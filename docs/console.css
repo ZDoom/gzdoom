@@ -1,0 +1,162 @@
+DT
+{
+	font-weight: bold;
+}
+DD
+{
+	margin-bottom: 1em;
+	margin-left: 1.5em;
+	margin-right: 1.5em;
+}
+TH
+{
+	text-align: left;
+	font-weight: bold;
+	padding-right: 2em;
+	vertical-align: top;
+}
+TD
+{
+	text-align: left;
+}
+
+/* Command Descriptions */
+DIV.c
+{
+	border-right: 2px solid;
+	padding-right: 0.4em;
+	border-top: 1px solid;
+	margin-top: 1em;
+	padding-left: 0.4em;
+	font-weight: bold;
+	padding-bottom: 0.2em;
+	border-left: 1px solid;
+	padding-top: 0.2em;
+	border-bottom: 1px solid;
+	background-color: rgb(152,251,152);
+	margin-bottom: 0px;
+}
+DIV.b
+{
+	border-right: 2px solid;
+	padding-right: 1.2em;
+	border-top: 1px;
+	padding-left: 1.2em;
+	padding-bottom: 0.5em;
+	border-left: 1px solid;
+	padding-top: 0.5em;
+	border-bottom: 2px solid;
+	background-color: rgb(240,255,240);
+	margin-top: 0px;
+}
+
+/* Variable Descriptions */
+DIV.v, DIV.vf
+{
+	border-right: 2px solid;
+	padding-right: 0.4em;
+	border-top: 1px solid;
+	margin-top: 1em;
+	padding-left: 0.4em;
+	font-weight: bold;
+	padding-bottom: 0.2em;
+	border-left: 1px solid;
+	padding-top: 0.2em;
+	border-bottom: 1px solid;
+	background-color: rgb(175,238,238);
+}
+DIV.vf
+{
+	background-color: rgb(175,200,238);
+}
+DIV.t, DIV.tf
+{
+	border-right: 2px solid;
+	padding-right: 1.2em;
+	border-top: 1px;
+	padding-left: 0.9em;
+	padding-bottom: 0.2em;
+	border-left: 1px solid;
+	padding-top: 0.2em;
+	border-bottom: 1px solid;
+	background-color: rgb(224,255,255);
+}
+DIV.tf
+{
+	background-color: rgb(224,238,255);
+}
+DIV.d, DIV.df
+{
+	border-right: 2px solid;
+	padding-right: 1.2em;
+	border-top: 2px;
+	padding-left: 1.2em;
+	padding-bottom: 0.5em;
+	border-left: 1px solid;
+	padding-top: 0.5em;
+	border-bottom: 2px solid;
+	background-color: rgb(240,255,255);
+}
+DIV.df
+{
+	background-color: rgb(240,248,255);
+}
+P
+{
+	margin-top: 1em;
+	margin-bottom: 0em;
+}
+A
+{
+	color: Blue;
+	text-decoration: none;
+}
+A:hover
+{
+	text-decoration: underline;
+}
+H1, H2
+{
+	font-weight: bold;
+	left: -0.8em;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	position: relative;
+}
+H3, H4
+{
+	font-weight: bold;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	left: 0em;
+}
+BODY
+{
+	margin: 2em 2em 2em 2em;
+	background-color: white;
+}
+PRE
+{
+	border: ridge 2px;
+	background-color: rgb(210,210,210);
+	padding: 1em 1em 1em 1em;
+}
+DIV.index
+{
+	padding-right: 0.8em;
+	padding-left: 0.8em;
+	left: 0px;
+	float: left;
+	padding-bottom: 1em;
+	overflow: auto;
+	clip: rect(auto,auto,auto,auto);
+	padding-top: 0.5em;
+	position: absolute;
+	top: 0px;
+	background-color: #ffffcc;
+	border-right: solid 1px #808080;
+	border-bottom: solid 1px #808080;
+}
+DIV.main
+{
+	margin-left: 11em;
+	height: 50%;
+}

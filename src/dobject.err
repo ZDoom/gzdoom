@@ -1,0 +1,31 @@
+dobject.h(87): Error! E121: col(27) syntax error 
+dobject.h(87): Note! N393: col(27) included from dthinker.h(38) 
+dobject.h(87): Note! N393: col(27) included from actor.h(31) 
+dobject.h(87): Note! N393: col(27) included from dobject.cpp(39) 
+dobject.h(120): Error! E412: col(36) only member functions can be declared 'const' or 'volatile' 
+dobject.h(125): Error! E412: col(9) only member functions can be declared 'const' or 'volatile' 
+dobject.h(128): Error! E204: col(29) 'this' pointer is not defined 
+dobject.h(130): Error! E386: col(30) attempt to use pointer to undefined class 
+dobject.h(130): Note! N638: col(30) 'TypeInfo' defined in: dobject.h(83) (col 8) 
+dobject.h(135): Error! E412: col(9) only member functions can be declared 'const' or 'volatile' 
+dobject.h(136): Error! E386: col(24) attempt to use pointer to undefined class 
+dobject.h(136): Note! N638: col(24) 'TypeInfo' defined in: dobject.h(83) (col 8) 
+dobject.h(136): Error! E204: col(42) 'this' pointer is not defined 
+dobject.h(148): Error! E121: col(1) syntax error 
+dobject.h(299): Error! E275: col(9) the second argument of 'operator delete' must be of type 'size_t' 
+dobject.h(299): Error! E488: col(9) 'operator delete' cannot be overloaded 
+dobject.h(236): Error! E386: col(24) attempt to use pointer to undefined class 
+dobject.h(236): Note! N638: col(24) 'TypeInfo' defined in: dobject.h(83) (col 8) 
+infomacros.h(166): Error! E080: col(2) Actor default lists are only implemented for Visual C++ and GCC 
+actor.h(310): Error! E029: col(37) symbol 'FindType' has not been declared 
+actor.h(315): Error! E386: col(27) attempt to use pointer to undefined class 
+actor.h(315): Note! N638: col(27) 'TypeInfo' defined in: dobject.h(83) (col 8) 
+actor.h(320): Error! E409: col(1) template argument 'T' is not used in the function argument list 
+actor.h(320): Note! N392: col(1) 'T' defined in: actor.h(318) (col 16) 
+actor.h(344): Error! E386: col(52) attempt to use pointer to undefined class 
+actor.h(344): Note! N638: col(52) 'TypeInfo' defined in: dobject.h(83) (col 8) 
+actor.h(617): Error! E029: col(47) symbol 'FindType' has not been declared 
+actor.h(622): Error! E409: col(1) template argument 'T' is not used in the function argument list 
+actor.h(622): Note! N392: col(1) 'T' defined in: actor.h(620) (col 16) 
+d_player.h(31): Error! E059: col(10) unable to open 'a_artifacts.h' 
+p_pspr.h(87): Error! E133: col(43) too many errors: compilation aborted 

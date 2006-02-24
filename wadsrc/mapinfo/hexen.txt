@@ -1,0 +1,34 @@
+// A bare-bones MAPINFO for Hexen.
+// Most of the MAPINFO is still in hexen.wad.
+
+clusterdef 1
+hub
+exittext clus1msg
+exittextislump
+music hub
+pic interpic
+
+clusterdef 2
+hub
+exittext clus2msg
+exittextislump
+music hub
+pic interpic
+
+clusterdef 3
+hub
+exittext clus3msg
+exittextislump
+music hub
+pic interpic
+
+clusterdef 4
+hub
+exittext clus4msg
+exittextislump
+music hub
+pic interpic
+
+// There is also support for showing a clus5msg after cluster 5, but
+// since it isn't used, and it would intefere with the finale if I
+// included it here, I'm leaving out the clusterdef for cluster 5.

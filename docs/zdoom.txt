@@ -1,0 +1,1134 @@
+ZDOOM v1.22
+December 12, 1999
+
+A port of id Software's original Linux Doom source code to Win32 and Linux
+with additional enhancements by Randy Heit (rheit@iastate.edu).
+
+ZDoom's homepage is at: http://zdoom.notgod.com/
+
+
+Contents
+
+  1. Introduction
+1-1. Significant differences between ZDoom and regular Doom
+1-2. Installing ZDoom
+
+  2. Command line arguments
+2-1. Configuration options
+2-2. Play options
+2-3. Loading options
+2-4. Debug options
+2-5. Multiplayer options
+2-6. Other options
+
+  3. Configuring ZDoom
+3-1. The Player Setup menu
+3-2. The new Options menu
+3-3. The Configure Controls menu
+3-4. The Gameplay Options menu
+3-5. The Display Options menu
+3-6. The Messages menu
+3-7. The Video Modes menu
+3-8. Changing settings not found in a menu
+
+  4. The Console
+4-1. Activating the console
+4-2. Using the console
+
+  5. Key bindings
+
+  6. Playing a network game
+6-1. Playing a network game with the DOS version
+6-2. Playing a network game the nice way
+6-3. Playing a network game the old way
+6-4. Configuring ICQ to launch an Internet game
+6-5. Playing with a modem/serial/parallel cable connection
+
+  7. Known bugs
+
+  8. Acknowledgments
+
+
+1. Introduction
+===============
+
+ZDoom is an enhanced port of the official DOOM source code. Originally for
+Win32 (Windows 95/98/NT), it is now available for Linux as well.
+
+ZDoom may be used and distributed free of charge. It must not be sold for
+profit. These are terms set forth by the Doom Source Code license, the
+MIDAS Digital Audio System license, and the Prometheus Truecolor license.
+
+
+1-1. Significant differences between ZDoom and regular Doom
+-----------------------------------------------------------
+
+- Will work under Windows NT with sound.
+- Free look (look up/down).
+- High resoulutions.
+- Translucency.
+- A console.
+- MOD and MIDI support.
+- Better mouse support.
+- Limited TCP/IP (actually UDP) networking.
+- Quake-style key bindings.
+- Jumping.
+- Crosshairs.
+- Walk over/under other things.
+- Hexen-style map editing.
+- Almost full BOOM support.
+
+
+1-2. Installing ZDoom
+---------------------
+
+To use ZDoom, unzip both zdoom.exe and zdoom.wad into your existing Doom 
+directory. (You must already have an existing copy of Doom to use this
+program.) If nothing else, you need to download the shareware Doom, which
+is available in several places on the Internet. To truly take advantage of
+ZDoom, though you need the full game. The Depths of Doom Trilogy can be had
+fairly cheaply and includes Ultimate Doom, Doom II, and The Master Levels
+for Doom II.
+
+ZDOOM REQUIRES an IWAD from a 1.9 version of Doom. If you have a lesser
+version, you can find patches to upgrade your version at
+ftp.idsoftware.com.
+
+ZDoom on Windows systems also requires Microsoft's DirectX 3 or later. If
+you are using Windows 95, you can download the latest version from Microsoft's
+website at http://www.microsoft.com/directx. Windows NT 4.0 users can get it
+as part of Service Packs 3 and 4 (which are available at
+http://www.microsoft.com/NTServer/all/downloads.asp).
+
+ZDoom for Linux requires Hermes. You can get it from http://hermes.terminal.at
+
+
+2. Command line parameters
+==========================
+
+ZDoom supports many command line parameters. They are described below:
+
+2-1. Configuration options
+--------------------------
+
+-bits <numbits>
+    Specifies the display depth. Currently, only 8 is supported.
+
+-width <x>
+-height <y>
+    Specifies the desired resolution of the screen. If only one of -width
+    or -height is specified, ZDoom will try to guess the other one based on
+    a standard aspect ratio. If the specified resolution is not supported
+    by your DirectDraw drivers, ZDoom will try various resolutions until it
+    either finds one that works or gives up. To determine which resolutions
+    ZDoom can use, use the vid_describemodes command from the console once
+    you have started the game.
+
+-cdrom
+    Causes ZDoom to look for savegames and zdoom.cfg in a directory called
+    C:\ZDOOMDAT. Screenshots will also be saved in this directory.
+
+-config <configfile>
+    Causes ZDoom to use an alternative configuration file. If configfile
+    doesn't exist, it will be created.
+
+-heapsize <x>
+    This is the size in megabytes of the zone memory manager’s heap. If set
+    too low, problems will almost certainly arise. 6 megabytes is probably
+    a reasonable minimum to use for this parameter, although ZDoom won’t
+    stop you from using something smaller like 0.5 megabytes (which will
+    almost certainly give you a Z_Malloc error if you try it). Values too
+	high will also cause problems, because the game will use the system
+	heap to obtain memory too. If the zone heap is too large, it will have
+	to use virtual memory, and everything will be slower. By default, the
+    heap size is 8 megabytes.
+
+-iwad <iwadfile[.wad]>
+    The IWAD file specified after this parameter will be used as the game
+    IWAD file instead of the default one. Normally, ZDoom looks for IWADs
+    in the following order and uses the first one it finds:
+
+        doom2f.wad
+        doom2.wad
+        plutonia.wad
+        tnt.wad
+        doom.wad
+        doom1.wad
+
+	ZDoom will look for the IWAD in the current directory, in the same
+	directory as zdoom.exe, in the directory set in the DOOMWADDIR
+	environment variable, and in the directory set in the HOME environment
+	variable.
+
+-m (DOS only)
+	Displays the MIDAS configuration screen when the game starts so you
+	can pick your soundcard if it isn't detected properly. Sorry, but there
+	isn't any way to save this configuration.
+
+-noflathack
+	Some wads were able to use new flats with the original Doom.exe. ZDoom
+	will normally try and detect them. Use this switch to prevent that.
+
+-noidle (Win32 only)
+    When the user presses Alt-Tab to switch from ZDoom to another window,
+    ZDoom will normally reduce its priority class so that it doesn't slow
+    the rest of the system down. By specifying this parameter, ZDoom will
+    try to run at full speed even when it isn't the active window.
+
+-nommx
+    Causes ZDoom not to use any MMX code. Normally, ZDoom should be able to
+    figure out on its own whether the processor supports MMX or not and
+    will act accordingly. Currently, MMX isn't actually used, so this switch
+	doesn't do anything.
+
+-nomusic
+    Prevents the playback of music.
+
+-noptc (Win32 only)
+	This forces ZDoom to use DirectDraw directly instead of using PTC as
+	an abstraction layer on top of it. Setting the cvar vid_noptc to 1
+	has the same effect as this command line option, and is also
+	remembered so that you don't need to type it in each type you run
+	the game. Unless you have problems with video, it is recommended that
+	you let ZDoom use PTC.
+
+-nosfx
+    Prevents the playback of sound effects. Because of the nature of MOD
+    music, this also disables playback of MODs.
+
+-nosound
+    Disables both music and sound effects.
+
+-notrans
+    Disables translucency.
+
+-primarysound (Win32 only)
+    If DirectSound is available, this parameter will cause ZDoom to try to
+    use the primary buffer for mixing. This can potentially lower sound
+    latency but also introduces the possibilty for more sound problems.
+
+-wavonly (Win32 only)
+    Forces ZDoom to use the standard Windows wave device for sound output
+    instead of DirectSound. If you experience problems with sound, it may
+    be worthwhile trying this parameter, although it will generally
+    introduce a large amount of latency, causing sounds to be heard later
+    than expected.
+
+-transfile <transfile[.tch]>
+    Causes ZDoom to use an alternative translucency cache file. This file
+    is automatically generated if it doesn't already exist and is used to
+    speed up startup by eliminating the need to recalculate the
+    translucency tables every time the game is started. By default, ZDoom
+    will look for a file called transtab.tch in the same directory that it
+    resides in. If the .tch extension is omitted, it will automatically be
+    added.
+
+2-2. Play options
+-----------------
+
+-avg
+    Stands for "Austin Virtual Gaming." Automatically advances to the next
+    level after 20 minutes. This is equivalent to +set timelimit 20 or
+	-timer 20.
+
+-fast
+    Sets the dmflags cvar to make the monsters as fast as in nightmare mode
+    even if you aren't playing nightmare.
+
+-nomonsters
+    Sets the dmflags cvar so that monsters are not spawned on levels.
+
+-respawn
+    Sets the dmflags cvar so that monsters respawn even if you aren't
+    playing at nightmare difficulty.
+
+-timer <x>
+    Causes ZDoom to automatically advance to the next level after x
+    minutes. This is equivalent to +set timelimit <x>.
+
+-turbo <x>
+    Causes player movement to be x% as fast as normal. Valid values are
+    10-256, with 100 being normal. Values larger than 100 are considered
+    cheating. This is equivalent to +set turbo <x>.
+
+2-3. Loading options
+--------------------
+
+-deh <dehfile[.deh]>
+    Causes ZDoom to apply a DeHackEd or .bex patch to the game. This must be
+    a text patch; binary patches are not supported. (As far as I know, most
+    patches are text patches so this shouldn’t be too much of a problem.)
+    Also, only patch format 6 is known to be supported. Other formats may
+    or may not work properly. If the .deh extension is omitted, ZDoom will
+    automatically add it. If this is a .bex patch, however, the extension
+    does need to be included.
+
+-bex <bexfile[.bex]>
+	This is the same as -deh, except the default file extension is .bex.
+
+-file <file1[.wad]> [file2[.wad] [file3[.wad] ...
+    Used to load one or more PWAD files which generally contain user-
+    created levels. Files listed further right take precedence to files
+    listed before them, so as an example, if both file1.wad and file2.wad
+    contain have a MAP01, the MAP01 in file2.wad would be used instead of
+    the one in file1.wad If the .wad extension is omitted, ZDoom will
+    automatically add it.
+
+-loadgame <x>
+    Automatically loads savegame x, where x is 0-7 corresponding to one of
+    the savegame slots.
+
+-maxdemo <x>
+    Specifies the initial size of the recording buffer used with the -record
+    parameter. This buffer will grow as needed, but you might want to use
+    this parameter to avoid any potential pauses when the buffer grows. The
+    default size of 128k is large enough for about 10 minutes of a
+    deathmatch, although the actual amount of space used by a demo depends
+    on what happens in the demo (due to the rudimentary delta compression
+    ZDoom applies to demos): If you did nothing but stand still, this should
+    be large enough for about 5.5 days.
+
+-playdemo <demofile[.lmp]>
+    ZDoom will automatically play the specified demo when it starts. If the
+	.lmp extension is omitted, it will automatically be added.
+
+-record <demofile[.lmp]>
+    Records a demo. The -warp parameter or +map command should also be used
+    if you don't want to record the demo on MAP01 or E1M1. To stop the demo
+    recording, use the "stop" console command. If the .lmp extension is
+    omitted, it will automatically be added. Unlike regular DOOM, only one
+    person in a multiplayer game needs to specify the -record parameter if
+    they want to record a demo. However, if someone quits before the person
+    recording the demo does, the person recording will automatically quit,
+    too, because I didn't bother to give demos a way to record when a player
+    leaves the game.
+
+-skill <x>
+    Sets the initial skill level. This is overridden if you start a new
+    game from the New Game menu.
+
+-timedemo <demofile[.lmp]>
+    Plays back a demo faster than -playdemo and displays a framerate when
+    the demo is over. If the .lmp extension is omitted, it will
+    automatically be added.
+
+-warp <m>
+-warp <e> <m>
+    For Doom II, starts the game on map m. For other versions of doom,
+    starts the game on episode e, map m. The +map command can also be used
+    to perform this action, but it expects the actual name of the map.
+    (i.e. MAP01, E1M1, ...)
+
+2-4. Debug options
+------------------
+
+-noblit
+    Causes ZDoom not to update the display on the screen, but it stills
+    draws everything to an internal buffer. Only useful with -timedemo.
+
+-nodraw
+    Causes ZDoom not to draw anything at all. Only useful with -timedemo.
+
+-debugfile
+    Causes ZDoom to write network debugging information to a file called
+    debugN.txt where N is your player number.
+
+-devparm
+    Prints a message telling you that you can take screenshots with the
+    Print Screen key. With the original Doom, using -devparm was the only
+    way to take screenshots. With ZDoom, screenshot is just another command.
+
++set developer 1
+    Prints a bunch of debugging messages to the console.
+
+2-5. Multiplayer options
+------------------------
+
+-altdeath
+    Informs ZDoom that you will be playing a deathmatch game and sets the
+    dmflags cvar so that items other than invulnerability and invisibilty
+    respawn after being picked up. Only player 1 needs to specify this.
+
+-deathmatch
+    Informs ZDoom that you will be playing a deathmatch game and sets the
+    dmflags cvar so that weapons stay behind when a player picks them up.
+    Only player 1 needs to specify this.
+
+-dup <x>
+    Causes ZDoom to transmit fewer player movement commands across the
+    network. Valid values range from 1-9. For example, -dup 2 would cause
+    ZDoom to send half as many movements as normal.
+
+-extratic
+    Causes ZDoom to send a backup copy of every movement command across the
+    network.
+
+-host <x>
+    This machine will function as a host for a multiplayer game with <x>
+    players (including this machine). It will wait for other machines to
+    connect using the -join parameter and then start the game when
+    everyone is connected. See section 6 for more details.
+
+-join <host>
+    Connect to a host for a multiplayer game. See section 6 for more
+    details.
+
+-net <console> [hosts] ...
+    Informs ZDoom that you will be playing a network game. See section 6
+    about network games below for more details.
+
+-port <x>
+    Specifies an alternate IP port for this machine during a network game.
+    By default, the port 5029 is used.
+
+2-6. Other options
+------------------
+
+In addition to the above parameters, console commands can be included on
+the command line by preceding them with a '+'. Some, however, will cause
+the game to crash if you use them (such as cheats). If you wish to
+change a cvar in this manner, it is a good idea to use the set command. This
+is because any set commands will be executed just after the config file is
+loaded, and all other commands are executed after every game subsystem has
+been initialized. For example, to turn on developer messages when you start
+ZDoom, use the command line:
+
+    zdoom +set developer 1
+
+instead of
+
+    zdoom +developer 1
+
+If you use the second line, you'll miss out on all the developer messages
+that get generated during the startup process.
+
+For a complete list of console commands and cvars, refer to the
+commands.txt file. If you want to get the most from ZDoom, I highly
+recommend at least glancing at it.
+
+
+3. Configuring ZDoom
+====================
+
+Zdoom now includes a new options menu which can be used to set some of the
+game's new options. A new control configuration menu is also included that
+can be used to easily assign some commands to different keys without a
+separate setup program.
+
+3-1. The Player Setup menu
+--------------------------
+
+This menu is found on the main menu and is used to select your player's
+name, team, suit color, gender, skin, and autoaim setting.
+
+Your player's name will be displayed on the scoreboard in deathmatch games
+and in the obituaries that are printed when you die. In teamplay games, your
+team name is used to identify which team you are on and also appears in the
+deathmatch scoreboard.
+
+The suit color is controlled with three sliders; one for each of red,
+green, and blue color components. Because the Doom palette only has 256
+colors, not all possible combinations will look good. The current color
+is displayed on an animated player character to the right of the sliders.
+
+Your player's gender can be male, female, or cyborg. However, unless you
+have a soundpack or a skin with non-male sounds, your player will still
+sound like the male DOOM marine. Some obituaries (such as "Zathras checks
+his glasses") will adjust themselves to fit the gender you select.
+
+You also have the option of looking like something other than the DOOM
+marine by picking a skin. ZDoom doesn't come with any, but it is compatible
+with skins developed for Doom Legacy. You can find skins to download from
+their site at http://frag.com/doomlegacy/dl_skins.htm. To automatically
+load skins at game startup, create a skins directory (in the same directory
+as zdoom.exe), and place your skins in it. You can also load skins from
+the command line with -file.
+
+The autoaim settings controls how close your vertical aim should be from a
+monster before ZDoom will adjust your aim to shoot it. By default, this
+value is set to always which means that it behaves just like the original
+Doom. Never indicates that ZDoom will never adjust your aim for you, and
+you will shoot where you aim. There are also intermediate values which
+adjust how much leeway you can have in your aim.
+
+3-2. The Options menu
+----------------------
+
+ZDoom's Options menu is different from the options menu in the original
+Doom and contains the following items:
+
+Customize Controls
+    Displays the customize controls menu.
+
+Go to console
+    Opens the console.
+
+Gameplay Options
+    Displays the gameplay options menu.
+
+Display Options
+    Displays the display options menu.
+
+Set video mode
+    Displays the video modes menu.
+
+Mouse speed
+    Adjusts how sensitive ZDoom is to mouse movements.
+
+MIDI Music Volume
+    Adjusts the volume of MIDI and MUS music. This is the type of music
+    found in the levels that come with DOOM and does not affect the volume
+    of MOD music.
+
+MOD Music volume
+    Adjusts the volume of MOD music. Setting this to a high setting will
+    usually result in nasty-sounding aliasing. Note that this only effects
+    the volume of MOD music and not MUS or MIDI music.
+
+Sound volume
+    Adjusts the volume of sound effects.
+
+Always Run
+    When on, you will always run whether or not you are holding down the
+    +speed key. By default, you can also change this setting by pressing
+    the caps lock key while playing a game.
+
+Always Mouselook
+    When on, moving the mouse up and down will always cause you to look up
+    and down instead of only when the +mouselook key is pressed.
+
+Invert Mouse
+    When on, mouselooking is reversed so that pushing the mouse forward
+    causes you to look down, and pulling the mouse back causes you to look
+    up.
+
+Lookspring
+    When on, releasing the +mouselook key will automatically center your
+    view.
+
+Lookstrafe
+    When on, moving the mouse left and right will always cause the player
+    to move in the corresponding direction.
+
+Reset to defaults
+    Select this item to set all options to their default values.
+
+Reset to last saved
+    Select this item to set all options to the values contained in the
+    configuration file.
+
+3-3. The Configure Controls menu
+--------------------------------
+
+This menu is found on the options menu and lists several controls and up to
+two keys assigned to that control. There may be more than two keys assigned
+to a control, but only two of them will be shown at a time. If there are no
+keys assigned to the given control, this will be indicated with ???.
+
+To change the keys assigned to a control, use the up and down arrow keys to
+select the control you wish to change. To assign a new key to the control,
+press Enter and then the key you want to activate this control. If you
+decide you don’t want to assign a new key to the control, press Escape. To
+remove all keys for the selected control, press Backspace instead of Enter.
+
+This menu only lists a select few commands, but they are the ones that are
+most likely to be used during gameplay. To assign other commands to keys,
+you can use the bind command from the console.
+
+3-4. The Gameplay Options menu
+------------------------------
+
+This menu is found in the options menu and controls several options
+related to game play and map directly to different dmflags values. The
+dmflags value corresponding to the current settings can be found at the
+bottom of the menu. Many of these settings apply only to deathmatch games
+and are indicated by a (DM) after their names. During a multiplayer game,
+only player 1 can change these settings. Currently, there are 18 dmflags
+that can be set from this menu:
+
+Falling damage
+    When set to yes, falling long distances will cause players damage.
+
+Weapons stay (DM)
+    When set to yes, weapons won't disappear when they're picked up. This
+    is the default when started with -deathmatch.
+
+Allow powerups (DM)
+    When set to yes, powerups (such as light amplification goggles) will
+    be spawned on levels.
+
+Allow health (DM)
+    When set to yes, any items that give you health (such as stimpacks)
+    will be spawned on levels.
+
+Allow armor (DM)
+    When set to yes, armor will be spawned on levels.
+
+Spawn farthest (DM)
+    When set to yes, dead players will respawn as far as possible from
+    other players.
+
+Same map (DM)
+    When set to yes, exiting a level will restart the current one instead
+    of advancing to another.
+
+Force respawn (DM)
+    When set to yes, dead players will respawn immediately.
+
+Allow exit (DM)
+    When set to no, anyone who tries to leave the level will be instantly
+    killed.
+
+Infinite ammo
+    When set to yes, weapons do not deplete their ammo.
+
+No monsters
+    When set to yes, monsters will not be spawned on levels.
+
+Monsters respawn
+    When set to yes, monsters respawn (just like nightmare difficulty).
+
+Powerups respawn
+    When set to yes, powerups other than invulnerability and invisibility
+    will respawn. This is the default for -altdeath.
+
+Fast monsters
+    When set to yes, monsters will be faster than normal (just like
+    nightmare difficulty).
+
+Allow jump
+    When set to yes, players can jump.
+
+Allow freelook
+    When set to yes, players can look up and down.
+
+Friendly fire
+    When set to yes, players on the same team can hurt each other. If you
+    kill a teammate, you also lose a frag. If this is set to no, players on
+    the same team will still be able to push each other around with their
+    weapons, but they won't be able to hurt each other. This flag only has
+    an effect when teamplay is on. Otherwise, all players can always hurt
+    each other.
+
+The final option on this menu, "Teamplay," is not a dmflag. When it is on,
+the deathmatch scoreboard will also show the name's of players' teams, and
+the game will also use the setting of the friendly fire dmflag.
+
+Some of the DM-only flags (such as item respawning) can also be enabled
+for singe player and co-op can be enabled by opening the console and setting
+the alwaysapplydmflags cvar to 1.
+
+3-5. The Display Options menu
+-----------------------------
+
+This menu is found in the options menu and controls various aspects of the
+display. Options currently available are:
+
+Messages
+    Displays the messages menu.
+
+Screen size
+    Controls the size of the screen used to draw the players view. Larger
+    sizes require more processing power to draw but also look better.
+
+Brightness
+    Controls how bright the display is.
+
+Crosshair
+    Selects one of eight crosshairs or no crosshair at all. Some of these
+    crosshairs are probably of dubious value but are available anyway.
+
+Column render mode
+    Selects a column renderer. Original is the one used by DOOM. And
+    optimized is a new one that can as much as double the framerate on
+    modern processors. If you're using a 486, you should definitely
+    be using the original renderer, because the optimized one will cut
+    your framerate by at least half.
+
+Detail mode
+    Controls vertical and horizontal pixel doubling. This is similar to the
+    low detail mode of the original Doom which would double the size of
+    pixels horizontally except that it can also do the same vertically.
+    Doubling horizontally will almost always result in a speedup
+    significantly larger than doubling them vertically.
+
+Stretch short skies
+    When turned on, short sky textures (such as the ones included with
+    Doom) are stretched vertically so that they don't wrap when you look up
+    or down.
+
+Stretch status bar
+    When turned on, the status bar will always be as wide as the screen.
+
+Screen wipe style
+    Selects the style of screen wipe to use between levels. "None" means to
+    just switch directly to the new screen. "Melt" is the style used by
+    Doom. "Burn" makes the old screen burn into the new one. "Crossfade"
+    fades out the old screen while fading the new one in at the same time.
+
+DirectDraw palette hack (Win32 only)
+    If you have trouble with the palette, your video card probably has buggy
+    drivers. Turn this on, and ZDoom will reset the palette every frame
+    and not just when it changes.
+
+Use fuzz effect
+    Controls whether the fuzz effect will be used for partially invisible
+    things. If turned off, then translucency will be used instead.
+
+Rocket trails
+    Controls whether rockets leave a trail of particles behind them.
+
+Blood type
+    Determines the way blood is draw: as sprites only, particles only,
+    or both.
+
+Bullet puff type
+    Determines the way bullet puffs are drawn: either as sprites or as
+    particles.
+
+Rotate automap
+    When turned on, the automap will rotate to keep the area that you are
+    facing toward the top of the map.
+
+Overlay automap
+    When turned on, the automap will first be overlayed on top of the
+    player view before being drawn fullscreen.
+
+Standard map colors
+    When turned on, ZDoom will use the automap colors from the original
+    Doom instead of the colors specified with the am_*color cvars.
+
+3-6. The Messages Menu
+----------------------
+
+This menu lets you adjust how messages are displayed on the screen.
+Possible items you can select from this menu are:
+
+Scale text in high res
+    When turned on, message text is enlarged on higher resolutions so that
+    it takes up about as much space as it would on a 320x200 screen.
+
+Minimum message level
+    This is the minimum message level (see below) that will be shown.
+
+The remaining items control the colors used to display messages each level
+of message:
+
+Item pickup
+    Messages that appear when you pick up an item.
+
+Obituaries
+    Messages that appear when a player dies.
+
+Critical messages
+    Anything that doesn't fit into one of the other categories.
+
+Chat messages
+    Messages from another player.
+
+Team messages
+    Messages from a teammate who is only speaking to his team.
+
+Centered messages
+    Messages in the middle of the screen
+
+3-7. The Video Modes menu
+-------------------------
+
+The video modes menu can be used to select the current display mode and
+switch between windowed mode and full screen. This menu can be found as a
+selection inside the Options menu.
+
+3-8. Changing settings not found in a menu
+------------------------------------------
+
+There are many settings (cvars) that aren't listed in any menu. To change
+these you need to use the console (see section 4). For a complete list of
+these, refer to the commands.txt file.
+
+
+4. The Console
+==============
+
+ZDoom has a console very similar to Quake's. Almost all game settings and
+controls can be accessed from it. For a complete list of console commands
+and cvars, see the commands.txt file.
+
+4-1. Activating the console
+---------------------------
+
+There are two ways to activate the console: From the Options menu, and with
+the toggleconsole command. The console can always be activated by selecting
+"Go to console" from the Options menu. While playing a game, pressing a key
+bound to the toggleconsole command can also activate the console. By
+default, this is the ` key, but it can be changed to any key with the bind
+command.
+
+
+4-2. Using the console
+----------------------
+
+Using the console is fairly simple. Just type in commands and press Enter
+to execute them. To scroll around in the console’s text buffer, you can use
+the Page Up and Page Down keys. Pressing Shift-Page Up scrolls to the top
+of the buffer, while pressing Shift-Page Down scrolls to the bottom.
+Without pressing Shift, these keys will scroll one line at a time in the
+corresponding direction.
+
+A handy feature of the console that was added in 1.13 is tab-completion. To
+use it, begin typing a command, and then press tab repeatedy to cycle
+through all the commands that begin with whatever you typed.
+
+To deactivate the console, you can press either ` or Escape. This will also
+erase any text you might have been typing on the command line.
+
+
+5. Key bindings
+===============
+
+ZDoom supports Quake-style controls as opposed to those of the original 
+Doom. To bind a command to a key, use the bind command followed by the key
+to bind and the command(s) to bind to it. Multiple commands should be
+separated by semicolons (;) and if there are any spaces in the commands,
+they need to all be enclosed in quotation marks (").
+
+For example, to make the Page Up key cause the player to look up, use the 
+command:
+
+bind pgup +lookup
+
+From now on, pressing Page Up will cause you to look up. Since this is also
+an action command (it begins with a '+'), releasing Page Up will also
+execute the -lookup command, which will cause you to stop looking up.
+
+You can also refer to keys by scancodes instead of names. For instance,
+
+bind #3 "echo I don't like my pistol."
+
+and
+
+bind 2 "echo I don't like my pistol."
+
+will both do the same thing, because 3 is the scancode for the "2" key.
+
+If you use key names, the keys are assumed to be arranged in a Qwerty
+layout. This may be somewhat confusing because the console uses the layout
+selected in the Keyboard control panel (which might not be Qwerty), but I
+decided to do it this way for consistancy. Thus, if you wanted to assign the
+key directly to the right of the tab key to a command, you would use
+"bind q <command>" even if that key isn't labeled Q on your keyboard.
+
+All key bindings are automatically saved in the config.cfg file when the
+game quits.
+
+The following special keys as well as the alphanumeric keys are named and
+can be bound. These are the same keys displayed in the Configure Controls
+menu:
+
+backspace
+tab
+enter
+ctrl
+shift
+kp*             * on the numeric keypad
+alt             Either the left or right Alt key
+space
+capslock
+numlock
+scroll          Scroll Lock
+kp7             7 on the numeric keypad
+kp8             8 on the numeric keypad
+kp9             9 on the numeric keypad
+kp-             - on the numeric keypad
+kp4             4 on the numeric keypad
+kp5             5 on the numeric keypad
+kp6             6 on the numeric keypad
+kp+             + on the numeric keypad
+kp1             1 on the numeric keypad
+kp2             2 on the numeric keypad
+kp3             3 on the numeric keypad
+kp0             0 on the numeric keypad
+kp.             . on the numeric keypad
+kana
+convert
+noconvert
+yen
+kp=             = on some numeric keypads
+circumflex
+kanji
+stop
+ax
+unlabeled
+kp,             , on some numeric keypads
+kp/             / on the numeric keypad
+sysrq
+home
+uparrow
+pgup
+leftarrow
+rightarrow
+end
+downarrow
+pgdn
+ins
+del
+lwin            The left Windows key
+rwin            The right Windows key
+apps            The application menu key
+pause           The pause key
+mouse1          The left mouse button
+mouse2          The right mouse button
+mouse3          The middle mouse button
+mouse4          The fourth mouse button if yours has one
+joy1 - joy32    All 32 joystick buttons supported by Windows
+mwheelup        The mouse wheel was rolled up
+mwheeldown      The mouse wheel was rolled down
+
+Note that i_remapkeypad must be "0" for kp0, kp., kp1, kp2, kp3, kp4, kp6,
+kp7, kp8, and kp9 to be treated as distinct keys.
+
+
+6. Playing a network game
+=========================
+
+Due to changes ZDoom has made to the message format of network games, you
+will definitely not be able to play a network game between ZDoom and
+another version of Doom. Since ZDoom uses the UDP protocol for networking,
+it is possible to play a game on the Internet as well as a LAN. If you want
+to try it, a good frontend to try is ZM (http://www.doomworld.com/zm).
+
+6-1. Playing a network game with the DOS version
+------------------------------------------------
+
+The information in the following sections about network games does *not*
+apply to the DOS version of ZDoom. While networking with the DOS version is
+untested, it should work just like the original DOOM: through sersetup
+or ipxsetup. If you want to try it, rename zdoomdos.exe to whatever sersetup
+or ipxsetup expects (it varies depending on which game they came with). BE
+SURE TO RENAME THE ORIGINAL DOOM.EXE, DOOM2.EXE, HERETIC.EXE, OR HEXEN.EXE
+TO SOMETHING ELSE BEFORE YOU DO THIS. Then launch a game using DM or some
+similar program. Please note that due to the size of the network packets
+used during game startup, you may experience access violations with the DOS
+version.
+
+6-2. Playing a network game the nice way
+----------------------------------------
+
+As of version 1.19, starting network games has been vastly simplified. The
+old method is retained for compatibility (see the next section), but you
+are encouraged to use this new method. Not only is the new method easier,
+but it should work with IP masquerading, providing that only the machines
+connect to the host use IP masquerading. What follows are Jeffrey Cuenco's
+instructions for using them:
+
+The syntax for these command-line parameters are as follows:
+
+To start (host) a game you simply type:
+
+    zdoom -host <x> 
+
+where x is the number of players that are going to be in the game
+(including yourself).
+
+To join a game you simply type:
+
+    zdoom -join <host ip> 
+
+where host ip is the ip address of the "host" computer.
+
+These functions simplify the netgame process by having one computer, the
+"host," accept connection requests from other computers running ZDoom.
+The host then sends back a response packet to the client, which contains
+the client's console number. When the total number of hosts connected to
+the host + the host itself equals the number of players specified in
+"-host," then the host sends a packet to all the clients connected to the
+host, containing the ip addresses of all the other computers connected to
+the host excluding the ip of the host itself and your ip (which you already
+have). When each client receives this "all here" packet, then it stores
+each address under a different index in the array that holds all the
+addresses of the client computers you're playing against. After each
+client successfully receives the "all here" packet and has already sent
+ACKs (acknowledgement packets) to the host, then the host sends a "Go"
+packet to all clients stating that it's ok to start the netgame. What
+follows this is the normal activity that you've already seen after you
+execute "-net ..."
+
+6-3. Playing a network game the old way
+---------------------------------------
+
+To begin a network game, start ZDoom with the "-net" command-line
+parameter. This is *different* from the DOS version of Doom (but the same
+as the Linux version). The -net parameter takes the form:
+
+    -net <console> [machine1] [machine2] ...
+
+<console> is the player number that your machine is playing as (1 to 8)
+and is followed by the addresses of the other machines in the network game.
+These addresses can be either IP addresses like 192.168.0.1 or hostnames
+like some.machine.com. To specify an alternate port to connect to on the
+other machines, append a colon to the address and follow it with the port
+number you wish to use (i.e. some.machine.com:26000).
+
+The number of players in a netgame is determined by the number of machines
+after <console> in the -net parameter. For a two-player game, you would
+only list one other machine. For a four-player game, you would list three.
+
+Each player must choose a different console number. One person *must* be
+console 1, and there can be no gaps between console numbers. For instance,
+in a two-player game it's okay for one player to be console 1 and the other
+to be console 2, but it's not okay if one player is console 1 and the other
+is console 4.
+
+An example for a two-player game:
+
+    One machine named joe runs:         zdoom -net 1 bob -deathmatch
+    The other machine named bob runs:   zdoom -net 2 joe -deathmatch
+
+It's also possible to start a network game on your own machine if you run
+ZDoom in a window with the -nomusic and -noidle parameters:
+
+    Start the first copy of zdoom:
+        zdoom -net 1 localhost:26000 -port 26001 -noidle -nomusic
+
+    Then start the second copy:
+        zdoom -net 2 localhost:26001 -port 26000 -noidle -nomusic
+
+This works much nicer under Windows NT than it does under 95/98.
+
+6-4. Configuring ICQ to launch an Internet game
+-----------------------------------------------
+
+I don't personally recommend using ZDoom on the Internet (and have never
+tried it), but if you want to give it a try, it's just like setting it up
+for a LAN game. You might also want to try specifying the -extratic and
+-dup 2 parameters to help compensate for the latency the Internet
+introduces. Doomworld's Linguica has also provided instructions for setting
+up ICQ to launch a game of ZDoom:
+
+    With a little tweaking I was able to successfully configure the nearly
+    ubiquitous program ICQ to launch ZDoom games with literally the click of
+    a button. Here's how: Go into the "Preferences" menu in ICQ and then
+    "Internet Phone/Games/Chat." Then click on "New External." You'll be
+    given a box with three empty lines to fill in. In the first line, type
+    in the title of the application, i.e. "ZDoom." In the second line, type
+    in the path to your zdoom.exe -- "C:\DOOM2\zdoom.exe" or whatever. In
+    the third line, type in the following: "-net 2 %i -extratic -dup 2
+    -deathmatch -nomonsters -skill 5 -warp 01 -nomusic" which will configure
+    ZDoom to DM on Map01 with the optimum TCP/IP deathmatch settings. Then
+    click on the "Client/Server Application" button. This will bring up two
+    additional lines to fill in. In the fourth line, type the same thing as
+    in line 2: "C:\DOOM2\zdoom.exe" or whatever. In the fifth line, type
+    "-net 1 %i -extratic -dup 2 -deathmatch -nomonsters -skill 5 -warp 01
+    -nomusic" which once again configures ZDoom for optimum Internet play.
+    It's exactly the same as line 3 except it has "-net 1" instead of
+    "-net 2." Once all this is typed in, press OK. Then, if you want to DM a
+    friend who has similarly enabled his ICQ, simply click on their name,
+    click on "Internet Phone/Games," and then on "ZDoom." And away you go!
+
+6-5. Playing with a modem/serial/parallel cable connection
+----------------------------------------------------------
+
+ZDoom only supports UDP games. However, using Microsoft's Dial-Up Networking
+(included with Windows 95/98/NT), it should be possible to also play a game
+on two computers connected with modems or null-modem serial or parallel
+cables. My only network connection is my Ethernet card, so I haven't
+actually tried this, but I can't see any reason why it shouldn't work.
+
+If you're running Windows 95, go download Dial-Up Networking 1.3 from
+http://www.microsoft.com/windows95/downloads/contents/wurecommended/s_wunetworking/dun13win95/default.asp
+and install it.
+
+If you're running Windows 98, open the "Add/Remove Programs" control panel
+and click the Windows Setup tab. Choose "Communications" from the components
+list and click "Details..." If there isn't a check by "Dial-Up Networking"
+and "Dial-Up Server," check them and click OK. Click OK again to close the
+control panel.
+
+Now go visit http://www.geocities.com/TimesSquare/Fortress/4004/guide.html
+and start reading the section entitled "Configuring the Dial-Up-Server." Once
+you have everything set up, start a game using the instructions for starting
+a LAN game above.
+
+If you want to use two computers connected directly using a parallel or
+serial cable, you also have to use Microsoft's Direct Cable Connection.
+
+
+7. Known Bugs
+=============
+
+* When played in a window on Windows NT, the mouse can sometimes go crazy.
+  You can get around this by pausing and unpausing the game several times
+  or Alt-Tabbing out of ZDoom and back into it. Alternatively, you can also
+  set the in_mouse cvar to "2" to force ZDoom to use DirectInput to read
+  the mouse, but this may make the mouse very jerky while using the keyboard
+  at the same time.
+* Some machines were incapable of running version 1.13 and died inside of
+  I_StartGraphics. I have been unable to reproduce this on my machine and
+  could find nothing wrong with the code, so my best guess is that it's a
+  driver problem (if it still happens).
+* I've had reports that ZDoom will rearrange the icons on the desktop after
+  quitting the game in fullscreen. I have not had this happen to me, but it
+  appears to be a DirectDraw problem.
+
+If you find another bug with ZDoom, first try and duplicate it. If you
+can't duplicate it, it's probably either a problem with your system or 
+omething that I won't be able to fix unless I stumble on it. (I actually
+did find an obscure bug this way!) If you can duplicate the problem, run
+the game in a window, and send me the contents of the dialog box that pops
+up when it dies. If you have Drwatson (found in the \windows\system
+directory of Windows 95B and 98), also run that beforehand and send me a
+copy of the log file it generates (provided that it's not too large). Also
+describe what you were doing when the problem occured and list any PWADs or
+DeHackEd patches you were using at the time.
+
+
+8. Acknowledgments
+==================
+(in no particular order)
+
+id Software /  These are the people who developed Doom and later released
+John           the source code for the Linux port. Without them, there
+Carmack        would be no ZDoom. I have also used some of the functions
+               from their Quake2 game DLL source.
+
+Bernd          Packaged up id's Linux code for the initial source release.
+Kreimeier
+
+Raven          Portions of Heretic and Hexen were used in ZDoom.
+Software
+
+Chi Hoang      Responsible in one way or another for BOOM. It provided a
+Team TNT       significant codebase for ZDoom. Information about BOOM can
+               be found at the Team TNT website:
+               http://www.teamtnt.com/boompubl/ixboom.htm
+
+Lee Killough   For all his brilliant work on both BOOM and later MBF.
+               Portions of MBF were used in ZDoom, primarily to fix BOOM
+               bugs.
+
+Yoghurt        Creator of the Cajun Bot. http://www.doomworld.com/doombot/
+
+Sebastien      Created qmus2mid which I used to determine the structure of
+Bacquet        DOOM's MUS lumps so that the game would have music.
+
+Andy Bay       Original input code is from his (discontinued) ATB Doom port.
+
+Peterri        Original sound code and some assembly is from his
+Kangaslampi    (discontineud) NTDOOM port. He was also the person primarily
+               responsible for writing the MIDAS Digital Audio System
+               1.1.2, which is used for all sound effects and MOD music.
+               It is copyright 1996,1997 Housemarque Inc. It can be found
+               at http://www.s2.org/midas/.
+
+Glenn "Gaffer" Developed the Prometheus Truecolor library. OpenPTC was used
+Fiedler        for the latest version of ZDoom, and older versions of PTC
+               were used for older versions of ZDoom. Its homepage is at
+               http://www.gaffer.org/ptc/.
+
+Markus         Wrote the miniLZO library, which ZDoom uses for data
+F.X.J.         compression. Its webpage is at
+Oberhummer     http://wildsau.idv.uni-linz.ac.at/mfx/lzo.html
+
+Greg Lewis     Released his DeHackEd source, without which adding
+               DeHackEd support would have been much harder.
+

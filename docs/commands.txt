@@ -1,0 +1,1742 @@
+This document lists all commands and cvars supported by the current version
+of ZDoom (1.22) and a short description of each. There are a total of 130
+commands and 141 cvars.
+===========================================================================
+
+There are five types of cvars:
+
+boolean:  This is a number that can be either "0" or "1". "0" indicates no/
+          false, and "1" indicates yes/true.
+
+  color:  This is a series of three hexadecimal numbers representing the
+          amounts of red, green, and blue (in that order) in a color. For
+          example, pure redwould be represented as "ffff 0000 0000". The
+          setcolor command can be used to set one of these cvars using a
+          color name instead of numbers. (See the description of the
+          setcolor command below.)
+
+ number:  This is an ordinary number.
+
+ integer: This is an ordinary that doesn't take fractional values.
+
+ string:  This is a series of text characters enclosed in quotes.
+
+
+Some commands also take parameters. Any parameters that are required are 
+enclosed in < >, and those that are optional are enclosed in [ ].
+
+
+ACTION COMMANDS
+===============
+NOTE: As in Quake, all action commands come in pairs. When prefixed by a
+'+', they activate the corresponding action, and when prefixed by a '-',
+they deactivate that action.
+
+
++attack, -attack
+ While active, causes the player to fire his active weapon.
+
++back, -back
+ While active, causes the player to move backward.
+See also: +forward
+
++forward, -forward
+ While active, causes the player to move forward.
+See also: +back
+
++jump, -jump
+ Causes the player to jump. When underwater, the player will swim upward
+ instead.
+See also: +moveup
+
++klook, -klook
+ While active, causes +forward and +back to act like +lookup and +lookdown 
+ instead.
+See also: +mlook, +lookup, +lookdown, +forward, +back
+
++left, -left
+ While active, normally causes the player to turn to the left. However, as
+ long as +strafe is active, this will cause the player to move to the left
+ instead.
+See also: +right, +strafe, +moveleft
+
++lookdown, -lookdown
+ While active, causes the player to look down.
+See also: +lookup, +klook
+
++lookup, -lookup
+ While active, causes the player to look up.
+See also: +lookdown, +klook
+
++mlook, -mlook
+ While active, causes movement along the mouse's vertical axis to tilt the 
+ player's view up or down instead of moving the player forward or backward.
+See also: +klook, freelook, invertmouse, lookspring
+
++movedown, -movedown
+ Moves the player down if swimming or flying.
+See also: +moveup
+
++moveleft, -moveleft
+ While active, causes the player to move to the left.
+See also: +moveright, +left, +strafe
+
++moveright, -moveright
+ While active, causes the player to move to the right.
+See also: +moveleft, +right, +strafe
+
++moveup, -moveup
+ Moves the player up if swimming or flying.
+See also: +movedown
+
++right, -right
+ While active, normally causes the player to turn to the right. However, as
+ long as +strafe is active, this will cause the player to move to the right
+ instead.
+See alse: +left, +strafe, +moveright
+
++showscores, -showscores
+ While this action is active and you are playing a deathmatch game, a list
+ of the frags made by all players will be displayed on the screen. In
+ deathmatch games, this list will also automatically be display when you
+ are dead.
+
++speed, -speed
+ While active, all player movements occur at a rate faster than normal.
+See also: cl_run
+
++strafe, -strafe
+ While active, causes all +left and +right commands to act like +moveleft
+ and +moveright instead.
+See also: +left, +right, +moveleft, +moveright
+
++use, -use
+ While active, causes the player to attempt to use any usable items in
+ front of him/her (such as a door).
+
+
+OTHER COMMANDS AND CVARS
+========================
+addbot [name]
+(command)
+ Spawns a bot. If a name is given, the corresponding bot in bots.cfg will be
+ spawned. Otherwise, a bot will be picked at random from bots.cfg.
+See also: listbots, removebots
+
+alias <new command> <command string>
+(command)
+ If specified with no parameters, will display a list of all current
+ aliases. If only <new command> is specified, it will be removed from the
+ list of aliases. If <command string> is also specified, it will be added
+ to the list of aliases as <new command>. For example, to create a new
+ command to kill the monsters on the level, you can use the command:
+
+     alias massacre kill monsters
+
+ Then, you can use the newly created massacre command to kill all the
+ monsters on the level.
+
+alwaysapplydmflags
+(cvar: boolean)
+default: 0
+ Normally, some dmflags are only used in deathmatch. If alwaysapplydmflags
+ is 1, then they will also be used in single-player and co-op games.
+See also: dmflags
+
+am_backcolor
+(cvar: color)
+default: "6c 54 40" (a light tan)
+ The color of the automap background. Changes to this cvar take effect the
+ next time the automap is activated.
+See also: all the am_* cvars
+
+am_cdwallcolor
+(cvar: color)
+default: "4c 38 20" (a dark tan)
+ The color of two-sided lines that have a different ceiling height on each
+ side. Changes to this cvar take effect the next time the automap is
+ activated.
+See also: all the am_* cvars
+
+am_fdwallcolor
+(cvar: color)
+default: "88 70 58" (a lighter tan)
+ The color of two-sided lines that have a different floor height on each
+ side. Changes to this cvar take effect the next time the automap is
+ activated.
+See also: all the am_* cvars
+
+am_gridcolor
+(cvar: color)
+default: "8b 5a 2b" (tan4)
+ The color of the automap grid. Changes to this cvar take effect the next
+ time the automap is activated.
+See also: all the am_* cvars
+
+am_interlevelcolor
+(cvar: color)
+default: "ff 00 00" (red)
+ The color of inter-level teleporters. These are teleporters that teleport
+ you to a different map. Changes to this cvar take effect the next time the
+ automap is activated.
+See also: all the am_* cvars
+
+am_intralevelcolor
+(cvar: color)
+default: "00 00 ff" (blue)
+ The color of intra-level teleporters. These are teleporters that teleport
+ you to a different location on the same map. Changes to this cvar take
+ effect the next time the automap is activated.
+See also: all the am_* cvars
+
+am_lockedcolor
+(cvar: color)
+default: "00 00 98" (a blue)
+ The color of lines that open locked doors. Changes to this cvar take
+ effetc the next time the automap is activated.
+See also: all the am_* cvars
+
+am_notseencolor
+(cvar: color)
+default: "6c 6c 6c" (somewhat dark gray)
+ The color of lines on the automap that haven't yet been seen. Visible with
+ a computer area map. Changes to this cvar take effect the next time the
+ automap is activated.
+See also: all the am_* cvars
+
+am_overlay
+(cvar: boolean)
+default: 0
+ Normally, the togglemap command switches the automap between fully off and
+ fully on. Setting this cvar to "1" will cause togglemap to draw the
+ automap on top of the player's view before it draws the automap
+ fullscreen. (Bad description, I know. Just try it)
+See also: am_rotate, togglemap
+
+am_ovotherwallscolor
+(cvar: color)
+default: "00 88 44" (a dark blueish-green)
+ The color of passable lines on the automap when the map is overlayed.
+ Changes to this cvar take effect the next time the automap is activated.
+See also: all the am_* cvars
+
+ov_telecolor
+(cvar: color)
+default: "ff ff 00" (a bright green)
+ The color of teleports on the overlayed automap. Changes to this cvar take
+ effect the next time the automap is activated.
+See also: all the am_* cvars
+
+am_ovthingcolor
+(cvar: color)
+default: "e8 88 00" (an orange)
+ The color of things visible with the automap cheat when the map is
+ overlayed. Changes to this cvar take effect the next time the automap is
+ activated.
+See also: all the am_* cvars
+
+am_ovunseencolor
+(cvar: color)
+default: "00 22 6e" (a dark greenish-blue)
+ The color of unseen lines on the automap when the map is overlayed.
+ Changes to this cvar take effect the next time the automap is activated.
+See also: all the am_* cvars
+
+am_ovwallcolor
+(cvar: color)
+default: "00 ff 00" (a bright green)
+ The color of impassable walls when the automap is overlayed. Changes to
+ this cvar take effect the next time the automap is activated.
+See also: all the am_* cvars
+
+am_ovyourcolor
+(cvar: color)
+default: "fc e8 d8" (a very light orange--almost white)
+ The color of the arrow representing the player in single player games when
+ the map is overlayed. Changes to this cvar take effect the next time the
+ automap is activated.
+See also: all the am_* cvars
+
+am_rotate
+(cvar: boolean)
+default: 0
+ Normally, the automap is always drawn such that north is at the top of the
+ screen. Setting this cvar to "1" causes the automap to be drawn so that
+ lines toward the top of the screen are always directly in front of the
+ player's view. Changes to this cvar take effect immediately, unlike most
+ of the other am_* cvars. This can be particularly useful when the automap
+ is overlayed.
+See also: am_overlay
+
+am_showmonsters
+(cvar: boolean)
+default: 1
+ When true, the fullscreen automap will display a count of the number of
+ monsters that have been killed in the current level and the total number
+ of monsters in the level.
+See also: am_showtime, am_showsecrets
+
+am_showsecrets
+(cvar: boolean)
+default: 1
+ When true, the fullscreen automap will display a count of the number of
+ secrets that have been found in the current level and the total number of
+ secrets in the level.
+See also: am_showmonsters, am_showtime
+
+am_showtime
+(cvar: boolean)
+default: 1
+ When true, the fullscreen automap will display the total amount of time
+ you have been in a level (excluding time that has been paused).
+See also: am_showmonsters, am_showsecrets
+
+am_thingcolor
+(cvar: color)
+default: "fcfc fcfc fcfc" (almost white)
+ The color of things revealed with the map cheat. Changes to this cvar take
+ effect the next time the automap is activated.
+See also: all the am_* cvars
+
+am_tswallcolor
+(cvar: color)
+default: "8888 8888 8888" (gray)
+ The color of two-sided lines that don't have any difference in floor or
+ ceiling heights on either side. Only seen using map cheat. Changes to this
+ cvar take effect the next time the automap is activated.
+See also: all the am_* cvars
+
+am_usecustomcolors
+(cvar: boolean)
+default: 1
+ When true, the automap uses the colors specified by the am_* cvars,
+ otherwise it uses the standard DOOM automap colors. Changes to this cvar
+ take effect the next time the automap is activated.
+See also: all the am_* cvars
+
+am_wallcolor
+(cvar: color)
+default: "2c2c 1818 0808" (a dark brown)
+ The color of one-sided and secret walls in the automap. Changes to this
+ cvar take effect the next time the automap is activated.
+See also: all the am_* cvars
+
+am_xhaircolor
+(cvar: color)
+default: "8080 8080 8080" (gray)
+ The color of the "crosshair" dot in the center of the automap. Changes to
+ this cvar take effect the next time the automap is activated.
+See also: all the am_* cvars
+
+am_yourcolor
+(cvar: color)
+default: "fcfc e8e8 d8d8" (a very light orange--almost white)
+ The color of the arrow representing the player in single player games.
+ Changes to this cvar take effect the next time the automap is activated.
+See also: all the am_* cvars
+
+autoaim
+(cvar: number)
+default: 5000
+ This represents the vertical distance from an object that the player's
+ sight must be before that object is aimed at. Setting this cvar to "0"
+ disables autoaiming, while large values such as "5000" will reproduce the
+ original DOOM behavior of always autoaiming.
+See also: color, name
+
+autoexec
+(cvar: string)
+default: "<PROGDIR>/autoexec.cfg"
+ This is a file that will be automatically executed by ZDoom each time it
+ starts. This file is executed immediately after the config file is loaded.
+ It should contain a series of console commands. C++ style comments are
+ also supported. Comments begin with // and anything after them until the
+ end of the line will be ignored.
+
+ <PROGDIR> represents the directory that ZDoom is in and will naturally
+ vary depending on where you put it.
+
+bind [key [command string]]
+(command)
+ If no parameters are specified, the entire list of bound keys will be
+ printed to the console. If only [key] is specified, the binding for that
+ specific key will be printed. If both [key] and [command string] are
+ specified, [command string] will be bound to [key].
+See also: doublebind, unbind, unbindall, undoublebind
+
+binddefaults
+(command)
+ Binds all keys to their default commands. This will not unbind any keys
+ that do not have any default bindings, so if you want to properly restore
+ the default controls, you need to use unbindall first.
+See also: unbindall, bind
+
+bot_allowspy
+(cvar: boolean)
+default: 0
+ Allows you to see through the eyes of bots during botmatch games.
+
+bot_next_color
+(cvar: number)
+default: 11
+ Theoretically, a number representing the color of the next bot to be
+ spawned. In practice, it doesn't do anything.
+
+bot_observer
+(cvar: boolean)
+default: 0
+ When set to 1, the player will experience minimal interaction with the
+ world, and bots will ignore him.
+
+bumpgamma
+(command)
+ Increases the current gamma level by 0.1. If the new gamma level would be
+ greater than 3.0, it wraps the gamma around to 1.0
+See also: gamma
+
+centerview
+(command)
+ Causes the player to look straight ahead.
+See also: +lookup, +lookdown
+
+changemap <map>
+(command)
+ Exits the current level and continues the game on the specified map.
+ Unlike the map and idclev commands, this command *will* work properly
+ during network games and is recorded in demos. Unfortunately, it has
+ occasionally resulted in some problems. It should, however, be safe
+ enough to use most of the time.
+See also: idclev, map
+
+changemus <music>
+(command)
+ Changes the currently playing music. <music> should be the name of a music
+ lump or file on disk (which need not have been specified with the -file
+ parameter).
+See also: dir, idmus
+
+chase
+(command)
+ Turns the chasecom on and off. This command also works while watching
+ demos, so you can bind it to a key and watch demos in the third person.
+See also: chase_dist, chase_height, chasedemo
+
+chase_dist
+(cvar: number)
+default: 90
+ This is how far away from the player the chasecam likes to be, but it will
+ get closer as necessary to avoid going inside walls.
+See also: chase, chase_height
+
+chase_height
+(cvar: number)
+default: -8
+ This is the base height above the top of the player's head that the
+ chasecam will be positioned at. Looking up and down will move the camera
+ in the opposite direction so that the player stays at approximately the
+ same height on the screen. Large values of this cvar (either positive or
+ negative) will produce strange output.
+See also: chase, chase_dist
+
+chasedemo
+(cvar: boolean)
+default: 0
+ If this cvar is true, then demos will automatically start with the
+ chasecam active.
+See also: chase
+
+chatmacro0
+chatmacro1
+chatmacro2
+chatmacro3
+chatmacro4
+chatmacro5
+chatmacro6
+chatmacro7
+chatmacro8
+chatmacro9
+(cvar: string)
+ These are all strings programmable to the function keys during a netgame.
+ To use these, enter chat mode with the messagemode command, and then hold
+ down Alt and press one of the number keys. The string stored in the
+ corresponding chatmacro cvar will be sent as if you had typed it yourself.
+
+cl_bloodtype
+(cvar: number)
+default: 0
+ Controls how blood is drawn. Supported values are:
+    0: Blood is drawn as sprites
+    1: Blood is drawn as both sprites and particles
+    2: Blood is drawn as particles
+
+cl_pufftype
+(cvar: number)
+default: 0
+ Controls how bullet puffs are drawn. Supported values are:
+    0: Puffs are drawn as sprites.
+    1: Puffs are drawn as particles.
+
+cl_rockettrails
+(cvar: boolean)
+default: 1
+ Controls whether or not rockets leave trails of smoke behind them.
+
+cl_run
+(cvar: boolean)
+default: 0
+ When non-zero, the game will always treat movement commands as if +speed
+ is active.
+See also: +speed
+
+clear
+(command)
+ Clears the console of all text.
+
+cmdlist
+(command)
+ Lists all commands currently supported by ZDoom.
+See also: cvarlist
+
+color
+(cvar: color)
+default: "4040 cfcf 0000" (Mostly green)
+ This is the color of your player's suit.
+See also: gender, name, skin, team
+
+con_midtime
+(cvar: number)
+default: 3
+ This is the number of seconds that messages in the middle of the screen
+ will be displayed before they dispapper.
+See also: con_notifytime
+
+con_notifytime
+(cvar: number)
+default: 3
+ This is the number of seconds that new messages will stay at the top of
+ the screen before they start scrolling away.
+See also: con_midtime
+
+con_scaletext
+(cvar: boolean)
+default: 0
+ If this cvar is true, then message text will be scaled to larger sizes
+ depending on the screen resolution so that it will stay approximately the
+ same size it would be on a 320x200 screen.
+
+configver
+(cvar: number)
+default: "116"
+ This cvar is used to keep track of which version of ZDoom was used to write
+ the current config file and adjust for differences that may have been
+ introduced between versions. Changing it has no effect, since it will
+ always be changed to reflect the current game version before the config
+ file is saved.
+
+crosshair
+(cvar: number)
+default: 0
+ If this cvar is non-zero, it draws a crosshair. If this cvar is negative,
+ the crosshair is translucent, otherwise it is opaque. The specific
+ crosshair drawn depends on the value of this cvar.
+
+cvarlist
+(command)
+ Lists the values of all currently defined cvars. Each cvar can also be
+ prefaced by multiple flags. These are:
+
+    A Cvar gets saved in the config file.
+    U Cvar contains user info.
+    S Cvar contains server info.
+    - Cvar can only be changed from the command line.
+    L Changes to cvar's contents don't take effect until the next game.
+    C Cvar has an internal callback.
+    * Cvar was created by the user and is meaningless to the game.
+
+See also: cmdlist, get, set
+
+deathmatch
+(cvar: boolean)
+default: 0
+ When true, deathmatch rules are used for the game.
+
+def_patch
+(cvar: string)
+default: ""
+ This is the name of a DeHackEd patch file to automatically apply each time
+ the game is run. It will only be used if the following conditions are met:
+
+    a) def_patch is not "", and the file exists.
+    b) No loaded WAD files contain a DEHACKED lump.
+    c) No patch is specified with the -deh command line parameter.
+
+developer
+(cvar: boolean)
+default: 0
+ When true, prints various debugging messages to the console.
+
+dimamount
+(cvar: number)
+default: 1
+ This is the amount of dimcolor to mix with the background when a menu is 
+ displayed. The available values are:
+    0: Do not dim the background.
+    1: Mix 25% of dimcolor with the background.
+    2: Mix 50% of dimcolor with the background.
+    3: Mix 75% of dimcolor with the background.
+See also: dimcolor
+
+dimcolor
+(cvar: color)
+default: "ffff d7d7 0000" (gold)
+ This is the color to mix with the background when a menu is displayed.
+See also: dimamount, setcolor
+
+dir [[path/][pattern]]
+(command)
+ This command lists the contents of a directory. It supports wildcards (but
+ will not recurse into multiple directories). If [path] is not specified,
+ it will display the contents of the directory the game was run from.
+
+deathmatch
+(cvar: boolean)
+default: 0
+ When set to true, the game is treated as a deathmatch. When the game is
+ started with -altdeath or -deathmatch, this cvar is automatically set to 1.
+
+dmflags
+(cvar: number)
+default: 0
+ This cvar controls the behavior of several aspects of gameplay. To
+ determine what value to store in this cvar, select the desired features
+ from the table below and add their values together. If a feature is
+ marked with (DM), then that feature will only be active during a
+ deathmatch game.
+
+  Value  Description
+ ------  -----------------------------------------------------------------   
+      1  Do not spawn health items (DM)
+      2  Do not spawn powerups (DM)
+      4  Leave weapons around after pickup (DM)
+      8  Falling too far hurts
+     16  Players cannot hurt teammates (friendly fire avoidance)
+     64  Stay on the same map when someone exits (DM)
+    128  Spawn players as far as possible from other players (DM)
+    256  Automatically respawn dead players (DM)
+    512  Do not spawn armor (DM)
+   1024  Kill anyone who tries to exit the level (DM)
+   2048  Don't use any ammo when firing
+   4096  Don't spawn monsters
+   8192  Monsters respawn sometime after their death
+  16384  Powerups other than invulnerability and invisibilty respawn
+  32768  Monsters are fast
+  65536  Don't allow jumping
+ 131072  Don't allow freelook
+ 262144  Invulnerability and invisibility respawn
+
+See also: menu_gameplay, teamplay
+
+doublebind [key [command string]]
+(command)
+ If no parameters are specified, the entire list of doublebound keys will be
+ printed to the console. If only [key] is specified, the doublebinding for
+ that specific key will be printed. If both [key] and [command string] are
+ specified, [command string] will be doublebound to [key]. (Doublebindings
+ are commands that are executed when a key is pressed twice quickly--such as
+ double cliking a mouse button.)
+See also: bind, unbind, unbindall, undoublebind
+
+dumpheap
+(command)
+ Prints detailed information about the heap. Probably not very useful to
+ the average user.
+See also: mem
+
+echo <string>
+(command)
+ Prints <string> to the console.
+
+endgame
+(command)
+ Ends the current single player game and drops the console down to cover the
+ screen.
+See also: menu_endgame
+
+error <error message>
+(command)
+ Simulates an error by killing the current game and falling back to the
+ fullscreen console with the specified message.
+
+exec <script file>
+(command)
+ Executes a series of commands stored in the <script file> as if they were
+ typed in at the console.
+
+fly
+(command)
+ Toggles fly mode on and off.
+
+forcewater
+(cvar: boolean)
+default: 0
+ When set to 1, all BOOM-style deep water will be swimmable. This is not
+ the default, because the effect can be used for more than just deep water
+ (although water is probably its most common use).
+
+fov [viewfield]
+(command)
+ When used without a parameter, returns the current field of vision. When
+ viewfield is specified, sets the field of vision. This can be between 1
+ and 179 degrees. The default is 90.
+
+fraglimit
+(cvar: number)
+default: 0
+ If this cvar is non-zero, the game will automatically advance to the next
+ level once anyone gets this many frags. (deathmatch only)
+See also: timelimit
+
+freelook
+(cvar: boolean)
+default: 0
+ When true, mouse aiming will always be on, regardless of the state of
+ +mlook.
+See also: +mlook, invertmouse
+
+freeze
+(command)
+ Use this command once to freeze gameplay (while still allowing you to move
+ around). Use it again to unfreeze gameplay.
+
+fullscreen
+(cvar: boolean)
+default: 1
+ If this cvar is true, the game will be displayed fullscreen. Otherwise, it
+ will be drawn in a window.
+
+gameversion
+(command)
+ Prints the version number and compile date of ZDoom.
+
+gamma
+(cvar: number)
+default: 1.0
+ If <level> is not specified, displays the current gamma correction level. 
+ Otherwise, sets the gamma correction level to <level>. 1.0 is equivalent
+ to no correction, while larger numbers translate into a brighter display,
+ and smaller numbers translate into a darker display. 0.0 is invalid and
+ will be rejected. Negative numbers are technically invalid as well but
+ will be accepted solely for the novelty value doing so provides.
+See also: bumpgamma
+
+gender
+(cvar: string)
+default: "male"
+ This is the gender of your player. Valid values are "male", "female", and
+ "neuter". Anything else will be treated as male. When you die, certain
+ messages will be altered to reflect the gender selected here.
+ Unfortunately, I don't provide any non-male player sounds, so you'll still
+ sound like a man no matter what this cvar is set to unless you provide your
+ own sounds.
+See also: color, name, skin, team
+
+get <cvar>
+ Displays the value of <cvar>. This is probably redundant since typing the
+ name of the cvar alone will accomplish the same thing.
+See also: cvarlist, set
+
+give <item>
+(command)
+ Gives an item to the player. This is a cheat. Give understands the
+ following items:
+
+    all - gives you everything
+    health - gives you full health
+    weapons - gives you every weapon
+    ammo - gives you full ammo
+    armor - gives you full armor
+    keys - gives you every key
+
+ Single items:
+    Basic Armor
+    Mega Armor
+    Armor Bonus
+    Chainsaw
+    Shotgun
+    Super Shotgun
+    Chaingun
+    Rocket Launcher
+    Plasma Gun
+    BFG9000
+    Bullets
+    Shells
+    Cells
+    Rockets
+    Invulnerability
+    Berserk
+    Partial Invisibility
+    Iron Feet
+    Computer Map
+    Light Amplification Visor
+    Blue Keycard
+    Yellow Keycard
+    Red Keycard
+    Blue Skull Key
+    Yellow Skull Key
+    Red Skull Key
+See also: sv_cheats
+
+god
+(command)
+ Toggles God (Degreelessness) mode on/off. While active, you cannot be hurt
+ by normal attacks (although telefragging will still kill you). Also known
+ as iddqd. This is (of course) a cheat.
+See also: sv_cheats
+
+history
+(command)
+ Prints the console command history.
+
+hud_scale
+(cvar: boolean)
+default: 0
+ Controls scaling of the fullscreen hud. At resolutions of 640x400 or above,
+ setting this cvar to 1 will cause the icons to be scaled to approximately
+ the same size they would be at 320x200. If this cvar is 0, the icons will
+ always be drawn without any scaling.
+
+idclev <level code>
+(command)
+ Changes to the level specified by <level code>.
+
+iddqd
+ See god.
+
+idmus <level code>
+(command)
+ Changes the music to that associated with the specified level.
+See also: changemus
+
+idmypos
+(cvar: boolean)
+default: 0
+ When non-zero, constantly displays the player's current position and view
+ angle.
+See also: idmypos (command)
+
+impulse <number>
+(command)
+ This is currently a hack to get weapon selection to work with keybindings
+ until I finalize the inventory system (at which time, I plan to handle
+ weapon selections as they are in Quake2). <number> can be a value ranging
+ between 1 and 7 inclusive and will select the corresponding weapon. Values
+ between 50 and 57 inclusive can be used to specify specific weapons instead
+ of rolling between the fist/chainsaw and shotgun/ssg with impulses 1 and 3.
+See also: weapnext, weapprev
+
+i_remapkeypad
+(cvar: boolean)
+default: 1
+ When non-zero, most keypad keys will act like the keys in the cursor
+ island between the main keyboard and the numeric keypad. For instance,
+ when this cvar is true, pressing "4" on the keypad is the same as pressing
+ the left arrow on the cursor island. If you need to map different commands
+ specifically to keys on the numeric keypad, set i_remapkeypad to "0".
+See also: bind
+
+in_mouse
+(cvar: number)
+default: 0
+ This cvar select which method ZDoom will use to read the mouse. Valid
+ values are:
+    0: Automatically select a method based on the operating system.
+    1: Use normal Win32 API calls (default for Windows NT).
+    2: Use DirectInput (default for Windows 95/98).
+
+invertmouse
+(cvar: boolean)
+default: 0
+ When true, reverses the way mouse movement up and down is interpreted with
+ +mlook. Normally, moving the mouse forward will make you look up, and
+ moving it back will make you look down. Setting this cvar to true changes
+ this behavior so that moving the mouse forward makes you look down, and
+ moving it back makes you lookup.
+See also: +mlook, freelook
+
+joy_speedmultipiler
+(cvar: number)
+default: 1.0
+ This cvar controls the overall sensitivity/movement speed possible with a
+ joystick. Values above 1.0 will allow you to reach full speed with less
+ movement of the joystick, but they will not let you go any faster than
+ normal (use the turbo cvar for that). Values less than 1.0 will prevent
+ you from reaching full speed with the joystick. One potentially useful
+ trick is to create these two aliases:
+    alias +creep "joy_speedmultiplier 0.25"
+    alias -creep "joy_speedmultiplier 1.0"
+ If you bind +creep to a button, then whenever that button is held down, you
+ will walk with the joystick instead of run.
+See also: joy_xsensitivity, joy_ysensitivity
+
+joy_xsensitivity
+(cvar: number)
+default: 1.0
+ This cvar controls how far the joystick needs to be moved horizontally to
+ reach full speed for turning or strafing.
+See also: joy_speedmultipiler, joy_ysensitivity
+
+joy_xthreshold
+(cvar: number)
+default: 0.15
+ This cvar is used to set the size of the joystick's horizontal "dead zone."
+ Larger numbers correspond to a larger dead zone. The joystick needs to be
+ outside this zone before its movement will register with the game.
+See also: joy_xsensitivity, joy_ythreshold
+
+joy_ysensitivity
+(cvar: number)
+default: -1.0
+ This cvar controls how far the joystick needs to be moved vertically to
+ reach full speed for moving forward and backward or looking up and down.
+See also: joy_speedmultipiler, joy_xsenstivity
+
+joy_ythreshold
+(cvar: number)
+default: 0.15
+ This cvar is used to set the size of the joystick's vertical "dead zone."
+ Larger numbers correspond to a larger dead zone. The joystick needs to be
+ outside this zone before its movement will register with the game.
+See also: joy_xthreshold, joy_ysensitivity
+
+key <value1> [[value2]...]
+(command)
+ Translates all parameters to the command into their corresponding key
+ values which are used internally for command and alias lookup. Probably
+ not very useful for the average user.
+
+kill [monsters]
+(command)
+ If used as "kill monsters", will kill all monsters on the level.
+ Otherwise, it will kill you instead. This command is broken in netgames,
+ so don't use it unless you are playing a single player game.
+
+limits
+(command)
+ Prints the current state of all dynamic limits in ZDoom. These are only
+ limits in the sense that they were limits in the original Doom. In ZDoom,
+ these limits have been removed, and this command will give you a rough
+ idea of how many of them your level uses.
+
+listbots
+(command)
+ Lists the bots available in bots.cfg, and indicates which are currently playing.
+See also: addbot
+
+logfile [log file]
+(command)
+ If [log file] is not specified, will stop console logging (if active). 
+ Otherwise, all file named [log file] will be created on disk, and all
+ console output will be recorded in it as well as on the screen.
+
+lookspring
+(cvar: boolean)
+default: 1
+ When true, all -mlook commands will also generate centerview commands.
+See also: +mlook
+
+lookstrafe
+(cvar: boolean)
+default: 0
+ When true, moving the mouse left and right will always cause the player
+ to strafe left and right regardless of the state of +strafe.
+See also: +strafe
+
+m_forward
+(cvar: number)
+default: 1.0
+ This is the sensitivity of moving forward and backward with the mouse.
+See also: mouse_sensitivity
+
+m_pitch
+(cvar: number)
+default: 1.0
+ This is the sensitivity of looking up and down with the mouse.
+See also: mouse_sensitivity, +mlook, freelook
+
+m_side
+(cvar: number)
+default: 2.0
+ This is the sensitivity of strafing left and right with the mouse.
+See also: mouse_sensitivity, +strafe, lookstrafe
+
+m_yaw
+(cvar: number)
+default: 1.0
+This is the sensitivity of looking left and right with the mouse.
+See also: mouse_sensitivity
+
+map <map>
+(command)
+ Starts a new game on the specified map.
+See also: changemap, idclev
+
+mem
+(command)
+ Prints statistics about the memory usage of the zone heap.
+See also: dumpheap
+
+menu_display
+(command)
+ Displays the display options menu,
+
+menu_endgame
+(command)
+ Asks the user if they want to end the current game, and returns to the
+ title screen if they do.
+
+menu_game
+(command)
+ Displays the new game menu.
+
+menu_gameplay
+(command)
+ Displays the gameplay options (dmflags) menu.
+See also: dmflags
+
+menu_help
+(command)
+ Displays the help screen.
+
+menu_keys
+(command)
+ Displays the customize controls menu.
+
+menu_load
+(command)
+ Displays the load game menu.
+
+menu_main
+(command)
+ Displays the main menu.
+
+menu_options
+(command)
+ Displays the options menu.
+
+menu_player
+(command)
+ Displays the player setup menu.
+
+menu_quit
+(command)
+ Asks the user if they want to quit, and quits if they do.
+
+menu_save
+(command)
+ Displays the save game menu.
+
+menu_video
+(command)
+ Displays the video mode menu.
+
+messagemode
+(command)
+ Enters message entry mode. Anything typed while in this mode will be
+ sent to everyone else as if you had used the say command.
+See also: say, say_team, messagemode2
+
+messagemode2
+(command)
+ Just like messagemode except that the message is only sent to other
+ members of your team. If teamplay is zero or you don't have a team, then
+ this command will work just like messagemode and send the message to
+ everyone.
+See also: messagemode, say, say_team, teamplay
+
+mouse_sensitivity
+(cvar: number)
+default: 1.0
+ The larger this cvar, the more sensitive the game is to all mouse
+ movements.
+See also: m_forward, m_pitch, m_side, m_yaw
+
+msg
+(cvar: number)
+default: 0
+ This is the minimum message level that the player will see. Message levels
+ are:
+    0. Item pickup
+    1. Obituaries
+    2. Critical messages
+    3. Chat messages
+    4. Chat messages from a teammate
+
+msg0color
+(cvar: number)
+default: 6
+ This cvar controls the color used to display level 0 messages. Available
+ colors are:
+    0. Brick
+    1. Tan
+    2. Gray
+    3. Green
+    4. Brown
+    5. Gold
+    6. Red
+    7. Blue
+See also: msg1color, msg2color, msg3color, msg4color, msgmidcolor
+
+msg1color
+(cvar: number)
+default: 5
+ This cvar controls the color used to display level 1 messages. Available
+ colors are the same as for msg0color.
+See also: msg0color, msg2color, msg3color, msg4color, msgmidcolor
+
+msg2color
+(cvar: number)
+default: 2
+ This cvar controls the color used to display level 2 messages. Available
+ colors are the same as for msg0color.
+See also: msg0color, msg1color, msg3color, msg4color, msgmidcolor
+
+msg3color
+(cvar: number)
+default: 3
+ This cvar controls the color used to display level 3 messages. Available
+ colors are the same as for msg0color.
+See also: msg0color, msg1color, msg2color, msg4color, msgmidcolor
+
+msg4color
+(cvar: number)
+default: 3
+ This cvar controls the color used to display level 4 messages. Available
+ colors are the same as for msg0color.
+See also: msg0color, msg1color, msg2color, msg3color, msgmidcolor
+
+msgmidcolor
+(cvar: number)
+default: 5
+ This cvar controls the color used to display messages in the middle of
+ the screen. Available colors are the same as for msg0color.
+See also: msg0color, msg1color, msg2color, msg3color, msg4color
+
+name
+(cvar: string)
+default: "Player"
+ This is your player's name. This is only really useful in a
+ multiplayer game, but it can also be set for single player.
+See also: color, gender, skin, team
+
+neverswitchonpickup
+(cvar: boolean)
+default: 0
+ When this cvar is true, you won't automatically switch to a new weapon
+ when you pick one up.
+
+nobfgaim
+(cvar: boolean)
+default: 0
+ When set to 1, prevents manual aiming of the BFG. It will still aim up or
+ down if you shoot it at something, but you won't be able to, for instance,
+ shoot it at the ground to quickly generate tracer damage by looking down.
+
+noclip
+(command)
+ Toggles noclipping mode on/off. This is a cheat.
+See also: sv_cheats
+
+nofilecompression
+(cvar: boolean)
+default: 0
+ This is a debugging cvar used to disable file compression. You should leave
+ it set to 0.
+
+noise
+(cvar: boolean)
+default: 0
+ When set to 1, the current status of all sound channels is displayed on
+ the screen.
+See also: snd_channels
+
+notarget
+(command)
+ Toggles notarget mode on/off. While active, monsters will not target you
+ unless you hurt them first. This is a cheat.
+See also: sv_cheats
+
+pause
+(command)
+ Pauses or unpauses the game depending on whether or not it is currently
+ paused.
+
+pings
+(command)
+ This lists a very rough estimate of the speed of the connection between
+ your machine and any others in the game. In reality, the values printed by
+ this command aren't even pings; they're just the number of milliseconds
+ that have passed since the last time you received a network packet from the
+ other machines.
+
+playdemo <demo>
+(command)
+ Plays a demo. The demo can be a file on disk or a lump in a wad.
+See also: timedemo
+
+puke <script> [arguments]
+(command)
+ Executes an ACS script on the current map, optionally passing it up to
+ three numerical arguments.
+
+quickload
+(command)
+ Loads the last quicksaved game.
+See also: quicksave
+
+quicksave
+(command)
+ Quick saves the game.
+See also: quickload
+
+quit
+(command)
+ Exits ZDoom and saves all configuration information to disk.
+
+r_columnmethod
+(cvar: number)
+default: 1
+ Selects which of two algorithms to use to draw vertical columns on the
+ screen. Method 0 is the original algorithm used by DOOM and is best for
+ a 486. Method 1 is a new algorithm optimized for modern processors, and
+ can as much as double the framerate on post-Pentium processors. (On 486s,
+ it can drop the framerate by at least half.)
+
+r_detail
+(cvar: number)
+default: 0
+ This cvar selects the detail level of the view window. Valid values are:
+    0. Normal detail level. Equivalent to Doom's high detail mode.
+    1. Double pixels horizontally. Equivalent to Doom's low detail mode.
+    2. Double pixels vertically.
+    3. Double pixels horizontally and vertically.
+ Doubling pixels horizontally offers more of a speed-up than doubling them
+ vertically does.
+
+r_drawflat
+(cvar: boolean)
+default: 0
+ When set to 0, segs will be drawn as solid colors instead of textures.
+ This is useful if you want to see how a node builder split a level's
+ linedefs. Otherwise, it just looks ugly.
+
+r_drawfuzz
+(cvar: boolean)
+default: 1
+ When set to false, the "fuzz" effect on spectres and partially invisible
+ players will be replaced with translucency.
+
+r_drawplayersprites
+(cvar: boolean)
+default: 1
+ When zero, the game will not draw the player's weapon or muzzle flash.
+
+r_particles
+(cvar: boolean)
+default: 1
+ If set to true, particles are drawn. Otherwise, they aren't.
+
+r_stretchsky
+(cvar: boolean)
+default: 1
+ Controls whether or not short sky textures are stretched so that you don't
+ see them wrap when you look up.
+
+r_viewsize
+(cvar: string)
+ String containing the width and height of the current view window. This
+ cvar is read only.
+See also: sizeup, sizedown, screenblocks
+
+removebots
+(command)
+ Removes any bots from the game. Bots will also be automatically removed from
+ network games when the arbitrator quits.
+See also: addbot
+
+say <message>
+(command)
+ Sends a <message> to everyone playing.
+See also: messagemode, messagemode2, say_team
+
+say_team <message>
+(command)
+ Sends a <message> only to other members of your team. If teamplay is zero
+ or you aren't on a team, then this command will act just like say and send
+ the message to everyone.
+See also: messagemode, messagemode2, say, team, teamplay
+
+screenblocks
+(cvar: integer)
+default: 10
+ This cvar determines the size of the view window. Valid values are in the
+ range 3-12 inclusive. Attempts to set this cvar to values outside this
+ range will be truncated. 3 is the smallest view window, and 12 is full
+ screen. 11 is also full screen, but includes a small heads-up display.
+See also: sizeup, sizedown, r_viewsize
+
+screenshot [file]
+(command)
+ Dumps a copy of the screen to disk as a .pcx file. If [file] is not
+ specified, the screenshot will be saved to the directory the game was run
+ from with a name of the form doom????.pcx.
+
+set <cvar> <value>
+(command)
+ Sets <cvar> to <value>. If <cvar> does not exist, it will be created.
+See also: get
+
+setcolor <cvar> <color name>
+(command)
+ Sets <cvar> to a color value specified in the X11R6RGB lump. (This is the 
+ X11R6.rgb file from a standard X-Windows system.) If <color name> cannot
+ be found, the contents of <cvar> are left unchanged. The file colors.txt
+ included with the ZDoom archive contains a list of all the color names
+ listed in zdoom.wad.
+See also: all the am_* cvars, dimcolor
+
+show_messages
+(cvar: boolean)
+Default: 1
+ When this variable is non-zero, game messages will be displayed at the top
+ of the screen. Regardless of the state of this cvar, console messages will
+ always be displayed in the console and also written to disk if logging is
+ enabled.
+
+sizedown
+(command)
+ Decreases the size of the view window.
+See also: screenblocks, sizeup
+
+sizeup
+(command)
+ Increases the size of the view window.
+See also: screenblocks, sizedown
+
+skill
+(cvar: integer)
+default: 2
+ This variable contains the game skill, ranging from 0 to 4 inclusive.
+ Changes to this cvar only take effect when a new level is loaded.
+
+skin
+(cvar: string)
+default: "base"
+ This is your player's skin. Any skins you want to use or see need to be
+ loaded at the command line with the -file parameter. "Base" is the name of
+ the regular Doom marine and is always available. When (if?) I get
+ client/server working, I will use a better mechanism where you can just
+ throw the skins in a directory and use them without having to worry about
+ specifying them at the command line.
+See also: color, gender, name, skins, team
+
+skins
+(command)
+ Lists the names of the skins that were loaded when the game was started.
+See also: skin
+
+snd_channels
+(cvar: integer)
+default: 8
+ This cvar determines the number of channels used for mixing sound effects.
+ Larger values generally sound better but also require a faster processor.
+ In general, anything between 8-16 should be plenty.
+
+snd_listmididevices
+(command)
+ This command lists the MIDI devices available in the system. Devices in
+ this list can be used in the snd_mididevice cvar to select which device
+ plays music.
+See also: snd_mididevice, snd_midivolume
+
+snd_mididevice
+(cvar: integer)
+default: -1
+ This cvar determines which MIDI device ZDoom uses for MIDI and MUS music.
+ A value of -1 indicates to use the Windows MIDI Mapper, while other
+ values select specific MIDI devices. A complete list of MIDI devices
+ available can be obtained with the snd_listmididevices command.
+See also: snd_listmididevices, snd_midivolume
+
+snd_midivolume
+(cvar: number)
+default: 0.5
+ This is the volume at which MIDI and MUS music is played and can range
+ from 0.0-1.0. 
+See also: snd_musicvolume, snd_sfxvolume
+
+snd_musicvolume
+(cvar: integer)
+default: 9
+ This is the volume at which MOD music is played and can range from 0-64
+ inclusive. Note that setting this near its maximum will probably result in
+ nasty distortions of the music.
+See also: snd_midivolume, snd_sfxvolume
+
+snd_pitched
+(cvar: boolean)
+default: 0
+ When set to true, the random pitch effect found in early version of Doom
+ will be simulated.
+
+snd_samplerate
+(cvar: integer)
+default: 44100
+ This is the sampling rate at which sounds are mixed in the game. The value
+ in this cvar will only take effect when MIDAS is restarted (usually when
+ the game first starts). If you do not play MOD music from within the game,
+ you can set this as low as 11025 without experiencing much perceptable
+ loss of sound quality.
+
+snd_sfxvolume
+(cvar: integer)
+default: 8
+ This is the volume at which sound effects are played and can range from
+ 0-15 inclusive.
+See also: snd_midivolume, snd_musicvolume
+
+snd_surround
+(cvar: boolean)
+default: 1
+ When true, selected sounds will be played on the surround channel. The
+ effect is even noticable if (like me) you don't have special hardware
+ to decode it. If you think it's annoying or you have a buggy soundcard
+ that mixes in stereo but outputs in mono, you can turn this off.
+
+splashfactor
+(cvar: number)
+default: 1.0
+ This controls the amount of damage players receive when they fire a rocket
+ and it explodes right next to them. It applies only to the player who fires
+ the rocket; all others receive normal damage. A value of 0.5 would apply
+ only half damage to the player. A value of 2.0 would apply double damage.
+ Other values are similar. Useful mostly for people who like to rocket
+ jump and don't like dying if they don't have 100% health and a lot of
+ armor.
+
+soundlinks
+(command)
+ Lists the links between different sounds that use the same sound lump.
+ Links are generated dynamically while you play, so it is possible for this
+ command to give different results in different games and even at different
+ times during the same game.
+See also: soundlist
+
+soundlist
+(command)
+ Lists all the sounds defined and the lumps that they alias to. Unlike
+ regular Doom, ZDoom refers to sounds using a long name and uses a SNDINFO
+ lump to map those to the lumps in a WAD file that contain the actual
+ sounds. Long names that refer to the same sound lump will have links
+ generated as necessary to avoid actually loading multiple copies of the
+ same sound into memory.
+See also: soundlinks
+
+spynext
+(command)
+ During a cooperative game or while watching a multiplayer demo, this
+ command will switch the view to the next player.
+See also: spyprev
+
+spyprev
+(command)
+ During a cooperative game or while watching a multiplayer demo, this
+ command will switch the view to the previous player.
+See also: spynext
+
+st_scale
+(cvar: boolean)
+default: 0
+ When this cvar is true, the status bar will be scaled so that it covers
+ the entire width of the screen in higher resolutions. This may look
+ somewhat ugly, but it should be easier to read on high resolutions with
+ smaller monitors.
+
+stat [page]
+(command)
+ Displays profiling information. When used alone, displays a list of
+ available displays. Use one of those as the page parameter to toggle
+ the display on and off.
+    stat fps : Time spent rendering the scene (not the same as vid_fps 1)
+    stat bots : Time spent doing bot-related activities
+    stat think : Time spent running all thinkers
+
+stop
+(command)
+ Stops demo recording and exits the game.
+
+sv_cheats
+(cvar: boolean)
+default: 0
+ When non-zero, cheats will be allowed in Nightmare difficulty and network
+ games. For purposes of fairness, this cvar can only be set from the
+ command line when you run ZDoom. This is to avoid situations where the key
+ player in a multiplayer game (player 1) could go to the console and type
+ something like this:
+    sv_cheats 1
+    god
+    sv_cheats 0
+ whereby rendering himself immune to the attacks of others.
+See also: give, god, noclip, notarget, idclev
+
+sv_friction
+(cvar: number)
+default: 0.90625
+ This is a dummy cvar that is still waiting to be implemented.
+See also: sv_gravity
+
+sv_gravity
+(cvar: number)
+default: 800
+ This is the overall gravity of the entire level. 800 is normal gravity.
+
+team
+(cvar: string)
+default: ""
+ This is the team that your player belongs to.
+See also: teamplay, say_team, messagemode2
+
+teamplay
+(cvar: boolean)
+default: 0
+ When set to "1", players will be recognized by team. Otherwise, everyone
+ is treated as if they aren't on a team regardless of the settings of their
+ team cvars. Useful primarily for the friendy fire avoidance dmflag and
+ say_team command.
+See also: dmflags, say_team team
+
+testblend <color> <amount>
+(command)
+ Sets the palette blend to a specified color and amount. <color> can be
+ either a color name defined in the X11R6RGB lump or a color string.
+ <amount> can be a number between 0.0 and 1.0 inclusive and specifies how
+ much of <color> should be mixed with the palette, with 0.0 being no mixing
+ and 1.0 being full mixing.
+See also: testcolor, testfade
+
+testcolor <color>
+ Sets the light color of any sectors using the default light to <color>.
+ <color> can be either a color defined in the X11R6RGB lump or a color
+ string.
+See also: testblend, testfade
+
+testfade <color>
+(command)
+ Temporarily sets the fade color of the current level to <color>. Most
+ levels fade to black by default, but this can be changed with the MAPINFO
+ lump. <color> can be either a color defined in the X11R6RGB lump or a
+ color string.
+See also: testblend, testcolor
+
+testgibs
+(cvar: boolean)
+default: 0
+ Does nothing.
+
+ticker
+(cvar: boolean)
+default: 0
+ When true, draws a series of dots at the bottom of the screen representing
+ the number of tics it took to display the current frame. (One tic is
+ 1/35th of a second.) When -devparm is specified on the command line, this
+ cvar is automatically set to "1". You can get a rough idea of your fps by
+ counting the number of lit dots and dividing that from 35. A better way
+ would be to use vid_fps.
+See also: vid_fps
+
+timedemo <demo>
+(command)
+ Plays a demo as fast as the refresh rate will allow and displays the
+ average framerate attained during playback. For stability reasons, this
+ command will also exit the game when the demo finishes.
+See also: playdemo
+
+timelimit
+(cvar: number)
+default: 0
+ When this cvar is non-zero, the game will automatically advance to the
+ next level after this many minutes have elapsed. (deathmatch only)
+See also: fraglimit
+
+toggle <cvar>
+(command)
+ Toggles the value of <cvar> between zero and non-zero.
+
+toggleconsole
+(command)
+ Toggles display of the console on/off.
+
+togglemap
+(command)
+ Toggles the automap on/off. 
+See also: am_overlay
+
+togglemessages
+(command)
+ Toggles display of game messages on/off. The only difference between doing
+ this and "toggle show_messages" is that this command always displays a
+ message describing the current state of messages.
+See also: show_messages, toggle
+
+turn180
+(command)
+ Quickly turns your player around 180 degrees.
+
+transsouls
+(cvar: number)
+default: 0.75
+ This is the amount of translucency exhibitted by lost souls. Valid values
+ are in the interval (0.0,1.0]. Large values mean less translucency.
+
+turbo
+(cvar: number)
+default: 100
+ This cvar effects how quickly the player moves. A value of 100 will cause
+ the player to move at normal speed, 200 will cause the player to move at
+ 200% of normal speed, 50 will cause the player to move at 50% of normal
+ speed, etc. Valid values range from 10 to 256.
+
+unbind <key>
+(command)
+ Removes a binding from the specified key.
+See also: bind, doublebind, unbindall, undoublebind
+
+unbindall
+(command)
+ Removes all bindings and doublebindings from every key. To restore the
+ default bindings, you can use the binddefaults command. There is no way to
+ restore any custom bindings after issuing this command except by retyping
+ each bind command or using the controls setup menu.
+See also: bind, binddefaults, doublebind, unbind, undoublebind
+
+undoublebind <key>
+(command)
+ Removes a doublebinding from the specified key.
+See also: bind, doublebind, unbind, unbindall
+
+use_joystick
+(cvar: boolean)
+default: 0
+ Set this cvar to 1 if you want to use a joystick with ZDoom.
+See also: use_mouse
+
+use_mouse
+(cvar: boolean)
+default: 1
+ Set this cvar is 0, ZDoom will ignore the mouse.
+See also: use_joystick
+
+var_friction
+(cvar: boolean)
+default: 1
+ When set to "0", normal friction is applied to the player in all cases.
+ Otherwise, the amount of friction applied is determined by the sector
+ the player is in.
+
+var_pushers
+(cvar: boolean)
+default: 0
+ When set to "0", disables the BOOM push/pull wind effects.
+
+vid_currentmode
+(command)
+ Displays the resolution of the currently active video mode.
+See also: vid_defwidth, vid_defheight, vid_listmodes
+
+vid_defbits
+(cvar: integer)
+default: 8
+ Specifies the default screen depth. Currently, only 8 bits are supported.
+See also: vid_defheight, vid_defwidth
+
+vid_defheight
+(cvar: integer)
+default: 200
+ Specifies the default screen height to use if not overridden at the
+ command line.
+See also: vid_defbits, vid_defwidth
+
+vid_defwidth
+(cvar: integer)
+default: 320
+ Specifies the default screen width to use if not overridden at the command
+ line.
+See also: vid_defbits, vid_defheight
+
+vid_listmodes
+(command)
+ Lists all resolutions supported by the current display driver.
+See also: vid_currentmode
+
+vid_fps
+(cvar: boolean)
+default: 0
+ When true, will display a frame-per-second meter at the bottom of the
+ screen.
+
+vid_noptc
+(cvar: boolean)
+default: 0
+ When this cvar is true, ZDoom will use DirectDraw directly instead of
+ using PTC to access it. Changes to this cvar take effect the next time
+ the game starts.
+
+vid_palettehack      (Win32 only)
+(cvar: boolean)
+default: 0
+ When this cvar is true, the game will refresh the palette every time
+ the screen is redrawn. This can be useful with some buggy video drivers.
+
+vid_winscale         (Linux only)
+(cvar: number)
+default: 1.0
+ Controls how large the display is scaled when playing in an X window.
+ Values of 1.0 and 2.0 are fast, other values use slower, generic scaling.
+
+vid_setmode <width> <height> <modeid>
+(command)
+ Sets the screen mode to <width> x <height> with <modeid> (if your video
+ hardware supports it).
+See also vid_describecurrentmode, vid_describemodes
+
+weapnext
+(command)
+ Selects the next weapon (in order) that you own and have ammo for.
+See also: impulse, weapprev
+
+weapondrop
+(cvar: boolean)
+default: 0
+ When true, dead players will drop their current weapon (or ammo if the
+ pistol).
+
+weapprev
+(command)
+ Selects the previous weapon (in order) that you own and have ammo for.
+See also: impulse, weapnext
+
+wi_percents
+(cvar: boolean)
+default: 1
+ When false, intermission stats are printed as absolute values such as "3
+ of 6". When true, intermission stats are printed as percentages such as
+ "50%".
+
+wipetype
+(cvar: number)
+default: 1
+ Selects the type of screen wipe to use. There are currently four possible
+ settings for this cvar:
+    1. No wipe
+    2. Melt
+    3. Burn
+    4. Crossfade

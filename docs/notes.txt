@@ -1,0 +1,22 @@
+For cygwin, using the PSDK headers:
+
+#define _STDCALL_SUPPORTED, _M_IX86, _inline=__inline__
+-Wno-unknown-pragmas
+But then there is all the __asm, which won't work with GCC. :-(
+
+---Hexen---
+
+Pig (not player) needs MF3_SEEISALSOACTIVE and activesound "PigActive2"
+
+MT_WRAITHB, MT_SERPENT, MT_SERPENTLEADER, and MT_MINOTAUR need MF3_STAYMORPHED
+MT_LEAF1, MT_LEAF2, MT_SPLASH and MT_SLUDGECHUNK need MF3_DONTSPLASH
+MT_CENTAUR_FX is launched at z+45*FRACUNIT
+MT_ICEGUY_FX is launched at z+40*FRACUNIT
+MT_HOLY_MISSILE is launched at z+40*FRACUNIT
+MT_ICEGUY_FX2 is launched at z+3*FRACUNIT
+MT_MSTAFF_FX2 is launched at z+40*FRACUNIT
+MT_LIGHTNING_FLOOR is launched at ONFLOORZ
+MT_LIGHTNING_CEILING is launched at ONCEILINGZ
+MT_MWAND_MISSILE and MT_CFLAME_MISSILE need MF3_VERYFAST
+
+Anything with MF2_BOSS also needs MF3_IGNOREMATTACKS

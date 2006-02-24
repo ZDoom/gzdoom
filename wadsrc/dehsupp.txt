@@ -1,0 +1,809 @@
+Actions
+{
+	 NULL,
+	 MonsterRail,
+	 FireRailgun,
+	 FireRailgunLeft,
+	 FireRailgunRight,
+	 RailWait,
+	 Light0,
+	 WeaponReady,
+	 Lower,
+	 Raise,
+	 Punch,
+	 ReFire,
+	 FirePistol,
+	 Light1,
+	 FireShotgun,
+	 Light2,
+	 FireShotgun2,
+	 CheckReload,
+	 OpenShotgun2,
+	 LoadShotgun2,
+	 CloseShotgun2,
+	 FireCGun,
+	 GunFlash,
+	 FireMissile,
+	 Saw,
+	 FirePlasma,
+	 BFGsound,
+	 FireBFG,
+	 BFGSpray,
+	 Explode,
+	 Pain,
+	 PlayerScream,
+	 Fall,
+	 XScream,
+	 Look,
+	 Chase,
+	 FaceTarget,
+	 PosAttack,
+	 Scream,
+	 SPosAttack,
+	 VileChase,
+	 VileStart,
+	 VileTarget,
+	 VileAttack,
+	 StartFire,
+	 Fire,
+	 FireCrackle,
+	 Tracer,
+	 SkelWhoosh,
+	 SkelFist,
+	 SkelMissile,
+	 FatRaise,
+	 FatAttack1,
+	 FatAttack2,
+	 FatAttack3,
+	 BossDeath,
+	 CPosAttack,
+	 CPosRefire,
+	 TroopAttack,
+	 SargAttack,
+	 HeadAttack,
+	 BruisAttack,
+	 SkullAttack,
+	 Metal,
+	 SpidRefire,
+	 BabyMetal,
+	 BspiAttack,
+	 Hoof,
+	 CyberAttack,
+	 PainAttack,
+	 PainDie,
+	 KeenDie,
+	 BrainPain,
+	 BrainScream,
+	 BrainDie,
+	 BrainAwake,
+	 BrainSpit,
+	 SpawnSound,
+	 SpawnFly,
+	 BrainExplode,
+	 Die,
+	 Detonate,
+	 Mushroom,
+
+	 // Additional stuff
+	 SetFloorClip,
+	 UnSetFloorClip,
+	 HideThing,
+	 UnHideThing,
+	 SetInvulnerable,
+	 UnSetInvulnerable,
+	 SetReflective,
+	 UnSetReflective,
+	 SetReflectiveInvulnerable,
+	 UnSetReflectiveInvulnerable,
+	 SetShootable,
+	 UnSetShootable,
+	 NoGravity,
+	 Gravity,
+	 LowGravity
+};
+
+OrgHeights
+{
+	56, 56, 56, 56, 16, 56, 8, 16, 64, 8, 56, 56,
+	56, 56, 56, 64, 8, 64, 56, 100, 64, 110, 56, 56,
+	72, 16, 32, 32, 32, 16, 42, 8, 8, 8,
+	8, 8, 8, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 68, 84, 84,
+	68, 52, 84, 68, 52, 52, 68, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 88, 88, 64, 64, 64, 64,
+	16, 16, 16
+};
+
+// This is a list of all the action functions used by each of Doom's states.
+ActionList
+{
+	NULL, Light0, WeaponReady, Lower, Raise, NULL,
+	Punch, NULL, NULL, ReFire, WeaponReady, Lower,
+	Raise, NULL, FirePistol, NULL, ReFire, Light1,
+	WeaponReady, Lower, Raise, NULL, FireShotgun, NULL,
+	NULL, NULL, NULL, NULL, NULL, ReFire, Light1,
+	Light2, WeaponReady, Lower, Raise, NULL,
+	FireShotgun2, NULL, CheckReload, OpenShotgun2, NULL,
+	LoadShotgun2, NULL, CloseShotgun2, ReFire, NULL, NULL,
+	Light1, Light2, WeaponReady, Lower, Raise,
+	FireCGun, FireCGun, ReFire, Light1, Light2,
+	WeaponReady, Lower, Raise, GunFlash, FireMissile,
+	ReFire, Light1, NULL, Light2, Light2, WeaponReady,
+	WeaponReady, Lower, Raise, Saw, Saw, ReFire,
+	WeaponReady, Lower, Raise, FirePlasma, ReFire,
+	Light1, Light1, WeaponReady, Lower, Raise,
+	BFGsound, GunFlash, FireBFG, ReFire, Light1,
+	Light2, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, BFGSpray, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, Explode, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	Pain, NULL, PlayerScream, Fall, NULL, NULL, NULL,
+	NULL, NULL, XScream, Fall, NULL, NULL, NULL, NULL,
+	NULL, NULL, Look, Look, Chase, Chase, Chase,
+	Chase, Chase, Chase, Chase, Chase, FaceTarget,
+	PosAttack, NULL, NULL, Pain, NULL, Scream, Fall,
+	NULL, NULL, NULL, XScream, Fall, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, Look,
+	Look, Chase, Chase, Chase, Chase, Chase,
+	Chase, Chase, Chase, FaceTarget, SPosAttack, NULL,
+	NULL, Pain, NULL, Scream, Fall, NULL, NULL, NULL,
+	XScream, Fall, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, Look, Look,
+	VileChase, VileChase, VileChase, VileChase,
+	VileChase, VileChase, VileChase, VileChase,
+	VileChase, VileChase, VileChase, VileChase,
+	VileStart, FaceTarget, VileTarget, FaceTarget,
+	FaceTarget, FaceTarget, FaceTarget, FaceTarget,
+	FaceTarget, VileAttack, NULL, NULL, NULL, NULL, NULL,
+	Pain, NULL, Scream, Fall, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, StartFire, Fire, Fire, Fire,
+	FireCrackle, Fire, Fire, Fire, Fire, Fire,
+	Fire, Fire, Fire, Fire, Fire, Fire, Fire,
+	Fire, FireCrackle, Fire, Fire, Fire, Fire,
+	Fire, Fire, Fire, Fire, Fire, Fire, Fire,
+	NULL, NULL, NULL, NULL, NULL, Tracer, Tracer, NULL,
+	NULL, NULL, Look, Look, Chase, Chase, Chase,
+	Chase, Chase, Chase, Chase, Chase, Chase,
+	Chase, Chase, Chase, FaceTarget, SkelWhoosh,
+	FaceTarget, SkelFist, FaceTarget, FaceTarget,
+	SkelMissile, FaceTarget, NULL, Pain, NULL, NULL,
+	Scream, Fall, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, Look,
+	Look, Chase, Chase, Chase, Chase, Chase,
+	Chase, Chase, Chase, Chase, Chase, Chase,
+	Chase, FatRaise, FatAttack1, FaceTarget, FaceTarget,
+	FatAttack2, FaceTarget, FaceTarget, FatAttack3,
+	FaceTarget, FaceTarget, NULL, Pain, NULL, Scream,
+	Fall, NULL, NULL, NULL, NULL, NULL, NULL, BossDeath,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	Look, Look, Chase, Chase, Chase, Chase,
+	Chase, Chase, Chase, Chase, FaceTarget,
+	CPosAttack, CPosAttack, CPosRefire, NULL, Pain,
+	NULL, Scream, Fall, NULL, NULL, NULL, NULL, NULL,
+	XScream, Fall, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, Look, Look, Chase,
+	Chase, Chase, Chase, Chase, Chase, Chase,
+	Chase, FaceTarget, FaceTarget, TroopAttack, NULL,
+	Pain, NULL, Scream, NULL, Fall, NULL, NULL,
+	XScream, NULL, Fall, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, Look, Look, Chase,
+	Chase, Chase, Chase, Chase, Chase, Chase,
+	Chase, FaceTarget, FaceTarget, SargAttack, NULL,
+	Pain, NULL, Scream, NULL, Fall, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, Look, Chase,
+	FaceTarget, FaceTarget, HeadAttack, NULL, Pain,
+	NULL, NULL, Scream, NULL, NULL, Fall, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, Look, Look, Chase, Chase, Chase, Chase,
+	Chase, Chase, Chase, Chase, FaceTarget,
+	FaceTarget, BruisAttack, NULL, Pain, NULL, Scream,
+	NULL, Fall, NULL, NULL, BossDeath, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, Look, Look, Chase,
+	Chase, Chase, Chase, Chase, Chase, Chase,
+	Chase, FaceTarget, FaceTarget, BruisAttack, NULL,
+	Pain, NULL, Scream, NULL, Fall, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, Look,
+	Look, Chase, Chase, FaceTarget, SkullAttack, NULL,
+	NULL, NULL, Pain, NULL, Scream, NULL, Fall, NULL,
+	NULL, Look, Look, Metal, Chase, Chase, Chase,
+	Metal, Chase, Chase, Chase, Metal, Chase,
+	Chase, Chase, FaceTarget, SPosAttack, SPosAttack,
+	SpidRefire, NULL, Pain, Scream, Fall, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, BossDeath, Look,
+	Look, NULL, BabyMetal, Chase, Chase, Chase,
+	Chase, Chase, BabyMetal, Chase, Chase, Chase,
+	Chase, Chase, FaceTarget, BspiAttack, NULL,
+	SpidRefire, NULL, Pain, Scream, Fall, NULL, NULL,
+	NULL, NULL, BossDeath, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	Look, Look, Hoof, Chase, Chase, Chase,
+	Chase, Chase, Metal, Chase, FaceTarget,
+	CyberAttack, FaceTarget, CyberAttack, FaceTarget,
+	CyberAttack, Pain, NULL, Scream, NULL, NULL, NULL,
+	Fall, NULL, NULL, NULL, BossDeath, Look, Chase,
+	Chase, Chase, Chase, Chase, Chase, FaceTarget,
+	FaceTarget, FaceTarget, PainAttack, NULL, Pain,
+	NULL, Scream, NULL, NULL, PainDie, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, Look, Look, Chase,
+	Chase, Chase, Chase, Chase, Chase, Chase,
+	Chase, FaceTarget, FaceTarget, CPosAttack,
+	FaceTarget, CPosAttack, CPosRefire, NULL, Pain,
+	NULL, Scream, Fall, NULL, NULL, NULL, XScream,
+	Fall, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, Scream,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, KeenDie,
+	NULL, NULL, Pain, NULL, BrainPain, BrainScream,
+	NULL, NULL, BrainDie, Look, BrainAwake, BrainSpit,
+	SpawnSound, SpawnFly, SpawnFly, SpawnFly, Fire,
+	Fire, Fire, Fire, Fire, Fire, Fire, Fire,
+	NULL, NULL, BrainExplode, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, Scream, NULL, Explode
+};
+
+// DeHackEd made the erroneous assumption that if a state didn't appear in
+// Doom with an action function, then it was incorrect to assign it one.
+// This is a list of the states that had action functions, so we can figure
+// out where in the original list of states a DeHackEd codepointer is.
+// (DeHackEd might also have done this for compatibility between Doom
+// versions, because states could move around, but actions would never
+// disappear, but that doesn't explain why frame patches specify an exact
+// state rather than a code pointer.)
+CodePConv
+{
+	  1,   2,   3,   4,   6,   9,  10,  11,  12,  14,
+	 16,  17,  18,  19,  20,  22,  29,  30,  31,  32,
+	 33,  34,  36,  38,  39,  41,  43,  44,  47,  48,
+	 49,  50,  51,  52,  53,  54,  55,  56,  57,  58,
+	 59,  60,  61,  62,  63,  65,  66,  67,  68,  69,
+	 70,  71,  72,  73,  74,  75,  76,  77,  78,  79,
+	 80,  81,  82,  83,  84,  85,  86,  87,  88,  89,
+	119, 127, 157, 159, 160, 166, 167, 174, 175, 176,
+	177, 178, 179, 180, 181, 182, 183, 184, 185, 188,
+	190, 191, 195, 196, 207, 208, 209, 210, 211, 212,
+	213, 214, 215, 216, 217, 218, 221, 223, 224, 228,
+	229, 241, 242, 243, 244, 245, 246, 247, 248, 249,
+	250, 251, 252, 253, 254, 255, 256, 257, 258, 259,
+	260, 261, 262, 263, 264, 270, 272, 273, 281, 282,
+	283, 284, 285, 286, 287, 288, 289, 290, 291, 292,
+	293, 294, 295, 296, 297, 298, 299, 300, 301, 302,
+	303, 304, 305, 306, 307, 308, 309, 310, 316, 317,
+	321, 322, 323, 324, 325, 326, 327, 328, 329, 330,
+	331, 332, 333, 334, 335, 336, 337, 338, 339, 340,
+	341, 342, 344, 347, 348, 362, 363, 364, 365, 366,
+	367, 368, 369, 370, 371, 372, 373, 374, 375, 376,
+	377, 378, 379, 380, 381, 382, 383, 384, 385, 387,
+	389, 390, 397, 406, 407, 408, 409, 410, 411, 412,
+	413, 414, 415, 416, 417, 418, 419, 421, 423, 424,
+	430, 431, 442, 443, 444, 445, 446, 447, 448, 449,
+	450, 451, 452, 453, 454, 456, 458, 460, 463, 465,
+	475, 476, 477, 478, 479, 480, 481, 482, 483, 484,
+	485, 486, 487, 489, 491, 493, 502, 503, 504, 505,
+	506, 508, 511, 514, 527, 528, 529, 530, 531, 532,
+	533, 534, 535, 536, 537, 538, 539, 541, 543, 545,
+	548, 556, 557, 558, 559, 560, 561, 562, 563, 564,
+	565, 566, 567, 568, 570, 572, 574, 585, 586, 587,
+	588, 589, 590, 594, 596, 598, 601, 602, 603, 604,
+	605, 606, 607, 608, 609, 610, 611, 612, 613, 614,
+	615, 616, 617, 618, 620, 621, 622, 631, 632, 633,
+	635, 636, 637, 638, 639, 640, 641, 642, 643, 644,
+	645, 646, 647, 648, 650, 652, 653, 654, 659, 674,
+	675, 676, 677, 678, 679, 680, 681, 682, 683, 684,
+	685, 686, 687, 688, 689, 690, 692, 696, 700, 701,
+	702, 703, 704, 705, 706, 707, 708, 709, 710, 711,
+	713, 715, 718, 726, 727, 728, 729, 730, 731, 732,
+	733, 734, 735, 736, 737, 738, 739, 740, 741, 743,
+	745, 746, 750, 751, 766, 774, 777, 779, 780, 783,
+	784, 785, 786, 787, 788, 789, 790, 791, 792, 793,
+	794, 795, 796, 797, 798, 801, 809, 811
+};
+
+// Sprite names in the order Doom originally had them.
+OrgSprNames
+{
+	TROO,SHTG,PUNG,PISG,PISF,SHTF,SHT2,CHGG,CHGF,MISG,
+	MISF,SAWG,PLSG,PLSF,BFGG,BFGF,BLUD,PUFF,BAL1,BAL2,
+	PLSS,PLSE,MISL,BFS1,BFE1,BFE2,TFOG,IFOG,PLAY,POSS,
+	SPOS,VILE,FIRE,FATB,FBXP,SKEL,MANF,FATT,CPOS,SARG,
+	HEAD,BAL7,BOSS,BOS2,SKUL,SPID,BSPI,APLS,APBX,CYBR,
+	PAIN,SSWV,KEEN,BBRN,BOSF,ARM1,ARM2,BAR1,BEXP,FCAN,
+	BON1,BON2,BKEY,RKEY,YKEY,BSKU,RSKU,YSKU,STIM,MEDI,
+	SOUL,PINV,PSTR,PINS,MEGA,SUIT,PMAP,PVIS,CLIP,AMMO,
+	ROCK,BROK,CELL,CELP,SHEL,SBOX,BPAK,BFUG,MGUN,CSAW,
+	LAUN,PLAS,SHOT,SGN2,COLU,SMT2,GOR1,POL2,POL5,POL4,
+	POL3,POL1,POL6,GOR2,GOR3,GOR4,GOR5,SMIT,COL1,COL2,
+	COL3,COL4,CAND,CBRA,COL6,TRE1,TRE2,ELEC,CEYE,FSKU,
+	COL5,TBLU,TGRN,TRED,SMBT,SMGT,SMRT,HDB1,HDB2,HDB3,
+	HDB4,HDB5,HDB6,POB1,POB2,BRS1,TLMP,TLP2
+};
+
+StateMap
+{
+	// S_NULL is implicit
+	Weapon,				FirstState, 1,	// S_LIGHTDONE
+	Fist,				FirstState, 8,	// S_PUNCH - S_PUNCH5
+	Pistol,				FirstState, 8,	// S_PISTOL - S_PISTOLFLASH
+	Shotgun,			FirstState, 14,	// S_SGUN - S_SGUNFLASH2
+	SuperShotgun,		FirstState, 17,	// S_DSGUN - S_DSGUNFLASH2
+	Chaingun,			FirstState, 8,	// S_CHAIN - S_CHAINFLASH2
+	RocketLauncher,		FirstState, 10,	// S_MISSILE - S_MISSILEFLASH4
+	Chainsaw,			FirstState, 7,	// S_SAW - S_SAW3
+	PlasmaRifle,		FirstState, 7,	// S_PLASMA - S_PLASMAFLASH2
+	BFG9000,			FirstState, 9,	// S_BFG - S_BFGFLASH2
+	Blood,				FirstState, 3,	// S_BLOOD1 - S_BLOOD3
+	BulletPuff,			FirstState, 4,	// S_PUFF1 - S_PUFF4
+	DoomImpBall,		FirstState, 5,	// S_TBALL1 - S_TBALLX3
+	CacodemonBall,		FirstState, 5,	// S_RBALL1 - S_RBALLX3
+	PlasmaBall,			FirstState, 7,	// S_PLASBALL - S_PLASEXP5
+	Rocket,				SpawnState, 1,	// S_ROCKET
+	BFGBall,			SpawnState, 8,	// S_BFGSHOT - S_BFGLAND6
+	BFGExtra,			SpawnState, 4,	// S_BFGEXP - S_BFGEXP4
+	Rocket,				DeathState, 3,	// S_EXPLODE1 - S_EXPLODE3
+	TeleportFog,		SpawnState, 12,	// S_TFOG - S_TFOG10
+	ItemFog,			SpawnState, 7,	// S_IFOG - S_IFOG5
+	DoomPlayer,			FirstState, 25,	// S_PLAY - S_PLAY_XDIE9
+	ZombieMan,			FirstState, 33,	// S_POSS_STND - S_POSS_RAISE4
+	ShotgunGuy,			FirstState, 34,	// S_SPOS_STND - S_SPOS_RAISE5
+	Archvile,			FirstState, 40,	// S_VILE_STND - S_VILE_DIE10
+	ArchvileFire,		FirstState, 30,	// S_FIRE1 - S_FIRE30
+	RevenantTracerSmoke, FirstState, 5, // S_SMOKE1 - S_SMOKE5
+	RevenantTracer,		FirstState, 5,	// S_TRACER - S_TRACEEXP3
+	Revenant,			FirstState, 36,	// S_SKEL_STND - S_SKEL_RAISE6
+	FatShot,			FirstState, 5,	// S_FATSHOT1 - S_FATSHOTX3
+	Fatso,				FirstState, 44,	// S_FATT_STND - S_FATT_RAISE8
+	ChaingunGuy,		FirstState, 36,	// S_CPOS_STND - S_CPOS_RAISE7
+	DoomImp,			FirstState, 33,	// S_TROO_STND - S_TROO_RAISE5
+	Demon,				FirstState, 27,	// S_SARG_STND - S_SARG_RAISE6
+	Cacodemon,			FirstState, 20,	// S_HEAD_STND - S_HEAD_RAISE6
+	BaronBall,			FirstState, 5,	// S_BRBALL1 - S_BRBALLX3
+	BaronOfHell,		FirstState, 29,	// S_BOSS_STND - S_BOSS_RAISE7
+	HellKnight,			FirstState, 29,	// S_BOS2_STND - S_BOS2_RAISE7
+	LostSoul,			FirstState, 16,	// S_SKULL_STND - S_SKULL_DIE6
+	SpiderMastermind,	FirstState, 31, // S_SPID_STND - S_SPID_DIE11
+	Arachnotron,		FirstState, 35,	// S_BSPI_STND - S_BSPI_RAISE7
+	ArachnotronPlasma,	FirstState, 7,	// S_ARACH_PLAZ - S_ARACH_PLEX5
+	Cyberdemon,			FirstState, 27,	// S_CYBER_STND - S_CYBER_DIE10
+	PainElemental,		FirstState, 25,	// S_PAIN_STND - S_PAIN_RAISE6
+	WolfensteinSS,		FirstState, 37,	// S_SSWV_STND - S_SSWV_RAISE5
+	CommanderKeen,		FirstState, 15,	// S_KEENSTND - S_KEENPAIN2
+	BossBrain,			SpawnState, 6,	// S_BRAIN - S_BRAIN_DIE4
+	BossEye,			FirstState, 3,	// S_BRAINEYE - S_BRAINEYE1
+	SpawnShot,			FirstState, 4,	// S_SPAWN1 - S_SPAWN4
+	SpawnFire,			FirstState, 8,	// S_SPAWNFIRE1 - S_SPAWNFIRE8
+	BossBrain,			FirstState, 3,	// S_BRAINEXPLODE1 - S_BRAINEXPLODE3
+	GreenArmor,			FirstState, 2,	// S_ARM1 - S_ARM1A
+	BlueArmor,			FirstState, 2,	// S_ARM2 - S_ARM2A
+	ExplosiveBarrel,	FirstState, 7,	// S_BAR1 - S_BEXP5
+	BurningBarrel,		FirstState, 3,	// S_BBAR1 - S_BBAR3
+	HealthBonus,		FirstState, 6,	// S_BON1 - S_BON1E
+	ArmorBonus,			FirstState, 6,	// S_BON2 - S_BON2E
+	BlueCard,			FirstState, 2,	// S_BKEY - S_BKEY2
+	RedCard,			FirstState, 2,	// S_RKEY - S_RKEY2
+	YellowCard,			FirstState, 2,	// S_YKEY - S_YKEY2
+	BlueSkull,			FirstState, 2,	// S_BSKULL - S_BSKULL2
+	RedSkull,			FirstState, 2,	// S_RSKULL - S_RSKULL2
+	YellowSkull,		FirstState, 2,	// S_YSKULL - S_YSKULL2
+	Stimpack,			FirstState, 1,	// S_STIM
+	Medikit,			FirstState, 1,	// S_MEDI
+	Soulsphere,			FirstState, 6,	// S_SOUL - S_SOUL6
+	InvulnerabilitySphere, FirstState, 4, // S_PINV - S_PINV4
+	Berserk,			FirstState, 1,	// S_PSTR
+	BlurSphere,			FirstState, 4,	// S_PINS - P_PINS4
+	Megasphere,			FirstState, 4,	// S_MEGA - S_MEGA4
+	RadSuit,			FirstState, 1,	// S_SUIT
+	Allmap,				FirstState, 6,	// S_PMAP - S_PMAP6
+	Infrared,			FirstState, 2,	// S_PVIS - S_PVIS2
+	Clip,				FirstState, 1,	// S_CLIP
+	ClipBox,			FirstState, 1,	// S_AMMO
+	RocketAmmo,			FirstState, 1,	// S_ROCK
+	RocketBox,			FirstState, 1,	// S_BROK
+	Cell,				FirstState, 1,	// S_CELL
+	CellPack,			FirstState, 1,	// S_CELP
+	Shell,				FirstState, 1,	// S_SHEL
+	ShellBox,			FirstState, 1,	// S_SBOX
+	Backpack,			FirstState, 1,	// S_BPAK
+	BFG9000,			SpawnState, 1,	// S_BFUG
+	Chaingun,			SpawnState, 1,	// S_MGUN
+	Chainsaw,			SpawnState, 1,	// S_CSAW
+	RocketLauncher,		SpawnState, 1,	// S_LAUN
+	PlasmaRifle,		SpawnState, 1,	// S_PLAS
+	Shotgun,			SpawnState, 1,	// S_SHOT
+	SuperShotgun,		SpawnState, 1,	// S_SHOT2
+	Column,				FirstState, 1,	// S_COLU
+	DoomUnusedStates,	FirstState, 1,	// S_STALAG
+	BloodyTwitch,		FirstState, 4,	// S_BLOODYTWITCH - S_BLOODYTWITCH4
+	DoomUnusedStates,	DeathState, 2,	// S_DEADTORSO - S_DEADBOTTOM
+	HeadsOnAStick,		FirstState, 1,	// S_HEADSONSTICK
+	RealGibs,			FirstState, 1,	// S_GIBS
+	HeadOnAStick,		FirstState, 1,	// S_HEADONASTICK
+	HeadCandles,		FirstState, 2,	// S_HEADCANDLES - S_HEADCANDLES2
+	DeadStick,			FirstState, 1,	// S_DEADSTICK
+	LiveStick,			FirstState, 2,	// S_LIVESTICK
+	Meat2,				FirstState, 1,	// S_MEAT2
+	Meat3,				FirstState, 1,	// S_MEAT3
+	Meat4,				FirstState, 1,	// S_MEAT4
+	Meat5,				FirstState, 1,	// S_MEAT5
+	Stalagtite,			FirstState, 1,	// S_STALAGTITE
+	TallGreenColumn,	FirstState, 1,	// S_TALLGRNCOL
+	ShortGreenColumn,	FirstState, 1,	// S_SHRTGRNCOL
+	TallRedColumn,		FirstState, 1,	// S_TALLREDCOL
+	ShortRedColumn,		FirstState, 1,	// S_SHRTREDCOL
+	Candlestick,		FirstState, 1,	// S_CANDLESTIK
+	Candelabra,			FirstState, 1,	// S_CANDELABRA
+	SkullColumn,		FirstState, 1,	// S_SKULLCOL
+	TorchTree,			FirstState, 1,	// S_TORCHTREE
+	BigTree,			FirstState, 1,	// S_BIGTREE
+	TechPillar,			FirstState, 1,	// S_TECHPILLAR
+	EvilEye,			FirstState, 4,	// S_EVILEYE - S_EVILEYE4
+	FloatingSkull,		FirstState, 3,	// S_FLOATSKULL - S_FLOATSKULL3
+	HeartColumn,		FirstState, 2,	// S_HEARTCOL - S_HEARTCOL2
+	BlueTorch,			FirstState, 4,	// S_BLUETORCH - S_BLUETORCH4
+	GreenTorch,			FirstState, 4,	// S_GREENTORCH - S_GREENTORCH4
+	RedTorch,			FirstState, 4,	// S_REDTORCH - S_REDTORCH4
+	ShortBlueTorch,		FirstState, 4,	// S_BTORCHSHRT - S_BTORCHSHRT4
+	ShortGreenTorch,	FirstState, 4,	// S_GTORCHSHRT - S_GTORCHSHRT4
+	ShortRedTorch,		FirstState, 4,	// S_RTORCHSHRT - S_RTORCHSHRT4
+	HangNoGuts,			FirstState, 1,	// S_HANGNOGUTS
+	HangBNoBrain,		FirstState, 1,	// S_HANGBNOBRAIN
+	HangTLookingDown,	FirstState, 1,	// S_HANGTLOOKDN
+	HangTSkull,			FirstState, 1,	// S_HANGTSKULL
+	HangTLookingUp,		FirstState, 1,	// S_HANGTLOOKUP
+	HangTNoBrain,		FirstState, 1,	// S_HANGTNOBRAIN
+	ColonGibs,			FirstState, 1,	// S_COLONGIBS
+	SmallBloodPool,		FirstState, 1,	// S_SMALLPOOL
+	BrainStem,			FirstState, 1,	// S_BRAINSTEM
+	TechLamp,			FirstState, 4,	// S_TECHLAMP - S_TECHLAMP4
+	TechLamp2,			FirstState, 4	// S_TECH2LAMP - S_TECH2LAMP4
+};
+
+// Sound equivalences. When a patch tries to change a sound, use these sound names.
+SoundMap
+{
+	"weapons/pistol",
+	"weapons/shotgf",
+	"weapons/shotgr",
+	"weapons/sshotf",
+	"weapons/sshoto",
+	"weapons/sshotc",
+	"weapons/sshotl",
+	"weapons/plasmaf",
+	"weapons/bfgf",
+	"weapons/sawup",
+	"weapons/sawidle",
+	"weapons/sawfull",
+	"weapons/sawhit",
+	"weapons/rocklf",
+	"weapons/bfgx",
+	"imp/attack",
+	"imp/shotx",
+	"plats/pt1_strt",
+	"plats/pt1_stop",
+	"doors/dr1_open",
+	"doors/dr1_clos",
+	"plats/pt1_mid",
+	"switches/normbutn",
+	"switches/exitbutn",
+	"*pain100_1",
+	"demon/pain",
+	"grunt/pain",
+	"vile/pain",
+	"fatso/pain",
+	"pain/pain",
+	"misc/gibbed",
+	"misc/i_pkup",
+	"misc/w_pkup",
+	"*land1",
+	"misc/teleport",
+	"grunt/sight",
+	"grunt/sight",
+	"grunt/sight",
+	"imp/sight",
+	"imp/sight",
+	"demon/sight",
+	"caco/sight",
+	"baron/sight",
+	"cyber/sight",
+	"spider/sight",
+	"baby/sight",
+	"knight/sight",
+	"vile/sight",
+	"fatso/sight",
+	"pain/sight",
+	"skull/melee",
+	"demon/melee",
+	"skeleton/melee",
+	"vile/start",
+	"imp/melee",
+	"skeleton/swing",
+	"*death1",
+	"*xdeath1",
+	"grunt/death",
+	"grunt/death",
+	"grunt/death",
+	"imp/death",
+	"imp/death",
+	"demon/death",
+	"caco/death",
+	"misc/unused",
+	"baron/death",
+	"cyber/death",
+	"spider/death",
+	"baby/death",
+	"vile/death",
+	"knight/death",
+	"pain/death",
+	"skeleton/death",
+	"grunt/active",
+	"imp/active",
+	"demon/active",
+	"baby/active",
+	"baby/walk",
+	"vile/active",
+	"*grunt1",
+	"world/barrelx",
+	"*fist",
+	"cyber/hoof",
+	"spider/walk",
+	"weapons/chngun",
+	"misc/chat2",
+	"doors/dr2_open",
+	"doors/dr2_clos",
+	"misc/spawn",
+	"vile/firecrkl",
+	"vile/firestrt",
+	"misc/p_pkup",
+	"brain/spit",
+	"brain/cube",
+	"brain/sight",
+	"brain/pain",
+	"brain/death",
+	"fatso/attack",
+	"fatso/death",
+	"wolfss/sight",
+	"wolfss/death",
+	"keen/pain",
+	"keen/death",
+	"skeleton/active",
+	"skeleton/sight",
+	"skeleton/attack",
+	"misc/chat"
+};
+
+// Names of different actor types, in original Doom 2 order
+InfoNames
+{
+	DoomPlayer,
+	ZombieMan,
+	ShotgunGuy,
+	Archvile,
+	ArchvileFire,
+	Revenant,
+	RevenantTracer,
+	RevenantTracerSmoke,
+	Fatso,
+	FatShot,
+	ChaingunGuy,
+	DoomImp,
+	Demon,
+	Spectre,
+	Cacodemon,
+	BaronOfHell,
+	BaronBall,
+	HellKnight,
+	LostSoul,
+	SpiderMastermind,
+	Arachnotron,
+	Cyberdemon,
+	PainElemental,
+	WolfensteinSS,
+	CommanderKeen,
+	BossBrain,
+	BossEye,
+	BossTarget,
+	SpawnShot,
+	SpawnFire,
+	ExplosiveBarrel,
+	DoomImpBall,
+	CacodemonBall,
+	Rocket,
+	PlasmaBall,
+	BFGBall,
+	ArachnotronPlasma,
+	BulletPuff,
+	Blood,
+	TeleportFog,
+	ItemFog,
+	TeleportDest,
+	BFGExtra,
+	GreenArmor,
+	BlueArmor,
+	HealthBonus,
+	ArmorBonus,
+	BlueCard,
+	RedCard,
+	YellowCard,
+	YellowSkull,
+	RedSkull,
+	BlueSkull,
+	Stimpack,
+	Medikit,
+	Soulsphere,
+	InvulnerabilitySphere,
+	Berserk,
+	BlurSphere,
+	RadSuit,
+	Allmap,
+	Infrared,
+	Megasphere,
+	Clip,
+	ClipBox,
+	RocketAmmo,
+	RocketBox,
+	Cell,
+	CellPack,
+	Shell,
+	ShellBox,
+	Backpack,
+	BFG9000,
+	Chaingun,
+	Chainsaw,
+	RocketLauncher,
+	PlasmaRifle,
+	Shotgun,
+	SuperShotgun,
+	TechLamp,
+	TechLamp2,
+	Column,
+	TallGreenColumn,
+	ShortGreenColumn,
+	TallRedColumn,
+	ShortRedColumn,
+	SkullColumn,
+	HeartColumn,
+	EvilEye,
+	FloatingSkull,
+	TorchTree,
+	BlueTorch,
+	GreenTorch,
+	RedTorch,
+	ShortBlueTorch,
+	ShortGreenTorch,
+	ShortRedTorch,
+	Stalagtite,
+	TechPillar,
+	Candlestick,
+	Candelabra,
+	BloodyTwitch,
+	Meat2,
+	Meat3,
+	Meat4,
+	Meat5,
+	NonsolidMeat2,
+	NonsolidMeat4,
+	NonsolidMeat3,
+	NonsolidMeat5,
+	NonsolidTwitch,
+	DeadCacodemon,
+	DeadMarine,
+	DeadZombieMan,
+	DeadDemon,
+	DeadLostSoul,
+	DeadDoomImp,
+	DeadShotgunGuy,
+	GibbedMarine,
+	GibbedMarineExtra,
+	HeadsOnAStick,
+	Gibs,
+	HeadOnAStick,
+	HeadCandles,
+	DeadStick,
+	LiveStick,
+	BigTree,
+	BurningBarrel,
+	HangNoGuts,
+	HangBNoBrain,
+	HangTLookingDown,
+	HangTSkull,
+	HangTLookingUp,
+	HangTNoBrain,
+	ColonGibs,
+	SmallBloodPool,
+	BrainStem
+};
+
+ThingBits
+{
+	 0, 0, SPECIAL,
+	 1, 0, SOLID,
+	 2, 0, SHOOTABLE,
+	 3, 0, NOSECTOR,
+	 4, 0, NOBLOCKMAP,
+	 5, 0, AMBUSH,
+	 6, 0, JUSTHIT,
+	 7, 0, JUSTATTACKED,
+	 8, 0, SPAWNCEILING,
+	 9, 0, NOGRAVITY,
+	10, 0, DROPOFF,
+	11, 0, PICKUP,
+	12, 0, NOCLIP,
+	14, 0, FLOAT,
+	15, 0, TELEPORT,
+	16, 0, MISSILE,
+	17, 0, DROPPED,
+	18, 0, SHADOW,
+	19, 0, NOBLOOD,
+	20, 0, CORPSE,
+	21, 0, INFLOAT,
+	22, 0, COUNTKILL,
+	23, 0, COUNTITEM,
+	24, 0, SKULLFLY,
+	25, 0, NOTDMATCH,
+	26, 0, TRANSLATION1,
+	26, 0, TRANSLATION,		// BOOM compatibility
+	27, 0, TRANSLATION2,
+	27, 0, UNUSED1,			// BOOM compatibility
+	28, 0, UNUSED2,			// BOOM compatibility
+	29, 0, UNUSED3,			// BOOM compatibility
+	30, 0, UNUSED4,			// BOOM compatibility
+	 2, 2, TRANSLUCENT,		// BOOM compatibility?
+	30, 0, STEALTH,
+	 1, 2, TRANSLUC25,
+	 2, 2, TRANSLUC50,
+	 3, 2, TRANSLUC75,
+
+	// Names for flags2
+	 0, 1, LOGRAV,
+	 1, 1, WINDTHRUST,
+	 2, 1, FLOORBOUNCE,
+	 3, 1, BLASTED,
+	 4, 1, FLY,
+	 5, 1, FLOORCLIP,
+	 6, 1, SPAWNFLOAT,
+	 7, 1, NOTELEPORT,
+	 8, 1, RIP,
+	 9, 1, PUSHABLE,
+	10, 1, CANSLIDE,			// Avoid conflict with SLIDE from BOOM
+	11, 1, ONMOBJ,
+	12, 1, PASSMOBJ,
+	13, 1, CANNOTPUSH,
+	14, 1, THRUGHOST,
+	15, 1, BOSS,
+	16, 1, FIREDAMAGE,
+	17, 1, NODMGTHRUST,
+	18, 1, TELESTOMP,
+	19, 1, FLOATBOB,
+	 4, 2, DONTDRAW,
+	21, 1, IMPACT,
+	22, 1, PUSHWALL,
+	23, 1, MCROSS,
+	24, 1, PCROSS,
+	25, 1, CANTLEAVEFLOORPIC,
+	26, 1, NONSHOOTABLE,
+	27, 1, INVULNERABLE,
+	28, 1, DORMANT,
+	29, 1, ICEDAMAGE,
+	30, 1, SEEKERMISSILE,
+	31, 1, REFLECTIVE
+};
+
+// RenderStyles, should match those in actor.h
+RenderStyles
+{
+	0, STYLE_None,
+	1, STYLE_Normal,
+	2, STYLE_Fuzzy,
+	3, STYLE_SoulTrans,
+	4, STYLE_OptFuzzy,
+	5, STYLE_Shaded,
+	64, STYLE_Translucent,
+	65, STYLE_Add
+};

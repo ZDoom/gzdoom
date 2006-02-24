@@ -1,0 +1,84 @@
+# Makefile for zlib, derived from Makefile.dj2.
+# Modified for mingw32 by C. Spieler, 6/16/98.
+# Updated for zlib 1.2.x by Christian Spieler and Cosmin Truta, Mar-2003.
+# Last updated: 1-Aug-2003.
+# Tested under Cygwin and MinGW.
+
+# Copyright (C) 1995-2003 Jean-loup Gailly.
+# For conditions of distribution and use, see copyright notice in zlib.h
+
+# To compile, or to compile and test, type:
+#
+#   make -fmakefile.mgw;  make test -fmakefile.mgw
+#
+# To use the asm code, type:
+#   cp contrib/asm?86/match.S ./match.S
+#   make LOC=-DASMV OBJA=match.o -fmakefile.mgw
+
+STATICLIB = libz.a
+
+#LOC = -DASMV
+#LOC = -DDEBUG -g
+
+CCDV = @../ccdv
+
+CC = gcc
+CFLAGS = $(LOC) -O2 -Wall -fomit-frame-pointer
+
+AS = $(CC)
+ASFLAGS = $(LOC) -Wall
+
+LD = $(CC)
+LDFLAGS = $(LOC) -s
+
+AR = ar
+ARFLAGS = rcs
+
+OBJS = adler32.o compress.o crc32.o deflate.o gzio.o infback.o \
+       inffast.o inflate.o inftrees.o trees.o uncompr.o zutil.o
+OBJA =
+
+all: $(STATICLIB)
+
+test: example minigzip
+	./example
+	echo hello world | minigzip | minigzip -d
+
+.c.o:
+	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<
+
+.S.o:
+	$(CCDV) $(AS) $(ASFLAGS) -c -o $@ $<
+
+$(STATICLIB): $(OBJS) $(OBJA)
+	$(CCDV) $(AR) $(ARFLAGS) $@ $(OBJS) $(OBJA)
+
+example: example.o $(STATICLIB)
+	$(CCDV) $(LD) $(LDFLAGS) -o $@ example.o $(STATICLIB)
+
+minigzip: minigzip.o $(STATICLIB)
+	$(CCDV) $(LD) $(LDFLAGS) -o $@ minigzip.o $(STATICLIB)
+
+
+.PHONY: clean
+
+clean:
+	-del /q /f $(STATICLIB) 2>nul
+	-del /q /f *.o 2>nul
+	-del /q /f *.exe 2>nul
+	-del /q /f foo.gz 2>nul
+
+adler32.o: zlib.h zconf.h
+compress.o: zlib.h zconf.h
+crc32.o: crc32.h zlib.h zconf.h
+deflate.o: deflate.h zutil.h zlib.h zconf.h
+example.o: zlib.h zconf.h
+gzio.o: zutil.h zlib.h zconf.h
+inffast.o: zutil.h zlib.h zconf.h inftrees.h inflate.h inffast.h
+inflate.o: zutil.h zlib.h zconf.h inftrees.h inflate.h inffast.h
+infback.o: zutil.h zlib.h zconf.h inftrees.h inflate.h inffast.h
+inftrees.o: zutil.h zlib.h zconf.h inftrees.h
+minigzip.o: zlib.h zconf.h
+trees.o: deflate.h zutil.h zlib.h zconf.h trees.h
+uncompr.o: zlib.h zconf.h
+zutil.o: zutil.h zlib.h zconf.h

@@ -1,0 +1,291 @@
+// Tome of Power
+texture optional SPINBK0
+pic SPINBK0 tics 3
+pic SPINBK1 tics 3
+pic SPINBK2 tics 3
+pic SPINBK3 tics 3
+pic SPINBK4 tics 3
+pic SPINBK5 tics 3
+pic SPINBK6 tics 3
+pic SPINBK7 tics 3
+pic SPINBK8 tics 3
+pic SPINBK9 tics 3
+pic SPINBK10 tics 3
+pic SPINBK11 tics 3
+pic SPINBK12 tics 3
+pic SPINBK13 tics 3
+pic SPINBK14 tics 3
+pic SPINBK15 tics 3
+
+// Speed Boots
+texture optional SPBOOT0
+pic SPBOOT0 tics 3
+pic SPBOOT1 tics 3
+pic SPBOOT2 tics 3
+pic SPBOOT3 tics 3
+pic SPBOOT4 tics 3
+pic SPBOOT5 tics 3
+pic SPBOOT6 tics 3
+pic SPBOOT7 tics 3
+pic SPBOOT8 tics 3
+pic SPBOOT9 tics 3
+pic SPBOOT10 tics 3
+pic SPBOOT11 tics 3
+pic SPBOOT12 tics 3
+pic SPBOOT13 tics 3
+pic SPBOOT14 tics 3
+pic SPBOOT15 tics 3
+
+// Defensive Power
+texture optional SPSHLD0
+pic SPSHLD0 tics 3
+pic SPSHLD1 tics 3
+pic SPSHLD2 tics 3
+pic SPSHLD3 tics 3
+pic SPSHLD4 tics 3
+pic SPSHLD5 tics 3
+pic SPSHLD6 tics 3
+pic SPSHLD7 tics 3
+pic SPSHLD8 tics 3
+pic SPSHLD9 tics 3
+pic SPSHLD10 tics 3
+pic SPSHLD11 tics 3
+pic SPSHLD12 tics 3
+pic SPSHLD13 tics 3
+pic SPSHLD14 tics 3
+pic SPSHLD15 tics 3
+
+// Minotaur Active
+texture optional SPMINO0
+pic SPMINO0 tics 3
+pic SPMINO1 tics 3
+pic SPMINO2 tics 3
+pic SPMINO3 tics 3
+pic SPMINO4 tics 3
+pic SPMINO5 tics 3
+pic SPMINO6 tics 3
+pic SPMINO7 tics 3
+pic SPMINO8 tics 3
+pic SPMINO9 tics 3
+pic SPMINO10 tics 3
+pic SPMINO11 tics 3
+pic SPMINO12 tics 3
+pic SPMINO13 tics 3
+pic SPMINO14 tics 3
+pic SPMINO15 tics 3
+
+// The Wings of Wrath are not included, because they stop spinning when
+// you stop flying, so they can't be a simple animation.
+
+switch doom 1 SW1BRCOM on pic SW2BRCOM tics 0
+switch doom 1 SW1BRN1 on pic SW2BRN1 tics 0
+switch doom 1 SW1BRN2 on pic SW2BRN2 tics 0
+switch doom 1 SW1BRNGN on pic SW2BRNGN tics 0
+switch doom 1 SW1BROWN on pic SW2BROWN tics 0
+switch doom 1 SW1COMM on pic SW2COMM tics 0
+switch doom 1 SW1COMP on pic SW2COMP tics 0
+switch doom 1 SW1DIRT on pic SW2DIRT tics 0
+switch doom 1 SW1EXIT on pic SW2EXIT tics 0
+switch doom 1 SW1GRAY on pic SW2GRAY tics 0
+switch doom 1 SW1GRAY1 on pic SW2GRAY1 tics 0
+switch doom 1 SW1METAL on pic SW2METAL tics 0
+switch doom 1 SW1PIPE on pic SW2PIPE tics 0
+switch doom 1 SW1SLAD on pic SW2SLAD tics 0
+switch doom 1 SW1STARG on pic SW2STARG tics 0
+switch doom 1 SW1STON1 on pic SW2STON1 tics 0
+switch doom 1 SW1STON2 on pic SW2STON2 tics 0
+switch doom 1 SW1STONE on pic SW2STONE tics 0
+switch doom 1 SW1STRTN on pic SW2STRTN tics 0
+
+switch doom 2 SW1BLUE on pic SW2BLUE tics 0
+switch doom 2 SW1CMT on pic SW2CMT tics 0
+switch doom 2 SW1GARG on pic SW2GARG tics 0
+switch doom 2 SW1GSTON on pic SW2GSTON tics 0
+switch doom 2 SW1HOT on pic SW2HOT tics 0
+switch doom 2 SW1LION on pic SW2LION tics 0
+switch doom 2 SW1SATYR on pic SW2SATYR tics 0
+switch doom 2 SW1SKIN on pic SW2SKIN tics 0
+switch doom 2 SW1VINE on pic SW2VINE tics 0
+switch doom 2 SW1WOOD on pic SW2WOOD tics 0
+
+switch doom 3 SW1PANEL on pic SW2PANEL tics 0
+switch doom 3 SW1ROCK on pic SW2ROCK tics 0
+switch doom 3 SW1MET2 on pic SW2MET2 tics 0
+switch doom 3 SW1WDMET on pic SW2WDMET tics 0
+switch doom 3 SW1BRIK on pic SW2BRIK tics 0
+switch doom 3 SW1MOD1 on pic SW2MOD1 tics 0
+switch doom 3 SW1ZIM on pic SW2ZIM tics 0
+switch doom 3 SW1STON6 on pic SW2STON6 tics 0
+switch doom 3 SW1TEK on pic SW2TEK tics 0
+switch doom 3 SW1MARB on pic SW2MARB tics 0
+switch doom 3 SW1SKULL on pic SW2SKULL tics 0
+
+switch heretic SW1OFF on pic SW1ON tics 0
+switch heretic SW2OFF on pic SW2ON tics 0
+
+switch hexen SW_1_UP on sound Switch1 pic SW_1_DN tics 0
+switch hexen SW_2_UP on sound Switch1 pic SW_2_DN tics 0
+switch hexen VALVE1 on sound ValveTurn pic VALVE2 tics 0
+switch hexen SW51_OFF on sound Switch2 pic SW51_ON tics 0
+switch hexen SW52_OFF on sound Switch2 pic SW52_ON tics 0
+switch hexen SW53_UP on sound RopePull pic SW53_DN tics 0
+switch hexen PUZZLE5 on sound Switch1 pic PUZZLE9 tics 0
+switch hexen PUZZLE6 on sound Switch1 pic PUZZLE10 tics 0
+switch hexen PUZZLE7 on sound Switch1 pic PUZZLE11 tics 0
+switch hexen PUZZLE8 on sound Switch1 pic PUZZLE12 tics 0
+
+switch strife GLASS01 on sound world/glassbreak pic GLASS02 tics 0
+switch strife GLASS03 on sound world/glassbreak pic GLASS04 tics 0
+switch strife GLASS05 on sound world/glassbreak pic GLASS06 tics 0
+switch strife GLASS07 on sound world/glassbreak pic GLASS08 tics 0
+switch strife GLASS17 on sound world/glassbreak pic GLASS18 tics 0
+switch strife GLASS19 on sound world/glassbreak pic GLASS20 tics 0
+switch strife SWKNOB01 on sound switches/knob pic SWKNOB02 tics 0
+switch strife SWLITE01 on pic SWLITE02 tics 0
+switch strife SWCHN01 on sound switches/chain pic SWCHN02 tics 0
+switch strife COMP01 on sound world/glassbreak pic COMP04B tics 0
+switch strife COMP05 on sound world/glassbreak pic COMP12B tics 0
+switch strife COMP09 on sound world/glassbreak pic COMP12B tics 0
+switch strife COMP12 on sound world/glassbreak pic COMP04B tics 0
+switch strife COMP13 on sound world/glassbreak pic COMP12B tics 0
+switch strife COMP17 on sound world/glassbreak pic COMP20B tics 0
+switch strife COMP21 on sound world/glassbreak pic COMP28B tics 0
+switch strife WALTEK09 on sound world/glassbreak pic WALTEKB1 tics 0
+switch strife WALTEK10 on sound world/glassbreak pic WALTEKB1 tics 0
+switch strife WALTEK15 on sound world/glassbreak pic WALTEKB1 tics 0
+switch strife SWFORC01 on pic SWFORC02 tics 0
+switch strife SWEXIT01 on pic SWEXIT02 tics 0
+switch strife DORSBK01 on sound switches/stone pic DORSBK02 tics 0
+switch strife SWSLD01 on sound switches/keycard pic SWSLD02 tics 0
+switch strife DORWS04 on sound switches/bolt pic DORWS05 tics 0
+switch strife SWIRON01 on pic SWIRON02 tics 0
+switch strife GLASS09 on sound world/glassbreak pic GLASS10 tics 0
+switch strife GLASS11 on sound world/glassbreak pic GLASS12 tics 0
+switch strife GLASS13 on sound world/glassbreak pic GLASS14 tics 0
+switch strife GLASS15 on sound world/glassbreak pic GLASS16 tics 0
+switch strife SWFORC03 on pic SWFORC04 tics 0
+switch strife SWCIT01 on pic SWCIT02 tics 0
+switch strife SWTRMG01 on pic SWTRMG04 tics 0
+switch strife SWMETL01 on pic SWMETL02 tics 0
+switch strife SWWOOD01 on pic SWWOOD02 tics 0
+switch strife SWTKBL01 on pic SWTKBL02 tics 0
+switch strife AZWAL21 on pic AZWAL22 tics 0
+switch strife SWINDT01 on pic SWINDT02 tics 0
+switch strife SWRUST01 on pic SWRUST02 tics 0
+switch strife SWCHAP01 on pic SWCHAP02 tics 0
+switch strife SWALIN01 on pic SWALIN02 tics 0
+switch strife SWWALG01 on pic SWWALG02 tics 0
+switch strife SWWALG03 on pic SWWALG04 tics 0
+switch strife SWTRAM01 on pic SWTRAM02 tics 0
+switch strife SWTRAM03 on pic SWTRAM04 tics 0
+switch strife SWORC01 on pic SWORC02 tics 0
+switch strife SWBRIK01 on pic SWBRIK02 tics 0
+switch strife SWIRON03 on pic SWIRON04 tics 0
+switch strife SWIRON05 on pic SWIRON06 tics 0
+switch strife SWIRON07 on pic SWIRON08 tics 0
+switch strife SWCARD01 on pic SWCARD02 tics 0
+switch strife SWSIGN01 on pic SWSIGN02 tics 0
+switch strife SWLEV01 on pic SWLEV02 tics 0
+switch strife SWLEV03 on pic SWLEV04 tics 0
+switch strife SWLEV05 on pic SWLEV06 tics 0
+switch strife SWBRN01 on pic SWBRN02 tics 0
+switch strife SWPIP01 on sound switches/valve pic SWPIP02 tics 0
+switch strife SWPALM01 on sound switches/scanner pic SWPALM02 tics 0
+switch strife SWKNOB03 on pic SWKNOB04 tics 0
+switch strife ALTSW01 on pic ALTSW02 tics 0
+switch strife COMP25 on sound world/glassbreak pic COMP28B tics 0
+switch strife COMP29 on sound world/glassbreak pic COMP20B tics 0
+switch strife COMP33 on sound world/glassbreak pic COMP50 tics 0
+switch strife COMP42 on sound world/glassbreak pic COMP51 tics 0
+switch strife GODSCRN1 on sound switches/fool pic GODSCRN2 tics 0
+switch strife ALIEN04 on pic ALIEN05 tics 0
+switch strife CITADL04 on pic CITADL05 tics 0
+switch strife SWITE03 on pic SWITE04 tics 0
+switch strife SWTELP01 on pic SWTELP02 tics 0
+switch strife BRNSCN01 quest on sound switches/sizzle pic BRNSCN05 tics 0
+
+// The animated doors from Strife
+
+animateddoor  SIGLDR01
+	opensound DoorOpenLargeMetal
+	closesound DoorCloseLargeMetal
+	pic SIGLDR01 
+	pic SIGLDR02 
+	pic SIGLDR03 
+	pic SIGLDR04 
+	pic SIGLDR05 
+	pic SIGLDR06 
+	pic SIGLDR07 
+	pic SIGLDR08 
+	
+animateddoor DORSTN01
+	opensound DoorOpenStone
+	closesound DoorCloseStone
+	pic DORSTN01 
+	pic DORSTN02 
+	pic DORSTN03 
+	pic DORSTN04 
+	pic DORSTN05 
+	pic DORSTN06 
+	pic DORSTN07 
+	pic DORSTN08 
+
+animateddoor DORQTR01
+	opensound DoorOpenAirlock
+	closesound DoorCloseAirlock
+	pic DORQTR01 
+	pic DORQTR02 
+	pic DORQTR03 
+	pic DORQTR04 
+	pic DORQTR05 
+	pic DORQTR06 
+	pic DORQTR07 
+	pic DORQTR08 
+	
+animateddoor DORCRG01
+	opensound DoorOpenSmallMetal
+	closesound DoorCloseSmallMetal
+	pic DORCRG01 
+	pic DORCRG02 
+	pic DORCRG03 
+	pic DORCRG04 
+	pic DORCRG05 
+	pic DORCRG06 
+	pic DORCRG07 
+	pic DORCRG08 
+	
+animateddoor DORCHN01
+	opensound DoorOpenChain
+	closesound DoorCloseChain
+	pic DORCHN01 
+	pic DORCHN02 
+	pic DORCHN03 
+	pic DORCHN04 
+	pic DORCHN05 
+	pic DORCHN06 
+	pic DORCHN07 
+	pic DORCHN08 
+	
+animateddoor DORIRS01
+	opensound DoorOpenAirlock
+	closesound DoorCloseAirlock
+	pic DORIRS01 
+	pic DORIRS02 
+	pic DORIRS03 
+	pic DORIRS04 
+	pic DORIRS05 
+	pic DORIRS06 
+	pic DORIRS07 
+	pic DORIRS08 
+	
+animateddoor DORALN01
+	opensound DoorOpenAirlock
+	closesound DoorCloseAirlock
+	pic DORALN01 
+	pic DORALN02 
+	pic DORALN03 
+	pic DORALN04 
+	pic DORALN05 
+	pic DORALN06 
+	pic DORALN07 
+	pic DORALN08 

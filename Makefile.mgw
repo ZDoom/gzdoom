@@ -1,0 +1,44 @@
+RELEASETARGET = zdoomgcc.exe
+DEBUGTARGET = zdoomgccd.exe
+
+all: basetools game
+debug: basetools debuggame
+release: basetools game
+
+ifndef CONFIG
+  CONFIG=Release
+endif
+
+game: basetools ccdv.exe
+	@$(MAKE) -f Makefile.mingw
+
+debuggame: basetools ccdv.exe
+	@$(MAKE) CONFIG=Debug -f Makefile.mingw
+
+$(RELEASETARGET): game
+$(DEBUGTARGET): debuggame
+
+basetools: ccdv.exe
+	$(MAKE) -C tools/lemon -f Makefile.mgw
+	$(MAKE) -C tools/re2c -f Makefile.mgw
+	$(MAKE) -C wadsrc -f Makefile.mgw
+	$(MAKE) -C zlib -f Makefile.mgw
+	$(MAKE) -C flac -f Makefile.mgw
+
+cleanexe:
+	@$(MAKE) -C . -f Makefile.mingw clean
+
+clean:
+	@$(MAKE) -C tools/lemon -f Makefile.mgw clean
+	@$(MAKE) -C tools/re2c -f Makefile.mgw clean
+	@$(MAKE) -C tools/dehsupp -f Makefile.mgw clean
+	@$(MAKE) -C tools/makewad -f Makefile.mgw clean
+	@$(MAKE) -C tools/xlatcc -f Makefile.mgw clean
+	@$(MAKE) -C wadsrc -f Makefile.mgw clean
+	@$(MAKE) -C . -f Makefile.mingw clean
+	@$(MAKE) -C zlib -f Makefile.mgw clean
+	@$(MAKE) -C flac -f Makefile.mgw clean
+	del /q /f ccdv.exe 2>nul
+
+ccdv.exe: ccdv-win32.c
+	@gcc -Os -s -nostdlib -fomit-frame-pointer -o ccdv.exe ccdv-win32.c -lkernel32 -luser32

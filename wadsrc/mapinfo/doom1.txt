@@ -1,0 +1,437 @@
+// MAPINFO for Doom 1 (Shareware, Registered, and Retail)
+
+// Registered/Retail Episode 1
+
+map E1M1 lookup HUSTR_E1M1
+levelnum 1
+titlepatch WILV00
+next E1M2
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 30
+sucktime 1
+music D_E1M1
+
+map E1M2 lookup HUSTR_E1M2
+levelnum 2
+titlepatch WILV01
+next E1M3
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 75
+sucktime 1
+music D_E1M2
+
+map E1M3 lookup HUSTR_E1M3
+levelnum 3
+titlepatch WILV02
+next E1M4
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 120
+sucktime 1
+music D_E1M3
+
+map E1M4 lookup HUSTR_E1M4
+levelnum 4
+titlepatch WILV03
+next E1M5
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 90
+sucktime 1
+music D_E1M4
+
+map E1M5 lookup HUSTR_E1M5
+levelnum 5
+titlepatch WILV04
+next E1M6
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 165
+sucktime 1
+music D_E1M5
+
+map E1M6 lookup HUSTR_E1M6
+levelnum 6
+titlepatch WILV05
+next E1M7
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 180
+sucktime 1
+music D_E1M6
+
+map E1M7 lookup HUSTR_E1M7
+levelnum 7
+titlepatch WILV06
+next E1M8
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 180
+sucktime 1
+music D_E1M7
+
+map E1M8 lookup HUSTR_E1M8
+levelnum 8
+titlepatch WILV07
+next EndGame1
+secretnext E1M9
+sky1 SKY1 0
+cluster 1
+par 30
+nointermission
+nosoundclipping
+baronspecial
+specialaction_lowerfloor
+sucktime 1
+music D_E1M8
+
+map E1M9 lookup HUSTR_E1M9
+levelnum 9
+titlepatch WILV08
+next E1M4
+secretnext E1M4
+sky1 SKY1 0
+cluster 1
+par 165
+sucktime 1
+music D_E1M9
+
+// Registered/Retail Episode 2
+
+map E2M1 lookup HUSTR_E2M1
+levelnum 11
+titlepatch WILV10
+next E2M2
+secretnext E2M9
+sky1 SKY2 0
+cluster 2
+par 90
+sucktime 1
+music D_E2M1
+
+map E2M2 lookup HUSTR_E2M2
+levelnum 12
+titlepatch WILV11
+next E2M3
+secretnext E2M9
+sky1 SKY2 0
+cluster 2
+par 90
+sucktime 1
+music D_E2M2
+
+map E2M3 lookup HUSTR_E2M3
+levelnum 13
+titlepatch WILV12
+next E2M4
+secretnext E2M9
+sky1 SKY2 0
+cluster 2
+par 90
+sucktime 1
+music D_E2M3
+
+map E2M4 lookup HUSTR_E2M4
+levelnum 14
+titlepatch WILV13
+next E2M5
+secretnext E2M9
+sky1 SKY2 0
+cluster 2
+par 120
+sucktime 1
+music D_E2M4
+
+map E2M5 lookup HUSTR_E2M5
+levelnum 15
+titlepatch WILV14
+next E2M6
+secretnext E2M9
+sky1 SKY2 0
+cluster 2
+par 90
+sucktime 1
+music D_E2M5
+
+map E2M6 lookup HUSTR_E2M6
+levelnum 16
+titlepatch WILV15
+next E2M7
+secretnext E2M9
+sky1 SKY2 0
+cluster 2
+par 360
+sucktime 1
+music D_E2M6
+
+map E2M7 lookup HUSTR_E2M7
+levelnum 17
+titlepatch WILV16
+next E2M8
+secretnext E2M9
+sky1 SKY2 0
+cluster 2
+par 240
+sucktime 1
+music D_E2M7
+
+map E2M8 lookup HUSTR_E2M8
+levelnum 18
+titlepatch WILV17
+next EndGame2
+secretnext E2M9
+sky1 SKY2 0
+cluster 2
+par 30
+nointermission
+nosoundclipping
+cyberdemonspecial
+specialaction_exitlevel
+sucktime 1
+music D_E2M8
+
+map E2M9 lookup HUSTR_E2M9
+levelnum 19
+titlepatch WILV18
+next E2M6
+secretnext E2M6
+sky1 SKY2 0
+cluster 2
+par 170
+sucktime 1
+music D_E2M9
+
+// Registered/Retail Episode 3
+
+map E3M1 lookup HUSTR_E3M1
+levelnum 21
+titlepatch WILV20
+next E3M2
+secretnext E3M9
+sky1 SKY3 0
+cluster 3
+par 90
+sucktime 1
+music D_E3M1
+
+map E3M2 lookup HUSTR_E3M2
+levelnum 22
+titlepatch WILV21
+next E3M3
+secretnext E3M9
+sky1 SKY3 0
+cluster 3
+par 45
+sucktime 1
+music D_E3M2
+
+map E3M3 lookup HUSTR_E3M3
+levelnum 23
+titlepatch WILV22
+next E3M4
+secretnext E3M9
+sky1 SKY3 0
+cluster 3
+par 90
+sucktime 1
+music D_E3M3
+
+map E3M4 lookup HUSTR_E3M4
+levelnum 24
+titlepatch WILV23
+next E3M5
+secretnext E3M9
+sky1 SKY3 0
+cluster 3
+par 150
+sucktime 1
+music D_E3M4
+
+map E3M5 lookup HUSTR_E3M5
+levelnum 25
+titlepatch WILV24
+next E3M6
+secretnext E3M9
+sky1 SKY3 0
+cluster 3
+par 90
+sucktime 1
+music D_E3M5
+
+map E3M6 lookup HUSTR_E3M6
+levelnum 26
+titlepatch WILV25
+next E3M7
+secretnext E3M9
+sky1 SKY3 0
+cluster 3
+par 90
+sucktime 1
+music D_E3M6
+
+map E3M7 lookup HUSTR_E3M7
+levelnum 27
+titlepatch WILV26
+next E3M8
+secretnext E3M9
+sky1 SKY3 0
+cluster 3
+par 165
+sucktime 1
+music D_E3M7
+
+map E3M8 lookup HUSTR_E3M8
+levelnum 28
+titlepatch WILV27
+next endbunny
+secretnext E3M9
+sky1 SKY3 0
+cluster 3
+par 30
+nointermission
+nosoundclipping
+spidermastermindspecial
+specialaction_exitlevel
+sucktime 1
+music D_E3M8
+
+map E3M9 lookup HUSTR_E3M9
+levelnum 29
+titlepatch WILV28
+next E3M7
+secretnext E3M7
+sky1 SKY3 0
+cluster 3
+par 135
+sucktime 1
+music D_E3M9
+
+// Retail Episode 4
+
+map E4M1 lookup HUSTR_E4M1
+levelnum 31
+titlepatch WILV30
+next E4M2
+secretnext E4M9
+sky1 SKY4 0
+cluster 4
+sucktime 1
+music D_E3M4
+
+map E4M2 lookup HUSTR_E4M2
+levelnum 32
+titlepatch WILV31
+next E4M3
+secretnext E4M9
+sky1 SKY4 0
+cluster 4
+sucktime 1
+music D_E3M2
+
+map E4M3 lookup HUSTR_E4M3
+levelnum 33
+titlepatch WILV32
+next E4M4
+secretnext E4M9
+sky1 SKY4 0
+cluster 4
+sucktime 1
+music D_E3M3
+
+map E4M4 lookup HUSTR_E4M4
+levelnum 34
+titlepatch WILV33
+next E4M5
+secretnext E4M9
+sky1 SKY4 0
+cluster 4
+sucktime 1
+music D_E1M5
+
+map E4M5 lookup HUSTR_E4M5
+levelnum 35
+titlepatch WILV34
+next E4M6
+secretnext E4M9
+sky1 SKY4 0
+cluster 4
+sucktime 1
+music D_E2M7
+
+map E4M6 lookup HUSTR_E4M6
+levelnum 36
+titlepatch WILV35
+next E4M7
+secretnext E4M9
+sky1 SKY4 0
+cluster 4
+cyberdemonspecial
+specialaction_opendoor
+sucktime 1
+music D_E2M4
+
+map E4M7 lookup HUSTR_E4M7
+levelnum 37
+titlepatch WILV36
+next E4M8
+secretnext E4M9
+sky1 SKY4 0
+cluster 4
+sucktime 1
+music D_E2M6
+
+map E4M8 lookup HUSTR_E4M8
+levelnum 38
+titlepatch WILV37
+next EndGame4
+secretnext E4M9
+sky1 SKY4 0
+cluster 4
+nointermission
+nosoundclipping
+spidermastermindspecial
+specialaction_lowerfloor
+sucktime 1
+music D_E2M5
+
+map E4M9 lookup HUSTR_E4M9
+levelnum 39
+titlepatch WILV38
+next E4M3
+secretnext E4M3
+sky1 SKY4 0
+cluster 4
+sucktime 1
+music D_E1M9
+
+// Clusters (correspond with same-numbered episode)
+
+clusterdef 1
+flat FLOOR4_8
+music D_VICTOR
+exittext lookup E1TEXT
+
+clusterdef 2
+flat SFLR6_1
+music D_VICTOR
+exittext lookup E2TEXT
+
+clusterdef 3
+flat MFLR8_4
+music D_VICTOR
+exittext lookup E3TEXT
+
+clusterdef 4
+flat MFLR8_3
+music D_VICTOR
+exittext lookup E4TEXT
+

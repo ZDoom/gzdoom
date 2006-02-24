@@ -1,0 +1,325 @@
+include "xlat/defines.i"
+
+// Highest crossable line is 231
+/*
+enum
+{
+	IDBadge = 1,
+	IDCard,
+	PassCard,
+	BrassKey,
+	SilverKey,
+	GoldKey,
+	FrontBaseKey,
+	WhatKey,
+	MilitaryID,
+	MineKey,
+	CatacombKey,
+	ChapelKey,
+	CoreKey,
+	SeveredHand,
+	MaulerKey,
+	OrderKey,
+	OracleKey,
+	Chalice,
+	Quest,
+	Piston,
+	SigilA,
+	Power1,
+	Power2,
+	Power3,
+	GiveQT1,
+	Prison,
+	Factory,
+	Warehouse,
+	SigilB
+}*/
+
+enum
+{
+Base_Key		= 1,
+Govs_Key		= 2,
+Passcard		= 3,
+ID_Badge		= 4,
+Prison_Key		= 5,
+Severed_Hand		= 6,
+Power1_Key		= 7,
+Power2_Key		= 8,
+Power3_Key		= 9,
+Gold_Key		= 10,
+ID_Card			= 11,
+Silver_Key		= 12,
+Oracle_Key		= 13,
+Military_ID		= 14,
+Order_Key		= 15,
+Warehouse_Key		= 16,
+Brass_Key		= 17,
+Red_Crystal_Key		= 18,
+Blue_Crystal_Key	= 19,
+Chapel_Key		= 20,
+Catacomb_Key		= 21,
+Security_Key		= 22,
+Core_Key		= 23,
+Mauler_Key		= 24,
+Factory_Key		= 25,
+MINE_KEY		= 26,
+New_Key5		= 27,
+Piston			= 50,
+Chalice			= 51,
+ThatDoesntWork		= 120,
+RetailOnly		= 121
+}
+
+// Scrollers
+ 48 = 0,		Scroll_Texture_Left (SCROLL_UNIT)
+142 = 0,		Scroll_Texture_Up (SCROLL_UNIT)
+143 = 0,		Scroll_Texture_Down (3*SCROLL_UNIT)
+149 = 0,		Scroll_Texture_Right (SCROLL_UNIT)
+
+// Shootables
+ 24 = SHOOT,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
+ 46 = SHOOT|REP|MONST,	Door_Open (tag, D_SLOW)
+ 47 = SHOOT,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
+180 = SHOOT,		ACS_ExecuteWithResult (0, 180, tag)
+182 = 14|MONST,		GlassBreak ()
+
+// Crossables
+230 = WALK|REP,		ACS_ExecuteAlways (0, 0, 230, tag)
+  2 = WALK,		Door_Open (tag, D_SLOW)
+227 = WALK|REP,		ACS_ExecuteAlways (0, 0, 227, tag)
+  3 = WALK,		Door_Close (tag, D_SLOW)
+  4 = WALK|MONST,	Door_Raise (tag, D_SLOW, VDOORWAIT)
+  5 = WALK,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
+  6 = WALK,		Ceiling_CrushAndRaiseA (tag, C_FAST, C_FAST, 10)
+  8 = WALK,		Stairs_BuildUpDoom (tag, ST_SLOW, 8)
+ 10 = WALK|MONST,	Plat_DownWaitUpStayLip (tag, P_FAST, PLATWAIT, 0)
+ 12 = WALK,		Light_MaxNeighbor (tag)
+ 13 = WALK,		Light_ChangeToValue (tag, 255)
+ 16 = WALK,		Door_CloseWaitOpen (tag, D_SLOW, 240)
+ 17 = WALK,		Light_StrobeDoom (tag, 5, 35)
+ 19 = WALK,		Floor_LowerToHighest (tag, F_SLOW, 128)
+ 22 = WALK,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
+ 25 = WALK,		Ceiling_CrushAndRaiseA (tag, C_SLOW, C_SLOW, 10)
+ 30 = WALK,		Floor_RaiseByTexture (tag, F_SLOW)
+ 35 = WALK,		Light_ChangeToValue (tag, 35)
+ 36 = WALK,		Floor_LowerToHighest (tag, F_FAST, 128)
+ 37 = WALK,		Floor_LowerToLowestTxTy (tag, F_SLOW)
+196 = WALK|REP,		ACS_ExecuteAlways (0, 0, 196, tag)
+212 = WALK|REP,		ACS_ExecuteAlways (0, 0, 212, tag)
+193 = WALK|REP,		ACS_ExecuteAlways (0, 0, 193, tag)
+ 38 = WALK,		Floor_LowerToLowest (tag, F_SLOW)
+ 39 = WALK|MONST,	Teleport (0, tag)
+ 44 = WALK,		Ceiling_LowerAndCrush (tag, C_SLOW, 10)
+ 52 = WALK|REP,		ACS_ExecuteAlways (0, 0, 52, tag)
+ 53 = WALK,		Plat_PerpetualRaiseLip (tag, P_SLOW, PLATWAIT, 0)
+ 54 = WALK,		Plat_Stop (tag)
+ 56 = WALK,		Floor_RaiseAndCrush (tag, F_SLOW, 10)
+ 57 = WALK,		Ceiling_CrushStop (tag)
+ 58 = WALK,		Floor_RaiseByValue (tag, F_SLOW, 64)
+ 59 = WALK,		Floor_RaiseByValueTxTy (tag, F_SLOW, 24)
+104 = WALK,		Light_MinNeighbor (tag)
+108 = WALK,		Door_Raise (tag, D_FAST, VDOORWAIT)
+109 = WALK,		Door_Open (tag, D_FAST)
+100 = WALK,		Stairs_BuildUpDoom (tag, ST_TURBO, 16, 0, 0)
+197 = WALK,		ACS_ExecuteAlways (0, 0, 197, tag)
+110 = WALK,		Door_Close (tag, D_FAST)
+119 = WALK,		Floor_RaiseToNearest (tag, F_SLOW)
+121 = WALK,		Plat_DownWaitUpStayLip (tag, P_TURBO, PLATWAIT, 0)
+124 = WALK,		Teleport_EndGame ()
+125 = MONWALK,		Teleport (0, tag)
+130 = WALK,		Floor_RaiseToNearest (tag, F_FAST)
+141 = WALK,		Ceiling_CrushAndRaiseSilentA (tag, C_SLOW, C_SLOW, 10)
+174 = WALK,		ACS_ExecuteAlways (0, 0, 174, tag)
+183 = WALK,		ACS_ExecuteAlways (0, 0, 183, tag)
+178 = WALK,		Generic_Stairs (tag, ST_FAST, 16, 0, 0)
+179 = WALK,		Ceiling_LowerToFloor (tag, C_SLOW)
+187 = WALK|REP,		ACS_ExecuteAlways (0, 0, 187, tag)
+188 = WALK|REP,		ACS_ExecuteAlways (0, 0, 188, tag)
+200 = WALK,		ACS_ExecuteAlways (0, 0, 200, tag)
+201 = WALK,		SendToCommunicator (tag, 1, 0)
+202 = WALK,		SendToCommunicator (tag, 0, 0)
+210 = WALK,		SendToCommunicator (tag, 0, 1)
+215 = WALK|REP,		ACS_ExecuteAlways (0, 0, 215, tag)
+204 = WALK,		ACS_ExecuteAlways (0, 0, 204, tag)
+228 = WALK|REP,		ACS_ExecuteAlways (0, 0, 228)
+
+216 = WALK|REP,		ACS_ExecuteAlways (0, 0, 216, tag)
+ 90 = WALK|REP,		Door_Raise (tag, D_SLOW, VDOORWAIT)
+ 72 = WALK|REP,		Ceiling_LowerAndCrush (tag, C_SLOW, 10)
+ 73 = WALK|REP,		Ceiling_CrushAndRaiseA (tag, C_SLOW, C_SLOW, 10)
+ 74 = WALK|REP,		Ceiling_CrushStop (tag)
+ 75 = WALK|REP,		Door_Close (tag, D_SLOW)
+ 76 = WALK|REP,		Door_CloseWaitOpen (tag, D_SLOW, 240)
+ 77 = WALK|REP,		Ceiling_CrushAndRaiseA (tag, C_FAST, C_FAST, 10)
+ 79 = WALK|REP,		Light_ChangeToValue (tag, 35)
+ 80 = WALK|REP,		Light_MaxNeighbor (tag)
+ 81 = WALK|REP,		Light_ChangeToValue (tag, 255)
+ 82 = WALK|REP,		Floor_LowerToLowest (tag, F_SLOW)
+ 83 = WALK|REP,		Floor_LowerToHighest (tag, F_SLOW, 128)
+ 84 = WALK|REP,		Floor_LowerToLowestTxTy (tag, F_SLOW)
+ 86 = WALK|REP,		Door_Open (tag, D_SLOW)
+ 87 = WALK|REP,		Plat_PerpetualRaiseLip (tag, P_SLOW, PLATWAIT, 0)
+ 88 = WALK|REP|MONST,	Plat_DownWaitUpStayLip (tag, P_FAST, PLATWAIT, 0)
+ 89 = WALK|REP,		Plat_Stop (tag)
+ 91 = WALK|REP,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
+ 92 = WALK|REP,		Floor_RaiseByValue (tag, F_SLOW, 64)
+ 93 = WALK|REP,		Floor_RaiseByValueTxTy (tag, F_SLOW, 24)
+ 94 = WALK|REP,		Floor_RaiseAndCrush (tag, F_SLOW, 10)
+ 95 = WALK|REP,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
+ 96 = WALK|REP,		Floor_RaiseByTexture (tag, F_SLOW)
+ 97 = WALK|REP|MONST,	Teleport (0, tag)
+ 98 = WALK|REP,		Floor_LowerToHighest (tag, F_FAST, 128)
+105 = WALK|REP,		Door_Raise (tag, D_FAST, VDOORWAIT)
+106 = WALK|REP,		Door_Open (tag, D_FAST)
+107 = WALK|REP,		Door_Close (tag, D_FAST)
+120 = WALK|REP,		Plat_DownWaitUpStayLip (tag, P_TURBO, PLATWAIT, 0)
+126 = MONWALK|REP,	Teleport (0, tag)
+128 = WALK|REP,		Floor_RaiseToNearest (tag, F_SLOW)
+129 = WALK|REP,		Floor_RaiseToNearest (tag, F_FAST)
+186 = WALK|REP,		ACS_ExecuteAlways (0, 0, 186, tag)
+145 = WALK|REP,		ACS_ExecuteAlways (0, 0, 145, tag)
+175 = WALK|REP,		ACS_ExecuteAlways (0, 0, 175, tag)
+198 = WALK|REP,		ACS_ExecuteAlways (0, 0, 198, tag)
+150 = WALK|REP,		NoiseAlert (0, 0)
+208 = WALK|REP,		ACS_ExecuteAlways (0, 0, 208, tag)
+206 = WALK|REP,		ACS_ExecuteAlways (0, 0, 206, tag)
+184 = WALK|REP,		ACS_ExecuteAlways (0, 0, 184, tag)
+185 = WALK|REP|MONST,	Teleport_NoFog (0, 1, tag)
+195 = WALK|REP|MONST,	Teleport_ZombieChanger (0, tag)
+203 = WALK|REP,		ACS_ExecuteAlways (0, 0, 203, tag)
+231 = WALK|REP|MONST,	Teleport (0, tag, 1)
+
+//666 Is used to slide a horizontal or vertical line. But none of the Strife maps
+//use it, and polyobjects are better, so I won't bother implementing it.
+
+// Local doors
+  1 = USE|MONST|REP,	Door_Raise (0, D_SLOW, VDOORWAIT, tag)
+ 26 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 4, tag)
+ 27 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 3, tag)
+ 28 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 10, tag)
+ 
+ 31 = USE|MONST,	Door_Open (0, D_SLOW, tag)
+ 32 = USE,		Door_LockedRaise (0, D_SLOW, 0, 4, tag)
+ 33 = USE,		Door_LockedRaise (0, D_SLOW, 0, 10, tag)
+ 34 = USE,		Door_LockedRaise (0, D_SLOW, 0, 3, tag)
+ 
+117 = USE|REP,		Door_Raise (0, D_FAST, VDOORWAIT, tag)
+118 = USE,		Door_Open (0, D_FAST, tag)
+
+156 = USE,		Door_LockedRaise (0, D_SLOW, 0, 17, tag)
+157 = USE,		Door_LockedRaise (0, D_SLOW, 0, 12, tag)
+158 = USE,		Door_LockedRaise (0, D_SLOW, 0, 10, tag)
+
+159 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 10, tag)
+160 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 12, tag)
+161 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 17, tag)
+165 = USE,		Door_LockedRaise (0, 0, 0, 102)
+166 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 6, tag)
+169 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 1, tag)
+170 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 2, tag)
+190 = USE|REP,		Door_LockedRaise (0, D_SLOW, VDOORWAIT, 15, tag)
+205 = USE|REP,		Door_LockedRaise (0, D_SLOW, 0, 103)
+213 = USE|REP,		ACS_ExecuteWithResult (0, 213, tag)
+217 = USE,		Door_LockedRaise (0, D_SLOW, 0, 23, tag)
+221 = USE,		Door_LockedRaise (0, D_SLOW, 0, 24, tag)
+224 = USE,		Door_LockedRaise (0, D_SLOW, 0, 20, tag)
+225 = USE,		Door_LockedRaise (0, D_SLOW, 0, 21, tag)
+232 = USE|REP,		ACS_ExecuteWithResult (0, 232, tag)
+
+144 = USE|MONST|REP,	Door_Animated (0, 4, 3*35)
+148 = USE|REP,		ForceField ()
+211 = USE|REP,		SendToCommunicator (tag, 0, 2, 1)
+
+// Switches
+  7 = USE,		Stairs_BuildUpDoom (tag, ST_SLOW, 8)
+  9 = USE,		Floor_Donut (tag, DORATE, DORATE)
+ 14 = USE,		Plat_UpByValueStayTx (tag, P_SLOW/2, 4)
+ 15 = USE,		Plat_UpByValueStayTx (tag, P_SLOW/2, 3)
+ 18 = USE,		Floor_RaiseToNearest (tag, F_SLOW)
+ 20 = USE,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
+ 21 = USE,		Plat_DownWaitUpStayLip (tag, P_FAST, PLATWAIT)
+ 23 = USE,		Floor_LowerToLowest (tag, F_SLOW)
+ 29 = USE,		Door_Raise (tag, D_SLOW, VDOORWAIT)
+ 40 = USE,		ACS_ExecuteWithResult (0, 40, tag)
+189 = USE,		ACS_LockedExecute (0, 0, 189, tag, 13)
+ 41 = USE,		Ceiling_LowerToFloor (tag, C_SLOW)
+ 71 = USE,		Floor_LowerToHighest (tag, F_FAST, 128)
+ 49 = USE,		Ceiling_CrushAndRaiseA (tag, C_SLOW, C_SLOW, 10)
+ 50 = USE,		Door_Close (tag, D_SLOW)
+ 51 = USE,		Teleport_EndGame (0)
+ 55 = USE,		Floor_RaiseAndCrush (tag, F_SLOW, 10)
+101 = USE,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
+102 = USE,		Floor_LowerToHighest (tag, F_SLOW, 128)
+103 = USE,		Door_Open (tag, D_SLOW)
+111 = USE,		Door_Raise (tag, D_FAST, VDOORWAIT)
+112 = USE,		Door_Open (tag, D_FAST)
+113 = USE,		Door_Close (tag, D_FAST)
+122 = USE,		Plat_DownWaitUpStayLip (tag, P_TURBO, PLATWAIT, 0)
+127 = USE,		Stairs_BuildUpDoom (tag, ST_TURBO, 16, 0, 0)
+131 = USE,		Floor_RaiseToNearest (tag, F_FAST)
+133 = USE,		Door_LockedRaise (tag, D_FAST, 0, 4)
+135 = USE,		Door_LockedRaise (tag, D_FAST, 0, 11)
+137 = USE,		Door_LockedRaise (tag, D_FAST, 0, 3)
+162 = USE,		Door_LockedRaise (tag, D_FAST, 0, 17)
+163 = USE,		Door_LockedRaise (tag, D_FAST, 0, 12)
+164 = USE,		Door_LockedRaise (tag, D_FAST, 0, 10)
+167 = USE,		Door_LockedRaise (tag, D_FAST, 0, 6)
+171 = USE,		Door_LockedRaise (tag, D_SLOW, 0, 5)
+140 = USE,		Floor_RaiseByValueTimes8 (tag, F_SLOW, 64)
+146 = USE,		Generic_Stairs (tag, ST_FAST, 16, 0, 0)
+147 = USE,		ClearForceField (tag)
+181 = USE,		ACS_ExecuteWithResult (0, 181, tag)
+194 = USE,		ACS_ExecuteWithResult (0, 194, tag)
+199 = USE,		ACS_ExecuteWithResult (0, 199, tag)
+209 = USE,		ACS_ExecuteWithResult (0, 209, tag)
+219 = USE,		ACS_LockedExecute (0, 0, 219, tag, 19)
+220 = USE,		ACS_LockedExecute (0, 0, 220, tag, 18)
+226 = USE,		ACS_ExecuteWithResult (0, 226, tag)
+235 = USE,		ACS_ExecuteWithResult (0, 235, tag)
+
+// Buttons
+ 11 = USE|REP,		Exit_Normal (0)
+ 42 = USE|REP,		Door_Close (tag, D_SLOW)
+ 43 = USE|REP,		Ceiling_LowerToFloor (tag, C_SLOW)
+ 45 = USE|REP,		Floor_LowerToHighest (tag, F_SLOW, 128)
+ 60 = USE|REP,		Floor_LowerToLowest (tag, F_SLOW)
+ 61 = USE|REP,		Door_Open (tag, D_SLOW)
+ 62 = USE|REP,		Plat_DownWaitUpStayLip (tag, P_FAST, PLATWAIT, 0)
+ 63 = USE|REP,		Door_Raise (tag, D_SLOW, VDOORWAIT)
+ 64 = USE|REP,		Floor_RaiseToLowestCeiling (tag, F_SLOW)
+ 66 = USE|REP,		Plat_UpByValueStayTx (tag, P_SLOW/2, 3)
+ 67 = USE|REP,		Plat_UpByValueStayTx (tag, P_SLOW/2, 4)
+ 65 = USE|REP,		Floor_RaiseAndCrush (tag, F_SLOW, 10)
+ 68 = USE|REP,		Plat_RaiseAndStayTx0 (tag, P_SLOW/2)
+ 69 = USE|REP,		Floor_RaiseToNearest (tag, F_SLOW)
+ 70 = USE|REP,		Floor_LowerToHighest (tag, F_FAST, 128)
+114 = USE|REP,		Door_Raise (tag, D_FAST, VDOORWAIT)
+115 = USE|REP,		Door_Open (tag, D_FAST)
+116 = USE|REP,		Door_Close (tag, D_FAST)
+123 = USE|REP,		Plat_DownWaitUpStayLip (tag, P_TURBO, PLATWAIT, 0)
+132 = USE|REP,		Floor_RaiseToNearest (tag, F_FAST)
+
+172 = USE|REP,		Door_LockedRaise (tag, D_SLOW, VDOORWAIT, 7)
+173 = USE|REP,		Door_LockedRaise (tag, D_SLOW, VDOORWAIT, 8)
+176 = USE|REP,		Door_LockedRaise (tag, D_SLOW, VDOORWAIT, 9)
+191 = USE|REP,		Door_LockedRaise (tag, D_SLOW, VDOORWAIT, 14)
+192 = USE|REP,		Door_LockedRaise (tag, D_SLOW, VDOORWAIT, 16)
+223 = USE|REP,		Door_LockedRaise (tag, D_SLOW, VDOORWAIT, 26)
+ 99 = USE|REP,		Door_LockedRaise (tag, D_FAST, VDOORWAIT, 4)
+134 = USE|REP,		Door_LockedRaise (tag, D_FAST, VDOORWAIT, 11)
+136 = USE|REP,		Door_LockedRaise (tag, D_FAST, VDOORWAIT, 3)
+151 = USE|REP,		Door_LockedRaise (tag, D_FAST, VDOORWAIT, 10)
+152 = USE|REP,		Door_LockedRaise (tag, D_FAST, VDOORWAIT, 17)
+153 = USE|REP,		Door_LockedRaise (tag, D_FAST, VDOORWAIT, 12)
+168 = USE|REP,		Door_LockedRaise (tag, D_FAST, VDOORWAIT, 6)
+
+138 = USE|REP,		Light_ChangeToValue (tag, 255)
+139 = USE|REP,		Light_ChangeToValue (tag, 35)
+154 = USE|REP,		ACS_LockedExecute (0, 0, 154, tag, 10)
+155 = USE|REP,		Plat_UpNearestWaitDownStay (tag, P_NORMAL, PLATWAIT)
+177 = USE|REP,		ACS_LockedExecute (0, 0, 177, tag, 9)
+207 = USE|REP,		Door_Animated (tag, 4, 3*35)
+214 = USE|REP,		ACS_ExecuteWithResult (0, 214, tag)
+229 = USE|REP,		ACS_ExecuteWithResult (0, 229, tag)
+233 = USE|REP,		ACS_ExecuteWithResult (0, 233, tag)
+234 = USE|REP,		ACS_ExecuteWithResult (0, 234, tag)

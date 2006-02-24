@@ -1,0 +1,131 @@
+// Doom Doors ---------------------------------
+
+:DoorOpenNormal
+	play		doors/dr1_open
+	nostopcutoff
+end
+
+:DoorCloseNormal
+	play		doors/dr1_clos
+	nostopcutoff
+end
+
+:DoorOpenBlazing
+	play		doors/dr2_open
+	nostopcutoff
+end
+
+:DoorCloseBlazing
+	play		doors/dr2_clos
+	nostopcutoff
+end
+
+// Heretic Doors ------------------------------
+
+:HereticDoorOpen
+	play		doors/dr1_open
+	nostopcutoff
+end
+
+:HereticDoorClose
+	play		doors/dr1_open
+	stopsound	doors/dr1_clos
+end
+
+// Strife Doors -------------------------------
+
+:DoorOpenStone
+	play		doors/stone_open
+	nostopcutoff
+end
+
+:DoorCloseStone
+	play		doors/stone_close
+	nostopcutoff
+end
+
+:DoorOpenLargeMetal
+	play		doors/large_metal_open
+	nostopcutoff
+end
+
+:DoorCloseLargeMetal
+	play		doors/large_metal_close
+	nostopcutoff
+end
+
+:DoorOpenSmallMetal
+	play		doors/small_metal_open
+	nostopcutoff
+end
+
+:DoorCloseSmallMetal
+	play		doors/small_metal_close
+	nostopcutoff
+end
+
+:DoorOpenLargeWood
+	play		doors/large_wood_open
+	nostopcutoff
+end
+
+:DoorCloseLargeWood
+	play		doors/large_wood_close
+	nostopcutoff
+end
+
+:DoorOpenSmallWood
+	play		doors/small_wood_open
+	nostopcutoff
+end
+
+:DoorCloseSmallWood
+	play		doors/large_wood_open
+	nostopcutoff
+end
+
+:DoorOpenAirlock
+	play		doors/airlock_open
+	nostopcutoff
+end
+
+:DoorCloseAirlock
+	play		doors/airlock_close
+	nostopcutoff
+end
+
+:DoorOpenChain
+	play		doors/chain_open
+	nostopcutoff
+end
+
+:DoorCloseChain
+	play		doors/chain_close
+	nostopcutoff
+end
+
+// Not Doors ----------------------------------
+
+:CeilingNormal
+//	playloop	plats/pt1_mid 8
+	playrepeat	plats/pt1_mid
+end
+
+:CeilingSemiSilent
+	stopsound	plats/pt1_stop
+end
+
+:Floor
+//	playloop	plats/pt1_mid 8
+	playrepeat	plats/pt1_mid
+	stopsound	plats/pt1_stop
+end
+
+:Platform
+	playuntildone   plats/pt1_strt
+//	playloop      	plats/pt1_mid 8
+	stopsound	plats/pt1_stop
+end
+
+:Silence
+end

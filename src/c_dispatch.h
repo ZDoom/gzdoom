@@ -1,0 +1,157 @@
+/*
+** c_dispatch.h
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2005 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+#ifndef __C_DISPATCH_H__
+#define __C_DISPATCH_H__
+
+#include "dobject.h"
+
+class FConfigFile;
+
+void C_ExecCmdLineParams ();
+
+// Add commands to the console as if they were typed in. Can handle wait
+// and semicolon-separated commands. This function may modify the source
+// string, but the string will be restored to its original state before
+// returning. Therefore, commands passed must not be in read-only memory.
+void AddCommandString (char *text, int keynum=0);
+
+// Process a single console command. Does not handle wait.
+void C_DoCommand (const char *cmd, int keynum=0);
+
+int C_ExecFile (const char *cmd, bool usePullin);
+
+// Write out alias commands to a file for all current aliases.
+void C_ArchiveAliases (FConfigFile *f);
+
+void C_SetAlias (const char *name, const char *cmd);
+
+// build a single string out of multiple strings
+char *BuildString (int argc, char **argv);
+
+// Class that can parse command lines
+class FCommandLine
+{
+public:
+	FCommandLine (const char *commandline);
+	~FCommandLine ();
+	int argc ();
+	char *operator[] (int i);
+	const char *args () { return cmd; }
+
+private:
+	const char *cmd;
+	int _argc;
+	char **_argv;
+	long argsize;
+};
+
+typedef void (*CCmdRun) (FCommandLine &argv, AActor *instigator, int key);
+
+class FConsoleCommand
+{
+public:
+	FConsoleCommand (const char *name, CCmdRun RunFunc);
+	virtual ~FConsoleCommand ();
+	virtual bool IsAlias ();
+	void PrintCommand () { Printf ("%s\n", m_Name); }
+
+	virtual void Run (FCommandLine &args, AActor *instigator, int key);
+
+	FConsoleCommand *m_Next, **m_Prev;
+	char *m_Name;
+
+	enum { HASH_SIZE = 251 };	// Is this prime?
+
+protected:
+	FConsoleCommand ();
+	bool AddToHash (FConsoleCommand **table);
+
+	CCmdRun m_RunFunc;
+
+};
+
+#define CCMD(n) \
+	void Cmd_##n (FCommandLine &, AActor *, int key); \
+	FConsoleCommand Cmd_##n##_ (#n, Cmd_##n); \
+	void Cmd_##n (FCommandLine &argv, AActor *m_Instigator, int key)
+
+const int KEY_DBLCLICKED = 0x8000;
+
+class FConsoleAlias : public FConsoleCommand
+{
+public:
+	FConsoleAlias (const char *name, const char *command, bool noSave);
+	~FConsoleAlias ();
+	void Run (FCommandLine &args, AActor *Instigator, int key);
+	bool IsAlias ();
+	void PrintAlias ();
+	void Archive (FConfigFile *f);
+	void Realias (const char *command, bool noSave);
+	void SafeDelete ();
+protected:
+	char *m_Command[2];
+	bool bRunning;
+	bool bKill;
+};
+
+// Actions
+struct FButtonStatus
+{
+	enum { MAX_KEYS = 6 };	// Maximum number of keys that can press this button
+
+	WORD Keys[MAX_KEYS];
+	BYTE bDown;				// Button is down right now
+	BYTE bWentDown;			// Button went down this tic
+	BYTE bWentUp;			// Button went up this tic
+	BYTE padTo16Bytes;
+
+	void PressKey (int keynum);
+	void ReleaseKey (int keynum);
+	void ResetTriggers () { bWentDown = bWentUp = false; }
+};
+
+extern FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
+	Button_Attack, Button_Speed, Button_MoveRight, Button_MoveLeft,
+	Button_Strafe, Button_LookDown, Button_LookUp, Button_Back,
+	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
+	Button_MoveUp, Button_Jump, Button_ShowScores;
+extern bool ParsingKeyConf;
+
+void ResetButtonTriggers ();	// Call ResetTriggers for all buttons
+void ResetButtonStates ();		// Same as above, but also clear bDown
+
+extern unsigned int MakeKey (const char *s);
+extern unsigned int MakeKey (const char *s, size_t len);
+
+#endif //__C_DISPATCH_H__

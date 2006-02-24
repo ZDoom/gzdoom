@@ -1,0 +1,23 @@
+EXE = makewad.exe
+
+CCDV = @../../ccdv
+CC = gcc
+CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
+
+OBJS = makewad.o
+
+all: $(EXE)
+
+.c.o:
+	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<
+
+$(EXE): $(OBJS)
+	$(CCDV) $(CC) -o $(EXE) $(OBJS)
+
+.PHONY: clean
+
+clean:
+	-del /q /f $(EXE) 2>nul
+	-del /q /f *.o 2>nul
+
+makewad.o: makewad.c

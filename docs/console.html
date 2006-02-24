@@ -1,0 +1,3587 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta name="GENERATOR" content="Microsoft Visual Studio.NET 7.0" />
+		<meta content="http://schemas.microsoft.com/intellisense/nav4-0" name="vs_targetSchema" />
+		<style type="text/css">@import url( console.css ); 
+		</style>
+		<title>ZDoom Console Reference</title>
+	</head>
+	<body>
+		<div class="main">
+			<h2>Contents</h2>
+			<ul>
+				<li>
+					Introduction<ul>
+						<li><a href="#about">About the console</a></li>
+						<li><a href="#using">Using this reference</a></li>
+						<li><a href="#cvartypes">Console variable types</a></li>
+						<li><a href="#obsolete">Obsolete commands and variables</a></li>
+						<li><a href="#buttons">Button commands</a></li></ul>
+				</li>
+				<li>
+					Reference
+					<ul>
+						<li>
+							<a href="#customization">Customization</a></li>
+						<li>
+							<a href="#screenshots">Screenshots</a></li>
+						<li>
+							<a href="#chatting">Chatting</a></li>
+						<li>
+							<a href="#gameplay">Gameplay</a></li>
+						<li>
+							<a href="#cheating">Cheating</a></li>
+						<li>
+							<a href="#display">Display</a></li>
+						<li>
+							<a href="#renderer">Renderer</a></li>
+						<li>
+							<a href="#video">Video</a></li>
+						<li>
+							<a href="#bots">Bots</a></li>
+						<li>
+							<a href="#automap">Automap</a></li>
+						<li>
+							<a href="#player_settings">Player settings</a></li>
+						<li>
+							<a href="#debugging">Debugging</a></li>
+						<li>
+							<a href="#effects">Effects</a></li>
+						<li>
+							<a href="#sounds">Sounds</a></li>
+						<li>
+							<a href="#music_midi">Music - MIDI</a></li>
+						<li>
+							<a href="#music_spc">Music - SPC</a></li>
+						<li>
+							<a href="#music_timidity">Music - Timidity</a></li>
+						<li>
+							<a href="#music_cd">Music - CD</a></li>
+						<li>
+							<a href="#input_keyboard">Input - Keyboard</a></li>
+						<li>
+							<a href="#input_mouse">Input - Mouse</a></li>
+						<li>
+							<a href="#input_joystick">Input - Joystick</a></li>
+						<li>
+							<a href="#other">Other commands and cvars</a></li></ul>
+				</li>
+			</ul>
+			<h2 id="about">About the console</h2>
+			<p>ZDoom's console is a powerful tool for interacting with the game engine directly.
+			There are two methods for accessing it:</p>
+			<ol><li>Open the options menu and select "Go to console."</li>
+			<li>Press a key bound to the <a href="#toggleconsole">toggleconsole</a> command. The normal key for this
+			is the ` key (the key to the left of 1 and above Tab).</li></ol>
+			<p>Once the console is open, you can type in commands and they will appear at the bottom of the console.
+			If you type a command that is wider than the console, the command view scrolls to fit the most recently
+			part of the command on the screen. Press Enter to execute the command.</p>
+			<p>To close the console and return to the game, press ` again or press Esc.</p>
+			<p>The console is divided into three distinct sections:</p>
+			<ol><li>The largest part of the console is the console buffer. This shows the last 32768 bytes printed to the
+			console (which are also printed to the top of the screen when the console is closed).</li>
+			<li>Underneath the console buffer is the command line. This is where you enter all your commands at.</li>
+			<li>Just beneath the command line is the ZDoom version number. If you're not sure what version of ZDoom
+			you're playing, just open the console and look in its lower-right corner.</li></ol>
+			<p>There are several special keys that function in the console:</p>
+			<blockquote>
+			<dl>
+			<dt>Enter</dt>
+			<dd>Execute the current command line.</dd>
+			<dt>Tab</dt>
+			<dd>Move forward through the possible completions for the current command. To use this feature, type the
+			first few characters of a command or cvar, then press Tab. For example, if you type <code>cl_</code>
+			and then press Tab, the first press of the Tab key will list all the possible choices that begin with cl_.
+			Each time you press Tab after that, the next choice in the list will be placed on the command line.</dd>
+			<dt>Shift+Tab</dt>
+			<dd>Move backward through the possible completions for the current command.</dd>
+			<dt>Left arrow</dt>
+			<dd>Move the cursor left on the command line.</dd>
+			<dt>Right arrow</dt>
+			<dd>Move the cursor right on the command line.</dd>
+			<dt>Home</dt>
+			<dd>Move the cursor to the first character on the command line.</dd>
+			<dt>End</dt>
+			<dd>Move the cursor to the last character on the command line.</dd>
+			<dt>Backspace</dt>
+			<dd>Delete the character to the left of the cursor</dd>
+			<dt>Del</dt>
+			<dd>Delete the character underneath the cursor</dd>
+			<dt>Up arrow</dt>
+			<dd>Scroll backward through the most recently typed command lines.</dd>
+			<dt>Down arrow</dt>
+			<dd>Scroll forward through the most recently typed command lines.</dd>
+			<dt>Ctrl+C</dt>
+			<dd>Copy the current command line to the clipboard.</dd>
+			<dt>Ctrl+V</dt>
+			<dd>Paste the contents of the clipboard to the command line.</dd>
+			<dt>Ctrl+D</dt>
+			<dd>When pressed on an empty command line, executes the contents of the <a href="#con_ctrl_d">con_ctrl_d</a>
+			cvar as if it had been typed at the command line.</dd>
+			<dt>Page Up</dt>
+			<dd>Scroll the console buffer up one line.</dd>
+			<dt>Page Down</dt>
+			<dd>Scroll the console buffer down one line.</dd>
+			<dt>Shift+Page Up</dt>
+			<dd>Scroll the console buffer up one page.</dd>
+			<dt>Shift+Page Down</dt>
+			<dd>Scroll the console buffer down one page.</dd>
+			<dt>Ctrl+Home</dt>
+			<dd>Scroll to the top of the console buffer.</dd>
+			<dt>Ctrlr+End</dt>
+			<dd>Scroll to the bottom of the console buffer.</dd>
+			</dl></blockquote>
+			<p>You can also use your mouse wheel to scroll through different things on the console:</p>
+			<blockquote>
+			<dl>
+			<dt>Wheel Up</dt>
+			<dd>Scroll the console buffer up three lines.</dd>
+			<dt>Wheel Down</dt>
+			<dd>Scroll the console buffer down three lines.</dd>
+			<dt>Ctrl+Wheel Up</dt>
+			<dd>Scroll the console buffer up one page.</dd>
+			<dt>Ctrl+Wheel Down</dt>
+			<dd>Scroll the console buffer down one page.</dd>
+			<dt>Shift+Wheel Up</dt>
+			<dd>Scroll backward through the most recently typed command lines.</dd>
+			<dt>Shift+Wheel Down</dt>
+			<dd>Scroll forward through the most recently typed command lines.</dd>
+			</dl></blockquote>
+			<h2 id="using">Using this reference</h2>
+			<p>This reference lists every cvar and command found in ZDoom. To make browsing easier,
+			they have been split into different sections according to category. If you already know the
+			name of the command or cvar you want, you can use the <a href="#index">index</a> to jump
+			directly to it.</p>
+			<p>Because cvars are like special commands, there is no separation between commands and cvars.
+			However, each entry is color coded:</p>
+			<div class="c">command <i>required-parameter</i> [<i>optional-parameter</i>]</div>
+			<div class="b">Green entries are commands. Commands are actions that the game can perform.
+			<p>The command's name and any parameters it takes are listed at the top of the box.
+			The parameters are all listed in <i>italics</i>. If a parameter is not required for the command
+			to operate, then it is surrounded by square brackets [<i>like this</i>].</p>
+			<p>The rest
+			of the box is devoted to a description of the command, which tells what the command does and what
+			any of its parameters do.</p></div>
+			<div class="v">cvar</div>
+			<div class="t">type: default</div>
+			<div class="d">Cyan entries are cvars. A cvar (short for console variable) contains a value that the
+			game uses to control its operations.
+			<p>Like commands, the first part of the box contains the cvar's name. However, parameters are never
+			listed because cvars always have one optional parameter. If you use a cvar without a parameter,
+			the cvar's current value is printed to the console. If you provide a parameter for the cvar, then that
+			will become the cvar's new value.</p>
+			<p>The next part of the box is the cvar's type and default value. The type determines what kinds of
+			values the cvar can hold, and its default is the value it will have when the game can't find an .ini
+			to load its settings from.</p>
+			<p>The remainder of the box is used to describe how the cvar is used.</p>
+			</div>
+			<div class="vf">flag cvar</div>
+			<div class="tf">flag in <i>other cvar</i>: default</div>
+			<div class="df">Blue entries are flag cvars. These are similar to the other types of cvars, except they
+			don't have any values of their own. Instead, they pick apart the contents of another cvar so that you don't
+			need to remember any numbers to use the other cvar.</div>
+			<h2 id="cvartypes">Console variable types</h2>
+			There are seven types of cvars:
+			<dl>
+				<dt>boolean</dt>
+				<dd>
+					This type of variable represents a yes/no or on/off value. It can only be set 
+					to true or false. As shorthand, setting a boolean variable to 0 will set it to 
+					false, and setting it to anything non-zero will set it to true.</dd>
+				<dt>integer</dt>
+				<dd>
+					This is an ordinary number without a decimal point. For example, 1 is an 
+					integer, but 1.2 is not.</dd>
+				<dt>float</dt>
+				<dd>
+					This is an ordinary number that can have a decimal point.</dd>
+				<dt>string</dt>
+				<dd>
+					This is a series of text characters enclosed in quotes: For example, "Felix 
+					loitered lecherously on the lot" is a string. If you removed the quotes around 
+					it, then it would not be a string.
+					<p>If you need to use quotes inside a string, preface it with a backslash.</p>
+					<pre>Are you "The One" of old?</pre>
+					would be written like this as a string:
+					<pre>"Are you \"The One\" of old?"</pre>
+				</dd>
+				<dt>color</dt>
+				<dd>
+					This type of variable is a series of three hexadecimal numbers representing the 
+					amounts of red, green, and blue (in that order) in a color. For example, pure 
+					red would be represented as "ff 00 00". As a shorthand, you can set a color 
+					variable with one of several color names, and the RGB values will be set for 
+					you.</dd>
+				<dt>GUID</dt>
+				<dd>
+					This type variable is used to hold a GUID (Globally Unique Identifier). It is 
+					currently used only by <a href="#joy_guid">joy_guid</a>.</dd>
+				<dt>flag</dt>
+				<dd>
+					This type of variable mirrors a setting in dmflags or dmflags2. Setting its 
+					value will set the corresponding value in one of those variables, and getting 
+					its value will get the corresponding value from one of the other two variables. 
+					This is designed to make using dmflags easier, because you don't have to 
+					memorize any numbers.
+				</dd>
+			</dl>
+			<h2 id="obsolete">Obsolete commands and variables</h2>
+			<p>The following commands and variables were present in ZDoom 1.22 but have been 
+				removed:</p>
+			<dl>
+				<dt>configver</dt>
+				<dd>
+					This variable was used by ZDoom to determine which version wrote the zdoom.cfg. 
+					This has been replaced by the [LastRun] section of zdoom.ini and is no longer 
+					accessible from the console.</dd>
+				<dt>def_patch</dt>
+				<dd>
+					You can now have multiple dehacked patches loaded automatically. To do this, 
+					add a [Doom.DefaultDehacked] section to <a href="#whereisini">zdoom.ini</a> like 
+					this:
+					<pre>[Doom.DefaultDehacked]
+Path=my_first_patch.deh
+Path=my_second_patch.deh</pre>
+					You can add as many Path= lines as you like. Not all Dehacked patches will work 
+					well together. Changes made by patches listed later will override any changes 
+					made by patches listed earlier that affect the same things. If you specify any 
+					patches with -deh or -bex at the command line, then those patches will be 
+					loaded instead of the ones listed here.</dd>
+				<dt>i_remapkeypad</dt>
+				<dd>
+					The keypad is never remapped to non-keypad keys anymore. This cvar came from a 
+					time when you could only assign a function to at most two different keys. Now 
+					that Quake-style keybindings are possible, this cvar is no longer necessary and 
+					has been a source of confusion.</dd>
+				<dt>impulse</dt>
+				<dd>
+					Use the new <a href="#slot">slot</a> command instead.</dd>
+				<dt>nobfgaim</dt>
+				<dd>
+					This was renamed to <a href="#sv_nobfgaim">sv_nobfgaim</a> and is now a part of <a href="#dmflags2">
+						dmflags2</a>.</dd>
+				<dt>vid_noptc</dt>
+				<dd>
+					PTC is no longer used for video, so there is nothing for this cvar to disable.</dd>
+				<dt>testgibs</dt>
+				<dd>
+					This variable never did anything useful in 1.22.
+				</dd>
+				<dt>sv_friction</dt>
+				<dd>
+					Friction was never configurable from the console.</dd>
+			</dl>
+			<div id="buttons">
+				<h2>Button commands</h2>
+				Button commands are commands that represent buttons and come in pairs. Each 
+				"button" has a command prefixed by a + and another corresponding command 
+				prefixed by a -. The + version of the command simulates pushing the button, and 
+				the - version of the command simulates releasing the button.
+				<p>When you bind a command that begins with + to a key, releasing the key will 
+					automatically execute the same command with the + replaced by a -. Note that 
+					this works for aliases as well as the commands listed here. This provides a 
+					useful way to bind multiple actions to a single key. Suppose you want the 
+					normal Doom behavior of moving forward and using when you double click the 
+					right mouse button. If you use the commands
+				</p>
+				<pre>bind mouse2 +forward<br />doublebind mouse2 +use</pre>
+				<p>ZDoom will move you forward when you press the right mouse button. When you 
+					double click it, you will press use, but you will not move forward. To simulate 
+					the standard Doom behavior, you can replace the doublebind command with these 
+					three commands instead:
+				</p>
+				<pre>alias +useforward "+use; +forward"<br />alias -useforward "-use; -forward"<br />doublebind mouse2 +useforward</pre>
+				Now when you double click the right mouse button, the +useforward alias will be 
+				executed. Because +useforward's name begins with a + releasing the right mouse 
+				button will execute the -useforward alias (whether or not -useforward is 
+				defined).
+				<p>This behavior of executing a - command when a key is released applies only to 
+					the first command or alias bound to the key. If you bind a key to "+forward; 
+					+right", releasing the key will execute the command "-forward; +right" and <i>not</i>
+					"-forward; -right". As shown above, you can use aliases to get the correct 
+					behavior.</p>
+				<p>Another trick you can do with aliases is to create a key that only executes the 
+					+ command without executing the - command. If you wanted a key that will make 
+					you move forward when you press it, and will keep you moving forward even after 
+					releasing it, you can use an alias like this:</p>
+				<pre>alias go "+forward"</pre>
+				<p>Then instead of binding +forward to a key, you bind go to the key instead. This 
+					works because go does not begin with a + so nothing will happen when you 
+					release the key&mdash;ZDoom only looks at the command actually bound to the key 
+					to determine if it should execute a - command when the key is released; it does 
+					not look inside aliases.
+				</p>
+				<h3>Standard buttons</h3>
+				<table cellspacing="0" cellpadding="0">
+					<tr>
+						<th>
+							<a name="_attack"></a>+attack</th>
+						<td>
+							Use your weapon.</td></tr>
+					<tr>
+						<th>
+							-attack</th>
+						<td>
+							Stop using your weapon.</td></tr>
+					<tr>
+						<td>
+					&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_use"></a>+use</th>
+						<td>
+							Start trying to use anything in front of you.</td></tr>
+					<tr>
+						<th>
+							-use</th>
+						<td>
+							Stop trying to use anything in front of you.</td></tr>
+					<tr>
+						<td>
+					&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="-back"></a>+back</th>
+						<td>
+							Move backward.</td></tr>
+					<tr>
+						<th>
+							-back</th>
+						<td>
+							Stop moving backward.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_forward"></a>+forward</th>
+						<td>
+							Move forward.</td></tr>
+					<tr>
+						<th>
+							-forward</th>
+						<td>
+							Stop moving forward.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_jump"></a>+jump</th>
+						<td>
+							Start jumping.</td></tr>
+					<tr>
+						<th>
+							-jump</th>
+						<td>
+							Stop jumping.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_left"></a>+left</th>
+						<td>
+							Start turning left.</td></tr>
+					<tr>
+						<th>
+							-left</th>
+						<td>
+							Stop turning left.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_right"></a>+right</th>
+						<td>
+							Start turning right.</td></tr>
+					<tr>
+						<th>
+							-right</th>
+						<td>
+							Stop turning right.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_moveleft"></a>+moveleft</th>
+						<td>
+							Start strafing left.</td></tr>
+					<tr>
+						<th>
+							-moveleft</th>
+						<td>
+							Stop strafing left.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_moveright"></a>+moveright</th>
+						<td>
+							Start strafing right.</td></tr>
+					<tr>
+						<th>
+							-moveright</th>
+						<td>
+							Stop strafing right.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_lookdown"></a>+lookdown</th>
+						<td>
+							Start lowering your view.</td></tr>
+					<tr>
+						<th>
+							-lookdown</th>
+						<td>
+							Stop lowering your view.</td></tr>
+					<tr>
+						<td>
+					&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_lookup"></a>+lookup</th>
+						<td>
+							Start raising your view.</td></tr>
+					<tr>
+						<th>
+							-lookup</th>
+						<td>
+							Stop raising your view.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_movedown"></a>+movedown</th>
+						<td>
+							Start moving down if swimming or flying.</td></tr>
+					<tr>
+						<th>
+							-movedown</th>
+						<td>
+							Stop moving down.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_moveup"></a>+moveup</th>
+						<td>
+							Start moving up if swimming or flying.</td></tr>
+					<tr>
+						<th>
+							-moveup</th>
+						<td>
+							Stop moving up if swimming or flying.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_strafe"></a>+strafe</th>
+						<td>
+							Causes +left and +right to behave like +moveleft and +moveright;</td></tr>
+					<tr>
+						<th>
+							-strafe</th>
+						<td>
+							Returns +left and +right to their normal behavior.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_klook"></a>+klook</th>
+						<td>
+							Causes +forward and +back to act like +lookup and +lookdown instead.</td></tr>
+					<tr>
+						<th>
+							-klook</th>
+						<td>
+							Returns +forward and +back to their normal behavior.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_mlook"></a>+mlook</th>
+						<td>
+							Moving the mouse up and down will make you look up and down.</td></tr>
+					<tr>
+						<th>
+							-mlook</th>
+						<td>
+							Moving the mouse up and down will make you move forward and backward. However, 
+							if freelook is true, then moving the mouse up and down will still change your 
+							view instead of moving you.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_showscores"></a>+showscores</th>
+						<td>
+							Display a scorelist for deathmatch games.</td></tr>
+					<tr>
+						<th>
+							-showscores</th>
+						<td>
+							Hide the deathmatch scorelist.</td></tr>
+					<tr>
+						<td>
+							&nbsp;</td></tr>
+					<tr>
+						<th>
+							<a name="_speed"></a>+speed</th>
+						<td>
+							Start running.</td></tr>
+					<tr>
+						<th>
+							-speed</th>
+						<td>Start walking.</td>
+					</tr>
+				</table>
+			</div>
+			<div id="customization">
+				<h2>Customization</h2>
+				<div class="c" id="addkeysection">addkeysection <i>menu-heading</i> <i>ini-section-name</i></div>
+				<div class="b">This command does two things. First, it adds a new heading called <i>menu-heading</i>
+					to the <a href="#menu_keys">controls menu</a>. You can use the <a href="#addmenukey">
+						addmenukey</a> command to add your own custom keys beneath this heading. 
+					Second, it loads all the bindings from the corresponding <i>ini-section-name</i>
+					section in zdoom.ini. You can use this command multiple times to create 
+					different sections in the menu and ini for different sets of commands. If you 
+					use a <i>menu-heading</i> that was already added to the menu, new controls 
+					added with addmenukey will appear at the end of that section, but the bindings 
+					will not be reloaded from the ini.
+				</div>
+				<div class="c" id="addmenukey">addmenukey <i>description</i> <i>command</i></div>
+				<div class="b">Adds a new control to the controls menu. <i>Description</i> is the 
+					name of this control in the menu, and <i>command</i> is a console command or 
+					alias to be executed when the control is pressed. New controls are added to the 
+					last section specified with <a href="#addkeysection">addkeysection</a>.</div>
+				<div class="c" id="addslot">addslot <i>slot</i> <i>weapon</i></div>
+				<div class="b">Adds a single weapon to the list of weapons in a weapon slot.</div>
+				<div class="c" id="addslotdefault">addslotdefault <i>slot</i> <i>weapon</i></div>
+				<div class="b">Adds a single weapon to the list of weapons in a weapon slot, but 
+					only if that weapon is not already in a slot. If the weapon is already present 
+					in a slot (either the slot specified to addslotdefault or some other slot), 
+					then this command does nothing. When used inside a KEYCONF lump, this command 
+					must be preceded by a <a href="weaponsection">weaponsection</a> command.</div>
+				<div class="c" id="alias">alias <i>new-command</i> [<i>command-string</i>]</div>
+				<div class="b">If specified with no parameters, will display a list of all current 
+					aliases. If only <i>new-command</i> is specified, it will be removed from the 
+					list of aliases. If <i>command-string</i> is also specified, it will be added 
+					to the list of aliases as <i>new-command</i>. For example, to create a new 
+					command to kill the monsters on the level, you can use the command:
+					<pre>alias massacre "kill monsters"</pre>
+					<p>Then you can use the newly created <code>massacre</code> command to kill all the 
+						monsters on the level.</p>
+				</div>
+				<div class="c" id="archivecvar">archivecvar <i>cvar</i></div>
+				<div class="b">When you create a custom cvar with the <a href="#set">set</a> command, 
+					it will not normally be saved in the ini. You can use archivecvar after 
+					creating the cvar to indicate that the custom cvar's value should persist even 
+					after you quit.</div>
+				<div class="c" id="atexit">atexit [<i>command</i>]</div>
+				<div class="b">If you specify a <i>command</i>, it will be added to a list of 
+					console commands to execute when the user quits the game. Commands are executed 
+					in the reverse order that they were added in. If you do not specify any 
+					arguments to atexit, then it will list the current set of commands that will 
+					execute when you quit.</div>
+				<div class="c" id="bind">bind [<i>key</i> [<i>command string</i>]]</div>
+				<div class="b">If no parameters are specified, the entire list of bound keys will 
+					be printed to the console. If only [<i>key</i>] is specified, the binding for 
+					that specific key will be printed. If both [<i>key</i>] and [<i>command string</i>] 
+					are specified, [<i>command string</i>] will be bound to [<i>key</i>].
+				</div>
+				<div class="c" id="binddefaults">binddefaults</div>
+				<div class="b">Binds all keys to their default commands. This will not unbind any 
+					keys that do not have any default bindings, so if you want to properly restore 
+					the default controls, you need to use unbindall first.
+				</div>
+				<div class="c" id="defaultbind">defaultbind <i>key</i> <i>command</i></div>
+				<div class="b">Binds <i>command</i> to the <i>key</i> if and only if <i>key</i> is 
+					not already bound <b>and</b> there are no keys already bound to <i>command</i>.</div>
+				<div class="c" id="doublebind">doublebind [<i>key</i> [<i>command string</i>]]</div>
+				<div class="b">This command works just like bind, except it controls the action 
+					that occurs when a key is double-clicked. If a key does not have a 
+					doublebinding, then double-clicking it has the same result as pressing it 
+					twice. Otherwise, the first press will execute the normal command set with 
+					bind, and the second press of the double-click will execute the command set 
+					with doublebind.
+				</div>
+				<div class="c" id="eval">eval <i>expression</i> [<i>variable</i>]</div>
+				<div class="b">Evaluates a mathematical expression and either prints it to the 
+					console or stores it in <i>variable</i>. Expressions are written using prefix 
+					notation instead of the more common infix notation. Basically, you first 
+					specify what you want to do (the operator) and then what you want to do it to 
+					(the operands). You must separate operators and operands with spaces.
+					<dl>
+						<dt>Examples:</dt>
+						<dd>
+							To compute 2+2:
+							<pre>eval + 2 2</pre>
+							To compute 5-3:
+							<pre>eval - 5 3</pre>
+							To compute 2+(5*6):
+							<pre>eval + 2 * 5 6</pre>
+							To decrease the number of screenblocks:
+							<pre>eval - $screenblocks 1 screenblocks</pre>
+						</dd>
+						<dt>The supported operators are:</dt><dd><table>
+								<tr>
+									<td><code>+ <i>a</i> <i>b</i></code></td>
+									<td><b>Adds</b> <i>a</i> and <i>b</i>.</td>
+								</tr>
+								<tr>
+									<td><code>- <i>a</i> <i>b</i></code></td>
+									<td><b>Subtracts</b> <i>b</i> from <i>a</i>.</td>
+								</tr>
+								<tr>
+									<td><code>* <i>a</i> <i>b</i></code></td>
+									<td><b>Multiplies</b> <i>a</i> and <i>b</i>.</td>
+								</tr>
+								<tr>
+									<td><code>/ <i>a</i> <i>b</i></code></td>
+									<td><b>Divides</b> <i>a</i> by <i>b</i>.</td>
+								</tr>
+								<tr>
+									<td><code>% <i>a</i> <i>b</i></code></td>
+									<td>Calculates the <b>remainder</b> of <i>a</i>/<i>b</i>.</td>
+								</tr>
+								<tr>
+									<td><code>^ <i>a</i> <i>b</i></code></td>
+									<td>Raises <i>a</i> to the <i>b</i>-th <b>power</b></td>
+									</tr>
+								<tr>
+									<td><code>&lt; <i>a</i> <i>b</i></code></td>
+									<td>Produces 1 if <i>a</i> is <b>less than</b> <i>b</i> and 0 if not.</td>
+								</tr>
+								<tr>
+									<td><code>&lt;= <i>a</i> <i>b</i></code></td>
+									<td>Produces 1 if <i>a</i> is <b>less than or equal</b> to <i>b</i> and 0 if not.</td>
+								</tr>
+								<tr>
+									<td><code>&gt; <i>a</i> <i>b</i></code></td>
+									<td>Produces 1 if <i>a</i> is <b>greater than</b> <i>b</i> and 0 if not.</td>
+								</tr>
+								<tr>
+									<td><code>&gt;= <i>a</i> <i>b</i></code></td>
+									<td>Produces 1 if <i>a</i> is <b>greater than or equal</b> to <i>b</i> and 0 if 
+										not.</td>
+								</tr>
+								<tr>
+									<td><code>= <i>a</i> <i>b</i></code></td>
+									<td>Produces 1 if <i>a</i> is <b>equal</b> to <i>b</i> and 0 if not.</td>
+								</tr>
+								<tr>
+									<td><code>== <i>a</i> <i>b</i></code></td>
+									<td>Produces 1 if <i>a</i> is <b>equal</b> to <i>b</i> and 0 if not.</td>
+								</tr>
+								<tr>
+									<td><code>!= <i>a</i> <i>b</i></code></td>
+									<td>Produces 1 if <i>a</i> is <b>not equal</b> to <i>b</i> and 0 if it is.</td>
+								</tr>
+								<tr>
+									<td><code>&lt;&gt; <i>a</i> <i>b</i></code></td>
+									<td>Produces 1 if <i>a</i> is <b>not equal</b> to <i>b</i> and 0 if is.</td>
+								</tr>
+								<tr>
+									<td><code>xor <i>a</i> <i>b</i></code></td>
+									<td>Calculates the <b>bit-wise exclusive-or</b> of <i>a</i> and <i>b</i>.</td>
+								</tr>
+								<tr>
+									<td><code>&amp; <i>a</i> <i>b</i></code></td>
+									<td>Calculates the <b>bit-wise and</b> of <i>a</i> and <i>b</i>.</td>
+								</tr>
+								<tr>
+									<td><code>| <i>a</i> <i>b</i></code></td>
+									<td>Calculates the <b>bit-wise or</b> of <i>a</i> and <i>b</i>.</td>
+								</tr>
+								<tr>
+									<td><code>&amp;&amp; <i>a</i> <i>b</i></code></td>
+									<td>Calculates the <b>logical and</b> of <i>a</i> and <i>b</i>.</td>
+								</tr>
+								<tr>
+									<td><code>|| <i>a</i> <i>b</i></code></td>
+									<td>Calculates the <b>logical or</b> of <i>a</i> and <i>b</i>.</td>
+								</tr>
+							</table>
+						</dd>
+					</dl>
+				</div>
+				<div class="c" id="exec">exec <i>script-file</i></div>
+				<div class="b">Executes a series of commands stored in the <i>script-file</i> as if 
+					they had been typed in at the console directly.
+				</div>
+				<div class="c" id="key">key <i>value1</i> [<i>value2</i>]</div>
+				<div class="b">Translates all parameters to the command into their corresponding 
+					key values which are used internally for command and alias lookup. Probably not 
+					very useful for the average user.
+				</div>
+				<div class="c" id="puke">puke <i>script</i> [<i>arguments</i>]</div>
+				<div class="b">Executes an ACS script on the current map, optionally passing it up 
+					to three numerical arguments.
+				</div>
+				<div class="c" id="pullin">pullin <i>wadfile</i></div>
+				<div class="b">Loads a <i>wadfile</i> at startup. This command is only valid inside 
+					.cfg files that have been <a href="#exe">exec</a>ed at startup.</div>
+				<div class="c" id="set">set <i>cvar</i> <i>value</i></div>
+				<div class="b">Sets <i>cvar</i> to <i>value</i>. If <i>cvar</i> does not exist, it 
+					will be created.
+				</div>
+				<div class="c" id="rebind">rebind <i>binding</i></div>
+				<div class="b">Changes the binding for the key that caused the rebind command to 
+					execute. For obvious reasons, this command cannot be used at the console.<dl>
+						<dt>Example:</dt>
+						<dd>
+							<pre>bind b "echo setting 1; rebind \"echo setting 2\""</pre>
+							This will cause the first press of b to echo "setting 1" to the console. All 
+							future presses of b will echo "setting 2" instead.
+						</dd>
+					</dl>
+				</div>
+				<div class="c" id="unbind">unbind <i>key</i></div>
+				<div class="b">Removes a binding from the specified key.</div>
+				<div class="c" id="unbindall">unbindall</div>
+				<div class="b">Removes all bindings and doublebindings from every key. To restore 
+					the default bindings, you can use the binddefaults command. There is no way to 
+					restore any custom bindings after issuing this command except by retyping each 
+					bind command or using the controls setup menu.</div>
+				<div class="c" id="undoublebind">undoublebind <i>key</i></div>
+				<div class="b">Removes a doublebinding from the specified key.</div>
+				<div class="c" id="unset">unset <i>cvar</i></div>
+				<div class="b">Undefines a user-created cvar.</div>
+				<div class="c" id="weaponsection">weaponsection <i>ini-section-name</i></div>
+				<div class="b">This command is similar to <a href="#addkeysection">addkeysection</a>. 
+					Upon execution, it loads all the weapon slot assignments from the corresponding <i>ini-section-name</i>
+					section in zdoom.ini. When you quit the game, the weapon slots will also be 
+					stored in the specified section in zdoom.ini instead of their standard location 
+					so that they do not overwrite the player's normal weapon assignments.
+				</div>
+			</div>
+			<div id="screenshots">
+				<h2>Screenshots</h2>
+				<div class="v" id="png_gamma">png_gamma</div>
+				<div class="t">float: 0</div>
+				<div class="d">Controls the gamma level stored in PNG screenshots. If this is 0, 
+					then your current <a href="#Gamma">gamma</a> setting will be used.</div>
+				<div class="v" id="png_level">png_level</div>
+				<div class="t">integer: 5</div>
+				<div class="d">This is the level of compression to use for PNG screenshots. 0 is no 
+					compression at all, 1 is minimal compression (fastest), 9 is maximum 
+					compression (slowest), and intermediate values offer intermediate compression. 
+					5 is offers a decent trade-of between file size and compression time. An 
+					uncompressed image will not neccessarily save faster than a compressed image, 
+					because the extra time needed to write out a complete uncompressed image may be 
+					longer than the time required to compress the image. If you need to create 
+					screenshots as quickly as possible, consider setting <a href="#screenshot_type">screenshot_type</a>
+					to "pcx".
+				</div>
+				<div class="c" id="screenshot">screenshot [<i>file</i>]</div>
+				<div class="b">Dumps a copy of the screen to disk as a PNG or PCX file. If <i>file</i>
+					is not specified, the screenshot will be saved to the directory the game was 
+					run from with a name of the form doom????.png.
+				</div>
+				<div class="v" id="screenshot_dir">screenshot_dir</div>
+				<div class="t">string: ""</div>
+				<div class="d">This is the directory where screenshots will be saved if you do not 
+					provide a filename to the screenshot command. If this is unspecified (i.e. you 
+					leave it at its default), screenshots will be saved to the current working 
+					directory.</div>
+				<div class="v" id="screenshot_quiet">screenshot_quiet</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this to true will suppress the messages informing you what 
+					file a screenshot was saved to.</div>
+				<div class="v" id="screenshot_type">screenshot_type</div>
+				<div class="t">string: "png"</div>
+				<div class="d">Determines the type of screenshots that will be saved. This can be 
+					either "png" or "pcx". In my empirical studies, PNG screenshots are about half 
+					the size of pcx screenshots. PCX screenshots have the advantage that they 
+					require less time to create so are most useful for rapid screenshot generation. 
+					The following sequence of console commands will take a screenshot every frame. 
+					You can use an external program to assemble these into a video, if desired.
+					<pre>screenshot_type "pcx"
+screenshot_quiet true
+alias autoshot "screenshot; wait 1; autoshot"
+autoshot</pre>
+					<p>If you use the autoshot alias, the command <code>alias autoshot</code> will stop 
+						automatic screenshot taking before you hit 10000 screenshots (approximately 4 
+						minutes, 45 seconds).</p>
+				</div>
+				<div class="v" id="storesavepic">storesavepic</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Setting this to false will produce smaller savegames (by about 14k 
+					typically) by not storing a screenshot inside the savegame.</div>
+			</div>
+			<div id="chatting">
+				<h2>Chatting</h2>
+				<div class="v" id="chat_substitution">chat_substitution</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true if you want to chat using special keywords that 
+					will be replaced with appropriate text when your messages are sent. The 
+					supported keywords are:
+					<dl>
+						<dt>$health</dt>
+						<dd>
+							Replaced by your current health.</dd>
+						<dt>$weapon</dt>
+						<dd>
+							Replaced by the name of your current weapon.</dd>
+						<dt>$armor</dt>
+						<dd>
+							Replaced by your current armor count.</dd>
+						<dt>$ammocount</dt>
+						<dd>
+							Replaced by your current ammo count.</dd>
+						<dt>$ammo</dt>
+						<dd>
+							Replaced by the name of your current ammo.</dd>
+					</dl>
+					As an example, if you just started a new game of Doom and have chat 
+					substitution turned on, when you send the message "My health is $health, and I 
+					am using a $weapon", the message that is actually sent will be "My health is 
+					100, and I am using a Pistol".</div>
+				<div class="v" id="chatmacroX">chatmacro0<br />
+					chatmacro1<br />
+					chatmacro2<br />
+					chatmacro3<br />
+					chatmacro4<br />
+					chatmacro5<br />
+					chatmacro6<br />
+					chatmacro7<br />
+					chatmacro8<br />
+					chatmacro9<br />
+				</div>
+				<!-- These are here so that I can grep for "<div class=\"v\"" and find all the variables
+     defined in this file.
+     
+		<div class="v" id="chatmacro1"></div>
+		<div class="v" id="chatmacro2"></div>
+		<div class="v" id="chatmacro3"></div>
+		<div class="v" id="chatmacro4"></div>
+		<div class="v" id="chatmacro5"></div>
+		<div class="v" id="chatmacro6"></div>
+		<div class="v" id="chatmacro7"></div>
+		<div class="v" id="chatmacro8"></div>
+		<div class="v" id="chatmacro9"></div>
+-->
+				<div class="t">string</div>
+				<div class="d">These are all strings that can be assigned to hotkeys in chat mode. 
+					To use these, enter chat mode and then hold down Alt and press one of the 
+					number keys. The string stored in the corresponding chatmacro cvar will be sent 
+					as if you had typed it yourself.
+				</div>
+				<div class="c" id="messagemode">messagemode</div>
+				<div class="b">Enters message entry mode. Anything typed while in this mode will be 
+					sent to everyone else as if you had used the say command once you press enter.
+				</div>
+				<div class="c" id="messagemode2">messagemode2</div>
+				<div class="b">This is just like messagemode except that the message is only sent 
+					to other members of your team. If teamplay is false or you don't have a team, 
+					then this command will work just like messagemode and send the message to 
+					everyone.
+				</div>
+				<div class="c" id="say">say <i>message</i></div>
+				<div class="b">Sends a <i>message</i> to everyone playing. If your message begins 
+					with "/me" then "/me" will be replaced by your name ala IRC.
+				</div>
+				<div class="c" id="say_team">say_team <i>message</i></div>
+				<div class="b">This is just like say except it only sends a <i>message</i> to your 
+					teammates. If teamplay is inactive, then this command will act exactly like say 
+					and send the message to everyone.
+				</div>
+			</div>
+			<div id="gameplay">
+				<h2>Gameplay</h2>
+			</div>
+			<div id="cheating">
+				<h2>Cheating</h2>
+				<div class="v" id="sv_cheats">sv_cheats</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When true, cheats will be allowed in Nightmare difficulty and 
+					network games. For purposes of fairness, this cvar can only be set from the 
+					command line when you run ZDoom. This is to avoid situations where the key 
+					player in a multiplayer game (player 1) could go to the console and type 
+					something like this:<code>sv_cheats 1<br />
+						god<br />
+						sv_cheats 0</code> whereby rendering himself immune to the attacks of 
+					others.</div>
+				<div class="c" id="anubis">anubis</div>
+				<div class="b">Toggles monster fear on and off. Scared monsters will run away from 
+					you and attack less frequently.</div>
+				<div class="c" id="fly">fly</div>
+				<div class="b">Toggles fly mode on and off.</div>
+				<div class="c" id="give">give <i>item</i></div>
+				<div class="b">Gives an item to the player. Give understands the following special 
+					items:
+					<ul>
+						<li>all - gives you everything</li>
+						<li>health - gives you full health</li>
+						<li>weapons - gives you every weapon</li>
+						<li>ammo - gives you full ammo</li>
+						<li>armor - gives you full armor</li>
+						<li>keys - gives you every key</li>
+					</ul>
+					It also understands the names of individual inventory items. Use the command <code><a href="#dumpclasses">
+							dumpclasses</a> inventory</code> for a complete list of these.
+				</div>
+				<div class="c" id="god">god</div>
+				<div class="b">Toggles God (Degreelessness) mode on/off. While active, you cannot 
+					be hurt by normal attacks (although telefragging will still kill you). Also 
+					known as iddqd.
+				</div>
+				<div class="c" id="iddqd">iddqd</div>
+				<div class="b">The same as <a href="#god">god</a>, except it also gives you 100 
+					health.
+				</div>
+				<div class="c" id="kill">kill [<i>monsters</i>]</div>
+				<div class="b">If used as "kill monsters", will kill all monsters on the level. 
+					Otherwise, it will kill you instead. This command is broken in netgames, so 
+					don't use it unless you are playing a single player game.
+				</div>
+				<div class="c" id="logfile">logfile [<i>log-file</i>]</div>
+				<div class="b">If <i>log-file</i> is not specified, console logging will be stopped 
+					(if active). Otherwise, a file named <i>log-file</i> will be created on disk, 
+					and all console output will be recorded in it as well as on the screen.
+				</div>
+				<div class="c" id="mdk">mdk</div>
+				<div class="b">This cheat will kill whatever you are looking at.</div>
+				<div class="c" id="morphme">morphme</div>
+				<div class="b">Transforms you into a chicken in Heretic and a pig in Hexen.</div>
+				<div class="c" id="noclip">noclip</div>
+				<div class="b">Toggles noclipping mode on/off.
+				</div>
+				<div class="c" id="notarget">notarget</div>
+				<div class="b">Toggles notarget mode on/off. While active, monsters will not target 
+					you unless you hurt them first.
+				</div>
+				<div class="c" id="powerup">powerup</div>
+				<div class="b">Powers you up in Heretic as if you had used a Tome of Power.</div>
+				<div class="v" id="turbo">turbo</div>
+				<div class="t">float: 100</div>
+				<div class="d">This cvar affects how quickly the player moves. A value of 100 will 
+					cause the player to move at normal speed, 200 will cause the player to move at 
+					200% of normal speed, 50 will cause the player to move at 50% of normal speed, 
+					etc. Valid values range from 10 to 256.</div>
+			</div>
+			<div id="display">
+				<h2>Display</h2>
+				<div class="c" id="bumpgamma">bumpgamma</div>
+				<div class="b">Increases the current gamma level by 0.1. If the new gamma level 
+					would be greater than 3.0, it wraps the gamma around to 1.0
+				</div>
+				<div class="v" id="cl_bbannounce">cl_bbannounce</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When true, enables the Bloodbath announcer for deathmatch games. The 
+					Bloodbath announcer is "The Voice" from Monolith Software's Blood game. To hear 
+					the announcer, you need to load Blood's sounds.rff either at the command line 
+					or through one of zdoom.ini's [*.Autoload] sections. You can get this file 
+					either from the demo or full version of Blood. If you don't have sounds.rff, 
+					you can still see the announcer's messages even though you won't hear anything.
+				</div>
+				<div class="v" id="cl_capfps">cl_capfps</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Traditionally, Doom has been limited to displaying only 35 frames 
+					per second. In ZDoom, this limitation has been shattered, and the game will 
+					normally run as fast as your processor allows. If you prefer the limited 
+					framerate originally offered by Doom, you can set this cvar to true, and the 
+					game will never run faster than 35 FPS. If your machine is too slow to run 
+					faster than 35 FPS, you might also experience better gameplay by setting this 
+					cvar to true.</div>
+				<div class="v" id="cl_showmultikills">cl_showmultikills</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Set this to false if you don't want to see Unreal Tournament-style 
+					messages when a player makes several kills in a short period of time.</div>
+				<div class="v" id="cl_showsprees">cl_showsprees</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Set this to false if you don't want to see Unreal Tournament-style 
+					messages when a player is on a killing spree.</div>
+				<div class="v" id="cl_spreaddecals">cl_spreaddecals</div>
+				<div class="t">boolean: true</div>
+				<div class="d">ZDoom clips decals to sidedefs. In order to hide this, the game will 
+					create as many duplicate decals on adjoining sidedefs as needed to make it 
+					appear that there is only one unbroken decal on the wall. Set this cvar to 
+					false if you don't want this.</div>
+				<div class="v" id="con_centernotify">con_centernotify</div>
+				<div class="t">boolean: false for Doom, true for Heretic and Hexen</div>
+				<div class="d">When true, notify messages at the top of the screen are centered. 
+					Otherwise, they are justified against the left margin.</div>
+				<div class="v" id="con_midtime">con_midtime</div>
+				<div class="t">float: 3</div>
+				<div class="d">This is the number of seconds that messages in the middle of the 
+					screen will be displayed before they dispapper.
+				</div>
+				<div class="v" id="con_notablist">con_notablist</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When you press tab on the console to complete a command, a list of 
+					possible completions will normally be printed the first time you press tab and 
+					subsequent presses of tab will cycle through the different completions. By 
+					setting this cvar to true, the list will not be printed and every press of tab 
+					will cycle through the possible completions.</div>
+				<div class="v" id="con_notifytime">con_notifytime</div>
+				<div class="t">float: 3</div>
+				<div class="d">This is the number of seconds that new messages will stay at the top 
+					of the screen before they start scrolling away.
+				</div>
+				<div class="v" id="con_scaletext">con_scaletext</div>
+				<div class="t">boolean: false</div>
+				<div class="d">If this cvar is true, then message text will be scaled to larger 
+					sizes depending on the screen resolution so that it will stay approximately the 
+					same size it would be on a 320x200 screen.
+				</div>
+				<div class="v" id="crosshair">crosshair</div>
+				<div class="t">integer: 0</div>
+				<div class="d">If this cvar is non-zero, it draws a crosshair. If this cvar is 
+					negative, the crosshair is translucent, otherwise it is opaque. The specific 
+					crosshair drawn depends on the value of this cvar.
+				</div>
+				<div class="v" id="crosshaircolor">crosshaircolor</div>
+				<div class="t">color: "ff 00 00"</div>
+				<div class="d">This is the crosshair's color if crosshairhealth is false.</div>
+				<div class="v" id="crosshairgrow">crosshairgrow</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true if you want the crosshair to temporarily enlarge 
+					each time you pick up an item.</div>
+				<div class="v" id="crosshairhealth">crosshairhealth</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, the crosshair's color reflects your current health. Green 
+					is healthy, red is near death, and intermediate colors are somewhere in 
+					between. Set this to false, if you want the crosshair to have a constant color 
+					(specified by the crosshaircolor cvar) instead.</div>
+				<div class="v" id="crosshairscale">crosshairscale</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true if you want the crosshair to always appear the same 
+					size at all resolutions. Leaving it at false causes the crosshair to be drawn 
+					normally.</div>
+				<div class="v" id="gamma">gamma</div>
+				<div class="t">float: 1.0</div>
+				<div class="d">Controls the amount of gamma correction applied to the display. 1.0 
+					is equivalent to no correction, while larger numbers translate into a brighter 
+					display, and smaller numbers translate into a darker display. 0.0 is invalid 
+					and will be rejected. Negative numbers are technically invalid but will be 
+					accepted solely for the novelty value doing so provides.
+				</div>
+				<div class="v" id="hud_scale">hud_scale</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Controls scaling of the fullscreen hud. At resolutions of 640x400 or 
+					above, setting this cvar to true will cause the icons to be scaled to 
+					approximately the same size they would be at 320x200. If this cvar is false, 
+					the icons will always be drawn without any scaling.
+				</div>
+				<div class="v" id="msg">msg</div>
+				<div class="t">integer: 0</div>
+				<div class="d">This is the minimum message level that you will see. You will not 
+					see any messages with a lower priority than this. The different message levels 
+					are:
+					<ol start="0">
+						<li>Item pickup</li>
+						<li>Obituaries</li>
+						<li>Critical messages</li>
+						<li>Chat messages</li>
+						<li>Chat messages from a teammate</li>
+					</ol>
+				</div>
+				<div class="v" id="msg0color">msg0color</div>
+				<div class="t">integer: 6</div>
+				<div class="d">This cvar controls the color used to display level 0 (item pickup) 
+					messages. Available colors are:
+					<ol start="0">
+						<li>Brick</li>
+						<li>Tan</li>
+						<li>Gray</li>
+						<li>Green</li>
+						<li>Brown</li>
+						<li>Gold</li>
+						<li>Red</li>
+						<li>Blue</li>
+						<li>Orange</li>
+						<li>White</li>
+						<li>Yellow
+						</li>
+					</ol>
+				</div>
+				<div class="v" id="msg1color">msg1color</div>
+				<div class="t">integer: 5</div>
+				<div class="d">This cvar selects the color used to display level 1 (obituary) 
+					messages. Available colors are the same as for" <a href="#msg0color">msg0color</a>.
+				</div>
+				<div class="v" id="msg2color">msg2color</div>
+				<div class="t">integer: 2</div>
+				<div class="d">This cvar selects the color used to display level 2 (critical) 
+					messages. Available colors are the same as for <a href="#msg0color">msg0color</a>.
+				</div>
+				<div class="v" id="msg3color">msg3color</div>
+				<div class="t">integer: 3</div>
+				<div class="d">This cvar selects the color used to display level 3 (chat) messages. 
+					Available colors are the same as for <a href="#msg0color">msg0color</a>.
+				</div>
+				<div class="v" id="msg4color">msg4color</div>
+				<div class="t">integer: 3</div>
+				<div class="d">This cvar selects the color used to display level 4 (team chat) 
+					messages. Available colors are the same as for <a href="#msg0color">msg0color</a>.
+				</div>
+				<div class="v" id="msgmidcolor">msgmidcolor</div>
+				<div class="t">integer: 5</div>
+				<div class="d">This cvar selects the color used to display messages in the middle 
+					of the screen. Available colors are the same as for <a href="#msg0color">msg0color</a>.
+				</div>
+				<div class="v" id="msgmidcolor2">msgmidcolor2</div>
+				<div class="t">integer: 4</div>
+				<div class="d">This cvar selects the color used to display messages in the middle 
+					of the screen that are sent to everyone. Available colors are the same as for <a href="#msg0color">
+						msg0color</a>.
+				</div>
+				<div class="v" id="st_scale">st_scale</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When this cvar is true, the status bar will be scaled so that it 
+					covers the entire width of the screen in higher resolutions. At low resolutions 
+					this may look ugly, but at high resolutions it should look good enough.</div>
+			</div>
+			<div id="renderer">
+				<h2>Renderer</h2>
+				<div class="v" id="r_columnmethod">r_columnmethod</div>
+				<div class="t">integer: 1</div>
+				<div class="d">Selects which of two algorithms to use to draw sprites and masked 
+					textures. Method 0 is the original algorithm used by DOOM. Method 1 is a new 
+					algorithm optimized for Pentium IIs and can perform significantly better with 
+					that or comparable processors. Ironically, method 0 is slightly faster than 
+					method 1 on Pentium III and Athlon processors (though not significantly so).
+				</div>
+				<div class="v" id="r_detal">r_detail</div>
+				<div class="t">integer: 0</div>
+				<div class="d">This cvar selects the detail level of the view window. Valid values 
+					are:
+					<ol start="0">
+						<li>Normal detail level. Equivalent to Doom's high detail mode.</li>
+						<li>Double pixels horizontally. Equivalent to Doom's low detail mode.</li>
+						<li>Double pixels vertically.</li>
+						<li>Double pixels horizontally and vertically.</li>
+					</ol>
+					Because of the way the renderer works, doubling pixels horizontally offers more 
+					of a speed-up than doubling them vertically does. Unless you have a very slow 
+					computer, there should be no reason to use any detail level other than 0.
+				</div>
+				<div class="v" id="r_drawflat">r_drawflat</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When set to 0, segs will be drawn as solid colors instead of 
+					textures. This is useful if you want to see how a node builder split a level's 
+					linedefs. Otherwise, it just looks ugly.
+				</div>
+				<div class="v" id="r_drawfuzz">r_drawfuzz</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When set to false, the "fuzz" effect on spectres and partially 
+					invisible players will be replaced with translucency.
+				</div>
+				<div class="v" id="r_drawmirrors">r_drawmirrors</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Setting this false will disable the display of mirrors.</div>
+				<div class="v" id="r_drawplayersprites">r_drawplayersprites</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When false, the game will not draw the player's weapon or muzzle 
+					flash, which can be nice for screenshots.
+				</div>
+				<div class="v" id="r_drawtrans">r_drawtrans</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Setting this to false will disable all translucency effects in the 
+					game.</div>
+				<div class="v" id="r_fogboundary">r_fogboundary</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Setting this to false will disable the display of fog boundaries. 
+					Fog boundaries are sections where two areas with different fog colors meet. If 
+					the boundary is not drawn, then it will look like there is no fog at all in 
+					front of the boundary. Some old levels may look bad with fog boundary drawing 
+					enabled, which is why this cvar is available.</div>
+				<div class="v" id="r_particles">r_particles</div>
+				<div class="t">boolean: true</div>
+				<div class="d">If set to true, particles are drawn. Otherwise, they aren't.
+				</div>
+				<div class="v" id="r_skyboxes">r_skyboxes</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Set this to false to disable the drawing of skyboxes. Then every sky 
+					will be drawn as a standard sky instead of as a skybox.</div>
+				<div class="v" id="r_stretchsky">r_stretchsky</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Controls whether or not short sky textures are stretched so that you 
+					don't see them wrap when you look up.
+				</div>
+				<div class="v" id="r_viewsize">r_viewsize</div>
+				<div class="t">string</div>
+				<div class="d">This cvar contains the width and height of the current view window. 
+					This cvar is read only.
+				</div>
+				<div class="c" id="r_visibility">r_visibility [<i>visibility</i>]</div>
+				<div class="b">Without any parameters, displays the current visibility. With a 
+					parameter, the visibility is set. Standard visibility for the Doom engine is 8. 
+					Visibility determines how quickly light drops off with distance from the 
+					viewer. At 0 visibility, there is no change in lighting with depth.
+				</div>
+			</div>
+			<div id="video">
+				<h2>Video</h2>
+				<div class="v" id="fullscreen">fullscreen</div>
+				<div class="t">boolean: true</div>
+				<div class="d">If this cvar is true, the game will be displayed fullscreen. 
+					Otherwise, it will be drawn in a window. Some video cards may require that you 
+					have fullscreen false in order to run ZDoom.
+				</div>
+				<div class="v" id="vid_attachedsurfaces">vid_attachedsurfaces (Win32 only)</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Controls how the game allocates video memory. False is the standard 
+					setting and will always produce a useable display. If you find that there are 
+					patches of pure black and pure white on the screen (especially noticeable when 
+					a demon is right in your face), try setting this to true. Certain old Windows 
+					95 video drivers are said to need this fix, and it is also necessary under NT 
+					4. Unfortunately, many new video drivers (including those under NT 4) will 
+					produce a scrambled display if the screen width is not 512 or 1024 pixels and 
+					this is set to true.</div>
+				<div class="c" id="vid_currentmode">vid_currentmode</div>
+				<div class="b">Displays the resolution of the current video mode.</div>
+				<div class="v" id="vid_defbits">vid_defbits</div>
+				<div class="t">integer: 8</div>
+				<div class="d">Ignored. This cvar is meant to specify the default screen depth, but 
+					the setting is currently ignored because only 256-color displays are supported.</div>
+				<div class="v" id="vid_defheight">vid_defheight</div>
+				<div class="t">integer: 200</div>
+				<div class="d">Specifies the default screen height to use if not overridden at the 
+					command line by the -height switch.</div>
+				<div class="v" id="vid_defwidth">vid_defwidth</div>
+				<div class="t">integer: 320</div>
+				<div class="d">
+					Specifies the default screen width to use if not overridden at the command line 
+					with the -width switch.</div>
+				<div class="c" id="vid_listmodes">vid_listmodes</div>
+				<div class="b">
+					Lists all resolutions supported by the current display driver.</div>
+				<div class="v" id="vid_fps">vid_fps</div>
+				<div class="t">boolean: false</div>
+				<div class="d">
+					When true, displays the average framerate over the past second in the 
+					lower-left corner of the screen. Because Doom's internal game rate and frame 
+					rate are linked, the framerate will never be (much) above 35 fps.</div>
+				<div class="v" id="vid_noblitter">vid_noblitter (Win32 only)</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Setting this to false will allow the use of the hardware to assist 
+					moving image data to video memory. When I initial wrote the code to use the 
+					blitter, it was faster than not using it. Now the blitter is slower, and I 
+					can't figure out why, so the default is true.</div>
+				<div class="v" id="vid_palettehack">vid_palettehack (Win32 only)</div>
+				<div class="t">boolean: false</div>
+				<div class="d">
+					When this cvar is true, the game will refresh the palette every time the screen 
+					is redrawn. This can be useful with some buggy video drivers. If the display is 
+					fine without it, leave it that way because this can slightly slow things down.</div>
+				<div class="c" id="vid_setmode">vid_setmode <i>width</i> <i>height</i> [<i>depth</i>]</div>
+				<div class="b">
+					Sets the screen mode to <i>width</i> x <i>height</i> with an optional color <i>depth</i>
+					(if your video hardware supports it). Only a depth of 8 is supported. See also 
+					vid_currentmode, vid_listmodes</div>
+				<div class="c" id="vid_speedtest">vid_speedtest</div>
+				<div class="b">Runs a test to measure the speed of writing to video memory compared 
+					to the speed of writing to system memory.</div>
+				<div class="v" id="vid_vsync">vid_vsync (Win32 only)</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Set this to false to disable vsync. Not all video cards support 
+					disabling vsync, and Doom's frame rate is capped at 35 FPS, so there's really 
+					no reason why you would want to disable vsync.</div>
+				<!-- 
+vid_winscale         (Linux only)
+(cvar: number)
+default: 1.0
+ Controls how large the display is scaled when playing in an X window.
+ Values of 1.0 and 2.0 are fast, other values use slower, generic scaling.
+-->
+				<div class="v" id="vid_winscale">vid_winscale</div>
+				<div class="t">float: 1</div>
+				<div class="d">Unimplemented.</div>
+			</div>
+			<div id="bots">
+				<h2>Bots</h2>
+				<div class="c" id="addbot">addbot [<i>name</i>]</div>
+				<div class="b">Spawns a bot. If a name is given, the corresponding bot in bots.cfg 
+					will be spawned. Otherwise, a bot will be picked at random from bots.cfg.
+				</div>
+				<div class="v" id="bot_allowspy">bot_allowspy</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Allows you to see through the eyes of bots during botmatch games.
+				</div>
+				<div class="v" id="bot_next_color">bot_next_color</div>
+				<div class="t">integer: 11</div>
+				<div class="d">Not implemented.
+				</div>
+				<div class="v" id="bot_observer">bot_observer</div>
+				<div class="t">boolean: false</div>
+				<div class="d">
+					When set to 1, the player will experience minimal interaction with the world, 
+					and bots will ignore him.
+				</div>
+				<div class="c" id="listbots">listbots</div>
+				<div class="b">Lists the bots available in bots.cfg, and indicates which are 
+					currently playing.
+				</div>
+				<div class="c" id="removebots">removebots</div>
+				<div class="b">Removes any bots from the game. Bots will also be automatically 
+					removed from network games when the arbitrator quits.
+				</div>
+			</div>
+			<div id="automap">
+				<h2>Automap</h2>
+				<div class="c" id="togglemap">togglemap</div>
+				<div class="b">Toggles the automap on/off.</div>
+				<div class="v" id="am_backcolor">am_backcolor</div>
+				<div class="t">color: "6c 54 40"</div>
+				<div class="d">The color of the automap background. Changes to this cvar take 
+					effect the next time the automap is activated.
+				</div>
+				<div class="v" id="am_cdwallcolor">am_cdwallcolor</div>
+				<div class="t">color: "4c 38 20"</div>
+				<div class="d">The color of two-sided lines that have a different ceiling height on 
+					each side.
+				</div>
+				<div class="v" id="am_cheat">am_cheat</div>
+				<div class="t">integer: 0</div>
+				<div class="d">This cvar controls the state of the automap cheat. In Doom, this is 
+					equivalent to how many times you have used the IDDT cheat. The other games have 
+					similar cheats. It has three possible values:
+					<ol start="0">
+						<li>
+							No cheating. The automap only shows you what you have already seen or whatever 
+							the full-map pickup reveals.</li>
+						<li>
+							Show <i>every</i> line on the map, including those that would normally never be 
+							seen on the map.</li>
+						<li>
+							Show <i>every</i>thing on the map, including all lines and actors.</li>
+					</ol>
+				</div>
+				<div class="v" id="am_fdwallcolor">am_fdwallcolor</div>
+				<div class="t">color: "88 70 58"</div>
+				<div class="d">The color of two-sided lines that have a different floor height on 
+					each side.
+				</div>
+				<div class="v" id="am_gridcolor">am_gridcolor</div>
+				<div class="t">color: "8b 5a 2b"</div>
+				<div class="d">The color of the automap grid.
+				</div>
+				<div class="v" id="am_interlevelcolor">am_interlevelcolor</div>
+				<div class="t">color: "ff 00 00"</div>
+				<div class="d">The color of inter-level teleporters. These are teleporters that 
+					teleport you to a different map.
+				</div>
+				<div class="v" id="am_intralevelcolor">am_intralevelcolor</div>
+				<div class="t">color: "00 00 ff"</div>
+				<div class="d">The color of intra-level teleporters. These are teleporters that 
+					teleport you to a different location on the same map.
+				</div>
+				<div class="v" id="am_lockedcolor">am_lockedcolor</div>
+				<div class="t">color: "00 00 98"</div>
+				<div class="d">The color of lines that open locked doors.
+				</div>
+				<div class="v" id="am_notseencolor">am_notseencolor</div>
+				<div class="t">color: "6c 6c 6c"</div>
+				<div class="d">The color of lines on the automap that haven't yet been seen. 
+					Visible with a computer area map.
+				</div>
+				<div class="v" id="am_overlay">am_overlay</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Normally, the togglemap command switches the automap between fully 
+					off and fully on. Setting this cvar to "1" will cause togglemap to draw the 
+					automap on top of the player's view before it draws the automap fullscreen. 
+					(Bad description, I know. Just try it)
+				</div>
+				<div class="v" id="am_ovotherwallscolor">am_ovotherwallscolor</div>
+				<div class="t">color: "00 88 44"</div>
+				<div class="d">The color of passable lines on the automap when the map is 
+					overlayed.
+				</div>
+				<div class="v" id="am_ovtelecolor">am_ovtelecolor</div>
+				<div class="t">color: "ff ff 00"</div>
+				<div class="d">The color of teleporters&mdash;both inter- and intra-level&mdash;on 
+					the overlayed automap.</div>
+				<div class="v" id="am_ovtrans">am_ovtrans</div>
+				<div class="t">float: 1</div>
+				<div class="d">Currently unimplemented.</div>
+				<div class="v" id="am_ovthingcolor">am_ovthingcolor</div>
+				<div class="t">color: "e8 88 00"</div>
+				<div class="d">The color of things visible with the automap cheat when the map is 
+					overlayed.
+				</div>
+				<div class="v" id="am_ovunseencolor">am_ovunseencolor</div>
+				<div class="t">color: "00 22 6e"</div>
+				<div class="d">The color of unseen lines on the automap when the map is overlayed.
+				</div>
+				<div class="v" id="am_ovwallcolor">am_ovwallcolor</div>
+				<div class="t">color: "00 ff 00"</div>
+				<div class="d">The color of impassable walls when the automap is overlayed.
+				</div>
+				<div class="v" id="am_ovyourcolor">am_ovyourcolor</div>
+				<div class="t">color: "fc e8 d8"</div>
+				<div class="d">The color of the arrow representing the player in single player 
+					games when the map is overlayed.
+				</div>
+				<div class="v" id="am_rotate">am_rotate</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Normally, the automap is always drawn such that north is at the top 
+					of the screen. Setting this cvar to "1" causes the automap to be drawn so that 
+					lines toward the top of the screen are always directly in front of the player's 
+					view. This can be particularly useful when the automap is overlayed.
+				</div>
+				<div class="v" id="am_secretwallcolor">am_secretwallcolor</div>
+				<div class="t">color: "00 00 00"</div>
+				<div class="d">The color of lines that are marked secret when you are using the <a href="#am_cheat">
+						automap cheat</a>. When you aren't using the automap cheat, secret walls 
+					are drawn the same color as one-sided lines.</div>
+				<div class="v" id="am_showitems">am_showitems</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When true, the fullscreen automap will display a count of all the 
+					"special" items you have found on the map. These are the same items that are 
+					used to determine the Items stat on the intermission screen.</div>
+				<div class="v" id="am_showmonsters">am_showmonsters</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, the fullscreen automap will display a count of the number 
+					of monsters that have been killed in the current level and the total number of 
+					monsters in the level.
+				</div>
+				<div class="v" id="am_showsecrets">am_showsecrets</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, the fullscreen automap will display a count of the number 
+					of secrets that have been found in the current level and the total number of 
+					secrets in the level.
+				</div>
+				<div class="v" id="am_showtime">am_showtime</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, the fullscreen automap will display the total amount of 
+					time you have been in a level (excluding time that has been paused).
+				</div>
+				<div class="v" id="am_thingcolor">am_thingcolor</div>
+				<div class="t">color: "fc fc fc"</div>
+				<div class="d">The color of things revealed with the map cheat.
+				</div>
+				<div class="v" id="am_tswallcolor">am_tswallcolor</div>
+				<div class="t">color: "88 88 88"</div>
+				<div class="d">The color of two-sided lines that don't have any difference in floor 
+					or ceiling heights on either side. Only seen using map cheat.
+				</div>
+				<div class="v" id="am_usecustomcolors">am_usecustomcolors</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, the automap uses the colors specified by the am_* cvars, 
+					otherwise it uses the standard DOOM automap colors.
+				</div>
+				<div class="v" id="am_wallcolor">am_wallcolor</div>
+				<div class="t">color: "2c 18 08"</div>
+				<div class="d">The color of one-sided and secret walls in the automap.
+				</div>
+				<div class="v" id="am_xhaircolor">am_xhaircolor</div>
+				<div class="t">color: "80 80 80"</div>
+				<div class="d">The color of the "crosshair" dot in the center of the automap.
+				</div>
+				<div class="v" id="am_yourcolor">am_yourcolor</div>
+				<div class="t">color: "fc e8 d8"</div>
+				<div class="d">The color of the arrow representing the player in single player 
+					games.
+				</div>
+			</div>
+			<div id="player_settings">
+				<h2>Player settings</h2>
+				<div class="v" id="autoaim">autoaim</div>
+				<div class="t">float: 5000</div>
+				<div class="d">This represents the vertical distance from an object that the 
+					player's sight must be before that object is aimed at. Setting this cvar to "0" 
+					disables autoaiming, while large values such as "5000" will reproduce the 
+					original DOOM behavior of always autoaiming.
+				</div>
+				<div class="v" id="color">color</div>
+				<div class="t">color</div>
+				<div class="d">This is your player's color. The default varies depending on which 
+					game you are playing.
+				</div>
+				<div class="v" id="gender">gender</div>
+				<div class="t">string: "male"</div>
+				<div class="d">This is the gender of your player. Valid values are "male", 
+					"female", and "neuter". Anything else will be treated as male. When you die, 
+					certain messages will be altered to reflect the gender selected here. 
+					Unfortunately, I don't provide any non-male player sounds, so you'll still 
+					sound like a man no matter what this cvar is set to unless you provide your own 
+					sounds.
+				</div>
+				<div class="v" id="movebob">movebob</div>
+				<div class="t">float: 0.25</div>
+				<div class="d">Controls how much the view bobs up and down while you are moving. 0 
+					would be no bob at all.</div>
+				<div class="v" id="name">name</div>
+				<div class="t">string: "Player"</div>
+				<div class="d">This is your player's name. This is only really useful in a 
+					multiplayer game, but it can also be set for single player.
+				</div>
+				<div class="v" id="neverswitchonpickup">neverswitchonpickup</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When this cvar is true, you won't automatically switch to a new 
+					weapon when you pick one up.
+				</div>
+				<div class="v" id="playerclass">playerclass</div>
+				<div class="t">string: "Fighter"</div>
+				<div class="d">This is the player's class when playing Hexen. It can have one of 
+					four values:
+					<ol>
+						<li>
+							Fighter</li><li>Cleric</li><li>Mage</li><li>Random</li></ol>
+					Changes to this cvar only take effect when you start a new game with the <a href="#map">
+						map</a> command.</div>
+				<div class="v" id="skin">skin</div>
+				<div class="t">string: "base"</div>
+				<div class="d">This is your player's skin. "Base" is the name of the regular Doom 
+					marine and is always available. Additional skins are contained in wad files 
+					that you either load with -file at the command line or autoload using the .ini 
+					or skins directory.
+				</div>
+				<div class="v" id="stillbob">stillbob</div>
+				<div class="t">float: 0</div>
+				<div class="d">Controls the amount of bobbing up and down that occurs when standing 
+					still. 0 is no bobbing at all.</div>
+				<div class="v" id="team">team</div>
+				<div class="t">integer: 255</div>
+				<div class="d">This is the team that your player belongs to. It is only meaningful 
+					during deathmatch games. There are four teams available:
+					<ol start="0">
+						<li>Red</li>
+						<li>Blue</li>
+						<li>Green</li>
+						<li>Gold</li></ol>
+					Using a team of 255 is special and will automatically assign you to whichever 
+					team has fewer players.</div>
+			</div>
+			<div id="debugging">
+				<h2>Debugging</h2>
+				<div class="v" id="autosavenum">autosavenum</div>
+				<div class="t">integer: 0</div>
+				<div class="d">This cvar keeps track of the number used for the next automatic save 
+					and is updated each time an automatic save is made. You cannot change it from 
+					the console.</div>
+				<div class="c" id="cl_noprediction">cl_noprediction</div>
+				<div class="t">boolean: false</div>
+				<div class="d">In order to provide more responsive network play, ZDoom normally 
+					uses player prediction so that you can move immediately without waiting to 
+					receive packets from the other machines in the game. Doom didn't have 
+					prediction, and if you don't like it, you can turn it off by setting this cvar 
+					to true.</div>
+				<div class="c" id="clearscancycles">clearscancycles</div>
+				<div class="b">Used for profiling the wallscan function.</div>
+				<div class="c" id="clearwallcycles">clearwallcycles</div>
+				<div class="b">Used for profiling the wall drawer.</div>
+				<div class="c" id="countdecals">countdecals</div>
+				<div class="b">Returns the internal count of automatically generated decals.</div>
+				<div class="c" id="countdecalsreal">countdecalsreal</div>
+				<div class="b">Iterates through every automatically generated decal in the level 
+					and returns how many are present. Compare this value with what countdecals 
+					returns to ensure that the internal count is accurate.</div>
+				<div class="v" id="demo_compress">demo_compress</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Keep this cvar true to compress demos so that they take up less 
+					space on disk.</div>
+				<div class="v" id="developer">developer</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When true, prints various debugging messages to the console.
+				</div>
+				<div class="c" id="dir">dir [[<i>path</i>/][<i>pattern</i>]]</div>
+				<div class="b">This command lists the contents of a directory. It supports 
+					wildcards (but will not recurse into multiple directories). If [path] is not 
+					specified, it will display the contents of the directory the game was run from.
+				</div>
+				<div class="v" id="disableautosave">disableautosave</div>
+				<div class="t">integer: 0</div>
+				<div class="d">Controls how frequently the game automatically saves for you. The 
+					possible settings are:
+					<ol start="0">
+						<li>Whenever you enter a new level and whenever the level requests it.</li>
+						<li>Only when the level requests it.</li>
+						<li>Never.</li>
+					</ol>
+				</div>
+				<div class="c" id="dumpclasses">dumpclasses [<i>base-class</i>]</div>
+				<div class="b">Displays a list of <i>all</i> classes in the game. You can use <i>base-class</i>
+					to limit the list to only those classes that derive from <i>base-class</i>. For 
+					example, <code>dumpclasses actor</code> will only show those classes that can 
+					be spawned in a level (including actors from all supported games). If you only 
+					want a list of weapons, you can use <code>dumpclasses weapon</code>. This list 
+					can be quite long and exceed the length of the console buffer, so it is a good 
+					idea to capture its output to a file using the <a href="#logfile">logfile</a> command.</div>
+				<div class="c" id="dumpmap">dumpmap <i>wadname</i> [<i>mapname</i>]</div>
+				<div class="b">Saves the current state of the level (minus actors) to a new wad 
+					called <i>wadname</i>. If you don't specify a <i>mapname</i>, it will be saved 
+					as MAP01. I used this while testing the internal node builder. Because ZDoom 
+					can now load Build maps, you can use this as a simple Build-&gt;Doom converter 
+					(although limitations in the Doom map format will likely force you to make 
+					several edits to produce a useable map).</div>
+				<div class="c" id="dumpmapthings">dumpmapthings</div>
+				<div class="b">Lists all the map editor numbers for actors in the current game.</div>
+				<div class="c" id="dumpspawnables">dumpspawnables</div>
+				<div class="b">Lists all the spawn numbers for actors in the current game.</div>
+				<div class="c" id="echo">echo <i>string</i></div>
+				<div class="b">Prints <i>string</i> to the console.
+				</div>
+				<div class="c" id="error">error <i>error-message</i></div>
+				<div class="b">Simulates an error by killing the current game and falling back to 
+					the fullscreen console with the specified message.
+				</div>
+				<div class="c" id="error_fatal">error_fatal <i>error-message</i></div>
+				<div class="b">Simulates a fatal error by exiting the game completely and showing 
+					the <i>error-message</i>.</div>
+				<div class="c" id="freeze">freeze</div>
+				<div class="b">Use this command once to freeze gameplay (while still allowing you 
+					to move around). Use it again to unfreeze gameplay.
+				</div>
+				<div class="c" id="gameversion">gameversion</div>
+				<div class="b">Prints the version number and compile date of ZDoom.
+				</div>
+				<div class="v" id="genblockmap">genblockmap</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true to force the game to ignore the blockmap saved with 
+					a map and always generate it from scratch, whether it needs to be generated or 
+					not.</div>
+				<div class="v" id="genglnodes">genglnodes</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When set to true, GL-friendly nodes will be generated and used in 
+					playce of whatever BSP tree was saved with the map. You must also set gennodes 
+					to true for this cvar to have any effect.</div>
+				<div class="v" id="gennodes">gennodes</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true if you want the game to ignore the BSP tree saved 
+					with a map and always build a new one. A value of true for gennodes also 
+					implies a true value for genblockmap.</div>
+				<div class="c" id="get">get <i>cvar</i></div>
+				<div class="b">Displays the value of <i>cvar</i>. This is redundant because typing 
+					the name of the cvar alone at the console will accomplish the same thing.
+				</div>
+				<div class="v" id="nofilecompression">nofilecompression</div>
+				<div class="t">boolean: false</div>
+				<div class="d">This is a debugging cvar used to disable file compression. You 
+					should leave it set to false.
+				</div>
+				<div class="v" id="noise">noise</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When set to true, the current status of all sound channels is 
+					displayed on the screen.
+				</div>
+				<div class="v" id="opl_enable">opl_enable</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When set to true, MUS music will be played using classical OPL2 FM 
+					synthesis as used by many of the sound cards available during the old DOS days 
+					when Doom was young. This can be very processor-intensive, so don't use it if 
+					you have a low end machine.</div>
+				<div class="v" id="opl_frequency">opl_frequency</div>
+				<div class="t">integer: 11025</div>
+				<div class="d">This is sampling rate the OPL emulation will run at. Setting it to 
+					less than a real OPL chip can drastically effect the pitch of certain sounds, 
+					since the emulation does no interpolation for samples that aren't emulated. A 
+					real OPL chip runs at a little over 30000 Hz.</div>
+				<div class="v" id="opl_onechip">opl_onechip</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this to true will limit the emulation to only one OPL2 chip 
+					instead of two. One chip is not really enough to play Doom's music, and most 
+					old sound cards had either two OPL2 chips or one OPL3 chip (which acts like two 
+					OPL2 chips), but it can make the emulation up to twice as fast.</div>
+				<div class="v" id="opl_singlevoice">opl_singlevoice</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this to true will cause all double voice instruments to use 
+					only one voice. Many Doom instruments use two voices, so this is not 
+					recommended.</div>
+				<div class="c" id="pings">pings</div>
+				<div class="b">This lists a very rough estimate of the speed of the connection 
+					between your machine and any others in the game. In reality, the values printed 
+					by this command aren't even pings; they're just the number of milliseconds that 
+					have passed since the last time you received a network packet from the other 
+					machines.
+				</div>
+				<div class="c" id="playerinfo">playerinfo [<i>player-number</i>]</div>
+				<div class="b">Without parameters, lists the numbers for each player in the game. 
+					If you specify a <i>player-number</i>, then details about that player's user 
+					info will be listed.</div>
+				<div class="c" id="playersounds">playersounds</div>
+				<div class="b">Lists the player sounds defined by each player class and skin.</div>
+				<div class="c" id="skins">skins</div>
+				<div class="b">Lists the names of the skins that were loaded when the game was 
+					started.
+				</div>
+				<div class="c" id="playmovie">playmovie <i>filename</i></div>
+				<div class="b">Plays a movie. Gameplay will be halted either until the movie 
+					finishes or the user presses the Escape key. Under Windows, DirectShow is used 
+					to play the movie, so you can watch anything that Windows Media Player can 
+					play. Movie playback is not implemented under other operating systems.</div>
+				<div class="c" id="playsound">playsound <i>sound</i></div>
+				<div class="b">Plays a sound on the local machine. Like all other sounds in the 
+					game, <i>sound</i> must be properly defined in a SNDINFO lump before you can 
+					use it.</div>
+				<div class="c" id="print">print <i>string</i></div>
+				<div class="b">Prints a named string to the console. These are the strings you can 
+					edit with a bex patch.</div>
+				<div class="c" id="scriptstat">scriptstat</div>
+				<div class="b">Lists the scripts running on the current level.</div>
+				<div class="v" id="showloadtimes">showloadtimes</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When set to true, various performance counters will be printed to 
+					the console whenever a map is loaded.</div>
+				<div class="c" id="showrngs">showrngs</div>
+				<div class="b">Prints the current seed for every random number generator.</div>
+				<div class="c" id="soundlinks">soundlinks</div>
+				<div class="b">Lists the links between different sounds that use the same sound 
+					data. Links are generated dynamically while you play, so it is possible for 
+					this command to give different results in different games and even at different 
+					times during the same game.
+				</div>
+				<div class="c" id="soundlist">soundlist</div>
+				<div class="b">Lists all the sounds defined and the lumps that they alias to. 
+					Unlike regular Doom, ZDoom refers to sounds using a long name and uses a 
+					SNDINFO lump to map those to the lumps in a WAD file that contain the actual 
+					sounds. Logical sounds that refer to the same sound data will have links 
+					generated as neccessary to avoid actually loading multiple copies of the same 
+					sound into memory.
+				</div>
+				<div class="c" id="summon">summon <i>actor-class</i></div>
+				<div class="b">Spawns a new actor in front of you. A complete list of actors can be 
+					obtained with the <code><a href="#dumpclasses">dumpclasses</a> actor</code> command. 
+					For a list of actors limited to those you can place in an editor, use the <a href="#dumpmapthings">
+						dumpmapthings</a> command. It is possible to spawn actors from another game 
+					with this command, but they will not be visible unless you provide the missing 
+					graphics for them.</div>
+				<div class="c" id="spray">spray <i>decal</i></div>
+				<div class="b">Sprays a decal on a nearby wall so you can see what it looks like.</div>
+				<div class="c" id="stat">stat [<i>page</i>]</div>
+				<div class="b">Displays profiling information. When used alone, displays a list of 
+					available displays. Use one of those as the <i>page</i> parameter to toggle the 
+					display on and off.
+					<dl>
+						<dt>stat blit</dt>
+						<dd>
+							Time spent copying the display to video memory.</dd>
+						<dt>stat bots</dt>
+						<dd>
+							Time spent doing bot-related activities.</dd>
+						<dt>stat destroys</dt>
+						<dd>
+							Statistics on object deletion each frame.</dd>
+						<dt>stat detail</dt>
+						<dd>
+							Time spent replicating pixels for low detail modes.</dd>
+						<dt>stat fps</dt>
+						<dd>
+							Time spent rendering the scene (not the same as setting vid_fps to true).</dd>
+						<dt>stat purge</dt>
+						<dd>
+							Statistics of memory purged from the zone heap each frame.</dd>
+						<dt>stat sight</dt>
+						<dd>
+							Time spent in sight calculations.</dd>
+						<dt>stat sound</dt>
+						<dd>
+							Number of active channels and %CPU used for sound.</dd>
+						<dt>stat think</dt>
+						<dd>
+							Time spent running all thinkers.</dd>
+						<dt>stat wallcycles</dt>
+						<dd>
+							Used in conjunction with <a href="#clearwallcycles">clearwallcycles</a> to 
+							profile the wall drawer.</dd>
+					</dl>
+				</div>
+				<div class="v" id="ticker">ticker</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When true, draws a series of dots at the bottom of the screen 
+					representing the number of tics it took to display the current frame. (One tic 
+					is 1/35th of a second.) When -devparm is specified on the command line, this 
+					cvar is automatically set to true. You can get a rough idea of your fps by 
+					counting the number of lit dots and dividing that from 35. A better way would 
+					be to use vid_fps.</div>
+				<div class="v" id="tilt">tilt</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this to true causes all planes to be drawn using the sloped 
+					drawer, even if they aren't sloped.</div>
+				<div class="v" id="tx">tx</div>
+				<div class="t">integer: 8</div>
+				<div class="d">The horizontal scale for textures that don't specify their own.</div>
+				<div class="v" id="ty">ty</div>
+				<div class="t">integer: 8</div>
+				<div class="d">The vertical scale for textures that don't specify their own.</div>
+				<div class="c" id="warp">warp <i>x-coordinate</i> <i>y-coordinate</i></div>
+				<div class="b">Sends you to the specified coordinates immediately. This can be used 
+					with <a href="#idmypos">idmypos</a> to debug problems in a specific area of a 
+					map.</div>
+			</div>
+			<div id="effects">
+				<h2>Effects</h2>
+				<div class="v" id="cl_bloodsplats">cl_bloodsplats</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, whenever something bleeds, it has a chance of leaving 
+					blood spots on nearby walls. Setting this to false might help performance on 
+					low-end machines.</div>
+				<div class="v" id="cl_bloodtype">cl_bloodtype</div>
+				<div class="t">integer: 0</div>
+				<div class="d">Controls how blood is drawn. Supported values are:
+					<ol start="0">
+						<li>Blood is drawn as sprites</li>
+						<li>Blood is drawn as both sprites and particles</li>
+						<li>Blood is drawn as particles only</li></ol>
+				</div>
+				<div class="v" id="cl_maxdecals">cl_maxdecals</div>
+				<div class="t">integer: 1024</div>
+				<div class="d">This is the maximum number of automatically generated decals (such 
+					as bullet marks and blood) that can appear in a level at one time. It does not 
+					effect decals that level authors have placed in their levels manually. Setting 
+					this to 0 will disable all decals except any that a level comes with.</div>
+				<div class="v" id="cl_missiledecals">cl_missiledecals</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Set this to false if you don't want exploding missiles to leave 
+					scorch marks.</div>
+				<div class="v" id="cl_pufftype">cl_pufftype</div>
+				<div class="t">integer: 0</div>
+				<div class="d">Controls how bullet puffs are drawn. Supported values are:
+					<ol start="0">
+						<li>Puffs are drawn as sprites</li>
+						<li>Puffs are drawn as particles</li></ol>
+				</div>
+				<div class="v" id="cl_rockettrails">cl_rockettrails</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Controls whether or not rockets leave trails of smoke behind them.
+				</div>
+				<div class="v" id="telezoom">telezoom</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, teleporters will create an Unreal-like zooming effect 
+					when you use them.</div>
+				<div class="c" id="test">test <i>expression</i> <i>true-command</i> [<i>false-command</i>]</div>
+				<div class="b">Evaluates <i>expression</i> and executes <i>true-command</i> if the 
+					result is non-zero. If the result is zero, then <i>false-command</i> will be 
+					executed instead (if you specified it).<dl>
+						<dt>Examples:</dt>
+						<dd>
+							<pre>test $cl_run "echo cl_run is on" "echo cl_run is off"
+test = + 2 2 4 "echo 2+2 really is 4"
+test &lt;= $screenblocks 10 "echo the view window is shrunk" "echo the view window is full size"</pre>
+						</dd>
+					</dl>
+				</div>
+				<div class="v" id="transsouls">transsouls</div>
+				<div class="t">float: 0.75</div>
+				<div class="d">This is the amount of translucency exhibitted by lost souls. Valid 
+					values are in the interval (0.0,1.0]. Larger values mean less translucency.</div>
+				<div class="v" id="wipetype">wipetype</div>
+				<div class="t">integer: 1</div>
+				<div class="d">
+					Selects the type of screen wipe to use. There are currently four possible 
+					settings for this cvar:<ol start="0">
+						<li>No wipe</li>
+						<li>Melt</li>
+						<li>Burn</li>
+						<li>Crossfade</li></ol>
+				</div>
+			</div>
+			<div id="sounds">
+				<h2>Sounds</h2>
+				<div class="c" id="eaxedit">eaxedit</div>
+				<div class="b">Opens the EAX editor.</div>
+				<div class="v" id="eaxedit_test">eaxedit_test</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, the EAX environment currently shown in the editor will be 
+					used for all areas of the map. This allows for interactive tweaking of 
+					different environments.</div>
+				<div class="v" id="snd_3d">snd_3d</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this cvar to true will enable the use of 3D sound hardware.</div>
+				<div class="v" id="snd_buffersize">snd_buffersize</div>
+				<div class="t">integer: 0</div>
+				<div class="d">This is the length of the sound buffer in milliseconds. Leaving this 
+					at 0 will use the sound card's default buffer size. If that is unacceptable, 
+					you can try setting the buffer size manually. Buffer sizes can be any multiple 
+					of 20. Sizes that are not will be rounded up to the nearest multiple of 20. 
+					Smaller buffers produce less latency but are more prone to "breaking up" or 
+					"stuttering". You want the buffer size to be as low as possible without 
+					stuttering. Each time you change the buffer size, you should use <a href="#snd_reset">
+						snd_reset</a> to test the new buffer size.</div>
+				<div class="v" id="snd_channels">snd_channels</div>
+				<div class="t">integer: 12</div>
+				<div class="d">This cvar determines the number of channels used for mixing sound 
+					effects. Larger values generally sound better but also require a faster 
+					processor. In general, anything between 8-16 should be plenty.
+				</div>
+				<div class="v" id="snd_driver">snd_driver</div>
+				<div class="t">integer: 0</div>
+				<div class="d">Selects a machine-specific sound driver. The available drivers 
+					depends both on the setting of <a href="#snd_output">snd_output</a> and on the 
+					hardware installed. The <a href="#snd_listdrivers">snd_listdrivers</a> command 
+					will list the drivers available for the current output device.</div>
+				<div class="v" id="snd_flipstereo">snd_flipstereo</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this to true causes sounds to the left of the listener to 
+					play on the right channel and vice-versa. Use this if your sound setup is 
+					screwy and has stereo reversed.</div>
+				<div class="v" id="snd_fpumixer">snd_fpumixer</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this to true will force the use of the high-quality FPU 
+					mixer. This is usually slower than the standard mixer, and you probably won't 
+					notice a difference.
+				</div>
+				<div class="c" id="snd_listdrivers">snd_listdrivers</div>
+				<div class="b">Lists the drivers supported by the current <a href="#snd_output">snd_output</a>
+					setting.</div>
+				<div class="v" id="snd_matrix">snd_matrix</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this to true enables simple software support for the rear 
+					channel in a surround system. I don't have a surround system, so I don't know 
+					how jarring the transition from front to back is.</div>
+				<div class="v" id="snd_movievolume">snd_movievolume</div>
+				<div class="t">float: 1.0</div>
+				<div class="d">This is the volume movies are played back at and can range from 0 to 
+					1.</div>
+				<div class="v" id="snd_musicvolume">snd_musicvolume</div>
+				<div class="t">float: 0.3</div>
+				<div class="d">This is the volume digital music is played at and can range from 0 
+					to 1. Digital music includes MODs, OGGs, MP3s, and SPCs.
+				</div>
+				<div class="v" id="snd_output">snd_output</div>
+				<div class="t">string: "default"</div>
+				<div class="d">Selects either DirectSound or WaveOut for sound playback. "Default" 
+					selects WaveOut under NT 4 and DirectSound under all other operating systems. 
+					"DSound" or "DirectSound" will force the use of DirectSound, and "WinMM" or 
+					"WaveOut" will force the use of WaveOut.</div>
+				<div class="v" id="snd_pitched">snd_pitched</div>
+				<div class="t">boolean: false for Doom, true for other games</div>
+				<div class="d">When set to true, the random pitch effect found in early versions of 
+					Doom will be simulated. For Doom, this defaults to false because pitch shifting 
+					was present only in early versions of that game. For Heretic and Hexen, this 
+					defaults to true because all versions of those games use pitch shifting.
+				</div>
+				<div class="c" id="snd_reset">snd_reset</div>
+				<div class="b">Activates any changes that have been made to <a href="#snd_3d">snd_3d</a>,
+					<a href="#snd_output">snd_output</a>, <a href="#snd_samplerate">snd_samplerate</a>, 
+					or <a href="#snd_driver">snd_driver</a>.</div>
+				<div class="v" id="snd_samplerate">snd_samplerate</div>
+				<div class="t">integer: 44100</div>
+				<div class="d">This is the sampling rate (in Hz) at which sounds are mixed in the 
+					game. This effects the sound quality for everything except MIDI music. Most 
+					DOOM sounds are only 11025 Hz, but some are 22050 Hz, and digital music sounds 
+					best with higher sampling rates, so the default is for CD quality 
+					sound&mdash;44100 Hz.
+				</div>
+				<div class="v" id="snd_sfxvolume">snd_sfxvolume</div>
+				<div class="t">float: 0.5</div>
+				<div class="d">This is the volume at which sound effects are played and can range 
+					from 0 to 1. This does not set the volume for your sound card's wave playback.
+				</div>
+				<div class="c" id="snd_status">snd_status</div>
+				<div class="b">Lists information about the current sound device.</div>
+				<div class="v" id="snd_surround">snd_surround</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, selected sounds will be played on the surround channel. 
+					This effect is actually intended for people with two speakers because it gives 
+					certain sounds an "airier" sound. If you have a Dolby Pro-Logic decoder, think 
+					it's annoying, or have a buggy soundcard that mixes in stereo but outputs in 
+					mono, you should turn this off.
+				</div>
+				<div class="v" id="snd_waterreverb">snd_waterreverb</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Controls the use of reverb in underwater areas. False disables the 
+					reverb, and true enables it. People complained that the reverb sounds bad with 
+					a SoundBlaster Live!, although I don't know if that's just because they weren't 
+					used to it or becuase the Live! card stinks. I think it sounds fine with an 
+					Audigy and a Vortex2.</div>
+			</div>
+			<div id="music_midi">
+				<h2>Music - MIDI</h2>
+				<div class="c" id="snd_listmididevices">snd_listmididevices</div>
+				<div class="b">This command lists the MIDI devices available in the system. Devices 
+					in this list can be used in the snd_mididevice cvar to select which device 
+					plays music.
+				</div>
+				<div class="v" id="snd_mididevice">snd_mididevice</div>
+				<div class="t">integer: -1</div>
+				<div class="d">This cvar determines which MIDI device ZDoom uses for MIDI and MUS 
+					music. A value of -1 indicates to use the Windows MIDI Mapper, while other 
+					values select specific MIDI devices. A complete list of MIDI devices available 
+					can be obtained with the snd_listmididevices command.
+				</div>
+				<div class="v" id="snd_midiprecache">snd_midiprecache</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Works around a bug in the GUS PnP drivers by precaching every 
+					instrument in a song just before playback begins. If you don't have one of 
+					these cards, you can set this to false to speed up music transitions.</div>
+				<div class="v" id="snd_midivolume">snd_midivolume</div>
+				<div class="t">float: 0.5</div>
+				<div class="d">This is the volume MIDI and MUS music is played at and can range 
+					from 0 to 1.
+				</div>
+			</div>
+			<div id="music_spc">
+				<h2>Music - SPC</h2>
+				SPC playback is only supported by the Windows version of ZDoom. You must also 
+				have snesapu.dll in your search path for it to work. The WinAmp plugin SNESAmp 
+				will automatically install this DLL for you, or you can download a copy of it 
+				from the <a href="http://zdoom.notgod.com/download.php">ZDoom downloads page</a>.
+				<div class="v" id="spc_8bit">spc_8bit</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true to playback SPCs using 8-bit quality instead of 
+					16-bit.</div>
+				<div class="v" id="spc_amp">spc_amp</div>
+				<div class="t">integer: 30</div>
+				<div class="d">Sets the SPC pre-amplification level.</div>
+				<div class="v" id="spc_frequency">spc_frequency</div>
+				<div class="t">integer: 32000</div>
+				<div class="d">Sets the sample rate to play SPCs at.</div>
+				<div class="v" id="spc_lowpass">spc_lowpass</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true to enable the SPC lowpass filter.</div>
+				<div class="v" id="spc_noecho">spc_noecho</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true to disable echo processing in SPC playback.</div>
+				<div class="v" id="spc_oldsamples">spc_oldsamples</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true to use the old ADPCM sample decompression routine 
+					for SPCs.</div>
+				<div class="v" id="spc_quality">spc_quality</div>
+				<div class="t">integer: 1</div>
+				<div class="d">Determines the type of interpolation used when playing SPCs:<ol start="0">
+						<li>No interpolation</li>
+						<li>Linear interpolation</li>
+						<li>Cubic interpolation</li>
+						<li>Gaussian interpolation</li></ol>
+				</div>
+				<div class="v" id="spc_stereo">spc_stereo</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Set this to false to prevent playing SPCs in stereo.</div>
+				<div class="v" id="spc_surround">spc_surround</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true to use pseudo surround sound when playing SPCs.</div>
+			</div>
+			<div id="music_timidity">
+				<h2>Music - Timidity</h2>
+				<p>Under Linux, Timidity is the only way to hear MIDI music. Most, if not all, 
+					Linux distributions should come with a copy of Timidity. If you can't get music 
+					to play in ZDoom, make sure Timidity is properly set up to play music from the 
+					command line before touching the cvars here.</p>
+				<p>Under Windows, Timidity is also supported as <a href="#snd_mididevice">snd_mididevice</a>
+					-2. The Windows version of ZDoom requires a special version of Timidity 
+					available from the <a href="http://zdoom.notgod.com/download.php">ZDoom downloads 
+						page</a>.</p>
+				<div class="v" id="timidity_8bit">timidity_8bit</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true to make Timidity output 8-bit instead of 16-bit 
+					audio.</div>
+				<div class="v" id="timidity_byteswap">timidity_byteswap</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this to true to make Timidity swap the upper 8 bits and the 
+					lower 8 bits of audio data when it is outputting 16-bits. Probably nobody needs 
+					this.</div>
+				<div class="v" id="timidity_chorus">timidity_chorus</div>
+				<div class="t">string: "0"</div>
+				<div class="d">The contents of this cvar are supplied to Timidity's -EFchorus 
+					option.</div>
+				<div class="v" id="timidity_exe">timidity_exe</div>
+				<div class="t">string: "timidity.exe" (Win32) or "timidity" (Linux)</div>
+				<div class="d">The name of the Timidity executable to use. If Timidity is not in 
+					the current path, you also need to specify the full pathname. Under Windows, 
+					you must include the .exe prefix.</div>
+				<div class="v" id="timidity_extargs">timidity_extargs</div>
+				<div class="t">string: ""</div>
+				<div class="d">This cvar is used to supply any extra arguments to Timidity. Its 
+					contents are appended to the command line that ZDoom generates using the other 
+					timidity cvars.</div>
+				<div class="v" id="timidity_frequency">timidity_frequency</div>
+				<div class="t">integer: 22050</div>
+				<div class="d">This is the sample rate that Timidity will play the music at.</div>
+				<div class="v" id="timidity_pipe">timidity_pipe</div>
+				<div class="t">integer: 60</div>
+				<div class="d">This is the approximate size, in milliseconds, of the stream buffer 
+					the game uses to mix Timidity's output with the rest of the game audio. Setting 
+					the buffer size to 0 will cause Timidity to send its output directly to the 
+					sound card instead of through the game. Most, if not all, PCI sound cards 
+					should be fine with this set to 0. Older sound cards will require this to be 
+					non-zero so that ZDoom can mix the music with the rest of its sounds.</div>
+				<div class="v" id="timidity_reverb">timidity_reverb</div>
+				<div class="t">string: "0"</div>
+				<div class="d">The contents of this cvar are supplied to Timidity's -EFreverb 
+					option.</div>
+				<div class="v" id="timidity_stereo">timidity_stereo</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Set this to false to force Timidity's output to be monaural instead 
+					of stereo.</div>
+			</div>
+			<div id="music_cd">
+				<h2>Music - CD</h2>
+				<div class="c" id="cd_close">cd_close</div>
+				<div class="b">Closes the CD tray.</div>
+				<div class="v" id="cd_drive">cd_drive</div>
+				<div class="t">string: ""</div>
+				<div class="d">This is the drive letter of the CD drive that the CD commands will 
+					affect. If you only have one CD drive, you can leave it blank. Doing so will 
+					cause the game to use the default CD drive.</div>
+				<div class="c" id="cd_eject">cd_eject</div>
+				<div class="b">Ejects the CD tray.</div>
+				<div class="v" id="cd_enabled">cd_enabled</div>
+				<div class="t">boolean: true</div>
+				<div class="d">Set this to false if you don't want CD audio support.</div>
+				<div class="c" id="cd_pause">cd_pause</div>
+				<div class="b">Pauses CD playback.</div>
+				<div class="c" id="cd_play">cd_play [<i>track</i>]</div>
+				<div class="b">Starts playing a CD. If you specify a <i>track</i>, that specific 
+					track will be looped. Otherwise, the entire CD will play.</div>
+				<div class="c" id="cd_resume">cd_resume</div>
+				<div class="b">Resumes CD playback that was previously paused.</div>
+				<div class="c" id="cd_stop">cd_stop</div>
+				<div class="b">Stops CD playback.</div>
+			</div>
+			<div id="input_keyboard">
+				<h2>Input - Keyboard</h2>
+				<div class="c" id="turnspeeds">turnspeeds [<i>speed1</i>] [<i>speed2</i>] [<i>speed3</i>] 
+					[<i>speed4</i>]</div>
+				<div class="b">Controls how quickly you turn with the keyboard. Using this command 
+					without any parameters lists the current turning speeds. To set the speeds, 
+					specify at least one, and any you do not specify will be filled in 
+					automatically. The different speeds are used in the following situations:<ol>
+						<li>Turning while walking</li>
+						<li>Turning while running</li>
+						<li>Just started turning while walking</li>
+						<li>Just started turning while running</li></ol>
+				</div>
+			</div>
+			<div id="input_mouse">
+				<h2>Input - Mouse</h2>
+				<div class="v" id="freelook">freelook</div>
+				<div class="t">boolean: 0</div>
+				<div class="d">
+					When true, mouse aiming will always be on, regardless of the state of +mlook.
+				</div>
+				<div class="v" id="in_mouse">in_mouse (Win32 only)</div>
+				<div class="t">integer: 0</div>
+				<div class="d">This cvar selects which method ZDoom will use to read the mouse. 
+					Valid values are:
+					<ol start="0">
+						<li>Automatically select a method based on the operating system</li>
+						<li>Use normal Win32 API calls (default for Windows NT 4).</li>
+						<li>Use DirectInput (default for all other Windows).</li>
+					</ol>
+				</div>
+				<div class="v" id="invertmouse">invertmouse</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When true, reverses the way mouse movement up and down is 
+					interpreted with +mlook. Normally, moving the mouse forward will make you look 
+					up, and moving it back will make you look down. Setting this cvar to true 
+					changes this behavior so that moving the mouse forward makes you look down, and 
+					moving it back makes you lookup.
+				</div>
+				<div class="v" id="lookspring">lookspring</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When true, all -mlook commands will also generate centerview 
+					commands.
+				</div>
+				<div class="v" id="lookstrafe">lookstrafe</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When true, moving the mouse left and right will always cause the 
+					player to strafe left and right regardless of the state of +strafe.
+				</div>
+				<div class="v" id="m_filter">m_filter</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this to true will smooth mouse input if your framerate 
+					exceeds your mouse's sampling rate. The only mice that really need this are 
+					serial mice, since those are typically sampled only 40 times each second. 
+					Utilities exist to increase the sampling rate of PS/2 mice under Windows 9x, 
+					and USB mice are always sampled considerably more frequently.</div>
+				<div class="v" id="m_forward">m_forward</div>
+				<div class="t">float: 1.0</div>
+				<div class="d">This is the sensitivity of moving forward and backward with the 
+					mouse.
+				</div>
+				<div class="v" id="m_noprescale">m_noprescale</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Setting this to true will use the raw mouse movements to control 
+					mouse input. Normally, the horizontal and vertical axes are multiplied by 
+					different scalars before being processed by the input code.</div>
+				<div class="v" id="m_pitch">m_pitch</div>
+				<div class="t">float: 1.0</div>
+				<div class="d">This is the sensitivity of looking up and down with the mouse.
+				</div>
+				<div class="v" id="m_side">m_side</div>
+				<div class="t">float: 2.0</div>
+				<div class="d">This is the sensitivity of strafing left and right with the mouse.
+				</div>
+				<div class="v" id="m_yaw">m_yaw</div>
+				<div class="t">float: 1.0</div>
+				<div class="d">This is the sensitivity of looking left and right with the mouse.</div>
+				<div class="v" id="mouse_sensitivity">mouse_sensitivity</div>
+				<div class="t">float: 1.0</div>
+				<div class="d">The larger this cvar, the more sensitive the game is to all mouse 
+					movements.
+				</div>
+				<div class="v" id="use_mouse">use_mouse</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When this cvar is false, ZDoom will ignore the mouse.</div>
+			</div>
+			<div id="input_joystick">
+				<h2>Input - Joystick</h2>
+				<p>Joystick support in ZDoom 2 has been extended considerably since ZDoom 1.22. It 
+					is now based around five virtual axes and a fully reconfigurable controller. 
+					Several cvars below bind a real joystick axis to a virtual axis. The virtual 
+					axes are listed below:</p>
+				<ol start="0">
+					<li>
+						None: The joystick axis is unused.</li>
+					<li>
+						Yaw: The joystick axis controls looking left and right.</li>
+					<li>
+						Pitch: The joystick axis controls looking up and down.</li>
+					<li>
+						Forward: The joystick axis controls moving forward and backward.</li>
+					<li>
+						Strafe: The joystick axis controls moving left and right.</li>
+					<li>
+						Up: The joystick axis controls moving up and down.</li></ol>
+				<p>Each real axis also has a corresponding threshold cvar. This controls how far 
+					the axis must be moved from its centered position before its movement will be 
+					registered with the game. This distance is also known as the axis' dead zone. 
+					If you find that you are "twitching" are moving very slowly when you have your 
+					controller centered, you should increase the threshold for the corresponding 
+					axis until the problem goes away. A value of 0 means the axis has no dead zone, 
+					and a value of 1 means the dead zone covers the entire range of the axis' 
+					movement.</p>
+				<div class="v" id="joy_dial">joy_dial</div>
+				<div class="t">integer: 0 (unused)</div>
+				<div class="d">The virtual axis the controller's dial represents.</div>
+				<div class="v" id="joy_dialthreshold">joy_dialthreshold</div>
+				<div class="t">float: 0.15</div>
+				<div class="d">The size of the dial's dead zone.</div>
+				<div class="v" id="joy_forwardspeed">joy_forwardspeed</div>
+				<div class="t">float: -1.0</div>
+				<div class="d">How quickly you move forward and backward with the forward axis.</div>
+				<div class="v" id="joy_guid">joy_guid</div>
+				<div class="t">GUID: {00000000-0000-0000-0000-000000000000}</div>
+				<div class="d">This is the GUID for the controller ZDoom will use for input. If it 
+					does not correspond to any controller currently connected to the system, then 
+					the default controller will be used instead. The easiest way to set this is by 
+					using the <a href="#menu_joy">joystick menu</a>.</div>
+				<div class="v" id="joy_pitchspeed">joy_pitchspeed</div>
+				<div class="t">float: -0.75</div>
+				<div class="d">How quickly you look up and down with the pitch axis.</div>
+				<div class="v" id="joy_sidespeed">joy_sidespeed</div>
+				<div class="t">float: 1.0</div>
+				<div class="d">How quickly you move left and right with the strafe axis.</div>
+				<div class="v" id="joy_slider">joy_slider</div>
+				<div class="t">integer: 0 (unused)</div>
+				<div class="d">The virtual axis the controller's slider represents.</div>
+				<div class="v" id="joy_sliderthreshold">joy_sliderthreshold</div>
+				<div class="t">float: 0.15</div>
+				<div class="d">The size of the slider's dead zone.</div>
+				<div class="v" id="joy_speedmultiplier">joy_speedmultiplier</div>
+				<div class="t">float: 1.0</div>
+				<div class="d">This cvar controls the overall sensitivity/movement speed possible 
+					with a joystick. Values above 1.0 will allow you to reach full speed with less 
+					movement of the joystick, but they will not let you go any faster than normal 
+					(use the <a href="#turbo">turbo</a> cvar for that). Values less than 1.0 will 
+					prevent you from reaching full speed with the joystick. One potentially useful 
+					trick is to create these two aliases:<pre>alias +creep "joy_speedmultiplier 0.25"
+alias -creep "joy_speedmultiplier 1.0"</pre>
+					If you bind +creep to a button, then whenever that button is held down, you 
+					will walk with the joystick instead of run.
+				</div>
+				<div class="v" id="joy_upspeed">joy_upspeed</div>
+				<div class="t">float: -1.0</div>
+				<div class="d">How quickly you move up and down with the up axis.</div>
+				<div class="v" id="joy_xaxis">joy_xaxis</div>
+				<div class="t">integer: 1 (yaw)</div>
+				<div class="d">The virtual axis the controller's X axis represents.</div>
+				<div class="v" id="joy_xrot">joy_xrot</div>
+				<div class="t">integer: 0 (unused)</div>
+				<div class="d">The virtual axis the controller's rotational X axis represents.</div>
+				<div class="v" id="joy_xrotthreshold">joy_xrotthreshold</div>
+				<div class="t">float: 0.15</div>
+				<div class="d">The size of the rotational X axis' dead zone.</div>
+				<div class="v" id="joy_xthreshold">joy_xthreshold</div>
+				<div class="t">float: 0.15</div>
+				<div class="d">The size of the X axis' dead zone.</div>
+				<div class="v" id="joy_yawspeed">joy_yawspeed</div>
+				<div class="t">float: -1.0</div>
+				<div class="d">How quickly you look left and right with the yaw axis.</div>
+				<div class="v" id="joy_yaxis">joy_yaxis</div>
+				<div class="t">integer: 3 (forward)</div>
+				<div class="d">The virtual axis the controller's Y axis represents.</div>
+				<div class="v" id="joy_yrot">joy_yrot</div>
+				<div class="t">integer: 0 (unused)</div>
+				<div class="d">The virtual axis the controller's rotational Y axis represents.</div>
+				<div class="v" id="joy_yrotthreshold">joy_yrotthreshold</div>
+				<div class="t">float: 0.15</div>
+				<div class="d">The size of the rotational Y axis' dead zone.</div>
+				<div class="v" id="joy_ythreshold">joy_ythreshold</div>
+				<div class="t">float: 0.15</div>
+				<div class="d">The size of the Y axis' dead zone.</div>
+				<div class="v" id="joy_zaxis">joy_zaxis</div>
+				<div class="t">integer: 4 (strafe)</div>
+				<div class="d">The virtual axis the controller's Z axis represents.</div>
+				<div class="v" id="joy_zrot">joy_zrot</div>
+				<div class="t">integer: 1 (pitch)</div>
+				<div class="d">The virtual axis the controller's rotational Z axis represents.</div>
+				<div class="v" id="joy_zrotthreshold">joy_zrotthreshold</div>
+				<div class="t">float: 0.15</div>
+				<div class="d">The size of the rotational Z axis' dead zone.</div>
+				<div class="v" id="joy_zthreshold">joy_zthreshold</div>
+				<div class="t">float: 0.15</div>
+				<div class="d">The size of the Z axis' dead zone.</div>
+				<div class="v" id="use_joystick">use_joystick</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Set this cvar to true if you want to use a joystick with ZDoom.</div>
+			</div>
+			<div id="other">
+				<h2>Other commands and cvars</h2>
+				<div class="v" id="addrocketexplosion">addrocketexplosion</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When false, rocket explosions are drawn with normal translucency. 
+					When true, rocket explosions use additive translucency instead, producing a 
+					brighter effect.</div>
+				<div class="v" id="alwaysapplydmflags">alwaysapplydmflags</div>
+				<div class="t">boolean: false</div>
+				<div class="d">Normally, some dmflags are only used in deathmatch. If 
+					alwaysapplydmflags is true, then they will also be used in single-player and 
+					co-op games.
+				</div>
+				<div class="c" id="centerview">centerview</div>
+				<div class="b">Causes the player to look straight ahead.
+				</div>
+				<div class="c" id="changemap">changemap <i>map</i></div>
+				<div class="b">Exits the current level and continues the game on the specified map. 
+					Unlike the map and idclev commands, this command *will* work properly during 
+					network games and is recorded in demos. Unfortunately, it has occasionally 
+					resulted in some problems. It should, however, be safe enough to use most of 
+					the time.
+				</div>
+				<div class="c" id="changemus">changemus <i>music</i></div>
+				<div class="b">Changes the currently playing music. <i>Music</i> should be the name 
+					of a music lump or file on disk (which need not have been specified with the 
+					-file parameter).
+				</div>
+				<div class="c" id="chase">chase</div>
+				<div class="b">Turns the chasecom on and off. This command also works while 
+					watching demos, so you can bind it to a key and watch demos in the third 
+					person.
+				</div>
+				<div class="v" id="chase_dist">chase_dist</div>
+				<div class="t">float: 90</div>
+				<div class="d">This is how far away from the player the chasecam likes to be, but 
+					it will get closer as necessary to avoid going inside walls.
+				</div>
+				<div class="v" id="chase_height">chase_height</div>
+				<div class="t">float: -8</div>
+				<div class="d">This is the base height above the top of the player's head that the 
+					chasecam will be positioned at. Looking up and down will move the camera in the 
+					opposite direction so that the player stays at approximately the same height on 
+					the screen. Large values of this cvar (either positive or negative) will 
+					produce strange output.
+				</div>
+				<div class="v" id="chasedemo">chasedemo</div>
+				<div class="t">boolean: false</div>
+				<div class="d">If this cvar is true, then demos will automatically start with the 
+					chasecam active.
+				</div>
+				<div class="v" id="cl_run">cl_run</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When non-zero, the game will always treat movement commands as if 
+					+speed is active.
+				</div>
+				<div class="c" id="clear">clear</div>
+				<div class="b">Clears the console of all text.
+				</div>
+				<div class="c" id="cmdlist">cmdlist [<i>pattern</i>]</div>
+				<div class="b">Lists all commands supported by the current version of ZDoom.
+				<p>If you specify a <i>pattern</i>, then only those cvars that match the pattern will be listed.
+					Patterns can contain the wildcards * (which substitutes for zero or more characters) and ? (which
+					substitutes for exactly one character).</p>
+				</div>
+				<div class="v" id="compatflags">compatflags</div>
+				<div class="t">integer: 0</div>
+				<div class="d">This cvar contains gameplay flags that control compatibility with 
+					the original Doom.
+					<table id="Table2">
+						<tr><th>Value</th><th>Description</th></tr>
+						<tr>
+							<td>1</td>
+							<td><a href="#compat_shortTex">compat_shortTex</a></td></tr>
+						<tr>
+							<td>2</td>
+							<td><a href="#compat_stairs">compat_stairs</a></td>
+						</tr>
+						<tr>
+							<td>4</td>
+							<td><a href="#compat_limitpain">compat_limitpain</a></td>
+						</tr>
+						<tr>
+							<td>8</td>
+							<td><a href="#compat_silentpickup">compat_silentpickup</a></td>
+						</tr>
+						<tr>
+							<td>16</td>
+							<td><a href="#compat_nopassover">compat_nopassover</a></td>
+						</tr>
+						<tr>
+							<td>32</td>
+							<td><a href="#compat_soundslots">compat_soundslots</a></td>
+						</tr>
+						<tr>
+							<td>64</td>
+							<td><a href="#compat_wallrun">compat_wallrun</a></td>
+						</tr>
+						<tr>
+							<td>128</td>
+							<td><a href="#compat_notossdrops">compat_notossdrops</a></td>
+						</tr>
+						<tr>
+							<td>256</td>
+							<td><a href="#compat_useblocking">compat_useblocking</a></td>
+						</tr>
+						<tr>
+							<td>512</td>
+							<td><a href="#compat_nodoorlight">compat_nodoorlight</a></td>
+						</tr>
+					</table>
+				</div>
+				<div class="vf" id="compat_limitpain">compat_limitpain</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">When true, Pain Elementals will not shoot out Lost Souls if there 
+					are already 20 or more Lost Souls on the level.</div>
+				<div class="vf" id="compat_nodoorlight">compat_nodoorlight</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">When true, the BOOM lighting extension to local doors is disabled. 
+					Briefly, because local doors do not use their tag, BOOM extended them to use 
+					the tag to indicate a sector that should have its light level changed as the 
+					door opens and closes. This should normally not cause any problems with 
+					pre-BOOM maps.</div>
+				<div class="vf" id="compat_nopassover">compat_nopassover</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">When true, you will not be able to move above or below other things, 
+					even if there is enough room for you to fit. You will have to go around them 
+					instead, just like in Doom.</div>
+				<div class="vf" id="compat_notossdrops">compat_notossdrops</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">When true, items dropped by monsters will appear on the floor as 
+					they did in Doom. When false, the monsters will appear to toss out items as in 
+					Heretic.</div>
+				<div class="vf" id="compat_shortTex">compat_shortTex</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">Controls the way the shortest texture around a sector is determined 
+					for specials that use it. When set to false, the blank texture (-) is not 
+					considered for the height. When true, the standard Doom behavior is replicated, 
+					and the blank texture is considered for the height. The blank texture is 
+					actually represented internally as being 64 pixels tall, so Doom could be 
+					tricked into thinking the shortest visible texture was only 64 pixels tall, 
+					even if it was really taller.</div>
+				<div class="vf" id="compat_silentpickup">compat_silentpickup</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">When true, only you will hear yourself when you pick up an item.</div>
+				<div class="vf" id="compat_soundslots">compat_soundslots</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">When true, actors will be limited to only one sound slot each. 
+					Normally, actors have eight sound slots that can be used to play different 
+					sounds simultaneously, so you cannot shut off the BFG sound by landing on the 
+					ground. This lets you use the "silent BFG" trick by forcing the landing sound 
+					and weapon sounds (and every other sound you make) into the same sound slot.
+				</div>
+				<div class="vf" id="compat_stairs">compat_stairs</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">When true, a Doom stairbuilding bug is retained that could effect a 
+					few levels.</div>
+				<div class="vf" id="compat_useblocking">compat_useblocking</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">When true, any special line can block a line activated by pressing 
+					the +use key, even if the special line has nothing to do with +use.</div>
+				<div class="vf" id="Div1">compat_wallrun</div>
+				<div class="tf">flag in <a href="#compatflags">compatflags</a>: false</div>
+				<div class="df">When true, the original buggy Doom movement clipping code is 
+					emulated, allowing players to perform the wall run.</div>
+				<div class="v" id="con_ctrl_d">con_ctrl_d</div>
+				<div class="t">string: ""</div>
+				<div class="d">When you press Ctrl-D on a blank line in the console, the command in 
+					this cvar is executed. For example, if you set con_ctrl_d to "quit", then 
+					pressing Ctrl-D will quit the game.</div>
+				<div class="c" id="cvarlist">cvarlist [<i>pattern</i>]</div>
+				<div class="b">Lists the values of all currently defined cvars. Each cvar can also 
+					be prefaced by multiple flags. These are:
+					<ul>
+						<li><code>A</code>Cvar gets saved in the config file.</li>
+						<li><code>U</code> Cvar contains user info.</li>
+						<li><code>S</code> Cvar contains server info.</li>
+						<li><code>-</code> Cvar can only be changed from the command line.</li>
+						<li><code>L</code> Changes to cvar's contents don't take effect until the next game.</li>
+						<li><code>C</code> Cvar has an internal callback.</li>
+						<li><code>*</code> Cvar was created by the user and is meaningless to the game.</li>
+					</ul>
+					If you specify a <i>pattern</i>, then only those cvars that match the pattern will be listed.
+					Patterns can contain the wildcards * (which substitutes for zero or more characters) and ? (which
+					substitutes for exactly one character). 
+				</div>
+				<div class="c" id="cvarlistplain">cvarlistplain</div>
+				<div class="b">This command works similarly to <a href="#cvarlist">cvarlist</a>, 
+					except it does not include flag information or list user-created cvars. Its 
+					primary purpose is to provide a simple list of cvars that can be exported and 
+					checked against this file to ensure it is complete.</div>
+				<div class="v" id="deathmatch">deathmatch</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When true, deathmatch rules are used for the game. When the game is 
+					started with -altdeath or -deathmatch, this cvar is automatically set to true.
+				</div>
+				<div class="v" id="dimamount">dimamount</div>
+				<div class="t">float: 0.2</div>
+				<div class="d">This is the amount of dimcolor to mix with the background when a 
+					menu is displayed. Setting it to 0 will cause the background to be untouched, 
+					and 1 will replace the background with dimcolor completely.
+				</div>
+				<div class="v" id="dimcolor">dimcolor</div>
+				<div class="t">color: "ff d7 00"</div>
+				<div class="d">This is the color to mix with the background when a menu is 
+					displayed.
+				</div>
+				<div class="v" id="dmflags">dmflags</div>
+				<div class="t">integer: 0</div>
+				<div class="d">This cvar controls the behavior of several aspects of gameplay. To 
+					determine what value to store in this cvar, select the desired features from 
+					the table below and add their values together. If a feature is marked with 
+					(DM), then that feature will only be active during a deathmatch game.
+					<table>
+						<tr><th>Value</th><th>Description</th></tr>
+						<tr><td>1</td><td>Do not spawn health items (DM)</td></tr>
+						<tr><td>2</td>
+							<td>Do not spawn powerups (DM)</td></tr>
+						<tr><td>4</td>
+							<td>Leave weapons around after pickup (DM)</td></tr>
+						<tr><td>8</td>
+							<td>Enables the original ZDoom falling damage</td></tr>
+						<tr><td>16</td>
+							<td>Enables Hexen falling damage</td></tr>
+						<tr><td>64</td>
+							<td>Stay on the same map when someone exits (DM)</td></tr>
+						<tr><td>128</td>
+							<td>Spawn players as far as possible from other players (DM)</td></tr>
+						<tr><td>256</td>
+							<td>Automatically respawn dead players (DM)</td></tr>
+						<tr><td>512</td>
+							<td>Do not spawn armor (DM)</td></tr>
+						<tr><td>1024</td>
+							<td>Kill anyone who tries to exit the level (DM)</td></tr>
+						<tr><td>2048</td>
+							<td>Don't use any ammo when firing</td></tr>
+						<tr><td>4096</td>
+							<td>Don't spawn monsters</td></tr>
+						<tr><td>8192</td>
+							<td>Monsters respawn sometime after their death</td></tr>
+						<tr><td>16384</td>
+							<td>Powerups other than invulnerability and invisibilty respawn</td></tr>
+						<tr><td>32768</td>
+							<td>Monsters are fast</td></tr>
+						<tr><td>65536</td>
+							<td>Don't allow jumping</td></tr>
+						<tr><td>131072</td>
+							<td>Don't allow freelook</td></tr>
+						<tr><td>262144</td>
+							<td>Invulnerability and invisibility powerups respawn</td></tr>
+						<tr><td>524288</td>
+							<td>Don't allow any actors to pass over or under other actors</td></tr>
+						<tr><td>1048576</td>
+							<td>The arbitrator controls the FOV for all players (DM)</td></tr>
+					</table>
+				</div>
+				<div class="vf" id="sv_barrelrespawn">sv_barrelrespawn</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, barrels will eventually respawn after they are destroyed. 
+					Changing this to true in the middle of a game will not effect barrels that have 
+					already been destroyed.</div>
+				<div class="vf" id="sv_falldamage">sv_falldamage</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, Hexen-style falling damage will be applied whenever you 
+					fall too fast and land on something.</div>
+				<div class="vf" id="sv_fastmonsters">sv_fastmonsters</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, monsters will move faster than normal.</div>
+				<div class="v" id="sv_fastweapons">sv_fastweapons</div>
+				<div class="t">integer: 0</div>
+				<div class="d">Controls how fast player weapons are. It can be set to one of three 
+					values:
+					<ol start="0">
+						<li>
+							Weapons are normal speed.</li><li>All weapon frames take 1 tic.</li><li>All 
+							weapon frames that perform an action take 1 tic, and all other weapon frames 
+							are skipped entirely.</li></ol>
+				</div>
+				<div class="vf" id="sv_forcerespawn">sv_forcerespawn</div>
+				<div class="tf">flag in <a href="#dmflags">dmfalgs</a>: false</div>
+				<div class="df">When true, players will respawn automatically after they die.</div>
+				<div class="vf" id="sv_infiniteammo">sv_infiniteammo</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, firing a weapon will not use any ammo.</div>
+				<div class="vf" id="sv_itemrespawn">sv_itemrespawn</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, items will respawn after they have been picked up.</div>
+				<div class="vf" id="sv_monsterrespawn">sv_monsterrespawn</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, monsters will respawn after they have been killed.</div>
+				<div class="vf" id="sv_noarmor">sv_noarmor</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, no armor will be spawned on the next map loaded.</div>
+				<div class="vf" id="sv_nobfgaim">sv_nobfgaim</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags2</a>: false</div>
+				<div class="df">When set to 1, prevents manual aiming of the BFG. It will still aim 
+					up or down if you shoot it at something, but you won't be able to, for 
+					instance, shoot it at the ground to quickly generate tracer damage by looking 
+					down.
+				</div>
+				<div class="vf" id="sv_noexit">sv_noexit</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, any players who attempt to exit the level will be killed. 
+					The only way to leave the level is to set a <a href="#timelimit">timelimit</a> or
+					<a href="#fraglimit">fraglimit</a> or change the map with the <a href="#changemap">changemap</a>
+					command.</div>
+				<div class="vf" id="sv_nofov">sv_nofov</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, only the arbitrator will be able to set the horizontal 
+					field-of-view with the <a href="#fov">fov</a> command, and the arbitrator's FOV 
+					will be used for all players.</div>
+				<div class="vf" id="sv_nofreelook">sv_nofreelook</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, disables looking up and down and forces the players to 
+					view straight ahead.</div>
+				<div class="vf" id="sv_nohealth">sv_nohealth</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, no health items will be spawned on the next map loaded.</div>
+				<div class="vf" id="sv_noitems">sv_noitems</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, no powerups or artifacts will be spawned on the next map 
+					loaded.</div>
+				<div class="vf" id="sv_nojump">sv_nojump</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, players' clothes will become so heavy that they cannot 
+					possibly jump no matter how hard they try.</div>
+				<div class="vf" id="sv_nomonsters">sv_nomonsters</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, no monsters will be spawned on the next map loaded.</div>
+				<div class="vf" id="sv_oldfalldamage">sv_oldfalldamage</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, the old ZDoom-style falling damage will be applied 
+					whenever you land on something too quickly.</div>
+				<div class="vf" id="sv_respawnprotect">sv_respawnprotect</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags2</a>: false</div>
+				<div class="df">When true, players will be invulnerable for two second after 
+					spawning.</div>
+				<div class="vf" id="sv_respawnsuper">sv_respawnsuper</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, Doom's invulnerability sphere and blur sphere will be 
+					able to respawn like regular items.</div>
+				<div class="vf" id="sv_samelevel">sv_samelevel</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, the only way to go to a different level is with the <a href="#changemap">
+						changemap</a> command.</div>
+				<div class="vf" id="sv_spawnfarthest">sv_spawnfarthest</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, players will be spawned as far as possible from any other 
+					players.</div>
+				<div class="vf" id="sv_weapondrop">sv_weapondrop</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, players will drop their weapons when they die.</div>
+				<div class="vf" id="sv_weaponstay">sv_weaponstay</div>
+				<div class="tf">flag in <a href="#dmflags">dmflags</a>: false</div>
+				<div class="df">When true, weapons will not disappear when a player picks them up. 
+					This does not apply to weapons dropped by monsters or other players.</div>
+				<div class="v" id="dmflags2">dmflags2</div>
+				<div class="t">integer: 0</div>
+				<div class="d">This cvar contains additional gameplay flags that were originally 
+					added in Skull Tag. Some of them were also available as separate flags in 
+					earlier ZDooms. To determine what value to store in this cvar, select the 
+					desired features from the table below and add their values together. If a 
+					feature is marked with (DM), then that feature will only be active during a 
+					deathmatch game.
+					<table id="Table1">
+						<tr>
+							<th>Value</th>
+							<th>Description</th></tr>
+						<tr>
+							<td>2</td>
+							<td>Players drop their current weapon when they die</td></tr>
+						<tr>
+							<td>32768</td>
+							<td>Prevents manually aiming the BFG up and down</td></tr>
+						<tr>
+							<td>65536</td>
+							<td>Barrels respawn after they explode (DM)</td></tr>
+						<tr>
+							<td>131072</td>
+							<td>Players are temporarily invulnerable immediately after spawning (DM)</td>
+						</tr>
+					</table>
+				</div>
+				<div class="c" id="endgame">endgame</div>
+				<div class="b">Ends the current single player game and drops the console down to 
+					cover the screen.
+				</div>
+				<div class="c" id="exit">exit</div>
+				<div class="b">This is a synonym for <a href="#quit">quit</a> and quits the game.</div>
+				<div class="v" id="forcewater">forcewater</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When set to true, all BOOM-style deep water will be swimmable. This 
+					is not the default, because the effect used to produce it can be used for more 
+					than just deep water (although water is probably its most common use).
+				</div>
+				<div class="c" id="fov">fov [<i>viewfield</i>]</div>
+				<div class="b">When used without a parameter, returns the current horizontal field 
+					of vision. When viewfield is specified, sets the field of vision. This can be 
+					between 1 and 179 degrees. The default is 90. Notice that this is a command and 
+					not a cvar.
+				</div>
+				<div class="v" id="fraglimit">fraglimit</div>
+				<div class="t">integer: 0</div>
+				<div class="d">
+					If this cvar is non-zero, the game will automatically advance to the next level 
+					once anyone gets this many frags. (deathmatch only)
+				</div>
+				<div class="c" id="history">history</div>
+				<div class="b">Prints the most recently executed console commands that you can 
+					cycle through by pressing the up and down arrow keys.
+				</div>
+				<div class="c" id="hxvisit">hxvisit <i>warp-trans</i></div>
+				<div class="b">Changes to the level specified by <i>warp-trans</i>. Unlike <a href="idclev">
+						idclev</a>, hxvisit determines the map to go to by finding a map defined in 
+					MAPINFO with a matching <i>warp-trans</i>. Hence, it emulates the Hexen visit 
+					cheat.</div>
+				<div class="c" id="idclev">idclev <i>level-code</i></div>
+				<div class="b">Changes to the level specified by <i>level-code</i>.
+				</div>
+				<div class="c" id="idmus">idmus <i>level-code</i></div>
+				<div class="b">Changes the music to that associated with the specified level.
+				</div>
+				<div class="v" id="idmypos">idmypos</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When true, constantly displays the player's current position and 
+					view angle.
+				</div>
+				<div class="v" id="infighting">infighting</div>
+				<div class="t">integer: 0</div>
+				<div class="d">Controls monster infighting. It has three possible values:
+					<ol start="-1">
+						<li>
+							Monsters never fight other monsters</li>
+						<li>
+							Monsters do not fight other monsters of their own kind unless they use bullet 
+							attacks. This is the standard Doom behavior.</li>
+						<li>
+							Monsters will fight other monsters, including those of their own kind.</li></ol>
+				</div>
+				<div class="c" id="invnext">invnext</div>
+				<div class="b">Selects the next inventory item you possess.</div>
+				<div class="c" id="invprev">invprev</div>
+				<div class="b">Selects the previous inventory item you possess.</div>
+				<div class="c" id="invuse">invuse</div>
+				<div class="b">Actives the currently selected inventory item.</div>
+				<div class="c" id="invuseall">invuseall</div>
+				<div class="b">Activates every inventory item you possess.</div>
+				<div class="c" id="land">land</div>
+				<div class="b">If you are using a flight item, deactivates it and causes you to 
+					land.</div>
+				<div class="v" id="language">language</div>
+				<div class="t">string: "auto"</div>
+				<div class="d">This is the language most game messages use. If it is "auto" or 
+					unknown, the settings in the Regional Settings control panel will be used to 
+					determine an appropriate language. Set this to "enu" if you want to use the 
+					standard U.S. English messages.</div>
+				<div class="c" id="map">map <i>map-name</i></div>
+				<div class="b">Starts a new game on the specified map. This command should only be 
+					used when playing a single player game. To change maps in multiplayer, use the <a href="#changemap">
+						changemap</a> command.
+				</div>
+				<div class="c" id="menu_advsound">menu_advsound</div>
+				<div class="b">Activates the advanced sound options menu.</div>
+				<div class="c" id="menu_compatibility">menu_compatibility</div>
+				<div class="b">Activates the compatibility options menu.</div>
+				<div class="c" id="menu_display">menu_display</div>
+				<div class="b">Activates the display options menu.</div>
+				<div class="c" id="menu_endgame">menu_endgame</div>
+				<div class="b">Asks the user if they want to end the current game, and returns to 
+					the title screen if they do.
+				</div>
+				<div class="c" id="menu_game">menu_game</div>
+				<div class="b">Activates the new game menu.
+				</div>
+				<div class="c" id="menu_gameplay">menu_gameplay</div>
+				<div class="b">Activates the gameplay options (dmflags) menu.
+				</div>
+				<div class="c" id="menu_help">menu_help</div>
+				<div class="b">Displays the help screen.
+				</div>
+				<div class="c" id="menu_joystick">menu_joystick</div>
+				<div class="b">Activates the joytick/game controller configuration menu.</div>
+				<div class="c" id="menu_keys">menu_keys</div>
+				<div class="b">Activates the customize controls menu.
+				</div>
+				<div class="c" id="menu_load">menu_load</div>
+				<div class="b">Activates the load game menu.
+				</div>
+				<div class="c" id="menu_main">menu_main</div>
+				<div class="b">Activates the main menu.
+				</div>
+				<div class="c" id="menu_mididevice">menu_mididevice</div>
+				<div class="b">Activates the MIDI device selection menu.</div>
+				<div class="c" id="menu_mouse">menu_mouse</div>
+				<div class="b">Activates the mouse configuration menu.</div>
+				<div class="c" id="menu_options">menu_options</div>
+				<div class="b">Activates the options menu.
+				</div>
+				<div class="c" id="menu_player">menu_player</div>
+				<div class="b">Activates the player setup menu.
+				</div>
+				<div class="c" id="menu_quit">menu_quit</div>
+				<div class="b">Asks the user if they want to quit, and quits if they do.
+				</div>
+				<div class="c" id="menu_save">menu_save</div>
+				<div class="b">Activates the save game menu.
+				</div>
+				<div class="c" id="menu_sound">menu_sound</div>
+				<div class="b">Activates the sound options menu.</div>
+				<div class="c" id="menu_video">menu_video</div>
+				<div class="b">Activates the video mode menu.
+				</div>
+				<div class="c" id="pause">pause</div>
+				<div class="b">Pauses and unpauses the game.
+				</div>
+				<div class="c" id="playdemo">playdemo <i>demo</i></div>
+				<div class="b">Plays a demo. The demo can be a file on disk or a lump in a wad.
+				</div>
+				<div class="c" id="playlist">playlist <i>playlist.m3u</i> [shuffle|<i>position</i>]</div>
+				<div class="b">Loads a WinAmp .m3u playlist. Any music that would normally be 
+					played will be ignored, and the songs in the playlist will be played instead. 
+					If you add the word shuffle after the name of the .m3u file, the playlist will 
+					be replayed in a random order. In place of shuffle, you can also specify a 
+					number corresponding to the song number in the playlist you want to play first.</div>
+				<div class="c" id="playlistnext">playlistnext</div>
+				<div class="b">Plays the next song in the playlist.</div>
+				<div class="c" id="playlistpos">playlistpos <i>position</i></div>
+				<div class="b">Starts playing the song at the specified <i>position</i> in the 
+					playlist.</div>
+				<div class="c" id="playlistprev">playlistprev</div>
+				<div class="b">Plays the previous song in the playlist.</div>
+				<div class="c" id="playliststatus">playliststatus</div>
+				<div class="b">Displays the number of songs in the playlist and the currently 
+					playing song.</div>
+				<div class="v" id="queryiwad">queryiwad</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When ZDoom finds more than one game IWAD and you have not used the 
+					-iwad parameter, it will normally ask you to select which one you want to play 
+					with. Set this to false, and the first IWAD found will automatically be used.</div>
+				<div class="c" id="quickload">quickload</div>
+				<div class="b">Loads the last quicksaved game.
+				</div>
+				<div class="c" id="quicksave">quicksave</div>
+				<div class="b">Quick saves the game.
+				</div>
+				<div class="c" id="quit">quit</div>
+				<div class="b">Exits ZDoom and saves all configuration information to disk.
+				</div>
+				<div class="v" id="screenblocks">screenblocks</div>
+				<div class="t">integer: 10</div>
+				<div class="d">This cvar determines the size of the view window. Valid values are 
+					in the range 3-12 inclusive. Attempts to set this cvar to values outside this 
+					range will be truncated. 3 is the smallest view window, and 12 is full screen. 
+					11 is also full screen, but includes a small heads-up display. 10 is almost 
+					full screen, except it includes the status bar at the bottom of the screen.
+				</div>
+				<div class="c" id="select">select <i>item</i></div>
+				<div class="b">Selects an inventory item by name. Supported names are:
+					<ul>
+						<li>invulnerability</li>
+						<li>invisibility</li>
+						<li>health</li>
+						<li>superhealth</li>
+						<li>tomeofpower</li>
+						<li>healingradius</li>
+						<li>summon</li>
+						<li>torch</li>
+						<li>firebomb</li>
+						<li>egg</li>
+						<li>fly</li>
+						<li>blastradius</li>
+						<li>poisonbag1</li>
+						<li>poisonbag2</li>
+						<li>poisonbag3</li>
+						<li>teleportother</li>
+						<li>speed</li>
+						<li>boostmana</li>
+						<li>boostarmor</li>
+						<li>teleport</li>
+						<li>puzzskull</li>
+						<li>puzzgembig</li>
+						<li>puzzgemred</li>
+						<li>puzzgemgreen1</li>
+						<li>puzzgemgreen2</li>
+						<li>puzzgemblue1</li>
+						<li>puzzgemblue2</li>
+						<li>puzzbook1</li>
+						<li>puzzbook2</li>
+						<li>puzzfweapon</li>
+						<li>puzzcweapon</li>
+						<li>puzzmweapon</li>
+						<li>puzzgear1</li>
+						<li>puzzgear2</li>
+						<li>puzzgear3</li>
+						<li>puzzgear4</li>
+					</ul>
+				</div>
+				<div class="c" id="setcolor">setcolor <i>cvar</i> <i>color-name</i></div>
+				<div class="b">Sets <i>cvar</i> to a color value specified in the X11R6RGB lump. 
+					(This is the X11R6.rgb file from a standard X-Windows system.) If <i>color-name</i>
+					cannot be found, the contents of <i>cvar</i> are left unchanged. The file 
+					colors.txt included with the ZDoom archive contains a list of all the color 
+					names listed in zdoom.wad.
+					<p>This command is redundant now that color cvars can be set to color names 
+						directly without using the setcolor command.</p>
+				</div>
+				<div class="c" id="setslot">setslot [<i>slot</i> <i>weapons</i>...]</div>
+				<div class="b">The setslot command is used to configure the weapon slots from 
+					within the game. Without any parameters, it lists the weapons currently 
+					assigned to each slot. If you specify a <i>slot</i> number, then the weapons in 
+					the slot will be replaced by those on the command line. If you don't specify 
+					any weapons, the slot will be cleared. There are ten slots numbered 0-9, and 
+					each slot can hold up to eight weapons. If a slot has more than one weapon, the <a href="#slot">
+						slot</a> command will cycle through them in reverse order. You can use the <code>
+						<a href="#dumpclasses">dumpclasses</a> weapon</code> command to get a list 
+					of the weapon names.
+					<dl>
+						<dt>Examples:</dt><dd><code>setslot 1 Fist Chainsaw</code><br />
+							<code>setslot 2 Pistol</code></dd></dl>
+				</div>
+				<div class="v" id="show_messages">show_messages</div>
+				<div class="t">boolean: true</div>
+				<div class="d">
+					When this variable is true, game messages will be displayed at the top of the 
+					screen. Regardless of the state of this cvar, console messages will always be 
+					displayed in the console. If logging is enabled, messages will also be written 
+					to disk.
+				</div>
+				<div class="c" id="sizedown">sizedown</div>
+				<div class="b">Decrements screenblocks by 1, shrinking the view window.
+				</div>
+				<div class="c" id="sizeup">sizeup</div>
+				<div class="b">Increments screenblocks by 1, enlarging the view window.
+				</div>
+				<div class="v" id="skill">skill</div>
+				<div class="t">integer: 2</div>
+				<div class="d">This variable contains the game skill, ranging from 0 to 4 
+					inclusive. Changes to this cvar only take effect when a new level is loaded.
+				</div>
+				<div class="c" id="slot">slot <i>slot-number</i></div>
+				<div class="b">Selects the next weapon from the specified weapon slot.</div>
+				<div class="v" id="splashfactor">splashfactor</div>
+				<div class="t">float: 1.0</div>
+				<div class="d">This controls the amount of damage players receive when they fire a 
+					rocket and it explodes right next to them. It applies only to the player who 
+					fires the rocket; all others receive normal damage. A value of 0.5 would apply 
+					only half damage to the player. A value of 2.0 would apply double damage. Other 
+					values are similar. Useful mostly for people who like to rocket jump and don't 
+					like dying if they don't have 100% health and a lot of armor.
+				</div>
+				<div class="c" id="spynext">spynext</div>
+				<div class="b">During a cooperative game or while watching a multiplayer demo, this 
+					command will switch your view to the next player.
+				</div>
+				<div class="c" id="spyprev">spyprev</div>
+				<div class="b">During a cooperative game or while watching a multiplayer demo, this 
+					command will switch your view to the previous player.
+				</div>
+				<div class="c" id="stop">stop</div>
+				<div class="b">Stops demo recording and exits the game.</div>
+				<div class="c" id="stopmus">stopmus</div>
+				<div class="b">Stops playing the current song.</div>
+				<div class="v" id="sv_aircontrol">sv_aircontrol</div>
+				<div class="t">float: 0.00390625</div>
+				<div class="d">Sets the amount of control you have while in the air. 1 is the same 
+					control you have while on normal ground. 0 is no control at all&mdash;the 
+					original Doom setting&mdash;you have to wait until you land before you can 
+					change direction. The default value is very close to the standard Doom value 
+					but still large enough to allow you to stand next to a ledge and jump onto it.</div>
+				<div class="v" id="sv_gravity">sv_gravity</div>
+				<div class="t">float: 800</div>
+				<div class="d">This is the overall gravity of the entire level. 800 is normal 
+					gravity.</div>
+				<div class="v" id="teamdamage">teamdamage</div>
+				<div class="t">float: 0.0</div>
+				<div class="d">Controls how much damage players can do to their teammates. This is 
+					multiplied to the normal damage done, so a value of 0 means that players cannot 
+					hurt their teammates. A value of 1 means that players deal full damage to their 
+					teammates. You can also set this to values greater than 1 to deal extra 
+					punishment to your teammates.</div>
+				<div class="v" id="teamplay">teamplay</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When set to true, players will be recognized by team. Otherwise, 
+					everyone is treated as if they aren't on a team regardless of the settings of 
+					their team cvars. Useful primarily for the friendy fire avoidance dmflag and 
+					say_team command.</div>
+				<div class="c" id="testblend">testblend <i>color</i> <i>amount</i></div>
+				<div class="b">Sets the palette blend to a specified color and amount. <i>color</i> 
+					can be either a color name defined in the X11R6RGB lump or a color string. <i>amount</i>
+					can be any number between 0.0 and 1.0 inclusive and specifies how much of <i>color</i>
+					should be mixed with the palette, with 0.0 being no mixing and 1.0 being full 
+					mixing.</div>
+				<div class="c" id="testcolor">testcolor <i>color</i></div>
+				<div class="b">Sets the light color of any sectors using the default light to <i>color</i>.
+					<i>color</i> can be either a color defined in the X11R6RGB lump or a color 
+					string.</div>
+				<div class="c" id="testfade">testfade <i>color</i></div>
+				<div class="b">Temporarily sets the fade color of the current level to <i>color</i>. 
+					Most levels fade to black by default, but this can be changed with the MAPINFO 
+					lump. <i>color</i> can be either a color defined in the X11R6RGB lump or a 
+					color string.</div>
+				<div class="c" id="timedemo">timedemo <i>demo</i></div>
+				<div class="b">Plays a demo as fast as the refresh rate will allow and displays the 
+					average framerate attained during playback. Due to limitations in the current 
+					demo system, this command will also exit the game when the demo finishes. See 
+					also: playdemo</div>
+				<div class="v" id="timelimit">timelimit</div>
+				<div class="t">float: 0</div>
+				<div class="d">When this cvar is non-zero, the game will automatically advance to 
+					the next level after this many minutes have elapsed. (deathmatch only) See 
+					also: fraglimit</div>
+				<div class="c" id="toggle">toggle <i>cvar</i></div>
+				<div class="b">Toggles the value of <i>cvar</i> between false and true (zero and 
+					non-zero).</div>
+				<div class="c" id="toggleconsole">toggleconsole</div>
+				<div class="b">Toggles display of the console on/off.</div>
+				<div class="c" id="togglemessages">togglemessages</div>
+				<div class="b">Toggles display of game messages on/off. The only difference between 
+					doing this and "toggle show_messages" is that this command always displays a 
+					message describing the current state of messages.</div>
+				<div class="c" id="turn180">turn180</div>
+				<div class="b">Quickly turns your player around 180 degrees.</div>
+				<div class="c" id="use">use <i>item</i></div>
+				<div class="b">Uses a specific inventory item. The supported item names are the 
+					same as for the <a href="#select">select</a> command.</div>
+				<div class="c" id="useflechette">useflechette</div>
+				<div class="b">This command will make you use whichever type of flechette you have. 
+					There are actually three different types of flechettes, and which one you pick 
+					up when you walk over a flechette is determined by your player's class. This 
+					command is equivalent to <code>use ArtiPoisonBag1</code>, <code>use ArtiPoisonBag2</code>, 
+					or <code>use ArtiPoisonBag3</code>, depending on which type of flechette is in 
+					your inventory.</div>
+				<div class="v" id="var_friction">var_friction</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When set to false, normal friction is applied to the player in all 
+					cases. Otherwise, the amount of friction applied is determined by the sector 
+					the player is in.</div>
+				<div class="v" id="var_pushers">var_pushers</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When set to false, disables the BOOM push/pull wind effects.</div>
+				<div class="c" id="weapnext">weapnext</div>
+				<div class="b">
+					Selects the next weapon (in order) that you own and have ammo for.</div>
+				<div class="c" id="weapon">weapon <i>weapon-number</i></div>
+				<div class="b">Activates a specific weapon if you are carrying it and have enough 
+					ammo. Weapon numbers may change in the future, so you are encouraged to use <a href="#addslot">
+						addslot</a> to add weapons for use with the <a href="#slot">slot</a> command 
+					instead.</div>
+				<div class="c" id="weapprev">weapprev</div>
+				<div class="b">Selects the previous weapon (in order) that you own and have ammo 
+					for.</div>
+				<div class="c" id="whereisini">whereisini</div>
+				<div class="b">Prints the location of the current zdoom.ini to the console. The 
+					zdoom.ini file is normally stored in the user's profile directory. It may not 
+					be immediately obvious where that is, so you can use this command to find out.</div>
+				<div class="v" id="wi_percents">wi_percents</div>
+				<div class="t">boolean: true</div>
+				<div class="d">When false, intermission stats are printed as absolute values such 
+					as "7 of 9". When true, intermission stats are printed as percentages such as 
+					"50%".</div>
+			</div>
+		</div> <!-- end main -->
+		<div id="index" class="index">
+			<h3>Index</h3>
+			<p><a href="#_attack">+/-attack</a><br />
+				<a href="#_back">+/-back</a><br />
+				<a href="#_forward">+/-forward</a><br />
+				<a href="#_jump">+/-jump</a><br />
+				<a href="#_klook">+/-klook</a><br />
+				<a href="#_left">+/-left</a><br />
+				<a href="#_lookdown">+/-lookdown</a><br />
+				<a href="#_lookup">+/-lookup</a><br />
+				<a href="#_mlook">+/-mlook</a><br />
+				<a href="#_movedown">+/-movedown</a><br />
+				<a href="#_moveleft">+/-moveleft</a><br />
+				<a href="#_moveright">+/-moveright</a><br />
+				<a href="#_moveup">+/-moveup</a><br />
+				<a href="#_right">+/-right</a><br />
+				<a href="#_showscores">+/-showscores</a><br />
+				<a href="#_speed">+/-speed</a><br />
+				<a href="#_strafe">+/-strafe</a><br />
+				<a href="#_use">+/-use</a></p>
+			<h4>A</h4>
+			<p><a href="#addbot">addbot</a><br />
+				<a href="#addkeysection">addkeysection</a><br />
+				<a href="#addmenukey">addmenukey</a><br />
+				<a href="#addrocketexplosion">addrocketexplosion</a><br />
+				<a href="#addslot">addslot</a><br />
+				<a href="#addslotdefault">addslotdefault</a><br />
+				<a href="#alias">alias</a><br />
+				<a href="#alwaysapplydmflags">alwaysapplydmflags</a><br />
+				<a href="#am_backcolor">am_backcolor</a><br />
+				<a href="#am_cdwallcolor">am_cdwallcolor</a><br />
+				<a href="#am_cheat">am_cheat</a><br />
+				<a href="#am_fdwallcolor">am_fdwallcolor</a><br />
+				<a href="#am_gridcolor">am_gridcolor</a><br />
+				<a href="#am_interlevelcolor">am_interlevelcolor</a><br />
+				<a href="#am_intralevelcolor">am_intralevelcolor</a><br />
+				<a href="#am_lockedcolor">am_lockedcolor</a><br />
+				<a href="#am_notseencolor">am_notseencolor</a><br />
+				<a href="#am_overlay">am_overlay</a><br />
+				<a href="#am_ovotherwallscolor">am_ovotherwallscolor</a><br />
+				<a href="#am_ovtelecolor">am_ovtelecolor</a><br />
+				<a href="#am_ovthingcolor">am_ovthingcolor</a><br />
+				<a href="#am_ovtrans">am_ovtrans</a><br />
+				<a href="#am_ovunseencolor">am_ovunseencolor</a><br />
+				<a href="#am_ovwallcolor">am_ovwallcolor</a><br />
+				<a href="#am_ovyourcolor">am_ovyourcolor</a><br />
+				<a href="#am_rotate">am_rotate</a><br />
+				<a href="#am_secretwallcolor">am_secretwallcolor</a><br />
+				<a href="#am_showitems">am_showitems</a><br />
+				<a href="#am_showmonsters">am_showmonsters</a><br />
+				<a href="#am_showsecrets">am_showsecrets</a><br />
+				<a href="#am_showtime">am_showtime</a><br />
+				<a href="#am_thingcolor">am_thingcolor</a><br />
+				<a href="#am_tswallcolor">am_tswallcolor</a><br />
+				<a href="#am_usecustomcolors">am_usecustomcolors</a><br />
+				<a href="#am_wallcolor">am_wallcolor</a><br />
+				<a href="#am_xhaircolor">am_xhaircolor</a><br />
+				<a href="#am_yourcolor">am_yourcolor</a><br />
+				<a href="#anubis">anubis</a><br />
+				<a href="#archivecvar">archivecvar</a><br />
+				<a href="#atexit">atexit</a><br />
+				<a href="#autoaim">autoaim</a><br />
+				<a href="#autosavenum">autosavenum</a></p>
+			<h4>B</h4>
+			<p><a href="#bind">bind</a><br />
+				<a href="#binddefaults">binddefaults</a><br />
+				<a href="#bot_allowspy">bot_allowspy</a><br />
+				<a href="#bot_next_color">bot_next_color</a><br />
+				<a href="#bot_observer">bot_observer</a><br />
+				<a href="#bumpgamma">bumpgamma</a></p>
+			<h4>C</h4>
+			<p><a href="#cd_close">cd_close</a><br />
+				<a href="#cd_drive">cd_drive</a><br />
+				<a href="#cd_eject">cd_eject</a><br />
+				<a href="#cd_enabled">cd_enabled</a><br />
+				<a href="#cd_pause">cd_pause</a><br />
+				<a href="#cd_play">cd_play</a><br />
+				<a href="#cd_resume">cd_resume</a><br />
+				<a href="#cd_stop">cd_stop</a><br />
+				<a href="#centerview">centerview</a><br />
+				<a href="#changemap">changemap</a><br />
+				<a href="#changemus">changemus</a><br />
+				<a href="#chase">chase</a><br />
+				<a href="#chase_dist">chase_dist</a><br />
+				<a href="#chase_height">chase_height</a><br />
+				<a href="#chasedemo">chasedemo</a><br />
+				<a href="#chat_substitution">chat_substitution</a><br />
+				<a href="#chatmacroX">chatmacro0</a><br />
+				<a href="#chatmacroX">chatmacro1</a><br />
+				<a href="#chatmacroX">chatmacro2</a><br />
+				<a href="#chatmacroX">chatmacro3</a><br />
+				<a href="#chatmacroX">chatmacro4</a><br />
+				<a href="#chatmacroX">chatmacro5</a><br />
+				<a href="#chatmacroX">chatmacro6</a><br />
+				<a href="#chatmacroX">chatmacro7</a><br />
+				<a href="#chatmacroX">chatmacro8</a><br />
+				<a href="#chatmacroX">chatmacro9</a><br />
+				<a href="#cl_bbannounce">cl_bbannounce</a><br />
+				<a href="#cl_bloodsplats">cl_bloodsplats</a><br />
+				<a href="#cl_bloodtype">cl_bloodtype</a><br />
+				<a href="#cl_capfps">cl_capfps</a><br />
+				<a href="#cl_maxdecals">cl_maxdecals</a><br />
+				<a href="#cl_missiledecals">cl_missiledecals</a><br />
+				<a href="#cl_noprediction">cl_noprediction</a><br />
+				<a href="#cl_pufftype">cl_pufftype</a><br />
+				<a href="#cl_rockettrails">cl_rockettrails</a><br />
+				<a href="#cl_run">cl_run</a><br />
+				<a href="#cl_showmultikills">cl_showmultikills</a><br />
+				<a href="#cl_showsprees">cl_showsprees</a><br />
+				<a href="#cl_spreaddecals">cl_spreaddecals</a><br />
+				<a href="#clear">clear</a><br />
+				<a href="#clearscancycles">clearscancycles</a><br />
+				<a href="#clearwallcycles">clearwallcycles</a><br />
+				<a href="#cmdlist">cmdlist</a><br />
+				<a href="#color">color</a><br />
+				<a href="#compat_limitpain">compat_limitpain</a><br />
+				<a href="#compat_nodoorlight">compat_nodoorlight</a><br />
+				<a href="#compat_nopassover">compat_nopassover</a><br />
+				<a href="#compat_notossdrops">compat_notossdrops</a><br />
+				<a href="#compat_shortTex">compat_shortTex</a><br />
+				<a href="#compat_silentpickup">compat_silentpickup</a><br />
+				<a href="#compat_soundslots">compat_soundslots</a><br />
+				<a href="#compat_stairs">compat_stairs</a><br />
+				<a href="#compat_useblocking">compat_useblocking</a><br />
+				<a href="#compat_wallrun">compat_wallrun</a><br />
+				<a href="#compatflags">compatflags</a><br />
+				<a href="#con_centernotify">con_centernotify</a><br />
+				<a href="#con_ctrl_d">con_ctrl_d</a><br />
+				<a href="#con_midtime">con_midtime</a><br />
+				<a href="#con_notablist">con_notablist</a><br />
+				<a href="#con_notifytime">con_notifytime</a><br />
+				<a href="#con_scaletext">con_scaletext</a><br />
+				<a href="#countdecals">countdecals</a><br />
+				<a href="#countdecalsreal">countdecalsreal</a><br />
+				<a href="#crosshair">crosshair</a><br />
+				<a href="#crosshaircolor">crosshaircolor</a><br />
+				<a href="#crosshairgrow">crosshairgrow</a><br />
+				<a href="#crosshairhealth">crosshairhealth</a><br />
+				<a href="#crosshairscale">crosshairscale</a><br />
+				<a href="#cvarlist">cvarlist</a><br />
+				<a href="#cvarlistplain">cvarlistplain</a></p>
+			<h4>D</h4>
+			<p><a href="#deathmatch">deathmatch</a><br />
+				<a href="#defaultbind">defaultbind</a><br />
+				<a href="#demo_compress">demo_compress</a><br />
+				<a href="#developer">developer</a><br />
+				<a href="#dimamount">dimamount</a><br />
+				<a href="#dimcolor">dimcolor</a><br />
+				<a href="#dir">dir</a><br />
+				<a href="#disableautosave">disableautosave</a><br />
+				<a href="#dmflags">dmflags</a><br />
+				<a href="#dmflags2">dmflags2</a><br />
+				<a href="#doublebind">doublebind</a><br />
+				<a href="#dumpclasses">dumpclasses</a><br />
+				<a href="#dumpmap">dumpmap</a><br />
+				<a href="#dumpmapthings">dumpmapthings</a><br />
+				<a href="#dumpspawnables">dumpspawnables</a></p>
+			<h4>E</h4>
+			<p><a href="#eaxedit">eaxedit</a><br />
+				<a href="#eaxedit_test">eaxedit_test</a><br />
+				<a href="#echo">echo</a><br />
+				<a href="#endgame">endgame</a><br />
+				<a href="#error">error</a><br />
+				<a href="#error_fatal">error_fatal</a><br />
+				<a href="#eval">eval</a> <a href="#exec">exec</a><br />
+				<a href="#exit">exit</a></p>
+			<h4>F</h4>
+			<p><a href="#fly">fly</a><br />
+				<a href="#forcewater">forcewater</a><br />
+				<a href="#fov">fov</a><br />
+				<a href="#fraglimit">fraglimit</a><br />
+				<a href="#freelook">freelook</a><br />
+				<a href="#freeze">freeze</a><br />
+				<a href="#fullscreen">fullscreen</a></p>
+			<h4>G</h4>
+			<p><a href="#gameversion">gameversion</a><br />
+				<a href="#gamma">gamma</a><br />
+				<a href="#genblockmap">genblockmap</a><br />
+				<a href="#gender">gender</a><br />
+				<a href="#genglnodes">genglnodes</a><br />
+				<a href="#gennodes">gennodes</a><br />
+				<a href="#get">get</a><br />
+				<a href="#give">give</a><br />
+				<a href="#god">god</a></p>
+			<h4>H</h4>
+			<p><a href="#history">history</a><br />
+				<a href="#hud_scale">hud_scale</a><br />
+				<a href="#hxvisit">hxvisit</a></p>
+			<h4>I</h4>
+			<p><a href="#idclev">idclev</a><br />
+				<a href="#iddqd">iddqd</a><br />
+				<a href="#idmus">idmus</a><br />
+				<a href="#idmypos">idmypos</a><br />
+				<a href="#in_mouse">in_mouse</a><br />
+				<a href="#infighting">infighting</a><br />
+				<a href="#invertmouse">invertmouse</a><br />
+				<a href="#invnext">invnext</a><br />
+				<a href="#invprev">invprev</a><br />
+				<a href="#invuse">invuse</a><br />
+				<a href="#invuseall">invuseall</a></p>
+			<h4>J</h4>
+			<p><a href="#joy_dial">joy_dial</a><br />
+				<a href="#joy_dialthreshold">joy_dialthreshold</a><br />
+				<a href="#joy_forwardspeed">joy_forwardspeed</a><br />
+				<a href="#joy_guid">joy_guid</a><br />
+				<a href="#joy_pitchspeed">joy_pitchspeed</a><br />
+				<a href="#joy_sidespeed">joy_sidespeed</a><br />
+				<a href="#joy_slider">joy_slider</a><br />
+				<a href="#joy_sliderthreshold">joy_sliderthreshold</a><br />
+				<a href="#joy_speedmultiplier">joy_speedmultiplier</a><br />
+				<a href="#joy_upspeed">joy_upspeed</a><br />
+				<a href="#joy_xaxis">joy_xaxis</a><br />
+				<a href="#joy_xrot">joy_xrot</a><br />
+				<a href="#joy_xrotthreshold">joy_xrotthreshold</a><br />
+				<a href="#joy_xthreshold">joy_xthreshold</a><br />
+				<a href="#joy_yaxis">joy_yaxis</a><br />
+				<a href="#joy_yawspeed">joy_yawspeed</a><br />
+				<a href="#joy_yrot">joy_yrot</a><br />
+				<a href="#joy_yrotthreshold">joy_yrotthreshold</a><br />
+				<a href="#joy_ythreshold">joy_ythreshold</a><br />
+				<a href="#joy_zaxis">joy_zaxis</a><br />
+				<a href="#joy_zrot">joy_zrot</a><br />
+				<a href="#joy_zrotthreshold">joy_zrotthreshold</a><br />
+				<a href="#joy_zthreshold">joy_zthreshold</a></p>
+			<h4>K</h4>
+			<p><a href="#key">key</a><br />
+				<a href="#kill">kill</a></p>
+			<h4>L</h4>
+			<p><a href="#land">land</a><br />
+				<a href="#language">language</a><br />
+				<a href="#listbots">listbots</a><br />
+				<a href="#logfile">logfile</a><br />
+				<a href="#lookspring">lookspring</a><br />
+				<a href="#lookstrafe">lookstrafe</a></p>
+			<h4>M</h4>
+			<p><a href="#m_filter">m_filter</a><br />
+				<a href="#m_forward">m_forward</a><br />
+				<a href="#m_noprescale">m_noprescale</a><br />
+				<a href="#m_pitch">m_pitch</a><br />
+				<a href="#m_side">m_side</a><br />
+				<a href="#m_yaw">m_yaw</a><br />
+				<a href="#map">map</a><br />
+				<a href="#mdk">mdk</a><br />
+				<a href="#menu_advsound">menu_advsound</a><br />
+				<a href="#menu_compatibility">menu_compatibility</a><br />
+				<a href="#menu_display">menu_display</a><br />
+				<a href="#menu_endgame">menu_endgame</a><br />
+				<a href="#menu_game">menu_game</a><br />
+				<a href="#menu_gameplay">menu_gameplay</a><br />
+				<a href="#menu_help">menu_help</a><br />
+				<a href="#menu_joystick">menu_joystick</a><br />
+				<a href="#menu_keys">menu_keys</a><br />
+				<a href="#menu_load">menu_load</a><br />
+				<a href="#menu_main">menu_main</a><br />
+				<a href="#menu_mididevice">menu_mididevice</a><br />
+				<a href="#menu_mouse">menu_mouse</a><br />
+				<a href="#menu_options">menu_options</a><br />
+				<a href="#menu_player">menu_player</a><br />
+				<a href="#menu_quit">menu_quit</a><br />
+				<a href="#menu_save">menu_save</a><br />
+				<a href="#menu_sound">menu_sound</a><br />
+				<a href="#menu_video">menu_video</a><br />
+				<a href="#messagemode">messagemode</a><br />
+				<a href="#messagemode2">messagemode2</a><br />
+				<a href="#morphme">morphme</a><br />
+				<a href="#mouse_sensitivity">mouse_sensitivity</a><br />
+				<a href="#movebob">movebob</a><br />
+				<a href="#msg">msg</a><br />
+				<a href="#msg0color">msg0color</a><br />
+				<a href="#msg1color">msg1color</a><br />
+				<a href="#msg2color">msg2color</a><br />
+				<a href="#msg3color">msg3color</a><br />
+				<a href="#msg4color">msg4color</a><br />
+				<a href="#msgmidcolor">msgmidcolor</a><br />
+				<a href="#msgmidcolor2">msgmidcolor2</a></p>
+			<h4>N</h4>
+			<p><a href="#name">name</a><br />
+				<a href="#neverswitchonpickup">neverswitchonpickup</a><br />
+				<a href="#noclip">noclip</a><br />
+				<a href="#nofilecompression">nofilecompression</a><br />
+				<a href="#noise">noise</a><br />
+				<a href="#notarget">notarget</a></p>
+			<h4>O</h4>
+			<p><a href="#opl_enable">opl_enable</a><br />
+				<a href="#opl_frequency">opl_frequency</a><br />
+				<a href="#opl_onechip">opl_onechip</a><br />
+				<a href="#opl_singlevoice">opl_singlevoice</a></p>
+			<h4>P</h4>
+			<p><a href="#pause">pause</a><br />
+				<a href="#pings">pings</a><br />
+				<a href="#playdemo">playdemo</a><br />
+				<a href="#playerclass">playerclass</a><br />
+				<a href="#playerinfo">playerinfo</a><br />
+				<a href="#playersounds">playersounds</a><br />
+				<a href="#playlist">playlist</a><br />
+				<a href="#playlistnext">playlistnext</a><br />
+				<a href="#playlistpos">playlistpos</a><br />
+				<a href="#playlistprev">playlistprev</a><br />
+				<a href="#playliststatus">playliststatus</a><br />
+				<a href="#playmovie">playmovie</a><br />
+				<a href="#playsound">playsound</a><br />
+				<a href="#png_gamma">png_gamma</a><br />
+				<a href="#png_level">png_level</a><br />
+				<a href="#powerup">powerup</a><br />
+				<a href="#print">print</a><br />
+				<a href="#puke">puke</a><br />
+				<a href="#pullin">pullin</a></p>
+			<h4>Q</h4>
+			<p><a href="#queryiwad">queryiwad</a><br />
+				<a href="#quickload">quickload</a><br />
+				<a href="#quicksave">quicksave</a><br />
+				<a href="#quit">quit</a></p>
+			<h4>R</h4>
+			<p><a href="#r_columnmethod">r_columnmethod</a><br />
+				<a href="#r_detail">r_detail</a><br />
+				<a href="#r_drawflat">r_drawflat</a><br />
+				<a href="#r_drawfuzz">r_drawfuzz</a><br />
+				<a href="#r_drawmirrors">r_drawmirrors</a><br />
+				<a href="#r_drawplayersprites">r_drawplayersprites</a><br />
+				<a href="#r_drawtrans">r_drawtrans</a><br />
+				<a href="#r_fogboundary">r_fogboundary</a><br />
+				<a href="#r_particles">r_particles</a><br />
+				<a href="#r_skyboxes">r_skyboxes</a><br />
+				<a href="#r_stretchsky">r_stretchsky</a><br />
+				<a href="#r_viewsize">r_viewsize</a><br />
+				<a href="#r_visibility">r_visibility</a><br />
+				<a href="#rebind">rebind</a><br />
+				<a href="#removebots">removebots</a></p>
+			<h4>S</h4>
+			<p><a href="#say">say</a><br />
+				<a href="#say_team">say_team</a><br />
+				<a href="#screenblocks">screenblocks</a><br />
+				<a href="#screenshot">screenshot</a><br />
+				<a href="#screenshot_dir">screenshot_dir</a><br />
+				<a href="#screenshot_quiet">screenshot_quiet</a><br />
+				<a href="#screenshot_type">screenshot_type</a><br />
+				<a href="#scriptstat">scriptstat</a><br />
+				<a href="#select">select</a><br />
+				<a href="#set">set</a><br />
+				<a href="#setcolor">setcolor</a><br />
+				<a href="#setslot">setslot</a><br />
+				<a href="#show_messages">show_messages</a><br />
+				<a href="#showloadtimes">showloadtimes</a><br />
+				<a href="#showrngs">showrngs</a><br />
+				<a href="#sizedown">sizedown</a><br />
+				<a href="#sizeup">sizeup</a><br />
+				<a href="#skill">skill</a><br />
+				<a href="#skin">skin</a><br />
+				<a href="#skins">skins</a><br />
+				<a href="#slot">slot</a><br />
+				<a href="#snd_3d">snd_3d</a><br />
+				<a href="#snd_buffersize">snd_buffersize</a><br />
+				<a href="#snd_channels">snd_channels</a><br />
+				<a href="#snd_driver">snd_driver</a><br />
+				<a href="#snd_flipstereo">snd_flipstereo</a><br />
+				<a href="#snd_fpumixer">snd_fpumixer</a><br />
+				<a href="#snd_listdrivers">snd_listdrivers</a><br />
+				<a href="#snd_listmididevices">snd_listmididevices</a><br />
+				<a href="#snd_matrix">snd_matrix</a><br />
+				<a href="#snd_mididevice">snd_mididevice</a><br />
+				<a href="#snd_midiprecache">snd_midiprecache</a><br />
+				<a href="#snd_midivolume">snd_midivolume</a><br />
+				<a href="#snd_movievolume">snd_movievolume</a><br />
+				<a href="#snd_musicvolume">snd_musicvolume</a><br />
+				<a href="#snd_output">snd_output</a><br />
+				<a href="#snd_pitched">snd_pitched</a><br />
+				<a href="#snd_reset">snd_reset</a><br />
+				<a href="#snd_samplerate">snd_samplerate</a><br />
+				<a href="#snd_sfxvolume">snd_sfxvolume</a><br />
+				<a href="#snd_status">snd_status</a><br />
+				<a href="#snd_surround">snd_surround</a><br />
+				<a href="#snd_waterreverb">snd_waterreverb</a><br />
+				<a href="#soundlinks">soundlinks</a><br />
+				<a href="#soundlist">soundlist</a><br />
+				<a href="#spc_8bit">spc_8bit</a><br />
+				<a href="#spc_amp">spc_amp</a><br />
+				<a href="#spc_frequency">spc_frequency</a><br />
+				<a href="#spc_lowpass">spc_lowpass</a><br />
+				<a href="#spc_noecho">spc_noecho</a><br />
+				<a href="#spc_oldsamples">spc_oldsamples</a><br />
+				<a href="#spc_quality">spc_quality</a><br />
+				<a href="#spc_stereo">spc_stereo</a><br />
+				<a href="#spc_surround">spc_surround</a><br />
+				<a href="#splashfactor">splashfactor</a><br />
+				<a href="#spray">spray</a><br />
+				<a href="#spynext">spynext</a><br />
+				<a href="#spyprev">spyprev</a><br />
+				<a href="#st_scale">st_scale</a><br />
+				<a href="#stat">stat</a><br />
+				<a href="#stillbob">stillbob</a><br />
+				<a href="#stop">stop</a><br />
+				<a href="#stopmus">stopmus</a><br />
+				<a href="#storesavepic">storesavepic</a><br />
+				<a href="#summon">summon</a><br />
+				<a href="#sv_aircontrol">sv_aircontrol</a><br />
+				<a href="#sv_barrelrespawn">sv_barrelrespawn</a><br />
+				<a href="#sv_cheats">sv_cheats</a><br />
+				<a href="#sv_falldamage">sv_falldamage</a><br />
+				<a href="#sv_fastmonsters">sv_fastmonsters</a><br />
+				<a href="#sv_fastweapons">sv_fastweapons</a><br />
+				<a href="#sv_forcerespawn">sv_forcerespawn</a><br />
+				<a href="#sv_gravity">sv_gravity</a><br />
+				<a href="#sv_infiniteammo">sv_infiniteammo</a><br />
+				<a href="#sv_itemrespawn">sv_itemrespawn</a><br />
+				<a href="#sv_monsterrespawn">sv_monsterrespawn</a><br />
+				<a href="#sv_noarmor">sv_noarmor</a><br />
+				<a href="#sv_nobfgaim">sv_nobfgaim</a><br />
+				<a href="#sv_noexit">sv_noexit</a><br />
+				<a href="#sv_nofov">sv_nofov</a><br />
+				<a href="#sv_nofreelook">sv_nofreelook</a><br />
+				<a href="#sv_nohealth">sv_nohealth</a><br />
+				<a href="#sv_noitems">sv_noitems</a><br />
+				<a href="#sv_nojump">sv_nojump</a><br />
+				<a href="#sv_nomonsters">sv_nomonsters</a><br />
+				<a href="#sv_oldfalldamage">sv_oldfalldamage</a><br />
+				<a href="#sv_respawnprotect">sv_respawnprotect</a><br />
+				<a href="#sv_respawnsuper">sv_respawnsuper</a><br />
+				<a href="#sv_samelevel">sv_samelevel</a><br />
+				<a href="#sv_spawnfarthest">sv_spawnfarthest</a><br />
+				<a href="#sv_weapondrop">sv_weapondrop</a><br />
+				<a href="#sv_weaponstay">sv_weaponstay</a></p>
+			<h4>T</h4>
+			<p><a href="#team">team</a><br />
+				<a href="#teamdamage">teamdamage</a><br />
+				<a href="#teamplay">teamplay</a><br />
+				<a href="#telezoom">telezoom</a><br />
+				<a href="#test">test</a><br />
+				<a href="#testblend">testblend</a><br />
+				<a href="#testcolor">testcolor</a><br />
+				<a href="#testfade">testfade</a><br />
+				<a href="#ticker">ticker</a><br />
+				<a href="#tilt">tilt</a><br />
+				<a href="#timedemo">timedemo</a><br />
+				<a href="#timelimit">timelimit</a><br />
+				<a href="#timidity_8bit">timidity_8bit</a><br />
+				<a href="#timidity_byteswap">timidity_byteswap</a><br />
+				<a href="#timidity_chorus">timidity_chorus</a><br />
+				<a href="#timidity_exe">timidity_exe</a><br />
+				<a href="#timidity_extargs">timidity_extargs</a><br />
+				<a href="#timidity_frequency">timidity_frequency</a><br />
+				<a href="#timidity_pipe">timidity_pipe</a><br />
+				<a href="#timidity_reverb">timidity_reverb</a><br />
+				<a href="#timidity_stereo">timidity_stereo</a><br />
+				<a href="#toggle">toggle</a><br />
+				<a href="#toggleconsole">toggleconsole</a><br />
+				<a href="#togglemap">togglemap</a><br />
+				<a href="#togglemessages">togglemessages</a><br />
+				<a href="#transsouls">transsouls</a><br />
+				<a href="#turbo">turbo</a><br />
+				<a href="#turn180">turn180</a><br />
+				<a href="#turnspeeds">turnspeeds</a><br />
+				<a href="#tx">tx</a><br />
+				<a href="#ty">ty</a></p>
+			<h4>U</h4>
+			<p><a href="#unbind">unbind</a><br />
+				<a href="#unbindall">unbindall</a><br />
+				<a href="#undoublebind">undoublebind</a><br />
+				<a href="#unset">unset</a><br />
+				<a href="#use">use</a><br />
+				<a href="#use_joystick">use_joystick</a><br />
+				<a href="#use_mouse">use_mouse</a><br />
+				<a href="#useflechette">useflechette</a></p>
+			<h4>V</h4>
+			<p><a href="#var_friction">var_friction</a><br />
+				<a href="#var_pushers">var_pushers</a><br />
+				<a href="#vid_attachedsurfaces">vid_attachedsurfaces</a><br />
+				<a href="#vid_currentmode">vid_currentmode</a><br />
+				<a href="#vid_defbits">vid_defbits</a><br />
+				<a href="#vid_defheight">vid_defheight</a><br />
+				<a href="#vid_defwidth">vid_defwidth</a><br />
+				<a href="#vid_fps">vid_fps</a><br />
+				<a href="#vid_listmodes">vid_listmodes</a><br />
+				<a href="#vid_noblitter">vid_noblitter</a><br />
+				<a href="#vid_palettehack">vid_palettehack</a><br />
+				<a href="#vid_setmode">vid_setmode</a><br />
+				<a href="#vid_speedtest">vid_speedtest</a><br />
+				<a href="#vid_vsync">vid_vsync</a><br />
+				<a href="#vid_winscale">vid_winscale</a></p>
+			<h4>W</h4>
+			<p><a href="#warp">warp</a><br />
+				<a href="#weapnext">weapnext</a><br />
+				<a href="#weapon">weapon</a><br />
+				<a href="#weaponsection">weaponsection</a><br />
+				<a href="#weapprev">weapprev</a><br />
+				<a href="#whereisini">whereisini</a><br />
+				<a href="#wi_percents">wi_percents</a><br />
+				<a href="#wipetype">wipetype</a></p>
+		</div>
+	</body>
+</html>

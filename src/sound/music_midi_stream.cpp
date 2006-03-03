@@ -27,7 +27,7 @@ CUSTOM_CVAR (Float, snd_midivolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 1.f;
 	else
 	{
-		float realvolume = clamp<float>(self * relative_volume, 0, 1.0f);
+		float realvolume = clamp<float>(self * relative_volume, 0.f, 1.f);
 		DWORD onechanvol = clamp<DWORD>((DWORD)(realvolume * 65535.f), 0, 65535);
 		midivolume = (onechanvol << 16) | onechanvol;
 		if (currSong && currSong->IsMIDI ())

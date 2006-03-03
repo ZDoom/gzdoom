@@ -552,6 +552,18 @@ public:
 	// Die. Now.
 	virtual bool Massacre ();
 
+	// Is the other actor on my team?
+	bool IsTeammate (AActor *other);
+
+	// Is the other actor my friend?
+	bool IsFriend (AActor *other);
+
+	// Do I hate the other actor?
+	bool IsHostile (AActor *other);
+
+	// What species am I?
+	virtual const TypeInfo *GetSpecies();
+
 // info for drawing
 // NOTE: The first member variable *must* be x.
 	fixed_t	 		x,y,z;
@@ -676,9 +688,6 @@ public:
 
 	// [RH] Used to interpolate the view to get >35 FPS
 	fixed_t PrevX, PrevY, PrevZ;
-
-	// Public functions
-	bool IsTeammate (AActor *other);
 
 	// ThingIDs
 	static void ClearTIDHashes ();

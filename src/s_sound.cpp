@@ -123,7 +123,7 @@ struct MusPlayingInfo
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-float S_GetMusicVolume (const char *music);
+extern float S_GetMusicVolume (const char *music);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

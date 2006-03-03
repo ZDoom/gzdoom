@@ -790,61 +790,6 @@ BOOL PIT_CheckLine (line_t *ld)
 
 //==========================================================================
 //
-// Species is defined as the lowest base class that is a monster
-// with no non-monster class in between
-//
-//==========================================================================
-
-const TypeInfo * P_GetSpecies(AActor * self)
-{
-	const TypeInfo * thistype=self->GetClass();
-
-	if (GetDefaultByType(thistype)->flags3 & MF3_ISMONSTER) while (thistype->ParentType)
-	{
-		if (GetDefaultByType(thistype->ParentType)->flags3 & MF3_ISMONSTER)
-			thistype=thistype->ParentType;
-		else 
-			break;
-	}
-	return thistype;
-}
-
-//==========================================================================
-//
-// Checks whether 2 monsters have to be considered friendly
-//
-//==========================================================================
-
-bool P_IsFriend(AActor * self, AActor * other)
-{
-	if (self->flags & other->flags&MF_FRIENDLY)
-	{
-		return !deathmatch || self->FriendPlayer==other->FriendPlayer || self->FriendPlayer==0 || other->FriendPlayer==0;
-	}
-	return false;
-}
-
-//==========================================================================
-//
-// Checks whether 2 monsters have to be considered hostile under any circumstances
-//
-//==========================================================================
-
-bool P_IsHostile(AActor * self, AActor * other)
-{
-	// Both monsters are non-friendlies so hostilities depend on infighting settings
-	if (!((self->flags | other->flags) & MF_FRIENDLY)) return false;
-
-	// Both monsters are friendly and belong to the same player if applicable.
-	if (self->flags & other->flags&MF_FRIENDLY)
-	{
-		return deathmatch && self->FriendPlayer!=other->FriendPlayer && self->FriendPlayer!=0 && other->FriendPlayer!=0;
-	}
-	return true;
-}
-
-//==========================================================================
-//
 // PIT_CheckThing
 //
 //==========================================================================
@@ -1014,7 +959,7 @@ BOOL PIT_CheckThing (AActor *thing)
 				{
 					//  0: Monsters cannot hurt same species except 
 					//     cases where they are clearly supposed to do that
-					if (P_IsFriend(thing, tmthing->target))
+					if (thing->IsFriend (tmthing->target))
 					{
 						// Friends never harm each other
 						return false;
@@ -1024,7 +969,7 @@ BOOL PIT_CheckThing (AActor *thing)
 						// [RH] Don't hurt monsters that hate the same thing as you do
 						return false;
 					}
-					if (P_GetSpecies(thing) == P_GetSpecies(tmthing->target))
+					if (thing->GetSpecies() == tmthing->target->GetSpecies())
 					{
 						// Don't hurt same species or any relative
 						if (!P_IsHostile(thing, tmthing->target))

@@ -117,8 +117,8 @@ public:
 	void SetMetaFixed (DWORD id, fixed_t parm);
 	void SetMetaString (DWORD id, const char *parm);	// The string is copied
 
-	int GetMetaInt (DWORD id) const;
-	fixed_t GetMetaFixed (DWORD id) const;
+	int GetMetaInt (DWORD id, int def=0) const;
+	fixed_t GetMetaFixed (DWORD id, fixed_t def=0) const;
 	const char *GetMetaString (DWORD id) const;
 
 	FMetaData *FindMeta (EMetaType type, DWORD id) const;

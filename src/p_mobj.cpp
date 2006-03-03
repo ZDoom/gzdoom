@@ -3770,7 +3770,7 @@ AActor *P_SpawnPuff (const TypeInfo *pufftype, fixed_t x, fixed_t y, fixed_t z, 
 		puff->SetState (puff->MeleeState);
 	}
 
-	if (cl_pufftype && updown != 3 && puff->flags4&MF4_ALLOWPARTICLES)
+	if (cl_pufftype && updown != 3 && (puff->flags4 & MF4_ALLOWPARTICLES))
 	{
 		P_DrawSplash2 (32, x, y, z, dir, updown, 1);
 		puff->renderflags |= RF_INVISIBLE;
@@ -4427,6 +4427,77 @@ bool AActor::IsTeammate (AActor *other)
 		return true;
 	}
 	return false;
+}
+
+//==========================================================================
+//
+// AActor :: GetSpecies
+//
+// Species is defined as the lowest base class that is a monster
+// with no non-monster class in between. This is virtualized, so special
+// monsters can change this behavior if they like.
+//
+//==========================================================================
+
+const TypeInfo *AActor::GetSpecies()
+{
+	const TypeInfo *thistype = GetClass();
+
+	if (GetDefaultByType(thistype)->flags3 & MF3_ISMONSTER)
+	{
+		while (thistype->ParentType)
+		{
+			if (GetDefaultByType(thistype->ParentType)->flags3 & MF3_ISMONSTER)
+				thistype = thistype->ParentType;
+			else 
+				break;
+		}
+	}
+	return thistype;
+}
+
+//==========================================================================
+//
+// AActor :: IsFriend
+//
+// Checks if two monsters have to be considered friendly.
+//
+//==========================================================================
+
+bool AActor::IsFriend (AActor *other)
+{
+	if (flags & other->flags & MF_FRIENDLY)
+	{
+		return !deathmatch ||
+			FriendPlayer == other->FriendPlayer ||
+			FriendPlayer == 0 ||
+			other->FriendPlayer == 0;
+	}
+	return false;
+}
+
+//==========================================================================
+//
+// AActor :: IsHostile
+//
+// Checks if two monsters have to be considered hostile under any circumstances
+//
+//==========================================================================
+
+bool P_IsHostile (AActor *other)
+{
+	// Both monsters are non-friendlies so hostilities depend on infighting settings
+	if (!((flags | other->flags) & MF_FRIENDLY)) return false;
+
+	// Both monsters are friendly and belong to the same player if applicable.
+	if (flags & other->flags & MF_FRIENDLY)
+	{
+		return deathmatch &&
+			self->FriendPlayer != other->FriendPlayer &&
+			self->FriendPlayer !=0 &&
+			other->FriendPlayer != 0;
+	}
+	return true;
 }
 
 int AActor::DoSpecialDamage (AActor *target, int damage)

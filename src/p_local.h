@@ -275,9 +275,6 @@ extern TArray<line_t *> spechit;
 extern bool				DoRipping;
 extern AActor			*LastRipped;
 
-bool P_IsFriend(AActor * self, AActor * other);
-bool P_IsHostile(AActor * self, AActor * other);
-
 BOOL	P_TestMobjLocation (AActor *mobj);
 bool	P_TestMobjZ (AActor *mobj);
 BOOL	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y);

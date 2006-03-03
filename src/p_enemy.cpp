@@ -344,10 +344,10 @@ bool P_HitFriend(AActor * self)
 	{
 		angle_t angle = R_PointToAngle2 (self->x, self->y, self->target->x, self->target->y);
 		fixed_t dist = P_AproxDistance (self->x-self->target->x, self->y-self->target->y);
-		P_AimLineAttack (self, self->angle, dist, 0);
+		P_AimLineAttack (self, angle, dist, 0);
 		if (linetarget != NULL && linetarget != self->target)
 		{
-			return P_IsFriend(self, linetarget);
+			return self->IsFriend (linetarget);
 		}
 	}
 	return false;
@@ -1104,7 +1104,7 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index)
 		if (other)
 		{
 			AActor *targ = other->target;
-			if (targ && targ->target == other && pr_skiptarget() > 100 && P_IsFriend(lookee, targ) &&
+			if (targ && targ->target == other && pr_skiptarget() > 100 && lookee->IsFriend (targ) &&
 				targ->health*2 >= targ->GetDefault()->health)
 			{
 				continue;
@@ -1374,7 +1374,7 @@ void A_Look (AActor *actor)
 
 	if (targ && (targ->flags & MF_SHOOTABLE))
 	{
-		if (P_IsFriend(actor, targ))	// be a little more precise!
+		if (actor->IsFriend (targ))	// be a little more precise!
 		{
 			// If we find a valid target here, the wandering logic should *not*
 			// be activated! If would cause the seestate to be set twice.

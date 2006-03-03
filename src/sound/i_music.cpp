@@ -83,8 +83,7 @@ static bool MusicDown = true;
 
 MusInfo *currSong;
 int		nomusic = 0;
-float	relative_volume = 1.0f;
-float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
+float	relative_volume = 1.f;
 
 //==========================================================================
 //
@@ -100,7 +99,7 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.3f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	else if (self > 1.f)
 		self = 1.f;
 	else if (currSong != NULL && !currSong->IsMIDI ())
-		currSong->SetVolume (clamp<float>(self*relative_volume, 0.0f, 1.0f));
+		currSong->SetVolume (clamp<float> (self * relative_volume, 0.f, 1.f));
 }
 
 MusInfo::~MusInfo ()
@@ -160,7 +159,7 @@ void I_PlaySong (void *handle, int _looping, float rel_vol)
 	if (!info || nomusic)
 		return;
 
-	saved_relative_volume = relative_volume = rel_vol;
+	relative_volume = rel_vol;
 	info->Stop ();
 	info->Play (_looping ? true : false);
 	
@@ -415,17 +414,6 @@ bool I_SetSongPosition (void *handle, int order)
 {
 	MusInfo *info = (MusInfo *)handle;
 	return info ? info->SetPosition (order) : false;
-}
-
-// Sets relative music volume. Takes $musicvolume in SNDINFO into consideration
-void I_SetMusicVolume (float factor)
-{
-	factor = clamp<float>(factor, 0, 2.0f);
-	relative_volume = saved_relative_volume * factor;
-#ifdef _WIN32
-	snd_midivolume.Callback();
-#endif
-	snd_musicvolume.Callback();
 }
 
 CCMD(testmusicvol)

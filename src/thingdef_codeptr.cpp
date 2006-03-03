@@ -96,18 +96,20 @@ StateCallData StateCall;
 
 //==========================================================================
 //
+// ACustomInventory :: CallStateChain
+//
 // Executes the code pointers in a chain of states
 // until there is no next state
 //
 //==========================================================================
 
-bool CallStateChain(AActor * actor, FState * State)
+bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 {
 	bool result = false;
-	int counter=0;
+	int counter = 0;
 
 	StateCall.State = State;
-	while (StateCall.State !=NULL)
+	while (StateCall.State != NULL)
 	{
 		// Assume success. The code pointer will set this to false if necessary
 		StateCall.Result = true;	
@@ -119,7 +121,7 @@ bool CallStateChain(AActor * actor, FState * State)
 
 		// Since there are no delays it is a good idea to check for infinite loops here!
 		counter++;
-		if (counter>=10000)	break;
+		if (counter >= 10000)	break;
 
 		if (StateCall.State == CallingState) 
 		{

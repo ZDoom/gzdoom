@@ -375,10 +375,10 @@ void FMetaTable::SetMetaInt (DWORD id, int parm)
 	meta->Value.Int = parm;
 }
 
-int FMetaTable::GetMetaInt (DWORD id) const
+int FMetaTable::GetMetaInt (DWORD id, int def) const
 {
 	FMetaData *meta = FindMeta (META_Int, id);
-	return meta != NULL ? meta->Value.Int : 0;
+	return meta != NULL ? meta->Value.Int : def;
 }
 
 void FMetaTable::SetMetaFixed (DWORD id, fixed_t parm)
@@ -387,10 +387,10 @@ void FMetaTable::SetMetaFixed (DWORD id, fixed_t parm)
 	meta->Value.Fixed = parm;
 }
 
-fixed_t FMetaTable::GetMetaFixed (DWORD id) const
+fixed_t FMetaTable::GetMetaFixed (DWORD id, fixed_t def) const
 {
 	FMetaData *meta = FindMeta (META_Fixed, id);
-	return meta != NULL ? meta->Value.Fixed : 0;
+	return meta != NULL ? meta->Value.Fixed : def;
 }
 
 void FMetaTable::SetMetaString (DWORD id, const char *parm)

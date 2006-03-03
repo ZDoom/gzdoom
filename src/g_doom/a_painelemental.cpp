@@ -212,7 +212,7 @@ void A_PainAttack (AActor *self)
 
 void A_PainDie (AActor *self)
 {
-	if (P_IsFriend (self, self->target))
+	if (self->IsFriend (self->target))
 	{ // And I thought you were my friend!
 		self->flags &= ~MF_FRIENDLY;
 	}

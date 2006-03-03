@@ -156,6 +156,9 @@ class ACustomInventory : public AInventory
 public:
 	FState *UseState, *PickupState, *DropState;
 
+	// This is used when an inventory item's use state sequence is executed.
+	static bool CallStateChain (AActor *actor, FState *state);
+
 	void Serialize (FArchive &arc);
 	bool TryPickup (AActor *toucher);
 	bool Use (bool pickup);

@@ -123,63 +123,10 @@ struct FBloodSFX
 // music volume multipliers
 struct FMusicVolume
 {
-	FMusicVolume() : MusicName(), Volume(1) {}
-	FMusicVolume (const FMusicVolume &other)
-	{
-		MusicName = other.MusicName;
-		Volume = other.Volume;
-	}
-	FMusicVolume &operator= (const FMusicVolume &other)
-	{
-		MusicName = other.MusicName;
-		Volume = other.Volume;
-		return *this;
-	}
-
-	string MusicName;
+	FMusicVolume *Next;
 	float Volume;
-
-private:
-	void *operator new (size_t size, FMusicVolume *addr)
-	{
-		return addr;
-	}
-	void operator delete (void *, FMusicVolume *)
-	{
-	}
-
-#ifndef __GNUC__
-	template<> friend inline bool NeedsDestructor<FMusicVolume> ()
-	{
-		return true;
-	}
-	template<> friend inline void ConstructInTArray<FMusicVolume> (FMusicVolume *dst, const FMusicVolume &src)
-	{
-		new (dst) FMusicVolume(src);
-	}
-	template<> friend inline void ConstructEmptyInTArray<FMusicVolume> (FMusicVolume *dst)
-	{
-		new (dst) FMusicVolume;
-	}
-#else
-	template<struct FMusicVolume> friend inline bool NeedsDestructor<FMusicVolume> ();
-	template<struct FMusicVolume> friend inline void ConstructInTArray<FMusicVolume> (FMusicVolume *dst, const FMusicVolume &src)
-	template<struct FMusicVolume> friend inline void ConstructEmptyInTArray<FMusicVolume> (FMusicVolume *dst)
-#endif
+	char MusicName[1];
 };
-
-template<> inline bool NeedsDestructor<FMusicVolume> ()
-{
-	return true;
-}
-template<> inline void ConstructInTArray<FMusicVolume> (FMusicVolume *dst, const FMusicVolume &src)
-{
-	new (dst) FMusicVolume(src);
-}
-template<> inline void ConstructEmptyInTArray<FMusicVolume> (FMusicVolume *dst)
-{
-	new (dst) FMusicVolume;
-}
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -241,7 +188,7 @@ static const char *SICommandStrings[] =
 };
 
 static TArray<FRandomSoundList> S_rnd;
-static TArray<FMusicVolume> MusicVolumes;
+static FMusicVolume *MusicVolumes;
 
 static int NumPlayerReserves;
 static bool DoneReserving;
@@ -268,12 +215,15 @@ static FRandom pr_randsound ("RandSound");
 
 float S_GetMusicVolume (const char *music)
 {
-	for (int i = 0; i < MusicVolumes.Size(); i++)
+	FMusicVolume *musvol = MusicVolumes;
+
+	while (musvol != NULL)
 	{
-		if (!stricmp(music, MusicVolumes[i].MusicName.GetChars()))
+		if (!stricmp (music, musvol->MusicName))
 		{
-			return MusicVolumes[i].Volume;
+			return musvol->Volume;
 		}
+		musvol = musvol->Next;
 	}
 	return 1.f;
 }
@@ -926,12 +876,14 @@ static void S_AddSNDINFO (int lump)
 				break;
 
 			case SI_MusicVolume: {
-				FMusicVolume mv;
 				SC_MustGetString();
-				mv.MusicName = sc_String;
+				string musname (sc_String);
 				SC_MustGetFloat();
-				mv.Volume = sc_Float;
-				MusicVolumes.Push (mv);
+				FMusicVolume *mv = (FMusicVolume *)Malloc (sizeof(*mv) + musname.Len());
+				mv->Volume = sc_Float;
+				strcpy (mv->MusicName, musname.GetChars());
+				mv->Next = MusicVolumes;
+				MusicVolumes = mv;
 				}
 				break;
 

@@ -166,9 +166,6 @@ struct FState
 extern FState * CallingState;
 int CheckIndex(int paramsize, FState ** pcallstate=NULL);
 
-// This is used when an inventory item's use state sequence is executed.
-bool CallStateChain(AActor * actor, FState * State);
-
 
 FArchive &operator<< (FArchive &arc, FState *&state);
 

@@ -648,8 +648,8 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		int flags4 = !inflictor ? 0 : inflictor->player && inflictor->player->ReadyWeapon ? 
 			inflictor->player->ReadyWeapon->flags4 : inflictor->flags4;
 
-		int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth));
-		if (gibhealth == 0) gibhealth = (gameinfo.gametype == GAME_Doom ? -GetDefault()->health : -GetDefault()->health/2);
+		int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
+			gameinfo.gametype == GAME_Doom ? -GetDefault()->health : -GetDefault()->health/2));
 		
 		DamageType = MOD_UNKNOWN;	// [RH] "Frozen" barrels shouldn't do freezing damage
 		if (XDeathState && (health<gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
@@ -1103,9 +1103,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	if (target->WoundState != NULL)
 	{
-		int woundhealth = RUNTIME_TYPE(target)->Meta.GetMetaInt (AMETA_WoundHealth);
-		if (!woundhealth)
-			woundhealth = 6;
+		int woundhealth = RUNTIME_TYPE(target)->Meta.GetMetaInt (AMETA_WoundHealth, 6);
 
 		if (target->health <= woundhealth)
 		{
@@ -1211,16 +1209,9 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 		return false;
 	if (threshold != 0 && !(flags4 & MF4_QUICKTORETALIATE))
 		return false;
-	if (P_IsFriend (this, other))
+	if (IsFriend (other))
 	{ // [RH] Friendlies don't target other friendlies
 		return false;
-	}
-	if ((flags & MF_FRIENDLY) && other->player != NULL)
-	{ // [RH] Friendlies don't target their player friends either
-		if (!deathmatch || other->player - players == FriendPlayer+1)
-		{
-			return false;
-		}
 	}
 	if ((gameinfo.gametype == GAME_Strife || infighting < 0) &&
 		other->player == NULL && !P_IsHostile (this, other))

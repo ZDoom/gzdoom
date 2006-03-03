@@ -1,3 +1,8 @@
+March 1, 2006
+- Rewrote MusicVolumes handling so it's a list and not an array.
+- Removed I_SetMusicVolume(). It isn't used.
+- Moved P_IsFriend(), P_IsHostile(), and P_GetSpecies() into AActor.
+
 February 18, 2006
 - Various fixes for compilation with GCC/Linux.
 - Various fixes from Graf Zahl: Wrong blood color with P_BloodSplatter2() and

@@ -15,6 +15,7 @@ public:
 
 	void Serialize (FArchive &arc)
 	{
+		Super::Serialize(arc);
 		arc << PieceMask ;
 		if (arc.IsStoring()) arc.UserWriteClass(PieceWeapon);
 		else arc.UserWriteClass(PieceWeapon);

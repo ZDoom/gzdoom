@@ -1,3 +1,16 @@
+March 12, 2006
+- Fixed: A_SpawnItem() should use CopyFriendliness().
+- Fixed: AExplosiveBarrel should have MF2_MCROSS set.
+- Fixed: Passing 0 numrays to A_BFGSpray should default to 40.
+- Fixed: New A_JumpIfCloser() function.
+- Future-proofing: thingdef.cpp/FindState() allows the 2.1 names for
+  SwitchingDecorations.
+- Fixed: ASwitchingDecoration declared itself as deriving from AActor instead of
+  ASwitchableDecoration.
+
+March 9, 2006
+- Fixed: AWeaponHolder::Serialize() did not call its supermethod.
+
 March 1, 2006
 - Rewrote MusicVolumes handling so it's a list and not an array.
 - Removed I_SetMusicVolume(). It isn't used.

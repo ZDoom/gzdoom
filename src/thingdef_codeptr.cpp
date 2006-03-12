@@ -382,7 +382,7 @@ void A_JumpIfHealthLower(AActor * self)
 void A_JumpIfCloser(AActor * self)
 {
 	FState * CallingState;
-	int index=CheckIndex(2, &CallingState);
+	int index = CheckIndex(2, &CallingState);
 	AActor * target;
 
 	if (!self->player)
@@ -390,7 +390,7 @@ void A_JumpIfCloser(AActor * self)
 		target=self->target;
 	}
 	else
-	{				
+	{
 		// Does the player aim at something that can be shot?
 		P_BulletSlope(self);
 		target = linetarget;
@@ -400,7 +400,7 @@ void A_JumpIfCloser(AActor * self)
 	if (target==NULL) return;
 
 	fixed_t dist = EvalExpressionF (StateParameters[index], self) * FRACUNIT;
-	if (index>0 && P_AproxDistance(self->x-self->target->x, self->y-self->target->y) < dist)
+	if (index > 0 && P_AproxDistance(self->x-target->x, self->y-target->y) < dist)
 		DoJump(self, CallingState, StateParameters[index+1]);
 }
 
@@ -491,7 +491,7 @@ void A_CallSpecial(AActor * self)
 //==========================================================================
 void A_CustomMissile(AActor * self)
 {
-	int index=CheckIndex(6);
+	int index=CheckIndex(7);
 	if (index<0) return;
 
 	const char * MissileName=(const char*)StateParameters[index];
@@ -500,6 +500,7 @@ void A_CustomMissile(AActor * self)
 	angle_t Angle=EvalExpressionF (StateParameters[index+3], self) * ANGLE_1;
 	int aimmode=EvalExpressionI (StateParameters[index+4], self);
 	angle_t pitch=EvalExpressionF (StateParameters[index+5], self) * ANGLE_1;
+	BOOL realtarget = EvalExpressionI (StateParameters[index+6], self);
 
 	AActor * targ;
 	AActor * missile;
@@ -1064,16 +1065,8 @@ void A_SpawnItem(AActor * self)
 			{
 				if (originator->flags3&MF3_ISMONSTER)
 				{
-					// If this is a monster transfer all friendliness information
-					mo->target = originator->target;
-					mo->TIDtoHate = originator->TIDtoHate;
-					mo->LastLook = originator->LastLook;
-					mo->flags3 |= originator->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
-					mo->flags4 |= originator->flags4 & MF4_NOHATEPLAYERS;
-					mo->flags = (mo->flags & ~MF_FRIENDLY) | (originator->flags & MF_FRIENDLY);
-					// Note to Randy: This line is missing from all other friendliness transfers!
-					mo->FriendPlayer=originator->FriendPlayer;
-
+					// If this is a monster, transfer all friendliness information
+					mo->CopyFriendliness (originator, true);
 					if (useammo) mo->master = originator;	// don't let it attack you (optional)!
 				}
 				else if (originator->player)

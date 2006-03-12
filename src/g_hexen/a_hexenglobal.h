@@ -149,4 +149,12 @@ public:
 	const char *PickupMessage ();
 };
 
+class ASwitchableDecoration : public AActor
+{
+	DECLARE_STATELESS_ACTOR (ASwitchableDecoration, AActor)
+public:
+	void Activate (AActor *activator);
+	void Deactivate (AActor *activator);
+};
+
 #endif //__A_HEXENGLOBAL_H__

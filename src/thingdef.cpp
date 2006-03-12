@@ -62,6 +62,7 @@
 #include "v_palette.h"
 #include "doomerrors.h"
 #include "a_doomglobal.h"
+#include "a_hexenglobal.h"
 #include "a_weaponpiece.h"
 #include "p_conversation.h"
 
@@ -625,7 +626,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_StopSound, NULL )
 	FUNC(A_SeekerMissile, "XX" )
 	FUNC(A_Jump, "XL" )
-	FUNC(A_CustomMissile, "MXXxxx" )
+	FUNC(A_CustomMissile, "MXXxxxx" )
 	FUNC(A_CustomBulletAttack, "XXXXmx" )
 	FUNC(A_CustomRailgun, "Xxccxxx" )
 	FUNC(A_JumpIfHealthLower, "XL" )
@@ -1128,7 +1129,7 @@ FState ** FindState(AActor * actor, const TypeInfo * type, const char * name)
 				return (&static_cast<AWeapon*>(actor)->UpState)+i;
 		}
 	}
-	if (type->IsDescendantOf (RUNTIME_CLASS(ACustomInventory)))
+	else if (type->IsDescendantOf (RUNTIME_CLASS(ACustomInventory)))
 	{
 		for(i=0;inventory_statenames[i];i++)
 		{
@@ -1136,7 +1137,13 @@ FState ** FindState(AActor * actor, const TypeInfo * type, const char * name)
 				return (&static_cast<ACustomInventory*>(actor)->UseState)+i;
 		}
 	}
-	return NULL;
+	else if (type->IsDescendantOf (RUNTIME_CLASS(ASwitchableDecoration)))
+	{
+		// These are the names that 2.1.0 will use
+		if (!stricmp(name, "ACTIVE")) return &actor->SeeState;
+		if (!stricmp(name, "INACTIVE")) return &actor->MeleeState;
+	} 
+   return NULL;
 }
 
 

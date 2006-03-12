@@ -1338,6 +1338,7 @@ void A_FireBFG (AActor *actor)
 }
 
 bool thebfugu;
+int EvalExpressionI (int id, AActor *self);
 //
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view
@@ -1356,8 +1357,8 @@ void A_BFGSpray (AActor *mo)
 	if (index >= 0) 
 	{
 		spraytype = TypeInfo::FindType ((const char *)StateParameters[index]);
-		numrays = (int)StateParameters[index+1];
-		if (numrays < 0)
+		numrays = EvalExpressionI (StateParameters[index+1], mo);
+		if (numrays <= 0)
 			numrays = 40;
 	}
 	if (spraytype == NULL)

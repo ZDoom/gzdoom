@@ -23,14 +23,6 @@ static FRandom pr_soaexplode ("SoAExplode");
 
 // SwitchableDecoration: Activate and Deactivate change state ---------------
 
-class ASwitchableDecoration : public AActor
-{
-	DECLARE_STATELESS_ACTOR (ASwitchableDecoration, AActor)
-public:
-	void Activate (AActor *activator);
-	void Deactivate (AActor *activator);
-};
-
 IMPLEMENT_ABSTRACT_ACTOR (ASwitchableDecoration)
 
 void ASwitchableDecoration::Activate (AActor *activator)
@@ -47,7 +39,7 @@ void ASwitchableDecoration::Deactivate (AActor *activator)
 
 class ASwitchingDecoration : public ASwitchableDecoration
 {
-	DECLARE_STATELESS_ACTOR (ASwitchingDecoration, AActor)
+	DECLARE_STATELESS_ACTOR (ASwitchingDecoration, ASwitchableDecoration)
 public:
 	void Deactivate (AActor *activator) {}
 };

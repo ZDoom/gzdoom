@@ -702,19 +702,6 @@ void DObject::CheckIfSerialized () const
 	}
 }
 
-FArchive &operator<< (FArchive &arc, const TypeInfo * &info)
-{
-	if (arc.IsStoring ())
-	{
-		arc.UserWriteClass (info);
-	}
-	else
-	{
-		arc.UserReadClass (info);
-	}
-	return arc;
-}
-
 ADD_STAT (destroys, out)
 {
 	sprintf (out, "Pointer fixing: %d in %04.1f ms",

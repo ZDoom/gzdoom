@@ -619,10 +619,14 @@ static void S_AddSNDINFO (int lump)
 					Printf ("Bad ambient index (%d)\n", sc_Number);
 					ambient = &dummy;
 				}
-				else
+				else if (Ambients[sc_Number] == NULL)
 				{
 					ambient = new AmbientSound;
 					Ambients[sc_Number] = ambient;
+				}
+				else
+				{
+					ambient = Ambients[sc_Number];
 				}
 				memset (ambient, 0, sizeof(AmbientSound));
 

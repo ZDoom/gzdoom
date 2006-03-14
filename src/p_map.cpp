@@ -945,7 +945,7 @@ BOOL PIT_CheckThing (AActor *thing)
 						}
 
 						// Monsters that are clearly hostile can always hurt each other
-						if (!P_IsHostile(thing, tmthing->target))
+						if (!thing->IsHostile (tmthing->target))
 						{
 							// The same if the shooter hates the target
 							if (thing->tid == 0 || tmthing->target->tid != thing->tid)
@@ -972,7 +972,7 @@ BOOL PIT_CheckThing (AActor *thing)
 					if (thing->GetSpecies() == tmthing->target->GetSpecies())
 					{
 						// Don't hurt same species or any relative
-						if (!P_IsHostile(thing, tmthing->target))
+						if (!thing->IsHostile (tmthing->target))
 						{
 							// But only if the target isn't one's hostile.
 							return false;

@@ -162,12 +162,15 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_CHAINSAW:
-		type = TypeInfo::FindType ("Chainsaw");
-		if (player->mo->FindInventory (type) == NULL)
+		if (player->mo != NULL)
 		{
-			player->mo->GiveInventoryType (type);
+			type = TypeInfo::FindType ("Chainsaw");
+			if (player->mo->FindInventory (type) == NULL)
+			{
+				player->mo->GiveInventoryType (type);
+			}
+			msg = GStrings("STSTR_CHOPPERS");
 		}
-		msg = GStrings("STSTR_CHOPPERS");
 		// [RH] The original cheat also set powers[pw_invulnerability] to true.
 		// Since this is a timer and not a boolean, it effectively turned off
 		// the invulnerability powerup, although it looks like it was meant to
@@ -175,16 +178,19 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_POWER:
-		item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
-		if (item != NULL)
+		if (player->mo != NULL)
 		{
-			item->Destroy ();
-			msg = GStrings("TXT_CHEATPOWEROFF");
-		}
-		else
-		{
-			player->mo->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
-			msg = GStrings("TXT_CHEATPOWERON");
+			item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+			if (item != NULL)
+			{
+				item->Destroy ();
+				msg = GStrings("TXT_CHEATPOWEROFF");
+			}
+			else
+			{
+				player->mo->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
+				msg = GStrings("TXT_CHEATPOWERON");
+			}
 		}
 		break;
 
@@ -250,8 +256,11 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_HEALTH:
-		player->health = player->mo->health = player->mo->GetDefault()->health;
-		msg = GStrings("TXT_CHEATHEALTH");
+		if (player->mo != NULL)
+		{
+			player->health = player->mo->health = player->mo->GetDefault()->health;
+			msg = GStrings("TXT_CHEATHEALTH");
+		}
 		break;
 
 	case CHT_KEYS:
@@ -261,7 +270,7 @@ void cht_DoCheat (player_t *player, int cheat)
 
 	// [GRB]
 	case CHT_RESSURECT:
-		if (player->playerstate != PST_LIVE)
+		if (player->playerstate != PST_LIVE && player->mo != NULL)
 		{
 			player->playerstate = PST_LIVE;
 			player->health = player->mo->health = player->mo->GetDefault()->health;
@@ -274,7 +283,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_TAKEWEAPS:
-		if (player->morphTics)
+		if (player->morphTics || player->mo != NULL)
 		{
 			return;
 		}
@@ -314,7 +323,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_MDK:
 		if (player->mo == NULL)
 		{
-			Printf ("MDK won't work outside of a game.\n");
+			Printf ("What do you want to kill outside of a game?\n");
 		}
 		else if (!deathmatch)
 		{
@@ -450,6 +459,34 @@ void cht_Give (player_t *player, char *name, int amount)
 				player->mo->health = deh.GodHealth;
 	  
 			player->health = deh.GodHealth;
+		}
+
+		if (!giveall)
+			return;
+	}
+
+	if (giveall || stricmp (name, "backpack") == 0)
+	{
+		// Select the correct type of backpack based on the game
+		if (gameinfo.gametype == GAME_Heretic)
+		{
+			type = TypeInfo::FindType ("BagOfHolding");
+		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			type = TypeInfo::FindType ("AmmoSatchel");
+		}
+		else if (gameinfo.gametype == GAME_Doom)
+		{
+			type = TypeInfo::FindType ("Backpack");
+		}
+		else
+		{ // Hexen doesn't have a backpack, foo!
+			type = NULL;
+		}
+		if (type != NULL)
+		{
+			GiveSpawner (player, type, 1);
 		}
 
 		if (!giveall)
@@ -594,23 +631,6 @@ void cht_Give (player_t *player, char *name, int amount)
 		}
 		if (!giveall)
 			return;
-	}
-
-	if (giveall || stricmp (name, "backpack") == 0)
-	{
-		// Select the correct type of backpack based on the game
-		if (gameinfo.gametype == GAME_Heretic)
-		{
-			name = "BagOfHolding";
-		}
-		else if (gameinfo.gametype == GAME_Strife)
-		{
-			name = "AmmoSatchel";
-		}
-		else if (gameinfo.gametype == GAME_Hexen && giveall)
-		{ // Hexen doesn't have a backpack, foo!
-			return;
-		}
 	}
 
 	type = TypeInfo::IFindType (name);

@@ -869,6 +869,7 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, BYTE *row)
 {
 	BYTE *out, *in;
 	BYTE pack;
+	int lastbyte;
 
 	out = row + width;
 	in = row + bytesPerRow;
@@ -876,6 +877,22 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, BYTE *row)
 	switch (bitdepth)
 	{
 	case 1:
+
+		lastbyte=width&7;
+		if (lastbyte!=0)
+		{
+			in--;
+			pack = *in;
+			out-=lastbyte;
+			out[0] = (pack >> 7) & 1;
+			if (lastbyte >= 2) out[1] = (pack >> 6) & 1;
+			if (lastbyte >= 3) out[2] = (pack >> 5) & 1;
+			if (lastbyte >= 4) out[3] = (pack >> 4) & 1;
+			if (lastbyte >= 5) out[4] = (pack >> 3) & 1;
+			if (lastbyte >= 6) out[5] = (pack >> 2) & 1;
+			if (lastbyte == 7) out[6] = (pack >> 1) & 1;
+		}
+
 		while (in-- > row)
 		{
 			pack = *in;
@@ -892,6 +909,18 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, BYTE *row)
 		break;
 
 	case 2:
+
+		lastbyte=width&3;
+		if (lastbyte!=0)
+		{
+			in--;
+			pack = *in;
+			out-=lastbyte;
+			out[0] = pack >> 6;
+			if (lastbyte >= 2) out[1] = (pack >> 4) & 3;
+			if (lastbyte == 3) out[2] = (pack >> 2) & 3;
+		}
+
 		while (in-- > row)
 		{
 			pack = *in;
@@ -904,6 +933,15 @@ static void UnpackPixels (int width, int bytesPerRow, int bitdepth, BYTE *row)
 		break;
 
 	case 4:
+		lastbyte=width&1;
+		if (lastbyte!=0)
+		{
+			in--;
+			pack = *in;
+			out-=lastbyte;
+			out[0] = pack >> 4;
+		}
+
 		while (in-- > row)
 		{
 			pack = *in;

@@ -34,6 +34,8 @@ public:
 	int SetName (const char *text, bool noCreate) { return Index = FindName (text, false); }
 	int SetName (const string &text, bool noCreate) { return Index = FindName (text.GetChars(), false); }
 
+	bool IsValidName() const { return (unsigned int)Index < NameArray.Size(); }
+
 	// Note that the comparison operators compare the names' indices, not
 	// their text, so they cannot be used to do a lexicographical sort.
 	bool operator == (const name &other) const { return Index == other.Index; }

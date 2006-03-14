@@ -23,15 +23,7 @@ END_DEFAULTS
 void AFourthWeaponPiece::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	if (arc.IsStoring ())
-	{
-		arc.UserWriteClass (FourthWeaponClass);
-	}
-	else
-	{
-		arc.UserReadClass (FourthWeaponClass);
-	}
-	arc << PieceValue << TempFourthWeapon;
+	arc << FourthWeaponClass << PieceValue << TempFourthWeapon;
 }
 
 const char *AFourthWeaponPiece::PickupMessage ()

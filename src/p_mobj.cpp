@@ -4484,7 +4484,7 @@ bool AActor::IsFriend (AActor *other)
 //
 //==========================================================================
 
-bool P_IsHostile (AActor *other)
+bool AActor::IsHostile (AActor *other)
 {
 	// Both monsters are non-friendlies so hostilities depend on infighting settings
 	if (!((flags | other->flags) & MF_FRIENDLY)) return false;
@@ -4493,8 +4493,8 @@ bool P_IsHostile (AActor *other)
 	if (flags & other->flags & MF_FRIENDLY)
 	{
 		return deathmatch &&
-			self->FriendPlayer != other->FriendPlayer &&
-			self->FriendPlayer !=0 &&
+			FriendPlayer != other->FriendPlayer &&
+			FriendPlayer !=0 &&
 			other->FriendPlayer != 0;
 	}
 	return true;

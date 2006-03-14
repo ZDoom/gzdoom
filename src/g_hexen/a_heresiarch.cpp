@@ -150,14 +150,7 @@ END_DEFAULTS
 void AHeresiarch::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	if (arc.IsStoring())
-	{
-		arc.UserWriteClass (StopBall);
-	}
-	else
-	{
-		arc.UserReadClass (StopBall);
-	}
+	arc << StopBall;
 }
 
 void AHeresiarch::Die (AActor *source, AActor *inflictor)

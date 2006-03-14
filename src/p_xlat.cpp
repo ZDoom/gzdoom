@@ -116,13 +116,6 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		return;
 	}
 
-/*	if (special == 52 || special == 124 || special == 51 || special == 11)
-	{
-		Printf ("Line %d has special %d (%d,%d)-(%d,%d)\n", ld-lines, special,
-			vertexes[mld->v1].x>>16, vertexes[mld->v1].y>>16,
-			vertexes[mld->v2].x>>16, vertexes[mld->v2].y>>16);
-	}
-*/
 	if (tlatebase.GetMem() == NULL)
 	{
 		if (gameinfo.gametype == GAME_Doom)
@@ -191,7 +184,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 					ld->args[4] = tag;
 					break;
 				}
-				if (ld->flags & ML_SECRET)
+				if ((ld->flags & ML_SECRET) && (GET_SPAC(ld->flags) == SPAC_USE || GET_SPAC(ld->flags) == SPAC_USETHROUGH))
 				{
 					ld->flags &= ~ML_MONSTERSCANACTIVATE;
 				}

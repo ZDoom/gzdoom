@@ -16,9 +16,7 @@ public:
 	void Serialize (FArchive &arc)
 	{
 		Super::Serialize(arc);
-		arc << PieceMask ;
-		if (arc.IsStoring()) arc.UserWriteClass(PieceWeapon);
-		else arc.UserWriteClass(PieceWeapon);
+		arc << PieceMask << PieceWeapon;
 	}
 };
 
@@ -36,9 +34,7 @@ END_DEFAULTS
 void AWeaponPiece::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	if (arc.IsStoring()) arc.UserWriteClass(WeaponClass); else arc.UserReadClass(WeaponClass);         
-	arc << FullWeapon;
-	arc << PieceValue;
+	arc << WeaponClass << FullWeapon << PieceValue;
 }
 
 //==========================================================================

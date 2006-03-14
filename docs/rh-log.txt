@@ -1,3 +1,36 @@
+March 13, 2006
+- Fixed: ActorFlagSetOrReset() wasn't receiving the + or - character from
+  ParseActorProperties().
+- Fixed: The decorate FindFlag() function returned flags from ActorFlags
+  instead of the passed flags set.
+- Fixed: The CHT_CHAINSAW, CHT_POWER, CHT_HEALTH, and CHT_RESSURECT needed
+  NULL player->mo checks.
+- Fixed: The "give all" command didn't give the backpack in Doom, and it
+  must give the backpack before giving ammo.
+- Fixed: P_SetPsprite() must not call the action function if the player is
+  not attached to an actor. This can happen, for instance, if the level is
+  destroyed while the player is holding a powered-up Phoenix Rod. As part
+  of its EndPowerup() function, it sets the psprite to the regular version,
+  but the player actor has already been destroyed.
+- Fixed: FinishThingdef() needs to check for valid names, because weapons
+  could have inherited valid pointers from their superclass.
+- Fixed: fuglyname didn't work.
+- Fixed: Redefining $ambient sounds leaked memory.
+- Added Jim's crashcatcher.c fix for better shell support.
+- VC7.1 seems to have no trouble distinguishing between passing a (const
+  TypeInfo *) reference to operator<< and the generic, templated (object *)
+  version, so a few places that can benefit from it now use it. I believe
+  VC6 had problems with this, which is why I didn't do it all along. The
+  function's implementation was also moved out of dobject.cpp and into
+  farchive.cpp.
+- Fixed: UnpackPixels() unpacked all chunks in a byte, which is wrong for the
+  last byte in a row if the image width is not an even multiple of the number
+  pixels per byte.
+- Fixed: P_TranslateLineDef() should only clear monster activation for secret
+  useable lines, not crossable lines.
+- Fixed: Some leftover P_IsHostile() calls still needed to be rewritten.
+- Fixed: AWeaponHolder::Serialize() wrote the class type in all circumstances.
+
 March 12, 2006
 - Fixed: A_SpawnItem() should use CopyFriendliness().
 - Fixed: AExplosiveBarrel should have MF2_MCROSS set.

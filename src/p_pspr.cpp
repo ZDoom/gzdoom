@@ -125,9 +125,12 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 			// Yes, I know this is truly awful but it is the only method I can think of 
 			// that does not involve changing stuff throughout the code. 
 			// Of course this should be rewritten ASAP.
-			CallingState=state;
+			CallingState = state;
 			// Call action routine.
-			state->GetAction() (player->mo);
+			if (player->mo != NULL)
+			{
+				state->GetAction() (player->mo);
+			}
 			if (!psp->state)
 			{
 				break;

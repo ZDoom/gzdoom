@@ -282,7 +282,7 @@ static flagdef *FindFlag (flagdef *flags, int numflags, const char *flag)
 		int lexval = stricmp (flag, flags[mid].name);
 		if (lexval == 0)
 		{
-			return &ActorFlags[mid];
+			return &flags[mid];
 		}
 		else if (lexval > 0)
 		{
@@ -1954,7 +1954,7 @@ void ParseActorProperties (Baggage &bag)
 			strlwr (sc_String);
 			propname += sc_String;
 		}
-		else
+		else if (sc_String[0] != '-' && sc_String[1] != '+')
 		{
 			SC_UnGet ();
 		}
@@ -2957,7 +2957,8 @@ public:
 	}
 	fuglyname &operator= (const TypeInfo *foo)
 	{
-		name(*this) = ENamedName(reinterpret_cast<size_t>(foo));
+		name *p = this;
+		*p = ENamedName(reinterpret_cast<size_t>(foo));
 		return *this;
 	}
 };
@@ -3299,7 +3300,7 @@ void FinishThingdef()
 			fuglyname v;
 
 			v = defaults->AmmoType1;
-			if (v != NAME_None)
+			if (v != NAME_None && v.IsValidName())
 			{
 				defaults->AmmoType1 = TypeInfo::FindType(v.GetChars());
 				if (!defaults->AmmoType1)
@@ -3313,7 +3314,7 @@ void FinishThingdef()
 			}
 
 			v = defaults->AmmoType2;
-			if (v != NAME_None)
+			if (v != NAME_None && v.IsValidName())
 			{
 				defaults->AmmoType2 = TypeInfo::FindType(v.GetChars());
 				if (!defaults->AmmoType2)
@@ -3327,7 +3328,7 @@ void FinishThingdef()
 			}
 
 			v = defaults->SisterWeaponType;
-			if (v != NAME_None)
+			if (v != NAME_None && v.IsValidName())
 			{
 				defaults->SisterWeaponType = TypeInfo::FindType(v.GetChars());
 				if (!defaults->SisterWeaponType)
@@ -3373,5 +3374,3 @@ void FinishThingdef()
 		}
 	}
 }
-
-

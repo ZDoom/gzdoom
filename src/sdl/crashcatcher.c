@@ -349,11 +349,11 @@ static void crash_catcher(int signum, siginfo_t *siginfo, void *context)
 				{
 					char buf[256];
 					snprintf(buf, sizeof(buf),
-					         "if (which gxmessage > /dev/null 2> &1);"
+					         "if (which gxmessage > /dev/null 2>&1);"
 					             "then gxmessage -buttons \"Damn it:0\" -center -title \"Very Fatal Error\" -file %s;"
-					          "elif (which xmessage > /dev/null 2> &1);"
-					              "then xmessage -buttons \"Damn it:0\" -center -file %s;"
-					          "fi", cc_logfile, cc_logfile);
+					         "elif (which xmessage > /dev/null 2>&1);"
+					             "then xmessage -buttons \"Damn it:0\" -center -file %s -geometry 600x400;"
+					         "fi", cc_logfile, cc_logfile);
 					system(buf);
 				}
 #endif

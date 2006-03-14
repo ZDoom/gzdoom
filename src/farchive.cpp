@@ -1420,3 +1420,16 @@ void FArchive::UserReadClass (const TypeInfo *&type)
 		break;
 	}
 }
+
+FArchive &operator<< (FArchive &arc, const TypeInfo * &info)
+{
+	if (arc.IsStoring ())
+	{
+		arc.UserWriteClass (info);
+	}
+	else
+	{
+		arc.UserReadClass (info);
+	}
+	return arc;
+}

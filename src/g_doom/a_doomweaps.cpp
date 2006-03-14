@@ -1337,7 +1337,6 @@ void A_FireBFG (AActor *actor)
 	player->userinfo.aimdist = storedaimdist;
 }
 
-bool thebfugu;
 int EvalExpressionI (int id, AActor *self);
 //
 // A_BFGSpray

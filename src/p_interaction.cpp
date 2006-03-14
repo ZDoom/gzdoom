@@ -1195,7 +1195,7 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	if ((master != NULL && other->IsA(master->GetClass())) ||		// don't attack your master (or others of its type)
 		(other->master != NULL && IsA(other->master->GetClass())))	// don't attack your minion (or those of others of your type)
 	{
-		if (!P_IsHostile(this, other) &&						// allow target switch if other is considered hostile
+		if (!IsHostile (other) &&								// allow target switch if other is considered hostile
 			(other->tid != TIDtoHate || TIDtoHate == 0) &&		// or has the tid we hate
 			other->TIDtoHate == TIDtoHate)						// or has different hate information
 		{
@@ -1205,7 +1205,7 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 
 	if ((other->flags3 & MF3_NOTARGET) &&
 		(other->tid != TIDtoHate || TIDtoHate == 0) &&
-		!P_IsHostile (this, other))
+		!IsHostile (other))
 		return false;
 	if (threshold != 0 && !(flags4 & MF4_QUICKTORETALIATE))
 		return false;
@@ -1214,7 +1214,7 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 		return false;
 	}
 	if ((gameinfo.gametype == GAME_Strife || infighting < 0) &&
-		other->player == NULL && !P_IsHostile (this, other))
+		other->player == NULL && !IsHostile (other))
 	{
 		return false;	// Strife & infighting off: Non-friendlies don't target other non-friendlies
 	}

@@ -246,7 +246,7 @@ public:
 	void Play (bool looping);
 	void Stop ();
 	bool IsPlaying ();
-	bool IsValid () const { return CommandLine != NULL; }
+	bool IsValid () const { return CommandLine.Len() > 0; }
 
 protected:
 	void PrepTimidity ();
@@ -264,8 +264,8 @@ protected:
 	int WavePipe[2];
 	pid_t ChildProcess;
 #endif
-	char *CommandLine;
-	int LoopPos;
+	string CommandLine;
+	size_t LoopPos;
 
 	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 #ifdef _WIN32

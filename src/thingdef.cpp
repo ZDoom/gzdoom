@@ -1947,16 +1947,19 @@ void ParseActorProperties (Baggage &bag)
 
 		string propname = sc_String;
 
-		if (SC_CheckString ("."))
+		if (sc_String[0] != '-' && sc_String[1] != '+')
 		{
-			SC_MustGetString ();
-			propname += '.';
-			strlwr (sc_String);
-			propname += sc_String;
-		}
-		else if (sc_String[0] != '-' && sc_String[1] != '+')
-		{
-			SC_UnGet ();
+			if (SC_CheckString ("."))
+			{
+				SC_MustGetString ();
+				propname += '.';
+				strlwr (sc_String);
+				propname += sc_String;
+			}
+			else 
+			{
+				SC_UnGet ();
+			}
 		}
 		prop = is_actorprop (propname.GetChars());
 

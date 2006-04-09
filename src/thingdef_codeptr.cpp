@@ -948,7 +948,14 @@ void A_GiveInventory(AActor * self)
 	if (mi) 
 	{
 		AInventory *item = static_cast<AInventory *>(Spawn (mi, 0, 0, 0));
-		item->Amount = amount;
+		if (item->IsKindOf(RUNTIME_CLASS(AHealth)))
+		{
+			item->Amount *= amount;
+		}
+		else
+		{
+			item->Amount = amount;
+		}
 		item->flags |= MF_DROPPED;
 		if (item->flags & MF_COUNTITEM)
 		{

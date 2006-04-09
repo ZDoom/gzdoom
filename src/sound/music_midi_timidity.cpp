@@ -158,10 +158,6 @@ TimiditySong::~TimiditySong ()
 		WavePipe[0] = -1;
 	}
 #endif
-	if (CommandLine != NULL)
-	{
-		delete[] CommandLine;
-	}
 }
 
 TimiditySong::TimiditySong (FILE *file, int len)
@@ -170,11 +166,10 @@ TimiditySong::TimiditySong (FILE *file, int len)
 	  ReadWavePipe (INVALID_HANDLE_VALUE), WriteWavePipe (INVALID_HANDLE_VALUE),
 	  KillerEvent (INVALID_HANDLE_VALUE),
 	  ChildProcess (INVALID_HANDLE_VALUE),
-	  Validated (false),
+	  Validated (false)
 #else
-	  ChildProcess (-1),
+	  ChildProcess (-1)
 #endif
-	  CommandLine (NULL)
 {
 	bool success;
 	FILE *f;
@@ -225,8 +220,6 @@ TimiditySong::TimiditySong (FILE *file, int len)
 
 void TimiditySong::PrepTimidity ()
 {
-	char cmdline[512];
-	int cmdsize;
 	int pipeSize;
 #ifdef _WIN32
 	static SECURITY_ATTRIBUTES inheritable = { sizeof(inheritable), NULL, TRUE };
@@ -245,7 +238,7 @@ void TimiditySong::PrepTimidity ()
 	}
 #endif // WIN32
 
-	cmdsize = sprintf (cmdline, "%s %s -EFchorus=%s -EFreverb=%s -s%d ",
+	CommandLine.Format ("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
 		*timidity_exe, *timidity_extargs,
 		*timidity_chorus, *timidity_reverb, *timidity_frequency);
 
@@ -301,27 +294,26 @@ void TimiditySong::PrepTimidity ()
 		}
 		else
 		{
-			cmdsize += sprintf (cmdline + cmdsize, "-o - -Ors");
+			CommandLine += "-o - -Ors";
 		}
 	}
 
 	if (pipeSize == 0)
 	{
-		cmdsize += sprintf (cmdline + cmdsize, "-Od");
+		CommandLine += "-Od";
 	}
 
-	cmdline[cmdsize++] = timidity_stereo ? 'S' : 'M';
-	cmdline[cmdsize++] = timidity_8bit ? '8' : '1';
+	CommandLine += timidity_stereo ? 'S' : 'M';
+	CommandLine += timidity_8bit ? '8' : '1';
 	if (timidity_byteswap)
 	{
-		cmdline[cmdsize++] = 'x';
+		CommandLine += 'x';
 	}
 
-	LoopPos = cmdsize + 4;
+	LoopPos = CommandLine.Len() + 4;
 
-	sprintf (cmdline + cmdsize, " -idl %s", DiskName.GetName ());
-
-	CommandLine = copystring (cmdline);
+	CommandLine += " -idl ";
+	CommandLine += DiskName.GetName();
 }
 
 #ifdef _WIN32
@@ -415,7 +407,7 @@ bool TimiditySong::ValidateTimidity ()
 
 bool TimiditySong::LaunchTimidity ()
 {
-	if (CommandLine == NULL)
+	if (CommandLine.Len() == 0)
 	{
 		return false;
 	}
@@ -438,7 +430,7 @@ bool TimiditySong::LaunchTimidity ()
 	startup.lpTitle = "TiMidity (ZDoom Launched)";
 	startup.wShowWindow = SW_SHOWMINNOACTIVE;
 
-	if (CreateProcess (NULL, CommandLine, NULL, NULL, TRUE,
+	if (CreateProcess (NULL, CommandLine.GetChars(), NULL, NULL, TRUE,
 		/*HIGH_PRIORITY_CLASS|*/DETACHED_PROCESS, NULL, NULL, &startup, &procInfo))
 	{
 		ChildProcess = procInfo.hProcess;
@@ -461,7 +453,7 @@ bool TimiditySong::LaunchTimidity ()
 	}
 
 	Printf (PRINT_BOLD, "Could not run timidity with the command line:\n%s\n"
-						"Reason: %s\n", CommandLine, msgBuf);
+						"Reason: %s\n", CommandLine.GetChars(), msgBuf);
 	if (msgBuf != hres)
 	{
 		LocalFree (msgBuf);
@@ -484,7 +476,7 @@ bool TimiditySong::LaunchTimidity ()
 	int forkres;
 	wordexp_t words;
 
-	switch (wordexp (CommandLine, &words, 0))
+	switch (wordexp (CommandLine.GetChars(), &words, 0))
 	{
 	case 0: // all good
 		break;

@@ -30,6 +30,7 @@ public:
 
 	char *GetChars() const { return Chars; }
 	char &operator[] (int index) { return Chars[index]; }
+	char &operator[] (size_t index) { return Chars[index]; }
 
 	string &operator = (const string &other);
 	string &operator = (const char *copyStr);

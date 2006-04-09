@@ -125,7 +125,10 @@ FWadCollection Wads;
 void strupr (char *s)
 {
 	while (*s)
-		*s++ = toupper (*s);
+	{
+		*s = toupper (*s);
+		s++;
+	}
 }
 #endif
 

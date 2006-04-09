@@ -1,3 +1,17 @@
+April 9, 2006
+- Fixed: The strupr() implementation in w_wad.cpp relied on compiler-dependant
+  behavior.
+- Fixed fix: ParseActorProperties() still wasn't sending + or - to
+  ActorFlagSetOrReset().
+- Fixed: [GZ] An item without use state won't be removed when being picked up.
+  The call to GoAwayAndDie is missing.
+- Fixed: [GZ]  A_GiveInventory sets the amount to give to a value passed to
+  this function. This is ok for everything except Health items. They should
+  give their original amount multiplied with the passed parameter.
+
+April 3, 2006
+- Fixed: Potential buffer overrun when launching timidity.
+
 March 13, 2006
 - Fixed: ActorFlagSetOrReset() wasn't receiving the + or - character from
   ParseActorProperties().

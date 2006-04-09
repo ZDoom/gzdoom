@@ -1240,6 +1240,10 @@ bool ACustomInventory::TryPickup (AActor *toucher)
 	{
 		useok = Super::TryPickup (toucher);
 	}
+	else if (useok || ItemFlags & IF_ALWAYSPICKUP)
+	{
+		GoAwayAndDie();
+	}
 	return useok;
 }
 

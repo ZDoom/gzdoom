@@ -330,4 +330,8 @@ void A_CStaffCheckBlink (AActor *actor)
 		P_SetPsprite (actor->player, ps_weapon, &ACWeapStaff::States[S_CSTAFFBLINK]);
 		actor->special1 = (pr_blink()+50)>>2;
 	}
+	else 
+	{
+		A_WeaponReady (actor);
+	}
 }

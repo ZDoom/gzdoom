@@ -483,6 +483,7 @@ class AGoldWandPuff2 : public AGoldWandFX1
 };
 
 IMPLEMENT_STATELESS_ACTOR (AGoldWandPuff2, Heretic, -1, 0)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_SpawnState (S_GWANDFXI1)
 END_DEFAULTS
 
@@ -1527,7 +1528,7 @@ void A_FireMacePL2 (AActor *actor)
 		mo->momx += player->mo->momx;
 		mo->momy += player->mo->momy;
 		mo->momz = 2*FRACUNIT+
-			finetangent[FINEANGLES/4-(player->mo->pitch>>ANGLETOFINESHIFT)];
+			clamp<fixed_t>(finetangent[FINEANGLES/4-(player->mo->pitch>>ANGLETOFINESHIFT)], -5*FRACUNIT, 5*FRACUNIT);
 		if (linetarget)
 		{
 			mo->tracer = linetarget;

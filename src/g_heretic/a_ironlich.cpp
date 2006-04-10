@@ -104,15 +104,15 @@ class AHeadFX1 : public AActor
 FState AHeadFX1::States[] =
 {
 #define S_HEADFX1 0
-	S_NORMAL (FX05, 'A',	6, NULL 					, &States[S_HEADFX1+1]),
-	S_NORMAL (FX05, 'B',	6, NULL 					, &States[S_HEADFX1+2]),
-	S_NORMAL (FX05, 'C',	6, NULL 					, &States[S_HEADFX1+0]),
+	S_BRIGHT (FX05, 'A',	6, NULL 					, &States[S_HEADFX1+1]),
+	S_BRIGHT (FX05, 'B',	6, NULL 					, &States[S_HEADFX1+2]),
+	S_BRIGHT (FX05, 'C',	6, NULL 					, &States[S_HEADFX1+0]),
 
 #define S_HEADFXI1 (S_HEADFX1+3)
-	S_NORMAL (FX05, 'D',	5, A_LichIceImpact			, &States[S_HEADFXI1+1]),
-	S_NORMAL (FX05, 'E',	5, NULL 					, &States[S_HEADFXI1+2]),
-	S_NORMAL (FX05, 'F',	5, NULL 					, &States[S_HEADFXI1+3]),
-	S_NORMAL (FX05, 'G',	5, NULL 					, NULL)
+	S_BRIGHT (FX05, 'D',	5, A_LichIceImpact			, &States[S_HEADFXI1+1]),
+	S_BRIGHT (FX05, 'E',	5, NULL 					, &States[S_HEADFXI1+2]),
+	S_BRIGHT (FX05, 'F',	5, NULL 					, &States[S_HEADFXI1+3]),
+	S_BRIGHT (FX05, 'G',	5, NULL 					, NULL)
 };
 
 IMPLEMENT_ACTOR (AHeadFX1, Heretic, -1, 164)
@@ -142,15 +142,15 @@ class AHeadFX2 : public AActor
 FState AHeadFX2::States[] =
 {
 #define S_HEADFX2 0
-	S_NORMAL (FX05, 'H',	6, NULL 					, &States[S_HEADFX2+1]),
-	S_NORMAL (FX05, 'I',	6, NULL 					, &States[S_HEADFX2+2]),
-	S_NORMAL (FX05, 'J',	6, NULL 					, &States[S_HEADFX2+0]),
+	S_BRIGHT (FX05, 'H',	6, NULL 					, &States[S_HEADFX2+1]),
+	S_BRIGHT (FX05, 'I',	6, NULL 					, &States[S_HEADFX2+2]),
+	S_BRIGHT (FX05, 'J',	6, NULL 					, &States[S_HEADFX2+0]),
 
 #define S_HEADFXI2 (S_HEADFX2+3)
-	S_NORMAL (FX05, 'D',	5, NULL 					, &States[S_HEADFXI2+1]),
-	S_NORMAL (FX05, 'E',	5, NULL 					, &States[S_HEADFXI2+2]),
-	S_NORMAL (FX05, 'F',	5, NULL 					, &States[S_HEADFXI2+3]),
-	S_NORMAL (FX05, 'G',	5, NULL 					, NULL)
+	S_BRIGHT (FX05, 'D',	5, NULL 					, &States[S_HEADFXI2+1]),
+	S_BRIGHT (FX05, 'E',	5, NULL 					, &States[S_HEADFXI2+2]),
+	S_BRIGHT (FX05, 'F',	5, NULL 					, &States[S_HEADFXI2+3]),
+	S_BRIGHT (FX05, 'G',	5, NULL 					, NULL)
 };
 
 IMPLEMENT_ACTOR (AHeadFX2, Heretic, -1, 0)
@@ -175,18 +175,18 @@ class AHeadFX3 : public AActor
 FState AHeadFX3::States[] =
 {
 #define S_HEADFX3 0
-	S_NORMAL (FX06, 'A',	4, A_LichFireGrow			, &States[S_HEADFX3+1]),
-	S_NORMAL (FX06, 'B',	4, A_LichFireGrow			, &States[S_HEADFX3+2]),
-	S_NORMAL (FX06, 'C',	4, A_LichFireGrow			, &States[S_HEADFX3+0]),
-	S_NORMAL (FX06, 'A',	5, NULL 					, &States[S_HEADFX3+4]),
-	S_NORMAL (FX06, 'B',	5, NULL 					, &States[S_HEADFX3+5]),
-	S_NORMAL (FX06, 'C',	5, NULL 					, &States[S_HEADFX3+3]),
+	S_BRIGHT (FX06, 'A',	4, A_LichFireGrow			, &States[S_HEADFX3+1]),
+	S_BRIGHT (FX06, 'B',	4, A_LichFireGrow			, &States[S_HEADFX3+2]),
+	S_BRIGHT (FX06, 'C',	4, A_LichFireGrow			, &States[S_HEADFX3+0]),
+	S_BRIGHT (FX06, 'A',	5, NULL 					, &States[S_HEADFX3+4]),
+	S_BRIGHT (FX06, 'B',	5, NULL 					, &States[S_HEADFX3+5]),
+	S_BRIGHT (FX06, 'C',	5, NULL 					, &States[S_HEADFX3+3]),
 
 #define S_HEADFXI3 (S_HEADFX3+6)
-	S_NORMAL (FX06, 'D',	5, NULL 					, &States[S_HEADFXI3+1]),
-	S_NORMAL (FX06, 'E',	5, NULL 					, &States[S_HEADFXI3+2]),
-	S_NORMAL (FX06, 'F',	5, NULL 					, &States[S_HEADFXI3+3]),
-	S_NORMAL (FX06, 'G',	5, NULL 					, NULL)
+	S_BRIGHT (FX06, 'D',	5, NULL 					, &States[S_HEADFXI3+1]),
+	S_BRIGHT (FX06, 'E',	5, NULL 					, &States[S_HEADFXI3+2]),
+	S_BRIGHT (FX06, 'F',	5, NULL 					, &States[S_HEADFXI3+3]),
+	S_BRIGHT (FX06, 'G',	5, NULL 					, NULL)
 };
 
 IMPLEMENT_ACTOR (AHeadFX3, Heretic, -1, 0)

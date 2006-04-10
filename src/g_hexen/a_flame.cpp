@@ -181,3 +181,27 @@ void A_FlameCheck (AActor *actor)
 		actor->Destroy ();
 	}
 }
+
+
+
+//===========================================================================
+//
+// Hexen uses 2 different spawn IDs for these actors
+//
+//===========================================================================
+
+class AFlameSmall2 : public AFlameSmall
+{
+	DECLARE_ACTOR (AFlameSmall2, AFlameSmall)
+};
+
+IMPLEMENT_STATELESS_ACTOR (AFlameSmall2, Hexen, -1, 66)
+END_DEFAULTS
+
+class AFlameLarge2 : public AFlameLarge
+{
+	DECLARE_ACTOR (AFlameLarge2, AFlameLarge)
+};
+
+IMPLEMENT_STATELESS_ACTOR (AFlameLarge2, Hexen, -1, 67)
+END_DEFAULTS

@@ -50,6 +50,13 @@ cbowmark    decals/cbowmark.png
 
 animdefs    animdefs.txt
 terrain	    terrain.txt
+in_epi1		in_epi1.txt
+in_epi2		in_epi2.txt
+in_epi3		in_epi3.txt
+in_htc1		in_htc1.txt
+in_htc2		in_htc2.txt
+in_htc3		in_htc3.txt
+lockdefs	lockdefs.txt
 
 ========
 # Support lumps

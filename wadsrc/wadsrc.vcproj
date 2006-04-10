@@ -45,6 +45,27 @@
 				RelativePath=".\animdefs.txt">
 			</File>
 			<File
+				RelativePath=".\In_epi1.txt">
+			</File>
+			<File
+				RelativePath=".\In_epi2.txt">
+			</File>
+			<File
+				RelativePath=".\In_epi3.txt">
+			</File>
+			<File
+				RelativePath=".\In_htc1.txt">
+			</File>
+			<File
+				RelativePath=".\In_htc2.txt">
+			</File>
+			<File
+				RelativePath=".\In_htc3.txt">
+			</File>
+			<File
+				RelativePath=".\Lockdefs.txt">
+			</File>
+			<File
 				RelativePath=".\sndeax.txt">
 			</File>
 			<File

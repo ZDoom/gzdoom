@@ -1,3 +1,33 @@
+April 10, 2006 (Changes by Graf Zahl)
+- Made the IronLich's projectiles bright. Using them in non-bright state
+  in dark sectors looks truly odd.
+- Fixed: Using bot_observer cleared the FRIENDLY flag off the player.
+- Fixed: Changed some decals from DecalScorch to DecalScorchLower.
+- Fixed: Added the missing intermission lumps and LOCKDEFS to zdoom.wad
+- Changed the damage formula for Strife's dagger. This change has already
+  been added to the 2.1.0 source but not to the current version.
+- Added a call to P_HitFriend to A_SentinelRefire to prevent it from shooting
+  at friends.
+- Fixed: The Inquisitor's grenades should not teleport.
+- Fixed: The Inquisitor isn't supposed to be thrust by damage so its mass
+  has to be increased.
+- Fixed: Strife's Inquisitor can be hurt by radius damage as long as this 
+  damage comes from a non-Inquisitor. 
+- Fixed: AArtiDarkServant::Use must always report successful use of the item.
+  This function cannot fail. It either spawns a Minotaur or a new artifact
+  but never nothing at all.
+- Fixed: Hexen's temp flames have two spawn IDs each. Since ZDoom doesn't
+  support multiple spawn IDs per item I added copies of these objects
+  to assign the second set od IDs.
+- Fixed: Hexen's wall torch was missing the MF4_FIXMAPTHINGPOS flag.
+- Fixed: A_CStaffCheckBlink must call A_WeaponReady because otherwise the
+  weapon bobbing becomes slightly erratic.
+- Fixed: AGoldWandPuff2 had incorrect values set for flags2.
+- Clamped the vertical speed of Heretic's Mace's balls. When shot at a high
+  vertical angle their movement becomes erratic.
+- Fixed: Doom's corpses must clear the MF3_ISMONSTER flag inherited from
+  their monster parents.
+
 April 9, 2006
 - Fixed: The strupr() implementation in w_wad.cpp relied on compiler-dependant
   behavior.

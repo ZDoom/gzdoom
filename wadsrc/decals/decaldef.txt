@@ -282,6 +282,12 @@ decal PlasmaScorch2
 	lowerdecal PlasmaScorchLower2
 }
 
+decalgroup PlasmaScorchLower
+{
+	PlasmaScorchLower1	1
+	PlasmaScorchLower2	1
+}
+
 decalgroup PlasmaScorch
 {
 	PlasmaScorch1	1
@@ -989,8 +995,8 @@ generator MaceFX1			BaronScorch
 generator Blaster			RailScorchLower
 generator BlasterFX1			HImpScorch
 generator Ripper			HImpScorch
-generator HornRodFX1			PlasmaScorch
-generator HornRodFX2			PlasmaScorch
+generator HornRodFX1			PlasmaScorchLower
+generator HornRodFX2			PlasmaScorchLower
 generator PhoenixFX1			Scorch
 generator PhoenixFX2			Scorch
 
@@ -1029,8 +1035,8 @@ generator Rebel4			BulletChip
 generator Rebel5			BulletChip
 generator Macil1			BulletChip
 generator Macil2			BulletChip
-generator SentinelFX1			PlasmaScorch
-generator SentinelFX2			PlasmaScorch
+generator SentinelFX1			PlasmaScorchLower
+generator SentinelFX2			PlasmaScorchLower
 generator Templar			RailScorchLower
 generator Reaver			BulletChip
 generator FlameMissile			CacoScorch

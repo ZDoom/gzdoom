@@ -199,7 +199,7 @@ void A_JabDagger (AActor *actor)
 	int			power;
 
 	power = actor->player->stamina / 10;
-	damage = (pr_jabdagger() & (power + 7)) * (power + 2);
+	damage = (pr_jabdagger() % (power + 8)) * (power + 2);
 
 	if (actor->FindInventory<APowerStrength>())
 	{

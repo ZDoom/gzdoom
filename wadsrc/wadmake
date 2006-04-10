@@ -39,6 +39,13 @@ zdoom.wad: zdoom.lst \
 	decals/cbowmark.png \
 	animdefs.txt \
 	terrain.txt \
+	in_epi1.txt \
+	in_epi2.txt \
+	in_epi3.txt \
+	in_htc1.txt \
+	in_htc2.txt \
+	in_htc3.txt \
+	lockdefs.txt \
 	dehsupp.lmp \
 	xlat/doom.x \
 	xlat/heretic.x \

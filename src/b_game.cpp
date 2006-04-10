@@ -138,7 +138,7 @@ void DCajunMaster::Main (int buf)
 		Printf ("%s is now observer\n", players[consoleplayer].userinfo.netname);
 		observer = true;
 		players[consoleplayer].mo->UnlinkFromWorld ();
-		players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOTDMATCH|MF_NOGRAVITY;
+		players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOTDMATCH|MF_NOGRAVITY|MF_FRIENDLY;
 		players[consoleplayer].mo->flags2 |= MF2_FLY;
 		players[consoleplayer].mo->LinkToWorld ();
 	}
@@ -147,7 +147,7 @@ void DCajunMaster::Main (int buf)
 		Printf ("%s returned to the fray\n", players[consoleplayer].userinfo.netname);
 		observer = false;
 		players[consoleplayer].mo->UnlinkFromWorld ();
-		players[consoleplayer].mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH;
+		players[consoleplayer].mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY;
 		players[consoleplayer].mo->flags2 &= ~MF2_FLY;
 		players[consoleplayer].mo->LinkToWorld ();
 	}

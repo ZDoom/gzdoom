@@ -186,6 +186,7 @@ void A_SentinelRefire (AActor *self)
 		if (self->target == NULL ||
 			self->target->health <= 0 ||
 			!P_CheckSight (self, self->target) ||
+			P_HitFriend(self) ||
 			pr_sentinelrefire() < 40)
 		{
 			self->SetState (self->SeeState);

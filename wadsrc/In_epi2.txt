@@ -1,0 +1,46 @@
+Background wimap1
+Splat wisplat
+Pointer wiurh0 wiurh1
+
+// IfEntering and IfLeaving are mutually exclusive so these have to be defined twice! 
+
+IfLeaving E2M1 Pic 128 136 WIA10000
+IfLeaving E2M2 Pic 128 136 WIA10100
+IfLeaving E2M3 Pic 128 136 WIA10200
+IfLeaving E2M4 Pic 128 136 WIA10300
+IfLeaving E2M5 Pic 128 136 WIA10400
+IfLeaving E2M6 Pic 128 136 WIA10500
+IfLeaving E2M7 Pic 128 136 WIA10600
+IfLeaving E2M9 Pic 128 136 WIA10400
+
+IfEntering E2M2 Pic 128 136 WIA10000
+IfEntering E2M3 Pic 128 136 WIA10100
+IfEntering E2M4 Pic 128 136 WIA10200
+IfEntering E2M5 Pic 128 136 WIA10300
+IfEntering E2M6 Pic 128 136 WIA10400
+IfEntering E2M7 Pic 128 136 WIA10500
+IfEntering E2M8 Pic 128 136 WIA10600
+IfEntering E2M9 Pic 128 136 WIA10400
+
+IfVisited E2M9 Pic 192 144 WIA10702
+
+IfEntering E2M9 Animation 192 144 11 ONCE
+{
+	WIA10700
+	WIA10701
+	WIA10702
+}
+
+      
+Spots
+{
+	E2M1 254 25
+	E2M2 97 50
+	E2M3 188 64
+	E2M4 128 78
+	E2M5 214 92
+	E2M6 133 130
+	E2M7 208 136
+	E2M8 148 140
+	E2M9 235 158
+}

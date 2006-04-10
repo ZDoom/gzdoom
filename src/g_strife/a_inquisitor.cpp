@@ -97,9 +97,11 @@ IMPLEMENT_ACTOR (AInquisitor, Strife, 16, 0)
 	PROP_SpeedFixed (12)
 	PROP_RadiusFixed (40)
 	PROP_HeightFixed (110)
+	PROP_MassLong(0x7fffffff)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_NOBLOOD|MF_COUNTKILL)
 	PROP_Flags2 (MF2_BOSS|MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_MCROSS)
-	PROP_Flags3 (MF3_NORADIUSDMG|MF3_DONTMORPH)
+	PROP_Flags3 (MF3_DONTMORPH)
+	PROP_Flags4 (MF4_DONTHURTSPECIES)
 	PROP_MaxDropOffHeight (32)
 	PROP_MinMissileChance (150)
 	PROP_SeeSound ("inquisitor/sight")
@@ -142,6 +144,7 @@ IMPLEMENT_ACTOR (AInquisitorShot, Strife, -1, 0)
 	PROP_HeightFixed (13)
 	PROP_Mass (15)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
+	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
 	PROP_MaxStepHeight (4)
 	PROP_SeeSound ("inquisitor/attack")
@@ -181,7 +184,7 @@ void A_InquisitorWalk (AActor *self)
 	A_Chase (self);
 }
 
-bool Sys1ED64 (AActor *self)
+bool InquisitorCheckDistance (AActor *self)
 {
 	if (self->reactiontime == 0 && P_CheckSight (self, self->target))
 	{
@@ -196,7 +199,7 @@ void A_InquisitorDecide (AActor *self)
 		return;
 
 	A_FaceTarget (self);
-	if (!Sys1ED64 (self))
+	if (!InquisitorCheckDistance (self))
 	{
 		self->SetState (&AInquisitor::States[S_INQ_ATK2]);
 	}

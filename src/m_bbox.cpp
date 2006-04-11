@@ -43,12 +43,12 @@ void DBoundingBox::AddToBox (fixed_t x, fixed_t y)
 {
 	if (x < m_Box[BOXLEFT])
 		m_Box[BOXLEFT] = x;
-	else if (x > m_Box[BOXRIGHT])
+	if (x > m_Box[BOXRIGHT])
 		m_Box[BOXRIGHT] = x;
 
 	if (y < m_Box[BOXBOTTOM])
 		m_Box[BOXBOTTOM] = y;
-	else if (y > m_Box[BOXTOP])
+	if (y > m_Box[BOXTOP])
 		m_Box[BOXTOP] = y;
 }
 

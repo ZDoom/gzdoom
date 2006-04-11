@@ -143,11 +143,8 @@ void FNodeBuilder::MakeSegsFromSides ()
 		share1 = NULL;
 		if (Level.Lines[i].sidenum[0] != NO_SIDE)
 		{
-			DWORD backside;
-
 			seg.linedef = i;
 			seg.sidedef = Level.Lines[i].sidenum[0];
-			backside = Level.Lines[i].sidenum[1];
 			seg.frontsector = Level.Lines[i].frontsector;
 			seg.backsector = Level.Lines[i].backsector;
 			seg.v1 = (int)(size_t)Level.Lines[i].v1;
@@ -173,11 +170,8 @@ void FNodeBuilder::MakeSegsFromSides ()
 
 		if (Level.Lines[i].sidenum[1] != NO_SIDE)
 		{
-			DWORD backside;
-
 			seg.linedef = i;
 			seg.sidedef = Level.Lines[i].sidenum[1];
-			backside = Level.Lines[i].sidenum[0];
 			seg.frontsector = Level.Lines[i].backsector;
 			seg.backsector = Level.Lines[i].frontsector;
 			seg.v1 = (int)(size_t)Level.Lines[i].v2;

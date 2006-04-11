@@ -400,6 +400,13 @@ void P_TranslateTeleportThings ()
 					lines[i].args[0] = 1;
 				}
 			}
+			else if (lines[i].special == Teleport_ZombieChanger)
+			{
+				if (lines[i].args[2] == 0)
+				{
+					lines[i].args[0] = 1;
+				}
+			}
 		}
 	}
 }

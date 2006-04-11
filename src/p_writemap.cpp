@@ -172,12 +172,15 @@ static int WriteSEGS (FILE *file)
 	ms.offset = 0;		// unused by ZDoom, so just leave it 0
 	for (int i = 0; i < numsegs; ++i)
 	{
-		ms.v1 = LittleShort(short(segs[i].v1 - vertexes));
-		ms.v2 = LittleShort(short(segs[i].v2 - vertexes));
-		ms.linedef = LittleShort(short(segs[i].linedef - lines));
-		ms.side = LittleShort(segs[i].sidedef - sides == segs[i].linedef->sidenum[0] ? 0 : 1);
-		ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->x, segs[i].v1->y, segs[i].v2->x, segs[i].v2->y)>>16));
-		fwrite (&ms, sizeof(ms), 1, file);
+		if (segs[i].linedef!=NULL)
+		{
+			ms.v1 = LittleShort(short(segs[i].v1 - vertexes));
+			ms.v2 = LittleShort(short(segs[i].v2 - vertexes));
+			ms.linedef = LittleShort(short(segs[i].linedef - lines));
+			ms.side = LittleShort(segs[i].sidedef - sides == segs[i].linedef->sidenum[0] ? 0 : 1);
+			ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->x, segs[i].v1->y, segs[i].v2->x, segs[i].v2->y)>>16));
+			fwrite (&ms, sizeof(ms), 1, file);
+		}
 	}
 	return numsegs * sizeof(ms);
 }

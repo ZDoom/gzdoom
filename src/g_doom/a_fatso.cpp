@@ -134,7 +134,7 @@ FState AFatShot::States[] =
 
 IMPLEMENT_ACTOR (AFatShot, Doom, -1, 153)
 	PROP_RadiusFixed (6)
-	PROP_HeightFixed (32)
+	PROP_HeightFixed (8)
 	PROP_SpeedFixed (20)
 	PROP_Damage (8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
@@ -252,6 +252,7 @@ void A_FatAttack3 (AActor *self)
 	}
 }
 
+int EvalExpressionI (int id, AActor *self);
 //
 // killough 9/98: a mushroom explosion effect, sorta :)
 // Original idea: Linguica
@@ -266,7 +267,7 @@ void A_Mushroom (AActor *actor)
 	if (index >= 0) 
 	{
 		spawntype = TypeInfo::FindType((const char *)StateParameters[index]);
-		n = (int)StateParameters[index+1];
+		n = EvalExpressionI (StateParameters[index+1], actor);
 		if (n == 0)
 			n = actor->damage;
 	}

@@ -210,6 +210,16 @@ void A_PainAttack (AActor *self)
 	A_PainShootSkull (self, self->angle);
 }
 
+void A_DualPainAttack (AActor *self)
+{
+	if (!self->target)
+		return;
+
+	A_FaceTarget (self);
+	A_PainShootSkull (self, self->angle + ANG45);
+	A_PainShootSkull (self, self->angle - ANG45);
+}
+
 void A_PainDie (AActor *self)
 {
 	if (self->IsFriend (self->target))

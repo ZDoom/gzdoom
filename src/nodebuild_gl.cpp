@@ -244,7 +244,7 @@ DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD
 	FPrivSeg *seg = &Segs[seg1];
 	FPrivSeg newseg;
 
-	newseg.sidedef = NO_INDEX;
+	newseg.sidedef = NO_SIDE;
 	newseg.linedef = -1;
 	newseg.loopnum = 0;
 	newseg.next = DWORD_MAX;

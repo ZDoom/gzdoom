@@ -1351,14 +1351,18 @@ void A_BFGSpray (AActor *mo)
 	AActor				*thingToHit;
 	const TypeInfo		*spraytype = NULL;
 	int					numrays = 40;
+	int					damagecnt = 15;
 
-	int index = CheckIndex (2, NULL);
+	int index = CheckIndex (3, NULL);
 	if (index >= 0) 
 	{
 		spraytype = TypeInfo::FindType ((const char *)StateParameters[index]);
 		numrays = EvalExpressionI (StateParameters[index+1], mo);
 		if (numrays <= 0)
 			numrays = 40;
+		damagecnt = EvalExpressionI (StateParameters[index+2], mo);
+		if (damagecnt <= 0)
+			damagecnt = 15;
 	}
 	if (spraytype == NULL)
 	{
@@ -1384,7 +1388,7 @@ void A_BFGSpray (AActor *mo)
 			linetarget->z + (linetarget->height>>2));
 		
 		damage = 0;
-		for (j = 0; j < 15; ++j)
+		for (j = 0; j < damagecnt; ++j)
 			damage += (pr_bfgspray() & 7) + 1;
 
 		thingToHit = linetarget;

@@ -1293,6 +1293,8 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	{ // [RH] Fake taller height to catch stepping up into things.
 		thing->height = realheight + thing->MaxStepHeight;
 	}
+
+	stepthing = NULL;
 	for (bx = xl; bx <= xh; bx++)
 	{
 		for (by = yl; by <= yh; by++)
@@ -1300,7 +1302,6 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 			AActor *robin = NULL;
 			do
 			{
-				stepthing = NULL;
 				if (!P_BlockThingsIterator (bx, by, PIT_CheckThing, checkpbt, robin))
 				{ // [RH] If a thing can be stepped up on, we need to continue checking
 				  // other things in the blocks and see if we hit something that is
@@ -2212,6 +2213,8 @@ bool P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove)
 
 	if (actor->floorsector != actor->Sector)
 	{
+		// this additional check prevents sliding on sloped dropoffs
+		if (planezhere>actor->floorz+4*FRACUNIT)
 		return false;
 	}
 
@@ -2734,36 +2737,38 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			{
 				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, true);
 			}
-			if ((gameinfo.gametype & (GAME_DoomStrife)) &&
-				!axeBlood &&
-				!(trace.Actor->flags & MF_NOBLOOD) &&
-				!(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
+			if (!(GetDefaultByType(pufftype)->flags3&MF3_BLOODLESSIMPACT))
 			{
-				P_SpawnBlood (hitx, hity, hitz, angle - ANG180, damage, trace.Actor);
-			}
-
-			if (damage)
-			{
-				if ((gameinfo.gametype & GAME_Raven) || axeBlood)
+				if ((gameinfo.gametype & (GAME_DoomStrife)) && !axeBlood &&
+					!(trace.Actor->flags & MF_NOBLOOD) &&
+					!(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 				{
-					if (!(trace.Actor->flags&MF_NOBLOOD) &&
-						!(trace.Actor->flags2&(MF2_INVULNERABLE|MF2_DORMANT)))
+					P_SpawnBlood (hitx, hity, hitz, angle - ANG180, damage, trace.Actor);
+				}
+	
+				if (damage)
+				{
+					if ((gameinfo.gametype&GAME_Raven) || axeBlood)
 					{
-						if (axeBlood)
+						if (!(trace.Actor->flags&MF_NOBLOOD) &&
+							!(trace.Actor->flags2&(MF2_INVULNERABLE|MF2_DORMANT)))
 						{
-							P_BloodSplatter2 (hitx, hity, hitz, trace.Actor);
-						}
-						if (pr_lineattack() < 192)
-						{
-							P_BloodSplatter (hitx, hity, hitz, trace.Actor);
+							if (axeBlood)
+							{
+								P_BloodSplatter2 (hitx, hity, hitz, trace.Actor);
+							}
+							if (pr_lineattack() < 192)
+							{
+								P_BloodSplatter (hitx, hity, hitz, trace.Actor);
+							}
 						}
 					}
+					// [RH] Stick blood to walls
+					P_TraceBleed (damage, trace.X, trace.Y, trace.Z,
+						trace.Actor, srcangle, srcpitch);
 				}
-				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType);
-				// [RH] Stick blood to walls
-				P_TraceBleed (damage, trace.X, trace.Y, trace.Z,
-					trace.Actor, srcangle, srcpitch);
 			}
+			if (damage) P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType);
 		}
 		if (trace.CrossedWater)
 		{
@@ -3089,6 +3094,7 @@ BOOL PTR_UseTraverse (intercept_t *in)
 	// [RH] Check for things to talk with or use a puzzle item on
 	if (!in->isaline)
 	{
+		if (usething==in->d.thing) return true;
 		// Check thing
 
 		// Check for puzzle item use
@@ -3124,7 +3130,9 @@ BOOL PTR_UseTraverse (intercept_t *in)
 	// lines further than 64 units away.
 	if (in->frac > FRACUNIT/2)
 	{
-		return true;
+		P_LineOpening (in->d.line, trace.x + FixedMul (trace.dx, in->frac),
+			trace.y + FixedMul (trace.dy, in->frac));
+		return openrange>0;
 	}
 
 	if (in->d.line->special == 0 || (GET_SPAC(in->d.line->flags) != SPAC_USETHROUGH &&
@@ -3191,17 +3199,16 @@ blocked:
 
 BOOL PTR_NoWayTraverse (intercept_t *in)
 {
-	line_t *ld = in->d.line;					// This linedef
+	line_t *ld = in->d.line;
 
-	return ld->special || !(					// Ignore specials
-		ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING) || (		// Always blocking
-		P_LineOpening(ld, trace.x + FixedMul (trace.dx, in->frac),
-			trace.y + FixedMul (trace.dy, in->frac)),			// Find openings
-		openrange <= 0 ||						// No opening
-		openbottom > usething->z+usething->MaxStepHeight ||	// Too high it blocks
-		opentop < usething->z+usething->height	// Too low it blocks
-	)
-	);
+	// [GrafZahl] de-obfuscated. Was I the only one who was unable to makes sense out of
+	// this convoluted mess?
+	if (ld->special) return true;
+	if (ld->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING)) return false;
+	P_LineOpening(ld, trace.x+FixedMul(trace.dx, in->frac),trace.y+FixedMul(trace.dy, in->frac));
+	return  openrange >0 && 
+			openbottom <= usething->z + usething->MaxStepHeight &&
+			opentop >= usething->z + usething->height;
 }
 
 /*
@@ -3813,14 +3820,6 @@ void P_DoCrunch (AActor *thing)
 	}
 
 	// crunch dropped items
-	if (thing->flags & MF_DROPPED)
-    {
-    	// [GrafZahl] Just a quick fix to prevent items in a player's inventory from being crushed
-    	// I still think this should be taken care of by the inventory system, not a special check here.
-		if (!thing->IsKindOf(RUNTIME_CLASS(AInventory)) || !static_cast<AInventory*>(thing)->Owner)
-			thing->Destroy ();
-		return;		// keep checking
-    }
 	if (thing->flags & MF_DROPPED)
 	{
 		thing->Destroy ();

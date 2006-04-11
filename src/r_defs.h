@@ -308,7 +308,7 @@ struct sector_t
 	short		tag;
 	int			nexttag,firsttag;	// killough 1/30/98: improves searches for tags.
 
-	WORD		sky;
+	int			sky;
 	short		seqType;		// this sector's sound sequence
 
 	fixed_t		soundorg[3];	// origin for any sounds played by the sector
@@ -429,7 +429,7 @@ struct line_s
 	short		args[5];	// <--- hexen-style arguments
 							//		note that these are shorts in order to support
 							//		the tag parameter from DOOM.
-	short		firstid, nextid;
+	int			firstid, nextid;
 	DWORD		sidenum[2];	// sidenum[1] will be 0xffffffff if one sided
 	fixed_t		bbox[4];	// bounding box, for the extent of the LineDef.
 	slopetype_t	slopetype;	// To aid move clipping.

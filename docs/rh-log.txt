@@ -1,4 +1,62 @@
+April 11, 2006 (Changes by Graf Zahl)
+- Fixed: It was possible to use things through closed walls when the wall
+  was further away than 64 map units.
+- Added a check for MF3_BLOODLESSIMPACT to P_LineAttack so that bloodless
+  hitscan attacks can be created.
+- Added a check to P_CheckSlopeWalk that prevents sliding when hanging over
+  a sloped dropoff.
+- Fixed: The line id hash chains used signed shorts to link their elements.
+  This completely broke line manipulation for linedef indices >= 32768.
+- Fixed: Changed PL_SKYFLAT from 0x8000 to 0x10000 because otherwise it
+  doesn't work with linedef indices >= 32768. Also expanded sector_t::sky
+  from WORD to int to make this work.
+- Added the flag parser fix from GZDoom. It was still incorrect.
+- Added an escape flag to sc_man. This was necessary to parse the frame names
+  correctly which can contain backslashes so they must be excluded from
+  converting \" to ".
+- Fixed: The 'ELVIS' cheat code wasn't terminated with 255.
+- Fixed: When an object without any death state dies it has to be destroyed.
+- Added 'nofog' parameter to Thing_Move
+- Added a check for Teleport_ZombieChanger to P_TranslateTeleportThings.
+- Fixed: Dumpmap crashed when the loaded map has GL nodes because it tried
+  to access the linedef of a miniseg. Needless to say, the BSP that is
+  written in this case is completely broken but at least it doesn't crash
+  anymore.
+- Fixed: z-momentum application in P_ZMovement was incompatible with
+  the original method. Unless MF2_FLOATBOB is set it must be done before
+  applying gravity to momz.
+- Fixed: AActor::Massacre caused an infinite loop when it wasn't able to
+  hurt the actor.
+- Fixed: Due to movement interpolation the viewsector could be incorrect
+  if the actual camera's position and the interpolated position were not
+  in the same sector.
+- Fixed: Assigning an empty string to a 'string' object NULLed
+  the Chars pointer. This cannot be done because it makes the
+  string object invalid.
+- Fixed: Default intermission handling for E1-E3 should only happen when
+  playing Doom 1 and Heretic.
+- Fixed: 'Give all' cheat must not try to give an item of type 'All'.
+- Fixed: In rare circumstances DBoundingBox::AddToBox could produce
+  incorrect results.
+- Fixed: The node builder still used NO_INDEX for initializing non-existent
+  sidedefs.
+- Added MaxStepHeight and MaxDropoffHeight actor properties to DECORATE.
+- Added new code pointers from GZDoom: A_FireAssaultGun, A_FadeIn and
+  the target inventory functions. Also added changes to several other
+  code pointers.
+- Fixed: The FlameThrowerParts were missing the IF_INVBAR flag.
+- Added a third parameter to A_BFGSpray to customize the amount of damage.
+- Added A_DualPainAttack code pointer submitted by Justin for GZDoom.
+- Fixed: AFatShot must have a height of 8, not 32.
+- Fixed: AFighterPLayer::DoHealingRadius initialized the armor item
+  incorrectly so it was ineffective.
+- Fixed: Strife's Brass Key needs a DoomEdNum of 39.
+- Removed all the obsolete code and variables from the keys. With the
+  LOCKDEFS lump the original key numbers were deleted anyway and the
+  NeedKey messages are taken from the lump now.
+
 April 10, 2006 (Changes by Graf Zahl)
+- Fixed: The Teleporter Beacon was missing the pickup message.
 - Made the IronLich's projectiles bright. Using them in non-bright state
   in dark sectors looks truly odd.
 - Fixed: Using bot_observer cleared the FRIENDLY flag off the player.

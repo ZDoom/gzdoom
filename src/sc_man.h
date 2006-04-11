@@ -7,6 +7,7 @@ void SC_OpenMem (const char *name, char *buffer, int size);
 void SC_OpenLumpNum (int lump, const char *name);
 void SC_Close (void);
 void SC_SetCMode (bool cmode);
+void SC_SetEscape (bool esc);
 void SC_SavePos (void);
 void SC_RestorePos (void);
 BOOL SC_GetString (void);

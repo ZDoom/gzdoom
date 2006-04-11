@@ -114,7 +114,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 // [BC] Added
 // [RH] Fixed
 
-bool P_Thing_Move (int tid, int mapspot)
+bool P_Thing_Move (int tid, int mapspot, bool fog)
 {
 	FActorIterator iterator1 (tid);
 	FActorIterator iterator2 (mapspot);
@@ -134,8 +134,11 @@ bool P_Thing_Move (int tid, int mapspot)
 		source->SetOrigin (target->x, target->y, target->z);
 		if (P_TestMobjLocation (source))
 		{
-			Spawn<ATeleportFog> (target->x, target->y, target->z + TELEFOGHEIGHT);
-			Spawn<ATeleportFog> (oldx, oldy, oldz + TELEFOGHEIGHT);
+			if (fog)
+			{
+				Spawn<ATeleportFog> (target->x, target->y, target->z + TELEFOGHEIGHT);
+				Spawn<ATeleportFog> (oldx, oldy, oldz + TELEFOGHEIGHT);
+			}
 			return true;
 		}
 		else

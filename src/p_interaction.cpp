@@ -675,6 +675,10 @@ void AActor::Die (AActor *source, AActor *inflictor)
 			{
 				SetState (IDeathState);
 			}
+			else
+			{
+				Destroy();
+			}
 		}
 	}
 

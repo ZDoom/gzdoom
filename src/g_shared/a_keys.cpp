@@ -450,23 +450,6 @@ bool AKey::ShouldStay ()
 
 //==========================================================================
 //
-// These 2 methods are practically obsolete... ;)
-//
-//==========================================================================
-
-const char *AKey::NeedKeyMessage (bool remote, int keynum)
-{
-	return "You don't have the key";
-}
-
-const char *AKey::NeedKeySound ()
-{
-	return "misc/keytry";
-}
-
-
-//==========================================================================
-//
 // These functions can be used to get color information for
 // automap display of keys and locked doors
 //

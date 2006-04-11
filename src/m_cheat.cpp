@@ -633,6 +633,9 @@ void cht_Give (player_t *player, char *name, int amount)
 			return;
 	}
 
+	if (giveall)
+		return;
+
 	type = TypeInfo::IFindType (name);
 	if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 	{

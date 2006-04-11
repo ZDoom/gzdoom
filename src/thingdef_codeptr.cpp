@@ -409,11 +409,11 @@ void A_JumpIfCloser(AActor * self)
 // State jump function
 //
 //==========================================================================
-void A_JumpIfInventory(AActor * self)
+void DoJumpIfInventory(AActor * self, AActor * owner)
 {
 	FState * CallingState;
 	int index=CheckIndex(3, &CallingState);
-	if (index<0) return;
+	if (index<0 || owner == NULL) return;
 
 	const char * ItemType=(const char *)StateParameters[index];
 	int ItemAmount = EvalExpressionI (StateParameters[index+1], self);
@@ -422,7 +422,7 @@ void A_JumpIfInventory(AActor * self)
 
 	if (!Type) return;
 
-	AInventory * Item=self->FindInventory(Type);
+	AInventory * Item=owner->FindInventory(Type);
 
 	if (Item)
 	{
@@ -431,6 +431,15 @@ void A_JumpIfInventory(AActor * self)
 	}
 }
 
+void A_JumpIfInventory(AActor * self)
+{
+	DoJumpIfInventory(self, self);
+}
+
+void A_JumpIfInTargetInventory(AActor * self)
+{
+	DoJumpIfInventory(self, self->target);
+}
 
 //==========================================================================
 //
@@ -486,12 +495,25 @@ void A_CallSpecial(AActor * self)
 
 //==========================================================================
 //
+// Checks whether this actor is a missile
+// Unfortunately this was buggy in older versions of the code and many
+// released DECORATE monsters rely on this bug so it can only be fixed
+// with an optional flag
+//
+//==========================================================================
+inline static bool isMissile(AActor * self, bool precise=true)
+{
+	return self->flags&MF_MISSILE || (precise && self->GetDefault()->flags&MF_MISSILE);
+}
+
+//==========================================================================
+//
 // The ultimate code pointer: Fully customizable missiles!
 //
 //==========================================================================
 void A_CustomMissile(AActor * self)
 {
-	int index=CheckIndex(7);
+	int index=CheckIndex(6);
 	if (index<0) return;
 
 	const char * MissileName=(const char*)StateParameters[index];
@@ -500,7 +522,6 @@ void A_CustomMissile(AActor * self)
 	angle_t Angle=EvalExpressionF (StateParameters[index+3], self) * ANGLE_1;
 	int aimmode=EvalExpressionI (StateParameters[index+4], self);
 	angle_t pitch=EvalExpressionF (StateParameters[index+5], self) * ANGLE_1;
-	BOOL realtarget = EvalExpressionI (StateParameters[index+6], self);
 
 	AActor * targ;
 	AActor * missile;
@@ -515,7 +536,7 @@ void A_CustomMissile(AActor * self)
 			fixed_t y = Spawnofs_XY * finesine[ang];
 			fixed_t z = SpawnHeight-32*FRACUNIT;
 
-			switch (aimmode)
+			switch (aimmode&3)
 			{
 			case 0:
 				// same adjustment as above (in all 3 directions this time) - for better aiming!
@@ -568,10 +589,10 @@ void A_CustomMissile(AActor * self)
 	
 				// handle projectile shooting projectiles - track the
 				// links back to a real owner
-                if (self->flags&MF_MISSILE)
+                if (isMissile(self, !!(aimmode&4)))
                 {
                 	AActor * owner=self ;//->target;
-                	while (owner->flags&MF_MISSILE && owner->target) owner=owner->target;
+                	while (isMissile(owner, !!(aimmode&4)) && owner->target) owner=owner->target;
                 	targ=owner;
                 	missile->target=owner;
 					// automatic handling of seeker missiles
@@ -931,14 +952,14 @@ void A_CustomRailgun (AActor *actor)
 
 //===========================================================================
 //
-// A_GiveInventory
+// DoGiveInventory
 //
 //===========================================================================
 
-void A_GiveInventory(AActor * self)
+static void DoGiveInventory(AActor * self, AActor * receiver)
 {
 	int index=CheckIndex(2);
-	if (index<0) return;
+	if (index<0 || receiver == NULL) return;
 
 	const char * item =(const char*)StateParameters[index];
 	int amount=EvalExpressionI (StateParameters[index+1], self);
@@ -962,7 +983,7 @@ void A_GiveInventory(AActor * self)
 			item->flags&=~MF_COUNTITEM;
 			level.total_items--;
 		}
-		if (!item->TryPickup (self))
+		if (!item->TryPickup (receiver))
 		{
 			item->Destroy ();
 			StateCall.Result = false;
@@ -972,16 +993,26 @@ void A_GiveInventory(AActor * self)
 	else StateCall.Result = false;
 }	
 
+void A_GiveInventory(AActor * self)
+{
+	DoGiveInventory(self, self);
+}	
+
+void A_GiveToTarget(AActor * self)
+{
+	DoGiveInventory(self, self->target);
+}	
+
 //===========================================================================
 //
-// A_GiveInventory
+// A_TakeInventory
 //
 //===========================================================================
 
-void A_TakeInventory(AActor * self)
+void DoTakeInventory(AActor * self, AActor * receiver)
 {
 	int index=CheckIndex(2);
-	if (index<0) return;
+	if (index<0 || receiver == NULL) return;
 
 	const char * item =(const char*)StateParameters[index];
 	int amount=EvalExpressionI (StateParameters[index+1], self);
@@ -991,7 +1022,7 @@ void A_TakeInventory(AActor * self)
 	StateCall.Result=false;
 	if (mi) 
 	{
-		AInventory * inv = self->FindInventory(mi);
+		AInventory * inv = receiver->FindInventory(mi);
 
 		if (inv && !inv->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
 		{
@@ -1006,6 +1037,15 @@ void A_TakeInventory(AActor * self)
 	}
 }	
 
+void A_TakeInventory(AActor * self)
+{
+	DoTakeInventory(self, self);
+}	
+
+void A_TakeFromTarget(AActor * self)
+{
+	DoTakeInventory(self, self->target);
+}	
 
 //===========================================================================
 //
@@ -1056,7 +1096,7 @@ void A_SpawnItem(AActor * self)
 	{
 		AActor * originator = self;
 
-		while (originator && originator->flags&MF_MISSILE) originator = originator->target;
+		while (originator && isMissile(originator)) originator = originator->target;
 
 		if (mo->flags3&MF3_ISMONSTER)
 		{
@@ -1072,8 +1112,8 @@ void A_SpawnItem(AActor * self)
 			{
 				if (originator->flags3&MF3_ISMONSTER)
 				{
-					// If this is a monster, transfer all friendliness information
-					mo->CopyFriendliness (originator, true);
+					// If this is a monster transfer all friendliness information
+					mo->CopyFriendliness(originator, true);
 					if (useammo) mo->master = originator;	// don't let it attack you (optional)!
 				}
 				else if (originator->player)
@@ -1148,7 +1188,11 @@ void A_ThrowGrenade(AActor * self)
 		bo->momx += self->momx>>1;
 		bo->momy += self->momy>>1;
 		bo->target= self;
-		bo->tics -= pr_grenade()&3;
+		if (bo->flags4&MF4_RANDOMIZE) 
+		{
+			bo->tics -= pr_grenade()&3;
+			if (bo->tics<1) bo->tics=1;
+		}
 		P_CheckMissileSpawn (bo);
 		StateCall.Result=true;
 	} 
@@ -1239,6 +1283,26 @@ void A_SetTranslucent(AActor * self)
 	}
 
 	self->RenderStyle=mode;
+}
+
+//===========================================================================
+//
+// A_FadeIn
+//
+// Fades the actor in
+//
+//===========================================================================
+void A_FadeIn(AActor * self)
+{
+	int index=CheckIndex(1, NULL);
+	if (index<0) return;
+
+	fixed_t reduce = EvalExpressionF (StateParameters[index], self) * FRACUNIT;
+	if (reduce == 0) reduce = FRACUNIT/10;
+
+	if (self->RenderStyle==STYLE_Normal) self->RenderStyle=STYLE_Translucent;
+	self->alpha += reduce;
+	//if (self->alpha<=0) self->Destroy();
 }
 
 //===========================================================================
@@ -1384,28 +1448,23 @@ void A_DropInventory(AActor * self)
 void A_SetBlend(AActor * self)
 {
 	int index=CheckIndex(3);
-	int colorn = StateParameters[index];
-
-	PalEntry color;
-	if (!colorn)
-		return;
-	else if (colorn == -1)
-		color.r = color.g = color.b = 255;
-	else
-		color = GPalette.BaseColors[colorn];
-
-	fixed_t alpha = EvalExpressionF (StateParameters[index+1], self) * FRACUNIT;
+	PalEntry color = StateParameters[index];
+	float alpha = clamp<float> (EvalExpressionF (StateParameters[index+1], self), 0, 1);
 	int tics = EvalExpressionI (StateParameters[index+2], self);
+	PalEntry color2 = StateParameters[index+3];
 
+	if (!color2.a)
+		color2 = color;
 
-	new DFlashFader(color.r/255.0f, color.g/255.0f, color.b/255.0f, alpha/(float)FRACUNIT,
-					color.r/255.0f, color.g/255.0f, color.b/255.0f, 0, tics, self);
+	new DFlashFader(color.r/255.0f, color.g/255.0f, color.b/255.0f, alpha,
+					color2.r/255.0f, color2.g/255.0f, color2.b/255.0f, 0,
+					(float)tics/TICRATE, self);
 }
 
 
 //===========================================================================
 //
-// A_JUmpIf
+// A_JumpIf
 //
 //===========================================================================
 void A_JumpIf(AActor * self)

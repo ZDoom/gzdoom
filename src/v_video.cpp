@@ -296,6 +296,8 @@ char *V_GetColorStringByName (const char *name)
 	int c[3], step;
 	size_t namelen;
 
+	if (Wads.GetNumLumps()==0) return NULL;
+
 	rgblump = Wads.CheckNumForName ("X11R6RGB");
 	if (rgblump == -1)
 	{

@@ -9,12 +9,7 @@ class AKey : public AInventory
 public:
 	virtual bool HandlePickup (AInventory *item);
 
-	// A Key can match two different locks.
 	BYTE KeyNumber;
-	BYTE AltKeyNumber;
-
-	virtual const char *NeedKeyMessage (bool remote, int keynum);
-	virtual const char *NeedKeySound ();
 
 protected:
 	virtual bool ShouldStay ();

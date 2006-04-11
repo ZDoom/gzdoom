@@ -74,6 +74,7 @@ static bool FreeScript = false;
 static char *SavedScriptPtr;
 static int SavedScriptLine;
 static bool CMode;
+static bool Escape=true;
 
 // CODE --------------------------------------------------------------------
 
@@ -242,13 +243,18 @@ void SC_SetCMode (bool cmode)
 	CMode = cmode;
 }
 
+void SC_SetEscape (bool esc)
+{
+	Escape = esc;
+}
+
 //==========================================================================
 //
 // SC_GetString
 //
 //==========================================================================
 
-BOOL SC_GetString (void)
+BOOL SC_GetString ()
 {
 	char *text;
 	BOOL foundToken;
@@ -326,9 +332,18 @@ BOOL SC_GetString (void)
 	if (*ScriptPtr == ASCII_QUOTE)
 	{ // Quoted string
 		ScriptPtr++;
-		while (*ScriptPtr != ASCII_QUOTE || *(ScriptPtr - 1) == '\\')
+		while (*ScriptPtr != ASCII_QUOTE)
 		{
-			*text++ = *ScriptPtr++;
+			// Hack alert: Do not allow escaped quotation marks when parsing DECORATE!
+			if (*ScriptPtr=='\\' && ScriptPtr[1]=='"' && Escape)
+			{
+				*text++ = '"';
+				ScriptPtr+=2;
+			}
+			else
+			{
+				*text++ = *ScriptPtr++;
+			}
 			if (ScriptPtr == ScriptEndPtr
 				|| text == &sc_String[MAX_STRING_SIZE-1])
 			{
@@ -373,6 +388,9 @@ BOOL SC_GetString (void)
 		if (strchr (stopchars, *ScriptPtr))
 		{
 			*text++ = *ScriptPtr++;
+			// [GRB] Allow 2-char operators
+			if (CMode && strchr ("&=|<>", *ScriptPtr))
+				*text++ = *ScriptPtr++;
 		}
 		else
 		{

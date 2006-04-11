@@ -1324,9 +1324,9 @@ FUNC(LS_Thing_SetGoal)
 }
 
 FUNC(LS_Thing_Move)		// [BC]
-// Thing_Move (tid, mapspot)
+// Thing_Move (tid, mapspot, nofog)
 {
-	return P_Thing_Move (arg0, arg1);
+	return P_Thing_Move (arg0, arg1, arg2 ? false : true);
 }
 
 FUNC(LS_Thing_SetTranslation)

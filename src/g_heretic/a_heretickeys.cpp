@@ -5,15 +5,6 @@
 #include "p_local.h"
 #include "a_keys.h"
 
-// I don't know why I changed this from Heretic's numbering
-// (which was yellow, green, blue).
-enum
-{
-	key_green = 1,
-	key_blue,
-	key_yellow,
-};
-
 IMPLEMENT_STATELESS_ACTOR (AHereticKey, Heretic, -1, 0)
 	PROP_Flags (MF_SPECIAL|MF_NOTDMATCH)
 	PROP_RadiusFixed (20)
@@ -46,18 +37,11 @@ FState AKeyGreen::States[] =
 
 IMPLEMENT_ACTOR (AKeyGreen, Heretic, 73, 86)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (key_green)
-	PROP_Key_AltKeyNumber (key_green+128)
 END_DEFAULTS
 
 const char *AKeyGreen::PickupMessage ()
 {
 	return GStrings("TXT_GOTGREENKEY");
-}
-
-const char *AKeyGreen::NeedKeyMessage (bool remote, int keynum)
-{
-	return GStrings("TXT_NEEDGREENKEY");
 }
 
 // Blue key -----------------------------------------------------------------
@@ -67,7 +51,6 @@ class AKeyBlue : public AHereticKey
 	DECLARE_ACTOR (AKeyBlue, AHereticKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState AKeyBlue::States[] =
@@ -86,18 +69,11 @@ FState AKeyBlue::States[] =
 
 IMPLEMENT_ACTOR (AKeyBlue, Heretic, 79, 85)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (key_blue)
-	PROP_Key_AltKeyNumber (key_blue+128)
 END_DEFAULTS
 
 const char *AKeyBlue::PickupMessage ()
 {
 	return GStrings("TXT_GOTBLUEKEY");
-}
-
-const char *AKeyBlue::NeedKeyMessage (bool remote, int keynum)
-{
-	return GStrings("TXT_NEEDBLUEKEY");
 }
 
 // Yellow key ---------------------------------------------------------------
@@ -107,7 +83,6 @@ class AKeyYellow : public AHereticKey
 	DECLARE_ACTOR (AKeyYellow, AHereticKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState AKeyYellow::States[] =
@@ -125,18 +100,11 @@ FState AKeyYellow::States[] =
 
 IMPLEMENT_ACTOR (AKeyYellow, Heretic, 80, 87)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (key_yellow)
-	PROP_Key_AltKeyNumber (key_yellow+128)
 END_DEFAULTS
 
 const char *AKeyYellow::PickupMessage ()
 {
 	return GStrings("TXT_GOTYELLOWKEY");
-}
-
-const char *AKeyYellow::NeedKeyMessage (bool remote, int keynum)
-{
-	return GStrings("TXT_NEEDYELLOWKEY");
 }
 
 // --- Key gizmos -----------------------------------------------------------

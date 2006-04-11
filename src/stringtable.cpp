@@ -225,9 +225,6 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 				continue;
 			}
 
-			if (SC_Compare ("C2TEXT"))
-				skip = skip;
-
 			string strName (sc_String);
 			SC_MustGetStringName ("=");
 			SC_MustGetString ();

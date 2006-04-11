@@ -434,6 +434,7 @@ ACTOR(KlaxonBlare)
 ACTOR(20e10)
 ACTOR(Countdown)
 ACTOR(AlertMonsters)
+ACTOR(FireAssaultGun)
 ACTOR(PlaySound)
 ACTOR(PlayWeaponSound)
 ACTOR(LoopActiveSound)
@@ -462,6 +463,7 @@ ACTOR(Recoil)
 ACTOR(SelectWeapon)
 ACTOR(Print)
 ACTOR(SetTranslucent)
+ACTOR(FadeIn)
 ACTOR(FadeOut)
 ACTOR(SpawnDebris)
 ACTOR(SetSolid)
@@ -480,6 +482,10 @@ ACTOR(SetUserVar)
 ACTOR(SetUserVarRandom)
 ACTOR(KillMaster)
 ACTOR(KillChildren)
+ACTOR(DualPainAttack)
+ACTOR(GiveToTarget)
+ACTOR(TakeFromTarget)
+ACTOR(JumpIfInTargetInventory)
 
 
 #include "d_dehackedactions.h"
@@ -491,7 +497,7 @@ AFuncDesc AFTable[]=
 
 	// most of the functions available in Dehacked
 	FUNC(A_MonsterRail, NULL)
-	FUNC(A_BFGSpray, "mx")
+	FUNC(A_BFGSpray, "mxx")
 	FUNC(A_Pain, NULL)
 	FUNC(A_NoBlocking, NULL)
 	FUNC(A_XScream, NULL)
@@ -531,6 +537,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_Hoof, NULL)
 	FUNC(A_CyberAttack, NULL)
 	FUNC(A_PainAttack, "m")
+	FUNC(A_DualPainAttack, "m")
 	FUNC(A_PainDie, "m")
 	FUNC(A_KeenDie, NULL)
 	FUNC(A_BrainPain, NULL)
@@ -565,8 +572,6 @@ AFuncDesc AFTable[]=
 	FUNC(A_UnsetSolid, NULL)
 	FUNC(A_SetFloat, NULL)
 	FUNC(A_UnsetFloat, NULL)
-	FUNC(A_BishopMissileWeave, NULL)
-	FUNC(A_CStaffMissileSlither, NULL)
 
 	// For better chainsaw attacks
 	FUNC(A_M_Saw, NULL)
@@ -601,6 +606,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_KlaxonBlare, NULL)
 	FUNC(A_Countdown, NULL)
 	FUNC(A_AlertMonsters, NULL)
+	FUNC(A_FireAssaultGun, NULL)
 	{"A_CheckTerrain", A_20e10, NULL },	// This needs a better name!
 
 	// Only selected original weapon functions will be available. 
@@ -626,26 +632,27 @@ AFuncDesc AFTable[]=
 	FUNC(A_StopSound, NULL )
 	FUNC(A_SeekerMissile, "XX" )
 	FUNC(A_Jump, "XL" )
-	FUNC(A_CustomMissile, "MXXxxxx" )
+	FUNC(A_CustomMissile, "MXXxxx" )
 	FUNC(A_CustomBulletAttack, "XXXXmx" )
-	FUNC(A_CustomRailgun, "Xxccxxx" )
+	FUNC(A_CustomRailgun, "Xxccyyx" )
 	FUNC(A_JumpIfHealthLower, "XL" )
 	FUNC(A_JumpIfCloser, "XL" )
 	FUNC(A_JumpIfInventory, "MXL" )
 	FUNC(A_GiveInventory, "Mx" )
 	FUNC(A_TakeInventory, "Mx" )
-	FUNC(A_SpawnItem, "Mxxx" )
-	FUNC(A_ThrowGrenade, "Mxxxx" )
+	FUNC(A_SpawnItem, "Mxxy" )
+	FUNC(A_ThrowGrenade, "Mxxxy" )
 	FUNC(A_SelectWeapon, "M")
 	FUNC(A_Print, "T")
 	FUNC(A_SetTranslucent, "Xx")
+	FUNC(A_FadeIn, "x")
 	FUNC(A_FadeOut, "x")
 	FUNC(A_SpawnDebris, "M")
 	FUNC(A_CheckSight, "L")
-	FUNC(A_ExtChase, "XXxx")
+	FUNC(A_ExtChase, "XXyx")
 	FUNC(A_Jiggle, "XX")
 	FUNC(A_DropInventory, "M")
-	FUNC(A_SetBlend, "CXX")
+	FUNC(A_SetBlend, "DXXd")
 	FUNC(A_ChangeFlag, "TX")
 	FUNC(A_JumpIf, "XL")
 	FUNC(A_KillMaster, NULL)
@@ -654,11 +661,14 @@ AFuncDesc AFTable[]=
 
 	// Weapon only functions
 	FUNC(A_JumpIfNoAmmo, "L" )
-	FUNC(A_CustomPunch, "Xxxmx" )
-	FUNC(A_FireBullets, "XXXXmxx" )
-	FUNC(A_FireCustomMissile, "Mxxxx" )
-	FUNC(A_RailAttack, "Xxxccxx" )
+	FUNC(A_CustomPunch, "Xxymx" )
+	FUNC(A_FireBullets, "XXXXmyx" )
+	FUNC(A_FireCustomMissile, "Mxyxx" )
+	FUNC(A_RailAttack, "Xxyccyx" )
 	FUNC(A_Recoil, "X")
+	FUNC(A_JumpIfInTargetInventory, "MXL" )
+	FUNC(A_GiveToTarget, "Mx" )
+	FUNC(A_TakeFromTarget, "Mx" )
 };
 
 //==========================================================================
@@ -1037,8 +1047,11 @@ typedef ActorProps (*ActorPropHandler) (register const char *str, register unsig
 
 static const ActorProps *is_actorprop (const char *str);
 
-//int ParseExpression ();
-
+int ParseExpression (bool _not)
+{
+	SC_MustGetNumber();
+	return _not? !sc_Number : sc_Number;
+}
 
 //==========================================================================
 //
@@ -1311,7 +1324,7 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 		{
 			for (i = 0; i < 5;)
 			{
-				StateParameters[paramindex+i+1]=SC_GetNumber();//ParseExpression ();
+				StateParameters[paramindex+i+1]=ParseExpression (false);
 				i++;
 				if (!TestCom()) break;
 			}
@@ -1495,7 +1508,9 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 			char * statestrp;
 
 			strncpy(statestring, sc_String, 255);
-			SC_MustGetString();
+			SC_SetEscape(false);
+			SC_MustGetString();	// this can read the frame string so escape characters have to be disabled
+			SC_SetEscape(true);
 
 			if (SC_Compare (":"))
 			{
@@ -1523,7 +1538,9 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 
 			memcpy(state.sprite.name, statestring, 4);
 			state.Misc1=state.Misc2=0;
-			SC_MustGetString();
+			SC_SetEscape(false);
+			SC_MustGetString();	// This reads the frame string so escape characters have to be disabled
+			SC_SetEscape(true);
 			strncpy(statestring, sc_String + 1, 255);
 			statestrp = statestring;
 			state.Frame=(*sc_String&223)-'A';
@@ -1681,11 +1698,21 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 								}
 								break;
 
+							case 'D':
+							case 'd':
+								SC_MustGetString ();
+								v = V_GetColor (NULL, sc_String);
+								((PalEntry *)&v)->a = 255;
+								break;
+
 							case 'X':
 							case 'x':
-								//v = ParseExpression ();
-								SC_MustGetNumber ();
-								v = sc_Number;
+								v = ParseExpression (false);
+								break;
+
+							case 'Y':
+							case 'y':
+								v = ParseExpression (true);
 								break;
 							}
 							StateParameters[paramindex++]=v;
@@ -1947,7 +1974,7 @@ void ParseActorProperties (Baggage &bag)
 
 		string propname = sc_String;
 
-		if (sc_String[0] != '-' && sc_String[1] != '+')
+		if (sc_String[0]!='-' && sc_String[0]!='+')
 		{
 			if (SC_CheckString ("."))
 			{
@@ -1956,7 +1983,7 @@ void ParseActorProperties (Baggage &bag)
 				strlwr (sc_String);
 				propname += sc_String;
 			}
-			else 
+			else
 			{
 				SC_UnGet ();
 			}
@@ -2672,6 +2699,24 @@ static void ActorDecal (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorMaxStepHeight (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetNumber ();
+	defaults->MaxStepHeight=sc_Number;
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void ActorMaxDropoffHeight (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetNumber ();
+	defaults->MaxDropOffHeight=sc_Number;
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorClearFlags (AActor *defaults, Baggage &bag)
 {
 	defaults->flags=defaults->flags2=defaults->flags3=defaults->flags4=0;
@@ -3215,6 +3260,8 @@ static const ActorProps props[] =
 	{ "inventory.respawntics",		(apf)InventoryRespawntics,	RUNTIME_CLASS(AInventory) },
 	{ "inventory.usesound",			(apf)InventoryUsesound,		RUNTIME_CLASS(AInventory) },
 	{ "mass",						ActorMass,					RUNTIME_CLASS(AActor) },
+	{ "maxdropoffheight",			ActorMaxDropoffHeight,		RUNTIME_CLASS(AActor) },
+	{ "maxstepheight",				ActorMaxStepHeight,			RUNTIME_CLASS(AActor) },
 	{ "melee",						ActorMeleeState,			RUNTIME_CLASS(AActor) },
 	{ "meleedamage",				ActorMeleeDamage,			RUNTIME_CLASS(AActor) },
 	{ "meleerange",					ActorMeleeRange,			RUNTIME_CLASS(AActor) },

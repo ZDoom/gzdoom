@@ -862,6 +862,9 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		viewpitch = iview->oviewpitch + FixedMul (frac, iview->nviewpitch - iview->oviewpitch);
 		viewangle = iview->oviewangle + FixedMul (frac, iview->nviewangle - iview->oviewangle);
 	}
+	
+	// Due to interpolation this is not necessarily the same as the sector the camera is in.
+	viewsector = R_PointInSubsector(viewx, viewy)->sector;
 }
 
 //==========================================================================

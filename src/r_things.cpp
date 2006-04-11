@@ -1480,7 +1480,9 @@ void R_DrawPlayerSprites (void)
 		(players[consoleplayer].cheats & CF_CHASECAM))
 		return;
 
-	sec = R_FakeFlat (camera->Sector, &tempsec, &floorlight,
+	// This used to use camera->Sector but due to interpolation that can be incorrect
+	// when the interpolated viewpoint is in a different sector than the camera.
+	sec = R_FakeFlat (viewsector, &tempsec, &floorlight,
 		&ceilinglight, false);
 
 	// [RH] set foggy flag

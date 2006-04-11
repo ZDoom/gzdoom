@@ -28,7 +28,6 @@ IMPLEMENT_ACTOR (ABaseKey, Strife, 230, 0)
 	PROP_StrifeTeaserType (129)
 	PROP_StrifeTeaserType2 (132)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (1)
 	PROP_Inventory_Icon ("I_FUSL")
 	PROP_Tag ("Base_Key")
 END_DEFAULTS
@@ -57,7 +56,6 @@ IMPLEMENT_ACTOR (AGovsKey, Strife, -1, 0)
 	PROP_StrifeTeaserType (130)
 	PROP_StrifeTeaserType2 (133)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (2)
 	PROP_Inventory_Icon ("I_REBL")
 	PROP_Tag ("Govs_Key")	// "Rebel_Key" in the Teaser
 END_DEFAULTS
@@ -74,7 +72,6 @@ class APasscard : public AStrifeKey
 	DECLARE_ACTOR (APasscard, AStrifeKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState APasscard::States[] =
@@ -87,7 +84,6 @@ IMPLEMENT_ACTOR (APasscard, Strife, 185, 0)
 	PROP_StrifeTeaserType (131)
 	PROP_StrifeTeaserType2 (134)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (3)
 	PROP_Inventory_Icon ("I_TPAS")
 	PROP_Tag ("Passcard")
 END_DEFAULTS
@@ -97,12 +93,6 @@ const char *APasscard::PickupMessage ()
 	return "You picked up the Passcard.";
 }
 
-const char *APasscard::NeedKeyMessage (bool remote, int keynum)
-{
-	return remote ? "You need a pass card"
-		: "You need a pass card to open this door";
-}
-
 // ID Badge -----------------------------------------------------------------
 
 class AIDBadge : public AStrifeKey
@@ -110,7 +100,6 @@ class AIDBadge : public AStrifeKey
 	DECLARE_ACTOR (AIDBadge, AStrifeKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState AIDBadge::States[] =
@@ -123,7 +112,6 @@ IMPLEMENT_ACTOR (AIDBadge, Strife, 184, 0)
 	PROP_StrifeTeaserType (132)
 	PROP_StrifeTeaserType2 (135)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (4)
 	PROP_Inventory_Icon ("I_CRD1")
 	PROP_Tag ("ID_Badge")
 END_DEFAULTS
@@ -131,12 +119,6 @@ END_DEFAULTS
 const char *AIDBadge::PickupMessage ()
 {
 	return "You picked up the ID Badge.";
-}
-
-const char *AIDBadge::NeedKeyMessage (bool remote, int keynum)
-{
-	return remote ? "You need an id badge" :
-		"You need an id badge to open this door";
 }
 
 // Prison Key ---------------------------------------------------------------
@@ -147,7 +129,6 @@ class APrisonKey : public AStrifeKey
 public:
 	bool TryPickup (AActor *toucher);
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState APrisonKey::States[] =
@@ -160,7 +141,6 @@ IMPLEMENT_ACTOR (APrisonKey, Strife, -1, 0)
 	PROP_StrifeTeaserType (133)
 	PROP_StrifeTeaserType2 (136)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (5)
 	PROP_Inventory_Icon ("I_PRIS")
 	PROP_Tag ("Prison_Key")
 END_DEFAULTS
@@ -180,11 +160,6 @@ const char *APrisonKey::PickupMessage ()
 	return "You picked up the Prsion Key.";
 }
 
-const char *APrisonKey::NeedKeyMessage (bool remote, int keynum)
-{
-	return "You don't have the key to the prison";
-}
-
 // Severed Hand -------------------------------------------------------------
 
 class ASeveredHand : public AStrifeKey
@@ -193,7 +168,6 @@ class ASeveredHand : public AStrifeKey
 public:
 	bool TryPickup (AActor *toucher);
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState ASeveredHand::States[] =
@@ -206,7 +180,6 @@ IMPLEMENT_ACTOR (ASeveredHand, Strife, 91, 0)
 	PROP_StrifeTeaserType (134)
 	PROP_StrifeTeaserType2 (137)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (6)
 	PROP_Inventory_Icon ("I_HAND")
 	PROP_Tag ("Severed_Hand")
 END_DEFAULTS
@@ -224,11 +197,6 @@ bool ASeveredHand::TryPickup (AActor *toucher)
 const char *ASeveredHand::PickupMessage ()
 {
 	return "You picked up the Severed Hand.";
-}
-
-const char *ASeveredHand::NeedKeyMessage (bool remote, int keynum)
-{
-	return "Hand print not on file";
 }
 
 // Power1 Key ---------------------------------------------------------------
@@ -250,7 +218,6 @@ IMPLEMENT_ACTOR (APower1Key, Strife, -1, 0)
 	PROP_StrifeTeaserType (135)
 	PROP_StrifeTeaserType2 (138)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (7)
 	PROP_Inventory_Icon ("I_PWR1")
 	PROP_Tag ("Power1_Key")
 END_DEFAULTS
@@ -279,7 +246,6 @@ IMPLEMENT_ACTOR (APower2Key, Strife, -1, 0)
 	PROP_StrifeTeaserType (136)
 	PROP_StrifeTeaserType2 (139)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (8)
 	PROP_Inventory_Icon ("I_PWR2")
 	PROP_Tag ("Power2_Key")
 END_DEFAULTS
@@ -308,7 +274,6 @@ IMPLEMENT_ACTOR (APower3Key, Strife, -1, 0)
 	PROP_StrifeTeaserType (137)
 	PROP_StrifeTeaserType2 (140)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (9)
 	PROP_Inventory_Icon ("I_PWR3")
 	PROP_Tag ("Power3_Key")
 END_DEFAULTS
@@ -325,7 +290,6 @@ class AGoldKey : public AStrifeKey
 	DECLARE_ACTOR (AGoldKey, AStrifeKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState AGoldKey::States[] =
@@ -338,7 +302,6 @@ IMPLEMENT_ACTOR (AGoldKey, Strife, 40, 0)
 	PROP_StrifeTeaserType (138)
 	PROP_StrifeTeaserType2 (141)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (10)
 	PROP_Inventory_Icon ("I_KY1G")
 	PROP_Tag ("Gold_Key")
 END_DEFAULTS
@@ -348,11 +311,6 @@ const char *AGoldKey::PickupMessage ()
 	return "You picked up the Gold Key.";
 }
 
-const char *AGoldKey::NeedKeyMessage (bool remote, int keynum)
-{
-	return "You need a gold key";
-}
-
 // ID Card ------------------------------------------------------------------
 
 class AIDCard : public AStrifeKey
@@ -360,7 +318,6 @@ class AIDCard : public AStrifeKey
 	DECLARE_ACTOR (AIDCard, AStrifeKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState AIDCard::States[] =
@@ -373,7 +330,6 @@ IMPLEMENT_ACTOR (AIDCard, Strife, 13, 0)
 	PROP_StrifeTeaserType (139)
 	PROP_StrifeTeaserType2 (142)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (11)
 	PROP_Inventory_Icon ("I_CRD2")
 	PROP_Tag ("ID_Card")
 END_DEFAULTS
@@ -383,13 +339,6 @@ const char *AIDCard::PickupMessage ()
 	return "You picked up the ID Card.";
 }
 
-const char *AIDCard::NeedKeyMessage (bool remote, int keynum)
-{
-	return remote ? "You need an id card"
-		: "You need an id card to open this door";
-}
-
-
 // Silver Key ---------------------------------------------------------------
 
 class ASilverKey : public AStrifeKey
@@ -397,7 +346,6 @@ class ASilverKey : public AStrifeKey
 	DECLARE_ACTOR (ASilverKey, AStrifeKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState ASilverKey::States[] =
@@ -410,7 +358,6 @@ IMPLEMENT_ACTOR (ASilverKey, Strife, 38, 0)
 	PROP_StrifeTeaserType (140)
 	PROP_StrifeTeaserType2 (143)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (12)
 	PROP_Inventory_Icon ("I_KY2S")
 	PROP_Tag ("Silver_Key")
 END_DEFAULTS
@@ -418,11 +365,6 @@ END_DEFAULTS
 const char *ASilverKey::PickupMessage ()
 {
 	return "You picked up the Silver Key.";
-}
-
-const char *ASilverKey::NeedKeyMessage (bool remote, int keynum)
-{
-	return "You need a silver key";
 }
 
 // Oracle Key ---------------------------------------------------------------
@@ -444,7 +386,6 @@ IMPLEMENT_ACTOR (AOracleKey, Strife, 61, 0)
 	PROP_StrifeTeaserType (141)
 	PROP_StrifeTeaserType2 (144)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (13)
 	PROP_Inventory_Icon ("I_ORAC")
 	PROP_Tag ("Oracle_Key")
 END_DEFAULTS
@@ -473,7 +414,6 @@ IMPLEMENT_ACTOR (AMilitaryID, Strife, -1, 0)
 	PROP_StrifeTeaserType (142)
 	PROP_StrifeTeaserType2 (145)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (14)
 	PROP_Inventory_Icon ("I_GYID")
 	PROP_Tag ("Military ID")
 END_DEFAULTS
@@ -502,7 +442,6 @@ IMPLEMENT_ACTOR (AOrderKey, Strife, 86, 0)
 	PROP_StrifeTeaserType (143)
 	PROP_StrifeTeaserType2 (146)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (15)
 	PROP_Inventory_Icon ("I_FUBR")
 	PROP_Tag ("Order_Key")
 END_DEFAULTS
@@ -531,7 +470,6 @@ IMPLEMENT_ACTOR (AWarehouseKey, Strife, 166, 0)
 	PROP_StrifeTeaserType (144)
 	PROP_StrifeTeaserType2 (147)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (16)
 	PROP_Inventory_Icon ("I_WARE")
 	PROP_Tag ("Warehouse_Key")
 END_DEFAULTS
@@ -548,7 +486,6 @@ class ABrassKey : public AStrifeKey
 	DECLARE_ACTOR (ABrassKey, AStrifeKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState ABrassKey::States[] =
@@ -556,12 +493,11 @@ FState ABrassKey::States[] =
 	S_NORMAL (KY3B, 'A', -1, NULL, NULL)
 };
 
-IMPLEMENT_ACTOR (ABrassKey, Strife, -1, 0)
+IMPLEMENT_ACTOR (ABrassKey, Strife, 39, 0)
 	PROP_StrifeType (149)
 	PROP_StrifeTeaserType (145)
 	PROP_StrifeTeaserType2 (148)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (17)
 	PROP_Inventory_Icon ("I_KY3B")
 	PROP_Tag ("Brass_Key")
 END_DEFAULTS
@@ -569,11 +505,6 @@ END_DEFAULTS
 const char *ABrassKey::PickupMessage ()
 {
 	return "You picked up the Brass Key.";
-}
-
-const char *ABrassKey::NeedKeyMessage (bool remote, int keynum)
-{
-	return "You need a brass key";
 }
 
 // Red Crystal Key ----------------------------------------------------------
@@ -595,7 +526,6 @@ IMPLEMENT_ACTOR (ARedCrystalKey, Strife, 192, 0)
 	PROP_StrifeTeaserType (146)
 	PROP_StrifeTeaserType2 (149)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (18)
 	PROP_Inventory_Icon ("I_RCRY")
 	PROP_Tag ("Red_Crystal_Key")
 END_DEFAULTS
@@ -624,7 +554,6 @@ IMPLEMENT_ACTOR (ABlueCrystalKey, Strife, 193, 0)
 	PROP_StrifeTeaserType (147)
 	PROP_StrifeTeaserType2 (150)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (19)
 	PROP_Inventory_Icon ("I_BCRY")
 	PROP_Tag ("Blue_Crystal_Key")
 END_DEFAULTS
@@ -653,7 +582,6 @@ IMPLEMENT_ACTOR (AChapelKey, Strife, 195, 0)
 	PROP_StrifeTeaserType (148)
 	PROP_StrifeTeaserType2 (151)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (20)
 	PROP_Inventory_Icon ("I_CHAP")
 	PROP_Tag ("Chapel_Key")
 END_DEFAULTS
@@ -683,7 +611,6 @@ IMPLEMENT_ACTOR (ACatacombKey, Strife, -1, 0)
 	PROP_StrifeTeaserType (149)
 	PROP_StrifeTeaserType2 (152)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (21)
 	PROP_Inventory_Icon ("I_TUNL")
 	PROP_Tag ("Catacomb_Key")	// "Tunnel_Key" in the Teaser
 END_DEFAULTS
@@ -722,7 +649,6 @@ IMPLEMENT_ACTOR (ASecurityKey, Strife, -1, 0)
 	PROP_StrifeTeaserType (150)
 	PROP_StrifeTeaserType2 (153)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (22)
 	PROP_Inventory_Icon ("I_SECK")
 	PROP_Tag ("Security_Key")
 END_DEFAULTS
@@ -751,7 +677,6 @@ IMPLEMENT_ACTOR (ACoreKey, Strife, 236, 0)
 	PROP_StrifeTeaserType (151)
 	PROP_StrifeTeaserType2 (154)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (23)
 	PROP_Inventory_Icon ("I_GOID")
 	PROP_Tag ("Core_Key")	// "New_Key1" in the Teaser
 END_DEFAULTS
@@ -780,7 +705,6 @@ IMPLEMENT_ACTOR (AMaulerKey, Strife, 233, 0)
 	PROP_StrifeTeaserType (152)
 	PROP_StrifeTeaserType2 (155)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (24)
 	PROP_Inventory_Icon ("I_BLTK")
 	PROP_Tag ("Mauler_Key")	// "New_Key2" in the Teaser
 END_DEFAULTS
@@ -809,7 +733,6 @@ IMPLEMENT_ACTOR (AFactoryKey, Strife, 234, 0)
 	PROP_StrifeTeaserType (153)
 	PROP_StrifeTeaserType2 (156)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (25)
 	PROP_Inventory_Icon ("I_PROC")
 	PROP_Tag ("Factory_Key")	// "New_Key3" in the Teaser
 END_DEFAULTS
@@ -838,7 +761,6 @@ IMPLEMENT_ACTOR (AMineKey, Strife, 235, 0)
 	PROP_StrifeTeaserType (154)
 	PROP_StrifeTeaserType2 (157)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (26)
 	PROP_Inventory_Icon ("I_MINE")	// "New_Key4" in the Teaser
 	PROP_Tag ("MINE_KEY")
 END_DEFAULTS
@@ -867,7 +789,6 @@ IMPLEMENT_ACTOR (ANewKey5, Strife, -1, 0)
 	PROP_StrifeTeaserType (155)
 	PROP_StrifeTeaserType2 (158)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (27)
 	PROP_Inventory_Icon ("I_BLTK")
 	PROP_Tag ("New_Key5")
 END_DEFAULTS
@@ -898,7 +819,6 @@ IMPLEMENT_ACTOR (APrisonPass, Strife, -1, 0)
 	PROP_StrifeTeaserType (286)
 	PROP_StrifeTeaserType2 (303)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (50)
 	PROP_Inventory_Icon ("I_TOKN")
 	PROP_Tag ("Prison_pass")
 END_DEFAULTS
@@ -941,7 +861,6 @@ class AOraclePass : public AKey
 public:
 	bool TryPickup (AActor *toucher);
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState AOraclePass::States[] =
@@ -954,7 +873,6 @@ IMPLEMENT_ACTOR (AOraclePass, Strife, -1, 0)
 	PROP_StrifeTeaserType (292)
 	PROP_StrifeTeaserType2 (309)
 	PROP_SpawnState (0)
-	PROP_Key_KeyNumber (51)
 	PROP_Inventory_Icon ("I_OTOK")
 	PROP_Tag ("Oracle_Pass")
 END_DEFAULTS
@@ -974,7 +892,3 @@ const char *AOraclePass::PickupMessage ()
 	return "You picked up the Oracle Pass.";
 }
 
-const char *AOraclePass::NeedKeyMessage (bool remote, int keynum)
-{
-	return "You need the Oracle Pass!";
-}

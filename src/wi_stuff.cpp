@@ -56,7 +56,7 @@ typedef enum
 } stateenum_t;
 
 CVAR (Bool, wi_percents, true, CVAR_ARCHIVE)
-CVAR (Bool, wi_totaltime, false, CVAR_ARCHIVE)	// Something that can be added later.
+CVAR (Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 
 
 void WI_loadData ();
@@ -328,11 +328,15 @@ void WI_LoadBackground(bool isenterpic)
 					// Not if the exit pic is user defined!
 					if (level.info->exitpic[0]!=0) return;
 
-					// not if the last level is not from the first 3 episodes
-					if (!IsExMy(wbs->current)) return;
+					// E1-E3 need special treatment when playing Doom 1.
+					if (gamemode!=commercial)
+					{
+						// not if the last level is not from the first 3 episodes
+						if (!IsExMy(wbs->current)) return;
 
-					// not if the next level is one of the first 3 episodes
-					if (IsExMy(wbs->next)) return;
+						// not if the next level is one of the first 3 episodes
+						if (IsExMy(wbs->next)) return;
+					}
 				}
 				lumpname = "INTERPIC";
 			}
@@ -1753,6 +1757,7 @@ void WI_updateStats ()
 
 			if (cnt_time >= plrs[me].stime / TICRATE)
 			{
+				cnt_total_time = wbs->totaltime / TICRATE;
 				S_Sound (CHAN_VOICE, NEXTSTAGE, 1, ATTN_NONE);
 				sp_state++;
 			}
@@ -1801,7 +1806,7 @@ void WI_drawStats (void)
 
 		screen->DrawTexture (timepic, SP_TIMEX, SP_TIMEY, DTA_Clean, true, TAG_DONE);
 		WI_drawTime (160 - SP_TIMEX, SP_TIMEY, cnt_time);
-		if (wi_totaltime)
+		if (wi_showtotaltime)
 		{
 			WI_drawTime (160 - SP_TIMEX, SP_TIMEY + lh, cnt_total_time, true);	// no 'sucks' for total time ever!
 		}
@@ -1845,7 +1850,7 @@ void WI_drawStats (void)
 			screen->DrawText (CR_UNTRANSLATED, 85, 160, "TIME",
 				DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 			WI_drawTime (249, 160, cnt_time);
-			if (wi_totaltime)
+			if (wi_showtotaltime)
 			{
 				WI_drawTime (249, 180, cnt_total_time);
 			}

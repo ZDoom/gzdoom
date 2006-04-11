@@ -122,11 +122,13 @@ string &string::operator = (const char *copyStr)
 	else
 	{
 		size_t len = strlen (copyStr);
+		/*
 		if (len == 0)
 		{
 			Chars = NULL;
 		}
 		else
+		*/
 		{
 			Chars = Pond.Alloc (this, len);
 			StrCopy (Chars, copyStr, len);

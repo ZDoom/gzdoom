@@ -15,22 +15,10 @@ END_DEFAULTS
 		DECLARE_ACTOR (AKey##n1, AHexenKey) \
 	public: \
 		const char *PickupMessage () { return GStrings("TXT_KEY_" #name); } \
-		const char *NeedKeyMessage (bool remote, int keynum) { return MakeNeedKey("TXT_KEY_" #name); } \
 	}; \
 	FState AKey##n1::States[] = { S_NORMAL (KEY##num, 'A', -1, NULL, NULL) }; \
 	IMPLEMENT_ACTOR (AKey##n1, Hexen, ednum, spawn) PROP_SpawnState (0) \
-	PROP_Key_KeyNumber(0x##num) PROP_Inventory_Icon ("KEYSLOT" #num) END_DEFAULTS
-
-static TArray<char> NeedString;
-
-static const char *MakeNeedKey (const char *msgname)
-{
-	const char *keyname = GStrings(msgname);
-	
-	NeedString.Grow ((unsigned int)strlen(keyname) + 14);
-	sprintf (&NeedString[0], "YOU NEED THE %s", keyname);
-	return &NeedString[0];
-}
+	PROP_Inventory_Icon ("KEYSLOT" #num) END_DEFAULTS
 
 MAKEKEY (1, Steel, STEEL, 8030, 85)
 MAKEKEY (2, Cave, CAVE, 8031, 86)

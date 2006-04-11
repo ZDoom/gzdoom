@@ -1035,6 +1035,7 @@ IMPLEMENT_ACTOR (AFlameThrowerParts, Strife, -1, 0)
 	PROP_StrifeType (191)
 	PROP_StrifeTeaserType (185)
 	PROP_StrifeTeaserType2 (189)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Inventory_Icon ("I_BFLM")
 	PROP_Tag ("flame_thrower_parts")
 END_DEFAULTS

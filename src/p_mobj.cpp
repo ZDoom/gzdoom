@@ -917,15 +917,18 @@ void AActor::Touch (AActor *toucher)
 
 bool AActor::Massacre ()
 {
+	int prevhealth;
+
 	if (health > 0)
 	{
 		flags |= MF_SHOOTABLE;
 		flags2 &= ~(MF2_DORMANT|MF2_INVULNERABLE);
 		do
 		{
+			prevhealth = health;
 			P_DamageMobj (this, NULL, NULL, 1000000, MOD_MASSACRE);
 		}
-		while (health > 0);
+		while (health != prevhealth && health > 0);	//abort if the actor wasn't hurt.
 		return true;
 	}
 	return false;
@@ -1266,8 +1269,16 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// it gets blocked.
 	if (mo->player != NULL && (compatflags & COMPATF_WALLRUN) || (mo->waterlevel >= 2))
 	{
-		xmove = mo->momx = clamp (mo->momx, -maxmove, maxmove);
-		ymove = mo->momy = clamp (mo->momy, -maxmove, maxmove);
+		// try to preserve the direction instead of clamping x and y independently.
+		xmove = clamp (mo->momx, -maxmove, maxmove);
+		ymove = clamp (mo->momy, -maxmove, maxmove);
+
+		fixed_t xfac = FixedDiv(xmove, mo->momx);
+		fixed_t yfac = FixedDiv(ymove, mo->momy);
+		fixed_t fac = MIN(xfac, yfac);
+
+		xmove = mo->momx = FixedMul(mo->momx, fac);
+		ymove = mo->momy = FixedMul(mo->momy, fac);
 	}
 	else
 	{
@@ -1725,6 +1736,9 @@ void P_ZMovement (AActor *mo)
 		mo->player->viewheight -= mo->floorz - mo->z;
 		mo->player->deltaviewheight = (VIEWHEIGHT - mo->player->viewheight)>>3;
 	}
+
+	if (!(mo->flags2&MF2_FLOATBOB)) mo->z += mo->momz;
+
 //
 // apply gravity
 //
@@ -1753,10 +1767,12 @@ void P_ZMovement (AActor *mo)
 			}
 		}
 	}
+
+	if (mo->flags2&MF2_FLOATBOB) mo->z += mo->momz;
+
 //
 // adjust height
 //
-	mo->z += mo->momz;
 	if ((mo->flags & MF_FLOAT) && mo->target)
 	{	// float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))

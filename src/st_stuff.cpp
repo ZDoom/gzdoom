@@ -138,7 +138,7 @@ static BYTE CheatOmnipotent[] =	{ 'o','m','n','i','p','o','t','e','n','t',255 };
 static BYTE CheatJimmy[] =		{ 'j','i','m','m','y',255 };
 static BYTE CheatBoomstix[] =	{ 'b','o','o','m','s','t','i','x',255 };
 static BYTE CheatStoneCold[] =	{ 's','t','o','n','e','c','o','l','d',255 };
-static BYTE CheatElvis[] =		{ 'e','l','v','i','s' };
+static BYTE CheatElvis[] =		{ 'e','l','v','i','s',255 };
 static BYTE CheatTopo[] =		{ 't','o','p','o',255 };
 
 static cheatseq_t DoomCheats[] =

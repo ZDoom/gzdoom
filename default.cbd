@@ -143,7 +143,7 @@ ${COMPILE} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.nas
  cmdlib.cpp colormatcher.cpp configfile.cpp ct_chat.cpp d_dehacked.cpp d_main.cpp \
  d_net.cpp d_netinfo.cpp d_protocol.cpp decallib.cpp decorations.cpp dobject.cpp \
  doomdef.cpp doomstat.cpp dsectoreffect.cpp dthinker.cpp empty.cpp f_finale.cpp \
- f_wipe.cpp farchive.cpp files.cpp g_game.cpp g_level.cpp gameconfigfile.cpp \
+ f_wipe.cpp farchive.cpp files.cpp g_game.cpp g_hub.cpp g_level.cpp gameconfigfile.cpp \ 
  gi.cpp hu_scores.cpp info.cpp infodefaults.cpp lumpconfigfile.cpp m_alloc.cpp \
  m_argv.cpp m_bbox.cpp m_cheat.cpp m_fixed.cpp m_menu.cpp m_misc.cpp m_options.cpp \
  m_png.cpp m_random.cpp mus2midi.cpp nodebuild.cpp nodebuild_events.cpp \

@@ -1,0 +1,89 @@
+Background wimap0
+Splat wisplat
+Pointer wiurh0 wiurh1
+
+Animation 224 104 11
+{
+	WIA00000
+	WIA00001
+	WIA00002
+}
+
+Animation 184 160 11
+{
+	WIA00100
+	WIA00101
+	WIA00102
+}
+
+Animation 112 136 11
+{
+	WIA00200
+	WIA00201
+	WIA00202
+}
+
+Animation 72 112 11
+{
+	WIA00300
+	WIA00301
+	WIA00302
+}
+
+Animation 88 96 11
+{
+	WIA00400
+	WIA00401
+	WIA00402
+}
+
+Animation 64 48 11
+{
+	WIA00500
+	WIA00501
+	WIA00502
+}
+
+Animation 192 40 11
+{
+	WIA00600
+	WIA00601
+	WIA00602
+}
+
+Animation 136 16 11
+{
+	WIA00700
+	WIA00701
+	WIA00702
+}
+
+Animation 80 16 11
+{
+	WIA00800
+	WIA00801
+	WIA00802
+}
+
+
+Animation 64 24 11
+{
+	WIA00900
+	WIA00901
+	WIA00902
+}
+
+
+Spots
+{
+    E1M1 185 164
+    E1M2 148 143
+    E1M3 69 122
+    E1M4 209 102
+    E1M5 116 89
+    E1M6 166 55
+    E1M7 71 56
+    E1M8 135 29
+    E1M9 71 24
+}
+ 

@@ -697,6 +697,9 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 
 	persteptime = FixedDiv (stairsize, speed) >> FRACBITS;
 
+	int (* FindSector) (int tag, int start)  =
+		(compatflags & COMPATF_STAIRINDEX)? P_FindSectorFromTagLinear : P_FindSectorFromTag;
+
 	// check if a manual trigger, if so do just the sector on the backside
 	if (tag == 0)
 	{
@@ -709,9 +712,6 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 
 	// The compatibility mode doesn't work with a hashing algorithm.
 	// It needs the original linear search method. This was broken in Boom.
-
-	int (* FindSector) (int tag, int start)  =
-		(compatflags & COMPATF_STAIRINDEX)? P_FindSectorFromTagLinear : P_FindSectorFromTag;
 
 	secnum = -1;
 	while ((secnum = FindSector (tag, secnum)) >= 0)

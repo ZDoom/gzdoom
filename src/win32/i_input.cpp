@@ -1265,13 +1265,13 @@ static HRESULT InitJoystick ()
 
 static void DI_Acquire (LPDIRECTINPUTDEVICE8 mouse)
 {
-	mouse->Acquire ();
+	if (mouse) mouse->Acquire ();
 	SetCursorState (NativeMouse);
 }
 
 static void DI_Unacquire (LPDIRECTINPUTDEVICE8 mouse)
 {
-	mouse->Unacquire ();
+	if (mouse) mouse->Unacquire ();
 	SetCursorState (TRUE);
 }
 

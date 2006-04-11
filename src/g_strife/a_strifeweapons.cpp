@@ -1512,9 +1512,10 @@ IMPLEMENT_ACTOR (AHEGrenade, Strife, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_DOOMBOUNCE)
 	PROP_Flags3 (MF3_CANBOUNCEWATER)
-	PROP_Flags4 (MF4_STRIFEDAMAGE)
+	PROP_Flags4 (MF4_STRIFEDAMAGE|MF4_NOBOUNCESOUND)
 	PROP_MaxStepHeight (4)
 	PROP_StrifeType (106)
+	PROP_BounceFactor((FRACUNIT*5/10))
 	PROP_SeeSound ("weapons/hegrenadeshoot")
 	PROP_DeathSound ("weapons/hegrenadebang")
 END_DEFAULTS
@@ -1560,9 +1561,10 @@ IMPLEMENT_ACTOR (APhosphorousGrenade, Strife, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_DOOMBOUNCE)
 	PROP_Flags3 (MF3_CANBOUNCEWATER)
-	PROP_Flags4 (MF4_STRIFEDAMAGE)
+	PROP_Flags4 (MF4_STRIFEDAMAGE|MF4_NOBOUNCESOUND)
 	PROP_MaxStepHeight (4)
 	PROP_StrifeType (107)
+	PROP_BounceFactor((FRACUNIT*5/10))
 	PROP_SeeSound ("weapons/phgrenadeshoot")
 	PROP_DeathSound ("weapons/phgrenadebang")
 END_DEFAULTS
@@ -1666,9 +1668,19 @@ void A_Burnination (AActor *self)
 			yofs = clamp (yofs, 12, 31);
 		}
 
+		fixed_t x = self->x + (xofs << FRACBITS);
+		fixed_t y = self->y + (yofs << FRACBITS);
+		sector_t * sector = R_PointInSubsector(x, y)->sector;
+
+		// The sector's floor is too high so spawn the flame elsewhere.
+		if (sector->floorplane.ZatPoint(x, y) > self->z + self->MaxStepHeight)
+		{
+			x = self->x;
+			y = self->y;
+		}
+
 		AActor *drop = Spawn<APhosphorousFire> (
-			self->x + (xofs << FRACBITS),
-			self->y + (yofs << FRACBITS),
+			x, y,
 			self->z + 4*FRACUNIT);
 		if (drop != NULL)
 		{

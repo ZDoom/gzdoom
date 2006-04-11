@@ -355,6 +355,7 @@ CVAR (Flag, sv_nojump,			dmflags, DF_NO_JUMP);
 CVAR (Flag, sv_nofreelook,		dmflags, DF_NO_FREELOOK);
 CVAR (Flag, sv_respawnsuper,	dmflags, DF_RESPAWN_SUPER);
 CVAR (Flag, sv_nofov,			dmflags, DF_NO_FOV);
+CVAR (Flag, sv_noweaponspawn,	dmflags, DF_NO_COOP_WEAPON_SPAWN);
 
 //==========================================================================
 //
@@ -2048,6 +2049,7 @@ void D_DoomMain (void)
 		DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
 		FinishDehPatch ();			// Create replacements for dehacked pickups
 	}
+	HandleNoSector ();	// clear NOSECTOR flag off all actors modified by Dehacked and the BossEye.
 
 	FActorInfo::StaticSetActorNums ();
 

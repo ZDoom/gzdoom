@@ -98,6 +98,7 @@
 
 #define LEVEL_KEEPFULLINVENTORY		UCONST64(0x4000000000)		// doesn't reduce the amount of inventory items to 1
 
+#define LEVEL_MONSTERFALLINGDAMAGE UCONST64(0x10000000000)
 struct acsdefered_s;
 class FBehavior;
 
@@ -150,6 +151,8 @@ struct level_info_s
 	char		exitpic[9];
 	char		intermusic[9];
 
+	char		soundinfo[9];
+	char		sndseq[9];
 	FSpecialAction * specialactions;
 };
 typedef struct level_info_s level_info_t;
@@ -165,8 +168,9 @@ struct level_locals_s
 	void Tick ();
 	void AddScroller (DScroller *, int secnum);
 
-	int			time;
-	int			maptime;
+	int			time;			// time in the hub
+	int			maptime;		// time in the map
+	int			totaltime;		// time in the game
 	int			starttime;
 	int			partime;
 	int			sucktime;
@@ -252,6 +256,7 @@ struct cluster_info_s
 	int			musicorder;
 	int			flags;
 	int			cdtrack;
+	char		*clustername;
 	unsigned int cdid;
 };
 typedef struct cluster_info_s cluster_info_t;

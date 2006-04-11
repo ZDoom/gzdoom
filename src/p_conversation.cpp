@@ -957,18 +957,29 @@ static void PickConversationReply ()
 	takestuff = true;
 	if (reply->GiveType != NULL)
 	{
-		AInventory *item = static_cast<AInventory *> (Spawn (reply->GiveType, 0, 0, 0));
-		// Items given here should not count as items!
-		if (item->flags & MF_COUNTITEM)
+		if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
-			level.total_items--;
-			item->flags &= ~MF_COUNTITEM;
+			if (players[consoleplayer].mo->FindInventory(reply->GiveType) != NULL)
+			{
+				takestuff = false;
+			}
 		}
-		item->flags |= MF_DROPPED;
-		if (!item->TryPickup (players[consoleplayer].mo))
+
+		if (takestuff)
 		{
-			item->Destroy ();
-			takestuff = false;
+			AInventory *item = static_cast<AInventory *> (Spawn (reply->GiveType, 0, 0, 0));
+			// Items given here should not count as items!
+			if (item->flags & MF_COUNTITEM)
+			{
+				level.total_items--;
+				item->flags &= ~MF_COUNTITEM;
+			}
+			item->flags |= MF_DROPPED;
+			if (!item->TryPickup (players[consoleplayer].mo))
+			{
+				item->Destroy ();
+				takestuff = false;
+			}
 		}
 	}
 

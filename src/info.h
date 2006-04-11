@@ -271,6 +271,7 @@ enum
 	ADEF_MeleeRange,
 	ADEF_MaxDropOffHeight,
 	ADEF_MaxStepHeight,
+	ADEF_BounceFactor,
 
 	ADEF_SpawnState,
 	ADEF_SeeState,
@@ -312,9 +313,6 @@ enum
 	ADEF_Powerup_EffectTics,
 	ADEF_Powerup_Color,
 	ADEF_PowerupGiver_EffectTics,
-
-	ADEF_Key_KeyNumber,
-	ADEF_Key_AltKeyNumber,
 
 	ADEF_Ammo_BackpackAmount,
 	ADEF_Ammo_BackpackMaxAmount,

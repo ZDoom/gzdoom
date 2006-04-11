@@ -53,11 +53,13 @@
 
 static int Background, YourColor, WallColor, TSWallColor,
 		   FDWallColor, CDWallColor, ThingColor,
+		   ThingColor_Item, ThingColor_Monster, ThingColor_Friend,
 		   SecretWallColor, GridColor, XHairColor,
 		   NotSeenColor,
 		   LockedColor,
 		   AlmostBackground,
-		   IntraTeleportColor, InterTeleportColor;
+		   IntraTeleportColor, InterTeleportColor,
+		   SecretSectorColor;
 
 static int DoomColors[11];
 static byte DoomPaletteVals[11*3] =
@@ -100,6 +102,7 @@ CVAR (Bool,  am_showsecrets,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showmonsters,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showitems,			false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtime,			true,		CVAR_ARCHIVE);
+CVAR (Bool,  am_showtotaltime,		false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_usecustomcolors,	true,		CVAR_ARCHIVE);
 CVAR (Float, am_ovtrans,			1.f,		CVAR_ARCHIVE);
 CVAR (Color, am_backcolor,			0x6c5440,	CVAR_ARCHIVE);
@@ -122,6 +125,15 @@ CVAR (Color, am_ovunseencolor,		0x00226e,	CVAR_ARCHIVE);
 CVAR (Color, am_ovtelecolor,		0xffff00,	CVAR_ARCHIVE);
 CVAR (Color, am_intralevelcolor,	0x0000ff,	CVAR_ARCHIVE);
 CVAR (Color, am_interlevelcolor,	0xff0000,	CVAR_ARCHIVE);
+CVAR (Color, am_secretsectorcolor,	0xff00ff,	CVAR_ARCHIVE);
+CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
+CVAR (Bool,  am_drawmapback,		true,		CVAR_ARCHIVE);
+CVAR (Color, am_thingcolor_friend,		0xfcfcfc,	CVAR_ARCHIVE);
+CVAR (Color, am_thingcolor_monster,		0xfcfcfc,	CVAR_ARCHIVE);
+CVAR (Color, am_thingcolor_item,		0xfcfcfc,	CVAR_ARCHIVE);
+CVAR (Color, am_ovthingcolor_friend,	0xe88800,	CVAR_ARCHIVE);
+CVAR (Color, am_ovthingcolor_monster,	0xe88800,	CVAR_ARCHIVE);
+CVAR (Color, am_ovthingcolor_item,		0xe88800,	CVAR_ARCHIVE);
 
 // drawing stuff
 #define AM_PANDOWNKEY	KEY_DOWNARROW
@@ -370,6 +382,11 @@ void AM_getIslope (mline_t *ml, islope_t *is)
 }
 */
 
+void AM_GetPosition(fixed_t & x, fixed_t & y)
+{
+	x = (m_x + m_w/2) << FRACTOMAPBITS;
+	y = (m_y + m_h/2) << FRACTOMAPBITS;
+}
 //
 //
 //
@@ -635,7 +652,10 @@ static void AM_initColors (BOOL overlayed)
 	if (overlayed)
 	{
 		YourColor = am_ovyourcolor.GetIndex ();
-		SecretWallColor = WallColor = am_ovwallcolor.GetIndex ();
+		SecretSectorColor = SecretWallColor = WallColor = am_ovwallcolor.GetIndex ();
+		ThingColor_Item = am_ovthingcolor_item.GetIndex();
+		ThingColor_Friend = am_ovthingcolor_friend.GetIndex();
+		ThingColor_Monster = am_ovthingcolor_monster.GetIndex();
 		ThingColor = am_ovthingcolor.GetIndex ();
 		FDWallColor = CDWallColor = LockedColor = am_ovotherwallscolor.GetIndex ();
 		NotSeenColor = TSWallColor = am_ovunseencolor.GetIndex ();
@@ -651,6 +671,9 @@ static void AM_initColors (BOOL overlayed)
 		TSWallColor = am_tswallcolor.GetIndex ();
 		FDWallColor = am_fdwallcolor.GetIndex ();
 		CDWallColor = am_cdwallcolor.GetIndex ();
+		ThingColor_Item = am_thingcolor_item.GetIndex();
+		ThingColor_Friend = am_thingcolor_friend.GetIndex();
+		ThingColor_Monster = am_thingcolor_monster.GetIndex();
 		ThingColor = am_thingcolor.GetIndex ();
 		GridColor = am_gridcolor.GetIndex ();
 		XHairColor = am_xhaircolor.GetIndex ();
@@ -658,6 +681,7 @@ static void AM_initColors (BOOL overlayed)
 		LockedColor = am_lockedcolor.GetIndex ();
 		InterTeleportColor = am_interlevelcolor.GetIndex ();
 		IntraTeleportColor = am_intralevelcolor.GetIndex ();
+		SecretSectorColor = am_secretsectorcolor.GetIndex ();
 
 		DWORD ba = am_backcolor;
 
@@ -679,13 +703,17 @@ static void AM_initColors (BOOL overlayed)
 		Background = DoomColors[0];
 		YourColor = DoomColors[1];
 		AlmostBackground = DoomColors[2];
-		SecretWallColor =
+		SecretSectorColor = 		
+			SecretWallColor =
 			WallColor = DoomColors[3];
 		TSWallColor = DoomColors[4];
 		FDWallColor = DoomColors[5];
 		LockedColor =
 			CDWallColor = DoomColors[6];
-		ThingColor = DoomColors[7];
+		ThingColor_Item = 
+			ThingColor_Friend = 
+			ThingColor_Monster =
+			ThingColor = DoomColors[7];
 		GridColor = DoomColors[8];
 		XHairColor = DoomColors[9];
 		NotSeenColor = DoomColors[10];
@@ -1079,7 +1107,7 @@ void AM_Ticker ()
 //
 void AM_clearFB (int color)
 {
-	if (mapback == NULL)
+	if (mapback == NULL || !am_drawmapback)
 	{
 		screen->Clear (0, 0, f_w, f_h, color);
 	}
@@ -1798,9 +1826,19 @@ void AM_drawWalls (bool allmap)
 		{
 			if ((lines[i].flags & ML_DONTDRAW) && am_cheat == 0)
 				continue;
+
 			if (!lines[i].backsector)
 			{
-				AM_drawMline(&l, WallColor);
+				if (lines[i].frontsector->oldspecial && 
+					(am_map_secrets==2 || (am_map_secrets==1 && !(lines[i].frontsector->special&SECRET_MASK))))
+				{
+					// map secret sectors like Boom
+					AM_drawMline(&l, SecretSectorColor);
+				}
+				else
+				{
+					AM_drawMline(&l, WallColor);
+				}
 			}
 			else
 			{
@@ -1828,9 +1866,30 @@ void AM_drawWalls (bool allmap)
 						AM_drawMline(&l, WallColor);
 				}
 				else if (lines[i].special == Door_LockedRaise ||
-						 lines[i].special == ACS_LockedExecute)
+						 lines[i].special == ACS_LockedExecute ||
+						 (lines[i].special == Generic_Door && lines[i].args[4]!=0))
 				{
-					AM_drawMline (&l, LockedColor);  // locked special
+					if (am_usecustomcolors)
+					{
+						int P_GetMapColorForLock(int lock);
+						int lock;
+
+
+						if (lines[i].special==Door_LockedRaise) lock=lines[i].args[3];
+						else lock=lines[i].args[4];
+
+						int color = P_GetMapColorForLock(lock);
+
+						if (color > 0)
+						{
+							color = ColorMatcher.Pick(RPART(color), GPART(color), BPART(color));
+						}
+						else color = LockedColor;
+
+						AM_drawMline (&l, color);
+					}
+					else
+						AM_drawMline (&l, LockedColor);  // locked special
 				}
 				else if (lines[i].backsector->floorplane
 					  != lines[i].frontsector->floorplane)
@@ -2001,8 +2060,9 @@ void AM_drawPlayers ()
     }
 }
 
-void AM_drawThings (int color)
+void AM_drawThings (int _color)
 {
+	int color;
 	int		 i;
 	AActor*	 t;
 	mpoint_t p;
@@ -2022,6 +2082,16 @@ void AM_drawThings (int color)
 				AM_rotatePoint (&p.x, &p.y);
 				angle += ANG90 - players[consoleplayer].camera->angle;
 			}
+
+			color = ThingColor;
+
+			// use separate colors for special thing types
+			if (t->flags3&MF3_ISMONSTER && !(t->flags&MF_CORPSE))
+			{
+				if (t->flags & MF_FRIENDLY || !(t->flags & MF_COUNTKILL)) color = ThingColor_Friend;
+				else color = ThingColor_Monster;
+			}
+			else if (t->flags&MF_SPECIAL) color = ThingColor_Item;
 
 			AM_drawLineCharacter
 			(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,

@@ -36,5 +36,6 @@
 
 void DoDehPatch (const char *patchfile, BOOL autoloading);
 void FinishDehPatch ();
+void HandleNoSector();
 
 #endif //__D_DEHACK_H__

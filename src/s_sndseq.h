@@ -2,7 +2,7 @@
 #define __S_SNDSEQ_H__
 
 #include <stddef.h>
-#include "actor.h"
+//#include "actor.h"
 #include "s_sound.h"
 #include "r_defs.h"
 
@@ -16,7 +16,7 @@ typedef enum {
 
 struct sector_t;
 
-void S_ParseSndSeq (void);
+void S_ParseSndSeq (int levellump);
 void SN_StartSequence (AActor *mobj, int sequence, seqtype_t type);
 void SN_StartSequence (AActor *mobj, const char *name);
 void SN_StartSequence (sector_t *sector, int sequence, seqtype_t type);

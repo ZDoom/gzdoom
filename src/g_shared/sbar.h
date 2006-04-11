@@ -209,14 +209,15 @@ protected:
 	void DrBNumberOuterFont (signed int val, int x, int y, int w=3) const;
 	void DrSmallNumberOuter (int val, int x, int y, bool center) const;
 
-	void DrawCrosshair ();
 	void RefreshBackground () const;
 
 	void GetCurrentAmmo (AAmmo *&ammo1, AAmmo *&ammo2, int &ammocount1, int &ammocount2) const;
-	AInventory *ValidateInvFirst (int numVisible) const;
 
 	static void AddBlend (float r, float g, float b, float a, float v_blend[4]);
 
+public:
+	AInventory *ValidateInvFirst (int numVisible) const;
+	void DrawCrosshair ();
 
 	int ST_X, ST_Y;
 	int RelTop;

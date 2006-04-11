@@ -645,6 +645,7 @@ void M_ReadSaveStrings ()
 					if (NULL != (png = M_VerifyPNG (file)))
 					{
 						char *ver = M_GetPNGText (png, "ZDoom Save Version");
+						char *engine = M_GetPNGText (png, "Engine");
 						if (ver != NULL)
 						{
 							if (!M_GetPNGText (png, "Title", title, SAVESTRINGSIZE))
@@ -652,7 +653,8 @@ void M_ReadSaveStrings ()
 								strncpy (title, I_FindName(&c_file), SAVESTRINGSIZE);
 							}
 							if (strncmp (ver, SAVESIG, 9) == 0 &&
-								atoi (ver+9) >= MINSAVEVER)
+								atoi (ver+9) >= MINSAVEVER &&
+								engine != NULL)
 							{
 								// Was saved with a compatible ZDoom version,
 								// so check if it's for the current game.
@@ -2278,7 +2280,7 @@ static void M_ChangeAutoAim (int choice)
 static void M_EditPlayerName (int choice)
 {
 	// we are going to be intercepting all chars
-	genStringEnter = 1;
+	genStringEnter = 2;
 	genStringEnd = M_PlayerNameChanged;
 	genStringLen = MAXPLAYERNAME;
 	
@@ -2477,7 +2479,7 @@ BOOL M_Responder (event_t *ev)
 		{
 			ch = ev->data1;
 			if (saveCharIndex < genStringLen &&
-				(size_t)SmallFont->StringWidth (savegamestring) < (genStringLen-1)*8)
+				(genStringEnter==2 || (size_t)SmallFont->StringWidth (savegamestring) < (genStringLen-1)*8))
 			{
 				savegamestring[saveCharIndex] = ch;
 				savegamestring[++saveCharIndex] = 0;

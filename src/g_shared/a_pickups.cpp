@@ -28,10 +28,7 @@ END_DEFAULTS
 void AAmmo::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	if (SaveVersion >= 223)
-	{
-		arc << BackpackAmount << BackpackMaxAmount;
-	}
+	arc << BackpackAmount << BackpackMaxAmount;
 }
 
 //===========================================================================
@@ -476,10 +473,7 @@ void AInventory::Serialize (FArchive &arc)
 	{
 		Icon = TexMan.ReadTexture (arc);
 	}
-	if (SaveVersion >= 226)
-	{
-		arc << AR_SOUNDW(PickupSound);
-	}
+	arc << AR_SOUNDW(PickupSound);
 }
 
 //===========================================================================
@@ -1281,10 +1275,7 @@ void ABasicArmorPickup::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << SavePercent << SaveAmount;
-	if (SaveVersion >= 222)
-	{
-		arc << DropTime;
-	}
+	arc << DropTime;
 }
 
 //===========================================================================
@@ -1558,13 +1549,10 @@ void ABasicArmor::AbsorbDamage (int damage, int damageType, int &newdamage)
 void AHexenArmor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << Slots[0] << Slots[1] << Slots[2] << Slots[3];
-	if (SaveVersion >= 224)
-	{
-		arc << Slots[4]
-			<< SlotsIncrement[0] << SlotsIncrement[1] << SlotsIncrement[2]
-			<< SlotsIncrement[3];
-	}
+	arc << Slots[0] << Slots[1] << Slots[2] << Slots[3]
+		<< Slots[4]
+		<< SlotsIncrement[0] << SlotsIncrement[1] << SlotsIncrement[2]
+		<< SlotsIncrement[3];
 }
 
 //===========================================================================
@@ -1842,10 +1830,7 @@ bool AHealthPickup::Use (bool pickup)
 void ABackpack::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	if (SaveVersion >= 227)
-	{
-		arc << bDepleted;
-	}
+	arc << bDepleted;
 }
 
 //===========================================================================

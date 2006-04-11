@@ -64,6 +64,7 @@ FState ABlood::States[] =
 
 IMPLEMENT_ACTOR (ABlood, Any, -1, 130)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_Mass (5)
 END_DEFAULTS
 

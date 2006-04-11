@@ -80,7 +80,7 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	p->momx = p->momy = 0;
 	morphed->ObtainInventory (actor);
 	// Remove all armor
-	for (item = actor->Inventory; item != NULL; )
+	for (item = morphed->Inventory; item != NULL; )
 	{
 		AInventory *next = item->Inventory;
 		if (item->IsKindOf (RUNTIME_CLASS(AArmor)))
@@ -209,6 +209,9 @@ bool P_MorphMonster (AActor *actor, const TypeInfo *spawntype)
 	morphed->tid = actor->tid;
 	morphed->angle = actor->angle;
 	morphed->tracer = actor;
+	morphed->alpha = actor->alpha;
+	morphed->RenderStyle = actor->RenderStyle;
+
 	morphed->special1 = MORPHTICS + pr_morphmonst();
 	morphed->special2 = actor->flags & ~MF_JUSTHIT;
 	//morphed->special = actor->special;

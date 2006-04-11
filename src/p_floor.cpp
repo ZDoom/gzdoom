@@ -654,6 +654,15 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 }
 
 
+static int P_FindSectorFromTagLinear (int tag, int start)
+{
+    for (int i=start+1;i<numsectors;i++)
+	{
+		if (sectors[i].tag == tag) return i;
+	}
+    return -1;
+}
+
 //
 // BUILD A STAIRCASE!
 // [RH] Added stairsize, srcspeed, delay, reset, igntxt, usespecials parameters
@@ -698,8 +707,14 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 		goto manual_stair;
 	}
 
+	// The compatibility mode doesn't work with a hashing algorithm.
+	// It needs the original linear search method. This was broken in Boom.
+
+	int (* FindSector) (int tag, int start)  =
+		(compatflags & COMPATF_STAIRINDEX)? P_FindSectorFromTagLinear : P_FindSectorFromTag;
+
 	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	while ((secnum = FindSector (tag, secnum)) >= 0)
 	{
 		sec = &sectors[secnum];
 

@@ -79,6 +79,7 @@
 // Data.
 #include "m_menu.h"
 
+EXTERN_CVAR(Bool, nomonsterinterpolation)
 //
 // defaulted values
 //
@@ -537,10 +538,19 @@ EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showmonsters)
 EXTERN_CVAR (Bool, am_showsecrets)
 EXTERN_CVAR (Bool, am_showtime)
+EXTERN_CVAR (Int, am_map_secrets)
+EXTERN_CVAR (Bool, am_showtotaltime)
+EXTERN_CVAR (Bool, am_drawmapback)
 
 static value_t MapColorTypes[] = {
 	{ 1, "Custom" },
 	{ 0, "Traditional Doom" }
+};
+
+static value_t SecretTypes[] = {
+	{ 0, "Never" },
+	{ 1, "Only when found" },
+	{ 2, "Always" },
 };
 
 static menuitem_t AutomapItems[] = {
@@ -554,6 +564,9 @@ static menuitem_t AutomapItems[] = {
 	{ discrete, "Show monster counts",	{&am_showmonsters},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Show secret counts",	{&am_showsecrets},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Show time elapsed",	{&am_showtime},			{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Show total time elapsed",	{&am_showtotaltime},	{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Show secrets on map",		{&am_map_secrets},		{3.0}, {0.0},	{0.0}, {SecretTypes} },
+	{ discrete, "Draw automap background",	{&am_drawmapback},		{2.0}, {0.0},	{0.0}, {OnOff} },
 };
 
 menu_t AutomapMenu =
@@ -592,6 +605,13 @@ EXTERN_CVAR (Color, am_ovunseencolor)
 EXTERN_CVAR (Color, am_ovtelecolor)
 EXTERN_CVAR (Color, am_intralevelcolor)
 EXTERN_CVAR (Color, am_interlevelcolor)
+EXTERN_CVAR (Color, am_secretsectorcolor)
+EXTERN_CVAR (Color, am_thingcolor_friend)
+EXTERN_CVAR (Color, am_thingcolor_monster)
+EXTERN_CVAR (Color, am_thingcolor_item)
+EXTERN_CVAR (Color, am_ovthingcolor_friend)
+EXTERN_CVAR (Color, am_ovthingcolor_monster)
+EXTERN_CVAR (Color, am_ovthingcolor_item)
 
 static menuitem_t MapColorsItems[] = {
 	{ rsafemore,   "Restore default custom colors",				{NULL},					{0}, {0}, {0}, {(value_t*)DefaultCustomColors} },
@@ -607,10 +627,14 @@ static menuitem_t MapColorsItems[] = {
 	{ colorpicker, "Locked doors",								{&am_lockedcolor},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Teleporter to the same map",				{&am_intralevelcolor},	{0}, {0}, {0}, {0} },
 	{ colorpicker, "Teleporter to a different map",				{&am_interlevelcolor},	{0}, {0}, {0}, {0} },
+	{ colorpicker, "Secret sector",								{&am_secretsectorcolor},	{0}, {0}, {0}, {0} },
 	{ redtext,		" ",										{NULL},					{0}, {0}, {0}, {0} },
 	{ colorpicker, "Invisible 2-sided walls (for cheat)",		{&am_tswallcolor},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Secret walls (for cheat)",					{&am_secretwallcolor},	{0}, {0}, {0}, {0} },
 	{ colorpicker, "Actors (for cheat)",						{&am_thingcolor},		{0}, {0}, {0}, {0} },
+	{ colorpicker, "Monsters (for cheat)",						{&am_thingcolor_monster},		{0}, {0}, {0}, {0} },
+	{ colorpicker, "Friends (for cheat)",						{&am_thingcolor_friend},		{0}, {0}, {0}, {0} },
+	{ colorpicker, "Items (for cheat)",							{&am_thingcolor_item},			{0}, {0}, {0}, {0} },
 	{ redtext,		" ",										{NULL},					{0}, {0}, {0}, {0} },
 	{ colorpicker, "You (overlay)",								{&am_ovyourcolor},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "1-sided walls (overlay)",					{&am_ovwallcolor},		{0}, {0}, {0}, {0} },
@@ -618,6 +642,9 @@ static menuitem_t MapColorsItems[] = {
 	{ colorpicker, "Not-yet-seen walls (overlay)",				{&am_ovunseencolor},	{0}, {0}, {0}, {0} },
 	{ colorpicker, "Teleporter (overlay)",						{&am_ovtelecolor},		{0}, {0}, {0}, {0} },
 	{ colorpicker, "Actors (overlay) (for cheat)",				{&am_ovthingcolor},		{0}, {0}, {0}, {0} },
+	{ colorpicker, "Monsters (overlay) (for cheat)",			{&am_ovthingcolor_monster},		{0}, {0}, {0}, {0} },
+	{ colorpicker, "Friends (overlay) (for cheat)",				{&am_ovthingcolor_friend},		{0}, {0}, {0}, {0} },
+	{ colorpicker, "Items (overlay) (for cheat)",				{&am_ovthingcolor_item},		{0}, {0}, {0}, {0} },
 };
 
 menu_t MapColorsMenu =
@@ -625,7 +652,7 @@ menu_t MapColorsMenu =
 	"CUSTOMIZE MAP COLORS",
 	0,
 	sizeof(MapColorsItems)/sizeof(MapColorsItems[0]),
-	42,
+	48,
 	MapColorsItems,
 };
 
@@ -896,7 +923,8 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Allow jump",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_JUMP} },
 	{ bitflag,	"Allow freelook",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FREELOOK} },
 	{ bitflag,	"Allow FOV",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FOV} },
-	{ bitflag,	"Allow BFG aiming",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NO_FREEAIMBFG} }
+	{ bitflag,	"Allow BFG aiming",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NO_FREEAIMBFG} },
+	{ bitflag,	"Multi. weapons in coop", {&dmflags},	{1}, {0}, {0}, {(value_t *)DF_NO_COOP_WEAPON_SPAWN} },
 };
 
 static menu_t DMFlagsMenu =
@@ -925,7 +953,8 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,	"Spawn item drops on the floor",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NOTOSSDROPS} },
 	{ bitflag,  "All special lines can block <use>",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_USEBLOCKING} },
 	{ bitflag,	"Disable BOOM door light effect",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NODOORLIGHT} },
-	{ bitflag,	"Raven scroll types use original speed",	{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_RAVENSCROLL} },
+	{ bitflag,	"Raven scrollers use original speed",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_RAVENSCROLL} },
+	{ discrete, "Interpolate monster movement",	{&nomonsterinterpolation},		{2.0}, {0.0},	{0.0}, {NoYes} },
 };
 
 static menu_t CompatibilityMenu =

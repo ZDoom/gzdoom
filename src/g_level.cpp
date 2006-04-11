@@ -74,6 +74,7 @@
 
 #include "gi.h"
 
+#include "g_hub.h"
 
 EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
@@ -234,6 +235,11 @@ static const char *MapInfoMapLevel[] =
 	"airsupply",
 	"specialaction",
 	"keepfullinventory",
+	"monsterfallingdamage",
+	"nomonsterfallingdamage",
+	"sndseq",
+	"sndinfo",
+	"soundinfo",
 	NULL
 };
 
@@ -340,6 +346,11 @@ MapHandlers[] =
 	{ MITYPE_INT,		lioffset(airsupply), 0 },
 	{ MITYPE_SPECIALACTION, lioffset(specialactions), 0 },
 	{ MITYPE_SETFLAG,	LEVEL_KEEPFULLINVENTORY, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_MONSTERFALLINGDAMAGE, 0 },
+	{ MITYPE_CLRFLAG,	LEVEL_MONSTERFALLINGDAMAGE, 0 },
+	{ MITYPE_LUMPNAME,	lioffset(sndseq), 0 },
+	{ MITYPE_LUMPNAME,	lioffset(soundinfo), 0 },
+	{ MITYPE_LUMPNAME,	lioffset(soundinfo), 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -354,6 +365,7 @@ static const char *MapInfoClusterLevel[] =
 	"cdid",
 	"entertextislump",
 	"exittextislump",
+	"name",
 	NULL
 };
 
@@ -368,7 +380,8 @@ MapInfoHandler ClusterHandlers[] =
 	{ MITYPE_INT,		cioffset(cdtrack), 0 },
 	{ MITYPE_HEX,		cioffset(cdid), 0 },
 	{ MITYPE_SETFLAG,	CLUSTER_ENTERTEXTINLUMP, 0 },
-	{ MITYPE_SETFLAG,	CLUSTER_EXITTEXTINLUMP, 0 }
+	{ MITYPE_SETFLAG,	CLUSTER_EXITTEXTINLUMP, 0 },
+	{ MITYPE_STRING,	cioffset(clustername), 0 },
 };
 
 static void ParseMapInfoLower (MapInfoHandler *handlers,
@@ -413,6 +426,10 @@ static void SetLevelDefaults (level_info_t *levelinfo)
 	{
 		// For maps without a BEHAVIOR, this will be cleared.
 		levelinfo->flags |= LEVEL_LAXMONSTERACTIVATION;
+	}
+	else
+	{
+		levelinfo->flags |= LEVEL_MONSTERFALLINGDAMAGE;
 	}
 	levelinfo->airsupply = 10;
 }
@@ -487,6 +504,7 @@ static void G_DoParseMapInfo (int lump)
 
 	SetLevelDefaults (&defaultinfo);
 	SC_OpenLumpNum (lump, "MAPINFO");
+	HexenHack=false;
 
 	while (SC_GetString ())
 	{
@@ -1328,6 +1346,7 @@ void G_InitNew (char *mapname, bool bTitleLevel)
 		}
 		level.time = 0;
 		level.maptime = 0;
+		level.totaltime = 0;
 
 		if (!multiplayer || !deathmatch)
 		{
@@ -1496,6 +1515,7 @@ void G_DoCompleted (void)
 	wminfo.partime = TICRATE * level.partime;
 	wminfo.sucktime = level.sucktime;
 	wminfo.pnum = consoleplayer;
+	wminfo.totaltime = level.totaltime;
 
 	for (i=0 ; i<MAXPLAYERS ; i++)
 	{
@@ -1535,6 +1555,9 @@ void G_DoCompleted (void)
 		mode = FINISH_SameHub;
 	}
 
+	// Intermission stats for entire hubs
+	G_LeavingHub(mode, thiscluster, &wminfo);
+
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
@@ -1559,7 +1582,9 @@ void G_DoCompleted (void)
 				ACS_WorldArrays[i].Clear ();
 			}
 		}
-		else if (mode == FINISH_NoHub)
+		// With hub statistics the time should be per hub.
+		// Additionally there is a global time counter now so nothing is missed by changing it
+		//else if (mode == FINISH_NoHub)
 		{ // Reset time to zero if not entering/staying in a hub.
 			level.time = 0;
 		}
@@ -1629,9 +1654,9 @@ void G_DoLoadLevel (int position, bool autosave)
 
 	Printf (
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n"
-			TEXTCOLOR_BOLD "%s\n\n",
-			level.level_name);
+			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
+			TEXTCOLOR_BOLD "%s - %s\n\n",
+			level.mapname, level.level_name);
 
 	if (wipegamestate == GS_LEVEL)
 		wipegamestate = GS_FORCEWIPE;
@@ -2268,17 +2293,16 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		<< level.found_items
 		<< level.killed_monsters
 		<< level.gravity
-		<< level.aircontrol;
-
-	if (SaveVersion >= 230)
-		arc << level.maptime;
+		<< level.aircontrol
+		<< level.maptime
+		<< level.totaltime;
 
 	if (arc.IsStoring ())
 	{
 		arc.WriteName (level.skypic1);
 		arc.WriteName (level.skypic2);
 	}
-	else if (SaveVersion >= 225)
+	else
 	{
 		strncpy (level.skypic1, arc.ReadName(), 8);
 		strncpy (level.skypic2, arc.ReadName(), 8);
@@ -2360,6 +2384,10 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 			arc << t;
 		}
 	}
+
+	// This must be saved, too, of course!
+	FCanvasTextureInfo::Serialize (arc);
+
 	if (!hubLoad)
 	{
 		P_SerializePlayers (arc);

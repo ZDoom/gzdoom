@@ -210,6 +210,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_MeleeRange:		actor->meleerange = dataint;		break;
 	case ADEF_MaxDropOffHeight:	actor->MaxDropOffHeight = dataint;	break;
 	case ADEF_MaxStepHeight:	actor->MaxStepHeight = dataint;		break;
+	case ADEF_BounceFactor:		actor->bouncefactor = dataint;		break;
 
 	case ADEF_SpawnState:		actor->SpawnState = datastate;		break;
 	case ADEF_SeeState:			actor->SeeState = datastate;		break;
@@ -264,9 +265,6 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 
 	case ADEF_Powerup_EffectTics:	power->EffectTics = dataint; break;
 	case ADEF_Powerup_Color:		power->BlendColor = dataint; break;
-
-	case ADEF_Key_KeyNumber:		key->KeyNumber = dataint; break;
-	case ADEF_Key_AltKeyNumber:		key->AltKeyNumber = dataint; break;
 
 	case ADEF_Ammo_BackpackAmount:	ammo->BackpackAmount = dataint; break;
 	case ADEF_Ammo_BackpackMaxAmount:ammo->BackpackMaxAmount = dataint; break;

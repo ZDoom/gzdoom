@@ -1066,7 +1066,7 @@ void R_NewWall (bool needlights)
 int side_s::GetLightLevel (bool foggy, int baselight) const
 {
 	// [RH] Get wall light level
-	if (this->Flags & WALLF_ABSLIGHTING)
+	if (this->Flags & WALLF_ABSLIGHTING && (!(this->Flags & WALLF_AUTOCONTRAST) || foggy))
 	{
 		return (BYTE)this->Light;
 	}
@@ -1074,7 +1074,19 @@ int side_s::GetLightLevel (bool foggy, int baselight) const
 	{
 		if (!foggy) // Don't do relative lighting in foggy sectors
 		{
-			baselight += this->Light * 2;
+			int rellight;
+
+			if (this->Flags & WALLF_AUTOCONTRAST)
+			{
+				baselight = (BYTE)this->Light;
+				rellight = linedef->dx==0? level.WallVertLight : linedef->dy==0 ? level.WallHorizLight : 0;
+			}
+			else 
+			{
+				rellight = this->Light;
+			}
+
+			baselight += rellight * 2;
 		}
 		return baselight;
 	}

@@ -219,6 +219,7 @@ enum
 	DF_NO_FREELOOK			= 1 << 17,	// Don't allow freelook
 	DF_RESPAWN_SUPER		= 1 << 18,	// Respawn invulnerability and invisibility
 	DF_NO_FOV				= 1 << 19,	// Only let the arbitrator set FOV (for all players)
+	DF_NO_COOP_WEAPON_SPAWN	= 1 << 20,	// Don't spawn multiplayer weapons in coop games
 };
 
 // [BC] More dmflags. w00p!
@@ -260,7 +261,7 @@ enum
 	COMPATF_NOTOSSDROPS		= 1 << 7,	// Spawn dropped items directly on the floor?
 	COMPATF_USEBLOCKING		= 1 << 8,	// Any special line can block a use line
 	COMPATF_NODOORLIGHT		= 1 << 9,	// Don't do the BOOM local door light effect
-	COMPATF_RAVENSCROLL		= 1 << 10,	// Raven's scrollers user their original carrying speed
+	COMPATF_RAVENSCROLL		= 1 << 10,	// Raven's scrollers use their original carrying speed
 };
 
 // phares 3/20/98:

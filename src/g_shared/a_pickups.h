@@ -53,7 +53,7 @@ struct FWeaponSlots
 	void Clear ();
 	bool LocateWeapon (const TypeInfo *type, int *const slot, int *const index);
 	ESlotDef AddDefaultWeapon (int slot, const TypeInfo *type);
-	void RestoreSlots (FConfigFile &config);
+	int RestoreSlots (FConfigFile &config);
 	void SaveSlots (FConfigFile &config);
 };
 

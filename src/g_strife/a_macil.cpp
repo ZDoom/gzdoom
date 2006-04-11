@@ -123,6 +123,11 @@ void AMacil1::NoBlockingSet ()
 
 int AMacil1::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype)
 {
+	target = source;
+	if (PainState != NULL)
+	{
+		SetState (PainState);
+	}
 	return -1;
 }
 
@@ -178,5 +183,5 @@ int AMacil2::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, i
 {
 	if (inflictor->IsKindOf (RUNTIME_CLASS(ASpectralLightningV1)))
 		return -1;
-	return damage;
+	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);
 }

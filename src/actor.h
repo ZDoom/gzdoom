@@ -270,6 +270,8 @@ enum
 	MF4_ALLOWPARTICLES	= 0x08000000,	// this puff type can be replaced by particles
 	MF4_NOEXTREMEDEATH	= 0x10000000,	// this projectile or weapon never gibs its victim
 	MF4_EXTREMEDEATH	= 0x20000000,	// this projectile or weapon always gibs its victim
+	MF4_FRIGHTENED		= 0x40000000,	// Monster runs away from player
+	MF4_NOBOUNCESOUND	= 0x80000000,	// Strife's grenades don't make a bouncing sound. 
 
 // --- mobj.renderflags ---
 
@@ -633,6 +635,7 @@ public:
 	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
 	WORD			SpawnFlags;
 	fixed_t			meleerange;
+	fixed_t			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
 
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98

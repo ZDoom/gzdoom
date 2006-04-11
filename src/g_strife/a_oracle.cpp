@@ -83,5 +83,5 @@ int AOracle::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, i
 {
 	if (inflictor->IsKindOf (RUNTIME_CLASS(ASpectralLightningV1)))
 		return -1;
-	return damage;
+	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);
 }

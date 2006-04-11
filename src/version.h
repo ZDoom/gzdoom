@@ -43,11 +43,13 @@ enum { GAMEVERSION = 205 };
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
-#define SAVEVER 230
-#define SAVESIG "ZDOOMSAVE230"
+#define SAVEVER 231
+#define SAVESIG "ZDOOMSAVE231"
+// This is so that derivates can use the same savegame versions without worrying about engine compatibility
+#define GAMESIG "ZDOOM"
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 221	// Used by 2.0.90
+#define MINSAVEVER 231	// Used by 2.0.99
 
 // The maximum length of one save game description for the menus.
 #define SAVESTRINGSIZE		24

@@ -170,6 +170,7 @@ public:
 	float		FOV;					// current field of vision
 	fixed_t		viewz;					// focal origin above r.z
 	fixed_t		viewheight;				// base height above floor for viewz
+	fixed_t		defaultviewheight;		// The normal view height when standing
 	fixed_t		deltaviewheight;		// squat speed.
 	fixed_t		bob;					// bounded/scaled total momentum
 
@@ -275,6 +276,12 @@ public:
 	float		BlendA;
 
 	char		*LogText;	// [RH] Log for Strife
+
+
+	fixed_t GetDeltaViewHeight() const
+	{
+		return (defaultviewheight - viewheight) >> 3;
+	}
 };
 
 typedef player_s player_t;

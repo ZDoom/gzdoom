@@ -253,6 +253,7 @@ public:
 #define PROP_MeleeRange(x)				ADD_FIXD_PROP(ADEF_MeleeRange,x)
 #define PROP_MaxDropOffHeight(x)		ADD_FIXD_PROP(ADEF_MaxDropOffHeight,x)
 #define PROP_MaxStepHeight(x)			ADD_FIXD_PROP(ADEF_MaxStepHeight,x)
+#define PROP_BounceFactor(x)			ADD_LONG_PROP(ADEF_BounceFactor,x)
 
 #define PROP_SpawnState(x)				ADD_BYTE_PROP(ADEF_SpawnState,x)
 #define PROP_SeeState(x)				ADD_BYTE_PROP(ADEF_SeeState,x)
@@ -296,9 +297,6 @@ public:
 #define PROP_PowerupGiver_EffectTics(x)	ADD_LONG_PROP(ADEF_PowerupGiver_EffectTics,x)
 #define PROP_Powerup_EffectTics(x)		ADD_LONG_PROP(ADEF_Powerup_EffectTics,x)
 #define PROP_Powerup_Color(a,r,g,b)		ADD_LONG_PROP(ADEF_Powerup_Color,((a)<<24)|((r)<<16)|((g)<<8)|(b))
-
-#define PROP_Key_KeyNumber(x)			ADD_BYTE_PROP(ADEF_Key_KeyNumber,x)
-#define PROP_Key_AltKeyNumber(x)		ADD_BYTE_PROP(ADEF_Key_AltKeyNumber,x)
 
 #define PROP_Ammo_BackpackAmount(x)		ADD_WORD_PROP(ADEF_Ammo_BackpackAmount,x)
 #define PROP_Ammo_BackpackMaxAmount(x)	ADD_WORD_PROP(ADEF_Ammo_BackpackMaxAmount,x)

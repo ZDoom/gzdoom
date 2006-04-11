@@ -1,5 +1,6 @@
 #include "files.h"
 #include "i_system.h"
+#include "templates.h"
 
 FileReader::FileReader ()
 : File(NULL), Length(0), CloseOnDestruct(false)
@@ -100,7 +101,7 @@ long FileReader::CalcFileLen() const
 
 // Now for the zlib wrapper -------------------------------------------------
 
-FileReaderZ::FileReaderZ (FileReader &file)
+FileReaderZ::FileReaderZ (FileReader &file, bool zip)
 : File(file), SawEOF(false)
 {
 	int err;
@@ -110,7 +111,9 @@ FileReaderZ::FileReaderZ (FileReader &file)
 	Stream.zalloc = Z_NULL;
 	Stream.zfree = Z_NULL;
 
-	err = inflateInit (&Stream);
+	if (!zip) err = inflateInit (&Stream);
+	else err = inflateInit2 (&Stream, -MAX_WBITS);
+
 	if (err != Z_OK)
 	{
 		I_Error ("FileReaderZ: inflateInit failed: %d\n", err);
@@ -161,4 +164,46 @@ void FileReaderZ::FillBuffer ()
 	}
 	Stream.next_in = InBuff;
 	Stream.avail_in = numread;
+}
+
+MemoryReader::MemoryReader (const char *buffer, long length)
+{
+	bufptr=buffer;
+	Length=length;
+	FilePos=0;
+}
+
+MemoryReader::~MemoryReader ()
+{
+}
+
+long MemoryReader::Tell () const
+{
+	return FilePos;
+}
+
+long MemoryReader::Seek (long offset, int origin)
+{
+	switch (origin)
+	{
+	case SEEK_CUR:
+		offset+=FilePos;
+		break;
+
+	case SEEK_END:
+		offset+=Length;
+		break;
+
+	}
+	FilePos=clamp<long>(offset,0,Length-1);
+	return 0;
+}
+
+long MemoryReader::Read (void *buffer, long len)
+{
+	if (len>Length-FilePos) len=Length-FilePos;
+	if (len<0) len=0;
+	memcpy(buffer,bufptr+FilePos,len);
+	FilePos+=len;
+	return len;
 }

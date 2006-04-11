@@ -372,8 +372,10 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
 	if (!(flags4 & MF4_DONTFALL)) flags&=~MF_NOGRAVITY;
 	flags |= MF_DROPOFF;
-	if (flags3 & MF3_ISMONSTER)
-	{ // [RH] Only monsters get to be corpses.
+	if ((flags3 & MF3_ISMONSTER) || RaiseState != NULL)
+	{	// [RH] Only monsters get to be corpses.
+		// Objects with a raise state should get the flag as well so they can
+		// be revived by an Arch-Vile. Batman Doom needs this.
 		flags |= MF_CORPSE;
 	}
 	// [RH] Allow the death height to be overridden using metadata.

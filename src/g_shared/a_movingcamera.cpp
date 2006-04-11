@@ -377,6 +377,8 @@ bool APathFollower::Interpolate ()
 		dz = z;
 	}
 
+	if (CurrNode->Next==NULL) return false;
+
 	UnlinkFromWorld ();
 	if (args[2] & 1)
 	{	// linear
@@ -386,6 +388,8 @@ bool APathFollower::Interpolate ()
 	}
 	else
 	{	// spline
+		if (CurrNode->Next->Next==NULL) return false;
+
 		x = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->x), FIXED2FLOAT(CurrNode->x),
 								FIXED2FLOAT(CurrNode->Next->x), FIXED2FLOAT(CurrNode->Next->Next->x)));
 		y = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->y), FIXED2FLOAT(CurrNode->y),

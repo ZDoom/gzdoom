@@ -12,11 +12,11 @@ public:
 	FileReader (const char *filename);
 	FileReader (FILE *file);
 	FileReader (FILE *file, long length);
-	~FileReader ();
+	virtual ~FileReader ();
 
-	long Tell () const;
-	long Seek (long offset, int origin);
-	long Read (void *buffer, long len);
+	virtual long Tell () const;
+	virtual long Seek (long offset, int origin);
+	virtual long Read (void *buffer, long len);
 	long GetLength () const { return Length; }
 
 	// If you use the underlying FILE without going through this class,
@@ -69,6 +69,7 @@ protected:
 
 private:
 	long CalcFileLen () const;
+protected:
 	bool CloseOnDestruct;
 };
 
@@ -76,7 +77,7 @@ private:
 class FileReaderZ
 {
 public:
-	FileReaderZ (FileReader &file);
+	FileReaderZ (FileReader &file, bool zip=false);
 	~FileReaderZ ();
 
 	long Read (void *buffer, long len);
@@ -131,5 +132,22 @@ private:
 
 	void FillBuffer ();
 };
+
+
+class MemoryReader : public FileReader
+{
+public:
+	MemoryReader (const char *buffer, long length);
+	~MemoryReader ();
+
+	virtual long Tell () const;
+	virtual long Seek (long offset, int origin);
+	virtual long Read (void *buffer, long len);
+
+protected:
+	const char * bufptr;
+};
+
+
 
 #endif

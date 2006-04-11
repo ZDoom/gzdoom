@@ -395,11 +395,7 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	}
 
 	strcpy (subsection, "WeaponSlots");
-	if (SetSection (section))
-	{
-		LocalWeapons.RestoreSlots (*this);
-	}
-	else
+	if (!SetSection (section) || !LocalWeapons.RestoreSlots (*this))
 	{
 		SetupWeaponList (gamename);
 	}

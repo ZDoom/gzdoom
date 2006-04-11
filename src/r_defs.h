@@ -365,6 +365,7 @@ struct sector_t
 	FExtraLight *ExtraLights;
 
 	vertex_t *Triangle[3];	// Three points that can define a plane
+	short						oldspecial;			//jff 2/16/98 remembers if sector WAS secret (automap)
 };
 
 struct ReverbContainer;
@@ -385,6 +386,7 @@ enum
 	WALLF_ABSLIGHTING	= 1,	// Light is absolute instead of relative
 	WALLF_NOAUTODECALS	= 2,	// Do not attach impact decals to this wall
 	WALLF_ADDTRANS		= 4,	// Use additive instead of normal translucency
+	WALLF_AUTOCONTRAST	= 8,	// Automatically handle fake contrast in side_s::GetLightLevel
 };
 
 struct side_s
@@ -607,6 +609,7 @@ public:
 	BYTE bMasked:1;			// Texture (might) have holes
 	BYTE bAlphaTexture:1;	// Texture is an alpha channel without color information
 	BYTE bHasCanvas:1;		// Texture is based off FCanvasTexture
+	BYTE bWarped:2;			// This is a warped texture. Used to avoid multiple warps on one texture
 
 	WORD Rotations;
 

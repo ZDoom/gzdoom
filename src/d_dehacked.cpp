@@ -62,6 +62,7 @@
 #include "decallib.h"
 #include "r_draw.h"
 #include "v_palette.h"
+#include "a_sharedglobal.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -915,7 +916,7 @@ static int PatchThing (int thingy)
 						// Force the top 4 bits to 0 so that the user is forced
 						// to use the mnemonics to change them. And MF_SLIDE doesn't
 						// exist anymore, so 0 that too.
-						value[0] |= atoi(strval) & 0x07ffdfff;
+						value[0] |= atoi(strval) & 0x0fffdfff;
 						vchanged[0] = true;
 					}
 					else
@@ -2289,6 +2290,7 @@ static void UnloadDehSupp ()
 		if (EnglishStrings != NULL)
 		{
 			delete EnglishStrings;
+			EnglishStrings = NULL;
 		}
 	}
 }
@@ -2528,6 +2530,43 @@ void FinishDehPatch ()
 		type->ActorInfo->DoomEdNum = -1;
 
 		DPrintf ("%s replaces %s\n", subclass->Name, type->Name);
+	}
+}
+
+void HandleNoSector()
+{
+	// MF_NOSECTOR is causing problems with monsters so remap it to RF_INVISIBLE 
+	// which in most cases is what this is used for anyway. 
+	// Do this for all actors touched by DEHACKED actors except the teleport spot.
+	unsigned int touchedIndex;
+
+	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
+	{
+		TypeInfo *ti = TouchedActors[touchedIndex];
+
+		if (ti!=NULL && ti->ActorInfo!=NULL && !ti->IsDescendantOf(RUNTIME_CLASS(ATeleportDest)))
+		{
+			AActor * def = GetDefaultByType(ti);
+
+			if (def->flags&MF_NOSECTOR)
+			{
+				def->flags&=~MF_NOSECTOR;
+				def->renderflags|=RF_INVISIBLE;
+			}
+		}
+	}
+	// The BossEye must be handled even without any Dehacked interference
+	// because otherwise it would not react to sound.
+	const TypeInfo * ti = TypeInfo::FindType("BossEye");
+	if (ti!=NULL)
+	{
+		AActor * def = GetDefaultByType(ti);
+
+		if (def->flags&MF_NOSECTOR)
+		{
+			def->flags&=~MF_NOSECTOR;
+			def->renderflags|=RF_INVISIBLE;
+		}
 	}
 }
 

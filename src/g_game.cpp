@@ -75,6 +75,9 @@
 
 #include <zlib.h>
 
+#include "g_hub.h"
+
+
 static FRandom pr_dmspawn ("DMSpawn");
 
 const int SAVEPICWIDTH = 216;
@@ -1607,6 +1610,21 @@ void G_DoLoadGame ()
 
 	SaveVersion = 0;
 
+	// Check whether this savegame actually has been created by a compatible engine.
+	// Since there are ZDoom derivates using the exact same savegame format but
+	// with mutual incompatibilities this check simplifies things significantly.
+	char * engine = M_GetPNGText (png, "Engine");
+	if (engine == NULL || 0 != strcmp (engine, GAMESIG))
+	{
+		// Make a special case for the message printed for old savegames that don't
+		// have this information.
+		if (engine == NULL) Printf ("Savegame is from an incompatible version\n");
+		else Printf ("Savegame is from another ZDoom based engine\n");
+		delete png;
+		fclose (stdfile);
+		return;
+	}
+
 	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 16) ||
 		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
 		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
@@ -1631,6 +1649,9 @@ void G_DoLoadGame ()
 		return;
 	}
 
+	// Read intermission data for hubs
+	G_ReadHubInfo(png);
+
 	bglobal.RemoveAllBots (true);
 
 	text = M_GetPNGText (png, "Important CVARs");
@@ -1642,7 +1663,7 @@ void G_DoLoadGame ()
 	}
 
 	// dearchive all the modifications
-	if (M_FindPNGChunk (png, MAKE_ID('p','t','I','c') == 8))
+	if (M_FindPNGChunk (png, MAKE_ID('p','t','I','c')) == 8)
 	{
 		DWORD time[2];
 		fread (&time, 8, 1, stdfile);
@@ -1825,7 +1846,8 @@ static void PutSaveComment (FILE *file)
 	M_AppendPNGText (file, "Creation Time", comment);
 
 	// Get level name
-	strcpy (comment, level.level_name);
+	//strcpy (comment, level.level_name);
+	sprintf(comment, "%s - %s", level.mapname, level.level_name);
 	len = (WORD)strlen (comment);
 	comment[len] = '\n';
 
@@ -1944,11 +1966,15 @@ void G_DoSaveGame (bool okForQuicksave)
 	SaveVersion = SAVEVER;
 	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
 	M_AppendPNGText (stdfile, "Software", "ZDoom " DOTVERSIONSTR);
+	M_AppendPNGText (stdfile, "Engine", GAMESIG);
 	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
 	M_AppendPNGText (stdfile, "Title", savedescription);
 	M_AppendPNGText (stdfile, "Current Map", level.mapname);
 	PutSaveWads (stdfile);
 	PutSaveComment (stdfile);
+
+	// Intermission stats for hubs
+	G_WriteHubInfo(stdfile);
 
 	{
 		byte vars[4096], *vars_p;
@@ -1986,7 +2012,21 @@ void G_DoSaveGame (bool okForQuicksave)
 	M_FinishPNG (stdfile);
 	fclose (stdfile);
 
-	Printf ("%s\n", GStrings("GGSAVED"));
+	// Check whether the file is ok.
+	bool success = false;
+	stdfile = fopen (savegamefile.GetChars(), "rb");
+	if (stdfile != NULL)
+	{
+		PNGHandle * pngh = M_VerifyPNG(stdfile);
+		if (pngh != NULL)
+		{
+			success=true;
+			delete pngh;
+		}
+		fclose(stdfile);
+	}
+	if (success) Printf ("%s\n", GStrings("GGSAVED"));
+	else Printf(PRINT_HIGH, "Save failed\n");
 
 	BackupSaveName = savegamefile;
 	savegamefile = "";

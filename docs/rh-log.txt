@@ -1,4 +1,98 @@
 April 11, 2006 (Changes by Graf Zahl)
+- Fixed: Strife's dialogs don't give weapons to the player he already has.
+- Fixed: The INDIANA cheat in Hexen gives 25 of each item, not just 1.
+- Fixed: The stair builder's compatibility mode must do a linear search
+  for sectors. Searching the hasch chain doesn't work here.
+- Fixed: Any monster with a TakeSpecialDamage method should call the
+  super class's method instead of simply returning the damage amount.
+- Fixed: Hexen's mash monsters cannot be frozen. No matter how you kill
+  them they just vanish. This means they need the NOICEDEATH flag.
+- Fixed: Morphing a monster must also copy its translucency settings.
+- Fixed: The first Macil must react to weapon fire, even though he 
+  doesn't get hurt by it.
+- Fixed: Anything with a raise state needs the MF_CORPSE flag when dying
+  because otherwise it can't be revived.
+- Fixed: Player names in Heretic, Hexen nand Strife could only be 13
+  characters because the input routine did an unnecessary font size check.
+- Added: After saving the game the savegame should be checked
+  and in case of an error an appropriate message be output.
+- Fixed: The pig player had an initial health of 100, not 30.
+- Fixed: Morphing a player removes the armor after transferring the
+  inventory to the morphed version - but it tried to remove it from the
+  unmorphed player instead.
+- Fixed: Heretic uses Backspace to activate the Tome of Power by default.
+- Fixed: 'Use all' should not try to use puzzle items.
+- Made FileReader's methods virtual. Right now this isn't important
+  but when ZIP support will be added it is needed. Also added a 
+  MemoryReader class that derives from FileReader.
+- Added a pointer check to DI_Acquire and DI_Unacquire. GZDoom definitely
+  had problems with that so it might be a good idea to always check these
+  pointers.
+- Added an engine signature to the savegame. The inability to distinguish
+  between ZDoom and GZDoom savegames constantly forced me to use some ugly 
+  tricks which broke the versioning system. This may also be useful for
+  other derivates that have to save additional data in a savegame.
+- Due to the savegame version bump I removed all compatibility code.
+- I had to bump the minimum savegame version because I got some strange
+  effects with old savegames. On the positive side, this allows me to
+  do a few more radical changes to the savegame code. ;)
+- Fixed: CanvasTextures weren't saved in a savegame.
+- Fixed: Multiple warp commands for the same texture were cumulative.
+- Changed FPatchTexture::MakeTexture and FIMGZTexture::MakeTexture so they
+  don't re-initialize the texture's size information repeatedly. This can
+  cause problems if code was added that manipulates these values after loading
+  the textures.
+- Changed FPatchTexture::GetDimensions to use ReopenLumpNum instead of
+  OpenLumpNum. Once ZIP handling is added the current code won't work anymore
+  without adding a highly expensive copy operator to FWadLump.
+- Added Transfer_WallLight special. This is similar to Transfer_Floor/Ceilinglight
+  but affects walls instead.
+- Fixed: P_TestActivateLine must check whether a valid actor is trying
+  to activate the line.
+- Added a check for MF2_NOTELEPORT to the special activation check for
+  Booms generic triggers. This excludes most items from activating these
+  lines that are not supposed to do that.
+- Added a sv_dropstyle CVAR so that the way items are dropped is no longer
+  dependent on the game being played.
+- Added MF4_FRIGHTENED flag from .96x.
+- Added a CVAR that disables the automap background graphic in Heretic
+  and Hexen.
+- Added more color options to the automap, including the option to show
+  secrets.
+- Added menu option for the monster movement interpolation CVAR.
+- Fixed: Strife's grenades don't make bouncing sounds.
+- Fixed: Strife's grenades lose 50% of their momentum when bouncing,
+  not 30% like in Hexen.
+- Fixed: HexenHack must be reset for each MAPINFO lump being parsed.
+- Turned monster falling damage into a level flag so that it can be
+  used in all games, not just Hexen.
+- Added the map's lump name to the savegame information. This is useful
+  for those who remember maps by their lump name and not the description.
+- Added a total game time counter and made the total time display on
+  the intermission screen operrable. Also added an optional total time
+  display for the automap.
+- Added support for full hub intermission statistics. To make this work
+  properly level.time is now being reset after changing hubs.
+- Added GZDoom's local SNDINFO/SNDSEQ code. This was supposed to be in
+  .96x but that was cancelled before I had the chance.
+- Made DCanvas::FlatFill virtual so it can be overridden by other
+  types of canvases (e.g. OpenGL.)
+- Fixed: CR_UNTRANSLATED was uninitialized for FON2 fonts
+- Fixed: Hexen uses a view height of 48, not 41.
+- Changed: Multiplayer weapons will be spawned in coop games now
+  unless the player explicitly disables this. There are many WADs
+  out there that need the additional weapons in coop games.
+- Added code that remaps MF_NOSECTOR to RF_INVISIBLE for all items
+  touched by Dehacked and for ABossEye. MF_NOSECTOR makes any
+  item completely deaf so it is very dangerous to use with monsters
+  or other things that depend on their sound target.
+- Fixed: The Dehacked code cleared one of the translation flags.
+- Fixed: The dehacked parser must set EnglishStrings to NULL after
+  freeing the memory.
+- Copied a fix for restoring the weapon slots from 2.1.0.
+- Fixed: APathFollower::Interpolate needs some NULL pointer checks.
+- Added MF2_NOTELEPORT to ABlood and AIceChunk. Teleporting blood can 
+  seriously mess up one-time teleporters - plus it looks just weird.
 - Fixed: It was possible to use things through closed walls when the wall
   was further away than 64 map units.
 - Added a check for MF3_BLOODLESSIMPACT to P_LineAttack so that bloodless

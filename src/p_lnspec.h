@@ -56,6 +56,7 @@ typedef enum {
 	Door_Animated = 14,
 
 	Autosave = 15,	// [RH] Save the game *now*
+	Transfer_WallLight = 16,
 
 	Floor_LowerByValue = 20,
 	Floor_LowerToLowest = 21,

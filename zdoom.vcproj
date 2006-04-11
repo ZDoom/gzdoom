@@ -693,6 +693,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\src\g_hub.cpp">
+			</File>
+			<File
 				RelativePath=".\src\g_level.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -1893,6 +1896,9 @@
 			</File>
 			<File
 				RelativePath=".\src\g_game.h">
+			</File>
+			<File
+				RelativePath=".\src\g_hub.h">
 			</File>
 			<File
 				RelativePath=".\src\g_level.h">

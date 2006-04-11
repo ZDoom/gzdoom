@@ -210,6 +210,8 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF4, ALLOWPARTICLES, AActor, flags4),
 	DEFINE_FLAG(MF4, EXTREMEDEATH, AActor, flags4),
 	DEFINE_FLAG(MF4, NOEXTREMEDEATH, AActor, flags4),
+	DEFINE_FLAG(MF4, FRIGHTENED, AActor, flags4),
+	DEFINE_FLAG(MF4, NOBOUNCESOUND, AActor, flags4),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -2668,6 +2670,15 @@ static void ActorBloodColor (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorBounceFactor (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetFloat ();
+	defaults->bouncefactor = sc_Float * FRACUNIT;
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorMinMissileChance (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetNumber ();
@@ -3227,6 +3238,7 @@ static const ActorProps props[] =
 	{ "armor.savepercent",			(apf)ArmorSavePercent,		RUNTIME_CLASS(AActor) },
 	{ "attacksound",				ActorAttackSound,			RUNTIME_CLASS(AActor) },
 	{ "bloodcolor",					ActorBloodColor,			RUNTIME_CLASS(AActor) },
+	{ "bouncefactor",				ActorBounceFactor,			RUNTIME_CLASS(AActor) },
 	{ "burn",						ActorBurnState,				RUNTIME_CLASS(AActor) },
 	{ "burnheight",					ActorBurnHeight,			RUNTIME_CLASS(AActor) },
 	{ "clearflags",					ActorClearFlags,			RUNTIME_CLASS(AActor) },
@@ -3424,3 +3436,5 @@ void FinishThingdef()
 		}
 	}
 }
+
+

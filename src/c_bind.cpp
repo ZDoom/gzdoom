@@ -124,6 +124,12 @@ static const FBinding DefRavenBindings[] =
 	{ NULL }
 };
 
+static const FBinding DefHereticBindings[] =
+{
+	{ "backspace", "use ArtiTomeOfPower" },
+	{ NULL }
+};
+
 static const FBinding DefHexenBindings[] =
 {
 	{ "/", "+jump" },
@@ -489,6 +495,11 @@ void C_BindDefaults ()
 	if (gameinfo.gametype & (GAME_Raven|GAME_Strife))
 	{
 		SetBinds (DefRavenBindings);
+	}
+
+	if (gameinfo.gametype == GAME_Heretic)
+	{
+		SetBinds (DefHereticBindings);
 	}
 
 	if (gameinfo.gametype == GAME_Hexen)

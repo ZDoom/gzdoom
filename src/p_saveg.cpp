@@ -126,7 +126,8 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->sky
 			<< sec->MoreFlags
 			<< sec->FloorSkyBox << sec->CeilingSkyBox
-			<< sec->ZoneNumber;
+			<< sec->ZoneNumber
+			<< sec->oldspecial;
 		if (arc.IsStoring ())
 		{
 			arc << sec->ColorMap->Color

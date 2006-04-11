@@ -93,14 +93,6 @@ void DScroller::Serialize (FArchive &arc)
 		<< m_LastHeight
 		<< m_vdx << m_vdy
 		<< m_Accel;
-	if (SaveVersion < 228)
-	{
-		if (m_Type == sc_carry)
-		{
-			m_dx = FixedDiv (m_dx, CARRYFACTOR);
-			m_dy = FixedDiv (m_dy, CARRYFACTOR);
-		}
-	}
 }
 
 DPusher::DPusher ()
@@ -218,14 +210,21 @@ static void P_InitAnimDefs ()
 				int picnum = TexMan.CheckForTexture (sc_String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
 				if (picnum != -1)
 				{
-					FTexture *warper;
-					if (type2)	// [GRB]
-						warper = new FWarp2Texture (TexMan[picnum]);
-					else
-						warper = new FWarpTexture (TexMan[picnum]);
-					TexMan.ReplaceTexture (picnum, warper, false);
+					FTexture * warper = TexMan[picnum];
 
-					// No decals on warping textures, by default
+					// don't warp a texture more than once
+					if (!warper->bWarped)
+					{
+						if (type2)	// [GRB]
+							warper = new FWarp2Texture (warper);
+						else
+							warper = new FWarpTexture (warper);
+						TexMan.ReplaceTexture (picnum, warper, false);
+					}
+
+					// No decals on warping textures, by default.
+					// Warping information is taken from the last warp 
+					// definition for this texture.
 					warper->bNoDecals = true;
 					if (SC_GetString ())
 					{
@@ -818,7 +817,7 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	if (activationType == SPAC_OTHERCROSS)
 	{
 		if (lineActivation == SPAC_CROSS && line->special >= Generic_Floor &&
-			line->special <= Generic_Crusher)
+			line->special <= Generic_Crusher && !(mo->flags2&MF2_NOTELEPORT))
 		{
 			return (line->flags & ML_MONSTERSCANACTIVATE) != 0;
 		}
@@ -829,7 +828,7 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{ 
 		return false;
 	}
-	if (!mo->player &&
+	if (mo && !mo->player &&
 		!(mo->flags & MF_MISSILE) &&
 		!(line->flags & ML_MONSTERSCANACTIVATE) &&
 		(activationType != SPAC_MCROSS || lineActivation != SPAC_MCROSS))
@@ -1302,6 +1301,95 @@ void DLightTransfer::DoTransfer (BYTE level, int target, bool floor)
 	}
 }
 
+
+class DWallLightTransfer : public DThinker
+{
+	enum
+	{
+		WLF_SIDE1=1,
+		WLF_SIDE2=2,
+		WLF_NOFAKECONTRAST=4
+	};
+
+	DECLARE_ACTOR (DWallLightTransfer, DThinker)
+public:
+	DWallLightTransfer (sector_t *srcSec, int target, BYTE flags);
+	void Serialize (FArchive &arc);
+	void Tick ();
+
+protected:
+	static void DoTransfer (BYTE level, int target, BYTE flags);
+
+	BYTE LastLight;
+	BYTE Flags;
+	sector_t *Source;
+	int TargetID;
+};
+
+IMPLEMENT_CLASS (DWallLightTransfer)
+
+void DWallLightTransfer::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << LastLight << Source << TargetID << Flags;
+}
+
+DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, BYTE flags)
+{
+	int linenum;
+	int wallflags;
+
+	Source = srcSec;
+	TargetID = target;
+	Flags = flags;
+	DoTransfer (LastLight = srcSec->lightlevel, target, Flags);
+
+	if (!(flags&WLF_NOFAKECONTRAST)) wallflags = WALLF_AUTOCONTRAST|WALLF_ABSLIGHTING;
+	else wallflags = WALLF_ABSLIGHTING;
+
+	for (linenum = -1; (linenum = P_FindLineFromID (target, linenum)) >= 0; )
+	{
+		if (flags & WLF_SIDE1 && lines[linenum].sidenum[0]!=NO_SIDE)
+			sides[lines[linenum].sidenum[0]].Flags |= wallflags;
+
+		if (flags & WLF_SIDE2 && lines[linenum].sidenum[1]!=NO_SIDE)
+			sides[lines[linenum].sidenum[1]].Flags |= wallflags;
+	}
+	ChangeStatNum(STAT_LIGHTTRANSFER);
+}
+
+void DWallLightTransfer::Tick ()
+{
+	BYTE light = Source->lightlevel;
+
+	if (light != LastLight)
+	{
+		LastLight = light;
+		DoTransfer (light, TargetID, Flags);
+	}
+}
+
+void DWallLightTransfer::DoTransfer (BYTE lightlevel, int target, BYTE flags)
+{
+	int linenum;
+
+	for (linenum = -1; (linenum = P_FindLineFromID (target, linenum)) >= 0; )
+	{
+		line_t * line = &lines[linenum];
+
+		if (flags & WLF_SIDE1 && line->sidenum[0]!=NO_SIDE)
+		{
+			sides[line->sidenum[0]].Light = (BYTE)lightlevel;
+		}
+
+		if (flags & WLF_SIDE2 && line->sidenum[1]!=NO_SIDE)
+		{
+			sides[line->sidenum[1]].Light = (BYTE)lightlevel;
+		}
+	}
+}
+
+
 //
 // P_SpawnSpecials
 //
@@ -1501,6 +1589,12 @@ void P_SpawnSpecials (void)
 		// ceiling lighting independently
 		case Transfer_CeilingLight:
 			new DLightTransfer (sides[*lines[i].sidenum].sector, lines[i].args[0], false);
+			break;
+
+		// [Graf Zahl] Add support for setting lighting
+		// per wall independently
+		case Transfer_WallLight:
+			new DWallLightTransfer (sides[*lines[i].sidenum].sector, lines[i].args[0], lines[i].args[1]);
 			break;
 
 		// [RH] ZDoom Static_Init settings

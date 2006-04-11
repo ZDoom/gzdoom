@@ -56,6 +56,7 @@ EXTERN_CVAR (Bool, am_showmonsters)
 EXTERN_CVAR (Bool, am_showsecrets)
 EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showtime)
+EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Bool, hud_scale)
 
@@ -1146,16 +1147,24 @@ void FBaseStatusBar::Draw (EHudState state)
 	else if (automapactive)
 	{
 		int y, i, time = level.time / TICRATE, height;
+		int totaltime = level.totaltime / TICRATE;
 		EColorRange highlight = (gameinfo.gametype == GAME_Doom) ?
 			CR_UNTRANSLATED : CR_YELLOW;
 
 		height = screen->Font->GetHeight () * CleanYfac;
 
 		// Draw timer
+		y = 8;
 		if (am_showtime)
 		{
 			sprintf (line, "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);	// Time
-			screen->DrawText (CR_GREY, SCREENWIDTH - 80*CleanXfac, 8, line, DTA_CleanNoMove, true, TAG_DONE);
+			screen->DrawText (CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
+			y+=8*CleanYfac;
+		}
+		if (am_showtotaltime)
+		{
+			sprintf (line, "%02d:%02d:%02d", totaltime/3600, (totaltime%3600)/60, totaltime%60);	// Total time
+			screen->DrawText (CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
 		}
 
 		// Draw map name

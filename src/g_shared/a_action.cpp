@@ -34,7 +34,7 @@ IMPLEMENT_ACTOR (AIceChunk, Any, -1, 0)
 	PROP_RadiusFixed (3)
 	PROP_HeightFixed (4)
 	PROP_Flags (MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH|MF2_FLOORCLIP)
+	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH|MF2_FLOORCLIP|MF2_NOTELEPORT)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -222,7 +222,7 @@ void A_FreezeDeathChunks (AActor *actor)
 	}
 	if (actor->player)
 	{ // attach the player's view to a chunk of ice
-		AIceChunkHead *head = Spawn<AIceChunkHead> (actor->x, actor->y, actor->z+VIEWHEIGHT);
+		AIceChunkHead *head = Spawn<AIceChunkHead> (actor->x, actor->y, actor->z + actor->player->defaultviewheight);
 		head->momz = FixedDiv(head->z-actor->z, actor->height)<<2;
 		head->momx = pr_freeze.Random2 () << (FRACBITS-7);
 		head->momy = pr_freeze.Random2 () << (FRACBITS-7);

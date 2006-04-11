@@ -543,8 +543,9 @@ void P_NewChaseDir (AActor *actor)
 	deltay = actor->target->y - actor->y;
 
 	// [RH] Make monsters run away from frightening players
-	if (actor->target->player != NULL &&
-		(actor->target->player->cheats & CF_FRIGHTENING))
+	if ((actor->target->player != NULL &&
+		(actor->target->player->cheats & CF_FRIGHTENING)) ||
+		actor->flags4 & MF4_FRIGHTENED)
 	{
 		deltax = -deltax;
 		deltay = -deltay;
@@ -1709,6 +1710,11 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			}
 			actor->target = NULL;
 			actor->flags |= MF_JUSTATTACKED;
+			if (actor->goal != NULL && actor->goal->args[1] != 0)
+			{
+				actor->flags4 |= MF4_INCOMBAT;
+				actor->SetState (actor->SpawnState);
+			}
 			actor->flags &= ~MF_INCHASE;
 			return;
 		}
@@ -1749,8 +1755,9 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	}
 
 	// [RH] Scared monsters attack less frequently
-	if (actor->target->player == NULL ||
-		!(actor->target->player->cheats & CF_FRIGHTENING) ||
+	if (((actor->target->player == NULL ||
+		!(actor->target->player->cheats & CF_FRIGHTENING)) &&
+		!(actor->flags4 & MF4_FRIGHTENED)) ||
 		pr_scaredycat() < 43)
 	{
 		// check for melee attack
@@ -1969,6 +1976,7 @@ void A_XXScream (AActor *actor)
 // PROC P_DropItem
 //
 //---------------------------------------------------------------------------
+CVAR(Int, sv_dropstyle, 0, CVAR_SERVERINFO | CVAR_ARCHIVE);
 
 AInventory *P_DropItem (AActor *source, const TypeInfo *type, int special, int chance)
 {
@@ -1980,7 +1988,10 @@ AInventory *P_DropItem (AActor *source, const TypeInfo *type, int special, int c
 		spawnz = source->z;
 		if (!(compatflags & COMPATF_NOTOSSDROPS))
 		{
-			if (gameinfo.gametype == GAME_Strife)
+			int style = sv_dropstyle;
+			if (style==0) style= (gameinfo.gametype == GAME_Strife)? 2:1;
+			
+			if (style==2)
 			{
 				spawnz += 24*FRACUNIT;
 			}
@@ -2031,7 +2042,10 @@ AInventory *P_DropItem (AActor *source, const TypeInfo *type, int special, int c
 
 void P_TossItem (AActor *item)
 {
-	if (gameinfo.gametype == GAME_Strife)
+	int style = sv_dropstyle;
+	if (style==0) style= (gameinfo.gametype == GAME_Strife)? 2:1;
+	
+	if (style==2)
 	{
 		item->momx += pr_dropitem.Random2(7) << FRACBITS;
 		item->momy += pr_dropitem.Random2(7) << FRACBITS;

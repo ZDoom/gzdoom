@@ -2060,7 +2060,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 			while (item != NULL)
 			{
 				AInventory *next = item->Inventory;
-				if (item->ItemFlags & IF_INVBAR)
+				if (item->ItemFlags & IF_INVBAR && !(item->IsKindOf(RUNTIME_CLASS(APuzzleItem))))
 				{
 					players[player].mo->UseInventory (item);
 				}

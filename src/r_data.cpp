@@ -746,9 +746,10 @@ FTexture::FTexture ()
 : LeftOffset(0), TopOffset(0),
   WidthBits(0), HeightBits(0), ScaleX(8), ScaleY(8),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
-  bMasked(true), bAlphaTexture(false), bHasCanvas(false),
+  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0),
   Rotations(0xFFFF), Width(0xFFFF), Height(0), WidthMask(0)
 {
+	*Name=0;
 }
 
 FTexture::~FTexture ()
@@ -1127,22 +1128,26 @@ const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_ou
 
 void FPatchTexture::GetDimensions ()
 {
-	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	// Wads.OpenLumpNum cannot be used here once Zip support has been added.
+	// To work correctly it needs an assignment operator which
+	// would cause considerable overhead elsewhere where it isn't needed.
+	FWadLump * lump = Wads.ReopenLumpNum (SourceLump);
 	patch_t dummy;
 
-	lump >> dummy.width >> dummy.height;
+	(*lump) >> dummy.width >> dummy.height;
 
 	if (dummy.width <= 0 || dummy.height <= 0 || dummy.width > 2048 || dummy.height > 2048)
 	{
-		lump = Wads.OpenLumpName ("-BADPATC");
-		lump >> dummy.width >> dummy.height;
+		lump = Wads.ReopenLumpNum ( Wads.GetNumForName("-BADPATC") );
+		(*lump) >> dummy.width >> dummy.height;
 	}
 
-	lump >> dummy.leftoffset >> dummy.topoffset;
+	(*lump) >> dummy.leftoffset >> dummy.topoffset;
 	Width = dummy.width;
 	Height = dummy.height;
 	LeftOffset = dummy.leftoffset;
 	TopOffset = dummy.topoffset;
+	delete lump;
 
 	CalcBitSize ();
 }
@@ -1175,10 +1180,13 @@ void FPatchTexture::MakeTexture ()
 		Printf (PRINT_BOLD, "Patch %s is too big.\n", Name);
 	}
 
-	Width = LittleShort(patch->width);
-	Height = LittleShort(patch->height);
-	LeftOffset = LittleShort(patch->leftoffset);
-	TopOffset = LittleShort(patch->topoffset);
+	if (Width == 0xFFFF)
+	{
+		Width = LittleShort(patch->width);
+		Height = LittleShort(patch->height);
+		LeftOffset = LittleShort(patch->leftoffset);
+		TopOffset = LittleShort(patch->topoffset);
+	}
 	CalcBitSize ();
 
 	// Add a little extra space at the end if the texture's height is not
@@ -1643,10 +1651,13 @@ void FIMGZTexture::MakeTexture ()
 	const ImageHeader *imgz = (const ImageHeader *)lump.GetMem();
 	const BYTE *data = (const BYTE *)&imgz[1];
 
-	Width = LittleShort(imgz->Width);
-	Height = LittleShort(imgz->Height);
-	LeftOffset = LittleShort(imgz->LeftOffset);
-	TopOffset = LittleShort(imgz->TopOffset);
+	if (Width != 0xFFFF)
+	{
+		Width = LittleShort(imgz->Width);
+		Height = LittleShort(imgz->Height);
+		LeftOffset = LittleShort(imgz->LeftOffset);
+		TopOffset = LittleShort(imgz->TopOffset);
+	}
 
 	BYTE *dest_p;
 	int dest_adv = Height;
@@ -2331,6 +2342,7 @@ FWarpTexture::FWarpTexture (FTexture *source)
 	ScaleY = source->ScaleY;
 	bNoDecals = source->bNoDecals;
 	Rotations = source->Rotations;
+	bWarped = 1;
 }
 
 FWarpTexture::~FWarpTexture ()
@@ -2454,6 +2466,7 @@ void FWarpTexture::MakeTexture (DWORD time)
 FWarp2Texture::FWarp2Texture (FTexture *source)
 : FWarpTexture (source)
 {
+	bWarped = 2;
 }
 
 void FWarp2Texture::MakeTexture (DWORD time)

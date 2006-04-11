@@ -130,7 +130,7 @@ FState APigPlayer::States[] =
 };
 
 IMPLEMENT_ACTOR (APigPlayer, Hexen, -1, 0)
-	PROP_SpawnHealth (100)
+	PROP_SpawnHealth (30)
 	PROP_ReactionTime (0)
 	PROP_PainChance (255)
 	PROP_RadiusFixed (16)

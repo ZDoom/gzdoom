@@ -241,10 +241,7 @@ void AActor::Serialize (FArchive &arc)
 		{
 			picnum = TexMan.ReadTexture (arc);
 		}
-		if (SaveVersion >= 227)
-		{
-			floorpic = TexMan.ReadTexture (arc);
-		}
+		floorpic = TexMan.ReadTexture (arc);
 	}
 	arc << TIDtoHate;
 	if (TIDtoHate == 0)
@@ -264,12 +261,8 @@ void AActor::Serialize (FArchive &arc)
 		<< floorz
 		<< ceilingz
 		<< dropoffz
-		<< floorsector;
-	if (SaveVersion < 227)
-	{
-		arc << floorpic;
-	}
-	arc << radius
+		<< floorsector
+		<< radius
 		<< height
 		<< momx
 		<< momy
@@ -330,24 +323,18 @@ void AActor::Serialize (FArchive &arc)
 		<< IDeathState
 		<< EDeathState
 		<< RaiseState
-		<< WoundState;
-	if (SaveVersion >= 230)
-	{
-		arc << MaxDropOffHeight << MaxStepHeight;
-	}
-	if (SaveVersion >= 229)
-	{
-		arc << HealState
-			<< YesState
-			<< NoState
-			<< GreetingsState
-			<< meleerange
-			<< CrushState;
-	}
-	if (SaveVersion >= 224)
-	{
-		arc << DamageType;
-	}
+		<< WoundState
+		<< HealState
+		<< YesState
+		<< NoState
+		<< GreetingsState
+		<< CrushState
+		<< MaxDropOffHeight 
+		<< MaxStepHeight
+		<< bouncefactor
+		<< meleerange
+		<< DamageType;
+
 	if (arc.IsStoring ())
 	{
 		int convnum = 0;
@@ -355,8 +342,6 @@ void AActor::Serialize (FArchive &arc)
 
 		if (Conversation != NULL)
 		{
-			if (strcmp (Conversation->SpeakerName, "RICHTER") == 0)
-				Conversation = Conversation;
 			for (i = 0; i < StrifeDialogues.Size(); ++i)
 			{
 				if (StrifeDialogues[i] == GetDefault()->Conversation)
@@ -1080,12 +1065,13 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	}
 
 	// The reflected velocity keeps only about 70% of its original speed
-	momx = MulScale30 (momx - MulScale15 (plane.a, dot), 751619277);
-	momy = MulScale30 (momy - MulScale15 (plane.b, dot), 751619277);
-	momz = MulScale30 (momz - MulScale15 (plane.c, dot), 751619277);
+	long bouncescale = 0x4000 * bouncefactor;
+	momx = MulScale30 (momx - MulScale15 (plane.a, dot), bouncescale);
+	momy = MulScale30 (momy - MulScale15 (plane.b, dot), bouncescale);
+	momz = MulScale30 (momz - MulScale15 (plane.c, dot), bouncescale);
 	angle = R_PointToAngle2 (0, 0, momx, momy);
 
-	if (SeeSound)
+	if (SeeSound && !(flags4 & MF4_NOBOUNCESOUND))
 	{
 		S_SoundID (this, CHAN_VOICE, SeeSound, 1, ATTN_IDLE);
 	}
@@ -1703,7 +1689,7 @@ void P_MonsterFallingDamage (AActor *mo)
 	int damage;
 	int mom;
 
-	if (gameinfo.gametype != GAME_Hexen)
+	if (!(level.flags&LEVEL_MONSTERFALLINGDAMAGE))
 		return;
 
 	mom = abs(mo->momz);
@@ -1734,7 +1720,7 @@ void P_ZMovement (AActor *mo)
 	if (mo->player && mo->player->mo == mo && mo->z < mo->floorz)
 	{
 		mo->player->viewheight -= mo->floorz - mo->z;
-		mo->player->deltaviewheight = (VIEWHEIGHT - mo->player->viewheight)>>3;
+		mo->player->deltaviewheight = mo->player->GetDeltaViewHeight();
 	}
 
 	if (!(mo->flags2&MF2_FLOATBOB)) mo->z += mo->momz;
@@ -2730,7 +2716,7 @@ void AActor::Tick ()
 					if (player && player->mo == this)
 					{
 						player->viewheight -= onmo->z + onmo->height - z;
-						fixed_t deltaview = (VIEWHEIGHT - player->viewheight)>>3;
+						fixed_t deltaview = player->GetDeltaViewHeight();
 						if (deltaview > player->deltaviewheight)
 						{
 							player->deltaviewheight = deltaview;
@@ -2935,6 +2921,7 @@ BEGIN_DEFAULTS (AActor, Any, -1, 0)
 	PROP_MeleeRange(44)		// MELEERANGE(64) - 20
 	PROP_MaxDropOffHeight(24)
 	PROP_MaxStepHeight(24)
+	PROP_BounceFactor(FRACUNIT*7/10)
 END_DEFAULTS
 
 //==========================================================================
@@ -3222,7 +3209,7 @@ void AActor::AdjustFloorClip ()
 	if (player && player->mo == this && oldclip != floorclip)
 	{
 		player->viewheight -= oldclip - floorclip;
-		player->deltaviewheight = (VIEWHEIGHT - player->viewheight) >> 3;
+		player->deltaviewheight = player->GetDeltaViewHeight();
 	}
 }
 
@@ -3349,7 +3336,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	p->morphTics = 0;
 	p->extralight = 0;
 	p->fixedcolormap = 0;
-	p->viewheight = VIEWHEIGHT;
+	p->viewheight = p->defaultviewheight = gameinfo.gametype == GAME_Hexen? 48*FRACUNIT : 41*FRACUNIT;
 	p->inconsistant = 0;
 	p->attacker = NULL;
 	p->spreecount = 0;
@@ -3666,8 +3653,8 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	if (deathmatch && info->flags & MF_NOTDMATCH)
 		return;
 
-	// [RH] don't spawn extra weapons in coop
-	if (multiplayer && !deathmatch)
+	// [RH] don't spawn extra weapons in coop if so desired
+	if (multiplayer && !deathmatch && (dmflags&DF_NO_COOP_WEAPON_SPAWN))
 	{
 		if (i->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 		{

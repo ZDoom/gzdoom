@@ -316,6 +316,7 @@ IMPLEMENT_ACTOR (AAcolyteToBe, Strife, 201, 0)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (56)
 	PROP_StrifeType (29)
+	PROP_Tag ("PEASANT")
 
 	PROP_DeathSound ("becoming/death")
 END_DEFAULTS

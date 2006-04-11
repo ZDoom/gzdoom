@@ -358,7 +358,7 @@ int FFont::SimpleTranslation (byte *colorsused, byte *translation, byte *reverse
 	memset (translation, 0, 256);
 
 	reverse[0] = 0;
-	for (i = 0, j = 1; i < 256; i++)
+	for (i = 1, j = 1; i < 256; i++)
 	{
 		if (colorsused[i])
 		{
@@ -384,7 +384,7 @@ int FFont::SimpleTranslation (byte *colorsused, byte *translation, byte *reverse
 			min = (*luminosity)[i];
 	}
 	diver = 1.0 / (max - min);
-	for (i = 0; i < j; i++)
+	for (i = 1; i < j; i++)
 	{
 		(*luminosity)[i] = ((*luminosity)[i] - min) * diver;
 	}
@@ -872,6 +872,8 @@ void FSingleLumpFont::BuildTranslations2 ()
 			*range++ = ColorMatcher.Pick (r, g, b);
 		}
 	}
+	// Make CR_UNTRANSLATED a valid translation!
+	memcpy(range, range-ActiveColors, ActiveColors);
 }
 
 FFontChar1::FFontChar1 (int sourcelump, const BYTE *sourceremap)

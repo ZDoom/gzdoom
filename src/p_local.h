@@ -35,7 +35,6 @@
 
 #define MAXHEALTH		(deh.MaxHealth)		//100
 #define MAXMORPHHEALTH	30
-#define VIEWHEIGHT		(41*FRACUNIT)
 
 #define BONUSADD		6
 

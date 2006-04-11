@@ -926,11 +926,12 @@ CCMD (addslotdefault)
 	}
 }
 
-void FWeaponSlots::RestoreSlots (FConfigFile &config)
+int FWeaponSlots::RestoreSlots (FConfigFile &config)
 {
 	char buff[MAX_WEAPONS_PER_SLOT*64];
 	const char *key, *value;
 	int slot;
+	int slotsread = 0;
 
 	buff[sizeof(buff)-1] = 0;
 
@@ -960,7 +961,9 @@ void FWeaponSlots::RestoreSlots (FConfigFile &config)
 			Slots[slot].AddWeapon (tok);
 			tok = strtok (NULL, " ");
 		}
+		slotsread++;
 	}
+	return slotsread;
 }
 
 void FWeaponSlots::SaveSlots (FConfigFile &config)

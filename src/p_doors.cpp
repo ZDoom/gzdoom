@@ -631,12 +631,6 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec)
 
 void DAnimatedDoor::Serialize (FArchive &arc)
 {
-	// If you have a pre-224 savegame with an active animated door, then you're out
-	// of luck.
-	if (SaveVersion < 224)
-	{
-		I_Error ("Can't load pre-2.0.93 savegames with active animated doors.\n");
-	}
 	Super::Serialize (arc);
 	arc << m_Line1 << m_Line2
 		<< m_Frame

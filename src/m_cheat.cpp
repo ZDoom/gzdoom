@@ -311,7 +311,10 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_ALLARTI:
-		cht_Give (player, "artifacts");
+		for (int i=0;i<25;i++)
+		{
+			cht_Give (player, "artifacts");
+		}
 		msg = GStrings("TXT_CHEATARTIFACTS3");
 		break;
 

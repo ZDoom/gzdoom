@@ -369,13 +369,27 @@ static void AssignHexenTranslations (void)
 //
 //==========================================================================
 
-void S_ParseSndSeq (void)
+void S_ParseSndSeq (int levellump)
 {
 	int lastlump, lump;
 	char name[MAX_SNDNAME+1];
 	int stopsound;
 	int cursize;
 	int curseq = -1;
+
+	// First free the old SNDSEQ data. This allows us to reload this for each level
+	// and specify a level specific SNDSEQ lump!
+	if (Sequences)
+	{
+		for (int i=0;i<NumSequences;i++)
+		{
+			if (Sequences[i]) free(Sequences[i]);
+		}
+		free(Sequences);
+	}
+
+	NumSequences=MaxSequences=0;
+	Sequences=NULL;	// must be reinitialized every level!
 
 	// be gone, compiler warnings
 	cursize = 0;
@@ -387,8 +401,13 @@ void S_ParseSndSeq (void)
 	ScriptTemp = (unsigned int *)Malloc (MAX_SEQSIZE * sizeof(*ScriptTemp));
 	ScriptTempSize = MAX_SEQSIZE;
 
-	while ((lump = Wads.FindLump ("SNDSEQ", &lastlump)) != -1)
+	while (((lump = Wads.FindLump ("SNDSEQ", &lastlump)) != -1 || levellump!=-1) && levellump!=-2)
 	{
+		if (lump==-1)
+		{
+			lump=levellump;
+			levellump=-2;
+		}
 		SC_OpenLumpNum (lump, "SNDSEQ");
 		while (SC_GetString ())
 		{
@@ -940,3 +959,4 @@ void DSeqNode::ChangeData (int seqOffset, int delayTics, float volume, int curre
 	m_SequencePtr += seqOffset;
 	m_CurrentSoundID = currentSoundID;
 }
+

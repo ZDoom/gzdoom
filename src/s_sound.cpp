@@ -50,6 +50,7 @@
 #include "vectors.h"
 #include "gi.h"
 #include "templates.h"
+#include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -264,6 +265,10 @@ void S_NoiseDebug (void)
 	BorderNeedRefresh = screen->GetPageCount ();
 }
 
+static string LastLocalSndInfo = "";
+static string LastLocalSndSeq = "";
+void S_AddLocalSndInfo(int lump);
+
 //==========================================================================
 //
 // S_Init
@@ -278,6 +283,10 @@ void S_Init ()
 	int curvelump;
 
 	Printf ("S_Init\n");
+
+	// remove old data (S_Init can be called multiple times!)
+	LastLocalSndInfo = LastLocalSndSeq = "";
+	if (SoundCurve) delete [] SoundCurve;
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
 	curvelump = Wads.CheckNumForName ("SNDCURVE");
@@ -305,7 +314,7 @@ void S_Init ()
 	}
 
 	// [RH] Read in sound sequences
-	S_ParseSndSeq ();
+	S_ParseSndSeq (-1);
 
 	// Allocating the virtual channels
 	numChannels = GSnd ? GSnd->SetChannels (snd_channels) : 0;
@@ -345,13 +354,59 @@ void S_Start ()
 {
 	int cnum;
 
-	// kill all playing sounds at start of level (trust me - a good idea)
-	for (cnum = 0; cnum < numChannels; cnum++)
+	if (GSnd)
 	{
-		if (Channel[cnum].sfxinfo)
+		// kill all playing sounds at start of level (trust me - a good idea)
+		for (cnum = 0; cnum < numChannels; cnum++)
 		{
-			S_StopChannel (cnum);
+			if (Channel[cnum].sfxinfo)
+			{
+				S_StopChannel (cnum);
+			}
 		}
+		
+		// Check for local sound definitions. Only reload if they differ
+		// from the previous ones.
+		
+		// To be certain better check whether level is valid!
+		char * LocalSndInfo= level.info? level.info->soundinfo : (char*)"";
+		char * LocalSndSeq = level.info? level.info->sndseq : (char*)"";
+		bool parse_ss=false;
+
+		// This level uses a different local SNDINFO
+		if (LastLocalSndInfo.CompareNoCase(LocalSndInfo) != 0 || !level.info)
+		{
+			// First delete the old sound list
+			for(unsigned i=1;i<S_sfx.Size();i++) 
+			{
+				GSnd->UnloadSound(&S_sfx[i]);
+			}
+			
+			// Parse the global SNDINFO
+			S_ParseSndInfo();
+		
+			if (*LocalSndInfo)
+			{
+				// Now parse the local SNDINFO
+				int j = Wads.CheckNumForName(LocalSndInfo);
+				if (j>=0) S_AddLocalSndInfo(j);
+			}
+
+			// Also reload the SNDSEQ if the SNDINFO was replaced!
+			parse_ss=true;
+		}
+		else if (LastLocalSndSeq.CompareNoCase(LocalSndSeq) != 0)
+		{
+			parse_ss=true;
+		}
+		if (parse_ss)
+		{
+			S_ParseSndSeq(*LocalSndSeq? Wads.CheckNumForName(LocalSndSeq) : -1);
+		}
+		else
+		
+		LastLocalSndInfo = LocalSndInfo;
+		LastLocalSndSeq = LocalSndSeq;
 	}
 
 	// start new music for the level

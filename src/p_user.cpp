@@ -108,8 +108,12 @@ void player_s::SetLogNumber (int num)
 	}
 	else
 	{
-		FMemLump data = Wads.ReadLump (lumpnum);
-		SetLogText ((char *)data.GetMem());
+		int length=Wads.LumpLength(lumpnum);
+		char *data= new char[length+1];
+		Wads.ReadLump (lumpnum, data);
+		data[length]=0;
+		SetLogText (data);
+		delete[] data;
 
 		// Print log text to console
 		AddToConsole(-1, TEXTCOLOR_GOLD);
@@ -130,10 +134,7 @@ void APlayerPawn::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 
-	if (SaveVersion >= 229)
-	{
-		arc << JumpZ;
-	}
+	arc << JumpZ;
 }
 
 void APlayerPawn::BeginPlay ()
@@ -144,6 +145,9 @@ void APlayerPawn::BeginPlay ()
 
 void APlayerPawn::AddInventory (AInventory *item)
 {
+	// Don't add to the inventory of dead players.
+	if (health<=0) return;	
+	
 	// Adding inventory to a voodoo doll should add it to the real player instead.
 	if (player != NULL && player->mo != this)
 	{
@@ -551,9 +555,11 @@ void P_CalcHeight (player_t *player)
 		}
 	}
 
+	fixed_t defaultviewheight = player->defaultviewheight;
+
 	if (player->cheats & CF_NOMOMENTUM)
 	{
-		player->viewz = player->mo->z + VIEWHEIGHT;
+		player->viewz = player->mo->z + defaultviewheight;
 
 		if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
 			player->viewz = player->mo->ceilingz-4*FRACUNIT;
@@ -585,14 +591,14 @@ void P_CalcHeight (player_t *player)
 	{
 		player->viewheight += player->deltaviewheight;
 
-		if (player->viewheight > VIEWHEIGHT)
+		if (player->viewheight > defaultviewheight)
 		{
-			player->viewheight = VIEWHEIGHT;
+			player->viewheight = defaultviewheight;
 			player->deltaviewheight = 0;
 		}
-		else if (player->viewheight < VIEWHEIGHT/2)
+		else if (player->viewheight < (defaultviewheight>>1))
 		{
-			player->viewheight = VIEWHEIGHT/2;
+			player->viewheight = defaultviewheight>>1;
 			if (player->deltaviewheight <= 0)
 				player->deltaviewheight = 1;
 		}
@@ -1370,6 +1376,7 @@ void player_s::Serialize (FArchive &arc)
 		<< DesiredFOV << FOV
 		<< viewz
 		<< viewheight
+		<< defaultviewheight
 		<< deltaviewheight
 		<< bob
 		<< momx
@@ -1415,6 +1422,7 @@ void player_s::Serialize (FArchive &arc)
 		<< BlendA
 		<< accuracy << stamina
 		<< LogText;
+		
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];
 	for (i = 0; i < NUMPSPRITES; i++)
@@ -1472,3 +1480,4 @@ void player_s::Serialize (FArchive &arc)
 		oldbuttons = ~0;
 	}
 }
+

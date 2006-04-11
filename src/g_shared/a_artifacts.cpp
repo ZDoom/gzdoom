@@ -71,10 +71,7 @@ void APowerupGiver::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << PowerupType;
-	if (SaveVersion >= 223)
-	{
-		arc << EffectTics << BlendColor;
-	}
+	arc << EffectTics << BlendColor;
 }
 
 // Powerup -------------------------------------------------------------------

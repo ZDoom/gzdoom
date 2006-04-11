@@ -229,7 +229,7 @@ private:
 	void CopyBakToInterp();
 	void DoAnInterpolation(fixed_t smoothratio);
 
-	static size_t HashKey(EInterpType type, void *interptr);
+	static unsigned HashKey(EInterpType type, void *interptr);
 	static FActiveInterpolation *FindInterpolation(EInterpType, void *interptr, FActiveInterpolation **&interp_p);
 
 	friend void updateinterpolations();

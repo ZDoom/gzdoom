@@ -522,6 +522,47 @@ int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref)
 
 //==========================================================================
 //
+// S_ClearSoundData
+//
+// clears all sound tables
+// When we want to allow level specific SNDINFO lumps this has to
+// be cleared for each level
+//==========================================================================
+
+static void S_ClearSoundData()
+{
+	int i;
+
+	S_sfx.Clear();
+
+	for(i=0;i<256;i++)
+	{
+		if (Ambients[i]) delete Ambients[i];
+		Ambients[i]=NULL;
+	}
+	for(i=0;i<S_rnd.Size();i++)
+	{
+		delete[] S_rnd[i].Sounds;
+	}
+	while (MusicVolumes != NULL)
+	{
+		FMusicVolume * me = MusicVolumes;
+		MusicVolumes = me->Next;
+		delete me;
+	}
+	S_rnd.Clear();
+
+	DoneReserving=false;
+	NumPlayerReserves=0;
+	PlayerClassesIsSorted=false;
+	PlayerClasses.Clear();
+	PlayerSounds.Clear();
+	DefPlayerClass=0;
+	*DefPlayerClassName=0;
+}
+
+//==========================================================================
+//
 // S_ParseSndInfo
 //
 // Parses all loaded SNDINFO lumps.
@@ -531,6 +572,8 @@ int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref)
 void S_ParseSndInfo ()
 {
 	int lump;
+
+	S_ClearSoundData();	// remove old sound data first!
 
 	CurrentPitchMask = 0;
 	S_AddSound ("{ no sound }", "DSEMPTY");	// Sound 0 is no sound at all
@@ -574,6 +617,26 @@ void S_ParseSndInfo ()
 	sfx_tink = S_FindSound ("misc/chat2");
 
 	sfx_empty = Wads.CheckNumForName ("dsempty");
+}
+
+//==========================================================================
+//
+// Adds a level specific SNDINFO lump
+//
+//==========================================================================
+
+void S_AddLocalSndInfo(int lump)
+{
+	S_AddSNDINFO(lump);
+	S_HashSounds ();
+	S_sfx.ShrinkToFit ();
+
+	if (S_rnd.Size() > 0)
+	{
+		S_rnd.ShrinkToFit ();
+	}
+
+	S_ShrinkPlayerSoundLists ();
 }
 
 //==========================================================================

@@ -1,17 +1,17 @@
 do ifopt help
-  echo  Available options are:
-  echo .    debug     - Build debug instead of release
-  echo .    verbose   - Show system commands instead of decorated messages
-  echo .    clean     - Clean temp files (use with debug to clean debug files)
-  echo .    zdoom.wad - (Re)build just zdoom.wad, even if it already exists
-  echo .
-  echo  To use with MinGW, compile cbuild.c into an executable using:
-  echo  gcc -O2 -W -Wall -Werror -o cbuild.exe cbuild.c
-  echo .
-  echo  Or if you have a sh-compatible shell, you can run the cbuild.c file
-  echo  directly or have it automatically compile itself with GCC by passing
-  echo  --make-compiled
-  echo .
+  echo "Available options are:
+    debug     - Build debug instead of release
+    verbose   - Show system commands instead of decorated messages
+    clean     - Clean temp files (use with debug to clean debug files)
+    zdoom.wad - (Re)build just zdoom.wad, even if it already exists
+
+To use with MinGW, compile cbuild.c into an executable using:
+gcc -O2 -W -Wall -Werror -o cbuild.exe cbuild.c
+
+Or if you have a sh-compatible shell, you can run the cbuild.c file
+directly or have it automatically compile itself with GCC by passing
+--make-compiled
+"
   exit 0
 done
 
@@ -67,31 +67,29 @@ DEP_DIR = "${OBJDIR}"
 
 do ifnopt clean
   EVILCLEAN = 0
+
   ifnexist "${OBJ_DIR}"  mkdir "${OBJ_DIR}"
 
   ifopt zdoom.wad  goto makewad
 
   do if "${NOASM}"=""
+    # This sets a custom command to run durring a compile for files with the
+    # given extension. <@> is replaced with the output file, <!> is the source,
+    # and <*> is the raw name as given to the compile command, without the
+    # extension
     do ifplat win32
-       NASM ?= nasmw
-       NASMFLAGS += -f win32
+      associate 'nas' 'nasmw -o <@> -f win32 <!>'
     else ifplat unix
-       NASM ?= nasm
-       NASMFLAGS += -f elf -DM_TARGET_LINUX
+      associate 'nas' 'nasm -o <@> -f elf -DM_TARGET_LINUX <!>'
     else
-      echo .
-      echo Unsupported platform!
-      echo .
-      exit 1
+      echo ''
+      echo Disabling assembly for this platform.
+      echo ''
+      goto no_asm
     done
-    # 'loadlist' stores a list of words, and 'execlist' executes a command on each one,
-    # replacing <@> with the word. Unfortuantely this doesn't do dependancy checking.
-    loadlist 'a' 'blocks' 'misc' 'tmap' 'tmap2' 'tmap3'
-    execlist ${NASM} -M "src/<@>.nas > ${OBJ_DIR}/<@>${DEP_EXT}"
     CPPFLAGS = "-DUSEASM ${CPPFLAGS}"
-    # 'associate' sets a command to compile files with the specified ext
-    associate nas ${NASM} -o "<@> ${NASMFLAGS} src/<!>.nas"
   else
+#:no_asm
     CPPFLAGS = "-DNOASM ${CPPFLAGS}"
   done
 
@@ -119,11 +117,12 @@ do ifnopt clean
 # It will not link if the target executable exists and is newer than all of the objects it's
 # linking with.
 
-  COMPILE = Compile
+  COMPILER = Compile
   LINK = Linkexec
 
 # This is where it can find the sources.
-  src_paths src src/g_doom src/g_heretic src/g_hexen src/g_raven src/g_strife src/g_shared src/oplsynth src/sound src/sdl
+  src_paths  src src/g_doom src/g_heretic src/g_hexen src/g_raven src/g_strife \
+   src/g_shared src/oplsynth src/sound src/sdl
 
 else
 
@@ -132,12 +131,12 @@ else
 # delete the specified source file, but rather the object and dependancy files that would 
 # result from compiling the specified source.
   EVILCLEAN = 1
-  COMPILE = -rmobj
+  COMPILER = -rmobj
   LINK = -rmexec
 
 done
 
-${COMPILE} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.nas \
+${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.nas \
  am_map.cpp b_bot.cpp b_func.cpp b_game.cpp b_move.cpp b_think.cpp bbannouncer.cpp \
  c_bind.cpp c_cmds.cpp c_console.cpp c_cvars.cpp c_dispatch.cpp c_expr.cpp \
  cmdlib.cpp colormatcher.cpp configfile.cpp ct_chat.cpp d_dehacked.cpp d_main.cpp \
@@ -201,6 +200,7 @@ ${COMPILE} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.nas
 
 ${LINK} "${TARGET}"
 
+
 # If we're not cleaning and zdoom.wad exists, exit now.
 if "${EVILCLEAN}"="0" ifexist zdoom.wad  exit 0
 #:makewad
@@ -209,15 +209,15 @@ LDFLAGS = ''
 CFLAGS = '-Os -Wall -fomit-frame-pointer'
 
 src_paths  tools/makewad
-${COMPILE} makewad.c
+${COMPILER} makewad.c
 ${LINK} tools/makewad/makewad
 
 src_paths  tools/xlatcc
-${COMPILE} xlat-parse.tab.c gen.c
+${COMPILER} xlat-parse.tab.c gen.c
 ${LINK} tools/xlatcc/xlatcc
 
 src_paths  tools/dehsupp
-${COMPILE} parse.tab.c
+${COMPILER} parse.tab.c
 ${LINK} tools/dehsupp/dehsupp
 
 do if "${EVILCLEAN}"="1"
@@ -226,6 +226,10 @@ do if "${EVILCLEAN}"="1"
   -rm zdoomgcc.map
   -rm zdoom.wad
 else
-  call cd wadsrc && ../tools/makewad/makewad zdoom.lst
-  copy wadsrc/zdoom.wad ./
+  chdir wadsrc
+  do ifret 0
+    -call ../tools/makewad/makewad zdoom.lst
+    ifret 0 -copy zdoom.wad ../
+    chdir ..
+  done
 done

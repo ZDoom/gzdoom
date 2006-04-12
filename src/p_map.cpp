@@ -2860,7 +2860,7 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 					bloodcolor.a=1;
 				}
 
-				AImpactDecal::StaticCreate (bloodType,
+				DImpactDecal::StaticCreate (bloodType,
 					bleedtrace.X, bleedtrace.Y, bleedtrace.Z,
 					sides + bleedtrace.Line->sidenum[bleedtrace.Side],
 					bloodcolor);
@@ -4492,7 +4492,7 @@ void SpawnShootDecal (AActor *t1, const FTraceResults &trace)
 	}
 	if (decalbase != NULL)
 	{
-		AImpactDecal::StaticCreate (decalbase->GetDecal (),
+		DImpactDecal::StaticCreate (decalbase->GetDecal (),
 			trace.X, trace.Y, trace.Z, sides + trace.Line->sidenum[trace.Side]);
 	}
 }

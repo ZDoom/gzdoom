@@ -179,7 +179,7 @@ void P_SerializeWorld (FArchive &arc)
 				<< si->Flags
 				<< si->LeftSide
 				<< si->RightSide;
-			ADecal::SerializeChain (arc, &si->BoundActors);
+			DBaseDecal::SerializeChain (arc, &si->AttachedDecals);
 		}
 	}
 
@@ -212,7 +212,7 @@ void P_SerializeWorld (FArchive &arc)
 
 void P_SerializeThinkers (FArchive &arc, bool hubLoad)
 {
-	AImpactDecal::SerializeTime (arc);
+	DImpactDecal::SerializeTime (arc);
 	DThinker::SerializeAll (arc, hubLoad);
 }
 

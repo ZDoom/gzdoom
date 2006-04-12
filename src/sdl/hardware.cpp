@@ -32,7 +32,7 @@
 **
 */
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #include "hardware.h"
 #include "i_video.h"

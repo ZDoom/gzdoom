@@ -1774,9 +1774,9 @@ void FActiveInterpolation::DoAnInterpolation (fixed_t smoothratio)
 	*adr2 = oldipos[1] + FixedMul (pos - oldipos[1], smoothratio);
 }
 
-unsigned FActiveInterpolation::HashKey (EInterpType type, void *interptr)
+size_t FActiveInterpolation::HashKey (EInterpType type, void *interptr)
 {
-	return (unsigned)type * ((unsigned)interptr>>5);
+	return (size_t)type * ((size_t)interptr>>5);
 }
 
 int FActiveInterpolation::CountInterpolations ()
@@ -1823,7 +1823,7 @@ int FActiveInterpolation::CountInterpolations (int *usedbuckets, int *minbucketf
 
 FActiveInterpolation *FActiveInterpolation::FindInterpolation (EInterpType type, void *interptr, FActiveInterpolation **&interp_p)
 {
-	unsigned hash = HashKey (type, interptr) % INTERPOLATION_BUCKETS;
+	size_t hash = HashKey (type, interptr) % INTERPOLATION_BUCKETS;
 	FActiveInterpolation *probe, **probe_p;
 
 	for (probe_p = &curiposhash[hash], probe = *probe_p;

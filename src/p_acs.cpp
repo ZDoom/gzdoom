@@ -77,11 +77,11 @@ FRandom pr_acs ("ACS");
 
 struct CallReturn
 {
-	int ReturnAddress;
 	ScriptFunction *ReturnFunction;
 	FBehavior *ReturnModule;
-	BYTE bDiscardResult;
-	BYTE Pad[3];
+	SDWORD *ReturnLocals;
+	int ReturnAddress;
+	int bDiscardResult;
 };
 
 static SDWORD Stack[STACK_SIZE];
@@ -2330,6 +2330,7 @@ int DLevelScript::RunScript ()
 				int i;
 				ScriptFunction *func;
 				FBehavior *module = activeBehavior;
+				SDWORD *mylocals;
 
 				funcnum = NEXTBYTE;
 				func = activeBehavior->GetFunction (funcnum, module);
@@ -2345,6 +2346,7 @@ int DLevelScript::RunScript ()
 					state = SCRIPT_PleaseRemove;
 					break;
 				}
+				mylocals = locals;
 				// The function's first argument is also its first local variable.
 				locals = &Stack[sp - func->ArgCount];
 				// Make space on the stack for any other variables the function uses.
@@ -2356,6 +2358,7 @@ int DLevelScript::RunScript ()
 				((CallReturn *)&Stack[sp])->ReturnAddress = activeBehavior->PC2Ofs (pc);
 				((CallReturn *)&Stack[sp])->ReturnFunction = activeFunction;
 				((CallReturn *)&Stack[sp])->ReturnModule = activeBehavior;
+				((CallReturn *)&Stack[sp])->ReturnLocals = mylocals;
 				((CallReturn *)&Stack[sp])->bDiscardResult = (pcd == PCD_CALLDISCARD);
 				sp += sizeof(CallReturn)/sizeof(int);
 				pc = module->Ofs2PC (func->Address);
@@ -2381,19 +2384,12 @@ int DLevelScript::RunScript ()
 				}
 				sp -= sizeof(CallReturn)/sizeof(int);
 				retState = (CallReturn *)&Stack[sp];
+				sp = locals - Stack;
 				pc = retState->ReturnModule->Ofs2PC (retState->ReturnAddress);
-				sp -= activeFunction->ArgCount + activeFunction->LocalCount;
 				activeFunction = retState->ReturnFunction;
 				activeBehavior = retState->ReturnModule;
 				fmt = activeBehavior->GetFormat();
-				if (activeFunction == NULL)
-				{
-					locals = localvars;
-				}
-				else
-				{
-					locals = &Stack[sp - activeFunction->ArgCount - activeFunction->LocalCount - sizeof(CallReturn)/sizeof(int)];
-				}
+				locals = retState->ReturnLocals;
 				if (!retState->bDiscardResult)
 				{
 					Stack[sp++] = value;
@@ -3393,7 +3389,7 @@ int DLevelScript::RunScript ()
 						static const char logbar[] = "\n<------------------------------->\n";
 
 						workreal[0] = '\x1c';
-						workreal[1] = color >= CR_BRICK && color <= CR_YELLOW ? 'A' + color : '-';
+						workreal[1] = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
 						AddToConsole (-1, bar);
 						AddToConsole (-1, workreal);
 						AddToConsole (-1, bar);

@@ -1,4 +1,4 @@
-#include <SDL/SDL.h>
+#include <SDL.h>
 #include "doomtype.h"
 #include "c_dispatch.h"
 #include "doomdef.h"

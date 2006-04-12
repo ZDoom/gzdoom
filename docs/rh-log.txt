@@ -1,3 +1,30 @@
+April 11, 2006
+- Fixed: ACS improperly calculated the address of local variables when
+  returning from one function to another function when the function that
+  was called was used as part of an expression.
+- Fixed: Using Thing_Hate with arg0 (hater) set to 0 from an open script
+  could crash.
+- Fixed: Some items along ledges in Hexen's MAP32 (Orchard of Lamentations)
+  appeared at the bottom of the ledge (and consequently inside it) instead
+  of on top of it because the items were placed directly on the lines.
+  AActor::LinkToWorldForMapThing() needs to use the original R_PointOnLineSide()
+  code to handle situations like this. Previously, it just used the original
+  code for straight horizontal/vertical lines and used the new code for
+  diagonal lines.
+- Fixed: FWadCollection::MergeLumps() used in incorrect realloc.
+- Fixed: FPlayList::NextLine() did not properly handle blank lines in the
+  playlist.
+- Changed: Decals now use lightweight thinkers instead of actors. (76 bytes
+  versus 396, so you save 320k if you have 1024 decals present.)
+- Fixed: Wads added with pullin were loaded immediately after the IWAD.
+  Exec files are now processed immediately before -file but after autoloading
+  wads in D_DoomMain().
+- Fixed: sdl/i_system.h unconditionally defined SHARE_DIR, preventing
+  redefinition from the command line.
+- Fixed: The standard way to include SDL.h is <SDL.h>, not <SDL/SDL.h>.
+- Fixed: Returned FActiveInterpolation::HashKey()'s return type to size_t,
+  avoiding a pointer truncation warning.
+
 April 11, 2006 (Changes by Graf Zahl)
 - Fixed: Strife's dialogs don't give weapons to the player he already has.
 - Fixed: The INDIANA cheat in Hexen gives 25 of each item, not just 1.

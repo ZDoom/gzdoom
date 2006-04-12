@@ -1919,19 +1919,6 @@ void D_DoomMain (void)
 	I_SetTitleString (IWADTypeNames[IdentifyVersion ()]);
 	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
 
-	// Run automatically executed files
-	execFiles = new DArgs;
-	GameConfig->AddAutoexec (execFiles, GameNames[gameinfo.gametype]);
-	D_MultiExec (execFiles, true);
-	delete execFiles;
-
-	// Run .cfg files at the start of the command line.
-	execFiles = Args.GatherFiles (NULL, ".cfg", false);
-	D_MultiExec (execFiles, true);
-	delete execFiles;
-
-	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
-
 	// [RH] zvox.wad - A wad I had intended to be automatically generated
 	// from Q2's pak0.pak so the female and cyborg player could have
 	// voices. I never got around to writing the utility to do it, though.
@@ -1964,6 +1951,19 @@ void D_DoomMain (void)
 		sprintf (file, "%s.Autoload", GameNames[gameinfo.gametype]);
 		D_AddConfigWads (file);
 	}
+
+	// Run automatically executed files
+	execFiles = new DArgs;
+	GameConfig->AddAutoexec (execFiles, GameNames[gameinfo.gametype]);
+	D_MultiExec (execFiles, true);
+	delete execFiles;
+
+	// Run .cfg files at the start of the command line.
+	execFiles = Args.GatherFiles (NULL, ".cfg", false);
+	D_MultiExec (execFiles, true);
+	delete execFiles;
+
+	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
 	DArgs *files = Args.GatherFiles ("-file", ".wad", true);
 	if (files->NumArgs() > 0)

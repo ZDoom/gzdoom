@@ -803,10 +803,10 @@ static int PatchThing (int thingy)
 			else if (stricmp (Line1, "Decal") == 0)
 			{
 				stripwhite (Line2);
-				const FDecal *decal = DecalLibrary.GetDecalByName (Line2);
+				const FDecalTemplate *decal = DecalLibrary.GetDecalByName (Line2);
 				if (decal != NULL)
 				{
-					info->DecalGenerator = const_cast <FDecal *>(decal);
+					info->DecalGenerator = const_cast <FDecalTemplate *>(decal);
 				}
 				else
 				{
@@ -1429,10 +1429,10 @@ static int PatchWeapon (int weapNum)
 		else if (stricmp (Line1, "Decal") == 0)
 		{
 			stripwhite (Line2);
-			const FDecal *decal = DecalLibrary.GetDecalByName (Line2);
+			const FDecalTemplate *decal = DecalLibrary.GetDecalByName (Line2);
 			if (decal != NULL)
 			{
-				info->DecalGenerator = const_cast <FDecal *>(decal);
+				info->DecalGenerator = const_cast <FDecalTemplate *>(decal);
 			}
 			else
 			{

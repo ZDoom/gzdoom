@@ -43,6 +43,7 @@
 #include "m_swap.h"
 #include "w_wad.h"
 #include "stats.h"
+#include "a_sharedglobal.h"
 
 #define WALLYREPEAT 8
 
@@ -123,7 +124,7 @@ FTexture		*rw_pic;
 static short	*maskedtexturecol;
 static FTexture	*WallSpriteTile;
 
-static void R_RenderBoundWallSprite (AActor *first, drawseg_t *clipper, int pass);
+static void R_RenderDecal (DBaseDecal *first, drawseg_t *clipper, int pass);
 static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
 
 //=============================================================================
@@ -1333,11 +1334,9 @@ void R_StoreWallRange (int start, int stop)
 	}
 
 	// [RH] Draw any decals bound to the seg
-	AActor *decal = (AActor *)curline->sidedef->BoundActors;
-	while (decal != NULL)
+	for (DBaseDecal *decal = curline->sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 	{
-		R_RenderBoundWallSprite (decal, ds_p, 0);
-		decal = decal->snext;
+		R_RenderDecal (decal, ds_p, 0);
 	}
 
 	ds_p++;
@@ -1767,9 +1766,7 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
 //		= 1: drawing masked textures (including sprites)
 // Currently, only pass = 0 is done or used
 
-static AActor *DecalActorForDebug;
-
-static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass)
+static void R_RenderDecal (DBaseDecal *decal, drawseg_t *clipper, int pass)
 {
 	fixed_t lx, ly, lx2, ly2;
 	int x1, x2;
@@ -1780,72 +1777,62 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	int needrepeat = 0;
 	sector_t *front, *back;
 
-	if (actor->renderflags & RF_INVISIBLE || !viewactive)
+	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || decal->PicNum == 0xFFFF)
 		return;
 
-	DecalActorForDebug = actor;
-
 	// Determine actor z
-	zpos = actor->z;
+	zpos = decal->z;
 	front = curline->frontsector;
 	back = (curline->backsector != NULL) ? curline->backsector : curline->frontsector;
-	switch (actor->renderflags & RF_RELMASK)
+	switch (decal->RenderFlags & RF_RELMASK)
 	{
 	default:
-		zpos = actor->z;
+		zpos = decal->z;
 		break;
 	case RF_RELUPPER:
 		if (curline->linedef->flags & ML_DONTPEGTOP)
 		{
-			zpos = actor->z + front->ceilingtexz;
+			zpos = decal->z + front->ceilingtexz;
 		}
 		else
 		{
-			zpos = actor->z + back->ceilingtexz;
+			zpos = decal->z + back->ceilingtexz;
 		}
 		break;
 	case RF_RELLOWER:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = actor->z + front->ceilingtexz;
+			zpos = decal->z + front->ceilingtexz;
 		}
 		else
 		{
-			zpos = actor->z + back->floortexz;
+			zpos = decal->z + back->floortexz;
 		}
 		break;
 	case RF_RELMID:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = actor->z + front->floortexz;
+			zpos = decal->z + front->floortexz;
 		}
 		else
 		{
-			zpos = actor->z + front->ceilingtexz;
+			zpos = decal->z + front->ceilingtexz;
 		}
 	}
 
-	xscale = actor->xscale + 1;
-	yscale = actor->yscale + 1;
+	xscale = decal->XScale + 1;
+	yscale = decal->YScale + 1;
 
-	if (actor->picnum != 0xffff)
-	{
-		WallSpriteTile = TexMan(actor->picnum);
-		flipx = actor->renderflags & RF_XFLIP;
-	}
-	else
-	{
-		//WallSpriteTile = SpriteFrames[sprites[actor->sprite].spriteframes + actor->frame].lump[0];
-		//flipx = SpriteFrames[sprites[actor->sprite].spriteframes + actor->frame].flip & 1;
-		return;
-	}
+	WallSpriteTile = TexMan(decal->PicNum);
+	flipx = decal->RenderFlags & RF_XFLIP;
+
 	if (WallSpriteTile->UseType == FTexture::TEX_Null)
 	{
 		return;
 	}
 
 	// Determine left and right edges of sprite. Since this sprite is bound
-	// to a wall, we use the wall's angle instead of the actor's. This is
+	// to a wall, we use the wall's angle instead of the decal's. This is
 	// pretty much the same as what R_AddLine() does.
 
 	x2 = WallSpriteTile->GetWidth();
@@ -1856,10 +1843,10 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	x2 *= xscale;
 
 	angle_t ang = R_PointToAngle2 (curline->v1->x, curline->v1->y, curline->v2->x, curline->v2->y) >> ANGLETOFINESHIFT;
-	lx  = actor->x - MulScale6 (x1, finecosine[ang]) - viewx;
-	lx2 = actor->x + MulScale6 (x2, finecosine[ang]) - viewx;
-	ly  = actor->y - MulScale6 (x1, finesine[ang]) - viewy;
-	ly2 = actor->y + MulScale6 (x2, finesine[ang]) - viewy;
+	lx  = decal->x - MulScale6 (x1, finecosine[ang]) - viewx;
+	lx2 = decal->x + MulScale6 (x2, finecosine[ang]) - viewx;
+	ly  = decal->y - MulScale6 (x1, finesine[ang]) - viewy;
+	ly2 = decal->y + MulScale6 (x2, finesine[ang]) - viewy;
 
 	WallTX1 = DMulScale20 (lx,  viewsin, -ly,  viewcos);
 	WallTX2 = DMulScale20 (lx2, viewsin, -ly2, viewcos);
@@ -1933,7 +1920,7 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	WallDepthOrg = -WallUoverZstep * WallTMapScale2;
 
 	// Get the top and bottom clipping arrays
-	switch (actor->renderflags & RF_CLIPMASK)
+	switch (decal->RenderFlags & RF_CLIPMASK)
 	{
 	case RF_CLIPFULL:
 		if (curline->backsector == NULL)
@@ -2031,13 +2018,13 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 		dc_colormap = basecolormap + fixedlightlev;
 	else if (fixedcolormap)
 		dc_colormap = fixedcolormap;
-	else if (!foggy && (actor->renderflags & RF_FULLBRIGHT))
+	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
 		dc_colormap = basecolormap;
 	else
 		calclighting = true;
 
 	// Draw it
-	if (actor->renderflags & RF_YFLIP)
+	if (decal->RenderFlags & RF_YFLIP)
 	{
 		sprflipvert = true;
 		yscale = -yscale;
@@ -2055,7 +2042,7 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 		dc_x = x1;
 		ESPSResult mode;
 
-		mode = R_SetPatchStyle (actor->RenderStyle, actor->alpha, actor->Translation, actor->alphacolor);
+		mode = R_SetPatchStyle (decal->RenderStyle, decal->Alpha, decal->Translation, decal->AlphaColor);
 
 		if (mode == DontDraw)
 		{
@@ -2130,23 +2117,6 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))
 {
 	unsigned int texturecolumn = lwall[dc_x] >> FRACBITS;
-#if 0
-	if (texturecolumn >= (unsigned)WallSpriteTile->GetWidth())
-	{
-		I_FatalError ("WallSpriteColumn tried to draw part of a decal that didn't exist.\n"
-			"Please report all of the following information, because\n"
-			"I want to get this fixed, yet I just can't get it happen to me:\n\n"
-			"%d->%d/%d"
-			"  %s  %04x  %d\n"
-			"%d  %d  %d\n"
-			"%d  %d  %d  %u\n",
-			dc_x, texturecolumn, TileCache[WallSpriteTile]->width,
-			WallSpriteTile->Name, DecalActorForDebug->renderflags, DecalActorForDebug->RenderStyle,
-			DecalActorForDebug->x, DecalActorForDebug->y, DecalActorForDebug->z,
-			viewx, viewy, viewz, viewangle);
-		texturecolumn = TileCache[WallSpriteTile]->width-1;
-	}
-#endif
 	dc_iscale = MulScale16 (swall[dc_x], rw_offset);
 	spryscale = SafeDivScale32 (1, dc_iscale);
 	if (sprflipvert)

@@ -30,7 +30,9 @@
 #include "d_ticcmd.h"
 #include "d_event.h"
 
+#ifndef SHARE_DIR
 #define SHARE_DIR "/usr/local/share/"
+#endif
 
 // Index values into the LanguageIDs array
 enum

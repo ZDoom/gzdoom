@@ -40,15 +40,16 @@
 #include "tarray.h"
 
 class AActor;
-class FDecal;
+class FDecalTemplate;
 struct FDecalAnimator;
 struct TypeInfo;
+class DBaseDecal;
 
 class FDecalBase
 {
 	friend class FDecalLib;
 public:
-	virtual const FDecal *GetDecal () const;
+	virtual const FDecalTemplate *GetDecal () const;
 	
 protected:
 	FDecalBase ();
@@ -60,14 +61,14 @@ protected:
 	TArray<const TypeInfo *> Users;	// Which actors generate this decal
 };
 
-class FDecal : public FDecalBase
+class FDecalTemplate : public FDecalBase
 {
 	friend class FDecalLib;
 public:
-	FDecal () : Translation (0) {}
+	FDecalTemplate () : Translation (0) {}
 
-	void ApplyToActor (AActor *actor) const;
-	const FDecal *GetDecal () const;
+	void ApplyToDecal (DBaseDecal *actor) const;
+	const FDecalTemplate *GetDecal () const;
 
 	DWORD ShadeColor;
 	WORD Translation;
@@ -92,8 +93,8 @@ public:
 	void ReadDecals ();		// SC_Open() should have just been called
 	void ReadAllDecals ();
 
-	const FDecal *GetDecalByNum (byte num) const;
-	const FDecal *GetDecalByName (const char *name) const;
+	const FDecalTemplate *GetDecalByNum (byte num) const;
+	const FDecalTemplate *GetDecalByName (const char *name) const;
 
 private:
 	struct FTranslation;
@@ -102,7 +103,7 @@ private:
 	static FDecalBase *ScanTreeForNum (const BYTE num, FDecalBase *root);
 	static FDecalBase *ScanTreeForName (const char *name, FDecalBase *root);
 	FTranslation *GenerateTranslation (DWORD start, DWORD end);
-	void AddDecal (const char *name, byte num, const FDecal &decal);
+	void AddDecal (const char *name, byte num, const FDecalTemplate &decal);
 	void AddDecal (FDecalBase *decal);
 	FDecalAnimator *FindAnimator (const char *name);
 

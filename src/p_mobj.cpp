@@ -986,7 +986,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 					y = line->v1->y + MulScale30 (line->dy, frac);
 					z = mo->z;
 
-					AImpactDecal::StaticCreate (base->GetDecal (),
+					DImpactDecal::StaticCreate (base->GetDecal (),
 						x, y, z, sides + line->sidenum[side]);
 				}
 			}

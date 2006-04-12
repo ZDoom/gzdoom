@@ -379,7 +379,7 @@ struct zone_t
 // The SideDef.
 //
 
-class ADecal;
+class DBaseDecal;
 
 enum
 {
@@ -394,7 +394,7 @@ struct side_s
 	fixed_t 	textureoffset;	// add this to the calculated texture column
 	fixed_t 	rowoffset;		// add this to the calculated texture top
 	sector_t*	sector;			// Sector the SideDef is facing.
-	ADecal*		BoundActors;	// [RH] Decals bound to the wall
+	DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
 	short		toptexture, bottomtexture, midtexture;	// texture indices
 	WORD		linenum;
 	DWORD		LeftSide, RightSide;	// [RH] Group walls into loops

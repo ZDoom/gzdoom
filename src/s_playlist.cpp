@@ -119,7 +119,7 @@ bool FPlayList::NextLine (FILE *file, char *buffer, int n)
 		if (NULL == fgets (buffer, n, file))
 			return false;
 
-		for (skipper = buffer; *skipper <= ' '; skipper++)
+		for (skipper = buffer; *skipper != 0 && *skipper <= ' '; skipper++)
 			;
 	} while (*skipper == '#' || *skipper == 0);
 
@@ -161,6 +161,7 @@ int FPlayList::SetPosition (int position)
 	{
 		Position = position;
 	}
+	DPrintf ("Playlist position set to %d\n", Position);
 	return Position;
 }
 
@@ -175,6 +176,7 @@ int FPlayList::Advance ()
 	{
 		Position = 0;
 	}
+	DPrintf ("Playlist advanced to song %d\n", Position);
 	return Position;
 }
 
@@ -184,6 +186,7 @@ int FPlayList::Backup ()
 	{
 		Position = NumSongs - 1;
 	}
+	DPrintf ("Playlist backed up to song %d\n", Position);
 	return Position;
 }
 

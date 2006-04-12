@@ -5,7 +5,7 @@
 #include "info.h"
 #include "actor.h"
 
-class FDecal;
+class FDecalTemplate;
 struct vertex_s;
 struct side_s;
 
@@ -50,32 +50,57 @@ class ARealGibs : public AActor
 
 struct side_s;
 
-class ADecal : public AActor
+class DBaseDecal : public DThinker
 {
-	DECLARE_STATELESS_ACTOR (ADecal, AActor)
+	DECLARE_CLASS (DBaseDecal, DThinker)
 public:
-	void BeginPlay ();
+	DBaseDecal ();
+	DBaseDecal (fixed_t x, fixed_t y, fixed_t z);
+	DBaseDecal (const AActor *actor);
+	DBaseDecal (const DBaseDecal *basis);
+
+	void Serialize (FArchive &arc);
 	void Destroy ();
 	int StickToWall (side_s *wall);
-	void Relocate (fixed_t x, fixed_t y, fixed_t z);
 	fixed_t GetRealZ (const side_s *wall) const;
+	void SetShade (DWORD rgb);
+	void SetShade (int r, int g, int b);
+	void Spread (const FDecalTemplate *tpl, side_s *wall);
 
-	static void SerializeChain (FArchive &arc, ADecal **firstptr);
-	static void MoveChain (ADecal *first, fixed_t x, fixed_t y);
+	static void SerializeChain (FArchive &arc, DBaseDecal **firstptr);
+	static void MoveChain (DBaseDecal *first, fixed_t x, fixed_t y);
 	static void FixForSide (side_s *side);
 
+	DBaseDecal *WallNext, **WallPrev;
+
+	fixed_t x, y, z;
+	DWORD AlphaColor;
+	WORD Translation;
+	WORD PicNum;
+	WORD RenderFlags;
+	BYTE XScale, YScale;
+	BYTE RenderStyle;
+	fixed_t LeftDistance;
+	fixed_t Alpha;
+
 protected:
+	virtual DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_s *wall) const;
 	void CalcFracPos (side_s *wall);
-	void DoTrace ();
 	void Remove ();
+
+	static void SpreadLeft (fixed_t r, vertex_s *v1, side_s *feelwall);
+	static void SpreadRight (fixed_t r, side_s *feelwall, fixed_t wallsize);
 };
 
-class AImpactDecal : public ADecal
+class DImpactDecal : public DBaseDecal
 {
-	DECLARE_STATELESS_ACTOR (AImpactDecal, ADecal)
+	DECLARE_CLASS (DImpactDecal, DBaseDecal)
 public:
-	static AImpactDecal *StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_s *wall, PalEntry color=0);
-	static AImpactDecal *StaticCreate (const FDecal *decal, fixed_t x, fixed_t y, fixed_t z, side_s *wall, PalEntry color=0);
+	DImpactDecal (fixed_t x, fixed_t y, fixed_t z);
+	DImpactDecal (side_s *wall, const FDecalTemplate *templ);
+
+	static DImpactDecal *StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_s *wall, PalEntry color=0);
+	static DImpactDecal *StaticCreate (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_s *wall, PalEntry color=0);
 
 	void BeginPlay ();
 	void Destroy ();
@@ -83,10 +108,14 @@ public:
 	void Serialize (FArchive &arc);
 	static void SerializeTime (FArchive &arc);
 
+	DImpactDecal *ImpactNext, *ImpactPrev;
+
 protected:
-	AImpactDecal *CloneSelf (const FDecal *decal, fixed_t x, fixed_t y, fixed_t z, side_s *wall) const;
-	static void SpreadLeft (fixed_t r, vertex_s *v1, side_s *feelwall);
-	static void SpreadRight (fixed_t r, side_s *feelwall, fixed_t wallsize);
+	DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_s *wall) const;
+
+private:
+	DImpactDecal();
+	void Link();
 };
 
 class AWaterSplashBase : public AActor

@@ -12,7 +12,7 @@
 
 #include "sdlvideo.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 // MACROS ------------------------------------------------------------------
 

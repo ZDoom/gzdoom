@@ -3,7 +3,7 @@
 ** Implements the actor that represents decals in the level
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2005 Randy Heit
+** Copyright 1998-2006 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -42,35 +42,91 @@
 #include "statnums.h"
 #include "c_dispatch.h"
 
-// Decals overload snext and sprev to keep a list of decals attached to a wall.
+static fixed_t DecalWidth, DecalLeft, DecalRight;
+static fixed_t SpreadZ;
+static const DBaseDecal *SpreadSource;
+static const FDecalTemplate *SpreadTemplate;
+static TArray<side_t *> SpreadStack;
+
+static int ImpactCount;
+static DImpactDecal *FirstImpact;	// (but not the Second or Third Impact :-)
+static DImpactDecal *LastImpact;
+
+CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
+
 // They also overload floorclip to be the fractional distance from the
 // left edge of the side. This distance is stored as a 2.30 fixed pt number.
 
-IMPLEMENT_STATELESS_ACTOR (ADecal, Any, 9200, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
-END_DEFAULTS
+IMPLEMENT_CLASS (DBaseDecal)
+IMPLEMENT_CLASS (DImpactDecal)
 
-void ADecal::Destroy ()
+DBaseDecal::DBaseDecal ()
+: DThinker(STAT_DECAL),
+  WallNext(0), WallPrev(0), x(0), y(0), z(0), AlphaColor(0), Translation(0), PicNum(0xFFFF),
+  RenderFlags(0), XScale(8), YScale(8), RenderStyle(0), LeftDistance(0), Alpha(0)
+{
+}
+
+DBaseDecal::DBaseDecal (fixed_t x, fixed_t y, fixed_t z)
+: DThinker(STAT_DECAL),
+  WallNext(0), WallPrev(0), x(x), y(y), z(z), AlphaColor(0), Translation(0), PicNum(0xFFFF),
+  RenderFlags(0), XScale(8), YScale(8), RenderStyle(0), LeftDistance(0), Alpha(0)
+{
+}
+
+DBaseDecal::DBaseDecal (const AActor *basis)
+: DThinker(STAT_DECAL),
+  WallNext(0), WallPrev(0), x(basis->x), y(basis->y), z(basis->z), AlphaColor(basis->alphacolor),
+  Translation(basis->Translation), PicNum(basis->picnum), RenderFlags(basis->renderflags),
+  XScale(basis->xscale), YScale(basis->yscale), RenderStyle(basis->RenderStyle), LeftDistance(0),
+  Alpha(basis->alpha)
+{
+}
+
+DBaseDecal::DBaseDecal (const DBaseDecal *basis)
+: DThinker(STAT_DECAL),
+  WallNext(0), WallPrev(0), x(basis->x), y(basis->y), z(basis->z), AlphaColor(basis->AlphaColor),
+  Translation(basis->Translation), PicNum(basis->PicNum), RenderFlags(basis->RenderFlags),
+  XScale(basis->XScale), YScale(basis->YScale), RenderStyle(basis->RenderStyle), LeftDistance(0),
+  Alpha(basis->Alpha)
+{
+}
+
+void DBaseDecal::Destroy ()
 {
 	Remove ();
 	Super::Destroy ();
 }
 
-void ADecal::Remove ()
+void DBaseDecal::Remove ()
 {
-	AActor **prev = sprev;
-	AActor *next = snext;
+	DBaseDecal **prev = WallPrev;
+	DBaseDecal *next = WallNext;
 	if (prev && (*prev = next))
-		next->sprev = prev;
-	sprev = NULL;
-	snext = NULL;
+		next->WallPrev = prev;
+	WallPrev = NULL;
+	WallNext = NULL;
 }
 
-void ADecal::SerializeChain (FArchive &arc, ADecal **first)
+void DBaseDecal::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << x << y << z
+		<< AlphaColor
+		<< Translation
+		<< PicNum
+		<< RenderFlags
+		<< XScale << YScale
+		<< RenderStyle
+		<< LeftDistance
+		<< Alpha;
+}
+
+void DBaseDecal::SerializeChain (FArchive &arc, DBaseDecal **first)
 {
 	DWORD numInChain;
-	AActor *fresh;
-	AActor **firstptr = (AActor **)first;
+	DBaseDecal *fresh;
+	DBaseDecal **firstptr = first;
 
 	if (arc.IsLoading ())
 	{
@@ -80,8 +136,8 @@ void ADecal::SerializeChain (FArchive &arc, ADecal **first)
 		{
 			arc << fresh;
 			*firstptr = fresh;
-			fresh->sprev = firstptr;
-			firstptr = &fresh->snext;
+			fresh->WallPrev = firstptr;
+			firstptr = &fresh->WallNext;
 		}
 	}
 	else
@@ -90,7 +146,7 @@ void ADecal::SerializeChain (FArchive &arc, ADecal **first)
 		fresh = *firstptr;
 		while (fresh != NULL)
 		{
-			fresh = fresh->snext;
+			fresh = fresh->WallNext;
 			++numInChain;
 		}
 		arc.WriteCount (numInChain);
@@ -98,24 +154,24 @@ void ADecal::SerializeChain (FArchive &arc, ADecal **first)
 		while (numInChain--)
 		{
 			arc << fresh;
-			fresh = fresh->snext;
+			fresh = fresh->WallNext;
 		}
 	}
 }
 
-void ADecal::MoveChain (ADecal *first, fixed_t x, fixed_t y)
+void DBaseDecal::MoveChain (DBaseDecal *first, fixed_t x, fixed_t y)
 {
 	while (first != NULL)
 	{
 		first->x += x;
 		first->y += y;
-		first = (ADecal *)first->snext;
+		first = (DBaseDecal *)first->WallNext;
 	}
 }
 
-void ADecal::FixForSide (side_t *wall)
+void DBaseDecal::FixForSide (side_t *wall)
 {
-	AActor *decal = wall->BoundActors;
+	DBaseDecal *decal = wall->AttachedDecals;
 	line_t *line = &lines[wall->linenum];
 	int wallnum = int(wall - sides);
 	vertex_t *v1, *v2;
@@ -136,83 +192,45 @@ void ADecal::FixForSide (side_t *wall)
 
 	while (decal != NULL)
 	{
-		decal->x = v1->x + MulScale2 (decal->floorclip, dx);
-		decal->y = v1->y + MulScale2 (decal->floorclip, dy);
-		decal = decal->snext;
+		decal->x = v1->x + MulScale2 (decal->LeftDistance, dx);
+		decal->y = v1->y + MulScale2 (decal->LeftDistance, dy);
+		decal = decal->WallNext;
 	}
 }
 
-void ADecal::BeginPlay ()
+void DBaseDecal::SetShade (DWORD rgb)
 {
-	Super::BeginPlay ();
-
-	// Decals do not think.
-	ChangeStatNum (STAT_DECAL);
-
-	// Find a wall to attach to, and set renderflags to keep
-	// the decal at its current height. If the decal cannot find a wall
-	// within 64 units, it destroys itself.
-	//
-	// Subclasses can set special1 if they don't want this sticky logic.
-
-	if (special1 == 0)
-	{
-		DoTrace ();
-	}
-
-	if (args[0] != 0)
-	{
-		const FDecal *decal = DecalLibrary.GetDecalByNum (args[0]);
-		if (decal != NULL)
-		{
-			decal->ApplyToActor (this);
-		}
-	}
+	PalEntry *entry = (PalEntry *)&rgb;
+	AlphaColor = rgb | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);
 }
 
-void ADecal::DoTrace ()
+void DBaseDecal::SetShade (int r, int g, int b)
 {
-	FTraceResults trace;
-
-	Trace (x, y, z, Sector,
-		finecosine[(angle+ANGLE_180)>>ANGLETOFINESHIFT],
-		finesine[(angle+ANGLE_180)>>ANGLETOFINESHIFT], 0,
-		64*FRACUNIT, 0, 0, NULL, trace, TRACE_NoSky);
-
-	if (trace.HitType == TRACE_HitWall)
-	{
-		x = trace.X;
-		y = trace.Y;
-		StickToWall (sides + trace.Line->sidenum[trace.Side]);
-	}
-	else
-	{
-		Destroy ();
-	}
+	AlphaColor = MAKEARGB(ColorMatcher.Pick (r, g, b), r, g, b);
 }
 
 // Returns the texture the decal stuck to.
-int ADecal::StickToWall (side_t *wall)
+int DBaseDecal::StickToWall (side_t *wall)
 {
 	// Stick the decal at the end of the chain so it appears on top
-	AActor *next, **prev;
+	DBaseDecal *next, **prev;
 
-	prev = (AActor **)&wall->BoundActors;
+	prev = &wall->AttachedDecals;
 	while (*prev != NULL)
 	{
 		next = *prev;
-		prev = &next->snext;
+		prev = &next->WallNext;
 	}
 
 	*prev = this;
-	snext = NULL;
-	sprev = prev;
+	WallNext = NULL;
+	WallPrev = prev;
 /*
-	snext = wall->BoundActors;
-	sprev = &wall->BoundActors;
-	if (snext)
-		snext->sprev = &snext;
-	wall->BoundActors = this;
+	WallNext = wall->AttachedDecals;
+	WallPrev = &wall->AttachedDecals;
+	if (WallNext)
+		WallNext->WallPrev = &WallNext;
+	wall->AttachedDecals = this;
 */
 	sector_t *front, *back;
 	line_t *line;
@@ -231,7 +249,7 @@ int ADecal::StickToWall (side_t *wall)
 	}
 	if (back == NULL)
 	{
-		renderflags |= RF_RELMID;
+		RenderFlags |= RF_RELMID;
 		if (line->flags & ML_DONTPEGBOTTOM)
 			z -= front->floortexz;
 		else
@@ -240,7 +258,7 @@ int ADecal::StickToWall (side_t *wall)
 	}
 	else if (back->floorplane.ZatPoint (x, y) >= z)
 	{
-		renderflags |= RF_RELLOWER|RF_CLIPLOWER;
+		RenderFlags |= RF_RELLOWER|RF_CLIPLOWER;
 		if (line->flags & ML_DONTPEGBOTTOM)
 			z -= front->ceilingtexz;
 		else
@@ -249,7 +267,7 @@ int ADecal::StickToWall (side_t *wall)
 	}
 	else
 	{
-		renderflags |= RF_RELUPPER|RF_CLIPUPPER;
+		RenderFlags |= RF_RELUPPER|RF_CLIPUPPER;
 		if (line->flags & ML_DONTPEGTOP)
 			z -= front->ceilingtexz;
 		else
@@ -259,21 +277,10 @@ int ADecal::StickToWall (side_t *wall)
 
 	CalcFracPos (wall);
 
-	// Face the decal away from the wall
-	angle = R_PointToAngle2 (0, 0, line->dx, line->dy);
-	if (line->frontsector == front)
-	{
-		angle -= ANGLE_90;
-	}
-	else
-	{
-		angle += ANGLE_90;
-	}
-
 	return tex;
 }
 
-fixed_t ADecal::GetRealZ (const side_t *wall) const
+fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 {
 	const line_t *line = &lines[wall->linenum];
 	const sector_t *front, *back;
@@ -293,7 +300,7 @@ fixed_t ADecal::GetRealZ (const side_t *wall) const
 		back = front;
 	}
 
-	switch (renderflags & RF_RELMASK)
+	switch (RenderFlags & RF_RELMASK)
 	{
 	default:
 		return z;
@@ -327,16 +334,7 @@ fixed_t ADecal::GetRealZ (const side_t *wall) const
 	}
 }
 
-void ADecal::Relocate (fixed_t ix, fixed_t iy, fixed_t iz)
-{
-	Remove ();
-	x = ix;
-	y = iy;
-	z = iz;
-	DoTrace ();
-}
-
-void ADecal::CalcFracPos (side_t *wall)
+void DBaseDecal::CalcFracPos (side_t *wall)
 {
 	line_t *line = &lines[wall->linenum];
 	int wallnum = int(wall - sides);
@@ -358,121 +356,16 @@ void ADecal::CalcFracPos (side_t *wall)
 
 	if (abs(dx) > abs(dy))
 	{
-		floorclip = SafeDivScale2 (x - v1->x, dx);
+		LeftDistance = SafeDivScale2 (x - v1->x, dx);
 	}
 	else if (dy != 0)
 	{
-		floorclip = SafeDivScale2 (y - v1->y, dy);
+		LeftDistance = SafeDivScale2 (y - v1->y, dy);
 	}
 	else
 	{
-		floorclip = 0;
+		LeftDistance = 0;
 	}
-}
-
-static int ImpactCount;
-static AActor *FirstImpact;	// (but not the Second or Third Impact :-)
-static AActor *LastImpact;
-
-CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
-
-CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
-{
-	if (self < 0)
-	{
-		self = 0;
-	}
-	else
-	{
-		while (ImpactCount > self)
-		{
-			FirstImpact->Destroy ();
-		}
-	}
-}
-
-// Uses: target points to previous impact decal
-//		 tracer points to next impact decal
-//
-// Note that this means we can't simply serialize an impact decal as-is
-// because doing so when many are present in a level could result in
-// a lot of recursion and we would run out of stack. Not nice. So instead,
-// the save game code calls AImpactDecal::SerializeAll to serialize a
-// list of impact decals.
-
-IMPLEMENT_STATELESS_ACTOR (AImpactDecal, Any, -1, 0)
-END_DEFAULTS
-
-void AImpactDecal::SerializeTime (FArchive &arc)
-{
-	if (arc.IsLoading ())
-	{
-		ImpactCount = 0;
-		FirstImpact = LastImpact = NULL;
-	}
-}
-
-void AImpactDecal::Serialize (FArchive &arc)
-{
-	if (arc.IsStoring ())
-	{
-		// NULL the next pointer so that the serializer will not follow it
-		// and possibly run out of stack space. NULLing target isn't
-		// required; it just makes the archive smaller.
-		AActor *saved1 = tracer, *saved2 = target;
-		tracer = NULL;
-		target = NULL;
-		Super::Serialize (arc);
-		tracer = saved1;
-		target = saved2;
-	}
-	else
-	{
-		Super::Serialize (arc);
-
-		ImpactCount++;
-		target = LastImpact;
-		if (target != NULL)
-		{
-			target->tracer = this;
-		}
-		else
-		{
-			FirstImpact = this;
-		}
-		LastImpact = this;
-	}
-}
-
-void AImpactDecal::BeginPlay ()
-{
-	special1 = 1;	// Don't want ADecal to find a wall to stick to
-	Super::BeginPlay ();
-
-	target = LastImpact;
-	if (target != NULL)
-	{
-		target->tracer = this;
-	}
-	else
-	{
-		FirstImpact = this;
-	}
-	LastImpact = this;
-}
-
-AImpactDecal *AImpactDecal::StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_t *wall, PalEntry color)
-{
-	if (cl_maxdecals > 0)
-	{
-		const FDecal *decal = DecalLibrary.GetDecalByName (name);
-
-		if (decal != NULL && (decal = decal->GetDecal()) != NULL)
-		{
-			return StaticCreate (decal, x, y, z, wall, color);
-		}
-	}
-	return NULL;
 }
 
 static void GetWallStuff (side_t *wall, vertex_t *&v1, fixed_t &ldx, fixed_t &ldy)
@@ -516,13 +409,7 @@ static side_t *NextWall (const side_t *wall)
 	return NULL;
 }
 
-static fixed_t DecalWidth, DecalLeft, DecalRight;
-static fixed_t SpreadZ;
-static const AImpactDecal *SpreadSource;
-static const FDecal *SpreadDecal;
-static TArray<side_t *> SpreadStack;
-
-void AImpactDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
+void DBaseDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
 {
 	fixed_t ldx, ldy;
 
@@ -542,7 +429,7 @@ void AImpactDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
 		x += Scale (r, ldx, wallsize);
 		y += Scale (r, ldy, wallsize);
 		r = wallsize + startr;
-		SpreadSource->CloneSelf (SpreadDecal, x, y, SpreadZ, feelwall);
+		SpreadSource->CloneSelf (SpreadTemplate, x, y, SpreadZ, feelwall);
 		SpreadStack.Push (feelwall);
 
 		side_t *nextwall = NextWall (feelwall);
@@ -566,7 +453,7 @@ void AImpactDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
 	}
 }
 
-void AImpactDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
+void DBaseDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
 {
 	vertex_t *v1;
 	fixed_t x, y, ldx, ldy;
@@ -601,120 +488,220 @@ void AImpactDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
 		x -= Scale (r, ldx, wallsize);
 		y -= Scale (r, ldy, wallsize);
 		r = DecalRight - r;
-		SpreadSource->CloneSelf (SpreadDecal, x, y, SpreadZ, feelwall);
+		SpreadSource->CloneSelf (SpreadTemplate, x, y, SpreadZ, feelwall);
 		SpreadStack.Push (feelwall);
 	}
 }
 
-AImpactDecal *AImpactDecal::StaticCreate (const FDecal *decal, fixed_t x, fixed_t y, fixed_t z, side_t *wall, PalEntry color)
+void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall)
 {
-	AImpactDecal *actor = NULL;
-	if (decal != NULL && cl_maxdecals > 0 &&
-		!(wall->Flags & WALLF_NOAUTODECALS))
+	FTexture *tex;
+	vertex_t *v1;
+	fixed_t rorg, ldx, ldy;
+	int xscale, yscale;
+
+	GetWallStuff (wall, v1, ldx, ldy);
+	rorg = Length (x - v1->x, y - v1->y);
+
+	tex = TexMan[PicNum];
+	int dwidth = tex->GetWidth ();
+
+	xscale = (XScale + 1) << (FRACBITS - 6);
+	yscale = (YScale + 1) << (FRACBITS - 6);
+
+	DecalWidth = dwidth * xscale;
+	DecalLeft = tex->LeftOffset * xscale;
+	DecalRight = DecalWidth - DecalLeft;
+	SpreadSource = this;
+	SpreadTemplate = tpl;
+	SpreadZ = z;
+
+
+	// Try spreading left first
+	SpreadLeft (rorg - DecalLeft, v1, wall);
+	SpreadStack.Clear ();
+
+	// Then try spreading right
+	SpreadRight (rorg + DecalRight, wall,
+		Length (lines[wall->linenum].dx, lines[wall->linenum].dy));
+	SpreadStack.Clear ();
+}
+
+DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, fixed_t ix, fixed_t iy, fixed_t iz, side_t *wall) const
+{
+	DBaseDecal *decal = new DBaseDecal(ix, iy, iz);
+	if (decal != NULL)
 	{
-		if (decal->LowerDecal)
+		decal->StickToWall (wall);
+		tpl->ApplyToDecal (decal);
+		decal->AlphaColor = AlphaColor;
+		decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
+							 (this->RenderFlags & ~RF_DECALMASK);
+	}
+	return decal;
+}
+
+CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
+{
+	if (self < 0)
+	{
+		self = 0;
+	}
+	else
+	{
+		while (ImpactCount > self)
 		{
-			StaticCreate (decal->LowerDecal->GetDecal(), x, y, z, wall);
+			FirstImpact->Destroy ();
+		}
+	}
+}
+
+// Uses: target points to previous impact decal
+//		 tracer points to next impact decal
+//
+// Note that this means we can't simply serialize an impact decal as-is
+// because doing so when many are present in a level could result in
+// a lot of recursion and we would run out of stack. Not nice. So instead,
+// the save game code calls DImpactDecal::SerializeAll to serialize a
+// list of impact decals.
+
+void DImpactDecal::SerializeTime (FArchive &arc)
+{
+	if (arc.IsLoading ())
+	{
+		ImpactCount = 0;
+		FirstImpact = LastImpact = NULL;
+	}
+}
+
+void DImpactDecal::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+}
+
+DImpactDecal::DImpactDecal ()
+: ImpactNext(0), ImpactPrev(0)
+{
+	Link();
+}
+
+DImpactDecal::DImpactDecal (fixed_t x, fixed_t y, fixed_t z)
+: DBaseDecal (x, y, z),
+  ImpactNext(0), ImpactPrev(0)
+{
+	Link();
+}
+
+void DImpactDecal::Link ()
+{
+	ImpactCount++;
+	ImpactPrev = LastImpact;
+	if (ImpactPrev != NULL)
+	{
+		ImpactPrev->ImpactNext = this;
+	}
+	else
+	{
+		FirstImpact = this;
+	}
+	LastImpact = this;
+}
+
+DImpactDecal *DImpactDecal::StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_t *wall, PalEntry color)
+{
+	if (cl_maxdecals > 0)
+	{
+		const FDecalTemplate *tpl = DecalLibrary.GetDecalByName (name);
+
+		if (tpl != NULL && (tpl = tpl->GetDecal()) != NULL)
+		{
+			return StaticCreate (tpl, x, y, z, wall, color);
+		}
+	}
+	return NULL;
+}
+
+DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, PalEntry color)
+{
+	DImpactDecal *decal = NULL;
+	if (tpl != NULL && cl_maxdecals > 0 && !(wall->Flags & WALLF_NOAUTODECALS))
+	{
+		if (tpl->LowerDecal)
+		{
+			StaticCreate (tpl->LowerDecal->GetDecal(), x, y, z, wall);
 		}
 		if (ImpactCount >= cl_maxdecals)
 		{
 			FirstImpact->Destroy ();
 		}
-		ImpactCount++;
-		actor = Spawn<AImpactDecal> (x, y, z);
 
-		if (actor == NULL)
-			return NULL;
+		decal = new DImpactDecal (x, y, z);
 
-		int stickypic = actor->StickToWall (wall);
+		int stickypic = decal->StickToWall (wall);
 		FTexture *tex = TexMan[stickypic];
 
 		if (tex != NULL && tex->bNoDecals)
 		{
-			actor->Destroy ();
 			return NULL;
 		}
 
-		decal->ApplyToActor (actor);
-		if (color != 0) actor->SetShade (color.r, color.g, color.b);
+		if (decal == NULL)
+		{
+			return NULL;
+		}
 
-		if (!cl_spreaddecals || actor->picnum == 0xffff)
-			return actor;
+		tpl->ApplyToDecal (decal);
+		if (color != 0)
+		{
+			decal->SetShade (color.r, color.g, color.b);
+		}
+
+		if (!cl_spreaddecals || decal->PicNum == 0xffff)
+		{
+			return decal;
+		}
 
 		// Spread decal to nearby walls if it does not all fit on this one
-		vertex_t *v1;
-		fixed_t rorg, ldx, ldy;
-		int xscale, yscale;
-
-		GetWallStuff (wall, v1, ldx, ldy);
-		rorg = Length (x - v1->x, y - v1->y);
-
-		tex = TexMan[actor->picnum];
-		int dwidth = tex->GetWidth ();
-
-		xscale = (actor->xscale + 1) << (FRACBITS - 6);
-		yscale = (actor->yscale + 1) << (FRACBITS - 6);
-
-		DecalWidth = dwidth * xscale;
-		DecalLeft = tex->LeftOffset * xscale;
-		DecalRight = DecalWidth - DecalLeft;
-		SpreadSource = actor;
-		SpreadDecal = decal;
-		SpreadZ = z;
-
-
-		// Try spreading left first
-		SpreadLeft (rorg - DecalLeft, v1, wall);
-		SpreadStack.Clear ();
-
-		// Then try spreading right
-		SpreadRight (rorg + DecalRight, wall,
-			Length (lines[wall->linenum].dx, lines[wall->linenum].dy));
-		SpreadStack.Clear ();
+		decal->Spread (tpl, wall);
 	}
-	return actor;
+	return decal;
 }
 
-AImpactDecal *AImpactDecal::CloneSelf (const FDecal *decal, fixed_t ix, fixed_t iy, fixed_t iz, side_t *wall) const
+DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, fixed_t ix, fixed_t iy, fixed_t iz, side_t *wall) const
 {
-	AImpactDecal *actor = NULL;
-	// [SO] We used to have an 'else' here -- but that means we create an actor without increasing the
-	//		count!!!
-	// [RH] Moved this before the destroy, just so it can't go negative temporarily.
-	ImpactCount++;
 	if (ImpactCount >= cl_maxdecals)
 	{
 		FirstImpact->Destroy ();
 	}
-	actor = Spawn<AImpactDecal> (ix, iy, iz);
-	if (actor != NULL)
+	DImpactDecal *decal = new DImpactDecal(ix, iy, iz);
+	if (decal != NULL)
 	{
-		actor->StickToWall (wall);
-		decal->ApplyToActor (actor);
-		actor->alphacolor = alphacolor;
-		actor->renderflags = (actor->renderflags & RF_DECALMASK) |
-							 (this->renderflags & ~RF_DECALMASK);
+		decal->StickToWall (wall);
+		tpl->ApplyToDecal (decal);
+		decal->AlphaColor = AlphaColor;
+		decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
+							 (this->RenderFlags & ~RF_DECALMASK);
 	}
-	return actor;
+	return decal;
 }
 
-void AImpactDecal::Destroy ()
+void DImpactDecal::Destroy ()
 {
-	if (target != NULL)
+	if (ImpactPrev != NULL)
 	{
-		target->tracer = tracer;
+		ImpactPrev->ImpactNext = ImpactNext;
 	}
-	if (tracer != NULL)
+	if (ImpactNext != NULL)
 	{
-		tracer->target = target;
+		ImpactNext->ImpactPrev = ImpactPrev;
 	}
 	if (LastImpact == this)
 	{
-		LastImpact = target;
+		LastImpact = ImpactPrev;
 	}
 	if (FirstImpact == this)
 	{
-		FirstImpact = tracer;
+		FirstImpact = ImpactNext;
 	}
 
 	ImpactCount--;
@@ -728,7 +715,7 @@ CCMD (countdecals)
 
 CCMD (countdecalsreal)
 {
-	TThinkerIterator<AImpactDecal> iterator (STAT_DECAL);
+	TThinkerIterator<DImpactDecal> iterator (STAT_DECAL);
 	int count = 0;
 
 	while (iterator.Next())
@@ -761,9 +748,67 @@ CCMD (spray)
 	{
 		if (trace.HitType == TRACE_HitWall)
 		{
-			AImpactDecal::StaticCreate (argv[1],
+			DImpactDecal::StaticCreate (argv[1],
 				trace.X, trace.Y, trace.Z,
 				sides + trace.Line->sidenum[trace.Side]);
 		}
 	}
+}
+
+class ADecal : public AActor
+{
+	DECLARE_STATELESS_ACTOR (ADecal, AActor);
+public:
+	void BeginPlay ();
+	bool DoTrace (DBaseDecal *decal, angle_t angle, sector_t *sec);
+};
+
+IMPLEMENT_STATELESS_ACTOR (ADecal, Any, 9200, 0)
+END_DEFAULTS
+
+void ADecal::BeginPlay ()
+{
+	Super::BeginPlay ();
+
+	// Find a wall to attach to, and set RenderFlags to keep
+	// the decal at its current height. If the decal cannot find a wall
+	// within 64 units, it destroys itself.
+	//
+	// Subclasses can set special1 if they don't want this sticky logic.
+
+	DBaseDecal *decal = new DBaseDecal (this);
+
+	if (!DoTrace (decal, angle, Sector))
+	{
+		decal->Destroy();
+		return;
+	}
+
+	if (args[0] != 0)
+	{
+		const FDecalTemplate *tpl = DecalLibrary.GetDecalByNum (args[0]);
+		if (tpl != NULL)
+		{
+			tpl->ApplyToDecal (decal);
+		}
+	}
+}
+
+bool ADecal::DoTrace (DBaseDecal *decal, angle_t angle, sector_t *sec)
+{
+	FTraceResults trace;
+
+	Trace (x, y, z, sec,
+		finecosine[(angle+ANGLE_180)>>ANGLETOFINESHIFT],
+		finesine[(angle+ANGLE_180)>>ANGLETOFINESHIFT], 0,
+		64*FRACUNIT, 0, 0, NULL, trace, TRACE_NoSky);
+
+	if (trace.HitType == TRACE_HitWall)
+	{
+		decal->x = trace.X;
+		decal->y = trace.Y;
+		decal->StickToWall (sides + trace.Line->sidenum[trace.Side]);
+		return true;
+	}
+	return false;
 }

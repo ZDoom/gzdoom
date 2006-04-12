@@ -610,7 +610,7 @@ static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool fl
 }
 
 #if 0
-static void MoveTheDecal (ADecal *decal, fixed_t z, AActor *source, AActor *dest)
+static void MoveTheDecal (DBaseDecal *decal, fixed_t z, AActor *source, AActor *dest)
 {
 	int an = (dest->angle - source->angle) >> ANGLETOFINESHIFT;
 	fixed_t offX = decal->x - source->x;

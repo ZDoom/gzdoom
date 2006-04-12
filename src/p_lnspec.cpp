@@ -1137,7 +1137,7 @@ FUNC(LS_Thing_Hate)
 
 	if (arg0 == 0)
 	{
-		if (it->player)
+		if (it != NULL && it->player != NULL)
 		{
 			// Players cannot have their attitudes set
 			return false;

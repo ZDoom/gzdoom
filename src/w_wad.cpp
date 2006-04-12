@@ -968,8 +968,8 @@ int FWadCollection::MergeLumps (const char *start, const char *end, int space)
 
 	if (newlumps)
 	{
-		if (size_t(oldlumps + newlumps) > NumLumps)
-			LumpInfo = (LumpRecord *)Realloc (LumpInfo, oldlumps + newlumps);
+		if (size_t(oldlumps + newlumps) >= NumLumps)
+			LumpInfo = (LumpRecord *)Realloc (LumpInfo, (oldlumps + newlumps + 1) * sizeof(LumpRecord));
 
 		memcpy (LumpInfo + oldlumps, newlumpinfos, sizeof(LumpRecord) * newlumps);
 		markerpos = oldlumps;

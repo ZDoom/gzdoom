@@ -434,12 +434,59 @@ void AActor::LinkToWorld (sector_t *sec)
 // Emulate buggy PointOnLineSide and fix actors that lie on
 // lines to compensate for some IWAD maps.
 //
+static int R_PointOnSideSlow (fixed_t x, fixed_t y, node_t *node)
+{
+	// [RH] This might have been faster than two multiplies and an
+	// add on a 386/486, but it certainly isn't on anything newer than that.
+	fixed_t	dx;
+	fixed_t	dy;
+	fixed_t	left;
+	fixed_t	right;
+
+	if (!node->dx)
+	{
+		if (x <= node->x)
+			return node->dy > 0;
+
+		return node->dy < 0;
+	}
+	if (!node->dy)
+	{
+		if (y <= node->y)
+			return node->dx < 0;
+
+		return node->dx > 0;
+	}
+
+	dx = (x - node->x);
+	dy = (y - node->y);
+
+	// Try to quickly decide by looking at sign bits.
+	if ( (node->dy ^ node->dx ^ dx ^ dy)&0x80000000 )
+	{
+		if  ( (node->dy ^ dx) & 0x80000000 )
+		{
+			// (left is negative)
+			return 1;
+		}
+		return 0;
+	}
+
+	left = FixedMul ( node->dy>>FRACBITS , dx );
+	right = FixedMul ( dy , node->dx>>FRACBITS );
+
+	if (right < left)
+	{
+		// front side
+		return 0;
+	}
+	// back side
+	return 1;
+}
+
 sector_t *AActor::LinkToWorldForMapThing ()
 {
-	node_t *node;
-	int side;
-				
-	node = nodes + numnodes - 1;
+	node_t *node = nodes + numnodes - 1;
 
 	do
 	{
@@ -451,25 +498,7 @@ sector_t *AActor::LinkToWorldForMapThing ()
 		// that lies directly on a line should always be
 		// considered as "in front" of the line. The orientation
 		// of the line should be irrelevant.
-		if (node->dx == 0)
-		{
-			if (x <= node->x)
-				side = node->dy > 0;
-			else
-				side = node->dy < 0;
-		}
-		else if (node->dy == 0)
-		{
-			if (y <= node->y)
-				side = node->dx < 0;
-			else
-				side = node->dx > 0;
-		}
-		else
-		{
-			side = R_PointOnSide (x, y, node);
-		}
-		node = (node_t *)node->children[side];
+		node = (node_t *)node->children[R_PointOnSideSlow (x, y, node)];
 	}
 	while (!((size_t)node & 1));
 

@@ -414,7 +414,7 @@ bool TimiditySong::LaunchTimidity ()
 
 	// Tell Timidity whether it should loop or not
 	CommandLine[LoopPos] = m_Looping ? 'l' : ' ';
-	DPrintf ("cmd: \x1cG%s\n", CommandLine);
+	DPrintf ("cmd: \x1cG%s\n", CommandLine.GetChars());
 
 #ifdef _WIN32
 	STARTUPINFO startup = { sizeof(startup), };
@@ -496,7 +496,7 @@ bool TimiditySong::LaunchTimidity ()
 		freopen ("/dev/null", "r", stdin);
 		freopen ("/dev/null", "w", stderr);
 		close (WavePipe[1]);
-		
+
 		printf ("exec %s\n", words.we_wordv[0]);
 		execvp (words.we_wordv[0], words.we_wordv);
 		exit (0);	// if execvp succeeds, we never get here

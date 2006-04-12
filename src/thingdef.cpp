@@ -90,8 +90,9 @@ inline char * MS_Strdup(const char * s)
 //
 //==========================================================================
 
-#define DEFINE_FLAG(prefix, name, type, variable) { prefix##_##name, #name, offsetof(type, variable) }
-#define DEFINE_FLAG2(symbol, name, type, variable) { symbol, #name, offsetof(type, variable) }
+// [RH] Keep GCC quiet by not using offsetof on Actor types.
+#define DEFINE_FLAG(prefix, name, type, variable) { prefix##_##name, #name, (int)&((type*)1)->variable - 1 }
+#define DEFINE_FLAG2(symbol, name, type, variable) { symbol, #name, (int)&((type*)1)->variable - 1 }
 
 struct flagdef
 {
@@ -1618,7 +1619,7 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 							case 'A':
 							case 'a':		// Angle
 								SC_MustGetFloat();
-								v=sc_Float*ANGLE_1;
+								v=angle_t(sc_Float*ANGLE_1);
 								break;
 
 							case 'B':
@@ -1641,7 +1642,7 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 							case 'F':
 							case 'f':		// Fixed point
 								SC_MustGetFloat();
-								v=sc_Float*FRACUNIT;
+								v=fixed_t(sc_Float*FRACUNIT);
 								break;
 
 							case 'S':
@@ -2673,7 +2674,7 @@ static void ActorBloodColor (AActor *defaults, Baggage &bag)
 static void ActorBounceFactor (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat ();
-	defaults->bouncefactor = sc_Float * FRACUNIT;
+	defaults->bouncefactor = fixed_t(sc_Float * FRACUNIT);
 }
 
 //==========================================================================
@@ -2875,11 +2876,11 @@ static void ArmorSavePercent (AActor *defaults, Baggage &bag)
 	// Special case here because this property has to work for 2 unrelated classes
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		((ABasicArmorPickup*)defaults)->SavePercent=sc_Float*FRACUNIT/100.0f;
+		((ABasicArmorPickup*)defaults)->SavePercent=fixed_t(sc_Float*FRACUNIT/100.0f);
 	}
 	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
-		((ABasicArmorBonus*)defaults)->SavePercent=sc_Float*FRACUNIT/100.0f;
+		((ABasicArmorBonus*)defaults)->SavePercent=fixed_t(sc_Float*FRACUNIT/100.0f);
 	}
 	else
 	{
@@ -3106,7 +3107,7 @@ static void WeaponUpSound (AWeapon *defaults, Baggage &bag)
 static void WeaponYAdjust (AWeapon *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->YAdjust=sc_Float * FRACUNIT;
+	defaults->YAdjust=fixed_t(sc_Float * FRACUNIT);
 }
 
 //==========================================================================
@@ -3154,7 +3155,7 @@ static void PowerupColor (APowerupGiver *defaults, Baggage &bag)
 		b=BPART(c);
 	}
 	SC_MustGetFloat();
-	alpha=sc_Float*255;
+	alpha=int(sc_Float*255);
 	alpha=clamp<int>(alpha, 0, 255);
 	defaults->BlendColor = MAKEARGB(alpha, r, g, b);
 }
@@ -3343,7 +3344,7 @@ static const ActorProps *is_actorprop (const char *str)
 //==========================================================================
 void FinishThingdef()
 {
-	int i;
+	size_t i;
 
 	for (i = 0;i < TypeInfo::m_RuntimeActors.Size(); i++)
 	{

@@ -28,7 +28,7 @@ struct Keygroup
 
 	bool check(AActor * owner)
 	{
-		for(int i=0;i<anykeylist.Size();i++)
+		for(size_t i=0;i<anykeylist.Size();i++)
 		{
 			if (anykeylist[i].check(owner)) return true;
 		}
@@ -52,7 +52,7 @@ struct Lock
 
 	~Lock()
 	{
-		for(int i=0;i<keylist.Size();i++) delete keylist[i];
+		for(size_t i=0;i<keylist.Size();i++) delete keylist[i];
 		keylist.Clear();
 		if (message) delete [] message;
 		if (remotemsg) delete [] remotemsg;
@@ -71,7 +71,7 @@ struct Lock
 				}
 			}
 		}
-		else for(int i=0;i<keylist.Size();i++)
+		else for(size_t i=0;i<keylist.Size();i++)
 		{
 			if (!keylist[i]->check(owner)) return false;
 		}
@@ -379,7 +379,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 	int failsound = 0;
 
 	failtext = NULL;
-	failsound = NULL;
+	failsound = 0;
 
 	if (keynum<=0 || keynum>255) return true;
 	// Just a safety precaution. The messages should have been initialized upon game start.

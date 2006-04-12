@@ -327,7 +327,8 @@ void FDecalLib::DelTree (FDecalBase *root)
 
 void FDecalLib::ReadAllDecals ()
 {
-	int i, lump, lastlump = 0;
+	int lump, lastlump = 0;
+	size_t i;
 
 	while ((lump = Wads.FindLump ("DECALDEF", &lastlump)) != -1)
 	{
@@ -341,7 +342,7 @@ void FDecalLib::ReadAllDecals ()
 		AActor *def = (AActor*)GetDefaultByType (TypeInfo::m_RuntimeActors[i]);
 
 		intptr_t v = (intptr_t)def->DecalGenerator;
-		if (v > 0 && v <= DecalNames.Size())
+		if (v > 0 && v <= (intptr_t)DecalNames.Size())
 		{
 			def->DecalGenerator = ScanTreeForName (DecalNames[v-1], Root);
 		}

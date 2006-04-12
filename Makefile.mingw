@@ -94,12 +94,12 @@ OBJECTS += \
 	$(OBJDIR)/doomstat.o \
 	$(OBJDIR)/dsectoreffect.o \
 	$(OBJDIR)/dthinker.o \
-	$(OBJDIR)/empty.o \
 	$(OBJDIR)/f_finale.o \
 	$(OBJDIR)/f_wipe.o \
 	$(OBJDIR)/farchive.o \
 	$(OBJDIR)/files.o \
 	$(OBJDIR)/g_game.o \
+	$(OBJDIR)/g_hub.o \
 	$(OBJDIR)/g_level.o \
 	$(OBJDIR)/gameconfigfile.o \
 	$(OBJDIR)/gi.o \
@@ -284,6 +284,7 @@ OBJECTS += \
 	$(OBJDIR)/a_summon.o \
 	$(OBJDIR)/a_teleportother.o \
 	$(OBJDIR)/a_weaponpiece.o \
+	$(OBJDIR)/a_weaponpieces.o \
 	$(OBJDIR)/a_wraith.o \
 	$(OBJDIR)/hexen_sbar.o \
 	$(OBJDIR)/a_artiegg.o \

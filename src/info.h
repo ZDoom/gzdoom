@@ -66,8 +66,10 @@
 #define __INFO_H__
 
 #include <stddef.h>
-#ifndef _WIN32
+#if !defined(_WIN32)
 #include <inttypes.h>		// for intptr_t
+#elif !defined(_MSC_VER)
+#include <stdint.h>			// for mingw
 #endif
 
 #include "dobject.h"

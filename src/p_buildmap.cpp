@@ -587,12 +587,12 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		if (bsec->floorstat & 64)
 		{ // floor is aligned to first wall
 			R_AlignFlat (sides[bsec->wallptr].linenum,
-				lines[sides[bsec->wallptr].linenum].sidenum[1] == bsec->wallptr, 0);
+				lines[sides[bsec->wallptr].linenum].sidenum[1] == (DWORD)bsec->wallptr, 0);
 		}
 		if (bsec->ceilingstat & 64)
 		{ // ceiling is aligned to first wall
 			R_AlignFlat (sides[bsec->wallptr].linenum,
-				lines[sides[bsec->wallptr].linenum].sidenum[1] == bsec->wallptr, 0);
+				lines[sides[bsec->wallptr].linenum].sidenum[1] == (DWORD)bsec->wallptr, 0);
 		}
 	}
 }

@@ -288,7 +288,7 @@ void WI_LoadBackground(bool isenterpic)
 	char buffer[10];
 	in_anim_t an;
 	lnode_t pt;
-	int texture;
+	int texture = -1;
 
 	bcnt=0;
 
@@ -558,7 +558,7 @@ void WI_LoadBackground(bool isenterpic)
 
 void WI_updateAnimatedBack()
 {
-	int i;
+	size_t i;
 
 	for(i=0;i<anims.Size();i++)
 	{
@@ -593,7 +593,7 @@ void WI_updateAnimatedBack()
 
 void WI_drawBackground()
 {
-	int i;
+	size_t i;
 	int animwidth=320;		// For a flat fill or clear background scale animations to 320x200
 	int animheight=200;
 
@@ -841,7 +841,7 @@ void WI_drawEL ()
 
 int WI_MapToIndex (char *map)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < lnodes.Size(); i++)
 	{
@@ -1089,7 +1089,7 @@ void WI_updateShowNextLoc ()
 
 void WI_drawShowNextLoc(void)
 {
-	int   i;
+	size_t i;
 	
 	WI_drawBackground();
 
@@ -1936,6 +1936,10 @@ void WI_Ticker(void)
 		
     case NoState:
 		WI_updateNoState();
+		break;
+
+	case LeavingIntermission:
+		// Hush, GCC.
 		break;
 	}
 }

@@ -1053,7 +1053,7 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, BOO
 		CrossProduct (v1, v2, cross);
 		if (VectorLength (cross) == 0)
 		{
-			Printf ("Slope thing at (%d,%d) lies directly on its target line.\n", x>>16, y>>16);
+			Printf ("Slope thing at (%d,%d) lies directly on its target line.\n", int(x>>16), int(y>>16));
 			return;
 		}
 		VectorNormalize (cross);
@@ -1620,7 +1620,7 @@ static void P_LoopSidedefs ()
 		// For each vertex, build a list of sidedefs that use that vertex
 		// as their left edge.
 		line_t *line = &lines[sides[i].linenum];
-		int lineside = (line->sidenum[0] != i);
+		int lineside = (line->sidenum[0] != (DWORD)i);
 		int vert = (lineside ? line->v2 : line->v1) - vertexes;
 		
 		sidetemp[i].b.lineside = lineside;

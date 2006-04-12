@@ -399,7 +399,7 @@ void A_JumpIfCloser(AActor * self)
 	// No target - no jump
 	if (target==NULL) return;
 
-	fixed_t dist = EvalExpressionF (StateParameters[index], self) * FRACUNIT;
+	fixed_t dist = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
 	if (index > 0 && P_AproxDistance(self->x-target->x, self->y-target->y) < dist)
 		DoJump(self, CallingState, StateParameters[index+1]);
 }
@@ -517,11 +517,11 @@ void A_CustomMissile(AActor * self)
 	if (index<0) return;
 
 	const char * MissileName=(const char*)StateParameters[index];
-	fixed_t SpawnHeight=EvalExpressionF (StateParameters[index+1], self) * FRACUNIT;
+	fixed_t SpawnHeight=fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	int Spawnofs_XY=EvalExpressionI (StateParameters[index+2], self);
-	angle_t Angle=EvalExpressionF (StateParameters[index+3], self) * ANGLE_1;
+	angle_t Angle=angle_t(EvalExpressionF (StateParameters[index+3], self) * ANGLE_1);
 	int aimmode=EvalExpressionI (StateParameters[index+4], self);
-	angle_t pitch=EvalExpressionF (StateParameters[index+5], self) * ANGLE_1;
+	angle_t pitch=angle_t(EvalExpressionF (StateParameters[index+5], self) * ANGLE_1);
 
 	AActor * targ;
 	AActor * missile;
@@ -539,6 +539,7 @@ void A_CustomMissile(AActor * self)
 			switch (aimmode&3)
 			{
 			case 0:
+			default:
 				// same adjustment as above (in all 3 directions this time) - for better aiming!
 				self->x+=x;
 				self->y+=y;
@@ -626,12 +627,12 @@ void A_CustomBulletAttack (AActor *self)
 	int index=CheckIndex(6);
 	if (index<0) return;
 
-	angle_t Spread_XY=EvalExpressionF (StateParameters[index], self) * ANGLE_1;
-	angle_t Spread_Z=EvalExpressionF (StateParameters[index+1], self) * ANGLE_1;
+	angle_t Spread_XY=angle_t(EvalExpressionF (StateParameters[index], self) * ANGLE_1);
+	angle_t Spread_Z=angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
 	int NumBullets=EvalExpressionI (StateParameters[index+2], self);
 	int DamagePerBullet=EvalExpressionI (StateParameters[index+3], self);
 	const char * PuffType=(const char *)StateParameters[index+4];
-	fixed_t Range = EvalExpressionF (StateParameters[index+5], self) * FRACUNIT;
+	fixed_t Range = fixed_t(EvalExpressionF (StateParameters[index+5], self) * FRACUNIT);
 
 	if(Range==0) Range=MISSILERANGE;
 
@@ -688,13 +689,13 @@ void A_FireBullets (AActor *self)
 	int index=CheckIndex(7);
 	if (index<0 || !self->player) return;
 
-	angle_t Spread_XY=EvalExpressionF (StateParameters[index], self) * ANGLE_1;
-	angle_t Spread_Z=EvalExpressionF (StateParameters[index+1], self) * ANGLE_1;
+	angle_t Spread_XY=angle_t(EvalExpressionF (StateParameters[index], self) * ANGLE_1);
+	angle_t Spread_Z=angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
 	int NumberOfBullets=EvalExpressionI (StateParameters[index+2], self);
 	int DamagePerBullet=EvalExpressionI (StateParameters[index+3], self);
 	const char * PuffTypeName=(const char *)StateParameters[index+4];
 	bool UseNoAmmo=!EvalExpressionI (StateParameters[index+5], self);
-	fixed_t Range=EvalExpressionF (StateParameters[index+6], self) * FRACUNIT; 
+	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+6], self) * FRACUNIT);
 	
 	const TypeInfo * PuffType;
 
@@ -753,10 +754,10 @@ void A_FireCustomMissile (AActor * self)
 	if (index<0 || !self->player) return;
 
 	const char * MissileName=(const char *)StateParameters[index];
-	angle_t Angle=EvalExpressionF (StateParameters[index+1], self) * ANGLE_1;
+	angle_t Angle=angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
 	bool UseNoAmmo=!EvalExpressionI (StateParameters[index+2], self);
 	int SpawnOfs_XY=EvalExpressionI (StateParameters[index+3], self);
-	fixed_t SpawnHeight=EvalExpressionF (StateParameters[index+4], self) * FRACUNIT;
+	fixed_t SpawnHeight=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
 
 	player_t *player=self->player;
 	AWeapon * weapon=player->ReadyWeapon;
@@ -808,7 +809,7 @@ void A_CustomPunch (AActor *self)
 	bool norandom=!!EvalExpressionI (StateParameters[index+1], self);
 	bool UseNoAmmo=!EvalExpressionI (StateParameters[index+2], self);
 	const char * PuffTypeName=(const char *)StateParameters[index+3];
-	fixed_t Range=EvalExpressionF (StateParameters[index+4], self) * FRACUNIT; 
+	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
 
 	const TypeInfo * PuffType;
 
@@ -1062,7 +1063,7 @@ void A_SpawnItem(AActor * self)
 
 	const TypeInfo * missile= TypeInfo::FindType((const char *)StateParameters[index]);
 	int distance = EvalExpressionI (StateParameters[index+1], self);
-	fixed_t zheight = EvalExpressionF (StateParameters[index+2], self) * FRACUNIT;
+	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	bool useammo = !EvalExpressionI (StateParameters[index+3], self);
 
 	if (!missile) 
@@ -1158,9 +1159,9 @@ void A_ThrowGrenade(AActor * self)
 	if (index<0) return;
 
 	const TypeInfo * missile= TypeInfo::FindType((const char *)StateParameters[index]);
-	fixed_t zheight = EvalExpressionF (StateParameters[index+1], self) * FRACUNIT;
-	fixed_t xymom = EvalExpressionF (StateParameters[index+2], self) * FRACUNIT;
-	fixed_t zmom = EvalExpressionF (StateParameters[index+3], self) * FRACUNIT;
+	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
+	fixed_t xymom = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
+	fixed_t zmom = fixed_t(EvalExpressionF (StateParameters[index+3], self) * FRACUNIT);
 	bool useammo = !EvalExpressionI (StateParameters[index+4], self);
 
 	if (self->player && CallingState != self->state && CallingState != StateCall.State)
@@ -1209,7 +1210,7 @@ void A_Recoil(AActor * actor)
 {
 	int index=CheckIndex(1, NULL);
 	if (index<0) return;
-	fixed_t xymom = EvalExpressionF (StateParameters[index], actor) * FRACUNIT;
+	fixed_t xymom = fixed_t(EvalExpressionF (StateParameters[index], actor) * FRACUNIT);
 
 	angle_t angle = actor->angle + ANG180;
 	angle >>= ANGLETOFINESHIFT;
@@ -1270,7 +1271,7 @@ void A_SetTranslucent(AActor * self)
 	int index=CheckIndex(2, NULL);
 	if (index<0) return;
 
-	fixed_t alpha = EvalExpressionF (StateParameters[index], self) * FRACUNIT;
+	fixed_t alpha = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
 	int mode = EvalExpressionI (StateParameters[index+1], self);
 	mode = mode == 0 ? STYLE_Translucent : mode == 2 ? STYLE_Fuzzy : STYLE_Add;
 
@@ -1297,7 +1298,7 @@ void A_FadeIn(AActor * self)
 	int index=CheckIndex(1, NULL);
 	if (index<0) return;
 
-	fixed_t reduce = EvalExpressionF (StateParameters[index], self) * FRACUNIT;
+	fixed_t reduce = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
 	if (reduce == 0) reduce = FRACUNIT/10;
 
 	if (self->RenderStyle==STYLE_Normal) self->RenderStyle=STYLE_Translucent;
@@ -1317,7 +1318,7 @@ void A_FadeOut(AActor * self)
 	int index=CheckIndex(1, NULL);
 	if (index<0) return;
 
-	fixed_t reduce = EvalExpressionF (StateParameters[index], self) * FRACUNIT;
+	fixed_t reduce = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
 	if (reduce == 0) reduce = FRACUNIT/10;
 
 	if (self->RenderStyle==STYLE_Normal) self->RenderStyle=STYLE_Translucent;
@@ -1507,5 +1508,3 @@ void A_KillChildren(AActor * self)
 		}
 	}
 }
-
-

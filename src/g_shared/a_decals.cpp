@@ -173,7 +173,7 @@ void DBaseDecal::FixForSide (side_t *wall)
 {
 	DBaseDecal *decal = wall->AttachedDecals;
 	line_t *line = &lines[wall->linenum];
-	int wallnum = int(wall - sides);
+	DWORD wallnum = DWORD(wall - sides);
 	vertex_t *v1, *v2;
 
 	if (line->sidenum[0] == wallnum)
@@ -237,7 +237,7 @@ int DBaseDecal::StickToWall (side_t *wall)
 	int tex;
 
 	line = &lines[wall->linenum];
-	if (line->sidenum[0] == wall - sides)
+	if (line->sidenum[0] == DWORD(wall - sides))
 	{
 		front = line->frontsector;
 		back = line->backsector;
@@ -285,7 +285,7 @@ fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 	const line_t *line = &lines[wall->linenum];
 	const sector_t *front, *back;
 
-	if (line->sidenum[0] == wall - sides)
+	if (line->sidenum[0] == DWORD(wall - sides))
 	{
 		front = line->frontsector;
 		back = line->backsector;
@@ -337,7 +337,7 @@ fixed_t DBaseDecal::GetRealZ (const side_t *wall) const
 void DBaseDecal::CalcFracPos (side_t *wall)
 {
 	line_t *line = &lines[wall->linenum];
-	int wallnum = int(wall - sides);
+	DWORD wallnum = DWORD(wall - sides);
 	vertex_t *v1, *v2;
 
 	if (line->sidenum[0] == wallnum)
@@ -371,7 +371,7 @@ void DBaseDecal::CalcFracPos (side_t *wall)
 static void GetWallStuff (side_t *wall, vertex_t *&v1, fixed_t &ldx, fixed_t &ldy)
 {
 	line_t *line = &lines[wall->linenum];
-	if (line->sidenum[0] == wall - sides)
+	if (line->sidenum[0] == DWORD(wall - sides))
 	{
 		v1 = line->v1;
 		ldx = line->dx;
@@ -393,7 +393,7 @@ static fixed_t Length (fixed_t dx, fixed_t dy)
 static side_t *NextWall (const side_t *wall)
 {
 	line_t *line = &lines[wall->linenum];
-	int wallnum = int(wall - sides);
+	DWORD wallnum = DWORD(wall - sides);
 
 	if (line->sidenum[0] == wallnum)
 	{

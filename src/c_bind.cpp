@@ -247,7 +247,7 @@ const char *KeyNames[NUM_KEYS] =
 static char *Bindings[NUM_KEYS];
 
 static char *DoubleBindings[NUM_KEYS];
-static int DClickTime[NUM_KEYS];
+static unsigned int DClickTime[NUM_KEYS];
 static byte DClicked[(NUM_KEYS+7)/8];
 
 static int GetKeyFromName (const char *name)

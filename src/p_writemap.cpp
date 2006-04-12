@@ -177,7 +177,7 @@ static int WriteSEGS (FILE *file)
 			ms.v1 = LittleShort(short(segs[i].v1 - vertexes));
 			ms.v2 = LittleShort(short(segs[i].v2 - vertexes));
 			ms.linedef = LittleShort(short(segs[i].linedef - lines));
-			ms.side = LittleShort(segs[i].sidedef - sides == segs[i].linedef->sidenum[0] ? 0 : 1);
+			ms.side = LittleShort(DWORD(segs[i].sidedef - sides) == segs[i].linedef->sidenum[0] ? 0 : 1);
 			ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->x, segs[i].v1->y, segs[i].v2->x, segs[i].v2->y)>>16));
 			fwrite (&ms, sizeof(ms), 1, file);
 		}

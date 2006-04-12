@@ -1,6 +1,6 @@
 April 11, 2006
-- Fixed: Compiling with mingw once again works, although savegame loading
-  problems are not yet fixed.
+- Fixed: GCC misoptimized the SWAP macros in farchive.cpp.
+- Fixed: Compiling with mingw once again works.
 - Fixed: ACS improperly calculated the address of local variables when
   returning from one function to another function when the function that
   was called was used as part of an expression.

@@ -80,22 +80,30 @@
 #define OLD_SPRITE			((BYTE)12)	// Reference to an old sprite name follows
 
 #ifdef WORDS_BIGENDIAN
-#define SWAP_WORD(x)
-#define SWAP_DWORD(x)
-#define SWAP_QWORD(x)
-#define SWAP_FLOAT(x)
-#define SWAP_DOUBLE(x)
+static inline WORD SWAP_WORD(x) { return x; }
+static inline DWORD SWAP_DWORD(x) { return x; }
+static inline QWORD SWAP_QWORD(x) { return x; }
+static inline float SWAP_FLOAT(x) { return x; }
+static inline double SWAP_DOUBLE(x) { return x; }
 #else
-#define SWAP_WORD(x)		{ x = (((x)<<8) | ((x)>>8)); }
-#define SWAP_DWORD(x)		{ x = (((x)>>24) | (((x)>>8)&0xff00) | ((x)<<8)&0xff0000 | ((x)<<24)); }
-#if 0
-#define SWAP_QWORD(x)		{ x = (((x)>>56) | (((x)>>40)&(0xff<<8)) | (((x)>>24)&(0xff<<16)) | (((x)>>8)&(0xff<<24)) |\
-								   (((x)<<8)&(QWORD)0xff00000000) | (((x)<<24)&(QWORD)0xff0000000000) | (((x)<<40)&(QWORD)0xff000000000000) | ((x)<<56))); }
+#ifdef _MSC_VER
+static inline WORD  SWAP_WORD(WORD x)		{ return _byteswap_ushort(x); }
+static inline DWORD SWAP_DWORD(DWORD x)		{ return _byteswap_ulong(x); }
+static inline QWORD SWAP_QWORD(QWORD x)		{ return _byteswap_uint64(x); }
 #else
-#define SWAP_QWORD(x)		{ DWORD *y = (DWORD *)&x; DWORD t=y[0]; y[0]=y[1]; y[1]=t; SWAP_DWORD(y[0]); SWAP_DWORD(y[1]); }
+static inline WORD  SWAP_WORD(WORD x)		{ return (((x)<<8) | ((x)>>8)); }
+static inline DWORD SWAP_DWORD(DWORD x)		{ return x = (((x)>>24) | (((x)>>8)&0xff00) | ((x)<<8)&0xff0000 | ((x)<<24)); }
+static inline QWORD SWAP_QWORD(QWORD x)
+{
+	union { QWORD q; DWORD d[2]; } t, u;
+	t.q = x;
+	u.d[0] = SWAP_DWORD(t.d[1]);
+	u.d[1] = SWAP_DWORD(t.d[0]);
+	return u.q;
+}
 #endif
-#define SWAP_FLOAT(x)		{ DWORD dw = *(DWORD *)&x; SWAP_DWORD(dw); x = *(float *)&dw; }
-#define SWAP_DOUBLE(x)		{ QWORD qw = *(QWORD *)&x; SWAP_QWORD(qw); x = *(double *)&qw; }
+static inline float SWAP_FLOAT(float x)		{ DWORD t = *(DWORD *)&x; t = SWAP_DWORD(t); return *(float *)&t; }
+static inline double SWAP_DOUBLE(double x)	{ QWORD t = *(QWORD *)&x; t = SWAP_QWORD(t); return *(double *)&t; }
 #endif
 
 // Output buffer size for compression; need some extra space.
@@ -175,13 +183,13 @@ void FCompressedFile::PostOpen ()
 		{
 			DWORD sizes[2];
 			fread (sizes, sizeof(DWORD), 2, m_File);
-			SWAP_DWORD (sizes[0]);
-			SWAP_DWORD (sizes[1]);
+			sizes[0] = SWAP_DWORD (sizes[0]);
+			sizes[1] = SWAP_DWORD (sizes[1]);
 			unsigned int len = sizes[0] == 0 ? sizes[1] : sizes[0];
 			m_Buffer = (byte *)Malloc (len+8);
 			fread (m_Buffer+8, len, 1, m_File);
-			SWAP_DWORD (sizes[0]);
-			SWAP_DWORD (sizes[1]);
+			sizes[0] = SWAP_DWORD (sizes[0]);
+			sizes[1] = SWAP_DWORD (sizes[1]);
 			((DWORD *)m_Buffer)[0] = sizes[0];
 			((DWORD *)m_Buffer)[1] = sizes[1];
 			Explode ();
@@ -483,10 +491,8 @@ void FCompressedMemFile::Serialize (FArchive &arc)
 		arc.Write (ZSig, 4);
 
 		DWORD sizes[2];
-		sizes[0] = ((DWORD *)m_ImplodedBuffer)[0];
-		sizes[1] = ((DWORD *)m_ImplodedBuffer)[1];
-		SWAP_DWORD (sizes[0]);
-		SWAP_DWORD (sizes[1]);
+		sizes[0] = SWAP_DWORD (((DWORD *)m_ImplodedBuffer)[0]);
+		sizes[1] = SWAP_DWORD (((DWORD *)m_ImplodedBuffer)[1]);
 		arc.Write (m_ImplodedBuffer, (sizes[0] ? sizes[0] : sizes[1])+8);
 	}
 	else
@@ -506,10 +512,8 @@ void FCompressedMemFile::Serialize (FArchive &arc)
 		DWORD len = sizes[0] == 0 ? sizes[1] : sizes[0];
 
 		m_Buffer = (BYTE *)Malloc (len+8);
-		SWAP_DWORD (sizes[0]);
-		SWAP_DWORD (sizes[1]);
-		((DWORD *)m_Buffer)[0] = sizes[0];
-		((DWORD *)m_Buffer)[1] = sizes[1];
+		((DWORD *)m_Buffer)[0] = SWAP_DWORD(sizes[0]);
+		((DWORD *)m_Buffer)[1] = SWAP_DWORD(sizes[1]);
 		arc.Read (m_Buffer+8, len);
 		m_ImplodedBuffer = m_Buffer;
 		m_Buffer = NULL;
@@ -554,7 +558,7 @@ void FPNGChunkFile::Close ()
 			data[1] = m_ChunkID;
 			fwrite (data, 8, 1, m_File);
 			fwrite (m_Buffer, m_BufferSize, 1, m_File);
-			SWAP_DWORD (crc);
+			crc = SWAP_DWORD (crc);
 			fwrite (&crc, 4, 1, m_File);
 		}
 		m_File = NULL;
@@ -823,14 +827,13 @@ FArchive &FArchive::operator<< (WORD &w)
 {
 	if (m_Storing)
 	{
-		WORD temp = w;
-		SWAP_WORD(temp);
+		WORD temp = SWAP_WORD(w);
 		Write (&temp, sizeof(WORD));
 	}
 	else
 	{
 		Read (&w, sizeof(WORD));
-		SWAP_WORD(w);
+		w = SWAP_WORD(w);
 	}
 	return *this;
 }
@@ -839,14 +842,13 @@ FArchive &FArchive::operator<< (DWORD &w)
 {
 	if (m_Storing)
 	{
-		DWORD temp = w;
-		SWAP_DWORD(temp);
+		DWORD temp = SWAP_DWORD(w);
 		Write (&temp, sizeof(DWORD));
 	}
 	else
 	{
 		Read (&w, sizeof(DWORD));
-		SWAP_DWORD(w);
+		w = SWAP_DWORD(w);
 	}
 	return *this;
 }
@@ -855,14 +857,13 @@ FArchive &FArchive::operator<< (QWORD &w)
 {
 	if (m_Storing)
 	{
-		QWORD temp = w;
-		SWAP_QWORD(temp);
+		QWORD temp = SWAP_QWORD(w);
 		Write (&temp, sizeof(QWORD));
 	}
 	else
 	{
 		Read (&w, sizeof(QWORD));
-		SWAP_QWORD(w);
+		w = SWAP_QWORD(w);
 	}
 	return *this;
 }
@@ -871,14 +872,13 @@ FArchive &FArchive::operator<< (float &w)
 {
 	if (m_Storing)
 	{
-		float temp = w;
-		SWAP_FLOAT(temp);
+		float temp = SWAP_FLOAT(w);
 		Write (&temp, sizeof(float));
 	}
 	else
 	{
 		Read (&w, sizeof(float));
-		SWAP_FLOAT(w);
+		w = SWAP_FLOAT(w);
 	}
 	return *this;
 }
@@ -887,14 +887,13 @@ FArchive &FArchive::operator<< (double &w)
 {
 	if (m_Storing)
 	{
-		double temp = w;
-		SWAP_DOUBLE(temp);
+		double temp = SWAP_DOUBLE(w);
 		Write (&temp, sizeof(double));
 	}
 	else
 	{
 		Read (&w, sizeof(double));
-		SWAP_DOUBLE(w);
+		w = SWAP_DOUBLE(w);
 	}
 	return *this;
 }
@@ -907,8 +906,7 @@ FArchive &FArchive::SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize)
 	{
 		if (*ptr)
 		{
-			w = (*ptr - (byte *)ptrbase) / elemSize;
-			SWAP_WORD(w);
+			w = SWAP_WORD((*ptr - (byte *)ptrbase) / elemSize);
 		}
 		else
 		{
@@ -919,7 +917,7 @@ FArchive &FArchive::SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize)
 	else
 	{
 		Read (&w, sizeof(WORD));
-		SWAP_WORD (w);
+		w = SWAP_WORD (w);
 		if (w != 0xffff)
 		{
 			*ptr = (byte *)ptrbase + w * elemSize;

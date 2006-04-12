@@ -43,7 +43,7 @@ enum { GAMEVERSION = 205 };
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
-#define SAVEVER 231
+#define SAVEVER 232
 #define SAVESIG "ZDOOMSAVE232"
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "ZDOOM"

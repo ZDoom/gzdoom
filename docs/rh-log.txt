@@ -1,3 +1,8 @@
+April 12, 2006 (Changes by Graf Zahl)
+- Fixed: SAVEVER was still 231 although MINSAVEVER was 232.
+- Fixed: Decal spreading used an incorrect z-coordinate. It has to use
+  the one originally passed to DImpactDecal::StaticCreate.
+
 April 11, 2006
 - Fixed: GCC misoptimized the SWAP macros in farchive.cpp.
 - Fixed: Compiling with mingw once again works.

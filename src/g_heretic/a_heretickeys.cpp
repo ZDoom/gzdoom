@@ -18,7 +18,6 @@ class AKeyGreen : public AHereticKey
 	DECLARE_ACTOR (AKeyGreen, AHereticKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState AKeyGreen::States[] =

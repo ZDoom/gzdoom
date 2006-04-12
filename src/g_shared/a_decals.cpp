@@ -493,7 +493,7 @@ void DBaseDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
 	}
 }
 
-void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall)
+void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t spread_z)
 {
 	FTexture *tex;
 	vertex_t *v1;
@@ -514,7 +514,7 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall)
 	DecalRight = DecalWidth - DecalLeft;
 	SpreadSource = this;
 	SpreadTemplate = tpl;
-	SpreadZ = z;
+	SpreadZ = spread_z;
 
 
 	// Try spreading left first
@@ -662,7 +662,7 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 		}
 
 		// Spread decal to nearby walls if it does not all fit on this one
-		decal->Spread (tpl, wall);
+		decal->Spread (tpl, wall, z);
 	}
 	return decal;
 }

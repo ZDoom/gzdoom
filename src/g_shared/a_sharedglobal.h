@@ -65,7 +65,7 @@ public:
 	fixed_t GetRealZ (const side_s *wall) const;
 	void SetShade (DWORD rgb);
 	void SetShade (int r, int g, int b);
-	void Spread (const FDecalTemplate *tpl, side_s *wall);
+	void Spread (const FDecalTemplate *tpl, side_s *wall, fixed_t spread_z);
 
 	static void SerializeChain (FArchive &arc, DBaseDecal **firstptr);
 	static void MoveChain (DBaseDecal *first, fixed_t x, fixed_t y);

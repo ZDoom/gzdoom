@@ -69,7 +69,6 @@ class ARedCard : public ADoomKey
 	DECLARE_ACTOR (ARedCard, ADoomKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState ARedCard::States[] =
@@ -95,7 +94,6 @@ class ABlueSkull : public ADoomKey
 	DECLARE_ACTOR (ABlueSkull, ADoomKey)
 public:
 	const char *PickupMessage ();
-	const char *NeedKeyMessage (bool remote, int keynum);
 };
 
 FState ABlueSkull::States[] =

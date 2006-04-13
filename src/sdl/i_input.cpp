@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <ctype.h>
 #include "doomtype.h"
 #include "c_dispatch.h"
 #include "doomdef.h"
@@ -396,7 +397,7 @@ void MessagePump (const SDL_Event &sev)
 			{
 				D_PostEvent (&event);
 			}
-			if (event.data2 >= 32 && event.subtype != EV_GUI_KeyUp)
+			if (!iscntrl(event.data2) && event.subtype != EV_GUI_KeyUp)
 			{
 				event.subtype = EV_GUI_Char;
 				event.data1 = event.data2;

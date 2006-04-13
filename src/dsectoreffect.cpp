@@ -172,7 +172,7 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 				dest = -m_Sector->ceilingplane.d;
 			}
 			m_Sector->floorplane.ChangeHeight (speed);
-			if (m_Sector->floorplane.d < dest)
+			if (m_Sector->floorplane.d <= dest)
 			{
 				m_Sector->floorplane.d = dest;
 				flag = P_ChangeSector (m_Sector, crush,
@@ -230,7 +230,7 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 				dest = -m_Sector->floorplane.d;
 			}
 			m_Sector->ceilingplane.ChangeHeight (-speed);
-			if (m_Sector->ceilingplane.d < dest)
+			if (m_Sector->ceilingplane.d <= dest)
 			{
 				m_Sector->ceilingplane.d = dest;
 				flag = P_ChangeSector (m_Sector, crush,
@@ -270,7 +270,7 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 		case 1:
 			// UP
 			m_Sector->ceilingplane.ChangeHeight (speed);
-			if (m_Sector->ceilingplane.d > dest)
+			if (m_Sector->ceilingplane.d >= dest)
 			{
 				m_Sector->ceilingplane.d = dest;
 				flag = P_ChangeSector (m_Sector, crush,

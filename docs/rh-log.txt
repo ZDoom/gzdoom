@@ -1,5 +1,12 @@
 April 12, 2006
-- Added Jim's Makefile.linux;
+- Fixed: Using printinv before starting a game crashed.
+- Fixed: DMover::MovePlane() would not stop moving the plane when it exactly
+  reached its target height unless it was a floor moving down.
+- Fixed: Actors that can't attack should not be valid haters for Thing_Hate.
+- Fixed: AArtiBlastRadius::BlastActor() should not set MF2_SLIDE for missiles.
+- Fixed: sdl/i_input.cpp should check !iscntrl() before generating EV_GUI_Char
+  messages.
+- Added Jim's Makefile.linux.
 - Changed: Decal scales now use full precision fixed point numbers.
 - Changed: Keeping impact decals in their own statlist is enough to keep track
   of them for when one needs to be destroyed. There's no need to maintain a

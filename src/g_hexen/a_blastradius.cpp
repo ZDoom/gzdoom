@@ -195,8 +195,12 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 
 		if (victim->flags & MF_MISSILE)
 		{
-			victim->momz = 8*FRACUNIT;
-			mo->momz = victim->momz;
+			// [RH] Floor and ceiling huggers should not be blasted vertically.
+			if (!(victim->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
+			{
+				victim->momz = 8*FRACUNIT;
+				mo->momz = victim->momz;
+			}
 		}
 		else
 		{
@@ -208,7 +212,14 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 		}
 		else
 		{
-			victim->flags2 |= MF2_SLIDE | MF2_BLASTED;
+			if (victim->flags & MF_MISSILE)
+			{ // [RH] Missiles should not slide.
+				victim->flags2 |= MF2_BLASTED;
+			}
+			else
+			{
+				victim->flags2 |= MF2_SLIDE | MF2_BLASTED;
+			}
 		}
 	}
 }

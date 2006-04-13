@@ -1153,6 +1153,10 @@ CCMD (printinv)
 {
 	AInventory *item;
 
+	if (players[consoleplayer].mo == NULL)
+	{
+		return;
+	}
 	for (item = players[consoleplayer].mo->Inventory; item != NULL; item = item->Inventory)
 	{
 		Printf ("%s #%lu (%d/%d)\n", item->GetClass()->Name+1, item->InventoryID, item->Amount, item->MaxAmount);

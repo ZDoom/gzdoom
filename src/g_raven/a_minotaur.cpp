@@ -442,7 +442,6 @@ IMPLEMENT_ACTOR (AMinotaurFX3, Raven, -1, 0)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (16)
 	PROP_SpeedFixed (0)
-	PROP_Flags3 (0)
 
 	PROP_SpawnState (S_MNTRFX3)
 

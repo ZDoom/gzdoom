@@ -157,7 +157,7 @@ bool APrisonKey::TryPickup (AActor *toucher)
 
 const char *APrisonKey::PickupMessage ()
 {
-	return "You picked up the Prsion Key.";
+	return "You picked up the Prison Key.";
 }
 
 // Severed Hand -------------------------------------------------------------

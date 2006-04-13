@@ -957,29 +957,38 @@ static void PickConversationReply ()
 	takestuff = true;
 	if (reply->GiveType != NULL)
 	{
-		if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+		if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
-			if (players[consoleplayer].mo->FindInventory(reply->GiveType) != NULL)
+			if (reply->GiveType->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 			{
-				takestuff = false;
+				if (players[consoleplayer].mo->FindInventory(reply->GiveType) != NULL)
+				{
+					takestuff = false;
+				}
+			}
+	
+			if (takestuff)
+			{
+				AInventory *item = static_cast<AInventory *> (Spawn (reply->GiveType, 0, 0, 0));
+				// Items given here should not count as items!
+				if (item->flags & MF_COUNTITEM)
+				{
+					level.total_items--;
+					item->flags &= ~MF_COUNTITEM;
+				}
+				item->flags |= MF_DROPPED;
+				if (!item->TryPickup (players[consoleplayer].mo))
+				{
+					item->Destroy ();
+					takestuff = false;
+				}
 			}
 		}
-
-		if (takestuff)
+		else
 		{
-			AInventory *item = static_cast<AInventory *> (Spawn (reply->GiveType, 0, 0, 0));
-			// Items given here should not count as items!
-			if (item->flags & MF_COUNTITEM)
-			{
-				level.total_items--;
-				item->flags &= ~MF_COUNTITEM;
-			}
-			item->flags |= MF_DROPPED;
-			if (!item->TryPickup (players[consoleplayer].mo))
-			{
-				item->Destroy ();
-				takestuff = false;
-			}
+			// Trying to give a non-inventory item.
+			takestuff = false;
+			Printf("Attempting to give non-inventory item %s\n", reply->GiveType->Name+1);
 		}
 	}
 

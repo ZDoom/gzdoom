@@ -435,7 +435,7 @@ Lock 11 Strife
 Lock 12 Strife
 {
 	SilverKey
-	Message "You don't have the key"
+	Message "You need a Silver Key"
 	Mapcolor 150 150 150
 }
 
@@ -477,14 +477,14 @@ Lock 17 Strife
 Lock 18 Strife
 {
 	RedCrystalKey
-	Message "You don't have the key"
+	Message "You need the Red Crystal"
 	Mapcolor 150 150 150
 }
 
 Lock 19 Strife
 {
 	BlueCrystalKey
-	Message "You don't have the key"
+	Message "You need the Blue Crystal"
 	Mapcolor 150 150 150
 }
 

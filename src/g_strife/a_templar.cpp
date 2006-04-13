@@ -110,7 +110,7 @@ END_DEFAULTS
 
 void ATemplar::NoBlockingSet ()
 {
-	P_DropItem (this, "EnergyPod", -1, 256);
+	P_DropItem (this, "EnergyPod", 20, 256);
 }
 
 class AMaulerPuff : public AActor

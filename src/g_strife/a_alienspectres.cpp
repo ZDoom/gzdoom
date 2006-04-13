@@ -6,6 +6,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_strifeglobal.h"
+#include "c_console.h"
 
 static FRandom pr_spectrespawn ("AlienSpectreSpawn");
 static FRandom pr_212e4 ("212e4");
@@ -509,13 +510,13 @@ void A_AlienSpectreDeath (AActor *self)
 	}
 	else if (self->GetClass() == RUNTIME_CLASS(AAlienSpectre2))
 	{
-		// You Killed The Bishop!
+		C_MidPrint("You Killed The Bishop!");
 		log = 74;
 		player->GiveInventoryType (QuestItemClasses[20]);
 	}
 	else if (self->GetClass() == RUNTIME_CLASS(AAlienSpectre3))
 	{
-		// You've Killed The Oracle!
+		C_MidPrint("You've Killed The Oracle!");
 		// If there are any Oracles still alive, kill them.
 		TThinkerIterator<AOracle> it;
 		AOracle *oracle;
@@ -545,7 +546,7 @@ void A_AlienSpectreDeath (AActor *self)
 	}
 	else if (self->GetClass() == RUNTIME_CLASS(AAlienSpectre4))
 	{
-		// You Killed Macil!
+		C_MidPrint("You Killed Macil!");
 		player->GiveInventoryType (QuestItemClasses[23]);
 		if (player->FindInventory (QuestItemClasses[24]) == NULL)
 		{	// Richter has taken over. Macil is a snake.
@@ -558,7 +559,7 @@ void A_AlienSpectreDeath (AActor *self)
 	}
 	else if (self->GetClass() == RUNTIME_CLASS(AAlienSpectre5))
 	{
-		// You've Killed the Loremaster!
+		C_MidPrint("You've Killed the Loremaster!");
 		ASigil *sigil;
 
 		player->GiveInventoryType (QuestItemClasses[25]);

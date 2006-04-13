@@ -1,3 +1,22 @@
+April 13, 2006 (Changes by Graf Zahl)
+- Fixed: A non-spectral attack set any spectral target to its missile state.
+  This is not supposed to happen.
+- Fixed: The Prison Key was misspelled in the pickup message.
+- Added missing lock messages for Strife.
+- Fixed some ammo pickup values for Strife.
+- Added the missing messages when killing a spectre in Strife.
+- Fixed: DImpactDecal's default constructor called ChangeStatNum which caused
+  a crash. Now it calls DBaseDecal's constructor that allows changing the
+  statnum.
+- Added additive translucency to the Ironlich's projectiles.
+- Added a check for AInventory to PickConversationReply before giving an item
+  to the player. This could crash if non-inventory items were given.
+- Added a few console commands useful for map testing:
+  * 'monster' lists all monsters and their position.
+  * 'itemd' does the same for items.
+  * 'changesky' changes the sky texture. Useful for trying out different skies.
+  * 'linetarget' prints some information about the monster the player is aiming at.
+
 April 12, 2006
 - Fixed: Using printinv before starting a game crashed.
 - Fixed: DMover::MovePlane() would not stop moving the plane when it exactly

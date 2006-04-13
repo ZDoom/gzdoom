@@ -64,6 +64,7 @@
 #include "r_main.h"
 #include "templates.h"
 #include "p_local.h"
+#include "r_sky.h"
 
 extern FILE *Logfile;
 
@@ -669,4 +670,83 @@ CCMD (save)
     string fname = argv[1];
 	DefaultExtension (fname, ".zds");
 	G_SaveGame (fname.GetChars(), argv.argc() > 2 ? argv[2] : argv[1]);
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(linetarget)
+{
+	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, 0);
+	if (linetarget)
+	{
+		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",linetarget->GetClass()->Name+1,linetarget->health,linetarget->GetDefault()->health);
+	}
+	else Printf("No target found\n");
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(monster)
+{
+	AActor * mo;
+
+	if (CheckCheatmode ()) return;
+	TThinkerIterator<AActor> it;
+
+	while (mo=it.Next())
+	{
+		if (mo->flags3&MF3_ISMONSTER && !(mo->flags&MF_CORPSE) && !(mo->flags&MF_FRIENDLY))
+		{
+			Printf ("%s at (%d,%d,%d)\n", mo->GetClass()->Name+1, mo->x>>16, mo->y>>16, mo->z>>16);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(items)
+{
+	AActor * mo;
+
+	if (CheckCheatmode ()) return;
+	TThinkerIterator<AActor> it;
+
+	while (mo=it.Next())
+	{
+		if (mo->IsKindOf(RUNTIME_CLASS(AInventory)) && mo->flags&MF_SPECIAL)
+		{
+			Printf ("%s at (%d,%d,%d)\n",mo->GetClass()->Name+1,mo->x>>16,mo->y>>16,mo->z>>16);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(changesky)
+{
+	const char *sky1name;
+
+	if (netgame || argv.argc()<2) return;
+
+	sky1name = argv[1];
+	if (sky1name[0] != 0)
+	{
+		strncpy (level.skypic1, sky1name, 8);
+		sky1texture = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+	}
+	R_InitSkyMap ();
+	sky1pos = sky2pos = 0;
 }

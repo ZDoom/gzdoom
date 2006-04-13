@@ -26,7 +26,7 @@ public:
 	}
 	void NoBlockingSet ()
 	{
-		P_DropItem (this, "EnergyPod", -1, 256);
+		P_DropItem (this, "EnergyPod", 20, 256);
 	}
 };
 

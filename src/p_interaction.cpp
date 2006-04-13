@@ -824,10 +824,12 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	{
 		if (inflictor == NULL || !(inflictor->flags4 & MF4_SPECTRAL))
 		{
+			/*
 			if (target->MissileState != NULL)
 			{
 				target->SetState (target->MissileState);
 			}
+			*/
 			return;
 		}
 	}

@@ -1766,7 +1766,7 @@ IMPLEMENT_ACTOR (AStrifeGrenadeLauncher, Strife, 154, 0)
 
 	PROP_Weapon_SelectionOrder (2400)
 	PROP_Weapon_AmmoUse1 (1)
-	PROP_Weapon_AmmoGive1 (8)
+	PROP_Weapon_AmmoGive1 (12)
 	PROP_Weapon_UpState (S_HEGRENADE_UP)
 	PROP_Weapon_DownState (S_HEGRENADE_DOWN)
 	PROP_Weapon_ReadyState (S_HEGRENADE)

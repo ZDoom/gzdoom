@@ -21,7 +21,7 @@ public:
 	}
 	void NoBlockingSet ()
 	{
-		P_DropItem (this, "CrateOfMissiles", -1, 256);
+		P_DropItem (this, "CrateOfMissiles", 20, 256);
 	}
 };
 

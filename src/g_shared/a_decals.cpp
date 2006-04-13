@@ -566,8 +566,8 @@ void DImpactDecal::Serialize (FArchive &arc)
 }
 
 DImpactDecal::DImpactDecal ()
+: DBaseDecal (STAT_AUTODECAL, 0)
 {
-	ChangeStatNum (STAT_AUTODECAL);
 	ImpactCount++;
 }
 

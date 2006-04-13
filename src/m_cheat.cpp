@@ -273,12 +273,23 @@ void cht_DoCheat (player_t *player, int cheat)
 		if (player->playerstate != PST_LIVE && player->mo != NULL)
 		{
 			player->playerstate = PST_LIVE;
+			if (player->mo->tracer != NULL)
+			{
+				APlayerPawn * pmo = player->mo;
+				player->mo = (APlayerPawn*)player->mo->tracer;
+				pmo->Destroy();
+				player->mo->player=player;
+				player->mo->renderflags &= ~RF_INVISIBLE;
+				player->morphTics = 0;
+			}
 			player->health = player->mo->health = player->mo->GetDefault()->health;
+			player->viewheight = player->defaultviewheight;
 			player->mo->flags = player->mo->GetDefault()->flags;
 			player->mo->height = player->mo->GetDefault()->height;
 			player->mo->SetState (player->mo->SpawnState);
 			player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
 			player->mo->GiveDefaultInventory();
+			P_SetPsprite(player, ps_weapon, player->ReadyWeapon->UpState);
 		}
 		break;
 
@@ -435,7 +446,7 @@ void cht_Give (player_t *player, char *name, int amount)
 	if (player != &players[consoleplayer])
 		Printf ("%s is a cheater: give %s\n", player->userinfo.netname, name);
 
-	if (player->mo == NULL)
+	if (player->mo == NULL || player->health <= 0)
 	{
 		return;
 	}

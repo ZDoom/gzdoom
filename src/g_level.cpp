@@ -865,6 +865,11 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 				}
 				ReplaceString ((char **)(info + handler->data1), sc_String);
 				*((int *)(info + handler->data2)) = colon ? atoi (colon + 1) : 0;
+				if (levelinfo != NULL)
+				{
+					// Flag the level so that the $MAP command doesn't override this.
+					flags|=LEVEL_MUSICDEFINED;
+				}
 			}
 			break;
 

@@ -98,7 +98,8 @@
 
 #define LEVEL_KEEPFULLINVENTORY		UCONST64(0x4000000000)		// doesn't reduce the amount of inventory items to 1
 
-#define LEVEL_MONSTERFALLINGDAMAGE UCONST64(0x10000000000)
+#define LEVEL_MUSICDEFINED			UCONST64(0x8000000000)		// a marker to disable the $map command in SNDINFO for this map
+#define LEVEL_MONSTERFALLINGDAMAGE	UCONST64(0x10000000000)
 struct acsdefered_s;
 class FBehavior;
 

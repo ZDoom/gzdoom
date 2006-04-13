@@ -2027,10 +2027,11 @@ void D_DoomMain (void)
 	// [RH] Try adding .deh and .bex files on the command line.
 	// If there are none, try adding any in the config file.
 
-	if (gameinfo.gametype == GAME_Doom)
+	//if (gameinfo.gametype == GAME_Doom)
 	{
 		if (!ConsiderPatches ("-deh", ".deh") &&
 			!ConsiderPatches ("-bex", ".bex") &&
+			(gameinfo.gametype == GAME_Doom) &&
 			GameConfig->SetSection ("Doom.DefaultDehacked"))
 		{
 			const char *key;

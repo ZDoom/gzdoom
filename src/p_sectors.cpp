@@ -62,6 +62,8 @@ fixed_t sector_t::FindLowestFloorSurrounding (vertex_t **v) const
 	fixed_t ofloor;
 	vertex_t *spot;
 
+	if (linecount == 0) return floortexz;
+
 	spot = lines[0]->v1;
 	floor = floorplane.ZatPoint (spot);
 
@@ -103,6 +105,8 @@ fixed_t sector_t::FindHighestFloorSurrounding (vertex_t **v) const
 	fixed_t floor;
 	fixed_t ofloor;
 	vertex_t *spot;
+
+	if (linecount == 0) return floortexz;
 
 	spot = lines[0]->v1;
 	floor = FIXED_MIN;
@@ -152,6 +156,8 @@ fixed_t sector_t::FindNextHighestFloor (vertex_t **v) const
 	vertex_t *spot;
 	line_t *check;
 	int i;
+
+	if (linecount == 0) return floortexz;
 
 	spot = lines[0]->v1;
 	height = floorplane.ZatPoint (spot);
@@ -205,6 +211,8 @@ fixed_t sector_t::FindNextLowestFloor (vertex_t **v) const
 	vertex_t *spot;
 	line_t *check;
 	int i;
+
+	if (linecount == 0) return floortexz;
 
 	spot = lines[0]->v1;
 	height = floorplane.ZatPoint (spot);
@@ -260,6 +268,9 @@ fixed_t sector_t::FindNextLowestCeiling (vertex_t **v) const
 	line_t *check;
 	int i;
 
+
+	if (linecount == 0) return ceilingtexz;
+
 	spot = lines[0]->v1;
 	height = ceilingplane.ZatPoint (spot);
 	heightdiff = FIXED_MAX;
@@ -312,6 +323,8 @@ fixed_t sector_t::FindNextHighestCeiling (vertex_t **v) const
 	line_t *check;
 	int i;
 
+	if (linecount == 0) return ceilingtexz;
+
 	spot = lines[0]->v1;
 	height = ceilingplane.ZatPoint (spot);
 	heightdiff = FIXED_MAX;
@@ -356,6 +369,8 @@ fixed_t sector_t::FindLowestCeilingSurrounding (vertex_t **v) const
 	line_t *check;
 	int i;
 
+	if (linecount == 0) return ceilingtexz;
+
 	spot = lines[0]->v1;
 	height = FIXED_MAX;
 
@@ -395,6 +410,8 @@ fixed_t sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 	vertex_t *spot;
 	line_t *check;
 	int i;
+
+	if (linecount == 0) return ceilingtexz;
 
 	spot = lines[0]->v1;
 	height = FIXED_MIN;
@@ -593,7 +610,10 @@ fixed_t sector_t::FindHighestFloorPoint (vertex_t **v) const
 	if ((floorplane.a | floorplane.b) == 0)
 	{
 		if (v != NULL)
-			*v = lines[0]->v1;
+		{
+			if (linecount == 0) *v = &vertexes[0];
+			else *v = lines[0]->v1;
+		}
 		return -floorplane.d;
 	}
 
@@ -632,7 +652,10 @@ fixed_t sector_t::FindLowestCeilingPoint (vertex_t **v) const
 	if ((ceilingplane.a | ceilingplane.b) == 0)
 	{
 		if (v != NULL)
-			*v = lines[0]->v1;
+		{
+			if (linecount == 0) *v = &vertexes[0];
+			else *v = lines[0]->v1;
+		}
 		return ceilingplane.d;
 	}
 

@@ -4,6 +4,17 @@ April 13, 2006
 - Update FLAC readers to #define FLAC__NO_DLL to match the new FLAC builds.
 
 April 13, 2006 (Changes by Graf Zahl)
+- Made weapons/bowhit unlimited. With a limit of 2 it won't be played 
+  consistently.
+- Fixed: 'Give' worked for dead players.
+- Added checks for sectors without lines to all Find* functions in p_sector.cpp
+- Fixed: Dehacked patches weren't loaded when not playing Doom.
+- Fixed: Thing_Remove must not remove living players from the map.
+- Fixed: Using $MAP in SNDINFO overrides music definitions in MAPINFO. This 
+  made it impossible to define music in MAPINFO for Hexen.
+- Fixed: Resurrecting a morphed player must first restore the unmorphed 
+  version.
+- Fixed: Resurrect must set the player's weapon to a valid state.
 - Fixed: The decal stretcher is supposed to stretch the decal to a specifiable
   size but it used that size as a scaling factor instead. The old code allowed
   a maximum scaling factor of 4 which masked this bug to a large extent but
@@ -25,7 +36,8 @@ April 13, 2006 (Changes by Graf Zahl)
   * 'monster' lists all monsters and their position.
   * 'itemd' does the same for items.
   * 'changesky' changes the sky texture. Useful for trying out different skies.
-  * 'linetarget' prints some information about the monster the player is aiming at.
+  * 'linetarget' prints some information about the monster the player is aiming 
+    at.
 
 April 12, 2006
 - Fixed: Using printinv before starting a game crashed.

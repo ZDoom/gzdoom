@@ -779,7 +779,7 @@ static void S_AddSNDINFO (int lump)
 				sprintf (temp, "MAP%02d", sc_Number);
 				info = FindLevelInfo (temp);
 				SC_MustGetString ();
-				if (info->mapname[0])
+				if (info->mapname[0] && (!(info->flags&LEVEL_MUSICDEFINED)))
 				{
 					ReplaceString (&info->music, sc_String);
 				}

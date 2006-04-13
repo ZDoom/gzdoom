@@ -574,6 +574,7 @@ $limit	weapons/phoenixhit		0
 $limit	weapons/phoenixpowshoot		1
 
 // [RH] Heretic didn't have these limitless, but they can sound bad if they're not
+$limit weapons/bowhit 0
 $limit weapons/hornrodshoot 0
 $limit weapons/hornrodhit 0
 $limit weapons/maceshoot 0

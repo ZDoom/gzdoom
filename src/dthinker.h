@@ -68,6 +68,8 @@ public:
 	static void DestroyMostThinkers ();
 	static void SerializeAll (FArchive &arc, bool keepPlayers);
 
+	static DThinker *FirstThinker (int statnum);
+
 private:
 	static void DestroyThinkersInList (Node *first);
 	static void DestroyMostThinkersInList (List &list, int stat);

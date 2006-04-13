@@ -531,7 +531,7 @@ int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref)
 
 static void S_ClearSoundData()
 {
-	size_t i;
+	unsigned int i;
 
 	S_sfx.Clear();
 

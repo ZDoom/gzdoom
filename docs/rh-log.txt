@@ -1,3 +1,24 @@
+April 12, 2006
+- Added Jim's Makefile.linux;
+- Changed: Decal scales now use full precision fixed point numbers.
+- Changed: Keeping impact decals in their own statlist is enough to keep track
+  of them for when one needs to be destroyed. There's no need to maintain a
+  separate list for them.
+- Fixed: Decal actors did not spread their decals across neighboring walls.
+- Fixed: Decal groups did not initialize their IDs and could not be reliably
+  used with the decal actor.
+- Fixed: Decals on moving polyobjects were not interpolated. R_RenderDecal()
+  now uses the decal's LeftDistance to calculate its visible location, so it
+  always stays in sync with the wall's vertices. This also lets me dump some
+  code from the polyobjects that maintained the decals' (x, y) coordinates.
+  Also, the decals' x and y information is redundant and can be removed.
+  Doing this revealed a bug with slider decals and horizontal sliding:
+  That is, it didn't work at all. I have opted to simply remove the horizontal
+  sliding support so that I don't have to worry about what happens when a
+  decal slides across the edge of a wall.
+- Fixed: DBaseDecal::LeftDistance was calculated as a 30.2 fixed point number.
+  It should be 2.30 fixed point.
+
 April 12, 2006 (Changes by Graf Zahl)
 - Fixed: SAVEVER was still 231 although MINSAVEVER was 232.
 - Fixed: Decal spreading used an incorrect z-coordinate. It has to use

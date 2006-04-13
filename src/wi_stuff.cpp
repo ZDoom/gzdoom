@@ -558,7 +558,7 @@ void WI_LoadBackground(bool isenterpic)
 
 void WI_updateAnimatedBack()
 {
-	size_t i;
+	unsigned int i;
 
 	for(i=0;i<anims.Size();i++)
 	{
@@ -593,7 +593,7 @@ void WI_updateAnimatedBack()
 
 void WI_drawBackground()
 {
-	size_t i;
+	unsigned int i;
 	int animwidth=320;		// For a flat fill or clear background scale animations to 320x200
 	int animheight=200;
 
@@ -841,7 +841,7 @@ void WI_drawEL ()
 
 int WI_MapToIndex (char *map)
 {
-	size_t i;
+	unsigned int i;
 
 	for (i = 0; i < lnodes.Size(); i++)
 	{
@@ -1089,7 +1089,7 @@ void WI_updateShowNextLoc ()
 
 void WI_drawShowNextLoc(void)
 {
-	size_t i;
+	unsigned int i;
 	
 	WI_drawBackground();
 

@@ -124,7 +124,7 @@ FTexture		*rw_pic;
 static short	*maskedtexturecol;
 static FTexture	*WallSpriteTile;
 
-static void R_RenderDecal (DBaseDecal *first, drawseg_t *clipper, int pass);
+static void R_RenderDecal (side_t *wall, DBaseDecal *first, drawseg_t *clipper, int pass);
 static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
 
 //=============================================================================
@@ -1336,7 +1336,7 @@ void R_StoreWallRange (int start, int stop)
 	// [RH] Draw any decals bound to the seg
 	for (DBaseDecal *decal = curline->sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 	{
-		R_RenderDecal (decal, ds_p, 0);
+		R_RenderDecal (curline->sidedef, decal, ds_p, 0);
 	}
 
 	ds_p++;
@@ -1766,11 +1766,11 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
 //		= 1: drawing masked textures (including sprites)
 // Currently, only pass = 0 is done or used
 
-static void R_RenderDecal (DBaseDecal *decal, drawseg_t *clipper, int pass)
+static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int pass)
 {
-	fixed_t lx, ly, lx2, ly2;
+	fixed_t lx, ly, lx2, ly2, decalx, decaly;
 	int x1, x2;
-	int xscale, yscale;
+	fixed_t xscale, yscale;
 	fixed_t topoff;
 	byte flipx;
 	fixed_t zpos;
@@ -1781,47 +1781,47 @@ static void R_RenderDecal (DBaseDecal *decal, drawseg_t *clipper, int pass)
 		return;
 
 	// Determine actor z
-	zpos = decal->z;
+	zpos = decal->Z;
 	front = curline->frontsector;
 	back = (curline->backsector != NULL) ? curline->backsector : curline->frontsector;
 	switch (decal->RenderFlags & RF_RELMASK)
 	{
 	default:
-		zpos = decal->z;
+		zpos = decal->Z;
 		break;
 	case RF_RELUPPER:
 		if (curline->linedef->flags & ML_DONTPEGTOP)
 		{
-			zpos = decal->z + front->ceilingtexz;
+			zpos = decal->Z + front->ceilingtexz;
 		}
 		else
 		{
-			zpos = decal->z + back->ceilingtexz;
+			zpos = decal->Z + back->ceilingtexz;
 		}
 		break;
 	case RF_RELLOWER:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->z + front->ceilingtexz;
+			zpos = decal->Z + front->ceilingtexz;
 		}
 		else
 		{
-			zpos = decal->z + back->floortexz;
+			zpos = decal->Z + back->floortexz;
 		}
 		break;
 	case RF_RELMID:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->z + front->floortexz;
+			zpos = decal->Z + front->floortexz;
 		}
 		else
 		{
-			zpos = decal->z + front->ceilingtexz;
+			zpos = decal->Z + front->ceilingtexz;
 		}
 	}
 
-	xscale = decal->XScale + 1;
-	yscale = decal->YScale + 1;
+	xscale = decal->ScaleX;
+	yscale = decal->ScaleY;
 
 	WallSpriteTile = TexMan(decal->PicNum);
 	flipx = decal->RenderFlags & RF_XFLIP;
@@ -1842,11 +1842,13 @@ static void R_RenderDecal (DBaseDecal *decal, drawseg_t *clipper, int pass)
 	x1 *= xscale;
 	x2 *= xscale;
 
+	decal->GetXY (wall, decalx, decaly);
+
 	angle_t ang = R_PointToAngle2 (curline->v1->x, curline->v1->y, curline->v2->x, curline->v2->y) >> ANGLETOFINESHIFT;
-	lx  = decal->x - MulScale6 (x1, finecosine[ang]) - viewx;
-	lx2 = decal->x + MulScale6 (x2, finecosine[ang]) - viewx;
-	ly  = decal->y - MulScale6 (x1, finesine[ang]) - viewy;
-	ly2 = decal->y + MulScale6 (x2, finesine[ang]) - viewy;
+	lx  = decalx - FixedMul (x1, finecosine[ang]) - viewx;
+	lx2 = decalx + FixedMul (x2, finecosine[ang]) - viewx;
+	ly  = decaly - FixedMul (x1, finesine[ang]) - viewy;
+	ly2 = decaly + FixedMul (x2, finesine[ang]) - viewy;
 
 	WallTX1 = DMulScale20 (lx,  viewsin, -ly,  viewcos);
 	WallTX2 = DMulScale20 (lx2, viewsin, -ly2, viewcos);
@@ -1974,10 +1976,7 @@ static void R_RenderDecal (DBaseDecal *decal, drawseg_t *clipper, int pass)
 	}
 
 	topoff = WallSpriteTile->TopOffset << FRACBITS;
-	dc_texturemid = topoff + SafeDivScale6 (zpos - viewz, yscale);
-
-	// Scale the texture size
-	rw_scalestep = MulScale6 (rw_scalestep, yscale);
+	dc_texturemid = topoff + FixedDiv (zpos - viewz, yscale);
 
 	// Clip sprite to drawseg
 	if (x1 < clipper->x1)
@@ -2035,7 +2034,8 @@ static void R_RenderDecal (DBaseDecal *decal, drawseg_t *clipper, int pass)
 		sprflipvert = false;
 	}
 
-	rw_offset = 16*FRACUNIT/yscale;
+	// rw_offset is used as the texture's vertical scale
+	rw_offset = SafeDivScale30(1, yscale);
 
 	do
 	{

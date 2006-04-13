@@ -44,6 +44,7 @@ class FDecalTemplate;
 struct FDecalAnimator;
 struct TypeInfo;
 class DBaseDecal;
+struct side_s;
 
 class FDecalBase
 {
@@ -67,12 +68,12 @@ class FDecalTemplate : public FDecalBase
 public:
 	FDecalTemplate () : Translation (0) {}
 
-	void ApplyToDecal (DBaseDecal *actor) const;
+	void ApplyToDecal (DBaseDecal *actor, side_s *wall) const;
 	const FDecalTemplate *GetDecal () const;
 
+	fixed_t ScaleX, ScaleY;
 	DWORD ShadeColor;
 	WORD Translation;
-	BYTE ScaleX, ScaleY;
 	BYTE RenderStyle;
 	WORD PicNum;
 	WORD RenderFlags;

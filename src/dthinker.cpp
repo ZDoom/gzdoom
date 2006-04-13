@@ -170,6 +170,26 @@ void DThinker::PostBeginPlay ()
 {
 }
 
+DThinker *DThinker::FirstThinker (int statnum)
+{
+	Node *node;
+
+	if ((unsigned)statnum > MAX_STATNUM)
+	{
+		statnum = MAX_STATNUM;
+	}
+	node = Thinkers[statnum].Head;
+	if (node->Succ == NULL)
+	{
+		node = FreshThinkers[statnum].Head;
+		if (node->Succ == NULL)
+		{
+			return NULL;
+		}
+	}
+	return static_cast<DThinker *>(node);
+}
+
 void DThinker::ChangeStatNum (int statnum)
 {
 	if ((unsigned)statnum > MAX_STATNUM)

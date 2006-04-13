@@ -181,7 +181,7 @@ bool FCDThread::Init ()
 		return false;
 
 	CD_Window = CreateWindow (
-		(LPCTSTR)(int)CD_WindowAtom,
+		(LPCTSTR)(INT_PTR)(int)CD_WindowAtom,
 		"ZDoom CD Player",
 		0,
 		0, 0, 10, 10,
@@ -192,7 +192,7 @@ bool FCDThread::Init ()
 
 	if (CD_Window == NULL)
 	{
-		UnregisterClass ((LPCTSTR)(int)CD_WindowAtom, g_hInst);
+		UnregisterClass ((LPCTSTR)(INT_PTR)(int)CD_WindowAtom, g_hInst);
 		CD_WindowAtom = 0;
 		return false;
 	}
@@ -217,7 +217,7 @@ void FCDThread::Deinit ()
 	}
 	if (CD_WindowAtom)
 	{
-		UnregisterClass ((LPCTSTR)(int)CD_WindowAtom, g_hInst);
+		UnregisterClass ((LPCTSTR)(INT_PTR)(int)CD_WindowAtom, g_hInst);
 		CD_WindowAtom = 0;
 	}
 	if (DeviceID)

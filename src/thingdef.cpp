@@ -91,8 +91,8 @@ inline char * MS_Strdup(const char * s)
 //==========================================================================
 
 // [RH] Keep GCC quiet by not using offsetof on Actor types.
-#define DEFINE_FLAG(prefix, name, type, variable) { prefix##_##name, #name, (int)&((type*)1)->variable - 1 }
-#define DEFINE_FLAG2(symbol, name, type, variable) { symbol, #name, (int)&((type*)1)->variable - 1 }
+#define DEFINE_FLAG(prefix, name, type, variable) { prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1 }
+#define DEFINE_FLAG2(symbol, name, type, variable) { symbol, #name, (int)(size_t)&((type*)1)->variable - 1 }
 
 struct flagdef
 {
@@ -3344,7 +3344,7 @@ static const ActorProps *is_actorprop (const char *str)
 //==========================================================================
 void FinishThingdef()
 {
-	size_t i;
+	unsigned int i;
 
 	for (i = 0;i < TypeInfo::m_RuntimeActors.Size(); i++)
 	{

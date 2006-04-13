@@ -28,7 +28,7 @@ struct Keygroup
 
 	bool check(AActor * owner)
 	{
-		for(size_t i=0;i<anykeylist.Size();i++)
+		for(unsigned int i=0;i<anykeylist.Size();i++)
 		{
 			if (anykeylist[i].check(owner)) return true;
 		}
@@ -52,7 +52,7 @@ struct Lock
 
 	~Lock()
 	{
-		for(size_t i=0;i<keylist.Size();i++) delete keylist[i];
+		for(unsigned int i=0;i<keylist.Size();i++) delete keylist[i];
 		keylist.Clear();
 		if (message) delete [] message;
 		if (remotemsg) delete [] remotemsg;
@@ -71,7 +71,7 @@ struct Lock
 				}
 			}
 		}
-		else for(size_t i=0;i<keylist.Size();i++)
+		else for(unsigned int i=0;i<keylist.Size();i++)
 		{
 			if (!keylist[i]->check(owner)) return false;
 		}

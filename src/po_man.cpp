@@ -820,10 +820,6 @@ void DoMovePolyobj (polyobj_t *po, int x, int y)
 			linedef->bbox[BOXBOTTOM] += y;
 			linedef->bbox[BOXLEFT] += x;
 			linedef->bbox[BOXRIGHT] += x;
-			if (linedef->sidenum[0] != NO_SIDE)
-				DBaseDecal::MoveChain (sides[linedef->sidenum[0]].AttachedDecals, x, y);
-			if (linedef->sidenum[1] != NO_SIDE)
-				DBaseDecal::MoveChain (sides[linedef->sidenum[1]].AttachedDecals, x, y);
 			linedef->validcount = validcount;
 		}
 		for (veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
@@ -908,12 +904,7 @@ BOOL PO_RotatePolyobj (int num, angle_t angle)
 		if ((*segList)->linedef->validcount != validcount)
 		{
 			UpdateSegBBox(*segList);
-			line_t *line = (*segList)->linedef;
-			if (line->sidenum[0] != NO_SIDE)
-				DBaseDecal::FixForSide (&sides[line->sidenum[0]]);
-			if (line->sidenum[1] != NO_SIDE)
-				DBaseDecal::FixForSide (&sides[line->sidenum[1]]);
-			line->validcount = validcount;
+			(*segList)->linedef->validcount = validcount;
 		}
 	}
 	if (blocked)
@@ -932,12 +923,7 @@ BOOL PO_RotatePolyobj (int num, angle_t angle)
 			if ((*segList)->linedef->validcount != validcount)
 			{
 				UpdateSegBBox(*segList);
-				line_t *line = (*segList)->linedef;
-				if (line->sidenum[0] != NO_SIDE)
-					DBaseDecal::FixForSide (&sides[line->sidenum[0]]);
-				if (line->sidenum[1] != NO_SIDE)
-					DBaseDecal::FixForSide (&sides[line->sidenum[1]]);
-				line->validcount = validcount;
+				(*segList)->linedef->validcount = validcount;
 			}
 		}
 		LinkPolyobj(po);

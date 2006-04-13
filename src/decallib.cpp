@@ -47,7 +47,7 @@
 
 FDecalLib DecalLibrary;
 
-static int ReadScale ();
+static fixed_t ReadScale ();
 static TArray<BYTE> DecalTranslations;
 extern TArray<char*> DecalNames;
 
@@ -90,7 +90,7 @@ struct FDecalAnimator
 {
 	FDecalAnimator (const char *name);
 	virtual ~FDecalAnimator ();
-	virtual DThinker *CreateThinker (DBaseDecal *actor) const = 0;
+	virtual DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const = 0;
 
 	char *Name;
 };
@@ -122,7 +122,7 @@ void DDecalThinker::Serialize (FArchive &arc)
 struct FDecalFaderAnim : public FDecalAnimator
 {
 	FDecalFaderAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor) const;
+	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
 
 	int DecayStart;
 	int DecayTime;
@@ -146,7 +146,7 @@ private:
 struct FDecalColorerAnim : public FDecalAnimator
 {
 	FDecalColorerAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor) const;
+	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
 
 	int DecayStart;
 	int DecayTime;
@@ -172,11 +172,11 @@ private:
 struct FDecalStretcherAnim : public FDecalAnimator
 {
 	FDecalStretcherAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor) const;
+	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
 
 	int StretchStart;
 	int StretchTime;
-	int GoalX, GoalY;
+	fixed_t GoalX, GoalY;
 };
 
 class DDecalStretcher : public DDecalThinker
@@ -189,10 +189,10 @@ public:
 
 	int TimeToStart;
 	int TimeToStop;
-	BYTE GoalX;
-	BYTE StartX;
-	BYTE GoalY;
-	BYTE StartY;
+	fixed_t GoalX;
+	fixed_t StartX;
+	fixed_t GoalY;
+	fixed_t StartY;
 	bool bStretchX;
 	bool bStretchY;
 	bool bStarted;
@@ -203,11 +203,11 @@ private:
 struct FDecalSliderAnim : public FDecalAnimator
 {
 	FDecalSliderAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor) const;
+	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
 
 	int SlideStart;
 	int SlideTime;
-	fixed_t DistX, DistY;
+	fixed_t /*DistX,*/ DistY;
 };
 
 class DDecalSlider : public DDecalThinker
@@ -220,7 +220,7 @@ public:
 
 	int TimeToStart;
 	int TimeToStop;
-	fixed_t DistX;
+/*	fixed_t DistX; */
 	fixed_t DistY;
 	fixed_t StartX;
 	fixed_t StartY;
@@ -232,7 +232,7 @@ private:
 struct FDecalCombinerAnim : public FDecalAnimator
 {
 	FDecalCombinerAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor) const;
+	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
 
 	int FirstAnimator;
 	int NumAnimators;
@@ -328,7 +328,7 @@ void FDecalLib::DelTree (FDecalBase *root)
 void FDecalLib::ReadAllDecals ()
 {
 	int lump, lastlump = 0;
-	size_t i;
+	unsigned int i;
 
 	while ((lump = Wads.FindLump ("DECALDEF", &lastlump)) != -1)
 	{
@@ -432,7 +432,7 @@ void FDecalLib::ParseDecal ()
 
 	memset (&newdecal, 0, sizeof(newdecal));
 	newdecal.PicNum = 0xffff;
-	newdecal.ScaleX = newdecal.ScaleY = 63;
+	newdecal.ScaleX = newdecal.ScaleY = FRACUNIT;
 	newdecal.RenderFlags = RF_WALLSPRITE;
 	newdecal.RenderStyle = STYLE_Normal;
 	newdecal.Alpha = 0x8000;
@@ -555,6 +555,7 @@ void FDecalLib::ParseDecalGroup ()
 		if (SC_Compare ("}"))
 		{
 			group->Name = copystring (groupName);
+			group->SpawnID = decalNum;
 			AddDecal (group);
 			break;
 		}
@@ -652,7 +653,7 @@ void FDecalLib::ParseFader ()
 void FDecalLib::ParseStretcher ()
 {
 	char stretcherName[64];
-	int goalX = -1, goalY = -1;
+	fixed_t goalX = -1, goalY = -1;
 	int startTime = 0, takeTime = 0;
 
 	SC_MustGetString ();
@@ -715,12 +716,12 @@ void FDecalLib::ParseSlider ()
 		SC_MustGetString ();
 		if (SC_Compare ("}"))
 		{
-			if ((distX | distY) != 0)
+			if ((/*distX |*/ distY) != 0)
 			{
 				FDecalSliderAnim *slider = new FDecalSliderAnim (sliderName);
 				slider->SlideStart = startTime;
 				slider->SlideTime = takeTime;
-				slider->DistX = distX;
+				/*slider->DistX = distX;*/
 				slider->DistY = distY;
 				Animators.Push (slider);
 			}
@@ -740,6 +741,7 @@ void FDecalLib::ParseSlider ()
 		{
 			SC_MustGetFloat ();
 			distX = (fixed_t)(sc_Float * FRACUNIT);
+			Printf ("DistX in slider decal %s is unsupported\n", sliderName);
 		}
 		else if (SC_Compare ("DistY"))
 		{
@@ -994,28 +996,28 @@ FDecalBase::~FDecalBase ()
 		delete[] Name;
 }
 
-void FDecalTemplate::ApplyToDecal (DBaseDecal *actor) const
+void FDecalTemplate::ApplyToDecal (DBaseDecal *decal, side_t *wall) const
 {
 	if (RenderStyle == STYLE_Shaded)
 	{
-		actor->SetShade (ShadeColor);
+		decal->SetShade (ShadeColor);
 	}
-	actor->Translation = Translation;
-	actor->XScale = ScaleX;
-	actor->YScale = ScaleY;
-	actor->PicNum = PicNum;
-	actor->Alpha = Alpha << 1;
-	actor->RenderStyle = RenderStyle;
-	actor->RenderFlags = (RenderFlags & ~(DECAL_RandomFlipX|DECAL_RandomFlipY)) |
-		(actor->RenderFlags & (RF_RELMASK|RF_CLIPMASK|RF_INVISIBLE|RF_ONESIDED));
+	decal->Translation = Translation;
+	decal->ScaleX = ScaleX;
+	decal->ScaleY = ScaleY;
+	decal->PicNum = PicNum;
+	decal->Alpha = Alpha << 1;
+	decal->RenderStyle = RenderStyle;
+	decal->RenderFlags = (RenderFlags & ~(DECAL_RandomFlipX|DECAL_RandomFlipY)) |
+		(decal->RenderFlags & (RF_RELMASK|RF_CLIPMASK|RF_INVISIBLE|RF_ONESIDED));
 	if (RenderFlags & (DECAL_RandomFlipX|DECAL_RandomFlipY))
 	{
-		actor->RenderFlags ^= pr_decal() &
+		decal->RenderFlags ^= pr_decal() &
 			((RenderFlags & (DECAL_RandomFlipX|DECAL_RandomFlipY)) >> 8);
 	}
 	if (Animator != NULL)
 	{
-		Animator->CreateThinker (actor);
+		Animator->CreateThinker (decal, wall);
 	}
 }
 
@@ -1152,7 +1154,7 @@ void DDecalFader::Tick ()
 	}
 }
 
-DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor) const
+DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	DDecalFader *fader = new DDecalFader (actor);
 
@@ -1178,7 +1180,7 @@ void DDecalStretcher::Serialize (FArchive &arc)
 		<< bStarted;
 }
 
-DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor) const
+DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	DDecalStretcher *thinker = new DDecalStretcher (actor);
 
@@ -1221,11 +1223,11 @@ void DDecalStretcher::Tick ()
 	{
 		if (bStretchX)
 		{
-			TheDecal->XScale = GoalX;
+			TheDecal->ScaleX = GoalX;
 		}
 		if (bStretchY)
 		{
-			TheDecal->YScale = GoalY;
+			TheDecal->ScaleY = GoalY;
 		}
 		Destroy ();
 		return;
@@ -1233,19 +1235,19 @@ void DDecalStretcher::Tick ()
 	if (!bStarted)
 	{
 		bStarted = true;
-		StartX = TheDecal->XScale;
-		StartY = TheDecal->YScale;
+		StartX = TheDecal->ScaleX;
+		StartY = TheDecal->ScaleY;
 	}
 
 	int distance = level.maptime - TimeToStart;
 	int maxDistance = TimeToStop - TimeToStart;
 	if (bStretchX)
 	{
-		TheDecal->XScale = StartX + Scale (GoalX - StartX, distance, maxDistance);
+		TheDecal->ScaleX = StartX + Scale (GoalX - StartX, distance, maxDistance);
 	}
 	if (bStretchY)
 	{
-		TheDecal->YScale = StartY + Scale (GoalY - StartY, distance, maxDistance);
+		TheDecal->ScaleY = StartY + Scale (GoalY - StartY, distance, maxDistance);
 	}
 }
 
@@ -1256,20 +1258,20 @@ void DDecalSlider::Serialize (FArchive &arc)
 	Super::Serialize (arc);
 	arc << TimeToStart
 		<< TimeToStop
-		<< DistX
+		/*<< DistX*/
 		<< DistY
-		<< StartX
+		/*<< StartX*/
 		<< StartY
 		<< bStarted;
 }
 
-DThinker *FDecalSliderAnim::CreateThinker (DBaseDecal *actor) const
+DThinker *FDecalSliderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	DDecalSlider *thinker = new DDecalSlider (actor);
 
 	thinker->TimeToStart = level.maptime + SlideStart;
 	thinker->TimeToStop = thinker->TimeToStart + SlideTime;
-	thinker->DistX = DistX;
+	/*thinker->DistX = DistX;*/
 	thinker->DistY = DistY;
 	thinker->bStarted = false;
 	return thinker;
@@ -1289,30 +1291,30 @@ void DDecalSlider::Tick ()
 	if (!bStarted)
 	{
 		bStarted = true;
-		StartX = TheDecal->x;
-		StartY = TheDecal->z;
+		/*StartX = TheDecal->LeftDistance;*/
+		StartY = TheDecal->Z;
 	}
 	if (level.maptime >= TimeToStop)
 	{
-		TheDecal->x = StartX + DistX;
-		TheDecal->z = StartY + DistY;
+		/*TheDecal->LeftDistance = StartX + DistX;*/
+		TheDecal->Z = StartY + DistY;
 		Destroy ();
 		return;
 	}
 
 	int distance = level.maptime - TimeToStart;
 	int maxDistance = TimeToStop - TimeToStart;
-	TheDecal->x = StartX + Scale (DistX, distance, maxDistance);
-	TheDecal->z = StartY + Scale (DistY, distance, maxDistance);
+	/*TheDecal->LeftDistance = StartX + Scale (DistX, distance, maxDistance);*/
+	TheDecal->Z = StartY + Scale (DistY, distance, maxDistance);
 }
 
-DThinker *FDecalCombinerAnim::CreateThinker (DBaseDecal *actor) const
+DThinker *FDecalCombinerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	DThinker *thinker = NULL;
 
 	for (int i = 0; i < NumAnimators; ++i)
 	{
-		thinker = AnimatorList[FirstAnimator+i]->CreateThinker (actor);
+		thinker = AnimatorList[FirstAnimator+i]->CreateThinker (actor, wall);
 	}
 	return thinker;
 }
@@ -1380,7 +1382,7 @@ void DDecalColorer::Tick ()
 	}
 }
 
-DThinker *FDecalColorerAnim::CreateThinker (DBaseDecal *actor) const
+DThinker *FDecalColorerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 {
 	DDecalColorer *Colorer = new DDecalColorer (actor);
 
@@ -1391,8 +1393,8 @@ DThinker *FDecalColorerAnim::CreateThinker (DBaseDecal *actor) const
 	return Colorer;
 }
 
-static int ReadScale ()
+static fixed_t ReadScale ()
 {
 	SC_MustGetFloat ();
-	return clamp ((int)(sc_Float * 64.f), 1, 256) - 1;
+	return fixed_t(clamp (sc_Float * FRACUNIT, 256.f, 256.f*FRACUNIT));
 }

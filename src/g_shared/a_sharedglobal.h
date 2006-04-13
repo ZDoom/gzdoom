@@ -55,37 +55,37 @@ class DBaseDecal : public DThinker
 	DECLARE_CLASS (DBaseDecal, DThinker)
 public:
 	DBaseDecal ();
-	DBaseDecal (fixed_t x, fixed_t y, fixed_t z);
+	DBaseDecal (fixed_t z);
+	DBaseDecal (int statnum, fixed_t z);
 	DBaseDecal (const AActor *actor);
 	DBaseDecal (const DBaseDecal *basis);
 
 	void Serialize (FArchive &arc);
 	void Destroy ();
-	int StickToWall (side_s *wall);
+	int StickToWall (side_s *wall, fixed_t x, fixed_t y);
 	fixed_t GetRealZ (const side_s *wall) const;
 	void SetShade (DWORD rgb);
 	void SetShade (int r, int g, int b);
-	void Spread (const FDecalTemplate *tpl, side_s *wall, fixed_t spread_z);
+	void Spread (const FDecalTemplate *tpl, side_s *wall, fixed_t x, fixed_t y, fixed_t z);
+	void GetXY (side_s *side, fixed_t &x, fixed_t &y) const;
 
 	static void SerializeChain (FArchive &arc, DBaseDecal **firstptr);
-	static void MoveChain (DBaseDecal *first, fixed_t x, fixed_t y);
-	static void FixForSide (side_s *side);
 
 	DBaseDecal *WallNext, **WallPrev;
 
-	fixed_t x, y, z;
+	fixed_t LeftDistance;
+	fixed_t Z;
+	fixed_t ScaleX, ScaleY;
+	fixed_t Alpha;
 	DWORD AlphaColor;
 	WORD Translation;
 	WORD PicNum;
 	WORD RenderFlags;
-	BYTE XScale, YScale;
 	BYTE RenderStyle;
-	fixed_t LeftDistance;
-	fixed_t Alpha;
 
 protected:
 	virtual DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_s *wall) const;
-	void CalcFracPos (side_s *wall);
+	void CalcFracPos (side_s *wall, fixed_t x, fixed_t y);
 	void Remove ();
 
 	static void SpreadLeft (fixed_t r, vertex_s *v1, side_s *feelwall);
@@ -96,7 +96,7 @@ class DImpactDecal : public DBaseDecal
 {
 	DECLARE_CLASS (DImpactDecal, DBaseDecal)
 public:
-	DImpactDecal (fixed_t x, fixed_t y, fixed_t z);
+	DImpactDecal (fixed_t z);
 	DImpactDecal (side_s *wall, const FDecalTemplate *templ);
 
 	static DImpactDecal *StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_s *wall, PalEntry color=0);
@@ -108,14 +108,12 @@ public:
 	void Serialize (FArchive &arc);
 	static void SerializeTime (FArchive &arc);
 
-	DImpactDecal *ImpactNext, *ImpactPrev;
-
 protected:
 	DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_s *wall) const;
+	static void CheckMax ();
 
 private:
 	DImpactDecal();
-	void Link();
 };
 
 class AWaterSplashBase : public AActor

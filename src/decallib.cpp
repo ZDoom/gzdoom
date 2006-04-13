@@ -1186,18 +1186,21 @@ DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor, side_t *wall) c
 
 	thinker->TimeToStart = level.maptime + StretchStart;
 	thinker->TimeToStop = thinker->TimeToStart + StretchTime;
-	if (GoalX >= 0)
+
+	FTexture * tex = TexMan[actor->PicNum];
+
+	if (GoalX >= 0 && tex != NULL)
 	{
-		thinker->GoalX = GoalX;
+		thinker->GoalX = GoalX / tex->GetWidth();
 		thinker->bStretchX = true;
 	}
 	else
 	{
 		thinker->bStretchX = false;
 	}
-	if (GoalY >= 0)
+	if (GoalY >= 0 && tex != NULL)
 	{
-		thinker->GoalY = GoalY;
+		thinker->GoalY = GoalY / tex->GetHeight();
 		thinker->bStretchY = true;
 	}
 	else

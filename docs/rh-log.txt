@@ -1,4 +1,9 @@
 April 13, 2006 (Changes by Graf Zahl)
+- Fixed: The decal stretcher is supposed to stretch the decal to a specifiable
+  size but it used that size as a scaling factor instead. The old code allowed
+  a maximum scaling factor of 4 which masked this bug to a large extent but
+  with the increased precision the blood smears were stretched to abnormal
+  proportions.
 - Fixed: A non-spectral attack set any spectral target to its missile state.
   This is not supposed to happen.
 - Fixed: The Prison Key was misspelled in the pickup message.

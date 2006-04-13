@@ -1,5 +1,5 @@
 /* libFLAC - Free Lossless Audio Codec library
- * Copyright (C) 2001,2002,2003,2004  Josh Coalson
+ * Copyright (C) 2001,2002,2003,2004,2005  Josh Coalson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,7 +54,16 @@
  * ilog2(17) = 4
  * ilog2(18) = 4
  */
-unsigned FLAC__bitmath_ilog2(unsigned v)
+unsigned FLAC__bitmath_ilog2(FLAC__uint32 v)
+{
+	unsigned l = 0;
+	FLAC__ASSERT(v > 0);
+	while(v >>= 1)
+		l++;
+	return l;
+}
+
+unsigned FLAC__bitmath_ilog2_wide(FLAC__uint64 v)
 {
 	unsigned l = 0;
 	FLAC__ASSERT(v > 0);

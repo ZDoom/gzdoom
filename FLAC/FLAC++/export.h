@@ -1,5 +1,5 @@
 /* libFLAC++ - Free Lossless Audio Codec library
- * Copyright (C) 2002,2003,2004  Josh Coalson
+ * Copyright (C) 2002,2003,2004,2005  Josh Coalson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 #ifndef FLACPP__EXPORT_H
 #define FLACPP__EXPORT_H
 
-#if defined(FLAC__NO_DLL) || !defined(_MSC_VER) || 1
+#if defined(FLAC__NO_DLL) || !defined(_MSC_VER)
 #define FLACPP_API
 
 #else

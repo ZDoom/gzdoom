@@ -1,5 +1,5 @@
 /* libFLAC - Free Lossless Audio Codec library
- * Copyright (C) 2000,2001,2002,2003,2004  Josh Coalson
+ * Copyright (C) 2000,2001,2002,2003,2004,2005  Josh Coalson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 #ifndef FLAC__ORDINALS_H
 #define FLAC__ORDINALS_H
 
-#ifndef _MSC_VER
+#if !(defined(_MSC_VER) || defined(__EMX__))
 #include <inttypes.h>
 #endif
 
@@ -46,6 +46,13 @@ typedef __int64 FLAC__int64;
 typedef unsigned __int16 FLAC__uint16;
 typedef unsigned __int32 FLAC__uint32;
 typedef unsigned __int64 FLAC__uint64;
+#elif defined(__EMX__)
+typedef short FLAC__int16;
+typedef long FLAC__int32;
+typedef long long FLAC__int64;
+typedef unsigned short FLAC__uint16;
+typedef unsigned long FLAC__uint32;
+typedef unsigned long long FLAC__uint64;
 #else
 typedef int16_t FLAC__int16;
 typedef int32_t FLAC__int32;
@@ -58,7 +65,6 @@ typedef uint64_t FLAC__uint64;
 typedef int FLAC__bool;
 
 typedef FLAC__uint8 FLAC__byte;
-typedef float FLAC__real;
 
 #ifdef true
 #undef true

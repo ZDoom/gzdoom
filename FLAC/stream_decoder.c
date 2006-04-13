@@ -1,5 +1,5 @@
 /* libFLAC - Free Lossless Audio Codec library
- * Copyright (C) 2000,2001,2002,2003,2004  Josh Coalson
+ * Copyright (C) 2000,2001,2002,2003,2004,2005  Josh Coalson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -121,6 +121,7 @@ typedef struct FLAC__StreamDecoderPrivate {
 	FLAC__EntropyCodingMethod_PartitionedRiceContents partitioned_rice_contents[FLAC__MAX_CHANNELS];
 	unsigned output_capacity, output_channels;
 	FLAC__uint32 last_frame_number;
+	FLAC__uint32 last_block_size;
 	FLAC__uint64 samples_decoded;
 	FLAC__bool has_stream_info, has_seek_table;
 	FLAC__StreamMetadata stream_info;
@@ -284,6 +285,7 @@ FLAC_API FLAC__StreamDecoderState FLAC__stream_decoder_init(FLAC__StreamDecoder 
 		return decoder->protected_->state = FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR;
 
 	decoder->private_->last_frame_number = 0;
+	decoder->private_->last_block_size = 0;
 	decoder->private_->samples_decoded = 0;
 	decoder->private_->has_stream_info = false;
 	decoder->private_->cached = false;
@@ -453,8 +455,10 @@ FLAC_API FLAC__bool FLAC__stream_decoder_set_metadata_respond_application(FLAC__
 	FLAC__ASSERT(0 != decoder->private_->metadata_filter_ids);
 
 	if(decoder->private_->metadata_filter_ids_count == decoder->private_->metadata_filter_ids_capacity) {
-		if(0 == (decoder->private_->metadata_filter_ids = (FLAC__byte*)realloc(decoder->private_->metadata_filter_ids, decoder->private_->metadata_filter_ids_capacity * 2)))
-			return decoder->protected_->state = FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR;
+		if(0 == (decoder->private_->metadata_filter_ids = (FLAC__byte*)realloc(decoder->private_->metadata_filter_ids, decoder->private_->metadata_filter_ids_capacity * 2))) {
+			decoder->protected_->state = FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR;
+			return false;
+		}
 		decoder->private_->metadata_filter_ids_capacity *= 2;
 	}
 
@@ -510,8 +514,10 @@ FLAC_API FLAC__bool FLAC__stream_decoder_set_metadata_ignore_application(FLAC__S
 	FLAC__ASSERT(0 != decoder->private_->metadata_filter_ids);
 
 	if(decoder->private_->metadata_filter_ids_count == decoder->private_->metadata_filter_ids_capacity) {
-		if(0 == (decoder->private_->metadata_filter_ids = (FLAC__byte*)realloc(decoder->private_->metadata_filter_ids, decoder->private_->metadata_filter_ids_capacity * 2)))
-			return decoder->protected_->state = FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR;
+		if(0 == (decoder->private_->metadata_filter_ids = (FLAC__byte*)realloc(decoder->private_->metadata_filter_ids, decoder->private_->metadata_filter_ids_capacity * 2))) {
+			decoder->protected_->state = FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR;
+			return false;
+		}
 		decoder->private_->metadata_filter_ids_capacity *= 2;
 	}
 
@@ -590,6 +596,8 @@ FLAC_API FLAC__bool FLAC__stream_decoder_flush(FLAC__StreamDecoder *decoder)
 		decoder->protected_->state = FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR;
 		return false;
 	}
+	decoder->private_->last_frame_number = 0;
+	decoder->private_->last_block_size = 0;
 	decoder->protected_->state = FLAC__STREAM_DECODER_SEARCH_FOR_FRAME_SYNC;
 
 	return true;
@@ -1167,12 +1175,13 @@ FLAC__bool read_metadata_vorbiscomment_(FLAC__StreamDecoder *decoder, FLAC__Stre
 	if(!FLAC__bitbuffer_read_raw_uint32_little_endian(decoder->private_->input, &obj->vendor_string.length, read_callback_, decoder))
 		return false; /* the read_callback_ sets the state for us */
 	if(obj->vendor_string.length > 0) {
-		if(0 == (obj->vendor_string.entry = (FLAC__byte*)malloc(obj->vendor_string.length))) {
+		if(0 == (obj->vendor_string.entry = (FLAC__byte*)malloc(obj->vendor_string.length+1))) {
 			decoder->protected_->state = FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR;
 			return false;
 		}
 		if(!FLAC__bitbuffer_read_byte_block_aligned_no_crc(decoder->private_->input, obj->vendor_string.entry, obj->vendor_string.length, read_callback_, decoder))
 			return false; /* the read_callback_ sets the state for us */
+		obj->vendor_string.entry[obj->vendor_string.length] = '\0';
 	}
 	else
 		obj->vendor_string.entry = 0;
@@ -1193,12 +1202,13 @@ FLAC__bool read_metadata_vorbiscomment_(FLAC__StreamDecoder *decoder, FLAC__Stre
 			if(!FLAC__bitbuffer_read_raw_uint32_little_endian(decoder->private_->input, &obj->comments[i].length, read_callback_, decoder))
 				return false; /* the read_callback_ sets the state for us */
 			if(obj->comments[i].length > 0) {
-				if(0 == (obj->comments[i].entry = (FLAC__byte*)malloc(obj->comments[i].length))) {
+				if(0 == (obj->comments[i].entry = (FLAC__byte*)malloc(obj->comments[i].length+1))) {
 					decoder->protected_->state = FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR;
 					return false;
 				}
 				if(!FLAC__bitbuffer_read_byte_block_aligned_no_crc(decoder->private_->input, obj->comments[i].entry, obj->comments[i].length, read_callback_, decoder))
 					return false; /* the read_callback_ sets the state for us */
+				obj->comments[i].entry[obj->comments[i].length] = '\0';
 			}
 			else
 				obj->comments[i].entry = 0;
@@ -1700,18 +1710,34 @@ FLAC__bool read_frame_header_(FLAC__StreamDecoder *decoder)
 		return true;
 	}
 
-	if(blocksize_hint && is_known_variable_blocksize_stream) {
-		if(!FLAC__bitbuffer_read_utf8_uint64(decoder->private_->input, &xx, read_callback_, decoder, raw_header, &raw_header_len))
-			return false; /* the read_callback_ sets the state for us */
-		if(xx == FLAC__U64L(0xffffffffffffffff)) { /* i.e. non-UTF8 code... */
-			decoder->private_->lookahead = raw_header[raw_header_len-1]; /* back up as much as we can */
-			decoder->private_->cached = true;
-			decoder->private_->error_callback(decoder, FLAC__STREAM_DECODER_ERROR_STATUS_BAD_HEADER, decoder->private_->client_data);
-			decoder->protected_->state = FLAC__STREAM_DECODER_SEARCH_FOR_FRAME_SYNC;
-			return true;
+	/*
+	 * Now we get to the regrettable consequences of not knowing for sure
+	 * whether we got a frame number or a sample number.  There are no
+	 * encoders that do variable-blocksize encoding so unless we know from
+	 * the STREAMINFO that it is variable-blocksize we will assume it is
+	 * fixed-blocksize.  The trouble comes when we have no STREAMINFO; again
+	 * we will guess that is fixed-blocksize.  Where this can go wrong: 1) a
+	 * variable-blocksize stream with no STREAMINFO; 2) a fixed-blocksize
+	 * stream that was edited such that one or more frames before or
+	 * including this one do not have the same number of samples as the
+	 * STREAMINFO's min and max blocksize.
+	 */
+	if(is_known_variable_blocksize_stream) {
+		if(blocksize_hint) {
+			if(!FLAC__bitbuffer_read_utf8_uint64(decoder->private_->input, &xx, read_callback_, decoder, raw_header, &raw_header_len))
+				return false; /* the read_callback_ sets the state for us */
+			if(xx == FLAC__U64L(0xffffffffffffffff)) { /* i.e. non-UTF8 code... */
+				decoder->private_->lookahead = raw_header[raw_header_len-1]; /* back up as much as we can */
+				decoder->private_->cached = true;
+				decoder->private_->error_callback(decoder, FLAC__STREAM_DECODER_ERROR_STATUS_BAD_HEADER, decoder->private_->client_data);
+				decoder->protected_->state = FLAC__STREAM_DECODER_SEARCH_FOR_FRAME_SYNC;
+				return true;
+			}
+			decoder->private_->frame.header.number_type = FLAC__FRAME_NUMBER_TYPE_SAMPLE_NUMBER;
+			decoder->private_->frame.header.number.sample_number = xx;
 		}
-		decoder->private_->frame.header.number_type = FLAC__FRAME_NUMBER_TYPE_SAMPLE_NUMBER;
-		decoder->private_->frame.header.number.sample_number = xx;
+		else
+			is_unparseable = true;
 	}
 	else {
 		if(!FLAC__bitbuffer_read_utf8_uint32(decoder->private_->input, &x, read_callback_, decoder, raw_header, &raw_header_len))
@@ -1725,14 +1751,21 @@ FLAC__bool read_frame_header_(FLAC__StreamDecoder *decoder)
 		}
 		decoder->private_->last_frame_number = x;
 		decoder->private_->frame.header.number_type = FLAC__FRAME_NUMBER_TYPE_SAMPLE_NUMBER;
-		if(blocksize_hint) {
-			if(decoder->private_->has_stream_info)
-				decoder->private_->frame.header.number.sample_number = (FLAC__int64)decoder->private_->stream_info.data.stream_info.min_blocksize * (FLAC__int64)x;
+		if(decoder->private_->has_stream_info) {
+			FLAC__ASSERT(decoder->private_->stream_info.data.stream_info.min_blocksize == decoder->private_->stream_info.data.stream_info.max_blocksize);
+			decoder->private_->frame.header.number.sample_number = (FLAC__uint64)decoder->private_->stream_info.data.stream_info.min_blocksize * (FLAC__uint64)x;
+			decoder->private_->last_block_size = decoder->private_->frame.header.blocksize;
+		}
+		else if(blocksize_hint) {
+			if(decoder->private_->last_block_size)
+				decoder->private_->frame.header.number.sample_number = (FLAC__uint64)decoder->private_->last_block_size * (FLAC__uint64)x;
 			else
 				is_unparseable = true;
 		}
-		else	
-			decoder->private_->frame.header.number.sample_number = (FLAC__int64)decoder->private_->frame.header.blocksize * (FLAC__int64)x;
+		else {
+			decoder->private_->frame.header.number.sample_number = (FLAC__uint64)decoder->private_->frame.header.blocksize * (FLAC__uint64)x;
+			decoder->private_->last_block_size = decoder->private_->frame.header.blocksize;
+		}
 	}
 
 	if(blocksize_hint) {
@@ -2045,6 +2078,22 @@ FLAC__bool read_residual_partitioned_rice_(FLAC__StreamDecoder *decoder, unsigne
 	const unsigned partitions = 1u << partition_order;
 	const unsigned partition_samples = partition_order > 0? decoder->private_->frame.header.blocksize >> partition_order : decoder->private_->frame.header.blocksize - predictor_order;
 
+	/* sanity checks */
+	if(partition_order == 0) {
+		if(decoder->private_->frame.header.blocksize < predictor_order) {
+			decoder->private_->error_callback(decoder, FLAC__STREAM_DECODER_ERROR_STATUS_LOST_SYNC, decoder->private_->client_data);
+			decoder->protected_->state = FLAC__STREAM_DECODER_SEARCH_FOR_FRAME_SYNC;
+			return true;
+		}
+	}
+	else {
+		if(partition_samples < predictor_order) {
+			decoder->private_->error_callback(decoder, FLAC__STREAM_DECODER_ERROR_STATUS_LOST_SYNC, decoder->private_->client_data);
+			decoder->protected_->state = FLAC__STREAM_DECODER_SEARCH_FOR_FRAME_SYNC;
+			return true;
+		}
+	}
+
 	if(!FLAC__format_entropy_coding_method_partitioned_rice_contents_ensure_size(partitioned_rice_contents, max(6, partition_order))) {
 		decoder->protected_->state = FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR;
 		return false;
@@ -2056,18 +2105,10 @@ FLAC__bool read_residual_partitioned_rice_(FLAC__StreamDecoder *decoder, unsigne
 			return false; /* the read_callback_ sets the state for us */
 		partitioned_rice_contents->parameters[partition] = rice_parameter;
 		if(rice_parameter < FLAC__ENTROPY_CODING_METHOD_PARTITIONED_RICE_ESCAPE_PARAMETER) {
-#ifdef FLAC__SYMMETRIC_RICE
-			for(u = (partition_order == 0 || partition > 0)? 0 : predictor_order; u < partition_samples; u++, sample++) {
-				if(!FLAC__bitbuffer_read_symmetric_rice_signed(decoder->private_->input, &i, rice_parameter, read_callback_, decoder))
-					return false; /* the read_callback_ sets the state for us */
-				residual[sample] = i;
-			}
-#else
 			u = (partition_order == 0 || partition > 0)? partition_samples : partition_samples - predictor_order;
 			if(!FLAC__bitbuffer_read_rice_signed_block(decoder->private_->input, residual + sample, u, rice_parameter, read_callback_, decoder))
 				return false; /* the read_callback_ sets the state for us */
 			sample += u;
-#endif
 		}
 		else {
 			if(!FLAC__bitbuffer_read_raw_uint32(decoder->private_->input, &rice_parameter, FLAC__ENTROPY_CODING_METHOD_PARTITIONED_RICE_RAW_LEN, read_callback_, decoder))

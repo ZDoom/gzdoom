@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;FLAC__CPU_IA32;FLAC__HAS_NASM;FLAC__SSE_OS;FLAC__USE_3DNOW"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;FLAC__CPU_IA32;FLAC__HAS_NASM;FLAC__SSE_OS;FLAC__USE_3DNOW;FLAC__NO_DLL"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -62,7 +62,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				OmitFramePointers="TRUE"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;FLAC__CPU_IA32;FLAC__HAS_NASM;FLAC__SSE_OS;FLAC__USE_3DNOW"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;FLAC__CPU_IA32;FLAC__HAS_NASM;FLAC__SSE_OS;FLAC__USE_3DNOW;FLAC__NO_DLL"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="TRUE"
@@ -161,10 +161,16 @@
 					RelativePath="private\fixed.h">
 				</File>
 				<File
+					RelativePath=".\private\float.h">
+				</File>
+				<File
 					RelativePath="private\format.h">
 				</File>
 				<File
 					RelativePath="private\lpc.h">
+				</File>
+				<File
+					RelativePath=".\private\memory.h">
 				</File>
 			</Filter>
 			<Filter

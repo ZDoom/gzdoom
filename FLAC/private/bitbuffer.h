@@ -1,5 +1,5 @@
 /* libFLAC - Free Lossless Audio Codec library
- * Copyright (C) 2000,2001,2002,2003  Josh Coalson
+ * Copyright (C) 2000,2001,2002,2003,2004,2005  Josh Coalson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -105,13 +105,6 @@ unsigned FLAC__bitbuffer_rice_bits(int val, unsigned parameter);
 unsigned FLAC__bitbuffer_golomb_bits_signed(int val, unsigned parameter);
 unsigned FLAC__bitbuffer_golomb_bits_unsigned(unsigned val, unsigned parameter);
 #endif
-#ifdef FLAC__SYMMETRIC_RICE
-FLAC__bool FLAC__bitbuffer_write_symmetric_rice_signed(FLAC__BitBuffer *bb, int val, unsigned parameter);
-#if 0 /* UNUSED */
-FLAC__bool FLAC__bitbuffer_write_symmetric_rice_signed_guarded(FLAC__BitBuffer *bb, int val, unsigned parameter, unsigned max_bits, FLAC__bool *overflow);
-#endif
-FLAC__bool FLAC__bitbuffer_write_symmetric_rice_signed_escape(FLAC__BitBuffer *bb, int val, unsigned parameter);
-#endif
 FLAC__bool FLAC__bitbuffer_write_rice_signed(FLAC__BitBuffer *bb, int val, unsigned parameter);
 #if 0 /* UNUSED */
 FLAC__bool FLAC__bitbuffer_write_rice_signed_guarded(FLAC__BitBuffer *bb, int val, unsigned parameter, unsigned max_bits, FLAC__bool *overflow);
@@ -143,9 +136,6 @@ FLAC__bool FLAC__bitbuffer_read_raw_uint32_little_endian(FLAC__BitBuffer *bb, FL
 FLAC__bool FLAC__bitbuffer_skip_bits_no_crc(FLAC__BitBuffer *bb, unsigned bits, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data); /* WATCHOUT: does not CRC the skipped data! */ /*@@@@ add to unit tests */
 FLAC__bool FLAC__bitbuffer_read_byte_block_aligned_no_crc(FLAC__BitBuffer *bb, FLAC__byte *val, unsigned nvals, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data); /* val may be 0 to skip bytes instead of reading them */ /* WATCHOUT: does not CRC the read data! */
 FLAC__bool FLAC__bitbuffer_read_unary_unsigned(FLAC__BitBuffer *bb, unsigned *val, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data);
-#ifdef FLAC__SYMMETRIC_RICE
-FLAC__bool FLAC__bitbuffer_read_symmetric_rice_signed(FLAC__BitBuffer *bb, int *val, unsigned parameter, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data);
-#endif
 FLAC__bool FLAC__bitbuffer_read_rice_signed(FLAC__BitBuffer *bb, int *val, unsigned parameter, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data);
 FLAC__bool FLAC__bitbuffer_read_rice_signed_block(FLAC__BitBuffer *bb, int vals[], unsigned nvals, unsigned parameter, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data);
 #if 0 /* UNUSED */

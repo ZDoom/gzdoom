@@ -1,5 +1,5 @@
 /* libFLAC - Free Lossless Audio Codec library
- * Copyright (C) 2000,2001,2002,2003,2004  Josh Coalson
+ * Copyright (C) 2000,2001,2002,2003,2004,2005  Josh Coalson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,6 +45,13 @@
  */
 
 /*
+ * Some optimization strategies are slower with older versions of MSVC
+ */
+#if defined _MSC_VER && _MSC_VER <= 1200
+#define FLAC__OLD_MSVC_FLAVOR
+#endif
+
+/*
  * This should be at least twice as large as the largest number of blurbs
  * required to represent any 'number' (in any encoding) you are going to
  * read.  With FLAC this is on the order of maybe a few hundred bits.
@@ -63,6 +70,27 @@
  */
 static const unsigned FLAC__BITBUFFER_DEFAULT_CAPACITY = ((65536 - 64) * 8) / FLAC__BITS_PER_BLURB; /* blurbs */
 
+#ifndef FLAC__OLD_MSVC_FLAVOR
+static const unsigned char byte_to_unary_table[] = {
+	8, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+#endif
+
 #if FLAC__BITS_PER_BLURB == 8
 #define FLAC__BITS_PER_BLURB_LOG2 3
 #define FLAC__BYTES_PER_BLURB 1
@@ -70,6 +98,9 @@ static const unsigned FLAC__BITBUFFER_DEFAULT_CAPACITY = ((65536 - 64) * 8) / FL
 #define FLAC__BLURB_TOP_BIT_ONE ((FLAC__byte)0x80)
 #define BLURB_BIT_TO_MASK(b) (((FLAC__blurb)'\x80') >> (b))
 #define CRC16_UPDATE_BLURB(bb, blurb, crc) FLAC__CRC16_UPDATE((blurb), (crc));
+#ifndef FLAC__OLD_MSVC_FLAVOR
+#define FLAC__ALIGNED_BLURB_UNARY(blurb) (byte_to_unary_table[blurb])
+#endif
 #elif FLAC__BITS_PER_BLURB == 32
 #define FLAC__BITS_PER_BLURB_LOG2 5
 #define FLAC__BYTES_PER_BLURB 4
@@ -77,6 +108,9 @@ static const unsigned FLAC__BITBUFFER_DEFAULT_CAPACITY = ((65536 - 64) * 8) / FL
 #define FLAC__BLURB_TOP_BIT_ONE ((FLAC__uint32)0x80000000)
 #define BLURB_BIT_TO_MASK(b) (((FLAC__blurb)0x80000000) >> (b))
 #define CRC16_UPDATE_BLURB(bb, blurb, crc) crc16_update_blurb((bb), (blurb));
+#ifndef FLAC__OLD_MSVC_FLAVOR
+#define FLAC__ALIGNED_BLURB_UNARY(blurb) ((blurb) <= 0xff ? byte_to_unary_table[blurb] + 24 : ((blurb) <= 0xffff ? byte_to_unary_table[(blurb) >> 8] + 16 : ((blurb) <= 0xffffff ? byte_to_unary_table[(blurb) >> 16] + 8 : byte_to_unary_table[(blurb) >> 24])))
+#endif
 #else
 /* ERROR, only sizes of 8 and 32 are supported */
 #endif
@@ -207,11 +241,27 @@ static FLAC__bool bitbuffer_read_from_client_(FLAC__BitBuffer *bb, FLAC__bool (*
 
 	/* first shift the unconsumed buffer data toward the front as much as possible */
 	if(bb->total_consumed_bits >= FLAC__BITS_PER_BLURB) {
-		unsigned l = 0, r = bb->consumed_blurbs, r_end = bb->blurbs + (bb->bits? 1:0);
+#if FLAC__BITS_PER_BLURB == 8
+		/*
+		 * memset and memcpy are usually implemented in assembly language
+		 * by the system libc, and they can be much faster
+		 */
+		const unsigned r_end = bb->blurbs + (bb->bits? 1:0);
+		const unsigned r = bb->consumed_blurbs, l = r_end - r;
+		memmove(&bb->buffer[0], &bb->buffer[r], l);
+		memset(&bb->buffer[l], 0, r);
+#elif FLAC__BITS_PER_BLURB == 32
+		/* still needs optimization */
+		const unsigned r_end = bb->blurbs + (bb->bits? 1:0);
+		unsigned l = 0, r = bb->consumed_blurbs;
 		for( ; r < r_end; l++, r++)
 			bb->buffer[l] = bb->buffer[r];
 		for( ; l < r_end; l++)
 			bb->buffer[l] = 0;
+#else
+		FLAC__ASSERT(false); /* ERROR, only sizes of 8 and 32 are supported */
+#endif /* FLAC__BITS_PER_BLURB == 32 or 8 */
+
 		bb->blurbs -= bb->consumed_blurbs;
 		bb->total_bits -= FLAC__BLURBS_TO_BITS(bb->consumed_blurbs);
 		bb->consumed_blurbs = 0;
@@ -857,127 +907,6 @@ unsigned FLAC__bitbuffer_golomb_bits_unsigned(unsigned uval, unsigned parameter)
 	return bits;
 }
 #endif /* UNUSED */
-
-#ifdef FLAC__SYMMETRIC_RICE
-FLAC__bool FLAC__bitbuffer_write_symmetric_rice_signed(FLAC__BitBuffer *bb, int val, unsigned parameter)
-{
-	unsigned total_bits, interesting_bits, msbs;
-	FLAC__uint32 pattern;
-
-	FLAC__ASSERT(0 != bb);
-	FLAC__ASSERT(0 != bb->buffer);
-	FLAC__ASSERT(parameter <= 31);
-
-	/* init pattern with the unary end bit and the sign bit */
-	if(val < 0) {
-		pattern = 3;
-		val = -val;
-	}
-	else
-		pattern = 2;
-
-	msbs = val >> parameter;
-	interesting_bits = 2 + parameter;
-	total_bits = interesting_bits + msbs;
-	pattern <<= parameter;
-	pattern |= (val & ((1<<parameter)-1)); /* the binary LSBs */
-
-	if(total_bits <= 32) {
-		if(!FLAC__bitbuffer_write_raw_uint32(bb, pattern, total_bits))
-			return false;
-	}
-	else {
-		/* write the unary MSBs */
-		if(!FLAC__bitbuffer_write_zeroes(bb, msbs))
-			return false;
-		/* write the unary end bit, the sign bit, and binary LSBs */
-		if(!FLAC__bitbuffer_write_raw_uint32(bb, pattern, interesting_bits))
-			return false;
-	}
-	return true;
-}
-
-#if 0 /* UNUSED */
-FLAC__bool FLAC__bitbuffer_write_symmetric_rice_signed_guarded(FLAC__BitBuffer *bb, int val, unsigned parameter, unsigned max_bits, FLAC__bool *overflow)
-{
-	unsigned total_bits, interesting_bits, msbs;
-	FLAC__uint32 pattern;
-
-	FLAC__ASSERT(0 != bb);
-	FLAC__ASSERT(0 != bb->buffer);
-	FLAC__ASSERT(parameter <= 31);
-
-	*overflow = false;
-
-	/* init pattern with the unary end bit and the sign bit */
-	if(val < 0) {
-		pattern = 3;
-		val = -val;
-	}
-	else
-		pattern = 2;
-
-	msbs = val >> parameter;
-	interesting_bits = 2 + parameter;
-	total_bits = interesting_bits + msbs;
-	pattern <<= parameter;
-	pattern |= (val & ((1<<parameter)-1)); /* the binary LSBs */
-
-	if(total_bits <= 32) {
-		if(!FLAC__bitbuffer_write_raw_uint32(bb, pattern, total_bits))
-			return false;
-	}
-	else if(total_bits > max_bits) {
-		*overflow = true;
-		return true;
-	}
-	else {
-		/* write the unary MSBs */
-		if(!FLAC__bitbuffer_write_zeroes(bb, msbs))
-			return false;
-		/* write the unary end bit, the sign bit, and binary LSBs */
-		if(!FLAC__bitbuffer_write_raw_uint32(bb, pattern, interesting_bits))
-			return false;
-	}
-	return true;
-}
-#endif /* UNUSED */
-
-FLAC__bool FLAC__bitbuffer_write_symmetric_rice_signed_escape(FLAC__BitBuffer *bb, int val, unsigned parameter)
-{
-	unsigned total_bits, val_bits;
-	FLAC__uint32 pattern;
-
-	FLAC__ASSERT(0 != bb);
-	FLAC__ASSERT(0 != bb->buffer);
-	FLAC__ASSERT(parameter <= 31);
-
-	val_bits = FLAC__bitmath_silog2(val);
-	total_bits = 2 + parameter + 5 + val_bits;
-
-	if(total_bits <= 32) {
-		pattern = 3;
-		pattern <<= (parameter + 5);
-		pattern |= val_bits;
-		pattern <<= val_bits;
-		pattern |= (val & ((1 << val_bits) - 1));
-		if(!FLAC__bitbuffer_write_raw_uint32(bb, pattern, total_bits))
-			return false;
-	}
-	else {
-		/* write the '-0' escape code first */
-		if(!FLAC__bitbuffer_write_raw_uint32(bb, 3u << parameter, 2+parameter))
-			return false;
-		/* write the length */
-		if(!FLAC__bitbuffer_write_raw_uint32(bb, val_bits, 5))
-			return false;
-		/* write the value */
-		if(!FLAC__bitbuffer_write_raw_int32(bb, val, val_bits))
-			return false;
-	}
-	return true;
-}
-#endif /* ifdef FLAC__SYMMETRIC_RICE */
 
 FLAC__bool FLAC__bitbuffer_write_rice_signed(FLAC__BitBuffer *bb, int val, unsigned parameter)
 {
@@ -2036,36 +1965,6 @@ FLaC__INLINE FLAC__bool FLAC__bitbuffer_read_unary_unsigned(FLAC__BitBuffer *bb,
 }
 #endif
 
-#ifdef FLAC__SYMMETRIC_RICE
-FLAC__bool FLAC__bitbuffer_read_symmetric_rice_signed(FLAC__BitBuffer *bb, int *val, unsigned parameter, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data)
-{
-	FLAC__uint32 sign = 0, lsbs = 0, msbs = 0;
-
-	FLAC__ASSERT(0 != bb);
-	FLAC__ASSERT(0 != bb->buffer);
-	FLAC__ASSERT(parameter <= 31);
-
-	/* read the unary MSBs and end bit */
-	if(!FLAC__bitbuffer_read_unary_unsigned(bb, &msbs, read_callback, client_data))
-		return false;
-
-	/* read the sign bit */
-	if(!FLAC__bitbuffer_read_bit_to_uint32(bb, &sign, read_callback, client_data))
-		return false;
-
-	/* read the binary LSBs */
-	if(!FLAC__bitbuffer_read_raw_uint32(bb, &lsbs, parameter, read_callback, client_data))
-		return false;
-
-	/* compose the value */
-	*val = (msbs << parameter) | lsbs;
-	if(sign)
-		*val = -(*val);
-
-	return true;
-}
-#endif /* ifdef FLAC__SYMMETRIC_RICE */
-
 FLAC__bool FLAC__bitbuffer_read_rice_signed(FLAC__BitBuffer *bb, int *val, unsigned parameter, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data)
 {
 	FLAC__uint32 lsbs = 0, msbs = 0;
@@ -2094,6 +1993,7 @@ FLAC__bool FLAC__bitbuffer_read_rice_signed(FLAC__BitBuffer *bb, int *val, unsig
 }
 
 FLAC__bool FLAC__bitbuffer_read_rice_signed_block(FLAC__BitBuffer *bb, int vals[], unsigned nvals, unsigned parameter, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data)
+#ifdef FLAC__OLD_MSVC_FLAVOR
 {
 	const FLAC__blurb *buffer = bb->buffer;
 
@@ -2300,6 +2200,115 @@ FLAC__bool FLAC__bitbuffer_read_rice_signed_block(FLAC__BitBuffer *bb, int vals[
 
 	return true;
 }
+#else
+{
+	const FLAC__blurb *buffer = bb->buffer;
+
+	unsigned i, j, val_i = nvals;
+	unsigned cbits = 0, uval = 0, msbs = 0, lsbs_left = 0;
+	FLAC__blurb blurb, save_blurb;
+	unsigned state = 0; /* 0 = getting unary MSBs, 1 = getting binary LSBs */
+
+	FLAC__ASSERT(0 != bb);
+	FLAC__ASSERT(0 != bb->buffer);
+	FLAC__ASSERT(parameter <= 31);
+
+	if(nvals == 0)
+		return true;
+
+	cbits = bb->consumed_bits;
+	i = bb->consumed_blurbs;
+	while(val_i != 0) {
+		for( ; i < bb->blurbs; i++) {
+			blurb = (save_blurb = buffer[i]) << cbits;
+			while(1) {
+				if(state == 0) {
+					if(blurb) {
+						j = FLAC__ALIGNED_BLURB_UNARY(blurb);
+						msbs += j;
+						j++;
+						cbits += j;
+
+						uval = 0;
+						lsbs_left = parameter;
+						state++;
+						if(cbits == FLAC__BITS_PER_BLURB) {
+							cbits = 0;
+							CRC16_UPDATE_BLURB(bb, save_blurb, bb->read_crc16);
+							break;
+						}
+						blurb <<= j;
+					}
+					else {
+						msbs += FLAC__BITS_PER_BLURB - cbits;
+						cbits = 0;
+						CRC16_UPDATE_BLURB(bb, save_blurb, bb->read_crc16);
+						break;
+					}
+				}
+				else {
+					const unsigned available_bits = FLAC__BITS_PER_BLURB - cbits;
+					if(lsbs_left >= available_bits) {
+						uval <<= available_bits;
+						uval |= (blurb >> cbits);
+						cbits = 0;
+						CRC16_UPDATE_BLURB(bb, save_blurb, bb->read_crc16);
+
+						if(lsbs_left == available_bits) {
+							/* compose the value */
+							uval |= (msbs << parameter);
+							*vals = (int)(uval >> 1 ^ -(int)(uval & 1));
+							--val_i;
+							if(val_i == 0) {
+								i++;
+								goto break2;
+							}
+							++vals;
+
+							msbs = 0;
+							state = 0;
+						}
+
+						lsbs_left -= available_bits;
+						break;
+					}
+					else {
+						cbits += lsbs_left;
+						uval <<= lsbs_left;
+						uval |= (blurb >> (FLAC__BITS_PER_BLURB - lsbs_left));
+						blurb <<= lsbs_left;
+
+						/* compose the value */
+						uval |= (msbs << parameter);
+						*vals = (int)(uval >> 1 ^ -(int)(uval & 1));
+						--val_i;
+						if(val_i == 0)
+							goto break2;
+						++vals;
+
+						msbs = 0;
+						state = 0;
+					}
+				}
+			}
+		}
+break2:
+		bb->consumed_blurbs = i;
+		bb->consumed_bits = cbits;
+		bb->total_consumed_bits = (i << FLAC__BITS_PER_BLURB_LOG2) | cbits;
+		if(val_i != 0) {
+			if(!bitbuffer_read_from_client_(bb, read_callback, client_data))
+				return false;
+			/* these must be zero because we can only get here if we got to the end of the buffer */
+			FLAC__ASSERT(bb->consumed_blurbs == 0);
+			FLAC__ASSERT(bb->consumed_bits == 0);
+			i = 0;
+		}
+	}
+
+	return true;
+}
+#endif
 
 #if 0 /* UNUSED */
 FLAC__bool FLAC__bitbuffer_read_golomb_signed(FLAC__BitBuffer *bb, int *val, unsigned parameter, FLAC__bool (*read_callback)(FLAC__byte buffer[], unsigned *bytes, void *client_data), void *client_data)

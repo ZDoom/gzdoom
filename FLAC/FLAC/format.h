@@ -1,5 +1,5 @@
 /* libFLAC - Free Lossless Audio Codec library
- * Copyright (C) 2000,2001,2002,2003,2004  Josh Coalson
+ * Copyright (C) 2000,2001,2002,2003,2004,2005  Josh Coalson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -153,7 +153,7 @@ extern "C" {
 extern FLAC_API const char *FLAC__VERSION_STRING;
 
 /** The vendor string inserted by the encoder into the VORBIS_COMMENT block.
- *  This is a nulL-terminated ASCII string; when inserted into the
+ *  This is a NUL-terminated ASCII string; when inserted into the
  *  VORBIS_COMMENT the trailing null is stripped.
  */
 extern FLAC_API const char *FLAC__VENDOR_STRING;
@@ -473,7 +473,7 @@ typedef enum {
 	/**< <A HREF="../format.html#metadata_block_seektable">SEEKTABLE</A> block */
 
 	FLAC__METADATA_TYPE_VORBIS_COMMENT = 4,
-	/**< <A HREF="../format.html#metadata_block_vorbis_comment">VORBISCOMMENT</A> block */
+	/**< <A HREF="../format.html#metadata_block_vorbis_comment">VORBISCOMMENT</A> block (a.k.a. FLAC tags) */
 
 	FLAC__METADATA_TYPE_CUESHEET = 5,
 	/**< <A HREF="../format.html#metadata_block_cuesheet">CUESHEET</A> block */
@@ -583,6 +583,10 @@ typedef struct {
 
 
 /** Vorbis comment entry structure used in VORBIS_COMMENT blocks.  (c.f. <A HREF="../format.html#metadata_block_vorbis_comment">format specification</A>)
+ *
+ *  For convenience, the APIs maintain a trailing NUL character at the end of
+ *  \a entry which is not counted toward \a length, i.e.
+ *  \code strlen(entry) == length \endcode
  */
 typedef struct {
 	FLAC__uint32 length;
@@ -743,7 +747,6 @@ extern FLAC_API const unsigned FLAC__STREAM_METADATA_LENGTH_LEN; /**< == 24 (bit
  *
  *****************************************************************************/
 
-/* @@@@ add to unit tests; it is already indirectly tested by the metadata_object tests */
 /** Tests that a sample rate is valid for FLAC.  Since the rules for valid
  *  sample rates are slightly complex, they are encapsulated in this function.
  *
@@ -753,6 +756,52 @@ extern FLAC_API const unsigned FLAC__STREAM_METADATA_LENGTH_LEN; /**< == 24 (bit
  *    \c false.
  */
 FLAC_API FLAC__bool FLAC__format_sample_rate_is_valid(unsigned sample_rate);
+
+/** Check a Vorbis comment entry name to see if it conforms to the Vorbis
+ *  comment specification.
+ *
+ *  Vorbis comment names must be composed only of characters from
+ *  [0x20-0x3C,0x3E-0x7D].
+ *
+ * \param name       A NUL-terminated string to be checked.
+ * \assert
+ *    \code name != NULL \endcode
+ * \retval FLAC__bool
+ *    \c false if entry name is illegal, else \c true.
+ */
+FLAC_API FLAC__bool FLAC__format_vorbiscomment_entry_name_is_legal(const char *name);
+
+/** Check a Vorbis comment entry value to see if it conforms to the Vorbis
+ *  comment specification.
+ *
+ *  Vorbis comment values must be valid UTF-8 sequences.
+ *
+ * \param value      A string to be checked.
+ * \param length     A the length of \a value in bytes.  May be
+ *                   \c (unsigned)(-1) to indicate that \a value is a plain
+ *                   UTF-8 NUL-terminated string.
+ * \assert
+ *    \code value != NULL \endcode
+ * \retval FLAC__bool
+ *    \c false if entry name is illegal, else \c true.
+ */
+FLAC_API FLAC__bool FLAC__format_vorbiscomment_entry_value_is_legal(const FLAC__byte *value, unsigned length);
+
+/** Check a Vorbis comment entry to see if it conforms to the Vorbis
+ *  comment specification.
+ *
+ *  Vorbis comment entries must be of the form 'name=value', and 'name' and
+ *  'value' must be legal according to
+ *  FLAC__format_vorbiscomment_entry_name_is_legal() and
+ *  FLAC__format_vorbiscomment_entry_value_is_legal() respectively.
+ *
+ * \param value      A string to be checked.
+ * \assert
+ *    \code value != NULL \endcode
+ * \retval FLAC__bool
+ *    \c false if entry name is illegal, else \c true.
+ */
+FLAC_API FLAC__bool FLAC__format_vorbiscomment_entry_is_legal(const FLAC__byte *entry, unsigned length);
 
 /* @@@@ add to unit tests; it is already indirectly tested by the metadata_object tests */
 /** Check a seek table to see if it conforms to the FLAC specification.

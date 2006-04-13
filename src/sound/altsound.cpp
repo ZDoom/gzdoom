@@ -33,6 +33,8 @@
 **
 */
 
+#ifdef _WIN32
+
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
@@ -1368,3 +1370,5 @@ void AltSoundRenderer::GatherStats (char *outstring)
 	}
 	sprintf (outstring, "%2d/%2d channels, %d/%d streams, %.2f%%", countc, NumChannels, counts, totals, perf*100.0/NUM_PERFMETERS);
 }
+
+#endif

@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "c_cvars.h"
@@ -261,3 +263,5 @@ void SPCSong::CloseEmu ()
 		HandleAPU = NULL;
 	}
 }
+
+#endif

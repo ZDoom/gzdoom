@@ -1,8 +1,9 @@
 # created on 4/12/2006 by James Bentler
 CXX ?= g++
-CPPFLAGS ?= -Wall -Wno-unused -O2 -fomit-frame-pointer
-CXXFLAGS += -DHAVE_FILELENGTH -D__forceinline=inline -Izlib -IFLAC `sdl-config --cflags`
-CXXFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp
+CC ?= gcc
+CFLAGS ?= -Wall -Wno-unused -O2 -fomit-frame-pointer
+CFLAGS += -DHAVE_FILELENGTH -D__forceinline=inline -Izlib -IFLAC `sdl-config --cflags`
+CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp
 LDFLAGS += -lFLAC++ -lFLAC -lz -lfmod `sdl-config --libs`
 
 NASM ?= nasm
@@ -10,15 +11,22 @@ NASMFLAGS += -f elf -DM_TARGET_LINUX
 
 SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/)
 INCLUDES = $(addprefix -I,$(SRCDIRS))
-CXXFLAGS += $(INCLUDES)
+CFLAGS += $(INCLUDES)
 
 RELEASEOBJ ?= releaseobj
 DEBUGOBJ ?= debugobj
 
-CSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS)))
+CPPSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS)))
+CSRCS = $(wildcard $(addsuffix *.c,$(SRCDIRS)))
+ifndef NOASM
 ASRCS = $(wildcard src/*.nas)
-SRCS = $(ASRCS) $(CSRCS)
-COBJFILES = $(notdir $(patsubst %.cpp,%.o,$(CSRCS)))
+CFLAGS += -DUSEASM=1
+else
+CFLAGS += -DNOASM
+endif
+SRCS = $(CSRCS) $(CPPSRCS) $(ASRCS)
+CPPOBJFILES = $(notdir $(patsubst %.cpp,%.o,$(CPPSRCS)))
+COBJFILES = $(notdir $(patsubst %.c,%.o,$(CSRCS)))
 AOBJFILES = $(notdir $(patsubst %.nas,%.o,$(ASRCS)))
 
 ZDOOM = zdoom
@@ -26,47 +34,57 @@ ZDOOMDEBUG = zdoomd
 
 ifndef DEBUG
   OBJDIR = $(RELEASEOBJ)
-  CXXFLAGS += -DNDEBUG
+  CFLAGS += -DNDEBUG
+  LDFLAGS += -Wl,-Map=zdoomgcc.map
   ZDOOMBIN = $(ZDOOM)
 else
   OBJDIR = $(DEBUGOBJ)
-  CXXFLAGS += -g
+  CFLAGS += -D_DEBUG -g3
   ZDOOMBIN = $(ZDOOMDEBUG)
 endif
+CXXFLAGS += $(CFLAGS)
 
-COBJS = $(addprefix $(OBJDIR)/,$(COBJFILES))
-DEPS = $(patsubst %.o,%.d,$(COBJS))
-OBJS = $(addprefix $(OBJDIR)/,$(AOBJFILES)) $(COBJS)
+OBJS = $(addprefix $(OBJDIR)/,$(CPPOBJFILES) $(COBJFILES))
+DEPS = $(patsubst %.o,%.d,$(OBJS))
+OBJS += $(addprefix $(OBJDIR)/,$(AOBJFILES))
 
 # rule pattern for dependencies
 define DEPBUILD_PATTERN
 _dep_: _src_
-	echo "_dep_: _src_"
 	$(CXX) _src_ -MM $(CXXFLAGS) -MT "$$(patsubst %.d,%.o,_dep_) _dep_" -MF _dep_
 -include _dep_
-
 endef
 
 # rule pattern for assembly files
 define ASMBUILD_PATTERN
 _obj_: _src_
-	echo "_obj_: _src_"
 	$(NASM) -o _obj_ $(NASMFLAGS) _src_
+endef
 
+define CBUILD_PATTERN
+_obj_: _src_
+	$(CC) -c $(CFLAGS) -o _obj_ -c _src_
 endef
 
 all: $(ZDOOMBIN) zdoom.wad
 
-$(ZDOOMBIN): $(DEPS) $(OBJDIR) $(OBJS)
-	$(CXX) $(LDFLAGS) $(OBJS) -o $(ZDOOMBIN)
+$(ZDOOMBIN): $(OBJDIR) $(DEPS) $(OBJS)
+	$(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
+	$(filter-out %/autostart.o %/autozend.o,$(OBJS)) $(OBJDIR)/autozend.o -o $(ZDOOMBIN)
+
+# textually substitute in the _dep_ and the _src_ it depends on to create rules
+# for creating dependency files without any existing dependency files
+$(foreach src,$(CPPSRCS) $(CSRCS), $(eval $(subst _src_,$(src),$(subst \
+_dep_,$(OBJDIR)/$(patsubst %.c,%.d,$(patsubst %.cpp,%.d,$(notdir $$$(src)))),\
+$(DEPBUILD_PATTERN)))))
 
 # textually substitute in the _obj_ and the _src_ it depends on to create rules
 $(foreach src,$(ASRCS), $(eval $(subst _src_,$(src),$(subst \
 _obj_,$(OBJDIR)/$(patsubst %.nas,%.o,$(notdir $$$(src))),$(ASMBUILD_PATTERN)))))
 
-# textually substitute in the _dep_ and the _src_ it depends on to create rules
+# textually substitute in the _obj_ and the _src_ it depends on to create rules
 $(foreach src,$(CSRCS), $(eval $(subst _src_,$(src),$(subst \
-_dep_,$(OBJDIR)/$(patsubst %.cpp,%.d,$(notdir $$$(src))),$(DEPBUILD_PATTERN)))))
+_obj_,$(OBJDIR)/$(patsubst %.c,%.o,$(notdir $$$(src))),$(CBUILD_PATTERN)))))
 
 $(OBJDIR)/%.o:
 	$(CXX) -c $(CXXFLAGS) -o $@ -c $<

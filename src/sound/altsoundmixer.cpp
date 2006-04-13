@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 #include "altsound.h"
 #include "c_cvars.h"
 
@@ -149,3 +151,5 @@ SQWORD AltSoundRenderer::MixStereo16 (SDWORD *dest, const SWORD *src, DWORD coun
 {
 	STEREO_MIXER
 }
+
+#endif

@@ -183,5 +183,7 @@ int AMacil2::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, i
 {
 	if (inflictor->IsKindOf (RUNTIME_CLASS(ASpectralLightningV1)))
 		return -1;
-	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);
+
+	// This must skip the method of AMacil1 but it should call AActor's version.
+	return AActor::TakeSpecialDamage(inflictor, source, damage, damagetype);
 }

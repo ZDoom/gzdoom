@@ -1,3 +1,4 @@
+#define FLAC__NO_DLL
 #include <fmod.h>
 #include <FLAC++/decoder.h>
 #include "s_sound.h"

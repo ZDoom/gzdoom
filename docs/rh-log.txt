@@ -1,3 +1,8 @@
+April 13, 2006
+- Fix farchive.cpp swappers for GCC again. Now that they use entirely integer
+  math, they should work with all GCC versions.
+- Update FLAC readers to #define FLAC__NO_DLL to match the new FLAC builds.
+
 April 13, 2006 (Changes by Graf Zahl)
 - Fixed: The decal stretcher is supposed to stretch the decal to a specifiable
   size but it used that size as a scaling factor instead. The old code allowed

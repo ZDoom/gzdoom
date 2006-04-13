@@ -2,6 +2,8 @@
 #include "templates.h"
 
 #include <string.h>
+
+#define FLAC__NO_DLL
 #include <FLAC++/decoder.h>
 
 class FLACSong::FLACStreamer : protected FLAC::Decoder::Stream

@@ -83,13 +83,18 @@
 static inline WORD SWAP_WORD(x) { return x; }
 static inline DWORD SWAP_DWORD(x) { return x; }
 static inline QWORD SWAP_QWORD(x) { return x; }
-static inline float SWAP_FLOAT(x) { return x; }
-static inline double SWAP_DOUBLE(x) { return x; }
+static inline void SWAP_FLOAT(x) { }
+static inline void SWAP_DOUBLE(double &dst, double src) { dst = src; }
 #else
 #ifdef _MSC_VER
 static inline WORD  SWAP_WORD(WORD x)		{ return _byteswap_ushort(x); }
 static inline DWORD SWAP_DWORD(DWORD x)		{ return _byteswap_ulong(x); }
 static inline QWORD SWAP_QWORD(QWORD x)		{ return _byteswap_uint64(x); }
+static inline void SWAP_DOUBLE(double &dst, double &src)
+{
+	union twiddle { QWORD q; double d; } *tdst = (twiddle *)&dst, *tsrc = (twiddle *)&src;
+	tdst->q = _byteswap_uint64(tsrc->q);
+}
 #else
 static inline WORD  SWAP_WORD(WORD x)		{ return (((x)<<8) | ((x)>>8)); }
 static inline DWORD SWAP_DWORD(DWORD x)		{ return x = (((x)>>24) | (((x)>>8)&0xff00) | ((x)<<8)&0xff0000 | ((x)<<24)); }
@@ -101,9 +106,20 @@ static inline QWORD SWAP_QWORD(QWORD x)
 	u.d[1] = SWAP_DWORD(t.d[0]);
 	return u.q;
 }
+static inline void SWAP_DOUBLE(double &dst, double &src)
+{
+	union twiddle { double f; DWORD d[2]; } *tdst = (twiddle *)&dst, *tsrc = (twiddle *)&src;
+	DWORD t;
+	t = tsrc->d[0];
+	tdst->d[0] = SWAP_DWORD(tsrc->d[1]);
+	tdst->d[1] = SWAP_DWORD(t);
+}
 #endif
-static inline float SWAP_FLOAT(float x)		{ DWORD t = *(DWORD *)&x; t = SWAP_DWORD(t); return *(float *)&t; }
-static inline double SWAP_DOUBLE(double x)	{ QWORD t = *(QWORD *)&x; t = SWAP_QWORD(t); return *(double *)&t; }
+static inline void SWAP_FLOAT(float &x)
+{
+	union twiddle { DWORD i; float f; } *t = (twiddle *)&x;
+	t->i = SWAP_DWORD(t->i);
+}
 #endif
 
 // Output buffer size for compression; need some extra space.
@@ -872,13 +888,14 @@ FArchive &FArchive::operator<< (float &w)
 {
 	if (m_Storing)
 	{
-		float temp = SWAP_FLOAT(w);
+		float temp = w;
+		SWAP_FLOAT(temp);
 		Write (&temp, sizeof(float));
 	}
 	else
 	{
 		Read (&w, sizeof(float));
-		w = SWAP_FLOAT(w);
+		SWAP_FLOAT(w);
 	}
 	return *this;
 }
@@ -887,13 +904,14 @@ FArchive &FArchive::operator<< (double &w)
 {
 	if (m_Storing)
 	{
-		double temp = SWAP_DOUBLE(w);
+		double temp;
+		SWAP_DOUBLE(temp,w);
 		Write (&temp, sizeof(double));
 	}
 	else
 	{
 		Read (&w, sizeof(double));
-		w = SWAP_DOUBLE(w);
+		SWAP_DOUBLE(w,w);
 	}
 	return *this;
 }

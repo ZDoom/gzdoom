@@ -1273,6 +1273,32 @@ const char *FWadCollection::GetWadFullName (int wadnum) const
 
 //==========================================================================
 //
+// IsUncompressedFile
+//
+// Returns true when the lump is available as an uncompressed portion of
+// a file. The music player can play such lumps by streaming but anything
+// else has to be loaded into memory first.
+//
+//==========================================================================
+
+bool FWadCollection::IsUncompressedFile(int lump) const
+{
+	/*
+	if ((unsigned)lump >= (unsigned)NumLumps)
+	{
+		I_Error ("IsUncompressedFile: %u >= NumLumps",lump);
+	}
+
+	LumpRecord * l = &LumpInfo[lump];
+
+	if (l->flags & LUMPF_COMPRESSED) return false;
+	else if (Wads[l->wadnum]->MemoryData!=NULL) return false;
+	*/
+	return true;
+}
+
+//==========================================================================
+//
 // W_SkinHack
 //
 // Tests a wad file to see if it contains an S_SKIN marker. If it does,

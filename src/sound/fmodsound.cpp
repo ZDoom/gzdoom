@@ -611,11 +611,19 @@ SoundStream *FMODSoundRenderer::CreateStream (SoundStreamCallback callback, int 
 	return NULL;
 }
 
-SoundStream *FMODSoundRenderer::OpenStream (const char *filename, int flags, int offset, int length)
+SoundStream *FMODSoundRenderer::OpenStream (const char *filename_or_data, int flags, int offset, int length)
 {
 	unsigned int mode = FSOUND_NORMAL | FSOUND_2D;
 	if (flags & SoundStream::Loop) mode |= FSOUND_LOOP_NORMAL;
-	FSOUND_STREAM *stream = FSOUND_Stream_Open (filename, mode, offset, length);
+	FSOUND_STREAM *stream;
+	
+	if (offset==-1)
+	{
+		mode |= FSOUND_LOADMEMORY;
+		offset=0;
+	}
+	stream = FSOUND_Stream_Open (filename_or_data, mode, offset, length);
+
 	if (stream != NULL)
 	{
 		return new FMODStreamCapsule (stream);
@@ -623,9 +631,19 @@ SoundStream *FMODSoundRenderer::OpenStream (const char *filename, int flags, int
 	return NULL;
 }
 
-SoundTrackerModule *FMODSoundRenderer::OpenModule (const char *filename, int offset, int length)
+SoundTrackerModule *FMODSoundRenderer::OpenModule (const char *filename_or_data, int offset, int length)
 {
-	FMUSIC_MODULE *mod = FMUSIC_LoadSongEx (filename, offset, length, FSOUND_LOOP_NORMAL, NULL, 0);
+	FMUSIC_MODULE *mod;
+
+	int mode = FSOUND_LOOP_NORMAL;
+	if (offset==-1)
+	{
+		mode |= FSOUND_LOADMEMORY;
+		offset=0;
+	}
+
+	mod = FMUSIC_LoadSongEx (filename_or_data, offset, length, mode, NULL, 0);
+
 	if (mod != NULL)
 	{
 		return new FMUSICCapsule (mod);

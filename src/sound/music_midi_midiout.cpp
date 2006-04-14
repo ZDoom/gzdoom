@@ -33,7 +33,7 @@ extern UINT mididevice;
 static BYTE EventLengths[7] = { 2, 2, 2, 2, 1, 1, 2 };
 static BYTE CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
 
-MIDISong2::MIDISong2 (FILE *file, int len)
+MIDISong2::MIDISong2 (FILE *file, char * musiccache, int len)
 : MidiOut (0), PlayerThread (0),
   PauseEvent (0), ExitEvent (0), VolumeChangeEvent (0),
   MusHeader (0)
@@ -42,8 +42,15 @@ MIDISong2::MIDISong2 (FILE *file, int len)
 	int i;
 
 	MusHeader = new BYTE[len];
-	if (fread (MusHeader, 1, len, file) != (size_t)len)
-		return;
+	if (file != NULL)
+	{
+		if (fread (MusHeader, 1, len, file) != (size_t)len)
+			return;
+	}
+	else
+	{
+		memcpy(MusHeader, musiccache, len);
+	}
 
 	// Do some validation of the MIDI file
 	if (MusHeader[4] != 0 || MusHeader[5] != 0 || MusHeader[6] != 0 || MusHeader[7] != 6)

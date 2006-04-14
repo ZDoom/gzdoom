@@ -84,6 +84,7 @@ static bool MusicDown = true;
 MusInfo *currSong;
 int		nomusic = 0;
 float	relative_volume = 1.f;
+float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
 
 //==========================================================================
 //
@@ -159,7 +160,7 @@ void I_PlaySong (void *handle, int _looping, float rel_vol)
 	if (!info || nomusic)
 		return;
 
-	relative_volume = rel_vol;
+	saved_relative_volume = relative_volume = rel_vol;
 	info->Stop ();
 	info->Play (_looping ? true : false);
 	
@@ -207,7 +208,7 @@ void I_UnRegisterSong (void *handle)
 	}
 }
 
-void *I_RegisterSong (const char *filename, int offset, int len)
+void *I_RegisterSong (const char *filename, char * musiccache, int offset, int len)
 {
 	FILE *file;
 	MusInfo *info = NULL;
@@ -218,63 +219,72 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 		return 0;
 	}
 
-	file = fopen (filename, "rb");
-	if (file == NULL)
+	if (offset!=-1)
 	{
-		return 0;
-	}
+		file = fopen (filename, "rb");
+		if (file == NULL)
+		{
+			return 0;
+		}
 
-	if (len == 0 && offset == 0)
-	{
-		fseek (file, 0, SEEK_END);
-		len = ftell (file);
-		fseek (file, 0, SEEK_SET);
-	}
-	else
-	{
-		fseek (file, offset, SEEK_SET);
-	}
+		if (len == 0 && offset == 0)
+		{
+			fseek (file, 0, SEEK_END);
+			len = ftell (file);
+			fseek (file, 0, SEEK_SET);
+		}
+		else
+		{
+			fseek (file, offset, SEEK_SET);
+		}
 
-	if (fread (&id, 4, 1, file) != 1)
-	{
-		fclose (file);
-		return 0;
+		if (fread (&id, 4, 1, file) != 1)
+		{
+			fclose (file);
+			return 0;
+		}
+		fseek (file, -4, SEEK_CUR);
 	}
-	fseek (file, -4, SEEK_CUR);
+	else 
+	{
+		file = NULL;
+		memcpy(&id, &musiccache[0], 4);
+	}
 
 	// Check for MUS format
 	if (id == MAKE_ID('M','U','S',0x1a))
 	{
 		if (GSnd != NULL && opl_enable)
 		{
-			info = new OPLMUSSong (file, len);
+			info = new OPLMUSSong (file, musiccache, len);
 		}
 		if (info == NULL)
 		{
 #ifdef _WIN32
 			if (snd_mididevice != -2)
 			{
-				info = new MUSSong2 (file, len);
+				info = new MUSSong2 (file, musiccache, len);
 			}
 			else if (GSnd != NULL)
 #endif // _WIN32
 			{
-				info = new TimiditySong (file, len);
+				info = new TimiditySong (file, musiccache, len);
 			}
 		}
 	}
 	// Check for MIDI format
 	else if (id == MAKE_ID('M','T','h','d'))
 	{
+		// This is a midi file
 #ifdef _WIN32
 		if (snd_mididevice != -2)
 		{
-			info = new MIDISong2 (file, len);
+			info = new MIDISong2 (file, musiccache, len);
 		}
 		else if (GSnd != NULL)
 #endif // _WIN32
 		{
-			info = new TimiditySong (file, len);
+			info = new TimiditySong (file, musiccache, len);
 		}
 	}
 	// Check for SPC format
@@ -283,22 +293,32 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 	{
 		char header[0x23];
 
-		if (fread (header, 1, 0x23, file) != 0x23)
+		if (file != NULL)
 		{
-			fclose (file);
-			return 0;
+			if (fread (header, 1, 0x23, file) != 0x23)
+			{
+				fclose (file);
+				return 0;
+			}
+			fseek (file, -0x23, SEEK_CUR);
 		}
-		fseek (file, -0x23, SEEK_CUR);
-		if (strncmp (header+4, "-SPC700 Sound File Data", 23) == 0)
+		else
 		{
-			info = new SPCSong (file, len);
+			memcpy(header, musiccache, 0x23);
+		}
+
+		if (strncmp (header+4, "-SPC700 Sound File Data", 23) == 0 &&
+			header[0x21] == '\x1a' &&
+			header[0x22] == '\x1a')
+		{
+			info = new SPCSong (file, musiccache, len);
 		}
 	}
 #endif
 	// Check for FLAC format
 	else if (id == MAKE_ID('f','L','a','C'))
 	{
-		info = new FLACSong (file, len);
+		info = new FLACSong (file, musiccache, len);
 		file = NULL;
 	}
 	// Check for RDosPlay raw OPL format
@@ -306,15 +326,23 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 	{
 		DWORD fullsig[2];
 
-		if (fread (fullsig, 4, 2, file) != 2)
+		if (file != NULL)
 		{
-			fclose (file);
-			return 0;
+			if (fread (fullsig, 4, 2, file) != 2)
+			{
+				fclose (file);
+				return 0;
+			}
+			fseek (file, -8, SEEK_CUR);
 		}
-		fseek (file, -8, SEEK_CUR);
+		else
+		{
+			memcpy(fullsig, musiccache, 8);
+		}
+
 		if (fullsig[1] == MAKE_ID('D','A','T','A'))
 		{
-			info = new OPLMUSSong (file, len);
+			info = new OPLMUSSong (file, musiccache, len);
 		}
 	}
 	// Check for Martin Fernandez's modified IMF format
@@ -322,15 +350,22 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 	{
 		char fullhead[6];
 
-		if (fread (fullhead, 1, 6, file) != 6)
+		if (file != NULL)
 		{
-			fclose (file);
-			return 0;
+			if (fread (fullhead, 1, 6, file) != 6)
+			{
+				fclose (file);
+				return 0;
+			}
+			fseek (file, -6, SEEK_CUR);
 		}
-		fseek (file, -6, SEEK_CUR);
+		else
+		{
+			memcpy(fullhead, musiccache, 6);
+		}
 		if (fullhead[4] == 'B' && fullhead[5] == 1)
 		{
-			info = new OPLMUSSong (file, len);
+			info = new OPLMUSSong (file, musiccache, len);
 		}
 	}
 
@@ -339,20 +374,23 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 		// Check for CDDA "format"
 		if (id == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
 		{
-			DWORD subid;
-
-			fseek (file, 8, SEEK_CUR);
-			if (fread (&subid, 4, 1, file) != 1)
+			if (file != NULL)
 			{
-				fclose (file);
-				return 0;
-			}
-			fseek (file, -12, SEEK_CUR);
+				DWORD subid;
 
-			if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
-			{
-				// This is a CDDA file
-				info = new CDDAFile (file, len);
+				fseek (file, 8, SEEK_CUR);
+				if (fread (&subid, 4, 1, file) != 1)
+				{
+					fclose (file);
+					return 0;
+				}
+				fseek (file, -12, SEEK_CUR);
+
+				if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
+				{
+					// This is a CDDA file
+					info = new CDDAFile (file, len);
+				}
 			}
 		}
 		
@@ -363,13 +401,13 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 		if (info == NULL && GSnd != NULL && len >= 1024)
 		{
 			// First try loading it as MOD, then as a stream
-			fclose (file);
+			if (file != NULL) fclose (file);
 			file = NULL;
-			info = new MODSong (filename, offset, len);
+			info = new MODSong (offset>=0? filename : musiccache, offset, len);
 			if (!info->IsValid ())
 			{
 				delete info;
-				info = new StreamSong (filename, offset, len);
+				info = new StreamSong (offset>=0? filename : musiccache, offset, len);
 			}
 		}
 	}
@@ -414,6 +452,17 @@ bool I_SetSongPosition (void *handle, int order)
 {
 	MusInfo *info = (MusInfo *)handle;
 	return info ? info->SetPosition (order) : false;
+}
+
+// Sets relative music volume. Takes $musicvolume in SNDINFO into consideration
+void I_SetMusicVolume (float factor)
+{
+	factor = clamp<float>(factor, 0, 2.0f);
+	relative_volume = saved_relative_volume * factor;
+#ifdef _WIN32
+	snd_midivolume.Callback();
+#endif
+	snd_musicvolume.Callback();
 }
 
 CCMD(testmusicvol)

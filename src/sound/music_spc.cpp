@@ -46,14 +46,18 @@ CUSTOM_CVAR (Int, spc_frequency, 32000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-SPCSong::SPCSong (FILE *iofile, int len)
+SPCSong::SPCSong (FILE *iofile, char * musiccache, int len)
 {
-	FileReader file (iofile, len);
 
 	if (!LoadEmu ())
 	{
 		return;
 	}
+
+	FileReader * file;
+
+	if (iofile != NULL) file = new FileReader(iofile, len);
+	else file = new MemoryReader(musiccache, len);
 
 	// No sense in using a higher frequency than the final output
 	int freq = MIN (*spc_frequency, *snd_samplerate);
@@ -69,6 +73,7 @@ SPCSong::SPCSong (FILE *iofile, int len)
 	{
 		Printf (PRINT_BOLD, "Could not create music stream.\n");
 		CloseEmu ();
+		delete file;
 		return;
 	}
 
@@ -78,7 +83,7 @@ SPCSong::SPCSong (FILE *iofile, int len)
 
 	BYTE spcfile[66048];
 
-	file.Read (spcfile, 66048);
+	file->Read (spcfile, 66048);
 
 	if (LoadSPCFile != NULL)
 	{
@@ -104,19 +109,19 @@ SPCSong::SPCSong (FILE *iofile, int len)
 	{
 		DWORD id;
 
-		file.Read (&id, 4);
+		file->Read (&id, 4);
 		if (id == MAKE_ID('x','i','d','6'))
 		{
 			DWORD size;
 
-			file >> size;
+			(*file) >> size;
 			DWORD pos = 66056;
 
 			while (pos < size)
 			{
 				XID6Tag tag;
 				
-				file.Read (&tag, 4);
+				file->Read (&tag, 4);
 				if (tag.Type == 0)
 				{
 					// Don't care about these
@@ -128,7 +133,7 @@ SPCSong::SPCSong (FILE *iofile, int len)
 						if (tag.Type == 4 && tag.ID == 0x36)
 						{
 							DWORD amp;
-							file >> amp;
+							(*file) >> amp;
 							if (APUVersion < 98)
 							{
 								amp >>= 12;
@@ -137,11 +142,12 @@ SPCSong::SPCSong (FILE *iofile, int len)
 							break;
 						}
 					}
-					file.Seek (LittleShort(tag.Value), SEEK_CUR);
+					file->Seek (LittleShort(tag.Value), SEEK_CUR);
 				}
 			}
 		}
 	}
+	delete file;
 }
 
 SPCSong::~SPCSong ()

@@ -54,9 +54,9 @@ StreamSong::~StreamSong ()
 	}
 }
 
-StreamSong::StreamSong (const char *filename, int offset, int len)
+StreamSong::StreamSong (const char *filename_or_data, int offset, int len)
 {
-	m_Stream = GSnd->OpenStream (filename, SoundStream::Loop, offset, len);
+	m_Stream = GSnd->OpenStream (filename_or_data, SoundStream::Loop, offset, len);
 }
 
 bool StreamSong::IsPlaying ()

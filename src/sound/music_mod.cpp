@@ -57,9 +57,9 @@ MODSong::~MODSong ()
 	}
 }
 
-MODSong::MODSong (const char *file, int offset, int length)
+MODSong::MODSong (const char *file_or_data, int offset, int length)
 {
-	m_Module = GSnd->OpenModule (file, offset, length);
+	m_Module = GSnd->OpenModule (file_or_data, offset, length);
 }
 
 bool MODSong::IsPlaying ()

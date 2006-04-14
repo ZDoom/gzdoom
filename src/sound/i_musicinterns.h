@@ -57,7 +57,7 @@ public:
 class MUSSong2 : public MusInfo
 {
 public:
-	MUSSong2 (FILE *file, int length);
+	MUSSong2 (FILE *file, char * musiccache, int length);
 	~MUSSong2 ();
 
 	void SetVolume (float volume);
@@ -102,7 +102,7 @@ protected:
 class MIDISong2 : public MusInfo
 {
 public:
-	MIDISong2 (FILE *file, int length);
+	MIDISong2 (FILE *file, char * musiccache, int length);
 	~MIDISong2 ();
 
 	void SetVolume (float volume);
@@ -204,7 +204,7 @@ typedef void *(__stdcall *EmuAPU_TYPE) (void *, DWORD, BYTE);
 class SPCSong : public StreamSong
 {
 public:
-	SPCSong (FILE *file, int length);
+	SPCSong (FILE *file, char * musiccache, int length);
 	~SPCSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
@@ -241,7 +241,7 @@ protected:
 class TimiditySong : public StreamSong
 {
 public:
-	TimiditySong (FILE *file, int length);
+	TimiditySong (FILE *file, char * musiccache, int length);
 	~TimiditySong ();
 	void Play (bool looping);
 	void Stop ();
@@ -278,7 +278,7 @@ protected:
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (FILE *file, int length);
+	OPLMUSSong (FILE *file, char * musiccache, int length);
 	~OPLMUSSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
@@ -296,7 +296,7 @@ protected:
 class FLACSong : public StreamSong
 {
 public:
-	FLACSong (FILE *file, int length);
+	FLACSong (FILE *file, char * musiccache, int length);
 	~FLACSong ();
 	void Play (bool looping);
 	bool IsPlaying ();

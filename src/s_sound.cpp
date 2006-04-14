@@ -265,8 +265,8 @@ void S_NoiseDebug (void)
 	BorderNeedRefresh = screen->GetPageCount ();
 }
 
-static string LastLocalSndInfo = "";
-static string LastLocalSndSeq = "";
+static string LastLocalSndInfo;
+static string LastLocalSndSeq;
 void S_AddLocalSndInfo(int lump);
 
 //==========================================================================
@@ -1414,6 +1414,8 @@ bool S_StartMusic (const char *m_id)
 // specified, it will only be played if the specified CD is in a drive.
 //==========================================================================
 
+TArray<char> musiccache;
+
 bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 {
 	if (!force && PlayList)
@@ -1467,8 +1469,24 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				Printf ("Music \"%s\" not found\n", musicname);
 				return false;
 			}
-			offset = Wads.GetLumpOffset (lumpnum);
-			length = Wads.LumpLength (lumpnum);
+			if (!Wads.IsUncompressedFile(lumpnum))
+			{
+				// We must cache the music data and use it from memory.
+
+				// shut down old music before reallocating and overwriting the cache!
+				S_StopMusic (true);
+
+				offset = -1;							// this tells the low level code that the music 
+														// is being used from memory
+				length = Wads.LumpLength (lumpnum);
+				musiccache.Resize(length);
+				Wads.ReadLump(lumpnum, &musiccache[0]);
+			}
+			else
+			{
+				offset = Wads.GetLumpOffset (lumpnum);
+				length = Wads.LumpLength (lumpnum);
+			}
 		}
 		else
 		{
@@ -1480,13 +1498,27 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		S_StopMusic (true);
 
 		// load & register it
+
+		// Note by Graf Zahl: S_StopMusic NULLs this variable so there's nothing to delete anymore!
+		/*
 		if (mus_playing.name)
 		{
 			delete[] mus_playing.name;
 		}
-		mus_playing.handle = I_RegisterSong (lumpnum != -1 ?
-			Wads.GetWadFullName (Wads.GetLumpFile (lumpnum)) :
-			musicname, offset, length);
+		*/
+
+		if (offset!=-1)
+		{
+			mus_playing.handle = I_RegisterSong (lumpnum != -1 ?
+				Wads.GetWadFullName (Wads.GetLumpFile (lumpnum)) :
+				musicname, NULL, offset, length);
+		}
+		else
+		{
+			// musiccache is used globally because otherwise I'd have to pass
+			// it as a parameter through several layers of code.
+			mus_playing.handle = I_RegisterSong (NULL, &musiccache[0], -1, length);
+		}
 	}
 
 	mus_playing.loop = looping;

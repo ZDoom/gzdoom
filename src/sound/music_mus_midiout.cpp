@@ -28,14 +28,22 @@ static const BYTE CtrlTranslate[15] =
 	121, // reset all controllers
 };
 
-MUSSong2::MUSSong2 (FILE *file, int len)
+MUSSong2::MUSSong2 (FILE *file, char * musiccache, int len)
 : MidiOut (0), PlayerThread (0),
   PauseEvent (0), ExitEvent (0), VolumeChangeEvent (0),
   MusBuffer (0), MusHeader (0)
 {
 	MusHeader = (MUSHeader *)new BYTE[len];
-	if (fread (MusHeader, 1, len, file) != (size_t)len)
-		return;
+
+	if (file != NULL)
+	{
+		if (fread (MusHeader, 1, len, file) != (size_t)len)
+			return;
+	}
+	else
+	{
+		memcpy(MusHeader, musiccache, len);
+	}
 
 	// Do some validation of the MUS file
 	if (MusHeader->Magic != MAKE_ID('M','U','S','\x1a'))

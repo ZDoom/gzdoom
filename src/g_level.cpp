@@ -2290,7 +2290,7 @@ void G_AirControlChanged ()
 
 void G_SerializeLevel (FArchive &arc, bool hubLoad)
 {
-	int i;
+	int i = level.totaltime;
 
 	arc << level.flags
 		<< level.fadeto
@@ -2300,7 +2300,11 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		<< level.gravity
 		<< level.aircontrol
 		<< level.maptime
-		<< level.totaltime;
+		<< i;
+
+	// Hub transitions must keep the current total time
+	if (!hubLoad)
+		level.totaltime=i;
 
 	if (arc.IsStoring ())
 	{

@@ -15,6 +15,7 @@
 #include "a_strifeglobal.h"
 #include "a_keys.h"
 #include "p_enemy.h"
+#include "sound/i_music.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
@@ -664,6 +665,12 @@ static void TakeStrifeItem (const TypeInfo *itemtype, int amount)
 	}
 }
 
+CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)
+{
+	if (self < 0.f) self = 0.f;
+	else if (self > 1.f) self = 1.f;
+}
+
 //============================================================================
 //
 // P_StartConversation
@@ -723,6 +730,7 @@ void P_StartConversation (AActor *npc, AActor *pc)
 
 	if (CurNode->SpeakerVoice != 0)
 	{
+		I_SetMusicVolume(dlg_musicvolume);
 		S_SoundID (npc, CHAN_VOICE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 	}
 
@@ -1043,6 +1051,7 @@ static void PickConversationReply ()
 	}
 
 	ConversationNPC->angle = ConversationNPCAngle;
+	I_SetMusicVolume(1.f);
 }
 
 //============================================================================
@@ -1075,5 +1084,6 @@ void CleanupConversationMenu ()
 		DialogueLines = NULL;
 	}
 	ConversationItems.Clear ();
+	I_SetMusicVolume(1.f);
 }
 

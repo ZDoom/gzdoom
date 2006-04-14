@@ -30,10 +30,12 @@
 #define IWAD_ID (('I'<<24)|('W'<<16)|('A'<<8)|('D'))
 #define PWAD_ID (('P'<<24)|('W'<<16)|('A'<<8)|('D'))
 #define RFF_ID (('R'<<24)|('F'<<16)|('F'<<8)|(0x1a))
+#define ZIP_ID (('P'<<24)|('K'<<16)|(3<<8)|(4))
 #else
 #define IWAD_ID (('I')|('W'<<8)|('A'<<16)|('D'<<24))
 #define PWAD_ID (('P')|('W'<<8)|('A'<<16)|('D'<<24))
 #define RFF_ID (('R')|('F'<<8)|('F'<<16)|(0x1a<<24))
+#define ZIP_ID (('P')|('K'<<8)|(3<<16)|(4<<24))
 #endif
 
 // [RH] Remove limit on number of WAD files
@@ -167,6 +169,7 @@ public:
 	int GetLumpNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
 
+	bool IsUncompressedFile(int lump) const;
 	int GetNumLumps () const;
 
 protected:

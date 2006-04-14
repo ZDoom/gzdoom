@@ -11,7 +11,7 @@
 class OPLmusicBlock : public musicBlock
 {
 public:
-	OPLmusicBlock (FILE *file, int len, int rate, int maxSamples);
+	OPLmusicBlock (FILE *file, char * musiccache, int len, int rate, int maxSamples);
 	~OPLmusicBlock ();
 	bool IsValid () const;
 

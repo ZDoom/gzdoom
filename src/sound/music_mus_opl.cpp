@@ -21,12 +21,12 @@ CUSTOM_CVAR (Bool, opl_onechip, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 }
 
 
-OPLMUSSong::OPLMUSSong (FILE *file, int len)
+OPLMUSSong::OPLMUSSong (FILE *file, char * musiccache, int len)
 {
 	int rate = *opl_frequency;
 	int samples = rate/14;
 
-	Music = new OPLmusicBlock (file, len, rate, samples);
+	Music = new OPLmusicBlock (file, musiccache, len, rate, samples);
 
 	m_Stream = GSnd->CreateStream (FillStream, samples*2,
 		SoundStream::Mono, rate, this);

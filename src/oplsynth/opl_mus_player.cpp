@@ -21,7 +21,7 @@ EXTERN_CVAR (Bool, opl_onechip)
 
 static OPLmusicBlock *BlockForStats;
 
-OPLmusicBlock::OPLmusicBlock (FILE *file, int len, int rate, int maxSamples)
+OPLmusicBlock::OPLmusicBlock (FILE *file, char * musiccache, int len, int rate, int maxSamples)
 	: SampleRate (rate), NextTickIn (0), Looping (false), ScoreLen (len)
 {
 	scoredata = NULL;
@@ -40,7 +40,22 @@ OPLmusicBlock::OPLmusicBlock (FILE *file, int len, int rate, int maxSamples)
 #endif
 
 	scoredata = new BYTE[len];
-	if (fread (scoredata, 1, len, file) != (size_t)len || io->OPLinit (TwoChips + 1, rate))
+
+	if (file)
+	{
+		if (fread (scoredata, 1, len, file) != (size_t)len)
+		{
+			delete[] scoredata;
+			scoredata = NULL;
+			return;
+		}
+	}
+	else
+	{
+		memcpy(scoredata, &musiccache[0], len);
+	}
+
+	if (io->OPLinit (TwoChips + 1, rate))
 	{
 		delete[] scoredata;
 		scoredata = NULL;

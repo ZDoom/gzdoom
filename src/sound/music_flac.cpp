@@ -9,7 +9,7 @@
 class FLACSong::FLACStreamer : protected FLAC::Decoder::Stream
 {
 public:
-	FLACStreamer (FILE *file, int length);
+	FLACStreamer (FILE *file, char * musiccache, int length);
 	~FLACStreamer ();
 
 	bool ServiceStream (void *buff, int len, bool loop);
@@ -24,7 +24,7 @@ protected:
 
 	void CopyToStream (void *&sbuff, FLAC__int32 **buffer, size_t ofs, size_t samples);
 
-	FileReader File;
+	FileReader *File;
 	long StartPos, EndPos;
 
 	FLAC__int32 *SamplePool[2];
@@ -36,10 +36,10 @@ protected:
 	size_t SLen;
 };
 
-FLACSong::FLACSong (FILE *file, int length)
+FLACSong::FLACSong (FILE *file, char * musiccache, int length)
 	: State (NULL)
 {
-	State = new FLACStreamer (file, length);
+	State = new FLACStreamer (file, musiccache, length);
 
 	if (State->NumChannels > 0 && State->SampleBits > 0 && State->SampleRate > 0)
 	{
@@ -107,17 +107,25 @@ bool FLACSong::FillStream (SoundStream *stream, void *buff, int len, void *userd
 	return song->State->ServiceStream (buff, len, song->m_Looping);
 }
 
-FLACSong::FLACStreamer::FLACStreamer (FILE *iofile, int length)
+FLACSong::FLACStreamer::FLACStreamer (FILE *iofile, char * musiccache, int length)
 	: NumChannels	(0),
 	  SampleBits	(0),
 	  SampleRate	(0),
-	  File			(iofile, length),
 	  PoolSize		(0),
 	  PoolUsed		(0),
 	  PoolPos		(0)
 {
-	StartPos = File.Tell();
-	EndPos = StartPos + File.GetLength();
+	if (iofile != NULL)
+	{
+		File = new FileReader (iofile, length);
+	}
+	else
+	{
+		File = new MemoryReader(musiccache, length);
+	}
+
+	StartPos = File->Tell();
+	EndPos = StartPos + File->GetLength();
 	init ();
 	process_until_end_of_metadata ();
 }
@@ -129,7 +137,8 @@ FLACSong::FLACStreamer::~FLACStreamer ()
 		delete[] SamplePool[0];
 		SamplePool[0] = NULL;
 	}
-	fclose (File.GetFile());
+	if (File->GetFile()!=NULL) fclose (File->GetFile());
+	delete File;
 }
 
 bool FLACSong::FLACStreamer::ServiceStream (void *buff1, int len, bool loop)
@@ -172,7 +181,7 @@ bool FLACSong::FLACStreamer::ServiceStream (void *buff1, int len, bool loop)
 			{
 				return FALSE;
 			}
-			File.Seek (StartPos, SEEK_SET);
+			File->Seek (StartPos, SEEK_SET);
 			reset ();
 		}
 
@@ -237,7 +246,7 @@ void FLACSong::FLACStreamer::CopyToStream (void *&sbuff, FLAC__int32 **buffer, s
 {
 	if (*bytes > 0)
 	{
-		long here = File.Tell();
+		long here = File->Tell();
 		if (here == EndPos)
 		{
 			return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
@@ -248,7 +257,7 @@ void FLACSong::FLACStreamer::CopyToStream (void *&sbuff, FLAC__int32 **buffer, s
 			{
 				*bytes = EndPos - here;
 			}
-			File.Read (buffer, *bytes);
+			File->Read (buffer, *bytes);
 			return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 		}
 	}

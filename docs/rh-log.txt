@@ -1,3 +1,12 @@
+April 14, 2006 (Changes by Graf Zahl)
+- Added the missing file 'flac/private/float.h' to the repository.
+- Added: In preparation for Zip-support the sound code has to be able to 
+  load music data from memory, not just from files.
+- Re-added I_SetMusicVolume to optionally reduce the music volume in Strife
+  conversations.
+- Fixed: The total game time must not be restored when loading a snapshot
+  during a hub transition.
+  
 April 13, 2006
 - Fix farchive.cpp swappers for GCC again. Now that they use entirely integer
   math, they should work with all GCC versions.

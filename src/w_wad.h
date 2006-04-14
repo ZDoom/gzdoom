@@ -76,6 +76,7 @@ typedef enum {
 	ns_bloodsfx,
 	ns_bloodmisc,
 	ns_strifevoices,
+	ns_hires,
 } namespace_t;
 
 // [RH] Copy an 8-char string and uppercase it.
@@ -90,13 +91,25 @@ class FWadLump : public FileReader
 public:
 	FWadLump ();
 	FWadLump (const FWadLump &copy);
+#ifdef _DEBUG
+	FWadLump & operator= (const FWadLump &copy);
+#endif
+	~FWadLump();
+
+	long Seek (long offset, int origin);
+	long Read (void *buffer, long len);
 
 private:
 	FWadLump (const FileReader &reader, long length);
 	FWadLump (FILE *file, long length);
+	FWadLump (char * data, long length, bool destroy);
+
+	char * sourceData;
+	bool destroySource;
 
 	friend class FWadCollection;
 };
+
 
 // A lump in memory. The destructor automatically deletes the memory
 // the lump was copied to. Note the copy contstructor is really more of
@@ -129,12 +142,13 @@ class FWadCollection
 {
 public:
 	FWadCollection ();
+	~FWadCollection ();
 
 	// The wadnum for the IWAD
 	enum { IWAD_FILENUM = 1 };
 
 	void InitMultipleFiles (wadlist_t **filenames);
-	void AddFile (const char *filename);
+	void AddFile (const char *filename, const char * data=NULL,int length=-1);
 	bool CheckIfWadLoaded (const char *name);
 
 	const char *GetWadName (int wadnum) const;
@@ -148,6 +162,11 @@ public:
 	inline int CheckNumForName (const char *name) { return CheckNumForName (name, ns_global); }
 	inline int CheckNumForName (const byte *name, int ns) { return CheckNumForName ((const char *)name, ns); }
 	inline int GetNumForName (const byte *name) { return GetNumForName ((const char *)name); }
+
+	int CheckNumForFullName (const char *name);
+	int CheckNumForFullName (const char *name, int wadfile);
+	int GetNumForFullName (const char *name);
+
 
 	void ReadLump (int lump, void *dest);
 	FMemLump ReadLump (int lump);
@@ -170,6 +189,8 @@ public:
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
 
 	bool IsUncompressedFile(int lump) const;
+
+
 	int GetNumLumps () const;
 
 protected:
@@ -178,6 +199,10 @@ protected:
 
 	WORD *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
 	WORD *NextLumpIndex;
+
+	WORD *FirstLumpIndex_FullName;	// The same information for fully qualified paths from .zips
+	WORD *NextLumpIndex_FullName;
+
 
 	LumpRecord *LumpInfo;
 	WadFileRecord **Wads;
@@ -193,6 +218,7 @@ protected:
 	void FindStrifeTeaserVoices ();
 
 private:
+	static int STACK_ARGS lumpcmp(const void * a, const void * b);
 	void ScanForFlatHack (int startlump);
 	void RenameSprites (int startlump);
 };

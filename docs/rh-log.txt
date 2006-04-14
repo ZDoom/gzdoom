@@ -1,4 +1,9 @@
 April 14, 2006 (Changes by Graf Zahl)
+- Added GZDoom's HI_START/HI_END lump namespace. Even though it doesn't do
+  anything (yet) suppporting it allows to make WADs that use hires texture
+  replacements but are able to run with ZDoom as well.
+- Added GZDoom's Zip-support but changed it so that lumps are sorted
+  alphabetically.
 - Added the missing file 'flac/private/float.h' to the repository.
 - Added: In preparation for Zip-support the sound code has to be able to 
   load music data from memory, not just from files.

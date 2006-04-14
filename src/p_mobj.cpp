@@ -2631,32 +2631,35 @@ void AActor::Tick ()
 	if ((flags & MF_SOLID) && !(flags & (MF_NOCLIP|MF_NOGRAVITY)) &&
 		!(flags & MF_NOBLOCKMAP) &&
 		momz <= 0 &&
-		floorz == z &&
-		floorsector->floorplane.c < STEEPSLOPE &&
-		floorsector->floorplane.ZatPoint (x, y) <= floorz)
+		floorz == z)
 	{
-		const msecnode_t *node;
-		bool dopush = true;
-
-		if (floorsector->floorplane.c > STEEPSLOPE*2/3)
+		const secplane_t * floorplane = &floorsector->floorplane;
+		if (floorplane->c < STEEPSLOPE &&
+			floorplane->ZatPoint (x, y) <= floorz)
 		{
-			for (node = touching_sectorlist; node; node = node->m_tnext)
+			const msecnode_t *node;
+			bool dopush = true;
+
+			if (floorplane->c > STEEPSLOPE*2/3)
 			{
-				const sector_t *sec = node->m_sector;
-				if (sec->floorplane.c >= STEEPSLOPE)
+				for (node = touching_sectorlist; node; node = node->m_tnext)
 				{
-					if (sec->floorplane.ZatPoint (x, y) >= z - MaxStepHeight)
+					const sector_t *sec = node->m_sector;
+					if (sec->floorplane.c >= STEEPSLOPE)
 					{
-						dopush = false;
-						break;
+						if (floorplane->ZatPoint (x, y) >= z - MaxStepHeight)
+						{
+							dopush = false;
+							break;
+						}
 					}
 				}
 			}
-		}
-		if (dopush)
-		{
-			momx += floorsector->floorplane.a;
-			momy += floorsector->floorplane.b;
+			if (dopush)
+			{
+				momx += floorplane->a;
+				momy += floorplane->b;
+			}
 		}
 	}
 
@@ -3654,7 +3657,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		return;
 
 	// [RH] don't spawn extra weapons in coop if so desired
-	if (multiplayer && !deathmatch && (dmflags&DF_NO_COOP_WEAPON_SPAWN))
+	if (multiplayer && !deathmatch && !(dmflags&DF_NO_COOP_WEAPON_SPAWN))
 	{
 		if (i->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 		{

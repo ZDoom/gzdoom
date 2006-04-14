@@ -2087,6 +2087,9 @@
 				RelativePath=".\src\w_wad.h">
 			</File>
 			<File
+				RelativePath=".\src\w_zip.h">
+			</File>
+			<File
 				RelativePath=".\src\weightedlist.h">
 			</File>
 			<File

@@ -30,6 +30,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wadsrc", "wadsrc\wadsrc.vcp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "makewad", "tools\makewad\makewad.vcproj", "{24A19C02-F041-4AB0-A1A1-02E1E88EDBD3}"
 	ProjectSection(ProjectDependencies) = postProject
+		{F9D9E7D4-E1A2-4866-9E85-B1B14137EE63} = {F9D9E7D4-E1A2-4866-9E85-B1B14137EE63}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xlatcc", "tools\xlatcc\xlatcc.vcproj", "{3FFA68B3-9449-4B03-ADEE-194C3638623B}"

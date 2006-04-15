@@ -17,6 +17,7 @@ bool SC_CheckString (const char *name);
 BOOL SC_GetNumber (void);
 void SC_MustGetNumber (void);
 BOOL SC_CheckNumber (void);
+BOOL SC_CheckFloat (void);
 BOOL SC_GetFloat (void);
 void SC_MustGetFloat (void);
 void SC_UnGet (void);

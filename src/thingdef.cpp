@@ -65,6 +65,7 @@
 #include "a_hexenglobal.h"
 #include "a_weaponpiece.h"
 #include "p_conversation.h"
+#include "thingdef.h"
 
 
 
@@ -637,7 +638,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_Jump, "XL" )
 	FUNC(A_CustomMissile, "MXXxxx" )
 	FUNC(A_CustomBulletAttack, "XXXXmx" )
-	FUNC(A_CustomRailgun, "Xxccyyx" )
+	FUNC(A_CustomRailgun, "Xxccxxx" )
 	FUNC(A_JumpIfHealthLower, "XL" )
 	FUNC(A_JumpIfCloser, "XL" )
 	FUNC(A_JumpIfInventory, "MXL" )
@@ -667,7 +668,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_CustomPunch, "Xxymx" )
 	FUNC(A_FireBullets, "XXXXmyx" )
 	FUNC(A_FireCustomMissile, "Mxyxx" )
-	FUNC(A_RailAttack, "Xxyccyx" )
+	FUNC(A_RailAttack, "Xxyccxx" )
 	FUNC(A_Recoil, "X")
 	FUNC(A_JumpIfInTargetInventory, "MXL" )
 	FUNC(A_GiveToTarget, "Mx" )
@@ -1049,41 +1050,6 @@ struct ActorProps { const char *name; ActorPropFunction Handler; const TypeInfo 
 typedef ActorProps (*ActorPropHandler) (register const char *str, register unsigned int len);
 
 static const ActorProps *is_actorprop (const char *str);
-
-int ParseExpression (bool _not)
-{
-	SC_MustGetNumber();
-	return _not? !sc_Number : sc_Number;
-}
-
-//==========================================================================
-//
-// SC_CheckFloat
-// [GRB] Same as SC_CheckNumber, only for floats
-//
-//==========================================================================
-
-BOOL SC_CheckFloat (void)
-{
-	char *stopper;
-
-	//CheckOpen ();
-	if (SC_GetString())
-	{
-		sc_Float = strtod (sc_String, &stopper);
-		if (*stopper != 0)
-		{
-			SC_UnGet();
-			return false;
-		}
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
 
 //==========================================================================
 //

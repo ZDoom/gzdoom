@@ -1,12 +1,20 @@
+April 15, 2006 (Changes by Graf Zahl)
+- Extended Makewad so it can write Zip files in addition to WAD files.
+
 April 14, 2006 (Changes by Graf Zahl)
+- Moved SC_CheckFloat into sc_man.cpp.
+- Fixed several issues with the DECORATE parser:
+  * Floating point parameters couldn't be parsed correctly
+  * Some code pointers used parameters incorrectly.
+  * Parameters with default value 1 didn't work as expected
 - Added GZDoom's HI_START/HI_END lump namespace. Even though it doesn't do
   anything (yet) suppporting it allows to make WADs that use hires texture
   replacements but are able to run with ZDoom as well.
 - Added GZDoom's Zip-support but changed it so that lumps are sorted
   alphabetically.
 - Added the missing file 'flac/private/float.h' to the repository.
-- Added: In preparation for Zip-support the sound code has to be able to 
-  load music data from memory, not just from files.
+- Added: For Zip-support the sound code has to be able to load music data 
+  from memory, not just from files.
 - Re-added I_SetMusicVolume to optionally reduce the music volume in Strife
   conversations.
 - Fixed: The total game time must not be restored when loading a snapshot

@@ -7,6 +7,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <time.h>
+#include "zip.h"
 
 #define MAX_LUMPS	4096
 
@@ -64,8 +67,84 @@ int appendlump (FILE *wadfile, char *filename)
 	return ret;
 }
 
+int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
+{
+	char *readbuf;
+	FILE *lumpfile;
+	size_t readlen;
+	int ret = 0;
+	size_t len;
+	zip_fileinfo zip_inf;
+
+	time_t currenttime;
+	tm * ltime;
+
+	time(&currenttime);
+	ltime = localtime(&currenttime);
+	memset(&zip_inf, 0, sizeof(zip_inf));
+	if (ltime != NULL)
+	{
+		zip_inf.tmz_date.tm_sec = ltime->tm_sec;
+		zip_inf.tmz_date.tm_min = ltime->tm_min;
+		zip_inf.tmz_date.tm_hour = ltime->tm_hour;
+		zip_inf.tmz_date.tm_mday = ltime->tm_mday;
+		zip_inf.tmz_date.tm_mon = ltime->tm_mon;
+		zip_inf.tmz_date.tm_year = ltime->tm_year;
+	}
+	
+
+	lumpfile = fopen (filename, "rb");
+	if (lumpfile == NULL)
+	{
+		fprintf (stderr, "Could not open %s: %s\n", filename, strerror(errno));
+		return 1;
+	}
+	fseek (lumpfile, 0, SEEK_END);
+	len = ftell(lumpfile);
+	fseek (lumpfile, 0, SEEK_SET);
+	readbuf = (char*)malloc(len);
+	if (readbuf == NULL)
+	{
+		fclose(lumpfile);
+		fprintf (stderr, "Could not allocate %d bytes\n", len);
+		return 1;
+	}
+	readlen =  fread (readbuf, 1, len, lumpfile);
+	fclose(lumpfile);
+	if (readlen != len)
+	{
+		free (readbuf);
+		fprintf (stderr, "Unable to read %s\n", filename);
+		return 1;
+	}
+
+	if (Z_OK != zipOpenNewFileInZip(zipfile, zipname, &zip_inf, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION))
+	{
+		free (readbuf);
+		fprintf (stderr, "Unable to open zip for writing %s\n", filename);
+		return 1;
+	}
+
+	if (Z_OK != zipWriteInFileInZip(zipfile, readbuf, (unsigned)len))
+	{
+		free (readbuf);
+		fprintf (stderr, "Unable to write %s to zip\n", filename);
+		return 1;
+	}
+	free (readbuf);
+
+	if (Z_OK != zipCloseFileInZip(zipfile))
+	{
+		fprintf (stderr, "Unable to close %s in zip\n", filename);
+		return 1;
+	}
+	return 0;
+}
+
 int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 {
+	zipFile zipfile = NULL;
+
 	wadinfo_t header;
 	filelump_t directory[MAX_LUMPS];
 	char str[256];
@@ -80,6 +159,8 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 	header.infotableofs = 0;
 	header.numlumps = 0;
 	memset (directory, 0, sizeof(directory));
+
+	//__asm int 3
 
 	while (fgets (str, sizeof(str), listfile))
 	{
@@ -101,27 +182,53 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 
 		if (*pt == '@')
 		{ // Rest of line is wadfile to create
-			if (wadfile != NULL)
+			if (wadfile != NULL || zipfile != NULL)
 			{
 				fprintf (stderr, "Line %d: Tried to reopen wadfile as %s.\n", lineno, pt + 1);
-				fclose (wadfile);
+				if (wadfile != NULL) fclose (wadfile);
+				if (zipfile != NULL) zipClose (zipfile, NULL);
+
 				return 1;
 			}
-			filename = makefile ? makefile : pt+1;
-			wadfile = fopen (filename, makefile ? "w" : "wb");
-			if (wadfile == NULL)
+
+			if (!makefile)
 			{
-				fprintf (stderr, "Line %d: Could not open %s: %s\n", lineno, filename, strerror(errno));
-				return 1;
+				int ln = (int)strlen(pt+1);
+
+				filename = pt+1;
+				if (ln >= 4)
+				{
+					// If the output file has an extension '.zip' or '.pk3' it will be in Zip format.
+					if (!stricmp(filename+ln-3, "ZIP") || !stricmp(filename+ln-3, "PK3"))
+					{
+						zipfile = zipOpen(filename, APPEND_STATUS_CREATE);
+						if (zipfile == NULL)
+						{
+							fprintf (stderr, "Line %d: Could not open %s: %s\n", lineno, filename, strerror(errno));
+							return 1;
+						}
+					}
+				}
 			}
-			if (makefile)
-			{ // Write out the only rule the makefile has
-				fprintf (wadfile, "%s: %s", pt+1, listfilename);
-			}
-			else
+			else filename = makefile;
+
+			if (!zipfile) 
 			{
-				// The correct header will be written once the wad is complete
-				fwrite (&header, sizeof(header), 1, wadfile);
+				wadfile = fopen (filename, makefile ? "w" : "wb");
+				if (wadfile == NULL)
+				{
+					fprintf (stderr, "Line %d: Could not open %s: %s\n", lineno, filename, strerror(errno));
+					return 1;
+				}
+				if (makefile)
+				{ // Write out the only rule the makefile has
+					fprintf (wadfile, "%s: %s", pt+1, listfilename);
+				}
+				else
+				{
+					// The correct header will be written once the wad is complete
+					fwrite (&header, sizeof(header), 1, wadfile);
+				}
 			}
 			continue;
 		}
@@ -143,7 +250,7 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 		}
 
 
-		if (wadfile == NULL)
+		if (wadfile == NULL && zipfile == NULL)
 		{
 			fprintf (stderr, "Line %d: No wad specified before lumps.\n", lineno);
 			return 1;
@@ -165,16 +272,27 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 		}
 		else
 		{
-			for (i = 0; lumpname[i]; ++i)
+			if (zipfile == NULL)
 			{
-				lumpname[i] = toupper(lumpname[i]);
-			}
-			strncpy (directory[header.numlumps].name, lumpname, 8);
-			directory[header.numlumps].filepos = ftell (wadfile);
-			if (filename != NULL)
-			{
-				ret |= appendlump (wadfile, filename);
+				for (i = 0; lumpname[i]; ++i)
+				{
+					lumpname[i] = toupper(lumpname[i]);
+				}
+				strncpy (directory[header.numlumps].name, lumpname, 8);
+				directory[header.numlumps].filepos = ftell (wadfile);
+				if (filename != NULL)
+				{
+					ret |= appendlump (wadfile, filename);
+				}
 				directory[header.numlumps].size = ftell (wadfile) - directory[header.numlumps].filepos;
+			}
+			else if (filename != NULL)
+			{
+				for (i = 0; lumpname[i]; ++i)
+				{
+					lumpname[i] = tolower(lumpname[i]);
+				}
+				ret |= appendtozip(zipfile, lumpname, filename);
 			}
 			header.numlumps++;
 		}
@@ -218,10 +336,18 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 		}
 		fclose (wadfile);
 	}
+	else if (zipfile != NULL)
+	{
+		zipClose(zipfile, NULL);
+	}
 	return ret;
 }
 
-int main (int argc, char **argv)
+#if !defined(_MSC_VER)
+#define __cdecl
+#endif
+
+int __cdecl main (int argc, char **argv)
 {
 	FILE *listfile = NULL;
 	char *listfilename = NULL;

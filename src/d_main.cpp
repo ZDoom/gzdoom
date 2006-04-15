@@ -1966,7 +1966,9 @@ void D_DoomMain (void)
 	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
 	DArgs *files = Args.GatherFiles ("-file", ".wad", true);
-	if (files->NumArgs() > 0)
+	DArgs *files1 = Args.GatherFiles (NULL, ".zip", false);
+	DArgs *files2 = Args.GatherFiles (NULL, ".pk3", false);
+	if (files->NumArgs() > 0 || files1->NumArgs() > 0 || files2->NumArgs() > 0)
 	{
 		// Check for -file in shareware
 		if (gameinfo.flags & GI_SHAREWARE)
@@ -1979,8 +1981,18 @@ void D_DoomMain (void)
 		{
 			D_AddWildFile (files->GetArg (i));
 		}
+		for (int i = 0; i < files1->NumArgs(); i++)
+		{
+			D_AddWildFile (files1->GetArg (i));
+		}
+		for (int i = 0; i < files2->NumArgs(); i++)
+		{
+			D_AddWildFile (files2->GetArg (i));
+		}
 	}
 	delete files;
+	delete files1;
+	delete files2;
 
 	Wads.InitMultipleFiles (&wadfiles);
 

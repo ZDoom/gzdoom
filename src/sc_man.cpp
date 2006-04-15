@@ -552,6 +552,35 @@ BOOL SC_CheckNumber (void)
 
 //==========================================================================
 //
+// SC_CheckFloat
+// [GRB] Same as SC_CheckNumber, only for floats
+//
+//==========================================================================
+
+BOOL SC_CheckFloat (void)
+{
+	char *stopper;
+
+	//CheckOpen ();
+	if (SC_GetString())
+	{
+		sc_Float = strtod (sc_String, &stopper);
+		if (*stopper != 0)
+		{
+			SC_UnGet();
+			return false;
+		}
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+//==========================================================================
+//
 // SC_GetFloat
 //
 //==========================================================================

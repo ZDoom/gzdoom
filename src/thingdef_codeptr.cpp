@@ -63,6 +63,7 @@
 #include "vectors.h"
 #include "a_sharedglobal.h"
 #include "a_doomglobal.h"
+#include "thingdef.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
@@ -76,10 +77,6 @@ static FRandom pr_grenade ("ThrowGrenade");
 static FRandom pr_crailgun ("CustomRailgun");
 static FRandom pr_spawndebris ("SpawnDebris");
 static FRandom pr_jiggle ("Jiggle");
-
-
-int EvalExpressionI (int id, AActor *self) { return id; }
-float EvalExpressionF (int id, AActor *self) { return id; }
 
 
 // A truly awful hack to get to the state that called an action function
@@ -694,7 +691,7 @@ void A_FireBullets (AActor *self)
 	int NumberOfBullets=EvalExpressionI (StateParameters[index+2], self);
 	int DamagePerBullet=EvalExpressionI (StateParameters[index+3], self);
 	const char * PuffTypeName=(const char *)StateParameters[index+4];
-	bool UseNoAmmo=!EvalExpressionI (StateParameters[index+5], self);
+	bool UseAmmo=EvalExpressionN (StateParameters[index+5], self);
 	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+6], self) * FRACUNIT);
 	
 	const TypeInfo * PuffType;
@@ -706,7 +703,7 @@ void A_FireBullets (AActor *self)
 	int bangle;
 	int bslope;
 
-	if (!UseNoAmmo && weapon)
+	if (UseAmmo && weapon)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
@@ -755,14 +752,14 @@ void A_FireCustomMissile (AActor * self)
 
 	const char * MissileName=(const char *)StateParameters[index];
 	angle_t Angle=angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
-	bool UseNoAmmo=!EvalExpressionI (StateParameters[index+2], self);
+	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
 	int SpawnOfs_XY=EvalExpressionI (StateParameters[index+3], self);
 	fixed_t SpawnHeight=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
 
 	player_t *player=self->player;
 	AWeapon * weapon=player->ReadyWeapon;
 
-	if (!UseNoAmmo && weapon)
+	if (UseAmmo && weapon)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
@@ -807,7 +804,7 @@ void A_CustomPunch (AActor *self)
 
 	int Damage=EvalExpressionI (StateParameters[index], self);
 	bool norandom=!!EvalExpressionI (StateParameters[index+1], self);
-	bool UseNoAmmo=!EvalExpressionI (StateParameters[index+2], self);
+	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
 	const char * PuffTypeName=(const char *)StateParameters[index+3];
 	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
 
@@ -827,7 +824,7 @@ void A_CustomPunch (AActor *self)
 	pitch = P_AimLineAttack (self, angle, MELEERANGE);
 
 	// only use ammo when actually hitting something!
-	if (!UseNoAmmo && linetarget && weapon)
+	if (UseAmmo && linetarget && weapon)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
@@ -863,16 +860,16 @@ void A_RailAttack (AActor * self)
 
 	int Damage=EvalExpressionI (StateParameters[index], self);
 	int Spawnofs_XY=EvalExpressionI (StateParameters[index+1], self);
-	bool UseNoAmmo=!EvalExpressionI (StateParameters[index+2], self);
+	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
 	int Color1=StateParameters[index+3];
 	int Color2=StateParameters[index+4];
-	bool Silent=!EvalExpressionI (StateParameters[index+5], self);
+	bool Silent=!!EvalExpressionI (StateParameters[index+5], self);
 	float MaxDiff=EvalExpressionF (StateParameters[index+6], self);
 
 	AWeapon * weapon=self->player->ReadyWeapon;
 
 	// only use ammo when actually hitting something!
-	if (!UseNoAmmo)
+	if (UseAmmo)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
@@ -905,8 +902,8 @@ void A_CustomRailgun (AActor *actor)
 	int Spawnofs_XY=EvalExpressionI (StateParameters[index+1], actor);
 	int Color1=StateParameters[index+2];
 	int Color2=StateParameters[index+3];
-	bool Silent=!EvalExpressionI (StateParameters[index+4], actor);
-	bool aim=!EvalExpressionI (StateParameters[index+5], actor);
+	bool Silent=!!EvalExpressionI (StateParameters[index+4], actor);
+	bool aim=!!EvalExpressionI (StateParameters[index+5], actor);
 	float MaxDiff=EvalExpressionF (StateParameters[index+6], actor);
 
 	// [RH] Andy Baker's stealth monsters
@@ -1064,7 +1061,7 @@ void A_SpawnItem(AActor * self)
 	const TypeInfo * missile= TypeInfo::FindType((const char *)StateParameters[index]);
 	int distance = EvalExpressionI (StateParameters[index+1], self);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
-	bool useammo = !EvalExpressionI (StateParameters[index+3], self);
+	bool useammo = EvalExpressionN (StateParameters[index+3], self);
 
 	if (!missile) 
 	{
@@ -1162,7 +1159,7 @@ void A_ThrowGrenade(AActor * self)
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	fixed_t xymom = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	fixed_t zmom = fixed_t(EvalExpressionF (StateParameters[index+3], self) * FRACUNIT);
-	bool useammo = !EvalExpressionI (StateParameters[index+4], self);
+	bool useammo = EvalExpressionN (StateParameters[index+4], self);
 
 	if (self->player && CallingState != self->state && CallingState != StateCall.State)
 	{
@@ -1394,7 +1391,7 @@ void A_ExtChase(AActor * self)
 	A_DoChase(self, false,
 		EvalExpressionI (StateParameters[index], self) ? self->MeleeState:NULL,
 		EvalExpressionI (StateParameters[index+1], self) ? self->MissileState:NULL,
-		!EvalExpressionI (StateParameters[index+2], self),
+		EvalExpressionN (StateParameters[index+2], self),
 		!!EvalExpressionI (StateParameters[index+3], self));
 }
 

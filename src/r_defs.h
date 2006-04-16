@@ -428,9 +428,7 @@ struct line_s
 	byte		special;	// [RH] specials are only one byte (like Hexen)
 	byte		alpha;		// <--- translucency (0-255/255=opaque)
 	short		id;			// <--- same as tag or set with Line_SetIdentification
-	short		args[5];	// <--- hexen-style arguments
-							//		note that these are shorts in order to support
-							//		the tag parameter from DOOM.
+	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	int			firstid, nextid;
 	DWORD		sidenum[2];	// sidenum[1] will be 0xffffffff if one sided
 	fixed_t		bbox[4];	// bounding box, for the extent of the LineDef.

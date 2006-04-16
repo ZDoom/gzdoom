@@ -272,24 +272,31 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_RESSURECT:
 		if (player->playerstate != PST_LIVE && player->mo != NULL)
 		{
-			player->playerstate = PST_LIVE;
-			if (player->mo->tracer != NULL)
+			if (player->mo->IsKindOf(RUNTIME_CLASS(APlayerChunk)))
 			{
-				APlayerPawn * pmo = player->mo;
-				player->mo = (APlayerPawn*)player->mo->tracer;
-				pmo->Destroy();
-				player->mo->player=player;
-				player->mo->renderflags &= ~RF_INVISIBLE;
-				player->morphTics = 0;
+				Printf("Unable to resurrect. Player is no longer connected to its body.\n");
 			}
-			player->health = player->mo->health = player->mo->GetDefault()->health;
-			player->viewheight = player->defaultviewheight;
-			player->mo->flags = player->mo->GetDefault()->flags;
-			player->mo->height = player->mo->GetDefault()->height;
-			player->mo->SetState (player->mo->SpawnState);
-			player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
-			player->mo->GiveDefaultInventory();
-			P_SetPsprite(player, ps_weapon, player->ReadyWeapon->UpState);
+			else
+			{
+				player->playerstate = PST_LIVE;
+				if (player->mo->tracer != NULL)
+				{
+					APlayerPawn * pmo = player->mo;
+					player->mo = (APlayerPawn*)player->mo->tracer;
+					pmo->Destroy();
+					player->mo->player=player;
+					player->mo->renderflags &= ~RF_INVISIBLE;
+					player->morphTics = 0;
+				}
+				player->health = player->mo->health = player->mo->GetDefault()->health;
+				player->viewheight = player->defaultviewheight;
+				player->mo->flags = player->mo->GetDefault()->flags;
+				player->mo->height = player->mo->GetDefault()->height;
+				player->mo->SetState (player->mo->SpawnState);
+				player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
+				player->mo->GiveDefaultInventory();
+				P_SetPsprite(player, ps_weapon, player->ReadyWeapon->UpState);
+			}
 		}
 		break;
 

@@ -272,6 +272,9 @@ enum
 	MF4_EXTREMEDEATH	= 0x20000000,	// this projectile or weapon always gibs its victim
 	MF4_FRIGHTENED		= 0x40000000,	// Monster runs away from player
 	MF4_NOBOUNCESOUND	= 0x80000000,	// Strife's grenades don't make a bouncing sound. 
+	
+	MF5_FASTER			= 0x00000001,	// moves faster when DF_FAST_MONSTERS or nightmare is on.
+	MF5_FASTMELEE		= 0x00000002,	// has a faster melee attack when DF_FAST_MONSTERS or nightmare is on.
 
 // --- mobj.renderflags ---
 
@@ -483,8 +486,8 @@ public:
 	// Called by RoughBlockCheck
 	virtual bool IsOkayToAttack (AActor *target);
 
-	virtual void ChangeSpecial (byte special, byte data1, byte data2,
-		byte data3, byte data4, byte data5);
+	virtual void ChangeSpecial (int special, int data1, int data2,
+		int data3, int data4, int data5);
 
 	// Plays the actor's ActiveSound if its voice isn't already making noise.
 	void PlayActiveSound ();
@@ -565,6 +568,12 @@ public:
 
 	// What species am I?
 	virtual const TypeInfo *GetSpecies();
+	
+	// Check for monsters that count as kill but excludes all friendlies.
+	bool CountsAsKill() const
+	{
+		return (flags & MF_COUNTKILL) && !(flags & MF_FRIENDLY);
+	}
 
 // info for drawing
 // NOTE: The first member variable *must* be x.
@@ -600,6 +609,7 @@ public:
 	DWORD			flags2;			// Heretic flags
 	DWORD			flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
 	DWORD			flags4;			// [RH] Even more flags!
+	DWORD			flags5;			// OMG! We need another one.
 	int				special1;		// Special info
 	int				special2;		// Special info
 	int 			health;
@@ -627,7 +637,7 @@ public:
 	fixed_t			floorclip;		// value to use for floor clipping
 	SWORD			tid;			// thing identifier
 	BYTE			special;		// special
-	BYTE			args[5];		// special arguments
+	int				args[5];		// special arguments
 
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	AActor			*goal;			// Monster's goal if not chasing anything
@@ -711,6 +721,8 @@ public:
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
 	void SetOrigin (fixed_t x, fixed_t y, fixed_t z);
+	bool InStateSequence(FState * newstate, FState * basestate);
+	int GetTics(FState * newstate);
 	bool SetState (FState *newstate);
 	bool SetStateNF (FState *newstate);
 	bool UpdateWaterLevel (fixed_t oldz);

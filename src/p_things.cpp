@@ -93,7 +93,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 			{
 				// If this is a monster, subtract it from the total monster
 				// count, because it already added to it during spawning.
-				if (mobj->flags & MF_COUNTKILL)
+				if (mobj->CountsAsKill())
 				{
 					level.total_monsters--;
 				}
@@ -337,7 +337,7 @@ nolead:
 					{
 						// If this is a monster, subtract it from the total monster
 						// count, because it already added to it during spawning.
-						if (mobj->flags & MF_COUNTKILL)
+						if (mobj->CountsAsKill())
 						{
 							level.total_monsters--;
 						}

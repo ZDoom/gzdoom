@@ -305,7 +305,7 @@ void A_PotteryExplode (AActor *actor)
 		}
 	}
 	S_Sound (mo, CHAN_BODY, "PotteryExplode", 1, ATTN_NORM);
-	if (SpawnableThings[actor->args[0]])
+	if (actor->args[0]>=0 && actor->args[0]<=255 && SpawnableThings[actor->args[0]])
 	{ // Spawn an item
 		if (!(dmflags & DF_NO_MONSTERS) 
 		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags3 & MF3_ISMONSTER))
@@ -1083,7 +1083,7 @@ void A_SoAExplode (AActor *actor)
 			mo->momy = pr_soaexplode.Random2()<<(FRACBITS-6);
 		}
 	}
-	if (SpawnableThings[actor->args[0]])
+	if (actor->args[0]>=0 && actor->args[0]<=255 && SpawnableThings[actor->args[0]])
 	{ // Spawn an item
 		if (!(dmflags & DF_NO_MONSTERS) 
 		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags3 & MF3_ISMONSTER))

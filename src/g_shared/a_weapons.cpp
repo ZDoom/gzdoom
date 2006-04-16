@@ -103,6 +103,9 @@ bool AWeapon::Use (bool pickup)
 {
 	AWeapon *useweap = this;
 
+	// Powered up weapons cannot be used directly.
+	if (WeaponFlags & WIF_POWERED_UP) return false;
+
 	// If the player is powered-up, use the alternate version of the
 	// weapon, if one exists.
 	if (SisterWeapon != NULL &&

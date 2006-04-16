@@ -1,4 +1,28 @@
+April 16, 2006 (Changes by Graf Zahl)
+- Increased the limit for the sound DoorCloseLight in Hexen to 4 because
+  it got cut off in the polyobject crusher in MAP01.
+- Fixed: A player that has no body (as in the head popped off in Heretic
+  and Hexen) must not be resurrected.
+- Fixed: Repeatable switches that are being activated while the switch
+  animation was still running didn't react properly.
+- Fixed: Not all paths in P_LoadSegs freed the vertchanged array.
+- Fixed: With infinitely tall actors on P_CheckPosition must not
+  check for stepping on things.
+- Fixed: R_FakeFlat used the control sector's floor light level for
+  ceilings of deep water areas.
+- Fixed: Dormant floating monsters still adjusted their height to their
+  target.
+- Fixed: Invisible special things should never create terrain splashes.
+- Changed: The Demon no longer reduces the actual state durations for
+  fast mode. Now this is done by AActor::SetState and controlled by
+  actor flags.
+- Fixed: Friendly monsters are now completely excluded fron being counted
+  as kills.
+
 April 15, 2006 (Changes by Graf Zahl)
+- Changed -warp for ExMy to use atoi to parse the parameters. This is
+  more robust than reading the characters directly.
+- Expanded thing and line args to 32 bit.
 - Extended Makewad so it can write Zip files in addition to WAD files.
 
 April 14, 2006 (Changes by Graf Zahl)

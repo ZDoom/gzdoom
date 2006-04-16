@@ -1101,7 +1101,7 @@ void A_SpawnItem(AActor * self)
 			if (!P_TestMobjLocation(mo))
 			{
 				// The monster is blocked so don't spawn it at all!
-				if (mo->flags&MF_COUNTKILL) level.total_monsters--;
+				if (mo->CountsAsKill()) level.total_monsters--;
 				mo->Destroy();
 				StateCall.Result=false;	// for an inventory iten's use state
 				return;

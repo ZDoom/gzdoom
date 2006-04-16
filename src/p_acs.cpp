@@ -1770,7 +1770,7 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 			{
 				// If this is a monster, subtract it from the total monster
 				// count, because it already added to it during spawning.
-				if (actor->flags & MF_COUNTKILL)
+				if (actor->CountsAsKill())
 				{
 					level.total_monsters--;
 				}

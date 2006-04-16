@@ -428,7 +428,7 @@ static WORD AddSwitchDef (FSwitchDef *def)
 // Start a button counting down till it turns off.
 // [RH] Rewritten to remove MAXBUTTONS limit.
 //
-static void P_StartButton (side_t *side, DActiveButton::EWhere w, int switchnum,
+static bool P_StartButton (side_t *side, DActiveButton::EWhere w, int switchnum,
 						   fixed_t x, fixed_t y, bool useagain)
 {
 	DActiveButton *button;
@@ -438,10 +438,14 @@ static void P_StartButton (side_t *side, DActiveButton::EWhere w, int switchnum,
 	while ( (button = iterator.Next ()) )
 	{
 		if (button->m_Side == side)
-			return;
+		{
+			button->m_Timer=1;	// force advancing to the next frame
+			return false;
+		}
 	}
 
 	new DActiveButton (side, w, switchnum, x, y, useagain);
+	return true;
 }
 
 static int TryFindSwitch (SWORD texture)
@@ -527,13 +531,16 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, byte special, bool *ques
 	//		button just activated, either).
 	fixed_t pt[3];
 	line_t *line = &lines[side->linenum];
+	bool playsound;
 
 	pt[0] = line->v1->x + (line->dx >> 1);
 	pt[1] = line->v1->y + (line->dy >> 1);
-	S_SoundID (pt, CHAN_VOICE|CHAN_LISTENERZ|CHAN_IMMOBILE, sound, 1, ATTN_STATIC);
 	*texture = SwitchList[i]->u.Textures[SwitchList[i]->NumFrames*2];
 	if (useAgain || SwitchList[i]->NumFrames > 1)
-		P_StartButton (side, where, i, pt[0], pt[1], !!useAgain);
+		playsound = P_StartButton (side, where, i, pt[0], pt[1], !!useAgain);
+	else 
+		playsound = true;
+	if (playsound) S_SoundID (pt, CHAN_VOICE|CHAN_LISTENERZ|CHAN_IMMOBILE, sound, 1, ATTN_STATIC);
 	if (quest != NULL)
 	{
 		*quest = SwitchList[i]->QuestPanel;

@@ -1307,7 +1307,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 				  // other things in the blocks and see if we hit something that is
 				  // definitely blocking. Otherwise, we need to check the lines, or we
 				  // could end up stuck inside a wall.
-					if (BlockingMobj == NULL)
+					if (BlockingMobj == NULL || (compatflags & COMPATF_NO_PASSMOBJ))
 					{ // Thing slammed into something; don't let it move now.
 						thing->height = realheight;
 						return false;

@@ -268,8 +268,8 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			ld->special = *tlate++;
 			for (;;)
 			{
-				short *destp;
-				short flagtemp;
+				int *destp;
+				int flagtemp;
 				BYTE op = *tlate++;
 				BYTE dest;
 				BYTE val = 0;	// quiet, GCC
@@ -291,7 +291,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 				}
 				else
 				{
-					flagtemp = short((flags >> 9) & 0x3f);
+					flagtemp = ((flags >> 9) & 0x3f);
 					destp = &flagtemp;
 				}
 				lsize = op >> 4;

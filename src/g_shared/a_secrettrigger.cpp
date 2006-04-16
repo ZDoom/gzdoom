@@ -51,6 +51,7 @@ public:
 
 IMPLEMENT_STATELESS_ACTOR (ASecretTrigger, Any, 9046, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_DONTSPLASH)
 END_DEFAULTS
 
 void ASecretTrigger::PostBeginPlay ()

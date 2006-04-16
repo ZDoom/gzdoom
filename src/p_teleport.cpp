@@ -116,6 +116,7 @@ void ATeleportFog::PostBeginPlay ()
 
 IMPLEMENT_STATELESS_ACTOR (ATeleportDest, Any, 14, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
+	PROP_Flags3(MF3_DONTSPLASH)
 END_DEFAULTS
 
 // Teleport dest that can spawn above floor

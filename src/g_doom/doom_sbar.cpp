@@ -778,6 +778,7 @@ private:
 		int 		i;
 		angle_t 	badguyangle;
 		angle_t 	diffang;
+		
 
 		if (FacePriority < 10)
 		{
@@ -803,6 +804,12 @@ private:
 					FaceCount = ST_EVILGRINCOUNT;
 					FaceIndex = CalcPainOffset() + ST_EVILGRINOFFSET;
 				}
+			}
+			else 
+			{
+				// This happens when a weapon is added to the inventory
+				// by other means than being picked up.
+				bEvilGrin = false;
 			}
 		}
   

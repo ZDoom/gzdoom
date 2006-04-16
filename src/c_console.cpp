@@ -433,7 +433,6 @@ void C_AddNotifyString (int printlevel, const char *source)
 		REPLACELINE
 	} addtype = NEWLINE;
 
-	char *work;
 	brokenlines_t *lines;
 	int i, len, width;
 
@@ -451,13 +450,12 @@ void C_AddNotifyString (int printlevel, const char *source)
 
 	width = con_scaletext > 1 ? DisplayWidth/2 : con_scaletext == 1 ? DisplayWidth / CleanXfac : DisplayWidth;
 
-	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].printlevel == printlevel
-		&& (work = (char *)malloc (strlen ((char *)NotifyStrings[NUMNOTIFIES-1].text)
-									+ strlen (source) + 1)) )
+	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].printlevel == printlevel)
 	{
-		sprintf (work, "%s%s", NotifyStrings[NUMNOTIFIES-1].text, source);
-		lines = V_BreakLines (width, work);
-		free (work);
+		string str;
+
+		str.Format("%s%s", NotifyStrings[NUMNOTIFIES-1].text, source);
+		lines = V_BreakLines (width, str.GetChars());
 	}
 	else
 	{

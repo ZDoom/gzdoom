@@ -2143,8 +2143,8 @@ void D_DoomMain (void)
 		}
 		else 
 		{
-			ep = Args.GetArg(p+1)[0]-'0';
-			map = p < Args.NumArgs() - 2 ? Args.GetArg(p+2)[0]-'0' : 10;
+			ep = atoi (Args.GetArg(p+1));
+			map = p < Args.NumArgs() - 2 ? atoi (Args.GetArg(p+2)) : 10;
 			if ((unsigned)map > 9)
 			{
 				map = ep;

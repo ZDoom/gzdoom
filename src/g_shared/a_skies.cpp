@@ -40,6 +40,7 @@
 
 IMPLEMENT_STATELESS_ACTOR (ASkyViewpoint, Any, 9080, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_DONTSPLASH)
 END_DEFAULTS
 
 // If this actor has no TID, make it the default sky box
@@ -90,6 +91,7 @@ public:
 
 IMPLEMENT_STATELESS_ACTOR (ASkyPicker, Any, 9081, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_DONTSPLASH)
 END_DEFAULTS
 
 void ASkyPicker::PostBeginPlay ()

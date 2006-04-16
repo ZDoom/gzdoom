@@ -385,7 +385,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 						if (ceilinglightlevel != NULL)
 						{
-							*ceilinglightlevel = GetFloorLight (s);
+							*ceilinglightlevel = GetCeilingLight (s);
 						}
 					}
 					FakeSide = FAKED_BelowFloor;
@@ -504,7 +504,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 				if (ceilinglightlevel != NULL)
 				{
-					*ceilinglightlevel = GetFloorLight (s);
+					*ceilinglightlevel = GetCeilingLight (s);
 				}
 			}
 			FakeSide = FAKED_BelowFloor;

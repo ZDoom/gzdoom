@@ -943,6 +943,8 @@ $alias menu/dismiss		PlatformStop
 $alias menu/choose		DoorCloseLight
 $alias menu/clear		PlatformStop
 
+$limit DoorCloseLight 4
+
 $endif	// ifhexen
 
 //===========================================================================

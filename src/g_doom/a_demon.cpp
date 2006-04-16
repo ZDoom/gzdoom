@@ -68,6 +68,7 @@ IMPLEMENT_ACTOR (ADemon, Doom, 3002, 8)
 	PROP_Mass (400)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
+	PROP_Flags5 (MF5_FASTER|MF5_FASTMELEE)
 
 	PROP_SpawnState (S_SARG_STND)
 	PROP_SeeState (S_SARG_RUN)
@@ -82,32 +83,6 @@ IMPLEMENT_ACTOR (ADemon, Doom, 3002, 8)
 	PROP_DeathSound ("demon/death")
 	PROP_ActiveSound ("demon/active")
 END_DEFAULTS
-
-static void SetTics (FState *state, int count)
-{
-	state->Tics = (count+1) & 255;
-	state->Misc1 = state->GetMisc1() | ((count+1)>>8);
-	state->Frame = (state->Frame & ~SF_BIGTIC) | (count > 254 ? SF_BIGTIC : 0);
-}
-
-AT_SPEED_SET (Demon, speednow)
-{
-	static bool isFast = false;
-	int i;
-
-	if (speednow == SPEED_Fast && !isFast)
-	{
-		isFast = true;
-		for (i = S_SARG_RUN; i < S_SARG_PAIN; i++)
-			SetTics (&ADemon::States[i], ADemon::States[i].GetTics() >> 1);
-	}
-	else if (speednow == SPEED_Normal && isFast)
-	{
-		isFast = false;
-		for (i = S_SARG_RUN; i < S_SARG_PAIN; i++)
-			SetTics (&ADemon::States[i], ADemon::States[i].GetTics() << 1);
-	}
-}
 
 class AStealthDemon : public ADemon
 {

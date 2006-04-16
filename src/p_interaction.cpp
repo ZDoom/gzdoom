@@ -411,7 +411,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 	if (source && source->player)
 	{
-		if (flags & MF_COUNTKILL)
+		if (CountsAsKill())
 		{ // count for intermission
 			source->player->killcount++;
 			level.killed_monsters++;
@@ -553,7 +553,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 			}
 		}
 	}
-	else if (!multiplayer && (flags & MF_COUNTKILL))
+	else if (!multiplayer && CountsAsKill())
 	{
 		// count all monster deaths,
 		// even those caused by other monsters

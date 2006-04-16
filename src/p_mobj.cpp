@@ -274,6 +274,7 @@ void AActor::Serialize (FArchive &arc)
 		<< flags2
 		<< flags3
 		<< flags4
+		<< flags5
 		<< special1
 		<< special2
 		<< health
@@ -444,6 +445,59 @@ AActor &AActor::operator= (const AActor &other)
 
 //==========================================================================
 //
+// AActor::InStateSequence
+//
+// Checks whether the current state is in a contiguous sequence that
+// starts with basestate
+//
+//==========================================================================
+
+bool AActor::InStateSequence(FState * newstate, FState * basestate)
+{
+	if (basestate == NULL) return false;
+
+	FState * thisstate = basestate;
+	do
+	{
+		if (newstate == thisstate) return true;
+		basestate = thisstate;
+		thisstate = thisstate->GetNextState();
+	}
+	while (thisstate == basestate+1);
+	return false;
+}
+
+//==========================================================================
+//
+// AActor::GetTics
+//
+// Get the actual duration of the next state
+// This is a more generalized attempt to make the Demon faster in
+// nightmare mode. Actually changing the states' durations has to
+// be considered highly problematic.
+//
+//==========================================================================
+
+int AActor::GetTics(FState * newstate)
+{
+	int tics = newstate->GetTics();
+	
+	if (gameskill == sk_nightmare || (dmflags & DF_FAST_MONSTERS))
+	{
+		if (flags5 & MF5_FASTER)
+		{
+			if (InStateSequence(newstate, SeeState)) return tics - (tics>>1);
+		}
+		if (flags5 & MF5_FASTMELEE)
+		{
+			if (InStateSequence(newstate, MeleeState)) return tics - (tics>>1);
+		}
+	}
+	return tics;
+}
+
+//==========================================================================
+//
 // AActor::SetState
 //
 // Returns true if the mobj is still present.
@@ -473,7 +527,7 @@ bool AActor::SetState (FState *newstate)
 			prevsprite = -1;
 		}
 		state = newstate;
-		tics = newstate->GetTics();
+		tics = GetTics(newstate);
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
 		newsprite = newstate->sprite.index;
 		if (newsprite != 1)
@@ -552,7 +606,7 @@ bool AActor::SetStateNF (FState *newstate)
 			prevsprite = -1;
 		}
 		state = newstate;
-		tics = newstate->GetTics();
+		tics = GetTics(newstate);
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
 		newsprite = newstate->sprite.index;
 		if (newsprite != 1)
@@ -788,6 +842,7 @@ bool AActor::GiveAmmo (const TypeInfo *type, int amount)
 
 void AActor::CopyFriendliness (const AActor *other, bool changeTarget)
 {
+	level.total_monsters -= CountsAsKill();
 	TIDtoHate = other->TIDtoHate;
 	LastLook = other->LastLook;
 	flags  = (flags & ~MF_FRIENDLY) | (other->flags & MF_FRIENDLY);
@@ -798,6 +853,7 @@ void AActor::CopyFriendliness (const AActor *other, bool changeTarget)
 	{
 		target = other->target;
 	}
+	level.total_monsters += CountsAsKill();
 }
 
 //============================================================================
@@ -1759,7 +1815,7 @@ void P_ZMovement (AActor *mo)
 //
 // adjust height
 //
-	if ((mo->flags & MF_FLOAT) && mo->target)
+	if ((mo->flags & MF_FLOAT) && !(mo->flags2 & MF2_DORMANT) && mo->target)
 	{	// float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
 		{
@@ -2068,8 +2124,8 @@ void P_NightmareRespawn (AActor *mobj)
 	// something is occupying its position?
 	if (!P_TestMobjLocation (mo))
 	{
-		//[GrafZahl] MF_COUNTKILL still needs to be checked here!
-		if (mo->flags & MF_COUNTKILL) level.total_monsters--;
+		//[GrafZahl] MF_COUNTKILL still needs to be checked here.
+		if (mo->CountsAsKill()) level.total_monsters--;
 		mo->Destroy ();
 		return;		// no respawn
 	}
@@ -2316,8 +2372,8 @@ bool AActor::IsOkayToAttack (AActor *link)
 	return false;
 }
 
-void AActor::ChangeSpecial (byte special, byte data1, byte data2,
-	byte data3, byte data4, byte data5)
+void AActor::ChangeSpecial (int special, int data1, int data2,
+	int data3, int data4, int data5)
 {
 	this->special = special;
 	args[0] = data1;
@@ -3048,7 +3104,7 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 		}
 	}
 	// [RH] Count monsters whenever they are spawned.
-	if (actor->flags & MF_COUNTKILL)
+	if (actor->CountsAsKill())
 	{
 		level.total_monsters++;
 	}
@@ -3087,7 +3143,6 @@ void AActor::HandleSpawnFlags ()
 	if (SpawnFlags & MTF_FRIENDLY)
 	{
 		flags |= MF_FRIENDLY;
-		// Friendlies don't count as kills!
 		if (flags & MF_COUNTKILL)
 		{
 			flags &= ~MF_COUNTKILL;
@@ -3728,7 +3783,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 
 	// [RH] Set the thing's special
 	mobj->special = mthing->special;
-	memcpy (mobj->args, mthing->args, sizeof(mobj->args));
+	for(int j=0;j<5;j++) mobj->args[j]=mthing->args[j];
 
 	// [RH] Add ThingID to mobj and link it in with the others
 	mobj->tid = mthing->thingid;

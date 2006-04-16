@@ -1032,8 +1032,8 @@ FUNC(LS_Thing_Remove)
 		// Don't remove live players.
 		if (actor->player == NULL || actor != actor->player->mo)
 		{
-			// be friendly to the level statistics! ;)
-			if (actor->flags&MF_COUNTKILL && actor->health > 0) level.total_monsters--;
+			// be friendly to the level statistics. ;)
+			if (actor->CountsAsKill() && actor->health > 0) level.total_monsters--;
 			if (actor->flags&MF_COUNTITEM) level.total_items--;
 			actor->Destroy ();
 		}

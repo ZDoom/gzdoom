@@ -553,6 +553,7 @@ void P_LoadSegs (int lump)
 		Printf ("This map has no segs.\n");
 		delete[] subsectors;
 		delete[] nodes;
+		delete[] vertchanged;
 		ForceNodeBuild = true;
 		return;
 	}
@@ -700,7 +701,6 @@ void P_LoadSegs (int lump)
 		delete[] subsectors;
 		delete[] nodes;
 		ForceNodeBuild = true;
-		return;
 	}
 
 	delete[] vertchanged; // phares 10/4/98

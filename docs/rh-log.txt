@@ -56,7 +56,7 @@ April 13, 2006 (Changes by Graf Zahl)
   to the player. This could crash if non-inventory items were given.
 - Added a few console commands useful for map testing:
   * 'monster' lists all monsters and their position.
-  * 'itemd' does the same for items.
+  * 'items' does the same for items.
   * 'changesky' changes the sky texture. Useful for trying out different skies.
   * 'linetarget' prints some information about the monster the player is aiming 
     at.

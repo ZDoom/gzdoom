@@ -1,3 +1,4 @@
+#include "actor.h"
 #include "sc_man.h"
 
 // A stub to simulate the interface of .96x's expression evaluator.

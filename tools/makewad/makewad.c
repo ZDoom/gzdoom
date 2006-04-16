@@ -160,8 +160,6 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 	header.numlumps = 0;
 	memset (directory, 0, sizeof(directory));
 
-	//__asm int 3
-
 	while (fgets (str, sizeof(str), listfile))
 	{
 		lineno++;

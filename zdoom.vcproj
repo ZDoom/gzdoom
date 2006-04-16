@@ -1778,6 +1778,9 @@
 				<File
 					RelativePath=".\src\thingdef_codeptr.cpp">
 				</File>
+				<File
+					RelativePath=".\src\thingdef_exp.cpp">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter

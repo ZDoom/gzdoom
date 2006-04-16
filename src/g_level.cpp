@@ -114,7 +114,7 @@ TAutoGrowArray<SDWORD> ACS_WorldArrays[NUM_WORLDVARS];
 SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
 TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 
-extern BOOL netdemo;
+extern bool netdemo;
 extern string BackupSaveName;
 
 BOOL savegamerestore;
@@ -1331,14 +1331,11 @@ void G_InitNew (char *mapname, bool bTitleLevel)
 
 	if (!savegamerestore)
 	{
-		if (!demoplayback)
-		{
-			if (!netgame)
-			{ // [RH] Change the random seed for each new single player game
-				rngseed = rngseed*3/2;
-			}
-			FRandom::StaticClearRandom ();
+		if (!netgame)
+		{ // [RH] Change the random seed for each new single player game
+			rngseed = rngseed*3/2;
 		}
+		FRandom::StaticClearRandom ();
 		memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
 		memset (ACS_GlobalVars, 0, sizeof(ACS_GlobalVars));
 		for (i = 0; i < NUM_WORLDVARS; ++i)

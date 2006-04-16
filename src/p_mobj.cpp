@@ -3277,7 +3277,7 @@ void AActor::AdjustFloorClip ()
 // Most of the player structure stays unchanged between levels.
 //
 EXTERN_CVAR (Bool, chasedemo)
-extern BOOL demonew;
+extern bool demonew;
 
 void P_SpawnPlayer (mapthing2_t *mthing)
 {

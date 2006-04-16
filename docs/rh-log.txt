@@ -1,3 +1,15 @@
+April 16, 2006
+- Fixed: After respawning in a singleplayer demo, demo playback went out
+  of sync becase the RNG seed was being altered during recording but not
+  during playback. This was caused by an inappropriate fix for a similar
+  problem: -record calls G_InitNew() before it actually starts recording
+  the demo, but -playdemo calls G_InitNew() after it starts playback. So
+  the rngseed stored in the demo was already altered. The correct thing
+  to do is not to prevent the rngseed from changing during playback but
+  to move the call to G_InitNew() after the call to G_BeginRecording().
+- Fixed: After respawning in a demo, demo playback was prematurely
+  terminated.
+
 April 16, 2006 (Changes by Graf Zahl)
 - Increased the limit for the sound DoorCloseLight in Hexen to 4 because
   it got cut off in the polyobject crusher in MAP01.

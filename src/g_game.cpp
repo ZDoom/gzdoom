@@ -130,10 +130,10 @@ int 			gametic;
 
 CVAR(Bool, demo_compress, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 char			demoname[256];
-BOOL 			demorecording;
-BOOL 			demoplayback;
-BOOL 			netdemo;
-BOOL			demonew;				// [RH] Only used around G_InitNew for demos
+bool 			demorecording;
+bool 			demoplayback;
+bool 			netdemo;
+bool			demonew;				// [RH] Only used around G_InitNew for demos
 int				demover;
 byte*			demobuffer;
 byte*			demo_p;
@@ -1345,8 +1345,10 @@ void G_DoReborn (int playernum, bool freshbot)
 		}
 		else
 		{ // Reload the level from scratch
+			bool indemo = demoplayback;
 			BackupSaveName = "";
 			G_InitNew (level.mapname, false);
+			demoplayback = indemo;
 //			gameaction = ga_loadlevel;
 		}
 	}
@@ -2161,10 +2163,14 @@ void G_RecordDemo (char* name)
 //		for earlier ZDEMs since I didn't want to bother supporting
 //		something that probably wasn't used much (if at all).
 
-void G_BeginRecording (void)
+void G_BeginRecording (const char *startmap)
 {
 	int i;
 
+	if (startmap == NULL)
+	{
+		startmap = level.mapname;
+	}
 	demo_p = demobuffer;
 
 	WriteLong (FORM_ID, &demo_p);			// Write FORM ID
@@ -2178,7 +2184,7 @@ void G_BeginRecording (void)
 	*demo_p++ = 3;							// (Useful?)
 	for (i = 0; i < 8; i++)					// Write name of map demo was recorded on.
 	{
-		*demo_p++ = level.mapname[i];
+		*demo_p++ = startmap[i];
 	}
 	WriteLong (rngseed, &demo_p);			// Write RNG seed
 	*demo_p++ = consoleplayer;

@@ -147,7 +147,7 @@ extern BOOL netdemo;
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 EXTERN_CVAR (Bool, st_scale)
 extern BOOL gameisdead;
-extern BOOL demorecording;
+extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 
 extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
@@ -2282,12 +2282,15 @@ void D_DoomMain (void)
 		G_LoadGame (file);
 	}
 
+
 	if (gameaction != ga_loadgame)
 	{
 		BorderNeedRefresh = screen->GetPageCount ();
 		if (autostart || netgame)
 		{
 			CheckWarpTransMap (startmap, true);
+			if (demorecording)
+				G_BeginRecording (startmap);
 			G_InitNew (startmap, false);
 		}
 		else
@@ -2295,9 +2298,10 @@ void D_DoomMain (void)
 			D_StartTitle ();				// start up intro loop
 		}
 	}
-
-	if (demorecording)
-		G_BeginRecording ();
+	else if (demorecording)
+	{
+		G_BeginRecording (NULL);
+	}
 				
 	atterm (D_QuitNetGame);		// killough
 

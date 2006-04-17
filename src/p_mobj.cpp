@@ -262,6 +262,7 @@ void AActor::Serialize (FArchive &arc)
 		<< ceilingz
 		<< dropoffz
 		<< floorsector
+		<< ceilingsector
 		<< radius
 		<< height
 		<< momx
@@ -1873,8 +1874,7 @@ void P_ZMovement (AActor *mo)
 				}
 				else
 				{
-					if (mo->floorsector->floorpic == skyflatnum &&
-						!(mo->flags3 & MF3_SKYEXPLODE))
+					if (mo->floorpic == skyflatnum && !(mo->flags3 & MF3_SKYEXPLODE))
 					{
 						// [RH] Just remove the missile without exploding it
 						//		if this is a sky floor.
@@ -1961,7 +1961,7 @@ void P_ZMovement (AActor *mo)
 			mo->z = mo->ceilingz - mo->height;
 			if (mo->flags2 & MF2_BOUNCETYPE)
 			{	// ceiling bounce
-				mo->FloorBounceMissile (mo->Sector->ceilingplane);
+				mo->FloorBounceMissile (mo->ceilingsector->ceilingplane);
 				return;
 			}
 			if (mo->momz > 0)
@@ -1977,8 +1977,7 @@ void P_ZMovement (AActor *mo)
 				{
 					return;
 				}
-				if (!(mo->flags3 & MF3_SKYEXPLODE) &&
-					mo->Sector->ceilingpic == skyflatnum)
+				if (mo->ceilingpic == skyflatnum &&  !(mo->flags3 & MF3_SKYEXPLODE))
 				{
 					mo->Destroy ();
 					return;
@@ -3041,6 +3040,8 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 		actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
 		actor->floorsector = actor->Sector;
 		actor->floorpic = actor->floorsector->floorpic;
+		actor->ceilingsector = actor->Sector;
+		actor->ceilingpic = actor->ceilingsector->ceilingpic;
 	}
 	else
 	{
@@ -3050,6 +3051,8 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 		actor->ceilingz = tmfceilingz;
 		actor->floorpic = tmffloorpic;
 		actor->floorsector = tmffloorsector;
+		actor->ceilingpic = tmfceilingpic;
+		actor->ceilingsector = tmfceilingsector;
 	}
 
 	actor->SpawnPoint[0] = ix >> FRACBITS;
@@ -3143,6 +3146,7 @@ void AActor::HandleSpawnFlags ()
 	if (SpawnFlags & MTF_FRIENDLY)
 	{
 		flags |= MF_FRIENDLY;
+		// Friendlies don't count as kills!
 		if (flags & MF_COUNTKILL)
 		{
 			flags &= ~MF_COUNTKILL;

@@ -600,6 +600,8 @@ public:
 
 	struct sector_t	*floorsector;
 	SDWORD			floorpic;			// contacted sec floorpic
+	struct sector_t	*ceilingsector;
+	SDWORD			ceilingpic;			// contacted sec ceilingpic
 	fixed_t			radius, height;		// for movement checking
 	fixed_t			momx, momy, momz;	// momentums
 	SDWORD			tics;				// state tic counter

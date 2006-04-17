@@ -1,3 +1,25 @@
+April 17, 2006 (Changes by Graf Zahl)
+- Fixed: dssiglup was misspelled as dssglup in SNDINFO so the Sigil's
+  charging sound never played.
+- Fixed: The sigil doesn't use the generic weapon pickup sound. It should
+  use weapons/sigilcharge.
+- Fixed: P_Move never checked whether a monster has the MF2_PUSHWALL flag.
+  As a result everything using A_Chase was able to activate pushable
+  walls and not just the monsters which are allowed to activate them.
+- Fixed: P_Move must split the move if the step size is larger than the
+  radius.
+- Fixed: tmfloorpic was set in P_LineOpening. But this is not guaranteed
+  to set the correct picture because the end result depends on the line
+  ordering and not the sector heights. It must be set in PIT_CheckLine.
+- Fixed: Due to the previously missing ceilingsector variable bouncing
+  missiles could use the incorrect sector when hitting an edge between
+  ceilings of different height.
+- Fixed: Missiles exploding on the edge of a ceiling neighboring to a
+  sky vanished instead of exploding if the missile's center was in the
+  sky sector. To do this I added ceilingsector and ceilingpic variables 
+  to AActor, similar to the already existing floorsector and floorpic.
+- Fixed: ZDoom now looks for ZDoom.wad in the program directory first.
+
 April 16, 2006
 - Fixed: After respawning in a singleplayer demo, demo playback went out
   of sync becase the RNG seed was being altered during recording but not
@@ -12198,3 +12220,4 @@ March 6, 1998
 - Functions in i_music.c now pay attention to the looping flag.
 - C_AddNotifyString() now pays attention to show_messages cvar.
 - Added support for specifying console commands on the command line.
+

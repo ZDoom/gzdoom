@@ -6,6 +6,7 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 #include "a_action.h"
+#include "thingdef.h"
 
 void A_FatRaise (AActor *);
 void A_FatAttack1 (AActor *);
@@ -252,7 +253,6 @@ void A_FatAttack3 (AActor *self)
 	}
 }
 
-int EvalExpressionI (int id, AActor *self);
 //
 // killough 9/98: a mushroom explosion effect, sorta :)
 // Original idea: Linguica

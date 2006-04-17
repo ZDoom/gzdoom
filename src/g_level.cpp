@@ -1918,6 +1918,8 @@ void G_FinishTravel ()
 			pawn->dropoffz = pawndup->dropoffz;
 			pawn->floorsector = pawndup->floorsector;
 			pawn->floorpic = pawndup->floorpic;
+			pawn->ceilingsector = pawndup->ceilingsector;
+			pawn->ceilingpic = pawndup->ceilingpic;
 			pawn->floorclip = pawndup->floorclip;
 			pawn->waterlevel = pawndup->waterlevel;
 			pawn->target = NULL;

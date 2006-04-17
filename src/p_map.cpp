@@ -93,6 +93,8 @@ fixed_t 		tmceilingz;
 fixed_t 		tmdropoffz;
 int				tmfloorpic;
 sector_t		*tmfloorsector;
+int				tmceilingpic;
+sector_t		*tmceilingsector;
 
 static fixed_t	tmfbbox[4];
 static AActor	*tmfthing;
@@ -101,6 +103,8 @@ fixed_t			tmfceilingz;
 fixed_t			tmfdropoffz;
 fixed_t			tmffloorpic;
 sector_t		*tmffloorsector;
+fixed_t			tmfceilingpic;
+sector_t		*tmfceilingsector;
 
 //Added by MC: So bot will know what kind of sector it's entering.
 sector_t*		tmsector;
@@ -122,6 +126,7 @@ AActor *BlockingMobj;
 msecnode_t* sector_list = NULL;		// phares 3/16/98
 
 extern sector_t *openbottomsec;
+extern sector_t *opentopsec;
 
 bool DoRipping;
 AActor *LastRipped;
@@ -228,6 +233,8 @@ void P_FindFloorCeiling (AActor *actor)
 	tmfceilingz = sec->ceilingplane.ZatPoint (x, y);
 	tmffloorpic = sec->floorpic;
 	tmffloorsector = sec;
+	tmfceilingpic = sec->ceilingpic;
+	tmfceilingsector = sec;
 	tmfthing = actor;
 	validcount++;
 
@@ -338,6 +345,8 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	tmfceilingz = newsubsec->sector->ceilingplane.ZatPoint (x, y);
 	tmffloorpic = newsubsec->sector->floorpic;
 	tmffloorsector = newsubsec->sector;
+	tmfceilingpic = newsubsec->sector->ceilingpic;
+	tmfceilingsector = newsubsec->sector;
 	tmfthing = tmthing;
 					
 	validcount++;
@@ -367,6 +376,8 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	fixed_t saveceilingz = tmfceilingz;
 	sector_t *savesector = tmffloorsector;
 	int savepic = tmffloorpic;
+	sector_t *savecsector = tmffloorsector;
+	int savecpic = tmffloorpic;
 	fixed_t savedropoff = tmfdropoffz;
 
 	for (bx=xl ; bx<=xh ; bx++)
@@ -386,6 +397,8 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	thing->ceilingz = saveceilingz;
 	thing->floorsector = savesector;
 	thing->floorpic = savepic;
+	thing->ceilingsector = savecsector;
+	thing->ceilingpic = savecpic;
 	thing->dropoffz = savedropoff;        // killough 11/98
 
 	if (thing->flags2 & MF2_FLOORCLIP)
@@ -765,6 +778,8 @@ BOOL PIT_CheckLine (line_t *ld)
 	if (opentop < tmceilingz)
 	{
 		tmceilingz = opentop;
+		tmceilingsector = opentopsec;
+		tmceilingpic = opentopsec->ceilingpic;
 		ceilingline = ld;
 		BlockingLine = ld;
 	}
@@ -773,6 +788,7 @@ BOOL PIT_CheckLine (line_t *ld)
 	{
 		tmfloorz = openbottom;
 		tmfloorsector = openbottomsec;
+		tmfloorpic = openbottomsec->floorpic;
 		BlockingLine = ld;
 	}
 
@@ -1265,6 +1281,8 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	tmceilingz = newsubsec->sector->ceilingplane.ZatPoint (x, y);
 	tmfloorpic = newsubsec->sector->floorpic;
 	tmfloorsector = newsubsec->sector;
+	tmceilingpic = newsubsec->sector->ceilingpic;
+	tmceilingsector = newsubsec->sector;
 
 	//Added by MC: Fill the tmsector.
 	tmsector = newsubsec->sector;
@@ -1710,6 +1728,8 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 	thing->dropoffz = tmdropoffz;		// killough 11/98: keep track of dropoffs
 	thing->floorpic = tmfloorpic;
 	thing->floorsector = tmfloorsector;
+	thing->ceilingpic = tmceilingpic;
+	thing->ceilingsector = tmceilingsector;
 	thing->x = x;
 	thing->y = y;
 
@@ -2983,6 +3003,8 @@ void P_RailAttack (AActor *source, int damage, int offset)
 		fixed_t savefloor, saveceil, savedropoff;
 		int savefloorpic;
 		sector_t *savefloorsec;
+		int saveceilingpic;
+		sector_t *saveceilingsec;
 
 		savex = source->x;
 		savey = source->y;
@@ -2992,6 +3014,8 @@ void P_RailAttack (AActor *source, int damage, int offset)
 		savedropoff = source->dropoffz;
 		savefloorpic = source->floorpic;
 		savefloorsec = source->floorsector;
+		saveceilingpic = source->ceilingpic;
+		saveceilingsec = source->ceilingsector;
 
 		source->SetOrigin (trace.X, trace.Y, trace.Z);
 		P_HitWater (source, trace.Sector);
@@ -3002,6 +3026,8 @@ void P_RailAttack (AActor *source, int damage, int offset)
 		source->dropoffz = savedropoff;
 		source->floorpic = savefloorpic;
 		source->floorsector = savefloorsec;
+		source->ceilingpic = saveceilingpic;
+		source->ceilingsector = saveceilingsec;
 	}
 	if (trace.CrossedWater)
 	{
@@ -3605,6 +3631,8 @@ BOOL P_AdjustFloorCeil (AActor *thing)
 	thing->dropoffz = tmdropoffz;		// killough 11/98: remember dropoffs
 	thing->floorpic = tmfloorpic;
 	thing->floorsector = tmfloorsector;
+	thing->ceilingpic = tmceilingpic;
+	thing->ceilingsector = tmceilingsector;
 	return isgood;
 }
 

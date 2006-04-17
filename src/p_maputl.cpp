@@ -189,6 +189,7 @@ fixed_t openrange;
 fixed_t lowfloor;
 extern int tmfloorpic;
 sector_t *openbottomsec;
+sector_t *opentopsec;
 
 void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, fixed_t refy)
 {
@@ -212,6 +213,7 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 
 	/*Printf ("]]]]]] %d %d\n", ff, bf);*/
 
+	opentopsec = fc < bc? front : back;
 	opentop = fc < bc ? fc : bc;
 
 	bool usefront;
@@ -241,14 +243,14 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 		openbottom = ff;
 		openbottomsec = front;
 		lowfloor = bf;
-		tmfloorpic = front->floorpic;
+		//tmfloorpic = front->floorpic;
 	}
 	else
 	{
 		openbottom = bf;
 		openbottomsec = back;
 		lowfloor = ff;
-		tmfloorpic = back->floorpic;
+		//tmfloorpic = back->floorpic;
 	}
 
 	openrange = opentop - openbottom;

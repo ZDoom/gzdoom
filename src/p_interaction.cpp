@@ -1354,14 +1354,22 @@ BOOL CheckCheatmode ();
 
 CCMD (kill)
 {
-	if (argv.argc() > 1 && !stricmp (argv[1], "monsters"))
+	if (argv.argc() > 1)
 	{
-		// Kill all the monsters
-		if (CheckCheatmode ())
-			return;
+		if (!stricmp (argv[1], "monsters"))
+		{
+			// Kill all the monsters
+			if (CheckCheatmode ())
+				return;
 
-		Net_WriteByte (DEM_GENERICCHEAT);
-		Net_WriteByte (CHT_MASSACRE);
+			Net_WriteByte (DEM_GENERICCHEAT);
+			Net_WriteByte (CHT_MASSACRE);
+		}
+		else
+		{
+			Printf("cannot kill '%s'\n", argv[1]);
+			return;
+		}
 	}
 	else
 	{

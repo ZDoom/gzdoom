@@ -259,6 +259,8 @@ extern fixed_t			tmffloorz, tmfceilingz;
 extern fixed_t			tmfdropoffz;
 extern fixed_t			tmffloorpic;
 extern sector_t			*tmffloorsector;
+extern fixed_t			tmfceilingpic;
+extern sector_t			*tmfceilingsector;
 
 
 //Added by MC: tmsectortype

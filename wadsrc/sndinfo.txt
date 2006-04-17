@@ -1011,7 +1011,7 @@ weapons/phgrenadeshoot	dsphoot
 weapons/phgrenadebang	dsexplod
 weapons/sigil		dssigil
 weapons/sigilhit	dssglhit
-weapons/sigilcharge	dssglup
+weapons/sigilcharge	dssiglup
 
 monsters/rifle		dsrifle
 

@@ -116,7 +116,7 @@ void D_AddWildFile (const char *pattern);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 void D_DoomLoop ();
-static const char *BaseFileSearch (const char *file, const char *ext);
+static const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir=false);
 static void STACK_ARGS DoConsoleAtExit ();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -1692,9 +1692,18 @@ static EIWADType IdentifyVersion (void)
 //
 //==========================================================================
 
-static const char *BaseFileSearch (const char *file, const char *ext)
+static const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir)
 {
 	static char wad[PATH_MAX];
+
+	if (lookfirstinprogdir)
+	{
+		sprintf (wad, "%s%s%s", progdir, progdir[strlen (progdir) - 1] != '/' ? "/" : "", file);
+		if (FileExists (wad))
+		{
+			return wad;
+		}
+	}
 
 	if (FileExists (file))
 	{
@@ -1910,7 +1919,8 @@ void D_DoomMain (void)
 
 	// [RH] Make sure zdoom.wad is always loaded,
 	// as it contains magic stuff we need.
-	wad = BaseFileSearch ("zdoom.wad", NULL);
+
+	wad = BaseFileSearch ("zdoom.wad", NULL, true);
 	if (wad)
 		D_AddFile (wad);
 	else

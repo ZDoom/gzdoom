@@ -1966,6 +1966,7 @@ IMPLEMENT_ACTOR (ASigil, Strife, -1, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOORCLIP)
 	PROP_Weapon_FlagsSet (WIF_CHEATNOTWEAPON)
+	PROP_Inventory_PickupSound("weapons/sigilcharge")
 	PROP_Tag ("SIGIL")
 	PROP_Inventory_Icon ("I_SGL1")
 END_DEFAULTS

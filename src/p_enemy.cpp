@@ -411,8 +411,40 @@ BOOL P_Move (AActor *actor)
 	tryx = (origx = actor->x) + (deltax = FixedMul (speed, xspeed[actor->movedir]));
 	tryy = (origy = actor->y) + (deltay = FixedMul (speed, yspeed[actor->movedir]));
 
+	// Like P_XYMovement this should do multiple moves if the step size is too large
+
+	fixed_t maxmove = actor->radius - FRACUNIT;
+	int steps = 1;
+
+	if (maxmove > 0)
+	{ 
+		const fixed_t xspeed = abs (deltax);
+		const fixed_t yspeed = abs (deltay);
+
+		if (xspeed > yspeed)
+		{
+			if (xspeed > maxmove)
+			{
+				steps = 1 + xspeed / maxmove;
+			}
+		}
+		else
+		{
+			if (yspeed > maxmove)
+			{
+				steps = 1 + yspeed / maxmove;
+			}
+		}
+	}
+	try_ok = true;
+	for(int i=1; i < steps; i++)
+	{
+		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), false);
+		if (!try_ok) break;
+	}
+
 	// killough 3/15/98: don't jump over dropoffs:
-	try_ok = P_TryMove (actor, tryx, tryy, false);
+	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, false);
 
 	// [GrafZahl] Interpolating monster movement as it is done here just looks bad
 	// so make it switchable!
@@ -481,7 +513,7 @@ BOOL P_Move (AActor *actor)
 		{
 			// [RH] let monsters push lines, as well as use them
 			if (P_ActivateLine (ld, actor, 0, SPAC_USE) ||
-				P_ActivateLine (ld, actor, 0, SPAC_PUSH))
+				((actor->flags & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_PUSH)))
 			{
 				good |= ld == BlockingLine ? 1 : 2;
 			}

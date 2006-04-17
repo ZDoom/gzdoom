@@ -1661,7 +1661,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		}
 
 		// killough 3/15/98: Allow certain objects to drop off
-		if (!dropoff && !(thing->flags & (MF_DROPOFF|MF_FLOAT|MF_MISSILE)))
+		if ((!dropoff && !(thing->flags & (MF_DROPOFF|MF_FLOAT|MF_MISSILE))) || (thing->flags5&MF5_NODROPOFF))
 		{
 			fixed_t floorz = tmfloorz;
 			// [RH] If the thing is standing on something, use its current z as the floorz.

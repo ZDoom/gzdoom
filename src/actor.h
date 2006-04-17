@@ -275,6 +275,7 @@ enum
 	
 	MF5_FASTER			= 0x00000001,	// moves faster when DF_FAST_MONSTERS or nightmare is on.
 	MF5_FASTMELEE		= 0x00000002,	// has a faster melee attack when DF_FAST_MONSTERS or nightmare is on.
+	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 
 // --- mobj.renderflags ---
 

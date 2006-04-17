@@ -1,4 +1,15 @@
 April 17, 2006 (Changes by Graf Zahl)
+- Fixed: The Oracle Pass is an item, not a key. Strictly speaking the
+  same applies to the Prison pass but having that as a key masks
+  some bad design in Strife so it is better to leave it a key.
+- Fixed: The spectral lightning spot used a weird combination of flags
+  that made it act quite unexpectedly. After removing all flags except
+  MF_NOBLOCKMAP it seems to do what it is supposed to do. I also had
+  to add a new flag, MF5_NODROPOFF to prevent the spot from moving over
+  tall ledges.
+- Fixed: When giving an autoactivatable item to the player a copy is
+  created to allow respawning. But when the item had been successully
+  used the original was destroyed, not the copy.
 - Fixed: dssiglup was misspelled as dssglup in SNDINFO so the Sigil's
   charging sound never played.
 - Fixed: The sigil doesn't use the generic weapon pickup sound. It should

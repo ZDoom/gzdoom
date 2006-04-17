@@ -1132,8 +1132,8 @@ bool AInventory::TryPickup (AActor *toucher)
 			{
 				if (--copy->Amount <= 0)
 				{
-					flags &= ~MF_SPECIAL;
-					SetState (&States[S_HOLDANDDESTROY]);
+					copy->flags &= ~MF_SPECIAL;
+					copy->SetState (&States[S_HOLDANDDESTROY]);
 				}
 			}
 		}

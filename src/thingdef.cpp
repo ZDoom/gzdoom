@@ -215,6 +215,10 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF4, FRIGHTENED, AActor, flags4),
 	DEFINE_FLAG(MF4, NOBOUNCESOUND, AActor, flags4),
 
+	DEFINE_FLAG(MF5, FASTER, AActor, flags5),
+	DEFINE_FLAG(MF5, FASTMELEE, AActor, flags5),
+	DEFINE_FLAG(MF5, NODROPOFF, AActor, flags5),
+
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
 	DEFINE_FLAG2(FX_ROCKET, ROCKETTRAIL, AActor, effects),

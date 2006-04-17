@@ -825,7 +825,6 @@ END_DEFAULTS
 
 bool APrisonPass::TryPickup (AActor *toucher)
 {
-	Super::TryPickup (toucher);
 	EV_DoDoor (DDoor::doorOpen, NULL, toucher, 223, 2*FRACUNIT, 0, 0, 0);
 	toucher->GiveInventoryType (QuestItemClasses[9]);
 	return true;
@@ -855,9 +854,9 @@ bool APrisonPass::SpecialDropAction (AActor *dropper)
 
 // Oracle Pass --------------------------------------------------------------
 
-class AOraclePass : public AKey
+class AOraclePass : public AInventory
 {
-	DECLARE_ACTOR (AOraclePass, AKey)
+	DECLARE_ACTOR (AOraclePass, AInventory)
 public:
 	bool TryPickup (AActor *toucher);
 	const char *PickupMessage ();
@@ -873,6 +872,7 @@ IMPLEMENT_ACTOR (AOraclePass, Strife, -1, 0)
 	PROP_StrifeTeaserType (292)
 	PROP_StrifeTeaserType2 (309)
 	PROP_SpawnState (0)
+	PROP_Inventory_FlagsSet(IF_INVBAR)
 	PROP_Inventory_Icon ("I_OTOK")
 	PROP_Tag ("Oracle_Pass")
 END_DEFAULTS

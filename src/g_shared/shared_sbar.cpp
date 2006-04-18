@@ -513,76 +513,52 @@ void FBaseStatusBar::DrINumber (signed int val, int x, int y, int imgBase) const
 
 void FBaseStatusBar::DrBNumber (signed int val, int x, int y, int size) const
 {
-	int xpos;
-	int index;
-	int w, h;
 	bool neg;
-	int i;
+	int i, w;
 	int power;
-	FTexture *pic = Images[imgBNumbers+3];
+	FTexture *pic;
 
-	if (pic != NULL)
+	pic = Images[imgBNumbers];
+	w = (pic != NULL) ? pic->GetWidth() : 0;
+
+	if (val == 0)
 	{
-		w = pic->GetWidth ();
-		h = pic->GetHeight ();
+		if (pic != NULL)
+		{
+			DrawImage (pic, x - w, y);
+		}
+		return;
 	}
-	else
+
+	if ( (neg = val < 0) )
 	{
-		w = h = 0;
+		val = -val;
+		size--;
 	}
-
-	xpos = x + w/2 + w*size;
-
 	for (i = size-1, power = 10; i > 0; i--)
 	{
 		power *= 10;
 	}
-
 	if (val >= power)
 	{
 		val = power - 1;
 	}
-	if ( (neg = val < 0) )
-	{
-		if (size == 2 && val < -9)
-		{
-			val = -9;
-		}
-		else if (size == 3 && val < -99)
-		{
-			val = -99;
-		}
-		val = -val;
-		size--;
-	}
-	if (val == 0)
-	{
-		pic = Images[imgBNumbers];
-		if (pic != NULL)
-		{
-			DrawImage (pic, xpos - pic->GetWidth()/2 - w, y);
-		}
-		return;
-	}
 	while (val != 0 && size--)
 	{
-		xpos -= w;
-		int oldval = val;
+		x -= w;
+		pic = Images[imgBNumbers + val % 10];
 		val /= 10;
-		index = imgBNumbers + (oldval - val*10);
-		pic = Images[index];
 		if (pic != NULL)
 		{
-			DrawImage (pic, xpos - pic->GetWidth()/2, y);
+			DrawImage (pic, x, y);
 		}
 	}
 	if (neg)
 	{
-		xpos -= w;
 		pic = Images[imgBNEGATIVE];
 		if (pic != NULL)
 		{
-			DrawImage (pic, xpos - pic->GetWidth()/2, y);
+			DrawImage (pic, x - w, y);
 		}
 	}
 }

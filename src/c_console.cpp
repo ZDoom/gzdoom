@@ -712,13 +712,12 @@ extern BOOL gameisdead;
 
 int VPrintf (int printlevel, const char *format, va_list parms)
 {
-	char outline[8192];
-
 	if (gameisdead)
 		return 0;
 
-	vsprintf (outline, format, parms);
-	return PrintString (printlevel, outline);
+	string outline;
+	outline.VFormat (format, parms);
+	return PrintString (printlevel, outline.GetChars());
 }
 
 int STACK_ARGS Printf (int printlevel, const char *format, ...)

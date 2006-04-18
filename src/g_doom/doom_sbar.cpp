@@ -39,7 +39,7 @@ public:
 		FTexture *tex;
 
 		FBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
-		tex = FBaseStatusBar::Images[imgBNumbers+3];
+		tex = FBaseStatusBar::Images[imgBNumbers];
 		BigWidth = tex->GetWidth();
 		BigHeight = tex->GetHeight();
 
@@ -257,7 +257,7 @@ private:
 			if (FragsRefresh)
 			{
 				FragsRefresh--;
-				DrawNumber (OldFrags, 110, 3, 2);
+				DrawNumber (OldFrags, 138/*110*/, 3, 2);
 			}
 		}
 		if (CPlayer->health != OldHealth)
@@ -268,7 +268,7 @@ private:
 		if (HealthRefresh)
 		{
 			HealthRefresh--;
-			DrawNumber (OldHealth, 48, 3);
+			DrawNumber (OldHealth, 90/*48*/, 3);
 		}
 		AInventory *armor = CPlayer->mo->FindInventory<ABasicArmor>();
 		int armorpoints = armor != NULL ? armor->Amount : 0;
@@ -280,7 +280,7 @@ private:
 		if (ArmorRefresh)
 		{
 			ArmorRefresh--;
-			DrawNumber (OldArmor, 179, 3);
+			DrawNumber (OldArmor, 221/*179*/, 3);
 		}
 		if (CPlayer->ReadyWeapon != NULL)
 		{
@@ -301,7 +301,7 @@ private:
 			ActiveAmmoRefresh--;
 			if (OldActiveAmmo != -9999)
 			{
-				DrawNumber (OldActiveAmmo, 2, 3);
+				DrawNumber (OldActiveAmmo, 44/*2*/, 3);
 			}
 			else
 			{
@@ -348,26 +348,29 @@ private:
 			{
 				ArmsRefresh[i]--;
 				int x = 111 + i * 12;
-				DrawPartialImage (&StatusBarTex, x, 6);
 
-
-				if (arms[i])
-				{
-					DrawImage (FBaseStatusBar::Images[imgSmNumbers+2+i], x, 4);
-				}
-				else
-				{
-					DrawImage (Images[imgGNUM2+i], x, 4);
-				}
-				if (arms[i+3])
-				{
-					DrawImage (FBaseStatusBar::Images[imgSmNumbers+2+i+3], x, 14);
-				}
-				else
-				{
-					DrawImage (Images[imgGNUM2+i+3], x, 14);
-				}
+				DrawArm (arms[i], i, x, 4, true);
+				DrawArm (arms[i+3], i+3, x, 14, false);
 			}
+		}
+	}
+
+	void DrawArm (int on, int picnum, int x, int y, bool drawBackground)
+	{
+		int w;
+		FTexture *pic = on ? FBaseStatusBar::Images[imgSmNumbers + 2 + picnum] : Images[imgGNUM2 + picnum];
+
+		if (pic != NULL)
+		{
+			w = pic->GetWidth();
+			x -= pic->LeftOffset;
+			y -= pic->TopOffset;
+
+			if (drawBackground)
+			{
+				DrawPartialImage (&StatusBarTex, x, w);
+			}
+			DrawImage (pic, x, y);
 		}
 	}
 
@@ -576,7 +579,7 @@ private:
 
 	void DrawNumber (int val, int x, int y, int size=3)
 	{
-		DrawPartialImage (&StatusBarTex, x-1, size*BigWidth+2);
+		DrawPartialImage (&StatusBarTex, x-BigWidth*size, size*BigWidth);
 		DrBNumber (val, x, y, size);
 	}
 
@@ -1026,6 +1029,7 @@ FDoomStatusBar::FDoomStatusBarTexture::FDoomStatusBarTexture ()
 
 void FDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, int y, BYTE *colormap_in)
 {
+	FTexture *pic;
 	BYTE colormap[256];
 
 	if (Pixels == NULL)
@@ -1049,7 +1053,13 @@ void FDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, 
 		colormap[255] = Near255;
 	}
 
-	TexMan[name]->CopyToBlock (Pixels, Width, Height, x, y, colormap);
+	pic = TexMan[name];
+	if (pic != NULL)
+	{
+		pic->GetWidth();
+		x -= pic->LeftOffset;
+		pic->CopyToBlock (Pixels, Width, Height, x, y, colormap);
+	}
 }
 
 FBaseStatusBar *CreateDoomStatusBar ()

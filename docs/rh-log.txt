@@ -1,3 +1,10 @@
+April 18, 2006
+- Fixed: FBaseStatusBar::DrBNumber() should behave like Doom's
+  STlib_drawNum(), and FDoomStatusBarTexture::DrawToBar() should add
+  the textures left offset to the x coordinate before drawing.
+  These fix Twice Risen's status bar.
+- Changed: VPrintf now uses string.VFormat(), instead of vsprintf().
+
 April 17, 2006 (Changes by Graf Zahl)
 - Fixed: The Oracle Pass is an item, not a key. Strictly speaking the
   same applies to the Prison pass but having that as a key masks

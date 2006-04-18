@@ -59,9 +59,18 @@ cluster 1
 
 map MAP09 "AREA  9: Castle: Programmer's Keep"
 next MAP10
-sky1 SKYMNT01 0
+sky1 SKYMNT02 0
 music D_TRIBAL
 cluster 1
+// These are the sky changes for the first 8 maps
+specialaction "Programmer", ACS_Execute, 0, 1, 256
+specialaction "Programmer", ACS_Execute, 0, 2, 256
+specialaction "Programmer", ACS_Execute, 0, 3, 256
+specialaction "Programmer", ACS_Execute, 0, 4, 256
+specialaction "Programmer", ACS_Execute, 0, 5, 256
+specialaction "Programmer", ACS_Execute, 0, 6, 256
+specialaction "Programmer", ACS_Execute, 0, 7, 256
+specialaction "Programmer", ACS_Execute, 0, 8, 256
 
 // It seems that Strife was originally going to print the text
 // from the C1TEXT lump when you move from map 9 to map 10, but

@@ -92,6 +92,13 @@ class AStrifeWeapon : public AWeapon
 	DECLARE_STATELESS_ACTOR (AStrifeWeapon, AWeapon)
 };
 
+class AFlameThrower : public AStrifeWeapon
+{
+	DECLARE_ACTOR (AFlameThrower, AStrifeWeapon)
+public:
+	const char *PickupMessage ();
+};
+
 class ASigil : public AStrifeWeapon
 {
 	DECLARE_ACTOR (ASigil, AStrifeWeapon)

@@ -228,6 +228,7 @@ void AActor::Serialize (FArchive &arc)
 			TexMan.WriteTexture (arc, picnum);
 		}
 		TexMan.WriteTexture (arc, floorpic);
+		TexMan.WriteTexture (arc, ceilingpic);
 	}
 	else
 	{
@@ -242,6 +243,7 @@ void AActor::Serialize (FArchive &arc)
 			picnum = TexMan.ReadTexture (arc);
 		}
 		floorpic = TexMan.ReadTexture (arc);
+		ceilingpic = TexMan.ReadTexture (arc);
 	}
 	arc << TIDtoHate;
 	if (TIDtoHate == 0)
@@ -334,6 +336,7 @@ void AActor::Serialize (FArchive &arc)
 		<< MaxDropOffHeight 
 		<< MaxStepHeight
 		<< bouncefactor
+		<< bouncecount
 		<< meleerange
 		<< DamageType;
 
@@ -1101,9 +1104,25 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 
 bool AActor::FloorBounceMissile (secplane_t &plane)
 {
-	if (z <= floorz && P_HitFloor (this) && !(flags3 & MF3_CANBOUNCEWATER))
-	{ // Landed in some sort of liquid
-		Destroy ();
+	if (z <= floorz && P_HitFloor (this))
+	{
+		// Landed in some sort of liquid
+		if (flags5 & MF5_EXPLODEONWATER)
+		{
+			P_ExplodeMissile(this, NULL);
+			return true;
+		}
+		if (!(flags3 & MF3_CANBOUNCEWATER))
+		{
+			Destroy ();
+			return true;
+		}
+	}
+
+	// The amount of bounces is limited
+	if (bouncecount>0 && --bouncecount==0)
+	{
+		P_ExplodeMissile(this, NULL);
 		return true;
 	}
 
@@ -1521,9 +1540,10 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 				{
 					if (mo->flags2 & MF2_BOUNCE2)
 					{
-						if ((BlockingMobj->flags2 & MF2_REFLECTIVE) ||
+						if (mo->flags5&MF5_BOUNCEONACTORS ||
+							(BlockingMobj->flags2 & MF2_REFLECTIVE) ||
 							((!BlockingMobj->player) &&
-							(!(BlockingMobj->flags3 & MF3_ISMONSTER))))
+							 (!(BlockingMobj->flags3 & MF3_ISMONSTER))))
 						{
 							fixed_t speed;
 
@@ -1536,7 +1556,7 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 							angle >>= ANGLETOFINESHIFT;
 							mo->momx = FixedMul (speed, finecosine[angle]);
 							mo->momy = FixedMul (speed, finesine[angle]);
-							if (mo->SeeSound)
+							if (mo->SeeSound && !(mo->flags4&MF4_NOBOUNCESOUND))
 							{
 								S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
 							}
@@ -2980,6 +3000,7 @@ BEGIN_DEFAULTS (AActor, Any, -1, 0)
 	PROP_MaxDropOffHeight(24)
 	PROP_MaxStepHeight(24)
 	PROP_BounceFactor(FRACUNIT*7/10)
+	PROP_BounceCount(-1)
 END_DEFAULTS
 
 //==========================================================================

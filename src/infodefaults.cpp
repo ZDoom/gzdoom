@@ -214,6 +214,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_MaxDropOffHeight:	actor->MaxDropOffHeight = dataint;	break;
 	case ADEF_MaxStepHeight:	actor->MaxStepHeight = dataint;		break;
 	case ADEF_BounceFactor:		actor->bouncefactor = dataint;		break;
+	case ADEF_BounceCount:		actor->bouncecount = dataint;		break;
 
 	case ADEF_SpawnState:		actor->SpawnState = datastate;		break;
 	case ADEF_SeeState:			actor->SeeState = datastate;		break;

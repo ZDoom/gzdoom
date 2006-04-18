@@ -825,6 +825,7 @@ END_DEFAULTS
 
 bool APrisonPass::TryPickup (AActor *toucher)
 {
+	Super::TryPickup (toucher);
 	EV_DoDoor (DDoor::doorOpen, NULL, toucher, 223, 2*FRACUNIT, 0, 0, 0);
 	toucher->GiveInventoryType (QuestItemClasses[9]);
 	return true;

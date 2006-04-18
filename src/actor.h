@@ -276,6 +276,8 @@ enum
 	MF5_FASTER			= 0x00000001,	// moves faster when DF_FAST_MONSTERS or nightmare is on.
 	MF5_FASTMELEE		= 0x00000002,	// has a faster melee attack when DF_FAST_MONSTERS or nightmare is on.
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
+	MF5_BOUNCEONACTORS	= 0x00000008,	// bouncing missile doesn't explode when it hits an actor 
+	MF5_EXPLODEONWATER	= 0x00000010,	// bouncing missile explpdes when hitting a water surface
 
 // --- mobj.renderflags ---
 
@@ -649,6 +651,7 @@ public:
 	WORD			SpawnFlags;
 	fixed_t			meleerange;
 	fixed_t			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
+	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98

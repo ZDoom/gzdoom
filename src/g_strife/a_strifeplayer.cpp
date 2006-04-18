@@ -6,6 +6,7 @@
 #include "a_action.h"
 #include "p_local.h"
 #include "a_doomglobal.h"
+#include "templates.h"
 
 void A_Pain (AActor *);
 void A_PlayerScream (AActor *);
@@ -24,6 +25,7 @@ class AStrifePlayer : public APlayerPawn
 	DECLARE_ACTOR (AStrifePlayer, APlayerPawn)
 public:
 	void GiveDefaultInventory ();
+	void TweakSpeeds (int &forward, int &side);
 };
 
 FState AStrifePlayer::States[] =
@@ -137,4 +139,14 @@ void AStrifePlayer::GiveDefaultInventory ()
 	player->health = GetDefault()->health;
 	weapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (TypeInfo::FindType ("PunchDagger")));
 	player->ReadyWeapon = player->PendingWeapon = weapon;
+}
+
+void AStrifePlayer::TweakSpeeds (int &forward, int &side)
+{
+	if (health<=10)
+	{
+		forward = clamp(forward, -0x1900, 0x1900);
+		side = clamp(side, -0x1800, 0x1800);
+	}
+	Super::TweakSpeeds (forward, side);
 }

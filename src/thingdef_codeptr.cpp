@@ -1505,3 +1505,4 @@ void A_KillChildren(AActor * self)
 		}
 	}
 }
+

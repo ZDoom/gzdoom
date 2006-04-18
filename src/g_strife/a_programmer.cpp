@@ -293,5 +293,7 @@ void A_ProgrammerDeath (AActor *self)
 			break;
 		}
 	}
-	P_StartScript (self, NULL, 250, NULL, 0, 0, 0, 0, false, false);
+	// the sky change scripts are now done as special actions in MAPINFO
+	A_BossDeath(self);
+	//P_StartScript (self, NULL, 250, NULL, 0, 0, 0, 0, false, false);
 }

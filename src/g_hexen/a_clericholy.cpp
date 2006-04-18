@@ -245,7 +245,7 @@ IMPLEMENT_ACTOR (AHolyMissile, Hexen, -1, 0)
 	PROP_HeightFixed (8)
 	PROP_Damage (4)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT)
+	PROP_Flags2 (MF2_NOTELEPORT)	
 
 	PROP_SpawnState (0)
 	PROP_DeathState (4)
@@ -468,7 +468,8 @@ END_DEFAULTS
 
 void A_CHolyAttack3 (AActor *actor)
 {
-	P_SpawnMissileZ (actor, actor->z + 40*FRACUNIT, actor->target, RUNTIME_CLASS(AHolyMissile));
+	AActor * missile = P_SpawnMissileZ (actor, actor->z + 40*FRACUNIT, actor->target, RUNTIME_CLASS(AHolyMissile));
+	if (missile != NULL) missile->tracer = NULL;	// No initial target
 	S_Sound (actor, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);
 }
 
@@ -518,9 +519,9 @@ void A_CHolyAttack2 (AActor *actor)
 		{ // Ghosts last slightly less longer in DeathMatch
 			mo->health = 85;
 		}
-		if (linetarget)
+		if (actor->tracer)
 		{
-			mo->tracer = linetarget;
+			mo->tracer = actor->tracer;
 			mo->flags |= MF_NOCLIP|MF_SKULLFLY;
 			mo->flags &= ~MF_MISSILE;
 		}
@@ -570,7 +571,9 @@ void A_CHolyAttack (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AHolyMissile));
+	AActor * missile = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AHolyMissile));
+	if (missile != NULL) missile->tracer = linetarget;
+
 	weapon->CHolyCount = 3;
 	S_Sound (actor, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);
 }

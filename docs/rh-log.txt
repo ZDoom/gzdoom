@@ -1,3 +1,21 @@
+April 18, 2006 (Changes by Graf Zahl)
+- Fixed A_CHolyAttack used linetarget to set the spirits' target actor.
+  But it assumed that this variable was still valid from shooting the
+  weapon. Not only is that not guaranteed. When used by the ClericBoss
+  it is an unwanted effect because the linetarget is most likely the 
+  last thing the player fired at which normally is the ClericBoss itself. 
+  A_CHolyAttack now sets tracer to the intended target instead of 
+  relying on linetarget being preserved.
+- Fixed: Strife's grenades only bounce twice off the floor. They also
+  bounce off all actors and immediately explode when hitting liquids.
+- Fixed: Strife's flame thrower gives 100 ammo as a pickup item but only
+  40 when given in a dialog.
+- Moved the sky change script starts for the Programmer into MAPINFO as
+  special death actions.
+- Changed the sky in MAP09 of Strife to the blue sky to make it more
+  consistent. Now the sky change occurs when the player wakes up after
+  fighting the programmer.
+
 April 18, 2006
 - Fixed: FBaseStatusBar::DrBNumber() should behave like Doom's
   STlib_drawNum(), and FDoomStatusBarTexture::DrawToBar() should add

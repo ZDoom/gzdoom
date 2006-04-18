@@ -218,6 +218,8 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, FASTER, AActor, flags5),
 	DEFINE_FLAG(MF5, FASTMELEE, AActor, flags5),
 	DEFINE_FLAG(MF5, NODROPOFF, AActor, flags5),
+	DEFINE_FLAG(MF5, BOUNCEONACTORS, AActor, flags5),
+	DEFINE_FLAG(MF5, EXPLODEONWATER, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -2644,7 +2646,16 @@ static void ActorBloodColor (AActor *defaults, Baggage &bag)
 static void ActorBounceFactor (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat ();
-	defaults->bouncefactor = fixed_t(sc_Float * FRACUNIT);
+	defaults->bouncefactor = clamp<fixed_t>(fixed_t(sc_Float * FRACUNIT), 0, FRACUNIT);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void ActorBounceCount (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetNumber ();
+	defaults->bouncecount = sc_Number;
 }
 
 //==========================================================================
@@ -3209,6 +3220,7 @@ static const ActorProps props[] =
 	{ "armor.savepercent",			(apf)ArmorSavePercent,		RUNTIME_CLASS(AActor) },
 	{ "attacksound",				ActorAttackSound,			RUNTIME_CLASS(AActor) },
 	{ "bloodcolor",					ActorBloodColor,			RUNTIME_CLASS(AActor) },
+	{ "bouncecount",				ActorBounceCount,			RUNTIME_CLASS(AActor) },
 	{ "bouncefactor",				ActorBounceFactor,			RUNTIME_CLASS(AActor) },
 	{ "burn",						ActorBurnState,				RUNTIME_CLASS(AActor) },
 	{ "burnheight",					ActorBurnHeight,			RUNTIME_CLASS(AActor) },

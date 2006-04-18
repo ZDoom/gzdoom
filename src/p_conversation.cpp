@@ -984,6 +984,11 @@ static void PickConversationReply ()
 					level.total_items--;
 					item->flags &= ~MF_COUNTITEM;
 				}
+				if (item->IsA(RUNTIME_CLASS(AFlameThrower)))
+				{
+					// The flame thrower gives less ammo when given in a dialog
+					static_cast<AWeapon*>(item)->AmmoGive1 = 40;
+				}
 				item->flags |= MF_DROPPED;
 				if (!item->TryPickup (players[consoleplayer].mo))
 				{

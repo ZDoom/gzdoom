@@ -955,15 +955,11 @@ void A_RocketInFlight (AActor *self)
 
 void A_FireFlamer (AActor *);
 
-class AFlameThrower : public AStrifeWeapon
+
+const char *AFlameThrower::PickupMessage ()
 {
-	DECLARE_ACTOR (AFlameThrower, AStrifeWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return "You picked up the flame thrower";
-	}
-};
+	return "You picked up the flame thrower";
+}
 
 FState AFlameThrower::States[] =
 {
@@ -996,7 +992,7 @@ IMPLEMENT_ACTOR (AFlameThrower, Strife, 2005, 0)
 	PROP_Weapon_Flags (WIF_BOT_MELEE)
 	PROP_Weapon_Kickback (0)
 	PROP_Weapon_AmmoUse1 (1)
-	PROP_Weapon_AmmoGive1 (40)
+	PROP_Weapon_AmmoGive1 (100)
 	PROP_Weapon_UpState (S_FLAMERUP)
 	PROP_Weapon_DownState (S_FLAMERDOWN)
 	PROP_Weapon_ReadyState (S_FLAMER)
@@ -1513,9 +1509,11 @@ IMPLEMENT_ACTOR (AHEGrenade, Strife, -1, 0)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_DOOMBOUNCE)
 	PROP_Flags3 (MF3_CANBOUNCEWATER)
 	PROP_Flags4 (MF4_STRIFEDAMAGE|MF4_NOBOUNCESOUND)
+	PROP_Flags5 (MF5_BOUNCEONACTORS|MF5_EXPLODEONWATER)
 	PROP_MaxStepHeight (4)
 	PROP_StrifeType (106)
 	PROP_BounceFactor((FRACUNIT*5/10))
+	PROP_BounceCount(2)
 	PROP_SeeSound ("weapons/hegrenadeshoot")
 	PROP_DeathSound ("weapons/hegrenadebang")
 END_DEFAULTS
@@ -1562,9 +1560,11 @@ IMPLEMENT_ACTOR (APhosphorousGrenade, Strife, -1, 0)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_DOOMBOUNCE)
 	PROP_Flags3 (MF3_CANBOUNCEWATER)
 	PROP_Flags4 (MF4_STRIFEDAMAGE|MF4_NOBOUNCESOUND)
+	PROP_Flags5 (MF5_BOUNCEONACTORS|MF5_EXPLODEONWATER)
 	PROP_MaxStepHeight (4)
 	PROP_StrifeType (107)
 	PROP_BounceFactor((FRACUNIT*5/10))
+	PROP_BounceCount(2)
 	PROP_SeeSound ("weapons/phgrenadeshoot")
 	PROP_DeathSound ("weapons/phgrenadebang")
 END_DEFAULTS

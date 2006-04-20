@@ -1,3 +1,7 @@
+April 19, 2006 (Changes by Graf Zahl)
+- Fixed: Hexen had no default sound sequence for doors and passed a NULL
+  pointer to SN_StartSequence in DoorSound.
+
 April 18, 2006 (Changes by Graf Zahl)
 - Fixed A_CHolyAttack used linetarget to set the spirits' target actor.
   But it assumed that this variable was still valid from shooting the

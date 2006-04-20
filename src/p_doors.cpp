@@ -215,10 +215,14 @@ void DDoor::DoorSound (bool raise) const
 	{
 		switch (gameinfo.gametype)
 		{
+	
 		default:
-			snd = NULL;
 			break;
 
+		case GAME_Hexen:
+			snd = "DoorNormal";
+			break;
+			
 		case GAME_Heretic:
 			snd = raise ? "HereticDoorOpen" : "HereticDoorClose";
 			break;

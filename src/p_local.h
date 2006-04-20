@@ -33,7 +33,6 @@
 
 #define STEEPSLOPE		46341	// [RH] Minimum floorplane.c value for walking
 
-#define MAXHEALTH		(deh.MaxHealth)		//100
 #define MAXMORPHHEALTH	30
 
 #define BONUSADD		6

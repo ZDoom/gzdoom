@@ -1,4 +1,26 @@
 April 19, 2006 (Changes by Graf Zahl)
+- Fixed: Hexen's ammo display in the status bar cannot be refreshed 
+  partially because the background patch has to be drawn always to 
+  overwrite the old display.
+- Fixed: Giving a health item to a non-player caused a crash.
+- Added a compatibility option to limit deh.MaxHealth to the health bonus.
+  Originally this value wasn't used for health packs. Doing this was a bug
+  in Boom but since there's quite a few maps out there which require
+  Boom's altered behavior it has to be compatibility optioned.
+- Fixed: The health bonus's max health must be defined by deh.MaxHealth, 
+  not deh.MaxSoulsphere. To achieve this deh.MaxHealth's handling had to
+  be altered because it has to default to 100.
+- Fixed: ZDBSP created incorrect side references with compressed sidedefs
+  and both sidedefs of a linedef being the same. This only affects the
+  external tool because the internal node builder is run after uncompressing
+  the sidedefs.
+- Added Jim's latest makefile.linux.
+- Added a consistency check to the PNAMES loader because one crash log
+  indicated that it crashed due to a corrupt PNAMES lump.
+- Brought back the sector based sound target handling as a compatibility
+  option. This radical change just broke far too many maps that depend
+  on the original behavior. Strife's special AI functions are excluded 
+  though because they work better with the new method.
 - Fixed: Hexen had no default sound sequence for doors and passed a NULL
   pointer to SN_StartSequence in DoorSound.
 

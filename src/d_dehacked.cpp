@@ -129,7 +129,7 @@ DehInfo deh =
 {
 	100,	// .StartHealth
 	 50,	// .StartBullets
-	100,	// .MaxHealth
+	 -1,	// .MaxHealth
 	200,	// .MaxArmor
 	  1,	// .GreenAC
 	  2,	// .BlueAC
@@ -1640,7 +1640,7 @@ static int PatchMisc (int dummy)
 
 	AHealth *health;
 	health = static_cast<AHealth *> (GetDefaultByName ("HealthBonus"));
-	health->MaxAmount = deh.MaxSoulsphere;
+	if (deh.MaxHealth != -1) health->MaxAmount = deh.MaxHealth;
 
 	// 0xDD means "enable infighting"
 	if (infighting == 0xDD)
@@ -2531,6 +2531,10 @@ void FinishDehPatch ()
 
 		DPrintf ("%s replaces %s\n", subclass->Name, type->Name);
 	}
+
+	// Since deh.MaxHealth was used incorrectly this can only be set
+	// after finishing with the DEH stuff.
+	if (deh.MaxHealth == -1) deh.MaxHealth = 100;
 }
 
 void HandleNoSector()

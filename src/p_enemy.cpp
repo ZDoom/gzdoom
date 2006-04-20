@@ -125,6 +125,7 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 	
 	sec->validcount = validcount;
 	sec->soundtraversed = soundblocks+1;
+	sec->SoundTarget = soundtarget;
 
 	// [RH] Set this in the actors in the sector instead of the sector itself.
 	for (actor = sec->thinglist; actor != NULL; actor = actor->snext)
@@ -1385,7 +1386,7 @@ void A_Look (AActor *actor)
 	}
 	else
 	{
-		targ = actor->LastHeard;
+		targ = (compatflags & COMPATF_SOUNDTARGET)? actor->Sector->SoundTarget : actor->LastHeard;
 
 		// [RH] If the soundtarget is dead, don't chase it
 		if (targ != NULL && targ->health <= 0)

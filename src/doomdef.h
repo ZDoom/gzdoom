@@ -262,6 +262,8 @@ enum
 	COMPATF_USEBLOCKING		= 1 << 8,	// Any special line can block a use line
 	COMPATF_NODOORLIGHT		= 1 << 9,	// Don't do the BOOM local door light effect
 	COMPATF_RAVENSCROLL		= 1 << 10,	// Raven's scrollers use their original carrying speed
+	COMPATF_SOUNDTARGET		= 1 << 11,	// Use sector based sound target code.
+	COMPATF_DEHHEALTH		= 1 << 12,	// Limit deh.MaxHealth to the health bonus (as in Doom2.exe)
 };
 
 // phares 3/20/98:

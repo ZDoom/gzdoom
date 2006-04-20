@@ -197,8 +197,6 @@ public:
 		Mana1Refresh = 0;
 		Mana2Refresh = 0;
 		AmmoRefresh = 0;
-		Ammo1Refresh = 0;
-		Ammo2Refresh = 0;
 	}
 
 	~FHexenStatusBar ()
@@ -509,51 +507,40 @@ private:
 
 	void DrawMainAltAmmo (AAmmo *ammo1, AAmmo *ammo2, int ammocount1, int ammocount2)
 	{
-		if (AmmoRefresh)
-		{
-			Ammo1Refresh = MAX(AmmoRefresh, Ammo1Refresh);
-			Ammo2Refresh = MAX(AmmoRefresh, Ammo2Refresh);
-			AmmoRefresh--;
-			DrawImage (Images[imgAMMOBACK], 77, 2);
-		}
 		if (ammo1 != oldammo1 || ammocount1 != oldammocount1)
 		{
-			Ammo1Refresh = screen->GetPageCount ();
+			AmmoRefresh = screen->GetPageCount ();
 			oldammo1 = ammo1;
 			oldammocount1 = ammocount1;
 		}
 		if (ammo2 != oldammo2 || ammocount2 != oldammocount2)
 		{
-			Ammo2Refresh = screen->GetPageCount ();
+			AmmoRefresh = screen->GetPageCount ();
 			oldammo2 = ammo2;
 			oldammocount2 = ammocount2;
 		}
-		if (ammo2 != NULL)
-		{ // Draw both ammos
-			if (Ammo1Refresh)
-			{
-				Ammo1Refresh--;
+
+		if (AmmoRefresh)
+		{
+			AmmoRefresh--;
+			DrawImage (Images[imgAMMOBACK], 77, 2);
+			if (ammo2 != NULL)
+			{ // Draw both ammos
+				AmmoRefresh--;
 				screen->DrawTexture (TexMan[ammo1->Icon], 89+ST_X, 10+ST_Y,
 					DTA_CenterOffset, true,
 					DTA_320x200, true,
 					TAG_DONE);
 				DrSmallNumber (ammo1->Amount, 86, 20);
-			}
-			if (Ammo2Refresh)
-			{
-				Ammo2Refresh--;
+
 				screen->DrawTexture (TexMan[ammo2->Icon], 113+ST_X, 10+ST_Y,
 					DTA_CenterOffset, true,
 					DTA_320x200, true,
 					TAG_DONE);
 				DrSmallNumber (ammo2->Amount, 110, 20);
 			}
-		}
-		else
-		{ // Draw one ammo
-			if (Ammo1Refresh)
-			{
-				Ammo1Refresh--;
+			else
+			{ // Draw one ammo
 				screen->DrawTexture (TexMan[ammo1->Icon], 100+ST_X, 10+ST_Y,
 					DTA_CenterOffset, true,
 					DTA_320x200, true,
@@ -1150,8 +1137,6 @@ private:
 	char Mana1Refresh;
 	char Mana2Refresh;
 	char AmmoRefresh;
-	char Ammo1Refresh;
-	char Ammo2Refresh;
 
 	FManaBar ManaVial1Pic;
 	FManaBar ManaVial2Pic;

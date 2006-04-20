@@ -19,10 +19,10 @@ DEBUGOBJ ?= debugobj
 CPPSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS)))
 CSRCS = $(wildcard $(addsuffix *.c,$(SRCDIRS)))
 ifndef NOASM
-ASRCS = $(wildcard src/*.nas)
-CFLAGS += -DUSEASM=1
+  ASRCS = $(wildcard src/*.nas)
+  CFLAGS += -DUSEASM=1
 else
-CFLAGS += -DNOASM
+  CFLAGS += -DNOASM
 endif
 SRCS = $(CSRCS) $(CPPSRCS) $(ASRCS)
 CPPOBJFILES = $(notdir $(patsubst %.cpp,%.o,$(CPPSRCS)))
@@ -54,27 +54,30 @@ RESTART?=1
 # rule pattern for dependencies
 define DEPBUILD_PATTERN
 _dep_: _src_
-   $(CXX) _src_ -MM $(CXXFLAGS) -MT "$$(patsubst %.d,%.o,_dep_) _dep_" -MF _dep_
+	$(CXX) _src_ -MM $(CXXFLAGS) -MT "$$(patsubst %.d,%.o,_dep_) _dep_" -MF _dep_
 endef
 
 # rule pattern for assembly files
 define ASMBUILD_PATTERN
 _obj_: _src_
-   $(NASM) -o _obj_ $(NASMFLAGS) _src_
+	$(NASM) -o _obj_ $(NASMFLAGS) _src_
 endef
 
 define CBUILD_PATTERN
 _obj_: _src_
-   $(CC) -c $(CFLAGS) -o _obj_ -c _src_
+	$(CC) -c $(CFLAGS) -o _obj_ -c _src_
 endef
 
 all: $(ZDOOMBIN) zdoom.wad
 
-$(ZDOOMBIN): $(OBJDIR) deps $(OBJS)
-   $(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
-   $(filter-out %/autostart.o %/autozend.o,$(OBJS)) $(OBJDIR)/autozend.o -o $(ZDOOMBIN)
+$(ZDOOMBIN): $(OBJDIR) $(if $(RESTART),deps) $(OBJS)
+ifndef RESTART
+	$(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
+	$(filter-out %/autostart.o %/autozend.o,$(OBJS)) \
+	$(OBJDIR)/autozend.o -o $(ZDOOMBIN)
+endif
 
-#include any of the dep files that already exist
+# include any of the dep files that already exist
 $(foreach dep,$(DEPS),$(if $(wildcard $(dep)),$(eval include $(dep))))
 
 # textually substitute in the _dep_ and the _src_ it depends on to create rules
@@ -92,30 +95,32 @@ $(foreach src,$(CSRCS), $(eval $(subst _src_,$(src),$(subst \
 _obj_,$(OBJDIR)/$(patsubst %.c,%.o,$(notdir $$$(src))),$(CBUILD_PATTERN)))))
 
 $(OBJDIR)/%.o:
-   $(CXX) -c $(CXXFLAGS) -o $@ -c $<
+	$(CXX) -c $(CXXFLAGS) -o $@ -c $<
 
 # start a new instance of make after dependency files have been made
 deps: $(DEPS)
-   $(if $(RESTART),@make -f $(firstword $(MAKEFILE_LIST)) RESTART=)
+ifdef RESTART
+	@make -f $(firstword $(MAKEFILE_LIST)) RESTART=
+endif
 
 $(OBJDIR):
-   mkdir $(OBJDIR)
+	mkdir $(OBJDIR)
 
 zdoom.wad:
-   make -C wadsrc/ -f Makefile
+	make -C wadsrc/ -f Makefile
 
 .PHONY : clean cleandeps cleanobjs distclean deps
 
 clean: cleanobjs
-   rm -f $(ZDOOMDEBUG) $(ZDOOM) $(ZDOOM).map
+	rm -f $(ZDOOMDEBUG) $(ZDOOM) $(ZDOOM).map
 
 # I could use a recursive delete instead, but that could be dangerous...
 distclean: clean cleandeps
-   rmdir $(RELEASEOBJ) $(DEBUGOBJ)
+	rmdir $(RELEASEOBJ) $(DEBUGOBJ)
 
 cleandeps:
-   rm -f $(RELEASEOBJ)/*.d $(DEBUGOBJ)/*.d
+	rm -f $(RELEASEOBJ)/*.d $(DEBUGOBJ)/*.d
 
 cleanobjs:
-   rm -f $(RELEASEOBJ)/*.o $(DEBUGOBJ)/*.o 
+	rm -f $(RELEASEOBJ)/*.o $(DEBUGOBJ)/*.o 
    

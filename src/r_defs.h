@@ -302,6 +302,7 @@ struct sector_t
 	short		floorpic, ceilingpic;
 	BYTE		lightlevel;
 
+	AActor *	SoundTarget;
 	byte 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 
 	short		special;

@@ -64,7 +64,7 @@ void A_WakeOracleSpectre (AActor *self)
 
 	if (spectre != NULL)
 	{
-		spectre->LastHeard = self->LastHeard;
+		spectre->Sector->SoundTarget = spectre->LastHeard = self->LastHeard;
 		spectre->target = self->target;
 		spectre->SetState (spectre->SeeState);
 	}

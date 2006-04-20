@@ -686,12 +686,6 @@ void A_KlaxonBlare (AActor *self)
 	}
 	if (self->reactiontime == 2)
 	{
-		/*
-		for (AActor *actor = self->Sector->thinglist; actor != NULL; actor = actor->snext)
-		{
-			actor->LastHeard = NULL;
-		}
-		*/
 		// [RH] Unalert monsters near the alarm and not just those in the same sector as it.
 		P_NoiseAlert (NULL, self, false);
 	}

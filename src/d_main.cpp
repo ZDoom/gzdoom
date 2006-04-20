@@ -390,6 +390,8 @@ CVAR (Flag, compat_notossdrops,	compatflags, COMPATF_NOTOSSDROPS);
 CVAR (Flag, compat_useblocking, compatflags, COMPATF_USEBLOCKING);
 CVAR (Flag, compat_nodoorlight,	compatflags, COMPATF_NODOORLIGHT);
 CVAR (Flag, compat_ravenscroll,	compatflags, COMPATF_RAVENSCROLL);
+CVAR (Flag, compat_soundtarget,	compatflags, COMPATF_SOUNDTARGET);
+CVAR (Flag, compat_dehhealth,	compatflags, COMPATF_DEHHEALTH);
 
 //==========================================================================
 //

@@ -209,6 +209,7 @@ void A_ClearSoundTarget (AActor *self)
 {
 	AActor *actor;
 
+	self->Sector->SoundTarget = NULL;
 	for (actor = self->Sector->thinglist; actor != NULL; actor = actor->snext)
 	{
 		actor->LastHeard = NULL;

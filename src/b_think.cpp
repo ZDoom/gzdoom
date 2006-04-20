@@ -363,7 +363,7 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	}
 	else if ((typeis (Megasphere) || typeis (Soulsphere) || typeis (HealthBonus)) && actor->health >= deh.MaxSoulsphere)
 		return;
-	else if (item->IsKindOf (RUNTIME_CLASS(AHealth)) && actor->health >= MAXHEALTH)
+	else if (item->IsKindOf (RUNTIME_CLASS(AHealth)) && actor->health >= deh.MaxHealth /*MAXHEALTH*/)
 		return;
 
 	if ((b->dest == NULL ||

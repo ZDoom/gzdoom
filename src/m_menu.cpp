@@ -181,6 +181,7 @@ static char		underscore[2];
 static int		MenuPClass;
 
 static FSaveGameNode *quickSaveSlot;	// NULL = no quicksave slot picked!
+static FSaveGameNode *lastSaveSlot;	// Used for highlighting the most recently used slot in the menu
 static int 		messageToPrint;			// 1 = message to be printed
 static const char *messageString;		// ...and here is the message string!
 static EMenuState messageLastMenuActive;
@@ -796,9 +797,10 @@ void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
 		SelSaveGame = node;
 	}
 
-	if (quickSaveSlot == NULL && okForQuicksave)
+	if (okForQuicksave)
 	{
-		quickSaveSlot = node;
+		if (quickSaveSlot == NULL) quickSaveSlot = node;
+		lastSaveSlot = node;
 	}
 }
 
@@ -1244,13 +1246,13 @@ void M_SaveGame (int choice)
 	M_ReadSaveStrings();
 	SaveGames.AddHead (&NewSaveNode);
 	TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
-	if (quickSaveSlot == NULL)
+	if (lastSaveSlot == NULL)
 	{
 		SelSaveGame = &NewSaveNode;
 	}
 	else
 	{
-		SelSaveGame = quickSaveSlot;
+		SelSaveGame = lastSaveSlot;
 	}
 	M_ExtractSaveData (SelSaveGame);
 }
@@ -2808,6 +2810,10 @@ static void M_DeleteSaveResponse (int choice)
 		{
 			quickSaveSlot = NULL;
 		}
+		if (lastSaveSlot == SelSaveGame)
+		{
+			lastSaveSlot = NULL;
+		}
 		SelSaveGame->Remove ();
 		delete SelSaveGame;
 		SelSaveGame = next;
@@ -3120,6 +3126,7 @@ void M_Init (void)
 	messageString = NULL;
 	messageLastMenuActive = menuactive;
 	quickSaveSlot = NULL;
+	lastSaveSlot = NULL;
 	strcpy (NewSaveNode.Title, "<New Save Game>");
 
 	underscore[0] = (gameinfo.gametype & (GAME_Doom|GAME_Strife)) ? '_' : '[';

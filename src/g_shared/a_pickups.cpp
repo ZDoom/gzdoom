@@ -183,7 +183,7 @@ bool P_GiveBody (AActor *actor, int num)
 
 	if (player != NULL)
 	{
-		max = MAXHEALTH + player->stamina;
+		max = ((compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth) + player->stamina;
 		if (player->morphTics)
 		{
 			max = MAXMORPHHEALTH;
@@ -1728,31 +1728,43 @@ bool AHealth::TryPickup (AActor *other)
 	player_t *player = other->player;
 	int max = MaxAmount;
 	
-	if (max == 0)
+	if (player != NULL)
 	{
-		max = MAXHEALTH + (player != NULL ? player->stamina : 0);
-		if (player->morphTics)
+		if (max == 0)
 		{
-			max = MAXMORPHHEALTH;
+			max = ((compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth) + player->stamina;
+			if (player->morphTics)
+			{
+				max = MAXMORPHHEALTH;
+			}
 		}
+		if (player->health >= max)
+		{
+			// You should be able to pick up the Doom health bonus even if
+			// you are already full on health.
+			if (ItemFlags & IF_ALWAYSPICKUP)
+			{
+				GoAwayAndDie ();
+				return true;
+			}
+			return false;
+		}
+		player->health += Amount;
+		if (player->health > max)
+		{
+			player->health = max;
+		}
+		player->mo->health = player->health;
 	}
-	if (player->health >= max)
+	else
 	{
-		// You should be able to pick up the Doom health bonus even if
-		// you are already full on health.
-		if (ItemFlags & IF_ALWAYSPICKUP)
+		if (P_GiveBody(other, Amount) || ItemFlags & IF_ALWAYSPICKUP)
 		{
 			GoAwayAndDie ();
 			return true;
 		}
 		return false;
 	}
-	player->health += Amount;
-	if (player->health > max)
-	{
-		player->health = max;
-	}
-	player->mo->health = player->health;
 	GoAwayAndDie ();
 	return true;
 }

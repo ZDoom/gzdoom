@@ -636,6 +636,23 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int p
 
 		pnames >> numpatches;
 
+		// Check whether the amount of names reported is correct.
+		if (numpatches < 0)
+		{
+			I_Error("Corrupt PNAMES lump found (negative amount of entries reported)");
+			return;
+		}
+
+		// Check whether the amount of names reported is correct.
+		int lumplength = Wads.LumpLength(patcheslump);
+		if (numpatches > (lumplength-4)/8)
+		{
+			Printf("PNAMES lump is shorter than required (%ld entries reported but only %d bytes (%ld entries) long\n",
+				numpatches, lumplength, (lumplength-4)/8);
+			// Truncate but continue reading. Who knows how many such lumps exist?
+			numpatches = (lumplength-4)/8;
+		}
+
 		// Catalog the patches these textures use so we know which
 		// textures they represent.
 		patchlookup = (FPatchLookup *)alloca (numpatches * sizeof(*patchlookup));

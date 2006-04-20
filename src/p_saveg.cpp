@@ -118,6 +118,7 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->gravity
 			<< sec->damage
 			<< sec->mod
+			<< sec->SoundTarget
 			<< sec->SecActTarget
 			<< sec->FloorLight
 			<< sec->CeilingLight

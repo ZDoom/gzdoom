@@ -1,4 +1,7 @@
 April 20, 2006 (Changes by Graf Zahl)
+- Fixed: Doom's status bar assumed that STBAR was always in Doom patch format.
+- Added MF3_DONTSPLASH to the newly created sound sequence things.
+- Fixed: makewad.c used C++ syntax.
 - Fixed: Strife's ending check included destroying the computer - an event
   that happens before the branch in the story.
 - Fixed: The overloaded FRandom::Random2 function with mask parameter didn't

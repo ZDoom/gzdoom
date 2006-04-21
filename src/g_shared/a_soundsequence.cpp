@@ -79,6 +79,7 @@ public:
 
 IMPLEMENT_STATELESS_ACTOR (ASoundSequenceSlot, Any, -1, 0)
 	PROP_Flags (MF_NOSECTOR|MF_NOBLOCKMAP)
+	PROP_Flags3 (MF3_DONTSPLASH)
 END_DEFAULTS
 
 //==========================================================================
@@ -107,6 +108,7 @@ public:
 
 IMPLEMENT_STATELESS_ACTOR (ASoundSequence, Any, 14066, 0)
 	PROP_Flags (MF_NOSECTOR|MF_NOBLOCKMAP)
+	PROP_Flags3 (MF3_DONTSPLASH)
 END_DEFAULTS
 
 //==========================================================================

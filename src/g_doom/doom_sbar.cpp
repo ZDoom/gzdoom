@@ -12,6 +12,7 @@
 #include "m_swap.h"
 #include "a_keys.h"
 #include "templates.h"
+#include "i_system.h"
 
 #define ST_EVILGRINCOUNT		(2*TICRATE)
 #define ST_STRAIGHTFACECOUNT	(TICRATE/2)
@@ -190,11 +191,21 @@ public:
 	}
 
 private:
-	struct FDoomStatusBarTexture : public FPatchTexture
+	struct FDoomStatusBarTexture : public FTexture
 	{
 	public:
 		FDoomStatusBarTexture ();
+		const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+		const BYTE *GetPixels ();
+		void Unload ();
+		~FDoomStatusBarTexture ();
 		void DrawToBar (const char *name, int x, int y, BYTE *colormap_in = NULL);
+
+	protected:
+		void MakeTexture ();
+
+		FTexture * BaseTexture;
+		BYTE *Pixels;
 	}
 	StatusBarTex;
 
@@ -1023,8 +1034,68 @@ private:
 };
 
 FDoomStatusBar::FDoomStatusBarTexture::FDoomStatusBarTexture ()
-: FPatchTexture (Wads.GetNumForName ("STBAR"), FTexture::TEX_MiscPatch)
 {
+	BaseTexture = TexMan[TexMan.AddPatch("STBAR")];
+	if (BaseTexture==NULL)
+	{
+		I_Error("Fatal error: STBAR not found");
+	}
+	UseType = FTexture::TEX_MiscPatch;
+	Name[0]=0;	// doesn't need a name
+
+	// now copy all the properties from the base texture
+	Width = BaseTexture->GetWidth();
+	Height = BaseTexture->GetHeight();
+	TopOffset = BaseTexture->TopOffset;
+	LeftOffset = BaseTexture->LeftOffset;
+	WidthBits = BaseTexture->WidthBits;
+	HeightBits = BaseTexture->HeightBits;
+	ScaleX = BaseTexture->ScaleX;
+	ScaleY = BaseTexture->ScaleY;
+	WidthMask = (1 << WidthBits) - 1;
+	Pixels = NULL;
+}
+
+const BYTE *FDoomStatusBar::FDoomStatusBarTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+
+	BaseTexture->GetColumn(column, spans_out);
+	return Pixels + column*Height;
+}
+
+const BYTE *FDoomStatusBar::FDoomStatusBarTexture::GetPixels ()
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+void FDoomStatusBar::FDoomStatusBarTexture::Unload ()
+{
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
+}
+												
+FDoomStatusBar::FDoomStatusBarTexture::~FDoomStatusBarTexture ()
+{
+	Unload ();
+}
+
+
+void FDoomStatusBar::FDoomStatusBarTexture::MakeTexture ()
+{
+	Pixels = new BYTE[Width*Height];
+	const BYTE *pix = BaseTexture->GetPixels();
+	memcpy(Pixels, pix, Width*Height);
 }
 
 void FDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, int y, BYTE *colormap_in)

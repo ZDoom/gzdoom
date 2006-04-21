@@ -179,7 +179,7 @@ static FProduction *ParseExpression (FCommandLine &argv, int &parsept)
 	}
 	else
 	{
-		for (size_t i = 0; i < sizeof(Producers)/sizeof(Producers[0]); ++i)
+		for (size_t i = 0; i < countof(Producers); ++i)
 		{
 			if (strcmp (Producers[i].Token, token) == 0)
 			{

@@ -2157,7 +2157,7 @@ void D_DoomMain (void)
 		{
 			ep = atoi (Args.GetArg(p+1));
 			map = p < Args.NumArgs() - 2 ? atoi (Args.GetArg(p+2)) : 10;
-			if ((unsigned)map > 9)
+			if (map < 1 || map > 9)
 			{
 				map = ep;
 				ep = 1;

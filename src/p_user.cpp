@@ -1354,25 +1354,13 @@ void P_UnPredictPlayer ()
 void player_s::Serialize (FArchive &arc)
 {
 	int i;
-	userinfo_t *ui;
-	userinfo_t dummy;
 
-	if (arc.IsStoring ())
-	{
-		arc.UserWriteClass (cls);
-		ui = &userinfo;
-	}
-	else
-	{
-		arc.UserReadClass (cls);
-		ui = &dummy;
-	}
-
-	arc << mo
+	arc << cls
+		<< mo
 		<< camera
 		<< playerstate
 		<< cmd
-		<< *ui
+		<< userinfo
 		<< DesiredFOV << FOV
 		<< viewz
 		<< viewheight
@@ -1452,22 +1440,6 @@ void player_s::Serialize (FArchive &arc)
 			<< allround
 			<< oldx
 			<< oldy;
-		if (arc.IsLoading ())
-		{
-			if (consoleplayer != this - players)
-			{
-				userinfo = *ui;
-			}
-			botinfo_t *thebot = bglobal.botinfo;
-			while (thebot && stricmp (userinfo.netname, thebot->name))
-				thebot = thebot->next;
-			if (thebot)
-			{
-				thebot->inuse = true;
-			}
-			bglobal.botnum++;
-			bglobal.botingame[this - players] = true;
-		}
 	}
 	else
 	{

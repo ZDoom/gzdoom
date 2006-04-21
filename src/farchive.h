@@ -38,8 +38,7 @@
 #include "doomtype.h"
 #include "dobject.h"
 #include "tarray.h"
-
-class DObject;
+#include "name.h"
 
 class FFile
 {
@@ -179,6 +178,7 @@ virtual void Read (void *mem, unsigned int len);
 		FArchive& operator<< (float &f);
 		FArchive& operator<< (double &d);
 		FArchive& operator<< (char *&str);
+		FArchive& operator<< (name &n);
 		FArchive& SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize);
 		FArchive& SerializeObject (DObject *&object, TypeInfo *type);
 		FArchive& WriteObject (DObject *obj);
@@ -280,12 +280,32 @@ inline FArchive &operator<< (FArchive &arc, PalEntry &p)
 #include "dobject.h"
 
 template<class T>
-inline
-FArchive &operator<< (FArchive &arc, T* &object)
+inline FArchive &operator<< (FArchive &arc, T* &object)
 {
 	return arc.SerializeObject ((DObject*&)object, RUNTIME_CLASS(T));
 }
 
 FArchive &operator<< (FArchive &arc, const TypeInfo * &info);
+
+template<class T>
+inline FArchive &operator<< (FArchive &arc, TArray<T> &self)
+{
+	unsigned int i;
+
+	if (arc.IsStoring())
+	{
+		arc.WriteCount(self.Count);
+	}
+	else
+	{
+		DWORD numStored = arc.ReadCount();
+		self.Resize(numStored);
+	}
+	for (i = 0; i < self.Count; ++i)
+	{
+		arc << self.Array[i];
+	}
+	return arc;
+}
 
 #endif //__FARCHIVE_H__

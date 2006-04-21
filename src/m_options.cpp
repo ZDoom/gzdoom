@@ -160,7 +160,7 @@ static menuitem_t ConfirmItems[] = {
 static menu_t ConfirmMenu = {
 	"PLEASE CONFIRM",
 	3,
-	sizeof(ConfirmItems)/sizeof(ConfirmItems[0]),
+	countof(ConfirmItems),
 	140,
 	ConfirmItems,
 };
@@ -208,7 +208,7 @@ menu_t OptionMenu =
 {
 	"OPTIONS",
 	0,
-	sizeof(OptionItems)/sizeof(OptionItems[0]),
+	countof(OptionItems),
 	0,
 	OptionItems,
 };
@@ -253,7 +253,7 @@ menu_t MouseMenu =
 {
 	"MOUSE OPTIONS",
 	0,
-	sizeof(MouseItems)/sizeof(MouseItems[0]),
+	countof(MouseItems),
 	0,
 	MouseItems,
 };
@@ -349,7 +349,7 @@ menu_t JoystickMenu =
 {
 	"JOYSTICK OPTIONS",
 	0,
-	sizeof(JoystickItems)/sizeof(JoystickItems[0]),
+	countof(JoystickItems),
 	0,
 	JoystickItems,
 };
@@ -422,7 +422,7 @@ menu_t ControlsMenu =
 {
 	"CUSTOMIZE CONTROLS",
 	3,
-	sizeof(ControlsItems)/sizeof(ControlsItems[0]),
+	countof(ControlsItems),
 	0,
 	ControlsItems,
 	2,
@@ -519,7 +519,7 @@ menu_t VideoMenu =
 {
 	"DISPLAY OPTIONS",
 	0,
-	sizeof(VideoItems)/sizeof(VideoItems[0]),
+	countof(VideoItems),
 	0,
 	VideoItems,
 };
@@ -573,7 +573,7 @@ menu_t AutomapMenu =
 {
 	"AUTOMAP OPTIONS",
 	0,
-	sizeof(AutomapItems)/sizeof(AutomapItems[0]),
+	countof(AutomapItems),
 	0,
 	AutomapItems,
 };
@@ -651,7 +651,7 @@ menu_t MapColorsMenu =
 {
 	"CUSTOMIZE MAP COLORS",
 	0,
-	sizeof(MapColorsItems)/sizeof(MapColorsItems[0]),
+	countof(MapColorsItems),
 	48,
 	MapColorsItems,
 };
@@ -699,7 +699,7 @@ menu_t ColorPickerMenu =
 {
 	"SELECT COLOR",
 	2,
-	sizeof(ColorPickerItems)/sizeof(ColorPickerItems[0]),
+	countof(ColorPickerItems),
 	0,
 	ColorPickerItems,
 };
@@ -931,7 +931,7 @@ static menu_t DMFlagsMenu =
 {
 	"GAMEPLAY OPTIONS",
 	0,
-	sizeof(DMFlagsItems)/sizeof(DMFlagsItems[0]),
+	countof(DMFlagsItems),
 	0,
 	DMFlagsItems,
 };
@@ -963,7 +963,7 @@ static menu_t CompatibilityMenu =
 {
 	"COMPATIBILITY OPTIONS",
 	0,
-	sizeof(CompatibilityItems)/sizeof(CompatibilityItems[0]),
+	countof(CompatibilityItems),
 	0,
 	CompatibilityItems,
 };
@@ -1044,7 +1044,7 @@ static menu_t SoundMenu =
 {
 	"SOUND OPTIONS",
 	0,
-	sizeof(SoundItems)/sizeof(SoundItems[0]),
+	countof(SoundItems),
 	0,
 	SoundItems,
 };
@@ -1106,7 +1106,7 @@ static menu_t AdvSoundMenu =
 {
 	"ADVANCED SOUND OPTIONS",
 	1,
-	sizeof(AdvSoundItems)/sizeof(AdvSoundItems[0]),
+	countof(AdvSoundItems),
 	0,
 	AdvSoundItems,
 };
@@ -2872,7 +2872,7 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
 		return;
 
 	// Start after the normal controls
-	unsigned int i = sizeof(ControlsItems)/sizeof(ControlsItems[0]);
+	unsigned int i = countof(ControlsItems);
 	unsigned int most = CustomControlsItems.Size();
 
 	while (i < most)
@@ -2903,7 +2903,7 @@ CCMD (addkeysection)
 		return;
 	}
 
-	const int numStdControls = sizeof(ControlsItems)/sizeof(ControlsItems[0]);
+	const int numStdControls = countof(ControlsItems);
 	int i;
 
 	if (ControlsMenu.items == ControlsItems)

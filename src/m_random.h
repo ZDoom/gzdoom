@@ -63,9 +63,10 @@ public:
 	~FRandom ();
 
 	int operator() ();			// Returns a random number in the range [0,255]
+	int operator() (int mod);	// Returns a random number in the range [0,mod)
 	int Random2();				// Returns rand# - rand#
 	int Random2(int mask);		// Returns (rand# & mask) - (rand# & mask)
-	int HitDice (int count);	// HITDICE macro used in Heretic and Hexen
+	int HitDice(int count);		// HITDICE macro used in Heretic and Hexen
 
 	int Random()				// synonym for ()
 	{

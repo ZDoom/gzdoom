@@ -179,6 +179,7 @@ OBJECTS += \
 	$(OBJDIR)/tempfiles.o \
 	$(OBJDIR)/thingdef.o \
 	$(OBJDIR)/thingdef_codeptr.o \
+	$(OBJDIR)/thingdef_exp.o \
 	$(OBJDIR)/v_collection.o \
 	$(OBJDIR)/v_draw.o \
 	$(OBJDIR)/v_font.o \
@@ -222,7 +223,6 @@ OBJECTS += \
 	$(OBJDIR)/a_chicken.o \
 	$(OBJDIR)/a_clink.o \
 	$(OBJDIR)/a_dsparil.o \
-	$(OBJDIR)/a_hereticambience.o \
 	$(OBJDIR)/a_hereticarmor.o \
 	$(OBJDIR)/a_hereticartifacts.o \
 	$(OBJDIR)/a_hereticdecorations.o \
@@ -344,6 +344,7 @@ OBJECTS += \
 	$(OBJDIR)/a_sharedmisc.o \
 	$(OBJDIR)/a_skies.o \
 	$(OBJDIR)/a_soundenvironment.o \
+	$(OBJDIR)/a_soundsequence.o \
 	$(OBJDIR)/a_spark.o \
 	$(OBJDIR)/a_splashes.o \
 	$(OBJDIR)/a_waterzone.o \

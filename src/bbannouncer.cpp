@@ -248,13 +248,11 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 		{ // Another player did the killing
 			if (killee->player->userinfo.gender == GENDER_MALE)
 			{ // Only males can be castrated
-				choice = &KillSounds[rannum %
-					(sizeof(KillSounds)/sizeof(KillSounds[0]))];
+				choice = &KillSounds[rannum % countof(KillSounds)];
 			}
 			else
 			{
-				choice = &KillSounds[rannum %
-					(sizeof(KillSounds)/sizeof(KillSounds[0])-1)];
+				choice = &KillSounds[rannum % (countof(KillSounds) - 1)];
 			}
 			killerName = killer->player->userinfo.netname;
 

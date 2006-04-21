@@ -63,16 +63,16 @@ void DCeiling::PlayCeilingSound ()
 {
 	if (m_Sector->seqType >= 0)
 	{
-		SN_StartSequence (m_Sector, m_Sector->seqType, SEQ_PLATFORM);
+		SN_StartSequence (m_Sector, m_Sector->seqType, SEQ_PLATFORM, 0);
 	}
 	else
 	{
 		if (m_Silent == 2)
-			SN_StartSequence (m_Sector, "Silence");
+			SN_StartSequence (m_Sector, "Silence", 0);
 		else if (m_Silent == 1)
-			SN_StartSequence (m_Sector, "CeilingSemiSilent");
+			SN_StartSequence (m_Sector, "CeilingSemiSilent", 0);
 		else
-			SN_StartSequence (m_Sector, "CeilingNormal");
+			SN_StartSequence (m_Sector, "CeilingNormal", 0);
 	}
 }
 

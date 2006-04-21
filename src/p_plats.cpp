@@ -58,9 +58,9 @@ void DPlat::Serialize (FArchive &arc)
 void DPlat::PlayPlatSound (const char *sound)
 {
 	if (m_Sector->seqType >= 0)
-		SN_StartSequence (m_Sector, m_Sector->seqType, SEQ_PLATFORM);
+		SN_StartSequence (m_Sector, m_Sector->seqType, SEQ_PLATFORM, 0);
 	else
-		SN_StartSequence (m_Sector, sound);
+		SN_StartSequence (m_Sector, sound, 0);
 }
 
 //
@@ -168,7 +168,7 @@ void DPlat::Tick ()
 				m_Status = down;
 
 			if (m_Type == platToggle)
-				SN_StartSequence (m_Sector, "Silence");
+				SN_StartSequence (m_Sector, "Silence", 0);
 			else
 				PlayPlatSound ("Platform");
 		}
@@ -346,7 +346,7 @@ manual_plat:
 			plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_High = sec->floorplane.d;
 			plat->m_Status = DPlat::down;
-			SN_StartSequence (sec, "Silence");
+			SN_StartSequence (sec, "Silence", 0);
 			break;
 
 		case DPlat::platDownToNearestFloor:

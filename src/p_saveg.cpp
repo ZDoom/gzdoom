@@ -46,21 +46,228 @@
 #include "v_palette.h"
 #include "a_sharedglobal.h"
 
+extern void P_SpawnPlayer (mapthing2_t *mthing);
 
+static void CopyPlayer (player_t *dst, player_t *src, const char *name);
+static void ReadOnePlayer (FArchive &arc);
+static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow);
+static void SpawnExtraPlayers ();
 
 //
 // P_ArchivePlayers
 //
 void P_SerializePlayers (FArchive &arc)
 {
+	BYTE numPlayers, numPlayersNow;
 	int i;
 
-	for (i = 0; i < MAXPLAYERS; i++)
+	// Count the number of players present right now.
+	for (numPlayersNow = 0, i = 0; i < MAXPLAYERS; ++i)
 	{
-		arc << playeringame[i];
 		if (playeringame[i])
 		{
-			players[i].Serialize (arc);
+			++numPlayersNow;
+		}
+	}
+
+	if (arc.IsStoring())
+	{
+		// Record the number of players in this save.
+		arc << numPlayersNow;
+
+		// Record each player's name, followed by their data.
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i])
+			{
+				arc.WriteString (players[i].userinfo.netname);
+				players[i].Serialize (arc);
+			}
+		}
+	}
+	else
+	{
+		arc << numPlayers;
+
+		// If there is only one player in the game, they go to the
+		// first player present, no matter what their name.
+		if (numPlayers == 1)
+		{
+			ReadOnePlayer (arc);
+		}
+		else
+		{
+			ReadMultiplePlayers (arc, numPlayers, numPlayersNow);
+		}
+		if (numPlayersNow > numPlayers)
+		{
+			SpawnExtraPlayers ();
+		}
+	}
+}
+
+static void ReadOnePlayer (FArchive &arc)
+{
+	int i;
+	char *name = NULL;
+	bool didIt = false;
+
+	arc << name;
+
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i])
+		{
+			if (!didIt)
+			{
+				didIt = true;
+				player_t playerTemp;
+				memset (&playerTemp, 0, sizeof(playerTemp));
+				playerTemp.Serialize (arc);
+				CopyPlayer (&players[i], &playerTemp, name);
+			}
+			else
+			{
+				if (players[i].mo != NULL)
+				{
+					players[i].mo->Destroy();
+					players[i].mo = NULL;
+				}
+			}
+		}
+	}
+	delete[] name;
+}
+
+static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow)
+{
+	// For two or more players, read each player into a temporary array.
+	int i, j;
+	char **nametemp = new char *[numPlayers];
+	player_t *playertemp = new player_t[numPlayers];
+	BYTE *tempPlayerUsed = new BYTE[numPlayers];
+	BYTE *playerUsed = new BYTE[MAXPLAYERS];
+
+	memset (playertemp, 0, numPlayers*sizeof(player_t));
+
+	for (i = 0; i < numPlayers; ++i)
+	{
+		nametemp[i] = NULL;
+		arc << nametemp[i];
+		playertemp[i].Serialize (arc);
+		tempPlayerUsed[i] = 0;
+	}
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		playerUsed[i] = playeringame[i] ? 0 : 2;
+	}
+
+	// Now try to match players from the savegame with players present
+	// based on their names. If two players in the savegame have the
+	// same name, then they are assigned to players in the current game
+	// on a first-come, first-served basis.
+	for (i = 0; i < numPlayers; ++i)
+	{
+		for (j = 0; j < MAXPLAYERS; ++j)
+		{
+			if (playerUsed[j] == 0 && stricmp(players[j].userinfo.netname, nametemp[i]) == 0)
+			{ // Found a match, so copy our temp player to the real player
+				Printf ("Found player %d (%s) at %d\n", i, nametemp[i], j);
+				CopyPlayer (&players[j], &playertemp[i], nametemp[i]);
+				playerUsed[j] = 1;
+				tempPlayerUsed[i] = 1;
+				break;
+			}
+		}
+	}
+
+	// Any players that didn't have matching names are assigned to existing
+	// players on a first-come, first-served basis.
+	for (i = 0; i < numPlayers; ++i)
+	{
+		if (tempPlayerUsed[i] == 0)
+		{
+			for (j = 0; j < MAXPLAYERS; ++j)
+			{
+				if (playerUsed[j] == 0)
+				{
+					Printf ("Assigned player %d (%s) to %d (%s)\n", i, nametemp[i], j, players[j].userinfo.netname);
+					CopyPlayer (&players[j], &playertemp[i], nametemp[i]);
+					playerUsed[j] = 1;
+					tempPlayerUsed[i] = 1;
+					break;
+				}
+			}
+		}
+	}
+
+	// Make sure any extra players don't have actors spawned yet.
+	for (j = 0; j < MAXPLAYERS; ++j)
+	{
+		if (playerUsed[j] == 0)
+		{
+			if (players[j].mo != NULL)
+			{
+				players[j].mo->Destroy();
+				players[j].mo = NULL;
+			}
+		}
+	}
+
+	delete[] playerUsed;
+	delete[] tempPlayerUsed;
+	delete[] playertemp;
+	for (i = 0; i < numPlayers; ++i)
+	{
+		delete[] nametemp[i];
+	}
+	delete[] nametemp;
+}
+
+static void CopyPlayer (player_t *dst, player_t *src, const char *name)
+{
+	// The userinfo needs to be saved for real players, but it
+	// needs to come from the save for bots.
+	userinfo_t uibackup = dst->userinfo;
+	memcpy (dst, src, sizeof(player_t));
+
+	if (dst->isbot)
+	{
+		botinfo_t *thebot = bglobal.botinfo;
+		while (thebot && stricmp (name, thebot->name))
+		{
+			thebot = thebot->next;
+		}
+		if (thebot)
+		{
+			thebot->inuse = true;
+		}
+		bglobal.botnum++;
+		bglobal.botingame[dst - players] = true;
+	}
+	else
+	{
+		dst->userinfo = uibackup;
+	}
+}
+
+static void SpawnExtraPlayers ()
+{
+	// If there are more players now than there were in the savegame,
+	// be sure to spawn the extra players.
+	int i;
+
+	if (deathmatch)
+	{
+		return;
+	}
+
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i] && players[i].mo == NULL)
+		{
+			players[i].playerstate = PST_ENTER;
+			P_SpawnPlayer (&playerstarts[i]);
 		}
 	}
 }

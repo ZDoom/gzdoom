@@ -205,94 +205,84 @@ void DDoor::Tick ()
 // [RH] DoorSound: Plays door sound depending on direction and speed
 void DDoor::DoorSound (bool raise) const
 {
-	const char *snd = "";
+	int choice;
+
+	// For multiple-selection sound sequences, the following choices are used:
+	//  0  Opening
+	//  1  Closing
+	//  2  Opening fast
+	//  3  Closing fast
+
+	choice = !raise;
+
+	if (m_Speed >= FRACUNIT*8)
+	{
+		choice += 2;
+	}
 
 	if (m_Sector->seqType >= 0)
 	{
-		SN_StartSequence (m_Sector, m_Sector->seqType, SEQ_DOOR);
+		SN_StartSequence (m_Sector, m_Sector->seqType, SEQ_DOOR, choice);
 	}
 	else
 	{
+		const char *snd;
+
 		switch (gameinfo.gametype)
 		{
-	
-		default:
-			break;
-
-		case GAME_Hexen:
+		default:	/* Doom and Hexen */
 			snd = "DoorNormal";
 			break;
 			
 		case GAME_Heretic:
-			snd = raise ? "HereticDoorOpen" : "HereticDoorClose";
-			break;
-
-		case GAME_Doom:
-			if (m_Speed >= 8*FRACUNIT)
-			{
-				snd = raise ? "DoorOpenBlazing" : "DoorCloseBlazing";
-			}
-			else
-			{
-				snd = raise ? "DoorOpenNormal" : "DoorCloseNormal";
-			}
+			snd = "HereticDoor";
 			break;
 
 		case GAME_Strife:
-			if (m_Speed >= FRACUNIT*8)
-			{
-				snd = raise ? "DoorOpenBlazing" : "DoorCloseBlazing";
-			}
-			else
-			{
-				snd = raise ? "DoorOpenSmallMetal" : "DoorCloseSmallMetal";
+			snd = "DoorSmallMetal";
 
-				// Search the front top textures of 2-sided lines on the door sector
-				// for a door sound to use.
-				for (int i = 0; i < m_Sector->linecount; ++i)
+			// Search the front top textures of 2-sided lines on the door sector
+			// for a door sound to use.
+			for (int i = 0; i < m_Sector->linecount; ++i)
+			{
+				const char *texname;
+				line_t *line = m_Sector->lines[i];
+
+				if (line->backsector == NULL)
+					continue;
+
+				texname = TexMan[sides[line->sidenum[0]].toptexture]->Name;
+				if (texname[0] == 'D' && texname[1] == 'O' && texname[2] == 'R')
 				{
-					const char *texname;
-					line_t *line = m_Sector->lines[i];
-
-					if (line->backsector == NULL)
-						continue;
-
-					texname = TexMan[sides[line->sidenum[0]].toptexture]->Name;
-					if (strncmp (texname, "DOR", 3) == 0)
+					switch (texname[3])
 					{
-						switch (texname[3])
+					case 'S':
+						snd = "DoorStone";
+						break;
+
+					case 'M':
+						if (texname[4] == 'L')
 						{
-						case 'S':
-							snd = raise ? "DoorOpenStone" : "DoorCloseStone";
-							break;
-
-						case 'M':
-							if (texname[4] == 'L')
-							{
-								snd = raise ? "DoorOpenLargeMetal" : "DoorCloseLargeMetal";
-							}
-							break;
-
-						case 'W':
-							if (texname[4] == 'L')
-							{
-								snd = raise ? "DoorOpenLargeWood" : "DoorCloseLargeWood";
-							}
-							else
-							{
-								snd = raise ? "DoorOpenSmallWood" : "DoorCloseSmallWood";
-							}
-							break;
+							snd = "DoorLargeMetal";
 						}
+						break;
+
+					case 'W':
+						if (texname[4] == 'L')
+						{
+							snd = "DoorLargeWood";
+						}
+						else
+						{
+							snd = "DoorSmallWood";
+						}
+						break;
 					}
 				}
 			}
 			break;
 		}
-		if (snd != NULL)
-		{
-			SN_StartSequence (m_Sector, snd);
-		}
+		SN_StartSequence (m_Sector, snd, choice);
 	}
 }
 
@@ -532,7 +522,7 @@ bool DAnimatedDoor::StartClosing ()
 	m_Line2->flags |= ML_BLOCKING;
 	if (ani.CloseSound != NULL)
 	{
-		SN_StartSequence (m_Sector, ani.CloseSound);
+		SN_StartSequence (m_Sector, ani.CloseSound, 1);
 	}
 
 	m_Status = Closing;
@@ -713,7 +703,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay)
 	MoveCeiling (2048*FRACUNIT, topdist, 1);
 	if (DoorAnimations[m_WhichDoorIndex].OpenSound != NULL)
 	{
-		SN_StartSequence (m_Sector, DoorAnimations[m_WhichDoorIndex].OpenSound);
+		SN_StartSequence (m_Sector, DoorAnimations[m_WhichDoorIndex].OpenSound, 1);
 	}
 }
 

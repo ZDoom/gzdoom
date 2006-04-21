@@ -1058,7 +1058,7 @@ void LoadJoystickConfig ()
 {
 	if (SetJoystickSection (false))
 	{
-		for (size_t i = 0; i < sizeof(JoyConfigVars)/sizeof(JoyConfigVars[0]); ++i)
+		for (size_t i = 0; i < countof(JoyConfigVars); ++i)
 		{
 			const char *val = GameConfig->GetValueForKey (JoyConfigVars[i]->GetName());
 			UCVarValue cval;
@@ -1077,7 +1077,7 @@ void SaveJoystickConfig ()
 	if (SetJoystickSection (true))
 	{
 		GameConfig->ClearCurrentSection ();
-		for (size_t i = 0; i < sizeof(JoyConfigVars)/sizeof(JoyConfigVars[0]); ++i)
+		for (size_t i = 0; i < countof(JoyConfigVars); ++i)
 		{
 			UCVarValue cval = JoyConfigVars[i]->GetGenericRep (CVAR_String);
 			GameConfig->SetValueForKey (JoyConfigVars[i]->GetName(), cval.String);

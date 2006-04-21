@@ -916,6 +916,21 @@ FArchive &FArchive::operator<< (double &w)
 	return *this;
 }
 
+FArchive &FArchive::operator<< (name &n)
+{ // In an archive, a "name" is a string that might be stored multiple times,
+  // so it is only stored once. It is still treated as a normal string. In the
+  // rest of the game, a name is a unique identifier for a number.
+	if (m_Storing)
+	{
+		WriteName (n.GetChars());
+	}
+	else
+	{
+		n = name(ReadName());
+	}
+	return *this;
+}
+
 FArchive &FArchive::SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize)
 {
 	WORD w;

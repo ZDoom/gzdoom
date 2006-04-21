@@ -6,7 +6,9 @@
 
 enum ENamedName
 {
-	NAME_None
+#define xx(n) NAME_##n,
+#include "namedef.h"
+#undef xx
 };
 
 class name

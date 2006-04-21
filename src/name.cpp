@@ -2,6 +2,14 @@
 #include "name.h"
 #include "c_dispatch.h"
 
+// Define the predefined names.
+static const char *PredefinedNames[] =
+{
+#define xx(n) #n,
+#include "namedef.h"
+#undef xx
+};
+
 int name::Buckets[name::HASH_SIZE];
 TArray<name::MainName> name::NameArray;
 bool name::Inited;
@@ -13,6 +21,11 @@ name::MainName::MainName (int next)
 int name::FindName (const char *text, bool noCreate)
 {
 	if (!Inited) InitBuckets ();
+
+	if (text == NULL)
+	{
+		return 0;
+	}
 
 	int hash = MakeKey (text) % HASH_SIZE;
 	int scanner = Buckets[hash];
@@ -44,10 +57,17 @@ int name::FindName (const char *text, bool noCreate)
 
 void name::InitBuckets ()
 {
+	size_t i;
+
 	Inited = true;
-	for (int i = 0; i < HASH_SIZE; ++i)
+	for (i = 0; i < HASH_SIZE; ++i)
 	{
 		Buckets[i] = -1;
 	}
-	name::FindName ("None", false);	// 'None' is always name 0.
+
+	// Register built-in names. 'None' must be name 0.
+	for (i = 0; i < countof(PredefinedNames); ++i)
+	{
+		FindName (PredefinedNames[i], false);
+	}
 }

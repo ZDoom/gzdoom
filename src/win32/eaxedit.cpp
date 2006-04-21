@@ -454,7 +454,7 @@ void SetupEnvControls (HWND hDlg)
 {
 	size_t i;
 
-	for (i = 0; i < sizeof(EnvControls)/sizeof(EnvControls[0]); ++i)
+	for (i = 0; i < countof(EnvControls); ++i)
 	{
 		if (EnvControls[i].EditControl == 0)
 			continue;
@@ -469,7 +469,7 @@ void SetupEnvControls (HWND hDlg)
 		SetWindowLongPtr (EnvControls[i].EditHWND, GWLP_USERDATA, (LONG_PTR)&EnvControls[i]);
 		SetWindowLongPtr (EnvControls[i].SliderHWND, GWLP_USERDATA, (LONG_PTR)&EnvControls[i]);
 	}
-	for (i = 0; i < sizeof(EnvFlags)/sizeof(EnvFlags[0]); ++i)
+	for (i = 0; i < countof(EnvFlags); ++i)
 	{
 		EnvFlags[i].CheckboxHWND = GetDlgItem (hDlg, EnvFlags[i].CheckboxControl);
 		SetWindowLongPtr (EnvFlags[i].CheckboxHWND, GWLP_USERDATA, (LONG_PTR)&EnvFlags[i]);
@@ -517,7 +517,7 @@ void UpdateControls (ReverbContainer *env, HWND hDlg)
 
 	CurrentEnv = NULL;
 
-	for (i = 0; i < sizeof(EnvControls)/sizeof(EnvControls[0]); ++i)
+	for (i = 0; i < countof(EnvControls); ++i)
 	{
 		EnvControl *ctrl = &EnvControls[i];
 
@@ -533,7 +533,7 @@ void UpdateControls (ReverbContainer *env, HWND hDlg)
 		EnableWindow (ctrl->EditHWND, !env->Builtin);
 		EnableWindow (ctrl->SliderHWND, !env->Builtin);
 	}
-	for (i = 0; i < sizeof(EnvFlags)/sizeof(EnvFlags[0]); ++i)
+	for (i = 0; i < countof(EnvFlags); ++i)
 	{
 		SendMessage (EnvFlags[i].CheckboxHWND, BM_SETCHECK,
 			(env->Properties.Flags & EnvFlags[i].Flag) ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -631,7 +631,7 @@ INT_PTR CALLBACK EAXProp (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		if (HIWORD(wParam) == BN_CLICKED && CurrentEnv != NULL)
 		{
-			for (size_t i = 0; i < sizeof(EnvFlags)/sizeof(EnvFlags[0]); ++i)
+			for (size_t i = 0; i < countof(EnvFlags); ++i)
 			{
 				if ((HWND)lParam == EnvFlags[i].CheckboxHWND)
 				{
@@ -1052,7 +1052,7 @@ retry:
 				base = NULL;
 			}
 			fprintf (f, "\"%s\" %u %u\n{\n", env->Name, HIBYTE(env->ID), LOBYTE(env->ID));
-			for (j = 0; j < sizeof(EnvControls)/sizeof(EnvControls[0]); ++j)
+			for (j = 0; j < countof(EnvControls); ++j)
 			{
 				const EnvControl *ctl = &EnvControls[j];
 				if (ctl->Name &&
@@ -1074,7 +1074,7 @@ retry:
 					}
 				}
 			}
-			for (j = 0; j < sizeof(EnvFlags)/sizeof(EnvFlags[0]); ++j)
+			for (j = 0; j < countof(EnvFlags); ++j)
 			{
 				if (EnvFlags[j].Flag & (env->Properties.Flags ^ base->Properties.Flags))
 				{

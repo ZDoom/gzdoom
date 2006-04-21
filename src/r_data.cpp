@@ -645,9 +645,9 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int p
 
 		// Check whether the amount of names reported is correct.
 		int lumplength = Wads.LumpLength(patcheslump);
-		if (numpatches > (lumplength-4)/8)
+		if (numpatches > DWORD((lumplength-4)/8))
 		{
-			Printf("PNAMES lump is shorter than required (%ld entries reported but only %d bytes (%ld entries) long\n",
+			Printf("PNAMES lump is shorter than required (%ld entries reported but only %d bytes (%d entries) long\n",
 				numpatches, lumplength, (lumplength-4)/8);
 			// Truncate but continue reading. Who knows how many such lumps exist?
 			numpatches = (lumplength-4)/8;
@@ -3204,7 +3204,7 @@ static void R_InitPatches ()
 	int i, j;
 	char name[9];
 
-	for (i = sizeof(patches)/sizeof(patches[0]); i >= 0; --i)
+	for (i = countof(patches); i >= 0; --i)
 	{
 		TexMan.AddPatch (patches[i]);
 	}
@@ -3221,7 +3221,7 @@ static void R_InitPatches ()
 	}
 
 	// Spinning power up icons for Heretic and Hexen
-	for (j = sizeof(spinners)/sizeof(spinners[0])-1; j >= 0; --j)
+	for (j = countof(spinners)-1; j >= 0; --j)
 	{
 		for (i = 0; i <= 15; ++i)
 		{

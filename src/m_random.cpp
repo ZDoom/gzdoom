@@ -127,17 +127,33 @@ int FRandom::operator() ()
 	return (UpdateSeed (Seed) >> 20) & 255;
 }
 
+int FRandom::operator() (int mod)
+{
+	if (mod <= 256)
+	{ // The mod is small enough, so a byte is enough to get a good number.
+		return (*this)() % mod;
+	}
+	else
+	{ // For mods > 256, construct a 32-bit int and modulo that.
+		int num = (*this)();
+		num = (num << 8) | (*this)();
+		num = (num << 8) | (*this)();
+		num = (num << 8) | (*this)();
+		return num % mod;
+	}
+}
+
 int FRandom::Random2 ()
 {
-	int t = (UpdateSeed (Seed) >> 20) & 255;
-	int u = (UpdateSeed (Seed) >> 20) & 255;
+	int t = (*this)();
+	int u = (*this)();
 	return t - u;
 }
 
 int FRandom::Random2 (int mask)
 {
-	int t = (UpdateSeed (Seed) >> 20) & mask;
-	int u = (UpdateSeed (Seed) >> 20) & mask;
+	int t = (*this)();
+	int u = (*this)();
 	return t - u;
 }
 

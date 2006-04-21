@@ -164,7 +164,7 @@ ${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.na
  a_doomimp.cpp a_doomkeys.cpp a_doommisc.cpp a_doomplayer.cpp a_doomweaps.cpp \
  a_fatso.cpp a_keen.cpp a_lostsoul.cpp a_painelemental.cpp a_possessed.cpp \
  a_revenant.cpp a_scriptedmarine.cpp a_spidermaster.cpp doom_sbar.cpp a_beast.cpp \
- a_chicken.cpp a_clink.cpp a_dsparil.cpp a_hereticambience.cpp a_hereticarmor.cpp \
+ a_chicken.cpp a_clink.cpp a_dsparil.cpp a_hereticarmor.cpp \
  a_hereticartifacts.cpp a_hereticdecorations.cpp a_hereticimp.cpp a_heretickeys.cpp \
  a_hereticmisc.cpp a_hereticplayer.cpp a_hereticweaps.cpp a_ironlich.cpp \
  a_knight.cpp a_mummy.cpp a_snake.cpp a_wizard.cpp heretic_sbar.cpp a_bats.cpp \
@@ -190,7 +190,7 @@ ${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.na
  a_camera.cpp a_debris.cpp a_decals.cpp a_flashfader.cpp a_fountain.cpp \
  a_hatetarget.cpp a_keys.cpp a_lightning.cpp a_movingcamera.cpp a_pickups.cpp \
  a_quake.cpp a_secrettrigger.cpp a_sectoraction.cpp a_sharedmisc.cpp a_skies.cpp \
- a_soundenvironment.cpp a_spark.cpp a_splashes.cpp a_waterzone.cpp a_weaponpiece.cpp a_weapons.cpp \
+ a_soundenvironment.cpp a_soundsequence.cpp a_spark.cpp a_splashes.cpp a_waterzone.cpp a_weaponpiece.cpp a_weapons.cpp \
  hudmessages.cpp shared_sbar.cpp fmopl.cpp mlkernel.cpp mlopl.cpp mlopl_io.cpp \
  opl_mus_player.cpp fmodsound.cpp i_music.cpp i_sound.cpp music_cd.cpp \
  music_flac.cpp music_midi_midiout.cpp music_midi_stream.cpp music_midi_timidity.cpp \

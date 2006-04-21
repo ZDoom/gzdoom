@@ -173,7 +173,7 @@ public:
 
 #define BEGIN_DEFAULTS(actor,game,ednum,spawnid) \
 	BEGIN_DEFAULTS_PRE(actor) \
-	RUNTIME_CLASS(actor), &actor::States[0], NULL, NULL, sizeof(actor::States)/sizeof(actor::States[0]), \
+	RUNTIME_CLASS(actor), &actor::States[0], NULL, NULL, countof(actor::States), \
 	BEGIN_DEFAULTS_POST(actor,game,ednum,spawnid)
 
 #define BEGIN_STATELESS_DEFAULTS(actor,game,ednum,spawnid) \

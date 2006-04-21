@@ -284,7 +284,7 @@ static int STACK_ARGS flagcmp (const void * a, const void * b)
 
 static flagdef *FindFlag (flagdef *flags, int numflags, const char *flag)
 {
-	int min = 0, max = numflags - 1;//sizeof(ActorFlags)/sizeof(ActorFlags[0])-1;
+	int min = 0, max = numflags - 1;
 
 	while (min <= max)
 	{
@@ -697,11 +697,11 @@ static AFuncDesc * FindFunction(char * string)
 
 	if (!funcsorted) 
 	{
-		qsort(AFTable, sizeof(AFTable)/sizeof(AFTable[0]), sizeof(AFTable[0]), funccmp);
+		qsort(AFTable, countof(AFTable), sizeof(AFTable[0]), funccmp);
 		funcsorted=true;
 	}
 
-	int min = 0, max = sizeof(AFTable)/sizeof(AFTable[0])-1;
+	int min = 0, max = countof(AFTable)-1;
 
 	while (min <= max)
 	{

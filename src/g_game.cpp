@@ -1620,8 +1620,14 @@ void G_DoLoadGame ()
 	{
 		// Make a special case for the message printed for old savegames that don't
 		// have this information.
-		if (engine == NULL) Printf ("Savegame is from an incompatible version\n");
-		else Printf ("Savegame is from another ZDoom based engine\n");
+		if (engine == NULL)
+		{
+			Printf ("Savegame is from an incompatible version\n");
+		}
+		else
+		{
+			Printf ("Savegame is from another ZDoom-based engine\n");
+		}
 		delete png;
 		fclose (stdfile);
 		return;

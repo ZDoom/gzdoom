@@ -303,7 +303,7 @@ void A_CentaurDropStuff (AActor *actor)
 		RUNTIME_CLASS(ACentaurShield)
 	};
 
-	for (int i = sizeof(DropTypes)/sizeof(DropTypes[0])-1; i >= 0; --i)
+	for (int i = countof(DropTypes)-1; i >= 0; --i)
 	{
 		AActor *mo;
 

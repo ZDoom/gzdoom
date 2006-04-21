@@ -1,3 +1,55 @@
+April 20, 2006
+- Fixed compilation with mingw again.
+- Added multiple-choice sound sequences. These overcome one of the major
+  deficiences of the Hexen-inherited SNDSEQ system while still being Hexen
+  compatible: Custom door sounds can now use different opening and closing
+  sequences, for both normal and blazing speeds.
+- Moved the TArray serializer into farchive.h so that tarray.h doesn't need
+  farchive.h at all because GCC was much pickier than VC. Because of this,
+  I don't need the FArchive change I made yesterday that hid FArchive's
+  TArray usses behind pointers.
+- Added a countof macro to doomtype.h. See the1's blog to find out why
+  it's implemented the way it is.
+    <http://blogs.msdn.com/the1/articles/210011.aspx>
+- Added a new method to FRandom for getting random numbers larger than 255,
+  which lets me:
+- Fixed: SNDSEQ delayrand commands could delay for no more than 255 tics.
+- Fixed: If you're going to have sector_t.SoundTarget, then they need to
+  be included in the pointer cleanup scans.
+
+April 19, 2006
+- Added a serializer for TArray. This required I make a couple changes to
+  FArchive in order to avoid circular references between farchive.h and
+  tarray.h.
+- Ported back newer name code from 2.1.
+- Fixed: Using -warp with only one parameter in Doom and Heretic to
+  select a map on episode 1 no longer worked.
+- New: Loading a multiplayer save now restores the players based on
+  their names rather than on their connection order. Using connection
+  order was sensible when -net was the only way to start a network game,
+  but with -host/-join, it's not so nice. Also, if there aren't enough
+  players in the save, then the extra players will be spawned normally,
+  so you can continue a saved game with more players than you started it
+  with.
+- Added some new SNDSEQ commands to make it possible to define Heretic's
+  ambient sounds in SNDSEQ: volumerel, volumerand, slot, randomsequence,
+  delayonce, and restart. With these, it is basically possible to obsolete
+  all of the $ambient SNDINFO commands.
+- Fixed: Sound sequences would only execute one command each time they were
+  ticked.
+- Fixed: No bounds checking was done on the volume sound sequences played at.
+- Fixed: The tic parameter to playloop was useless and caused it to
+  act like a redundant playrepeat. I have removed all the logic that
+  caused playloop to play repeating sounds, and now it acts like an
+  infinite sequence of play/delay commands until the sequence is
+  stopped.
+- Fixed: Sound sequences were ticked every frame, not every tic, so all
+  the delay commands were timed incorrectly and varied depending on your
+  framerate. Since this is useful for restarting looping sounds that got
+  cut off, I have not changed this. Instead, the delay commands now
+  record the tic when execution should resume, not the number of tics
+  left to delay.
+
 April 19, 2006 (Changes by Graf Zahl)
 - Fixed: Hexen's ammo display in the status bar cannot be refreshed 
   partially because the background patch has to be drawn always to 

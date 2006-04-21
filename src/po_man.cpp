@@ -254,7 +254,7 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 	}
 	pe->m_Speed = (speed*direction*(ANGLE_90/64))>>3;
 	poly->specialdata = pe;
-	SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+	SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 	
 	while ( (mirror = GetPolyobjMirror( polyNum)) )
 	{
@@ -287,7 +287,7 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 		direction = -direction;
 		pe->m_Speed = (speed*direction*(ANGLE_90/64))>>3;
 		polyNum = mirror;
-		SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+		SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 	}
 	return true;
 }
@@ -360,7 +360,7 @@ bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
 	pe->m_Angle = an>>ANGLETOFINESHIFT;
 	pe->m_xSpeed = FixedMul (pe->m_Speed, finecosine[pe->m_Angle]);
 	pe->m_ySpeed = FixedMul (pe->m_Speed, finesine[pe->m_Angle]);
-	SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+	SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 
 	// Do not interpolate very fast moving polyobjects. The minimum tic count is
 	// 3 instead of 2, because the moving crate effect in Massmouth 2, Hostitality
@@ -387,7 +387,7 @@ bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
 		pe->m_xSpeed = FixedMul (pe->m_Speed, finecosine[pe->m_Angle]);
 		pe->m_ySpeed = FixedMul (pe->m_Speed, finesine[pe->m_Angle]);
 		polyNum = mirror;
-		SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+		SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 		if (dist/speed <= 2)
 		{
 			pe->StopInterpolation ();
@@ -412,7 +412,7 @@ void DPolyDoor::Tick ()
 		if (!--m_Tics)
 		{
 			poly = GetPolyobj (m_PolyObj);
-			SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+			SN_StartSequence (poly, poly->seqType, SEQ_DOOR, m_Close);
 		}
 		return;
 	}
@@ -462,7 +462,7 @@ void DPolyDoor::Tick ()
 				m_xSpeed = -m_xSpeed;
 				m_ySpeed = -m_ySpeed;
 				m_Close = false;
-				SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+				SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 			}
 		}
 		break;
@@ -509,7 +509,7 @@ void DPolyDoor::Tick ()
 				m_Dist = m_TotalDist - m_Dist;
 				m_Speed = -m_Speed;
 				m_Close = false;
-				SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+				SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 			}
 		}			
 		break;
@@ -552,7 +552,7 @@ bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle,
 		pd->m_Direction = angle >> ANGLETOFINESHIFT;
 		pd->m_xSpeed = FixedMul (pd->m_Speed, finecosine[pd->m_Direction]);
 		pd->m_ySpeed = FixedMul (pd->m_Speed, finesine[pd->m_Direction]);
-		SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+		SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 	}
 	else if (type == PODOOR_SWING)
 	{
@@ -560,7 +560,7 @@ bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle,
 		pd->m_Direction = 1; // ADD:  PODOOR_SWINGL, PODOOR_SWINGR
 		pd->m_Speed = (speed*pd->m_Direction*(ANGLE_90/64))>>3;
 		pd->m_Dist = pd->m_TotalDist = angle;
-		SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+		SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 	}
 
 	poly->specialdata = pd;
@@ -582,7 +582,7 @@ bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle,
 			pd->m_Direction = (angle + ANGLE_180) >> ANGLETOFINESHIFT; // reverse the angle
 			pd->m_xSpeed = FixedMul (pd->m_Speed, finecosine[pd->m_Direction]);
 			pd->m_ySpeed = FixedMul (pd->m_Speed, finesine[pd->m_Direction]);
-			SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+			SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 		}
 		else if (type == PODOOR_SWING)
 		{
@@ -590,7 +590,7 @@ bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle,
 			pd->m_Direction = -1; // ADD:  same as above
 			pd->m_Speed = (speed*pd->m_Direction*(ANGLE_90/64))>>3;
 			pd->m_Dist = pd->m_TotalDist = angle;
-			SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+			SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 		}
 		polyNum = mirror;
 	}

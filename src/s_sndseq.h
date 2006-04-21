@@ -5,6 +5,7 @@
 //#include "actor.h"
 #include "s_sound.h"
 #include "r_defs.h"
+#include "name.h"
 
 typedef enum {
 	SEQ_PLATFORM,
@@ -16,52 +17,47 @@ typedef enum {
 
 struct sector_t;
 
-void S_ParseSndSeq (int levellump);
-void SN_StartSequence (AActor *mobj, int sequence, seqtype_t type);
-void SN_StartSequence (AActor *mobj, const char *name);
-void SN_StartSequence (sector_t *sector, int sequence, seqtype_t type);
-void SN_StartSequence (sector_t *sector, const char *name);
-void SN_StartSequence (fixed_t spot[3], int sequence, seqtype_t type);
-void SN_StartSequence (fixed_t spot[3], const char *name);
-void SN_StopSequence (AActor *mobj);
-void SN_StopSequence (sector_t *sector);
-void SN_StopSequence (fixed_t spot[3]);
-void SN_UpdateActiveSequences (void);
-void SN_StopAllSequences (void);
-ptrdiff_t SN_GetSequenceOffset (int sequence, unsigned int *sequencePtr);
-void SN_ChangeNodeData (int nodeNum, int seqOffset, int delayTics,
-	float volume, int currentSoundID);
-bool SN_IsMakingLoopingSound (sector_t *sector);
-
 class DSeqNode : public DObject
 {
 	DECLARE_CLASS (DSeqNode, DObject)
 public:
 	virtual ~DSeqNode ();
 	void Serialize (FArchive &arc);
+	void StopAndDestroy ();
+	void Destroy ();
+	void Tick ();
+	void ChangeData (int seqOffset, int delayTics, float volume, int currentSoundID);
+	void AddChoice (int seqnum, seqtype_t type);
+	name GetSequenceName() const;
+
 	virtual void MakeSound () {}
 	virtual void MakeLoopedSound () {}
 	virtual void *Source () { return NULL; }
 	virtual bool IsPlaying () { return false; }
-	void Tick ();
+	virtual DSeqNode *SpawnChild (int seqnum) { return NULL; }
+
 	inline static DSeqNode *FirstSequence() { return SequenceListHead; }
 	inline DSeqNode *NextSequence() const { return m_Next; }
-	void ChangeData (int seqOffset, int delayTics, float volume, int currentSoundID);
 
 	static void SerializeSequences (FArchive &arc);
 
 protected:
 	DSeqNode ();
-	DSeqNode (int sequence);
+	DSeqNode (int sequence, int modenum);
 
-	unsigned int *m_SequencePtr;
+	SDWORD *m_SequencePtr;
 	int m_Sequence;
 
 	int m_CurrentSoundID;
-	int m_DelayTics;
+	int m_DelayUntilTic;
 	float m_Volume;
 	int m_StopSound;
 	int m_Atten;
+	int m_ModeNum;
+
+	TArray<int> m_SequenceChoices;
+	DSeqNode *m_ChildSeqNode;
+	DSeqNode *m_ParentSeqNode;
 
 private:
 	static DSeqNode *SequenceListHead;
@@ -72,30 +68,31 @@ private:
 	friend void SN_StopAllSequences (void);
 };
 
-typedef struct
+struct FSoundSequence
 {
-	char			name[MAX_SNDNAME+1];
-	int				stopsound;
-	unsigned int	script[1];	// + more until end of sequence script
-} sndseq_t;
+	name	SeqName;
+	name	Slot;
+	int		StopSound;
+	SDWORD	Script[1];	// + more until end of sequence script
+};
 
-void SN_StartSequence (AActor *mobj, int sequence, seqtype_t type);
-void SN_StartSequence (AActor *mobj, const char *name);
-void SN_StartSequence (sector_t *sector, int sequence, seqtype_t type);
-void SN_StartSequence (sector_t *sector, const char *name);
-void SN_StartSequence (polyobj_t *poly, int sequence, seqtype_t type);
-void SN_StartSequence (polyobj_t *poly, const char *name);
+void S_ParseSndSeq (int levellump);
+DSeqNode *SN_StartSequence (AActor *mobj, int sequence, seqtype_t type, int modenum, bool nostop=false);
+DSeqNode *SN_StartSequence (AActor *mobj, const char *name, int modenum);
+DSeqNode *SN_StartSequence (AActor *mobj, name seqname, int modenum);
+DSeqNode *SN_StartSequence (sector_t *sector, int sequence, seqtype_t type, int modenum, bool nostop=false);
+DSeqNode *SN_StartSequence (sector_t *sector, const char *name, int modenum);
+DSeqNode *SN_StartSequence (polyobj_t *poly, int sequence, seqtype_t type, int modenum, bool nostop=false);
+DSeqNode *SN_StartSequence (polyobj_t *poly, const char *name, int modenum);
 void SN_StopSequence (AActor *mobj);
 void SN_StopSequence (sector_t *sector);
 void SN_StopSequence (polyobj_t *poly);
 void SN_UpdateActiveSequences (void);
-ptrdiff_t SN_GetSequenceOffset (int sequence, unsigned int *sequencePtr);
+ptrdiff_t SN_GetSequenceOffset (int sequence, SDWORD *sequencePtr);
 void SN_DoStop (void *);
 void SN_ChangeNodeData (int nodeNum, int seqOffset, int delayTics,
 	float volume, int currentSoundID);
-
-extern sndseq_t **Sequences;
-extern int ActiveSequences;
-extern int NumSequences;
+name SN_GetSequenceSlot (int sequence, seqtype_t type);
+bool SN_IsMakingLoopingSound (sector_t *sector);
 
 #endif //__S_SNDSEQ_H__

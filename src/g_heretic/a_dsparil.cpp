@@ -607,9 +607,9 @@ void A_Srcr2Decide (AActor *actor)
 	};
 
 	unsigned int chanceindex = actor->health / (actor->GetDefault()->health/8);
-	if (chanceindex >= sizeof(chance)/sizeof(chance[0]))
+	if (chanceindex >= countof(chance))
 	{
-		chanceindex = sizeof(chance)/sizeof(chance[0])-1;
+		chanceindex = countof(chance) - 1;
 	}
 
 	if (pr_s2d() < chance[chanceindex])

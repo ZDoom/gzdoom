@@ -1988,6 +1988,9 @@
 				RelativePath=".\src\name.h">
 			</File>
 			<File
+				RelativePath=".\src\namedef.h">
+			</File>
+			<File
 				RelativePath=".\src\nodebuild.h">
 			</File>
 			<File
@@ -2688,6 +2691,9 @@
 				RelativePath="src\g_shared\a_soundenvironment.cpp">
 			</File>
 			<File
+				RelativePath=".\src\g_shared\a_soundsequence.cpp">
+			</File>
+			<File
 				RelativePath=".\src\g_shared\a_spark.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -3316,21 +3322,6 @@
 			</File>
 			<File
 				RelativePath=".\src\g_heretic\a_dsparil.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\src\g_heretic\a_hereticambience.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool

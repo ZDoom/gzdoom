@@ -182,9 +182,9 @@ void uppercopy (char *to, const char *from)
 }
 
 FWadCollection::FWadCollection ()
-: FirstLumpIndex(NULL), NextLumpIndex(NULL), LumpInfo(NULL), Wads(NULL),
+: FirstLumpIndex(NULL), NextLumpIndex(NULL),
   FirstLumpIndex_FullName(NULL), NextLumpIndex_FullName(NULL), 
-  NumLumps(0), NumWads(0)
+  LumpInfo(NULL), Wads(NULL), NumLumps(0), NumWads(0)
 {
 }
 
@@ -650,13 +650,13 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		sprintf(path, "%s:", filename);
 		char * wadstr = path+strlen(path);
 
-		for(int i=0; i < EmbeddedWADs.Size(); i++)
+		for(unsigned int i = 0; i < EmbeddedWADs.Size(); i++)
 		{
 			FZipFileInfo * zip_fh = EmbeddedWADs[i];
 			FZipLocalHeader localHeader;
 
 			*wadstr=0;
-			int len = LittleShort(zip_fh->wFileNameSize);
+			size_t len = LittleShort(zip_fh->wFileNameSize);
 			if (len+strlen(path) > 255) len = 255-strlen(path);
 			strncpy(wadstr, ((char*)zip_fh) + sizeof(FZipFileInfo), len);
 			wadstr[len]=0;
@@ -1851,7 +1851,7 @@ FWadCollection::WadFileRecord::WadFileRecord (FILE *file)
 }
 
 FWadCollection::WadFileRecord::WadFileRecord (const char * mem, int len)
-: FileReader(), Name(NULL), FirstLump(0), LastLump(0), MemoryData(mem)
+: FileReader(), MemoryData(mem), Name(NULL), FirstLump(0), LastLump(0)
 {
 	Length = len;
 	FilePos = StartPos = 0;

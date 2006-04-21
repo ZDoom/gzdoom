@@ -626,7 +626,7 @@ void A_SerpentSpawnGibs (AActor *actor)
 		RUNTIME_CLASS(ASerpentGib1)
 	};
 
-	for (int i = sizeof(GibTypes)/sizeof(GibTypes[0])-1; i >= 0; --i)
+	for (int i = countof(GibTypes)-1; i >= 0; --i)
 	{
 		mo = Spawn (GibTypes[i],
 			actor->x+((pr_serpentgibs()-128)<<12), 

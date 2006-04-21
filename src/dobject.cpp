@@ -603,6 +603,14 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 		if (playeringame[i])
 			players[i].FixPointers (old, notOld);
 	}
+
+	for (i = 0; i < numsectors; ++i)
+	{
+		if (sectors[i].SoundTarget == old)
+		{
+			sectors[i].SoundTarget = static_cast<AActor *>(notOld);
+		}
+	}
 }
 
 // Search for references to a single object and NULL them.
@@ -677,6 +685,18 @@ void DObject::DestroyScan ()
 				players[i].FixPointers (*(destroybase + j), NULL);
 			} while (++j);
 		}
+	}
+
+	for (i = 0; i < numsectors; ++i)
+	{
+		j = destroycount;
+		do
+		{
+			if (sectors[i].SoundTarget == *(destroybase + j))
+			{
+				sectors[i].SoundTarget = NULL;
+			}
+		} while (++j);
 	}
 }
 

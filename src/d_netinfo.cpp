@@ -730,14 +730,12 @@ FArchive &operator<< (FArchive &arc, userinfo_t &info)
 	if (arc.IsStoring ())
 	{
 		arc.Write (&info.netname, sizeof(info.netname));
-		arc.Write (&info.team, sizeof(info.team));
 	}
 	else
 	{
 		arc.Read (&info.netname, sizeof(info.netname));
-		arc.Read (&info.team, sizeof(info.team));
 	}
-	arc << info.aimdist << info.color << info.skin << info.gender << info.neverswitch;
+	arc << info.team << info.aimdist << info.color << info.skin << info.gender << info.neverswitch;
 	return arc;
 }
 

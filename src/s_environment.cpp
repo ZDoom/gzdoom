@@ -55,7 +55,7 @@ static const FEAXField EAXFields[] =
 	{ 0, 0, 0, 0, 6 },
 	{ 0, 0, 0, 0, 7 }
 };
-#define NUM_EAX_FIELDS (int(sizeof(EAXFields)/sizeof(EAXFields[0])))
+#define NUM_EAX_FIELDS (int(countof(EAXFields)))
 
 static const char *EAXFieldNames[NUM_EAX_FIELDS+2] =
 {

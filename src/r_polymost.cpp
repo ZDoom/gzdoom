@@ -525,7 +525,7 @@ int PolyClipper::DoMost (float x0, float y0, float x1, float y1, pmostcallbackty
 CVAR(Bool, testpolymost, false, 0)
 static int pmx, pmy;
 static int pt, px0, py0, px1, py1;
-static struct { float x, y; } polypts[80];
+static struct polypt { float x, y; } polypts[80];
 static byte polysize[32];
 static int numpoly, polypt;
 PolyClipper TestPoly;
@@ -804,7 +804,7 @@ CCMD(initpolymosttest)
 static void testpolycallback (double *dpx, double *dpy, int n, void *foo)
 {
 	if (numpoly == sizeof(polysize)) return;
-	if (size_t(polypt + n) > sizeof(polypts)/sizeof(polypts[0])) return;
+	if (size_t(polypt + n) > countof(polypts)) return;
 	polysize[numpoly++] = n;
 	for (int i = 0; i < n; ++i)
 	{

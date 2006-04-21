@@ -422,7 +422,7 @@ void C_DoCommand (const char *cmd, int keynum)
 	{
 		int i;
 
-		for (i = sizeof(KeyConfCommands)/sizeof(KeyConfCommands[0])-1; i >= 0; --i)
+		for (i = countof(KeyConfCommands)-1; i >= 0; --i)
 		{
 			if (strnicmp (beg, KeyConfCommands[i], len) == 0 &&
 				KeyConfCommands[i][len] == 0)

@@ -1839,7 +1839,7 @@ static int PatchText (int oldSize)
 			}
 			// If this sprite is used by a pickup, then the DehackedPickup sprite map
 			// needs to be updated too.
-			for (i = 0; (size_t)i < sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0]); ++i)
+			for (i = 0; (size_t)i < countof(DehSpriteMappings); ++i)
 			{
 				if (strncmp (DehSpriteMappings[i].Sprite, oldStr, 4) == 0)
 				{
@@ -1853,7 +1853,7 @@ static int PatchText (int oldSize)
 						swap (DehSpriteMappings[i-1], DehSpriteMappings[i]);
 						--i;
 					}
-					while ((size_t)i < sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0])-1 &&
+					while ((size_t)i < countof(DehSpriteMappings)-1 &&
 						strncmp (DehSpriteMappings[i+1].Sprite, newStr, 4) < 0)
 					{
 						swap (DehSpriteMappings[i+1], DehSpriteMappings[i]);
@@ -2359,10 +2359,10 @@ static bool LoadDehSupp ()
 		else if (CompareLabel ("ACTF", supp))
 		{
 			NumCodePtrs = GetWord (supp + 4);
-			if ((unsigned)NumCodePtrs != sizeof(CodePtrs)/sizeof(CodePtrs[0]))
+			if ((unsigned)NumCodePtrs != countof(CodePtrs))
 			{
 				Printf ("DEHSUPP defines %d code pointers, but there should be %d\n",
-					NumCodePtrs, sizeof(CodePtrs)/sizeof(CodePtrs[0]));
+					NumCodePtrs, countof(CodePtrs));
 				return false;
 			}
 			CodePtrNames = (CodePtrMap *)GetWordSpace (supp + 6, NumCodePtrs*2);
@@ -2670,7 +2670,7 @@ const TypeInfo *ADehackedPickup::DetermineType ()
 	// Look at the actor's current sprite to determine what kind of
 	// item to pretend to me.
 	int min = 0;
-	int max = sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0]) - 1;
+	int max = countof(DehSpriteMappings) - 1;
 
 	while (min <= max)
 	{

@@ -180,4 +180,9 @@ struct PalEntry
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
 #endif
 
+template <typename T, size_t N>
+char ( &_ArraySizeHelper( T (&array)[N] ))[N];
+
+#define countof( array ) (sizeof( _ArraySizeHelper( array ) ))
+
 #endif

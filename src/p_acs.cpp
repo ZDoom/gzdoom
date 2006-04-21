@@ -1588,30 +1588,12 @@ void DLevelScript::PutFirst ()
 
 int DLevelScript::Random (int min, int max)
 {
-	int num1, num2, num3, num4;
-	unsigned int num;
-
 	if (max < min)
 	{
 		swap (max, min);
 	}
 
-	if (max - min > 255)
-	{
-		num1 = pr_acs();
-		num2 = pr_acs();
-		num3 = pr_acs();
-		num4 = pr_acs();
-
-		num = ((num1 << 24) | (num2 << 16) | (num3 << 8) | num4);
-	}
-	else
-	{
-		num = pr_acs();
-	}
-	num %= (max - min + 1);
-	num += min;
-	return (int)num;
+	return min + pr_acs(max - min + 1);
 }
 
 int DLevelScript::ThingCount (int type, int tid)
@@ -3544,9 +3526,7 @@ int DLevelScript::RunScript ()
 			{
 				if (activationline)
 				{
-					SN_StartSequence (
-						activationline->frontsector,
-						lookup);
+					SN_StartSequence (activationline->frontsector, lookup, 0);
 				}
 			}
 			sp--;

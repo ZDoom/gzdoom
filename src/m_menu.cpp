@@ -70,8 +70,6 @@
 #define SELECTOR_XOFFSET	(-28)
 #define SELECTOR_YOFFSET	(-1)
 
-#define NUM_MENU_ITEMS(m)	(sizeof(m)/sizeof(m[0]))
-
 // TYPES -------------------------------------------------------------------
 
 struct FSaveGameNode : public Node
@@ -250,7 +248,7 @@ static oldmenuitem_t MainMenu[]=
 
 static oldmenu_t MainDef =
 {
-	NUM_MENU_ITEMS (MainMenu),
+	countof(MainMenu),
 	MainMenu,
 	M_DrawMainMenu,
 	97,64,
@@ -271,7 +269,7 @@ static oldmenuitem_t HereticMainMenu[] =
 
 static oldmenu_t HereticMainDef =
 {
-	NUM_MENU_ITEMS (HereticMainMenu),
+	countof(HereticMainMenu),
 	HereticMainMenu,
 	M_DrawHereticMainMenu,
 	110, 56,
@@ -334,7 +332,7 @@ static oldmenuitem_t FilesItems[] =
 
 static oldmenu_t FilesMenu =
 {
-	NUM_MENU_ITEMS (FilesItems),
+	countof(FilesItems),
 	FilesItems,
 	M_DrawFiles,
 	110,60,
@@ -355,7 +353,7 @@ static oldmenuitem_t NewGameMenu[]=
 
 static oldmenu_t NewDef =
 {
-	NUM_MENU_ITEMS (NewGameMenu),
+	countof(NewGameMenu),
 	NewGameMenu,		// oldmenuitem_t ->
 	M_DrawNewGame,		// drawing routine ->
 	48,63,				// x,y
@@ -376,7 +374,7 @@ static oldmenuitem_t HereticSkillItems[] =
 
 static oldmenu_t HereticSkillMenu =
 {
-	NUM_MENU_ITEMS (HereticSkillItems),
+	countof(HereticSkillItems),
 	HereticSkillItems,
 	M_DrawNewGame,
 	38, 30,
@@ -421,7 +419,7 @@ static oldmenuitem_t PlayerSetupMenu[] =
 
 static oldmenu_t PSetupDef =
 {
-	NUM_MENU_ITEMS (PlayerSetupMenu),
+	countof(PlayerSetupMenu),
 	PlayerSetupMenu,
 	M_PlayerSetupDrawer,
 	48,	47,
@@ -462,7 +460,7 @@ static oldmenuitem_t LoadMenu[]=
 
 static oldmenu_t LoadDef =
 {
-	NUM_MENU_ITEMS(LoadMenu),
+	countof(LoadMenu),
 	LoadMenu,
 	M_DrawLoad,
 	80,54,
@@ -486,7 +484,7 @@ static oldmenuitem_t SaveMenu[] =
 
 static oldmenu_t SaveDef =
 {
-	NUM_MENU_ITEMS(LoadMenu),
+	countof(LoadMenu),
 	SaveMenu,
 	M_DrawSave,
 	80,54,

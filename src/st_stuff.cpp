@@ -28,8 +28,6 @@
 #include "d_event.h"
 #include "gi.h"
 
-#define COUNT_CHEATS(l)		(sizeof(l)/sizeof(l[0]))
-
 EXTERN_CVAR (Bool, ticker);
 EXTERN_CVAR (Bool, noisedebug);
 EXTERN_CVAR (Int, am_cheat);
@@ -241,22 +239,22 @@ BOOL ST_Responder (event_t *ev)
 		{
 		case GAME_Doom:
 			cheats = DoomCheats;
-			numcheats = COUNT_CHEATS(DoomCheats);
+			numcheats = countof(DoomCheats);
 			break;
 
 		case GAME_Heretic:
 			cheats = HereticCheats;
-			numcheats = COUNT_CHEATS(HereticCheats);
+			numcheats = countof(HereticCheats);
 			break;
 
 		case GAME_Hexen:
 			cheats = HexenCheats;
-			numcheats = COUNT_CHEATS(HexenCheats);
+			numcheats = countof(HexenCheats);
 			break;
 
 		case GAME_Strife:
 			cheats = StrifeCheats;
-			numcheats = COUNT_CHEATS(StrifeCheats);
+			numcheats = countof(StrifeCheats);
 			break;
 
 		default:

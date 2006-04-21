@@ -77,7 +77,7 @@ int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 	zip_fileinfo zip_inf;
 
 	time_t currenttime;
-	tm * ltime;
+	struct tm * ltime;
 
 	time(&currenttime);
 	ltime = localtime(&currenttime);

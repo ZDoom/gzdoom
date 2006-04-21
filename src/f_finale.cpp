@@ -155,7 +155,7 @@ void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid,
 		else if (EndSequences[FinaleSequence].EndType == END_Strife)
 		{
 			if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
-				players[0].mo->FindInventory (QuestItemClasses[26]))
+				players[0].mo->FindInventory (QuestItemClasses[27]))
 			{
 				FinalePart = 10;
 			}

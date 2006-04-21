@@ -1,7 +1,11 @@
 # created on 4/12/2006 by James Bentler
 CXX ?= g++
 CC ?= gcc
-CFLAGS ?= -Wall -Wno-unused -O2 -fomit-frame-pointer
+ifndef DEBUG
+CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer
+else
+CFLAGS ?= -pipe -Wall -Wno-unused
+endif
 CFLAGS += -DHAVE_FILELENGTH -D__forceinline=inline -Izlib -IFLAC `sdl-config --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
 LDFLAGS += -lFLAC++ -lFLAC -lz -lfmod `sdl-config --libs`
@@ -114,9 +118,17 @@ zdoom.wad:
 clean: cleanobjs
 	rm -f $(ZDOOMDEBUG) $(ZDOOM) $(ZDOOM).map
 
+cleandebug:
+	rm -f $(ZDOOMDEBUG) $(DEBUGOBJ)/*.o $(DEBUGOBJ)/*.d
+	-rmdir $(DEBUGOBJ)
+
+cleanrelease:
+	rm -f $(ZDOOM) $(ZDOOM).map $(RELEASEOBJ)/*.o $(RELEASEOBJ)/*.o
+	-rmdir $(RELEASEOBJ)
+
 # I could use a recursive delete instead, but that could be dangerous...
 distclean: clean cleandeps
-	rmdir $(RELEASEOBJ) $(DEBUGOBJ)
+	-rmdir $(RELEASEOBJ) $(DEBUGOBJ)
 
 cleandeps:
 	rm -f $(RELEASEOBJ)/*.d $(DEBUGOBJ)/*.d

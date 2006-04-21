@@ -1,3 +1,10 @@
+April 20, 2006 (Changes by Graf Zahl)
+- Fixed: Strife's ending check included destroying the computer - an event
+  that happens before the branch in the story.
+- Fixed: The overloaded FRandom::Random2 function with mask parameter didn't
+  use its parameter.
+- Added Jim's latest makefile.linux
+
 April 20, 2006
 - Fixed: Crash when opening the player setup menu when you're so dead that
   your head has popped off your body.

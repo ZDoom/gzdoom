@@ -867,7 +867,7 @@ menu_t ModesMenu =
 {
 	"VIDEO MODE",
 	2,
-	17,
+	countof(ModesItems),
 	0,
 	ModesItems,
 };

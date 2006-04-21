@@ -152,8 +152,8 @@ int FRandom::Random2 ()
 
 int FRandom::Random2 (int mask)
 {
-	int t = (*this)();
-	int u = (*this)();
+	int t = (*this)(mask);
+	int u = (*this)(mask);
 	return t - u;
 }
 

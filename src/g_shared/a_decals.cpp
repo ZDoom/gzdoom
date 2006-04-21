@@ -690,27 +690,8 @@ CCMD (spray)
 		return;
 	}
 
-	FTraceResults trace;
-
-	angle_t ang = m_Instigator->angle  >> ANGLETOFINESHIFT;
-	angle_t pitch = (angle_t)(m_Instigator->pitch) >> ANGLETOFINESHIFT;
-	fixed_t vx = FixedMul (finecosine[pitch], finecosine[ang]);
-	fixed_t vy = FixedMul (finecosine[pitch], finesine[ang]);
-	fixed_t vz = -finesine[pitch];
-
-	if (Trace (m_Instigator->x, m_Instigator->y,
-		m_Instigator->z + m_Instigator->height - (m_Instigator->height>>2),
-		m_Instigator->Sector,
-		vx, vy, vz, 172*FRACUNIT, 0, ML_BLOCKEVERYTHING, m_Instigator,
-		trace, TRACE_NoSky))
-	{
-		if (trace.HitType == TRACE_HitWall)
-		{
-			DImpactDecal::StaticCreate (argv[1],
-				trace.X, trace.Y, trace.Z,
-				sides + trace.Line->sidenum[trace.Side]);
-		}
-	}
+	Net_WriteByte (DEM_SPRAY);
+	Net_WriteString (argv[1]);
 }
 
 class ADecal : public AActor

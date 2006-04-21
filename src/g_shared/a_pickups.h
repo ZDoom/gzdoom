@@ -171,7 +171,6 @@ class AAmmo : public AInventory
 	DECLARE_STATELESS_ACTOR (AAmmo, AInventory)
 public:
 	void Serialize (FArchive &arc);
-	bool TryPickup (AActor *toucher);
 	AInventory *CreateCopy (AActor *other);
 	bool HandlePickup (AInventory *item);
 	const TypeInfo *GetParentAmmo () const;

@@ -49,6 +49,8 @@
 #include "d_gui.h"
 #include "templates.h"
 #include "p_acs.h"
+#include "p_trace.h"
+#include "a_sharedglobal.h"
 
 int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
 					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net);
@@ -619,9 +621,12 @@ void PlayerIsGone (int netnode, int netconsole)
 	}
 
 	// [RH] Make the player disappear
-	P_DisconnectEffect (players[netconsole].mo);
-	players[netconsole].mo->Destroy ();
-	players[netconsole].mo = NULL;
+	if (players[netconsole].mo != NULL)
+	{
+		P_DisconnectEffect (players[netconsole].mo);
+		players[netconsole].mo->Destroy ();
+		players[netconsole].mo = NULL;
+	}
 	// [RH] Let the scripts know the player left
 	FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, NULL, true, netconsole);
 	if (netconsole == Net_Arbitrator)
@@ -1419,7 +1424,7 @@ void D_ArbitrateNetStart (void)
 
 				if (!nodeingame[node])
 				{
-					if (netbuffer[2] != GAMEVERSION)
+					if (netbuffer[2] != NETGAMEVERSION)
 						I_Error ("Different DOOM versions cannot play a net game!");
 
 					playeringame[netbuffer[1]] = true;
@@ -1465,7 +1470,7 @@ void D_ArbitrateNetStart (void)
 				break;
 		}
 
-		netbuffer[2] = GAMEVERSION;
+		netbuffer[2] = NETGAMEVERSION;
 		netbuffer[3] = playersdetected[0] >> 24;
 		netbuffer[4] = playersdetected[0] >> 16;
 		netbuffer[5] = playersdetected[0] >> 8;
@@ -1483,7 +1488,7 @@ void D_ArbitrateNetStart (void)
 		else
 		{ // Send user info for all nodes
 			netbuffer[0] = NCMD_SETUP+1;
-			netbuffer[2] = GAMEVERSION;
+			netbuffer[2] = NETGAMEVERSION;
 			for (i = 1; i < doomcom->numnodes; ++i)
 			{
 				for (j = 0; j < doomcom->numnodes; ++j)
@@ -2000,7 +2005,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 	case DEM_GIVECHEAT:
 		s = ReadString (stream);
-		cht_Give (&players[player], s, ReadByte (stream));
+		cht_Give (&players[player], s, ReadWord (stream));
 		break;
 
 	case DEM_WARPCHEAT:
@@ -2131,6 +2136,34 @@ void Net_DoCommand (int type, byte **stream, int player)
 		}
 		break;
 
+	case DEM_SPRAY:
+		{
+			FTraceResults trace;
+
+			angle_t ang = players[player].mo->angle  >> ANGLETOFINESHIFT;
+			angle_t pitch = (angle_t)(players[player].mo->pitch) >> ANGLETOFINESHIFT;
+			fixed_t vx = FixedMul (finecosine[pitch], finecosine[ang]);
+			fixed_t vy = FixedMul (finecosine[pitch], finesine[ang]);
+			fixed_t vz = -finesine[pitch];
+
+			s = ReadString (stream);
+
+			if (Trace (players[player].mo->x, players[player].mo->y,
+				players[player].mo->z + players[player].mo->height - (players[player].mo->height>>2),
+				players[player].mo->Sector,
+				vx, vy, vz, 172*FRACUNIT, 0, ML_BLOCKEVERYTHING, players[player].mo,
+				trace, TRACE_NoSky))
+			{
+				if (trace.HitType == TRACE_HitWall)
+				{
+					DImpactDecal::StaticCreate (s,
+						trace.X, trace.Y, trace.Z,
+						sides + trace.Line->sidenum[trace.Side]);
+				}
+			}
+		}
+		break;
+
 	case DEM_PAUSE:
 		if (gamestate == GS_LEVEL)
 		{
@@ -2241,7 +2274,7 @@ void Net_SkipCommand (int type, byte **stream)
 			break;
 
 		case DEM_GIVECHEAT:
-			skip = strlen ((char *)(*stream)) + 2;
+			skip = strlen ((char *)(*stream)) + 3;
 			break;
 
 		case DEM_MUSICCHANGE:
@@ -2250,6 +2283,8 @@ void Net_SkipCommand (int type, byte **stream)
 		case DEM_UINFCHANGED:
 		case DEM_CHANGEMAP:
 		case DEM_SUMMON:
+		case DEM_SUMMONFRIEND:
+		case DEM_SPRAY:
 			skip = strlen ((char *)(*stream)) + 1;
 			break;
 

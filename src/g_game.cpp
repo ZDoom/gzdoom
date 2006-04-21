@@ -2185,7 +2185,7 @@ void G_BeginRecording (const char *startmap)
 
 	// Write header chunk
 	StartChunk (ZDHD_ID, &demo_p);
-	WriteWord (GAMEVER, &demo_p);			// Write ZDoom version
+	WriteWord (DEMOGAMEVERSION, &demo_p);	// Write ZDoom version
 	*demo_p++ = 2;							// Write minimum version needed to use this demo.
 	*demo_p++ = 3;							// (Useful?)
 	for (i = 0; i < 8; i++)					// Write name of map demo was recorded on.
@@ -2303,12 +2303,12 @@ BOOL G_ProcessIFFDemo (char *mapname)
 			headerHit = true;
 
 			demover = ReadWord (&demo_p);	// ZDoom version demo was created with
-			if (demover < 0x203)
+			if (demover < MINDEMOVERSION)
 			{
 				Printf ("Demo requires an older version of ZDoom!\n");
 				//return true;
 			}
-			if (ReadWord (&demo_p) > GAMEVER)		// Minimum ZDoom version
+			if (ReadWord (&demo_p) > DEMOGAMEVERSION)	// Minimum ZDoom version
 			{
 				Printf ("Demo requires a newer version of ZDoom!\n");
 				return true;
@@ -2469,17 +2469,11 @@ void G_TimeDemo (char* name)
 ===================
 */
 
-EXTERN_CVAR (String, name)
-EXTERN_CVAR (Float, autoaim)
-EXTERN_CVAR (Color, color)
-
 BOOL G_CheckDemoStatus (void)
 {
 	if (!demorecording)
 	{ // [RH] Restore the player's userinfo settings.
-		D_UserInfoChanged (&name);
-		D_UserInfoChanged (&autoaim);
-		D_UserInfoChanged (&color);
+		D_SetupUserInfo();
 	}
 
 	if (demoplayback)

@@ -61,31 +61,6 @@ const TypeInfo *AAmmo::GetParentAmmo () const
 
 //===========================================================================
 //
-// AAmmo :: TryPickup
-//
-//===========================================================================
-
-bool AAmmo::TryPickup (AActor *toucher)
-{
-	int count = Amount;
-
-	if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
-	{ // extra ammo in baby mode and nightmare mode
-		if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-			Amount <<= 1;
-		else
-			Amount += Amount >> 1;
-	}
-	if (!Super::TryPickup (toucher))
-	{
-		Amount = count;
-		return false;
-	}
-	return true;
-}
-
-//===========================================================================
-//
 // AAmmo :: HandlePickup
 //
 //===========================================================================
@@ -97,8 +72,18 @@ bool AAmmo::HandlePickup (AInventory *item)
 	{
 		if (Amount < MaxAmount)
 		{
+			int receiving = item->Amount;
+
+			// extra ammo in baby mode and nightmare mode
+			if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+			{
+				if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+					receiving <<= 1;
+				else
+					receiving += receiving >> 1;
+			}
 			int oldamount = Amount;
-			Amount += item->Amount;
+			Amount += receiving;
 			if (Amount > MaxAmount)
 			{
 				Amount = MaxAmount;
@@ -143,6 +128,16 @@ bool AAmmo::HandlePickup (AInventory *item)
 AInventory *AAmmo::CreateCopy (AActor *other)
 {
 	AInventory *copy;
+	int amount = Amount;
+
+	// extra ammo in baby mode and nightmare mode
+	if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+	{
+		if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+			amount <<= 1;
+		else
+			amount += amount >> 1;
+	}
 
 	if (GetClass()->ParentType != RUNTIME_CLASS(AAmmo))
 	{
@@ -152,12 +147,13 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 			Destroy ();
 		}
 		copy = static_cast<AInventory *>(Spawn (type, 0, 0, 0));
-		copy->Amount = Amount;
+		copy->Amount = amount;
 		copy->BecomeItem ();
 	}
 	else
 	{
 		copy = Super::CreateCopy (other);
+		copy->Amount = amount;
 	}
 	if (copy->Amount > copy->MaxAmount)
 	{ // Don't pick up more ammo than you're supposed to be able to carry.

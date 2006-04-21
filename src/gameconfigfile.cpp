@@ -493,7 +493,7 @@ void FGameConfigFile::ArchiveGlobalData ()
 {
 	SetSection ("LastRun", true);
 	ClearCurrentSection ();
-	SetValueForKey ("Version", STRVERSION);
+	SetValueForKey ("Version", LASTRUNVERSION);
 
 	SetSection ("GlobalSettings", true);
 	ClearCurrentSection ();

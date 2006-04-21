@@ -1,4 +1,18 @@
 April 20, 2006
+- Fixed: Crash when opening the player setup menu when you're so dead that
+  your head has popped off your body.
+- Fixed: When item respawning is on and you play on skill 1 or 5, picking
+  up ammo would permanently double the amount of ammo received from that
+  item the next time it gets picked up.
+- Added a check to PlayerIsGone() for players who have already had their
+  actors destroyed before calling it.
+- Fixed: G_CheckDemoStatus() only restored your name, autoaim, and color
+  settings after playing back a demo.
+- Added DEM_SPRAY net command so that sprayed decals work in multiplayer
+  and demos.
+- Changed DEM_GIVECHEAT to use a word for specifying the item quantity.
+  This is useful mainly for giving yourself more than 255 health at a time.
+- Fixed: DEM_SUMMONFRIEND was not handled by Net_SkipCommand().
 - Fixed compilation with mingw again.
 - Added multiple-choice sound sequences. These overcome one of the major
   deficiences of the Hexen-inherited SNDSEQ system while still being Hexen
@@ -7,7 +21,7 @@ April 20, 2006
 - Moved the TArray serializer into farchive.h so that tarray.h doesn't need
   farchive.h at all because GCC was much pickier than VC. Because of this,
   I don't need the FArchive change I made yesterday that hid FArchive's
-  TArray usses behind pointers.
+  TArray uses behind pointers.
 - Added a countof macro to doomtype.h. See the1's blog to find out why
   it's implemented the way it is.
     <http://blogs.msdn.com/the1/articles/210011.aspx>

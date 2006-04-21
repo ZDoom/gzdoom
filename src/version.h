@@ -34,17 +34,36 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-// Lots of different representations for the version number
-enum { GAMEVERSION = 205 };
-#define STRVERSION "205"
+/** Lots of different version numbers **/
+
+// The version string the user actually sees.
 #define DOTVERSIONSTR "2.0.99"
-#define GAMEVER (2*256+3)
+
+// Version identifier for network games.
+// Bump it every time you do a release unless you're certain you
+// didn't change anything that will affect sync.
+#define NETGAMEVERSION 206
+
+// Version stored in the ini's [LastRun] section.
+// Bump it if you made some configuration change that you want to
+// be able to migrate in FGameConfigFile::DoGlobalSetup().
+#define LASTRUNVERSION "205"
+
+// Protocol version used in demos.
+// Bump it if you change existing DEM_ commands or add new ones.
+// Otherwise, it should be safe to leave it alone.
+#define DEMOGAMEVERSION 0x204
+
+// Minimum demo version we can play.
+// Bump it whenever you change or remove existing DEM_ commands.
+#define MINDEMOVERSION 0x204
 
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
 #define SAVEVER 232
 #define SAVESIG "ZDOOMSAVE232"
+
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "ZDOOM"
 

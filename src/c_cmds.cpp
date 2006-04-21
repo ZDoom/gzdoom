@@ -339,14 +339,14 @@ CCMD (give)
 	Net_WriteByte (DEM_GIVECHEAT);
 	Net_WriteString (argv[1]);
 	if (argv.argc() > 2)
-		Net_WriteByte (clamp (atoi (argv[2]), 1, 255));
+		Net_WriteWord (clamp (atoi (argv[2]), 1, 32767));
 	else
-		Net_WriteByte (0);
+		Net_WriteWord (0);
 }
 
 CCMD (gameversion)
 {
-	Printf ("%d.%d : " __DATE__ "\n", GAMEVERSION / 100, GAMEVERSION % 100);
+	Printf ("%s : " __DATE__ "\n", DOTVERSIONSTR);
 }
 
 CCMD (print)

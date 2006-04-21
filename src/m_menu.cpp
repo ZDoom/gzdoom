@@ -1792,7 +1792,7 @@ void M_PlayerSetup (void)
 	{
 		PlayerClass = RUNTIME_TYPE(players[consoleplayer].mo);
 	}
-	PlayerState = GetDefaultByType (PlayerClass)->SeeState;
+	PlayerState = GetDefaultByType (PlayerClass)->SpawnState;
 	PlayerTics = PlayerState->GetTics();
 	if (FireScreen == NULL)
 		FireScreen = new DSimpleCanvas (144, 160);

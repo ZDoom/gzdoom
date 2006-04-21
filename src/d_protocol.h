@@ -109,7 +109,7 @@ enum EDemoCommand
 	DEM_UINFCHANGED,	//  8 User info changed
 	DEM_SINFCHANGED,	//  9 Server/Host info changed
 	DEM_GENERICCHEAT,	// 10 Next byte is cheat to apply (see next enum)
-	DEM_GIVECHEAT,		// 11 String: item to give, Byte: quantity
+	DEM_GIVECHEAT,		// 11 String: item to give, Word: quantity
 	DEM_SAY,			// 12 Byte: who to talk to, String: message to display
 	DEM_DROPPLAYER,		// 13 Not implemented, takes a byte
 	DEM_CHANGEMAP,		// 14 Name of map to change to
@@ -136,6 +136,7 @@ enum EDemoCommand
 	DEM_WARPCHEAT,		// 35 4 bytes: 2 for x, 2 for y
 	DEM_CENTERVIEW,		// 36
 	DEM_SUMMONFRIEND,	// 37 String: Thing to fabricate
+	DEM_SPRAY,			// 38 String: The decal to spray
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

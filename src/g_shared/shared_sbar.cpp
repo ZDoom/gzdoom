@@ -1243,7 +1243,7 @@ void FBaseStatusBar::Draw (EHudState state)
 
 void FBaseStatusBar::DrawTopStuff (EHudState state)
 {
-	if (demoplayback && demover != GAMEVER)
+	if (demoplayback && demover != DEMOGAMEVERSION)
 	{
 		screen->DrawText (CR_TAN, 0, ST_Y - 40 * CleanYfac,
 			"Demo was recorded with a different version\n"

@@ -61,6 +61,7 @@
 
 #include "stats.h"
 #include "hardware.h"
+#include "zstring.h"
 
 EXTERN_CVAR (String, language)
 
@@ -385,14 +386,22 @@ static int matchfile (const struct dirent *ent)
 
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
 {
+	string dir;
+	
 	char *slash = strrchr (filespec, '/');
 	if (slash)
+	{
 		pattern = slash+1;
+		dir = string(filespec, slash-filespec+1);
+	}
 	else
+	{
 		pattern = filespec;
+		dir = ".";
+	}
 
     fileinfo->current = 0;
-    fileinfo->count = scandir (".", &fileinfo->namelist,
+    fileinfo->count = scandir (dir.GetChars(), &fileinfo->namelist,
 							   matchfile, alphasort);
     if (fileinfo->count > 0)
     {

@@ -1,3 +1,6 @@
+April 21, 2006 (Changes by Graf Zahl)
+- Added Zloba's fix for Linux's I_FindFirst.
+
 April 20, 2006 (Changes by Graf Zahl)
 - Fixed: Doom's status bar assumed that STBAR was always in Doom patch format.
 - Added MF3_DONTSPLASH to the newly created sound sequence things.

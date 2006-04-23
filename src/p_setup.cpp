@@ -2804,6 +2804,7 @@ void P_FreeLevelData ()
 	{
 		delete[] sectors;
 		sectors = NULL;
+		numsectors = 0;	// needed for the pointer cleanup code
 	}
 	if (subsectors != NULL)
 	{

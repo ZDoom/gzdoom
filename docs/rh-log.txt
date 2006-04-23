@@ -1,4 +1,6 @@
 April 21, 2006 (Changes by Graf Zahl)
+- Fixed: To prevent the pointer cleanup code from crashing numsectors has
+  to be set to 0 when the sectors array is deleted.
 - Added Zloba's fix for Linux's I_FindFirst.
 
 April 20, 2006 (Changes by Graf Zahl)

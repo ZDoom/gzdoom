@@ -420,7 +420,7 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 	}
 }
 
-void P_DrawRailTrail (vec3_t start, vec3_t end)
+void P_DrawRailTrail (AActor * source, vec3_t start, vec3_t end, int color1, int color2, float maxdiff, bool silent)
 {
 	float length;
 	int steps, i;
@@ -433,33 +433,44 @@ void P_DrawRailTrail (vec3_t start, vec3_t end)
 
 	if (length)
 	{
-		// The railgun's sound is special. It gets played from the
-		// point on the slug's trail that is closest to the hearing player.
-		AActor *mo = players[consoleplayer].camera;
-		vec3_t point;
-		float r;
-		float dirz;
-
 		length = 1 / length;
 
-		if (abs(mo->x - FLOAT2FIXED(start[0])) < 20 * FRACUNIT
-			&& (mo->y - FLOAT2FIXED(start[1])) < 20 * FRACUNIT)
-		{ // This player (probably) fired the railgun
-			S_Sound (mo, CHAN_WEAPON, "weapons/railgf", 1, ATTN_NORM);
-		}
-		else
+		if (!silent)
 		{
-			// Only consider sound in 2D (for now, anyway)
-			r = ((start[1] - FIXED2FLOAT(mo->y)) * (-dir[1]) -
-				 (start[0] - FIXED2FLOAT(mo->x)) * (dir[0])) * length * length;
+			int sound;
+			
+			// Allow other sounds than 'weapons/railgf'!
+			if (!source->player) sound = source->AttackSound;
+			else if (source->player->ReadyWeapon) sound = source->player->ReadyWeapon->AttackSound;
+			else sound = NULL;
+			if (!sound) sound=S_FindSound("weapons/railgf");
 
-			dirz = dir[2];
-			dir[2] = 0;
-			VectorMA (start, r, dir, point);
-			dir[2] = dirz;
+			// The railgun's sound is special. It gets played from the
+			// point on the slug's trail that is closest to the hearing player.
+			AActor *mo = players[consoleplayer].camera;
+			vec3_t point;
+			float r;
+			float dirz;
 
-			S_Sound (FLOAT2FIXED(point[0]), FLOAT2FIXED(point[1]),
-				CHAN_WEAPON, "weapons/railgf", 1, ATTN_NORM);
+			if (abs(mo->x - FLOAT2FIXED(start[0])) < 20 * FRACUNIT
+				&& (mo->y - FLOAT2FIXED(start[1])) < 20 * FRACUNIT)
+			{ // This player (probably) fired the railgun
+				S_SoundID (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
+			}
+			else
+			{
+				// Only consider sound in 2D (for now, anyway)
+				r = ((start[1] - FIXED2FLOAT(mo->y)) * (-dir[1]) -
+					(start[0] - FIXED2FLOAT(mo->x)) * (dir[0])) * length * length;
+
+				dirz = dir[2];
+				dir[2] = 0;
+				VectorMA (start, r, dir, point);
+				dir[2] = dirz;
+
+				S_SoundID (FLOAT2FIXED(point[0]), FLOAT2FIXED(point[1]), mo->z,
+					CHAN_WEAPON, sound, 1, ATTN_NORM);
+			}
 		}
 	}
 	else
@@ -473,73 +484,113 @@ void P_DrawRailTrail (vec3_t start, vec3_t end)
 	VectorScale2 (extend, 3);
 	VectorScale (dir, 3, step);
 
-	VectorCopy (start, pos);
-	deg = 270;
-	for (i = steps; i; i--)
+	if (color1 != -1)
 	{
-		particle_t *p = NewParticle ();
-		vec3_t tempvec;
-
-		if (!p)
-			return;
-
-		p->trans = 255;
-		p->ttl = 35;
-		p->fade = FADEFROMTTL(35);
-		p->size = 3;
-
-		RotatePointAroundVector (tempvec, dir, extend, deg);
-		p->velx = FLOAT2FIXED(tempvec[0])>>4;
-		p->vely = FLOAT2FIXED(tempvec[1])>>4;
-		p->velz = FLOAT2FIXED(tempvec[2])>>4;
-		VectorAdd (tempvec, pos, tempvec);
-		deg += 14;
-		if (deg >= 360)
-			deg -= 360;
-		p->x = FLOAT2FIXED(tempvec[0]);
-		p->y = FLOAT2FIXED(tempvec[1]);
-		p->z = FLOAT2FIXED(tempvec[2]);
-		VectorAdd (pos, step, pos);
-
+		color1 = color1==0? -1: ColorMatcher.Pick(RPART(color1), GPART(color1), BPART(color1));
+		VectorCopy (start, pos);
+		deg = 270;
+		for (i = steps; i; i--)
 		{
-			int rand = M_Random();
+			particle_t *p = NewParticle ();
+			vec3_t tempvec;
 
-			if (rand < 155)
-				p->color = rblue2;
-			else if (rand < 188)
-				p->color = rblue1;
-			else if (rand < 222)
-				p->color = rblue3;
-			else
-				p->color = rblue4;
+			if (!p)
+				return;
+
+			p->trans = 255;
+			p->ttl = 35;
+			p->fade = FADEFROMTTL(35);
+			p->size = 3;
+
+			RotatePointAroundVector (tempvec, dir, extend, deg);
+			p->velx = FLOAT2FIXED(tempvec[0])>>4;
+			p->vely = FLOAT2FIXED(tempvec[1])>>4;
+			p->velz = FLOAT2FIXED(tempvec[2])>>4;
+			VectorAdd (tempvec, pos, tempvec);
+			deg += 14;
+			if (deg >= 360)
+				deg -= 360;
+			p->x = FLOAT2FIXED(tempvec[0]);
+			p->y = FLOAT2FIXED(tempvec[1]);
+			p->z = FLOAT2FIXED(tempvec[2]);
+			VectorAdd (pos, step, pos);
+
+			if (color1==-1)
+			{
+				int rand = M_Random();
+
+				if (rand < 155)
+					p->color = rblue2;
+				else if (rand < 188)
+					p->color = rblue1;
+				else if (rand < 222)
+					p->color = rblue3;
+				else
+					p->color = rblue4;
+			}
+			else 
+			{
+				p->color = color1;
+			}
 		}
 	}
 
-	VectorCopy (start, pos);
-	for (i = steps; i; i--)
+	if (color2 != -1)
 	{
-		particle_t *p = JitterParticle (33);
+		color2 = color2==0? -1: ColorMatcher.Pick(RPART(color2), GPART(color2), BPART(color2));
+		vec3_t diff;
+		VectorSet (diff, 0, 0, 0);
 
-		if (!p)
-			return;
-
-		p->size = 2;
-		p->x = FLOAT2FIXED(pos[0]);
-		p->y = FLOAT2FIXED(pos[1]);
-		p->z = FLOAT2FIXED(pos[2]);
-		p->accz -= FRACUNIT/4096;
-		VectorAdd (pos, step, pos);
+		VectorCopy (start, pos);
+		for (i = steps; i; i--)
 		{
-			int rand = M_Random();
+			particle_t *p = JitterParticle (33);
 
-			if (rand < 85)
-				p->color = grey4;
-			else if (rand < 170)
-				p->color = grey2;
-			else
-				p->color = grey1;
+			if (!p)
+				return;
+
+			if (maxdiff > 0)
+			{
+				int rnd = M_Random ();
+				if (rnd & 1)
+					diff[0] = clamp<float> (diff[0] + ((rnd & 8) ? 1 : -1), -maxdiff, maxdiff);
+				if (rnd & 2)
+					diff[1] = clamp<float> (diff[1] + ((rnd & 16) ? 1 : -1), -maxdiff, maxdiff);
+				if (rnd & 4)
+					diff[2] = clamp<float> (diff[2] + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
+			}
+
+			vec3_t postmp;
+			VectorCopy (pos, postmp);
+			VectorAdd (postmp, diff, postmp);
+
+			p->size = 2;
+			p->x = FLOAT2FIXED(postmp[0]);
+			p->y = FLOAT2FIXED(postmp[1]);
+			p->z = FLOAT2FIXED(postmp[2]);
+			if (color1 != -1)
+				p->accz -= FRACUNIT/4096;
+			VectorAdd (pos, step, pos);
+
+			if (color2==-1)
+			{
+				{
+					int rand = M_Random();
+
+					if (rand < 85)
+						p->color = grey4;
+					else if (rand < 170)
+						p->color = grey2;
+					else
+						p->color = grey1;
+				}
+				p->color = white;
+			}
+			else 
+			{
+				p->color = color2;
+			}
 		}
-		p->color = white;
 	}
 }
 

@@ -205,7 +205,7 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 
 static void maybedrawnow (bool tick, bool force)
 {
-	if (ConsoleDrawing || screen->IsLocked ())
+	if (ConsoleDrawing || !gotconback || screen->IsLocked ())
 	{
 		return;
 	}

@@ -1,4 +1,19 @@
 April 22, 2006 (Changes by Graf Zahl)
+- Removed ABossEye::Serialize because it didn't do anything.
+- Fixed the issues with .96x's railgun code and added it to the current
+  version.
+- Fixed: Setting of the friendly Minotaur's angle was inconsistent and
+  could cause it to move backwards in a féw situation.
+- Fixed: The minotaur did checks for type by checking for the MF_FRIENDLY
+  flag, not by checking for the actor class. That made it impossible to
+  spawn friendly 'normal' minotaurs.
+- Moved a few virtual methods which are only applicable to the friendly
+  minotaur to AMinotaurFriend.
+- Fixed: The friendly minotaur checked the master's health instead of
+  the target's when deciding whether to switch targets. Replaced with
+  MF4_NOTARGETSWITCH.
+- Fixed: maybedrawnow must not draw the console unless the background
+  texture has been set up.
 - Fixed: V_InitCustomFonts initialized lastlump to -1 instead of 0.
 - Fixed: CreateTexture never checked whether it could read from the
   texture lump. Since the minimum valid length is 13 bytes for a

@@ -8,6 +8,7 @@
 #include "p_enemy.h"
 #include "a_action.h"
 #include "a_hexenglobal.h"
+#include "templates.h"
 
 // The cleric ---------------------------------------------------------------
 
@@ -140,7 +141,7 @@ fixed_t AClericPlayer::GetJumpZ ()
 	return FRACUNIT*39/4;	// ~9.75
 }
 
-void AClericPlayer::SpecialInvulnerabilityHandling (EInvulState state)
+void AClericPlayer::SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha)
 {
 	if (state == INVUL_Active)
 	{
@@ -175,6 +176,10 @@ void AClericPlayer::SpecialInvulnerabilityHandling (EInvulState state)
 		flags2 &= ~MF2_NONSHOOTABLE;
 		RenderStyle = STYLE_Normal;
 		alpha = OPAQUE;
+	}
+	else if (state == INVUL_GetAlpha)
+	{
+		if (pAlpha != NULL) *pAlpha = MIN<fixed_t>(FRACUNIT/4 + alpha*3/4, FRACUNIT);
 	}
 }
 

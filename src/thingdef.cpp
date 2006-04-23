@@ -1668,8 +1668,8 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 								else
 								{
 									int c = V_GetColor (NULL, sc_String);
-									// 0 needs to be the default so we have to add 1 here!
-									v = 1 + ColorMatcher.Pick (RPART (c), GPART (c), BPART (c));
+									// 0 needs to be the default so we have to mark the color.
+									v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
 								}
 								break;
 

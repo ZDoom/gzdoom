@@ -874,14 +874,7 @@ void A_RailAttack (AActor * self)
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
 
-	// Need to keep the default colors
-	if (Color1==0) Color1 = ColorMatcher.Pick (0, 0, 255);
-	else if (Color1>0) Color1--;
-
-	if (Color2==0) Color2 = ColorMatcher.Pick (255, 255, 255);
-	else if (Color2>0) Color2--;
-
-	P_RailAttack (self, Damage, Spawnofs_XY/*, Color1, Color2, MaxDiff, Silent*/);
+	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent);
 }
 
 //==========================================================================
@@ -938,14 +931,7 @@ void A_CustomRailgun (AActor *actor)
 		}
 	}
 
-	// Need to keep the default colors
-	if (Color1==0) Color1 = ColorMatcher.Pick (0, 0, 255);
-	else if (Color1>0) Color1--;
-
-	if (Color2==0) Color2 = ColorMatcher.Pick (255, 255, 255);
-	else if (Color2>0) Color2--;
-
-	P_RailAttack (actor, Damage, Spawnofs_XY/*, Color1, Color2, MaxDiff, Silent*/);
+	P_RailAttack (actor, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent);
 }
 
 //===========================================================================

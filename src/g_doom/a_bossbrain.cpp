@@ -86,8 +86,6 @@ END_DEFAULTS
 class ABossEye : public AActor
 {
 	DECLARE_ACTOR (ABossEye, AActor)
-public:
-	void Serialize (FArchive &arc);
 };
 
 FState ABossEye::States[] =
@@ -107,11 +105,6 @@ IMPLEMENT_ACTOR (ABossEye, Doom, 89, 0)
 	PROP_SpawnState (S_BRAINEYE)
 	PROP_SeeState (S_BRAINEYESEE)
 END_DEFAULTS
-
-void ABossEye::Serialize (FArchive &arc)
-{
-	Super::Serialize (arc);
-}
 
 IMPLEMENT_STATELESS_ACTOR (ABossTarget, Doom, 87, 0)
 	PROP_HeightFixed (32)

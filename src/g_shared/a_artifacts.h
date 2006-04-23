@@ -59,6 +59,7 @@ protected:
 	void InitEffect ();
 	void DoEffect ();
 	void EndEffect ();
+	void AlterWeaponSprite (vissprite_t *vis);
 };
 
 class APowerStrength : public APowerup

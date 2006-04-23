@@ -449,8 +449,9 @@ bool APlayerPawn::DoHealingRadius (APlayerPawn *other)
 	return false;
 }
 
-void APlayerPawn::SpecialInvulnerabilityHandling (EInvulState setting)
+void APlayerPawn::SpecialInvulnerabilityHandling (EInvulState setting, fixed_t * pAlpha)
 {
+	if (setting == INVUL_GetAlpha && pAlpha!=NULL) *pAlpha=FIXED_MAX;	// indicates no change
 }
 
 /*

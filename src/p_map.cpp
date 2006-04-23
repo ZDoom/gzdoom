@@ -2961,7 +2961,7 @@ static bool ProcessRailHit (FTraceResults &res)
 	return true;
 }
 
-void P_RailAttack (AActor *source, int damage, int offset)
+void P_RailAttack (AActor *source, int damage, int offset, int color1, int color2, float maxdiff, bool silent)
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
@@ -3064,7 +3064,7 @@ void P_RailAttack (AActor *source, int damage, int offset)
 	}
 
 	VectorFixedSet (end, trace.X, trace.Y, trace.Z);
-	P_DrawRailTrail (start, end);
+	P_DrawRailTrail (source, start, end, color1, color2, maxdiff, silent);
 }
 
 //

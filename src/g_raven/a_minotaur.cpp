@@ -139,24 +139,12 @@ IMPLEMENT_ACTOR (AMinotaur, Heretic, 9, 0)
 	PROP_ActiveSound ("minotaur/active")
 END_DEFAULTS
 
-void AMinotaur::BeginPlay ()
-{
-	Super::BeginPlay ();
-	StartTime = -1;
-}
-
-void AMinotaur::Serialize (FArchive &arc)
-{
-	Super::Serialize (arc);
-	arc << StartTime;
-}
-
 void AMinotaur::Tick ()
 {
 	Super::Tick ();
 	
 	// The unfriendly Minotaur (Heretic's) is invulnerable while charging
-	if (!(flags & MF_FRIENDLY))
+	if (!IsKindOf(RUNTIME_CLASS(AMinotaurFriend)))
 	{
 		// Get MF_SKULLFLY bit and shift it so it matches MF2_INVULNERABLE
 		DWORD flying = (flags & MF_SKULLFLY) << 3;
@@ -169,11 +157,8 @@ void AMinotaur::Tick ()
 
 void AMinotaur::NoBlockingSet ()
 {
-	if (!(flags & MF_FRIENDLY))
-	{
-		P_DropItem (this, "ArtiSuperHealth", 0, 51);
-		P_DropItem (this, "PhoenixRodAmmo", 10, 84);
-	}
+	P_DropItem (this, "ArtiSuperHealth", 0, 51);
+	P_DropItem (this, "PhoenixRodAmmo", 10, 84);
 }
 
 bool AMinotaur::Slam (AActor *thing)
@@ -195,91 +180,6 @@ int AMinotaur::DoSpecialDamage (AActor *target, int damage)
 		return -1;
 	}
 	return damage;
-}
-
-bool AMinotaur::IsOkayToAttack (AActor *link)
-{
-	if ((link->flags3&MF3_ISMONSTER) && (link != tracer))
-	{
-		if (!((link->flags ^ flags) & MF_FRIENDLY))
-		{ // Don't attack friends
-			if (link->flags & MF_FRIENDLY)
-			{
-				if (!deathmatch || link->FriendPlayer == 0 || FriendPlayer == 0 ||
-					link->FriendPlayer != FriendPlayer)
-				{
-					return false;
-				}
-			}
-			else
-			{
-				return false;
-			}
-		}
-		if (!(link->flags&MF_SHOOTABLE))
-		{
-			return false;
-		}
-		if (link->flags2&MF2_DORMANT)
-		{
-			return false;
-		}
-		if ((link->IsKindOf (RUNTIME_CLASS(AMinotaur))) &&
-			(link->tracer == tracer))
-		{
-			return false;
-		}
-		if (multiplayer && !deathmatch && link->player)
-		{
-			return false;
-		}
-		if (P_CheckSight (this, link))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-void AMinotaur::Die (AActor *source, AActor *inflictor)
-{
-	Super::Die (source, inflictor);
-
-	if (tracer && tracer->health > 0 && tracer->player)
-	{
-		// Search thinker list for minotaur
-		TThinkerIterator<AMinotaur> iterator;
-		AMinotaur *mo;
-
-		while ((mo = iterator.Next()) != NULL)
-		{
-			if (mo->health <= 0) continue;
-			// [RH] Minotaurs can't be morphed, so this isn't needed
-			//if (!(mo->flags&MF_COUNTKILL)) continue;		// for morphed minotaurs
-			if (mo->flags&MF_CORPSE) continue;
-			if (mo->StartTime >= 0 && (level.maptime - StartTime) >= MAULATORTICS) continue;
-			if (mo->tracer != NULL && mo->tracer->player == tracer->player) break;
-		}
-
-		if (mo == NULL)
-		{
-			AInventory *power = tracer->FindInventory (RUNTIME_CLASS(APowerMinotaur));
-			if (power != NULL)
-			{
-				power->Destroy ();
-			}
-		}
-	}
-}
-
-bool AMinotaur::OkayToSwitchTarget (AActor *other)
-{ // Minotaurs with masters never change their target until
-  // they've killed their current one.
-	if (tracer != NULL && tracer->health > 0)
-		return false;
-	if (other == tracer)
-		return false;		// Do not target the master
-	return Super::OkayToSwitchTarget (other);
 }
 
 // Minotaur Friend ----------------------------------------------------------
@@ -323,6 +223,99 @@ AT_GAME_SET (Minotaur)
 	}
 }
 
+void AMinotaurFriend::BeginPlay ()
+{
+	Super::BeginPlay ();
+	StartTime = -1;
+}
+
+void AMinotaurFriend::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << StartTime;
+}
+
+bool AMinotaurFriend::IsOkayToAttack (AActor *link)
+{
+	if ((link->flags3&MF3_ISMONSTER) && (link != tracer))
+	{
+		if (!((link->flags ^ flags) & MF_FRIENDLY))
+		{ // Don't attack friends
+			if (link->flags & MF_FRIENDLY)
+			{
+				if (!deathmatch || link->FriendPlayer == 0 || FriendPlayer == 0 ||
+					link->FriendPlayer != FriendPlayer)
+				{
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+		if (!(link->flags&MF_SHOOTABLE))
+		{
+			return false;
+		}
+		if (link->flags2&MF2_DORMANT)
+		{
+			return false;
+		}
+		if ((link->IsKindOf (RUNTIME_CLASS(AMinotaur))) &&
+			(link->tracer == tracer))
+		{
+			return false;
+		}
+		if (multiplayer && !deathmatch && link->player)
+		{
+			return false;
+		}
+		if (P_CheckSight (this, link))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void AMinotaurFriend::Die (AActor *source, AActor *inflictor)
+{
+	Super::Die (source, inflictor);
+
+	if (tracer && tracer->health > 0 && tracer->player)
+	{
+		// Search thinker list for minotaur
+		TThinkerIterator<AMinotaurFriend> iterator;
+		AMinotaurFriend *mo;
+
+		while ((mo = iterator.Next()) != NULL)
+		{
+			if (mo->health <= 0) continue;
+			// [RH] Minotaurs can't be morphed, so this isn't needed
+			//if (!(mo->flags&MF_COUNTKILL)) continue;		// for morphed minotaurs
+			if (mo->flags&MF_CORPSE) continue;
+			if (mo->StartTime >= 0 && (level.maptime - StartTime) >= MAULATORTICS) continue;
+			if (mo->tracer != NULL && mo->tracer->player == tracer->player) break;
+		}
+
+		if (mo == NULL)
+		{
+			AInventory *power = tracer->FindInventory (RUNTIME_CLASS(APowerMinotaur));
+			if (power != NULL)
+			{
+				power->Destroy ();
+			}
+		}
+	}
+}
+
+bool AMinotaurFriend::OkayToSwitchTarget (AActor *other)
+{
+	if (other == tracer) return false;		// Do not target the master
+	return Super::OkayToSwitchTarget (other);
+}
+
 void AMinotaurFriend::NoBlockingSet ()
 {
 	// Do not drop anything
@@ -358,6 +351,7 @@ IMPLEMENT_ACTOR (AMinotaurFX1, Raven, -1, 0)
 	PROP_DamageType (MOD_FIRE)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_NOTELEPORT)
+	PROP_Flags4 (MF4_NOTARGETSWITCH)
 	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_MNTRFX1)
@@ -531,7 +525,7 @@ void A_MinotaurAtk1 (AActor *actor)
 
 void A_MinotaurDecide (AActor *actor)
 {
-	bool friendly = !!(actor->flags & MF_FRIENDLY);
+	bool friendly = actor->IsKindOf(RUNTIME_CLASS(AMinotaurFriend));
 	angle_t angle;
 	AActor *target;
 	int dist;
@@ -630,6 +624,7 @@ void A_MinotaurAtk2 (AActor *actor)
 	angle_t angle;
 	fixed_t momz;
 	fixed_t z;
+	bool friendly = actor->IsKindOf(RUNTIME_CLASS(AMinotaurFriend));
 
 	if (!actor->target)
 	{
@@ -639,7 +634,7 @@ void A_MinotaurAtk2 (AActor *actor)
 	if (actor->CheckMeleeRange())
 	{
 		int damage;
-		damage = pr_atk.HitDice ((actor->flags & MF_FRIENDLY) ? 3 : 5);
+		damage = pr_atk.HitDice (friendly ? 3 : 5);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
@@ -670,6 +665,7 @@ void A_MinotaurAtk3 (AActor *actor)
 {
 	AActor *mo;
 	player_t *player;
+	bool friendly = actor->IsKindOf(RUNTIME_CLASS(AMinotaurFriend));
 
 	if (!actor->target)
 	{
@@ -680,7 +676,7 @@ void A_MinotaurAtk3 (AActor *actor)
 	{
 		int damage;
 		
-		damage = pr_minotauratk3.HitDice ((actor->flags & MF_FRIENDLY) ? 3 : 5);
+		damage = pr_minotauratk3.HitDice (friendly ? 3 : 5);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		if ((player = actor->target->player) != NULL &&
@@ -787,7 +783,7 @@ void A_MinotaurFade2 (AActor *actor)
 
 void A_MinotaurRoam (AActor *actor)
 {
-	AMinotaur *self = static_cast<AMinotaur *> (actor);
+	AMinotaurFriend *self = static_cast<AMinotaurFriend *> (actor);
 
 	// In case pain caused him to skip his fade in.
 	actor->RenderStyle = STYLE_Normal;
@@ -829,14 +825,14 @@ void A_MinotaurRoam (AActor *actor)
 
 void A_MinotaurLook (AActor *actor)
 {
-	AMinotaur *self = static_cast<AMinotaur *> (actor);
 
-	if (!(self->flags & MF_FRIENDLY))
+	if (!actor->IsKindOf(RUNTIME_CLASS(AMinotaurFriend)))
 	{
 		A_Look (actor);
 		return;
 	}
 
+	AMinotaurFriend *self = static_cast<AMinotaurFriend *> (actor);
 	AActor *mo = NULL;
 	player_t *player;
 	fixed_t dist;
@@ -900,7 +896,13 @@ void A_MinotaurLook (AActor *actor)
 
 void A_MinotaurChase (AActor *actor)
 {
-	AMinotaur *self = static_cast<AMinotaur *> (actor);
+	if (!actor->IsKindOf(RUNTIME_CLASS(AMinotaurFriend)))
+	{
+		A_Chase (actor);
+		return;
+	}
+
+	AMinotaurFriend *self = static_cast<AMinotaurFriend *> (actor);
 
 	// In case pain caused him to skip his fade in.
 	actor->RenderStyle = STYLE_Normal;
@@ -908,12 +910,6 @@ void A_MinotaurChase (AActor *actor)
 	if (self->StartTime >= 0 && (level.maptime - self->StartTime) >= MAULATORTICS)
 	{
 		P_DamageMobj (actor, NULL, NULL, 1000000, MOD_UNKNOWN);
-		return;
-	}
-
-	if (!(self->flags & MF_FRIENDLY))
-	{
-		A_Chase (actor);
 		return;
 	}
 
@@ -952,6 +948,7 @@ void A_MinotaurChase (AActor *actor)
 	if (!P_Move (actor))
 	{
 		P_NewChaseDir (actor);
+		FaceMovementDirection (actor);
 	}
 
 	// Active sound

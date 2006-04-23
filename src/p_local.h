@@ -303,7 +303,7 @@ void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, 
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
-void	P_RailAttack (AActor *source, int damage, int offset);	// [RH] Shoot a railgun
+void	P_RailAttack (AActor *source, int damage, int offset, int color1 = 0, int color2 = 0, float maxdiff = 0, bool silent = false);	// [RH] Shoot a railgun
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec);
 bool	P_CheckMissileSpawn (AActor *missile);

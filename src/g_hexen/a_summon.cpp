@@ -132,7 +132,7 @@ bool AArtiDarkServant::Use (bool pickup)
 
 void A_Summon (AActor *actor)
 {
-	AMinotaur *mo;
+	AMinotaurFriend *mo;
 
 	mo = Spawn<AMinotaurFriend> (actor->x, actor->y, actor->z);
 	if (mo)

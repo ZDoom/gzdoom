@@ -76,10 +76,11 @@ public:
 	{
 		INVUL_Start,
 		INVUL_Active,
-		INVUL_Stop
+		INVUL_Stop,
+		INVUL_GetAlpha
 	};
 
-	virtual void SpecialInvulnerabilityHandling (EInvulState state);
+	virtual void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha=NULL);
 
 	void BeginPlay ();
 	void Die (AActor *source, AActor *inflictor);

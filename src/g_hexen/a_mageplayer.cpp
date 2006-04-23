@@ -173,7 +173,7 @@ bool AMagePlayer::DoHealingRadius (APlayerPawn *other)
 	return false;
 }
 
-void AMagePlayer::SpecialInvulnerabilityHandling (EInvulState state)
+void AMagePlayer::SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha)
 {
 	if (state == INVUL_Start)
 	{
@@ -182,6 +182,10 @@ void AMagePlayer::SpecialInvulnerabilityHandling (EInvulState state)
 	else if (state == INVUL_Stop)
 	{
 		flags2 &= ~MF2_REFLECTIVE;
+	}
+	else if (state == INVUL_GetAlpha && pAlpha != NULL)
+	{
+		*pAlpha = FIXED_MAX;
 	}
 }
 

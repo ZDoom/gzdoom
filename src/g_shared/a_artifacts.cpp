@@ -321,6 +321,22 @@ void APowerInvulnerable::EndEffect ()
 	}
 }
 
+//===========================================================================
+//
+// APowerInvuInvulnerable :: AlterWeaponSprite
+//
+//===========================================================================
+
+void APowerInvulnerable::AlterWeaponSprite (vissprite_t *vis)
+{
+	if (Owner->player->mo != NULL)
+	{
+		fixed_t wp_alpha;
+		Owner->player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_GetAlpha, &wp_alpha);
+		if (wp_alpha != FIXED_MAX) vis->alpha = wp_alpha;
+	}
+}
+
 // Strength (aka Berserk) Powerup --------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerStrength, Any, -1, 0)

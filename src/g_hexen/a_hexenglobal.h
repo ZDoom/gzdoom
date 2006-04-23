@@ -105,7 +105,7 @@ public:
 	void GiveDefaultInventory ();
 	const char *GetSoundClass ();
 	fixed_t GetJumpZ ();
-	void SpecialInvulnerabilityHandling (EInvulState state);
+	void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha);
 };
 
 class AClericWeapon : public AWeapon
@@ -125,7 +125,7 @@ public:
 	const char *GetSoundClass ();
 	fixed_t GetJumpZ ();
 	bool DoHealingRadius (APlayerPawn *other);
-	void SpecialInvulnerabilityHandling (EInvulState state);
+	void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha);
 };
 
 class AMageWeapon : public AWeapon

@@ -1,3 +1,10 @@
+April 22, 2006 (Changes by Graf Zahl)
+- Fixed: V_InitCustomFonts initialized lastlump to -1 instead of 0.
+- Fixed: CreateTexture never checked whether it could read from the
+  texture lump. Since the minimum valid length is 13 bytes for a
+  1x1 pixel patch everything below that will now return with an error.
+- Fixed a few occurences of mismatched free's for new'd memory.
+
 April 21, 2006 (Changes by Graf Zahl)
 - Fixed: To prevent the pointer cleanup code from crashing numsectors has
   to be set to 0 when the sectors array is deleted.

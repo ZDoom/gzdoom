@@ -234,9 +234,11 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 {
 	FTexture *out = NULL;
     enum { t_patch, t_raw, t_imgz, t_png } type = t_patch;
-	DWORD first4bytes;
+	DWORD first4bytes=0;
 
-	if (lumpnum < 0)
+	// Must check the length of the lump. Zero length flat markers (F1_START etc.) will come through here.
+	// 13 is the minimum length of andthing valid (i.e a 1x1 pixel Doom patch.)
+	if (lumpnum < 0 || Wads.LumpLength(lumpnum)<13)
 	{
 		return -1;
 	}

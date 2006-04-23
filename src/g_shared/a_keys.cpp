@@ -294,8 +294,8 @@ static void ParseLock()
 		}
 	}
 	// copy the messages if the other one does not exist
-	if (!lock->remotemsg && lock->message) lock->remotemsg=strdup(lock->message);
-	if (!lock->message && lock->remotemsg) lock->message=strdup(lock->remotemsg);
+	if (!lock->remotemsg && lock->message) lock->remotemsg = copystring(lock->message);
+	if (!lock->message && lock->remotemsg) lock->message = copystring(lock->remotemsg);
 	lock->keylist.ShrinkToFit();
 }
 

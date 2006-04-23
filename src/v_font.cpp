@@ -1233,7 +1233,7 @@ void V_InitCustomFonts()
 	char namebuffer[16], templatebuf[16];
 	int adder=0;
 	int i;
-	int llump,lastlump=-1;
+	int llump,lastlump=0;
 	int format;
 	int start;
 	int first;

@@ -277,6 +277,7 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 	NeedGammaUpdate = false;
 	UpdatePending = false;
 	NotPaletted = false;
+	FlashAmount = 0;
 	
 	Screen = SDL_SetVideoMode (width, height, vid_displaybits,
 		SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|SDL_ANYFORMAT|

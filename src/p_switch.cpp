@@ -292,7 +292,7 @@ void P_ProcessSwitchDef ()
 		{
 			free (def1);
 		}
-		free (picname);
+		delete [] picname;
 		return;
 	}
 
@@ -316,7 +316,7 @@ void P_ProcessSwitchDef ()
 	def2->PairIndex = AddSwitchDef (def1);
 	def1->PairIndex = AddSwitchDef (def2);
 	def1->QuestPanel = def2->QuestPanel = quest;
-	free (picname);
+	delete [] picname;
 }
 
 FSwitchDef *ParseSwitchDef (bool ignoreBad)

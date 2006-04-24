@@ -1670,11 +1670,19 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			{
 				floorz = MAX(thing->z, tmfloorz);
 			}
-			if (floorz - tmdropoffz > thing->MaxDropOffHeight &&
-				!(thing->flags2 & MF2_BLASTED))
-			{ // Can't move over a dropoff unless it's been blasted
-				thing->z = oldz;
-				return false;
+			if (!(thing->flags5&MF5_AVOIDINGDROPOFF))
+			{
+				if (floorz - tmdropoffz > thing->MaxDropOffHeight &&
+					!(thing->flags2 & MF2_BLASTED))
+				{ // Can't move over a dropoff unless it's been blasted
+					thing->z = oldz;
+					return false;
+				}
+			}
+			else
+			{
+				// special logic to move a monster off a dropoff
+				if (thing->dropoffz - tmdropoffz > thing->MaxDropOffHeight) return false;
 			}
 		}
 		if (thing->flags2 & MF2_CANTLEAVEFLOORPIC

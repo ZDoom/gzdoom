@@ -144,6 +144,9 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 		{
 			continue;
 		}
+		
+		// Early out for intra-sector lines
+		if (sides[check->sidenum[0]].sector==sides[check->sidenum[1]].sector) continue;
 
 		if ( sides[ check->sidenum[0] ].sector == sec)
 			other = sides[ check->sidenum[1] ].sector;
@@ -277,9 +280,12 @@ bool P_CheckMeleeRange2 (AActor *actor)
 	return true;
 }
 
+
+//=============================================================================
 //
 // P_CheckMissileRange
 //
+//=============================================================================
 BOOL P_CheckMissileRange (AActor *actor)
 {
 	fixed_t dist;
@@ -529,6 +535,7 @@ BOOL P_Move (AActor *actor)
 }
 
 
+//=============================================================================
 //
 // TryWalk
 // Attempts to move actor on
@@ -540,6 +547,8 @@ BOOL P_Move (AActor *actor)
 // If a door is in the way,
 // an OpenDoor call is made to start it opening.
 //
+//=============================================================================
+
 BOOL P_TryWalk (AActor *actor)
 {
 	if (!P_Move (actor))
@@ -550,18 +559,19 @@ BOOL P_TryWalk (AActor *actor)
 	return true;
 }
 
+//=============================================================================
+//
+// P_DoNewChaseDir
+//
+// killough 9/8/98:
+//
+// Most of P_NewChaseDir(), except for what
+// determines the new direction to take
+//
+//=============================================================================
 
-/*
-================
-=
-= P_NewChaseDir
-=
-================
-*/
-
-void P_NewChaseDir (AActor *actor)
+void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 {
-	fixed_t 	deltax, deltay;
 	dirtype_t	d[3];
 	int			tdir;
 	dirtype_t	olddir, turnaround;
@@ -572,8 +582,6 @@ void P_NewChaseDir (AActor *actor)
 	olddir = (dirtype_t)actor->movedir;
 	turnaround = opposite[olddir];
 
-	deltax = actor->target->x - actor->x;
-	deltay = actor->target->y - actor->y;
 
 	// [RH] Make monsters run away from frightening players
 	if ((actor->target->player != NULL &&
@@ -677,6 +685,132 @@ void P_NewChaseDir (AActor *actor)
 
 	actor->movedir = DI_NODIR;	// can not move
 }
+
+
+//=============================================================================
+//
+// killough 11/98:
+//
+// Monsters try to move away from tall dropoffs.
+//
+// In Doom, they were never allowed to hang over dropoffs,
+// and would remain stuck if involuntarily forced over one.
+// This logic, combined with p_map.c (P_TryMove), allows
+// monsters to free themselves without making them tend to
+// hang over dropoffs.
+//=============================================================================
+
+struct avoiddropoff_t
+{
+	fixed_t deltax;
+	fixed_t deltay;
+	fixed_t floorx;
+	fixed_t floory;
+	fixed_t floorz;
+	fixed_t t_bbox[4];
+} a;
+
+static BOOL PIT_AvoidDropoff(line_t *line)
+{
+	if (line->backsector                          && // Ignore one-sided linedefs
+		a.t_bbox[BOXRIGHT]  > line->bbox[BOXLEFT]   &&
+		a.t_bbox[BOXLEFT]   < line->bbox[BOXRIGHT]  &&
+		a.t_bbox[BOXTOP]    > line->bbox[BOXBOTTOM] && // Linedef must be contacted
+		a.t_bbox[BOXBOTTOM] < line->bbox[BOXTOP]    &&
+		P_BoxOnLineSide(a.t_bbox, line) == -1)
+    {
+		fixed_t front = line->frontsector->floorplane.ZatPoint(a.floorx,a.floory);
+		fixed_t back  = line->backsector->floorplane.ZatPoint(a.floorx,a.floory);
+		angle_t angle;
+		
+		// The monster must contact one of the two floors,
+		// and the other must be a tall dropoff (more than 24).
+		
+		if (back == a.floorz && front < a.floorz - FRACUNIT*24)
+		{
+			angle = R_PointToAngle2(0,0,line->dx,line->dy);   // front side dropoff
+		}
+		else if (front == a.floorz && back < a.floorz - FRACUNIT*24)
+		{
+			angle = R_PointToAngle2(line->dx,line->dy,0,0); // back side dropoff
+		}
+		else return true;
+		
+		// Move away from dropoff at a standard speed.
+		// Multiple contacted linedefs are cumulative (e.g. hanging over corner)
+		a.deltax -= finesine[angle >> ANGLETOFINESHIFT]*32;
+		a.deltay += finecosine[angle >> ANGLETOFINESHIFT]*32;
+    }
+	return true;
+}
+
+//=============================================================================
+//
+// P_NewChaseDir
+//
+// killough 9/8/98: Split into two functions
+//
+//=============================================================================
+
+void P_NewChaseDir(AActor * actor)
+{
+	fixed_t deltax = actor->target->x - actor->x;
+	fixed_t deltay = actor->target->y - actor->y;
+	
+	// Try to move away from a dropoff
+	if (actor->floorz - actor->dropoffz > actor->MaxDropOffHeight && 
+		actor->z <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
+		!(actor->flags2 & MF2_ONMOBJ) &&
+		!(actor->flags & MF_FLOAT) && !(compatflags & COMPATF_DROPOFF))
+	{
+		a.deltax = a.deltay = 0;
+		a.floorx = actor->x;
+		a.floory = actor->y;
+		a.floorz = actor->z;
+
+		int yh=((a.t_bbox[BOXTOP]   = actor->y+actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
+		int yl=((a.t_bbox[BOXBOTTOM]= actor->y-actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
+		int xh=((a.t_bbox[BOXRIGHT] = actor->x+actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
+		int xl=((a.t_bbox[BOXLEFT]  = actor->x-actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
+		int bx, by;
+		
+		// check lines
+		
+		validcount++;
+		for (bx=xl ; bx<=xh ; bx++)
+			for (by=yl ; by<=yh ; by++)
+				P_BlockLinesIterator(bx, by, PIT_AvoidDropoff);  // all contacted lines
+
+		if (a.deltax || a.deltay) 
+		{
+			// [Graf Zahl] I have changed P_TryMove to only apply this logic when
+			// being called from here. AVOIDINGDROPOFF activates the code that
+			// allows monsters to move away from a dropoff. This is different from
+			// MBF which requires unconditional use of the altered logic and therefore
+			// forcing a massive change in the monster behavior to use this.
+
+			// use different dropoff movement logic in P_TryMove
+			actor->flags5|=MF5_AVOIDINGDROPOFF;
+			P_DoNewChaseDir(actor, a.deltax, a.deltay);
+			actor->flags5&=~MF5_AVOIDINGDROPOFF;
+		
+			// If moving away from dropoff, set movecount to 1 so that 
+			// small steps are taken to get monster away from dropoff.
+			actor->movecount = 1;
+			return;
+		}
+	}
+	P_DoNewChaseDir(actor, deltax, deltay);
+}
+
+
+
+
+//=============================================================================
+//
+// P_RandomChaseDir
+//
+//=============================================================================
 
 void P_RandomChaseDir (AActor *actor)
 {
@@ -1472,6 +1606,12 @@ void A_Look (AActor *actor)
 	}
 }
 
+
+//==========================================================================
+//
+// A_Wander
+//
+//==========================================================================
 void A_Wander (AActor *self)
 {
 	int delta;
@@ -1511,6 +1651,12 @@ void A_Wander (AActor *self)
 	}
 }
 
+
+//==========================================================================
+//
+// A_Look2
+//
+//==========================================================================
 void A_Look2 (AActor *self)
 {
 	AActor *targ;
@@ -1856,7 +2002,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	// class bosses don't do this when strafing
 	if (!fastchase || !actor->special2)
 	{
-		// CANTLEAVEFLOORPIC handling was completely missing in the non-serpent functions!
+		// CANTLEAVEFLOORPIC handling was completely missing in the non-serpent functions.
 		fixed_t oldX = actor->x;
 		fixed_t oldY = actor->y;
 		int oldFloor = actor->floorpic;
@@ -1902,10 +2048,11 @@ void A_FastChase (AActor *actor)
 	A_DoChase (actor, true, actor->MeleeState, actor->MissileState, true, true);
 }
 
-
+//=============================================================================
 //
 // A_FaceTarget
 //
+//=============================================================================
 void A_FaceTarget (AActor *actor)
 {
 	if (!actor->target)
@@ -1927,11 +2074,14 @@ void A_FaceTarget (AActor *actor)
     }
 }
 
+
+//===========================================================================
 //
 // [RH] A_MonsterRail
 //
 // New function to let monsters shoot a railgun
 //
+//===========================================================================
 void A_MonsterRail (AActor *actor)
 {
 	if (!actor->target)

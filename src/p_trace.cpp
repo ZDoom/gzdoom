@@ -168,6 +168,13 @@ static BOOL PTR_TraceIterator (intercept_t *in)
 		else
 		{
 			entersector = (lineside == 0) ? in->d.line->backsector : in->d.line->frontsector;
+			
+			// For backwards compatibility: Ignore lines with the same sector on both sides.
+			// This is the way Doom.exe did it and some WADs (e.g. Alien Vendetta MAP15 needs it.
+			if (compatflags & COMPATF_TRACE)
+			{
+				return true;
+			}
 		}
 
 		ff = CurSector->floorplane.ZatPoint (hitx, hity);

@@ -264,6 +264,8 @@ enum
 	COMPATF_RAVENSCROLL		= 1 << 10,	// Raven's scrollers use their original carrying speed
 	COMPATF_SOUNDTARGET		= 1 << 11,	// Use sector based sound target code.
 	COMPATF_DEHHEALTH		= 1 << 12,	// Limit deh.MaxHealth to the health bonus (as in Doom2.exe)
+	COMPATF_TRACE			= 1 << 13,	// Trace ignores lines with the same sector on both sides
+	COMPATF_DROPOFF			= 1 << 14,	// Monsters cannot move when hanging over a dropoff
 };
 
 // phares 3/20/98:

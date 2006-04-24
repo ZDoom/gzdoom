@@ -278,6 +278,7 @@ enum
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	MF5_BOUNCEONACTORS	= 0x00000008,	// bouncing missile doesn't explode when it hits an actor 
 	MF5_EXPLODEONWATER	= 0x00000010,	// bouncing missile explpdes when hitting a water surface
+	MF5_AVOIDINGDROPOFF = 0x00000020,	// Used to move monsters away fro dropoffs
 
 // --- mobj.renderflags ---
 

@@ -1,3 +1,11 @@
+April 23, 2006 (Changes by Graf Zahl)
+- Added MBF's logic to move monsters away from a dropoff but changed it
+  so that it doesn't require a general change in the movement code.
+- Added: The Trace function needs a compatibility option to exclude
+  two-sided lines with both sides in the same sector from being checked.
+  Originally this wasn't done and some WADs (e.g. Alien Vendetta MAP15)
+  need the original behavior to work.
+
 April 22, 2006 (Changes by Graf Zahl)
 - Removed ABossEye::Serialize because it didn't do anything.
 - Fixed the issues with .96x's railgun code and added it to the current

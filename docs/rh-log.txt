@@ -1,4 +1,7 @@
 April 23, 2006 (Changes by Graf Zahl)
+- Added a clipmidtextures level flag which exposes the ML_CLIP_MIDTEX
+  feature globally per level. Also moved the setting of this flag for Strife
+  into MAPINFO.
 - Added MBF's logic to move monsters away from a dropoff but changed it
   so that it doesn't require a general change in the movement code.
 - Added: The Trace function needs a compatibility option to exclude

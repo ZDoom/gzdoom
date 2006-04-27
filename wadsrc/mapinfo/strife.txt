@@ -4,7 +4,7 @@ defaultmap
 forcenoskystretch
 strifefallingdamage
 nointermission
-
+clipmidtextures
 
 map MAP01 "AREA  1: sanctuary"
 next MAP02

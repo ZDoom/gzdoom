@@ -240,6 +240,7 @@ static const char *MapInfoMapLevel[] =
 	"sndseq",
 	"sndinfo",
 	"soundinfo",
+	"clipmidtextures",
 	NULL
 };
 
@@ -351,6 +352,7 @@ MapHandlers[] =
 	{ MITYPE_LUMPNAME,	lioffset(sndseq), 0 },
 	{ MITYPE_LUMPNAME,	lioffset(soundinfo), 0 },
 	{ MITYPE_LUMPNAME,	lioffset(soundinfo), 0 },
+	{ MITYPE_SETFLAG,	LEVEL_CLIPMIDTEX, 0 },
 };
 
 static const char *MapInfoClusterLevel[] =

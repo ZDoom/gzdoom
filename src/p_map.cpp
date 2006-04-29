@@ -2243,7 +2243,7 @@ bool P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove)
 	{
 		// this additional check prevents sliding on sloped dropoffs
 		if (planezhere>actor->floorz+4*FRACUNIT)
-		return false;
+			return false;
 	}
 
 	if (actor->z - planezhere > FRACUNIT)
@@ -3186,10 +3186,26 @@ blocked:
 			(in->d.line->special != 0 && (compatflags & COMPATF_USEBLOCKING)))
 		{
 			// [RH] Give sector a chance to intercept the use
-			sector_t *sec = in->d.line->frontsector;
-			if ((!sec->SecActTarget ||
-					!sec->SecActTarget->TriggerAction (usething, SECSPAC_Use|SECSPAC_UseWall))
-				&& usething->player)
+
+			sector_t * sec;
+
+			sec = usething->Sector;
+
+			if (sec->SecActTarget && sec->SecActTarget->TriggerAction (usething, SECSPAC_Use))
+			{
+				return false;
+			}
+
+			sec = P_PointOnLineSide(usething->x, usething->y, in->d.line) == 0?
+				in->d.line->frontsector : in->d.line->backsector;
+
+			if (sec != NULL && sec->SecActTarget &&
+				sec->SecActTarget->TriggerAction (usething, SECSPAC_UseWall))
+			{
+				return false;
+			}
+
+			if (usething->player)
 			{
 				S_Sound (usething, CHAN_VOICE, "*usefail", 1, ATTN_IDLE);
 			}
@@ -3202,7 +3218,7 @@ blocked:
 	if (P_PointOnLineSide (usething->x, usething->y, in->d.line) == 1)
 		// [RH] continue traversal for two-sided lines
 		//return in->d.line->backsector != NULL;		// don't use back side
-		goto blocked;	// do a proper check for back sides of triggers!
+		goto blocked;	// do a proper check for back sides of triggers
 		
 	P_ActivateLine (in->d.line, usething, 0, SPAC_USE);
 

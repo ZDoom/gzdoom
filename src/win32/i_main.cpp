@@ -308,7 +308,7 @@ void DoMain (HINSTANCE hInstance)
 		
 		/* create window */
 		Window = CreateWindow((LPCTSTR)WinClassName,
-				(LPCTSTR) "ZDOOM " DOTVERSIONSTR " (" __DATE__ ")",
+				(LPCTSTR) GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")",
 				WS_OVERLAPPEDWINDOW,
 				0/*CW_USEDEFAULT*/, 1/*CW_USEDEFAULT*/, width, height,
 				(HWND)   NULL,

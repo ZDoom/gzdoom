@@ -1,3 +1,4 @@
+NoAutostartMap
 Background mape3
 Splat in_x
 Pointer in_yah

@@ -1,3 +1,12 @@
+April 29, 2006 (Changes by Graf Zahl)
+- ZDoom now loads zdoom.pk3 instead of zdoom.wad.
+- Fixed: StreamSong::SetVolume should check the m_stream pointer. This can
+  happen when a TimiditySong doesn't use FMOD and outputs the sound itself.
+- Fixed: 'use' sector actions were using the incorrect sector on several 
+  occasions.
+- Added a wi_noautostartmap CVAR and a noautostartmap intermission option
+  that force the user to manually end the 'entering level' page.
+
 April 23, 2006 (Changes by Graf Zahl)
 - Added a clipmidtextures level flag which exposes the ML_CLIP_MIDTEX
   feature globally per level. Also moved the setting of this flag for Strife

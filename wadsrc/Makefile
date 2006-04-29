@@ -19,13 +19,13 @@ wadmake: zdoom.lst
 	$(MAKEWAD) -make wadmake zdoom.lst
 
 clean:
-	$(RM) wadmake zdoom.wad xlat/*.x dehsupp.lmp
+	$(RM) wadmake zdoom.pk3 xlat/*.x dehsupp.lmp
 
 # This target is for Visual C++'s Rebuild All command
 nrebuild: clean
 	$(MAKE) NOLOGO=$(NOLOGO) MAKEWAD=$(MAKEWAD) XLATCC=$(XLATCC) DEHSUPP=$(DEHSUPP)
-	copy zdoom.wad ..\..
+	copy zdoom.pk3 ..\..
 
 # Copy the wad to my testing area
 andcopy: makethewad
-	copy zdoom.wad ..\..
+	copy zdoom.pk3 ..\..

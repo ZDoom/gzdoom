@@ -10,7 +10,7 @@ wadmake: zdoom.lst $(MAKEWAD).exe $(XLATCC).exe $(DEHSUPP).exe
 	$(MAKEWAD) -make wadmake zdoom.lst
 
 clean:
-	del /q /f wadmake zdoom.wad xlat\*.x dehsupp.lmp 2>nul
+	del /q /f wadmake zdoom.pk3 xlat\*.x dehsupp.lmp 2>nul
 
 ../tools/makewad/makewad.exe:
 	$(MAKE) -C ../tools/makewad -f Makefile.mgw

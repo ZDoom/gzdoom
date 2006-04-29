@@ -11,6 +11,7 @@
 #include "p_effect.h"
 #include "gi.h"
 #include "templates.h"
+#include "thingdef.h"
 
 static FRandom pr_punch ("Punch");
 static FRandom pr_saw ("Saw");
@@ -1337,7 +1338,6 @@ void A_FireBFG (AActor *actor)
 	player->userinfo.aimdist = storedaimdist;
 }
 
-int EvalExpressionI (int id, AActor *self);
 //
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view

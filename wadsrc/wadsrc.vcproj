@@ -19,8 +19,8 @@
 				Name="VCNMakeTool"
 				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo andcopy"
 				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
-				CleanCommandLine="del wadmake zdoom.wad"
-				Output="zdoom.wad"/>
+				CleanCommandLine="del wadmake zdoom.pk3"
+				Output="zdoom.pk3"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -31,8 +31,8 @@
 				Name="VCNMakeTool"
 				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo"
 				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
-				CleanCommandLine="del wadmake zdoom.wad"
-				Output="zdoom.wad"/>
+				CleanCommandLine="del wadmake zdoom.pk3"
+				Output="zdoom.pk3"/>
 		</Configuration>
 	</Configurations>
 	<References>

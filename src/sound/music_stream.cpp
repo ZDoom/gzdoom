@@ -2,7 +2,7 @@
 
 void StreamSong::SetVolume (float volume)
 {
-	m_Stream->SetVolume (volume);
+	if (m_Stream!=NULL) m_Stream->SetVolume (volume);
 }
 
 void StreamSong::Play (bool looping)

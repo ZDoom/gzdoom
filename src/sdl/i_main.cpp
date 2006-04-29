@@ -147,7 +147,7 @@ int main (int argc, char **argv)
 	}
 	atterm (SDL_Quit);
 
-	SDL_WM_SetCaption ("ZDOOM " DOTVERSIONSTR " (" __DATE__ ")", NULL);
+	SDL_WM_SetCaption (GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")", NULL);
 	
     try
     {

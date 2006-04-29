@@ -1921,14 +1921,14 @@ void D_DoomMain (void)
 	M_FindResponseFile ();
 	M_LoadDefaults ();			// load before initing other systems
 
-	// [RH] Make sure zdoom.wad is always loaded,
+	// [RH] Make sure zdoom.pk3 is always loaded,
 	// as it contains magic stuff we need.
 
-	wad = BaseFileSearch ("zdoom.wad", NULL, true);
+	wad = BaseFileSearch ("zdoom.pk3", NULL, true);
 	if (wad)
 		D_AddFile (wad);
 	else
-		I_FatalError ("Cannot find zdoom.wad");
+		I_FatalError ("Cannot find zdoom.pk3");
 
 	I_SetTitleString (IWADTypeNames[IdentifyVersion ()]);
 	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);

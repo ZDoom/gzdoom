@@ -57,6 +57,7 @@ typedef enum
 
 CVAR (Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR (Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
+CVAR (Bool, wi_noautostartmap, false, CVAR_ARCHIVE)
 
 
 void WI_loadData ();
@@ -200,6 +201,7 @@ static int				cnt_time;
 static int				cnt_total_time;
 static int				cnt_par;
 static int				cnt_pause;
+static bool				noautostartmap;
 
 //
 //		GRAPHICS
@@ -262,7 +264,9 @@ static const char *WI_Cmd[]={
 
 	"Animation",
 	"Pic",
-	
+
+	"NoAutostartMap",
+
 	NULL
 };
 
@@ -481,6 +485,10 @@ void WI_LoadBackground(bool isenterpic)
 					an.levelname[8]=0;
 					SC_MustGetString();
 					caseval=SC_MustMatchString(WI_Cmd);
+
+				case 14:	// NoAutostartMap
+					noautostartmap=true;
+					break;
 
 				default:
 					switch (caseval)
@@ -1052,7 +1060,11 @@ void WI_updateNoState ()
 {
 	WI_updateAnimatedBack();
 
-	if (!--cnt)
+
+	if (!wi_noautostartmap && !noautostartmap) cnt--;
+	if (acceleratestage) cnt=0;
+
+	if (cnt==0)
 	{
 		WI_End();
 		G_WorldDone();
@@ -2070,6 +2082,7 @@ void WI_initVariables (wbstartstruct_t *wbstartstruct)
 
 void WI_Start (wbstartstruct_t *wbstartstruct)
 {
+	noautostartmap = false;
 	V_SetBlend (0,0,0,0);
 	WI_initVariables (wbstartstruct);
 	WI_loadData ();

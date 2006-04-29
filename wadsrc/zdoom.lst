@@ -1,183 +1,178 @@
 # The big list of all things zdoom.wad.
 
-@zdoom.wad
+@zdoom.pk3
 
-invgemr2    invgemr2.lmp
-invgemr1    invgemr1.lmp
-invgeml2    invgeml2.lmp
-invgeml1    invgeml1.lmp
-artibox	    artibox.png
-selectbo    selectbo.png
-fiteface    fiteface.lmp
-mageface    mageface.lmp
-clerface    clerface.lmp
-hamoback    hamoback.png
+graphics/invgemr2.lmp    	invgemr2.lmp
+graphics/invgemr1.lmp    	invgemr1.lmp
+graphics/invgeml2.lmp    	invgeml2.lmp
+graphics/invgeml1.lmp    	invgeml1.lmp
+graphics/artibox.png    	artibox.png
+graphics/selectbo.png    	selectbo.png
+graphics/fiteface.lmp       fiteface.lmp
+graphics/mageface.lmp       mageface.lmp
+graphics/clerface.lmp       clerface.lmp
+graphics/hamoback.png       hamoback.png
 
 ========			    # Decals
-decaldef    decals/decaldef.txt
+decaldef.txt                decals/decaldef.txt
 --------
 
-blast1	    decals/blast1.png
-cbalscr1    decals/cbalscr1.png
-cbalscr2    decals/cbalscr2.png
-bal7scr1    decals/bal7scr1.png
-bal7scr2    decals/bal7scr2.png
-bfglite1    decals/bfglite1.png
-bfglite2    decals/bfglite2.png
-bfgscrc1    decals/bfgscrc1.png
-bfgscrc2    decals/bfgscrc2.png
-plasma1	    decals/plasma1.png
-plasma2	    decals/plasma2.png
-scorch1	    decals/scorch1.png
-bsplat1	    decals/bsplat1.png
-bsplat2	    decals/bsplat2.png
-bsplat3	    decals/bsplat3.png
-bsplat4	    decals/bsplat4.png
-bsplat5	    decals/bsplat5.png
-bsplat6	    decals/bsplat6.png
-bsplat7	    decals/bsplat7.png
-bsmear1	    decals/bsmear1.png
-bsmear2	    decals/bsmear2.png
-chip1	    decals/chip1.png
-chip2	    decals/chip2.png
-chip3	    decals/chip3.png
-chip4	    decals/chip4.png
-chip5	    decals/chip5.png
-cbowmark    decals/cbowmark.png
+graphics/blast1.png	        decals/blast1.png
+graphics/cbalscr1.png       decals/cbalscr1.png
+graphics/cbalscr2.png       decals/cbalscr2.png
+graphics/bal7scr1.png       decals/bal7scr1.png
+graphics/bal7scr2.png       decals/bal7scr2.png
+graphics/bfglite1.png       decals/bfglite1.png
+graphics/bfglite2.png       decals/bfglite2.png
+graphics/bfgscrc1.png       decals/bfgscrc1.png
+graphics/bfgscrc2.png       decals/bfgscrc2.png
+graphics/plasma1.png        decals/plasma1.png
+graphics/plasma2.png	    decals/plasma2.png
+graphics/scorch1.png        decals/scorch1.png
+graphics/bsplat1.png	    decals/bsplat1.png
+graphics/bsplat2.png	    decals/bsplat2.png
+graphics/bsplat3.png	    decals/bsplat3.png
+graphics/bsplat4.png	    decals/bsplat4.png
+graphics/bsplat5.png	    decals/bsplat5.png
+graphics/bsplat6.png	    decals/bsplat6.png
+graphics/bsplat7.png	    decals/bsplat7.png
+graphics/bsmear1.png	    decals/bsmear1.png
+graphics/bsmear2.png	    decals/bsmear2.png
+graphics/chip1.png	        decals/chip1.png
+graphics/chip2.png	        decals/chip2.png
+graphics/chip3.png 	        decals/chip3.png
+graphics/chip4.png	        decals/chip4.png
+graphics/chip5.png	        decals/chip5.png
+graphics/cbowmark.png       decals/cbowmark.png
 
 ========
 # Definition lumps
 
-animdefs    animdefs.txt
-terrain	    terrain.txt
-in_epi1		in_epi1.txt
-in_epi2		in_epi2.txt
-in_epi3		in_epi3.txt
-in_htc1		in_htc1.txt
-in_htc2		in_htc2.txt
-in_htc3		in_htc3.txt
-lockdefs	lockdefs.txt
+animdefs.txt                animdefs.txt
+terrain.txt           	    terrain.txt
+in_epi1.txt           		in_epi1.txt
+in_epi2.txt           		in_epi2.txt
+in_epi3.txt           		in_epi3.txt
+in_htc1.txt           		in_htc1.txt
+in_htc2.txt           		in_htc2.txt
+in_htc3.txt           		in_htc3.txt
+lockdefs.txt             	lockdefs.txt
 
 ========
 # Support lumps
 
-dehsupp	    dehsupp.lmp
+dehsupp.lmp	                dehsupp.lmp
 
-doomx	    xlat/doom.x
-hereticx    xlat/heretic.x
-strifex	    xlat/strife.x
+doomx.lmp	                xlat/doom.x
+hereticx.lmp                xlat/heretic.x
+strifex.lmp	                xlat/strife.x
 
-animated    animated.lmp
-spaldoom    spaldoom.lmp
-spalhtic    spalhtic.lmp
+animated.lmp                animated.lmp
+spaldoom.lmp                spaldoom.lmp
+spalhtic.lmp                spalhtic.lmp
 
 ========
 # Language lumps
 
-language    languages/english-us.txt
-language    languages/french.txt
-language    languages/italian.txt
+language.en                 languages/english-us.txt
+language.fr                 languages/french.txt
+language.it                 languages/italian.txt
 
 ========
 
-x11r6rgb    x11r6rgb.txt
-stkeys6	    stkeys6.lmp
-stkeys7	    stkeys7.lmp
-stkeys8	    stkeys8.lmp
-dbigfont    dbigfont.lmp    # The big Doom font
-sbigfont    sbigfont.lmp    # The big Strife font
-confont	    confont.lmp
-fonta60	    fonta60.lmp
-fonta61	    fonta61.lmp
-fonta62	    fonta62.lmp
-fonta63	    fonta63.lmp
-fonta164    fonta164.lmp
-fonta165    fonta165.lmp
-fonta182    fonta182.lmp
-fonta188    fonta188.lmp
-fonta191    fonta191.lmp
-stcfn223    stcfn223.lmp
-stcfn220    stcfn220.lmp
-stcfn214    stcfn214.lmp
-stcfn197    stcfn197.lmp
-stcfn196    stcfn196.lmp
-stpbany	    stpbany.lmp
-stfbany	    stfbany.lmp
+x11r6rgb.txt                x11r6rgb.txt
+graphics/stkeys6.lmp	    stkeys6.lmp
+graphics/stkeys7.lmp	    stkeys7.lmp
+graphics/stkeys8.lmp	    stkeys8.lmp
+dbigfont.lmp                dbigfont.lmp    # The big Doom font
+sbigfont.lmp                sbigfont.lmp    # The big Strife font
+confont.lmp            	    confont.lmp
+graphics/fonta60.lmp	    fonta60.lmp
+graphics/fonta61.lmp	    fonta61.lmp
+graphics/fonta62.lmp	    fonta62.lmp
+graphics/fonta63.lmp	    fonta63.lmp
+graphics/fonta164.lmp	    fonta164.lmp
+graphics/fonta165.lmp	    fonta165.lmp
+graphics/fonta182.lmp	    fonta182.lmp
+graphics/fonta188.lmp	    fonta188.lmp
+graphics/fonta191.lmp	    fonta191.lmp
+graphics/stcfn223.lmp	    stcfn223.lmp
+graphics/stcfn220.lmp	    stcfn220.lmp
+graphics/stcfn214.lmp	    stcfn214.lmp
+graphics/stcfn197.lmp	    stcfn197.lmp
+graphics/stcfn196.lmp	    stcfn196.lmp
+graphics/stpbany.lmp	    stpbany.lmp
+graphics/stfbany.lmp	    stfbany.lmp
 
 ========
 # Crosshairs
-xhairs1	    xhairs1.imgz
-xhairs2	    xhairs2.imgz
-xhairs3	    xhairs3.imgz
-xhairs4	    xhairs4.imgz
-xhairs5	    xhairs5.imgz
-xhairs6	    xhairs6.imgz
-xhairs7	    xhairs7.imgz
+graphics/xhairs1.imgz	    xhairs1.imgz
+graphics/xhairs2.imgz	    xhairs2.imgz
+graphics/xhairs3.imgz	    xhairs3.imgz
+graphics/xhairs4.imgz	    xhairs4.imgz
+graphics/xhairs5.imgz	    xhairs5.imgz
+graphics/xhairs6.imgz	    xhairs6.imgz
+graphics/xhairs7.imgz	    xhairs7.imgz
 
-xhairb1	    xhairb1.imgz
-xhairb2	    xhairb2.png
-xhairb3	    xhairb3.imgz
-xhairb4	    xhairb4.imgz
-xhairb5	    xhairb5.imgz
-xhairb6	    xhairb6.imgz
-xhairb7	    xhairb7.imgz
+graphics/xhairb1.imgz	    xhairb1.imgz
+graphics/xhairb2.imgz	    xhairb2.png
+graphics/xhairb3.imgz	    xhairb3.imgz
+graphics/xhairb4.imgz	    xhairb4.imgz
+graphics/xhairb5.imgz	    xhairb5.imgz
+graphics/xhairb6.imgz	    xhairb6.imgz
+graphics/xhairb7.imgz	    xhairb7.imgz
 
-S_START	    # Now some sprites
-tnt1a0	    tnt1a0.png
-unkna0	    unkna0.png
-tlgla0	    tlgl.png
-tlglb0	    tlgl.png
-tlglc0	    tlgl.png
-tlgld0	    tlgl.png
-tlgle0	    tlgl.png
-iceca0	    iceca0.png
-icecb0	    icecb0.png
-icecc0	    icecc0.png
-icecd0	    icecd0.png
+# Now some sprites
+sprites/tnt1a0.png		    tnt1a0.png
+sprites/unkna0.png		    unkna0.png
+sprites/tlgla0.png		    tlgl.png
+sprites/tlglb0.png		    tlgl.png
+sprites/tlglc0.png		    tlgl.png
+sprites/tlgld0.png		    tlgl.png
+sprites/tlgle0.png		    tlgl.png
+sprites/iceca0.png		    iceca0.png
+sprites/icecb0.png		    icecb0.png
+sprites/icecc0.png		    icecc0.png
+sprites/icecd0.png		    icecd0.png
 S_END
 
 # The patch substituted when a corrupt patch is detected
--badpatc    badpatch.lmp
+graphics/-badpatc.lmp 	    badpatch.lmp
 
 # The texture substituted when an unknown texture is encountered
-TX_START
--noflat-    noflat.png
-TX_END
+textures/-noflat-.png       noflat.png
 
 ========
 # Sounds
 
-sndinfo	    sndinfo.txt
-sndseq	    sndseq.txt
-sndeax	    sndeax.txt
+sndinfo.txt	    			sndinfo.txt
+sndseq.txt	    			sndseq.txt
+sndeax.txt	    			sndeax.txt
 
 --------
 
-icedth1	    icedeath.flac
-icebrk1a    icebreak.flac
+sounds/icedth1.flac		    icedeath.flac
+sounds/icebrk1a.flac	    icebreak.flac
 
-dsquake	    quake.flac
-dsempty	    dsempty.lmp
-dssecret    secret.flac
-spark1	    spark1.flac
-spark2	    spark2.flac
-spark3	    spark3.flac
-railgf1	    railgunfire.flac
+sounds/dsquake.flac		    quake.flac
+sounds/dsempty.lmp		    dsempty.lmp
+sounds/dssecret.flac	    secret.flac
+sounds/spark1.flac		    spark1.flac
+sounds/spark2.flac		    spark2.flac
+sounds/spark3.flac		    spark3.flac
+sounds/railgf1.flac		    railgunfire.flac
 
 ========
 # Mapinfos
 
-d1info	    mapinfo/doom1.txt
-d2info	    mapinfo/doom2.txt
-plutinfo    mapinfo/plutonia.txt
-tntinfo	    mapinfo/tnt.txt
-herinfo	    mapinfo/heretic.txt
-hexninfo    mapinfo/hexen.txt
-strfinfo    mapinfo/strife.txt
+d1info.txt				    mapinfo/doom1.txt
+d2info.txt				    mapinfo/doom2.txt
+plutinfo.txt			    mapinfo/plutonia.txt
+tntinfo.txt				    mapinfo/tnt.txt
+herinfo.txt				    mapinfo/heretic.txt
+hexninfo.txt			    mapinfo/hexen.txt
+strfinfo.txt			    mapinfo/strife.txt
 
 ========
 # Strife's helper script
-
-A_START
-strfhelp    strfhelp.o
-A_END
+acs/strfhelp.o    			strfhelp.o

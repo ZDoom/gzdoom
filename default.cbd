@@ -155,7 +155,7 @@ ${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.na
  p_xlat.cpp po_man.cpp r_bsp.cpp r_data.cpp r_draw.cpp r_drawt.cpp r_main.cpp \
  r_plane.cpp r_segs.cpp r_sky.cpp r_things.cpp r_polymost.cpp s_advsound.cpp \
  s_environment.cpp s_playlist.cpp s_sndseq.cpp s_sound.cpp sc_man.cpp skins.cpp \
- st_stuff.cpp stats.cpp stringtable.cpp tables.cpp tempfiles.cpp thingdef.cpp thingdef_codeptr.cpp \
+ st_stuff.cpp stats.cpp stringtable.cpp tables.cpp tempfiles.cpp thingdef.cpp thingdef_codeptr.cpp thingdef_exp.cpp \
  v_collection.cpp v_draw.cpp v_font.cpp v_palette.cpp v_pfx.cpp v_text.cpp \
  v_video.cpp vectors.cpp name.cpp zstring.cpp zstringpool.cpp zstrformat.cpp \
  w_wad.cpp wi_stuff.cpp a_arachnotron.cpp a_archvile.cpp a_bossbrain.cpp \

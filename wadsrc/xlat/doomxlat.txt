@@ -286,7 +286,7 @@ include "xlat/defines.i"
 // should give results equivalent to hardware Legacy rendering.
 284 = 0,		TranslucentLine (lineid, 128, 0)
 285 = 0,		TranslucentLine (lineid, 192, 0)
-286 = 0,		TranslucentLine (lineid, 208, 0)
+286 = 0,		TranslucentLine (lineid,  48, 0)
 287 = 0,		TranslucentLine (lineid, 128, 1)
 
 281 = 0,		ExtraFloor_LightOnly (tag, 0)	// thick extra floor

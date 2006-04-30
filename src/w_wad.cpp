@@ -128,44 +128,6 @@ FWadCollection Wads;
 
 //==========================================================================
 //
-// strupr
-//
-// Suprisingly, glibc lacks this
-//==========================================================================
-
-#ifdef NEED_STRUPR
-void strupr (char *s)
-{
-	while (*s) {
-		*s = toupper (*s);
-		++s;
-	}
-}
-#endif
-
-//==========================================================================
-//
-// filelength
-//
-// Suprisingly, glibc lacks this
-//==========================================================================
-
-#ifdef NEED_FILELENGTH
-int filelength (int handle)
-{
-	struct stat fileinfo;
-
-	if (fstat (handle, &fileinfo) == -1)
-	{
-		close (handle);
-		I_Error ("Error fstating");
-	}
-	return fileinfo.st_size;
-}
-#endif
-
-//==========================================================================
-//
 // uppercoppy
 //
 // [RH] Copy up to 8 chars, upper-casing them in the process
@@ -532,8 +494,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			strcpy(base, lname);
 			char * dot = strrchr(base,'.');
 			if (dot) *dot=0;
-			strupr(base);
-			strncpy(lump_p->name, base, 8);
+			uppercopy(lump_p->name, base);
 			lump_p->fullname = copystring(name);
 			lump_p->position = LittleLong(zip_fh->dwFileOffset) + sizeof(FZipLocalHeader) + LittleShort(zip_fh->wFileNameSize);
 			lump_p->size = zip_fh->dwSize;
@@ -600,8 +561,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		singleinfo.FilePos = 0;
 		singleinfo.Size = LittleLong(wadinfo->GetLength());
 		ExtractFileBase (filename, name);
-		strupr (name);
-		strncpy (singleinfo.Name, name, 8);
+		uppercopy(singleinfo.Name, name);
 		NumLumps++;
 	}
 	Printf ("\n");

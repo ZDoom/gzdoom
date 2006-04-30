@@ -448,6 +448,11 @@ private:
 		int drawbar;
 
 		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
+		if (ammo1==ammo2)
+		{
+			// Don't show the same ammo twice.
+			ammo2=NULL;
+		}
 
 		// If the weapon uses some ammo that is not mana, do not draw
 		// the mana bars; draw the specific used ammo instead.

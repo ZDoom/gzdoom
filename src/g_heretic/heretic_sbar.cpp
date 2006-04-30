@@ -408,6 +408,11 @@ private:
 
 		// Ammo
 		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
+		if (ammo1==ammo2)
+		{
+			// Don't show the same ammo twice.
+			ammo2=NULL;
+		}
 		if (oldammo1 != ammo1 || oldammo2 != ammo2 ||
 			oldammocount1 != ammocount1 || oldammocount2 != ammocount2)
 		{
@@ -600,7 +605,7 @@ private:
 				DTA_HUDRules, HUD_Normal,
 				DTA_CenterBottomOffset, true,
 				TAG_DONE);
-			if (ammo2 != NULL)
+			if (ammo2 != NULL && ammo2!=ammo1)
 			{
 				// Draw secondary ammo just above the primary ammo
 				DrINumberOuter (ammo2->Amount, -29, -56);

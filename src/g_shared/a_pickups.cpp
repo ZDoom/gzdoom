@@ -812,6 +812,40 @@ void AInventory::Hide ()
 	}
 }
 
+
+//===========================================================================
+//
+//
+//===========================================================================
+
+static void PrintPickupMessage (const char *str)
+{
+	if (str != NULL)
+	{
+		string temp;
+
+		if (strchr (str, '$'))
+		{
+			// The message or part of it is from the LANGUAGE lump
+			string name;
+
+			size_t part1 = strcspn (str, "$");
+			temp = string(str, part1);
+
+			size_t part2 = strcspn (str + part1 + 1, "$");
+			name = string(str + part1 + 1, part2);
+
+			temp += GStrings(name.GetChars());
+			if (str[part1 + 1 + part2] == '$')
+			{
+				temp += str + part1 + part2 + 2;
+			}
+			str = temp.GetChars();
+		}
+		Printf (PRINT_LOW, "%s\n", str);
+	}
+}
+
 //===========================================================================
 //
 // AInventory :: Touch
@@ -845,7 +879,7 @@ void AInventory::Touch (AActor *toucher)
 		{
 			StaticLastMessageTic = gametic;
 			StaticLastMessage = message;
-			Printf (PRINT_LOW, "%s\n", message);
+			PrintPickupMessage (message);
 			StatusBar->FlashCrosshair ();
 		}
 
@@ -860,7 +894,7 @@ void AInventory::Touch (AActor *toucher)
 		{
 			PlayPickupSound (toucher);
 		}
-	}
+	}							
 
 	// [RH] Execute an attached special (if any)
 	DoPickupSpecial (toucher);

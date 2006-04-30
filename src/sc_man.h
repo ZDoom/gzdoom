@@ -26,6 +26,8 @@ BOOL SC_Compare (const char *text);
 int SC_MatchString (const char **strings);
 int SC_MustMatchString (const char **strings);
 void STACK_ARGS SC_ScriptError (const char *message, ...);
+void SC_SaveScriptState();
+void SC_RestoreScriptState();	
 
 extern char *sc_String;
 extern int sc_StringLen;

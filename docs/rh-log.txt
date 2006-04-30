@@ -1,3 +1,32 @@
+April 30, 2006 (Changes by Graf Zahl)
+- Removed the DCorpseQueue class. It was no longer used and since
+  the savegames it might have been used in have become incompatible
+  a long time ago there is no reason to keep it around anymore.
+- Fixed: level.maptime must be set to 0 every time a level is loaded.
+- Converted a_doomarmor.cpp and a_doomkeys.cpp to DECORATE.
+- Replaced all need key messages that weren't already in LANGUAGE with
+  a LANGUAGE identifier. Also made the messages for Hexen's keys unique
+  strings instead of constructing them at run time.
+- Added: Pickup messages can now handle embedded localized strings - like
+  the need key messages
+- Converted a_hereticdecorations.cpp as well.
+- Time to put the capabilities of Zip files to good use:
+  Converted a_doomdecorations.cpp into a DECORATE lump to test my changes.
+  (The EXE got 24 kb shorter by that - much more than I expected...)
+- Added a 'game' property to DECORATE so that game specific IDs can be
+  defined.
+- Added an #include directive to the DECORATE parser.
+- Also removed ABreakableDecoration. Using AActor and the metadata
+  for the death and burn height gives the same results with less code.
+- Removed the ADecoration class. It just inherited from AActor without
+  adding any functionality of its own.
+- Added functions to sc_man to save and restore the full script state.
+  This allows recursive use of the script parser.
+- Changed SC_Open to check for full names in a ZIP first.
+- Fixed: Ammo2 no longer gets displayed when it is identical to Ammo1.
+- Re-enabled the death camera due to public demand but made it switchable
+  by a CVAR.
+
 April 29, 2006 (Changes by Graf Zahl)
 - ZDoom now loads zdoom.pk3 instead of zdoom.wad.
 - Fixed: StreamSong::SetVolume should check the m_stream pointer. This can

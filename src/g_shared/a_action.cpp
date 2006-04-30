@@ -331,45 +331,6 @@ void DCorpsePointer::Serialize (FArchive &arc)
 	arc << Corpse << Count;
 }
 
-// Pointers to members cannot be assigned to single array elements,
-// so this class is deprecated. It exists now only for compatibility with
-// old savegames.
-
-class DCorpseQueue : public DThinker
-{
-	DECLARE_CLASS (DCorpseQueue, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	void Serialize (FArchive &arc);
-	void Tick ();
-protected:
-	AActor *CorpseQueue[CORPSEQUEUESIZE];
-};
-
-IMPLEMENT_CLASS(DCorpseQueue)
-
-void DCorpseQueue::Serialize (FArchive &arc)
-{
-	int foo = 0;
-	int i;
-
-	Super::Serialize (arc);
-	for (i = 0; i < CORPSEQUEUESIZE; ++i)
-		arc << CorpseQueue[i];
-	arc << foo;
-}
-
-void DCorpseQueue::Tick ()
-{
-	for (int i = 0; i < CORPSEQUEUESIZE; ++i)
-	{
-		if (CorpseQueue[i] != NULL)
-		{
-			new DCorpsePointer (CorpseQueue[i]);
-		}
-	}
-	Destroy ();
-}
 
 // throw another corpse on the queue
 void A_QueueCorpse (AActor *actor)

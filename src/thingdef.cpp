@@ -2076,6 +2076,42 @@ static void ActorSkipSuper (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorGame (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	if (SC_Compare ("Doom"))
+	{
+		bag.Info->GameFilter |= GAME_Doom;
+	}
+	else if (SC_Compare ("Heretic"))
+	{
+		bag.Info->GameFilter |= GAME_Heretic;
+	}
+	else if (SC_Compare ("Hexen"))
+	{
+		bag.Info->GameFilter |= GAME_Hexen;
+	}
+	else if (SC_Compare ("Raven"))
+	{
+		bag.Info->GameFilter |= GAME_Raven;
+	}
+	else if (SC_Compare ("Strife"))
+	{
+		bag.Info->GameFilter |= GAME_Strife;
+	}
+	else if (SC_Compare ("Any"))
+	{
+		bag.Info->GameFilter = GAME_Any;
+	}
+	else
+	{
+		SC_ScriptError ("Unknown game type %s", sc_String);
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorSpawnID (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetNumber();
@@ -2890,7 +2926,8 @@ static void InventoryIcon (AInventory *defaults, Baggage &bag)
 		defaults->Icon = TexMan.AddPatch (sc_String, ns_sprites);
 		if (defaults->Icon<=0)
 		{
-			Printf("Icon '%s' for '%s' not found\n", sc_String, bag.Info->Class->Name+1);
+			if (bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype)
+				Printf("Icon '%s' for '%s' not found\n", sc_String, bag.Info->Class->Name+1);
 		}
 	}
 }
@@ -3239,6 +3276,7 @@ static const ActorProps props[] =
 	{ "dropitem",					ActorDropItem,				RUNTIME_CLASS(AActor) },
 	{ "explosiondamage",			ActorExplosionDamage,		RUNTIME_CLASS(AActor) },
 	{ "explosionradius",			ActorExplosionRadius,		RUNTIME_CLASS(AActor) },
+	{ "game",						ActorGame,					RUNTIME_CLASS(AActor) },
 	{ "gibhealth",					ActorGibHealth,				RUNTIME_CLASS(AActor) },
 	{ "greetings",					ActorGreetingsState,		RUNTIME_CLASS(AActor) },
 	{ "heal",						ActorHealState,				RUNTIME_CLASS(AActor) },

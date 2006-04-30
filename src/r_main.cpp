@@ -101,6 +101,7 @@ static bool r_showviewer;
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Int, r_polymost, 0, 0)
+CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
 
 fixed_t			r_BaseVisibility;
 fixed_t			r_WallVisibility;
@@ -993,7 +994,7 @@ void R_SetupFrame (AActor *actor)
 	}
 
 	if (player != NULL &&
-		((player->cheats & CF_CHASECAM)/* || (camera->health <= 0)*/) &&
+		((player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) &&
 		(camera->RenderStyle != STYLE_None) &&
 		!(camera->renderflags & RF_INVISIBLE) &&
 		camera->sprite != 0)	// Sprite 0 is always TNT1

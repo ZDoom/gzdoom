@@ -7,7 +7,7 @@ Lock 1 Doom
 {
 	RedCard
 	Message "$PD_REDC"
-	RemoteMessage "You need a red card to activate this object"
+	RemoteMessage "$PD_REDCO"
 	Mapcolor 255 0 0
 }
 
@@ -16,7 +16,7 @@ Lock 2 Doom
 {
 	BlueCard
 	Message "$PD_BLUEC"
-	RemoteMessage "You need a blue card to activate this object"
+	RemoteMessage "$PD_BLUECO"
 	Mapcolor 0 0 255
 }
 
@@ -25,7 +25,7 @@ Lock 3 Doom
 {
 	YellowCard
 	Message "$PD_YELLOWC"
-	RemoteMessage "You need a yellow card to activate this object"
+	RemoteMessage "$PD_YELLOWCO"
 	Mapcolor 255 255 0
 }
 
@@ -34,7 +34,7 @@ Lock 4 Doom
 {
 	RedSkull
 	Message "$PD_REDS"
-	RemoteMessage "You need a red skull to activate this object"
+	RemoteMessage "$PD_REDSO"
 	Mapcolor 255 0 0
 }
 
@@ -43,7 +43,7 @@ Lock 5 Doom
 {
 	BlueSkull
 	Message "$PD_BLUES"
-	RemoteMessage "You need a blue skull to activate this object"
+	RemoteMessage "$PD_BLUESO"
 	Mapcolor 0 0 255
 }
 
@@ -52,7 +52,7 @@ Lock 6 Doom
 {
 	YellowSkull
 	Message "$PD_YELLOWS"
-	RemoteMessage "You need a yellow skull to activate this object"
+	RemoteMessage "$PD_YELLOWSO"
 	Mapcolor 255 255 0
 }
 
@@ -112,15 +112,15 @@ Lock 134 Doom
 
 Lock 100
 {
-	Message "Any key will open this door"
-	RemoteMessage "Any key will activate this object"
+	Message "$PD_ANY"
+	RemoteMessage "$PD_ANYOBJ"
 	Mapcolor 128 128 255
 }
 
 Lock 228
 {
-	Message "Any key will open this door"
-	RemoteMessage "Any key will activate this object"
+	Message "$PD_ANY"
+	RemoteMessage "$PD_ANYOBJ"
 	Mapcolor 128 128 255
 }
 
@@ -130,7 +130,7 @@ Lock 229 Doom
 	Any { YellowCard YellowSkull KeyYellow}
 	Any { RedCard RedSkull KeyGreen}
 	Message "$PD_ALL3"
-	RemoteMessage "You need all three keys to activate this object"
+	RemoteMessage "$PD_ALL3O"
 }
 
 Lock 101 Doom
@@ -142,7 +142,7 @@ Lock 101 Doom
 	RedCard 
 	RedSkull
 	Message "$PD_ALL6"
-	RemoteMessage "You need all six keys to activate this object"
+	RemoteMessage "$PD_ALL6O"
 }
 
 //
@@ -203,7 +203,7 @@ Lock 229 Heretic
 	KeyYellow 
 	KeyBlue
 	Message "$PD_ALL3"
-	RemoteMessage "You need all three keys to activate this object"
+	RemoteMessage "$PD_ALL3O"
 }
 
 Lock 101 Heretic
@@ -212,7 +212,7 @@ Lock 101 Heretic
 	KeyYellow 
 	KeyBlue
 	Message "$PD_ALL3"
-	RemoteMessage "You need all three keys to activate this object"
+	RemoteMessage "$PD_ALL3O"
 }
 
 
@@ -223,7 +223,7 @@ Lock 101 Heretic
 Lock 1 Hexen
 {
 	KeySteel
-	Message "You need the $TXT_KEY_STEEL"
+	Message "$TXT_NEED_KEY_STEEL"
 	Mapcolor 150 150 150
 }
 
@@ -231,7 +231,7 @@ Lock 1 Hexen
 Lock 2 Hexen
 {
 	KeyCave
-	Message "You need the $TXT_KEY_CAVE"
+	Message "$TXT_NEED_KEY_CAVE"
 	Mapcolor 255 218 0
 }
 
@@ -239,7 +239,7 @@ Lock 2 Hexen
 Lock 3 Hexen
 {
 	KeyAxe
-	Message "You need the $TXT_KEY_AXE"
+	Message "$TXT_NEED_KEY_AXE"
 	Mapcolor 64 64 255
 }
 
@@ -247,7 +247,7 @@ Lock 3 Hexen
 Lock 4 Hexen
 {
 	KeyFire
-	Message "You need the $TXT_KEY_FIRE"
+	Message "$TXT_NEED_KEY_FIRE"
 	Mapcolor 255 128 0
 }
 
@@ -255,7 +255,7 @@ Lock 4 Hexen
 Lock 5 Hexen
 {
 	KeyEmerald
-	Message "You need the $TXT_KEY_EMERALD"
+	Message "$TXT_NEED_KEY_EMERALD"
 	Mapcolor 0 255 0
 }
 
@@ -263,7 +263,7 @@ Lock 5 Hexen
 Lock 6 Hexen
 {
 	KeyDungeon
-	Message "You need the $TXT_KEY_DUNGEON"
+	Message "$TXT_NEED_KEY_DUNGEON"
 	Mapcolor 47 151 255
 }
 
@@ -271,7 +271,7 @@ Lock 6 Hexen
 Lock 7 Hexen
 {
 	KeySilver
-	Message "You need the $TXT_KEY_SILVER"
+	Message "$TXT_NEED_KEY_SILVER"
 	Mapcolor 154 152 188
 }
 
@@ -279,7 +279,7 @@ Lock 7 Hexen
 Lock 8 Hexen
 {
 	KeyRusted
-	Message "You need the $TXT_KEY_RUSTED"
+	Message "$TXT_NEED_KEY_RUSTED"
 	Mapcolor 156 76 0
 }
 
@@ -287,7 +287,7 @@ Lock 8 Hexen
 Lock 9 Hexen
 {
 	KeyHorn
-	Message "You need the $TXT_KEY_HORN"
+	Message "$TXT_NEED_KEY_HORN"
 	Mapcolor 255 218 0
 }
 
@@ -295,7 +295,7 @@ Lock 9 Hexen
 Lock 10 Hexen
 {
 	KeySwamp
-	Message "You need the $TXT_KEY_SWAMP"
+	Message "$TXT_NEED_KEY_SWAMP"
 	Mapcolor 64 255 64
 }
 
@@ -303,7 +303,7 @@ Lock 10 Hexen
 Lock 11 Hexen
 {
 	KeyCastle
-	Message "You need the $TXT_KEY_CASTLE"
+	Message "$TXT_NEED_KEY_CASTLE"
 	Mapcolor 255 64 64
 }
 
@@ -321,7 +321,7 @@ Lock 101 Hexen
 	KeyHorn
 	KeySwamp
 	KeyCastle
-	Message "You need all the keys"
+	Message "$PD_ALLKEYS"
 }
 
 Lock 229 Hexen
@@ -337,7 +337,7 @@ Lock 229 Hexen
 	KeyHorn
 	KeySwamp
 	KeyCastle
-	Message "You need all the keys"
+	Message "$PD_ALLKEYS"
 }
 
 
@@ -354,7 +354,7 @@ Lock 1 Strife
 Lock 2 Strife
 {
 	GovsKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
@@ -362,8 +362,8 @@ Lock 2 Strife
 Lock 3 Strife
 {
 	Passcard
-	RemoteMessage "You need a passcard"
-	Message "You need a pass card key to open this door"
+	RemoteMessage "$TXT_NEED_PASSCARD"
+	Message "$TXT_NEED_PASSCARD_DOOR"
 	Mapcolor 128 266 150
 }
 
@@ -371,7 +371,7 @@ Lock 3 Strife
 Lock 4 Strife
 {
 	IDBadge
-	Message "You need an ID card"
+	Message "$TXT_NEED_IDCARD"
 	Mapcolor 255 128 0
 }
 
@@ -379,7 +379,7 @@ Lock 4 Strife
 Lock 5 Strife
 {
 	PrisonKey
-	Message "You don't have the key to the prison"
+	Message "$TXT_NEED_PRISONKEY"
 	Mapcolor 0 255 0
 }
 
@@ -387,7 +387,7 @@ Lock 5 Strife
 Lock 6 Strife
 {
 	SeveredHand
-	Message "Hand print not on file"
+	Message "$TXT_NEED_HANDPRINT"
 	Mapcolor 255 151 100
 }
 
@@ -395,7 +395,7 @@ Lock 6 Strife
 Lock 7 Strife
 {
 	Power1Key
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
@@ -403,7 +403,7 @@ Lock 7 Strife
 Lock 8 Strife
 {
 	Power2Key
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
@@ -411,7 +411,7 @@ Lock 8 Strife
 Lock 9 Strife
 {
 	Power3Key
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
@@ -419,7 +419,7 @@ Lock 9 Strife
 Lock 10 Strife
 {
 	GoldKey
-	Message "You need the Gold Key"
+	Message "$TXT_NEED_GOLDKEY"
 	Mapcolor 255 200 0
 }
 
@@ -427,134 +427,134 @@ Lock 10 Strife
 Lock 11 Strife
 {
 	IDCard
-	RemoteMessage "You need an ID badge"
-	Message "You need an ID badge to open this door"
+	RemoteMessage "$TXT_NEED_IDBADGE"
+	Message "$TXT_NEED_IDBADGE_DOOR"
 	Mapcolor 200 0 0
 }
 
 Lock 12 Strife
 {
 	SilverKey
-	Message "You need a Silver Key"
+	Message "$TXT_NEED_SILVERKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 13 Strife
 {
 	OracleKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 14 Strife
 {
 	MilitaryID
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 15 Strife
 {
 	OrderKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 16 Strife
 {
 	WarehouseKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 17 Strife
 {
 	BrassKey
-	Message "You need a brass key"
+	Message "$TXT_NEED_BRASSKEY"
 	Mapcolor 150 75 0
 }
 
 Lock 18 Strife
 {
 	RedCrystalKey
-	Message "You need the Red Crystal"
+	Message "$TXT_NEED_REDCRYSTAL"
 	Mapcolor 150 150 150
 }
 
 Lock 19 Strife
 {
 	BlueCrystalKey
-	Message "You need the Blue Crystal"
+	Message "$TXT_NEED_BLUECRYSTAL"
 	Mapcolor 150 150 150
 }
 
 Lock 20 Strife
 {
 	ChapelKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 21 Strife
 {
 	CatacombKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 22 Strife
 {
 	SecurityKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 23 Strife
 {
 	CoreKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 24 Strife
 {
 	MaulerKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 25 Strife
 {
 	FactoryKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
  	Mapcolor 150 150 150
 }
 
 Lock 26 Strife
 {
 	MineKey
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 27 Strife
 {
 	NewKey5
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 50 Strife
 {
 	PrisonPass
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 
 Lock 51 Strife
 {
 	OraclePass
-	Message "You don't have the key"
+	Message "$TXT_NEEDKEY"
 	Mapcolor 150 150 150
 }
 

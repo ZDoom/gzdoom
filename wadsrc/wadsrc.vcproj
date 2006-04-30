@@ -229,6 +229,26 @@
 					RelativePath=".\languages\italian.txt">
 				</File>
 			</Filter>
+			<Filter
+				Name="Decorate"
+				Filter="">
+				<File
+					RelativePath=".\decorate\decorate.txt">
+				</File>
+				<Filter
+					Name="Doom"
+					Filter="">
+					<File
+						RelativePath=".\decorate\doom\doomarmor.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\doom\doomdecorations.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\doom\doomkeys.txt">
+					</File>
+				</Filter>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\Makefile">

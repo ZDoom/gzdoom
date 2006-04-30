@@ -634,7 +634,7 @@ private:
 				TAG_DONE);
 			DrBNumberOuter (ammo1->Amount, -67, -4 - BigHeight);
 			ammotop = -4 - BigHeight;
-			if (ammo2 != NULL)
+			if (ammo2 != NULL && ammo2!=ammo1)
 			{
 				// Draw secondary ammo just above the primary ammo
 				int y = MIN (-6 - BigHeight, -6 - (ammoIcon != NULL ? ammoIcon->GetHeight() : 0));

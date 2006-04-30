@@ -1,0 +1,266 @@
+ACTOR SkullHang70 17
+{
+	Game Heretic
+	Radius 20
+	Height 70
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		SKH1 A -1
+		Stop
+	}
+}
+	
+ACTOR SkullHang60 24
+{
+	Game Heretic
+	Radius 20
+	Height 60
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		SKH2 A -1
+		Stop
+	}
+}
+	
+ACTOR SkullHang45 25
+{
+	Game Heretic
+	Radius 20
+	Height 45
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		SKH3 A -1
+		Stop
+	}
+}
+	
+ACTOR SkullHang35 26
+{
+	Game Heretic
+	Radius 20
+	Height 35
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		SKH4 A -1
+		Stop
+	}
+}
+	
+ACTOR Chandelier 28
+{
+	Game Heretic
+	Radius 20
+	Height 60
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		CHDL ABC 4
+		Loop
+	}
+}
+
+ACTOR SerpentTorch 27
+{
+	Game Heretic
+	Radius 12
+	Height 54
+	+SOLID
+	States
+	{
+	Spawn:
+		SRTC ABC 4
+		Loop
+	}
+}
+
+ACTOR SmallPillar 29
+{
+	Game Heretic
+	Radius 16
+	Height 34
+	+SOLID
+	States
+	{
+	Spawn:
+		SMPL A -1
+		Stop
+	}
+}
+
+ACTOR StalagmiteSmall 37
+{
+	Game Heretic
+	Radius 8
+	Height 32
+	+SOLID
+	States
+	{
+	Spawn:
+		STGS A -1
+		Stop
+	}
+}
+
+ACTOR StalagmiteLarge 38
+{
+	Game Heretic
+	Radius 12
+	Height 64
+	+SOLID
+	States
+	{
+	Spawn:
+		STGL A -1
+		Stop
+	}
+}
+
+ACTOR StalactiteSmall 39
+{
+	Game Heretic
+	Radius 8
+	Height 36
+	+SOLID
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		STCS A -1
+		Stop
+	}
+}
+
+ACTOR StalactiteLarge 40
+{
+	Game Heretic
+	Radius 12
+	Height 68
+	+SOLID
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		STCL A -1
+		Stop
+	}
+}
+
+ACTOR FireBrazier 76
+{
+	Game Heretic
+	Radius 16
+	Height 44
+	+SOLID
+	States
+	{
+	Spawn:
+		KFR1 ABCDEFGH 3 Bright
+		Loop
+	}
+}
+
+ACTOR Barrel 44
+{
+	Game Heretic
+	Radius 12
+	Height 32
+	+SOLID
+	States
+	{
+	Spawn:
+		BARL A -1
+		Stop
+	}
+}
+
+ACTOR BrownPillar 47
+{
+	Game Heretic
+	Radius 14
+	Height 128
+	+SOLID
+	States
+	{
+	Spawn:
+		BRPL A -1
+		Stop
+	}
+}
+
+ACTOR Moss1 48
+{
+	Game Heretic
+	Radius 20
+	Height 23
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		MOS1 A -1
+		Stop
+	}
+}
+
+ACTOR Moss2 49
+{
+	Game Heretic
+	Radius 20
+	Height 27
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		MOS2 A -1
+		Stop
+	}
+}
+
+ACTOR WallTorch 50
+{
+	Game Heretic
+	Radius 20
+	Height 16
+	+NOGRAVITY
+	+FIXMAPTHINGPOS
+	States
+	{
+	Spawn:
+		WTRH ABC 6 Bright
+		Loop
+	}
+}
+
+ACTOR HangingCorpse 51
+{
+	Game Heretic
+	Radius 8
+	Height 104
+	+SOLID
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		HCOR A -1
+		Stop
+	}
+}
+

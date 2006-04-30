@@ -85,6 +85,12 @@ PD_YELLOWO = "You need a yellow key to activate this object";
 PD_BLUEK = "You need a blue key to open this door";
 PD_REDK = "You need a red key to open this door";
 PD_YELLOWK = "You need a yellow key to open this door";
+PD_BLUECO = "You need a blue card to activate this object";
+PD_REDCO = "You need a red card to activate this object";
+PD_YELLOWCO = "You need a yellow card to activate this object";
+PD_BLUESO = "You need a blue skull to activate this object";
+PD_REDSO = "You need a red skull to activate this object";
+PD_YELLOWSO = "You need a yellow skull to activate this object";
 GGSAVED = "game saved.";
 HUSTR_MSGU = "[Message unsent]";
 
@@ -529,8 +535,12 @@ PD_BLUES = "You need a blue skull to open this door";
 PD_REDS = "You need a red skull to open this door";
 PD_YELLOWS = "You need a yellow skull to open this door";
 PD_ANY = "Any key will open this door";
+PD_ANYOBJ = "Any key will activate this object";
 PD_ALL3 = "You need all three keys to open this door";
+PD_ALL3O = "You need all three keys to activate this object";
 PD_ALL6 = "You need all six keys to open this door";
+PD_ALL6O = "You need all six keys to activate this object";
+PD_ALLKEYS = "You need all the keys";
 
 // Gameflow messages
 TXT_FRAGLIMIT = "Fraglimit hit.";
@@ -895,6 +905,18 @@ TXT_KEY_HORN = "HORN KEY";
 TXT_KEY_SWAMP = "SWAMP KEY";
 TXT_KEY_CASTLE = "CASTLE KEY";
 
+TXT_NEED_KEY_STEEL = "You need the STEEL KEY";
+TXT_NEED_KEY_CAVE = "You need the CAVE KEY";
+TXT_NEED_KEY_AXE = "You need the AXE KEY";
+TXT_NEED_KEY_FIRE = "You need the FIRE KEY";
+TXT_NEED_KEY_EMERALD = "You need the EMERALD KEY";
+TXT_NEED_KEY_DUNGEON = "You need the DUNGEON KEY";
+TXT_NEED_KEY_SILVER = "You need the SILVER KEY";
+TXT_NEED_KEY_RUSTED = "You need the RUSTED KEY";
+TXT_NEED_KEY_HORN = "You need the HORN KEY";
+TXT_NEED_KEY_SWAMP = "You need the SWAMP KEY";
+TXT_NEED_KEY_CASTLE = "You need the CASTLE KEY";
+
 // Artifacts
 
 TXT_ARTIINVULNERABILITY2 = "ICON OF THE DEFENDER";
@@ -948,6 +970,21 @@ TXT_QUIETUS_PIECE = "SEGMENT OF QUIETUS";
 TXT_WRAITHVERGE_PIECE = "SEGMENT OF WRAITHVERGE";
 TXT_BLOODSCOURGE_PIECE = "SEGMENT OF BLOODSCOURGE";
 
+// Strife locks
+
+TXT_NEEDKEY = "You don't have the key";
+TXT_NEED_PASSCARD = "You need a passcard";
+TXT_NEED_PASSCARD_DOOR = "You need a pass card key to open this door";
+TXT_NEED_IDCARD = "You need an ID card"
+TXT_NEED_PRISONKEY = "You don't have the key to the prison";
+TXT_NEED_HANDPRINT = "Hand print not on file";
+TXT_NEED_GOLDKEY = "You need the Gold Key";
+TXT_NEED_IDBADGE = "You need an ID Badge";
+TXT_NEED_IDBADGE_DOOR = "You need an ID Badge to open this door";
+TXT_NEED_SILVERKEY = "You need the Silver Key";
+TXT_NEED_BRASSKEY = "You need the Brass Key";
+TXT_NEED_REDCRYSTAL = "You need the Red Crystal";
+TXT_NEED_BLUECRYSTAL = "You need the Blue Crystal";
 
 // Bloodbath announcer
 

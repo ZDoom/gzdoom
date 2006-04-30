@@ -1735,6 +1735,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	level.starttime = gametic;
+	level.maptime = 0;
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	G_FinishTravel ();
 	if (players[consoleplayer].camera == NULL ||

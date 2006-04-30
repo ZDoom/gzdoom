@@ -1,0 +1,5 @@
+#include "actors/doom/doomarmor.txt"
+#include "actors/doom/doomkeys.txt"
+#include "actors/doom/doomdecorations.txt"
+
+#include "actors/heretic/hereticdecorations.txt"

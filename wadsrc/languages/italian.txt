@@ -547,6 +547,14 @@ PD_YELLOWS = "ti serve una chiave-teschio gialla per aprire questa porta";
 PD_ANY = "Una chiave qualunque aprira' questa porta";
 PD_ALL3 = "Ti servono tutte le tre chiavi per aprire questa porta";
 PD_ALL6 = "Ti servono tutte le sei chiavi per aprire questa porta";
+PD_ALL3O = "Ti servono tutte le tre chiavi per attivare questo oggetto ";
+PD_ALL6O = "Ti servono tutte le sei chiavi per attivare questo oggetto ";
+PD_BLUECO = "ti serve una tessera blu per attivare questo oggetto ";
+PD_REDCO = "ti serve una tessera rossa per attivare questo oggetto ";
+PD_YELLOWCO = "ti serve una tessera gialla per attivare questo oggetto ";
+PD_BLUESO = "ti serve una chiave-teschio blu per attivare questo oggetto ";
+PD_REDSO = "ti serve una chiave-teschio rossa per attivare questo oggetto ";
+PD_YELLOWSO = "ti serve una chiave-teschio gialla per attivare questo oggetto ";
 
 // Gameflow messages
 TXT_FRAGLIMIT = "Fraglimit raggiunto.";

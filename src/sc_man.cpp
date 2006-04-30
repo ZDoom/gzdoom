@@ -62,7 +62,7 @@ char *sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char ScriptName[128];
+static string ScriptName;
 static char *ScriptBuffer;
 static char *ScriptPtr;
 static char *ScriptEndPtr;
@@ -86,7 +86,9 @@ static bool Escape=true;
 
 void SC_Open (const char *name)
 {
-	SC_OpenLumpNum (Wads.GetNumForName (name), name);
+	int lump = Wads.CheckNumForFullName(name);
+	if (lump==-1) lump = Wads.GetNumForName(name);
+	SC_OpenLumpNum(lump, name);
 }
 
 //==========================================================================
@@ -102,7 +104,8 @@ void SC_OpenFile (const char *name)
 {
 	SC_Close ();
 	ScriptSize = M_ReadFile (name, (byte **)&ScriptBuffer);
-	ExtractFileBase (name, ScriptName);
+	ScriptName = name;	// This is used for error messages so the full file name is preferable
+	//ExtractFileBase (name, ScriptName);
 	FreeScript = true;
 	SC_PrepareScript ();
 }
@@ -121,7 +124,7 @@ void SC_OpenMem (const char *name, char *buffer, int size)
 	SC_Close ();
 	ScriptSize = size;
 	ScriptBuffer = buffer;
-	strcpy (ScriptName, name);
+	ScriptName = name;
 	FreeScript = false;
 	SC_PrepareScript ();
 }
@@ -140,7 +143,7 @@ void SC_OpenLumpNum (int lump, const char *name)
 	ScriptSize = Wads.LumpLength (lump);
 	ScriptBuffer = new char[ScriptSize];
 	Wads.ReadLump (lump, ScriptBuffer);
-	strcpy (ScriptName, name);
+	ScriptName = name;
 	FreeScript = true;
 	SC_PrepareScript ();
 }
@@ -164,6 +167,7 @@ static void SC_PrepareScript (void)
 	AlreadyGot = false;
 	SavedScriptPtr = NULL;
 	CMode = false;
+	Escape = true;
 }
 
 //==========================================================================
@@ -596,7 +600,7 @@ BOOL SC_GetFloat (void)
 		if (*stopper != 0)
 		{
 			I_Error ("SC_GetFloat: Bad numeric constant \"%s\".\n"
-				"Script %s, Line %d\n", sc_String, ScriptName, sc_Line);
+				"Script %s, Line %d\n", sc_String, ScriptName.GetChars(), sc_Line);
 		}
 		sc_Number = (int)sc_Float;
 		return true;
@@ -747,7 +751,7 @@ void STACK_ARGS SC_ScriptError (const char *message, ...)
 		va_end (arglist);
 	}
 
-	I_Error ("Script error, \"%s\" line %d:\n%s\n", ScriptName,
+	I_Error ("Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
 		sc_Line, composed.GetChars());
 }
 
@@ -762,5 +766,88 @@ static void CheckOpen(void)
 	if (ScriptOpen == false)
 	{
 		I_FatalError ("SC_ call before SC_Open().");
+	}
+}
+
+
+//==========================================================================
+//
+// Script state saving
+// This allows recursive script execution
+// This does not save the last token!
+//
+//==========================================================================
+
+struct SavedScript
+{
+	int sc_Line;
+	BOOL sc_End;
+	BOOL sc_Crossed;
+	BOOL sc_FileScripts;
+
+	string * ScriptName;
+	char *ScriptBuffer;
+	char *ScriptPtr;
+	char *ScriptEndPtr;
+	bool ScriptOpen;
+	int ScriptSize;
+	bool FreeScript;
+	char *SavedScriptPtr;
+	int SavedScriptLine;
+	bool CMode;
+	bool Escape;
+};
+
+
+static TArray<SavedScript> SavedScripts;
+
+void SC_SaveScriptState()
+{
+	SavedScript ss;
+
+	ss.sc_Line = sc_Line;
+	ss.sc_End = sc_End;
+	ss.sc_Crossed = sc_Crossed;
+	ss.sc_FileScripts = sc_FileScripts;
+	ss.ScriptName = ::new string(ScriptName);
+	ss.ScriptBuffer = ScriptBuffer;
+	ss.ScriptPtr = ScriptPtr;
+	ss.ScriptEndPtr = ScriptEndPtr;
+	ss.ScriptOpen = ScriptOpen;
+	ss.ScriptSize = ScriptSize;
+	ss.FreeScript = FreeScript;
+	ss.SavedScriptPtr = SavedScriptPtr;
+	ss.SavedScriptLine = SavedScriptLine;
+	ss.CMode = CMode;
+	ss.Escape = Escape;
+	SavedScripts.Push(ss);
+	ScriptOpen = false;
+}
+
+void SC_RestoreScriptState()
+{
+	if (SavedScripts.Size()>0)
+	{
+		SavedScript ss;
+
+		SavedScripts.Pop(ss);
+		sc_Line = ss.sc_Line;
+		sc_End = ss.sc_End;
+		sc_Crossed = ss.sc_Crossed;
+		sc_FileScripts = ss.sc_FileScripts;
+		ScriptName = *ss.ScriptName;
+		delete ss.ScriptName;
+		ScriptBuffer = ss.ScriptBuffer;
+		ScriptPtr = ss.ScriptPtr;
+		ScriptEndPtr = ss.ScriptEndPtr;
+		ScriptOpen = ss.ScriptOpen;
+		ScriptSize = ss.ScriptSize;
+		FreeScript = ss.FreeScript;
+		SavedScriptPtr = ss.SavedScriptPtr;
+		SavedScriptLine = ss.SavedScriptLine;
+		CMode = ss.CMode;
+		Escape = ss.Escape;
+		SavedScripts.ShrinkToFit();
+		AlreadyGot = false;
 	}
 }

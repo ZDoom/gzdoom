@@ -478,7 +478,7 @@ private:
 				DTA_HUDRules, HUD_Normal,
 				DTA_CenterBottomOffset, true,
 				TAG_DONE);
-			if (ammo2 != NULL)
+			if (ammo2 != NULL && ammo1!=ammo2)
 			{
 				// Draw secondary ammo just above the primary ammo
 				DrINumberOuter (ammo2->Amount, -23, -48, false, 7);

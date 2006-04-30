@@ -30,6 +30,14 @@ typedef struct
 
 } filelump_t;
 
+/*
+// appendlump(wadfile, filename):
+//
+//   open the file by filename, write all of its contents to the wadfile 
+//
+//   returns: 0 = success, 1 = error
+*/
+
 int appendlump (FILE *wadfile, char *filename)
 {
 	char readbuf[64*1024];
@@ -45,28 +53,55 @@ int appendlump (FILE *wadfile, char *filename)
 	}
 	while (lumpfile != NULL)
 	{
+		// try to read a chunk of data
 		readlen = fread (readbuf, 1, sizeof(readbuf), lumpfile);
+
+		// if we reached the end, or hit an error
 		if (readlen < sizeof(readbuf))
 		{
+			// if it's an error, 
 			if (ferror (lumpfile))
 			{
+				// diagnose 
 				fprintf (stderr, "Error reading %s: %s\n", filename, strerror(errno));
+				// set return code to error
 				ret |= 1;
 			}
+			// in any case, close the lump file to break the loop
 			fclose (lumpfile);
 			lumpfile = NULL;
 		}
+
+		// write whatever data we have in the buffer
+
+		// if we hit an error (less bytes written than given)
 		if (fwrite (readbuf, 1, readlen, wadfile) < readlen)
 		{
+			// diagnose
 			fprintf (stderr, "Error writing to wad: %s\n", strerror(errno));
+			// close the lump file to break the loop
 			fclose (lumpfile);
 			lumpfile = NULL;
+			// set return code to error
 			ret |= 1;
 		}
+		// if the lump file got closed, the loop exits
 	}
 	return ret;
 }
 
+/*
+// appendtozip(zipFile, zipname, filename):
+//
+//   write a given lump file (filename) to the zipFile as zipname
+// 
+//   zipFile: zip object to be written to
+//
+//   zipname: name of the file inside the zip
+//   filename: file to read data from
+// 
+// returns: 0 = success, 1 = error
+*/
 int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 {
 	char *readbuf;
@@ -79,11 +114,16 @@ int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 	time_t currenttime;
 	struct tm * ltime;
 
+	// clear zip_inf structure
+	memset(&zip_inf, 0, sizeof(zip_inf));
+
+	// try to determine local time
 	time(&currenttime);
 	ltime = localtime(&currenttime);
-	memset(&zip_inf, 0, sizeof(zip_inf));
+	// if succeeded,
 	if (ltime != NULL)
 	{
+		// put it into the zip_inf structure
 		zip_inf.tmz_date.tm_sec = ltime->tm_sec;
 		zip_inf.tmz_date.tm_min = ltime->tm_min;
 		zip_inf.tmz_date.tm_hour = ltime->tm_hour;
@@ -91,17 +131,20 @@ int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 		zip_inf.tmz_date.tm_mon = ltime->tm_mon;
 		zip_inf.tmz_date.tm_year = ltime->tm_year;
 	}
-	
 
+	// lumpfile = source file
 	lumpfile = fopen (filename, "rb");
 	if (lumpfile == NULL)
 	{
 		fprintf (stderr, "Could not open %s: %s\n", filename, strerror(errno));
 		return 1;
 	}
+	// len = source size
 	fseek (lumpfile, 0, SEEK_END);
 	len = ftell(lumpfile);
 	fseek (lumpfile, 0, SEEK_SET);
+
+	// allocate a buffer for the whole source file
 	readbuf = (char*)malloc(len);
 	if (readbuf == NULL)
 	{
@@ -109,15 +152,21 @@ int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 		fprintf (stderr, "Could not allocate %d bytes\n", len);
 		return 1;
 	}
+	// read the whole source file into buffer
 	readlen =  fread (readbuf, 1, len, lumpfile);
 	fclose(lumpfile);
+
+	// if read less bytes than expected, 
 	if (readlen != len)
 	{
+		// diagnose and return error
 		free (readbuf);
 		fprintf (stderr, "Unable to read %s\n", filename);
 		return 1;
 	}
+	// file loaded
 
+	// create zip entry, giving entry name and zip_inf data
 	if (Z_OK != zipOpenNewFileInZip(zipfile, zipname, &zip_inf, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION))
 	{
 		free (readbuf);
@@ -125,44 +174,68 @@ int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 		return 1;
 	}
 
+	// write data into zipfile (zipfile remembers the state)
 	if (Z_OK != zipWriteInFileInZip(zipfile, readbuf, (unsigned)len))
 	{
 		free (readbuf);
 		fprintf (stderr, "Unable to write %s to zip\n", filename);
 		return 1;
 	}
+	// done writing data
 	free (readbuf);
 
+	// close the zip entry
 	if (Z_OK != zipCloseFileInZip(zipfile))
 	{
 		fprintf (stderr, "Unable to close %s in zip\n", filename);
 		return 1;
 	}
+	// all done
 	return 0;
 }
 
+/*
+// buildwad(listfile, listfilename, makecmd, makefile)
+//
+//  go through the listfile, either:
+//   writing dependencies (listfile + lumps with files) into a makefile,
+//   -or-
+//   writing lumps into a wad/zip file
+//
+//  listfile: already opened source file
+//  listfilename: filename, if any - only for the makefile
+//  makecmd: given as argv[0] - only for the makefile
+//  makefile: output filename for makefile. determines mode:
+//   - if specified, we're writing deps into a makefile
+//   - otherwise, we're writing lumps into a wad/zip
+// 
+*/
 int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 {
+	// destination we're writing output into - 
+	// one of these:
 	zipFile zipfile = NULL;
+	FILE *wadfile = NULL;
 
 	wadinfo_t header;
 	filelump_t directory[MAX_LUMPS];
-	char str[256];
-	FILE *wadfile = NULL;
+	char str[256]; // buffer for reading listfile line by line
 	char *pt;
 	char *lumpname, *filename;
 	int lineno = 0;
 	int ret = 0;
 	int i;
 
+	// prepare PWAD data
 	strncpy (header.magic, "PWAD", 4);
 	header.infotableofs = 0;
 	header.numlumps = 0;
 	memset (directory, 0, sizeof(directory));
 
+	// read the listfile line by line
 	while (fgets (str, sizeof(str), listfile))
 	{
-		lineno++;
+		lineno++; // counting lines for diagnostic purposes
 
 		// Strip comments
 		pt = strchr (str, '#');
@@ -189,7 +262,7 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 				return 1;
 			}
 
-			if (!makefile)
+			if (!makefile) // if it's not a makefile,
 			{
 				int ln = (int)strlen(pt+1);
 
@@ -210,8 +283,9 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 			}
 			else filename = makefile;
 
-			if (!zipfile) 
+			if (!zipfile) // if we didn't end up opening zip, it's a regular file
 			{
+				// open wadfile
 				wadfile = fopen (filename, makefile ? "w" : "wb");
 				if (wadfile == NULL)
 				{
@@ -229,7 +303,7 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 				}
 			}
 			continue;
-		}
+		} // @
 
 		// Everything up to the next whitespace is the lump name
 		lumpname = pt;
@@ -247,17 +321,20 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 			if (*filename == 0) filename = NULL;
 		}
 
-
+		// must have output selected
 		if (wadfile == NULL && zipfile == NULL)
 		{
 			fprintf (stderr, "Line %d: No wad specified before lumps.\n", lineno);
 			return 1;
 		}
 
+		// if we're writing a makefile,
 		if (makefile)
 		{
+			// and the lump has a filename,
 			if (filename != NULL)
 			{
+				// add it as a dependency (with quotes, if needed)
 				if (strchr (filename, ' '))
 				{
 					fprintf (wadfile, " \\\n\t\"%s\"", filename);
@@ -268,42 +345,67 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 				}
 			}
 		}
-		else
+		else // not writing a makefile
 		{
-			if (zipfile == NULL)
+			if (zipfile == NULL) // must be a wadfile
 			{
+				// convert lumpname to uppercase
 				for (i = 0; lumpname[i]; ++i)
 				{
 					lumpname[i] = toupper(lumpname[i]);
 				}
+				// put name into directory entry
 				strncpy (directory[header.numlumps].name, lumpname, 8);
+				// put filepos into directory entry
 				directory[header.numlumps].filepos = ftell (wadfile);
+				// if filename given,
 				if (filename != NULL)
 				{
+					// append data to the wadfile
 					ret |= appendlump (wadfile, filename);
 				}
+				// put size into directory entry (how many bytes were just written)
 				directory[header.numlumps].size = ftell (wadfile) - directory[header.numlumps].filepos;
 			}
-			else if (filename != NULL)
+			else if (filename != NULL) // writing a zip, and filename is non-null
 			{
+				// convert lumpname to lowercase
 				for (i = 0; lumpname[i]; ++i)
 				{
 					lumpname[i] = tolower(lumpname[i]);
 				}
+				// add lump data to the zip
 				ret |= appendtozip(zipfile, lumpname, filename);
 			}
+			// count all lumps
 			header.numlumps++;
 		}
-	}
+
+	} // end of line-by-line reading
+
+	// the finishing touches:
+	//  - makefile: terminate the line, and write the action line
+	//  - unzipped wad: write the directory at the end, 
+	//    and update the header with directory's position
+	//  - zipped wad: just close it
+
+	// if we were writing a plain file,
 	if (wadfile != NULL)
 	{
+		// if it's makefile,
 		if (makefile)
 		{
+			// terminate the dependencies line,
+			// and write the action command
 			fprintf (wadfile, "\n\t%s %s\n", makecmd, listfilename);
 		}
-		else
+		else // otherwise, it's plain wad
 		{
+			// the directory of lumps will be written at the end,
+			// starting at the current position - put it into the header
 			header.infotableofs = ftell (wadfile);
+
+			// swap endianness, if needed
 #ifdef WORDS_BIGENDIAN
 #define SWAP(x) 	((((x)>>24)|(((x)>>8) & 0xff00)|(((x)<<8) & 0xff0000)|((x)<<24)))
 
@@ -313,29 +415,37 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 				directory[i].size = SWAP(directory[i].size);
 			}
 #endif
+			// write the whole directory of lumps
 			if (fwrite (directory, sizeof(directory[0]), header.numlumps, wadfile) != header.numlumps)
 			{
+				// failed to write the whole directory
 				fprintf (stderr, "Error writing to wad: %s\n", strerror(errno));
 				ret |= 1;
 			}
-			else
+			else // success - seek to 0 and rewrite the header, now with offset
 			{
+				// endianness
 #ifdef WORDS_BIGENDIAN
 				SWAP(header.infotableofs);
 				SWAP(header.numlumps);
 #endif
+				// seek to 0
 				fseek (wadfile, 0, SEEK_SET);
+
+				// rewrite the header
 				if (fwrite (&header, sizeof(header), 1, wadfile) != 1)
 				{
 					fprintf (stderr, "Error writing to wad: %s\n", strerror(errno));
 					ret |= 1;
 				}
 			}
-		}
+		} // plain wad
+
 		fclose (wadfile);
-	}
+	} // wadfile!=NULL - wad or makefile
 	else if (zipfile != NULL)
 	{
+		// zip - just close it
 		zipClose(zipfile, NULL);
 	}
 	return ret;
@@ -393,6 +503,6 @@ int __cdecl main (int argc, char **argv)
 	return ret;
 
 baduse:
-	fprintf (stderr, "Usage: makewad [-make makecommand makefile] [listfile]\n");
+	fprintf (stderr, "Usage: makewad [-make makefile] [listfile]\n");
 	return 1;
 }

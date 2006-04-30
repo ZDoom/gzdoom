@@ -77,44 +77,9 @@ struct FExtraInfo
 	bool ExplosionShooterImmune;
 };
 
-class ADecoration : public AActor
+class ASimpleProjectile : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ADecoration, AActor);
-};
-IMPLEMENT_ABSTRACT_ACTOR (ADecoration)
-
-class ABreakableDecoration : public ADecoration
-{
-	DECLARE_STATELESS_ACTOR (ABreakableDecoration, ADecoration);
-public:
-	void Serialize (FArchive &arc)
-	{
-		Super::Serialize (arc);
-		arc << DeathHeight << BurnHeight;
-	}
-
-	void Die (AActor *source, AActor *inflictor)
-	{
-		Super::Die (source, inflictor);
-		flags &= ~MF_CORPSE;	// Don't be a corpse
-		if (DamageType == MOD_FIRE)
-		{
-			height = BurnHeight;	// Use burn height
-		}
-		else
-		{
-			height = DeathHeight;	// Use death height
-		}
-	};
-
-	fixed_t DeathHeight;
-	fixed_t BurnHeight;
-};
-IMPLEMENT_ABSTRACT_ACTOR (ABreakableDecoration)
-
-class ASimpleProjectile : public ADecoration
-{
-	DECLARE_STATELESS_ACTOR (ASimpleProjectile, ADecoration);
+	DECLARE_STATELESS_ACTOR (ASimpleProjectile, AActor);
 public:
 	void Serialize (FArchive &arc)
 	{
@@ -363,10 +328,32 @@ static void ParseDecorate (void (*process)(FState *, int))
 	EDefinitionType def;
 	FActorInfo *info;
 	char *typeName;
+	int recursion=0;
 
 	// Get actor class name. The A prefix is added automatically.
-	while (SC_GetString ())
+	while (true)
 	{
+		if (!SC_GetString ())
+		{
+			if (recursion==0) return;
+			SC_RestoreScriptState();
+			recursion--;
+			continue;
+		}
+		if (SC_Compare ("#include"))
+		{
+			int lump;
+
+			SC_MustGetString();
+			// This is not using SC_Open because it can print a more useful error message when done here
+			lump = Wads.CheckNumForFullName(sc_String);
+			if (lump==-1) lump = Wads.CheckNumForName(sc_String);
+			if (lump==-1) SC_ScriptError("Lump '%s' not found", sc_String);
+			SC_SaveScriptState();
+			SC_OpenLumpNum(lump, sc_String);
+			recursion++;
+			continue;
+		}
 		if (SC_Compare ("Actor"))
 		{
 			ProcessActor (process);
@@ -380,7 +367,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 		}
 		else if (SC_Compare ("Breakable"))
 		{
-			parent = RUNTIME_CLASS(ABreakableDecoration);
+			parent = RUNTIME_CLASS(AActor);
 			def = DEF_BreakableDecoration;
 			SC_MustGetString ();
 		}
@@ -392,7 +379,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 		}
 		else
 		{
-			parent = RUNTIME_CLASS(ADecoration);
+			parent = RUNTIME_CLASS(AActor);
 			def = DEF_Decoration;
 		}
 
@@ -423,6 +410,10 @@ static void ParseDecorate (void (*process)(FState *, int))
 			else if (SC_Compare ("Raven"))
 			{
 				info->GameFilter |= GAME_Raven;
+			}
+			else if (SC_Compare ("Strife"))
+			{
+				info->GameFilter |= GAME_Strife;
 			}
 			else if (SC_Compare ("Any"))
 			{
@@ -534,15 +525,8 @@ static void ParseDecorate (void (*process)(FState *, int))
 						info->OwnedStates[extra.DeathStart].Action = A_ScreamAndUnblock;
 					}
 
-					if (extra.DeathHeight == 0)
-					{
-						((ABreakableDecoration *)(info->Defaults))->DeathHeight =
-							((ABreakableDecoration *)(info->Defaults))->height;
-					}
-					else
-					{
-						((ABreakableDecoration *)(info->Defaults))->DeathHeight = extra.DeathHeight;
-					}
+					if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(info->Defaults))->height;
+					info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, extra.DeathHeight);
 				}
 				((AActor *)(info->Defaults))->DeathState = &info->OwnedStates[extra.DeathStart];
 			}
@@ -580,15 +564,9 @@ static void ParseDecorate (void (*process)(FState *, int))
 					info->OwnedStates[extra.FireDeathStart].Action = A_ActiveAndUnblock;
 				}
 
-				if (extra.BurnHeight == 0)
-				{
-					((ABreakableDecoration *)(info->Defaults))->BurnHeight =
-						((ABreakableDecoration *)(info->Defaults))->height;
-				}
-				else
-				{
-					((ABreakableDecoration *)(info->Defaults))->BurnHeight = extra.BurnHeight;
-				}
+				if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(info->Defaults))->height;
+				info->Class->Meta.SetMetaFixed (AMETA_BurnHeight, extra.BurnHeight);
+
 				((AActor *)(info->Defaults))->BDeathState = &info->OwnedStates[extra.FireDeathStart];
 			}
 

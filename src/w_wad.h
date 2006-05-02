@@ -24,19 +24,16 @@
 #define __W_WAD__
 
 #include "files.h"
+#include "doomdef.h"
 
 // [RH] Compare wad header as ints instead of chars
-#ifdef WORDS_BIGENDIAN
-#define IWAD_ID (('I'<<24)|('W'<<16)|('A'<<8)|('D'))
-#define PWAD_ID (('P'<<24)|('W'<<16)|('A'<<8)|('D'))
-#define RFF_ID (('R'<<24)|('F'<<16)|('F'<<8)|(0x1a))
-#define ZIP_ID (('P'<<24)|('K'<<16)|(3<<8)|(4))
-#else
-#define IWAD_ID (('I')|('W'<<8)|('A'<<16)|('D'<<24))
-#define PWAD_ID (('P')|('W'<<8)|('A'<<16)|('D'<<24))
-#define RFF_ID (('R')|('F'<<8)|('F'<<16)|(0x1a<<24))
-#define ZIP_ID (('P')|('K'<<8)|(3<<16)|(4<<24))
-#endif
+#define IWAD_ID		MAKE_ID('I','W','A','D')
+#define PWAD_ID		MAKE_ID('P','W','A','D')
+#define RFF_ID		MAKE_ID('R','F','F',0x1a)
+#define ZIP_ID		MAKE_ID('P','K',3,4)
+#define GRP_ID_0	MAKE_ID('K','e','n','S')
+#define GRP_ID_1	MAKE_ID('i','l','v','e')
+#define GRP_ID_2	MAKE_ID('r','m','a','n')
 
 // [RH] Remove limit on number of WAD files
 struct wadlist_t

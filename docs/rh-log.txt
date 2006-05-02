@@ -1,3 +1,10 @@
+May 1, 2006
+- Made loading of Build's palette.dat automatic if it's found inside a loaded
+  group file, but the -bpal parameter remains for now.
+- Made loading of Build art tiles automatic if they are found inside a group
+  file. Removed the corresponding command-line parameter.
+- Added support for Ken Silverman's group files.
+
 April 30, 2006 (Changes by Graf Zahl)
 - Removed the DCorpseQueue class. It was no longer used and since
   the savegames it might have been used in have become incompatible

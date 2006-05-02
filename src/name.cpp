@@ -18,6 +18,7 @@ name::MainName::MainName (int next)
 : NextHash(next)
 {
 }
+
 int name::FindName (const char *text, bool noCreate)
 {
 	if (!Inited) InitBuckets ();

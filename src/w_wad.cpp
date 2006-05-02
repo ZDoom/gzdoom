@@ -46,13 +46,6 @@ struct rffinfo_t
 	DWORD		NumLumps;
 };
 
-union MergedHeader
-{
-	DWORD magic;
-	wadinfo_t wad;
-	rffinfo_t rff;
-};
-
 struct rfflump_t
 {
 	BYTE		IDontKnow[16];
@@ -64,6 +57,27 @@ struct rfflump_t
 	char		Name[8];
 	BYTE		WhatIsThis[4];
 };
+
+struct grpinfo_t
+{
+	DWORD		Magic[3];
+	DWORD		NumLumps;
+};
+
+struct grplump_t
+{
+	char		Name[12];
+	DWORD		Size;
+};
+
+union MergedHeader
+{
+	DWORD magic[3];
+	wadinfo_t wad;
+	rffinfo_t rff;
+	grpinfo_t grp;
+};
+
 
 //
 // WADFILE I/O related stuff.
@@ -341,7 +355,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 
 	wadinfo->Name = copystring (filename);
 
-	if (header.magic == IWAD_ID || header.magic == PWAD_ID)
+	if (header.magic[0] == IWAD_ID || header.magic[0] == PWAD_ID)
 	{ // This is a WAD file
 
 		header.wad.NumLumps = LittleLong(header.wad.NumLumps);
@@ -352,7 +366,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		NumLumps += header.wad.NumLumps;
 		Printf (" (%ld lumps)", header.wad.NumLumps);
 	}
-	else if (header.magic == RFF_ID)
+	else if (header.magic[0] == RFF_ID)
 	{ // This is a Blood RFF file
 
 		rfflump_t *lumps, *rff_p;
@@ -403,7 +417,37 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
 		}
 	}
-	else if (header.magic==ZIP_ID)
+	else if (header.magic[0] == GRP_ID_0 && header.magic[1] == GRP_ID_1 && header.magic[2] == GRP_ID_2)
+	{
+		grplump_t *lumps, *grp_p;
+		int pos;
+
+		header.grp.NumLumps = LittleLong(header.grp.NumLumps);
+		lumps = new grplump_t[header.grp.NumLumps];
+		wadinfo->Read (lumps, header.grp.NumLumps * sizeof(grplump_t));
+		pos = sizeof(grpinfo_t) + header.grp.NumLumps * sizeof(grplump_t);
+
+		NumLumps += header.grp.NumLumps;
+		LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
+		lump_p = &LumpInfo[startlump];
+
+		for (i = 0, grp_p = lumps; i < header.grp.NumLumps; ++i, ++grp_p)
+		{
+			lump_p->wadnum = (WORD)NumWads;
+			lump_p->position = pos;
+			lump_p->size = LittleLong(grp_p->Size);
+			pos += lump_p->size;
+			grp_p->Name[12] = '\0';	// Be sure filename is null-terminated
+			lump_p->fullname = copystring(grp_p->Name);
+			uppercopy (lump_p->name, grp_p->Name);
+			lump_p->compressedsize = -1;
+			lump_p->flags = 0;
+			lump_p->namespc = ns_global;
+			lump_p++;
+		}
+		Printf (" (%ld files)", header.grp.NumLumps);
+	}
+	else if (header.magic[0] == ZIP_ID)
 	{
 		DWORD centraldir = Zip_FindCentralDir(wadinfo);
 		FZipCentralInfo info;
@@ -567,7 +611,9 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 	Printf ("\n");
 
 	// Fill in lumpinfo
-	if (header.magic != RFF_ID && header.magic != ZIP_ID)
+	if (header.magic[0] != RFF_ID &&
+		header.magic[0] != ZIP_ID &&
+		(header.magic[0] != GRP_ID_0 || header.magic[1] != GRP_ID_1 || header.magic[2] != GRP_ID_2))
 	{
 		LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
 		lump_p = &LumpInfo[startlump];

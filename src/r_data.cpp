@@ -2727,38 +2727,33 @@ void R_InitTextures (void)
 
 void R_InitBuildTiles ()
 {
-	const char *artdir;
 	int numartfiles;
+	char artfile[] = "tilesXXX.art";
+	int lumpnum;
 
-	if (NULL != (artdir = Args.CheckValue ("-art")))
+	for (numartfiles = 0; numartfiles < 1000; numartfiles++)
 	{
-		char lastchar = artdir[strlen(artdir)-1];
-		const char *optslash = (lastchar == '/' || lastchar == '\\') ? "" : "/";
-		char artpath[PATH_MAX];
-
-		for (numartfiles = 0; ; numartfiles++)
+		artfile[5] = numartfiles / 100 + '0';
+		artfile[6] = numartfiles / 10 % 10 + '0';
+		artfile[7] = numartfiles % 10 + '0';
+		lumpnum = Wads.CheckNumForFullName (artfile);
+		if (lumpnum < 0)
 		{
-			sprintf (artpath, "%s%stiles%03d.art", artdir, optslash, numartfiles);
-			if (!FileExists (artpath))
-			{
-				break;
-			}
-
-			FileReader file (artpath);
-
-			// BADBAD: This memory is never explicitly deleted except when the
-			// version number is wrong.
-			BYTE *art = new BYTE[file.GetLength()];
-			file.Read (art, file.GetLength());
-
-			if (LittleLong(*(DWORD *)art) != 1)
-			{
-				delete[] art;
-				break;
-			}
-
-			TexMan.AddTiles (art);
+			break;
 		}
+
+		// BADBAD: This memory is never explicitly deleted except when the
+		// version number is wrong.
+		BYTE *art = new BYTE[Wads.LumpLength (lumpnum)];
+		Wads.ReadLump (lumpnum, art);
+
+		if (LittleLong(*(DWORD *)art) != 1)
+		{
+			delete[] art;
+			break;
+		}
+
+		TexMan.AddTiles (art);
 	}
 }
 
@@ -2782,7 +2777,7 @@ void R_SetDefaultColormap (const char *name)
 		BYTE remap[256];
 
 		// [RH] If using BUILD's palette.dat, generate the colormap
-		if (Args.CheckValue ("-bpal") != NULL)
+		if (Args.CheckParm ("-bpal") || Wads.CheckNumForFullName("palette.dat"))
 		{
 			Printf ("Make colormap\n");
 			FDynamicColormap foo;

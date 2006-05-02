@@ -297,48 +297,67 @@ static int STACK_ARGS sortforremap2 (const void *a, const void *b)
 	}
 }
 
+static void FixBuildPalette (BYTE *pal)
+{
+	int c;
+
+	// Reverse the palette because BUILD used entry 255 as
+	// transparent, but we use 0 as transparent.
+	for (c = 0; c < 768/2; c += 3)
+	{
+		BYTE temp[3] =
+		{
+			(pal[c] << 2) | (pal[c] >> 4),
+			(pal[c+1] << 2) | (pal[c+1] >> 4),
+			(pal[c+2] << 2) | (pal[c+2] >> 4)
+		};
+		pal[c] = (pal[765-c] << 2) | (pal[765-c] >> 4);
+		pal[c+1] = (pal[766-c] << 2) | (pal[766-c] >> 4);
+		pal[c+2] = (pal[767-c] << 2) | (pal[767-c] >> 4);
+		pal[765-c] = temp[0];
+		pal[766-c] = temp[1];
+		pal[767-c] = temp[2];
+	}
+}
+
 void InitPalette ()
 {
 	BYTE pal[768];
 	BYTE *shade;
 	int c;
 	const char *buildPal;
+	bool usingBuild = false;
 
 	buildPal = Args.CheckValue ("-bpal");
 	if (buildPal != NULL)
 	{
 		int f = open (buildPal, O_BINARY | O_RDONLY);
-		if (f >= 0 && read (f, pal, 768) == 768)
-		{
-			// Reverse the palette because BUILD used entry 255 as
-			// transparent, but we use 0 as transparent.
-			for (c = 0; c < 768/2; c += 3)
-			{
-				BYTE temp[3] =
-				{
-					(pal[c] << 2) | (pal[c] >> 4),
-					(pal[c+1] << 2) | (pal[c+1] >> 4),
-					(pal[c+2] << 2) | (pal[c+2] >> 4)
-				};
-				pal[c] = (pal[765-c] << 2) | (pal[765-c] >> 4);
-				pal[c+1] = (pal[766-c] << 2) | (pal[766-c] >> 4);
-				pal[c+2] = (pal[767-c] << 2) | (pal[767-c] >> 4);
-				pal[765-c] = temp[0];
-				pal[766-c] = temp[1];
-				pal[767-c] = temp[2];
-			}
-		}
-		else
-		{
-			buildPal = NULL;
-		}
 		if (f >= 0)
 		{
+			if (read (f, pal, 768) == 768)
+			{
+				FixBuildPalette (pal);
+				usingBuild = true;
+			}
 			close (f);
 		}
 	}
+	else
+	{
+		int lump = Wads.CheckNumForFullName ("palette.dat");
 
-	if (buildPal == NULL)
+		if (lump >= 0 && Wads.LumpLength (lump) >= 768)
+		{
+			FWadLump data = Wads.OpenLumpNum (lump);
+			if (data.Read (pal, 768) == 768)
+			{
+				FixBuildPalette (pal);
+				usingBuild = true;
+			}
+		}
+	}
+
+	if (!usingBuild)
 	{
 		FWadLump palump = Wads.OpenLumpName ("PLAYPAL");
 		palump.Read (pal, 768);

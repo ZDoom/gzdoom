@@ -1951,7 +1951,7 @@ void ParseActorProperties (Baggage &bag)
 		// about the property.
 		info = bag.Info->Class;
 
-		string propname = sc_String;
+		FString propname = sc_String;
 
 		if (sc_String[0]!='-' && sc_String[0]!='+')
 		{
@@ -2806,7 +2806,7 @@ static void ActorFlagSetOrReset (AActor *defaults, Baggage &bag)
 	}
 	else
 	{
-		string part1 = sc_String;
+		FString part1 = sc_String;
 		const char *part2 = NULL;
 		if (SC_CheckString ("."))
 		{
@@ -3046,18 +3046,18 @@ static void WeaponAmmoGive2 (AWeapon *defaults, Baggage &bag)
 // This class is for storing a name inside a const TypeInfo* field without
 // generating compiler warnings. It does not manipulate data in any other
 // way.
-class fuglyname : public name
+class fuglyname : public FName
 {
 public:
-	fuglyname() : name() {}
-	fuglyname(const char *foo) : name(foo) {}
+	fuglyname() : FName() {}
+	fuglyname(const char *foo) : FName(foo) {}
 	operator const TypeInfo *()
 	{
 		return reinterpret_cast<const TypeInfo *>(size_t(int(*this)));
 	}
 	fuglyname &operator= (const TypeInfo *foo)
 	{
-		name *p = this;
+		FName *p = this;
 		*p = ENamedName(reinterpret_cast<size_t>(foo));
 		return *this;
 	}

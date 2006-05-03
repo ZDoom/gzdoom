@@ -2727,11 +2727,57 @@ void R_InitTextures (void)
 
 void R_InitBuildTiles ()
 {
-	int numartfiles;
+	int numartfiles = 0;
 	char artfile[] = "tilesXXX.art";
 	int lumpnum;
 
-	for (numartfiles = 0; numartfiles < 1000; numartfiles++)
+	lumpnum = Wads.CheckNumForFullName ("blood.pal");
+	if (lumpnum >= 0)
+	{
+		// Blood's tiles are external resources. (Why did they do it like that?)
+		FString rffpath = Wads.GetWadFullName (Wads.GetLumpFile (lumpnum));
+		int slashat = rffpath.LastIndexOf ('/');
+		if (slashat >= 0)
+		{
+			rffpath.Resize (slashat + 1);
+		}
+		else
+		{
+			rffpath += '/';
+		}
+
+		for (; numartfiles < 1000; numartfiles++)
+		{
+			artfile[5] = numartfiles / 100 + '0';
+			artfile[6] = numartfiles / 10 % 10 + '0';
+			artfile[7] = numartfiles % 10 + '0';
+
+			FString artpath = rffpath;
+			artpath += artfile;
+
+			FILE *f = fopen (artpath, "rb");
+			if (f == NULL)
+			{
+				break;
+			}
+
+			// BADBAD: This memory is never explicitly deleted except when the
+			// version number is wrong.
+			int len = Q_filelength (f);
+			BYTE *art = new BYTE[len];
+			if (fread (art, 1, len, f) != len || LittleLong(*(DWORD *)art) != 1)
+			{
+				delete[] art;
+			}
+			else
+			{
+				TexMan.AddTiles (art);
+			}
+			fclose (f);
+		}
+	}
+
+	for (; numartfiles < 1000; numartfiles++)
 	{
 		artfile[5] = numartfiles / 100 + '0';
 		artfile[6] = numartfiles / 10 % 10 + '0';
@@ -2750,10 +2796,11 @@ void R_InitBuildTiles ()
 		if (LittleLong(*(DWORD *)art) != 1)
 		{
 			delete[] art;
-			break;
 		}
-
-		TexMan.AddTiles (art);
+		else
+		{
+			TexMan.AddTiles (art);
+		}
 	}
 }
 
@@ -2776,8 +2823,8 @@ void R_SetDefaultColormap (const char *name)
 		BYTE unremap[256];
 		BYTE remap[256];
 
-		// [RH] If using BUILD's palette.dat, generate the colormap
-		if (Args.CheckParm ("-bpal") || Wads.CheckNumForFullName("palette.dat"))
+		// [RH] If using BUILD's palette, generate the colormap
+		if (Wads.CheckNumForFullName("palette.dat") >= 0 || Wads.CheckNumForFullName("blood.pal") >= 0)
 		{
 			Printf ("Make colormap\n");
 			FDynamicColormap foo;

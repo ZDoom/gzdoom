@@ -62,7 +62,7 @@ char *sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static string ScriptName;
+static FString ScriptName;
 static char *ScriptBuffer;
 static char *ScriptPtr;
 static char *ScriptEndPtr;
@@ -737,7 +737,7 @@ BOOL SC_Compare (const char *text)
 
 void STACK_ARGS SC_ScriptError (const char *message, ...)
 {
-	string composed;
+	FString composed;
 
 	if (message == NULL)
 	{
@@ -785,7 +785,7 @@ struct SavedScript
 	BOOL sc_Crossed;
 	BOOL sc_FileScripts;
 
-	string * ScriptName;
+	FString *ScriptName;
 	char *ScriptBuffer;
 	char *ScriptPtr;
 	char *ScriptEndPtr;
@@ -809,7 +809,7 @@ void SC_SaveScriptState()
 	ss.sc_End = sc_End;
 	ss.sc_Crossed = sc_Crossed;
 	ss.sc_FileScripts = sc_FileScripts;
-	ss.ScriptName = ::new string(ScriptName);
+	ss.ScriptName = ::new FString(ScriptName);
 	ss.ScriptBuffer = ScriptBuffer;
 	ss.ScriptPtr = ScriptPtr;
 	ss.ScriptEndPtr = ScriptEndPtr;

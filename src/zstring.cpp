@@ -4,32 +4,32 @@
 #include "zstring.h"
 
 
-string::string (size_t len)
+FString::FString (size_t len)
 {
 	Chars = Pond.Alloc (this, len);
 }
 
-string::string (const char *copyStr)
+FString::FString (const char *copyStr)
 {
 	size_t len = strlen (copyStr);
 	Chars = Pond.Alloc (this, len);
 	StrCopy (Chars, copyStr, len);
 }
 
-string::string (const char *copyStr, size_t len)
+FString::FString (const char *copyStr, size_t len)
 {
 	Chars = Pond.Alloc (this, len);
 	StrCopy (Chars, copyStr, len);
 }
 
-string::string (char oneChar)
+FString::FString (char oneChar)
 {
 	Chars = Pond.Alloc (this, 1);
 	Chars[0] = oneChar;
 	Chars[1] = '\0';
 }
 
-string::string (const string &head, const string &tail)
+FString::FString (const FString &head, const FString &tail)
 {
 	size_t len1 = head.Len();
 	size_t len2 = tail.Len();
@@ -38,7 +38,7 @@ string::string (const string &head, const string &tail)
 	StrCopy (Chars + len1, tail);
 }
 
-string::string (const string &head, const char *tail)
+FString::FString (const FString &head, const char *tail)
 {
 	size_t len1 = head.Len();
 	size_t len2 = strlen (tail);
@@ -47,7 +47,7 @@ string::string (const string &head, const char *tail)
 	StrCopy (Chars + len1, tail, len2);
 }
 
-string::string (const string &head, char tail)
+FString::FString (const FString &head, char tail)
 {
 	size_t len1 = head.Len();
 	Chars = Pond.Alloc (this, len1 + 1);
@@ -56,7 +56,7 @@ string::string (const string &head, char tail)
 	Chars[len1+1] = '\0';
 }
 
-string::string (const char *head, const string &tail)
+FString::FString (const char *head, const FString &tail)
 {
 	size_t len1 = strlen (head);
 	size_t len2 = tail.Len();
@@ -65,7 +65,7 @@ string::string (const char *head, const string &tail)
 	StrCopy (Chars + len1, tail);
 }
 
-string::string (const char *head, const char *tail)
+FString::FString (const char *head, const char *tail)
 {
 	size_t len1 = strlen (head);
 	size_t len2 = strlen (tail);
@@ -74,7 +74,7 @@ string::string (const char *head, const char *tail)
 	StrCopy (Chars + len1, tail, len2);
 }
 
-string::string (char head, const string &tail)
+FString::FString (char head, const FString &tail)
 {
 	size_t len2 = tail.Len();
 	Chars = Pond.Alloc (this, 1 + len2);
@@ -82,7 +82,7 @@ string::string (char head, const string &tail)
 	StrCopy (Chars + 1, tail);
 }
 
-string::~string ()
+FString::~FString ()
 {
 	if (Chars != NULL)
 	{
@@ -91,7 +91,7 @@ string::~string ()
 	}
 }
 
-string &string::operator = (const string &other)
+FString &FString::operator = (const FString &other)
 {
 	if (Chars != NULL)
 	{
@@ -109,7 +109,7 @@ string &string::operator = (const string &other)
 	return *this;
 }
 
-string &string::operator = (const char *copyStr)
+FString &FString::operator = (const char *copyStr)
 {
 	if (Chars != NULL)
 	{
@@ -137,7 +137,7 @@ string &string::operator = (const char *copyStr)
 	return *this;
 }
 
-void string::Format (const char *fmt, ...)
+void FString::Format (const char *fmt, ...)
 {
 	va_list arglist;
 	va_start (arglist, fmt);
@@ -145,7 +145,7 @@ void string::Format (const char *fmt, ...)
 	va_end (arglist);
 }
 
-void string::VFormat (const char *fmt, va_list arglist)
+void FString::VFormat (const char *fmt, va_list arglist)
 {
 	if (Chars != NULL)
 	{
@@ -155,41 +155,41 @@ void string::VFormat (const char *fmt, va_list arglist)
 	StringFormat::VWorker (FormatHelper, this, fmt, arglist);
 }
 
-int string::FormatHelper (void *data, const char *cstr, int len)
+int FString::FormatHelper (void *data, const char *cstr, int len)
 {
-	string *str = (string *)data;
+	FString *str = (FString *)data;
 	size_t len1 = str->Len();
 	str->Chars = Pond.Realloc (str, str->Chars, len1 + len);
 	StrCopy (str->Chars + len1, cstr, len);
 	return len;
 }
 
-string string::operator + (const string &tail) const
+FString FString::operator + (const FString &tail) const
 {
-	return string (*this, tail);
+	return FString (*this, tail);
 }
 
-string string::operator + (const char *tail) const
+FString FString::operator + (const char *tail) const
 {
-	return string (*this, tail);
+	return FString (*this, tail);
 }
 
-string operator + (const char *head, const string &tail)
+FString operator + (const char *head, const FString &tail)
 {
-	return string (head, tail);
+	return FString (head, tail);
 }
 
-string string::operator + (char tail) const
+FString FString::operator + (char tail) const
 {
-	return string (*this, tail);
+	return FString (*this, tail);
 }
 
-string operator + (char head, const string &tail)
+FString operator + (char head, const FString &tail)
 {
-	return string (head, tail);
+	return FString (head, tail);
 }
 
-string &string::operator += (const string &tail)
+FString &FString::operator += (const FString &tail)
 {
 	size_t len1 = Len();
 	size_t len2 = tail.Len();
@@ -198,7 +198,7 @@ string &string::operator += (const string &tail)
 	return *this;
 }
 
-string &string::operator += (const char *tail)
+FString &FString::operator += (const char *tail)
 {
 	size_t len1 = Len();
 	size_t len2 = strlen(tail);
@@ -207,7 +207,7 @@ string &string::operator += (const char *tail)
 	return *this;
 }
 
-string &string::operator += (char tail)
+FString &FString::operator += (char tail)
 {
 	size_t len1 = Len();
 	Chars = Pond.Realloc (this, Chars, len1 + 1);
@@ -216,46 +216,55 @@ string &string::operator += (char tail)
 	return *this;
 }
 
-string string::Left (size_t numChars) const
+void FString::Resize (long newlen)
+{
+	if (newlen >= 0)
+	{
+		Chars = Pond.Realloc (this, Chars, newlen);
+		Chars[newlen] = '\0';
+	}
+}
+
+FString FString::Left (size_t numChars) const
 {
 	size_t len = Len();
 	if (len < numChars)
 	{
 		numChars = len;
 	}
-	return string (Chars, numChars);
+	return FString (Chars, numChars);
 }
 
-string string::Right (size_t numChars) const
+FString FString::Right (size_t numChars) const
 {
 	size_t len = Len();
 	if (len < numChars)
 	{
 		numChars = len;
 	}
-	return string (Chars + len - numChars, numChars);
+	return FString (Chars + len - numChars, numChars);
 }
 
-string string::Mid (size_t pos, size_t numChars) const
+FString FString::Mid (size_t pos, size_t numChars) const
 {
 	size_t len = Len();
 	if (pos >= len)
 	{
-		return string("");
+		return FString("");
 	}
 	if (pos + numChars > len)
 	{
 		numChars = len - pos;
 	}
-	return string (Chars + pos, numChars);
+	return FString (Chars + pos, numChars);
 }
 
-long string::IndexOf (const string &substr, long startIndex) const
+long FString::IndexOf (const FString &substr, long startIndex) const
 {
 	return IndexOf (substr.Chars, startIndex);
 }
 
-long string::IndexOf (const char *substr, long startIndex) const
+long FString::IndexOf (const char *substr, long startIndex) const
 {
 	if (startIndex > 0 && Len() <= (size_t)startIndex)
 	{
@@ -269,7 +278,7 @@ long string::IndexOf (const char *substr, long startIndex) const
 	return long(str - Chars);
 }
 
-long string::IndexOf (char subchar, long startIndex) const
+long FString::IndexOf (char subchar, long startIndex) const
 {
 	if (startIndex > 0 && Len() <= (size_t)startIndex)
 	{
@@ -283,12 +292,12 @@ long string::IndexOf (char subchar, long startIndex) const
 	return long(str - Chars);
 }
 
-long string::IndexOfAny (const string &charset, long startIndex) const
+long FString::IndexOfAny (const FString &charset, long startIndex) const
 {
 	return IndexOfAny (charset.Chars, startIndex);
 }
 
-long string::IndexOfAny (const char *charset, long startIndex) const
+long FString::IndexOfAny (const char *charset, long startIndex) const
 {
 	if (startIndex > 0 && Len() <= (size_t)startIndex)
 	{
@@ -302,32 +311,32 @@ long string::IndexOfAny (const char *charset, long startIndex) const
 	return long(brk - Chars);
 }
 
-long string::LastIndexOf (const string &substr) const
+long FString::LastIndexOf (const FString &substr) const
 {
 	return LastIndexOf (substr.Chars, long(Len()), substr.Len());
 }
 
-long string::LastIndexOf (const char *substr) const
+long FString::LastIndexOf (const char *substr) const
 {
 	return LastIndexOf (substr, long(Len()), strlen(substr));
 }
 
-long string::LastIndexOf (char subchar) const
+long FString::LastIndexOf (char subchar) const
 {
 	return LastIndexOf (subchar, long(Len()));
 }
 
-long string::LastIndexOf (const string &substr, long endIndex) const
+long FString::LastIndexOf (const FString &substr, long endIndex) const
 {
 	return LastIndexOf (substr.Chars, endIndex, substr.Len());
 }
 
-long string::LastIndexOf (const char *substr, long endIndex) const
+long FString::LastIndexOf (const char *substr, long endIndex) const
 {
 	return LastIndexOf (substr, endIndex, strlen(substr));
 }
 
-long string::LastIndexOf (char subchar, long endIndex) const
+long FString::LastIndexOf (char subchar, long endIndex) const
 {
 	if ((size_t)endIndex > Len())
 	{
@@ -343,7 +352,7 @@ long string::LastIndexOf (char subchar, long endIndex) const
 	return -1;
 }
 
-long string::LastIndexOf (const char *substr, long endIndex, size_t substrlen) const
+long FString::LastIndexOf (const char *substr, long endIndex, size_t substrlen) const
 {
 	if ((size_t)endIndex > Len())
 	{
@@ -360,22 +369,22 @@ long string::LastIndexOf (const char *substr, long endIndex, size_t substrlen) c
 	return -1;
 }
 
-long string::LastIndexOfAny (const string &charset) const
+long FString::LastIndexOfAny (const FString &charset) const
 {
 	return LastIndexOfAny (charset.Chars, long(Len()));
 }
 
-long string::LastIndexOfAny (const char *charset) const
+long FString::LastIndexOfAny (const char *charset) const
 {
 	return LastIndexOfAny (charset, long(Len()));
 }
 
-long string::LastIndexOfAny (const string &charset, long endIndex) const
+long FString::LastIndexOfAny (const FString &charset, long endIndex) const
 {
 	return LastIndexOfAny (charset.Chars, endIndex);
 }
 
-long string::LastIndexOfAny (const char *charset, long endIndex) const
+long FString::LastIndexOfAny (const char *charset, long endIndex) const
 {
 	if ((size_t)endIndex > Len())
 	{
@@ -391,7 +400,7 @@ long string::LastIndexOfAny (const char *charset, long endIndex) const
 	return -1;
 }
 
-void string::ToUpper ()
+void FString::ToUpper ()
 {
 	size_t max = Len();
 	for (size_t i = 0; i < max; ++i)
@@ -400,7 +409,7 @@ void string::ToUpper ()
 	}
 }
 
-void string::ToLower ()
+void FString::ToLower ()
 {
 	size_t max = Len();
 	for (size_t i = 0; i < max; ++i)
@@ -409,7 +418,7 @@ void string::ToLower ()
 	}
 }
 
-void string::SwapCase ()
+void FString::SwapCase ()
 {
 	size_t max = Len();
 	for (size_t i = 0; i < max; ++i)
@@ -425,7 +434,7 @@ void string::SwapCase ()
 	}
 }
 
-void string::StripLeft ()
+void FString::StripLeft ()
 {
 	size_t max = Len(), i, j;
 	for (i = 0; i < max; ++i)
@@ -440,12 +449,12 @@ void string::StripLeft ()
 	Pond.Realloc (this, Chars, j-1);
 }
 
-void string::StripLeft (const string &charset)
+void FString::StripLeft (const FString &charset)
 {
 	return StripLeft (charset.Chars);
 }
 
-void string::StripLeft (const char *charset)
+void FString::StripLeft (const char *charset)
 {
 	size_t max = Len(), i, j;
 	for (i = 0; i < max; ++i)
@@ -460,7 +469,7 @@ void string::StripLeft (const char *charset)
 	Pond.Realloc (this, Chars, j-1);
 }
 
-void string::StripRight ()
+void FString::StripRight ()
 {
 	size_t max = Len(), i;
 	for (i = max - 1; i-- > 0; )
@@ -472,12 +481,12 @@ void string::StripRight ()
 	Pond.Realloc (this, Chars, i+1);
 }
 
-void string::StripRight (const string &charset)
+void FString::StripRight (const FString &charset)
 {
 	return StripRight (charset.Chars);
 }
 
-void string::StripRight (const char *charset)
+void FString::StripRight (const char *charset)
 {
 	size_t max = Len(), i;
 	for (i = max - 1; i-- > 0; )
@@ -489,7 +498,7 @@ void string::StripRight (const char *charset)
 	Pond.Realloc (this, Chars, i+1);
 }
 
-void string::StripLeftRight ()
+void FString::StripLeftRight ()
 {
 	size_t max = Len(), i, j, k;
 	for (i = 0; i < max; ++i)
@@ -510,12 +519,12 @@ void string::StripLeftRight ()
 	Pond.Realloc (this, Chars, k);
 }
 
-void string::StripLeftRight (const string &charset)
+void FString::StripLeftRight (const FString &charset)
 {
 	return StripLeft (charset.Chars);
 }
 
-void string::StripLeftRight (const char *charset)
+void FString::StripLeftRight (const char *charset)
 {
 	size_t max = Len(), i, j, k;
 	for (i = 0; i < max; ++i)
@@ -536,17 +545,17 @@ void string::StripLeftRight (const char *charset)
 	Pond.Realloc (this, Chars, k);
 }
 
-void string::Insert (size_t index, const string &instr)
+void FString::Insert (size_t index, const FString &instr)
 {
 	Insert (index, instr.Chars, instr.Len());
 }
 
-void string::Insert (size_t index, const char *instr)
+void FString::Insert (size_t index, const char *instr)
 {
 	Insert (index, instr, strlen(instr));
 }
 
-void string::Insert (size_t index, const char *instr, size_t instrlen)
+void FString::Insert (size_t index, const char *instr, size_t instrlen)
 {
 	size_t mylen = Len();
 	if (index > mylen)
@@ -565,7 +574,7 @@ void string::Insert (size_t index, const char *instr, size_t instrlen)
 	}
 }
 
-void string::ReplaceChars (char oldchar, char newchar)
+void FString::ReplaceChars (char oldchar, char newchar)
 {
 	size_t i, j;
 	for (i = 0, j = Len(); i < j; ++i)
@@ -577,7 +586,7 @@ void string::ReplaceChars (char oldchar, char newchar)
 	}
 }
 
-void string::ReplaceChars (const char *oldcharset, char newchar)
+void FString::ReplaceChars (const char *oldcharset, char newchar)
 {
 	size_t i, j;
 	for (i = 0, j = Len(); i < j; ++i)
@@ -589,7 +598,7 @@ void string::ReplaceChars (const char *oldcharset, char newchar)
 	}
 }
 
-void string::StripChars (char killchar)
+void FString::StripChars (char killchar)
 {
 	size_t read, write, mylen;
 	for (read = write = 0, mylen = Len(); read < mylen; ++read)
@@ -603,7 +612,7 @@ void string::StripChars (char killchar)
 	Pond.Realloc (this, Chars, write);
 }
 
-void string::StripChars (const char *killchars)
+void FString::StripChars (const char *killchars)
 {
 	size_t read, write, mylen;
 	for (read = write = 0, mylen = Len(); read < mylen; ++read)
@@ -617,12 +626,12 @@ void string::StripChars (const char *killchars)
 	Pond.Realloc (this, Chars, write);
 }
 
-void string::MergeChars (char merger)
+void FString::MergeChars (char merger)
 {
 	MergeChars (merger, merger);
 }
 
-void string::MergeChars (char merger, char newchar)
+void FString::MergeChars (char merger, char newchar)
 {
 	size_t read, write, mylen;
 	for (read = write = 0, mylen = Len(); read < mylen; )
@@ -643,7 +652,7 @@ void string::MergeChars (char merger, char newchar)
 	Pond.Realloc (this, Chars, write);
 }
 
-void string::MergeChars (const char *charset, char newchar)
+void FString::MergeChars (const char *charset, char newchar)
 {
 	size_t read, write, mylen;
 	for (read = write = 0, mylen = Len(); read < mylen; )
@@ -664,27 +673,27 @@ void string::MergeChars (const char *charset, char newchar)
 	Pond.Realloc (this, Chars, write);
 }
 
-void string::Substitute (const string &oldstr, const string &newstr)
+void FString::Substitute (const FString &oldstr, const FString &newstr)
 {
 	return Substitute (oldstr.Chars, newstr.Chars, oldstr.Len(), newstr.Len());
 }
 
-void string::Substitute (const char *oldstr, const string &newstr)
+void FString::Substitute (const char *oldstr, const FString &newstr)
 {
 	return Substitute (oldstr, newstr.Chars, strlen(oldstr), newstr.Len());
 }
 
-void string::Substitute (const string &oldstr, const char *newstr)
+void FString::Substitute (const FString &oldstr, const char *newstr)
 {
 	return Substitute (oldstr.Chars, newstr, oldstr.Len(), strlen(newstr));
 }
 
-void string::Substitute (const char *oldstr, const char *newstr)
+void FString::Substitute (const char *oldstr, const char *newstr)
 {
 	return Substitute (oldstr, newstr, strlen(oldstr), strlen(newstr));
 }
 
-void string::Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen)
+void FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen)
 {
 	for (size_t checkpt = 0; checkpt < Len(); )
 	{
@@ -708,7 +717,7 @@ void string::Substitute (const char *oldstr, const char *newstr, size_t oldstrle
 	}
 }
 
-bool string::IsInt () const
+bool FString::IsInt () const
 {
 	// String must match: [whitespace] [{+ | –}] [0 [{ x | X }]] [digits] [whitespace]
 
@@ -767,7 +776,7 @@ octdigits	= [0-7];
 	return yych == '\0';
 }
 
-bool string::IsFloat () const
+bool FString::IsFloat () const
 {
 	// String must match: [whitespace] [sign] [digits] [.digits] [ {d | D | e | E}[sign]digits] [whitespace]
 /* This state machine is based on a simplification of re2c's output for this input:
@@ -818,34 +827,34 @@ digits		= [0-9];
 	return yych == '\0';
 }
 
-long string::ToLong (int base) const
+long FString::ToLong (int base) const
 {
 	return strtol (Chars, NULL, base);
 }
 
-unsigned long string::ToULong (int base) const
+unsigned long FString::ToULong (int base) const
 {
 	return strtoul (Chars, NULL, base);
 }
 
-double string::ToDouble () const
+double FString::ToDouble () const
 {
 	return strtod (Chars, NULL);
 }
 
-string::StringHeader *string::GetHeader () const
+FString::StringHeader *FString::GetHeader () const
 {
 	if (Chars == NULL) return NULL;
 	return (StringHeader *)(Chars - sizeof(StringHeader));
 }
 
-void string::StrCopy (char *to, const char *from, size_t len)
+void FString::StrCopy (char *to, const char *from, size_t len)
 {
 	memcpy (to, from, len*sizeof(char));
 	to[len] = 0;
 }
 
-void string::StrCopy (char *to, const string &from)
+void FString::StrCopy (char *to, const FString &from)
 {
 	StrCopy (to, from.Chars, from.Len());
 }

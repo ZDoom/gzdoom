@@ -944,11 +944,11 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_MusicVolume: {
 				SC_MustGetString();
-				string musname (sc_String);
+				FString musname (sc_String);
 				SC_MustGetFloat();
 				FMusicVolume *mv = (FMusicVolume *)Malloc (sizeof(*mv) + musname.Len());
 				mv->Volume = sc_Float;
-				strcpy (mv->MusicName, musname.GetChars());
+				strcpy (mv->MusicName, musname);
 				mv->Next = MusicVolumes;
 				MusicVolumes = mv;
 				}

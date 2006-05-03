@@ -225,10 +225,10 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 				continue;
 			}
 
-			string strName (sc_String);
+			FString strName (sc_String);
 			SC_MustGetStringName ("=");
 			SC_MustGetString ();
-			string strText (sc_String, ProcessEscapes (sc_String));
+			FString strText (sc_String, ProcessEscapes (sc_String));
 			SC_MustGetString ();
 			while (!SC_Compare (";"))
 			{

@@ -11,41 +11,41 @@ enum ENamedName
 #undef xx
 };
 
-class name
+class FName
 {
 public:
-	name () : Index(0) {}
-	name (const char *text) { Index = FindName (text, false); }
-	name (const string &text) { Index = FindName (text.GetChars(), false); }
-	name (const char *text, bool noCreate) { Index = FindName (text, noCreate); }
-	name (const string &text, bool noCreate) { Index = FindName (text.GetChars(), noCreate); }
-	name (const name &other) { Index = other.Index; }
-	name (ENamedName index) { Index = index; }
- //   ~name () {}	// Names can be added but never removed.
+	FName () : Index(0) {}
+	FName (const char *text) { Index = FindName (text, false); }
+	FName (const FString &text) { Index = FindName (text.GetChars(), false); }
+	FName (const char *text, bool noCreate) { Index = FindName (text, noCreate); }
+	FName (const FString &text, bool noCreate) { Index = FindName (text.GetChars(), noCreate); }
+	FName (const FName &other) { Index = other.Index; }
+	FName (ENamedName index) { Index = index; }
+ //   ~FName () {}	// Names can be added but never removed.
 
 	int GetIndex() const { return Index; }
 	operator int() const { return Index; }
-	const string &GetText() const { return NameArray[Index].Text; }
+	const FString &GetText() const { return NameArray[Index].Text; }
 	const char *GetChars() const { return NameArray[Index].Text.GetChars(); }
 
-	name &operator = (const char *text) { Index = FindName (text, false); return *this; }
-	name &operator = (const string &text) { Index = FindName (text.GetChars(), false); return *this; }
-	name &operator = (const name &other) { Index = other.Index; return *this; }
-	name &operator = (ENamedName index) { Index = index; return *this; }
+	FName &operator = (const char *text) { Index = FindName (text, false); return *this; }
+	FName &operator = (const FString &text) { Index = FindName (text.GetChars(), false); return *this; }
+	FName &operator = (const FName &other) { Index = other.Index; return *this; }
+	FName &operator = (ENamedName index) { Index = index; return *this; }
 
 	int SetName (const char *text, bool noCreate) { return Index = FindName (text, false); }
-	int SetName (const string &text, bool noCreate) { return Index = FindName (text.GetChars(), false); }
+	int SetName (const FString &text, bool noCreate) { return Index = FindName (text.GetChars(), false); }
 
 	bool IsValidName() const { return (unsigned int)Index < NameArray.Size(); }
 
 	// Note that the comparison operators compare the names' indices, not
 	// their text, so they cannot be used to do a lexicographical sort.
-	bool operator == (const name &other) const { return Index == other.Index; }
-	bool operator != (const name &other) const { return Index != other.Index; }
-	bool operator <  (const name &other) const { return Index <  other.Index; }
-	bool operator <= (const name &other) const { return Index <= other.Index; }
-	bool operator >  (const name &other) const { return Index >  other.Index; }
-	bool operator >= (const name &other) const { return Index >= other.Index; }
+	bool operator == (const FName &other) const { return Index == other.Index; }
+	bool operator != (const FName &other) const { return Index != other.Index; }
+	bool operator <  (const FName &other) const { return Index <  other.Index; }
+	bool operator <= (const FName &other) const { return Index <= other.Index; }
+	bool operator >  (const FName &other) const { return Index >  other.Index; }
+	bool operator >= (const FName &other) const { return Index >= other.Index; }
 
 	bool operator == (ENamedName index) const { return Index == index; }
 	bool operator != (ENamedName index) const { return Index != index; }
@@ -64,7 +64,7 @@ private:
 		MainName (int next);
 		MainName (const MainName &other) : Text(other.Text), NextHash(other.NextHash) {}
 		MainName () {}
-		string Text;
+		FString Text;
 		int NextHash;
 
 		void *operator new (size_t size, MainName *addr)
@@ -91,11 +91,11 @@ private:
 	}
 	template<> friend void ConstructInTArray<MainName> (MainName *dst, const MainName &src)
 	{
-		new (dst) name::MainName(src);
+		new (dst) FName::MainName(src);
 	}
 	template<> friend void ConstructEmptyInTArray<MainName> (MainName *dst)
 	{
-		new (dst) name::MainName;
+		new (dst) FName::MainName;
 	}
 #else
 	template<class MainName> friend inline bool NeedsDestructor ();
@@ -106,20 +106,20 @@ private:
 };
 
 #ifdef __GNUC__
-template<> inline bool NeedsDestructor<name::MainName> () { return true; }
+template<> inline bool NeedsDestructor<FName::MainName> () { return true; }
 
-template<> inline void CopyForTArray<name::MainName> (name::MainName &dst, name::MainName &src)
+template<> inline void CopyForTArray<FName::MainName> (FName::MainName &dst, FName::MainName &src)
 {
 	dst.NextHash = src.NextHash;
 	CopyForTArray (dst.Text, src.Text);
 }
-template<> inline void ConstructInTArray<name::MainName> (name::MainName *dst, const name::MainName &src)
+template<> inline void ConstructInTArray<FName::MainName> (FName::MainName *dst, const FName::MainName &src)
 {
-	new (dst) name::MainName(src);
+	new (dst) FName::MainName(src);
 }
-template<> inline void ConstructEmptyInTArray<name::MainName> (name::MainName *dst)
+template<> inline void ConstructEmptyInTArray<FName::MainName> (FName::MainName *dst)
 {
-	new (dst) name::MainName;
+	new (dst) FName::MainName;
 }
 #endif
 

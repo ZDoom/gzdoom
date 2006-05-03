@@ -4,12 +4,12 @@
 
 #include "zstring.h"
 
-string::PoolGroup string::Pond;
+FString::PoolGroup FString::Pond;
 
 #ifndef NOPOOLS
-struct string::Pool
+struct FString::Pool
 {
-	// The pool's performance (and thus the string class's performance) is
+	// The pool's performance (and thus the FString class's performance) is
 	// controlled via these two constants. A small pool size will result
 	// in more frequent garbage collection, while a large pool size will
 	// result in longer garbage collection. A large pool can also end up
@@ -17,7 +17,7 @@ struct string::Pool
 	// is ideal. Similarly, making the granularity too big will also result
 	// in more frequent garbage collection. But if you do a lot of
 	// concatenation with the += operator, then a large granularity is good
-	// because it gives the string more room to grow without needing to
+	// because it gives the FString more room to grow without needing to
 	// be reallocated.
 	//
 	// Note that the granularity must be a power of 2. The pool size need
@@ -27,7 +27,7 @@ struct string::Pool
 
 	Pool (size_t minSize);
 	~Pool ();
-	char *Alloc (string *owner, size_t len);
+	char *Alloc (FString *owner, size_t len);
 	char *Realloc (char *chars, size_t newlen);
 	void Free (char *chars);
 	void MergeFreeBlocks (StringHeader *block);
@@ -48,7 +48,7 @@ struct string::Pool
 // guarantee it will be constructed before any strings that need it.
 // Instead, we rely on the loader to initialize Pools to NULL for us.
 
-string::PoolGroup::~PoolGroup ()
+FString::PoolGroup::~PoolGroup ()
 {
 	int count = 0;
 	Pool *pool = Pools, *next;
@@ -62,7 +62,7 @@ string::PoolGroup::~PoolGroup ()
 	Pools = NULL;
 }
 
-char *string::PoolGroup::Alloc (string *owner, size_t len)
+char *FString::PoolGroup::Alloc (FString *owner, size_t len)
 {
 	char *mem;
 	Pool *pool, *best, **prev, **bestprev;
@@ -70,7 +70,7 @@ char *string::PoolGroup::Alloc (string *owner, size_t len)
 	// If no pools, create one
 	if (Pools == NULL)
 	{
-		Pools = new string::Pool (len);
+		Pools = new FString::Pool (len);
 	}
 
 	// Try to allocate space from an existing pool
@@ -114,8 +114,8 @@ char *string::PoolGroup::Alloc (string *owner, size_t len)
 	}
 	else
 	{
-		// No pools were large enough to hold the string, so create a new one
-		pool = new string::Pool (len);
+		// No pools were large enough to hold the FString, so create a new one
+		pool = new FString::Pool (len);
 		pool->Next = Pools;
 		Pools = pool;
 		mem = pool->Alloc (owner, len);
@@ -123,7 +123,7 @@ char *string::PoolGroup::Alloc (string *owner, size_t len)
 	return mem;
 }
 
-char *string::PoolGroup::Realloc (string *owner, char *chars, size_t newlen)
+char *FString::PoolGroup::Realloc (FString *owner, char *chars, size_t newlen)
 {
 	if (chars == NULL)
 	{
@@ -148,13 +148,13 @@ char *string::PoolGroup::Realloc (string *owner, char *chars, size_t newlen)
 	return newchars;
 }
 
-void string::PoolGroup::Free (char *chars)
+void FString::PoolGroup::Free (char *chars)
 {
 	Pool *pool = FindPool (chars);
 	pool->Free (chars);
 }
 
-string::Pool *string::PoolGroup::FindPool (char *chars) const
+FString::Pool *FString::PoolGroup::FindPool (char *chars) const
 {
 	Pool *pool = Pools;
 	while (pool != NULL)
@@ -168,12 +168,12 @@ string::Pool *string::PoolGroup::FindPool (char *chars) const
 	return pool;
 }
 
-string::StringHeader *string::PoolGroup::GetHeader (char *chars)
+FString::StringHeader *FString::PoolGroup::GetHeader (char *chars)
 {
 	return (StringHeader *)(chars - sizeof(StringHeader));
 }
 
-string::Pool::Pool (size_t minSize)
+FString::Pool::Pool (size_t minSize)
 {
 	if (minSize < POOL_SIZE)
 	{
@@ -191,7 +191,7 @@ string::Pool::Pool (size_t minSize)
 	GenerationNum = 0;
 }
 
-string::Pool::~Pool ()
+FString::Pool::~Pool ()
 {
 	if (PoolData != NULL)
 	{
@@ -219,7 +219,7 @@ string::Pool::~Pool ()
 	}
 }
 
-char *string::Pool::Alloc (string *owner, size_t len)
+char *FString::Pool::Alloc (FString *owner, size_t len)
 {
 	if (NextAlloc == (StringHeader *)MaxAlloc)
 	{
@@ -244,7 +244,7 @@ char *string::Pool::Alloc (string *owner, size_t len)
 	return NULL;
 }
 
-char *string::Pool::Realloc (char *chars, size_t newlen)
+char *FString::Pool::Realloc (char *chars, size_t newlen)
 {
 	size_t needlen = RoundLen (newlen);
 	StringHeader *oldhead = (StringHeader *)(chars - sizeof(StringHeader));
@@ -266,11 +266,11 @@ char *string::Pool::Realloc (char *chars, size_t newlen)
 		return chars;
 	}
 
-	// If there is free space after this string, try to grow into it.
+	// If there is free space after this FString, try to grow into it.
 	StringHeader *nexthead = (StringHeader *)((char *)oldhead + oldtruelen);
 	if (nexthead < (StringHeader *)MaxAlloc && nexthead->Owner == NULL)
 	{
-		// Make sure there's only one free block past this string
+		// Make sure there's only one free block past this FString
 		MergeFreeBlocks (nexthead);
 		// Is there enough room to grow?
 		if (oldtruelen + nexthead->Len >= needlen)
@@ -282,7 +282,7 @@ char *string::Pool::Realloc (char *chars, size_t newlen)
 				StringHeader *nextnewhead = (StringHeader *)((char *)oldhead + needlen);
 				nextnewhead->Owner = NULL;
 				nextnewhead->Len = newfreelen;
-				// If this is the last string in the pool, then the NextAlloc marker also needs to move
+				// If this is the last FString in the pool, then the NextAlloc marker also needs to move
 				if (nexthead == NextAlloc)
 				{
 					NextAlloc = nextnewhead;
@@ -297,7 +297,7 @@ char *string::Pool::Realloc (char *chars, size_t newlen)
 	char *newchars = Alloc (oldhead->Owner, newlen);
 	if (newchars != NULL)
 	{
-		string::StrCopy (newchars, chars, oldhead->Len);
+		FString::StrCopy (newchars, chars, oldhead->Len);
 		Free (chars);
 		return newchars;
 	}
@@ -306,7 +306,7 @@ char *string::Pool::Realloc (char *chars, size_t newlen)
 	return NULL;
 }
 
-void string::Pool::Free (char *chars)
+void FString::Pool::Free (char *chars)
 {
 	StringHeader *head = (StringHeader *)(chars - sizeof(StringHeader));
 	size_t truelen = RoundLen (head->Len);
@@ -318,7 +318,7 @@ void string::Pool::Free (char *chars)
 	MergeFreeBlocks (head);
 }
 
-void string::Pool::MergeFreeBlocks (StringHeader *head)
+void FString::Pool::MergeFreeBlocks (StringHeader *head)
 {
 	StringHeader *block;
 
@@ -344,17 +344,17 @@ void string::Pool::MergeFreeBlocks (StringHeader *head)
 	}
 }
 
-bool string::Pool::BigEnough (size_t len) const
+bool FString::Pool::BigEnough (size_t len) const
 {
 	return FreeSpace >= RoundLen (len);
 }
 
-size_t string::Pool::RoundLen (size_t len) const
+size_t FString::Pool::RoundLen (size_t len) const
 {
 	return (len + 1 + sizeof(StringHeader) + BLOCK_GRANULARITY - 1) & ~(BLOCK_GRANULARITY - 1);
 }
 
-void string::Pool::CollectGarbage (bool noGenerations)
+void FString::Pool::CollectGarbage (bool noGenerations)
 {
 	// This is a generational garbage collector. The space occupied by strings from
 	// the first two generations will not be collected unless noGenerations is set true.
@@ -404,7 +404,7 @@ void string::Pool::CollectGarbage (bool noGenerations)
 	}
 }
 #else
-char *string::PoolGroup::Alloc (string *owner, size_t len)
+char *FString::PoolGroup::Alloc (FString *owner, size_t len)
 {
 	char *mem = (char *)malloc (len + 1 + sizeof(StringHeader));
 	StringHeader *head = (StringHeader *)mem;
@@ -413,7 +413,7 @@ char *string::PoolGroup::Alloc (string *owner, size_t len)
 	return mem;
 }
 
-char *string::PoolGroup::Realloc (string *owner, char *chars, size_t newlen)
+char *FString::PoolGroup::Realloc (FString *owner, char *chars, size_t newlen)
 {
 	if (chars == NULL)
 	{
@@ -427,7 +427,7 @@ char *string::PoolGroup::Realloc (string *owner, char *chars, size_t newlen)
 	return (char *)head + sizeof(StringHeader);
 }
 
-void string::PoolGroup::Free (char *chars)
+void FString::PoolGroup::Free (char *chars)
 {
 	free (chars - sizeof(StringHeader));
 }

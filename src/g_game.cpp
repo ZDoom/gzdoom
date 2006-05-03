@@ -183,7 +183,7 @@ int 			turnheld;								// for accelerative turning
 int 			mousex;
 int 			mousey; 		
 
-string			savegamefile;
+FString			savegamefile;
 char			savedescription[SAVESTRINGSIZE];
 
 // [RH] Name of screenshot file to generate (usually NULL)
@@ -194,8 +194,8 @@ int 			bodyqueslot;
 
 void R_ExecuteSetViewSize (void);
 
-string savename;
-string BackupSaveName;
+FString savename;
+FString BackupSaveName;
 
 bool SendLand;
 const AInventory *SendItemUse, *SendItemDrop;
@@ -599,7 +599,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	{
 		sendsave = false;
 		Net_WriteByte (DEM_SAVEGAME);
-		Net_WriteString (savegamefile.GetChars());
+		Net_WriteString (savegamefile);
 		Net_WriteString (savedescription);
 		savegamefile = "";
 	}
@@ -1484,7 +1484,7 @@ static bool CheckSingleWad (char *name, bool &printRequires, bool printwarn)
 	{
 		return true;
 	}
-	if (!Wads.CheckIfWadLoaded (name))
+	if (Wads.CheckIfWadLoaded (name) < 0)
 	{
 		if (printwarn)
 		{
@@ -1734,9 +1734,9 @@ void G_SaveGame (const char *filename, const char *description)
 	sendsave = true;
 }
 
-string G_BuildSaveName (const char *prefix, int slot)
+FString G_BuildSaveName (const char *prefix, int slot)
 {
-	string name;
+	FString name;
 	const char *leader;
 	const char *slash = "";
 

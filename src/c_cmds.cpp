@@ -633,9 +633,9 @@ CCMD (load)
 		Printf ("cannot load during a network game\n");
 		return;
 	}
-	string fname = argv[1];
+	FString fname = argv[1];
 	DefaultExtension (fname, ".zds");
-    G_LoadGame (fname.GetChars());
+    G_LoadGame (fname);
 }
 
 //==========================================================================
@@ -668,9 +668,38 @@ CCMD (save)
         Printf ("player is dead in a single-player game\n");
         return;
     }
-    string fname = argv[1];
+    FString fname = argv[1];
 	DefaultExtension (fname, ".zds");
-	G_SaveGame (fname.GetChars(), argv.argc() > 2 ? argv[2] : argv[1]);
+	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);
+}
+
+//==========================================================================
+//
+// CCMD wdir
+//
+// Lists the contents of a loaded wad file.
+//
+//==========================================================================
+
+CCMD (wdir)
+{
+	if (argv.argc() != 2)
+	{
+		Printf ("usage: wdir <wadfile>\n");
+		return;
+	}
+	int wadnum = Wads.CheckIfWadLoaded (argv[1]);
+	if (wadnum < 0)
+	{
+		Printf ("%s must be loaded to view its directory.\n", argv[1]);
+	}
+	for (int i = 0; i < Wads.GetNumLumps(); ++i)
+	{
+		if (Wads.GetLumpFile(i) == wadnum)
+		{
+			Printf ("%s\n", Wads.GetLumpFullName(i));
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

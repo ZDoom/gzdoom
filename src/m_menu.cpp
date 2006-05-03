@@ -75,7 +75,7 @@
 struct FSaveGameNode : public Node
 {
 	char Title[SAVESTRINGSIZE];
-	string Filename;
+	FString Filename;
 	bool bOldVersion;
 	bool bMissingWads;
 };
@@ -611,7 +611,7 @@ void M_ReadSaveStrings ()
 	{
 		void *filefirst;
 		findstate_t c_file;
-		string filter;
+		FString filter;
 
 		filter = G_BuildSaveName ("*.zds", -1);
 		filefirst = I_FindFirst (filter.GetChars(), &c_file);
@@ -620,8 +620,8 @@ void M_ReadSaveStrings ()
 			do
 			{
 				// I_FindName only returns the file's name and not its full path
-				string filepath = G_BuildSaveName (I_FindName(&c_file), -1);
-				FILE *file = fopen (filepath.GetChars(), "rb");
+				FString filepath = G_BuildSaveName (I_FindName(&c_file), -1);
+				FILE *file = fopen (filepath, "rb");
 
 				if (file != NULL)
 				{
@@ -1204,21 +1204,21 @@ void M_DoSave (FSaveGameNode *node)
 	else
 	{
 		// Find an unused filename and save as that
-		string filename;
+		FString filename;
 		int i;
 		FILE *test;
 
 		for (i = 0;; ++i)
 		{
 			filename = G_BuildSaveName ("save", i);
-			test = fopen (filename.GetChars(), "rb");
+			test = fopen (filename, "rb");
 			if (test == NULL)
 			{
 				break;
 			}
 			fclose (test);
 		}
-		G_SaveGame (filename.GetChars(), savegamestring);
+		G_SaveGame (filename, savegamestring);
 	}
 	M_ClearMenus ();
 	BorderNeedRefresh = screen->GetPageCount ();

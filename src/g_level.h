@@ -107,7 +107,7 @@ class FBehavior;
 
 struct FSpecialAction
 {
-	name Type;					// this is initialized before the actors...
+	FName Type;					// this is initialized before the actors...
 	BYTE Action;
 	WORD Args[5];				// must allow 16 bit tags for 666 & 667!
 	FSpecialAction *Next;

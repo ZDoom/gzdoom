@@ -10,16 +10,16 @@ static const char *PredefinedNames[] =
 #undef xx
 };
 
-int name::Buckets[name::HASH_SIZE];
-TArray<name::MainName> name::NameArray;
-bool name::Inited;
+int FName::Buckets[FName::HASH_SIZE];
+TArray<FName::MainName> FName::NameArray;
+bool FName::Inited;
 
-name::MainName::MainName (int next)
+FName::MainName::MainName (int next)
 : NextHash(next)
 {
 }
 
-int name::FindName (const char *text, bool noCreate)
+int FName::FindName (const char *text, bool noCreate)
 {
 	if (!Inited) InitBuckets ();
 
@@ -56,7 +56,7 @@ int name::FindName (const char *text, bool noCreate)
 	return index;
 }
 
-void name::InitBuckets ()
+void FName::InitBuckets ()
 {
 	size_t i;
 

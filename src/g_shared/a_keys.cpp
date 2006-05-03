@@ -168,18 +168,18 @@ static void PrintMessage (const char *str)
 {
 	if (str != NULL)
 	{
-		string temp;
+		FString temp;
 
 		if (strchr (str, '$'))
 		{
 			// The message or part of it is from the LANGUAGE lump
-			string name;
+			FString name;
 
 			size_t part1 = strcspn (str, "$");
-			temp = string(str, part1);
+			temp = FString(str, part1);
 
 			size_t part2 = strcspn (str + part1 + 1, "$");
-			name = string(str + part1 + 1, part2);
+			name = FString(str + part1 + 1, part2);
 
 			temp += GStrings(name.GetChars());
 			if (str[part1 + 1 + part2] == '$')

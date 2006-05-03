@@ -264,7 +264,7 @@ protected:
 	int WavePipe[2];
 	pid_t ChildProcess;
 #endif
-	string CommandLine;
+	FString CommandLine;
 	size_t LoopPos;
 
 	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);

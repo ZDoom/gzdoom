@@ -150,9 +150,9 @@ private:
 
 static void AssignTranslations (int seq, seqtype_t type);
 static void AssignHexenTranslations (void);
-static void AddSequence (int curseq, name seqname, name slot, int stopsound, const TArray<DWORD> &ScriptTemp);
+static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<DWORD> &ScriptTemp);
 static int FindSequence (const char *searchname);
-static int FindSequence (name seqname);
+static int FindSequence (FName seqname);
 static bool TwiddleSeqNum (int &sequence, seqtype_t type);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -265,7 +265,7 @@ void DSeqNode::Serialize (FArchive &arc)
 	}
 	else
 	{
-		name seqName;
+		FName seqName;
 		int delayTics = 0, id;
 		float volume;
 		int atten = ATTN_NORM;
@@ -336,7 +336,7 @@ void DSeqNode::AddChoice (int seqnum, seqtype_t type)
 	}
 }
 
-name DSeqNode::GetSequenceName () const
+FName DSeqNode::GetSequenceName () const
 {
 	return Sequences[m_Sequence]->SeqName;
 }
@@ -435,8 +435,8 @@ void S_ParseSndSeq (int levellump)
 	TArray<DWORD> ScriptTemp;
 	int lastlump, lump;
 	char seqtype = ':';
-	name seqname;
-	name slot;
+	FName seqname;
+	FName slot;
 	int stopsound;
 	int delaybase;
 	float volumebase;
@@ -519,7 +519,7 @@ void S_ParseSndSeq (int levellump)
 					SC_MustGetNumber();
 					ScriptTemp.Push (sc_Number);
 					SC_MustGetString();
-					ScriptTemp.Push (name(sc_String));
+					ScriptTemp.Push (FName(sc_String));
 				}
 				continue;
 			}
@@ -646,13 +646,13 @@ void S_ParseSndSeq (int levellump)
 		AssignHexenTranslations ();
 }
 
-static void AddSequence (int curseq, name seqname, name slot, int stopsound, const TArray<DWORD> &ScriptTemp)
+static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<DWORD> &ScriptTemp)
 {
 	Sequences[curseq] = (FSoundSequence *)Malloc (sizeof(FSoundSequence) + sizeof(DWORD)*ScriptTemp.Size());
 	Sequences[curseq]->SeqName = seqname;
 	Sequences[curseq]->Slot = slot;
 	Sequences[curseq]->StopSound = stopsound;
-	memcpy (Sequences[curseq]->Script, &ScriptTemp[0], sizeof(int)*ScriptTemp.Size());
+	memcpy (Sequences[curseq]->Script, &ScriptTemp[0], sizeof(DWORD)*ScriptTemp.Size());
 	Sequences[curseq]->Script[ScriptTemp.Size()] = MakeCommand(SS_CMD_END, 0);
 }
 
@@ -801,7 +801,7 @@ DSeqNode *SN_StartSequence (AActor *actor, const char *seqname, int modenum)
 	return NULL;
 }
 
-DSeqNode *SN_StartSequence (AActor *actor, name seqname, int modenum)
+DSeqNode *SN_StartSequence (AActor *actor, FName seqname, int modenum)
 {
 	int seqnum = FindSequence (seqname);
 	if (seqnum >= 0)
@@ -833,7 +833,7 @@ DSeqNode *SN_StartSequence (polyobj_t *poly, const char *seqname, int modenum)
 
 static int FindSequence (const char *searchname)
 {
-	name seqname (searchname, true);
+	FName seqname (searchname, true);
 
 	if (seqname != NAME_None)
 	{
@@ -842,7 +842,7 @@ static int FindSequence (const char *searchname)
 	return -1;
 }
 
-static int FindSequence (name seqname)
+static int FindSequence (FName seqname)
 {
 	int i;
 
@@ -1163,7 +1163,7 @@ ptrdiff_t SN_GetSequenceOffset (int sequence, SDWORD *sequencePtr)
 //
 //==========================================================================
 
-name SN_GetSequenceSlot (int sequence, seqtype_t type)
+FName SN_GetSequenceSlot (int sequence, seqtype_t type)
 {
 	if (TwiddleSeqNum (sequence, type))
 	{

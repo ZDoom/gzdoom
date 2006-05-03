@@ -131,7 +131,7 @@ void ASoundSequence::Destroy ()
 
 void ASoundSequence::PostBeginPlay ()
 {
-	name slot = SN_GetSequenceSlot (args[0], SEQ_ENVIRONMENT);
+	FName slot = SN_GetSequenceSlot (args[0], SEQ_ENVIRONMENT);
 
 	if (slot != NAME_None)
 	{ // This is a slotted sound, so add it to the master for that slot

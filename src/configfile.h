@@ -58,7 +58,7 @@ public:
 	void SetValueForKey (const char *key, const char *value, bool duplicates=false);
 
 	const char *GetPathName () const { return PathName.GetChars(); }
-	void ChangePathName (const string &path);
+	void ChangePathName (const char *path);
 
 	void LoadConfigFile (void (*nosechandler)(const char *pathname, FConfigFile *config, void *userdata), void *userdata);
 	void WriteConfigFile () const;
@@ -90,7 +90,7 @@ private:
 	FConfigSection **LastSectionPtr;
 	FConfigSection *CurrentSection;
 	FConfigEntry *CurrentEntry;
-	string PathName;
+	FString PathName;
 
 	FConfigSection *FindSection (const char *name) const;
 	FConfigEntry *FindEntry (FConfigSection *section, const char *key) const;

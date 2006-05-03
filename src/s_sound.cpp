@@ -265,8 +265,8 @@ void S_NoiseDebug (void)
 	BorderNeedRefresh = screen->GetPageCount ();
 }
 
-static string LastLocalSndInfo;
-static string LastLocalSndSeq;
+static FString LastLocalSndInfo;
+static FString LastLocalSndSeq;
 void S_AddLocalSndInfo(int lump);
 
 //==========================================================================

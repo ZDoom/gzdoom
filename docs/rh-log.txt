@@ -1,3 +1,13 @@
+May 3, 2006
+- Removed -bpal parameter. Blood's blood.pal is loaded from blood.rff, and
+  its tiles are loaded from the same directory.
+- RFF files now load their entire directories into the lumplist.
+- Added char * and const char * type coversions for FString, so FStrings can be
+  freely passed to functions expecting C strings. (Except varargs functions,
+  which still require manually fetching the C string out of it.)
+- Renamed the name class to FName.
+- Renamed the string class to FString to emphasize that it is not std::string.
+
 May 3, 2006 (Changes by Graf Zahl)
 - Removed doom.x, heretic.x and strife.x from the SVN repository. These
   are generated files.

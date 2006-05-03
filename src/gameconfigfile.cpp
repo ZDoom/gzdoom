@@ -74,7 +74,7 @@ char *WeaponSection;
 
 FGameConfigFile::FGameConfigFile ()
 {
-	string pathname;
+	FString pathname;
 	
 	bMigrating = false;
 	pathname = GetConfigPath (true);
@@ -504,14 +504,14 @@ void FGameConfigFile::ArchiveGlobalData ()
 	C_ArchiveCVars (this, 3);
 }
 
-string FGameConfigFile::GetConfigPath (bool tryProg)
+FString FGameConfigFile::GetConfigPath (bool tryProg)
 {
 	char *pathval;
-	string path;
+	FString path;
 
 	pathval = Args.CheckValue ("-config");
 	if (pathval != NULL)
-		return string(pathval);
+		return FString(pathval);
 
 #ifndef unix
 	path = NULL;
@@ -606,7 +606,7 @@ void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
 		// with a default autoexec.cfg file present.
 		if (!SetSection (section))
 		{
-			string path;
+			FString path;
 			
 #ifndef unix
 			if (Args.CheckParm ("-cdrom"))
@@ -748,6 +748,6 @@ void FGameConfigFile::SetupWeaponList (const char *gamename)
 
 CCMD (whereisini)
 {
-	string path = GameConfig->GetConfigPath (false);
+	FString path = GameConfig->GetConfigPath (false);
 	Printf ("%s\n", path.GetChars());
 }

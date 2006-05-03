@@ -2367,7 +2367,7 @@ void A_BossDeath (AActor *actor)
 	FSpecialAction *sa = level.info->specialactions;
 	while (sa)
 	{
-		if (name(actor->GetClass()->Name+1) == sa->Type)
+		if (FName(actor->GetClass()->Name+1) == sa->Type)
 		{
 			if (!checked && !CheckBossDeath(actor))
 			{

@@ -128,7 +128,7 @@ void FConfigFile::ClearConfig ()
 	LastSectionPtr = &Sections;
 }
 
-void FConfigFile::ChangePathName (const string &pathname)
+void FConfigFile::ChangePathName (const char *pathname)
 {
 	PathName = pathname;
 }
@@ -306,7 +306,7 @@ FConfigFile::FConfigEntry *FConfigFile::NewConfigEntry (
 
 void FConfigFile::LoadConfigFile (void (*nosechandler)(const char *pathname, FConfigFile *config, void *userdata), void *userdata)
 {
-	FILE *file = fopen (PathName.GetChars(), "r");
+	FILE *file = fopen (PathName, "r");
 	bool succ;
 
 	if (file == NULL)
@@ -319,7 +319,7 @@ void FConfigFile::LoadConfigFile (void (*nosechandler)(const char *pathname, FCo
 	{ // First valid line did not define a section
 		if (nosechandler != NULL)
 		{
-			nosechandler (PathName.GetChars(), this, userdata);
+			nosechandler (PathName, this, userdata);
 		}
 	}
 }
@@ -399,7 +399,7 @@ char *FConfigFile::ReadLine (char *string, int n, void *file) const
 
 void FConfigFile::WriteConfigFile () const
 {
-	FILE *file = fopen (PathName.GetChars(), "w");
+	FILE *file = fopen (PathName, "w");
 	FConfigSection *section;
 	FConfigEntry *entry;
 

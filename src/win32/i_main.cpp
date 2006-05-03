@@ -665,10 +665,3 @@ CCMD (crashout)
 {
 	*(int *)0 = 0;
 }
-
-#include "zstring.h"
-TArray<string> Foo;
-void bar (string &h, int *&a)
-{
-	Foo.Push (h);
-}

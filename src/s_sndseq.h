@@ -28,7 +28,7 @@ public:
 	void Tick ();
 	void ChangeData (int seqOffset, int delayTics, float volume, int currentSoundID);
 	void AddChoice (int seqnum, seqtype_t type);
-	name GetSequenceName() const;
+	FName GetSequenceName() const;
 
 	virtual void MakeSound () {}
 	virtual void MakeLoopedSound () {}
@@ -70,8 +70,8 @@ private:
 
 struct FSoundSequence
 {
-	name	SeqName;
-	name	Slot;
+	FName	SeqName;
+	FName	Slot;
 	int		StopSound;
 	SDWORD	Script[1];	// + more until end of sequence script
 };
@@ -79,7 +79,7 @@ struct FSoundSequence
 void S_ParseSndSeq (int levellump);
 DSeqNode *SN_StartSequence (AActor *mobj, int sequence, seqtype_t type, int modenum, bool nostop=false);
 DSeqNode *SN_StartSequence (AActor *mobj, const char *name, int modenum);
-DSeqNode *SN_StartSequence (AActor *mobj, name seqname, int modenum);
+DSeqNode *SN_StartSequence (AActor *mobj, FName seqname, int modenum);
 DSeqNode *SN_StartSequence (sector_t *sector, int sequence, seqtype_t type, int modenum, bool nostop=false);
 DSeqNode *SN_StartSequence (sector_t *sector, const char *name, int modenum);
 DSeqNode *SN_StartSequence (polyobj_t *poly, int sequence, seqtype_t type, int modenum, bool nostop=false);
@@ -92,7 +92,7 @@ ptrdiff_t SN_GetSequenceOffset (int sequence, SDWORD *sequencePtr);
 void SN_DoStop (void *);
 void SN_ChangeNodeData (int nodeNum, int seqOffset, int delayTics,
 	float volume, int currentSoundID);
-name SN_GetSequenceSlot (int sequence, seqtype_t type);
+FName SN_GetSequenceSlot (int sequence, seqtype_t type);
 bool SN_IsMakingLoopingSound (sector_t *sector);
 
 #endif //__S_SNDSEQ_H__

@@ -353,7 +353,7 @@ enum
 struct FStateName
 {
 	FState *AActor::*State;
-	name Name;
+	FName Name;
 };
 
 #if _MSC_VER

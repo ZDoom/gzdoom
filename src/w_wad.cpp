@@ -84,13 +84,13 @@ union MergedHeader
 //
 struct FWadCollection::LumpRecord
 {
-	char		name[8];
 	char *		fullname;		// only valid for files loaded from a .zip file
+	char		name[9];
+	short		wadnum;
+	WORD		flags;
 	int			position;
 	int			size;
 	int			namespc;
-	short		wadnum;
-	WORD		flags;
 	int			compressedsize;
 };
 
@@ -370,7 +370,6 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 	{ // This is a Blood RFF file
 
 		rfflump_t *lumps, *rff_p;
-		int skipped = 0;
 
 		header.rff.NumLumps = LittleLong(header.rff.NumLumps);
 		header.rff.DirOfs = LittleLong(header.rff.DirOfs);
@@ -397,25 +396,31 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			}
 			else
 			{
-				//lump_p->namespc = ns_bloodmisc;
-				--NumLumps;
-				++skipped;
-				continue;
+				lump_p->namespc = ns_global;
 			}
+
 			uppercopy (lump_p->name, rff_p->Name);
+			lump_p->name[8] = 0;
 			lump_p->wadnum = (WORD)NumWads;
 			lump_p->position = LittleLong(rff_p->FilePos);
 			lump_p->size = LittleLong(rff_p->Size);
 			lump_p->flags = (rff_p->Flags & 0x10) >> 4;
-			lump_p->fullname = NULL;
-			lump_p->compressedsize=-1;
+			lump_p->compressedsize = -1;
+
+			// Rearrange the name and extension in a part of the lump record
+			// that I don't have any use for in order to cnstruct the fullname.
+			rff_p->Name[8] = '\0';
+			sprintf ((char *)rff_p->IDontKnow, "%s.", rff_p->Name);
+			rff_p->Name[0] = '\0';
+			strcat ((char *)rff_p->IDontKnow, rff_p->Extension);
+			lump_p->fullname = copystring ((char *)rff_p->IDontKnow);
+			if (strstr ((char *)rff_p->IDontKnow, "TILE"))
+				rff_p = rff_p;
+
 			lump_p++;
 		}
+		Printf (" (%ld files)", header.rff.NumLumps);
 		delete[] lumps;
-		if (skipped != 0)
-		{
-			LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
-		}
 	}
 	else if (header.magic[0] == GRP_ID_0 && header.magic[1] == GRP_ID_1 && header.magic[2] == GRP_ID_2)
 	{
@@ -440,12 +445,14 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			grp_p->Name[12] = '\0';	// Be sure filename is null-terminated
 			lump_p->fullname = copystring(grp_p->Name);
 			uppercopy (lump_p->name, grp_p->Name);
+			lump_p->name[8] = 0;
 			lump_p->compressedsize = -1;
 			lump_p->flags = 0;
 			lump_p->namespc = ns_global;
 			lump_p++;
 		}
 		Printf (" (%ld files)", header.grp.NumLumps);
+		delete[] lumps;
 	}
 	else if (header.magic[0] == ZIP_ID)
 	{
@@ -539,6 +546,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			char * dot = strrchr(base,'.');
 			if (dot) *dot=0;
 			uppercopy(lump_p->name, base);
+			lump_p->name[8] = 0;
 			lump_p->fullname = copystring(name);
 			lump_p->position = LittleLong(zip_fh->dwFileOffset) + sizeof(FZipLocalHeader) + LittleShort(zip_fh->wFileNameSize);
 			lump_p->size = zip_fh->dwSize;
@@ -621,6 +629,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		{
 			// [RH] Convert name to uppercase during copy
 			uppercopy (lump_p->name, fileinfo->Name);
+			lump_p->name[8] = 0;
 			lump_p->wadnum = (WORD)NumWads;
 			lump_p->position = LittleLong(fileinfo->FilePos);
 			lump_p->size = LittleLong(fileinfo->Size);
@@ -699,10 +708,11 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 // Returns true if the specified wad is loaded, false otherwise.
 // If a fully-qualified path is specified, then the wad must match exactly.
 // Otherwise, any wad with that name will work, whatever its path.
+// Returns the wads index if found, or -1 if not.
 //
 //==========================================================================
 
-bool FWadCollection::CheckIfWadLoaded (const char *name)
+int FWadCollection::CheckIfWadLoaded (const char *name)
 {
 	unsigned int i;
 
@@ -712,7 +722,7 @@ bool FWadCollection::CheckIfWadLoaded (const char *name)
 		{
 			if (stricmp (GetWadFullName (i), name) == 0)
 			{
-				return true;
+				return i;
 			}
 		}
 	}
@@ -722,11 +732,11 @@ bool FWadCollection::CheckIfWadLoaded (const char *name)
 		{
 			if (stricmp (GetWadName (i), name) == 0)
 			{
-				return true;
+				return i;
 			}
 		}
 	}
-	return false;
+	return -1;
 }
 
 //==========================================================================
@@ -1474,6 +1484,24 @@ void FWadCollection::GetLumpName (char *to, int lump) const
 		*to = 0;
 	else
 		uppercopy (to, LumpInfo[lump].name);
+}
+
+//==========================================================================
+//
+// FWadCollection :: GetLumpFullName
+//
+// Returns the lump's full name if it has one or its short name if not.
+//
+//==========================================================================
+
+const char *FWadCollection::GetLumpFullName (int lump) const
+{
+	if ((size_t)lump >= NumLumps)
+		return NULL;
+	else if (LumpInfo[lump].fullname != NULL)
+		return LumpInfo[lump].fullname;
+	else
+		return LumpInfo[lump].name;
 }
 
 //==========================================================================

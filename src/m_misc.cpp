@@ -296,13 +296,13 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 
 
 #ifdef unix
-string GetUserFile (string file, bool nodir)
+zstring GetUserFile (const char *file, bool nodir)
 {
 	char *home = getenv ("HOME");
 	if (home == NULL || *home == '\0')
 		I_FatalError ("Please set your HOME environment variable");
 
-	string path = home;
+	zstring path = home;
 	if (path[path.Len()-1] != '/')
 		path += nodir ? "/" : "/.zdoom";
 	else if (!nodir)
@@ -311,9 +311,9 @@ string GetUserFile (string file, bool nodir)
 	if (!nodir)
 	{
 		struct stat info;
-		if (stat (path.GetChars(), &info) == -1)
+		if (stat (path, &info) == -1)
 		{
-			if (mkdir (path.GetChars(), S_IRUSR | S_IWUSR | S_IXUSR) == -1)
+			if (mkdir (path, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
 			{
 				I_FatalError ("Failed to create %s directory:\n%s",
 					path.GetChars(), strerror (errno));
@@ -517,9 +517,9 @@ void WritePNGfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 //
 // M_ScreenShot
 //
-static BOOL FindFreeName (string &fullname, const char *extension)
+static BOOL FindFreeName (FString &fullname, const char *extension)
 {
-	string lbmname;
+	FString lbmname;
 	int i;
 
 	for (i = 0; i <= 9999; i++)
@@ -537,7 +537,7 @@ static BOOL FindFreeName (string &fullname, const char *extension)
 void M_ScreenShot (char *filename)
 {
 	FILE *file;
-	string autoname;
+	FString autoname;
 	bool writepcx = (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
 
 	// find a file name to save it to

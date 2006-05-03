@@ -60,7 +60,7 @@ BOOL G_Responder (event_t*	ev);
 
 void G_ScreenShot (char *filename);
 
-string G_BuildSaveName (const char *prefix, int slot);
+FString G_BuildSaveName (const char *prefix, int slot);
 
 struct PNGHandle;
 bool G_CheckSaveGameWads (PNGHandle *png, bool printwarn);

@@ -7,66 +7,69 @@
 #include "tarray.h"
 
 //#define NOPOOLS
-class string
+class FString
 {
 public:
-	string () : Chars(NULL) {}
+	FString () : Chars(NULL) {}
 
 	// Copy constructors
-	string (const string &other) { Chars = NULL; *this = other; }
-	string (const char *copyStr);
-	string (const char *copyStr, size_t copyLen);
-	string (char oneChar);
+	FString (const FString &other) { Chars = NULL; *this = other; }
+	FString (const char *copyStr);
+	FString (const char *copyStr, size_t copyLen);
+	FString (char oneChar);
 
 	// Concatenation constructors
-	string (const string &head, const string &tail);
-	string (const string &head, const char *tail);
-	string (const string &head, char tail);
-	string (const char *head, const string &tail);
-	string (const char *head, const char *tail);
-	string (char head, const string &tail);
+	FString (const FString &head, const FString &tail);
+	FString (const FString &head, const char *tail);
+	FString (const FString &head, char tail);
+	FString (const char *head, const FString &tail);
+	FString (const char *head, const char *tail);
+	FString (char head, const FString &tail);
 
-	~string ();
+	~FString ();
+
+	operator char *() { return Chars; }
+	operator const char *() const { return Chars; }
 
 	char *GetChars() const { return Chars; }
 	char &operator[] (int index) { return Chars[index]; }
 	char &operator[] (size_t index) { return Chars[index]; }
 
-	string &operator = (const string &other);
-	string &operator = (const char *copyStr);
+	FString &operator = (const FString &other);
+	FString &operator = (const char *copyStr);
 
-	string operator + (const string &tail) const;
-	string operator + (const char *tail) const;
-	string operator + (char tail) const;
-	friend string operator + (const char *head, const string &tail);
-	friend string operator + (char head, const string &tail);
+	FString operator + (const FString &tail) const;
+	FString operator + (const char *tail) const;
+	FString operator + (char tail) const;
+	friend FString operator + (const char *head, const FString &tail);
+	friend FString operator + (char head, const FString &tail);
 
-	string &operator += (const string &tail);
-	string &operator += (const char *tail);
-	string &operator += (char tail);
+	FString &operator += (const FString &tail);
+	FString &operator += (const char *tail);
+	FString &operator += (char tail);
 
-	string Left (size_t numChars) const;
-	string Right (size_t numChars) const;
-	string Mid (size_t pos, size_t numChars) const;
+	FString Left (size_t numChars) const;
+	FString Right (size_t numChars) const;
+	FString Mid (size_t pos, size_t numChars) const;
 
-	long IndexOf (const string &substr, long startIndex=0) const;
+	long IndexOf (const FString &substr, long startIndex=0) const;
 	long IndexOf (const char *substr, long startIndex=0) const;
 	long IndexOf (char subchar, long startIndex=0) const;
 
-	long IndexOfAny (const string &charset, long startIndex=0) const;
+	long IndexOfAny (const FString &charset, long startIndex=0) const;
 	long IndexOfAny (const char *charset, long startIndex=0) const;
 
-	long LastIndexOf (const string &substr) const;
+	long LastIndexOf (const FString &substr) const;
 	long LastIndexOf (const char *substr) const;
 	long LastIndexOf (char subchar) const;
-	long LastIndexOf (const string &substr, long endIndex) const;
+	long LastIndexOf (const FString &substr, long endIndex) const;
 	long LastIndexOf (const char *substr, long endIndex) const;
 	long LastIndexOf (char subchar, long endIndex) const;
 	long LastIndexOf (const char *substr, long endIndex, size_t substrlen) const;
 
-	long LastIndexOfAny (const string &charset) const;
+	long LastIndexOfAny (const FString &charset) const;
 	long LastIndexOfAny (const char *charset) const;
-	long LastIndexOfAny (const string &charset, long endIndex) const;
+	long LastIndexOfAny (const FString &charset, long endIndex) const;
 	long LastIndexOfAny (const char *charset, long endIndex) const;
 
 	void ToUpper ();
@@ -74,18 +77,18 @@ public:
 	void SwapCase ();
 
 	void StripLeft ();
-	void StripLeft (const string &charset);
+	void StripLeft (const FString &charset);
 	void StripLeft (const char *charset);
 
 	void StripRight ();
-	void StripRight (const string &charset);
+	void StripRight (const FString &charset);
 	void StripRight (const char *charset);
 
 	void StripLeftRight ();
-	void StripLeftRight (const string &charset);
+	void StripLeftRight (const FString &charset);
 	void StripLeftRight (const char *charset);
 
-	void Insert (size_t index, const string &instr);
+	void Insert (size_t index, const FString &instr);
 	void Insert (size_t index, const char *instr);
 	void Insert (size_t index, const char *instr, size_t instrlen);
 
@@ -99,9 +102,9 @@ public:
 	void MergeChars (char merger, char newchar);
 	void MergeChars (const char *charset, char newchar);
 
-	void Substitute (const string &oldstr, const string &newstr);
-	void Substitute (const char *oldstr, const string &newstr);
-	void Substitute (const string &oldstr, const char *newstr);
+	void Substitute (const FString &oldstr, const FString &newstr);
+	void Substitute (const char *oldstr, const FString &newstr);
+	void Substitute (const FString &oldstr, const char *newstr);
 	void Substitute (const char *oldstr, const char *newstr);
 	void Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen);
 
@@ -117,19 +120,21 @@ public:
 	size_t Len() const { return Chars == NULL ? 0 : ((StringHeader *)(Chars - sizeof(StringHeader)))->Len; }
 	bool IsEmpty() const { return Len() == 0; }
 
-	int Compare (const string &other) const { return strcmp (Chars, other.Chars); }
+	void Resize (long newlen);
+
+	int Compare (const FString &other) const { return strcmp (Chars, other.Chars); }
 	int Compare (const char *other) const { return strcmp (Chars, other); }
 
-	int CompareNoCase (const string &other) const { return stricmp (Chars, other.Chars); }
+	int CompareNoCase (const FString &other) const { return stricmp (Chars, other.Chars); }
 	int CompareNoCase (const char *other) const { return stricmp (Chars, other); }
 
 protected:
 	struct StringHeader
 	{
 #ifndef NOPOOLS
-		string *Owner;		// string this char array belongs to
+		FString *Owner;		// FString this char array belongs to
 #endif
-		size_t Len;			// Length of string, excluding terminating null
+		size_t Len;			// Length of FString, excluding terminating null
 	};
 	struct Pool;
 	struct PoolGroup
@@ -140,83 +145,83 @@ protected:
 		Pool *FindPool (char *chars) const;
 		static StringHeader *GetHeader (char *chars);
 #endif
-		char *Alloc (string *owner, size_t len);
-		char *Realloc (string *owner, char *chars, size_t newlen);
+		char *Alloc (FString *owner, size_t len);
+		char *Realloc (FString *owner, char *chars, size_t newlen);
 		void Free (char *chars);
 	};
 
-	string (size_t len);
+	FString (size_t len);
 	StringHeader *GetHeader () const;
 
 	static int FormatHelper (void *data, const char *str, int len);
 	static void StrCopy (char *to, const char *from, size_t len);
-	static void StrCopy (char *to, const string &from);
+	static void StrCopy (char *to, const FString &from);
 	static PoolGroup Pond;
 
 	char *Chars;
 
 #ifndef __GNUC__
-	template<> friend bool NeedsDestructor<string> () { return true; }
+	template<> friend bool NeedsDestructor<FString> () { return true; }
 
-	template<> friend void CopyForTArray<string> (string &dst, string &src)
+	template<> friend void CopyForTArray<FString> (FString &dst, FString &src)
 	{
 		// When a TArray is resized, we just need to update the Owner, because
 		// the old copy is going to go away very soon. No need to call the
 		// destructor, either, because full ownership is transferred to the
-		// new string.
+		// new FString.
 		char *chars = src.Chars;
 		dst.Chars = chars;
 		if (chars != NULL)
 		{
-			((string::StringHeader *)(chars - sizeof(string::StringHeader)))->Owner = &dst;
+			((FString::StringHeader *)(chars - sizeof(FString::StringHeader)))->Owner = &dst;
 		}
 	}
-	template<> friend void ConstructInTArray<string> (string *dst, const string &src)
+	template<> friend void ConstructInTArray<FString> (FString *dst, const FString &src)
 	{
-		new (dst) string(src);
+		new (dst) FString(src);
 	}
-	template<> friend void ConstructEmptyInTArray<string> (string *dst)
+	template<> friend void ConstructEmptyInTArray<FString> (FString *dst)
 	{
-		new (dst) string;
+		new (dst) FString;
 	}
 #else
-	template<class string> friend inline void CopyForTArray (string &dst, string &src);
-	template<class string> friend inline void ConstructInTArray (string *dst, const string &src);
-	template<class string> friend inline void ConstructEmptyInTArray (string *dst);
+	template<class FString> friend inline void CopyForTArray (FString &dst, FString &src);
+	template<class FString> friend inline void ConstructInTArray (FString *dst, const FString &src);
+	template<class FString> friend inline void ConstructEmptyInTArray (FString *dst);
 #endif
 
 private:
-	void *operator new (size_t size, string *addr)
+	void *operator new (size_t size, FString *addr)
 	{
 		return addr;
 	}
-	void operator delete (void *, string *)
+	void operator delete (void *, FString *)
 	{
 	}
 };
 
 #ifdef __GNUC__
-template<> inline bool NeedsDestructor<string> () { return true; }
-template<> inline void CopyForTArray<string> (string &dst, string &src)
+template<> inline bool NeedsDestructor<FString> () { return true; }
+template<> inline void CopyForTArray<FString> (FString &dst, FString &src)
 {
 	// When a TArray is resized, we just need to update the Owner, because
 	// the old copy is going to go away very soon. No need to call the
 	// destructor, either, because full ownership is transferred to the
-	// new string.
+	// new FString.
 	char *chars = src.Chars;
 	dst.Chars = chars;
 	if (chars != NULL)
 	{
-		((string::StringHeader *)(chars - sizeof(string::StringHeader)))->Owner = &dst;
+		((FString::StringHeader *)(chars - sizeof(FString::StringHeader)))->Owner = &dst;
 	}
 }
-template<> inline void ConstructInTArray<string> (string *dst, const string &src)
+template<> inline void ConstructInTArray<FString> (FString *dst, const FString &src)
 {
-	new (dst) string(src);
+	new (dst) FString(src);
 }
-template<> inline void ConstructEmptyInTArray<string> (string *dst)
+template<> inline void ConstructEmptyInTArray<FString> (FString *dst)
 {
-	new (dst) string;
+	new (dst) FString;
 }
 #endif
 

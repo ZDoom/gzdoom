@@ -178,7 +178,7 @@ virtual void Read (void *mem, unsigned int len);
 		FArchive& operator<< (float &f);
 		FArchive& operator<< (double &d);
 		FArchive& operator<< (char *&str);
-		FArchive& operator<< (name &n);
+		FArchive& operator<< (FName &n);
 		FArchive& SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize);
 		FArchive& SerializeObject (DObject *&object, TypeInfo *type);
 		FArchive& WriteObject (DObject *obj);

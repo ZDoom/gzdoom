@@ -67,7 +67,7 @@ static int FinaleSequence;
 static SBYTE FadeDir;
 static bool FinaleHasPic;
 
-static string FinaleText;
+static FString FinaleText;
 static size_t FinaleTextLen;
 static char *FinaleFlat;
 

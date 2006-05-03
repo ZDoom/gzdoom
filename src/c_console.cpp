@@ -236,7 +236,7 @@ struct TextQueue
 	TextQueue *Next;
 	bool bNotify;
 	int PrintLevel;
-	string Text;
+	FString Text;
 };
 
 TextQueue *EnqueuedText, **EnqueuedTextTail = &EnqueuedText;
@@ -257,11 +257,11 @@ void DequeueConsoleText ()
 		TextQueue *next = queued->Next;
 		if (queued->bNotify)
 		{
-			C_AddNotifyString (queued->PrintLevel, queued->Text.GetChars());
+			C_AddNotifyString (queued->PrintLevel, queued->Text);
 		}
 		else
 		{
-			AddToConsole (queued->PrintLevel, queued->Text.GetChars());
+			AddToConsole (queued->PrintLevel, queued->Text);
 		}
 		delete queued;
 		queued = next;
@@ -452,10 +452,10 @@ void C_AddNotifyString (int printlevel, const char *source)
 
 	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].printlevel == printlevel)
 	{
-		string str;
+		FString str;
 
 		str.Format("%s%s", NotifyStrings[NUMNOTIFIES-1].text, source);
-		lines = V_BreakLines (width, str.GetChars());
+		lines = V_BreakLines (width, str);
 	}
 	else
 	{
@@ -715,9 +715,9 @@ int VPrintf (int printlevel, const char *format, va_list parms)
 	if (gameisdead)
 		return 0;
 
-	string outline;
+	FString outline;
 	outline.VFormat (format, parms);
-	return PrintString (printlevel, outline.GetChars());
+	return PrintString (printlevel, outline);
 }
 
 int STACK_ARGS Printf (int printlevel, const char *format, ...)
@@ -1100,12 +1100,12 @@ void C_DrawConsole ()
 				// Make a copy of the command line, in case an input event is handled
 				// while we draw the console and it changes.
 				CmdLine[2+CmdLine[0]] = 0;
-				string command((char *)&CmdLine[2+CmdLine[259]]);
+				FString command((char *)&CmdLine[2+CmdLine[259]]);
 				int cursorpos = CmdLine[1] - CmdLine[259];
 
 				screen->DrawChar (CR_ORANGE, left, bottomline, '\x1c', TAG_DONE);
 				screen->DrawText (CR_ORANGE, left + ConFont->GetCharWidth(0x1c), bottomline,
-					command.GetChars(), TAG_DONE);
+					command, TAG_DONE);
 
 				if (cursoron)
 				{

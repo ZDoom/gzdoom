@@ -298,27 +298,41 @@ static int STACK_ARGS sortforremap2 (const void *a, const void *b)
 	}
 }
 
-static void FixBuildPalette (BYTE *pal)
+static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
 {
-	int c;
+	if (Wads.LumpLength (lump) < 768)
+	{
+		return false;
+	}
 
+	FMemLump data = Wads.ReadLump (lump);
+	const BYTE *ipal = (const BYTE *)data.GetMem();
+	
 	// Reverse the palette because BUILD used entry 255 as
 	// transparent, but we use 0 as transparent.
-	for (c = 0; c < 768/2; c += 3)
+
+	for (int c = 0; c < 768/2; c += 3)
 	{
-		BYTE temp[3] =
+		if (!blood)
 		{
-			(pal[c] << 2) | (pal[c] >> 4),
-			(pal[c+1] << 2) | (pal[c+1] >> 4),
-			(pal[c+2] << 2) | (pal[c+2] >> 4)
-		};
-		pal[c] = (pal[765-c] << 2) | (pal[765-c] >> 4);
-		pal[c+1] = (pal[766-c] << 2) | (pal[766-c] >> 4);
-		pal[c+2] = (pal[767-c] << 2) | (pal[767-c] >> 4);
-		pal[765-c] = temp[0];
-		pal[766-c] = temp[1];
-		pal[767-c] = temp[2];
+			opal[765-c] = (ipal[0] << 2) | (ipal[0] >> 4);
+			opal[766-c] = (ipal[1] << 2) | (ipal[1] >> 4);
+			opal[767-c] = (ipal[2] << 2) | (ipal[2] >> 4);
+			opal[c] =	(ipal[765-c] << 2) | (ipal[765-c] >> 4);
+			opal[c+1] = (ipal[766-c] << 2) | (ipal[766-c] >> 4);
+			opal[c+2] = (ipal[767-c] << 2) | (ipal[767-c] >> 4);
+		}
+		else
+		{
+			opal[c] = ipal[765-c];
+			opal[c+1] = ipal[766-c];
+			opal[c+2] = ipal[767-c];
+			opal[765-c] = ipal[c];
+			opal[766-c] = ipal[c+1];
+			opal[767-c] = ipal[c+2];
+		}
 	}
+	return true;
 }
 
 void InitPalette ()
@@ -326,36 +340,16 @@ void InitPalette ()
 	BYTE pal[768];
 	BYTE *shade;
 	int c;
-	const char *buildPal;
 	bool usingBuild = false;
+	int lump;
 
-	buildPal = Args.CheckValue ("-bpal");
-	if (buildPal != NULL)
+	if ((lump = Wads.CheckNumForFullName ("palette.dat")) >= 0 && Wads.LumpLength (lump) >= 768)
 	{
-		int f = open (buildPal, O_BINARY | O_RDONLY);
-		if (f >= 0)
-		{
-			if (read (f, pal, 768) == 768)
-			{
-				FixBuildPalette (pal);
-				usingBuild = true;
-			}
-			close (f);
-		}
+		usingBuild = FixBuildPalette (pal, lump, false);
 	}
-	else
+	else if ((lump = Wads.CheckNumForFullName ("blood.pal")) >= 0 && Wads.LumpLength (lump) >= 768)
 	{
-		int lump = Wads.CheckNumForFullName ("palette.dat");
-
-		if (lump >= 0 && Wads.LumpLength (lump) >= 768)
-		{
-			FWadLump data = Wads.OpenLumpNum (lump);
-			if (data.Read (pal, 768) == 768)
-			{
-				FixBuildPalette (pal);
-				usingBuild = true;
-			}
-		}
+		usingBuild = FixBuildPalette (pal, lump, true);
 	}
 
 	if (!usingBuild)
@@ -369,7 +363,7 @@ void InitPalette ()
 	ColorMatcher.SetPalette ((DWORD *)GPalette.BaseColors);
 
 	// The BUILD engine already has a transparent color, so it doesn't need any remapping.
-	if (buildPal == NULL)
+	if (!usingBuild)
 	{
 		if (GPalette.Remap[0] == 0)
 		{ // No duplicates, so settle for something close to color 0

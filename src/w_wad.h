@@ -146,7 +146,7 @@ public:
 
 	void InitMultipleFiles (wadlist_t **filenames);
 	void AddFile (const char *filename, const char * data=NULL,int length=-1);
-	bool CheckIfWadLoaded (const char *name);
+	int CheckIfWadLoaded (const char *name);
 
 	const char *GetWadName (int wadnum) const;
 	const char *GetWadFullName (int wadnum) const;
@@ -181,6 +181,7 @@ public:
 	int LumpLength (int lump) const;
 	int GetLumpOffset (int lump) const;				// [RH] Returns offset of lump in the wadfile
 	void GetLumpName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
+	const char *GetLumpFullName (int lump) const;	// [RH] Returns the lump's full name
 	int GetLumpFile (int lump) const;				// [RH] Returns wadnum for a specified lump
 	int GetLumpNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match

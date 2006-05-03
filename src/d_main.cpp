@@ -1598,7 +1598,7 @@ static EIWADType IdentifyVersion (void)
 					else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
 					{
 						string homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
-						CheckIWAD (homepath.GetChars(), wads);
+						CheckIWAD (homepath, wads);
 					}
 #endif
 					else
@@ -1726,7 +1726,7 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 			if (stricmp (key, "Path") == 0)
 			{
 				const char *dir;
-				string homepath;
+				FString homepath;
 
 				if (*value == '$')
 				{
@@ -1743,7 +1743,7 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 				else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
 				{
 					homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
-					dir = homepath.GetChars();
+					dir = homepath;
 				}
 #endif
 				else
@@ -1765,9 +1765,9 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 	// Retry, this time with a default extension
 	if (ext != NULL)
 	{
-		string tmp = file;
+		FString tmp = file;
 		DefaultExtension (tmp, ext);
-		return BaseFileSearch (tmp.GetChars(), NULL);
+		return BaseFileSearch (tmp, NULL);
 	}
 	return NULL;
 }

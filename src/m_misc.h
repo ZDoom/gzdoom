@@ -43,6 +43,6 @@ void M_LoadDefaults ();
 void STACK_ARGS M_SaveDefaults ();
 void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection);
 
-string GetUserFile (string path, bool nodir=false);
+FString GetUserFile (const char *path, bool nodir=false);
 
 #endif

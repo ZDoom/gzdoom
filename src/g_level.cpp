@@ -115,7 +115,7 @@ SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
 TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern bool netdemo;
-extern string BackupSaveName;
+extern FString BackupSaveName;
 
 BOOL savegamerestore;
 
@@ -895,7 +895,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 				*so = sa;
 				SC_SetCMode(true);
 				SC_MustGetString();
-				sa->Type = name(sc_String);
+				sa->Type = FName(sc_String);
 				SC_CheckString(",");
 				SC_MustGetString();
 				strlwr(sc_String);

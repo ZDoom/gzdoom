@@ -144,7 +144,7 @@ void DefaultExtension (char *path, const char *extension)
 	strcat (path, extension);
 }
 
-void DefaultExtension (string &path, const char *extension)
+void DefaultExtension (FString &path, const char *extension)
 {
 	char *src = &path[int(path.Len())-1];
 

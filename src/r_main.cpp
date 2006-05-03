@@ -1124,15 +1124,24 @@ void R_SetupFrame (AActor *actor)
 			fixedlightlev = player->fixedcolormap*256;
 			fixedcolormap = NormalLight.Maps;
 		}
-		else
+		else switch (player->fixedcolormap)
 		{
-			fixedcolormap = InvulnerabilityColormap;
+		case INVERSECOLORMAP:
+			fixedcolormap = InverseColormap;
+			break;
+
+		case GOLDCOLORMAP:
+			fixedcolormap = GoldColormap;
+			break;
+
+		default:
+			break;
 		}
 	}
 	// [RH] Inverse light for shooting the Sigil
 	else if (extralight == INT_MIN)
 	{
-		fixedcolormap = InvulnerabilityColormap;
+		fixedcolormap = InverseColormap;
 		extralight = 0;
 	}
 
@@ -1419,7 +1428,7 @@ void R_RenderActorView (AActor *actor)
 	R_FindParticleSubsectors ();
 
 	clock (WallCycles);
-	WORD savedflags = camera->renderflags;
+	DWORD savedflags = camera->renderflags;
 	// Never draw the player unless in chasecam mode
 	if (!r_showviewer)
 	{

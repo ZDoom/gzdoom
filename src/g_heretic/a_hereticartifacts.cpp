@@ -6,37 +6,6 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 
-// Invisibility -------------------------------------------------------------
-
-class AArtiInvisibility : public APowerupGiver
-{
-	DECLARE_ACTOR (AArtiInvisibility, APowerupGiver)
-public:
-	const char *PickupMessage ();
-};
-
-FState AArtiInvisibility::States[] =
-{
-	S_BRIGHT (INVS, 'A',  350, NULL, &States[0])
-};
-
-IMPLEMENT_ACTOR (AArtiInvisibility, Heretic, 75, 135)
-	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HR_SHADOW)
-	PROP_SpawnState (0)
-	PROP_Inventory_RespawnTics (30+4200)
-	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
-	PROP_Inventory_Icon ("ARTIINVS")
-	PROP_PowerupGiver_Powerup ("PowerGhost")
-END_DEFAULTS
-
-const char *AArtiInvisibility::PickupMessage ()
-{
-	return GStrings("TXT_ARTIINVISIBILITY");
-}
-
 // Tome of power ------------------------------------------------------------
 
 class AArtiTomeOfPower : public APowerupGiver

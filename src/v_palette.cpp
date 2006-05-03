@@ -59,7 +59,8 @@ extern "C" {
 FDynamicColormap NormalLight;
 }
 FPalette GPalette;
-BYTE *InvulnerabilityColormap;
+BYTE *InverseColormap;
+BYTE *GoldColormap;
 int Near255;
 
 FColorMatcher ColorMatcher;
@@ -384,35 +385,34 @@ void InitPalette ()
 	NormalLight.Color = PalEntry (255, 255, 255);
 	NormalLight.Fade = 0;
 
-	InvulnerabilityColormap = new BYTE[NUMCOLORMAPS*256];
-
 	// build special maps (e.g. invulnerability)
-	shade = InvulnerabilityColormap;
-	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-	{ // Doom invulnerability is an inverted grayscale
-	  // Strife uses it when firing the Sigil
-		int grayint;
-		for (c = 0; c < 256; c++)
-		{
-			grayint = (65535 -
-				(GPalette.BaseColors[c].r * 77 +
-				 GPalette.BaseColors[c].g * 143 +
-				 GPalette.BaseColors[c].b * 37)) >> 8;
-			*shade++ = ColorMatcher.Pick (grayint, grayint, grayint);
-		}
-	}
-	else
-	{ // Heretic invulnerability is a golden shade
-		int intensity;
+	int intensity;
 
-		for (c = 0; c < 256; c++)
-		{
-			intensity = GPalette.BaseColors[c].r * 77 +
-						GPalette.BaseColors[c].g * 143 +
-						GPalette.BaseColors[c].b * 37;
-			*shade++ = ColorMatcher.Pick (
-				MIN (255, (intensity+intensity/2)>>8), intensity>>8, 0);
-		}
+	// Doom invulnerability is an inverted grayscale
+	// Strife uses it when firing the Sigil
+	InverseColormap = new BYTE[NUMCOLORMAPS*256];
+	shade = InverseColormap;
+
+	for (c = 0; c < 256; c++)
+	{
+		intensity = (65535 -
+			(GPalette.BaseColors[c].r * 77 +
+			 GPalette.BaseColors[c].g * 143 +
+			 GPalette.BaseColors[c].b * 37)) >> 8;
+		*shade++ = ColorMatcher.Pick (intensity, intensity, intensity);
+	}
+
+	// Heretic invulnerability is a golden shade
+	GoldColormap = new BYTE[NUMCOLORMAPS*256];
+	shade = GoldColormap;
+
+	for (c = 0; c < 256; c++)
+	{
+		intensity = GPalette.BaseColors[c].r * 77 +
+					GPalette.BaseColors[c].g * 143 +
+					GPalette.BaseColors[c].b * 37;
+		*shade++ = ColorMatcher.Pick (
+			MIN (255, (intensity+intensity/2)>>8), intensity>>8, 0);
 	}
 }
 

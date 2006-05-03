@@ -1,5 +1,17 @@
+#include "actors/shared/debris.txt"
+#include "actors/shared/splashes.txt"
+
 #include "actors/doom/doomarmor.txt"
+#include "actors/doom/doomartifacts.txt"
 #include "actors/doom/doomkeys.txt"
 #include "actors/doom/doomdecorations.txt"
 
+#include "actors/raven/ravenartifacts.txt"
+#include "actors/raven/ravenhealth.txt"
+
+#include "actors/heretic/hereticarmor.txt"
+#include "actors/heretic/hereticartifacts.txt"
+#include "actors/heretic/heretickeys.txt"
 #include "actors/heretic/hereticdecorations.txt"
+
+#include "actors/hexen/flame.txt"

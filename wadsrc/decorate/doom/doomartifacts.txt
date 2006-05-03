@@ -1,0 +1,127 @@
+// Invulnerability Sphere ---------------------------------------------------
+
+ACTOR InvulnerabilitySphere : PowerupGiver 2022
+{
+	Game Doom
+	SpawnID 133
+	+COUNTITEM
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	+INVENTORY.BIGPOWERUP
+	Inventory.MaxAmount 0
+	Powerup.Type Invulnerable
+	Powerup.Color InverseMap
+	Inventory.PickupMessage "$GOTINVUL"
+	States
+	{
+	Spawn:
+		PINV ABCD 6 Bright
+		Loop
+	}
+}
+
+// Soulsphere --------------------------------------------------------------
+
+ACTOR Soulsphere : Health 2013
+{
+	Game Doom
+	SpawnID 25
+	+COUNTITEM
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	+INVENTORY.FANCYPICKUPSOUND
+	Inventory.Amount 100
+	Inventory.MaxAmount 200
+	Inventory.PickupMessage "$GOTSUPER"
+	Inventory.PickupSound "misc/p_pkup"
+	States
+	{
+	Spawn:
+		SOUL ABCDCB 6 Bright
+		Loop
+	}
+}
+
+// Invisibility -------------------------------------------------------------
+
+ACTOR BlurSphere : PowerupGiver 2024
+{
+	Game Doom
+	SpawnID 135
+	+COUNTITEM
+	+VISIBILITYPULSE
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	+INVENTORY.BIGPOWERUP
+	Inventory.MaxAmount 0
+	Powerup.Type Invisibility
+	RenderStyle Translucent
+	Inventory.PickupMessage "$GOTINVIS"
+	States
+	{
+	Spawn:
+		PINS ABCD 6 Bright
+		Loop
+	}
+}	
+
+// Radiation suit (aka iron feet) -------------------------------------------
+
+ACTOR RadSuit : PowerupGiver 2025
+{
+	Game Doom
+	SpawnID 136
+	Height 46
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	Inventory.MaxAmount 0
+	Powerup.Type IronFeet
+	States
+	{
+	Spawn:
+		SUIT A -1 Bright
+		Stop
+	}
+}	
+
+// infrared -----------------------------------------------------------------
+
+ACTOR Infrared : PowerupGiver 2045
+{
+	Game Doom
+	SpawnID 138
+	+COUNTITEM
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	Inventory.MaxAmount 0
+	Powerup.Type LightAmp
+	Inventory.PickupMessage "$GOTVISOR"
+	States
+	{
+	Spawn:
+		PVIS A 6 Bright
+		PVIS B 6
+		Loop
+	}
+}
+	
+// Allmap -------------------------------------------------------------------
+
+ACTOR Allmap : MapRevealer 2026
+{
+	Game Doom
+	SpawnID 137
+	+COUNTITEM
+	+INVENTORY.FANCYPICKUPSOUND
+	+INVENTORY.ALWAYSPICKUP
+	Inventory.MaxAmount 0
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$GOTMAP"
+	States
+	{
+	Spawn:
+		PMAP ABCDCB 6 Bright
+		Loop
+	}
+}
+

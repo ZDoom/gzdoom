@@ -588,7 +588,7 @@ public:
 	BYTE			frame;				// sprite frame to draw
 	BYTE			xscale, yscale;		// Scaling values; 63 is normal size
 	BYTE			RenderStyle;		// Style to draw this actor with
-	WORD			renderflags;		// Different rendering flags
+	DWORD			renderflags;		// Different rendering flags
 	WORD			picnum;				// Draw this instead of sprite if != 0xffff
 	SWORD			TIDtoHate;			// TID of things to hate (0 if none)
 	DWORD			effects;			// [RH] see p_effect.h

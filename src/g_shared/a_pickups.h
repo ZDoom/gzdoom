@@ -85,6 +85,7 @@ enum
 	IF_PICKUPFLASH		= 1<<9,		// Item "flashes" when picked up
 	IF_ALWAYSPICKUP		= 1<<10,	// For IF_AUTOACTIVATE, MaxAmount=0 items: Always "pick up", even if it doesn't do anything
 	IF_FANCYPICKUPSOUND	= 1<<11,	// Play pickup sound in "surround" mode
+	IF_BIGPOWERUP		= 1<<12,	// Affected by RESPAWN_SUPER dmflag
 };
 
 struct vissprite_t;

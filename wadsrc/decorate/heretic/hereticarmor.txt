@@ -1,0 +1,39 @@
+
+// Silver Shield (Shield1) --------------------------------------------------
+
+Actor SilverShield : BasicArmorPickup 85
+{
+	Game Heretic
+	SpawnID 68
+	+FLOATBOB
+	Inventory.Pickupmessage "$TXT_ITEMSHIELD1"
+	Inventory.Icon "SHLDA0"
+	Armor.Savepercent 50
+	Armor.Saveamount 100
+	States
+	{
+	Spawn:
+		SHLD A -1
+		stop
+	}
+}
+
+// Enchanted shield (Shield2) -----------------------------------------------
+
+Actor EnchantedShield : BasicArmorPickup 31
+{
+	Game Heretic
+	SpawnID 69
+	+FLOATBOB
+	Inventory.Pickupmessage "$TXT_ITEMSHIELD2"
+	Inventory.Icon "SHD2A0"
+	Armor.Savepercent 75
+	Armor.Saveamount 200
+	States
+	{
+	Spawn:
+		SHD2 A -1
+		stop
+	}
+}
+

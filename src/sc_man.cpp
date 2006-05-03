@@ -836,7 +836,7 @@ void SC_RestoreScriptState()
 		sc_Crossed = ss.sc_Crossed;
 		sc_FileScripts = ss.sc_FileScripts;
 		ScriptName = *ss.ScriptName;
-		delete ss.ScriptName;
+		::delete ss.ScriptName;
 		ScriptBuffer = ss.ScriptBuffer;
 		ScriptPtr = ss.ScriptPtr;
 		ScriptEndPtr = ss.ScriptEndPtr;

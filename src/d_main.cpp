@@ -149,6 +149,7 @@ EXTERN_CVAR (Bool, st_scale)
 extern BOOL gameisdead;
 extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
+extern bool insave;
 
 extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
@@ -690,6 +691,7 @@ void D_ErrorCleanup ()
 	players[0].playerstate = PST_LIVE;
 	gameaction = ga_fullconsole;
 	menuactive = MENU_Off;
+	insave=false;
 }
 
 //==========================================================================

@@ -1,0 +1,54 @@
+
+ACTOR HereticKey : Key
+{
+	+NOTDMATCH
+	Radius 20
+	Height 16
+}
+
+// Green key ------------------------------------------------------------
+
+ACTOR KeyGreen : HereticKey 73
+{
+	Game Heretic
+	SpawnID 86
+	Inventory.PickupMessage "$TXT_GOTGREENKEY"
+	States
+	{
+	Spawn:
+		AKYY ABCDEFGHIJ 3 Bright
+		Loop
+	}
+}
+
+// Blue key -----------------------------------------------------------------
+
+ACTOR KeyBlue : HereticKey 79
+{
+	Game Heretic
+	SpawnID 85
+	Inventory.PickupMessage "$TXT_GOTBLUEKEY"
+	States
+	{
+	Spawn:
+		BKYY ABCDEFGHIJ 3 Bright
+		Loop
+	}
+}
+
+// Yellow key ---------------------------------------------------------------
+
+ACTOR KeyYellow : HereticKey 80
+{
+	Game Heretic
+	SpawnID 87
+	Inventory.PickupMessage "$TXT_GOTYELLOWKEY"
+	States
+	{
+	Spawn:
+		CKYY ABCDEFGHI 3 Bright
+		Loop
+	}
+}
+
+ 

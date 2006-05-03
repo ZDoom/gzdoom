@@ -1,0 +1,116 @@
+// Temp Small Flame --------------------------------------------------------
+
+ACTOR AFlameSmallTemp 10500
+{
+	Game Hexen
+	SpawnID 96
+	+NOTELEPORT
+	RenderStyle Add
+	States
+	{
+	Spawn:
+		FFSM AB 3 Bright
+		FFSM C 2 Bright A_CountdownArg(1)
+		FFSM C 2 Bright
+		FFSM D 3 Bright
+		FFSM E 3 Bright A_CountdownArg(1)
+		Loop
+	}
+}
+
+
+// Temp Large Flame ---------------------------------------------------------
+
+ACTOR AFlameLargeTemp 10502
+{
+	Game Hexen
+	SpawnID 98
+	+NOTELEPORT
+	RenderStyle Add
+	States
+	{
+	Spawn:
+		FFLG A 4 Bright
+		FFLG B 4 Bright A_CountdownArg(1)
+		FFLG C 4 Bright
+		FFLG D 4 Bright A_CountdownArg(1)
+		FFLG E 4 Bright
+		FFLG F 4 Bright A_CountdownArg(1)
+		FFLG G 4 Bright
+		FFLG H 4 Bright A_CountdownArg(1)
+		FFLG I 4 Bright
+		FFLG J 4 Bright A_CountdownArg(1)
+		FFLG K 4 Bright
+		FFLG L 4 Bright A_CountdownArg(1)
+		FFLG M 4 Bright
+		FFLG N 4 Bright A_CountdownArg(1)
+		FFLG O 4 Bright
+		FFLG P 4 Bright A_CountdownArg(1)
+		Goto Spawn+4
+	}
+}
+
+// Small Flame --------------------------------------------------------------
+
+ACTOR FlameSmall : SwitchableDecoration 10501
+{
+	Game Hexen
+	SpawnID 97
+	+NOTELEPORT
+	+INVISIBLE
+	RenderStyle Add
+	States
+	{
+	Active:
+		FFSM A 0 Bright A_PlaySound("Ignite")
+	Spawn:
+		FFSM A 3 Bright
+		FFSM A 3 Bright A_UnHideThing
+		FFSM ABCDE 3 Bright
+		Goto Spawn+2
+	Inactive:
+		FFSM A 2
+		FFSM B 2 A_HideThing
+		FFSM C 200
+		Wait
+	}
+}
+
+ACTOR FlameSmall2 : FlameSmall
+{
+	Game Hexen
+	SpawnID 66
+}	
+
+// Large Flame --------------------------------------------------------------
+
+ACTOR FlameLarge : SwitchableDecoration 10503
+{
+	Game Hexen
+	SpawnID 99
+	+NOTELEPORT
+	+INVISIBLE
+	RenderStyle Add
+	States
+	{
+	Active:
+		FFLG A 0 Bright A_PlaySound("Ignite")
+	Spawn:
+		FFLG A 2 Bright
+		FFLG A 2 Bright A_UnHideThing
+		FFLG ABCDEFGHIJKLMNOP 4 Bright
+		Goto Spawn+6
+	Inactive:
+		FFLG DCB 2
+		FFLG A 2 A_HideThing
+		FFLG A 200 
+		Wait
+	}
+}
+		
+ACTOR FlameLarge2 : FlameLarge
+{
+	Game Hexen
+	SpawnID 67
+}
+

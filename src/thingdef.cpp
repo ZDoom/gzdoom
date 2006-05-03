@@ -225,6 +225,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
 	DEFINE_FLAG2(FX_ROCKET, ROCKETTRAIL, AActor, effects),
 	DEFINE_FLAG2(FX_GRENADE, GRENADETRAIL, AActor, effects),
+	DEFINE_FLAG(RF, INVISIBLE, AActor, renderflags),
 };
 
 static flagdef InventoryFlags[] =
@@ -239,6 +240,7 @@ static flagdef InventoryFlags[] =
 	DEFINE_FLAG(IF, PICKUPFLASH, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, ALWAYSPICKUP, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, FANCYPICKUPSOUND, AInventory, ItemFlags),
+	DEFINE_FLAG(IF, BIGPOWERUP, AInventory, ItemFlags),
 };
 
 static flagdef WeaponFlags[] =
@@ -496,6 +498,7 @@ ACTOR(DualPainAttack)
 ACTOR(GiveToTarget)
 ACTOR(TakeFromTarget)
 ACTOR(JumpIfInTargetInventory)
+ACTOR(CountdownArg)
 
 
 #include "d_dehackedactions.h"
@@ -679,6 +682,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_JumpIfInTargetInventory, "MXL" )
 	FUNC(A_GiveToTarget, "Mx" )
 	FUNC(A_TakeFromTarget, "Mx" )
+	FUNC(A_CountdownArg, "X")
 };
 
 //==========================================================================
@@ -2502,8 +2506,15 @@ static void ActorRenderStyle (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorAlpha (AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->alpha=fixed_t(sc_Float*FRACUNIT);
+	if (SC_CheckString("DEFAULT"))
+	{
+		defaults->alpha = gameinfo.gametype==GAME_Heretic? HR_SHADOW : HX_SHADOW;
+	}
+	else
+	{
+		SC_MustGetFloat();
+		defaults->alpha=fixed_t(sc_Float*FRACUNIT);
+	}
 }
 
 //==========================================================================
@@ -2955,7 +2966,18 @@ static void InventoryDefMaxAmount (AInventory *defaults, Baggage &bag)
 //==========================================================================
 static void InventoryPickupmsg (AInventory *defaults, Baggage &bag)
 {
+	// allow game specific pickup messages
+	const char * games[] = {"Doom", "Heretic", "Hexen", "Raven", "Strife", NULL};
+	int gamemode[]={GAME_Doom, GAME_Heretic, GAME_Hexen, GAME_Raven, GAME_Strife};
+
 	SC_MustGetString();
+	int game = SC_MatchString(games);
+
+	if (game!=-1)
+	{
+		SC_MustGetString();
+		if (!(gameinfo.gametype&gamemode[game])) return;
+	}
 	bag.Info->Class->Meta.SetMetaString(AIMETA_PickupMessage, sc_String);
 }
 
@@ -3167,6 +3189,18 @@ static void PowerupColor (APowerupGiver *defaults, Baggage &bag)
 	else
 	{
 		SC_MustGetString();
+
+		if (SC_Compare("INVERSEMAP"))
+		{
+			defaults->BlendColor = INVERSECOLOR;
+			return;
+		}
+		else if (SC_Compare("GOLDMAP"))
+		{
+			defaults->BlendColor = GOLDCOLOR;
+			return;
+		}
+
 		int c = V_GetColor(NULL, sc_String);
 		r=RPART(c);
 		g=GPART(c);
@@ -3175,7 +3209,8 @@ static void PowerupColor (APowerupGiver *defaults, Baggage &bag)
 	SC_MustGetFloat();
 	alpha=int(sc_Float*255);
 	alpha=clamp<int>(alpha, 0, 255);
-	defaults->BlendColor = MAKEARGB(alpha, r, g, b);
+	if (alpha!=0) defaults->BlendColor = MAKEARGB(alpha, r, g, b);
+	else defaults->BlendColor = 0;
 }
 
 //==========================================================================

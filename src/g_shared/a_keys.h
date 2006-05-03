@@ -15,16 +15,6 @@ protected:
 	virtual bool ShouldStay ();
 };
 
-class ADoomKey : public AKey
-{
-	DECLARE_STATELESS_ACTOR (ADoomKey, AKey)
-};
-
-class AHereticKey : public AKey
-{
-	DECLARE_STATELESS_ACTOR (AHereticKey, AKey)
-};
-
 class AHexenKey : public AKey
 {
 	DECLARE_STATELESS_ACTOR (AHexenKey, AKey)

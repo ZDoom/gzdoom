@@ -1324,9 +1324,9 @@ DThinker *FDecalCombinerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) co
 
 FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 {
-	unsigned int i;
+	int i;
 
-	for (i = Animators.Size ()-1; i >= 0; --i)
+	for (i = (int)Animators.Size ()-1; i >= 0; --i)
 	{
 		if (stricmp (name, Animators[i]->Name) == 0)
 		{

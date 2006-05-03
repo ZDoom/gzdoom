@@ -1,0 +1,15 @@
+ACTOR CrystalVial : Health 81
+{
+	Game Raven
+	SpawnID 23
+	+FLOATBOB
+	Inventory.Amount 10
+	Inventory.PickupMessage "$TXT_ITEMHEALTH"
+	States
+	{
+	Spawn:
+		PTN1 ABC 3
+		Loop
+	}
+}
+

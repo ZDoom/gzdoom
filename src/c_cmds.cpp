@@ -67,6 +67,7 @@
 #include "r_sky.h"
 
 extern FILE *Logfile;
+extern bool insave;
 
 CVAR (Bool, sv_cheats, false, CVAR_SERVERINFO | CVAR_LATCH)
 
@@ -90,12 +91,12 @@ BOOL CheckCheatmode ()
 
 CCMD (quit)
 {
-	exit (0);
+	if (!insave) exit (0);
 }
 
 CCMD (exit)
 {
-	exit (0);
+	if (!insave) exit (0);
 }
 
 /*

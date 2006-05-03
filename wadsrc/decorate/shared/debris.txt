@@ -1,0 +1,362 @@
+
+// Rocks --------------------------------------------------------------------
+
+ACTOR Rock1
+{
+	SpawnID 41
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		ROKK A 20
+		Loop
+	Death:
+		ROKK A 10
+		Stop
+	}
+}
+	
+ACTOR Rock2
+{
+	SpawnID 42
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		ROKK B 20
+		Loop
+	Death:
+		ROKK B 10
+		Stop
+	}
+}
+
+
+ACTOR Rock3
+{
+	SpawnID 43
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		ROKK C 20
+		Loop
+	Death:
+		ROKK C 10
+		Stop
+	}
+}
+
+
+// Dirt --------------------------------------------------------------------
+
+ACTOR Dirt1
+{
+	SpawnID 44
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		ROKK D 20
+		Loop
+	Death:
+		ROKK D 10
+		Stop
+	}
+}
+
+ACTOR Dirt2
+{
+	SpawnID 45
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		ROKK E 20
+		Loop
+	Death:
+		ROKK E 10
+		Stop
+	}
+}
+
+ACTOR Dirt3
+{
+	SpawnID 46
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		ROKK F 20
+		Loop
+	Death:
+		ROKK F 10
+		Stop
+	}
+}
+
+ACTOR Dirt4
+{
+	SpawnID 47
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		ROKK G 20
+		Loop
+	Death:
+		ROKK G 10
+		Stop
+	}
+}
+
+ACTOR Dirt5
+{
+	SpawnID 48
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		ROKK H 20
+		Loop
+	Death:
+		ROKK H 10
+		Stop
+	}
+}
+
+ACTOR Dirt6
+{
+	SpawnID 49
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		ROKK I 20
+		Loop
+	Death:
+		ROKK I 10
+		Stop
+	}
+}
+
+// Stained glass ------------------------------------------------------------
+
+
+ACTOR SGShard1 : GlassShard
+{
+	SpawnID 54
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSA ABCDE 4
+		Loop
+	Death:
+		SGSA E 30
+		Stop
+	}
+}
+
+ACTOR SGShard2 : GlassShard
+{
+	SpawnID 55
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSA FGHIJ 4
+		Loop
+	Death:
+		SGSA J 30
+		Stop
+	}
+}
+
+ACTOR SGShard3 : GlassShard
+{
+	SpawnID 56
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSA KLMNO 4
+		Loop
+	Death:
+		SGSA O 30
+		Stop
+	}
+}
+
+ACTOR SGShard4 : GlassShard
+{
+	SpawnID 57
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSA PQRST 4
+		Loop
+	Death:
+		SGSA T 30
+		Stop
+	}
+}
+
+ACTOR SGShard5 : GlassShard
+{
+	SpawnID 58
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSA UVWXY 4
+		Loop
+	Death:
+		SGSA Y 30
+		Stop
+	}
+}
+
+ACTOR SGShard6 : GlassShard
+{
+	SpawnID 59
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSB A 4
+		Loop
+	Death:
+		SGSB A 30
+		Stop
+	}
+}
+
+ACTOR SGShard7 : GlassShard
+{
+	SpawnID 60
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSB B 4
+		Loop
+	Death:
+		SGSB B 30
+		Stop
+	}
+}
+
+ACTOR SGShard8 : GlassShard
+{
+	SpawnID 61
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSB C 4
+		Loop
+	Death:
+		SGSB C 30
+		Stop
+	}
+}
+
+ACTOR SGShard9 : GlassShard
+{
+	SpawnID 62
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSB D 4
+		Loop
+	Death:
+		SGSB D 30
+		Stop
+	}
+}
+
+ACTOR SGShard0 : GlassShard
+{
+	SpawnID 63
+	Radius 5
+	Projectile
+	-ACTIVATEMCROSS
+	-ACTIVATEIMPACT
+	BounceFactor 0.3
+	States
+	{
+	Spawn:
+		SGSB E 4
+		Loop
+	Death:
+		SGSB E 30
+		Stop
+	}
+}
+

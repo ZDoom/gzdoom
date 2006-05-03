@@ -148,12 +148,6 @@ void A_BspiAttack (AActor *self)
 	if (!self->target)
 		return;
 
-	// [RH] Andy Baker's stealth monsters
-	if (self->flags & MF_STEALTH)
-	{
-		self->visdir = 1;
-	}
-
 	A_FaceTarget (self);
 
 	// launch a missile

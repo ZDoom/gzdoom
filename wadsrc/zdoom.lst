@@ -179,12 +179,32 @@ acs/strfhelp.o    			strfhelp.o
 
 
 ========
+========
 # Decorate stuff
 
 decorate.txt				decorate/decorate.txt
 
+actors/shared/debris.txt					decorate/shared/debris.txt
+actors/shared/splashes.txt					decorate/shared/splashes.txt
+
 actors/doom/doomarmor.txt					decorate/doom/doomarmor.txt
+actors/doom/doomartifacts.txt				decorate/doom/doomartifacts.txt
 actors/doom/doomkeys.txt					decorate/doom/doomkeys.txt
 actors/doom/doomdecorations.txt				decorate/doom/doomdecorations.txt
 
+actors/raven/ravenartifacts.txt				decorate/raven/ravenartifacts.txt
+actors/raven/ravenhealth.txt				decorate/raven/ravenhealth.txt
+
+actors/heretic/hereticarmor.txt				decorate/heretic/hereticarmor.txt
+actors/heretic/hereticartifacts.txt			decorate/heretic/hereticartifacts.txt
+actors/heretic/heretickeys.txt				decorate/heretic/heretickeys.txt
 actors/heretic/hereticdecorations.txt		decorate/heretic/hereticdecorations.txt
+
+actors/hexen/flame.txt						decorate/hexen/flame.txt
+actors/hexen/hexenarmor.txt					decorate/hexen/hexenarmor.txt
+actors/hexen/hexendecorations.txt			decorate/hexen/hexendecorations.txt
+actors/hexen/hexenkeys.txt					decorate/hexen/hexenkeys.txt
+actors/hexen/hexenspecialdecs.txt			decorate/hexen/hexenspecialdecs.txt
+actors/hexen/puzzleitems.txt				decorate/hexen/puzzleitems.txt
+actors/hexen/scriptprojectiles.txt			decorate/hexen/scriptprojectiles.txt
+actors/hexen/speedboots.txt					decorate/hexen/speedboots.txt

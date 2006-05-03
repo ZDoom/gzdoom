@@ -242,10 +242,81 @@
 						RelativePath=".\decorate\doom\doomarmor.txt">
 					</File>
 					<File
+						RelativePath=".\decorate\doom\doomartifacts.txt">
+					</File>
+					<File
 						RelativePath=".\decorate\doom\doomdecorations.txt">
 					</File>
 					<File
 						RelativePath=".\decorate\doom\doomkeys.txt">
+					</File>
+				</Filter>
+				<Filter
+					Name="Heretic"
+					Filter="">
+					<File
+						RelativePath=".\decorate\heretic\hereticarmor.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\heretic\hereticartifacts.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\heretic\hereticdecorations.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\heretic\heretickeys.txt">
+					</File>
+				</Filter>
+				<Filter
+					Name="Hexen"
+					Filter="">
+					<File
+						RelativePath=".\decorate\hexen\flame.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\hexenarmor.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\hexendecorations.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\hexenkeys.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\hexenspecialdecs.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\puzzleitems.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\scriptprojectiles.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\speedboots.txt">
+					</File>
+				</Filter>
+				<Filter
+					Name="Strife"
+					Filter="">
+				</Filter>
+				<Filter
+					Name="Raven"
+					Filter="">
+					<File
+						RelativePath=".\decorate\raven\ravenartifacts.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\raven\ravenhealth.txt">
+					</File>
+				</Filter>
+				<Filter
+					Name="Shared"
+					Filter="">
+					<File
+						RelativePath=".\shared\debris.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\shared\splashes.txt">
 					</File>
 				</Filter>
 			</Filter>

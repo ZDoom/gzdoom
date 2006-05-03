@@ -1628,19 +1628,38 @@ static int PatchMisc (int dummy)
 	ABasicArmorPickup *armor;
 
 	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("GreenArmor"));
-	armor->SaveAmount = 100 * deh.GreenAC;
-	armor->SavePercent = deh.GreenAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+	if (armor!=NULL)
+	{
+		armor->SaveAmount = 100 * deh.GreenAC;
+		armor->SavePercent = deh.GreenAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+	}
 	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("BlueArmor"));
-	armor->SaveAmount = 100 * deh.BlueAC;
-	armor->SavePercent = deh.BlueAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+	if (armor!=NULL)
+	{
+		armor->SaveAmount = 100 * deh.BlueAC;
+		armor->SavePercent = deh.BlueAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+	}
 
 	ABasicArmorBonus *barmor;
 	barmor = static_cast<ABasicArmorBonus *> (GetDefaultByName ("ArmorBonus"));
-	barmor->MaxSaveAmount = deh.MaxArmor;
+	if (barmor!=NULL)
+	{
+		barmor->MaxSaveAmount = deh.MaxArmor;
+	}
 
 	AHealth *health;
 	health = static_cast<AHealth *> (GetDefaultByName ("HealthBonus"));
-	if (deh.MaxHealth != -1) health->MaxAmount = deh.MaxHealth;
+	if (deh.MaxHealth != -1 && health!=NULL) 
+	{
+		health->MaxAmount = deh.MaxHealth;
+	}
+
+	health = static_cast<AHealth *> (GetDefaultByName ("Soulsphere"));
+	if (health!=NULL)
+	{
+		health->Amount = deh.SoulsphereHealth;
+		health->MaxAmount = deh.MaxSoulsphere;
+	}
 
 	// 0xDD means "enable infighting"
 	if (infighting == 0xDD)

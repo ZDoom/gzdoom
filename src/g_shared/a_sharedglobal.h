@@ -80,7 +80,7 @@ public:
 	DWORD AlphaColor;
 	WORD Translation;
 	WORD PicNum;
-	WORD RenderFlags;
+	DWORD RenderFlags;
 	BYTE RenderStyle;
 
 protected:
@@ -114,36 +114,6 @@ protected:
 
 private:
 	DImpactDecal();
-};
-
-class AWaterSplashBase : public AActor
-{
-	DECLARE_ACTOR (AWaterSplashBase, AActor)
-};
-
-class AWaterSplash : public AActor
-{
-	DECLARE_ACTOR (AWaterSplash, AActor)
-};
-
-class ALavaSplash : public AActor
-{
-	DECLARE_ACTOR (ALavaSplash, AActor)
-};
-
-class ALavaSmoke : public AActor
-{
-	DECLARE_ACTOR (ALavaSmoke, AActor)
-};
-
-class ASludgeSplash : public AActor
-{
-	DECLARE_ACTOR (ASludgeSplash, AActor)
-};
-
-class ASludgeChunk : public AActor
-{
-	DECLARE_ACTOR (ASludgeChunk, AActor)
 };
 
 class AAmbientSound : public AActor

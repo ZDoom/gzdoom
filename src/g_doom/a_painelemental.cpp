@@ -222,7 +222,7 @@ void A_DualPainAttack (AActor *self)
 
 void A_PainDie (AActor *self)
 {
-	if (self->IsFriend (self->target))
+	if (self->target != NULL && self->IsFriend (self->target))
 	{ // And I thought you were my friend!
 		self->flags &= ~MF_FRIENDLY;
 	}

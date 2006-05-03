@@ -1,0 +1,108 @@
+
+// Health -------------------------------------------------------------------
+
+ACTOR ArtiHealth : HealthPickup 82
+{
+	Game Raven
+	SpawnID 24
+	Health 25
+	+COUNTITEM
+	+FLOATBOB
+	+INVENTORY.PICKUPFLASH
+	+INVENTORY.FANCYPICKUPSOUND
+	Inventory.Icon ARTIPTN2
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_ARTIHEALTH"
+	States
+	{
+	Spawn:
+		PTN2 ABC 4
+		Loop
+	}
+}
+
+// Super health -------------------------------------------------------------
+
+ACTOR ArtiSuperHealth : HealthPickup 32
+{
+	Game Raven
+	SpawnID 25
+	Health 100
+	+COUNTITEM
+	+FLOATBOB
+	+INVENTORY.PICKUPFLASH
+	+INVENTORY.FANCYPICKUPSOUND
+	Inventory.Icon ARTISPHL
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_ARTISUPERHEALTH"
+	States
+	{
+	Spawn:
+		SPHL A 350
+		Loop
+	}
+}
+
+// Flight -------------------------------------------------------------------
+
+ACTOR ArtiFly : PowerupGiver 83
+{
+	Game Raven
+	SpawnID 15
+	+COUNTITEM
+	+FLOATBOB
+	+INVENTORY.PICKUPFLASH
+	+INVENTORY.INTERHUBSTRIP
+	Inventory.RespawnTics 4230
+	Inventory.Icon ARTISOAR
+	Inventory.PickupMessage "$TXT_ARTIFLY"
+	Powerup.Type Flight
+	States
+	{
+	Spawn:
+		SOAR ABCB 5
+		Loop
+	}
+}
+
+// Invulnerability ----------------------------------------------------------
+
+ACTOR ArtiInvulnerability : PowerupGiver 84
+{
+	Game Raven
+	SpawnID 133
+	+COUNTITEM
+	+FLOATBOB
+	+INVENTORY.PICKUPFLASH
+	Inventory.RespawnTics 4230
+	Inventory.Icon ARTIINVU
+	Inventory.PickupMessage "$TXT_ARTIINVULNERABILITY"
+	Inventory.PickupMessage Hexen "$TXT_ARTIINVULNERABILITY2"
+	Powerup.Type Invulnerable
+	States
+	{
+	Spawn:
+		INVU ABCD 3
+		Loop
+	}
+}
+	
+// Torch --------------------------------------------------------------------
+
+ACTOR ArtiTorch : PowerupGiver 33
+{
+	Game Raven
+	SpawnID 73
+	+COUNTITEM
+	+FLOATBOB
+	+INVENTORY.PICKUPFLASH
+	Inventory.Icon ARTITRCH
+	Inventory.PickupMessage "$TXT_ARTITORCH"
+	Powerup.Type Torch
+	States
+	{
+	Spawn:
+		TRCH ABC 3 Bright
+		Loop
+	}
+}

@@ -357,31 +357,6 @@ void A_AccTeleGlitter (AActor *actor)
 	}
 }
 
-// Super map ----------------------------------------------------------------
-
-class ASuperMap : public AMapRevealer
-{
-	DECLARE_ACTOR (ASuperMap, AMapRevealer)
-protected:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_ITEMSUPERMAP");
-	}
-};
-
-FState ASuperMap::States[] =
-{
-#define S_ITEM_SPMP 0
-	S_NORMAL (SPMP, 'A',   -1, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ASuperMap, Heretic, 35, 137)
-	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Flags2 (MF2_FLOATBOB)
-
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 // --- Volcano --------------------------------------------------------------
 
 void A_VolcanoSet (AActor *);

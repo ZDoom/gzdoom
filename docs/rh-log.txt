@@ -1,3 +1,36 @@
+May 3, 2006 (Changes by Graf Zahl)
+- Removed doom.x, heretic.x and strife.x from the SVN repository. These
+  are generated files.
+- Fixed: A_PainDie has to check whether a valid target exists before 
+  calling IsFriend.
+- Fixed: FDecalLib::FindAnimator needs a signed counter to work properly.
+
+May 1, 2006 (Changes by Graf Zahl)
+- Added support for game specific pickup messages, if only to be able
+  to define Raven's invulnerability item in DECORATE.
+- Removed A_TreeDeath because it is no longer used.
+- Fixed: When picking up a PowerupGiver for an active powerup the
+  blend color and the duration were transferred to a temorary item
+  and never took effect. They have to be trnasferred to the newly created
+  powerup item before trying to give it to the player, not afterward.
+- Made the colormap of the InvulnerabilitySphere item specific. 
+  The base power class still needs to have its color adjusted
+  per game though and since Raven's invulnerability item is used in both
+  Hexen and Heretic it can't define its own colormap/blend.
+- Separated the invulnerability colormaps from the game being played
+  and made them item specific. They can also be specified as regular
+  blend colors in DECORATE now.
+- Converted a_hereticarmor.cpp and most of a_doomartifacts.cpp,
+  a_hereticartifacts.cpp and a_heretickeys.cpp to DECORATE.
+- Changed the Soulsphere to be a real health item with the Dehacked
+  modifications made in d_dehacked.cpp as for most other items which
+  need to be adjusted.
+- Added IF_BIGPOWERUP flag to AInventory to expose the RESPAWN_SUPER
+  dmflag to DECORATE. Also removed the now obsolete ShouldRespawn methods
+  from AInvulnerabilitySphere and ABlurSphere.
+- Converted a_splashes.cpp to DECORATE.
+- Converted most of a_debris.cpp to DECORATE.
+
 May 1, 2006
 - Made loading of Build's palette.dat automatic if it's found inside a loaded
   group file, but the -bpal parameter remains for now.

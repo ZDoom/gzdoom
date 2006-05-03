@@ -44,17 +44,18 @@ bool APowerupGiver::Use (bool pickup)
 {
 	APowerup *power = static_cast<APowerup *> (Spawn (PowerupType, 0, 0, 0));
 
+	if (EffectTics != 0)
+	{
+		power->EffectTics = EffectTics;
+	}
+	if (BlendColor != 0)
+	{
+		power->BlendColor = BlendColor;
+	}
+
 	power->ItemFlags |= ItemFlags & IF_ALWAYSPICKUP;
 	if (power->TryPickup (Owner))
 	{
-		if (EffectTics != 0)
-		{
-			power->EffectTics = EffectTics;
-		}
-		if (BlendColor != 0)
-		{
-			power->BlendColor = BlendColor;
-		}
 		return true;
 	}
 	power->GoAwayAndDie ();
@@ -91,6 +92,14 @@ void APowerup::Tick ()
 	else if (EffectTics > 0)
 	{
 		DoEffect ();
+
+		if (EffectTics > BLINKTHRESHOLD || (EffectTics & 8))
+		{
+			if (BlendColor == INVERSECOLOR) Owner->player->fixedcolormap = INVERSECOLORMAP;
+			else if (BlendColor == GOLDCOLOR) Owner->player->fixedcolormap = GOLDCOLORMAP;
+		}
+		else Owner->player->fixedcolormap = 0;
+
 		if (--EffectTics == 0)
 		{
 			Destroy ();
@@ -118,7 +127,10 @@ void APowerup::Serialize (FArchive &arc)
 
 PalEntry APowerup::GetBlend ()
 {
-	if (EffectTics <= 4*32 && !(EffectTics & 8))
+	if (EffectTics <= BLINKTHRESHOLD && !(EffectTics & 8))
+		return 0;
+
+	if (BlendColor == INVERSECOLOR || BlendColor == GOLDCOLOR) 
 		return 0;
 
 	return BlendColor;
@@ -213,7 +225,12 @@ bool APowerup::HandlePickup (AInventory *item)
 			return true;
 		}
 		// Only increase the EffectTics, not decrease it.
-		EffectTics = MAX (EffectTics, power->EffectTics);
+		// Color also gets transferred only when the new item has an effect.
+		if (power->EffectTics > EffectTics)
+		{
+			EffectTics = power->EffectTics;
+			BlendColor = power->BlendColor;
+		}
 		power->ItemFlags |= IF_PICKUPGOOD;
 		return true;
 	}
@@ -259,6 +276,25 @@ IMPLEMENT_STATELESS_ACTOR (APowerInvulnerable, Any, -1, 0)
 	PROP_Inventory_Icon ("SPSHLD0")
 END_DEFAULTS
 
+// Need to set the default for each game here
+AT_GAME_SET(PowerInvulnerable)
+{
+	APowerInvulnerable * invul = GetDefault<APowerInvulnerable>();
+	switch (gameinfo.gametype)
+	{
+	case GAME_Doom:
+	case GAME_Strife:
+		invul->BlendColor = INVERSECOLOR;
+		break;
+
+	case GAME_Heretic:
+		invul->BlendColor = GOLDCOLOR;
+		break;
+
+	default:
+		break;
+	}
+}
 //===========================================================================
 //
 // APowerInvulnerable :: InitEffect
@@ -281,19 +317,6 @@ void APowerInvulnerable::InitEffect ()
 void APowerInvulnerable::DoEffect ()
 {
 	Owner->player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Active);
-	if (gameinfo.gametype != GAME_Hexen)
-	{
-		if ((EffectTics > BLINKTHRESHOLD || (EffectTics & 8)) &&
-			!(Owner->player->mo->effects & FX_RESPAWNINVUL) &&
-			0 == BlendColor.a)	// [RH] No special colormap if there is a blend
-		{
-			Owner->player->fixedcolormap = NUMCOLORMAPS;
-		}
-		else
-		{
-			Owner->player->fixedcolormap = 0;
-		}
-	}
 }
 
 //===========================================================================

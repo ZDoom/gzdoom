@@ -1373,6 +1373,7 @@ void A_DoChase(AActor * actor, bool fastchase, FState * meleestate, FState * mis
 void A_ExtChase(AActor * self)
 {
 	int index=CheckIndex(4, &CallingState);
+	if (index<0) return;
 
 	A_DoChase(self, false,
 		EvalExpressionI (StateParameters[index], self) ? self->MeleeState:NULL,
@@ -1390,6 +1391,7 @@ void A_ExtChase(AActor * self)
 void A_Jiggle(AActor * self)
 {
 	int index=CheckIndex(2, &CallingState);
+	if (index<0) return;
 	int xmax = EvalExpressionI (StateParameters[index], self);
 	int ymax = EvalExpressionI (StateParameters[index+1], self);
 
@@ -1412,6 +1414,7 @@ void A_Jiggle(AActor * self)
 void A_DropInventory(AActor * self)
 {
 	int index=CheckIndex(1, &CallingState);
+	if (index<0) return;
 	const TypeInfo * ti = TypeInfo::FindType((const char*)StateParameters[index]);
 	if (ti)
 	{
@@ -1432,6 +1435,7 @@ void A_DropInventory(AActor * self)
 void A_SetBlend(AActor * self)
 {
 	int index=CheckIndex(3);
+	if (index<0) return;
 	PalEntry color = StateParameters[index];
 	float alpha = clamp<float> (EvalExpressionF (StateParameters[index+1], self), 0, 1);
 	int tics = EvalExpressionI (StateParameters[index+2], self);
@@ -1455,6 +1459,7 @@ void A_JumpIf(AActor * self)
 {
 	FState * CallingState;
 	int index=CheckIndex(2, &CallingState);
+	if (index<0) return;
 	int expression = EvalExpressionI (StateParameters[index], self);
 
 	if (index>=0 && expression) DoJump(self, CallingState, StateParameters[index+1]);
@@ -1490,5 +1495,24 @@ void A_KillChildren(AActor * self)
 			P_DamageMobj(mo, self, self, mo->health, MOD_UNKNOWN, DMG_NO_ARMOR);
 		}
 	}
+}
+
+//===========================================================================
+//
+// A_CountdownArg
+//
+//===========================================================================
+void A_CountdownArg(AActor * self)
+{
+	int index=CheckIndex(1);
+	if (index<0) return;
+	index = EvalExpressionI (StateParameters[index], self);
+
+	if (index<=0 || index>5) return;
+	if (!self->args[index]--)
+	{
+		self->SetState(self->DeathState);
+	}
+
 }
 

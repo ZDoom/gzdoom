@@ -86,6 +86,8 @@ extern int				r_Yaspect;
 // Number of diminishing brightness levels.
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.
 #define NUMCOLORMAPS			32
+#define INVERSECOLORMAP			32
+#define GOLDCOLORMAP			33
 
 // The size of a single colormap, in bits
 #define COLORMAPSHIFT			8

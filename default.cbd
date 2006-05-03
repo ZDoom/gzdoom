@@ -160,26 +160,26 @@ ${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.na
  v_video.cpp vectors.cpp name.cpp zstring.cpp zstringpool.cpp zstrformat.cpp \
  w_wad.cpp wi_stuff.cpp a_arachnotron.cpp a_archvile.cpp a_bossbrain.cpp \
  a_bruiser.cpp a_cacodemon.cpp a_cyberdemon.cpp a_demon.cpp \
- a_doomarmor.cpp a_doomartifacts.cpp a_doomdecorations.cpp a_doomhealth.cpp \
- a_doomimp.cpp a_doomkeys.cpp a_doommisc.cpp a_doomplayer.cpp a_doomweaps.cpp \
+ a_doomartifacts.cpp a_doomhealth.cpp \
+ a_doomimp.cpp a_doommisc.cpp a_doomplayer.cpp a_doomweaps.cpp \
  a_fatso.cpp a_keen.cpp a_lostsoul.cpp a_painelemental.cpp a_possessed.cpp \
  a_revenant.cpp a_scriptedmarine.cpp a_spidermaster.cpp doom_sbar.cpp a_beast.cpp \
- a_chicken.cpp a_clink.cpp a_dsparil.cpp a_hereticarmor.cpp \
- a_hereticartifacts.cpp a_hereticdecorations.cpp a_hereticimp.cpp a_heretickeys.cpp \
+ a_chicken.cpp a_clink.cpp a_dsparil.cpp \
+ a_hereticartifacts.cpp a_hereticimp.cpp a_heretickeys.cpp \
  a_hereticmisc.cpp a_hereticplayer.cpp a_hereticweaps.cpp a_ironlich.cpp \
  a_knight.cpp a_mummy.cpp a_snake.cpp a_wizard.cpp heretic_sbar.cpp a_bats.cpp \
  a_bishop.cpp a_blastradius.cpp a_boostarmor.cpp a_centaur.cpp a_clericboss.cpp \
  a_clericflame.cpp a_clericholy.cpp a_clericmace.cpp a_clericplayer.cpp \
  a_clericstaff.cpp a_demons.cpp a_dragon.cpp a_ettin.cpp a_fighteraxe.cpp \
  a_fighterboss.cpp a_fighterhammer.cpp a_fighterplayer.cpp a_fighterquietus.cpp \
- a_firedemon.cpp a_flame.cpp a_flechette.cpp a_fog.cpp a_healingradius.cpp \
+ a_firedemon.cpp a_flechette.cpp a_fog.cpp a_healingradius.cpp \
  a_heresiarch.cpp a_hexenarmor.cpp a_hexendecorations.cpp a_hexenkeys.cpp \
  a_hexenspecialdecs.cpp a_iceguy.cpp a_korax.cpp a_mageboss.cpp a_magecone.cpp \
  a_magelightning.cpp a_mageplayer.cpp a_magestaff.cpp a_magewand.cpp a_mana.cpp \
  a_pig.cpp a_puzzleitems.cpp a_scriptprojectiles.cpp a_serpent.cpp a_speedboots.cpp \
  a_spike.cpp a_summon.cpp a_teleportother.cpp a_weaponpieces.cpp a_wraith.cpp \
  hexen_sbar.cpp a_artiegg.cpp a_artitele.cpp a_minotaur.cpp a_ravenambient.cpp \
- a_ravenartifacts.cpp a_ravenhealth.cpp a_acolyte.cpp a_alienspectres.cpp \
+ a_acolyte.cpp a_alienspectres.cpp \
  a_beggars.cpp a_coin.cpp a_crusader.cpp a_entityboss.cpp a_inquisitor.cpp \
  a_loremaster.cpp a_macil.cpp a_merchants.cpp a_oracle.cpp a_peasant.cpp \
  a_programmer.cpp a_questitems.cpp a_ratbuddy.cpp a_reaver.cpp a_rebels.cpp \
@@ -190,7 +190,7 @@ ${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.na
  a_camera.cpp a_debris.cpp a_decals.cpp a_flashfader.cpp a_fountain.cpp \
  a_hatetarget.cpp a_keys.cpp a_lightning.cpp a_movingcamera.cpp a_pickups.cpp \
  a_quake.cpp a_secrettrigger.cpp a_sectoraction.cpp a_sharedmisc.cpp a_skies.cpp \
- a_soundenvironment.cpp a_soundsequence.cpp a_spark.cpp a_splashes.cpp a_waterzone.cpp a_weaponpiece.cpp a_weapons.cpp \
+ a_soundenvironment.cpp a_soundsequence.cpp a_spark.cpp a_waterzone.cpp a_weaponpiece.cpp a_weapons.cpp \
  hudmessages.cpp shared_sbar.cpp fmopl.cpp mlkernel.cpp mlopl.cpp mlopl_io.cpp \
  opl_mus_player.cpp fmodsound.cpp i_music.cpp i_sound.cpp music_cd.cpp \
  music_flac.cpp music_midi_midiout.cpp music_midi_stream.cpp music_midi_timidity.cpp \

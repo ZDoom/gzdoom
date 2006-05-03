@@ -688,7 +688,7 @@ ACTOR HangTSkull 76
 
 // Hanging from top without a brain ----------------------------------------
 
-ACTOR AHangTNoBrain 78
+ACTOR HangTNoBrain 78
 {
 	Game Doom
 	Radius 16

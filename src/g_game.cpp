@@ -113,6 +113,7 @@ bool 			sendpause;				// send a pause event next tic
 bool			sendsave;				// send a save event next tic 
 bool			sendturn180;			// [RH] send a 180 degree turn next tic
 bool 			usergame;				// ok to save / end game
+bool			insave;					// Game is saving - used to block exit commands
 
 BOOL			timingdemo; 			// if true, exit with report on completion 
 BOOL 			nodrawers;				// for comparative timing purposes 
@@ -1153,6 +1154,7 @@ void G_PlayerReborn (int player)
 	{
 		APowerup *invul = static_cast<APowerup*>(actor->GiveInventoryType (RUNTIME_CLASS(APowerInvulnerable)));
 		invul->EffectTics = 2*TICRATE;
+		invul->BlendColor = 0;				// don't mess with the view
 		actor->effects |= FX_RESPAWNINVUL;	// [RH] special effect
 	}
 }
@@ -1959,6 +1961,7 @@ void G_DoSaveGame (bool okForQuicksave)
 		return;
 	}
 
+	insave=true;
 	G_SnapshotLevel ();
 
 	FILE *stdfile = fopen (savegamefile.GetChars(), "wb");
@@ -1968,6 +1971,7 @@ void G_DoSaveGame (bool okForQuicksave)
 		Printf ("Could not create savegame '%s'\n", savegamefile.GetChars());
 		savegamefile = "";
 		gameaction = ga_nothing;
+		insave = false;
 		return;
 	}
 
@@ -2038,6 +2042,7 @@ void G_DoSaveGame (bool okForQuicksave)
 
 	BackupSaveName = savegamefile;
 	savegamefile = "";
+	insave = false;
 }
 
 

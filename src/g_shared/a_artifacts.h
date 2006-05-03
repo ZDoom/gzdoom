@@ -4,6 +4,9 @@
 #include "farchive.h"
 #include "a_pickups.h"
 
+#define INVERSECOLOR 0x00345678
+#define GOLDCOLOR 0x009abcde
+
 #define STREAM_ENUM(e) \
 	inline FArchive &operator<< (FArchive &arc, e &i) \
 	{ \

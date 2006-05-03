@@ -870,27 +870,6 @@ void AZShrub2::GetExplodeParms (int &damage, int &distance, bool &hurtSrc)
 	distance = 64;
 }
 
-//===========================================================================
-//
-// A_TreeDeath
-//
-//===========================================================================
-
-void A_TreeDeath (AActor *actor)
-{
-	if (actor->DamageType != MOD_FIRE)
-	{
-		actor->height <<= 2;
-		actor->flags |= MF_SHOOTABLE;
-		actor->flags &= ~(MF_CORPSE+MF_DROPOFF);
-		actor->health = 35;
-		return;
-	}
-	else
-	{
-		actor->SetState (actor->MeleeState);
-	}
-}
 
 // Poison Shroom ------------------------------------------------------------
 

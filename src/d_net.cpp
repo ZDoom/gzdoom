@@ -178,7 +178,7 @@ static struct TicSpecial
 
 		for (i = 0; i < BACKUPTICS; i++)
 		{
-			streams[i] = (byte *)Malloc (256);
+			streams[i] = (byte *)M_Malloc (256);
 			used[i] = 0;
 		}
 		okay = true;
@@ -210,7 +210,7 @@ static struct TicSpecial
 		DPrintf ("Expanding special size to %d\n", specialsize);
 
 		for (i = 0; i < BACKUPTICS; i++)
-			streams[i] = (byte *)Realloc (streams[i], specialsize);
+			streams[i] = (byte *)M_Realloc (streams[i], specialsize);
 
 		streamptr = streams[(maketic/ticdup)%BACKUPTICS] + streamoffs;
 	}
@@ -1911,7 +1911,7 @@ void FDynamicBuffer::SetData (const byte *data, int len)
 	if (len > m_BufferLen)
 	{
 		m_BufferLen = (len + 255) & ~255;
-		m_Data = (byte *)Realloc (m_Data, m_BufferLen);
+		m_Data = (byte *)M_Realloc (m_Data, m_BufferLen);
 	}
 	if (data)
 	{

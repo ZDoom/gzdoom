@@ -149,8 +149,8 @@ void P_InitSwitchList ()
 				((gameinfo.maxSwitch & ~15) == (list_p[18] & ~15)) &&
 				TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags) >= 0)
 			{
-				def1 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
-				def2 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
+				def1 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
+				def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 				def1->PreTexture = def2->u.Textures[2] = TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags);
 				def2->PreTexture = def1->u.Textures[2] = TexMan.CheckForTexture (list_p + 9, FTexture::TEX_Wall, texflags);
 				def1->Sound = def2->Sound = 0;
@@ -300,7 +300,7 @@ void P_ProcessSwitchDef ()
 	// it to the original texture without doing anything interesting
 	if (def2 == NULL)
 	{
-		def2 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
+		def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 		def2->Sound = def1->Sound;
 		def2->NumFrames = 1;
 		def2->u.Times[0] = 0;
@@ -399,7 +399,7 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 	{
 		return NULL;
 	}
-	def = (FSwitchDef *)Malloc (myoffsetof (FSwitchDef, u.Times[0]) + numframes * 6);
+	def = (FSwitchDef *)M_Malloc (myoffsetof (FSwitchDef, u.Times[0]) + numframes * 6);
 	def->Sound = sound;
 	def->NumFrames = numframes;
 	memcpy (&def->u.Times[0], times, numframes * 4);

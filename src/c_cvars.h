@@ -257,6 +257,7 @@ class FStringCVar : public FBaseCVar
 {
 public:
 	FStringCVar (const char *name, const char *def, DWORD flags, void (*callback)(FStringCVar &)=NULL);
+	~FStringCVar ();
 
 	virtual ECVarType GetRealType () const;
 

@@ -662,7 +662,7 @@ CCMD (atexit)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		GameAtExit *record = (GameAtExit *)Malloc (
+		GameAtExit *record = (GameAtExit *)M_Malloc (
 			sizeof(GameAtExit)+strlen(argv[i]));
 		strcpy (record->Command, argv[i]);
 		record->Next = ExitCmdList;
@@ -1105,7 +1105,7 @@ void D_AddFile (const char *file)
 		}
 		file = f;
 	}
-	wadlist_t *wad = (wadlist_t *)Malloc (sizeof(*wad) + strlen(file));
+	wadlist_t *wad = (wadlist_t *)M_Malloc (sizeof(*wad) + strlen(file));
 
 	*wadtail = wad;
 	wad->next = NULL;

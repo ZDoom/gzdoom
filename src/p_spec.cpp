@@ -461,7 +461,7 @@ static void ParseAnim (bool istex)
 			sink.Countdown = frames[0].SpeedMin;
 			sink.NumFrames = frames.Size();
 
-			newAnim = (FAnimDef *)Malloc (sizeof(FAnimDef) + (frames.Size()-1)*sizeof(FAnimDef::FAnimFrame));
+			newAnim = (FAnimDef *)M_Malloc (sizeof(FAnimDef) + (frames.Size()-1)*sizeof(FAnimDef::FAnimFrame));
 			*newAnim = sink;
 
 			for (i = 0; i < frames.Size(); ++i)
@@ -471,7 +471,7 @@ static void ParseAnim (bool istex)
 		}
 		else
 		{
-			newAnim = (FAnimDef *)Malloc (sizeof(FAnimDef));
+			newAnim = (FAnimDef *)M_Malloc (sizeof(FAnimDef));
 			*newAnim = sink;
 		}
 
@@ -588,7 +588,7 @@ void P_InitPicAnims (void)
 			anim.Frames[0].FramePic = anim.BasePic;
 			anim.Countdown = anim.Frames[0].SpeedMin - 1;
 
-			newAnim = (FAnimDef *)Malloc (sizeof(FAnimDef));
+			newAnim = (FAnimDef *)M_Malloc (sizeof(FAnimDef));
 			*newAnim = anim;
 			Anims.Push (newAnim);
 		}
@@ -600,7 +600,7 @@ void P_InitPicAnims (void)
 
 void P_AddSimpleAnim (int picnum, int animcount, int animtype, int animspeed)
 {
-	FAnimDef *anim = (FAnimDef *)Malloc (sizeof(FAnimDef));
+	FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef));
 	anim->bUniqueFrames = false;
 	anim->CurFrame = 0;
 	anim->BasePic = picnum;

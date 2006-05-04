@@ -256,7 +256,7 @@ static DWORD Zip_FindCentralDir(FileReader * fin)
 	FileSize = fin->Tell();
 	uMaxBack = MIN<DWORD>(0xffff, FileSize);
 
-	buf = (unsigned char*)Malloc(BUFREADCOMMENT+4);
+	buf = (unsigned char*)M_Malloc(BUFREADCOMMENT+4);
 	if (buf == NULL) return 0;
 
 	uBackRead = 4;
@@ -379,7 +379,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		BloodCrypt (lumps, header.rff.DirOfs, header.rff.NumLumps * sizeof(rfflump_t));
 
 		NumLumps += header.rff.NumLumps;
-		LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
+		LumpInfo = (LumpRecord *)M_Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
 		lump_p = &LumpInfo[startlump];
 
 		for (i = 0, rff_p = lumps; i < header.rff.NumLumps; ++i, ++rff_p)
@@ -433,7 +433,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		pos = sizeof(grpinfo_t) + header.grp.NumLumps * sizeof(grplump_t);
 
 		NumLumps += header.grp.NumLumps;
-		LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
+		LumpInfo = (LumpRecord *)M_Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
 		lump_p = &LumpInfo[startlump];
 
 		for (i = 0, grp_p = lumps; i < header.grp.NumLumps; ++i, ++grp_p)
@@ -479,7 +479,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		}
 
 		NumLumps += LittleShort(info.wEntryCount);
-		LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
+		LumpInfo = (LumpRecord *)M_Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
 		lump_p = &LumpInfo[startlump];
 
 		// Load the entire central directory. Too bad that this contains variable length entries...
@@ -599,7 +599,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		}
 		// Resize the lump record array to its actual size
 		NumLumps -= skipped;
-		LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
+		LumpInfo = (LumpRecord *)M_Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
 		
 		// Entries in Zips are sorted alphabetically.
 		qsort(LumpInfo + startlump, NumLumps - startlump, sizeof(LumpRecord), lumpcmp);
@@ -623,7 +623,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		header.magic[0] != ZIP_ID &&
 		(header.magic[0] != GRP_ID_0 || header.magic[1] != GRP_ID_1 || header.magic[2] != GRP_ID_2))
 	{
-		LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
+		LumpInfo = (LumpRecord *)M_Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
 		lump_p = &LumpInfo[startlump];
 		for (i = startlump; i < (unsigned)NumLumps; i++, lump_p++, fileinfo++)
 		{
@@ -649,7 +649,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 
 	wadinfo->FirstLump = startlump;
 	wadinfo->LastLump = NumLumps - 1;
-	Wads = (WadFileRecord **)Realloc (Wads, (++NumWads)*sizeof(WadFileRecord*));
+	Wads = (WadFileRecord **)M_Realloc (Wads, (++NumWads)*sizeof(WadFileRecord*));
 	Wads[NumWads-1] = wadinfo;
 
 	// [RH] Put the Strife Teaser voices into the voices namespace
@@ -1153,7 +1153,7 @@ void FWadCollection::ScanForFlatHack (int startlump)
 					}
 				}
 				++NumLumps;
-				LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
+				LumpInfo = (LumpRecord *)M_Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
 				for (; i > j; --i)
 				{
 					LumpInfo[i+1] = LumpInfo[i];
@@ -1374,7 +1374,7 @@ int FWadCollection::MergeLumps (const char *start, const char *end, int space)
 	if (newlumps)
 	{
 		if (size_t(oldlumps + newlumps) >= NumLumps)
-			LumpInfo = (LumpRecord *)Realloc (LumpInfo, (oldlumps + newlumps + 1) * sizeof(LumpRecord) );
+			LumpInfo = (LumpRecord *)M_Realloc (LumpInfo, (oldlumps + newlumps + 1) * sizeof(LumpRecord) );
 
 		memcpy (LumpInfo + oldlumps, newlumpinfos, sizeof(LumpRecord) * newlumps);
 		markerpos = oldlumps;

@@ -476,7 +476,6 @@ extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 BOOL PO_MovePolyobj (int num, int x, int y);
 BOOL PO_RotatePolyobj (int num, angle_t angle);
 void PO_Init ();
-void PO_DeInit ();
 BOOL PO_Busy (int polyobj);
 
 //

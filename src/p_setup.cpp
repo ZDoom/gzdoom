@@ -2853,6 +2853,12 @@ void P_FreeLevelData ()
 		delete[] PolyBlockMap;
 		PolyBlockMap = NULL;
 	}
+	po_NumPolyobjs = 0;
+	if (polyobjs != NULL)
+	{
+		delete[] polyobjs;
+		polyobjs = NULL;
+	}
 	if (rejectmatrix != NULL)
 	{
 		delete[] rejectmatrix;
@@ -2951,7 +2957,6 @@ void P_SetupLevel (char *lumpname, int position)
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint (NULL);
-	PolyBlockMap = NULL;
 
 	// Free all level data from the previous map
 	P_FreeLevelData ();
@@ -3180,8 +3185,6 @@ void P_SetupLevel (char *lumpname, int position)
 
 	for (i = 0; i < BODYQUESIZE; i++)
 		bodyque[i] = NULL;
-
-	PO_DeInit ();	// Flush polyobjs from previous map
 
 	deathmatchstarts.Clear ();
 

@@ -574,7 +574,7 @@ void AddToConsole (int printlevel, const char *text)
 	}
 	if (size > worklen)
 	{
-		work = (char *)Realloc (work, size);
+		work = (char *)M_Realloc (work, size);
 		worklen = size;
 	}
 	if (work == NULL)
@@ -1487,7 +1487,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 				// or there is nothing in the history list,
 				// so add it to the history list.
 
-				History *temp = (History *)Malloc (sizeof(struct History) + buffer[0]);
+				History *temp = (History *)M_Malloc (sizeof(struct History) + buffer[0]);
 
 				strcpy (temp->String, (char *)&buffer[2]);
 				temp->Older = HistHead;
@@ -1700,12 +1700,28 @@ void C_MidPrintBold (const char *msg)
 
 /****** Tab completion code ******/
 
-static struct TabData
+struct TabData
 {
 	int UseCount;
-	char *Name;
-} *TabCommands = NULL;
-static int NumTabCommands = 0;
+	FString Name;
+
+	TabData()
+	: UseCount(0)
+	{
+	}
+
+	TabData(const char *name)
+	: UseCount(1), Name(name)
+	{
+	}
+
+	TabData(const TabData &other)
+	: UseCount(other.UseCount), Name(other.Name)
+	{
+	}
+};
+
+static TArray<TabData> TabCommands;
 static int TabPos;				// Last TabCommand tabbed to
 static int TabStart;			// First char in CmdLine to use for tab completion
 static int TabSize;				// Size of tab string
@@ -1714,7 +1730,7 @@ static BOOL FindTabCommand (const char *name, int *stoppos, int len)
 {
 	int i, cval = 1;
 
-	for (i = 0; i < NumTabCommands; i++)
+	for (i = 0; i < TabCommands.Size(); i++)
 	{
 		cval = strnicmp (TabCommands[i].Name, name, len);
 		if (cval >= 0)
@@ -1736,15 +1752,8 @@ void C_AddTabCommand (const char *name)
 	}
 	else
 	{
-		NumTabCommands++;
-		TabCommands = (TabData *)Realloc (TabCommands, sizeof(struct TabData) * NumTabCommands);
-		if (pos < NumTabCommands - 1)
-		{
-			memmove (TabCommands + pos + 1, TabCommands + pos,
-					 (NumTabCommands - pos - 1) * sizeof(struct TabData));
-		}
-		TabCommands[pos].Name = copystring (name);
-		TabCommands[pos].UseCount = 1;
+		TabData tab(name);
+		TabCommands.Insert (pos, tab);
 	}
 }
 
@@ -1756,13 +1765,7 @@ void C_RemoveTabCommand (const char *name)
 	{
 		if (--TabCommands[pos].UseCount == 0)
 		{
-			NumTabCommands--;
-			delete[] TabCommands[pos].Name;
-			if (pos < NumTabCommands - 1)
-			{
-				memmove (TabCommands + pos, TabCommands + pos + 1,
-						 (NumTabCommands - pos - 1) * sizeof(struct TabData));
-			}
+			TabCommands.Delete(pos);
 		}
 	}
 }
@@ -1827,7 +1830,7 @@ static void C_TabComplete (bool goForward)
 		}
 		else
 		{ // Find the last matching tab, then go one past it.
-			while (++TabPos < NumTabCommands)
+			while (++TabPos < TabCommands.Size())
 			{
 				if (FindDiffPoint (TabCommands[TabPos].Name, (char *)(CmdLine + TabStart)) < TabSize)
 				{
@@ -1842,7 +1845,7 @@ static void C_TabComplete (bool goForward)
 		}
 	}
 
-	if ((goForward && ++TabPos == NumTabCommands) ||
+	if ((goForward && ++TabPos == TabCommands.Size()) ||
 		(!goForward && --TabPos < 0))
 	{
 		TabbedLast = false;
@@ -1878,7 +1881,7 @@ static bool C_TabCompleteList ()
 	nummatches = 0;
 	maxwidth = 0;
 
-	for (i = TabPos; i < NumTabCommands; ++i)
+	for (i = TabPos; i < TabCommands.Size(); ++i)
 	{
 		if (FindDiffPoint (TabCommands[i].Name, (char *)(CmdLine + TabStart)) < TabSize)
 		{

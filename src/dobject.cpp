@@ -85,7 +85,7 @@ void TypeInfo::RegisterType ()
 	if (m_NumTypes == m_MaxTypes)
 	{
 		m_MaxTypes = m_MaxTypes ? m_MaxTypes*2 : 256;
-		m_Types = (TypeInfo **)Realloc (m_Types, m_MaxTypes * sizeof(*m_Types));
+		m_Types = (TypeInfo **)M_Realloc (m_Types, m_MaxTypes * sizeof(*m_Types));
 	}
 	m_Types[m_NumTypes] = this;
 	TypeIndex = m_NumTypes;
@@ -162,7 +162,7 @@ const TypeInfo *TypeInfo::IFindType (const char *name)
 // Create a new object that this type represents
 DObject *TypeInfo::CreateNew () const
 {
-	BYTE *mem = (BYTE *)Malloc (SizeOf);
+	BYTE *mem = (BYTE *)M_Malloc (SizeOf);
 	ConstructNative (mem);
 	((DObject *)mem)->SetClass (const_cast<TypeInfo *>(this));
 

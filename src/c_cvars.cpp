@@ -783,6 +783,17 @@ FStringCVar::FStringCVar (const char *name, const char *def, DWORD flags, void (
 	DefaultValue = copystring (def);
 	if (Flags & CVAR_ISDEFAULT)
 		Value = copystring (def);
+	else
+		Value = NULL;
+}
+
+FStringCVar::~FStringCVar ()
+{
+	if (Value != NULL)
+	{
+		delete[] Value;
+	}
+	delete[] DefaultValue;
 }
 
 ECVarType FStringCVar::GetRealType () const

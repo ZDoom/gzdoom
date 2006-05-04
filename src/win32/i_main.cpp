@@ -646,11 +646,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 			SetUnhandledExceptionFilter (CatchAllExceptions);
 	}
 
-#ifdef _DEBUG
+#if defined(_DEBUG) && defined(_MSC_VER)
 	// Uncomment this line to make the Visual C++ CRT check the heap before
 	// every allocation and deallocation. This will be slow, but it can be a
 	// great help in finding problem areas.
 	//_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
+	_CrtSetDbgFlag (_CrtSetDbgFlag(0) | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
 	DoMain (hInstance);

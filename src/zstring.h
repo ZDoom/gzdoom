@@ -161,8 +161,6 @@ protected:
 	char *Chars;
 
 #ifndef __GNUC__
-	template<> friend bool NeedsDestructor<FString> () { return true; }
-
 	template<> friend void CopyForTArray<FString> (FString &dst, FString &src)
 	{
 		// When a TArray is resized, we just need to update the Owner, because
@@ -176,18 +174,8 @@ protected:
 			((FString::StringHeader *)(chars - sizeof(FString::StringHeader)))->Owner = &dst;
 		}
 	}
-	template<> friend void ConstructInTArray<FString> (FString *dst, const FString &src)
-	{
-		new (dst) FString(src);
-	}
-	template<> friend void ConstructEmptyInTArray<FString> (FString *dst)
-	{
-		new (dst) FString;
-	}
 #else
 	template<class FString> friend inline void CopyForTArray (FString &dst, FString &src);
-	template<class FString> friend inline void ConstructInTArray (FString *dst, const FString &src);
-	template<class FString> friend inline void ConstructEmptyInTArray (FString *dst);
 #endif
 
 private:
@@ -201,7 +189,6 @@ private:
 };
 
 #ifdef __GNUC__
-template<> inline bool NeedsDestructor<FString> () { return true; }
 template<> inline void CopyForTArray<FString> (FString &dst, FString &src)
 {
 	// When a TArray is resized, we just need to update the Owner, because
@@ -214,14 +201,6 @@ template<> inline void CopyForTArray<FString> (FString &dst, FString &src)
 	{
 		((FString::StringHeader *)(chars - sizeof(FString::StringHeader)))->Owner = &dst;
 	}
-}
-template<> inline void ConstructInTArray<FString> (FString *dst, const FString &src)
-{
-	new (dst) FString(src);
-}
-template<> inline void ConstructEmptyInTArray<FString> (FString *dst)
-{
-	new (dst) FString;
 }
 #endif
 

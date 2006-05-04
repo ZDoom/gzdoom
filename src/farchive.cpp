@@ -202,7 +202,7 @@ void FCompressedFile::PostOpen ()
 			sizes[0] = SWAP_DWORD (sizes[0]);
 			sizes[1] = SWAP_DWORD (sizes[1]);
 			unsigned int len = sizes[0] == 0 ? sizes[1] : sizes[0];
-			m_Buffer = (byte *)Malloc (len+8);
+			m_Buffer = (byte *)M_Malloc (len+8);
 			fread (m_Buffer+8, len, 1, m_File);
 			sizes[0] = SWAP_DWORD (sizes[0]);
 			sizes[1] = SWAP_DWORD (sizes[1]);
@@ -256,7 +256,7 @@ FFile &FCompressedFile::Write (const void *mem, unsigned int len)
 				m_MaxBufferSize = m_MaxBufferSize ? m_MaxBufferSize * 2 : 16384;
 			}
 			while (m_Pos + len > m_MaxBufferSize);
-			m_Buffer = (byte *)Realloc (m_Buffer, m_MaxBufferSize);
+			m_Buffer = (byte *)M_Realloc (m_Buffer, m_MaxBufferSize);
 		}
 		if (len == 1)
 			m_Buffer[m_Pos] = *(BYTE *)mem;
@@ -357,7 +357,7 @@ void FCompressedFile::Implode ()
 	}
 
 	m_MaxBufferSize = m_BufferSize = ((outlen == 0) ? len : outlen);
-	m_Buffer = (BYTE *)Malloc (m_BufferSize + 8);
+	m_Buffer = (BYTE *)M_Malloc (m_BufferSize + 8);
 	m_Pos = 0;
 
 	DWORD *lens = (DWORD *)(m_Buffer);
@@ -384,7 +384,7 @@ void FCompressedFile::Explode ()
 		cprlen = BigLong(ints[0]);
 		expandsize = BigLong(ints[1]);
 		
-		expand = (unsigned char *)Malloc (expandsize);
+		expand = (unsigned char *)M_Malloc (expandsize);
 		if (cprlen)
 		{
 			int r;
@@ -467,7 +467,7 @@ bool FCompressedMemFile::Open ()
 	m_Mode = EWriting;
 	m_BufferSize = 0;
 	m_MaxBufferSize = 16384;
-	m_Buffer = (unsigned char *)Malloc (16384);
+	m_Buffer = (unsigned char *)M_Malloc (16384);
 	m_Pos = 0;
 	return true;
 }
@@ -527,7 +527,7 @@ void FCompressedMemFile::Serialize (FArchive &arc)
 		arc << sizes[0] << sizes[1];
 		DWORD len = sizes[0] == 0 ? sizes[1] : sizes[0];
 
-		m_Buffer = (BYTE *)Malloc (len+8);
+		m_Buffer = (BYTE *)M_Malloc (len+8);
 		((DWORD *)m_Buffer)[0] = SWAP_DWORD(sizes[0]);
 		((DWORD *)m_Buffer)[1] = SWAP_DWORD(sizes[1]);
 		arc.Read (m_Buffer+8, len);
@@ -550,7 +550,7 @@ FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id)
 FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id, unsigned int chunklen)
 	: FCompressedFile (file, EReading, true, false), m_ChunkID (id)
 {
-	m_Buffer = (byte *)Malloc (chunklen);
+	m_Buffer = (byte *)M_Malloc (chunklen);
 	m_BufferSize = chunklen;
 	fread (m_Buffer, chunklen, 1, m_File);
 	// Skip the CRC for now. Maybe later it will be used.
@@ -1371,7 +1371,7 @@ DWORD FArchive::MapObject (const DObject *obj)
 	if (m_ObjectCount >= m_MaxObjectCount)
 	{
 		m_MaxObjectCount = m_MaxObjectCount ? m_MaxObjectCount * 2 : 1024;
-		m_ObjectMap = (ObjectMap *)Realloc (m_ObjectMap, sizeof(ObjectMap)*m_MaxObjectCount);
+		m_ObjectMap = (ObjectMap *)M_Realloc (m_ObjectMap, sizeof(ObjectMap)*m_MaxObjectCount);
 		for (i = m_ObjectCount; i < m_MaxObjectCount; i++)
 		{
 			m_ObjectMap[i].hashNext = ~0;

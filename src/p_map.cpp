@@ -4260,7 +4260,7 @@ msecnode_t *P_GetSecnode()
 	}
 	else
 	{
-		node = (msecnode_t *)Malloc (sizeof(*node));
+		node = (msecnode_t *)M_Malloc (sizeof(*node));
 	}
 	return node;
 }

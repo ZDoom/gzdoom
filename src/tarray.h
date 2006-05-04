@@ -36,14 +36,11 @@
 #define __TARRAY_H__
 
 #include <stdlib.h>
+#include <assert.h>
+#include <new>
+
 #include "m_alloc.h"
 
-// Specialize this function for any type that needs to have its destructor called.
-template<class T>
-bool NeedsDestructor ()
-{
-	return false;
-}
 
 // This function is called once for each entry in the TArray after it grows.
 // The old entries will be immediately freed afterwards, so if they need to
@@ -51,11 +48,8 @@ bool NeedsDestructor ()
 template<class T>
 void CopyForTArray (T &dst, T &src)
 {
-	dst = src;
-	if (NeedsDestructor<T>())
-	{
-		src.~T();
-	}
+	::new((void*)&dst) T(src);
+	src.~T();
 }
 
 // This function is called by Push to copy the the element to an unconstructed
@@ -64,8 +58,7 @@ void CopyForTArray (T &dst, T &src)
 template<class T>
 void ConstructInTArray (T *dst, const T &src)
 {
-	//new (dst) T(src);
-	*dst = src;
+	::new((void*)dst) T(src);
 }
 
 // This function is much like the above function, except it is called when
@@ -73,6 +66,7 @@ void ConstructInTArray (T *dst, const T &src)
 template<class T>
 void ConstructEmptyInTArray (T *dst)
 {
+	::new((void*)dst) T;
 }
 
 template <class T>
@@ -89,7 +83,7 @@ public:
 	{
 		Most = max;
 		Count = 0;
-		Array = (T *)Malloc (sizeof(T)*max);
+		Array = (T *)M_Malloc (sizeof(T)*max);
 	}
 	TArray (const TArray<T> &other)
 	{
@@ -101,7 +95,10 @@ public:
 		{
 			if (Array != NULL)
 			{
-				DoDelete (0, Count-1);
+				if (Count > 0)
+				{
+					DoDelete (0, Count-1);
+				}
 				free (Array);
 			}
 			DoCopy (other);
@@ -112,8 +109,14 @@ public:
 	{
 		if (Array)
 		{
-			DoDelete (0, Count-1);
+			if (Count > 0)
+			{
+				DoDelete (0, Count-1);
+			}
 			free (Array);
+			Array = NULL;
+			Count = 0;
+			Most = 0;
 		}
 	}
 	T &operator[] (unsigned int index) const
@@ -142,11 +145,43 @@ public:
 	}
 	void Delete (unsigned int index)
 	{
-		DoDelete (index, index);
-		if (index < Count-1)
-			memmove (Array + index, Array + index + 1, (Count - index - 1) * sizeof(T));
 		if (index < Count)
+		{
+			for (unsigned int i = index; i < Count - 1; ++i)
+			{
+				Array[i] = Array[i+1];
+			}
 			Count--;
+			DoDelete (Count, Count);
+		}
+	}
+	// Inserts an item into the array, shifting elements as needed
+	void Insert (unsigned int index, const T &item)
+	{
+		if (index >= Count)
+		{
+			// Inserting somewhere past the end of the array, so we can
+			// just add it without moving things.
+			Resize (index + 1);
+			ConstructInTArray (&Array[index], item);
+		}
+		else
+		{
+			// Inserting somewhere in the middle of the array, so make
+			// room for it and shift old entries out of the way.
+
+			Resize (Count + 1);
+
+			// Now copy items from the index and onward
+			for (unsigned int i = Count - 1; i-- > index; )
+			{
+				Array[i+1] = Array[i];
+			}
+
+			// Now put the new element in
+			DoDelete (index, index);
+			ConstructInTArray (&Array[index], item);
+		}
 	}
 	void ShrinkToFit ()
 	{
@@ -186,12 +221,9 @@ public:
 		{
 			Grow (amount - Count);
 		}
-		if (NeedsDestructor<T>())
+		for (unsigned int i = Count; i < amount; ++i)
 		{
-			for (unsigned int i = Count; i < amount; ++i)
-			{
-				ConstructEmptyInTArray (&Array[i]);
-			}
+			ConstructEmptyInTArray (&Array[i]);
 		}
 		Count = amount;
 	}
@@ -217,8 +249,11 @@ public:
 	}
 	void Clear ()
 	{
-		DoDelete (0, Count-1);
-		Count = 0;
+		if (Count > 0)
+		{
+			DoDelete (0, Count-1);
+			Count = 0;
+		}
 	}
 private:
 	T *Array;
@@ -230,7 +265,7 @@ private:
 		Most = Count = other.Count;
 		if (Count != 0)
 		{
-			Array = (T *)Malloc (sizeof(T)*Most);
+			Array = (T *)M_Malloc (sizeof(T)*Most);
 			for (unsigned int i = 0; i < Count; ++i)
 			{
 				Array[i] = other.Array[i];
@@ -244,7 +279,7 @@ private:
 
 	void DoResize ()
 	{
-		T *newarray = (T *)Malloc (sizeof(T)*Most);
+		T *newarray = (T *)M_Malloc (sizeof(T)*Most);
 		for (unsigned int i = 0; i < Count; ++i)
 		{
 			CopyForTArray (newarray[i], Array[i]);
@@ -255,12 +290,10 @@ private:
 
 	void DoDelete (unsigned int first, unsigned int last)
 	{
-		if (NeedsDestructor<T>())
+		assert (last != ~0u);
+		for (unsigned int i = first; i <= last; ++i)
 		{
-			for (unsigned int i = first; i <= last; ++i)
-			{
-				Array[i].~T();
-			}
+			Array[i].~T();
 		}
 	}
 };

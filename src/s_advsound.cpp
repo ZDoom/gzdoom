@@ -946,7 +946,7 @@ static void S_AddSNDINFO (int lump)
 				SC_MustGetString();
 				FString musname (sc_String);
 				SC_MustGetFloat();
-				FMusicVolume *mv = (FMusicVolume *)Malloc (sizeof(*mv) + musname.Len());
+				FMusicVolume *mv = (FMusicVolume *)M_Malloc (sizeof(*mv) + musname.Len());
 				mv->Volume = sc_Float;
 				strcpy (mv->MusicName, musname);
 				mv->Next = MusicVolumes;

@@ -31,7 +31,7 @@ struct FString::Pool
 	char *Realloc (char *chars, size_t newlen);
 	void Free (char *chars);
 	void MergeFreeBlocks (StringHeader *block);
-	void CollectGarbage (bool noGenerations);
+	void CollectGarbage ();
 	bool BigEnough (size_t len) const;
 	size_t RoundLen (size_t len) const;
 
@@ -40,8 +40,6 @@ struct FString::Pool
 	char *PoolData;
 	char *MaxAlloc;
 	StringHeader *NextAlloc;
-	StringHeader *GarbageStart;
-	int GenerationNum;
 };
 
 // The PoolGroup does not get a constructor, because there is no way to
@@ -100,13 +98,8 @@ char *FString::PoolGroup::Alloc (FString *owner, size_t len)
 	}
 	if (best->BigEnough (len))
 	{
-		best->CollectGarbage (false);
+		best->CollectGarbage ();
 		mem = best->Alloc (owner, len);
-		if (mem == NULL)
-		{
-			best->CollectGarbage (true);
-			mem = best->Alloc (owner, len);
-		}
 		// Move the pool to the front of the list
 		*bestprev = best->Next;
 		best->Next = Pools;
@@ -151,7 +144,10 @@ char *FString::PoolGroup::Realloc (FString *owner, char *chars, size_t newlen)
 void FString::PoolGroup::Free (char *chars)
 {
 	Pool *pool = FindPool (chars);
-	pool->Free (chars);
+	if (pool != NULL)
+	{
+		pool->Free (chars);
+	}
 }
 
 FString::Pool *FString::PoolGroup::FindPool (char *chars) const
@@ -187,8 +183,6 @@ FString::Pool::Pool (size_t minSize)
 	NextAlloc = (StringHeader *)PoolData;
 	NextAlloc->Owner = NULL;
 	NextAlloc->Len = minSize;
-	GarbageStart = NextAlloc;
-	GenerationNum = 0;
 }
 
 FString::Pool::~Pool ()
@@ -199,19 +193,19 @@ FString::Pool::~Pool ()
 		// all the strings stored in it. So we need to walk through the pool
 		// and make any owned strings un-owned.
 		StringHeader *str;
+		StringHeader *laststr;
 
 		for (str = (StringHeader *)PoolData; str < NextAlloc; )
 		{
 			if (str->Owner != NULL)
 			{
-				str->Owner->Chars = NULL;
-				str->Owner = NULL;
-				str = (StringHeader *)((char *)str + RoundLen(str->Len));
+				FString *owner = str->Owner;
+				assert (owner->Chars == (char *)str + sizeof(StringHeader));
+				Free ((char *)str + sizeof(StringHeader));
+				owner->Chars = "";
 			}
-			else
-			{
-				str = (StringHeader *)((char *)str + str->Len);
-			}
+			laststr = str;
+			str = (StringHeader *)((char *)str + str->Len);
 		}
 
 		delete[] PoolData;
@@ -308,6 +302,21 @@ char *FString::Pool::Realloc (char *chars, size_t newlen)
 
 void FString::Pool::Free (char *chars)
 {
+#ifdef _DEBUG
+	for (StringHeader *str = (StringHeader *)PoolData; str < NextAlloc; )
+	{
+		if (str->Owner != NULL)
+		{
+			assert (str->Owner->Chars == (char *)str + sizeof(StringHeader));
+			str = (StringHeader *)((char *)str + RoundLen(str->Len));
+		}
+		else
+		{
+			str = (StringHeader *)((char *)str + str->Len);
+		}
+	}
+#endif
+
 	StringHeader *head = (StringHeader *)(chars - sizeof(StringHeader));
 	size_t truelen = RoundLen (head->Len);
 
@@ -316,6 +325,25 @@ void FString::Pool::Free (char *chars)
 	head->Owner = NULL;
 	head->Len = truelen;
 	MergeFreeBlocks (head);
+
+#ifdef _DEBUG
+	memset (head + 1, 0xCE, head->Len - sizeof(StringHeader));
+#endif
+
+#ifdef _DEBUG
+	for (StringHeader *str = (StringHeader *)PoolData; str < NextAlloc; )
+	{
+		if (str->Owner != NULL)
+		{
+			assert (str->Owner->Chars == (char *)str + sizeof(StringHeader));
+			str = (StringHeader *)((char *)str + RoundLen(str->Len));
+		}
+		else
+		{
+			str = (StringHeader *)((char *)str + str->Len);
+		}
+	}
+#endif
 }
 
 void FString::Pool::MergeFreeBlocks (StringHeader *head)
@@ -331,10 +359,6 @@ void FString::Pool::MergeFreeBlocks (StringHeader *head)
 	// If this chain of blocks meets up with the free space, then they can join up with it.
 	if (block == NextAlloc)
 	{
-		if (GarbageStart == NextAlloc)
-		{
-			GarbageStart = head;
-		}
 		NextAlloc = head;
 		head->Len = MaxAlloc - (char *)head;
 	}
@@ -354,19 +378,13 @@ size_t FString::Pool::RoundLen (size_t len) const
 	return (len + 1 + sizeof(StringHeader) + BLOCK_GRANULARITY - 1) & ~(BLOCK_GRANULARITY - 1);
 }
 
-void FString::Pool::CollectGarbage (bool noGenerations)
+void FString::Pool::CollectGarbage ()
 {
 	// This is a generational garbage collector. The space occupied by strings from
 	// the first two generations will not be collected unless noGenerations is set true.
 
-	if (noGenerations)
-	{
-		GarbageStart = (StringHeader *)PoolData;
-		GenerationNum = 0;
-	}
-
 	StringHeader *moveto, *movefrom;
-	moveto = movefrom = GarbageStart;
+	moveto = movefrom = (StringHeader *)PoolData;
 
 	while (movefrom < NextAlloc)
 	{
@@ -397,11 +415,6 @@ void FString::Pool::CollectGarbage (bool noGenerations)
 	}
 	else if (FreeSpace != 0)
 		FreeSpace = FreeSpace;
-
-	if (++GenerationNum <= 3)
-	{
-		GarbageStart = moveto;
-	}
 }
 #else
 char *FString::PoolGroup::Alloc (FString *owner, size_t len)

@@ -808,7 +808,7 @@ vissprite_t *R_NewVisSprite (void)
 		ptrdiff_t prevvisspritenum = vissprite_p - vissprites;
 
 		MaxVisSprites = MaxVisSprites ? MaxVisSprites * 2 : 128;
-		vissprites = (vissprite_t **)Realloc (vissprites, MaxVisSprites * sizeof(vissprite_t));
+		vissprites = (vissprite_t **)M_Realloc (vissprites, MaxVisSprites * sizeof(vissprite_t));
 		lastvissprite = &vissprites[MaxVisSprites];
 		firstvissprite = &vissprites[firstvisspritenum];
 		vissprite_p = &vissprites[prevvisspritenum];

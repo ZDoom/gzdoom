@@ -119,7 +119,7 @@ void R_ClearDrawSegs (void)
 	if (drawsegs == NULL)
 	{
 		MaxDrawSegs = 256;		// [RH] Default. Increased as needed.
-		firstdrawseg = drawsegs = (drawseg_t *)Malloc (MaxDrawSegs * sizeof(drawseg_t));
+		firstdrawseg = drawsegs = (drawseg_t *)M_Malloc (MaxDrawSegs * sizeof(drawseg_t));
 	}
 	FirstInterestingDrawseg = 0;
 	InterestingDrawsegs.Clear ();

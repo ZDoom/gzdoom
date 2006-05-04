@@ -124,9 +124,16 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, byte **stream)
 	byte flags;
 
 	if (basis != NULL)
-		memcpy (ucmd, basis, sizeof(usercmd_t));
+	{
+		if (basis != ucmd)
+		{
+			memcpy (ucmd, basis, sizeof(usercmd_t));
+		}
+	}
 	else
+	{
 		memset (ucmd, 0, sizeof(usercmd_t));
+	}
 
 	flags = ReadByte (stream);
 

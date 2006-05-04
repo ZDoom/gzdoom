@@ -82,44 +82,21 @@ private:
 	static bool Inited;
 
 #ifndef __GNUC__
-	template<> friend bool NeedsDestructor<MainName> () { return true; }
-
 	template<> friend void CopyForTArray<MainName> (MainName &dst, MainName &src)
 	{
 		dst.NextHash = src.NextHash;
 		CopyForTArray (dst.Text, src.Text);
 	}
-	template<> friend void ConstructInTArray<MainName> (MainName *dst, const MainName &src)
-	{
-		new (dst) FName::MainName(src);
-	}
-	template<> friend void ConstructEmptyInTArray<MainName> (MainName *dst)
-	{
-		new (dst) FName::MainName;
-	}
 #else
-	template<class MainName> friend inline bool NeedsDestructor ();
 	template<class MainName> friend inline void CopyForTArray (MainName &dst, MainName &src);
-	template<class MainName> friend inline void ConstructInTArray (MainName *dst, const MainName &src);
-	template<class MainName> friend inline void ConstructEmptyInTArray (MainName *dst);
 #endif
 };
 
 #ifdef __GNUC__
-template<> inline bool NeedsDestructor<FName::MainName> () { return true; }
-
 template<> inline void CopyForTArray<FName::MainName> (FName::MainName &dst, FName::MainName &src)
 {
 	dst.NextHash = src.NextHash;
 	CopyForTArray (dst.Text, src.Text);
-}
-template<> inline void ConstructInTArray<FName::MainName> (FName::MainName *dst, const FName::MainName &src)
-{
-	new (dst) FName::MainName(src);
-}
-template<> inline void ConstructEmptyInTArray<FName::MainName> (FName::MainName *dst)
-{
-	new (dst) FName::MainName;
 }
 #endif
 

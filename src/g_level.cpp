@@ -537,7 +537,7 @@ static void G_DoParseMapInfo (int lump)
 			if (levelindex == -1)
 			{
 				levelindex = numwadlevelinfos++;
-				wadlevelinfos = (level_info_t *)Realloc (wadlevelinfos, sizeof(level_info_t)*numwadlevelinfos);
+				wadlevelinfos = (level_info_t *)M_Realloc (wadlevelinfos, sizeof(level_info_t)*numwadlevelinfos);
 			}
 			levelinfo = wadlevelinfos + levelindex;
 			memcpy (levelinfo, &defaultinfo, sizeof(*levelinfo));
@@ -602,7 +602,7 @@ static void G_DoParseMapInfo (int lump)
 			if (clusterindex == -1)
 			{
 				clusterindex = numwadclusterinfos++;
-				wadclusterinfos = (cluster_info_t *)Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
+				wadclusterinfos = (cluster_info_t *)M_Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
 				clusterinfo = wadclusterinfos + clusterindex;
 			}
 			else
@@ -836,7 +836,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			if (FindWadClusterInfo (sc_Number) == -1)
 			{
 				int clusterindex = numwadclusterinfos++;
-				wadclusterinfos = (cluster_info_t *)Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
+				wadclusterinfos = (cluster_info_t *)M_Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
 				clusterinfo = wadclusterinfos + clusterindex;
 				memset (clusterinfo, 0, sizeof(cluster_info_t));
 				clusterinfo->cluster = sc_Number;

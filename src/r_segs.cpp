@@ -1104,7 +1104,7 @@ void R_CheckDrawSegs ()
 	{ // [RH] Grab some more drawsegs
 		size_t newdrawsegs = MaxDrawSegs ? MaxDrawSegs*2 : 32;
 		ptrdiff_t firstofs = firstdrawseg - drawsegs;
-		drawsegs = (drawseg_t *)Realloc (drawsegs, newdrawsegs * sizeof(drawseg_t));
+		drawsegs = (drawseg_t *)M_Realloc (drawsegs, newdrawsegs * sizeof(drawseg_t));
 		firstdrawseg = drawsegs + firstofs;
 		ds_p = drawsegs + MaxDrawSegs;
 		MaxDrawSegs = newdrawsegs;
@@ -1125,7 +1125,7 @@ void R_CheckOpenings (size_t need)
 		do
 			maxopenings = maxopenings ? maxopenings*2 : 16384;
 		while (need > maxopenings);
-		openings = (short *)Realloc (openings, maxopenings * sizeof(*openings));
+		openings = (short *)M_Realloc (openings, maxopenings * sizeof(*openings));
 		DPrintf ("MaxOpenings increased to %u\n", maxopenings);
 	}
 }

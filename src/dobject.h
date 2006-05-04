@@ -310,7 +310,7 @@ public:
 
 	void *operator new(size_t len)
 	{
-		return Malloc(len);
+		return M_Malloc(len);
 	}
 
 	void operator delete (void *mem)

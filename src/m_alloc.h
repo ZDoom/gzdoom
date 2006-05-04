@@ -41,18 +41,19 @@
 // except they bomb out with an error requester
 // when they can't get the memory.
 
-void *Malloc (size_t size);
-void *Calloc (size_t num, size_t size);
-void *Realloc (void *memblock, size_t size);
+void *M_Malloc (size_t size);
+void *M_Calloc (size_t num, size_t size);
+void *M_Realloc (void *memblock, size_t size);
 
 #else
 
 #include <stdlib.h>
 #include <crtdbg.h>
 
-inline void *Malloc(size_t size) { return malloc (size); }
-inline void *Calloc(size_t num, size_t size) { return calloc (num, size); }
-inline void *Realloc(void *memblock, size_t size) { return realloc (memblock, size); }
+#define M_Malloc(size) malloc(size)
+#define M_Calloc(num, size) calloc(num, size)
+#define M_Realloc(memblock, size) realloc(memblock, size)
+
 #endif
 
 #endif //__M_ALLOC_H__

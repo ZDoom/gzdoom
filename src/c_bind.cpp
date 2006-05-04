@@ -244,9 +244,8 @@ const char *KeyNames[NUM_KEYS] =
 	"mwheelup",	"mwheeldown",							// the mouse wheel
 };
 
-static char *Bindings[NUM_KEYS];
-
-static char *DoubleBindings[NUM_KEYS];
+static FString Bindings[NUM_KEYS];
+static FString DoubleBindings[NUM_KEYS];
 static unsigned int DClickTime[NUM_KEYS];
 static byte DClicked[(NUM_KEYS+7)/8];
 
@@ -343,7 +342,7 @@ CCMD (bind)
 		}
 		else
 		{
-			ReplaceString (&Bindings[i], argv[2]);
+			Bindings[i] = argv[2];
 		}
 	}
 	else
@@ -438,7 +437,7 @@ CCMD (doublebind)
 		}
 		else
 		{
-			ReplaceString (&DoubleBindings[i], argv[2]);
+			DoubleBindings[i] = argv[2];
 		}
 	}
 	else
@@ -455,7 +454,7 @@ CCMD (doublebind)
 
 CCMD (rebind)
 {
-	char **bindings;
+	FString *bindings;
 
 	if (key == 0)
 	{
@@ -475,7 +474,7 @@ CCMD (rebind)
 
 	if (argv.argc() > 1)
 	{
-		ReplaceString (&bindings[key], argv[1]);
+		bindings[key] = argv[1];
 	}
 }
 
@@ -603,7 +602,7 @@ BOOL C_DoKey (event_t *ev)
 
 void C_ArchiveBindings (FConfigFile *f, bool dodouble, const char *matchcmd)
 {
-	char **bindings;
+	FString *bindings;
 	const char *name;
 	int i;
 
@@ -660,7 +659,7 @@ void C_DoBind (const char *key, const char *bind, bool dodouble)
 	}
 	if (keynum != 0)
 	{
-		ReplaceString ((dodouble ? DoubleBindings : Bindings) + keynum, bind);
+		(dodouble ? DoubleBindings : Bindings)[keynum] = bind;
 	}
 }
 
@@ -734,5 +733,5 @@ void C_ChangeBinding (const char *str, int newone)
 
 char *C_GetBinding (int key)
 {
-	return (unsigned int)key < NUM_KEYS ? Bindings[key] : NULL;
+	return (unsigned int)key < NUM_KEYS ? Bindings[key].GetChars() : NULL;
 }

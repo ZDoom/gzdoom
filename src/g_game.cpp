@@ -2138,7 +2138,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 		ptrdiff_t body = demobodyspot - demobuffer;
 		// [RH] Allocate more space for the demo
 		maxdemosize += 0x20000;
-		demobuffer = (byte *)Realloc (demobuffer, maxdemosize);
+		demobuffer = (byte *)M_Realloc (demobuffer, maxdemosize);
 		demo_p = demobuffer + pos;
 		lenspot = demobuffer + spot;
 		democompspot = demobuffer + comp;
@@ -2164,7 +2164,7 @@ void G_RecordDemo (char* name)
 		maxdemosize = atoi(v)*1024;
 	if (maxdemosize < 0x20000)
 		maxdemosize = 0x20000;
-	demobuffer = (byte *)Malloc (maxdemosize);
+	demobuffer = (byte *)M_Malloc (maxdemosize);
 
 	demorecording = true; 
 }

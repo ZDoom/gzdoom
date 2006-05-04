@@ -268,7 +268,7 @@ void P_InitTerrainTypes ()
 	int size;
 
 	size = (TexMan.NumTextures()+1)*sizeof(byte);
-	TerrainTypes = (byte *)Malloc (size);
+	TerrainTypes = (byte *)M_Malloc (size);
 	memset (TerrainTypes, 0, size);
 
 	MakeDefaultTerrain ();

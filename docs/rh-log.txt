@@ -1,4 +1,20 @@
 May 3, 2006
+- Removed generational garbage collection from the string pool because it didn't
+  actually work.
+- Turned the list of TabCommands into a TArray because I saw lots of console
+  commands in the memory leak report at exit. Then I realized those were actually
+  key bindings, so I changed the Bindings and DoubleBindings arrays into FString
+  arrays.
+- Fixed: FStringCVar was missing a destructor.
+- Added TArray::Insert().
+- Fixed: TArray::Delete() used memmove().
+- Renamed Malloc(), Realloc(), and Calloc() to M_Malloc(), M_Realloc(), and
+  M_Calloc() so that the debug versions can be defined as macros.
+- Enabled the CRT's memory leak detection in WinMain().
+- Moved contents of PO_DeInit() into P_FreeLevelData().
+- Removed "PolyBlockMap = NULL;" from P_SetupLevel(), because the P_FreeLevelData()
+  call it makes next does the exact same thing, but also freeing it if needed.
+- Fixed: Unneeded memcpy in UnpackUserCmd() when ucmd and basis are the same
 - Removed -bpal parameter. Blood's blood.pal is loaded from blood.rff, and
   its tiles are loaded from the same directory.
 - RFF files now load their entire directories into the lumplist.

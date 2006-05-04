@@ -474,7 +474,7 @@ static visplane_t *new_visplane (unsigned hash)
 
 	if (check == NULL)
 	{
-		check = (visplane_t *)Calloc (1, sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
+		check = (visplane_t *)M_Calloc (1, sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
 		check->bottom = &check->top[MAXWIDTH+2];
 	}
 	else if (NULL == (freetail = freetail->next))

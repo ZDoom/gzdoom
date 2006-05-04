@@ -308,7 +308,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 			int height;
 			int width;
 
-			foo = (patch_t *)Malloc (data.GetLength());
+			foo = (patch_t *)M_Malloc (data.GetLength());
 			data.Seek (-4, SEEK_CUR);
 			data.Read (foo, data.GetLength());
 
@@ -823,7 +823,7 @@ FTexture::Span **FTexture::CreateSpans (const BYTE *pixels) const
 
 	if (!bMasked)
 	{ // Texture does not have holes, so it can use a simpler span structure
-		spans = (Span **)Malloc (sizeof(Span*)*Width + sizeof(Span)*2);
+		spans = (Span **)M_Malloc (sizeof(Span*)*Width + sizeof(Span)*2);
 		span = (Span *)&spans[Width];
 		for (int x = 0; x < Width; ++x)
 		{
@@ -867,7 +867,7 @@ FTexture::Span **FTexture::CreateSpans (const BYTE *pixels) const
 		}
 
 		// Allocate space for the spans
-		spans = (Span **)Malloc (sizeof(Span*)*numcols + sizeof(Span)*numspans);
+		spans = (Span **)M_Malloc (sizeof(Span*)*numcols + sizeof(Span)*numspans);
 
 		// Fill in the spans
 		for (x = 0, span = (Span *)&spans[numcols], data_p = pixels; x < numcols; ++x)
@@ -1271,7 +1271,7 @@ void FPatchTexture::MakeTexture ()
 	}
 
 	// Create the spans
-	Spans = (Span **)Malloc (sizeof(Span*)*Width + sizeof(Span)*numspans);
+	Spans = (Span **)M_Malloc (sizeof(Span*)*Width + sizeof(Span)*numspans);
 	spanstuffer = (Span *)((BYTE *)Spans + sizeof(Span*)*Width);
 	warned = false;
 
@@ -1393,7 +1393,7 @@ void FPatchTexture::HackHack (int newheight)
 	}
 
 	// Create the spans
-	Spans = (Span **)Malloc (sizeof(Span *)*Width + sizeof(Span)*Width*2);
+	Spans = (Span **)M_Malloc (sizeof(Span *)*Width + sizeof(Span)*Width*2);
 
 	Span *span = (Span *)&Spans[Width];
 

@@ -1082,7 +1082,7 @@ void FFontChar2::MakeTexture ()
 		I_FatalError ("The font %s is corrupt", name);
 	}
 
-	Spans = CreateSpans (Pixels);
+	if (Spans!=NULL) Spans = CreateSpans (Pixels);
 }
 
 //===========================================================================

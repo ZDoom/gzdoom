@@ -437,7 +437,7 @@ ACTOR ZMossCeiling2 59
 	States
 	{
 	Spawn:
-		MS21 A -1
+		MSS2 A -1
 		Stop
 	}
 }

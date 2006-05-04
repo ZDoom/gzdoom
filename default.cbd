@@ -173,10 +173,10 @@ ${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.na
  a_clericstaff.cpp a_demons.cpp a_dragon.cpp a_ettin.cpp a_fighteraxe.cpp \
  a_fighterboss.cpp a_fighterhammer.cpp a_fighterplayer.cpp a_fighterquietus.cpp \
  a_firedemon.cpp a_flechette.cpp a_fog.cpp a_healingradius.cpp \
- a_heresiarch.cpp a_hexenarmor.cpp a_hexendecorations.cpp a_hexenkeys.cpp \
+ a_heresiarch.cpp \
  a_hexenspecialdecs.cpp a_iceguy.cpp a_korax.cpp a_mageboss.cpp a_magecone.cpp \
  a_magelightning.cpp a_mageplayer.cpp a_magestaff.cpp a_magewand.cpp a_mana.cpp \
- a_pig.cpp a_puzzleitems.cpp a_scriptprojectiles.cpp a_serpent.cpp a_speedboots.cpp \
+ a_pig.cpp a_puzzleitems.cpp a_scriptprojectiles.cpp a_serpent.cpp \
  a_spike.cpp a_summon.cpp a_teleportother.cpp a_weaponpieces.cpp a_wraith.cpp \
  hexen_sbar.cpp a_artiegg.cpp a_artitele.cpp a_minotaur.cpp a_ravenambient.cpp \
  a_acolyte.cpp a_alienspectres.cpp \
@@ -212,6 +212,7 @@ src_paths  tools/makewad
 ${COMPILER} makewad.c ioapi.c zip.c 
 ${LINK} tools/makewad/makewad
 
+LDFLAGS = ''
 src_paths  tools/xlatcc
 ${COMPILER} xlat-parse.tab.c gen.c
 ${LINK} tools/xlatcc/xlatcc

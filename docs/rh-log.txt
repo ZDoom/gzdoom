@@ -1,5 +1,6 @@
 May 4, 2006 (Changes by Graf Zahl)
-- Converted A_Hexendecorations.cpp
+- Converted A_Puzzleitems.cpp and parts of A_HexenSpecialdecs.cpp to DECORATE.
+- Converted A_Hexendecorations.cpp to DECORATE.
 - Changed the lower decal spawning code to transfer the main decal's color if
   the lower decal's default color is the same as the main decal's.
 - Changed the decal stretcher back to use the specified size parameters as a 

@@ -37,7 +37,7 @@
 #include "i_system.h"
 #include "m_alloc.h"
 
-void *Malloc (size_t size)
+void *M_Malloc (size_t size)
 {
 	void *zone = malloc (size);
 
@@ -47,7 +47,7 @@ void *Malloc (size_t size)
 	return zone;
 }
 
-void *Calloc (size_t num, size_t size)
+void *M_Calloc (size_t num, size_t size)
 {
 	void *zone = calloc (num, size);
 
@@ -57,7 +57,7 @@ void *Calloc (size_t num, size_t size)
 	return zone;
 }
 
-void *Realloc (void *memblock, size_t size)
+void *M_Realloc (void *memblock, size_t size)
 {
 	void *zone = realloc (memblock, size);
 

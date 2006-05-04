@@ -1,3 +1,13 @@
+May 4, 2006 (Changes by Graf Zahl)
+- Converted A_Hexendecorations.cpp
+- Changed the lower decal spawning code to transfer the main decal's color if
+  the lower decal's default color is the same as the main decal's.
+- Changed the decal stretcher back to use the specified size parameters as a 
+  scaling factor and not a destination size because this is more consistent with 
+  the rest of the decal code. Also adjusted the blood smear definition in DECALDEF
+  and the description in the Wiki for this.
+- Added Jim's most recent fixes.
+
 May 3, 2006
 - Fixed: Conversion of c_bind.cpp to FString was incomplete.
 - Fixed some functions that were declared as taking size_t's but defined as taking
@@ -40,6 +50,8 @@ May 3, 2006
 - Renamed the string class to FString to emphasize that it is not std::string.
 
 May 3, 2006 (Changes by Graf Zahl)
+- Converted A_Speedboots.cpp, A_HexenArmor.cpp and A_Hexenkeys.cpp to DECORATE
+- Fixed a few memory allocation issues pointed out by Jim's Valgrind dump.
 - Removed doom.x, heretic.x and strife.x from the SVN repository. These
   are generated files.
 - Fixed: A_PainDie has to check whether a valid target exists before 

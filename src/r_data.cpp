@@ -1746,7 +1746,7 @@ void FIMGZTexture::MakeTexture ()
 		}
 	}
 
-	Spans = CreateSpans (Pixels);
+	if (Spans == NULL) Spans = CreateSpans (Pixels);
 }
 
 
@@ -1976,7 +1976,7 @@ void FPNGTexture::MakeTexture ()
 			delete[] oldpix;
 		}
 	}
-	Spans = CreateSpans (Pixels);
+	if (Spans == NULL) Spans = CreateSpans (Pixels);
 }
 
 
@@ -2220,7 +2220,8 @@ void FMultiPatchTexture::MakeTexture ()
 {
 	// Add a little extra space at the end if the texture's height is not
 	// a power of 2, in case somebody accidentally makes it repeat vertically.
-	int numpix = Width * Height + (1 << HeightBits) - Height;
+	// (Jim's Valgrind dump indicates that more padding is needed here.)
+	int numpix = Width * Height + Height;// (1 << HeightBits) - Height;
 
 	Pixels = new BYTE[numpix];
 	memset (Pixels, 0, numpix);
@@ -2231,7 +2232,7 @@ void FMultiPatchTexture::MakeTexture ()
 			Parts[i].OriginX, Parts[i].OriginY);
 	}
 
-	Spans = CreateSpans (Pixels);
+	if (Spans == NULL) Spans = CreateSpans (Pixels);
 }
 
 void FMultiPatchTexture::CheckForHacks ()

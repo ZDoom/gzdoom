@@ -3,7 +3,7 @@ do ifopt help
     debug     - Build debug instead of release
     verbose   - Show system commands instead of decorated messages
     clean     - Clean temp files (use with debug to clean debug files)
-    zdoom.wad - (Re)build just zdoom.wad, even if it already exists
+    zdoom.pk3 - (Re)build just zdoom.pk3, even if it already exists
 
 To use with MinGW, compile cbuild.c into an executable using:
 gcc -O2 -W -Wall -Werror -o cbuild.exe cbuild.c
@@ -70,7 +70,7 @@ do ifnopt clean
 
   ifnexist "${OBJ_DIR}"  mkdir "${OBJ_DIR}"
 
-  ifopt zdoom.wad  goto makewad
+  ifopt zdoom.pk3  goto makewad
 
   do if "${NOASM}"=""
     # This sets a custom command to run durring a compile for files with the
@@ -201,15 +201,15 @@ ${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.na
 ${LINK} "${TARGET}"
 
 
-# If we're not cleaning and zdoom.wad exists, exit now.
-if "${EVILCLEAN}"="0" ifexist zdoom.wad  exit 0
+# If we're not cleaning and zdoom.pk3 exists, exit now.
+if "${EVILCLEAN}"="0" ifexist zdoom.pk3  exit 0
 #:makewad
 
-LDFLAGS = ''
 CFLAGS = '-Os -Wall -fomit-frame-pointer'
 
+LDFLAGS = '-lz'
 src_paths  tools/makewad
-${COMPILER} makewad.c
+${COMPILER} makewad.c ioapi.c zip.c 
 ${LINK} tools/makewad/makewad
 
 src_paths  tools/xlatcc
@@ -224,12 +224,12 @@ do if "${EVILCLEAN}"="1"
   -rm "${OBJ_DIR}"
   -rm "${DEP_DIR}"
   -rm zdoomgcc.map
-  -rm zdoom.wad
+  -rm zdoom.pk3
 else
   chdir wadsrc
   do ifret 0
     -call ../tools/makewad/makewad zdoom.lst
-    ifret 0 -copy zdoom.wad ../
+    ifret 0 -copy zdoom.pk3 ../
     chdir ..
   done
 done

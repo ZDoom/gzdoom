@@ -21,7 +21,7 @@ colorchanger ToBlack
 stretcher BloodStretcher
 {
 	StretchTime	35
-	GoalY		80
+	GoalY		2.0
 }
 
 slider BloodSlider

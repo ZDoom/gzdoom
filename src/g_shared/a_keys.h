@@ -15,11 +15,6 @@ protected:
 	virtual bool ShouldStay ();
 };
 
-class AHexenKey : public AKey
-{
-	DECLARE_STATELESS_ACTOR (AHexenKey, AKey)
-};
-
 class AStrifeKey : public AKey
 {
 	DECLARE_STATELESS_ACTOR (AStrifeKey, AKey)

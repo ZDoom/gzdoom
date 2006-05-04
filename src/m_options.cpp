@@ -2671,7 +2671,7 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 	char strtemp[32], **str;
 	int	 i, c;
 	int	 width, height, showbits;
-	bool letterbox;
+	bool letterbox=false;
 	int  ratiomatch;
 
 	if (menu_screenratios >= 0 && menu_screenratios <= 4 && menu_screenratios != 3)

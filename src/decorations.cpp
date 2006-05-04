@@ -336,6 +336,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 		if (!SC_GetString ())
 		{
 			if (recursion==0) return;
+			SC_Close();
 			SC_RestoreScriptState();
 			recursion--;
 			continue;

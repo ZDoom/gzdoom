@@ -326,7 +326,7 @@ CCMD (bind)
 		}
 		if (argv.argc() == 2)
 		{
-			Printf ("\"%s\" = \"%s\"\n", argv[1], (Bindings[i].GetChars() ? Bindings[i].GetChars() : ""));
+			Printf ("\"%s\" = \"%s\"\n", argv[1], Bindings[i].GetChars());
 		}
 		else
 		{
@@ -417,7 +417,7 @@ CCMD (doublebind)
 		}
 		if (argv.argc() == 2)
 		{
-			Printf ("\"%s\" = \"%s\"\n", argv[1], (DoubleBindings[i].GetChars() ? DoubleBindings[i].GetChars() : ""));
+			Printf ("\"%s\" = \"%s\"\n", argv[1], DoubleBindings[i].GetChars());
 		}
 		else
 		{

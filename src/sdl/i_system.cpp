@@ -386,13 +386,13 @@ static int matchfile (const struct dirent *ent)
 
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
 {
-	string dir;
+	FString dir;
 	
 	char *slash = strrchr (filespec, '/');
 	if (slash)
 	{
 		pattern = slash+1;
-		dir = string(filespec, slash-filespec+1);
+		dir = FString(filespec, slash-filespec+1);
 	}
 	else
 	{

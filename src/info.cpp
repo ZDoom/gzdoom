@@ -356,7 +356,7 @@ static int STACK_ARGS sortnums (const void *a, const void *b)
 
 void FDoomEdMap::DumpMapThings ()
 {
-	TArray<EdSorting> infos (TypeInfo::m_NumTypes);
+	TArray<EdSorting> infos (TypeInfo::m_Types.Size());
 	int i;
 
 	for (i = 0; i < DOOMED_HASHSIZE; ++i)

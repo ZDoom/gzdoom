@@ -127,10 +127,8 @@ void *statcopy;					// for statistics driver
 
 level_locals_t level;			// info about current level
 
-static cluster_info_t *wadclusterinfos;
-static int numwadclusterinfos = 0;
-level_info_t *wadlevelinfos;
-int numwadlevelinfos = 0;
+static TArray<cluster_info_t> wadclusterinfos;
+TArray<level_info_t> wadlevelinfos;
 
 // MAPINFO is parsed slightly differently when the map name is just a number.
 static bool HexenHack;
@@ -394,9 +392,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 
 static int FindWadLevelInfo (char *name)
 {
-	int i;
-
-	for (i = 0; i < numwadlevelinfos; i++)
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 		if (!strnicmp (name, wadlevelinfos[i].mapname, 8))
 			return i;
 		
@@ -405,9 +401,7 @@ static int FindWadLevelInfo (char *name)
 
 static int FindWadClusterInfo (int cluster)
 {
-	int i;
-
-	for (i = 0; i < numwadclusterinfos; i++)
+	for (unsigned int i = 0; i < wadclusterinfos.Size(); i++)
 		if (wadclusterinfos[i].cluster == cluster)
 			return i;
 		
@@ -536,10 +530,9 @@ static void G_DoParseMapInfo (int lump)
 			levelindex = FindWadLevelInfo (sc_String);
 			if (levelindex == -1)
 			{
-				levelindex = numwadlevelinfos++;
-				wadlevelinfos = (level_info_t *)M_Realloc (wadlevelinfos, sizeof(level_info_t)*numwadlevelinfos);
+				levelindex = wadlevelinfos.Reserve(1);
 			}
-			levelinfo = wadlevelinfos + levelindex;
+			levelinfo = &wadlevelinfos[levelindex];
 			memcpy (levelinfo, &defaultinfo, sizeof(*levelinfo));
 			if (HexenHack)
 			{
@@ -601,13 +594,12 @@ static void G_DoParseMapInfo (int lump)
 			clusterindex = FindWadClusterInfo (sc_Number);
 			if (clusterindex == -1)
 			{
-				clusterindex = numwadclusterinfos++;
-				wadclusterinfos = (cluster_info_t *)M_Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
-				clusterinfo = wadclusterinfos + clusterindex;
+				clusterindex = wadclusterinfos.Reserve(1);
+				clusterinfo = &wadclusterinfos[clusterindex];
 			}
 			else
 			{
-				clusterinfo = wadclusterinfos + clusterindex;
+				clusterinfo = &wadclusterinfos[clusterindex];
 				if (clusterinfo->entertext != NULL)
 				{
 					delete[] clusterinfo->entertext;
@@ -835,9 +827,8 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			// depending on the check done.
 			if (FindWadClusterInfo (sc_Number) == -1)
 			{
-				int clusterindex = numwadclusterinfos++;
-				wadclusterinfos = (cluster_info_t *)M_Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
-				clusterinfo = wadclusterinfos + clusterindex;
+				unsigned int clusterindex = wadclusterinfos.Reserve(1);
+				clusterinfo = &wadclusterinfos[clusterindex];
 				memset (clusterinfo, 0, sizeof(cluster_info_t));
 				clusterinfo->cluster = sc_Number;
 				if (gameinfo.gametype == GAME_Hexen)
@@ -1105,11 +1096,9 @@ void G_SetForEndGame (char *nextmap)
 
 level_info_t *FindLevelByWarpTrans (int num)
 {
-	int i;
-
-	for (i = numwadlevelinfos - 1; i >= 0; --i)
+	for (unsigned i = wadlevelinfos.Size(); i-- != 0; )
 		if (wadlevelinfos[i].WarpTrans == num)
-			return (level_info_t *)(wadlevelinfos + i);
+			return &wadlevelinfos[i];
 
 	return NULL;
 }
@@ -1126,10 +1115,8 @@ static void zapDefereds (acsdefered_t *def)
 
 void P_RemoveDefereds (void)
 {
-	int i;
-
 	// Remove any existing defereds
-	for (i = 0; i < numwadlevelinfos; i++)
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		if (wadlevelinfos[i].defered)
 		{
@@ -1244,7 +1231,7 @@ void G_InitNew (char *mapname, bool bTitleLevel)
 	// [RH] Mark all levels as not visited
 	if (!savegamerestore)
 	{
-		for (i = 0; i < numwadlevelinfos; i++)
+		for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 			wadlevelinfos[i].flags = wadlevelinfos[i].flags & ~LEVEL_VISITED;
 	}
 
@@ -2080,18 +2067,16 @@ level_info_t *FindLevelInfo (char *mapname)
 	int i;
 
 	if ((i = FindWadLevelInfo (mapname)) > -1)
-		return (level_info_t *)(wadlevelinfos + i);
+		return &wadlevelinfos[i];
 	else
 		return &TheDefaultLevelInfo;
 }
 
 level_info_t *FindLevelByNum (int num)
 {
-	int i;
-
-	for (i = 0; i < numwadlevelinfos; i++)
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 		if (wadlevelinfos[i].levelnum == num)
-			return (level_info_t *)(wadlevelinfos + i);
+			return &wadlevelinfos[i];
 
 	return NULL;
 }
@@ -2119,7 +2104,7 @@ level_info_t *CheckLevelRedirect (level_info_t *info)
 static void SetLevelNum (level_info_t *info, int num)
 {
 	// Avoid duplicate levelnums. The level being set always has precedence.
-	for (int i = 0; i < numwadlevelinfos; ++i)
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); ++i)
 	{
 		if (wadlevelinfos[i].levelnum == num)
 			wadlevelinfos[i].levelnum = 0;
@@ -2132,7 +2117,7 @@ cluster_info_t *FindClusterInfo (int cluster)
 	int i;
 
 	if ((i = FindWadClusterInfo (cluster)) > -1)
-		return wadclusterinfos + i;
+		return &wadclusterinfos[i];
 	else
 		return &TheDefaultClusterInfo;
 }
@@ -2461,9 +2446,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 
 void G_ClearSnapshots (void)
 {
-	int i;
-
-	for (i = 0; i < numwadlevelinfos; i++)
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		if (wadlevelinfos[i].snapshot)
 		{
@@ -2497,9 +2480,9 @@ static void writeSnapShot (FArchive &arc, level_info_t *i)
 
 void G_WriteSnapshots (FILE *file)
 {
-	int i;
+	unsigned int i;
 
-	for (i = 0; i < numwadlevelinfos; i++)
+	for (i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		if (wadlevelinfos[i].snapshot)
 		{
@@ -2511,7 +2494,7 @@ void G_WriteSnapshots (FILE *file)
 	FPNGChunkArchive *arc = NULL;
 	
 	// Write out which levels have been visited
-	for (i = 0; i < numwadlevelinfos; ++i)
+	for (i = 0; i < wadlevelinfos.Size(); ++i)
 	{
 		if (wadlevelinfos[i].flags & LEVEL_VISITED)
 		{
@@ -2638,9 +2621,8 @@ static void writeDefereds (FArchive &arc, level_info_t *i)
 void P_WriteACSDefereds (FILE *file)
 {
 	FPNGChunkArchive *arc = NULL;
-	int i;
 
-	for (i = 0; i < numwadlevelinfos; i++)
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		if (wadlevelinfos[i].defered)
 		{

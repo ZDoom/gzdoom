@@ -518,7 +518,7 @@ void cht_Give (player_t *player, char *name, int amount)
 	{
 		// Find every unique type of ammo. Give it to the player if
 		// he doesn't have it already, and set each to its maximum.
-		for (int i = 0; i < TypeInfo::m_NumTypes; ++i)
+		for (unsigned int i = 0; i < TypeInfo::m_Types.Size(); ++i)
 		{
 			const TypeInfo *type = TypeInfo::m_Types[i];
 
@@ -574,7 +574,7 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "keys") == 0)
 	{
-		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
+		for (unsigned int i = 0; i < TypeInfo::m_Types.Size(); ++i)
 		{
 			if (TypeInfo::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
 			{
@@ -596,7 +596,7 @@ void cht_Give (player_t *player, char *name, int amount)
 	if (giveall || stricmp (name, "weapons") == 0)
 	{
 		AWeapon *savedpending = player->PendingWeapon;
-		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
+		for (unsigned int i = 0; i < TypeInfo::m_Types.Size(); ++i)
 		{
 			type = TypeInfo::m_Types[i];
 			if (type != RUNTIME_CLASS(AWeapon) &&
@@ -617,7 +617,7 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "artifacts") == 0)
 	{
-		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
+		for (unsigned int i = 0; i < TypeInfo::m_Types.Size(); ++i)
 		{
 			type = TypeInfo::m_Types[i];
 			if (type->IsDescendantOf (RUNTIME_CLASS(AInventory)))
@@ -638,7 +638,7 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "puzzlepieces") == 0)
 	{
-		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
+		for (unsigned int i = 0; i < TypeInfo::m_Types.Size(); ++i)
 		{
 			type = TypeInfo::m_Types[i];
 			if (type->IsDescendantOf (RUNTIME_CLASS(APuzzleItem)))

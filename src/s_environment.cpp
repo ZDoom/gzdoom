@@ -382,6 +382,25 @@ ReverbContainer *DefaultEnvironments[26] =
 
 ReverbContainer *Environments = &Off;
 
+static struct ReverbContainerDeleter
+{
+	~ReverbContainerDeleter()
+	{
+		ReverbContainer *probe = Environments;
+
+		while (probe != NULL)
+		{
+			ReverbContainer *next = probe->Next;
+			if (!probe->Builtin)
+			{
+				delete[] const_cast<char *>(probe->Name);
+				delete probe;
+			}
+			probe = next;
+		}
+	}
+} DeleteTheReverbContainers;
+
 ReverbContainer *S_FindEnvironment (const char *name)
 {
 	ReverbContainer *probe = Environments;

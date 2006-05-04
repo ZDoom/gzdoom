@@ -1034,7 +1034,7 @@ void R_DrawSkyBoxes ()
 	ptrdiff_t savedvissprite_p = vissprite_p - vissprites;
 	ptrdiff_t savedds_p = ds_p - drawsegs;
 	ptrdiff_t savedlastopening = lastopening;
-	unsigned int savedinteresting = FirstInterestingDrawseg;
+	size_t savedinteresting = FirstInterestingDrawseg;
 	float savedvisibility = R_GetVisibility ();
 	AActor *savedcamera = camera;
 	sector_t *savedsector = viewsector;
@@ -1180,7 +1180,7 @@ void R_DrawSkyBoxes ()
 	vissprite_p = vissprites + savedvissprite_p;
 	firstdrawseg = drawsegs;
 	ds_p = drawsegs + savedds_p;
-	InterestingDrawsegs.Resize (FirstInterestingDrawseg);
+	InterestingDrawsegs.Resize ((unsigned int)FirstInterestingDrawseg);
 	FirstInterestingDrawseg = savedinteresting;
 
 	lastopening = savedlastopening;

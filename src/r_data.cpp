@@ -1100,6 +1100,7 @@ FPatchTexture::~FPatchTexture ()
 	if (Spans != NULL)
 	{
 		FreeSpans (Spans);
+		Spans = NULL;
 	}
 }
 
@@ -1603,6 +1604,7 @@ FIMGZTexture::~FIMGZTexture ()
 	if (Spans != NULL)
 	{
 		FreeSpans (Spans);
+		Spans = NULL;
 	}
 }
 
@@ -1880,10 +1882,12 @@ FPNGTexture::~FPNGTexture ()
 	if (Spans != NULL)
 	{
 		FreeSpans (Spans);
+		Spans = NULL;
 	}
 	if (PaletteMap != NULL && PaletteMap != GrayMap)
 	{
 		delete[] PaletteMap;
+		PaletteMap = NULL;
 	}
 }
 
@@ -1993,6 +1997,7 @@ FBuildTexture::~FBuildTexture ()
 	if (Spans != NULL)
 	{
 		FreeSpans (Spans);
+		Spans = NULL;
 	}
 }
 
@@ -2143,10 +2148,12 @@ FMultiPatchTexture::~FMultiPatchTexture ()
 	if (Parts != NULL)
 	{
 		delete[] Parts;
+		Parts = NULL;
 	}
 	if (Spans != NULL)
 	{
 		FreeSpans (Spans);
+		Spans = NULL;
 	}
 }
 
@@ -2367,6 +2374,11 @@ FWarpTexture::FWarpTexture (FTexture *source)
 FWarpTexture::~FWarpTexture ()
 {
 	Unload ();
+	if (Spans != NULL)
+	{
+		FreeSpans (Spans);
+		Spans = NULL;
+	}
 	delete SourcePic;
 }
 
@@ -2706,7 +2718,7 @@ void R_InitTextures (void)
 	// Hexen parallax skies use color 0 to indicate transparency on the front
 	// layer, so we must not remap color 0 on these textures. Unfortunately,
 	// the only way to identify these textures is to check the MAPINFO.
-	for (i = 0; i < numwadlevelinfos; ++i)
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); ++i)
 	{
 		if (wadlevelinfos[i].flags & LEVEL_DOUBLESKY)
 		{

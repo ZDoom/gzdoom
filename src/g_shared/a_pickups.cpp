@@ -1893,7 +1893,7 @@ AInventory *ABackpack::CreateCopy (AActor *other)
 {
 	// Find every unique type of ammo. Give it to the player if
 	// he doesn't have it already, and double it's maximum capacity.
-	for (int i = 0; i < TypeInfo::m_NumTypes; ++i)
+	for (unsigned int i = 0; i < TypeInfo::m_Types.Size(); ++i)
 	{
 		const TypeInfo *type = TypeInfo::m_Types[i];
 

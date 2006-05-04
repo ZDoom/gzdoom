@@ -547,7 +547,7 @@ FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id)
 {
 }
 
-FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id, unsigned int chunklen)
+FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id, size_t chunklen)
 	: FCompressedFile (file, EReading, true, false), m_ChunkID (id)
 {
 	m_Buffer = (byte *)M_Malloc (chunklen);
@@ -588,7 +588,7 @@ FPNGChunkArchive::FPNGChunkArchive (FILE *file, DWORD id)
 	AttachToFile (Chunk);
 }
 
-FPNGChunkArchive::FPNGChunkArchive (FILE *file, DWORD id, unsigned int len)
+FPNGChunkArchive::FPNGChunkArchive (FILE *file, DWORD id, size_t len)
 	: FArchive (), Chunk (file, id, len)
 {
 	AttachToFile (Chunk);
@@ -636,8 +636,8 @@ void FArchive::AttachToFile (FFile &file)
 	}
 	m_Persistent = file.IsPersistent();
 	m_TypeMap = NULL;
-	m_TypeMap = new TypeMap[TypeInfo::m_NumTypes];
-	for (i = 0; i < TypeInfo::m_NumTypes; i++)
+	m_TypeMap = new TypeMap[TypeInfo::m_Types.Size()];
+	for (i = 0; i < TypeInfo::m_Types.Size(); i++)
 	{
 		m_TypeMap[i].toArchive = TypeMap::NO_INDEX;
 		m_TypeMap[i].toCurrent = NULL;
@@ -1291,10 +1291,10 @@ DWORD FArchive::FindName (const char *name, unsigned int bucket) const
 
 DWORD FArchive::WriteClass (const TypeInfo *info)
 {
-	if (m_ClassCount >= TypeInfo::m_NumTypes)
+	if (m_ClassCount >= TypeInfo::m_Types.Size())
 	{
 		I_Error ("Too many unique classes have been written.\nOnly %u were registered\n",
-			TypeInfo::m_NumTypes);
+			TypeInfo::m_Types.Size());
 	}
 	if (m_TypeMap[info->TypeIndex].toArchive != TypeMap::NO_INDEX)
 	{
@@ -1315,13 +1315,13 @@ const TypeInfo *FArchive::ReadClass ()
 	} typeName;
 	int i;
 
-	if (m_ClassCount >= TypeInfo::m_NumTypes)
+	if (m_ClassCount >= TypeInfo::m_Types.Size())
 	{
 		I_Error ("Too many unique classes have been read.\nOnly %u were registered\n",
-			TypeInfo::m_NumTypes);
+			TypeInfo::m_Types.Size());
 	}
 	operator<< (typeName.val);
-	for (i = 0; i < TypeInfo::m_NumTypes; i++)
+	for (i = 0; i < TypeInfo::m_Types.Size(); i++)
 	{
 		if (!strcmp (TypeInfo::m_Types[i]->Name, typeName.val))
 		{

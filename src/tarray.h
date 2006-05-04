@@ -125,11 +125,7 @@ public:
 	}
 	unsigned int Push (const T &item)
 	{
-		if (Count >= Most)
-		{
-			Most = (Most >= 16) ? Most + Most / 2 : 16;
-			DoResize ();
-		}
+		Grow (1);
 		ConstructInTArray (&Array[Count], item);
 		return Count++;
 	}
@@ -209,7 +205,7 @@ public:
 		if (Count + amount > Most)
 		{
 			const unsigned int choicea = Count + amount;
-			const unsigned int choiceb = Most + Most/2;
+			const unsigned int choiceb = Most = (Most >= 16) ? Most + Most / 2 : 16;
 			Most = (choicea > choiceb ? choicea : choiceb);
 			DoResize ();
 		}
@@ -219,11 +215,17 @@ public:
 	{
 		if (Count < amount)
 		{
+			// Adding new entries
 			Grow (amount - Count);
+			for (unsigned int i = Count; i < amount; ++i)
+			{
+				ConstructEmptyInTArray (&Array[i]);
+			}
 		}
-		for (unsigned int i = Count; i < amount; ++i)
+		else if (Count != amount)
 		{
-			ConstructEmptyInTArray (&Array[i]);
+			// Deleting old entries
+			DoDelete (amount, Count - 1);
 		}
 		Count = amount;
 	}
@@ -231,10 +233,7 @@ public:
 	// with them.
 	unsigned int Reserve (unsigned int amount)
 	{
-		if (Count + amount > Most)
-		{
-			Grow (amount);
-		}
+		Grow (amount);
 		unsigned int place = Count;
 		Count += amount;
 		return place;

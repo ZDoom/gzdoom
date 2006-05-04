@@ -3445,7 +3445,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	// give all cards in death match mode
 	if (deathmatch)
 	{
-		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
+		for (i = 0; i < TypeInfo::m_Types.Size(); ++i)
 		{
 			if (TypeInfo::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
 			{

@@ -1336,7 +1336,7 @@ static int PatchAmmo (int ammoNum)
 	// Fix per-ammo/max-ammo amounts for descendants of the base ammo class
 	if (oldclip != *per)
 	{
-		for (int i = 0; i < TypeInfo::m_NumTypes; ++i)
+		for (int i = 0; i < TypeInfo::m_Types.Size(); ++i)
 		{
 			TypeInfo *type = TypeInfo::m_Types[i];
 

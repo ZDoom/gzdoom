@@ -296,13 +296,13 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 
 
 #ifdef unix
-zstring GetUserFile (const char *file, bool nodir)
+FString GetUserFile (const char *file, bool nodir)
 {
 	char *home = getenv ("HOME");
 	if (home == NULL || *home == '\0')
 		I_FatalError ("Please set your HOME environment variable");
 
-	zstring path = home;
+	FString path = home;
 	if (path[path.Len()-1] != '/')
 		path += nodir ? "/" : "/.zdoom";
 	else if (!nodir)

@@ -309,7 +309,7 @@ static void ParseLock()
 static void ClearLocks()
 {
 	int i;
-	for(i=0;i<TypeInfo::m_NumTypes;i++)
+	for(i=0;i<TypeInfo::m_Types.Size();i++)
 	{
 		if (TypeInfo::m_Types[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
 		{

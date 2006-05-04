@@ -962,6 +962,7 @@ FFontChar2::~FFontChar2 ()
 	if (Spans != NULL)
 	{
 		FreeSpans (Spans);
+		Spans = NULL;
 	}
 }
 

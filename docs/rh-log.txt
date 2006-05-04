@@ -1,4 +1,19 @@
 May 3, 2006
+- Fixed: Conversion of c_bind.cpp to FString was incomplete.
+- Fixed some functions that were declared as taking size_t's but defined as taking
+  unsigned ints.
+- Added a dummy object to delete sound environments on exit.
+- Fixed: FWarpTexture did not delete its Spans when destroyed.
+- Changed wadclusterinfos and wadlevelinfos arrays into TArrays.
+- Added the TypeInfo::AutoTypeInfoPtr for TypeInfo::m_RuntimeActors so they can
+  be automatically deleted.
+- Changed TypeInfo::m_Types into a TArray so it will be automatically deleted
+  on exit.
+- Fixed: TArray::Resize() did not deconstruct entries when shrinking the array.
+- Changed TArray::Push() so that it calls Grow() instead of duplicating the growth
+  calculations itself.
+- Calling TArray::Grow() for a small amount when the array is short should grow it
+  a bit more than it was doing.
 - Removed generational garbage collection from the string pool because it didn't
   actually work.
 - Turned the list of TabCommands into a TArray because I saw lots of console

@@ -83,7 +83,7 @@ drawseg_t		*drawsegs;
 drawseg_t*		firstdrawseg;
 drawseg_t*		ds_p;
 
-unsigned int	FirstInterestingDrawseg;
+size_t			FirstInterestingDrawseg;
 TArray<size_t>	InterestingDrawsegs;
 
 fixed_t			WallTX1, WallTX2;	// x coords at left, right of wall in view space

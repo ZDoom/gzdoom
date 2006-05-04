@@ -47,10 +47,8 @@
 #include "r_state.h"
 #include "stats.h"
 
-TArray<TypeInfo *> TypeInfo::m_RuntimeActors;
-TypeInfo **TypeInfo::m_Types;
-unsigned short TypeInfo::m_NumTypes;
-unsigned short TypeInfo::m_MaxTypes;
+TypeInfo::DeletingArray TypeInfo::m_RuntimeActors;
+TArray<TypeInfo *> TypeInfo::m_Types (256);
 unsigned int TypeInfo::TypeHash[256];	// Why can't I use TypeInfo::HASH_SIZE?
 
 #if defined(_MSC_VER) || defined(__GNUC__)
@@ -79,17 +77,22 @@ TypeInfo DObject::_StaticType(NULL, "DObject", NULL, sizeof(DObject));
 static cycle_t StaleCycles;
 static int StaleCount;
 
+TypeInfo::DeletingArray::~DeletingArray()
+{
+	for (unsigned int i = 0; i < Size(); ++i)
+	{
+		if ((*this)[i] != NULL)
+		{
+			delete (*this)[i];
+			(*this)[i] = NULL;
+		}
+	}
+}
+
 void TypeInfo::RegisterType ()
 {
 	// Add type to list
-	if (m_NumTypes == m_MaxTypes)
-	{
-		m_MaxTypes = m_MaxTypes ? m_MaxTypes*2 : 256;
-		m_Types = (TypeInfo **)M_Realloc (m_Types, m_MaxTypes * sizeof(*m_Types));
-	}
-	m_Types[m_NumTypes] = this;
-	TypeIndex = m_NumTypes;
-	m_NumTypes++;
+	TypeIndex = m_Types.Push (this);
 
 	// Add type to hash table. Types are inserted into each bucket
 	// lexicographically, and the prefix character is ignored.
@@ -150,7 +153,7 @@ const TypeInfo *TypeInfo::IFindType (const char *name)
 {
 	if (name != NULL)
 	{
-		for (int i = 0; i < TypeInfo::m_NumTypes; i++)
+		for (int i = 0; i < TypeInfo::m_Types.Size(); i++)
 		{
 			if (stricmp (TypeInfo::m_Types[i]->Name + 1, name) == 0)
 				return TypeInfo::m_Types[i];
@@ -434,7 +437,7 @@ CCMD (dumpclasses)
 	}
 
 	shown = omitted = 0;
-	for (i = 0; i < TypeInfo::m_NumTypes; i++)
+	for (i = 0; i < TypeInfo::m_Types.Size(); i++)
 	{
 		if (root == NULL ||
 			(TypeInfo::m_Types[i]->IsDescendantOf (root) &&

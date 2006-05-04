@@ -1597,7 +1597,7 @@ static EIWADType IdentifyVersion (void)
 #ifdef unix
 					else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
 					{
-						string homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
+						FString homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
 						CheckIWAD (homepath, wads);
 					}
 #endif

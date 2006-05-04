@@ -274,8 +274,7 @@ typedef struct cluster_info_s cluster_info_t;
 
 extern level_locals_t level;
 
-extern level_info_t *wadlevelinfos;
-extern int numwadlevelinfos;
+extern TArray<level_info_t> wadlevelinfos;
 
 extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
 extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];

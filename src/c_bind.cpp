@@ -283,16 +283,8 @@ void C_UnbindAll ()
 {
 	for (int i = 0; i < NUM_KEYS; ++i)
 	{
-		if (Bindings[i])
-		{
-			free (Bindings[i]);
-			Bindings[i] = NULL;
-		}
-		if (DoubleBindings[i])
-		{
-			free (DoubleBindings[i]);
-			DoubleBindings[i] = NULL;
-		}
+		Bindings[i] = "";
+		DoubleBindings[i] = "";
 	}
 }
 
@@ -309,11 +301,7 @@ CCMD (unbind)
 	{
 		if ( (i = GetKeyFromName (argv[1])) )
 		{
-			if (Bindings[i])
-			{
-				free (Bindings[i]);
-				Bindings[i] = NULL;
-			}
+			Bindings[i] = "";
 		}
 		else
 		{
@@ -338,7 +326,7 @@ CCMD (bind)
 		}
 		if (argv.argc() == 2)
 		{
-			Printf ("\"%s\" = \"%s\"\n", argv[1], (Bindings[i] ? Bindings[i] : ""));
+			Printf ("\"%s\" = \"%s\"\n", argv[1], (Bindings[i].GetChars() ? Bindings[i].GetChars() : ""));
 		}
 		else
 		{
@@ -351,8 +339,8 @@ CCMD (bind)
 		
 		for (i = 0; i < NUM_KEYS; i++)
 		{
-			if (Bindings[i])
-				Printf ("%s \"%s\"\n", KeyName (i), Bindings[i]);
+			if (!Bindings[i].IsEmpty())
+				Printf ("%s \"%s\"\n", KeyName (i), Bindings[i].GetChars());
 		}
 	}
 }
@@ -404,11 +392,7 @@ CCMD (undoublebind)
 	{
 		if ( (i = GetKeyFromName (argv[1])) )
 		{
-			if (DoubleBindings[i])
-			{
-				delete[] DoubleBindings[i];
-				DoubleBindings[i] = NULL;
-			}
+			DoubleBindings[i] = "";
 		}
 		else
 		{
@@ -433,7 +417,7 @@ CCMD (doublebind)
 		}
 		if (argv.argc() == 2)
 		{
-			Printf ("\"%s\" = \"%s\"\n", argv[1], (DoubleBindings[i] ? DoubleBindings[i] : ""));
+			Printf ("\"%s\" = \"%s\"\n", argv[1], (DoubleBindings[i].GetChars() ? DoubleBindings[i].GetChars() : ""));
 		}
 		else
 		{
@@ -446,8 +430,8 @@ CCMD (doublebind)
 		
 		for (i = 0; i < NUM_KEYS; i++)
 		{
-			if (DoubleBindings[i])
-				Printf ("%s \"%s\"\n", KeyName (i), DoubleBindings[i]);
+			if (!DoubleBindings[i].IsEmpty())
+				Printf ("%s \"%s\"\n", KeyName (i), DoubleBindings[i].GetChars());
 		}
 	}
 }
@@ -610,7 +594,7 @@ void C_ArchiveBindings (FConfigFile *f, bool dodouble, const char *matchcmd)
 
 	for (i = 0; i < NUM_KEYS; i++)
 	{
-		if (bindings[i] && (matchcmd==NULL || stricmp(bindings[i], matchcmd)==0))
+		if (!bindings[i].IsEmpty() && (matchcmd==NULL || stricmp(bindings[i], matchcmd)==0))
 		{
 			name = KeyName (i);
 			if (name[1] == 0)	// Make sure given name is config-safe
@@ -628,8 +612,7 @@ void C_ArchiveBindings (FConfigFile *f, bool dodouble, const char *matchcmd)
 			if (matchcmd != NULL)
 			{ // If saving a specific command, remove the old binding
 			  // so it does not get saved in the general binding list
-				delete[] Bindings[i];
-				Bindings[i] = NULL;
+				Bindings[i] = "";
 			}
 		}
 	}
@@ -671,7 +654,7 @@ int C_GetKeysForCommand (char *cmd, int *first, int *second)
 
 	while (i < NUM_KEYS && c < 2)
 	{
-		if (Bindings[i] && stricmp (cmd, Bindings[i]) == 0)
+		if (stricmp (cmd, Bindings[i]) == 0)
 		{
 			if (c++ == 0)
 				*first = i;
@@ -712,10 +695,9 @@ void C_UnbindACommand (char *str)
 
 	for (i = 0; i < NUM_KEYS; i++)
 	{
-		if (Bindings[i] && !stricmp (str, Bindings[i]))
+		if (!stricmp (str, Bindings[i]))
 		{
-			delete[] Bindings[i];
-			Bindings[i] = NULL;
+			Bindings[i] = "";
 		}
 	}
 }
@@ -724,10 +706,7 @@ void C_ChangeBinding (const char *str, int newone)
 {
 	if ((unsigned int)newone < NUM_KEYS)
 	{
-		if (Bindings[newone])
-			delete[] Bindings[newone];
-
-		Bindings[newone] = copystring (str);
+		Bindings[newone] = str;
 	}
 }
 

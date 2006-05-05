@@ -1,8 +1,40 @@
+/*
+** name.h
+**
+**---------------------------------------------------------------------------
+** Copyright 2005-2006 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #ifndef NAME_H
 #define NAME_H
 
-#include "zstring.h"
-#include "tarray.h"
+#include "doomtype.h"
 
 enum ENamedName
 {
@@ -15,28 +47,24 @@ class FName
 {
 public:
 	FName () : Index(0) {}
-	FName (const char *text) { Index = FindName (text, false); }
-	FName (const FString &text) { Index = FindName (text.GetChars(), false); }
-	FName (const char *text, bool noCreate) { Index = FindName (text, noCreate); }
-	FName (const FString &text, bool noCreate) { Index = FindName (text.GetChars(), noCreate); }
+	FName (const char *text) { Index = NameData.FindName (text, false); }
+	FName (const char *text, bool noCreate) { Index = NameData.FindName (text, noCreate); }
 	FName (const FName &other) { Index = other.Index; }
 	FName (ENamedName index) { Index = index; }
  //   ~FName () {}	// Names can be added but never removed.
 
 	int GetIndex() const { return Index; }
 	operator int() const { return Index; }
-	const FString &GetText() const { return NameArray[Index].Text; }
-	const char *GetChars() const { return NameArray[Index].Text.GetChars(); }
+	const char *GetChars() const { return NameData.NameArray[Index].Text; }
+	operator const char *() const { return NameData.NameArray[Index].Text; }
 
-	FName &operator = (const char *text) { Index = FindName (text, false); return *this; }
-	FName &operator = (const FString &text) { Index = FindName (text.GetChars(), false); return *this; }
+	FName &operator = (const char *text) { Index = NameData.FindName (text, false); return *this; }
 	FName &operator = (const FName &other) { Index = other.Index; return *this; }
 	FName &operator = (ENamedName index) { Index = index; return *this; }
 
-	int SetName (const char *text, bool noCreate) { return Index = FindName (text, false); }
-	int SetName (const FString &text, bool noCreate) { return Index = FindName (text.GetChars(), false); }
+	int SetName (const char *text, bool noCreate=false) { return Index = NameData.FindName (text, noCreate); }
 
-	bool IsValidName() const { return (unsigned int)Index < NameArray.Size(); }
+	bool IsValidName() const { return (unsigned)Index < (unsigned)NameData.NumNames; }
 
 	// Note that the comparison operators compare the names' indices, not
 	// their text, so they cannot be used to do a lexicographical sort.
@@ -57,47 +85,36 @@ public:
 private:
 	int Index;
 
-	enum { HASH_SIZE = 256 };
-
-	struct MainName
+	struct NameEntry
 	{
-		MainName (int next);
-		MainName (const MainName &other) : Text(other.Text), NextHash(other.NextHash) {}
-		MainName () {}
-		FString Text;
+		char *Text;
+		DWORD Hash;
 		int NextHash;
-
-		void *operator new (size_t size, MainName *addr)
-		{
-			return addr;
-		}
-		void operator delete (void *, MainName *)
-		{
-		}
 	};
-	static TArray<MainName> NameArray;
-	static int Buckets[HASH_SIZE];
-	static int FindName (const char *text, bool noCreate);
-	static void InitBuckets ();
-	static bool Inited;
 
-#ifndef __GNUC__
-	template<> friend void CopyForTArray<MainName> (MainName &dst, MainName &src)
+	struct NameManager
 	{
-		dst.NextHash = src.NextHash;
-		CopyForTArray (dst.Text, src.Text);
-	}
-#else
-	template<class MainName> friend inline void CopyForTArray (MainName &dst, MainName &src);
-#endif
-};
+		// No constructor because we can't ensure that it actually gets
+		// called before any FNames are constructed during startup. This
+		// means this struct must only exist in the program's BSS section.
+		~NameManager();
 
-#ifdef __GNUC__
-template<> inline void CopyForTArray<FName::MainName> (FName::MainName &dst, FName::MainName &src)
-{
-	dst.NextHash = src.NextHash;
-	CopyForTArray (dst.Text, src.Text);
-}
-#endif
+		enum { HASH_SIZE = 256 };
+		struct NameBlock;
+
+		NameBlock *Blocks;
+		NameEntry *NameArray;
+		int NumNames, MaxNames;
+		int Buckets[HASH_SIZE];
+
+		int FindName (const char *text, bool noCreate);
+		int AddName (const char *text, DWORD hash, DWORD bucket);
+		NameBlock *AddBlock (size_t len);
+		void InitBuckets ();
+		bool Inited;
+	};
+
+	static NameManager NameData;
+};
 
 #endif

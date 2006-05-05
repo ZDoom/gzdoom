@@ -464,7 +464,7 @@ DObject::DObject ()
 : ObjectFlags(0), Class(0)
 {
 	if (FreeIndices.Pop (Index))
-		Objects[Index] = this;
+		Objects[(unsigned int)Index] = this;
 	else
 		Index = Objects.Push (this);
 }
@@ -473,7 +473,7 @@ DObject::DObject (TypeInfo *inClass)
 : ObjectFlags(0), Class(inClass)
 {
 	if (FreeIndices.Pop (Index))
-		Objects[Index] = this;
+		Objects[(unsigned int)Index] = this;
 	else
 		Index = Objects.Push (this);
 }
@@ -559,7 +559,7 @@ void DObject::RemoveFromArray ()
 	}
 	else if (Objects.Size() > Index)
 	{
-		Objects[Index] = NULL;
+		Objects[(unsigned int)Index] = NULL;
 		FreeIndices.Push (Index);
 	}
 }

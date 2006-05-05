@@ -551,7 +551,7 @@ FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id, size_t chunklen)
 	: FCompressedFile (file, EReading, true, false), m_ChunkID (id)
 {
 	m_Buffer = (byte *)M_Malloc (chunklen);
-	m_BufferSize = chunklen;
+	m_BufferSize = (unsigned int)chunklen;
 	fread (m_Buffer, chunklen, 1, m_File);
 	// Skip the CRC for now. Maybe later it will be used.
 	fseek (m_File, 4, SEEK_CUR);

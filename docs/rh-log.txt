@@ -1,4 +1,27 @@
+May 6, 2006
+- Updated Italian strings that someone kindly e-mailed to me.
+- The CRT no longer detects any memory leaks when I run to the IWAD picker and quit.
+- Fixed: The memory used to hold the path to zdoom.wad/.pk3 was not freed if
+  the IWAD picker was cancelled.
+- Fixed: Some implementations of cvar->GetGenericRep (CVAR_String) returned a 
+  statically allocated string and others returned a dynamically allocated string.
+  To be consistant, they should all be static.
+- Fixed: DObject also has three static TArrays that should not be explicitly
+  initialized: Objects, FreeIndices, and ToDestroy.
+- Added a new do-nothing constructor for TArray that can be used for BSS objects
+  that are manipulated before startup. Specifically, this was added because
+  C_AddTabCommand() is called before main, but the TabCommands constructor is
+  called after the array already has over 100 entries in it, orphaning everything
+  that was already inserted. And since the code is much nicer-looking now, I didn't
+  want to revert to the old non-TArray version.
+  
+  This could also have been used to fix FName, but I consider the current
+  implementation to be better than the old one, so I'm leaving it as-is.
+
 May 5, 2006
+- Fixed: Scanned IWAD paths were not freed if you exited without selecting one.
+- Fixed: Dynamically allocated cvars were not freed on exit.
+- Fixed: FConfigFile's destructor did not free space used for Values.
 - Added "DropItem None" as a way for inherited actors to avoid dropping items if
   their superclass normally does. This is only needed if somebody dehacks
   DeadZombieMan or DeadShotgunGuy.

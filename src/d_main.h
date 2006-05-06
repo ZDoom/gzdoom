@@ -77,7 +77,7 @@ enum EIWADType
 
 struct WadStuff
 {
-	char *Path;
+	FString Path;
 	EIWADType Type;
 };
 

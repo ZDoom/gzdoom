@@ -455,9 +455,9 @@ CCMD (dumpclasses)
 	Printf ("%d classes shown, %d omitted\n", shown, omitted);
 }
 
-TArray<DObject *> DObject::Objects;
-TArray<size_t> DObject::FreeIndices;
-TArray<DObject *> DObject::ToDestroy;
+TArray<DObject *> DObject::Objects (TArray<DObject *>::NoInit);
+TArray<size_t> DObject::FreeIndices (TArray<size_t>::NoInit);
+TArray<DObject *> DObject::ToDestroy (TArray<DObject *>::NoInit);
 bool DObject::Inactive;
 
 DObject::DObject ()

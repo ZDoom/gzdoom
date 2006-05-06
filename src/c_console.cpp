@@ -528,6 +528,21 @@ static void AddLine (const char *text, bool more, int len)
 	}
 }
 
+static char *work = NULL;
+static int worklen = 0;
+
+static struct FreeWork
+{
+	~FreeWork()
+	{
+		if (work != NULL)
+		{
+			free (work);
+			work = NULL;
+		}
+	}
+} FreeTheWork;
+
 void AddToConsole (int printlevel, const char *text)
 {
 	static enum
@@ -536,8 +551,6 @@ void AddToConsole (int printlevel, const char *text)
 		APPENDLINE,
 		REPLACELINE
 	} addtype = NEWLINE;
-	static char *work = NULL;
-	static int worklen = 0;
 
 	char *work_p;
 	char *linestart;
@@ -1721,7 +1734,7 @@ struct TabData
 	}
 };
 
-static TArray<TabData> TabCommands;
+static TArray<TabData> TabCommands (TArray<TabData>::NoInit);
 static int TabPos;				// Last TabCommand tabbed to
 static int TabStart;			// First char in CmdLine to use for tab completion
 static int TabSize;				// Size of tab string

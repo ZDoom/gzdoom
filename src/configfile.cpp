@@ -85,6 +85,7 @@ FConfigFile::~FConfigFile ()
 		while (entry != NULL)
 		{
 			FConfigEntry *nextentry = entry->Next;
+			delete[] entry->Value;
 			delete[] (char *)entry;
 			entry = nextentry;
 		}

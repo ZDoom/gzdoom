@@ -73,6 +73,20 @@ template <class T>
 class TArray
 {
 public:
+	////////
+	// This is a dummy constructor that does nothing. The purpose of this
+	// is so you can create a global TArray in the data segment that gets
+	// used by code before startup without worrying about the constructor
+	// resetting it after it's already been used. You MUST NOT use it for
+	// heap- or stack-allocated TArrays.
+	enum ENoInit
+	{
+		NoInit
+	};
+	TArray (ENoInit dummy)
+	{
+	}
+	////////
 	TArray ()
 	{
 		Most = 0;
@@ -278,7 +292,8 @@ private:
 
 	void DoResize ()
 	{
-		T *newarray = (T *)M_Malloc (sizeof(T)*Most);
+		size_t allocsize = sizeof(T)*Most;
+		T *newarray = (T *)M_Malloc (allocsize);
 		for (unsigned int i = 0; i < Count; ++i)
 		{
 			CopyForTArray (newarray[i], Array[i]);

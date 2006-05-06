@@ -1477,7 +1477,7 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 	// Search for a pre-defined IWAD
 	for (i = IWADNames[0] ? 0 : 1; IWADNames[i]; i++)
 	{
-		if (wads[i].Path == NULL)
+		if (wads[i].Path.IsEmpty())
 		{
 			sprintf (iwad, "%s%s%s", doomwaddir, slash, IWADNames[i]);
 			FixPathSeperator (iwad);
@@ -1486,7 +1486,7 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 				wads[i].Type = ScanIWAD (iwad);
 				if (wads[i].Type != NUM_IWAD_TYPES)
 				{
-					wads[i].Path = copystring (iwad);
+					wads[i].Path = iwad;
 					numfound++;
 				}
 			}
@@ -1541,7 +1541,7 @@ static int CheckIWADinEnvDir (const char *envname, WadStuff *wads)
 //
 //==========================================================================
 
-static EIWADType IdentifyVersion (void)
+static EIWADType IdentifyVersion (const char *zdoom_wad)
 {
 	WadStuff wads[sizeof(IWADNames)/sizeof(char *)];
 	size_t foundwads[NUM_IWAD_TYPES] = { 0 };
@@ -1658,6 +1658,9 @@ static EIWADType IdentifyVersion (void)
 	if (pickwad < 0)
 		exit (0);
 
+	// zdoom.pk3 must always be the first file loaded and the IWAD second.
+	D_AddFile (zdoom_wad);
+
 	if (wads[pickwad].Type == IWAD_HexenDK)
 	{ // load hexen.wad before loading hexdd.wad
 		D_AddFile (wads[foundwads[IWAD_Hexen]-1].Path);
@@ -1678,11 +1681,6 @@ static EIWADType IdentifyVersion (void)
 		}
 		strcpy (filepart, "voices.wad");
 		D_AddFile (wads[pickwad].Path);
-	}
-
-	for (i = 0; i < numwads; i++)
-	{
-		delete[] wads[i].Path;
 	}
 
 	return wads[pickwad].Type;
@@ -1927,17 +1925,19 @@ void D_DoomMain (void)
 	// as it contains magic stuff we need.
 
 	wad = BaseFileSearch ("zdoom.pk3", NULL, true);
-	if (wad)
-		D_AddFile (wad);
-	else
+	if (wad == NULL)
+	{
 		I_FatalError ("Cannot find zdoom.pk3");
+	}
 
-	I_SetTitleString (IWADTypeNames[IdentifyVersion ()]);
+	I_SetTitleString (IWADTypeNames[IdentifyVersion(wad)]);
 	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
 
 	// [RH] zvox.wad - A wad I had intended to be automatically generated
 	// from Q2's pak0.pak so the female and cyborg player could have
 	// voices. I never got around to writing the utility to do it, though.
+	// And I probably never will now. But I know at least one person uses
+	// it for something else, so this gets to stay here.
 	wad = BaseFileSearch ("zvox.wad", NULL);
 	if (wad)
 		D_AddFile (wad);

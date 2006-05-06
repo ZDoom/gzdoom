@@ -74,9 +74,9 @@ spalhtic.lmp                spalhtic.lmp
 ========
 # Language lumps
 
-language.en                 languages/english-us.txt
+language.enu                languages/english-us.txt
 language.fr                 languages/french.txt
-language.it                 languages/italian.txt
+language.ita                languages/italian.txt
 
 ========
 

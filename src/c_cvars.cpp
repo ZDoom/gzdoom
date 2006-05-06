@@ -68,6 +68,22 @@ FBaseCVar *CVars = NULL;
 
 int cvar_defflags;
 
+static struct RuntimeCVarDestroyer
+{
+	~RuntimeCVarDestroyer()
+	{
+		FBaseCVar *var, *next;
+		for (var = CVars; var != NULL; var = next)
+		{
+			next = var->m_Next;
+			if (var->GetFlags() & CVAR_UNSETTABLE)
+			{
+				delete var;
+			}
+		}
+	}
+} DestroyTheRuntimeCVars;
+
 FBaseCVar::FBaseCVar (const FBaseCVar &var)
 {
 	I_FatalError ("Use of cvar copy constructor");
@@ -810,7 +826,7 @@ UCVarValue FStringCVar::GetFavoriteRep (ECVarType *type) const
 {
 	UCVarValue ret;
 	*type = CVAR_String;
-	ret.String = copystring (Value);
+	ret.String = Value;
 	return ret;
 }
 
@@ -823,7 +839,7 @@ UCVarValue FStringCVar::GetFavoriteRepDefault (ECVarType *type) const
 {
 	UCVarValue ret;
 	*type = CVAR_String;
-	ret.String = copystring (DefaultValue);
+	ret.String = DefaultValue;
 	return ret;
 }
 
@@ -890,11 +906,9 @@ UCVarValue FColorCVar::FromInt2 (int value, ECVarType type)
 	if (type == CVAR_String)
 	{
 		UCVarValue ret;
-		char work[9];
-
-		sprintf (work, "%02x %02x %02x",
+		sprintf (cstrbuf, "%02x %02x %02x",
 			RPART(value), GPART(value), BPART(value));
-		ret.String = copystring (work);
+		ret.String = cstrbuf;
 		return ret;
 	}
 	return FromInt (value, type);

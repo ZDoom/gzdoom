@@ -174,6 +174,8 @@ private:
 	friend void C_SetCVarsToDefaults (void);
 
 	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter);
+
+	friend struct RuntimeCVarDestroyer;
 };
 
 class FBoolCVar : public FBaseCVar

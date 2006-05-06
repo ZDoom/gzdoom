@@ -187,6 +187,7 @@ decorate.txt				decorate/decorate.txt
 actors/shared/debris.txt					decorate/shared/debris.txt
 actors/shared/splashes.txt					decorate/shared/splashes.txt
 
+actors/doom/deadthings.txt					decorate/doom/deadthings.txt
 actors/doom/doomarmor.txt					decorate/doom/doomarmor.txt
 actors/doom/doomartifacts.txt				decorate/doom/doomartifacts.txt
 actors/doom/doomkeys.txt					decorate/doom/doomkeys.txt

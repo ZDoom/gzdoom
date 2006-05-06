@@ -161,6 +161,9 @@ struct FState
 	{
 		Frame = (Frame & (SF_FULLBRIGHT|SF_BIGTIC)) | (frame-'A');
 	}
+
+	static const TypeInfo *StaticFindStateOwner (const FState *state);
+	static const TypeInfo *StaticFindStateOwner (const FState *state, const FActorInfo *info);
 };
 
 // A truly awful hack to get to the state that called an action function

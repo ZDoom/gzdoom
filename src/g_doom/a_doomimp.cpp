@@ -168,36 +168,3 @@ void A_TroopAttack (AActor *self)
 	// launch a missile
 	P_SpawnMissile (self, self->target, RUNTIME_CLASS(ADoomImpBall));
 }
-
-// Dead imp ----------------------------------------------------------------
-
-class ADeadDoomImp : public ADoomImp
-{
-	DECLARE_STATELESS_ACTOR (ADeadDoomImp, ADoomImp)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ADeadDoomImp, Doom, 20, 0)
-	PROP_SpawnState (S_TROO_DIE+4)
-
-	// Undo all the changes to default Actor properties that ADoomImp made
-	PROP_SpawnHealth (1000)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
-	PROP_Mass (100)
-	PROP_SpeedFixed (0)
-	PROP_PainChance (0)
-	PROP_Flags (0)
-	PROP_Flags2 (0)
-	PROP_Flags3 (0)
-	PROP_SeeState (255)
-	PROP_PainState (255)
-	PROP_MissileState (255)
-	PROP_DeathState (255)
-	PROP_XDeathState (255)
-	PROP_RaiseState (255)
-	PROP_SeeSound ("")
-	PROP_PainSound ("")
-	PROP_DeathSound ("")
-	PROP_ActiveSound ("")
-	PROP_AttackSound ("")
-END_DEFAULTS

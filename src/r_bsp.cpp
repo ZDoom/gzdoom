@@ -78,7 +78,7 @@ fixed_t			rw_frontcz1, rw_frontcz2;
 fixed_t			rw_frontfz1, rw_frontfz2;
 
 
-unsigned int	MaxDrawSegs;
+size_t			MaxDrawSegs;
 drawseg_t		*drawsegs;
 drawseg_t*		firstdrawseg;
 drawseg_t*		ds_p;

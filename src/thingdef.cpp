@@ -65,6 +65,7 @@
 #include "a_hexenglobal.h"
 #include "a_weaponpiece.h"
 #include "p_conversation.h"
+#include "v_text.h"
 #include "thingdef.h"
 
 
@@ -74,7 +75,7 @@ extern TArray<FActorInfo *> Decorations;
 // allow decal specifications in DECORATE. Decals are loaded after DECORATE so the names must be stored here.
 TArray<char*> DecalNames;
 // all state parameters
-TArray<int> StateParameters;
+TArray<intptr_t> StateParameters;
 
 //==========================================================================
 //
@@ -989,8 +990,11 @@ void A_NoBlocking (AActor *actor)
 
 		while (di != NULL)
 		{
-			const TypeInfo *ti = TypeInfo::FindType(di->Name);
-			if (ti) P_DropItem (actor, ti, di->amount, di->probability);
+			if (stricmp (di->Name, "None") != 0)
+			{
+				const TypeInfo *ti = TypeInfo::FindType(di->Name);
+				if (ti) P_DropItem (actor, ti, di->amount, di->probability);
+			}
 			di = di->Next;
 		}
 	}
@@ -1422,7 +1426,7 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 	FState * laststate = NULL;
 	intptr_t lastlabel = -1;
 	FState ** stp;
-	int minrequiredstate = 0;
+	int minrequiredstate = -1;
 
 	statestring[255] = 0;
 
@@ -1433,8 +1437,14 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 		SC_MustGetString();
 		if (SC_Compare("GOTO"))
 		{
-			SC_MustGetString();
+do_goto:	SC_MustGetString();
 			strncpy (statestring, sc_String, 255);
+			if (SC_CheckString ("."))
+			{
+				SC_MustGetString ();
+				strcat (statestring, ".");
+				strcat (statestring, sc_String);
+			}
 			if (SC_CheckString ("+"))
 			{
 				SC_MustGetNumber ();
@@ -1493,6 +1503,7 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 
 			if (SC_Compare (":"))
 			{
+				laststate = NULL;
 				do
 				{
 					lastlabel = count;
@@ -1501,10 +1512,13 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 					else 
 						SC_ScriptError("Unknown state label %s", statestring);
 					SC_MustGetString ();
+					if (SC_Compare ("Goto"))
+					{
+						goto do_goto;
+					}
 					strncpy(statestring, sc_String, 255);
 					SC_MustGetString ();
 				} while (SC_Compare (":"));
-				laststate = NULL;
 //				continue;
 			}
 
@@ -1747,6 +1761,88 @@ endofstate:
 
 //==========================================================================
 //
+// ResolveGotoLabel
+//
+//==========================================================================
+
+static FState *ResolveGotoLabel (AActor *actor, const TypeInfo *type, char *name)
+{
+	FState **stp, *state;
+	char *namestart = name;
+	char *label, *offset, *pt;
+	int v;
+
+	// Check for classname
+	if ((pt = strchr (name, '.')) != NULL)
+	{
+		const char *classname = name;
+		*pt = '\0';
+		name = pt + 1;
+
+		// The classname may either be "Super" to identify this class's immediate
+		// superclass, or it may the name of any class that this one derives from.
+		if (stricmp (classname, "Super") == 0)
+		{
+			type = type->ParentType;
+			actor = GetDefaultByType (type);
+		}
+		else
+		{
+			const TypeInfo *stype = TypeInfo::IFindType (classname);
+			if (stype == NULL)
+			{
+				SC_ScriptError ("%s is an unknown class.", classname);
+			}
+			if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
+			{
+				SC_ScriptError ("%s is not an actor class, so it has no states.", stype->Name+1);
+			}
+			if (!stype->IsAncestorOf (type))
+			{
+				SC_ScriptError ("%s is not derived from %s so cannot access its states.",
+					type->Name+1, stype->Name+1);
+			}
+			if (type != stype)
+			{
+				type = stype;
+				actor = GetDefaultByType (type);
+			}
+		}
+	}
+	label = name;
+	// Check for offset
+	offset = NULL;
+	if ((pt = strchr (name, '+')) != NULL)
+	{
+		*pt = '\0';
+		offset = pt + 1;
+	}
+	v = offset ? strtol (offset, NULL, 0) : 0;
+
+	// Calculate the state's address.
+	stp = FindState (actor, type, label);
+	state = NULL;
+	if (stp != NULL)
+	{
+		if (*stp != NULL)
+		{
+			state = *stp + v;
+		}
+		else if (v != 0)
+		{
+			SC_ScriptError ("Attempt to get invalid state from actor %s.", type->Name+1);
+		}
+	}
+	else
+	{
+		SC_ScriptError("Unknown state label %s", label);
+	}
+	free(namestart);		// free the allocated string buffer
+	return state;
+}
+
+//==========================================================================
+//
 // FixStatePointers
 //
 // Fixes an actor's default state pointers.
@@ -1776,14 +1872,15 @@ static void FixStatePointers (FActorInfo *actor, FState **start, FState **stop)
 //
 //==========================================================================
 
-static void FixStatePointersAgain (FActorInfo *actor, FState **start, FState **stop)
+static void FixStatePointersAgain (FActorInfo *actor, AActor *defaults, FState **start, FState **stop)
 {
 	FState **stp;
 
 	for (stp = start; stp <= stop; ++stp)
 	{
-		if (*stp != NULL && (*stp < actor->OwnedStates || *stp >= actor->OwnedStates + actor->NumOwnedStates))
-		{ // It doesn't point into this actor's own states, so it must be a label string. Resolve it.
+		if (*stp != NULL && FState::StaticFindStateOwner (*stp, actor) == NULL)
+		{ // It's not a valid state, so it must be a label string. Resolve it.
+			*stp = ResolveGotoLabel (defaults, actor->Class, (char *)*stp);
 		}
 	}
 }
@@ -1796,82 +1893,79 @@ static void FixStatePointersAgain (FActorInfo *actor, FState **start, FState **s
 //==========================================================================
 static int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 {
-	FState **stp;
 	int count = StateArray.Size();
-	FState * realstates=new FState[count];
+	FState *realstates = new FState[count];
 	int i;
 	int currange;
 
-	memcpy(realstates,&StateArray[0],count*sizeof(FState));
-	actor->OwnedStates=realstates;
-	actor->NumOwnedStates=count;
-
-	// adjust the state pointers
-	// In the case new states are added these must be adjusted, too!
-	FixStatePointers (actor, &defaults->SpawnState, &defaults->GreetingsState);
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	if (count > 0)
 	{
-		AWeapon * weapon=(AWeapon*)defaults;
+		memcpy(realstates, &StateArray[0], count*sizeof(FState));
+		actor->OwnedStates = realstates;
+		actor->NumOwnedStates = count;
 
-		FixStatePointers (actor, &weapon->UpState, &weapon->FlashState);
-	}
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ACustomInventory)))
-	{
-		ACustomInventory * item=(ACustomInventory*)defaults;
-
-		FixStatePointers (actor, &item->UseState, &item->DropState);
-	}
-
-	for(i = currange = 0; i < count; i++)
-	{
-		// resolve labels and jumps
-		switch((ptrdiff_t)realstates[i].NextState)
+		// adjust the state pointers
+		// In the case new states are added these must be adjusted, too!
+		FixStatePointers (actor, &defaults->SpawnState, &defaults->GreetingsState);
+		if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
-		case 0:		// next
-			realstates[i].NextState=(i<count-1? &realstates[i+1]:&realstates[0]);
-			break;
+			AWeapon *weapon = (AWeapon*)defaults;
 
-		case -1:	// stop
-			realstates[i].NextState=NULL;
-			break;
+			FixStatePointers (actor, &weapon->UpState, &weapon->FlashState);
+		}
+		if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ACustomInventory)))
+		{
+			ACustomInventory *item = (ACustomInventory*)defaults;
 
-		case -2:	// wait
-			realstates[i].NextState=&realstates[i];
-			break;
+			FixStatePointers (actor, &item->UseState, &item->DropState);
+		}
 
-		default:	// loop
-			if ((size_t)realstates[i].NextState < 0x10000)
+		for(i = currange = 0; i < count; i++)
+		{
+			// resolve labels and jumps
+			switch((ptrdiff_t)realstates[i].NextState)
 			{
-				realstates[i].NextState=&realstates[(size_t)realstates[i].NextState-1];
-			}
-			else	// goto
-			{
-				char *label = strtok ((char*)realstates[i].NextState, "+");
-				char *labelpt = label;
-				char *offset = strtok (NULL, "+");
-				int v = offset ? strtol (offset, NULL, 0) : 0;
+			case 0:		// next
+				realstates[i].NextState = (i < count-1 ? &realstates[i+1] : &realstates[0]);
+				break;
 
-				stp = FindState (defaults, bag.Info->Class, label);
-				if (stp)
+			case -1:	// stop
+				realstates[i].NextState = NULL;
+				break;
+
+			case -2:	// wait
+				realstates[i].NextState = &realstates[i];
+				break;
+
+			default:	// loop
+				if ((size_t)realstates[i].NextState < 0x10000)
 				{
-					if (*stp) realstates[i].NextState=*stp+v;
-					else 
-					{
-						realstates[i].NextState=NULL;
-						if (v)
-						{
-							SC_ScriptError("Attempt to get invalid state from actor %s\n", actor->Class->Name);
-							return 0;
-						}
-					}
+					realstates[i].NextState = &realstates[(size_t)realstates[i].NextState-1];
 				}
-				else 
-					SC_ScriptError("Unknown state label %s", label);
-				free(labelpt);		// free the allocated string buffer
+				else	// goto
+				{
+					realstates[i].NextState = ResolveGotoLabel (defaults, bag.Info->Class, (char *)realstates[i].NextState);
+				}
 			}
 		}
 	}
 	StateArray.Clear ();
+
+	// Fix state pointers that are gotos
+	FixStatePointersAgain (actor, defaults, &defaults->SpawnState, &defaults->GreetingsState);
+	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	{
+		AWeapon *weapon = (AWeapon*)defaults;
+
+		FixStatePointersAgain (actor, defaults, &weapon->UpState, &weapon->FlashState);
+	}
+	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ACustomInventory)))
+	{
+		ACustomInventory *item = (ACustomInventory*)defaults;
+
+		FixStatePointersAgain (actor, defaults, &item->UseState, &item->DropState);
+	}
+
 	return count;
 }
 
@@ -2061,6 +2155,29 @@ void ProcessActor(void (*process)(FState *, int))
 #endif
 
 	SC_SetCMode (false);
+}
+
+//==========================================================================
+//
+// StatePropertyIsDeprecated
+//
+// Deprecated means it will be removed in a future version.
+//
+//==========================================================================
+
+static void StatePropertyIsDeprecated (const char *actorname, const char *prop)
+{
+	static bool warned = false;
+
+	Printf (TEXTCOLOR_YELLOW "In actor %s, the %s property is deprecated.\n",
+		actorname, prop);
+	if (!warned)
+	{
+		warned = true;
+		Printf (TEXTCOLOR_YELLOW "Instead of \"%s <state>\", add this to the actor's States block:\n"
+				TEXTCOLOR_YELLOW "    %s:\n"
+				TEXTCOLOR_YELLOW "        Goto <state>\n", prop, prop);
+	}
 }
 
 //==========================================================================
@@ -2336,6 +2453,7 @@ static void ActorDropItem (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorSpawnState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Spawn");
 	defaults->SpawnState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2344,6 +2462,7 @@ static void ActorSpawnState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorSeeState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "See");
 	defaults->SeeState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2352,6 +2471,7 @@ static void ActorSeeState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorMeleeState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Melee");
 	defaults->MeleeState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2360,6 +2480,7 @@ static void ActorMeleeState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorMissileState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Missile");
 	defaults->MissileState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2368,6 +2489,7 @@ static void ActorMissileState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorPainState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Pain");
 	defaults->PainState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2376,6 +2498,7 @@ static void ActorPainState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorDeathState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Death");
 	defaults->DeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2384,6 +2507,7 @@ static void ActorDeathState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorXDeathState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "XDeath");
 	defaults->XDeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2392,6 +2516,7 @@ static void ActorXDeathState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorBurnState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Burn");
 	defaults->BDeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2400,6 +2525,7 @@ static void ActorBurnState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorIceState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Ice");
 	defaults->IDeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2408,6 +2534,7 @@ static void ActorIceState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorRaiseState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Raise");
 	defaults->RaiseState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2416,6 +2543,7 @@ static void ActorRaiseState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorCrashState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Crash");
 	defaults->CrashState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2424,6 +2552,7 @@ static void ActorCrashState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorCrushState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Crush");
 	defaults->CrushState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2432,6 +2561,7 @@ static void ActorCrushState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorWoundState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Wound");
 	defaults->WoundState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2440,6 +2570,7 @@ static void ActorWoundState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorDisintegrateState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Disintegrate");
 	defaults->EDeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2448,6 +2579,7 @@ static void ActorDisintegrateState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorHealState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Heal");
 	defaults->HealState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2456,6 +2588,7 @@ static void ActorHealState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorYesState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Yes");
 	defaults->YesState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2464,6 +2597,7 @@ static void ActorYesState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorNoState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "No");
 	defaults->NoState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2472,6 +2606,7 @@ static void ActorNoState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorGreetingsState (AActor *defaults, Baggage &bag)
 {
+	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Greetings");
 	defaults->GreetingsState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -3492,5 +3627,3 @@ void FinishThingdef()
 		}
 	}
 }
-
-

@@ -66,6 +66,8 @@ extern void LoadDecorations (void (*process)(FState *, int));
 
 FArchive &operator<< (FArchive &arc, FState *&state)
 {
+	const TypeInfo *info;
+
 	if (arc.IsStoring ())
 	{
 		if (state == NULL)
@@ -75,41 +77,17 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 			return arc;
 		}
 
-		FActorInfo *info = RUNTIME_CLASS(AActor)->ActorInfo;
+		info = FState::StaticFindStateOwner (state);
 
-		if (state >= info->OwnedStates &&
-			state < info->OwnedStates + info->NumOwnedStates)
+		if (info != NULL)
 		{
-			arc.UserWriteClass (RUNTIME_CLASS(AActor));
-			arc.WriteCount ((DWORD)(state - info->OwnedStates));
-			return arc;
+			arc.UserWriteClass (info);
+			arc.WriteCount ((DWORD)(state - info->ActorInfo->OwnedStates));
 		}
-
-		TAutoSegIterator<FActorInfo *, &ARegHead, &ARegTail> reg;
-		while (++reg != NULL)
+		else
 		{
-			if (state >= reg->OwnedStates &&
-				state <  reg->OwnedStates + reg->NumOwnedStates)
-			{
-				arc.UserWriteClass (reg->Class);
-				arc.WriteCount ((DWORD)(state - reg->OwnedStates));
-				return arc;
-			}
+			I_Error ("Cannot find owner for state %p\n", state);
 		}
-
-		for (unsigned int i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
-		{
-			FActorInfo *info = TypeInfo::m_RuntimeActors[i]->ActorInfo;
-			if (state >= info->OwnedStates &&
-				state <  info->OwnedStates + info->NumOwnedStates)
-			{
-				arc.UserWriteClass (info->Class);
-				arc.WriteCount ((DWORD)(state - info->OwnedStates));
-				return arc;
-			}
-		}
-
-		I_Error ("Cannot find owner for state %p\n", state);
 	}
 	else
 	{
@@ -132,6 +110,56 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 		}
 	}
 	return arc;
+}
+
+// Find the actor that a state belongs to.
+const TypeInfo *FState::StaticFindStateOwner (const FState *state)
+{
+	const FActorInfo *info = RUNTIME_CLASS(AActor)->ActorInfo;
+
+	if (state >= info->OwnedStates &&
+		state < info->OwnedStates + info->NumOwnedStates)
+	{
+		return RUNTIME_CLASS(AActor);
+	}
+
+	TAutoSegIterator<FActorInfo *, &ARegHead, &ARegTail> reg;
+	while (++reg != NULL)
+	{
+		if (state >= reg->OwnedStates &&
+			state <  reg->OwnedStates + reg->NumOwnedStates)
+		{
+			return reg->Class;
+		}
+	}
+
+	for (unsigned int i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
+	{
+		info = TypeInfo::m_RuntimeActors[i]->ActorInfo;
+		if (state >= info->OwnedStates &&
+			state <  info->OwnedStates + info->NumOwnedStates)
+		{
+			return info->Class;
+		}
+	}
+
+	return NULL;
+}
+
+// Find the actor that a state belongs to, but restrict the search to
+// the specified type and its ancestors.
+const TypeInfo *FState::StaticFindStateOwner (const FState *state, const FActorInfo *info)
+{
+	while (info != NULL)
+	{
+		if (state >= info->OwnedStates &&
+			state <  info->OwnedStates + info->NumOwnedStates)
+		{
+			return info->Class;
+		}
+		info = info->Class->ParentType->ActorInfo;
+	}
+	return NULL;
 }
 
 // Change sprite names to indices

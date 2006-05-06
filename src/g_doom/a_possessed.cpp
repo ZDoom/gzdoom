@@ -143,41 +143,6 @@ void A_PosAttack (AActor *self)
 	P_LineAttack (self, angle, MISSILERANGE, slope, damage, MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
 }
 
-// Dead zombie man ---------------------------------------------------------
-
-class ADeadZombieMan : public AZombieMan
-{
-	DECLARE_STATELESS_ACTOR (ADeadZombieMan, AZombieMan)
-public:
-	void NoBlockingSet () {}
-};
-
-IMPLEMENT_STATELESS_ACTOR (ADeadZombieMan, Doom, 18, 0)
-	PROP_SpawnState (S_POSS_DIE+4)
-
-	// Undo all the changes to default Actor properties that AZombieMan made
-	PROP_SpawnHealth (1000)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
-	PROP_Mass (100)
-	PROP_SpeedFixed (0)
-	PROP_PainChance (0)
-	PROP_Flags (0)
-	PROP_Flags2 (0)
-	PROP_Flags3 (0)
-	PROP_SeeState (255)
-	PROP_PainState (255)
-	PROP_MissileState (255)
-	PROP_DeathState (255)
-	PROP_XDeathState (255)
-	PROP_RaiseState (255)
-	PROP_SeeSound ("")
-	PROP_PainSound ("")
-	PROP_DeathSound ("")
-	PROP_ActiveSound ("")
-	PROP_AttackSound ("")
-END_DEFAULTS
-
 // Shotgun guy -------------------------------------------------------------
 
 class AShotgunGuy : public AActor
@@ -320,41 +285,6 @@ void A_SPosAttack (AActor *self)
 	S_Sound (self, CHAN_WEAPON, "shotguy/attack", 1, ATTN_NORM);
 	A_SPosAttack2 (self);
 }
-
-// Dead shotgun guy --------------------------------------------------------
-
-class ADeadShotgunGuy : public AShotgunGuy
-{
-	DECLARE_STATELESS_ACTOR (ADeadShotgunGuy, AShotgunGuy)
-public:
-	void NoBlockingSet () {}
-};
-
-IMPLEMENT_STATELESS_ACTOR (ADeadShotgunGuy, Doom, 19, 0)
-	PROP_SpawnState (S_SPOS_DIE+4)
-
-	// Undo all the changes to default Actor properties that AShotgunGuy made
-	PROP_SpawnHealth (1000)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
-	PROP_Mass (100)
-	PROP_SpeedFixed (0)
-	PROP_PainChance (0)
-	PROP_Flags (0)
-	PROP_Flags2 (0)
-	PROP_Flags3 (0)
-	PROP_SeeState (255)
-	PROP_PainState (255)
-	PROP_MissileState (255)
-	PROP_DeathState (255)
-	PROP_XDeathState (255)
-	PROP_RaiseState (255)
-	PROP_SeeSound ("")
-	PROP_PainSound ("")
-	PROP_DeathSound ("")
-	PROP_ActiveSound ("")
-	PROP_AttackSound ("")
-END_DEFAULTS
 
 // Chaingun guy ------------------------------------------------------------
 

@@ -1,0 +1,123 @@
+// Gibbed marine -----------------------------------------------------------
+
+actor GibbedMarine 10
+{
+	Game Doom
+	States
+	{
+	Spawn:
+		PLAY W -1
+		Stop
+	}
+}
+
+// Gibbed marine (extra copy) ----------------------------------------------
+
+actor GibbedMarineExtra : GibbedMarine 12
+{
+	Game Doom
+}
+
+// Dead marine -------------------------------------------------------------
+
+actor DeadMarine 15
+{
+	Game Doom
+	States
+	{
+	Spawn:
+		PLAY N -1
+		Stop
+	}
+}
+
+/* If it wasn't for Dehacked compatibility, the rest of these would be
+ * better defined as single frame states. But since Doom reused the
+ * dead state from the original monsters, we need to do the same.
+ */
+
+// Dead zombie man ---------------------------------------------------------
+
+actor DeadZombieMan : ZombieMan 18
+{
+	Game Doom
+	DropItem None
+	Skip_Super
+	States
+	{
+	Spawn:
+		Goto Super.Death+4
+	}
+}
+
+// Dead shotgun guy --------------------------------------------------------
+
+actor DeadShotgunGuy : ShotgunGuy 19
+{
+	Game Doom
+	DropItem None
+	Skip_Super
+	States
+	{
+	Spawn:
+		Goto Super.Death+4
+	}
+};
+
+// Dead imp ----------------------------------------------------------------
+
+actor DeadDoomImp : DoomImp 20
+{
+	Game Doom
+	Skip_Super
+	States
+	{
+	Spawn:
+		Goto Super.Death+4
+	}
+}
+
+// Dead demon --------------------------------------------------------------
+
+actor DeadDemon : Demon 21
+{
+	Game Doom
+	Skip_Super
+	States
+	{
+	Spawn:
+		Goto Super.Death+5
+	}
+}
+
+// Dead cacodemon ----------------------------------------------------------
+
+actor DeadCacodemon : Cacodemon 22
+{
+	Game Doom
+	Skip_Super
+	States
+	{
+	Spawn:
+		Goto Super.Death+5
+	}
+}
+
+// Dead lost soul ----------------------------------------------------------
+
+/* [RH] Considering that the lost soul removes itself when it dies, there
+ * really wasn't much point in id including this thing, but they did anyway.
+ * (There was probably a time when it stayed around after death, and this is
+ * a holdover from that.)
+ */
+
+actor DeadLostSoul : LostSoul 23
+{
+	Game Doom
+	Skip_Super
+	States
+	{
+	Spawn:
+		Goto Super.Death+5
+	}
+}

@@ -104,46 +104,6 @@ void A_SkullAttack (AActor *self)
 	self->momz = (dest->z+(dest->height>>1) - self->z) / dist;
 }
 
-// Dead lost soul ----------------------------------------------------------
-
-/* [RH] Considering that the lost soul removes itself when it dies, there
- * really wasn't much point in id including this thing, but they did anyway.
- * (There was probably a time when it stayed around after death, and this is
- * a holdover from that.)
- */
-
-class ADeadLostSoul : public ALostSoul
-{
-	DECLARE_STATELESS_ACTOR (ADeadLostSoul, ALostSoul)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ADeadLostSoul, Doom, 23, 0)
-	PROP_SpawnState (S_SKULL_DIE+5)
-
-	// Undo all the changes to default Actor properties that ALostSoul made
-	PROP_SpawnHealth (1000)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
-	PROP_Mass (100)
-	PROP_SpeedFixed (0)
-	PROP_Damage (0)
-	PROP_PainChance (0)
-	PROP_Flags (0)
-	PROP_Flags2 (0)
-	PROP_Flags3 (0)
-	PROP_Flags4 (0)
-	PROP_RenderStyle (STYLE_Normal)
-	PROP_SeeState (255)
-	PROP_PainState (255)
-	PROP_MissileState (255)
-	PROP_DeathState (255)
-	PROP_RaiseState (255)
-	PROP_PainSound ("")
-	PROP_DeathSound ("")
-	PROP_ActiveSound ("")
-	PROP_AttackSound ("")
-END_DEFAULTS
-
 //==========================================================================
 //
 // CVAR transsouls

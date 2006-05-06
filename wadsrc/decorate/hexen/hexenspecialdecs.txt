@@ -98,6 +98,7 @@ ACTOR ZTwinedTorch : SwitchableDecoration 116
 
 ACTOR ZTwinedTorchUnlit : ZTwinedTorch 117
 {
+	Game Hexen
 	States
 	{
 	Spawn:
@@ -130,6 +131,7 @@ ACTOR ZWallTorch : SwitchableDecoration 54
 
 ACTOR ZWallTorchUnlit : ZWallTorch 55
 {
+	Game Hexen
 	States
 	{
 	Spawn:
@@ -215,6 +217,7 @@ ACTOR ZFireBull : SwitchableDecoration 8042
 
 ACTOR ZFireBullUnlit : ZFireBull 8043
 {
+	Game Hexen
 	States
 	{
 	Spawn:
@@ -276,8 +279,9 @@ ACTOR ZCauldron : SwitchableDecoration 8069
 	}
 }
 
-ACTOR AZCauldronUnlit : ZCauldron
+ACTOR ZCauldronUnlit : ZCauldron
 {
+	Game Hexen
 	States
 	{
 	Spawn:

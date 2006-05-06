@@ -1746,7 +1746,10 @@ void FIMGZTexture::MakeTexture ()
 		}
 	}
 
-	if (Spans == NULL) Spans = CreateSpans (Pixels);
+	if (Spans == NULL)
+	{
+		Spans = CreateSpans (Pixels);
+	}
 }
 
 
@@ -1976,7 +1979,10 @@ void FPNGTexture::MakeTexture ()
 			delete[] oldpix;
 		}
 	}
-	if (Spans == NULL) Spans = CreateSpans (Pixels);
+	if (Spans == NULL)
+	{
+		Spans = CreateSpans (Pixels);
+	}
 }
 
 
@@ -2232,7 +2238,10 @@ void FMultiPatchTexture::MakeTexture ()
 			Parts[i].OriginX, Parts[i].OriginY);
 	}
 
-	if (Spans == NULL) Spans = CreateSpans (Pixels);
+	if (Spans == NULL)
+	{
+		Spans = CreateSpans (Pixels);
+	}
 }
 
 void FMultiPatchTexture::CheckForHacks ()

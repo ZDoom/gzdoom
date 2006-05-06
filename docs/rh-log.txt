@@ -1,3 +1,13 @@
+May 5, 2006
+- Changed TAG_MORE to pass a va_list pointer instead of a va_list because it's a
+  non-POD type when targeting several non-ix86 targets with GCC. Hopefully this works.
+
+May 4, 2006
+- Rewrote FName to use only POD types for its static data so that it can be used
+  without any explicit constructors being called.
+- Fixed: ZTwinedTorchUnlit, ZWallTorchUnlit, ZFireBullUnlit, and ZCauldronUnlit
+  were missing game filters.
+
 May 4, 2006 (Changes by Graf Zahl)
 - Converted A_Puzzleitems.cpp and parts of A_HexenSpecialdecs.cpp to DECORATE.
 - Converted A_Hexendecorations.cpp to DECORATE.

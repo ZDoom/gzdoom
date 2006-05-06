@@ -103,7 +103,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 
 	while (tag != TAG_DONE)
 	{
-		va_list more_p;
+		va_list *more_p;
 		DWORD data;
 
 		switch (tag)
@@ -114,9 +114,9 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case TAG_MORE:
-			more_p = va_arg (tags, va_list);
+			more_p = va_arg (tags, va_list*);
 			va_end (tags);
-			tags = more_p;
+			tags = *more_p;
 			break;
 
 		case DTA_DestWidth:

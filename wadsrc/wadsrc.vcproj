@@ -301,6 +301,39 @@
 				<Filter
 					Name="Strife"
 					Filter="">
+					<File
+						RelativePath=".\decorate\strife\beggars.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\merchants.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\peasants.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\questitems.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\ratbuddy.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\rebels.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\strifearmor.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\strifeitems.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\strifekeys.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\strifestuff.txt">
+					</File>
+					<File
+						RelativePath=".\decorate\strife\zombie.txt">
+					</File>
 				</Filter>
 				<Filter
 					Name="Raven"

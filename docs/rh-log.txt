@@ -18,6 +18,45 @@ May 6, 2006
   This could also have been used to fix FName, but I consider the current
   implementation to be better than the old one, so I'm leaving it as-is.
 
+May 6, 2006 (Changes by Graf Zahl)
+- Converted a_zombie.cpp and most of a_strifestuff.cpp to DECORATE.
+- Converted a_strifekeys.cpp to DECORATE and moved the pickup messages to the
+  string table.
+- Removed the WIF_HITS_GHOSTS weapon flag and replaced it with MF2_THRUGHOST. 
+  There is no need to keep two flags around with virtually the same meaning.
+- Changed the ShadowArmor to use the VISIBILITYPULSE flag to change its translucency.
+  It looks much better now than the cheap code pointer based blinking it used before.
+- Converted most of a_strifeitems.cpp to DECORATE and moved the pickup messages 
+  to the string table.
+- Converted a_strifearmor.cpp to DECORATE and moved the pickup messages to the
+  string table.
+- Moved the messages for killing spectres to the string table.
+- Converted the quest items to DECORATE. Also changed A_GiveQuestItem to get
+  the messages it prints from the string table instead of the quest item's tag
+  string.
+
+May 5, 2006 (Changes by Graf Zahl)
+- Removed the hopelessly outdated thingdef_doc.txt file from the repository.
+- Converted a_peasant.cpp and a_ratbuddy.cpp to DECORATE.
+- Fixed: C_DoKey didn't treat an empty string as 'no binding' when checking for
+  valid double bindings.
+- Converted a_merchants.cpp to DECORATE.
+- Added MF5_NODAMAGE flag to generalize the behavior of Strife's merchants which
+  can be shot but take no damage from getting hurt.
+- Converted a_beggars.cpp to DECORATE.
+- Added an Inventory.GiveQuest property. This makes it possible to define all of
+  Strife's original items that also give a quest item in DECORATE but it is also 
+  useful to define items like the ones in Day of the Acolyte without ugly workarounds.
+- Added a Tag property and Strife teaser conversation IDs to DECORATE so now it is 
+  possible to define many of Strife's items.
+- Added a FastSpeed property to DECORATE so that projectiles can finally be
+  assigned a higher speed for fast mode.
+- Added a ACS_LockedExecuteDoor special. It is basically the same as the existing
+  ACS_LockedExecute but it uses the 'door' message instead of 'remote'. This
+  cannot be integrated into ACS_LockedExecute because all its arguments are already
+  in use.
+- Added a fully customizable A_CustomMeleeAttack function for DECORATE.
+
 May 5, 2006
 - Fixed: Scanned IWAD paths were not freed if you exited without selecting one.
 - Fixed: Dynamically allocated cvars were not freed on exit.
@@ -40,6 +79,8 @@ May 4, 2006
   were missing game filters.
 
 May 4, 2006 (Changes by Graf Zahl)
+- Added Poisondamage property for DECORATE. I first did this for one of the first
+  DECORATE updates but the code seems to have gotten lost.
 - Converted A_Puzzleitems.cpp and parts of A_HexenSpecialdecs.cpp to DECORATE.
 - Converted A_Hexendecorations.cpp to DECORATE.
 - Changed the lower decal spawning code to transfer the main decal's color if
@@ -439,7 +480,7 @@ April 13, 2006 (Changes by Graf Zahl)
 - Added checks for sectors without lines to all Find* functions in p_sector.cpp
 - Fixed: Dehacked patches weren't loaded when not playing Doom.
 - Fixed: Thing_Remove must not remove living players from the map.
-- Fixed: Using $MAP in SNDINFO overrides music definitions in MAPINFO. This 
+- Fixed: Using $MAP in SNDINFO overrode music definitions in MAPINFO. This 
   made it impossible to define music in MAPINFO for Hexen.
 - Fixed: Resurrecting a morphed player must first restore the unmorphed 
   version.
@@ -534,7 +575,7 @@ April 11, 2006 (Changes by Graf Zahl)
 - Fixed: Strife's dialogs don't give weapons to the player he already has.
 - Fixed: The INDIANA cheat in Hexen gives 25 of each item, not just 1.
 - Fixed: The stair builder's compatibility mode must do a linear search
-  for sectors. Searching the hasch chain doesn't work here.
+  for sectors. Searching the hash chain doesn't work here.
 - Fixed: Any monster with a TakeSpecialDamage method should call the
   super class's method instead of simply returning the damage amount.
 - Fixed: Hexen's mash monsters cannot be frozen. No matter how you kill

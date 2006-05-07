@@ -1,0 +1,61 @@
+
+// Zombie -------------------------------------------------------------------
+
+ACTOR Zombie : StrifeHumanoid 169
+{
+	Game Strife
+	Health 31
+	Radius 20
+	Height 56
+	PainChance 0
+	+SOLID
+	+SHOOTABLE
+	+FLOORCLIP
+	+CANPASS
+	+CANPUSHWALLS
+	+ACTIVATEMCROSS
+	MinMissileChance 150
+	MaxStepHeight 16
+	MaxDropOffHeight 32
+	Translation 0
+	ConversationID 28, -1, -1
+	DeathSound "zombie/death"
+	States
+	{
+	Spawn:
+		PEAS A 5 A_CheckTerrain
+		Loop
+	Pain:
+		AGRD A 5 A_CheckTerrain
+		Loop
+	Death:
+		GIBS M 5 A_TossGib
+		GIBS N 5 A_XScream
+		GIBS O 5 A_NoBlocking
+		GIBS PQRST 4 A_TossGib
+		GIBS U 5
+		GIBS V 1400
+		Stop
+	}
+}
+
+
+// Zombie Spawner -----------------------------------------------------------
+
+ACTOR ZombieSpawner 170
+{
+	Game Strife
+	Health 20
+	+SHOOTABLE
+	+NOSECTOR
+	RenderStyle None
+	ConversationID 30, -1, -1
+	ActiveSound "zombie/spawner"	// Does Strife use this somewhere else?
+	States
+	{
+	Spawn:
+		TNT1 A 175 A_SpawnItem("Zombie", 0.1, 0)
+		Loop
+	}
+}
+

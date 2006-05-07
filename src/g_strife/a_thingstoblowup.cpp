@@ -4,6 +4,7 @@
 #include "c_console.h"
 #include "p_enemy.h"
 #include "a_action.h"
+#include "gstrings.h"
 
 static FRandom pr_bang4cloud ("Bang4Cloud");
 static FRandom pr_lightout ("LightOut");
@@ -13,11 +14,6 @@ extern const TypeInfo *QuestItemClasses[31];
 void A_TossGib (AActor *);
 void A_LoopActiveSound (AActor *);
 void A_LightGoesOut (AActor *);
-
-class ARubble1 : public AActor
-{
-	DECLARE_ACTOR (ARubble1, AActor)
-};
 
 // A Cloud used for varius explosions ---------------------------------------
 // This actor has no direct equivalent in strife. To create this, Strife
@@ -71,14 +67,14 @@ void A_Bang4Cloud (AActor *self)
 
 void A_GiveQuestItem (AActor *self)
 {
-	int questitem = (self->Speed >> FRACBITS) - 1;
+	int questitem = (self->Speed >> FRACBITS);
 	
 	// Give one of these quest items to every player in the game
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i])
 		{
-			AInventory *item = static_cast<AInventory *>(Spawn (QuestItemClasses[questitem], 0,0,0));
+			AInventory *item = static_cast<AInventory *>(Spawn (QuestItemClasses[questitem-1], 0,0,0));
 			if (!item->TryPickup (players[i].mo))
 			{
 				item->Destroy ();
@@ -86,7 +82,11 @@ void A_GiveQuestItem (AActor *self)
 		}
 	}
 
-	const char *name = QuestItemClasses[questitem]->Meta.GetMetaString (AMETA_StrifeName);
+	char messageid[64];
+
+	sprintf(messageid, "TXT_QUEST_%d", questitem);
+	const char * name = GStrings[messageid];
+
 	if (name != NULL)
 	{
 		C_MidPrint (name);
@@ -272,7 +272,7 @@ void A_LightGoesOut (AActor *self)
 
 	for (int i = 0; i < 8; ++i)
 	{
-		foo = Spawn<ARubble1> (self->x, self->y, self->z);
+		foo = Spawn("Rubble1", self->x, self->y, self->z);
 		if (foo != NULL)
 		{
 			int t = pr_lightout() & 15;

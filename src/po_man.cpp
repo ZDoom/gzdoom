@@ -194,7 +194,7 @@ void DRotatePoly::Tick ()
 			return;
 		}
 		m_Dist -= absSpeed;
-		if (m_Dist <= 0 && m_Dist+absSpeed>0)
+		if (m_Dist == 0)
 		{
 			polyobj_t *poly = GetPolyobj (m_PolyObj);
 			if (poly->specialdata == this)

@@ -3904,21 +3904,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\src\g_hexen\a_scriptprojectiles.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\src\g_hexen\a_serpent.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -4043,12 +4028,6 @@
 				RelativePath=".\src\g_strife\a_programmer.cpp">
 			</File>
 			<File
-				RelativePath=".\src\g_strife\a_questitems.cpp">
-			</File>
-			<File
-				RelativePath=".\src\g_strife\a_ratbuddy.cpp">
-			</File>
-			<File
 				RelativePath=".\src\g_strife\a_reaver.cpp">
 			</File>
 			<File
@@ -4067,9 +4046,6 @@
 				RelativePath=".\src\g_strife\a_strifeammo.cpp">
 			</File>
 			<File
-				RelativePath=".\src\g_strife\a_strifearmor.cpp">
-			</File>
-			<File
 				RelativePath=".\src\g_strife\a_strifebishop.cpp">
 			</File>
 			<File
@@ -4077,9 +4053,6 @@
 			</File>
 			<File
 				RelativePath=".\src\g_strife\a_strifeitems.cpp">
-			</File>
-			<File
-				RelativePath=".\src\g_strife\a_strifekeys.cpp">
 			</File>
 			<File
 				RelativePath=".\src\g_strife\a_strifeplayer.cpp">
@@ -4104,9 +4077,6 @@
 			</File>
 			<File
 				RelativePath=".\src\g_strife\a_thingstoblowup.cpp">
-			</File>
-			<File
-				RelativePath=".\src\g_strife\a_zombie.cpp">
 			</File>
 			<File
 				RelativePath=".\src\g_strife\strife_sbar.cpp">

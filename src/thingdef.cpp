@@ -69,6 +69,8 @@
 #include "thingdef.h"
 
 
+const TypeInfo *QuestItemClasses[31];
+
 
 extern TArray<FActorInfo *> Decorations;
 
@@ -221,6 +223,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, NODROPOFF, AActor, flags5),
 	DEFINE_FLAG(MF5, BOUNCEONACTORS, AActor, flags5),
 	DEFINE_FLAG(MF5, EXPLODEONWATER, AActor, flags5),
+	DEFINE_FLAG(MF5, NODAMAGE, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -444,12 +447,14 @@ ACTOR(ClearShadow)
 ACTOR(GetHurt)
 ACTOR(TurretLook)
 ACTOR(KlaxonBlare)
-ACTOR(20e10)
+ACTOR(CheckTerrain)
 ACTOR(Countdown)
 ACTOR(AlertMonsters)
+ACTOR(ClearSoundTarget)
 ACTOR(FireAssaultGun)
 ACTOR(PlaySound)
 ACTOR(PlayWeaponSound)
+ACTOR(FLoopActiveSound)
 ACTOR(LoopActiveSound)
 ACTOR(StopSound)
 ACTOR(SeekerMissile)
@@ -500,6 +505,7 @@ ACTOR(GiveToTarget)
 ACTOR(TakeFromTarget)
 ACTOR(JumpIfInTargetInventory)
 ACTOR(CountdownArg)
+ACTOR(CustomMeleeAttack)
 
 
 #include "d_dehackedactions.h"
@@ -620,8 +626,9 @@ AFuncDesc AFTable[]=
 	FUNC(A_KlaxonBlare, NULL)
 	FUNC(A_Countdown, NULL)
 	FUNC(A_AlertMonsters, NULL)
+	FUNC(A_ClearSoundTarget, NULL)
 	FUNC(A_FireAssaultGun, NULL)
-	{"A_CheckTerrain", A_20e10, NULL },	// This needs a better name!
+	FUNC(A_CheckTerrain, NULL )
 
 	// Only selected original weapon functions will be available. 
 	// All the attack pointers are somewhat tricky due to the way the flash state is handled
@@ -642,6 +649,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_BulletAttack, NULL)
 	FUNC(A_PlaySound, "S" )
 	FUNC(A_PlayWeaponSound, "S" )
+	FUNC(A_FLoopActiveSound, NULL )
 	FUNC(A_LoopActiveSound, NULL )
 	FUNC(A_StopSound, NULL )
 	FUNC(A_SeekerMissile, "XX" )
@@ -684,6 +692,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_GiveToTarget, "Mx" )
 	FUNC(A_TakeFromTarget, "Mx" )
 	FUNC(A_CountdownArg, "X")
+	FUNC(A_CustomMeleeAttack, "XXXsty" )
 };
 
 //==========================================================================
@@ -2079,17 +2088,6 @@ void ParseActorProperties (Baggage &bag)
 			SC_ScriptError("\"%s\" is an unknown actor property\n", propname.GetChars());
 		}
 	}
-
-	// copy the THRUGHOST flag to the HITS_GHOSTS weapon flag
-	// Their meaning is synonymous so it really doesn't make sense
-	// to have two different flags for this
-	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
-	{
-		AWeapon * weapon=(AWeapon*)bag.Info->Defaults;
-
-		if (weapon->flags2&MF2_THRUGHOST) weapon->WeaponFlags|=WIF_HITS_GHOSTS;
-		else weapon->WeaponFlags&=~WIF_HITS_GHOSTS;
-	}
 }
 
 //==========================================================================
@@ -2248,12 +2246,40 @@ static void ActorSpawnID (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorConversationID (AActor *defaults, Baggage &bag)
 {
+	int convid;
+
 	SC_MustGetNumber();
-	if (sc_Number<0 || sc_Number>344)
+	convid = sc_Number;
+
+	// Handling for Strife teaser IDs - only of meaning for the standard items
+	// as PWADs cannot be loaded with the teasers.
+	if (SC_CheckString(","))
+	{
+		SC_MustGetNumber();
+		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE))
+			convid=sc_Number;
+
+		SC_MustGetStringName(",");
+		SC_MustGetNumber();
+		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE|GI_TEASER2))
+			convid=sc_Number;
+
+		if (convid==-1) return;
+	}
+	if (convid<0 || convid>344)
 	{
 		SC_ScriptError ("ConversationID must be in the range [0,344]");
 	}
-	else StrifeTypes[sc_Number] = bag.Info->Class;
+	else StrifeTypes[convid] = bag.Info->Class;
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void ActorTag (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetString();
+	bag.Info->Class->Meta.SetMetaString(AMETA_StrifeName, sc_String);
 }
 
 //==========================================================================
@@ -2771,7 +2797,7 @@ static void ActorTranslation (AActor *defaults, Baggage &bag)
 {
 	if (SC_CheckNumber())
 	{
-		int max = gameinfo.gametype==GAME_Strife? 6:2;
+		int max = (gameinfo.gametype==GAME_Strife || (bag.Info->GameFilter&GAME_Strife)) ? 6:2;
 		if (sc_Number < 0 || sc_Number > max)
 		{
 			SC_ScriptError ("Translation must be in the range [0,%d]", max);
@@ -2887,6 +2913,24 @@ static void ActorMaxDropoffHeight (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetNumber ();
 	defaults->MaxDropOffHeight=sc_Number;
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void ActorPoisonDamage (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt (AMETA_PoisonDamage, sc_Number);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void ActorFastSpeed (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetFloat();
+	bag.Info->Class->Meta.SetMetaFixed (AMETA_FastSpeed, fixed_t(sc_Float*FRACUNIT));
 }
 
 //==========================================================================
@@ -3141,6 +3185,15 @@ static void InventoryUsesound (AInventory *defaults, Baggage &bag)
 {
 	SC_MustGetString();
 	defaults->UseSound=S_FindSound(sc_String);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void InventoryGiveQuest (APuzzleItem *defaults, Baggage &bag)
+{
+	SC_MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt(AIMETA_GiveQuest, sc_Number);
 }
 
 //==========================================================================
@@ -3446,6 +3499,7 @@ static const ActorProps props[] =
 	{ "dropitem",					ActorDropItem,				RUNTIME_CLASS(AActor) },
 	{ "explosiondamage",			ActorExplosionDamage,		RUNTIME_CLASS(AActor) },
 	{ "explosionradius",			ActorExplosionRadius,		RUNTIME_CLASS(AActor) },
+	{ "fastspeed",					ActorFastSpeed,				RUNTIME_CLASS(AActor) },
 	{ "game",						ActorGame,					RUNTIME_CLASS(AActor) },
 	{ "gibhealth",					ActorGibHealth,				RUNTIME_CLASS(AActor) },
 	{ "greetings",					ActorGreetingsState,		RUNTIME_CLASS(AActor) },
@@ -3456,6 +3510,7 @@ static const ActorProps props[] =
 	{ "ice",						ActorIceState,				RUNTIME_CLASS(AActor) },
 	{ "inventory.amount",			(apf)InventoryAmount,		RUNTIME_CLASS(AInventory) },
 	{ "inventory.defmaxamount",		(apf)InventoryDefMaxAmount,	RUNTIME_CLASS(AInventory) },
+	{ "inventory.givequest",		(apf)InventoryGiveQuest,	RUNTIME_CLASS(AInventory) },
 	{ "inventory.icon",				(apf)InventoryIcon,			RUNTIME_CLASS(AInventory) },
 	{ "inventory.maxamount",		(apf)InventoryMaxAmount,	RUNTIME_CLASS(AInventory) },
 	{ "inventory.pickupmessage",	(apf)InventoryPickupmsg,	RUNTIME_CLASS(AInventory) },
@@ -3479,6 +3534,7 @@ static const ActorProps props[] =
 	{ "pain",						ActorPainState,				RUNTIME_CLASS(AActor) },
 	{ "painchance",					ActorPainChance,			RUNTIME_CLASS(AActor) },
 	{ "painsound",					ActorPainSound,				RUNTIME_CLASS(AActor) },
+	{ "poisondamage",				ActorPoisonDamage,			RUNTIME_CLASS(AActor) },
 	{ "powerup.color",				(apf)PowerupColor,			RUNTIME_CLASS(APowerupGiver) },
 	{ "powerup.duration",			(apf)PowerupDuration,		RUNTIME_CLASS(APowerupGiver) },
 	{ "powerup.type",				(apf)PowerupType,			RUNTIME_CLASS(APowerupGiver) },
@@ -3496,6 +3552,7 @@ static const ActorProps props[] =
 	{ "spawnid",					ActorSpawnID,				RUNTIME_CLASS(AActor) },
 	{ "speed",						ActorSpeed,					RUNTIME_CLASS(AActor) },
 	{ "states",						ActorStates,				RUNTIME_CLASS(AActor) },
+	{ "tag",						ActorTag,					RUNTIME_CLASS(AActor) },
 	{ "translation",				ActorTranslation,			RUNTIME_CLASS(AActor) },
 	{ "weapon.ammogive",			(apf)WeaponAmmoGive1,		RUNTIME_CLASS(AWeapon) },
 	{ "weapon.ammogive1",			(apf)WeaponAmmoGive1,		RUNTIME_CLASS(AWeapon) },
@@ -3625,5 +3682,13 @@ void FinishThingdef()
 				}
 			}
 		}
+	}
+
+	// Since these are defined in DECORATE now the table has to be initialized here.
+	for(int i=0;i<31;i++)
+	{
+		char fmt[20];
+		sprintf(fmt, "QuestItem%d", i+1);
+		QuestItemClasses[i]=TypeInfo::FindType(fmt);
 	}
 }

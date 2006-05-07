@@ -1,0 +1,335 @@
+// Med patch -----------------------------------------------------------------
+
+ACTOR MedPatch : HealthPickup 2011
+{
+	Game Strife
+	ConversationID 125, 121, 124
+	Health 10
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	Inventory.MaxAmount 20
+	Tag "Med_patch"
+	Inventory.Icon "I_STMP"
+	Inventory.PickupMessage "$TXT_MEDPATCH"
+	States
+	{
+	Spawn:
+		STMP A -1
+		Stop
+	}
+}
+
+
+// Medical Kit ---------------------------------------------------------------
+
+ACTOR MedicalKit : HealthPickup 2012
+{
+	Game Strife
+	ConversationID 126, 122, 125
+	Health 25
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	Inventory.MaxAmount 15
+	Tag "Medical_kit"
+	Inventory.Icon "I_MDKT"
+	Inventory.PickupMessage "$TXT_MEDICALKIT"
+	States
+	{
+	Spawn:
+		MDKT A -1
+		Stop
+	}
+}
+
+
+// Surgery Kit --------------------------------------------------------------
+
+ACTOR SurgeryKit : HealthPickup 83
+{
+	Game Strife
+	ConversationID 127, 123, 126
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	Health -100
+	Inventory.MaxAmount 5
+	Tag "Surgery_Kit"	// "full_health" in the Teaser
+	Inventory.Icon "I_FULL"
+	Inventory.PickupMessage "$TXT_SURGERYKIT"
+	States
+	{
+	Spawn:
+		FULL AB 35
+		Loop
+	}
+}
+
+
+// StrifeMap ----------------------------------------------------------------
+
+ACTOR StrifeMap : MapRevealer 2026
+{
+	Game Strife
+	SpawnID 137
+	ConversationID 164, 160, 163
+	+FLOORCLIP
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_STRIFEMAP"	
+	States
+	{
+	Spawn:
+		SMAP AB 6 Bright
+		Loop
+	}
+}
+		
+
+// Beldin's Ring ------------------------------------------------------------
+
+ACTOR BeldinsRing : Inventory
+{
+	Game Strife
+	+NOTDMATCH
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	ConversationID 173, 165, 169
+	Tag "ring"
+	Inventory.Icon "I_RING"
+	Inventory.GiveQuest 1
+	Inventory.PickupMessage "$TXT_BELDINSRING"
+	States
+	{
+	Spawn:
+		RING A -1
+		Stop
+	}
+}
+
+
+// Offering Chalice ---------------------------------------------------------
+
+ACTOR OfferingChalice : Inventory 205
+{
+	Game Strife
+	+DROPPED
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	ConversationID 174, 166, 170
+	Radius 10
+	Height 16
+	Tag "Offering_Chalice"
+	Inventory.Icon "I_RELC"
+	Inventory.PickupMessage "$TXT_OFFERINGCHALICE"
+	Inventory.GiveQuest 2
+	States
+	{
+	Spawn:
+		RELC A -1
+		Stop
+	}
+}
+
+
+// Ear ----------------------------------------------------------------------
+
+ACTOR Ear : Inventory
+{
+	Game Strife
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	ConversationID 175, 167, 171
+	Tag "ear"
+	Inventory.Icon "I_EARS"
+	Inventory.PickupMessage "$TXT_EAR"
+	Inventory.GiveQuest 9
+	States
+	{
+	Spawn:
+		EARS A -1
+		Stop
+	}
+}
+
+
+// Broken Power Coupling ----------------------------------------------------
+
+ACTOR BrokenPowerCoupling : Inventory 226
+{
+	Game Strife
+	ConversationID 289, -1, -1
+	Health 40
+	+DROPPED
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	Radius 16
+	Height 16
+	Tag "BROKEN_POWER_COUPLING"
+	Inventory.MaxAmount 1
+	Inventory.Icon "I_COUP"
+	Inventory.PickupMessage "$TXT_BROKENCOUPLING"
+	Inventory.GiveQuest 8
+	States
+	{
+	Spawn:
+		COUP C -1
+		Stop
+	}
+}
+
+
+// Shadow Armor -------------------------------------------------------------
+
+ACTOR ShadowArmor : PowerupGiver 2024
+{
+	Game Strife
+	SpawnID 135
+	ConversationID 160, 156, 159
+	+FLOORCLIP
+	+VISIBILITYPULSE
+	+INVENTORY.INVBAR
+	-INVENTORY.FANCYPICKUPSOUND
+	RenderStyle Translucent
+	Tag "Shadow_armor"
+	Inventory.MaxAmount 2
+	Powerup.Type "Shadow"
+	Inventory.Icon "I_SHD1"
+	Inventory.PickupSound "misc/i_pkup"
+	Inventory.PickupMessage "$TXT_SHADOWARMOR"
+	States
+	{
+	Spawn:
+		SHD1 A -1 Bright
+		Stop
+	}
+}
+
+
+// Environmental suit -------------------------------------------------------
+
+ACTOR EnvironmentalSuit : PowerupGiver 2025
+{
+	Game Strife
+	SpawnID 136
+	ConversationID 161, 157, 160
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	-INVENTORY.FANCYPICKUPSOUND
+	Inventory.MaxAmount 5
+	Powerup.Type "Mask"
+	Tag "Environmental_Suit"
+	Inventory.Icon "I_MASK"
+	Inventory.PickupSound "misc/i_pkup"
+	Inventory.PickupMessage "$TXT_ENVSUIT"
+	States
+	{
+	Spawn:
+		MASK A -1
+		Stop
+	}
+}
+
+
+// Guard Uniform ------------------------------------------------------------
+
+ACTOR GuardUniform : Inventory 90
+{
+	Game Strife
+	ConversationID 162, 158, 161
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	Tag "Guard_Uniform"
+	Inventory.Icon "I_UNIF"
+	Inventory.PickupMessage "$TXT_GUARDUNIFORM"
+	Inventory.GiveQuest 15
+	States
+	{
+	Spawn:
+		UNIF A -1
+		Stop
+	}
+}
+
+
+// Officer's Uniform --------------------------------------------------------
+
+ACTOR OfficersUniform : Inventory 52
+{
+	Game Strife
+	ConversationID 163, 159, 162
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	Tag "Officer's_Uniform"
+	Inventory.Icon "I_OFIC"
+	Inventory.PickupMessage "$TXT_OFFICERSUNIFORM"
+	States
+	{
+	Spawn:
+		OFIC A -1
+		Stop
+	}
+}
+	
+
+// InterrogatorReport -------------------------------------------------------
+// SCRIPT32 in strife0.wad has an Acolyte that drops this, but I couldn't
+// find that Acolyte in the map. It seems to be totally unused in the
+// final game.
+
+ACTOR InterrogatorReport : Inventory
+{
+	Game Strife
+	ConversationID 308, 289, 306
+	+FLOORCLIP
+	Tag "report"
+	Inventory.PickupMessage "$TXT_REPORT"
+	States
+	{
+	Spawn:
+		TOKN A -1
+		Stop
+	}
+}
+
+
+// Info ---------------------------------------------------------------------
+
+ACTOR Info : Inventory
+{
+	Game Strife
+	ConversationID 300, 282, 299
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	Tag "info"
+	Inventory.Icon "I_TOKN"
+	Inventory.PickupMessage "$TXT_INFO"
+	States
+	{
+	Spawn:
+		TOKN A -1
+		Stop
+	}
+}
+
+
+// Targeter -----------------------------------------------------------------
+
+ACTOR Targeter : PowerupGiver 207
+{
+	Game Strife
+	ConversationID 167, 169, 173
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	-INVENTORY.FANCYPICKUPSOUND
+	Tag "Targeter"
+	Powerup.Type "Targeter"
+	Inventory.MaxAmount 5
+	Inventory.Icon "I_TARG"
+	Inventory.PickupSound "misc/i_pkup"
+	Inventory.PickupMessage "$TXT_TARGETER"
+	States
+	{
+	Spawn:
+		TARG A -1
+		Stop
+	}
+}
+	

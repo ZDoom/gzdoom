@@ -15,11 +15,6 @@ protected:
 	virtual bool ShouldStay ();
 };
 
-class AStrifeKey : public AKey
-{
-	DECLARE_STATELESS_ACTOR (AStrifeKey, AKey)
-};
-
 bool P_CheckKeys (AActor *owner, int keynum, bool remote);
 void P_InitKeyMessages ();
 int P_GetMapColorForLock (int lock);

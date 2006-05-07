@@ -1393,7 +1393,16 @@ FUNC(LS_ACS_ExecuteAlways)
 FUNC(LS_ACS_LockedExecute)
 // ACS_LockedExecute (script, map, s_arg1, s_arg2, lock)
 {
-	if (arg4 && !P_CheckKeys (it, arg4, 1))
+	if (arg4 && !P_CheckKeys (it, arg4, true))
+		return false;
+	else
+		return LS_ACS_Execute (ln, it, backSide, arg0, arg1, arg2, arg3, 0);
+}
+
+FUNC(LS_ACS_LockedExecuteDoor)
+// ACS_LockedExecuteDoor (script, map, s_arg1, s_arg2, lock)
+{
+	if (arg4 && !P_CheckKeys (it, arg4, false))
 		return false;
 	else
 		return LS_ACS_Execute (ln, it, backSide, arg0, arg1, arg2, arg3, 0);
@@ -2556,8 +2565,8 @@ lnSpecFunc LineSpecials[256] =
 	LS_Door_Raise,
 	LS_Door_LockedRaise,
 	LS_Door_Animated,
-	LS_Autosave,	// Autosave
-	LS_NOP,		// 16
+	LS_Autosave,
+	LS_NOP,		// Transfer_WallLight
 	LS_NOP,		// 17
 	LS_NOP,		// 18
 	LS_NOP,		// 19
@@ -2626,7 +2635,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_ACS_Terminate,
 	LS_ACS_LockedExecute,
 	LS_ACS_ExecuteWithResult,
-	LS_NOP,		// 85
+	LS_ACS_LockedExecuteDoor,
 	LS_NOP,		// 86
 	LS_NOP,		// 87
 	LS_NOP,		// 88

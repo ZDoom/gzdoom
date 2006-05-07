@@ -986,6 +986,66 @@ TXT_NEED_BRASSKEY = "You need the Brass Key";
 TXT_NEED_REDCRYSTAL = "You need the Red Crystal";
 TXT_NEED_BLUECRYSTAL = "You need the Blue Crystal";
 
+// Strife Quest messages
+
+TXT_QUEST_14 = "You've Blown Up the Crystal";
+TXT_QUEST_16 = "You've Blown Up the Gates";
+TXT_QUEST_27 = "You've Blown Up the Computer";
+
+TXT_KILLED_BISHOP = "You Killed The Bishop!";
+TXT_KILLED_ORACLE = "You've Killed The Oracle!";
+TXT_KILLED_MACIL = "You Killed Macil!";
+TXT_KILLED_LOREMASTER = "You've Killed the Loremaster!";
+
+// Strife pickup messages
+
+TXT_METALARMOR = "You picked up the Metal Armor.";
+TXT_LEATHERARMOR = "You picked up the Leather Armor.";
+TXT_MEDPATCH = "You picked up the Med patch.";
+TXT_MEDICALKIT = "You picked up the Medical kit.";
+TXT_SURGERYKIT = "You picked up the Surgery Kit.";
+TXT_STRIFEMAP = "You picked up the map";
+TXT_BELDINSRING = "You picked up the ring.";
+TXT_OFFERINGCHALICE = "You picked up the Offering Chalice.";
+TXT_EAR = "You picked up the ear.";
+TXT_BROKENCOUPLING = "You picked up the broken power coupling.";
+TXT_SHADOWARMOR = "You picked up the Shadow armor.";
+TXT_ENVSUIT = "You picked up the Environmental Suit.";
+TXT_GUARDUNIFORM = "You picked up the Guard Uniform.";
+TXT_OFFICERSUNIFORM = "You picked up the Officer's Uniform.";
+TXT_REPORT = "You picked up the report.";
+TXT_INFO = "You picked up the info.";
+TXT_TARGETER = "You picked up the Targeter.";
+
+TXT_BASEKEY = "You picked up the Base Key.";
+TXT_GOVSKEY = "You picked up the Govs Key.";
+TXT_PASSCARD = "You picked up the Passcard.";
+TXT_IDBADGE = "You picked up the ID Badge.";
+TXT_PRISONKEY = "You picked up the Prison Key.";
+TXT_SEVEREDHAND = "You picked up the Severed Hand.";
+TXT_POWER1KEY = "You picked up the Power1 Key.";
+TXT_POWER2KEY = "You picked up the Power2 Key.";
+TXT_POWER3KEY = "You picked up the Power3 Key.";
+TXT_GOLDKEY = "You picked up the Gold Key.";
+TXT_IDCARD = "You picked up the ID Card.";
+TXT_SILVERKEY = "You picked up the Silver Key.";
+TXT_ORACLEKEY = "You picked up the Oracle Key.";
+TXT_MILITARYID = "You picked up the Military ID.";
+TXT_ORDERKEY = "You picked up the Order Key.";
+TXT_WAREHOUSEKEY = "You picked up the Warehouse Key.";
+TXT_BRASSKEY = "You picked up the Brass Key.";
+TXT_REDCRYSTAL = "You picked up the Red Crystal Key.";
+TXT_BLUECRYSTAL = "You picked up the Blue Crystal Key.";
+TXT_CHAPELKEY = "You picked up the Chapel Key.";
+TXT_CATACOMBKEY = "You picked up the Catacomb Key.";
+TXT_SECURITYKEY = "You picked up the Security Key.";
+TXT_COREKEY = "You picked up the Core Key.";
+TXT_MAULERKEY = "You picked up the Mauler Key.";
+TXT_FACTORYKEY = "You picked up the Factory Key.";
+TXT_MINEKEY = "You picked up the Mine Key.";
+TXT_NEWKEY5 = "You picked up the New Key5.";
+TXT_ORACLEPASS = "You picked up the Oracle Pass.";
+
 // Bloodbath announcer
 
 BBA_BONED = "%k boned %o like a fish";

@@ -69,6 +69,7 @@ enum
 {
 	AIMETA_BASE = 0x71000,
 	AIMETA_PickupMessage,		// string
+	AIMETA_GiveQuest,			// optionally give one of the quest items.
 };
 
 enum
@@ -144,6 +145,9 @@ public:
 	virtual void AlterWeaponSprite (vissprite_t *vis);
 
 	virtual PalEntry GetBlend ();
+
+protected:
+	void GiveQuest(AActor * toucher);
 
 private:
 	static int StaticLastMessageTic;
@@ -260,7 +264,7 @@ enum
 	WIF_WIMPY_WEAPON =		0x00000200, // change away when ammo for another weapon is replenished
 	WIF_POWERED_UP =		0x00000400, // this is a tome-of-power'ed version of its sister
 	WIF_EXTREME_DEATH =		0x00000800,	// weapon always causes an extreme death
-	WIF_HITS_GHOSTS =		0x00001000, // melee weapon can strike ghosts
+
 	WIF_STAFF2_KICKBACK =	0x00002000, // the powered-up Heretic staff has special kickback
 
 	WIF_CHEATNOTWEAPON	=	1<<27,		// Give cheat considers this not a weapon (used by Sigil)

@@ -1,0 +1,1659 @@
+// Tank 1 Huge ------------------------------------------------------------
+
+ACTOR Tank1 209
+{
+	Game Strife
+	Radius 16
+	Height 192
+	+SOLID
+	ConversationID 31, -1, -1
+	States
+	{
+	Spawn:
+		TNK1 A 15
+		TNK1 B 11
+		TNK1 C 40
+		Loop
+	}
+}
+
+// Tank 2 Huge ------------------------------------------------------------
+
+ACTOR Tank2 210
+{
+	Game Strife
+	Radius 16
+	Height 192
+	+SOLID
+	ConversationID 32, -1, -1
+	States
+	{
+	Spawn:
+		TNK2 A 15
+		TNK2 B 11
+		TNK2 C 40
+		Loop
+	}
+}
+
+// Tank 3 Huge ------------------------------------------------------------
+
+ACTOR Tank3 211
+{
+	Game Strife
+	Radius 16
+	Height 192
+	+SOLID
+	ConversationID 33, -1, -1
+	States
+	{
+	Spawn:
+		TNK3 A 15
+		TNK3 B 11
+		TNK3 C 40
+		Loop
+	}
+}
+
+// Tank 4 -------------------------------------------------------------------
+
+ACTOR Tank4 213
+{
+	Game Strife
+	Radius 16
+	Height 56
+	+SOLID
+	ConversationID 34, -1, -1
+	States
+	{
+	Spawn:
+		TNK4 A 15
+		TNK4 B 11
+		TNK4 C 40
+		Loop
+	}
+}
+
+// Tank 5 -------------------------------------------------------------------
+
+ACTOR Tank5 214
+{
+	Game Strife
+	Radius 16
+	Height 56
+	+SOLID
+	ConversationID 35, -1, -1
+	States
+	{
+	Spawn:
+		TNK5 A 15
+		TNK5 B 11
+		TNK5 C 40
+		Loop
+	}
+}
+
+// Tank 6 -------------------------------------------------------------------
+
+ACTOR Tank6 229
+{
+	Game Strife
+	Radius 16
+	Height 56
+	+SOLID
+	ConversationID 36, -1, -1
+	States
+	{
+	Spawn:
+		TNK6 A 15
+		TNK6 B 11
+		TNK6 C 40
+		Loop
+	}
+}
+
+// Water Bottle -------------------------------------------------------------
+
+ACTOR WaterBottle 2014
+{
+	Game Strife
+	ConversationID 131, -1, -1
+	States
+	{
+	Spawn:
+		WATR A -1
+		Stop
+	}
+}
+
+// Mug ----------------------------------------------------------------------
+
+ACTOR Mug 164
+{
+	Game Strife
+	ConversationID 132, -1, -1
+	States
+	{
+	Spawn:
+		MUGG A -1
+		Stop
+	}
+}
+
+// Wooden Barrel ------------------------------------------------------------
+
+ACTOR WoodenBarrel 82
+{
+	Game Strife
+	Health 10
+	Radius 10
+	Height 32
+	+SOLID +SHOOTABLE +NOBLOOD
+	+INCOMBAT
+	ConversationID 203, -1, -1
+	DeathSound "woodenbarrel/death"
+	States
+	{
+	Spawn:
+		BARW A -1
+		Stop
+	Death:
+		BARW B 2 A_Scream
+		BARW C 2
+		BARW D 2 A_NoBlocking
+		BARW EFG 2
+		BARW H -1
+		Stop
+	}
+}
+
+// Strife's explosive barrel ------------------------------------------------
+
+ACTOR ExplosiveBarrel2 : ExplosiveBarrel 94
+{
+	Game Strife
+	Health 30
+	Radius 10
+	Height 32
+	ConversationID 204, -1, -1
+	//+SOLID +SHOOTABLE +NOBLOOD
+	+INCOMBAT
+	States
+	{
+	Spawn:
+		BART A -1
+		Stop
+	Death:
+		BART B 2 Bright A_Scream
+		BART CD 2 Bright
+		BART E 2 Bright A_NoBlocking
+		BART F 0 Bright A_AlertMonsters
+		BART F 2 Bright A_Explode(64, 64)
+		BART GHIJ 2 Bright
+		BART K 3 Bright
+		BART L -1
+		Stop
+	}
+}
+
+// Light Silver, Fluorescent ----------------------------------------------
+
+ACTOR LightSilverFluorescent 95
+{
+	Game Strife
+	Radius 4
+	Height 16
+	+NOBLOCKMAP
+	+FIXMAPTHINGPOS
+	ConversationID 206, -1, -1
+	States
+	{
+	Spawn:
+		LITS A -1 Bright
+		Stop
+	}
+}
+
+// Light Brown, Fluorescent -----------------------------------------------
+
+ACTOR LightBrownFluorescent 96
+{
+	Game Strife
+	Radius 4
+	Height 16
+	+NOBLOCKMAP
+	+FIXMAPTHINGPOS
+	ConversationID 207, -1, -1
+	States
+	{
+	Spawn:
+		LITB A -1 Bright
+		Stop
+	}
+}
+
+// Light Gold, Fluorescent ------------------------------------------------
+
+ACTOR LightGoldFluorescent 97
+{
+	Game Strife
+	Radius 4
+	Height 16
+	+NOBLOCKMAP
+	+FIXMAPTHINGPOS
+	ConversationID 208, -1, -1
+	States
+	{
+	Spawn:
+		LITG A -1 Bright
+		Stop
+	}
+}
+
+// Light Globe --------------------------------------------------------------
+
+ACTOR LightGlobe 2028
+{
+	Game Strife
+	Radius 16
+	Height 16
+	+SOLID
+	ConversationID 209, -1, -1
+	States
+	{
+	Spawn:
+		LITE A -1 Bright
+		Stop
+	}
+}
+
+// Techno Pillar ------------------------------------------------------------
+
+ACTOR PillarTechno 48
+{
+	Game Strife
+	Radius 20
+	Height 128
+	+SOLID
+	ConversationID 210, -1, -1
+	States
+	{
+	Spawn:
+		MONI A -1
+		Stop
+	}
+}
+
+// Aztec Pillar -------------------------------------------------------------
+
+ACTOR PillarAztec 54
+{
+	Game Strife
+	Radius 16
+	Height 128
+	+SOLID
+	ConversationID 211, -1, -1
+	States
+	{
+	Spawn:
+		STEL A -1
+		Stop
+	}
+}
+
+// Damaged Aztec Pillar -----------------------------------------------------
+
+ACTOR PillarAztecDamaged 55
+{
+	Game Strife
+	Radius 16
+	Height 80
+	+SOLID
+	ConversationID 212, -1, -1
+	States
+	{
+	Spawn:
+		STLA A -1
+		Stop
+	}
+}
+
+// Ruined Aztec Pillar ------------------------------------------------------
+
+ACTOR PillarAztecRuined 56
+{
+	Game Strife
+	Radius 16
+	Height 40
+	+SOLID
+	ConversationID 213, -1, -1
+	States
+	{
+	Spawn:
+		STLE A -1
+		Stop
+	}
+}
+
+// Huge Tech Pillar ---------------------------------------------------------
+
+ACTOR PillarHugeTech 57
+{
+	Game Strife
+	Radius 24
+	Height 192
+	+SOLID
+	ConversationID 214, -1, -1
+	States
+	{
+	Spawn:
+		HUGE ABCD 4
+		Loop
+	}
+}
+
+// Alien Power Crystal in a Pillar ------------------------------------------
+
+ACTOR PillarAlienPower 227
+{
+	Game Strife
+	Radius 24
+	Height 192
+	+SOLID
+	ConversationID 215, -1, -1
+	ActiveSound "ambient/alien2"
+	States
+	{
+	Spawn:
+		APOW A -1 A_LoopActiveSound
+		Stop
+	}
+}
+
+// SStalactiteBig -----------------------------------------------------------
+
+ACTOR SStalactiteBig 98
+{
+	Game Strife
+	Radius 16
+	Height 54
+	+SOLID +SPAWNCEILING +NOGRAVITY
+	ConversationID 216, -1, -1
+	States
+	{
+	Spawn:
+		STLG C -1
+		Stop
+	}
+}
+
+// SStalactiteSmall ---------------------------------------------------------
+
+ACTOR SStalactiteSmall 161
+{
+	Game Strife
+	Radius 16
+	Height 40
+	+SOLID +SPAWNCEILING +NOGRAVITY
+	ConversationID 217, -1, -1
+	States
+	{
+	Spawn:
+		STLG A -1
+		Stop
+	}
+}
+
+// SStalagmiteBig -----------------------------------------------------------
+
+ACTOR SStalagmiteBig 160
+{
+	Game Strife
+	Radius 16
+	Height 40
+	+SOLID
+	ConversationID 218, -1, -1
+	States
+	{
+	Spawn:
+		STLG B -1
+		Stop
+	}
+}
+
+// Cave Pillar Top ----------------------------------------------------------
+
+ACTOR CavePillarTop 159
+{
+	Game Strife
+	Radius 16
+	Height 128
+	+SOLID +SPAWNCEILING +NOGRAVITY
+	ConversationID 219, -1, -1
+	States
+	{
+	Spawn:
+		STLG D -1
+		Stop
+	}
+}
+
+// Cave Pillar Bottom -------------------------------------------------------
+
+ACTOR CavePillarBottom 162
+{
+	Game Strife
+	Radius 16
+	Height 128
+	+SOLID
+	ConversationID 220, -1, -1
+	States
+	{
+	Spawn:
+		STLG E -1
+		Stop
+	}
+}
+
+// SStalagmiteSmall ---------------------------------------------------------
+
+ACTOR SStalagmiteSmall 163
+{
+	Game Strife
+	Radius 16
+	Height 25
+	+SOLID
+	ConversationID 221, -1, -1
+	States
+	{
+	Spawn:
+		STLG E -1
+		Stop
+	}
+}
+
+// Candle -------------------------------------------------------------------
+
+ACTOR Candle 34
+{
+	Game Strife
+	ConversationID 222, -1, -1
+	States
+	{
+	Spawn:
+		KNDL A -1 Bright
+		Stop
+	}
+}
+
+// StrifeCandelabra ---------------------------------------------------------
+
+ACTOR StrifeCandelabra 35
+{
+	Game Strife
+	Radius 16
+	Height 40
+	+SOLID
+	ConversationID 223, -1, -1
+	States
+	{
+	Spawn:
+		CLBR A -1
+		Stop
+	}
+}
+
+// Floor Water Drop ---------------------------------------------------------
+
+ACTOR WaterDropOnFloor 103
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 224, -1, -1
+	ActiveSound "world/waterdrips"
+	States
+	{
+	Spawn:
+		DRIP A 6 A_FLoopActiveSound
+		DRIP BC 4
+		DRIP D 4 A_FLoopActiveSound
+		DRIP EF 4
+		DRIP G 4 A_FLoopActiveSound
+		DRIP H 4
+		Loop
+	}
+}
+
+// Waterfall Splash ---------------------------------------------------------
+
+ACTOR WaterfallSplash 104
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 225, -1, -1
+	ActiveSound "world/waterfall"
+	States
+	{
+	Spawn:
+		SPLH ABCDEFG 4
+		SPLH H 4 A_LoopActiveSound
+		Loop
+	}
+}
+
+// Ceiling Water Drip -------------------------------------------------------
+
+ACTOR WaterDrip 53
+{
+	Game Strife
+	Height 1
+	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
+	ConversationID 226, -1, -1
+	States
+	{
+	Spawn:
+		CDRP A 10
+		CDRP BCD 8
+		Loop
+	}
+}
+
+// WaterFountain ------------------------------------------------------------
+
+ACTOR WaterFountain 112
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 227, -1, -1
+	ActiveSound "world/watersplash"
+	States
+	{
+	Spawn:
+		WTFT ABC 4
+		WTFT D 4 A_LoopActiveSound
+		Stop
+	}
+}
+
+// Hearts in Tank -----------------------------------------------------------
+
+ACTOR HeartsInTank 113
+{
+	Game Strife
+	Radius 16
+	Height 56
+	+SOLID
+	ConversationID 228, -1, -1
+	States
+	{
+	Spawn:
+		HERT ABC 4 Bright
+		Loop
+	}
+}
+
+// Teleport Swirl -----------------------------------------------------------
+
+ACTOR TeleportSwirl 23
+{
+	Game Strife
+	+NOBLOCKMAP
+	RenderStyle Add
+	Alpha 0.25
+	ConversationID 229, -1, -1
+	States
+	{
+	Spawn:
+		TELP ABCD 3 Bright
+		Stop
+	}
+}
+
+// Dead Player --------------------------------------------------------------
+// Strife's disappeared. This one doesn't.
+
+ACTOR DeadStrifePlayer 15
+{
+	Game Strife
+	ConversationID 231, -1, -1
+	States
+	{
+	Spawn:
+		PLAY P 700
+		RGIB H -1
+		Stop
+	}
+}
+
+// Dead Peasant -------------------------------------------------------------
+// Unlike Strife's, this one does not turn into gibs and disappear.
+
+ACTOR DeadPeasant 18
+{
+	Game Strife
+	ConversationID 232, -1, -1
+	States
+	{
+	Spawn:
+		PEAS N -1
+		Stop
+	}
+}
+
+// Dead Acolyte -------------------------------------------------------------
+// Unlike Strife's, this one does not turn into gibs and disappear.
+
+ACTOR DeadAcolyte 21
+{
+	Game Strife
+	ConversationID 233, -1, -1
+	States
+	{
+	Spawn:
+		AGRD N -1
+		Stop
+	}
+}
+
+// Dead Reaver --------------------------------------------------------------
+
+ACTOR DeadReaver 20
+{
+	Game Strife
+	ConversationID 234, -1, -1
+	States
+	{
+	Spawn:
+		ROB1 R -1
+		Stop
+	}
+}
+
+// Dead Rebel ---------------------------------------------------------------
+
+ACTOR DeadRebel
+{
+	Game Strife
+	ConversationID 235, -1, -1
+	States
+	{
+	Spawn:
+		HMN1 N -1
+		Stop
+	}
+}
+
+// Sacrificed Guy -----------------------------------------------------------
+
+ACTOR SacrificedGuy 212
+{
+	Game Strife
+	ConversationID 236, -1, -1
+	States
+	{
+	Spawn:
+		SACR A -1
+		Stop
+	}
+}
+
+// Pile of Guts -------------------------------------------------------------
+
+ACTOR PileOfGuts
+{
+	// Strife used a doomednum, which is the same as the Aztec Pillar. Since
+	// the pillar came first in the mobjinfo list, you could not spawn this
+	// in a map. Pity.
+	Game Strife
+	ConversationID 237, -1, -1
+	States
+	{
+	Spawn:
+		DEAD A -1
+		Stop
+	}
+}
+
+// Burning Barrel -----------------------------------------------------------
+
+ACTOR StrifeBurningBarrel 70
+{
+	Game Strife
+	Radius 16
+	Height 48
+	+SOLID
+	ConversationID 238, -1, -1
+	States
+	{
+	Spawn:
+		BBAR ABCD 4 Bright
+		Loop
+	}
+}
+
+// Burning Bowl -----------------------------------------------------------
+
+ACTOR BurningBowl 105
+{
+	Game Strife
+	Radius 16
+	Height 16
+	+SOLID
+	ConversationID 239, -1, -1
+	ActiveSound "world/smallfire"
+	States
+	{
+	Spawn:
+		BOWL ABCD 4 Bright
+		Loop
+	}
+}
+
+// Burning Brazier -----------------------------------------------------------
+
+ACTOR BurningBrazier 106
+{
+	Game Strife
+	Radius 10
+	Height 32
+	+SOLID
+	ConversationID 240, -1, -1
+	ActiveSound "world/smallfire"
+	States
+	{
+	Spawn:
+		BRAZ ABCD 4 Bright
+		Stop
+	}
+}
+
+// Small Torch Lit --------------------------------------------------------
+
+ACTOR SmallTorchLit 107
+{
+	Game Strife
+	Radius 0.00007
+	Height 16
+	+NOBLOCKMAP
+	+FIXMAPTHINGPOS
+	ConversationID 241, -1, -1
+
+	// It doesn't have any action functions, so how does it use this sound?
+	ActiveSound "world/smallfire"
+	States
+	{
+	Spawn:
+		TRHL ABCD 4 Bright
+		Loop
+	}
+}
+
+// Small Torch Unlit --------------------------------------------------------
+
+ACTOR SmallTorchUnlit 108
+{
+	Game Strife
+	Radius 0.00007
+	Height 16
+	+NOBLOCKMAP
+	+FIXMAPTHINGPOS
+	ConversationID 242, -1, -1
+	States
+	{
+	Spawn:
+		TRHO A -1
+		Stop
+	}
+}
+
+// Ceiling Chain ------------------------------------------------------------
+
+ACTOR CeilingChain 109
+{
+	Game Strife
+	Radius 20
+	Height 93
+	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
+	ConversationID 243, -1, -1
+	States
+	{
+	Spawn:
+		CHAN A -1
+		Stop
+	}
+}
+
+// Cage Light ---------------------------------------------------------------
+
+ACTOR CageLight 28
+{
+	// No, it's not bright even though it's a light.
+	Game Strife
+	Height 3
+	+NOBLOCKMAP +SPAWNCEILING +NOGRAVITY
+	ConversationID 244, -1, -1
+	States
+	{
+	Spawn:
+		CAGE A -1
+		Stop
+	}
+}
+
+// Statue -------------------------------------------------------------------
+
+ACTOR Statue 110
+{
+	Game Strife
+	Radius 20
+	Height 64
+	+SOLID
+	ConversationID 245, -1, -1
+	States
+	{
+	Spawn:
+		STAT A -1
+		Stop
+	}
+}
+
+// Ruined Statue ------------------------------------------------------------
+
+ACTOR StatueRuined 44
+{
+	Game Strife
+	Radius 20
+	Height 56
+	+SOLID
+	ConversationID 246, -1, -1
+	States
+	{
+	Spawn:
+		DSTA A -1
+		Stop
+	}
+}
+
+// Medium Torch -------------------------------------------------------------
+
+ACTOR MediumTorch 111
+{
+	Game Strife
+	Radius 4
+	Height 72
+	+SOLID
+	ConversationID 247, -1, -1
+	States
+	{
+	Spawn:
+		LTRH ABCD 4
+		Loop
+	}
+}
+
+// Outside Lamp -------------------------------------------------------------
+
+ACTOR OutsideLamp 43
+{
+	// No, it's not bright.
+	Game Strife
+	Radius 3
+	Height 80
+	+SOLID
+	ConversationID 248, -1, -1
+	States
+	{
+	Spawn:
+		LAMP A -1
+		Stop
+	}
+}
+
+// Pole Lantern -------------------------------------------------------------
+
+ACTOR PoleLantern 46
+{
+	// No, it's not bright.
+	Game Strife
+	Radius 3
+	Height 80
+	+SOLID
+	ConversationID 249, -1, -1
+	States
+	{
+	Spawn:
+		LANT A -1
+		Stop
+	}
+}
+
+// Rock 1 -------------------------------------------------------------------
+
+ACTOR SRock1 99
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 250, -1, -1
+	States
+	{
+	Spawn:
+		ROK1 A -1
+		Stop
+	}
+}
+
+// Rock 2 -------------------------------------------------------------------
+
+ACTOR SRock2 100
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 251, -1, -1
+	States
+	{
+	Spawn:
+		ROK2 A -1
+		Stop
+	}
+}
+
+// Rock 3 -------------------------------------------------------------------
+
+ACTOR SRock3 101
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 252, -1, -1
+	States
+	{
+	Spawn:
+		ROK3 A -1
+		Stop
+	}
+}
+
+// Rock 4 -------------------------------------------------------------------
+
+ACTOR SRock4 102
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 253, -1, -1
+	States
+	{
+	Spawn:
+		ROK4 A -1
+		Stop
+	}
+}
+
+// Stick in Water -----------------------------------------------------------
+
+ACTOR StickInWater 215
+{
+	Game Strife
+	+NOBLOCKMAP
+	+FLOORCLIP
+	ConversationID 254, -1, -1
+	ActiveSound "world/river"
+	States
+	{
+	Spawn:
+		LOGW ABCD 5 A_LoopActiveSound
+		Loop
+	}
+}
+
+// Rubble 1 -----------------------------------------------------------------
+
+ACTOR Rubble1 29
+{
+	Game Strife
+	+NOBLOCKMAP +NOCLIP
+	ConversationID 255, -1, -1
+	States
+	{
+	Spawn:
+		RUB1 A -1
+		Stop
+	}
+}
+
+// Rubble 2 -----------------------------------------------------------------
+
+ACTOR Rubble2 30
+{
+	Game Strife
+	+NOBLOCKMAP +NOCLIP
+	ConversationID 256, -1, -1
+	States
+	{
+	Spawn:
+		RUB2 A -1
+		Stop
+	}
+}
+
+// Rubble 3 -----------------------------------------------------------------
+
+ACTOR Rubble3 31
+{
+	Game Strife
+	+NOBLOCKMAP +NOCLIP
+	ConversationID 257, -1, -1
+	States
+	{
+	Spawn:
+		RUB3 A -1
+		Stop
+	}
+}
+
+// Rubble 4 -----------------------------------------------------------------
+
+ACTOR Rubble4 32
+{
+	Game Strife
+	+NOBLOCKMAP +NOCLIP
+	ConversationID 258, -1, -1
+	States
+	{
+	Spawn:
+		RUB4 A -1
+		Stop
+	}
+}
+
+// Rubble 5 -----------------------------------------------------------------
+
+ACTOR Rubble5 36
+{
+	Game Strife
+	+NOBLOCKMAP +NOCLIP
+	ConversationID 259, -1, -1
+	States
+	{
+	Spawn:
+		RUB5 A -1
+		Stop
+	}
+}
+
+// Rubble 6 -----------------------------------------------------------------
+
+ACTOR Rubble6 37
+{
+	Game Strife
+	+NOBLOCKMAP +NOCLIP
+	ConversationID 260, -1, -1
+	States
+	{
+	Spawn:
+		RUB6 A -1
+		Stop
+	}
+}
+
+// Rubble 7 -----------------------------------------------------------------
+
+ACTOR Rubble7 41
+{
+	Game Strife
+	+NOBLOCKMAP +NOCLIP
+	ConversationID 261, -1, -1
+	States
+	{
+	Spawn:
+		RUB7 A -1
+		Stop
+	}
+}
+
+// Rubble 8 -----------------------------------------------------------------
+
+ACTOR Rubble8 42
+{
+	Game Strife
+	+NOBLOCKMAP +NOCLIP
+	ConversationID 262, -1, -1
+	States
+	{
+	Spawn:
+		RUB8 A -1
+		Stop
+	}
+}
+
+// Surgery Crab -------------------------------------------------------------
+
+ACTOR SurgeryCrab 117
+{
+	Game Strife
+	+SOLID +SPAWNCEILING +NOGRAVITY
+	Radius 20
+	Height 16
+	ConversationID 263, -1, -1
+	States
+	{
+	Spawn:
+		CRAB A -1
+		Stop
+	}
+}
+
+// Large Torch --------------------------------------------------------------
+
+ACTOR LargeTorch 47
+{
+	Game Strife
+	Radius 10
+	Height 72
+	+SOLID
+	ConversationID 264, -1, -1
+	ActiveSound "world/smallfire"
+	States
+	{
+	Spawn:
+		LMPC ABCD 4 Bright
+		Loop
+	}
+}
+
+// Huge Torch --------------------------------------------------------------
+
+ACTOR HugeTorch 50
+{
+	Game Strife
+	Radius 10
+	Height 80
+	+SOLID
+	ConversationID 265, -1, -1
+	ActiveSound "world/smallfire"
+	States
+	{
+	Spawn:
+		LOGS ABCD 4
+		Loop
+	}
+}
+
+// Palm Tree ----------------------------------------------------------------
+
+ACTOR PalmTree 51
+{
+	Game Strife
+	Radius 15
+	Height 109
+	+SOLID
+	ConversationID 266, -1, -1
+	States
+	{
+	Spawn:
+		TREE A -1
+		Stop
+	}
+}
+
+// Big Tree ----------------------------------------------------------------
+
+ACTOR BigTree2 202
+{
+	Game Strife
+	Radius 15
+	Height 109
+	+SOLID
+	ConversationID 267, -1, -1
+	States
+	{
+	Spawn:
+		TREE B -1
+		Stop
+	}
+}
+
+// Potted Tree ----------------------------------------------------------------
+
+ACTOR PottedTree 203
+{
+	Game Strife
+	Radius 15
+	Height 64
+	+SOLID
+	ConversationID 268, -1, -1
+	States
+	{
+	Spawn:
+		TREE C -1
+		Stop
+	}
+}
+
+// Tree Stub ----------------------------------------------------------------
+
+ACTOR TreeStub 33
+{
+	Game Strife
+	Radius 15
+	Height 80
+	+SOLID
+	ConversationID 269, -1, -1
+	States
+	{
+	Spawn:
+		TRET A -1
+		Stop
+	}
+}
+
+// Short Bush ---------------------------------------------------------------
+
+ACTOR ShortBush 60
+{
+	Game Strife
+	Radius 15
+	Height 40
+	+SOLID
+	ConversationID 270, -1, -1
+	States
+	{
+	Spawn:
+		BUSH A -1
+		Stop
+	}
+}
+
+// Tall Bush ---------------------------------------------------------------
+
+ACTOR TallBush 62
+{
+	Game Strife
+	Radius 20
+	Height 64
+	+SOLID
+	ConversationID 271, -1, -1
+	States
+	{
+	Spawn:
+		SHRB A -1
+		Stop
+	}
+}
+
+// Chimney Stack ------------------------------------------------------------
+
+ACTOR ChimneyStack 63
+{
+	Game Strife
+	Radius 20
+	Height 64	// This height does not fit the sprite
+	+SOLID
+	ConversationID 272, -1, -1
+	States
+	{
+	Spawn:
+		STAK A -1
+		Stop
+	}
+}
+
+// Barricade Column ---------------------------------------------------------
+
+ACTOR BarricadeColumn 69
+{
+	Game Strife
+	Radius 16
+	Height 128
+	+SOLID
+	ConversationID 273, -1, -1
+	States
+	{
+	Spawn:
+		BARC A -1
+		Stop
+	}
+}
+
+// Pot ----------------------------------------------------------------------
+
+ACTOR Pot 165
+{
+	Game Strife
+	Radius 12
+	Height 24
+	+SOLID
+	ConversationID 274, -1, -1
+	States
+	{
+	Spawn:
+		VAZE A -1
+		Stop
+	}
+}
+
+// Pitcher ------------------------------------------------------------------
+
+ACTOR Pitcher 188
+{
+	Game Strife
+	Radius 12
+	Height 32
+	+SOLID
+	ConversationID 275, -1, -1
+	States
+	{
+	Spawn:
+		VAZE B -1
+		Stop
+	}
+}
+
+// Stool --------------------------------------------------------------------
+
+ACTOR Stool 189
+{
+	Game Strife
+	Radius 6
+	Height 24
+	+SOLID
+	ConversationID 276, -1, -1
+	States
+	{
+	Spawn:
+		STOL A -1
+		Stop
+	}
+}
+
+// Metal Pot ----------------------------------------------------------------
+
+ACTOR MetalPot 190
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 277, -1, -1
+	States
+	{
+	Spawn:
+		MPOT A -1
+		Stop
+	}
+}
+
+// Tub ----------------------------------------------------------------------
+
+ACTOR Tub 191
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 278, -1, -1
+	States
+	{
+	Spawn:
+		TUB1 A -1
+		Stop
+	}
+}
+
+// Anvil --------------------------------------------------------------------
+
+ACTOR Anvil 194
+{
+	Game Strife
+	Radius 16
+	Height 32
+	+SOLID
+	ConversationID 279, -1, -1
+	States
+	{
+	Spawn:
+		ANVL A -1
+		Stop
+	}
+}
+
+// Silver Tech Lamp ----------------------------------------------------------
+
+ACTOR TechLampSilver 196
+{
+	Game Strife
+	Radius 11
+	Height 64
+	+SOLID
+	ConversationID 280, -1, -1
+	States
+	{
+	Spawn:
+		TECH A -1
+		Stop
+	}
+}
+
+// Brass Tech Lamp ----------------------------------------------------------
+
+ACTOR TechLampBrass 197
+{
+	Game Strife
+	Radius 8
+	Height 64
+	+SOLID
+	ConversationID 281, -1, -1
+	States
+	{
+	Spawn:
+		TECH B -1
+		Stop
+	}
+}
+
+// Tray --------------------------------------------------------------------
+
+ACTOR Tray 68
+{
+	Game Strife
+	Radius 24
+	Height 40
+	+SOLID
+	ConversationID 282, -1, -1
+	States
+	{
+	Spawn:
+		TRAY A -1
+		Stop
+	}
+}
+
+// AmmoFiller ---------------------------------------------------------------
+
+ACTOR AmmoFiller 228
+{
+	Game Strife
+	Radius 12
+	Height 24
+	+SOLID
+	ConversationID 283, -1, -1
+	States
+	{
+	Spawn:
+		AFED A -1
+		Stop
+	}
+}
+
+// Sigil Banner -------------------------------------------------------------
+
+ACTOR SigilBanner 216
+{
+	Game Strife
+	Radius 24
+	Height 96
+	+NOBLOCKMAP	// I take it this was once solid, yes?
+	ConversationID 284, -1, -1
+	States
+	{
+	Spawn:
+		SBAN A -1
+		Stop
+	}
+}
+
+// RebelBoots ---------------------------------------------------------------
+
+ACTOR RebelBoots 217
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 285, -1, -1
+	States
+	{
+	Spawn:
+		BOTR A -1
+		Stop
+	}
+}
+
+// RebelHelmet --------------------------------------------------------------
+
+ACTOR RebelHelmet 218
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 286, -1, -1
+	States
+	{
+	Spawn:
+		HATR A -1
+		Stop
+	}
+}
+
+// RebelShirt ---------------------------------------------------------------
+
+ACTOR RebelShirt 219
+{
+	Game Strife
+	+NOBLOCKMAP
+	ConversationID 287, -1, -1
+	States
+	{
+	Spawn:
+		TOPR A -1
+		Stop
+	}
+}
+
+// Alien Bubble Column ------------------------------------------------------
+
+ACTOR AlienBubbleColumn 221
+{
+	Game Strife
+	Radius 16
+	Height 128
+	+SOLID
+	ConversationID 290, -1, -1
+	ActiveSound "ambient/alien5"
+	States
+	{
+	Spawn:
+		BUBB A 4 A_LoopActiveSound
+		Loop
+	}
+}
+
+// Alien Floor Bubble -------------------------------------------------------
+
+ACTOR AlienFloorBubble 222
+{
+	Game Strife
+	Radius 16
+	Height 72
+	+SOLID
+	ConversationID 291, -1, -1
+	ActiveSound "ambient/alien6"
+	States
+	{
+	Spawn:
+		BUBF A 4 A_LoopActiveSound
+		Loop
+	}
+}
+
+// Alien Ceiling Bubble -----------------------------------------------------
+
+ACTOR AlienCeilingBubble 223
+{
+	Game Strife
+	Radius 16
+	Height 72
+	+SOLID +SPAWNCEILING +NOGRAVITY
+	ConversationID 292, -1, -1
+	ActiveSound "ambient/alien4"
+	States
+	{
+	Spawn:
+		BUBC A 4 A_LoopActiveSound
+		Loop
+	}
+}
+
+// Alien Asp Climber --------------------------------------------------------
+
+ACTOR AlienAspClimber 224
+{
+	Game Strife
+	Radius 16
+	Height 128
+	+SOLID
+	ConversationID 293, -1, -1
+	ActiveSound "ambient/alien3"
+	States
+	{
+	Spawn:
+		ASPR A 4 A_LoopActiveSound
+		Loop
+	}
+}
+
+// Alien Spider Light -------------------------------------------------------
+
+ACTOR AlienSpiderLight 225
+{
+	Game Strife
+	Radius 32
+	Height 56
+	+SOLID
+	ConversationID 294, -1, -1
+	ActiveSound "ambient/alien1"
+	States
+	{
+	Spawn:
+		SPDL ABC 5 A_LoopActiveSound
+		Loop
+	}
+}
+
+// Target Practice -----------------------------------------------------------
+
+ACTOR TargetPractice 208
+{
+	Game Strife
+	Health 99999999
+	PainChance 255
+	Radius 10
+	Height 72
+	Mass 9999999
+	+SOLID +SHOOTABLE +NOBLOOD
+	+INCOMBAT +NODAMAGE
+	ConversationID 205, -1, -1
+	PainSound "misc/metalhit"
+	States
+	{
+	Spawn:
+		HOGN A 2 A_CheckTerrain
+		Loop
+	Pain:
+		HOGN B 1 A_CheckTerrain
+		HOGN C 1 A_Pain
+		Goto Spawn
+	}
+}
+

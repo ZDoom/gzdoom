@@ -176,17 +176,17 @@ ${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.na
  a_heresiarch.cpp \
  a_hexenspecialdecs.cpp a_iceguy.cpp a_korax.cpp a_mageboss.cpp a_magecone.cpp \
  a_magelightning.cpp a_mageplayer.cpp a_magestaff.cpp a_magewand.cpp a_mana.cpp \
- a_pig.cpp a_puzzleitems.cpp a_scriptprojectiles.cpp a_serpent.cpp \
+ a_pig.cpp a_puzzleitems.cpp a_serpent.cpp \
  a_spike.cpp a_summon.cpp a_teleportother.cpp a_weaponpieces.cpp a_wraith.cpp \
  hexen_sbar.cpp a_artiegg.cpp a_artitele.cpp a_minotaur.cpp a_ravenambient.cpp \
  a_acolyte.cpp a_alienspectres.cpp \
- a_beggars.cpp a_coin.cpp a_crusader.cpp a_entityboss.cpp a_inquisitor.cpp \
- a_loremaster.cpp a_macil.cpp a_merchants.cpp a_oracle.cpp a_peasant.cpp \
- a_programmer.cpp a_questitems.cpp a_ratbuddy.cpp a_reaver.cpp a_rebels.cpp \
- a_sentinel.cpp a_spectral.cpp a_stalker.cpp a_strifeammo.cpp a_strifearmor.cpp \
- a_strifebishop.cpp a_strifeitems.cpp a_strifekeys.cpp a_strifeplayer.cpp \
+ a_coin.cpp a_crusader.cpp a_entityboss.cpp a_inquisitor.cpp \
+ a_loremaster.cpp a_macil.cpp a_oracle.cpp \
+ a_programmer.cpp a_reaver.cpp a_rebels.cpp \
+ a_sentinel.cpp a_spectral.cpp a_stalker.cpp a_strifeammo.cpp \
+ a_strifebishop.cpp a_strifeitems.cpp a_strifeplayer.cpp \
  a_strifestuff.cpp a_strifeweapons.cpp a_templar.cpp a_thingstoblowup.cpp \
- a_zombie.cpp strife_sbar.cpp a_action.cpp a_artifacts.cpp a_bridge.cpp \
+ strife_sbar.cpp a_action.cpp a_artifacts.cpp a_bridge.cpp \
  a_camera.cpp a_debris.cpp a_decals.cpp a_flashfader.cpp a_fountain.cpp \
  a_hatetarget.cpp a_keys.cpp a_lightning.cpp a_movingcamera.cpp a_pickups.cpp \
  a_quake.cpp a_secrettrigger.cpp a_sectoraction.cpp a_sharedmisc.cpp a_skies.cpp \

@@ -209,3 +209,15 @@ actors/hexen/hexenspecialdecs.txt			decorate/hexen/hexenspecialdecs.txt
 actors/hexen/puzzleitems.txt				decorate/hexen/puzzleitems.txt
 actors/hexen/scriptprojectiles.txt			decorate/hexen/scriptprojectiles.txt
 actors/hexen/speedboots.txt					decorate/hexen/speedboots.txt
+
+actors/strife/beggars.txt					decorate/strife/beggars.txt
+actors/strife/merchants.txt                 decorate/strife/merchants.txt
+actors/strife/peasants.txt                  decorate/strife/peasants.txt
+actors/strife/questitems.txt                decorate/strife/questitems.txt
+actors/strife/ratbuddy.txt                  decorate/strife/ratbuddy.txt
+actors/strife/strifearmor.txt               decorate/strife/strifearmor.txt
+actors/strife/strifeitems.txt               decorate/strife/strifeitems.txt
+actors/strife/strifekeys.txt                decorate/strife/strifekeys.txt
+actors/strife/strifestuff.txt               decorate/strife/strifestuff.txt
+actors/strife/zombie.txt                    decorate/strife/zombie.txt
+

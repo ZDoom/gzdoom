@@ -84,7 +84,7 @@ xx(Extreme)
 
 // Damage types
 xx(Fire)
-xx(Ice)
+//xx(Ice)	already defined above
 xx(Disintegrate)
 xx(Water)
 xx(Slime)

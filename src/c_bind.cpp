@@ -552,13 +552,14 @@ BOOL C_DoKey (event_t *ev)
 		}
 	}
 
-	if (binding == NULL)
+
+	if (binding == NULL || *binding==0)
 	{
 		binding = Bindings[ev->data1];
 		dclick = false;
 	}
 
-	if (binding != NULL && (chatmodeon == 0 || ev->data1 < 256))
+	if (binding != NULL && *binding!=0 && (chatmodeon == 0 || ev->data1 < 256))
 	{
 		if (ev->type == EV_KeyUp)
 		{

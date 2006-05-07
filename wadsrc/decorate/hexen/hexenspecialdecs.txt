@@ -102,8 +102,7 @@ ACTOR ZTwinedTorchUnlit : ZTwinedTorch 117
 	States
 	{
 	Spawn:
-		TWTR I -1
-		Stop
+		Goto Super.Inactive
 	}
 }
 
@@ -135,8 +134,7 @@ ACTOR ZWallTorchUnlit : ZWallTorch 55
 	States
 	{
 	Spawn:
-		WLTR I -1
-		Stop
+		Goto Super.Inactive
 	}
 }
 
@@ -221,8 +219,7 @@ ACTOR ZFireBullUnlit : ZFireBull 8043
 	States
 	{
 	Spawn:
-		FBUL H -1
-		Stop
+		Goto Super.Inactive+2
 	}
 }
 
@@ -279,14 +276,13 @@ ACTOR ZCauldron : SwitchableDecoration 8069
 	}
 }
 
-ACTOR ZCauldronUnlit : ZCauldron
+ACTOR ZCauldronUnlit : ZCauldron 8070
 {
 	Game Hexen
 	States
 	{
 	Spawn:
-		CDRN A -1
-		Stop
+		Goto Super.Inactive
 	}
 }
 

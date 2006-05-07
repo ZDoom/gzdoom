@@ -1,0 +1,49 @@
+
+ACTOR MetalArmor : BasicArmorPickup 2019
+{
+	Game Strife
+	SpawnID 69
+	ConversationID 129, 125, 128
+	Radius 20
+	Height 16
+	+FLOORCLIP 
+	+INVENTORY.AUTOACTIVATE 
+	+INVENTORY.INVBAR
+	Inventory.MaxAmount 3
+	Inventory.Icon "I_ARM1"
+	Inventory.PickupMessage "$TXT_METALARMOR"
+	Armor.SaveAmount 200
+	Armor.SavePercent 50
+	Tag "Metal_Armor"
+	States
+	{
+	Spawn:
+		ARM3 A -1
+		Stop
+	}
+}
+
+ACTOR LeatherArmor : BasicArmorPickup 2018
+{
+	Game Strife
+	SpawnID 68
+	ConversationID 130, 126, 129
+	Radius 20
+	Height 16
+	+FLOORCLIP 
+	+INVENTORY.AUTOACTIVATE 
+	+INVENTORY.INVBAR
+	Inventory.MaxAmount 5
+	Inventory.Icon "I_ARM2"
+	Inventory.PickupMessage "$TXT_LEATHERARMOR"
+	Armor.SaveAmount 100
+	Armor.SavePercent 33.33333
+	Tag "Leather_Armor"
+	States
+	{
+	Spawn:
+		ARM4 A -1
+		Stop
+	}
+}
+

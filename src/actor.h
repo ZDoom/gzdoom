@@ -279,6 +279,7 @@ enum
 	MF5_BOUNCEONACTORS	= 0x00000008,	// bouncing missile doesn't explode when it hits an actor 
 	MF5_EXPLODEONWATER	= 0x00000010,	// bouncing missile explpdes when hitting a water surface
 	MF5_AVOIDINGDROPOFF = 0x00000020,	// Used to move monsters away fro dropoffs
+	MF5_NODAMAGE		= 0x00000040,	// Actor can be shot and reacts to being shot but takes no damage
 
 // --- mobj.renderflags ---
 
@@ -398,6 +399,8 @@ enum
 	AMETA_BloodColor,		// colorized blood
 	AMETA_GibHealth,		// negative health below which this monster dies an extreme death
 	AMETA_WoundHealth,		// health needed to enter wound state
+	AMETA_PoisonDamage,		// Amount of poison damage
+	AMETA_FastSpeed,		// Speed in fast mode
 };
 
 // Map Object definition.

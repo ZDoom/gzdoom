@@ -70,6 +70,7 @@ static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_camelee ("CustomMelee");
 static FRandom pr_cabullet ("CustomBullet");
 static FRandom pr_cajump ("CustomJump");
+static FRandom pr_custommelee ("CustomMelee2");
 static FRandom pr_cwbullet ("CustomWpBullet");
 static FRandom pr_cwjump ("CustomWpJump");
 static FRandom pr_cwpunch ("CustomWpPunch");
@@ -662,6 +663,44 @@ void A_CustomBulletAttack (AActor *self)
 
 //==========================================================================
 //
+// A fully customizable melee attack
+//
+//==========================================================================
+void A_CustomMeleeAttack (AActor *self)
+{
+	int index=CheckIndex(6);
+	if (index<0) return;
+
+	int Multiplier = EvalExpressionI (StateParameters[index], self);
+	int Modulus = EvalExpressionI (StateParameters[index+1], self);
+	int Adder = EvalExpressionI (StateParameters[index+2], self);
+	int MeleeSound=StateParameters[index+3];
+	const char * DamageType = (const char*)StateParameters[index+4];
+	bool bleed = EvalExpressionN (StateParameters[index+5], self);
+	int mod;
+
+	// This needs to be redesigned once the customizable damage type system is working
+	if (DamageType == NULL) mod=MOD_HIT;
+	else if (!stricmp(DamageType, "Fire")) mod=MOD_FIRE;
+	else if (!stricmp(DamageType, "Ice")) mod=MOD_ICE;
+	else if (!stricmp(DamageType, "Disintegrate")) mod=MOD_DISINTEGRATE;
+	else mod=MOD_HIT;
+
+	if (!self->target)
+		return;
+				
+	A_FaceTarget (self);
+	if (self->CheckMeleeRange ())
+	{
+		int damage = ((pr_custommelee()%Modulus)*Multiplier)+Adder;
+		if (MeleeSound) S_SoundID (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
+		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		if (bleed) P_TraceBleed (damage, self->target, self);
+	}
+}
+
+//==========================================================================
+//
 // State jump function
 //
 //==========================================================================
@@ -1045,7 +1084,7 @@ void A_SpawnItem(AActor * self)
 	if (index<0) return;
 
 	const TypeInfo * missile= TypeInfo::FindType((const char *)StateParameters[index]);
-	int distance = EvalExpressionI (StateParameters[index+1], self);
+	fixed_t distance = EvalExpressionF (StateParameters[index+1], self);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	bool useammo = EvalExpressionN (StateParameters[index+3], self);
 
@@ -1263,7 +1302,7 @@ void A_SetTranslucent(AActor * self)
 	if (mode != STYLE_Fuzzy)
 	{
 		if (self->alpha == 0) mode = STYLE_None;
-		else if (mode == STYLE_Translucent && self->alpha == FRACUNIT) mode = STYLE_Normal;
+		else if (mode == STYLE_Translucent && self->alpha >= FRACUNIT) mode = STYLE_Normal;
 	}
 
 	self->RenderStyle=mode;

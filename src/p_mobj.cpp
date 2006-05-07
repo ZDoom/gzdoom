@@ -89,6 +89,7 @@ static FRandom pr_spawnmapthing ("SpawnMapThing");
 static FRandom pr_spawnpuff ("SpawnPuff");
 static FRandom pr_spawnblood ("SpawnBlood");
 static FRandom pr_splatter ("BloodSplatter");
+static FRandom pr_takedamage ("TakeDamage");
 static FRandom pr_ripperblood ("RipperBlood");
 static FRandom pr_chunk ("Chunk");
 static FRandom pr_checkmissilespawn ("CheckMissileSpawn");
@@ -3051,6 +3052,7 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	actor->frame = st->GetFrame();
 	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | st->GetFullbright();
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
+	actor->Speed = actor->GetClass()->Meta.GetMetaFixed(AMETA_FastSpeed, actor->Speed);
 
 	// set subsector and/or block links
 	actor->LinkToWorld (SpawningMapThing);
@@ -4595,6 +4597,16 @@ int AActor::DoSpecialDamage (AActor *target, int damage)
 	}
 	else
 	{
+		if (target->player)
+		{
+			int poisondamage = GetClass()->Meta.GetMetaInt(AMETA_PoisonDamage);
+			if (poisondamage > 0)
+			{
+				P_PoisonPlayer (target->player, this, this->target, poisondamage);
+				damage >>= 1;
+			}
+		}
+	
 		return damage;
 	}
 }
@@ -4606,6 +4618,16 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, in
 	// be hurt with any type of damage. Exception: Massacre damage always succeeds, because
 	// it needs to work.
 	FState *death;
+
+	if (flags5 & MF5_NODAMAGE)
+	{
+		target = source;
+		if (PainState != NULL && pr_takedamage() < PainChance)
+		{
+			SetState (PainState);
+		}
+		return -1;
+	}
 
 	if (DeathState != NULL)
 	{

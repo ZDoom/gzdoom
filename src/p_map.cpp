@@ -2551,7 +2551,7 @@ BOOL PTR_AimTraverse (intercept_t* in)
 	if ((th->flags3 & MF3_GHOST) && 
 		shootthing->player &&	// [RH] Be sure shootthing is a player
 		shootthing->player->ReadyWeapon &&
-		(shootthing->player->ReadyWeapon->WeaponFlags & WIF_HITS_GHOSTS))
+		(shootthing->player->ReadyWeapon->flags2 & MF2_THRUGHOST))
 	{
 		return true;
 	}
@@ -2695,7 +2695,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 
 	hitGhosts = (t1->player != NULL &&
 		t1->player->ReadyWeapon != NULL &&
-		(t1->player->ReadyWeapon->WeaponFlags & WIF_HITS_GHOSTS));
+		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST));
 
 	if (!Trace (t1->x, t1->y, shootz, t1->Sector, vx, vy, vz, distance,
 		MF_SHOOTABLE, ML_BLOCKEVERYTHING, t1, trace,

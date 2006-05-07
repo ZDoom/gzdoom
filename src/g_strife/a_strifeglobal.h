@@ -55,11 +55,6 @@ public:
 	AInventory *CreateCopy (AActor *other);
 };
 
-class AQuestItem : public AInventory
-{
-	DECLARE_ACTOR (AQuestItem, AInventory)
-};
-
 class AOracle : public AActor
 {
 	DECLARE_ACTOR (AOracle, AActor)

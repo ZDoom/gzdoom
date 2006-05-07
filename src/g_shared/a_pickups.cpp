@@ -12,6 +12,7 @@
 #include "c_dispatch.h"
 #include "gstrings.h"
 #include "templates.h"
+#include "a_strifeglobal.h"
 
 static FRandom pr_restore ("RestorePos");
 
@@ -1102,6 +1103,21 @@ bool AInventory::DoRespawn ()
 	return true;
 }
 
+
+//===========================================================================
+//
+// AInventory :: GiveQuest
+//
+//===========================================================================
+
+void AInventory::GiveQuest (AActor *toucher)
+{
+	int quest = GetClass()->Meta.GetMetaInt(AIMETA_GiveQuest);
+	if (quest>0 && quest<31)
+	{
+		toucher->GiveInventoryType (QuestItemClasses[quest-1]);
+	}
+}
 //===========================================================================
 //
 // AInventory :: TryPickup
@@ -1169,6 +1185,8 @@ bool AInventory::TryPickup (AActor *toucher)
 			}
 		}
 	}
+
+	GiveQuest(toucher);
 	return true;
 }
 
@@ -1271,6 +1289,7 @@ bool ACustomInventory::TryPickup (AActor *toucher)
 	}
 	else if (useok || ItemFlags & IF_ALWAYSPICKUP)
 	{
+		GiveQuest (toucher);
 		GoAwayAndDie();
 	}
 	return useok;
@@ -2049,6 +2068,7 @@ IMPLEMENT_ABSTRACT_ACTOR (AMapRevealer)
 bool AMapRevealer::TryPickup (AActor *toucher)
 {
 	level.flags |= LEVEL_ALLMAP;
+	GiveQuest (toucher);
 	GoAwayAndDie ();
 	return true;
 }

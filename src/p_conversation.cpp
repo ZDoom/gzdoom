@@ -643,7 +643,7 @@ static void TakeStrifeItem (const TypeInfo *itemtype, int amount)
 		return;
 
 	// Don't take quest items.
-	if (itemtype->IsDescendantOf (RUNTIME_CLASS(AQuestItem)))
+	if (itemtype->IsDescendantOf (TypeInfo::FindType("QuestItem")))
 		return;
 
 	// Don't take keys

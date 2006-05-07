@@ -92,6 +92,7 @@ bool AWeaponPiece::TryPickup (AActor *toucher)
 		{ 
 			// Already has the piece, check if mana needed
 			if (!gaveAmmo) return false;
+			GiveQuest (toucher);
 			GoAwayAndDie();
 			return true;
 		}
@@ -114,6 +115,7 @@ bool AWeaponPiece::TryPickup (AActor *toucher)
 			FullWeapon->AmmoGive2=Defaults->AmmoGive2;
 		}
 	}
+	GiveQuest (toucher);
 	GoAwayAndDie();
 	return true;
 }

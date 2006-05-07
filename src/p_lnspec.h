@@ -127,6 +127,7 @@ typedef enum {
 	ACS_Terminate = 82,
 	ACS_LockedExecute = 83,
 	ACS_ExecuteWithResult = 84,
+	ACS_LockedExecuteDoor = 85,
 
 	Polyobj_OR_RotateLeft = 90,
 	Polyobj_OR_RotateRight = 91,

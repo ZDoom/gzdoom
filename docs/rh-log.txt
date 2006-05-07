@@ -1,3 +1,14 @@
+May 7, 2006 (Changes by Graf Zahl)
+- Added a misc/secret sound definition for Heretic.
+- Fixed: Powered up weapons were not properly deselected when the level ended
+  and their ready state was different from the main weapon's.
+- Made some improvements to A_CountdownArg.
+- Removed the 'Yes', 'No' and 'Greetings' state assignment commands. They haven't
+  been documented and thus haven't been used at all so far. Therefore they don't 
+  need to be handled considering that they will go away anyway.
+- Changed the DECORATE state parser so that Stop can also be specified right after
+  a label, in addition to goto.
+
 May 6, 2006
 - Updated Italian strings that someone kindly e-mailed to me.
 - The CRT no longer detects any memory leaks when I run to the IWAD picker and quit.

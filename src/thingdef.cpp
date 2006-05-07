@@ -1400,7 +1400,7 @@ static void RetargetStatePointers (intptr_t count, const char *target, FState **
 	{
 		if (*probe == (FState *)count)
 		{
-			*probe = (FState *)strdup (target);
+			*probe = target == NULL? NULL : (FState *)strdup (target);
 		}
 	}
 }
@@ -1476,12 +1476,20 @@ do_goto:	SC_MustGetString();
 		}
 		else if (SC_Compare("STOP"))
 		{
-			if (!laststate) 
+do_stop:
+			if (laststate!=NULL)
+			{
+				laststate->NextState=(FState*)-1;
+			}
+			else if (lastlabel >=0)
+			{
+				RetargetStates (count+1, NULL, actor->Class, defaults);
+			}
+			else
 			{
 				SC_ScriptError("STOP before first state");
 				continue;
 			}
-			laststate->NextState=(FState*)-1;
 		}
 		else if (SC_Compare("WAIT") || SC_Compare("FAIL"))
 		{
@@ -1524,6 +1532,10 @@ do_goto:	SC_MustGetString();
 					if (SC_Compare ("Goto"))
 					{
 						goto do_goto;
+					}
+					else if (SC_Compare("Stop"))
+					{
+						goto do_stop;
 					}
 					strncpy(statestring, sc_String, 255);
 					SC_MustGetString ();
@@ -2612,33 +2624,6 @@ static void ActorHealState (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorYesState (AActor *defaults, Baggage &bag)
-{
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Yes");
-	defaults->YesState=CheckState (bag.CurrentState, bag.Info->Class);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorNoState (AActor *defaults, Baggage &bag)
-{
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "No");
-	defaults->NoState=CheckState (bag.CurrentState, bag.Info->Class);
-}
-
-//==========================================================================
-//
-//==========================================================================
-static void ActorGreetingsState (AActor *defaults, Baggage &bag)
-{
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Greetings");
-	defaults->GreetingsState=CheckState (bag.CurrentState, bag.Info->Class);
-}
-
-//==========================================================================
-//
-//==========================================================================
 static void ActorStates (AActor *defaults, Baggage &bag)
 {
 	if (!bag.StateSet) ProcessStates(bag.Info, defaults, bag);
@@ -3502,7 +3487,6 @@ static const ActorProps props[] =
 	{ "fastspeed",					ActorFastSpeed,				RUNTIME_CLASS(AActor) },
 	{ "game",						ActorGame,					RUNTIME_CLASS(AActor) },
 	{ "gibhealth",					ActorGibHealth,				RUNTIME_CLASS(AActor) },
-	{ "greetings",					ActorGreetingsState,		RUNTIME_CLASS(AActor) },
 	{ "heal",						ActorHealState,				RUNTIME_CLASS(AActor) },
 	{ "health",						ActorHealth,				RUNTIME_CLASS(AActor) },
 	{ "height",						ActorHeight,				RUNTIME_CLASS(AActor) },
@@ -3529,7 +3513,6 @@ static const ActorProps props[] =
 	{ "missileheight",				ActorMissileHeight,			RUNTIME_CLASS(AActor) },
 	{ "missiletype",				ActorMissileType,			RUNTIME_CLASS(AActor) },
 	{ "monster",					ActorMonster,				RUNTIME_CLASS(AActor) },
-	{ "no",							ActorNoState,				RUNTIME_CLASS(AActor) },
 	{ "obituary",					ActorObituary,				RUNTIME_CLASS(AActor) },
 	{ "pain",						ActorPainState,				RUNTIME_CLASS(AActor) },
 	{ "painchance",					ActorPainChance,			RUNTIME_CLASS(AActor) },
@@ -3575,7 +3558,6 @@ static const ActorProps props[] =
 	{ "woundhealth",				ActorWoundHealth,			RUNTIME_CLASS(AActor) },
 	{ "xdeath",						ActorXDeathState,			RUNTIME_CLASS(AActor) },
 	{ "xscale",						ActorXScale,				RUNTIME_CLASS(AActor) },
-	{ "yes",						ActorYesState,				RUNTIME_CLASS(AActor) },
 	{ "yscale",						ActorYScale,				RUNTIME_CLASS(AActor) },
 	// AWeapon:MinAmmo1 and 2 are never used so there is no point in adding them here!
 };

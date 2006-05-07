@@ -782,6 +782,8 @@ menu/invalid			plroof
 menu/dismiss			dorcls
 menu/clear			dorcls
 
+misc/secret			dssecret
+
 $endif	// ifheretic
 
 

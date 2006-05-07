@@ -481,7 +481,7 @@ void AWeapon::PostMorphWeapon ()
 
 void AWeapon::EndPowerup ()
 {
-	if (SisterWeapon != NULL)
+	if (SisterWeapon != NULL && WeaponFlags&WIF_POWERED_UP)
 	{
 		if (ReadyState != SisterWeapon->ReadyState)
 		{

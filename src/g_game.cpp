@@ -1042,6 +1042,13 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode)
 		}
 		item = next;
 	}
+	if (p->ReadyWeapon != NULL &&
+		p->ReadyWeapon->WeaponFlags&WIF_POWERED_UP &&
+		p->PendingWeapon == p->ReadyWeapon->SisterWeapon)
+	{
+		// Unselect powered up weapons if the unpowered counterpart is pending
+		p->ReadyWeapon=p->PendingWeapon;
+	}
 	p->mo->flags &= ~MF_SHADOW; 		// cancel invisibility
 	p->mo->RenderStyle = STYLE_Normal;
 	p->mo->alpha = FRACUNIT;

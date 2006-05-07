@@ -1550,7 +1550,18 @@ void A_CountdownArg(AActor * self)
 	if (index<=0 || index>5) return;
 	if (!self->args[index]--)
 	{
-		self->SetState(self->DeathState);
+		if (self->flags&MF_MISSILE)
+		{
+			P_ExplodeMissile(self, NULL);
+		}
+		else if (self->flags&MF_SHOOTABLE)
+		{
+			P_DamageMobj (self, NULL, NULL, self->health, MOD_UNKNOWN);
+		}
+		else
+		{
+			self->SetState(self->DeathState);
+		}
 	}
 
 }

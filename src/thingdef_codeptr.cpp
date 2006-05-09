@@ -191,7 +191,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 
 	int MeleeDamage=StateParameters[index];
 	int MeleeSound=StateParameters[index+1];
-	const char *MissileName=(const char *)StateParameters[index+2];
+	FName MissileName=(ENamedName)StateParameters[index+2];
 	fixed_t MissileHeight=StateParameters[index+3];
 
 	A_FaceTarget (self);
@@ -202,7 +202,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		P_TraceBleed (damage, self->target, self);
 	}
-	else if (domissile && MissileName)
+	else if (domissile && MissileName != NAME_None)
 	{
 		const TypeInfo * ti=TypeInfo::FindType(MissileName);
 		if (ti) 

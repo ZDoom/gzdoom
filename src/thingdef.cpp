@@ -81,15 +81,6 @@ TArray<intptr_t> StateParameters;
 
 //==========================================================================
 //
-//
-//==========================================================================
-inline char * MS_Strdup(const char * s)
-{
-	return *s? strdup(s):NULL;
-}
-
-//==========================================================================
-//
 // List of all flags
 //
 //==========================================================================
@@ -953,12 +944,35 @@ enum
 
 struct FDropItem 
 {
-	const char * Name;
+	FName Name;
 	int probability;
 	int amount;
 	FDropItem * Next;
 };
-TArray<FDropItem *> DropItemList;
+
+static void FreeDropItemChain(FDropItem *chain)
+{
+	while (chain != NULL)
+	{
+		FDropItem *next = chain->Next;
+		delete chain;
+		chain = next;
+	}
+}
+
+class FDropItemPtrArray : public TArray<FDropItem *>
+{
+public:
+	~FDropItemPtrArray()
+	{
+		for (unsigned int i = 0; i < Size(); ++i)
+		{
+			FreeDropItemChain ((*this)[i]);
+		}
+	}
+};
+
+FDropItemPtrArray DropItemList;
 
 //----------------------------------------------------------------------------
 //
@@ -999,7 +1013,7 @@ void A_NoBlocking (AActor *actor)
 
 		while (di != NULL)
 		{
-			if (stricmp (di->Name, "None") != 0)
+			if (di->Name != NAME_None)
 			{
 				const TypeInfo *ti = TypeInfo::FindType(di->Name);
 				if (ti) P_DropItem (actor, ti, di->amount, di->probability);
@@ -1032,7 +1046,7 @@ struct FBasicAttack
 {
 	int MeleeDamage;
 	int MeleeSound;
-	const char *MissileName;
+	FName MissileName;
 	fixed_t MissileHeight;
 };
 
@@ -1165,7 +1179,7 @@ static void ResetBaggage (Baggage *bag)
 	bag->DropItemList = NULL;
 	bag->BAttack.MissileHeight = 32*FRACUNIT;
 	bag->BAttack.MeleeSound = 0;
-	bag->BAttack.MissileName = NULL;
+	bag->BAttack.MissileName = NAME_None;
 	bag->DropItemSet = false;
 	bag->CurrentState = 0;
 	bag->StateSet = false;
@@ -1174,6 +1188,10 @@ static void ResetBaggage (Baggage *bag)
 static void ResetActor (AActor *actor, Baggage *bag)
 {
 	memcpy (actor, GetDefault<AActor>(), sizeof(AActor));
+	if (bag->DropItemList != NULL)
+	{
+		FreeDropItemChain (bag->DropItemList);
+	}
 	ResetBaggage (bag);
 }
 
@@ -1373,7 +1391,7 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 
 		StateParameters[paramindex] = bag.BAttack.MeleeDamage;
 		StateParameters[paramindex+1] = bag.BAttack.MeleeSound;
-		StateParameters[paramindex+2] = (intptr_t)bag.BAttack.MissileName;
+		StateParameters[paramindex+2] = bag.BAttack.MissileName;
 		StateParameters[paramindex+3] = bag.BAttack.MissileHeight;
 		state.Action = BasicAttacks[batk];
 		return true;
@@ -1400,7 +1418,7 @@ static void RetargetStatePointers (intptr_t count, const char *target, FState **
 	{
 		if (*probe == (FState *)count)
 		{
-			*probe = target == NULL? NULL : (FState *)strdup (target);
+			*probe = target == NULL ? NULL : (FState *)copystring (target);
 		}
 	}
 }
@@ -1463,7 +1481,7 @@ do_goto:	SC_MustGetString();
 			// copy the text - this must be resolved later!
 			if (laststate != NULL)
 			{ // Following a state definition: Modify it.
-				laststate->NextState=(FState*)strdup(statestring);	
+				laststate->NextState = (FState*)copystring(statestring);	
 			}
 			else if (lastlabel >= 0)
 			{ // Following a label: Retarget it.
@@ -1667,7 +1685,7 @@ do_stop:
 							case 'T':
 							case 't':		// String
 								SC_MustGetString();
-								v=(intptr_t)MS_Strdup(sc_String);
+								v = (intptr_t)(sc_String[0] ? copystring(sc_String) : NULL);
 								break;
 
 							case 'L':
@@ -1858,7 +1876,7 @@ static FState *ResolveGotoLabel (AActor *actor, const TypeInfo *type, char *name
 	{
 		SC_ScriptError("Unknown state label %s", label);
 	}
-	free(namestart);		// free the allocated string buffer
+	delete[] namestart;		// free the allocated string buffer
 	return state;
 }
 
@@ -1915,12 +1933,13 @@ static void FixStatePointersAgain (FActorInfo *actor, AActor *defaults, FState *
 static int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 {
 	int count = StateArray.Size();
-	FState *realstates = new FState[count];
-	int i;
-	int currange;
 
 	if (count > 0)
 	{
+		FState *realstates = new FState[count];
+		int i;
+		int currange;
+
 		memcpy(realstates, &StateArray[0], count*sizeof(FState));
 		actor->OwnedStates = realstates;
 		actor->NumOwnedStates = count;
@@ -2471,7 +2490,7 @@ static void ActorDropItem (AActor *defaults, Baggage &bag)
 	FDropItem * di=new FDropItem;
 
 	SC_MustGetString();
-	di->Name=strdup(sc_String);
+	di->Name=sc_String;
 	di->probability=255;
 	di->amount=-1;
 	if (SC_CheckNumber())
@@ -2763,7 +2782,7 @@ static void ActorMeleeSound (AActor *defaults, Baggage &bag)
 static void ActorMissileType (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetString();
-	bag.BAttack.MissileName = MS_Strdup(sc_String);
+	bag.BAttack.MissileName = sc_String;
 }
 
 //==========================================================================

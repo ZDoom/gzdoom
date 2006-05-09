@@ -1550,17 +1550,16 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 	int pickwad;
 	size_t i;
 	bool iwadparmfound = false;
+	FString custwad;
 
 	memset (wads, 0, sizeof(wads));
 
 	if (iwadparm)
 	{
-		char *custwad = new char[strlen (iwadparm) + 5];
-		strcpy (custwad, iwadparm);
-		FixPathSeperator (custwad);
+		custwad = iwadparm;
+		FixPathSeperator (custwad.GetChars());
 		if (CheckIWAD (custwad, wads))
 		{ // -iwad parameter was a directory
-			delete[] custwad;
 			iwadparm = NULL;
 		}
 		else
@@ -2015,13 +2014,12 @@ void D_DoomMain (void)
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);
 
-	//P_InitXlat ();
-
 	// [RH] Moved these up here so that we can do most of our
 	//		startup output in a fullscreen console.
 
 	CT_Init ();
 	I_Init ();
+
 	V_Init ();
 
 	// Base systems have been inited; enable cvar callbacks

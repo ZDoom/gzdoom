@@ -40,9 +40,9 @@ actor DeadMarine 15
 
 actor DeadZombieMan : ZombieMan 18
 {
+	Skip_Super
 	Game Doom
 	DropItem None
-	Skip_Super
 	States
 	{
 	Spawn:
@@ -54,9 +54,9 @@ actor DeadZombieMan : ZombieMan 18
 
 actor DeadShotgunGuy : ShotgunGuy 19
 {
+	Skip_Super
 	Game Doom
 	DropItem None
-	Skip_Super
 	States
 	{
 	Spawn:
@@ -68,8 +68,8 @@ actor DeadShotgunGuy : ShotgunGuy 19
 
 actor DeadDoomImp : DoomImp 20
 {
-	Game Doom
 	Skip_Super
+	Game Doom
 	States
 	{
 	Spawn:
@@ -81,8 +81,8 @@ actor DeadDoomImp : DoomImp 20
 
 actor DeadDemon : Demon 21
 {
-	Game Doom
 	Skip_Super
+	Game Doom
 	States
 	{
 	Spawn:
@@ -94,8 +94,8 @@ actor DeadDemon : Demon 21
 
 actor DeadCacodemon : Cacodemon 22
 {
-	Game Doom
 	Skip_Super
+	Game Doom
 	States
 	{
 	Spawn:
@@ -113,8 +113,8 @@ actor DeadCacodemon : Cacodemon 22
 
 actor DeadLostSoul : LostSoul 23
 {
-	Game Doom
 	Skip_Super
+	Game Doom
 	States
 	{
 	Spawn:

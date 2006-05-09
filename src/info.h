@@ -353,12 +353,6 @@ enum
 	ADEF_EOL = 0xED5E		// End Of List
 };
 
-struct FStateName
-{
-	FState *AActor::*State;
-	FName Name;
-};
-
 #if _MSC_VER
 // nonstandard extension used : zero-sized array in struct/union
 #pragma warning(disable:4200)
@@ -378,7 +372,6 @@ struct FActorInfo
 	TypeInfo *Class;
 	FState *OwnedStates;
 	BYTE *Defaults;
-	FStateName *StateNames;
 	int NumOwnedStates;
 	BYTE GameFilter;
 	BYTE SpawnID;
@@ -400,6 +393,8 @@ struct FActorInfo
 class FDoomEdMap
 {
 public:
+	~FDoomEdMap();
+
 	const TypeInfo *FindType (int doomednum) const;
 	void AddType (int doomednum, const TypeInfo *type);
 	void DelType (int doomednum);

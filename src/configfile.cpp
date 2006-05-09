@@ -195,7 +195,7 @@ void FConfigFile::ClearCurrentSection ()
 		{
 			next = entry->Next;
 			delete[] entry->Value;
-			delete entry;
+			delete (char *)entry;
 			entry = next;
 		}
 		CurrentSection->RootEntry = NULL;

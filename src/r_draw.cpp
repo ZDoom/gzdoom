@@ -1212,18 +1212,19 @@ void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip)
 //
 void R_InitTranslationTables ()
 {
-	int i, j;
-
-	// Diminishing translucency tables for shaded actors. Not really
-	// translation tables, but putting them here was convenient, particularly
-	// since translationtables[0] would otherwise be wasted.
-	translationtables[0] = new BYTE[256*
+	static BYTE MainTranslationTables[256*
 		(NUMCOLORMAPS*16			// Shaded
 		 +MAXPLAYERS*2				// Players + PlayersExtra
 		 +8							// Standard	(7 for Strife, 3 for the rest)
 		 +MAX_ACS_TRANSLATIONS		// LevelScripted
 		 +BODYQUESIZE				// PlayerCorpses
 		 )];
+	int i, j;
+
+	// Diminishing translucency tables for shaded actors. Not really
+	// translation tables, but putting them here was convenient, particularly
+	// since translationtables[0] would otherwise be wasted.
+	translationtables[0] = MainTranslationTables;
 
 	// Player translations, one for each player
 	translationtables[TRANSLATION_Players] =

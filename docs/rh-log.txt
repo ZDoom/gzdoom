@@ -1,4 +1,30 @@
 May 8, 2006
+- Fixed: The names in the Depths array in m_options.cpp were never freed.
+- Fixed: FDoomEdMap needed a destructor.
+- Fixed: Decal animators were never freed.
+- Fixed: Colormaps were never freed.
+- Fixed: Memory allocated in R_InitTranslationTables() was never freed.
+- Fixed: R_InitParticles() allocated way more memory than it needed to. (And the
+  particle memory was never freed, either.)
+- Fixed: FMetaTable::FreeMeta() should use delete[] to free string metadata.
+- Fixed: FConfigFile::ClearCurrentSection() must cast the entry to a char *
+  before deleting it, because that's the way it was allocated.
+- Fixed definitions of DeadZombieMan and DeadShotgunGuy in doom/deadthings.txt.
+  Skip_super resets the dropitem list, so having it after "DropItem None" is
+  pointless.
+- Fixed: Decorate DropItem information was never freed.
+- Fixed: FinishStates() allocated even 0-entry state arrays.
+- Fixed: Default actor instances were never freed.
+- Fixed: FRandomSoundList never freed its sound list.
+- Fixed: Level and cluster strings read from MAPINFO were never freed.
+- Fixed: Episode names were never freed.
+- Fixed: InverseColormap and GoldColormap were never freed. Since they're always
+  allocated, they can just be arrays rather than pointers.
+- Fixed: FFont destructor never freed any of the character data or the font's name.
+- Fixed: Fonts were not freed at exit.
+- Fixed: FStringTable::LoadLanguage() did not call SC_Close().
+- Fixed: When using the -iwad parameter, IdentifyVersion() did not release the
+  buffer it created to hold the parameter's path.
 - Blends created with the ACS fade commands now degrade to transparent overlays
   when the menu is visible, so they can no longer obscure the menu.
 

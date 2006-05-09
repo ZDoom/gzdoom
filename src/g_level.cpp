@@ -95,6 +95,17 @@ static void InitPlayerClasses ();
 static void ParseEpisodeInfo ();
 static void G_DoParseMapInfo (int lump);
 static void SetLevelNum (level_info_t *info, int num);
+static void ClearEpisodes ();
+static void ClearLevelInfoStrings (level_info_t *linfo);
+static void ClearClusterInfoStrings (cluster_info_t *cinfo);
+
+static struct EpisodeKiller
+{
+	~EpisodeKiller()
+	{
+		ClearEpisodes();
+	}
+} KillTheEpisodes;
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
@@ -129,6 +140,23 @@ level_locals_t level;			// info about current level
 
 static TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;
+
+static struct LevelClusterInfoKiller
+{
+	~LevelClusterInfoKiller()
+	{
+		unsigned int i;
+
+		for (i = 0; i < wadlevelinfos.Size(); ++i)
+		{
+			ClearLevelInfoStrings (&wadlevelinfos[i]);
+		}
+		for (i = 0; i < wadclusterinfos.Size(); ++i)
+		{
+			ClearClusterInfoStrings (&wadclusterinfos[i]);
+		}
+	}
+} KillTheLevelAndClusterInfos;
 
 // MAPINFO is parsed slightly differently when the map name is just a number.
 static bool HexenHack;
@@ -532,8 +560,16 @@ static void G_DoParseMapInfo (int lump)
 			{
 				levelindex = wadlevelinfos.Reserve(1);
 			}
+			else
+			{
+				ClearLevelInfoStrings (&wadlevelinfos[levelindex]);
+			}
 			levelinfo = &wadlevelinfos[levelindex];
 			memcpy (levelinfo, &defaultinfo, sizeof(*levelinfo));
+			if (levelinfo->music != NULL)
+			{
+				levelinfo->music = copystring (levelinfo->music);
+			}
 			if (HexenHack)
 			{
 				levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;
@@ -612,6 +648,10 @@ static void G_DoParseMapInfo (int lump)
 				{
 					delete[] clusterinfo->messagemusic;
 				}
+				if (clusterinfo->clustername != NULL)
+				{
+					delete[] clusterinfo->clustername;
+				}
 			}
 			memset (clusterinfo, 0, sizeof(cluster_info_t));
 			clusterinfo->cluster = sc_Number;
@@ -623,16 +663,59 @@ static void G_DoParseMapInfo (int lump)
 			break;
 
 		case MITL_CLEAREPISODES:
-			for (int i = 0; i < EpiDef.numitems; ++i)
-			{
-				delete[] const_cast<char *>(EpisodeMenu[i].name);
-				EpisodeMenu[i].name = NULL;
-			}
-			EpiDef.numitems = 0;
+			ClearEpisodes ();
 			break;
 		}
 	}
 	SC_Close ();
+}
+
+static void ClearLevelInfoStrings(level_info_t *linfo)
+{
+	if (linfo->music != NULL)
+	{
+		delete[] linfo->music;
+		linfo->music = NULL;
+	}
+	if (linfo->level_name != NULL)
+	{
+		delete[] linfo->level_name;
+		linfo->level_name = NULL;
+	}
+}
+
+static void ClearClusterInfoStrings(cluster_info_t *cinfo)
+{
+	if (cinfo->exittext != NULL)
+	{
+		delete[] cinfo->exittext;
+		cinfo->exittext = NULL;
+	}
+	if (cinfo->entertext != NULL)
+	{
+		delete[] cinfo->entertext;
+		cinfo->entertext = NULL;
+	}
+	if (cinfo->messagemusic != NULL)
+	{
+		delete[] cinfo->messagemusic;
+		cinfo->messagemusic = NULL;
+	}
+	if (cinfo->clustername != NULL)
+	{
+		delete[] cinfo->clustername;
+		cinfo->clustername = NULL;
+	}
+}
+
+static void ClearEpisodes()
+{
+	for (int i = 0; i < EpiDef.numitems; ++i)
+	{
+		delete[] const_cast<char *>(EpisodeMenu[i].name);
+		EpisodeMenu[i].name = NULL;
+	}
+	EpiDef.numitems = 0;
 }
 
 static void ParseMapInfoLower (MapInfoHandler *handlers,

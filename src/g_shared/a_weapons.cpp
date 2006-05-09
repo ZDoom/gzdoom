@@ -31,19 +31,6 @@ BEGIN_DEFAULTS (AWeapon, Any, -1, 0)
  PROP_Inventory_PickupSound ("misc/w_pkup")
 END_DEFAULTS
 
-ACTOR_STATE_NAMES(AWeapon) =
-{
-	{ (FState *AActor::*)&AWeapon::UpState,			"Up" },
-	{ (FState *AActor::*)&AWeapon::DownState,		"Down" },
-	{ (FState *AActor::*)&AWeapon::ReadyState,		"Ready" },
-	{ (FState *AActor::*)&AWeapon::AtkState,		"Attack" },
-	{ (FState *AActor::*)&AWeapon::HoldAtkState,	"HoldAttack" },
-	{ (FState *AActor::*)&AWeapon::AltAtkState,		"AltAttack" },
-	{ (FState *AActor::*)&AWeapon::AltHoldAtkState,	"AltHoldAttack" },
-	{ (FState *AActor::*)&AWeapon::FlashState,		"Flash" },
-	{ 0, NAME_None }
-};
-
 //===========================================================================
 //
 // AWeapon :: Serialize

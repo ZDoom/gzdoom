@@ -38,6 +38,7 @@
 
 #include "doomtype.h"
 #include "tarray.h"
+#include "name.h"
 
 class AActor;
 class FDecalTemplate;
@@ -57,7 +58,7 @@ protected:
 	virtual ~FDecalBase ();
 
 	FDecalBase *Left, *Right;
-	char *Name;
+	FName Name;
 	BYTE SpawnID;
 	TArray<const TypeInfo *> Users;	// Which actors generate this decal
 };

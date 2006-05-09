@@ -108,6 +108,7 @@ protected:
 	FFont *Next;
 
 	static FFont *FirstFont;
+	friend struct FontsDeleter;
 
 #if defined(_MSC_VER) && _MSC_VER < 1310
 	template<> friend FArchive &operator<< (FArchive &arc, FFont* &font);

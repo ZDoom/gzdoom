@@ -799,6 +799,21 @@ EXTERN_CVAR (Bool, fullscreen)
 
 static value_t Depths[22];
 
+static struct DepthNameKiller
+{
+	~DepthNameKiller()
+	{
+		for (int i = 0; i < countof(Depths); ++i)
+		{
+			if (Depths[i].name != NULL)
+			{
+				delete[] Depths[i].name;
+				Depths[i].name = NULL;
+			}
+		}
+	}
+} KillTheDepthValues;
+
 EXTERN_CVAR (Bool, vid_tft)		// Defined below
 CUSTOM_CVAR (Int, menu_screenratios, 0, CVAR_ARCHIVE)
 {
@@ -1155,7 +1170,7 @@ void M_OptInit (void)
 	int currval = 0, dummy1, dummy2, i;
 	char name[24];
 
-	for (i = 1; i < 32; i++)
+	for (i = 1; i < 32 && currval < countof(Depths); i++)
 	{
 		I_StartModeIterator (i);
 		if (I_NextMode (&dummy1, &dummy2, NULL))

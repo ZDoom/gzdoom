@@ -2836,6 +2836,23 @@ int firstfakecmap;
 byte *realcolormaps;
 int lastusedcolormap;
 
+static struct ColorMapKiller
+{
+	~ColorMapKiller()
+	{
+		if (fakecmaps != NULL)
+		{
+			delete fakecmaps;
+			fakecmaps = NULL;
+		}
+		if (realcolormaps != NULL)
+		{
+			delete realcolormaps;
+			realcolormaps = NULL;
+		}
+	}
+} KillTheColormaps;
+
 void R_SetDefaultColormap (const char *name)
 {
 	if (strnicmp (fakecmaps[0].name, name, 8) != 0)

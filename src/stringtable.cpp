@@ -267,6 +267,7 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 			}
 		}
 	}
+	SC_Close ();
 }
 
 // Replace \ escape sequences in a string with the escaped characters.

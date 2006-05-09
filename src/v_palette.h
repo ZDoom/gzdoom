@@ -77,8 +77,8 @@ struct FDynamicColormap
 	FDynamicColormap *Next;
 };
 
-extern BYTE *InverseColormap;
-extern BYTE *GoldColormap;
+extern BYTE InverseColormap[NUMCOLORMAPS*256];
+extern BYTE GoldColormap[NUMCOLORMAPS*256];
 extern FPalette GPalette;
 extern "C" {
 extern FDynamicColormap NormalLight;

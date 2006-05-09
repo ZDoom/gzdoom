@@ -118,6 +118,14 @@ static struct TypeInfoDataFreeer
 
 void TypeInfo::StaticFreeData (TypeInfo *type)
 {
+	if (type->ActorInfo != NULL)
+	{
+		if (type->ActorInfo->Defaults != NULL)
+		{
+			delete[] type->ActorInfo->Defaults;
+			type->ActorInfo->Defaults = NULL;
+		}
+	}
 	if (type->bRuntimeClass)
 	{
 		if (type->Name != NULL)
@@ -127,6 +135,11 @@ void TypeInfo::StaticFreeData (TypeInfo *type)
 		type->Name = NULL;
 		if (type->ActorInfo != NULL)
 		{
+			if (type->ActorInfo->OwnedStates != NULL)
+			{
+				delete[] type->ActorInfo->OwnedStates;
+				type->ActorInfo->OwnedStates = NULL;
+			}
 			delete type->ActorInfo;
 			type->ActorInfo = NULL;
 		}
@@ -350,7 +363,7 @@ void FMetaTable::FreeMeta ()
 		switch (meta->Type)
 		{
 		case META_String:
-			delete meta->Value.String;
+			delete[] meta->Value.String;
 			break;
 		default:
 			break;

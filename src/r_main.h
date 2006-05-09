@@ -23,6 +23,10 @@
 #ifndef __R_MAIN_H__
 #define __R_MAIN_H__
 
+// Number of diminishing brightness levels.
+// There a 0-31, i.e. 32 LUT in the COLORMAP lump.
+#define NUMCOLORMAPS			32
+
 #include "d_player.h"
 #include "r_data.h"
 #include "r_bsp.h"
@@ -83,9 +87,6 @@ extern int				r_Yaspect;
 // 16 discrete light levels. The terminology I use is borrowed from Build.
 //
 
-// Number of diminishing brightness levels.
-// There a 0-31, i.e. 32 LUT in the COLORMAP lump.
-#define NUMCOLORMAPS			32
 #define INVERSECOLORMAP			32
 #define GOLDCOLORMAP			33
 

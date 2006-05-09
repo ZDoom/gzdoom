@@ -92,10 +92,22 @@ struct FDecalAnimator
 	virtual ~FDecalAnimator ();
 	virtual DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const = 0;
 
-	char *Name;
+	FName Name;
 };
 
-static TArray<FDecalAnimator *> Animators;
+class FDecalAnimatorArray : public TArray<FDecalAnimator *>
+{
+public:
+	~FDecalAnimatorArray()
+	{
+		for (unsigned int i = 0; i < Size(); ++i)
+		{
+			delete (*this)[i];
+		}
+	}
+};
+
+FDecalAnimatorArray Animators;
 
 struct DDecalThinker : public DThinker
 {
@@ -554,7 +566,7 @@ void FDecalLib::ParseDecalGroup ()
 		SC_MustGetString ();
 		if (SC_Compare ("}"))
 		{
-			group->Name = copystring (groupName);
+			group->Name = groupName;
 			group->SpawnID = decalNum;
 			AddDecal (group);
 			break;
@@ -835,7 +847,7 @@ void FDecalLib::AddDecal (const char *name, byte num, const FDecalTemplate &deca
 	FDecalTemplate *newDecal = new FDecalTemplate;
 
 	*newDecal = decal;
-	newDecal->Name = copystring (name);
+	newDecal->Name = name;
 	newDecal->SpawnID = num;
 	AddDecal (newDecal);
 }
@@ -987,13 +999,11 @@ FDecalLib::FTranslation *FDecalLib::GenerateTranslation (DWORD start, DWORD end)
 
 FDecalBase::FDecalBase ()
 {
-	Name = NULL;
+	Name = NAME_None;
 }
 
 FDecalBase::~FDecalBase ()
 {
-	if (Name != NULL)
-		delete[] Name;
 }
 
 void FDecalTemplate::ApplyToDecal (DBaseDecal *decal, side_t *wall) const
@@ -1101,16 +1111,11 @@ const FDecalTemplate *FDecalGroup::GetDecal () const
 
 FDecalAnimator::FDecalAnimator (const char *name)
 {
-	Name = copystring (name);
+	Name = name;
 }
 
 FDecalAnimator::~FDecalAnimator ()
 {
-	if (Name != NULL)
-	{
-		delete[] Name;
-		Name = NULL;
-	}
 }
 
 IMPLEMENT_CLASS (DDecalFader)

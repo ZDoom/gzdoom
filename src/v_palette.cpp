@@ -59,8 +59,8 @@ extern "C" {
 FDynamicColormap NormalLight;
 }
 FPalette GPalette;
-BYTE *InverseColormap;
-BYTE *GoldColormap;
+BYTE InverseColormap[NUMCOLORMAPS*256];
+BYTE GoldColormap[NUMCOLORMAPS*256];
 int Near255;
 
 FColorMatcher ColorMatcher;
@@ -384,7 +384,6 @@ void InitPalette ()
 
 	// Doom invulnerability is an inverted grayscale
 	// Strife uses it when firing the Sigil
-	InverseColormap = new BYTE[NUMCOLORMAPS*256];
 	shade = InverseColormap;
 
 	for (c = 0; c < 256; c++)
@@ -397,7 +396,6 @@ void InitPalette ()
 	}
 
 	// Heretic invulnerability is a golden shade
-	GoldColormap = new BYTE[NUMCOLORMAPS*256];
 	shade = GoldColormap;
 
 	for (c = 0; c < 256; c++)

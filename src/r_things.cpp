@@ -1975,6 +1975,14 @@ void R_DrawMasked (void)
 // [RH] Particle functions
 //
 
+static void STACK_ARGS FreeParticles()
+{
+	if (Particles != NULL)
+	{
+		delete[] Particles;
+	}
+}
+
 void R_InitParticles ()
 {
 	char *i;
@@ -1986,8 +1994,9 @@ void R_InitParticles ()
 	else if (NumParticles < 100)
 		NumParticles = 100;
 
-	Particles = new particle_t[NumParticles * sizeof(particle_t)];
+	Particles = new particle_t[NumParticles];
 	R_ClearParticles ();
+	atterm (FreeParticles);
 }
 
 void R_ClearParticles ()

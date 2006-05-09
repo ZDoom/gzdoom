@@ -110,6 +110,17 @@ static const byte myislower[256] =
 
 FFont *FFont::FirstFont = NULL;
 
+static struct FontsDeleter
+{
+	~FontsDeleter()
+	{
+		while (FFont::FirstFont != NULL)
+		{
+			delete FFont::FirstFont;
+		}
+	}
+} DeleteAllTheFonts;
+
 #if defined(_MSC_VER) && _MSC_VER < 1310
 template<> FArchive &operator<< (FArchive &arc, FFont* &font)
 #else
@@ -262,7 +273,7 @@ FFont::~FFont ()
 
 		for (int i = 0; i < count; ++i)
 		{
-			if (Chars[i].Pic != NULL && Chars[i].Pic->Name == 0)
+			if (Chars[i].Pic != NULL && Chars[i].Pic->Name[0] == 0)
 			{
 				delete Chars[i].Pic;
 			}
@@ -279,6 +290,11 @@ FFont::~FFont ()
 	{
 		delete[] PatchRemap;
 		PatchRemap = NULL;
+	}
+	if (Name)
+	{
+		delete[] Name;
+		Name = NULL;
 	}
 
 	FFont **prev = &FirstFont;
@@ -559,6 +575,7 @@ FFont::FFont ()
 	Chars = NULL;
 	Ranges = NULL;
 	PatchRemap = NULL;
+	Name = NULL;
 }
 
 FSingleLumpFont::FSingleLumpFont (const char *name, int lump)

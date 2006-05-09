@@ -303,6 +303,11 @@ FDoomEdMap DoomEdMap;
 
 FDoomEdMap::FDoomEdEntry *FDoomEdMap::DoomEdHash[DOOMED_HASHSIZE];
 
+FDoomEdMap::~FDoomEdMap()
+{
+	Empty();
+}
+
 void FDoomEdMap::AddType (int doomednum, const TypeInfo *type)
 {
 	unsigned int hash = (unsigned int)doomednum % DOOMED_HASHSIZE;

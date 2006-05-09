@@ -173,12 +173,12 @@ public:
 
 #define BEGIN_DEFAULTS(actor,game,ednum,spawnid) \
 	BEGIN_DEFAULTS_PRE(actor) \
-	RUNTIME_CLASS(actor), &actor::States[0], NULL, NULL, countof(actor::States), \
+	RUNTIME_CLASS(actor), &actor::States[0], NULL, countof(actor::States), \
 	BEGIN_DEFAULTS_POST(actor,game,ednum,spawnid)
 
 #define BEGIN_STATELESS_DEFAULTS(actor,game,ednum,spawnid) \
 	BEGIN_DEFAULTS_PRE(actor) \
-	RUNTIME_CLASS(actor), NULL, NULL, NULL, 0, \
+	RUNTIME_CLASS(actor), NULL, NULL, 0, \
 	BEGIN_DEFAULTS_POST(actor,game,ednum,spawnid)
 
 // IMPLEMENT_ACTOR combines IMPLEMENT_CLASS and BEGIN_DEFAULTS
@@ -190,13 +190,6 @@ public:
 
 #define IMPLEMENT_ABSTRACT_ACTOR(actor) \
 	IMPLEMENT_STATELESS_ACTOR(actor,Any,-1,0) END_DEFAULTS
-
-#define ACTOR_STATE_NAMES(actor) \
-	extern FStateName actor##StateNames[]; \
-	extern FActorInfo actor##ActorInfo; \
-	struct actor##StateNamesAssignerClass { actor##StateNamesAssignerClass() { actor##ActorInfo.StateNames = actor##StateNames; } } \
-		actor##StateNamesAssigner; \
-	FStateName actor##StateNames[]
 
 #define PROP_SeeSound(x)				ADD_STRING_PROP(ADEF_SeeSound,"\1",x)
 #define PROP_AttackSound(x)				ADD_STRING_PROP(ADEF_AttackSound,"\2",x)

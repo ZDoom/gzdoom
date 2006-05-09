@@ -62,10 +62,30 @@
 
 struct FRandomSoundList
 {
+	FRandomSoundList()
+	: Sounds(0), SfxHead(0), NumSounds(0)
+	{
+	}
+	~FRandomSoundList()
+	{
+		if (Sounds != NULL)
+		{
+			delete[] Sounds;
+			Sounds = NULL;
+		}
+	}
+
 	WORD		*Sounds;	// A list of sounds that can result for the following id
 	WORD		SfxHead;	// The sound id used to reference this list
 	WORD		NumSounds;
 };
+
+template<>
+void CopyForTArray<FRandomSoundList> (FRandomSoundList &dst, FRandomSoundList &src)
+{
+	dst = src;
+}
+
 
 struct FPlayerClassLookup
 {
@@ -540,10 +560,6 @@ static void S_ClearSoundData()
 		if (Ambients[i]) delete Ambients[i];
 		Ambients[i]=NULL;
 	}
-	for(i=0;i<S_rnd.Size();i++)
-	{
-		delete[] S_rnd[i].Sounds;
-	}
 	while (MusicVolumes != NULL)
 	{
 		FMusicVolume * me = MusicVolumes;
@@ -934,10 +950,10 @@ static void S_AddSNDINFO (int lump)
 				else if (list.Size() > 1)
 				{ // Only add non-empty random lists
 					random.NumSounds = (WORD)list.Size();
-					random.Sounds = new WORD[random.NumSounds];
-					memcpy (random.Sounds, &list[0], sizeof(WORD)*random.NumSounds);
 					S_sfx[random.SfxHead].link = (WORD)S_rnd.Push (random);
 					S_sfx[random.SfxHead].bRandomHeader = true;
+					S_rnd[S_sfx[random.SfxHead].link].Sounds = new WORD[random.NumSounds];
+					memcpy (S_rnd[S_sfx[random.SfxHead].link].Sounds, &list[0], sizeof(WORD)*random.NumSounds);
 				}
 				}
 				break;

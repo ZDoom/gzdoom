@@ -168,24 +168,6 @@ IMPLEMENT_POINTY_CLASS (AActor)
  DECLARE_POINTER (master)
 END_POINTERS
 
-ACTOR_STATE_NAMES(AActor) =
-{
-	{ &AActor::SpawnState,		"Spawn" },
-	{ &AActor::SeeState,		"See" },
-	{ &AActor::PainState,		"Pain" },
-	{ &AActor::MeleeState,		"Melee" },
-	{ &AActor::MissileState,	"Missile" },
-	{ &AActor::CrashState,		"Crash" },
-	{ &AActor::DeathState,		"Death" },
-	{ &AActor::XDeathState,		"XDeath" },
-	{ &AActor::BDeathState,		"Burn" },
-	{ &AActor::IDeathState,		"Ice" },
-	{ &AActor::EDeathState,		"Disintegrate" },
-	{ &AActor::RaiseState,		"Raise" },
-	{ &AActor::WoundState,		"Wound" },
-	{ 0, NAME_None }
-};
-
 AActor::~AActor ()
 {
 	// Please avoid calling the destructor directly (or through delete)!

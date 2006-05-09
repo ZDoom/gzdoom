@@ -7,7 +7,6 @@
 
 %ifndef M_TARGET_LINUX
 %define ylookup			_ylookup
-%define vplce			_vplce
 %define vince			_vince
 %define palookupoffse	_palookupoffse
 %define bufplce			_bufplce
@@ -27,6 +26,7 @@
 %define mvlineasm1		_mvlineasm1
 %define mvlineasm4		_mvlineasm4
 %endif
+%define vplce			_vplce
 
 EXTERN ylookup ; near
 

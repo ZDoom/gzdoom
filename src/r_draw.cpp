@@ -988,6 +988,13 @@ DWORD (STACK_ARGS *dovline1)() = vlinec1;
 DWORD (STACK_ARGS *doprevline1)() = vlinec1;
 void (STACK_ARGS *dovline4)() = vlinec4;
 
+static DWORD STACK_ARGS mvlinec1();
+static void STACK_ARGS mvlinec4();
+static int mvlinebits;
+
+DWORD (STACK_ARGS *domvline1)() = mvlinec1;
+void (STACK_ARGS *domvline4)() = mvlinec4;
+
 #else
 
 extern "C"
@@ -1001,11 +1008,18 @@ void STACK_ARGS vlinetallasm4 ();
 void STACK_ARGS vlinetallasmathlon4 ();
 void STACK_ARGS setupvlineasm (int);
 void STACK_ARGS setupvlinetallasm (int);
+
+DWORD STACK_ARGS mvlineasm1();
+void STACK_ARGS mvlineasm4();
+void STACK_ARGS setupmvlineasm (int);
 }
 
 DWORD (STACK_ARGS *dovline1)() = vlinetallasm1;
 DWORD (STACK_ARGS *doprevline1)() = prevlinetallasm1;
 void (STACK_ARGS *dovline4)() = vlinetallasm4;
+
+DWORD (STACK_ARGS *domvline1)() = mvlineasm1;
+void (STACK_ARGS *domvline4)() = mvlineasm4;
 #endif
 
 void setupvline (int fracbits)
@@ -1076,6 +1090,63 @@ void STACK_ARGS vlinec4 ()
 		dest[1] = palookupoffse[1][bufplce[1][(place=vplce[1])>>bits]]; vplce[1] = place+vince[1];
 		dest[2] = palookupoffse[2][bufplce[2][(place=vplce[2])>>bits]]; vplce[2] = place+vince[2];
 		dest[3] = palookupoffse[3][bufplce[3][(place=vplce[3])>>bits]]; vplce[3] = place+vince[3];
+		dest += dc_pitch;
+	} while (--count);
+}
+#endif
+
+void setupmvline (int fracbits)
+{
+#if defined(USEASM)
+	setupmvlineasm (fracbits);
+	domvline1 = mvlineasm1;
+	domvline4 = mvlineasm4;
+#else
+	mvlinebits = fracbits;
+#endif
+}
+
+#ifndef USEASM
+DWORD STACK_ARGS mvlinec1 ()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	const BYTE *source = dc_source;
+	BYTE *dest = dc_dest;
+	int bits = mvlinebits;
+	int pitch = dc_pitch;
+
+	do
+	{
+		BYTE pix = source[frac>>bits];
+		if (pix != 0)
+		{
+			*dest = colormap[pix];
+		}
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
+
+void STACK_ARGS mvlinec4 ()
+{
+	BYTE *dest = dc_dest;
+	int count = dc_count;
+	int bits = mvlinebits;
+	DWORD place;
+
+	do
+	{
+		BYTE pix;
+
+		pix = bufplce[0][(place=vplce[0])>>bits]; if(pix) dest[0] = palookupoffse[0][pix]; vplce[0] = place+vince[0];
+		pix = bufplce[1][(place=vplce[1])>>bits]; if(pix) dest[1] = palookupoffse[1][pix]; vplce[1] = place+vince[1];
+		pix = bufplce[2][(place=vplce[2])>>bits]; if(pix) dest[2] = palookupoffse[2][pix]; vplce[2] = place+vince[2];
+		pix = bufplce[3][(place=vplce[3])>>bits]; if(pix) dest[3] = palookupoffse[3][pix]; vplce[3] = place+vince[3];
 		dest += dc_pitch;
 	} while (--count);
 }
@@ -1200,6 +1271,139 @@ void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip)
 	{
 		R_DrawFogBoundarySection (t2, b2, x1);
 	}
+}
+
+int tmvlinebits;
+
+void setuptmvline (int bits)
+{
+	tmvlinebits = bits;
+}
+
+fixed_t tmvline1_add ()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	const BYTE *source = dc_source;
+	BYTE *dest = dc_dest;
+	int bits = tmvlinebits;
+	int pitch = dc_pitch;
+
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	do
+	{
+		BYTE pix = source[frac>>bits];
+		if (pix != 0)
+		{
+			DWORD fg = fg2rgb[colormap[pix]];
+			DWORD bg = bg2rgb[*dest];
+			fg = (fg+bg) | 0x1f07c1f;
+			*dest = RGB32k[0][0][fg & (fg>>15)];
+		}
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
+
+void tmvline4_add ()
+{
+	BYTE *dest = dc_dest;
+	int count = dc_count;
+	int bits = tmvlinebits;
+
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	do
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			BYTE pix = bufplce[i][vplce[i] >> bits];
+			if (pix != 0)
+			{
+				DWORD fg = fg2rgb[palookupoffse[i][pix]];
+				DWORD bg = bg2rgb[dest[i]];
+				fg = (fg+bg) | 0x1f07c1f;
+				dest[i] = RGB32k[0][0][fg & (fg>>15)];
+			}
+			vplce[i] += vince[i];
+		}
+		dest += dc_pitch;
+	} while (--count);
+}
+
+fixed_t tmvline1_addclamp ()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	const BYTE *source = dc_source;
+	BYTE *dest = dc_dest;
+	int bits = tmvlinebits;
+	int pitch = dc_pitch;
+
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	do
+	{
+		BYTE pix = source[frac>>bits];
+		if (pix != 0)
+		{
+			DWORD a = fg2rgb[colormap[pix]] + bg2rgb[*dest];
+			DWORD b = a;
+
+			a |= 0x01f07c1f;
+			b &= 0x40100400;
+			a &= 0x3fffffff;
+			b = b - (b >> 5);
+			a |= b;
+			*dest = RGB32k[0][0][a & (a>>15)];
+		}
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
+
+void tmvline4_addclamp ()
+{
+	BYTE *dest = dc_dest;
+	int count = dc_count;
+	int bits = tmvlinebits;
+
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	do
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			BYTE pix = bufplce[i][vplce[i] >> bits];
+			if (pix != 0)
+			{
+				DWORD a = fg2rgb[palookupoffse[i][pix]] + bg2rgb[dest[i]];
+				DWORD b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				dest[i] = RGB32k[0][0][a & (a>>15)];
+			}
+			vplce[i] += vince[i];
+		}
+		dest += dc_pitch;
+	} while (--count);
 }
 
 /****************************************************/
@@ -1967,4 +2171,21 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD col
 void R_FinishSetPatchStyle ()
 {
 	basecolormap = basecolormapsave;
+}
+
+bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)())
+{
+	if (colfunc == R_DrawAddColumnP_C)
+	{
+		*tmvline1 = tmvline1_add;
+		*tmvline4 = tmvline4_add;
+		return true;
+	}
+	if (colfunc == R_DrawAddClampColumnP_C)
+	{
+		*tmvline1 = tmvline1_addclamp;
+		*tmvline4 = tmvline4_addclamp;
+		return true;
+	}
+	return false;
 }

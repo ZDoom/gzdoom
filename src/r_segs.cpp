@@ -121,7 +121,7 @@ static fixed_t	rw_bottomtexturemid;
 
 FTexture		*rw_pic;
 
-static short	*maskedtexturecol;
+static fixed_t	*maskedtexturecol;
 static FTexture	*WallSpriteTile;
 
 static void R_RenderDecal (side_t *wall, DBaseDecal *first, drawseg_t *clipper, int pass);
@@ -157,10 +157,11 @@ CVAR(Bool, r_drawmirrors, true, 0)
 // R_RenderMaskedSegRange
 //
 fixed_t *MaskedSWall;
+fixed_t MaskedScaleY;
 
 static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FTexture::Span *spans), FTexture *tex)
 {
-	if (maskedtexturecol[dc_x] != SHRT_MAX)
+	if (maskedtexturecol[dc_x] != FIXED_MAX)
 	{
 		// calculate lighting
 		if (!fixedcolormap)
@@ -168,7 +169,7 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 			dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 		}
 
-		dc_iscale = MaskedSWall[dc_x];
+		dc_iscale = MulScale5 (MaskedSWall[dc_x], MaskedScaleY);
 		sprtopscreen = centeryfrac - FixedMul (dc_texturemid, spryscale);
 		
 		// killough 1/25/98: here's where Medusa came in, because
@@ -181,9 +182,9 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 
 		// draw the texture
 		const FTexture::Span *spans;
-		const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x], &spans);
+		const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x] >> FRACBITS, &spans);
 		blastfunc (pixels, spans);
-		maskedtexturecol[dc_x] = SHRT_MAX;
+		maskedtexturecol[dc_x] = FIXED_MAX;
 	}
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;
@@ -243,7 +244,8 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	}
 
 	MaskedSWall = (fixed_t *)(openings + ds->swall) - ds->x1;
-	maskedtexturecol = openings + ds->maskedtexturecol - ds->x1;
+	MaskedScaleY = tex->ScaleY ? tex->ScaleY : ty;
+	maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
 	spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 	rw_scalestep = ds->iscalestep;
 
@@ -274,84 +276,102 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		dc_texturemid = MulScale3 (dc_texturemid - viewz, scaley) + curline->sidedef->rowoffset;
 	}
 
-	// [RH] Don't bother drawing segs that are completely offscreen
-	if (MulScale12 (globaldclip, ds->sz1) < -textop &&
-		MulScale12 (globaldclip, ds->sz2) < -textop)
-	{ // Texture top is below the bottom of the screen
-		goto clearfog;
-	}
-
-	if (MulScale12 (globaluclip, ds->sz1) > texheight - textop &&
-		MulScale12 (globaluclip, ds->sz2) > texheight - textop)
-	{ // Texture bottom is above the top of the screen
-		goto clearfog;
-	}
-
-	WallSZ1 = ds->sz1;
-	WallSZ2 = ds->sz2;
-	WallSX1 = ds->sx1;
-	WallSX2 = ds->sx2;
-
-	OWallMost (wallupper, textop);
-	OWallMost (walllower, textop - texheight);
-
-	for (i = x1; i <= x2; i++)
-	{
-		if (wallupper[i] < mceilingclip[i])
-			wallupper[i] = mceilingclip[i];
-	}
-	for (i = x1; i <= x2; i++)
-	{
-		if (walllower[i] > mfloorclip[i])
-			walllower[i] = mfloorclip[i];
-	}
-	mfloorclip = walllower;
-	mceilingclip = wallupper;
-
 	if (fixedlightlev)
 		dc_colormap = basecolormap + fixedlightlev;
 	else if (fixedcolormap)
 		dc_colormap = fixedcolormap;
 
-	// draw the columns one at a time
-	if (drawmode == DoDraw0)
-	{
-		for (dc_x = x1; dc_x <= x2; ++dc_x)
+	if (!(curline->linedef->flags & ML_WRAP_MIDTEX))
+	{ // Texture does not wrap vertically.
+
+		// [RH] Don't bother drawing segs that are completely offscreen
+		if (MulScale12 (globaldclip, ds->sz1) < -textop &&
+			MulScale12 (globaldclip, ds->sz2) < -textop)
+		{ // Texture top is below the bottom of the screen
+			goto clearfog;
+		}
+
+		if (MulScale12 (globaluclip, ds->sz1) > texheight - textop &&
+			MulScale12 (globaluclip, ds->sz2) > texheight - textop)
+		{ // Texture bottom is above the top of the screen
+			goto clearfog;
+		}
+
+		WallSZ1 = ds->sz1;
+		WallSZ2 = ds->sz2;
+		WallSX1 = ds->sx1;
+		WallSX2 = ds->sx2;
+
+		OWallMost (wallupper, textop);
+		OWallMost (walllower, textop - texheight);
+
+		for (i = x1; i <= x2; i++)
 		{
-			BlastMaskedColumn (R_DrawMaskedColumn, tex);
+			if (wallupper[i] < mceilingclip[i])
+				wallupper[i] = mceilingclip[i];
+		}
+		for (i = x1; i <= x2; i++)
+		{
+			if (walllower[i] > mfloorclip[i])
+				walllower[i] = mfloorclip[i];
+		}
+		mfloorclip = walllower;
+		mceilingclip = wallupper;
+
+		// draw the columns one at a time
+		if (drawmode == DoDraw0)
+		{
+			for (dc_x = x1; dc_x <= x2; ++dc_x)
+			{
+				BlastMaskedColumn (R_DrawMaskedColumn, tex);
+			}
+		}
+		else
+		{
+			// [RH] Draw up to four columns at once
+			int stop = (x2+1) & ~3;
+
+			if (x1 > x2)
+				goto clearfog;
+
+			dc_x = x1;
+
+			while ((dc_x < stop) && (dc_x & 3))
+			{
+				BlastMaskedColumn (R_DrawMaskedColumn, tex);
+				dc_x++;
+			}
+
+			while (dc_x < stop)
+			{
+				rt_initcols();
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex);
+				rt_draw4cols (dc_x - 3);
+				dc_x++;
+			}
+
+			while (dc_x <= x2)
+			{
+				BlastMaskedColumn (R_DrawMaskedColumn, tex);
+				dc_x++;
+			}
 		}
 	}
 	else
-	{
-		// [RH] Draw up to four columns at once
-		int stop = (x2+1) & ~3;
+	{ // Texture does wrap vertically.
 
-		if (x1 > x2)
-			goto clearfog;
-
-		dc_x = x1;
-
-		while ((dc_x < stop) && (dc_x & 3))
+		rw_offset = 0;
+		rw_pic = tex;
+		if (colfunc == basecolfunc)
 		{
-			BlastMaskedColumn (R_DrawMaskedColumn, tex);
-			dc_x++;
+			maskwallscan(x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol);
 		}
-
-		while (dc_x < stop)
+		else
 		{
-			rt_initcols();
-			BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
-			BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
-			BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
-			BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex);
-			rt_draw4cols (dc_x - 3);
-			dc_x++;
-		}
-
-		while (dc_x <= x2)
-		{
-			BlastMaskedColumn (R_DrawMaskedColumn, tex);
-			dc_x++;
+			transmaskwallscan(x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol);
 		}
 	}
 
@@ -411,8 +431,8 @@ ebp = x2
 void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
 			   const BYTE *(*getcol)(FTexture *tex, int x))
 {
-	long x, shiftval;
-	long y1ve[4], y2ve[4], u4, d4, z;
+	int x, shiftval;
+	int y1ve[4], y2ve[4], u4, d4, z;
 	char bad;
 	fixed_t light = rw_light - rw_lightstep;
 	SDWORD yrepeat, texturemid, xoffset;
@@ -634,6 +654,347 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	wallscan (x1, x2, up, dwal, swal, lwal);
 	basecolormap = startcolormap;
 	wallshade = startshade;
+}
+
+inline fixed_t mvline1 (fixed_t vince, byte *colormap, int count, fixed_t vplce, const byte *bufplce, byte *dest)
+{
+	dc_iscale = vince;
+	dc_colormap = colormap;
+	dc_count = count;
+	dc_texturefrac = vplce;
+	dc_source = bufplce;
+	dc_dest = dest;
+	return domvline1 ();
+}
+
+void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
+			   const BYTE *(*getcol)(FTexture *tex, int x))
+{
+	int x, shiftval;
+	BYTE *p;
+	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
+	char bad;
+	fixed_t light = rw_light - rw_lightstep;
+	SDWORD yrepeat, texturemid, xoffset;
+
+	if (rw_pic->UseType == FTexture::TEX_Null)
+	{
+		return;
+	}
+
+	if (!rw_pic->bMasked)
+	{ // Textures that aren't masked can use the faster wallscan.
+		wallscan (x1, x2, uwal, dwal, swal, lwal, getcol);
+		return;
+	}
+
+//extern cycle_t WallScanCycles;
+//clock (WallScanCycles);
+
+	rw_pic->GetHeight();	// Make sure texture size is loaded
+	shiftval = rw_pic->HeightBits;
+	setupmvline (32-shiftval);
+	yrepeat = (rw_pic->ScaleY ? rw_pic->ScaleY : ty) << (11 - shiftval);
+	texturemid = dc_texturemid << (16 - shiftval);
+	xoffset = rw_offset;
+
+	x = startx = x1;
+	p = x + dc_destorg;
+
+	if (fixedcolormap)
+	{
+		palookupoffse[0] = dc_colormap;
+		palookupoffse[1] = dc_colormap;
+		palookupoffse[2] = dc_colormap;
+		palookupoffse[3] = dc_colormap;
+	}
+
+	for(; (x <= x2) && ((size_t)p & 3); ++x, ++p)
+	{
+		light += rw_lightstep;
+		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
+		y2ve[0] = dwal[x];//min(dwal[x],dmost[x]);
+		if (y2ve[0] <= y1ve[0]) continue;
+
+		if (!fixedcolormap)
+		{ // calculate lighting
+			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+		}
+
+		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
+		dc_dest = ylookup[y1ve[0]] + p;
+		dc_iscale = swal[x] * yrepeat;
+		dc_count = y2ve[0] - y1ve[0];
+		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+
+		domvline1();
+	}
+
+	for(; x <= x2-3; x += 4, p+= 4)
+	{
+		bad = 0;
+		for (z = 3, dax = x+3; z >= 0; --z, --dax)
+		{
+			y1ve[z] = uwal[dax];
+			y2ve[z] = dwal[dax];
+			if (y2ve[z] <= y1ve[z]) { bad += 1<<z; continue; }
+
+			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
+			vince[z] = swal[dax] * yrepeat;
+			vplce[z] = texturemid + FixedMul (vince[z], (y1ve[z]<<FRACBITS)-centeryfrac+FRACUNIT);
+		}
+		if (bad == 15)
+		{
+			light += rw_lightstep << 2;
+			continue;
+		}
+
+		if (!fixedcolormap)
+		{
+			for (z = 0; z < 4; ++z)
+			{
+				light += rw_lightstep;
+				palookupoffse[z] = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			}
+		}
+
+		u4 = MAX(MAX(y1ve[0],y1ve[1]),MAX(y1ve[2],y1ve[3]));
+		d4 = MIN(MIN(y2ve[0],y2ve[1]),MIN(y2ve[2],y2ve[3]));
+
+		if ((bad != 0) || (u4 >= d4))
+		{
+			for (z = 0; z < 4; ++z)
+			{
+				if (!(bad & 1))
+				{
+					mvline1(vince[z],palookupoffse[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+				}
+				bad >>= 1;
+			}
+			continue;
+		}
+
+		for (z = 0; z < 4; ++z)
+		{
+			if (u4 > y1ve[z])
+			{
+				vplce[z] = mvline1(vince[z],palookupoffse[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+			}
+		}
+
+		if (d4 > u4)
+		{
+			dc_count = d4-u4;
+			dc_dest = ylookup[u4]+p;
+			domvline4();
+		}
+
+		BYTE *i = p+ylookup[d4];
+		for (z = 0; z < 4; ++z)
+		{
+			if (y2ve[z] > d4)
+			{
+				mvline1(vince[z],palookupoffse[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
+			}
+		}
+	}
+	for(; x <= x2; ++x, ++p)
+	{
+		light += rw_lightstep;
+		y1ve[0] = uwal[x];
+		y2ve[0] = dwal[x];
+		if (y2ve[0] <= y1ve[0]) continue;
+
+		if (!fixedcolormap)
+		{ // calculate lighting
+			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+		}
+
+		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
+		dc_dest = ylookup[y1ve[0]] + p;
+		dc_iscale = swal[x] * yrepeat;
+		dc_count = y2ve[0] - y1ve[0];
+		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+
+		domvline1();
+	}
+
+//unclock(WallScanCycles);
+
+	NetUpdate ();
+}
+
+inline void preptmvline1 (fixed_t vince, byte *colormap, int count, fixed_t vplce, const byte *bufplce, byte *dest)
+{
+	dc_iscale = vince;
+	dc_colormap = colormap;
+	dc_count = count;
+	dc_texturefrac = vplce;
+	dc_source = bufplce;
+	dc_dest = dest;
+}
+
+void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
+			   const BYTE *(*getcol)(FTexture *tex, int x))
+{
+	fixed_t (*tmvline1)();
+	void (*tmvline4)();
+	int x, shiftval;
+	BYTE *p;
+	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
+	char bad;
+	fixed_t light = rw_light - rw_lightstep;
+	SDWORD yrepeat, texturemid, xoffset;
+
+	if (rw_pic->UseType == FTexture::TEX_Null)
+	{
+		return;
+	}
+
+	if (!R_GetTransMaskDrawers (&tmvline1, &tmvline4))
+	{
+		// The current translucency is unsupported, so draw with regular maskwallscan instead.
+		maskwallscan (x1, x2, uwal, dwal, swal, lwal, getcol);
+		return;
+	}
+
+//extern cycle_t WallScanCycles;
+//clock (WallScanCycles);
+
+	rw_pic->GetHeight();	// Make sure texture size is loaded
+	shiftval = rw_pic->HeightBits;
+	setuptmvline (32-shiftval);
+	yrepeat = (rw_pic->ScaleY ? rw_pic->ScaleY : ty) << (11 - shiftval);
+	texturemid = dc_texturemid << (16 - shiftval);
+	xoffset = rw_offset;
+
+	x = startx = x1;
+	p = x + dc_destorg;
+
+	if (fixedcolormap)
+	{
+		palookupoffse[0] = dc_colormap;
+		palookupoffse[1] = dc_colormap;
+		palookupoffse[2] = dc_colormap;
+		palookupoffse[3] = dc_colormap;
+	}
+
+	for(; (x <= x2) && ((size_t)p & 3); ++x, ++p)
+	{
+		light += rw_lightstep;
+		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
+		y2ve[0] = dwal[x];//min(dwal[x],dmost[x]);
+		if (y2ve[0] <= y1ve[0]) continue;
+
+		if (!fixedcolormap)
+		{ // calculate lighting
+			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+		}
+
+		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
+		dc_dest = ylookup[y1ve[0]] + p;
+		dc_iscale = swal[x] * yrepeat;
+		dc_count = y2ve[0] - y1ve[0];
+		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+
+		tmvline1();
+	}
+
+	for(; x <= x2-3; x += 4, p+= 4)
+	{
+		bad = 0;
+		for (z = 3, dax = x+3; z >= 0; --z, --dax)
+		{
+			y1ve[z] = uwal[dax];
+			y2ve[z] = dwal[dax];
+			if (y2ve[z] <= y1ve[z]) { bad += 1<<z; continue; }
+
+			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
+			vince[z] = swal[dax] * yrepeat;
+			vplce[z] = texturemid + FixedMul (vince[z], (y1ve[z]<<FRACBITS)-centeryfrac+FRACUNIT);
+		}
+		if (bad == 15)
+		{
+			light += rw_lightstep << 2;
+			continue;
+		}
+
+		if (!fixedcolormap)
+		{
+			for (z = 0; z < 4; ++z)
+			{
+				light += rw_lightstep;
+				palookupoffse[z] = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			}
+		}
+
+		u4 = MAX(MAX(y1ve[0],y1ve[1]),MAX(y1ve[2],y1ve[3]));
+		d4 = MIN(MIN(y2ve[0],y2ve[1]),MIN(y2ve[2],y2ve[3]));
+
+		if ((bad != 0) || (u4 >= d4))
+		{
+			for (z = 0; z < 4; ++z)
+			{
+				if (!(bad & 1))
+				{
+					preptmvline1(vince[z],palookupoffse[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+					tmvline1();
+				}
+				bad >>= 1;
+			}
+			continue;
+		}
+
+		for (z = 0; z < 4; ++z)
+		{
+			if (u4 > y1ve[z])
+			{
+				preptmvline1(vince[z],palookupoffse[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+				vplce[z] = tmvline1();
+			}
+		}
+
+		if (d4 > u4)
+		{
+			dc_count = d4-u4;
+			dc_dest = ylookup[u4]+p;
+			tmvline4();
+		}
+
+		BYTE *i = p+ylookup[d4];
+		for (z = 0; z < 4; ++z)
+		{
+			if (y2ve[z] > d4)
+			{
+				preptmvline1(vince[z],palookupoffse[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
+				tmvline1();
+			}
+		}
+	}
+	for(; x <= x2; ++x, ++p)
+	{
+		light += rw_lightstep;
+		y1ve[0] = uwal[x];
+		y2ve[0] = dwal[x];
+		if (y2ve[0] <= y1ve[0]) continue;
+
+		if (!fixedcolormap)
+		{ // calculate lighting
+			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+		}
+
+		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
+		dc_dest = ylookup[y1ve[0]] + p;
+		dc_iscale = swal[x] * yrepeat;
+		dc_count = y2ve[0] - y1ve[0];
+		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+
+		tmvline1();
+	}
+
+//unclock(WallScanCycles);
+
+	NetUpdate ();
 }
 
 //
@@ -929,7 +1290,7 @@ void R_NewWall (bool needlights)
 
 				|| (backsector->floor_angle + backsector->base_floor_angle) != (frontsector->floor_angle + frontsector->base_floor_angle)
 
-				|| (sidedef->midtexture && linedef->flags & ML_CLIP_MIDTEX)
+				|| (sidedef->midtexture && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
 				;
 
 			markceiling = (frontsector->ceilingpic != skyflatnum ||
@@ -958,7 +1319,7 @@ void R_NewWall (bool needlights)
 
 				|| (backsector->ceiling_angle + backsector->base_ceiling_angle) != (frontsector->ceiling_angle + frontsector->base_ceiling_angle)
 
-				|| (sidedef->midtexture && linedef->flags & ML_CLIP_MIDTEX)
+				|| (sidedef->midtexture && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
 				);
 		}
 
@@ -1235,7 +1596,7 @@ void R_StoreWallRange (int start, int stop)
 			(WallSZ1 >= TOO_CLOSE_Z && WallSZ2 >= TOO_CLOSE_Z))
 		{
 			fixed_t *swal;
-			short *lwal;
+			fixed_t *lwal;
 			int i;
 
 			maskedtexture = true;
@@ -1243,22 +1604,22 @@ void R_StoreWallRange (int start, int stop)
 			ds_p->bFogBoundary = IsFogBoundary (frontsector, backsector);
 			if (sidedef->midtexture != 0)
 			{
-				ds_p->maskedtexturecol = R_NewOpening (stop - start);
+				ds_p->maskedtexturecol = R_NewOpening ((stop - start) * 2);
 				ds_p->swall = R_NewOpening ((stop - start) * 2);
 
-				lwal = openings + ds_p->maskedtexturecol;
+				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
 				swal = (fixed_t *)(openings + ds_p->swall);
 				int scaley = TexMan(sidedef->midtexture)->ScaleY ?
 					TexMan(sidedef->midtexture)->ScaleY : ty;
 				int xoffset = rw_offset;
 				for (i = start; i < stop; i++)
 				{
-					*lwal++ = (short)((lwall[i] + xoffset) >> FRACBITS);
-					*swal++ = MulScale5 (swall[i], scaley);
+					*lwal++ = lwall[i] + xoffset;
+					*swal++ = swall[i];
 				}
 
-				fixed_t istart = *((fixed_t *)(openings + ds_p->swall));
-				fixed_t iend = *(swal - 1);
+				fixed_t istart = MulScale5 (*((fixed_t *)(openings + ds_p->swall)), scaley);
+				fixed_t iend = MulScale5 (*(swal - 1), scaley);
 
 				if (istart < 3 && istart >= 0) istart = 3;
 				if (istart > -3 && istart < 0) istart = -3;

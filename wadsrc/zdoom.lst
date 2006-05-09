@@ -165,17 +165,17 @@ sounds/railgf1.flac		    railgunfire.flac
 ========
 # Mapinfos
 
-d1info.txt				    mapinfo/doom1.txt
-d2info.txt				    mapinfo/doom2.txt
-plutinfo.txt			    mapinfo/plutonia.txt
-tntinfo.txt				    mapinfo/tnt.txt
-herinfo.txt				    mapinfo/heretic.txt
-hexninfo.txt			    mapinfo/hexen.txt
-strfinfo.txt			    mapinfo/strife.txt
+mapinfo/doom1.txt			mapinfo/doom1.txt
+mapinfo/doom2.txt			mapinfo/doom2.txt
+mapinfo/plutonia.txt			mapinfo/plutonia.txt
+mapinfo/tnt.txt				mapinfo/tnt.txt
+mapinfo/heretic.txt			mapinfo/heretic.txt
+mapinfo/hexen.txt			mapinfo/hexen.txt
+mapinfo/strife.txt			mapinfo/strife.txt
 
 ========
 # Strife's helper script
-acs/strfhelp.o    			strfhelp.o
+acs/strfhelp.o				strfhelp.o
 
 
 ========

@@ -509,6 +509,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		lines[j].v1 = FindVertex (walls[i].x, walls[i].y);
 		lines[j].v2 = FindVertex (walls[walls[i].point2].x, walls[walls[i].point2].y);
 		lines[j].frontsector = sides[i].sector;
+		lines[j].flags |= ML_WRAP_MIDTEX;
 		if (walls[i].nextsector >= 0)
 		{
 			lines[j].backsector = sectors + walls[i].nextsector;

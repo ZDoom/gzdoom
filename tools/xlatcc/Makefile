@@ -1,8 +1,14 @@
-EXE = xlatcc.exe
+ifeq (Windows_NT,$(OS))
+  EXE = xlatcc.exe
+  CCDV = @../../ccdv
+  CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
+else
+  EXE = xlatcc
+  CCDV =
+  CFLAGS = -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp $(LOC) -Os -Wall -fomit-frame-pointer
+endif
 
-CCDV = @../../ccdv
 CC = gcc
-CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
 
 BISON = bison
 BISONFLAGS = 
@@ -17,8 +23,13 @@ $(EXE): $(OBJS)
 .PHONY: clean
 
 clean:
+ifeq (Windows_NT,$(OS))
 	-del /q /f $(EXE) 2>nul
 	-del /q /f *.o 2>nul
+else
+	rm -f $(EXE)
+	rm -f *.o
+endif
 
 xlat-parse.tab.o: xlat-parse.tab.c xlat.h
 	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<

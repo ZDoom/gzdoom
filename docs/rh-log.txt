@@ -1,3 +1,15 @@
+May 9, 2006
+- Updated Jim's Makefile.linux.
+- Added support for wrapping midtextures vertically.
+- Since zdoom.wad is now zdoom.pk3, the default mapinfos can use full pathnames.
+  So now they do.
+- Fixed: The DSimpleCanvas constructor used a pitch too narrow on screens wider
+  than 640 pixels when using a non-AMD processor and the processor's L1 cache
+  line size could not be determined. I think this should fix the issue of
+  weirdly rendered 8 pixel wide borders on the left and right of the screen that
+  some people experienced.
+- Fixed: The secnodes were never freed.
+
 May 9, 2006 (Changes by Graf Zahl)
 - Fixed: The FSpecialFont constructor created the name string twice.
 - Fixed: The animated door parser was still leaking memory when it encountered

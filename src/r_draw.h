@@ -70,6 +70,12 @@ extern DWORD (STACK_ARGS *doprevline1) ();
 extern void (STACK_ARGS *dovline4) ();
 extern void setupvline (int);
 
+extern DWORD (STACK_ARGS *domvline1) ();
+extern void (STACK_ARGS *domvline4) ();
+extern void setupmvline (int);
+
+extern void setuptmvline (int);
+
 // The Spectre/Invisibility effect.
 extern void (*R_DrawFuzzColumn)(void);
 
@@ -261,10 +267,19 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD col
 // style was STYLE_Shade
 void R_FinishSetPatchStyle ();
 
+// transmaskwallscan calls this to find out what column drawers to use
+bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)());
+
 // Retrieve column data for wallscan. Should probably be removed
 // to just use the texture's GetColumn() method. It just exists
 // for double-layer skies.
 const BYTE *R_GetColumn (FTexture *tex, int col);
 void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, const byte *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+
+// maskwallscan is exactly like wallscan but does not draw anything where the texture is color 0.
+void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, const byte *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+
+// transmaskwallscan is like maskwallscan, but it can also blend to the background
+void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, const byte *(*getcol)(FTexture *tex, int col)=R_GetColumn);
 
 #endif

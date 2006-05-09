@@ -267,6 +267,7 @@ static const char *MapInfoMapLevel[] =
 	"sndinfo",
 	"soundinfo",
 	"clipmidtextures",
+	"wrapmidtextures",
 	NULL
 };
 
@@ -379,6 +380,7 @@ MapHandlers[] =
 	{ MITYPE_LUMPNAME,	lioffset(soundinfo), 0 },
 	{ MITYPE_LUMPNAME,	lioffset(soundinfo), 0 },
 	{ MITYPE_SETFLAG,	LEVEL_CLIPMIDTEX, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_WRAPMIDTEX, 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -474,30 +476,30 @@ void G_ParseMapInfo ()
 		switch (gamemission)
 		{
 		case doom:
-			G_DoParseMapInfo (Wads.GetNumForName ("D1INFO"));
+			G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/doom1.txt"));
 			break;
 		case pack_plut:
-			G_DoParseMapInfo (Wads.GetNumForName ("PLUTINFO"));
+			G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/plutonia.txt"));
 			break;
 		case pack_tnt:
-			G_DoParseMapInfo (Wads.GetNumForName ("TNTINFO"));
+			G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/tnt.txt"));
 			break;
 		default:
-			G_DoParseMapInfo (Wads.GetNumForName ("D2INFO"));
+			G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/doom2.txt"));
 			break;
 		}
 		break;
 
 	case GAME_Heretic:
-		G_DoParseMapInfo (Wads.GetNumForName ("HERINFO"));
+		G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/heretic.txt"));
 		break;
 
 	case GAME_Hexen:
-		G_DoParseMapInfo (Wads.GetNumForName ("HEXNINFO"));
+		G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/hexen.txt"));
 		break;
 
 	case GAME_Strife:
-		G_DoParseMapInfo (Wads.GetNumForName ("STRFINFO"));
+		G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/strife.txt"));
 		break;
 
 	default:

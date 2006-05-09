@@ -1,8 +1,14 @@
-EXE = dehsupp.exe
+ifeq (Windows_NT,$(OS))
+  EXE = dehsupp.exe
+  CCDV = @../../ccdv
+  CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
+else
+  EXE = dehsupp
+  CCDV =
+  CFLAGS = -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -Os -Wall -fomit-frame-pointer
+endif
 
-CCDV = @../../ccdv
 CC = gcc
-CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
 
 BISON = bison
 BISONFLAGS = 
@@ -17,8 +23,13 @@ $(EXE): $(OBJS)
 .PHONY: clean
 
 clean:
+ifeq (Windows_NT,$(OS))
 	-del /q /f $(EXE) 2>nul
 	-del /q /f *.o 2>nul
+else
+	rm -f $(EXE)
+	rm -f *.o
+endif
 
 parse.tab.o: parse.tab.c
 	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<

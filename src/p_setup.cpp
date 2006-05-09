@@ -1477,7 +1477,8 @@ void P_LoadLineDefs (int lump)
 
 		P_AdjustLine (ld);
 		P_SaveLineSpecial (ld);
-		if (level.flags&LEVEL_CLIPMIDTEX) ld->flags|=ML_CLIP_MIDTEX;
+		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 	}
 }
 
@@ -1548,7 +1549,8 @@ void P_LoadLineDefs2 (int lump)
 
 		P_AdjustLine (ld);
 		P_SaveLineSpecial (ld);
-		if (level.flags&LEVEL_CLIPMIDTEX) ld->flags|=ML_CLIP_MIDTEX;
+		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
+		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 	}
 }
 

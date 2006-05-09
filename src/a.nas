@@ -22,6 +22,10 @@
 %define prevlineasm1	_prevlineasm1
 %define vlineasm1		_vlineasm1
 %define vlineasm4		_vlineasm4
+
+%define setupmvlineasm		_setupmvlineasm
+%define mvlineasm1		_mvlineasm1
+%define mvlineasm4		_mvlineasm4
 %endif
 
 EXTERN ylookup ; near
@@ -38,14 +42,20 @@ EXTERN dc_dest
 EXTERN dc_source
 EXTERN dc_texturefrac
 
+mvlineasm4_counter:
+	dd 0
+
 	SECTION .text
 
 ALIGN 16
 GLOBAL setvlinebpl_
 setvlinebpl_:
-	mov dword [fixchain1a+2], eax
-	mov dword [fixchain1b+2], eax
-	mov dword [fixchain2a+2], eax
+	mov [fixchain1a+2], eax
+	mov [fixchain1b+2], eax
+	mov [fixchain2a+2], eax
+	mov [fixchain1m+2], eax
+	mov [fixchain2ma+2], eax
+	mov [fixchain2mb+2], eax
 	ret
 
 ; pass it log2(texheight)
@@ -242,9 +252,6 @@ machvsh12:	rol ebx, 88h                ;sh
 		mov ecx, esi
 		jmp short beginvlineasm4
 ALIGN 16
-		nop
-		nop
-		nop
 beginvlineasm4:
 machvsh1:	shr ecx, 88h          ;32-sh
 		mov ebx, esi
@@ -300,3 +307,226 @@ machvsh8:	shl edx, 88h     ;16-sh
 		pop ebx
 		pop ebp
 		ret
+
+;*************************************************************************
+;************************* Masked Vertical Lines *************************
+;*************************************************************************
+
+; pass it log2(texheight)
+
+ALIGN 16
+GLOBAL setupmvlineasm
+setupmvlineasm:
+		mov ecx, dword [esp+4]
+		mov byte [maskmach3a+2], cl
+		mov byte [machmv13+2], cl
+		mov byte [machmv14+2], cl
+		mov byte [machmv15+2], cl
+		mov byte [machmv16+2], cl
+		ret
+
+ALIGN 16
+GLOBAL mvlineasm1	;Masked vline
+mvlineasm1:
+		push ebx
+		push edi
+		push esi
+		push ebp
+		mov ecx, [dc_count]
+		mov ebp, [dc_colormap]
+		mov edi, [dc_dest]
+		mov eax, [dc_iscale]
+		mov edx, [dc_texturefrac]
+		mov esi, [dc_source]
+beginmvline:
+		mov ebx, edx
+maskmach3a:	shr ebx, 32
+		mov bl, byte [esi+ebx]
+		cmp bl, 0
+		je short skipmask1
+maskmach3c:	mov bl, byte [ebp+ebx]
+		mov [edi], bl
+skipmask1:	add edx, eax
+fixchain1m:	add edi, 320
+		dec ecx
+		jnz short beginmvline
+
+		pop ebp
+		pop esi
+		pop edi
+		pop ebx
+		mov eax, edx
+		ret
+
+ALIGN 16
+GLOBAL mvlineasm4
+mvlineasm4:
+		push ebx
+		push esi
+		push edi
+		push ebp
+
+		mov ecx,[dc_count]
+		mov edi,[dc_dest]
+
+		mov eax, [bufplce+0]
+		mov ebx, [bufplce+4]
+		mov [machmv1+2], eax
+		mov [machmv4+2], ebx
+		mov eax, [bufplce+8]
+		mov ebx, [bufplce+12]
+		mov [machmv7+2], eax
+		mov [machmv10+2], ebx
+
+		mov eax, [palookupoffse]
+		mov ebx, [palookupoffse+4]
+		mov [machmv2+2], eax
+		mov [machmv5+2], ebx
+		mov eax, [palookupoffse+8]
+		mov ebx, [palookupoffse+12]
+		mov [machmv8+2], eax
+		mov [machmv11+2], ebx
+
+		mov eax, [vince]	;vince
+		mov ebx, [vince+4]
+		xor al, al
+		xor bl, bl
+		mov [machmv3+2], eax
+		mov [machmv6+2], ebx
+		mov eax, [vince+8]
+		mov ebx, [vince+12]
+		mov [machmv9+2], eax
+		mov [machmv12+2], ebx
+
+		inc ecx
+		push ecx
+		mov ecx, [vplce+0]
+		mov edx, [vplce+4]
+		mov esi, [vplce+8]
+		mov ebp, [vplce+12]
+fixchain2ma:	sub edi, 320
+
+		jmp short beginmvlineasm4
+ALIGN 16
+beginmvlineasm4:
+		dec dword [esp]
+		jz near endmvlineasm4
+
+		mov eax, ebp
+		mov ebx, esi
+machmv16:	shr eax, 32
+machmv15:	shr ebx, 32
+machmv12:	add ebp, 0x88888888		;vince[3]
+machmv9:	add esi, 0x88888888		;vince[2]
+machmv10:	mov al, [eax+0x88888888]	;bufplce[3]
+machmv7:	mov bl, [ebx+0x88888888]	;bufplce[2]
+		cmp al, 1
+		adc dl, dl
+		cmp bl, 1
+		adc dl, dl
+machmv8:	mov bl, [ebx+0x88888888]	;palookupoffs[2]
+machmv11:	mov bh, [eax+0x88888888]	;palookupoffs[3]
+
+		mov eax, edx
+machmv14:	shr eax, 32
+		shl ebx, 16
+machmv4:	mov al, [eax+0x88888888]	;bufplce[1]
+		cmp al, 1
+		adc dl, dl
+machmv6:	add edx, 0x88888888		;vince[1]
+machmv5:	mov bh, [eax+0x88888888]	;palookupoffs[1]
+
+		mov eax, ecx
+machmv13:	shr eax, 32
+machmv3:	add ecx, 0x88888888		;vince[0]
+machmv1:	mov al, [eax+0x88888888]	;bufplce[0]
+		cmp al, 1
+		adc dl, dl
+machmv2:	mov bl, [eax+0x88888888]	;palookupoffs[0]
+
+		shl dl, 4
+		xor eax, eax
+fixchain2mb:	add edi, 320
+		mov al, dl
+		add eax, mvcase15
+		jmp eax		;16 byte cases
+
+ALIGN 16
+endmvlineasm4:
+		mov [_vplce], ecx
+		mov [_vplce+4], edx
+		mov [_vplce+8], esi
+		mov [_vplce+12], ebp
+		pop ecx
+		pop ebp
+		pop edi
+		pop esi
+		pop ebx
+		ret
+
+	;5,7,8,8,11,13,12,14,11,13,14,14,12,14,15,7
+ALIGN 16
+mvcase15:	mov [edi], ebx
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase14:	mov [edi+1], bh
+		shr ebx, 16
+		mov [edi+2], bx
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase13:	mov [edi], bl
+		shr ebx, 16
+		mov [edi+2], bx
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase12:	shr ebx, 16
+		mov [edi+2], bx
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase11:	mov [edi], bx
+		shr ebx, 16
+		mov [edi+3], bh
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase10:	mov [edi+1], bh
+		shr ebx, 16
+		mov [edi+3], bh
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase9:	mov [edi], bl
+		shr ebx, 16
+		mov [edi+3], bh
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase8:	shr ebx, 16
+		mov [edi+3], bh
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase7:	mov [edi], bx
+		shr ebx, 16
+		mov [edi+2], bl
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase6:	shr ebx, 8
+		mov [edi+1], bx
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase5:	mov [edi], bl
+		shr ebx, 16
+		mov [edi+2], bl
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase4:	shr ebx, 16
+		mov [edi+2], bl
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase3:	mov [edi], bx
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase2:	mov [edi+1], bh
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase1:	mov [edi], bl
+		jmp beginmvlineasm4
+ALIGN 16
+mvcase0:	jmp beginmvlineasm4

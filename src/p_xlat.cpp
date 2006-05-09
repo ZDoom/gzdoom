@@ -88,7 +88,6 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		{
 			flags |= ML_BLOCK_FLOATERS;
 		}
-		//flags |= ML_CLIP_MIDTEX; moved to MAPINFO
 		passthrough = 0;
 	}
 	else

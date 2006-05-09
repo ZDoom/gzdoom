@@ -1,6 +1,7 @@
 # created on 4/12/2006 by James Bentler
 CXX ?= g++
 CC ?= gcc
+NASM ?= nasm
 ifndef DEBUG
 CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer
 else
@@ -9,8 +10,6 @@ endif
 CFLAGS += -DHAVE_FILELENGTH -D__forceinline=inline -Izlib -IFLAC `sdl-config --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
 LDFLAGS += -lFLAC++ -lFLAC -lz -lfmod `sdl-config --libs`
-
-NASM ?= nasm
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
 SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/)
@@ -44,6 +43,7 @@ ifndef DEBUG
 else
   OBJDIR = $(DEBUGOBJ)
   CFLAGS += -D_DEBUG -g3
+  NASMFLAGS += -g
   ZDOOMBIN = $(ZDOOMDEBUG)
 endif
 CXXFLAGS += $(CFLAGS)
@@ -72,7 +72,7 @@ _obj_: _src_
 	$(CC) -c $(CFLAGS) -o _obj_ -c _src_
 endef
 
-all: $(ZDOOMBIN) zdoom.wad
+all: $(ZDOOMBIN) toolsandpk3 zdoom.pk3
 
 $(ZDOOMBIN): $(OBJDIR) $(if $(RESTART),deps) $(OBJS)
 ifndef RESTART
@@ -110,10 +110,22 @@ endif
 $(OBJDIR):
 	mkdir $(OBJDIR)
 
-zdoom.wad:
-	make -C wadsrc/ -f Makefile
+toolsandpk3: tools/makewad/makewad tools/dehsupp/dehsupp tools/xlatcc/xlatcc
+	make -C wadsrc/
 
-.PHONY : clean cleandeps cleanobjs distclean deps
+zdoom.pk3: toolsandpk3
+	ln -sf wadsrc/zdoom.pk3 ./
+
+tools/makewad/makewad:
+	make -C tools/makewad/
+
+tools/dehsupp/dehsupp:
+	make -C tools/dehsupp/
+
+tools/xlatcc/xlatcc:
+	make -C tools/xlatcc/
+
+.PHONY : clean cleandeps cleanobjs distclean deps toolsandpk3
 
 clean: cleanobjs
 	rm -f $(ZDOOMDEBUG) $(ZDOOM) $(ZDOOM).map

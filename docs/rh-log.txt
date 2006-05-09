@@ -1,4 +1,5 @@
 May 9, 2006
+- Backported the improved hierarchical dumpclasses command from the FP code.
 - Updated Jim's Makefile.linux.
 - Added support for wrapping midtextures vertically.
 - Since zdoom.wad is now zdoom.pk3, the default mapinfos can use full pathnames.

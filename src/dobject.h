@@ -38,6 +38,8 @@
 #include "tarray.h"
 #include "doomtype.h"
 
+class TypeInfo;
+
 class FArchive;
 
 class   DObject;
@@ -130,56 +132,20 @@ private:
 	void CopyMeta (const FMetaTable *other);
 };
 
-struct TypeInfo
-{
-	static void StaticInit ();
-	static void StaticFreeData (TypeInfo *type);
+#define RUNTIME_TYPE(object)	(object->GetClass())	// Passed an object, returns the type of that object
+#define RUNTIME_CLASS(cls)		(&cls::_StaticType)		// Passed a class name, returns a TypeInfo representing that class
 
+struct ClassReg
+{
+	TypeInfo *MyClass;
 	const char *Name;
 	TypeInfo *ParentType;
 	unsigned int SizeOf;
-	const size_t *Pointers;	// object pointers defined by this class *only*
+	POINTY_TYPE(DObject) *Pointers;
 	void (*ConstructNative)(void *);
-	FActorInfo *ActorInfo;
-	unsigned int HashNext;
-	unsigned short TypeIndex;
-	bool bRuntimeClass;		// class was defined at run-time, not compile-time
-	FMetaTable Meta;
-	const size_t *FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 
-	void RegisterType ();
-	DObject *CreateNew () const;
-	TypeInfo *CreateDerivedClass (char *name, unsigned int size);
-	void BuildFlatPointers ();
-
-	// Returns true if this type is an ancestor of (or same as) the passed type.
-	bool IsAncestorOf (const TypeInfo *ti) const
-	{
-		while (ti)
-		{
-			if (this == ti)
-				return true;
-			ti = ti->ParentType;
-		}
-		return false;
-	}
-	inline bool IsDescendantOf (const TypeInfo *ti) const
-	{
-		return ti->IsAncestorOf (this);
-	}
-
-	static const TypeInfo *FindType (const char *name);
-	static const TypeInfo *IFindType (const char *name);
-
-	static TArray<TypeInfo *> m_Types;
-	static TArray<TypeInfo *> m_RuntimeActors;
-
-	enum { HASH_SIZE = 256 };
-	static unsigned int TypeHash[HASH_SIZE];
+	void RegisterClass();
 };
-
-#define RUNTIME_TYPE(object)    (object->GetClass())    // Passed an object, returns the type of that object
-#define RUNTIME_CLASS(cls)              (&cls::_StaticType)             // Passed a class name, returns a TypeInfo representing that class
 
 enum EInPlace { EC_InPlace };
 
@@ -255,23 +221,24 @@ class DObject
 public: \
 	static TypeInfo _StaticType; \
 	virtual TypeInfo *StaticType() const { return &_StaticType; } \
+	static ClassReg RegistrationInfo;
+	static void InPlaceConstructor (void *mem);
 private: \
 	typedef DObject ThisClass;
 
+	// Per-instance variables. There are three.
 public:
+	DWORD ObjectFlags;			// Flags for this object
+private:
+	TypeInfo *Class;			// This object's type
+	size_t Index;				// This object's index in the global object table
+
 	DObject ();
 	DObject (TypeInfo *inClass);
 	virtual ~DObject ();
 
-	inline bool IsKindOf (const TypeInfo *base) const
-	{
-		return base->IsAncestorOf (GetClass ());
-	}
-
-	inline bool IsA (const TypeInfo *type) const
-	{
-		return (type == GetClass());
-	}
+	inline bool IsKindOf (const TypeInfo *base) const;
+	inline bool IsA (const TypeInfo *type) const;
 
 	virtual void Serialize (FArchive &arc);
 
@@ -288,8 +255,6 @@ public:
 	// change any pointers from the old object to the new object,
 	// use this method.
 	static void PointerSubstitution (DObject *old, DObject *notOld);
-
-	DWORD ObjectFlags;
 
 	static void STACK_ARGS StaticShutdown ();
 
@@ -333,8 +298,6 @@ protected:
 	}
 
 private:
-	TypeInfo *Class;
-
 	static TArray<DObject *> Objects;
 	static TArray<size_t> FreeIndices;
 	static TArray<DObject *> ToDestroy;
@@ -345,7 +308,18 @@ private:
 	void RemoveFromArray ();
 
 	static bool Inactive;
-	size_t Index;
 };
+
+#include "dobjtype.h"
+
+inline bool DObject::IsKindOf (const TypeInfo *base) const
+{
+	return base->IsAncestorOf (GetClass ());
+}
+
+inline bool DObject::IsA (const TypeInfo *type) const
+{
+	return (type == GetClass());
+}
 
 #endif //__DOBJECT_H__

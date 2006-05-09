@@ -478,33 +478,41 @@ void P_SpawnDoorRaiseIn5Mins (sector_t *sec)
 
 // Strife's animated doors. Based on Doom's unused sliding doors, but slightly different.
 
-TArray<FDoorAnimation> DoorAnimations;
-
-FDoorAnimation::~FDoorAnimation()
+class DeletingDoorArray : public TArray<FDoorAnimation>
 {
-	if (TextureFrames != NULL) 
+public:
+	~DeletingDoorArray()
 	{
-		delete [] TextureFrames;
-		TextureFrames = NULL;
+		for(unsigned i=0;i<Size();i++)
+		{
+			FDoorAnimation *ani = &((*this)[i]);
+			if (ani->TextureFrames != NULL) 
+			{
+				delete [] ani->TextureFrames;
+				ani->TextureFrames = NULL;
+			}
+			if (ani->OpenSound != NULL)
+			{
+				delete [] ani->OpenSound;
+				ani->OpenSound = NULL;
+			}
+			if (ani->CloseSound != NULL)
+			{
+				delete [] ani->CloseSound;
+				ani->CloseSound = NULL;
+			}
+		}
 	}
-	if (OpenSound != NULL)
-	{
-		delete [] OpenSound;
-		OpenSound = NULL;
-	}
-	if (CloseSound != NULL)
-	{
-		delete [] CloseSound;
-		CloseSound = NULL;
-	}
-}
+};
+
+DeletingDoorArray DoorAnimations;
 
 // EV_SlidingDoor : slide a door horizontally
 // (animate midtexture, then set noblocking line)
 //
 
 //
-// Return index into "DoorAnimatinos" array for which door type to use
+// Return index into "DoorAnimations" array for which door type to use
 //
 static int P_FindSlidingDoorType (int picnum)
 {

@@ -578,11 +578,7 @@ struct FDoorAnimation
 	int NumTextureFrames;
 	char *OpenSound;
 	char *CloseSound;
-
-	~FDoorAnimation();
 };
-
-extern TArray<FDoorAnimation> DoorAnimations;
 
 void P_ParseAnimatedDoor ();
 

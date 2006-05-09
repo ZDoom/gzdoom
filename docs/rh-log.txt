@@ -1,4 +1,6 @@
 May 9, 2006 (Changes by Graf Zahl)
+- Changed FDoorAnimation deletion so that the array takes care of it. This
+  eliminates some complications with the requirements a destructor has.
 - Fixed: Skin definitions were never freed.
 - Fixed: Names in terrain definitions were never freed. Replacing them with
   FNames would have been a good idea anyway.

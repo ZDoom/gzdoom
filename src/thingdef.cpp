@@ -2076,8 +2076,13 @@ void ParseActorProperties (Baggage &bag)
 	const ActorProps *prop;
 
 	ChkBraceOpn ();
-	while (!TestBraceCls() && !sc_End)
+	while (!TestBraceCls())
 	{
+		if (sc_End)
+		{
+			SC_ScriptError("Unexpected end of file encountered");
+		}
+
 		SC_GetString ();
 		strlwr (sc_String);
 

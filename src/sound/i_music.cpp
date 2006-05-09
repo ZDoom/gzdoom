@@ -307,9 +307,7 @@ void *I_RegisterSong (const char *filename, char * musiccache, int offset, int l
 			memcpy(header, musiccache, 0x23);
 		}
 
-		if (strncmp (header+4, "-SPC700 Sound File Data", 23) == 0 &&
-			header[0x21] == '\x1a' &&
-			header[0x22] == '\x1a')
+		if (strncmp (header+4, "-SPC700 Sound File Data", 23) == 0)
 		{
 			info = new SPCSong (file, musiccache, len);
 		}

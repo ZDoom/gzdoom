@@ -204,7 +204,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 	}
 	else if (domissile && MissileName != NAME_None)
 	{
-		const TypeInfo * ti=TypeInfo::FindType(MissileName);
+		const TypeInfo * ti=TypeInfo::IFindType(MissileName);
 		if (ti) 
 		{
 			// Although there is a P_SpawnMissileZ function its

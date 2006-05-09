@@ -1158,6 +1158,7 @@ void FPatchTexture::GetDimensions ()
 
 	if (dummy.width <= 0 || dummy.height <= 0 || dummy.width > 2048 || dummy.height > 2048)
 	{
+		delete lump;
 		lump = Wads.ReopenLumpNum ( Wads.GetNumForName("-BADPATC") );
 		(*lump) >> dummy.width >> dummy.height;
 	}

@@ -1,3 +1,9 @@
+May 9, 2006 (Changes by Graf Zahl)
+- Fixed: If you want to use a name as the missile parameter for the basic
+  attack functions the type search in DoAttack must be case insensitive.
+- Fixed: APowerup::DoEffect must do more thorough checks before resetting
+  the fixed colormap.
+
 May 8, 2006
 - Fixed: The names in the Depths array in m_options.cpp were never freed.
 - Fixed: FDoomEdMap needed a destructor.

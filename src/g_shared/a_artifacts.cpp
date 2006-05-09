@@ -98,7 +98,11 @@ void APowerup::Tick ()
 			if (BlendColor == INVERSECOLOR) Owner->player->fixedcolormap = INVERSECOLORMAP;
 			else if (BlendColor == GOLDCOLOR) Owner->player->fixedcolormap = GOLDCOLORMAP;
 		}
-		else Owner->player->fixedcolormap = 0;
+		else if ((BlendColor == INVERSECOLOR && Owner->player->fixedcolormap == INVERSECOLORMAP) || 
+				 (BlendColor == GOLDCOLOR && Owner->player->fixedcolormap == GOLDCOLORMAP))
+		{
+			Owner->player->fixedcolormap = 0;
+		}
 
 		if (--EffectTics == 0)
 		{

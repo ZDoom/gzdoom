@@ -2011,6 +2011,7 @@ void D_DoomMain (void)
 
 	Wads.InitMultipleFiles (&wadfiles);
 
+
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);
 
@@ -2079,6 +2080,7 @@ void D_DoomMain (void)
 	HandleNoSector ();	// clear NOSECTOR flag off all actors modified by Dehacked and the BossEye.
 
 	FActorInfo::StaticSetActorNums ();
+
 
 	// [RH] User-configurable startup strings. Because BOOM does.
 	static const char *startupString[5] = {

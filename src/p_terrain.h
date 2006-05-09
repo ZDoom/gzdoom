@@ -36,15 +36,17 @@
 
 #include "dobject.h"
 #include "m_fixed.h"
+#include "tarray.h"
+#include "name.h"
 
-extern byte *TerrainTypes;
+extern TArray<byte> TerrainTypes;
 
 // at game start
 void P_InitTerrainTypes ();
 
 struct FSplashDef
 {
-	const char *Name;
+	FName Name;
 	int SmallSplashSound;
 	int NormalSplashSound;
 	const TypeInfo *SmallSplash;
@@ -60,7 +62,7 @@ struct FSplashDef
 
 struct FTerrainDef
 {
-	const char *Name;
+	FName Name;
 	int Splash;
 	int DamageAmount;
 	int DamageMOD;

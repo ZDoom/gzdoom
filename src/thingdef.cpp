@@ -1015,7 +1015,7 @@ void A_NoBlocking (AActor *actor)
 		{
 			if (di->Name != NAME_None)
 			{
-				const TypeInfo *ti = TypeInfo::FindType(di->Name);
+				const TypeInfo *ti = TypeInfo::IFindType(di->Name);
 				if (ti) P_DropItem (actor, ti, di->amount, di->probability);
 			}
 			di = di->Next;
@@ -3618,7 +3618,7 @@ void FinishThingdef()
 			v = defaults->AmmoType1;
 			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->AmmoType1 = TypeInfo::FindType(v.GetChars());
+				defaults->AmmoType1 = TypeInfo::IFindType(v.GetChars());
 				if (!defaults->AmmoType1)
 				{
 					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
@@ -3632,7 +3632,7 @@ void FinishThingdef()
 			v = defaults->AmmoType2;
 			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->AmmoType2 = TypeInfo::FindType(v.GetChars());
+				defaults->AmmoType2 = TypeInfo::IFindType(v.GetChars());
 				if (!defaults->AmmoType2)
 				{
 					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
@@ -3646,7 +3646,7 @@ void FinishThingdef()
 			v = defaults->SisterWeaponType;
 			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->SisterWeaponType = TypeInfo::FindType(v.GetChars());
+				defaults->SisterWeaponType = TypeInfo::IFindType(v.GetChars());
 				if (!defaults->SisterWeaponType)
 				{
 					SC_ScriptError("Unknown sister weapon type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
@@ -3677,7 +3677,7 @@ void FinishThingdef()
 			v = defaults->WeaponClass;
 			if (v != NAME_None)
 			{
-				defaults->WeaponClass = TypeInfo::FindType(v.GetChars());
+				defaults->WeaponClass = TypeInfo::IFindType(v.GetChars());
 				if (!defaults->WeaponClass)
 				{
 					SC_ScriptError("Unknown weapon type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
@@ -3695,6 +3695,6 @@ void FinishThingdef()
 	{
 		char fmt[20];
 		sprintf(fmt, "QuestItem%d", i+1);
-		QuestItemClasses[i]=TypeInfo::FindType(fmt);
+		QuestItemClasses[i]=TypeInfo::IFindType(fmt);
 	}
 }

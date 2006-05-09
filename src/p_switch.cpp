@@ -114,7 +114,19 @@ static WORD AddSwitchDef (FSwitchDef *def);
 // CHANGE THE TEXTURE OF A WALL SWITCH TO ITS OPPOSITE
 //
 
-static TArray<FSwitchDef *> SwitchList;
+class DeletingSwitchArray : public TArray<FSwitchDef *>
+{
+public:
+	~DeletingSwitchArray()
+	{
+		for(unsigned i=0;i<Size();i++)
+		{
+			if ((*this)[i] != NULL) free((*this)[i]);
+			(*this)[i]=NULL;
+		}
+	}
+};
+static DeletingSwitchArray SwitchList;
 
 //
 // P_InitSwitchList

@@ -1,4 +1,12 @@
 May 9, 2006 (Changes by Graf Zahl)
+- Fixed: Skin definitions were never freed.
+- Fixed: Names in terrain definitions were never freed. Replacing them with
+  FNames would have been a good idea anyway.
+- Fixed: The lock definitions were never freed.
+- Fixed: FDoorAnimation was missing a destructor.
+- Fixed: animation and switch definitions were never freed.
+- Replaced all other places where FindType was used with FNames with 
+  IFindType.
 - Fixed: If you want to use a name as the missile parameter for the basic
   attack functions the type search in DoAttack must be case insensitive.
 - Fixed: APowerup::DoEffect must do more thorough checks before resetting

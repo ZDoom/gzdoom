@@ -785,6 +785,13 @@ void R_InitSprites ()
 	qsort (&skins[1], numskins-1, sizeof(FPlayerSkin), skinsorter);
 }
 
+static struct SkinDeleter
+{
+	~SkinDeleter()
+	{
+		if (skins!=NULL) delete[] skins;
+	}
+} DeleteTheSkins;
 
 
 //

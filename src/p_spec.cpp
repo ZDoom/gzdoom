@@ -142,7 +142,19 @@ struct FAnimDef
 	};
 };
 
-TArray<FAnimDef *> Anims;
+class DeletingAnimArray : public TArray<FAnimDef *>
+{
+public:
+	~DeletingAnimArray()
+	{
+		for(unsigned i=0;i<Size();i++)
+		{
+			if ((*this)[i] != NULL) free((*this)[i]);
+			(*this)[i]=NULL;
+		}
+	}
+};
+static DeletingAnimArray Anims;
 
 // killough 3/7/98: Initialize generalized scrolling
 static void P_SpawnScrollers();

@@ -480,6 +480,25 @@ void P_SpawnDoorRaiseIn5Mins (sector_t *sec)
 
 TArray<FDoorAnimation> DoorAnimations;
 
+FDoorAnimation::~FDoorAnimation()
+{
+	if (TextureFrames != NULL) 
+	{
+		delete [] TextureFrames;
+		TextureFrames = NULL;
+	}
+	if (OpenSound != NULL)
+	{
+		delete [] OpenSound;
+		OpenSound = NULL;
+	}
+	if (CloseSound != NULL)
+	{
+		delete [] CloseSound;
+		CloseSound = NULL;
+	}
+}
+
 // EV_SlidingDoor : slide a door horizontally
 // (animate midtexture, then set noblocking line)
 //

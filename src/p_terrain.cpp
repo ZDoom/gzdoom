@@ -125,10 +125,10 @@ static void ParseOuter ();
 static void ParseSplash ();
 static void ParseTerrain ();
 static void ParseFloor ();
-static int FindSplash (const char *name);
-static int FindTerrain (const char *name);
+static int FindSplash (FName name);
+static int FindTerrain (FName name);
 static void GenericParse (FGenericParse *parser, const char **keywords,
-	void *fields, const char *type, const char *name);
+	void *fields, const char *type, FName name);
 static void ParseDamage (int keyword, void *fields);
 static void ParseFriction (int keyword, void *fields);
 
@@ -136,7 +136,7 @@ static void ParseFriction (int keyword, void *fields);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte *TerrainTypes;
+TArray<byte>TerrainTypes;
 TArray<FSplashDef> Splashes;
 TArray<FTerrainDef> Terrains;
 
@@ -268,8 +268,8 @@ void P_InitTerrainTypes ()
 	int size;
 
 	size = (TexMan.NumTextures()+1)*sizeof(byte);
-	TerrainTypes = (byte *)M_Malloc (size);
-	memset (TerrainTypes, 0, size);
+	TerrainTypes.Resize(size);
+	memset (&TerrainTypes[0], 0, size);
 
 	MakeDefaultTerrain ();
 
@@ -295,7 +295,7 @@ static void MakeDefaultTerrain ()
 	FTerrainDef def;
 
 	memset (&def, 0, sizeof(def));
-	def.Name = copystring ("Solid");
+	def.Name = "Solid";
 	def.Splash = -1;
 	Terrains.Push (def);
 }
@@ -399,13 +399,15 @@ void ParseSplash ()
 	int splashnum;
 	FSplashDef *splashdef;
 	bool isnew = false;
+	FName name;
 
 	SC_MustGetString ();
-	splashnum = (int)FindSplash (sc_String);
+	name = sc_String;
+	splashnum = (int)FindSplash (name);
 	if (splashnum < 0)
 	{
 		FSplashDef def;
-		def.Name = copystring (sc_String);
+		def.Name = name;
 		splashnum = (int)Splashes.Push (def);
 		isnew = true;
 	}
@@ -446,16 +448,17 @@ void ParseSplash ()
 void ParseTerrain ()
 {
 	int terrainnum;
-	const char *name;
+	FName name;
 
 	SC_MustGetString ();
-	terrainnum = (int)FindTerrain (sc_String);
+	name = sc_String;
+	terrainnum = (int)FindTerrain (name);
 	if (terrainnum < 0)
 	{
 		FTerrainDef def;
 		memset (&def, 0, sizeof(def));
 		def.Splash = -1;
-		def.Name = copystring (sc_String);
+		def.Name = name;
 		terrainnum = (int)Terrains.Push (def);
 	}
 
@@ -549,7 +552,7 @@ static void ParseFriction (int keyword, void *fields)
 //==========================================================================
 
 static void GenericParse (FGenericParse *parser, const char **keywords,
-	void *fields, const char *type, const char *name)
+	void *fields, const char *type, FName name)
 {
 	bool notdone = true;
 	int keyword;
@@ -578,7 +581,7 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 			if (val == 0)
 			{
 				Printf ("Unknown sound %s in %s %s\n",
-					sc_String, type, name);
+					sc_String, type, name.GetChars());
 			}
 			break;
 
@@ -599,13 +602,13 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 				if (!info->IsDescendantOf (RUNTIME_CLASS(AActor)))
 				{
 					Printf ("%s is not an Actor (in %s %s)\n",
-						sc_String, type, name);
+						sc_String, type, name.GetChars());
 					info = NULL;
 				}
 				else if (info == NULL)
 				{
 					Printf ("Unknown actor %s in %s %s\n",
-						sc_String, type, name);
+						sc_String, type, name.GetChars());
 				}
 			}
 			SET_FIELD (const TypeInfo *, info);
@@ -618,7 +621,7 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 			if (val == -1)
 			{
 				Printf ("Splash %s is not defined yet (in %s %s)\n",
-					sc_String, type, name);
+					sc_String, type, name.GetChars());
 			}
 			break;
 
@@ -683,13 +686,13 @@ static void ParseFloor ()
 //
 //==========================================================================
 
-int FindSplash (const char *name)
+int FindSplash (FName name)
 {
 	unsigned int i;
 
 	for (i = 0; i < Splashes.Size (); i++)
 	{
-		if (stricmp (Splashes[i].Name, name) == 0)
+		if (Splashes[i].Name == name)
 		{
 			return (int)i;
 		}
@@ -703,13 +706,13 @@ int FindSplash (const char *name)
 //
 //==========================================================================
 
-int FindTerrain (const char *name)
+int FindTerrain (FName name)
 {
 	unsigned int i;
 
 	for (i = 0; i < Terrains.Size (); i++)
 	{
-		if (stricmp (Terrains[i].Name, name) == 0)
+		if (Terrains[i].Name == name)
 		{
 			return (int)i;
 		}

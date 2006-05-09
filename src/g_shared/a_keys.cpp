@@ -85,6 +85,15 @@ static bool keysdone=false;		// have the locks been initialized?
 static int currentnumber;		// number to be assigned to next key
 static bool ignorekey;			// set to true when the current lock is not being used
 
+static void ClearLocks();
+
+static struct LockDeleter
+{
+	~LockDeleter()
+	{
+		ClearLocks();
+	}
+} DeleteTheLocks;
 
 static const char * keywords_lock[]={
 	"ANY",

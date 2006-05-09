@@ -118,11 +118,6 @@ static struct TypeInfoDataFreeer
 
 void TypeInfo::StaticFreeData (TypeInfo *type)
 {
-	if (type->ActorInfo != NULL)
-	{
-		delete type->ActorInfo;
-		type->ActorInfo = NULL;
-	}
 	if (type->bRuntimeClass)
 	{
 		if (type->Name != NULL)
@@ -130,6 +125,11 @@ void TypeInfo::StaticFreeData (TypeInfo *type)
 			delete[] type->Name;
 		}
 		type->Name = NULL;
+		if (type->ActorInfo != NULL)
+		{
+			delete type->ActorInfo;
+			type->ActorInfo = NULL;
+		}
 		delete type;
 	}
 }

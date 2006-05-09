@@ -166,6 +166,47 @@ FWadCollection::FWadCollection ()
 
 FWadCollection::~FWadCollection ()
 {
+	if (FirstLumpIndex != NULL)
+	{
+		delete[] FirstLumpIndex;
+		FirstLumpIndex = NULL;
+	}
+	if (NextLumpIndex != NULL)
+	{
+		delete[] NextLumpIndex;
+		NextLumpIndex = NULL;
+	}
+	if (FirstLumpIndex_FullName != NULL)
+	{
+		delete[] FirstLumpIndex_FullName;
+		FirstLumpIndex_FullName = NULL;
+	}
+	if (NextLumpIndex_FullName != NULL)
+	{
+		delete[] NextLumpIndex_FullName;
+		NextLumpIndex_FullName = NULL;
+	}
+	if (LumpInfo != NULL)
+	{
+		for (DWORD i = 0; i < NumLumps; ++i)
+		{
+			if (LumpInfo[i].fullname != NULL)
+			{
+				delete[] LumpInfo[i].fullname;
+			}
+		}
+		delete[] LumpInfo;
+		LumpInfo = NULL;
+	}
+	if (Wads != NULL)
+	{
+		for (DWORD i = 0; i < NumWads; ++i)
+		{
+			delete Wads[i];
+		}
+		delete[] Wads;
+		Wads = NULL;
+	}
 }
 
 //==========================================================================

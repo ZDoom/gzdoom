@@ -47,9 +47,9 @@
 #include "r_state.h"
 #include "stats.h"
 
-TypeInfo::DeletingArray TypeInfo::m_RuntimeActors;
+TArray<TypeInfo *> TypeInfo::m_RuntimeActors;
 TArray<TypeInfo *> TypeInfo::m_Types (256);
-unsigned int TypeInfo::TypeHash[256];	// Why can't I use TypeInfo::HASH_SIZE?
+unsigned int TypeInfo::TypeHash[TypeInfo::HASH_SIZE];	// Why can't I use TypeInfo::HASH_SIZE?
 
 #if defined(_MSC_VER) || defined(__GNUC__)
 #include "autosegs.h"
@@ -77,15 +77,60 @@ TypeInfo DObject::_StaticType(NULL, "DObject", NULL, sizeof(DObject));
 static cycle_t StaleCycles;
 static int StaleCount;
 
-TypeInfo::DeletingArray::~DeletingArray()
+// A harmless non_NULL FlatPointer for classes without pointers.
+static const size_t TheEnd = ~0;
+
+static struct TypeInfoDataFreeer
 {
-	for (unsigned int i = 0; i < Size(); ++i)
+	~TypeInfoDataFreeer()
 	{
-		if ((*this)[i] != NULL)
+		TArray<size_t *> uniqueFPs(64);
+		unsigned int i, j;
+
+		for (i = 0; i < TypeInfo::m_Types.Size(); ++i)
 		{
-			delete (*this)[i];
-			(*this)[i] = NULL;
+			TypeInfo *type = TypeInfo::m_Types[i];
+			if (type->FlatPointers != &TheEnd && type->FlatPointers != type->Pointers)
+			{
+				// FlatPointers are shared by many classes, so we must check for
+				// duplicates and only delete those that are unique.
+				for (j = 0; j < uniqueFPs.Size(); ++j)
+				{
+					if (type->FlatPointers == uniqueFPs[j])
+					{
+						break;
+					}
+				}
+				if (j == uniqueFPs.Size())
+				{
+					uniqueFPs.Push(const_cast<size_t *>(type->FlatPointers));
+				}
+			}
+			// For runtime classes, this call will also delete the TypeInfo.
+			TypeInfo::StaticFreeData (type);
 		}
+		for (i = 0; i < uniqueFPs.Size(); ++i)
+		{
+			delete[] uniqueFPs[i];
+		}
+	}
+} FreeTypeInfoData;
+
+void TypeInfo::StaticFreeData (TypeInfo *type)
+{
+	if (type->ActorInfo != NULL)
+	{
+		delete type->ActorInfo;
+		type->ActorInfo = NULL;
+	}
+	if (type->bRuntimeClass)
+	{
+		if (type->Name != NULL)
+		{
+			delete[] type->Name;
+		}
+		type->Name = NULL;
+		delete type;
 	}
 }
 
@@ -199,6 +244,7 @@ TypeInfo *TypeInfo::CreateDerivedClass (char *name, unsigned int size)
 	type->RegisterType();
 	type->Meta = Meta;
 	type->FlatPointers = NULL;
+	type->bRuntimeClass = true;
 
 	// If this class has an actor info, then any classes derived from it
 	// also need an actor info.
@@ -233,8 +279,6 @@ TypeInfo *TypeInfo::CreateDerivedClass (char *name, unsigned int size)
 // to the same array as the super class's.
 void TypeInfo::BuildFlatPointers ()
 {
-	static const size_t TheEnd = ~0;
-
 	if (FlatPointers != NULL)
 	{ // Already built: Do nothing.
 		return;

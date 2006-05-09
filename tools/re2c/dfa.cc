@@ -127,7 +127,7 @@ DFA::DFA(Ins *ins, uint ni, uint lb, uint ub, Char *rep)
 	    if(i->i.tag == CHAR){
 		for(Ins *j = i + 1; j < (Ins*) i->i.link; ++j){
 		    if(!(j->c.link = goTo[j->c.value - lb].to))
-			goTo[nGoTos++].ch = j->c.value;
+			goTo[nGoTos++].ch = (Char)j->c.value;
 		    goTo[j->c.value - lb].to = j;
 		}
 	    } else if(i->i.tag == TERM){

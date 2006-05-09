@@ -133,6 +133,7 @@ private:
 struct TypeInfo
 {
 	static void StaticInit ();
+	static void StaticFreeData (TypeInfo *type);
 
 	const char *Name;
 	TypeInfo *ParentType;
@@ -142,6 +143,7 @@ struct TypeInfo
 	FActorInfo *ActorInfo;
 	unsigned int HashNext;
 	unsigned short TypeIndex;
+	bool bRuntimeClass;		// class was defined at run-time, not compile-time
 	FMetaTable Meta;
 	const size_t *FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 
@@ -169,16 +171,8 @@ struct TypeInfo
 	static const TypeInfo *FindType (const char *name);
 	static const TypeInfo *IFindType (const char *name);
 
-	// The DeletingArray deletes all the TypeInfos it points to
-	// when it gets destroyed.
-	class DeletingArray : public TArray<TypeInfo *>
-	{
-	public:
-		~DeletingArray();
-	};
-
 	static TArray<TypeInfo *> m_Types;
-	static DeletingArray m_RuntimeActors;
+	static TArray<TypeInfo *> m_RuntimeActors;
 
 	enum { HASH_SIZE = 256 };
 	static unsigned int TypeHash[HASH_SIZE];

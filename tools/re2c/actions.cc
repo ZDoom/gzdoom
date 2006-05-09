@@ -27,7 +27,7 @@ void showIns(std::ostream &o, const Ins &i, const Ins &base){
     case CHAR: {
 	o << "match ";
 	for(const Ins *j = &(&i)[1]; j < (Ins*) i.i.link; ++j)
-	    prtCh(o, j->c.value);
+	    prtCh(o, (const uchar)j->c.value);
 	break;
     } case GOTO:
 	o << "goto " << ((Ins*) i.i.link - &base);

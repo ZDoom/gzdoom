@@ -1262,9 +1262,9 @@ int max;
 void ErrorMsg(const char *filename, int lineno, const char *format, ...){
   char errmsg[ERRMSGSIZE];
   char prefix[PREFIXLIMIT+10];
-  int errmsgsize;
-  int prefixsize;
-  int availablewidth;
+  size_t errmsgsize;
+  size_t prefixsize;
+  size_t availablewidth;
   va_list ap;
   int end, restart, base;
 
@@ -1494,7 +1494,7 @@ char **argv;
 /*
 ** Return a pointer to the next structure in the linked list.
 */
-#define NEXT(A) (*(char**)(((unsigned long)A)+offset))
+#define NEXT(A) (*(char**)(((size_t)A)+offset))
 
 /*
 ** Inputs:
@@ -1568,11 +1568,11 @@ char *list;
 char **next;
 int (*cmp)();
 {
-  unsigned long offset;
+  size_t offset;
   char *ep;
   char *set[LISTSIZE];
   int i;
-  offset = (unsigned long)next - (unsigned long)list;
+  offset = (size_t)next - (size_t)list;
   for(i=0; i<LISTSIZE; i++) set[i] = 0;
   while( list ){
     ep = list;
@@ -1604,7 +1604,8 @@ int n;
 int k;
 FILE *err;
 {
-  int spcnt, i;
+  size_t spcnt;
+  int i;
   spcnt = 0;
   if( argv[0] ) fprintf(err,"%s",argv[0]);
   spcnt = strlen(argv[0]) + 1;
@@ -1722,7 +1723,7 @@ FILE *err;
         if( *end ){
           if( err ){
             fprintf(err,"%sillegal character in floating-point argument.\n",emsg);
-            errline(i,((unsigned long)end)-(unsigned long)argv[i],err);
+            errline(i,((size_t)end)-(size_t)argv[i],err);
           }
           errcnt++;
         }
@@ -1733,7 +1734,7 @@ FILE *err;
         if( *end ){
           if( err ){
             fprintf(err,"%sillegal character in integer argument.\n",emsg);
-            errline(i,((unsigned long)end)-(unsigned long)argv[i],err);
+            errline(i,((size_t)end)-(size_t)argv[i],err);
           }
           errcnt++;
         }
@@ -1828,7 +1829,7 @@ int n;
 
 void OptPrint(){
   int i;
-  int max, len;
+  size_t max, len;
   max = 0;
   for(i=0; op[i].label; i++){
     len = strlen(op[i].label) + 1;
@@ -2304,7 +2305,7 @@ to follow the previous rule.");
 ** macros.  This routine looks for "%ifdef" and "%ifndef" and "%endif" and
 ** comments them out.  Text in between is also commented out as appropriate.
 */
-static int preprocess_input(char *z){
+static void preprocess_input(char *z){
   int i, j, k, n;
   int exclude = 0;
   int start = 1;
@@ -2624,7 +2625,7 @@ struct lemon *lemp;
   maxlen = 10;
   for(i=0; i<lemp->nsymbol; i++){
     sp = lemp->symbols[i];
-    len = strlen(sp->name);
+    len = (int)strlen(sp->name);
     if( len>maxlen ) maxlen = len;
   }
   ncolumns = 76/(maxlen+5);
@@ -3037,8 +3038,8 @@ struct lemon *lemp;
 */
 PRIVATE char *append_str(char *zText, int n, int p1, int p2){
   static char *z = 0;
-  static int alloced = 0;
-  static int used = 0;
+  static size_t alloced = 0;
+  static size_t used = 0;
   int c;
   char zInt[40];
 
@@ -3051,7 +3052,7 @@ PRIVATE char *append_str(char *zText, int n, int p1, int p2){
       used += n;
       assert( used>=0 );
     }
-    n = strlen(zText);
+    n = (int)strlen(zText);
   }
   if( n+sizeof(zInt)*2+used >= alloced ){
     alloced = n + sizeof(zInt)*2 + used + 200;
@@ -3207,13 +3208,13 @@ int mhflag;                 /* True if generating makeheaders output */
   for(i=0; i<arraysize; i++) types[i] = 0;
   maxdtlength = 0;
   if( lemp->vartype ){
-    maxdtlength = strlen(lemp->vartype);
+    maxdtlength = (int)strlen(lemp->vartype);
   }
   for(i=0; i<lemp->nsymbol; i++){
     int len;
     struct symbol *sp = lemp->symbols[i];
     if( sp->datatype==0 ) continue;
-    len = strlen(sp->datatype);
+    len = (int)strlen(sp->datatype);
     if( len>maxdtlength ) maxdtlength = len;
   }
   stddt = (char*)malloc( maxdtlength*2 + 1 );
@@ -3410,7 +3411,7 @@ int mhflag;     /* Output in makeheaders format if true */
   name = lemp->name ? lemp->name : "Parse";
   if( lemp->arg && lemp->arg[0] ){
     int i;
-    i = strlen(lemp->arg);
+    i = (int)strlen(lemp->arg);
     while( i>=1 && isspace(lemp->arg[i-1]) ) i--;
     while( i>=1 && (isalnum(lemp->arg[i-1]) || lemp->arg[i-1]=='_') ) i--;
     fprintf(out,"#define %sARG_SDECL %s;\n",name,lemp->arg);  lineno++;

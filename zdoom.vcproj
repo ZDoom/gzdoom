@@ -3995,9 +3995,6 @@
 				RelativePath=".\src\g_strife\a_alienspectres.cpp">
 			</File>
 			<File
-				RelativePath=".\src\g_strife\a_beggars.cpp">
-			</File>
-			<File
 				RelativePath=".\src\g_strife\a_coin.cpp">
 			</File>
 			<File
@@ -4016,13 +4013,7 @@
 				RelativePath=".\src\g_strife\a_macil.cpp">
 			</File>
 			<File
-				RelativePath=".\src\g_strife\a_merchants.cpp">
-			</File>
-			<File
 				RelativePath=".\src\g_strife\a_oracle.cpp">
-			</File>
-			<File
-				RelativePath=".\src\g_strife\a_peasant.cpp">
 			</File>
 			<File
 				RelativePath=".\src\g_strife\a_programmer.cpp">

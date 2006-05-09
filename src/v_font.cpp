@@ -1138,7 +1138,6 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 	FontHeight = 0;
 	GlobalKerning = false;
 	memset (usedcolors, 0, 256);
-	Name = copystring (name);
 	Next = FirstFont;
 	FirstFont = this;
 

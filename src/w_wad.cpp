@@ -1938,6 +1938,10 @@ FWadCollection::WadFileRecord::~WadFileRecord ()
 	{
 		delete[] Name;
 	}
+	if (MemoryData != NULL) 
+	{
+		delete [] MemoryData;
+	}
 }
 
 long FWadCollection::WadFileRecord::Seek (long offset, int origin)

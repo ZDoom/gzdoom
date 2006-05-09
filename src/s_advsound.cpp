@@ -210,6 +210,19 @@ static const char *SICommandStrings[] =
 static TArray<FRandomSoundList> S_rnd;
 static FMusicVolume *MusicVolumes;
 
+static struct MusicVolumeDeleter
+{
+	~MusicVolumeDeleter()
+	{
+		while(MusicVolumes!=NULL)
+		{
+			FMusicVolume * next = MusicVolumes->Next;
+			free(MusicVolumes);
+			MusicVolumes=next;
+		}
+	}
+} DeleteTheMusicVolumes;
+
 static int NumPlayerReserves;
 static bool DoneReserving;
 static bool PlayerClassesIsSorted;

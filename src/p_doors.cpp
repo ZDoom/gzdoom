@@ -856,11 +856,16 @@ void P_ParseAnimatedDoor()
 			break;
 		}
 	}
-	anim.TextureFrames = new int[frames.Size()];
-	memcpy (anim.TextureFrames, &frames[0], sizeof(int) * frames.Size());
-	anim.NumTextureFrames = frames.Size();
 	if (!error)
 	{
+		anim.TextureFrames = new int[frames.Size()];
+		memcpy (anim.TextureFrames, &frames[0], sizeof(int) * frames.Size());
+		anim.NumTextureFrames = frames.Size();
 		DoorAnimations.Push (anim);
+	}
+	else
+	{
+		if (anim.OpenSound!=NULL) delete [] anim.OpenSound;
+		if (anim.CloseSound!=NULL) delete [] anim.CloseSound;
 	}
 }

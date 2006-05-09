@@ -2851,11 +2851,22 @@ void M_StartControlPanel (bool makeSound)
 void M_Drawer ()
 {
 	int i, x, y, max;
+	PalEntry fade = 0;
+
+	const player_t *player = &players[consoleplayer];
+	if (player->camera != NULL)
+	{
+		if (player->camera->player != NULL)
+		{
+			player = player->camera->player;
+		}
+		fade = PalEntry (BYTE(player->BlendA*255), BYTE(player->BlendR*255), BYTE(player->BlendG*255), BYTE(player->BlendB*255));
+	}
 
 	// Horiz. & Vertically center string and print it.
 	if (messageToPrint)
 	{
-		screen->Dim ();
+		screen->Dim (fade);
 		BorderNeedRefresh = screen->GetPageCount ();
 		SB_state = screen->GetPageCount ();
 
@@ -2878,7 +2889,7 @@ void M_Drawer ()
 	{
 		if (InfoType == 0 && !OptionsActive)
 		{
-			screen->Dim ();
+			screen->Dim (fade);
 		}
 		// For Heretic shareware message:
 		if (showSharewareMessage)

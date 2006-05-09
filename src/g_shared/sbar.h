@@ -175,6 +175,8 @@ public:
 	fixed_t GetDisplacement () { return Displacement; }
 	int GetPlayer ();
 
+	static void AddBlend (float r, float g, float b, float a, float v_blend[4]);
+
 	virtual void Serialize (FArchive &arc);
 
 	virtual void Tick ();
@@ -212,8 +214,6 @@ protected:
 	void RefreshBackground () const;
 
 	void GetCurrentAmmo (AAmmo *&ammo1, AAmmo *&ammo2, int &ammocount1, int &ammocount2) const;
-
-	static void AddBlend (float r, float g, float b, float a, float v_blend[4]);
 
 public:
 	AInventory *ValidateInvFirst (int numVisible) const;

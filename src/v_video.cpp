@@ -57,6 +57,7 @@
 #include "cmdlib.h"
 #include "gi.h"
 #include "templates.h"
+#include "sbar.h"
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
@@ -196,8 +197,9 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int color) const
 	}
 }
 
-void DCanvas::Dim () const
+void DCanvas::Dim (PalEntry color) const
 {
+	PalEntry dimmer;
 	float amount = dimamount;
 
 	if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
@@ -205,7 +207,16 @@ void DCanvas::Dim () const
 		// enough to make the menus readable.
 		amount = MIN<float> (1.f, amount*2.f);
 	}
-	Dim (PalEntry(dimcolor), amount, 0, 0, Width, Height);
+	dimmer = PalEntry(dimcolor);
+	// Add the cvar's dimming on top of the color passed to the function
+	if (color.a != 0)
+	{
+		float dim[4] = { color.r/255.f, color.g/255.f, color.b/255.f, color.a/255.f };
+		FBaseStatusBar::AddBlend (dimmer.r/255.f, dimmer.g/255.f, dimmer.b/255.f, amount, dim);
+		dimmer = PalEntry (BYTE(dim[0]*255), BYTE(dim[1]*255), BYTE(dim[2]*255));
+		amount = dim[3];
+	}
+	Dim (dimmer, amount, 0, 0, Width, Height);
 }
 
 void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h) const

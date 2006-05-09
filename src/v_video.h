@@ -149,7 +149,7 @@ public:
 	virtual void GetBlock (int x, int y, int width, int height, byte *dest) const;
 
 	// Dim the entire canvas for the menus
-	virtual void Dim () const;
+	virtual void Dim (PalEntry color = 0) const;
 
 	// Dim part of the canvas
 	virtual void Dim (PalEntry color, float amount, int x1, int y1, int w, int h) const;

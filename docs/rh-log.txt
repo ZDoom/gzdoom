@@ -1,3 +1,7 @@
+May 8, 2006
+- Blends created with the ACS fade commands now degrade to transparent overlays
+  when the menu is visible, so they can no longer obscure the menu.
+
 May 7, 2006 (Changes by Graf Zahl)
 - Added a misc/secret sound definition for Heretic.
 - Fixed: Powered up weapons were not properly deselected when the level ended

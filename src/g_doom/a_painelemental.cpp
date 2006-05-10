@@ -115,7 +115,7 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	int index=CheckIndex(1, NULL);
 	if (index>=0) 
 	{
-		spawntype = PClass::FindClass((const char *)StateParameters[index]);
+		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
 	}
 	if (spawntype == NULL) spawntype = RUNTIME_CLASS(ALostSoul);
 

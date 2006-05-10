@@ -1,3 +1,20 @@
+May 10, 2006 (Changes by Graf Zahl)
+- Changed A_ChangeFlag so that it doesn't need to alter the flag 
+  string. With strings being passed as names this is unsafe.
+- Removed unused parameter types from the function parameter parser for
+  DECORATE.
+- Changed: All actor name parameters in DECORATE are now passed as 
+  FNames, not as strings. 
+- Fixed: The MAPINFO parser stored the RedirectType as a type pointer.
+  But at this point DECORATE hasn't been read yet so this was limited to
+  the internal classes.
+- Fixed: TXT_NEED_IDCARD wasn't terminated with a ';'.
+- Fixed: Strife's DeadRebel was missing its DoomEdNum.
+- With names as type identifiers it is no longer necessary to remap
+  the monster types to internal constants in A_BossDeath.
+- Fixed: A_BossDeath got the string from a name - just to get a name from
+  the string. Using the name directly is sufficient.
+
 May 9, 2006
 - Redid ClearLcoks() fix that I accidentally removed.
 - Added a new setting for am_rotate: 2 will enable rotation only for the

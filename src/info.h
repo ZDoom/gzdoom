@@ -86,7 +86,7 @@ const BYTE SF_BIGTIC	 = 0x80;
 // The first 2 parameters for each function call represent 
 // the old misc1/misc2 values, even for non-weapons
 
-extern TArray<intptr_t> StateParameters;
+extern TArray<int> StateParameters;
 
 struct FState
 {

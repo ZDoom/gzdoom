@@ -2349,25 +2349,14 @@ bool CheckBossDeath (AActor *actor)
 //
 void A_BossDeath (AActor *actor)
 {
-	enum
-	{
-		MT_FATSO,
-		MT_BABY,
-		MT_BRUISER,
-		MT_CYBORG,
-		MT_SPIDER,
-
-		MT_HEAD,
-		MT_MINOTAUR,
-		MT_SORCERER2
-	} type;
-
+	FName type = actor->GetClass()->TypeName;
+	
 	// Do generic special death actions first
 	bool checked = false;
 	FSpecialAction *sa = level.info->specialactions;
 	while (sa)
 	{
-		if (FName(actor->GetClass()->TypeName.GetChars()) == sa->Type)
+		if (type == sa->Type)
 		{
 			if (!checked && !CheckBossDeath(actor))
 			{
@@ -2393,28 +2382,14 @@ void A_BossDeath (AActor *actor)
 						LEVEL_SORCERER2SPECIAL)) == 0)
 		return;
 
-	const PClass *actorType = actor->GetClass();
-	switch (actorType->TypeName)
-	{
-	case NAME_Fatso:			type = MT_FATSO;		break;
-	case NAME_Arachnotron:		type = MT_BABY;			break;
-	case NAME_BaronOfHell:		type = MT_BRUISER;		break;
-	case NAME_Cyberdemon:		type = MT_CYBORG;		break;
-	case NAME_SpiderMastermind:	type = MT_SPIDER;		break;
-	case NAME_Ironlich:			type = MT_HEAD;			break;
-	case NAME_Minotaur:			type = MT_MINOTAUR;		break;
-	case NAME_Sorcerer2:		type = MT_SORCERER2;	break;
-	default:					return;
-	}
-
 	if (
-		((level.flags & LEVEL_MAP07SPECIAL) && (type == MT_FATSO || type == MT_BABY)) ||
-		((level.flags & LEVEL_BRUISERSPECIAL) && (type == MT_BRUISER)) ||
-		((level.flags & LEVEL_CYBORGSPECIAL) && (type == MT_CYBORG)) ||
-		((level.flags & LEVEL_SPIDERSPECIAL) && (type == MT_SPIDER)) ||
-		((level.flags & LEVEL_HEADSPECIAL) && (type == MT_HEAD)) ||
-		((level.flags & LEVEL_MINOTAURSPECIAL) && (type == MT_MINOTAUR)) ||
-		((level.flags & LEVEL_SORCERER2SPECIAL) && (type == MT_SORCERER2))
+		((level.flags & LEVEL_MAP07SPECIAL) && (type == NAME_Fatso || type == NAME_Arachnotron)) ||
+		((level.flags & LEVEL_BRUISERSPECIAL) && (type == NAME_BaronOfHell)) ||
+		((level.flags & LEVEL_CYBORGSPECIAL) && (type == NAME_Cyberdemon)) ||
+		((level.flags & LEVEL_SPIDERSPECIAL) && (type == NAME_SpiderMastermind)) ||
+		((level.flags & LEVEL_HEADSPECIAL) && (type == NAME_Ironlich)) ||
+		((level.flags & LEVEL_MINOTAURSPECIAL) && (type == NAME_Minotaur)) ||
+		((level.flags & LEVEL_SORCERER2SPECIAL) && (type == NAME_Sorcerer2))
 	   )
 		;
 	else
@@ -2432,13 +2407,13 @@ void A_BossDeath (AActor *actor)
 	}
 	if (level.flags & LEVEL_MAP07SPECIAL)
 	{
-		if (type == MT_FATSO)
+		if (type == NAME_Fatso)
 		{
 			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0);
 			return;
 		}
 		
-		if (type == MT_BABY)
+		if (type == NAME_Arachnotron)
 		{
 			EV_DoFloor (DFloor::floorRaiseByTexture, NULL, 667, FRACUNIT, 0, 0, 0);
 			return;

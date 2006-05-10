@@ -8,6 +8,7 @@
 %ifndef M_TARGET_LINUX
 %define ylookup			_ylookup
 %define vince			_vince
+%define vplce			_vplce
 %define palookupoffse	_palookupoffse
 %define bufplce			_bufplce
 %define dc_iscale		_dc_iscale
@@ -26,7 +27,6 @@
 %define mvlineasm1		_mvlineasm1
 %define mvlineasm4		_mvlineasm4
 %endif
-%define vplce			_vplce
 
 EXTERN ylookup ; near
 
@@ -453,10 +453,10 @@ fixchain2mb:	add edi, 320
 
 ALIGN 16
 endmvlineasm4:
-		mov [_vplce], ecx
-		mov [_vplce+4], edx
-		mov [_vplce+8], esi
-		mov [_vplce+12], ebp
+		mov [vplce], ecx
+		mov [vplce+4], edx
+		mov [vplce+8], esi
+		mov [vplce+12], ebp
 		pop ecx
 		pop ebp
 		pop edi

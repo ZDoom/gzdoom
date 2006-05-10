@@ -671,7 +671,7 @@ ACTOR DeadReaver 20
 
 // Dead Rebel ---------------------------------------------------------------
 
-ACTOR DeadRebel
+ACTOR DeadRebel 19
 {
 	Game Strife
 	ConversationID 235, -1, -1

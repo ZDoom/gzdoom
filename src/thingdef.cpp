@@ -77,7 +77,7 @@ extern TArray<FActorInfo *> Decorations;
 // allow decal specifications in DECORATE. Decals are loaded after DECORATE so the names must be stored here.
 TArray<char*> DecalNames;
 // all state parameters
-TArray<intptr_t> StateParameters;
+TArray<int> StateParameters;
 
 //==========================================================================
 //
@@ -362,17 +362,16 @@ int EvalExpressionI (int id, AActor *self);
 void A_ChangeFlag(AActor * self)
 {
 	int index=CheckIndex(2);
-	char * flagname = (char *)StateParameters[index];	// the string is changed but that doesn't really matter
+	const char * flagname = FName((ENamedName)StateParameters[index]).GetChars();	
 	int expression = EvalExpressionI (StateParameters[index+1], self);
 
-	char *dot = strchr (flagname, '.');
+	const char *dot = strchr (flagname, '.');
 	flagdef *fd;
 
 	if (dot != NULL)
 	{
-		*dot = '\0';
-		fd = FindFlag (self->GetClass(), flagname, dot+1);
-		*dot = '.';
+		FString part1(flagname, dot-flagname);
+		fd = FindFlag (self->GetClass(), part1, dot+1);
 	}
 	else
 	{
@@ -665,7 +664,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_ExtChase, "XXyx")
 	FUNC(A_Jiggle, "XX")
 	FUNC(A_DropInventory, "M")
-	FUNC(A_SetBlend, "DXXd")
+	FUNC(A_SetBlend, "CXXc")
 	FUNC(A_ChangeFlag, "TX")
 	FUNC(A_JumpIf, "XL")
 	FUNC(A_KillMaster, NULL)
@@ -1629,7 +1628,7 @@ do_stop:
 						const char * params = afd->parameters;
 						int numparams = (int)strlen(params);
 						int paramindex = PrepareStateParameters(&state, numparams);
-						intptr_t v;
+						int v;
 
 						if (!islower(*params))
 						{
@@ -1643,10 +1642,11 @@ do_stop:
 						{
 							switch(*params)
 							{
+							/*
 							case 'A':
 							case 'a':		// Angle
 								SC_MustGetFloat();
-								v=angle_t(sc_Float*ANGLE_1);
+								v=(int)angle_t(sc_Float*ANGLE_1);
 								break;
 
 							case 'B':
@@ -1672,6 +1672,13 @@ do_stop:
 								v=fixed_t(sc_Float*FRACUNIT);
 								break;
 
+							case '!':		// not boolean (to simulate parameters which default to 1)
+								SC_MustGetNumber();
+								v=!sc_Number;
+								break;
+
+							*/
+
 							case 'S':
 							case 's':		// Sound name
 								SC_MustGetString();
@@ -1683,7 +1690,7 @@ do_stop:
 							case 'T':
 							case 't':		// String
 								SC_MustGetString();
-								v = (intptr_t)(sc_String[0] ? copystring(sc_String) : NULL);
+								v = (int)(sc_String[0] ? FName(sc_String) : NAME_None);
 								break;
 
 							case 'L':
@@ -1708,11 +1715,6 @@ do_stop:
 
 								break;
 
-							case '!':		// not boolean (to simulate parameters which default to 1)
-								SC_MustGetNumber();
-								v=!sc_Number;
-								break;
-
 							case 'C':
 							case 'c':
 								SC_MustGetString ();
@@ -1726,13 +1728,6 @@ do_stop:
 									// 0 needs to be the default so we have to mark the color.
 									v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
 								}
-								break;
-
-							case 'D':
-							case 'd':
-								SC_MustGetString ();
-								v = V_GetColor (NULL, sc_String);
-								((PalEntry *)&v)->a = 255;
 								break;
 
 							case 'X':

@@ -413,7 +413,7 @@ void DoJumpIfInventory(AActor * self, AActor * owner)
 	int index=CheckIndex(3, &CallingState);
 	if (index<0 || owner == NULL) return;
 
-	const char * ItemType=(const char *)StateParameters[index];
+	ENamedName ItemType=(ENamedName)StateParameters[index];
 	int ItemAmount = EvalExpressionI (StateParameters[index+1], self);
 	int JumpOffset = StateParameters[index+2];
 	const PClass * Type=PClass::FindClass(ItemType);
@@ -514,7 +514,7 @@ void A_CustomMissile(AActor * self)
 	int index=CheckIndex(6);
 	if (index<0) return;
 
-	const char * MissileName=(const char*)StateParameters[index];
+	ENamedName MissileName=(ENamedName)StateParameters[index];
 	fixed_t SpawnHeight=fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	int Spawnofs_XY=EvalExpressionI (StateParameters[index+2], self);
 	angle_t Angle=angle_t(EvalExpressionF (StateParameters[index+3], self) * ANGLE_1);
@@ -629,7 +629,7 @@ void A_CustomBulletAttack (AActor *self)
 	angle_t Spread_Z=angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
 	int NumBullets=EvalExpressionI (StateParameters[index+2], self);
 	int DamagePerBullet=EvalExpressionI (StateParameters[index+3], self);
-	const char * PuffType=(const char *)StateParameters[index+4];
+	ENamedName PuffType=(ENamedName)StateParameters[index+4];
 	fixed_t Range = fixed_t(EvalExpressionF (StateParameters[index+5], self) * FRACUNIT);
 
 	if(Range==0) Range=MISSILERANGE;
@@ -675,15 +675,14 @@ void A_CustomMeleeAttack (AActor *self)
 	int Modulus = EvalExpressionI (StateParameters[index+1], self);
 	int Adder = EvalExpressionI (StateParameters[index+2], self);
 	int MeleeSound=StateParameters[index+3];
-	const char * DamageType = (const char*)StateParameters[index+4];
+	ENamedName DamageType = (ENamedName)StateParameters[index+4];
 	bool bleed = EvalExpressionN (StateParameters[index+5], self);
 	int mod;
 
 	// This needs to be redesigned once the customizable damage type system is working
-	if (DamageType == NULL) mod=MOD_HIT;
-	else if (!stricmp(DamageType, "Fire")) mod=MOD_FIRE;
-	else if (!stricmp(DamageType, "Ice")) mod=MOD_ICE;
-	else if (!stricmp(DamageType, "Disintegrate")) mod=MOD_DISINTEGRATE;
+	if (DamageType==NAME_Fire) mod=MOD_FIRE;
+	else if (DamageType==NAME_Ice) mod=MOD_ICE;
+	else if (DamageType==NAME_Disintegrate) mod=MOD_DISINTEGRATE;
 	else mod=MOD_HIT;
 
 	if (!self->target)
@@ -729,7 +728,7 @@ void A_FireBullets (AActor *self)
 	angle_t Spread_Z=angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
 	int NumberOfBullets=EvalExpressionI (StateParameters[index+2], self);
 	int DamagePerBullet=EvalExpressionI (StateParameters[index+3], self);
-	const char * PuffTypeName=(const char *)StateParameters[index+4];
+	ENamedName PuffTypeName=(ENamedName)StateParameters[index+4];
 	bool UseAmmo=EvalExpressionN (StateParameters[index+5], self);
 	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+6], self) * FRACUNIT);
 	
@@ -789,7 +788,7 @@ void A_FireCustomMissile (AActor * self)
 	int index=CheckIndex(5);
 	if (index<0 || !self->player) return;
 
-	const char * MissileName=(const char *)StateParameters[index];
+	ENamedName MissileName=(ENamedName)StateParameters[index];
 	angle_t Angle=angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
 	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
 	int SpawnOfs_XY=EvalExpressionI (StateParameters[index+3], self);
@@ -844,7 +843,7 @@ void A_CustomPunch (AActor *self)
 	int Damage=EvalExpressionI (StateParameters[index], self);
 	bool norandom=!!EvalExpressionI (StateParameters[index+1], self);
 	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
-	const char * PuffTypeName=(const char *)StateParameters[index+3];
+	ENamedName PuffTypeName=(ENamedName)StateParameters[index+3];
 	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
 
 	const PClass * PuffType;
@@ -984,7 +983,7 @@ static void DoGiveInventory(AActor * self, AActor * receiver)
 	int index=CheckIndex(2);
 	if (index<0 || receiver == NULL) return;
 
-	const char * item =(const char*)StateParameters[index];
+	ENamedName item =(ENamedName)StateParameters[index];
 	int amount=EvalExpressionI (StateParameters[index+1], self);
 
 	if (amount==0) amount=1;
@@ -1037,7 +1036,7 @@ void DoTakeInventory(AActor * self, AActor * receiver)
 	int index=CheckIndex(2);
 	if (index<0 || receiver == NULL) return;
 
-	const char * item =(const char*)StateParameters[index];
+	ENamedName item =(ENamedName)StateParameters[index];
 	int amount=EvalExpressionI (StateParameters[index+1], self);
 
 	const PClass * mi=PClass::FindClass(item);
@@ -1083,7 +1082,7 @@ void A_SpawnItem(AActor * self)
 	int index=CheckIndex(4, &CallingState);
 	if (index<0) return;
 
-	const PClass * missile= PClass::FindClass((const char *)StateParameters[index]);
+	const PClass * missile= PClass::FindClass((ENamedName)StateParameters[index]);
 	fixed_t distance = EvalExpressionF (StateParameters[index+1], self);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	bool useammo = EvalExpressionN (StateParameters[index+3], self);
@@ -1180,7 +1179,7 @@ void A_ThrowGrenade(AActor * self)
 	int index=CheckIndex(5, &CallingState);
 	if (index<0) return;
 
-	const PClass * missile= PClass::FindClass((const char *)StateParameters[index]);
+	const PClass * missile= PClass::FindClass((ENamedName)StateParameters[index]);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	fixed_t xymom = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	fixed_t zmom = fixed_t(EvalExpressionF (StateParameters[index+3], self) * FRACUNIT);
@@ -1251,7 +1250,7 @@ void A_SelectWeapon(AActor * actor)
 	int index=CheckIndex(1, NULL);
 	if (index<0 || actor->player == NULL) return;
 
-	const PClass * weapon= PClass::FindClass((const char *)StateParameters[index]);
+	const PClass * weapon= PClass::FindClass((ENamedName)StateParameters[index]);
 	AWeapon * weaponitem = static_cast<AWeapon*>(actor->FindInventory(weapon));
 
 	if (weaponitem != NULL && weaponitem->IsKindOf(RUNTIME_CLASS(AWeapon)))
@@ -1278,7 +1277,7 @@ void A_Print(AActor * actor)
 	if (actor->CheckLocalView (consoleplayer) ||
 		(actor->target!=NULL && actor->target->CheckLocalView (consoleplayer)))
 	{
-		C_MidPrint((const char *)StateParameters[index]);
+		C_MidPrint(FName((ENamedName)StateParameters[index]).GetChars());
 	}
 }
 
@@ -1362,7 +1361,7 @@ void A_SpawnDebris(AActor * self)
 	int index=CheckIndex(1, NULL);
 	if (index<0) return;
 
-	debris = PClass::FindClass((const char *)StateParameters[index]);
+	debris = PClass::FindClass((ENamedName)StateParameters[index]);
 	if (debris == NULL) return;
 
 	for (i = 0; i < GetDefaultByType(debris)->health; i++)
@@ -1454,7 +1453,7 @@ void A_DropInventory(AActor * self)
 {
 	int index=CheckIndex(1, &CallingState);
 	if (index<0) return;
-	const PClass * ti = PClass::FindClass((const char*)StateParameters[index]);
+	const PClass * ti = PClass::FindClass((ENamedName)StateParameters[index]);
 	if (ti)
 	{
 		AInventory * inv = self->FindInventory(ti);
@@ -1480,6 +1479,8 @@ void A_SetBlend(AActor * self)
 	int tics = EvalExpressionI (StateParameters[index+2], self);
 	PalEntry color2 = StateParameters[index+3];
 
+	if (color==-1) color=0;
+	if (color2==-1) color2=0;
 	if (!color2.a)
 		color2 = color;
 

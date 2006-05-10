@@ -1356,7 +1356,7 @@ void A_BFGSpray (AActor *mo)
 	int index = CheckIndex (3, NULL);
 	if (index >= 0) 
 	{
-		spraytype = PClass::FindClass ((const char *)StateParameters[index]);
+		spraytype = PClass::FindClass ((ENamedName)StateParameters[index]);
 		numrays = EvalExpressionI (StateParameters[index+1], mo);
 		if (numrays <= 0)
 			numrays = 40;

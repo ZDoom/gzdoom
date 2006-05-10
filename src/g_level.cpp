@@ -772,12 +772,14 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 
 		case MITYPE_REDIRECT:
 			SC_MustGetString ();
-			levelinfo->RedirectType = PClass::FindClass (sc_String);
+			levelinfo->RedirectType = sc_String;
+			/*
 			if (levelinfo->RedirectType == NULL ||
 				!(levelinfo->RedirectType->IsDescendantOf (RUNTIME_CLASS(AInventory))))
 			{
 				SC_ScriptError ("%s is not an inventory item", sc_String);
 			}
+			*/
 			// Intentional fall-through
 
 		case MITYPE_MAPNAME: {
@@ -2168,18 +2170,22 @@ level_info_t *FindLevelByNum (int num)
 
 level_info_t *CheckLevelRedirect (level_info_t *info)
 {
-	if (info->RedirectType != NULL)
+	if (info->RedirectType != NAME_None)
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		const PClass *type = PClass::FindClass(info->RedirectType);
+		if (type != NULL)
 		{
-			if (playeringame[i] && players[i].mo->FindInventory (info->RedirectType))
+			for (int i = 0; i < MAXPLAYERS; ++i)
 			{
-				level_info_t *newinfo = FindLevelInfo (info->RedirectMap);
-				if (newinfo != NULL)
+				if (playeringame[i] && players[i].mo->FindInventory (type))
 				{
-					info = newinfo;
+					level_info_t *newinfo = FindLevelInfo (info->RedirectMap);
+					if (newinfo != NULL)
+					{
+						info = newinfo;
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}

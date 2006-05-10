@@ -79,7 +79,27 @@ xx(Mauler)
 xx(Chicken)
 xx(Pig)
 
+
+// Damage types
+xx(Fire)
+//xx(Ice)	already defined above
+xx(Disintegrate)
 #if 0
+xx(Water)
+xx(Slime)
+xx(Crush)
+xx(Telefrag)
+xx(Falling)
+xx(Suicide)
+xx(Exit)
+xx(Railgun)
+xx(Poison)
+xx(Electric)
+xx(BFGSplash)
+xx(DrainLife)	// A weapon like the Sigil that drains your life away.
+xx(Massacre)	// For death by a cheater!
+//(Melee)		already defined above, so don't define it again
+
 
 // Standard animator names.
 xx(Spawn)
@@ -105,25 +125,6 @@ xx(AltHoldAttack)
 // Special death name for getting killed excessively. Could be used as
 // a damage type if you wanted to force an extreme death.
 xx(Extreme)
-
-// Damage types
-xx(Fire)
-//xx(Ice)	already defined above
-xx(Disintegrate)
-xx(Water)
-xx(Slime)
-xx(Crush)
-xx(Telefrag)
-xx(Falling)
-xx(Suicide)
-xx(Exit)
-xx(Railgun)
-xx(Poison)
-xx(Electric)
-xx(BFGSplash)
-xx(DrainLife)	// A weapon like the Sigil that drains your life away.
-xx(Massacre)	// For death by a cheater!
-//(Melee)		already defined above, so don't define it again
 
 // Compatible death names for the decorate parser.
 xx(XDeath)

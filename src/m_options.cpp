@@ -532,7 +532,7 @@ menu_t VideoMenu =
 static void StartMapColorsMenu (void);
 
 EXTERN_CVAR (Bool, am_rotate)
-EXTERN_CVAR (Bool, am_overlay)
+EXTERN_CVAR (Int, am_overlay)
 EXTERN_CVAR (Bool, am_usecustomcolors)
 EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showmonsters)
@@ -553,12 +553,18 @@ static value_t SecretTypes[] = {
 	{ 2, "Always" },
 };
 
+static value_t OverlayTypes[] = {
+	{ 0, "Off" },
+	{ 1, "On" },
+	{ 2, "Exclusively" }
+};
+
 static menuitem_t AutomapItems[] = {
 	{ discrete, "Map color set",		{&am_usecustomcolors},	{2.0}, {0.0},	{0.0}, {MapColorTypes} },
 	{ more,		"Set custom colors",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t*)StartMapColorsMenu} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Rotate automap",		{&am_rotate},		   	{2.0}, {0.0},	{0.0}, {OnOff} },
-	{ discrete, "Overlay automap",		{&am_overlay},			{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Overlay automap",		{&am_overlay},			{3.0}, {0.0},	{0.0}, {OverlayTypes} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Show item counts",		{&am_showitems},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Show monster counts",	{&am_showmonsters},		{2.0}, {0.0},	{0.0}, {OnOff} },

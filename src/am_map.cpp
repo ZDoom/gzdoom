@@ -97,7 +97,7 @@ inline fixed_t MTOF(fixed_t x)
 static int WeightingScale;
 
 CVAR (Bool,  am_rotate,				false,		CVAR_ARCHIVE);
-CVAR (Bool,  am_overlay,			false,		CVAR_ARCHIVE);
+CVAR (Int,   am_overlay,			0,			CVAR_ARCHIVE);
 CVAR (Bool,  am_showsecrets,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showmonsters,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showitems,			false,		CVAR_ARCHIVE);
@@ -892,7 +892,7 @@ void AM_ToggleMap ()
 	}
 	else
 	{
-		if (am_overlay && viewactive)
+		if (am_overlay==1 && viewactive)
 		{
 			viewactive = false;
 			SB_state = screen->GetPageCount ();

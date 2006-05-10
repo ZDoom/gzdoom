@@ -1,4 +1,6 @@
 May 9, 2006
+- Added a new setting for am_overlay: 2 will disable the normal automap and
+  show only the overlayed version.
 - Fixed?: WallSpriteColumn apparently needs to set dc_texturefrac. At least
   Valgrind seems to say so.
 - Fixed: The FWadCollection destructor needs to use free to free the LumpInfo

@@ -1924,7 +1924,7 @@ static bool C_TabCompleteList ()
 		Printf (TEXTCOLOR_BLUE "Completions for %s:\n", CmdLine+2);
 		for (i = TabPos; nummatches > 0; ++i, --nummatches)
 		{
-			Printf ("%-*s", int(maxwidth), TabCommands[i].Name);
+			Printf ("%-*s", int(maxwidth), TabCommands[i].Name.GetChars());
 			x += maxwidth;
 			if (x > ConCols - maxwidth)
 			{

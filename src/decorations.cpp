@@ -439,15 +439,15 @@ static void ParseDecorate (void (*process)(FState *, int))
 		info->NumOwnedStates = states.Size();
 		if (info->NumOwnedStates == 0)
 		{
-			SC_ScriptError ("%s does not define any animation frames", typeName );
+			SC_ScriptError ("%s does not define any animation frames", typeName.GetChars() );
 		}
 		else if (extra.SpawnEnd == 0)
 		{
-			SC_ScriptError ("%s does not have a Frames definition", typeName );
+			SC_ScriptError ("%s does not have a Frames definition", typeName.GetChars() );
 		}
 		else if (def == DEF_BreakableDecoration && extra.DeathEnd == 0)
 		{
-			SC_ScriptError ("%s does not have a DeathFrames definition", typeName );
+			SC_ScriptError ("%s does not have a DeathFrames definition", typeName.GetChars() );
 		}
 		else if (extra.IceDeathEnd != 0 && extra.bGenericIceDeath)
 		{

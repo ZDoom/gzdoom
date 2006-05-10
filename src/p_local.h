@@ -96,7 +96,7 @@ void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
 int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);
 bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax);
 
-AActor *P_SpawnPuff (const TypeInfo *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hit=false);
+AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hit=false);
 void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator);
 void	P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
 void	P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
@@ -104,18 +104,18 @@ void	P_RipperBlood (AActor *mo, AActor *bleeder);
 int		P_GetThingFloorType (AActor *thing);
 void	P_ExplodeMissile (AActor *missile, line_t *explodeline);
 
-AActor *P_SpawnMissile (AActor* source, AActor* dest, const TypeInfo *type);
-AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, const TypeInfo *type);
-AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, const TypeInfo *type);
-AActor *P_SpawnMissileAngle (AActor *source, const TypeInfo *type, angle_t angle, fixed_t momz);
-AActor *P_SpawnMissileAngleSpeed (AActor *source, const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed);
-AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz);
-AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner=NULL);
-AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const TypeInfo *type);
+AActor *P_SpawnMissile (AActor* source, AActor* dest, const PClass *type);
+AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, const PClass *type);
+AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, const PClass *type);
+AActor *P_SpawnMissileAngle (AActor *source, const PClass *type, angle_t angle, fixed_t momz);
+AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type, angle_t angle, fixed_t momz, fixed_t speed);
+AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, const PClass *type, angle_t angle, fixed_t momz);
+AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, const PClass *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner=NULL);
+AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PClass *type);
 
-AActor *P_SpawnPlayerMissile (AActor* source, const TypeInfo *type);
-AActor *P_SpawnPlayerMissile (AActor *source, const TypeInfo *type, angle_t angle);
-AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z, const TypeInfo *type, angle_t angle);
+AActor *P_SpawnPlayerMissile (AActor* source, const PClass *type);
+AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type, angle_t angle);
+AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z, const PClass *type, angle_t angle);
 
 void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz);
 
@@ -123,7 +123,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz);
 // [RH] P_THINGS
 //
 #define MAX_SPAWNABLES	(256)
-extern const TypeInfo *SpawnableThings[MAX_SPAWNABLES];
+extern const PClass *SpawnableThings[MAX_SPAWNABLES];
 
 bool	P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid);
 bool	P_Thing_Projectile (int tid, int type, angle_t angle,
@@ -298,7 +298,7 @@ extern	AActor*	linetarget; 	// who got hit (or NULL)
 extern	AActor *PuffSpawned;	// points to last puff spawned
 
 fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vrange=0);
-void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, int damageType, const TypeInfo *pufftype);
+void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, int damageType, const PClass *pufftype);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
@@ -347,7 +347,7 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher);
 void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int mod, int flags=0);
 
 bool P_GiveBody (AActor *actor, int num);
-bool P_MorphPlayer (player_t *player, const TypeInfo *morphClass);
+bool P_MorphPlayer (player_t *player, const PClass *morphClass);
 void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison);
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);
 

@@ -373,7 +373,7 @@ CCMD (use)
 {
 	if (argv.argc() > 1 && m_Instigator != NULL)
 	{
-		SendItemUse = m_Instigator->FindInventory (TypeInfo::IFindType (argv[1]));
+		SendItemUse = m_Instigator->FindInventory (PClass::FindClass (argv[1]));
 	}
 }
 
@@ -386,17 +386,17 @@ CCMD (drop)
 {
 	if (argv.argc() > 1 && m_Instigator != NULL)
 	{
-		SendItemDrop = m_Instigator->FindInventory (TypeInfo::IFindType (argv[1]));
+		SendItemDrop = m_Instigator->FindInventory (PClass::FindClass (argv[1]));
 	}
 }
 
 CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
-	static const char *bagnames[3] =
+	static const ENamedName bagnames[3] =
 	{
-		"ArtiPoisonBag1",
-		"ArtiPoisonBag2",
-		"ArtiPoisonBag3"
+		NAME_ArtiPoisonBag1,
+		NAME_ArtiPoisonBag2,
+		NAME_ArtiPoisonBag3
 	};
 	int i, j;
 
@@ -407,7 +407,7 @@ CCMD (useflechette)
 
 	for (j = 0; j < 3; ++j)
 	{
-		const TypeInfo *type = TypeInfo::FindType (bagnames[(i+j)%3]);
+		const PClass *type = PClass::FindClass (bagnames[(i+j)%3]);
 		AInventory *item;
 		if (type != NULL && (item = m_Instigator->FindInventory (type)))
 		{
@@ -421,7 +421,7 @@ CCMD (select)
 {
 	if (argv.argc() > 1)
 	{
-		AInventory *item = m_Instigator->FindInventory (TypeInfo::FindType (argv[1]));
+		AInventory *item = m_Instigator->FindInventory (PClass::FindClass (argv[1]));
 		if (item != NULL)
 		{
 			m_Instigator->player->InvSel = item;
@@ -1109,7 +1109,7 @@ void G_PlayerReborn (int player)
 	userinfo_t  userinfo;	// [RH] Save userinfo
 	botskill_t  b_skill;//Added by MC:
 	APlayerPawn *actor;
-	const TypeInfo *cls;
+	const PClass *cls;
 	char		*log;
 
 	p = &players[player];

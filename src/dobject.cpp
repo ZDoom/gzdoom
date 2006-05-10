@@ -47,295 +47,22 @@
 #include "r_state.h"
 #include "stats.h"
 
-TArray<TypeInfo *> TypeInfo::m_RuntimeActors;
-TArray<TypeInfo *> TypeInfo::m_Types (256);
-unsigned int TypeInfo::TypeHash[TypeInfo::HASH_SIZE];	// Why can't I use TypeInfo::HASH_SIZE?
-
-#if defined(_MSC_VER) || defined(__GNUC__)
 #include "autosegs.h"
 
-TypeInfo DObject::_StaticType =
+PClass DObject::_StaticType;
+ClassReg DObject::RegistrationInfo =
 {
-	"DObject",
-	NULL,
-	sizeof(DObject),
+	&DObject::_StaticType,			// MyClass
+	"DObject",						// Name
+	NULL,							// ParentType
+	sizeof(DObject),				// SizeOf
+	NULL,							// Pointers
+	&DObject::InPlaceConstructor	// ConstructNative
 };
-
-void TypeInfo::StaticInit ()
-{
-	TAutoSegIterator<TypeInfo *, &CRegHead, &CRegTail> probe;
-
-	while (++probe != NULL)
-	{
-		probe->RegisterType ();
-	}
-}
-#else
-TypeInfo DObject::_StaticType(NULL, "DObject", NULL, sizeof(DObject));
-#endif
+_DECLARE_TI(DObject)
 
 static cycle_t StaleCycles;
 static int StaleCount;
-
-// A harmless non_NULL FlatPointer for classes without pointers.
-static const size_t TheEnd = ~0;
-
-static struct TypeInfoDataFreeer
-{
-	~TypeInfoDataFreeer()
-	{
-		TArray<size_t *> uniqueFPs(64);
-		unsigned int i, j;
-
-		for (i = 0; i < TypeInfo::m_Types.Size(); ++i)
-		{
-			TypeInfo *type = TypeInfo::m_Types[i];
-			if (type->FlatPointers != &TheEnd && type->FlatPointers != type->Pointers)
-			{
-				// FlatPointers are shared by many classes, so we must check for
-				// duplicates and only delete those that are unique.
-				for (j = 0; j < uniqueFPs.Size(); ++j)
-				{
-					if (type->FlatPointers == uniqueFPs[j])
-					{
-						break;
-					}
-				}
-				if (j == uniqueFPs.Size())
-				{
-					uniqueFPs.Push(const_cast<size_t *>(type->FlatPointers));
-				}
-			}
-			// For runtime classes, this call will also delete the TypeInfo.
-			TypeInfo::StaticFreeData (type);
-		}
-		for (i = 0; i < uniqueFPs.Size(); ++i)
-		{
-			delete[] uniqueFPs[i];
-		}
-	}
-} FreeTypeInfoData;
-
-void TypeInfo::StaticFreeData (TypeInfo *type)
-{
-	if (type->ActorInfo != NULL)
-	{
-		if (type->ActorInfo->Defaults != NULL)
-		{
-			delete[] type->ActorInfo->Defaults;
-			type->ActorInfo->Defaults = NULL;
-		}
-	}
-	if (type->bRuntimeClass)
-	{
-		if (type->Name != NULL)
-		{
-			delete[] type->Name;
-		}
-		type->Name = NULL;
-		if (type->ActorInfo != NULL)
-		{
-			if (type->ActorInfo->OwnedStates != NULL)
-			{
-				delete[] type->ActorInfo->OwnedStates;
-				type->ActorInfo->OwnedStates = NULL;
-			}
-			delete type->ActorInfo;
-			type->ActorInfo = NULL;
-		}
-		delete type;
-	}
-}
-
-void TypeInfo::RegisterType ()
-{
-	// Add type to list
-	TypeIndex = m_Types.Push (this);
-
-	// Add type to hash table. Types are inserted into each bucket
-	// lexicographically, and the prefix character is ignored.
-	unsigned int bucket = MakeKey (Name+1) % HASH_SIZE;
-	unsigned int *hashpos = &TypeHash[bucket];
-	while (*hashpos != 0)
-	{
-		int lexx = strcmp (Name+1, m_Types[*hashpos-1]->Name+1);
-		// (The Lexx is the most powerful weapon of destruction
-		//  in the two universes.)
-
-		if (lexx > 0)
-		{ // This type should come later in the chain
-			hashpos = &m_Types[*hashpos-1]->HashNext;
-		}
-		else if (lexx == 0)
-		{ // This type has already been inserted
-			I_FatalError ("Class %s already registered", Name);
-		}
-		else
-		{ // Type comes right here
-			break;
-		}
-	}
-	HashNext = *hashpos;
-	*hashpos = TypeIndex + 1;
-}
-
-// Case-sensitive search (preferred)
-const TypeInfo *TypeInfo::FindType (const char *name)
-{
-	if (name != NULL)
-	{
-		unsigned int index = TypeHash[MakeKey (name) % HASH_SIZE];
-
-		while (index != 0)
-		{
-			int lexx = strcmp (name, m_Types[index-1]->Name + 1);
-			if (lexx > 0)
-			{
-				index = m_Types[index-1]->HashNext;
-			}
-			else if (lexx == 0)
-			{
-				return m_Types[index-1];
-			}
-			else
-			{
-				break;
-			}
-		}
-	}
-	return NULL;
-}
-
-// Case-insensitive search
-const TypeInfo *TypeInfo::IFindType (const char *name)
-{
-	if (name != NULL)
-	{
-		for (int i = 0; i < TypeInfo::m_Types.Size(); i++)
-		{
-			if (stricmp (TypeInfo::m_Types[i]->Name + 1, name) == 0)
-				return TypeInfo::m_Types[i];
-		}
-	}
-	return NULL;
-}
-
-// Create a new object that this type represents
-DObject *TypeInfo::CreateNew () const
-{
-	BYTE *mem = (BYTE *)M_Malloc (SizeOf);
-	ConstructNative (mem);
-	((DObject *)mem)->SetClass (const_cast<TypeInfo *>(this));
-
-	// If this is a scripted extension of a class but not an actor,
-	// initialize any extended space to zero. Actors have defaults, so
-	// we can initialize them better
-	if (ActorInfo != NULL)
-	{
-		AActor *actor = (AActor *)mem;
-		memcpy (&(actor->x), &(((AActor *)ActorInfo->Defaults)->x), SizeOf - ((BYTE *)&actor->x - (BYTE *)actor));
-	}
-	else if (ParentType != 0 &&
-		ConstructNative == ParentType->ConstructNative &&
-		SizeOf > ParentType->SizeOf)
-	{
-		memset (mem + ParentType->SizeOf, 0, SizeOf - ParentType->SizeOf);
-	}
-	return (DObject *)mem;
-}
-
-// Create a new type based on an existing type
-TypeInfo *TypeInfo::CreateDerivedClass (char *name, unsigned int size)
-{
-	TypeInfo *type = new TypeInfo;
-
-	type->Name = name;
-	type->ParentType = this;
-	type->SizeOf = size;
-	type->Pointers = NULL;
-	type->ConstructNative = ConstructNative;
-	type->RegisterType();
-	type->Meta = Meta;
-	type->FlatPointers = NULL;
-	type->bRuntimeClass = true;
-
-	// If this class has an actor info, then any classes derived from it
-	// also need an actor info.
-	if (this->ActorInfo != NULL)
-	{
-		FActorInfo *info = type->ActorInfo = new FActorInfo;
-		info->Class = type;
-		info->Defaults = new BYTE[size];
-		info->GameFilter = GAME_Any;
-		info->SpawnID = 0;
-		info->DoomEdNum = -1;
-		info->OwnedStates = NULL;
-		info->NumOwnedStates = 0;
-
-		memcpy (info->Defaults, ActorInfo->Defaults, SizeOf);
-		if (size > SizeOf)
-		{
-			memset (info->Defaults + SizeOf, 0, size - SizeOf);
-		}
-		m_RuntimeActors.Push (type);
-	}
-	else
-	{
-		type->ActorInfo = NULL;
-	}
-	return type;
-}
-
-// Create the FlatPointers array, if it doesn't exist already.
-// It comprises all the Pointers from superclasses plus this class's own Pointers.
-// If this class does not define any new Pointers, then FlatPointers will be set
-// to the same array as the super class's.
-void TypeInfo::BuildFlatPointers ()
-{
-	if (FlatPointers != NULL)
-	{ // Already built: Do nothing.
-		return;
-	}
-	else if (ParentType == NULL)
-	{ // No parent: FlatPointers is the same as Pointers.
-		if (Pointers == NULL)
-		{ // No pointers: Make FlatPointers a harmless non-NULL.
-			FlatPointers = &TheEnd;
-		}
-		else
-		{
-			FlatPointers = Pointers;
-		}
-	}
-	else
-	{
-		ParentType->BuildFlatPointers ();
-		if (Pointers == NULL)
-		{ // No new pointers: Just use the same FlatPointers as the parent.
-			FlatPointers = ParentType->FlatPointers;
-		}
-		else
-		{ // New pointers: Create a new FlatPointers array and add them.
-			int numPointers, numSuperPointers;
-
-			// Count pointers defined by this class.
-			for (numPointers = 0; Pointers[numPointers] != ~(size_t)0; numPointers++)
-			{ }
-			// Count pointers defined by superclasses.
-			for (numSuperPointers = 0; ParentType->FlatPointers[numSuperPointers] != ~(size_t)0; numSuperPointers++)
-			{ }
-
-			// Concatenate them into a new array
-			size_t *flat = new size_t[numPointers + numSuperPointers + 1];
-			if (numSuperPointers > 0)
-			{
-				memcpy (flat, ParentType->FlatPointers, sizeof(size_t)*numSuperPointers);
-			}
-			memcpy (flat + numSuperPointers, Pointers, sizeof(size_t)*(numPointers+1));
-			FlatPointers = flat;
-		}
-	}
-}
 
 FMetaTable::~FMetaTable ()
 {
@@ -467,14 +194,116 @@ const char *FMetaTable::GetMetaString (DWORD id) const
 
 CCMD (dumpclasses)
 {
-	const TypeInfo *root;
+	// This is by no means speed-optimized. But it's an informational console
+	// command that will be executed infrequently, so I don't mind.
+	struct DumpInfo
+	{
+		const PClass *Type;
+		DumpInfo *Next;
+		DumpInfo *Children;
+
+		static DumpInfo *FindType (DumpInfo *root, const PClass *type)
+		{
+			if (root == NULL)
+			{
+				return root;
+			}
+			if (root->Type == type)
+			{
+				return root;
+			}
+			if (root->Next != NULL)
+			{
+				return FindType (root->Next, type);
+			}
+			if (root->Children != NULL)
+			{
+				return FindType (root->Children, type);
+			}
+			return NULL;
+		}
+
+		static DumpInfo *AddType (DumpInfo **root, const PClass *type)
+		{
+			DumpInfo *info, *parentInfo;
+
+			if (*root == NULL)
+			{
+				info = new DumpInfo;
+				info->Type = type;
+				info->Next = NULL;
+				info->Children = *root;
+				*root = info;
+				return info;
+			}
+			if (type->ParentClass == (*root)->Type)
+			{
+				parentInfo = *root;
+			}
+			else if (type == (*root)->Type)
+			{
+				return *root;
+			}
+			else
+			{
+				parentInfo = FindType (*root, type->ParentClass);
+				if (parentInfo == NULL)
+				{
+					parentInfo = AddType (root, type->ParentClass);
+				}
+			}
+			// Has this type already been added?
+			for (info = parentInfo->Children; info != NULL; info = info->Next)
+			{
+				if (info->Type == type)
+				{
+					return info;
+				}
+			}
+			info = new DumpInfo;
+			info->Type = type;
+			info->Next = parentInfo->Children;
+			info->Children = NULL;
+			parentInfo->Children = info;
+			return info;
+		}
+
+		static void PrintTree (DumpInfo *root, int level)
+		{
+			Printf ("%*c%s\n", level, ' ', root->Type->TypeName.GetChars());
+			if (root->Children != NULL)
+			{
+				PrintTree (root->Children, level + 2);
+			}
+			if (root->Next != NULL)
+			{
+				PrintTree (root->Next, level);
+			}
+		}
+
+		static void FreeTree (DumpInfo *root)
+		{
+			if (root->Children != NULL)
+			{
+				FreeTree (root->Children);
+			}
+			if (root->Next != NULL)
+			{
+				FreeTree (root->Next);
+			}
+			delete root;
+		}
+	};
+
 	int i;
 	int shown, omitted;
+	DumpInfo *tree = NULL;
+	const PClass *root = NULL;
 	bool showall = true;
 
 	if (argv.argc() > 1)
 	{
-		root = TypeInfo::IFindType (argv[1]);
+		root = PClass::FindClass (argv[1]);
 		if (root == NULL)
 		{
 			Printf ("Class '%s' not found\n", argv[1]);
@@ -488,20 +317,19 @@ CCMD (dumpclasses)
 			}
 		}
 	}
-	else
-	{
-		root = NULL;
-	}
 
 	shown = omitted = 0;
-	for (i = 0; i < TypeInfo::m_Types.Size(); i++)
+	DumpInfo::AddType (&tree, root != NULL ? root : RUNTIME_CLASS(DObject));
+	for (i = 0; i < PClass::m_Types.Size(); i++)
 	{
+		PClass *cls = PClass::m_Types[i];
 		if (root == NULL ||
-			(TypeInfo::m_Types[i]->IsDescendantOf (root) &&
-			 (showall || TypeInfo::m_Types[i] == root ||
-			  TypeInfo::m_Types[i]->ActorInfo != root->ActorInfo)))
+			(cls->IsDescendantOf (root) &&
+			(showall || cls == root ||
+			cls->ActorInfo != root->ActorInfo)))
 		{
-			Printf (" %s\n", TypeInfo::m_Types[i]->Name + 1);
+			DumpInfo::AddType (&tree, cls);
+//			Printf (" %s\n", PClass::m_Types[i]->Name + 1);
 			shown++;
 		}
 		else
@@ -509,6 +337,8 @@ CCMD (dumpclasses)
 			omitted++;
 		}
 	}
+	DumpInfo::PrintTree (tree, 2);
+	DumpInfo::FreeTree (tree);
 	Printf ("%d classes shown, %d omitted\n", shown, omitted);
 }
 
@@ -517,20 +347,25 @@ TArray<size_t> DObject::FreeIndices (TArray<size_t>::NoInit);
 TArray<DObject *> DObject::ToDestroy (TArray<DObject *>::NoInit);
 bool DObject::Inactive;
 
+void DObject::InPlaceConstructor (void *mem)
+{
+	new ((EInPlace *)mem) DObject;
+}
+
 DObject::DObject ()
 : ObjectFlags(0), Class(0)
 {
 	if (FreeIndices.Pop (Index))
-		Objects[(unsigned int)Index] = this;
+		Objects[Index] = this;
 	else
 		Index = Objects.Push (this);
 }
 
-DObject::DObject (TypeInfo *inClass)
+DObject::DObject (PClass *inClass)
 : ObjectFlags(0), Class(inClass)
 {
 	if (FreeIndices.Pop (Index))
-		Objects[(unsigned int)Index] = this;
+		Objects[Index] = this;
 	else
 		Index = Objects.Push (this);
 }
@@ -616,7 +451,7 @@ void DObject::RemoveFromArray ()
 	}
 	else if (Objects.Size() > Index)
 	{
-		Objects[(unsigned int)Index] = NULL;
+		Objects[Index] = NULL;
 		FreeIndices.Push (Index);
 	}
 }
@@ -631,11 +466,11 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 		DObject *current = i < highest ? Objects[i] : &bglobal;
 		if (current)
 		{
-			const TypeInfo *info = current->GetClass();
+			const PClass *info = current->GetClass();
 			const size_t *offsets = info->FlatPointers;
 			if (offsets == NULL)
 			{
-				const_cast<TypeInfo *>(info)->BuildFlatPointers();
+				const_cast<PClass *>(info)->BuildFlatPointers();
 				offsets = info->FlatPointers;
 			}
 			while (*offsets != ~(size_t)0)
@@ -699,11 +534,11 @@ void DObject::DestroyScan ()
 		DObject *current = i < highest ? Objects[i] : &bglobal;
 		if (current)
 		{
-			const TypeInfo *info = current->GetClass();
+			const PClass *info = current->GetClass();
 			const size_t *offsets = info->FlatPointers;
 			if (offsets == NULL)
 			{
-				const_cast<TypeInfo *>(info)->BuildFlatPointers();
+				const_cast<PClass *>(info)->BuildFlatPointers();
 				offsets = info->FlatPointers;
 			}
 			while (*offsets != ~(size_t)0)
@@ -778,7 +613,7 @@ void DObject::CheckIfSerialized () const
 			"BUG: %s::Serialize\n"
 			"(or one of its superclasses) needs to call\n"
 			"Super::Serialize\n",
-			StaticType ()->Name);
+			StaticType()->TypeName.GetChars());
 	}
 }
 

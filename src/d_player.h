@@ -69,8 +69,8 @@ public:
 	virtual bool DoHealingRadius (APlayerPawn *other);
 	virtual void MorphPlayerThink ();
 	virtual void ActivateMorphWeapon ();
-	virtual AWeapon *PickNewWeapon (const TypeInfo *ammotype);
-	virtual AWeapon *BestWeapon (const TypeInfo *ammotype);
+	virtual AWeapon *PickNewWeapon (const PClass *ammotype);
+	virtual AWeapon *BestWeapon (const PClass *ammotype);
 
 	enum EInvulState
 	{
@@ -165,7 +165,7 @@ public:
 
 	userinfo_t	userinfo;				// [RH] who is this?
 	
-	const TypeInfo *cls;				// class of associated PlayerPawn
+	const PClass *cls;				// class of associated PlayerPawn
 
 	float		DesiredFOV;				// desired field of vision
 	float		FOV;					// current field of vision

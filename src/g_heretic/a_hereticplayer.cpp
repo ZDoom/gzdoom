@@ -135,10 +135,10 @@ void AHereticPlayer::GiveDefaultInventory ()
 	AInventory *wand, *ammo;
 
 	player->health = GetDefault()->health;
-	player->mo->GiveInventoryType (TypeInfo::FindType ("Staff"));
-	wand = player->mo->GiveInventoryType (TypeInfo::FindType ("GoldWand"));
+	player->mo->GiveInventoryType (PClass::FindClass ("Staff"));
+	wand = player->mo->GiveInventoryType (PClass::FindClass ("GoldWand"));
 	// Adding the gold wand automatically adds its ammo
-	ammo = player->mo->FindInventory (TypeInfo::FindType ("GoldWandAmmo"));
+	ammo = player->mo->FindInventory (PClass::FindClass ("GoldWandAmmo"));
 	ammo->Amount = 50;
 	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (wand);
 }

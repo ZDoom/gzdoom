@@ -136,67 +136,307 @@ else
 
 done
 
-${COMPILER} "autostart.cpp a.nas blocks.nas misc.nas tmap.nas tmap2.nas tmap3.nas \
- am_map.cpp b_bot.cpp b_func.cpp b_game.cpp b_move.cpp b_think.cpp bbannouncer.cpp \
- c_bind.cpp c_cmds.cpp c_console.cpp c_cvars.cpp c_dispatch.cpp c_expr.cpp \
- cmdlib.cpp colormatcher.cpp configfile.cpp ct_chat.cpp d_dehacked.cpp d_main.cpp \
- d_net.cpp d_netinfo.cpp d_protocol.cpp decallib.cpp decorations.cpp dobject.cpp \
- doomdef.cpp doomstat.cpp dsectoreffect.cpp dthinker.cpp empty.cpp f_finale.cpp \
- f_wipe.cpp farchive.cpp files.cpp g_game.cpp g_hub.cpp g_level.cpp gameconfigfile.cpp \ 
- gi.cpp hu_scores.cpp info.cpp infodefaults.cpp lumpconfigfile.cpp m_alloc.cpp \
- m_argv.cpp m_bbox.cpp m_cheat.cpp m_fixed.cpp m_menu.cpp m_misc.cpp m_options.cpp \
- m_png.cpp m_random.cpp mus2midi.cpp nodebuild.cpp nodebuild_events.cpp \
- nodebuild_extract.cpp nodebuild_gl.cpp nodebuild_utility.cpp p_acs.cpp \
- p_buildmap.cpp p_ceiling.cpp p_conversation.cpp p_doors.cpp p_effect.cpp \
- p_enemy.cpp p_floor.cpp p_interaction.cpp p_lights.cpp p_lnspec.cpp p_map.cpp \
- p_maputl.cpp p_mobj.cpp p_pillar.cpp p_plats.cpp p_pspr.cpp p_saveg.cpp \
- p_sectors.cpp p_setup.cpp p_sight.cpp p_spec.cpp p_switch.cpp p_teleport.cpp \
- p_terrain.cpp p_things.cpp p_tick.cpp p_trace.cpp p_user.cpp p_writemap.cpp \
- p_xlat.cpp po_man.cpp r_bsp.cpp r_data.cpp r_draw.cpp r_drawt.cpp r_main.cpp \
- r_plane.cpp r_segs.cpp r_sky.cpp r_things.cpp r_polymost.cpp s_advsound.cpp \
- s_environment.cpp s_playlist.cpp s_sndseq.cpp s_sound.cpp sc_man.cpp skins.cpp \
- st_stuff.cpp stats.cpp stringtable.cpp tables.cpp tempfiles.cpp thingdef.cpp thingdef_codeptr.cpp thingdef_exp.cpp \
- v_collection.cpp v_draw.cpp v_font.cpp v_palette.cpp v_pfx.cpp v_text.cpp \
- v_video.cpp vectors.cpp name.cpp zstring.cpp zstringpool.cpp zstrformat.cpp \
- w_wad.cpp wi_stuff.cpp a_arachnotron.cpp a_archvile.cpp a_bossbrain.cpp \
- a_bruiser.cpp a_cacodemon.cpp a_cyberdemon.cpp a_demon.cpp \
- a_doomartifacts.cpp a_doomhealth.cpp \
- a_doomimp.cpp a_doommisc.cpp a_doomplayer.cpp a_doomweaps.cpp \
- a_fatso.cpp a_keen.cpp a_lostsoul.cpp a_painelemental.cpp a_possessed.cpp \
- a_revenant.cpp a_scriptedmarine.cpp a_spidermaster.cpp doom_sbar.cpp a_beast.cpp \
- a_chicken.cpp a_clink.cpp a_dsparil.cpp \
- a_hereticartifacts.cpp a_hereticimp.cpp a_heretickeys.cpp \
- a_hereticmisc.cpp a_hereticplayer.cpp a_hereticweaps.cpp a_ironlich.cpp \
- a_knight.cpp a_mummy.cpp a_snake.cpp a_wizard.cpp heretic_sbar.cpp a_bats.cpp \
- a_bishop.cpp a_blastradius.cpp a_boostarmor.cpp a_centaur.cpp a_clericboss.cpp \
- a_clericflame.cpp a_clericholy.cpp a_clericmace.cpp a_clericplayer.cpp \
- a_clericstaff.cpp a_demons.cpp a_dragon.cpp a_ettin.cpp a_fighteraxe.cpp \
- a_fighterboss.cpp a_fighterhammer.cpp a_fighterplayer.cpp a_fighterquietus.cpp \
- a_firedemon.cpp a_flechette.cpp a_fog.cpp a_healingradius.cpp \
+${COMPILER} "autostart.cpp \
+ a.nas \
+ blocks.nas \
+ misc.nas \
+ tmap.nas \
+ tmap2.nas \
+ tmap3.nas \
+ am_map.cpp \
+ b_bot.cpp \
+ b_func.cpp \
+ b_game.cpp \
+ b_move.cpp \
+ b_think.cpp \
+ bbannouncer.cpp \
+ c_bind.cpp \
+ c_cmds.cpp \
+ c_console.cpp \
+ c_cvars.cpp \
+ c_dispatch.cpp \
+ c_expr.cpp \
+ cmdlib.cpp \
+ colormatcher.cpp \
+ configfile.cpp \
+ ct_chat.cpp \
+ d_dehacked.cpp \
+ d_main.cpp \
+ d_net.cpp \
+ d_netinfo.cpp \
+ d_protocol.cpp \
+ decallib.cpp \
+ decorations.cpp \
+ dobject.cpp \
+ dobjtype.cpp \
+ doomdef.cpp \
+ doomstat.cpp \
+ dsectoreffect.cpp \
+ dthinker.cpp \
+ empty.cpp \
+ f_finale.cpp \
+ f_wipe.cpp \
+ farchive.cpp \
+ files.cpp \
+ g_game.cpp \
+ g_hub.cpp \
+ g_level.cpp \
+ gameconfigfile.cpp \
+ gi.cpp \
+ hu_scores.cpp \
+ info.cpp \
+ infodefaults.cpp \
+ lumpconfigfile.cpp \
+ m_alloc.cpp \
+ m_argv.cpp \
+ m_bbox.cpp \
+ m_cheat.cpp \
+ m_fixed.cpp \
+ m_menu.cpp \
+ m_misc.cpp \
+ m_options.cpp \
+ m_png.cpp \
+ m_random.cpp \
+ mus2midi.cpp \
+ nodebuild.cpp \
+ nodebuild_events.cpp \
+ nodebuild_extract.cpp \
+ nodebuild_gl.cpp \
+ nodebuild_utility.cpp \
+ p_acs.cpp \
+ p_buildmap.cpp \
+ p_ceiling.cpp \
+ p_conversation.cpp \
+ p_doors.cpp \
+ p_effect.cpp \
+ p_enemy.cpp \
+ p_floor.cpp \
+ p_interaction.cpp \
+ p_lights.cpp \
+ p_lnspec.cpp \
+ p_map.cpp \
+ p_maputl.cpp \
+ p_mobj.cpp \
+ p_pillar.cpp \
+ p_plats.cpp \
+ p_pspr.cpp \
+ p_saveg.cpp \
+ p_sectors.cpp \
+ p_setup.cpp \
+ p_sight.cpp \
+ p_spec.cpp \
+ p_switch.cpp \
+ p_teleport.cpp \
+ p_terrain.cpp \
+ p_things.cpp \
+ p_tick.cpp \
+ p_trace.cpp \
+ p_user.cpp \
+ p_writemap.cpp \
+ p_xlat.cpp \
+ po_man.cpp \
+ r_bsp.cpp \
+ r_data.cpp \
+ r_draw.cpp \
+ r_drawt.cpp \
+ r_main.cpp \
+ r_plane.cpp \
+ r_segs.cpp \
+ r_sky.cpp \
+ r_things.cpp \
+ r_polymost.cpp \
+ s_advsound.cpp \
+ s_environment.cpp \
+ s_playlist.cpp \
+ s_sndseq.cpp \
+ s_sound.cpp \
+ sc_man.cpp \
+ skins.cpp \
+ st_stuff.cpp \
+ stats.cpp \
+ stringtable.cpp \
+ tables.cpp \
+ tempfiles.cpp \
+ thingdef.cpp \
+ thingdef_codeptr.cpp \
+ thingdef_exp.cpp \
+ v_collection.cpp \
+ v_draw.cpp \
+ v_font.cpp \
+ v_palette.cpp \
+ v_pfx.cpp \
+ v_text.cpp \
+ v_video.cpp \
+ vectors.cpp \
+ name.cpp \
+ zstring.cpp \
+ zstringpool.cpp \
+ zstrformat.cpp \
+ w_wad.cpp \
+ wi_stuff.cpp \
+ a_arachnotron.cpp \
+ a_archvile.cpp \
+ a_bossbrain.cpp \
+ a_bruiser.cpp \
+ a_cacodemon.cpp \
+ a_cyberdemon.cpp \
+ a_demon.cpp \
+ a_doomartifacts.cpp \
+ a_doomhealth.cpp \
+ a_doomimp.cpp \
+ a_doommisc.cpp \
+ a_doomplayer.cpp \
+ a_doomweaps.cpp \
+ a_fatso.cpp \
+ a_keen.cpp \
+ a_lostsoul.cpp \
+ a_painelemental.cpp \
+ a_possessed.cpp \
+ a_revenant.cpp \
+ a_scriptedmarine.cpp \
+ a_spidermaster.cpp \
+ doom_sbar.cpp \
+ a_beast.cpp \
+ a_chicken.cpp \
+ a_clink.cpp \
+ a_dsparil.cpp \
+ a_hereticartifacts.cpp \
+ a_hereticimp.cpp \
+ a_heretickeys.cpp \
+ a_hereticmisc.cpp \
+ a_hereticplayer.cpp \
+ a_hereticweaps.cpp \
+ a_ironlich.cpp \
+ a_knight.cpp \
+ a_mummy.cpp \
+ a_snake.cpp \
+ a_wizard.cpp \
+ heretic_sbar.cpp \
+ a_bats.cpp \
+ a_bishop.cpp \
+ a_blastradius.cpp \
+ a_boostarmor.cpp \
+ a_centaur.cpp \
+ a_clericboss.cpp \
+ a_clericflame.cpp \
+ a_clericholy.cpp \
+ a_clericmace.cpp \
+ a_clericplayer.cpp \
+ a_clericstaff.cpp \
+ a_demons.cpp \
+ a_dragon.cpp \
+ a_ettin.cpp \
+ a_fighteraxe.cpp \
+ a_fighterboss.cpp \
+ a_fighterhammer.cpp \
+ a_fighterplayer.cpp \
+ a_fighterquietus.cpp \
+ a_firedemon.cpp \
+ a_flechette.cpp \
+ a_fog.cpp \
+ a_healingradius.cpp \
  a_heresiarch.cpp \
- a_hexenspecialdecs.cpp a_iceguy.cpp a_korax.cpp a_mageboss.cpp a_magecone.cpp \
- a_magelightning.cpp a_mageplayer.cpp a_magestaff.cpp a_magewand.cpp a_mana.cpp \
- a_pig.cpp a_puzzleitems.cpp a_serpent.cpp \
- a_spike.cpp a_summon.cpp a_teleportother.cpp a_weaponpieces.cpp a_wraith.cpp \
- hexen_sbar.cpp a_artiegg.cpp a_artitele.cpp a_minotaur.cpp a_ravenambient.cpp \
- a_acolyte.cpp a_alienspectres.cpp \
- a_coin.cpp a_crusader.cpp a_entityboss.cpp a_inquisitor.cpp \
- a_loremaster.cpp a_macil.cpp a_oracle.cpp \
- a_programmer.cpp a_reaver.cpp a_rebels.cpp \
- a_sentinel.cpp a_spectral.cpp a_stalker.cpp a_strifeammo.cpp \
- a_strifebishop.cpp a_strifeitems.cpp a_strifeplayer.cpp \
- a_strifestuff.cpp a_strifeweapons.cpp a_templar.cpp a_thingstoblowup.cpp \
- strife_sbar.cpp a_action.cpp a_artifacts.cpp a_bridge.cpp \
- a_camera.cpp a_debris.cpp a_decals.cpp a_flashfader.cpp a_fountain.cpp \
- a_hatetarget.cpp a_keys.cpp a_lightning.cpp a_movingcamera.cpp a_pickups.cpp \
- a_quake.cpp a_secrettrigger.cpp a_sectoraction.cpp a_sharedmisc.cpp a_skies.cpp \
- a_soundenvironment.cpp a_soundsequence.cpp a_spark.cpp a_waterzone.cpp a_weaponpiece.cpp a_weapons.cpp \
- hudmessages.cpp shared_sbar.cpp fmopl.cpp mlkernel.cpp mlopl.cpp mlopl_io.cpp \
- opl_mus_player.cpp fmodsound.cpp i_music.cpp i_sound.cpp music_cd.cpp \
- music_flac.cpp music_midi_midiout.cpp music_midi_stream.cpp music_midi_timidity.cpp \
- music_mod.cpp music_mus_midiout.cpp music_mus_opl.cpp music_stream.cpp \
- sample_flac.cpp crashcatcher.c i_input.cpp i_net.cpp i_cd.cpp i_main.cpp \
- i_system.cpp hardware.cpp i_movie.cpp sdlvideo.cpp autozend.cpp"
+ a_hexenspecialdecs.cpp \
+ a_iceguy.cpp \
+ a_korax.cpp \
+ a_mageboss.cpp \
+ a_magecone.cpp \
+ a_magelightning.cpp \
+ a_mageplayer.cpp \
+ a_magestaff.cpp \
+ a_magewand.cpp \
+ a_mana.cpp \
+ a_pig.cpp \
+ a_puzzleitems.cpp \
+ a_serpent.cpp \
+ a_spike.cpp \
+ a_summon.cpp \
+ a_teleportother.cpp \
+ a_weaponpieces.cpp \
+ a_wraith.cpp \
+ hexen_sbar.cpp \
+ a_artiegg.cpp \
+ a_artitele.cpp \
+ a_minotaur.cpp \
+ a_ravenambient.cpp \
+ a_acolyte.cpp \
+ a_alienspectres.cpp \
+ a_coin.cpp \
+ a_crusader.cpp \
+ a_entityboss.cpp \
+ a_inquisitor.cpp \
+ a_loremaster.cpp \
+ a_macil.cpp \
+ a_oracle.cpp \
+ a_programmer.cpp \
+ a_reaver.cpp \
+ a_rebels.cpp \
+ a_sentinel.cpp \
+ a_spectral.cpp \
+ a_stalker.cpp \
+ a_strifeammo.cpp \
+ a_strifebishop.cpp \
+ a_strifeitems.cpp \
+ a_strifeplayer.cpp \
+ a_strifestuff.cpp \
+ a_strifeweapons.cpp \
+ a_templar.cpp \
+ a_thingstoblowup.cpp \
+ strife_sbar.cpp \
+ a_action.cpp \
+ a_artifacts.cpp \
+ a_bridge.cpp \
+ a_camera.cpp \
+ a_debris.cpp \
+ a_decals.cpp \
+ a_flashfader.cpp \
+ a_fountain.cpp \
+ a_hatetarget.cpp \
+ a_keys.cpp \
+ a_lightning.cpp \
+ a_movingcamera.cpp \
+ a_pickups.cpp \
+ a_quake.cpp \
+ a_secrettrigger.cpp \
+ a_sectoraction.cpp \
+ a_sharedmisc.cpp \
+ a_skies.cpp \
+ a_soundenvironment.cpp \
+ a_soundsequence.cpp \
+ a_spark.cpp \
+ a_waterzone.cpp \
+ a_weaponpiece.cpp \
+ a_weapons.cpp \
+ hudmessages.cpp \
+ shared_sbar.cpp \
+ fmopl.cpp \
+ mlkernel.cpp \
+ mlopl.cpp \
+ mlopl_io.cpp \
+ opl_mus_player.cpp \
+ fmodsound.cpp \
+ i_music.cpp \
+ i_sound.cpp \
+ music_cd.cpp \
+ music_flac.cpp \
+ music_midi_midiout.cpp \
+ music_midi_stream.cpp \
+ music_midi_timidity.cpp \
+ music_mod.cpp \
+ music_mus_midiout.cpp \
+ music_mus_opl.cpp \
+ music_stream.cpp \
+ sample_flac.cpp \
+ crashcatcher.c \
+ i_input.cpp \
+ i_net.cpp \
+ i_cd.cpp \
+ i_main.cpp \
+ i_system.cpp \
+ hardware.cpp \
+ i_movie.cpp \
+ sdlvideo.cpp \
+ autozend.cpp"
 
 ${LINK} "${TARGET}"
 

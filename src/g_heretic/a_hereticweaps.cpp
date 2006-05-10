@@ -1794,7 +1794,7 @@ void A_GauntletAttack (AActor *actor)
 	int randVal;
 	fixed_t dist;
 	player_t *player;
-	const TypeInfo *pufftype;
+	const PClass *pufftype;
 	AInventory *power;
 
 	if (NULL == (player = actor->player))
@@ -2056,7 +2056,7 @@ END_DEFAULTS
 
 int ABlasterFX1::DoSpecialDamage (AActor *target, int damage)
 {
-	if (target->IsKindOf (TypeInfo::FindType ("Ironlich")))
+	if (target->IsKindOf (PClass::FindClass ("Ironlich")))
 	{ // Less damage to Ironlich bosses
 		damage = pr_bfx1() & 1;
 		if (!damage)
@@ -2133,7 +2133,7 @@ END_DEFAULTS
 
 int ARipper::DoSpecialDamage (AActor *target, int damage)
 {
-	if (target->IsKindOf (TypeInfo::FindType ("Ironlich")))
+	if (target->IsKindOf (PClass::FindClass ("Ironlich")))
 	{ // Less damage to Ironlich bosses
 		damage = pr_ripd() & 1;
 		if (!damage)

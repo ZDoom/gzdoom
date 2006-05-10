@@ -325,7 +325,7 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 	}
 
 	AInventory *copy;
-	const TypeInfo *spawntype;
+	const PClass *spawntype;
 
 	if (other->IsKindOf (RUNTIME_CLASS(AClericPlayer)))
 	{

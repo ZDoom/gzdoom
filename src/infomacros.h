@@ -173,12 +173,12 @@ public:
 
 #define BEGIN_DEFAULTS(actor,game,ednum,spawnid) \
 	BEGIN_DEFAULTS_PRE(actor) \
-	RUNTIME_CLASS(actor), &actor::States[0], NULL, countof(actor::States), \
+	RUNTIME_CLASS(actor), &actor::States[0], countof(actor::States), \
 	BEGIN_DEFAULTS_POST(actor,game,ednum,spawnid)
 
 #define BEGIN_STATELESS_DEFAULTS(actor,game,ednum,spawnid) \
 	BEGIN_DEFAULTS_PRE(actor) \
-	RUNTIME_CLASS(actor), NULL, NULL, 0, \
+	RUNTIME_CLASS(actor), NULL, 0, \
 	BEGIN_DEFAULTS_POST(actor,game,ednum,spawnid)
 
 // IMPLEMENT_ACTOR combines IMPLEMENT_CLASS and BEGIN_DEFAULTS

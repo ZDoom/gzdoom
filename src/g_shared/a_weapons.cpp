@@ -242,7 +242,7 @@ void AWeapon::AttachToOwner (AActor *other)
 //
 //===========================================================================
 
-AAmmo *AWeapon::AddAmmo (AActor *other, const TypeInfo *ammotype, int amount)
+AAmmo *AWeapon::AddAmmo (AActor *other, const PClass *ammotype, int amount)
 {
 	AAmmo *ammo;
 
@@ -298,7 +298,7 @@ bool AWeapon::AddExistingAmmo (AAmmo *ammo, int amount)
 //
 //===========================================================================
 
-AWeapon *AWeapon::AddWeapon (const TypeInfo *weapontype)
+AWeapon *AWeapon::AddWeapon (const PClass *weapontype)
 {
 	AWeapon *weap;
 
@@ -555,10 +555,10 @@ void FWeaponSlot::Clear ()
 
 bool FWeaponSlot::AddWeapon (const char *type)
 {
-	return AddWeapon (TypeInfo::IFindType (type));
+	return AddWeapon (PClass::FindClass (type));
 }
 
-bool FWeaponSlot::AddWeapon (const TypeInfo *type)
+bool FWeaponSlot::AddWeapon (const PClass *type)
 {
 	int i;
 
@@ -628,7 +628,7 @@ void FWeaponSlots::Clear ()
 // then add it to the specified slot. False is returned if the weapon was
 // not in a slot and could not be added. True is returned otherwise.
 
-ESlotDef FWeaponSlots::AddDefaultWeapon (int slot, const TypeInfo *type)
+ESlotDef FWeaponSlots::AddDefaultWeapon (int slot, const PClass *type)
 {
 	int currSlot, index;
 
@@ -644,7 +644,7 @@ ESlotDef FWeaponSlots::AddDefaultWeapon (int slot, const TypeInfo *type)
 	return SLOTDEF_Exists;
 }
 
-bool FWeaponSlots::LocateWeapon (const TypeInfo *type, int *const slot, int *const index)
+bool FWeaponSlots::LocateWeapon (const PClass *type, int *const slot, int *const index)
 {
 	int i, j;
 
@@ -724,7 +724,7 @@ AWeapon *PickNextWeapon (player_s *player)
 		{
 			int slot = (unsigned)((start + i) / MAX_WEAPONS_PER_SLOT) % NUM_WEAPON_SLOTS;
 			int index = (unsigned)(start + i) % MAX_WEAPONS_PER_SLOT;
-			const TypeInfo *type = LocalWeapons.Slots[slot].Weapons[index];
+			const PClass *type = LocalWeapons.Slots[slot].Weapons[index];
 			AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory (type));
 
 			if (weap != NULL && weap->CheckAmmo (AWeapon::EitherFire, false))
@@ -759,7 +759,7 @@ AWeapon *PickPrevWeapon (player_s *player)
 				slot += NUM_WEAPON_SLOTS * MAX_WEAPONS_PER_SLOT;
 			int index = slot % MAX_WEAPONS_PER_SLOT;
 			slot /= MAX_WEAPONS_PER_SLOT;
-			const TypeInfo *type = LocalWeapons.Slots[slot].Weapons[index];
+			const PClass *type = LocalWeapons.Slots[slot].Weapons[index];
 			AWeapon *weap = static_cast<AWeapon *> (player->mo->FindInventory (type));
 
 			if (weap != NULL && weap->CheckAmmo (AWeapon::EitherFire, false))
@@ -791,7 +791,7 @@ CCMD (setslot)
 				i < MAX_WEAPONS_PER_SLOT && LocalWeapons.Slots[slot].GetWeapon(i) != NULL;
 				++i)
 			{
-				Printf (" %s", LocalWeapons.Slots[slot].GetWeapon(i)->Name+1);
+				Printf (" %s", LocalWeapons.Slots[slot].GetWeapon(i)->TypeName.GetChars());
 			}
 			Printf ("\n");
 		}
@@ -881,7 +881,7 @@ CCMD (weaponsection)
 
 CCMD (addslotdefault)
 {
-	const TypeInfo *type;
+	const PClass *type;
 	unsigned int slot;
 
 	if (argv.argc() != 3 || (slot = atoi (argv[1])) >= NUM_WEAPON_SLOTS)
@@ -896,7 +896,7 @@ CCMD (addslotdefault)
 		return;
 	}
 
-	type = TypeInfo::IFindType (argv[2]);
+	type = PClass::FindClass (argv[2]);
 	if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 	{
 		Printf ("%s is not a weapon\n", argv[2]);
@@ -975,7 +975,7 @@ void FWeaponSlots::SaveSlots (FConfigFile &config)
 			{
 				buff[index++] = ' ';
 			}
-			const char *name = Slots[i].Weapons[j]->Name+1;
+			const char *name = Slots[i].Weapons[j]->TypeName.GetChars();
 			strcpy (buff+index, name);
 			index += (int)strlen (name);
 		}

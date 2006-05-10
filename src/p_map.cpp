@@ -2674,7 +2674,7 @@ static bool CheckForSpectral (FTraceResults &res)
 }
 
 void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, int damageType, const TypeInfo *pufftype)
+				   int pitch, int damage, int damageType, const PClass *pufftype)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
@@ -4313,7 +4313,7 @@ msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode)
 
 	if (s == 0)
 	{
-		I_FatalError ("AddSecnode of 0 for %s\n", thing->_StaticType.Name);
+		I_FatalError ("AddSecnode of 0 for %s\n", thing->_StaticType.TypeName.GetChars());
 	}
 
 	node = nextnode;

@@ -570,6 +570,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\src\dobjtype.cpp">
+			</File>
+			<File
 				RelativePath=".\src\doomdef.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -1866,6 +1869,9 @@
 			</File>
 			<File
 				RelativePath=".\src\dobject.h">
+			</File>
+			<File
+				RelativePath=".\src\dobjtype.h">
 			</File>
 			<File
 				RelativePath=".\src\doomdata.h">

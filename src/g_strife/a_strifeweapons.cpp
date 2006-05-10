@@ -1419,7 +1419,7 @@ void A_FireMauler2 (AActor *self)
 //
 //============================================================================
 
-AActor *P_SpawnSubMissile (AActor *source, TypeInfo *type, AActor *target);
+AActor *P_SpawnSubMissile (AActor *source, PClass *type, AActor *target);
 
 void A_MaulerTorpedoWave (AActor *self)
 {
@@ -1441,7 +1441,7 @@ void A_MaulerTorpedoWave (AActor *self)
 	self->z = savedz;
 }
 
-AActor *P_SpawnSubMissile (AActor *source, TypeInfo *type, AActor *target)
+AActor *P_SpawnSubMissile (AActor *source, PClass *type, AActor *target)
 {
 	AActor *other = Spawn (type, source->x, source->y, source->z);
 
@@ -1812,7 +1812,7 @@ END_DEFAULTS
 
 void A_FireGrenade (AActor *self)
 {
-	TypeInfo *grenadetype;
+	PClass *grenadetype;
 	player_t *player = self->player;
 	AActor *grenade;
 	angle_t an;
@@ -2458,7 +2458,7 @@ int ASigil::GiveSigilPiece (AActor *receiver)
 	else if (sigil->NumPieces < 5)
 	{
 		++sigil->NumPieces;
-		static const TypeInfo *const sigils[5] =
+		static const PClass *const sigils[5] =
 		{
 			RUNTIME_CLASS(ASigil1),
 			RUNTIME_CLASS(ASigil2),

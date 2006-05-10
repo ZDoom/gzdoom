@@ -358,7 +358,7 @@ private:
 		}
 	}
 
-	void FlashItem (const TypeInfo *itemtype)
+	void FlashItem (const PClass *itemtype)
 	{
 		ItemFlash = FRACUNIT*3/4;
 	}
@@ -628,7 +628,7 @@ private:
 				label = item->GetClass()->Meta.GetMetaString (AMETA_StrifeName);
 				if (label == NULL)
 				{
-					label = item->GetClass()->Name + 1;
+					label = item->GetClass()->TypeName.GetChars();
 				}
 
 				int colnum = ((i-pos) / 5) & (KeyPopScroll > 0 ? 3 : 1);
@@ -685,7 +685,7 @@ private:
 			// How much ammo does the player have?
 			static const struct
 			{
-				const TypeInfo *AmmoType;
+				const PClass *AmmoType;
 				int Y;
 			} AmmoList[7] =
 			{
@@ -717,20 +717,20 @@ private:
 			// What weapons does the player have?
 			static const struct
 			{
-				const char *TypeName;
+				ENamedName TypeName;
 				int X, Y;
 			} WeaponList[6] =
 			{
-				{ "StrifeCrossbow",			23, 19 },
-				{ "AssaultGun",				21, 41 },
-				{ "FlameThrower",			57, 50 },
-				{ "MiniMissileLauncher",	20, 64 },
-				{ "StrifeGrenadeLauncher",	55, 20 },
-				{ "Mauler",					52, 75 },
+				{ NAME_StrifeCrossbow,			23, 19 },
+				{ NAME_AssaultGun,				21, 41 },
+				{ NAME_FlameThrower,			57, 50 },
+				{ NAME_MiniMissileLauncher,		20, 64 },
+				{ NAME_StrifeGrenadeLauncher,	55, 20 },
+				{ NAME_Mauler,					52, 75 },
 			};
 			for (i = 0; i < 6; ++i)
 			{
-				item = CPlayer->mo->FindInventory (TypeInfo::FindType (WeaponList[i].TypeName));
+				item = CPlayer->mo->FindInventory (PClass::FindClass (WeaponList[i].TypeName));
 
 				if (item != NULL)
 				{

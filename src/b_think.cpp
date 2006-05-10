@@ -123,7 +123,7 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 		//Check if it's more important to get an item than fight.
 		if (b->dest && (b->dest->flags&MF_SPECIAL)) //Must be an item, that is close enough.
 		{
-#define is(x) b->dest->IsKindOf (TypeInfo::FindType (#x))
+#define is(x) b->dest->IsKindOf (PClass::FindClass (#x))
 			if (
 				(
 				 (actor->health < b->skill.isp &&
@@ -321,7 +321,7 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 		return;
 	}
 
-#define typeis(x) item->IsKindOf (TypeInfo::FindType (#x))
+#define typeis(x) item->IsKindOf (PClass::FindClass (#x))
 	if ((item->renderflags & RF_INVISIBLE) //Under respawn and away.
 		|| item == b->prev)
 	{
@@ -353,7 +353,7 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	else if (item->IsKindOf (RUNTIME_CLASS(AAmmo)))
 	{
 		AAmmo *ammo = static_cast<AAmmo *> (item);
-		const TypeInfo *parent = ammo->GetParentAmmo ();
+		const PClass *parent = ammo->GetParentAmmo ();
 		AInventory *holdingammo = b->mo->FindInventory (parent);
 
 		if (holdingammo != NULL && holdingammo->Amount >= holdingammo->MaxAmount)

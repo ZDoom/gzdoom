@@ -123,7 +123,7 @@ void AFighterPlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
 	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
-		(GiveInventoryType (TypeInfo::FindType ("FWeapFist")));
+		(GiveInventoryType (PClass::FindClass ("FWeapFist")));
 
 	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
 	AHexenArmor *armor = FindInventory<AHexenArmor>();
@@ -269,7 +269,7 @@ void A_FPunchAttack (AActor *actor)
 	fixed_t power;
 	int i;
 	player_t *player;
-	const TypeInfo *pufftype;
+	const PClass *pufftype;
 
 	if (NULL == (player = actor->player))
 	{

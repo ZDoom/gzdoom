@@ -88,7 +88,7 @@ private:
 	struct NameEntry
 	{
 		char *Text;
-		DWORD Hash;
+		unsigned int Hash;
 		int NextHash;
 	};
 
@@ -108,7 +108,7 @@ private:
 		int Buckets[HASH_SIZE];
 
 		int FindName (const char *text, bool noCreate);
-		int AddName (const char *text, DWORD hash, DWORD bucket);
+		int AddName (const char *text, unsigned int hash, unsigned int bucket);
 		NameBlock *AddBlock (size_t len);
 		void InitBuckets ();
 		bool Inited;

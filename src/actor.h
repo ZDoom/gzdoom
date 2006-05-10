@@ -370,18 +370,18 @@ class AInventory;
 
 inline AActor *GetDefaultByName (const char *name)
 {
-	return (AActor *)(TypeInfo::FindType (name)->ActorInfo->Defaults);
+	return (AActor *)(PClass::FindClass(name)->Defaults);
 }
 
-inline AActor *GetDefaultByType (const TypeInfo *type)
+inline AActor *GetDefaultByType (const PClass *type)
 {
-	return (AActor *)(type->ActorInfo->Defaults);
+	return (AActor *)(type->Defaults);
 }
 
 template<class T>
 inline T *GetDefault ()
 {
-	return (T *)(RUNTIME_CLASS(T)->ActorInfo->Defaults);
+	return (T *)(RUNTIME_CLASS(T)->Defaults);
 }
 
 struct secplane_t;
@@ -417,11 +417,11 @@ public:
 
 	void Serialize (FArchive &arc);
 
-	static AActor *StaticSpawn (const TypeInfo *type, fixed_t x, fixed_t y, fixed_t z);
+	static AActor *StaticSpawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z);
 
 	inline AActor *GetDefault () const
 	{
-		return (AActor *)(RUNTIME_TYPE(this)->ActorInfo->Defaults);
+		return (AActor *)(RUNTIME_TYPE(this)->Defaults);
 	}
 
 	// BeginPlay: Called just after the actor is created
@@ -533,20 +533,20 @@ public:
 	bool CheckLocalView (int playernum) const;
 
 	// Finds the first item of a particular type.
-	AInventory *FindInventory (const TypeInfo *type) const;
+	AInventory *FindInventory (const PClass *type) const;
 	template<class T> T *FindInventory () const
 	{
 		return static_cast<T *> (FindInventory (RUNTIME_CLASS(T)));
 	}
 
 	// Adds one item of a particular type. Returns NULL if it could not be added.
-	AInventory *GiveInventoryType (const TypeInfo *type);
+	AInventory *GiveInventoryType (const PClass *type);
 
 	// Returns the first item held with IF_INVBAR set.
 	AInventory *FirstInv () const;
 
 	// Tries to give the actor some ammo.
-	bool GiveAmmo (const TypeInfo *type, int amount);
+	bool GiveAmmo (const PClass *type, int amount);
 
 	// Set the alphacolor field properly
 	void SetShade (DWORD rgb);
@@ -574,7 +574,7 @@ public:
 	bool IsHostile (AActor *other);
 
 	// What species am I?
-	virtual const TypeInfo *GetSpecies();
+	virtual const PClass *GetSpecies();
 	
 	// Check for monsters that count as kill but excludes all friendlies.
 	bool CountsAsKill() const
@@ -786,14 +786,14 @@ public:
 	}
 };
 
-inline AActor *Spawn (const TypeInfo *type, fixed_t x, fixed_t y, fixed_t z)
+inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z)
 {
 	return AActor::StaticSpawn (type, x, y, z);
 }
 
 inline AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z)
 {
-	return AActor::StaticSpawn (TypeInfo::FindType (type), x, y, z);
+	return AActor::StaticSpawn (PClass::FindClass(type), x, y, z);
 }
 
 template<class T>

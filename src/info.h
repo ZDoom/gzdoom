@@ -162,8 +162,8 @@ struct FState
 		Frame = (Frame & (SF_FULLBRIGHT|SF_BIGTIC)) | (frame-'A');
 	}
 
-	static const TypeInfo *StaticFindStateOwner (const FState *state);
-	static const TypeInfo *StaticFindStateOwner (const FState *state, const FActorInfo *info);
+	static const PClass *StaticFindStateOwner (const FState *state);
+	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);
 };
 
 // A truly awful hack to get to the state that called an action function
@@ -369,9 +369,8 @@ struct FActorInfo
 	void ApplyDefaults (BYTE *defaults);
 	void RegisterIDs ();
 
-	TypeInfo *Class;
+	PClass *Class;
 	FState *OwnedStates;
-	BYTE *Defaults;
 	int NumOwnedStates;
 	BYTE GameFilter;
 	BYTE SpawnID;
@@ -395,8 +394,8 @@ class FDoomEdMap
 public:
 	~FDoomEdMap();
 
-	const TypeInfo *FindType (int doomednum) const;
-	void AddType (int doomednum, const TypeInfo *type);
+	const PClass *FindType (int doomednum) const;
+	void AddType (int doomednum, const PClass *type);
 	void DelType (int doomednum);
 	void Empty ();
 
@@ -408,7 +407,7 @@ private:
 	struct FDoomEdEntry
 	{
 		FDoomEdEntry *HashNext;
-		const TypeInfo *Type;
+		const PClass *Type;
 		int DoomEdNum;
 	};
 

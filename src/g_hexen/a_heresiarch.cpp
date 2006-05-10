@@ -710,7 +710,7 @@ void A_SorcBallOrbit(AActor *ball)
 
 	if (!ball->IsKindOf (RUNTIME_CLASS(ASorcBall)))
 	{
-		I_Error ("Corrupted sorcerer:\nTried to use a %s", RUNTIME_TYPE(ball)->Name+1);
+		I_Error ("Corrupted sorcerer:\nTried to use a %s", RUNTIME_TYPE(ball)->TypeName.GetChars());
 	}
 	actor = static_cast<ASorcBall *> (ball);
 

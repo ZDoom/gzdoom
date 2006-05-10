@@ -101,10 +101,10 @@ void ADoomPlayer::GiveDefaultInventory ()
 
 	player->health = deh.StartHealth;		// [RH] Used to be MAXHEALTH
 	health = deh.StartHealth;
-	fist = player->mo->GiveInventoryType (TypeInfo::FindType ("Fist"));
-	pistol = player->mo->GiveInventoryType (TypeInfo::FindType ("Pistol"));
+	fist = player->mo->GiveInventoryType (PClass::FindClass ("Fist"));
+	pistol = player->mo->GiveInventoryType (PClass::FindClass ("Pistol"));
 	// Adding the pistol automatically adds bullets
-	bullets = player->mo->FindInventory (TypeInfo::FindType ("Clip"));
+	bullets = player->mo->FindInventory (PClass::FindClass ("Clip"));
 	if (bullets != NULL)
 	{
 		bullets->Amount = deh.StartBullets;		// [RH] Used to be 50

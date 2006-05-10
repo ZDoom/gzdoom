@@ -50,7 +50,7 @@ public:
 	virtual bool Use (bool pickup);
 	virtual void Serialize (FArchive &arc);
 
-	const TypeInfo *PowerupType;
+	const PClass *PowerupType;
 	int EffectTics;			// Non-0 to override the powerup's default tics
 	PalEntry BlendColor;	// Non-0 to override the powerup's default blend
 };

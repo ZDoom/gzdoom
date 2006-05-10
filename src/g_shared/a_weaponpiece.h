@@ -12,6 +12,6 @@ public:
 	virtual void PlayPickupSound (AActor *toucher);
 
 	int PieceValue;
-	const TypeInfo * WeaponClass;
+	const PClass * WeaponClass;
 	AWeapon * FullWeapon;
 };

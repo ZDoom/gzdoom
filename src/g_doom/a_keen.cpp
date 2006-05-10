@@ -65,7 +65,7 @@ void A_KeenDie (AActor *self)
 	// scan the remaining thinkers to see if all Keens are dead
 	AActor *other;
 	TThinkerIterator<AActor> iterator;
-	const TypeInfo *matchClass = self->GetClass ();
+	const PClass *matchClass = self->GetClass ();
 
 	while ( (other = iterator.Next ()) )
 	{

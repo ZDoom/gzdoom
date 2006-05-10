@@ -702,8 +702,8 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
 {
 	int i;
 	int count;
-	const TypeInfo *normalType = TypeInfo::FindType ("ArtiHealth");
-	const TypeInfo *superType = TypeInfo::FindType ("ArtiSuperHealth");
+	const PClass *normalType = PClass::FindClass (NAME_ArtiHealth);
+	const PClass *superType = PClass::FindClass (NAME_ArtiSuperHealth);
 	AInventory *normalItem = player->mo->FindInventory (normalType);
 	AInventory *superItem = player->mo->FindInventory (superType);
 	int normalAmount, superAmount;
@@ -773,11 +773,11 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
 
 void P_AutoUseStrifeHealth (player_t *player)
 {
-	static const char *healthnames[2] = { "MedicalKit", "MedPatch" };
+	static const ENamedName healthnames[2] = { NAME_MedicalKit, NAME_MedPatch };
 
 	for (int i = 0; i < 2; ++i)
 	{
-		const TypeInfo *type = TypeInfo::FindType (healthnames[i]);
+		const PClass *type = PClass::FindClass (healthnames[i]);
 
 		while (player->health < 50)
 		{

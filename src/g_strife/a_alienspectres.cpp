@@ -26,7 +26,7 @@ void A_AlienSpectreDeath (AActor *);
 void A_AlertMonsters (AActor *);
 void A_Tracer2 (AActor *);
 
-AActor *P_SpawnSubMissile (AActor *source, TypeInfo *type, AActor *target);
+AActor *P_SpawnSubMissile (AActor *source, PClass *type, AActor *target);
 
 // Alien Spectre 1 -----------------------------------------------------------
 
@@ -340,7 +340,7 @@ END_DEFAULTS
 
 //============================================================================
 
-static void GenericSpectreSpawn (AActor *actor, const TypeInfo *type)
+static void GenericSpectreSpawn (AActor *actor, const PClass *type)
 {
 	AActor *spectre = Spawn (type, actor->x, actor->y, actor->z);
 	if (spectre != NULL)

@@ -701,7 +701,7 @@ private:
 //
 //---------------------------------------------------------------------------
 
-	void FlashItem (const TypeInfo *itemtype)
+	void FlashItem (const PClass *itemtype)
 	{
 		ArtifactFlash = 4;
 	}

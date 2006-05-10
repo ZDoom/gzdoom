@@ -361,7 +361,7 @@ void A_FAxeAttack (AActor *actor)
 	int useMana;
 	player_t *player;
 	AWeapon *weapon;
-	const TypeInfo *pufftype;
+	const PClass *pufftype;
 
 	if (NULL == (player = actor->player))
 	{

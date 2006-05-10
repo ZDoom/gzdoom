@@ -217,7 +217,7 @@ static DCanvas	*FireScreen;
 static byte		FireRemap[256];
 
 static char		*genders[3] = { "male", "female", "other" };
-static const TypeInfo *PlayerClass;
+static const PClass *PlayerClass;
 static FState	*PlayerState;
 static int		PlayerTics;
 static int		PlayerRotation;
@@ -1803,7 +1803,7 @@ static void M_PlayerSetupTicker (void)
 	// Based on code in f_finale.c
 	if (gameinfo.gametype == GAME_Hexen)
 	{
-		const TypeInfo *oldclass = PlayerClass;
+		const PClass *oldclass = PlayerClass;
 
 		PickPlayerClass ();
 		if (PlayerClass != oldclass)
@@ -3192,15 +3192,15 @@ static void PickPlayerClass ()
 {
 	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
-		PlayerClass = TypeInfo::FindType ("DoomPlayer");
+		PlayerClass = PClass::FindClass (NAME_DoomPlayer);
 	}
 	else if (gameinfo.gametype == GAME_Heretic)
 	{
-		PlayerClass = TypeInfo::FindType ("HereticPlayer");
+		PlayerClass = PClass::FindClass (NAME_HereticPlayer);
 	}
 	else
 	{
-		static const char *classnames[3] = { "FighterPlayer", "ClericPlayer", "MagePlayer" };
+		static const ENamedName classnames[3] = { NAME_FighterPlayer, NAME_ClericPlayer, NAME_MagePlayer };
 
 		int nowtype = players[consoleplayer].userinfo.PlayerClass;
 
@@ -3209,6 +3209,6 @@ static void PickPlayerClass ()
 			nowtype = (MenuTime>>7) % 3;
 		}
 
-		PlayerClass = TypeInfo::FindType (classnames[nowtype]);
+		PlayerClass = PClass::FindClass (classnames[nowtype]);
 	}
 }

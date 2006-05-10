@@ -416,7 +416,6 @@ void MapThing::Serialize (FArchive &arc)
 
 AActor::AActor () throw()
 {
-	memset (&x, 0, (byte *)&this[1] - (byte *)&x);
 }
 
 AActor::AActor (const AActor &other) throw()
@@ -765,7 +764,7 @@ AInventory *AActor::DropInventory (AInventory *item)
 //
 //============================================================================
 
-AInventory *AActor::FindInventory (const TypeInfo *type) const
+AInventory *AActor::FindInventory (const PClass *type) const
 {
 	AInventory *item;
 
@@ -785,7 +784,7 @@ AInventory *AActor::FindInventory (const TypeInfo *type) const
 //
 //============================================================================
 
-AInventory *AActor::GiveInventoryType (const TypeInfo *type)
+AInventory *AActor::GiveInventoryType (const PClass *type)
 {
 	AInventory *item;
 
@@ -806,7 +805,7 @@ AInventory *AActor::GiveInventoryType (const TypeInfo *type)
 //
 //============================================================================
 
-bool AActor::GiveAmmo (const TypeInfo *type, int amount)
+bool AActor::GiveAmmo (const PClass *type, int amount)
 {
 	AInventory *item = static_cast<AInventory *>(Spawn (type, 0, 0, 0));
 	item->Amount = amount;
@@ -2992,7 +2991,7 @@ END_DEFAULTS
 //
 //==========================================================================
 
-AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed_t iz)
+AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t iz)
 {
 	if (type == NULL)
 	{
@@ -3001,12 +3000,12 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 
 	if (type->ActorInfo == NULL)
 	{
-		I_Error ("%s is not an actor\n", type->Name);
+		I_Error ("%s is not an actor\n", type->TypeName.GetChars());
 	}
 
 	AActor *actor;
 
-	actor = static_cast<AActor *>(const_cast<TypeInfo *>(type)->CreateNew ());
+	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
 
 	actor->x = actor->PrevX = ix;
 	actor->y = actor->PrevY = iy;
@@ -3323,19 +3322,19 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 		p->CurrentPlayerClass = 0;
 		if (gameinfo.gametype == GAME_Doom)
 		{
-			p->cls = TypeInfo::FindType ("DoomPlayer");
+			p->cls = PClass::FindClass (NAME_DoomPlayer);
 		}
 		else if (gameinfo.gametype == GAME_Heretic)
 		{
-			p->cls = TypeInfo::FindType ("HereticPlayer");
+			p->cls = PClass::FindClass (NAME_HereticPlayer);
 		}
 		else if (gameinfo.gametype == GAME_Strife)
 		{
-			p->cls = TypeInfo::FindType ("StrifePlayer");
+			p->cls = PClass::FindClass (NAME_StrifePlayer);
 		}
 		else
 		{
-			static const char *classes[3] = { "FighterPlayer", "ClericPlayer", "MagePlayer" };
+			static const ENamedName classes[3] = { NAME_FighterPlayer, NAME_ClericPlayer, NAME_MagePlayer };
 			int type;
 
 			if (!deathmatch || !multiplayer)
@@ -3351,7 +3350,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 				}
 			}
 			p->CurrentPlayerClass = type;
-			p->cls = TypeInfo::FindType (classes[type]);
+			p->cls = PClass::FindClass (classes[type]);
 		}
 	}
 
@@ -3429,14 +3428,14 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	// give all cards in death match mode
 	if (deathmatch)
 	{
-		for (i = 0; i < TypeInfo::m_Types.Size(); ++i)
+		for (i = 0; i < PClass::m_Types.Size(); ++i)
 		{
-			if (TypeInfo::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
+			if (PClass::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
 			{
-				AKey *key = (AKey *)GetDefaultByType (TypeInfo::m_Types[i]);
+				AKey *key = (AKey *)GetDefaultByType (PClass::m_Types[i]);
 				if (key->KeyNumber != 0)
 				{
-					key = static_cast<AKey *>(Spawn (TypeInfo::m_Types[i], 0,0,0));
+					key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0));
 					if (!key->TryPickup (p->mo))
 					{
 						key->Destroy ();
@@ -3490,7 +3489,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 // [RH] position is used to weed out unwanted start spots
 void P_SpawnMapThing (mapthing2_t *mthing, int position)
 {
-	const TypeInfo *i;
+	const PClass *i;
 	int mask;
 	AActor *mobj;
 	fixed_t x, y, z;
@@ -3709,7 +3708,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 			sprites[defaults->SpawnState->sprite.index].numframes == 0)
 		{
 			Printf ("%s at (%i, %i) has no frames\n",
-					i->Name+1, mthing->x, mthing->y);
+					i->TypeName.GetChars(), mthing->x, mthing->y);
 			i = RUNTIME_CLASS(AUnknown);
 		}
 	}
@@ -3743,11 +3742,11 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		{
 			if (i->IsDescendantOf (RUNTIME_CLASS(AHealth)))
 				return;
-			if (strcmp (i->Name, "Berserk") == 0)
+			if (i->TypeName == NAME_Berserk)
 				return;
-			if (strcmp (i->Name, "Soulsphere") == 0)
+			if (i->TypeName == NAME_Soulsphere)
 				return;
-			if (strcmp (i->Name, "Megasphere") == 0)
+			if (i->TypeName == NAME_Megasphere)
 				return;
 		}
 		if (dmflags & DF_NO_ITEMS)
@@ -3759,7 +3758,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		{
 			if (i->IsDescendantOf (RUNTIME_CLASS(AArmor)))
 				return;
-			if (strcmp (i->Name, "Megasphere") == 0)
+			if (i->TypeName == NAME_Megasphere)
 				return;
 		}
 	}
@@ -3818,7 +3817,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (const TypeInfo *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hitthing)
+AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hitthing)
 {
 	AActor *puff;
 
@@ -4226,19 +4225,19 @@ bool P_CheckMissileSpawn (AActor* th)
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissile (AActor *source, AActor *dest, const TypeInfo *type)
+AActor *P_SpawnMissile (AActor *source, AActor *dest, const PClass *type)
 {
 	return P_SpawnMissileXYZ (source->x, source->y, source->z + 32*FRACUNIT,
 		source, dest, type);
 }
 
-AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const TypeInfo *type)
+AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const PClass *type)
 {
 	return P_SpawnMissileXYZ (source->x, source->y, z, source, dest, type);
 }
 
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, const TypeInfo *type)
+	AActor *source, AActor *dest, const PClass *type)
 {
 	int defflags3 = GetDefaultByType (type)->flags3;
 
@@ -4315,7 +4314,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissileAngle (AActor *source, const TypeInfo *type,
+AActor *P_SpawnMissileAngle (AActor *source, const PClass *type,
 	angle_t angle, fixed_t momz)
 {
 	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT,
@@ -4323,13 +4322,13 @@ AActor *P_SpawnMissileAngle (AActor *source, const TypeInfo *type,
 }
 
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z,
-	const TypeInfo *type, angle_t angle, fixed_t momz)
+	const PClass *type, angle_t angle, fixed_t momz)
 {
 	return P_SpawnMissileAngleZSpeed (source, z, type, angle, momz,
 		GetDefaultByType (type)->Speed);
 }
 
-AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const TypeInfo *type)
+AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PClass *type)
 {
 	angle_t an;
 	fixed_t dist;
@@ -4358,7 +4357,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const Typ
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissileAngleSpeed (AActor *source, const TypeInfo *type,
+AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type,
 	angle_t angle, fixed_t momz, fixed_t speed)
 {
 	return P_SpawnMissileAngleZSpeed (source, source->z + 32*FRACUNIT,
@@ -4366,7 +4365,7 @@ AActor *P_SpawnMissileAngleSpeed (AActor *source, const TypeInfo *type,
 }
 
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
-	const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner)
+	const PClass *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner)
 {
 	AActor *mo;
 	int defflags3 = GetDefaultByType (type)->flags3;
@@ -4406,18 +4405,18 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 ================
 */
 
-AActor *P_SpawnPlayerMissile (AActor *source, const TypeInfo *type)
+AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type)
 {
 	return P_SpawnPlayerMissile (source, source->x, source->y, source->z, type, source->angle);
 }
 
-AActor *P_SpawnPlayerMissile (AActor *source, const TypeInfo *type, angle_t angle)
+AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type, angle_t angle)
 {
 	return P_SpawnPlayerMissile (source, source->x, source->y, source->z, type, angle);
 }
 
 AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
-							  const TypeInfo *type, angle_t angle)
+							  const PClass *type, angle_t angle)
 {
 	static const int angdiff[3] = { -1<<26, 1<<26, 0 };
 	int i;
@@ -4509,16 +4508,16 @@ bool AActor::IsTeammate (AActor *other)
 //
 //==========================================================================
 
-const TypeInfo *AActor::GetSpecies()
+const PClass *AActor::GetSpecies()
 {
-	const TypeInfo *thistype = GetClass();
+	const PClass *thistype = GetClass();
 
 	if (GetDefaultByType(thistype)->flags3 & MF3_ISMONSTER)
 	{
-		while (thistype->ParentType)
+		while (thistype->ParentClass)
 		{
-			if (GetDefaultByType(thistype->ParentType)->flags3 & MF3_ISMONSTER)
-				thistype = thistype->ParentType;
+			if (GetDefaultByType(thistype->ParentClass)->flags3 & MF3_ISMONSTER)
+				thistype = thistype->ParentClass;
 			else 
 				break;
 		}

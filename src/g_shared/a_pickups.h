@@ -20,11 +20,11 @@ public:
 	FWeaponSlot ();
 	void Clear ();
 	bool AddWeapon (const char *type);
-	bool AddWeapon (const TypeInfo *type);
+	bool AddWeapon (const PClass *type);
 	AWeapon *PickWeapon (player_s *player);
 	int CountWeapons ();
 
-	inline const TypeInfo *GetWeapon (int index) const
+	inline const PClass *GetWeapon (int index) const
 	{
 		return Weapons[index];
 	}
@@ -35,7 +35,7 @@ public:
 	friend struct FWeaponSlots;
 
 private:
-	const TypeInfo *Weapons[MAX_WEAPONS_PER_SLOT];
+	const PClass *Weapons[MAX_WEAPONS_PER_SLOT];
 };
 
 // FWeaponSlots::AddDefaultWeapon return codes
@@ -51,8 +51,8 @@ struct FWeaponSlots
 	FWeaponSlot Slots[NUM_WEAPON_SLOTS];
 
 	void Clear ();
-	bool LocateWeapon (const TypeInfo *type, int *const slot, int *const index);
-	ESlotDef AddDefaultWeapon (int slot, const TypeInfo *type);
+	bool LocateWeapon (const PClass *type, int *const slot, int *const index);
+	ESlotDef AddDefaultWeapon (int slot, const PClass *type);
 	int RestoreSlots (FConfigFile &config);
 	void SaveSlots (FConfigFile &config);
 };
@@ -178,7 +178,7 @@ public:
 	void Serialize (FArchive &arc);
 	AInventory *CreateCopy (AActor *other);
 	bool HandlePickup (AInventory *item);
-	const TypeInfo *GetParentAmmo () const;
+	const PClass *GetParentAmmo () const;
 
 	int BackpackAmount, BackpackMaxAmount;
 };
@@ -190,16 +190,16 @@ class AWeapon : public AInventory
 	HAS_OBJECT_POINTERS
 public:
 	DWORD WeaponFlags;
-	const TypeInfo *AmmoType1, *AmmoType2;	// Types of ammo used by this weapon
+	const PClass *AmmoType1, *AmmoType2;	// Types of ammo used by this weapon
 	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
 	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
 	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
 	int Kickback;
 	fixed_t YAdjust;						// For viewing the weapon fullscreen
 	WORD UpSound, ReadySound;				// Sounds when coming up and idle
-	const TypeInfo *SisterWeaponType;		// Another weapon to pick up with this one
-	const TypeInfo *ProjectileType;			// Projectile used by primary attack
-	const TypeInfo *AltProjectileType;		// Projectile used by alternate attack
+	const PClass *SisterWeaponType;		// Another weapon to pick up with this one
+	const PClass *ProjectileType;			// Projectile used by primary attack
+	const PClass *AltProjectileType;		// Projectile used by alternate attack
 	int SelectionOrder;						// Lower-numbered weapons get picked first
 	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
 
@@ -245,9 +245,9 @@ public:
 	bool DepleteAmmo (bool altFire, bool checkEnough=true);
 
 protected:
-	static AAmmo *AddAmmo (AActor *other, const TypeInfo *ammotype, int amount);
+	static AAmmo *AddAmmo (AActor *other, const PClass *ammotype, int amount);
 	static bool AddExistingAmmo (AAmmo *ammo, int amount);
-	AWeapon *AddWeapon (const TypeInfo *weapon);
+	AWeapon *AddWeapon (const PClass *weapon);
 };
 
 enum

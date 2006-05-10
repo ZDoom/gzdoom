@@ -497,7 +497,7 @@ void A_M_BerserkPunch (AActor *self)
 //
 //============================================================================
 
-void P_GunShot2 (AActor *mo, bool accurate, int pitch, const TypeInfo *pufftype)
+void P_GunShot2 (AActor *mo, bool accurate, int pitch, const PClass *pufftype)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -964,7 +964,7 @@ void AScriptedMarine::SetWeapon (EMarineWeapon type)
 	}
 }
 
-void AScriptedMarine::SetSprite (const TypeInfo *source)
+void AScriptedMarine::SetSprite (const PClass *source)
 {
 	if (source == NULL || source->ActorInfo == NULL)
 	{ // A valid actor class wasn't passed, so use the standard sprite

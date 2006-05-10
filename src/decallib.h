@@ -43,7 +43,7 @@
 class AActor;
 class FDecalTemplate;
 struct FDecalAnimator;
-struct TypeInfo;
+struct PClass;
 class DBaseDecal;
 struct side_s;
 
@@ -60,7 +60,7 @@ protected:
 	FDecalBase *Left, *Right;
 	FName Name;
 	BYTE SpawnID;
-	TArray<const TypeInfo *> Users;	// Which actors generate this decal
+	TArray<const PClass *> Users;	// Which actors generate this decal
 };
 
 class FDecalTemplate : public FDecalBase

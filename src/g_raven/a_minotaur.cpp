@@ -588,15 +588,15 @@ void A_MinotaurCharge (AActor *actor)
 
 	if (actor->special1 > 0)
 	{
-		const TypeInfo *type;
+		const PClass *type;
 
 		if (gameinfo.gametype == GAME_Heretic)
 		{
-			type = TypeInfo::FindType ("PhoenixPuff");
+			type = PClass::FindClass ("PhoenixPuff");
 		}
 		else
 		{
-			type = TypeInfo::FindType ("PunchPuff");
+			type = PClass::FindClass ("PunchPuff");
 		}
 		puff = Spawn (type, actor->x, actor->y, actor->z);
 		puff->momz = 2*FRACUNIT;

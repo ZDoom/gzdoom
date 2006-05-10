@@ -30,7 +30,7 @@ class AHeresiarch : public AActor
 {
 	DECLARE_ACTOR (AHeresiarch, AActor)
 public:
-	const TypeInfo *StopBall;
+	const PClass *StopBall;
 
 	void Serialize (FArchive &arc);
 	void Die (AActor *source, AActor *inflictor);
@@ -72,7 +72,7 @@ public:
 protected:
 	virtual bool MatchPlayerClass (AActor *toucher);
 	virtual const char *PieceMessage ();
-	const TypeInfo *FourthWeaponClass;
+	const PClass *FourthWeaponClass;
 	int PieceValue;
 	AInventory *TempFourthWeapon;
 	bool PrivateShouldStay ();

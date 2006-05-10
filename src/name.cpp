@@ -99,8 +99,8 @@ int FName::NameManager::FindName (const char *text, bool noCreate)
 		return 0;
 	}
 
-	DWORD hash = MakeKey (text);
-	DWORD bucket = hash % HASH_SIZE;
+	unsigned int hash = MakeKey (text);
+	unsigned int bucket = hash % HASH_SIZE;
 	int scanner = Buckets[bucket];
 
 	// See if the name already exists.
@@ -150,7 +150,7 @@ void FName::NameManager::InitBuckets ()
 //
 //==========================================================================
 
-int FName::NameManager::AddName (const char *text, DWORD hash, DWORD bucket)
+int FName::NameManager::AddName (const char *text, unsigned int hash, unsigned int bucket)
 {
 	char *textstore;
 	NameBlock *block = Blocks;

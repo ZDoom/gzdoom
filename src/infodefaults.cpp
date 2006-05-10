@@ -48,37 +48,37 @@
 
 void FActorInfo::BuildDefaults ()
 {
-	if (Defaults == NULL)
+	if (Class->Defaults == NULL)
 	{
-		Defaults = new BYTE[Class->SizeOf];
+		Class->Defaults = new BYTE[Class->Size];
 		if (Class == RUNTIME_CLASS(AActor))
 		{
-			memset (Defaults, 0, Class->SizeOf);
+			memset (Class->Defaults, 0, Class->Size);
 		}
 		else
 		{
-			TypeInfo *parent;
+			PClass *parent;
 
-			parent = Class->ParentType;
+			parent = Class->ParentClass;
 			parent->ActorInfo->BuildDefaults ();
-			assert (Class->SizeOf >= parent->SizeOf);
-			memcpy (Defaults, parent->ActorInfo->Defaults, parent->SizeOf);
-			if (Class->SizeOf > parent->SizeOf)
+			assert (Class->Size >= parent->Size);
+			memcpy (Class->Defaults, parent->Defaults, parent->Size);
+			if (Class->Size > parent->Size)
 			{
-				memset (Defaults + parent->SizeOf, 0, Class->SizeOf - parent->SizeOf);
+				memset (Class->Defaults + parent->Size, 0, Class->Size - parent->Size);
 			}
 			if (parent == RUNTIME_CLASS(AActor) && OwnedStates == NULL)
 			{ // Stateless actors that are direct subclasses of AActor
 			  // have their spawnstate default to something that won't
 			  // immediately destroy them.
-				((AActor *)(Defaults))->SpawnState = &AActor::States[0];
+				((AActor *)(Class->Defaults))->SpawnState = &AActor::States[0];
 			}
 		}
-		ApplyDefaults (Defaults);
+		ApplyDefaults (Class->Defaults);
 	}
 }
 
-static FState *DefaultStates (TypeInfo *type)
+static FState *DefaultStates (PClass *type)
 {
 	FState *states = type->ActorInfo->OwnedStates;
 
@@ -86,21 +86,21 @@ static FState *DefaultStates (TypeInfo *type)
 	{
 		do
 		{
-			type = type->ParentType;
+			type = type->ParentClass;
 			states = type->ActorInfo->OwnedStates;
 		} while (states == NULL && type != RUNTIME_CLASS(AActor));
 	}
 	return states;
 }
 
-static TypeInfo *sgClass;
+static PClass *sgClass;
 static BYTE *sgDefaults;
 
 static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 {
 	int datasound = 0;
 	FState *datastate = NULL;
-	const TypeInfo *datatype;
+	const PClass *datatype;
 
 	if (defnum <= ADEF_LastString)
 	{
@@ -134,10 +134,10 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_Weapon_SisterType:
 	case ADEF_Weapon_ProjectileType:
 	case ADEF_PowerupGiver_Powerup:
-		datatype = TypeInfo::FindType (datastr);
+		datatype = PClass::FindClass (datastr);
 		if (datatype == NULL)
 		{
-			I_FatalError ("Unknown class %s in %s's default list", datastr, sgClass->Name+1);
+			I_FatalError ("Unknown class %s in %s's default list", datastr, sgClass->TypeName.GetChars());
 		}
 		break;
 

@@ -38,7 +38,7 @@
 #include "tarray.h"
 #include "doomtype.h"
 
-class TypeInfo;
+struct PClass;
 
 class FArchive;
 
@@ -133,15 +133,16 @@ private:
 };
 
 #define RUNTIME_TYPE(object)	(object->GetClass())	// Passed an object, returns the type of that object
-#define RUNTIME_CLASS(cls)		(&cls::_StaticType)		// Passed a class name, returns a TypeInfo representing that class
+#define RUNTIME_CLASS(cls)		(&cls::_StaticType)		// Passed a class name, returns a PClass representing that class
+#define NATIVE_TYPE(object)		(object->StaticType())	// Passed an object, returns the type of the C++ class representing the object
 
 struct ClassReg
 {
-	TypeInfo *MyClass;
+	PClass *MyClass;
 	const char *Name;
-	TypeInfo *ParentType;
+	PClass *ParentType;
 	unsigned int SizeOf;
-	POINTY_TYPE(DObject) *Pointers;
+	const size_t *Pointers;
 	void (*ConstructNative)(void *);
 
 	void RegisterClass();
@@ -151,8 +152,9 @@ enum EInPlace { EC_InPlace };
 
 #define DECLARE_ABSTRACT_CLASS(cls,parent) \
 public: \
-	static TypeInfo _StaticType; \
-	virtual TypeInfo *StaticType() const { return RUNTIME_CLASS(cls); } \
+	static PClass _StaticType; \
+	virtual PClass *StaticType() const { return &_StaticType; } \
+	static ClassReg RegistrationInfo, *RegistrationInfoPtr; \
 private: \
 	typedef parent Super; \
 	typedef cls ThisClass;
@@ -169,44 +171,39 @@ private: \
 #define DECLARE_POINTER(field)	(size_t)&((ThisClass*)1)->field - 1,
 #define END_POINTERS			~0 };
 
-#if !defined(_MSC_VER) && !defined(__GNUC__)
-#       define _IMP_TYPEINFO(cls,ptr,create) \
-	TypeInfo cls::_StaticType (ptr, #cls, RUNTIME_CLASS(cls::Super), sizeof(cls), create);
+#if defined(_MSC_VER)
+#	pragma data_seg(".creg$u")
+#	pragma data_seg()
+#	define _DECLARE_TI(cls) __declspec(allocate(".creg$u")) ClassReg *cls::RegistrationInfoPtr = &cls::RegistrationInfo;
 #else
-
-#       if defined(_MSC_VER)
-#               pragma data_seg(".creg$u")
-#               pragma data_seg()
-#               define _DECLARE_TI(cls) __declspec(allocate(".creg$u")) TypeInfo *_##cls##AddType = &cls::_StaticType;
-#       else
-#               define _DECLARE_TI(cls) TypeInfo *_##cls##AddType __attribute__((section("creg"))) = &cls::_StaticType;
-#       endif
-
-#       define _IMP_TYPEINFO(cls,ptrs,create) \
-	TypeInfo cls::_StaticType = { \
-#cls, \
-	RUNTIME_CLASS(cls::Super), \
-	sizeof(cls), \
-	ptrs, \
-	create, }; \
-	_DECLARE_TI(cls)
-
+#	define _DECLARE_TI(cls) ClassReg *cls::RegistrationInfoPtr __attribute__((section("creg"))) = &cls::RegistartionInfo;
 #endif
+
+#define _IMP_PCLASS(cls,ptrs,create) \
+	PClass cls::_StaticType; \
+	ClassReg cls::RegistrationInfo = {\
+		RUNTIME_CLASS(cls), \
+		#cls, \
+		RUNTIME_CLASS(cls::Super), \
+		sizeof(cls), \
+		ptrs, \
+		create }; \
+	_DECLARE_TI(cls)
 
 #define _IMP_CREATE_OBJ(cls) \
 	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }
 
 #define IMPLEMENT_POINTY_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
-	_IMP_TYPEINFO(cls,cls::PointerOffsets,cls::InPlaceConstructor) \
+	_IMP_PCLASS(cls,cls::PointerOffsets,cls::InPlaceConstructor) \
 	const size_t cls::PointerOffsets[] = {
 
 #define IMPLEMENT_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
-	_IMP_TYPEINFO(cls,NULL,cls::InPlaceConstructor) 
+	_IMP_PCLASS(cls,NULL,cls::InPlaceConstructor) 
 
 #define IMPLEMENT_ABSTRACT_CLASS(cls) \
-	_IMP_TYPEINFO(cls,NULL,NULL)
+	_IMP_PCLASS(cls,NULL,NULL)
 
 enum EObjectFlags
 {
@@ -218,27 +215,28 @@ enum EObjectFlags
 
 class DObject
 {
-public: \
-	static TypeInfo _StaticType; \
-	virtual TypeInfo *StaticType() const { return &_StaticType; } \
-	static ClassReg RegistrationInfo;
+public:
+	static PClass _StaticType;
+	virtual PClass *StaticType() const { return &_StaticType; }
+	static ClassReg RegistrationInfo, *RegistrationInfoPtr;
 	static void InPlaceConstructor (void *mem);
-private: \
+private:
 	typedef DObject ThisClass;
 
 	// Per-instance variables. There are three.
 public:
 	DWORD ObjectFlags;			// Flags for this object
 private:
-	TypeInfo *Class;			// This object's type
-	size_t Index;				// This object's index in the global object table
+	PClass *Class;				// This object's type
+	unsigned int Index;			// This object's index in the global object table
 
+public:
 	DObject ();
-	DObject (TypeInfo *inClass);
+	DObject (PClass *inClass);
 	virtual ~DObject ();
 
-	inline bool IsKindOf (const TypeInfo *base) const;
-	inline bool IsA (const TypeInfo *type) const;
+	inline bool IsKindOf (const PClass *base) const;
+	inline bool IsA (const PClass *type) const;
 
 	virtual void Serialize (FArchive &arc);
 
@@ -258,7 +256,7 @@ private:
 
 	static void STACK_ARGS StaticShutdown ();
 
-	TypeInfo *GetClass() const
+	PClass *GetClass() const
 	{
 		if (Class == NULL)
 		{
@@ -269,7 +267,7 @@ private:
 		return Class;
 	}
 
-	void SetClass (TypeInfo *inClass)
+	void SetClass (PClass *inClass)
 	{
 		Class = inClass;
 	}
@@ -285,7 +283,7 @@ private:
 	}
 
 protected:
-	// This form of placement new and delete is for use *only* by TypeInfo's
+	// This form of placement new and delete is for use *only* by PClass's
 	// CreateNew() method. Do not use them for some other purpose.
 	void *operator new(size_t len, EInPlace *mem)
 	{
@@ -312,12 +310,12 @@ private:
 
 #include "dobjtype.h"
 
-inline bool DObject::IsKindOf (const TypeInfo *base) const
+inline bool DObject::IsKindOf (const PClass *base) const
 {
 	return base->IsAncestorOf (GetClass ());
 }
 
-inline bool DObject::IsA (const TypeInfo *type) const
+inline bool DObject::IsA (const PClass *type) const
 {
 	return (type == GetClass());
 }

@@ -772,7 +772,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 
 		case MITYPE_REDIRECT:
 			SC_MustGetString ();
-			levelinfo->RedirectType = TypeInfo::IFindType (sc_String);
+			levelinfo->RedirectType = PClass::FindClass (sc_String);
 			if (levelinfo->RedirectType == NULL ||
 				!(levelinfo->RedirectType->IsDescendantOf (RUNTIME_CLASS(AInventory))))
 			{

@@ -21,7 +21,7 @@ static FRandom pr_morphmonst ("MorphMonster");
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
+bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 {
 	AInventory *item;
 	APlayerPawn *morphed;
@@ -193,7 +193,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphMonster (AActor *actor, const TypeInfo *spawntype)
+bool P_MorphMonster (AActor *actor, const PClass *spawntype)
 {
 	AActor *morphed;
 
@@ -329,11 +329,11 @@ int AEggFX::DoSpecialDamage (AActor *target, int damage)
 {
 	if (target->player)
 	{
-		P_MorphPlayer (target->player, TypeInfo::FindType ("ChickenPlayer"));
+		P_MorphPlayer (target->player, PClass::FindClass (NAME_ChickenPlayer));
 	}
 	else
 	{
-		P_MorphMonster (target, TypeInfo::FindType ("Chicken"));
+		P_MorphMonster (target, PClass::FindClass (NAME_Chicken));
 	}
 	return -1;
 }
@@ -422,11 +422,11 @@ int APorkFX::DoSpecialDamage (AActor *target, int damage)
 {
 	if (target->player)
 	{
-		P_MorphPlayer (target->player, TypeInfo::FindType ("PigPlayer"));
+		P_MorphPlayer (target->player, PClass::FindClass (NAME_PigPlayer));
 	}
 	else
 	{
-		P_MorphMonster (target, TypeInfo::FindType ("Pig"));
+		P_MorphMonster (target, PClass::FindClass (NAME_Pig));
 	}
 	return -1;
 }

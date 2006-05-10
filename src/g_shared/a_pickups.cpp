@@ -49,13 +49,13 @@ void AAmmo::Serialize (FArchive &arc)
 //
 //===========================================================================
 
-const TypeInfo *AAmmo::GetParentAmmo () const
+const PClass *AAmmo::GetParentAmmo () const
 {
-	const TypeInfo *type = GetClass ();
+	const PClass *type = GetClass ();
 
-	while (type->ParentType != RUNTIME_CLASS(AAmmo))
+	while (type->ParentClass != RUNTIME_CLASS(AAmmo))
 	{
-		type = type->ParentType;
+		type = type->ParentClass;
 	}
 	return type;
 }
@@ -140,9 +140,9 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 			amount += amount >> 1;
 	}
 
-	if (GetClass()->ParentType != RUNTIME_CLASS(AAmmo))
+	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo))
 	{
-		const TypeInfo *type = GetParentAmmo();
+		const PClass *type = GetParentAmmo();
 		if (!GoAway ())
 		{
 			Destroy ();
@@ -1208,7 +1208,9 @@ CCMD (printinv)
 	}
 	for (item = players[consoleplayer].mo->Inventory; item != NULL; item = item->Inventory)
 	{
-		Printf ("%s #%lu (%d/%d)\n", item->GetClass()->Name+1, item->InventoryID, item->Amount, item->MaxAmount);
+		Printf ("%s #%lu (%d/%d)\n", item->GetClass()->TypeName.GetChars(),
+			item->InventoryID,
+			item->Amount, item->MaxAmount);
 	}
 }
 
@@ -1912,11 +1914,11 @@ AInventory *ABackpack::CreateCopy (AActor *other)
 {
 	// Find every unique type of ammo. Give it to the player if
 	// he doesn't have it already, and double it's maximum capacity.
-	for (unsigned int i = 0; i < TypeInfo::m_Types.Size(); ++i)
+	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
 	{
-		const TypeInfo *type = TypeInfo::m_Types[i];
+		const PClass *type = PClass::m_Types[i];
 
-		if (type->ParentType == RUNTIME_CLASS(AAmmo) &&
+		if (type->ParentClass == RUNTIME_CLASS(AAmmo) &&
 			((AAmmo *)GetDefaultByType (type))->BackpackAmount > 0)
 		{
 			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory (type));
@@ -1959,13 +1961,13 @@ bool ABackpack::HandlePickup (AInventory *item)
 {
 	// Since you already have a backpack, that means you already have every
 	// kind of ammo in your inventory, so we don't need to look at the
-	// entire TypeInfo list to discover what kinds of ammo exist, and we don't
+	// entire PClass list to discover what kinds of ammo exist, and we don't
 	// have to alter the MaxAmount either.
 	if (item->IsKindOf (RUNTIME_CLASS(ABackpack)))
 	{
 		for (AInventory *probe = Owner->Inventory; probe != NULL; probe = probe->Inventory)
 		{
-			if (probe->GetClass()->ParentType == RUNTIME_CLASS(AAmmo))
+			if (probe->GetClass()->ParentClass == RUNTIME_CLASS(AAmmo))
 			{
 				if (probe->Amount < probe->MaxAmount)
 				{
@@ -2020,7 +2022,7 @@ void ABackpack::DetachFromOwner ()
 
 	for (item = Owner->Inventory; item != NULL; item = item->Inventory)
 	{
-		if (item->GetClass()->ParentType == RUNTIME_CLASS(AAmmo) &&
+		if (item->GetClass()->ParentClass == RUNTIME_CLASS(AAmmo) &&
 			item->MaxAmount == static_cast<AAmmo*>(item)->BackpackMaxAmount)
 		{
 			item->MaxAmount = static_cast<AInventory*>(item->GetDefault())->MaxAmount;

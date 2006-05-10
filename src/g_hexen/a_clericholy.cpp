@@ -892,7 +892,7 @@ void AClericWeaponPiece::BeginPlay ()
 
 void A_DropWraithvergePieces (AActor *actor)
 {
-	static const TypeInfo *pieces[3] =
+	static const PClass *pieces[3] =
 	{
 		RUNTIME_CLASS(ACWeaponPiece1),
 		RUNTIME_CLASS(ACWeaponPiece2),

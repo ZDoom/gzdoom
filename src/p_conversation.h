@@ -16,11 +16,11 @@ struct brokenlines_t;
 struct FStrifeDialogueNode
 {
 	~FStrifeDialogueNode ();
-	const TypeInfo *DropType;
-	const TypeInfo *ItemCheck[3];
+	const PClass *DropType;
+	const PClass *ItemCheck[3];
 	int ItemCheckNode;	// index into StrifeDialogues
 
-	const TypeInfo *SpeakerType;
+	const PClass *SpeakerType;
 	char *SpeakerName;
 	int SpeakerVoice;
 	int Backdrop;
@@ -35,8 +35,8 @@ struct FStrifeDialogueReply
 	~FStrifeDialogueReply ();
 
 	FStrifeDialogueReply *Next;
-	const TypeInfo *GiveType;
-	const TypeInfo *ItemCheck[3];
+	const PClass *GiveType;
+	const PClass *ItemCheck[3];
 	int ItemCheckAmount[3];
 	char *Reply;
 	char *QuickYes;
@@ -54,7 +54,7 @@ extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 // to their index in the mobjinfo table. This table indexes all
 // the Strife actor types in the order Strife had them and is
 // initialized as part of the actor's setup in infodefaults.cpp.
-extern const TypeInfo *StrifeTypes[344];
+extern const PClass *StrifeTypes[344];
 
 void P_LoadStrifeConversations (const char *mapname);
 void P_FreeStrifeConversations ();

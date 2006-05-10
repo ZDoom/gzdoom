@@ -47,14 +47,14 @@
 #include "templates.h"
 
 // List of spawnable things for the Thing_Spawn and Thing_Projectile specials.
-const TypeInfo *SpawnableThings[MAX_SPAWNABLES];
+const PClass *SpawnableThings[MAX_SPAWNABLES];
 
 static FRandom pr_leadtarget ("LeadTarget");
 
 bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 {
 	int rtn = 0;
-	const TypeInfo *kind;
+	const PClass *kind;
 	AActor *spot, *mobj;
 	FActorIterator iterator (tid);
 
@@ -155,7 +155,7 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 	bool leadTarget)
 {
 	int rtn = 0;
-	const TypeInfo *kind;
+	const PClass *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
 	float fspeed = float(speed);
@@ -369,7 +369,7 @@ CCMD (dumpspawnables)
 	{
 		if (SpawnableThings[i] != NULL)
 		{
-			Printf ("%d %s\n", i, SpawnableThings[i]->Name + 1);
+			Printf ("%d %s\n", i, SpawnableThings[i]->TypeName.GetChars());
 		}
 	}
 }

@@ -49,9 +49,9 @@ struct FSplashDef
 	FName Name;
 	int SmallSplashSound;
 	int NormalSplashSound;
-	const TypeInfo *SmallSplash;
-	const TypeInfo *SplashBase;
-	const TypeInfo *SplashChunk;
+	const PClass *SmallSplash;
+	const PClass *SplashBase;
+	const PClass *SplashChunk;
 	byte ChunkXVelShift;
 	byte ChunkYVelShift;
 	byte ChunkZVelShift;

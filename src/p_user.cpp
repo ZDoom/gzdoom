@@ -210,7 +210,7 @@ void APlayerPawn::RemoveInventory (AInventory *item)
 
 bool APlayerPawn::UseInventory (AInventory *item)
 {
-	const TypeInfo *itemtype = item->GetClass();
+	const PClass *itemtype = item->GetClass();
 
 	if (player->cheats & CF_TOTALLYFROZEN)
 	{ // You can't use items if you're totally frozen
@@ -239,7 +239,7 @@ bool APlayerPawn::UseInventory (AInventory *item)
 //
 //===========================================================================
 
-AWeapon *APlayerPawn::BestWeapon (const TypeInfo *ammotype)
+AWeapon *APlayerPawn::BestWeapon (const PClass *ammotype)
 {
 	AWeapon *bestMatch = NULL;
 	int bestOrder = INT_MAX;
@@ -295,7 +295,7 @@ AWeapon *APlayerPawn::BestWeapon (const TypeInfo *ammotype)
 //
 //===========================================================================
 
-AWeapon *APlayerPawn::PickNewWeapon (const TypeInfo *ammotype)
+AWeapon *APlayerPawn::PickNewWeapon (const PClass *ammotype)
 {
 	AWeapon *best = BestWeapon (ammotype);
 
@@ -1148,7 +1148,7 @@ void P_PlayerThink (player_t *player)
 			}
 			else if (cmd->ucmd.upmove > 0 && !(player->cheats & CF_PREDICTING))
 			{
-				AInventory *fly = player->mo->FindInventory (TypeInfo::FindType ("ArtiFly"));
+				AInventory *fly = player->mo->FindInventory (PClass::FindClass (NAME_ArtiFly));
 				if (fly != NULL)
 				{
 					player->mo->UseInventory (fly);

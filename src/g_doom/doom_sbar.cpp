@@ -332,7 +332,7 @@ private:
 		{
 			for (j = 0; j < MAX_WEAPONS_PER_SLOT; j++)
 			{
-				const TypeInfo *weap = LocalWeapons.Slots[i+2].GetWeapon (j);
+				const PClass *weap = LocalWeapons.Slots[i+2].GetWeapon (j);
 				if (weap != NULL && CPlayer->mo->FindInventory (weap) != NULL)
 				{
 					arms[i] = 1;
@@ -387,12 +387,12 @@ private:
 
 	void DrawAmmoStats ()
 	{
-		static const char *const ammoTypes[4] =
+		static const ENamedName ammoTypes[4] =
 		{
-			"Clip",
-			"Shell",
-			"RocketAmmo",
-			"Cell"
+			NAME_Clip,
+			NAME_Shell,
+			NAME_RocketAmmo,
+			NAME_Cell
 		};
 		int ammo[4], maxammo[4];
 		int i;
@@ -400,7 +400,7 @@ private:
 		// Catalog the player's ammo
 		for (i = 0; i < 4; i++)
 		{
-			const TypeInfo *type = TypeInfo::FindType (ammoTypes[i]);
+			const PClass *type = PClass::FindClass (ammoTypes[i]);
 			AInventory *item = CPlayer->mo->FindInventory (type);
 			if (item != NULL)
 			{

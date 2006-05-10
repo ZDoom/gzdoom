@@ -9,7 +9,7 @@
 static FRandom pr_bang4cloud ("Bang4Cloud");
 static FRandom pr_lightout ("LightOut");
 
-extern const TypeInfo *QuestItemClasses[31];
+extern const PClass *QuestItemClasses[31];
 
 void A_TossGib (AActor *);
 void A_LoopActiveSound (AActor *);

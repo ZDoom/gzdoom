@@ -348,7 +348,7 @@ void A_FiredSpawnRock (AActor *actor)
 {
 	AActor *mo;
 	int x,y,z;
-	const TypeInfo *rtype;
+	const PClass *rtype;
 
 	switch (pr_firedemonrock() % 5)
 	{

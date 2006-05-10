@@ -165,7 +165,7 @@ IMPLEMENT_STATELESS_ACTOR (ATelOtherFX5, Any, -1, 0)
 	PROP_SpawnState (S_TELO_FX5)
 END_DEFAULTS
 
-static void TeloSpawn (AActor *source, const TypeInfo *type)
+static void TeloSpawn (AActor *source, const PClass *type)
 {
 	AActor *fx;
 

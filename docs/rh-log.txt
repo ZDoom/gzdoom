@@ -1,4 +1,5 @@
 May 9, 2006
+- Backported the classnames-are-names changes from the FP code.
 - Backported the improved hierarchical dumpclasses command from the FP code.
 - Updated Jim's Makefile.linux.
 - Added support for wrapping midtextures vertically.

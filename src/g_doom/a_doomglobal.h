@@ -84,7 +84,7 @@ public:
 	void BeginPlay ();
 	void Tick ();
 	void SetWeapon (EMarineWeapon);
-	void SetSprite (const TypeInfo *source);
+	void SetSprite (const PClass *source);
 	void Serialize (FArchive &arc);
 
 protected:

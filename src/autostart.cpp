@@ -37,7 +37,7 @@
 ** that way can require a lot of extra space, which is why I'm doing things
 ** this way.
 **
-** In the case of TypeInfo lists (section creg), I orginally used the
+** In the case of PClass lists (section creg), I orginally used the
 ** constructor to do just that, and the code for that still exists if you
 ** compile with something other than Visual C++ or GCC.
 */

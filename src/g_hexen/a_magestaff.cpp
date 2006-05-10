@@ -486,7 +486,7 @@ void A_MStaffTrack (AActor *actor)
 
 void A_DropBloodscourgePieces (AActor *actor)
 {
-	static const TypeInfo *pieces[3] =
+	static const PClass *pieces[3] =
 	{
 		RUNTIME_CLASS(AMWeaponPiece1),
 		RUNTIME_CLASS(AMWeaponPiece2),

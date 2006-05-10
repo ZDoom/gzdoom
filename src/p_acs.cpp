@@ -167,7 +167,7 @@ static void ClearInventory (AActor *activator)
 //
 //============================================================================
 
-static void DoGiveInv (AActor *actor, const TypeInfo *info, int amount)
+static void DoGiveInv (AActor *actor, const PClass *info, int amount)
 {
 	AWeapon *savedPendingWeap = actor->player != NULL
 		? actor->player->PendingWeapon : NULL;
@@ -222,17 +222,17 @@ static void DoGiveInv (AActor *actor, const TypeInfo *info, int amount)
 
 static void GiveInventory (AActor *activator, const char *type, int amount)
 {
-	const TypeInfo *info;
+	const PClass *info;
 
 	if (amount <= 0 || type == NULL)
 	{
 		return;
 	}
-	if (strcmp (type, "Armor") == 0)
+	if (stricmp (type, "Armor") == 0)
 	{
 		type = "BasicArmorPickup";
 	}
-	info = TypeInfo::FindType (type);
+	info = PClass::FindClass (type);
 	if (info == NULL)
 	{
 		Printf ("ACS: I don't know what %s is.\n", type);
@@ -263,7 +263,7 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 //
 //============================================================================
 
-static void DoTakeInv (AActor *actor, const TypeInfo *info, int amount)
+static void DoTakeInv (AActor *actor, const PClass *info, int amount)
 {
 	AInventory *item = actor->FindInventory (info);
 	if (item != NULL)
@@ -274,7 +274,7 @@ static void DoTakeInv (AActor *actor, const TypeInfo *info, int amount)
 			// If it's not ammo, destroy it. Ammo needs to stick around, even
 			// when it's zero for the benefit of the weapons that use it and 
 			// to maintain the maximum ammo amounts a backpack might have given.
-			if (item->GetClass()->ParentType != RUNTIME_CLASS(AAmmo))
+			if (item->GetClass()->ParentClass != RUNTIME_CLASS(AAmmo))
 			{
 				item->Destroy ();
 			}
@@ -296,7 +296,7 @@ static void DoTakeInv (AActor *actor, const TypeInfo *info, int amount)
 
 static void TakeInventory (AActor *activator, const char *type, int amount)
 {
-	const TypeInfo *info;
+	const PClass *info;
 
 	if (type == NULL)
 	{
@@ -310,7 +310,7 @@ static void TakeInventory (AActor *activator, const char *type, int amount)
 	{
 		return;
 	}
-	info = TypeInfo::FindType (type);
+	info = PClass::FindClass (type);
 	if (info == NULL)
 	{
 		return;
@@ -342,16 +342,16 @@ static int CheckInventory (AActor *activator, const char *type)
 	if (activator == NULL || type == NULL)
 		return 0;
 
-	if (strcmp (type, "Armor") == 0)
+	if (stricmp (type, "Armor") == 0)
 	{
 		type = "BasicArmor";
 	}
-	else if (strcmp (type, "Health") == 0)
+	else if (stricmp (type, "Health") == 0)
 	{
 		return activator->health;
 	}
 
-	const TypeInfo *info = TypeInfo::FindType (type);
+	const PClass *info = PClass::FindClass (type);
 	AInventory *item = activator->FindInventory (info);
 	return item ? item->Amount : 0;
 }
@@ -1599,7 +1599,7 @@ int DLevelScript::Random (int min, int max)
 int DLevelScript::ThingCount (int type, int tid)
 {
 	AActor *actor;
-	const TypeInfo *kind;
+	const PClass *kind;
 	int count = 0;
 
 	if (type >= MAX_SPAWNABLES)
@@ -1732,7 +1732,7 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 
 int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle)
 {
-	const TypeInfo *info = TypeInfo::FindType (FBehavior::StaticLookupString (type));
+	const PClass *info = PClass::FindClass (FBehavior::StaticLookupString (type));
 	AActor *actor = NULL;
 
 	if (info != NULL)
@@ -3225,7 +3225,7 @@ int DLevelScript::RunScript ()
 				}
 				else if (activator)
 				{
-					workwhere += sprintf (workwhere, "%s", RUNTIME_TYPE(activator)->Name+1);
+					workwhere += sprintf (workwhere, "%s", RUNTIME_TYPE(activator)->TypeName.GetChars());
 				}
 				else
 				{
@@ -3740,10 +3740,10 @@ int DLevelScript::RunScript ()
 		case PCD_GETAMMOCAPACITY:
 			if (activator != NULL)
 			{
-				const TypeInfo *type = TypeInfo::FindType (FBehavior::StaticLookupString (STACK(1)));
+				const PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(1)));
 				AInventory *item;
 
-				if (type != NULL && type->ParentType == RUNTIME_CLASS(AAmmo))
+				if (type != NULL && type->ParentClass == RUNTIME_CLASS(AAmmo))
 				{
 					item = activator->FindInventory (type);
 					if (item != NULL)
@@ -3769,10 +3769,10 @@ int DLevelScript::RunScript ()
 		case PCD_SETAMMOCAPACITY:
 			if (activator != NULL)
 			{
-				const TypeInfo *type = TypeInfo::FindType (FBehavior::StaticLookupString (STACK(2)));
+				const PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(2)));
 				AInventory *item;
 
-				if (type != NULL && type->ParentType == RUNTIME_CLASS(AAmmo))
+				if (type != NULL && type->ParentClass == RUNTIME_CLASS(AAmmo))
 				{
 					item = activator->FindInventory (type);
 					if (item != NULL)
@@ -4075,7 +4075,7 @@ int DLevelScript::RunScript ()
 			else
 			{
 				STACK(1) = 0 == strcmp (FBehavior::StaticLookupString (STACK(1)),
-					activator->player->ReadyWeapon->GetClass()->Name+1);
+					activator->player->ReadyWeapon->GetClass()->TypeName.GetChars());
 			}
 			break;
 
@@ -4086,7 +4086,7 @@ int DLevelScript::RunScript ()
 			}
 			else
 			{
-				AInventory *item = activator->FindInventory (TypeInfo::FindType (
+				AInventory *item = activator->FindInventory (PClass::FindClass (
 					FBehavior::StaticLookupString (STACK(1))));
 
 				if (item == NULL || !item->IsKindOf (RUNTIME_CLASS(AWeapon)))
@@ -4142,7 +4142,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_SETMARINESPRITE:
 			{
-				const TypeInfo *type = TypeInfo::FindType (FBehavior::StaticLookupString (STACK(1)));
+				const PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(1)));
 
 				if (type != NULL)
 				{

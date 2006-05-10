@@ -204,7 +204,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 	}
 	else if (domissile && MissileName != NAME_None)
 	{
-		const TypeInfo * ti=TypeInfo::IFindType(MissileName);
+		const PClass * ti=PClass::FindClass(MissileName);
 		if (ti) 
 		{
 			// Although there is a P_SpawnMissileZ function its
@@ -416,7 +416,7 @@ void DoJumpIfInventory(AActor * self, AActor * owner)
 	const char * ItemType=(const char *)StateParameters[index];
 	int ItemAmount = EvalExpressionI (StateParameters[index+1], self);
 	int JumpOffset = StateParameters[index+2];
-	const TypeInfo * Type=TypeInfo::FindType(ItemType);
+	const PClass * Type=PClass::FindClass(ItemType);
 
 	if (!Type) return;
 
@@ -526,7 +526,7 @@ void A_CustomMissile(AActor * self)
 
 	if (self->target != NULL || aimmode==2)
 	{
-		const TypeInfo * ti=TypeInfo::FindType(MissileName);
+		const PClass * ti=PClass::FindClass(MissileName);
 		if (ti) 
 		{
 			angle_t ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
@@ -638,14 +638,14 @@ void A_CustomBulletAttack (AActor *self)
 	int i;
 	int bangle;
 	int bslope;
-	const TypeInfo *pufftype;
+	const PClass *pufftype;
 
 	if (self->target)
 	{
 		A_FaceTarget (self);
 		bangle = self->angle;
 
-		pufftype = TypeInfo::FindType(PuffType);
+		pufftype = PClass::FindClass(PuffType);
 		if (!pufftype) pufftype=RUNTIME_CLASS(ABulletPuff);
 
 		bslope = P_AimLineAttack (self, bangle, MISSILERANGE);
@@ -733,7 +733,7 @@ void A_FireBullets (AActor *self)
 	bool UseAmmo=EvalExpressionN (StateParameters[index+5], self);
 	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+6], self) * FRACUNIT);
 	
-	const TypeInfo * PuffType;
+	const PClass * PuffType;
 
 	player_t * player=self->player;
 	AWeapon * weapon=player->ReadyWeapon;
@@ -755,7 +755,7 @@ void A_FireBullets (AActor *self)
 	bangle = self->angle;
 	bslope = bulletpitch;
 
-	PuffType = TypeInfo::FindType(PuffTypeName);
+	PuffType = PClass::FindClass(PuffTypeName);
 	if (!PuffType) PuffType=RUNTIME_CLASS(ABulletPuff);
 
 	S_SoundID (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
@@ -803,7 +803,7 @@ void A_FireCustomMissile (AActor * self)
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
 
-	const TypeInfo * ti=TypeInfo::FindType(MissileName);
+	const PClass * ti=PClass::FindClass(MissileName);
 	if (ti) 
 	{
 		angle_t ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
@@ -847,7 +847,7 @@ void A_CustomPunch (AActor *self)
 	const char * PuffTypeName=(const char *)StateParameters[index+3];
 	fixed_t Range=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
 
-	const TypeInfo * PuffType;
+	const PClass * PuffType;
 
 
 	player_t *player=self->player;
@@ -868,7 +868,7 @@ void A_CustomPunch (AActor *self)
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
 
-	PuffType = TypeInfo::FindType(PuffTypeName);
+	PuffType = PClass::FindClass(PuffTypeName);
 	if (!PuffType) PuffType=RUNTIME_CLASS(ABulletPuff);
 
 	if (Range == 0) Range = MELEERANGE;
@@ -988,7 +988,7 @@ static void DoGiveInventory(AActor * self, AActor * receiver)
 	int amount=EvalExpressionI (StateParameters[index+1], self);
 
 	if (amount==0) amount=1;
-	const TypeInfo * mi=TypeInfo::FindType(item);
+	const PClass * mi=PClass::FindClass(item);
 	if (mi) 
 	{
 		AInventory *item = static_cast<AInventory *>(Spawn (mi, 0, 0, 0));
@@ -1040,7 +1040,7 @@ void DoTakeInventory(AActor * self, AActor * receiver)
 	const char * item =(const char*)StateParameters[index];
 	int amount=EvalExpressionI (StateParameters[index+1], self);
 
-	const TypeInfo * mi=TypeInfo::FindType(item);
+	const PClass * mi=PClass::FindClass(item);
 
 	StateCall.Result=false;
 	if (mi) 
@@ -1083,7 +1083,7 @@ void A_SpawnItem(AActor * self)
 	int index=CheckIndex(4, &CallingState);
 	if (index<0) return;
 
-	const TypeInfo * missile= TypeInfo::FindType((const char *)StateParameters[index]);
+	const PClass * missile= PClass::FindClass((const char *)StateParameters[index]);
 	fixed_t distance = EvalExpressionF (StateParameters[index+1], self);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	bool useammo = EvalExpressionN (StateParameters[index+3], self);
@@ -1180,7 +1180,7 @@ void A_ThrowGrenade(AActor * self)
 	int index=CheckIndex(5, &CallingState);
 	if (index<0) return;
 
-	const TypeInfo * missile= TypeInfo::FindType((const char *)StateParameters[index]);
+	const PClass * missile= PClass::FindClass((const char *)StateParameters[index]);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	fixed_t xymom = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	fixed_t zmom = fixed_t(EvalExpressionF (StateParameters[index+3], self) * FRACUNIT);
@@ -1251,7 +1251,7 @@ void A_SelectWeapon(AActor * actor)
 	int index=CheckIndex(1, NULL);
 	if (index<0 || actor->player == NULL) return;
 
-	const TypeInfo * weapon= TypeInfo::FindType((const char *)StateParameters[index]);
+	const PClass * weapon= PClass::FindClass((const char *)StateParameters[index]);
 	AWeapon * weaponitem = static_cast<AWeapon*>(actor->FindInventory(weapon));
 
 	if (weaponitem != NULL && weaponitem->IsKindOf(RUNTIME_CLASS(AWeapon)))
@@ -1357,12 +1357,12 @@ void A_SpawnDebris(AActor * self)
 {
 	int i;
 	AActor * mo;
-	const TypeInfo * debris;
+	const PClass * debris;
 
 	int index=CheckIndex(1, NULL);
 	if (index<0) return;
 
-	debris = TypeInfo::FindType((const char *)StateParameters[index]);
+	debris = PClass::FindClass((const char *)StateParameters[index]);
 	if (debris == NULL) return;
 
 	for (i = 0; i < GetDefaultByType(debris)->health; i++)
@@ -1454,7 +1454,7 @@ void A_DropInventory(AActor * self)
 {
 	int index=CheckIndex(1, &CallingState);
 	if (index<0) return;
-	const TypeInfo * ti = TypeInfo::FindType((const char*)StateParameters[index]);
+	const PClass * ti = PClass::FindClass((const char*)StateParameters[index]);
 	if (ti)
 	{
 		AInventory * inv = self->FindInventory(ti);

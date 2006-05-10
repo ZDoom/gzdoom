@@ -2104,10 +2104,10 @@ void Net_DoCommand (int type, byte **stream, int player)
 	case DEM_SUMMON:
 	case DEM_SUMMONFRIEND:
 		{
-			const TypeInfo *typeinfo;
+			const PClass *typeinfo;
 
 			s = ReadString (stream);
-			typeinfo = TypeInfo::FindType (s);
+			typeinfo = PClass::FindClass (s);
 			if (typeinfo != NULL && typeinfo->ActorInfo != NULL)
 			{
 				AActor *source = players[player].mo;

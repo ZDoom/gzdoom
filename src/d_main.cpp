@@ -1905,7 +1905,7 @@ void D_DoomMain (void)
 	file[PATH_MAX-1] = 0;
 
 #if defined(_MSC_VER) || defined(__GNUC__)
-	TypeInfo::StaticInit ();
+	PClass::StaticInit ();
 #endif
 
 	atterm (DObject::StaticShutdown);

@@ -2117,7 +2117,7 @@ FUNC(LS_SetPlayerProperty)
 	// Add or remove a power
 	if (arg2 >= PROP_INVULNERABILITY && arg2 <= PROP_SPEED)
 	{
-		static const TypeInfo *powers[11] =
+		static const PClass *powers[11] =
 		{
 			RUNTIME_CLASS(APowerInvulnerable),
 			RUNTIME_CLASS(APowerStrength),

@@ -100,7 +100,7 @@ protected:
 	{
 		return GStrings("TXT_MANA_BOTH");
 	}
-	bool GiveMana (AActor *other, const TypeInfo *type)
+	bool GiveMana (AActor *other, const PClass *type)
 	{
 		AInventory *mana = other->FindInventory (type);
 		if (mana == NULL)
@@ -164,7 +164,7 @@ public:
 	bool Use (bool pickup);
 	const char *PickupMessage ();
 protected:
-	bool FillMana (const TypeInfo *type);
+	bool FillMana (const PClass *type);
 };
 
 FState AArtiBoostMana::States[] =
@@ -191,7 +191,7 @@ bool AArtiBoostMana::Use (bool pickup)
 	return success;
 }
 
-bool AArtiBoostMana::FillMana (const TypeInfo *type)
+bool AArtiBoostMana::FillMana (const PClass *type)
 {
 	AInventory *mana = Owner->FindInventory (type);
 	if (mana == NULL)

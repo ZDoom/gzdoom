@@ -168,8 +168,8 @@ virtual void Read (void *mem, unsigned int len);
 		void WriteCount (DWORD count);
 		DWORD ReadCount ();
 
-		void UserWriteClass (const TypeInfo *info);
-		void UserReadClass (const TypeInfo *&info);
+		void UserWriteClass (const PClass *info);
+		void UserReadClass (const PClass *&info);
 
 		FArchive& operator<< (BYTE &c);
 		FArchive& operator<< (WORD &s);
@@ -180,9 +180,9 @@ virtual void Read (void *mem, unsigned int len);
 		FArchive& operator<< (char *&str);
 		FArchive& operator<< (FName &n);
 		FArchive& SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize);
-		FArchive& SerializeObject (DObject *&object, TypeInfo *type);
+		FArchive& SerializeObject (DObject *&object, PClass *type);
 		FArchive& WriteObject (DObject *obj);
-		FArchive& ReadObject (DObject *&obj, TypeInfo *wanttype);
+		FArchive& ReadObject (DObject *&obj, PClass *wanttype);
 
 		void WriteName (const char *name);
 		const char *ReadName ();	// The returned name disappears with the archive, unlike strings
@@ -207,10 +207,10 @@ protected:
 
 		DWORD FindObjectIndex (const DObject *obj) const;
 		DWORD MapObject (const DObject *obj);
-		DWORD WriteClass (const TypeInfo *info);
-		const TypeInfo *ReadClass ();
-		const TypeInfo *ReadClass (const TypeInfo *wanttype);
-		const TypeInfo *ReadStoredClass (const TypeInfo *wanttype);
+		DWORD WriteClass (const PClass *info);
+		const PClass *ReadClass ();
+		const PClass *ReadClass (const PClass *wanttype);
+		const PClass *ReadStoredClass (const PClass *wanttype);
 		DWORD HashObject (const DObject *obj) const;
 		DWORD AddName (const char *name);
 		DWORD AddName (unsigned int start);	// Name has already been added to storage
@@ -228,7 +228,7 @@ protected:
 
 		struct TypeMap
 		{
-			const TypeInfo *toCurrent;	// maps archive type index to execution type index
+			const PClass *toCurrent;	// maps archive type index to execution type index
 			DWORD toArchive;		// maps execution type index to archive type index
 
 			enum { NO_INDEX = 0xffffffff };
@@ -285,7 +285,7 @@ inline FArchive &operator<< (FArchive &arc, T* &object)
 	return arc.SerializeObject ((DObject*&)object, RUNTIME_CLASS(T));
 }
 
-FArchive &operator<< (FArchive &arc, const TypeInfo * &info);
+FArchive &operator<< (FArchive &arc, const PClass * &info);
 
 template<class T>
 inline FArchive &operator<< (FArchive &arc, TArray<T> &self)

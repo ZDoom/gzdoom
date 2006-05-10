@@ -2161,7 +2161,7 @@ void A_XXScream (AActor *actor)
 //---------------------------------------------------------------------------
 CVAR(Int, sv_dropstyle, 0, CVAR_SERVERINFO | CVAR_ARCHIVE);
 
-AInventory *P_DropItem (AActor *source, const TypeInfo *type, int special, int chance)
+AInventory *P_DropItem (AActor *source, const PClass *type, int special, int chance)
 {
 	if (type != NULL && pr_dropitem() <= chance)
 	{
@@ -2367,7 +2367,7 @@ void A_BossDeath (AActor *actor)
 	FSpecialAction *sa = level.info->specialactions;
 	while (sa)
 	{
-		if (FName(actor->GetClass()->Name+1) == sa->Type)
+		if (FName(actor->GetClass()->TypeName.GetChars()) == sa->Type)
 		{
 			if (!checked && !CheckBossDeath(actor))
 			{
@@ -2393,24 +2393,19 @@ void A_BossDeath (AActor *actor)
 						LEVEL_SORCERER2SPECIAL)) == 0)
 		return;
 
-	if (strcmp (RUNTIME_TYPE(actor)->Name+1, "Fatso") == 0)
-		type = MT_FATSO;
-	else if (strcmp (RUNTIME_TYPE(actor)->Name+1, "Arachnotron") == 0)
-		type = MT_BABY;
-	else if (strcmp (RUNTIME_TYPE(actor)->Name+1, "BaronOfHell") == 0)
-		type = MT_BRUISER;
-	else if (strcmp (RUNTIME_TYPE(actor)->Name+1, "Cyberdemon") == 0)
-		type = MT_CYBORG;
-	else if (strcmp (RUNTIME_TYPE(actor)->Name+1, "SpiderMastermind") == 0)
-		type = MT_SPIDER;
-	else if (strcmp (RUNTIME_TYPE(actor)->Name+1, "Ironlich") == 0)
-		type = MT_HEAD;
-	else if (strcmp (RUNTIME_TYPE(actor)->Name+1, "Minotaur") == 0)
-		type = MT_MINOTAUR;
-	else if (strcmp (RUNTIME_TYPE(actor)->Name+1, "Sorcerer2") == 0)
-		type = MT_SORCERER2;
-	else
-		return;
+	const PClass *actorType = actor->GetClass();
+	switch (actorType->TypeName)
+	{
+	case NAME_Fatso:			type = MT_FATSO;		break;
+	case NAME_Arachnotron:		type = MT_BABY;			break;
+	case NAME_BaronOfHell:		type = MT_BRUISER;		break;
+	case NAME_Cyberdemon:		type = MT_CYBORG;		break;
+	case NAME_SpiderMastermind:	type = MT_SPIDER;		break;
+	case NAME_Ironlich:			type = MT_HEAD;			break;
+	case NAME_Minotaur:			type = MT_MINOTAUR;		break;
+	case NAME_Sorcerer2:		type = MT_SORCERER2;	break;
+	default:					return;
+	}
 
 	if (
 		((level.flags & LEVEL_MAP07SPECIAL) && (type == MT_FATSO || type == MT_BABY)) ||

@@ -122,7 +122,7 @@ void AMagePlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
 	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
-		(GiveInventoryType (TypeInfo::FindType ("MWeapWand")));
+		(GiveInventoryType (PClass::FindClass ("MWeapWand")));
 	
 	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
 	AHexenArmor *armor = FindInventory<AHexenArmor>();

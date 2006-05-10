@@ -557,7 +557,7 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 	bool notdone = true;
 	int keyword;
 	int val;
-	const TypeInfo *info;
+	const PClass *info;
 
 	do
 	{
@@ -598,7 +598,7 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 			}
 			else
 			{
-				info = TypeInfo::IFindType (sc_String);
+				info = PClass::FindClass (sc_String);
 				if (!info->IsDescendantOf (RUNTIME_CLASS(AActor)))
 				{
 					Printf ("%s is not an Actor (in %s %s)\n",
@@ -611,7 +611,7 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 						sc_String, type, name.GetChars());
 				}
 			}
-			SET_FIELD (const TypeInfo *, info);
+			SET_FIELD (const PClass *, info);
 			break;
 
 		case GEN_Splash:

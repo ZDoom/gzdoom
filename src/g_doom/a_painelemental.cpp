@@ -110,12 +110,12 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	angle_t an;
 	int prestep;
 
-	const TypeInfo *spawntype = NULL;
+	const PClass *spawntype = NULL;
 
 	int index=CheckIndex(1, NULL);
 	if (index>=0) 
 	{
-		spawntype = TypeInfo::FindType((const char *)StateParameters[index]);
+		spawntype = PClass::FindClass((const char *)StateParameters[index]);
 	}
 	if (spawntype == NULL) spawntype = RUNTIME_CLASS(ALostSoul);
 

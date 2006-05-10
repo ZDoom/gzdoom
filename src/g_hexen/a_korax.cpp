@@ -71,10 +71,10 @@ void A_KSpiritRoam (AActor *);
 void A_KBolt (AActor *);
 void A_KBoltRaise (AActor *);
 
-void KoraxFire (AActor *actor, const TypeInfo *type, int arm);
+void KoraxFire (AActor *actor, const PClass *type, int arm);
 void KSpiritInit (AActor *spirit, AActor *korax);
 AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, const TypeInfo *type);
+	AActor *source, AActor *dest, const PClass *type);
 
 extern void SpawnSpiritTail (AActor *spirit);
 
@@ -395,11 +395,11 @@ void A_KoraxMissile (AActor *actor)
 
 	int type = pr_koraxmissile()%6;
 	int i;
-	const TypeInfo *info;
+	const PClass *info;
 
 	S_Sound (actor, CHAN_VOICE, "KoraxAttack", 1, ATTN_NORM);
 
-	info = TypeInfo::FindType (choices[type].type);
+	info = PClass::FindClass (choices[type].type);
 	if (info == NULL)
 	{
 		I_Error ("Unknown Korax missile: %s\n", choices[type].type);
@@ -464,7 +464,7 @@ void A_KoraxCommand (AActor *actor)
 //
 //============================================================================
 
-void KoraxFire (AActor *actor, const TypeInfo *type, int arm)
+void KoraxFire (AActor *actor, const PClass *type, int arm)
 {
 	static const int extension[6] =
 	{
@@ -675,7 +675,7 @@ void A_KBoltRaise (AActor *actor)
 //============================================================================
 
 AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, const TypeInfo *type)
+	AActor *source, AActor *dest, const PClass *type)
 {
 	AActor *th;
 	angle_t an;

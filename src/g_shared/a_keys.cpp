@@ -13,7 +13,7 @@
 
 struct OneKey
 {
-	const TypeInfo * key;
+	const PClass * key;
 	int count;
 
 	bool check(AActor * owner)
@@ -109,7 +109,7 @@ static const char * keywords_lock[]={
 //
 //===========================================================================
 
-static void AddOneKey(Keygroup * keygroup, const TypeInfo * mi)
+static void AddOneKey(Keygroup * keygroup, const PClass * mi)
 {
 	if (mi)
 	{
@@ -149,14 +149,14 @@ static void AddOneKey(Keygroup * keygroup, const TypeInfo * mi)
 static Keygroup * ParseKeygroup()
 {
 	Keygroup * keygroup;
-	const TypeInfo * mi;
+	const PClass * mi;
 
 	SC_MustGetStringName("{");
 	keygroup=new Keygroup;
 	while (!SC_CheckString("}"))
 	{
 		SC_MustGetString();
-		mi=TypeInfo::FindType(sc_String);
+		mi=PClass::FindClass(sc_String);
 		AddOneKey(keygroup, mi);
 	}
 	if (keygroup->anykeylist.Size()==0)
@@ -213,7 +213,7 @@ static void ParseLock()
 	Lock sink;
 	Lock * lock=&sink;
 	Keygroup * keygroup;
-	const TypeInfo * mi;
+	const PClass * mi;
 
 	SC_MustGetNumber();
 	keynum=sc_Number;
@@ -288,7 +288,7 @@ static void ParseLock()
 			break;
 
 		default:
-			mi=TypeInfo::FindType(sc_String);
+			mi=PClass::FindClass(sc_String);
 			if (mi) 
 			{
 				keygroup=new Keygroup;
@@ -318,12 +318,11 @@ static void ParseLock()
 static void ClearLocks()
 {
 	int i;
-	for(i=0;i<TypeInfo::m_Types.Size();i++)
+	for(i=0;i<PClass::m_Types.Size();i++)
 	{
-		if (TypeInfo::m_Types[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
+		if (PClass::m_Types[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
 		{
-			if (TypeInfo::m_Types[i]->ActorInfo != NULL)
-				static_cast<AKey*>(GetDefaultByType(TypeInfo::m_Types[i]))->KeyNumber=0;
+			static_cast<AKey*>(GetDefaultByType(PClass::m_Types[i]))->KeyNumber=0;
 		}
 	}
 	for(i=0;i<256;i++)

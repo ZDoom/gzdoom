@@ -137,7 +137,7 @@ void AStrifePlayer::GiveDefaultInventory ()
 	AWeapon *weapon;
 
 	player->health = GetDefault()->health;
-	weapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (TypeInfo::FindType ("PunchDagger")));
+	weapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (PClass::FindClass ("PunchDagger")));
 	player->ReadyWeapon = player->PendingWeapon = weapon;
 }
 

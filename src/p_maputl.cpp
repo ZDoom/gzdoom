@@ -551,7 +551,7 @@ sector_t *AActor::LinkToWorldForMapThing ()
 						if (num >= 0 && num <= den)
 						{
 							DPrintf ("%s at (%ld,%ld) lies directly on line %d\n",
-								this->GetClass()->Name+1, x>>FRACBITS, y>>FRACBITS, ldef-lines);
+								this->GetClass()->TypeName.GetChars(), x>>FRACBITS, y>>FRACBITS, ldef-lines);
 							angle_t finean = R_PointToAngle2 (0, 0, ldef->dx, ldef->dy);
 							if (ldef->backsector != NULL && ldef->backsector == ssec->sector)
 							{

@@ -263,7 +263,7 @@ END_DEFAULTS
 
 // Wisp types, for randomness below -----------------------------------------
 
-static const TypeInfo *const WispTypes[2] =
+static const PClass *const WispTypes[2] =
 {
 	RUNTIME_CLASS(AIceGuyWisp1),
 	RUNTIME_CLASS(AIceGuyWisp2)

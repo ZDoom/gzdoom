@@ -171,9 +171,9 @@ void A_FatAttack1 (AActor *self)
 	if (!self->target)
 		return;
 
-	const TypeInfo *spawntype = NULL;
+	const PClass *spawntype = NULL;
 	int index = CheckIndex (1, NULL);
-	if (index >= 0) spawntype = TypeInfo::FindType ((const char *)StateParameters[index]);
+	if (index >= 0) spawntype = PClass::FindClass ((const char *)StateParameters[index]);
 	if (spawntype == NULL) spawntype = RUNTIME_CLASS(AFatShot);
 
 	A_FaceTarget (self);
@@ -199,9 +199,9 @@ void A_FatAttack2 (AActor *self)
 	if (!self->target)
 		return;
 
-	const TypeInfo *spawntype = NULL;
+	const PClass *spawntype = NULL;
 	int index = CheckIndex (1, NULL);
-	if (index >= 0) spawntype = TypeInfo::FindType ((const char *)StateParameters[index]);
+	if (index >= 0) spawntype = PClass::FindClass ((const char *)StateParameters[index]);
 	if (spawntype == NULL) spawntype = RUNTIME_CLASS(AFatShot);
 
 	A_FaceTarget (self);
@@ -227,9 +227,9 @@ void A_FatAttack3 (AActor *self)
 	if (!self->target)
 		return;
 
-	const TypeInfo *spawntype = NULL;
+	const PClass *spawntype = NULL;
 	int index = CheckIndex (1, NULL);
-	if (index >= 0) spawntype = TypeInfo::FindType ((const char *)StateParameters[index]);
+	if (index >= 0) spawntype = PClass::FindClass ((const char *)StateParameters[index]);
 	if (spawntype == NULL) spawntype = RUNTIME_CLASS(AFatShot);
 
 	A_FaceTarget (self);
@@ -262,11 +262,11 @@ void A_Mushroom (AActor *actor)
 {
 	int i, j, n = actor->damage;
 
-	const TypeInfo *spawntype = NULL;
+	const PClass *spawntype = NULL;
 	int index = CheckIndex (1, NULL);
 	if (index >= 0) 
 	{
-		spawntype = TypeInfo::FindType((const char *)StateParameters[index]);
+		spawntype = PClass::FindClass((const char *)StateParameters[index]);
 		n = EvalExpressionI (StateParameters[index+1], actor);
 		if (n == 0)
 			n = actor->damage;

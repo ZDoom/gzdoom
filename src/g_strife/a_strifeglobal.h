@@ -108,7 +108,7 @@ public:
 	int NumPieces, DownPieces;
 };
 
-extern const TypeInfo *QuestItemClasses[31];
+extern const PClass *QuestItemClasses[31];
 
 // Sigil/Spectral projectiles -----------------------------------------------
 

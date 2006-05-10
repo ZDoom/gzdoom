@@ -25,7 +25,7 @@ public:
 	void Unload ();
 	bool CheckModified ();
 
-	void SetVial (FTexture *pic, AActor *actor, const TypeInfo *manaType);
+	void SetVial (FTexture *pic, AActor *actor, const PClass *manaType);
 
 protected:
 	BYTE Pixels[5*24];
@@ -89,7 +89,7 @@ const BYTE *FManaBar::GetPixels ()
 	return Pixels;
 }
 
-void FManaBar::SetVial (FTexture *pic, AActor *actor, const TypeInfo *manaType)
+void FManaBar::SetVial (FTexture *pic, AActor *actor, const PClass *manaType)
 {
 	int level;
 	AInventory *ammo;
@@ -1035,7 +1035,7 @@ private:
 //
 //---------------------------------------------------------------------------
 
-	void FlashItem (const TypeInfo *itemtype)
+	void FlashItem (const PClass *itemtype)
 	{
 		ArtifactFlash = 4;
 	}

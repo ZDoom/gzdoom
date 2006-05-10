@@ -323,11 +323,11 @@ static void ParseDecorate (void (*process)(FState *, int))
 {
 	TArray<FState> states;
 	FExtraInfo extra;
-	TypeInfo *type;
-	TypeInfo *parent;
+	PClass *type;
+	PClass *parent;
 	EDefinitionType def;
 	FActorInfo *info;
-	char *typeName;
+	FName typeName;
 	int recursion=0;
 
 	// Get actor class name. The A prefix is added automatically.
@@ -384,11 +384,8 @@ static void ParseDecorate (void (*process)(FState *, int))
 			def = DEF_Decoration;
 		}
 
-		typeName = new char[strlen(sc_String)+2];
-		typeName[0] = 'A';
-		strcpy (&typeName[1], sc_String);
-
-		type = parent->CreateDerivedClass (typeName, parent->SizeOf);
+		typeName = FName(sc_String);
+		type = parent->CreateDerivedClass (typeName, parent->Size);
 		info = type->ActorInfo;
 		info->GameFilter = 0x80;
 		Decorations.Push (info);
@@ -437,20 +434,20 @@ static void ParseDecorate (void (*process)(FState *, int))
 
 		states.Clear ();
 		memset (&extra, 0, sizeof(extra));
-		ParseInsideDecoration (info, (AActor *)(info->Defaults), states, extra, def);
+		ParseInsideDecoration (info, (AActor *)(type->Defaults), states, extra, def);
 
 		info->NumOwnedStates = states.Size();
 		if (info->NumOwnedStates == 0)
 		{
-			SC_ScriptError ("%s does not define any animation frames", typeName + 1);
+			SC_ScriptError ("%s does not define any animation frames", typeName );
 		}
 		else if (extra.SpawnEnd == 0)
 		{
-			SC_ScriptError ("%s does not have a Frames definition", typeName + 1);
+			SC_ScriptError ("%s does not have a Frames definition", typeName );
 		}
 		else if (def == DEF_BreakableDecoration && extra.DeathEnd == 0)
 		{
-			SC_ScriptError ("%s does not have a DeathFrames definition", typeName + 1);
+			SC_ScriptError ("%s does not have a DeathFrames definition", typeName );
 		}
 		else if (extra.IceDeathEnd != 0 && extra.bGenericIceDeath)
 		{
@@ -526,10 +523,10 @@ static void ParseDecorate (void (*process)(FState *, int))
 						info->OwnedStates[extra.DeathStart].Action = A_ScreamAndUnblock;
 					}
 
-					if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(info->Defaults))->height;
+					if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(type->Defaults))->height;
 					info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, extra.DeathHeight);
 				}
-				((AActor *)(info->Defaults))->DeathState = &info->OwnedStates[extra.DeathStart];
+				((AActor *)(type->Defaults))->DeathState = &info->OwnedStates[extra.DeathStart];
 			}
 
 			// Burn states are the same as death states, except they can optionally terminate
@@ -565,10 +562,10 @@ static void ParseDecorate (void (*process)(FState *, int))
 					info->OwnedStates[extra.FireDeathStart].Action = A_ActiveAndUnblock;
 				}
 
-				if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(info->Defaults))->height;
-				info->Class->Meta.SetMetaFixed (AMETA_BurnHeight, extra.BurnHeight);
+				if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
+				type->Meta.SetMetaFixed (AMETA_BurnHeight, extra.BurnHeight);
 
-				((AActor *)(info->Defaults))->BDeathState = &info->OwnedStates[extra.FireDeathStart];
+				((AActor *)(type->Defaults))->BDeathState = &info->OwnedStates[extra.FireDeathStart];
 			}
 
 			// Ice states are similar to burn and death, except their final frame enters
@@ -589,31 +586,31 @@ static void ParseDecorate (void (*process)(FState *, int))
 				info->OwnedStates[i].Tics = 2;
 				info->OwnedStates[i].Misc1 = 0;
 				info->OwnedStates[i].Action = A_FreezeDeathChunks;
-				((AActor *)(info->Defaults))->IDeathState = &info->OwnedStates[extra.IceDeathStart];
+				((AActor *)(type->Defaults))->IDeathState = &info->OwnedStates[extra.IceDeathStart];
 			}
 			else if (extra.bGenericIceDeath)
 			{
-				((AActor *)(info->Defaults))->IDeathState = &AActor::States[AActor::S_GENERICFREEZEDEATH];
+				((AActor *)(type->Defaults))->IDeathState = &AActor::States[AActor::S_GENERICFREEZEDEATH];
 			}
 		}
 		if (def == DEF_BreakableDecoration)
 		{
-			((AActor *)(info->Defaults))->flags |= MF_SHOOTABLE;
+			((AActor *)(type->Defaults))->flags |= MF_SHOOTABLE;
 		}
 		if (def == DEF_Projectile)
 		{
 			if (extra.ExplosionRadius > 0)
 			{
-				((ASimpleProjectile *)(info->Defaults))->ExplosionRadius =
+				((ASimpleProjectile *)(type->Defaults))->ExplosionRadius =
 					extra.ExplosionRadius;
-				((ASimpleProjectile *)(info->Defaults))->ExplosionDamage =
+				((ASimpleProjectile *)(type->Defaults))->ExplosionDamage =
 					extra.ExplosionDamage > 0 ? extra.ExplosionDamage : extra.ExplosionRadius;
-				((ASimpleProjectile *)(info->Defaults))->HurtShooter =
+				((ASimpleProjectile *)(type->Defaults))->HurtShooter =
 					!extra.ExplosionShooterImmune;
 			}
-			((AActor *)(info->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
+			((AActor *)(type->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
 		}
-		((AActor *)(info->Defaults))->SpawnState = &info->OwnedStates[extra.SpawnStart];
+		((AActor *)(type->Defaults))->SpawnState = &info->OwnedStates[extra.SpawnStart];
 		process (info->OwnedStates, info->NumOwnedStates);
 	}
 }

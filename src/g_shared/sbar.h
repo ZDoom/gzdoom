@@ -182,7 +182,7 @@ public:
 	virtual void Tick ();
 	virtual void Draw (EHudState state);
 			void DrawTopStuff (EHudState state);
-	virtual void FlashItem (const TypeInfo *itemtype);
+	virtual void FlashItem (const PClass *itemtype);
 	virtual void AttachToPlayer (player_s *player);
 	virtual void FlashCrosshair ();
 	virtual void BlendView (float blend[4]);

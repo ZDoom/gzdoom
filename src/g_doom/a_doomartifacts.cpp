@@ -67,7 +67,7 @@ public:
 		P_GiveBody (Owner, 100);
 		if (Super::Use (pickup))
 		{
-			const TypeInfo *fistType = TypeInfo::FindType ("Fist");
+			const PClass *fistType = PClass::FindClass ("Fist");
 			if (Owner->player->ReadyWeapon == NULL ||
 				Owner->player->ReadyWeapon->GetClass() != fistType)
 			{

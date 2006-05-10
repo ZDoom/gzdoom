@@ -69,7 +69,7 @@
 #include "thingdef.h"
 
 
-const TypeInfo *QuestItemClasses[31];
+const PClass *QuestItemClasses[31];
 
 
 extern TArray<FActorInfo *> Decorations;
@@ -261,7 +261,7 @@ static flagdef WeaponFlags[] =
 	//DEFINE_FLAG(WIF , HITS_GHOSTS, WeaponFlags),	// I think it would be smarter to remap the THRUGHOST flag to this
 };
 
-static const struct { const TypeInfo *Type; flagdef *Defs; int NumDefs; } FlagLists[] =
+static const struct { const PClass *Type; flagdef *Defs; int NumDefs; } FlagLists[] =
 {
 	{ RUNTIME_CLASS(AActor), 		ActorFlags,		sizeof(ActorFlags)/sizeof(flagdef) },
 	{ RUNTIME_CLASS(AInventory), 	InventoryFlags,	sizeof(InventoryFlags)/sizeof(flagdef) },
@@ -303,7 +303,7 @@ static flagdef *FindFlag (flagdef *flags, int numflags, const char *flag)
 	return NULL;
 }
 
-static flagdef *FindFlag (const TypeInfo *type, const char *part1, const char *part2)
+static flagdef *FindFlag (const PClass *type, const char *part1, const char *part2)
 {
 	static bool flagsorted = false;
 	flagdef *def;
@@ -335,7 +335,7 @@ static flagdef *FindFlag (const TypeInfo *type, const char *part1, const char *p
 	{ // Search just the named list
 		for (i = 0; i < NUM_FLAG_LISTS; ++i)
 		{
-			if (stricmp (FlagLists[i].Type->Name+1, part1) == 0)
+			if (stricmp (FlagLists[i].Type->TypeName.GetChars(), part1) == 0)
 			{
 				if (type->IsDescendantOf (FlagLists[i].Type))
 				{
@@ -388,7 +388,7 @@ void A_ChangeFlag(AActor * self)
 	}
 	else
 	{
-		Printf("Unknown flag '%s' in '%s'\n", flagname, self->GetClass()->Name+1);
+		Printf("Unknown flag '%s' in '%s'\n", flagname, self->GetClass()->TypeName.GetChars());
 	}
 }
 
@@ -1015,7 +1015,7 @@ void A_NoBlocking (AActor *actor)
 		{
 			if (di->Name != NAME_None)
 			{
-				const TypeInfo *ti = TypeInfo::IFindType(di->Name);
+				const PClass *ti = PClass::FindClass(di->Name);
 				if (ti) P_DropItem (actor, ti, di->amount, di->probability);
 			}
 			di = di->Next;
@@ -1082,7 +1082,7 @@ static TArray<FState> StateArray;
 
 typedef void (*ActorPropFunction) (AActor *defaults, Baggage &bag);
 
-struct ActorProps { const char *name; ActorPropFunction Handler; const TypeInfo * type; };
+struct ActorProps { const char *name; ActorPropFunction Handler; const PClass * type; };
 
 typedef ActorProps (*ActorPropHandler) (register const char *str, register unsigned int len);
 
@@ -1131,7 +1131,7 @@ static const char * weapon_statenames[]={"SELECT", "DESELECT", "READY", "FIRE", 
 static const char * inventory_statenames[]={"USE", "PICKUP", "DROP", NULL };
 
 
-FState ** FindState(AActor * actor, const TypeInfo * type, const char * name)
+FState ** FindState(AActor * actor, const PClass * type, const char * name)
 {
 	int i;
 
@@ -1204,20 +1204,18 @@ static void ResetActor (AActor *actor, Baggage *bag)
 //==========================================================================
 static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 {
-	char * typeName;
+	FName typeName;
 
 	SC_MustGetString();
 
-	if (TypeInfo::IFindType (sc_String) != NULL)
+	if (PClass::FindClass (sc_String) != NULL)
 	{
 		SC_ScriptError ("Actor %s is already defined.", sc_String);
 	}
 
-	typeName = new char[strlen(sc_String)+2];
-	sprintf(typeName, "A%s", sc_String);
+	typeName = sc_String;
 
-
-	TypeInfo * parent = RUNTIME_CLASS(AActor);
+	PClass * parent = RUNTIME_CLASS(AActor);
 	if (parentc)
 	{
 		*parentc = NULL;
@@ -1225,7 +1223,7 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 		if (SC_Compare(":"))
 		{
 			SC_MustGetString();
-			parent = const_cast<TypeInfo *> (TypeInfo::IFindType (sc_String));
+			parent = const_cast<PClass *> (PClass::FindClass (sc_String));
 
 			if (parent == NULL)
 			{
@@ -1243,7 +1241,7 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 		else SC_UnGet();
 	}
 
-	TypeInfo * ti = parent->CreateDerivedClass (typeName, parent->SizeOf);
+	PClass * ti = parent->CreateDerivedClass (typeName, parent->Size);
 	FActorInfo * info = ti->ActorInfo;
 
 	Decorations.Push (info);
@@ -1263,7 +1261,7 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 	if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 	{
 		// preinitialize kickback to the default for the game
-		((AWeapon*)(info->Defaults))->Kickback=gameinfo.defKickback;
+		((AWeapon*)(info->Class->Defaults))->Kickback=gameinfo.defKickback;
 	}
 
 	return info;
@@ -1423,7 +1421,7 @@ static void RetargetStatePointers (intptr_t count, const char *target, FState **
 	}
 }
 
-static void RetargetStates (intptr_t count, const char *target, const TypeInfo *cls, AActor *defaults)
+static void RetargetStates (intptr_t count, const char *target, const PClass *cls, AActor *defaults)
 {
 	RetargetStatePointers (count, target, &defaults->SpawnState, &defaults->GreetingsState);
 	if (cls->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
@@ -1793,7 +1791,7 @@ endofstate:
 	}
 	if (count<=minrequiredstate)
 	{
-		SC_ScriptError("A_Jump offset out of range in %s", actor->Class->Name);
+		SC_ScriptError("A_Jump offset out of range in %s", actor->Class->TypeName.GetChars());
 	}
 	return count;
 }
@@ -1804,7 +1802,7 @@ endofstate:
 //
 //==========================================================================
 
-static FState *ResolveGotoLabel (AActor *actor, const TypeInfo *type, char *name)
+static FState *ResolveGotoLabel (AActor *actor, const PClass *type, char *name)
 {
 	FState **stp, *state;
 	char *namestart = name;
@@ -1822,24 +1820,24 @@ static FState *ResolveGotoLabel (AActor *actor, const TypeInfo *type, char *name
 		// superclass, or it may the name of any class that this one derives from.
 		if (stricmp (classname, "Super") == 0)
 		{
-			type = type->ParentType;
+			type = type->ParentClass;
 			actor = GetDefaultByType (type);
 		}
 		else
 		{
-			const TypeInfo *stype = TypeInfo::IFindType (classname);
+			const PClass *stype = PClass::FindClass (classname);
 			if (stype == NULL)
 			{
 				SC_ScriptError ("%s is an unknown class.", classname);
 			}
 			if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
 			{
-				SC_ScriptError ("%s is not an actor class, so it has no states.", stype->Name+1);
+				SC_ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
 			}
 			if (!stype->IsAncestorOf (type))
 			{
 				SC_ScriptError ("%s is not derived from %s so cannot access its states.",
-					type->Name+1, stype->Name+1);
+					type->TypeName.GetChars(), stype->TypeName.GetChars());
 			}
 			if (type != stype)
 			{
@@ -1869,7 +1867,7 @@ static FState *ResolveGotoLabel (AActor *actor, const TypeInfo *type, char *name
 		}
 		else if (v != 0)
 		{
-			SC_ScriptError ("Attempt to get invalid state from actor %s.", type->Name+1);
+			SC_ScriptError ("Attempt to get invalid state from actor %s.", type->TypeName.GetChars());
 		}
 	}
 	else
@@ -2014,7 +2012,7 @@ static int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 // For getting a state address from the parent
 //
 //==========================================================================
-static FState *CheckState(int statenum, TypeInfo *type)
+static FState *CheckState(int statenum, PClass *type)
 {
 	if (SC_GetString() && !sc_Crossed)
 	{
@@ -2024,7 +2022,7 @@ static FState *CheckState(int statenum, TypeInfo *type)
 			SC_MustGetString();
 
 			FState * basestate;
-			FState ** stp=FindState((AActor*)type->ParentType->ActorInfo->Defaults, type, sc_String);
+			FState ** stp=FindState((AActor*)type->ParentClass->Defaults, type, sc_String);
 			int v = 0;
 
 			if (stp) basestate =*stp;
@@ -2052,7 +2050,7 @@ static FState *CheckState(int statenum, TypeInfo *type)
 
 			if (v && !basestate)
 			{
-				SC_ScriptError("Attempt to get invalid state from actor %s\n", type->ParentType->Name+1);
+				SC_ScriptError("Attempt to get invalid state from actor %s\n", type->ParentClass->TypeName.GetChars());
 				return NULL;
 			}
 			return basestate;
@@ -2072,7 +2070,7 @@ static FState *CheckState(int statenum, TypeInfo *type)
 //==========================================================================
 void ParseActorProperties (Baggage &bag)
 {
-	const TypeInfo *info;
+	const PClass *info;
 	const ActorProps *prop;
 
 	ChkBraceOpn ();
@@ -2112,11 +2110,11 @@ void ParseActorProperties (Baggage &bag)
 		{
 			if (!info->IsDescendantOf(prop->type))
 			{
-				SC_ScriptError("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), prop->type->Name+1);
+				SC_ScriptError("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), prop->type->TypeName.GetChars());
 			}
 			else
 			{
-				prop->Handler ((AActor *)bag.Info->Defaults, bag);
+				prop->Handler ((AActor *)bag.Info->Class->Defaults, bag);
 			}
 		}
 		else
@@ -2142,7 +2140,7 @@ void ProcessActor(void (*process)(FState *, int))
 		FActorInfo * parent;
 
 		info=CreateNewActor(&parent, &bag);
-		defaults=(AActor*)info->Defaults;
+		defaults=(AActor*)info->Class->Defaults;
 		bag.StateSet = false;
 		bag.DropItemSet = false;
 		bag.CurrentState = 0;
@@ -2515,7 +2513,7 @@ static void ActorDropItem (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorSpawnState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Spawn");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Spawn");
 	defaults->SpawnState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2524,7 +2522,7 @@ static void ActorSpawnState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorSeeState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "See");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "See");
 	defaults->SeeState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2533,7 +2531,7 @@ static void ActorSeeState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorMeleeState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Melee");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Melee");
 	defaults->MeleeState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2542,7 +2540,7 @@ static void ActorMeleeState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorMissileState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Missile");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Missile");
 	defaults->MissileState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2551,7 +2549,7 @@ static void ActorMissileState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorPainState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Pain");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Pain");
 	defaults->PainState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2560,7 +2558,7 @@ static void ActorPainState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorDeathState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Death");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Death");
 	defaults->DeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2569,7 +2567,7 @@ static void ActorDeathState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorXDeathState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "XDeath");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "XDeath");
 	defaults->XDeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2578,7 +2576,7 @@ static void ActorXDeathState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorBurnState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Burn");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Burn");
 	defaults->BDeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2587,7 +2585,7 @@ static void ActorBurnState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorIceState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Ice");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Ice");
 	defaults->IDeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2596,7 +2594,7 @@ static void ActorIceState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorRaiseState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Raise");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Raise");
 	defaults->RaiseState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2605,7 +2603,7 @@ static void ActorRaiseState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorCrashState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Crash");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Crash");
 	defaults->CrashState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2614,7 +2612,7 @@ static void ActorCrashState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorCrushState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Crush");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Crush");
 	defaults->CrushState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2623,7 +2621,7 @@ static void ActorCrushState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorWoundState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Wound");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Wound");
 	defaults->WoundState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2632,7 +2630,7 @@ static void ActorWoundState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorDisintegrateState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Disintegrate");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Disintegrate");
 	defaults->EDeathState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -2641,7 +2639,7 @@ static void ActorDisintegrateState (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorHealState (AActor *defaults, Baggage &bag)
 {
-	StatePropertyIsDeprecated (bag.Info->Class->Name+1, "Heal");
+	StatePropertyIsDeprecated (bag.Info->Class->TypeName.GetChars(), "Heal");
 	defaults->HealState=CheckState (bag.CurrentState, bag.Info->Class);
 }
 
@@ -3126,7 +3124,7 @@ static void InventoryIcon (AInventory *defaults, Baggage &bag)
 		if (defaults->Icon<=0)
 		{
 			if (bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype)
-				Printf("Icon '%s' for '%s' not found\n", sc_String, bag.Info->Class->Name+1);
+				Printf("Icon '%s' for '%s' not found\n", sc_String, bag.Info->Class->TypeName.GetChars());
 		}
 	}
 }
@@ -3240,7 +3238,7 @@ static void WeaponAmmoGive2 (AWeapon *defaults, Baggage &bag)
 //
 //==========================================================================
 
-// This class is for storing a name inside a const TypeInfo* field without
+// This class is for storing a name inside a const PClass* field without
 // generating compiler warnings. It does not manipulate data in any other
 // way.
 class fuglyname : public FName
@@ -3248,11 +3246,11 @@ class fuglyname : public FName
 public:
 	fuglyname() : FName() {}
 	fuglyname(const char *foo) : FName(foo) {}
-	operator const TypeInfo *()
+	operator const PClass *()
 	{
-		return reinterpret_cast<const TypeInfo *>(size_t(int(*this)));
+		return reinterpret_cast<const PClass *>(size_t(int(*this)));
 	}
-	fuglyname &operator= (const TypeInfo *foo)
+	fuglyname &operator= (const PClass *foo)
 	{
 		FName *p = this;
 		*p = ENamedName(reinterpret_cast<size_t>(foo));
@@ -3424,18 +3422,18 @@ static void PowerupDuration (APowerupGiver *defaults, Baggage &bag)
 //==========================================================================
 static void PowerupType (APowerupGiver *defaults, Baggage &bag)
 {
-	char typestr[256];
+	FString typestr;
+
 	SC_MustGetString();
-	sc_String[249]=0;
-	sprintf(typestr, "Power%s", sc_String);
-	const TypeInfo * powertype=TypeInfo::FindType(typestr);
+	typestr.Format ("Power%s", sc_String);
+	const PClass * powertype=PClass::FindClass(typestr);
 	if (!powertype)
 	{
-		SC_ScriptError("Unknown powerup type '%s' in '%s'\n", sc_String, bag.Info->Class->Name+1);
+		SC_ScriptError("Unknown powerup type '%s' in '%s'\n", sc_String, bag.Info->Class->TypeName.GetChars());
 	}
 	else if (!powertype->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
-		SC_ScriptError("Invalid powerup type '%s' in '%s'\n", sc_String, bag.Info->Class->Name+1);
+		SC_ScriptError("Invalid powerup type '%s' in '%s'\n", sc_String, bag.Info->Class->TypeName.GetChars());
 	}
 	else
 	{
@@ -3599,9 +3597,9 @@ void FinishThingdef()
 {
 	unsigned int i;
 
-	for (i = 0;i < TypeInfo::m_RuntimeActors.Size(); i++)
+	for (i = 0;i < PClass::m_RuntimeActors.Size(); i++)
 	{
-		TypeInfo * ti = TypeInfo::m_RuntimeActors[i];
+		PClass * ti = PClass::m_RuntimeActors[i];
 
 		// Friendlies never count as kills!
 		if (GetDefaultByType(ti)->flags & MF_FRIENDLY)
@@ -3612,56 +3610,56 @@ void FinishThingdef()
 		// the typeinfo properties of weapons have to be fixed here after all actors have been declared
 		if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
-			AWeapon * defaults=(AWeapon *)ti->ActorInfo->Defaults;
+			AWeapon * defaults=(AWeapon *)ti->Defaults;
 			fuglyname v;
 
 			v = defaults->AmmoType1;
 			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->AmmoType1 = TypeInfo::IFindType(v.GetChars());
+				defaults->AmmoType1 = PClass::FindClass(v.GetChars());
 				if (!defaults->AmmoType1)
 				{
-					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
+					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
-				else if (defaults->AmmoType1->ParentType!=RUNTIME_CLASS(AAmmo))
+				else if (defaults->AmmoType1->ParentClass != RUNTIME_CLASS(AAmmo))
 				{
-					SC_ScriptError("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
+					SC_ScriptError("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
 			}
 
 			v = defaults->AmmoType2;
 			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->AmmoType2 = TypeInfo::IFindType(v.GetChars());
+				defaults->AmmoType2 = PClass::FindClass(v.GetChars());
 				if (!defaults->AmmoType2)
 				{
-					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
+					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
-				else if (defaults->AmmoType2->ParentType!=RUNTIME_CLASS(AAmmo))
+				else if (defaults->AmmoType2->ParentClass != RUNTIME_CLASS(AAmmo))
 				{
-					SC_ScriptError("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
+					SC_ScriptError("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
 			}
 
 			v = defaults->SisterWeaponType;
 			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->SisterWeaponType = TypeInfo::IFindType(v.GetChars());
+				defaults->SisterWeaponType = PClass::FindClass(v.GetChars());
 				if (!defaults->SisterWeaponType)
 				{
-					SC_ScriptError("Unknown sister weapon type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
+					SC_ScriptError("Unknown sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
 				else if (!defaults->SisterWeaponType->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 				{
-					SC_ScriptError("Invalid sister weapon type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
+					SC_ScriptError("Invalid sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
 			}
 
 			// Do some consistency checks. If these states are undefined the weapon cannot work!
-			if (!defaults->ReadyState) SC_ScriptError("Weapon %s doesn't define a ready state.\n", ti->Name+1);
-			if (!defaults->UpState) SC_ScriptError("Weapon %s doesn't define a select state.\n", ti->Name+1);
-			if (!defaults->DownState) SC_ScriptError("Weapon %s doesn't define a deselect state.\n", ti->Name+1);
-			if (!defaults->AtkState) SC_ScriptError("Weapon %s doesn't define an attack state.\n", ti->Name+1);
+			if (!defaults->ReadyState) SC_ScriptError("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
+			if (!defaults->UpState) SC_ScriptError("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
+			if (!defaults->DownState) SC_ScriptError("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
+			if (!defaults->AtkState) SC_ScriptError("Weapon %s doesn't define an attack state.\n", ti->TypeName.GetChars());
 
 			// If the weapon doesn't define a hold state use the attack state instead.
 			if (!defaults->HoldAtkState) defaults->HoldAtkState=defaults->AtkState;
@@ -3671,20 +3669,20 @@ void FinishThingdef()
 		// same for the weapon type of weapon pieces.
 		else if (ti->IsDescendantOf(RUNTIME_CLASS(AWeaponPiece)))
 		{
-			AWeaponPiece * defaults=(AWeaponPiece *)ti->ActorInfo->Defaults;
+			AWeaponPiece * defaults=(AWeaponPiece *)ti->Defaults;
 			fuglyname v;
 
 			v = defaults->WeaponClass;
 			if (v != NAME_None)
 			{
-				defaults->WeaponClass = TypeInfo::IFindType(v.GetChars());
+				defaults->WeaponClass = PClass::FindClass(v.GetChars());
 				if (!defaults->WeaponClass)
 				{
-					SC_ScriptError("Unknown weapon type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
+					SC_ScriptError("Unknown weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
-				else if (defaults->WeaponClass->ParentType!=RUNTIME_CLASS(AWeapon))
+				else if (defaults->WeaponClass->ParentClass != RUNTIME_CLASS(AWeapon))
 				{
-					SC_ScriptError("Invalid weapon type '%s' in '%s'\n", v.GetChars(), ti->Name+1);
+					SC_ScriptError("Invalid weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
 			}
 		}
@@ -3695,6 +3693,6 @@ void FinishThingdef()
 	{
 		char fmt[20];
 		sprintf(fmt, "QuestItem%d", i+1);
-		QuestItemClasses[i]=TypeInfo::IFindType(fmt);
+		QuestItemClasses[i]=PClass::FindClass(fmt);
 	}
 }

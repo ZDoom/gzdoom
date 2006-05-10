@@ -636,8 +636,8 @@ void FArchive::AttachToFile (FFile &file)
 	}
 	m_Persistent = file.IsPersistent();
 	m_TypeMap = NULL;
-	m_TypeMap = new TypeMap[TypeInfo::m_Types.Size()];
-	for (i = 0; i < TypeInfo::m_Types.Size(); i++)
+	m_TypeMap = new TypeMap[PClass::m_Types.Size()];
+	for (i = 0; i < PClass::m_Types.Size(); i++)
 	{
 		m_TypeMap[i].toArchive = TypeMap::NO_INDEX;
 		m_TypeMap[i].toCurrent = NULL;
@@ -963,7 +963,7 @@ FArchive &FArchive::SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize)
 	return *this;
 }
 
-FArchive &FArchive::SerializeObject (DObject *&object, TypeInfo *type)
+FArchive &FArchive::SerializeObject (DObject *&object, PClass *type)
 {
 	if (IsStoring ())
 		return WriteObject (object);
@@ -988,7 +988,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 	}
 	else
 	{
-		const TypeInfo *type = RUNTIME_TYPE(obj);
+		const PClass *type = RUNTIME_TYPE(obj);
 
 		if (type == RUNTIME_CLASS(DObject))
 		{
@@ -997,7 +997,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 			id[0] = NULL_OBJ;
 			Write (id, 1);
 		}
-		else if (m_TypeMap[type->TypeIndex].toArchive == TypeMap::NO_INDEX)
+		else if (m_TypeMap[type->ClassIndex].toArchive == TypeMap::NO_INDEX)
 		{
 			// No instances of this class have been written out yet.
 			// Write out the class, then write out the object. If this
@@ -1047,7 +1047,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 					id[0] = NEW_OBJ;
 					Write (id, 1);
 				}
-				WriteCount (m_TypeMap[type->TypeIndex].toArchive);
+				WriteCount (m_TypeMap[type->ClassIndex].toArchive);
 //				Printf ("Reuse class %s (%u)\n", type->Name, m_File->Tell());
 				MapObject (obj);
 				obj->Serialize (*this);
@@ -1064,10 +1064,10 @@ FArchive &FArchive::WriteObject (DObject *obj)
 	return *this;
 }
 
-FArchive &FArchive::ReadObject (DObject* &obj, TypeInfo *wanttype)
+FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 {
 	BYTE objHead;
-	const TypeInfo *type;
+	const PClass *type;
 	BYTE playerNum;
 	DWORD index;
 
@@ -1289,24 +1289,24 @@ DWORD FArchive::FindName (const char *name, unsigned int bucket) const
 	return (DWORD)map;
 }
 
-DWORD FArchive::WriteClass (const TypeInfo *info)
+DWORD FArchive::WriteClass (const PClass *info)
 {
-	if (m_ClassCount >= TypeInfo::m_Types.Size())
+	if (m_ClassCount >= PClass::m_Types.Size())
 	{
 		I_Error ("Too many unique classes have been written.\nOnly %u were registered\n",
-			TypeInfo::m_Types.Size());
+			PClass::m_Types.Size());
 	}
-	if (m_TypeMap[info->TypeIndex].toArchive != TypeMap::NO_INDEX)
+	if (m_TypeMap[info->ClassIndex].toArchive != TypeMap::NO_INDEX)
 	{
-		I_Error ("Attempt to write '%s' twice.\n", info->Name);
+		I_Error ("Attempt to write '%s' twice.\n", info->TypeName.GetChars());
 	}
-	m_TypeMap[info->TypeIndex].toArchive = m_ClassCount;
+	m_TypeMap[info->ClassIndex].toArchive = m_ClassCount;
 	m_TypeMap[m_ClassCount].toCurrent = info;
-	WriteString (info->Name);
+	WriteString (info->TypeName.GetChars());
 	return m_ClassCount++;
 }
 
-const TypeInfo *FArchive::ReadClass ()
+const PClass *FArchive::ReadClass ()
 {
 	struct String {
 		String() { val = NULL; }
@@ -1315,51 +1315,55 @@ const TypeInfo *FArchive::ReadClass ()
 	} typeName;
 	int i;
 
-	if (m_ClassCount >= TypeInfo::m_Types.Size())
+	if (m_ClassCount >= PClass::m_Types.Size())
 	{
 		I_Error ("Too many unique classes have been read.\nOnly %u were registered\n",
-			TypeInfo::m_Types.Size());
+			PClass::m_Types.Size());
 	}
 	operator<< (typeName.val);
-	for (i = 0; i < TypeInfo::m_Types.Size(); i++)
+	FName zaname(typeName.val, true);
+	if (zaname != NAME_None)
 	{
-		if (!strcmp (TypeInfo::m_Types[i]->Name, typeName.val))
+		for (i = 0; i < PClass::m_Types.Size(); i++)
 		{
-			m_TypeMap[i].toArchive = m_ClassCount;
-			m_TypeMap[m_ClassCount].toCurrent = TypeInfo::m_Types[i];
-			m_ClassCount++;
-			return TypeInfo::m_Types[i];
+			if (PClass::m_Types[i]->TypeName == zaname)
+			{
+				m_TypeMap[i].toArchive = m_ClassCount;
+				m_TypeMap[m_ClassCount].toCurrent = PClass::m_Types[i];
+				m_ClassCount++;
+				return PClass::m_Types[i];
+			}
 		}
 	}
 	I_Error ("Unknown class '%s'\n", typeName.val);
 	return NULL;
 }
 
-const TypeInfo *FArchive::ReadClass (const TypeInfo *wanttype)
+const PClass *FArchive::ReadClass (const PClass *wanttype)
 {
-	const TypeInfo *type = ReadClass ();
+	const PClass *type = ReadClass ();
 	if (!type->IsDescendantOf (wanttype))
 	{
 		I_Error ("Expected to extract an object of type '%s'.\n"
 				 "Found one of type '%s' instead.\n",
-			wanttype->Name, type->Name);
+			wanttype->TypeName.GetChars(), type->TypeName.GetChars());
 	}
 	return type;
 }
 
-const TypeInfo *FArchive::ReadStoredClass (const TypeInfo *wanttype)
+const PClass *FArchive::ReadStoredClass (const PClass *wanttype)
 {
 	DWORD index = ReadCount ();
 	if (index >= m_ClassCount)
 	{
 		I_Error ("Class reference too high (%lu; max is %lu)\n", index, m_ClassCount);
 	}
-	const TypeInfo *type = m_TypeMap[index].toCurrent;
+	const PClass *type = m_TypeMap[index].toCurrent;
 	if (!type->IsDescendantOf (wanttype))
 	{
 		I_Error ("Expected to extract an object of type '%s'.\n"
 				 "Found one of type '%s' instead.\n",
-			wanttype->Name, type->Name);
+			wanttype->TypeName.GetChars(), type->TypeName.GetChars());
 	}
 	return type;
 }
@@ -1404,7 +1408,7 @@ DWORD FArchive::FindObjectIndex (const DObject *obj) const
 	return (DWORD)index;
 }
 
-void FArchive::UserWriteClass (const TypeInfo *type)
+void FArchive::UserWriteClass (const PClass *type)
 {
 	BYTE id;
 
@@ -1415,7 +1419,7 @@ void FArchive::UserWriteClass (const TypeInfo *type)
 	}
 	else
 	{
-		if (m_TypeMap[type->TypeIndex].toArchive == TypeMap::NO_INDEX)
+		if (m_TypeMap[type->ClassIndex].toArchive == TypeMap::NO_INDEX)
 		{
 			id = 1;
 			Write (&id, 1);
@@ -1425,12 +1429,12 @@ void FArchive::UserWriteClass (const TypeInfo *type)
 		{
 			id = 0;
 			Write (&id, 1);
-			WriteCount (m_TypeMap[type->TypeIndex].toArchive);
+			WriteCount (m_TypeMap[type->ClassIndex].toArchive);
 		}
 	}
 }
 
-void FArchive::UserReadClass (const TypeInfo *&type)
+void FArchive::UserReadClass (const PClass *&type)
 {
 	BYTE newclass;
 
@@ -1452,7 +1456,7 @@ void FArchive::UserReadClass (const TypeInfo *&type)
 	}
 }
 
-FArchive &operator<< (FArchive &arc, const TypeInfo * &info)
+FArchive &operator<< (FArchive &arc, const PClass * &info)
 {
 	if (arc.IsStoring ())
 	{

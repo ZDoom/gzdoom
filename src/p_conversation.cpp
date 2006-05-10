@@ -56,7 +56,7 @@ struct TeaserSpeech
 
 static FRandom pr_randomspeech("RandomSpeech");
 
-void GiveSpawner (player_t *player, const TypeInfo *type);
+void GiveSpawner (player_t *player, const PClass *type);
 
 TArray<FStrifeDialogueNode *> StrifeDialogues;
 
@@ -64,7 +64,7 @@ TArray<FStrifeDialogueNode *> StrifeDialogues;
 // to their index in the mobjinfo table. This table indexes all
 // the Strife actor types in the order Strife had them and is
 // initialized as part of the actor's setup in infodefaults.cpp.
-const TypeInfo *StrifeTypes[344];
+const PClass *StrifeTypes[344];
 
 static menu_t ConversationMenu;
 static TArray<menuitem_t> ConversationItems;
@@ -172,11 +172,11 @@ static const char *const RandomLines[NUM_RANDOM_TALKERS][NUM_RANDOM_LINES+1] =
 //
 // GetStrifeType
 //
-// Given an item type number, returns the corresponding TypeInfo.
+// Given an item type number, returns the corresponding PClass.
 //
 //============================================================================
 
-static const TypeInfo *GetStrifeType (int typenum)
+static const PClass *GetStrifeType (int typenum)
 {
 	if (typenum > 0 && typenum < 344)
 	{
@@ -322,7 +322,7 @@ static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, DWORD &prevSpeakerTy
 	FStrifeDialogueNode *node;
 	Speech speech;
 	char fullsound[16];
-	const TypeInfo *type;
+	const PClass *type;
 	int j;
 
 	node = new FStrifeDialogueNode;
@@ -392,7 +392,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FWadLump *lump, DWORD &prevSpeakerTy
 	FStrifeDialogueNode *node;
 	TeaserSpeech speech;
 	char fullsound[16];
-	const TypeInfo *type;
+	const PClass *type;
 	int j;
 
 	node = new FStrifeDialogueNode;
@@ -614,7 +614,7 @@ static int FindNode (const FStrifeDialogueNode *node)
 //
 //============================================================================
 
-static bool CheckStrifeItem (const TypeInfo *itemtype, int amount=-1)
+static bool CheckStrifeItem (const PClass *itemtype, int amount=-1)
 {
 	AInventory *item;
 
@@ -637,13 +637,13 @@ static bool CheckStrifeItem (const TypeInfo *itemtype, int amount=-1)
 //
 //============================================================================
 
-static void TakeStrifeItem (const TypeInfo *itemtype, int amount)
+static void TakeStrifeItem (const PClass *itemtype, int amount)
 {
 	if (itemtype == NULL || amount == 0)
 		return;
 
 	// Don't take quest items.
-	if (itemtype->IsDescendantOf (TypeInfo::FindType("QuestItem")))
+	if (itemtype->IsDescendantOf (PClass::FindClass(NAME_QuestItem)))
 		return;
 
 	// Don't take keys
@@ -1001,7 +1001,7 @@ static void PickConversationReply ()
 		{
 			// Trying to give a non-inventory item.
 			takestuff = false;
-			Printf("Attempting to give non-inventory item %s\n", reply->GiveType->Name+1);
+			Printf("Attempting to give non-inventory item %s\n", reply->GiveType->TypeName.GetChars());
 		}
 	}
 

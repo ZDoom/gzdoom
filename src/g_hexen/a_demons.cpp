@@ -19,7 +19,7 @@ void A_DemonAttack2_2 (AActor *);
 void A_DemonDeath (AActor *);
 void A_Demon2Death (AActor *);
 
-static void TossChunks (AActor *, const TypeInfo *const chunks[]);
+static void TossChunks (AActor *, const PClass *const chunks[]);
 
 // Demon, type 1 (green, like D'Sparil's) -----------------------------------
 
@@ -605,7 +605,7 @@ void A_DemonAttack2_2 (AActor *actor)
 
 void A_DemonDeath (AActor *actor)
 {
-	const TypeInfo *const ChunkTypes[] =
+	const PClass *const ChunkTypes[] =
 	{
 		RUNTIME_CLASS(ADemon1Chunk5),
 		RUNTIME_CLASS(ADemon1Chunk4),
@@ -625,7 +625,7 @@ void A_DemonDeath (AActor *actor)
 
 void A_Demon2Death (AActor *actor)
 {
-	const TypeInfo *const ChunkTypes[] =
+	const PClass *const ChunkTypes[] =
 	{
 		RUNTIME_CLASS(ADemon2Chunk5),
 		RUNTIME_CLASS(ADemon2Chunk4),
@@ -637,7 +637,7 @@ void A_Demon2Death (AActor *actor)
 	TossChunks (actor, ChunkTypes);
 }
 
-static void TossChunks (AActor *actor, const TypeInfo *const chunks[])
+static void TossChunks (AActor *actor, const PClass *const chunks[])
 {
 	AActor *mo;
 	angle_t angle;

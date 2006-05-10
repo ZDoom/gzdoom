@@ -1349,14 +1349,14 @@ void A_BFGSpray (AActor *mo)
 	int 				damage;
 	angle_t 			an;
 	AActor				*thingToHit;
-	const TypeInfo		*spraytype = NULL;
+	const PClass		*spraytype = NULL;
 	int					numrays = 40;
 	int					damagecnt = 15;
 
 	int index = CheckIndex (3, NULL);
 	if (index >= 0) 
 	{
-		spraytype = TypeInfo::FindType ((const char *)StateParameters[index]);
+		spraytype = PClass::FindClass ((const char *)StateParameters[index]);
 		numrays = EvalExpressionI (StateParameters[index+1], mo);
 		if (numrays <= 0)
 			numrays = 40;

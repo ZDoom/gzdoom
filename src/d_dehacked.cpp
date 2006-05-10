@@ -169,7 +169,7 @@ public:
 	void PlayPickupSound (AActor *toucher);
 	void DoPickupSpecial (AActor *toucher);
 private:
-	const TypeInfo *DetermineType ();
+	const PClass *DetermineType ();
 	AInventory *RealPickup;
 };
 
@@ -186,8 +186,8 @@ FState ADehackedPickup::States[] =
 BEGIN_DEFAULTS (ADehackedPickup, Any, -1, 0)
 END_DEFAULTS
 
-TArray<TypeInfo *> DehackedPickups;
-TArray<TypeInfo *> TouchedActors;
+TArray<PClass *> DehackedPickups;
+TArray<PClass *> TouchedActors;
 
 char *UnchangedSpriteNames;
 int NumUnchangedSprites;
@@ -299,7 +299,7 @@ struct StateMapper
 {
 	FState *State;
 	int StateSpan;
-	const TypeInfo *Owner;
+	const PClass *Owner;
 	bool OwnerIsPickup;
 };
 
@@ -477,7 +477,7 @@ static FState *FindState (int statenum)
 		{
 			if (StateMap[i].OwnerIsPickup)
 			{
-				TouchedActors.Push (const_cast<TypeInfo *>(StateMap[i].Owner));
+				TouchedActors.Push (const_cast<PClass *>(StateMap[i].Owner));
 			}
 			return StateMap[i].State + statenum - stateacc;
 		}
@@ -713,7 +713,7 @@ static int PatchThing (int thingy)
 	bool hadTranslucency = false;
 	bool hadStyle = false;
 	int oldflags;
-	const TypeInfo *type;
+	const PClass *type;
 	SWORD *ednum, dummyed;
 
 	type = NULL;
@@ -728,7 +728,7 @@ static int PatchThing (int thingy)
 		DPrintf ("Thing %d\n", thingy);
 		if (thingy > 0)
 		{
-			type = TypeInfo::FindType (GetName (InfoNames[thingy - 1]));
+			type = PClass::FindClass (GetName (InfoNames[thingy - 1]));
 			if (type == NULL)
 			{
 				info = &dummy;
@@ -1052,7 +1052,7 @@ static int PatchThing (int thingy)
 
 		if (info->flags & MF_SPECIAL)
 		{
-			TouchedActors.Push (const_cast<TypeInfo *>(type));
+			TouchedActors.Push (const_cast<PClass *>(type));
 		}
 
 		// Make MF3_ISMONSTER match MF_COUNTKILL
@@ -1293,7 +1293,7 @@ static int PatchSprite (int sprNum)
 
 static int PatchAmmo (int ammoNum)
 {
-	const TypeInfo *ammoType;
+	const PClass *ammoType;
 	AAmmo *defaultAmmo;
 	int result;
 	int *max;
@@ -1304,7 +1304,7 @@ static int PatchAmmo (int ammoNum)
 	if (ammoNum >= 0 && ammoNum < 4)
 	{
 		DPrintf ("Ammo %d.\n", ammoNum);
-		ammoType = TypeInfo::FindType (AmmoNames[ammoNum]);
+		ammoType = PClass::FindClass (AmmoNames[ammoNum]);
 		defaultAmmo = (AAmmo *)GetDefaultByType (ammoType);
 		max = &defaultAmmo->MaxAmount;
 		per = &defaultAmmo->Amount;
@@ -1336,9 +1336,9 @@ static int PatchAmmo (int ammoNum)
 	// Fix per-ammo/max-ammo amounts for descendants of the base ammo class
 	if (oldclip != *per)
 	{
-		for (int i = 0; i < TypeInfo::m_Types.Size(); ++i)
+		for (int i = 0; i < PClass::m_Types.Size(); ++i)
 		{
-			TypeInfo *type = TypeInfo::m_Types[i];
+			PClass *type = PClass::m_Types[i];
 
 			if (type == ammoType)
 				continue;
@@ -1411,7 +1411,7 @@ static int PatchWeapon (int weapNum)
 				{
 					val = 5;
 				}
-				info->AmmoType1 = TypeInfo::FindType (AmmoNames[val]);
+				info->AmmoType1 = PClass::FindClass (AmmoNames[val]);
 				if (info->AmmoType1 != NULL)
 				{
 					info->AmmoGive1 = ((AAmmo*)GetDefaultByType (info->AmmoType1))->Amount * 2;
@@ -1574,7 +1574,7 @@ static int PatchMisc (int dummy)
 					"Minotaur",
 					NULL
 				};
-				static const TypeInfo * const types[] =
+				static const PClass * const types[] =
 				{
 					RUNTIME_CLASS(APowerInvulnerable),
 					RUNTIME_CLASS(APowerStrength),
@@ -2431,7 +2431,7 @@ static bool LoadDehSupp ()
 				for (i = 0; i < NumStateMaps; i++)
 				{
 					const char *name = GetName (GetWord (supp + 6 + i*4));
-					const TypeInfo *type = TypeInfo::FindType (name);
+					const PClass *type = PClass::FindClass (name);
 					if (type == NULL)
 					{
 						Printf ("Can't find type %s\n", name);
@@ -2520,7 +2520,7 @@ void FinishDehPatch ()
 
 	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
 	{
-		TypeInfo *type = TouchedActors[touchedIndex];
+		PClass *type = TouchedActors[touchedIndex];
 		AActor *defaults1 = GetDefaultByType (type);
 		if (!(defaults1->flags & MF_SPECIAL))
 		{ // We only need to do this for pickups
@@ -2529,8 +2529,8 @@ void FinishDehPatch ()
 
 		// Create a new class that will serve as the actual pickup
 		char typeNameBuilder[32];
-		sprintf (typeNameBuilder, "ADehackedPickup%d", touchedIndex);
-		TypeInfo *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
+		sprintf (typeNameBuilder, "DehackedPickup%d", touchedIndex);
+		PClass *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
 			(copystring(typeNameBuilder), sizeof(ADehackedPickup));
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy (defaults2, defaults1, sizeof(AActor));
@@ -2548,7 +2548,7 @@ void FinishDehPatch ()
 		type->ActorInfo->SpawnID = 0;
 		type->ActorInfo->DoomEdNum = -1;
 
-		DPrintf ("%s replaces %s\n", subclass->Name, type->Name);
+		DPrintf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
 	}
 
 	// Since deh.MaxHealth was used incorrectly this can only be set
@@ -2565,7 +2565,7 @@ void HandleNoSector()
 
 	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
 	{
-		TypeInfo *ti = TouchedActors[touchedIndex];
+		PClass *ti = TouchedActors[touchedIndex];
 
 		if (ti!=NULL && ti->ActorInfo!=NULL && !ti->IsDescendantOf(RUNTIME_CLASS(ATeleportDest)))
 		{
@@ -2580,7 +2580,7 @@ void HandleNoSector()
 	}
 	// The BossEye must be handled even without any Dehacked interference
 	// because otherwise it would not react to sound.
-	const TypeInfo * ti = TypeInfo::FindType("BossEye");
+	const PClass * ti = PClass::FindClass("BossEye");
 	if (ti!=NULL)
 	{
 		AActor * def = GetDefaultByType(ti);
@@ -2618,7 +2618,7 @@ void A_SpawnDehackedPickup (AActor *actor)
 
 bool ADehackedPickup::TryPickup (AActor *toucher)
 {
-	const TypeInfo *type = DetermineType ();
+	const PClass *type = DetermineType ();
 	if (type == NULL)
 	{
 		return false;
@@ -2687,7 +2687,7 @@ void ADehackedPickup::Destroy ()
 	Super::Destroy ();
 }
 
-const TypeInfo *ADehackedPickup::DetermineType ()
+const PClass *ADehackedPickup::DetermineType ()
 {
 	// Look at the actor's current sprite to determine what kind of
 	// item to pretend to me.
@@ -2700,7 +2700,7 @@ const TypeInfo *ADehackedPickup::DetermineType ()
 		int lex = memcmp (DehSpriteMappings[mid].Sprite, sprites[sprite].name, 4);
 		if (lex == 0)
 		{
-			return TypeInfo::FindType (DehSpriteMappings[mid].ClassName);
+			return PClass::FindClass (DehSpriteMappings[mid].ClassName);
 		}
 		else if (lex < 0)
 		{

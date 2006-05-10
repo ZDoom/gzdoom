@@ -151,7 +151,7 @@ END_DEFAULTS
 
 void A_FogSpawn (AActor *actor)
 {
-	static const TypeInfo *fogs[3] =
+	static const PClass *fogs[3] =
 	{
 		RUNTIME_CLASS(AFogPatchSmall),
 		RUNTIME_CLASS(AFogPatchMedium),

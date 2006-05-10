@@ -26,10 +26,10 @@ BOOL P_Move (AActor *actor);
 BOOL P_TryWalk (AActor *actor);
 void P_NewChaseDir (AActor *actor);
 BOOL P_LookForPlayers (AActor *actor, BOOL allaround);
-AInventory *P_DropItem (AActor *source, const TypeInfo *type, int special, int chance);
+AInventory *P_DropItem (AActor *source, const PClass *type, int special, int chance);
 inline AInventory *P_DropItem (AActor *source, const char *type, int special, int chance)
 {
-	return P_DropItem (source, TypeInfo::FindType (type), special, chance);
+	return P_DropItem (source, PClass::FindClass (type), special, chance);
 }
 void P_TossItem (AActor *item);
 

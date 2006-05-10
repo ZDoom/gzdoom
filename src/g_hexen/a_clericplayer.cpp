@@ -125,7 +125,7 @@ void AClericPlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
 	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
-		(GiveInventoryType (TypeInfo::FindType ("CWeapMace")));
+		(GiveInventoryType (PClass::FindClass ("CWeapMace")));
 
 	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
 	AHexenArmor *armor = FindInventory<AHexenArmor>();

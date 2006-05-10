@@ -767,7 +767,7 @@ END_DEFAULTS
 
 void A_TossGib (AActor *self)
 {
-	const TypeInfo *gibtype = (self->flags & MF_NOBLOOD) ? RUNTIME_CLASS(AJunk) : RUNTIME_CLASS(AMeat);
+	const PClass *gibtype = (self->flags & MF_NOBLOOD) ? RUNTIME_CLASS(AJunk) : RUNTIME_CLASS(AMeat);
 	AActor *gib = Spawn (gibtype, self->x, self->y, self->z + 24*FRACUNIT);
 	angle_t an;
 	int speed;

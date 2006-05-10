@@ -1,6 +1,9 @@
 // 'None' must always be the first name.
 xx(None)
 
+xx(Super)
+xx(Object)
+
 // Hexen sound sequence names
 xx(Platform)
 xx(PlatformMetal)
@@ -17,10 +20,6 @@ xx(DoorCreak)
 xx(DoorMetal2)
 xx(Wind)
 
-#if 0
-xx(Super)
-xx(Object)
-
 // Special bosses A_BossDeath knows about
 xx(Fatso)
 xx(Arachnotron)
@@ -31,6 +30,11 @@ xx(Ironlich)
 xx(Minotaur)
 xx(Sorcerer2)
 
+// P_SpawnMapThing checks for these as health items (I smell a FIXME)
+xx(Berserk)
+xx(Soulsphere)
+xx(Megasphere)		// also counts as armor for P_SpawnMapThing
+
 // Standard player classes
 xx(DoomPlayer)
 xx(HereticPlayer)
@@ -38,6 +42,31 @@ xx(StrifePlayer)
 xx(FighterPlayer)
 xx(ClericPlayer)
 xx(MagePlayer)
+xx(ChickenPlayer)
+xx(PigPlayer)
+
+// Flechette names for the different Hexen player classes
+xx(ArtiPoisonBag1)
+xx(ArtiPoisonBag2)
+xx(ArtiPoisonBag3)
+
+// Strife quests
+xx(QuestItem)
+
+// Auto-usable health items
+xx(ArtiHealth)
+xx(ArtiSuperHealth)
+xx(MedicalKit)
+xx(MedPatch)
+
+// The Wings of Wrath
+xx(ArtiFly)
+
+// Doom ammo types
+xx(Clip)
+xx(Shell)
+xx(RocketAmmo)
+xx(Cell)
 
 // Weapon names for the Strife status bar
 xx(StrifeCrossbow)
@@ -47,15 +76,10 @@ xx(MiniMissileLauncher)
 xx(StrifeGrenadeLauncher)
 xx(Mauler)
 
-// Flechette names for the different Hexen player classes
-xx(ArtiPoisonBag1)
-xx(ArtiPoisonBag2)
-xx(ArtiPoisonBag3)
+xx(Chicken)
+xx(Pig)
 
-// P_SpawnMapThing checks for these as health items (I smell a FIXME)
-xx(Berserk)
-xx(Soulsphere)
-xx(Megasphere)		// also counts as armor for P_SpawnMapThing
+#if 0
 
 // Standard animator names.
 xx(Spawn)

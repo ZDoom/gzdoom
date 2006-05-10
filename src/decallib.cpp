@@ -349,9 +349,9 @@ void FDecalLib::ReadAllDecals ()
 		SC_Close ();
 	}
 	// Supporting code to allow specifying decals directly in the DECORATE lump
-	for (i = 0; i < TypeInfo::m_RuntimeActors.Size(); i++)
+	for (i = 0; i < PClass::m_RuntimeActors.Size(); i++)
 	{
-		AActor *def = (AActor*)GetDefaultByType (TypeInfo::m_RuntimeActors[i]);
+		AActor *def = (AActor*)GetDefaultByType (PClass::m_RuntimeActors[i]);
 
 		intptr_t v = (intptr_t)def->DecalGenerator;
 		if (v > 0 && v <= (intptr_t)DecalNames.Size())
@@ -585,26 +585,18 @@ void FDecalLib::ParseDecalGroup ()
 
 void FDecalLib::ParseGenerator ()
 {
-	const TypeInfo *type;
+	const PClass *type;
 	FDecalBase *decal;
 	AActor *actor;
 
 	// Get name of generator (actor)
 	SC_MustGetString ();
-	type = TypeInfo::FindType (sc_String);
+	type = PClass::FindClass (sc_String);
 	if (type == NULL || type->ActorInfo == NULL)
 	{
-		if (type == NULL)
-		{
-			type = TypeInfo::IFindType (sc_String);
-			if (type != NULL)
-			{
-				SC_ScriptError ("%s is not an actor. Did you mean %s?", sc_String, type->Name + 1);
-			}
-		}
 		SC_ScriptError ("%s is not an actor.", sc_String);
 	}
-	actor = (AActor *)type->ActorInfo->Defaults;
+	actor = (AActor *)type->Defaults;
 
 	// Get name of generated decal
 	SC_MustGetString ();
@@ -894,7 +886,7 @@ void FDecalLib::AddDecal (FDecalBase *decal)
 		// Fix references to the old decal so that they use the new one instead.
 		for (unsigned int i = 0; i < node->Users.Size(); ++i)
 		{
-			((AActor *)node->Users[i]->ActorInfo->Defaults)->DecalGenerator = decal;
+			((AActor *)node->Users[i]->Defaults)->DecalGenerator = decal;
 		}
 		decal->Users = node->Users;
 		delete node;

@@ -713,7 +713,10 @@ CCMD(linetarget)
 	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, 0);
 	if (linetarget)
 	{
-		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",linetarget->GetClass()->Name+1,linetarget->health,linetarget->GetDefault()->health);
+		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
+			linetarget->GetClass()->TypeName.GetChars(),
+			linetarget->health,
+			linetarget->GetDefault()->health);
 	}
 	else Printf("No target found\n");
 }
@@ -734,7 +737,9 @@ CCMD(monster)
 	{
 		if (mo->flags3&MF3_ISMONSTER && !(mo->flags&MF_CORPSE) && !(mo->flags&MF_FRIENDLY))
 		{
-			Printf ("%s at (%ld,%ld,%ld)\n", mo->GetClass()->Name+1, mo->x>>16, mo->y>>16, mo->z>>16);
+			Printf ("%s at (%ld,%ld,%ld)\n",
+				mo->GetClass()->TypeName.GetChars(),
+				mo->x >> FRACBITS, mo->y >> FRACBITS, mo->z >> FRACBITS);
 		}
 	}
 }
@@ -755,7 +760,9 @@ CCMD(items)
 	{
 		if (mo->IsKindOf(RUNTIME_CLASS(AInventory)) && mo->flags&MF_SPECIAL)
 		{
-			Printf ("%s at (%ld,%ld,%ld)\n",mo->GetClass()->Name+1,mo->x>>16,mo->y>>16,mo->z>>16);
+			Printf ("%s at (%ld,%ld,%ld)\n",
+				mo->GetClass()->TypeName.GetChars(),
+				mo->x >> FRACBITS, mo->y >> FRACBITS, mo->z >> FRACBITS);
 		}
 	}
 }

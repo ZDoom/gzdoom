@@ -371,7 +371,7 @@ static bool DoSubstitution (char *out, const char *in)
 				}
 				else
 				{
-					out += sprintf (out, "%s", weapon->GetClass()->Name+1);
+					out += sprintf (out, "%s", weapon->GetClass()->TypeName.GetChars());
 				}
 			}
 		}
@@ -412,10 +412,10 @@ static bool DoSubstitution (char *out, const char *in)
 				}
 				else
 				{
-					out += sprintf (out, "%s", weapon->Ammo1->GetClass()->Name+1);
+					out += sprintf (out, "%s", weapon->Ammo1->GetClass()->TypeName.GetChars());
 					if (weapon->Ammo2 != NULL)
 					{
-						out += sprintf (out, "/%s", weapon->Ammo2->GetClass()->Name+1);
+						out += sprintf (out, "/%s", weapon->Ammo2->GetClass()->TypeName.GetChars());
 					}
 				}
 			}

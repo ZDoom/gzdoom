@@ -66,7 +66,7 @@ extern void LoadDecorations (void (*process)(FState *, int));
 
 FArchive &operator<< (FArchive &arc, FState *&state)
 {
-	const TypeInfo *info;
+	const PClass *info;
 
 	if (arc.IsStoring ())
 	{
@@ -91,7 +91,7 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 	}
 	else
 	{
-		const TypeInfo *info;
+		const PClass *info;
 		DWORD ofs;
 
 		arc.UserReadClass (info);
@@ -113,7 +113,7 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 }
 
 // Find the actor that a state belongs to.
-const TypeInfo *FState::StaticFindStateOwner (const FState *state)
+const PClass *FState::StaticFindStateOwner (const FState *state)
 {
 	const FActorInfo *info = RUNTIME_CLASS(AActor)->ActorInfo;
 
@@ -133,9 +133,9 @@ const TypeInfo *FState::StaticFindStateOwner (const FState *state)
 		}
 	}
 
-	for (unsigned int i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
+	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
 	{
-		info = TypeInfo::m_RuntimeActors[i]->ActorInfo;
+		info = PClass::m_RuntimeActors[i]->ActorInfo;
 		if (state >= info->OwnedStates &&
 			state <  info->OwnedStates + info->NumOwnedStates)
 		{
@@ -148,7 +148,7 @@ const TypeInfo *FState::StaticFindStateOwner (const FState *state)
 
 // Find the actor that a state belongs to, but restrict the search to
 // the specified type and its ancestors.
-const TypeInfo *FState::StaticFindStateOwner (const FState *state, const FActorInfo *info)
+const PClass *FState::StaticFindStateOwner (const FState *state, const FActorInfo *info)
 {
 	while (info != NULL)
 	{
@@ -157,7 +157,7 @@ const TypeInfo *FState::StaticFindStateOwner (const FState *state, const FActorI
 		{
 			return info->Class;
 		}
-		info = info->Class->ParentType->ActorInfo;
+		info = info->Class->ParentClass->ActorInfo;
 	}
 	return NULL;
 }
@@ -218,7 +218,7 @@ void FActorInfo::StaticInit ()
 		sprites.Push (temp);
 	}
 
-	// Attach FActorInfo structures to every actor's TypeInfo
+	// Attach FActorInfo structures to every actor's PClass
 	while (++reg != NULL)
 	{
 		reg->Class->ActorInfo = reg;
@@ -226,7 +226,7 @@ void FActorInfo::StaticInit ()
 			(unsigned)reg->OwnedStates->sprite.index < sprites.Size ())
 		{
 			Printf ("\x1c+%s is stateless. Fix its default list.\n",
-				reg->Class->Name + 1);
+				reg->Class->TypeName.GetChars());
 		}
 		ProcessStates (reg->OwnedStates, reg->NumOwnedStates);
 	}
@@ -266,9 +266,9 @@ void FActorInfo::StaticSetActorNums ()
 		reg->RegisterIDs ();
 	}
 
-	for (unsigned int i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
+	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
 	{
-		TypeInfo::m_RuntimeActors[i]->ActorInfo->RegisterIDs ();
+		PClass::m_RuntimeActors[i]->ActorInfo->RegisterIDs ();
 	}
 }
 
@@ -308,7 +308,7 @@ FDoomEdMap::~FDoomEdMap()
 	Empty();
 }
 
-void FDoomEdMap::AddType (int doomednum, const TypeInfo *type)
+void FDoomEdMap::AddType (int doomednum, const PClass *type)
 {
 	unsigned int hash = (unsigned int)doomednum % DOOMED_HASHSIZE;
 	FDoomEdEntry *entry = DoomEdHash[hash];
@@ -326,7 +326,7 @@ void FDoomEdMap::AddType (int doomednum, const TypeInfo *type)
 	else
 	{
 		Printf (PRINT_BOLD, "Warning: %s and %s both have doomednum %d.\n",
-			type->Name+1, entry->Type->Name+1, doomednum);
+			type->TypeName.GetChars(), entry->Type->TypeName.GetChars(), doomednum);
 	}
 	entry->Type = type;
 }
@@ -366,7 +366,7 @@ void FDoomEdMap::Empty ()
 	}
 }
 
-const TypeInfo *FDoomEdMap::FindType (int doomednum) const
+const PClass *FDoomEdMap::FindType (int doomednum) const
 {
 	unsigned int hash = (unsigned int)doomednum % DOOMED_HASHSIZE;
 	FDoomEdEntry *entry = DoomEdHash[hash];
@@ -377,7 +377,7 @@ const TypeInfo *FDoomEdMap::FindType (int doomednum) const
 
 struct EdSorting
 {
-	const TypeInfo *Type;
+	const PClass *Type;
 	int DoomEdNum;
 };
 
@@ -389,7 +389,7 @@ static int STACK_ARGS sortnums (const void *a, const void *b)
 
 void FDoomEdMap::DumpMapThings ()
 {
-	TArray<EdSorting> infos (TypeInfo::m_Types.Size());
+	TArray<EdSorting> infos (PClass::m_Types.Size());
 	int i;
 
 	for (i = 0; i < DOOMED_HASHSIZE; ++i)
@@ -415,7 +415,7 @@ void FDoomEdMap::DumpMapThings ()
 		for (i = 0; i < (int)infos.Size (); ++i)
 		{
 			Printf ("%6d %s\n",
-				infos[i].DoomEdNum, infos[i].Type->Name + 1);
+				infos[i].DoomEdNum, infos[i].Type->TypeName.GetChars());
 		}
 	}
 }
@@ -434,15 +434,14 @@ CCMD (summon)
 
 	if (argv.argc() > 1)
 	{
-		// Don't use FindType, because we want a case-insensitive search
-		const TypeInfo *type = TypeInfo::IFindType (argv[1]);
+		const PClass *type = PClass::FindClass (argv[1]);
 		if (type == NULL)
 		{
 			Printf ("Unknown class '%s'\n", argv[1]);
 			return;
 		}
 		Net_WriteByte (DEM_SUMMON);
-		Net_WriteString (type->Name + 1);
+		Net_WriteString (type->TypeName.GetChars());
 	}
 }
 
@@ -453,14 +452,13 @@ CCMD (summonfriend)
 
 	if (argv.argc() > 1)
 	{
-		// Don't use FindType, because we want a case-insensitive search
-		const TypeInfo *type = TypeInfo::IFindType (argv[1]);
+		const PClass *type = PClass::FindClass (argv[1]);
 		if (type == NULL)
 		{
 			Printf ("Unknown class '%s'\n", argv[1]);
 			return;
 		}
 		Net_WriteByte (DEM_SUMMONFRIEND);
-		Net_WriteString (type->Name + 1);
+		Net_WriteString (type->TypeName.GetChars());
 	}
 }

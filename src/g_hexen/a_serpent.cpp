@@ -619,7 +619,7 @@ void A_SerpentHeadPop (AActor *actor)
 void A_SerpentSpawnGibs (AActor *actor)
 {
 	AActor *mo;
-	static const TypeInfo *const GibTypes[] =
+	static const PClass *const GibTypes[] =
 	{
 		RUNTIME_CLASS(ASerpentGib3),
 		RUNTIME_CLASS(ASerpentGib2),

@@ -1427,7 +1427,7 @@ void FBaseStatusBar::DrawConsistancy () const
 	}
 }
 
-void FBaseStatusBar::FlashItem (const TypeInfo *itemtype)
+void FBaseStatusBar::FlashItem (const PClass *itemtype)
 {
 }
 

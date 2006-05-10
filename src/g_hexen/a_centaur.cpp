@@ -297,7 +297,7 @@ void A_CentaurAttack2 (AActor *actor)
 
 void A_CentaurDropStuff (AActor *actor)
 {
-	const TypeInfo *const DropTypes[] =
+	const PClass *const DropTypes[] =
 	{
 		RUNTIME_CLASS(ACentaurSword),
 		RUNTIME_CLASS(ACentaurShield)

@@ -536,13 +536,13 @@ extern	gamestate_t 	wipegamestate;
 
 void F_StartCast (void)
 {
-	const TypeInfo *type;
+	const PClass *type;
 	int i;
 
 	// [RH] Set the names and defaults for the cast
 	for (i = 0; castorder[i].type; i++)
 	{
-		type = TypeInfo::FindType (castorder[i].type);
+		type = PClass::FindClass (castorder[i].type);
 		if (type == NULL)
 			castorder[i].info = GetDefault<AActor>();
 		else
@@ -551,13 +551,13 @@ void F_StartCast (void)
 
 	for (i = 0; atkstates[i].type; i++)
 	{
-		type = TypeInfo::FindType (atkstates[i].type);
+		type = PClass::FindClass (atkstates[i].type);
 		if (type != NULL)
 		{
 			if (atkstates[i].melee)
-				atkstates[i].match = ((AActor *)(type->ActorInfo->Defaults))->MeleeState + atkstates[i].ofs;
+				atkstates[i].match = ((AActor *)(type->Defaults))->MeleeState + atkstates[i].ofs;
 			else
-				atkstates[i].match = ((AActor *)(type->ActorInfo->Defaults))->MissileState + atkstates[i].ofs;
+				atkstates[i].match = ((AActor *)(type->Defaults))->MissileState + atkstates[i].ofs;
 		}
 		else
 		{
@@ -565,9 +565,9 @@ void F_StartCast (void)
 		}
 	}
 
-	type = TypeInfo::FindType ("DoomPlayer");
+	type = PClass::FindClass (NAME_DoomPlayer);
 	if (type != NULL)
-		advplayerstate = ((AActor *)(type->ActorInfo->Defaults))->MissileState;
+		advplayerstate = ((AActor *)(type->Defaults))->MissileState;
 
 	wipegamestate = GS_FORCEWIPE;
 	castnum = 0;

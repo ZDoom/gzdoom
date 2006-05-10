@@ -11,7 +11,7 @@ class AWeaponHolder : public AInventory
 
 public:
 	int PieceMask;
-	const TypeInfo * PieceWeapon;
+	const PClass * PieceWeapon;
 
 	void Serialize (FArchive &arc)
 	{

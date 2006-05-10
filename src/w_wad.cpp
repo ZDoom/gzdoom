@@ -195,7 +195,7 @@ FWadCollection::~FWadCollection ()
 				delete[] LumpInfo[i].fullname;
 			}
 		}
-		delete[] LumpInfo;
+		free (LumpInfo);
 		LumpInfo = NULL;
 	}
 	if (Wads != NULL)
@@ -204,7 +204,7 @@ FWadCollection::~FWadCollection ()
 		{
 			delete Wads[i];
 		}
-		delete[] Wads;
+		free (Wads);
 		Wads = NULL;
 	}
 }

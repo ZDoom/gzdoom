@@ -4290,9 +4290,6 @@
 				RelativePath="docs\rh-log.txt">
 			</File>
 			<File
-				RelativePath="docs\thingdef_doc.txt">
-			</File>
-			<File
 				RelativePath="docs\zdoom.txt">
 			</File>
 			<Filter

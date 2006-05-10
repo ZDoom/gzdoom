@@ -1,4 +1,17 @@
 May 9, 2006
+- Fixed?: WallSpriteColumn apparently needs to set dc_texturefrac. At least
+  Valgrind seems to say so.
+- Fixed: The FWadCollection destructor needs to use free to free the LumpInfo
+  and Wads arrays.
+- Fixed: The ColorMapKiller needs to use the delete[] form of delete.
+- Fixed: FConfigFile::ClearCurrentSection() should be calling the delete[] form
+  of delete to free the entry.
+- Fixed: FPatchTexture::MakeTexture() does not need to blindly recreate the
+  Spans if they already exist.
+- Fixed: The FMultiPatchTexture destructor did not call its Unload() method.
+- Restored the original padding calculation to FMultiPatchTexture::MakeTexture().
+  I believe the Valgrind errors were caused by accessing off the end of the
+  screen buffer, not from accessing off the end of a texture.
 - Backported the classnames-are-names changes from the FP code.
 - Backported the improved hierarchical dumpclasses command from the FP code.
 - Updated Jim's Makefile.linux.

@@ -1273,6 +1273,11 @@ void FPatchTexture::MakeTexture ()
 	}
 
 	// Create the spans
+	if (Spans != NULL)
+	{
+		return;
+	}
+
 	Spans = (Span **)M_Malloc (sizeof(Span*)*Width + sizeof(Span)*numspans);
 	spanstuffer = (Span *)((BYTE *)Spans + sizeof(Span*)*Width);
 	warned = false;
@@ -2152,6 +2157,7 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 
 FMultiPatchTexture::~FMultiPatchTexture ()
 {
+	Unload ();
 	if (Parts != NULL)
 	{
 		delete[] Parts;
@@ -2227,8 +2233,7 @@ void FMultiPatchTexture::MakeTexture ()
 {
 	// Add a little extra space at the end if the texture's height is not
 	// a power of 2, in case somebody accidentally makes it repeat vertically.
-	// (Jim's Valgrind dump indicates that more padding is needed here.)
-	int numpix = Width * Height + Height;// (1 << HeightBits) - Height;
+	int numpix = Width * Height + (1 << HeightBits) - Height;
 
 	Pixels = new BYTE[numpix];
 	memset (Pixels, 0, numpix);
@@ -2843,12 +2848,12 @@ static struct ColorMapKiller
 	{
 		if (fakecmaps != NULL)
 		{
-			delete fakecmaps;
+			delete[] fakecmaps;
 			fakecmaps = NULL;
 		}
 		if (realcolormaps != NULL)
 		{
-			delete realcolormaps;
+			delete[] realcolormaps;
 			realcolormaps = NULL;
 		}
 	}

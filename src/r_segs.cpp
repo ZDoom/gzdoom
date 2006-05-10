@@ -2488,6 +2488,7 @@ static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTextur
 	const BYTE *column;
 	const FTexture::Span *spans;
 	column = WallSpriteTile->GetColumn (texturecolumn, &spans);
+	dc_texturefrac = 0;
 	drawfunc (column, spans);
 	rw_light += rw_lightstep;
 }

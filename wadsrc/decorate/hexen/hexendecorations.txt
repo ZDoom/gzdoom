@@ -1139,7 +1139,7 @@ ACTOR ZBucket 8103
 	}
 }
 
-ACTOR ZFireThing 8060
+ACTOR FireThing 8060
 {
 	Game Hexen
 	Radius 5
@@ -1161,7 +1161,7 @@ ACTOR ZFireThing 8060
 	}
 }
 
-ACTOR ZBrassTorch 8061
+ACTOR BrassTorch 8061
 {
 	Game Hexen
 	Radius 6

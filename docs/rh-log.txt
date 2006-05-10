@@ -1,4 +1,7 @@
 May 10, 2006 (Changes by Graf Zahl)
+- Fixed: PClass::CreateNew didn't check whether the class had valid
+  defaults and tried to copy data from a NULL pointer.
+- Fixed: FireThing and BrassTorch were misspelled in hexendecorations.txt
 - Changed A_ChangeFlag so that it doesn't need to alter the flag 
   string. With strings being passed as names this is unsafe.
 - Removed unused parameter types from the function parameter parser for

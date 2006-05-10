@@ -165,7 +165,10 @@ DObject *PClass::CreateNew () const
 	BYTE *mem = (BYTE *)M_Malloc (Size);
 
 	// Set this object's defaults before constructing it.
-	memcpy (mem, Defaults, Size);
+	if (Defaults!=NULL)
+		memcpy (mem, Defaults, Size);
+	else
+		memset (mem, 0, Size);
 
 	ConstructNative (mem);
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));

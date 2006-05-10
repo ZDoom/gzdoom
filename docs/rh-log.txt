@@ -1,4 +1,6 @@
 May 9, 2006
+- Added a new setting for am_rotate: 2 will enable rotation only for the
+  overlay map while leaving the regular map unrotated.
 - Added a new setting for am_overlay: 2 will disable the normal automap and
   show only the overlayed version.
 - Fixed?: WallSpriteColumn apparently needs to set dc_texturefrac. At least

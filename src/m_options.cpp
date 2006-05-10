@@ -531,7 +531,7 @@ menu_t VideoMenu =
  *=======================================*/
 static void StartMapColorsMenu (void);
 
-EXTERN_CVAR (Bool, am_rotate)
+EXTERN_CVAR (Int, am_rotate)
 EXTERN_CVAR (Int, am_overlay)
 EXTERN_CVAR (Bool, am_usecustomcolors)
 EXTERN_CVAR (Bool, am_showitems)
@@ -553,17 +553,23 @@ static value_t SecretTypes[] = {
 	{ 2, "Always" },
 };
 
-static value_t OverlayTypes[] = {
+static value_t RotateTypes[] = {
 	{ 0, "Off" },
 	{ 1, "On" },
-	{ 2, "Exclusively" }
+	{ 2, "On for overlay only" }
+};
+
+static value_t OverlayTypes[] = {
+	{ 0, "Off" },
+	{ 1, "Overlay+Normal" },
+	{ 2, "Overlay Only" }
 };
 
 static menuitem_t AutomapItems[] = {
 	{ discrete, "Map color set",		{&am_usecustomcolors},	{2.0}, {0.0},	{0.0}, {MapColorTypes} },
 	{ more,		"Set custom colors",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t*)StartMapColorsMenu} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ discrete, "Rotate automap",		{&am_rotate},		   	{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Rotate automap",		{&am_rotate},		   	{3.0}, {0.0},	{0.0}, {RotateTypes} },
 	{ discrete, "Overlay automap",		{&am_overlay},			{3.0}, {0.0},	{0.0}, {OverlayTypes} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Show item counts",		{&am_showitems},		{2.0}, {0.0},	{0.0}, {OnOff} },
@@ -572,7 +578,7 @@ static menuitem_t AutomapItems[] = {
 	{ discrete, "Show time elapsed",	{&am_showtime},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Show total time elapsed",	{&am_showtotaltime},	{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Show secrets on map",		{&am_map_secrets},		{3.0}, {0.0},	{0.0}, {SecretTypes} },
-	{ discrete, "Draw automap background",	{&am_drawmapback},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Draw map background",	{&am_drawmapback},		{2.0}, {0.0},	{0.0}, {OnOff} },
 };
 
 menu_t AutomapMenu =

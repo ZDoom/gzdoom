@@ -96,7 +96,7 @@ inline fixed_t MTOF(fixed_t x)
 
 static int WeightingScale;
 
-CVAR (Bool,  am_rotate,				false,		CVAR_ARCHIVE);
+CVAR (Int,   am_rotate,				0,			CVAR_ARCHIVE);
 CVAR (Int,   am_overlay,			0,			CVAR_ARCHIVE);
 CVAR (Bool,  am_showsecrets,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showmonsters,		true,		CVAR_ARCHIVE);
@@ -496,7 +496,7 @@ static void AM_ClipRotatedExtents ()
 {
 	fixed_t rmin_x, rmin_y, rmax_x, rmax_y;
 
-	if (!am_rotate)
+	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
 		rmin_x = min_x;
 		rmin_y = min_y;
@@ -1068,7 +1068,7 @@ void AM_doFollowPlayer ()
   		// do the parallax parchment scrolling.
 		sx = (players[consoleplayer].camera->x - f_oldloc.x) >> FRACTOMAPBITS;
 		sy = (f_oldloc.y - players[consoleplayer].camera->y) >> FRACTOMAPBITS;
-		if (am_rotate)
+		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			AM_rotate (&sx, &sy, players[consoleplayer].camera->angle - ANG90);
 		}
@@ -1769,7 +1769,7 @@ void AM_drawGrid (int color)
 		ml.b.x = x;
 		ml.a.y = miny - exty;
 		ml.b.y = ml.a.y + minlen;
-		if (am_rotate)
+		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			AM_rotatePoint (&ml.a.x, &ml.a.y);
 			AM_rotatePoint (&ml.b.x, &ml.b.y);
@@ -1791,7 +1791,7 @@ void AM_drawGrid (int color)
 		ml.b.x = ml.a.x + minlen;
 		ml.a.y = y;
 		ml.b.y = y;
-		if (am_rotate)
+		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			AM_rotatePoint (&ml.a.x, &ml.a.y);
 			AM_rotatePoint (&ml.b.x, &ml.b.y);
@@ -1816,7 +1816,7 @@ void AM_drawWalls (bool allmap)
 		l.b.x = lines[i].v2->x >> FRACTOMAPBITS;
 		l.b.y = lines[i].v2->y >> FRACTOMAPBITS;
 
-		if (am_rotate)
+		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			AM_rotatePoint (&l.a.x, &l.a.y);
 			AM_rotatePoint (&l.b.x, &l.b.y);
@@ -1992,7 +1992,7 @@ void AM_drawPlayers ()
 
 	if (!multiplayer)
 	{
-		if (am_rotate)
+		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			angle = ANG90;
 		else
 			angle = players[consoleplayer].camera->angle;
@@ -2047,7 +2047,7 @@ void AM_drawPlayers ()
 			pt.y = p->mo->y >> FRACTOMAPBITS;
 			angle = p->mo->angle;
 
-			if (am_rotate)
+			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				AM_rotatePoint (&pt.x, &pt.y);
 				angle -= players[consoleplayer].camera->angle - ANG90;
@@ -2077,7 +2077,7 @@ void AM_drawThings (int _color)
 			p.y = t->y >> FRACTOMAPBITS;
 			angle = t->angle;
 
-			if (am_rotate)
+			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				AM_rotatePoint (&p.x, &p.y);
 				angle += ANG90 - players[consoleplayer].camera->angle;
@@ -2131,7 +2131,7 @@ void AM_drawMarks ()
 			pt.x = markpoints[i].x;
 			pt.y = markpoints[i].y;
 
-			if (am_rotate)
+			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 				AM_rotatePoint (&pt.x, &pt.y);
 
 			fx = CXMTOF(pt.x);

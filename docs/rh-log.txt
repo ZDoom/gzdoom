@@ -1,4 +1,5 @@
 May 9, 2006
+- Redid ClearLcoks() fix that I accidentally removed.
 - Added a new setting for am_rotate: 2 will enable rotation only for the
   overlay map while leaving the regular map unrotated.
 - Added a new setting for am_overlay: 2 will disable the normal automap and

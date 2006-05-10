@@ -2180,7 +2180,7 @@ void ProcessActor(void (*process)(FState *, int))
 	catch (...)
 	{
 		if (info)
-			SC_ScriptError("Unexpected error during parsing of actor %s", info->Class->Name+1);
+			SC_ScriptError("Unexpected error during parsing of actor %s", info->Class->TypeName.GetChars());
 		else
 			SC_ScriptError("Unexpected error during parsing of actor definitions");
 	}

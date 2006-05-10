@@ -322,7 +322,11 @@ static void ClearLocks()
 	{
 		if (PClass::m_Types[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
 		{
-			static_cast<AKey*>(GetDefaultByType(PClass::m_Types[i]))->KeyNumber=0;
+			AKey *key = static_cast<AKey*>(GetDefaultByType(PClass::m_Types[i]));
+			if (key != NULL)
+			{
+				key->KeyNumber = 0;
+			}
 		}
 	}
 	for(i=0;i<256;i++)

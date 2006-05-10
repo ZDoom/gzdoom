@@ -12,6 +12,9 @@ May 9, 2006
 - Fixed: The secnodes were never freed.
 
 May 9, 2006 (Changes by Graf Zahl)
+- Fixed a few Strife ammo amount values.
+- Fixed the ClearLocks function so it doesn't crash when called before the
+  ActorInfos have been created.
 - Fixed: The FSpecialFont constructor created the name string twice.
 - Fixed: The animated door parser was still leaking memory when it encountered
   an invalid animation due to missing textures.

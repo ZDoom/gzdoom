@@ -322,7 +322,8 @@ static void ClearLocks()
 	{
 		if (TypeInfo::m_Types[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
 		{
-			static_cast<AKey*>(GetDefaultByType(TypeInfo::m_Types[i]))->KeyNumber=0;
+			if (TypeInfo::m_Types[i]->ActorInfo != NULL)
+				static_cast<AKey*>(GetDefaultByType(TypeInfo::m_Types[i]))->KeyNumber=0;
 		}
 	}
 	for(i=0;i<256;i++)

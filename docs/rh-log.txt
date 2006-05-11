@@ -3,11 +3,11 @@ May 10, 2006
   height if the floor had moved while they were there before. This was because
   the player was spawned on the original copy of the map before the changes to
   it were dearchived, so they didn't know about the new floor height.
-- Guess we're not leak-free yet. Try travelling around in a hub and see that
-  it leaks. I don't have time to track it down right now.
 - Fixed: Calling BaseFileSearch() and letting it fill in the file's extension
   didn't work because the space for the path was deallocated before it
   returned.
+- Guess we're not leak-free yet. Try travelling around in a hub and see that
+  it leaks. I don't have time to track it down right now.
 - Yay! We now seem to be free of memory leaks! The next step will be to
   merge a lot of these static destructor-only structs into regular
   functions added to the exit chain with atterm so that they can be called

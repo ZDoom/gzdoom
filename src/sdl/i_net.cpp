@@ -170,12 +170,12 @@ int FindNode (sockaddr_in *address)
 	int i;
 
 	// find remote node number
-	for (i = 0; i<doomcom->numnodes; i++)
+	for (i = 0; i<doomcom.numnodes; i++)
 		if (address->sin_addr.s_addr == sendaddress[i].sin_addr.s_addr
 			&& address->sin_port == sendaddress[i].sin_port)
 			break;
 
-	if (i == doomcom->numnodes)
+	if (i == doomcom.numnodes)
 	{
 		// packet is not from one of the players (new game broadcast?)
 		i = -1;
@@ -191,9 +191,9 @@ void PacketSend (void)
 	int c;
 
 	//printf ("sending %i\n",gametic);
-	c = sendto (mysocket , (const char*)doomcom->data, doomcom->datalength
-				,0,(sockaddr *)&sendaddress[doomcom->remotenode]
-				,sizeof(sendaddress[doomcom->remotenode]));
+	c = sendto (mysocket , (const char*)doomcom.data, doomcom.datalength
+				,0,(sockaddr *)&sendaddress[doomcom.remotenode]
+				,sizeof(sendaddress[doomcom.remotenode]));
 
 	//	if (c == -1)
 	//			I_Error ("SendPacket error: %s",strerror(errno));
@@ -211,7 +211,7 @@ void PacketGet (void)
 	int node;
 
 	fromlen = sizeof(fromaddress);
-	c = recvfrom (mysocket, (char*)doomcom->data, MAX_MSGLEN, 0
+	c = recvfrom (mysocket, (char*)doomcom.data, MAX_MSGLEN, 0
 				  , (sockaddr *)&fromaddress, &fromlen);
 	node = FindNode (&fromaddress);
 
@@ -225,7 +225,7 @@ void PacketGet (void)
 			Printf (PRINT_BOLD, "The connection from %s was dropped\n",
 				players[sendplayer[node]].userinfo.netname);
 
-			doomcom->data[0] = 0x80;	// NCMD_EXIT
+			doomcom.data[0] = 0x80;	// NCMD_EXIT
 			c = 1;
 		}
 		else if (err != WSAEWOULDBLOCK)
@@ -234,13 +234,13 @@ void PacketGet (void)
 		}
 		else
 		{
-			doomcom->remotenode = -1;		// no packet
+			doomcom.remotenode = -1;		// no packet
 			return;
 		}
 	}
 
-	doomcom->remotenode = node;
-	doomcom->datalength = (short)c;
+	doomcom.remotenode = node;
+	doomcom.datalength = (short)c;
 }
 
 sockaddr_in *PreGet (void *buffer, int bufferlen, bool noabort)
@@ -307,7 +307,7 @@ void BuildAddress (sockaddr_in *address, char *name)
 	if (!isnamed)
 	{
 		address->sin_addr.s_addr = inet_addr (name);
-		Printf ("Node number %d address %s\n", doomcom->numnodes, name);
+		Printf ("Node number %d address %s\n", doomcom.numnodes, name);
 	}
 	else
 	{
@@ -316,7 +316,7 @@ void BuildAddress (sockaddr_in *address, char *name)
 			I_FatalError ("gethostbyname: couldn't find %s\n%s", name, neterror());
 		address->sin_addr.s_addr = *(int *)hostentry->h_addr_list[0];
 		Printf ("Node number %d hostname %s\n",
-			doomcom->numnodes, hostentry->h_name);
+			doomcom.numnodes, hostentry->h_name);
 	}
 
 	if (portpart)
@@ -368,34 +368,34 @@ void WaitForPlayers (int i)
 	StartNetwork (false);
 
 	// parse player number and host list
-	doomcom->consoleplayer = (short)(Args.GetArg (i+1)[0]-'1');
-	Printf ("Console player number: %d\n", doomcom->consoleplayer);
+	doomcom.consoleplayer = (short)(Args.GetArg (i+1)[0]-'1');
+	Printf ("Console player number: %d\n", doomcom.consoleplayer);
 
-	doomcom->numnodes = 1;		// this node for sure
+	doomcom.numnodes = 1;		// this node for sure
 		
 	i++;
 	while (++i < Args.NumArgs() && Args.GetArg (i)[0] != '-' && Args.GetArg (i)[0] != '+')
 	{
-		BuildAddress (&sendaddress[doomcom->numnodes], Args.GetArg (i));
-		doomcom->numnodes++;
+		BuildAddress (&sendaddress[doomcom.numnodes], Args.GetArg (i));
+		doomcom.numnodes++;
 	}
 
-	Printf ("Total players: %d\n", doomcom->numnodes);
+	Printf ("Total players: %d\n", doomcom.numnodes);
 		
-	doomcom->id = DOOMCOM_ID;
-	doomcom->numplayers = doomcom->numnodes;
+	doomcom.id = DOOMCOM_ID;
+	doomcom.numplayers = doomcom.numnodes;
 }
 
 void STACK_ARGS SendAbort (void)
 {
 	BYTE dis[2] = { PRE_FAKE, PRE_DISCONNECT };
 
-	while (--doomcom->numnodes > 0)
+	while (--doomcom.numnodes > 0)
 	{
-		PreSend (dis, 2, &sendaddress[doomcom->numnodes]);
-		PreSend (dis, 2, &sendaddress[doomcom->numnodes]);
-		PreSend (dis, 2, &sendaddress[doomcom->numnodes]);
-		PreSend (dis, 2, &sendaddress[doomcom->numnodes]);
+		PreSend (dis, 2, &sendaddress[doomcom.numnodes]);
+		PreSend (dis, 2, &sendaddress[doomcom.numnodes]);
+		PreSend (dis, 2, &sendaddress[doomcom.numnodes]);
+		PreSend (dis, 2, &sendaddress[doomcom.numnodes]);
 	}
 }
 
@@ -417,9 +417,9 @@ void HostGame (int i)
 	{ // Special case: Only 1 player, so don't bother starting the network
 		netgame = false;
 		multiplayer = true;
-		doomcom->id = DOOMCOM_ID;
-		doomcom->numplayers = doomcom->numnodes = 1;
-		doomcom->consoleplayer = 0;
+		doomcom.id = DOOMCOM_ID;
+		doomcom.numplayers = doomcom.numnodes = 1;
+		doomcom.consoleplayer = 0;
 		return;
 	}
 
@@ -427,18 +427,18 @@ void HostGame (int i)
 
 	// [JC] - this computer is starting the game, therefore it should
 	// be the Net Arbitrator.
-	doomcom->consoleplayer = 0;
-	Printf ("Console player number: %d\n", doomcom->consoleplayer);
+	doomcom.consoleplayer = 0;
+	Printf ("Console player number: %d\n", doomcom.consoleplayer);
 
-	doomcom->numnodes = 1;
+	doomcom.numnodes = 1;
 	Printf ("Waiting for players...\n");
 
 	atterm (SendAbort);
 
 	// Wait for numplayers-1 different connections
-	while (doomcom->numnodes < numplayers)
+	while (doomcom.numnodes < numplayers)
 	{
-		while (doomcom->numnodes < numplayers)
+		while (doomcom.numnodes < numplayers)
 		{
 			if (CheckAbort ())
 			{
@@ -458,7 +458,7 @@ void HostGame (int i)
 					node = FindNode (from);
 					if (node == -1)
 					{
-						node = doomcom->numnodes++;
+						node = doomcom.numnodes++;
 						sendaddress[node] = *from;
 					}
 					Printf ("Got connect from node %d\n", node);
@@ -472,8 +472,8 @@ void HostGame (int i)
 					if (node >= 0)
 					{
 						Printf ("Got disconnect from node %d\n", node);
-						doomcom->numnodes--;
-						while (node < doomcom->numnodes)
+						doomcom.numnodes--;
+						while (node < doomcom.numnodes)
 						{
 							sendaddress[node] = sendaddress[node+1];
 							node++;
@@ -494,8 +494,8 @@ void HostGame (int i)
 				node = FindNode (from);
 				if (node >= 0)
 				{
-					doomcom->numnodes--;
-					while (node < doomcom->numnodes)
+					doomcom.numnodes--;
+					while (node < doomcom.numnodes)
 					{
 						sendaddress[node] = sendaddress[node+1];
 						node++;
@@ -510,18 +510,18 @@ void HostGame (int i)
 	ackcount = 0;
 	memset (gotack, 0, sizeof(gotack));
 	Printf ("Sending all here\n");
-	while (ackcount < doomcom->numnodes - 1)
+	while (ackcount < doomcom.numnodes - 1)
 	{
 		packet.fake = PRE_FAKE;
 		packet.message = PRE_ALLHERE;
-		packet.numnodes = doomcom->numnodes - 2;
-		for (node = 1; node < doomcom->numnodes; node++)
+		packet.numnodes = doomcom.numnodes - 2;
+		for (node = 1; node < doomcom.numnodes; node++)
 		{
 			int machine, spot = 0;
 
 			if (!gotack[node])
 			{
-				for (spot = 0, machine = 1; machine < doomcom->numnodes; machine++)
+				for (spot = 0, machine = 1; machine < doomcom.numnodes; machine++)
 				{
 					if (node != machine)
 					{
@@ -567,7 +567,7 @@ void HostGame (int i)
 	Printf ("Go\n");
 	packet.fake = PRE_FAKE;
 	packet.message = PRE_GO;
-	for (node = 1; node < doomcom->numnodes; node++)
+	for (node = 1; node < doomcom.numnodes; node++)
 	{
 		for (int i = 8; i != 0; --i)
 		{
@@ -575,13 +575,13 @@ void HostGame (int i)
 		}
 	}
 
-	Printf ("Total players: %d\n", doomcom->numnodes);
+	Printf ("Total players: %d\n", doomcom.numnodes);
 
-	doomcom->id = DOOMCOM_ID;
-	doomcom->numplayers = doomcom->numnodes;
+	doomcom.id = DOOMCOM_ID;
+	doomcom.numplayers = doomcom.numnodes;
 
 	// On the host, each player's number is the same as its node number
-	for (i = 0; i < doomcom->numnodes; ++i)
+	for (i = 0; i < doomcom.numnodes; ++i)
 	{
 		sendplayer[i] = i;
 	}
@@ -614,9 +614,9 @@ void SendToHost (BYTE message, BYTE ackmess, bool abortable)
 			{
 				waiting = false;
 
-				doomcom->consoleplayer = packet.consolenum;
+				doomcom.consoleplayer = packet.consolenum;
 				sendplayer[0] = packet.consolenum;
-				Printf ("Console player number: %d\n", doomcom->consoleplayer);
+				Printf ("Console player number: %d\n", doomcom.consoleplayer);
 			}
 		}
 	}
@@ -644,7 +644,7 @@ void JoinGame (int i)
 
 	// Wait for everyone else to connect
 	waiting = true;
-	//doomcom->numnodes = 2;
+	//doomcom.numnodes = 2;
 	atterm (SendAbort);
 
 	while (waiting)
@@ -665,12 +665,12 @@ void JoinGame (int i)
 			switch (packet.message)
 			{
 			case PRE_ALLHERE:
-				if (doomcom->numnodes == 0)
+				if (doomcom.numnodes == 0)
 				{
 					int node;
 
 					packet.numnodes = packet.numnodes;
-					doomcom->numnodes = packet.numnodes + 2;
+					doomcom.numnodes = packet.numnodes + 2;
 					for (node = 0; node < packet.numnodes; node++)
 					{
 						sendaddress[node+2].sin_addr.s_addr = packet.machines[node].address;
@@ -702,10 +702,10 @@ void JoinGame (int i)
 
 	popterm ();
 
-	Printf ("Total players: %d\n", doomcom->numnodes);
+	Printf ("Total players: %d\n", doomcom.numnodes);
 
-	doomcom->id = DOOMCOM_ID;
-	doomcom->numplayers = doomcom->numnodes;
+	doomcom.id = DOOMCOM_ID;
+	doomcom.numplayers = doomcom.numnodes;
 }
 
 //
@@ -716,24 +716,23 @@ void I_InitNetwork (void)
 	int i;
 	char *v;
 
-	doomcom = new doomcom_t;
-	memset (doomcom, 0, sizeof(*doomcom));
+	memset (&doomcom, 0, sizeof(doomcom));
 
 	// set up for network
 	v = Args.CheckValue ("-dup");
 	if (v)
 	{
-		doomcom->ticdup = clamp (atoi (v), 1, MAXTICDUP);
+		doomcom.ticdup = clamp (atoi (v), 1, MAXTICDUP);
 	}
 	else
 	{
-		doomcom->ticdup = 1;
+		doomcom.ticdup = 1;
 	}
 
 	if (Args.CheckParm ("-extratic"))
-		doomcom->extratics = 1;
+		doomcom.extratics = 1;
 	else
-		doomcom->extratics = 0;
+		doomcom.extratics = 0;
 
 	v = Args.CheckValue ("-port");
 	if (v)
@@ -758,9 +757,9 @@ void I_InitNetwork (void)
 		// single player game
 		netgame = false;
 		multiplayer = false;
-		doomcom->id = DOOMCOM_ID;
-		doomcom->numplayers = doomcom->numnodes = 1;
-		doomcom->consoleplayer = 0;
+		doomcom.id = DOOMCOM_ID;
+		doomcom.numplayers = doomcom.numnodes = 1;
+		doomcom.consoleplayer = 0;
 		return;
 	}
 }
@@ -768,16 +767,16 @@ void I_InitNetwork (void)
 
 void I_NetCmd (void)
 {
-	if (doomcom->command == CMD_SEND)
+	if (doomcom.command == CMD_SEND)
 	{
 		netsend ();
 	}
-	else if (doomcom->command == CMD_GET)
+	else if (doomcom.command == CMD_GET)
 	{
 		netget ();
 	}
 	else
-		I_Error ("Bad net cmd: %i\n",doomcom->command);
+		I_Error ("Bad net cmd: %i\n",doomcom.command);
 }
 
 #ifdef __WIN32__

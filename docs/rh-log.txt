@@ -1,3 +1,24 @@
+May 10, 2006
+- Fixed mvlineasm1 and mvlineasm4 so that they can be used with textures
+  taller than 256 pixels. There was a very slight performance hit for this,
+  but I was able to tweak mvlineasm4 to make it approximately as fast as
+  before. Interestingly, maskwallscan manages to be nearly as fast as
+  wallscan despite having to check every pixel for transparency. I'm
+  tempted to dump all the old masked rendering code and use
+  (trans)maskwallscan for everything for the sake of simplicity: Only
+  two functions to maintain for each render style, and much less
+  complicated supporting code. Currently, I need five different functions
+  for each rendering style: One traditional column-at-a-time style like
+  Doom did it originally, two for rt_draw4cols, and two for transmaskwallscan.
+  (Right now, I have cheated, and just done the ones that can be used
+  by walls for transmaskwallscan, so the actual number of different functions
+  isn't quite so high.) For small textures, such as font characters and
+  far-away sprites, I'm sure maskwallscan is faster than the current code.
+  For large textures, it's probably still competitive even if it isn't faster.
+  But considering how similar wallscan and maskwallscan perform, the
+  difference is probably pretty minimal, and maskwallscan still might come
+  out ahead due to its simpler overhead.
+
 May 10, 2006 (Changes by Graf Zahl)
 - Fixed: PClass::CreateNew didn't check whether the class had valid
   defaults and tried to copy data from a NULL pointer.

@@ -341,8 +341,8 @@ mvlineasm1:
 beginmvline:
 		mov ebx, edx
 maskmach3a:	shr ebx, 32
-		mov bl, byte [esi+ebx]
-		cmp bl, 0
+		movzx ebx, byte [esi+ebx]
+		cmp ebx, 0
 		je short skipmask1
 maskmach3c:	mov bl, byte [ebp+ebx]
 		mov [edi], bl
@@ -371,12 +371,12 @@ mvlineasm4:
 
 		mov eax, [bufplce+0]
 		mov ebx, [bufplce+4]
-		mov [machmv1+2], eax
-		mov [machmv4+2], ebx
+		mov [machmv1+3], eax
+		mov [machmv4+3], ebx
 		mov eax, [bufplce+8]
 		mov ebx, [bufplce+12]
-		mov [machmv7+2], eax
-		mov [machmv10+2], ebx
+		mov [machmv7+3], eax
+		mov [machmv10+3], ebx
 
 		mov eax, [palookupoffse]
 		mov ebx, [palookupoffse+4]
@@ -389,7 +389,6 @@ mvlineasm4:
 
 		mov eax, [vince]	;vince
 		mov ebx, [vince+4]
-		xor al, al
 		xor bl, bl
 		mov [machmv3+2], eax
 		mov [machmv6+2], ebx
@@ -415,37 +414,37 @@ beginmvlineasm4:
 		mov eax, ebp
 		mov ebx, esi
 machmv16:	shr eax, 32
-machmv15:	shr ebx, 32
 machmv12:	add ebp, 0x88888888		;vince[3]
+machmv15:	shr ebx, 32
 machmv9:	add esi, 0x88888888		;vince[2]
-machmv10:	mov al, [eax+0x88888888]	;bufplce[3]
-machmv7:	mov bl, [ebx+0x88888888]	;bufplce[2]
-		cmp al, 1
+machmv10:	movzx eax, byte [eax+0x88888888];bufplce[3]
+machmv7:	movzx ebx, byte [ebx+0x88888888];bufplce[2]
+		cmp eax, 1
 		adc dl, dl
-		cmp bl, 1
+		cmp ebx, 1
 		adc dl, dl
 machmv8:	mov bl, [ebx+0x88888888]	;palookupoffs[2]
 machmv11:	mov bh, [eax+0x88888888]	;palookupoffs[3]
 
 		mov eax, edx
+machmv6:	add edx, 0x88888888		;vince[1]
 machmv14:	shr eax, 32
 		shl ebx, 16
-machmv4:	mov al, [eax+0x88888888]	;bufplce[1]
-		cmp al, 1
+machmv4:	movzx eax, byte [eax+0x88888888];bufplce[1]
+		cmp eax, 1
 		adc dl, dl
-machmv6:	add edx, 0x88888888		;vince[1]
 machmv5:	mov bh, [eax+0x88888888]	;palookupoffs[1]
 
 		mov eax, ecx
-machmv13:	shr eax, 32
 machmv3:	add ecx, 0x88888888		;vince[0]
-machmv1:	mov al, [eax+0x88888888]	;bufplce[0]
-		cmp al, 1
+machmv13:	shr eax, 32
+machmv1:	movzx eax, byte [eax+0x88888888];bufplce[0]
+		cmp eax, 1
 		adc dl, dl
 machmv2:	mov bl, [eax+0x88888888]	;palookupoffs[0]
 
-		shl dl, 4
 		xor eax, eax
+		shl dl, 4
 fixchain2mb:	add edi, 320
 		mov al, dl
 		add eax, mvcase15

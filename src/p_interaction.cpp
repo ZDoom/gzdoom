@@ -126,6 +126,11 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 	};
 	const char *subst = NULL;
 
+	if (from[0]=='$') 
+	{
+		from=GStrings(from+1);
+	}
+
 	do
 	{
 		if (*from != '%')

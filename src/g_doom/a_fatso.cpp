@@ -103,19 +103,6 @@ IMPLEMENT_ACTOR (AFatso, Doom, 67, 112)
 	PROP_ActiveSound ("fatso/active")
 END_DEFAULTS
 
-class AStealthFatso : public AFatso
-{
-	DECLARE_STATELESS_ACTOR (AStealthFatso, AFatso)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHFATSO"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthFatso, Doom, 9058, 123)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
-
 class AFatShot : public AActor
 {
 	DECLARE_ACTOR (AFatShot, AActor)

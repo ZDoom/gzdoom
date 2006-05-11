@@ -605,7 +605,7 @@ ACTOR TeleportSwirl 23
 	{
 	Spawn:
 		TELP ABCD 3 Bright
-		Stop
+		Loop
 	}
 }
 

@@ -94,20 +94,6 @@ IMPLEMENT_ACTOR (ADoomImp, Doom, 3001, 5)
 	PROP_ActiveSound ("imp/active")
 END_DEFAULTS
 
-class AStealthDoomImp : public ADoomImp
-{
-	DECLARE_STATELESS_ACTOR (AStealthDoomImp, ADoomImp)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHIMP"); }
-	const char *GetHitObituary () { return GStrings("OB_STEALTHIMP"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthDoomImp, Doom, 9057, 122)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
-
 class ADoomImpBall : public AActor
 {
 	DECLARE_ACTOR (ADoomImpBall, AActor)

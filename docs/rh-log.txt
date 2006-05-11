@@ -1,4 +1,20 @@
 May 11, 2006 (Changes by Graf Zahl)
+- Converted the stealth monsters to DECORATE.
+- Added string replacement option to obituary strings.
+- Changed lock and pickup message handling so that it is either a real
+  string or a LANGUAGE identifier. The only reason I did the mixed format
+  in the first place were Hexen's lock messages but they have been 
+  replaced by unique strings in the mean time so the feature isn't needed 
+  any more.
+- Added a flags parameter to TranslucentLine.
+- Extended the second arg of Line_SetIdentification to set not only 
+  ML_ZONEBOUNDARY but all 8 bits of the third byte in the flag word.
+  This allows a relatively simple means of setting all the new flags
+  directly.
+- Moved ML_ZONEBOUNDARY to doomdata.h so that it is in the same place as the
+  other line flags.
+- Fixed: Strife's teleport swirl didn't loop its animation.
+- Fixed: Strife's rat is not supposed to be shootable.
 - Fixed: Strife's MiniMissile pickup amount was still incorrect.
 - Moved Strife's random dialogs into the string table. Now it should also be
   possible to define dialogs for other actors as well.

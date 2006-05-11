@@ -6,6 +6,7 @@
 #include "actors/doom/doomartifacts.txt"
 #include "actors/doom/doomkeys.txt"
 #include "actors/doom/doomdecorations.txt"
+#include "actors/doom/stealthmonsters.txt"
 
 #include "actors/raven/ravenartifacts.txt"
 #include "actors/raven/ravenhealth.txt"

@@ -157,20 +157,18 @@ static inline int GET_SPAC (int flags)
 // [RH] In case I feel like it, here it is...
 #define ML_3DMIDTEX_ETERNITY		0x0400
 
-// [RH] Line blocks everything
-#define ML_BLOCKEVERYTHING			0x8000
-
 // [RH] Extra flags for Strife compatibility
-// The first set are as they exist in Strife maps.
-// The second set are what they get translated into.
 #define ML_TRANSLUCENT_STRIFE		0x1000
 #define ML_RAILING_STRIFE			0x0200
 #define ML_BLOCK_FLOATERS_STRIFE	0x0400
 
-#define ML_RAILING					0x20000
-#define ML_BLOCK_FLOATERS			0x40000
-#define ML_CLIP_MIDTEX				0x80000	// Automatic for every Strife line
-#define ML_WRAP_MIDTEX				0x100000
+
+#define ML_BLOCKEVERYTHING			0x00008000	// [RH] Line blocks everything
+#define ML_ZONEBOUNDARY				0x00010000
+#define ML_RAILING					0x00020000
+#define ML_BLOCK_FLOATERS			0x00040000
+#define ML_CLIP_MIDTEX				0x00080000	// Automatic for every Strife line
+#define ML_WRAP_MIDTEX				0x00100000
 
 // Sector definition, from editing
 typedef struct

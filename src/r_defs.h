@@ -419,7 +419,6 @@ enum slopetype_t
 	ST_NEGATIVE
 };
 
-#define ML_ZONEBOUNDARY		0x00010000
 
 struct line_s
 {

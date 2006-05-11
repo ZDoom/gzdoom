@@ -108,19 +108,6 @@ void AZombieMan::NoBlockingSet ()
 	P_DropItem (this, "Clip", -1, 256);
 }
 
-class AStealthZombieMan : public AZombieMan
-{
-	DECLARE_STATELESS_ACTOR (AStealthZombieMan, AZombieMan)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHZOMBIE"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthZombieMan, Doom, 9061, 102)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
-
 //
 // A_PosAttack
 //
@@ -234,19 +221,6 @@ void AShotgunGuy::NoBlockingSet ()
 {
 	P_DropItem (this, "Shotgun", -1, 256);
 }
-
-class AStealthShotgunGuy : public AShotgunGuy
-{
-	DECLARE_STATELESS_ACTOR (AStealthShotgunGuy, AShotgunGuy)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHSHOTGUY"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthShotgunGuy, Doom, 9060, 103)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
 
 static void A_SPosAttack2 (AActor *self)
 {
@@ -378,19 +352,6 @@ void AChaingunGuy::NoBlockingSet ()
 {
 	P_DropItem (this, "Chaingun", -1, 256);
 }
-
-class AStealthChaingunGuy : public AChaingunGuy
-{
-	DECLARE_STATELESS_ACTOR (AStealthChaingunGuy, AChaingunGuy)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHCHAINGUY"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthChaingunGuy, Doom, 9054, 120)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
 
 // Wolfenstein SS ----------------------------------------------------------
 

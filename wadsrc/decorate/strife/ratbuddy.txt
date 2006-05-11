@@ -7,7 +7,6 @@ ACTOR RatBuddy 85
 	Speed 13
 	Radius 10
 	Height 16
-	+SHOOTABLE
 	+NOBLOOD +FLOORCLIP +CANPASS
 	+ISMONSTER +INCOMBAT
 	MinMissileChance 150

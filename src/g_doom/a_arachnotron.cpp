@@ -94,19 +94,6 @@ IMPLEMENT_ACTOR (AArachnotron, Doom, 68, 6)
 	PROP_ActiveSound ("baby/active")
 END_DEFAULTS
 
-class AStealthArachnotron : public AArachnotron
-{
-	DECLARE_STATELESS_ACTOR (AStealthArachnotron, AArachnotron)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHBABY"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthArachnotron, Doom, 9050, 117)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
-
 class AArachnotronPlasma : public APlasmaBall
 {
 	DECLARE_ACTOR (AArachnotronPlasma, APlasmaBall)

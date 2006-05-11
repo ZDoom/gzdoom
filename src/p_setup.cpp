@@ -1290,21 +1290,22 @@ void P_AdjustLine (line_t *ld)
 	}
 
 	// [RH] Set line id (as appropriate) here
-	// for Doom format maps this must be done in P_TranslateLinedef because
-	// the tag doesn't always go into the first arg!
+	// for Doom format maps this must be done in P_TranslateLineDef because
+	// the tag doesn't always go into the first arg.
 	if (HasBehavior)	
 	{
 		if (ld->special == Line_SetIdentification)
 		{
 			ld->id = ld->args[0];
-			if (ld->args[1] == 1)
-			{
-				ld->flags |= ML_ZONEBOUNDARY;
-			}
+			ld->flags |= ld->args[1]<<16;
+		}
+		else if (ld->special == TranslucentLine)
+		{
+			ld->id = ld->args[0];
+			ld->flags |= ld->args[3]<<16;
 		}
 		else if (
 			ld->special == Teleport_Line ||
-			ld->special == TranslucentLine ||
 			ld->special == Scroll_Texture_Model)
 		{
 			ld->id = ld->args[0];

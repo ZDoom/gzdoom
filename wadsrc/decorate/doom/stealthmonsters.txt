@@ -1,0 +1,127 @@
+
+ACTOR StealthArachnotron : Arachnotron 9050
+{
+	Game Doom
+	SpawnID 117
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHBABY"
+}
+
+ACTOR StealthArchvile : Archvile 9051
+{
+	Game Doom
+	SpawnID 118
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHVILE"
+}
+
+ACTOR StealthBaron : BaronOfHell 9052
+{
+	Game Doom
+	SpawnID 100
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHBARON"
+	HitObituary "$OB_STEALTHBARON"
+}
+
+ACTOR StealthCacodemon : Cacodemon 9053
+{
+	Game Doom
+	SpawnID 119
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHCACO"
+	HitObituary "$OB_STEALTHCACO"
+}
+
+ACTOR StealthChaingunGuy : ChaingunGuy 9054
+{
+	Game Doom
+	SpawnID 120
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHCHAINGUY"
+}
+
+ACTOR StealthDemon : Demon 9055
+{
+	Game Doom
+	SpawnID 121
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHDEMON"
+	HitObituary "$OB_STEALTHDEMON"
+}
+
+ACTOR StealthHellKnight : HellKnight 9056
+{
+	Game Doom
+	SpawnID 101
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHKNIGHT"
+	HitObituary "$OB_STEALTHKNIGHT"
+}
+
+ACTOR StealthDoomImp : DoomImp 9057
+{
+	Game Doom
+	SpawnID 122
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHIMP"
+	HitObituary "$OB_STEALTHIMP"
+}
+
+ACTOR StealthFatso : Fatso 9058
+{
+	Game Doom
+	SpawnID 123
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHFATSO"
+}
+
+ACTOR StealthRevenant : Revenant 9059
+{
+	Game Doom
+	SpawnID 124
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHUNDEAD"
+	HitObituary "$OB_STEALTHUNDEAD"
+}
+
+ACTOR StealthShotgunGuy : ShotgunGuy 9060
+{
+	Game Doom
+	SpawnID 103
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHSHOTGUNGUY"
+}
+
+ACTOR StealthZombieMan : ZombieMan 9061
+{
+	Game Doom
+	SpawnID 102
+	+STEALTH
+	RenderStyle Translucent
+	Alpha 0
+	Obituary "$OB_STEALTHZOMBIE"
+}
+

@@ -99,19 +99,6 @@ const char *AArchvile::GetObituary ()
 	return GStrings("OB_VILE");
 }
 
-class AStealthArchvile : public AArchvile
-{
-	DECLARE_STATELESS_ACTOR (AStealthArchvile, AArchvile)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHVILE"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthArchvile, Doom, 9051, 118)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
-
 class AArchvileFire : public AActor
 {
 	DECLARE_ACTOR (AArchvileFire, AActor)

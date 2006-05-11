@@ -253,6 +253,9 @@
 					<File
 						RelativePath=".\decorate\doom\doomkeys.txt">
 					</File>
+					<File
+						RelativePath=".\decorate\doom\stealthmonsters.txt">
+					</File>
 				</Filter>
 				<Filter
 					Name="Heretic"

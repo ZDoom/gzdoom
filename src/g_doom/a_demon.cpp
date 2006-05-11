@@ -84,20 +84,6 @@ IMPLEMENT_ACTOR (ADemon, Doom, 3002, 8)
 	PROP_ActiveSound ("demon/active")
 END_DEFAULTS
 
-class AStealthDemon : public ADemon
-{
-	DECLARE_STATELESS_ACTOR (AStealthDemon, ADemon)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHDEMON"); }
-	const char *GetHitObituary () { return GStrings("OB_STEALTHDEMON"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthDemon, Doom, 9055, 121)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_Alpha (0)
-	PROP_RenderStyle (STYLE_Translucent)
-END_DEFAULTS
-
 class ASpectre : public ADemon
 {
 	DECLARE_STATELESS_ACTOR (ASpectre, ADemon)

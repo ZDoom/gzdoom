@@ -89,20 +89,6 @@ IMPLEMENT_ACTOR (ABaronOfHell, Doom, 3003, 3)
 	PROP_ActiveSound ("baron/active")
 END_DEFAULTS
 
-class AStealthBaron : public ABaronOfHell
-{
-	DECLARE_STATELESS_ACTOR (AStealthBaron, ABaronOfHell)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHBARON"); }
-	const char *GetHitObituary () { return GStrings("OB_STEALTHBARON"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthBaron, Doom, 9052, 100)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
-
 class ABaronBall : public AActor
 {
 	DECLARE_ACTOR (ABaronBall, AActor)
@@ -217,20 +203,6 @@ IMPLEMENT_ACTOR (AHellKnight, Doom, 69, 113)
 	PROP_PainSound ("knight/pain")
 	PROP_DeathSound ("knight/death")
 	PROP_ActiveSound ("knight/active")
-END_DEFAULTS
-
-class AStealthHellKnight : public AHellKnight
-{
-	DECLARE_STATELESS_ACTOR (AStealthHellKnight, AHellKnight)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHKNIGHT"); }
-	const char *GetHitObituary () { return GStrings("OB_STEALTHKNIGHT"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthHellKnight, Doom, 9056, 101)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_Alpha (0)
-	PROP_RenderStyle (STYLE_Translucent)
 END_DEFAULTS
 
 void A_BruisAttack (AActor *self)

@@ -824,25 +824,9 @@ static void PrintPickupMessage (const char *str)
 {
 	if (str != NULL)
 	{
-		FString temp;
-
-		if (strchr (str, '$'))
+		if (str[0]=='$') 
 		{
-			// The message or part of it is from the LANGUAGE lump
-			FString name;
-
-			size_t part1 = strcspn (str, "$");
-			temp = FString(str, part1);
-
-			size_t part2 = strcspn (str + part1 + 1, "$");
-			name = FString(str + part1 + 1, part2);
-
-			temp += GStrings(name.GetChars());
-			if (str[part1 + 1 + part2] == '$')
-			{
-				temp += str + part1 + part2 + 2;
-			}
-			str = temp.GetChars();
+			str=GStrings(str+1);
 		}
 		Printf (PRINT_LOW, "%s\n", str);
 	}

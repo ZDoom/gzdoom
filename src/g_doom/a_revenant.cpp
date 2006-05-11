@@ -104,20 +104,6 @@ IMPLEMENT_ACTOR (ARevenant, Doom, 66, 20)
 END_DEFAULTS
 
 
-class AStealthRevenant : public ARevenant
-{
-	DECLARE_STATELESS_ACTOR (AStealthRevenant, ARevenant)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHUNDEAD"); }
-	const char *GetHitObituary () { return GStrings("OB_STEALTHUNDEAD"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthRevenant, Doom, 9059, 124)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
-
 class ARevenantTracer : public AActor
 {
 	DECLARE_ACTOR (ARevenantTracer, AActor)

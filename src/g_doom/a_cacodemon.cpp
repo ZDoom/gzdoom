@@ -78,20 +78,6 @@ IMPLEMENT_ACTOR (ACacodemon, Doom, 3005, 19)
 	PROP_AttackSound ("caco/melee")
 END_DEFAULTS
 
-class AStealthCacodemon : public ACacodemon
-{
-	DECLARE_STATELESS_ACTOR (AStealthCacodemon, ACacodemon)
-public:
-	const char *GetObituary () { return GStrings("OB_STEALTHCACO"); }
-	const char *GetHitObituary () { return GStrings("OB_STEALTHCACO"); }
-};
-
-IMPLEMENT_STATELESS_ACTOR (AStealthCacodemon, Doom, 9053, 119)
-	PROP_FlagsSet (MF_STEALTH)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (0)
-END_DEFAULTS
-
 class ACacodemonBall : public AActor
 {
 	DECLARE_ACTOR (ACacodemonBall, AActor)

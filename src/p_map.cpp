@@ -4240,22 +4240,6 @@ bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil)
 
 msecnode_t *headsecnode = NULL;
 
-struct SecnodeKiller
-{
-	~SecnodeKiller()
-	{
-		msecnode_t *node = headsecnode;
-
-		while (node != NULL)
-		{
-			msecnode_t *next = node->m_snext;
-			free (node);
-			node = next;
-		}
-		headsecnode = NULL;
-	}
-} KillTheSecnodes;
-
 //=============================================================================
 //
 // P_GetSecnode

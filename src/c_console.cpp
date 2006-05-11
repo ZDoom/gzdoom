@@ -34,6 +34,7 @@
 
 #include "m_alloc.h"
 #include "templates.h"
+#include "p_setup.h"
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
@@ -131,6 +132,21 @@ static byte CmdLine[260];
 #define MAXHISTSIZE 50
 static struct History *HistHead = NULL, *HistTail = NULL, *HistPos = NULL;
 static int HistSize;
+
+static struct HistoryFree
+{
+	~HistoryFree()
+	{
+		History *hist = HistTail;
+
+		while (hist != NULL)
+		{
+			History *next = hist->Newer;
+			free (hist);
+			hist = next;
+		}
+	}
+} HistoryFree_er;
 
 
 CVAR (Float, con_notifytime, 3.f, CVAR_ARCHIVE)
@@ -1151,7 +1167,7 @@ void C_FullConsole ()
 		gamestate = GS_FULLCONSOLE;
 		level.music = NULL;
 		S_Start ();
-		SN_StopAllSequences ();
+		P_FreeLevelData ();
 		V_SetBlend (0,0,0,0);
 	}
 	else
@@ -1716,7 +1732,7 @@ void C_MidPrintBold (const char *msg)
 struct TabData
 {
 	int UseCount;
-	FString Name;
+	FName TabName;
 
 	TabData()
 	: UseCount(0)
@@ -1724,12 +1740,12 @@ struct TabData
 	}
 
 	TabData(const char *name)
-	: UseCount(1), Name(name)
+	: UseCount(1), TabName(name)
 	{
 	}
 
 	TabData(const TabData &other)
-	: UseCount(other.UseCount), Name(other.Name)
+	: UseCount(other.UseCount), TabName(other.TabName)
 	{
 	}
 };
@@ -1741,11 +1757,18 @@ static int TabSize;				// Size of tab string
 
 static BOOL FindTabCommand (const char *name, int *stoppos, int len)
 {
-	int i, cval = 1;
+	FName aname(name);
+	unsigned int i;
+	int cval = 1;
 
 	for (i = 0; i < TabCommands.Size(); i++)
 	{
-		cval = strnicmp (TabCommands[i].Name, name, len);
+		if (TabCommands[i].TabName == aname)
+		{
+			*stoppos = i;
+			return true;
+		}
+		cval = strnicmp (TabCommands[i].TabName.GetChars(), name, len);
 		if (cval >= 0)
 			break;
 	}
@@ -1772,19 +1795,28 @@ void C_AddTabCommand (const char *name)
 
 void C_RemoveTabCommand (const char *name)
 {
-	int pos;
+	FName aname(name, true);
 
-	if (FindTabCommand (name, &pos, INT_MAX))
+	if (aname == NAME_None)
 	{
-		if (--TabCommands[pos].UseCount == 0)
+		return;
+	}
+	for (unsigned int i = 0; i < TabCommands.Size(); ++i)
+	{
+		if (TabCommands[i].TabName == aname)
 		{
-			TabCommands.Delete(pos);
+			if (--TabCommands[i].UseCount == 0)
+			{
+				TabCommands.Delete(i);
+			}
+			break;
 		}
 	}
 }
 
-static int FindDiffPoint (const char *str1, const char *str2)
+static int FindDiffPoint (FName name1, const char *str2)
 {
+	const char *str1 = name1.GetChars();
 	int i;
 
 	for (i = 0; tolower(str1[i]) == tolower(str2[i]); i++)
@@ -1845,7 +1877,7 @@ static void C_TabComplete (bool goForward)
 		{ // Find the last matching tab, then go one past it.
 			while (++TabPos < TabCommands.Size())
 			{
-				if (FindDiffPoint (TabCommands[TabPos].Name, (char *)(CmdLine + TabStart)) < TabSize)
+				if (FindDiffPoint (TabCommands[TabPos].TabName, (char *)(CmdLine + TabStart)) < TabSize)
 				{
 					break;
 				}
@@ -1866,7 +1898,7 @@ static void C_TabComplete (bool goForward)
 	}
 	else
 	{
-		diffpoint = FindDiffPoint (TabCommands[TabPos].Name, (char *)(CmdLine + TabStart));
+		diffpoint = FindDiffPoint (TabCommands[TabPos].TabName, (char *)(CmdLine + TabStart));
 
 		if (diffpoint < TabSize)
 		{
@@ -1876,7 +1908,7 @@ static void C_TabComplete (bool goForward)
 		}
 		else
 		{		
-			strcpy ((char *)(CmdLine + TabStart), TabCommands[TabPos].Name);
+			strcpy ((char *)(CmdLine + TabStart), TabCommands[TabPos].TabName.GetChars());
 			CmdLine[0] = CmdLine[1] = (BYTE)strlen ((char *)(CmdLine + 2)) + 1;
 			CmdLine[CmdLine[0] + 1] = ' ';
 		}
@@ -1896,7 +1928,7 @@ static bool C_TabCompleteList ()
 
 	for (i = TabPos; i < TabCommands.Size(); ++i)
 	{
-		if (FindDiffPoint (TabCommands[i].Name, (char *)(CmdLine + TabStart)) < TabSize)
+		if (FindDiffPoint (TabCommands[i].TabName, (char *)(CmdLine + TabStart)) < TabSize)
 		{
 			break;
 		}
@@ -1907,14 +1939,14 @@ static bool C_TabCompleteList ()
 				// This keeps track of the longest common prefix for all the possible
 				// completions, so we can fill in part of the command for the user if
 				// the longest common prefix is longer than what the user already typed.
-				int diffpt = FindDiffPoint (TabCommands[i-1].Name, TabCommands[i].Name);
+				int diffpt = FindDiffPoint (TabCommands[i-1].TabName, TabCommands[i].TabName.GetChars());
 				if (diffpt < commonsize)
 				{
 					commonsize = diffpt;
 				}
 			}
 			nummatches++;
-			maxwidth = MAX (maxwidth, strlen (TabCommands[i].Name));
+			maxwidth = MAX (maxwidth, strlen (TabCommands[i].TabName.GetChars()));
 		}
 	}
 	if (nummatches > 1)
@@ -1924,7 +1956,7 @@ static bool C_TabCompleteList ()
 		Printf (TEXTCOLOR_BLUE "Completions for %s:\n", CmdLine+2);
 		for (i = TabPos; nummatches > 0; ++i, --nummatches)
 		{
-			Printf ("%-*s", int(maxwidth), TabCommands[i].Name.GetChars());
+			Printf ("%-*s", int(maxwidth), TabCommands[i].TabName.GetChars());
 			x += maxwidth;
 			if (x > ConCols - maxwidth)
 			{
@@ -1940,7 +1972,7 @@ static bool C_TabCompleteList ()
 		if (TabSize != commonsize)
 		{
 			TabSize = commonsize;
-			strncpy ((char *)CmdLine + TabStart, TabCommands[TabPos].Name, commonsize);
+			strncpy ((char *)CmdLine + TabStart, TabCommands[TabPos].TabName.GetChars(), commonsize);
 			CmdLine[0] = TabStart + commonsize - 2;
 			CmdLine[1] = CmdLine[0];
 		}

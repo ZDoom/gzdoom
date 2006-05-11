@@ -78,6 +78,8 @@ class DCajunMaster : public DObject
 	DECLARE_CLASS (DCajunMaster, DObject)
 	HAS_OBJECT_POINTERS
 public:
+	~DCajunMaster();
+
 	void ClearPlayer (int playernum, bool keepTeam);
 
 	//(B_Game.c)

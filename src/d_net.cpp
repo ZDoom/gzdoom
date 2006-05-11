@@ -93,8 +93,8 @@ extern FString	savegamefile;
 
 extern short consistancy[MAXPLAYERS][BACKUPTICS];
 
-doomcom_t*		doomcom;
-#define netbuffer (doomcom->data)
+doomcom_t		doomcom;
+#define netbuffer (doomcom.data)
 
 enum { NET_PeerToPeer, NET_PacketServer };
 BYTE NetMode = NET_PeerToPeer;
@@ -327,7 +327,7 @@ int NetbufferSize ()
 {
 	if (netbuffer[0] & (NCMD_EXIT | NCMD_SETUP))
 	{
-		return doomcom->datalength;
+		return doomcom.datalength;
 	}
 
 	int k = 2, count, numtics;
@@ -335,7 +335,7 @@ int NetbufferSize ()
 	if (netbuffer[0] & NCMD_RETRANSMIT)
 		k++;
 
-	if (NetMode == NET_PacketServer && doomcom->remotenode == nodeforplayer[Net_Arbitrator])
+	if (NetMode == NET_PacketServer && doomcom.remotenode == nodeforplayer[Net_Arbitrator])
 		k++;
 
 	numtics = netbuffer[0] & NCMD_XTICS;
@@ -360,7 +360,7 @@ int NetbufferSize ()
 	}
 
 	// Need at least 3 bytes per tic per player
-	if (doomcom->datalength < k + 3 * count * numtics)
+	if (doomcom.datalength < k + 3 * count * numtics)
 	{
 		return k + 3 * count * numtics;
 	}
@@ -449,7 +449,7 @@ void HSendPacket (int node, int len)
 				fprintf (debugfile, "%c%2x", i==k?'|':' ', ((byte *)netbuffer)[i]);
 		}
 		fprintf (debugfile, " [[ ");
-		for (i = 0; i < doomcom->numnodes; ++i)
+		for (i = 0; i < doomcom.numnodes; ++i)
 		{
 			if (nodeingame[i])
 			{
@@ -485,9 +485,9 @@ void HSendPacket (int node, int len)
 	}
 #endif
 
-	doomcom->command = CMD_SEND;
-	doomcom->remotenode = node;
-	doomcom->datalength = len;
+	doomcom.command = CMD_SEND;
+	doomcom.remotenode = node;
+	doomcom.datalength = len;
 
 	I_NetCmd ();
 }
@@ -501,7 +501,7 @@ BOOL HGetPacket (void)
 	if (reboundpacket)
 	{
 		memcpy (netbuffer, reboundstore, reboundpacket);
-		doomcom->remotenode = 0;
+		doomcom.remotenode = 0;
 		reboundpacket = 0;
 		return true;
 	}
@@ -512,10 +512,10 @@ BOOL HGetPacket (void)
 	if (demoplayback)
 		return false;
 				
-	doomcom->command = CMD_GET;
+	doomcom.command = CMD_GET;
 	I_NetCmd ();
 	
-	if (doomcom->remotenode == -1)
+	if (doomcom.remotenode == -1)
 		return false;
 		
 	if (debugfile)
@@ -524,15 +524,15 @@ BOOL HGetPacket (void)
 
 		if (netbuffer[0] & NCMD_SETUP)
 		{
-			fprintf (debugfile,"%i/%i  get %i = SETUP [%3i]", gametic, maketic, doomcom->remotenode, doomcom->datalength);
-			for (i = 0; i < doomcom->datalength; i++)
+			fprintf (debugfile,"%i/%i  get %i = SETUP [%3i]", gametic, maketic, doomcom.remotenode, doomcom.datalength);
+			for (i = 0; i < doomcom.datalength; i++)
 				fprintf (debugfile, " %2x", ((byte *)netbuffer)[i]);
 			fprintf (debugfile, "\n");
 		}
 		else if (netbuffer[0] & NCMD_EXIT)
 		{
-			fprintf (debugfile,"%i/%i  get %i = EXIT [%3i]", gametic, maketic, doomcom->remotenode, doomcom->datalength);
-			for (i = 0; i < doomcom->datalength; i++)
+			fprintf (debugfile,"%i/%i  get %i = EXIT [%3i]", gametic, maketic, doomcom.remotenode, doomcom.datalength);
+			for (i = 0; i < doomcom.datalength; i++)
 				fprintf (debugfile, " %2x", ((byte *)netbuffer)[i]);
 			fprintf (debugfile, "\n");
 		}
@@ -540,7 +540,7 @@ BOOL HGetPacket (void)
 			k = 2;
 
 			if (NetMode == NET_PacketServer &&
-				doomcom->remotenode == nodeforplayer[Net_Arbitrator])
+				doomcom.remotenode == nodeforplayer[Net_Arbitrator])
 			{
 				k++;
 			}
@@ -556,25 +556,25 @@ BOOL HGetPacket (void)
 
 			fprintf (debugfile,"%i/%i  get %i = (%i + %i, R %i) [%3i]",
 					gametic, maketic,
-					doomcom->remotenode,
+					doomcom.remotenode,
 					ExpandTics(netbuffer[1]),
-					numtics, realretrans, doomcom->datalength);
+					numtics, realretrans, doomcom.datalength);
 			
-			for (i = 0; i < doomcom->datalength; i++)
+			for (i = 0; i < doomcom.datalength; i++)
 				fprintf (debugfile, "%c%2x", i==k?'|':' ', ((byte *)netbuffer)[i]);
 			if (numtics)
 				fprintf (debugfile, " <<%4x>>\n",
-					consistancy[playerfornode[doomcom->remotenode]][nettics[doomcom->remotenode]%BACKUPTICS] & 0xFFFF);
+					consistancy[playerfornode[doomcom.remotenode]][nettics[doomcom.remotenode]%BACKUPTICS] & 0xFFFF);
 			else
 				fprintf (debugfile, "\n");
 		}
 	}
 
-	if (doomcom->datalength != NetbufferSize ())
+	if (doomcom.datalength != NetbufferSize ())
 	{
 		if (debugfile)
 			fprintf (debugfile,"---bad packet length %i (calculated %i)\n",
-				doomcom->datalength, NetbufferSize());
+				doomcom.datalength, NetbufferSize());
 		return false;
 	}
 
@@ -585,14 +585,14 @@ void PlayerIsGone (int netnode, int netconsole)
 {
 	int i;
 
-	for (i = netnode + 1; i < doomcom->numnodes; ++i)
+	for (i = netnode + 1; i < doomcom.numnodes; ++i)
 	{
 		if (nodeingame[i])
 			break;
 	}
-	if (i == doomcom->numnodes)
+	if (i == doomcom.numnodes)
 	{
-		doomcom->numnodes = netnode;
+		doomcom.numnodes = netnode;
 	}
 
 	nodeingame[netnode] = false;
@@ -690,12 +690,12 @@ void GetPackets (void)
 			{
 				// This player apparantly doesn't realise the game has started
 				netbuffer[0] = NCMD_SETUP+3;
-				HSendPacket (doomcom->remotenode, 1);
+				HSendPacket (doomcom.remotenode, 1);
 			}
 			continue;			// extra setup packet
 		}
 						
-		netnode = doomcom->remotenode;
+		netnode = doomcom.remotenode;
 		netconsole = playerfornode[netnode] & ~PL_DRONE;
 
 		// [RH] Get "ping" times
@@ -1065,7 +1065,7 @@ void NetUpdate (void)
 			// and it also added the player being sent the packet to the count.
 			count -= 2;
 
-			for (j = 0; j < doomcom->numnodes; ++j)
+			for (j = 0; j < doomcom.numnodes; ++j)
 			{
 				if (nodejustleft[j])
 				{
@@ -1087,7 +1087,7 @@ void NetUpdate (void)
 		}
 	}
 
-	for (i = 0; i < doomcom->numnodes; i++)
+	for (i = 0; i < doomcom.numnodes; i++)
 	{
 		BYTE playerbytes[MAXPLAYERS];
 
@@ -1120,7 +1120,7 @@ void NetUpdate (void)
 			consoleplayer == Net_Arbitrator &&
 			i != 0)
 		{
-			for (j = 1; j < doomcom->numnodes; ++j)
+			for (j = 1; j < doomcom.numnodes; ++j)
 			{
 				if (nodeingame[j] && nettics[j] < lowtic && j != i)
 				{
@@ -1134,7 +1134,7 @@ void NetUpdate (void)
 		if (numtics > BACKUPTICS)
 			I_Error ("NetUpdate: Node %d missed too many tics", i);
 
-		resendto[i] = MAX (0, lowtic - doomcom->extratics);
+		resendto[i] = MAX (0, lowtic - doomcom.extratics);
 
 		if (numtics == 0 && resendOnly && !remoteresend[i] && nettics[i])
 		{
@@ -1161,7 +1161,7 @@ void NetUpdate (void)
 		{
 			netbuffer[0] |= NCMD_QUITTERS;
 			netbuffer[k++] = quitcount;
-			for (int l = 0; l < doomcom->numnodes; ++l)
+			for (int l = 0; l < doomcom.numnodes; ++l)
 			{
 				if (nodejustleft[l])
 				{
@@ -1339,7 +1339,7 @@ void D_ArbitrateNetStart (void)
 	bool		allset = false;
 
 	// Return right away if we're just playing with ourselves.
-	if (doomcom->numnodes == 1)
+	if (doomcom.numnodes == 1)
 		return;
 
 	autostart = true;
@@ -1355,7 +1355,7 @@ void D_ArbitrateNetStart (void)
 	nodeforplayer[consoleplayer] = 0;
 	if (consoleplayer == Net_Arbitrator)
 	{
-		for (i = 1; i < doomcom->numnodes; ++i)
+		for (i = 1; i < doomcom.numnodes; ++i)
 		{
 			playerfornode[i] = i;
 			nodeforplayer[i] = i;
@@ -1365,7 +1365,7 @@ void D_ArbitrateNetStart (void)
 	{
 		playerfornode[1] = 0;
 		nodeforplayer[0] = 1;
-		for (i = 1; i < doomcom->numnodes; ++i)
+		for (i = 1; i < doomcom.numnodes; ++i)
 		{
 			if (i < consoleplayer)
 			{
@@ -1399,14 +1399,14 @@ void D_ArbitrateNetStart (void)
 				I_FatalError ("The game was aborted\n");
 			}
 
-			if (doomcom->remotenode == 0)
+			if (doomcom.remotenode == 0)
 			{
 				continue;
 			}
 
 			if (netbuffer[0] == NCMD_SETUP || netbuffer[0] == NCMD_SETUP+1)		// got user info
 			{
-				node = (netbuffer[0] == NCMD_SETUP) ? doomcom->remotenode
+				node = (netbuffer[0] == NCMD_SETUP) ? doomcom.remotenode
 					: nodeforplayer[netbuffer[1]];
 
 				playersdetected[node] =
@@ -1442,8 +1442,8 @@ void D_ArbitrateNetStart (void)
 			{
 				gotsetup[0] = 0x80;
 
-				ticdup = doomcom->ticdup = netbuffer[1];
-				doomcom->extratics = netbuffer[2];
+				ticdup = doomcom.ticdup = netbuffer[1];
+				doomcom.extratics = netbuffer[2];
 				NetMode = netbuffer[3];
 
 				stream = &netbuffer[4];
@@ -1462,11 +1462,11 @@ void D_ArbitrateNetStart (void)
 		// If everybody already knows everything, it's time to go
 		if (consoleplayer == Net_Arbitrator)
 		{
-			for (i = 0; i < doomcom->numnodes; ++i)
-				if (playersdetected[i] != DWORD(1 << doomcom->numnodes) - 1 || !gotsetup[i])
+			for (i = 0; i < doomcom.numnodes; ++i)
+				if (playersdetected[i] != DWORD(1 << doomcom.numnodes) - 1 || !gotsetup[i])
 					break;
 
-			if (i == doomcom->numnodes)
+			if (i == doomcom.numnodes)
 				break;
 		}
 
@@ -1489,9 +1489,9 @@ void D_ArbitrateNetStart (void)
 		{ // Send user info for all nodes
 			netbuffer[0] = NCMD_SETUP+1;
 			netbuffer[2] = NETGAMEVERSION;
-			for (i = 1; i < doomcom->numnodes; ++i)
+			for (i = 1; i < doomcom.numnodes; ++i)
 			{
-				for (j = 0; j < doomcom->numnodes; ++j)
+				for (j = 0; j < doomcom.numnodes; ++j)
 				{
 					// Send info about player j to player i?
 					if (i != j && (playersdetected[0] & (1<<j)) &&
@@ -1510,8 +1510,8 @@ void D_ArbitrateNetStart (void)
 		if (consoleplayer == Net_Arbitrator)
 		{
 			netbuffer[0] = NCMD_SETUP+2;
-			netbuffer[1] = doomcom->ticdup;
-			netbuffer[2] = doomcom->extratics;
+			netbuffer[1] = doomcom.ticdup;
+			netbuffer[2] = doomcom.extratics;
 			netbuffer[3] = NetMode;
 			stream = &netbuffer[4];
 			WriteString (startmap, &stream);
@@ -1530,7 +1530,7 @@ void D_ArbitrateNetStart (void)
 
 	if (debugfile)
 	{
-		for (i = 0; i < doomcom->numnodes; ++i)
+		for (i = 0; i < doomcom.numnodes; ++i)
 		{
 			fprintf (debugfile, "player %d is on node %d\n", i, nodeforplayer[i]);
 		}
@@ -1552,7 +1552,7 @@ static void SendSetup (DWORD playersdetected[MAXNETNODES], BYTE gotsetup[MAXNETN
 	}
 	else
 	{
-		for (int i = 1; i < doomcom->numnodes; ++i)
+		for (int i = 1; i < doomcom.numnodes; ++i)
 		{
 			if (!gotsetup[i] || netbuffer[0] == NCMD_SETUP+3)
 			{
@@ -1583,10 +1583,10 @@ void D_CheckNetGame (void)
 
 	// I_InitNetwork sets doomcom and netgame
 	I_InitNetwork ();
-	if (doomcom->id != DOOMCOM_ID)
+	if (doomcom.id != DOOMCOM_ID)
 		I_FatalError ("Doomcom buffer invalid!");
 	
-	consoleplayer = doomcom->consoleplayer;
+	consoleplayer = doomcom.consoleplayer;
 
 	v = Args.CheckValue ("-netmode");
 	if (v != NULL)
@@ -1612,15 +1612,15 @@ void D_CheckNetGame (void)
 	}
 
 	// read values out of doomcom
-	ticdup = doomcom->ticdup;
+	ticdup = doomcom.ticdup;
 
-	for (i = 0; i < doomcom->numplayers; i++)
+	for (i = 0; i < doomcom.numplayers; i++)
 		playeringame[i] = true;
-	for (i = 0; i < doomcom->numnodes; i++)
+	for (i = 0; i < doomcom.numnodes; i++)
 		nodeingame[i] = true;
 
 	Printf ("player %i of %i (%i nodes)\n",
-			consoleplayer+1, doomcom->numplayers, doomcom->numnodes);
+			consoleplayer+1, doomcom.numplayers, doomcom.numnodes);
 }
 
 
@@ -1663,7 +1663,7 @@ void STACK_ARGS D_QuitNetGame (void)
 		}
 		else
 		{
-			for (j = 1; j < doomcom->numnodes; j++)
+			for (j = 1; j < doomcom.numnodes; j++)
 				if (nodeingame[j])
 					HSendPacket (j, k);
 		}
@@ -1709,7 +1709,7 @@ void TryRunTics (void)
 
 	lowtic = INT_MAX;
 	numplaying = 0;
-	for (i = 0; i < doomcom->numnodes; i++)
+	for (i = 0; i < doomcom.numnodes; i++)
 	{
 		if (nodeingame[i])
 		{
@@ -1806,7 +1806,7 @@ void TryRunTics (void)
 		NetUpdate ();
 		lowtic = INT_MAX;
 
-		for (i = 0; i < doomcom->numnodes; i++)
+		for (i = 0; i < doomcom.numnodes; i++)
 			if (nodeingame[i] && nettics[i] < lowtic)
 				lowtic = nettics[i];
 

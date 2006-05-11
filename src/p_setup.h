@@ -32,6 +32,8 @@
 //		of single-player start spots should be spawned in the level.
 void P_SetupLevel (char *mapname, int position);
 
+void P_FreeLevelData();
+
 // Called by startup code.
 void P_Init (void);
 

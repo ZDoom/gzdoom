@@ -678,6 +678,18 @@ vissprite_t		**vissprite_p;
 vissprite_t		**lastvissprite;
 int 			newvissprite;
 
+static struct VisSpriteDeleter
+{
+	~VisSpriteDeleter()
+	{
+		for (int i = 0; i < MaxVisSprites; ++i)
+		{
+			delete vissprites[i];
+		}
+		free (vissprites);
+	}
+} DeleteTheVisSprites;
+
 static void R_CreateSkinTranslation (const char *palname)
 {
 	FMemLump lump = Wads.ReadLump (palname);
@@ -831,7 +843,6 @@ vissprite_t *R_NewVisSprite (void)
 	vissprite_p++;
 	return *(vissprite_p-1);
 }
-
 
 //
 // R_DrawMaskedColumn
@@ -1555,8 +1566,18 @@ static vissprite_t **spritesorter;
 static int spritesortersize = 0;
 static int vsprcount;
 
-static drawseg_t **drawsegsorter;
-static int drawsegsortersize = 0;
+static struct SpriteSorterFree
+{
+	~SpriteSorterFree()
+	{
+		if (spritesorter != NULL)
+		{
+			delete[] spritesorter;
+			spritesortersize = 0;
+			spritesorter = NULL;
+		}
+	}
+} SpriteSorterFree_er;
 
 // Sort vissprites by depth, far to near
 static int STACK_ARGS sv_compare (const void *arg1, const void *arg2)
@@ -1569,6 +1590,9 @@ static int STACK_ARGS sv_compare (const void *arg1, const void *arg2)
 }
 
 #if 0
+static drawseg_t **drawsegsorter;
+static int drawsegsortersize = 0;
+
 // Sort vissprites by leftmost column, left to right
 static int STACK_ARGS sv_comparex (const void *arg1, const void *arg2)
 {

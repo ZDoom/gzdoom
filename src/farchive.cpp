@@ -43,6 +43,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <zlib.h>
+#include <malloc.h>
 
 #include "doomtype.h"
 #include "farchive.h"
@@ -826,6 +827,32 @@ FArchive &FArchive::operator<< (char *&str)
 			delete[] str;
 		}
 		str = str2;
+	}
+	return *this;
+}
+
+FArchive &FArchive::operator<< (FString &str)
+{
+	if (m_Storing)
+	{
+		WriteString (str.GetChars());
+	}
+	else
+	{
+		DWORD size = ReadCount();
+
+		if (size == 0)
+		{
+			str = "";
+		}
+		else
+		{
+			char *str2 = (char *)alloca(size*sizeof(char));
+			size--;
+			Read (str2, size);
+			str2[size] = 0;
+			str = str2;
+		}
 	}
 	return *this;
 }

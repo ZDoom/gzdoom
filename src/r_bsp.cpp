@@ -83,6 +83,18 @@ drawseg_t		*drawsegs;
 drawseg_t*		firstdrawseg;
 drawseg_t*		ds_p;
 
+static struct DrawSegFree
+{
+	~DrawSegFree()
+	{
+		if (drawsegs != NULL)
+		{
+			free (drawsegs);
+			drawsegs = NULL;
+		}
+	}
+} FreeDrawSegs;
+
 size_t			FirstInterestingDrawseg;
 TArray<size_t>	InterestingDrawsegs;
 

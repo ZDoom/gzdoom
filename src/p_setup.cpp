@@ -55,6 +55,8 @@
 #include "gi.h"
 #include "p_conversation.h"
 #include "a_keys.h"
+#include "s_sndseq.h"
+#include "sbar.h"
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t **things, int *numthings);
@@ -2790,6 +2792,7 @@ extern polyblock_t **PolyBlockMap;
 
 void P_FreeLevelData ()
 {
+	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
@@ -2904,9 +2907,49 @@ void P_FreeLevelData ()
 	if (zones != NULL)
 	{
 		delete[] zones;
+		zones = NULL;
 	}
 	P_FreeStrifeConversations ();
 }
+
+extern msecnode_t *headsecnode;
+
+static struct AutoFreeLevelData
+{
+	~AutoFreeLevelData()
+	{
+		P_FreeLevelData();
+
+		// Blocknodes and msecnodes should be freed now, when we
+		// can be sure they are all easily located in their
+		// free lists.
+		{
+			FBlockNode *node = FBlockNode::FreeBlocks;
+			while (node != NULL)
+			{
+				FBlockNode *next = node->NextBlock;
+				delete node;
+				node = next;
+			}
+		}
+		{
+			msecnode_t *node = headsecnode;
+
+			while (node != NULL)
+			{
+				msecnode_t *next = node->m_snext;
+				free (node);
+				node = next;
+			}
+			headsecnode = NULL;
+		}
+		if (StatusBar != NULL)
+		{
+			delete StatusBar;
+			StatusBar = NULL;
+		}
+	}
+} LevelDataFree_er;
 
 //
 // P_SetupLevel

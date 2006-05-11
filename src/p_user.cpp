@@ -124,7 +124,7 @@ void player_s::SetLogNumber (int num)
 
 void player_s::SetLogText (const char *text)
 {
-	ReplaceString (&LogText, text);
+	LogText = text;
 }
 
 IMPLEMENT_ABSTRACT_ACTOR (APlayerPawn)

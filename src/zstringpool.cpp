@@ -200,7 +200,7 @@ FString::Pool::~Pool ()
 			if (str->Owner != NULL)
 			{
 				FString *owner = str->Owner;
-				assert (owner->Chars == (char *)str + sizeof(StringHeader));
+//				assert (owner->Chars == (char *)str + sizeof(StringHeader));
 				Free ((char *)str + sizeof(StringHeader));
 				owner->Chars = "";
 			}
@@ -307,7 +307,7 @@ void FString::Pool::Free (char *chars)
 	{
 		if (str->Owner != NULL)
 		{
-			assert (str->Owner->Chars == (char *)str + sizeof(StringHeader));
+//			assert (str->Owner->Chars == (char *)str + sizeof(StringHeader));
 			str = (StringHeader *)((char *)str + RoundLen(str->Len));
 		}
 		else
@@ -335,7 +335,7 @@ void FString::Pool::Free (char *chars)
 	{
 		if (str->Owner != NULL)
 		{
-			assert (str->Owner->Chars == (char *)str + sizeof(StringHeader));
+//			assert (str->Owner->Chars == (char *)str + sizeof(StringHeader));
 			str = (StringHeader *)((char *)str + RoundLen(str->Len));
 		}
 		else

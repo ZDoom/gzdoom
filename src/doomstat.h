@@ -254,7 +254,7 @@ extern int				skyflatnum;
 
 // This is the interface to the packet driver, a separate program
 // in DOS, but just an abstraction here.
-extern	doomcom_t*		doomcom;
+extern	doomcom_t		doomcom;
 
 extern	struct ticcmd_t	localcmds[LOCALCMDTICS];
 

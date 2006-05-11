@@ -146,6 +146,18 @@ private:
 	sector_t *m_Sector;
 };
 
+// When destroyed, destroy the sound sequences too.
+struct FSoundSequencePtrArray : public TArray<FSoundSequence *>
+{
+	~FSoundSequencePtrArray()
+	{
+		for (unsigned int i = 0; i < Size(); ++i)
+		{
+			free ((*this)[i]);
+		}
+	}
+};
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void AssignTranslations (int seq, seqtype_t type);
@@ -157,7 +169,7 @@ static bool TwiddleSeqNum (int &sequence, seqtype_t type);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-TArray<FSoundSequence *> Sequences;
+FSoundSequencePtrArray Sequences;
 int ActiveSequences;
 DSeqNode *DSeqNode::SequenceListHead;
 
@@ -298,6 +310,7 @@ void DSeqNode::Serialize (FArchive &arc)
 		ChangeData (seqOffset, delayTics - TIME_REFERENCE, volume, id);
 
 		numchoices = arc.ReadCount();
+		m_SequenceChoices.Resize(numchoices);
 		for (i = 0; i < numchoices; ++i)
 		{
 			arc << seqName;

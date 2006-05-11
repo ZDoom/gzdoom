@@ -1769,7 +1769,6 @@ void G_DoLoadLevel (int position, bool autosave)
 		players[i].fragcount = 0;
 	}
 
-	SN_StopAllSequences ();
 	P_SetupLevel (level.mapname, position);
 
 	// [RH] Start lightning, if MAPINFO tells us to

@@ -90,6 +90,10 @@ static bool waitingforspawn[MAXPLAYERS];
 
 void G_DoReborn (int playernum, bool freshbot);
 
+DCajunMaster::~DCajunMaster()
+{
+	ForgetBots();
+}
 
 //This function is called every tick (from g_game.c),
 //send bots into thinking (+more).

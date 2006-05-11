@@ -797,6 +797,7 @@ extern int DisplayBits;
 int testingmode;		// Holds time to revert to old mode
 int OldWidth, OldHeight, OldBits;
 
+void M_FreeModesList ();
 static void BuildModesList (int hiwidth, int hiheight, int hi_id);
 static BOOL GetSelectedSize (int line, int *width, int *height);
 static void SetModesMenu (int w, int h, int bits);
@@ -823,6 +824,7 @@ static struct DepthNameKiller
 				Depths[i].name = NULL;
 			}
 		}
+		M_FreeModesList();
 	}
 } KillTheDepthValues;
 
@@ -2743,7 +2745,7 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 			{
 				if (*str)
 				{
-					free (*str);
+					delete[] *str;
 					*str = NULL;
 				}
 			}
@@ -2754,6 +2756,29 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 void M_RefreshModesList ()
 {
 	BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
+}
+
+void M_FreeModesList ()
+{
+	for (int i = VM_RESSTART; ModesItems[i].type == screenres; ++i)
+	{
+		for (int c = 0; c < 3; ++c)
+		{
+			char **str;
+
+			switch (c)
+			{
+			default: str = &ModesItems[i].b.res1; break;
+			case 1:  str = &ModesItems[i].c.res2; break;
+			case 2:  str = &ModesItems[i].d.res3; break;
+			}
+			if (str != NULL)
+			{
+				delete[] *str;
+				*str = NULL;
+			}
+		}
+	}
 }
 
 static BOOL GetSelectedSize (int line, int *width, int *height)

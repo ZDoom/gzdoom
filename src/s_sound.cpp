@@ -116,7 +116,7 @@ typedef struct
 
 struct MusPlayingInfo
 {
-	char *name;
+	FString name;
 	void *handle;
 	int   baseorder;
 	bool  loop;
@@ -144,7 +144,7 @@ int MAX_SND_DIST;
 static channel_t *Channel;			// the set of channels available
 static BOOL		mus_paused;			// whether songs are paused
 static MusPlayingInfo mus_playing;	// music currently being played
-static char		*LastSong;			// last music that was played
+static FString	 LastSong;			// last music that was played
 static byte		*SoundCurve;
 static int		nextcleanup;
 static FPlayList *PlayList;
@@ -166,6 +166,29 @@ CVAR (Bool, snd_matrix, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_flipstereo, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------
+
+static struct FreeSoundData
+{
+	~FreeSoundData()
+	{
+		if (Channel != NULL)
+		{
+			delete[] Channel;
+			Channel = NULL;
+			numChannels = 0;
+		}
+		if (SoundCurve != NULL)
+		{
+			delete[] SoundCurve;
+			SoundCurve = NULL;
+		}
+		if (PlayList != NULL)
+		{
+			delete PlayList;
+			PlayList = NULL;
+		}
+	}
+} SoundDataFree_er;
 
 //==========================================================================
 //
@@ -1430,7 +1453,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		return false;
 	}
 
-	if (mus_playing.name && stricmp (mus_playing.name, musicname) == 0)
+	if (!mus_playing.name.IsEmpty() && stricmp (mus_playing.name, musicname) == 0)
 	{
 		if (order != mus_playing.baseorder)
 		{
@@ -1451,10 +1474,6 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			id = strtoul (more+1, NULL, 16);
 		}
 		S_StopMusic (true);
-		if (mus_playing.name)
-		{
-			delete[] mus_playing.name;
-		}
 		mus_playing.handle = I_RegisterCDSong (track, id);
 	}
 	else
@@ -1498,15 +1517,6 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		S_StopMusic (true);
 
 		// load & register it
-
-		// Note by Graf Zahl: S_StopMusic NULLs this variable so there's nothing to delete anymore!
-		/*
-		if (mus_playing.name)
-		{
-			delete[] mus_playing.name;
-		}
-		*/
-
 		if (offset!=-1)
 		{
 			mus_playing.handle = I_RegisterSong (lumpnum != -1 ?
@@ -1525,7 +1535,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 
 	if (mus_playing.handle != 0)
 	{ // play it
-		mus_playing.name = copystring (musicname);
+		mus_playing.name = musicname;
 		I_PlaySong (mus_playing.handle, looping, S_GetMusicVolume (musicname));
 		mus_playing.baseorder =
 			(I_SetSongPosition (mus_playing.handle, order) ? order : 0);
@@ -1543,11 +1553,10 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 
 void S_RestartMusic ()
 {
-	if (LastSong != NULL)
+	if (!LastSong.IsEmpty())
 	{
 		S_ChangeMusic (LastSong, mus_playing.baseorder, mus_playing.loop, true);
-		delete[] LastSong;
-		LastSong = NULL;
+		LastSong = "";
 	}
 }
 
@@ -1583,7 +1592,7 @@ int S_GetMusic (char **name)
 void S_StopMusic (bool force)
 {
 	// [RH] Don't stop if a playlist is active.
-	if ((force || PlayList == NULL) && mus_playing.name)
+	if ((force || PlayList == NULL) && !mus_playing.name.IsEmpty())
 	{
 		if (mus_paused)
 			I_ResumeSong(mus_playing.handle);
@@ -1591,13 +1600,8 @@ void S_StopMusic (bool force)
 		I_StopSong(mus_playing.handle);
 		I_UnRegisterSong(mus_playing.handle);
 
-		if (LastSong)
-		{
-			delete[] LastSong;
-		}
-
 		LastSong = mus_playing.name;
-		mus_playing.name = NULL;
+		mus_playing.name = "";
 		mus_playing.handle = 0;
 	}
 }

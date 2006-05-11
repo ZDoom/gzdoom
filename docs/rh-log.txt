@@ -1,4 +1,41 @@
 May 10, 2006
+- Yay! We now seem to be free of memory leaks! The next step will be to
+  merge a lot of these static destructor-only structs into regular
+  functions added to the exit chain with atterm so that they can be called
+  in a deterministic order and not whatever order the linker decides to put
+  them in. (Interestingly, the amount of memory used when repeatedly
+  executing the same map command at the console varies up and down, but it
+  now stays relatively stable rather than increasing unbounded.)
+- Fixed: The list of resolutions in the video modes menu was not freed
+  at exit.
+- Fixed: mus_playing.name was not freed at exit.
+- Fixed: SN_StopAllSequences() should be called at the start of
+  P_FreeLevelData(), not just before the call to P_SetupLevel() in
+  G_DoLoadLevel(), so it can run even at exit. And C_FullConsole() can
+  call P_FreeLevelData() to free more memory too.
+- Fixed: StatusBar was not freed at exit.
+- Fixed: spritesorter was not freed at exit.
+- Fixed: Bad things happened if FString's data pool was destroyed before
+  all C_RemoveTabCommand() calls were made.
+- Added an overload for FArchive << FString.
+- Fixed: The players' log text was not freed at exit.
+- Fixed: Bot information was not freed at exit.
+- Fixed: doomcom was not freed at exit. But since it's always created,
+  there's no reason why it needs to be allocated from the heap. My guess
+  is that in the DOS days, the external packet driver was responsible for
+  allocating doomcom and passed its location with the -net parameter.
+- Fixed: FBlockNodes were not freed at exit.
+- Fixed: Openings were not freed at exit.
+- Fixed: Drawsegs were not freed at exit.
+- Fixed: Vissprites were not freed at exit.
+- Fixed: Console command history was not freed at exit.
+- Fixed: Visplanes were not freed at exit.
+- Fixed: Call P_FreeLevelData() at exit.
+- Fixed: Channel, SoundCurve, and PlayList in s_sound.cpp were not freed at
+  exit.
+- Fixed: Sound sequences were not freed at exit.
+- Fixed: DSeqNode::Serialize() did not resize the m_SequenceChoices array
+  when loading.
 - Fixed mvlineasm1 and mvlineasm4 so that they can be used with textures
   taller than 256 pixels. There was a very slight performance hit for this,
   but I was able to tweak mvlineasm4 to make it approximately as fast as

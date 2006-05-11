@@ -276,7 +276,7 @@ public:
 	float		BlendB;
 	float		BlendA;
 
-	char		*LogText;	// [RH] Log for Strife
+	FString		LogText;	// [RH] Log for Strife
 
 
 	fixed_t GetDeltaViewHeight() const

@@ -15,6 +15,7 @@
 #include "a_strifeglobal.h"
 #include "a_keys.h"
 #include "p_enemy.h"
+#include "gstrings.h"
 #include "sound/i_music.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
@@ -84,89 +85,8 @@ static brokenlines_t *DialogueLines;
 static AActor *ConversationNPC, *ConversationPC;
 static angle_t ConversationNPCAngle;
 
-#define NUM_RANDOM_TALKERS 5
 #define NUM_RANDOM_LINES 10
 #define NUM_RANDOM_GOODBYES 3
-
-static char *const RandomGoodbyes[NUM_RANDOM_GOODBYES] =
-{
-	"Bye!",
-	"Thanks, bye!",
-	"See you later!"
-};
-
-static const char *const RandomLines[NUM_RANDOM_TALKERS][NUM_RANDOM_LINES+1] =
-{
-	{
-	"PEASANT",
-	"Please don't hurt me.",
-	"If you're looking to hurt me, I'm not really worth the effort.",
-	"I don't know anything.",
-	"Go away or I'll call the guards!",
-	"I wish sometimes that all these rebels would just learn their place and stop this nonsense.",
-	"Just leave me alone, OK?",
-	"I'm not sure, but sometimes I think that I know some of the acolytes.",
-	"The order's got everything around here pretty well locked up tight.",
-	"There's no way that this is just a security force.",
-	"I've heard that the order is really nervous about the front's actions around here."
-	},
-
-	{
-	"REBEL",
-	"There's no way the order will stand against us.",
-	"We're almost ready to strike. Macil's plans are falling in place.",
-	"We're all behind you, don't worry.",
-	"Don't get too close to any of those big robots. They'll melt you down for scrap!",
-	"The day of our glory will soon come, and those who oppose us will be crushed!",
-	"Don't get too comfortable. We've still got our work cut out for us.",
-	"Macil says that you're the new hope. Bear that in mind.",
-	"Once we've taken these charlatans down, we'll be able to rebuild this world as it should be.",
-	"Remember that you aren't fighting just for yourself, but for everyone here and outside.",
-	"As long as one of us still stands, we will win."
-	},
-
-	{
-	"AGUARD",
-	"Move along, peasant.",
-	"Follow the true faith, only then will you begin to understand.",
-	"Only through death can one be truly reborn.",
-	"I'm not interested in your useless drivel.",
-	"If I had wanted to talk to you I would have told you so.",
-	"Go and annoy someone else!",
-	"Keep moving!",
-	"If the alarm goes off, just stay out of our way!",
-	"The order will cleanse the world and usher it into the new era.",
-	"Problem? No, I thought not."
-	},
-
-	{
-	"BEGGAR",
-	"Alms for the poor?",
-	"What are you looking at, surfacer?",
-	"You wouldn't have any extra food, would you?",
-	"You surface people will never understand us.",
-	"Ha, the guards can't find us. Those idiots don't even know we exist.",
-	"One day everyone but those who serve the order will be forced to join us.",
-	"Stare now, but you know that this will be your own face one day.",
-	"There's nothing more annoying than a surfacer with an attitude!",
-	"The order will make short work of your pathetic front.",
-	"Watch yourself, surfacer. We know our enemies!"
-	},
-
-	{
-	"PGUARD",
-	"We are the hands of fate. To earn our wrath is to find oblivion!",
-	"The order will cleanse the world of the weak and corrupt!",
-	"Obey the will of the masters!",
-	"Long life to the brothers of the order!",
-	"Free will is an illusion that binds the weak minded.",
-	"Power is the path to glory. To follow the order is to walk that path!",
-	"Take your place among the righteous, join us!",
-	"The order protects its own.",
-	"Acolytes? They have yet to see the full glory of the order.",
-	"If there is any honor inside that pathetic shell of a body, you'll enter into the arms of the order."
-	}
-};
 
 //============================================================================
 //
@@ -224,7 +144,8 @@ void P_FreeStrifeConversations ()
 	{
 		if (StrifeTypes[i] != NULL)
 		{
-			GetDefaultByType (StrifeTypes[i])->Conversation = NULL;
+			AActor * ac = GetDefaultByType (StrifeTypes[i]);
+			if (ac != NULL) ac->Conversation = NULL;
 		}
 	}
 
@@ -742,14 +663,11 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	toSay = CurNode->Dialogue;
 	if (strncmp (toSay, "RANDOM_", 7) == 0)
 	{
-		for (i = 0; i < NUM_RANDOM_TALKERS; ++i)
-		{
-			if (strcmp (RandomLines[i][0], toSay + 7) == 0)
-			{
-				toSay = RandomLines[i][1 + (pr_randomspeech() % NUM_RANDOM_LINES)];
-				break;
-			}
-		}
+		FString dlgtext;
+
+		dlgtext.Format("TXT_%s_%02d", toSay, 1+(pr_randomspeech() % NUM_RANDOM_LINES));
+		toSay = GStrings[dlgtext.GetChars()];
+		if (toSay==NULL) toSay = "Go away!";	// Ok, it's lame - but it doesn't look like an error to the player. ;)
 	}
 	DialogueLines = V_BreakLines (screen->GetWidth()/CleanXfac-24*2, toSay);
 
@@ -774,7 +692,10 @@ void P_StartConversation (AActor *npc, AActor *pc)
 		}
 		++i;
 	}
-	item.label = RandomGoodbyes[pr_randomspeech() % NUM_RANDOM_GOODBYES];
+	char goodbye[25];
+	sprintf(goodbye, "TXT_RANDOMGOODBYE_%d", 1+(pr_randomspeech() % NUM_RANDOM_GOODBYES));
+	item.label = (char*)GStrings[goodbye];
+	if (item.label == NULL) item.label = "Bye.";
 	item.b.position = i;
 	item.c.extra = NULL;
 	ConversationItems.Push (item);

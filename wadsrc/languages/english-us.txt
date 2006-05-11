@@ -1046,6 +1046,68 @@ TXT_MINEKEY = "You picked up the Mine Key.";
 TXT_NEWKEY5 = "You picked up the New Key5.";
 TXT_ORACLEPASS = "You picked up the Oracle Pass.";
 
+// Random dialogs
+
+TXT_RANDOM_PEASANT_01 = "Please don't hurt me.";
+TXT_RANDOM_PEASANT_02 = "If you're looking to hurt me, I'm not really worth the effort.";
+TXT_RANDOM_PEASANT_03 = "I don't know anything.";
+TXT_RANDOM_PEASANT_04 = "Go away or I'll call the guards!";
+TXT_RANDOM_PEASANT_05 = "I wish sometimes that all these rebels would just learn their place and stop this nonsense.";
+TXT_RANDOM_PEASANT_06 = "Just leave me alone, OK?";
+TXT_RANDOM_PEASANT_07 = "I'm not sure, but sometimes I think that I know some of the acolytes.";
+TXT_RANDOM_PEASANT_08 = "The order's got everything around here pretty well locked up tight.";
+TXT_RANDOM_PEASANT_09 = "There's no way that this is just a security force.";
+TXT_RANDOM_PEASANT_10 = "I've heard that the order is really nervous about the front's actions around here.";
+
+TXT_RANDOM_REBEL_01 = "There's no way the order will stand against us.";
+TXT_RANDOM_REBEL_02 = "We're almost ready to strike. Macil's plans are falling in place.";
+TXT_RANDOM_REBEL_03 = "We're all behind you, don't worry.";
+TXT_RANDOM_REBEL_04 = "Don't get too close to any of those big robots. They'll melt you down for scrap!";
+TXT_RANDOM_REBEL_05 = "The day of our glory will soon come, and those who oppose us will be crushed!";
+TXT_RANDOM_REBEL_06 = "Don't get too comfortable. We've still got our work cut out for us.";
+TXT_RANDOM_REBEL_07 = "Macil says that you're the new hope. Bear that in mind.";
+TXT_RANDOM_REBEL_08 = "Once we've taken these charlatans down, we'll be able to rebuild this world as it should be.";
+TXT_RANDOM_REBEL_09 = "Remember that you aren't fighting just for yourself, but for everyone here and outside.";
+TXT_RANDOM_REBEL_10 = "As long as one of us still stands, we will win.";
+
+TXT_RANDOM_AGUARD_01 = "Move along, peasant.";
+TXT_RANDOM_AGUARD_02 = "Follow the true faith, only then will you begin to understand.";
+TXT_RANDOM_AGUARD_03 = "Only through death can one be truly reborn.";
+TXT_RANDOM_AGUARD_04 = "I'm not interested in your useless drivel.";
+TXT_RANDOM_AGUARD_05 = "If I had wanted to talk to you I would have told you so.";
+TXT_RANDOM_AGUARD_06 = "Go and annoy someone else!";
+TXT_RANDOM_AGUARD_07 = "Keep moving!";
+TXT_RANDOM_AGUARD_08 = "If the alarm goes off, just stay out of our way!";
+TXT_RANDOM_AGUARD_09 = "The order will cleanse the world and usher it into the new era.";
+TXT_RANDOM_AGUARD_10 = "Problem? No, I thought not.";
+
+TXT_RANDOM_BEGGAR_01 = "Alms for the poor?";
+TXT_RANDOM_BEGGAR_02 = "What are you looking at, surfacer?";
+TXT_RANDOM_BEGGAR_03 = "You wouldn't have any extra food, would you?";
+TXT_RANDOM_BEGGAR_04 = "You surface people will never understand us.";
+TXT_RANDOM_BEGGAR_05 = "Ha, the guards can't find us. Those idiots don't even know we exist.";
+TXT_RANDOM_BEGGAR_06 = "One day everyone but those who serve the order will be forced to join us.";
+TXT_RANDOM_BEGGAR_07 = "Stare now, but you know that this will be your own face one day.";
+TXT_RANDOM_BEGGAR_08 = "There's nothing more annoying than a surfacer with an attitude!";
+TXT_RANDOM_BEGGAR_09 = "The order will make short work of your pathetic front.";
+TXT_RANDOM_BEGGAR_10 = "Watch yourself, surfacer. We know our enemies!";
+
+TXT_RANDOM_PGUARD_01 = "We are the hands of fate. To earn our wrath is to find oblivion!";
+TXT_RANDOM_PGUARD_02 = "The order will cleanse the world of the weak and corrupt!";
+TXT_RANDOM_PGUARD_03 = "Obey the will of the masters!";
+TXT_RANDOM_PGUARD_04 = "Long life to the brothers of the order!";
+TXT_RANDOM_PGUARD_05 = "Free will is an illusion that binds the weak minded.";
+TXT_RANDOM_PGUARD_06 = "Power is the path to glory. To follow the order is to walk that path!";
+TXT_RANDOM_PGUARD_07 = "Take your place among the righteous, join us!";
+TXT_RANDOM_PGUARD_08 = "The order protects its own.";
+TXT_RANDOM_PGUARD_09 = "Acolytes? They have yet to see the full glory of the order.";
+TXT_RANDOM_PGUARD_10 = "If there is any honor inside that pathetic shell of a body, you'll enter into the arms of the order.";
+
+TXT_RANDOMGOODBYE_1 = "Bye!";
+TXT_RANDOMGOODBYE_2 = "Thanks, bye!";
+TXT_RANDOMGOODBYE_3 = "See you later!";
+
+
 // Bloodbath announcer
 
 BBA_BONED = "%k boned %o like a fish";

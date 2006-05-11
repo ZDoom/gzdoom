@@ -1,3 +1,8 @@
+May 11, 2006 (Changes by Graf Zahl)
+- Fixed: Strife's MiniMissile pickup amount was still incorrect.
+- Moved Strife's random dialogs into the string table. Now it should also be
+  possible to define dialogs for other actors as well.
+
 May 10, 2006
 - Fixed: When revisiting a map in a hub, the player could spawn at the wrong
   height if the floor had moved while they were there before. This was because

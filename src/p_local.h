@@ -92,6 +92,8 @@ void	P_UnPredictPlayer ();
 extern fixed_t FloatBobOffsets[64];
 extern AActor *MissileActor;
 
+void P_SpawnPlayer (mapthing2_t* mthing);
+
 void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
 int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);
 bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax);

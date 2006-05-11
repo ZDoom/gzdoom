@@ -1172,7 +1172,6 @@ void G_PlayerReborn (int player)
 // at the given mapthing2_t spot  
 // because something is occupying it 
 //
-void P_SpawnPlayer (mapthing2_t* mthing);
 
 BOOL G_CheckSpot (int playernum, mapthing2_t *mthing)
 {

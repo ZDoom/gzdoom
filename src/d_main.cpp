@@ -1710,7 +1710,8 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 
 	if (FileExists (file))
 	{
-		return file;
+		sprintf (wad, "%s", file);
+		return wad;
 	}
 
 	if (GameConfig->SetSection ("FileSearch.Directories"))

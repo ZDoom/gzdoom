@@ -1960,7 +1960,7 @@ void G_StartTravel ()
 void G_FinishTravel ()
 {
 	TThinkerIterator<APlayerPawn> it (STAT_TRAVELLING);
-	APlayerPawn *pawn, *pawndup, *next;
+	APlayerPawn *pawn, *pawndup, *oldpawn, *next;
 	AInventory *inv;
 
 	next = it.Next ();
@@ -1977,6 +1977,9 @@ void G_FinishTravel ()
 		}
 		else
 		{
+			oldpawn = pawndup;
+			P_SpawnPlayer (&playerstarts[pawn->player - players]);
+			pawndup = pawn->player->mo;
 			if (!startkeepfacing)
 			{
 				pawn->angle = pawndup->angle;
@@ -2002,7 +2005,8 @@ void G_FinishTravel ()
 			pawn->lastenemy = NULL;
 			pawn->AddToHash ();
 			pawn->player->mo = pawn;
-			DObject::PointerSubstitution (pawndup, pawn);
+			DObject::PointerSubstitution (oldpawn, pawn);
+			oldpawn->Destroy();
 			pawndup->Destroy ();
 			pawn->LinkToWorld ();
 			pawn->AddToHash ();

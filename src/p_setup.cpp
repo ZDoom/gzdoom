@@ -74,6 +74,7 @@ CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
 CVAR (Bool, showloadtimes, false, 0);
 
 static void P_InitTagLists ();
+static void P_Shutdown ();
 
 //
 // MAP related Lookup tables.
@@ -2798,6 +2799,8 @@ void P_FreeLevelData ()
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
+	FBehavior::StaticUnloadModules ();
+	level.behavior = NULL;
 	if (vertexes != NULL)
 	{
 		delete[] vertexes;
@@ -2915,42 +2918,32 @@ void P_FreeLevelData ()
 
 extern msecnode_t *headsecnode;
 
-static struct AutoFreeLevelData
+void P_FreeExtraLevelData()
 {
-	~AutoFreeLevelData()
+	// Free all blocknodes and msecnodes.
+	// *NEVER* call this function without calling
+	// P_FreeLevelData() first, or they might not all be freed.
 	{
-		P_FreeLevelData();
-
-		// Blocknodes and msecnodes should be freed now, when we
-		// can be sure they are all easily located in their
-		// free lists.
+		FBlockNode *node = FBlockNode::FreeBlocks;
+		while (node != NULL)
 		{
-			FBlockNode *node = FBlockNode::FreeBlocks;
-			while (node != NULL)
-			{
-				FBlockNode *next = node->NextBlock;
-				delete node;
-				node = next;
-			}
-		}
-		{
-			msecnode_t *node = headsecnode;
-
-			while (node != NULL)
-			{
-				msecnode_t *next = node->m_snext;
-				free (node);
-				node = next;
-			}
-			headsecnode = NULL;
-		}
-		if (StatusBar != NULL)
-		{
-			delete StatusBar;
-			StatusBar = NULL;
+			FBlockNode *next = node->NextBlock;
+			delete node;
+			node = next;
 		}
 	}
-} LevelDataFree_er;
+	{
+		msecnode_t *node = headsecnode;
+
+		while (node != NULL)
+		{
+			msecnode_t *next = node->m_snext;
+			free (node);
+			node = next;
+		}
+		headsecnode = NULL;
+	}
+}
 
 //
 // P_SetupLevel
@@ -3349,12 +3342,27 @@ void P_SetupLevel (char *lumpname, int position)
 //
 void P_Init ()
 {
+	atterm (P_Shutdown);
+
 	P_InitEffects ();		// [RH]
 	P_InitPicAnims ();
 	P_InitSwitchList ();
 	P_InitTerrainTypes ();
 	P_InitKeyMessages ();
 	R_InitSprites ();
+}
+
+static void P_Shutdown ()
+{
+	R_DeinitSprites ();
+	P_DeinitKeyMessages ();
+	P_FreeLevelData ();
+	P_FreeExtraLevelData ();
+	if (StatusBar != NULL)
+	{
+		delete StatusBar;
+		StatusBar = NULL;
+	}
 }
 
 #if 0

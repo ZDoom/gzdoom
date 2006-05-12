@@ -135,6 +135,7 @@ void FCompressedFile::BeEmpty ()
 	m_Buffer = NULL;
 	m_File = NULL;
 	m_NoCompress = false;
+	m_Mode = ENotOpen;
 }
 
 static const char LZOSig[4] = { 'F', 'L', 'Z', 'O' };
@@ -424,6 +425,14 @@ FCompressedMemFile::FCompressedMemFile (const char *name, EOpenMode mode)
 	m_ImplodedBuffer = NULL;
 }
 */
+
+FCompressedMemFile::~FCompressedMemFile ()
+{
+	if (m_ImplodedBuffer != NULL)
+	{
+		free (m_ImplodedBuffer);
+	}
+}
 
 bool FCompressedMemFile::Open (const char *name, EOpenMode mode)
 {

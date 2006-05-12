@@ -76,6 +76,7 @@ extern TArray<sfxinfo_t> S_sfx;
 //	allocates channel buffer, sets S_sfx lookup.
 //
 void S_Init ();
+void S_Shutdown ();
 
 // Per level startup code.
 // Kills playing sounds at start of level and starts new music.
@@ -181,6 +182,7 @@ void S_UpdateSounds (void *listener);
 // [RH] S_sfx "maintenance" routines
 void S_ParseSndInfo ();
 void S_ParseSndEax ();
+void S_UnloadSndEax ();
 
 void S_HashSounds ();
 int S_FindSound (const char *logicalname);

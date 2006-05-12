@@ -8,6 +8,7 @@
 struct PClass
 {
 	static void StaticInit ();
+	static void StaticShutdown ();
 	static void StaticFreeData (PClass *type);
 
 	// Per-class information -------------------------------------

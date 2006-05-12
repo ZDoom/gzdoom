@@ -86,7 +86,14 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 		}
 		else
 		{
-			I_Error ("Cannot find owner for state %p\n", state);
+			I_Error ("Cannot find owner for state %p:\n"
+					 "%s %c%c %3d [%p] -> %p", state,
+					 sprites[state->sprite.index].name,
+					 state->GetFrame() + 'A',
+					 state->GetFullbright() ? '*' : ' ',
+					 state->GetTics(),
+					 state->GetAction(),
+					 state->GetNextState());
 		}
 	}
 	else

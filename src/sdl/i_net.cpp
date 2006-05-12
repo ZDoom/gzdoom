@@ -323,7 +323,7 @@ void BuildAddress (sockaddr_in *address, char *name)
 		*portpart = ':';
 }
 
-void STACK_ARGS CloseNetwork (void)
+void CloseNetwork (void)
 {
 	if (mysocket != INVALID_SOCKET)
 	{
@@ -386,7 +386,7 @@ void WaitForPlayers (int i)
 	doomcom.numplayers = doomcom.numnodes;
 }
 
-void STACK_ARGS SendAbort (void)
+void SendAbort (void)
 {
 	BYTE dis[2] = { PRE_FAKE, PRE_DISCONNECT };
 

@@ -278,6 +278,7 @@ public:
 					oldfrags = -9999; //can't use -1, 'cuz of negative frags
 					oldlife = -1;
 					oldkeys[0] = oldkeys[1] = oldkeys[2] = oldkeys[3] = oldkeys[4] = NULL;
+					ArtiRefresh = 0;
 					//oldhealth = -1;
 				}
 				if (!automapactive)

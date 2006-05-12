@@ -1479,7 +1479,7 @@ BOOL I_InitInput (void *hwnd)
 
 
 // Free all input resources
-void STACK_ARGS I_ShutdownInput ()
+void I_ShutdownInput ()
 {
 	if (g_pKey)
 	{

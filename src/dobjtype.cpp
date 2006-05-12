@@ -10,42 +10,51 @@ PClass *PClass::TypeHash[PClass::HASH_SIZE];
 // A harmless non_NULL FlatPointer for classes without pointers.
 static const size_t TheEnd = ~0;
 
-static struct TypeInfoDataFreeer
+void PClass::StaticInit ()
 {
-	~TypeInfoDataFreeer()
-	{
-		TArray<size_t *> uniqueFPs(64);
-		unsigned int i, j;
+	atterm (StaticShutdown);
 
-		for (i = 0; i < PClass::m_Types.Size(); ++i)
+	TAutoSegIterator<ClassReg *, &CRegHead, &CRegTail> probe;
+
+	while (++probe != NULL)
+	{
+		probe->RegisterClass ();
+	}
+}
+
+void PClass::StaticShutdown ()
+{
+	TArray<size_t *> uniqueFPs(64);
+	unsigned int i, j;
+
+	for (i = 0; i < PClass::m_Types.Size(); ++i)
+	{
+		PClass *type = PClass::m_Types[i];
+		PClass::m_Types[i] = NULL;
+		if (type->FlatPointers != &TheEnd && type->FlatPointers != type->Pointers)
 		{
-			PClass *type = PClass::m_Types[i];
-			PClass::m_Types[i] = NULL;
-			if (type->FlatPointers != &TheEnd && type->FlatPointers != type->Pointers)
+			// FlatPointers are shared by many classes, so we must check for
+			// duplicates and only delete those that are unique.
+			for (j = 0; j < uniqueFPs.Size(); ++j)
 			{
-				// FlatPointers are shared by many classes, so we must check for
-				// duplicates and only delete those that are unique.
-				for (j = 0; j < uniqueFPs.Size(); ++j)
+				if (type->FlatPointers == uniqueFPs[j])
 				{
-					if (type->FlatPointers == uniqueFPs[j])
-					{
-						break;
-					}
-				}
-				if (j == uniqueFPs.Size())
-				{
-					uniqueFPs.Push(const_cast<size_t *>(type->FlatPointers));
+					break;
 				}
 			}
-			// For runtime classes, this call will also delete the PClass.
-			PClass::StaticFreeData (type);
+			if (j == uniqueFPs.Size())
+			{
+				uniqueFPs.Push(const_cast<size_t *>(type->FlatPointers));
+			}
 		}
-		for (i = 0; i < uniqueFPs.Size(); ++i)
-		{
-			delete[] uniqueFPs[i];
-		}
+		// For runtime classes, this call will also delete the PClass.
+		PClass::StaticFreeData (type);
 	}
-} FreeTypeInfoData;
+	for (i = 0; i < uniqueFPs.Size(); ++i)
+	{
+		delete[] uniqueFPs[i];
+	}
+}
 
 void PClass::StaticFreeData (PClass *type)
 {
@@ -67,17 +76,6 @@ void PClass::StaticFreeData (PClass *type)
 			type->ActorInfo = NULL;
 		}
 		delete type;
-	}
-}
-
-
-void PClass::StaticInit ()
-{
-	TAutoSegIterator<ClassReg *, &CRegHead, &CRegTail> probe;
-
-	while (++probe != NULL)
-	{
-		probe->RegisterClass ();
 	}
 }
 

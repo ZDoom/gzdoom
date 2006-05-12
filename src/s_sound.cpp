@@ -167,29 +167,6 @@ CVAR (Bool, snd_flipstereo, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------
 
-static struct FreeSoundData
-{
-	~FreeSoundData()
-	{
-		if (Channel != NULL)
-		{
-			delete[] Channel;
-			Channel = NULL;
-			numChannels = 0;
-		}
-		if (SoundCurve != NULL)
-		{
-			delete[] SoundCurve;
-			SoundCurve = NULL;
-		}
-		if (PlayList != NULL)
-		{
-			delete PlayList;
-			PlayList = NULL;
-		}
-	}
-} SoundDataFree_er;
-
 //==========================================================================
 //
 // P_AproxDistance2
@@ -306,6 +283,7 @@ void S_Init ()
 	int curvelump;
 
 	Printf ("S_Init\n");
+	atterm (S_Shutdown);
 
 	// remove old data (S_Init can be called multiple times!)
 	LastLocalSndInfo = LastLocalSndSeq = "";
@@ -363,6 +341,32 @@ void S_Init ()
 	// Note that sounds have not been cached (yet).
 //	for (i=1; (size_t)i < S_sfx.Size (); i++)
 //		S_sfx[i].usefulness = -1;
+}
+
+//==========================================================================
+//
+// S_Shutdown
+//
+//==========================================================================
+
+void S_Shutdown ()
+{
+	if (Channel != NULL)
+	{
+		delete[] Channel;
+		Channel = NULL;
+		numChannels = 0;
+	}
+	if (SoundCurve != NULL)
+	{
+		delete[] SoundCurve;
+		SoundCurve = NULL;
+	}
+	if (PlayList != NULL)
+	{
+		delete PlayList;
+		PlayList = NULL;
+	}
 }
 
 //==========================================================================

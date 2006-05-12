@@ -124,6 +124,6 @@ public:
 extern SoundRenderer *GSnd;
 
 void I_InitSound ();
-void STACK_ARGS I_ShutdownSound ();
+void I_ShutdownSound ();
 
 #endif

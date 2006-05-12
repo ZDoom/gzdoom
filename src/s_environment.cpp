@@ -6,6 +6,7 @@
 #include "cmdlib.h"
 #include "templates.h"
 #include "w_wad.h"
+#include "i_system.h"
 
 struct FEAXField
 {
@@ -382,25 +383,6 @@ ReverbContainer *DefaultEnvironments[26] =
 
 ReverbContainer *Environments = &Off;
 
-static struct ReverbContainerDeleter
-{
-	~ReverbContainerDeleter()
-	{
-		ReverbContainer *probe = Environments;
-
-		while (probe != NULL)
-		{
-			ReverbContainer *next = probe->Next;
-			if (!probe->Builtin)
-			{
-				delete[] const_cast<char *>(probe->Name);
-				delete probe;
-			}
-			probe = next;
-		}
-	}
-} DeleteTheReverbContainers;
-
 ReverbContainer *S_FindEnvironment (const char *name)
 {
 	ReverbContainer *probe = Environments;
@@ -587,10 +569,29 @@ void S_ParseSndEax ()
 {
 	int lump, lastlump = 0;
 
+	atterm (S_UnloadSndEax);
+
 	while ((lump = Wads.FindLump ("SNDEAX", &lastlump)) != -1)
 	{
 		SC_OpenLumpNum (lump, "SNDEAX");
 		ReadEAX ();
 		SC_Close ();
 	}
+}
+
+void S_UnloadSndEax ()
+{
+	ReverbContainer *probe = Environments;
+
+	while (probe != NULL)
+	{
+		ReverbContainer *next = probe->Next;
+		if (!probe->Builtin)
+		{
+			delete[] const_cast<char *>(probe->Name);
+			delete probe;
+		}
+		probe = next;
+	}
+	Environments = &Off;
 }

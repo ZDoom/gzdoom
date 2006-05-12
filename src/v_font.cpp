@@ -110,17 +110,6 @@ static const byte myislower[256] =
 
 FFont *FFont::FirstFont = NULL;
 
-static struct FontsDeleter
-{
-	~FontsDeleter()
-	{
-		while (FFont::FirstFont != NULL)
-		{
-			delete FFont::FirstFont;
-		}
-	}
-} DeleteAllTheFonts;
-
 #if defined(_MSC_VER) && _MSC_VER < 1310
 template<> FArchive &operator<< (FArchive &arc, FFont* &font)
 #else

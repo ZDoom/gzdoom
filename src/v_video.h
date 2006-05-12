@@ -189,7 +189,7 @@ private:
 	DCanvas *Next;
 	static DCanvas *CanvasChain;
 
-	friend void STACK_ARGS FreeCanvasChain ();
+	friend void FreeCanvasChain ();
 };
 
 // A canvas in system memory.
@@ -285,6 +285,8 @@ extern "C" DWORD *Col2RGB8_LessPrecision[65];
 
 // Allocates buffer screens, call before R_Init.
 void V_Init ();
+
+void V_Shutdown ();
 
 void V_MarkRect (int x, int y, int width, int height);
 

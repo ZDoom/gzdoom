@@ -166,7 +166,7 @@ ticcmd_t *I_BaseTiccmd (void);
 
 // Called by M_Responder when quit is selected.
 // Clean exit, displays sell blurb.
-void STACK_ARGS I_Quit (void);
+void I_Quit (void);
 
 
 void I_Tactile (int on, int off, int total);
@@ -174,7 +174,7 @@ void I_Tactile (int on, int off, int total);
 void STACK_ARGS I_Error (const char *error, ...) GCCPRINTF(1,2);
 void STACK_ARGS I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 
-void addterm (void (STACK_ARGS *func)(void), const char *name);
+void addterm (void (*func)(void), const char *name);
 #define atterm(t) addterm (t, #t)
 void popterm ();
 

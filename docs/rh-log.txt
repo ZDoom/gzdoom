@@ -1,3 +1,23 @@
+May 11, 2006
+- Merged a lot of these static destructor-only structs into regular
+  functions added to the exit chain with atterm so that they can be called
+  in a deterministic order and not whatever order the linker decides to put
+  them in.
+- Fixed: DCajunMaster did not free its getspawned.
+- Fixed: P_FreeLevelData() did not free ACS scripts.
+- Fixed: Level snapshots were not freed at exit.
+- Fixed: The save/load menu list was not freed at exit.
+- Fixed: FCompressedMemFile needs a destructor to free the m_ImplodedBuffer.
+- Fixed: G_DoLoadGame() did not free the engine string.
+- Fixed: M_ReadSaveStrings() did not free the engine string.
+- Fixed: Processing DEM_SAVEGAME did not free the pathname string.
+- Added a check for truncated flats to FFlatTexture::MakeTexture() because
+  Heretic's F_SKY1 is only four bytes long.
+- Added a dump of the offending state to the "Cannot find state..." diagnostic.
+- Fixed: FCompressedFile did not initialize m_Mode in its default constructor.
+- Fixed: Heretic and Hexen status bars did not initialize ArtiRefresh.
+- Fixed: PNGHandle destructor should use delete[] to free TextChunks.
+
 May 11, 2006 (Changes by Graf Zahl)
 - Converted the stealth monsters to DECORATE.
 - Added string replacement option to obituary strings.

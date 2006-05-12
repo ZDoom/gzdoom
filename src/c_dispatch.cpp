@@ -149,29 +149,6 @@ FActionMap ActionMaps[] =
 
 #define NUM_ACTIONS countof(ActionMaps)
 
-static struct AliasKiller
-{
-	~AliasKiller()
-	{
-		// Scan the hash table for all aliases and delete them.
-		// Regular commands will be destroyed automatically.
-		for (size_t i = 0; i < countof(Commands); ++i)
-		{
-			FConsoleCommand *cmd = Commands[i];
-
-			while (cmd != NULL)
-			{
-				FConsoleCommand *next = cmd->m_Next;
-				if (cmd->IsAlias())
-				{
-					delete cmd;
-				}
-				cmd = next;
-			}
-		}
-	}
-} KillTheAliases;
-
 
 
 IMPLEMENT_CLASS (DWaitingCommand)

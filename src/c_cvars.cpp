@@ -68,22 +68,6 @@ FBaseCVar *CVars = NULL;
 
 int cvar_defflags;
 
-static struct RuntimeCVarDestroyer
-{
-	~RuntimeCVarDestroyer()
-	{
-		FBaseCVar *var, *next;
-		for (var = CVars; var != NULL; var = next)
-		{
-			next = var->m_Next;
-			if (var->GetFlags() & CVAR_UNSETTABLE)
-			{
-				delete var;
-			}
-		}
-	}
-} DestroyTheRuntimeCVars;
-
 FBaseCVar::FBaseCVar (const FBaseCVar &var)
 {
 	I_FatalError ("Use of cvar copy constructor");

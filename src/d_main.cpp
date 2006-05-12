@@ -91,12 +91,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-struct GameAtExit
-{
-	GameAtExit *Next;
-	char Command[1];
-};
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern void M_RestoreMode ();
@@ -117,7 +111,6 @@ void D_AddWildFile (const char *pattern);
 
 void D_DoomLoop ();
 static const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir=false);
-static void STACK_ARGS DoConsoleAtExit ();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -221,7 +214,6 @@ static const char *IWADNames[] =
 	"strife0.wad",
 	NULL
 };
-static GameAtExit *ExitCmdList;
 
 // CODE --------------------------------------------------------------------
 
@@ -618,56 +610,6 @@ void D_Display (bool screenshot)
 
 	unclock (cycles);
 	FrameCycles = cycles;
-}
-
-//==========================================================================
-//
-// DoConsoleAtExit
-//
-// Executes the contents of the atexit cvar, if any, at quit time.
-//
-//==========================================================================
-
-static void STACK_ARGS DoConsoleAtExit ()
-{
-	GameAtExit *cmd = ExitCmdList;
-
-	while (cmd != NULL)
-	{
-		GameAtExit *next = cmd->Next;
-		AddCommandString (cmd->Command);
-		free (cmd);
-		cmd = next;
-	}
-}
-
-//==========================================================================
-//
-// CCMD atexit
-//
-//==========================================================================
-
-CCMD (atexit)
-{
-	if (argv.argc() == 1)
-	{
-		Printf ("Registered atexit commands:\n");
-		GameAtExit *record = ExitCmdList;
-		while (record != NULL)
-		{
-			Printf ("%s\n", record->Command);
-			record = record->Next;
-		}
-		return;
-	}
-	for (int i = 1; i < argv.argc(); ++i)
-	{
-		GameAtExit *record = (GameAtExit *)M_Malloc (
-			sizeof(GameAtExit)+strlen(argv[i]));
-		strcpy (record->Command, argv[i]);
-		record->Next = ExitCmdList;
-		ExitCmdList = record;
-	}
 }
 
 //==========================================================================
@@ -1905,12 +1847,9 @@ void D_DoomMain (void)
 
 	file[PATH_MAX-1] = 0;
 
-#if defined(_MSC_VER) || defined(__GNUC__)
-	PClass::StaticInit ();
-#endif
-
 	atterm (DObject::StaticShutdown);
-	atterm (DoConsoleAtExit);
+	PClass::StaticInit ();
+	atterm (C_DeinitConsole);
 
 	gamestate = GS_STARTUP;
 

@@ -277,7 +277,7 @@ void CalculateCPUSpeed ()
 //
 static int has_exited;
 
-void STACK_ARGS I_Quit (void)
+void I_Quit (void)
 {
     has_exited = 1;		/* Prevent infinitely recursive exits -- killough */
 

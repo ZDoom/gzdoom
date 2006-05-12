@@ -337,7 +337,7 @@ FString GetUserFile (const char *file, bool nodir)
 // M_SaveDefaults
 //
 
-void STACK_ARGS M_SaveDefaults ()
+void M_SaveDefaults ()
 {
 	GameConfig->ArchiveGlobalData ();
 	if (GameNames[gameinfo.gametype] != NULL)

@@ -55,7 +55,7 @@ IVideo *Video;
 //static IMouse *Mouse;
 //static IJoystick *Joystick;
 
-void STACK_ARGS I_ShutdownHardware ()
+void I_ShutdownHardware ()
 {
 	if (screen)
 		delete screen, screen = NULL;

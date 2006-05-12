@@ -1623,7 +1623,7 @@ void G_DoLoadGame ()
 	// Check whether this savegame actually has been created by a compatible engine.
 	// Since there are ZDoom derivates using the exact same savegame format but
 	// with mutual incompatibilities this check simplifies things significantly.
-	char * engine = M_GetPNGText (png, "Engine");
+	char *engine = M_GetPNGText (png, "Engine");
 	if (engine == NULL || 0 != strcmp (engine, GAMESIG))
 	{
 		// Make a special case for the message printed for old savegames that don't
@@ -1634,11 +1634,16 @@ void G_DoLoadGame ()
 		}
 		else
 		{
-			Printf ("Savegame is from another ZDoom-based engine\n");
+			Printf ("Savegame is from another ZDoom-based engine: %s\n", engine);
+			delete[] engine;
 		}
 		delete png;
 		fclose (stdfile);
 		return;
+	}
+	if (engine != NULL)
+	{
+		delete[] engine;
 	}
 
 	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 16) ||

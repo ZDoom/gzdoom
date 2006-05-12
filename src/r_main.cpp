@@ -77,6 +77,8 @@ bool RP_SetupFrame (bool backside);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void R_Shutdown();
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
@@ -764,8 +766,10 @@ CUSTOM_CVAR (Int, r_columnmethod, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-void R_Init (void)
+void R_Init ()
 {
+	atterm (R_Shutdown);
+
 	R_InitData ();
 	R_InitPointToAngle ();
 	R_InitTables ();
@@ -788,6 +792,19 @@ void R_Init (void)
 	hcolfunc_post4 = rt_map4cols;
 
 	framecount = 0;
+}
+
+//==========================================================================
+//
+// R_Shutdown
+//
+//==========================================================================
+
+static void R_Shutdown ()
+{
+	R_DeinitParticles();
+	R_DeinitPlanes();
+	R_DeinitData();
 }
 
 //==========================================================================

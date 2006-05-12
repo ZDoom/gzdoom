@@ -49,7 +49,7 @@ EXTERN_CVAR (Float, vid_winscale)
 
 IVideo *Video;
 
-void STACK_ARGS I_ShutdownHardware ()
+void I_ShutdownHardware ()
 {
 	if (screen)
 		delete screen, screen = NULL;

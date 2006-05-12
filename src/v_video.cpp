@@ -853,6 +853,8 @@ void V_Init (void)
 	char *i;
 	int width, height, bits;
 
+	atterm (V_Shutdown);
+
 	// [RH] Initialize palette management
 	InitPalette ();
 
@@ -919,8 +921,6 @@ void V_Init (void)
 		bits = vid_defbits;
 	}
 
-	atterm (FreeCanvasChain);
-
 	I_ClosestResolution (&width, &height, bits);
 
 	if (!V_SetResolution (width, height, bits))
@@ -935,7 +935,16 @@ void V_Init (void)
 	BuildTransTable (GPalette.BaseColors);
 }
 
-void STACK_ARGS FreeCanvasChain ()
+void V_Shutdown()
+{
+	FreeCanvasChain();
+	while (FFont::FirstFont != NULL)
+	{
+		delete FFont::FirstFont;
+	}
+}
+
+void FreeCanvasChain ()
 {
 	if (screen != NULL)
 	{

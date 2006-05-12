@@ -81,7 +81,7 @@ PNGHandle::~PNGHandle ()
 {
 	for (unsigned int i = 0; i < TextChunks.Size(); ++i)
 	{
-		delete TextChunks[i];
+		delete[] TextChunks[i];
 	}
 	if (bDeleteFilePtr)
 	{

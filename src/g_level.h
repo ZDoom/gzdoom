@@ -318,6 +318,7 @@ level_info_t *CheckLevelRedirect (level_info_t *info);
 char *CalcMapName (int episode, int level);
 
 void G_ParseMapInfo (void);
+void G_UnloadMapInfo ();
 
 void G_ClearSnapshots (void);
 void G_SnapshotLevel (void);

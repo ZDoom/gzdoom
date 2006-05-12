@@ -137,7 +137,7 @@ void I_InitMusic (void)
 }
 
 
-void STACK_ARGS I_ShutdownMusic(void)
+void I_ShutdownMusic(void)
 {
 	if (MusicDown)
 		return;

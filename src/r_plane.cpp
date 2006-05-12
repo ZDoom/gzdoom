@@ -72,20 +72,6 @@ static visplane_t		*visplanes[MAXVISPLANES+1];	// killough
 static visplane_t		*freetail;					// killough
 static visplane_t		**freehead = &freetail;		// killough
 
-static struct VisPlaneFree
-{
-	~VisPlaneFree()
-	{
-		R_ClearPlanes(false);
-		for (visplane_t *pl = freetail; pl != NULL; )
-		{
-			visplane_t *next = pl->next;
-			free (pl);
-			pl = next;
-		}
-	}
-} VisPlaneFree_er;
-
 visplane_t 				*floorplane;
 visplane_t 				*ceilingplane;
 
@@ -112,18 +98,6 @@ angle_t stacked_angle;
 size_t					maxopenings;
 short					*openings;
 ptrdiff_t				lastopening;
-
-static struct OpeningsFree
-{
-	~OpeningsFree()
-	{
-		if (openings != NULL)
-		{
-			free (openings);
-			openings = NULL;
-		}
-	}
-} FreeOpenings;
 
 //
 // Clip values are the solid pixel bounding the range.
@@ -179,6 +153,23 @@ void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool masked);
 
 void R_InitPlanes ()
 {
+}
+
+//==========================================================================
+//
+// R_DeinitPlanes
+//
+//==========================================================================
+
+void R_DeinitPlanes ()
+{
+	R_ClearPlanes(false);
+	for (visplane_t *pl = freetail; pl != NULL; )
+	{
+		visplane_t *next = pl->next;
+		free (pl);
+		pl = next;
+	}
 }
 
 //==========================================================================

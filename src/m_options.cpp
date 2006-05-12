@@ -812,22 +812,6 @@ EXTERN_CVAR (Bool, fullscreen)
 
 static value_t Depths[22];
 
-static struct DepthNameKiller
-{
-	~DepthNameKiller()
-	{
-		for (int i = 0; i < countof(Depths); ++i)
-		{
-			if (Depths[i].name != NULL)
-			{
-				delete[] Depths[i].name;
-				Depths[i].name = NULL;
-			}
-		}
-		M_FreeModesList();
-	}
-} KillTheDepthValues;
-
 EXTERN_CVAR (Bool, vid_tft)		// Defined below
 CUSTOM_CVAR (Int, menu_screenratios, 0, CVAR_ARCHIVE)
 {
@@ -3055,3 +3039,20 @@ CCMD (addmenukey)
 	ControlsMenu.items = &CustomControlsItems[0];
 	ControlsMenu.numitems = (int)CustomControlsItems.Size();
 }
+
+void M_Deinit ()
+{
+	// Free bitdepth names for the modes menu.
+	for (int i = 0; i < countof(Depths); ++i)
+	{
+		if (Depths[i].name != NULL)
+		{
+			delete[] Depths[i].name;
+			Depths[i].name = NULL;
+		}
+	}
+
+	// Free resolutions from the modes menu.
+	M_FreeModesList();
+}
+

@@ -678,17 +678,9 @@ vissprite_t		**vissprite_p;
 vissprite_t		**lastvissprite;
 int 			newvissprite;
 
-static struct VisSpriteDeleter
-{
-	~VisSpriteDeleter()
-	{
-		for (int i = 0; i < MaxVisSprites; ++i)
-		{
-			delete vissprites[i];
-		}
-		free (vissprites);
-	}
-} DeleteTheVisSprites;
+static vissprite_t **spritesorter;
+static int spritesortersize = 0;
+static int vsprcount;
 
 static void R_CreateSkinTranslation (const char *palname)
 {
@@ -797,14 +789,33 @@ void R_InitSprites ()
 	qsort (&skins[1], numskins-1, sizeof(FPlayerSkin), skinsorter);
 }
 
-static struct SkinDeleter
+void R_DeinitSprites()
 {
-	~SkinDeleter()
+	// Free skins
+	if (skins != NULL)
 	{
-		if (skins!=NULL) delete[] skins;
+		delete[] skins;
+		skins = NULL;
 	}
-} DeleteTheSkins;
 
+	// Free vissprites
+	for (int i = 0; i < MaxVisSprites; ++i)
+	{
+		delete vissprites[i];
+	}
+	free (vissprites);
+	vissprites = NULL;
+	vissprite_p = lastvissprite = NULL;
+	MaxVisSprites = 0;
+
+	// Free vissprites sorter
+	if (spritesorter != NULL)
+	{
+		delete[] spritesorter;
+		spritesortersize = 0;
+		spritesorter = NULL;
+	}
+}
 
 //
 // R_ClearSprites
@@ -1562,23 +1573,6 @@ void R_DrawPlayerSprites (void)
 //		more vissprites that need to be sorted, the better the performance
 //		gain compared to the old function.
 //
-static vissprite_t **spritesorter;
-static int spritesortersize = 0;
-static int vsprcount;
-
-static struct SpriteSorterFree
-{
-	~SpriteSorterFree()
-	{
-		if (spritesorter != NULL)
-		{
-			delete[] spritesorter;
-			spritesortersize = 0;
-			spritesorter = NULL;
-		}
-	}
-} SpriteSorterFree_er;
-
 // Sort vissprites by depth, far to near
 static int STACK_ARGS sv_compare (const void *arg1, const void *arg2)
 {
@@ -2006,14 +2000,6 @@ void R_DrawMasked (void)
 // [RH] Particle functions
 //
 
-static void STACK_ARGS FreeParticles()
-{
-	if (Particles != NULL)
-	{
-		delete[] Particles;
-	}
-}
-
 void R_InitParticles ()
 {
 	char *i;
@@ -2027,7 +2013,16 @@ void R_InitParticles ()
 
 	Particles = new particle_t[NumParticles];
 	R_ClearParticles ();
-	atterm (FreeParticles);
+	atterm (R_DeinitParticles);
+}
+
+void R_DeinitParticles()
+{
+	if (Particles != NULL)
+	{
+		delete[] Particles;
+		Particles = NULL;
+	}
 }
 
 void R_ClearParticles ()

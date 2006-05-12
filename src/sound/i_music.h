@@ -42,7 +42,7 @@
 //	MUSIC I/O
 //
 void I_InitMusic ();
-void STACK_ARGS I_ShutdownMusic ();
+void I_ShutdownMusic ();
 void I_BuildMIDIMenuList (struct value_s **values, float *numValues);
 
 // Volume.

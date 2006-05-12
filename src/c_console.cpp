@@ -87,6 +87,9 @@ extern int		gametic;
 extern bool		automapactive;	// in AM_map.c
 extern BOOL		advancedemo;
 
+extern FBaseCVar *CVars;
+extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
+
 int			ConCols, PhysRows;
 BOOL		vidactive = false, gotconback = false;
 BOOL		cursoron = false;
@@ -103,6 +106,13 @@ static char *BufferRover = ConsoleBuffer;
 
 static void ClearConsole ();
 
+struct GameAtExit
+{
+	GameAtExit *Next;
+	char Command[1];
+};
+
+static GameAtExit *ExitCmdList;
 
 #define SCROLLUP 1
 #define SCROLLDN 2
@@ -115,6 +125,11 @@ static const char *TickerLabel;
 
 static bool TickerVisible;
 static bool ConsoleDrawing;
+
+// Buffer for AddToConsole()
+static char *work = NULL;
+static int worklen = 0;
+
 
 struct History
 {
@@ -132,22 +147,6 @@ static byte CmdLine[260];
 #define MAXHISTSIZE 50
 static struct History *HistHead = NULL, *HistTail = NULL, *HistPos = NULL;
 static int HistSize;
-
-static struct HistoryFree
-{
-	~HistoryFree()
-	{
-		History *hist = HistTail;
-
-		while (hist != NULL)
-		{
-			History *next = hist->Newer;
-			free (hist);
-			hist = next;
-		}
-	}
-} HistoryFree_er;
-
 
 CVAR (Float, con_notifytime, 3.f, CVAR_ARCHIVE)
 CVAR (Bool, con_centernotify, false, CVAR_ARCHIVE)
@@ -421,6 +420,113 @@ void C_InitConsole (int width, int height, BOOL ingame)
 	}
 }
 
+//==========================================================================
+//
+// CCMD atexit
+//
+//==========================================================================
+
+CCMD (atexit)
+{
+	if (argv.argc() == 1)
+	{
+		Printf ("Registered atexit commands:\n");
+		GameAtExit *record = ExitCmdList;
+		while (record != NULL)
+		{
+			Printf ("%s\n", record->Command);
+			record = record->Next;
+		}
+		return;
+	}
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		GameAtExit *record = (GameAtExit *)M_Malloc (
+			sizeof(GameAtExit)+strlen(argv[i]));
+		strcpy (record->Command, argv[i]);
+		record->Next = ExitCmdList;
+		ExitCmdList = record;
+	}
+}
+
+//==========================================================================
+//
+// C_DeinitConsole
+//
+// Executes the contents of the atexit cvar, if any, at quit time.
+// Then releases all of the console's memory.
+//
+//==========================================================================
+
+void C_DeinitConsole ()
+{
+	GameAtExit *cmd = ExitCmdList;
+
+	while (cmd != NULL)
+	{
+		GameAtExit *next = cmd->Next;
+		AddCommandString (cmd->Command);
+		free (cmd);
+		cmd = next;
+	}
+
+	// Free command history
+	History *hist = HistTail;
+
+	while (hist != NULL)
+	{
+		History *next = hist->Newer;
+		free (hist);
+		hist = next;
+	}
+	HistTail = HistHead = HistPos = NULL;
+
+	// Free cvars allocated at runtime
+	FBaseCVar *var, *next, **nextp;
+	for (var = CVars, nextp = &CVars; var != NULL; var = next)
+	{
+		next = var->m_Next;
+		if (var->GetFlags() & CVAR_UNSETTABLE)
+		{
+			delete var;
+			*nextp = next;
+		}
+		else
+		{
+			nextp = &var->m_Next;
+		}
+	}
+
+	// Free alias commands. (i.e. The "commands" that can be allocated
+	// at runtime.)
+	for (size_t i = 0; i < countof(Commands); ++i)
+	{
+		FConsoleCommand *cmd = Commands[i];
+
+		while (cmd != NULL)
+		{
+			FConsoleCommand *next = cmd->m_Next;
+			if (cmd->IsAlias())
+			{
+				delete cmd;
+			}
+			cmd = next;
+		}
+	}
+
+	// Make sure all tab commands are cleared before the memory for
+	// their names is deallocated.
+	C_ClearTabCommands ();
+
+	// Free AddToConsole()'s work buffer
+	if (work != NULL)
+	{
+		free (work);
+		work = NULL;
+		worklen = 0;
+	}
+}
+
 static void ClearConsole ()
 {
 	RowAdjust = 0;
@@ -543,21 +649,6 @@ static void AddLine (const char *text, bool more, int len)
 		TopLine = (TopLine + 1) & LINEMASK;
 	}
 }
-
-static char *work = NULL;
-static int worklen = 0;
-
-static struct FreeWork
-{
-	~FreeWork()
-	{
-		if (work != NULL)
-		{
-			free (work);
-			work = NULL;
-		}
-	}
-} FreeTheWork;
 
 void AddToConsole (int printlevel, const char *text)
 {
@@ -1812,6 +1903,11 @@ void C_RemoveTabCommand (const char *name)
 			break;
 		}
 	}
+}
+
+void C_ClearTabCommands ()
+{
+	TabCommands.Clear();
 }
 
 static int FindDiffPoint (FName name1, const char *str2)

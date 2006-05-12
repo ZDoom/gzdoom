@@ -88,6 +88,6 @@ class IJoystick : public IInputDevice
 };
 
 void I_InitHardware ();
-void STACK_ARGS I_ShutdownHardware ();
+void I_ShutdownHardware ();
 
 #endif	// __HARDWARE_H__

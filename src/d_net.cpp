@@ -1629,7 +1629,7 @@ void D_CheckNetGame (void)
 // Called before quitting to leave a net game
 // without hanging the other players
 //
-void STACK_ARGS D_QuitNetGame (void)
+void D_QuitNetGame (void)
 {
 	int i, j, k;
 
@@ -2184,7 +2184,9 @@ void Net_DoCommand (int type, byte **stream, int player)
 	case DEM_SAVEGAME:
 		if (gamestate == GS_LEVEL)
 		{
-			savegamefile = ReadString (stream);
+			s = ReadString (stream);
+			savegamefile = s;
+			delete[] s;
 			s = ReadString (stream);
 			memset (savedescription, 0, sizeof(savedescription));
 			strncpy (savedescription, s, sizeof(savedescription));

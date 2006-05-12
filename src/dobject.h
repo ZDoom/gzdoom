@@ -254,7 +254,7 @@ public:
 	// use this method.
 	static void PointerSubstitution (DObject *old, DObject *notOld);
 
-	static void STACK_ARGS StaticShutdown ();
+	static void StaticShutdown ();
 
 	PClass *GetClass() const
 	{

@@ -49,6 +49,7 @@
 #include "r_data.h"
 #include "m_random.h"
 #include "d_netinf.h"
+#include "i_system.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -209,19 +210,6 @@ static const char *SICommandStrings[] =
 
 static TArray<FRandomSoundList> S_rnd;
 static FMusicVolume *MusicVolumes;
-
-static struct MusicVolumeDeleter
-{
-	~MusicVolumeDeleter()
-	{
-		while(MusicVolumes!=NULL)
-		{
-			FMusicVolume * next = MusicVolumes->Next;
-			free(MusicVolumes);
-			MusicVolumes=next;
-		}
-	}
-} DeleteTheMusicVolumes;
 
 static int NumPlayerReserves;
 static bool DoneReserving;
@@ -568,26 +556,29 @@ static void S_ClearSoundData()
 
 	S_sfx.Clear();
 
-	for(i=0;i<256;i++)
+	for(i = 0; i < countof(Ambients); i++)
 	{
-		if (Ambients[i]) delete Ambients[i];
-		Ambients[i]=NULL;
+		if (Ambients[i] != NULL)
+		{
+			delete Ambients[i];
+			Ambients[i] = NULL;
+		}
 	}
 	while (MusicVolumes != NULL)
 	{
-		FMusicVolume * me = MusicVolumes;
+		FMusicVolume *me = MusicVolumes;
 		MusicVolumes = me->Next;
 		delete me;
 	}
 	S_rnd.Clear();
 
-	DoneReserving=false;
-	NumPlayerReserves=0;
-	PlayerClassesIsSorted=false;
+	DoneReserving = false;
+	NumPlayerReserves = 0;
+	PlayerClassesIsSorted = false;
 	PlayerClasses.Clear();
 	PlayerSounds.Clear();
-	DefPlayerClass=0;
-	*DefPlayerClassName=0;
+	DefPlayerClass = 0;
+	*DefPlayerClassName = 0;
 }
 
 //==========================================================================
@@ -602,6 +593,7 @@ void S_ParseSndInfo ()
 {
 	int lump;
 
+	atterm (S_ClearSoundData);
 	S_ClearSoundData();	// remove old sound data first!
 
 	CurrentPitchMask = 0;

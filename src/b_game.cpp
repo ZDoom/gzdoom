@@ -93,6 +93,11 @@ void G_DoReborn (int playernum, bool freshbot);
 DCajunMaster::~DCajunMaster()
 {
 	ForgetBots();
+	if (getspawned != NULL)
+	{
+		delete getspawned;
+		getspawned = NULL;
+	}
 }
 
 //This function is called every tick (from g_game.c),

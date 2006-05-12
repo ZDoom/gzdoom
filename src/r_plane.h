@@ -80,6 +80,7 @@ extern short			ceilingclip[MAXWIDTH];
 extern fixed_t			yslope[MAXHEIGHT];
 
 void R_InitPlanes ();
+void R_DeinitPlanes ();
 void R_ClearPlanes (bool fullclear);
 
 void R_DrawPlanes ();

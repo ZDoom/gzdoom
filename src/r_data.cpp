@@ -1508,7 +1508,11 @@ void FFlatTexture::MakeTexture ()
 {
 	FWadLump lump = Wads.OpenLumpNum (SourceLump);
 	Pixels = new BYTE[Width*Height];
-	lump.Read (Pixels, Width*Height);
+	long numread = lump.Read (Pixels, Width*Height);
+	if (numread < Width*Height)
+	{
+		memset (Pixels + numread, 0xBB, Width*Height - numread);
+	}
 	FlipSquareBlockRemap (Pixels, Width, Height, GPalette.Remap);
 }
 
@@ -2842,23 +2846,6 @@ int firstfakecmap;
 byte *realcolormaps;
 int lastusedcolormap;
 
-static struct ColorMapKiller
-{
-	~ColorMapKiller()
-	{
-		if (fakecmaps != NULL)
-		{
-			delete[] fakecmaps;
-			fakecmaps = NULL;
-		}
-		if (realcolormaps != NULL)
-		{
-			delete[] realcolormaps;
-			realcolormaps = NULL;
-		}
-	}
-} KillTheColormaps;
-
 void R_SetDefaultColormap (const char *name)
 {
 	if (strnicmp (fakecmaps[0].name, name, 8) != 0)
@@ -2983,6 +2970,20 @@ void R_InitColormaps ()
 	}
 }
 
+void R_DeinitColormaps ()
+{
+	if (fakecmaps != NULL)
+	{
+		delete[] fakecmaps;
+		fakecmaps = NULL;
+	}
+	if (realcolormaps != NULL)
+	{
+		delete[] realcolormaps;
+		realcolormaps = NULL;
+	}
+}
+
 // [RH] Returns an index into realcolormaps. Multiply it by
 //		256*NUMCOLORMAPS to find the start of the colormap to use.
 //		WATERMAP is an exception and returns a blending value instead.
@@ -3026,7 +3027,25 @@ void R_InitData ()
 	C_InitConsole (SCREENWIDTH, SCREENHEIGHT, true);
 }
 
+void R_DeinitData ()
+{
+	R_DeinitColormaps ();
 
+	// Free openings
+	if (openings != NULL)
+	{
+		free (openings);
+		openings = NULL;
+	}
+
+	// Free drawsegs
+	if (drawsegs != NULL)
+	{
+		free (drawsegs);
+		drawsegs = NULL;
+	}
+
+}
 
 //
 // R_PrecacheLevel
@@ -3382,7 +3401,7 @@ static void R_InitPatches ()
 	}
 }
 
-#if 0
+#ifdef _DEBUG
 // Prints the spans generated for a texture. Only needed for debugging.
 CCMD (printspans)
 {

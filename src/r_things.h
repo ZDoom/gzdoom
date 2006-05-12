@@ -59,6 +59,7 @@ inline particle_t *NewParticle (void)
 }
 
 void R_InitParticles ();
+void R_DeinitParticles ();
 void R_ClearParticles ();
 void R_DrawParticle (vissprite_t *);
 void R_ProjectParticle (particle_t *, const sector_t *sector, int shade, int fakeside);
@@ -97,6 +98,7 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside);
 void R_AddPSprites ();
 void R_DrawSprites ();
 void R_InitSprites ();
+void R_DeinitSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();
 

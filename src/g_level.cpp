@@ -99,14 +99,6 @@ static void ClearEpisodes ();
 static void ClearLevelInfoStrings (level_info_t *linfo);
 static void ClearClusterInfoStrings (cluster_info_t *cinfo);
 
-static struct EpisodeKiller
-{
-	~EpisodeKiller()
-	{
-		ClearEpisodes();
-	}
-} KillTheEpisodes;
-
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
 TArray<EndSequence> EndSequences;
@@ -140,23 +132,6 @@ level_locals_t level;			// info about current level
 
 static TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;
-
-static struct LevelClusterInfoKiller
-{
-	~LevelClusterInfoKiller()
-	{
-		unsigned int i;
-
-		for (i = 0; i < wadlevelinfos.Size(); ++i)
-		{
-			ClearLevelInfoStrings (&wadlevelinfos[i]);
-		}
-		for (i = 0; i < wadclusterinfos.Size(); ++i)
-		{
-			ClearClusterInfoStrings (&wadclusterinfos[i]);
-		}
-	}
-} KillTheLevelAndClusterInfos;
 
 // MAPINFO is parsed slightly differently when the map name is just a number.
 static bool HexenHack;
@@ -468,6 +443,8 @@ static void SetLevelDefaults (level_info_t *levelinfo)
 void G_ParseMapInfo ()
 {
 	int lump, lastlump = 0;
+
+	atterm (G_UnloadMapInfo);
 
 	// Parse the default MAPINFO for the current game.
 	switch (gameinfo.gametype)
@@ -1179,6 +1156,27 @@ void G_SetForEndGame (char *nextmap)
 	  // but I want to keep this simple.
 		SetEndSequence (nextmap, END_Pic1);
 	}
+}
+
+void G_UnloadMapInfo ()
+{
+	unsigned int i;
+
+	G_ClearSnapshots ();
+
+	for (i = 0; i < wadlevelinfos.Size(); ++i)
+	{
+		ClearLevelInfoStrings (&wadlevelinfos[i]);
+	}
+	wadlevelinfos.Clear();
+
+	for (i = 0; i < wadclusterinfos.Size(); ++i)
+	{
+		ClearClusterInfoStrings (&wadclusterinfos[i]);
+	}
+	wadclusterinfos.Clear();
+
+	ClearEpisodes();
 }
 
 level_info_t *FindLevelByWarpTrans (int num)

@@ -99,14 +99,25 @@ BOOL			(*pIsDebuggerPresent)(VOID);
 extern UINT TimerPeriod;
 extern HCURSOR TheArrowCursor, TheInvisibleCursor;
 
-#define MAX_TERMS	16
-void (STACK_ARGS *TermFuncs[MAX_TERMS])(void);
+#define MAX_TERMS	32
+void (*TermFuncs[MAX_TERMS])(void);
 static int NumTerms;
 
 void atterm (void (STACK_ARGS *func)(void))
 {
+	// Make sure this function wasn't already registered.
+	for (int i = 0; i < NumTerms; ++i)
+	{
+		if (TermFuncs[i] == func)
+		{
+			return;
+		}
+	}
 	if (NumTerms == MAX_TERMS)
+	{
+		func ();
 		I_FatalError ("Too many exit functions registered.\nIncrease MAX_TERMS in i_main.cpp");
+	}
 	TermFuncs[NumTerms++] = func;
 }
 
@@ -132,7 +143,7 @@ static int STACK_ARGS NewFailure (size_t size)
 }
 #endif
 
-static void STACK_ARGS UnCOM (void)
+static void UnCOM (void)
 {
 	CoUninitialize ();
 }

@@ -33,6 +33,7 @@
 void P_SetupLevel (char *mapname, int position);
 
 void P_FreeLevelData();
+void P_FreeExtraLevelData();
 
 // Called by startup code.
 void P_Init (void);

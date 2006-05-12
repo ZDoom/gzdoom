@@ -434,7 +434,7 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 //
 //==========================================================================
 
-static void STACK_ARGS KillThread ()
+static void KillThread ()
 {
 	if (CDThread != NULL)
 	{

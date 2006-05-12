@@ -39,13 +39,21 @@
 
 DArgs Args;
 
-#define MAX_TERMS	16
-void (STACK_ARGS *TermFuncs[MAX_TERMS]) ();
+#define MAX_TERMS	32
+void (*TermFuncs[MAX_TERMS]) ();
 const char *TermNames[MAX_TERMS];
 static int NumTerms;
 
-void addterm (void (STACK_ARGS *func) (), const char *name)
+void addterm (void (*func) (), const char *name)
 {
+	// Make sure this function wasn't already registered.
+	for (int i = 0; i < NumTerms; ++i)
+	{
+		if (TermFuncs[i] == func)
+		{
+			return;
+		}
+	}
     if (NumTerms == MAX_TERMS)
 	{
 		func ();

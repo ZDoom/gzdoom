@@ -237,7 +237,7 @@ void I_InitSound ()
 }
 
 
-void STACK_ARGS I_ShutdownSound (void)
+void I_ShutdownSound (void)
 {
 	if (GSnd != NULL)
 	{

@@ -112,6 +112,8 @@ static void M_QuickLoad ();
 static void M_LoadSelect (const FSaveGameNode *file);
 static void M_SaveSelect (const FSaveGameNode *file);
 static void M_ReadSaveStrings ();
+static void M_UnloadSaveStrings ();
+static FSaveGameNode *M_RemoveSaveSlot (FSaveGameNode *file);
 static void M_ExtractSaveData (const FSaveGameNode *file);
 static void M_UnloadSaveData ();
 static void M_InsertSaveNode (FSaveGameNode *node);
@@ -605,13 +607,15 @@ void M_GameFiles (int choice)
 //
 // Find savegames and read their titles
 //
-void M_ReadSaveStrings ()
+static void M_ReadSaveStrings ()
 {
 	if (SaveGames.IsEmpty ())
 	{
 		void *filefirst;
 		findstate_t c_file;
 		FString filter;
+
+		atterm (M_UnloadSaveStrings);
 
 		filter = G_BuildSaveName ("*.zds", -1);
 		filefirst = I_FindFirst (filter.GetChars(), &c_file);
@@ -676,6 +680,10 @@ void M_ReadSaveStrings ()
 							}
 							delete[] ver;
 						}
+						if (engine != NULL)
+						{
+							delete[] engine;
+						}
 						delete png;
 					}
 					else
@@ -723,6 +731,36 @@ void M_ReadSaveStrings ()
 	{
 		SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
 	}
+}
+
+static void M_UnloadSaveStrings()
+{
+	M_UnloadSaveData();
+	while (!SaveGames.IsEmpty())
+	{
+		M_RemoveSaveSlot (static_cast<FSaveGameNode *>(SaveGames.Head));
+	}
+}
+
+static FSaveGameNode *M_RemoveSaveSlot (FSaveGameNode *file)
+{
+	FSaveGameNode *next = static_cast<FSaveGameNode *>(file->Succ);
+
+	if (file == TopSaveGame)
+	{
+		TopSaveGame = next;
+	}
+	if (quickSaveSlot == file)
+	{
+		quickSaveSlot = NULL;
+	}
+	if (lastSaveSlot == file)
+	{
+		lastSaveSlot = NULL;
+	}
+	file->Remove ();
+	delete file;
+	return next;
 }
 
 void M_InsertSaveNode (FSaveGameNode *node)
@@ -2800,21 +2838,7 @@ static void M_DeleteSaveResponse (int choice)
 
 		remove (SelSaveGame->Filename.GetChars());
 		M_UnloadSaveData ();
-		if (SelSaveGame == TopSaveGame)
-		{
-			TopSaveGame = next;
-		}
-		if (quickSaveSlot == SelSaveGame)
-		{
-			quickSaveSlot = NULL;
-		}
-		if (lastSaveSlot == SelSaveGame)
-		{
-			lastSaveSlot = NULL;
-		}
-		SelSaveGame->Remove ();
-		delete SelSaveGame;
-		SelSaveGame = next;
+		SelSaveGame = M_RemoveSaveSlot (SelSaveGame);
 		M_ExtractSaveData (SelSaveGame);
 	}
 }
@@ -3106,6 +3130,8 @@ EXTERN_CVAR (Int, screenblocks)
 void M_Init (void)
 {
 	int i;
+
+	atterm (M_Deinit);
 
 	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{

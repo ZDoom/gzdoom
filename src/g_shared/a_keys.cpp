@@ -87,14 +87,6 @@ static bool ignorekey;			// set to true when the current lock is not being used
 
 static void ClearLocks();
 
-static struct LockDeleter
-{
-	~LockDeleter()
-	{
-		ClearLocks();
-	}
-} DeleteTheLocks;
-
 static const char * keywords_lock[]={
 	"ANY",
 	"MESSAGE",
@@ -327,6 +319,7 @@ static void ClearLocks()
 
 //===========================================================================
 //
+// P_InitKeyMessages
 //
 //===========================================================================
 
@@ -359,6 +352,16 @@ void P_InitKeyMessages()
 	keysdone=true;
 }
 
+//===========================================================================
+//
+// P_DeinitKeyMessages
+//
+//===========================================================================
+
+void P_DeinitKeyMessages()
+{
+	ClearLocks();
+}
 
 //===========================================================================
 //

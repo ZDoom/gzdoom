@@ -211,6 +211,7 @@ public:
 					oldlife = -1;
 					oldkeys = -1;
 					oldhealth = -1;
+					ArtiRefresh = 0;
 				}
 				DrawMainBar ();
 			}
@@ -408,10 +409,10 @@ private:
 
 		// Ammo
 		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
-		if (ammo1==ammo2)
+		if (ammo1 == ammo2)
 		{
 			// Don't show the same ammo twice.
-			ammo2=NULL;
+			ammo2 = NULL;
 		}
 		if (oldammo1 != ammo1 || oldammo2 != ammo2 ||
 			oldammocount1 != ammocount1 || oldammocount2 != ammocount2)

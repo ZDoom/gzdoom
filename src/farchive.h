@@ -46,7 +46,8 @@ public:
 		enum EOpenMode
 		{
 			EReading,
-			EWriting
+			EWriting,
+			ENotOpen
 		};
 
 		enum ESeekPos
@@ -117,6 +118,7 @@ class FCompressedMemFile : public FCompressedFile
 public:
 	FCompressedMemFile ();
 	FCompressedMemFile (FILE *file);	// Create for reading
+	~FCompressedMemFile ();
 
 	bool Open (const char *name, EOpenMode mode);	// Works for reading only
 	bool Open (void *memblock);	// Open for reading only

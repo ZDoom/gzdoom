@@ -1073,6 +1073,40 @@ void APowerTargeter::PositionAccuracy ()
 	player->psprites[ps_targetright].sx = (160-3)*FRACUNIT + ((100 - player->accuracy) << FRACBITS);
 }
 
+// Frightener Powerup --------------------------------
+
+IMPLEMENT_STATELESS_ACTOR (APowerFrightener, Any, -1, 0)
+	PROP_Powerup_EffectTics (60*TICRATE)
+END_DEFAULTS
+
+//===========================================================================
+//
+// APowerFrightener :: InitEffect
+//
+//===========================================================================
+
+void APowerFrightener::InitEffect ()
+{
+	if (Owner->player == NULL)
+		return;
+
+	Owner->player->cheats |= CF_FRIGHTENING;
+}
+
+//===========================================================================
+//
+// APowerFrightener :: EndEffect
+//
+//===========================================================================
+
+void APowerFrightener::EndEffect ()
+{
+	if (Owner->player == NULL)
+		return;
+
+	Owner->player->cheats &= ~CF_FRIGHTENING;
+}
+
 // Scanner powerup ----------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerScanner, Any, -1, 0)

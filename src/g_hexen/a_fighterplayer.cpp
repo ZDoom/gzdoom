@@ -208,6 +208,7 @@ FState AFWeapFist::States[] =
 };
 
 IMPLEMENT_ACTOR (AFWeapFist, Hexen, -1, 0)
+	PROP_Flags5 (MF5_BLOODSPLATTER)
 	PROP_Weapon_SelectionOrder (3400)
 	PROP_Weapon_Flags (WIF_BOT_MELEE)
 	PROP_Weapon_UpState (S_PUNCHUP)

@@ -1310,6 +1310,16 @@ void FWadCollection::RenameSprites (int startlump)
 				}
 			}
 		}
+
+		// When not playing Doom rename all BLOD sprites to BLUD so that
+		// the same blood states can be used everywhere
+		if (gameinfo.gametype != GAME_Doom)
+		{
+			if (*(DWORD *)LumpInfo[i].name == MAKE_ID('B', 'L', 'O', 'D'))
+			{
+				*(DWORD *)LumpInfo[i].name = MAKE_ID('B', 'L', 'U', 'D');
+			}
+		}
 	}
 }
 

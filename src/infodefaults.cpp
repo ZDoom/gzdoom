@@ -372,4 +372,9 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 	{
 		((AActor *)defaults)->flags3 |= MF3_ISMONSTER;
 	}
+	// Any default projectile in Raven's games produces blood splatter
+	if (gameinfo.gametype & GAME_Raven && ((AActor *)defaults)->flags & MF_MISSILE)
+	{
+		((AActor *)defaults)->flags5 |= MF5_BLOODSPLATTER;
+	}
 }

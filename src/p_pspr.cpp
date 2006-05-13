@@ -26,6 +26,7 @@
 #include "p_effect.h"
 #include "a_doomglobal.h"
 #include "templates.h"
+#include "thingdef.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -740,6 +741,16 @@ void A_Light2 (AActor *actor)
 	if (actor->player != NULL)
 	{
 		actor->player->extralight = 2;
+	}
+}
+
+void A_Light (AActor *actor)
+{
+	int index=CheckIndex(1, &CallingState);
+
+	if (actor->player != NULL && index > 0)
+	{
+		actor->player->extralight = clamp<int>(EvalExpressionI (StateParameters[index], actor), 0, 20);
 	}
 }
 

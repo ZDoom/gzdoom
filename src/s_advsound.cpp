@@ -591,9 +591,14 @@ static void S_ClearSoundData()
 
 void S_ParseSndInfo ()
 {
+	static bool termdone=false;
 	int lump;
 
-	atterm (S_ClearSoundData);
+	if (!termdone)
+	{
+		termdone=true;
+		atterm (S_ClearSoundData);
+	}
 	S_ClearSoundData();	// remove old sound data first!
 
 	CurrentPitchMask = 0;

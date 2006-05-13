@@ -185,6 +185,15 @@ protected:
 	void Travelled ();
 };
 
+class APowerFrightener : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerFrightener, APowerup)
+protected:
+	void InitEffect ();
+	void EndEffect ();
+};
+
+
 class player_s;
 
 #endif //__A_ARTIFACTS_H__

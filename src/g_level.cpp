@@ -982,6 +982,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 // name "Episode name as text"
 // picname "Picture to display the episode name"
 // key "Shortcut key for the menu"
+// noskillmenu
 // remove
 
 static void ParseEpisodeInfo ()
@@ -993,6 +994,7 @@ static void ParseEpisodeInfo ()
 	bool remove = false;
 	char key = 0;
 	bool addedgfx = false;
+	bool noskill = false;
 
 	// Get map name
 	SC_MustGetString ();
@@ -1032,6 +1034,10 @@ static void ParseEpisodeInfo ()
 			SC_MustGetString ();
 			key = sc_String[0];
 		}
+		else if (SC_Compare("noskillmenu"))
+		{
+			noskill = true;
+		}
 		else
 		{
 			SC_UnGet ();
@@ -1059,6 +1065,8 @@ static void ParseEpisodeInfo ()
 					sizeof(EpisodeMaps[0])*(EpiDef.numitems - i - 1));
 				memmove (&EpisodeMenu[i], &EpisodeMenu[i+1],
 					sizeof(EpisodeMenu[0])*(EpiDef.numitems - i - 1));
+				memmove (&EpisodeNoSkill[i], &EpisodeNoSkill[i+1], 
+					sizeof(EpisodeNoSkill[0])*(EpiDef.numitems - i - 1));
 			}
 			EpiDef.numitems--;
 		}
@@ -1090,6 +1098,7 @@ static void ParseEpisodeInfo ()
 		EpisodeMenu[i].name = pic;
 		EpisodeMenu[i].alphaKey = tolower(key);
 		EpisodeMenu[i].fulltext = !picisgfx;
+		EpisodeNoSkill[i] = noskill;
 		strncpy (EpisodeMaps[i], map, 8);
 
 		if (picisgfx)

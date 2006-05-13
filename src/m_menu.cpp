@@ -313,6 +313,7 @@ oldmenuitem_t EpisodeMenu[MAX_EPISODES] =
 };
 
 char EpisodeMaps[MAX_EPISODES][8];
+bool EpisodeNoSkill[MAX_EPISODES];
 
 oldmenu_t EpiDef =
 {
@@ -1500,7 +1501,11 @@ void M_NewGame(int choice)
 	{
 		if (EpiDef.numitems <= 1)
 		{
-			if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+			if (EpisodeNoSkill[0])
+			{
+				M_ChooseSkill(2);
+			}
+			else if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 			{
 				M_SetupNextMenu (&NewDef);
 			}
@@ -1621,6 +1626,12 @@ void M_Episode (int choice)
 		return;
 	}
 
+	if (EpisodeNoSkill[choice])
+	{
+		M_ChooseSkill(2);
+		return;
+	}
+
 	epi = choice;
 	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 		M_SetupNextMenu (&NewDef);
@@ -1685,9 +1696,13 @@ static void SCClass (int option)
 	{
 		M_SetupNextMenu (&EpiDef);
 	}
-	else
+	else if (!EpisodeNoSkill[0])
 	{
 		M_SetupNextMenu (&HexenSkillMenu);
+	}
+	else
+	{
+		M_ChooseSkill(2);
 	}
 }
 

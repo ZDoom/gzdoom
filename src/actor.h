@@ -277,9 +277,11 @@ enum
 	MF5_FASTMELEE		= 0x00000002,	// has a faster melee attack when DF_FAST_MONSTERS or nightmare is on.
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	MF5_BOUNCEONACTORS	= 0x00000008,	// bouncing missile doesn't explode when it hits an actor 
-	MF5_EXPLODEONWATER	= 0x00000010,	// bouncing missile explpdes when hitting a water surface
-	MF5_AVOIDINGDROPOFF = 0x00000020,	// Used to move monsters away fro dropoffs
+	MF5_EXPLODEONWATER	= 0x00000010,	// bouncing missile explodes when hitting a water surface
+	MF5_AVOIDINGDROPOFF = 0x00000020,	// Used to move monsters away from dropoffs
 	MF5_NODAMAGE		= 0x00000040,	// Actor can be shot and reacts to being shot but takes no damage
+	MF5_CHASEGOAL		= 0x00000080,	// Walks to goal instead of target if a valid goal is set.
+	MF5_BLOODSPLATTER	= 0x00000100,	// Blood splatter like in Raven's games.
 
 // --- mobj.renderflags ---
 

@@ -62,6 +62,7 @@ FState AMWeapFrost::States[] =
 
 IMPLEMENT_ACTOR (AMWeapFrost, Hexen, 53, 36)
 	PROP_Flags (MF_SPECIAL)
+	PROP_Flags5 (MF5_BLOODSPLATTER)
 	PROP_SpawnState (S_COS1)
 
 	PROP_Weapon_SelectionOrder (1700)

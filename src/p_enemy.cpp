@@ -89,6 +89,7 @@ dirtype_t diags[4] =
 fixed_t xspeed[8] = {FRACUNIT,46341,0,-46341,-FRACUNIT,-46341,0,46341};
 fixed_t yspeed[8] = {0,46341,FRACUNIT,46341,0,-46341,-FRACUNIT,-46341};
 
+void P_RandomChaseDir (AActor *actor);
 
 
 //
@@ -576,21 +577,8 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 	int			tdir;
 	dirtype_t	olddir, turnaround;
 
-	if (actor->target == NULL)
-		I_Error ("P_NewChaseDir: called with no target");
-				
 	olddir = (dirtype_t)actor->movedir;
 	turnaround = opposite[olddir];
-
-
-	// [RH] Make monsters run away from frightening players
-	if ((actor->target->player != NULL &&
-		(actor->target->player->cheats & CF_FRIGHTENING)) ||
-		actor->flags4 & MF4_FRIGHTENED)
-	{
-		deltax = -deltax;
-		deltay = -deltay;
-	}
 
 	if (deltax>10*FRACUNIT)
 		d[1]= DI_EAST;
@@ -702,6 +690,7 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 
 struct avoiddropoff_t
 {
+	AActor * thing;
 	fixed_t deltax;
 	fixed_t deltay;
 	fixed_t floorx;
@@ -724,13 +713,13 @@ static BOOL PIT_AvoidDropoff(line_t *line)
 		angle_t angle;
 		
 		// The monster must contact one of the two floors,
-		// and the other must be a tall dropoff (more than 24).
+		// and the other must be a tall dropoff.
 		
-		if (back == a.floorz && front < a.floorz - FRACUNIT*24)
+		if (back == a.floorz && front < a.floorz - a.thing->MaxDropOffHeight)
 		{
 			angle = R_PointToAngle2(0,0,line->dx,line->dy);   // front side dropoff
 		}
-		else if (front == a.floorz && back < a.floorz - FRACUNIT*24)
+		else if (front == a.floorz && back < a.floorz - a.thing->MaxDropOffHeight)
 		{
 			angle = R_PointToAngle2(line->dx,line->dy,0,0); // back side dropoff
 		}
@@ -754,8 +743,33 @@ static BOOL PIT_AvoidDropoff(line_t *line)
 
 void P_NewChaseDir(AActor * actor)
 {
-	fixed_t deltax = actor->target->x - actor->x;
-	fixed_t deltay = actor->target->y - actor->y;
+	fixed_t deltax;
+	fixed_t deltay;
+
+	if ((actor->flags5&MF5_CHASEGOAL || actor->goal == actor->target) && actor->goal!=NULL)
+	{
+		deltax = actor->goal->x - actor->x;
+		deltay = actor->goal->y - actor->y;
+	}
+	else if (actor->target != NULL)
+	{
+		deltax = actor->target->x - actor->x;
+		deltay = actor->target->y - actor->y;
+
+		if ((actor->target->player != NULL && (actor->target->player->cheats & CF_FRIGHTENING)) || 
+			(actor->flags4 & MF4_FRIGHTENED))
+		{
+			deltax = -deltax;
+			deltay = -deltay;
+		}
+	}
+	else
+	{
+		// Don't abort if this happens.
+		Printf ("P_NewChaseDir: called with no target\n");
+		P_RandomChaseDir(actor);
+		return;
+	}
 	
 	// Try to move away from a dropoff
 	if (actor->floorz - actor->dropoffz > actor->MaxDropOffHeight && 
@@ -763,6 +777,7 @@ void P_NewChaseDir(AActor * actor)
 		!(actor->flags2 & MF2_ONMOBJ) &&
 		!(actor->flags & MF_FLOAT) && !(compatflags & COMPATF_DROPOFF))
 	{
+		a.thing = actor;
 		a.deltax = a.deltay = 0;
 		a.floorx = actor->x;
 		a.floory = actor->y;
@@ -1510,6 +1525,8 @@ void A_Look (AActor *actor)
 		actor->special = 0;
 		actor->goal = iterator.Next ();
 		actor->reactiontime = actor->args[2] * TICRATE + level.maptime;
+		if (actor->args[3] == 0) actor->flags5 &=~ MF5_CHASEGOAL;
+		else actor->flags5 |= MF5_CHASEGOAL;
 	}
 
 	actor->threshold = 0;		// any shot will wake up
@@ -1859,9 +1876,14 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	}
 	
 	// [RH] Don't attack if just moving toward goal
-	if (actor->target == actor->goal)
+	if (actor->target == actor->goal || (actor->flags5&MF5_CHASEGOAL && actor->goal != NULL))
 	{
-		if (actor->CheckMeleeRange ())
+		AActor * savedtarget = actor->target;
+		actor->target = actor->goal;
+		bool result = actor->CheckMeleeRange();
+		actor->target = savedtarget;
+
+		if (result)
 		{
 			// reached the goal
 			TActorIterator<APatrolPoint> iterator (actor->goal->args[0]);
@@ -1877,27 +1899,31 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			}
 
 			angle_t lastgoalang = actor->goal->angle;
-			actor->goal = iterator.Next ();
-			if (actor->goal != NULL)
+			int delay;
+			AActor * newgoal = iterator.Next ();
+			if (newgoal != NULL && actor->goal == actor->target)
 			{
-				actor->reactiontime = actor->goal->args[1] * TICRATE + level.maptime;
+				delay = newgoal->args[1];
+				actor->reactiontime = delay * TICRATE + level.maptime;
 			}
 			else
 			{
+				delay = 0;
 				actor->reactiontime = actor->GetDefault()->reactiontime;
 				actor->angle = lastgoalang;		// Look in direction of last goal
 			}
-			actor->target = NULL;
+			if (actor->target == actor->goal) actor->target = NULL;
 			actor->flags |= MF_JUSTATTACKED;
-			if (actor->goal != NULL && actor->goal->args[1] != 0)
+			if (newgoal != NULL && delay != 0)
 			{
 				actor->flags4 |= MF4_INCOMBAT;
 				actor->SetState (actor->SpawnState);
 			}
 			actor->flags &= ~MF_INCHASE;
+			actor->goal = newgoal;
 			return;
 		}
-		goto nomissile;
+		if (actor->goal == actor->target) goto nomissile;
 	}
 
 	// Strafe	(Hexen's class bosses)

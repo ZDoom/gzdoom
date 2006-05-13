@@ -1310,7 +1310,7 @@ FUNC(LS_Thing_SpawnFacing)
 }
 
 FUNC(LS_Thing_SetGoal)
-// Thing_SetGoal (tid, goal, delay)
+// Thing_SetGoal (tid, goal, delay, chasegoal)
 {
 	TActorIterator<AActor> selfiterator (arg0);
 	TActorIterator<APatrolPoint> goaliterator (arg1);
@@ -1324,8 +1324,12 @@ FUNC(LS_Thing_SetGoal)
 		if (self->flags & MF_SHOOTABLE)
 		{
 			self->goal = goal;
-			if (!self->target)
+			if (arg3 == 0) self->flags5 &=~ MF5_CHASEGOAL;
+			else self->flags |= MF5_CHASEGOAL;
+			if (self->target == NULL)
+			{
 				self->reactiontime = arg2 * TICRATE;
+			}
 		}
 	}
 

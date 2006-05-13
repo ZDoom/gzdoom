@@ -58,6 +58,7 @@ FState ACWeapMace::States[] =
 
 IMPLEMENT_ACTOR (ACWeapMace, Hexen, -1, 0)
 	PROP_Weapon_SelectionOrder (3500)
+	PROP_Flags5 (MF5_BLOODSPLATTER)
 	PROP_Weapon_Flags (WIF_BOT_MELEE)
 	PROP_Weapon_UpState (S_CMACEUP)
 	PROP_Weapon_DownState (S_CMACEDOWN)

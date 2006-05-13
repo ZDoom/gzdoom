@@ -65,6 +65,7 @@ FState AFWeapHammer::States[] =
 
 IMPLEMENT_ACTOR (AFWeapHammer, Hexen, 123, 28)
 	PROP_Flags (MF_SPECIAL)
+	PROP_Flags5 (MF5_BLOODSPLATTER)
 	PROP_SpawnState (S_HAMM)
 
 	PROP_Weapon_SelectionOrder (900)

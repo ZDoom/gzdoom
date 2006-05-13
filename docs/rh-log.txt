@@ -1,3 +1,29 @@
+May 13, 2006 (Changes by Graf Zahl)
+- Changed: The decision whether blood splatter sprites are spawned is no
+  longer determined by game. Instead there's a new flag, MF5_BLOODSPLATTER
+  which is deciding what to do. To keep backwards compatibility this flag
+  is unset for projectiles in Doom and Strife and set for them in Heretic 
+  and Hexen. The same applies to DECORATE but of course the flag can be
+  manipulated here.
+- BLODxx sprites are now globally renamed to BLUDxx when not playing Doom. 
+  This allows using the same states in every game, including the 
+  Raven-specific blood actors.
+- Gave the bullet puff and the axe blood masses of 5 so that the make small
+  splashes.
+- Added A_Light(value) code pointer for DECORATE to generalize the weapon
+  light effect.
+- Added 'noskillmenu' option to MAPINFO episode definitions. This is for
+  WADs that want to implement a skill selection level.
+- Added APROP_ChaseGoal and APROP_Frightened actor properties for ACS.
+- Added MF5_CHASEGOAL flag that makes monsters to go after their goal even
+  if they have a valid target.
+- Fixed some issues with the changes to P_NewChaseDir I made to include
+  MBF's dropoff logic.
+- Added a PowerFrightener powerup class. It seemed like such a waste to
+  have this cool feature but no means to use it in a decent fashion.
+- Fixed: S_Init and S_ParseSndInfo should call atterm only once but not
+  each time they are called.
+
 May 11, 2006
 - Merged a lot of these static destructor-only structs into regular
   functions added to the exit chain with atterm so that they can be called

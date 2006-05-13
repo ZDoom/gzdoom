@@ -1913,6 +1913,8 @@ void DLevelScript::DoSetFont (int fontnum)
 #define APROP_Ambush		10
 #define APROP_Invulnerable	11
 #define APROP_JumpZ			12	// [GRB]
+#define APROP_ChaseGoal		13
+#define APROP_Frightened	14
 #define APROP_SeeSound		5	// Sounds can only be set, not gotten
 #define APROP_AttackSound	6
 #define APROP_PainSound		7
@@ -1960,6 +1962,8 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	case APROP_Invulnerable:if (value) actor->flags2 |= MF2_INVULNERABLE; else actor->flags2 &= ~MF2_INVULNERABLE;		break;
 	case APROP_JumpZ:		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 								static_cast<APlayerPawn *>(actor)->JumpZ = value;						break; 	// [GRB]
+	case APROP_ChaseGoal:	if (value) actor->flags5 |= MF5_CHASEGOAL; else actor->flags5 &= ~MF5_CHASEGOAL;		break;
+	case APROP_Frightened:	if (value) actor->flags4 |= MF4_FRIGHTENED; else actor->flags4 &= ~MF4_FRIGHTENED;		break;
 	case APROP_SeeSound:	actor->SeeSound = S_FindSound (FBehavior::StaticLookupString (value));		break;
 	case APROP_AttackSound:	actor->AttackSound = S_FindSound (FBehavior::StaticLookupString (value));	break;
 	case APROP_PainSound:	actor->PainSound = S_FindSound (FBehavior::StaticLookupString (value));		break;
@@ -1997,6 +2001,8 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Alpha:		return actor->alpha;
 	case APROP_RenderStyle:	return actor->RenderStyle;
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
+	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);
+	case APROP_Frightened:	return !!(actor->flags4 & MF4_FRIGHTENED);
 	case APROP_JumpZ:		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
 								return static_cast<APlayerPawn *>(actor)->JumpZ;	// [GRB]

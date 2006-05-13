@@ -373,6 +373,7 @@ FState AGoldWand::States[] =
 };
 
 IMPLEMENT_ACTOR (AGoldWand, Heretic, -1, 0)
+	PROP_Flags5 (MF5_BLOODSPLATTER)
 	PROP_Weapon_SelectionOrder (2000)
 	PROP_Weapon_AmmoUse1 (USE_GWND_AMMO_1)
 	PROP_Weapon_AmmoGive1 (25)
@@ -1696,6 +1697,7 @@ FState AGauntlets::States[] =
 
 IMPLEMENT_ACTOR (AGauntlets, Heretic, 2005, 32)
 	PROP_Flags (MF_SPECIAL)
+	PROP_Flags5 (MF5_BLOODSPLATTER)
 	PROP_SpawnState (S_WGNT)
 
 	PROP_Weapon_SelectionOrder (2300)
@@ -1989,6 +1991,7 @@ FState ABlaster::States[] =
 
 IMPLEMENT_ACTOR (ABlaster, Heretic, 53, 28)
 	PROP_Flags (MF_SPECIAL)
+	PROP_Flags5 (MF5_BLOODSPLATTER)
 	PROP_SpawnState (S_BLSR)
 
 	PROP_Weapon_SelectionOrder (500)

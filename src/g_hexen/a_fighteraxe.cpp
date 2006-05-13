@@ -220,6 +220,7 @@ FState AAxeBlood::States[] =
 };
 
 IMPLEMENT_ACTOR (AAxeBlood, Hexen, -1, 0)
+	PROP_Mass (5)
 	PROP_RadiusFixed (2)
 	PROP_HeightFixed (4)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF)

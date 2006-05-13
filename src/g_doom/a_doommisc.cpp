@@ -110,6 +110,7 @@ IMPLEMENT_ACTOR (ABulletPuff, Doom, -1, 131)
 
 	PROP_SpawnState (0)
 	PROP_MeleeState (2)
+	PROP_Mass(5)
 END_DEFAULTS
 
 void ABulletPuff::BeginPlay ()

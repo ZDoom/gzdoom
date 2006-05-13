@@ -215,6 +215,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, BOUNCEONACTORS, AActor, flags5),
 	DEFINE_FLAG(MF5, EXPLODEONWATER, AActor, flags5),
 	DEFINE_FLAG(MF5, NODAMAGE, AActor, flags5),
+	DEFINE_FLAG(MF5, BLOODSPLATTER, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -496,6 +497,7 @@ ACTOR(TakeFromTarget)
 ACTOR(JumpIfInTargetInventory)
 ACTOR(CountdownArg)
 ACTOR(CustomMeleeAttack)
+ACTOR(Light)
 
 
 #include "d_dehackedactions.h"
@@ -622,6 +624,7 @@ AFuncDesc AFTable[]=
 
 	// Only selected original weapon functions will be available. 
 	// All the attack pointers are somewhat tricky due to the way the flash state is handled
+	FUNC(A_Light, "X")
 	FUNC(A_Light0, NULL)
 	FUNC(A_Light1, NULL)
 	FUNC(A_Light2, NULL)
@@ -2962,6 +2965,7 @@ static void ActorProjectile (AActor *defaults, Baggage &bag)
 	// sets the standard flags for a projectile
 	defaults->flags|=MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE; 
 	defaults->flags2|=MF2_IMPACT|MF2_PCROSS|MF2_NOTELEPORT;
+	if (gameinfo.gametype&GAME_Raven) defaults->flags5|=MF5_BLOODSPLATTER;
 }
 
 //==========================================================================

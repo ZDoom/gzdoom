@@ -279,11 +279,16 @@ void S_AddLocalSndInfo(int lump);
 
 void S_Init ()
 {
+	static bool termdone=false;
 	int i;
 	int curvelump;
 
 	Printf ("S_Init\n");
-	atterm (S_Shutdown);
+	if (!termdone)
+	{
+		termdone=true;
+		atterm (S_Shutdown);
+	}
 
 	// remove old data (S_Init can be called multiple times!)
 	LastLocalSndInfo = LastLocalSndSeq = "";

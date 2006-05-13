@@ -1049,7 +1049,7 @@ BOOL PIT_CheckThing (AActor *thing)
 		if (damage > 0)
 		{
 			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->DamageType);
-			if (gameinfo.gametype != GAME_Doom &&
+			if ((tmthing->flags5 & MF5_BLOODSPLATTER) &&
 				!(thing->flags & MF_NOBLOOD) &&
 				!(thing->flags2 & MF2_REFLECTIVE) &&
 				!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)) &&
@@ -2746,9 +2746,11 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		}
 		else
 		{
-			bool axeBlood;
+			bool bloodsplatter = (t1->flags5 & MF5_BLOODSPLATTER) ||
+									(t1->player != NULL &&	t1->player->ReadyWeapon != NULL &&
+										(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
 
-			axeBlood = (t1->player != NULL &&
+			bool axeBlood = (t1->player != NULL &&
 				t1->player->ReadyWeapon != NULL &&
 				(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
 
@@ -2767,7 +2769,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			}
 			if (!(GetDefaultByType(pufftype)->flags3&MF3_BLOODLESSIMPACT))
 			{
-				if ((gameinfo.gametype & (GAME_DoomStrife)) && !axeBlood &&
+				if (!bloodsplatter && !axeBlood &&
 					!(trace.Actor->flags & MF_NOBLOOD) &&
 					!(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 				{
@@ -2776,7 +2778,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	
 				if (damage)
 				{
-					if ((gameinfo.gametype&GAME_Raven) || axeBlood)
+					if (bloodsplatter || axeBlood)
 					{
 						if (!(trace.Actor->flags&MF_NOBLOOD) &&
 							!(trace.Actor->flags2&(MF2_INVULNERABLE|MF2_DORMANT)))

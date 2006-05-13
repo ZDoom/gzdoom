@@ -3925,12 +3925,12 @@ class ABloodSplatter : public AActor
 FState ABloodSplatter::States[] =
 {
 #define S_BLOODSPLATTER 0
-	S_NORMAL (BLOD, 'C',	8, NULL, &States[S_BLOODSPLATTER+1]),
-	S_NORMAL (BLOD, 'B',	8, NULL, &States[S_BLOODSPLATTER+2]),
-	S_NORMAL (BLOD, 'A',	8, NULL, NULL),
+	S_NORMAL (BLUD, 'C',	8, NULL, &States[S_BLOODSPLATTER+1]),
+	S_NORMAL (BLUD, 'B',	8, NULL, &States[S_BLOODSPLATTER+2]),
+	S_NORMAL (BLUD, 'A',	8, NULL, NULL),
 
 #define S_BLOODSPLATTERX (S_BLOODSPLATTER+3)
-	S_NORMAL (BLOD, 'A',	6, NULL, NULL)
+	S_NORMAL (BLUD, 'A',	6, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (ABloodSplatter, Raven, -1, 0)

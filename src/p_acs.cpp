@@ -4567,7 +4567,7 @@ int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backS
 		}
 		else
 		{
-			if (!net || who->player == &players[consoleplayer])
+			if (!net || (who && who->player == &players[consoleplayer]))
 			{
 				Printf ("P_StartScript: Unknown script %d\n", script);
 			}

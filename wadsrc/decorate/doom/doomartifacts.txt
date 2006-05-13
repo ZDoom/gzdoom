@@ -75,6 +75,7 @@ ACTOR RadSuit : PowerupGiver 2025
 	+INVENTORY.AUTOACTIVATE
 	+INVENTORY.ALWAYSPICKUP
 	Inventory.MaxAmount 0
+	Inventory.PickupMessage "$GOTSUIT"
 	Powerup.Type IronFeet
 	States
 	{

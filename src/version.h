@@ -66,6 +66,7 @@
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "ZDOOM"
+#define BASEWAD "zdoom.pk3"
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
 #define MINSAVEVER 232	// Used by 2.0.99

@@ -1,4 +1,15 @@
 May 13, 2006 (Changes by Graf Zahl)
+- Fixed: P_StartScript was missing a NULL pointer check for the error
+  message. When trying to puke a script outside a map it crashed.
+- Fixed: The random number generator for large numbers must mask out the
+  sign bit before performing a modulo.
+- Now that the conversation states are pointers there is no need to make
+  AActor::ConversationAnimation virtual. No class overrides this method 
+  anymore.
+- Replaced AMacil1::TakeSpecialDamage with MF5_NODAMAGE.
+- Fixed: AMacil2::TakeSpecialDamage and AOracle::TakeSpecialDamage didn't
+  check whether inflictor was NULL and crashed when used with 'kill monsters'.
+- Fixed: Some Strife decorations didn't loop their animation
 - Changed: The decision whether blood splatter sprites are spawned is no
   longer determined by game. Instead there's a new flag, MF5_BLOODSPLATTER
   which is deciding what to do. To keep backwards compatibility this flag

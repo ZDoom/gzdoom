@@ -139,7 +139,7 @@ int FRandom::operator() (int mod)
 		num = (num << 8) | (*this)();
 		num = (num << 8) | (*this)();
 		num = (num << 8) | (*this)();
-		return num % mod;
+		return (num&0x7fffffff) % mod;
 	}
 }
 

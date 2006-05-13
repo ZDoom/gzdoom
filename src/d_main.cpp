@@ -1863,10 +1863,10 @@ void D_DoomMain (void)
 	// [RH] Make sure zdoom.pk3 is always loaded,
 	// as it contains magic stuff we need.
 
-	wad = BaseFileSearch ("zdoom.pk3", NULL, true);
+	wad = BaseFileSearch (BASEWAD, NULL, true);
 	if (wad == NULL)
 	{
-		I_FatalError ("Cannot find zdoom.pk3");
+		I_FatalError ("Cannot find " BASEWAD);
 	}
 
 	I_SetTitleString (IWADTypeNames[IdentifyVersion(wad)]);

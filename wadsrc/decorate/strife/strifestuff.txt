@@ -571,7 +571,7 @@ ACTOR WaterFountain 112
 	Spawn:
 		WTFT ABC 4
 		WTFT D 4 A_LoopActiveSound
-		Stop
+		Loop
 	}
 }
 
@@ -763,7 +763,7 @@ ACTOR BurningBrazier 106
 	{
 	Spawn:
 		BRAZ ABCD 4 Bright
-		Stop
+		Loop
 	}
 }
 

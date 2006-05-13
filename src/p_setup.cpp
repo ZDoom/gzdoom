@@ -2746,7 +2746,7 @@ static void P_InitTagLists ()
 	}
 }
 
-static void P_GetPolySpots (int lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors)
+void P_GetPolySpots (int lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors)
 {
 	if (HasBehavior)
 	{

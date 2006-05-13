@@ -555,7 +555,7 @@ public:
 	void SetShade (int r, int g, int b);
 
 	// Plays a conversation animation
-	virtual void ConversationAnimation (int animnum);
+	void ConversationAnimation (int animnum);
 
 	// Make this actor hate the same things as another actor
 	void CopyFriendliness (const AActor *other, bool changeTarget);

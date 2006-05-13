@@ -81,7 +81,7 @@ void A_WakeOracleSpectre (AActor *self)
 
 int AOracle::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype)
 {
-	if (inflictor->IsKindOf (RUNTIME_CLASS(ASpectralLightningV1)))
+	if (inflictor != NULL && inflictor->IsKindOf (RUNTIME_CLASS(ASpectralLightningV1)))
 		return -1;
 	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);
 }

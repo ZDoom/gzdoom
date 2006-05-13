@@ -17,7 +17,6 @@ class AMacil1 : public AStrifeHumanoid
 	DECLARE_ACTOR (AMacil1, AStrifeHumanoid)
 public:
 	void NoBlockingSet ();
-	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype);
 };
 
 FState AMacil1::States[] =
@@ -91,6 +90,7 @@ IMPLEMENT_ACTOR (AMacil1, Strife, 64, 0)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_MCROSS)
 	PROP_Flags3 (MF3_ISMONSTER)
 	PROP_Flags4 (MF4_FIRERESIST|MF4_NOICEDEATH|MF4_NOSPLASHALERT)
+	PROP_Flags5 (MF5_NODAMAGE)
 	PROP_MinMissileChance (150)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (56)
@@ -110,25 +110,6 @@ END_DEFAULTS
 void AMacil1::NoBlockingSet ()
 {
 	P_DropItem (this, "BoxOfBullets", -1, 256);
-}
-
-//============================================================================
-//
-// AMacil1 :: TakeSpecialDamage
-//
-// Before you storm the castle, Macil is a god and unkillable. The effort
-// required to take the castle apparently drops him to mere godlike status.
-//
-//============================================================================
-
-int AMacil1::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype)
-{
-	target = source;
-	if (PainState != NULL)
-	{
-		SetState (PainState);
-	}
-	return -1;
 }
 
 // Macil (version 2) ---------------------------------------------------------
@@ -153,6 +134,7 @@ IMPLEMENT_STATELESS_ACTOR (AMacil2, Strife, 200, 0)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_MCROSS)
 	PROP_Flags4Clear (MF4_FIRERESIST)
 	PROP_Flags4Set (MF4_SPECTRAL)
+	PROP_Flags5Clear (MF5_NODAMAGE)
 	PROP_MinMissileChance (150)
 	PROP_Tag ("MACIL")
 	PROP_DeathSound ("macil/slop")
@@ -181,9 +163,8 @@ void AMacil2::NoBlockingSet ()
 
 int AMacil2::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype)
 {
-	if (inflictor->IsKindOf (RUNTIME_CLASS(ASpectralLightningV1)))
+	if (inflictor != NULL && inflictor->IsKindOf (RUNTIME_CLASS(ASpectralLightningV1)))
 		return -1;
 
-	// This must skip the method of AMacil1 but it should call AActor's version.
-	return AActor::TakeSpecialDamage(inflictor, source, damage, damagetype);
+	return Super::TakeSpecialDamage(inflictor, source, damage, damagetype);
 }

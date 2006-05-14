@@ -243,6 +243,8 @@ static const char *MapInfoMapLevel[] =
 	"soundinfo",
 	"clipmidtextures",
 	"wrapmidtextures",
+	"allowcrouch",
+	"nocrouch",
 	NULL
 };
 
@@ -356,6 +358,8 @@ MapHandlers[] =
 	{ MITYPE_LUMPNAME,	lioffset(soundinfo), 0 },
 	{ MITYPE_SETFLAG,	LEVEL_CLIPMIDTEX, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_WRAPMIDTEX, 0 },
+	{ MITYPE_SCFLAGS,	LEVEL_CROUCH_YES, ~LEVEL_CROUCH_NO },
+	{ MITYPE_SCFLAGS,	LEVEL_CROUCH_NO, ~LEVEL_CROUCH_YES },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -1510,6 +1514,12 @@ static void goOn (int position, bool keepFacing, bool secret)
 			NoWipe = 4;
 		D_DrawIcon = "TELEICON";
 	}
+
+	// un-crouch all players here
+	for(int i=0;i<MAXPLAYERS;i++)
+	{
+		players[i].Uncrouch();
+	}
 }
 
 void G_ExitLevel (int position, bool keepFacing)
@@ -2124,6 +2134,10 @@ void G_InitLevelLocals ()
 		clear = DF_NO_JUMP;
 	if (level.flags & LEVEL_JUMP_NO)
 		set = DF_NO_JUMP;
+	if (level.flags & LEVEL_CROUCH_YES)
+		clear = DF_NO_CROUCH;
+	if (level.flags & LEVEL_CROUCH_NO)
+		set = DF_NO_CROUCH;
 	if (level.flags & LEVEL_FREELOOK_YES)
 		clear |= DF_NO_FREELOOK;
 	if (level.flags & LEVEL_FREELOOK_NO)

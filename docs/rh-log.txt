@@ -1,3 +1,14 @@
+May 14, 2006 (Changes by Graf Zahl)
+- Added an AltFlash state for weapons.
+- Turned FloatSpeed into an actor property and changed the value to 5
+  for all floating Strife actors, as a comment in the source indicated.
+- Added GZDoom's code for Vavoom slope things because I wanted to test
+  something with a map from Silent Steel.
+- Added nocrouch and allowcrouch MAPINFO commands and a DF_NO_CROUCH
+  dmflag.
+- Added GZDoom's crouching code after cleaning it up so that adding
+  crouching sprites will be easier.
+
 May 13, 2006 (Changes by Graf Zahl)
 - Fixed: P_StartScript was missing a NULL pointer check for the error
   message. When trying to puke a script outside a map it crashed.

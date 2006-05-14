@@ -84,7 +84,7 @@
 #include "sbar.h"
 #include "decallib.h"
 #include "r_polymost.h"
-
+#include "version.h"
 #include "v_text.h"
 
 // MACROS ------------------------------------------------------------------
@@ -349,6 +349,7 @@ CVAR (Flag, sv_nofreelook,		dmflags, DF_NO_FREELOOK);
 CVAR (Flag, sv_respawnsuper,	dmflags, DF_RESPAWN_SUPER);
 CVAR (Flag, sv_nofov,			dmflags, DF_NO_FOV);
 CVAR (Flag, sv_noweaponspawn,	dmflags, DF_NO_COOP_WEAPON_SPAWN);
+CVAR (Flag, sv_nocrouch,		dmflags, DF_NO_CROUCH);
 
 //==========================================================================
 //

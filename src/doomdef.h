@@ -220,6 +220,7 @@ enum
 	DF_RESPAWN_SUPER		= 1 << 18,	// Respawn invulnerability and invisibility
 	DF_NO_FOV				= 1 << 19,	// Only let the arbitrator set FOV (for all players)
 	DF_NO_COOP_WEAPON_SPAWN	= 1 << 20,	// Don't spawn multiplayer weapons in coop games
+	DF_NO_CROUCH			= 1 << 21,	// Don't allow crouching
 };
 
 // [BC] More dmflags. w00p!

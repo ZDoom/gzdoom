@@ -51,4 +51,6 @@ void FormatGUID (char *text, const GUID &guid);
 
 char *myasctime ();
 
+void CreatePath(const char * fn);
+
 #endif

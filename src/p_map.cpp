@@ -1496,9 +1496,9 @@ void P_FakeZMovement (AActor *mo)
 			fixed_t dist = P_AproxDistance (mo->x - mo->target->x, mo->y - mo->target->y);
 			fixed_t delta = (mo->target->z + (mo->height>>1)) - mo->z;
 			if (delta < 0 && dist < -(delta*3))
-				mo->z -= FLOATSPEED;
+				mo->z -= mo->FloatSpeed;
 			else if (delta > 0 && dist < (delta*3))
-				mo->z += FLOATSPEED;
+				mo->z += mo->FloatSpeed;
 		}
 	}
 	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->z > mo->floorz))

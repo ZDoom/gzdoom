@@ -115,7 +115,7 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_Attack, Button_Speed, Button_MoveRight, Button_MoveLeft,
 	Button_Strafe, Button_LookDown, Button_LookUp, Button_Back,
 	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
-	Button_MoveUp, Button_Jump, Button_ShowScores;
+	Button_MoveUp, Button_Jump, Button_ShowScores, Button_Crouch;
 
 // To add new actions, go to the console and type "key <action name>".
 // This will give you the key value to use in the first column. Then
@@ -132,6 +132,7 @@ FActionMap ActionMaps[] =
 	{ 0x47c02d3b, &Button_Attack,		"attack" },
 	{ 0x6dcec137, &Button_Back,			"back" },
 	{ 0x7a67e768, &Button_Left,			"left" },
+	{ 0x8076f318, &Button_Crouch,		"crouch" },
 	{ 0x84b8789a, &Button_MoveLeft,		"moveleft" },
 	{ 0x8fd9bf1e, &Button_ShowScores,	"showscores" },
 	{ 0x94b1cc4b, &Button_Use,			"use" },
@@ -1280,3 +1281,4 @@ CCMD (pullin)
 		}
 	}
 }
+

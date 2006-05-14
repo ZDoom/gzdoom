@@ -2254,6 +2254,14 @@ void Net_DoCommand (int type, byte **stream, int player)
 		}
 		break;
 
+	case DEM_CROUCH:
+		if (gamestate == GS_LEVEL && players[player].mo != NULL)
+		{
+			players[player].crouching = players[player].crouchdir<0? 1 : -1;
+		}
+		break;
+
+
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;

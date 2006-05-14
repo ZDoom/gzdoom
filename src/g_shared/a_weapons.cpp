@@ -55,7 +55,7 @@ void AWeapon::Serialize (FArchive &arc)
 		<< UpState << DownState << ReadyState
 		<< AtkState << HoldAtkState
 		<< AltAtkState << AltHoldAtkState
-		<< FlashState
+		<< FlashState << AltFlashState
 		<< Ammo1 << Ammo2 << SisterWeapon
 		<< bAltFire;
 }

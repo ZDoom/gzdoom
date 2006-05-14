@@ -185,6 +185,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_ReactionTime:		actor->reactiontime = dataint;		break;
 	case ADEF_PainChance:		actor->PainChance = dataint;		break;
 	case ADEF_Speed:			actor->Speed = dataint;				break;
+	case ADEF_FloatSpeed:		actor->FloatSpeed = dataint;		break;
 	case ADEF_Radius:			actor->radius = dataint;			break;
 	case ADEF_Height:			actor->height = dataint;			break;
 	case ADEF_Mass:				actor->Mass = dataint;				break;

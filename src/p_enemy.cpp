@@ -479,9 +479,9 @@ BOOL P_Move (AActor *actor)
 			fixed_t savedz = actor->z;
 
 			if (actor->z < tmfloorz)
-				actor->z += FLOATSPEED;
+				actor->z += actor->FloatSpeed;
 			else
-				actor->z -= FLOATSPEED;
+				actor->z -= actor->FloatSpeed;
 
 			// [RH] Check to make sure there's nothing in the way of the float
 			if (P_TestMobjZ (actor))

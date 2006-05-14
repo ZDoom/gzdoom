@@ -127,6 +127,12 @@ void player_s::SetLogText (const char *text)
 	LogText = text;
 }
 
+//===========================================================================
+//
+// APlayerPawn
+//
+//===========================================================================
+
 IMPLEMENT_ABSTRACT_ACTOR (APlayerPawn)
 IMPLEMENT_ABSTRACT_ACTOR (APlayerChunk)
 
@@ -142,6 +148,37 @@ void APlayerPawn::BeginPlay ()
 	Super::BeginPlay ();
 	ChangeStatNum (STAT_PLAYER);
 }
+
+
+//===========================================================================
+//
+// APlayerPawn :: Tick
+//
+//===========================================================================
+
+void APlayerPawn::Tick()
+{
+	if (player != NULL && player->mo == this && player->morphTics == 0 && player->playerstate != PST_DEAD)
+	{
+		yscale = FixedMul(GetDefault()->yscale, player->crouchfactor);
+		height = FixedMul(GetDefault()->height, player->crouchfactor);
+	}
+	else
+	{
+		// Ensure that PlayerPawns not connected to a player or morphed players are always un-crouched.
+		yscale = GetDefault()->yscale;
+		if (health > 0) height = GetDefault()->height;
+	}
+	Super::Tick();
+
+	// Here's the place where crouching sprites should be handled
+}
+
+//===========================================================================
+//
+// APlayerPawn :: AddInventory
+//
+//===========================================================================
 
 void APlayerPawn::AddInventory (AInventory *item)
 {
@@ -162,6 +199,12 @@ void APlayerPawn::AddInventory (AInventory *item)
 		player->InvSel = item;
 	}
 }
+
+//===========================================================================
+//
+// APlayerPawn :: RemoveInventory
+//
+//===========================================================================
 
 void APlayerPawn::RemoveInventory (AInventory *item)
 {
@@ -207,6 +250,12 @@ void APlayerPawn::RemoveInventory (AInventory *item)
 		PickNewWeapon (NULL);
 	}
 }
+
+//===========================================================================
+//
+// APlayerPawn :: UseInventory
+//
+//===========================================================================
 
 bool APlayerPawn::UseInventory (AInventory *item)
 {
@@ -556,7 +605,7 @@ void P_CalcHeight (player_t *player)
 		}
 	}
 
-	fixed_t defaultviewheight = player->defaultviewheight;
+	fixed_t defaultviewheight = player->defaultviewheight + player->crouchviewdelta;
 
 	if (player->cheats & CF_NOMOMENTUM)
 	{
@@ -694,6 +743,14 @@ void P_MovePlayer (player_t *player)
 		mo->TweakSpeeds (fm, sm);
 		fm = FixedMul (fm, player->mo->Speed);
 		sm = FixedMul (sm, player->mo->Speed);
+
+		// When crouching speed and bobbing have to be reduced
+		if (player->morphTics==0 && player->crouchfactor != FRACUNIT)
+		{
+			fm = FixedMul(fm, player->crouchfactor);
+			sm = FixedMul(sm, player->crouchfactor);
+			bobfactor = FixedMul(bobfactor, player->crouchfactor);
+		}
 
 		forwardmove = Scale (fm, movefactor * 35, TICRATE << 8);
 		sidemove = Scale (sm, movefactor * 35, TICRATE << 8);
@@ -939,6 +996,40 @@ void P_DeathThink (player_t *player)
 
 //----------------------------------------------------------------------------
 //
+// PROC P_CrouchMove
+//
+//----------------------------------------------------------------------------
+
+void P_CrouchMove(player_t * player, int direction)
+{
+	fixed_t defaultheight = player->mo->GetDefault()->height;
+	fixed_t savedheight = player->mo->height;
+	fixed_t crouchspeed = direction * CROUCHSPEED;
+
+	player->crouchdir = (signed char) direction;
+	player->crouchfactor += crouchspeed;
+
+	// check whether the move is ok
+	player->mo->height = FixedMul(defaultheight, player->crouchfactor);
+	if (!P_TryMove(player->mo, player->mo->x, player->mo->y, false, false))
+	{
+		player->mo->height = savedheight;
+		if (direction > 0)
+		{
+			// doesn't fit
+			player->crouchfactor -= crouchspeed;
+			return;
+		}
+	}
+	player->mo->height = savedheight;
+
+	player->crouchfactor = clamp<fixed_t>(player->crouchfactor, FRACUNIT/2, FRACUNIT);
+	player->viewheight = FixedMul(player->defaultviewheight, player->crouchfactor);
+	player->crouchviewdelta = player->viewheight - player->defaultviewheight;
+}
+
+//----------------------------------------------------------------------------
+//
 // PROC P_PlayerThink
 //
 //----------------------------------------------------------------------------
@@ -1031,8 +1122,43 @@ void P_PlayerThink (player_t *player)
 		cmd->ucmd.upmove = 0;
 	}
 
+	// Handle crouching
+	if (player->morphTics == 0)
+	{
+		if (!(player->cheats & CF_TOTALLYFROZEN))
+		{
+			int crouchdir = player->crouching;
+		
+			if (crouchdir==0)
+			{
+				crouchdir = (player->cmd.ucmd.buttons & BT_DUCK)? -1 : 1;
+			}
+			else if (player->cmd.ucmd.buttons & BT_DUCK)
+			{
+				player->crouching=0;
+			}
+			if (crouchdir == 1 && player->crouchfactor < FRACUNIT &&
+				player->mo->z + player->mo->height < player->mo->ceilingz)
+			{
+				P_CrouchMove(player, 1);
+			}
+			else if (crouchdir == -1 && player->crouchfactor > FRACUNIT/2)
+			{
+				P_CrouchMove(player, -1);
+			}
+		}
+	}
+	else
+	{
+		player->Uncrouch();
+	}
+
+	player->crouchoffset = -FixedMul(player->defaultviewheight, (FRACUNIT - player->crouchfactor));
+
+
 	if (player->playerstate == PST_DEAD)
 	{
+		player->Uncrouch();
 		P_DeathThink (player);
 		return;
 	}
@@ -1099,6 +1225,12 @@ void P_PlayerThink (player_t *player)
 		// [RH] check for jump
 		if (cmd->ucmd.buttons & BT_JUMP)
 		{
+			if (player->crouchoffset!=0)
+			{
+				// Jumping while crouching will force an un-crouch but not jump
+				player->crouching = 1;
+			}
+			else
 			if (player->mo->waterlevel >= 2)
 			{
 				player->mo->momz = 4*FRACUNIT;
@@ -1418,6 +1550,11 @@ void player_s::Serialize (FArchive &arc)
 		arc << psprites[i];
 
 	arc << CurrentPlayerClass;
+
+	arc << crouchfactor
+		<< crouching 
+		<< crouchdir
+		<< crouchviewdelta;
 
 	if (isbot)
 	{

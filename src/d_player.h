@@ -53,6 +53,7 @@ class APlayerPawn : public AActor
 public:
 	virtual void Serialize (FArchive &arc);
 
+	virtual void Tick();
 	virtual void AddInventory (AInventory *item);
 	virtual void RemoveInventory (AInventory *item);
 	virtual bool UseInventory (AInventory *item);
@@ -278,10 +279,24 @@ public:
 
 	FString		LogText;	// [RH] Log for Strife
 
+	signed char crouching;
+	signed char	crouchdir;
+	fixed_t crouchfactor;
+	fixed_t crouchoffset;
+	fixed_t crouchviewdelta;
 
 	fixed_t GetDeltaViewHeight() const
 	{
-		return (defaultviewheight - viewheight) >> 3;
+		return (defaultviewheight + crouchviewdelta - viewheight) >> 3;
+	}
+
+	void Uncrouch()
+	{
+		crouchfactor = FRACUNIT;
+		crouchoffset = 0;
+		crouchdir = 0;
+		crouching = 0;
+		crouchviewdelta = 0;
 	}
 };
 
@@ -295,6 +310,7 @@ inline FArchive &operator<< (FArchive &arc, player_s *&p)
 	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
 }
 
+#define CROUCHSPEED (FRACUNIT/12)
 #define MAX_DN_ANGLE	56		// Max looking down angle
 #define MAX_UP_ANGLE	32		// Max looking up angle
 

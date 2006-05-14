@@ -376,6 +376,8 @@ static menuitem_t ControlsItems[] =
 	{ control,	"Turn left",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+left"} },
 	{ control,	"Turn right",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+right"} },
 	{ control,	"Jump",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+jump"} },
+	{ control,	"Crouch",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+crouch"} },
+	{ control,	"Crouch Toggle",		{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"crouch"} },
 	{ control,	"Fly / Swim up",		{NULL},	{0.0}, {0.0}, {0.0}, {(value_t *)"+moveup"} },
 	{ control,	"Fly / Swim down",		{NULL},	{0.0}, {0.0}, {0.0}, {(value_t *)"+movedown"} },
 	{ control,	"Stop flying",			{NULL},	{0.0}, {0.0}, {0.0}, {(value_t *)"land"} },
@@ -476,7 +478,7 @@ static value_t ColumnMethods[] = {
 
 static value_t BloodTypes[] = {
 	{ 0.0, "Sprites" },
-	{ 1.0, "Sprites and Particles" },
+	{ 1.0, "Sprites & Particles" },
 	{ 2.0, "Particles" }
 };
 
@@ -934,6 +936,7 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Mega powerups respawn",{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_RESPAWN_SUPER} },
 	{ bitflag,	"Fast monsters",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FAST_MONSTERS} },
 	{ bitflag,	"Allow jump",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_JUMP} },
+	{ bitflag,	"Allow crouch",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_CROUCH} },
 	{ bitflag,	"Allow freelook",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FREELOOK} },
 	{ bitflag,	"Allow FOV",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FOV} },
 	{ bitflag,	"Allow BFG aiming",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NO_FREEAIMBFG} },

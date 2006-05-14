@@ -243,7 +243,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 	AActor *mo;
 
 	mo = Spawn<AThrowingBomb> (Owner->x, Owner->y, 
-		Owner->z-Owner->floorclip+35*FRACUNIT);
+		Owner->z-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0));
 	if (mo)
 	{
 		angle_t pitch = (angle_t)Owner->pitch >> ANGLETOFINESHIFT;

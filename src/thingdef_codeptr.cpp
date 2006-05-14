@@ -532,7 +532,7 @@ void A_CustomMissile(AActor * self)
 			angle_t ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
 			fixed_t x = Spawnofs_XY * finecosine[ang];
 			fixed_t y = Spawnofs_XY * finesine[ang];
-			fixed_t z = SpawnHeight-32*FRACUNIT;
+			fixed_t z = SpawnHeight - 32*FRACUNIT + (self->player? self->player->crouchoffset : 0);
 
 			switch (aimmode&3)
 			{
@@ -1197,7 +1197,8 @@ void A_ThrowGrenade(AActor * self)
 
 	AActor * bo;
 
-	bo = Spawn(missile, self->x, self->y, self->z - self->floorclip + zheight + 35*FRACUNIT);
+	bo = Spawn(missile, self->x, self->y, 
+			self->z - self->floorclip + zheight + 35*FRACUNIT + (self->player? self->player->crouchoffset : 0));
 	if (bo)
 	{
 		int pitch = self->pitch;

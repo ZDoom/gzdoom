@@ -1128,7 +1128,7 @@ static const char * actor_statenames[]={"SPAWN","SEE","PAIN","MELEE","MISSILE","
 										"CRUSH", "YES", "NO", "GREETINGS", NULL};
 
 static const char * weapon_statenames[]={"SELECT", "DESELECT", "READY", "FIRE", "HOLD",
-										 "ALTFIRE", "ALTHOLD", "FLASH", NULL };
+										 "ALTFIRE", "ALTHOLD", "FLASH", "ALTFLASH", NULL };
 
 static const char * inventory_statenames[]={"USE", "PICKUP", "DROP", NULL };
 
@@ -1429,7 +1429,7 @@ static void RetargetStates (intptr_t count, const char *target, const PClass *cl
 	if (cls->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 	{
 		AWeapon *weapon = (AWeapon *)defaults;
-		RetargetStatePointers (count, target, &weapon->UpState, &weapon->FlashState);
+		RetargetStatePointers (count, target, &weapon->UpState, &weapon->AltFlashState);
 	}
 	if (cls->IsDescendantOf (RUNTIME_CLASS(ACustomInventory)))
 	{
@@ -1947,7 +1947,7 @@ static int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 		{
 			AWeapon *weapon = (AWeapon*)defaults;
 
-			FixStatePointers (actor, &weapon->UpState, &weapon->FlashState);
+			FixStatePointers (actor, &weapon->UpState, &weapon->AltFlashState);
 		}
 		if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ACustomInventory)))
 		{
@@ -1993,7 +1993,7 @@ static int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 	{
 		AWeapon *weapon = (AWeapon*)defaults;
 
-		FixStatePointersAgain (actor, defaults, &weapon->UpState, &weapon->FlashState);
+		FixStatePointersAgain (actor, defaults, &weapon->UpState, &weapon->AltFlashState);
 	}
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ACustomInventory)))
 	{
@@ -2375,6 +2375,15 @@ static void ActorSpeed (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
 	defaults->Speed=fixed_t(sc_Float*FRACUNIT);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void ActorFloatSpeed (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetFloat();
+	defaults->FloatSpeed=fixed_t(sc_Float*FRACUNIT);
 }
 
 //==========================================================================
@@ -3506,6 +3515,7 @@ static const ActorProps props[] =
 	{ "explosiondamage",			ActorExplosionDamage,		RUNTIME_CLASS(AActor) },
 	{ "explosionradius",			ActorExplosionRadius,		RUNTIME_CLASS(AActor) },
 	{ "fastspeed",					ActorFastSpeed,				RUNTIME_CLASS(AActor) },
+	{ "floatspeed",					ActorFloatSpeed,			RUNTIME_CLASS(AActor) },
 	{ "game",						ActorGame,					RUNTIME_CLASS(AActor) },
 	{ "gibhealth",					ActorGibHealth,				RUNTIME_CLASS(AActor) },
 	{ "heal",						ActorHealState,				RUNTIME_CLASS(AActor) },

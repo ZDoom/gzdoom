@@ -29,8 +29,6 @@
 
 #include <stdlib.h>
 
-#define FLOATSPEED		(FRACUNIT*4)
-
 #define STEEPSLOPE		46341	// [RH] Minimum floorplane.c value for walking
 
 #define MAXMORPHHEALTH	30

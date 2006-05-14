@@ -681,6 +681,7 @@ public:
 	WORD UseSound;		// [RH] Sound to play when an actor is used.
 
 	fixed_t Speed;
+	fixed_t FloatSpeed;
 	fixed_t MaxDropOffHeight, MaxStepHeight;
 	SDWORD Mass;
 	SWORD PainChance;

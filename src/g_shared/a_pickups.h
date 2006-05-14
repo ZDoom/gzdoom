@@ -208,7 +208,7 @@ public:
 	FState *ReadyState;
 	FState *AtkState, *HoldAtkState;
 	FState *AltAtkState, *AltHoldAtkState;
-	FState *FlashState;
+	FState *FlashState, *AltFlashState;
 
 	// In-inventory instance variables
 	AAmmo *Ammo1, *Ammo2;

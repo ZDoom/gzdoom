@@ -274,6 +274,11 @@ CCMD (centerview)
 	Net_WriteByte (DEM_CENTERVIEW);
 }
 
+CCMD(crouch)
+{
+	Net_WriteByte(DEM_CROUCH);
+}
+
 CCMD (land)
 {
 	SendLand = true;
@@ -533,6 +538,9 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 
 	if (Button_Jump.bDown)
 		cmd->ucmd.buttons |= BT_JUMP;
+
+	if (Button_Crouch.bDown)
+		cmd->ucmd.buttons |= BT_DUCK;
 
 	// [RH] Scale joystick moves to full range of allowed speeds
 	if (JoyAxes[JOYAXIS_PITCH] != 0)

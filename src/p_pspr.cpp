@@ -663,7 +663,8 @@ void A_GunFlash (AActor *actor)
 		return;
 	}
 	player->mo->PlayAttacking2 ();
-	P_SetPsprite (player, ps_flash, player->ReadyWeapon->FlashState);
+	P_SetPsprite (player, ps_flash, (player->ReadyWeapon->bAltFire && player->ReadyWeapon->AltFlashState != NULL) ?
+		player->ReadyWeapon->AltFlashState : player->ReadyWeapon->FlashState);
 }
 
 

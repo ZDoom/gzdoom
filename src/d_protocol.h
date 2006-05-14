@@ -137,6 +137,7 @@ enum EDemoCommand
 	DEM_CENTERVIEW,		// 36
 	DEM_SUMMONFRIEND,	// 37 String: Thing to fabricate
 	DEM_SPRAY,			// 38 String: The decal to spray
+	DEM_CROUCH,			// 39
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

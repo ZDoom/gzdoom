@@ -145,7 +145,7 @@ extern FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_Attack, Button_Speed, Button_MoveRight, Button_MoveLeft,
 	Button_Strafe, Button_LookDown, Button_LookUp, Button_Back,
 	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
-	Button_MoveUp, Button_Jump, Button_ShowScores;
+	Button_MoveUp, Button_Jump, Button_ShowScores, Button_Crouch;
 extern bool ParsingKeyConf;
 
 void ResetButtonTriggers ();	// Call ResetTriggers for all buttons

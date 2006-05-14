@@ -296,6 +296,7 @@ void AActor::Serialize (FArchive &arc)
 		<< AR_SOUNDW(ActiveSound)
 		<< AR_SOUNDW(UseSound)
 		<< Speed
+		<< FloatSpeed
 		<< Mass
 		<< PainChance
 		<< SpawnState
@@ -1285,7 +1286,8 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	int steps, step, totalsteps;
 	fixed_t startx, starty;
 
-	fixed_t maxmove = (mo->waterlevel < 2) || (mo->flags & MF_MISSILE) ? MAXMOVE : MAXMOVE/4;
+	fixed_t maxmove = (mo->waterlevel < 1) || (mo->flags & MF_MISSILE) || 
+					  (mo->player && mo->player->crouchoffset<-10*FRACUNIT) ? MAXMOVE : MAXMOVE/4;
 
 	if (mo->flags2 & MF2_WINDTHRUST && mo->waterlevel < 2 && !(mo->flags & MF_NOCLIP))
 	{
@@ -1311,9 +1313,10 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// that large thrusts can't propel an actor through a wall, because wall
 	// running depends on the player's original movement continuing even after
 	// it gets blocked.
-	if (mo->player != NULL && (compatflags & COMPATF_WALLRUN) || (mo->waterlevel >= 2))
+	if (mo->player != NULL && (compatflags & COMPATF_WALLRUN) || (mo->waterlevel >= 1) ||
+		(mo->player != NULL && mo->player->crouchfactor < FRACUNIT*3/4))
 	{
-		// try to preserve the direction instead of clamping x and y independently.
+		// preserve the direction instead of clamping x and y independently.
 		xmove = clamp (mo->momx, -maxmove, maxmove);
 		ymove = clamp (mo->momy, -maxmove, maxmove);
 
@@ -1825,9 +1828,9 @@ void P_ZMovement (AActor *mo)
 			dist = P_AproxDistance (mo->x - mo->target->x, mo->y - mo->target->y);
 			delta = (mo->target->z + (mo->height>>1)) - mo->z;
 			if (delta < 0 && dist < -(delta*3))
-				mo->z -= FLOATSPEED, mo->momz = 0;
+				mo->z -= mo->FloatSpeed, mo->momz = 0;
 			else if (delta > 0 && dist < (delta*3))
-				mo->z += FLOATSPEED, mo->momz = 0;
+				mo->z += mo->FloatSpeed, mo->momz = 0;
 		}
 	}
 	if (mo->player && (mo->flags & MF_NOGRAVITY) && (mo->z > mo->floorz))
@@ -2983,6 +2986,7 @@ BEGIN_DEFAULTS (AActor, Any, -1, 0)
 	PROP_MaxStepHeight(24)
 	PROP_BounceFactor(FRACUNIT*7/10)
 	PROP_BounceCount(-1)
+	PROP_FloatSpeed(4)
 END_DEFAULTS
 
 //==========================================================================
@@ -3410,6 +3414,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	p->lastkilltime = 0;
 	p->BlendR = p->BlendG = p->BlendB = p->BlendA = 0.f;
 	p->air_finished = level.time + level.airsupply;
+	p->Uncrouch();
 
 	p->momx = p->momy = 0;		// killough 10/98: initialize bobbing to 0.
 
@@ -4455,7 +4460,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	}
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
-		z += 4*8*FRACUNIT - source->floorclip;
+		z += 4*8*FRACUNIT - source->floorclip + (source->player? source->player->crouchoffset : 0);
 	}
 	MissileActor = Spawn (type, x, y, z);
 

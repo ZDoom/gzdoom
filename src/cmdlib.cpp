@@ -337,3 +337,41 @@ char *myasctime ()
 		return "Pre Jan 01 00:00:00 1970\n";
 	}
 }
+
+/************************************************************************/
+/* CreatePath: creates a directory including all levels necessary    	*/
+/*																		*/
+/************************************************************************/
+void DoCreatePath(const char * fn)
+{
+#ifdef _WIN32
+char drive[_MAX_DRIVE];
+#endif
+char path[PATH_MAX];
+char p[PATH_MAX];
+int i;
+
+#ifdef _WIN32
+	_splitpath(fn,drive,path,NULL,NULL);
+	_makepath(p,drive,path,NULL,NULL);
+	i=(int)strlen(p);
+	if (p[i-1]=='/' || p[i-1]=='\\') p[i-1]=0;
+	if (*path) DoCreatePath(p);
+	CreateDirectory(p,NULL);
+#else
+	// FIXME: write me
+#endif
+}
+
+void CreatePath(const char * fn)
+{
+	char name[PATH_MAX];
+	char c = fn[strlen(fn)-1];
+
+	if (c!='\\' && c!='/') 
+	{
+		sprintf(name, "%s/", fn);
+		DoCreatePath(name);
+	}
+	else DoCreatePath(fn);
+}

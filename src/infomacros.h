@@ -217,6 +217,7 @@ public:
 #define PROP_MaxPainChance				ADD_WORD_PROP(ADEF_PainChance,256)
 #define PROP_SpeedFixed(x)				ADD_FIXD_PROP(ADEF_Speed,x)
 #define PROP_SpeedLong(x)				ADD_LONG_PROP(ADEF_Speed,x)
+#define PROP_FloatSpeed(x)				ADD_FIXD_PROP(ADEF_FloatSpeed,x)
 #define PROP_Radius(x)					ADD_LONG_PROP(ADEF_Radius,x)
 #define PROP_RadiusFixed(x)				ADD_FIXD_PROP(ADEF_Radius,x)
 #define PROP_Height(x)					ADD_LONG_PROP(ADEF_Height,x)

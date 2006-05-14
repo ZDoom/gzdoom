@@ -576,6 +576,7 @@ void M_ScreenShot (char *filename)
 		autoname = filename;
 		DefaultExtension (autoname, writepcx ? ".pcx" : ".png");
 	}
+	CreatePath(screenshot_dir);
 
 	// save the screenshot
 	screen->Lock (true);

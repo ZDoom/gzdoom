@@ -102,7 +102,7 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
-		SetValueForKey ("Path", "~/.zdoom", true);
+		SetValueForKey ("Path", HOME_DIR, true);
 		SetValueForKey ("Path", SHARE_DIR, true);
 #endif
 	}

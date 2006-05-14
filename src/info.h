@@ -281,6 +281,7 @@ enum
 	ADEF_MaxStepHeight,
 	ADEF_BounceFactor,
 	ADEF_BounceCount,
+	ADEF_FloatSpeed,
 
 	ADEF_SpawnState,
 	ADEF_SeeState,

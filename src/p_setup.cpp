@@ -1148,6 +1148,61 @@ void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
 							 plane->c, z);
 }
 
+
+//-----------------------------------------------------------------------------
+//
+//
+//-----------------------------------------------------------------------------
+void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int which)
+{
+	for (int i=0;i<sec->linecount;i++)
+	{
+		line_t * l=sec->lines[i];
+
+		if (l->args[0]==id)
+		{
+			vec3_t v1, v2, cross;
+			secplane_t *srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
+			fixed_t srcheight = (which == 0) ? sec->floortexz : sec->ceilingtexz;
+
+			v1[0] = FIXED2FLOAT (x - l->v2->x);
+			v1[1] = FIXED2FLOAT (y - l->v2->y);
+			v1[2] = FIXED2FLOAT (z - srcheight);
+			
+			v2[0] = FIXED2FLOAT (x - l->v1->x);
+			v2[1] = FIXED2FLOAT (y - l->v1->y);
+			v2[2] = FIXED2FLOAT (z - srcheight);
+
+			CrossProduct (v1, v2, cross);
+			VectorNormalize (cross);
+
+			// Fix backward normals
+			if ((cross[2] < 0 && which == 0) || (cross[2] > 0 && which == 1))
+			{
+				cross[0] = -cross[0];
+				cross[1] = -cross[1];
+				cross[2] = -cross[2];
+			}
+
+
+			srcplane->a = FLOAT2FIXED (cross[0]);
+			srcplane->b = FLOAT2FIXED (cross[1]);
+			srcplane->c = FLOAT2FIXED (cross[2]);
+			//plane->ic = FLOAT2FIXED (1.f/cross[2]);
+			srcplane->ic = DivScale32 (1, srcplane->c);
+			srcplane->d = -TMulScale16 (srcplane->a, x,
+										srcplane->b, y,
+										srcplane->c, z);
+
+			int v=srcplane->ZatPoint(x,y);
+			int w=srcplane->ZatPoint(l->v1->x,l->v1->y);
+			int x=srcplane->ZatPoint(l->v2->x,l->v2->y);
+
+			return;
+		}
+	}
+}
+				   
 enum
 {
 	THING_SlopeFloorPointLine = 9500,
@@ -1156,16 +1211,23 @@ enum
 	THING_SetCeilingSlope = 9503,
 	THING_CopyFloorPlane = 9510,
 	THING_CopyCeilingPlane = 9511,
+	THING_VavoomFloor=1500,
+	THING_VavoomCeiling=1501,
 };
 
+//-----------------------------------------------------------------------------
+//
+//
+//-----------------------------------------------------------------------------
 static void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 {
 	mapthing2_t *mt;
 
 	for (mt = firstmt; mt < lastmt; ++mt)
 	{
-		if (mt->type >= THING_SlopeFloorPointLine &&
-			mt->type <= THING_SetCeilingSlope)
+		if ((mt->type >= THING_SlopeFloorPointLine &&
+			 mt->type <= THING_SetCeilingSlope) ||
+			mt->type==THING_VavoomFloor || mt->type==THING_VavoomCeiling)
 		{
 			fixed_t x, y, z;
 			secplane_t *refplane;
@@ -1183,7 +1245,11 @@ static void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 				refplane = &sec->floorplane;
 			}
 			z = refplane->ZatPoint (x, y) + (mt->z << FRACBITS);
-			if (mt->type <= THING_SlopeCeilingPointLine)
+			if (mt->type==THING_VavoomFloor || mt->type==THING_VavoomCeiling)
+			{
+				P_VavoomSlope(sec, mt->thingid, x, y, mt->z<<FRACBITS, mt->type & 1); 
+			}
+			else if (mt->type <= THING_SlopeCeilingPointLine)
 			{
 				P_SlopeLineToPoint (mt->args[0], x, y, z, mt->type & 1);
 			}

@@ -1,4 +1,14 @@
 May 14, 2006 (Changes by Graf Zahl)
+- Added a show_obituaries option to disable obituaries without disabling
+  other more important message types which have lower priority for some
+  reason.
+- Added a menu option for show_messages after accidentally switching it
+  off far too often and wondering why no messages appear.
+- Added crouching DoomPlayer sprites submitted by Enjay.
+- Fixed DF_NO_CROUCH was not checked.
+- Fixed: The intermission script parser had some of its cases in the
+  keyword parser incorrectly sorted.
+- Fixed: atterm was still defined to take a STACK_ARGS function argument.
 - Added an AltFlash state for weapons.
 - Turned FloatSpeed into an actor property and changed the value to 5
   for all floating Strife actors, as a comment in the source indicated.

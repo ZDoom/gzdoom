@@ -479,16 +479,16 @@ void WI_LoadBackground(bool isenterpic)
 					an.levelname2[8]=0;
 					goto readanimation;
 
+				case 14:	// NoAutostartMap
+					noautostartmap=true;
+					break;
+
 				readanimation:
 					SC_MustGetString();
 					strncpy(an.levelname,sc_String,8);
 					an.levelname[8]=0;
 					SC_MustGetString();
 					caseval=SC_MustMatchString(WI_Cmd);
-
-				case 14:	// NoAutostartMap
-					noautostartmap=true;
-					break;
 
 				default:
 					switch (caseval)

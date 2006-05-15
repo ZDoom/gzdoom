@@ -78,6 +78,7 @@ static FRandom pr_grenade ("ThrowGrenade");
 static FRandom pr_crailgun ("CustomRailgun");
 static FRandom pr_spawndebris ("SpawnDebris");
 static FRandom pr_jiggle ("Jiggle");
+static FRandom pr_burst ("Burst");
 
 
 // A truly awful hack to get to the state that called an action function
@@ -1566,5 +1567,57 @@ void A_CountdownArg(AActor * self)
 		}
 	}
 
+}
+
+//============================================================================
+//
+// A_Burst
+//
+//============================================================================
+
+void A_Burst (AActor *actor)
+{
+   int i, numChunks;
+   AActor * mo;
+   int index=CheckIndex(1, NULL);
+   if (index<0) return;
+   const PClass * chunk = PClass::FindClass((ENamedName)StateParameters[index]);
+   if (chunk == NULL) return;
+
+   actor->momx = actor->momy = actor->momz = 0;
+   actor->height = actor->GetDefault()->height;
+
+   // [RH] In Hexen, this creates a random number of shards (range [24,56])
+   // with no relation to the size of the actor shattering. I think it should
+   // base the number of shards on the size of the dead thing, so bigger
+   // things break up into more shards than smaller things.
+   // An actor with radius 20 and height 64 creates ~40 chunks.
+   numChunks = MAX<int> (4, (actor->radius>>FRACBITS)*(actor->height>>FRACBITS)/32);
+   i = (pr_burst.Random2()) % (numChunks/4);
+   for (i = MAX (24, numChunks + i); i >= 0; i--)
+   {
+      mo = Spawn(chunk,
+         actor->x + (((pr_burst()-128)*actor->radius)>>7),
+         actor->y + (((pr_burst()-128)*actor->radius)>>7),
+         actor->z + (pr_burst()*actor->height/255));
+
+	  if (mo)
+      {
+         mo->momz = FixedDiv(mo->z-actor->z, actor->height)<<2;
+         mo->momx = pr_burst.Random2 () << (FRACBITS-7);
+         mo->momy = pr_burst.Random2 () << (FRACBITS-7);
+         mo->RenderStyle = actor->RenderStyle;
+         mo->alpha = actor->alpha;
+      }
+   }
+
+   // [RH] Do some stuff to make this more useful outside Hexen
+   if (actor->flags4 & MF4_BOSSDEATH)
+   {
+      A_BossDeath (actor);
+   }
+   A_NoBlocking (actor);
+
+   actor->Destroy ();
 }
 

@@ -67,6 +67,7 @@ static FRandom pr_switcher ("SwitchTarget");
 
 CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)
+EXTERN_CVAR (Bool, show_obituaries)
 
 //
 // GET STUFF
@@ -183,11 +184,8 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	BOOL friendly;
 	int  gender;
 
-	if (self->player == NULL)
-		return;
-
-	// No obituaries for voodoo dolls
-	if (self->player->mo != self)
+	// No obituaries for non-players, voodoo dolls or when not wanted
+	if (self->player == NULL || self->player->mo != self || !show_obituaries)
 		return;
 
 	gender = self->player->userinfo.gender;

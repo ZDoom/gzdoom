@@ -87,6 +87,7 @@ public:
 	void Die (AActor *source, AActor *inflictor);
 
 	fixed_t		JumpZ;				// [GRB] Variable JumpZ
+	int			crouchsprite;
 };
 
 class APlayerChunk : public APlayerPawn

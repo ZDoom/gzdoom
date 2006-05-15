@@ -6,6 +6,7 @@
 #include "a_action.h"
 #include "p_local.h"
 #include "a_doomglobal.h"
+#include "w_wad.h"
 
 void A_Pain (AActor *);
 void A_PlayerScream (AActor *);
@@ -74,6 +75,9 @@ FState ADoomPlayer::States[] =
 	S_NORMAL (PLAY, 'W',	5, NULL 						, &States[S_HTIC_XDIE+8]),
 	S_NORMAL (PLAY, 'X',	5, NULL 						, &States[S_HTIC_XDIE+9]),
 	S_NORMAL (PLAY, 'Y',   -1, NULL							, NULL),
+	
+#define S_CROUCH (S_HTIC_XDIE+10)	// only here so that the crouching sprite is entered into the sprite table.
+	S_NORMAL (PLYC, 'A',   -1, NULL 						, NULL),
 };
 
 IMPLEMENT_ACTOR (ADoomPlayer, Doom, -1, 0)
@@ -176,6 +180,31 @@ void A_PlayerScream (AActor *self)
 		}
 	}
 	S_SoundID (self, chan, sound, 1, ATTN_NORM);
+}
+
+AT_GAME_SET(DoomPlayer)
+{
+	// Sets the crouching sprite.
+	// Exception: If the normal sprite is from a PWAD and the crouching sprite from ZDoom.pk3
+	// it is assumed that they don't match and the crouching sprite is disabled.
+	// This code is not executed when the player already has a crouch sprite (set by DECORATE.)
+	if (gameinfo.gametype == GAME_Doom && GetDefault<ADoomPlayer>()->crouchsprite == 0)
+	{
+		int spritenorm = Wads.CheckNumForName("PLAYA1", ns_sprites);
+		int spritecrouch = Wads.CheckNumForName("PLYCA1", ns_sprites);
+		
+		if (spritenorm==-1 || spritecrouch ==-1) return;
+	
+		int wadnorm = Wads.GetLumpFile(spritenorm);
+		int wadcrouch = Wads.GetLumpFile(spritenorm);
+		
+		if (wadnorm > FWadCollection::IWAD_FILENUM && wadcrouch <= FWadCollection::IWAD_FILENUM) 
+		{
+			// Question: Add an option / disable crouching or do what?
+			return;
+		}
+	}
+	GetDefault<ADoomPlayer>()->crouchsprite = ADoomPlayer::States[S_CROUCH].sprite.index;
 }
 
 //==========================================================================

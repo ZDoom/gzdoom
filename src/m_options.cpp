@@ -87,6 +87,7 @@ CVAR (Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // Show messages has default, 0 = off, 1 = on
 CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 
 extern int	skullAnimCounter;
 
@@ -762,6 +763,8 @@ static value_t MessageLevels[] = {
 };
 
 static menuitem_t MessagesItems[] = {
+	{ discrete, "Show messages",		{&show_messages},		{2.0}, {0.0},   {0.0}, {OnOff} },
+	{ discrete, "Show obituaries",		{&show_obituaries},		{2.0}, {0.0},   {0.0}, {OnOff} },
 	{ discrete,	"Scale text in high res", {&con_scaletext},		{3.0}, {0.0}, 	{0.0}, {ScaleValues} },
 	{ discrete, "Minimum message level", {&msglevel},		   	{3.0}, {0.0},   {0.0}, {MessageLevels} },
 	{ discrete, "Center messages",		{&con_centernotify},	{2.0}, {0.0},	{0.0}, {OnOff} },

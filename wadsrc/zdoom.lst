@@ -134,7 +134,59 @@ sprites/iceca0.png		    iceca0.png
 sprites/icecb0.png		    icecb0.png
 sprites/icecc0.png		    icecc0.png
 sprites/icecd0.png		    icecd0.png
-S_END
+
+# crouching DoomPlayer
+sprites/plyca1.lmp  		crouch/plyca1.lmp
+sprites/plyca2a8.lmp        crouch/plyca2a8.lmp
+sprites/plyca3a7.lmp        crouch/plyca3a7.lmp
+sprites/plyca4a6.lmp        crouch/plyca4a6.lmp
+sprites/plyca5.lmp          crouch/plyca5.lmp
+sprites/plycb1.lmp          crouch/plycb1.lmp
+sprites/plycb2b8.lmp        crouch/plycb2b8.lmp
+sprites/plycb3b7.lmp        crouch/plycb3b7.lmp
+sprites/plycb4b6.lmp        crouch/plycb4b6.lmp
+sprites/plycb5.lmp          crouch/plycb5.lmp
+sprites/plycc1.lmp          crouch/plycc1.lmp
+sprites/plycc2c8.lmp        crouch/plycc2c8.lmp
+sprites/plycc3c7.lmp        crouch/plycc3c7.lmp
+sprites/plycc4c6.lmp        crouch/plycc4c6.lmp
+sprites/plycc5.lmp          crouch/plycc5.lmp
+sprites/plycd1.lmp          crouch/plycd1.lmp
+sprites/plycd2d8.lmp        crouch/plycd2d8.lmp
+sprites/plycd3d7.lmp        crouch/plycd3d7.lmp
+sprites/plycd4d6.lmp        crouch/plycd4d6.lmp
+sprites/plycd5.lmp          crouch/plycd5.lmp
+sprites/plyce1.lmp          crouch/plyce1.lmp
+sprites/plyce2e8.lmp        crouch/plyce2e8.lmp
+sprites/plyce3e7.lmp        crouch/plyce3e7.lmp
+sprites/plyce4e6.lmp        crouch/plyce4e6.lmp
+sprites/plyce5.lmp          crouch/plyce5.lmp
+sprites/plycf1.lmp          crouch/plycf1.lmp
+sprites/plycf2f8.lmp        crouch/plycf2f8.lmp
+sprites/plycf3f7.lmp        crouch/plycf3f7.lmp
+sprites/plycf4f6.lmp        crouch/plycf4f6.lmp
+sprites/plycf5.lmp          crouch/plycf5.lmp
+sprites/plycg1.lmp          crouch/plycg1.lmp
+sprites/plycg2g8.lmp        crouch/plycg2g8.lmp
+sprites/plycg3g7.lmp        crouch/plycg3g7.lmp
+sprites/plycg4g6.lmp        crouch/plycg4g6.lmp
+sprites/plycg5.lmp          crouch/plycg5.lmp
+sprites/plych0.lmp          crouch/plych0.lmp
+sprites/plyci0.lmp          crouch/plyci0.lmp
+sprites/plycj0.lmp          crouch/plycj0.lmp
+sprites/plyck0.lmp          crouch/plyck0.lmp
+sprites/plycl0.lmp          crouch/plycl0.lmp
+sprites/plycm0.lmp          crouch/plycm0.lmp
+sprites/plycn0.lmp          crouch/plycn0.lmp
+sprites/plyco0.lmp          crouch/plyco0.lmp
+sprites/plycp0.lmp          crouch/plycp0.lmp
+sprites/plycq0.lmp          crouch/plycq0.lmp
+sprites/plycr0.lmp          crouch/plycr0.lmp
+sprites/plycs0.lmp          crouch/plycs0.lmp
+sprites/plyct0.lmp          crouch/plyct0.lmp
+sprites/plycu0.lmp          crouch/plycu0.lmp
+sprites/plycv0.lmp          crouch/plycv0.lmp
+sprites/plycw0.lmp          crouch/plycw0.lmp
 
 # The patch substituted when a corrupt patch is detected
 graphics/-badpatc.lmp 	    badpatch.lmp

@@ -103,7 +103,7 @@ extern HCURSOR TheArrowCursor, TheInvisibleCursor;
 void (*TermFuncs[MAX_TERMS])(void);
 static int NumTerms;
 
-void atterm (void (STACK_ARGS *func)(void))
+void atterm (void (*func)(void))
 {
 	// Make sure this function wasn't already registered.
 	for (int i = 0; i < NumTerms; ++i)
@@ -148,7 +148,7 @@ static void UnCOM (void)
 	CoUninitialize ();
 }
 
-static void STACK_ARGS UnWTS (void)
+static void UnWTS (void)
 {
 	if (hwtsapi32 != 0)
 	{

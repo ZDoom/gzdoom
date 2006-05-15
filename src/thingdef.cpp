@@ -498,6 +498,7 @@ ACTOR(JumpIfInTargetInventory)
 ACTOR(CountdownArg)
 ACTOR(CustomMeleeAttack)
 ACTOR(Light)
+ACTOR(Burst)
 
 
 #include "d_dehackedactions.h"
@@ -686,6 +687,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_TakeFromTarget, "Mx" )
 	FUNC(A_CountdownArg, "X")
 	FUNC(A_CustomMeleeAttack, "XXXsty" )
+	FUNC(A_Burst, "M")
 };
 
 //==========================================================================

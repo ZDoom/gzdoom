@@ -158,20 +158,51 @@ void APlayerPawn::BeginPlay ()
 
 void APlayerPawn::Tick()
 {
+	int crouchspriteno;
+	
+	// FIXME: Handle skins
+	
+	if (sprite == SpawnState->sprite.index && crouchsprite > 0) 
+	{
+		crouchspriteno = crouchsprite;
+	}
+	else
+	{
+		// no sprite -> squash the existing one
+		crouchspriteno = 0;
+	}
+
 	if (player != NULL && player->mo == this && player->morphTics == 0 && player->playerstate != PST_DEAD)
 	{
-		yscale = FixedMul(GetDefault()->yscale, player->crouchfactor);
 		height = FixedMul(GetDefault()->height, player->crouchfactor);
 	}
 	else
 	{
-		// Ensure that PlayerPawns not connected to a player or morphed players are always un-crouched.
-		yscale = GetDefault()->yscale;
 		if (health > 0) height = GetDefault()->height;
 	}
 	Super::Tick();
 
 	// Here's the place where crouching sprites should be handled
+	if (player->crouchfactor<FRACUNIT*3/4)
+	{
+		if (crouchsprite != 0) 
+		{
+			sprite = crouchsprite;
+			yscale = GetDefault()->yscale;
+		}
+		else if (player->playerstate != PST_DEAD)
+		{
+			yscale = player->crouchfactor < FRACUNIT*3/4 ? GetDefault()->yscale/2 : GetDefault()->yscale;
+		}
+	}
+	else
+	{
+		if (sprite == crouchsprite)
+		{
+			sprite = SpawnState->sprite.index;
+		}
+		yscale = GetDefault()->yscale;
+	}
 }
 
 //===========================================================================
@@ -1123,7 +1154,7 @@ void P_PlayerThink (player_t *player)
 	}
 
 	// Handle crouching
-	if (player->morphTics == 0)
+	if (player->morphTics == 0 && !(dmflags & DF_NO_CROUCH))
 	{
 		if (!(player->cheats & CF_TOTALLYFROZEN))
 		{

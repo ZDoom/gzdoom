@@ -279,7 +279,7 @@ void APlayerPawn::Tick()
 	Super::Tick();
 
 	// Here's the place where crouching sprites should be handled
-	if (player->crouchfactor<FRACUNIT*3/4)
+	if (player != NULL && player->crouchfactor<FRACUNIT*3/4)
 	{
 		if (crouchsprite != 0) 
 		{
@@ -1425,8 +1425,9 @@ void P_PlayerThink (player_t *player)
 			P_PlayerInSpecialSector (player);
 		}
 		P_PlayerOnSpecialFlat (player, P_GetThingFloorType (player->mo));
-		if (player->mo->momz <= -35*FRACUNIT
-			&& player->mo->momz >= -40*FRACUNIT && !player->morphTics)
+		if (player->mo->momz <= -35*FRACUNIT &&
+			player->mo->momz >= -40*FRACUNIT && !player->morphTics &&
+			player->mo->waterlevel == 0)
 		{
 			int id = S_FindSkinnedSound (player->mo, "*falling");
 			if (id != 0 && !S_GetSoundPlayingInfo (player->mo, id))

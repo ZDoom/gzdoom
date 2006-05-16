@@ -130,7 +130,7 @@ public:
 		if (index < Count)
 		{
 			Array[index].~T();
-			memmove (&Array[index], &Array[index+1], Count - index - 1);
+			memmove (&Array[index], &Array[index+1], sizeof(T)*(Count - index - 1));
 			Count--;
 		}
 	}

@@ -83,7 +83,6 @@
 #include "gameconfigfile.h"
 #include "sbar.h"
 #include "decallib.h"
-#include "version.h"
 #include "r_polymost.h"
 #include "version.h"
 #include "v_text.h"

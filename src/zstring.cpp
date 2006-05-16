@@ -1,39 +1,74 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <new>		// for bad_alloc
+
 #include "zstring.h"
 
-
-FString::FString (size_t len)
+FNullStringData FString::NullString =
 {
-	Chars = Pond.Alloc (this, len);
+	0,			// Length of string
+	2,			// Size of character buffer
+	2,			// RefCount; it must never be modified, so keep it above 1 user at all times
+	"\0"
+};
+
+void FString::AttachToOther (const FString &other)
+{
+	assert (other.Chars != NULL);
+
+	if (other.Data()->RefCount < 0)
+	{
+		AllocBuffer (other.Data()->Len);
+		StrCopy (Chars, other.Chars, other.Data()->Len);
+	}
+	else
+	{
+		Chars = const_cast<FString &>(other).Data()->AddRef();
+	}
 }
 
 FString::FString (const char *copyStr)
 {
-	size_t len = strlen (copyStr);
-	Chars = Pond.Alloc (this, len);
-	StrCopy (Chars, copyStr, len);
+	if (copyStr == NULL || *copyStr == '\0')
+	{
+		NullString.RefCount++;
+		Chars = &NullString.Nothing[0];
+	}
+	else
+	{
+		size_t len = strlen (copyStr);
+		AllocBuffer (len);
+		StrCopy (Chars, copyStr, len);
+	}
 }
 
 FString::FString (const char *copyStr, size_t len)
 {
-	Chars = Pond.Alloc (this, len);
+	AllocBuffer (len);
 	StrCopy (Chars, copyStr, len);
 }
 
 FString::FString (char oneChar)
 {
-	Chars = Pond.Alloc (this, 1);
-	Chars[0] = oneChar;
-	Chars[1] = '\0';
+	if (oneChar == '\0')
+	{
+		NullString.RefCount++;
+		Chars = &NullString.Nothing[0];
+	}
+	else
+	{
+		AllocBuffer (1);
+		Chars[0] = oneChar;
+		Chars[1] = '\0';
+	}
 }
 
 FString::FString (const FString &head, const FString &tail)
 {
 	size_t len1 = head.Len();
 	size_t len2 = tail.Len();
-	Chars = Pond.Alloc (this, len1 + len2);
+	AllocBuffer (len1 + len2);
 	StrCopy (Chars, head);
 	StrCopy (Chars + len1, tail);
 }
@@ -42,7 +77,7 @@ FString::FString (const FString &head, const char *tail)
 {
 	size_t len1 = head.Len();
 	size_t len2 = strlen (tail);
-	Chars = Pond.Alloc (this, len1 + len2);
+	AllocBuffer (len1 + len2);
 	StrCopy (Chars, head);
 	StrCopy (Chars + len1, tail, len2);
 }
@@ -50,7 +85,7 @@ FString::FString (const FString &head, const char *tail)
 FString::FString (const FString &head, char tail)
 {
 	size_t len1 = head.Len();
-	Chars = Pond.Alloc (this, len1 + 1);
+	AllocBuffer (len1 + 1);
 	StrCopy (Chars, head);
 	Chars[len1] = tail;
 	Chars[len1+1] = '\0';
@@ -60,7 +95,7 @@ FString::FString (const char *head, const FString &tail)
 {
 	size_t len1 = strlen (head);
 	size_t len2 = tail.Len();
-	Chars = Pond.Alloc (this, len1 + len2);
+	AllocBuffer (len1 + len2);
 	StrCopy (Chars, head, len1);
 	StrCopy (Chars + len1, tail);
 }
@@ -69,7 +104,7 @@ FString::FString (const char *head, const char *tail)
 {
 	size_t len1 = strlen (head);
 	size_t len2 = strlen (tail);
-	Chars = Pond.Alloc (this, len1 + len2);
+	AllocBuffer (len1 + len2);
 	StrCopy (Chars, head, len1);
 	StrCopy (Chars + len1, tail, len2);
 }
@@ -77,62 +112,76 @@ FString::FString (const char *head, const char *tail)
 FString::FString (char head, const FString &tail)
 {
 	size_t len2 = tail.Len();
-	Chars = Pond.Alloc (this, 1 + len2);
+	AllocBuffer (1 + len2);
 	Chars[0] = head;
 	StrCopy (Chars + 1, tail);
 }
 
 FString::~FString ()
 {
-	if (Chars != NULL)
+	Data()->Release();
+}
+
+char *FString::LockBuffer()
+{
+	if (Data()->RefCount == 1)
+	{ // We're the only user, so we can lock it straight away
+		Data()->RefCount = -1;
+	}
+	else if (Data()->RefCount < -1)
+	{ // Already locked; just add to the lock count
+		Data()->RefCount--;
+	}
+	else
+	{ // Somebody else is also using this character buffer, so create a copy
+		FStringData *old = Data();
+		AllocBuffer (old->Len);
+		StrCopy (Chars, old->Chars(), old->Len);
+		old->Release();
+	}
+	return Chars;
+}
+
+void FString::UnlockBuffer()
+{
+	assert (Data()->RefCount < 0);
+
+	if (++Data()->RefCount == 0)
 	{
-		Pond.Free (Chars);
-		Chars = NULL;
+		Data()->RefCount = 1;
 	}
 }
 
 FString &FString::operator = (const FString &other)
 {
-	if (Chars != NULL)
+	assert (Chars != NULL);
+
+	if (&other != this)
 	{
-		Pond.Free (Chars);
-	}
-	if (other.Chars == NULL)
-	{
-		Chars = NULL;
-	}
-	else
-	{
-		Chars = Pond.Alloc (this, other.GetHeader()->Len);
-		StrCopy (Chars, other);
+		int oldrefcount = Data()->RefCount < 0;
+		Data()->Release();
+		AttachToOther(other);
+		if (oldrefcount < 0)
+		{
+			LockBuffer();
+			Data()->RefCount = oldrefcount;
+		}
 	}
 	return *this;
 }
-
 FString &FString::operator = (const char *copyStr)
 {
-	if (Chars != NULL)
+	Data()->Release();
+	if (copyStr == NULL || *copyStr == '\0')
 	{
-		Pond.Free (Chars);
-	}
-	if (copyStr == NULL)
-	{
-		Chars = NULL;
+		NullString.RefCount++;
+		Chars = &NullString.Nothing[0];
 	}
 	else
 	{
 		size_t len = strlen (copyStr);
-		/*
-		if (len == 0)
-		{
-			Chars = NULL;
-		}
-		else
-		*/
-		{
-			Chars = Pond.Alloc (this, len);
-			StrCopy (Chars, copyStr, len);
-		}
+		AllocBuffer (len);
+		StrCopy (Chars, copyStr, len);
 	}
 	return *this;
 }
@@ -147,11 +196,8 @@ void FString::Format (const char *fmt, ...)
 
 void FString::VFormat (const char *fmt, va_list arglist)
 {
-	if (Chars != NULL)
-	{
-		Pond.Free (Chars);
-	}
-	Chars = NULL;
+	Data()->Release();
+	Chars = (char *)(FStringData::Alloc(128) + 1);
 	StringFormat::VWorker (FormatHelper, this, fmt, arglist);
 }
 
@@ -159,8 +205,12 @@ int FString::FormatHelper (void *data, const char *cstr, int len)
 {
 	FString *str = (FString *)data;
 	size_t len1 = str->Len();
-	str->Chars = Pond.Realloc (str, str->Chars, len1 + len);
+	if (len1 + len > str->Data()->AllocLen)
+	{
+		str->Chars = (char *)(str->Data()->Realloc((len1 + len + 127) & ~127) + 1);
+	}
 	StrCopy (str->Chars + len1, cstr, len);
+	str->Data()->Len = (unsigned int)(len1 + len);
 	return len;
 }
 
@@ -193,7 +243,7 @@ FString &FString::operator += (const FString &tail)
 {
 	size_t len1 = Len();
 	size_t len2 = tail.Len();
-	Chars = Pond.Realloc (this, Chars, len1 + len2);
+	ReallocBuffer (len1 + len2);
 	StrCopy (Chars + len1, tail);
 	return *this;
 }
@@ -202,7 +252,7 @@ FString &FString::operator += (const char *tail)
 {
 	size_t len1 = Len();
 	size_t len2 = strlen(tail);
-	Chars = Pond.Realloc (this, Chars, len1 + len2);
+	ReallocBuffer (len1 + len2);
 	StrCopy (Chars + len1, tail, len2);
 	return *this;
 }
@@ -210,17 +260,17 @@ FString &FString::operator += (const char *tail)
 FString &FString::operator += (char tail)
 {
 	size_t len1 = Len();
-	Chars = Pond.Realloc (this, Chars, len1 + 1);
+	ReallocBuffer (len1 + 1);
 	Chars[len1] = tail;
 	Chars[len1+1] = '\0';
 	return *this;
 }
 
-void FString::Resize (long newlen)
+void FString::Truncate (long newlen)
 {
-	if (newlen >= 0)
+	if (newlen >= 0 && newlen < (long)Len())
 	{
-		Chars = Pond.Realloc (this, Chars, newlen);
+		ReallocBuffer (newlen);
 		Chars[newlen] = '\0';
 	}
 }
@@ -250,7 +300,7 @@ FString FString::Mid (size_t pos, size_t numChars) const
 	size_t len = Len();
 	if (pos >= len)
 	{
-		return FString("");
+		return FString();
 	}
 	if (pos + numChars > len)
 	{
@@ -402,24 +452,29 @@ long FString::LastIndexOfAny (const char *charset, long endIndex) const
 
 void FString::ToUpper ()
 {
+	LockBuffer();
 	size_t max = Len();
 	for (size_t i = 0; i < max; ++i)
 	{
 		Chars[i] = toupper(Chars[i]);
 	}
+	UnlockBuffer();
 }
 
 void FString::ToLower ()
 {
+	LockBuffer();
 	size_t max = Len();
 	for (size_t i = 0; i < max; ++i)
 	{
 		Chars[i] = tolower(Chars[i]);
 	}
+	UnlockBuffer();
 }
 
 void FString::SwapCase ()
 {
+	LockBuffer();
 	size_t max = Len();
 	for (size_t i = 0; i < max; ++i)
 	{
@@ -432,6 +487,7 @@ void FString::SwapCase ()
 			Chars[i] = toupper(Chars[i]);
 		}
 	}
+	UnlockBuffer();
 }
 
 void FString::StripLeft ()
@@ -442,11 +498,21 @@ void FString::StripLeft ()
 		if (!isspace(Chars[i]))
 			break;
 	}
-	for (j = 0; i <= max; ++j, ++i)
+	if (Data()->RefCount <= 1)
 	{
-		Chars[j] = Chars[i];
+		for (j = 0; i <= max; ++j, ++i)
+		{
+			Chars[j] = Chars[i];
+		}
+		ReallocBuffer (j-1);
 	}
-	Pond.Realloc (this, Chars, j-1);
+	else
+	{
+		FStringData *old = Data();
+		AllocBuffer (max - i);
+		StrCopy (Chars, old->Chars() + i, max - i);
+		old->Release();
+	}
 }
 
 void FString::StripLeft (const FString &charset)
@@ -462,11 +528,21 @@ void FString::StripLeft (const char *charset)
 		if (!strchr (charset, Chars[i]))
 			break;
 	}
-	for (j = 0; i <= max; ++j, ++i)
+	if (Data()->RefCount <= 1)
 	{
-		Chars[j] = Chars[i];
+		for (j = 0; i <= max; ++j, ++i)
+		{
+			Chars[j] = Chars[i];
+		}
+		ReallocBuffer (j-1);
 	}
-	Pond.Realloc (this, Chars, j-1);
+	else
+	{
+		FStringData *old = Data();
+		AllocBuffer (max - i);
+		StrCopy (Chars, old->Chars() + i, max - i);
+		old->Release();
+	}
 }
 
 void FString::StripRight ()
@@ -477,8 +553,18 @@ void FString::StripRight ()
 		if (!isspace(Chars[i]))
 			break;
 	}
-	Chars[i+1] = '\0';
-	Pond.Realloc (this, Chars, i+1);
+	if (Data()->RefCount <= 1)
+	{
+		Chars[i+1] = '\0';
+		ReallocBuffer (i+1);
+	}
+	else
+	{
+		FStringData *old = Data();
+		AllocBuffer (i+1);
+		StrCopy (Chars, old->Chars(), i+1);
+		old->Release();
+	}
 }
 
 void FString::StripRight (const FString &charset)
@@ -494,8 +580,18 @@ void FString::StripRight (const char *charset)
 		if (!strchr (charset, Chars[i]))
 			break;
 	}
-	Chars[i+1] = '\0';
-	Pond.Realloc (this, Chars, i+1);
+	if (Data()->RefCount <= 1)
+	{
+		Chars[i+1] = '\0';
+		ReallocBuffer (i+1);
+	}
+	else
+	{
+		FStringData *old = Data();
+		AllocBuffer (i+1);
+		StrCopy (Chars, old->Chars(), i+1);
+		old->Release();
+	}
 }
 
 void FString::StripLeftRight ()
@@ -511,17 +607,27 @@ void FString::StripLeftRight ()
 		if (!isspace(Chars[j]))
 			break;
 	}
-	for (k = 0; i <= j; ++i, ++k)
+	if (Data()->RefCount <= 1)
 	{
-		Chars[k] = Chars[i];
+		for (k = 0; i <= j; ++i, ++k)
+		{
+			Chars[k] = Chars[i];
+		}
+		Chars[k] = '\0';
+		ReallocBuffer (k);
 	}
-	Chars[k] = '\0';
-	Pond.Realloc (this, Chars, k);
+	else
+	{
+		FStringData *old = Data();
+		AllocBuffer (j - i);
+		StrCopy (Chars, old->Chars(), j - i);
+		old->Release();
+	}
 }
 
 void FString::StripLeftRight (const FString &charset)
 {
-	return StripLeft (charset.Chars);
+	return StripLeftRight (charset.Chars);
 }
 
 void FString::StripLeftRight (const char *charset)
@@ -537,12 +643,22 @@ void FString::StripLeftRight (const char *charset)
 		if (!strchr (charset, Chars[j]))
 			break;
 	}
-	for (k = 0; i <= j; ++i, ++k)
+	if (Data()->RefCount <= 1)
 	{
-		Chars[k] = Chars[i];
+		for (k = 0; i <= j; ++i, ++k)
+		{
+			Chars[k] = Chars[i];
+		}
+		Chars[k] = '\0';
+		ReallocBuffer (k);
 	}
-	Chars[k] = '\0';
-	Pond.Realloc (this, Chars, k);
+	else
+	{
+		FStringData *old = Data();
+		AllocBuffer (j - i);
+		StrCopy (Chars, old->Chars(), j - i);
+		old->Release();
+	}
 }
 
 void FString::Insert (size_t index, const FString &instr)
@@ -562,21 +678,28 @@ void FString::Insert (size_t index, const char *instr, size_t instrlen)
 	{
 		index = mylen;
 	}
-	Pond.Realloc (this, Chars, mylen + instrlen);
-	if (index < mylen)
+	if (Data()->RefCount <= 1)
 	{
+		ReallocBuffer (mylen + instrlen);
 		memmove (Chars + index + instrlen, Chars + index, (mylen - index + 1)*sizeof(char));
+		memcpy (Chars + index, instr, instrlen*sizeof(char));
 	}
-	memcpy (Chars + index, instr, instrlen*sizeof(char));
-	if (index == mylen)
+	else
 	{
-		Chars[mylen + instrlen] = '\0';
+		FStringData *old = Data();
+		AllocBuffer (mylen + instrlen);
+		StrCopy (Chars, old->Chars(), index);
+		StrCopy (Chars + index, instr, instrlen);
+		StrCopy (Chars + index + instrlen, Chars + index, mylen - index + 1);
+		old->Release();
 	}
 }
 
 void FString::ReplaceChars (char oldchar, char newchar)
 {
 	size_t i, j;
+
+	LockBuffer();
 	for (i = 0, j = Len(); i < j; ++i)
 	{
 		if (Chars[i] == oldchar)
@@ -584,11 +707,14 @@ void FString::ReplaceChars (char oldchar, char newchar)
 			Chars[i] = newchar;
 		}
 	}
+	UnlockBuffer();
 }
 
 void FString::ReplaceChars (const char *oldcharset, char newchar)
 {
 	size_t i, j;
+
+	LockBuffer();
 	for (i = 0, j = Len(); i < j; ++i)
 	{
 		if (strchr (oldcharset, Chars[i]) != NULL)
@@ -596,11 +722,14 @@ void FString::ReplaceChars (const char *oldcharset, char newchar)
 			Chars[i] = newchar;
 		}
 	}
+	UnlockBuffer();
 }
 
 void FString::StripChars (char killchar)
 {
 	size_t read, write, mylen;
+
+	LockBuffer();
 	for (read = write = 0, mylen = Len(); read < mylen; ++read)
 	{
 		if (Chars[read] != killchar)
@@ -609,12 +738,15 @@ void FString::StripChars (char killchar)
 		}
 	}
 	Chars[write] = '\0';
-	Pond.Realloc (this, Chars, write);
+	ReallocBuffer (write);
+	UnlockBuffer();
 }
 
 void FString::StripChars (const char *killchars)
 {
 	size_t read, write, mylen;
+
+	LockBuffer();
 	for (read = write = 0, mylen = Len(); read < mylen; ++read)
 	{
 		if (strchr (killchars, Chars[read]) == NULL)
@@ -623,7 +755,8 @@ void FString::StripChars (const char *killchars)
 		}
 	}
 	Chars[write] = '\0';
-	Pond.Realloc (this, Chars, write);
+	ReallocBuffer (write);
+	UnlockBuffer();
 }
 
 void FString::MergeChars (char merger)
@@ -634,6 +767,8 @@ void FString::MergeChars (char merger)
 void FString::MergeChars (char merger, char newchar)
 {
 	size_t read, write, mylen;
+
+	LockBuffer();
 	for (read = write = 0, mylen = Len(); read < mylen; )
 	{
 		if (Chars[read] == merger)
@@ -649,12 +784,15 @@ void FString::MergeChars (char merger, char newchar)
 		}
 	}
 	Chars[write] = '\0';
-	Pond.Realloc (this, Chars, write);
+	ReallocBuffer (write);
+	UnlockBuffer();
 }
 
 void FString::MergeChars (const char *charset, char newchar)
 {
 	size_t read, write, mylen;
+
+	LockBuffer();
 	for (read = write = 0, mylen = Len(); read < mylen; )
 	{
 		if (strchr (charset, Chars[read]) != NULL)
@@ -670,7 +808,8 @@ void FString::MergeChars (const char *charset, char newchar)
 		}
 	}
 	Chars[write] = '\0';
-	Pond.Realloc (this, Chars, write);
+	ReallocBuffer (write);
+	UnlockBuffer();
 }
 
 void FString::Substitute (const FString &oldstr, const FString &newstr)
@@ -695,6 +834,7 @@ void FString::Substitute (const char *oldstr, const char *newstr)
 
 void FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen)
 {
+	LockBuffer();
 	for (size_t checkpt = 0; checkpt < Len(); )
 	{
 		char *match = strstr (Chars + checkpt, oldstr);
@@ -704,7 +844,7 @@ void FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrl
 			size_t matchpt = match - Chars;
 			if (oldstrlen != newstrlen)
 			{
-				Pond.Realloc (this, Chars, len + newstrlen - oldstrlen);
+				ReallocBuffer (len + newstrlen - oldstrlen);
 				memmove (Chars + matchpt + newstrlen, Chars + matchpt + oldstrlen, (len + 1 - matchpt - oldstrlen)*sizeof(char));
 			}
 			memcpy (Chars + matchpt, newstr, newstrlen);
@@ -715,6 +855,7 @@ void FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrl
 			break;
 		}
 	}
+	UnlockBuffer();
 }
 
 bool FString::IsInt () const
@@ -842,12 +983,6 @@ double FString::ToDouble () const
 	return strtod (Chars, NULL);
 }
 
-FString::StringHeader *FString::GetHeader () const
-{
-	if (Chars == NULL) return NULL;
-	return (StringHeader *)(Chars - sizeof(StringHeader));
-}
-
 void FString::StrCopy (char *to, const char *from, size_t len)
 {
 	memcpy (to, from, len*sizeof(char));
@@ -857,4 +992,107 @@ void FString::StrCopy (char *to, const char *from, size_t len)
 void FString::StrCopy (char *to, const FString &from)
 {
 	StrCopy (to, from.Chars, from.Len());
+}
+
+void FString::AllocBuffer (size_t len)
+{
+	Chars = (char *)(FStringData::Alloc(len) + 1);
+	Data()->Len = (unsigned int)len;
+}
+
+void FString::ReallocBuffer (size_t newlen)
+{
+	if (Data()->RefCount > 1)
+	{ // If more than one reference, we must use a new copy
+		FStringData *old = Data();
+		AllocBuffer (newlen);
+		StrCopy (Chars, old->Chars(), old->Len);
+		old->Release();
+	}
+	else
+	{
+		if (newlen > Data()->AllocLen)
+		{
+			Chars = (char *)(Data()->Realloc(newlen) + 1);
+		}
+		Data()->Len = (unsigned int)newlen;
+	}
+}
+
+// Under Windows, use the system heap functions for managing string memory.
+// Under other OSs, use ordinary memory management instead.
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+static HANDLE StringHeap;
+#endif
+
+FStringData *FStringData::Alloc (size_t strlen)
+{
+	strlen += 1 + sizeof(FStringData);	// Add space for header and terminating null
+	strlen = (strlen + 7) & ~7;			// Pad length up
+
+#ifdef _WIN32
+	if (StringHeap == NULL)
+	{
+		StringHeap = HeapCreate (0, 64*1024, 0);
+		if (StringHeap == NULL)
+		{
+			throw std::bad_alloc();
+		}
+	}
+
+	FStringData *block = (FStringData *)HeapAlloc (StringHeap, 0, strlen);
+#else
+	FStringData *block = (FStringData *)malloc (strlen);
+#endif
+	if (block == NULL)
+	{
+		throw std::bad_alloc();
+	}
+	block->Len = 0;
+	block->AllocLen = (unsigned int)strlen - sizeof(FStringData) - 1;
+	block->RefCount = 1;
+	return block;
+}
+
+FStringData *FStringData::Realloc (size_t newstrlen)
+{
+	assert (RefCount <= 1);
+
+	newstrlen += 1 + sizeof(FStringData);	// Add space for header and terminating null
+	newstrlen = (newstrlen + 7) & ~7;		// Pad length up
+
+#ifdef _WIN32
+	FStringData *block = (FStringData *)HeapReAlloc (StringHeap, 0, this, newstrlen);
+#else
+	FStringData *block = (FStringData *)realloc (this, newstrlen);
+#endif
+	if (block == NULL)
+	{
+		throw std::bad_alloc();
+	}
+	block->AllocLen = (unsigned int)newstrlen - sizeof(FStringData) - 1;
+	return block;
+}
+
+void FStringData::Dealloc ()
+{
+	assert (RefCount <= 0);
+
+#ifdef _WIN32
+	HeapFree (StringHeap, 0, this);
+#else
+	free (this);
+#endif
+}
+
+FStringData *FStringData::MakeCopy ()
+{
+	FStringData *copy = Alloc (Len);
+	copy->Len = Len;
+	FString::StrCopy (copy->Chars(), Chars(), Len);
+	return copy;
 }

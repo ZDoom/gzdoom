@@ -634,7 +634,7 @@ BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		for (i = 0; i < NumWads; i++)
 		{
 			char work[256];
-			char *filepart = strrchr (WadList[i].Path, '/');
+			const char *filepart = strrchr (WadList[i].Path, '/');
 			if (filepart == NULL)
 				filepart = WadList[i].Path;
 			else

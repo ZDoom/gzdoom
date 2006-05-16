@@ -146,7 +146,7 @@ void DefaultExtension (char *path, const char *extension)
 
 void DefaultExtension (FString &path, const char *extension)
 {
-	char *src = &path[int(path.Len())-1];
+	const char *src = &path[int(path.Len())-1];
 
 	while (src != &path[0] && !IsSeperator(*src))
 	{

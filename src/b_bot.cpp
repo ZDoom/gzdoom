@@ -64,7 +64,8 @@ void DCajunMaster::ClearPlayer (int i, bool keepTeam)
 		bot->inuse = false;
 		bot->lastteam = keepTeam ? players[i].userinfo.team : TEAM_None;
 	}
-	memset (&players[i], 0, sizeof(player_t));
+	players[i].~player_t();
+	::new(&players[i]) player_t;
 	playeringame[i] = false;
 }
 

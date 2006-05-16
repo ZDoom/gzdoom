@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include "tarray.h"
 #include "doomtype.h"
+#include "m_alloc.h"
 
 struct PClass;
 

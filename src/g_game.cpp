@@ -738,7 +738,7 @@ BOOL G_Responder (event_t *ev)
 	if (gameaction == ga_nothing && 
 		(demoplayback || gamestate == GS_DEMOSCREEN || gamestate == GS_TITLELEVEL))
 	{
-		char *cmd = C_GetBinding (ev->data1);
+		const char *cmd = C_GetBinding (ev->data1);
 
 		if (ev->type == EV_KeyDown)
 		{
@@ -1118,7 +1118,7 @@ void G_PlayerReborn (int player)
 	botskill_t  b_skill;//Added by MC:
 	APlayerPawn *actor;
 	const PClass *cls;
-	char		*log;
+	FString		log;
 
 	p = &players[player];
 
@@ -1134,7 +1134,9 @@ void G_PlayerReborn (int player)
 	cls = p->cls;
 	log = p->LogText;
 
-	memset (p, 0, sizeof(*p));
+	// Reset player structure to its defaults
+	p->~player_t();
+	::new(p) player_t;
 
 	memcpy (p->frags, frags, sizeof(p->frags));
 	p->fragcount = fragcount;
@@ -1483,7 +1485,7 @@ void G_ScreenShot (char *filename)
 // G_InitFromSavegame
 // Can be called by the startup code or the menu task.
 //
-void G_LoadGame (char* name)
+void G_LoadGame (const char* name)
 {
 	if (name != NULL)
 	{

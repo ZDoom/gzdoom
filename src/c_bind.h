@@ -53,6 +53,6 @@ void C_SetDefaultBindings ();
 void C_UnbindAll ();
 
 // Returns string bound to given key (NULL if none)
-char *C_GetBinding (int key);
+const char *C_GetBinding (int key);
 
 #endif //__C_BINDINGS_H__

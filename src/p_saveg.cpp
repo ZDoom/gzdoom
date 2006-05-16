@@ -148,8 +148,6 @@ static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNo
 	BYTE *tempPlayerUsed = new BYTE[numPlayers];
 	BYTE *playerUsed = new BYTE[MAXPLAYERS];
 
-	memset (playertemp, 0, numPlayers*sizeof(player_t));
-
 	for (i = 0; i < numPlayers; ++i)
 	{
 		nametemp[i] = NULL;

@@ -270,7 +270,6 @@ ${COMPILER} "autostart.cpp \
  vectors.cpp \
  name.cpp \
  zstring.cpp \
- zstringpool.cpp \
  zstrformat.cpp \
  w_wad.cpp \
  wi_stuff.cpp \

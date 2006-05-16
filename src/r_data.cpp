@@ -93,7 +93,7 @@ byte**			warpedflats;
 int*			flatwarpedwhen;
 
 
-
+static TArray<BYTE *> BuildTileFiles;
 FTextureManager TexMan;
 
 FTextureManager::FTextureManager ()
@@ -2771,7 +2771,7 @@ void R_InitBuildTiles ()
 		int slashat = rffpath.LastIndexOf ('/');
 		if (slashat >= 0)
 		{
-			rffpath.Resize (slashat + 1);
+			rffpath.Truncate (slashat + 1);
 		}
 		else
 		{
@@ -2793,8 +2793,6 @@ void R_InitBuildTiles ()
 				break;
 			}
 
-			// BADBAD: This memory is never explicitly deleted except when the
-			// version number is wrong.
 			int len = Q_filelength (f);
 			BYTE *art = new BYTE[len];
 			if (fread (art, 1, len, f) != len || LittleLong(*(DWORD *)art) != 1)
@@ -2803,6 +2801,7 @@ void R_InitBuildTiles ()
 			}
 			else
 			{
+				BuildTileFiles.Push (art);
 				TexMan.AddTiles (art);
 			}
 			fclose (f);
@@ -2820,8 +2819,6 @@ void R_InitBuildTiles ()
 			break;
 		}
 
-		// BADBAD: This memory is never explicitly deleted except when the
-		// version number is wrong.
 		BYTE *art = new BYTE[Wads.LumpLength (lumpnum)];
 		Wads.ReadLump (lumpnum, art);
 
@@ -2831,11 +2828,20 @@ void R_InitBuildTiles ()
 		}
 		else
 		{
+			BuildTileFiles.Push (art);
 			TexMan.AddTiles (art);
 		}
 	}
 }
 
+void R_DeinitBuildTiles ()
+{
+	for (unsigned int i = 0; i < BuildTileFiles.Size(); ++i)
+	{
+		delete[] BuildTileFiles[i];
+	}
+	BuildTileFiles.Clear();
+}
 
 static struct FakeCmap {
 	char name[8];
@@ -3030,6 +3036,7 @@ void R_InitData ()
 void R_DeinitData ()
 {
 	R_DeinitColormaps ();
+	R_DeinitBuildTiles();
 
 	// Free openings
 	if (openings != NULL)

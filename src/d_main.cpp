@@ -83,6 +83,7 @@
 #include "gameconfigfile.h"
 #include "sbar.h"
 #include "decallib.h"
+#include "version.h"
 #include "r_polymost.h"
 #include "version.h"
 #include "v_text.h"
@@ -1409,7 +1410,6 @@ static EIWADType ScanIWAD (const char *iwad)
 static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 {
 	const char *slash;
-	char iwad[512];
 	int i;
 	int numfound;
 
@@ -1422,8 +1422,10 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 	{
 		if (wads[i].Path.IsEmpty())
 		{
-			sprintf (iwad, "%s%s%s", doomwaddir, slash, IWADNames[i]);
-			FixPathSeperator (iwad);
+			FString iwad;
+			
+			iwad.Format ("%s%s%s", doomwaddir, slash, IWADNames[i]);
+			FixPathSeperator (iwad.LockBuffer());
 			if (FileExists (iwad))
 			{
 				wads[i].Type = ScanIWAD (iwad);
@@ -1495,12 +1497,10 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 	bool iwadparmfound = false;
 	FString custwad;
 
-	memset (wads, 0, sizeof(wads));
-
 	if (iwadparm)
 	{
 		custwad = iwadparm;
-		FixPathSeperator (custwad.GetChars());
+		FixPathSeperator (custwad.LockBuffer());
 		if (CheckIWAD (custwad, wads))
 		{ // -iwad parameter was a directory
 			iwadparm = NULL;
@@ -1514,7 +1514,7 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 		}
 	}
 
-	if (iwadparm == NULL || wads[0].Path == NULL)
+	if (iwadparm == NULL || wads[0].Path.IsEmpty())
 	{
 		if (GameConfig->SetSection ("IWADSearch.Directories"))
 		{
@@ -1552,7 +1552,7 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 		}
 	}
 
-	if (iwadparm != NULL && wads[0].Path != NULL)
+	if (iwadparm != NULL && !wads[0].Path.IsEmpty())
 	{
 		iwadparmfound = true;
 	}
@@ -1612,17 +1612,19 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 
 	if (wads[pickwad].Type == IWAD_Strife)
 	{ // Try to load voices.wad along with strife1.wad
-		char *filepart = strrchr (wads[pickwad].Path, '/');
-		if (filepart == NULL)
+		long lastslash = wads[pickwad].Path.LastIndexOf ('/');
+		FString path;
+
+		if (lastslash == -1)
 		{
-			filepart = wads[pickwad].Path;
+			path = wads[pickwad].Path;
 		}
 		else
 		{
-			++filepart;
+			path = FString (wads[pickwad].Path, lastslash + 1);
 		}
-		strcpy (filepart, "voices.wad");
-		D_AddFile (wads[pickwad].Path);
+		path += "voices.wad";
+		D_AddFile (path);
 	}
 
 	return wads[pickwad].Type;

@@ -417,14 +417,15 @@ bool TimiditySong::ValidateTimidity ()
 
 bool TimiditySong::LaunchTimidity ()
 {
-	if (CommandLine.Len() == 0)
+	if (CommandLine.IsEmpty())
 	{
 		return false;
 	}
 
 	// Tell Timidity whether it should loop or not
-	CommandLine[LoopPos] = m_Looping ? 'l' : ' ';
-	DPrintf ("cmd: \x1cG%s\n", CommandLine.GetChars());
+	char *cmdline = CommandLine.LockBuffer();
+	cmdline[LoopPos] = m_Looping ? 'l' : ' ';
+	DPrintf ("cmd: \x1cG%s\n", cmdline);
 
 #ifdef _WIN32
 	STARTUPINFO startup = { sizeof(startup), };
@@ -440,14 +441,16 @@ bool TimiditySong::LaunchTimidity ()
 	startup.lpTitle = "TiMidity (ZDoom Launched)";
 	startup.wShowWindow = SW_SHOWMINNOACTIVE;
 
-	if (CreateProcess (NULL, CommandLine.GetChars(), NULL, NULL, TRUE,
+	if (CreateProcess (NULL, cmdline, NULL, NULL, TRUE,
 		/*HIGH_PRIORITY_CLASS|*/DETACHED_PROCESS, NULL, NULL, &startup, &procInfo))
 	{
 		ChildProcess = procInfo.hProcess;
 		//SetThreadPriority (procInfo.hThread, THREAD_PRIORITY_HIGHEST);
 		CloseHandle (procInfo.hThread);		// Don't care about the created thread
+		CommandLine.UnlockBuffer();
 		return true;
 	}
+	CommandLine.UnlockBuffer();
 
 	char hres[9];
 	LPTSTR msgBuf;

@@ -509,7 +509,7 @@ void C_SetDefaultBindings ()
 
 BOOL C_DoKey (event_t *ev)
 {
-	char *binding = NULL;
+	FString binding;
 	bool dclick;
 	int dclickspot;
 	byte dclickmask;
@@ -553,33 +553,27 @@ BOOL C_DoKey (event_t *ev)
 	}
 
 
-	if (binding == NULL || *binding==0)
+	if (binding.IsEmpty())
 	{
 		binding = Bindings[ev->data1];
 		dclick = false;
 	}
 
-	if (binding != NULL && *binding!=0 && (chatmodeon == 0 || ev->data1 < 256))
+	if (!binding.IsEmpty() && (chatmodeon == 0 || ev->data1 < 256))
 	{
-		if (ev->type == EV_KeyUp)
+		if (ev->type == EV_KeyUp && binding[0] != '+')
 		{
-			if (binding[0] != '+')
-			{
-				return false;
-			}
-			binding[0] = '-';
+			return false;
 		}
 
-		// Copy the command in case it rebinds the key
-		char copy[1024];
-		strncpy (copy, binding, 1023);
-		copy[1023] = 0;
+		char *copy = binding.LockBuffer();
+
+		if (ev->type == EV_KeyUp)
+		{
+			copy[0] = '-';
+		}
+
 		AddCommandString (copy, dclick ? ev->data1 | KEY_DBLCLICKED : ev->data1);
-
-		if (ev->type == EV_KeyUp)
-		{
-			binding[0] = '+';
-		}
 		return true;
 	}
 	return false;
@@ -711,7 +705,7 @@ void C_ChangeBinding (const char *str, int newone)
 	}
 }
 
-char *C_GetBinding (int key)
+const char *C_GetBinding (int key)
 {
 	return (unsigned int)key < NUM_KEYS ? Bindings[key].GetChars() : NULL;
 }

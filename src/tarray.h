@@ -38,36 +38,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <new>
-
 #include "m_alloc.h"
 
-
-// This function is called once for each entry in the TArray after it grows.
-// The old entries will be immediately freed afterwards, so if they need to
-// be destroyed, it needs to happen in this function.
-template<class T>
-void CopyForTArray (T &dst, T &src)
-{
-	::new((void*)&dst) T(src);
-	src.~T();
-}
-
-// This function is called by Push to copy the the element to an unconstructed
-// area of memory. Basically, if NeedsDestructor is overloaded to return true,
-// then this should be overloaded to use placement new.
-template<class T>
-void ConstructInTArray (T *dst, const T &src)
-{
-	::new((void*)dst) T(src);
-}
-
-// This function is much like the above function, except it is called when
-// the array is explicitly enlarged without using Push.
-template<class T>
-void ConstructEmptyInTArray (T *dst)
-{
-	::new((void*)dst) T;
-}
 
 template <class T>
 class TArray
@@ -140,7 +112,7 @@ public:
 	unsigned int Push (const T &item)
 	{
 		Grow (1);
-		ConstructInTArray (&Array[Count], item);
+		::new((void*)&Array[Count]) T(item);
 		return Count++;
 	}
 	bool Pop (T &item)
@@ -148,7 +120,7 @@ public:
 		if (Count > 0)
 		{
 			item = Array[--Count];
-			DoDelete (Count, Count);
+			Array[Count].~T();
 			return true;
 		}
 		return false;
@@ -157,12 +129,9 @@ public:
 	{
 		if (index < Count)
 		{
-			for (unsigned int i = index; i < Count - 1; ++i)
-			{
-				Array[i] = Array[i+1];
-			}
+			Array[index].~T();
+			memmove (&Array[index], &Array[index+1], Count - index - 1);
 			Count--;
-			DoDelete (Count, Count);
 		}
 	}
 	// Inserts an item into the array, shifting elements as needed
@@ -173,24 +142,19 @@ public:
 			// Inserting somewhere past the end of the array, so we can
 			// just add it without moving things.
 			Resize (index + 1);
-			ConstructInTArray (&Array[index], item);
+			::new ((void *)&Array[index]) T(item);
 		}
 		else
 		{
-			// Inserting somewhere in the middle of the array, so make
-			// room for it and shift old entries out of the way.
-
+			// Inserting somewhere in the middle of the array,
+			// so make room for it
 			Resize (Count + 1);
 
-			// Now copy items from the index and onward
-			for (unsigned int i = Count - 1; i-- > index; )
-			{
-				Array[i+1] = Array[i];
-			}
+			// Now move items from the index and onward out of the way
+			memmove (&Array[index+1], &Array[index], sizeof(T)*(Count - index - 1));
 
-			// Now put the new element in
-			DoDelete (index, index);
-			ConstructInTArray (&Array[index], item);
+			// And put the new element in
+			::new ((void *)&Array[index]) T(item);
 		}
 	}
 	void ShrinkToFit ()
@@ -233,7 +197,7 @@ public:
 			Grow (amount - Count);
 			for (unsigned int i = Count; i < amount; ++i)
 			{
-				ConstructEmptyInTArray (&Array[i]);
+				::new((void *)&Array[i]) T;
 			}
 		}
 		else if (Count != amount)
@@ -293,13 +257,7 @@ private:
 	void DoResize ()
 	{
 		size_t allocsize = sizeof(T)*Most;
-		T *newarray = (T *)M_Malloc (allocsize);
-		for (unsigned int i = 0; i < Count; ++i)
-		{
-			CopyForTArray (newarray[i], Array[i]);
-		}
-		free (Array);
-		Array = newarray;
+		Array = (T *)M_Realloc (Array, allocsize);
 	}
 
 	void DoDelete (unsigned int first, unsigned int last)

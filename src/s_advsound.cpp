@@ -81,13 +81,6 @@ struct FRandomSoundList
 	WORD		NumSounds;
 };
 
-template<>
-void CopyForTArray<FRandomSoundList> (FRandomSoundList &dst, FRandomSoundList &src)
-{
-	dst = src;
-}
-
-
 struct FPlayerClassLookup
 {
 	char		Name[MAX_SNDNAME+1];

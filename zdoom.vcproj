@@ -1766,9 +1766,6 @@
 			<File
 				RelativePath=".\src\zstring.cpp">
 			</File>
-			<File
-				RelativePath=".\src\zstringpool.cpp">
-			</File>
 			<Filter
 				Name="Decorate++"
 				Filter="">

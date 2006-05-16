@@ -77,6 +77,8 @@ enum EIWADType
 
 struct WadStuff
 {
+	WadStuff() : Type(IWAD_Doom2TNT) {}
+
 	FString Path;
 	EIWADType Type;
 };

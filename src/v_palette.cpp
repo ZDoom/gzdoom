@@ -311,13 +311,10 @@ static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
 	// Reverse the palette because BUILD used entry 255 as
 	// transparent, but we use 0 as transparent.
 
-	for (int c = 0; c < 768/2; c += 3)
+	for (int c = 0; c < 768; c += 3)
 	{
 		if (!blood)
 		{
-			opal[765-c] = (ipal[0] << 2) | (ipal[0] >> 4);
-			opal[766-c] = (ipal[1] << 2) | (ipal[1] >> 4);
-			opal[767-c] = (ipal[2] << 2) | (ipal[2] >> 4);
 			opal[c] =	(ipal[765-c] << 2) | (ipal[765-c] >> 4);
 			opal[c+1] = (ipal[766-c] << 2) | (ipal[766-c] >> 4);
 			opal[c+2] = (ipal[767-c] << 2) | (ipal[767-c] >> 4);
@@ -327,9 +324,6 @@ static bool FixBuildPalette (BYTE *opal, int lump, bool blood)
 			opal[c] = ipal[765-c];
 			opal[c+1] = ipal[766-c];
 			opal[c+2] = ipal[767-c];
-			opal[765-c] = ipal[c];
-			opal[766-c] = ipal[c+1];
-			opal[767-c] = ipal[c+2];
 		}
 	}
 	return true;

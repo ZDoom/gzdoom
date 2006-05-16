@@ -155,6 +155,8 @@ enum
 class player_s
 {
 public:
+	player_s();
+
 	void Serialize (FArchive &arc);
 	void FixPointers (const DObject *obj, DObject *replacement);
 

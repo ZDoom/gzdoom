@@ -4,16 +4,71 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stddef.h>
 #include "tarray.h"
 
-//#define NOPOOLS
+struct FStringData
+{
+	unsigned int Len;		// Length of string, excluding terminating null
+	unsigned int AllocLen;	// Amount of memory allocated for string
+	int RefCount;			// < 0 means it's locked
+	// char StrData[xxx];
+
+	char *Chars()
+	{
+		return (char *)(this + 1);
+	}
+
+	const char *Chars() const
+	{
+		return (const char *)(this + 1);
+	}
+
+	char *AddRef()
+	{
+		if (RefCount < 0)
+		{
+			return (char *)(MakeCopy() + 1);
+		}
+		else
+		{
+			RefCount++;
+			return (char *)(this + 1);
+		}
+	}
+
+	void Release()
+	{
+		assert (RefCount != 0);
+
+		if (--RefCount <= 0)
+		{
+			Dealloc();
+		}
+	}
+
+	FStringData *MakeCopy();
+
+	static FStringData *Alloc (size_t strlen);
+	FStringData *Realloc (size_t newstrlen);
+	void Dealloc ();
+};
+
+struct FNullStringData
+{
+	unsigned int Len;
+	unsigned int AllocLen;
+	int RefCount;
+	char Nothing[2];
+};
+
 class FString
 {
 public:
-	FString () : Chars(NULL) {}
+	FString () : Chars(&NullString.Nothing[0]) { NullString.RefCount++; }
 
 	// Copy constructors
-	FString (const FString &other) { Chars = NULL; *this = other; }
+	FString (const FString &other) { AttachToOther (other); }
 	FString (const char *copyStr);
 	FString (const char *copyStr, size_t copyLen);
 	FString (char oneChar);
@@ -28,12 +83,14 @@ public:
 
 	~FString ();
 
-	operator char *() { return Chars; }
+	char *LockBuffer();		// Obtain write access to the character buffer
+	void UnlockBuffer();	// Allow shared access to the character buffer
+
 	operator const char *() const { return Chars; }
 
-	char *GetChars() const { return Chars; }
-	char &operator[] (int index) { return Chars[index]; }
-	char &operator[] (size_t index) { return Chars[index]; }
+	const char *GetChars() const { return Chars; }
+	const char &operator[] (int index) const { return Chars[index]; }
+	const char &operator[] (size_t index) const { return Chars[index]; }
 
 	FString &operator = (const FString &other);
 	FString &operator = (const char *copyStr);
@@ -117,10 +174,10 @@ public:
 	unsigned long ToULong (int base=0) const;
 	double ToDouble () const;
 
-	size_t Len() const { return Chars == NULL ? 0 : ((StringHeader *)(Chars - sizeof(StringHeader)))->Len; }
+	size_t Len() const { return Data()->Len; }
 	bool IsEmpty() const { return Len() == 0; }
 
-	void Resize (long newlen);
+	void Truncate (long newlen);
 
 	int Compare (const FString &other) const { return strcmp (Chars, other.Chars); }
 	int Compare (const char *other) const { return strcmp (Chars, other); }
@@ -129,80 +186,23 @@ public:
 	int CompareNoCase (const char *other) const { return stricmp (Chars, other); }
 
 protected:
-	struct StringHeader
-	{
-#ifndef NOPOOLS
-		FString *Owner;		// FString this char array belongs to
-#endif
-		size_t Len;			// Length of FString, excluding terminating null
-	};
-	struct Pool;
-	struct PoolGroup
-	{
-#ifndef NOPOOLS
-		~PoolGroup ();
-		Pool *Pools;
-		Pool *FindPool (char *chars) const;
-		static StringHeader *GetHeader (char *chars);
-#endif
-		char *Alloc (FString *owner, size_t len);
-		char *Realloc (FString *owner, char *chars, size_t newlen);
-		void Free (char *chars);
-	};
+	const FStringData *Data() const { return (FStringData *)Chars - 1; }
+	FStringData *Data() { return (FStringData *)Chars - 1; }
 
-	FString (size_t len);
-	StringHeader *GetHeader () const;
+	void AttachToOther (const FString &other);
+	void AllocBuffer (size_t len);
+	void ReallocBuffer (size_t newlen);
 
 	static int FormatHelper (void *data, const char *str, int len);
 	static void StrCopy (char *to, const char *from, size_t len);
 	static void StrCopy (char *to, const FString &from);
-	static PoolGroup Pond;
 
 	char *Chars;
 
-#ifndef __GNUC__
-	template<> friend void CopyForTArray<FString> (FString &dst, FString &src)
-	{
-		// When a TArray is resized, we just need to update the Owner, because
-		// the old copy is going to go away very soon. No need to call the
-		// destructor, either, because full ownership is transferred to the
-		// new FString.
-		char *chars = src.Chars;
-		dst.Chars = chars;
-		if (chars != NULL)
-		{
-			((FString::StringHeader *)(chars - sizeof(FString::StringHeader)))->Owner = &dst;
-		}
-	}
-#else
-	template<class FString> friend inline void CopyForTArray (FString &dst, FString &src);
-#endif
+	static FNullStringData NullString;
 
-private:
-	void *operator new (size_t size, FString *addr)
-	{
-		return addr;
-	}
-	void operator delete (void *, FString *)
-	{
-	}
+	friend struct FStringData;
 };
-
-#ifdef __GNUC__
-template<> inline void CopyForTArray<FString> (FString &dst, FString &src)
-{
-	// When a TArray is resized, we just need to update the Owner, because
-	// the old copy is going to go away very soon. No need to call the
-	// destructor, either, because full ownership is transferred to the
-	// new FString.
-	char *chars = src.Chars;
-	dst.Chars = chars;
-	if (chars != NULL)
-	{
-		((FString::StringHeader *)(chars - sizeof(FString::StringHeader)))->Owner = &dst;
-	}
-}
-#endif
 
 namespace StringFormat
 {

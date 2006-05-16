@@ -1,3 +1,19 @@
+May 15, 2006
+- Changed the memory management for FString. Instead of using a garbage
+  collected heap, it now uses normal heap calls and reference counting to
+  implement lazy copying. You may now use bitwise operators to move
+  (but not copy!) FStrings around in memory. This means that the
+  CopyForTArray template function is gone, since TArrays can now freely
+  move their contents around without bothering with their specifics.
+  
+  There is one important caveat, however. It is not acceptable to blindly 0
+  an FString's contents. This necessitated the creation of a proper
+  constructor for player_s so that it can be reset without using memset. I
+  did a quick scan of all memsets in the source and didn't see anything else
+  with a similar problem, but it's possible I missed something.
+- Fixed: Build tiles were never deallocated.
+- Fixed: Using Build's palette.dat only got half the palette right.
+
 May 14, 2006 (Changes by Graf Zahl)
 - Added a show_obituaries option to disable obituaries without disabling
   other more important message types which have lower priority for some

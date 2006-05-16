@@ -1,3 +1,11 @@
+May 16, 2006
+- Fixed: ApplyActorDefault() must ensure that dataint is non-negative before
+  calculating a non-NULL state. When compiling with Visual C++, states are
+  stored in the defaults list as byte values, but when compiling with GCC,
+  they are passed as 32-bit arguments to the function directly. So in VC++,
+  using ~0 to specify a NULL state appears as 255, but in GCC, it appears as
+  -1.
+
 May 16, 2006 (Changes by Graf Zahl)
 - Added a missing NULL pointer check to APlayerPawn::Tick.
 - Fixed: The falling scream should not be played when the player is under

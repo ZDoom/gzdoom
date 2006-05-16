@@ -109,7 +109,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 			datasound = S_FindSound (datastr);
 		}
 	}
-	else if (defnum > ADEF_LastString && dataint < 255)
+	else if (defnum > ADEF_LastString && dataint >= 0 && dataint < 255)
 	{
 		datastate = DefaultStates (sgClass) + dataint;
 	}

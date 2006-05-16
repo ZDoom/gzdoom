@@ -122,7 +122,6 @@ static void ReadOnePlayer (FArchive &arc)
 			{
 				didIt = true;
 				player_t playerTemp;
-				memset (&playerTemp, 0, sizeof(playerTemp));
 				playerTemp.Serialize (arc);
 				CopyPlayer (&players[i], &playerTemp, name);
 			}
@@ -227,7 +226,7 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 	// The userinfo needs to be saved for real players, but it
 	// needs to come from the save for bots.
 	userinfo_t uibackup = dst->userinfo;
-	memcpy (dst, src, sizeof(player_t));
+	*dst = *src;
 
 	if (dst->isbot)
 	{

@@ -37,8 +37,8 @@
 #include "doomtype.h"
 #include "r_main.h"
 
-#define MAKERGB(r,g,b)		(((r)<<16)|((g)<<8)|(b))
-#define MAKEARGB(a,r,g,b)	(((a)<<24)|((r)<<16)|((g)<<8)|(b))
+#define MAKERGB(r,g,b)		DWORD(((r)<<16)|((g)<<8)|(b))
+#define MAKEARGB(a,r,g,b)	DWORD(((a)<<24)|((r)<<16)|((g)<<8)|(b))
 
 #define APART(c)			(((c)>>24)&0xff)
 #define RPART(c)			(((c)>>16)&0xff)

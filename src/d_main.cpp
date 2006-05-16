@@ -1559,7 +1559,7 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 
 	for (i = numwads = 0; i < sizeof(IWADNames)/sizeof(char *); i++)
 	{
-		if (wads[i].Path != NULL)
+		if (!wads[i].Path.IsEmpty())
 		{
 			if (i != numwads)
 			{

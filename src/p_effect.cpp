@@ -442,7 +442,7 @@ void P_DrawRailTrail (AActor * source, vec3_t start, vec3_t end, int color1, int
 			// Allow other sounds than 'weapons/railgf'!
 			if (!source->player) sound = source->AttackSound;
 			else if (source->player->ReadyWeapon) sound = source->player->ReadyWeapon->AttackSound;
-			else sound = NULL;
+			else sound = 0;
 			if (!sound) sound=S_FindSound("weapons/railgf");
 
 			// The railgun's sound is special. It gets played from the

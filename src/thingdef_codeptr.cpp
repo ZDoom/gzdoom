@@ -1084,7 +1084,7 @@ void A_SpawnItem(AActor * self)
 	if (index<0) return;
 
 	const PClass * missile= PClass::FindClass((ENamedName)StateParameters[index]);
-	fixed_t distance = EvalExpressionF (StateParameters[index+1], self);
+	fixed_t distance = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	bool useammo = EvalExpressionN (StateParameters[index+3], self);
 
@@ -1481,8 +1481,8 @@ void A_SetBlend(AActor * self)
 	int tics = EvalExpressionI (StateParameters[index+2], self);
 	PalEntry color2 = StateParameters[index+3];
 
-	if (color==-1) color=0;
-	if (color2==-1) color2=0;
+	if (color == MAKEARGB(255,255,255,255)) color=0;
+	if (color2 == MAKEARGB(255,255,255,255)) color2=0;
 	if (!color2.a)
 		color2 = color;
 

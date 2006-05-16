@@ -2793,7 +2793,7 @@ void R_InitBuildTiles ()
 				break;
 			}
 
-			int len = Q_filelength (f);
+			size_t len = Q_filelength (f);
 			BYTE *art = new BYTE[len];
 			if (fread (art, 1, len, f) != len || LittleLong(*(DWORD *)art) != 1)
 			{

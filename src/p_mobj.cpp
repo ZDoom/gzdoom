@@ -3296,7 +3296,6 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	int		  playernum;
 	player_t *p;
 	APlayerPawn *mobj, *oldactor;
-	int 	  i;
 	BYTE	  state;
 
 	// [RH] Things 4001-? are also multiplayer starts. Just like 1-4.
@@ -3433,7 +3432,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	// give all cards in death match mode
 	if (deathmatch)
 	{
-		for (i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
 		{
 			if (PClass::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
 			{

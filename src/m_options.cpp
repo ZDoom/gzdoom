@@ -1171,10 +1171,11 @@ static byte BitTranslate[16];
 
 void M_OptInit (void)
 {
-	int currval = 0, dummy1, dummy2, i;
+	int dummy1, dummy2;
+	size_t currval = 0;
 	char name[24];
 
-	for (i = 1; i < 32 && currval < countof(Depths); i++)
+	for (unsigned int i = 1; i < 32 && currval < countof(Depths); i++)
 	{
 		I_StartModeIterator (i);
 		if (I_NextMode (&dummy1, &dummy2, NULL))
@@ -3049,7 +3050,7 @@ CCMD (addmenukey)
 void M_Deinit ()
 {
 	// Free bitdepth names for the modes menu.
-	for (int i = 0; i < countof(Depths); ++i)
+	for (size_t i = 0; i < countof(Depths); ++i)
 	{
 		if (Depths[i].name != NULL)
 		{

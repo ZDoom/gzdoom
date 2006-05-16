@@ -1,4 +1,7 @@
 May 15, 2006
+- Fixed: CopyPlayer() in p_saveg.cpp should use normal assignment, not
+  memcpy to copy the player structures.
+- Fixed compilation with MinGW again and removed most of the new warnings.
 - Changed the memory management for FString. Instead of using a garbage
   collected heap, it now uses normal heap calls and reference counting to
   implement lazy copying. You may now use bitwise operators to move

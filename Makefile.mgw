@@ -31,9 +31,9 @@ cleanexe:
 clean:
 	@$(MAKE) -C tools/lemon -f Makefile.mgw clean
 	@$(MAKE) -C tools/re2c -f Makefile.mgw clean
-	@$(MAKE) -C tools/dehsupp -f Makefile.mgw clean
-	@$(MAKE) -C tools/makewad -f Makefile.mgw clean
-	@$(MAKE) -C tools/xlatcc -f Makefile.mgw clean
+	@$(MAKE) -C tools/dehsupp -f Makefile clean
+	@$(MAKE) -C tools/makewad -f Makefile clean
+	@$(MAKE) -C tools/xlatcc -f Makefile clean
 	@$(MAKE) -C wadsrc -f Makefile.mgw clean
 	@$(MAKE) -C . -f Makefile.mingw clean
 	@$(MAKE) -C zlib -f Makefile.mgw clean

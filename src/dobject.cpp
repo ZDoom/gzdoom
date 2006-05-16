@@ -295,7 +295,7 @@ CCMD (dumpclasses)
 		}
 	};
 
-	int i;
+	unsigned int i;
 	int shown, omitted;
 	DumpInfo *tree = NULL;
 	const PClass *root = NULL;
@@ -499,7 +499,7 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 			players[i].FixPointers (old, notOld);
 	}
 
-	for (i = 0; i < numsectors; ++i)
+	for (i = 0; i < (unsigned int)numsectors; ++i)
 	{
 		if (sectors[i].SoundTarget == old)
 		{
@@ -582,7 +582,7 @@ void DObject::DestroyScan ()
 		}
 	}
 
-	for (i = 0; i < numsectors; ++i)
+	for (i = 0; i < (unsigned int)numsectors; ++i)
 	{
 		j = destroycount;
 		do

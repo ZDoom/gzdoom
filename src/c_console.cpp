@@ -1971,7 +1971,7 @@ static void C_TabComplete (bool goForward)
 		}
 		else
 		{ // Find the last matching tab, then go one past it.
-			while (++TabPos < TabCommands.Size())
+			while (++TabPos < (int)TabCommands.Size())
 			{
 				if (FindDiffPoint (TabCommands[TabPos].TabName, (char *)(CmdLine + TabStart)) < TabSize)
 				{
@@ -1986,7 +1986,7 @@ static void C_TabComplete (bool goForward)
 		}
 	}
 
-	if ((goForward && ++TabPos == TabCommands.Size()) ||
+	if ((goForward && ++TabPos == (int)TabCommands.Size()) ||
 		(!goForward && --TabPos < 0))
 	{
 		TabbedLast = false;
@@ -2022,7 +2022,7 @@ static bool C_TabCompleteList ()
 	nummatches = 0;
 	maxwidth = 0;
 
-	for (i = TabPos; i < TabCommands.Size(); ++i)
+	for (i = TabPos; i < (int)TabCommands.Size(); ++i)
 	{
 		if (FindDiffPoint (TabCommands[i].TabName, (char *)(CmdLine + TabStart)) < TabSize)
 		{

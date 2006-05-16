@@ -90,6 +90,7 @@ OBJECTS += \
 	$(OBJDIR)/decallib.o \
 	$(OBJDIR)/decorations.o \
 	$(OBJDIR)/dobject.o \
+	$(OBJDIR)/dobjtype.o \
 	$(OBJDIR)/doomdef.o \
 	$(OBJDIR)/doomstat.o \
 	$(OBJDIR)/dsectoreffect.o \
@@ -190,7 +191,6 @@ OBJECTS += \
 	$(OBJDIR)/vectors.o \
 	$(OBJDIR)/name.o \
 	$(OBJDIR)/zstring.o \
-	$(OBJDIR)/zstringpool.o \
 	$(OBJDIR)/zstrformat.o \
 	$(OBJDIR)/w_wad.o \
 	$(OBJDIR)/wi_stuff.o \
@@ -201,12 +201,8 @@ OBJECTS += \
 	$(OBJDIR)/a_cacodemon.o \
 	$(OBJDIR)/a_cyberdemon.o \
 	$(OBJDIR)/a_demon.o \
-	$(OBJDIR)/a_doomarmor.o \
-	$(OBJDIR)/a_doomartifacts.o \
-	$(OBJDIR)/a_doomdecorations.o \
 	$(OBJDIR)/a_doomhealth.o \
 	$(OBJDIR)/a_doomimp.o \
-	$(OBJDIR)/a_doomkeys.o \
 	$(OBJDIR)/a_doommisc.o \
 	$(OBJDIR)/a_doomplayer.o \
 	$(OBJDIR)/a_doomweaps.o \
@@ -223,9 +219,7 @@ OBJECTS += \
 	$(OBJDIR)/a_chicken.o \
 	$(OBJDIR)/a_clink.o \
 	$(OBJDIR)/a_dsparil.o \
-	$(OBJDIR)/a_hereticarmor.o \
 	$(OBJDIR)/a_hereticartifacts.o \
-	$(OBJDIR)/a_hereticdecorations.o \
 	$(OBJDIR)/a_hereticimp.o \
 	$(OBJDIR)/a_heretickeys.o \
 	$(OBJDIR)/a_hereticmisc.o \
@@ -257,14 +251,10 @@ OBJECTS += \
 	$(OBJDIR)/a_fighterplayer.o \
 	$(OBJDIR)/a_fighterquietus.o \
 	$(OBJDIR)/a_firedemon.o \
-	$(OBJDIR)/a_flame.o \
 	$(OBJDIR)/a_flechette.o \
 	$(OBJDIR)/a_fog.o \
 	$(OBJDIR)/a_healingradius.o \
 	$(OBJDIR)/a_heresiarch.o \
-	$(OBJDIR)/a_hexenarmor.o \
-	$(OBJDIR)/a_hexendecorations.o \
-	$(OBJDIR)/a_hexenkeys.o \
 	$(OBJDIR)/a_hexenspecialdecs.o \
 	$(OBJDIR)/a_iceguy.o \
 	$(OBJDIR)/a_korax.o \
@@ -277,9 +267,7 @@ OBJECTS += \
 	$(OBJDIR)/a_mana.o \
 	$(OBJDIR)/a_pig.o \
 	$(OBJDIR)/a_puzzleitems.o \
-	$(OBJDIR)/a_scriptprojectiles.o \
 	$(OBJDIR)/a_serpent.o \
-	$(OBJDIR)/a_speedboots.o \
 	$(OBJDIR)/a_spike.o \
 	$(OBJDIR)/a_summon.o \
 	$(OBJDIR)/a_teleportother.o \
@@ -291,39 +279,29 @@ OBJECTS += \
 	$(OBJDIR)/a_artitele.o \
 	$(OBJDIR)/a_minotaur.o \
 	$(OBJDIR)/a_ravenambient.o \
-	$(OBJDIR)/a_ravenartifacts.o \
-	$(OBJDIR)/a_ravenhealth.o \
 	$(OBJDIR)/a_acolyte.o \
 	$(OBJDIR)/a_alienspectres.o \
-	$(OBJDIR)/a_beggars.o \
 	$(OBJDIR)/a_coin.o \
 	$(OBJDIR)/a_crusader.o \
 	$(OBJDIR)/a_entityboss.o \
 	$(OBJDIR)/a_inquisitor.o \
 	$(OBJDIR)/a_loremaster.o \
 	$(OBJDIR)/a_macil.o \
-	$(OBJDIR)/a_merchants.o \
 	$(OBJDIR)/a_oracle.o \
-	$(OBJDIR)/a_peasant.o \
 	$(OBJDIR)/a_programmer.o \
-	$(OBJDIR)/a_questitems.o \
-	$(OBJDIR)/a_ratbuddy.o \
 	$(OBJDIR)/a_reaver.o \
 	$(OBJDIR)/a_rebels.o \
 	$(OBJDIR)/a_sentinel.o \
 	$(OBJDIR)/a_spectral.o \
 	$(OBJDIR)/a_stalker.o \
 	$(OBJDIR)/a_strifeammo.o \
-	$(OBJDIR)/a_strifearmor.o \
 	$(OBJDIR)/a_strifebishop.o \
 	$(OBJDIR)/a_strifeitems.o \
-	$(OBJDIR)/a_strifekeys.o \
 	$(OBJDIR)/a_strifeplayer.o \
 	$(OBJDIR)/a_strifestuff.o \
 	$(OBJDIR)/a_strifeweapons.o \
 	$(OBJDIR)/a_templar.o \
 	$(OBJDIR)/a_thingstoblowup.o \
-	$(OBJDIR)/a_zombie.o \
 	$(OBJDIR)/strife_sbar.o \
 	$(OBJDIR)/a_action.o \
 	$(OBJDIR)/a_artifacts.o \
@@ -346,7 +324,6 @@ OBJECTS += \
 	$(OBJDIR)/a_soundenvironment.o \
 	$(OBJDIR)/a_soundsequence.o \
 	$(OBJDIR)/a_spark.o \
-	$(OBJDIR)/a_splashes.o \
 	$(OBJDIR)/a_waterzone.o \
 	$(OBJDIR)/a_weapons.o \
 	$(OBJDIR)/hudmessages.o \

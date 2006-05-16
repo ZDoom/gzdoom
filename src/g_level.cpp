@@ -80,8 +80,9 @@ EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
 
-#define lioffset(x)		myoffsetof(level_info_t,x)
-#define cioffset(x)		myoffsetof(cluster_info_t,x)
+// Hey, GCC, these macros better be safe!
+#define lioffset(x)		((size_t)&((level_info_t*)1)->x - 1)
+#define cioffset(x)		((size_t)&((cluster_info_t*)1)->x - 1)
 
 #define SNAP_ID			MAKE_ID('s','n','A','p')
 #define VIST_ID			MAKE_ID('v','i','S','t')

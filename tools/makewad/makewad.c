@@ -107,7 +107,6 @@ int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 	char *readbuf;
 	FILE *lumpfile;
 	size_t readlen;
-	int ret = 0;
 	size_t len;
 	zip_fileinfo zip_inf;
 
@@ -450,10 +449,6 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 	}
 	return ret;
 }
-
-#if !defined(_MSC_VER)
-#define __cdecl
-#endif
 
 int __cdecl main (int argc, char **argv)
 {

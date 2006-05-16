@@ -1744,6 +1744,11 @@ do_stop:
 							case 'y':
 								v = ParseExpression (true);
 								break;
+
+							default:
+								assert(false);
+								v = -1;
+								break;
 							}
 							StateParameters[paramindex++]=v;
 							params++;

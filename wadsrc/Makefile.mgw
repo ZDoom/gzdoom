@@ -13,10 +13,10 @@ clean:
 	del /q /f wadmake zdoom.pk3 xlat\*.x dehsupp.lmp 2>nul
 
 ../tools/makewad/makewad.exe:
-	$(MAKE) -C ../tools/makewad -f Makefile.mgw
+	$(MAKE) -C ../tools/makewad -f Makefile
 	
 ../tools/xlatcc/xlatcc.exe:
-	$(MAKE) -C ../tools/xlatcc -f Makefile.mgw
+	$(MAKE) -C ../tools/xlatcc -f Makefile
 	
 ../tools/dehsupp/dehsupp.exe:
-	$(MAKE) -C ../tools/dehsupp -f Makefile.mgw
+	$(MAKE) -C ../tools/dehsupp -f Makefile

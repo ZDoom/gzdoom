@@ -752,10 +752,11 @@ static void AM_initColors (BOOL overlayed)
 				int red = (int)(backRed * back + foreRed * fore);
 				int green = (int)(backGreen * back + foreGreen * fore);
 				int blue = (int)(backGreen * back + foreBlue * fore);
-				if (palette)
+// [RH] What was I thinking here?
+//				if (palette)
 					antialias[alias][i] = ColorMatcher.Pick (red, green, blue);
-				else
-					antialias[alias][i] = MAKERGB(red, green, blue);
+//				else
+//					antialias[alias][i] = MAKERGB(red, green, blue);
 			}
 			*(aliasedLines[alias].color) = aliasedLines[alias].falseColor;
 		}

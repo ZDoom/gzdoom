@@ -3,11 +3,13 @@ ifeq (Windows_NT,$(OS))
   CCDV = @../../ccdv
   CFLAGS = -Os -Wall -fomit-frame-pointer
   LDFLAGS = -L../../zlib/ -lz
+  ZLIB = ../../zlib/libz.a
 else
   EXE = makewad
   CCDV = 
   CFLAGS = -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -Os -Wall -fomit-frame-pointer
   LDFLAGS = -lz
+  ZLIB =
 endif
 
 CC = gcc
@@ -19,8 +21,13 @@ all: $(EXE)
 .c.o:
 	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<
 
-$(EXE): $(OBJS)
-	$(CCDV) $(CC) $(LDFLAGS) -o $(EXE) $(OBJS)
+$(EXE): $(OBJS) $(ZLIB)
+	$(CCDV) $(CC) -o $(EXE) $(OBJS) $(LDFLAGS)
+
+ifeq (Windows_NT,$(OS))
+$(ZLIB):
+	make -C ../../zlib -f Makefile.mgw
+endif
 
 .PHONY: clean
 

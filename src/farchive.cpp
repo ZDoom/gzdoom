@@ -628,7 +628,7 @@ FArchive::FArchive (FFile &file)
 
 void FArchive::AttachToFile (FFile &file)
 {
-	int i;
+	unsigned int i;
 
 	m_HubTravel = false;
 	m_File = &file;
@@ -1349,7 +1349,6 @@ const PClass *FArchive::ReadClass ()
 		~String() { if (val) delete[] val; }
 		char *val;
 	} typeName;
-	int i;
 
 	if (m_ClassCount >= PClass::m_Types.Size())
 	{
@@ -1360,7 +1359,7 @@ const PClass *FArchive::ReadClass ()
 	FName zaname(typeName.val, true);
 	if (zaname != NAME_None)
 	{
-		for (i = 0; i < PClass::m_Types.Size(); i++)
+		for (unsigned int i = 0; i < PClass::m_Types.Size(); i++)
 		{
 			if (PClass::m_Types[i]->TypeName == zaname)
 			{

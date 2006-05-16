@@ -54,7 +54,7 @@ ACTOR PuzzGemRed : PuzzleItem 9004
 
 // Green Gem 1 (Emerald Planet) ---------------------------------------------
 
-ACTOR PuzzGemGreen : PuzzleItem 9005
+ACTOR PuzzGemGreen1 : PuzzleItem 9005
 {
 	Game Hexen
 	SpawnID 79

@@ -359,7 +359,7 @@ int I_PickIWad (WadStuff *wads, int numwads)
 	printf ("Please select a game wad:\n");
 	for (i = 0; i < numwads; ++i)
 	{
-		char *filepart = strrchr (wads[i].Path, '/');
+		const char *filepart = strrchr (wads[i].Path, '/');
 		if (filepart == NULL)
 			filepart = wads[i].Path;
 		else

@@ -66,6 +66,11 @@ class FTexture;
 #define TAG_IGNORE	(1L) /* Ignore this Tag							*/
 #define TAG_MORE	(2L) /* Ends this list and continues with the	*/
 						 /* list pointed to in ti_Data 				*/
+struct TagMoreData
+{
+	va_list tagdata;
+};
+
 //#define TAG_SKIP	(3L) /* Skip this and the next ti_Data Tags		*/
 
 #define TAG_USER	((DWORD)(1L<<31))

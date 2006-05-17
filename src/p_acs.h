@@ -146,6 +146,7 @@ public:
 	SDWORD *MapVars[NUM_MAPVARS];
 
 	static FBehavior *StaticLoadModule (int lumpnum);
+	static void StaticLoadDefaultModules ();
 	static void StaticUnloadModules ();
 	static bool StaticCheckAllGood ();
 	static FBehavior *StaticGetModule (int lib);

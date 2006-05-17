@@ -62,6 +62,8 @@
 #include "w_wad.h"
 #include "r_sky.h"
 #include "gstrings.h"
+#include "gi.h"
+#include "sc_man.h"
 
 extern FILE *Logfile;
 
@@ -455,6 +457,38 @@ void DPlaneWatcher::Tick ()
 }
 
 //---- ACS lump manager ----//
+
+// Load user-specified default modules. This must be called after the level's
+// own behavior is loaded (if it has one).
+void FBehavior::StaticLoadDefaultModules ()
+{
+	// When playing Strife, STRFHELP is always loaded.
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		StaticLoadModule (Wads.CheckNumForName ("STRFHELP", ns_acslibrary));
+	}
+
+	// Scan each LOADACS lump and load the specified modules in order
+	int lump, lastlump = 0;
+
+	while ((lump = Wads.FindLump ("LOADACS", &lastlump)) != -1)
+	{
+		SC_OpenLumpNum (lump, "LOADACS");
+		while (SC_GetString())
+		{
+			int acslump = Wads.CheckNumForName (sc_String, ns_acslibrary);
+			if (acslump >= 0)
+			{
+				StaticLoadModule (acslump);
+			}
+			else
+			{
+				Printf ("Could not find autoloaded ACS library %s\n", sc_String);
+			}
+		}
+		SC_Close ();
+	}
+}
 
 FBehavior *FBehavior::StaticLoadModule (int lumpnum)
 {

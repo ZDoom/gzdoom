@@ -107,7 +107,6 @@
 #define LEVEL_CROUCH_YES			UCONST64(0x100000000000)
 
 struct acsdefered_s;
-class FBehavior;
 
 struct FSpecialAction
 {
@@ -220,8 +219,6 @@ struct level_locals_s
 	fixed_t		aircontrol;
 	fixed_t		airfriction;
 	int			airsupply;
-
-	FBehavior	*behavior;
 
 	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
 

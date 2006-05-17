@@ -1,4 +1,10 @@
-May 16, 2006
+-May 16, 2006
+- Added support for automatically loading ACS objects (even for Doom-format
+  maps). To use it, compile the ACS files as ordinary libraries placed
+  between A_START/A_END markers. Then outside the markers, create a lump
+  called LOADACS. This is just a plain text lump that lists all the libraries
+  you want to autoload with every map. You can do this with as many libraries
+  as you want, and LOADACS lumps are also cummulative.
 - Fixed: ApplyActorDefault() must ensure that dataint is non-negative before
   calculating a non-NULL state. When compiling with Visual C++, states are
   stored in the defaults list as byte values, but when compiling with GCC,

@@ -2777,12 +2777,11 @@ void P_LoadReject (int lump, bool junk)
 //
 void P_LoadBehavior (int lumpnum)
 {
-	level.behavior = FBehavior::StaticLoadModule (lumpnum);
+	FBehavior::StaticLoadModule (lumpnum);
 	if (!FBehavior::StaticCheckAllGood ())
 	{
 		Printf ("ACS scripts unloaded.\n");
 		FBehavior::StaticUnloadModules ();
-		level.behavior = NULL;
 	}
 }
 
@@ -2866,7 +2865,6 @@ void P_FreeLevelData ()
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
 	FBehavior::StaticUnloadModules ();
-	level.behavior = NULL;
 	if (vertexes != NULL)
 	{
 		delete[] vertexes;
@@ -3092,7 +3090,6 @@ void P_SetupLevel (char *lumpname, int position)
 		ForceNodeBuild = gennodes;
 		// [RH] Load in the BEHAVIOR lump
 		FBehavior::StaticUnloadModules ();
-		level.behavior = NULL;
 		if (HasBehavior)
 		{
 			P_LoadBehavior (lumpnum+ML_BEHAVIOR);
@@ -3106,13 +3103,8 @@ void P_SetupLevel (char *lumpname, int position)
 			{
 				level.flags &= ~LEVEL_LAXMONSTERACTIVATION;
 			}
-			// FIXME: Also load STRFHELP for Strife maps with their own BEHAVIOR.
-			// But since none exist right now, I'm not in a big hurry to do it.
-			if (gameinfo.gametype == GAME_Strife)
-			{
-				P_LoadBehavior (Wads.CheckNumForName ("STRFHELP", ns_acslibrary));
-			}
 		}
+		FBehavior::StaticLoadDefaultModules ();
 
 		P_LoadStrifeConversations (lumpname);
 

@@ -3471,16 +3471,13 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	P_PlayerStartStomp (mobj);
 
 	// [BC] Do script stuff
-	if (level.behavior != NULL)
+	if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 	{
-		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
-		{
-			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
-		}
-		else if (state == PST_REBORN)
-		{
-			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
-		}
+		FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
+	}
+	else if (state == PST_REBORN)
+	{
+		FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
 	}
 }
 

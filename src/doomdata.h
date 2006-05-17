@@ -157,6 +157,11 @@ static inline int GET_SPAC (int flags)
 // [RH] In case I feel like it, here it is...
 #define ML_3DMIDTEX_ETERNITY		0x0400
 
+// If this bit is set, then all non-original-Doom bits are cleared when
+// translating the line. Only applies when playing Doom with Doom-format maps.
+// Hexen format maps and the other games are not affected by this.
+#define ML_RESERVED_ETERNITY		0x0800
+
 // [RH] Extra flags for Strife compatibility
 #define ML_TRANSLUCENT_STRIFE		0x1000
 #define ML_RAILING_STRIFE			0x0200

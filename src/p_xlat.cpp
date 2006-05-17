@@ -92,6 +92,13 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	}
 	else
 	{
+		if (gameinfo.gametype == GAME_Doom)
+		{
+			if (flags & ML_RESERVED_ETERNITY)
+			{
+				flags &= 0x1FF;
+			}
+		}
 		passthrough = (flags & ML_PASSUSE_BOOM);
 	}
 	flags = flags & 0xFFFF01FF;	// Ignore flags unknown to DOOM

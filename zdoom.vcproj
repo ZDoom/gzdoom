@@ -4083,6 +4083,9 @@
 				Name="Render Sources"
 				Filter="">
 				<File
+					RelativePath=".\src\r_anim.cpp">
+				</File>
+				<File
 					RelativePath=".\src\r_bsp.cpp">
 					<FileConfiguration
 						Name="Release|Win32">

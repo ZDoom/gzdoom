@@ -1,4 +1,15 @@
--May 16, 2006
+May 17, 2006
+- Texture animation improvements:
+  * Animations are now millisecond-accurate, so delays in ANIMDEFS can have
+    fractional parts.
+  * Cleaned up the animation code and moved it into r_anim.cpp.
+  * Blood's oscillating texture animations are now available for use by actual
+    supported games by adding the word "oscillate" after a "range" definition
+    in ANIMDEFS.
+  * Not exactly texture animation, but it's handled in the same function as
+    texture animations: Scrolling skies also have millisecond precision.
+
+May 16, 2006
 - Implemented Quasar's suggestion to use line flag 2048 as a "reserved" flag
   that, if set, clears all the non-original-Doom flags on a line. This is
   only for Doom format maps when playing Doom.

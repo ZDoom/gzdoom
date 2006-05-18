@@ -41,6 +41,10 @@ void DLightningThinker::Serialize (FArchive &arc)
 
 	if (arc.IsLoading ())
 	{
+		if (LightningLightLevels != NULL)
+		{
+			delete[] LightningLightLevels;
+		}
 		LightningLightLevels = new BYTE[numsectors + (numsectors+7)/8];
 	}
 	lights = LightningLightLevels;

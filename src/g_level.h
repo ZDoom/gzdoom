@@ -282,7 +282,7 @@ extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
 extern TAutoGrowArray<SDWORD> ACS_WorldArrays[NUM_WORLDVARS];
 extern TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 
-extern BOOL savegamerestore;
+extern bool savegamerestore;
 
 // mapname will be changed if it is a valid warptrans
 bool CheckWarpTransMap (char mapname[9], bool substitute);

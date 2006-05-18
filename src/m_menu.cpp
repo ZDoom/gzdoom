@@ -827,7 +827,7 @@ void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
 	{
 		node = new FSaveGameNode;
 		strcpy (node->Title, title);
-		node->Filename = copystring (file);
+		node->Filename = file;
 		node->bOldVersion = false;
 		node->bMissingWads = false;
 		M_InsertSaveNode (node);

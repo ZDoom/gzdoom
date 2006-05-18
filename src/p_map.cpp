@@ -4389,6 +4389,23 @@ msecnode_t *P_DelSecnode (msecnode_t *node)
 
 //=============================================================================
 //
+// P_DelSector_List
+//
+// Deletes the sector_list and NULLs it.
+//
+//=============================================================================
+
+void P_DelSector_List ()
+{
+	if (sector_list != NULL)
+	{
+		P_DelSeclist (sector_list);
+		sector_list = NULL;
+	}
+}
+
+//=============================================================================
+//
 // P_DelSeclist
 //
 // Delete an entire sector list

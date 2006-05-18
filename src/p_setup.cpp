@@ -2926,12 +2926,6 @@ void P_FreeLevelData ()
 		delete[] PolyBlockMap;
 		PolyBlockMap = NULL;
 	}
-	po_NumPolyobjs = 0;
-	if (polyobjs != NULL)
-	{
-		delete[] polyobjs;
-		polyobjs = NULL;
-	}
 	if (rejectmatrix != NULL)
 	{
 		delete[] rejectmatrix;
@@ -2972,6 +2966,7 @@ void P_FreeLevelData ()
 		delete[] polyobjs;
 		polyobjs = NULL;
 	}
+	po_NumPolyobjs = 0;
 	if (zones != NULL)
 	{
 		delete[] zones;

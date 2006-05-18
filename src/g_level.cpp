@@ -121,7 +121,7 @@ TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 extern bool netdemo;
 extern FString BackupSaveName;
 
-BOOL savegamerestore;
+bool savegamerestore;
 
 extern int mousex, mousey;
 extern bool sendpause, sendsave, sendturn180, SendLand;
@@ -1949,6 +1949,7 @@ void G_StartTravel ()
 			if (players[i].health > 0)
 			{
 				pawn->UnlinkFromWorld ();
+				P_DelSector_List ();
 				pawn->RemoveFromHash ();
 				pawn->ChangeStatNum (STAT_TRAVELLING);
 
@@ -1956,6 +1957,7 @@ void G_StartTravel ()
 				{
 					inv->ChangeStatNum (STAT_TRAVELLING);
 					inv->UnlinkFromWorld ();
+					P_DelSector_List ();
 				}
 			}
 		}

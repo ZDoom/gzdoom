@@ -1,4 +1,12 @@
 May 17, 2006
+- Fixed: M_NotifyNewSave() needlessly created a copy of the filename.
+- Fixed: Any touching_sectorlists for actors unlinked in G_StartTravel() were
+  lost forever.
+- Fixed: DLightningThinker::Serialize() did not delete the old
+  LightningLightLevels array when loading from an archive.
+- Fixed: Although I moved the correct polyobject freeing code into
+  P_FreeLevelData(), I left the old wrong code there too, which just deleted
+  the array without deleting anything hanging off of it.
 - Texture animation improvements:
   * Animations are now millisecond-accurate, so delays in ANIMDEFS can have
     fractional parts.

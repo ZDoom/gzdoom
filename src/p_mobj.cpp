@@ -3223,11 +3223,7 @@ void AActor::Destroy ()
 	flags |= MF_NOSECTOR|MF_NOBLOCKMAP;
 
 	// Delete all nodes on the current sector_list			phares 3/16/98
-	if (sector_list)
-	{
-		P_DelSeclist (sector_list);
-		sector_list = NULL;
-	}
+	P_DelSector_List();
 
 	// stop any playing sound
 	S_RelinkSound (this, NULL);

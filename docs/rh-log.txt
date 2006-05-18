@@ -1,3 +1,10 @@
+May 17, 2006 (Changes by Graf Zahl)
+- Fixed: In case the path to strife1.wad didn't contain any '/' an
+  incorrect path was created for voices.wad.
+- Fixed: The code building the path for Strife's voices.wad called the
+  wrong FString constructor.
+- Fixed: LS_Thing_SetGoal set MF5_CHASEGOAL in flags, not flags5.
+
 May 17, 2006
 - Fixed: M_NotifyNewSave() needlessly created a copy of the filename.
 - Fixed: Any touching_sectorlists for actors unlinked in G_StartTravel() were

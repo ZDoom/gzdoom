@@ -1616,11 +1616,11 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 
 		if (lastslash == -1)
 		{
-			path = wads[pickwad].Path;
+			path = "";//  wads[pickwad].Path;
 		}
 		else
 		{
-			path = FString (wads[pickwad].Path, lastslash + 1);
+			path = FString (wads[pickwad].Path.GetChars(), lastslash + 1);
 		}
 		path += "voices.wad";
 		D_AddFile (path);

@@ -1325,7 +1325,7 @@ FUNC(LS_Thing_SetGoal)
 		{
 			self->goal = goal;
 			if (arg3 == 0) self->flags5 &=~ MF5_CHASEGOAL;
-			else self->flags |= MF5_CHASEGOAL;
+			else self->flags5 |= MF5_CHASEGOAL;
 			if (self->target == NULL)
 			{
 				self->reactiontime = arg2 * TICRATE;

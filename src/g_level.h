@@ -137,8 +137,8 @@ struct level_info_s
 	DWORD		snapshotVer;
 	struct acsdefered_s *defered;
 	char		skypic2[9];
-	fixed_t		skyspeed1;
-	fixed_t		skyspeed2;
+	float		skyspeed1;
+	float		skyspeed2;
 	DWORD		fadeto;
 	DWORD		outsidefog;
 	int			cdtrack;
@@ -203,8 +203,8 @@ struct level_locals_s
 	char		skypic1[9];
 	char		skypic2[9];
 
-	fixed_t		skyspeed1;				// Scrolling speed of first sky texture
-	fixed_t		skyspeed2;
+	float		skyspeed1;				// Scrolling speed of sky textures, in pixels per ms
+	float		skyspeed2;
 
 	int			total_secrets;
 	int			found_secrets;

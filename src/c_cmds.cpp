@@ -785,5 +785,4 @@ CCMD(changesky)
 		sky1texture = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 	}
 	R_InitSkyMap ();
-	sky1pos = sky2pos = 0;
 }

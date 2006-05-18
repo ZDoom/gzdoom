@@ -3403,7 +3403,7 @@ void P_Init ()
 	atterm (P_Shutdown);
 
 	P_InitEffects ();		// [RH]
-	P_InitPicAnims ();
+	R_InitPicAnims ();
 	P_InitSwitchList ();
 	P_InitTerrainTypes ();
 	P_InitKeyMessages ();

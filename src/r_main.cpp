@@ -1045,6 +1045,7 @@ void R_SetupFrame (AActor *actor)
 		iview->otic = nowtic;
 	}
 
+	R_UpdateAnimations (I_MSTime());
 	r_TicFrac = I_GetTimeFrac (&r_FrameTime);
 	if (cl_capfps || r_NoInterpolate)
 	{

@@ -505,9 +505,9 @@ void FTextureManager::AddTiles (void *tiles)
 			}
 
 			speed = (anm >> 24) & 15;
-			speed = MAX (1, (1 << speed) * TICRATE / 120);
+			speed = MAX (1, (1 << speed) * 1000 / 120);	// Convert from 120 Hz to 1000 Hz.
 
-			P_AddSimpleAnim (texnum, picanm[pic] & 63, type, speed);
+			R_AddSimpleAnim (texnum, picanm[pic] & 63, type, speed);
 		}
 
 		// Blood's rotation types:

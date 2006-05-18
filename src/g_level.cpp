@@ -865,12 +865,11 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			SC_MustGetFloat ();		// get scroll speed
 			if (HexenHack)
 			{
-				*((fixed_t *)(info + handler->data2)) = sc_Number << 8;
+				sc_Float /= 256;
 			}
-			else
-			{
-				*((fixed_t *)(info + handler->data2)) = (fixed_t)(sc_Float * 65536.0f);
-			}
+			// Sky scroll speed is specified as pixels per tic, but we
+			// want pixels per millisecond.
+			*((float *)(info + handler->data2)) = sc_Float * 35 / 1000;
 			break;
 
 		case MITYPE_SETFLAG:
@@ -1774,7 +1773,6 @@ void G_DoLoadLevel (int position, bool autosave)
 	// [RH] Fetch sky parameters from level_locals_t.
 	sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 	sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
-	sky1pos = sky2pos = 0;
 
 	// [RH] Set up details about sky rendering
 	R_InitSkyMap ();
@@ -2420,7 +2418,6 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		strncpy (level.skypic2, arc.ReadName(), 8);
 		sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 		sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
-		sky1pos = sky2pos = 0;
 		R_InitSkyMap ();
 	}
 

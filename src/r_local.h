@@ -43,4 +43,10 @@
 #include "r_things.h"
 #include "r_draw.h"
 
+// r_anim.cpp
+
+void R_InitPicAnims ();
+void R_AddSimpleAnim (int picnum, int animcount, int animtype, DWORD animspeed /* in ms */, DWORD speedrange=0);
+void R_UpdateAnimations (DWORD mstime);
+
 #endif // __R_LOCAL_H__

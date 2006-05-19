@@ -65,7 +65,7 @@ TArray<FStrifeDialogueNode *> StrifeDialogues;
 // to their index in the mobjinfo table. This table indexes all
 // the Strife actor types in the order Strife had them and is
 // initialized as part of the actor's setup in infodefaults.cpp.
-const PClass *StrifeTypes[344];
+const PClass *StrifeTypes[999];
 
 static menu_t ConversationMenu;
 static TArray<menuitem_t> ConversationItems;

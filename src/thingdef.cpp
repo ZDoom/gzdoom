@@ -2305,9 +2305,9 @@ static void ActorConversationID (AActor *defaults, Baggage &bag)
 
 		if (convid==-1) return;
 	}
-	if (convid<0 || convid>344)
+	if (convid<0 || convid>999)
 	{
-		SC_ScriptError ("ConversationID must be in the range [0,344]");
+		SC_ScriptError ("ConversationID must be in the range [0,999]");
 	}
 	else StrifeTypes[convid] = bag.Info->Class;
 }

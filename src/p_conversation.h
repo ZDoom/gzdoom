@@ -54,7 +54,7 @@ extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 // to their index in the mobjinfo table. This table indexes all
 // the Strife actor types in the order Strife had them and is
 // initialized as part of the actor's setup in infodefaults.cpp.
-extern const PClass *StrifeTypes[344];
+extern const PClass *StrifeTypes[999];
 
 void P_LoadStrifeConversations (const char *mapname);
 void P_FreeStrifeConversations ();

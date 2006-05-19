@@ -1,3 +1,7 @@
+May 19, 2006 (Changes by Graf Zahl)
+- Increased the StrifeTypes array to 999 entries so that custom WADs have 
+  more flexibility when defining dialogs.
+
 May 18, 2006
 - Added a check against rw_havelow in the "sky hack" part of R_NewWall().
   This prevents the front ceiling from being moved up if there has been no

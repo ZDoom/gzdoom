@@ -1247,13 +1247,16 @@ void R_NewWall (bool needlights)
 				memcpy (&walltop[WallSX1], &wallupper[WallSX1], (WallSX2 - WallSX1)*sizeof(walltop[0]));
 				rw_havehigh = false;
 			}
-			else
+			else if (rw_havelow && frontsector->ceilingplane != backsector->ceilingplane)
 			{ // back ceiling is above front ceiling
+				// The check for rw_havelow is not Doom-compliant, but it avoids HoM that
+				// would otherwise occur because there is space made available for this
+				// wall but nothing to draw for it.
 				// Recalculate walltop so that the wall is clipped by the back sector's
 				// ceiling instead of the front sector's ceiling.
 				WallMost (walltop, backsector->ceilingplane);
 			}
-			// Putting sky ceilins on the front and back of a line alters the way unpegged
+			// Putting sky ceilings on the front and back of a line alters the way unpegged
 			// positioning works.
 			rw_frontlowertop = backsector->ceilingtexz;
 		}

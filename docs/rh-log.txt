@@ -1,4 +1,9 @@
 May 18, 2006
+- Added a check against rw_havelow in the "sky hack" part of R_NewWall().
+  This prevents the front ceiling from being moved up if there has been no
+  texture defined to draw on the wall. This makes various parts of The
+  Darkest Hour render properly again while still allowing the crosses in
+  heroes2.wad and lamasery.wad to render correctly.
 - Added a NULL sector check to P_CheckFakeFloorTrigger() because there was
   a crash report indicating that an actor being pushed up by a moving floor
   had a NULL sector. Since this field should be valid for every actor, the

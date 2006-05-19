@@ -778,6 +778,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 	}
 
 	BuildTranslations (luminosity, identity);
+	delete[] widths2;
 }
 
 void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BYTE *palette, bool rescale)

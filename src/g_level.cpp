@@ -666,6 +666,12 @@ static void ClearLevelInfoStrings(level_info_t *linfo)
 		delete[] linfo->level_name;
 		linfo->level_name = NULL;
 	}
+	for (FSpecialAction *spac = linfo->specialactions; spac != NULL; )
+	{
+		FSpecialAction *next = spac->Next;
+		delete spac;
+		spac = next;
+	}
 }
 
 static void ClearClusterInfoStrings(cluster_info_t *cinfo)

@@ -1,3 +1,16 @@
+May 18, 2006
+- Added a NULL sector check to P_CheckFakeFloorTrigger() because there was
+  a crash report indicating that an actor being pushed up by a moving floor
+  had a NULL sector. Since this field should be valid for every actor, the
+  debug build gets an assert here, and the release build just returns without
+  doing anything.
+- Fixed: Camera textures were not rendered properly when the underlying
+  canvas's pitch and width were different (which, really, only happens if
+  you use ridiculously large camera textures).
+- Fixed: FCanvasTextureInfo's were never freed.
+- Fixed: MAPINFO special action structures were not freed.
+- Fixed: FSingleLumpFont::LoadFON2() never freed its widths2 array.
+
 May 17, 2006 (Changes by Graf Zahl)
 - Fixed: In case the path to strife1.wad didn't contain any '/' an
   incorrect path was created for voices.wad.
@@ -1552,7 +1565,7 @@ February 10, 2005
 - Fixed: P_ExplodeMissile() should zero the projectile's speed before putting it into
   its DeathState, not after. Strife's flamethrower needs it like this, and I'm not
   sure when or why it was moved to happen after the state change.
-- Fixed: R_DrawSkyBoxes() needs to save and restory viewx and viewy as well as viewz
+- Fixed: R_DrawSkyBoxes() needs to save and restore viewx and viewy as well as viewz
   for drawing masked items.
 - Fixed: P_MorphPlayer() did not properly transfer ownership of inventory items, so
   when it destroyed the player's armor, it also unlinked anything after the armor in

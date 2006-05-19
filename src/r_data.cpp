@@ -1026,7 +1026,7 @@ void FTexture::FlipSquareBlockRemap (BYTE *block, int x, int y, const BYTE *rema
 	}
 }
 
-void FTexture::FlipNonSquareBlock (BYTE *dst, const BYTE *src, int x, int y)
+void FTexture::FlipNonSquareBlock (BYTE *dst, const BYTE *src, int x, int y, int srcpitch)
 {
 	int i, j;
 
@@ -1034,7 +1034,7 @@ void FTexture::FlipNonSquareBlock (BYTE *dst, const BYTE *src, int x, int y)
 	{
 		for (j = 0; j < y; ++j)
 		{
-			dst[i*y+j] = src[i+j*x];
+			dst[i*y+j] = src[i+j*srcpitch];
 		}
 	}
 }
@@ -1982,7 +1982,7 @@ void FPNGTexture::MakeTexture ()
 			}
 			else
 			{
-				FlipNonSquareBlock (newpix, Pixels, Width, Height);
+				FlipNonSquareBlock (newpix, Pixels, Width, Height, Width);
 			}
 			BYTE *oldpix = Pixels;
 			Pixels = newpix;
@@ -2631,7 +2631,7 @@ void FCanvasTexture::MakeTexture ()
 {
 	Canvas = new DSimpleCanvas (Width, Height);
 	Canvas->Lock ();
-	if (Width != Height)
+	if (Width != Height || Width != Canvas->GetPitch())
 	{
 		Pixels = new BYTE[Width*Height];
 	}
@@ -2678,13 +2678,13 @@ void FCanvasTexture::RenderView (AActor *viewpoint, int fov)
 	R_SetFOV (fov);
 	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, Width, Height);
 	R_SetFOV (savedfov);
-	if (Width == Height)
+	if (Pixels == Canvas->GetBuffer())
 	{
 		FlipSquareBlock (Pixels, Width, Height);
 	}
 	else
 	{
-		FlipNonSquareBlock (Pixels, Canvas->GetBuffer(), Width, Height);
+		FlipNonSquareBlock (Pixels, Canvas->GetBuffer(), Width, Height, Canvas->GetPitch());
 	}
 	bNeedsUpdate = false;
 	bDidUpdate = true;
@@ -3037,6 +3037,7 @@ void R_DeinitData ()
 {
 	R_DeinitColormaps ();
 	R_DeinitBuildTiles();
+	FCanvasTextureInfo::EmptyList();
 
 	// Free openings
 	if (openings != NULL)

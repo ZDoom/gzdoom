@@ -206,6 +206,8 @@ void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
+FCanvasTextureInfo *FCanvasTextureInfo::List;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int lastcenteryfrac;
@@ -1545,7 +1547,6 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	viewactive = savedviewactive;
 }
 
-FCanvasTextureInfo *FCanvasTextureInfo::List;
 //==========================================================================
 //
 // FCanvasTextureInfo :: Add

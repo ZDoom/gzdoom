@@ -2002,6 +2002,11 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz)
 		return;
 	}
 	sector_t *sec = mo->Sector;
+	assert (sec != NULL);
+	if (sec == NULL)
+	{
+		return;
+	}
 	if (sec->heightsec != NULL && sec->SecActTarget != NULL)
 	{
 		sector_t *hs = sec->heightsec;

@@ -664,7 +664,7 @@ protected:
 
 	static void FlipSquareBlock (BYTE *block, int x, int y);
 	static void FlipSquareBlockRemap (BYTE *block, int x, int y, const BYTE *remap);
-	static void FlipNonSquareBlock (BYTE *blockto, const BYTE *blockfrom, int x, int y);
+	static void FlipNonSquareBlock (BYTE *blockto, const BYTE *blockfrom, int x, int y, int srcpitch);
 	static void FlipNonSquareBlockRemap (BYTE *blockto, const BYTE *blockfrom, int x, int y, const BYTE *remap);
 };
 

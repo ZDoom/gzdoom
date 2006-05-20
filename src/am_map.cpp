@@ -496,7 +496,7 @@ static void AM_ClipRotatedExtents ()
 {
 	fixed_t rmin_x, rmin_y, rmax_x, rmax_y;
 
-	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+	if (am_rotate == 0 || (am_rotate == 2 && !viewactive))
 	{
 		rmin_x = min_x;
 		rmin_y = min_y;

@@ -1,3 +1,11 @@
+May 20, 2006 (Changes by Graf Zahl)
+- Fixed: The automap code had the check for rotation reversed.
+- Changed type PClass::FreeIndices to TArray<unsigned int> because that's
+  the type of the indices.
+- Fixed: makewad.c needs __cdecl for non-Windows builds.
+- Fixed: FinishThingdef didn't check whether the WeaponClass pointer in
+  AWeaponPiece was a valid name.
+
 May 19, 2006
 - Fixed: FloorAndCeiling_Raise/Lower did not work with slopes because they
   used ZatPointDist instead of PointToDist to calculate the destination

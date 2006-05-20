@@ -343,7 +343,7 @@ CCMD (dumpclasses)
 }
 
 TArray<DObject *> DObject::Objects (TArray<DObject *>::NoInit);
-TArray<size_t> DObject::FreeIndices (TArray<size_t>::NoInit);
+TArray<unsigned int> DObject::FreeIndices (TArray<unsigned int>::NoInit);
 TArray<DObject *> DObject::ToDestroy (TArray<DObject *>::NoInit);
 bool DObject::Inactive;
 

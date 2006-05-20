@@ -3632,7 +3632,7 @@ void FinishThingdef()
 			v = defaults->AmmoType1;
 			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->AmmoType1 = PClass::FindClass(v.GetChars());
+				defaults->AmmoType1 = PClass::FindClass(v);
 				if (!defaults->AmmoType1)
 				{
 					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
@@ -3646,7 +3646,7 @@ void FinishThingdef()
 			v = defaults->AmmoType2;
 			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->AmmoType2 = PClass::FindClass(v.GetChars());
+				defaults->AmmoType2 = PClass::FindClass(v);
 				if (!defaults->AmmoType2)
 				{
 					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
@@ -3660,7 +3660,7 @@ void FinishThingdef()
 			v = defaults->SisterWeaponType;
 			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->SisterWeaponType = PClass::FindClass(v.GetChars());
+				defaults->SisterWeaponType = PClass::FindClass(v);
 				if (!defaults->SisterWeaponType)
 				{
 					SC_ScriptError("Unknown sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
@@ -3689,14 +3689,14 @@ void FinishThingdef()
 			fuglyname v;
 
 			v = defaults->WeaponClass;
-			if (v != NAME_None)
+			if (v != NAME_None && v.IsValidName())
 			{
-				defaults->WeaponClass = PClass::FindClass(v.GetChars());
+				defaults->WeaponClass = PClass::FindClass(v);
 				if (!defaults->WeaponClass)
 				{
 					SC_ScriptError("Unknown weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
-				else if (defaults->WeaponClass->ParentClass != RUNTIME_CLASS(AWeapon))
+				else if (!defaults->WeaponClass->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 				{
 					SC_ScriptError("Invalid weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}

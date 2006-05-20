@@ -1,3 +1,10 @@
+May 19, 2006
+- Fixed: FloorAndCeiling_Raise/Lower did not work with slopes because they
+  used ZatPointDist instead of PointToDist to calculate the destination
+  distance for the plane equation.
+- Fixed: Sky scroll positions could "jump" once they wrapped past position
+  32767. An fmod now keeps them within range of the sky textures' real widths.
+
 May 19, 2006 (Changes by Graf Zahl)
 - Increased the StrifeTypes array to 999 entries so that custom WADs have 
   more flexibility when defining dialogs.

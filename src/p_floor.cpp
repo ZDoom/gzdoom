@@ -1026,15 +1026,15 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 		// [RH] elevate up by a specific amount
 		case DElevator::elevateRaise:
 			elevator->m_Direction = 1;
-			elevator->m_FloorDestDist = sec->floorplane.ZatPointDist (sec->soundorg[0], sec->soundorg[1], floorheight + height);
-			elevator->m_CeilingDestDist = sec->ceilingplane.ZatPointDist (sec->soundorg[0], sec->soundorg[1], ceilingheight + height);
+			elevator->m_FloorDestDist = sec->floorplane.PointToDist (sec->soundorg[0], sec->soundorg[1], floorheight + height);
+			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (sec->soundorg[0], sec->soundorg[1], ceilingheight + height);
 			break;
 
 		// [RH] elevate down by a specific amount
 		case DElevator::elevateLower:
 			elevator->m_Direction = -1;
-			elevator->m_FloorDestDist = sec->floorplane.ZatPointDist (sec->soundorg[0], sec->soundorg[1], floorheight - height);
-			elevator->m_CeilingDestDist = sec->ceilingplane.ZatPointDist (sec->soundorg[0], sec->soundorg[1], ceilingheight - height);
+			elevator->m_FloorDestDist = sec->floorplane.PointToDist (sec->soundorg[0], sec->soundorg[1], floorheight - height);
+			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (sec->soundorg[0], sec->soundorg[1], ceilingheight - height);
 			break;
 		}
 	}

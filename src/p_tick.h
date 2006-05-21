@@ -30,6 +30,7 @@
 // Carries out all thinking of monsters and players.
 void P_Ticker (void);
 
+bool P_CheckTickerPaused ();
 
 
 #endif

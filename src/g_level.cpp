@@ -246,6 +246,7 @@ static const char *MapInfoMapLevel[] =
 	"wrapmidtextures",
 	"allowcrouch",
 	"nocrouch",
+	"pausemusicinmenus",
 	NULL
 };
 
@@ -361,6 +362,7 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_WRAPMIDTEX, 0 },
 	{ MITYPE_SCFLAGS,	LEVEL_CROUCH_YES, ~LEVEL_CROUCH_NO },
 	{ MITYPE_SCFLAGS,	LEVEL_CROUCH_NO, ~LEVEL_CROUCH_YES },
+	{ MITYPE_SCFLAGS,	LEVEL_PAUSE_MUSIC_IN_MENUS, 0 },
 };
 
 static const char *MapInfoClusterLevel[] =

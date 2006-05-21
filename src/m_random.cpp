@@ -170,7 +170,6 @@ int FRandom::HitDice (int count)
 
 void FRandom::StaticClearRandom ()
 {
-	Printf ("init with seed %d\n", rngseed);
 	const DWORD seed = rngseed*2+1;	// add 3/26/98: add rngseed
 	FRandom *rng = FRandom::RNGList;
 

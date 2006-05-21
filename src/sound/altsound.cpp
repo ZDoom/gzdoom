@@ -75,6 +75,7 @@ struct AltSoundRenderer::Channel
 	SDWORD LeftVolume;
 	SDWORD RightVolume;
 	bool Looping;
+	bool Paused;
 	CRITICAL_SECTION CriticalSection;
 };
 
@@ -521,6 +522,7 @@ long AltSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, 
 	chan->LeftVolume = left;
 	chan->RightVolume = right;
 	chan->Looping = !!looping;
+	chan->Paused = false;
 	LeaveCriticalSection (&chan->CriticalSection);
 
 	return channel + 1;
@@ -539,6 +541,22 @@ void AltSoundRenderer::StopSound (long handle)
 	Channel *chan = Channels + handle - 1;
 
 	chan->Sample = NULL;
+}
+
+//==========================================================================
+//
+// AltSoundRenderer :: SetSfxPaused
+//
+//==========================================================================
+
+void AltSoundRenderer::SetSfxPaused (bool paused)
+{
+	if (Channels == NULL) return;
+
+	for (int i = 0; i < NumChannels; ++i)
+	{
+		Channels[i].Paused = paused;
+	}
 }
 
 //==========================================================================
@@ -857,7 +875,7 @@ void AltSoundRenderer::UpdateSound ()
 	for (int i = 0; i < NumChannels; ++i)
 	{
 		EnterCriticalSection (&Channels[i].CriticalSection);
-		if (Channels[i].Sample != NULL)
+		if (Channels[i].Sample != NULL && !Channels[i].Paused)
 		{
 			if (Channels[i].Sample->b16bit)
 			{

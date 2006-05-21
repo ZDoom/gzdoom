@@ -1,3 +1,9 @@
+May 20, 2006
+- Fixed default.cbd and Makefile.mingw for current code state.
+- New: Pausing the game (through any means, not just the pause key) now pauses
+  sound effects as well as music. "PauseMusicInMenus" has been added as a
+  MAPINFO flag to also pause the music when a menu or the console are open.
+
 May 20, 2006 (Changes by Graf Zahl)
 - Fixed: The automap code had the check for rotation reversed.
 - Changed type PClass::FreeIndices to TArray<unsigned int> because that's

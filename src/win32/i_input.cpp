@@ -1538,7 +1538,7 @@ static void SetSoundPaused (int state)
 	{
 		if (paused == 0)
 		{
-			S_PauseSound ();
+			S_PauseSound (false);
 			if (!netgame
 #ifdef _DEBUG
 				&& !demoplayback

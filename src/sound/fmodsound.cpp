@@ -739,7 +739,7 @@ long FMODSoundRenderer::StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int 
 
 void FMODSoundRenderer::StopSound (long handle)
 {
-	if (!handle ||!ChannelMap)
+	if (!handle || !ChannelMap)
 		return;
 
 	handle--;
@@ -752,6 +752,16 @@ void FMODSoundRenderer::StopSound (long handle)
 	}
 }
 
+void FMODSoundRenderer::SetSfxPaused (bool paused)
+{
+	for (int i = 0; i < NumChannels; ++i)
+	{
+		if (ChannelMap[i].soundID != -1)
+		{
+			FSOUND_SetPaused (ChannelMap[i].channelID, paused);
+		}
+	}
+}
 
 bool FMODSoundRenderer::IsPlayingSound (long handle)
 {

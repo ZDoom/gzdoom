@@ -27,11 +27,39 @@
 #include "p_acs.h"
 #include "c_console.h"
 #include "b_bot.h"
-
+#include "s_sound.h"
 #include "doomstat.h"
 #include "sbar.h"
 
 extern gamestate_t wipegamestate;
+
+//==========================================================================
+//
+// P_CheckTickerPaused
+//
+// Returns true if the ticker should be paused. In that cause, it also
+// pauses sound effects and possibly music. If the ticker should not be
+// paused, then it returns false but does not unpause anything.
+//
+//==========================================================================
+
+bool P_CheckTickerPaused ()
+{
+	// pause if in menu or console and at least one tic has been run
+	if ( !netgame
+		 && gamestate != GS_TITLELEVEL
+		 && ((menuactive != MENU_Off && menuactive != MENU_OnNoPause) ||
+			 ConsoleState == c_down || ConsoleState == c_falling)
+		 && !demoplayback
+		 && !demorecording
+		 && players[consoleplayer].viewz != 1
+		 && wipegamestate == gamestate)
+	{
+		S_PauseSound (!(level.flags & LEVEL_PAUSE_MUSIC_IN_MENUS));
+		return true;
+	}
+	return false;
+}
 
 //
 // P_Ticker
@@ -44,22 +72,10 @@ void P_Ticker (void)
 	r_NoInterpolate = true;
 
 	// run the tic
-	if (paused)
+	if (paused || P_CheckTickerPaused())
 		return;
 
-	// pause if in menu or console and at least one tic has been run
-	if ( !netgame
-		 && gamestate != GS_TITLELEVEL
-		 && ((menuactive != MENU_Off && menuactive != MENU_OnNoPause) ||
-			 ConsoleState == c_down || ConsoleState == c_falling)
-		 && !demoplayback
-		 && !demorecording
-		 && players[consoleplayer].viewz != 1
-		 && wipegamestate == gamestate)
-	{
-		return;
-	}
-
+	S_ResumeSound ();
 	P_ResetSightCounters (false);
 
 	// Since things will be moving, it's okay to interpolate them in the renderer.

@@ -63,6 +63,7 @@
 #include "templates.h"
 #include "lists.h"
 #include "gi.h"
+#include "p_tick.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -587,6 +588,9 @@ void M_ActivateMenuInput ()
 {
 	ResetButtonStates ();
 	menuactive = MENU_On;
+	// Pause sound effects before we play the menu switch sound.
+	// That way, it won't be paused.
+	P_CheckTickerPaused ();
 }
 
 void M_DeactivateMenuInput ()

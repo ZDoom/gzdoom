@@ -99,6 +99,9 @@ public:
 	// Stops a sound channel.
 	virtual void StopSound (long handle) = 0;
 
+	// Pauses or resumes all sound effect channels.
+	virtual void SetSfxPaused (bool paused) = 0;
+
 	// Returns true if the channel is still playing a sound.
 	virtual bool IsPlayingSound (long handle) = 0;
 

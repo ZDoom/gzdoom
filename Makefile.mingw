@@ -28,7 +28,7 @@ ifndef RELEASETARGET
   RELEASETARGET = zdoomgcc.exe
 endif
 ifndef DEBUGTARGET
-  DEBUGTARGE = zdoomgccd.exe
+  DEBUGTARGET = zdoomgccd.exe
 endif
 DEBUGOBJDIR = debugobj
 RELEASEOBJDIR = releaseobj
@@ -156,6 +156,7 @@ OBJECTS += \
 	$(OBJDIR)/p_writemap.o \
 	$(OBJDIR)/p_xlat.o \
 	$(OBJDIR)/po_man.o \
+	$(OBJDIR)/r_anim.o \
 	$(OBJDIR)/r_bsp.o \
 	$(OBJDIR)/r_data.o \
 	$(OBJDIR)/r_draw.o \
@@ -365,7 +366,6 @@ OBJECTS += \
 ifndef NOASM
   OBJECTS += \
     $(OBJDIR)/a.o \
-    $(OBJDIR)/blocks.o \
     $(OBJDIR)/misc.o \
     $(OBJDIR)/tmap.o \
     $(OBJDIR)/tmap2.o \

@@ -268,12 +268,12 @@ void MessagePump (const SDL_Event &sev)
 			{ // kill focus
 				FlushDIKState ();
 				if (!paused)
-					S_PauseSound ();
+					S_PauseSound (false);
 			}
 			else
 			{ // set focus
 				if (!paused)
-					S_ResumeSound ();
+					S_ResumeSound (false);
 			}
 		}
 		break;

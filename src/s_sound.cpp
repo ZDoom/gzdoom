@@ -142,7 +142,8 @@ static void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3],
 
 int MAX_SND_DIST;
 static channel_t *Channel;			// the set of channels available
-static BOOL		mus_paused;			// whether songs are paused
+static bool		SoundPaused;		// whether sound effects are paused
+static bool		MusicPaused;		// whether music is paused
 static MusPlayingInfo mus_playing;	// music currently being played
 static FString	 LastSong;			// last music that was played
 static byte		*SoundCurve;
@@ -341,7 +342,8 @@ void S_Init ()
 	}
 	
 	// no sounds are playing, and they are not paused
-	mus_paused = 0;
+	MusicPaused = false;
+	SoundPaused = false;
 
 	// Note that sounds have not been cached (yet).
 //	for (i=1; (size_t)i < S_sfx.Size (); i++)
@@ -442,7 +444,8 @@ void S_Start ()
 	}
 
 	// start new music for the level
-	mus_paused = 0;
+	MusicPaused = false;
+	SoundPaused = false;
 
 	// [RH] This is a lot simpler now.
 	if (!savegamerestore)
@@ -1227,15 +1230,20 @@ bool S_IsActorPlayingSomething (AActor *actor, int channel)
 //
 // S_PauseSound
 //
-// Stop music, during game PAUSE.
+// Stop music and sound effects, during game PAUSE.
 //==========================================================================
 
-void S_PauseSound ()
+void S_PauseSound (bool notmusic)
 {
-	if (mus_playing.handle && !mus_paused)
+	if (!notmusic && mus_playing.handle && !MusicPaused)
 	{
 		I_PauseSong (mus_playing.handle);
-		mus_paused = true;
+		MusicPaused = true;
+	}
+	if (GSnd != NULL && !SoundPaused)
+	{
+		GSnd->SetSfxPaused (true);
+		SoundPaused = true;
 	}
 }
 
@@ -1243,15 +1251,20 @@ void S_PauseSound ()
 //
 // S_ResumeSound
 //
-// Resume music, after game PAUSE.
+// Resume music and sound effects, after game PAUSE.
 //==========================================================================
 
 void S_ResumeSound ()
 {
-	if (mus_playing.handle && mus_paused)
+	if (mus_playing.handle && MusicPaused)
 	{
 		I_ResumeSong (mus_playing.handle);
-		mus_paused = false;
+		MusicPaused = false;
+	}
+	if (GSnd != NULL && SoundPaused)
+	{
+		GSnd->SetSfxPaused (false);
+		SoundPaused = false;
 	}
 }
 
@@ -1603,7 +1616,7 @@ void S_StopMusic (bool force)
 	// [RH] Don't stop if a playlist is active.
 	if ((force || PlayList == NULL) && !mus_playing.name.IsEmpty())
 	{
-		if (mus_paused)
+		if (MusicPaused)
 			I_ResumeSong(mus_playing.handle);
 
 		I_StopSong(mus_playing.handle);

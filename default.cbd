@@ -138,7 +138,6 @@ done
 
 ${COMPILER} "autostart.cpp \
  a.nas \
- blocks.nas \
  misc.nas \
  tmap.nas \
  tmap2.nas \
@@ -235,6 +234,7 @@ ${COMPILER} "autostart.cpp \
  p_writemap.cpp \
  p_xlat.cpp \
  po_man.cpp \
+ r_anim.cpp \
  r_bsp.cpp \
  r_data.cpp \
  r_draw.cpp \

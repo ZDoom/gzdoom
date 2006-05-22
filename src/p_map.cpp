@@ -4151,7 +4151,8 @@ void PIT_CeilingRaise (AActor *thing)
 	// (or something else?) Things marked as hanging from the ceiling will
 	// stay where they are.
 	if (thing->z < thing->floorz &&
-		thing->z + thing->height >= thing->ceilingz - moveamt)
+		thing->z + thing->height >= thing->ceilingz - moveamt &&
+		!(thing->flags & MF_NOLIFTDROP))
 	{
 		fixed_t oldz = thing->z;
 		thing->z = thing->floorz;

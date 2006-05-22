@@ -1,3 +1,11 @@
+May 22, 2006 (Changes by Graf Zahl)
+- Fixed: Thing_ChangeTid must check whether the actor whose tid is about to
+  be changed is scheduled for destruction.
+- Fixed: G_FinishTravel added the player to the hash chain twice.
+- Fixed: The animations for Doom's E3 intermission used incorrect patch names.
+- Added a check for MF_NOLIFTDROP to PIT_CeilingRaise because the overlapping 
+  bridges in 007LTSD got moved by this function.
+
 May 21, 2006
 - Fixed GCC 4 warnings in FNodeBuilder::CreateSubsectorsForReal().
 - Changed f_finale.cpp/atkstates[] into a static variable, since its

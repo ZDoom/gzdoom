@@ -2029,7 +2029,6 @@ void G_FinishTravel ()
 			pawn->waterlevel = pawndup->waterlevel;
 			pawn->target = NULL;
 			pawn->lastenemy = NULL;
-			pawn->AddToHash ();
 			pawn->player->mo = pawn;
 			DObject::PointerSubstitution (oldpawn, pawn);
 			oldpawn->Destroy();

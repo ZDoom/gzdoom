@@ -2359,7 +2359,7 @@ static void preprocess_input(char *z){
 void Parse(gp)
 struct lemon *gp;
 {
-  struct pstate ps;
+  struct pstate ps = { 0, };
   FILE *fp;
   char *filebuf;
   int filesize;

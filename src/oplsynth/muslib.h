@@ -96,6 +96,8 @@ struct OPLdata {
 };
 
 struct OPLio {
+	virtual ~OPLio() {}
+
 	void	OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2);
 	void	OPLwriteValue(uint regbase, uint channel, uchar value);
 	void	OPLwriteFreq(uint channel, uint freq, uint octave, uint keyon);

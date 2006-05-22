@@ -638,7 +638,6 @@ int yylex (void)
 {
 	char token[80];
 	int toksize;
-	int buildup;
 	int c;
 
 loop:
@@ -661,7 +660,7 @@ loop:
 	}
 	if (isdigit (c))
 	{
-		buildup = c - '0';
+		int buildup = c - '0';
 		if (c == '0')
 		{
 			c = fgetc (Source);
@@ -705,6 +704,8 @@ loop:
 	}
 	if (isalpha (c))
 	{
+		int buildup = 0;
+		
 		token[0] = c;
 		toksize = 1;
 		while (toksize < 79 && (isalnum (c = fgetc (Source)) || c == '_'))

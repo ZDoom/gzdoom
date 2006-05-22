@@ -77,7 +77,7 @@ static void DumpFormattedOutput()
 	DWORD out;
 	WORD color;
 	char *cp;
-	char spaces[8 + 1] = "        ";
+	char spaces[8 + 1];
 	char *saved;
 	int curcol;
 	int i;
@@ -88,6 +88,16 @@ static void DumpFormattedOutput()
 		WriteFile(gStdOut, "\n", 1, &out, NULL);
 		return;
 	}
+
+	spaces[0] = ' ';
+	spaces[1] = ' ';
+	spaces[2] = ' ';
+	spaces[3] = ' ';
+	spaces[4] = ' ';
+	spaces[5] = ' ';
+	spaces[6] = ' ';
+	spaces[7] = ' ';
+	spaces[8] = '\0';
 
 	color = info.wAttributes & ~(FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY);
 	curcol = 0;

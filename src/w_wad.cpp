@@ -623,7 +623,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			{
 				char * c;
 
-				while (c=(char*)memchr(lump_p->name, '^', 8))
+				while ((c=(char*)memchr(lump_p->name, '^', 8)))
 				{
 					*c='\\';
 				}

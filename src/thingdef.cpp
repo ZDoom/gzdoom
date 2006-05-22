@@ -3014,7 +3014,7 @@ static void ActorFlagSetOrReset (AActor *defaults, Baggage &bag)
 			SC_MustGetString ();
 			part2 = sc_String;
 		}
-		if (fd = FindFlag (bag.Info->Class, part1.GetChars(), part2))
+		if ( (fd = FindFlag (bag.Info->Class, part1.GetChars(), part2)) )
 		{
 			DWORD * flagvar = (DWORD*) ((char*)defaults + fd->structoffset);
 			if (mod == '+')

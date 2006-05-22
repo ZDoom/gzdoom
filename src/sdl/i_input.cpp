@@ -273,7 +273,7 @@ void MessagePump (const SDL_Event &sev)
 			else
 			{ // set focus
 				if (!paused)
-					S_ResumeSound (false);
+					S_ResumeSound ();
 			}
 		}
 		break;

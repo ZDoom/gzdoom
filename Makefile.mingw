@@ -35,7 +35,7 @@ RELEASEOBJDIR = releaseobj
 
 CCDV = @ccdv
 
-FMODDIR = c:/fmods/fmodapi374win
+FMODDIR = "c:/program files/fmodapi375win"
 
 CPPFLAGS = -DWIN32 -D_WIN32 -D_WINDOWS -DHAVE_STRUPR -DHAVE_FILELENGTH -DI_DO_NOT_LIKE_BIG_DOWNLOADS -D__forceinline=inline -MMD -Izlib -IFLAC -Isrc -Isrc/win32 -Isrc/g_doom -Isrc/g_heretic -I src/g_hexen -Isrc/g_raven -Isrc/g_strife -Isrc/g_shared -Isrc/oplsynth -Isrc/sound
 LDFLAGS += flac/libflac.a zlib/libz.a -lfmod -lwsock32 -lwinmm -lddraw -ldsound -ldxguid -ldinput8 -lole32 -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lsetupapi -lws2_32 -Wl,--subsystem,windows

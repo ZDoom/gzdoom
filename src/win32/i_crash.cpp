@@ -2780,7 +2780,7 @@ void DisplayCrashLog ()
 {
 	HINSTANCE riched;
 	HANDLE file;
-	bool gzipped;
+	bool gzipped = false;
 
 	if (NumFiles == 0 || (riched = LoadLibrary ("riched20.dll")) == NULL)
 	{

@@ -45,6 +45,7 @@ inline std::ostream& operator<<(std::ostream &o, const Range *r){
 class RegExp {
 public:
     uint	size;
+	virtual ~RegExp() {}
 public:
     virtual char *typeOf() = 0;
     RegExp *isA(char *t)

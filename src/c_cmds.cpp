@@ -733,7 +733,7 @@ CCMD(monster)
 	if (CheckCheatmode ()) return;
 	TThinkerIterator<AActor> it;
 
-	while (mo=it.Next())
+	while ( (mo = it.Next()) )
 	{
 		if (mo->flags3&MF3_ISMONSTER && !(mo->flags&MF_CORPSE) && !(mo->flags&MF_FRIENDLY))
 		{
@@ -756,7 +756,7 @@ CCMD(items)
 	if (CheckCheatmode ()) return;
 	TThinkerIterator<AActor> it;
 
-	while (mo=it.Next())
+	while ( (mo = it.Next()) )
 	{
 		if (mo->IsKindOf(RUNTIME_CLASS(AInventory)) && mo->flags&MF_SPECIAL)
 		{

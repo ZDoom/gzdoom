@@ -1,3 +1,16 @@
+May 21, 2006
+- Fixed GCC 4 warnings in FNodeBuilder::CreateSubsectorsForReal().
+- Changed f_finale.cpp/atkstates[] into a static variable, since its
+  anonymous type prevents it from being accessed from other files anyway.
+- Fixed: The behavior of the eventtail advancement in d_net.cpp/CheckAbort()
+  was compiler-dependant.
+- Fixed warnings GCC 4 threw up while compiling re2c and lemon.
+- Removed __cdecl from makewad.c again. This is already defined as a builtin
+  for MinGW, and redefining it produces a warning. (Why is main explicitly
+  declared __cdecl anyway?)
+- Fixed building ccdv-win32 with GCC 4. GCC 4 creates a memcpy call, which
+  won't work because it doesn't get linked with the standard C library.
+
 May 20, 2006
 - Fixed default.cbd and Makefile.mingw for current code state.
 - New: Pausing the game (through any means, not just the pause key) now pauses

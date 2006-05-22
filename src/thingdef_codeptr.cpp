@@ -1530,7 +1530,7 @@ void A_KillChildren(AActor * self)
 	TThinkerIterator<AActor> it;
 	AActor * mo;
 
-	while (mo=it.Next())
+	while ( (mo = it.Next()) )
 	{
 		if (mo->master == self)
 		{

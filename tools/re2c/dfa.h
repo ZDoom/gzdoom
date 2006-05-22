@@ -16,6 +16,7 @@ public:
     State		*state;
 public:
     Action(State*);
+	virtual ~Action() {}
     virtual void emit(std::ostream&, bool&) = 0;
     virtual bool isRule() const;
     virtual bool isMatch() const;

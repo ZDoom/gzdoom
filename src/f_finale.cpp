@@ -478,7 +478,7 @@ castinfo_t castorder[] =
 	{0, NULL}
 };
 
-struct
+static struct
 {
 	const char *type;
 	byte melee;

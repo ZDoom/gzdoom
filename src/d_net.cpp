@@ -1272,7 +1272,7 @@ BOOL CheckAbort (void)
 	I_WaitForTic (I_GetTime (false) + TICRATE/4);
 	I_StartTic ();
 	for ( ; eventtail != eventhead 
-		  ; eventtail = (++eventtail)&(MAXEVENTS-1) ) 
+		  ; eventtail = (eventtail+1)&(MAXEVENTS-1) ) 
 	{ 
 		ev = &events[eventtail]; 
 		if (ev->type == EV_KeyDown && ev->data1 == KEY_ESCAPE)

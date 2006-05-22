@@ -333,7 +333,7 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 
 		if (GetPolyExtents (spot->polynum, bbox))
 		{
-			FPolyStart *anchor;
+			FPolyStart *anchor = NULL;
 
 			unsigned int j;
 

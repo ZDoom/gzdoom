@@ -23,7 +23,7 @@ int ErrorCount;
 void WriteWord (int word);
 void WriteLabel (char *label);
 void WriteWords (int count, short *array);
-void WriteBytes (int count, char *array);
+void WriteBytes (int count, unsigned char *array);
 
 void WriteNameTable ();
 
@@ -855,7 +855,7 @@ void WriteWords (int count, short *array)
 	}
 }
 
-void WriteBytes (int count, char *array)
+void WriteBytes (int count, unsigned char *array)
 {
 	WriteWord (count);
 	fwrite (array, 1, count, Dest);
@@ -952,7 +952,7 @@ void WriteHeights ()
 void WriteCodePConv ()
 {
 	WriteLabel ("CODP");
-	WriteWords (CodePMapSize, CodePMap);
+	WriteWords (CodePMapSize, (short *)CodePMap);
 }
 
 void WriteSprites ()

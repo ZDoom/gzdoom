@@ -450,11 +450,7 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 	return ret;
 }
 
-#if !defined(_MSC_VER)
-#define __cdecl
-#endif
-
-int __cdecl main (int argc, char **argv)
+int main (int argc, char **argv)
 {
 	FILE *listfile = NULL;
 	char *listfilename = NULL;

@@ -1,3 +1,7 @@
+May 22, 2006
+- Fixed: The new Thing_ChangeTID check would infinite loop if an actor
+  scheduled for destruction was encountered.
+
 May 22, 2006 (Changes by Graf Zahl)
 - Fixed: Thing_ChangeTid must check whether the actor whose tid is about to
   be changed is scheduled for destruction.

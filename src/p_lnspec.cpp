@@ -900,11 +900,11 @@ FUNC(LS_Thing_ChangeTID)
 		next = iterator.Next ();
 		while (next != NULL)
 		{
-			if (!(next->ObjectFlags & OF_MassDestruction))
-			{
-				actor = next;
-				next = iterator.Next ();
+			actor = next;
+			next = iterator.Next ();
 
+			if (!(actor->ObjectFlags & OF_MassDestruction))
+			{
 				actor->RemoveFromHash ();
 				actor->tid = arg1;
 				actor->AddToHash ();

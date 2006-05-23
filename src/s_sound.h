@@ -123,6 +123,7 @@ void S_LoopedSoundID (fixed_t *pt, int channel, int sfxid, float volume, int att
 #define CHAN_LISTENERZ			8
 #define CHAN_IMMOBILE			16
 #define CHAN_MAYBE_LOCAL		32
+#define CHAN_NOPAUSE			64	// do not pause this sound in menus
 #define CHAN_PICKUP				(CHAN_ITEM|CHAN_MAYBE_LOCAL)
 
 // sound attenuation values

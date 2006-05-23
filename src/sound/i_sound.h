@@ -93,8 +93,8 @@ public:
 	virtual SoundTrackerModule *OpenModule (const char *file, int offset, int length);
 
 	// Starts a sound in a particular sound channel.
-	virtual long StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping) = 0;
-	virtual long StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3]);
+	virtual long StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping, bool pauseable) = 0;
+	virtual long StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3], bool pauseable);
 
 	// Stops a sound channel.
 	virtual void StopSound (long handle) = 0;

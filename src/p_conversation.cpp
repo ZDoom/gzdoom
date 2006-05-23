@@ -652,7 +652,7 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	if (CurNode->SpeakerVoice != 0)
 	{
 		I_SetMusicVolume(dlg_musicvolume);
-		S_SoundID (npc, CHAN_VOICE, CurNode->SpeakerVoice, 1, ATTN_NORM);
+		S_SoundID (npc, CHAN_VOICE|CHAN_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 	}
 
 	// Set up the menu

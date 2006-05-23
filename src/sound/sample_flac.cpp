@@ -117,7 +117,7 @@ FLACSampleLoader::~FLACSampleLoader ()
 void FLACSampleLoader::CopyToSample (size_t ofs, FLAC__int32 **buffer, size_t ilen)
 {
 	size_t i;
-	size_t len = MIN (ilen, SLen);
+	size_t len = MIN<size_t> (ilen, SLen);
 	FLAC__int32 *buffer0 = buffer[0] + ofs;
 
 	if (SampleBits == 16)

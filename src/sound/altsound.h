@@ -25,7 +25,7 @@ public:
 	SoundStream *OpenStream (const char *filename, int flags, int offset, int length);
 
 	// Starts a sound in a particular sound channel.
-	long StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping);
+	long StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping, bool pauseable);
 
 	// Stops a sound channel.
 	void StopSound (long handle);

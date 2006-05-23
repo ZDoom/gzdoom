@@ -997,7 +997,7 @@ UINT_PTR CALLBACK SaveHookProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
 					"Nothing Selected",
 					MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2))
 				{
-					SetWindowLongPtr (hDlg, DWL_MSGRESULT, 1);
+					SetWindowLongPtr (hDlg, DWLP_MSGRESULT, 1);
 					return 1;
 				}
 			}

@@ -75,7 +75,8 @@ struct AltSoundRenderer::Channel
 	SDWORD LeftVolume;
 	SDWORD RightVolume;
 	bool Looping;
-	bool Paused;
+	bool bPaused;
+	bool bIsPauseable;
 	CRITICAL_SECTION CriticalSection;
 };
 
@@ -483,7 +484,7 @@ void AltSoundRenderer :: SetSfxVolume (float volume)
 //
 //==========================================================================
 
-long AltSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping)
+long AltSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping, bool pauseable)
 {
 	if (sfx->data == NULL || Channels == NULL)
 	{
@@ -522,7 +523,8 @@ long AltSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, 
 	chan->LeftVolume = left;
 	chan->RightVolume = right;
 	chan->Looping = !!looping;
-	chan->Paused = false;
+	chan->bPaused = false;
+	chan->bIsPauseable = pauseable;
 	LeaveCriticalSection (&chan->CriticalSection);
 
 	return channel + 1;
@@ -555,7 +557,10 @@ void AltSoundRenderer::SetSfxPaused (bool paused)
 
 	for (int i = 0; i < NumChannels; ++i)
 	{
-		Channels[i].Paused = paused;
+		if (Channels[i].bIsPauseable)
+		{
+			Channels[i].bPaused = paused;
+		}
 	}
 }
 
@@ -875,7 +880,7 @@ void AltSoundRenderer::UpdateSound ()
 	for (int i = 0; i < NumChannels; ++i)
 	{
 		EnterCriticalSection (&Channels[i].CriticalSection);
-		if (Channels[i].Sample != NULL && !Channels[i].Paused)
+		if (Channels[i].Sample != NULL && !Channels[i].bPaused)
 		{
 			if (Channels[i].Sample->b16bit)
 			{

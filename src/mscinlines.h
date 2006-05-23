@@ -14,10 +14,15 @@
 // Watcom, so it's better to rely on its C optimizer to produce fast code.)
 //
 
-#pragma warning (disable: 4035)
 
 #include <string.h>
 #include <stddef.h>
+
+#ifdef _M_X64
+#include "x64inlines.h"
+#else
+
+#pragma warning (disable: 4035)
 
 __forceinline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 {
@@ -358,3 +363,4 @@ __forceinline int quickertoint (float v)
 }
 
 #pragma warning (default: 4035)
+#endif

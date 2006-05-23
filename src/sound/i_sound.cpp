@@ -310,7 +310,7 @@ SoundTrackerModule *SoundRenderer::OpenModule (const char *file, int offset, int
 	return NULL;
 }
 
-long SoundRenderer::StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3])
+long SoundRenderer::StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3], bool pauseable)
 {
 	return 0;
 }

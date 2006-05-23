@@ -886,13 +886,13 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 			pt2[2] = z;
 			CalcPosVel (pt2, mover, chanflags & CHAN_LISTENERZ,  pos, vel);
 		}
-		Channel[i].handle = GSnd->StartSound3D (sfx, volume, Channel[i].pitch, i, looping, pos, vel);
+		Channel[i].handle = GSnd->StartSound3D (sfx, volume, Channel[i].pitch, i, looping, pos, vel, !(chanflags & CHAN_NOPAUSE));
 		Channel[i].is3d = true;
 		Channel[i].constz = !!(chanflags & CHAN_LISTENERZ);
 	}
 	else
 	{
-		Channel[i].handle = GSnd->StartSound (sfx, vol, sep, Channel[i].pitch, i, looping);
+		Channel[i].handle = GSnd->StartSound (sfx, vol, sep, Channel[i].pitch, i, looping, !(chanflags & CHAN_NOPAUSE));
 		Channel[i].is3d = false;
 		Channel[i].constz = true;
 	}

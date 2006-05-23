@@ -655,7 +655,7 @@ SoundTrackerModule *FMODSoundRenderer::OpenModule (const char *filename_or_data,
 // vol range is 0-255
 // sep range is 0-255, -1 for surround, -2 for full vol middle
 //
-long FMODSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping)
+long FMODSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping, bool pauseable)
 {
 	if (!ChannelMap)
 		return 0;
@@ -695,6 +695,7 @@ long FMODSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch,
 		ChannelMap[channel].bIsLooping = looping ? true : false;
 		ChannelMap[channel].lastPos = 0;
 		ChannelMap[channel].bIs3D = false;
+		ChannelMap[channel].bIsPauseable = pauseable;
 		return channel + 1;
 	}
 
@@ -703,7 +704,7 @@ long FMODSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch,
 }
 
 long FMODSoundRenderer::StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel,
-	bool looping, float pos[3], float vel[3])
+	bool looping, float pos[3], float vel[3], bool pauseable)
 {
 	if (!Sound3D || !ChannelMap)
 		return 0;
@@ -730,6 +731,7 @@ long FMODSoundRenderer::StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int 
 		ChannelMap[channel].bIsLooping = looping ? true : false;
 		ChannelMap[channel].lastPos = 0;
 		ChannelMap[channel].bIs3D = true;
+		ChannelMap[channel].bIsPauseable = pauseable;
 		return channel + 1;
 	}
 
@@ -758,7 +760,10 @@ void FMODSoundRenderer::SetSfxPaused (bool paused)
 	{
 		if (ChannelMap[i].soundID != -1)
 		{
-			FSOUND_SetPaused (ChannelMap[i].channelID, paused);
+			if (ChannelMap[i].bIsPauseable)
+			{
+				FSOUND_SetPaused (ChannelMap[i].channelID, paused);
+			}
 		}
 	}
 }

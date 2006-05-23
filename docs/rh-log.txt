@@ -1,4 +1,11 @@
 May 22, 2006
+- Fixed: The new sound pausing on menu open interrupted Strife conversations.
+- Did some very preliminary support for x64 compiling.
+- Now I see why makewad is using the __fastcall calling convention by default:
+  Because the release zlib is built with it as well.
+- Fixed: Conversion from 'const char *' to 'char *' in DEM_SAVEGAME case in
+  Net_DoCommand().
+- Updated the project files for Visual C++ 2005.
 - Fixed: The new Thing_ChangeTID check would infinite loop if an actor
   scheduled for destruction was encountered.
 

@@ -42,7 +42,7 @@ int mbo_getopt(int argc, char* const *argv, const mbo_opt_struct opts[], char **
 {
 	static int optchr = 0;
 	static int dash = 0; /* have already seen the - */
-	int arg_start = 2;
+	size_t arg_start = 2;
 
 	int opts_idx = -1;
 

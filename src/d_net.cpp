@@ -2195,7 +2195,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 				// Paths sent over the network will be valid for the system that sent
 				// the save command. For other systems, the path needs to be changed.
 				const char *fileonly = savegamefile.GetChars();
-				char *slash = strrchr (fileonly, '\\');
+				const char *slash = strrchr (fileonly, '\\');
 				if (slash != NULL)
 				{
 					fileonly = slash + 1;

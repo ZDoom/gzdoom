@@ -450,7 +450,12 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 	return ret;
 }
 
-int main (int argc, char **argv)
+// If building with GCC and not MinGW, macro __cdecl to nothing.
+#if defined(__GNUC__) && !defined(__MINGW32__)
+#define __cdecl
+#endif
+
+int __cdecl main (int argc, char **argv)
 {
 	FILE *listfile = NULL;
 	char *listfilename = NULL;

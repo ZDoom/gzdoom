@@ -40,18 +40,17 @@ extern "C" double CyclesPerSecond;
 
 #if _MSC_VER
 
+#include <intrin.h>
+
 typedef QWORD cycle_t;
 
 inline cycle_t GetClockCycle ()
 {
-	if (CPU.bRDTSC)
-	{
-		__asm rdtsc
-	}
-	else
-	{
-		return 0;
-	}
+#if _M_X64
+	return __rdtsc();
+#else
+	return CPU.bRDTSC ? __rdtsc() : 0;
+#endif
 }
 
 #elif (defined __GNUG__)

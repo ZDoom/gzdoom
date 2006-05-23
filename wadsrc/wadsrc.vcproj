@@ -1,38 +1,105 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="wadsrc"
 	ProjectGUID="{1D179D4B-F008-431B-8C72-111F8372584F}"
-	Keyword="MakeFileProj">
+	Keyword="MakeFileProj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
+		<Platform
+			Name="x64"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
-			ConfigurationType="0">
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			>
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo andcopy"
 				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
 				CleanCommandLine="del wadmake zdoom.pk3"
-				Output="zdoom.pk3"/>
+				Output="zdoom.pk3"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
-			ConfigurationType="0">
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			>
 			<Tool
 				Name="VCNMakeTool"
 				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo"
 				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
 				CleanCommandLine="del wadmake zdoom.pk3"
-				Output="zdoom.pk3"/>
+				Output="zdoom.pk3"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo andcopy"
+				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
+				CleanCommandLine="del wadmake zdoom.pk3"
+				Output="zdoom.pk3"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo"
+				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
+				CleanCommandLine="del wadmake zdoom.pk3"
+				Output="zdoom.pk3"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -40,337 +107,431 @@
 	<Files>
 		<Filter
 			Name="Lumps"
-			Filter="">
+			>
 			<File
-				RelativePath=".\animdefs.txt">
+				RelativePath=".\animdefs.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\In_epi1.txt">
+				RelativePath=".\In_epi1.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\In_epi2.txt">
+				RelativePath=".\In_epi2.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\In_epi3.txt">
+				RelativePath=".\In_epi3.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\In_htc1.txt">
+				RelativePath=".\In_htc1.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\In_htc2.txt">
+				RelativePath=".\In_htc2.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\In_htc3.txt">
+				RelativePath=".\In_htc3.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\Lockdefs.txt">
+				RelativePath=".\Lockdefs.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\sndeax.txt">
+				RelativePath=".\sndeax.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\sndinfo.txt">
+				RelativePath=".\sndinfo.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\sndseq.txt">
+				RelativePath=".\sndseq.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\terrain.txt">
+				RelativePath=".\terrain.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\x11r6rgb.txt">
+				RelativePath=".\x11r6rgb.txt"
+				>
 			</File>
 			<Filter
 				Name="Map Translators"
-				Filter="">
+				>
 				<File
-					RelativePath=".\xlat\doomxlat.txt">
+					RelativePath=".\xlat\doomxlat.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\xlat\hereticxlat.txt">
+					RelativePath=".\xlat\hereticxlat.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\xlat\strifexlat.txt">
+					RelativePath=".\xlat\strifexlat.txt"
+					>
 				</File>
 				<Filter
 					Name="Includes"
-					Filter="">
+					>
 					<File
-						RelativePath=".\xlat\defines.i">
+						RelativePath=".\xlat\defines.i"
+						>
 					</File>
 					<File
-						RelativePath=".\xlat\specials.i">
+						RelativePath=".\xlat\specials.i"
+						>
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="Decals"
-				Filter="">
+				>
 				<File
-					RelativePath=".\decals\bal7scr1.png">
+					RelativePath=".\decals\bal7scr1.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bal7scr2.png">
+					RelativePath=".\decals\bal7scr2.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bfglite1.png">
+					RelativePath=".\decals\bfglite1.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bfglite2.png">
+					RelativePath=".\decals\bfglite2.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bfgscrc1.png">
+					RelativePath=".\decals\bfgscrc1.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bfgscrc2.png">
+					RelativePath=".\decals\bfgscrc2.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\blast1.png">
+					RelativePath=".\decals\blast1.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bsmear1.png">
+					RelativePath=".\decals\bsmear1.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bsmear2.png">
+					RelativePath=".\decals\bsmear2.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bsplat1.png">
+					RelativePath=".\decals\bsplat1.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bsplat2.png">
+					RelativePath=".\decals\bsplat2.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bsplat3.png">
+					RelativePath=".\decals\bsplat3.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bsplat4.png">
+					RelativePath=".\decals\bsplat4.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bsplat5.png">
+					RelativePath=".\decals\bsplat5.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bsplat6.png">
+					RelativePath=".\decals\bsplat6.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\bsplat7.png">
+					RelativePath=".\decals\bsplat7.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\cbalscr1.png">
+					RelativePath=".\decals\cbalscr1.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\cbalscr2.png">
+					RelativePath=".\decals\cbalscr2.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\cbowmark.png">
+					RelativePath=".\decals\cbowmark.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\chip1.png">
+					RelativePath=".\decals\chip1.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\chip2.png">
+					RelativePath=".\decals\chip2.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\chip3.png">
+					RelativePath=".\decals\chip3.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\chip4.png">
+					RelativePath=".\decals\chip4.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\chip5.png">
+					RelativePath=".\decals\chip5.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\decaldef.txt">
+					RelativePath=".\decals\decaldef.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\plasma1.png">
+					RelativePath=".\decals\plasma1.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\plasma2.png">
+					RelativePath=".\decals\plasma2.png"
+					>
 				</File>
 				<File
-					RelativePath=".\decals\scorch1.png">
+					RelativePath=".\decals\scorch1.png"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="MapInfos"
-				Filter="">
+				>
 				<File
-					RelativePath=".\mapinfo\doom1.txt">
+					RelativePath=".\mapinfo\doom1.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\mapinfo\doom2.txt">
+					RelativePath=".\mapinfo\doom2.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\mapinfo\heretic.txt">
+					RelativePath=".\mapinfo\heretic.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\mapinfo\hexen.txt">
+					RelativePath=".\mapinfo\hexen.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\mapinfo\plutonia.txt">
+					RelativePath=".\mapinfo\plutonia.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\mapinfo\strife.txt">
+					RelativePath=".\mapinfo\strife.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\mapinfo\tnt.txt">
+					RelativePath=".\mapinfo\tnt.txt"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Languages"
-				Filter="">
+				>
 				<File
-					RelativePath=".\languages\english-us.txt">
+					RelativePath=".\languages\english-us.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\languages\french.txt">
+					RelativePath=".\languages\french.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\languages\italian.txt">
+					RelativePath=".\languages\italian.txt"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Decorate"
-				Filter="">
+				>
 				<File
-					RelativePath=".\decorate\decorate.txt">
+					RelativePath=".\decorate\decorate.txt"
+					>
 				</File>
 				<Filter
 					Name="Doom"
-					Filter="">
+					>
 					<File
-						RelativePath=".\decorate\doom\deadthings.txt">
+						RelativePath=".\decorate\doom\deadthings.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\doom\doomarmor.txt">
+						RelativePath=".\decorate\doom\doomarmor.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\doom\doomartifacts.txt">
+						RelativePath=".\decorate\doom\doomartifacts.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\doom\doomdecorations.txt">
+						RelativePath=".\decorate\doom\doomdecorations.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\doom\doomkeys.txt">
+						RelativePath=".\decorate\doom\doomkeys.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\doom\stealthmonsters.txt">
+						RelativePath=".\decorate\doom\stealthmonsters.txt"
+						>
 					</File>
 				</Filter>
 				<Filter
 					Name="Heretic"
-					Filter="">
+					>
 					<File
-						RelativePath=".\decorate\heretic\hereticarmor.txt">
+						RelativePath=".\decorate\heretic\hereticarmor.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\heretic\hereticartifacts.txt">
+						RelativePath=".\decorate\heretic\hereticartifacts.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\heretic\hereticdecorations.txt">
+						RelativePath=".\decorate\heretic\hereticdecorations.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\heretic\heretickeys.txt">
+						RelativePath=".\decorate\heretic\heretickeys.txt"
+						>
 					</File>
 				</Filter>
 				<Filter
 					Name="Hexen"
-					Filter="">
+					>
 					<File
-						RelativePath=".\decorate\hexen\flame.txt">
+						RelativePath=".\decorate\hexen\flame.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\hexen\hexenarmor.txt">
+						RelativePath=".\decorate\hexen\hexenarmor.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\hexen\hexendecorations.txt">
+						RelativePath=".\decorate\hexen\hexendecorations.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\hexen\hexenkeys.txt">
+						RelativePath=".\decorate\hexen\hexenkeys.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\hexen\hexenspecialdecs.txt">
+						RelativePath=".\decorate\hexen\hexenspecialdecs.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\hexen\puzzleitems.txt">
+						RelativePath=".\decorate\hexen\puzzleitems.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\hexen\scriptprojectiles.txt">
+						RelativePath=".\decorate\hexen\scriptprojectiles.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\hexen\speedboots.txt">
+						RelativePath=".\decorate\hexen\speedboots.txt"
+						>
 					</File>
 				</Filter>
 				<Filter
 					Name="Strife"
-					Filter="">
+					>
 					<File
-						RelativePath=".\decorate\strife\beggars.txt">
+						RelativePath=".\decorate\strife\beggars.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\merchants.txt">
+						RelativePath=".\decorate\strife\merchants.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\peasants.txt">
+						RelativePath=".\decorate\strife\peasants.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\questitems.txt">
+						RelativePath=".\decorate\strife\questitems.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\ratbuddy.txt">
+						RelativePath=".\decorate\strife\ratbuddy.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\rebels.txt">
+						RelativePath=".\decorate\strife\rebels.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\strifearmor.txt">
+						RelativePath=".\decorate\strife\strifearmor.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\strifeitems.txt">
+						RelativePath=".\decorate\strife\strifeitems.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\strifekeys.txt">
+						RelativePath=".\decorate\strife\strifekeys.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\strifestuff.txt">
+						RelativePath=".\decorate\strife\strifestuff.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\zombie.txt">
+						RelativePath=".\decorate\strife\zombie.txt"
+						>
 					</File>
 				</Filter>
 				<Filter
 					Name="Raven"
-					Filter="">
+					>
 					<File
-						RelativePath=".\decorate\raven\ravenartifacts.txt">
+						RelativePath=".\decorate\raven\ravenartifacts.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\raven\ravenhealth.txt">
+						RelativePath=".\decorate\raven\ravenhealth.txt"
+						>
 					</File>
 				</Filter>
 				<Filter
 					Name="Shared"
-					Filter="">
+					>
 					<File
-						RelativePath=".\shared\debris.txt">
+						RelativePath=".\shared\debris.txt"
+						>
 					</File>
 					<File
-						RelativePath=".\decorate\shared\splashes.txt">
+						RelativePath=".\decorate\shared\splashes.txt"
+						>
 					</File>
 				</Filter>
 			</Filter>
 		</Filter>
 		<File
-			RelativePath=".\Makefile">
+			RelativePath=".\Makefile"
+			>
 		</File>
 		<File
-			RelativePath=".\Makefile.mgw">
+			RelativePath=".\Makefile.mgw"
+			>
 		</File>
 		<File
-			RelativePath=".\Makefile2">
+			RelativePath=".\Makefile2"
+			>
 		</File>
 		<File
-			RelativePath=".\zdoom.lst">
+			RelativePath=".\zdoom.lst"
+			>
 		</File>
 	</Files>
 	<Globals>

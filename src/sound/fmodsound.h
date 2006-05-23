@@ -26,8 +26,8 @@ public:
 	SoundTrackerModule *OpenModule (const char *file, int offset, int length);
 
 	// Starts a sound in a particular sound channel.
-	long StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping);
-	long StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3]);
+	long StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping, bool pauseable);
+	long StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3], bool pauseable);
 
 	// Stops a sound channel.
 	void StopSound (long handle);
@@ -60,6 +60,7 @@ private:
 		long channelID;
 		bool bIsLooping;
 		bool bIs3D;
+		bool bIsPauseable;
 		unsigned int lastPos;
 	} *ChannelMap;
 

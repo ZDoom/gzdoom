@@ -1110,15 +1110,15 @@ void A_SpawnItem(AActor * self)
 	}
 
 	AActor * mo = Spawn( missile, 
-					self->x + distance*finecosine[self->angle>>ANGLETOFINESHIFT], 
-					self->y + distance*finesine[self->angle>>ANGLETOFINESHIFT], 
+					self->x + FixedMul(distance, finecosine[self->angle>>ANGLETOFINESHIFT]), 
+					self->y + FixedMul(distance, finesine[self->angle>>ANGLETOFINESHIFT]), 
 					self->z - self->floorclip + zheight);
 
-	mo->angle=self->angle;
 	if (mo) 
 	{
 		AActor * originator = self;
 
+		mo->angle=self->angle;
 		while (originator && isMissile(originator)) originator = originator->target;
 
 		if (mo->flags3&MF3_ISMONSTER)

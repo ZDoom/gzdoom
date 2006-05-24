@@ -1,3 +1,9 @@
+May 24, 2006 (Changes by Graf Zahl)
+- Fixed: A_SpawnItem performed an integer multiplication with fixed point
+  values to calculate the spawn position.
+- Fixed: A_SpawnItem tried to set the spawned actor's angle before checking
+  the validity of the returned pointer.
+
 May 23, 2006
 - Added missing linker dependencies for Visual C++ 2005 Express Edition and
   fixed building of the assembly files when the source is located in a path

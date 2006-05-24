@@ -3,7 +3,7 @@ CXX ?= g++
 CC ?= gcc
 NASM ?= nasm
 ifndef DEBUG
-CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer
+CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer -ffunction-sections -fvtable-gc -fno-rtti
 else
 CFLAGS ?= -pipe -Wall -Wno-unused
 endif
@@ -38,7 +38,7 @@ ZDOOMDEBUG = zdoomd
 ifndef DEBUG
   OBJDIR = $(RELEASEOBJ)
   CFLAGS += -DNDEBUG
-  LDFLAGS += -Wl,-Map=$(ZDOOM).map
+  LDFLAGS += -s -Wl,--gc-sections,-Map=$(ZDOOM).map
   ZDOOMBIN = $(ZDOOM)
 else
   OBJDIR = $(DEBUGOBJ)
@@ -81,8 +81,8 @@ ifndef RESTART
 	$(OBJDIR)/autozend.o -o $(ZDOOMBIN)
 endif
 
-# include any of the dep files that already exist
-$(foreach dep,$(DEPS),$(if $(wildcard $(dep)),$(eval include $(dep))))
+# include any of the dep files that already exist if we aren't making clean
+$(if !$(findstring clean,$(MAKECMDGOALS)),$(foreach dep,$(DEPS),$(if $(wildcard $(dep)),$(eval include $(dep)))))
 
 # textually substitute in the _dep_ and the _src_ it depends on to create rules
 # for creating dependency files without any existing dependency files

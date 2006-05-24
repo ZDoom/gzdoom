@@ -52,10 +52,10 @@ do ifopt debug
   TARGET = "${DEBUGTARGET}"
 else
   OBJDIR = "${RELEASEOBJDIR}"
-  CFLAGS += "-march=${ARCH_TYPE} -mtune=${TUNE_TYPE} -Wall -Wno-unused -O${OPTLEVEL} -fomit-frame-pointer"
+  CFLAGS += "-march=${ARCH_TYPE} -mtune=${TUNE_TYPE} -Wall -Wno-unused -O${OPTLEVEL} -fomit-frame-pointer -ffunction-sections -fvtable-gc -fno-rtti"
   CPPFLAGS += " -DNDEBUG"
   CXXFLAGS = "${CFLAGS}"
-  LDFLAGS += " -Wl,-Map=zdoomgcc.map"
+  LDFLAGS += " -s -Wl,--gc-sections,-Map=zdoomgcc.map"
   TARGET = "${RELEASETARGET}"
 done
 
@@ -446,12 +446,12 @@ if "${EVILCLEAN}"="0" ifexist zdoom.pk3  exit 0
 
 CFLAGS = '-Os -Wall -fomit-frame-pointer'
 
-LDFLAGS = '-lz'
+LDFLAGS = '-s -lz'
 src_paths  tools/makewad
 ${COMPILER} makewad.c ioapi.c zip.c 
 ${LINK} tools/makewad/makewad
 
-LDFLAGS = ''
+LDFLAGS = '-s'
 src_paths  tools/xlatcc
 ${COMPILER} xlat-parse.tab.c gen.c
 ${LINK} tools/xlatcc/xlatcc

@@ -71,10 +71,10 @@ void STACK_ARGS DCanvas::DrawChar (int normalcolor, int x, int y, byte character
 	if (NULL != (pic = Font->GetChar (character, &dummy)))
 	{
 		const BYTE *range = Font->GetColorTranslation ((EColorRange)normalcolor);
-		TagMoreData taglist;
-		va_start (taglist.tagdata, character);
+		va_list taglist;
+		va_start (taglist, character);
 		DrawTexture (pic, x, y, DTA_Translation, range, TAG_MORE, &taglist);
-		va_end (taglist.tagdata);
+		va_end (taglist);
 	}
 }
 
@@ -125,7 +125,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 
 	while (tag != TAG_DONE)
 	{
-		TagMoreData * more_p;
+		va_list *more_p;
 		DWORD data;
 		void *ptrval;
 
@@ -137,9 +137,13 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 			break;
 
 		case TAG_MORE:
-			more_p = va_arg (tags, TagMoreData*);
+			more_p = va_arg (tags, va_list*);
 			va_end (tags);
-			tags = more_p->tagdata;
+#ifdef __GNUC__
+			__va_copy (tags, *more_p);
+#else
+			tags = *more_p;
+#endif
 			break;
 
 		case DTA_DestWidth:
@@ -226,10 +230,10 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 
 		if (NULL != (pic = Font->GetChar (c, &w)))
 		{
-			TagMoreData taglist;
-			va_start (taglist.tagdata, string);
+			va_list taglist;
+			va_start (taglist, string);
 			DrawTexture (pic, cx, cy, DTA_Translation, range, TAG_MORE, &taglist);
-			va_end (taglist.tagdata);
+			va_end (taglist);
 		}
 		cx += (w + kerning) * scalex;
 	}

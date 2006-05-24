@@ -61,19 +61,13 @@ class FTexture;
 //     DWORD ti_Data;
 // };
 
-#define TAG_DONE	(0L) /* Used to indicate the end of the Tag list */
-#define TAG_END		(0L) /* Ditto									*/
-#define TAG_IGNORE	(1L) /* Ignore this Tag							*/
-#define TAG_MORE	(2L) /* Ends this list and continues with the	*/
+#define TAG_DONE	(0)  /* Used to indicate the end of the Tag list */
+#define TAG_END		(0)  /* Ditto									*/
+#define TAG_IGNORE	(1)  /* Ignore this Tag							*/
+#define TAG_MORE	(2)  /* Ends this list and continues with the	*/
 						 /* list pointed to in ti_Data 				*/
-struct TagMoreData
-{
-	va_list tagdata;
-};
 
-//#define TAG_SKIP	(3L) /* Skip this and the next ti_Data Tags		*/
-
-#define TAG_USER	((DWORD)(1L<<31))
+#define TAG_USER	((DWORD)(1u<<31))
 
 enum
 {

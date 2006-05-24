@@ -1,3 +1,9 @@
+May 24, 2006
+- Disabled RTTI generation and enabled function-level linking in the VC 2005
+  zdoom project.
+- Fixed: TAG_MORE now uses __va_copy to copy the taglist when building with
+  GCC, so that should let it build under x86-64 and any other GCC targets.
+
 May 24, 2006 (Changes by Graf Zahl)
 - Fixed: A_SpawnItem performed an integer multiplication with fixed point
   values to calculate the spawn position.

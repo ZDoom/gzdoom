@@ -1,3 +1,8 @@
+May 23, 2006
+- Added missing linker dependencies for Visual C++ 2005 Express Edition and
+  fixed building of the assembly files when the source is located in a path
+  with spaces.
+
 May 22, 2006
 - Fixed: The new sound pausing on menu open interrupted Strife conversations.
 - Did some very preliminary support for x64 compiling.

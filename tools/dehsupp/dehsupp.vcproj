@@ -47,7 +47,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;__STDC__=0"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -70,84 +70,6 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/dehsupp.pdb"
 				SubSystem="1"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)\$(TargetFileName)&quot;"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
-			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4996"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/dehsupp.exe"
-				LinkIncremental="1"
-				GenerateDebugInformation="true"
-				SubSystem="1"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -206,7 +128,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -230,6 +152,85 @@
 				ProgramDatabaseFile="$(OutDir)/dehsupp.pdb"
 				SubSystem="1"
 				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)\$(TargetFileName)&quot;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="1"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				RuntimeLibrary="2"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4996"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				OutputFile="$(OutDir)/dehsupp.exe"
+				LinkIncremental="1"
+				GenerateDebugInformation="true"
+				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -283,8 +284,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="1"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -341,41 +343,29 @@
 	</References>
 	<Files>
 		<File
-			RelativePath=".\parse.tab.c"
+			RelativePath=".\dehsupp.c"
 			>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions="__STDC__=0"
-					CompileAs="1"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions="__STDC__=0"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|x64"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions="__STDC__=0"
-				/>
-			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\dehsupp.h"
+			>
+		</File>
+		<File
+			RelativePath=".\parse.c"
+			>
 			<FileConfiguration
 				Name="Release|x64"
 				>
 				<Tool
 					Name="VCCLCompilerTool"
-					PreprocessorDefinitions="__STDC__=0"
+					ObjectFile="$(IntDir)\$(InputName)1.obj"
+					XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 				/>
 			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\parse.h"
+			>
 		</File>
 		<File
 			RelativePath=".\parse.y"
@@ -385,8 +375,9 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="bison parse.y&#x0D;&#x0A;"
-					Outputs="parse.tab.c"
+					Description="Creating parse.c from parse.y"
+					CommandLine="..\lemon\lemon.exe -m -s &quot;$(InputFileName)&quot;"
+					Outputs="$(InputDir)parse.c"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -394,8 +385,77 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="bison parse.y&#x0D;&#x0A;"
-					Outputs="parse.tab.c"
+					Description="Creating parse.c from parse.y"
+					CommandLine="..\lemon\lemon.exe -m -s &quot;$(InputFileName)&quot;"
+					Outputs="$(InputDir)parse.c"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Creating parse.c from parse.y"
+					CommandLine="..\lemon\lemon.exe -s &quot;$(InputFileName)&quot;"
+					Outputs="$(InputDir)parse.c"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Creating parse.c from parse.y"
+					CommandLine="..\lemon\lemon.exe -m -s &quot;$(InputFileName)&quot;"
+					Outputs="$(InputDir)parse.c"
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\scanner.c"
+			>
+		</File>
+		<File
+			RelativePath=".\scanner.re"
+			>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Creating scanner.c from scanner.re"
+					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;"
+					Outputs="$(InputDir)scanner.c"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Creating scanner.c from scanner.re"
+					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;"
+					Outputs="$(InputDir)scanner.c"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Creating scanner.c from scanner.re"
+					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;"
+					Outputs="$(InputDir)scanner.c"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|x64"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Creating scanner.c from scanner.re"
+					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;"
+					Outputs="$(InputDir)scanner.c"
 				/>
 			</FileConfiguration>
 		</File>

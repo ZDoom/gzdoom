@@ -1,7 +1,7 @@
-/* A Bison parser, made by GNU Bison 1.875.  */
+/* A Bison parser, made by GNU Bison 2.1.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, when this file is copied by Bison into a
    Bison output file, you may use that output file without restriction.
@@ -34,30 +34,39 @@
      ID = 260,
      CODE = 261,
      RANGE = 262,
-     STRING = 263
+     STRING = 263,
+     CONFIG = 264,
+     VALUE = 265,
+     NUMBER = 266
    };
 #endif
+/* Tokens.  */
 #define CLOSESIZE 258
 #define CLOSE 259
 #define ID 260
 #define CODE 261
 #define RANGE 262
 #define STRING 263
+#define CONFIG 264
+#define VALUE 265
+#define NUMBER 266
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 53 "parser.y"
+#line 58 "parser.y"
 typedef union YYSTYPE {
-    Symbol	*symbol;
-    RegExp	*regexp;
-    Token	*token;
-    char	op;
-    ExtOp	extop;
+    re2c::Symbol	*symbol;
+    re2c::RegExp	*regexp;
+    re2c::Token 	*token;
+    char        	op;
+    int         	number;
+    re2c::ExtOp 	extop;
+    re2c::Str   	*str;
 } YYSTYPE;
-/* Line 1240 of yacc.c.  */
-#line 60 "y.tab.h"
+/* Line 1447 of yacc.c.  */
+#line 70 "y.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

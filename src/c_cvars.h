@@ -149,34 +149,45 @@ private:
 	static bool m_UseCallback;
 	static bool m_DoNoSet;
 
-	// Writes all cvars that could effect demo sync to *demo_p. These are
-	// cvars that have either CVAR_SERVERINFO or CVAR_DEMOSAVE set.
-	friend void C_WriteCVars (byte **demo_p, DWORD filter, bool compact=false);
-
-	// Read all cvars from *demo_p and set them appropriately.
+	friend void C_WriteCVars (byte **demo_p, DWORD filter, bool compact);
 	friend void C_ReadCVars (byte **demo_p);
-
-	// Backup demo cvars. Called before a demo starts playing to save all
-	// cvars the demo might change.
 	friend void C_BackupCVars (void);
-
-	// Finds a named cvar
 	friend FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 	friend FBaseCVar *FindCVarSub (const char *var_name, int namelen);
-
-	// Called from G_InitNew()
 	friend void UnlatchCVars (void);
-
-	// archive cvars to FILE f
 	friend void C_ArchiveCVars (FConfigFile *f, int type);
-
-	// initialize cvars to default values after they are created
 	friend void C_SetCVarsToDefaults (void);
-
 	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter);
-
 	friend void C_DeinitConsole();
 };
+
+// Writes all cvars that could effect demo sync to *demo_p. These are
+// cvars that have either CVAR_SERVERINFO or CVAR_DEMOSAVE set.
+void C_WriteCVars (byte **demo_p, DWORD filter, bool compact=false);
+
+// Read all cvars from *demo_p and set them appropriately.
+void C_ReadCVars (byte **demo_p);
+
+// Backup demo cvars. Called before a demo starts playing to save all
+// cvars the demo might change.
+void C_BackupCVars (void);
+
+// Finds a named cvar
+FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
+FBaseCVar *FindCVarSub (const char *var_name, int namelen);
+
+// Called from G_InitNew()
+void UnlatchCVars (void);
+
+// archive cvars to FILE f
+void C_ArchiveCVars (FConfigFile *f, int type);
+
+// initialize cvars to default values after they are created
+void C_SetCVarsToDefaults (void);
+
+void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter);
+
+void C_DeinitConsole();
 
 class FBoolCVar : public FBaseCVar
 {

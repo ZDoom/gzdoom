@@ -444,6 +444,8 @@ void mainCRTStartup(void)
 	DWORD nread;
 	int cc = 0;
 	int yy = 0;
+	int gcc = 0;
+	int lemon = 0;
 	CONSOLE_SCREEN_BUFFER_INFO bufferInfo;
 
 	gExitStatus = 95;
@@ -465,14 +467,25 @@ void mainCRTStartup(void)
 	lstrcpy(gAction, "Running ");
 	lstrcpyn(gAction+8, ext, extlen+1);
 
-	if (extlen == 2 && lstrcmpi(gAction+8, "ar") == CSTR_EQUAL)
+	if (extlen == 2 && lstrcmpi(gAction+8, "ar") == 0)
 	{
 		SetTarget(&gAr, arg, arglen);
+	}
+	else if((extlen == 2 &&
+		(lstrcmpi(gAction+8, "cc") == 0 ||
+		 lstrcmpi(gAction+8, "cl") == 0)) ||
+		(extlen == 3 && lstrcmpi(gAction+8, "gcc") == 0))
+	{
+		gcc = 1;
+	}
+	else if(extlen == 5 && lstrcmpi(gAction+8, "lemon") == 0)
+	{
+		lemon = 1;
 	}
 
 	while(StepCmdLine(&cmdline, &arg, &arglen))
 	{
-		if(arglen == 2 && arg[0] == '-' && arg[1] == 'o')
+		if(gcc && arglen == 2 && arg[0] == '-' && arg[1] == 'o')
 		{
 			if(StepCmdLine(&cmdline, &arg, &arglen))
 			{
@@ -496,6 +509,16 @@ void mainCRTStartup(void)
 			SetTarget(&gTarget, arg, arglen);
 		}
 		else if(ext[0] == '.' && ext[1] == 'y')
+		{
+			if(lemon)
+			{
+				lstrcpy(gAction, "Generating");
+				SetTarget(&gTarget, arg, arglen);
+				gTarget[arglen-1] = 'c';
+			}
+			yy++;
+		}
+		else if(ext[0] == '.' && ext[1] == 'r' && ext[2] == 'e')
 		{
 			yy++;
 		}

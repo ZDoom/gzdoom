@@ -1,8 +1,8 @@
-/* $Id: main.cc,v 1.10 2004/05/13 03:47:52 nuffer Exp $ */
+/* $Id: main.cc,v 1.53 2006/05/14 13:38:26 helly Exp $ */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif _WIN32
-#include "configwin.h"
+#elif defined(_WIN32)
+#include "config_w32.h"
 #endif
 
 #include <fstream>
@@ -15,89 +15,234 @@
 #include "dfa.h"
 #include "mbo_getopt.h"
 
-char *fileName = 0;
-char *outputFileName = 0;
-bool sFlag = false;
+namespace re2c
+{
+
+file_info sourceFileInfo;
+file_info outputFileInfo;
+
 bool bFlag = false;
-unsigned int oline = 1;
+bool dFlag = false;
+bool eFlag = false;
+bool fFlag = false;
+bool gFlag = false;
+bool iFlag = false;
+bool sFlag = false;
+bool wFlag = false;
+
+bool bSinglePass = false;
+bool bLastPass   = false;
+
+bool bUsedYYAccept  = false;
+bool bUsedYYMaxFill = false;
+bool bUsedYYMarker  = true;
+
+bool bUseStartLabel= false;
+bool bUseStateNext = false;
+bool bUseYYFill    = true;
+
+std::string startLabelName;
+uint maxFill = 1;
+uint next_label = 0;
+uint cGotoThreshold = 9;
+
+uint topIndent = 0;
+std::string indString("\t");
+bool yybmHexTable = false;
+bool bUseStateAbort = false;
+bool bWroteGetState = false;
+
+uint nRealChars = 256;
+
+uint next_fill_index = 0;
+uint last_fill_index = 0;
+std::set<uint> vUsedLabels;
 
 using namespace std;
 
 static char *opt_arg = NULL;
 static int opt_ind = 1;
 
-static const mbo_opt_struct OPTIONS[] = {
-	{'?', 0, "help"},
-	{'b', 0, "bit-vectors"},
-	{'e', 0, "ecb"},
-	{'h', 0, "help"},
-	{'s', 0, "nested-ifs"},
-	{'o', 1, "output"},
-	{'v', 0, "version"}
+static const mbo_opt_struct OPTIONS[] =
+{
+	mbo_opt_struct('?', 0, "help"),
+	mbo_opt_struct('b', 0, "bit-vectors"),
+	mbo_opt_struct('d', 0, "debug-output"),
+	mbo_opt_struct('e', 0, "ecb"),
+	mbo_opt_struct('f', 0, "storable-state"),
+	mbo_opt_struct('g', 0, "computed-gotos"),
+	mbo_opt_struct('h', 0, "help"),
+	mbo_opt_struct('i', 0, "no-debug-info"),
+	mbo_opt_struct('o', 1, "output"),
+	mbo_opt_struct('s', 0, "nested-ifs"),
+	mbo_opt_struct('v', 0, "version"),
+	mbo_opt_struct('V', 0, "vernum"),
+	mbo_opt_struct('w', 0, "wide-chars"),      
+	mbo_opt_struct('1', 0, "two-pass"),
+	mbo_opt_struct('-', 0, NULL) /* end of args */
 };
 
 static void usage()
 {
-	cerr << "usage: re2c [-esbvh] file\n"
-		"\n"
-		"-? -h   --help          Display this info.\n"
-		"\n"
-		"-b      --bit-vectors   Implies -s. Use bit vectors as well in the attempt to\n"
-		"                        coax better code out of the compiler. Most useful for\n"
-		"                        specifications with more than a few keywords (e.g. for\n"
-		"                        most programming languages).\n"
-		"\n"
-		"-e      --ecb           Cross-compile from an ASCII platform to\n"
-		"                        an EBCDIC one.\n"
-		"\n"
-		"-s      --nested-ifs    Generate nested ifs for some switches. Many compilers\n"
-		"                        need this assist to generate better code.\n"
-		"\n"
-		"-o      --output=output Specify the output file instead of stdout\n"
-		"\n"
-		"-v      --version       Show version information.\n";
+	cerr << "usage: re2c [-bdefghisvVw1] [-o file] file\n"
+	"\n"
+	"-? -h  --help           Display this info.\n"
+	"\n"
+	"-b     --bit-vectors    Implies -s. Use bit vectors as well in the attempt to\n"
+	"                        coax better code out of the compiler. Most useful for\n"
+	"                        specifications with more than a few keywords (e.g. for\n"
+	"                        most programming languages).\n"
+	"\n"
+	"-d     --debug-output   Creates a parser that dumps information during\n"
+	"                        about the current position and in which state the\n"
+	"                        parser is.\n"
+	"\n"
+	"-e     --ecb            Cross-compile from an ASCII platform to\n"
+	"                        an EBCDIC one.\n"
+	"\n"
+	"-f     --storable-state Generate a scanner that supports storable states.\n"
+	"\n"
+	"-g     --computed-gotos Implies -b. Generate computed goto code (only useable\n"
+	"                        with gcc).\n"
+	"\n"
+	"-i     --no-debug-info  Do not generate '#line' info (usefull for versioning).\n"
+	"\n"
+	"-o     --output=output  Specify the output file instead of stdout\n"
+	"                        This cannot be used together with -e switch.\n"
+	"\n"
+	"-s     --nested-ifs     Generate nested ifs for some switches. Many compilers\n"
+	"                        need this assist to generate better code.\n"
+	"\n"
+	"-v     --version        Show version information.\n"
+	"-V     --vernum         Show version as one number.\n"
+	"\n"
+	"-w     --wide-chars     Create a parser that supports wide chars (UCS-2). This\n"
+	"                        implies -s and cannot be used together with -e switch.\n"
+	"\n"
+	"-1     --single-pass    Force single pass generation, this cannot be combined\n"
+	"                        with -f and disables YYMAXFILL generation prior to last\n"
+	"                        re2c block.\n"
+	;
 }
+
+} // end namespace re2c
+
+using namespace re2c;
 
 int main(int argc, char *argv[])
 {
 	int c;
-	fileName = NULL;
+	const char *sourceFileName = 0;
+	const char *outputFileName = 0;
 
-	if (argc == 1) {
+	if (argc == 1)
+	{
 		usage();
 		return 2;
 	}
 
-	while ((c = mbo_getopt(argc, argv, OPTIONS, &opt_arg, &opt_ind, 0))!=-1) {
-		switch (c) {
+	while ((c = mbo_getopt(argc, argv, OPTIONS, &opt_arg, &opt_ind, 0)) != -1)
+	{
+		switch (c)
+		{
+
 			case 'b':
-				sFlag = true;
-				bFlag = true;
-				break;
+			bFlag = true;
+			sFlag = true;
+			break;
+
 			case 'e':
-				xlat = asc2ebc;
-				talx = ebc2asc;
-				break;
-			case 's':
-				sFlag = true;
-				break;
+			xlat = asc2ebc;
+			talx = ebc2asc;
+			eFlag = true;
+			break;
+
+			case 'd':
+			dFlag = true;
+			break;
+
+			case 'f':
+			fFlag = true;
+			if (bSinglePass) {
+				std::cerr << "re2c: error: cannot combine -1 and -f switch\n";
+				return 1;
+			}
+			break;
+
+			case 'g':
+			gFlag = true;
+			bFlag = true;
+			sFlag = true;
+			break;
+
+			case 'i':
+			iFlag = true;
+			break;
+
 			case 'o':
-				outputFileName = opt_arg;
-				break;
+			outputFileName = opt_arg;
+			break;
+
+			case 's':
+			sFlag = true;
+			break;
+			
+			case '1':
+			if (bFlag) {
+				std::cerr << "re2c: error: cannot combine -1 and -f switch\n";
+				return 1;
+			}
+			bSinglePass = true;
+			break;
+
 			case 'v':
-				cerr << "re2c " << PACKAGE_VERSION << "\n";
+			cout << "re2c " << PACKAGE_VERSION << "\n";
+			return 2;
+
+			case 'V': {
+				string vernum(PACKAGE_VERSION);
+
+				if (vernum[1] == '.')
+				{
+					vernum.insert(0, "0");
+				}
+				vernum.erase(2, 1);
+				if (vernum[3] == '.')
+				{
+					vernum.insert(2, "0");
+				}
+				vernum.erase(4, 1);
+				if (vernum.length() < 6 || vernum[5] < '0' || vernum[5] > '9')
+				{
+					vernum.insert(4, "0");
+				}
+				vernum.resize(6);
+				cout << vernum << endl;
 				return 2;
+			}
+			
+			case 'w':
+			nRealChars = (1<<16);
+			sFlag = true;
+			wFlag = true;
+			break;
+	  
 			case 'h':
 			case '?':
 			default:
-				usage();
-				return 2;
+			usage();
+			return 2;
 		}
 	}
 
-	if (argc == opt_ind + 1)
+	if (wFlag && eFlag)
 	{
-		fileName = argv[opt_ind];
+		usage();
+		return 2;
+	}
+	else if (argc == opt_ind + 1)
+	{
+		sourceFileName = argv[opt_ind];
 	}
 	else
 	{
@@ -105,45 +250,65 @@ int main(int argc, char *argv[])
 		return 2;
 	}
 
-	// set up the input stream
-	istream* input = 0;
-	ifstream inputFile;
-	if (fileName[0] == '-' && fileName[1] == '\0')
+	// set up the source stream
+	re2c::ifstream_lc source;
+
+	if (sourceFileName[0] == '-' && sourceFileName[1] == '\0')
 	{
-		fileName = "<stdin>";
-		input = &cin;
-	}
-	else
-	{
-		inputFile.open(fileName);
-		if (!inputFile)
+		if (fFlag)
 		{
-			cerr << "can't open " << fileName << "\n";
+			std::cerr << "re2c: error: multiple /*!re2c stdin is not acceptable when -f is specified\n";
 			return 1;
 		}
-		input = &inputFile;
+		sourceFileName = "<stdin>";
+		source.open(stdin);
+	}
+	else if (!source.open(sourceFileName).is_open())
+	{
+		cerr << "re2c: error: cannot open " << sourceFileName << "\n";
+		return 1;
 	}
 
 	// set up the output stream
-	ostream* output = 0;
-	ofstream outputFile;
-	if (outputFileName == 0 || (fileName[0] == '-' && fileName[1] == '\0'))
+	re2c::ofstream_lc output;
+
+	if (outputFileName == 0 || (sourceFileName[0] == '-' && sourceFileName[1] == '\0'))
 	{
 		outputFileName = "<stdout>";
-		output = &cout;
+		output.open(stdout);
 	}
-	else
+	else if (!output.open(outputFileName).is_open())
 	{
-		outputFile.open(outputFileName);
-		if (!outputFile)
+		cerr << "re2c: error: cannot open " << outputFileName << "\n";
+		return 1;
+	}
+	Scanner scanner(sourceFileName, source, output);
+	sourceFileInfo = file_info(sourceFileName, &scanner);
+	outputFileInfo = file_info(outputFileName, &output);
+
+	if (!bSinglePass)
+	{
+		bUsedYYMarker = false;
+
+		re2c::ifstream_lc null_source;
+		
+		if (!null_source.open(sourceFileName).is_open())
 		{
-			cerr << "can't open " << outputFileName << "\n";
+			cerr << "re2c: error: cannot re-open " << sourceFileName << "\n";
 			return 1;
 		}
-		output = &outputFile;
+
+		null_stream  null_dev;
+		Scanner null_scanner(sourceFileName, null_source, null_dev);
+		parse(null_scanner, null_dev);
+		next_label = 0;
+		next_fill_index = 0;
+		Symbol::ClearTable();
+		bWroteGetState = false;
+		bUsedYYMaxFill = false;
 	}
 
-	parse(*input, *output);
+	bLastPass = true;
+	parse(scanner, output);
 	return 0;
-
 }

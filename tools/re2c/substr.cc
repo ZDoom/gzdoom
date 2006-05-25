@@ -1,37 +1,62 @@
-/* $Id: substr.cc,v 1.4 2004/05/13 02:58:18 nuffer Exp $ */
+/* $Id: substr.cc,v 1.11 2006/02/26 20:30:54 helly Exp $ */
 #include <string.h>
+#include <stdlib.h>
 #include "substr.h"
 #include "globals.h"
 
-void SubStr::out(std::ostream& o) const {
-    o.write(str, len);
-    for (size_t i = 0; i < (size_t)len; ++i)
-    {
-    	if (str[i] == '\n')
-	    ++oline;
-    }
+#ifndef HAVE_STRNDUP
+
+char *strndup(const char *str, size_t len)
+{
+	char * ret = (char*)malloc(len + 1);
+	
+	memcpy(ret, str, len);
+	ret[len] = '\0';
+	return ret;
 }
 
-bool operator==(const SubStr &s1, const SubStr &s2){
-    return (bool) (s1.len == s2.len && memcmp(s1.str, s2.str, s1.len) == 0);
+#endif
+
+namespace re2c
+{
+
+void SubStr::out(std::ostream& o) const
+{
+	o.write(str, len);
 }
 
-Str::Str(const SubStr& s) : SubStr(new char[s.len], s.len) {
-    memcpy(str, s.str, s.len);
+bool operator==(const SubStr &s1, const SubStr &s2)
+{
+	return (bool) (s1.len == s2.len && memcmp(s1.str, s2.str, s1.len) == 0);
 }
 
-Str::Str(Str& s) : SubStr(s.str, s.len) {
-    s.str = NULL;
-    s.len = 0;
+Str::Str(const SubStr& s)
+	: SubStr(strndup(s.str, s.len), s.len)
+{
+	;
 }
 
-Str::Str() : SubStr((char*) NULL, 0) {
-    ;
+Str::Str(Str& s)
+	: SubStr(s.str, s.len)
+{
+	s.str = NULL;
+	s.len = 0;
+}
+
+Str::Str()
+	: SubStr((char*) NULL, 0)
+{
+	;
 }
 
 
-Str::~Str() {
-    delete str;
-    str = (char*)-1;
-    len = (uint)-1;
+Str::~Str()
+{
+	if (str) {
+		free((void*)str);
+	}
+	str = (char*) - 1;
+	len = (uint) - 1;
 }
+
+} // end namespace re2c

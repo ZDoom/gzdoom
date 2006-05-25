@@ -1,4 +1,9 @@
 May 24, 2006
+- Modified ccdv-win32 to show "Generating X" messages when running lemon and
+  re2c.
+- Updated lemon and re2c to the latest versions and ported dehsupp to use them
+  for code generation. (Xlatcc is next.)
+- Added function level linking for Makefile.mingw.
 - Disabled RTTI generation and enabled function-level linking in the VC 2005
   zdoom project.
 - Fixed: TAG_MORE now uses __va_copy to copy the taglist when building with

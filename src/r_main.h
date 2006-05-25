@@ -246,6 +246,14 @@ private:
 	static FActiveInterpolation *curiposhash[INTERPOLATION_BUCKETS];
 };
 
+void updateinterpolations();
+void setinterpolation(EInterpType, void *interptr);
+void stopinterpolation(EInterpType, void *interptr);
+void dointerpolations(fixed_t smoothratio);
+void restoreinterpolations();
+void clearinterpolations();
+void SerializeInterpolations(FArchive &arc);
+
 extern void R_FreePastViewers ();
 
 extern int stacked_extralight;

@@ -93,6 +93,7 @@ void ReportOutput(/* struct lemon * */);
 void ReportTable(/* struct lemon * */);
 void ReportHeader(/* struct lemon * */);
 void CompressTables(/* struct lemon * */);
+void ResortStates(/* struct lemon * */);
 
 /********** From the file "set.h" ****************************************/
 void  SetSize(/* int N */);             /* All sets will be of size N */
@@ -118,7 +119,8 @@ struct symbol {
   int index;               /* Index number for this symbol */
   enum {
     TERMINAL,
-    NONTERMINAL
+    NONTERMINAL,
+    MULTITERMINAL
   } type;                  /* Symbols are all either TERMINALS or NTs */
   struct rule *rule;       /* Linked list of rules of this (if an NT) */
   struct symbol *fallback; /* fallback token in case this token doesn't parse */
@@ -139,6 +141,9 @@ struct symbol {
   int dtnum;               /* The data type number.  In the parser, the value
                            ** stack is a union.  The .yy%d element of this
                            ** union is the correct data type for this object */
+  /* The following fields are used by MULTITERMINALs only */
+  int nsubsym;             /* Number of constituent symbols in the MULTI */
+  struct symbol **subsym;  /* Array of constituent symbols */
 };
 
 /* Each production rule in the grammar is stored in the following
@@ -205,7 +210,7 @@ struct action {
 struct state {
   struct config *bp;       /* The basis configurations for this state */
   struct config *cfp;      /* All configurations in this set */
-  int index;               /* Sequencial number for this state */
+  int statenum;            /* Sequencial number for this state */
   struct action *ap;       /* Array of actions for this state */
   int nTknAct, nNtAct;     /* Number of actions on terminals and nonterminals */
   int iTknOfst, iNtOfst;   /* yy_action[] offset for terminals and nonterms */
@@ -583,11 +588,18 @@ struct lemon *xp;
   struct rule *rp;
   for(rp=xp->rule; rp; rp=rp->next){
     if( rp->precsym==0 ){
-      int i;
-      for(i=0; i<rp->nrhs; i++){
-        if( rp->rhs[i]->prec>=0 ){
+      int i, j;
+      for(i=0; i<rp->nrhs && rp->precsym==0; i++){
+        struct symbol *sp = rp->rhs[i];
+        if( sp->type==MULTITERMINAL ){
+          for(j=0; j<sp->nsubsym; j++){
+            if( sp->subsym[j]->prec>=0 ){
+              rp->precsym = sp->subsym[j];
+              break;
+            }
+          }
+        }else if( sp->prec>=0 ){
           rp->precsym = rp->rhs[i];
-          break;
 	}
       }
     }
@@ -603,7 +615,7 @@ struct lemon *xp;
 void FindFirstSets(lemp)
 struct lemon *lemp;
 {
-  int i;
+  int i, j;
   struct rule *rp;
   int progress;
 
@@ -620,7 +632,8 @@ struct lemon *lemp;
     for(rp=lemp->rule; rp; rp=rp->next){
       if( rp->lhs->lambda ) continue;
       for(i=0; i<rp->nrhs; i++){
-         if( rp->rhs[i]->lambda==B_FALSE ) break;
+         struct symbol *sp = rp->rhs[i];
+         if( sp->type!=TERMINAL || sp->lambda==B_FALSE ) break;
       }
       if( i==rp->nrhs ){
         rp->lhs->lambda = B_TRUE;
@@ -639,6 +652,11 @@ struct lemon *lemp;
         s2 = rp->rhs[i];
         if( s2->type==TERMINAL ){
           progress += SetAdd(s1->firstset,s2->index);
+          break;
+        }else if( s2->type==MULTITERMINAL ){
+          for(j=0; j<s2->nsubsym; j++){
+            progress += SetAdd(s1->firstset,s2->subsym[j]->index);
+          }
           break;
 	}else if( s1==s2 ){
           if( s1->lambda==B_FALSE ) break;
@@ -686,7 +704,7 @@ symbol instead.",lemp->start,lemp->rule->lhs->name);
   for(rp=lemp->rule; rp; rp=rp->next){
     int i;
     for(i=0; i<rp->nrhs; i++){
-      if( rp->rhs[i]==sp ){
+      if( rp->rhs[i]==sp ){   /* FIX ME:  Deal with multiterminals */
         ErrorMsg(lemp->filename,0,
 "The start symbol \"%s\" occurs on the \
 right-hand side of a rule. This will result in a parser which \
@@ -750,12 +768,30 @@ struct lemon *lemp;
     MemoryCheck(stp);
     stp->bp = bp;                /* Remember the configuration basis */
     stp->cfp = cfp;              /* Remember the configuration closure */
-    stp->index = lemp->nstate++; /* Every state gets a sequence number */
+    stp->statenum = lemp->nstate++; /* Every state gets a sequence number */
     stp->ap = 0;                 /* No actions, yet. */
     State_insert(stp,stp->bp);   /* Add to the state table */
     buildshifts(lemp,stp);       /* Recursively compute successor states */
   }
   return stp;
+}
+
+/*
+** Return true if two symbols are the same.
+*/
+int same_symbol(a,b)
+struct symbol *a;
+struct symbol *b;
+{
+  int i;
+  if( a==b ) return 1;
+  if( a->type!=MULTITERMINAL ) return 0;
+  if( b->type!=MULTITERMINAL ) return 0;
+  if( a->nsubsym!=b->nsubsym ) return 0;
+  for(i=0; i<a->nsubsym; i++){
+    if( a->subsym[i]!=b->subsym[i] ) return 0;
+  }
+  return 1;
 }
 
 /* Construct all successor states to the given state.  A "successor"
@@ -790,7 +826,7 @@ struct state *stp;     /* The state from which successors are computed */
       if( bcfp->status==COMPLETE ) continue;    /* Already used */
       if( bcfp->dot>=bcfp->rp->nrhs ) continue; /* Can't shift this one */
       bsp = bcfp->rp->rhs[bcfp->dot];           /* Get symbol after dot */
-      if( bsp!=sp ) continue;                   /* Must be same as for "cfp" */
+      if( !same_symbol(bsp,sp) ) continue;      /* Must be same as for "cfp" */
       bcfp->status = COMPLETE;                  /* Mark this config as used */
       new = Configlist_addbasis(bcfp->rp,bcfp->dot+1);
       Plink_add(&new->bplp,bcfp);
@@ -802,7 +838,14 @@ struct state *stp;     /* The state from which successors are computed */
 
     /* The state "newstp" is reached from the state "stp" by a shift action
     ** on the symbol "sp" */
-    Action_add(&stp->ap,SHIFT,sp,(char *)newstp);
+    if( sp->type==MULTITERMINAL ){
+      int i;
+      for(i=0; i<sp->nsubsym; i++){
+        Action_add(&stp->ap,SHIFT,sp->subsym[i],(char*)newstp);
+      }
+    }else{
+      Action_add(&stp->ap,SHIFT,sp,(char *)newstp);
+    }
   }
 }
 
@@ -1165,6 +1208,12 @@ struct lemon *lemp;
           if( xsp->type==TERMINAL ){
             SetAdd(newcfp->fws,xsp->index);
             break;
+          }else if( xsp->type==MULTITERMINAL ){
+            int k;
+            for(k=0; k<xsp->nsubsym; k++){
+              SetAdd(newcfp->fws, xsp->subsym[k]->index);
+            }
+            break;
 	  }else{
             SetUnion(newcfp->fws,xsp->firstset);
             if( xsp->lambda==B_FALSE ) break;
@@ -1257,24 +1306,36 @@ int max;
 ** of the line.
 */
 #define ERRMSGSIZE  10000 /* Hope this is big enough.  No way to error check */
+#if _MSC_VER
+#define LINEWIDTH   10000 /* Max width of any output line */
+#else
 #define LINEWIDTH      79 /* Max width of any output line */
-#define PREFIXLIMIT    30 /* Max width of the prefix on each line */
+#endif
+#define PREFIXLIMIT  3000 /* Max width of the prefix on each line */
 void ErrorMsg(const char *filename, int lineno, const char *format, ...){
   char errmsg[ERRMSGSIZE];
   char prefix[PREFIXLIMIT+10];
-  size_t errmsgsize;
-  size_t prefixsize;
-  size_t availablewidth;
+  int errmsgsize;
+  int prefixsize;
+  int availablewidth;
   va_list ap;
   int end, restart, base;
 
   va_start(ap, format);
   /* Prepare a prefix to be prepended to every output line */
+#if _MSC_VER
+  if( lineno>0 ){
+	sprintf(prefix,"%.*s(%d) : error : ",PREFIXLIMIT-10,filename,lineno);
+  }else{
+	sprintf(prefix,"%.*s : error : ",PREFIXLIMIT-10,filename);
+  }
+#else
   if( lineno>0 ){
     sprintf(prefix,"%.*s:%d: ",PREFIXLIMIT-10,filename,lineno);
   }else{
     sprintf(prefix,"%.*s: ",PREFIXLIMIT-10,filename);
   }
+#endif
   prefixsize = strlen(prefix);
   availablewidth = LINEWIDTH - prefixsize;
 
@@ -1407,7 +1468,7 @@ char **argv;
   lem.symbols = Symbol_arrayof();
   for(i=0; i<=lem.nsymbol; i++) lem.symbols[i]->index = i;
   qsort(lem.symbols,lem.nsymbol+1,sizeof(struct symbol*),
-        (int(*)(const void *,const void *))Symbolcmpp);
+        (int(*)(const void*, const void*))Symbolcmpp);
   for(i=0; i<=lem.nsymbol; i++) lem.symbols[i]->index = i;
   for(i=1; isupper(lem.symbols[i]->name[0]); i++);
   lem.nterminal = i;
@@ -1443,6 +1504,10 @@ char **argv;
 
     /* Compress the action tables */
     if( compress==0 ) CompressTables(&lem);
+
+    /* Reorder and renumber the states so that states with fewer choices
+    ** occur at the end. */
+    ResortStates(&lem);
 
     /* Generate a report of the parser generated.  (the "y.output" file) */
     if( !quiet ) ReportOutput(&lem);
@@ -1494,7 +1559,7 @@ char **argv;
 /*
 ** Return a pointer to the next structure in the linked list.
 */
-#define NEXT(A) (*(char**)(((size_t)A)+offset))
+#define NEXT(A) (*(char**)(((unsigned long)A)+offset))
 
 /*
 ** Inputs:
@@ -1568,11 +1633,11 @@ char *list;
 char **next;
 int (*cmp)();
 {
-  size_t offset;
+  unsigned long offset;
   char *ep;
   char *set[LISTSIZE];
   int i;
-  offset = (size_t)next - (size_t)list;
+  offset = (unsigned long)next - (unsigned long)list;
   for(i=0; i<LISTSIZE; i++) set[i] = 0;
   while( list ){
     ep = list;
@@ -1604,14 +1669,12 @@ int n;
 int k;
 FILE *err;
 {
-  size_t spcnt;
-  int i;
-  spcnt = 0;
+  int spcnt, i;
   if( argv[0] ) fprintf(err,"%s",argv[0]);
   spcnt = strlen(argv[0]) + 1;
   for(i=1; i<n && argv[i]; i++){
     fprintf(err," %s",argv[i]);
-    spcnt += strlen(argv[i]+1);
+    spcnt += strlen(argv[i])+1;
   }
   spcnt += k;
   for(; argv[i]; i++) fprintf(err," %s",argv[i]);
@@ -1695,6 +1758,7 @@ FILE *err;
   int j;
   int errcnt = 0;
   cp = strchr(argv[i],'=');
+  assert( cp!=0 );
   *cp = 0;
   for(j=0; op[j].label; j++){
     if( strcmp(argv[i],op[j].label)==0 ) break;
@@ -1723,7 +1787,7 @@ FILE *err;
         if( *end ){
           if( err ){
             fprintf(err,"%sillegal character in floating-point argument.\n",emsg);
-            errline(i,((size_t)end)-(size_t)argv[i],err);
+            errline(i,((unsigned long)end)-(unsigned long)argv[i],err);
           }
           errcnt++;
         }
@@ -1734,7 +1798,7 @@ FILE *err;
         if( *end ){
           if( err ){
             fprintf(err,"%sillegal character in integer argument.\n",emsg);
-            errline(i,((size_t)end)-(size_t)argv[i],err);
+            errline(i,((unsigned long)end)-(unsigned long)argv[i],err);
           }
           errcnt++;
         }
@@ -1829,7 +1893,7 @@ int n;
 
 void OptPrint(){
   int i;
-  size_t max, len;
+  int max, len;
   max = 0;
   for(i=0; op[i].label; i++){
     len = strlen(op[i].label) + 1;
@@ -2087,7 +2151,7 @@ to follow the previous rule.");
       }else if( isalpha(x[0]) ){
         if( psp->nrhs>=MAXRHS ){
           ErrorMsg(psp->filename,psp->tokenlineno,
-            "Too many symbol on RHS or rule beginning at \"%s\".",
+            "Too many symbols on RHS or rule beginning at \"%s\".",
             x);
           psp->errorcnt++;
           psp->state = RESYNC_AFTER_RULE_ERROR;
@@ -2096,6 +2160,27 @@ to follow the previous rule.");
           psp->alias[psp->nrhs] = 0;
           psp->nrhs++;
 	}
+      }else if( (x[0]=='|' || x[0]=='/') && psp->nrhs>0 ){
+        struct symbol *msp = psp->rhs[psp->nrhs-1];
+        if( msp->type!=MULTITERMINAL ){
+          struct symbol *origsp = msp;
+          msp = malloc(sizeof(*msp));
+          memset(msp, 0, sizeof(*msp));
+          msp->type = MULTITERMINAL;
+          msp->nsubsym = 1;
+          msp->subsym = malloc(sizeof(struct symbol*));
+          msp->subsym[0] = origsp;
+          msp->name = origsp->name;
+          psp->rhs[psp->nrhs-1] = msp;
+        }
+        msp->nsubsym++;
+        msp->subsym = realloc(msp->subsym, sizeof(struct symbol*)*msp->nsubsym);
+        msp->subsym[msp->nsubsym-1] = Symbol_new(&x[1]);
+        if( islower(x[1]) || islower(msp->subsym[0]->name[0]) ){
+          ErrorMsg(psp->filename,psp->tokenlineno,
+            "Cannot form a compound containing a non-terminal");
+          psp->errorcnt++;
+        }
       }else if( x[0]=='(' && psp->nrhs>0 ){
         psp->state = RHS_ALIAS_1;
       }else{
@@ -2359,7 +2444,7 @@ static void preprocess_input(char *z){
 void Parse(gp)
 struct lemon *gp;
 {
-  struct pstate ps = { 0, };
+  struct pstate ps;
   FILE *fp;
   char *filebuf;
   int filesize;
@@ -2482,6 +2567,10 @@ struct lemon *gp;
       nextcp = cp;
     }else if( c==':' && cp[1]==':' && cp[2]=='=' ){ /* The operator "::=" */
       cp += 3;
+      nextcp = cp;
+    }else if( (c=='/' || c=='|') && isalpha(cp[1]) ){
+      cp += 2;
+      while( (c = *cp)!=0 && (isalnum(c) || c=='_') ) cp++;
       nextcp = cp;
     }else{                          /* All other (one character) operators */
       cp++;
@@ -2625,7 +2714,7 @@ struct lemon *lemp;
   maxlen = 10;
   for(i=0; i<lemp->nsymbol; i++){
     sp = lemp->symbols[i];
-    len = (int)strlen(sp->name);
+    len = strlen(sp->name);
     if( len>maxlen ) maxlen = len;
   }
   ncolumns = 76/(maxlen+5);
@@ -2642,15 +2731,21 @@ struct lemon *lemp;
   }
   for(rp=lemp->rule; rp; rp=rp->next){
     printf("%s",rp->lhs->name);
-/*    if( rp->lhsalias ) printf("(%s)",rp->lhsalias); */
+    /*    if( rp->lhsalias ) printf("(%s)",rp->lhsalias); */
     printf(" ::=");
     for(i=0; i<rp->nrhs; i++){
-      printf(" %s",rp->rhs[i]->name);
-/*      if( rp->rhsalias[i] ) printf("(%s)",rp->rhsalias[i]); */
+      sp = rp->rhs[i];
+      printf(" %s", sp->name);
+      if( sp->type==MULTITERMINAL ){
+        for(j=1; j<sp->nsubsym; j++){
+          printf("|%s", sp->subsym[j]->name);
+        }
+      }
+      /* if( rp->rhsalias[i] ) printf("(%s)",rp->rhsalias[i]); */
     }
     printf(".");
     if( rp->precsym ) printf(" [%s]",rp->precsym->name);
-/*    if( rp->code ) printf("\n    %s",rp->code); */
+    /* if( rp->code ) printf("\n    %s",rp->code); */
     printf("\n");
   }
 }
@@ -2660,18 +2755,25 @@ FILE *fp;
 struct config *cfp;
 {
   struct rule *rp;
-  int i;
+  struct symbol *sp;
+  int i, j;
   rp = cfp->rp;
   fprintf(fp,"%s ::=",rp->lhs->name);
   for(i=0; i<=rp->nrhs; i++){
     if( i==cfp->dot ) fprintf(fp," *");
     if( i==rp->nrhs ) break;
-    fprintf(fp," %s",rp->rhs[i]->name);
+    sp = rp->rhs[i];
+    fprintf(fp," %s", sp->name);
+    if( sp->type==MULTITERMINAL ){
+      for(j=1; j<sp->nsubsym; j++){
+        fprintf(fp,"|%s",sp->subsym[j]->name);
+      }
+    }
   }
 }
 
 /* #define TEST */
-#ifdef TEST
+#if 0
 /* Print a set */
 PRIVATE void SetPrint(out,set,lemp)
 FILE *out;
@@ -2698,7 +2800,7 @@ struct plink *plp;
 char *tag;
 {
   while( plp ){
-    fprintf(out,"%12s%s (state %2d) ","",tag,plp->cfp->stp->index);
+    fprintf(out,"%12s%s (state %2d) ","",tag,plp->cfp->stp->statenum);
     ConfigPrint(out,plp->cfp);
     fprintf(out,"\n");
     plp = plp->next;
@@ -2713,7 +2815,7 @@ int PrintAction(struct action *ap, FILE *fp, int indent){
   int result = 1;
   switch( ap->type ){
     case SHIFT:
-      fprintf(fp,"%*s shift  %d",indent,ap->sp->name,ap->x.stp->index);
+      fprintf(fp,"%*s shift  %d",indent,ap->sp->name,ap->x.stp->statenum);
       break;
     case REDUCE:
       fprintf(fp,"%*s reduce %d",indent,ap->sp->name,ap->x.rp->index);
@@ -2752,7 +2854,7 @@ struct lemon *lemp;
   fprintf(fp," \b");
   for(i=0; i<lemp->nstate; i++){
     stp = lemp->sorted[i];
-    fprintf(fp,"State %d:\n",stp->index);
+    fprintf(fp,"State %d:\n",stp->statenum);
     if( lemp->basisflag ) cfp=stp->bp;
     else                  cfp=stp->cfp;
     while( cfp ){
@@ -2765,7 +2867,7 @@ struct lemon *lemp;
       }
       ConfigPrint(fp,cfp);
       fprintf(fp,"\n");
-#ifdef TEST
+#if 0
       SetPrint(fp,cfp->fws,lemp);
       PlinkPrint(fp,cfp->fplp,"To  ");
       PlinkPrint(fp,cfp->bplp,"From");
@@ -2796,7 +2898,11 @@ int modemask;
   extern int access();
 
 #ifdef __WIN32__
-  cp = strrchr(argv0,'\\');
+  for (cp = argv0 + strlen(argv0); cp-- > argv0; )
+  {
+    if( *cp == '\\' || *cp == '/' )
+      break;
+  }
 #else
   cp = strrchr(argv0,'/');
 #endif
@@ -2838,7 +2944,7 @@ struct action *ap;
 {
   int act;
   switch( ap->type ){
-    case SHIFT:  act = ap->x.stp->index;               break;
+    case SHIFT:  act = ap->x.stp->statenum;            break;
     case REDUCE: act = ap->x.rp->index + lemp->nstate; break;
     case ERROR:  act = lemp->nstate + lemp->nrule;     break;
     case ACCEPT: act = lemp->nstate + lemp->nrule + 1; break;
@@ -3036,10 +3142,10 @@ struct lemon *lemp;
 **
 ** If n==-1, then the previous character is overwritten.
 */
-PRIVATE char *append_str(char *zText, int n, int p1, int p2){
+PRIVATE char *append_str(char *zText, int n, int p1, int p2, int bNoSubst){
   static char *z = 0;
-  static size_t alloced = 0;
-  static size_t used = 0;
+  static int alloced = 0;
+  static int used = 0;
   int c;
   char zInt[40];
 
@@ -3052,16 +3158,16 @@ PRIVATE char *append_str(char *zText, int n, int p1, int p2){
       used += n;
       assert( used>=0 );
     }
-    n = (int)strlen(zText);
+    n = strlen(zText);
   }
-  if( n+sizeof(zInt)*2+used >= alloced ){
+  if( n+sizeof(zInt)*2+used >= (size_t)alloced ){
     alloced = n + sizeof(zInt)*2 + used + 200;
     z = realloc(z,  alloced);
   }
   if( z==0 ) return "";
   while( n-- > 0 ){
     c = *(zText++);
-    if( c=='%' && zText[0]=='d' ){
+    if( !bNoSubst && c=='%' && zText[0]=='d' ){
       sprintf(zInt, "%d", p1);
       p1 = p2;
       strcpy(&z[used], zInt);
@@ -3090,7 +3196,7 @@ PRIVATE void translate_code(struct lemon *lemp, struct rule *rp){
   for(i=0; i<rp->nrhs; i++) used[i] = 0;
   lhsused = 0;
 
-  append_str(0,0,0,0);
+  append_str(0,0,0,0,0);
   for(cp=rp->code; *cp; cp++){
     if( isalpha(*cp) && (cp==rp->code || (!isalnum(cp[-1]) && cp[-1]!='_')) ){
       char saved;
@@ -3098,7 +3204,7 @@ PRIVATE void translate_code(struct lemon *lemp, struct rule *rp){
       saved = *xp;
       *xp = 0;
       if( rp->lhsalias && strcmp(cp,rp->lhsalias)==0 ){
-        append_str("yygotominor.yy%d",0,rp->lhs->dtnum,0);
+        append_str("yygotominor.yy%d",0,rp->lhs->dtnum,0,0);
         cp = xp;
         lhsused = 1;
       }else{
@@ -3107,10 +3213,16 @@ PRIVATE void translate_code(struct lemon *lemp, struct rule *rp){
             if( cp!=rp->code && cp[-1]=='@' ){
               /* If the argument is of the form @X then substituted
               ** the token number of X, not the value of X */
-              append_str("yymsp[%d].major",-1,i-rp->nrhs+1,0);
+              append_str("yymsp[%d].major",-1,i-rp->nrhs+1,0,0);
             }else{
-              append_str("yymsp[%d].minor.yy%d",0,
-                         i-rp->nrhs+1,rp->rhs[i]->dtnum);
+              struct symbol *sp = rp->rhs[i];
+              int dtnum;
+              if( sp->type==MULTITERMINAL ){
+                dtnum = sp->subsym[0]->dtnum;
+              }else{
+                dtnum = sp->dtnum;
+              }
+              append_str("yymsp[%d].minor.yy%d",0,i-rp->nrhs+1, dtnum,0);
             }
             cp = xp;
             used[i] = 1;
@@ -3120,7 +3232,7 @@ PRIVATE void translate_code(struct lemon *lemp, struct rule *rp){
       }
       *xp = saved;
     }
-    append_str(cp, 1, 0, 0);
+    append_str(cp, 1, 0, 0, 1);
   } /* End loop */
 
   /* Check to make sure the LHS has been used */
@@ -3142,13 +3254,13 @@ PRIVATE void translate_code(struct lemon *lemp, struct rule *rp){
     }else if( rp->rhsalias[i]==0 ){
       if( has_destructor(rp->rhs[i],lemp) ){
         append_str("  yy_destructor(%d,&yymsp[%d].minor);\n", 0,
-           rp->rhs[i]->index,i-rp->nrhs+1);
+           rp->rhs[i]->index,i-rp->nrhs+1,0);
       }else{
         /* No destructor defined for this term */
       }
     }
   }
-  cp = append_str(0,0,0,0);
+  cp = append_str(0,0,0,0,0);
   rp->code = Strsafe(cp);
 }
 
@@ -3208,13 +3320,13 @@ int mhflag;                 /* True if generating makeheaders output */
   for(i=0; i<arraysize; i++) types[i] = 0;
   maxdtlength = 0;
   if( lemp->vartype ){
-    maxdtlength = (int)strlen(lemp->vartype);
+    maxdtlength = strlen(lemp->vartype);
   }
   for(i=0; i<lemp->nsymbol; i++){
     int len;
     struct symbol *sp = lemp->symbols[i];
     if( sp->datatype==0 ) continue;
-    len = (int)strlen(sp->datatype);
+    len = strlen(sp->datatype);
     if( len>maxdtlength ) maxdtlength = len;
   }
   stddt = (char*)malloc( maxdtlength*2 + 1 );
@@ -3411,7 +3523,7 @@ int mhflag;     /* Output in makeheaders format if true */
   name = lemp->name ? lemp->name : "Parse";
   if( lemp->arg && lemp->arg[0] ){
     int i;
-    i = (int)strlen(lemp->arg);
+    i = strlen(lemp->arg);
     while( i>=1 && isspace(lemp->arg[i-1]) ) i--;
     while( i>=1 && (isalnum(lemp->arg[i-1]) || lemp->arg[i-1]=='_') ) i--;
     fprintf(out,"#define %sARG_SDECL %s;\n",name,lemp->arg);  lineno++;
@@ -3458,21 +3570,6 @@ int mhflag;     /* Output in makeheaders format if true */
   }
   for(i=0; i<lemp->nstate; i++){
     stp = lemp->sorted[i];
-    stp->nTknAct = stp->nNtAct = 0;
-    stp->iDflt = lemp->nstate + lemp->nrule;
-    stp->iTknOfst = NO_OFFSET;
-    stp->iNtOfst = NO_OFFSET;
-    for(ap=stp->ap; ap; ap=ap->next){
-      if( compute_action(lemp,ap)>=0 ){
-        if( ap->sp->index<lemp->nterminal ){
-          stp->nTknAct++;
-        }else if( ap->sp->index<lemp->nsymbol ){
-          stp->nNtAct++;
-        }else{
-          stp->iDflt = compute_action(lemp, ap);
-        }
-      }
-    }
     ax[i*2].stp = stp;
     ax[i*2].isTkn = 1;
     ax[i*2].nAction = stp->nTknAct;
@@ -3519,7 +3616,7 @@ int mhflag;     /* Output in makeheaders format if true */
   free(ax);
 
   /* Output the yy_action table */
-  fprintf(out,"static YYACTIONTYPE yy_action[] = {\n"); lineno++;
+  fprintf(out,"static const YYACTIONTYPE yy_action[] = {\n"); lineno++;
   n = acttab_size(pActtab);
   for(i=j=0; i<n; i++){
     int action = acttab_yyaction(pActtab, i);
@@ -3536,7 +3633,7 @@ int mhflag;     /* Output in makeheaders format if true */
   fprintf(out, "};\n"); lineno++;
 
   /* Output the yy_lookahead table */
-  fprintf(out,"static YYCODETYPE yy_lookahead[] = {\n"); lineno++;
+  fprintf(out,"static const YYCODETYPE yy_lookahead[] = {\n"); lineno++;
   for(i=j=0; i<n; i++){
     int la = acttab_yylookahead(pActtab, i);
     if( la<0 ) la = lemp->nsymbol;
@@ -3553,9 +3650,11 @@ int mhflag;     /* Output in makeheaders format if true */
 
   /* Output the yy_shift_ofst[] table */
   fprintf(out, "#define YY_SHIFT_USE_DFLT (%d)\n", mnTknOfst-1); lineno++;
-  fprintf(out, "static %s yy_shift_ofst[] = {\n", 
-          minimum_size_type(mnTknOfst-1, mxTknOfst)); lineno++;
   n = lemp->nstate;
+  while( n>0 && lemp->sorted[n-1]->iTknOfst==NO_OFFSET ) n--;
+  fprintf(out, "#define YY_SHIFT_MAX %d\n", n-1); lineno++;
+  fprintf(out, "static const %s yy_shift_ofst[] = {\n", 
+          minimum_size_type(mnTknOfst-1, mxTknOfst)); lineno++;
   for(i=j=0; i<n; i++){
     int ofst;
     stp = lemp->sorted[i];
@@ -3574,9 +3673,11 @@ int mhflag;     /* Output in makeheaders format if true */
 
   /* Output the yy_reduce_ofst[] table */
   fprintf(out, "#define YY_REDUCE_USE_DFLT (%d)\n", mnNtOfst-1); lineno++;
-  fprintf(out, "static %s yy_reduce_ofst[] = {\n", 
-          minimum_size_type(mnNtOfst-1, mxNtOfst)); lineno++;
   n = lemp->nstate;
+  while( n>0 && lemp->sorted[n-1]->iNtOfst==NO_OFFSET ) n--;
+  fprintf(out, "#define YY_REDUCE_MAX %d\n", n-1); lineno++;
+  fprintf(out, "static const %s yy_reduce_ofst[] = {\n", 
+          minimum_size_type(mnNtOfst-1, mxNtOfst)); lineno++;
   for(i=j=0; i<n; i++){
     int ofst;
     stp = lemp->sorted[i];
@@ -3594,7 +3695,7 @@ int mhflag;     /* Output in makeheaders format if true */
   fprintf(out, "};\n"); lineno++;
 
   /* Output the default action table */
-  fprintf(out, "static YYACTIONTYPE yy_default[] = {\n"); lineno++;
+  fprintf(out, "static const YYACTIONTYPE yy_default[] = {\n"); lineno++;
   n = lemp->nstate;
   for(i=j=0; i<n; i++){
     stp = lemp->sorted[i];
@@ -3643,7 +3744,16 @@ int mhflag;     /* Output in makeheaders format if true */
   for(i=0, rp=lemp->rule; rp; rp=rp->next, i++){
     assert( rp->index==i );
     fprintf(out," /* %3d */ \"%s ::=", i, rp->lhs->name);
-    for(j=0; j<rp->nrhs; j++) fprintf(out," %s",rp->rhs[j]->name);
+    for(j=0; j<rp->nrhs; j++){
+      struct symbol *sp = rp->rhs[j];
+      fprintf(out," %s", sp->name);
+      if( sp->type==MULTITERMINAL ){
+        int k;
+        for(k=1; k<sp->nsubsym; k++){
+          fprintf(out,"|%s",sp->subsym[k]->name);
+        }
+      }
+    }
     fprintf(out,"\",\n"); lineno++;
   }
   tplt_xfer(lemp->name,in,out,&lineno);
@@ -3661,6 +3771,20 @@ int mhflag;     /* Output in makeheaders format if true */
     for(i=0; i<lemp->nsymbol && lemp->symbols[i]->type!=TERMINAL; i++);
     if( i<lemp->nsymbol ){
       emit_destructor_code(out,lemp->symbols[i],lemp,&lineno);
+      fprintf(out,"      break;\n"); lineno++;
+    }
+  }
+  if( lemp->vardest ){
+    struct symbol *dflt_sp = 0;
+    for(i=0; i<lemp->nsymbol; i++){
+      struct symbol *sp = lemp->symbols[i];
+      if( sp==0 || sp->type==TERMINAL ||
+          sp->index<=0 || sp->destructor!=0 ) continue;
+      fprintf(out,"    case %d:\n",sp->index); lineno++;
+      dflt_sp = sp;
+    }
+    if( dflt_sp!=0 ){
+      emit_destructor_code(out,dflt_sp,lemp,&lineno);
       fprintf(out,"      break;\n"); lineno++;
     }
   }
@@ -3683,20 +3807,6 @@ int mhflag;     /* Output in makeheaders format if true */
     emit_destructor_code(out,lemp->symbols[i],lemp,&lineno);
     fprintf(out,"      break;\n"); lineno++;
   }
-  if( lemp->vardest ){
-    struct symbol *dflt_sp = 0;
-    for(i=0; i<lemp->nsymbol; i++){
-      struct symbol *sp = lemp->symbols[i];
-      if( sp==0 || sp->type==TERMINAL ||
-          sp->index<=0 || sp->destructor!=0 ) continue;
-      fprintf(out,"    case %d:\n",sp->index); lineno++;
-      dflt_sp = sp;
-    }
-    if( dflt_sp!=0 ){
-      emit_destructor_code(out,dflt_sp,lemp,&lineno);
-      fprintf(out,"      break;\n"); lineno++;
-    }
-  }
   tplt_xfer(lemp->name,in,out,&lineno);
 
   /* Generate code which executes whenever the parser stack overflows */
@@ -3713,7 +3823,7 @@ int mhflag;     /* Output in makeheaders format if true */
   }
   tplt_xfer(lemp->name,in,out,&lineno);
 
-  /* Generate code which execution during each REDUCE action */
+  /* Generate code which executes during each REDUCE action */
   for(rp=lemp->rule; rp; rp=rp->next){
     if( rp->code ) translate_code(lemp, rp);
   }
@@ -3790,7 +3900,7 @@ struct lemon *lemp;
 ** of defaults.
 **
 ** In this version, we take the most frequent REDUCE action and make
-** it the default.  Only default a reduce if there are more than one.
+** it the default.
 */
 void CompressTables(lemp)
 struct lemon *lemp;
@@ -3824,8 +3934,8 @@ struct lemon *lemp;
     }
  
     /* Do not make a default if the number of rules to default
-    ** is not at least 2 */
-    if( nbest<2 ) continue;
+    ** is not at least 1 */
+    if( nbest<1 ) continue;
 
 
     /* Combine matching REDUCE actions into a single default */
@@ -3840,6 +3950,63 @@ struct lemon *lemp;
     stp->ap = Action_sort(stp->ap);
   }
 }
+
+
+/*
+** Compare two states for sorting purposes.  The smaller state is the
+** one with the most non-terminal actions.  If they have the same number
+** of non-terminal actions, then the smaller is the one with the most
+** token actions.
+*/
+static int stateResortCompare(const void *a, const void *b){
+  const struct state *pA = *(const struct state**)a;
+  const struct state *pB = *(const struct state**)b;
+  int n;
+
+  n = pB->nNtAct - pA->nNtAct;
+  if( n==0 ){
+    n = pB->nTknAct - pA->nTknAct;
+  }
+  return n;
+}
+
+
+/*
+** Renumber and resort states so that states with fewer choices
+** occur at the end.  Except, keep state 0 as the first state.
+*/
+void ResortStates(lemp)
+struct lemon *lemp;
+{
+  int i;
+  struct state *stp;
+  struct action *ap;
+
+  for(i=0; i<lemp->nstate; i++){
+    stp = lemp->sorted[i];
+    stp->nTknAct = stp->nNtAct = 0;
+    stp->iDflt = lemp->nstate + lemp->nrule;
+    stp->iTknOfst = NO_OFFSET;
+    stp->iNtOfst = NO_OFFSET;
+    for(ap=stp->ap; ap; ap=ap->next){
+      if( compute_action(lemp,ap)>=0 ){
+        if( ap->sp->index<lemp->nterminal ){
+          stp->nTknAct++;
+        }else if( ap->sp->index<lemp->nsymbol ){
+          stp->nNtAct++;
+        }else{
+          stp->iDflt = compute_action(lemp, ap);
+        }
+      }
+    }
+  }
+  qsort(&lemp->sorted[1], lemp->nstate-1, sizeof(lemp->sorted[0]),
+        stateResortCompare);
+  for(i=0; i<lemp->nstate; i++){
+    lemp->sorted[i]->statenum = i;
+  }
+}
+
 
 /***************** From the file "set.c" ************************************/
 /*

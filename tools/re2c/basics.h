@@ -1,12 +1,15 @@
-/* $Id: basics.h,v 1.3 2004/03/13 13:40:37 helly Exp $ */
+/* $Id: basics.h,v 1.6 2005/12/29 14:32:09 helly Exp $ */
 #ifndef _basics_h
 #define _basics_h
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif _WIN32
-#include "configwin.h"
+#elif defined(_WIN32)
+#include "config_w32.h"
 #endif
+
+namespace re2c
+{
 
 #if SIZEOF_CHAR == 1
 typedef unsigned char byte;
@@ -44,20 +47,11 @@ typedef unsigned long dword;
 typedef unsigned long dword;
 #endif
 
-#ifndef HAVE_UINT
-typedef unsigned int 	uint;
-#endif
+typedef unsigned int uint;
+typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef unsigned long ulong;
 
-#ifndef HAVE_UCHAR
-typedef unsigned char 	uchar;
-#endif
-
-#ifndef HAVE_USHORT
-typedef unsigned short 	ushort;
-#endif
-
-#ifndef HAVE_ULONG
-typedef unsigned long 	ulong;
-#endif
+} // end namespace re2c
 
 #endif

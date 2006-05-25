@@ -1,0 +1,141 @@
+Version 0.10.3 (2006-05-14)
+---------------------------
+- Fixed issue with -wb and -ws.
+- Added -g switch to support gcc's computed goto's.
+- Changed to use nested if's instead of "switch(yyaccept)" in -s mode.
+
+Version 0.10.2 (2006-05-01)
+---------------------------
+- Changed to generate YYMARKER only when needed or in single pass mode.
+- Added -1 switch to force single pass generation and make two pass the default.
+- Fixed -i switch.
+- Added configuration 'yyfill:enable' to allow suppression of YYFILL() blocks.
+- Added tutorial like lessons to re2c.
+- Added /*!ignore!re2c */ to support documenting of re2c source.
+- Fixed issue with multiline re2c comments (/*!max:re2c ... */ and alike).
+- Fixed generation of YYDEBUG() when using -d switch.
+- Added /*!getstate:re2c */ which triggers generation of the YYGETSTATE() block.
+- Added configuration 'state:abort'.
+- Changed to not generate yyNext unless configuration 'state:nextlabel' is used.
+- Changed to not generate yyaccept code unless needed.
+- Changed to use if- instead of switch-expression when yyaccpt has only one case.
+- Added docu, examples and tests to .src.zip package (0.10.1 zip was repackaged).
+- Fixed #1479044 incorrect code generated when using -b.
+- Fixed #1472770 re2c creates an infinite loop.
+- Fixed #1454253 Piece of code saving a backtracking point not generated.
+- Fixed #1463639 Missing forward declaration.
+- Implemented #1187127 savable state support for multiple re2c blocks.
+
+Version 0.10.1 (2006-02-28)
+---------------------------
+- Added support for Solaris and native SUN compiler.
+- Applied #1438160 expose YYCTXMARKER.
+
+Version 0.10.0 (2006-02-18)
+---------------------------
+- Added make target zip to create windows source packages as zip files.
+- Added re2c:startlabel configuration.
+- Fixed code generation to not generate unreachable code for initial state.
+- Added support for c/c++ compatible \u and \U unicode notation.
+- Added ability to control indendation.
+- Made scanner error out in case an ambiguous /* is found.
+- Fixed indendation of generated code.
+- Added support for DOS line endings.
+- Added experimental unicode support.
+- Added config_w32.h to build out of the box on windows (using msvc 2002+).
+- Added Microsoft Visual C .NET 2005 build files.
+- Applied #1411087 variable length trailing context.
+- Applied #1408326 do not generate goto next state.
+- Applied #1408282 CharSet initialization fix.
+- Applied #1408278 readsome with MSVC.
+- Applied #1307467 Unicode patch for 0.9.7.
+
+Version 0.9.12 (2005-12-28)
+---------------------------
+- Fixed bug #1390174 re2c cannot accept {0,}.
+
+Version 0.9.11 (2005-12-18)
+---------------------------
+- Fixed #1313083 -e (EBCDIC cross compile) broken.
+- Fixed #1297658 underestimation of n in YYFILL(n).
+- Applied #1339483 Avoid rebuilds of re2c when running subtargets.
+- Implemented #1335305 symbol table reimplementation, just slightly modifed.
+
+Version 0.9.10 (2005-09-04)
+---------------------------
+- Added -i switch to avoid generating #line information.
+- Fixed bug #1251653 re2c generate some invalid #line on WIN32.
+
+Version 0.9.9 (2005-07-21)
+--------------------------
+- Implemented #1232777 negated char classes '[^...]' and the dot operator '.'.
+- Added hexadecimal character definitions.
+- Added consistency check for octal character definitions.
+
+Version 0.9.8 (2005-06-26)
+--------------------------
+- Fixed code generation for -b switch.
+- Added Microsoft Visual C .NET build files.
+
+Version 0.9.7 (2005-04-30)
+--------------------------
+- Applied #1181535 storable state patch.
+- Added -d flag which outputs a debugable parser.
+- Fixed generation of '#line' directives (according to ISO-C99).
+- Fixed bug #1187785 Re2c fails to generate valid code.
+- Fixed bug #1187452 unused variable `yyaccept'.
+
+Version 0.9.6 (2005-04-14)
+--------------------------
+- Fixed build with gcc >= 3.4.
+
+Version 0.9.5 (2005-04-08)
+--------------------------
+- Added /*!max:re2c */ which emits a '#define YYMAXFILL <max>\n' line
+  This allows to define buffers of the minimum required length. Occurence
+  must follow '/*re2c */ and cannot preceed it.
+- Changed re2c to two pass generation to output warning free code.
+- Fixed bug #1163046 re2c hangs when processing valid re-file.
+- Fixed bug #1022799 re2c scanner has buffering bug.
+
+Version 0.9.4 (2005-03-12)
+--------------------------
+- Added --vernum support.
+- Fixed bug #1054496 incorrect code generated with -b option.
+- Fixed bug #1012748 re2c does not emit last line if '\n' missing.
+- Fixed bug #999104 --output=output option does not work as documented.
+- Fixed bug #999103 Invalid options prefixed with two dashes cause program crash.
+
+Version 0.9.3 (2004-05-26)
+--------------------------
+- Fixes one small possible bug in the generated output.  ych instead of yych is 
+  output in certain circumstances
+
+Version 0.9.2 (2004-05-26)
+--------------------------
+- Added -o option to specify the output file which also will set the #line 
+  directives to something useful.
+- Print version to cout instead cerr.
+- Added -h and -- style options.
+- Moved development to http://sourceforge.net/projects/re2c .
+- Fixed bug #960144 minor cosmetic problem.
+- Fixed bug #953181 cannot compile with.
+- Fixed bug #939277 Windows support.
+- Fixed bug #914462 automake build patch
+- Fixed bug #891940 braced quantifiers: {\d+(,|,\d+)?} style.
+- Fixed bug #869298 Add case insensitive string literals.
+- Fixed bug #869297 Input buffer overrun. 
+
+Version 0.9.1 (2003-12-13)
+--------------------------
+- Removed rcs comments in source files.
+
+Version 0.9
+-----------
+- Redistribution based on version 0.5.
+- Added parentheses to assignment expressions in 'if' statements.
+- Rearranged class members to match initialization order.
+- Substr fix.
+- Use array delete [] when necessary.
+- Other minor fixes for subduing compiler warnings.
+

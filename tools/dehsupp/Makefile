@@ -10,10 +10,12 @@ endif
 
 CC = gcc
 
-BISON = bison
-BISONFLAGS = 
+RE2C = ../re2c/re2c
+LEMON = ../lemon/lemon
+LEMONFLAGS =
+RE2CFLAGS = -s
 
-OBJS = parse.tab.o
+OBJS = dehsupp.o parse.o scanner.o
 
 all: $(EXE)
 
@@ -31,8 +33,14 @@ else
 	rm -f *.o
 endif
 
-parse.tab.o: parse.tab.c
+%.o: %.c
 	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<
+
+parse.h parse.c: parse.y
+	$(CCDV) $(LEMON) $(LEMONFLAGS) $<
 	
+scanner.c: scanner.re
+	$(CCDV) $(RE2C) $(RE2CFLAGS) -o $@ $<
+
 parse.tab.c: parse.y
 	$(CCDV) $(BISON) $(BISONFLAGS) -o $@ $<

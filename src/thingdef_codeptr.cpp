@@ -107,13 +107,12 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 	bool result = false;
 	int counter = 0;
 
-	StateCall.State = State;
-	while (StateCall.State != NULL)
+	while (State != NULL)
 	{
 		// Assume success. The code pointer will set this to false if necessary
 		StateCall.Result = true;	
-		CallingState = StateCall.State;
-		StateCall.State->GetAction() (actor);
+		CallingState = StateCall.State = State;
+		State->GetAction() (actor);
 
 		// collect all the results. Even one successful call signifies overall success.
 		result |= StateCall.Result;
@@ -122,16 +121,25 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 		counter++;
 		if (counter >= 10000)	break;
 
-		if (StateCall.State == CallingState) 
+		if (StateCall.State == State) 
 		{
 			// Abort immediately if the state jumps to itself!
-			if (StateCall.State == StateCall.State->GetNextState()) return false;
+			if (State == State->GetNextState()) 
+			{
+				StateCall.State = NULL;
+				return false;
+			}
 			
 			// If both variables are still the same there was no jump
 			// so we must advance to the next state.
-			StateCall.State = StateCall.State->GetNextState();
+			State = State->GetNextState();
+		}
+		else 
+		{
+			State = StateCall.State;
 		}
 	}
+	StateCall.State = NULL;
 	return result;
 }
 

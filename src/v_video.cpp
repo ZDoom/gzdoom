@@ -937,20 +937,15 @@ void V_Init (void)
 
 void V_Shutdown()
 {
-	FreeCanvasChain();
+	if (screen != NULL)
+	{
+		delete screen;
+		screen = NULL;
+	}
 	while (FFont::FirstFont != NULL)
 	{
 		delete FFont::FirstFont;
 	}
-}
-
-void FreeCanvasChain ()
-{
-	if (screen != NULL)
-	{
-		delete screen;
-	}
-	screen = NULL;
 }
 
 EXTERN_CVAR (Bool, vid_tft)

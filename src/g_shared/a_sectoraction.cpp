@@ -46,16 +46,21 @@ void ASectorAction::Destroy ()
 {
 	// Remove ourself from this sector's list of actions
 	AActor *probe = Sector->SecActTarget;
-	AActor **prev = reinterpret_cast<AActor **>(&Sector->SecActTarget);
+	union
+	{
+		AActor **act;
+		ASectorAction **secact;
+	} prev;
+	prev.secact = &Sector->SecActTarget;
 
 	while (probe && probe != this)
 	{
-		prev = &probe->tracer;
+		prev.act = &probe->tracer;
 		probe = probe->tracer;
 	}
 	if (probe != NULL)
 	{
-		*prev = probe->tracer;
+		*prev.act = probe->tracer;
 	}
 
 	Super::Destroy ();

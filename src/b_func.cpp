@@ -137,7 +137,7 @@ bool DCajunMaster::Check_LOS (AActor *from, AActor *to, angle_t vangle)
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return abs (R_PointToAngle2 (from->x, from->y, to->x, to->y) - from->angle) <= vangle/2;
+	return (angle_t)abs (R_PointToAngle2 (from->x, from->y, to->x, to->y) - from->angle) <= vangle/2;
 }
 
 //-------------------------------------

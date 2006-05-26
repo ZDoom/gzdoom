@@ -199,7 +199,7 @@ DWORD FRandom::StaticSumSeeds ()
 	return pr_spawnmobj.Seed + pr_acs.Seed + pr_chase.Seed + pr_lost.Seed + pr_slam.Seed;
 }
 
-void P_WriteRNGState (FILE *file)
+void FRandom::StaticWriteRNGState (FILE *file)
 {
 	FRandom *rng;
 	const DWORD seed = rngseed*2+1;
@@ -217,7 +217,7 @@ void P_WriteRNGState (FILE *file)
 	}
 }
 
-void P_ReadRNGState (PNGHandle *png)
+void FRandom::StaticReadRNGState (PNGHandle *png)
 {
 	FRandom *rng;
 

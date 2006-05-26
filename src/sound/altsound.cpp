@@ -1036,7 +1036,7 @@ looper:		mov eax, [esi+ecx*8]
 #endif
 	for (; count; --count)
 	{
-		SDWORD val = *from++ >> 2;
+		SDWORD val = *from++ >> 8;
 		if (val > 32767)
 		{
 			val = 32767;

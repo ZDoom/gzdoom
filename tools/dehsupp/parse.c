@@ -7,12 +7,11 @@
 #ifndef NDEBUG
 #include <string.h>
 #endif
-#line 1 "parse.y"
+#line 1 "..\\dehsupp\\parse.y"
 
 #include <malloc.h>
 #include "dehsupp.h"
-#line 16 "parse.c"
-#include "parse.h"
+#line 16 "..\\dehsupp\\parse.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -23,42 +22,6 @@
 **
 ** Each symbol here is a terminal symbol in the grammar.
 */
-#if INTERFACE
-#define OR                              1
-#define XOR                             2
-#define AND                             3
-#define MINUS                           4
-#define PLUS                            5
-#define MULTIPLY                        6
-#define DIVIDE                          7
-#define NEG                             8
-#define EOI                             9
-#define PRINT                          10
-#define LPAREN                         11
-#define RPAREN                         12
-#define COMMA                          13
-#define STRING                         14
-#define ENDL                           15
-#define NUM                            16
-#define Actions                        17
-#define LBRACE                         18
-#define RBRACE                         19
-#define SEMICOLON                      20
-#define SYM                            21
-#define OrgHeights                     22
-#define ActionList                     23
-#define RBARCE                         24
-#define CodePConv                      25
-#define OrgSprNames                    26
-#define StateMap                       27
-#define FirstState                     28
-#define SpawnState                     29
-#define DeathState                     30
-#define SoundMap                       31
-#define InfoNames                      32
-#define ThingBits                      33
-#define RenderStyles                   34
-#endif
 /* Make sure the INTERFACE macro is defined.
 */
 #ifndef INTERFACE
@@ -100,21 +63,17 @@
 #define YYCODETYPE unsigned char
 #define YYNOCODE 68
 #define YYACTIONTYPE unsigned char
-#if INTERFACE
 #define ParseTOKENTYPE struct Token
-#endif
 typedef union {
   ParseTOKENTYPE yy0;
   int yy62;
   int yy135;
 } YYMINORTYPE;
 #define YYSTACKDEPTH 100
-#if INTERFACE
 #define ParseARG_SDECL
 #define ParseARG_PDECL
 #define ParseARG_FETCH
 #define ParseARG_STORE
-#endif
 #define YYNSTATE 140
 #define YYNRULE 77
 #define YYERRORSYMBOL 35
@@ -527,9 +486,9 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     case 32:
     case 33:
     case 34:
-#line 8 "parse.y"
+#line 8 "..\\dehsupp\\parse.y"
 { if ((yypminor->yy0).string) free((yypminor->yy0).string); }
-#line 534 "parse.c"
+#line 493 "..\\dehsupp\\parse.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -829,205 +788,205 @@ static void yy_reduce(
   **     break;
   */
       case 14:
-#line 37 "parse.y"
+#line 37 "..\\dehsupp\\parse.y"
 {
 	printf ("\n");
   yy_destructor(10,&yymsp[-3].minor);
   yy_destructor(11,&yymsp[-2].minor);
   yy_destructor(12,&yymsp[0].minor);
 }
-#line 841 "parse.c"
+#line 800 "..\\dehsupp\\parse.c"
         break;
       case 18:
-#line 45 "parse.y"
+#line 45 "..\\dehsupp\\parse.y"
 { printf ("%s", yymsp[0].minor.yy0.string); }
-#line 846 "parse.c"
+#line 805 "..\\dehsupp\\parse.c"
         break;
       case 19:
-#line 46 "parse.y"
+#line 46 "..\\dehsupp\\parse.y"
 { printf ("%d", yymsp[0].minor.yy62); }
-#line 851 "parse.c"
+#line 810 "..\\dehsupp\\parse.c"
         break;
       case 20:
-#line 47 "parse.y"
+#line 47 "..\\dehsupp\\parse.y"
 { printf ("\n");   yy_destructor(15,&yymsp[0].minor);
 }
-#line 857 "parse.c"
+#line 816 "..\\dehsupp\\parse.c"
         break;
       case 21:
-#line 50 "parse.y"
+#line 50 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = yymsp[0].minor.yy0.val; }
-#line 862 "parse.c"
+#line 821 "..\\dehsupp\\parse.c"
         break;
       case 22:
-#line 51 "parse.y"
+#line 51 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 + yymsp[0].minor.yy62;   yy_destructor(5,&yymsp[-1].minor);
 }
-#line 868 "parse.c"
+#line 827 "..\\dehsupp\\parse.c"
         break;
       case 23:
-#line 52 "parse.y"
+#line 52 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 - yymsp[0].minor.yy62;   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 874 "parse.c"
+#line 833 "..\\dehsupp\\parse.c"
         break;
       case 24:
-#line 53 "parse.y"
+#line 53 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 * yymsp[0].minor.yy62;   yy_destructor(6,&yymsp[-1].minor);
 }
-#line 880 "parse.c"
+#line 839 "..\\dehsupp\\parse.c"
         break;
       case 25:
-#line 54 "parse.y"
+#line 54 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 / yymsp[0].minor.yy62;   yy_destructor(7,&yymsp[-1].minor);
 }
-#line 886 "parse.c"
+#line 845 "..\\dehsupp\\parse.c"
         break;
       case 26:
-#line 55 "parse.y"
+#line 55 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 | yymsp[0].minor.yy62;   yy_destructor(1,&yymsp[-1].minor);
 }
-#line 892 "parse.c"
+#line 851 "..\\dehsupp\\parse.c"
         break;
       case 27:
-#line 56 "parse.y"
+#line 56 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 & yymsp[0].minor.yy62;   yy_destructor(3,&yymsp[-1].minor);
 }
-#line 898 "parse.c"
+#line 857 "..\\dehsupp\\parse.c"
         break;
       case 28:
-#line 57 "parse.y"
+#line 57 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 ^ yymsp[0].minor.yy62;   yy_destructor(2,&yymsp[-1].minor);
 }
-#line 904 "parse.c"
+#line 863 "..\\dehsupp\\parse.c"
         break;
       case 29:
-#line 58 "parse.y"
+#line 58 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = -yymsp[0].minor.yy62;   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 910 "parse.c"
+#line 869 "..\\dehsupp\\parse.c"
         break;
       case 30:
-#line 59 "parse.y"
+#line 59 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = yymsp[-1].minor.yy62;   yy_destructor(11,&yymsp[-2].minor);
   yy_destructor(12,&yymsp[0].minor);
 }
-#line 917 "parse.c"
+#line 876 "..\\dehsupp\\parse.c"
         break;
       case 33:
-#line 65 "parse.y"
+#line 65 "..\\dehsupp\\parse.y"
 { AddAction (yymsp[0].minor.yy0.string); }
-#line 922 "parse.c"
+#line 881 "..\\dehsupp\\parse.c"
         break;
       case 34:
-#line 66 "parse.y"
+#line 66 "..\\dehsupp\\parse.y"
 { AddAction (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 928 "parse.c"
+#line 887 "..\\dehsupp\\parse.c"
         break;
       case 37:
-#line 72 "parse.y"
+#line 72 "..\\dehsupp\\parse.y"
 { AddHeight (yymsp[0].minor.yy62); }
-#line 933 "parse.c"
+#line 892 "..\\dehsupp\\parse.c"
         break;
       case 38:
-#line 73 "parse.y"
+#line 73 "..\\dehsupp\\parse.y"
 { AddHeight (yymsp[0].minor.yy62);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 939 "parse.c"
+#line 898 "..\\dehsupp\\parse.c"
         break;
       case 41:
-#line 79 "parse.y"
+#line 79 "..\\dehsupp\\parse.y"
 { AddActionMap (yymsp[0].minor.yy0.string); }
-#line 944 "parse.c"
+#line 903 "..\\dehsupp\\parse.c"
         break;
       case 42:
-#line 80 "parse.y"
+#line 80 "..\\dehsupp\\parse.y"
 { AddActionMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 950 "parse.c"
+#line 909 "..\\dehsupp\\parse.c"
         break;
       case 45:
-#line 86 "parse.y"
+#line 86 "..\\dehsupp\\parse.y"
 { AddCodeP (yymsp[0].minor.yy62); }
-#line 955 "parse.c"
+#line 914 "..\\dehsupp\\parse.c"
         break;
       case 46:
-#line 87 "parse.y"
+#line 87 "..\\dehsupp\\parse.y"
 { AddCodeP (yymsp[0].minor.yy62);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 961 "parse.c"
+#line 920 "..\\dehsupp\\parse.c"
         break;
       case 49:
-#line 93 "parse.y"
+#line 93 "..\\dehsupp\\parse.y"
 { AddSpriteName (yymsp[0].minor.yy0.string); }
-#line 966 "parse.c"
+#line 925 "..\\dehsupp\\parse.c"
         break;
       case 50:
-#line 94 "parse.y"
+#line 94 "..\\dehsupp\\parse.y"
 { AddSpriteName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 972 "parse.c"
+#line 931 "..\\dehsupp\\parse.c"
         break;
       case 55:
-#line 103 "parse.y"
+#line 103 "..\\dehsupp\\parse.y"
 { AddStateMap (yymsp[-4].minor.yy0.string, yymsp[-2].minor.yy62, yymsp[0].minor.yy62);   yy_destructor(13,&yymsp[-3].minor);
   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 979 "parse.c"
+#line 938 "..\\dehsupp\\parse.c"
         break;
       case 56:
-#line 106 "parse.y"
+#line 106 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = 0;   yy_destructor(28,&yymsp[0].minor);
 }
-#line 985 "parse.c"
+#line 944 "..\\dehsupp\\parse.c"
         break;
       case 57:
-#line 107 "parse.y"
+#line 107 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = 1;   yy_destructor(29,&yymsp[0].minor);
 }
-#line 991 "parse.c"
+#line 950 "..\\dehsupp\\parse.c"
         break;
       case 58:
-#line 108 "parse.y"
+#line 108 "..\\dehsupp\\parse.y"
 { yygotominor.yy62 = 2;   yy_destructor(30,&yymsp[0].minor);
 }
-#line 997 "parse.c"
+#line 956 "..\\dehsupp\\parse.c"
         break;
       case 61:
-#line 114 "parse.y"
+#line 114 "..\\dehsupp\\parse.y"
 { AddSoundMap (yymsp[0].minor.yy0.string); }
-#line 1002 "parse.c"
+#line 961 "..\\dehsupp\\parse.c"
         break;
       case 62:
-#line 115 "parse.y"
+#line 115 "..\\dehsupp\\parse.y"
 { AddSoundMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1008 "parse.c"
+#line 967 "..\\dehsupp\\parse.c"
         break;
       case 65:
-#line 121 "parse.y"
+#line 121 "..\\dehsupp\\parse.y"
 { AddInfoName (yymsp[0].minor.yy0.string); }
-#line 1013 "parse.c"
+#line 972 "..\\dehsupp\\parse.c"
         break;
       case 66:
-#line 122 "parse.y"
+#line 122 "..\\dehsupp\\parse.y"
 { AddInfoName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1019 "parse.c"
+#line 978 "..\\dehsupp\\parse.c"
         break;
       case 71:
-#line 131 "parse.y"
+#line 131 "..\\dehsupp\\parse.y"
 { AddThingBits (yymsp[0].minor.yy0.string, yymsp[-4].minor.yy62, yymsp[-2].minor.yy62);   yy_destructor(13,&yymsp[-3].minor);
   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1026 "parse.c"
+#line 985 "..\\dehsupp\\parse.c"
         break;
       case 76:
-#line 140 "parse.y"
+#line 140 "..\\dehsupp\\parse.y"
 { AddRenderStyle (yymsp[0].minor.yy0.string, yymsp[-2].minor.yy62);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1032 "parse.c"
+#line 991 "..\\dehsupp\\parse.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;

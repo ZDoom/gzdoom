@@ -234,7 +234,11 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 {
 	FTexture *out = NULL;
     enum { t_patch, t_raw, t_imgz, t_png } type = t_patch;
-	DWORD first4bytes=0;
+	union
+	{
+		DWORD dw;
+		WORD w[2];
+	} first4bytes;
 
 	// Must check the length of the lump. Zero length flat markers (F1_START etc.) will come through here.
 	// 13 is the minimum length of andthing valid (i.e a 1x1 pixel Doom patch.)
@@ -246,12 +250,12 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 	{
 		FWadLump data = Wads.OpenLumpNum (lumpnum);
 
-		data >> first4bytes;
-		if (first4bytes == MAKE_ID('I','M','G','Z'))
+		data >> first4bytes.dw;
+		if (first4bytes.dw == MAKE_ID('I','M','G','Z'))
 		{
 			type = t_imgz;
 		}
-		else if (first4bytes == MAKE_ID(137,'P','N','G'))
+		else if (first4bytes.dw == MAKE_ID(137,'P','N','G'))
 		{
 			DWORD width, height;
 			BYTE bitdepth, colortype, compression, filter, interlace;
@@ -259,12 +263,12 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 			// This is most likely a PNG, but make sure. (Note that if the
 			// first 4 bytes match, but later bytes don't, we assume it's
 			// a corrupt PNG.)
-			data >> first4bytes;
-			if (first4bytes != MAKE_ID(13,10,26,10))		return -1;
-			data >> first4bytes;
-			if (first4bytes != MAKE_ID(0,0,0,13))			return -1;
-			data >> first4bytes;
-			if (first4bytes != MAKE_ID('I','H','D','R'))	return -1;
+			data >> first4bytes.dw;
+			if (first4bytes.dw != MAKE_ID(13,10,26,10))		return -1;
+			data >> first4bytes.dw;
+			if (first4bytes.dw != MAKE_ID(0,0,0,13))		return -1;
+			data >> first4bytes.dw;
+			if (first4bytes.dw != MAKE_ID('I','H','D','R'))	return -1;
 
 			// The PNG looks valid so far. Check the IHDR to make sure it's a
 			// type of PNG we support.
@@ -282,11 +286,11 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 
 			// Just for completeness, make sure the PNG has something more than an
 			// IHDR.
-			data >> first4bytes >> first4bytes;
-			if (first4bytes == 0)
+			data >> first4bytes.dw >> first4bytes.dw;
+			if (first4bytes.dw == 0)
 			{
-				data >> first4bytes;
-				if (first4bytes == MAKE_ID('I','E','N','D'))
+				data >> first4bytes.dw;
+				if (first4bytes.dw == MAKE_ID('I','E','N','D'))
 				{
 					return -1;
 				}
@@ -369,8 +373,8 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 	{
 	default:
 		{	// Check patch sizes for sanity
-			WORD width = LittleShort(*(WORD *)&first4bytes);
-			WORD height = LittleShort(*((WORD *)&first4bytes + 1));
+			WORD width = LittleShort(first4bytes.w[0]);
+			WORD height = LittleShort(first4bytes.w[1]);
 
 			if (width <= 2048 && height <= 2048)
 			{

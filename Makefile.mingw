@@ -46,6 +46,8 @@ ifdef FMODDIR
   LDFLAGS += -L$(FMODDIR)/api/lib
 endif
 
+CFLAGS += -fno-strict-aliasing
+
 ifeq ($(CONFIG),Debug)
   OBJDIR = $(DEBUGOBJDIR)
   CFLAGS += $(CPPFLAGS) -Wall -Wno-unused -g3

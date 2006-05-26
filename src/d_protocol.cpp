@@ -73,8 +73,13 @@ int ReadLong (byte **stream)
 
 float ReadFloat (byte **stream)
 {
-	int fakeint = ReadLong (stream);
-	return *((float *)&fakeint);
+	union
+	{
+		int i;
+		float f;
+	} fakeint;
+	fakeint.i = ReadLong (stream);
+	return fakeint.f;
 }
 
 void WriteString (const char *string, byte **stream)
@@ -114,7 +119,13 @@ void WriteLong (int v, byte **stream)
 
 void WriteFloat (float v, byte **stream)
 {
-	WriteLong (*((int *)&v), stream);
+	union
+	{
+		int i;
+		float f;
+	} fakeint;
+	fakeint.f = v;
+	WriteLong (fakeint.i, stream);
 }
 
 // Returns the number of bytes read

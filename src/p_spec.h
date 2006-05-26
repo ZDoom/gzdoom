@@ -138,6 +138,8 @@ protected:
 	friend BOOL PIT_PushThing (AActor *thing);
 };
 
+BOOL PIT_PushThing (AActor *thing);
+
 inline FArchive &operator<< (FArchive &arc, DPusher::EPusher &type)
 {
 	BYTE val = (BYTE)type;
@@ -448,6 +450,11 @@ private:
 	friend void P_ActivateInStasis (int tag);
 };
 
+bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type,
+				int height, int speed, int delay, int lip, int change);
+void EV_StopPlat (int tag);
+void P_ActivateInStasis (int tag);
+
 inline FArchive &operator<< (FArchive &arc, DPlat::EPlatType &type)
 {
 	BYTE val = (BYTE)type;
@@ -559,6 +566,12 @@ private:
 
 };
 
+bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
+				int tag, int speed, int delay, int lock,
+				int lightTag);
+void P_SpawnDoorCloseIn30 (sector_t *sec);
+void P_SpawnDoorRaiseIn5Mins (sector_t *sec);
+
 inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor &type)
 {
 	BYTE val = (BYTE)type;
@@ -610,6 +623,8 @@ protected:
 private:
 	DAnimatedDoor ();
 };
+
+bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay);
 
 //
 // P_CEILNG
@@ -686,6 +701,12 @@ private:
 	friend bool EV_CeilingCrushStop (int tag);
 	friend void P_ActivateInStasisCeiling (int tag);
 };
+
+bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
+	int tag, fixed_t speed, fixed_t speed2, fixed_t height,
+	int crush, int silent, int change);
+bool EV_CeilingCrushStop (int tag);
+void P_ActivateInStasisCeiling (int tag);
 
 inline FArchive &operator<< (FArchive &arc, DCeiling::ECeiling &type)
 {
@@ -785,6 +806,14 @@ private:
 	DFloor ();
 };
 
+bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
+	fixed_t stairsize, fixed_t speed, int delay, int reset, int igntxt,
+	int usespecials);
+bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
+	fixed_t speed, fixed_t height, int crush, int change);
+bool EV_FloorCrushStop (int tag);
+bool EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed);
+
 inline FArchive &operator<< (FArchive &arc, DFloor::EFloor &type)
 {
 	BYTE val = (BYTE)type;
@@ -827,6 +856,9 @@ private:
 	DElevator ();
 };
 
+bool EV_DoElevator (line_t *line, DElevator::EElevator type, fixed_t speed,
+	fixed_t height, int tag);
+
 inline FArchive &operator<< (FArchive &arc, DElevator::EElevator &type)
 {
 	BYTE val = (BYTE)type;
@@ -859,6 +891,9 @@ protected:
 	void DoWaggle (bool ceiling);
 	DWaggleBase ();
 };
+
+bool EV_StartWaggle (int tag, int height, int speed,
+	int offset, int timer, bool ceiling);
 
 class DFloorWaggle : public DWaggleBase
 {

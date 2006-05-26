@@ -1708,7 +1708,7 @@ void G_DoLoadGame ()
 	}
 
 	G_ReadSnapshots (png);
-	P_ReadRNGState (png);
+	FRandom::StaticReadRNGState (png);
 	P_ReadACSDefereds (png);
 
 	// load a base level
@@ -2024,7 +2024,7 @@ void G_DoSaveGame (bool okForQuicksave)
 	}
 
 	G_WriteSnapshots (stdfile);
-	P_WriteRNGState (stdfile);
+	FRandom::StaticWriteRNGState (stdfile);
 	P_WriteACSDefereds (stdfile);
 
 	WriteVars (stdfile, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));

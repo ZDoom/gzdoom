@@ -68,6 +68,8 @@ private:
 	friend void SN_StopAllSequences (void);
 };
 
+void SN_StopAllSequences (void);
+
 struct FSoundSequence
 {
 	FName	SeqName;

@@ -969,31 +969,30 @@ FArchive &FArchive::operator<< (FName &n)
 
 FArchive &FArchive::SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize)
 {
-	WORD w;
+	DWORD w;
 
 	if (m_Storing)
 	{
-		if (*ptr)
+		if (*(void **)ptr)
 		{
-			w = SWAP_WORD((*ptr - (byte *)ptrbase) / elemSize);
+			w = DWORD(((size_t)*ptr - (size_t)ptrbase) / elemSize);
 		}
 		else
 		{
-			w = 0xffff;
+			w = ~0u;
 		}
-		Write (&w, sizeof(WORD));
+		WriteCount (w);
 	}
 	else
 	{
-		Read (&w, sizeof(WORD));
-		w = SWAP_WORD (w);
-		if (w != 0xffff)
+		w = ReadCount ();
+		if (w != ~0u)
 		{
-			*ptr = (byte *)ptrbase + w * elemSize;
+			*(void **)ptr = (byte *)ptrbase + w * elemSize;
 		}
 		else
 		{
-			*ptr = NULL;
+			*(void **)ptr = NULL;
 		}
 	}
 	return *this;

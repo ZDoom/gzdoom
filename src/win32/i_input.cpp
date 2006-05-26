@@ -1745,20 +1745,20 @@ static void MouseRead_DI ()
 		/* Look at the element to see what happened */
 		// GCC does not like putting the DIMOFS_ macros in case statements,
 		// so use ifs instead.
-		if (od.dwOfs == DIMOFS_X)
+		if (od.dwOfs == (DWORD)DIMOFS_X)
 		{
 			dx += od.dwData;
 		}
-		else if (od.dwOfs == DIMOFS_Y)
+		else if (od.dwOfs == (DWORD)DIMOFS_Y)
 		{
 			dy += od.dwData;
 		}
-		else if (od.dwOfs == DIMOFS_Z)
+		else if (od.dwOfs == (DWORD)DIMOFS_Z)
 		{
 			WheelMove += od.dwData;
 			WheelMoved ();
 		}
-		else if (od.dwOfs >= DIMOFS_BUTTON0 && od.dwOfs <= DIMOFS_BUTTON7)
+		else if (od.dwOfs >= (DWORD)DIMOFS_BUTTON0 && od.dwOfs <= (DWORD)DIMOFS_BUTTON7)
 		{
 			/* [RH] Mouse button events mimic keydown/up events */
 			if (!GUICapture)

@@ -354,7 +354,8 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 
 void DCajunMaster::DoAddBot (int bnum, char *info)
 {
-	D_ReadUserInfoStrings (bnum, (byte **)&info, false);
+	byte *infob = (byte *)info;
+	D_ReadUserInfoStrings (bnum, &infob, false);
 	if (!deathmatch && playerstarts[bnum].type == 0)
 	{
 		Printf ("%s tried to join, but there was no player %d start\n",

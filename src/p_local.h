@@ -394,17 +394,23 @@ protected:
 	friend void ThrustMobj (AActor *actor, seg_t *seg, polyobj_t *po);
 };
 
+void ThrustMobj (AActor *actor, seg_t *seg, polyobj_t *po);
+
 class DRotatePoly : public DPolyAction
 {
 	DECLARE_CLASS (DRotatePoly, DPolyAction)
 public:
 	DRotatePoly (int polyNum);
 	void Tick ();
-protected:
-	friend bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
 private:
 	DRotatePoly ();
+
+	friend bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
 };
+
+bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
+
+bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
 
 class DMovePoly : public DPolyAction
 {
@@ -421,6 +427,8 @@ protected:
 
 	friend bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, BOOL overRide);
 };
+
+bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, BOOL overRide);
 
 class DPolyDoor : public DMovePoly
 {
@@ -441,6 +449,8 @@ protected:
 private:
 	DPolyDoor ();
 };
+
+bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
 
 // [RH] Data structure for P_SpawnMapThing() to keep track
 //		of polyobject-related things.

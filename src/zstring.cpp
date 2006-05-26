@@ -194,10 +194,23 @@ void FString::Format (const char *fmt, ...)
 	va_end (arglist);
 }
 
+void FString::AppendFormat (const char *fmt, ...)
+{
+	va_list arglist;
+	va_start (arglist, fmt);
+	StringFormat::VWorker (FormatHelper, this, fmt, arglist);
+	va_end (arglist);
+}
+
 void FString::VFormat (const char *fmt, va_list arglist)
 {
 	Data()->Release();
 	Chars = (char *)(FStringData::Alloc(128) + 1);
+	StringFormat::VWorker (FormatHelper, this, fmt, arglist);
+}
+
+void FString::VAppendFormat (const char *fmt, va_list arglist)
+{
 	StringFormat::VWorker (FormatHelper, this, fmt, arglist);
 }
 

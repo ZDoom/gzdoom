@@ -166,7 +166,9 @@ public:
 	void Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen);
 
 	void Format (const char *fmt, ...);
+	void AppendFormat (const char *fmt, ...);
 	void VFormat (const char *fmt, va_list arglist);
+	void VAppendFormat (const char *fmt, va_list arglist);
 
 	bool IsInt () const;
 	bool IsFloat () const;

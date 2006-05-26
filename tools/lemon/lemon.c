@@ -27,7 +27,7 @@
 #define MAXRHS 1000
 #endif
 
-char *msort();
+void *msort(void *list, void *next, int (*cmp)());
 
 /******** From the file "action.h" *************************************/
 struct action *Action_new();
@@ -370,7 +370,7 @@ struct action *ap2;
 struct action *Action_sort(ap)
 struct action *ap;
 {
-  ap = (struct action *)msort((char *)ap,(char **)&ap->next,actioncmp);
+  ap = (struct action *)msort(ap,&ap->next,actioncmp);
   return ap;
 }
 
@@ -1228,14 +1228,14 @@ struct lemon *lemp;
 
 /* Sort the configuration list */
 void Configlist_sort(){
-  current = (struct config *)msort((char *)current,(char **)&(current->next),Configcmp);
+  current = (struct config *)msort(current,&(current->next),Configcmp);
   currentend = 0;
   return;
 }
 
 /* Sort the basis configuration list */
 void Configlist_sortbasis(){
-  basis = (struct config *)msort((char *)current,(char **)&(current->bp),Configcmp);
+  basis = (struct config *)msort(current,&(current->bp),Configcmp);
   basisend = 0;
   return;
 }
@@ -1315,9 +1315,9 @@ int max;
 void ErrorMsg(const char *filename, int lineno, const char *format, ...){
   char errmsg[ERRMSGSIZE];
   char prefix[PREFIXLIMIT+10];
-  int errmsgsize;
-  int prefixsize;
-  int availablewidth;
+  size_t errmsgsize;
+  size_t prefixsize;
+  size_t availablewidth;
   va_list ap;
   int end, restart, base;
 
@@ -1559,7 +1559,7 @@ char **argv;
 /*
 ** Return a pointer to the next structure in the linked list.
 */
-#define NEXT(A) (*(char**)(((unsigned long)A)+offset))
+#define NEXT(A) (*(void**)(((size_t)A)+offset))
 
 /*
 ** Inputs:
@@ -1576,11 +1576,7 @@ char **argv;
 **   The "next" pointers for elements in the lists a and b are
 **   changed.
 */
-static char *merge(a,b,cmp,offset)
-char *a;
-char *b;
-int (*cmp)();
-int offset;
+static void *merge(void *a,void *b,int (*cmp)(),size_t offset)
 {
   char *ptr, *head;
 
@@ -1628,16 +1624,13 @@ int offset;
 **   The "next" pointers for elements in list are changed.
 */
 #define LISTSIZE 30
-char *msort(list,next,cmp)
-char *list;
-char **next;
-int (*cmp)();
+void *msort(void *list,void *next,int (*cmp)())
 {
-  unsigned long offset;
+  size_t offset;
   char *ep;
   char *set[LISTSIZE];
   int i;
-  offset = (unsigned long)next - (unsigned long)list;
+  offset = (size_t)next - (size_t)list;
   for(i=0; i<LISTSIZE; i++) set[i] = 0;
   while( list ){
     ep = list;
@@ -1669,7 +1662,8 @@ int n;
 int k;
 FILE *err;
 {
-  int spcnt, i;
+  int i;
+  size_t spcnt;
   if( argv[0] ) fprintf(err,"%s",argv[0]);
   spcnt = strlen(argv[0]) + 1;
   for(i=1; i<n && argv[i]; i++){
@@ -1787,7 +1781,7 @@ FILE *err;
         if( *end ){
           if( err ){
             fprintf(err,"%sillegal character in floating-point argument.\n",emsg);
-            errline(i,((unsigned long)end)-(unsigned long)argv[i],err);
+            errline(i,((size_t)end)-(size_t)argv[i],err);
           }
           errcnt++;
         }
@@ -1798,7 +1792,7 @@ FILE *err;
         if( *end ){
           if( err ){
             fprintf(err,"%sillegal character in integer argument.\n",emsg);
-            errline(i,((unsigned long)end)-(unsigned long)argv[i],err);
+            errline(i,((size_t)end)-(size_t)argv[i],err);
           }
           errcnt++;
         }
@@ -1893,7 +1887,7 @@ int n;
 
 void OptPrint(){
   int i;
-  int max, len;
+  size_t max, len;
   max = 0;
   for(i=0; op[i].label; i++){
     len = strlen(op[i].label) + 1;
@@ -2453,6 +2447,7 @@ struct lemon *gp;
   char *cp, *nextcp;
   int startline = 0;
 
+  memset(&ps, 0, sizeof ps);
   ps.gp = gp;
   ps.filename = gp->filename;
   ps.errorcnt = 0;
@@ -2714,7 +2709,7 @@ struct lemon *lemp;
   maxlen = 10;
   for(i=0; i<lemp->nsymbol; i++){
     sp = lemp->symbols[i];
-    len = strlen(sp->name);
+    len = (int)strlen(sp->name);
     if( len>maxlen ) maxlen = len;
   }
   ncolumns = 76/(maxlen+5);
@@ -3158,7 +3153,7 @@ PRIVATE char *append_str(char *zText, int n, int p1, int p2, int bNoSubst){
       used += n;
       assert( used>=0 );
     }
-    n = strlen(zText);
+    n = (int)strlen(zText);
   }
   if( n+sizeof(zInt)*2+used >= (size_t)alloced ){
     alloced = n + sizeof(zInt)*2 + used + 200;
@@ -3171,7 +3166,7 @@ PRIVATE char *append_str(char *zText, int n, int p1, int p2, int bNoSubst){
       sprintf(zInt, "%d", p1);
       p1 = p2;
       strcpy(&z[used], zInt);
-      used += strlen(&z[used]);
+      used += (int)strlen(&z[used]);
       zText++;
       n--;
     }else{
@@ -3320,13 +3315,13 @@ int mhflag;                 /* True if generating makeheaders output */
   for(i=0; i<arraysize; i++) types[i] = 0;
   maxdtlength = 0;
   if( lemp->vartype ){
-    maxdtlength = strlen(lemp->vartype);
+    maxdtlength = (int)strlen(lemp->vartype);
   }
   for(i=0; i<lemp->nsymbol; i++){
     int len;
     struct symbol *sp = lemp->symbols[i];
     if( sp->datatype==0 ) continue;
-    len = strlen(sp->datatype);
+    len = (int)strlen(sp->datatype);
     if( len>maxdtlength ) maxdtlength = len;
   }
   stddt = (char*)malloc( maxdtlength*2 + 1 );
@@ -3522,7 +3517,7 @@ int mhflag;     /* Output in makeheaders format if true */
   }
   name = lemp->name ? lemp->name : "Parse";
   if( lemp->arg && lemp->arg[0] ){
-    int i;
+    size_t i;
     i = strlen(lemp->arg);
     while( i>=1 && isspace(lemp->arg[i-1]) ) i--;
     while( i>=1 && (isalnum(lemp->arg[i-1]) || lemp->arg[i-1]=='_') ) i--;

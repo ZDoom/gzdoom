@@ -38,6 +38,9 @@ private:
 	const PClass *Weapons[MAX_WEAPONS_PER_SLOT];
 };
 
+AWeapon *PickNextWeapon (player_s *player);
+AWeapon *PickPrevWeapon (player_s *player);
+
 // FWeaponSlots::AddDefaultWeapon return codes
 enum ESlotDef
 {

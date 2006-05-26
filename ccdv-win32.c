@@ -89,15 +89,11 @@ static void DumpFormattedOutput()
 		return;
 	}
 
-	spaces[0] = ' ';
-	spaces[1] = ' ';
-	spaces[2] = ' ';
-	spaces[3] = ' ';
-	spaces[4] = ' ';
-	spaces[5] = ' ';
-	spaces[6] = ' ';
-	spaces[7] = ' ';
-	spaces[8] = '\0';
+	for(i = 0; i < 8; ++i)
+	{
+		spaces[i] = ' ';
+	}
+	spaces[i] = '\0';
 
 	color = info.wAttributes & ~(FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY);
 	curcol = 0;
@@ -473,8 +469,11 @@ void mainCRTStartup(void)
 	}
 	else if((extlen == 2 &&
 		(lstrcmpi(gAction+8, "cc") == 0 ||
-		 lstrcmpi(gAction+8, "cl") == 0)) ||
-		(extlen == 3 && lstrcmpi(gAction+8, "gcc") == 0))
+		 lstrcmpi(gAction+8, "cl") == 0 ||
+		 lstrcmpi(gAction+8, "ld") == 0)) ||
+		(extlen == 3 && 
+		 (lstrcmpi(gAction+8, "gcc") == 0 ||
+		  lstrcmpi(gAction+8, "g++") == 0)))
 	{
 		gcc = 1;
 	}
@@ -522,7 +521,9 @@ void mainCRTStartup(void)
 		{
 			yy++;
 		}
-		else if(CompareString(LOCALE_USER_DEFAULT, NORM_IGNORECASE, ".nas", 4, ext, -1) == CSTR_EQUAL)
+		else if((ext[0] == '.' && ext[1] == 'n' && ext[2] == 'a' && ext[3] == 's') ||
+				(ext[0] == '.' && ext[1] == 'a' && ext[2] == 's' && ext[3] == 'm') ||
+				(ext[0] == '.' && ext[1] == 's'))
 		{
 			lstrcpy(gAction, "Assembling");
 			SetTarget(&gTarget, arg, arglen);

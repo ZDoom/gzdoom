@@ -509,25 +509,29 @@ namespace StringFormat
 #define FP_EXPONENT_MASK	(2047llu<<52)
 #define FP_FRACTION_MASK	((1llu<<52)-1)
 #endif
-			double number = va_arg (arglist, double);
+			union
+			{
+				double d;
+				uint64_t i64;
+			} number;
+			number.d = va_arg (arglist, double);
 
 			if (precision < 0) precision = 6;
 
 			flags |= F_SIGNED;
-			int64arg = *(uint64_t*)&number;
 
-			if ((int64arg & FP_EXPONENT_MASK) == FP_EXPONENT_MASK)
+			if ((number.i64 & FP_EXPONENT_MASK) == FP_EXPONENT_MASK)
 			{
-				if (int64arg & FP_SIGN_MASK)
+				if (number.i64 & FP_SIGN_MASK)
 				{
 					flags |= F_NEGATIVE;
 				}
-				if ((int64arg & FP_FRACTION_MASK) == 0)
+				if ((number.i64 & FP_FRACTION_MASK) == 0)
 				{
 					obuff = "Infinity";
 					bufflen = 8;
 				}
-				else if ((int64arg & ((FP_FRACTION_MASK+1)>>1)) == 0)
+				else if ((number.i64 & ((FP_FRACTION_MASK+1)>>1)) == 0)
 				{
 					obuff = "NaN";
 					bufflen = 3;
@@ -542,7 +546,7 @@ namespace StringFormat
 				// Converting a binary floating point number to an ASCII decimal
 				// representation is non-trivial, so I'm not going to do it myself.
 				// (At least for now.)
-				len += fmt_fp (output, outputData, flags, precision, width, number, type);
+				len += fmt_fp (output, outputData, flags, precision, width, number.d, type);
 				continue;
 			}
 		}

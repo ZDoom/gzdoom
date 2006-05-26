@@ -2125,7 +2125,8 @@ int DLevelScript::RunScript ()
 	ACSFormat fmt = activeBehavior->GetFormat();
 	int runaway = 0;	// used to prevent infinite loops
 	int pcd;
-	char workreal[4096], *const work = workreal+2, *workwhere = work;
+	//char workreal[4096], *const work = workreal+2, *workwhere = work;
+	FString work;
 	const char *lookup;
 	int optstart = -1;
 	int temp;
@@ -2348,6 +2349,11 @@ int DLevelScript::RunScript ()
 		case PCD_CALL:
 		case PCD_CALLDISCARD:
 			{
+				union
+				{
+					CallReturn *ret;
+					SDWORD *retsp;
+				};
 				int funcnum;
 				int i;
 				ScriptFunction *func;
@@ -2377,11 +2383,12 @@ int DLevelScript::RunScript ()
 					Stack[sp+i] = 0;
 				}
 				sp += i;
-				((CallReturn *)&Stack[sp])->ReturnAddress = activeBehavior->PC2Ofs (pc);
-				((CallReturn *)&Stack[sp])->ReturnFunction = activeFunction;
-				((CallReturn *)&Stack[sp])->ReturnModule = activeBehavior;
-				((CallReturn *)&Stack[sp])->ReturnLocals = mylocals;
-				((CallReturn *)&Stack[sp])->bDiscardResult = (pcd == PCD_CALLDISCARD);
+				retsp = &Stack[sp];
+				ret->ReturnAddress = activeBehavior->PC2Ofs (pc);
+				ret->ReturnFunction = activeFunction;
+				ret->ReturnModule = activeBehavior;
+				ret->ReturnLocals = mylocals;
+				ret->bDiscardResult = (pcd == PCD_CALLDISCARD);
 				sp += sizeof(CallReturn)/sizeof(int);
 				pc = module->Ofs2PC (func->Address);
 				activeFunction = func;
@@ -2394,7 +2401,11 @@ int DLevelScript::RunScript ()
 		case PCD_RETURNVAL:
 			{
 				int value;
-				CallReturn *retState;
+				union
+				{
+					SDWORD *retsp;
+					CallReturn *retState;
+				};
 
 				if (pcd == PCD_RETURNVAL)
 				{
@@ -2405,7 +2416,7 @@ int DLevelScript::RunScript ()
 					value = 0;
 				}
 				sp -= sizeof(CallReturn)/sizeof(int);
-				retState = (CallReturn *)&Stack[sp];
+				retsp = &Stack[sp];
 				sp = locals - Stack;
 				pc = retState->ReturnModule->Ofs2PC (retState->ReturnAddress);
 				activeFunction = retState->ReturnFunction;
@@ -3201,8 +3212,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_BEGINPRINT:
-			workwhere = work;
-			work[0] = 0;
+			work = "";
 			break;
 
 		case PCD_PRINTSTRING:
@@ -3214,25 +3224,23 @@ int DLevelScript::RunScript ()
 			}
 			if (lookup != NULL)
 			{
-				workwhere += sprintf (workwhere, "%s", lookup);
+				work += lookup;
 			}
 			--sp;
 			break;
 
 		case PCD_PRINTNUMBER:
-			workwhere += sprintf (workwhere, "%ld", STACK(1));
+			work.AppendFormat ("%ld", STACK(1));
 			--sp;
 			break;
 
 		case PCD_PRINTCHARACTER:
-			workwhere[0] = STACK(1);
-			workwhere[1] = 0;
-			workwhere++;
+			work += (char)STACK(1);
 			--sp;
 			break;
 
 		case PCD_PRINTFIXED:
-			workwhere += sprintf (workwhere, "%g", FIXED2FLOAT(STACK(1)));
+			work.AppendFormat ("%g", FIXED2FLOAT(STACK(1)));
 			--sp;
 			break;
 
@@ -3255,21 +3263,21 @@ int DLevelScript::RunScript ()
 				}
 				else
 				{
-					workwhere += sprintf (workwhere, "Player %ld", STACK(1));
+					work.AppendFormat ("Player %ld", STACK(1));
 					sp--;
 					break;
 				}
 				if (player)
 				{
-					workwhere += sprintf (workwhere, "%s", player->userinfo.netname);
+					work += player->userinfo.netname;
 				}
 				else if (activator)
 				{
-					workwhere += sprintf (workwhere, "%s", RUNTIME_TYPE(activator)->TypeName.GetChars());
+					work += RUNTIME_TYPE(activator)->TypeName.GetChars();
 				}
 				else
 				{
-					workwhere += sprintf (workwhere, " ");
+					work += ' ';
 				}
 				sp--;
 			}
@@ -3280,8 +3288,9 @@ int DLevelScript::RunScript ()
 			{
 				int a = *(activeBehavior->MapVars[STACK(1)]);
 				int offset = STACK(2);
-				while((workwhere[0] = activeBehavior->GetArrayVal (a, offset)) != '\0') {
-					workwhere++;
+				int c;
+				while((c = activeBehavior->GetArrayVal (a, offset)) != '\0') {
+					work += (char)c;
 					offset++;
 				}
 				sp-=2;
@@ -3293,8 +3302,9 @@ int DLevelScript::RunScript ()
 			{
 				int a = STACK(1);
 				int offset = STACK(2);
-				while((workwhere[0] = ACS_WorldArrays[a].GetVal (offset)) != '\0') {
-					workwhere++;
+				int c;
+				while((c = ACS_WorldArrays[a].GetVal (offset)) != '\0') {
+					work += (char)c;
 					offset++;
 				}
 				sp-=2;
@@ -3306,8 +3316,9 @@ int DLevelScript::RunScript ()
 			{
 				int a = STACK(1);
 				int offset = STACK(2);
-				while((workwhere[0] = ACS_GlobalArrays[a].GetVal (offset)) != '\0') {
-					workwhere++;
+				int c;
+				while((c = ACS_GlobalArrays[a].GetVal (offset)) != '\0') {
+					work += (char)c;
 					offset++;
 				}
 				sp-=2;
@@ -3318,10 +3329,12 @@ int DLevelScript::RunScript ()
 		case PCD_ENDPRINTBOLD:
 		case PCD_MOREHUDMESSAGE:
 		case PCD_ENDLOG:
-			strbin (work);
+			strbin (work.LockBuffer());
+			work.Truncate ((long)strlen(work));
+			work.UnlockBuffer();
 			if (pcd == PCD_ENDLOG)
 			{
-				Printf ("%s\n", work);
+				Printf ("%s\n", work.GetChars());
 			}
 			else if (pcd != PCD_MOREHUDMESSAGE)
 			{
@@ -3409,16 +3422,19 @@ int DLevelScript::RunScript ()
 						static const char bar[] = TEXTCOLOR_ORANGE "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 					"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
 						static const char logbar[] = "\n<------------------------------->\n";
+						char consolecolor[3];
 
-						workreal[0] = '\x1c';
-						workreal[1] = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
+						consolecolor[0] = '\x1c';
+						consolecolor[1] = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
+						consolecolor[2] = '\0';
 						AddToConsole (-1, bar);
-						AddToConsole (-1, workreal);
+						AddToConsole (-1, consolecolor);
+						AddToConsole (-1, work);
 						AddToConsole (-1, bar);
 						if (Logfile)
 						{
 							fputs (logbar, Logfile);
-							fputs (workreal, Logfile);
+							fputs (work, Logfile);
 							fputs (logbar, Logfile);
 							fflush (Logfile);
 						}

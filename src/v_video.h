@@ -187,8 +187,6 @@ private:
 	// Keep track of canvases, for automatic destruction at exit
 	DCanvas *Next;
 	static DCanvas *CanvasChain;
-
-	friend void FreeCanvasChain ();
 };
 
 // A canvas in system memory.

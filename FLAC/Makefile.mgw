@@ -23,23 +23,13 @@ CXXFLAGS = $(LOC) $(DEFINES) -O2 -Wall
 NASM = nasmw
 NASMFLAGS = -d OBJ_FORMAT_win32 -f win32
 
-LD = $(CC)
-LDFLAGS = $(LOC) -s
-
 AR = ar
 ARFLAGS = rcs
-
-RC = windres
-RCFLAGS = --define GCC_WINDRES
 
 OBJS = cpu_asm.o fixed_asm.o lpc_asm.o \
        bitbuffer.o bitmath.o cpu.o crc.o fixed.o format.o lpc.o memory.o stream_decoder.o stream_decoder_pp.o
 
 all: $(STATICLIB)
-
-test: example minigzip
-	./example
-	echo hello world | minigzip | minigzip -d
 
 .c.o:
 	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<
@@ -63,7 +53,7 @@ fixed_asm.o: ia32/fixed_asm.nasm
 	$(CCDV) $(NASM) -o $@ $(NASMFLAGS) $<
 lpc_asm.o: ia32/lpc_asm.nasm
 	$(CCDV) $(NASM) -o $@ $(NASMFLAGS) $<
-butbuffer.o: bitbuffer.c
+bitbuffer.o: bitbuffer.c
 bitmath.o: bitmath.c
 cpu.o: cpu.c
 crc.o: crc.c

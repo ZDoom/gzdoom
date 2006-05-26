@@ -102,8 +102,11 @@ void SC_Open (const char *name)
 
 void SC_OpenFile (const char *name)
 {
+	byte *filebuf;
+
 	SC_Close ();
-	ScriptSize = M_ReadFile (name, (byte **)&ScriptBuffer);
+	ScriptSize = M_ReadFile (name, &filebuf);
+	ScriptBuffer = (char *)filebuf;
 	ScriptName = name;	// This is used for error messages so the full file name is preferable
 	//ExtractFileBase (name, ScriptName);
 	FreeScript = true;

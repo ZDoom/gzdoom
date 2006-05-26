@@ -75,6 +75,8 @@ public:
 
 	static void StaticClearRandom ();
 	static DWORD StaticSumSeeds ();
+	static void StaticReadRNGState (PNGHandle *png);
+	static void StaticWriteRNGState (FILE *file);
 
 #ifdef _DEBUG
 	static void StaticPrintSeeds ();
@@ -90,9 +92,6 @@ private:
 #endif
 
 	static FRandom *RNGList;
-
-	friend void P_ReadRNGState (PNGHandle *png);
-	friend void P_WriteRNGState (FILE *file);
 };
 
 extern DWORD rngseed;			// The starting seed (not part of state)

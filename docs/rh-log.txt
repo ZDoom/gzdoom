@@ -1,6 +1,17 @@
+May 25, 2006
+- Fixed: The C code in AltSoundRenderer::CopyAndClip() did not shift the sample
+  data enough (2 bits instead of 8), so it was super loud and aliased.
+- Fixes for GCC 4.1: Several type-punned pointer warnings, but more
+  importantly, declaring a friend function inside a class body is no longer
+  enough to declare that function globally; you must declare it again outside
+  the class.
+- Upgraded FArchive::SerializePointer so that it can store 32-bit indices.
+- ACS printing pcodes now build their string in an FSttring instead of a fixed
+  sized buffer on the stack.
+
 May 24, 2006
 - Modified ccdv-win32 to show "Generating X" messages when running lemon and
-  re2c.
+  re2c instead of "Linking X".
 - Updated lemon and re2c to the latest versions and ported dehsupp to use them
   for code generation. (Xlatcc is next.)
 - Added function level linking for Makefile.mingw.

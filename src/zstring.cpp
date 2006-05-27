@@ -218,9 +218,9 @@ int FString::FormatHelper (void *data, const char *cstr, int len)
 {
 	FString *str = (FString *)data;
 	size_t len1 = str->Len();
-	if (len1 + len > str->Data()->AllocLen)
+	if (len1 + len > str->Data()->AllocLen || str->Chars == &NullString.Nothing[0])
 	{
-		str->Chars = (char *)(str->Data()->Realloc((len1 + len + 127) & ~127) + 1);
+		str->ReallocBuffer((len1 + len + 127) & ~127);
 	}
 	StrCopy (str->Chars + len1, cstr, len);
 	str->Data()->Len = (unsigned int)(len1 + len);

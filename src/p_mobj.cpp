@@ -3292,7 +3292,7 @@ void AActor::AdjustFloorClip ()
 EXTERN_CVAR (Bool, chasedemo)
 extern bool demonew;
 
-void P_SpawnPlayer (mapthing2_t *mthing)
+void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 {
 	int		  playernum;
 	player_t *p;
@@ -3428,7 +3428,12 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 		p->cheats = CF_CHASECAM;
 
 	// setup gun psprite
-	P_SetupPsprites (p);
+	if (startenterscripts)
+	{
+		// This can also start a script so don't do it for
+		// the dummy player.
+		P_SetupPsprites (p);
+	}
 
 	// give all cards in death match mode
 	if (deathmatch)
@@ -3472,13 +3477,16 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	P_PlayerStartStomp (mobj);
 
 	// [BC] Do script stuff
-	if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
+	if (startenterscripts)
 	{
-		FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
-	}
-	else if (state == PST_REBORN)
-	{
-		FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
+		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
+		{
+			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
+		}
+		else if (state == PST_REBORN)
+		{
+			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
+		}
 	}
 }
 

@@ -1,3 +1,10 @@
+May 27, 2006 (Changes by Graf Zahl)
+- Fixed: FString::FormatHelper must not alter the null string.
+- Fixed: FString::FormatHelper should use ReallocBuffer instead of directly
+  calling Realloc. This caused crashes with the ACS print function.
+- Fixed: The dummy player spawned in G_FinishTravel must not start any ENTER
+  scripts.
+
 May 26, 2006
 - Changed makewad's zip routines so that it simply stores files that cannot be
   compressed smaller instead of using deflate anyway. Saves 133 bytes currently.

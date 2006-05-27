@@ -2004,7 +2004,11 @@ void G_FinishTravel ()
 		else
 		{
 			oldpawn = pawndup;
-			P_SpawnPlayer (&playerstarts[pawn->player - players]);
+
+			// The player being spawned here is a short lived dummy and
+			// must not start any ENTER script or big problems will happen.
+			P_SpawnPlayer (&playerstarts[pawn->player - players], false);
+
 			pawndup = pawn->player->mo;
 			if (!startkeepfacing)
 			{

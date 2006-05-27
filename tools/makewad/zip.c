@@ -129,11 +129,6 @@ typedef struct
     uLong dosDate;
     uLong crc32;
     int  encrypt;
-#ifndef NOCRYPT
-    unsigned long keys[3];     /* keys defining the pseudo-random sequence */
-    const unsigned long* pcrc_32_tab;
-    int crypt_header_size;
-#endif
 } curfile_info;
 
 typedef struct
@@ -153,11 +148,6 @@ typedef struct
 } zip_internal;
 
 
-
-#ifndef NOCRYPT
-#define INCLUDECRYPTINGCODE_IFCRYPTALLOWED
-#include "crypt.h"
-#endif
 
 local linkedlist_datablock_internal* allocate_new_datablock()
 {
@@ -717,11 +707,6 @@ extern int ZEXPORT zipOpenNewFileInZip3 (file, filename, zipfi,
     uInt i;
     int err = ZIP_OK;
 
-#    ifdef NOCRYPT
-    if (password != NULL)
-        return ZIP_PARAMERROR;
-#    endif
-
     if (file == NULL)
         return ZIP_PARAMERROR;
     if ((method!=0) && (method!=Z_DEFLATED))
@@ -874,23 +859,6 @@ extern int ZEXPORT zipOpenNewFileInZip3 (file, filename, zipfi,
         if (err==Z_OK)
             zi->ci.stream_initialised = 1;
     }
-#    ifndef NOCRYPT
-    zi->ci.crypt_header_size = 0;
-    if ((err==Z_OK) && (password != NULL))
-    {
-        unsigned char bufHead[RAND_HEAD_LEN];
-        unsigned int sizeHead;
-        zi->ci.encrypt = 1;
-        zi->ci.pcrc_32_tab = get_crc_table();
-        /*init_keys(password,zi->ci.keys,zi->ci.pcrc_32_tab);*/
-
-        sizeHead=crypthead(password,bufHead,RAND_HEAD_LEN,zi->ci.keys,zi->ci.pcrc_32_tab,crcForCrypting);
-        zi->ci.crypt_header_size = sizeHead;
-
-        if (ZWRITE(zi->z_filefunc,zi->filestream,bufHead,sizeHead) != sizeHead)
-                err = ZIP_ERRNO;
-    }
-#    endif
 
     if (err==Z_OK)
         zi->in_opened_file_inzip = 1;
@@ -947,16 +915,6 @@ local int zipFlushWriteBuffer(zi)
 {
     int err=ZIP_OK;
 
-    if (zi->ci.encrypt != 0)
-    {
-#ifndef NOCRYPT
-        uInt i;
-        int t;
-        for (i=0;i<zi->ci.pos_in_buffered_data;i++)
-            zi->ci.buffered_data[i] = zencode(zi->ci.keys, zi->ci.pcrc_32_tab,
-                                       zi->ci.buffered_data[i],t);
-#endif
-    }
     if (ZWRITE(zi->z_filefunc,zi->filestream,zi->ci.buffered_data,zi->ci.pos_in_buffered_data)
                                                                     !=zi->ci.pos_in_buffered_data)
       err = ZIP_ERRNO;
@@ -1081,9 +1039,6 @@ extern int ZEXPORT zipCloseFileInZipRaw (file, uncompressed_size, crc32)
         uncompressed_size = (uLong)zi->ci.stream.total_in;
     }
     compressed_size = (uLong)zi->ci.stream.total_out;
-#    ifndef NOCRYPT
-    compressed_size += zi->ci.crypt_header_size;
-#    endif
 
     ziplocal_putValue_inmemory(zi->ci.central_header+16,crc32,4); /*crc*/
     ziplocal_putValue_inmemory(zi->ci.central_header+20,
@@ -1129,6 +1084,135 @@ extern int ZEXPORT zipCloseFileInZip (file)
     zipFile file;
 {
     return zipCloseFileInZipRaw (file,0,0);
+}
+
+extern int ZEXPORT zipAddFileToZip (file, filename, zipfi, buf, len)
+	zipFile file;
+	const char *filename;
+	const zip_fileinfo *zipfi;
+	const void *buf;
+	unsigned len;
+{
+    zip_internal* zi;
+    uLong compressed_size;
+	uLong uncompressed_size;
+	uLong crc32;
+	long data_pos;
+	int err = ZIP_OK;
+
+    if (file == NULL)
+        return ZIP_PARAMERROR;
+
+	if (err == ZIP_OK)
+		err = zipOpenNewFileInZip(file, filename, zipfi, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
+
+    zi = (zip_internal*)file;
+
+	data_pos = ZTELL(zi->z_filefunc, zi->filestream);
+
+	if (err == ZIP_OK)
+		err = zipWriteInFileInZip(file, buf, len);
+
+	if (err != ZIP_OK)
+		return err;
+
+    zi->ci.stream.avail_in = 0;
+
+    while (err==ZIP_OK)
+    {
+        uLong uTotalOutBefore;
+        if (zi->ci.stream.avail_out == 0)
+        {
+            if (zipFlushWriteBuffer(zi) == ZIP_ERRNO)
+                err = ZIP_ERRNO;
+            zi->ci.stream.avail_out = (uInt)Z_BUFSIZE;
+            zi->ci.stream.next_out = zi->ci.buffered_data;
+        }
+        uTotalOutBefore = zi->ci.stream.total_out;
+        err=deflate(&zi->ci.stream,  Z_FINISH);
+        zi->ci.pos_in_buffered_data += (uInt)(zi->ci.stream.total_out - uTotalOutBefore) ;
+    }
+
+    if (err==Z_STREAM_END)
+        err=ZIP_OK; /* this is normal */
+
+    if ((zi->ci.pos_in_buffered_data>0) && (err==ZIP_OK))
+        if (zipFlushWriteBuffer(zi)==ZIP_ERRNO)
+            err = ZIP_ERRNO;
+
+    err=deflateEnd(&zi->ci.stream);
+    zi->ci.stream_initialised = 0;
+
+    crc32 = (uLong)zi->ci.crc32;
+    uncompressed_size = (uLong)zi->ci.stream.total_in;
+    compressed_size = (uLong)zi->ci.stream.total_out;
+
+	if (uncompressed_size <= compressed_size)
+	{
+		/* Compressed size was no better than uncompressed, so redo it. */
+		zi->ci.stream.avail_in = (uInt)0;
+		zi->ci.stream.avail_out = (uInt)Z_BUFSIZE;
+		zi->ci.stream.next_out = zi->ci.buffered_data;
+		zi->ci.stream.total_in = 0;
+		zi->ci.stream.total_out = 0;
+		zi->ci.method = 0;
+		ziplocal_putValue_inmemory(zi->ci.central_header+10,0,2); /* method */
+
+		if (ZSEEK(zi->z_filefunc,zi->filestream,
+				  data_pos,ZLIB_FILEFUNC_SEEK_SET)!=0)
+			err = ZIP_ERRNO;
+
+		err = zipWriteInFileInZip(file, buf, len);
+		if ((zi->ci.pos_in_buffered_data>0) && (err==ZIP_OK))
+			if (zipFlushWriteBuffer(zi)==ZIP_ERRNO)
+				err = ZIP_ERRNO;
+		compressed_size = (uLong)zi->ci.stream.total_out;
+	}
+
+    ziplocal_putValue_inmemory(zi->ci.central_header+16,crc32,4); /*crc*/
+    ziplocal_putValue_inmemory(zi->ci.central_header+20,
+                                compressed_size,4); /*compr size*/
+    if (zi->ci.stream.data_type == Z_ASCII)
+        ziplocal_putValue_inmemory(zi->ci.central_header+36,(uLong)Z_ASCII,2);
+    ziplocal_putValue_inmemory(zi->ci.central_header+24,
+                                uncompressed_size,4); /*uncompr size*/
+
+    if (err==ZIP_OK)
+        err = add_data_in_datablock(&zi->central_dir,zi->ci.central_header,
+                                       (uLong)zi->ci.size_centralheader);
+    free(zi->ci.central_header);
+
+    if (err==ZIP_OK)
+    {
+        long cur_pos_inzip = ZTELL(zi->z_filefunc,zi->filestream);
+        if (ZSEEK(zi->z_filefunc,zi->filestream,
+                  zi->ci.pos_local_header + 8,ZLIB_FILEFUNC_SEEK_SET)!=0)
+            err = ZIP_ERRNO;
+
+		if (err==ZIP_OK)
+			err = ziplocal_putValue(&zi->z_filefunc,zi->filestream,(uLong)zi->ci.method,2);
+
+		if (err==ZIP_OK)
+			err = ziplocal_putValue(&zi->z_filefunc,zi->filestream,(uLong)zi->ci.dosDate,4);
+
+        if (err==ZIP_OK)
+            err = ziplocal_putValue(&zi->z_filefunc,zi->filestream,crc32,4); /* crc 32, unknown */
+
+        if (err==ZIP_OK) /* compressed size, unknown */
+            err = ziplocal_putValue(&zi->z_filefunc,zi->filestream,compressed_size,4);
+
+        if (err==ZIP_OK) /* uncompressed size, unknown */
+            err = ziplocal_putValue(&zi->z_filefunc,zi->filestream,uncompressed_size,4);
+
+        if (ZSEEK(zi->z_filefunc,zi->filestream,
+                  cur_pos_inzip,ZLIB_FILEFUNC_SEEK_SET)!=0)
+            err = ZIP_ERRNO;
+    }
+
+    zi->number_entry ++;
+    zi->in_opened_file_inzip = 0;
+
+    return err;
 }
 
 extern int ZEXPORT zipClose (file, global_comment)

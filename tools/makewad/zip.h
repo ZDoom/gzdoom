@@ -208,6 +208,15 @@ extern int ZEXPORT zipWriteInFileInZip OF((zipFile file,
   Write data in the zipfile
 */
 
+extern int ZEXPORT zipAddFileToZip OF((zipFile file,
+                       const char *filename,
+					   const zip_fileinfo *zipfi,
+					   const void *buf,
+					   unsigned len));
+/*
+  [RH] Add a file to the zipfile, using deflate or stored, whichever is best
+*/
+
 extern int ZEXPORT zipCloseFileInZip OF((zipFile file));
 /*
   Close the current file in the zipfile

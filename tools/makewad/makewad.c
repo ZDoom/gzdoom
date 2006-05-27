@@ -165,31 +165,16 @@ int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 	}
 	// file loaded
 
-	// create zip entry, giving entry name and zip_inf data
-	if (Z_OK != zipOpenNewFileInZip(zipfile, zipname, &zip_inf, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION))
-	{
-		free (readbuf);
-		fprintf (stderr, "Unable to open zip for writing %s\n", filename);
-		return 1;
-	}
-
-	// write data into zipfile (zipfile remembers the state)
-	if (Z_OK != zipWriteInFileInZip(zipfile, readbuf, (unsigned)len))
+	// create zip entry, giving entry name and zip_inf data,
+	// write data into zipfile, and close the zip entry
+	if (Z_OK != zipAddFileToZip(zipfile, zipname, &zip_inf, readbuf, (unsigned)len))
 	{
 		free (readbuf);
 		fprintf (stderr, "Unable to write %s to zip\n", filename);
 		return 1;
 	}
-	// done writing data
-	free (readbuf);
-
-	// close the zip entry
-	if (Z_OK != zipCloseFileInZip(zipfile))
-	{
-		fprintf (stderr, "Unable to close %s in zip\n", filename);
-		return 1;
-	}
 	// all done
+	free (readbuf);
 	return 0;
 }
 

@@ -1,3 +1,14 @@
+May 28, 2006 (Changes by Graf Zahl)
+- Fixed: Monsters couldn't hurt other monsters of the same species if they
+  were supposed to hate them.
+- Since I was editing the file anyway I added checks for Heretic's and Strife's
+  damaging floor types to DCajunMaster::IsDangerous.
+- Added a NULL pointer check to DCajunMaster::TurnToAng because a crash log
+  indicated that this can happen.
+- Fixed: Strife's energy pod contains 20 units when dropped by monsters.
+  To achieve this I added an Ammo.DropAmount property because there are
+  no other means to control this from inside a conversation script.
+
 May 27, 2006 (Changes by Graf Zahl)
 - Fixed: FString::FormatHelper must not alter the null string.
 - Fixed: FString::FormatHelper should use ReallocBuffer instead of directly

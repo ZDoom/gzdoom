@@ -3067,6 +3067,15 @@ static void AmmoBackpackMaxAmount (AAmmo *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void AmmoDropAmount (AAmmo *defaults, Baggage &bag)
+{
+	SC_MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt (AIMETA_DropAmount, sc_Number);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ArmorMaxSaveAmount (ABasicArmorBonus *defaults, Baggage &bag)
 {
 	SC_MustGetNumber();
@@ -3497,6 +3506,7 @@ static const ActorProps props[] =
 	{ "alpha",						ActorAlpha,					RUNTIME_CLASS(AActor) },
 	{ "ammo.backpackamount",		(apf)AmmoBackpackAmount,	RUNTIME_CLASS(AAmmo) },
 	{ "ammo.backpackmaxamount",		(apf)AmmoBackpackMaxAmount,	RUNTIME_CLASS(AAmmo) },
+	{ "ammo.dropamount",			(apf)AmmoDropAmount,		RUNTIME_CLASS(AAmmo) },
 	{ "armor.maxsaveamount",		(apf)ArmorMaxSaveAmount,	RUNTIME_CLASS(ABasicArmorBonus) },
 	{ "armor.saveamount",			(apf)ArmorSaveAmount,		RUNTIME_CLASS(AActor) },
 	{ "armor.savepercent",			(apf)ArmorSavePercent,		RUNTIME_CLASS(AActor) },

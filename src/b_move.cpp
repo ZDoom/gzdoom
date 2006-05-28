@@ -324,21 +324,25 @@ bool DCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
 void DCajunMaster::TurnToAng (AActor *actor)
 {
-	if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE)
-	{
-		if (actor->player->t_roam && !actor->player->missile)
-		{ //Keep angle that where when shot where decided.
-			return;
-		}
-	}
-
     int maxturn = MAXTURN;
 
-	if(actor->player->enemy)
-	if(!actor->player->dest) //happens when running after item in combat situations, or normal, prevent's weak turns
-	if(actor->player->ReadyWeapon->ProjectileType == NULL && !(actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_MELEE))
-	if(Check_LOS(actor, actor->player->enemy, SHOOTFOV+5*ANGLE_1))
-		maxturn = 3;
+	if (actor->player->ReadyWeapon != NULL)
+	{
+		if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE)
+		{
+			if (actor->player->t_roam && !actor->player->missile)
+			{ //Keep angle that where when shot where decided.
+				return;
+			}
+		}
+
+
+		if(actor->player->enemy)
+			if(!actor->player->dest) //happens when running after item in combat situations, or normal, prevents weak turns
+				if(actor->player->ReadyWeapon->ProjectileType == NULL && !(actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_MELEE))
+					if(Check_LOS(actor, actor->player->enemy, SHOOTFOV+5*ANGLE_1))
+						maxturn = 3;
+	}
 
 	int distance = actor->player->angle - actor->angle;
 
@@ -374,6 +378,12 @@ bool DCajunMaster::IsDangerous (sector_t *sec)
 		|| special == dDamage_Hellslime
 		|| special == dDamage_Nukage
 		|| special == dDamage_End
-		|| special == dDamage_SuperHellslime;
+		|| special == dDamage_SuperHellslime
+		|| special == dDamage_LavaWimpy
+		|| special == dDamage_LavaHefty
+		|| special == dScroll_EastLavaDamage
+		|| special == sLight_Strobe_Hurt
+		|| special == Damage_InstantDeath
+		|| special == sDamage_SuperHellslime;
 }
 

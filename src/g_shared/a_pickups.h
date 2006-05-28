@@ -73,6 +73,7 @@ enum
 	AIMETA_BASE = 0x71000,
 	AIMETA_PickupMessage,		// string
 	AIMETA_GiveQuest,			// optionally give one of the quest items.
+	AIMETA_DropAmount,			// specifies the amount for a dropped ammo item
 };
 
 enum

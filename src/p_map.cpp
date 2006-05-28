@@ -987,11 +987,15 @@ BOOL PIT_CheckThing (AActor *thing)
 					}
 					if (thing->GetSpecies() == tmthing->target->GetSpecies())
 					{
-						// Don't hurt same species or any relative
+						// Don't hurt same species or any relative -
+						// but only if the target isn't one's hostile.
 						if (!thing->IsHostile (tmthing->target))
 						{
-							// But only if the target isn't one's hostile.
-							return false;
+							// Allow hurting monsters the shooter hates.
+							if (thing->tid == 0 || tmthing->target->tid != thing->tid)
+							{
+								return false;
+							}
 						}
 					}
 				}

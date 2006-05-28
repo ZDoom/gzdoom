@@ -326,6 +326,7 @@ enum
 
 	ADEF_Ammo_BackpackAmount,
 	ADEF_Ammo_BackpackMaxAmount,
+	ADEF_Ammo_DropAmount,
 
 	ADEF_Weapon_Flags,
 	ADEF_Weapon_FlagsSet,

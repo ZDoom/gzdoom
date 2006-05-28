@@ -273,6 +273,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 
 	case ADEF_Ammo_BackpackAmount:	ammo->BackpackAmount = dataint; break;
 	case ADEF_Ammo_BackpackMaxAmount:ammo->BackpackMaxAmount = dataint; break;
+	case ADEF_Ammo_DropAmount:		sgClass->Meta.SetMetaInt (AIMETA_DropAmount, dataint);
 
 	case ADEF_Weapon_Flags:			weapon->WeaponFlags = dataint; break;
 	case ADEF_Weapon_FlagsSet:		weapon->WeaponFlags |= dataint; break;

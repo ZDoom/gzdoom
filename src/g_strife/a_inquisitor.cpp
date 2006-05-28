@@ -223,13 +223,13 @@ void A_InquisitorAttack (AActor *self)
 
 	self->z += 32*FRACBITS;
 	self->angle -= ANGLE_45/32;
-	proj = P_SpawnMissileZAimed (self, self->z + 32*FRACUNIT, self->target, RUNTIME_CLASS(AInquisitorShot));
+	proj = P_SpawnMissileZAimed (self, self->z, self->target, RUNTIME_CLASS(AInquisitorShot));
 	if (proj != NULL)
 	{
 		proj->momz += 9*FRACUNIT;
 	}
 	self->angle += ANGLE_45/16;
-	proj = P_SpawnMissileZAimed (self, self->z + 32*FRACUNIT, self->target, RUNTIME_CLASS(AInquisitorShot));
+	proj = P_SpawnMissileZAimed (self, self->z, self->target, RUNTIME_CLASS(AInquisitorShot));
 	if (proj != NULL)
 	{
 		proj->momz += 16*FRACUNIT;

@@ -188,6 +188,7 @@ IMPLEMENT_ACTOR (AEnergyPod, Strife, 2047, 75)
 	PROP_Inventory_MaxAmount (400)
 	PROP_Ammo_BackpackAmount (20)
 	PROP_Ammo_BackpackMaxAmount (800)
+	PROP_Ammo_DropAmount (20)
 	PROP_Inventory_Icon ("I_BRY1")
 	PROP_Tag ("energy_pod")
 END_DEFAULTS

@@ -298,6 +298,7 @@ public:
 
 #define PROP_Ammo_BackpackAmount(x)		ADD_WORD_PROP(ADEF_Ammo_BackpackAmount,x)
 #define PROP_Ammo_BackpackMaxAmount(x)	ADD_WORD_PROP(ADEF_Ammo_BackpackMaxAmount,x)
+#define PROP_Ammo_DropAmount(x)			ADD_WORD_PROP(ADEF_Ammo_DropAmount,x)
 
 #define PROP_Weapon_Flags(x)			ADD_LONG_PROP(ADEF_Weapon_Flags,x)
 #define PROP_Weapon_FlagsSet(x)			ADD_LONG_PROP(ADEF_Weapon_FlagsSet,x)

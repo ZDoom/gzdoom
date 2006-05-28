@@ -2214,14 +2214,15 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int special, int cha
 		mo->flags &= ~MF_NOGRAVITY;	// [RH] Make sure it is affected by gravity
 		if (mo->IsKindOf (RUNTIME_CLASS(AInventory)))
 		{
+			AInventory * inv = static_cast<AInventory *>(mo);
 			if (special > 0)
 			{
-				static_cast<AInventory *>(mo)->Amount = special;
+				inv->Amount = special;
 			}
 			else if (mo->IsKindOf (RUNTIME_CLASS(AAmmo)))
 			{
 				// Half ammo when dropped by bad guys.
-				static_cast<AInventory *>(mo)->Amount /= 2;
+				inv->Amount = inv->GetClass()->Meta.GetMetaInt (AIMETA_DropAmount, inv->Amount / 2 );
 			}
 			else if (mo->IsKindOf (RUNTIME_CLASS(AWeapon)))
 			{
@@ -2229,7 +2230,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int special, int cha
 				static_cast<AWeapon *>(mo)->AmmoGive1 /= 2;
 				static_cast<AWeapon *>(mo)->AmmoGive2 /= 2;
 			}
-			if (static_cast<AInventory *>(mo)->SpecialDropAction (source))
+			if (inv->SpecialDropAction (source))
 			{
 				return NULL;
 			}

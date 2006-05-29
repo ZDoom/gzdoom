@@ -4,11 +4,12 @@ ifeq (Windows_NT,$(OS))
   CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
 else
   EXE = dehsupp
-  CCDV =
+  CCDV = 
   CFLAGS = -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -Os -Wall -fomit-frame-pointer
 endif
 
 CC = gcc
+LDFLAGS = -s
 
 RE2C = ../re2c/re2c
 LEMON = ../lemon/lemon
@@ -20,7 +21,7 @@ OBJS = dehsupp.o parse.o scanner.o
 all: $(EXE)
 
 $(EXE): $(OBJS)
-	$(CCDV) $(CC) -o $(EXE) $(OBJS)
+	$(CCDV) $(CC) $(LDFLAGS) -o $(EXE) $(OBJS)
 
 .PHONY: clean
 

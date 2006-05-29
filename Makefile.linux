@@ -3,9 +3,13 @@ CXX ?= g++
 CC ?= gcc
 NASM ?= nasm
 ifndef DEBUG
-CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer -ffunction-sections -fvtable-gc -fno-rtti
+	ifndef NOGC
+		CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer -ffunction-sections -fvtable-gc -fno-rtti
+	else
+		CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer -ffunction-sections -fno-rtti
+	endif
 else
-CFLAGS ?= -pipe -Wall -Wno-unused
+	CFLAGS ?= -pipe -Wall -Wno-unused
 endif
 CFLAGS += -DHAVE_FILELENGTH -D__forceinline=inline -Izlib -IFLAC `sdl-config --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
@@ -38,7 +42,11 @@ ZDOOMDEBUG = zdoomd
 ifndef DEBUG
   OBJDIR = $(RELEASEOBJ)
   CFLAGS += -DNDEBUG
-  LDFLAGS += -s -Wl,--gc-sections,-Map=$(ZDOOM).map
+	ifndef NOGC
+	  LDFLAGS += -s -Wl,--gc-sections,-Map=$(ZDOOM).map
+	else
+		LDFLAGS += -s -Wl,-Map=$(ZDOOM).map
+	endif
   ZDOOMBIN = $(ZDOOM)
 else
   OBJDIR = $(DEBUGOBJ)

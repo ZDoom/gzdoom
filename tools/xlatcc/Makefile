@@ -4,11 +4,12 @@ ifeq (Windows_NT,$(OS))
   CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
 else
   EXE = xlatcc
-  CCDV =
+  CCDV = 
   CFLAGS = -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp $(LOC) -Os -Wall -fomit-frame-pointer
 endif
 
 CC = gcc
+LDFLAGS= -s
 
 BISON = bison
 BISONFLAGS = 
@@ -18,7 +19,7 @@ OBJS = gen.o xlat-parse.tab.o
 all: $(EXE)
 
 $(EXE): $(OBJS)
-	$(CCDV) $(CC) -o $(EXE) $(OBJS)
+	$(CCDV) $(CC) $(LDFLAGS) -o $(EXE) $(OBJS)
 
 .PHONY: clean
 

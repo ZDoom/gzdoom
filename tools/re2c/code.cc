@@ -962,7 +962,6 @@ void Go::genGoto(std::ostream &o, uint ind, const State *from, const State *next
 				if (to && to->isBase)
 				{
 					const BitMap *b = BitMap::find(to);
-					const char * sYych;
 	
 					if (b && matches(b->go, b->on, this, to))
 					{

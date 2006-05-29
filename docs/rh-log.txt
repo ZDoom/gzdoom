@@ -1,3 +1,11 @@
+May 28, 2006
+- Fixed: When building GL nodes for Deathkings MAP42, one polyobject had one
+  of its segs thrown away, so the map could not start. This was because the
+  nodebuilder assumed all subsectors would be 2D and could not handle the
+  case where a degenerate 1D subsector is created. In this case, that happens
+  because that map has three polyobjects in the middle of the void, so the only
+  way to assign them to a subsector is to use a 1D subsector.
+
 May 28, 2006 (Changes by Graf Zahl)
 - Fixed: Monsters couldn't hurt other monsters of the same species if they
   were supposed to hate them.

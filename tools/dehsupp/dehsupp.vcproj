@@ -376,7 +376,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Creating parse.c from parse.y"
-					CommandLine="..\lemon\lemon.exe -m -s &quot;$(InputFileName)&quot;"
+					CommandLine="..\lemon\lemon.exe -s &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
 					Outputs="$(InputDir)parse.c"
 				/>
 			</FileConfiguration>
@@ -386,7 +386,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Creating parse.c from parse.y"
-					CommandLine="..\lemon\lemon.exe -m -s &quot;$(InputFileName)&quot;"
+					CommandLine="..\lemon\lemon.exe -s &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
 					Outputs="$(InputDir)parse.c"
 				/>
 			</FileConfiguration>
@@ -396,7 +396,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Creating parse.c from parse.y"
-					CommandLine="..\lemon\lemon.exe -s &quot;$(InputFileName)&quot;"
+					CommandLine="..\lemon\lemon.exe -s &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
 					Outputs="$(InputDir)parse.c"
 				/>
 			</FileConfiguration>
@@ -406,7 +406,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Creating parse.c from parse.y"
-					CommandLine="..\lemon\lemon.exe -m -s &quot;$(InputFileName)&quot;"
+					CommandLine="..\lemon\lemon.exe -s &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
 					Outputs="$(InputDir)parse.c"
 				/>
 			</FileConfiguration>

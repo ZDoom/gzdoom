@@ -37,12 +37,15 @@
 **
 */
 
+#include <string.h>
 #include "doomtype.h"
 #include "nodebuild.h"
 
 FEventTree::FEventTree ()
 : Root (&Nil), Spare (NULL)
 {
+	memset (&Nil, 0, sizeof(Nil));
+	Nil.Color = FEvent::BLACK;
 }
 
 FEventTree::~FEventTree ()
@@ -85,7 +88,7 @@ void FEventTree::LeftRotate (FEvent *x)
 		y->Left->Parent = x;
 	}
 	y->Parent = x->Parent;
-	if (x->Parent != &Nil)
+	if (x->Parent == &Nil)
 	{
 		Root = y;
 	}
@@ -110,7 +113,7 @@ void FEventTree::RightRotate (FEvent *x)
 		y->Right->Parent = x;
 	}
 	y->Parent = x->Parent;
-	if (x->Parent != &Nil)
+	if (x->Parent == &Nil)
 	{
 		Root = y;
 	}
@@ -176,7 +179,7 @@ void FEventTree::Insert (FEvent *z)
 	z->Right = &Nil;
 
 	z->Color = FEvent::RED;
-	while (z != Root && z->Parent->Color != FEvent::RED)
+	while (z != Root && z->Parent->Color == FEvent::RED)
 	{
 		if (z->Parent == z->Parent->Parent->Left)
 		{
@@ -219,10 +222,11 @@ void FEventTree::Insert (FEvent *z)
 				}
 				z->Parent->Color = FEvent::BLACK;
 				z->Parent->Parent->Color = FEvent::RED;
-				RightRotate (z->Parent->Parent);
+				LeftRotate (z->Parent->Parent);
 			}
 		}
 	}
+	Root->Color = FEvent::BLACK;
 }
 
 void FEventTree::Delete (FEvent *z)

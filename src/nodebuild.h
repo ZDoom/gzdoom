@@ -133,6 +133,7 @@ private:
 	TArray<FSplitSharer> SplitSharers;	// Segs collinear with the current splitter
 
 	DWORD HackSeg;			// Seg to force to back of splitter
+	DWORD HackMate;			// Seg to use in front of hack seg
 	FLevel &Level;
 	bool GLNodes;			// Add minisegs to make GL nodes?
 
@@ -143,7 +144,7 @@ private:
 	int SelectVertexExact (FPrivVert &vertex);
 	void BuildTree ();
 	void MakeSegsFromSides ();
-	FPrivSeg *CheckSegForDuplicate (const FPrivSeg *check);
+	int CreateSeg (int linenum, int sidenum);
 	void GroupSegPlanes ();
 	void FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolyStart> &anchors);
 	bool GetPolyExtents (int polynum, fixed_t bbox[4]);
@@ -153,7 +154,8 @@ private:
 	int CreateSubsector (DWORD set, fixed_t bbox[4]);
 	void CreateSubsectorsForReal ();
 	bool CheckSubsector (DWORD set, node_t &node, DWORD &splitseg, int setsize);
-	int SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int step, bool nosplit);
+	bool CheckSubsectorOverlappingSegs (DWORD set, node_t &node, DWORD &splitseg);
+	bool ShoveSegBehind (DWORD set, node_t &node, DWORD seg, DWORD mate);	int SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int step, bool nosplit);
 	void SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1);
 	DWORD SplitSeg (DWORD segnum, int splitvert, int v1InFront);
 	int Heuristic (node_t &node, DWORD set, bool honorNoSplit);
@@ -173,6 +175,7 @@ private:
 	int CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *outVerts);
 	DWORD PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_t *outVerts);
 	void PushConnectingGLSeg (int subsector, TArray<seg_t> &segs, vertex_t *v1, vertex_t *v2);
+	int OutputDegenerateSubsector (TArray<seg_t> &segs, int subsector, bool bForward, double lastdot, FPrivSeg *&prev, vertex_t *outVerts);
 
 	static int STACK_ARGS SortSegs (const void *a, const void *b);
 

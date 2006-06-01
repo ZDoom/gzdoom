@@ -246,125 +246,15 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 	  //          to the start seg.
 	  // A dot product serves to determine distance from the start seg.
 
-		seg = &Segs[SegList[first].SegNum];
-		double x1 = Vertices[seg->v1].x;
-		double y1 = Vertices[seg->v1].y;
-		double dx = Vertices[seg->v2].x - x1, dx2;
-		double dy = Vertices[seg->v2].y - y1, dy2;
-		double lastdot = 0, dot;
-		bool firstside = seg->planefront;
-
 		// Stage 1. Go forward.
-		for (i = first + 1; i < max; ++i)
-		{
-			double bestdot = DBL_MAX;
-			FPrivSeg *bestseg = NULL;
-			for (j = first + 1; j < max; ++j)
-			{
-				seg = &Segs[SegList[j].SegNum];
-				if (seg->planefront != firstside)
-				{
-					continue;
-				}
-				dx2 = Vertices[seg->v1].x - x1;
-				dy2 = Vertices[seg->v1].y - y1;
-				dot = dx*dx2 + dy*dy2;
-
-				if (dot < bestdot && dot > lastdot)
-				{
-					bestdot = dot;
-					bestseg = seg;
-				}
-			}
-			if (bestseg != NULL)
-			{
-				if (prev->v2 != bestseg->v1)
-				{
-					PushConnectingGLSeg (subsector, segs, &outVerts[prev->v2], &outVerts[bestseg->v1]);
-					count++;
-				}
-				seg->storedseg = PushGLSeg (segs, bestseg, outVerts);
-				count++;
-				prev = bestseg;
-				lastdot = bestdot;
-			}
-		}
+		count += OutputDegenerateSubsector (segs, subsector, true, 0, prev, outVerts);
 
 		// Stage 2. Go backward.
-		lastdot = DBL_MAX;
-		for (i = first + 1; i < max; ++i)
-		{
-			double bestdot = -DBL_MAX;
-			FPrivSeg *bestseg = NULL;
-			for (j = first + 1; j < max; ++j)
-			{
-				seg = &Segs[SegList[j].SegNum];
-				if (seg->planefront == firstside)
-				{
-					continue;
-				}
-				dx2 = Vertices[seg->v1].x - x1;
-				dy2 = Vertices[seg->v1].y - y1;
-				dot = dx*dx2 + dy*dy2;
-
-				if (dot > bestdot && dot < lastdot)
-				{
-					bestdot = dot;
-					bestseg = seg;
-				}
-			}
-			if (bestseg != NULL)
-			{
-				if (prev->v2 != bestseg->v1)
-				{
-					PushConnectingGLSeg (subsector, segs, &outVerts[prev->v2], &outVerts[bestseg->v1]);
-					count++;
-				}
-				seg->storedseg = PushGLSeg (segs, bestseg, outVerts);
-				count++;
-				prev = bestseg;
-				lastdot = bestdot;
-			}
-		}
+		count += OutputDegenerateSubsector (segs, subsector, false, DBL_MAX, prev, outVerts);
 
 		// Stage 3. Go forward again.
-		lastdot = -DBL_MAX;
-		for (i = first + 1; i < max; ++i)
-		{
-			double bestdot = 0;
-			FPrivSeg *bestseg = NULL;
-			for (j = first + 1; j < max; ++j)
-			{
-				seg = &Segs[SegList[j].SegNum];
-				if (seg->planefront != firstside)
-				{
-					continue;
-				}
-				dx2 = Vertices[seg->v1].x - x1;
-				dy2 = Vertices[seg->v1].y - y1;
-				dot = dx*dx2 + dy*dy2;
-
-				if (dot < bestdot && dot > lastdot)
-				{
-					bestdot = dot;
-					bestseg = seg;
-				}
-			}
-			if (bestseg != NULL)
-			{
-				if (prev->v2 != bestseg->v1)
-				{
-					PushConnectingGLSeg (subsector, segs, &outVerts[prev->v2], &outVerts[bestseg->v1]);
-					count++;
-				}
-				seg->storedseg = PushGLSeg (segs, bestseg, outVerts);
-				count++;
-				prev = bestseg;
-				lastdot = bestdot;
-			}
-		}
+		count += OutputDegenerateSubsector (segs, subsector, true, -DBL_MAX, prev, outVerts);
 	}
-
 
 	if (prev->v2 != firstVert)
 	{
@@ -372,6 +262,73 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 		count++;
 	}
 
+	return count;
+}
+
+int FNodeBuilder::OutputDegenerateSubsector (TArray<seg_t> &segs, int subsector, bool bForward, double lastdot, FPrivSeg *&prev, vertex_t *outVerts)
+{
+	static const double bestinit[2] = { -DBL_MAX, DBL_MAX };
+	FPrivSeg *seg;
+	int i, j, first, max, count;
+	double dot, x1, y1, dx, dy, dx2, dy2;
+	bool wantside;
+
+	first = Subsectors[subsector].firstline;
+	max = first + Subsectors[subsector].numlines;
+	count = 0;
+
+	seg = &Segs[SegList[first].SegNum];
+	x1 = Vertices[seg->v1].x;
+	y1 = Vertices[seg->v1].y;
+	dx = Vertices[seg->v2].x - x1;
+	dy = Vertices[seg->v2].y - y1;
+	wantside = seg->planefront ^ !bForward;
+
+	for (i = first + 1; i < max; ++i)
+	{
+		double bestdot = bestinit[bForward];
+		FPrivSeg *bestseg = NULL;
+		for (j = first + 1; j < max; ++j)
+		{
+			seg = &Segs[SegList[j].SegNum];
+			if (seg->planefront != wantside)
+			{
+				continue;
+			}
+			dx2 = Vertices[seg->v1].x - x1;
+			dy2 = Vertices[seg->v1].y - y1;
+			dot = dx*dx2 + dy*dy2;
+
+			if (bForward)
+			{
+				if (dot < bestdot && dot > lastdot)
+				{
+					bestdot = dot;
+					bestseg = seg;
+				}
+			}
+			else
+			{
+				if (dot > bestdot && dot < lastdot)
+				{
+					bestdot = dot;
+					bestseg = seg;
+				}
+			}
+		}
+		if (bestseg != NULL)
+		{
+			if (prev->v2 != bestseg->v1)
+			{
+				PushConnectingGLSeg (subsector, segs, &outVerts[prev->v2], &outVerts[bestseg->v1]);
+				count++;
+			}
+			seg->storedseg = PushGLSeg (segs, bestseg, outVerts);
+			count++;
+			prev = bestseg;
+			lastdot = bestdot;
+		}
+	}
 	return count;
 }
 

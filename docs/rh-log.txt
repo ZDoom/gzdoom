@@ -1,3 +1,20 @@
+May 31, 2006
+- Merged in recent ZDBSP fixes:
+ - Added code to explicitly handle outputting overlapping segs when
+   building GL nodes with ZDBSP, removing the check that discarded
+   them early on.
+ - AddIntersection() should convert to doubles before subtracting the vertex
+   from the node, not after, to avoid integer overflow. (See cah.wad, MAP12
+   and MAP13.) A simpler dot product will also suffice for distance calculation.
+ - Splitters that come too close to a vertex should be avoided. (See cata.wad.)
+ - Red-Black Tree implementation was broken and colored every node red.
+ - Moved most of the code for outputting degenerate GL subsectors into another
+   function.
+ - Removed forgotten debugging file dump from WriteSSectors2().
+ - Enabled reference optimization and COMDAT folding in the linker for a slightly
+   smaller executable.
+
+
 May 31, 2006 (Changes by Graf Zahl)
 - Fixed: Ammo items dropped by monsters that have a default amount of 1 didn't
   contain any ammo at all. 

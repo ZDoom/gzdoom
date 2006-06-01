@@ -125,13 +125,7 @@ int FNodeBuilder::SelectVertexExact (FPrivVert &vertex)
 
 void FNodeBuilder::MakeSegsFromSides ()
 {
-	FPrivSeg *share1, *share2;
-	FPrivSeg seg;
 	int i, j;
-
-	seg.next = DWORD_MAX;
-	seg.loopnum = 0;
-	seg.partner = DWORD_MAX;
 
 	if (Level.NumLines == 0)
 	{
@@ -140,28 +134,9 @@ void FNodeBuilder::MakeSegsFromSides ()
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
-		share1 = NULL;
 		if (Level.Lines[i].sidenum[0] != NO_SIDE)
 		{
-			seg.linedef = i;
-			seg.sidedef = Level.Lines[i].sidenum[0];
-			seg.frontsector = Level.Lines[i].frontsector;
-			seg.backsector = Level.Lines[i].backsector;
-			seg.v1 = (int)(size_t)Level.Lines[i].v1;
-			seg.v2 = (int)(size_t)Level.Lines[i].v2;
-			seg.nextforvert = Vertices[seg.v1].segs;
-			seg.nextforvert2 = Vertices[seg.v2].segs2;
-			share1 = CheckSegForDuplicate (&seg);
-			if (share1 == NULL)
-			{
-				j = (int)Segs.Push (seg);
-				Vertices[seg.v1].segs = j;
-				Vertices[seg.v2].segs2 = j;
-			}
-			else
-			{
-				Printf ("Linedefs %d and %d share endpoints.\n", i, share1->linedef);
-			}
+			CreateSeg (i, 0);
 		}
 		else
 		{
@@ -170,55 +145,49 @@ void FNodeBuilder::MakeSegsFromSides ()
 
 		if (Level.Lines[i].sidenum[1] != NO_SIDE)
 		{
-			seg.linedef = i;
-			seg.sidedef = Level.Lines[i].sidenum[1];
-			seg.frontsector = Level.Lines[i].backsector;
-			seg.backsector = Level.Lines[i].frontsector;
-			seg.v1 = (int)(size_t)Level.Lines[i].v2;
-			seg.v2 = (int)(size_t)Level.Lines[i].v1;
-			seg.nextforvert = Vertices[seg.v1].segs;
-			seg.nextforvert2 = Vertices[seg.v2].segs2;
-			share2 = CheckSegForDuplicate (&seg);
-			if (share2 == NULL)
+			j = CreateSeg (i, 1);
+			if (Level.Lines[i].sidenum[0] != NO_SIDE)
 			{
-				j = (int)Segs.Push (seg);
-				Vertices[seg.v1].segs = j;
-				Vertices[seg.v2].segs2 = j;
-
-				if (Level.Lines[i].sidenum[0] != NO_SIDE && share1 == NULL)
-				{
-					Segs[j-1].partner = j;
-					Segs[j].partner = j-1;
-				}
-			}
-			else if (share1 == NULL || share2->linedef != share1->linedef)
-			{
-				Printf ("Linedefs %d and %d share endpoints.\n", i, share2->linedef);
+				Segs[j-1].partner = j;
+				Segs[j].partner = j-1;
 			}
 		}
 	}
 }
 
-// Check for another seg with the same start and end vertices as this one.
-// Combined with its use above, this will find two-sided lines that are shadowed
-// by another one- or two-sided line, and it will also find one-sided lines that
-// shadow each other. It will not find one-sided lines that share endpoints but
-// face opposite directions. Although they should probably be a single two-sided
-// line, leaving them in will not generate bad nodes.
-
-FNodeBuilder::FPrivSeg *FNodeBuilder::CheckSegForDuplicate (const FNodeBuilder::FPrivSeg *check)
+int FNodeBuilder::CreateSeg (int linenum, int sidenum)
 {
-	DWORD segnum;
+	FPrivSeg seg;
+	int segnum;
 
-	// Check for segs facing the same direction
-	for (segnum = check->nextforvert; segnum != DWORD_MAX; segnum = Segs[segnum].nextforvert)
-	{
-		if (Segs[segnum].v2 == check->v2)
-		{
-			return &Segs[segnum];
-		}
+	seg.next = DWORD_MAX;
+	seg.loopnum = 0;
+	seg.partner = DWORD_MAX;
+
+	if (sidenum == 0)
+	{ // front
+		seg.frontsector = Level.Lines[linenum].frontsector;
+		seg.backsector = Level.Lines[linenum].backsector;
+		seg.v1 = (int)(size_t)Level.Lines[linenum].v1;
+		seg.v2 = (int)(size_t)Level.Lines[linenum].v2;
 	}
-	return NULL;
+	else
+	{ // back
+		seg.frontsector = Level.Lines[linenum].backsector;
+		seg.backsector = Level.Lines[linenum].frontsector;
+		seg.v2 = (int)(size_t)Level.Lines[linenum].v1;
+		seg.v1 = (int)(size_t)Level.Lines[linenum].v2;
+	}
+	seg.linedef = linenum;
+	seg.sidedef = Level.Lines[linenum].sidenum[sidenum];
+	seg.nextforvert = Vertices[seg.v1].segs;
+	seg.nextforvert2 = Vertices[seg.v2].segs2;
+
+	segnum = (int)Segs.Push (seg);
+	Vertices[seg.v1].segs = segnum;
+	Vertices[seg.v2].segs2 = segnum;
+
+	return segnum;
 }
 
 // Group colinear segs together so that only one seg per line needs to be checked

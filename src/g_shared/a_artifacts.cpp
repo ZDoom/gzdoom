@@ -1087,7 +1087,7 @@ END_DEFAULTS
 
 void APowerFrightener::InitEffect ()
 {
-	if (Owner->player == NULL)
+	if (Owner== NULL || Owner->player == NULL)
 		return;
 
 	Owner->player->cheats |= CF_FRIGHTENING;
@@ -1101,7 +1101,7 @@ void APowerFrightener::InitEffect ()
 
 void APowerFrightener::EndEffect ()
 {
-	if (Owner->player == NULL)
+	if (Owner== NULL || Owner->player == NULL)
 		return;
 
 	Owner->player->cheats &= ~CF_FRIGHTENING;

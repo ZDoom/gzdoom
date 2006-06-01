@@ -298,7 +298,7 @@ protected:
 
 private:
 	static TArray<DObject *> Objects;
-	static TArray<size_t> FreeIndices;
+	static TArray<unsigned int> FreeIndices;
 	static TArray<DObject *> ToDestroy;
 
 	static void DestroyScan (DObject *obj);

@@ -2222,7 +2222,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int special, int cha
 			else if (mo->IsKindOf (RUNTIME_CLASS(AAmmo)))
 			{
 				// Half ammo when dropped by bad guys.
-				inv->Amount = inv->GetClass()->Meta.GetMetaInt (AIMETA_DropAmount, inv->Amount / 2 );
+				inv->Amount = inv->GetClass()->Meta.GetMetaInt (AIMETA_DropAmount, MAX(1, inv->Amount / 2 ));
 			}
 			else if (mo->IsKindOf (RUNTIME_CLASS(AWeapon)))
 			{

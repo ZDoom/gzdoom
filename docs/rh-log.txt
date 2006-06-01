@@ -1,3 +1,12 @@
+May 31, 2006 (Changes by Graf Zahl)
+- Fixed: Ammo items dropped by monsters that have a default amount of 1 didn't
+  contain any ammo at all. 
+- Fixed: PClass::FreeIndices was declared as TArray<size_t> in the header but
+  as TArray<unsigned int> in the cpp file.
+
+May 28, 2006 (Changes by Graf Zahl)
+- Fixed: PowerFrighteners must check Owner for NULL in InitEffect and EndEffect.
+
 May 28, 2006
 - Fixed: When building GL nodes for Deathkings MAP42, one polyobject had one
   of its segs thrown away, so the map could not start. This was because the

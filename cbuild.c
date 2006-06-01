@@ -1969,8 +1969,8 @@ reparse:
 			if(do_level >= sizeof(int)*8)
 			{
 				printf("\n\n!!! %s error, line %d !!!\n"
-				       "Too many 'do' commands enountered (max: %ud)!\n\n",
-				       fname, curr_line, sizeof(int)*8 - 1);
+				       "Too many 'do' commands enountered (max: %lud)!\n\n",
+				       fname, curr_line, (unsigned long)(sizeof(int)*8 - 1));
 				snprintf(linebuf, sizeof(linebuf), "exit -1\n");
 				goto reparse;
 			}
@@ -2687,8 +2687,8 @@ dir_write_check:
 					if(!tmp)
 					{
 						fprintf(stderr, "\n\n\n*** Critical Error ***\n"
-						                "Out of memory allocating %ud defines!\n\n",
-						                num_defines+1);
+						                "Out of memory allocating %lud defines!\n\n",
+						                (unsigned long)(num_defines+1));
 						snprintf(linebuf, sizeof(linebuf), "exit -1\n");
 						goto reparse;
 					}

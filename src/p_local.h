@@ -126,7 +126,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz);
 extern const PClass *SpawnableThings[MAX_SPAWNABLES];
 
 bool	P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid);
-bool	P_Thing_Projectile (int tid, int type, angle_t angle,
+bool	P_Thing_Projectile (int tid, int type, const char * type_name, angle_t angle,
 			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 			bool leadTarget);
 bool	P_Thing_Move (int tid, int mapspot, bool fog);

@@ -50,6 +50,7 @@
 #include "a_keys.h"
 #include "gi.h"
 #include "m_random.h"
+#include "p_conversation.h"
 #include "a_strifeglobal.h"
 
 #define FUNC(a) static int a (line_t *ln, AActor *it, bool backSide, \
@@ -1107,14 +1108,14 @@ FUNC(LS_Thing_Damage)
 FUNC(LS_Thing_Projectile)
 // Thing_Projectile (tid, type, angle, speed, vspeed)
 {
-	return P_Thing_Projectile (arg0, arg1, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
+	return P_Thing_Projectile (arg0, arg1, NULL, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
 		arg4<<(FRACBITS-3), 0, NULL, 0, 0, false);
 }
 
 FUNC(LS_Thing_ProjectileGravity)
 // Thing_ProjectileGravity (tid, type, angle, speed, vspeed)
 {
-	return P_Thing_Projectile (arg0, arg1, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
+	return P_Thing_Projectile (arg0, arg1, NULL, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
 		arg4<<(FRACBITS-3), 0, NULL, 1, 0, false);
 }
 
@@ -1284,13 +1285,13 @@ FUNC(LS_Thing_Hate)
 FUNC(LS_Thing_ProjectileAimed)
 // Thing_ProjectileAimed (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, arg1, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, false);
+	return P_Thing_Projectile (arg0, arg1, NULL, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, false);
 }
 
 FUNC(LS_Thing_ProjectileIntercept)
 // Thing_ProjectileIntercept (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, arg1, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, true);
+	return P_Thing_Projectile (arg0, arg1, NULL, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, true);
 }
 
 // [BC] added newtid for next two
@@ -1310,6 +1311,81 @@ FUNC(LS_Thing_SpawnFacing)
 // Thing_SpawnFacing (tid, type, nofog, newtid)
 {
 	return P_Thing_Spawn (arg0, arg1, ANGLE_MAX, arg2 ? false : true, arg3);
+}
+
+static bool DoThingRaise(AActor * thing)
+{
+	if (thing == NULL)
+		return false;	// not valid
+
+	if (!(thing->flags & MF_CORPSE) )
+		return true;	// not a corpse
+	
+	if (thing->tics != -1)
+		return true;	// not lying still yet
+	
+	if (thing->RaiseState == NULL)
+		return true;	// monster doesn't have a raise state
+	
+	AActor *info = thing->GetDefault ();
+
+	thing->momx = thing->momy = 0;
+
+	// [RH] Check against real height and radius
+	fixed_t oldheight = thing->height;
+	fixed_t oldradius = thing->radius;
+	int oldflags = thing->flags;
+
+	thing->flags |= MF_SOLID;
+	thing->height = info->height;	// [RH] Use real height
+	thing->radius = info->radius;	// [RH] Use real radius
+	if (!P_CheckPosition (thing, thing->x, thing->y))
+	{
+		thing->flags = oldflags;
+		thing->radius = oldradius;
+		thing->height = oldheight;
+		return false;
+	}
+
+	S_Sound (thing, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
+	
+	thing->SetState (info->RaiseState);
+	thing->flags = info->flags;
+	thing->flags2 = info->flags2;
+	thing->flags3 = info->flags3;
+	thing->flags4 = info->flags4;
+	thing->health = info->health;
+	thing->target = NULL;
+	thing->lastenemy = NULL;
+
+	// [RH] If it's a monster, it gets to count as another kill
+	if (thing->CountsAsKill())
+	{
+		level.total_monsters++;
+	}
+	return true;
+}
+
+FUNC(LS_Thing_Raise)
+// Thing_Raise(tid)
+{
+	AActor * target;
+	bool ok = false;
+
+	if (arg0==0)
+	{
+		ok = DoThingRaise (it);
+	}
+	else
+	{
+		TActorIterator<AActor> iterator (arg0);
+
+		while ( (target = iterator.Next ()) )
+		{
+			ok |= DoThingRaise(target);
+		}
+	}
+	return ok;
 }
 
 FUNC(LS_Thing_SetGoal)
@@ -2555,6 +2631,40 @@ FUNC(LS_GlassBreak)
 	return false;
 }
 
+FUNC(LS_StartConversation)
+// StartConversation (tid, facetalker)
+{
+	FActorIterator iterator (arg0);
+
+	AActor *target = iterator.Next();
+
+	// Only living players are allowed to start conversations
+	if (it == NULL || it->player == NULL || it->player->mo != it || it->health<=0)
+	{
+		return false;
+	}
+
+	// Dead things can't talk.
+	if (target->health <= 0)
+	{
+		return false;
+	}
+	// Fighting things don't talk either.
+	if (target->flags4 & MF4_INCOMBAT)
+	{
+		return false;
+	}
+	if (target->Conversation != NULL)
+	{
+		// Give the NPC a chance to play a brief animation
+		target->ConversationAnimation (0);
+		P_StartConversation (target, it, !!arg1);
+		return true;
+	}
+	return false;
+}
+
+
 lnSpecFunc LineSpecials[256] =
 {
 	LS_NOP,
@@ -2574,8 +2684,8 @@ lnSpecFunc LineSpecials[256] =
 	LS_Door_Animated,
 	LS_Autosave,
 	LS_NOP,		// Transfer_WallLight
-	LS_NOP,		// 17
-	LS_NOP,		// 18
+	LS_Thing_Raise,
+	LS_StartConversation,
 	LS_NOP,		// 19
 	LS_Floor_LowerByValue,
 	LS_Floor_LowerToLowest,

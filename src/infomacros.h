@@ -252,6 +252,7 @@ public:
 #define PROP_MaxStepHeight(x)			ADD_FIXD_PROP(ADEF_MaxStepHeight,x)
 #define PROP_BounceFactor(x)			ADD_LONG_PROP(ADEF_BounceFactor,x)
 #define PROP_BounceCount(x)				ADD_LONG_PROP(ADEF_BounceCount,x)
+#define PROP_RadiusdamageFactor(x)		ADD_LONG_PROP(ADEF_RDFactor,x)
 
 #define PROP_SpawnState(x)				ADD_BYTE_PROP(ADEF_SpawnState,x)
 #define PROP_SeeState(x)				ADD_BYTE_PROP(ADEF_SeeState,x)

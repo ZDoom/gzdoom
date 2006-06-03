@@ -247,6 +247,19 @@ static const char *MapInfoMapLevel[] =
 	"allowcrouch",
 	"nocrouch",
 	"pausemusicinmenus",
+	"compat_shorttex",	
+	"compat_stairs",		
+	"compat_limitpain",	
+	"compat_nopassover",	
+	"compat_notossdrops",	
+	"compat_useblocking", 
+	"compat_nodoorlight",	
+	"compat_ravenscroll",	
+	"compat_soundtarget",	
+	"compat_dehhealth",	
+	"compat_trace",		
+	"compat_dropoff",		
+
 	NULL
 };
 
@@ -270,7 +283,8 @@ enum EMIType
 	MITYPE_RELLIGHT,
 	MITYPE_CLRBYTES,
 	MITYPE_REDIRECT,
-	MITYPE_SPECIALACTION
+	MITYPE_SPECIALACTION,
+	MITYPE_COMPATFLAG,
 };
 
 struct MapInfoHandler
@@ -363,6 +377,18 @@ MapHandlers[] =
 	{ MITYPE_SCFLAGS,	LEVEL_CROUCH_YES, ~LEVEL_CROUCH_NO },
 	{ MITYPE_SCFLAGS,	LEVEL_CROUCH_NO, ~LEVEL_CROUCH_YES },
 	{ MITYPE_SCFLAGS,	LEVEL_PAUSE_MUSIC_IN_MENUS, 0 },
+	{ MITYPE_COMPATFLAG, COMPATF_SHORTTEX},
+	{ MITYPE_COMPATFLAG, COMPATF_STAIRINDEX},
+	{ MITYPE_COMPATFLAG, COMPATF_LIMITPAIN},
+	{ MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ},
+	{ MITYPE_COMPATFLAG, COMPATF_NOTOSSDROPS},
+	{ MITYPE_COMPATFLAG, COMPATF_USEBLOCKING},
+	{ MITYPE_COMPATFLAG, COMPATF_NODOORLIGHT},
+	{ MITYPE_COMPATFLAG, COMPATF_RAVENSCROLL},
+	{ MITYPE_COMPATFLAG, COMPATF_SOUNDTARGET},
+	{ MITYPE_COMPATFLAG, COMPATF_DEHHEALTH},
+	{ MITYPE_COMPATFLAG, COMPATF_TRACE},
+	{ MITYPE_COMPATFLAG, COMPATF_DROPOFF},
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -974,6 +1000,16 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 					sa->Args[j++] = sc_Number;
 				}
 				SC_SetCMode(false);
+			}
+			break;
+
+		case MITYPE_COMPATFLAG:
+			SC_MustGetNumber();
+			if (levelinfo != NULL)
+			{
+				if (sc_Number) levelinfo->compatflags |= (DWORD)handler->data1;
+				else levelinfo->compatflags &= ~ (DWORD)handler->data1;
+				levelinfo->compatmask |= (DWORD)handler->data1;
 			}
 			break;
 		}
@@ -2156,6 +2192,8 @@ void G_InitLevelLocals ()
 		set |= DF_NO_FREELOOK;
 
 	dmflags = (dmflags & ~clear) | set;
+
+	compatflags.Callback();
 
 	NormalLight.ChangeFade (level.fadeto);
 

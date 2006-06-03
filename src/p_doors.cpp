@@ -302,7 +302,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTa
 	vertex_t *spot;
 	fixed_t height;
 
-	if (compatflags & COMPATF_NODOORLIGHT)
+	if (i_compatflags & COMPATF_NODOORLIGHT)
 	{
 		m_LightTag = 0;
 	}

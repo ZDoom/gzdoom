@@ -59,7 +59,7 @@ extern const PClass *StrifeTypes[999];
 void P_LoadStrifeConversations (const char *mapname);
 void P_FreeStrifeConversations ();
 
-void P_StartConversation (AActor *npc, AActor *pc);
+void P_StartConversation (AActor *npc, AActor *pc, bool facetalker);
 void P_ResumeConversation ();
 
 #endif

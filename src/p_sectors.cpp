@@ -451,7 +451,7 @@ fixed_t sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 
 static inline void CheckShortestTex (int texnum, fixed_t &minsize)
 {
-	if (texnum > 0 || (texnum == 0 && (compatflags & COMPATF_SHORTTEX)))
+	if (texnum > 0 || (texnum == 0 && (i_compatflags & COMPATF_SHORTTEX)))
 	{
 		FTexture *tex = TexMan[texnum];
 		int yscale = tex->ScaleY ? tex->ScaleY : 8;

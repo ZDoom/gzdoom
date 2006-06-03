@@ -150,7 +150,7 @@ bool P_Thing_Move (int tid, int mapspot, bool fog)
 	return false;
 }
 
-bool P_Thing_Projectile (int tid, int type, angle_t angle,
+bool P_Thing_Projectile (int tid, int type, const char * type_name, angle_t angle,
 	fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
@@ -161,11 +161,19 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 	float fspeed = float(speed);
 	int defflags3;
 
-	if (type >= MAX_SPAWNABLES)
-		return false;
+	if (type_name == NULL)
+	{
+		if (type >= MAX_SPAWNABLES)
+			return false;
 
-	if ((kind = SpawnableThings[type]) == NULL)
-		return false;
+		if ((kind = SpawnableThings[type]) == NULL)
+			return false;
+	}
+	else
+	{
+		if ((kind = PClass::FindClass(type_name)) == NULL)
+			return false;
+	}
 
 	defflags3 = GetDefaultByType (kind)->flags3;
 	if ((defflags3 & MF3_ISMONSTER) && (dmflags & DF_NO_MONSTERS))

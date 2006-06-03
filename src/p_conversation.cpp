@@ -84,6 +84,7 @@ static FStrifeDialogueNode *CurNode, *PrevNode;
 static brokenlines_t *DialogueLines;
 static AActor *ConversationNPC, *ConversationPC;
 static angle_t ConversationNPCAngle;
+static bool ConversationFaceTalker;
 
 #define NUM_RANDOM_LINES 10
 #define NUM_RANDOM_GOODBYES 3
@@ -601,7 +602,7 @@ CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)
 //
 //============================================================================
 
-void P_StartConversation (AActor *npc, AActor *pc)
+void P_StartConversation (AActor *npc, AActor *pc, bool facetalker)
 {
 	FStrifeDialogueReply *reply;
 	menuitem_t item;
@@ -629,9 +630,13 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	{
 		npc->target = pc;
 	}
+	ConversationFaceTalker = facetalker;
 	ConversationNPCAngle = npc->angle;
-	A_FaceTarget (npc);
-	pc->angle = R_PointToAngle2 (pc->x, pc->y, npc->x, npc->y);
+	if (facetalker)
+	{
+		A_FaceTarget (npc);
+		pc->angle = R_PointToAngle2 (pc->x, pc->y, npc->x, npc->y);
+	}
 
 	// Check if we should jump to another node
 	while (CurNode->ItemCheck[0] != NULL)
@@ -742,7 +747,7 @@ void P_ResumeConversation ()
 {
 	if (ConversationPC != NULL && ConversationNPC != NULL)
 	{
-		P_StartConversation (ConversationNPC, ConversationPC);
+		P_StartConversation (ConversationNPC, ConversationPC, ConversationFaceTalker);
 	}
 }
 
@@ -962,7 +967,7 @@ static void PickConversationReply ()
 			ConversationNPC->Conversation = StrifeDialogues[rootnode - reply->NextNode - 1];
 			if (gameaction != ga_slideshow)
 			{
-				P_StartConversation (ConversationNPC, players[consoleplayer].mo);
+				P_StartConversation (ConversationNPC, players[consoleplayer].mo, ConversationFaceTalker);
 				return;
 			}
 			else

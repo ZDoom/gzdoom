@@ -1313,7 +1313,7 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// that large thrusts can't propel an actor through a wall, because wall
 	// running depends on the player's original movement continuing even after
 	// it gets blocked.
-	if (mo->player != NULL && (compatflags & COMPATF_WALLRUN) || (mo->waterlevel >= 1) ||
+	if (mo->player != NULL && (i_compatflags & COMPATF_WALLRUN) || (mo->waterlevel >= 1) ||
 		(mo->player != NULL && mo->player->crouchfactor < FRACUNIT*3/4))
 	{
 		// preserve the direction instead of clamping x and y independently.
@@ -1456,7 +1456,7 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					{
 						mo->momz = WATER_JUMP_SPEED;
 					}
-					if (player && (compatflags & COMPATF_WALLRUN))
+					if (player && (i_compatflags & COMPATF_WALLRUN))
 					{
 					// [RH] Here is the key to wall running: The move is clipped using its full speed.
 					// If the move is done a second time (because it was too fast for one move), it
@@ -1474,7 +1474,7 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					}
 					else
 					{
-						if (!player || !(compatflags & COMPATF_WALLRUN))
+						if (!player || !(i_compatflags & COMPATF_WALLRUN))
 						{
 							xmove = mo->momx;
 							ymove = mo->momy;
@@ -2595,7 +2595,7 @@ void AActor::Tick ()
 					scrolltype <= Scroll_SouthWest_Fast)
 				{ // Hexen scroll special
 					scrolltype -= Scroll_North_Slow;
-					if (compatflags&COMPATF_RAVENSCROLL)
+					if (i_compatflags&COMPATF_RAVENSCROLL)
 					{
 						angle_t fineangle = HexenScrollDirs[scrolltype / 3] * 32;
 						fixed_t carryspeed = DivScale32 (HexenSpeedMuls[scrolltype % 3], 32*CARRYFACTOR);
@@ -2615,7 +2615,7 @@ void AActor::Tick ()
 					scrolltype -= Carry_East5;
 					byte dir = HereticScrollDirs[scrolltype / 5];
 					fixed_t carryspeed = DivScale32 (HereticSpeedMuls[scrolltype % 5], 32*CARRYFACTOR);
-					if (scrolltype<=Carry_East35 && !(compatflags&COMPATF_RAVENSCROLL)) 
+					if (scrolltype<=Carry_East35 && !(i_compatflags&COMPATF_RAVENSCROLL)) 
 					{
 						// Use speeds that actually match the scrolling textures!
 						carryspeed = (1 << ((scrolltype%5) + FRACBITS-1));
@@ -2625,7 +2625,7 @@ void AActor::Tick ()
 				}
 				else if (scrolltype == dScroll_EastLavaDamage)
 				{ // Special Heretic scroll special
-					if (compatflags&COMPATF_RAVENSCROLL)
+					if (i_compatflags&COMPATF_RAVENSCROLL)
 					{
 						scrollx += DivScale32 (28, 32*CARRYFACTOR);
 					}
@@ -2762,7 +2762,7 @@ void AActor::Tick ()
 		(z - FloatBobOffsets[(FloatBobPhase + level.maptime) & 63] != floorz)
 		)))
 	{	// Handle Z momentum and gravity
-		if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(compatflags & COMPATF_NO_PASSMOBJ))
+		if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			if (!(onmo = P_CheckOnmobj (this)))
 			{

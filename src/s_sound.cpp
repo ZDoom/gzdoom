@@ -624,13 +624,13 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	{
 		pt = NULL;
 	}
-	if (compatflags & COMPATF_MAGICSILENCE)
+	if (i_compatflags & COMPATF_MAGICSILENCE)
 	{ // For people who just can't play without a silent BFG.
 		channel = 1;
 	}
 	else
 	{
-		if ((channel & CHAN_MAYBE_LOCAL) && (compatflags & COMPATF_SILENTPICKUP))
+		if ((channel & CHAN_MAYBE_LOCAL) && (i_compatflags & COMPATF_SILENTPICKUP))
 		{
 			if (mover != 0 && mover != players[consoleplayer].camera)
 			{
@@ -1108,7 +1108,7 @@ void S_StopSound (fixed_t *pt, int channel)
 	{
 		if (Channel[i].sfxinfo &&
 			((pt == NULL && Channel[i].pt == &Channel[i].x) || Channel[i].pt == pt) &&
-			((compatflags & COMPATF_MAGICSILENCE) || Channel[i].entchannel == channel))
+			((i_compatflags & COMPATF_MAGICSILENCE) || Channel[i].entchannel == channel))
 		{
 			S_StopChannel (i);
 		}
@@ -1208,7 +1208,7 @@ bool S_IsActorPlayingSomething (AActor *actor, int channel)
 {
 	int i;
 
-	if (compatflags & COMPATF_MAGICSILENCE)
+	if (i_compatflags & COMPATF_MAGICSILENCE)
 	{
 		channel = 0;
 	}

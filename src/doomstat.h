@@ -309,5 +309,6 @@ EXTERN_CVAR (Int, dmflags);
 EXTERN_CVAR (Int, dmflags2);	// [BC]
 
 EXTERN_CVAR (Int, compatflags);
+extern int i_compatflags;
 
 #endif

@@ -1,3 +1,15 @@
+June 3, 2006 (Changes by Graf Zahl)
+- Added a StartConversation special that allows automatic activation of Strife
+  dialogs.
+- Added Thing_Raise special that allows Arch-Vile like resurrections from scripts
+  or DECORATE states.
+- Added a RadiusDamageFactor property for actors. This replaces the hard coded
+  factor of 0.25 for Hexen's players.
+- Added new SpawnProjectile function to ACS. It's the same as Thing_Projectile2
+  but the projectile is specified by name, not spawn ID.
+- Added MAPINFO option to set the compatibility flags. If this is done these
+  explicit settings will take precedence over the compatflags CVAR.
+
 May 31, 2006
 - Merged in recent ZDBSP fixes:
  - Added code to explicitly handle outputting overlapping segs when
@@ -13,7 +25,6 @@ May 31, 2006
  - Removed forgotten debugging file dump from WriteSSectors2().
  - Enabled reference optimization and COMDAT folding in the linker for a slightly
    smaller executable.
-
 
 May 31, 2006 (Changes by Graf Zahl)
 - Fixed: Ammo items dropped by monsters that have a default amount of 1 didn't

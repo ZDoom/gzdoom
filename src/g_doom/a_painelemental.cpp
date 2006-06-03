@@ -132,7 +132,7 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	}
 
 	// [RH] make this optional
-	if (compatflags & COMPATF_LIMITPAIN)
+	if (i_compatflags & COMPATF_LIMITPAIN)
 	{
 		// count total number of skulls currently on the level
 		// if there are already 20 skulls on the level, don't spit another one

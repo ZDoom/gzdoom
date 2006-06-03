@@ -134,6 +134,7 @@ struct level_info_s
 	char		*level_name;
 	char		fadetable[9];
 	SBYTE		WallVertLight, WallHorizLight;
+	// TheDefaultLevelInfo initializes everything above this line.
 	int			musicorder;
 	FCompressedMemFile	*snapshot;
 	DWORD		snapshotVer;
@@ -149,6 +150,8 @@ struct level_info_s
 	float		aircontrol;
 	int			WarpTrans;
 	int			airsupply;
+	DWORD		compatflags;
+	DWORD		compatmask;
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.

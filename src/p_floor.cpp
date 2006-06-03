@@ -698,7 +698,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	persteptime = FixedDiv (stairsize, speed) >> FRACBITS;
 
 	int (* FindSector) (int tag, int start)  =
-		(compatflags & COMPATF_STAIRINDEX)? P_FindSectorFromTagLinear : P_FindSectorFromTag;
+		(i_compatflags & COMPATF_STAIRINDEX)? P_FindSectorFromTagLinear : P_FindSectorFromTag;
 
 	// check if a manual trigger, if so do just the sector on the backside
 	if (tag == 0)
@@ -862,7 +862,7 @@ manual_stair:
 		{
 			return rtn;
 		}
-		if (!(compatflags & COMPATF_STAIRINDEX))
+		if (!(i_compatflags & COMPATF_STAIRINDEX))
 		{
 			secnum = osecnum;	//jff 3/4/98 restore loop index
 		}

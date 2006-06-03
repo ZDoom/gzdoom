@@ -372,7 +372,14 @@ CVAR (Flag, sv_barrelrespawn,	dmflags2, DF2_BARRELS_RESPAWN);
 //
 //==========================================================================
 
-CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO);
+int i_compatflags;	// internal compatflags composed from the compatflags CVAR and MAPINFO settings
+
+CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
+{
+	if (level.info == NULL) i_compatflags = self;
+	else i_compatflags = (self & ~level.info->compatmask) | (level.info->compatflags & level.info->compatmask);
+}
+
 CVAR (Flag, compat_shortTex,	compatflags, COMPATF_SHORTTEX);
 CVAR (Flag, compat_stairs,		compatflags, COMPATF_STAIRINDEX);
 CVAR (Flag, compat_limitpain,	compatflags, COMPATF_LIMITPAIN);

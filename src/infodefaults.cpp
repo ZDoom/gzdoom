@@ -216,6 +216,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_MaxStepHeight:	actor->MaxStepHeight = dataint;		break;
 	case ADEF_BounceFactor:		actor->bouncefactor = dataint;		break;
 	case ADEF_BounceCount:		actor->bouncecount = dataint;		break;
+	case ADEF_RDFactor:			sgClass->Meta.SetMetaFixed (AMETA_RDFactor, dataint); break;
 
 	case ADEF_SpawnState:		actor->SpawnState = datastate;		break;
 	case ADEF_SeeState:			actor->SeeState = datastate;		break;
@@ -273,7 +274,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 
 	case ADEF_Ammo_BackpackAmount:	ammo->BackpackAmount = dataint; break;
 	case ADEF_Ammo_BackpackMaxAmount:ammo->BackpackMaxAmount = dataint; break;
-	case ADEF_Ammo_DropAmount:		sgClass->Meta.SetMetaInt (AIMETA_DropAmount, dataint);
+	case ADEF_Ammo_DropAmount:		sgClass->Meta.SetMetaInt (AIMETA_DropAmount, dataint); break;
 
 	case ADEF_Weapon_Flags:			weapon->WeaponFlags = dataint; break;
 	case ADEF_Weapon_FlagsSet:		weapon->WeaponFlags |= dataint; break;

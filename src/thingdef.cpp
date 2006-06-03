@@ -2957,6 +2957,15 @@ static void ActorFastSpeed (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorRadiusDamageFactor (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetFloat();
+	bag.Info->Class->Meta.SetMetaFixed (AMETA_RDFactor, fixed_t(sc_Float*FRACUNIT));
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorClearFlags (AActor *defaults, Baggage &bag)
 {
 	defaults->flags=defaults->flags2=defaults->flags3=defaults->flags4=0;
@@ -3572,6 +3581,7 @@ static const ActorProps props[] =
 	{ "projectile",					ActorProjectile,			RUNTIME_CLASS(AActor) },
 	{ "puzzleitem.number",			(apf)PuzzleitemNumber,		RUNTIME_CLASS(APuzzleItem) },
 	{ "radius",						ActorRadius,				RUNTIME_CLASS(AActor) },
+	{ "radiusdamagefactor",			ActorRadiusDamageFactor,	RUNTIME_CLASS(AActor) },
 	{ "raise",						ActorRaiseState,			RUNTIME_CLASS(AActor) },
 	{ "reactiontime",				ActorReactionTime,			RUNTIME_CLASS(AActor) },
 	{ "renderstyle",				ActorRenderStyle,			RUNTIME_CLASS(AActor) },

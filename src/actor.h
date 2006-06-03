@@ -403,6 +403,7 @@ enum
 	AMETA_WoundHealth,		// health needed to enter wound state
 	AMETA_PoisonDamage,		// Amount of poison damage
 	AMETA_FastSpeed,		// Speed in fast mode
+	AMETA_RDFactor,			// Radius damage factor
 };
 
 // Map Object definition.

@@ -775,7 +775,7 @@ void P_NewChaseDir(AActor * actor)
 	if (actor->floorz - actor->dropoffz > actor->MaxDropOffHeight && 
 		actor->z <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
 		!(actor->flags2 & MF2_ONMOBJ) &&
-		!(actor->flags & MF_FLOAT) && !(compatflags & COMPATF_DROPOFF))
+		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 	{
 		a.thing = actor;
 		a.deltax = a.deltay = 0;
@@ -1537,7 +1537,7 @@ void A_Look (AActor *actor)
 	}
 	else
 	{
-		targ = (compatflags & COMPATF_SOUNDTARGET)? actor->Sector->SoundTarget : actor->LastHeard;
+		targ = (i_compatflags & COMPATF_SOUNDTARGET)? actor->Sector->SoundTarget : actor->LastHeard;
 
 		// [RH] If the soundtarget is dead, don't chase it
 		if (targ != NULL && targ->health <= 0)
@@ -2195,7 +2195,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int special, int cha
 		fixed_t spawnz;
 
 		spawnz = source->z;
-		if (!(compatflags & COMPATF_NOTOSSDROPS))
+		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
 		{
 			int style = sv_dropstyle;
 			if (style==0) style= (gameinfo.gametype == GAME_Strife)? 2:1;
@@ -2235,7 +2235,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int special, int cha
 				return NULL;
 			}
 		}
-		if (!(compatflags & COMPATF_NOTOSSDROPS))
+		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
 		{
 			P_TossItem (mo);
 		}

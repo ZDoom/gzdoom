@@ -57,6 +57,8 @@ typedef enum {
 
 	Autosave = 15,	// [RH] Save the game *now*
 	Transfer_WallLight = 16,
+	Thing_Raise = 17,
+	StartConversation = 18,
 
 	Floor_LowerByValue = 20,
 	Floor_LowerToLowest = 21,

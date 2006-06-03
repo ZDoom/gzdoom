@@ -834,7 +834,7 @@ BOOL PIT_CheckThing (AActor *thing)
 	}
 	BlockingMobj = thing;
 	topz = thing->z + thing->height;
-	if (!(compatflags & COMPATF_NO_PASSMOBJ) && !(tmthing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY|MF_NOGRAVITY)) &&
+	if (!(i_compatflags & COMPATF_NO_PASSMOBJ) && !(tmthing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY|MF_NOGRAVITY)) &&
 		(thing->flags & MF_SOLID) && (thing->flags4 & MF4_ACTLIKEBRIDGE))
 	{
 		// [RH] Let monsters walk on actors as well as floors
@@ -856,7 +856,7 @@ BOOL PIT_CheckThing (AActor *thing)
 	}
 	// [RH] If the other thing is a bridge, then treat the moving thing as if it had MF2_PASSMOBJ, so
 	// you can use a scrolling floor to move scenery items underneath a bridge.
-	if ((tmthing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(compatflags & COMPATF_NO_PASSMOBJ))
+	if ((tmthing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
 		if (tmthing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
 		{ // Some things prefer not to overlap each other, if possible
@@ -1329,7 +1329,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 				  // other things in the blocks and see if we hit something that is
 				  // definitely blocking. Otherwise, we need to check the lines, or we
 				  // could end up stuck inside a wall.
-					if (BlockingMobj == NULL || (compatflags & COMPATF_NO_PASSMOBJ))
+					if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ))
 					{ // Thing slammed into something; don't let it move now.
 						thing->height = realheight;
 						return false;
@@ -1593,7 +1593,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				goto pushline;
 			}
 		}
-		if (!(tmthing->flags2 & MF2_PASSMOBJ) || (compatflags & COMPATF_NO_PASSMOBJ))
+		if (!(tmthing->flags2 & MF2_PASSMOBJ) || (i_compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			thing->z = oldz;
 			return false;
@@ -3159,7 +3159,7 @@ BOOL PTR_UseTraverse (intercept_t *in)
 		{
 			// Give the NPC a chance to play a brief animation
 			in->d.thing->ConversationAnimation (0);
-			P_StartConversation (in->d.thing, usething);
+			P_StartConversation (in->d.thing, usething, true);
 			return false;
 		}
 		return true;
@@ -3189,7 +3189,7 @@ blocked:
 				trace.y + FixedMul (trace.dy, in->frac));
 		}
 		if (openrange <= 0 ||
-			(in->d.line->special != 0 && (compatflags & COMPATF_USEBLOCKING)))
+			(in->d.line->special != 0 && (i_compatflags & COMPATF_USEBLOCKING)))
 		{
 			// [RH] Give sector a chance to intercept the use
 
@@ -3233,7 +3233,7 @@ blocked:
 	//[RH] And now I've changed it again. If the line is of type
 	//	   SPAC_USE, then it eats the use. Everything else passes
 	//	   it through, including SPAC_USETHROUGH.
-	if (compatflags & COMPATF_USEBLOCKING)
+	if (i_compatflags & COMPATF_USEBLOCKING)
 	{
 		return GET_SPAC(in->d.line->flags) == SPAC_USETHROUGH;
 	}
@@ -3508,10 +3508,8 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		{
 			points = points * splashfactor;
 		}
-		if (thing->player && gameinfo.gametype == GAME_Hexen)
-		{
-			points = points * 0.25f;
-		}
+		points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(float)FRACUNIT;
+
 		if (points > 0.f && P_CheckSight (thing, bombspot, 1))
 		{ // OK to damage; target is in direct path
 			float momz;
@@ -3569,12 +3567,13 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		{ // OK to damage; target is in direct path
 			int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
 			damage = (int)((float)damage * splashfactor);
-			if (thing->player && gameinfo.gametype == GAME_Hexen)
+
+			damage = Scale(damage, thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT), FRACUNIT);
+			if (damage > 0)
 			{
-				damage >>= 2;
+				P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
+				P_TraceBleed (damage, thing, bombspot);
 			}
-			P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
-			P_TraceBleed (damage, thing, bombspot);
 		}
 	}
 	return true;

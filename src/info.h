@@ -282,6 +282,7 @@ enum
 	ADEF_BounceFactor,
 	ADEF_BounceCount,
 	ADEF_FloatSpeed,
+	ADEF_RDFactor,
 
 	ADEF_SpawnState,
 	ADEF_SeeState,

@@ -171,7 +171,7 @@ static BOOL PTR_TraceIterator (intercept_t *in)
 			
 			// For backwards compatibility: Ignore lines with the same sector on both sides.
 			// This is the way Doom.exe did it and some WADs (e.g. Alien Vendetta MAP15 needs it.
-			if (compatflags & COMPATF_TRACE)
+			if (i_compatflags & COMPATF_TRACE)
 			{
 				return true;
 			}

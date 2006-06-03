@@ -180,7 +180,7 @@ bool P_GiveBody (AActor *actor, int num)
 
 	if (player != NULL)
 	{
-		max = ((compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth) + player->stamina;
+		max = ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth) + player->stamina;
 		if (player->morphTics)
 		{
 			max = MAXMORPHHEALTH;
@@ -1768,7 +1768,7 @@ bool AHealth::TryPickup (AActor *other)
 	{
 		if (max == 0)
 		{
-			max = ((compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth) + player->stamina;
+			max = ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth) + player->stamina;
 			if (player->morphTics)
 			{
 				max = MAXMORPHHEALTH;

@@ -2638,6 +2638,12 @@ FUNC(LS_StartConversation)
 
 	AActor *target = iterator.Next();
 
+	// Nothing to talk to
+	if (target == NULL)
+	{
+		return false;
+	}
+	
 	// Only living players are allowed to start conversations
 	if (it == NULL || it->player == NULL || it->player->mo != it || it->health<=0)
 	{

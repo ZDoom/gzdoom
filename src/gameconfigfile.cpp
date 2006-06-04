@@ -563,7 +563,7 @@ FString FGameConfigFile::GetConfigPath (bool tryProg)
 	if (path.IsEmpty())
 	{
 		if (Args.CheckParm ("-cdrom"))
-			return copystring ("c:\\zdoomdat\\zdoom.ini");
+			return "c:\\zdoomdat\\zdoom.ini";
 
 		path = progdir;
 		path += "zdoom.ini";
@@ -611,7 +611,7 @@ void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
 #ifndef unix
 			if (Args.CheckParm ("-cdrom"))
 			{
-				path = copystring ("c:\\zdoomdat\\autoexec.cfg");
+				path = "c:\\zdoomdat\\autoexec.cfg";
 			}
 			else
 			{

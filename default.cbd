@@ -52,10 +52,16 @@ do ifopt debug
   TARGET = "${DEBUGTARGET}"
 else
   OBJDIR = "${RELEASEOBJDIR}"
-  CFLAGS += "-march=${ARCH_TYPE} -mtune=${TUNE_TYPE} -Wall -Wno-unused -O${OPTLEVEL} -fomit-frame-pointer -ffunction-sections -fvtable-gc -fno-rtti"
+  CFLAGS += "-march=${ARCH_TYPE} -mtune=${TUNE_TYPE} -Wall -Wno-unused -O${OPTLEVEL} -fomit-frame-pointer -ffunction-sections -fno-rtti"
+  ifopt gc
+    CFLAGS += "-march=${ARCH_TYPE} -mtune=${TUNE_TYPE} -Wall -Wno-unused -O${OPTLEL} -fomit-frame-pointer -fno-rtti"
+  done
   CPPFLAGS += " -DNDEBUG"
   CXXFLAGS = "${CFLAGS}"
-  LDFLAGS += " -s -Wl,--gc-sections,-Map=zdoomgcc.map"
+  LDFLAGS += " -s -Wl,-Map=zdoomgcc.map"
+  ifopt gc
+    LDFLAGS += " -Wl,--gc-sections"
+  done
   TARGET = "${RELEASETARGET}"
 done
 
@@ -457,7 +463,7 @@ ${COMPILER} xlat-parse.tab.c gen.c
 ${LINK} tools/xlatcc/xlatcc
 
 src_paths  tools/dehsupp
-${COMPILER} parse.tab.c
+${COMPILER} parse.c scanner.c dehsupp.c
 ${LINK} tools/dehsupp/dehsupp
 
 do if "${EVILCLEAN}"="1"

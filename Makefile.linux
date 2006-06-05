@@ -2,14 +2,14 @@
 CXX ?= g++
 CC ?= gcc
 NASM ?= nasm
-ifndef DEBUG
-	ifndef NOGC
-		CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer -ffunction-sections -fvtable-gc -fno-rtti
-	else
-		CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer -ffunction-sections -fno-rtti
-	endif
+ifdef DEBUG
+  CFLAGS ?= -pipe -Wall -Wno-unused
 else
-	CFLAGS ?= -pipe -Wall -Wno-unused
+  CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer -fno-rtti
+endif
+ifdef GC
+  CFLAGS += -ffunction-sections
+  LDFLAGS += -Wl,--gc-sections
 endif
 CFLAGS += -DHAVE_FILELENGTH -D__forceinline=inline -Izlib -IFLAC `sdl-config --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
@@ -25,11 +25,11 @@ DEBUGOBJ ?= debugobj
 
 CPPSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS)))
 CSRCS = $(wildcard $(addsuffix *.c,$(SRCDIRS)))
-ifndef NOASM
+ifdef NOASM
+  CFLAGS += -DNOASM
+else
   ASRCS = $(wildcard src/*.nas)
   CFLAGS += -DUSEASM=1
-else
-  CFLAGS += -DNOASM
 endif
 SRCS = $(CSRCS) $(CPPSRCS) $(ASRCS)
 CPPOBJFILES = $(notdir $(patsubst %.cpp,%.o,$(CPPSRCS)))
@@ -39,20 +39,16 @@ AOBJFILES = $(notdir $(patsubst %.nas,%.o,$(ASRCS)))
 ZDOOM = zdoom
 ZDOOMDEBUG = zdoomd
 
-ifndef DEBUG
-  OBJDIR = $(RELEASEOBJ)
-  CFLAGS += -DNDEBUG
-	ifndef NOGC
-	  LDFLAGS += -s -Wl,--gc-sections,-Map=$(ZDOOM).map
-	else
-		LDFLAGS += -s -Wl,-Map=$(ZDOOM).map
-	endif
-  ZDOOMBIN = $(ZDOOM)
-else
+ifdef DEBUG
   OBJDIR = $(DEBUGOBJ)
   CFLAGS += -D_DEBUG -g3
   NASMFLAGS += -g
   ZDOOMBIN = $(ZDOOMDEBUG)
+else
+  OBJDIR = $(RELEASEOBJ)
+  CFLAGS += -DNDEBUG
+  LDFLAGS += -s -Wl,-Map=$(ZDOOM).map
+  ZDOOMBIN = $(ZDOOM)
 endif
 CXXFLAGS += $(CFLAGS)
 

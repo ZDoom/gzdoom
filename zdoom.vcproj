@@ -2320,6 +2320,30 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\nodebuild_classify_nosse2.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\nodebuild_classify_sse2.cpp"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						EnableEnhancedInstructionSet="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						EnableEnhancedInstructionSet="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\src\nodebuild_events.cpp"
 				>
 			</File>

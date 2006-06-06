@@ -142,6 +142,10 @@ else
 
 done
 
+# How do you pass -msse2 -mfpmath=sse2 with cbuild when compiling nodebuild_classify_sse2.cpp?
+# Since I don't know the answer, that means you won't get an SSE2-supporting nodebuilder if
+# you build with cbuild. Use make instead.
+
 ${COMPILER} "autostart.cpp \
  a.nas \
  misc.nas \
@@ -204,6 +208,8 @@ ${COMPILER} "autostart.cpp \
  m_random.cpp \
  mus2midi.cpp \
  nodebuild.cpp \
+ nodebuild_classify_nosse2.cpp \
+ nodebuild_classify_sse2.cpp \
  nodebuild_events.cpp \
  nodebuild_extract.cpp \
  nodebuild_gl.cpp \

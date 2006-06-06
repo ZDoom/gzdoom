@@ -56,14 +56,6 @@ const int MaxSegs = 64;
 const int SplitCost = 8;
 const int AAPreference = 16;
 
-// Points within this distance of a line will be considered on the line.
-// Units are in fixed_ts.
-const double SIDE_EPSILON = 6.5536;
-
-// Vertices within this distance of each other vertically and horizontally
-// will be considered as the same vertex.
-const fixed_t VERTEX_EPSILON = 6;
-
 #if 0
 #define D(x) x
 #else
@@ -72,14 +64,23 @@ const fixed_t VERTEX_EPSILON = 6;
 
 FNodeBuilder::FNodeBuilder (FLevel &level,
 							TArray<FPolyStart> &polyspots, TArray<FPolyStart> &anchors,
-							bool makeGLNodes)
-	: Level (level), GLNodes (makeGLNodes), SegsStuffed (0)
+							bool makeGLNodes, bool enableSSE2)
+	: Level(level), GLNodes(makeGLNodes), EnableSSE2(enableSSE2), SegsStuffed(0)
 {
+	VertexMap = new FVertexMap (*this, Level.MinX, Level.MinY, Level.MaxX, Level.MaxY);
 	FindUsedVertices (Level.Vertices, Level.NumVertices);
 	MakeSegsFromSides ();
 	FindPolyContainers (polyspots, anchors);
 	GroupSegPlanes ();
 	BuildTree ();
+}
+
+FNodeBuilder::~FNodeBuilder()
+{
+	if (VertexMap != 0)
+	{
+		delete VertexMap;
+	}
 }
 
 void FNodeBuilder::BuildTree ()
@@ -194,7 +195,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 		sub.numlines = (DWORD)(SegList.Size() - sub.firstline);
 
 		// Sort segs by linedef for special effects
-		qsort (&SegList[sub.firstline], sub.numlines, sizeof(int), SortSegs);
+		qsort (&SegList[sub.firstline], sub.numlines, sizeof(USegPtr), SortSegs);
 
 		// Convert seg pointers into indices
 		for (unsigned int i = sub.firstline; i < SegList.Size(); ++i)
@@ -701,52 +702,6 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 	return score;
 }
 
-int FNodeBuilder::ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2)
-{
-	const FPrivVert *v1 = &Vertices[seg->v1];
-	const FPrivVert *v2 = &Vertices[seg->v2];
-	sidev1 = PointOnSide (v1->x, v1->y, node.x, node.y, node.dx, node.dy);
-	sidev2 = PointOnSide (v2->x, v2->y, node.x, node.y, node.dx, node.dy);
-
-	if ((sidev1 | sidev2) == 0)
-	{ // seg is coplanar with the splitter, so use its orientation to determine
-	  // which child it ends up in. If it faces the same direction as the splitter,
-	  // it goes in front. Otherwise, it goes in back.
-
-		if (node.dx != 0)
-		{
-			if ((node.dx > 0 && v2->x > v1->x) || (node.dx < 0 && v2->x < v1->x))
-			{
-				return 0;
-			}
-			else
-			{
-				return 1;
-			}
-		}
-		else
-		{
-			if ((node.dy > 0 && v2->y > v1->y) || (node.dy < 0 && v2->y < v1->y))
-			{
-				return 0;
-			}
-			else
-			{
-				return 1;
-			}
-		}
-	}
-	else if (sidev1 <= 0 && sidev2 <= 0)
-	{
-		return 0;
-	}
-	else if (sidev1 >= 0 && sidev2 >= 0)
-	{
-		return 1;
-	}
-	return -1;
-}
-
 void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1)
 {
 	outset0 = DWORD_MAX;
@@ -809,24 +764,7 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 			newvert.y = Vertices[seg->v1].y;
 			newvert.x += fixed_t(frac * double(Vertices[seg->v2].x - newvert.x));
 			newvert.y += fixed_t(frac * double(Vertices[seg->v2].y - newvert.y));
-			for (i = 0; i < Vertices.Size(); ++i)
-			{
-				if (abs(Vertices[i].x - newvert.x) < VERTEX_EPSILON &&
-					abs(Vertices[i].y - newvert.y) < VERTEX_EPSILON)
-				{
-					break;
-				}
-			}
-			if (i < Vertices.Size())
-			{
-				vertnum = i;
-			}
-			else
-			{
-				newvert.segs = DWORD_MAX;
-				newvert.segs2 = DWORD_MAX;
-				vertnum = Vertices.Push (newvert);
-			}
+			vertnum = VertexMap->SelectVertexClose (newvert);
 
 			seg2 = SplitSeg (set, vertnum, sidev1);
 
@@ -1047,33 +985,6 @@ double FNodeBuilder::InterceptVector (const node_t &splitter, const FPrivSeg &se
 	double frac = num / den;
 
 	return frac;
-}
-
-int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int dy)
-{
-	// For most cases, a simple dot product is enough.
-	double d_dx = double(dx);
-	double d_dy = double(dy);
-	double d_x = double(x);
-	double d_y = double(y);
-	double d_x1 = double(x1);
-	double d_y1 = double(y1);
-
-	double s_num = (d_y1-d_y)*d_dx - (d_x1-d_x)*d_dy;
-
-	if (fabs(s_num) < 17179869184.0)	// 4<<32
-	{
-		// Either the point is very near the line, or the segment defining
-		// the line is very short: Do a more expensive test to determine
-		// just how far from the line the point is.
-		double l = sqrt(d_dx*d_dx+d_dy*d_dy);
-		double dist = fabs(s_num)/l;
-		if (dist < SIDE_EPSILON)
-		{
-			return 0;
-		}
-	}
-	return s_num > 0.0 ? -1 : 1;
 }
 
 void FNodeBuilder::PrintSet (int l, DWORD set)

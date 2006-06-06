@@ -45,12 +45,17 @@
 #include <stdio.h>
 
 #include "nodebuild.h"
+#include "templates.h"
 #include "m_bbox.h"
 #include "r_main.h"
 #include "i_system.h"
 
 static const int PO_LINE_START = 1;
 static const int PO_LINE_EXPLICIT = 5;
+
+// Vertices within this distance of each other vertically and horizontally
+// will be considered as the same vertex.
+const fixed_t VERTEX_EPSILON = 6;
 
 #if 0
 #define D(x) x
@@ -68,57 +73,38 @@ angle_t FNodeBuilder::PointToAngle (fixed_t x, fixed_t y)
 {
 	const double rad2bam = double(1<<30) / M_PI;
 	double ang = atan2 (double(y), double(x));
-	if (ang < 0.0)
-	{
-		ang = 2*M_PI+ang;
-	}
 	return angle_t(ang * rad2bam) << 1;
 }
 
 void FNodeBuilder::FindUsedVertices (vertex_t *oldverts, int max)
 {
-	size_t *map = (size_t *)alloca (max*sizeof(size_t));
+	int *map = (int *)alloca (max*sizeof(int));
 	int i;
 	FPrivVert newvert;
 
-	memset (&map[0], -1, sizeof(size_t)*max);
-
-	newvert.segs = DWORD_MAX;
-	newvert.segs2 = DWORD_MAX;
+	memset (&map[0], -1, sizeof(int)*max);
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
 		ptrdiff_t v1 = Level.Lines[i].v1 - oldverts;
 		ptrdiff_t v2 = Level.Lines[i].v2 - oldverts;
 
-		if (map[v1] == (size_t)-1)
+		if (map[v1] == -1)
 		{
 			newvert.x = oldverts[v1].x;
 			newvert.y = oldverts[v1].y;
-			map[v1] = SelectVertexExact (newvert);
+			map[v1] = VertexMap->SelectVertexExact (newvert);
 		}
-		if (map[v2] == (size_t)-1)
+		if (map[v2] == -1)
 		{
 			newvert.x = oldverts[v2].x;
 			newvert.y = oldverts[v2].y;
-			map[v2] = SelectVertexExact (newvert);
+			map[v2] = VertexMap->SelectVertexExact (newvert);
 		}
 
 		Level.Lines[i].v1 = (vertex_t *)map[v1];
 		Level.Lines[i].v2 = (vertex_t *)map[v2];
 	}
-}
-
-int FNodeBuilder::SelectVertexExact (FPrivVert &vertex)
-{
-	for (unsigned int i = 0; i < Vertices.Size(); ++i)
-	{
-		if (Vertices[i].x == vertex.x && Vertices[i].y == vertex.y)
-		{
-			return (int)i;
-		}
-	}
-	return (int)Vertices.Push (vertex);
 }
 
 // For every sidedef in the map, create a corresponding seg.
@@ -279,8 +265,7 @@ void FNodeBuilder::GroupSegPlanes ()
 
 	D(Printf ("%d planes from %d segs\n", planenum, Segs.Size()));
 
-	planenum = (planenum+7)/8;
-	PlaneChecked.Reserve (planenum);
+	PlaneChecked.Reserve ((planenum + 7) / 8);
 }
 
 // Find "loops" of segs surrounding polyobject's origin. Note that a polyobject's origin
@@ -496,4 +481,121 @@ void FNodeBuilder::AddSegToBBox (fixed_t bbox[4], const FPrivSeg *seg)
 	if (v2->x > bbox[BOXRIGHT])		bbox[BOXRIGHT] = v2->x;
 	if (v2->y < bbox[BOXBOTTOM])	bbox[BOXBOTTOM] = v2->y;
 	if (v2->y > bbox[BOXTOP])		bbox[BOXTOP] = v2->y;
+}
+
+void FNodeBuilder::FLevel::FindMapBounds ()
+{
+	fixed_t minx, maxx, miny, maxy;
+
+	minx = maxx = Vertices[0].x;
+	miny = maxy = Vertices[0].y;
+
+	for (int i = 1; i < NumVertices; ++i)
+	{
+			 if (Vertices[i].x < minx) minx = Vertices[i].x;
+		else if (Vertices[i].x > maxx) maxx = Vertices[i].x;
+			 if (Vertices[i].y < miny) miny = Vertices[i].y;
+		else if (Vertices[i].y > maxy) maxy = Vertices[i].y;
+	}
+
+	MinX = minx;
+	MinY = miny;
+	MaxX = maxx;
+	MaxY = maxy;
+}
+
+FNodeBuilder::FVertexMap::FVertexMap (FNodeBuilder &builder,
+	fixed_t minx, fixed_t miny, fixed_t maxx, fixed_t maxy)
+	: MyBuilder(builder)
+{
+	MinX = minx;
+	MinY = miny;
+	BlocksWide = int(((double(maxx) - minx + 1) + (BLOCK_SIZE - 1)) / BLOCK_SIZE);
+	BlocksTall = int(((double(maxy) - miny + 1) + (BLOCK_SIZE - 1)) / BLOCK_SIZE);
+	MaxX = MinX + BlocksWide * BLOCK_SIZE - 1;
+	MaxY = MinY + BlocksTall * BLOCK_SIZE - 1;
+	VertexGrid = new TArray<int>[BlocksWide * BlocksTall];
+}
+
+FNodeBuilder::FVertexMap::~FVertexMap ()
+{
+	delete[] VertexGrid;
+}
+
+int FNodeBuilder::FVertexMap::SelectVertexExact (FNodeBuilder::FPrivVert &vert)
+{
+	TArray<int> &block = VertexGrid[GetBlock (vert.x, vert.y)];
+	FPrivVert *vertices = &MyBuilder.Vertices[0];
+	unsigned int i;
+
+	for (i = 0; i < block.Size(); ++i)
+	{
+		if (vertices[block[i]].x == vert.x && vertices[block[i]].y == vert.y)
+		{
+			return block[i];
+		}
+	}
+
+	// Not present: add it!
+	return InsertVertex (vert);
+}
+
+int FNodeBuilder::FVertexMap::SelectVertexClose (FNodeBuilder::FPrivVert &vert)
+{
+	TArray<int> &block = VertexGrid[GetBlock (vert.x, vert.y)];
+	FPrivVert *vertices = &MyBuilder.Vertices[0];
+	unsigned int i;
+
+	for (i = 0; i < block.Size(); ++i)
+	{
+		if (abs(vertices[block[i]].x - vert.x) < VERTEX_EPSILON &&
+			abs(vertices[block[i]].y - vert.y) < VERTEX_EPSILON)
+		{
+			return block[i];
+		}
+	}
+
+	// Not present: add it!
+	return InsertVertex (vert);
+}
+
+int FNodeBuilder::FVertexMap::InsertVertex (FNodeBuilder::FPrivVert &vert)
+{
+	int vertnum;
+
+	vert.segs = DWORD_MAX;
+	vert.segs2 = DWORD_MAX;
+	vertnum = (int)MyBuilder.Vertices.Push (vert);
+
+	// If a vertex is near a block boundary, then it will be inserted on
+	// both sides of the boundary so that SelectVertexClose can find
+	// it by checking in only one block.
+	fixed_t minx = MAX (MinX, vert.x - VERTEX_EPSILON);
+	fixed_t maxx = MIN (MaxX, vert.x + VERTEX_EPSILON);
+	fixed_t miny = MAX (MinY, vert.y - VERTEX_EPSILON);
+	fixed_t maxy = MIN (MaxY, vert.y + VERTEX_EPSILON);
+
+	int blk[4] =
+	{
+		GetBlock (minx, miny),
+		GetBlock (maxx, miny),
+		GetBlock (minx, maxy),
+		GetBlock (maxx, maxy)
+	};
+	unsigned int blkcount[4] =
+	{
+		VertexGrid[blk[0]].Size(),
+		VertexGrid[blk[1]].Size(),
+		VertexGrid[blk[2]].Size(),
+		VertexGrid[blk[3]].Size()
+	};
+	for (int i = 0; i < 4; ++i)
+	{
+		if (VertexGrid[blk[i]].Size() == blkcount[i])
+		{
+			VertexGrid[blk[i]].Push (vertnum);
+		}
+	}
+
+	return vertnum;
 }

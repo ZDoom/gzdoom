@@ -124,6 +124,8 @@ OBJECTS += \
 	$(OBJDIR)/m_random.o \
 	$(OBJDIR)/mus2midi.o \
 	$(OBJDIR)/nodebuild.o \
+	$(OBJDIR)/nodebuild_classify_nosse2.o \
+	$(OBJDIR)/nodebuild_classify_sse2.o \
 	$(OBJDIR)/nodebuild_events.o \
 	$(OBJDIR)/nodebuild_extract.o \
 	$(OBJDIR)/nodebuild_gl.o \
@@ -392,6 +394,10 @@ all: $(TARGET)
 
 $(OBJDIR)/%.o : %.cpp
 	$(CCDV) $(CXX) $(CXXFLAGS) -o $@ -c $<
+
+# This file needs special handling so that it actually gets compiled with SSE2 support.
+$(OBJDIR)/nodebuild_classify_sse2.o: nodebuild_classify_sse2.cpp
+	$(CCDV) $(CXX) $(CXXFLAGS) -msse2 -mfpmath=sse -c -o $@ $<
 
 $(OBJDIR)/%.o : %.nas
 	$(CCDV) nasmw -o $@ -f win32 $<

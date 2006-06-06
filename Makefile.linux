@@ -1,4 +1,10 @@
 # created on 4/12/2006 by James Bentler
+
+# RH says: Might I suggest using -MMD instead of -MM? You can create the
+# .o files and the .d files in the same step and avoid rerunning make.
+# I'd do it myself, but I don't want to break anything without testing
+# it first.
+
 CXX ?= g++
 CC ?= gcc
 NASM ?= nasm
@@ -104,6 +110,11 @@ _obj_,$(OBJDIR)/$(patsubst %.c,%.o,$(notdir $$$(src))),$(CBUILD_PATTERN)))))
 
 $(OBJDIR)/%.o:
 	$(CXX) -c $(CXXFLAGS) -o $@ -c $<
+
+# Hi, you Linux people. This works with Makefile.mingw, so i assume it works here too.
+# This file needs special handling so that it actually gets compiled with SSE2 support.
+$(OBJDIR)/nodebuild_classify_sse2.o: nodebuild_classify_sse2.cpp
+	$(CXX) $(CXXFLAGS) -msse2 -mfpmath=sse -c -o $@ $<
 
 # start a new instance of make after dependency files have been made
 deps: $(DEPS)

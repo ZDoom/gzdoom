@@ -1,3 +1,22 @@
+June 6, 2006
+- Integrated recent ZDBSP improvements into the internal nodebuilder:
+ - ClassifyLine now chooses either SSE2 or regular x87 math depending on whether
+   or not SSE2 is available at runtime. Since most of the time is spent in
+   ClassifyLine, using SSE2 in just this one function helps the most.
+ - Nodebuilding is a little faster if we inline PointOnSide.
+ - Changed FEventTree into a regular binary tree, since there just aren't enough
+   nodes inserted into it to make a red-black tree worthwhile.
+ - Added more checks at the start of ClassifyLine so that it has a better chance
+   of avoiding the more complicated checking, and it seems to have paid off with
+   a reasonably modest performance boost.
+ - Added a "vertex map" for ZDBSP's vertex selection. (Think BLOCKMAP for
+   vertices instead of lines.) On large maps, this can result in a very
+   significant speed up. (In one particular map, ZDBSP had previously
+   spent 40% of its time just scanning through all the vertices in the
+   map. Now the time it spends finding vertices is immeasurable.) On small maps,
+   this won't make much of a difference, because the number of vertices to search
+   was so small to begin with.
+
 June 3, 2006 (Changes by Graf Zahl)
 - Added a StartConversation special that allows automatic activation of Strife
   dialogs.
@@ -22,9 +41,6 @@ May 31, 2006
  - Red-Black Tree implementation was broken and colored every node red.
  - Moved most of the code for outputting degenerate GL subsectors into another
    function.
- - Removed forgotten debugging file dump from WriteSSectors2().
- - Enabled reference optimization and COMDAT folding in the linker for a slightly
-   smaller executable.
 
 May 31, 2006 (Changes by Graf Zahl)
 - Fixed: Ammo items dropped by monsters that have a default amount of 1 didn't

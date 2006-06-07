@@ -1,3 +1,6 @@
+June 7, 2006 (Changes by Graf Zahl)
+- Fixed: A_CustomPunch didn't use the range parameter correctly.
+
 June 6, 2006
 - Integrated recent ZDBSP improvements into the internal nodebuilder:
  - ClassifyLine now chooses either SSE2 or regular x87 math depending on whether

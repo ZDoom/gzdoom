@@ -113,7 +113,7 @@ $(OBJDIR)/%.o:
 
 # Hi, you Linux people. This works with Makefile.mingw, so i assume it works here too.
 # This file needs special handling so that it actually gets compiled with SSE2 support.
-$(OBJDIR)/nodebuild_classify_sse2.o: nodebuild_classify_sse2.cpp
+$(OBJDIR)/nodebuild_classify_sse2.o: src/nodebuild_classify_sse2.cpp
 	$(CXX) $(CXXFLAGS) -msse2 -mfpmath=sse -c -o $@ $<
 
 # start a new instance of make after dependency files have been made

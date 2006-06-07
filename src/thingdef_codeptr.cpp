@@ -868,7 +868,8 @@ void A_CustomPunch (AActor *self)
 	if (!norandom) Damage *= (pr_cwpunch()%8+1);
 
 	angle = self->angle + (pr_cwpunch.Random2() << 18);
-	pitch = P_AimLineAttack (self, angle, MELEERANGE);
+	if (Range == 0) Range = MELEERANGE;
+	pitch = P_AimLineAttack (self, angle, Range);
 
 	// only use ammo when actually hitting something!
 	if (UseAmmo && linetarget && weapon)
@@ -879,7 +880,6 @@ void A_CustomPunch (AActor *self)
 	PuffType = PClass::FindClass(PuffTypeName);
 	if (!PuffType) PuffType=RUNTIME_CLASS(ABulletPuff);
 
-	if (Range == 0) Range = MELEERANGE;
 	P_LineAttack (self, angle, Range, pitch, Damage, GetDefaultByType(PuffType)->DamageType, PuffType);
 
 	// turn to face target

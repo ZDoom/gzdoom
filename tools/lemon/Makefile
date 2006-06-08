@@ -4,7 +4,7 @@ ifeq (Windows_NT,$(OS))
   CFLAGS = $(LOC) -D_WIN32 -Os -Wall -Wno-implicit -fomit-frame-pointer
 else
   EXE = lemon
-  CCDV = 
+  CCDV = @../../ccdv
   CFLAGS = -Os -Wall -Wno-implicit -fomit-frame-pointer
 endif
 

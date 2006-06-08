@@ -6,7 +6,7 @@ ifeq (Windows_NT,$(OS))
   ZLIB = ../../zlib/libz.a
 else
   EXE = makewad
-  CCDV = 
+  CCDV = @../../ccdv
   CFLAGS = -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -Os -Wall -fomit-frame-pointer
   LDFLAGS = -s -lz
   ZLIB =

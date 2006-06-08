@@ -4,7 +4,7 @@ ifeq (Windows_NT,$(OS))
 	CXXFLAGS = $(LOC) -D_WIN32 -DNDEBUG -Os -Wall -Wno-unused
 else
 	EXE = re2c
-	CCDV = 
+	CCDV = @../../ccdv
 	CXXFLAGS = -DHAVE_CONFIG_H -DNDEBUG -Os -Wall -Wno-unused
 endif
 

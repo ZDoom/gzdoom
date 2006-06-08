@@ -1,28 +1,26 @@
 # created on 4/12/2006 by James Bentler
 
-# RH says: Might I suggest using -MMD instead of -MM? You can create the
-# .o files and the .d files in the same step and avoid rerunning make.
-# I'd do it myself, but I don't want to break anything without testing
-# it first.
-
 CXX ?= g++
 CC ?= gcc
 NASM ?= nasm
+CCDV = @./ccdv
 ifdef DEBUG
-  CFLAGS ?= -pipe -Wall -Wno-unused
+  CFLAGS ?= -pipe -Wall -Wno-unused -fno-strict-aliasing
 else
-  CFLAGS ?= -pipe -Wall -Wno-unused -O2 -fomit-frame-pointer -fno-rtti
+  CFLAGS ?= -pipe -Wall -Wno-unused -fno-strict-aliasing -O2 -fomit-frame-pointer
+  CXXFLAGS ?= -fno-rtti
 endif
 ifdef GC
   CFLAGS += -ffunction-sections
   LDFLAGS += -Wl,--gc-sections
 endif
-CFLAGS += -DHAVE_FILELENGTH -D__forceinline=inline -Izlib -IFLAC `sdl-config --cflags`
+CFLAGS += -MMD -DHAVE_FILELENGTH -D__forceinline=inline -Izlib -IFLAC `sdl-config --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
 LDFLAGS += -lFLAC++ -lFLAC -lz -lfmod `sdl-config --libs`
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
 SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/)
+VPATH = $(SRCDIRS)
 INCLUDES = $(addprefix -I,$(SRCDIRS))
 CFLAGS += $(INCLUDES)
 
@@ -62,70 +60,30 @@ COBJS = $(addprefix $(OBJDIR)/,$(CPPOBJFILES) $(COBJFILES))
 DEPS = $(patsubst %.o,%.d,$(COBJS))
 OBJS = $(addprefix $(OBJDIR)/,$(AOBJFILES)) $(COBJS)
 
-# controls whether to start another instance of make at deps
-RESTART?=1
-
-# rule pattern for dependencies
-define DEPBUILD_PATTERN
-_dep_: _src_
-	$(CXX) _src_ -MM $(CXXFLAGS) -MT "$$(patsubst %.d,%.o,_dep_) _dep_" -MF _dep_
-endef
-
-# rule pattern for assembly files
-define ASMBUILD_PATTERN
-_obj_: _src_
-	$(NASM) -o _obj_ $(NASMFLAGS) _src_
-endef
-
-define CBUILD_PATTERN
-_obj_: _src_
-	$(CC) -c $(CFLAGS) -o _obj_ -c _src_
-endef
-
 all: $(ZDOOMBIN) toolsandpk3 zdoom.pk3
 
-$(ZDOOMBIN): $(OBJDIR) $(if $(RESTART),deps) $(OBJS)
-ifndef RESTART
-	$(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
+$(ZDOOMBIN): ccdv $(OBJDIR) $(OBJS)
+	$(CCDV) $(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
 	$(filter-out %/autostart.o %/autozend.o,$(OBJS)) \
 	$(OBJDIR)/autozend.o -o $(ZDOOMBIN)
-endif
 
-# include any of the dep files that already exist if we aren't making clean
-$(if !$(findstring clean,$(MAKECMDGOALS)),$(foreach dep,$(DEPS),$(if $(wildcard $(dep)),$(eval include $(dep)))))
+$(OBJDIR)/%.o: %.cpp
+	$(CCDV) $(CXX) $(CXXFLAGS) -o $@ -c $<
 
-# textually substitute in the _dep_ and the _src_ it depends on to create rules
-# for creating dependency files without any existing dependency files
-$(foreach src,$(CPPSRCS) $(CSRCS), $(eval $(subst _src_,$(src),$(subst \
-_dep_,$(OBJDIR)/$(patsubst %.c,%.d,$(patsubst %.cpp,%.d,$(notdir $$$(src)))),\
-$(DEPBUILD_PATTERN)))))
+$(OBJDIR)/%.o: %.c
+	$(CCDV) $(CC) $(CFLAGS) -o $@ -c $<
 
-# textually substitute in the _obj_ and the _src_ it depends on to create rules
-$(foreach src,$(ASRCS), $(eval $(subst _src_,$(src),$(subst \
-_obj_,$(OBJDIR)/$(patsubst %.nas,%.o,$(notdir $$$(src))),$(ASMBUILD_PATTERN)))))
+$(OBJDIR)/%.o: %.nas
+	$(CCDV) $(NASM) -o $@ $(NASMFLAGS) $<
 
-# textually substitute in the _obj_ and the _src_ it depends on to create rules
-$(foreach src,$(CSRCS), $(eval $(subst _src_,$(src),$(subst \
-_obj_,$(OBJDIR)/$(patsubst %.c,%.o,$(notdir $$$(src))),$(CBUILD_PATTERN)))))
-
-$(OBJDIR)/%.o:
-	$(CXX) -c $(CXXFLAGS) -o $@ -c $<
-
-# Hi, you Linux people. This works with Makefile.mingw, so i assume it works here too.
 # This file needs special handling so that it actually gets compiled with SSE2 support.
-$(OBJDIR)/nodebuild_classify_sse2.o: src/nodebuild_classify_sse2.cpp
-	$(CXX) $(CXXFLAGS) -msse2 -mfpmath=sse -c -o $@ $<
-
-# start a new instance of make after dependency files have been made
-deps: $(DEPS)
-ifdef RESTART
-	@make -f $(firstword $(MAKEFILE_LIST)) RESTART=
-endif
+$(OBJDIR)/nodebuild_classify_sse2.o: nodebuild_classify_sse2.cpp
+	$(CCDV) $(CXX) $(CXXFLAGS) -msse2 -mfpmath=sse -c -o $@ $<
 
 $(OBJDIR):
 	mkdir $(OBJDIR)
 
-toolsandpk3: tools/makewad/makewad tools/dehsupp/dehsupp tools/xlatcc/xlatcc
+toolsandpk3: ccdv tools/makewad/makewad tools/dehsupp/dehsupp tools/xlatcc/xlatcc
 	make -C wadsrc/
 
 zdoom.pk3: toolsandpk3
@@ -140,10 +98,16 @@ tools/dehsupp/dehsupp:
 tools/xlatcc/xlatcc:
 	make -C tools/xlatcc/
 
-.PHONY : clean cleandeps cleanobjs distclean deps toolsandpk3
+.PHONY : clean cleandeps cleanobjs distclean toolsandpk3 cleantools
 
 clean: cleanobjs
 	rm -f $(ZDOOMDEBUG) $(ZDOOM) $(ZDOOM).map
+	rm -f ccdv
+
+cleantools:
+	@$(MAKE) -C tools/makewad clean
+	@$(MAKE) -C tools/dehsupp clean
+	@$(MAKE) -C tools/xlatcc clean
 
 cleandebug:
 	rm -f $(ZDOOMDEBUG) $(DEBUGOBJ)/*.o $(DEBUGOBJ)/*.d
@@ -163,3 +127,9 @@ cleandeps:
 cleanobjs:
 	rm -f $(RELEASEOBJ)/*.o $(DEBUGOBJ)/*.o 
    
+ccdv: ccdv-posix.c
+	@gcc -Os -s ccdv-posix.c -o ccdv
+
+ifneq ($(MAKECMDGOALS),clean)
+-include $(DEPS)
+endif

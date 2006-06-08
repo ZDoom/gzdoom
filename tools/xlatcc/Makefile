@@ -4,7 +4,7 @@ ifeq (Windows_NT,$(OS))
   CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
 else
   EXE = xlatcc
-  CCDV = 
+  CCDV = @../../ccdv
   CFLAGS = -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp $(LOC) -Os -Wall -fomit-frame-pointer
 endif
 

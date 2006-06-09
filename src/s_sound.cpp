@@ -1520,6 +1520,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				offset = -1;							// this tells the low level code that the music 
 														// is being used from memory
 				length = Wads.LumpLength (lumpnum);
+				if (length == 0)
+				{
+					offset = 0;
+					return false;
+				}
 				musiccache.Resize(length);
 				Wads.ReadLump(lumpnum, &musiccache[0]);
 			}

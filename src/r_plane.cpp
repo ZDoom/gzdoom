@@ -1148,8 +1148,10 @@ void R_DrawSkyBoxes ()
 		FirstInterestingDrawseg = InterestingDrawsegs.Size();
 
 		interestingStack.Push (FirstInterestingDrawseg);
-		drawsegStack.Push (firstdrawseg - drawsegs);
-		visspriteStack.Push (firstvissprite - vissprites);
+		ptrdiff_t diffnum = firstdrawseg - drawsegs;
+		drawsegStack.Push (diffnum);
+		diffnum = firstvissprite - vissprites;
+		visspriteStack.Push (diffnum);
 		viewxStack.Push (viewx);
 		viewyStack.Push (viewy);
 		viewzStack.Push (viewz);

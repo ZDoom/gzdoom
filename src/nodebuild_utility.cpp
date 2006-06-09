@@ -102,8 +102,8 @@ void FNodeBuilder::FindUsedVertices (vertex_t *oldverts, int max)
 			map[v2] = VertexMap->SelectVertexExact (newvert);
 		}
 
-		Level.Lines[i].v1 = (vertex_t *)map[v1];
-		Level.Lines[i].v2 = (vertex_t *)map[v2];
+		Level.Lines[i].v1 = (vertex_t *)(size_t)map[v1];
+		Level.Lines[i].v2 = (vertex_t *)(size_t)map[v2];
 	}
 }
 

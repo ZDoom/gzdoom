@@ -748,7 +748,6 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 			FPrivVert newvert;
 			unsigned int vertnum;
 			int seg2;
-			unsigned int i;
 
 			if (seg->loopnum)
 			{

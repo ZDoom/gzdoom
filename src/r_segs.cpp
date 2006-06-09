@@ -1539,7 +1539,8 @@ void R_StoreWallRange (int start, int stop)
 
 	if (rw_markmirror)
 	{
-		WallMirrors.Push (ds_p - drawsegs);
+		size_t drawsegnum = ds_p - drawsegs;
+		WallMirrors.Push (drawsegnum);
 		ds_p->silhouette = SIL_BOTH;
 	}
 	else if (backsector == NULL)
@@ -1647,7 +1648,8 @@ void R_StoreWallRange (int start, int stop)
 
 			if (ds_p->bFogBoundary || ds_p->maskedtexturecol != -1)
 			{
-				InterestingDrawsegs.Push (ds_p - drawsegs);
+				size_t drawsegnum = ds_p - drawsegs;
+				InterestingDrawsegs.Push (drawsegnum);
 			}
 		}
 	}

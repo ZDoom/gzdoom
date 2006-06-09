@@ -160,7 +160,8 @@ struct level_info_s
 
 	char		enterpic[9];
 	char		exitpic[9];
-	char		intermusic[9];
+	char 		*intermusic;
+	int			intermusicorder;
 
 	char		soundinfo[9];
 	char		sndseq[9];

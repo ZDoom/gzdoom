@@ -1507,8 +1507,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		{
 			if ((lumpnum = Wads.CheckNumForName (musicname)) == -1)
 			{
-				Printf ("Music \"%s\" not found\n", musicname);
-				return false;
+				if ((lumpnum = Wads.CheckNumForFullName (musicname)) == -1)
+				{
+					Printf ("Music \"%s\" not found\n", musicname);
+					return false;
+				}
 			}
 			if (!Wads.IsUncompressedFile(lumpnum))
 			{

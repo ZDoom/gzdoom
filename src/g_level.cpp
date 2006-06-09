@@ -363,7 +363,7 @@ MapHandlers[] =
 	{ MITYPE_LUMPNAME,	lioffset(exitpic), 0 },
 	{ MITYPE_LUMPNAME,	lioffset(exitpic), 0 },
 	{ MITYPE_LUMPNAME,	lioffset(enterpic), 0 },
-	{ MITYPE_LUMPNAME,	lioffset(intermusic), 0 },
+	{ MITYPE_MUSIC,		lioffset(intermusic), lioffset(intermusicorder) },
 	{ MITYPE_INT,		lioffset(airsupply), 0 },
 	{ MITYPE_SPECIALACTION, lioffset(specialactions), 0 },
 	{ MITYPE_SETFLAG,	LEVEL_KEEPFULLINVENTORY, 0 },

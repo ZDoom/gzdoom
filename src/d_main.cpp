@@ -1545,7 +1545,7 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 #ifdef unix
 					else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
 					{
-						FString homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
+						FString homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1, true);
 						CheckIWAD (homepath, wads);
 					}
 #endif
@@ -1691,7 +1691,7 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 #ifdef unix
 				else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
 				{
-					homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
+					homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1, true);
 					dir = homepath;
 				}
 #endif

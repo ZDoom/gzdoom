@@ -1917,13 +1917,13 @@ void WI_Ticker(void)
 	if (bcnt == 1)
 	{
 		// intermission music - use the defaults if none specified
-		if (level.info->intermusic[0]) 
-			S_ChangeMusic(level.info->intermusic);
+		if (level.info->intermusic != NULL) 
+			S_ChangeMusic(level.info->intermusic, level.info->intermusicorder);
 		else if (gameinfo.gametype == GAME_Heretic)
 			S_ChangeMusic ("mus_intr");
 		else if (gameinfo.gametype == GAME_Hexen)
 			S_ChangeMusic ("hub");
-		else if (gameinfo.gametype == GAME_Strife)	// Strife also needs a default!
+		else if (gameinfo.gametype == GAME_Strife)	// Strife also needs a default
 			S_ChangeMusic ("d_slide");
 		else if (gamemode == commercial)
 			S_ChangeMusic ("d_dm2int");

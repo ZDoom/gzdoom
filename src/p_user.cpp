@@ -254,20 +254,6 @@ void APlayerPawn::BeginPlay ()
 
 void APlayerPawn::Tick()
 {
-	int crouchspriteno;
-	
-	// FIXME: Handle skins
-	
-	if (sprite == SpawnState->sprite.index && crouchsprite > 0) 
-	{
-		crouchspriteno = crouchsprite;
-	}
-	else
-	{
-		// no sprite -> squash the existing one
-		crouchspriteno = 0;
-	}
-
 	if (player != NULL && player->mo == this && player->morphTics == 0 && player->playerstate != PST_DEAD)
 	{
 		height = FixedMul(GetDefault()->height, player->crouchfactor);
@@ -277,29 +263,9 @@ void APlayerPawn::Tick()
 		if (health > 0) height = GetDefault()->height;
 	}
 	Super::Tick();
-
-	// Here's the place where crouching sprites should be handled
-	if (player != NULL && player->crouchfactor<FRACUNIT*3/4)
-	{
-		if (crouchsprite != 0) 
-		{
-			sprite = crouchsprite;
-			yscale = GetDefault()->yscale;
-		}
-		else if (player->playerstate != PST_DEAD)
-		{
-			yscale = player->crouchfactor < FRACUNIT*3/4 ? GetDefault()->yscale/2 : GetDefault()->yscale;
-		}
-	}
-	else
-	{
-		if (sprite == crouchsprite)
-		{
-			sprite = SpawnState->sprite.index;
-		}
-		yscale = GetDefault()->yscale;
-	}
 }
+
+
 
 //===========================================================================
 //
@@ -628,6 +594,80 @@ bool APlayerPawn::DoHealingRadius (APlayerPawn *other)
 void APlayerPawn::SpecialInvulnerabilityHandling (EInvulState setting, fixed_t * pAlpha)
 {
 	if (setting == INVUL_GetAlpha && pAlpha!=NULL) *pAlpha=FIXED_MAX;	// indicates no change
+}
+
+
+
+//===========================================================================
+//
+// P_CheckPlayerSprites
+//
+// Here's the place where crouching sprites are handled
+// This must be called each frame before rendering
+//
+//===========================================================================
+
+void P_CheckPlayerSprites()
+{
+	for(int i=0; i<MAXPLAYERS; i++)
+	{
+		player_t * player = &players[i];
+		APlayerPawn * mo = player->mo;
+
+		if (playeringame[i] && mo != NULL)
+		{
+			int crouchspriteno;
+			int defyscale = mo->GetDefault()->yscale;
+			
+			if (player->userinfo.skin != 0)
+			{
+				defyscale = skins[player->userinfo.skin].scale;
+			}
+			
+			// FIXME: Handle skins
+			
+			if (player->crouchfactor < FRACUNIT*3/4)
+			{
+
+				if (mo->sprite == mo->SpawnState->sprite.index || mo->sprite == mo->crouchsprite) 
+				{
+					crouchspriteno = mo->crouchsprite;
+				}
+				else if (mo->sprite == skins[player->userinfo.skin].sprite ||
+						 mo->sprite == skins[player->userinfo.skin].crouchsprite)
+				{
+					crouchspriteno = skins[player->userinfo.skin].crouchsprite;
+				}
+				else
+				{
+					// no sprite -> squash the existing one
+					crouchspriteno = -1;
+				}
+
+				if (crouchspriteno > 0) 
+				{
+					mo->sprite = crouchspriteno;
+					mo->yscale = defyscale;
+				}
+				else if (player->playerstate != PST_DEAD)
+				{
+					mo->yscale = player->crouchfactor < FRACUNIT*3/4 ? defyscale/2 : defyscale;
+				}
+			}
+			else
+			{
+				if (mo->sprite == mo->crouchsprite)
+				{
+					mo->sprite = mo->SpawnState->sprite.index;
+				}
+				else if (mo->sprite == skins[player->userinfo.skin].crouchsprite)
+				{
+					mo->sprite = skins[player->userinfo.skin].sprite;
+				}
+				mo->yscale = defyscale;
+			}
+		}
+	}
 }
 
 /*

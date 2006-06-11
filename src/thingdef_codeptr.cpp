@@ -1522,7 +1522,7 @@ void A_JumpIf(AActor * self)
 //===========================================================================
 void A_KillMaster(AActor * self)
 {
-	if (self->master)
+	if (self->master != NULL)
 	{
 		P_DamageMobj(self->master, self, self, self->master->health, MOD_UNKNOWN, DMG_NO_ARMOR);
 	}

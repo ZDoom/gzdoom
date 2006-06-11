@@ -313,6 +313,9 @@ inline FArchive &operator<< (FArchive &arc, player_s *&p)
 	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
 }
 
+void P_CheckPlayerSprites();
+
+
 #define CROUCHSPEED (FRACUNIT/12)
 #define MAX_DN_ANGLE	56		// Max looking down angle
 #define MAX_UP_ANGLE	32		// Max looking up angle

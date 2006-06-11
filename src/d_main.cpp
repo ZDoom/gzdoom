@@ -510,6 +510,7 @@ void D_Display (bool screenshot)
 				break;
 
 			R_RefreshViewBorder ();
+			P_CheckPlayerSprites();
 			R_RenderActorView (players[consoleplayer].mo);
 			R_DetailDouble ();		// [RH] Apply detail mode expansion
 			// [RH] Let cameras draw onto textures that were visible this frame.
@@ -1856,6 +1857,8 @@ void D_DoomMain (void)
 
 	file[PATH_MAX-1] = 0;
 
+	srand(I_MSTime());
+	
 	atterm (DObject::StaticShutdown);
 	PClass::StaticInit ();
 	atterm (C_DeinitConsole);

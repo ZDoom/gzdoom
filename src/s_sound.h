@@ -198,8 +198,8 @@ int S_FindSoundByLump (int lump);
 int S_AddSound (const char *logicalname, const char *lumpname);	// Add sound by lumpname
 int S_AddSoundLump (const char *logicalname, int lump);	// Add sound by lump index
 int S_AddPlayerSound (const char *playerclass, const int gender, int refid, const char *lumpname);
-int S_AddPlayerSound (const char *playerclass, const int gender, int refid, int lumpnum);
-int S_AddPlayerSoundExisting (const char *playerclass, const int gender, int refid, int aliasto);
+int S_AddPlayerSound (const char *playerclass, const int gender, int refid, int lumpnum, bool fromskin=false);
+int S_AddPlayerSoundExisting (const char *playerclass, const int gender, int refid, int aliasto, bool fromskin=false);
 void S_ShrinkPlayerSoundLists ();
 
 // [RH] Prints sound debug info to the screen.

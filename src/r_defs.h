@@ -842,6 +842,7 @@ public:
 	byte		scale;
 	byte		game;
 	int			sprite;
+	int			crouchsprite;
 	int			namespc;	// namespace for this skin
 };
 

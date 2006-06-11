@@ -142,6 +142,16 @@ struct FMusicVolume
 	char MusicName[1];
 };
 
+// This is used to recreate the skin sounds after reloading SNDINFO due to a changed local one.
+struct FSavedPlayerSoundInfo
+{
+	const char * pclass;
+	int gender;
+	int refid;
+	int lumpnum;
+	bool alias;
+};
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel, 
@@ -154,6 +164,8 @@ extern bool IsFloat (const char *str);
 
 static int STACK_ARGS SortPlayerClasses (const void *a, const void *b);
 static int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref);
+static void S_SavePlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool alias);
+static void S_RestorePlayerSounds();
 static int S_AddPlayerClass (const char *name);
 static int S_AddPlayerGender (int classnum, int gender);
 static int S_FindPlayerClass (const char *name);
@@ -203,6 +215,7 @@ static const char *SICommandStrings[] =
 
 static TArray<FRandomSoundList> S_rnd;
 static FMusicVolume *MusicVolumes;
+static TArray<FSavedPlayerSoundInfo> SavedPlayerSounds;
 
 static int NumPlayerReserves;
 static bool DoneReserving;
@@ -484,7 +497,7 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 		lumpname ? Wads.CheckNumForName (lumpname) : -1);
 }
 
-int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum)
+int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool fromskin)
 {
 	char fakename[MAX_SNDNAME+1];
 	size_t len;
@@ -501,6 +514,9 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum)
 	int soundlist = S_AddPlayerGender (classnum, gender);
 
 	PlayerSounds[soundlist + S_sfx[refid].link] = id;
+
+	if (fromskin) S_SavePlayerSound(pclass, gender, refid, lumpnum, false);
+
 	return id;
 }
 
@@ -512,12 +528,15 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum)
 //==========================================================================
 
 int S_AddPlayerSoundExisting (const char *pclass, int gender, int refid,
-	int aliasto)
+	int aliasto, bool fromskin)
 {
 	int classnum = S_AddPlayerClass (pclass);
 	int soundlist = S_AddPlayerGender (classnum, gender);
 
 	PlayerSounds[soundlist + S_sfx[refid].link] = aliasto;
+
+	if (fromskin) S_SavePlayerSound(pclass, gender, refid, aliasto, true);
+
 	return aliasto;
 }
 
@@ -618,7 +637,7 @@ void S_ParseSndInfo ()
 			break;
 		}
 	}
-
+	S_RestorePlayerSounds();
 	S_HashSounds ();
 	S_sfx.ShrinkToFit ();
 
@@ -873,10 +892,11 @@ static void S_AddSNDINFO (int lump)
 				// $playeralias <player class> <gender> <logical name> <logical name of existing sound>
 				char pclass[MAX_SNDNAME+1];
 				int gender, refid;
+				int soundnum;
 
 				S_ParsePlayerSoundCommon (pclass, gender, refid);
-				S_AddPlayerSoundExisting (pclass, gender, refid,
-					S_FindSoundTentative (sc_String));
+				soundnum = S_FindSoundTentative (sc_String);
+				S_AddPlayerSoundExisting (pclass, gender, refid, soundnum);
 				}
 				break;
 
@@ -1294,6 +1314,44 @@ static int S_LookupPlayerSound (int classidx, int gender, int refid)
 		}
 	}
 	return sndnum;
+}
+
+
+//==========================================================================
+//
+// S_SavePlayerSound / S_RestorePlayerSounds
+//
+// Restores all skin-based player sounds after changing the local SNDINFO
+// which forces a reload of the global one as well
+//
+//==========================================================================
+
+static void S_SavePlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool alias)
+{
+	FSavedPlayerSoundInfo spi;
+
+	spi.pclass = pclass;
+	spi.gender = gender;
+	spi.refid = refid;
+	spi.lumpnum = lumpnum;
+	spi.alias = alias;
+	SavedPlayerSounds.Push(spi);
+}
+
+static void S_RestorePlayerSounds()
+{
+	for(unsigned int i = 0; i < SavedPlayerSounds.Size(); i++)
+	{
+		FSavedPlayerSoundInfo * spi = &SavedPlayerSounds[i];
+		if (spi->alias)
+		{
+			S_AddPlayerSoundExisting(spi->pclass, spi->gender, spi->refid, spi->lumpnum);
+		}
+		else
+		{
+			S_AddPlayerSound(spi->pclass, spi->gender, spi->refid, spi->lumpnum);
+		}
+	}
 }
 
 //==========================================================================

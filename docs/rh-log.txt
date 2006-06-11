@@ -1,3 +1,19 @@
+June 10, 2006 (Changes by Graf Zahl)
+- Fixed: The skin loader assumed that all skin textures are in Doom patch
+  format. Now it calls FTexture::CreateTexture to do proper checks.
+- Removed the PickupSound method from FakeInventory and changed it so that
+  it uses AInventory::PickupSound to store its custom pickup sound.
+- Removed the PickupMessage method from FakeInventory. This can be handled
+  by the standard pickup message code now that it uses the meta data for the
+  message.
+- Fixed: The maximum indices for StrifeTypes were inconsistent. Now the
+  allowed range is 0-1000 in all situations.
+- Fixed: Setting a local SNDINFO for a map deleted all skin based sounds.
+- Added a crouchsprite property to the skin info.
+- Fixed: Crouching sprites must be checked each frame, not just each tic.
+- Added an srand call to D_DoomMain in order to randomize the values returned
+  by rand which is being used to shuffle the playlist.
+
 June 10, 2006
 - Fixed: Information added with addkeysection and addmenukey was never freed.
 - Fixed: A classic decorate FakeInventory's PickupText was never freed.

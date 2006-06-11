@@ -105,16 +105,6 @@ class AFakeInventory : public AInventory
 public:
 	bool Respawnable;
 
-	const char *PickupMessage ()
-	{
-		const char *text = GetClass()->Meta.GetMetaString (AIMETA_PickupMessage);
-		if (text == 0)
-		{
-			return Super::PickupMessage();
-		}
-		return text;
-	}
-
 	bool ShouldRespawn ()
 	{
 		return Respawnable && Super::ShouldRespawn();
@@ -136,18 +126,6 @@ public:
 	void DoPickupSpecial (AActor *toucher)
 	{
 		// The special was already executed by TryPickup, so do nothing here
-	}
-
-	void PlayPickupSound (AActor *toucher)
-	{
-		if (AttackSound != 0)
-		{
-			S_SoundID (toucher, CHAN_PICKUP, AttackSound, 1, ATTN_NORM);
-		}
-		else
-		{
-			Super::PlayPickupSound (toucher);
-		}
 	}
 };
 IMPLEMENT_STATELESS_ACTOR (AFakeInventory, Any, -1, 0)
@@ -855,7 +833,7 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		else if (def == DEF_Pickup && SC_Compare ("PickupSound"))
 		{
 			SC_MustGetString ();
-			inv->AttackSound = S_FindSound (sc_String);
+			inv->PickupSound = S_FindSound (sc_String);
 		}
 		else if (def == DEF_Pickup && SC_Compare ("PickupMessage"))
 		{

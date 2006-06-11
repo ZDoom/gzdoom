@@ -418,7 +418,7 @@ void R_InitSkins (void)
 	spritedef_t temp;
 	int sndlumps[NUMSKINSOUNDS];
 	char key[65];
-	DWORD intname;
+	DWORD intname, crouchname;
 	size_t i;
 	int j, k, base;
 	int lastlump;
@@ -447,6 +447,7 @@ void R_InitSkins (void)
 
 		SC_OpenLumpNum (base, "S_SKIN");
 		intname = 0;
+		crouchname = 0;
 
 		// Data is stored as "key = data".
 		while (SC_GetString ())
@@ -477,6 +478,12 @@ void R_InitSkins (void)
 				for (j = 3; j >= 0; j--)
 					sc_String[j] = toupper (sc_String[j]);
 				intname = *((DWORD *)sc_String);
+			}
+			else if (0 == stricmp (key, "crouchsprite"))
+			{
+				for (j = 3; j >= 0; j--)
+					sc_String[j] = toupper (sc_String[j]);
+				crouchname = *((DWORD *)sc_String);
 			}
 			else if (0 == stricmp (key, "face"))
 			{
@@ -559,42 +566,60 @@ void R_InitSkins (void)
 			intname = *(DWORD *)name;
 		}
 
-		memset (sprtemp, 0xFFFF, sizeof(sprtemp));
-		for (k = 0; k < MAX_SPRITE_FRAMES; ++k)
-		{
-			sprtemp[k].Flip = 0;
-		}
-		maxframe = -1;
-
 		int basens = Wads.GetLumpNamespace(base);
 
-		for (k = base + 1; Wads.GetLumpNamespace(k) == basens; k++)
+		for(int spr = 0; spr<2; spr++)
 		{
-			char lname[9];
-			Wads.GetLumpName (lname, k);
-			if (*(DWORD *)lname == intname)
+			memset (sprtemp, 0xFFFF, sizeof(sprtemp));
+			for (k = 0; k < MAX_SPRITE_FRAMES; ++k)
 			{
-				int picnum = TexMan.AddTexture (new FPatchTexture (k, FTexture::TEX_SkinSprite));
-				R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false);
-
-				if (lname[6])
-					R_InstallSpriteLump (picnum, lname[6] - 'A', lname[7], true);
+				sprtemp[k].Flip = 0;
 			}
-		}
+			maxframe = -1;
 
-		if (maxframe <= 0)
-		{
-			Printf (PRINT_BOLD, "Skin %s (#%d) has no frames. Removing.\n", skins[i].name, i);
-			if (i < numskins-1)
-				memmove (&skins[i], &skins[i+1], sizeof(skins[0])*(numskins-i-1));
-			i--;
-			continue;
-		}
+			if (spr == 1)
+			{
+				if (crouchname !=0 && crouchname != intname)
+				{
+					intname = crouchname;
+				}
+				else
+				{
+					skins[i].crouchsprite = -1;
+					break;
+				}
+			}
 
-		Wads.GetLumpName (temp.name, base+1);
-		temp.name[4] = 0;
-		skins[i].sprite = (int)sprites.Push (temp);
-		R_InstallSprite (skins[i].sprite);
+			for (k = base + 1; Wads.GetLumpNamespace(k) == basens; k++)
+			{
+				char lname[9];
+				Wads.GetLumpName (lname, k);
+				if (*(DWORD *)lname == intname)
+				{
+					int picnum = TexMan.CreateTexture(k, FTexture::TEX_SkinSprite);
+					R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false);
+
+					if (lname[6])
+						R_InstallSpriteLump (picnum, lname[6] - 'A', lname[7], true);
+				}
+			}
+
+			if (spr == 0 && maxframe <= 0)
+			{
+				Printf (PRINT_BOLD, "Skin %s (#%d) has no frames. Removing.\n", skins[i].name, i);
+				if (i < numskins-1)
+					memmove (&skins[i], &skins[i+1], sizeof(skins[0])*(numskins-i-1));
+				i--;
+				continue;
+			}
+
+			Wads.GetLumpName (temp.name, base+1);
+			temp.name[4] = 0;
+			int sprno = (int)sprites.Push (temp);
+			if (spr==0)	skins[i].sprite = sprno;
+			else skins[i].crouchsprite = sprno;
+			R_InstallSprite (sprno);
+		}
 
 		// Register any sounds this skin provides
 		aliasid = 0;
@@ -605,12 +630,12 @@ void R_InitSkins (void)
 				if (j == 0 || sndlumps[j] != sndlumps[j-1])
 				{
 					aliasid = S_AddPlayerSound (skins[i].name, skins[i].gender,
-						playersoundrefs[j], sndlumps[j]);
+						playersoundrefs[j], sndlumps[j], true);
 				}
 				else
 				{
 					S_AddPlayerSoundExisting (skins[i].name, skins[i].gender,
-						playersoundrefs[j], aliasid);
+						playersoundrefs[j], aliasid, true);
 				}
 			}
 		}

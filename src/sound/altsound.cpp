@@ -4,7 +4,7 @@
 ** Simple, no frills DirectSound player.
 **
 **---------------------------------------------------------------------------
-** Copyright 2002-2005 Randy Heit
+** Copyright 2002-2006 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

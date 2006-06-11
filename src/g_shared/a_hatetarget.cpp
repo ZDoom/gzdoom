@@ -3,7 +3,7 @@
 ** Something for monsters to hate and shoot at
 **
 **---------------------------------------------------------------------------
-** Copyright 2003-2005 Randy Heit
+** Copyright 2003-2006 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

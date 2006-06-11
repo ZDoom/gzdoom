@@ -3,7 +3,7 @@
 ** Gathers exception information when the program crashes.
 **
 **---------------------------------------------------------------------------
-** Copyright 2002-2005 Randy Heit
+** Copyright 2002-2006 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

@@ -2941,6 +2941,30 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
 
 static int AddKeySpot;
 
+static void FreeKeySections()
+{
+	const unsigned int numStdControls = countof(ControlsItems);
+	unsigned int i;
+
+	for (i = numStdControls; i < CustomControlsItems.Size(); ++i)
+	{
+		menuitem_t *item = &CustomControlsItems[i];
+		if (item->type == whitetext || item->type == control)
+		{
+			if (item->label != NULL)
+			{
+				delete[] item->label;
+				item->label = NULL;
+			}
+			if (item->e.command != NULL)
+			{
+				delete[] item->e.command;
+				item->e.command = NULL;
+			}
+		}
+	}
+}
+
 CCMD (addkeysection)
 {
 	if (argv.argc() != 3)
@@ -2973,6 +2997,7 @@ CCMD (addkeysection)
 		}
 	}
 
+	atterm (FreeKeySections);
 	if (i == last)
 	{ // Add the new section
 		// Limit the ini name to 32 chars

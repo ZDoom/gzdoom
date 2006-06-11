@@ -63,6 +63,8 @@ BYTE InverseColormap[NUMCOLORMAPS*256];
 BYTE GoldColormap[NUMCOLORMAPS*256];
 int Near255;
 
+static void FreeSpecialLights();;
+
 FColorMatcher ColorMatcher;
 
 /* Current color blending values */
@@ -336,6 +338,8 @@ void InitPalette ()
 	int c;
 	bool usingBuild = false;
 	int lump;
+
+	atterm (FreeSpecialLights);
 
 	if ((lump = Wads.CheckNumForFullName ("palette.dat")) >= 0 && Wads.LumpLength (lump) >= 768)
 	{
@@ -625,7 +629,7 @@ FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturat
 	}
 
 	// Not found. Create it.
-	colormap = new FDynamicColormap;;
+	colormap = new FDynamicColormap;
 	colormap->Maps = new BYTE[NUMCOLORMAPS*256];
 	colormap->Next = NormalLight.Next;
 	colormap->Color = color;
@@ -636,6 +640,19 @@ FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturat
 	colormap->BuildLights ();
 
 	return colormap;
+}
+
+// Free all lights created with GetSpecialLights
+static void FreeSpecialLights()
+{
+	FDynamicColormap *colormap, *next;
+
+	for (colormap = NormalLight.Next; colormap != NULL; colormap = next)
+	{
+		next = colormap->Next;
+		delete[] colormap->Maps;
+		delete colormap;
+	}
 }
 
 // Builds NUMCOLORMAPS colormaps lit with the specified color

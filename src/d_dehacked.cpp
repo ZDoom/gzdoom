@@ -1935,42 +1935,32 @@ donewithtext:
 
 static int PatchStrings (int dummy)
 {
-	static size_t maxstrlen = 128;
-	static char *holdstring;
 	int result;
 
 	DPrintf ("[Strings]\n");
 
-	if (!holdstring)
-		holdstring = (char *)M_Malloc (maxstrlen);
-
 	while ((result = GetLine()) == 1)
 	{
-		*holdstring = '\0';
+		FString holdstring;
 		do
 		{
-			while (maxstrlen < strlen (holdstring) + strlen (Line2) + 8)
+			holdstring += skipwhite (Line2);
+			holdstring.StripRight();
+			if (holdstring.Len() > 0 && holdstring[holdstring.Len()-1] == '\\')
 			{
-				maxstrlen += 128;
-				holdstring = (char *)M_Realloc (holdstring, maxstrlen);
-			}
-			strcat (holdstring, skipwhite (Line2));
-			stripwhite (holdstring);
-			if (holdstring[strlen(holdstring)-1] == '\\')
-			{
-				holdstring[strlen(holdstring)-1] = '\0';
+				holdstring.Truncate((long)holdstring.Len()-1);
 				Line2 = igets ();
-			} else
+			}
+			else
+			{
 				Line2 = NULL;
+			}
 		} while (Line2 && *Line2);
 
-		ReplaceSpecialChars (holdstring);
-		// [RH] There used to be some code here to add % specifiers to
-		// obituaries that lacked them for compatibility with old ZDoom
-		// versions. This code was removed when the string table was
-		// switched to something completely dynamic.
+		ReplaceSpecialChars (holdstring.LockBuffer());
+		holdstring.UnlockBuffer();
 		GStrings.SetString (Line1, holdstring);
-		DPrintf ("%s set to:\n%s\n", Line1, holdstring);
+		DPrintf ("%s set to:\n%s\n", Line1, holdstring.GetChars());
 	}
 
 	return result;
@@ -2274,6 +2264,11 @@ static void UnloadDehSupp ()
 {
 	if (--DehUseCount <= 0)
 	{
+		// StateMap is not freed here, because if you load a second
+		// dehacked patch through some means other than including it
+		// in the first patch, it won't see the state information
+		// that was altered by the first. So we need to keep the
+		// StateMap around until all patches have been applied.
 		DehUseCount = 0;
 		delete[] DehSuppLump;
 		DehSuppLump = NULL;
@@ -2283,13 +2278,6 @@ static void UnloadDehSupp ()
 			delete[] OrgSprNames;
 			OrgSprNames = NULL;
 		}
-		/* No! Not if we want to load multiple independant patches!
-		if (StateMap != NULL)
-		{
-			delete[] StateMap;
-			StateMap = NULL;
-		}
-		*/
 		if (BitNames != NULL)
 		{
 			delete[] BitNames;
@@ -2531,7 +2519,7 @@ void FinishDehPatch ()
 		char typeNameBuilder[32];
 		sprintf (typeNameBuilder, "DehackedPickup%d", touchedIndex);
 		PClass *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
-			(copystring(typeNameBuilder), sizeof(ADehackedPickup));
+			(typeNameBuilder, sizeof(ADehackedPickup));
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy (defaults2, defaults1, sizeof(AActor));
 		subclass->ActorInfo->GameFilter = type->ActorInfo->GameFilter;
@@ -2554,6 +2542,13 @@ void FinishDehPatch ()
 	// Since deh.MaxHealth was used incorrectly this can only be set
 	// after finishing with the DEH stuff.
 	if (deh.MaxHealth == -1) deh.MaxHealth = 100;
+
+	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
+	if (StateMap != NULL)
+	{
+		delete[] StateMap;
+		StateMap = NULL;
+	}
 }
 
 void HandleNoSector()

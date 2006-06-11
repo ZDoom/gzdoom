@@ -632,7 +632,12 @@ void AltSoundRenderer::LoadSound (sfxinfo_t *sfx)
 	SDWORD len;
 	BYTE *sfxdata, *sfxstart;
 	SDWORD size;
-	
+
+	if (sfx->data != NULL)
+	{
+		return;
+	}
+
 	size = sfx->lumpnum >= 0 ? Wads.LumpLength (sfx->lumpnum) : 0;
 	if (size == 0)
 	{

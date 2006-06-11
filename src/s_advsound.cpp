@@ -547,6 +547,13 @@ static void S_ClearSoundData()
 {
 	unsigned int i;
 
+	if (GSnd != NULL)
+	{
+		for (i = 0; i < S_sfx.Size(); ++i)
+		{
+			GSnd->UnloadSound (&S_sfx[i]);
+		}
+	}
 	S_sfx.Clear();
 
 	for(i = 0; i < countof(Ambients); i++)
@@ -584,14 +591,9 @@ static void S_ClearSoundData()
 
 void S_ParseSndInfo ()
 {
-	static bool termdone=false;
 	int lump;
 
-	if (!termdone)
-	{
-		termdone=true;
-		atterm (S_ClearSoundData);
-	}
+	atterm (S_ClearSoundData);
 	S_ClearSoundData();	// remove old sound data first!
 
 	CurrentPitchMask = 0;

@@ -692,6 +692,7 @@ CCMD (wdir)
 	if (wadnum < 0)
 	{
 		Printf ("%s must be loaded to view its directory.\n", argv[1]);
+		return;
 	}
 	for (int i = 0; i < Wads.GetNumLumps(); ++i)
 	{

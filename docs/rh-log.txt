@@ -1,3 +1,17 @@
+June 10, 2006
+- Fixed: Information added with addkeysection and addmenukey was never freed.
+- Fixed: A classic decorate FakeInventory's PickupText was never freed.
+- Fixed: Colored lights were never freed.
+- Fixed: When a dehacked patch was applied, the dehacked StateMap was never
+  freed.
+- Removed termdone checks around atterm(S_ClearSoundData) and
+  atterm(S_Shutdown) because atterm() already checks for duplicates.
+- Fixed: S_ClearSoundData() should unload all sounds before it clears S_sfx.
+- Fixed: AltSoundRenderer::LoadSound() didn't check if the sound had already
+  been loaded and lost the old sound data if it had been.
+- Fixed: FinishDehPatch() needlessly duplicated the new DehackedPickup's name.
+- Fixed: PatchStrings() allocated a private string and never freed it.
+
 June 8, 2006 (Changes by Graf Zahl)
 - Changed music name handling in MAPINFO so that music can be specified by
   full path of a file in a Zip.

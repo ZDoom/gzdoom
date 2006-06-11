@@ -103,16 +103,16 @@ class AFakeInventory : public AInventory
 {
 	DECLARE_STATELESS_ACTOR (AFakeInventory, AInventory);
 public:
-	char *PickupText;
 	bool Respawnable;
 
 	const char *PickupMessage ()
 	{
-		if (PickupText == 0)
+		const char *text = GetClass()->Meta.GetMetaString (AIMETA_PickupMessage);
+		if (text == 0)
 		{
 			return Super::PickupMessage();
 		}
-		return PickupText;
+		return text;
 	}
 
 	bool ShouldRespawn ()
@@ -860,7 +860,7 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		else if (def == DEF_Pickup && SC_Compare ("PickupMessage"))
 		{
 			SC_MustGetString ();
-			inv->PickupText = copystring (sc_String);
+			info->Class->Meta.SetMetaString(AIMETA_PickupMessage, sc_String);
 		}
 		else if (def == DEF_Pickup && SC_Compare ("Respawns"))
 		{

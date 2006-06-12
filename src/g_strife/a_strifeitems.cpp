@@ -485,14 +485,20 @@ IMPLEMENT_STATELESS_ACTOR (AUpgradeStamina, Strife, -1, 0)
 	PROP_StrifeType (306)
 	PROP_StrifeTeaserType (287)
 	PROP_StrifeTeaserType2 (307)
+	PROP_Inventory_Amount (10)
+	PROP_Inventory_MaxAmount (100)
 END_DEFAULTS
 
 bool AUpgradeStamina::TryPickup (AActor *toucher)
 {
-	if (toucher->player == NULL || toucher->player->stamina >= 100)
+	if (toucher->player == NULL)
 		return false;
-	toucher->player->stamina += 10;
-	P_GiveBody (toucher, 200);
+		
+	toucher->player->stamina += Amount;
+	if (toucher->player->stamina >= MaxAmount)
+		toucher->player->stamina = MaxAmount;
+		
+	P_GiveBody (toucher, -100);
 	GoAwayAndDie ();
 	return true;
 }

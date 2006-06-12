@@ -1,3 +1,7 @@
+June 11, 2006 (Changes by Graf Zahl)
+- Changed UpgradeStamina to use AInventory's Amount and MaxAmount to
+  control the amount of upgrade and the maximum that can be reached.
+
 June 10, 2006 (Changes by Graf Zahl)
 - Fixed: The skin loader assumed that all skin textures are in Doom patch
   format. Now it calls FTexture::CreateTexture to do proper checks.

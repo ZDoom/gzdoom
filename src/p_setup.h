@@ -51,26 +51,26 @@ struct MapData
 		file = NULL;
 	}
 
-	void Seek(int lumpindex)
+	void Seek(unsigned int lumpindex)
 	{
-		if (lumpindex>=0 && lumpindex<countof(MapLumps))
+		if (lumpindex<countof(MapLumps))
 		{
 			file->Seek(MapLumps[lumpindex].FilePos, SEEK_SET);
 		}
 	}
 
-	void Read(int lumpindex, void * buffer)
+	void Read(unsigned int lumpindex, void * buffer)
 	{
-		if (lumpindex>=0 && lumpindex<countof(MapLumps))
+		if (lumpindex<countof(MapLumps))
 		{
 			file->Seek(MapLumps[lumpindex].FilePos, SEEK_SET);
 			file->Read(buffer, MapLumps[lumpindex].Size);
 		}
 	}
 
-	DWORD Size(int lumpindex)
+	DWORD Size(unsigned int lumpindex)
 	{
-		if (lumpindex>=0 && lumpindex<countof(MapLumps))
+		if (lumpindex<countof(MapLumps))
 		{
 			return MapLumps[lumpindex].Size;
 		}

@@ -187,7 +187,7 @@ static void P_SetSideNum (DWORD *sidenum_p, WORD sidenum);
 
 static int GetMapIndex(const char * mapname, int lastindex, const char * lumpname)
 {
-	static struct
+	static struct checkstruct
 	{
 		char * lumpname;
 		bool required;
@@ -923,7 +923,7 @@ void P_LoadSegs (MapData * map)
 void P_LoadSubsectors (MapData * map)
 {
 	int i;
-	int maxseg = map->Size(ML_SEGS) / sizeof(mapseg_t);
+	DWORD maxseg = map->Size(ML_SEGS) / sizeof(mapseg_t);
 
 	numsubsectors = map->MapLumps[ML_SSECTORS].Size / sizeof(mapsubsector_t);
 

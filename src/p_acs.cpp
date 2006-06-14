@@ -1988,21 +1988,73 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 			actor->player->health = value;
 		}
 		break;
-	case APROP_Speed:		actor->Speed = value;		break;
-	case APROP_Damage:		actor->damage = value;		break;
-	case APROP_Alpha:		actor->alpha = value;		break;
-	case APROP_RenderStyle:	actor->RenderStyle = value;	break;
-	case APROP_Ambush:		if (value) actor->flags |= MF_AMBUSH; else actor->flags &= ~MF_AMBUSH;		break;
-	case APROP_Invulnerable:if (value) actor->flags2 |= MF2_INVULNERABLE; else actor->flags2 &= ~MF2_INVULNERABLE;		break;
-	case APROP_JumpZ:		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
-								static_cast<APlayerPawn *>(actor)->JumpZ = value;						break; 	// [GRB]
-	case APROP_ChaseGoal:	if (value) actor->flags5 |= MF5_CHASEGOAL; else actor->flags5 &= ~MF5_CHASEGOAL;		break;
-	case APROP_Frightened:	if (value) actor->flags4 |= MF4_FRIGHTENED; else actor->flags4 &= ~MF4_FRIGHTENED;		break;
-	case APROP_SeeSound:	actor->SeeSound = S_FindSound (FBehavior::StaticLookupString (value));		break;
-	case APROP_AttackSound:	actor->AttackSound = S_FindSound (FBehavior::StaticLookupString (value));	break;
-	case APROP_PainSound:	actor->PainSound = S_FindSound (FBehavior::StaticLookupString (value));		break;
-	case APROP_DeathSound:	actor->DeathSound = S_FindSound (FBehavior::StaticLookupString (value));	break;
-	case APROP_ActiveSound:	actor->ActiveSound = S_FindSound (FBehavior::StaticLookupString (value));	break;
+
+	case APROP_Speed:
+		if (abs(value) < 128)
+		{ // Backwards compatibility: Older ZDooms didn't use fixed point in A_Chase.
+			value <<= FRACBITS;
+		}
+		actor->Speed = value;
+		break;
+
+	case APROP_Damage:
+		actor->damage = value;
+		break;
+
+	case APROP_Alpha:
+		actor->alpha = value;
+		break;
+
+	case APROP_RenderStyle:
+		actor->RenderStyle = value;	
+		break;
+
+	case APROP_Ambush:
+		if (value) actor->flags |= MF_AMBUSH; else actor->flags &= ~MF_AMBUSH;
+		break;
+
+	case APROP_Invulnerable:
+		if (value) actor->flags2 |= MF2_INVULNERABLE; else actor->flags2 &= ~MF2_INVULNERABLE;
+		break;
+
+	case APROP_JumpZ:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+			static_cast<APlayerPawn *>(actor)->JumpZ = value;
+		break; 	// [GRB]
+
+	case APROP_ChaseGoal:
+		if (value)
+			actor->flags5 |= MF5_CHASEGOAL;
+		else
+			actor->flags5 &= ~MF5_CHASEGOAL;
+		break;
+
+	case APROP_Frightened:
+		if (value)
+			actor->flags4 |= MF4_FRIGHTENED;
+		else
+			actor->flags4 &= ~MF4_FRIGHTENED;
+		break;
+
+	case APROP_SeeSound:
+		actor->SeeSound = S_FindSound (FBehavior::StaticLookupString (value));
+		break;
+
+	case APROP_AttackSound:
+		actor->AttackSound = S_FindSound (FBehavior::StaticLookupString (value));
+		break;
+
+	case APROP_PainSound:
+		actor->PainSound = S_FindSound (FBehavior::StaticLookupString (value));	
+		break;
+
+	case APROP_DeathSound:
+		actor->DeathSound = S_FindSound (FBehavior::StaticLookupString (value));
+		break;
+
+	case APROP_ActiveSound:
+		actor->ActiveSound = S_FindSound (FBehavior::StaticLookupString (value));
+		break;
 	}
 }
 

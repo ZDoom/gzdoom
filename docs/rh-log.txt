@@ -1,3 +1,10 @@
+June 13, 2006
+- Fixed: In the past, ZDoom worked like Doom and used integral values for
+  monster speeds. Now it uses fixed point so that an actor's speed property
+  can always be considered is always fixed point. So DoSetActorProperty()
+  should scale very slow speeds, just like dehacked's PatchThing() has done
+  for some time now.
+
 June 11, 2006 (Changes by Graf Zahl)
 - Changed UpgradeStamina to use AInventory's Amount and MaxAmount to
   control the amount of upgrade and the maximum that can be reached.

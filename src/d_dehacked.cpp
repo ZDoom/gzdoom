@@ -1045,7 +1045,7 @@ static int PatchThing (int thingy)
 		}
 		// If this thing's speed is really low (i.e. meant to be a monster),
 		// bump it up, because all speeds are fixed point now.
-		if (info->Speed < 256)
+		if (abs(info->Speed) < 256)
 		{
 			info->Speed <<= FRACBITS;
 		}

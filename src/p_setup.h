@@ -23,7 +23,62 @@
 #ifndef __P_SETUP__
 #define __P_SETUP__
 
+#include "w_wad.h"
+#include "files.h"
+#include "doomdata.h"
 
+
+struct MapData
+{
+	wadlump_t MapLumps[ML_BEHAVIOR+1];
+	bool HasBehavior;
+	bool CloseOnDestruct;
+	int lumpnum;
+	FileReader * file;
+	
+	MapData()
+	{
+		memset(MapLumps, 0, sizeof(MapLumps));
+		file = NULL;
+		lumpnum=-1;
+		HasBehavior=false;
+		CloseOnDestruct=true;
+	}
+	
+	~MapData()
+	{
+		if (CloseOnDestruct && file != NULL) delete file;
+		file = NULL;
+	}
+
+	void Seek(int lumpindex)
+	{
+		if (lumpindex>=0 && lumpindex<countof(MapLumps))
+		{
+			file->Seek(MapLumps[lumpindex].FilePos, SEEK_SET);
+		}
+	}
+
+	void Read(int lumpindex, void * buffer)
+	{
+		if (lumpindex>=0 && lumpindex<countof(MapLumps))
+		{
+			file->Seek(MapLumps[lumpindex].FilePos, SEEK_SET);
+			file->Read(buffer, MapLumps[lumpindex].Size);
+		}
+	}
+
+	DWORD Size(int lumpindex)
+	{
+		if (lumpindex>=0 && lumpindex<countof(MapLumps))
+		{
+			return MapLumps[lumpindex].Size;
+		}
+		return 0;
+	}
+};
+
+MapData * P_OpenMapData(const char * mapname);
 
 // NOT called by W_Ticker. Fixme. [RH] Is that bad?
 //

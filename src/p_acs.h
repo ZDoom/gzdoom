@@ -42,6 +42,7 @@
 #define NUM_MAPVARS				128
 
 class FFont;
+class FileReader;
 
 // The in-memory version
 struct ScriptPtr
@@ -123,7 +124,7 @@ enum ACSFormat { ACS_Old, ACS_Enhanced, ACS_LittleEnhanced, ACS_Unknown };
 class FBehavior
 {
 public:
-	FBehavior (int lumpnum);
+	FBehavior (int lumpnum, FileReader * fr=NULL, int len=0);
 	~FBehavior ();
 
 	bool IsGood ();
@@ -145,7 +146,7 @@ public:
 
 	SDWORD *MapVars[NUM_MAPVARS];
 
-	static FBehavior *StaticLoadModule (int lumpnum);
+	static FBehavior *StaticLoadModule (int lumpnum, FileReader * fr=NULL, int len=0);
 	static void StaticLoadDefaultModules ();
 	static void StaticUnloadModules ();
 	static bool StaticCheckAllGood ();

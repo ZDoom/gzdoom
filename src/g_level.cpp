@@ -85,6 +85,7 @@ EXTERN_CVAR (Int, disableautosave)
 #define cioffset(x)		((size_t)&((cluster_info_t*)1)->x - 1)
 
 #define SNAP_ID			MAKE_ID('s','n','A','p')
+#define DSNP_ID			MAKE_ID('d','s','N','p')
 #define VIST_ID			MAKE_ID('v','i','S','t')
 #define ACSD_ID			MAKE_ID('a','c','S','d')
 #define RCLS_ID			MAKE_ID('r','c','L','s')
@@ -1298,7 +1299,7 @@ bool CheckWarpTransMap (char mapname[9], bool substitute)
 // Can be called by the startup code or the menu task,
 // consoleplayer, playeringame[] should be set.
 //
-static char d_mapname[9];
+static char d_mapname[256];
 
 void G_DeferedInitNew (char *mapname)
 {
@@ -1317,16 +1318,46 @@ CCMD (map)
 	}
 	if (argv.argc() > 1)
 	{
-		if (Wads.CheckNumForName (argv[1]) == -1)
+		MapData * map = P_OpenMapData(argv[1]);
+		if (map == NULL)
 			Printf ("No map %s\n", argv[1]);
 		else
+		{
+			delete map;
 			G_DeferedInitNew (argv[1]);
+		}
 	}
 	else
 	{
 		Printf ("Usage: map <map name>\n");
 	}
 }
+
+CCMD (open)
+{
+	if (netgame)
+	{
+		Printf ("You cannot use open in multiplayer games.\n");
+		return;
+	}
+	if (argv.argc() > 1)
+	{
+		sprintf(d_mapname, "file:%s", argv[1]);
+		MapData * map = P_OpenMapData(d_mapname);
+		if (map == NULL)
+			Printf ("No map %s\n", d_mapname);
+		else
+		{
+			delete map;
+			gameaction = ga_newgame2;
+		}
+	}
+	else
+	{
+		Printf ("Usage: open <map file>\n");
+	}
+}
+
 
 void G_NewInit ()
 {
@@ -1431,10 +1462,12 @@ void G_InitNew (char *mapname, bool bTitleLevel)
 	}
 
 	// [RH] If this map doesn't exist, bomb out
-	if (Wads.CheckNumForName (mapname) == -1)
+	MapData * map = P_OpenMapData(mapname);
+	if (!map)
 	{
 		I_Error ("Could not find map %s\n", mapname);
 	}
+	delete map;
 
 	if (dmflags & DF_MONSTERS_RESPAWN)
 	{
@@ -1504,8 +1537,7 @@ void G_InitNew (char *mapname, bool bTitleLevel)
 		bglobal.Init ();
 	}
 
-	strncpy (level.mapname, mapname, 8);
-	level.mapname[8] = 0;
+	strcpy (level.mapname, mapname);
 	if (bTitleLevel)
 	{
 		gamestate = GS_TITLELEVEL;
@@ -2560,7 +2592,7 @@ void G_SnapshotLevel ()
 	if (level.info->snapshot)
 		delete level.info->snapshot;
 
-	if (level.info->mapname[0] != 0)
+	if (level.info->mapname[0] != 0 || level.info == &TheDefaultLevelInfo)
 	{
 		level.info->snapshotVer = SAVEVER;
 		level.info->snapshot = new FCompressedMemFile;
@@ -2580,7 +2612,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 	if (level.info->snapshot == NULL)
 		return;
 
-	if (level.info->mapname[0] != 0)
+	if (level.info->mapname[0] != 0 || level.info == &TheDefaultLevelInfo)
 	{
 		SaveVersion = level.info->snapshotVer;
 		level.info->snapshot->Reopen ();
@@ -2653,6 +2685,11 @@ void G_WriteSnapshots (FILE *file)
 			FPNGChunkArchive arc (file, SNAP_ID);
 			writeSnapShot (arc, (level_info_t *)&wadlevelinfos[i]);
 		}
+	}
+	if (TheDefaultLevelInfo.snapshot != NULL)
+	{
+		FPNGChunkArchive arc (file, DSNP_ID);
+		writeSnapShot(arc, &TheDefaultLevelInfo);
 	}
 
 	FPNGChunkArchive *arc = NULL;
@@ -2728,6 +2765,20 @@ void G_ReadSnapshots (PNGHandle *png)
 		i->snapshot = new FCompressedMemFile;
 		i->snapshot->Serialize (arc);
 		chunkLen = (DWORD)M_NextPNGChunk (png, SNAP_ID);
+	}
+
+	chunkLen = (DWORD)M_FindPNGChunk (png, DSNP_ID);
+	if (chunkLen != 0)
+	{
+		FPNGChunkArchive arc (png->File->GetFile(), DSNP_ID, chunkLen);
+		DWORD snapver;
+
+		arc << snapver;
+		arc << namelen;
+		arc.Read (mapname, namelen);
+		TheDefaultLevelInfo.snapshotVer = snapver;
+		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
+		TheDefaultLevelInfo.snapshot->Serialize (arc);
 	}
 
 	chunkLen = (DWORD)M_FindPNGChunk (png, VIST_ID);

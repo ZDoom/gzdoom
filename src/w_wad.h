@@ -171,7 +171,9 @@ public:
 
 	FWadLump OpenLumpNum (int lump);
 	FWadLump OpenLumpName (const char *name) { return OpenLumpNum (GetNumForName (name)); }
-	FWadLump *ReopenLumpNum (int lump);	// Opens a new, independant FILE
+	FWadLump *ReopenLumpNum (int lump);	// Opens a new, independent FILE
+	
+	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	bool CheckLumpName (int lump, const char *name);	// [RH] True if lump's name == name

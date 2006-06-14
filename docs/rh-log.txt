@@ -1,3 +1,28 @@
+June 14, 2006 (Changes by Graf Zahl)
+- Fixed: Saving on maps that don't contain a MAPINFO definition didn't work.
+- Fixed: The Zip loader loaded all WADs inside a Zip into the lump directory.
+  This is only supposed to be done for WADs in the root directory.
+
+June 12-14, 2006 (Changes by Graf Zahl)
+- Complete restructuring of the map loading code. Previously the only way
+  to put maps into Zips was to load them as embedded WADs which caused
+  some problems, most importantly that the map's file name was irrelevant
+  and the internal map label was used instead. With the new code there
+  is now a properly defined way to add maps to Zips:
+  * Maps are placed in a subdirectory called 'maps'.
+  * Maps are stored as WADs that contain all map related lumps.
+  * The first lump in the map's WAD directory must be the map label.
+  * All lumps not belonging to the first map are ignored.
+  * The map's file name determines the name the map is identified with. 
+    For maps stored this way the internal map label is ignored so with this 
+    method renaming maps is as easy as renaming a file and it is no longer 
+    necessary to manipulate the map label.
+  With the new code it is also possible to load external maps without
+  adding them to the WAD list. Type 'open mapfile.wad' in the console
+  to start such a map.
+  The new code also performs stricter lump name checks to prevent accidental
+  loading of non-map data.
+
 June 13, 2006
 - Fixed: In the past, ZDoom worked like Doom and used integral values for
   monster speeds. Now it uses fixed point so that an actor's speed property

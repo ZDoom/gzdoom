@@ -65,6 +65,7 @@
 #include "templates.h"
 #include "p_local.h"
 #include "r_sky.h"
+#include "p_setup.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -308,12 +309,14 @@ CCMD (changemap)
 
 	if (argv.argc() > 1)
 	{
-		if (Wads.CheckNumForName (argv[1]) == -1)
+		MapData * map = P_OpenMapData(argv[1]);
+		if (map == NULL)
 		{
 			Printf ("No map %s\n", argv[1]);
 		}
 		else
 		{
+			delete map;
 			if (argv.argc() > 2)
 			{
 				Net_WriteByte (DEM_CHANGEMAP2);

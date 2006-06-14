@@ -193,7 +193,7 @@ struct level_locals_s
 	int			levelnum;
 	int			lumpnum;
 	char		level_name[64];			// the descriptive name (Outer Base, etc)
-	char		mapname[9];				// the server name (base1, etc)
+	char		mapname[256];			// the server name (base1, etc)
 	char		nextmap[9];				// go here when fraglimit is hit
 	char		secretmap[9];			// map to go to when used secret exit
 

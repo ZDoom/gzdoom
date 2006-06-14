@@ -490,7 +490,7 @@ void FBehavior::StaticLoadDefaultModules ()
 	}
 }
 
-FBehavior *FBehavior::StaticLoadModule (int lumpnum)
+FBehavior *FBehavior::StaticLoadModule (int lumpnum, FileReader * fr, int len)
 {
 	for (unsigned int i = 0; i < StaticModules.Size(); ++i)
 	{
@@ -500,7 +500,7 @@ FBehavior *FBehavior::StaticLoadModule (int lumpnum)
 		}
 	}
 
-	return new FBehavior (lumpnum);
+	return new FBehavior (lumpnum, fr, len);
 }
 
 bool FBehavior::StaticCheckAllGood ()
@@ -653,10 +653,9 @@ void FBehavior::SerializeVarSet (FArchive &arc, SDWORD *vars, int max)
 	}
 }
 
-FBehavior::FBehavior (int lumpnum)
+FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 {
 	BYTE *object;
-	int len;
 	int i;
 
 	NumScripts = 0;
@@ -673,7 +672,7 @@ FBehavior::FBehavior (int lumpnum)
 	memset (MapVarStore, 0, sizeof(MapVarStore));
 	ModuleName[0] = 0;
 
-	len = Wads.LumpLength (lumpnum);
+	if (fr == NULL) len = Wads.LumpLength (lumpnum);
 
 	// Any behaviors smaller than 32 bytes cannot possibly contain anything useful.
 	// (16 bytes for a completely empty behavior + 12 bytes for one script header
@@ -685,7 +684,14 @@ FBehavior::FBehavior (int lumpnum)
 	}
 
 	object = new byte[len];
-	Wads.ReadLump (lumpnum, object);
+	if (fr == NULL)
+	{
+		Wads.ReadLump (lumpnum, object);
+	}
+	else
+	{
+		fr->Read (object, len);
+	}
 
 	if (object[0] != 'A' || object[1] != 'C' || object[2] != 'S')
 	{
@@ -707,8 +713,16 @@ FBehavior::FBehavior (int lumpnum)
 		return;
 	}
 
-	Wads.GetLumpName (ModuleName, lumpnum);
-	ModuleName[8] = 0;
+	if (fr == NULL)
+	{
+		Wads.GetLumpName (ModuleName, lumpnum);
+		ModuleName[8] = 0;
+	}
+	else
+	{
+		strcpy(ModuleName, "BEHAVIOR");
+	}
+
 	Data = object;
 	DataSize = len;
 	

@@ -1852,7 +1852,7 @@ static void PutSaveWads (FILE *file)
 	M_AppendPNGText (file, "Game WAD", name);
 
 	// Name of wad the map resides in
-	if (Wads.GetLumpFile (level.lumpnum) != 1)
+	if (Wads.GetLumpFile (level.lumpnum) > 1)
 	{
 		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
 		M_AppendPNGText (file, "Map WAD", name);
@@ -2064,6 +2064,14 @@ void G_DoSaveGame (bool okForQuicksave)
 
 	BackupSaveName = savegamefile;
 	savegamefile = "";
+
+	// We don't need the snapshot any longer.
+	if (level.info->snapshot != NULL)
+	{
+		delete level.info->snapshot;
+		level.info->snapshot = NULL;
+	}
+		
 	insave = false;
 }
 

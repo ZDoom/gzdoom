@@ -57,6 +57,7 @@
 #include "a_keys.h"
 #include "s_sndseq.h"
 #include "sbar.h"
+#include "p_setup.h"
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t **things, int *numthings);
@@ -75,6 +76,8 @@ CVAR (Bool, showloadtimes, false, 0);
 
 static void P_InitTagLists ();
 static void P_Shutdown ();
+
+
 
 //
 // MAP related Lookup tables.
@@ -130,9 +133,6 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 }				*sidetemp;
 static WORD		*linemap;
 
-// [RH] Set true if the map contains a BEHAVIOR lump
-BOOL			HasBehavior;
-
 bool			UsingGLNodes;
 
 // BLOCKMAP
@@ -174,7 +174,188 @@ mapthing2_t		playerstarts[MAXPLAYERS];
 static void P_AllocateSideDefs (int count);
 static void P_SetSideNum (DWORD *sidenum_p, WORD sidenum);
 
+
+
+
+//===========================================================================
+//
+// GetMapIndex
+//
+// Gets the type of map lump or -1 if invalid
+//
+//===========================================================================
+
+static int GetMapIndex(const char * mapname, int lastindex, const char * lumpname)
+{
+	static struct
+	{
+		char * lumpname;
+		bool required;
+	} check[]={
+		{NULL, true},
+		{"THINGS", true},
+		{"LINEDEFS", true},
+		{"SIDEDEFS", true},
+		{"VERTEXES", true},
+		{"SEGS", false},
+		{"SSECTORS", false},
+		{"NODES", false},
+		{"SECTORS", true},
+		{"REJECT", false},
+		{"BLOCKMAP", false},
+		{"BEHAVIOR", false},
+		{"SCRIPTS", false},
+	};
+
+	if (lumpname==NULL) lumpname="";
+
+	for(size_t i=lastindex+1;i<countof(check);i++)
+	{
+		if (!strnicmp(lumpname, check[i].lumpname, 8))
+			return (int)i;
+
+		if (check[i].required)
+		{
+			I_Error("'%s' not found in %s\n", check[i].lumpname, mapname);
+		}
+	}
+
+	return -1;	// End of map reached
+}
+
+//===========================================================================
+//
+// Opens a map for reading
+//
+//===========================================================================
+
+MapData * P_OpenMapData(const char * mapname)
+{
+	MapData * map = new MapData;
+	bool externalfile = !strnicmp(mapname, "file:", 5);
+	
+	
+	if (externalfile)
+	{
+		mapname+=5;
+		if (!FileExists(mapname))
+		{
+			delete map;
+			return NULL;
+		}
+		map->file = new FileReader(mapname);
+		map->CloseOnDestruct = true;
+	}
+	else
+	{
+		FString fmt;
+		int lump_wad;
+		int lump_map;
+		int lump_name;
+		
+		// Check for both *.wad and *.map in order to load Build maps
+		// as well. The higher one will take precedence.
+		lump_name = Wads.CheckNumForName(mapname);
+		fmt.Format("maps/%s.wad", mapname);
+		lump_wad = Wads.CheckNumForFullName(fmt);
+		fmt.Format("maps/%s.map", mapname);
+		lump_map = Wads.CheckNumForFullName(fmt);
+		
+		if (lump_name > lump_wad && lump_name > lump_map && lump_name != -1)
+		{
+			map->file = Wads.GetFileReader(Wads.GetLumpFile (lump_name));
+			map->CloseOnDestruct = false;
+			map->lumpnum = lump_name;
+
+			map->MapLumps[0].FilePos = Wads.GetLumpOffset(lump_name);
+			map->MapLumps[0].Size = Wads.LumpLength(lump_name);
+
+			int index=0;
+			for(int i=1;;i++)
+			{
+				// Since levels must be stored in WADs they can't really have full
+				// names and for any valid level lump this always returns the short name.
+				const char * lumpname = Wads.GetLumpFullName(lump_name + i);
+				index = GetMapIndex(mapname, index, lumpname);
+
+				// The next lump is not part of this map anymore
+				if (index < 0) break;
+
+				map->MapLumps[index].FilePos = Wads.GetLumpOffset(lump_name + i);
+				map->MapLumps[index].Size = Wads.LumpLength(lump_name + i);
+				strncpy(map->MapLumps[i].Name, lumpname, 8);
+			}
+			return map;
+		}
+		else
+		{
+			if (lump_map > lump_wad)
+			{
+				lump_wad = lump_map;
+			}
+			if (lump_wad == -1)
+			{
+				delete map;
+				return NULL;
+			}
+			map->lumpnum = lump_wad;
+			map->file = Wads.ReopenLumpNum(lump_wad);
+			map->CloseOnDestruct = true;
+		}
+	}
+	DWORD id;
+	(*map->file) >> id;
+	
+	if (id == IWAD_ID || id == PWAD_ID)
+	{
+		char maplabel[9]="";
+		int index=0;
+		DWORD dirofs, numentries;
+
+		(*map->file) >> numentries >> dirofs;
+
+		map->file->Seek(dirofs, SEEK_SET);
+		for(DWORD i = 0; i < numentries; i++)
+		{
+			DWORD offset, size;
+			char lumpname[8];
+
+			(*map->file) >> offset >> size;
+			map->file->Read(lumpname, 8);
+
+			if (i>0)
+			{
+				index = GetMapIndex(maplabel, index, lumpname);
+
+				// The next lump is not part of this map anymore
+				if (index < 0) break;
+			}
+			else
+			{
+				strncpy(maplabel, lumpname, 8);
+				maplabel[8]=0;
+			}
+
+			map->MapLumps[index].FilePos = offset;
+			map->MapLumps[index].Size = size;
+			strncpy(map->MapLumps[i].Name, lumpname, 8);
+		}
+	}
+	else
+	{
+		// This is a Build map and not subject to WAD consistency checks.
+		map->MapLumps[0].Size = map->file->GetLength();
+	}
+	return map;		
+}
+
+
+//===========================================================================
+//
 // [RH] Figure out blends for deep water sectors
+//
+//===========================================================================
+
 static void SetTexture (short *texture, DWORD *blend, char *name8)
 {
 	char name[9];
@@ -227,6 +408,12 @@ static void SetTextureNoErr (short *texture, DWORD *color, char *name8, bool *va
 	}
 }
 
+//===========================================================================
+//
+// Sound enviroment handling
+//
+//===========================================================================
+
 void P_FloodZone (sector_t *sec, int zonenum)
 {
 	int i;
@@ -273,17 +460,20 @@ void P_FloodZones ()
 	}
 }
 
+//===========================================================================
 //
 // P_LoadVertexes
 //
-void P_LoadVertexes (int lump)
+//===========================================================================
+
+void P_LoadVertexes (MapData * map)
 {
 	FWadLump data;
 	int i;
 
 	// Determine number of vertices:
 	//	total lump length / vertex record length.
-	numvertexes = Wads.LumpLength (lump) / sizeof(mapvertex_t);
+	numvertexes = map->MapLumps[ML_VERTEXES].Size / sizeof(mapvertex_t);
 
 	if (numvertexes == 0)
 	{
@@ -293,22 +483,25 @@ void P_LoadVertexes (int lump)
 	// Allocate memory for buffer.
 	vertexes = new vertex_t[numvertexes];		
 
-	data = Wads.OpenLumpNum (lump);
+	map->Seek(ML_VERTEXES);
 		
 	// Copy and convert vertex coordinates, internal representation as fixed.
 	for (i = 0; i < numvertexes; i++)
 	{
 		SWORD x, y;
 
-		data >> x >> y;
+		(*map->file) >> x >> y;
 		vertexes[i].x = x << FRACBITS;
 		vertexes[i].y = y << FRACBITS;
 	}
 }
 
+//===========================================================================
 //
 // P_LoadZSegs
 //
+//===========================================================================
+
 void P_LoadZSegs (FileReaderZ &data)
 {
 	for (int i = 0; i < numsegs; ++i)
@@ -338,11 +531,14 @@ void P_LoadZSegs (FileReaderZ &data)
 	}
 }
 
+//===========================================================================
 //
 // P_LoadGLZSegs
 //
 // This is the GL nodes version of the above function.
 //
+//===========================================================================
+
 void P_LoadGLZSegs (FileReaderZ &data)
 {
 	for (int i = 0; i < numsubsectors; ++i)
@@ -401,9 +597,12 @@ void P_LoadGLZSegs (FileReaderZ &data)
 	}
 }
 
+//===========================================================================
 //
 // P_LoadZNodes
 //
+//===========================================================================
+
 static void P_LoadZNodes (FileReader &dalump, DWORD id)
 {
 	FileReaderZ data (dalump);
@@ -528,16 +727,18 @@ static void P_LoadZNodes (FileReader &dalump, DWORD id)
 }
 
 
+//===========================================================================
 //
 // P_LoadSegs
 //
 // killough 5/3/98: reformatted, cleaned up
+//
+//===========================================================================
 
-void P_LoadSegs (int lump)
+void P_LoadSegs (MapData * map)
 {
 	int  i;
-	FMemLump lumpdata;
-	const byte *data;
+	byte *data;
 	byte *vertchanged = new byte[numvertexes];	// phares 10/4/98
 	DWORD segangle;
 	line_t* line;		// phares 10/4/98
@@ -546,10 +747,11 @@ void P_LoadSegs (int lump)
 	int dis;			// phares 10/4/98
 	int dx,dy;			// phares 10/4/98
 	int vnum1,vnum2;	// phares 10/4/98
+	int lumplen = map->MapLumps[ML_SEGS].Size;
 
 	memset (vertchanged,0,numvertexes); // phares 10/4/98
 
-	numsegs = Wads.LumpLength (lump) / sizeof(mapseg_t);
+	numsegs = lumplen / sizeof(mapseg_t);
 
 	if (numsegs == 0)
 	{
@@ -563,8 +765,9 @@ void P_LoadSegs (int lump)
 
 	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
-	lumpdata = Wads.ReadLump (lump);
-	data = (const BYTE *)lumpdata.GetMem();
+
+	data = new byte[lumplen];
+	map->Read(ML_SEGS, data);
 
 	// phares: 10/4/98: Vertchanged is an array that represents the vertices.
 	// Mark those used by linedefs. A marked vertex is one that is not a
@@ -592,35 +795,35 @@ void P_LoadSegs (int lump)
 
 			segangle = (WORD)LittleShort(ml->angle);
 
-// phares 10/4/98: In the case of a lineseg that was created by splitting
-// another line, it appears that the line angle is inherited from the
-// father line. Due to roundoff, the new vertex may have been placed 'off
-// the line'. When you get close to such a line, and it is very short,
-// it's possible that the roundoff error causes 'firelines', the thin
-// lines that can draw from screen top to screen bottom occasionally. This
-// is due to all the angle calculations that are done based on the line
-// angle, the angles from the viewer to the vertices, and the viewer's
-// angle in the world. In the case of firelines, the rounded-off position
-// of one of the vertices determines one of these angles, and introduces
-// an error in the scaling factor for mapping textures and determining
-// where on the screen the ceiling and floor spans should be shown. For a
-// fireline, the engine thinks the ceiling bottom and floor top are at the
-// midpoint of the screen. So you get ceilings drawn all the way down to the
-// screen midpoint, and floors drawn all the way up. Thus 'firelines'. The
-// name comes from the original sighting, which involved a fire texture.
-//
-// To correct this, reset the vertex that was added so that it sits ON the
-// split line.
-//
-// To know which of the two vertices was added, its number is greater than
-// that of the last of the author-created vertices. If both vertices of the
-// line were added by splitting, pick the higher-numbered one. Once you've
-// changed a vertex, don't change it again if it shows up in another seg.
-//
-// To determine if there's an error in the first place, find the
-// angle of the line between the two seg vertices. If it's one degree or more
-// off, then move one vertex. This may seem insignificant, but one degree
-// errors _can_ cause firelines.
+			// phares 10/4/98: In the case of a lineseg that was created by splitting
+			// another line, it appears that the line angle is inherited from the
+			// father line. Due to roundoff, the new vertex may have been placed 'off
+			// the line'. When you get close to such a line, and it is very short,
+			// it's possible that the roundoff error causes 'firelines', the thin
+			// lines that can draw from screen top to screen bottom occasionally. This
+			// is due to all the angle calculations that are done based on the line
+			// angle, the angles from the viewer to the vertices, and the viewer's
+			// angle in the world. In the case of firelines, the rounded-off position
+			// of one of the vertices determines one of these angles, and introduces
+			// an error in the scaling factor for mapping textures and determining
+			// where on the screen the ceiling and floor spans should be shown. For a
+			// fireline, the engine thinks the ceiling bottom and floor top are at the
+			// midpoint of the screen. So you get ceilings drawn all the way down to the
+			// screen midpoint, and floors drawn all the way up. Thus 'firelines'. The
+			// name comes from the original sighting, which involved a fire texture.
+			//
+			// To correct this, reset the vertex that was added so that it sits ON the
+			// split line.
+			//
+			// To know which of the two vertices was added, its number is greater than
+			// that of the last of the author-created vertices. If both vertices of the
+			// line were added by splitting, pick the higher-numbered one. Once you've
+			// changed a vertex, don't change it again if it shows up in another seg.
+			//
+			// To determine if there's an error in the first place, find the
+			// angle of the line between the two seg vertices. If it's one degree or more
+			// off, then move one vertex. This may seem insignificant, but one degree
+			// errors _can_ cause firelines.
 
 			ptp_angle = R_PointToAngle2 (li->v1->x, li->v1->y, li->v2->x, li->v2->y);
 			dis = 0;
@@ -707,22 +910,24 @@ void P_LoadSegs (int lump)
 	}
 
 	delete[] vertchanged; // phares 10/4/98
+	delete[] data;
 }
 
 
+//===========================================================================
 //
 // P_LoadSubsectors
 //
-void P_LoadSubsectors (int lump)
+//===========================================================================
+
+void P_LoadSubsectors (MapData * map)
 {
-	DWORD maxseg;
-	FWadLump data;
 	int i;
+	int maxseg = map->Size(ML_SEGS) / sizeof(mapseg_t);
 
-	numsubsectors = Wads.LumpLength (lump) / sizeof(mapsubsector_t);
-	maxseg = Wads.LumpLength (lump - ML_SSECTORS + ML_SEGS) / sizeof(mapseg_t);
+	numsubsectors = map->MapLumps[ML_SSECTORS].Size / sizeof(mapsubsector_t);
 
-	if (numsubsectors == 0 || maxseg == 0)
+	if (numsubsectors == 0 || maxseg == 0 )
 	{
 		Printf ("This map has an incomplete BSP tree.\n");
 		delete[] nodes;
@@ -731,7 +936,7 @@ void P_LoadSubsectors (int lump)
 	}
 
 	subsectors = new subsector_t[numsubsectors];		
-	data = Wads.OpenLumpNum (lump);
+	map->Seek(ML_SSECTORS);
 		
 	memset (subsectors, 0, numsubsectors*sizeof(subsector_t));
 	
@@ -739,7 +944,7 @@ void P_LoadSubsectors (int lump)
 	{
 		WORD numsegs, firstseg;
 
-		data >> numsegs >> firstseg;
+		(*map->file) >> numsegs >> firstseg;
 
 		if (numsegs == 0)
 		{
@@ -777,24 +982,26 @@ void P_LoadSubsectors (int lump)
 }
 
 
-
+//===========================================================================
 //
 // P_LoadSectors
 //
-void P_LoadSectors (int lump)
+//===========================================================================
+
+void P_LoadSectors (MapData * map)
 {
-	FMemLump			data;
 	char				fname[9];
 	int 				i;
-	mapsector_t*		ms;
+	char				*msp;
+	mapsector_t			*ms;
 	sector_t*			ss;
 	int					defSeqType;
 	FDynamicColormap	*fogMap, *normMap;
+	int					lumplen = map->Size(ML_SECTORS);
 
-	numsectors = Wads.LumpLength (lump) / sizeof(mapsector_t);
+	numsectors = lumplen / sizeof(mapsector_t);
 	sectors = new sector_t[numsectors];		
 	memset (sectors, 0, numsectors*sizeof(sector_t));
-	data = Wads.ReadLump (lump);
 
 	if (level.flags & LEVEL_SNDSEQTOTALCTRL)
 		defSeqType = 0;
@@ -804,7 +1011,9 @@ void P_LoadSectors (int lump)
 	fogMap = normMap = NULL;
 	fname[8] = 0;
 
-	ms = (mapsector_t *)data.GetMem();
+	msp = new char[lumplen];
+	map->Read(ML_SECTORS, msp);
+	ms = (mapsector_t*)msp;
 	ss = sectors;
 	for (i = 0; i < numsectors; i++, ss++, ms++)
 	{
@@ -821,7 +1030,7 @@ void P_LoadSectors (int lump)
 		strncpy (fname, ms->ceilingpic, 8);
 		ss->ceilingpic = TexMan.GetTexture (fname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 		ss->lightlevel = clamp (LittleShort(ms->lightlevel), (short)0, (short)255);
-		if (HasBehavior)
+		if (map->HasBehavior)
 			ss->special = LittleShort(ms->special);
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
@@ -864,25 +1073,30 @@ void P_LoadSectors (int lump)
 		ss->friction = ORIG_FRICTION;
 		ss->movefactor = ORIG_FRICTION_FACTOR;
 	}
+	delete[] msp;
 }
 
 
+//===========================================================================
 //
 // P_LoadNodes
 //
-void P_LoadNodes (int lump)
+//===========================================================================
+
+void P_LoadNodes (MapData * map)
 {
 	FMemLump	data;
 	int 		i;
 	int 		j;
 	int 		k;
-	mapnode_t*	mn;
+	char		*mnp;
+	mapnode_t	*mn;
 	node_t* 	no;
-	int			maxss;
 	WORD*		used;
+	int			lumplen = map->Size(ML_NODES);
+	int			maxss = map->Size(ML_SSECTORS) / sizeof(mapsubsector_t);
 
-	numnodes = Wads.LumpLength (lump) / sizeof(mapnode_t);
-	maxss = Wads.LumpLength (lump - ML_NODES + ML_SSECTORS) / sizeof(mapsubsector_t);
+	numnodes = lumplen / sizeof(mapnode_t);
 
 	if ((numnodes == 0 && maxss != 1) || maxss == 0)
 	{
@@ -891,11 +1105,12 @@ void P_LoadNodes (int lump)
 	}
 	
 	nodes = new node_t[numnodes];		
-	data = Wads.ReadLump (lump);
 	used = (WORD *)alloca (sizeof(WORD)*numnodes);
 	memset (used, 0, sizeof(WORD)*numnodes);
 
-	mn = (mapnode_t *)data.GetMem();
+	mnp = new char[lumplen];
+	mn = (mapnode_t*)mnp;
+	map->Read(ML_NODES, mn);
 	no = nodes;
 	
 	for (i = 0; i < numnodes; i++, no++, mn++)
@@ -916,6 +1131,7 @@ void P_LoadNodes (int lump)
 						"The BSP will be rebuilt.\n", i, child);
 					ForceNodeBuild = true;
 					delete[] nodes;
+					delete[] mnp;
 					return;
 				}
 				no->children[j] = (BYTE *)&subsectors[child] + 1;
@@ -926,6 +1142,7 @@ void P_LoadNodes (int lump)
 					"The BSP will be rebuilt.\n", i, (node_t *)no->children[j] - nodes);
 				ForceNodeBuild = true;
 				delete[] nodes;
+				delete[] mnp;
 				return;
 			}
 			else if (used[child])
@@ -935,6 +1152,7 @@ void P_LoadNodes (int lump)
 					"The BSP will be rebuilt.\n", i, child, used[child]-1);
 				ForceNodeBuild = true;
 				delete[] nodes;
+				delete[] mnp;
 				return;
 			}
 			else
@@ -948,23 +1166,33 @@ void P_LoadNodes (int lump)
 			}
 		}
 	}
+	delete[] mnp;
 }
 
 
+//===========================================================================
 //
 // P_LoadThings
 //
-void P_LoadThings (int lump, int position)
+//===========================================================================
+
+void P_LoadThings (MapData * map, int position)
 {
 	mapthing2_t mt2;		// [RH] for translation
-	FMemLump data = Wads.ReadLump (lump);
-	const mapthing_t *mt = (mapthing_t *)data.GetMem();
-	const mapthing_t *lastmt = (mapthing_t *)((BYTE*)data.GetMem() + Wads.LumpLength (lump));
+	int	lumplen = map->Size(ML_THINGS);
+	int numthings = lumplen / sizeof(mapthing_t);
+
+	char *mtp;
+	mapthing_t *mt;
+
+	mtp = new char[lumplen];
+	map->Read(ML_THINGS, mtp);
+	mt = (mapthing_t*)mtp;
 
 	// [RH] ZDoom now uses Hexen-style maps as its native format.
 	//		Since this is the only place where Doom-style Things are ever
 	//		referenced, we translate them into a Hexen-style thing.
-	for ( ; mt < lastmt; mt++)
+	for (int i=0 ; i < numthings; i++, mt++)
 	{
 		// [RH] At this point, monsters unique to Doom II were weeded out
 		//		if the IWAD wasn't for Doom II. R_SpawnMapThing() can now
@@ -1004,11 +1232,14 @@ void P_LoadThings (int lump, int position)
 
 		P_SpawnMapThing (&mt2, position);
 	}
+	delete [] mtp;
 }
 
+//===========================================================================
 //
 // P_SpawnSlopeMakers
 //
+//===========================================================================
 
 static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, BOOL slopeCeil)
 {
@@ -1080,6 +1311,12 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, BOO
 	}
 }
 
+//===========================================================================
+//
+// P_CopyPlane
+//
+//===========================================================================
+
 static void P_CopyPlane (int tag, fixed_t x, fixed_t y, BOOL copyCeil)
 {
 	sector_t *dest = R_PointInSubsector (x, y)->sector;
@@ -1105,6 +1342,12 @@ static void P_CopyPlane (int tag, fixed_t x, fixed_t y, BOOL copyCeil)
 	}
 	*(secplane_t *)((BYTE *)dest + planeofs) = *(secplane_t *)((BYTE *)source + planeofs);
 }
+
+//===========================================================================
+//
+// P_SetSlope
+//
+//===========================================================================
 
 void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
 	fixed_t x, fixed_t y, fixed_t z)
@@ -1149,10 +1392,12 @@ void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
 }
 
 
-//-----------------------------------------------------------------------------
+//===========================================================================
 //
+// P_VavoomSlope
 //
-//-----------------------------------------------------------------------------
+//===========================================================================
+
 void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int which)
 {
 	for (int i=0;i<sec->linecount;i++)
@@ -1215,10 +1460,12 @@ enum
 	THING_VavoomCeiling=1501,
 };
 
-//-----------------------------------------------------------------------------
+//===========================================================================
 //
+// P_SpawnSlopeMakers
 //
-//-----------------------------------------------------------------------------
+//===========================================================================
+
 static void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 {
 	mapthing2_t *mt;
@@ -1272,6 +1519,8 @@ static void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 	}
 }
 
+//===========================================================================
+//
 // [RH]
 // P_LoadThings2
 //
@@ -1280,15 +1529,22 @@ static void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 // player start spots are spawned by filtering out those
 // whose first parameter don't match position.
 //
-void P_LoadThings2 (int lump, int position)
+//===========================================================================
+
+void P_LoadThings2 (MapData * map, int position)
 {
-	FMemLump data = Wads.ReadLump (lump);
+	int	lumplen = map->MapLumps[ML_THINGS].Size;
+	int numthings = lumplen / sizeof(mapthing2_t);
+
+	int i;
+	char *mtp;
 	mapthing2_t *mt;
-	mapthing2_t *firstmt = (mapthing2_t *)data.GetMem();
-	mapthing2_t *lastmt = (mapthing2_t *)((BYTE *)firstmt + Wads.LumpLength (lump));
+
+	mtp = new char[lumplen];
+	map->Read(ML_THINGS, mtp);
 
 #ifdef WORDS_BIGENDIAN
-	for (mt = firstmt; mt < lastmt; ++mt)
+	for (i=0, mt = (mapthing2_t*)mtp; i < numthings; i++,mt++)
 	{
 		mt->thingid = LittleShort(mt->thingid);
 		mt->x = LittleShort(mt->x);
@@ -1301,15 +1557,17 @@ void P_LoadThings2 (int lump, int position)
 #endif
 
 	// [RH] Spawn slope creating things first.
-	P_SpawnSlopeMakers (firstmt, lastmt);
+	P_SpawnSlopeMakers ((mapthing2_t*)mtp, ((mapthing2_t*)mtp)+numthings);
 
-	for (mt = firstmt; mt < lastmt; mt++)
+	for (i=0, mt = (mapthing2_t*)mtp; i < numthings; i++,mt++)
 	{
 		P_SpawnMapThing (mt, position);
 	}
+	delete[] mtp;
 }
 
 
+//===========================================================================
 //
 // P_LoadLineDefs
 //
@@ -1317,6 +1575,9 @@ void P_LoadThings2 (int lump, int position)
 //
 // [RH] Actually split into four functions to allow for Hexen and Doom
 //		linedefs.
+//
+//===========================================================================
+
 void P_AdjustLine (line_t *ld)
 {
 	vertex_t *v1, *v2;
@@ -1359,7 +1620,7 @@ void P_AdjustLine (line_t *ld)
 	// [RH] Set line id (as appropriate) here
 	// for Doom format maps this must be done in P_TranslateLineDef because
 	// the tag doesn't always go into the first arg.
-	if (HasBehavior)	
+	if (level.flags & LEVEL_HEXENFORMAT)	
 	{
 		if (ld->special == Line_SetIdentification)
 		{
@@ -1479,17 +1740,21 @@ void P_FinishLoadingLineDefs ()
 	}
 }
 
-void P_LoadLineDefs (int lump)
+void P_LoadLineDefs (MapData * map)
 {
-	FMemLump data;
 	int i, skipped;
 	line_t *ld;
+	int lumplen = map->Size(ML_LINEDEFS);
+	char * mldf;
+	maplinedef_t *mld;
 		
-	numlines = Wads.LumpLength (lump) / sizeof(maplinedef_t);
+	numlines = lumplen / sizeof(maplinedef_t);
 	lines = new line_t[numlines];
 	linemap = new WORD[numlines];
 	memset (lines, 0, numlines*sizeof(line_t));
-	data = Wads.ReadLump (lump);
+
+	mldf = new char[lumplen];
+	map->Read(ML_LINEDEFS, mldf);
 
 	// [RH] Count the number of sidedef references. This is the number of
 	// sidedefs we need. The actual number in the SIDEDEFS lump might be less.
@@ -1497,12 +1762,13 @@ void P_LoadLineDefs (int lump)
 
 	for (skipped = sidecount = i = 0; i < numlines; )
 	{
-		maplinedef_t *mld = ((maplinedef_t *)data.GetMem()) + i;
+		mld = ((maplinedef_t*)mldf) + i;
 		int v1 = LittleShort(mld->v1);
 		int v2 = LittleShort(mld->v2);
 
 		if (v1 >= numvertexes || v2 >= numvertexes)
 		{
+			delete [] mldf;
 			I_Error ("Line %d has invalid vertices: %d and/or %d.\nThe map only contains %d vertices.", i+skipped, v1, v2, numvertexes);
 		}
 		else if (v1 == v2 ||
@@ -1528,7 +1794,7 @@ void P_LoadLineDefs (int lump)
 
 	P_AllocateSideDefs (sidecount);
 
-	maplinedef_t *mld = (maplinedef_t *)data.GetMem();
+	mld = (maplinedef_t *)mldf;
 	ld = lines;
 	for (i = numlines; i > 0; i--, mld++, ld++)
 	{
@@ -1550,26 +1816,30 @@ void P_LoadLineDefs (int lump)
 		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 	}
+	delete[] mldf;
 }
 
 // [RH] Same as P_LoadLineDefs() except it uses Hexen-style LineDefs.
-void P_LoadLineDefs2 (int lump)
+void P_LoadLineDefs2 (MapData * map)
 {
-	FMemLump			data;
-	int 				i, skipped;
-	maplinedef2_t*		mld;
-	line_t* 			ld;
-
-	numlines = Wads.LumpLength (lump) / sizeof(maplinedef2_t);
+	int i, skipped;
+	line_t *ld;
+	int lumplen = map->Size(ML_LINEDEFS);
+	char * mldf;
+	maplinedef2_t *mld;
+		
+	numlines = lumplen / sizeof(maplinedef2_t);
 	lines = new line_t[numlines];
 	linemap = new WORD[numlines];
 	memset (lines, 0, numlines*sizeof(line_t));
-	data = Wads.ReadLump (lump);
+
+	mldf = new char[lumplen];
+	map->Read(ML_LINEDEFS, mldf);
 
 	// [RH] Remove any lines that have 0 length and count sidedefs used
 	for (skipped = sidecount = i = 0; i < numlines; )
 	{
-		maplinedef2_t *mld = ((maplinedef2_t *)data.GetMem()) + i;
+		mld = ((maplinedef2_t*)mldf) + i;
 
 		if (mld->v1 == mld->v2 ||
 			(vertexes[LittleShort(mld->v1)].x == vertexes[LittleShort(mld->v2)].x &&
@@ -1597,7 +1867,7 @@ void P_LoadLineDefs2 (int lump)
 
 	P_AllocateSideDefs (sidecount);
 
-	mld = (maplinedef2_t *)data.GetMem();
+	mld = (maplinedef2_t *)mldf;
 	ld = lines;
 	for (i = numlines; i > 0; i--, mld++, ld++)
 	{
@@ -1622,6 +1892,7 @@ void P_LoadLineDefs2 (int lump)
 		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 	}
+	delete[] mldf;
 }
 
 
@@ -1629,9 +1900,9 @@ void P_LoadLineDefs2 (int lump)
 // P_LoadSideDefs
 //
 // killough 4/4/98: split into two functions
-void P_LoadSideDefs (int lump)
+void P_LoadSideDefs (MapData * map)
 {
-	numsides = Wads.LumpLength (lump) / sizeof(mapsidedef_t);
+	numsides = map->Size(ML_SIDEDEFS) / sizeof(mapsidedef_t);
 }
 
 static void P_AllocateSideDefs (int count)
@@ -1794,17 +2065,19 @@ static void P_LoopSidedefs ()
 // after linedefs are loaded, to allow overloading.
 // killough 5/3/98: reformatted, cleaned up
 
-void P_LoadSideDefs2 (int lump)
+void P_LoadSideDefs2 (MapData * map)
 {
-	char name[9];
-	FMemLump data = Wads.ReadLump (lump);
 	int  i;
+	char name[9];
+	mapsidedef_t * msdf = new mapsidedef_t[numsides+1];
+
+	map->Read(ML_SIDEDEFS, msdf);
 
 	name[8] = 0;
 
 	for (i = 0; i < numsides; i++)
 	{
-		mapsidedef_t *msd = (mapsidedef_t *)data.GetMem() + sidetemp[i].a.map;
+		mapsidedef_t *msd = msdf + sidetemp[i].a.map;
 		side_t *sd = sides + i;
 		sector_t *sec;
 
@@ -1908,6 +2181,7 @@ void P_LoadSideDefs2 (int lump)
 			break;
 		}
 	}
+	delete[] msdf;
 }
 
 // [RH] Set slopes for sectors, based on line specials
@@ -2322,23 +2596,26 @@ static void P_CreateBlockMap ()
 // killough 3/30/98: Rewritten to remove blockmap limit
 //
 
-void P_LoadBlockMap (int lump)
+void P_LoadBlockMap (MapData * map)
 {
-	int count;
+	int count = map->Size(ML_BLOCKMAP);
 
 	if (ForceNodeBuild || genblockmap ||
-		(count = Wads.LumpLength(lump)/2) >= 0x10000 ||
-		Args.CheckParm("-blockmap") ||
-		Wads.LumpLength (lump) == 0)
+		count/2 >= 0x10000 || count == 0 ||
+		Args.CheckParm("-blockmap")
+		)
 	{
 		DPrintf ("Generating BLOCKMAP\n");
 		P_CreateBlockMap ();
 	}
 	else
 	{
-		FMemLump lumpy = Wads.ReadLump (lump);
-		const short *wadblockmaplump = (short *)lumpy.GetMem();
+		byte * data = new byte[count];
+		map->Read(ML_BLOCKMAP, data);
+		const short *wadblockmaplump = (short *)data;
 		int i;
+
+		count/=2;
 		blockmaplump = new int[count];
 
 		// killough 3/1/98: Expand wad blockmap into larger internal one,
@@ -2356,6 +2633,7 @@ void P_LoadBlockMap (int lump)
 			short t = LittleShort(wadblockmaplump[i]);          // killough 3/1/98
 			blockmaplump[i] = t == -1 ? (DWORD)0xffffffff : (DWORD) t & 0xffff;
 		}
+		delete[] data;
 	}
 
 	bmaporgx = blockmaplump[0]<<FRACBITS;
@@ -2710,20 +2988,18 @@ void FExtraLight::InsertLight (const secplane_t &inplane, line_t *line, int type
 //
 // P_LoadReject
 //
-void P_LoadReject (int lump, bool junk)
+void P_LoadReject (MapData * map, bool junk)
 {
-	char lname[9];
 	const int neededsize = (numsectors * numsectors + 7) >> 3;
 	int rejectsize;
 
-	Wads.GetLumpName (lname, lump);
-	if (strcmp (lname, "REJECT") != 0)
+	if (strnicmp (map->MapLumps[ML_REJECT].Name, "REJECT", 8) != 0)
 	{
 		rejectsize = 0;
 	}
 	else
 	{
-		rejectsize = junk ? 0 : Wads.LumpLength (lump);
+		rejectsize = junk ? 0 : map->Size(ML_REJECT);
 	}
 
 	if (rejectsize < neededsize)
@@ -2741,8 +3017,8 @@ void P_LoadReject (int lump, bool junk)
 		rejectsize = MIN (rejectsize, neededsize);
 		rejectmatrix = new BYTE[rejectsize];
 
-		FWadLump reader = Wads.OpenLumpNum (lump);
-		reader.Read (rejectmatrix, rejectsize);
+		map->Seek(ML_REJECT);
+		map->file->Read (rejectmatrix, rejectsize);
 
 		int qwords = rejectsize / 8;
 		int i;
@@ -2775,9 +3051,10 @@ void P_LoadReject (int lump, bool junk)
 //
 // [RH] P_LoadBehavior
 //
-void P_LoadBehavior (int lumpnum)
+void P_LoadBehavior (MapData * map)
 {
-	FBehavior::StaticLoadModule (lumpnum);
+	map->Seek(ML_BEHAVIOR);
+	FBehavior::StaticLoadModule (-1, map->file, map->Size(ML_BEHAVIOR));
 	if (!FBehavior::StaticCheckAllGood ())
 	{
 		Printf ("ACS scripts unloaded.\n");
@@ -2811,14 +3088,20 @@ static void P_InitTagLists ()
 	}
 }
 
-void P_GetPolySpots (int lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors)
+void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors)
 {
-	if (HasBehavior)
+	if (map->HasBehavior)
 	{
 		int spot1, spot2, spot3, anchor;
-		FMemLump lumpy = Wads.ReadLump (lump);
-		const mapthing2_t *mt = (mapthing2_t *)lumpy.GetMem();
-		int num = Wads.LumpLength (lump) / sizeof(*mt);
+
+		int	lumplen = map->Size(ML_THINGS);
+		int num = lumplen / sizeof(mapthing2_t);
+
+		mapthing2_t *mt;
+
+		map->Seek(ML_THINGS);
+		mt = new mapthing2_t[num];
+		map->file->Read(mt, num * sizeof(mapthing2_t));
 
 		if (gameinfo.gametype == GAME_Hexen)
 		{
@@ -2852,6 +3135,7 @@ void P_GetPolySpots (int lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<F
 				}
 			}
 		}
+		delete[] mt;
 	}
 }
 
@@ -3014,7 +3298,7 @@ void P_SetupLevel (char *lumpname, int position)
 	cycle_t times[20] = { 0 };
 	mapthing2_t *buildthings;
 	int numbuildthings;
-	int i, lumpnum;
+	int i;
 	bool buildmap;
 
 	wminfo.partime = 180;
@@ -3059,35 +3343,34 @@ void P_SetupLevel (char *lumpname, int position)
 	// Free all level data from the previous map
 	P_FreeLevelData ();
 
+	MapData * map = P_OpenMapData(lumpname);
+	if (map == NULL)
+	{
+		I_Error("Unable to open map '%s'\n", lumpname);
+	}
+
 	// find map num
-	level.lumpnum = lumpnum = Wads.GetNumForName (lumpname);
+	level.lumpnum = map->lumpnum;
 
 	// [RH] Support loading Build maps (because I felt like it. :-)
 	buildmap = false;
-	if (Wads.LumpLength (lumpnum) > 0)
+	if (map->MapLumps[0].Size > 0)
 	{
-		BYTE *mapdata = new BYTE[Wads.LumpLength (lumpnum)];
-		Wads.ReadLump (lumpnum, mapdata);
-		buildmap = P_LoadBuildMap (mapdata, Wads.LumpLength (lumpnum), &buildthings, &numbuildthings);
+		BYTE *mapdata = new BYTE[map->MapLumps[0].Size];
+		map->file->Read(mapdata, map->MapLumps[0].Size);
+		buildmap = P_LoadBuildMap (mapdata, map->MapLumps[0].Size, &buildthings, &numbuildthings);
 		delete[] mapdata;
 	}
 
 	if (!buildmap)
 	{
-		char lname[9];
-
-		// [RH] Check if this map is Hexen-style.
-		//		LINEDEFS and THINGS need to be handled accordingly.
-		HasBehavior = Wads.CheckLumpName (lumpnum+ML_BEHAVIOR, "BEHAVIOR");
-
 		// note: most of this ordering is important 
-
 		ForceNodeBuild = gennodes;
 		// [RH] Load in the BEHAVIOR lump
 		FBehavior::StaticUnloadModules ();
-		if (HasBehavior)
+		if (map->HasBehavior)
 		{
-			P_LoadBehavior (lumpnum+ML_BEHAVIOR);
+			P_LoadBehavior (map);
 			level.flags |= LEVEL_HEXENFORMAT;
 		}
 		else
@@ -3104,36 +3387,27 @@ void P_SetupLevel (char *lumpname, int position)
 		P_LoadStrifeConversations (lumpname);
 
 		clock (times[0]);
-		P_LoadVertexes (lumpnum+ML_VERTEXES);
+		P_LoadVertexes (map);
 		unclock (times[0]);
 		
 		// Check for maps without any BSP data at all (e.g. SLIGE)
 		clock (times[1]);
-		Wads.GetLumpName (lname, lumpnum+ML_SEGS);
-		if (strcmp (lname, "SECTORS") == 0)
-		{
-			P_LoadSectors (lumpnum+ML_SEGS);
-			ForceNodeBuild = true;
-		}
-		else
-		{
-			P_LoadSectors (lumpnum+ML_SECTORS);
-		}
+		P_LoadSectors (map);
 		unclock (times[1]);
 
 		clock (times[2]);
-		P_LoadSideDefs (lumpnum+ML_SIDEDEFS);
+		P_LoadSideDefs (map);
 		unclock (times[2]);
 
 		clock (times[3]);
-		if (!HasBehavior)
-			P_LoadLineDefs (lumpnum+ML_LINEDEFS);
+		if (!map->HasBehavior)
+			P_LoadLineDefs (map);
 		else
-			P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);	// [RH] Load Hexen-style linedefs
+			P_LoadLineDefs2 (map);	// [RH] Load Hexen-style linedefs
 		unclock (times[3]);
 
 		clock (times[4]);
-		P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);
+		P_LoadSideDefs2 (map);
 		unclock (times[4]);
 
 		clock (times[5]);
@@ -3159,24 +3433,24 @@ void P_SetupLevel (char *lumpname, int position)
 		FWadLump test;
 		DWORD id = MAKE_ID('X','x','X','x'), idcheck;
 
-		if (Wads.LumpLength (lumpnum + ML_ZNODES) != 0)
+		if (map->MapLumps[ML_ZNODES].Size != 0)
 		{
-			test = Wads.OpenLumpNum (lumpnum + ML_ZNODES);
+			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 		}
 		else
 		{
 			// If normal nodes are not present but GL nodes are, use them.
-			test = Wads.OpenLumpNum (lumpnum + ML_GLZNODES);
+			map->Seek(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
 		}
 
-		test.Read (&id, 4);
+		map->file->Read (&id, 4);
 		if (id == idcheck)
 		{
 			try
 			{
-				P_LoadZNodes (test, id);
+				P_LoadZNodes (*map->file, id);
 			}
 			catch (CRecoverableError &error)
 			{
@@ -3203,15 +3477,15 @@ void P_SetupLevel (char *lumpname, int position)
 		else
 		{
 			clock (times[7]);
-			P_LoadSubsectors (lumpnum+ML_SSECTORS);
+			P_LoadSubsectors (map);
 			unclock (times[7]);
 
 			clock (times[8]);
-			if (!ForceNodeBuild) P_LoadNodes (lumpnum+ML_NODES);
+			if (!ForceNodeBuild) P_LoadNodes (map);
 			unclock (times[8]);
 
 			clock (times[9]);
-			if (!ForceNodeBuild) P_LoadSegs (lumpnum+ML_SEGS);
+			if (!ForceNodeBuild) P_LoadSegs (map);
 			unclock (times[9]);
 		}
 
@@ -3237,7 +3511,7 @@ void P_SetupLevel (char *lumpname, int position)
 
 		startTime = I_MSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
-		P_GetPolySpots (lumpnum+ML_THINGS, polyspots, anchors);
+		P_GetPolySpots (map, polyspots, anchors);
 		FNodeBuilder::FLevel leveldata =
 		{
 			vertexes, numvertexes,
@@ -3257,11 +3531,11 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 
 	clock (times[10]);
-	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
+	P_LoadBlockMap (map);
 	unclock (times[10]);
 
 	clock (times[11]);
-	P_LoadReject (lumpnum+ML_REJECT, buildmap);
+	P_LoadReject (map, buildmap);
 	unclock (times[11]);
 
 	clock (times[12]);
@@ -3284,10 +3558,10 @@ void P_SetupLevel (char *lumpname, int position)
 	if (!buildmap)
 	{
 		clock (times[14]);
-		if (!HasBehavior)
-			P_LoadThings (lumpnum+ML_THINGS, position);
+		if (!map->HasBehavior)
+			P_LoadThings (map, position);
 		else
-			P_LoadThings2 (lumpnum+ML_THINGS, position);	// [RH] Load Hexen-style things
+			P_LoadThings2 (map, position);	// [RH] Load Hexen-style things
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i] && players[i].mo != NULL)
@@ -3296,7 +3570,7 @@ void P_SetupLevel (char *lumpname, int position)
 		unclock (times[14]);
 
 		clock (times[15]);
-		if (!HasBehavior)
+		if (!map->HasBehavior)
 			P_TranslateTeleportThings ();	// [RH] Assign teleport destination TIDs
 		unclock (times[15]);
 	}
@@ -3308,6 +3582,7 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 		delete[] buildthings;
 	}
+	delete map;
 
 	clock (times[16]);
 	PO_Init ();	// Initialize the polyobjs

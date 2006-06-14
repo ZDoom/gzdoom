@@ -569,10 +569,12 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			FixPathSeperator(name);
 			strlwr(name);
 
-			// Check for embedded WADs. They must be extracted and added separately to the lump list.
+			// Check for embedded WADs in the root directory. 
+			// They must be extracted and added separately to the lump list.
+			// WADs in subdirectories are added to the lump directory.
 			// Embedded .zips are ignored for now. But they should be allowed later!
 			char * c = strstr(name, ".wad");
-			if (c && strlen(c)==4)
+			if (c && strlen(c)==4 && !strchr(name, '/'))
 			{
 				EmbeddedWADs.Push(zip_fh);
 				skipped++;
@@ -969,7 +971,7 @@ int FWadCollection::GetLumpOffset (int lump) const
 {
 	if ((size_t)lump >= NumLumps)
 	{
-		I_Error ("W_LumpLength: %i >= NumLumps",lump);
+		I_Error ("GetLumpOffset: %i >= NumLumps",lump);
 	}
 
 	return LumpInfo[lump].position;
@@ -1749,6 +1751,23 @@ FWadLump *FWadCollection::ReopenLumpNum (int lump)
 		return new FWadLump (f, l->size);
 	}
 
+}
+
+//==========================================================================
+//
+// GetFileReader
+//
+// Retrieves the FileReader object to access the given WAD
+//
+//==========================================================================
+
+FileReader *FWadCollection::GetFileReader(int wadnum)
+{
+	if ((DWORD)wadnum >= NumWads)
+	{
+		return NULL;
+	}
+	return Wads[wadnum];
 }
 
 //==========================================================================

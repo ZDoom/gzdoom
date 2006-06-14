@@ -1,3 +1,9 @@
+June 14, 2006
+- Removed my "backwards compatibility fix" for APROP_Speed. It turns out that
+  in all the public versions where monster speed is not fixed point, you
+  couldn't modify the monster's speed due to a bug in P_Move() anyway. So
+  there's nothing to be backward compatible with.
+
 June 14, 2006 (Changes by Graf Zahl)
 - Fixed: Saving on maps that don't contain a MAPINFO definition didn't work.
 - Fixed: The Zip loader loaded all WADs inside a Zip into the lump directory.
@@ -24,6 +30,8 @@ June 12-14, 2006 (Changes by Graf Zahl)
   loading of non-map data.
 
 June 13, 2006
+- Moved level scroller information out of G_InitLevelLocals() and into
+  P_FreeLevelData() so that it also gets performed at shutdown.
 - Fixed: In the past, ZDoom worked like Doom and used integral values for
   monster speeds. Now it uses fixed point so that an actor's speed property
   can always be considered is always fixed point. So DoSetActorProperty()

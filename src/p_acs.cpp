@@ -2004,10 +2004,6 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Speed:
-		if (abs(value) < 128)
-		{ // Backwards compatibility: Older ZDooms didn't use fixed point in A_Chase.
-			value <<= FRACBITS;
-		}
 		actor->Speed = value;
 		break;
 

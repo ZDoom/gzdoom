@@ -3257,6 +3257,11 @@ void P_FreeLevelData ()
 		zones = NULL;
 	}
 	P_FreeStrifeConversations ();
+	if (level.Scrolls != NULL)
+	{
+		delete[] level.Scrolls;
+		level.Scrolls = NULL;
+	}
 }
 
 extern msecnode_t *headsecnode;

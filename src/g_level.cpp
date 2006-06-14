@@ -2228,12 +2228,6 @@ void G_InitLevelLocals ()
 	compatflags.Callback();
 
 	NormalLight.ChangeFade (level.fadeto);
-
-	if (level.Scrolls != NULL)
-	{
-		delete[] level.Scrolls;
-		level.Scrolls = NULL;
-	}
 }
 
 char *CalcMapName (int episode, int level)

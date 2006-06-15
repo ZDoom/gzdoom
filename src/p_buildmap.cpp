@@ -742,6 +742,8 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 //
 // Decrypt
 //
+// Note that this is different from the general RFF encryption.
+//
 //==========================================================================
 
 static void Decrypt (void *to_, const void *from_, int len, int key)
@@ -749,13 +751,9 @@ static void Decrypt (void *to_, const void *from_, int len, int key)
 	BYTE *to = (BYTE *)to_;
 	const BYTE *from = (const BYTE *)from_;
 
-	while (len > 0)
+	for (int i = 0; i < len; ++i, ++key)
 	{
-		*to = *from ^ key;
-		to++;
-		from++;
-		key++;
-		len--;
+		to[i] = from[i] ^ key;
 	}
 }
 

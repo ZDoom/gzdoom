@@ -33,6 +33,7 @@ struct MapData
 	wadlump_t MapLumps[ML_BEHAVIOR+1];
 	bool HasBehavior;
 	bool CloseOnDestruct;
+	bool Encrypted;
 	int lumpnum;
 	FileReader * file;
 	
@@ -40,9 +41,10 @@ struct MapData
 	{
 		memset(MapLumps, 0, sizeof(MapLumps));
 		file = NULL;
-		lumpnum=-1;
-		HasBehavior=false;
-		CloseOnDestruct=true;
+		lumpnum = -1;
+		HasBehavior = false;
+		CloseOnDestruct = true;
+		Encrypted = false;
 	}
 	
 	~MapData()

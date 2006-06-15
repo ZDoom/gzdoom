@@ -79,6 +79,9 @@ typedef enum {
 // [RH] Copy an 8-char string and uppercase it.
 void uppercopy (char *to, const char *from);
 
+// Perform Blood encryption/decryption.
+void BloodCrypt (void *data, int key, int len);
+
 // A very loose reference to a lump on disk. This is really just a wrapper
 // around the main wad's FILE object with a different length recorded. Since
 // the two lumps from the same wad share the same FILE, you cannot read from
@@ -97,12 +100,13 @@ public:
 	long Read (void *buffer, long len);
 
 private:
-	FWadLump (const FileReader &reader, long length);
+	FWadLump (const FileReader &reader, long length, bool encrypted);
 	FWadLump (FILE *file, long length);
 	FWadLump (char * data, long length, bool destroy);
 
-	char * sourceData;
-	bool destroySource;
+	char *SourceData;
+	bool DestroySource;
+	bool Encrypted;
 
 	friend class FWadCollection;
 };
@@ -189,7 +193,7 @@ public:
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
 
 	bool IsUncompressedFile(int lump) const;
-
+	bool IsEncryptedFile(int lump) const;
 
 	int GetNumLumps () const;
 

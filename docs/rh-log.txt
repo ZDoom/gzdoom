@@ -1,4 +1,8 @@
 June 14, 2006
+- Fixed loading of Build/Blood maps.
+- FWadLump::Read() now handles Blood decryption directly.
+- Fixed: A fatal error thrown during map loading after the sectors have been
+  counted but before they are allocated crashed in PointerSubstitution().
 - Removed my "backwards compatibility fix" for APROP_Speed. It turns out that
   in all the public versions where monster speed is not fixed point, you
   couldn't modify the monster's speed due to a bug in P_Move() anyway. So

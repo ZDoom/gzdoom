@@ -1603,10 +1603,6 @@ void FWadCollection::ReadLump (int lump, void *dest)
 		I_Error ("W_ReadLump: only read %ld of %ld on lump %i\n",
 			numread, size, lump);	
 	}
-	if (LumpInfo[lump].flags & LUMPF_BLOODCRYPT)
-	{
-		BloodCrypt (dest, 0, MIN<int> (size, 256));
-	}
 }
 
 //==========================================================================
@@ -1628,10 +1624,6 @@ FMemLump FWadCollection::ReadLump (int lump)
 	{
 		I_Error ("W_ReadLump: only read %ld of %ld on lump %i\n",
 			numread, size, lump);	
-	}
-	if (LumpInfo[lump].flags & LUMPF_BLOODCRYPT)
-	{
-		BloodCrypt (dest, 0, MIN<int> (size, 256));
 	}
 	return FMemLump (dest);
 }
@@ -1657,40 +1649,29 @@ FWadLump FWadCollection::OpenLumpNum (int lump)
 
 	l = &LumpInfo[lump];
 	wad = Wads[l->wadnum];
-
-#if 0
-	// Blood encryption?
-	if (writeable || l->flags & LUMPF_BLOODCRYPT)
-	{
-		ptr = Malloc (l->size);
-		NonMappedPointers.insert (ptr);
-		W_ReadLump (lump, ptr);
-		return ptr;
-	}
-#endif
-
 	wad->Seek (l->position, SEEK_SET);
 
 	if (l->flags & LUMPF_COMPRESSED)
 	{
 		// A compressed entry in a .zip file
 		char * buffer = new char[l->size+1];	// the last byte is used as a reference counter
+		buffer[l->size] = 0;
 		FileReaderZ frz(*wad, true);
 		frz.Read(buffer, l->size);
 		return FWadLump(buffer, l->size, true);
 	}
-	else if (wad->MemoryData!=NULL)
+	else if (wad->MemoryData != NULL)
 	{
 		// A lump from an embedded WAD
 		// Handling this here creates less overhead than trying
 		// to do it inside the FWadLump class.
 
-		return FWadLump((char*)wad->MemoryData+l->position, l->size, false);
+		return FWadLump((char*)wad->MemoryData + l->position, l->size, false);
 	}
 	else
 	{
 		// An uncompressed lump in a .wad or .zip
-		return FWadLump (*wad, l->size);
+		return FWadLump (*wad, l->size, !!(l->flags & LUMPF_BLOODCRYPT));
 	}
 }
 
@@ -1837,6 +1818,23 @@ bool FWadCollection::IsUncompressedFile(int lump) const
 
 //==========================================================================
 //
+// IsEncryptedFile
+//
+// Returns true if the first 256 bytes of the lump are encrypted for Blood.
+//
+//==========================================================================
+
+bool FWadCollection::IsEncryptedFile(int lump) const
+{
+	if ((unsigned)lump >= (unsigned)NumLumps)
+	{
+		return false;
+	}
+	return !!(LumpInfo[lump].flags & LUMPF_BLOODCRYPT);
+}
+
+//==========================================================================
+//
 // W_SkinHack
 //
 // Tests a wad file to see if it contains an S_SKIN marker. If it does,
@@ -1901,7 +1899,7 @@ void FWadCollection::SkinHack (int baselump)
 //
 //==========================================================================
 
-static void BloodCrypt (void *data, int key, int len)
+void BloodCrypt (void *data, int key, int len)
 {
 	int p = (BYTE)key, i;
 
@@ -2013,7 +2011,7 @@ long FWadCollection::WadFileRecord::Read (void *buffer, long len)
 // FWadLump -----------------------------------------------------------------
 
 FWadLump::FWadLump ()
-: FileReader (), sourceData(NULL)
+: FileReader(), SourceData(NULL), DestroySource(false), Encrypted(false)
 {
 }
 
@@ -2021,17 +2019,16 @@ FWadLump::FWadLump (const FWadLump &copy)
 {
 	// This must be defined isn't called.
 	File = copy.File;
-	Length=copy.Length;
-	FilePos=copy.FilePos;
-	StartPos=copy.StartPos;
-	CloseOnDestruct=false;
-	if (copy.sourceData!=NULL)
+	Length = copy.Length;
+	FilePos = copy.FilePos;
+	StartPos = copy.StartPos;
+	CloseOnDestruct = false;
+	SourceData = copy.SourceData;
+	DestroySource = copy.DestroySource;
+	if (SourceData != NULL && DestroySource)
 	{
-		sourceData=copy.sourceData;
-		destroySource=copy.destroySource;
-		if (destroySource) sourceData[copy.Length]++;
+		SourceData[copy.Length]++;
 	}
-	else sourceData=NULL;
 }
 
 #ifdef _DEBUG
@@ -2039,83 +2036,113 @@ FWadLump & FWadLump::operator= (const FWadLump &copy)
 {
 	// Only the debug build actually calls this!
 	File = copy.File;
-	Length=copy.Length;
-	FilePos=copy.FilePos;
-	StartPos=copy.StartPos;
-	CloseOnDestruct=false;	// For WAD lumps this is always false!
-	if (copy.sourceData!=NULL)
+	Length = copy.Length;
+	FilePos = copy.FilePos;
+	StartPos = copy.StartPos;
+	CloseOnDestruct = false;	// For WAD lumps this is always false!
+	SourceData = copy.SourceData;
+	DestroySource = copy.DestroySource;
+	if (SourceData != NULL && DestroySource)
 	{
-		sourceData=copy.sourceData;
-		destroySource=copy.destroySource;
-		if (destroySource) sourceData[copy.Length]++;
+		SourceData[copy.Length]++;
 	}
-	else sourceData=NULL;
 	return *this;
 }
 #endif
 
-FWadLump::FWadLump (const FileReader &other, long length)
-: FileReader (other, length), sourceData(NULL)
+FWadLump::FWadLump (const FileReader &other, long length, bool encrypted)
+: FileReader(other, length), SourceData(NULL), DestroySource(false), Encrypted(encrypted)
 {
 }
 
 FWadLump::FWadLump (FILE *file, long length)
-: FileReader (file, length), sourceData(NULL)
+: FileReader(file, length), SourceData(NULL), DestroySource(false), Encrypted(false)
 {
 }
 
-FWadLump::FWadLump (char * data, long length, bool destroy)
-: FileReader (), sourceData(data)
+FWadLump::FWadLump (char *data, long length, bool destroy)
+: FileReader(), SourceData(data), DestroySource(destroy), Encrypted(false)
 {
 	FilePos = StartPos = 0;
-	Length=length;
-	destroySource=destroy;
-	if (destroySource) data[length]=0;
+	Length = length;
+	if (destroy)
+	{
+		data[length] = 0;
+	}
 }
 
 FWadLump::~FWadLump()
 {
-	if (sourceData && destroySource) 
+	if (SourceData && DestroySource) 
 	{
-		if (sourceData[Length]==0) delete [] sourceData;
-		else sourceData[Length]--;
+		if (SourceData[Length] == 0)
+		{
+			delete[] SourceData;
+		}
+		else
+		{
+			SourceData[Length]--;
+		}
 	}
 }
 
 long FWadLump::Seek (long offset, int origin)
 {
-	if (sourceData)
+	if (SourceData)
 	{
 		switch (origin)
 		{
 		case SEEK_CUR:
-			offset+=FilePos;
+			offset += FilePos;
 			break;
 
 		case SEEK_END:
-			offset+=Length;
+			offset += Length;
 			break;
+
 		default:
 			break;
 		}
-		if (offset<0) offset=0;
-		else if (offset>Length) offset=Length;
-		FilePos=offset;
+		FilePos = clamp<long> (offset, 0, Length);
 		return 0;
 	}
-	else return FileReader::Seek(offset, origin);
+	return FileReader::Seek(offset, origin);
 }
 
 long FWadLump::Read (void *buffer, long len)
 {
-	if (sourceData)
+	long numread;
+	long startread = FilePos;
+
+	if (SourceData != NULL)
 	{
-		if (FilePos+len>Length) len=Length-FilePos;
-		memcpy(buffer, sourceData+FilePos, len);
-		FilePos+=len;
-		return len;
+		if (FilePos + len > Length)
+		{
+			len = Length - FilePos;
+		}
+		memcpy(buffer, SourceData + FilePos, len);
+		FilePos += len;
+		numread = len;
 	}
-	else return FileReader::Read(buffer, len);
+	else
+	{
+		numread = FileReader::Read(buffer, len);
+	}
+
+	// Blood, you are so mean to me with your encryption.
+	if (Encrypted && startread - StartPos < 256)
+	{
+		int cryptstart = startread - StartPos;
+		int cryptlen = MIN<int> (FilePos - StartPos, 256);
+		BYTE *data = (BYTE *)buffer - cryptstart;
+		
+		for (int i = cryptstart; i < cryptlen; ++i)
+		{
+			data[i] ^= i >> 1;
+		}
+	}
+
+	return numread;
 }
 
 // FMemLump -----------------------------------------------------------------

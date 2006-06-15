@@ -499,11 +499,14 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 			players[i].FixPointers (old, notOld);
 	}
 
-	for (i = 0; i < (unsigned int)numsectors; ++i)
+	if (sectors != NULL)
 	{
-		if (sectors[i].SoundTarget == old)
+		for (i = 0; i < (unsigned int)numsectors; ++i)
 		{
-			sectors[i].SoundTarget = static_cast<AActor *>(notOld);
+			if (sectors[i].SoundTarget == old)
+			{
+				sectors[i].SoundTarget = static_cast<AActor *>(notOld);
+			}
 		}
 	}
 }

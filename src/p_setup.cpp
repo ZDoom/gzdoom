@@ -181,30 +181,33 @@ static void P_SetSideNum (DWORD *sidenum_p, WORD sidenum);
 //
 // GetMapIndex
 //
-// Gets the type of map lump or -1 if invalid
+// Gets the type of map lump or -1 if invalid or -2 if required and not found.
 //
 //===========================================================================
 
-static int GetMapIndex(const char * mapname, int lastindex, const char * lumpname)
+struct checkstruct
 {
-	static struct checkstruct
+	char *lumpname;
+	bool  required;
+};
+
+static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname, bool needrequired)
+{
+	static const checkstruct check[] = 
 	{
-		char * lumpname;
-		bool required;
-	} check[]={
-		{NULL, true},
-		{"THINGS", true},
+		{NULL,		 true},
+		{"THINGS",	 true},
 		{"LINEDEFS", true},
 		{"SIDEDEFS", true},
 		{"VERTEXES", true},
-		{"SEGS", false},
+		{"SEGS",	 false},
 		{"SSECTORS", false},
-		{"NODES", false},
-		{"SECTORS", true},
-		{"REJECT", false},
+		{"NODES",	 false},
+		{"SECTORS",	 true},
+		{"REJECT",	 false},
 		{"BLOCKMAP", false},
 		{"BEHAVIOR", false},
-		{"SCRIPTS", false},
+		{"SCRIPTS",	 false},
 	};
 
 	if (lumpname==NULL) lumpname="";
@@ -216,7 +219,11 @@ static int GetMapIndex(const char * mapname, int lastindex, const char * lumpnam
 
 		if (check[i].required)
 		{
-			I_Error("'%s' not found in %s\n", check[i].lumpname, mapname);
+			if (needrequired)
+			{
+				I_Error("'%s' not found in %s\n", check[i].lumpname, mapname);
+			}
+			return -2;
 		}
 	}
 
@@ -229,7 +236,7 @@ static int GetMapIndex(const char * mapname, int lastindex, const char * lumpnam
 //
 //===========================================================================
 
-MapData * P_OpenMapData(const char * mapname)
+MapData *P_OpenMapData(const char * mapname)
 {
 	MapData * map = new MapData;
 	bool externalfile = !strnicmp(mapname, "file:", 5);
@@ -237,7 +244,7 @@ MapData * P_OpenMapData(const char * mapname)
 	
 	if (externalfile)
 	{
-		mapname+=5;
+		mapname += 5;
 		if (!FileExists(mapname))
 		{
 			delete map;
@@ -269,14 +276,20 @@ MapData * P_OpenMapData(const char * mapname)
 
 			map->MapLumps[0].FilePos = Wads.GetLumpOffset(lump_name);
 			map->MapLumps[0].Size = Wads.LumpLength(lump_name);
+			map->Encrypted = Wads.IsEncryptedFile(lump_name);
 
-			int index=0;
-			for(int i=1;;i++)
+			if (map->Encrypted)
+			{ // If it's encrypted, then it's a Blood file, presumably a map.
+				return map;
+			}
+
+			int index = 0;
+			for(int i = 1;; i++)
 			{
 				// Since levels must be stored in WADs they can't really have full
 				// names and for any valid level lump this always returns the short name.
 				const char * lumpname = Wads.GetLumpFullName(lump_name + i);
-				index = GetMapIndex(mapname, index, lumpname);
+				index = GetMapIndex(mapname, index, lumpname, i != 1 || map->MapLumps[0].Size == 0);
 
 				// The next lump is not part of this map anymore
 				if (index < 0) break;
@@ -325,7 +338,7 @@ MapData * P_OpenMapData(const char * mapname)
 
 			if (i>0)
 			{
-				index = GetMapIndex(maplabel, index, lumpname);
+				index = GetMapIndex(maplabel, index, lumpname, true);
 
 				// The next lump is not part of this map anymore
 				if (index < 0) break;
@@ -468,7 +481,6 @@ void P_FloodZones ()
 
 void P_LoadVertexes (MapData * map)
 {
-	FWadLump data;
 	int i;
 
 	// Determine number of vertices:
@@ -3362,7 +3374,18 @@ void P_SetupLevel (char *lumpname, int position)
 	if (map->MapLumps[0].Size > 0)
 	{
 		BYTE *mapdata = new BYTE[map->MapLumps[0].Size];
+		map->Seek(0);
 		map->file->Read(mapdata, map->MapLumps[0].Size);
+		if (map->Encrypted)
+		{
+			// Why can't the linker find this function? Ugh.
+			//BloodCrypt (mapdata, 0, MIN<int> (map->MapLumps[0].Size, 256));
+			int len = MIN<int> (map->MapLumps[0].Size, 256);
+			for (int i = 0; i < len; ++i)
+			{
+				mapdata[i] ^= i >> 1;
+			}
+		}
 		buildmap = P_LoadBuildMap (mapdata, map->MapLumps[0].Size, &buildthings, &numbuildthings);
 		delete[] mapdata;
 	}

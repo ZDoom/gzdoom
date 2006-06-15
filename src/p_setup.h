@@ -30,7 +30,7 @@
 
 struct MapData
 {
-	wadlump_t MapLumps[ML_BEHAVIOR+1];
+	wadlump_t MapLumps[ML_MAX];
 	bool HasBehavior;
 	bool CloseOnDestruct;
 	bool Encrypted;

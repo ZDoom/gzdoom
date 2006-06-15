@@ -55,6 +55,7 @@ enum
 	ML_BLOCKMAP,		// LUT, motion clipping, walls/grid element
 	ML_BEHAVIOR,		// [RH] Hexen-style scripts. If present, THINGS
 						//		and LINEDEFS are also Hexen-style.
+	ML_MAX,
 
 	// [RH] These are compressed (and extended) nodes. They combine the data from
 	// vertexes, segs, ssectors, and nodes into a single lump.

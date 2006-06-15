@@ -207,7 +207,7 @@ static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname,
 		{"REJECT",	 false},
 		{"BLOCKMAP", false},
 		{"BEHAVIOR", false},
-		{"SCRIPTS",	 false},
+		//{"SCRIPTS",	 false},
 	};
 
 	if (lumpname==NULL) lumpname="";
@@ -296,7 +296,7 @@ MapData *P_OpenMapData(const char * mapname)
 
 				map->MapLumps[index].FilePos = Wads.GetLumpOffset(lump_name + i);
 				map->MapLumps[index].Size = Wads.LumpLength(lump_name + i);
-				strncpy(map->MapLumps[i].Name, lumpname, 8);
+				strncpy(map->MapLumps[index].Name, lumpname, 8);
 			}
 			return map;
 		}
@@ -351,7 +351,7 @@ MapData *P_OpenMapData(const char * mapname)
 
 			map->MapLumps[index].FilePos = offset;
 			map->MapLumps[index].Size = size;
-			strncpy(map->MapLumps[i].Name, lumpname, 8);
+			strncpy(map->MapLumps[index].Name, lumpname, 8);
 		}
 	}
 	else

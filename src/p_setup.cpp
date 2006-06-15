@@ -3380,13 +3380,7 @@ void P_SetupLevel (char *lumpname, int position)
 		map->file->Read(mapdata, map->MapLumps[0].Size);
 		if (map->Encrypted)
 		{
-			// Why can't the linker find this function? Ugh.
-			//BloodCrypt (mapdata, 0, MIN<int> (map->MapLumps[0].Size, 256));
-			int len = MIN<int> (map->MapLumps[0].Size, 256);
-			for (int i = 0; i < len; ++i)
-			{
-				mapdata[i] ^= i >> 1;
-			}
+			BloodCrypt (mapdata, 0, MIN<int> (map->MapLumps[0].Size, 256));
 		}
 		buildmap = P_LoadBuildMap (mapdata, map->MapLumps[0].Size, &buildthings, &numbuildthings);
 		delete[] mapdata;
@@ -3461,14 +3455,14 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
 		FWadLump test;
-		DWORD id = MAKE_ID('X','x','X','x'), idcheck;
+		DWORD id = MAKE_ID('X','x','X','x'), idcheck=0;
 
 		if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
 		{
 			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 		}
-		else if (map->MapLumps[ML_ZNODES].Size != 0)
+		else if (map->MapLumps[ML_GLZNODES].Size != 0)
 		{
 			// If normal nodes are not present but GL nodes are, use them.
 			map->Seek(ML_GLZNODES);

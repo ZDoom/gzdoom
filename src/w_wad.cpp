@@ -127,7 +127,6 @@ void W_SysWadInit ();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void BloodCrypt (void *data, int key, int len);
 static void PrintLastError ();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------

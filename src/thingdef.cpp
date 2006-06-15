@@ -1665,6 +1665,13 @@ do_stop:
 								v=clamp<int>(sc_Number, 0, 90);
 								break;
 
+							case '!':		// not boolean (to simulate parameters which default to 1)
+								SC_MustGetNumber();
+								v=!sc_Number;
+								break;
+
+							*/
+
 							case 'I':
 							case 'i':		// Integer
 								SC_MustGetNumber();
@@ -1677,12 +1684,6 @@ do_stop:
 								v=fixed_t(sc_Float*FRACUNIT);
 								break;
 
-							case '!':		// not boolean (to simulate parameters which default to 1)
-								SC_MustGetNumber();
-								v=!sc_Number;
-								break;
-
-							*/
 
 							case 'S':
 							case 's':		// Sound name

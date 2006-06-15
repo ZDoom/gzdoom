@@ -290,6 +290,7 @@ MapData *P_OpenMapData(const char * mapname)
 				// names and for any valid level lump this always returns the short name.
 				const char * lumpname = Wads.GetLumpFullName(lump_name + i);
 				index = GetMapIndex(mapname, index, lumpname, i != 1 || map->MapLumps[0].Size == 0);
+				if (index == ML_BEHAVIOR) map->HasBehavior = true;
 
 				// The next lump is not part of this map anymore
 				if (index < 0) break;
@@ -339,6 +340,7 @@ MapData *P_OpenMapData(const char * mapname)
 			if (i>0)
 			{
 				index = GetMapIndex(maplabel, index, lumpname, true);
+				if (index == ML_BEHAVIOR) map->HasBehavior = true;
 
 				// The next lump is not part of this map anymore
 				if (index < 0) break;
@@ -3461,12 +3463,12 @@ void P_SetupLevel (char *lumpname, int position)
 		FWadLump test;
 		DWORD id = MAKE_ID('X','x','X','x'), idcheck;
 
-		if (map->MapLumps[ML_ZNODES].Size != 0)
+		if (map->MapLumps[ML_ZNODES].Size != 0 && !UsingGLNodes)
 		{
 			map->Seek(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 		}
-		else
+		else if (map->MapLumps[ML_ZNODES].Size != 0)
 		{
 			// If normal nodes are not present but GL nodes are, use them.
 			map->Seek(ML_GLZNODES);
@@ -3517,21 +3519,6 @@ void P_SetupLevel (char *lumpname, int position)
 			unclock (times[9]);
 		}
 
-		/* Checking for compressed GL nodes is similar to above, and
-		 * should look something like this:
-		FWadLump test = Wads.OpenLumpNum (lumpnum+ML_GLZNODES);
-		DWORD id;
-
-		test.Read (&id, 4);
-		if (id == MAKE_ID('Z','G','L','N'))
-		{
-			P_LoadGLZNodes (test);
-		}
-		else
-		{
-			// Load normal GL nodes, if present
-		}
-		*/
 	}
 	if (ForceNodeBuild)
 	{
@@ -3547,8 +3534,8 @@ void P_SetupLevel (char *lumpname, int position)
 			lines, numlines
 		};
 		leveldata.FindMapBounds ();
-		FNodeBuilder builder (leveldata, polyspots, anchors, genglnodes, CPU.bSSE2);
-		UsingGLNodes = genglnodes;
+		UsingGLNodes |= genglnodes;
+		FNodeBuilder builder (leveldata, polyspots, anchors, UsingGLNodes, CPU.bSSE2);
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
 			segs, numsegs,

@@ -92,12 +92,9 @@ IMPLEMENT_ACTOR (AArchvile, Doom, 64, 111)
 	PROP_PainSound ("vile/pain")
 	PROP_DeathSound ("vile/death")
 	PROP_ActiveSound ("vile/active")
-END_DEFAULTS
+	PROP_Obituary("$OB_VILE")
 
-const char *AArchvile::GetObituary ()
-{
-	return GStrings("OB_VILE");
-}
+END_DEFAULTS
 
 class AArchvileFire : public AActor
 {

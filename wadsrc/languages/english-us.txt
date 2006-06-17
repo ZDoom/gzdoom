@@ -966,6 +966,7 @@ TXT_WEAPON_C4 = "WRAITHVERGE ASSEMBLED";
 TXT_WEAPON_M2 = "FROST SHARDS";
 TXT_WEAPON_M3 = "ARC OF DEATH";
 TXT_WEAPON_M4 = "BLOODSCOURGE ASSEMBLED";
+TXT_WEAPONPIECE = "A weapon piece! This is your lucky day!";
 TXT_QUIETUS_PIECE = "SEGMENT OF QUIETUS";
 TXT_WRAITHVERGE_PIECE = "SEGMENT OF WRAITHVERGE";
 TXT_BLOODSCOURGE_PIECE = "SEGMENT OF BLOODSCOURGE";
@@ -1013,9 +1014,27 @@ TXT_SHADOWARMOR = "You picked up the Shadow armor.";
 TXT_ENVSUIT = "You picked up the Environmental Suit.";
 TXT_GUARDUNIFORM = "You picked up the Guard Uniform.";
 TXT_OFFICERSUNIFORM = "You picked up the Officer's Uniform.";
+TXT_FTHROWERPARTS = "You picked up the flame thrower parts.";
 TXT_REPORT = "You picked up the report.";
 TXT_INFO = "You picked up the info.";
 TXT_TARGETER = "You picked up the Targeter.";
+TXT_COMMUNICATOR = "You picked up the Communicator";
+TXT_COIN = "You picked up the coin.";
+TXT_XGOLD = "You picked up %d gold.";
+TXT_BEACON = "You picked up the Teleporter Beacon.";
+TXT_DEGNINORE = "You picked up the Degnin Ore.";
+TXT_SCANNER = "You picked up the scanner.";
+TXT_NEEDMAP = "The scanner won't work without a map!\n";
+TXT_PRISONPASS = "You picked up the Prison pass.";
+
+TXT_STRIFECROSSBOW = "You picked up the crossbow";
+TXT_ASSAULTGUN = "You picked up the assault gun";
+TXT_MMLAUNCHER = "You picked up the mini missile launcher";
+TXT_FLAMER = "You picked up the flame thrower";
+TXT_MAULER = "You picked up the mauler";
+TXT_GLAUNCHER = "You picked up the Grenade launcher";
+TXT_SIGIL = "You picked up the SIGIL.";
+
 
 TXT_BASEKEY = "You picked up the Base Key.";
 TXT_GOVSKEY = "You picked up the Govs Key.";
@@ -1045,6 +1064,18 @@ TXT_FACTORYKEY = "You picked up the Factory Key.";
 TXT_MINEKEY = "You picked up the Mine Key.";
 TXT_NEWKEY5 = "You picked up the New Key5.";
 TXT_ORACLEPASS = "You picked up the Oracle Pass.";
+
+TXT_HEGRENADES = "You picked up the HE-Grenade Rounds.";
+TXT_PHGRENADES = "You picked up the Phoshorus-Grenade Rounds.";
+TXT_CLIPOFBULLETS = "You picked up the clip of bullets.";
+TXT_BOXOFBULLETS = "You picked up the box of bullets.";
+TXT_MINIMISSILES = "You picked up the mini missiles.";
+TXT_CRATEOFMISSILES = "You picked up the crate of missiles.";
+TXT_ENERGYPOD = "You picked up the energy pod.";
+TXT_ENERGYPACK = "You picked up the energy pack.";
+TXT_POISONBOLTS = "You picked up the poison bolts.";
+TXT_ELECTRICBOLTS = "You picked up the electric bolts.";
+TXT_AMMOSATCHEL = "You picked up the ammo satchel";
 
 // Random dialogs
 

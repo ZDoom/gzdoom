@@ -27,8 +27,6 @@ class ASorcerer2 : public AActor
 public:
 	void Serialize (FArchive &arc);
 	void BeginPlay ();
-	const char *GetObituary ();
-	const char *GetHitObituary ();
 
 	int NumBossSpots;
 	AActor *FirstBossSpot;
@@ -39,8 +37,6 @@ class AWizard : public AActor
 	DECLARE_ACTOR (AWizard, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary ();
-	const char *GetHitObituary ();
 };
 
 void P_DSparilTeleport (AActor *actor);

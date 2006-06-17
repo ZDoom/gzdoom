@@ -220,7 +220,6 @@ class AChicken : public AActor
 	DECLARE_ACTOR (AChicken, AActor)
 public:
 	void Destroy ();
-	const char *GetObituary ();
 	void Die (AActor *source, AActor *inflictor);
 };
 
@@ -275,6 +274,7 @@ IMPLEMENT_ACTOR (AChicken, Heretic, -1, 122)
 	PROP_PainSound ("chicken/pain")
 	PROP_DeathSound ("chicken/death")
 	PROP_ActiveSound ("chicken/active")
+	PROP_Obituary("$OB_CHICKEN")
 END_DEFAULTS
 
 void AChicken::Destroy ()
@@ -284,11 +284,6 @@ void AChicken::Destroy ()
 		tracer->Destroy ();
 	}
 	Super::Destroy ();
-}
-
-const char *AChicken::GetObituary ()
-{
-	return GStrings("OB_CHICKEN");
 }
 
 void AChicken::Die (AActor *source, AActor *inflictor)

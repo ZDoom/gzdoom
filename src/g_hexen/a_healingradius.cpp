@@ -19,7 +19,6 @@ class AArtiHealingRadius : public AInventory
 	DECLARE_ACTOR (AArtiHealingRadius, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState AArtiHealingRadius::States[] =
@@ -50,6 +49,7 @@ IMPLEMENT_ACTOR (AArtiHealingRadius, Hexen, 10120, 0)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIHRAD")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTIHEALINGRADIUS")
 END_DEFAULTS
 
 bool AArtiHealingRadius::Use (bool pickup)
@@ -68,9 +68,4 @@ bool AArtiHealingRadius::Use (bool pickup)
 	}
 	return effective;
 
-}
-
-const char *AArtiHealingRadius::PickupMessage ()
-{
-	return GStrings("TXT_ARTIHEALINGRADIUS");
 }

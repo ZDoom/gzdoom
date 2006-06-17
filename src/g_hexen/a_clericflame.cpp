@@ -27,11 +27,6 @@ void A_CFlameMissile (AActor *);
 class ACWeapFlame : public AClericWeapon
 {
 	DECLARE_ACTOR (ACWeapFlame, AClericWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WEAPON_C3");
-	}
 };
 
 FState ACWeapFlame::States[] =
@@ -94,6 +89,7 @@ IMPLEMENT_ACTOR (ACWeapFlame, Hexen, 8009, 0)
 	PROP_Weapon_MoveCombatDist (27000000)
 	PROP_Weapon_AmmoType1 ("Mana2")
 	PROP_Weapon_ProjectileType ("CFlameMissile")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_C3")
 END_DEFAULTS
 
 // Floor Flame --------------------------------------------------------------

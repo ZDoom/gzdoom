@@ -1,4 +1,21 @@
 June 17, 2006 (Changes by Graf Zahl)
+- Converted a_doomhealth.cpp to DECORATE.
+- Added a PickupMessage property to the internal actor parser, replaced
+  most of the virtual PickupMessages with it and placed the code that
+  reads the metadata into AInventory::PickupMessage. Now the
+  PickupMessage method is truly virtual and I can do:
+   Added a Health.LowMessage property to define double message items like
+   Doom's medikit in DECORATE.
+- Since defining Mana3 as an ammo type and then overriding the TryPickup
+  method means that this item defeats all ammo checks in the game it might
+  as well be defined as a CustomInventory item. At least this fixes the
+  amount given in easy and very hard skills.
+- Converted all ammo items to DECORATE.
+- Changed internal property setting of ammo types and sister weapons
+  to use fuglyname as for DECORATE definitions. This allows to export
+  the ammo definitions into DECORATE definitions without doing it for
+  the weapons themselves.
+- Replaced obituary methods with actor properties.
 - Fixed: The secret map check didn't work for maps inside Zips.
 
 June 14, 2006

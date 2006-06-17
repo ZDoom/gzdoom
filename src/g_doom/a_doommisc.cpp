@@ -45,12 +45,8 @@ IMPLEMENT_ACTOR (AExplosiveBarrel, Doom, 2035, 125)
 	PROP_DeathState (S_BEXP)
 
 	PROP_DeathSound ("world/barrelx")
+	PROP_Obituary("$OB_BARREL")
 END_DEFAULTS
-
-const char *AExplosiveBarrel::GetObituary ()
-{
-	return GStrings("OB_BARREL");
-}
 
 void A_BarrelDestroy (AActor *actor)
 {

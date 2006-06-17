@@ -240,8 +240,10 @@ actors/shared/debris.txt					decorate/shared/debris.txt
 actors/shared/splashes.txt					decorate/shared/splashes.txt
 
 actors/doom/deadthings.txt					decorate/doom/deadthings.txt
+actors/doom/doomammo.txt					decorate/doom/doomammo.txt
 actors/doom/doomarmor.txt					decorate/doom/doomarmor.txt
 actors/doom/doomartifacts.txt				decorate/doom/doomartifacts.txt
+actors/doom/doomhealth.txt					decorate/doom/doomhealth.txt
 actors/doom/doomkeys.txt					decorate/doom/doomkeys.txt
 actors/doom/doomdecorations.txt				decorate/doom/doomdecorations.txt
 actors/doom/stealthmonsters.txt				decorate/doom/stealthmonsters.txt
@@ -249,6 +251,7 @@ actors/doom/stealthmonsters.txt				decorate/doom/stealthmonsters.txt
 actors/raven/ravenartifacts.txt				decorate/raven/ravenartifacts.txt
 actors/raven/ravenhealth.txt				decorate/raven/ravenhealth.txt
 
+actors/heretic/hereticammo.txt				decorate/heretic/hereticammo.txt
 actors/heretic/hereticarmor.txt				decorate/heretic/hereticarmor.txt
 actors/heretic/hereticartifacts.txt			decorate/heretic/hereticartifacts.txt
 actors/heretic/heretickeys.txt				decorate/heretic/heretickeys.txt
@@ -259,6 +262,7 @@ actors/hexen/hexenarmor.txt					decorate/hexen/hexenarmor.txt
 actors/hexen/hexendecorations.txt			decorate/hexen/hexendecorations.txt
 actors/hexen/hexenkeys.txt					decorate/hexen/hexenkeys.txt
 actors/hexen/hexenspecialdecs.txt			decorate/hexen/hexenspecialdecs.txt
+actors/hexen/mana.txt						decorate/hexen/mana.txt
 actors/hexen/puzzleitems.txt				decorate/hexen/puzzleitems.txt
 actors/hexen/scriptprojectiles.txt			decorate/hexen/scriptprojectiles.txt
 actors/hexen/speedboots.txt					decorate/hexen/speedboots.txt
@@ -268,6 +272,7 @@ actors/strife/merchants.txt                 decorate/strife/merchants.txt
 actors/strife/peasants.txt                  decorate/strife/peasants.txt
 actors/strife/questitems.txt                decorate/strife/questitems.txt
 actors/strife/ratbuddy.txt                  decorate/strife/ratbuddy.txt
+actors/strife/strifeammo.txt                decorate/strife/strifeammo.txt
 actors/strife/strifearmor.txt               decorate/strife/strifearmor.txt
 actors/strife/strifeitems.txt               decorate/strife/strifeitems.txt
 actors/strife/strifekeys.txt                decorate/strife/strifekeys.txt

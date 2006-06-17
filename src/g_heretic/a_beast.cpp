@@ -20,7 +20,6 @@ class ABeast : public AActor
 	DECLARE_ACTOR (ABeast, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary ();
 };
 
 FState ABeast::States[] =
@@ -89,16 +88,12 @@ IMPLEMENT_ACTOR (ABeast, Heretic, 70, 3)
 	PROP_PainSound ("beast/pain")
 	PROP_DeathSound ("beast/death")
 	PROP_ActiveSound ("beast/active")
+	PROP_Obituary("$OB_BEAST")
 END_DEFAULTS
 
 void ABeast::NoBlockingSet ()
 {
 	P_DropItem (this, "CrossbowAmmo", 10, 84);
-}
-
-const char *ABeast::GetObituary ()
-{
-	return GStrings("OB_BEAST");
 }
 
 // Beast ball ---------------------------------------------------------------

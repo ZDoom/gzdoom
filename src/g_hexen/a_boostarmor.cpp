@@ -13,7 +13,6 @@ class AArtiBoostArmor : public AInventory
 	DECLARE_ACTOR (AArtiBoostArmor, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState AArtiBoostArmor::States[] =
@@ -37,6 +36,7 @@ IMPLEMENT_ACTOR (AArtiBoostArmor, Hexen, 8041, 22)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIBRAC")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTIBOOSTARMOR")
 END_DEFAULTS
 
 bool AArtiBoostArmor::Use (bool pickup)
@@ -82,7 +82,3 @@ bool AArtiBoostArmor::Use (bool pickup)
 	}
 }
 
-const char *AArtiBoostArmor::PickupMessage ()
-{
-	return GStrings("TXT_ARTIBOOSTARMOR");
-}

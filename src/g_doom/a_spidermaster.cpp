@@ -17,8 +17,6 @@ void A_SPosAttackUseAtkSound (AActor *);
 class ASpiderMastermind : public AActor
 {
 	DECLARE_ACTOR (ASpiderMastermind, AActor)
-public:
-	const char *GetObituary () { return GStrings("OB_SPIDER"); }
 };
 
 FState ASpiderMastermind::States[] =
@@ -88,6 +86,7 @@ IMPLEMENT_ACTOR (ASpiderMastermind, Doom, 7, 7)
 	PROP_PainSound ("spider/pain")
 	PROP_DeathSound ("spider/death")
 	PROP_ActiveSound ("spider/active")
+	PROP_Obituary("$OB_SPIDER")
 END_DEFAULTS
 
 void A_SpidRefire (AActor *self)

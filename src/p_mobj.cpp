@@ -2247,16 +2247,6 @@ angle_t AActor::AngleIncrements ()
 	return ANGLE_45;
 }
 
-const char *AActor::GetObituary ()
-{
-	return NULL;
-}
-
-const char *AActor::GetHitObituary ()
-{
-	return GetObituary ();
-}
-
 void AActor::PreExplode ()
 {
 }

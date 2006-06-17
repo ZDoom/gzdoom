@@ -14,9 +14,6 @@ void A_HeadAttack (AActor *);
 class ACacodemon : public AActor
 {
 	DECLARE_ACTOR (ACacodemon, AActor)
-public:
-	const char *GetObituary () { return GStrings("OB_CACO"); }
-	const char *GetHitObituary () { return GStrings("OB_CACOHIT"); }
 };
 
 FState ACacodemon::States[] =
@@ -76,6 +73,8 @@ IMPLEMENT_ACTOR (ACacodemon, Doom, 3005, 19)
 	PROP_DeathSound ("caco/death")
 	PROP_ActiveSound ("caco/active")
 	PROP_AttackSound ("caco/melee")
+	PROP_Obituary("$OB_CACO")
+	PROP_HitObituary("$OB_CACOHIT")
 END_DEFAULTS
 
 class ACacodemonBall : public AActor

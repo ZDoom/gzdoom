@@ -26,15 +26,11 @@ public:
 	void BeginPlay ();
 protected:
 	bool MatchPlayerClass (AActor *toucher);
-	const char *PieceMessage ();
 };
 
-IMPLEMENT_ABSTRACT_ACTOR (AFighterWeaponPiece)
-
-const char *AFighterWeaponPiece::PieceMessage ()
-{
-	return GStrings("TXT_QUIETUS_PIECE");
-}
+IMPLEMENT_STATELESS_ACTOR (AFighterWeaponPiece, Hexen, -1, 0)
+	PROP_Inventory_PickupMessage("$TXT_QUIETUS_PIECE")
+END_DEFAULTS
 
 bool AFighterWeaponPiece::MatchPlayerClass (AActor *toucher)
 {
@@ -145,11 +141,6 @@ END_DEFAULTS
 class AFWeapQuietus : public AFighterWeapon
 {
 	DECLARE_ACTOR (AFWeapQuietus, AFighterWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WEAPON_F4");
-	}
 };
 
 FState AFWeapQuietus::States[] =
@@ -213,6 +204,7 @@ IMPLEMENT_ACTOR (AFWeapQuietus, Hexen, -1, 0)
 	PROP_Weapon_AmmoType1 ("Mana1")
 	PROP_Weapon_AmmoType2 ("Mana2")
 	PROP_Weapon_ProjectileType ("FSwordMissile")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_F4")
 END_DEFAULTS
 
 // Fighter Sword Missile ----------------------------------------------------

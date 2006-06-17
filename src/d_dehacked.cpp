@@ -2639,9 +2639,6 @@ bool ADehackedPickup::TryPickup (AActor *toucher)
 
 const char *ADehackedPickup::PickupMessage ()
 {
-	const char *message = RealPickup->GetClass()->Meta.GetMetaString (AIMETA_PickupMessage);
-	if (message != NULL) return message;
-
 	return RealPickup->PickupMessage ();
 }
 

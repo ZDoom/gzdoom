@@ -18,6 +18,7 @@ END_POINTERS
 
 BEGIN_STATELESS_DEFAULTS (AFourthWeaponPiece, Hexen, -1, 0)
 	PROP_Inventory_PickupSound ("misc/w_pkup")
+	PROP_Inventory_PickupMessage("$TXT_WEAPONPIECE")
 END_DEFAULTS
 
 void AFourthWeaponPiece::Serialize (FArchive &arc)
@@ -34,18 +35,13 @@ const char *AFourthWeaponPiece::PickupMessage ()
 	}
 	else
 	{
-		return PieceMessage ();
+		return Super::PickupMessage ();
 	}
 }
 
 bool AFourthWeaponPiece::MatchPlayerClass (AActor *toucher)
 {
 	return true;
-}
-
-const char *AFourthWeaponPiece::PieceMessage ()
-{
-	return "A weapon piece! This is your lucky day!";
 }
 
 void AFourthWeaponPiece::PlayPickupSound (AActor *toucher)
@@ -73,6 +69,8 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 	bool checkAssembled;
 	bool gaveWeapon;
 	int gaveMana;
+	const PClass *mana1 = PClass::FindClass(NAME_Mana1);
+	const PClass *mana2 = PClass::FindClass(NAME_Mana2);
 
 	checkAssembled = true;
 	gaveWeapon = false;
@@ -85,8 +83,8 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 			return false;
 		}
 		checkAssembled = false;
-		gaveMana = toucher->GiveAmmo (RUNTIME_CLASS(AMana1), 20) +
-				   toucher->GiveAmmo (RUNTIME_CLASS(AMana2), 20);
+		gaveMana = toucher->GiveAmmo (mana1, 20) +
+				   toucher->GiveAmmo (mana2, 20);
 		if (!gaveMana)
 		{ // Didn't need the mana, so don't pick it up
 			return false;
@@ -98,13 +96,13 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 		{ // Already has the piece
 			return false;
 		}
-		toucher->GiveAmmo (RUNTIME_CLASS(AMana1), 20);
-		toucher->GiveAmmo (RUNTIME_CLASS(AMana2), 20);
+		toucher->GiveAmmo (mana1, 20);
+		toucher->GiveAmmo (mana2, 20);
 	}
 	else
 	{ // Deathmatch or singleplayer game
-		gaveMana = toucher->GiveAmmo (RUNTIME_CLASS(AMana1), 20) +
-				   toucher->GiveAmmo (RUNTIME_CLASS(AMana2), 20);
+		gaveMana = toucher->GiveAmmo (mana1, 20) +
+				   toucher->GiveAmmo (mana2, 20);
 		if (toucher->player->pieces & PieceValue)
 		{ // Already has the piece, check if mana needed
 			if (!gaveMana)

@@ -20,226 +20,6 @@ static FRandom pr_fireplasma ("FirePlasma");
 static FRandom pr_firerail ("FireRail");
 static FRandom pr_bfgspray ("BFGSpray");
 
-/* ammo ********************************************************************/
-
-// Clip --------------------------------------------------------------------
-
-class AClip : public AAmmo
-{
-	DECLARE_ACTOR (AClip, AAmmo)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTCLIP");
-	}
-};
-
-FState AClip::States[] =
-{
-	S_NORMAL (CLIP, 'A',   -1, NULL 				, NULL)
-};
-
-IMPLEMENT_ACTOR (AClip, Doom, 2007, 11)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Amount (10)
-	PROP_Inventory_MaxAmount (200)
-	PROP_Ammo_BackpackAmount (10)
-	PROP_Ammo_BackpackMaxAmount (400)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("CLIPA0")
-END_DEFAULTS
-
-// Clip box ----------------------------------------------------------------
-
-class AClipBox : public AClip
-{
-	DECLARE_ACTOR (AClipBox, AClip)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTCLIPBOX");
-	}
-};
-
-FState AClipBox::States[] =
-{
-	S_NORMAL (AMMO, 'A',   -1, NULL 				, NULL)
-};
-
-IMPLEMENT_ACTOR (AClipBox, Doom, 2048, 139)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Amount (50)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-// Rocket ------------------------------------------------------------------
-
-class ARocketAmmo : public AAmmo
-{
-	DECLARE_ACTOR (ARocketAmmo, AAmmo)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTROCKET");
-	}
-};
-
-FState ARocketAmmo::States[] =
-{
-	S_NORMAL (ROCK, 'A',   -1, NULL 				, NULL)
-};
-
-IMPLEMENT_ACTOR (ARocketAmmo, Doom, 2010, 140)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (26)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Amount (1)
-	PROP_Inventory_MaxAmount (50)
-	PROP_Ammo_BackpackAmount (1)
-	PROP_Ammo_BackpackMaxAmount (100)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("ROCKA0")
-END_DEFAULTS
-
-// Rocket box --------------------------------------------------------------
-
-class ARocketBox : public ARocketAmmo
-{
-	DECLARE_ACTOR (ARocketBox, ARocketAmmo)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTROCKBOX");
-	}
-};
-
-FState ARocketBox::States[] =
-{
-	S_NORMAL (BROK, 'A',   -1, NULL 				, NULL)
-};
-
-IMPLEMENT_ACTOR (ARocketBox, Doom, 2046, 141)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Amount (5)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-// Cell --------------------------------------------------------------------
-
-class ACell : public AAmmo
-{
-	DECLARE_ACTOR (ACell, AAmmo)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTCELL");
-	}
-};
-
-FState ACell::States[] =
-{
-	S_NORMAL (CELL, 'A',   -1, NULL 				, NULL)
-};
-
-IMPLEMENT_ACTOR (ACell, Doom, 2047, 75)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (10)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Amount (20)
-	PROP_Inventory_MaxAmount (300)
-	PROP_Ammo_BackpackAmount (20)
-	PROP_Ammo_BackpackMaxAmount (600)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("CELLA0")
-END_DEFAULTS
-
-// Cell pack ---------------------------------------------------------------
-
-class ACellPack : public ACell
-{
-	DECLARE_ACTOR (ACellPack, ACell)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTCELLBOX");
-	}
-};
-
-FState ACellPack::States[] =
-{
-	S_NORMAL (CELP, 'A',   -1, NULL 				, NULL)
-};
-
-IMPLEMENT_ACTOR (ACellPack, Doom, 17, 142)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (18)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Amount (100)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-// Shells ------------------------------------------------------------------
-
-class AShell : public AAmmo
-{
-	DECLARE_ACTOR (AShell, AAmmo)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTSHELLS");
-	}
-};
-
-FState AShell::States[] =
-{
-	S_NORMAL (SHEL, 'A',   -1, NULL 				, NULL)
-};
-
-IMPLEMENT_ACTOR (AShell, Doom, 2008, 12)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (8)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Amount (4)
-	PROP_Inventory_MaxAmount (50)
-	PROP_Ammo_BackpackAmount (4)
-	PROP_Ammo_BackpackMaxAmount (100)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("SHELA0")
-END_DEFAULTS
-
-// Shell box ---------------------------------------------------------------
-
-class AShellBox : public AShell
-{
-	DECLARE_ACTOR (AShellBox, AShell)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTSHELLBOX");
-	}
-};
-
-FState AShellBox::States[] =
-{
-	S_NORMAL (SBOX, 'A',   -1, NULL 				, NULL)
-};
-
-IMPLEMENT_ACTOR (AShellBox, Doom, 2049, 143)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (10)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Amount (20)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-/* the weapons that use the ammo above *************************************/
-
 // Fist ---------------------------------------------------------------------
 
 void A_Punch (AActor *);
@@ -247,8 +27,6 @@ void A_Punch (AActor *);
 class AFist : public AWeapon
 {
 	DECLARE_ACTOR (AFist, AWeapon)
-public:
-	const char *GetObituary ();
 };
 
 FState AFist::States[] =
@@ -279,12 +57,9 @@ IMPLEMENT_ACTOR (AFist, Doom, -1, 0)
 	PROP_Weapon_AtkState (S_PUNCH1)
 	PROP_Weapon_HoldAtkState (S_PUNCH1)
 	PROP_Weapon_Kickback (100)
-END_DEFAULTS
+	PROP_Obituary("$OB_MPFIST")
 
-const char *AFist::GetObituary ()
-{
-	return GStrings("OB_MPFIST");
-}
+END_DEFAULTS
 
 //
 // A_Punch
@@ -334,8 +109,6 @@ void A_FirePistol (AActor *);
 class APistol : public AWeapon
 {
 	DECLARE_ACTOR (APistol, AWeapon)
-public:
-	const char *GetObituary ();
 };
 
 FState APistol::States[] =
@@ -378,12 +151,8 @@ IMPLEMENT_ACTOR (APistol, Doom, -1, 0)
 	PROP_Weapon_Kickback (100)
 	PROP_Weapon_MoveCombatDist (25000000)
 	PROP_Weapon_AmmoType1 ("Clip")
+	PROP_Obituary("$OB_MPPISTOL")
 END_DEFAULTS
-
-const char *APistol::GetObituary ()
-{
-	return GStrings("OB_MPPISTOL");
-}
 
 //
 // A_FirePistol
@@ -424,9 +193,6 @@ void A_Saw (AActor *);
 class AChainsaw : public AWeapon
 {
 	DECLARE_ACTOR (AChainsaw, AWeapon)
-public:
-	const char *PickupMessage ();
-	const char *GetObituary ();
 };
 
 FState AChainsaw::States[] =
@@ -465,17 +231,9 @@ IMPLEMENT_ACTOR (AChainsaw, Doom, 2005, 32)
 	PROP_Weapon_HoldAtkState (S_SAW1)
 	PROP_Weapon_UpSound ("weapons/sawup")
 	PROP_Weapon_ReadySound ("weapons/sawidle")
+	PROP_Obituary("$OB_MPCHAINSAW")
+	PROP_Inventory_PickupMessage("$GOTCHAINSAW")
 END_DEFAULTS
-
-const char *AChainsaw::PickupMessage ()
-{
-	return GStrings("GOTCHAINSAW");
-}
-
-const char *AChainsaw::GetObituary ()
-{
-	return GStrings("OB_MPCHAINSAW");
-}
 
 //
 // A_Saw
@@ -545,9 +303,6 @@ void A_FireShotgun (AActor *);
 class AShotgun : public AWeapon
 {
 	DECLARE_ACTOR (AShotgun, AWeapon)
-public:
-	const char *PickupMessage ();
-	const char *GetObituary ();
 };
 
 FState AShotgun::States[] =
@@ -598,17 +353,9 @@ IMPLEMENT_ACTOR (AShotgun, Doom, 2001, 27)
 	PROP_Weapon_Kickback (100)
 	PROP_Weapon_MoveCombatDist (24000000)
 	PROP_Weapon_AmmoType1 ("Shell")
+	PROP_Obituary("$OB_MPSHOTGUN")
+	PROP_Inventory_PickupMessage("$GOTSHOTGUN")
 END_DEFAULTS
-
-const char *AShotgun::PickupMessage ()
-{
-	return GStrings("GOTSHOTGUN");
-}
-
-const char *AShotgun::GetObituary ()
-{
-	return GStrings("OB_MPSHOTGUN");
-}
 
 //
 // A_FireShotgun
@@ -649,9 +396,6 @@ void A_CloseShotgun2 (AActor *actor);
 class ASuperShotgun : public AWeapon
 {
 	DECLARE_ACTOR (ASuperShotgun, AWeapon)
-public:
-	const char *PickupMessage ();
-	const char *GetObituary ();
 };
 
 FState ASuperShotgun::States[] =
@@ -707,17 +451,9 @@ IMPLEMENT_ACTOR (ASuperShotgun, Doom, 82, 33)
 	PROP_Weapon_Kickback (100)
 	PROP_Weapon_MoveCombatDist (15000000)
 	PROP_Weapon_AmmoType1 ("Shell")
+	PROP_Obituary("$OB_MPSSHOTGUN")
+	PROP_Inventory_PickupMessage("$GOTSHOTGUN2")
 END_DEFAULTS
-
-const char *ASuperShotgun::PickupMessage ()
-{
-	return GStrings("GOTSHOTGUN2");
-}
-
-const char *ASuperShotgun::GetObituary ()
-{
-	return GStrings("OB_MPSSHOTGUN");
-}
 
 //
 // A_FireShotgun2
@@ -790,9 +526,6 @@ void A_FireCGun (AActor *);
 class AChaingun : public AWeapon
 {
 	DECLARE_ACTOR (AChaingun, AWeapon)
-public:
-	const char *PickupMessage ();
-	const char *GetObituary ();
 };
 
 FState AChaingun::States[] =
@@ -837,17 +570,9 @@ IMPLEMENT_ACTOR (AChaingun, Doom, 2002, 28)
 	PROP_Weapon_Kickback (100)
 	PROP_Weapon_MoveCombatDist (27000000)
 	PROP_Weapon_AmmoType1 ("Clip")
+	PROP_Obituary("$OB_MPCHAINGUN")
+	PROP_Inventory_PickupMessage("$GOTCHAINGUN")
 END_DEFAULTS
-
-const char *AChaingun::PickupMessage ()
-{
-	return GStrings("GOTCHAINGUN");
-}
-
-const char *AChaingun::GetObituary ()
-{
-	return GStrings("OB_MPCHAINGUN");
-}
 
 //
 // A_FireCGun
@@ -895,8 +620,6 @@ void A_Explode (AActor *);
 class ARocketLauncher : public AWeapon
 {
 	DECLARE_ACTOR (ARocketLauncher, AWeapon)
-public:
-	const char *PickupMessage ();
 };
 
 FState ARocketLauncher::States[] =
@@ -945,12 +668,8 @@ IMPLEMENT_ACTOR (ARocketLauncher, Doom, 2003, 29)
 	PROP_Weapon_MoveCombatDist (18350080)
 	PROP_Weapon_AmmoType1 ("RocketAmmo")
 	PROP_Weapon_ProjectileType ("Rocket")
+	PROP_Inventory_PickupMessage("$GOTLAUNCHER")
 END_DEFAULTS
-
-const char *ARocketLauncher::PickupMessage ()
-{
-	return GStrings("GOTLAUNCHER");
-}
 
 FState ARocket::States[] =
 {
@@ -977,17 +696,13 @@ IMPLEMENT_ACTOR (ARocket, Doom, -1, 127)
 
 	PROP_SeeSound ("weapons/rocklf")
 	PROP_DeathSound ("weapons/rocklx")
+	PROP_Obituary("$OB_MPROCKET")
 END_DEFAULTS
 
 void ARocket::BeginPlay ()
 {
 	Super::BeginPlay ();
 	effects |= FX_ROCKET;
-}
-
-const char *ARocket::GetObituary ()
-{
-	return GStrings("OB_MPROCKET");
 }
 
 //
@@ -1017,8 +732,6 @@ void A_FirePlasma (AActor *);
 class APlasmaRifle : public AWeapon
 {
 	DECLARE_ACTOR (APlasmaRifle, AWeapon)
-public:
-	const char *PickupMessage ();
 };
 
 FState APlasmaRifle::States[] =
@@ -1063,12 +776,8 @@ IMPLEMENT_ACTOR (APlasmaRifle, Doom, 2004, 30)
 	PROP_Weapon_MoveCombatDist (27000000)
 	PROP_Weapon_ProjectileType ("PlasmaBall")
 	PROP_Weapon_AmmoType1 ("Cell")
+	PROP_Inventory_PickupMessage("$GOTPLASMA")
 END_DEFAULTS
-
-const char *APlasmaRifle::PickupMessage ()
-{
-	return GStrings("GOTPLASMA");
-}
 
 FState APlasmaBall::States[] =
 {
@@ -1101,12 +810,8 @@ IMPLEMENT_ACTOR (APlasmaBall, Doom, -1, 51)
 
 	PROP_SeeSound ("weapons/plasmaf")
 	PROP_DeathSound ("weapons/plasmax")
+	PROP_Obituary("$OB_MPPLASMARIFLE")
 END_DEFAULTS
-
-const char *APlasmaBall::GetObituary ()
-{
-	return GStrings("OB_MPPLASMARIFLE");
-}
 
 //
 // A_FirePlasma
@@ -1191,8 +896,6 @@ void A_BFGsound (AActor *);
 class ABFG9000 : public AWeapon
 {
 	DECLARE_ACTOR (ABFG9000, AWeapon)
-public:
-	const char *PickupMessage ();
 };
 
 class ABFGExtra : public AActor
@@ -1245,12 +948,8 @@ IMPLEMENT_ACTOR (ABFG9000, Doom, 2006, 31)
 	PROP_Weapon_MoveCombatDist (10000000)
 	PROP_Weapon_AmmoType1 ("Cell")
 	PROP_Weapon_ProjectileType ("BFGBall")
+	PROP_Inventory_PickupMessage("$GOTBFG9000")
 END_DEFAULTS
-
-const char *ABFG9000::PickupMessage ()
-{
-	return GStrings("GOTBFG9000");
-}
 
 FState ABFGBall::States[] =
 {
@@ -1282,12 +981,8 @@ IMPLEMENT_ACTOR (ABFGBall, Doom, -1, 128)
 	PROP_DeathState (S_BFGLAND)
 
 	PROP_DeathSound ("weapons/bfgx")
+	PROP_Obituary("$OB_MPBFG_BOOM")
 END_DEFAULTS
-
-const char *ABFGBall::GetObituary ()
-{
-	return GStrings("OB_MPBFG_BOOM");
-}
 
 FState ABFGExtra::States[] =
 {

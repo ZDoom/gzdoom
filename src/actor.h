@@ -442,12 +442,6 @@ public:
 	// Smallest yaw interval for a mapthing to be spawned with
 	virtual angle_t AngleIncrements ();
 
-	// Normal/ranged obituary if this actor is the attacker
-	virtual const char *GetObituary ();
-
-	// Melee obituary if this actor is the attacker
-	virtual const char *GetHitObituary ();
-
 	// Return true if the monster should use a missile attack, false for melee
 	virtual bool SuggestMissileAttack (fixed_t dist);
 

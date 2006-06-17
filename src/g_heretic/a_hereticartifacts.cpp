@@ -13,7 +13,6 @@ class AArtiTomeOfPower : public APowerupGiver
 	DECLARE_ACTOR (AArtiTomeOfPower, APowerupGiver)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState AArtiTomeOfPower::States[] =
@@ -28,6 +27,7 @@ IMPLEMENT_ACTOR (AArtiTomeOfPower, Heretic, 86, 134)
 	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIPWBK")
 	PROP_PowerupGiver_Powerup ("PowerWeaponLevel2")
+	PROP_Inventory_PickupMessage("$TXT_ARTITOMEOFPOWER")
 END_DEFAULTS
 
 bool AArtiTomeOfPower::Use (bool pickup)
@@ -49,11 +49,6 @@ bool AArtiTomeOfPower::Use (bool pickup)
 	{
 		return Super::Use (pickup);
 	}
-}
-
-const char *AArtiTomeOfPower::PickupMessage ()
-{
-	return GStrings("TXT_ARTITOMEOFPOWER");
 }
 
 // Time bomb ----------------------------------------------------------------
@@ -99,7 +94,6 @@ class AArtiTimeBomb : public AInventory
 	DECLARE_ACTOR (AArtiTimeBomb, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState AArtiTimeBomb::States[] =
@@ -115,6 +109,7 @@ IMPLEMENT_ACTOR (AArtiTimeBomb, Heretic, 34, 72)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIFBMB")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTIFIREBOMB")
 END_DEFAULTS
 
 bool AArtiTimeBomb::Use (bool pickup)
@@ -128,7 +123,3 @@ bool AArtiTimeBomb::Use (bool pickup)
 	return true;
 }
 
-const char *AArtiTimeBomb::PickupMessage ()
-{
-	return GStrings("TXT_ARTIFIREBOMB");
-}

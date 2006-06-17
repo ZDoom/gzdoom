@@ -65,9 +65,6 @@ void ABossSpot::BeginPlay ()
 class ASorcerer1 : public AActor
 {
 	DECLARE_ACTOR (ASorcerer1, AActor)
-public:
-	const char *GetObituary ();
-	const char *GetHitObituary ();
 };
 
 FState ASorcerer1::States[] =
@@ -137,17 +134,9 @@ IMPLEMENT_ACTOR (ASorcerer1, Heretic, 7, 142)
 	PROP_PainSound ("dsparilserpent/pain")
 	PROP_DeathSound ("dsparilserpent/death")
 	PROP_ActiveSound ("dsparilserpent/active")
+	PROP_Obituary("$OB_DSPARIL1")
+	PROP_HitObituary("$OB_DSPARIL1HIT")
 END_DEFAULTS
-
-const char *ASorcerer1::GetObituary ()
-{
-	return GStrings("OB_DSPARIL1");
-}
-
-const char *ASorcerer1::GetHitObituary ()
-{
-	return GStrings("OB_DSPARIL1HIT");
-}
 
 // Sorcerer FX 1 ------------------------------------------------------------
 
@@ -270,6 +259,8 @@ IMPLEMENT_ACTOR (ASorcerer2, Heretic, -1, 143)
 	PROP_AttackSound ("dsparil/attack")
 	PROP_PainSound ("dsparil/pain")
 	PROP_ActiveSound ("dsparil/active")
+	PROP_Obituary("$OB_DSPARIL2")
+	PROP_HitObituary("$OB_DSPARIL2HIT")
 END_DEFAULTS
 
 void ASorcerer2::Serialize (FArchive &arc)
@@ -293,16 +284,6 @@ void ASorcerer2::BeginPlay ()
 		spot->NextSpot = iterator.Next ();
 		spot = spot->NextSpot;
 	}
-}
-
-const char *ASorcerer2::GetObituary ()
-{
-	return GStrings("OB_DSPARIL2");
-}
-
-const char *ASorcerer2::GetHitObituary ()
-{
-	return GStrings("OB_DSPARIL2HIT");
 }
 
 // Sorcerer 2 FX 1 ----------------------------------------------------------

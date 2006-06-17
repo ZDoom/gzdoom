@@ -242,7 +242,10 @@ enum
 	ADEF_Weapon_ProjectileType,
 	ADEF_PowerupGiver_Powerup,
 	ADEF_Inventory_Icon,
-	ADEF_LastString = ADEF_Inventory_Icon,
+	ADEF_Obituary,
+	ADEF_HitObituary,
+	ADEF_Inventory_PickupMsg,
+	ADEF_LastString = ADEF_Inventory_PickupMsg,
 
 	// The rest of the properties use their type field (upper 2 bits)
 	ADEF_XScale,

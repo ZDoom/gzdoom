@@ -66,12 +66,8 @@ IMPLEMENT_ACTOR (ALostSoul, Doom, 3006, 110)
 	PROP_PainSound ("skull/pain")
 	PROP_DeathSound ("skull/death")
 	PROP_ActiveSound ("skull/active")
+	PROP_Obituary("$OB_SKULL")
 END_DEFAULTS
-
-const char *ALostSoul::GetObituary ()
-{
-	return GStrings("OB_SKULL");
-}
 
 //
 // SkullAttack

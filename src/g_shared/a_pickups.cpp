@@ -854,11 +854,7 @@ void AInventory::Touch (AActor *toucher)
 
 	if (!(ItemFlags & IF_QUIET))
 	{
-		const char *message = GetClass()->Meta.GetMetaString (AIMETA_PickupMessage);
-		if (message == NULL)
-		{
-			message = PickupMessage ();
-		}
+		const char * message = PickupMessage ();
 
 		if (toucher->CheckLocalView (consoleplayer)
 			&& (StaticLastMessageTic != gametic || StaticLastMessage != message))
@@ -930,7 +926,9 @@ void AInventory::DoPickupSpecial (AActor *toucher)
 
 const char *AInventory::PickupMessage ()
 {
-	return "You got a pickup";
+	const char *message = GetClass()->Meta.GetMetaString (AIMETA_PickupMessage);
+
+	return message != NULL? message : "You got a pickup";
 }
 
 //===========================================================================
@@ -1753,6 +1751,28 @@ IMPLEMENT_STATELESS_ACTOR (AHealth, Any, -1, 0)
 	PROP_Inventory_PickupSound ("misc/health_pkup")
 END_DEFAULTS
 
+
+//===========================================================================
+//
+// AHealth :: TryPickup
+//
+//===========================================================================
+const char *AHealth::PickupMessage ()
+{
+	int threshold = GetClass()->Meta.GetMetaInt(AIMETA_LowHealth, 0);
+
+	if (PrevHealth < threshold)
+	{
+		const char *message = GetClass()->Meta.GetMetaString (AIMETA_LowHealthMessage);
+
+		if (message != NULL)
+		{
+			return message;
+		}
+	}
+	return Super::PickupMessage();
+}
+
 //===========================================================================
 //
 // AHealth :: TryPickup
@@ -1766,6 +1786,7 @@ bool AHealth::TryPickup (AActor *other)
 	
 	if (player != NULL)
 	{
+		PrevHealth = other->player->health;
 		if (max == 0)
 		{
 			max = ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth) + player->stamina;
@@ -1794,6 +1815,7 @@ bool AHealth::TryPickup (AActor *other)
 	}
 	else
 	{
+		PrevHealth = INT_MAX;
 		if (P_GiveBody(other, Amount) || ItemFlags & IF_ALWAYSPICKUP)
 		{
 			GoAwayAndDie ();
@@ -2020,14 +2042,9 @@ void ABackpack::DetachFromOwner ()
 
 //===========================================================================
 //
-// ABackpack :: PickupMessage
+// ABackpack
 //
 //===========================================================================
-
-const char *ABackpack::PickupMessage ()
-{
-	return GStrings("GOTBACKPACK");
-}
 
 FState ABackpack::States[] =
 {
@@ -2038,6 +2055,7 @@ IMPLEMENT_ACTOR (ABackpack, Doom, 8, 144)
 	PROP_HeightFixed (26)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_Inventory_PickupMessage("$GOTBACKPACK")
 END_DEFAULTS
 
 IMPLEMENT_ABSTRACT_ACTOR (AMapRevealer)
@@ -2073,15 +2091,6 @@ IMPLEMENT_ACTOR (ACommunicator, Strife, 206, 0)
 	PROP_Inventory_Icon ("I_COMM")
 	PROP_Tag ("Communicator")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_COMMUNICATOR")
 END_DEFAULTS
 
-//===========================================================================
-//
-// ACommunicator :: PickupMessage
-//
-//===========================================================================
-
-const char *ACommunicator::PickupMessage ()
-{
-	return "You picked up the Communicator";
-}

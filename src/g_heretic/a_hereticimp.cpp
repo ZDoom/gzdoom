@@ -25,9 +25,6 @@ void A_ImpXDeath2 (AActor *);
 class AHereticImp : public AActor
 {
 	DECLARE_ACTOR (AHereticImp, AActor)
-public:
-	const char *GetObituary ();
-	const char *GetHitObituary ();
 };
 
 FState AHereticImp::States[] =
@@ -114,17 +111,9 @@ IMPLEMENT_ACTOR (AHereticImp, Heretic, 66, 5)
 	PROP_PainSound ("himp/pain")
 	PROP_DeathSound ("himp/death")
 	PROP_ActiveSound ("himp/active")
+	PROP_Obituary("$OB_HERETICIMP")
+	PROP_HitObituary("$OB_HERETICIMPHIT")
 END_DEFAULTS
-
-const char *AHereticImp::GetObituary ()
-{
-	return GStrings("OB_HERETICIMP");
-}
-
-const char *AHereticImp::GetHitObituary ()
-{
-	return GStrings("OB_HERETICIMPHIT");
-}
 
 // Heretic imp leader -------------------------------------------------------
 

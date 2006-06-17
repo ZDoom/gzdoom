@@ -22,8 +22,6 @@ class AKnight : public AActor
 	DECLARE_ACTOR (AKnight, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary ();
-	const char *GetHitObituary ();
 };
 
 FState AKnight::States[] =
@@ -82,21 +80,13 @@ IMPLEMENT_ACTOR (AKnight, Heretic, 64, 6)
 	PROP_PainSound ("hknight/pain")
 	PROP_DeathSound ("hknight/death")
 	PROP_ActiveSound ("hknight/active")
+	PROP_Obituary("$OB_BONEKNIGHT")
+	PROP_HitObituary("$OB_BONEKNIGHTHIT")
 END_DEFAULTS
 
 void AKnight::NoBlockingSet ()
 {
 	P_DropItem (this, "CrossbowAmmo", 5, 84);
-}
-
-const char *AKnight::GetObituary ()
-{
-	return GStrings("OB_BONEKNIGHT");
-}
-
-const char *AKnight::GetHitObituary ()
-{
-	return GStrings("OB_BONEKNIGHTHIT");
 }
 
 // Knight ghost -------------------------------------------------------------

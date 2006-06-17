@@ -38,18 +38,6 @@ static FRandom pr_fp2 ("FirePhoenixPL2");
 
 #define FLAME_THROWER_TICS (10*TICRATE)
 
-#define AMMO_GWND_WIMPY 10
-#define AMMO_GWND_HEFTY 50
-#define AMMO_CBOW_WIMPY 5
-#define AMMO_CBOW_HEFTY 20
-#define AMMO_BLSR_WIMPY 10
-#define AMMO_BLSR_HEFTY 25
-#define AMMO_SKRD_WIMPY 20
-#define AMMO_SKRD_HEFTY 100
-#define AMMO_PHRD_WIMPY 1
-#define AMMO_PHRD_HEFTY 10
-#define AMMO_MACE_WIMPY 20
-#define AMMO_MACE_HEFTY 100
 
 #define USE_GWND_AMMO_1 1
 #define USE_GWND_AMMO_2 1
@@ -283,58 +271,6 @@ void A_StaffAttackPL2 (AActor *actor)
 
 void A_FireGoldWandPL1 (AActor *);
 void A_FireGoldWandPL2 (AActor *);
-
-// Wimpy ammo ---------------------------------------------------------------
-
-class AGoldWandAmmo : public AAmmo
-{
-	DECLARE_ACTOR (AGoldWandAmmo, AAmmo)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOGOLDWAND1");
-	}
-};
-
-FState AGoldWandAmmo::States[] =
-{
-	S_NORMAL (AMG1, 'A',   -1, NULL 						, NULL),
-};
-
-IMPLEMENT_ACTOR (AGoldWandAmmo, Heretic, 10, 11)
-	PROP_Inventory_Amount (AMMO_GWND_WIMPY)
-	PROP_Inventory_MaxAmount (100)
-	PROP_Ammo_BackpackAmount (AMMO_GWND_WIMPY)
-	PROP_Ammo_BackpackMaxAmount (200)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("INAMGLD")
-END_DEFAULTS
-
-// Hefty ammo ---------------------------------------------------------------
-
-class AGoldWandHefty : public AGoldWandAmmo
-{
-	DECLARE_ACTOR (AGoldWandHefty, AGoldWandAmmo)
-public:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOGOLDWAND2");
-	}
-};
-
-FState AGoldWandHefty::States[] =
-{
-	S_NORMAL (AMG2, 'A',	4, NULL 						, &States[1]),
-	S_NORMAL (AMG2, 'B',	4, NULL 						, &States[2]),
-	S_NORMAL (AMG2, 'C',	4, NULL 						, &States[0])
-};
-
-IMPLEMENT_ACTOR (AGoldWandHefty, Heretic, 12, 12)
-	PROP_Inventory_Amount (AMMO_GWND_HEFTY)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-END_DEFAULTS
 
 // Gold wand ----------------------------------------------------------------
 
@@ -573,68 +509,11 @@ void A_FireCrossbowPL1 (AActor *);
 void A_FireCrossbowPL2 (AActor *);
 void A_BoltSpark (AActor *);
 
-// Wimpy ammo ---------------------------------------------------------------
-
-class ACrossbowAmmo : public AAmmo
-{
-	DECLARE_ACTOR (ACrossbowAmmo, AAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOCROSSBOW1");
-	}
-};
-
-FState ACrossbowAmmo::States[] =
-{
-	S_NORMAL (AMC1, 'A',   -1, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ACrossbowAmmo, Heretic, 18, 33)
-	PROP_Inventory_Amount (AMMO_CBOW_WIMPY)
-	PROP_Inventory_MaxAmount (50)
-	PROP_Ammo_BackpackAmount (AMMO_CBOW_WIMPY)
-	PROP_Ammo_BackpackMaxAmount (100)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("INAMBOW")
-END_DEFAULTS
-
-// Hefty ammo ---------------------------------------------------------------
-
-class ACrossbowHefty : public ACrossbowAmmo
-{
-	DECLARE_ACTOR (ACrossbowHefty, ACrossbowAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOCROSSBOW2");
-	}
-};
-
-FState ACrossbowHefty::States[] =
-{
-	S_NORMAL (AMC2, 'A',	5, NULL 						, &States[1]),
-	S_NORMAL (AMC2, 'B',	5, NULL 						, &States[2]),
-	S_NORMAL (AMC2, 'C',	5, NULL 						, &States[0])
-};
-
-IMPLEMENT_ACTOR (ACrossbowHefty, Heretic, 19, 34)
-	PROP_Inventory_Amount (AMMO_CBOW_HEFTY)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 // Crossbow -----------------------------------------------------------------
 
 class ACrossbow : public AHereticWeapon
 {
 	DECLARE_ACTOR (ACrossbow, AHereticWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WPNCROSSBOW");
-	}
 };
 
 class ACrossbowPowered : public ACrossbow
@@ -711,6 +590,7 @@ IMPLEMENT_ACTOR (ACrossbow, Heretic, 2001, 27)
 	PROP_Weapon_AmmoType1 ("CrossbowAmmo")
 	PROP_Weapon_SisterType ("CrossbowPowered")
 	PROP_Weapon_ProjectileType ("CrossbowFX1")
+	PROP_Inventory_PickupMessage("$TXT_WPNCROSSBOW")
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (ACrossbowPowered, Heretic, -1, 0)
@@ -917,56 +797,6 @@ void A_MaceBallImpact2 (AActor *);
 void A_FireMacePL2 (AActor *);
 void A_DeathBallImpact (AActor *);
 
-// Wimpy ammo ---------------------------------------------------------------
-
-class AMaceAmmo : public AAmmo
-{
-	DECLARE_ACTOR (AMaceAmmo, AAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOMACE1");
-	}
-};
-
-FState AMaceAmmo::States[] =
-{
-	S_NORMAL (AMM1, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AMaceAmmo, Heretic, 13, 35)
-	PROP_Inventory_Amount (AMMO_MACE_WIMPY)
-	PROP_Inventory_MaxAmount (150)
-	PROP_Ammo_BackpackAmount (AMMO_MACE_WIMPY)
-	PROP_Ammo_BackpackMaxAmount (300)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("INAMLOB")
-END_DEFAULTS
-
-// Hefty ammo ---------------------------------------------------------------
-
-class AMaceHefty : public AMaceAmmo
-{
-	DECLARE_ACTOR (AMaceHefty, AMaceAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOMACE1");
-	}
-};
-
-FState AMaceHefty::States[] =
-{
-	S_NORMAL (AMM2, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AMaceHefty, Heretic, 16, 36)
-	PROP_Inventory_Amount (AMMO_MACE_HEFTY)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 // The mace itself ----------------------------------------------------------
 
 class AMace : public AHereticWeapon
@@ -975,11 +805,6 @@ class AMace : public AHereticWeapon
 	HAS_OBJECT_POINTERS
 public:
 	void Serialize (FArchive &arc);
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WPNMACE");
-	}
 protected:
 	bool DoRespawn ();
 	int NumMaceSpots;
@@ -1055,6 +880,7 @@ BEGIN_DEFAULTS (AMace, Heretic, -1, 0)
 	PROP_Weapon_AmmoType1 ("MaceAmmo")
 	PROP_Weapon_SisterType ("MacePowered")
 	PROP_Weapon_ProjectileType ("MaceFX2")
+	PROP_Inventory_PickupMessage("$TXT_WPNMACE")
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (AMacePowered, Heretic, -1, 0)
@@ -1639,11 +1465,6 @@ void A_GauntletSound (AActor *);
 class AGauntlets : public AHereticWeapon
 {
 	DECLARE_ACTOR (AGauntlets, AHereticWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WPNGAUNTLETS");
-	}
 };
 
 class AGauntletsPowered : public AGauntlets
@@ -1711,6 +1532,7 @@ IMPLEMENT_ACTOR (AGauntlets, Heretic, 2005, 32)
 	PROP_Weapon_YAdjust (15)
 	PROP_Weapon_UpSound ("weapons/gauntletsactivate")
 	PROP_Weapon_SisterType ("GauntletsPowered")
+	PROP_Inventory_PickupMessage("$TXT_WPNGAUNTLETS")
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (AGauntletsPowered, Heretic, -1, 0)
@@ -1887,70 +1709,11 @@ void A_FireBlasterPL1 (AActor *);
 void A_FireBlasterPL2 (AActor *);
 void A_SpawnRippers (AActor *);
 
-// Wimpy ammo ---------------------------------------------------------------
-
-class ABlasterAmmo : public AAmmo
-{
-	DECLARE_ACTOR (ABlasterAmmo, AAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOBLASTER1");
-	}
-};
-
-FState ABlasterAmmo::States[] =
-{
-	S_NORMAL (AMB1, 'A',	4, NULL 					, &States[1]),
-	S_NORMAL (AMB1, 'B',	4, NULL 					, &States[2]),
-	S_NORMAL (AMB1, 'C',	4, NULL 					, &States[0])
-};
-
-IMPLEMENT_ACTOR (ABlasterAmmo, Heretic, 54, 37)
-	PROP_Inventory_Amount (AMMO_BLSR_WIMPY)
-	PROP_Inventory_MaxAmount (200)
-	PROP_Ammo_BackpackAmount (AMMO_BLSR_WIMPY)
-	PROP_Ammo_BackpackMaxAmount (400)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("INAMBST")
-END_DEFAULTS
-
-// Hefty ammo ---------------------------------------------------------------
-
-class ABlasterHefty : public ABlasterAmmo
-{
-	DECLARE_ACTOR (ABlasterHefty, ABlasterAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOBLASTER2");
-	}
-};
-
-FState ABlasterHefty::States[] =
-{
-	S_NORMAL (AMB2, 'A',	4, NULL 					, &States[1]),
-	S_NORMAL (AMB2, 'B',	4, NULL 					, &States[2]),
-	S_NORMAL (AMB2, 'C',	4, NULL 					, &States[0])
-};
-
-IMPLEMENT_ACTOR (ABlasterHefty, Heretic, 55, 38)
-	PROP_Inventory_Amount (AMMO_BLSR_HEFTY)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 // Blaster ------------------------------------------------------------------
 
 class ABlaster : public AHereticWeapon
 {
 	DECLARE_ACTOR (ABlaster, AHereticWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WPNBLASTER");
-	}
 };
 
 class ABlasterPowered : public ABlaster
@@ -2006,6 +1769,7 @@ IMPLEMENT_ACTOR (ABlaster, Heretic, 53, 28)
 	PROP_Weapon_MoveCombatDist (27000000)
 	PROP_Weapon_AmmoType1 ("BlasterAmmo")
 	PROP_Weapon_SisterType ("BlasterPowered")
+	PROP_Inventory_PickupMessage("$TXT_WPNBLASTER")
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (ABlasterPowered, Heretic, -1, 0)
@@ -2348,68 +2112,11 @@ void A_HideInCeiling (AActor *);
 void A_SkullRodStorm (AActor *);
 void A_RainImpact (AActor *);
 
-// Wimpy ammo ---------------------------------------------------------------
-
-class ASkullRodAmmo : public AAmmo
-{
-	DECLARE_ACTOR (ASkullRodAmmo, AAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOSKULLROD1");
-	}
-};
-
-FState ASkullRodAmmo::States[] =
-{
-	S_NORMAL (AMS1, 'A',	5, NULL 					, &States[1]),
-	S_NORMAL (AMS1, 'B',	5, NULL 					, &States[0])
-};
-
-IMPLEMENT_ACTOR (ASkullRodAmmo, Heretic, 20, 158)
-	PROP_Inventory_Amount (AMMO_SKRD_WIMPY)
-	PROP_Inventory_MaxAmount (200)
-	PROP_Ammo_BackpackAmount (AMMO_SKRD_WIMPY)
-	PROP_Ammo_BackpackMaxAmount (400)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("INAMRAM")
-END_DEFAULTS
-
-// Hefty ammo ---------------------------------------------------------------
-
-class ASkullRodHefty : public ASkullRodAmmo
-{
-	DECLARE_ACTOR (ASkullRodHefty, ASkullRodAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOSKULLROD2");
-	}
-};
-
-FState ASkullRodHefty::States[] =
-{
-	S_NORMAL (AMS2, 'A',	5, NULL 					, &States[1]),
-	S_NORMAL (AMS2, 'B',	5, NULL 					, &States[0])
-};
-
-IMPLEMENT_ACTOR (ASkullRodHefty, Heretic, 21, 159)
-	PROP_Inventory_Amount (AMMO_SKRD_HEFTY)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 // Skull (Horn) Rod ---------------------------------------------------------
 
 class ASkullRod : public AHereticWeapon
 {
 	DECLARE_ACTOR (ASkullRod, AHereticWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WPNSKULLROD");
-	}
 };
 
 class ASkullRodPowered : public ASkullRod
@@ -2465,6 +2172,7 @@ IMPLEMENT_ACTOR (ASkullRod, Heretic, 2004, 30)
 	PROP_Weapon_AmmoType1 ("SkullRodAmmo")
 	PROP_Weapon_SisterType ("SkullRodPowered")
 	PROP_Weapon_ProjectileType ("HornRodFX1")
+	PROP_Inventory_PickupMessage("$TXT_WPNSKULLROD")
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (ASkullRodPowered, Heretic, -1, 0)
@@ -2871,60 +2579,6 @@ void A_PhoenixPuff (AActor *);
 void A_FlameEnd (AActor *);
 void A_FloatPuff (AActor *);
 
-// Wimpy ammo ---------------------------------------------------------------
-
-class APhoenixRodAmmo : public AAmmo
-{
-	DECLARE_ACTOR (APhoenixRodAmmo, AAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOPHOENIXROD1");
-	}
-};
-
-FState APhoenixRodAmmo::States[] =
-{
-	S_NORMAL (AMP1, 'A',	4, NULL 					, &States[1]),
-	S_NORMAL (AMP1, 'B',	4, NULL 					, &States[2]),
-	S_NORMAL (AMP1, 'C',	4, NULL 					, &States[0])
-};
-
-IMPLEMENT_ACTOR (APhoenixRodAmmo, Heretic, 22, 161)
-	PROP_Inventory_Amount (AMMO_PHRD_WIMPY)
-	PROP_Inventory_MaxAmount (20)
-	PROP_Ammo_BackpackAmount (AMMO_PHRD_WIMPY)
-	PROP_Ammo_BackpackMaxAmount (40)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-	PROP_Inventory_Icon ("INAMPNX")
-END_DEFAULTS
-
-// Hefty ammo ---------------------------------------------------------------
-
-class APhoenixRodHefty : public APhoenixRodAmmo
-{
-	DECLARE_ACTOR (APhoenixRodHefty, APhoenixRodAmmo)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_AMMOPHOENIXROD2");
-	}
-};
-
-FState APhoenixRodHefty::States[] =
-{
-	S_NORMAL (AMP2, 'A',	4, NULL 					, &States[1]),
-	S_NORMAL (AMP2, 'B',	4, NULL 					, &States[2]),
-	S_NORMAL (AMP2, 'C',	4, NULL 					, &States[0])
-};
-
-IMPLEMENT_ACTOR (APhoenixRodHefty, Heretic, 23, 162)
-	PROP_Inventory_Amount (AMMO_PHRD_HEFTY)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 // Phoenix Rod --------------------------------------------------------------
 
 class APhoenixRod : public AHereticWeapon
@@ -2935,10 +2589,6 @@ public:
 	{
 		Super::Serialize (arc);
 		arc << FlameCount;
-	}
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WPNPHOENIXROD");
 	}
 	int FlameCount;		// for flamethrower duration
 };
@@ -2996,6 +2646,7 @@ IMPLEMENT_ACTOR (APhoenixRod, Heretic, 2003, 29)
 	PROP_Weapon_AmmoType1 ("PhoenixRodAmmo")
 	PROP_Weapon_SisterType ("PhoenixRodPowered")
 	PROP_Weapon_ProjectileType ("PhoenixFX1")
+	PROP_Inventory_PickupMessage("$TXT_WPNPHOENIXROD")
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (APhoenixRodPowered, Heretic, -1, 0)
@@ -3310,25 +2961,3 @@ void A_FloatPuff (AActor *puff)
 	puff->momz += FRACUNIT*18/10;
 }
 
-// --- Bag of holding -------------------------------------------------------
-
-class ABagOfHolding : public ABackpack
-{
-	DECLARE_ACTOR (ABagOfHolding, ABackpack)
-protected:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_ITEMBAGOFHOLDING");
-	}
-};
-
-FState ABagOfHolding::States[] =
-{
-	S_NORMAL (BAGH, 'A',   -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (ABagOfHolding, Heretic, 8, 136)
-	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (0)
-END_DEFAULTS

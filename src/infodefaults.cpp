@@ -45,6 +45,7 @@
 #include "r_data.h"
 #include "w_wad.h"
 #include "a_strifeglobal.h"
+#include "thingdef.h"
 
 void FActorInfo::BuildDefaults ()
 {
@@ -61,6 +62,7 @@ void FActorInfo::BuildDefaults ()
 
 			parent = Class->ParentClass;
 			parent->ActorInfo->BuildDefaults ();
+			Class->Meta = parent->Meta;
 			assert (Class->Size >= parent->Size);
 			memcpy (Class->Defaults, parent->Defaults, parent->Size);
 			if (Class->Size > parent->Size)
@@ -129,9 +131,6 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 
 	switch (defnum)
 	{
-	case ADEF_Weapon_AmmoType1:
-	case ADEF_Weapon_AmmoType2:
-	case ADEF_Weapon_SisterType:
 	case ADEF_Weapon_ProjectileType:
 	case ADEF_PowerupGiver_Powerup:
 		datatype = PClass::FindClass (datastr);
@@ -167,6 +166,19 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 			sgClass->Meta.SetMetaString (AMETA_StrifeName, name);
 			break;
 		}
+
+	case ADEF_Obituary:
+		sgClass->Meta.SetMetaString (AMETA_Obituary, datastr);
+		break;
+
+	case ADEF_HitObituary:
+		sgClass->Meta.SetMetaString (AMETA_HitObituary, datastr);
+		break;
+
+	case ADEF_Inventory_PickupMsg:
+		sgClass->Meta.SetMetaString (AIMETA_PickupMessage, datastr);
+		break;
+
 	case ADEF_PowerupGiver_Powerup:
 		giver->PowerupType = datatype;
 		break;
@@ -280,10 +292,10 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_Weapon_FlagsSet:		weapon->WeaponFlags |= dataint; break;
 	case ADEF_Weapon_UpSound:		weapon->UpSound = datasound; break;
 	case ADEF_Weapon_ReadySound:	weapon->ReadySound = datasound; break;
-	case ADEF_Weapon_SisterType:	weapon->SisterWeaponType = datatype; break;
+	case ADEF_Weapon_SisterType:	weapon->SisterWeaponType = fuglyname(datastr); break;
 	case ADEF_Weapon_ProjectileType:weapon->ProjectileType = datatype; break;
-	case ADEF_Weapon_AmmoType1:		weapon->AmmoType1 = datatype; break;
-	case ADEF_Weapon_AmmoType2:		weapon->AmmoType2 = datatype; break;
+	case ADEF_Weapon_AmmoType1:		weapon->AmmoType1 = fuglyname(datastr); break;
+	case ADEF_Weapon_AmmoType2:		weapon->AmmoType2 = fuglyname(datastr); break;
 	case ADEF_Weapon_AmmoGive1:		weapon->AmmoGive1 = dataint; break;
 	case ADEF_Weapon_AmmoGive2:		weapon->AmmoGive2 = dataint; break;
 	case ADEF_Weapon_AmmoUse1:		weapon->AmmoUse1 = dataint; break;

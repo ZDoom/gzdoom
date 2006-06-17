@@ -1,0 +1,144 @@
+// Clip --------------------------------------------------------------------
+
+ACTOR Clip : Ammo 2007
+{
+	Game Doom
+	SpawnID 11
+	Inventory.PickupMessage "$GOTCLIP"
+	Inventory.Amount 10
+	Inventory.MaxAmount 200
+	Ammo.BackpackAmount 10
+	Ammo.BackpackMaxAmount 400
+	Inventory.Icon "CLIPA0"
+	States
+	{
+	Spawn:
+		CLIP A -1
+		Stop
+	}
+}
+
+// Clip box ----------------------------------------------------------------
+
+ACTOR ClipBox : Clip 2048
+{
+	Game Doom
+	SpawnID 139
+	Inventory.PickupMessage "$GOTCLIPBOX"
+	Inventory.Amount 50
+	States
+	{
+	Spawn:
+		AMMO A -1
+		Stop
+	}
+}
+
+// Rocket ------------------------------------------------------------------
+
+ACTOR RocketAmmo : Ammo 2010
+{
+	Game Doom
+	SpawnID 140
+	Inventory.PickupMessage "$GOTROCKET"
+	Inventory.Amount 1
+	Inventory.MaxAmount 50
+	Ammo.BackpackAmount 1
+	Ammo.BackpackMaxAmount 100
+	Inventory.Icon "ROCKA0"
+	States
+	{
+	Spawn:
+		ROCK A -1
+		Stop
+	}
+}
+
+// Rocket box --------------------------------------------------------------
+
+ACTOR RocketBox : RocketAmmo 2046
+{
+	Game Doom
+	SpawnID 141
+	Inventory.PickupMessage "$GOTROCKBOX"
+	Inventory.Amount 5
+	States
+	{
+	Spawn:
+		BROK A -1
+		Stop
+	}
+}
+
+// Cell --------------------------------------------------------------------
+
+ACTOR Cell : Ammo 2047
+{
+	Game Doom
+	SpawnID 75
+	Inventory.PickupMessage "$GOTCELL"
+	Inventory.Amount 20
+	Inventory.MaxAmount 300
+	Ammo.BackpackAmount 20
+	Ammo.BackpackMaxAmount 600
+	Inventory.Icon "CELLA0"
+	States
+	{
+	Spawn:
+		CELL A -1
+		Stop
+	}
+}
+
+// Cell pack ---------------------------------------------------------------
+
+ACTOR CellPack : Cell 17
+{
+	Game Doom
+	SpawnID 11
+	Inventory.PickupMessage "$GOTCELLBOX"
+	Inventory.Amount 100
+	States
+	{
+	Spawn:
+		CELP A -1
+		Stop
+	}
+}
+
+// Shells ------------------------------------------------------------------
+
+ACTOR Shell : Ammo 2008
+{
+	Game Doom
+	SpawnID 12
+	Inventory.PickupMessage "$GOTSHELLS"
+	Inventory.Amount 4
+	Inventory.MaxAmount 50
+	Ammo.BackpackAmount 4
+	Ammo.BackpackMaxAmount 100
+	Inventory.Icon "SHELA0"
+	States
+	{
+	Spawn:
+		SHEL A -1
+		Stop
+	}
+}
+
+// Shell box ---------------------------------------------------------------
+
+ACTOR ShellBox : Shell 2049
+{
+	Game Doom
+	SpawnID 143
+	Inventory.PickupMessage "$GOTSHELLBOX"
+	Inventory.Amount 20
+	States
+	{
+	Spawn:
+		SBOX A -1
+		Stop
+	}
+}
+

@@ -146,7 +146,6 @@ class AArtiPoisonBag : public AInventory
 public:
 	bool HandlePickup (AInventory *item);
 	AInventory *CreateCopy (AActor *other);
-	const char *PickupMessage ();
 	void BeginPlay ();
 };
 
@@ -163,6 +162,7 @@ IMPLEMENT_ACTOR (AArtiPoisonBag, Hexen, 8000, 72)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIPSBG")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTIPOISONBAG")
 END_DEFAULTS
 
 // Poison Bag 1 (The Cleric's) ----------------------------------------------
@@ -344,17 +344,6 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 	copy->MaxAmount = MaxAmount;
 	GoAwayAndDie ();
 	return copy;
-}
-
-//============================================================================
-//
-// AArtiPoisonBag :: PickupMessage
-//
-//============================================================================
-
-const char *AArtiPoisonBag::PickupMessage ()
-{
-	return GStrings("TXT_ARTIPOISONBAG");
 }
 
 //============================================================================

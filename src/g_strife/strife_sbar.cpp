@@ -12,7 +12,6 @@
 #include "m_swap.h"
 #include "templates.h"
 #include "a_keys.h"
-#include "a_strifeweaps.h"
 #include "a_strifeglobal.h"
 #include "gi.h"
 
@@ -685,26 +684,27 @@ private:
 			// How much ammo does the player have?
 			static const struct
 			{
-				const PClass *AmmoType;
+				ENamedName AmmoType;
 				int Y;
 			} AmmoList[7] =
 			{
-				{ RUNTIME_CLASS(AClipOfBullets),			19 },
-				{ RUNTIME_CLASS(APoisonBolts),				35 },
-				{ RUNTIME_CLASS(AElectricBolts),			43 },
-				{ RUNTIME_CLASS(AHEGrenadeRounds),			59 },
-				{ RUNTIME_CLASS(APhosphorusGrenadeRounds),	67 },
-				{ RUNTIME_CLASS(AMiniMissiles),				75 },
-				{ RUNTIME_CLASS(AEnergyPod),				83 }
+				{ NAME_ClipOfBullets,			19 },
+				{ NAME_PoisonBolts,				35 },
+				{ NAME_ElectricBolts,			43 },
+				{ NAME_HEGrenadeRounds,			59 },
+				{ NAME_PhosphorusGrenadeRounds,	67 },
+				{ NAME_MiniMissiles,			75 },
+				{ NAME_EnergyPod,				83 }
 			};
 			for (i = 0; i < 7; ++i)
 			{
-				item = CPlayer->mo->FindInventory (AmmoList[i].AmmoType);
+				const PClass * ammotype = PClass::FindClass(AmmoList[i].AmmoType);
+				item = CPlayer->mo->FindInventory (ammotype);
 
 				if (item == NULL)
 				{
 					DrINumber2 (0, left+206*xscale, top+AmmoList[i].Y*yscale, 7*xscale, imgFONY0);
-					DrINumber2 (((AInventory *)GetDefaultByType (AmmoList[i].AmmoType))->MaxAmount,
+					DrINumber2 (((AInventory *)GetDefaultByType (ammotype))->MaxAmount,
 						left+239*xscale, top+AmmoList[i].Y*yscale, 7*xscale, imgFONY0);
 				}
 				else

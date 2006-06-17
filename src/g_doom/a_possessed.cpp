@@ -25,7 +25,6 @@ class AZombieMan : public AActor
 	DECLARE_ACTOR (AZombieMan, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary () { return GStrings("OB_ZOMBIE"); }
 };
 
 FState AZombieMan::States[] =
@@ -101,6 +100,7 @@ IMPLEMENT_ACTOR (AZombieMan, Doom, 3004, 4)
 	PROP_PainSound ("grunt/pain")
 	PROP_DeathSound ("grunt/death")
 	PROP_ActiveSound ("grunt/active")
+	PROP_Obituary("$OB_ZOMBIE")
 END_DEFAULTS
 
 void AZombieMan::NoBlockingSet ()
@@ -137,7 +137,6 @@ class AShotgunGuy : public AActor
 	DECLARE_ACTOR (AShotgunGuy, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary () { return GStrings("OB_SHOTGUY"); }
 };
 
 FState AShotgunGuy::States[] =
@@ -215,6 +214,7 @@ IMPLEMENT_ACTOR (AShotgunGuy, Doom, 9, 1)
 	PROP_PainSound ("shotguy/pain")
 	PROP_DeathSound ("shotguy/death")
 	PROP_ActiveSound ("shotguy/active")
+	PROP_Obituary("$OB_SHOTGUY")
 END_DEFAULTS
 
 void AShotgunGuy::NoBlockingSet ()
@@ -267,7 +267,6 @@ class AChaingunGuy : public AActor
 	DECLARE_ACTOR (AChaingunGuy, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary () { return GStrings("OB_CHAINGUY"); }
 };
 
 FState AChaingunGuy::States[] =
@@ -346,6 +345,7 @@ IMPLEMENT_ACTOR (AChaingunGuy, Doom, 65, 2)
 	PROP_DeathSound ("chainguy/death")
 	PROP_ActiveSound ("chainguy/active")
 	PROP_AttackSound ("chainguy/attack")
+	PROP_Obituary("$OB_CHAINGUY")
 END_DEFAULTS
 
 void AChaingunGuy::NoBlockingSet ()
@@ -359,7 +359,6 @@ class AWolfensteinSS : public AActor
 {
 	DECLARE_ACTOR (AWolfensteinSS, AActor)
 public:
-	const char *GetObituary () { return GStrings("OB_WOLFSS"); }
 	void NoBlockingSet ();
 };
 
@@ -440,6 +439,7 @@ IMPLEMENT_ACTOR (AWolfensteinSS, Doom, 84, 116)
 	PROP_DeathSound ("wolfss/death")
 	PROP_ActiveSound ("wolfss/active")
 	PROP_AttackSound ("wolfss/attack")
+	PROP_Obituary("$OB_WOLFSS")
 END_DEFAULTS
 
 void AWolfensteinSS::NoBlockingSet ()

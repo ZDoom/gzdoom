@@ -16,8 +16,6 @@ void A_Metal (AActor *);
 class ACyberdemon : public AActor
 {
 	DECLARE_ACTOR (ACyberdemon, AActor)
-public:
-	const char *GetObituary () { return GStrings("OB_CYBORG"); }
 };
 
 FState ACyberdemon::States[] =
@@ -83,6 +81,7 @@ IMPLEMENT_ACTOR (ACyberdemon, Doom, 16, 114)
 	PROP_PainSound ("cyber/pain")
 	PROP_DeathSound ("cyber/death")
 	PROP_ActiveSound ("cyber/active")
+	PROP_Obituary("$OB_CYBORG")
 END_DEFAULTS
 
 void A_CyberAttack (AActor *self)

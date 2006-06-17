@@ -20,9 +20,6 @@ void A_SkelFist (AActor *);
 class ARevenant : public AActor
 {
 	DECLARE_ACTOR (ARevenant, AActor)
-public:
-	const char *GetObituary () { return GStrings("OB_UNDEAD"); }
-	const char *GetHitObituary () { return GStrings("OB_UNDEADHIT"); }
 };
 
 FState ARevenant::States[] =
@@ -101,6 +98,8 @@ IMPLEMENT_ACTOR (ARevenant, Doom, 66, 20)
 	PROP_PainSound ("skeleton/pain")
 	PROP_DeathSound ("skeleton/death")
 	PROP_ActiveSound ("skeleton/active")
+	PROP_Obituary("$OB_UNDEAD")
+	PROP_HitObituary("$OB_UNDEADHIT")
 END_DEFAULTS
 
 

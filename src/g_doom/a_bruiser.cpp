@@ -15,9 +15,6 @@ void A_BruisAttack (AActor *);
 class ABaronOfHell : public AActor
 {
 	DECLARE_ACTOR (ABaronOfHell, AActor)
-public:
-	const char *GetObituary () { return GStrings("OB_BARON"); }
-	const char *GetHitObituary () { return GStrings("OB_BARONHIT"); }
 };
 
 FState ABaronOfHell::States[] =
@@ -87,6 +84,9 @@ IMPLEMENT_ACTOR (ABaronOfHell, Doom, 3003, 3)
 	PROP_PainSound ("baron/pain")
 	PROP_DeathSound ("baron/death")
 	PROP_ActiveSound ("baron/active")
+	PROP_Obituary("$OB_BARON")
+	PROP_HitObituary("$OB_BARONHIT")
+
 END_DEFAULTS
 
 class ABaronBall : public AActor
@@ -131,9 +131,6 @@ AT_SPEED_SET (BaronBall, speed)
 class AHellKnight : public ABaronOfHell
 {
 	DECLARE_ACTOR (AHellKnight, ABaronOfHell)
-public:
-	const char *GetObituary () { return GStrings("OB_KNIGHT"); }
-	const char *GetHitObituary () { return GStrings("OB_KNIGHTHIT"); }
 };
 
 FState AHellKnight::States[] =
@@ -203,6 +200,8 @@ IMPLEMENT_ACTOR (AHellKnight, Doom, 69, 113)
 	PROP_PainSound ("knight/pain")
 	PROP_DeathSound ("knight/death")
 	PROP_ActiveSound ("knight/active")
+	PROP_Obituary("$OB_KNIGHT")
+	PROP_HitObituary("$OB_KNIGHTHIT")
 END_DEFAULTS
 
 void A_BruisAttack (AActor *self)

@@ -34,11 +34,6 @@ public:
 		}
 		return true;
 	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTMSPHERE");
-	}
 };
 
 FState AMegasphere::States[] =
@@ -54,6 +49,7 @@ IMPLEMENT_ACTOR (AMegasphere, Doom, 83, 132)
 	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
 	PROP_Inventory_MaxAmount (0)
 	PROP_SpawnState (0)
+	PROP_Inventory_PickupMessage("$GOTMSPHERE")
 END_DEFAULTS
 
 // Berserk ------------------------------------------------------------------
@@ -81,11 +77,6 @@ public:
 		}
 		return false;
 	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings("GOTBERSERK");
-	}
 };
 
 FState ABerserk::States[] =
@@ -99,5 +90,6 @@ IMPLEMENT_ACTOR (ABerserk, Doom, 2023, 134)
 	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
 	PROP_Inventory_MaxAmount (0)
 	PROP_PowerupGiver_Powerup ("PowerStrength")
+	PROP_Inventory_PickupMessage("$GOTBERSERK")
 END_DEFAULTS
 

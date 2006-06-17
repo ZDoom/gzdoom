@@ -13,8 +13,6 @@ class ABossBrain : public AActor
 class AExplosiveBarrel : public AActor
 {
 	DECLARE_ACTOR (AExplosiveBarrel, AActor)
-public:
-	const char *GetObituary ();
 };
 
 class ABulletPuff : public AActor
@@ -29,34 +27,26 @@ class ARocket : public AActor
 	DECLARE_ACTOR (ARocket, AActor)
 public:
 	void BeginPlay ();
-	const char *GetObituary ();
 };
 
 class AArchvile : public AActor
 {
 	DECLARE_ACTOR (AArchvile, AActor)
-public:
-	const char *GetObituary ();
 };
 
 class ALostSoul : public AActor
 {
 	DECLARE_ACTOR (ALostSoul, AActor)
-public:
-	const char *GetObituary ();
 };
 
 class APlasmaBall : public AActor
 {
 	DECLARE_ACTOR (APlasmaBall, AActor)
-	const char *GetObituary ();
 };
 
 class ABFGBall : public AActor
 {
 	DECLARE_ACTOR (ABFGBall, AActor)
-public:
-	const char *GetObituary ();
 };
 
 class AScriptedMarine : public AActor

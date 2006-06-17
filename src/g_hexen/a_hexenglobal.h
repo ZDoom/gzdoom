@@ -71,7 +71,6 @@ public:
 	void PlayPickupSound (AActor *toucher);
 protected:
 	virtual bool MatchPlayerClass (AActor *toucher);
-	virtual const char *PieceMessage ();
 	const PClass *FourthWeaponClass;
 	int PieceValue;
 	AInventory *TempFourthWeapon;
@@ -133,20 +132,6 @@ class AMageWeapon : public AWeapon
 	DECLARE_STATELESS_ACTOR (AMageWeapon, AWeapon);
 public:
 	bool TryPickup (AActor *toucher);
-};
-
-class AMana1 : public AAmmo
-{
-	DECLARE_ACTOR (AMana1, AAmmo)
-public:
-	const char *PickupMessage ();
-};
-
-class AMana2 : public AAmmo
-{
-	DECLARE_ACTOR (AMana2, AAmmo)
-public:
-	const char *PickupMessage ();
 };
 
 class ASwitchableDecoration : public AActor

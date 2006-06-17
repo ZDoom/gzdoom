@@ -34,11 +34,6 @@ void A_FreeTargMobj (AActor *);
 class AMWeapLightning : public AMageWeapon
 {
 	DECLARE_ACTOR (AMWeapLightning, AMageWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WEAPON_M3");
-	}
 };
 
 FState AMWeapLightning::States[] =
@@ -116,6 +111,7 @@ IMPLEMENT_ACTOR (AMWeapLightning, Hexen, 8040, 0)
 	PROP_Weapon_MoveCombatDist (23000000)
 	PROP_Weapon_AmmoType1 ("Mana2")
 	PROP_Weapon_ProjectileType ("LightningFloor")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_M3")
 END_DEFAULTS
 
 // Lightning ----------------------------------------------------------------

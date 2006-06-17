@@ -27,11 +27,6 @@ void A_BeAdditive (AActor *);
 class AFWeapHammer : public AFighterWeapon
 {
 	DECLARE_ACTOR (AFWeapHammer, AFighterWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WEAPON_F3");
-	}
 };
 
 FState AFWeapHammer::States[] =
@@ -82,6 +77,7 @@ IMPLEMENT_ACTOR (AFWeapHammer, Hexen, 123, 28)
 	PROP_Weapon_MoveCombatDist (22000000)
 	PROP_Weapon_AmmoType1 ("Mana2")
 	PROP_Weapon_ProjectileType ("HammerMissile")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_F3")
 END_DEFAULTS
 
 // Hammer Missile -----------------------------------------------------------

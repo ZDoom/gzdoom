@@ -345,7 +345,6 @@ class AArtiEgg : public AInventory
 	DECLARE_ACTOR (AArtiEgg, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState AArtiEgg::States[] =
@@ -364,6 +363,7 @@ IMPLEMENT_ACTOR (AArtiEgg, Heretic, 30, 14)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIEGGC")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTIEGG")
 END_DEFAULTS
 
 bool AArtiEgg::Use (bool pickup)
@@ -374,11 +374,6 @@ bool AArtiEgg::Use (bool pickup)
 	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle-(ANG45/3));
 	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle+(ANG45/3));
 	return true;
-}
-
-const char *AArtiEgg::PickupMessage ()
-{
-	return GStrings("TXT_ARTIEGG");
 }
 
 // Pork missile --------------------------------------------------------------
@@ -438,7 +433,6 @@ class AArtiPork : public AInventory
 	DECLARE_ACTOR (AArtiPork, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState AArtiPork::States[] =
@@ -461,6 +455,7 @@ IMPLEMENT_ACTOR (AArtiPork, Hexen, 30, 14)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIPORK")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTIEGG2")
 END_DEFAULTS
 
 bool AArtiPork::Use (bool pickup)
@@ -473,7 +468,3 @@ bool AArtiPork::Use (bool pickup)
 	return true;
 }
 
-const char *AArtiPork::PickupMessage ()
-{
-	return GStrings("TXT_ARTIEGG2");
-}

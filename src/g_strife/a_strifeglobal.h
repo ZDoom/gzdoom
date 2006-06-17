@@ -40,7 +40,6 @@ class ADegninOre : public AInventory
 {
 	DECLARE_ACTOR (ADegninOre, AInventory)
 public:
-	const char *PickupMessage ();
 	void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
 	bool Use (bool pickup);
 };
@@ -90,8 +89,6 @@ class AStrifeWeapon : public AWeapon
 class AFlameThrower : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AFlameThrower, AStrifeWeapon)
-public:
-	const char *PickupMessage ();
 };
 
 class ASigil : public AStrifeWeapon
@@ -101,7 +98,6 @@ public:
 	bool HandlePickup (AInventory *item);
 	AInventory *CreateCopy (AActor *other);
 	void Serialize (FArchive &arc);
-	const char *PickupMessage ();
 	bool SpecialDropAction (AActor *dropper);
 	static int GiveSigilPiece (AActor *daPlayer);
 

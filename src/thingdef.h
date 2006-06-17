@@ -1,6 +1,26 @@
 #ifndef __THINGDEF_H
 #define __THINGDEF_H
 
+// This class is for storing a name inside a const PClass* field without
+// generating compiler warnings. It does not manipulate data in any other
+// way.
+class fuglyname : public FName
+{
+public:
+	fuglyname() : FName() {}
+	fuglyname(const char *foo) : FName(foo) {}
+	operator const PClass *()
+	{
+		return reinterpret_cast<const PClass *>(size_t(int(*this)));
+	}
+	fuglyname &operator= (const PClass *foo)
+	{
+		FName *p = this;
+		*p = ENamedName(reinterpret_cast<size_t>(foo));
+		return *this;
+	}
+};
+
 int ParseExpression (bool _not);
 
 int EvalExpressionI (int id, AActor *self);

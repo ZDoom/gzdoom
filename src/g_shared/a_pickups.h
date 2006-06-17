@@ -74,6 +74,8 @@ enum
 	AIMETA_PickupMessage,		// string
 	AIMETA_GiveQuest,			// optionally give one of the quest items.
 	AIMETA_DropAmount,			// specifies the amount for a dropped ammo item
+	AIMETA_LowHealth,
+	AIMETA_LowHealthMessage,
 };
 
 enum
@@ -287,8 +289,11 @@ enum
 class AHealth : public AInventory
 {
 	DECLARE_STATELESS_ACTOR (AHealth, AInventory)
+
+	int PrevHealth;
 public:
 	virtual bool TryPickup (AActor *other);
+	virtual const char *PickupMessage ();
 };
 
 // HealthPickup is some item that gives the player health when used.
@@ -401,7 +406,6 @@ public:
 	bool HandlePickup (AInventory *item);
 	AInventory *CreateCopy (AActor *other);
 	AInventory *CreateTossable ();
-	const char *PickupMessage ();
 	void DetachFromOwner ();
 
 	bool bDepleted;
@@ -412,8 +416,6 @@ public:
 class ACommunicator : public AInventory
 {
 	DECLARE_ACTOR (ACommunicator, AInventory)
-public:
-	const char *PickupMessage ();
 };
 
 #endif //__A_PICKUPS_H__

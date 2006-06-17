@@ -1,0 +1,231 @@
+// HE-Grenade Rounds --------------------------------------------------------
+
+ACTOR HEGrenadeRounds : Ammo 152
+{
+	Game Strife
+	+FLOORCLIP
+	ConversationID 177, 170, 174
+	Inventory.Amount 6
+	Inventory.MaxAmount 30
+	Ammo.BackpackAmount 6
+	Ammo.BackpackMaxAmount 60
+	Inventory.Icon "I_GRN1"
+	Tag "HE-Grenade_Rounds"
+	Inventory.PickupMessage "$TXT_HEGRENADES"
+	States
+	{
+	Spawn:
+		GRN1 A -1
+		Stop
+	}
+}
+
+// Phosphorus-Grenade Rounds ------------------------------------------------
+
+ACTOR PhosphorusGrenadeRounds : Ammo 153
+{
+	Game Strife
+	+FLOORCLIP
+	ConversationID 178, 171, 175
+	Inventory.Amount 4
+	Inventory.MaxAmount 16
+	Ammo.BackpackAmount 4
+	Ammo.BackpackMaxAmount 32
+	Inventory.Icon "I_GRN2"
+	Tag "Phoshorus-Grenade_Rounds"	// "Fire-Grenade_Rounds" in the Teaser
+	Inventory.PickupMessage "$TXT_PHGRENADES"
+	States
+	{
+	Spawn:
+		GRN2 A -1
+		Stop
+	}
+}
+
+// Clip of Bullets ----------------------------------------------------------
+
+ACTOR ClipOfBullets : Ammo 2007
+{
+	Game Strife
+	SpawnID 11
+	ConversationID 179, 173, 177
+	+FLOORCLIP
+	Inventory.Amount 10
+	Inventory.MaxAmount 250
+	Ammo.BackpackAmount 10
+	Ammo.BackpackMaxAmount 500
+	Inventory.Icon "I_BLIT"
+	Tag "clip_of_bullets"	// "bullets" in the Teaser
+	Inventory.PickupMessage "$TXT_CLIPOFBULLETS"
+	States
+	{
+	Spawn:
+		BLIT A -1
+		Stop
+	}
+}
+
+// Box of Bullets -----------------------------------------------------------
+
+ACTOR BoxOfBullets : ClipOfBullets 2048
+{
+	Game Strife
+	SpawnID 139
+	ConversationID 180, 174, 178
+	Inventory.Amount 50
+	Tag "ammo"
+	Inventory.PickupMessage "$TXT_BOXOFBULLETS"
+	States
+	{
+	Spawn:
+		BBOX A -1
+		Stop
+	}
+}
+
+// Mini Missiles ------------------------------------------------------------
+
+ACTOR MiniMissiles : Ammo 2010
+{
+	Game Strife
+	SpawnID 140
+	ConversationID 181, 175, 179
+	+FLOORCLIP
+	Inventory.Amount 4
+	Inventory.MaxAmount 100
+	Ammo.BackpackAmount 4
+	Ammo.BackpackMaxAmount 200
+	Inventory.Icon "I_ROKT"
+	Tag "mini_missiles"	//"rocket" in the Teaser
+	Inventory.PickupMessage "$TXT_MINIMISSILES"
+	States
+	{
+	Spawn:
+		MSSL A -1
+		Stop
+	}
+}
+
+// Crate of Missiles --------------------------------------------------------
+
+ACTOR CrateOfMissiles : MiniMissiles 2046
+{
+	Game Strife
+	SpawnID 141
+	ConversationID 182, 176, 180
+	Inventory.Amount 20
+	Tag "crate_of_missiles"	//"box_of_rockets" in the Teaser
+	Inventory.PickupMessage "$TXT_CRATEOFMISSILES"
+	States
+	{
+	Spawn:
+		ROKT A -1
+		Stop
+	}
+}
+
+// Energy Pod ---------------------------------------------------------------
+
+ACTOR EnergyPod : Ammo 2047
+{
+	Game Strife
+	SpawnID 75
+	ConversationID 183, 177, 181
+	+FLOORCLIP
+	Inventory.Amount 20
+	Inventory.MaxAmount 400
+	Ammo.BackpackAmount 20
+	Ammo.BackpackMaxAmount 800
+	Ammo.DropAmount 20
+	Inventory.Icon "I_BRY1"
+	Tag "energy_pod"
+	Inventory.PickupMessage "$TXT_ENERGYPOD"
+	States
+	{
+	Spawn:
+		BRY1 AB 6
+		Loop
+	}
+}
+
+// Energy pack ---------------------------------------------------------------
+
+ACTOR EnergyPack : EnergyPod 17
+{
+	Game Strife
+	SpawnID 142
+	ConversationID 184, 178, 182
+	Inventory.Amount 100
+	Tag "energy_pack"
+	Inventory.PickupMessage "$TXT_ENERGYPACK"
+	States
+	{
+	Spawn:
+		CPAC AB 6
+		Loop
+	}
+}
+
+// Poison Bolt Quiver -------------------------------------------------------
+
+ACTOR PoisonBolts : Ammo 115
+{
+	Game Strife
+	ConversationID 185, 179, 183
+	+FLOORCLIP
+	Inventory.Amount 10
+	Inventory.MaxAmount 25
+	Ammo.BackpackAmount 2
+	Ammo.BackpackMaxAmount 50
+	Inventory.Icon "I_PQRL"
+	Tag "poison_bolts"	// "poison_arrows" in the Teaser
+	Inventory.PickupMessage "$TXT_POISONBOLTS"
+	States
+	{
+	Spawn:
+		PQRL A -1
+		Stop
+	}
+}
+
+// Electric Bolt Quiver -------------------------------------------------------
+
+ACTOR ElectricBolts : Ammo 114
+{
+	Game Strife
+	ConversationID 186, 180, 184
+	+FLOORCLIP
+	Inventory.Amount 20
+	Inventory.MaxAmount 50
+	Ammo.BackpackAmount 4
+	Ammo.BackpackMaxAmount 100
+	Inventory.Icon "I_XQRL"
+	Tag "electric_bolts"	// "electric_arrows" in the Teaser
+	Inventory.PickupMessage "$TXT_ELECTRICBOLTS"
+	States
+	{
+	Spawn:
+		XQRL A -1
+		Stop
+	}
+}
+
+// Ammo Satchel -------------------------------------------------------------
+
+ACTOR AmmoSatchel : Backpack 183
+{
+	Game Strife
+	SpawnID 144
+	ConversationID 187, 181, 184
+	+FLOORCLIP
+	Inventory.Icon "I_BKPK"
+	Tag "Ammo_satchel"	// "Back_pack" in the Teaser
+	Inventory.PickupMessage "$TXT_AMMOSATCHEL"
+	States
+	{
+	Spawn:
+		BKPK A -1
+		Stop
+	}
+}
+

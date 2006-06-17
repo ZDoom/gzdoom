@@ -225,7 +225,6 @@ class ATeleporterBeacon : public AInventory
 	DECLARE_ACTOR (ATeleporterBeacon, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState ATeleporterBeacon::States[] =
@@ -248,12 +247,8 @@ IMPLEMENT_ACTOR (ATeleporterBeacon, Strife, 10, 0)
 	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Inventory_Icon ("I_BEAC")
 	PROP_Tag ("Teleporter_Beacon")
+	PROP_Inventory_PickupMessage("$TXT_BEACON")
 END_DEFAULTS
-
-const char *ATeleporterBeacon::PickupMessage ()
-{
-	return "You picked up the Teleporter Beacon.";
-}
 
 bool ATeleporterBeacon::Use (bool pickup)
 {

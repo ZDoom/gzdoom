@@ -13,8 +13,6 @@ void A_SargAttack (AActor *);
 class ADemon : public AActor
 {
 	DECLARE_ACTOR (ADemon, AActor)
-public:
-	const char *GetHitObituary () { return GStrings("OB_DEMONHIT"); }
 };
 
 FState ADemon::States[] =
@@ -82,13 +80,12 @@ IMPLEMENT_ACTOR (ADemon, Doom, 3002, 8)
 	PROP_PainSound ("demon/pain")
 	PROP_DeathSound ("demon/death")
 	PROP_ActiveSound ("demon/active")
+	PROP_HitObituary("$OB_DEMONHIT")
 END_DEFAULTS
 
 class ASpectre : public ADemon
 {
 	DECLARE_STATELESS_ACTOR (ASpectre, ADemon)
-public:
-	const char *GetHitObituary () { return GStrings("OB_SPECTREHIT"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (ASpectre, Doom, 58, 9)
@@ -101,6 +98,7 @@ IMPLEMENT_STATELESS_ACTOR (ASpectre, Doom, 58, 9)
 	PROP_PainSound ("spectre/pain")
 	PROP_DeathSound ("spectre/death")
 	PROP_ActiveSound ("spectre/active")
+	PROP_HitObituary("$OB_SPECTREHIT")
 END_DEFAULTS
 
 void A_SargAttack (AActor *self)

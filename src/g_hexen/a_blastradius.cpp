@@ -17,7 +17,6 @@ class AArtiBlastRadius : public AInventory
 	DECLARE_ACTOR (AArtiBlastRadius, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 protected:
 	void BlastActor (AActor *victim, fixed_t strength);
 };
@@ -41,12 +40,8 @@ IMPLEMENT_ACTOR (AArtiBlastRadius, Hexen, 10110, 74)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIBLST")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTIBLASTRADIUS")
 END_DEFAULTS
-
-const char *AArtiBlastRadius::PickupMessage ()
-{
-	return GStrings("TXT_ARTIBLASTRADIUS");
-}
 
 // Blast Effect -------------------------------------------------------------
 

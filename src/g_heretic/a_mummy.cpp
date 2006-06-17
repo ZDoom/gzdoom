@@ -23,7 +23,6 @@ class AMummy : public AActor
 	DECLARE_ACTOR (AMummy, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetHitObituary ();
 };
 
 FState AMummy::States[] =
@@ -79,6 +78,7 @@ IMPLEMENT_ACTOR (AMummy, Heretic, 68, 4)
 	PROP_PainSound ("mummy/pain")
 	PROP_DeathSound ("mummy/death")
 	PROP_ActiveSound ("mummy/active")
+	PROP_HitObituary("$OB_MUMMY")
 END_DEFAULTS
 
 void AMummy::NoBlockingSet ()
@@ -86,18 +86,11 @@ void AMummy::NoBlockingSet ()
 	P_DropItem (this, "GoldWandAmmo", 3, 84);
 }
 
-const char *AMummy::GetHitObituary ()
-{
-	return GStrings("OB_MUMMY");
-}
-
 // Mummy leader -------------------------------------------------------------
 
 class AMummyLeader : public AMummy
 {
 	DECLARE_ACTOR (AMummyLeader, AMummy)
-public:
-	const char *GetObituary ();
 };
 
 FState AMummyLeader::States[] =
@@ -116,12 +109,8 @@ IMPLEMENT_ACTOR (AMummyLeader, Heretic, 45, 2)
 	PROP_SpawnHealth (100)
 	PROP_PainChance (64)
 	PROP_MissileState (S_MUMMYL_ATK)
+	PROP_Obituary("$OB_MUMMYLEADER")
 END_DEFAULTS
-
-const char *AMummyLeader::GetObituary ()
-{
-	return GStrings("OB_MUMMYLEADER");
-}
 
 // Mummy ghost --------------------------------------------------------------
 

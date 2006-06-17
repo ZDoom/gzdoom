@@ -457,9 +457,11 @@ private:
 
 		// If the weapon uses some ammo that is not mana, do not draw
 		// the mana bars; draw the specific used ammo instead.
+		const PClass *mana1 = PClass::FindClass(NAME_Mana1);
+		const PClass *mana2 = PClass::FindClass(NAME_Mana2);
 
-		drawbar = !((ammo1 != NULL && ammo1->GetClass() != RUNTIME_CLASS(AMana1) && ammo1->GetClass() != RUNTIME_CLASS(AMana2)) ||
-				    (ammo2 != NULL && ammo2->GetClass() != RUNTIME_CLASS(AMana1) && ammo2->GetClass() != RUNTIME_CLASS(AMana2)));
+		drawbar = !((ammo1 != NULL && ammo1->GetClass() != mana1 && ammo1->GetClass() != mana2) ||
+				    (ammo2 != NULL && ammo2->GetClass() != mana1 && ammo2->GetClass() != mana2));
 
 		if (drawbar != olddrawbars)
 		{
@@ -474,7 +476,7 @@ private:
 		}
 		if (drawbar)
 		{
-			DrawManaBars (ammo1, ammo2);
+			DrawManaBars (ammo1, ammo2, mana1, mana2);
 		}
 		else
 		{
@@ -564,7 +566,7 @@ private:
 //
 //---------------------------------------------------------------------------
 
-	void DrawManaBars (AAmmo *ammo1, AAmmo *ammo2)
+	void DrawManaBars (AAmmo *ammo1, AAmmo *ammo2, const PClass *manatype1, const PClass *manatype2)
 	{
 		AAmmo *mana1 = NULL, *mana2 = NULL;
 		int usemana1 = false, usemana2 = false;
@@ -593,12 +595,12 @@ private:
 		if (ammo1 == NULL)
 		{
 		}
-		else if (ammo1->GetClass() == RUNTIME_CLASS(AMana1))
+		else if (ammo1->GetClass() == manatype1)
 		{
 			mana1 = ammo1;
 			usemana1 = true;
 		}
-		else if (ammo1->GetClass() == RUNTIME_CLASS(AMana2))
+		else if (ammo1->GetClass() == manatype2)
 		{
 			mana2 = ammo1;
 			usemana2 = true;
@@ -606,23 +608,23 @@ private:
 		if (ammo2 == NULL)
 		{
 		}
-		else if (ammo2->GetClass() == RUNTIME_CLASS(AMana1))
+		else if (ammo2->GetClass() == manatype1)
 		{
 			mana1 = ammo2;
 			usemana1 = true;
 		}
-		else if (ammo2->GetClass() == RUNTIME_CLASS(AMana2))
+		else if (ammo2->GetClass() == manatype2)
 		{
 			mana2 = ammo2;
 			usemana2 = true;
 		}
 		if (mana1 == NULL)
 		{
-			mana1 = CPlayer->mo->FindInventory<AMana1> ();
+			mana1 = static_cast<AAmmo*>(CPlayer->mo->FindInventory(manatype1));
 		}
 		if (mana2 == NULL)
 		{
-			mana2 = CPlayer->mo->FindInventory<AMana2> ();
+			mana2 = static_cast<AAmmo*>(CPlayer->mo->FindInventory(manatype2));
 		}
 		manacount1 = mana1 != NULL ? mana1->Amount : 0;
 		manacount2 = mana2 != NULL ? mana2->Amount : 0;
@@ -682,13 +684,13 @@ private:
 			if (manaVialPatch1)
 			{
 				DrawImage (Images[manaPatch1], 77, 2);
-				ManaVial1Pic.SetVial (Images[manaVialPatch1], CPlayer->mo, RUNTIME_CLASS(AMana1));
+				ManaVial1Pic.SetVial (Images[manaVialPatch1], CPlayer->mo, manatype1);
 				DrawImage (&ManaVial1Pic, 94, 2);
 			}
 			if (manaVialPatch2)
 			{
 				DrawImage (Images[manaPatch2], 110, 2);
-				ManaVial2Pic.SetVial (Images[manaVialPatch2], CPlayer->mo, RUNTIME_CLASS(AMana2));
+				ManaVial2Pic.SetVial (Images[manaVialPatch2], CPlayer->mo, manatype2);
 				DrawImage (&ManaVial2Pic, 102, 2);
 			}
 		}
@@ -976,9 +978,11 @@ private:
 
 		// If the weapon uses some ammo that is not mana, do not draw
 		// the mana blocks; draw the specific used ammo instead.
+		const PClass *mana1 = PClass::FindClass(NAME_Mana1);
+		const PClass *mana2 = PClass::FindClass(NAME_Mana2);
 
-		drawmana = !((ammo1 != NULL && ammo1->GetClass() != RUNTIME_CLASS(AMana1) && ammo1->GetClass() != RUNTIME_CLASS(AMana2)) ||
-				     (ammo2 != NULL && ammo2->GetClass() != RUNTIME_CLASS(AMana1) && ammo2->GetClass() != RUNTIME_CLASS(AMana2)));
+		drawmana = !((ammo1 != NULL && ammo1->GetClass() != mana1 && ammo1->GetClass() != mana2) ||
+				     (ammo2 != NULL && ammo2->GetClass() != mana1 && ammo2->GetClass() != mana2));
 
 		if (drawmana)
 		{
@@ -989,36 +993,36 @@ private:
 			{
 				if (CPlayer->ReadyWeapon->Ammo1 != NULL)
 				{
-					if (CPlayer->ReadyWeapon->Ammo1->GetClass() == RUNTIME_CLASS(AMana1))
+					if (CPlayer->ReadyWeapon->Ammo1->GetClass() == mana1)
 					{
 						ammo |= 1;
 					}
-					else if (CPlayer->ReadyWeapon->Ammo1->GetClass() == RUNTIME_CLASS(AMana2))
+					else if (CPlayer->ReadyWeapon->Ammo1->GetClass() == mana2)
 					{
 						ammo |= 2;
 					}
 				}
 				if (CPlayer->ReadyWeapon->Ammo2 != NULL)
 				{
-					if (CPlayer->ReadyWeapon->Ammo2->GetClass() == RUNTIME_CLASS(AMana1))
+					if (CPlayer->ReadyWeapon->Ammo2->GetClass() == mana1)
 					{
 						ammo |= 1;
 					}
-					else if (CPlayer->ReadyWeapon->Ammo2->GetClass() == RUNTIME_CLASS(AMana2))
+					else if (CPlayer->ReadyWeapon->Ammo2->GetClass() == mana2)
 					{
 						ammo |= 2;
 					}
 				}
 			}
 
-			item = CPlayer->mo->FindInventory (RUNTIME_CLASS(AMana1));
+			item = CPlayer->mo->FindInventory (mana1);
 			i = item != NULL ? item->Amount : 0;
 			manaImage = ((ammo & 1) && i > 0) ? imgMANABRIGHT1 : imgMANADIM1;
 			screen->DrawTexture (Images[manaImage], -17, -30,
 				DTA_HUDRules, HUD_Normal, TAG_DONE);
 			DrINumberOuter (i, -47, -30);
 
-			item = CPlayer->mo->FindInventory (RUNTIME_CLASS(AMana2));
+			item = CPlayer->mo->FindInventory (mana2);
 			i = item != NULL ? item->Amount : 0;
 			manaImage = ((ammo & 2) && i > 0) ? imgMANABRIGHT2 : imgMANADIM2;
 			screen->DrawTexture (Images[manaImage], -17, -15,

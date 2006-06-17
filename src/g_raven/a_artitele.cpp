@@ -16,7 +16,6 @@ class AArtiTeleport : public AInventory
 	DECLARE_ACTOR (AArtiTeleport, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState AArtiTeleport::States[] =
@@ -35,6 +34,7 @@ IMPLEMENT_ACTOR (AArtiTeleport, Raven, 36, 18)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIATLP")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTITELEPORT")
 END_DEFAULTS
 
 bool AArtiTeleport::Use (bool pickup)
@@ -67,11 +67,6 @@ bool AArtiTeleport::Use (bool pickup)
 		S_Sound (Owner, CHAN_VOICE, "*evillaugh", 1, ATTN_NONE);
 	}
 	return true;
-}
-
-const char *AArtiTeleport::PickupMessage ()
-{
-	return GStrings("TXT_ARTITELEPORT");
 }
 
 //---------------------------------------------------------------------------

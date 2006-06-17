@@ -38,15 +38,11 @@ public:
 	void BeginPlay ();
 protected:
 	bool MatchPlayerClass (AActor *toucher);
-	const char *PieceMessage ();
 };
 
-IMPLEMENT_ABSTRACT_ACTOR (AClericWeaponPiece)
-
-const char *AClericWeaponPiece::PieceMessage ()
-{
-	return GStrings("TXT_WRAITHVERGE_PIECE");
-}
+IMPLEMENT_STATELESS_ACTOR (AClericWeaponPiece, Hexen, -1, 0)
+	PROP_Inventory_PickupMessage("$TXT_WRAITHVERGE_PIECE")
+END_DEFAULTS
 
 bool AClericWeaponPiece::MatchPlayerClass (AActor *toucher)
 {
@@ -164,10 +160,6 @@ public:
 		Super::Serialize (arc);
 		arc << CHolyCount;
 	}
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WEAPON_C4");
-	}
 	PalEntry GetBlend ()
 	{
 		return PalEntry (CHolyCount * 128 / 3, 131, 131, 131);
@@ -221,6 +213,7 @@ IMPLEMENT_ACTOR (ACWeapWraithverge, Hexen, -1, 0)
 	PROP_Weapon_AmmoType1 ("Mana1")
 	PROP_Weapon_AmmoType2 ("Mana2")
 	PROP_Weapon_ProjectileType ("HolyMissile")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_C4")
 END_DEFAULTS
 
 // Holy Missile -------------------------------------------------------------

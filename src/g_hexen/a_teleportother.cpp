@@ -28,7 +28,6 @@ class AArtiTeleportOther : public AInventory
 	DECLARE_ACTOR (AArtiTeleportOther, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState AArtiTeleportOther::States[] =
@@ -48,12 +47,8 @@ IMPLEMENT_ACTOR (AArtiTeleportOther, Hexen, 10040, 17)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTITELO")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTITELEPORTOTHER")
 END_DEFAULTS
-
-const char *AArtiTeleportOther::PickupMessage ()
-{
-	return GStrings("TXT_ARTITELEPORTOTHER");
-}
 
 // Teleport Other FX --------------------------------------------------------
 

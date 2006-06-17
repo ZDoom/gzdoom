@@ -127,11 +127,6 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 	};
 	const char *subst = NULL;
 
-	if (from[0]=='$') 
-	{
-		from=GStrings(from+1);
-	}
-
 	do
 	{
 		if (*from != '%')
@@ -256,32 +251,16 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 				if (message == NULL)
 				{
 					message = attacker->GetClass()->Meta.GetMetaString (AMETA_Obituary);
-					if (message == NULL)
-					{
-						message = attacker->GetHitObituary ();
-					}
 				}
 			}
 			else
 			{
 				message = attacker->GetClass()->Meta.GetMetaString (AMETA_Obituary);
-				if (message == NULL)
-				{
-					message = attacker->GetObituary ();
-				}
 			}
 		}
 	}
 
-	if (message)
-	{
-		SexMessage (message, gendermessage, gender,
-			self->player->userinfo.netname, self->player->userinfo.netname);
-		Printf (PRINT_MEDIUM, "%s\n", gendermessage);
-		return;
-	}
-
-	if (attacker != NULL && attacker->player != NULL)
+	if (message == NULL && attacker != NULL && attacker->player != NULL)
 	{
 		if (friendly)
 		{
@@ -297,18 +276,10 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 			if (inflictor != NULL)
 			{
 				message = inflictor->GetClass()->Meta.GetMetaString (AMETA_Obituary);
-				if (message == NULL)
-				{
-					message = inflictor->GetObituary ();
-				}
 			}
 			if (message == NULL && attacker->player->ReadyWeapon != NULL)
 			{
 				message = attacker->player->ReadyWeapon->GetClass()->Meta.GetMetaString (AMETA_Obituary);
-				if (message == NULL)
-				{
-					message = attacker->player->ReadyWeapon->GetObituary ();
-				}
 			}
 			if (message == NULL)
 			{
@@ -325,15 +296,17 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 		}
 	}
 
-	if (message)
+	if (message != NULL && message[0] == '$') 
 	{
-		SexMessage (message, gendermessage, gender,
-			self->player->userinfo.netname, attacker->player->userinfo.netname);
-		Printf (PRINT_MEDIUM, "%s\n", gendermessage);
-		return;
+		message=GStrings[message+1];
 	}
 
-	SexMessage (GStrings("OB_DEFAULT"), gendermessage, gender,
+	if (message == NULL)
+	{
+		message = GStrings("OB_DEFAULT");
+	}
+
+	SexMessage (message, gendermessage, gender,
 		self->player->userinfo.netname, self->player->userinfo.netname);
 	Printf (PRINT_MEDIUM, "%s\n", gendermessage);
 }

@@ -8,9 +8,9 @@
 #include "p_lnspec.h"
 #include "p_enemy.h"
 #include "s_sound.h"
-#include "a_strifeweaps.h"
 #include "d_event.h"
 #include "a_keys.h"
+#include "c_console.h"
 
 // Degnin Ore ---------------------------------------------------------------
 
@@ -48,12 +48,8 @@ IMPLEMENT_ACTOR (ADegninOre, Strife, 59, 0)
 	PROP_Tag ("Degnin_Ore")		// "Thalite_Ore" in the Teaser
 	PROP_DeathSound ("ore/explode")
 	PROP_Inventory_Icon ("I_XPRK")
+	PROP_Inventory_PickupMessage("$TXT_DEGNINORE")
 END_DEFAULTS
-
-const char *ADegninOre::PickupMessage ()
-{
-	return "You picked up the Degnin Ore.";
-}
 
 void ADegninOre::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
 {
@@ -179,7 +175,6 @@ class AScanner : public APowerupGiver
 {
 	DECLARE_ACTOR (AScanner, APowerupGiver)
 public:
-	const char *PickupMessage ();
 	bool Use (bool pickup);
 };
 
@@ -200,12 +195,8 @@ IMPLEMENT_ACTOR (AScanner, Strife, 2027, 0)
 	PROP_Inventory_Icon ("I_PMUP")
 	PROP_PowerupGiver_Powerup ("PowerScanner")
 	PROP_Inventory_PickupSound ("misc/i_pkup")
+	PROP_Inventory_PickupMessage("$TXT_SCANNER")
 END_DEFAULTS
-
-const char *AScanner::PickupMessage ()
-{
-	return "You picked up the scanner.";
-}
 
 bool AScanner::Use (bool pickup)
 {
@@ -213,7 +204,7 @@ bool AScanner::Use (bool pickup)
 	{
 		if (Owner->CheckLocalView (consoleplayer))
 		{
-			Printf ("The scanner won't work without a map!\n");
+			C_MidPrint(GStrings("TXT_NEEDMAP"));
 		}
 		return false;
 	}
@@ -228,7 +219,6 @@ class APrisonPass : public AKey
 public:
 	bool TryPickup (AActor *toucher);
 	bool SpecialDropAction (AActor *dropper);
-	const char *PickupMessage ();
 };
 
 FState APrisonPass::States[] =
@@ -243,6 +233,7 @@ IMPLEMENT_ACTOR (APrisonPass, Strife, -1, 0)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("I_TOKN")
 	PROP_Tag ("Prison_pass")
+	PROP_Inventory_PickupMessage("$TXT_PRISONPASS")
 END_DEFAULTS
 
 bool APrisonPass::TryPickup (AActor *toucher)
@@ -251,11 +242,6 @@ bool APrisonPass::TryPickup (AActor *toucher)
 	EV_DoDoor (DDoor::doorOpen, NULL, toucher, 223, 2*FRACUNIT, 0, 0, 0);
 	toucher->GiveInventoryType (QuestItemClasses[9]);
 	return true;
-}
-
-const char *APrisonPass::PickupMessage ()
-{
-	return "You picked up the Prison pass.";
 }
 
 //============================================================================
@@ -430,24 +416,28 @@ END_DEFAULTS
 
 bool AAmmoFillup::TryPickup (AActor *toucher)
 {
-	AInventory *item = toucher->FindInventory<AClipOfBullets>();
-	if (item == NULL)
+	const PClass * clip = PClass::FindClass(NAME_ClipOfBullets);
+	if (clip != NULL)
 	{
-		item = toucher->GiveInventoryType (RUNTIME_CLASS(AClipOfBullets));
-		if (item != NULL)
+		AInventory *item = toucher->FindInventory(clip);
+		if (item == NULL)
+		{
+			item = toucher->GiveInventoryType (clip);
+			if (item != NULL)
+			{
+				item->Amount = 50;
+			}
+		}
+		else if (item->Amount < 50)
 		{
 			item->Amount = 50;
 		}
+		else
+		{
+			return false;
+		}
+		GoAwayAndDie ();
 	}
-	else if (item->Amount < 50)
-	{
-		item->Amount = 50;
-	}
-	else
-	{
-		return false;
-	}
-	GoAwayAndDie ();
 	return true;
 }
 

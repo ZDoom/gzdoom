@@ -27,15 +27,11 @@ public:
 	void BeginPlay ();
 protected:
 	bool MatchPlayerClass (AActor *toucher);
-	const char *PieceMessage ();
 };
 
-IMPLEMENT_ABSTRACT_ACTOR (AMageWeaponPiece)
-
-const char *AMageWeaponPiece::PieceMessage ()
-{
-	return GStrings("TXT_BLOODSCOURGE_PIECE");
-}
+IMPLEMENT_STATELESS_ACTOR (AMageWeaponPiece, Hexen, -1, 0)
+	PROP_Inventory_PickupMessage("$TXT_BLOODSCOURGE_PIECE")
+END_DEFAULTS
 
 bool AMageWeaponPiece::MatchPlayerClass (AActor *toucher)
 {
@@ -152,10 +148,6 @@ public:
 		Super::Serialize (arc);
 		arc << MStaffCount;
 	}
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WEAPON_M4");
-	}
 	PalEntry GetBlend ()
 	{
 		return PalEntry (MStaffCount * 128 / 3, 151, 110, 0);
@@ -240,6 +232,7 @@ IMPLEMENT_ACTOR (AMWeapBloodscourge, Hexen, -1, 0)
 	PROP_Weapon_AmmoType1 ("Mana1")
 	PROP_Weapon_AmmoType2 ("Mana2")
 	PROP_Weapon_ProjectileType ("MageStaffFX2")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_M4")
 END_DEFAULTS
 
 // Mage Staff FX2 (Bloodscourge) --------------------------------------------

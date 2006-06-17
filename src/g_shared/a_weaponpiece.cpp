@@ -148,8 +148,14 @@ bool AWeaponPiece::PrivateShouldStay ()
 
 const char *AWeaponPiece::PickupMessage ()
 {
-	if (FullWeapon) return FullWeapon->PickupMessage();
-	return Super::PickupMessage();
+	if (FullWeapon) 
+	{
+		return FullWeapon->PickupMessage();
+	}
+	else
+	{
+		return Super::PickupMessage();
+	}
 }
 
 //===========================================================================

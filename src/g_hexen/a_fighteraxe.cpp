@@ -39,11 +39,6 @@ public:
 	FState *GetReadyState ();
 	FState *GetAtkState ();
 	FState *GetHoldAtkState ();
-
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WEAPON_F2");
-	}
 };
 
 FState AFWeapAxe::States[] =
@@ -175,6 +170,7 @@ IMPLEMENT_ACTOR (AAxePuff, Hexen, -1, 0)
 	PROP_SeeSound ("FighterAxeHitThing")
 	PROP_AttackSound ("FighterHammerHitWall")
 	PROP_ActiveSound ("FighterHammerMiss")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_F2")
 END_DEFAULTS
 
 // Glowing Axe Puff ---------------------------------------------------------

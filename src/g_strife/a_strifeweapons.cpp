@@ -361,11 +361,6 @@ void A_FirePoison (AActor *);
 class AStrifeCrossbow : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AStrifeCrossbow, AStrifeWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return "You picked up the crossbow";
-	}
 };
 
 FState AStrifeCrossbow::States[] =
@@ -442,6 +437,7 @@ IMPLEMENT_ACTOR (AStrifeCrossbow, Strife, 2001, 0)
 	PROP_Weapon_AmmoType1 ("ElectricBolts")
 	PROP_Weapon_SisterType ("StrifeCrossbow2")
 	PROP_Weapon_ProjectileType ("ElectricBolt")
+	PROP_Inventory_PickupMessage("$TXT_STRIFECROSSBOW")
 
 	PROP_Inventory_Icon ("CBOWA0")
 	PROP_Tag ("crossbow")
@@ -586,10 +582,6 @@ class AAssaultGun : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AAssaultGun, AStrifeWeapon)
 public:
-	const char *PickupMessage ()
-	{
-		return "You picked up the assault gun";
-	}
 	bool HandlePickup (AInventory *item);
 };
 
@@ -644,6 +636,7 @@ IMPLEMENT_ACTOR (AAssaultGun, Strife, 2002, 0)
 
 	PROP_Inventory_Icon ("RIFLA0")
 	PROP_Tag ("assault_gun")
+	PROP_Inventory_PickupMessage("$TXT_ASSAULTGUN")
 END_DEFAULTS
 
 //============================================================================
@@ -767,11 +760,6 @@ void A_FireMiniMissile (AActor *);
 class AMiniMissileLauncher : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AMiniMissileLauncher, AStrifeWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return "You picked up the mini missile launcher";
-	}
 };
 
 FState AMiniMissileLauncher::States[] =
@@ -818,6 +806,7 @@ IMPLEMENT_ACTOR (AMiniMissileLauncher, Strife, 2003, 0)
 
 	PROP_Inventory_Icon ("MMSLA0")
 	PROP_Tag ("mini_missile_launcher")	// "missile_gun" in the Teaser
+	PROP_Inventory_PickupMessage("$TXT_MMLAUNCHER")
 END_DEFAULTS
 
 // Rocket Trail -------------------------------------------------------------
@@ -956,11 +945,6 @@ void A_RocketInFlight (AActor *self)
 void A_FireFlamer (AActor *);
 
 
-const char *AFlameThrower::PickupMessage ()
-{
-	return "You picked up the flame thrower";
-}
-
 FState AFlameThrower::States[] =
 {
 	S_NORMAL (FLAM, 'A', -1, NULL, NULL),
@@ -1005,36 +989,9 @@ IMPLEMENT_ACTOR (AFlameThrower, Strife, 2005, 0)
 
 	PROP_Inventory_Icon ("FLAMA0")
 	PROP_Tag ("flame_thrower")
+	PROP_Inventory_PickupMessage("$TXT_FLAMER")
 END_DEFAULTS
 
-// Flame Thrower Parts ------------------------------------------------------
-
-class AFlameThrowerParts : AInventory
-{
-	DECLARE_ACTOR (AFlameThrowerParts, AInventory)
-public:
-	const char *PickupMessage ()
-	{
-		return "You picked up the flame thrower parts.";
-	}
-};
-
-FState AFlameThrowerParts::States[] =
-{
-	S_NORMAL (BFLM, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AFlameThrowerParts, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_SPECIAL)
-	PROP_Flags2 (MF2_FLOORCLIP)
-	PROP_StrifeType (191)
-	PROP_StrifeTeaserType (185)
-	PROP_StrifeTeaserType2 (189)
-	PROP_Inventory_FlagsSet (IF_INVBAR)
-	PROP_Inventory_Icon ("I_BFLM")
-	PROP_Tag ("flame_thrower_parts")
-END_DEFAULTS
 
 // Flame Thrower Projectile -------------------------------------------------
 
@@ -1126,11 +1083,6 @@ void A_MaulerTorpedoWave (AActor *);
 class AMauler : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AMauler, AStrifeWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return "You picked up the mauler";
-	}
 };
 
 FState AMauler::States[] =
@@ -1206,6 +1158,7 @@ IMPLEMENT_ACTOR (AMauler, Strife, 2004, 0)
 
 	PROP_Inventory_Icon ("TRPDA0")
 	PROP_Tag ("mauler")		// "blaster" in the Teaser
+	PROP_Inventory_PickupMessage("$TXT_MAULER")
 END_DEFAULTS
 
 // Mauler Torpedo version ---------------------------------------------------
@@ -1700,11 +1653,6 @@ void A_FireGrenade (AActor *);
 class AStrifeGrenadeLauncher : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AStrifeGrenadeLauncher, AStrifeWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return "You picked up the Grenade launcher";
-	}
 };
 
 FState AStrifeGrenadeLauncher::States[] =
@@ -1780,6 +1728,7 @@ IMPLEMENT_ACTOR (AStrifeGrenadeLauncher, Strife, 154, 0)
 
 	PROP_Inventory_Icon ("GRNDA0")
 	PROP_Tag ("Grenade_launcher")
+	PROP_Inventory_PickupMessage("$TXT_GLAUNCHER")
 END_DEFAULTS
 
 // White Phosphorous Grenade Launcher ---------------------------------------
@@ -1969,6 +1918,7 @@ IMPLEMENT_ACTOR (ASigil, Strife, -1, 0)
 	PROP_Inventory_PickupSound("weapons/sigilcharge")
 	PROP_Tag ("SIGIL")
 	PROP_Inventory_Icon ("I_SGL1")
+	PROP_Inventory_PickupMessage("$TXT_SIGIL")
 END_DEFAULTS
 
 // Sigil 1 ------------------------------------------------------------------
@@ -2111,17 +2061,6 @@ AInventory *ASigil::CreateCopy (AActor *other)
 	copy->Icon = Icon;
 	GoAwayAndDie ();
 	return copy;
-}
-
-//============================================================================
-//
-// ASigil :: PickupMessage
-//
-//============================================================================
-
-const char *ASigil::PickupMessage ()
-{
-	return "You picked up the SIGIL.";
 }
 
 //============================================================================

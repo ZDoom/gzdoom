@@ -165,8 +165,8 @@ bool AMagePlayer::DoHealingRadius (APlayerPawn *other)
 {
 	int amount = 50 + (pr_manaradius() % 50);
 
-	if (GiveAmmo (RUNTIME_CLASS(AMana1), amount) ||
-		GiveAmmo (RUNTIME_CLASS(AMana2), amount))
+	if (GiveAmmo (PClass::FindClass("Mana1"), amount) ||
+		GiveAmmo (PClass::FindClass("Mana2"), amount))
 	{
 		S_Sound (other, CHAN_AUTO, "MysticIncant", 1, ATTN_NORM);
 		return true;

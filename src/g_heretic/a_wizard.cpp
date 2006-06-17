@@ -81,22 +81,14 @@ IMPLEMENT_ACTOR (AWizard, Heretic, 15, 19)
 	PROP_PainSound ("wizard/pain")
 	PROP_DeathSound ("wizard/death")
 	PROP_ActiveSound ("wizard/active")
+	PROP_Obituary("$OB_WIZARD")
+	PROP_HitObituary("$OB_WIZARDHIT")
 END_DEFAULTS
 
 void AWizard::NoBlockingSet ()
 {
 	P_DropItem (this, "BlasterAmmo", 10, 84);
 	P_DropItem (this, "ArtiTomeOfPower", 0, 4);
-}
-
-const char *AWizard::GetObituary ()
-{
-	return GStrings("OB_WIZARD");
-}
-
-const char *AWizard::GetHitObituary ()
-{
-	return GStrings("OB_WIZARDHIT");
 }
 
 class AWizardFX1 : public AActor

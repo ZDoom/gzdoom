@@ -14,9 +14,6 @@ void A_TroopAttack (AActor *);
 class ADoomImp : public AActor
 {
 	DECLARE_ACTOR (ADoomImp, AActor)
-public:
-	const char *GetObituary () { return GStrings("OB_IMP"); }
-	const char *GetHitObituary () { return GStrings("OB_IMPHIT"); }
 };
 
 FState ADoomImp::States[] =
@@ -92,6 +89,8 @@ IMPLEMENT_ACTOR (ADoomImp, Doom, 3001, 5)
 	PROP_PainSound ("imp/pain")
 	PROP_DeathSound ("imp/death")
 	PROP_ActiveSound ("imp/active")
+	PROP_Obituary("$OB_IMP")
+	PROP_HitObituary("$OB_IMPHIT")
 END_DEFAULTS
 
 class ADoomImpBall : public AActor

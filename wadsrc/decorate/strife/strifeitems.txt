@@ -268,6 +268,25 @@ ACTOR OfficersUniform : Inventory 52
 	}
 }
 	
+	
+// Flame Thrower Parts ------------------------------------------------------
+
+ACTOR FlameThrowerParts : Inventory 
+{
+	Game Strife
+	ConversationID 191, 185, 189
+	+FLOORCLIP
+	+INVENTORY.INVBAR
+	Inventory.Icon "I_BFLM"
+	Tag "flame_thrower_parts"
+	Inventory.PickupMessage "$TXT_FTHROWERPARTS"
+	States
+	{
+	Spawn:
+		BFLM A -1
+		Stop
+	}
+}
 
 // InterrogatorReport -------------------------------------------------------
 // SCRIPT32 in strife0.wad has an Acolyte that drops this, but I couldn't

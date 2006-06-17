@@ -25,11 +25,6 @@ void A_CStaffMissileSlither (AActor *);
 class ACWeapStaff : public AClericWeapon
 {
 	DECLARE_ACTOR (ACWeapStaff, AClericWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WEAPON_C2");
-	}
 };
 
 FState ACWeapStaff::States[] =
@@ -99,6 +94,7 @@ IMPLEMENT_ACTOR (ACWeapStaff, Hexen, 10, 32)
 	PROP_Weapon_MoveCombatDist (25000000)
 	PROP_Weapon_AmmoType1 ("Mana1")
 	PROP_Weapon_ProjectileType ("CStaffMissile")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_C2")
 END_DEFAULTS
 
 // Serpent Staff Missile ----------------------------------------------------

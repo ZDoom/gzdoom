@@ -16,8 +16,6 @@ void A_FatAttack3 (AActor *);
 class AFatso : public AActor
 {
 	DECLARE_ACTOR (AFatso, AActor)
-public:
-	const char *GetObituary () { return GStrings("OB_FATSO"); }
 };
 
 FState AFatso::States[] =
@@ -101,6 +99,7 @@ IMPLEMENT_ACTOR (AFatso, Doom, 67, 112)
 	PROP_PainSound ("fatso/pain")
 	PROP_DeathSound ("fatso/death")
 	PROP_ActiveSound ("fatso/active")
+	PROP_Obituary("$OB_FATSO")
 END_DEFAULTS
 
 class AFatShot : public AActor

@@ -17,7 +17,6 @@ class ASnake : public AActor
 	DECLARE_ACTOR (ASnake, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary ();
 };
 
 FState ASnake::States[] =
@@ -80,12 +79,8 @@ IMPLEMENT_ACTOR (ASnake, Heretic, 92, 132)
 	PROP_PainSound ("snake/pain")
 	PROP_DeathSound ("snake/death")
 	PROP_ActiveSound ("snake/active")
+	PROP_Obituary("$OB_SNAKE")
 END_DEFAULTS
-
-const char *ASnake::GetObituary ()
-{
-	return GStrings("OB_SNAKE");
-}
 
 // Snake projectile A -------------------------------------------------------
 

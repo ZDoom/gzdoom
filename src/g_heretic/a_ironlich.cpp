@@ -23,8 +23,6 @@ class AIronlich : public AActor
 	DECLARE_ACTOR (AIronlich, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary ();
-	const char *GetHitObituary ();
 };
 
 FState AIronlich::States[] =
@@ -76,22 +74,14 @@ IMPLEMENT_ACTOR (AIronlich, Heretic, 6, 20)
 	PROP_PainSound ("ironlich/pain")
 	PROP_DeathSound ("ironlich/death")
 	PROP_ActiveSound ("ironlich/active")
+	PROP_Obituary("$OB_IRONLICH")
+	PROP_HitObituary("$OB_IRONLICHHIT")
 END_DEFAULTS
 
 void AIronlich::NoBlockingSet ()
 {
 	P_DropItem (this, "BlasterAmmo", 10, 84);
 	P_DropItem (this, "ArtiEgg", 0, 51);
-}
-
-const char *AIronlich::GetObituary ()
-{
-	return GStrings("OB_IRONLICH");
-}
-
-const char *AIronlich::GetHitObituary ()
-{
-	return GStrings("OB_IRONLICHHIT");
 }
 
 // Head FX 1 ----------------------------------------------------------------

@@ -18,7 +18,6 @@ class AClink : public AActor
 	DECLARE_ACTOR (AClink, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary ();
 };
 
 FState AClink::States[] =
@@ -73,16 +72,12 @@ IMPLEMENT_ACTOR (AClink, Heretic, 90, 1)
 	PROP_PainSound ("clink/pain")
 	PROP_DeathSound ("clink/death")
 	PROP_ActiveSound ("clink/active")
+	PROP_Obituary("$OB_CLINK")
 END_DEFAULTS
 
 void AClink::NoBlockingSet ()
 {
 	P_DropItem (this, "SkullRodAmmo", 20, 84);
-}
-
-const char *AClink::GetObituary ()
-{
-	return GStrings("OB_CLINK");
 }
 
 //----------------------------------------------------------------------------

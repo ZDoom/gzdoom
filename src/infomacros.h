@@ -207,6 +207,9 @@ public:
 #define PROP_Weapon_ProjectileType(x)	ADD_STRING_PROP(ADEF_Weapon_ProjectileType,"\16",x)
 #define PROP_PowerupGiver_Powerup(x)	ADD_STRING_PROP(ADEF_PowerupGiver_Powerup,"\17",x)
 #define PROP_Inventory_Icon(x)			ADD_STRING_PROP(ADEF_Inventory_Icon,"\20",x)
+#define PROP_Obituary(x)				ADD_STRING_PROP(ADEF_Obituary,"\21",x)
+#define PROP_HitObituary(x)				ADD_STRING_PROP(ADEF_HitObituary,"\22",x)
+#define PROP_Inventory_PickupMessage(x)	ADD_STRING_PROP(ADEF_Obituary,"\23",x)
 
 #define PROP_XScale(x)					ADD_BYTE_PROP(ADEF_XScale,x)
 #define PROP_YScale(x)					ADD_BYTE_PROP(ADEF_YScale,x)

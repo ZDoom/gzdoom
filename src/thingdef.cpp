@@ -3240,6 +3240,18 @@ static void InventoryGiveQuest (APuzzleItem *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void HealthLowMessage (AHealth *defaults, Baggage &bag)
+{
+	SC_MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt(AIMETA_LowHealth, sc_Number);
+	SC_MustGetStringName(",");
+	SC_MustGetString();
+	bag.Info->Class->Meta.SetMetaString(AIMETA_LowHealthMessage, sc_String);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void PuzzleitemNumber (APuzzleItem *defaults, Baggage &bag)
 {
 	SC_MustGetNumber();
@@ -3267,30 +3279,10 @@ static void WeaponAmmoGive2 (AWeapon *defaults, Baggage &bag)
 //==========================================================================
 //
 // Passing these parameters is really tricky to allow proper inheritance
-// and forward declarations. Here only an index into a string table is
+// and forward declarations. Here only a name is
 // stored which must be resolved after everything has been declared
 //
 //==========================================================================
-
-// This class is for storing a name inside a const PClass* field without
-// generating compiler warnings. It does not manipulate data in any other
-// way.
-class fuglyname : public FName
-{
-public:
-	fuglyname() : FName() {}
-	fuglyname(const char *foo) : FName(foo) {}
-	operator const PClass *()
-	{
-		return reinterpret_cast<const PClass *>(size_t(int(*this)));
-	}
-	fuglyname &operator= (const PClass *foo)
-	{
-		FName *p = this;
-		*p = ENamedName(reinterpret_cast<size_t>(foo));
-		return *this;
-	}
-};
 
 static void WeaponAmmoType1 (AWeapon *defaults, Baggage &bag)
 {
@@ -3547,6 +3539,7 @@ static const ActorProps props[] =
 	{ "gibhealth",					ActorGibHealth,				RUNTIME_CLASS(AActor) },
 	{ "heal",						ActorHealState,				RUNTIME_CLASS(AActor) },
 	{ "health",						ActorHealth,				RUNTIME_CLASS(AActor) },
+	{ "health.lowmessage",			(apf)HealthLowMessage,		RUNTIME_CLASS(AHealth) },
 	{ "height",						ActorHeight,				RUNTIME_CLASS(AActor) },
 	{ "hitobituary",				ActorHitObituary,			RUNTIME_CLASS(AActor) },
 	{ "ice",						ActorIceState,				RUNTIME_CLASS(AActor) },
@@ -3628,15 +3621,28 @@ static const ActorProps *is_actorprop (const char *str)
 //==========================================================================
 //
 // Do some postprocessing after everything has been defined
+// This also processes all the internal actors to adjust the type
+// fields in the weapons
 //
 //==========================================================================
 void FinishThingdef()
 {
 	unsigned int i;
+	bool isRuntimeActor=false;
 
-	for (i = 0;i < PClass::m_RuntimeActors.Size(); i++)
+	for (i = 0;i < PClass::m_Types.Size(); i++)
 	{
-		PClass * ti = PClass::m_RuntimeActors[i];
+		PClass * ti = PClass::m_Types[i];
+
+		// Skip non-actors
+		if (!ti->IsDescendantOf(RUNTIME_CLASS(AActor))) continue;
+
+		// Everything coming after the first runtime actor is also a runtime actor
+		// so this check is sufficient
+		if (ti == PClass::m_RuntimeActors[0])
+		{
+			isRuntimeActor=true;
+		}
 
 		// Friendlies never count as kills!
 		if (GetDefaultByType(ti)->flags & MF_FRIENDLY)
@@ -3654,13 +3660,16 @@ void FinishThingdef()
 			if (v != NAME_None && v.IsValidName())
 			{
 				defaults->AmmoType1 = PClass::FindClass(v);
-				if (!defaults->AmmoType1)
+				if (isRuntimeActor)
 				{
-					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
-				}
-				else if (defaults->AmmoType1->ParentClass != RUNTIME_CLASS(AAmmo))
-				{
-					SC_ScriptError("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					if (!defaults->AmmoType1)
+					{
+						I_Error("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					}
+					else if (defaults->AmmoType1->ParentClass != RUNTIME_CLASS(AAmmo))
+					{
+						I_Error("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					}
 				}
 			}
 
@@ -3668,13 +3677,16 @@ void FinishThingdef()
 			if (v != NAME_None && v.IsValidName())
 			{
 				defaults->AmmoType2 = PClass::FindClass(v);
-				if (!defaults->AmmoType2)
+				if (isRuntimeActor)
 				{
-					SC_ScriptError("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
-				}
-				else if (defaults->AmmoType2->ParentClass != RUNTIME_CLASS(AAmmo))
-				{
-					SC_ScriptError("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					if (!defaults->AmmoType2)
+					{
+						I_Error("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					}
+					else if (defaults->AmmoType2->ParentClass != RUNTIME_CLASS(AAmmo))
+					{
+						I_Error("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					}
 				}
 			}
 
@@ -3682,25 +3694,31 @@ void FinishThingdef()
 			if (v != NAME_None && v.IsValidName())
 			{
 				defaults->SisterWeaponType = PClass::FindClass(v);
-				if (!defaults->SisterWeaponType)
+				if (isRuntimeActor)
 				{
-					SC_ScriptError("Unknown sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
-				}
-				else if (!defaults->SisterWeaponType->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
-				{
-					SC_ScriptError("Invalid sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					if (!defaults->SisterWeaponType)
+					{
+						I_Error("Unknown sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					}
+					else if (!defaults->SisterWeaponType->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+					{
+						I_Error("Invalid sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					}
 				}
 			}
 
-			// Do some consistency checks. If these states are undefined the weapon cannot work!
-			if (!defaults->ReadyState) SC_ScriptError("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
-			if (!defaults->UpState) SC_ScriptError("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
-			if (!defaults->DownState) SC_ScriptError("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
-			if (!defaults->AtkState) SC_ScriptError("Weapon %s doesn't define an attack state.\n", ti->TypeName.GetChars());
+			if (isRuntimeActor)
+			{
+				// Do some consistency checks. If these states are undefined the weapon cannot work!
+				if (!defaults->ReadyState) I_Error("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
+				if (!defaults->UpState) I_Error("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
+				if (!defaults->DownState) I_Error("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
+				if (!defaults->AtkState) I_Error("Weapon %s doesn't define an attack state.\n", ti->TypeName.GetChars());
 
-			// If the weapon doesn't define a hold state use the attack state instead.
-			if (!defaults->HoldAtkState) defaults->HoldAtkState=defaults->AtkState;
-			if (!defaults->AltHoldAtkState) defaults->AltHoldAtkState=defaults->AltAtkState;
+				// If the weapon doesn't define a hold state use the attack state instead.
+				if (!defaults->HoldAtkState) defaults->HoldAtkState=defaults->AtkState;
+				if (!defaults->AltHoldAtkState) defaults->AltHoldAtkState=defaults->AltAtkState;
+			}
 
 		}
 		// same for the weapon type of weapon pieces.
@@ -3715,11 +3733,11 @@ void FinishThingdef()
 				defaults->WeaponClass = PClass::FindClass(v);
 				if (!defaults->WeaponClass)
 				{
-					SC_ScriptError("Unknown weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					I_Error("Unknown weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
 				else if (!defaults->WeaponClass->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 				{
-					SC_ScriptError("Invalid weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					I_Error("Invalid weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
 				}
 			}
 		}

@@ -14,8 +14,6 @@ void A_SpidRefire (AActor *self);
 class AArachnotron : public AActor
 {
 	DECLARE_ACTOR (AArachnotron, AActor)
-public:
-	const char *GetObituary () { return GStrings("OB_BABY"); }
 };
 
 FState AArachnotron::States[] =
@@ -92,6 +90,8 @@ IMPLEMENT_ACTOR (AArachnotron, Doom, 68, 6)
 	PROP_PainSound ("baby/pain")
 	PROP_DeathSound ("baby/death")
 	PROP_ActiveSound ("baby/active")
+	PROP_Obituary("$OB_BABY")
+
 END_DEFAULTS
 
 class AArachnotronPlasma : public APlasmaBall

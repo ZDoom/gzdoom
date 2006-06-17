@@ -217,7 +217,6 @@ class APig : public AActor
 	DECLARE_ACTOR (APig, AActor)
 public:
 	void Destroy ();
-	const char *GetObituary ();
 	void Die (AActor *source, AActor *inflictor);
 };
 
@@ -286,12 +285,6 @@ void APig::Destroy ()
 		tracer->Destroy ();
 	}
 	Super::Destroy ();
-}
-
-const char *APig::GetObituary ()
-{
-	//return GStrings("OB_CHICKEN");
-	return Super::GetObituary ();
 }
 
 void APig::Die (AActor *source, AActor *inflictor)

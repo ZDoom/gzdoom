@@ -1,5 +1,6 @@
 #include "a_pickups.h"
 #include "a_strifeglobal.h"
+#include "gstrings.h"
 
 // Coin ---------------------------------------------------------------------
 
@@ -19,19 +20,20 @@ IMPLEMENT_ACTOR (ACoin, Strife, 93, 0)
 	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Inventory_Icon ("I_COIN")
 	PROP_Tag ("coin")
+	PROP_Inventory_PickupMessage("$TXT_COIN")
 END_DEFAULTS
 
 const char *ACoin::PickupMessage ()
 {
 	if (Amount == 1)
 	{
-		return "You picked up the coin.";
+		return Super::PickupMessage();
 	}
 	else
 	{
 		static char msg[64];
 
-		sprintf (msg, "You picked up %d gold.", Amount);
+		sprintf (msg, GStrings("TXT_XGOLD"), Amount);
 		return msg;
 	}
 }

@@ -16,7 +16,6 @@ class AArtiDarkServant : public AInventory
 	DECLARE_ACTOR (AArtiDarkServant, AInventory)
 public:
 	bool Use (bool pickup);
-	const char *PickupMessage ();
 };
 
 FState AArtiDarkServant::States[] =
@@ -34,12 +33,8 @@ IMPLEMENT_ACTOR (AArtiDarkServant, Hexen, 86, 16)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTISUMN")
 	PROP_Inventory_PickupSound ("misc/p_pkup")
+	PROP_Inventory_PickupMessage("$TXT_ARTISUMMON")
 END_DEFAULTS
-
-const char *AArtiDarkServant::PickupMessage ()
-{
-	return GStrings("TXT_ARTISUMMON");
-}
 
 // Summoning Doll -----------------------------------------------------------
 

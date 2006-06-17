@@ -68,7 +68,19 @@ xx(Shell)
 xx(RocketAmmo)
 xx(Cell)
 
-// Weapon names for the Strife status bar
+// Hexen Mana
+xx(Mana1)
+xx(Mana2)
+
+// Ammo and weapon names for the Strife status bar
+xx(ClipOfBullets)
+xx(PoisonBolts)
+xx(ElectricBolts)
+xx(HEGrenadeRounds)
+xx(PhosphorusGrenadeRounds)
+xx(MiniMissiles)
+xx(EnergyPod)
+
 xx(StrifeCrossbow)
 xx(AssaultGun)
 xx(FlameThrower)

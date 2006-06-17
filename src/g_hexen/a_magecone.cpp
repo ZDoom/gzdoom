@@ -26,11 +26,6 @@ void A_ShedShard (AActor *);
 class AMWeapFrost : public AMageWeapon
 {
 	DECLARE_ACTOR (AMWeapFrost, AMageWeapon)
-public:
-	const char *PickupMessage ()
-	{
-		return GStrings("TXT_WEAPON_M2");
-	}
 };
 
 FState AMWeapFrost::States[] =
@@ -78,6 +73,7 @@ IMPLEMENT_ACTOR (AMWeapFrost, Hexen, 53, 36)
 	PROP_Weapon_MoveCombatDist (19000000)
 	PROP_Weapon_AmmoType1 ("Mana1")
 	PROP_Weapon_ProjectileType ("FrostMissile")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_M2")
 END_DEFAULTS
 
 // Frost Missile ------------------------------------------------------------

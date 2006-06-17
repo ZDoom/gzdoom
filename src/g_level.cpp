@@ -1650,8 +1650,10 @@ void G_DoCompleted (void)
 		wminfo.next[0] = 0;
 		if (secretexit)
 		{
-			if (Wads.CheckNumForName (level.secretmap) != -1)
+			MapData * map = P_OpenMapData(level.secretmap);
+			if (map != NULL)
 			{
+				delete map;
 				strncpy (wminfo.next, level.secretmap, 8);
 				strncpy (wminfo.lname1, FindLevelInfo (level.secretmap)->pname, 8);
 			}

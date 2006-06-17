@@ -1,3 +1,6 @@
+June 17, 2006 (Changes by Graf Zahl)
+- Fixed: The secret map check didn't work for maps inside Zips.
+
 June 14, 2006
 - Fixed loading of Build/Blood maps.
 - FWadLump::Read() now handles Blood decryption directly.

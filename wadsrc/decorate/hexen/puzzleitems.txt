@@ -229,7 +229,7 @@ ACTOR PuzzMWeapon : PuzzleItem 9017
 
 // Clock Gear 1 -------------------------------------------------------------
 
-ACTOR PuzzGear : PuzzleItem 9018
+ACTOR PuzzGear1 : PuzzleItem 9018
 {
 	Game Hexen
 	PuzzleItem.Number 13

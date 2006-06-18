@@ -146,6 +146,7 @@ public:
 	virtual bool HandlePickup (AInventory *item);
 	virtual bool Use (bool pickup);
 	virtual void Travelled ();
+	virtual void OwnerDied ();
 
 	virtual void AbsorbDamage (int damage, int damageType, int &newdamage);
 	virtual void AlterWeaponSprite (vissprite_t *vis);

@@ -273,6 +273,19 @@ AInventory *APowerup::CreateTossable ()
 	return NULL;
 }
 
+//===========================================================================
+//
+// APowerup :: OwnerDied
+//
+// Powerups don't last beyond death.
+//
+//===========================================================================
+
+void APowerup::OwnerDied ()
+{
+	Destroy ();
+}
+
 // Invulnerability Powerup ---------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerInvulnerable, Any, -1, 0)

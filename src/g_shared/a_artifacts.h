@@ -30,6 +30,7 @@ public:
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
 	virtual void Serialize (FArchive &arc);
+	virtual void OwnerDied ();
 	virtual PalEntry GetBlend ();
 	virtual bool DrawPowerup (int x, int y);
 

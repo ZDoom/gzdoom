@@ -72,6 +72,8 @@ public:
 	virtual void ActivateMorphWeapon ();
 	virtual AWeapon *PickNewWeapon (const PClass *ammotype);
 	virtual AWeapon *BestWeapon (const PClass *ammotype);
+	virtual void GiveDeathmatchInventory ();
+	virtual void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
 	enum EInvulState
 	{

@@ -531,6 +531,18 @@ void AInventory::Travelled ()
 
 //===========================================================================
 //
+// AInventory :: OwnerDied
+//
+// Items receive this message when their owners die.
+//
+//===========================================================================
+
+void AInventory::OwnerDied ()
+{
+}
+
+//===========================================================================
+//
 // AInventory :: HandlePickup
 //
 // Returns true if the pickup was handled (or should not happen at all),

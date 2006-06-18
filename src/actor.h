@@ -545,6 +545,9 @@ public:
 	// Tries to give the actor some ammo.
 	bool GiveAmmo (const PClass *type, int amount);
 
+	// Destroys all the inventory the actor is holding.
+	void DestroyAllInventory ();
+
 	// Set the alphacolor field properly
 	void SetShade (DWORD rgb);
 	void SetShade (int r, int g, int b);

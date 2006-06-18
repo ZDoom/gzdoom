@@ -1374,27 +1374,18 @@ void G_DoReborn (int playernum, bool freshbot)
 	{
 		// respawn at the start
 		int i;
-		AInventory *oldInv;
 
 		// first disassociate the corpse
 		if (players[playernum].mo)
 		{
-			oldInv = players[playernum].mo->Inventory;
-			players[playernum].mo->Inventory = NULL;
 			G_QueueBody (players[playernum].mo);
 			players[playernum].mo->player = NULL;
-		}
-		else
-		{
-			oldInv = NULL;
 		}
 
 		// spawn at random spot if in death match
 		if (deathmatch)
 		{
 			G_DeathMatchSpawnPlayer (playernum);
-			if (players[playernum].mo == NULL)
-				i = 1;
 			return;
 		}
 
@@ -1433,40 +1424,6 @@ void G_DoReborn (int playernum, bool freshbot)
 				// he's going to be inside something.  Too bad.
 			}
 			P_SpawnPlayer (&playerstarts[playernum]);
-		}
-
-		// Cooperative net-play, retain keys, weapons, and some ammo,
-		// but throw the other inventory items away.
-		if (!freshbot)
-		{
-			AInventory *probe = oldInv;
-
-			while (probe != NULL)
-			{
-				AInventory *next = probe->Inventory;
-				if (probe->IsKindOf (RUNTIME_CLASS(AWeapon)))
-				{
-					// Keep weapons
-				}
-				else if (probe->IsKindOf (RUNTIME_CLASS(AKey)))
-				{
-					// Keep keys
-				}
-				else if (probe->IsKindOf (RUNTIME_CLASS(AAmmo)))
-				{
-					// Take away some ammo
-					if (probe->Amount > 0)
-					{
-						probe->Amount = MAX(1, probe->Amount / 2);
-					}
-				}
-				else
-				{
-					// Eliminate it
-					probe->Destroy ();
-				}
-				probe = next;
-			}
 		}
 	}
 }

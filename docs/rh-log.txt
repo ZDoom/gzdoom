@@ -1,3 +1,9 @@
+June 17, 2006
+- Finally implemented code to keep some or all of your inventory intact when
+  respawning in coop. Now the new inventory code should finally be complete. :-)
+- Fixed: PROP_Inventory_PickupMessage was improperly defined for non-VC++
+  compilation.
+
 June 17, 2006 (Changes by Graf Zahl)
 - Converted a_doomhealth.cpp to DECORATE.
 - Added a PickupMessage property to the internal actor parser, replaced

@@ -221,6 +221,13 @@ enum
 	DF_NO_FOV				= 1 << 19,	// Only let the arbitrator set FOV (for all players)
 	DF_NO_COOP_WEAPON_SPAWN	= 1 << 20,	// Don't spawn multiplayer weapons in coop games
 	DF_NO_CROUCH			= 1 << 21,	// Don't allow crouching
+	DF_COOP_LOSE_INVENTORY	= 1 << 22,	// Lose all your old inventory when respawning in coop
+	DF_COOP_LOSE_KEYS		= 1 << 23,	// Lose keys when respawning in coop
+	DF_COOP_LOSE_WEAPONS	= 1 << 24,	// Lose weapons when respawning in coop
+	DF_COOP_LOSE_ARMOR		= 1 << 25,	// Lose armor when respawning in coop
+	DF_COOP_LOSE_POWERUPS	= 1 << 26,	// Lose powerups when respawning in coop
+	DF_COOP_LOSE_AMMO		= 1 << 27,	// Lose ammo when respawning in coop
+	DF_COOP_HALVE_AMMO		= 1 << 28,	// Lose half your ammo when respawning in coop (but not less than the normal starting amount)
 };
 
 // [BC] More dmflags. w00p!

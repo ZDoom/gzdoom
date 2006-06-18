@@ -679,6 +679,20 @@ void AActor::RemoveInventory (AInventory *item)
 
 //============================================================================
 //
+// AActor :: DestroyAllInventory
+//
+//============================================================================
+
+void AActor::DestroyAllInventory ()
+{
+	while (Inventory != NULL)
+	{
+		Inventory->Destroy ();
+	}
+}
+
+//============================================================================
+//
 // AActor :: FirstInv
 //
 // Returns the first item in this actor's inventory that has IF_INVBAR set.
@@ -3203,12 +3217,7 @@ void AActor::Deactivate (AActor *activator)
 void AActor::Destroy ()
 {
 	// [RH] Destroy any inventory this actor is carrying
-	while (Inventory != NULL)
-	{
-		AInventory *item = Inventory;
-		Inventory = item->Inventory;
-		item->Destroy ();
-	}
+	DestroyAllInventory ();
 
 	// [RH] Unlink from tid chain
 	RemoveFromHash ();
@@ -3220,7 +3229,7 @@ void AActor::Destroy ()
 	// Delete all nodes on the current sector_list			phares 3/16/98
 	P_DelSector_List();
 
-	// stop any playing sound
+	// Transform any playing sound into positioned, non-actor sounds.
 	S_RelinkSound (this, NULL);
 
 	Super::Destroy ();
@@ -3425,24 +3434,18 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 		P_SetupPsprites (p);
 	}
 
-	// give all cards in death match mode
 	if (deathmatch)
-	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
-		{
-			if (PClass::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
-			{
-				AKey *key = (AKey *)GetDefaultByType (PClass::m_Types[i]);
-				if (key->KeyNumber != 0)
-				{
-					key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0));
-					if (!key->TryPickup (p->mo))
-					{
-						key->Destroy ();
-					}
-				}
-			}
-		}
+	{ // Give all cards in death match mode.
+		p->mo->GiveDeathmatchInventory ();
+	}
+	else if (multiplayer && state == PST_REBORN && oldactor != NULL)
+	{ // Special inventory handling for respawning in coop
+		p->mo->FilterCoopRespawnInventory (oldactor);
+	}
+	if (oldactor != NULL)
+	{ // Remove any inventory left from the old actor. Coop handles
+	  // it above, but the other modes don't.
+		oldactor->DestroyAllInventory();
 	}
 
 	if (StatusBar != NULL && (playernum == consoleplayer || StatusBar->GetPlayer() == playernum))

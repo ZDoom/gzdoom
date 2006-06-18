@@ -38,6 +38,7 @@
 #include "p_effect.h"
 #include "s_sound.h"
 #include "a_sharedglobal.h"
+#include "a_keys.h"
 #include "statnums.h"
 #include "v_palette.h"
 #include "v_video.h"
@@ -46,6 +47,7 @@
 #include "sbar.h"
 #include "f_finale.h"
 #include "c_console.h"
+#include "doomdef.h"
 
 static FRandom pr_healradius ("HealRadius");
 
@@ -456,6 +458,141 @@ AWeapon *APlayerPawn::PickNewWeapon (const PClass *ammotype)
 	return best;
 }
 
+//===========================================================================
+//
+// APlayerPawn :: GiveDeathmatchInventory
+//
+// Gives players items they should have in addition to their default
+// inventory when playing deathmatch. (i.e. all keys)
+//
+//===========================================================================
+
+void APlayerPawn::GiveDeathmatchInventory()
+{
+	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+	{
+		if (PClass::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
+		{
+			AKey *key = (AKey *)GetDefaultByType (PClass::m_Types[i]);
+			if (key->KeyNumber != 0)
+			{
+				key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0));
+				if (!key->TryPickup (this))
+				{
+					key->Destroy ();
+				}
+			}
+		}
+	}
+}
+
+//===========================================================================
+//
+// APlayerPawn :: FilterCoopRespawnInventory
+//
+// When respawning in coop, this function is called to walk through the dead
+// player's inventory and modify it according to the current game flags so
+// that it can be transferred to the new live player. This player currently
+// has the default inventory, and the oldplayer has the inventory at the time
+// of death.
+//
+//===========================================================================
+
+void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
+{
+	AInventory *item, *next, *defitem;
+
+	// If we're losing everything, this is really simple.
+	if (dmflags & DF_COOP_LOSE_INVENTORY)
+	{
+		oldplayer->DestroyAllInventory();
+		return;
+	}
+
+	// If we don't want to lose anything, then we don't need to bother checking
+	// the old inventory.
+	if (dmflags &  (DF_COOP_LOSE_KEYS |
+					DF_COOP_LOSE_WEAPONS |
+					DF_COOP_LOSE_AMMO |
+					DF_COOP_HALVE_AMMO |
+					DF_COOP_LOSE_ARMOR |
+					DF_COOP_LOSE_POWERUPS))
+	{
+		// Walk through the old player's inventory and destroy or modify
+		// according to dmflags.
+		for (item = oldplayer->Inventory; item != NULL; item = next)
+		{
+			next = item->Inventory;
+
+			// If this item is part of the default inventory, we never want
+			// to destroy it, although we might want to copy the default
+			// inventory amount.
+			defitem = FindInventory (item->GetClass());
+
+			if ((dmflags & DF_COOP_LOSE_KEYS) &&
+				defitem == NULL &&
+				item->IsKindOf(RUNTIME_CLASS(AKey)))
+			{
+				item->Destroy();
+			}
+			else if ((dmflags & DF_COOP_LOSE_WEAPONS) &&
+				defitem == NULL &&
+				item->IsKindOf(RUNTIME_CLASS(AWeapon)))
+			{
+				item->Destroy();
+			}
+			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
+				defitem == NULL &&
+				item->IsKindOf(RUNTIME_CLASS(AArmor)))
+			{
+				item->Destroy();
+			}
+			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
+				defitem == NULL &&
+				item->IsKindOf(RUNTIME_CLASS(APowerupGiver)))
+			{
+				item->Destroy();
+			}
+			else if ((dmflags & (DF_COOP_LOSE_AMMO | DF_COOP_HALVE_AMMO)) &&
+				item->IsKindOf(RUNTIME_CLASS(AAmmo)))
+			{
+				if (defitem == NULL)
+				{
+					if (dmflags & DF_COOP_LOSE_AMMO)
+					{
+						// Do NOT destroy the ammo, because a weapon might reference it.
+						item->Amount = 0;
+					}
+					else if (item->Amount > 1)
+					{
+						item->Amount /= 2;
+					}
+				}
+				else
+				{
+					// When set to lose ammo, you get to keep all your starting ammo.
+					// When set to halve ammo, you won't be left with less than your starting amount.
+					if (dmflags & DF_COOP_LOSE_AMMO)
+					{
+						item->Amount = defitem->Amount;
+					}
+					else if (item->Amount > 1)
+					{
+						item->Amount = MAX(item->Amount / 2, defitem->Amount);
+					}
+				}
+			}
+		}
+	}
+
+	// Now destroy the default inventory this player is holding and move
+	// over the old player's remaining inventory.
+	DestroyAllInventory();
+	ObtainInventory (oldplayer);
+
+	player->ReadyWeapon = NULL;
+	PickNewWeapon (NULL);
+}
 
 const char *APlayerPawn::GetSoundClass ()
 {
@@ -558,11 +695,6 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 					}
 				}
 			}
-		}
-		// Kill the player's inventory
-		while (Inventory != NULL)
-		{
-			Inventory->Destroy ();
 		}
 		if (!multiplayer && (level.flags & LEVEL_DEATHSLIDESHOW))
 		{

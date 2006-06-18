@@ -334,6 +334,14 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		this->player->cheats&CF_PREDICTING?"predicting":"real");
 	}
 
+	// [RH] Notify this actor's items.
+	for (AInventory *item = Inventory; item != NULL; )
+	{
+		AInventory *next = item->Inventory;
+		item->OwnerDied();
+		item = next;
+	}
+
 	if (flags & MF_MISSILE)
 	{ // [RH] When missiles die, they just explode
 		P_ExplodeMissile (this, NULL);

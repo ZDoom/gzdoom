@@ -2589,6 +2589,7 @@ FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
 	bNeedsUpdate = true;
 	bDidUpdate = false;
 	bHasCanvas = true;
+	bFirstUpdate = true;
 }
 
 FCanvasTexture::~FCanvasTexture ()
@@ -2680,7 +2681,7 @@ void FCanvasTexture::RenderView (AActor *viewpoint, int fov)
 	}
 	float savedfov = LastFOV;
 	R_SetFOV (fov);
-	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, Width, Height);
+	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, Width, Height, bFirstUpdate);
 	R_SetFOV (savedfov);
 	if (Pixels == Canvas->GetBuffer())
 	{
@@ -2692,6 +2693,7 @@ void FCanvasTexture::RenderView (AActor *viewpoint, int fov)
 	}
 	bNeedsUpdate = false;
 	bDidUpdate = true;
+	bFirstUpdate = false;
 }
 
 //

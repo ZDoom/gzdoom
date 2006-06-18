@@ -98,6 +98,7 @@ static TArray<InterpolationViewer> PastViewers;
 static int centerxwide;
 static bool polyclipped;
 static bool r_showviewer;
+bool r_dontmaplines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1403,7 +1404,7 @@ void R_SetupBuffer (bool inview)
 //
 //==========================================================================
 
-void R_RenderActorView (AActor *actor)
+void R_RenderActorView (AActor *actor, bool dontmaplines)
 {
 	WallCycles = PlaneCycles = MaskedCycles = WallScanCycles = 0;
 
@@ -1441,6 +1442,8 @@ void R_RenderActorView (AActor *actor)
 	MirrorFlags = 0;
 	ActiveWallMirror = NULL;
 
+	r_dontmaplines = dontmaplines;
+	
 	// [RH] Hack to make windows into underwater areas possible
 	r_fakingunderwater = false;
 
@@ -1518,7 +1521,7 @@ void R_RenderActorView (AActor *actor)
 //==========================================================================
 
 void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
-	int x, int y, int width, int height)
+	int x, int y, int width, int height, bool dontmaplines)
 {
 	const int saveddetail = detailxshift | (detailyshift << 1);
 	const bool savedviewactive = viewactive;
@@ -1535,7 +1538,7 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	viewwindowy = y;
 	viewactive = true;
 
-	R_RenderActorView (actor);
+	R_RenderActorView (actor, dontmaplines);
 
 	RenderTarget = screen;
 	bRenderingToCanvas = false;
@@ -1579,6 +1582,7 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, int picnum, int fov)
 			// Yes, change its assignment to this new camera
 			probe->Viewpoint = viewpoint;
 			probe->FOV = fov;
+			texture->bFirstUpdate = true;
 			return;
 		}
 	}
@@ -1589,6 +1593,7 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, int picnum, int fov)
 	probe->PicNum = picnum;
 	probe->FOV = fov;
 	probe->Next = List;
+	texture->bFirstUpdate = true;
 	List = probe;
 }
 

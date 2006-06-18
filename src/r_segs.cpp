@@ -1184,7 +1184,7 @@ void R_NewWall (bool needlights)
 	linedef = curline->linedef;
 
 	// mark the segment as visible for auto map
-	linedef->flags |= ML_MAPPED;
+	if (!r_dontmaplines) linedef->flags |= ML_MAPPED;
 
 	midtexture = toptexture = bottomtexture = 0;
 

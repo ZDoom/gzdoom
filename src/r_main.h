@@ -79,6 +79,8 @@ extern int				loopcount;
 
 extern int				r_Yaspect;
 
+extern bool				r_dontmaplines;
+
 //
 // Lighting.
 //
@@ -184,11 +186,11 @@ void R_SetViewAngle ();
 //
 
 // Called by G_Drawer.
-void R_RenderActorView (AActor *actor);
+void R_RenderActorView (AActor *actor, bool dontmaplines = false);
 void R_RefreshViewBorder ();
 void R_SetupBuffer (bool inview);
 
-void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas, int x, int y, int width, int height);
+void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines = false);
 
 void R_ResetViewInterpolation ();
 

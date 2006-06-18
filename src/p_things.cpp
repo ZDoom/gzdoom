@@ -114,6 +114,31 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 // [BC] Added
 // [RH] Fixed
 
+bool P_MoveThing(AActor * source, fixed_t x, fixed_t y, fixed_t z, bool fog)
+{
+	fixed_t oldx, oldy, oldz;
+
+	oldx = source->x;
+	oldy = source->y;
+	oldz = source->z;
+
+	source->SetOrigin (x, y, z);
+	if (P_TestMobjLocation (source))
+	{
+		if (fog)
+		{
+			Spawn<ATeleportFog> (x, y, z + TELEFOGHEIGHT);
+			Spawn<ATeleportFog> (oldx, oldy, oldz + TELEFOGHEIGHT);
+		}
+		return true;
+	}
+	else
+	{
+		source->SetOrigin (oldx, oldy, oldz);
+		return false;
+	}
+}
+
 bool P_Thing_Move (int tid, int mapspot, bool fog)
 {
 	FActorIterator iterator1 (tid);
@@ -125,27 +150,7 @@ bool P_Thing_Move (int tid, int mapspot, bool fog)
 
 	if (source != NULL && target != NULL)
 	{
-		fixed_t oldx, oldy, oldz;
-
-		oldx = source->x;
-		oldy = source->y;
-		oldz = source->z;
-
-		source->SetOrigin (target->x, target->y, target->z);
-		if (P_TestMobjLocation (source))
-		{
-			if (fog)
-			{
-				Spawn<ATeleportFog> (target->x, target->y, target->z + TELEFOGHEIGHT);
-				Spawn<ATeleportFog> (oldx, oldy, oldz + TELEFOGHEIGHT);
-			}
-			return true;
-		}
-		else
-		{
-			source->SetOrigin (oldx, oldy, oldz);
-			return false;
-		}
+		return P_MoveThing(source, target->x, target->y, target->z, fog);
 	}
 	return false;
 }

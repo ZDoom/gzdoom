@@ -263,6 +263,7 @@ protected:
 	Span DummySpans[2];
 	BYTE bNeedsUpdate:1;
 	BYTE bDidUpdate:1;
+	BYTE bFirstUpdate:1;
 
 	void MakeTexture ();
 

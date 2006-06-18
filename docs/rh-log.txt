@@ -1,3 +1,11 @@
+June 18, 2006 (Changes by Graf Zahl)
+- Added another set of ACS inventory functions which take a tid for the actor
+  and aren't limited to the script's activator.
+- Added GetSectorLightLevel(tag), GetActorCeilingZ(tid) and
+  SetActorPosition(tid, x, y, z, fog) ACS functions.
+- Fixed: First initialization of camera textures should not mark the rendered
+  lines as mapped.
+  
 June 17, 2006
 - Finally implemented code to keep some or all of your inventory intact when
   respawning in coop. Now the new inventory code should finally be complete. :-)

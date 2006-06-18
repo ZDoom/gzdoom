@@ -129,6 +129,7 @@ bool	P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid);
 bool	P_Thing_Projectile (int tid, int type, const char * type_name, angle_t angle,
 			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 			bool leadTarget);
+bool	P_MoveThing(AActor * source, fixed_t x, fixed_t y, fixed_t z, bool fog);
 bool	P_Thing_Move (int tid, int mapspot, bool fog);
 
 //

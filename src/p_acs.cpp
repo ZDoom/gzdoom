@@ -3811,9 +3811,20 @@ int DLevelScript::RunScript ()
 			ClearInventory (activator);
 			break;
 
+		case PCD_CLEARACTORINVENTORY:
+			ClearInventory (SingleActorFromTID(STACK(3), NULL));
+			sp--;
+			break;
+
 		case PCD_GIVEINVENTORY:
 			GiveInventory (activator, FBehavior::StaticLookupString (STACK(2)), STACK(1));
 			sp -= 2;
+			break;
+
+		case PCD_GIVEACTORINVENTORY:
+			GiveInventory (SingleActorFromTID(STACK(3), NULL), 
+							FBehavior::StaticLookupString (STACK(2)), STACK(1));
+			sp -= 3;
 			break;
 
 		case PCD_GIVEINVENTORYDIRECT:
@@ -3826,6 +3837,12 @@ int DLevelScript::RunScript ()
 			sp -= 2;
 			break;
 
+		case PCD_TAKEACTORINVENTORY:
+			TakeInventory (SingleActorFromTID(STACK(3), NULL),  
+							FBehavior::StaticLookupString (STACK(2)), STACK(1));
+			sp -= 3;
+			break;
+
 		case PCD_TAKEINVENTORYDIRECT:
 			TakeInventory (activator, FBehavior::StaticLookupString (pc[0]), pc[1]);
 			pc += 2;
@@ -3833,6 +3850,12 @@ int DLevelScript::RunScript ()
 
 		case PCD_CHECKINVENTORY:
 			STACK(1) = CheckInventory (activator, FBehavior::StaticLookupString (STACK(1)));
+			break;
+
+		case PCD_CHECKACTORINVENTORY:
+			STACK(1) = CheckInventory (SingleActorFromTID(STACK(2), NULL),  
+										FBehavior::StaticLookupString (STACK(1)));
+			sp--;
 			break;
 
 		case PCD_CHECKINVENTORYDIRECT:
@@ -3964,6 +3987,17 @@ int DLevelScript::RunScript ()
 			STACK(1) = I_PlayMovie (FBehavior::StaticLookupString (STACK(1)));
 			break;
 
+		case PCD_SETACTORPOSITION:
+			{
+				BOOL result = false;
+				AActor *actor = SingleActorFromTID (STACK(5), activator);
+				if (actor != NULL)
+					result = P_MoveThing(actor, STACK(4), STACK(3), STACK(2), !!STACK(1));
+				sp -= 4;
+				STACK(1) = result;
+			}
+			break;
+
 		case PCD_GETACTORX:
 		case PCD_GETACTORY:
 		case PCD_GETACTORZ:
@@ -3982,6 +4016,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_GETACTORFLOORZ:
+		case PCD_GETACTORCEILINGZ:
 			{
 				AActor *actor = SingleActorFromTID (STACK(1), activator);
 
@@ -3989,10 +4024,15 @@ int DLevelScript::RunScript ()
 				{
 					STACK(1) = 0;
 				}
-				else
+				else if (pcd == PCD_GETACTORFLOORZ)
 				{
 					STACK(1) = actor->floorz;
 				}
+				else
+				{
+					STACK(1) = actor->ceilingz;
+				}
+
 			}
 			break;
 
@@ -4044,6 +4084,19 @@ int DLevelScript::RunScript ()
 					}
 				}
 				sp -= 2;
+				STACK(1) = z;
+			}
+			break;
+
+		case PCD_GETSECTORLIGHTLEVEL:
+			{
+				int secnum = P_FindSectorFromTag (STACK(1), -1);
+				int z = -1;
+
+				if (secnum >= 0)
+				{
+					z = sectors[secnum].lightlevel;
+				}
 				STACK(1) = z;
 			}
 			break;

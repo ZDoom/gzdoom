@@ -624,14 +624,9 @@ static void G_DoParseMapInfo (int lump)
 				strcpy (levelinfo->skypic2, levelinfo->skypic1);
 			}
 			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
-			if (levelinfo->pname[0] != 0 && TexMan.CheckForTexture (levelinfo->pname, FTexture::TEX_MiscPatch) < 0)
+			if (levelinfo->pname[0] != 0)
 			{
-				int lumpnum = Wads.CheckNumForName (levelinfo->pname);
-				if (lumpnum >= 0)
-				{
-					TexMan.CreateTexture (lumpnum, FTexture::TEX_MiscPatch);
-				}
-				else
+				if (TexMan.AddPatch(levelinfo->pname) < 0)
 				{
 					levelinfo->pname[0] = 0;
 				}

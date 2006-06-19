@@ -97,7 +97,9 @@ struct FWadCollection::LumpRecord
 enum
 {
 	LUMPF_BLOODCRYPT = 1,	// Lump uses Blood-style encryption
-	LUMPF_COMPRESSED = 2	// Zip-compressed
+	LUMPF_COMPRESSED = 2,	// Zip-compressed
+	LUMPF_ZIPFILE	 = 4,	// Inside a Zip file - used to enforce use of special directories insize Zips
+
 };
 
 class FWadCollection::WadFileRecord : public FileReader
@@ -592,6 +594,10 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			lump_p->fullname = copystring(name);
 			lump_p->position = LittleLong(zip_fh->dwFileOffset) + sizeof(FZipLocalHeader) + LittleShort(zip_fh->wFileNameSize);
 			lump_p->size = zip_fh->dwSize;
+
+			// Map some directories to WAD namespaces.
+			// Note that some of these namespaces don't exist in WADS.
+			// CheckNumForName will handle any request for these namespaces accordingly.
 			lump_p->namespc =	!strncmp(name, "flats/", 6)			? ns_flats :
 								!strncmp(name, "textures/", 9)		? ns_newtextures :
 								!strncmp(name, "hires/", 6)			? ns_hires :
@@ -599,10 +605,10 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 								!strncmp(name, "colormaps/", 10)	? ns_colormaps :
 								!strncmp(name, "acs/", 4)			? ns_acslibrary :
 								!strncmp(name, "voices/", 7)		? ns_strifevoices :
-								!strncmp(name, "patches/", 8)		? ns_global :
-								!strncmp(name, "graphics/", 9)		? ns_global :
-								!strncmp(name, "sounds/", 7)		? ns_global :
-								!strncmp(name, "music/", 6)			? ns_global : 
+								!strncmp(name, "patches/", 8)		? ns_patches :
+								!strncmp(name, "graphics/", 9)		? ns_graphics :
+								!strncmp(name, "sounds/", 7)		? ns_sounds :
+								!strncmp(name, "music/", 6)			? ns_music : 
 								!strchr(name, '/')					? ns_global : -1;
 			
 			// Anything that is not in one of these subdirectories or the main directory 
@@ -614,7 +620,8 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			}
 
 			lump_p->wadnum = (WORD)NumWads;
-			lump_p->flags = LittleShort(zip_fh->wCompression) == Z_DEFLATED? LUMPF_COMPRESSED : 0;
+			lump_p->flags = LittleShort(zip_fh->wCompression) == Z_DEFLATED? 
+								LUMPF_COMPRESSED|LUMPF_ZIPFILE : LUMPF_ZIPFILE;
 			lump_p->compressedsize = LittleLong(zip_fh->dwCompressedSize);
 
 			// Since '\' can't be used as a file name's part inside a ZIP
@@ -816,10 +823,20 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 	uppercopy (uname, name);
 	i = FirstLumpIndex[LumpNameHash (uname) % NumLumps];
 
-	while (i != NULL_INDEX &&
-		(*(__int64 *)&LumpInfo[i].name != *(__int64 *)&uname ||
-		 LumpInfo[i].namespc != space))
+	while (i != NULL_INDEX)
 	{
+		if (*(__int64 *)&LumpInfo[i].name == *(__int64 *)&uname)
+		{
+			if (LumpInfo[i].namespc == space) break;
+			// If the lump is from one of the special namespaces exclusive to Zips
+			// the check has to be done differently:
+			// If we find a lump with this name in the global namespace that does not come
+			// from a Zip return that. WADs don't know these namespaces and single lumps must
+			// work as well.
+			if (space > ns_specialzipdirectory &&
+				LumpInfo[i].namespc == ns_global && 
+				!(LumpInfo[i].flags & LUMPF_ZIPFILE)) break;
+		}
 		i = NextLumpIndex[i];
 	}
 
@@ -858,11 +875,11 @@ int FWadCollection::CheckNumForName (const char *name, int space, int wadnum)
 //
 //==========================================================================
 
-int FWadCollection::GetNumForName (const char *name)
+int FWadCollection::GetNumForName (const char *name, int space)
 {
 	int	i;
 
-	i = CheckNumForName (name);
+	i = CheckNumForName (name, space);
 
 	if (i == -1)
 		I_Error ("W_GetNumForName: %s not found!", name);

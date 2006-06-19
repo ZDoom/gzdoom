@@ -499,7 +499,7 @@ OPLmusicWriter::OPLmusicWriter (const char *songname, const char *filename)
 	else
 	{
 		SharingData = false;
-		int lumpnum = Wads.CheckNumForName (songname);
+		int lumpnum = Wads.CheckNumForName (songname, ns_music);
 		if (lumpnum == -1)
 		{
 			Printf ("Song %s is unknown.\n", songname);

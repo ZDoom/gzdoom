@@ -257,10 +257,13 @@ CCMD (idclev)
 
 		// Catch invalid maps.
 		mapname = CalcMapName (epsd, map);
-		if (Wads.CheckNumForName (mapname) == -1)
+
+		MapData * mapd = P_OpenMapData(mapname);
+		if (mapd == NULL)
 			return;
 
 		// So be it.
+		delete mapd;
 		Printf ("%s\n", GStrings("STSTR_CLEV"));
       	G_DeferedInitNew (mapname);
 		players[0].health = 0;		// Force reset
@@ -281,9 +284,12 @@ CCMD (hxvisit)
 		if (CheckWarpTransMap (mapname, false))
 		{
 			// Just because it's in MAPINFO doesn't mean it's in the wad.
-			if (Wads.CheckNumForName (mapname) != -1)
+
+			MapData * map = P_OpenMapData(mapname);
+			if (map != NULL)
 			{
 				// So be it.
+				delete map;
 				Printf ("%s\n", GStrings("STSTR_CLEV"));
       			G_DeferedInitNew (mapname);
 				return;

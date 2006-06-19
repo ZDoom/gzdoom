@@ -241,7 +241,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 	} first4bytes;
 
 	// Must check the length of the lump. Zero length flat markers (F1_START etc.) will come through here.
-	// 13 is the minimum length of andthing valid (i.e a 1x1 pixel Doom patch.)
+	// 13 is the minimum length of anything valid (i.e a 1x1 pixel Doom patch.)
 	if (lumpnum < 0 || Wads.LumpLength(lumpnum)<13)
 	{
 		return -1;
@@ -426,7 +426,7 @@ int FTextureManager::AddPatch (const char *patchname, int namespc)
 	{
 		return lumpnum;
 	}
-	lumpnum = Wads.CheckNumForName (patchname, namespc);
+	lumpnum = Wads.CheckNumForName (patchname, namespc==ns_global? ns_graphics:namespc);
 	if (lumpnum < 0)
 	{
 		return -1;
@@ -603,7 +603,7 @@ void FTextureManager::AddPatches (int lumpnum)
 
 		if (CheckForTexture (name, FTexture::TEX_WallPatch, false) == -1)
 		{
-			CreateTexture (Wads.CheckNumForName (name), FTexture::TEX_WallPatch);
+			CreateTexture (Wads.CheckNumForName (name, ns_patches), FTexture::TEX_WallPatch);
 		}
 	}
 
@@ -1163,7 +1163,7 @@ void FPatchTexture::GetDimensions ()
 	if (dummy.width <= 0 || dummy.height <= 0 || dummy.width > 2048 || dummy.height > 2048)
 	{
 		delete lump;
-		lump = Wads.ReopenLumpNum ( Wads.GetNumForName("-BADPATC") );
+		lump = Wads.ReopenLumpNum ( Wads.GetNumForName("-BADPATC", ns_graphics) );
 		(*lump) >> dummy.width >> dummy.height;
 	}
 

@@ -74,6 +74,16 @@ typedef enum {
 	ns_bloodmisc,
 	ns_strifevoices,
 	ns_hires,
+
+	// These namespaces are only used to mark lumps in special subdirectories
+	// so that their contents doesn't interfere with the global namespace.
+	// searching for data in these namespaces works differently for lumps coming
+	// from Zips or other files.
+	ns_specialzipdirectory,
+	ns_sounds,
+	ns_patches,
+	ns_graphics,
+	ns_music,
 } namespace_t;
 
 // [RH] Copy an 8-char string and uppercase it.
@@ -157,12 +167,14 @@ public:
 
 	int CheckNumForName (const char *name, int namespc);
 	int CheckNumForName (const char *name, int namespc, int wadfile);
-	int GetNumForName (const char *name);
+	int GetNumForName (const char *name, int namespc);
 
 	inline int CheckNumForName (const byte *name) { return CheckNumForName ((const char *)name, ns_global); }
 	inline int CheckNumForName (const char *name) { return CheckNumForName (name, ns_global); }
 	inline int CheckNumForName (const byte *name, int ns) { return CheckNumForName ((const char *)name, ns); }
+	inline int GetNumForName (const char *name) { return GetNumForName (name, ns_global); }
 	inline int GetNumForName (const byte *name) { return GetNumForName ((const char *)name); }
+	inline int GetNumForName (const byte *name, int ns) { return GetNumForName ((const char *)name, ns); }
 
 	int CheckNumForFullName (const char *name);
 	int CheckNumForFullName (const char *name, int wadfile);

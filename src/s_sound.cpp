@@ -152,10 +152,6 @@ static FPlayList *PlayList;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-// [RH] Hacks for pitch variance
-int sfx_sawup, sfx_sawidl, sfx_sawful, sfx_sawhit;
-int sfx_itemup, sfx_tink;
-
 int sfx_empty;
 
 int numChannels;
@@ -1500,7 +1496,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 
 		if (!FileExists (musicname))
 		{
-			if ((lumpnum = Wads.CheckNumForName (musicname)) == -1)
+			if ((lumpnum = Wads.CheckNumForName (musicname, ns_music)) == -1)
 			{
 				if ((lumpnum = Wads.CheckNumForFullName (musicname)) == -1)
 				{

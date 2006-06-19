@@ -470,7 +470,7 @@ void FDecalLib::ParseDecal ()
 		case DECAL_PIC:
 			SC_MustGetString ();
 			picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Any);
-			if (picnum < 0 && (picnum = Wads.CheckNumForName (sc_String)) >= 0)
+			if (picnum < 0 && (picnum = Wads.CheckNumForName (sc_String, ns_graphics)) >= 0)
 			{
 				picnum = TexMan.CreateTexture (picnum, FTexture::TEX_Decal);
 			}

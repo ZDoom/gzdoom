@@ -641,7 +641,7 @@ void AltSoundRenderer::LoadSound (sfxinfo_t *sfx)
 	size = sfx->lumpnum >= 0 ? Wads.LumpLength (sfx->lumpnum) : 0;
 	if (size == 0)
 	{
-		sfx->lumpnum = Wads.GetNumForName ("dsempty");
+		sfx->lumpnum = Wads.GetNumForName ("dsempty", ns_sounds);
 		size = Wads.LumpLength (sfx->lumpnum);
 		if (size == 0)
 		{
@@ -792,7 +792,7 @@ badwave:
 			delete[] sfxdata;
 			sfxdata = NULL;
 		}
-		sfx->lumpnum = Wads.GetNumForName ("dsempty");
+		sfx->lumpnum = Wads.GetNumForName ("dsempty", ns_sounds);
 		LoadSound (sfx);
 	}
 	if (sfxdata != NULL) delete[] sfxdata;

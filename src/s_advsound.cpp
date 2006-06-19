@@ -440,7 +440,7 @@ int S_FindSoundTentative (const char *name)
 int S_AddSound (const char *logicalname, const char *lumpname)
 {
 	return S_AddSound (logicalname,
-		lumpname ? Wads.CheckNumForName (lumpname) : -1);
+		lumpname ? Wads.CheckNumForName (lumpname, ns_sounds) : -1);
 }
 
 static int S_AddSound (const char *logicalname, int lumpnum)
@@ -494,7 +494,7 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 	const char *lumpname)
 {
 	return S_AddPlayerSound (pclass, gender, refid,
-		lumpname ? Wads.CheckNumForName (lumpname) : -1);
+		lumpname ? Wads.CheckNumForName (lumpname, ns_sounds) : -1);
 }
 
 int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool fromskin)
@@ -648,15 +648,7 @@ void S_ParseSndInfo ()
 
 	S_ShrinkPlayerSoundLists ();
 
-	// [RH] Hack for pitch varying
-	sfx_sawup = S_FindSound ("weapons/sawup");
-	sfx_sawidl = S_FindSound ("weapons/sawidle");
-	sfx_sawful = S_FindSound ("weapons/sawfull");
-	sfx_sawhit = S_FindSound ("weapons/sawhit");
-	sfx_itemup = S_FindSound ("misc/i_pkup");
-	sfx_tink = S_FindSound ("misc/chat2");
-
-	sfx_empty = Wads.CheckNumForName ("dsempty");
+	sfx_empty = Wads.CheckNumForName ("dsempty", ns_sounds);
 }
 
 //==========================================================================

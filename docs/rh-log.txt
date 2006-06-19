@@ -1,3 +1,15 @@
+June 19, 2006 (Changes by Graf Zahl)
+- Removed the unused sfx_ variables for the chainsaw sounds.
+- Fixed map name checks in idclev, hxvisit, for +map and the titlemap.
+- Changed handling of Zips so that the patches/, graphics/, sounds/ and
+  music/ subdirectories no longer are placed in the global namespace. Instead
+  new namespaces are defined. These namespaces aren't merged, however and 
+  searching in them either returns a lump inside it or one from the global
+  namespace when it doesn't come from a Zip file. Proper order of files is
+  still observed though. As a result proper use of the directories inside Zips 
+  is strictly enforced now so that for example anything used as a patch must be 
+  in the patches/ directory and won't be found anywhere else.
+
 June 18, 2006 (Changes by Graf Zahl)
 - Added another set of ACS inventory functions which take a tid for the actor
   and aren't limited to the script's activator.

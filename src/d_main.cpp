@@ -810,7 +810,7 @@ void D_DoStrifeAdvanceDemo ()
 	case 0:
 		pagetic = 6 * TICRATE;
 		pagename = "TITLEPIC";
-		if (Wads.CheckNumForName ("d_logo") < 0)
+		if (Wads.CheckNumForName ("d_logo", ns_music) < 0)
 		{ // strife0.wad does not have d_logo
 			S_StartMusic ("");
 		}
@@ -925,7 +925,9 @@ void D_DoAdvanceDemo (void)
 
 	// [RH] If you want something more dynamic for your title, create a map
 	// and name it TITLEMAP. That map will be loaded and used as the title.
-	if (Wads.CheckNumForName ("TITLEMAP") >= 0)
+
+	MapData * map = P_OpenMapData("TITLEMAP");
+	if (map != NULL)
 	{
 		G_InitNew ("TITLEMAP", true);
 		return;
@@ -2129,12 +2131,14 @@ void D_DoomMain (void)
 	p = Args.CheckParm ("+map");
 	if (p && p < Args.NumArgs()-1)
 	{
-		if (Wads.CheckNumForName (Args.GetArg (p+1)) == -1)
+		MapData * map = P_OpenMapData(Args.GetArg (p+1));
+		if (map == NULL)
 		{
 			Printf ("Can't find map %s\n", Args.GetArg (p+1));
 		}
 		else
 		{
+			delete map;
 			strncpy (startmap, Args.GetArg (p+1), 8);
 			Args.GetArg (p)[0] = '-';
 			autostart = true;

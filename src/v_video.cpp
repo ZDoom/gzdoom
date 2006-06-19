@@ -867,7 +867,7 @@ void V_Init (void)
 	{
 		SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
 	}
-	if (Wads.CheckNumForName ("STBFN033") >= 0)
+	if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
 	{
 		SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
 	}

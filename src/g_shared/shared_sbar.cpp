@@ -104,10 +104,10 @@ CUSTOM_CVAR (Int, crosshair, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 	size = (SCREENWIDTH < 640) ? 'S' : 'B';
 	sprintf (name, "XHAIR%c%d", size, num);
-	if ((lump = Wads.CheckNumForName (name)) == -1)
+	if ((lump = Wads.CheckNumForName (name, ns_graphics)) == -1)
 	{
 		sprintf (name, "XHAIR%c1", size);
-		if ((lump = Wads.CheckNumForName (name)) == -1)
+		if ((lump = Wads.CheckNumForName (name, ns_graphics)) == -1)
 		{
 			strcpy (name, "XHAIRS1");
 		}

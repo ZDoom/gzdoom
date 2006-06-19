@@ -1054,7 +1054,7 @@ void FMODSoundRenderer::DoLoad (void **slot, sfxinfo_t *sfx)
 		}
 
 		if (errcount)
-			sfx->lumpnum = Wads.GetNumForName ("dsempty");
+			sfx->lumpnum = Wads.GetNumForName ("dsempty", ns_sounds);
 
 		size = Wads.LumpLength (sfx->lumpnum);
 		if (size == 0)
@@ -1187,7 +1187,7 @@ void FMODSoundRenderer::getsfx (sfxinfo_t *sfx)
 	// If the sound doesn't exist, replace it with the empty sound.
 	if (sfx->lumpnum == -1)
 	{
-		sfx->lumpnum = Wads.GetNumForName ("dsempty");
+		sfx->lumpnum = Wads.GetNumForName ("dsempty", ns_sounds);
 	}
 	
 	// See if there is another sound already initialized with this lump. If so,

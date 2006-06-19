@@ -1381,11 +1381,11 @@ void M_DrawReadThis ()
 	{
 		char name[9];
 		name[8] = 0;
-		Wads.GetLumpName (name, Wads.GetNumForName (gameinfo.info.indexed.basePage) + InfoType);
+		Wads.GetLumpName (name, Wads.GetNumForName (gameinfo.info.indexed.basePage, ns_graphics) + InfoType);
 		tex = TexMan[name];
 		if (InfoType > 1)
 		{
-			Wads.GetLumpName (name, Wads.GetNumForName (gameinfo.info.indexed.basePage) + InfoType - 1);
+			Wads.GetLumpName (name, Wads.GetNumForName (gameinfo.info.indexed.basePage, ns_graphics) + InfoType - 1);
 			prevpic = TexMan[name];
 		}
 	}

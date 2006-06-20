@@ -1,6 +1,8 @@
 June 20, 2006
-- Unlimited the monster pain sounds in Hexen after playing as the Cleric a
-  while and killing centaurs with the flechette.
+- Added grubber's thingdef_exp.cpp. I might not use it later, but I can still
+  use it now.
+- Unlimited the monster pain sounds in Hexen after I played as the Cleric a
+  while and killed several centaurs with the flechette.
 - Fixed: Moving to an old level in a hub caused the old player's inventory to
   spawn owned by the current player (but still hanging off the old player), so
   the game would hang when trying to delete it.

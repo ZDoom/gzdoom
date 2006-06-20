@@ -15,6 +15,7 @@
 
 std:
 	tok = YYCURSOR;
+std2:
 /*!re2c
 	any	= [\000-\377];
 	WSP	= ([\000- ]\[\n]);
@@ -58,7 +59,8 @@ std:
 		"\n"					{ goto newline; }
 		"\""					{ goto string; }
 
-		[-]? D+ ([.]D*)?		{ goto normal_token; }	/* number */
+		[-]						{ goto negative_check; }
+		((D+) | (D* [.] D+) | (D+ [.] D*))	{ goto normal_token; }	/* number */
 		"&&"					{ goto normal_token; }
 		"=="					{ goto normal_token; }
 		"||"					{ goto normal_token; }
@@ -70,6 +72,25 @@ std:
 		any						{ goto normal_token; }	/* unknown character */
 	*/
 	}
+
+negative_check:
+	if (YYCURSOR >= YYLIMIT)
+	{
+		goto normal_token;
+	}
+	if (*YYCURSOR >= '0' && *YYCURSOR <= '9')
+	{
+		goto std2;
+	}
+	if (*YYCURSOR != '.' || YYCURSOR+1 >= YYLIMIT)
+	{
+		goto normal_token;
+	}
+	if (*(YYCURSOR+1) >= '0' && *YYCURSOR <= '9')
+	{
+		goto std2;
+	}
+	goto normal_token;
 
 comment:
 /*!re2c

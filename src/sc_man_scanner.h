@@ -15,7 +15,7 @@
 	char *cursor = ScriptPtr;
 	char *limit = ScriptEndPtr;
 
-std:
+std1:
 	tok = YYCURSOR;
 std2:
 #line 33 "src/sc_man_scanner.re"
@@ -70,7 +70,7 @@ yy6:
 	goto yy23;
 yy7:
 #line 40 "src/sc_man_scanner.re"
-	{ goto std; }
+	{ goto std1; }
 #line 75 "src/sc_man_scanner.h"
 yy8:
 	++YYCURSOR;
@@ -260,7 +260,7 @@ yy34:
 	goto yy72;
 yy35:
 #line 58 "src/sc_man_scanner.re"
-	{ goto std; }
+	{ goto std1; }
 #line 265 "src/sc_man_scanner.h"
 yy36:
 	++YYCURSOR;
@@ -509,7 +509,7 @@ yy85:
 yy86:
 	++YYCURSOR;
 #line 97 "src/sc_man_scanner.re"
-	{ goto std; }
+	{ goto std1; }
 #line 514 "src/sc_man_scanner.h"
 }
 #line 110 "src/sc_man_scanner.re"
@@ -523,7 +523,7 @@ newline:
 	}
 	sc_Line++;
 	sc_Crossed = true;
-	goto std;
+	goto std1;
 
 normal_token:
 	ScriptPtr = (YYCURSOR >= YYLIMIT) ? ScriptEndPtr : cursor;

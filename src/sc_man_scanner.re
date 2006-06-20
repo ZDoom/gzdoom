@@ -13,7 +13,7 @@
 	char *cursor = ScriptPtr;
 	char *limit = ScriptEndPtr;
 
-std:
+std1:
 	tok = YYCURSOR;
 std2:
 /*!re2c
@@ -37,7 +37,7 @@ std2:
 		"/*"						{ goto comment; }	/* C comment */
 		("//"|";") (any\"\n")* "\n"	{ goto newline; }	/* C++/Hexen comment */
 
-		WSP+						{ goto std; }		/* whitespace */
+		WSP+						{ goto std1; }		/* whitespace */
 		"\n"						{ goto newline; }
 		"\""						{ goto string; }
 
@@ -55,7 +55,7 @@ std2:
 		"/*"					{ goto comment; }	/* C comment */
 		"//" (any\"\n")* "\n"	{ goto newline; }	/* C++ comment */
 
-		WSP+					{ goto std; }		/* whitespace */
+		WSP+					{ goto std1; }		/* whitespace */
 		"\n"					{ goto newline; }
 		"\""					{ goto string; }
 
@@ -94,7 +94,7 @@ negative_check:
 
 comment:
 /*!re2c
-	"*/"			{ goto std; }
+	"*/"			{ goto std1; }
 	"\n"
 		{
 			if (YYCURSOR >= YYLIMIT)
@@ -117,7 +117,7 @@ newline:
 	}
 	sc_Line++;
 	sc_Crossed = true;
-	goto std;
+	goto std1;
 
 normal_token:
 	ScriptPtr = (YYCURSOR >= YYLIMIT) ? ScriptEndPtr : cursor;

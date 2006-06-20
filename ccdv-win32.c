@@ -473,7 +473,8 @@ void mainCRTStartup(void)
 		 lstrcmpi(gAction+8, "ld") == 0)) ||
 		(extlen == 3 && 
 		 (lstrcmpi(gAction+8, "gcc") == 0 ||
-		  lstrcmpi(gAction+8, "g++") == 0)))
+		  lstrcmpi(gAction+8, "g++") == 0)) ||
+		(extlen == 7 && lstrcmpi(gAction+8, "windres") == 0))
 	{
 		gcc = 1;
 	}

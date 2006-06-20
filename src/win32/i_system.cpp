@@ -630,17 +630,27 @@ BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 	switch (message)
 	{
 	case WM_INITDIALOG:
+		// Add our program name to the window title
+		{
+			TCHAR label[256];
+			FString newlabel;
+
+			GetWindowText (hDlg, label, countof(label));
+			newlabel.Format (GAMESIG " " DOTVERSIONSTR_NOREV ": %s", label);
+			SetWindowText (hDlg, newlabel.GetChars());
+		}
+		// Populate the list with all the IWADs found
 		list = GetDlgItem (hDlg, IDC_IWADLIST);
 		for (i = 0; i < NumWads; i++)
 		{
-			char work[256];
+			FString work;
 			const char *filepart = strrchr (WadList[i].Path, '/');
 			if (filepart == NULL)
 				filepart = WadList[i].Path;
 			else
 				filepart++;
-			sprintf (work, "%s (%s)", IWADTypeNames[WadList[i].Type], filepart);
-			SendMessage (list, LB_ADDSTRING, 0, (LPARAM)work);
+			work.Format ("%s (%s)", IWADTypeNames[WadList[i].Type], filepart);
+			SendMessage (list, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
 			SendMessage (list, LB_SETITEMDATA, i, (LPARAM)i);
 		}
 		SendMessage (list, LB_SETCURSEL, 0, 0);

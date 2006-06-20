@@ -285,6 +285,7 @@ bool FMODSoundRenderer::Init ()
 	bool nosound = false;
 
 	ChannelMap = NULL;
+	NumChannels = 0;
 	PrevEnvironment = DefaultEnvironments[0];
 
 #ifdef _WIN32
@@ -483,6 +484,7 @@ void FMODSoundRenderer::Shutdown ()
 			delete[] ChannelMap;
 			ChannelMap = NULL;
 		}
+		NumChannels = 0;
 
 		// Free all loaded samples
 		for (i = 0; i < S_sfx.Size (); i++)

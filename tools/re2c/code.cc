@@ -1602,8 +1602,7 @@ void genGetState(std::ostream &o, uint& ind, uint start_label)
 	if (fFlag && !bWroteGetState)
 	{
 		vUsedLabels.insert(start_label);
-		o << indent(ind) << "switch(YYGETSTATE())\n";
-		o << indent(ind) << "{\n";
+		o << indent(ind) << "switch(YYGETSTATE()) {\n";
 		if (bUseStateAbort)
 		{
 			o << indent(ind) << "default: abort();\n";

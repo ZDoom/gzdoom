@@ -947,6 +947,18 @@ $alias menu/clear		PlatformStop
 
 $limit DoorCloseLight 4
 
+$limit PuppyBeat 0
+$limit CeantaurPain 0
+$limit BishopPain 0
+$limit SerpentPain 0
+$limit DemonPain 0
+$limit WraithPain 0
+$limit MaulatorPain 0
+$limit EttinPain 0
+$limit FireDemonPain 0
+$limit SorcererPain 0
+$limit DragonPain 0
+
 $endif	// ifhexen
 
 //===========================================================================

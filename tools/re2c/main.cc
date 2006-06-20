@@ -78,7 +78,7 @@ static const mbo_opt_struct OPTIONS[] =
 	mbo_opt_struct('v', 0, "version"),
 	mbo_opt_struct('V', 0, "vernum"),
 	mbo_opt_struct('w', 0, "wide-chars"),      
-	mbo_opt_struct('1', 0, "two-pass"),
+	mbo_opt_struct('1', 0, "single-pass"),
 	mbo_opt_struct('-', 0, NULL) /* end of args */
 };
 

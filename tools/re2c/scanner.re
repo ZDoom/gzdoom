@@ -32,8 +32,7 @@ Scanner::Scanner(const char *fn, std::istream& i, std::ostream& o)
 	: in(i)
 	, out(o)
 	, bot(NULL), tok(NULL), ptr(NULL), cur(NULL), pos(NULL), lim(NULL)
-	, top(NULL), eof(NULL), tchar(0), tline(0), cline(1), iscfg(0)
-	, filename(fn)
+	, top(NULL), eof(NULL), tchar(0), tline(0), cline(1), iscfg(0), filename(fn)
 {
     ;
 }

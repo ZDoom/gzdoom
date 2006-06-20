@@ -1138,7 +1138,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 
 			// But also create a new one so that we can get past the one
 			// stored in the archive.
-			DObject *tempobj = type->CreateNew ();
+			AActor *tempobj = static_cast<AActor *>(type->CreateNew ());
 			MapObject (obj != NULL ? obj : tempobj);
 			tempobj->Serialize (*this);
 			tempobj->CheckIfSerialized ();
@@ -1146,6 +1146,13 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 			// around just so that the load will succeed.
 			if (obj != NULL)
 			{
+				// When the temporary player's inventory items were loaded,
+				// they became owned by the real player. Undo that now.
+				for (AInventory *item = tempobj->Inventory;
+					item != NULL; item = item->Inventory)
+				{
+					item->Owner = tempobj;
+				}
 				tempobj->Destroy ();
 			}
 			else
@@ -1173,12 +1180,17 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 //			Printf ("Use player class: %s (%u)\n", type->Name, m_File->Tell());
 			obj = players[playerNum].mo;
 
-			DObject *tempobj = type->CreateNew ();
+			AActor *tempobj = static_cast<AActor *>(type->CreateNew ());
 			MapObject (obj != NULL ? obj : tempobj);
 			tempobj->Serialize (*this);
 			tempobj->CheckIfSerialized ();
 			if (obj != NULL)
 			{
+				for (AInventory *item = tempobj->Inventory;
+					item != NULL; item = item->Inventory)
+				{
+					item->Owner = tempobj;
+				}
 				tempobj->Destroy ();
 			}
 			else

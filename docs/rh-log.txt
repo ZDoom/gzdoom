@@ -1,3 +1,33 @@
+June 20, 2006
+- Unlimited the monster pain sounds in Hexen after playing as the Cleric a
+  while and killing centaurs with the flechette.
+- Fixed: Moving to an old level in a hub caused the old player's inventory to
+  spawn owned by the current player (but still hanging off the old player), so
+  the game would hang when trying to delete it.
+- Modified re2c so that it doesn't add a date to the file it generates. Thus,
+  if it regenerates a file during a full rebuild, SVN won't see it as a change.
+  Also updated it to 0.10.5.
+- Fixed: SC_GetString() did not properly terminate sc_String when the last
+  token in the file had no white space after it. Since I could not actually
+  find the problem (it works fine in debug mode and I saw no logic errors),
+  I decided to take this opportunity to reimplement it using an re2c-generated
+  scanner. Now it's 1.6x faster than before and correctness is easier to
+  verify.
+
+June 19, 2006
+- Fixed: FMODSoundRenderer::Shutdown() also needs to reset NumChannels.
+- Added back the Manifest to zdoom.rc for non-VC8 Windows compilers.
+- Fixed MinGW compilation again. Now it uses the same method as Makefile.linux
+  to find all the source files so that it doesn't need to be manually updated
+  each time source files are added or removed.
+- Added the SVN revision number to the version string. A new tool is used to
+  obtain this information from the svnversion command and write it into a
+  header file. If you don't have the svn command line tools installed or didn't
+  check it out from the repository, you can still build. I added some rules for
+  this to Makefile.linux, and I assume they work because they do for
+  Makefile.mingw.
+- Fixed: MIDISong2 did not delete MusHeader in its destructor.
+
 June 19, 2006 (Changes by Graf Zahl)
 - Removed the unused sfx_ variables for the chainsaw sounds.
 - Fixed map name checks in idclev, hxvisit, for +map and the titlemap.

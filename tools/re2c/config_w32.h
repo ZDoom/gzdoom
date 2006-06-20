@@ -63,13 +63,13 @@
 #define PACKAGE_NAME "re2c"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "re2c 0.10.3"
+#define PACKAGE_STRING "re2c 0.10.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "re2c"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.10.3"
+#define PACKAGE_VERSION "0.10.5"
 
 /* The size of a `char', as computed by sizeof. */
 #define SIZEOF_CHAR 1
@@ -87,7 +87,7 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.10.3"
+#define VERSION "0.10.5"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

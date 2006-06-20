@@ -150,6 +150,10 @@ MIDISong2::~MIDISong2 ()
 	{
 		delete[] Tracks;
 	}
+	if (MusHeader != NULL)
+	{
+		delete[] MusHeader;
+	}
 }
 
 bool MIDISong2::IsMIDI () const

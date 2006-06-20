@@ -20,6 +20,7 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "m_misc.h"
+#include "templates.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -263,8 +264,7 @@ void SC_SetEscape (bool esc)
 
 BOOL SC_GetString ()
 {
-	char *text;
-	BOOL foundToken;
+	char *marker, *tok;
 
 	CheckOpen();
 	if (AlreadyGot)
@@ -272,154 +272,16 @@ BOOL SC_GetString ()
 		AlreadyGot = false;
 		return true;
 	}
-	foundToken = false;
 	sc_Crossed = false;
 	if (ScriptPtr >= ScriptEndPtr)
 	{
 		sc_End = true;
 		return false;
 	}
-	while (foundToken == false)
-	{
-		while (ScriptPtr < ScriptEndPtr && *ScriptPtr <= ' ')
-		{
-			if (*ScriptPtr++ == '\n')
-			{
-				sc_Line++;
-				sc_Crossed = true;
-			}
-		}
-		if (ScriptPtr >= ScriptEndPtr)
-		{
-			sc_End = true;
-			return false;
-		}
-		if ((CMode || *ScriptPtr != ASCII_COMMENT) &&
-			!(ScriptPtr[0] == CPP_COMMENT && ScriptPtr < ScriptEndPtr - 1 &&
-			  (ScriptPtr[1] == CPP_COMMENT || ScriptPtr[1] == C_COMMENT)))
-		{ // Found a token
-			foundToken = true;
-		}
-		else
-		{ // Skip comment
-			if (ScriptPtr[0] == CPP_COMMENT && ScriptPtr[1] == C_COMMENT)
-			{	// C comment
-				while (ScriptPtr[0] != C_COMMENT || ScriptPtr[1] != CPP_COMMENT)
-				{
-					if (ScriptPtr[0] == '\n')
-					{
-						sc_Line++;
-						sc_Crossed = true;
-					}
-					ScriptPtr++;
-					if (ScriptPtr >= ScriptEndPtr - 1)
-					{
-						sc_End = true;
-						return false;
-					}
-				}
-				ScriptPtr += 2;
-			}
-			else
-			{	// C++ comment
-				while (*ScriptPtr++ != '\n')
-				{
-					if (ScriptPtr >= ScriptEndPtr)
-					{
-						sc_End = true;
-						return false;
-					}
-				}
-				sc_Line++;
-				sc_Crossed = true;
-			}
-		}
-	}
-	text = sc_String;
-	if (*ScriptPtr == ASCII_QUOTE)
-	{ // Quoted string
-		ScriptPtr++;
-		while (*ScriptPtr != ASCII_QUOTE)
-		{
-			// Hack alert: Do not allow escaped quotation marks when parsing DECORATE!
-			if (*ScriptPtr=='\\' && ScriptPtr[1]=='"' && Escape)
-			{
-				*text++ = '"';
-				ScriptPtr+=2;
-			}
-			else
-			{
-				*text++ = *ScriptPtr++;
-			}
-			if (ScriptPtr == ScriptEndPtr
-				|| text == &sc_String[MAX_STRING_SIZE-1])
-			{
-				break;
-			}
-		}
-		ScriptPtr++;
-	}
-	else
-	{ // Normal string
-		static const char *stopchars;
 
-		if (CMode)
-		{
-			stopchars = CMODE_STOPCHARS;
-
-			// '-' can be its own token, or it can be part of a negative number
-			if (*ScriptPtr == '-')
-			{
-				*text++ = '-';
-				ScriptPtr++;
-				if (ScriptPtr < ScriptEndPtr && *ScriptPtr >= '0' && *ScriptPtr <= '9')
-				{
-					stopchars = CMODE_STOPCHARS_NODECIMAL;
-					goto grabtoken;
-				}
-				goto gottoken;
-			}
-			else if (*ScriptPtr >= '0' && *ScriptPtr <= '9')
-			{
-				stopchars = CMODE_STOPCHARS_NODECIMAL;
-			}
-			else if (*ScriptPtr == '.' && ScriptPtr[1] >= '0' && ScriptPtr[1] <= '9')
-			{
-				stopchars = CMODE_STOPCHARS_NODECIMAL;
-			}
-		}
-		else
-		{
-			stopchars = NORMAL_STOPCHARS;
-		}
-		if (strchr (stopchars, *ScriptPtr))
-		{
-			*text++ = *ScriptPtr++;
-			// [GRB] Allow 2-char operators
-			if (CMode && strchr ("&=|<>", *ScriptPtr))
-				*text++ = *ScriptPtr++;
-		}
-		else
-		{
-grabtoken:
-			while ((*ScriptPtr > ' ') && (strchr (stopchars, *ScriptPtr) == NULL)
-				&& (CMode || *ScriptPtr != ASCII_COMMENT)
-				&& !(ScriptPtr[0] == CPP_COMMENT && (ScriptPtr < ScriptEndPtr - 1) &&
-					 (ScriptPtr[1] == CPP_COMMENT || ScriptPtr[1] == C_COMMENT)))
-			{
-				*text++ = *ScriptPtr++;
-				if (ScriptPtr == ScriptEndPtr
-					|| text == &sc_String[MAX_STRING_SIZE-1])
-				{
-					break;
-				}
-			}
-		}
-	}
-gottoken:
-	*text = 0;
-	sc_StringLen = text - sc_String;
-	return true;
+	// In case the generated scanner does not use marker, avoid compiler warnings.
+	marker;
+#include "sc_man_scanner.h"
 }
 
 //==========================================================================

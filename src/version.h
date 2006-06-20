@@ -34,10 +34,22 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
+// The svnrevision.h is automatically updated to grab the revision of
+// of the current source tree so that it can be included with version numbers.
+#include "svnrevision.h"
+
 /** Lots of different version numbers **/
 
+#define DOTVERSIONSTR_NOREV "2.1.0"
+
 // The version string the user actually sees.
-#define DOTVERSIONSTR "2.0.99"
+#define DOTVERSIONSTR DOTVERSIONSTR_NOREV " (r" SVN_REVISION_STRING ")"
+
+// The version as seen in the Windows resource
+#define RC_FILEVERSION 2,1,0,SVN_REVISION_NUMBER
+#define RC_PRODUCTVERSION 2,1,0,0
+#define RC_FILEVERSION2 DOTVERSIONSTR
+#define RC_PRODUCTVERSION2 "2.1"
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you

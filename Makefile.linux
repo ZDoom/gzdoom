@@ -62,7 +62,7 @@ OBJS = $(addprefix $(OBJDIR)/,$(AOBJFILES)) $(COBJS)
 
 all: $(ZDOOMBIN) toolsandpk3 zdoom.pk3
 
-$(ZDOOMBIN): ccdv $(OBJDIR) $(OBJS)
+$(ZDOOMBIN): ccdv updaterev $(OBJDIR) $(OBJS)
 	$(CCDV) $(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
 	$(filter-out %/autostart.o %/autozend.o,$(OBJS)) \
 	$(OBJDIR)/autozend.o -o $(ZDOOMBIN)
@@ -84,21 +84,28 @@ $(OBJDIR):
 	mkdir $(OBJDIR)
 
 toolsandpk3: ccdv tools/makewad/makewad tools/dehsupp/dehsupp tools/xlatcc/xlatcc
-	make -C wadsrc/
+	$(MAKE) -C wadsrc/
 
 zdoom.pk3: toolsandpk3
 	ln -sf wadsrc/zdoom.pk3 ./
 
 tools/makewad/makewad:
-	make -C tools/makewad/
+	$(MAKE) -C tools/makewad/
 
 tools/dehsupp/dehsupp:
-	make -C tools/dehsupp/
+	$(MAKE) -C tools/dehsupp/
 
 tools/xlatcc/xlatcc:
-	make -C tools/xlatcc/
+	$(MAKE) -C tools/xlatcc/
 
-.PHONY : clean cleandeps cleanobjs distclean toolsandpk3 cleantools
+
+updaterev: tools/updaterevision/updaterevision
+	@tools/updaterevision/updaterevision . src/svnrevision.h
+
+tools/updaterevision/updaterevision:
+	$(MAKE) -C tools/updaterevision
+
+.PHONY : clean cleandeps cleanobjs distclean toolsandpk3 cleantools updaterev
 
 clean: cleanobjs
 	rm -f $(ZDOOMDEBUG) $(ZDOOM) $(ZDOOM).map
@@ -130,6 +137,6 @@ cleanobjs:
 ccdv: ccdv-posix.c
 	@gcc -Os -s ccdv-posix.c -o ccdv
 
-ifneq ($(MAKECMDGOALS),clean)
+ifeq (,$(findstring $(MAKECMDGOALS),clean cleandeps cleanobjs distclean toolsandpk3 cleantools updaterev))
 -include $(DEPS)
 endif

@@ -687,7 +687,9 @@ void AActor::DestroyAllInventory ()
 {
 	while (Inventory != NULL)
 	{
-		Inventory->Destroy ();
+		AInventory *item = Inventory;
+		item->Destroy ();
+		assert (item != Inventory);
 	}
 }
 

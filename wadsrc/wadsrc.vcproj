@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="wadsrc"
 	ProjectGUID="{1D179D4B-F008-431B-8C72-111F8372584F}"
+	RootNamespace="wadsrc"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>
@@ -39,15 +40,15 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
+			Name="Debug|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="0"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo"
+				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo andcopy"
 				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
 				CleanCommandLine="del wadmake zdoom.pk3"
 				Output="zdoom.pk3"
@@ -60,15 +61,15 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			Name="Release|Win32"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
 			ConfigurationType="0"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo andcopy"
+				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo"
 				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
 				CleanCommandLine="del wadmake zdoom.pk3"
 				Output="zdoom.pk3"
@@ -367,6 +368,10 @@
 						>
 					</File>
 					<File
+						RelativePath=".\decorate\doom\doomammo.txt"
+						>
+					</File>
+					<File
 						RelativePath=".\decorate\doom\doomarmor.txt"
 						>
 					</File>
@@ -376,6 +381,10 @@
 					</File>
 					<File
 						RelativePath=".\decorate\doom\doomdecorations.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\doomhealth.txt"
 						>
 					</File>
 					<File
@@ -390,6 +399,10 @@
 				<Filter
 					Name="Heretic"
 					>
+					<File
+						RelativePath=".\decorate\heretic\hereticammo.txt"
+						>
+					</File>
 					<File
 						RelativePath=".\decorate\heretic\hereticarmor.txt"
 						>
@@ -431,6 +444,10 @@
 						>
 					</File>
 					<File
+						RelativePath=".\decorate\hexen\mana.txt"
+						>
+					</File>
+					<File
 						RelativePath=".\decorate\hexen\puzzleitems.txt"
 						>
 					</File>
@@ -467,7 +484,7 @@
 						>
 					</File>
 					<File
-						RelativePath=".\decorate\strife\rebels.txt"
+						RelativePath=".\decorate\strife\strifeammo.txt"
 						>
 					</File>
 					<File

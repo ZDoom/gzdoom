@@ -722,29 +722,37 @@ void ADecal::BeginPlay ()
 	// If no decal is specified, don't try to create one.
 	if (args[0] != 0 && (tpl = DecalLibrary.GetDecalByNum (args[0])) != 0)
 	{
-		// Look for a wall within 64 units behind the actor. If none can be
-		// found, then no decal is created, and this actor is destroyed
-		// without effectively doing anything.
-		Trace (x, y, z, Sector,
-			finecosine[(angle+ANGLE_180)>>ANGLETOFINESHIFT],
-			finesine[(angle+ANGLE_180)>>ANGLETOFINESHIFT], 0,
-			64*FRACUNIT, 0, 0, NULL, trace, TRACE_NoSky);
-
-		if (trace.HitType == TRACE_HitWall)
+		if (tpl->PicNum == 65535)
 		{
-			decal = new DBaseDecal (this);
-			wall = sides + trace.Line->sidenum[trace.Side];
-			decal->StickToWall (wall, trace.X, trace.Y);
-			tpl->ApplyToDecal (decal, wall);
-			// Spread decal to nearby walls if it does not all fit on this one
-			if (cl_spreaddecals)
-			{
-				decal->Spread (tpl, wall, trace.X, trace.Y, z);
-			}
+			Printf("Decal actor at (%ld,%ld) does not have a valid texture\n", x>>FRACBITS, y>>FRACBITS);
+			
 		}
 		else
 		{
-			DPrintf ("Could not find a wall to stick decal to at (%ld,%ld)\n", x>>FRACBITS, y>>FRACBITS);
+			// Look for a wall within 64 units behind the actor. If none can be
+			// found, then no decal is created, and this actor is destroyed
+			// without effectively doing anything.
+			Trace (x, y, z, Sector,
+				finecosine[(angle+ANGLE_180)>>ANGLETOFINESHIFT],
+				finesine[(angle+ANGLE_180)>>ANGLETOFINESHIFT], 0,
+				64*FRACUNIT, 0, 0, NULL, trace, TRACE_NoSky);
+
+			if (trace.HitType == TRACE_HitWall)
+			{
+				decal = new DBaseDecal (this);
+				wall = sides + trace.Line->sidenum[trace.Side];
+				decal->StickToWall (wall, trace.X, trace.Y);
+				tpl->ApplyToDecal (decal, wall);
+				// Spread decal to nearby walls if it does not all fit on this one
+				if (cl_spreaddecals)
+				{
+					decal->Spread (tpl, wall, trace.X, trace.Y, z);
+				}
+			}
+			else
+			{
+				DPrintf ("Could not find a wall to stick decal to at (%ld,%ld)\n", x>>FRACBITS, y>>FRACBITS);
+			}
 		}
 	}
 	else

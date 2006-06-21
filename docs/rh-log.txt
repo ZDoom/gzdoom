@@ -1,4 +1,5 @@
 June 21, 2006 (Changes by Graf Zahl)
+- Fixed: Decal actors with an invalid decal texture caused a crash.
 - Fixed: Player could crouch while dead.
 - Fixed: The sidedef loader could allocate insufficient memory if a map
   contained unused sidedefs.

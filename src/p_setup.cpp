@@ -2083,15 +2083,14 @@ void P_LoadSideDefs2 (MapData * map)
 {
 	int  i;
 	char name[9];
-	mapsidedef_t * msdf = new mapsidedef_t[numsides+1];
-
+	char * msdf = new char[map->Size(ML_SIDEDEFS)];
 	map->Read(ML_SIDEDEFS, msdf);
 
 	name[8] = 0;
 
 	for (i = 0; i < numsides; i++)
 	{
-		mapsidedef_t *msd = msdf + sidetemp[i].a.map;
+		mapsidedef_t *msd = ((mapsidedef_t*)msdf) + sidetemp[i].a.map;
 		side_t *sd = sides + i;
 		sector_t *sec;
 

@@ -811,7 +811,27 @@ int PrintString (int printlevel, const char *outline)
 
 	if (Logfile)
 	{
-		fputs (outline, Logfile);
+		// Strip out any color escape sequences before writing to the log file
+		char * copy = new char[strlen(outline)+1];
+		const char * srcp = outline;
+		char * dstp = copy;
+
+		while (*srcp != 0)
+		{
+			if (*srcp!=0x1c)
+			{
+				*dstp++=*srcp++;
+			}
+			else
+			{
+				if (srcp[1]!=0) srcp+=2;
+				else break;
+			}
+		}
+		*dstp=0;
+
+		fputs (copy, Logfile);
+		delete [] copy;
 //#ifdef _DEBUG
 		fflush (Logfile);
 //#endif

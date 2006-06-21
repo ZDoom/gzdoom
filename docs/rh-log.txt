@@ -1,4 +1,8 @@
 June 21, 2006 (Changes by Graf Zahl)
+- Fixed: The sidedef loader could allocate insufficient memory if a map
+  contained unused sidedefs.
+- Fixed: Color control sequences were written to the log file. Since any
+  entered console command contains such a sequence it was quite noticable.
 - Fixed: The obituary code didn't use the attacker's name for kills caused
   by other players.
 - Fixed: PIT_StompThing never checked for COMPATF_NO_PASSMOBJ.

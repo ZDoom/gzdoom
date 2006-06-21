@@ -405,7 +405,7 @@ void P_TranslateTeleportThings ()
 			}
 			else if (lines[i].special == Teleport_ZombieChanger)
 			{
-				if (lines[i].args[2] == 0)
+				if (lines[i].args[1] == 0)
 				{
 					lines[i].args[0] = 1;
 				}

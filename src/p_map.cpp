@@ -280,7 +280,7 @@ BOOL PIT_StompThing (AActor *thing)
 	// [RH] Z-Check
 	// But not if not MF2_PASSMOBJ or MF3_DONTOVERLAP are set!
 	// Otherwise those things would get stuck inside each other.
-	if (tmthing->flags2&MF2_PASSMOBJ)
+	if ((tmthing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 	{
 		if (!(thing->flags3 & tmthing->flags3 & MF3_DONTOVERLAP))
 		{

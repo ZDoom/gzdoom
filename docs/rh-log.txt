@@ -1,3 +1,8 @@
+June 21, 2006 (Changes by Graf Zahl)
+- Fixed: PIT_StompThing never checked for COMPATF_NO_PASSMOBJ.
+- Fixed: COMPATF_TRACE returned true for all two-sided lines, not just for
+  those with the same sector on both sides.
+
 June 20, 2006
 - Added grubber's thingdef_exp.cpp. I might not use it later, but I can still
   use it now.

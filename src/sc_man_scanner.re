@@ -4,8 +4,17 @@
 #define	YYMARKER	marker
 
 	// This buffer must be as large as the largest YYFILL call
-	YYCTYPE eofbuf[2];
-#define	YYFILL(n)	{ if(n == 2) { eofbuf[0] = *cursor; } eofbuf[n-1] = '\n'; cursor = eofbuf; limit = eofbuf + n - 1; sc_End = true; }
+	YYCTYPE eofbuf[3];
+#define	YYFILL(n)	\
+	{ if(!sc_End) { \
+	   if(n == 2) { eofbuf[0] = *cursor; } \
+	   else if(n == 3) { eofbuf[0] = *cursor; eofbuf[1] = *(cursor + 1); } \
+	   eofbuf[n-1] = '\n'; \
+	   cursor = eofbuf; \
+	   limit = eofbuf + n - 1; \
+	   sc_End = true; } \
+	} \
+	assert(n <= 3)	// Semicolon intentionally omitted
 
 //#define YYDEBUG(s,c) { Printf ("%d: %02x\n", s, c); }
 #define YYDEBUG(s,c)
@@ -21,6 +30,7 @@ std2:
 	WSP	= ([\000- ]\[\n]);
 	NWS = (any\[\000- ]);
 	D	= [0-9];
+	X	= [0-9A-Fa-f];
 
 	TOK1 = [{}|=];
 	TOKC = [{}|=/`~!@#$%^&*()\[\]\\?\-=+;:<>,.];
@@ -44,7 +54,7 @@ std2:
 		TOK1						{ goto normal_token; }
 
 		/* Regular tokens may contain /, but they must not contain comment starts */
-		TOK2* ([/] (TOK2\[*])+ [*]*)* [/]?	{ goto normal_token; }
+		TOK2* ([/] (TOK2\[*]) TOK2*)*	{ goto normal_token; }
 
 		any							{ goto normal_token; }	/* unknown character */
 	*/
@@ -60,7 +70,7 @@ std2:
 		"\""					{ goto string; }
 
 		[-]						{ goto negative_check; }
-		((D+) | (D* [.] D+) | (D+ [.] D*))	{ goto normal_token; }	/* number */
+		((D* [.] D+) | (D+ [.] D*))	{ goto normal_token; }	/* decimal number */
 		"&&"					{ goto normal_token; }
 		"=="					{ goto normal_token; }
 		"||"					{ goto normal_token; }
@@ -74,6 +84,8 @@ std2:
 	}
 
 negative_check:
+	// re2c doesn't have enough state to handle '-' as the start of a negative number
+	// and as its own token, so help it out a little.
 	if (YYCURSOR >= YYLIMIT)
 	{
 		goto normal_token;

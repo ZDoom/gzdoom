@@ -308,7 +308,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 	FName typeName;
 	int recursion=0;
 
-	// Get actor class name. The A prefix is added automatically.
+	// Get actor class name.
 	while (true)
 	{
 		if (!SC_GetString ())

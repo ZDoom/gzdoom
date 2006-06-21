@@ -1823,7 +1823,7 @@ static FState *ResolveGotoLabel (AActor *actor, const PClass *type, char *name)
 		name = pt + 1;
 
 		// The classname may either be "Super" to identify this class's immediate
-		// superclass, or it may the name of any class that this one derives from.
+		// superclass, or it may be the name of any class that this one derives from.
 		if (stricmp (classname, "Super") == 0)
 		{
 			type = type->ParentClass;
@@ -2145,13 +2145,13 @@ void ProcessActor(void (*process)(FState *, int))
 	{
 		FActorInfo * parent;
 
+		SC_SetCMode (true);
+
 		info=CreateNewActor(&parent, &bag);
 		defaults=(AActor*)info->Class->Defaults;
 		bag.StateSet = false;
 		bag.DropItemSet = false;
 		bag.CurrentState = 0;
-
-		SC_SetCMode (true);
 
 		ParseActorProperties (bag);
 		FinishStates (info, defaults, bag);

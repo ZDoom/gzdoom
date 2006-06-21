@@ -1,3 +1,11 @@
+June 21, 2006
+- Fixed: G_InitLevelLocals() needs to OR in the crouching bits, otherwise it
+  discards the jumping bits.
+- ProcessActor() now sets C mode before retrieving the actor's name.
+- Fixed: The new SC_GetString() scanner accepted slashes at the end of tokens
+  when not in C mode, even if they were the start of a comment. Now if you
+  want a slash at the end, you must quote it.
+
 June 21, 2006 (Changes by Graf Zahl)
 - Fixed: Decal actors with an invalid decal texture caused a crash.
 - Fixed: Player could crouch while dead.

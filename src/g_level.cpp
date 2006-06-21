@@ -2212,9 +2212,9 @@ void G_InitLevelLocals ()
 	if (level.flags & LEVEL_JUMP_NO)
 		set = DF_NO_JUMP;
 	if (level.flags & LEVEL_CROUCH_YES)
-		clear = DF_NO_CROUCH;
+		clear |= DF_NO_CROUCH;
 	if (level.flags & LEVEL_CROUCH_NO)
-		set = DF_NO_CROUCH;
+		set |= DF_NO_CROUCH;
 	if (level.flags & LEVEL_FREELOOK_YES)
 		clear |= DF_NO_FREELOOK;
 	if (level.flags & LEVEL_FREELOOK_NO)

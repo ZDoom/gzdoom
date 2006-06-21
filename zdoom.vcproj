@@ -464,7 +464,7 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Source Files"
+			Name="A Source Files"
 			Filter="c;cpp"
 			>
 			<File
@@ -4331,7 +4331,7 @@
 			</Filter>
 		</Filter>
 		<Filter
-			Name="Header Files"
+			Name="A Header Files"
 			Filter="h"
 			>
 			<File

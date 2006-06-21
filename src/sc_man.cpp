@@ -75,7 +75,8 @@ static bool FreeScript = false;
 static char *SavedScriptPtr;
 static int SavedScriptLine;
 static bool CMode;
-static bool Escape=true;
+static bool Escape = true;
+static bool AtTermed;
 
 // CODE --------------------------------------------------------------------
 
@@ -250,6 +251,15 @@ void SC_SetCMode (bool cmode)
 {
 	CMode = cmode;
 }
+
+//==========================================================================
+//
+// SC_SetEscape
+//
+// Turns the escape sequence \" in strings on or off. If it's off, that
+// means you can't include quotation marks inside strings.
+//
+//==========================================================================
 
 void SC_SetEscape (bool esc)
 {

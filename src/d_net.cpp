@@ -2255,7 +2255,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 		break;
 
 	case DEM_CROUCH:
-		if (gamestate == GS_LEVEL && players[player].mo != NULL)
+		if (gamestate == GS_LEVEL && players[player].mo != NULL && players[player].health > 0)
 		{
 			players[player].crouching = players[player].crouchdir<0? 1 : -1;
 		}

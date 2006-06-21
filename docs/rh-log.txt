@@ -1,4 +1,5 @@
 June 21, 2006 (Changes by Graf Zahl)
+- Fixed: Player could crouch while dead.
 - Fixed: The sidedef loader could allocate insufficient memory if a map
   contained unused sidedefs.
 - Fixed: Color control sequences were written to the log file. Since any

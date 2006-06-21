@@ -29,8 +29,8 @@ cleanexe:
 	@$(MAKE) -C . -f Makefile.mingw clean
 
 clean:
-	@$(MAKE) -C tools/lemon -f Makefile.mgw clean
-	@$(MAKE) -C tools/re2c -f Makefile.mgw clean
+	@$(MAKE) -C tools/lemon -f Makefile clean
+	@$(MAKE) -C tools/re2c -f Makefile clean
 	@$(MAKE) -C tools/dehsupp -f Makefile clean
 	@$(MAKE) -C tools/makewad -f Makefile clean
 	@$(MAKE) -C tools/xlatcc -f Makefile clean

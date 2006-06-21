@@ -1422,7 +1422,7 @@ void P_PlayerThink (player_t *player)
 	}
 
 	// Handle crouching
-	if (player->morphTics == 0 && !(dmflags & DF_NO_CROUCH))
+	if (player->morphTics == 0 && player->health > 0 && !(dmflags & DF_NO_CROUCH))
 	{
 		if (!(player->cheats & CF_TOTALLYFROZEN))
 		{

@@ -295,6 +295,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 			}
 		}
 	}
+	else attacker = self;	// for the message creation
 
 	if (message != NULL && message[0] == '$') 
 	{
@@ -307,7 +308,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	}
 
 	SexMessage (message, gendermessage, gender,
-		self->player->userinfo.netname, self->player->userinfo.netname);
+		self->player->userinfo.netname, attacker->player->userinfo.netname);
 	Printf (PRINT_MEDIUM, "%s\n", gendermessage);
 }
 

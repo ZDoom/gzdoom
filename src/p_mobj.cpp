@@ -3725,7 +3725,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		return;
 
 	// [RH] don't spawn extra weapons in coop if so desired
-	if (multiplayer && !deathmatch && !(dmflags&DF_NO_COOP_WEAPON_SPAWN))
+	if (multiplayer && !deathmatch && (dmflags & DF_NO_COOP_WEAPON_SPAWN))
 	{
 		if (i->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 		{

@@ -1,4 +1,9 @@
 June 22, 2006 (Changes by Graf Zahl)
+- Fixed: The check to prevent items from being given to dead players
+  didn't work properly. It has to be done in the cheat code, not in
+  APlayerPawn::AddInventory.
+- Fixed: The medikit and stimpack used a MaxAmount of 100 so that
+  stamina upgrades were ineffective.
 - Fixed: Jumping and crouching at the same time created jerky results.
   Now jumping takes precedence and you can't crouch while pressing the
   jump key (which causes an uncrouch.)

@@ -69,7 +69,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	switch (cheat)
 	{
 	case CHT_IDDQD:
-		if (!(player->cheats & CF_GODMODE))
+		if (!(player->cheats & CF_GODMODE) && player->playerstate == PST_LIVE)
 		{
 			if (player->mo)
 				player->mo->health = deh.GodHealth;
@@ -162,7 +162,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_CHAINSAW:
-		if (player->mo != NULL)
+		if (player->mo != NULL && player->health >= 0)
 		{
 			type = PClass::FindClass ("Chainsaw");
 			if (player->mo->FindInventory (type) == NULL)
@@ -178,7 +178,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_POWER:
-		if (player->mo != NULL)
+		if (player->mo != NULL && player->health >= 0)
 		{
 			item = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
 			if (item != NULL)
@@ -226,7 +226,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		{
 			level.flags ^= LEVEL_ALLMAP;
 		}
-		else if (player->mo != NULL)
+		else if (player->mo != NULL && player->health >= 0)
 		{
 			item = player->mo->FindInventory (BeholdPowers[i]);
 			if (item == NULL)
@@ -256,7 +256,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_HEALTH:
-		if (player->mo != NULL)
+		if (player->mo != NULL && player->playerstate == PST_LIVE)
 		{
 			player->health = player->mo->health = player->mo->GetDefault()->health;
 			msg = GStrings("TXT_CHEATHEALTH");
@@ -362,7 +362,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_LEGO:
-		if (player->mo != NULL)
+		if (player->mo != NULL && player->health >= 0)
 		{
 			int oldpieces = ASigil::GiveSigilPiece (player->mo);
 			item = player->mo->FindInventory (RUNTIME_CLASS(ASigil));
@@ -411,6 +411,11 @@ void cht_DoCheat (player_t *player, int cheat)
 
 void GiveSpawner (player_t *player, const PClass *type, int amount)
 {
+	if (player->mo == NULL || player->health <= 0)
+	{
+		return;
+	}
+
 	AInventory *item = static_cast<AInventory *>
 		(Spawn (type, player->mo->x, player->mo->y, player->mo->z));
 	if (item != NULL)

@@ -277,9 +277,6 @@ void APlayerPawn::Tick()
 
 void APlayerPawn::AddInventory (AInventory *item)
 {
-	// Don't add to the inventory of dead players.
-	if (health<=0) return;	
-	
 	// Adding inventory to a voodoo doll should add it to the real player instead.
 	if (player != NULL && player->mo != this)
 	{

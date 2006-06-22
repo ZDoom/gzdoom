@@ -24,7 +24,6 @@ ACTOR Stimpack : Health 2011
 	Game Doom
 	SpawnID 23
 	Inventory.Amount 10
-	Inventory.MaxAmount 100
 	Inventory.PickupMessage "$GOTSTIM"
 	States
 	{
@@ -41,7 +40,6 @@ ACTOR Medikit : Health 2012
 	Game Doom
 	SpawnID 24
 	Inventory.Amount 25
-	Inventory.MaxAmount 100
 	Inventory.PickupMessage "$GOTMEDIKIT"
 	Health.LowMessage 25, "$GOTMEDINEED"
 	States

@@ -1,3 +1,8 @@
+June 22, 2006 (Changes by Graf Zahl)
+- Fixed: Jumping and crouching at the same time created jerky results.
+  Now jumping takes precedence and you can't crouch while pressing the
+  jump key (which causes an uncrouch.)
+
 June 21, 2006
 - Fixed: DF_NO_COOP_WEAPON_SPAWN was handled backwardly.
 - Fixed: G_InitLevelLocals() needs to OR in the crouching bits, otherwise it

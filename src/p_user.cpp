@@ -1422,6 +1422,7 @@ void P_PlayerThink (player_t *player)
 	}
 
 	// Handle crouching
+	if (player->cmd.ucmd.buttons & BT_JUMP) player->cmd.ucmd.buttons &= ~BT_DUCK;
 	if (player->morphTics == 0 && player->health > 0 && !(dmflags & DF_NO_CROUCH))
 	{
 		if (!(player->cheats & CF_TOTALLYFROZEN))

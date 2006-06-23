@@ -1,4 +1,8 @@
 June 22, 2006 (Changes by Graf Zahl)
+- Fixed: FWarpTexture::MakeTexture must be declared virtual so that
+  the FWarp2Texture version of it can be called.
+
+June 22, 2006 (Changes by Graf Zahl)
 - Fixed: The check to prevent items from being given to dead players
   didn't work properly. It has to be done in the cheat code, not in
   APlayerPawn::AddInventory.

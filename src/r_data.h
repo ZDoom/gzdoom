@@ -230,7 +230,7 @@ protected:
 	Span **Spans;
 	DWORD GenTime;
 
-	void MakeTexture (DWORD time);
+	virtual void MakeTexture (DWORD time);
 };
 
 // [GRB] Eternity-like warping

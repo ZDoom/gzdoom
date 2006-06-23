@@ -1,4 +1,6 @@
 June 22, 2006 (Changes by Graf Zahl)
+- Fixed: The resurrect cheat didn't reset the player's damage type so
+  if he died by being frozen the blue blend didn't disappear.
 - Fixed: FWarpTexture::MakeTexture must be declared virtual so that
   the FWarp2Texture version of it can be called.
 

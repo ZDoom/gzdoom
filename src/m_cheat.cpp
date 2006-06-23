@@ -294,6 +294,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->height = player->mo->GetDefault()->height;
 				player->mo->SetState (player->mo->SpawnState);
 				player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
+				player->mo->DamageType = MOD_UNKNOWN;
 //				player->mo->GiveDefaultInventory();
 				P_SetPsprite(player, ps_weapon, player->ReadyWeapon->UpState);
 			}

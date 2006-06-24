@@ -1,3 +1,13 @@
+June 23, 2006
+- Changed the archive format for crash reports from tar.gz to zip.
+- Went back to a single process model for crash reporting. It appears there
+  are some machines that don't like having another process collect the
+  information and report it. I still feel that having another process do
+  it _should_ be more reliable, because that process can execute in a known
+  good state. Ah well. I haven't yet seen anything that left the main process
+  in a totally unrecoverable state, so it's probably okay. Unlike before, this
+  single-process version is still GCC-compatible.
+
 June 22, 2006 (Changes by Graf Zahl)
 - Fixed: The resurrect cheat didn't reset the player's damage type so
   if he died by being frozen the blue blend didn't disappear.

@@ -32,6 +32,8 @@
 **
 */
 
+// HEADER FILES ------------------------------------------------------------
+
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0501
 #include <windows.h>
@@ -51,6 +53,7 @@
 #include <stddef.h>
 #include "resource.h"
 #include "version.h"
+#include "m_swap.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,16 +61,7 @@
 #include <time.h>
 #include <zlib.h>
 
-// Damn Microsoft for doing Get/SetWindowLongPtr half-assed. Instead of
-// giving them proper prototypes under Win32, they are just macros for
-// Get/SetWindowLong, meaning they take LONGs and not LONG_PTRs.
-#ifdef _WIN64
-typedef LONG_PTR WLONG_PTR;
-#else
-typedef LONG WLONG_PTR;
-#endif
-
-HRESULT (__stdcall *pEnableThemeDialogTexture) (HWND hwnd, DWORD dwFlags);
+// MACROS ------------------------------------------------------------------
 
 #define BUGS_FORUM_URL	"http://forum.zdoom.org/index.php?c=3"
 
@@ -80,10 +74,142 @@ HRESULT (__stdcall *pEnableThemeDialogTexture) (HWND hwnd, DWORD dwFlags);
 // If you are working on your own modified version of ZDoom, change
 // the last part of the UPLOAD_AGENT (between parentheses) to your
 // own program's name. e.g. (Skulltag) or (ZDaemon) or (ZDoomFu)
-#define UPLOAD_AGENT	"ZDoom/" DOTVERSIONSTR " (ZDoom the Original)"
+#define UPLOAD_AGENT	"ZDoom/" DOTVERSIONSTR " (" GAMESIG ")"
 
 // Time, in milliseconds, to wait for a send() or recv() to complete.
 #define TIMEOUT			60000
+
+// Maximum number of files that might appear in a crash report.
+#define MAX_FILES 5
+
+#ifndef WORDS_BIGENDIAN
+#define MAKE_ID(a,b,c,d)	((a)|((b)<<8)|((c)<<16)|((d)<<24))
+#else
+#define MAKE_ID(a,b,c,d)	((d)|((c)<<8)|((b)<<16)|((a)<<24))
+#endif
+
+#define ZIP_LOCALFILE	MAKE_ID('P','K',3,4)
+#define ZIP_CENTRALFILE	MAKE_ID('P','K',1,2)
+#define ZIP_ENDOFDIR	MAKE_ID('P','K',5,6)
+
+// TYPES -------------------------------------------------------------------
+
+// Damn Microsoft for doing Get/SetWindowLongPtr half-assed. Instead of
+// giving them proper prototypes under Win32, they are just macros for
+// Get/SetWindowLong, meaning they take LONGs and not LONG_PTRs.
+#ifdef _WIN64
+typedef LONG_PTR WLONG_PTR;
+#else
+typedef LONG WLONG_PTR;
+#endif
+
+namespace zip
+{
+#pragma pack(push,1)
+	struct LocalFileHeader
+	{
+		DWORD	Magic;						// 0
+		BYTE	VersionToExtract[2];		// 4
+		WORD	Flags;						// 6
+		WORD	Method;						// 8
+		WORD	ModTime;					// 10
+		WORD	ModDate;					// 12
+		DWORD	CRC32;						// 14
+		DWORD	CompressedSize;				// 18
+		DWORD	UncompressedSize;			// 22
+		WORD	NameLength;					// 26
+		WORD	ExtraLength;				// 28
+	};
+
+	struct CentralDirectoryEntry
+	{
+		DWORD	Magic;
+		BYTE	VersionMadeBy[2];
+		BYTE	VersionToExtract[2];
+		WORD	Flags;
+		WORD	Method;
+		WORD	ModTime;
+		WORD	ModDate;
+		DWORD	CRC32;
+		DWORD	CompressedSize;
+		DWORD	UncompressedSize;
+		WORD	NameLength;
+		WORD	ExtraLength;
+		WORD	CommentLength;
+		WORD	StartingDiskNumber;
+		WORD	InternalAttributes;
+		DWORD	ExternalAttributes;
+		DWORD	LocalHeaderOffset;
+	};
+
+	struct EndOfCentralDirectory
+	{
+		DWORD	Magic;
+		WORD	DiskNumber;
+		WORD	FirstDisk;
+		WORD	NumEntries;
+		WORD	NumEntriesOnAllDisks;
+		DWORD	DirectorySize;
+		DWORD	DirectoryOffset;
+		WORD	ZipCommentLength;
+	};
+#pragma pack(pop)
+}
+
+struct TarFile
+{
+	HANDLE		File;
+	const char *Filename;
+	int			ZipOffset;
+	DWORD		UncompressedSize;
+	DWORD		CompressedSize;
+	DWORD		CRC32;
+	bool		Deflated;
+};
+
+typedef BOOL (WINAPI *THREADWALK) (HANDLE, LPTHREADENTRY32);
+typedef BOOL (WINAPI *MODULEWALK) (HANDLE, LPMODULEENTRY32);
+typedef HANDLE (WINAPI *CREATESNAPSHOT) (DWORD, DWORD);
+typedef BOOL (WINAPI *WRITEDUMP) (HANDLE, DWORD, HANDLE, MINIDUMP_TYPE,
+								  PMINIDUMP_EXCEPTION_INFORMATION,
+								  PMINIDUMP_USER_STREAM_INFORMATION,
+								  PMINIDUMP_CALLBACK_INFORMATION);
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void AddFile (HANDLE file, const char *filename);
+static void CloseTarFiles ();
+static HANDLE MakeZip ();
+static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, short dostime);
+static HANDLE CreateTempFile ();
+
+static void DumpBytes (HANDLE file, BYTE *address);
+static void AddStackInfo (HANDLE file, void *dumpaddress);
+static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack);
+static void AddToolHelp (HANDLE file);
+
+static HANDLE WriteTextReport ();
+
+static INT_PTR CALLBACK DetailsDlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+static void SetEditControl (HWND control, HWND sizedisplay, int filenum);
+
+static BOOL UploadReport (HANDLE report, bool gziped);
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+extern HINSTANCE g_hInst;
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+EXCEPTION_POINTERS CrashPointers;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static HRESULT (__stdcall *pEnableThemeDialogTexture) (HWND hwnd, DWORD dwFlags);
 
 static const char PostHeader[] =
 "POST " UPLOAD_URI " HTTP/1.1\r\n"
@@ -132,69 +258,9 @@ static const char DbgHelpRequest[] =
 "User-Agent: " UPLOAD_AGENT "\r\n"
 "\r\n";
 
-
-namespace tar
-{
-	/*
-	* Standard Archive Format - Standard TAR - USTAR
-	*/
-	enum
-	{
-		RECORDSIZE =	512,
-		NAMSIZE	=		100,
-		TUNMLEN =		32,
-		TGNMLEN =		32
-	};
-
-	union record {
-		unsigned char charptr[RECORDSIZE];
-		struct {
-			char	name[NAMSIZE];
-			char	mode[8];
-			char	uid[8];
-			char	gid[8];
-			char	size[12];
-			char	mtime[12];
-			char	chksum[8];
-			char	linkflag;
-			char	linkname[NAMSIZE];
-			char	magic[8];
-			char	uname[TUNMLEN];
-			char	gname[TGNMLEN];
-			char	devmajor[8];
-			char	devminor[8];
-		} header;
-	};
-}
-
-#define MAX_FILES 5
-
-struct TarFile
-{
-	HANDLE File;
-	const char *Filename;
-};
 static TarFile TarFiles[MAX_FILES];
+
 static int NumFiles;
-
-static void AddFile (HANDLE file, const char *filename);
-static void CloseTarFiles ();
-static HANDLE MakeTar (bool &gzip);
-static HANDLE CreateTempFile ();
-
-typedef BOOL (WINAPI *THREADWALK) (HANDLE, LPTHREADENTRY32);
-typedef BOOL (WINAPI *MODULEWALK) (HANDLE, LPMODULEENTRY32);
-typedef HANDLE (WINAPI *CREATESNAPSHOT) (DWORD, DWORD);
-typedef BOOL (WINAPI *WRITEDUMP) (HANDLE, DWORD, HANDLE, MINIDUMP_TYPE,
-								  PMINIDUMP_EXCEPTION_INFORMATION,
-								  PMINIDUMP_USER_STREAM_INFORMATION,
-								  PMINIDUMP_CALLBACK_INFORMATION);
-
-extern HINSTANCE g_hInst;
-
-EXCEPTION_POINTERS CrashPointers;
-EXCEPTION_RECORD MyExceptionRecord;
-CONTEXT MyContextRecord;
 
 static HANDLE DbgProcess;
 static DWORD DbgProcessID;
@@ -204,17 +270,48 @@ static PVOID CrashAddress;
 static bool NeedDbgHelp;
 static char CrashSummary[256];
 
-static void DumpBytes (HANDLE file, BYTE *address);
-static void AddStackInfo (HANDLE file, void *dumpaddress);
-static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack);
-static void AddToolHelp (HANDLE file);
+static WNDPROC StdStaticProc;
 
-static HANDLE WriteTextReport ();
+// CODE --------------------------------------------------------------------
 
-static INT_PTR CALLBACK DetailsDlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-static void SetEditControl (HWND control, HWND sizedisplay, int filenum);
+//==========================================================================
+//
+// SafeReadMemory
+//
+// Returns true if the memory was succussfully read and false if not.
+//
+//==========================================================================
 
-static BOOL UploadReport (HANDLE report, bool gziped);
+static bool SafeReadMemory (const void *base, void *buffer, size_t len)
+{
+	// Non-GCC version: Use SEH to catch any bad reads immediately when
+	// they happen instead of trying to catch them beforehand.
+	//
+	// GCC version: Test the memory beforehand and hope it doesn't become
+	// unreadable while we read it. GCC is the only Windows compiler (that
+	// I know of) that can't do SEH.
+#ifdef __GNUC__
+	if (IsBadReadPtr (base, len) != 0)
+	{
+		return false;
+	}
+#endif
+	bool success = false;
+
+#ifndef __GNUC__
+	__try
+	{
+#endif
+		memcpy (buffer, base, len);
+		success = true;
+#ifndef __GNUC__
+	}
+	__except(EXCEPTION_EXECUTE_HANDLER)
+	{
+	}
+#endif
+	return success;
+}
 
 //==========================================================================
 //
@@ -321,7 +418,7 @@ void __cdecl Writef (HANDLE file, const char *format, ...)
 //
 //==========================================================================
 
-void CreateCrashLog (HANDLE process, DWORD processID, DWORD threadID, LPEXCEPTION_POINTERS exceptionRecord, char *custominfo, DWORD customsize)
+void CreateCrashLog (char *custominfo, DWORD customsize)
 {
 	// Do not collect information more than once.
 	if (NumFiles != 0)
@@ -329,59 +426,46 @@ void CreateCrashLog (HANDLE process, DWORD processID, DWORD threadID, LPEXCEPTIO
 		return;
 	}
 
-	DbgThreadID = threadID;
-	DbgProcessID = processID;
-	DbgProcess = process;
-	if (!ReadProcessMemory (DbgProcess, exceptionRecord, &CrashPointers, sizeof(CrashPointers), NULL) ||
-		!ReadProcessMemory (DbgProcess, CrashPointers.ExceptionRecord, &MyExceptionRecord, sizeof(EXCEPTION_RECORD), NULL) ||
-		!ReadProcessMemory (DbgProcess, CrashPointers.ContextRecord, &MyContextRecord, sizeof(CONTEXT), NULL))
+	DbgThreadID = GetCurrentThreadId();
+	DbgProcessID = GetCurrentProcessId();
+	DbgProcess = GetCurrentProcess();
+
+	CrashCode = CrashPointers.ExceptionRecord->ExceptionCode;
+	CrashAddress = CrashPointers.ExceptionRecord->ExceptionAddress;
+
+	AddFile (WriteTextReport(), "report.txt");
+	AddFile (WriteMyMiniDump(), "minidump.mdmp");
+
+	// Copy app-specific information out of the crashing process's memory
+	// and into a new temporary file.
+	if (customsize != 0)
 	{
 		HANDLE file = CreateTempFile();
+		DWORD wrote;
 
-		Writef (file, "Could not read process memory\n");
-		AddFile (file, "failed.txt");
-	}
-	else
-	{
-		CrashPointers.ExceptionRecord = &MyExceptionRecord;
-		CrashPointers.ContextRecord = &MyContextRecord;
-		CrashCode = CrashPointers.ExceptionRecord->ExceptionCode;
-		CrashAddress = CrashPointers.ExceptionRecord->ExceptionAddress;
-
-		AddFile (WriteTextReport(), "report.txt");
-		AddFile (WriteMyMiniDump(), "minidump.mdmp");
-
-		// Copy app-specific information out of the crashing process's memory
-		// and into a new temporary file.
-		if (customsize != 0)
+		if (file != INVALID_HANDLE_VALUE)
 		{
-			HANDLE file = CreateTempFile();
-			DWORD wrote;
+			BYTE buffer[512];
+			DWORD left;
 
-			if (file != INVALID_HANDLE_VALUE)
+			for (;; customsize -= left, custominfo += left)
 			{
-				BYTE buffer[512];
-				DWORD left;
-
-				for (;; customsize -= left, custominfo += left)
+				left = customsize > 512 ? 512 : customsize;
+				if (left == 0)
 				{
-					left = customsize > 512 ? 512 : customsize;
-					if (left == 0)
-					{
-						break;
-					}
-					if (ReadProcessMemory (DbgProcess, custominfo, buffer, left, NULL))
-					{
-						WriteFile (file, buffer, left, &wrote, NULL);
-					}
-					else
-					{
-						Writef (file, "Failed reading remaining %lu bytes\r\n", customsize);
-						break;
-					}
+					break;
 				}
-				AddFile (file, "local.txt");
+				if (SafeReadMemory (custominfo, buffer, left))
+				{
+					WriteFile (file, buffer, left, &wrote, NULL);
+				}
+				else
+				{
+					Writef (file, "Failed reading remaining %lu bytes\r\n", customsize);
+					break;
+				}
 			}
+			AddFile (file, "local.txt");
 		}
 	}
 	CloseHandle (DbgProcess);
@@ -675,7 +759,7 @@ static void AddStackInfo (HANDLE file, void *dumpaddress)
 		Writef (file, "%p:", scan);
 		for (i = 0; i < max; ++i)
 		{
-			if (!ReadProcessMemory (DbgProcess, &scan[i], &peekd, 4, NULL))
+			if (!SafeReadMemory (&scan[i], &peekd, 4))
 			{
 				break;
 			}
@@ -688,7 +772,7 @@ static void AddStackInfo (HANDLE file, void *dumpaddress)
 		Writef (file, "  ");
 		for (i = 0; i < max*4; ++i)
 		{
-			if (!ReadProcessMemory (DbgProcess, (BYTE *)scan + i, &peekb, 1, NULL))
+			if (!SafeReadMemory ((BYTE *)scan + i, &peekb, 1))
 			{
 				break;
 			}
@@ -725,7 +809,7 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack)
 	{
 		DWORD_PTR code;
 
-		if (ReadProcessMemory (DbgProcess, scan, &code, sizeof(code), NULL) &&
+		if (SafeReadMemory (scan, &code, sizeof(code)) &&
 			code >= codeStart && code < codeEnd)
 		{
 			static const char regNames[][4] =
@@ -737,18 +821,18 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack)
 			const BYTE *bytep = (BYTE *)code;
 			BYTE peekb;
 
-#define chkbyte(x,m,v) ReadProcessMemory(DbgProcess, x, &peekb, 1, NULL) && ((peekb & m) == v)
+#define chkbyte(x,m,v) SafeReadMemory(x, &peekb, 1) && ((peekb & m) == v)
 
 			if (chkbyte(bytep - 5, 0xFF, 0xE8) || chkbyte(bytep - 5, 0xFF, 0xE9))
 			{
 				DWORD peekd;
-				if (ReadProcessMemory (DbgProcess, bytep - 4, &peekd, 4, NULL))
+				if (SafeReadMemory (bytep - 4, &peekd, 4))
 				{
 					DWORD_PTR jumpaddr = peekd + code;
 					Writef (file, "\r\n %p  %s %p", code - 5,
 						peekb == 0xE9 ? "jmp " : "call", jumpaddr);
 					if (chkbyte((LPCVOID)jumpaddr, 0xFF, 0xE9) &&
-						ReadProcessMemory (DbgProcess, (LPCVOID)(jumpaddr + 1), &peekd, 4, NULL))
+						SafeReadMemory ((LPCVOID)(jumpaddr + 1), &peekd, 4))
 					{
 						Writef (file," => jmp  %p", peekd + jumpaddr + 5);
 					}
@@ -785,7 +869,7 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack)
 
 					Writef (file, "\r\n %08x", bytep - i);
 					bytep -= i - 1;
-					ReadProcessMemory (DbgProcess, bytep, &peekb, 1, NULL);
+					SafeReadMemory (bytep, &peekb, 1);
 					mod = peekb >> 6;
 					rm = peekb & 7;
 					bytep++;
@@ -798,7 +882,7 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack)
 					{
 						int index, base;
 
-						ReadProcessMemory (DbgProcess, bytep, &peekb, 1, NULL);
+						SafeReadMemory (bytep, &peekb, 1);
 						scale = 1 << (peekb >> 6);
 						index = (peekb >> 3) & 7;
 						base = peekb & 7;
@@ -832,12 +916,12 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack)
 					if (mod == 1)
 					{
 						signed char miniofs;
-						ReadProcessMemory (DbgProcess, bytep++, &miniofs, 1, NULL);
+						SafeReadMemory (bytep++, &miniofs, 1);
 						offset = miniofs;
 					}
 					else
 					{
-						ReadProcessMemory (DbgProcess, bytep, &offset, 4, NULL);
+						SafeReadMemory (bytep, &offset, 4);
 						bytep += 4;
 					}
 					if ((DWORD_PTR)bytep == code)
@@ -905,7 +989,7 @@ static void DumpBytes (HANDLE file, BYTE *address)
 		{
 			line_p += sprintf (line_p, "\r\n%p:", address);
 		}
-		if (ReadProcessMemory (DbgProcess, address, &peek, 1, NULL))
+		if (SafeReadMemory (address, &peek, 1))
 		{
 			line_p += sprintf (line_p, " %02x", *address);
 		}
@@ -989,40 +1073,44 @@ static void CloseTarFiles ()
 // WriteBlock
 //
 // This is a wrapper around WriteFile. If stream is non-NULL, then the data
-// is compressed before writing it to the file. outbuf must be 512 bytes.
+// is compressed before writing it to the file. outbuf must be 1024 bytes.
 //
 //==========================================================================
 
-static void WriteBlock (HANDLE file, LPCVOID buffer, DWORD bytes, z_stream *stream, Bytef *outbuf, DWORD *crc)
+static DWORD WriteBlock (HANDLE file, LPCVOID buffer, DWORD bytes, z_stream *stream, Bytef *outbuf)
 {
 	if (stream == NULL)
 	{
 		WriteFile (file, buffer, bytes, &bytes, NULL);
+		return bytes;
 	}
 	else
 	{
+		DWORD wrote = 0;
+
 		stream->next_in = (Bytef *)buffer;
 		stream->avail_in = bytes;
-		*crc = crc32 (*crc, (const Bytef *)buffer, bytes);
 
 		while (stream->avail_in != 0)
 		{
 			if (stream->avail_out == 0)
 			{
 				stream->next_out = outbuf;
-				stream->avail_out = sizeof(tar::record);
-				WriteFile (file, outbuf, sizeof(tar::record), &bytes, NULL);
+				stream->avail_out = 1024;
+				wrote += 1024;
+				WriteFile (file, outbuf, 1024, &bytes, NULL);
 			}
 			deflate (stream, Z_NO_FLUSH);
 		}
+		return wrote;
 	}
 }
 
 //==========================================================================
 //
-// WriteTar
+// WriteZip
 //
-// Writes a .tar.gz file. If deflateInit fails, then ".gz" the gzip
+// Writes a .zip/pk3 file. If deflateInit fails, then ".gz" the gzip
 // argument will be false, otherwise it will be set true. A HANDLE to the
 // file is returned. This file is delete-on-close.
 //
@@ -1031,27 +1119,120 @@ static void WriteBlock (HANDLE file, LPCVOID buffer, DWORD bytes, z_stream *stre
 //
 //==========================================================================
 
-static HANDLE MakeTar (bool &gzip)
+static HANDLE MakeZip ()
 {
-	DWORD len;
-	unsigned char gzipheader[10];
-	tar::record record;
-	Bytef outbuf[sizeof(record)];
+	zip::CentralDirectoryEntry central = { ZIP_CENTRALFILE, { 20, 0 }, { 20, 0 }, };
+	zip::EndOfCentralDirectory dirend = { ZIP_ENDOFDIR, };
+	short dosdate, dostime;
 	time_t now;
-	int i, j, sum;
+	struct tm *nowtm;
+	int i, numfiles;
 	HANDLE file;
-	DWORD filesize, k;
-	DWORD totalsize;
-	z_stream stream;
-	int err;
-	DWORD crc;
+	DWORD len, dirsize;
 
 	if (NumFiles == 0)
 	{
 		return INVALID_HANDLE_VALUE;
 	}
 
+	// Open the zip file.
+	file = CreateTempFile ();
+	if (file == INVALID_HANDLE_VALUE)
+	{
+		return file;
+	}
+
 	time (&now);
+	nowtm = localtime (&now);
+
+	if (nowtm == NULL || nowtm->tm_year < 80)
+	{
+		dosdate = dostime = 0;
+	}
+	else
+	{
+		dosdate = (nowtm->tm_year - 80) * 512 + (nowtm->tm_mon + 1) * 32 + nowtm->tm_mday;
+		dostime = nowtm->tm_hour * 2048 + nowtm->tm_min * 32 + nowtm->tm_sec / 2;
+		dosdate = LittleShort(dosdate);
+		dostime = LittleShort(dostime);
+	}
+
+	// Write out the zip archive, one file at a time
+	for (i = 0; i < NumFiles; ++i)
+	{
+		AddZipFile (file, &TarFiles[i], dosdate, dostime);
+	}
+
+	// Write the central directory
+	central.ModTime = dostime;
+	central.ModDate = dosdate;
+	central.InternalAttributes = LittleShort(1);
+
+	dirend.DirectoryOffset = LittleLong(SetFilePointer (file, 0, NULL, FILE_CURRENT));
+
+	for (i = 0, numfiles = 0, dirsize = 0; i < NumFiles; ++i)
+	{
+		// Skip empty files
+		if (TarFiles[i].UncompressedSize == 0)
+		{
+			continue;
+		}
+		numfiles++;
+		if (TarFiles[i].Deflated)
+		{
+			central.Flags = LittleShort(2);
+			central.Method = LittleShort(8);
+		}
+		else
+		{
+			central.Flags = 0;
+			central.Method = 0;
+		}
+		central.CRC32 = LittleLong(TarFiles[i].CRC32);
+		central.CompressedSize = LittleLong(TarFiles[i].CompressedSize);
+		central.UncompressedSize = LittleLong(TarFiles[i].UncompressedSize);
+		central.NameLength = LittleShort((WORD)strlen(TarFiles[i].Filename));
+		central.LocalHeaderOffset = LittleLong(TarFiles[i].ZipOffset);
+		WriteFile (file, &central, sizeof(central), &len, NULL);
+		WriteFile (file, TarFiles[i].Filename, (DWORD)strlen(TarFiles[i].Filename), &len, NULL);
+		dirsize += sizeof(central) + len;
+	}
+
+	// Write the directory terminator
+	dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort(numfiles);
+	dirend.DirectorySize = LittleLong(dirsize);
+	WriteFile (file, &dirend, sizeof(dirend), &len, NULL);
+
+	return file;
+}
+
+//==========================================================================
+//
+// AddZipFile
+//
+// Adds a file to the opened zip.
+//
+//==========================================================================
+
+static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, short dostime)
+{
+	zip::LocalFileHeader local = { ZIP_LOCALFILE, };
+	Bytef outbuf[1024], inbuf[1024];
+	z_stream stream;
+	DWORD wrote, len, k;
+	int err;
+	bool gzip;
+
+	whichfile->UncompressedSize = GetFileSize (whichfile->File, NULL);
+	whichfile->CompressedSize = 0;
+	whichfile->ZipOffset = 0;
+	whichfile->Deflated = false;
+
+	// Skip empty files.
+	if (whichfile->UncompressedSize == 0)
+	{
+		return;
+	}
 
 	stream.next_in = Z_NULL;
 	stream.avail_in = 0;
@@ -1061,89 +1242,42 @@ static HANDLE MakeTar (bool &gzip)
 		8, Z_DEFAULT_STRATEGY);
 	gzip = err == Z_OK;
 
-	// Open the tar file.
-	file = CreateTempFile ();
-	if (file == INVALID_HANDLE_VALUE)
+	if (gzip)
 	{
-		if (gzip)
-		{
-			deflateEnd (&stream);
-		}
-		return file;
-	}
-
-	if (gzip = (err == Z_OK))
-	{
-		// Write GZIP header
-		memcpy (gzipheader,   "\x1F\x8B\x08\x00    \x02\x0B", 10);
-		memcpy (gzipheader+4, &now, 4);
-		WriteFile (file, gzipheader, 10, &len, NULL);
-		crc = crc32 (0, NULL, 0);
+		local.Method = LittleShort(8);
+		whichfile->Deflated = true;
 		stream.next_out = outbuf;
 		stream.avail_out = sizeof(outbuf);
 	}
 
-	// Write out the tar archive, one file at a time
-	for (i = 0, totalsize = 0; i < NumFiles; ++i)
+	// Write out the header and filename.
+	local.VersionToExtract[0] = 20;
+	local.Flags = gzip ? LittleShort(2) : 0;
+	local.ModTime = dostime;
+	local.ModDate = dosdate;
+	local.UncompressedSize = LittleLong(whichfile->UncompressedSize);
+	local.NameLength = LittleShort((WORD)strlen(whichfile->Filename));
+	
+	whichfile->ZipOffset = SetFilePointer (ziphandle, 0, NULL, FILE_CURRENT);
+	WriteFile (ziphandle, &local, sizeof(local), &wrote, NULL);
+	WriteFile (ziphandle, whichfile->Filename, (DWORD)strlen(whichfile->Filename), &wrote, NULL);
+
+	// Write the file itself and calculate its CRC.
+	SetFilePointer (whichfile->File, 0, NULL, FILE_BEGIN);
+	for (k = 0; k < whichfile->UncompressedSize; )
 	{
-		// Fill in header information
-		filesize = GetFileSize (TarFiles[i].File, NULL);
-
-		// Skip empty files
-		if (filesize == 0)
+		len = whichfile->UncompressedSize - k;
+		if (len > 1024)
 		{
-			continue;
+			len = 1024;
 		}
-
-		memset (&record, 0, sizeof(record));
-		strcpy (record.header.name,  TarFiles[i].Filename);
-		strcpy (record.header.mode,  "000666 ");
-		strcpy (record.header.uid,   "     0 ");
-		strcpy (record.header.gid,   "     0 ");
-		strcpy (record.header.magic, "ustar  ");
-		strcpy (record.header.uname, "zdoom");
-		strcpy (record.header.gname, "games");
-		sprintf(record.header.size,  "%11lo ", filesize);
-		sprintf(record.header.mtime, "%11lo ", now);
-		record.header.linkflag =     '0';
-
-		// Calculate checksum
-		memcpy (record.header.chksum, "        ", 8);
-		for (j = 0, sum = 0; j < (int)sizeof(record); ++j)
-		{
-			sum += record.charptr[j];
-		}
-		sprintf (record.header.chksum, "%6o", sum);
-
-		// Write out the header and then the file (padded to 512 bytes)
-		WriteBlock (file, &record, sizeof(record), gzip ? &stream : NULL, outbuf, &crc);
-		totalsize += sizeof(record);
-
-		SetFilePointer (TarFiles[i].File, 0, NULL, FILE_BEGIN);
-		for (k = 0; k < filesize; k += 512)
-		{
-			len = filesize - k;
-			if (len > sizeof(record))
-			{
-				len = sizeof(record);
-			}
-			else
-			{
-				memset (&record.charptr[len], 0, sizeof(record)-len);
-			}
-			ReadFile (TarFiles[i].File, &record, len, &len, NULL);
-			WriteBlock (file, &record, sizeof(record), gzip ? &stream : NULL, outbuf, &crc);
-			totalsize += sizeof(record);
-		}
+		k += len;
+		ReadFile (whichfile->File, &inbuf, len, &len, NULL);
+		whichfile->CRC32 = crc32 (whichfile->CRC32, inbuf, len);
+		whichfile->CompressedSize += WriteBlock (ziphandle, inbuf, len, gzip ? &stream : NULL, outbuf);
 	}
 
-	// EOT is two zeroed blocks, according to GNU tar.
-	memset (&record, 0, sizeof(record));
-	WriteBlock (file, &record, sizeof(record), gzip ? &stream : NULL, outbuf, &crc);
-	WriteBlock (file, &record, sizeof(record), gzip ? &stream : NULL, outbuf, &crc);
-	totalsize += 2*sizeof(record);
-
-	// Flush the zlib stream buffer and write the gzip epilogue
+	// Flush the zlib stream buffer.
 	if (gzip)
 	{
 		for (bool done = false;;)
@@ -1151,7 +1285,8 @@ static HANDLE MakeTar (bool &gzip)
 			len = sizeof(outbuf) - stream.avail_out;
 			if (len != 0)
 			{
-				WriteFile (file, outbuf, len, &len, NULL);
+				whichfile->CompressedSize += len;
+				WriteFile (ziphandle, outbuf, len, &wrote, NULL);
 				stream.next_out = outbuf;
 				stream.avail_out = sizeof(outbuf);
 			}
@@ -1167,14 +1302,17 @@ static HANDLE MakeTar (bool &gzip)
 			}
 		}
 		deflateEnd (&stream);
-		memcpy (gzipheader,   &crc, 4);
-		memcpy (gzipheader+4, &totalsize, 4);
-		WriteFile (file, gzipheader, 8, &len, NULL);
 	}
-	return file;
-}
 
-static WNDPROC StdStaticProc;
+	// Fill in fields we didn't know when we wrote the local header.
+	SetFilePointer (ziphandle, whichfile->ZipOffset + 14, NULL, FILE_BEGIN);
+	k = LittleLong(whichfile->CRC32);
+	WriteFile (ziphandle, &k, 4, &wrote, NULL);
+	k = LittleLong(whichfile->CompressedSize);
+	WriteFile (ziphandle, &k, 4, &wrote, NULL);
+
+	SetFilePointer (ziphandle, 0, NULL, FILE_END);
+}
 
 //==========================================================================
 //
@@ -2301,7 +2439,6 @@ struct UploadParmStruct
 	HWND hDlg;
 	HANDLE hThread;
 	HANDLE hFile;
-	bool gzipped;
 	const char *UserSummary;
 };
 
@@ -2394,10 +2531,6 @@ static DWORD WINAPI UploadProc (LPVOID lpParam)
 						sizeof(MultipartBinaryHeader)-1 +
 						sizeof(MultipartHeaderGZip)-1 + fileLen +
 						sizeof(MultipartFooter)-1;
-		if (!parm->gzipped)
-		{
-			contentLength -= sizeof(MultipartHeaderGZip) - sizeof(MultipartHeaderNoGZip);
-		}
 		headerLen = sprintf (xferbuf, PostHeader, contentLength);
 		bytesSent = send (sock, xferbuf, headerLen, 0);
 		if (bytesSent != headerLen)
@@ -2463,8 +2596,7 @@ static DWORD WINAPI UploadProc (LPVOID lpParam)
 		}
 
 		// Send the report file.
-		headerLen = sprintf (xferbuf, "%s%s", MultipartBinaryHeader,
-			parm->gzipped ? MultipartHeaderGZip : MultipartHeaderNoGZip);
+		headerLen = sprintf (xferbuf, "%s%s", MultipartBinaryHeader, MultipartHeaderZip);
 
 		bytesSent = send (sock, xferbuf, headerLen, 0);
 		if (bytesSent == SOCKET_ERROR)
@@ -2684,9 +2816,9 @@ static BOOL CALLBACK BoingDlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARA
 //
 //==========================================================================
 
-static BOOL UploadReport (HANDLE file, bool gzipped)
+static BOOL UploadReport (HANDLE file)
 {
-	UploadParmStruct uploadParm = { 0, 0, file, gzipped, UserSummary };
+	UploadParmStruct uploadParm = { 0, 0, file, UserSummary };
 	BOOL res = (BOOL)DialogBoxParam (g_hInst, MAKEINTRESOURCE(IDD_BOING), NULL, (DLGPROC)BoingDlgProc, (LPARAM)&uploadParm);
 	if (UserSummary != NULL)
 	{
@@ -2706,7 +2838,7 @@ static BOOL UploadReport (HANDLE file, bool gzipped)
 //
 //==========================================================================
 
-static void SaveReport (HANDLE file, bool gzipped)
+static void SaveReport (HANDLE file)
 {
 	OPENFILENAME ofn = {
 #ifdef OPENFILENAME_SIZE_VERSION_400
@@ -2717,16 +2849,8 @@ static void SaveReport (HANDLE file, bool gzipped)
 		, };
 	char filename[256];
 
-	if (gzipped)
-	{
-		ofn.lpstrFilter = "GZipped Tarball (*.tar.gz)\0*.tar.gz\0";
-		strcpy (filename, "CrashReport.tar.gz");
-	}
-	else
-	{
-		ofn.lpstrFilter = "Tarball (*.tar)\0*.tar\0";
-		strcpy (filename, "CrashReport.tar");
-	}
+	ofn.lpstrFilter = "Zip file (*.pk3)\0*.pk3\0";
+	strcpy (filename, "CrashReport.pk3");
 	ofn.lpstrFile = filename;
 	ofn.nMaxFile = sizeof(filename);
 
@@ -2780,7 +2904,6 @@ void DisplayCrashLog ()
 {
 	HINSTANCE riched;
 	HANDLE file;
-	bool gzipped = false;
 
 	if (NumFiles == 0 || (riched = LoadLibrary ("riched20.dll")) == NULL)
 	{
@@ -2805,16 +2928,16 @@ void DisplayCrashLog ()
 		INT_PTR result = DialogBox (g_hInst, MAKEINTRESOURCE(IDD_CRASHDIALOG), NULL, (DLGPROC)CrashDlgProc);
 		if (result == IDYES)
 		{
-#if 0	// Server-side support is not done yet
-			file = MakeTar (gzipped);
-			UploadReport (file, gzipped);
+#if 0	// Server-side support is not done yet because I am too lazy.
+			file = MakeZip ();
+			UploadReport (file);
 			CloseHandle (file);
 #endif
 		}
 		else if (result == IDC_SAVEREPORT)
 		{
-			file = MakeTar (gzipped);
-			SaveReport (file, gzipped);
+			file = MakeZip ();
+			SaveReport (file);
 			CloseHandle (file);
 		}
 		FreeLibrary (riched);

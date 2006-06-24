@@ -67,11 +67,9 @@
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 
-void CreateCrashLog (HANDLE process, DWORD processID, DWORD threadID, LPEXCEPTION_POINTERS exceptionRecord, char *custominfo, DWORD customsize);
+void CreateCrashLog (char *custominfo, DWORD customsize);
 extern void DisplayCrashLog ();
 extern EXCEPTION_POINTERS CrashPointers;
-extern EXCEPTION_RECORD MyExceptionRecord;
-extern CONTEXT MyContextRecord;
 
 // Will this work with something besides VC++?
 // Answer: yes it will.
@@ -479,15 +477,7 @@ LONG WINAPI ExitMessedUp (LPEXCEPTION_POINTERS foo)
 	ExitProcess (1000);
 }
 
-void CALLBACK TimeToDie (ULONG_PTR dummy)
-{
-	SetUnhandledExceptionFilter (ExitMessedUp);
-	I_ShutdownHardware ();
-	SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
-	exit (-1);
-}
-
-void CALLBACK SpawnFailed (ULONG_PTR dummy)
+void CALLBACK ExitFatally (ULONG_PTR dummy)
 {
 	SetUnhandledExceptionFilter (ExitMessedUp);
 	I_ShutdownHardware ();
@@ -496,30 +486,8 @@ void CALLBACK SpawnFailed (ULONG_PTR dummy)
 	exit (-1);
 }
 
-void GetInfo (PEXCEPTION_POINTERS dst, PEXCEPTION_POINTERS src)
-{
-	dst->ExceptionRecord = &MyExceptionRecord;
-	dst->ContextRecord = &MyContextRecord;
-	MyExceptionRecord = *src->ExceptionRecord;
-	MyContextRecord = *src->ContextRecord;
-}
-
 LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 {
-	static bool caughtsomething = false;
-
-	if (caughtsomething) return EXCEPTION_EXECUTE_HANDLER;
-	caughtsomething = true;
-
-	char *custominfo = (char *)HeapAlloc (GetProcessHeap(), 0, 16384);
-	PAPCFUNC apcfunc;
-	char cmdline[128];
-	char modname[_MAX_PATH];
-	STARTUPINFO startup = { sizeof(startup) };
-	PROCESS_INFORMATION newproc;
-
-	GetInfo (&CrashPointers, info);
-
 #ifdef _DEBUG
 	if (info->ExceptionRecord->ExceptionCode == EXCEPTION_BREAKPOINT)
 	{
@@ -527,41 +495,27 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	}
 #endif
 
+	static bool caughtsomething = false;
+
+	if (caughtsomething) return EXCEPTION_EXECUTE_HANDLER;
+	caughtsomething = true;
+
+	char *custominfo = (char *)HeapAlloc (GetProcessHeap(), 0, 16384);
+
 	CrashPointers = *info;
 	DoomSpecificInfo (custominfo);
-
-	// Spawn off a new copy of ourself to handle the information gathering and reporting.
-	wsprintf (cmdline, "IDidCrash:OuchieBooboo %x %x %p %p %lx", GetCurrentProcessId(),
-		GetCurrentThreadId(), &CrashPointers, custominfo, strlen(custominfo));
-	GetModuleFileName (NULL, modname, _MAX_PATH);
-	modname[_MAX_PATH-1] = 0;
-	if (!CreateProcess (modname, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &newproc))
-	{
-		// CreateProcess failed. We'll have to do everything ourself!
-		CreateCrashLog (GetCurrentProcess(), GetCurrentProcessId(), GetCurrentThreadId(), &CrashPointers, custominfo, (DWORD)strlen(custominfo));
-		apcfunc = SpawnFailed;
-		QueueUserAPC (SpawnFailed, MainThread, 0);
-	}
-	else
-	{
-		// Give our new debugger process a chance to get up and running and attach
-		// itself to us. Calling SuspendThread (so that we wait only as long as actually
-		// needed) does not work, because it interferes with the receipt of the
-		// exception information. I'm not sure why.
-		Sleep (1000);
-		apcfunc = TimeToDie;
-	}
+	CreateCrashLog (custominfo, (DWORD)strlen(custominfo));
 
 	// If the main thread crashed, then make it clean up after itself.
 	// Otherwise, put the crashing thread to sleep and signal the main thread to clean up.
 	if (GetCurrentThreadId() == MainThreadID)
 	{
-		info->ContextRecord->Eip = (DWORD_PTR)apcfunc;
+		info->ContextRecord->Eip = (DWORD_PTR)ExitFatally;
 	}
 	else
 	{
 		info->ContextRecord->Eip = (DWORD_PTR)SleepForever;
-		QueueUserAPC (apcfunc, MainThread, 0);
+		QueueUserAPC (ExitFatally, MainThread, 0);
 	}
 	return EXCEPTION_CONTINUE_EXECUTION;
 }
@@ -572,63 +526,15 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 
 	InitCommonControls ();	// Be pretty under XP
 
-	if (strncmp (GetCommandLine(), "IDidCrash:OuchieBooboo ", 23) == 0 && __argc == 6)
-	{ // We are being run to handle a crash in another instance of ourself.
-	  // argv[1] is the process ID of the instance that crashed.
-	  // argv[2] is the thread ID of the crasher.
-	  // argv[3] is a pointer to the exception information in that process's address space.
-	  // argv[4] is a pointer to a text buffer for ZDoom-specific info.
-	  // argv[5] is the length of argv[4]'s buffer
-		DWORD pid, tid;
-		LPEXCEPTION_POINTERS info;
-		char *info2;
-		DWORD info2len;
-		BOOL debugging;
-		HANDLE debuggee;
-		DEBUG_EVENT debugev;
-
-		pid = strtoul (__argv[1], NULL, 16);
-		tid = strtoul (__argv[2], NULL, 16);
-		sscanf (__argv[3], "%p", &info);
-		sscanf (__argv[4], "%p", &info2);
-		info2len = strtoul (__argv[5], NULL, 16);
-
-		// DebugActiveProcess will suspend all threads in the other process,
-		// so that's why we call it. When it resumes, it will shut down
-		// as cleanly as it can.
-		debugging = DebugActiveProcess (pid);
-//		if (MessageBox (NULL, GetCommandLine(), "foo", MB_OKCANCEL) == IDCANCEL) exit (0);
-		debuggee = OpenProcess (PROCESS_ALL_ACCESS, FALSE, pid);
-		CreateCrashLog (debuggee, pid, tid, info, info2, info2len);
-		if (debugging)
-		{ // Now let the crashing process resume. Process debug events until the process
-		  // has exited. We don't care about the events, we just wanted the debugger status
-		  // so that the process would be suspended while we gathered info on it.
-			while (WaitForDebugEvent (&debugev, INFINITE))
-			{
-				ContinueDebugEvent(debugev.dwProcessId, debugev.dwThreadId, DBG_CONTINUE);
-				if (debugev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
-				{
-					// In this case, ContinueDebugEvent closes the process handle for us,
-					// so we don't need to (and we must be sure not to reference it again).
-					break;
-				}
-			}
-		}
-		DisplayCrashLog ();
-		exit (0);
-	}
 #if !defined(__GNUC__) && defined(_DEBUG)
 	if (__argc == 2 && strcmp (__argv[1], "TestCrash") == 0)
 	{
-		EXCEPTION_POINTERS info;
 		__try
 		{
 			*(int *)0 = 0;
 		}
-		__except(GetInfo (&info, GetExceptionInformation()),
-			CreateCrashLog (GetCurrentProcess(), GetCurrentProcessId(), GetCurrentThreadId(), &info, __argv[1], 9),
-			EXCEPTION_EXECUTE_HANDLER)
+		__except(CrashPointers = *GetExceptionInformation(),
+			CreateCrashLog (__argv[1], 9), EXCEPTION_EXECUTE_HANDLER)
 		{
 		}
 		DisplayCrashLog ();

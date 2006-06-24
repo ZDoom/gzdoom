@@ -56,7 +56,6 @@
 #include "version.h"
 #include "i_video.h"
 #include "i_sound.h"
-#include "gccseh.h"
 #include "autosegs.h"
 #include "w_wad.h"
 

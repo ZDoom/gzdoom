@@ -1110,12 +1110,11 @@ static DWORD WriteBlock (HANDLE file, LPCVOID buffer, DWORD bytes, z_stream *str
 //
 // WriteZip
 //
-// Writes a .zip/pk3 file. If deflateInit fails, then ".gz" the gzip
-// argument will be false, otherwise it will be set true. A HANDLE to the
-// file is returned. This file is delete-on-close.
+// Writes a .zip/pk3 file. A HANDLE to the file is returned. This file is
+// delete-on-close.
 //
 // The archive contains all the files previously passed to AddFile(). They
-// must still be open, because WriteTar() does not open them itself.
+// must still be open, because MakeZip() does not open them itself.
 //
 //==========================================================================
 
@@ -2849,8 +2848,8 @@ static void SaveReport (HANDLE file)
 		, };
 	char filename[256];
 
-	ofn.lpstrFilter = "Zip file (*.pk3)\0*.pk3\0";
-	strcpy (filename, "CrashReport.pk3");
+	ofn.lpstrFilter = "Zip file (*.zip)\0*.zip\0";
+	strcpy (filename, "CrashReport.zip");
 	ofn.lpstrFile = filename;
 	ofn.nMaxFile = sizeof(filename);
 

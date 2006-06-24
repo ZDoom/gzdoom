@@ -80,12 +80,16 @@
 #define GAMESIG "ZDOOM"
 #define BASEWAD "zdoom.pk3"
 
+// More stuff that needs to be different for derivatives.
+#define GAMENAME "ZDoom"
+#define FORUM_URL "http://forum.zdoom.org"
+
 #ifdef unix
 #define HOME_DIR "~/.zdoom"
 #endif
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 232	// Used by 2.0.99
+#define MINSAVEVER 232	// Used by 2.1.0
 
 // The maximum length of one save game description for the menus.
 #define SAVESTRINGSIZE		24

@@ -1513,7 +1513,7 @@ static INT_PTR CALLBACK OverviewDlgProc (HWND hDlg, UINT message, WPARAM wParam,
 
 		// Setup the header at the top of the page.
 		edit = GetDlgItem (hDlg, IDC_CRASHHEADER);
-		SendMessage (edit, WM_SETTEXT, 0, (LPARAM)"ZDoom has encountered a problem and needs to close.\n"
+		SendMessage (edit, WM_SETTEXT, 0, (LPARAM)GAMENAME" has encountered a problem and needs to close.\n"
 			"We are sorry for the inconvenience.");
 		
 		// Setup a bold version of the standard dialog font and make the header bold.
@@ -1531,8 +1531,8 @@ static INT_PTR CALLBACK OverviewDlgProc (HWND hDlg, UINT message, WPARAM wParam,
 		SendMessage (edit, EM_AUTOURLDETECT, TRUE, 0);
 		SendMessage (edit, WM_SETTEXT, 0, (LPARAM)"Please tell us about this problem.\n"
 			"The information will NOT be sent to Microsoft.\n\n"
-			"An error report has been created that you can submit to help improve ZDoom. "
-			"You can either save it to disk and make a report in the bugs forum at http://forum.zdoom.org, "
+			"An error report has been created that you can submit to help improve "GAMENAME". "
+			"You can either save it to disk and make a report in the bugs forum at "FORUM_URL", "
 			"or you can send it directly without letting other people know about it.");
 		SendMessage (edit, EM_SETSEL, 0, 81);
 		SendMessage (edit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&charFormat);
@@ -2650,9 +2650,9 @@ static DWORD WINAPI UploadProc (LPVOID lpParam)
 		if (NeedDbgHelp && MessageBox (parm->hDlg,
 			"Shall I download dbghelp.dll?\n\n"
 			"This is a Microsoft-supplied DLL that can gather detailed information when a program crashes.\n\n"
-			"Although it is not essential for ZDoom, it will make any future error\n"
+			"Although it is not essential for "GAMENAME", it will make any future error\n"
 			"reports more useful, so it is strongly suggested that you answer \"yes.\"\n\n"
-			"If you answer \"yes,\" dbghelp.dll will be installed in the same directory as ZDoom.",
+			"If you answer \"yes,\" dbghelp.dll will be installed in the same directory as "GAMENAME".",
 			"Download dbghelp.dll?", MB_YESNO|MB_ICONQUESTION) == IDYES)
 		{
 			char *bs;
@@ -2907,11 +2907,11 @@ void DisplayCrashLog ()
 	if (NumFiles == 0 || (riched = LoadLibrary ("riched20.dll")) == NULL)
 	{
 		char ohPoo[] =
-			"ZDoom crashed but was unable to produce\n"
+			GAMENAME" crashed but was unable to produce\n"
 			"detailed information about the crash.\n"
 			"\nThis is all that is available:\n\nCode=XXXXXXXX\nAddr=XXXXXXXX";
 		sprintf (ohPoo + sizeof(ohPoo) - 23, "%08lX\nAddr=%p", CrashCode, CrashAddress);
-		MessageBox (NULL, ohPoo, "ZDoom Very Fatal Error", MB_OK|MB_ICONSTOP);
+		MessageBox (NULL, ohPoo, GAMENAME" Very Fatal Error", MB_OK|MB_ICONSTOP);
 		if (WinHlp32 != NULL)
 		{
 			FreeLibrary (WinHlp32);

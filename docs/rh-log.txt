@@ -1,4 +1,7 @@
 June 24, 2006 (Changes by Graf Zahl)
+- Fixed: PIT_CheckThing checked AActor::tid instead of TidToHate to determine
+  whether a monster of the same species can be hurt.
+- Added new ice chunk sprites submitted by Enjay.
 - Deleted the programmer death script from strifehelp.acs because it is no 
   longer used.
 - Fixed: strfhelp.acs and the PUMPUPS cheat need to give 10 UpgradeStaminas

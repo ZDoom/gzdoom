@@ -964,7 +964,7 @@ BOOL PIT_CheckThing (AActor *thing)
 						if (!thing->IsHostile (tmthing->target))
 						{
 							// The same if the shooter hates the target
-							if (thing->tid == 0 || tmthing->target->tid != thing->tid)
+							if (thing->tid == 0 || tmthing->target->TIDtoHate != thing->tid)
 							{
 								return false;
 							}
@@ -992,7 +992,7 @@ BOOL PIT_CheckThing (AActor *thing)
 						if (!thing->IsHostile (tmthing->target))
 						{
 							// Allow hurting monsters the shooter hates.
-							if (thing->tid == 0 || tmthing->target->tid != thing->tid)
+							if (thing->tid == 0 || tmthing->target->TIDtoHate != thing->tid)
 							{
 								return false;
 							}

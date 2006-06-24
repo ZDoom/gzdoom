@@ -325,7 +325,7 @@ script << 0 >> (int type, int tag)
 	case 226:
 		if (Floor_LowerToHighest (tag, 8, 128))
 		{
-			GiveInventory ("UpgradeStamina", 1);
+			GiveInventory ("UpgradeStamina", 10);
 			GiveInventory ("UpgradeAccuracy", 1);
 			print (s:"Congratulations! You have completed the training area");
 		}

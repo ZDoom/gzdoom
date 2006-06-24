@@ -395,7 +395,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_PUMPUPS:
-		cht_Give (player, "UpgradeStamina");
+		cht_Give (player, "UpgradeStamina", 10);
 		cht_Give (player, "UpgradeAccuracy");
 		msg = "you got the stuff!";
 		break;

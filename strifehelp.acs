@@ -295,7 +295,7 @@ script << 0 >> (int type, int tag)
 		{
 			print (s:"You've destroyed the Converter!");
 			GiveInventory ("QuestItem25", 1);
-			GiveInventory ("UpgradeStamina", 1);
+			GiveInventory ("UpgradeStamina", 10);
 			GiveInventory ("UpgradeAccuracy", 1);
 		}
 		else
@@ -396,16 +396,5 @@ script << 0 >> (int type, int tag)
 		// Not a line type, but used by the Programmer death script.
 		ChangeSky ("SKYMNT01", "SKYMNT01");
 		break;
-	}
-}
-
-// When the Programmer dies, he executes script 250.
-
-script 250 (void)
-{
-	// The next time you visit maps 1-9, their skies need to change.
-	for (int i = 1; i < 10; i++)
-	{
-	    ACS_Execute (0, i, 256);
 	}
 }

@@ -1128,6 +1128,7 @@ static HANDLE MakeZip ()
 	int i, numfiles;
 	HANDLE file;
 	DWORD len, dirsize;
+	size_t namelen;
 
 	if (NumFiles == 0)
 	{
@@ -1165,7 +1166,6 @@ static HANDLE MakeZip ()
 	// Write the central directory
 	central.ModTime = dostime;
 	central.ModDate = dosdate;
-	central.InternalAttributes = LittleShort(1);
 
 	dirend.DirectoryOffset = LittleLong(SetFilePointer (file, 0, NULL, FILE_CURRENT));
 
@@ -1187,14 +1187,20 @@ static HANDLE MakeZip ()
 			central.Flags = 0;
 			central.Method = 0;
 		}
+		namelen = strlen(TarFiles[i].Filename);
+		central.InternalAttributes = 0;
+		if (namelen > 4 && stricmp(TarFiles[i].Filename - 4, ".txt") == 0)
+		{ // Bit 0 set indicates this is probably a text file. But do any tools use it?
+			central.InternalAttributes = LittleShort(1);
+		}
 		central.CRC32 = LittleLong(TarFiles[i].CRC32);
 		central.CompressedSize = LittleLong(TarFiles[i].CompressedSize);
 		central.UncompressedSize = LittleLong(TarFiles[i].UncompressedSize);
-		central.NameLength = LittleShort((WORD)strlen(TarFiles[i].Filename));
+		central.NameLength = LittleShort((WORD)namelen);
 		central.LocalHeaderOffset = LittleLong(TarFiles[i].ZipOffset);
 		WriteFile (file, &central, sizeof(central), &len, NULL);
-		WriteFile (file, TarFiles[i].Filename, (DWORD)strlen(TarFiles[i].Filename), &len, NULL);
-		dirsize += sizeof(central) + len;
+		WriteFile (file, TarFiles[i].Filename, (DWORD)namelen, &len, NULL);
+		dirsize += sizeof(central) + namelen;
 	}
 
 	// Write the directory terminator

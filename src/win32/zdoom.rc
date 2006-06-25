@@ -43,6 +43,46 @@ BEGIN
     "#ifndef NO_MANIFEST\r\n"
     "   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""zdoom.exe.manifest""\r\n"
     "#endif\r\n"
+    "\r\n"
+    "/////////////////////////////////////////////////////////////////////////////\r\n"
+    "//\r\n"
+    "// Version\r\n"
+    "//\r\n"
+    "\r\n"
+    "VS_VERSION_INFO VERSIONINFO\r\n"
+    " FILEVERSION RC_FILEVERSION\r\n"
+    " PRODUCTVERSION RC_PRODUCTVERSION\r\n"
+    " FILEFLAGSMASK 0x3fL\r\n"
+    "#ifdef _DEBUG\r\n"
+    " FILEFLAGS 0x3L\r\n"
+    "#else\r\n"
+    " FILEFLAGS 0x2L\r\n"
+    "#endif\r\n"
+    " FILEOS 0x40004L\r\n"
+    " FILETYPE 0x1L\r\n"
+    " FILESUBTYPE 0x0L\r\n"
+    "BEGIN\r\n"
+    "    BLOCK ""StringFileInfo""\r\n"
+    "    BEGIN\r\n"
+    "        BLOCK ""040904b0""\r\n"
+    "        BEGIN\r\n"
+    "            VALUE ""Comments"", ""Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg.""\r\n"
+    "            VALUE ""CompanyName"", "" ""\r\n"
+    "            VALUE ""FileDescription"", ""ZDoom""\r\n"
+    "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
+    "            VALUE ""InternalName"", ""ZDoom""\r\n"
+    "            VALUE ""LegalCopyright"", ""Copyright © 1993-1996, id Software & 1998-2006, Randy Heit""\r\n"
+    "            VALUE ""LegalTrademarks"", ""Doom® is a Registered Trademark of id Software, Inc.""\r\n"
+    "            VALUE ""OriginalFilename"", ""zdoom.exe""\r\n"
+    "            VALUE ""ProductName"", ""ZDoom""\r\n"
+    "            VALUE ""ProductVersion"", RC_PRODUCTVERSION2\r\n"
+    "        END\r\n"
+    "    END\r\n"
+    "    BLOCK ""VarFileInfo""\r\n"
+    "    BEGIN\r\n"
+    "        VALUE ""Translation"", 0x409, 1200\r\n"
+    "    END\r\n"
+    "END\r\n"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -161,47 +201,6 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,0,199
- PRODUCTVERSION 2,1,0,0
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x3L
-#else
- FILEFLAGS 0x2L
-#endif
- FILEOS 0x40004L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904b0"
-        BEGIN
-            VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
-            VALUE "CompanyName", " "
-            VALUE "FileDescription", "ZDoom"
-            VALUE "FileVersion", "2.1.0 (r199M)"
-            VALUE "InternalName", "ZDoom"
-            VALUE "LegalCopyright", "Copyright © 1993-1996, id Software & 1998-2006, Randy Heit"
-            VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."
-            VALUE "OriginalFilename", "zdoom.exe"
-            VALUE "ProductName", "ZDoom"
-            VALUE "ProductVersion", "2.1"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1200
-    END
-END
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -456,6 +455,46 @@ IDB_DEADGUY             BITMAP                  "deadguy.bmp"
 #ifndef NO_MANIFEST
    CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "zdoom.exe.manifest"
 #endif
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION RC_FILEVERSION
+ PRODUCTVERSION RC_PRODUCTVERSION
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x3L
+#else
+ FILEFLAGS 0x2L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
+            VALUE "CompanyName", " "
+            VALUE "FileDescription", "ZDoom"
+            VALUE "FileVersion", RC_FILEVERSION2
+            VALUE "InternalName", "ZDoom"
+            VALUE "LegalCopyright", "Copyright © 1993-1996, id Software & 1998-2006, Randy Heit"
+            VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."
+            VALUE "OriginalFilename", "zdoom.exe"
+            VALUE "ProductName", "ZDoom"
+            VALUE "ProductVersion", RC_PRODUCTVERSION2
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED

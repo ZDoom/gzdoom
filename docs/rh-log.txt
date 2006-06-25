@@ -1,3 +1,9 @@
+June 24, 2006
+- Moved the version resource into the "compile-time directives" section of
+  the resource script so that Developer Studio won't replace the version macros
+  in it with their literal values. Now updating version.h is guaranteed to be
+  enough to bump the version everywhere it's used.
+
 June 24, 2006 (Changes by Graf Zahl)
 - Fixed: PIT_CheckThing checked AActor::tid instead of TidToHate to determine
   whether a monster of the same species can be hurt.

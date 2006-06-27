@@ -128,6 +128,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	}
 	pmo->player = NULL;
 
+	mo->ObtainInventory (pmo);
 	DObject::PointerSubstitution (pmo, mo);
 	mo->angle = pmo->angle;
 	mo->player = player;
@@ -161,8 +162,6 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	angle = mo->angle >> ANGLETOFINESHIFT;
 	Spawn<ATeleportFog> (pmo->x + 20*finecosine[angle],
 		pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT);
-	mo->Inventory = pmo->Inventory;
-	pmo->Inventory = NULL;
 	beastweap = player->ReadyWeapon;
 	if (player->PremorphWeapon != NULL)
 	{

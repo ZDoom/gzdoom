@@ -1,3 +1,7 @@
+June 27, 2006 (Changes by Graf Zahl)
+- Fixed: P_UndoPlayerMorph didn't properly transfer the inventory. It just 
+  copied the pointer instead of using ObtainInventory.
+
 June 24, 2006
 - Moved the version resource into the "compile-time directives" section of
   the resource script so that Developer Studio won't replace the version macros
@@ -8,6 +12,8 @@ June 24, 2006 (Changes by Graf Zahl)
 - Fixed: PIT_CheckThing checked AActor::tid instead of TidToHate to determine
   whether a monster of the same species can be hurt.
 - Added new ice chunk sprites submitted by Enjay.
+- Replaced all occurences of 'ZDoom' in i_crash.cpp with a define from version.h 
+  so that this file doesn't need to be changed for altering the texts.
 - Deleted the programmer death script from strifehelp.acs because it is no 
   longer used.
 - Fixed: strfhelp.acs and the PUMPUPS cheat need to give 10 UpgradeStaminas

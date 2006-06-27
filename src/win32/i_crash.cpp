@@ -1200,7 +1200,7 @@ static HANDLE MakeZip ()
 		central.LocalHeaderOffset = LittleLong(TarFiles[i].ZipOffset);
 		WriteFile (file, &central, sizeof(central), &len, NULL);
 		WriteFile (file, TarFiles[i].Filename, (DWORD)namelen, &len, NULL);
-		dirsize += sizeof(central) + namelen;
+		dirsize += DWORD(sizeof(central) + namelen);
 	}
 
 	// Write the directory terminator

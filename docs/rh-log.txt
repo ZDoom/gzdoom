@@ -1,4 +1,7 @@
-June 27, 2006 (Changes by Graf Zahl)
+June 28, 2006 (Changes by Graf Zahl)
+- Fixed: Bouncing projectiles should not bounce off horizon lines. Now they
+  vanish instead.
+- Changed masses of ice chunks and glass shards to make small splashes
 - Fixed: P_UndoPlayerMorph didn't properly transfer the inventory. It just 
   copied the pointer instead of using ObtainInventory.
 

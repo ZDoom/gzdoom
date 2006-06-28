@@ -2441,6 +2441,13 @@ bool P_BounceWall (AActor *mo)
 		line = bestslideline;
 	}
 
+	if (line->special == Line_Horizon)
+	{
+		mo->SeeSound = 0;	// it might make a sound otherwise
+		mo->Destroy();
+		return true;
+	}
+
 	side = P_PointOnLineSide (mo->x, mo->y, line);
 	lineangle = R_PointToAngle2 (0, 0, line->dx, line->dy);
 	if (side == 1)

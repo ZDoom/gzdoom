@@ -174,6 +174,7 @@ ACTOR SGShard1 : GlassShard
 {
 	SpawnID 54
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
@@ -193,6 +194,7 @@ ACTOR SGShard2 : GlassShard
 {
 	SpawnID 55
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
@@ -212,6 +214,7 @@ ACTOR SGShard3 : GlassShard
 {
 	SpawnID 56
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
@@ -231,6 +234,7 @@ ACTOR SGShard4 : GlassShard
 {
 	SpawnID 57
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
@@ -250,6 +254,7 @@ ACTOR SGShard5 : GlassShard
 {
 	SpawnID 58
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
@@ -269,6 +274,7 @@ ACTOR SGShard6 : GlassShard
 {
 	SpawnID 59
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
@@ -288,6 +294,7 @@ ACTOR SGShard7 : GlassShard
 {
 	SpawnID 60
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
@@ -307,6 +314,7 @@ ACTOR SGShard8 : GlassShard
 {
 	SpawnID 61
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
@@ -326,6 +334,7 @@ ACTOR SGShard9 : GlassShard
 {
 	SpawnID 62
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
@@ -345,6 +354,7 @@ ACTOR SGShard0 : GlassShard
 {
 	SpawnID 63
 	Radius 5
+	Mass 5
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT

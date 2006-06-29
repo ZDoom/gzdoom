@@ -1,3 +1,8 @@
+June 29, 2006 (Changes by Graf Zahl)
+- Added a 'default' setting to all color selection menu items that leaves 
+  the font untranslated.
+- Fixed: Heretic's monsters were missing the MF2_MCROSS flag.
+
 June 28, 2006 (Changes by Graf Zahl)
 - Fixed: Bouncing projectiles should not bounce off horizon lines. Now they
   vanish instead.

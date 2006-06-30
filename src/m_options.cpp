@@ -753,7 +753,7 @@ static value_t TextColors[] =
 	{ 7.0, "blue" },
 	{ 8.0, "orange" },
 	{ 9.0, "white" },
-	{ 10.0, "yellow" }
+	{ 10.0, "yellow" },
 	{ 11.0, "default" }
 };
 

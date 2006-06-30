@@ -69,7 +69,7 @@ void C_HideConsole (void);
 void C_AdjustBottom (void);
 void C_FlushDisplay (void);
 
-void C_InitTicker (const char *label, unsigned int max);
+void C_InitTicker (const char *label, unsigned int max, bool showpercent=true);
 void C_SetTicker (unsigned int at, bool forceUpdate=false);
 
 void C_MidPrint (const char *message);

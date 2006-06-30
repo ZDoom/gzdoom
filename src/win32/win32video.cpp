@@ -1599,6 +1599,7 @@ bool DDrawFB::PaintToWindow ()
 					PrimarySurf->Blt (&rect, BackSurf, NULL, DDBLT_WAIT, NULL);
 				}
 			}
+			Buffer = NULL;
 			LOG ("Did paint to window\n");
 		}
 		return true;

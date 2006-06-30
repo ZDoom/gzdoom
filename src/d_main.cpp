@@ -633,16 +633,16 @@ void D_ErrorCleanup ()
 	screen->Unlock ();
 	bglobal.RemoveAllBots (true);
 	D_QuitNetGame ();
+	if (demorecording || demoplayback)
+		G_CheckDemoStatus ();
 	Net_ClearBuffers ();
 	G_NewInit ();
 	singletics = false;
-	if (demorecording || demoplayback)
-		G_CheckDemoStatus ();
 	playeringame[0] = 1;
 	players[0].playerstate = PST_LIVE;
 	gameaction = ga_fullconsole;
 	menuactive = MENU_Off;
-	insave=false;
+	insave = false;
 }
 
 //==========================================================================

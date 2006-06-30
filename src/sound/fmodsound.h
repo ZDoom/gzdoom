@@ -51,6 +51,7 @@ public:
 	void PrintStatus ();
 	void PrintDriversList ();
 	void GatherStats (char *outstring);
+	void ResetEnvironment ();
 
 private:
 	// Maps sfx channels onto FMOD channels

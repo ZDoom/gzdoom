@@ -332,6 +332,10 @@ void SoundRenderer::GatherStats (char *outstring)
 	sprintf (outstring, "No stats for this sound renderer.");
 }
 
+void SoundRenderer::ResetEnvironment ()
+{
+}
+
 SoundStream::~SoundStream ()
 {
 }
@@ -339,3 +343,4 @@ SoundStream::~SoundStream ()
 SoundTrackerModule::~SoundTrackerModule ()
 {
 }
+

@@ -857,6 +857,11 @@ void FMODSoundRenderer::UpdateSoundParams3D (long handle, float pos[3], float ve
 	FSOUND_3D_SetAttributes (ChannelMap[handle].channelID, pos, vel);
 }
 
+void FMODSoundRenderer::ResetEnvironment ()
+{
+	PrevEnvironment = NULL;
+}
+
 void FMODSoundRenderer::UpdateListener (AActor *listener)
 {
 	float angle;
@@ -908,6 +913,7 @@ void FMODSoundRenderer::UpdateListener (AActor *listener)
 			else
 			{
 				underwater = (listener->waterlevel == 3 && snd_waterreverb);
+				assert (zones != NULL);
 				env = zones[listener->Sector->ZoneNumber].Environment;
 				if (env == NULL)
 				{

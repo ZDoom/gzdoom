@@ -121,6 +121,7 @@ static GameAtExit *ExitCmdList;
 EXTERN_CVAR (Bool, show_messages)
 
 static unsigned int TickerAt, TickerMax;
+static bool TickerPercent;
 static const char *TickerLabel;
 
 static bool TickerVisible;
@@ -1079,8 +1080,9 @@ static void C_DrawNotifyText ()
 	}
 }
 
-void C_InitTicker (const char *label, unsigned int max)
+void C_InitTicker (const char *label, unsigned int max, bool showpercent)
 {
+	TickerPercent = showpercent;
 	TickerMax = max;
 	TickerLabel = label;
 	TickerAt = 0;
@@ -1170,7 +1172,14 @@ void C_DrawConsole ()
 				memset (tickstr + tickbegin + 1, 0x11, tickend - tickbegin);
 				tickstr[tickend + 1] = 0x12;
 				tickstr[tickend + 2] = ' ';
-				sprintf (tickstr + tickend + 3, "%lu%%", Scale (TickerAt, 100, TickerMax));
+				if (TickerPercent)
+				{
+					sprintf (tickstr + tickend + 3, "%lu%%", Scale (TickerAt, 100, TickerMax));
+				}
+				else
+				{
+					tickstr[tickend+3] = 0;
+				}
 				screen->DrawText (CR_BROWN, LEFTMARGIN, tickerY, tickstr, TAG_DONE);
 
 				// Draw the marker
@@ -1268,6 +1277,7 @@ void C_FullConsole ()
 {
 	if (demoplayback)
 		G_CheckDemoStatus ();
+	D_QuitNetGame ();
 	advancedemo = false;
 	ConsoleState = c_down;
 	HistPos = NULL;

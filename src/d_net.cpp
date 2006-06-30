@@ -621,11 +621,13 @@ void PlayerIsGone (int netnode, int netconsole)
 	}
 
 	// [RH] Make the player disappear
+	FBehavior::StaticStopMyScripts (players[netconsole].mo);
 	if (players[netconsole].mo != NULL)
 	{
 		P_DisconnectEffect (players[netconsole].mo);
 		players[netconsole].mo->Destroy ();
 		players[netconsole].mo = NULL;
+		players[netconsole].camera = NULL;
 	}
 	// [RH] Let the scripts know the player left
 	FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, NULL, true, netconsole);

@@ -156,6 +156,7 @@ public:
 	static const ScriptPtr *StaticFindScript (int script, FBehavior *&module);
 	static const char *StaticLookupString (DWORD index);
 	static void StaticStartTypedScripts (WORD type, AActor *activator, bool always, int arg1=0, bool runNow=false);
+	static void StaticStopMyScripts (AActor *actor);
 
 private:
 	struct ArrayInfo;
@@ -632,6 +633,7 @@ public:
 	static DACSThinker *ActiveThinker;
 
 	void DumpScriptStatus();
+	void StopScriptsFor (AActor *actor);
 
 private:
 	DLevelScript *LastScript;

@@ -357,6 +357,7 @@ CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 static BYTE KeyState[256];
 static BYTE DIKState[2][NUM_KEYS];
+static int KeysReadCount;
 static int ActiveDIKState;
 static void SetSoundPaused (int state);
 
@@ -744,6 +745,10 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (wParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), INGAME_PRIORITY_CLASS);
+			if (GSnd != NULL)
+			{
+				GSnd->ResetEnvironment();
+			}
 		}
 		else if (!noidle && !netgame)
 		{
@@ -1686,8 +1691,18 @@ static void MouseRead_Win32 ()
 	POINT pt;
 	int x, y;
 
+	if (KeysReadCount == 0)
+	{
+		UngrabMouse_Win32();
+	}
+	else if (KeysReadCount == 1 && HaveFocus && !MakeMouseEvents)
+	{
+		GrabMouse_Win32();
+	}
 	if (!HaveFocus || !MakeMouseEvents || !GetCursorPos (&pt))
+	{
 		return;
+	}
 
 	x = pt.x - PrevX;
 	y = PrevY - pt.y;
@@ -1829,7 +1844,7 @@ static void KeyRead ()
 	toState = DIKState[ActiveDIKState ^ 1];
 
 	hr = g_pKey->GetDeviceState (256, toState);
-	if (hr == DIERR_INPUTLOST)
+	if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
 	{
 		hr = g_pKey->Acquire ();
 		if (hr != DI_OK)
@@ -1844,6 +1859,7 @@ static void KeyRead ()
 	}
 
 	// Successfully got the buffer
+	KeysReadCount++;
 	ActiveDIKState ^= 1;
 
 	// Copy key states not handled here from the old to the new buffer

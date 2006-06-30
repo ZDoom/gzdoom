@@ -175,6 +175,13 @@ typedef BOOL (WINAPI *WRITEDUMP) (HANDLE, DWORD, HANDLE, MINIDUMP_TYPE,
 								  PMINIDUMP_USER_STREAM_INFORMATION,
 								  PMINIDUMP_CALLBACK_INFORMATION);
 
+struct MiniDumpThreadData
+{
+	HANDLE							File;
+	WRITEDUMP						pMiniDumpWriteDump;
+	MINIDUMP_EXCEPTION_INFORMATION *Exceptor;
+};
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -188,11 +195,12 @@ static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, sho
 static HANDLE CreateTempFile ();
 
 static void DumpBytes (HANDLE file, BYTE *address);
-static void AddStackInfo (HANDLE file, void *dumpaddress);
-static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack);
+static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code);
+static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD *jump);
 static void AddToolHelp (HANDLE file);
 
 static HANDLE WriteTextReport ();
+static DWORD WINAPI WriteMiniDumpInAnotherThread (LPVOID lpParam);
 
 static INT_PTR CALLBACK DetailsDlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 static void SetEditControl (HWND control, HWND sizedisplay, int filenum);
@@ -379,8 +387,23 @@ static HANDLE WriteMyMiniDump (void)
 		file = CreateTempFile ();
 		if (file != INVALID_HANDLE_VALUE)
 		{
-			good = pMiniDumpWriteDump (DbgProcess, DbgProcessID, file,
-				MiniDumpNormal, &exceptor, NULL, NULL);
+			if (CrashPointers.ExceptionRecord->ExceptionCode != EXCEPTION_STACK_OVERFLOW)
+			{
+				good = pMiniDumpWriteDump (DbgProcess, DbgProcessID, file,
+					MiniDumpNormal, &exceptor, NULL, NULL);
+			}
+			else
+			{
+				MiniDumpThreadData dumpdata = { file, pMiniDumpWriteDump, &exceptor };
+				DWORD id;
+				HANDLE thread = CreateThread (NULL, 0, WriteMiniDumpInAnotherThread,
+					&dumpdata, 0, &id);
+				WaitForSingleObject (thread, INFINITE);
+				if (GetExitCodeThread (thread, &id))
+				{
+					good = id;
+				}
+			}
 		}
 	}
 	else
@@ -388,6 +411,23 @@ static HANDLE WriteMyMiniDump (void)
 		NeedDbgHelp = true;
 	}
 	return good ? file : INVALID_HANDLE_VALUE;
+}
+
+//==========================================================================
+//
+// WriteMiniDumpInAnotherThread
+//
+// When a stack overflow occurs, there isn't enough room left on the stack
+// for MiniDumpWriteDump to do its thing, so we create a new thread with
+// a new stack to do the work.
+//
+//==========================================================================
+
+static DWORD WINAPI WriteMiniDumpInAnotherThread (LPVOID lpParam)
+{
+	MiniDumpThreadData *dumpdata = (MiniDumpThreadData *)lpParam;
+	return dumpdata->pMiniDumpWriteDump (DbgProcess, DbgProcessID,
+		dumpdata->File, MiniDumpNormal, dumpdata->Exceptor, NULL, NULL);
 }
 
 //==========================================================================
@@ -634,7 +674,8 @@ HANDLE WriteTextReport ()
 
 	if (ctxt->ContextFlags & CONTEXT_CONTROL)
 	{
-		AddStackInfo (file, (void *)(size_t)CrashPointers.ContextRecord->Esp);
+		AddStackInfo (file, (void *)(size_t)CrashPointers.ContextRecord->Esp,
+			CrashPointers.ExceptionRecord->ExceptionCode);
 	}
 
 	return file;
@@ -731,14 +772,24 @@ static void AddToolHelp (HANDLE file)
 //
 //==========================================================================
 
-static void AddStackInfo (HANDLE file, void *dumpaddress)
+static void AddStackInfo (HANDLE file, void *dumpaddress, DWORD code)
 {
-	DWORD *addr = (DWORD *)dumpaddress;
+	DWORD *addr = (DWORD *)dumpaddress, *jump;
 	DWORD *topOfStack = GetTopOfStack (dumpaddress);
 	BYTE peekb;
 	DWORD peekd;
 
-	StackWalk (file, dumpaddress, topOfStack);
+	jump = topOfStack;
+	if (code == EXCEPTION_STACK_OVERFLOW)
+	{
+		// If the stack overflowed, only dump the first and last 16KB of it.
+		if (topOfStack - addr > 32768/4)
+		{
+			jump = addr + 16384/4;
+		}
+	}
+
+	StackWalk (file, dumpaddress, topOfStack, jump);
 
 	Writef (file, "\r\nStack Contents:\r\n");
 	DWORD *scan;
@@ -746,6 +797,12 @@ static void AddStackInfo (HANDLE file, void *dumpaddress)
 	{
 		int i;
 		ptrdiff_t max;
+
+		if (scan == jump)
+		{
+			scan = topOfStack - 16384/4;
+			Writef (file, "\r\n . . . Snip . . .\r\n\r\n");
+		}
 
 		if (topOfStack - scan < 4)
 		{
@@ -792,7 +849,7 @@ static void AddStackInfo (HANDLE file, void *dumpaddress)
 //
 //==========================================================================
 
-static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack)
+static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD *jump)
 {
 	DWORD *addr = (DWORD *)dumpaddress;
 
@@ -808,6 +865,12 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack)
 	for (DWORD_PTR *scan = addr; scan < topOfStack; ++scan)
 	{
 		DWORD_PTR code;
+
+		if (scan == jump)
+		{
+			scan = topOfStack - 16384/4;
+			Writef (file, "\r\n\r\n  . . . . Snip . . . .\r\n");
+		}
 
 		if (SafeReadMemory (scan, &code, sizeof(code)) &&
 			code >= codeStart && code < codeEnd)
@@ -1793,9 +1856,9 @@ repeat:
 		while (cb - ((LPBYTE)buff_p - buffer) > 150)
 		{
 			ReadFile (info->File, buf16, 16, &read, NULL);
-			if (read == 0)
+			if (read == 0 || info->Pointer >= 65536)
 			{
-				info->Stage++;
+				info->Stage = read == 0 ? 2 : 3;
 				goto repeat;
 			}
 			char *linestart = buff_p;
@@ -1833,10 +1896,15 @@ repeat:
 
 	case 2:		// Write epilogue
 		buff_p += sprintf (buff_p, "\\cf0 }");
-		info->Stage++;
+		info->Stage = 4;
 		break;
 
-	case 3:		// We're done
+	case 3:		// Write epilogue for truncated file
+		buff_p += sprintf (buff_p, "--- Rest of file truncated ---\\cf0 }");
+		info->Stage = 4;
+		break;
+
+	case 4:		// We're done
 		return TRUE;
 	}
 

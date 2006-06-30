@@ -361,7 +361,10 @@ void DCajunMaster::DoAddBot (int bnum, char *info)
 		Printf ("%s tried to join, but there was no player %d start\n",
 			players[bnum].userinfo.netname, bnum+1);
 		ClearPlayer (bnum, false);	// Make the bot inactive again
-		botnum--;
+		if (botnum > 0)
+		{
+			botnum--;
+		}
 	}
 	else
 	{

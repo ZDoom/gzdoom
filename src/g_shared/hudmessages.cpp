@@ -142,7 +142,10 @@ DHUDMessage::~DHUDMessage ()
 	{
 		V_FreeBrokenLines (Lines);
 		Lines = NULL;
-		BorderNeedRefresh = screen->GetPageCount ();
+		if (screen != NULL)
+		{
+			BorderNeedRefresh = screen->GetPageCount ();
+		}
 	}
 	if (SourceText != NULL)
 	{

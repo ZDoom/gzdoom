@@ -1434,6 +1434,22 @@ void FBehavior::StartTypedScripts (WORD type, AActor *activator, bool always, in
 	}
 }
 
+// FBehavior :: StaticStopMyScripts
+//
+// Stops any scripts started by the specified actor. Used by the net code
+// when a player disconnects. Should this be used in general whenever an
+// actor is destroyed?
+
+void FBehavior::StaticStopMyScripts (AActor *actor)
+{
+	DACSThinker *controller = DACSThinker::ActiveThinker;
+
+	if (controller != NULL)
+	{
+		controller->StopScriptsFor (actor);
+	}
+}
+
 //---- The ACS Interpreter ----//
 
 void strbin (char *str);
@@ -1508,6 +1524,21 @@ void DACSThinker::Tick ()
 	{
 		DLevelScript *next = script->next;
 		script->RunScript ();
+		script = next;
+	}
+}
+
+void DACSThinker::StopScriptsFor (AActor *actor)
+{
+	DLevelScript *script = Scripts;
+
+	while (script != NULL)
+	{
+		DLevelScript *next = script->next;
+		if (script->activator == actor)
+		{
+			script->SetState (DLevelScript::SCRIPT_PleaseRemove);
+		}
 		script = next;
 	}
 }

@@ -1369,10 +1369,13 @@ void G_NewInit ()
 		demoplayback = false;
 		D_SetupUserInfo ();
 	}
-	memset (playeringame, 0, sizeof(playeringame));
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
+		player_t *p = &players[i];
+		p->~player_t();
+		::new(p) player_t;
 		players[i].playerstate = PST_DEAD;
+		playeringame[i] = 0;
 	}
 	BackupSaveName = "";
 	consoleplayer = 0;

@@ -57,6 +57,7 @@
 #include "m_crc32.h"
 #include "d_player.h"
 #include "templates.h"
+#include "c_console.h"
 
 #include "doomstat.h"
 
@@ -215,11 +216,11 @@ void PacketGet (void)
 				  , (sockaddr *)&fromaddress, &fromlen);
 	node = FindNode (&fromaddress);
 
-	if (c == SOCKET_ERROR)
+	if (node >= 0 && c == SOCKET_ERROR)
 	{
 		int err = WSAGetLastError();
 
-		if (err == WSAECONNRESET && node >= 0)
+		if (err == WSAECONNRESET)
 		{ // The remote node aborted unexpectedly, so pretend it sent an exit packet
 
 			Printf (PRINT_BOLD, "The connection from %s was dropped\n",
@@ -435,11 +436,15 @@ void HostGame (int i)
 
 	atterm (SendAbort);
 
+	C_InitTicker ("Waiting for players", numplayers);
+	C_SetTicker (1, true);
+
 	// Wait for numplayers-1 different connections
 	while (doomcom.numnodes < numplayers)
 	{
 		while (doomcom.numnodes < numplayers)
 		{
+			C_SetTicker (doomcom.numnodes, true);
 			if (CheckAbort ())
 			{
 				SendAbort ();
@@ -510,6 +515,8 @@ void HostGame (int i)
 	ackcount = 0;
 	memset (gotack, 0, sizeof(gotack));
 	Printf ("Sending all here\n");
+	C_InitTicker ("Done waiting", 1);
+	C_SetTicker (1, true);
 	while (ackcount < doomcom.numnodes - 1)
 	{
 		packet.fake = PRE_FAKE;
@@ -585,13 +592,32 @@ void HostGame (int i)
 	{
 		sendplayer[i] = i;
 	}
+	C_SetTicker (1, true);
+	C_InitTicker (NULL, 0);
 }
 
-void SendToHost (BYTE message, BYTE ackmess, bool abortable)
+// This routine is used by a guest to notify the host of its presence.
+// Once that host acknowledges receipt of the notification, this routine
+// is never called again.
+
+static const int bouncerfps = 10;
+static const int bouncerdelay = 1000 / bouncerfps;
+static const int updateperiod = 300 / bouncerdelay;
+
+int SendToHost (BYTE message, BYTE ackmess, bool abortable)
 {
 	sockaddr_in *from;
 	bool waiting = true;
 	PreGamePacket packet;
+	int bouncer = 0;
+
+	C_InitTicker ("Waiting for host", 8, false);
+	C_SetTicker (0, true);
+
+	// Let host know we are here
+	packet.fake = PRE_FAKE;
+	packet.message = message;
+	PreSend (&packet, 2, &sendaddress[1]);
 
 	while (waiting)
 	{
@@ -601,25 +627,41 @@ void SendToHost (BYTE message, BYTE ackmess, bool abortable)
 			I_FatalError ("Network game synchronization aborted.");
 		}
 
-		// Let host know we are here
-		packet.fake = PRE_FAKE;
-		packet.message = message;
-		PreSend (&packet, 2, &sendaddress[1]);
+		Sleep (bouncerdelay);
 
-		Sleep (300);
 		// Listen for acknowledgement
-		while ( (from = PreGet (&packet, sizeof(packet), true)) )
+		if (bouncer % updateperiod == 0)
 		{
-			if (packet.fake == PRE_FAKE && packet.message == ackmess)
+			while ( (from = PreGet (&packet, sizeof(packet), true)) )
 			{
-				waiting = false;
+				if (packet.fake == PRE_FAKE && packet.message == ackmess)
+				{
+					waiting = false;
 
-				doomcom.consoleplayer = packet.consolenum;
-				sendplayer[0] = packet.consolenum;
-				Printf ("Console player number: %d\n", doomcom.consoleplayer);
+					doomcom.consoleplayer = packet.consolenum;
+					sendplayer[0] = packet.consolenum;
+					Printf ("Console player number: %d\n", doomcom.consoleplayer);
+				}
+			}
+			if (waiting)
+			{
+				// Let host know we are here
+				packet.fake = PRE_FAKE;
+				packet.message = message;
+				PreSend (&packet, 2, &sendaddress[1]);
 			}
 		}
+		if (waiting)
+		{
+			int tickpos = ++bouncer & 15;
+			if (tickpos > 8)
+			{
+				tickpos = 16 - tickpos;
+			}
+			C_SetTicker (tickpos, true);
+		}
 	}
+	return bouncer;
 }
 
 void JoinGame (int i)
@@ -627,6 +669,7 @@ void JoinGame (int i)
 	sockaddr_in *from;
 	bool waiting;
 	PreGamePacket packet;
+	int bouncer;
 
 	if ((i == Args.NumArgs() - 1) ||
 		(Args.GetArg(i+1)[0] == '-') ||
@@ -640,9 +683,10 @@ void JoinGame (int i)
 	sendplayer[1] = 0;
 
 	// Let host know we are here
-	SendToHost (PRE_CONNECT, PRE_CONACK, true);
+	bouncer = SendToHost (PRE_CONNECT, PRE_CONACK, true);
 
 	// Wait for everyone else to connect
+	C_InitTicker ("Waiting for players", 8, false);
 	waiting = true;
 	//doomcom.numnodes = 2;
 	atterm (SendAbort);
@@ -655,54 +699,68 @@ void JoinGame (int i)
 			I_FatalError ("Network game synchronization aborted.");
 		}
 
-		Sleep (300);
-		while (waiting && (from = PreGet (&packet, sizeof(packet), false)) )
+		Sleep (bouncerdelay);
+
+		if (bouncer % updateperiod == 0)
 		{
-			if (packet.fake != PRE_FAKE)
+			while (waiting && (from = PreGet (&packet, sizeof(packet), false)) )
 			{
-				continue;
-			}
-			switch (packet.message)
-			{
-			case PRE_ALLHERE:
-				if (doomcom.numnodes == 0)
+				if (packet.fake != PRE_FAKE)
 				{
-					int node;
-
-					packet.numnodes = packet.numnodes;
-					doomcom.numnodes = packet.numnodes + 2;
-					for (node = 0; node < packet.numnodes; node++)
-					{
-						sendaddress[node+2].sin_addr.s_addr = packet.machines[node].address;
-						sendaddress[node+2].sin_port = packet.machines[node].port;
-						sendplayer[node+2] = packet.machines[node].player;
-
-						// [JC] - fixes problem of games not starting due to
-						// no address family being assigned to nodes stored in
-						// sendaddress[] from the All Here packet.
-						sendaddress[node+2].sin_family = AF_INET;
-					}
+					continue;
 				}
+				switch (packet.message)
+				{
+				case PRE_ALLHERE:
+					if (doomcom.numnodes == 0)
+					{
+						int node;
 
-				Printf ("Received All Here, sending ACK\n");
-				packet.fake = PRE_FAKE;
-				packet.message = PRE_ALLHEREACK;
-				PreSend (&packet, 2, &sendaddress[1]);
-				break;
-			case PRE_GO:
-				Printf ("Go\n");
-				waiting = false;
-				break;
-			case PRE_DISCONNECT:
-				I_FatalError ("Host cancelled the game");
-				break;
+						packet.numnodes = packet.numnodes;
+						doomcom.numnodes = packet.numnodes + 2;
+						for (node = 0; node < packet.numnodes; node++)
+						{
+							sendaddress[node+2].sin_addr.s_addr = packet.machines[node].address;
+							sendaddress[node+2].sin_port = packet.machines[node].port;
+							sendplayer[node+2] = packet.machines[node].player;
+
+							// [JC] - fixes problem of games not starting due to
+							// no address family being assigned to nodes stored in
+							// sendaddress[] from the All Here packet.
+							sendaddress[node+2].sin_family = AF_INET;
+						}
+					}
+
+					Printf ("Received All Here, sending ACK\n");
+					packet.fake = PRE_FAKE;
+					packet.message = PRE_ALLHEREACK;
+					PreSend (&packet, 2, &sendaddress[1]);
+					break;
+				case PRE_GO:
+					Printf ("Go\n");
+					waiting = false;
+					break;
+				case PRE_DISCONNECT:
+					I_FatalError ("Host cancelled the game");
+					break;
+				}
 			}
+		}
+		if (waiting)
+		{
+			int tickpos = ++bouncer & 15;
+			if (tickpos > 8)
+			{
+				tickpos = 16 - tickpos;
+			}
+			C_SetTicker (tickpos, true);
 		}
 	}
 
 	popterm ();
 
 	Printf ("Total players: %d\n", doomcom.numnodes);
+	C_InitTicker (NULL, 0);
 
 	doomcom.id = DOOMCOM_ID;
 	doomcom.numplayers = doomcom.numnodes;

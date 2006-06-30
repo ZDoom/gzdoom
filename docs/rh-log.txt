@@ -1,3 +1,60 @@
+June 29, 2006
+- Added some hackery at the start of MouseRead_Win32() that prevents it from
+  yanking the mouse around if they keys haven't been read yet to combat the
+  same situation that causes the keyboard to return DIERR_NOTACQUIRED in
+  KeyRead(): The window is sort of in focus and sort of not. User.dll
+  considers it to be focused and it's drawn as such, but another focused
+  window is on top of it, and DirectInput doesn't see it as focused.
+- Fixed: KeyRead() should handle DIERR_NOTACQUIRED errors the same way it
+  handles DIERR_INPUTLOST errors. This can happen if our window had the
+  focus stolen away from it before we tried to acquire the keyboard in
+  DI_Init2(). Strangely, MouseRead_DI() already did this.
+- When a stack overflow occurs, report.txt now only includes the first and
+  last 16KB of the stack to make it more manageable.
+- Limited StreamEditBinary() to the first 64KB of the file to keep it from
+  taking too long on large dumps.
+- And now I know why gathering crash information in the same process that
+  crashed can be bad: Stack overflows. You get one spare page to play with
+  when the stack overflows. MiniDumpWriteDump() needs more than that and
+  causes an access violation when it runs out of leftover stack, silently
+  terminating the application. Windows XP x64 offers SetThreadStackGuarantee()
+  to increase this, but that isn't available on anything older, including
+  32-bit XP. To get around this, a new thread is created to write the mini
+  dump when the stack overflows.
+- Changed A_Burnination() to be closer to Strife's.
+- Fixed: When playing back demos, DoAddBot() can be called without an
+  associated call to SpawnBot(). So if the bot can't spawn, botnum can
+  go negative, which will cause problems later in DCajunMaster::Main()
+  when it sees that wanted_botnum (0) is higher than botnum (-1).
+- Fixed: Stopping demo recording in multiplayer games should not abruptly
+  drop the recorder out of the game without notifying the other players.
+  In fact, there's no reason why it should drop them out of multiplayer at
+  all.
+- Fixed: Earthquakes were unreliable in multiplayer games because
+  P_PredictPlayer() did not preserve the player's xviewshift.
+- Fixed: PlayerIsGone() needs to stop any scripts that belong to the player
+  who left, in addition to executing disconnect scripts.
+- Fixed: APlayerPawn::AddInventory() should also check for a NULL player->mo
+  in case the player left but somebody still has a reference to their actor.
+- Fixed: DDrawFB::PaintToWindow() should simulate proper unlocking behavior
+  and set Buffer to NULL.
+- Improved feedback for network game initialization with the console ticker.
+- Moved i_net.cpp and i_net.h out of sdl/ and win32/ and into the main source
+  directory. They are identical, so keeping two copies of them is bad.
+- Fixed: (At least with Creative's driver's,) EAX settings are global and not
+  per-application. So if you play a multiplayer ZDoom game on one computer
+  (or even another EAX-using application), ZDoom needs to restore the
+  environment when it regains focus.
+- Maybe fixed: (See http://forum.zdoom.org/potato.php?t=10689) Apparently,
+  PacketGet can receive ECONNRESET from nodes that aren't in the game. It
+  should be safe to just ignore these packets.
+- Fixed: PlayerIsGone() should set the gone player's camera to NULL in case
+  the player who left was player 0. This is because if a remaining player
+  receives a "recoverable" error, they will become player 0. Once that happens,
+  they game will try to update sounds through their camera and crash in
+  FMODSoundRenderer::UpdateListener() because the zones array is now NULL.
+  G_NewInit() should also clear all the player structures.
+
 June 29, 2006 (Changes by Graf Zahl)
 - Added a 'default' setting to all color selection menu items that leaves 
   the font untranslated.

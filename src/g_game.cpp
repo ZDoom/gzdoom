@@ -2101,7 +2101,10 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 	if (stoprecording)
 	{ // use "stop" console command to end demo recording
 		G_CheckDemoStatus ();
-		gameaction = ga_fullconsole;
+		if (!netgame)
+		{
+			gameaction = ga_fullconsole;
+		}
 		return;
 	}
 

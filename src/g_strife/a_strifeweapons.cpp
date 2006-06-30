@@ -1598,27 +1598,20 @@ void A_Burnination (AActor *self)
 		//		x + (((pr_phburn() + 12) & 31) << FRACBITS);
 		//
 		// But that creates a lop-sided burn because it won't use negative offsets.
-		int xofs = pr_phburn();
-		int yofs = pr_phburn();
+		int xofs, xrand = pr_phburn();
+		int yofs, yrand = pr_phburn();
 
-		xofs = (xofs - 128);
-		if (xofs < 0)
+		// Adding 12 is pointless if you're going to mask it afterward.
+		xofs = xrand & 31;
+		if (xrand & 128)
 		{
-			xofs = clamp (xofs, -31, -12);
-		}
-		else
-		{
-			xofs = clamp (xofs, 12, 31);
+			xofs = -xofs;
 		}
 
-		yofs = (yofs - 128);
-		if (yofs < 0)
+		yofs = yrand & 31;
+		if (yrand & 128)
 		{
-			yofs = clamp (yofs, -31, -12);
-		}
-		else
-		{
-			yofs = clamp (yofs, 12, 31);
+			yofs = -yofs;
 		}
 
 		fixed_t x = self->x + (xofs << FRACBITS);

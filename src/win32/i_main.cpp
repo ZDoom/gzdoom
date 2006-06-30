@@ -519,6 +519,14 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	return EXCEPTION_CONTINUE_EXECUTION;
 }
 
+static void infiniterecursion(int foo)
+{
+	if (foo)
+	{
+		infiniterecursion(foo);
+	}
+}
+
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
 	g_hInst = hInstance;
@@ -539,6 +547,19 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		DisplayCrashLog ();
 		exit (0);
 	}
+	if (__argc == 2 && strcmp (__argv[1], "TestStackCrash") == 0)
+	{
+		__try
+		{
+			infiniterecursion(1);
+		}
+		__except(CrashPointers = *GetExceptionInformation(),
+			CreateCrashLog (__argv[1], 14), EXCEPTION_EXECUTE_HANDLER)
+		{
+		}
+		DisplayCrashLog ();
+		exit (0);
+	}
 #endif
 
 #ifdef REGEXEPEEK
@@ -550,17 +571,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		0, FALSE, DUPLICATE_SAME_ACCESS);
 	MainThreadID = GetCurrentThreadId();
 
+#ifndef _DEBUG
 	if (MainThread != INVALID_HANDLE_VALUE)
 	{
-		// SetUnhandledExceptionFilter is not supposed to do anything if a debugger
-		// is attached to the process, but one time I did see my exception filter
-		// used instead of breaking into the debugger. (Or maybe I just forgot to
-		// run it in the debugger. Whatever. It doesn't hurt to check for one.)
-#ifdef _DEBUG
-		if (!IsDebuggerPresent ())
-#endif
-			SetUnhandledExceptionFilter (CatchAllExceptions);
+		SetUnhandledExceptionFilter (CatchAllExceptions);
 	}
+#endif
 
 #if defined(_DEBUG) && defined(_MSC_VER)
 	// Uncomment this line to make the Visual C++ CRT check the heap before

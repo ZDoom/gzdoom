@@ -278,7 +278,7 @@ void APlayerPawn::Tick()
 void APlayerPawn::AddInventory (AInventory *item)
 {
 	// Adding inventory to a voodoo doll should add it to the real player instead.
-	if (player != NULL && player->mo != this)
+	if (player != NULL && player->mo != this && player->mo != NULL)
 	{
 		player->mo->AddInventory (item);
 		return;
@@ -1728,13 +1728,14 @@ void P_PredictPlayer (player_t *player)
 	}
 	act->BlockNode = NULL;
 
-
+	int xviewshift = player->xviewshift;
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		player->cmd = localcmds[i % LOCALCMDTICS];
 		P_PlayerThink (player);
 		player->mo->Tick ();
 	}
+	player->xviewshift = xviewshift;
 }
 
 extern msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode);

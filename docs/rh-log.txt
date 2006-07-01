@@ -1,3 +1,8 @@
+July 1, 2006 (Changes by Graf Zahl)
+- Fixed: In multiplayer games, when trying to change targets, A_Chase forgot
+  to check whether the new target was the same as the old one and treated 
+  this case as a real target change.
+
 June 29, 2006
 - Added some hackery at the start of MouseRead_Win32() that prevents it from
   yanking the mouse around if they keys haven't been read yet to combat the

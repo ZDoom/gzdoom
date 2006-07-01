@@ -2009,12 +2009,13 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			actor->flags3 &= ~MF3_NOSIGHTCHECK;
 			lookForBetter = true;
 		}
+		AActor * oldtarget = actor->target;
 		gotNew = P_LookForPlayers (actor, true);
 		if (lookForBetter)
 		{
 			actor->flags3 |= MF3_NOSIGHTCHECK;
 		}
-		if (gotNew)
+		if (gotNew && actor->target != oldtarget)
 		{
 			actor->flags &= ~MF_INCHASE;
 			return; 	// got a new target

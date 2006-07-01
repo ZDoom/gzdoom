@@ -182,4 +182,26 @@ protected:
 	DFlashFader ();
 };
 
+class DEarthquake : public DThinker
+{
+	DECLARE_CLASS (DEarthquake, DThinker)
+	HAS_OBJECT_POINTERS
+public:
+	DEarthquake (AActor *center, int intensity, int duration, int damrad, int tremrad);
+
+	void Serialize (FArchive &arc);
+	void Tick ();
+
+	AActor *m_Spot;
+	fixed_t m_TremorRadius, m_DamageRadius;
+	int m_Intensity;
+	int m_Countdown;
+	int m_QuakeSFX;
+
+	static int StaticGetQuakeIntensity (AActor *viewer);
+
+private:
+	DEarthquake ();
+};
+
 #endif //__A_SHAREDGLOBAL_H__

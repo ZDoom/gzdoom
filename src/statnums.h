@@ -54,4 +54,5 @@ enum
 	STAT_INVENTORY,							// An inventory item
 	STAT_LIGHT,								// A sector light effect
 	STAT_LIGHTTRANSFER,						// A sector light transfer. These must be ticked after the light effects!!!
+	STAT_EARTHQUAKE,						// Earthquake actors
 };

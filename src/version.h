@@ -73,8 +73,8 @@
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
-#define SAVEVER 232
-#define SAVESIG "ZDOOMSAVE232"
+#define SAVEVER 233
+#define SAVESIG "ZDOOMSAVE233"
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "ZDOOM"

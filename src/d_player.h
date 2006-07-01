@@ -222,7 +222,6 @@ public:
 	AActor		*attacker;				// who did damage (NULL for floors)
 	int			extralight;				// so gun flashes light up areas
 	int			fixedcolormap;			// can be set to REDCOLORMAP, etc.
-	int			xviewshift;				// [RH] view shift (for earthquakes)
 	pspdef_t	psprites[NUMPSPRITES];	// view sprites (gun, etc)
 	int			morphTics;				// player is a chicken/pig if > 0
 	AWeapon		*PremorphWeapon;		// ready weapon before morphing

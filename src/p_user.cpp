@@ -115,7 +115,6 @@ player_s::player_s()
   poisoner(0),
   attacker(0),
   extralight(0),
-  xviewshift(0),
   morphTics(0),
   PremorphWeapon(0),
   chickenPeck(0),
@@ -1348,8 +1347,6 @@ void P_PlayerThink (player_t *player)
 			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
 	}
 
-	player->xviewshift = 0;		// [RH] Make sure view is in right place
-
 	// [RH] Zoom the player's FOV
 	if (player->FOV != player->DesiredFOV)
 	{
@@ -1728,14 +1725,12 @@ void P_PredictPlayer (player_t *player)
 	}
 	act->BlockNode = NULL;
 
-	int xviewshift = player->xviewshift;
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		player->cmd = localcmds[i % LOCALCMDTICS];
 		P_PlayerThink (player);
 		player->mo->Tick ();
 	}
-	player->xviewshift = xviewshift;
 }
 
 extern msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode);
@@ -1825,9 +1820,13 @@ void player_s::Serialize (FArchive &arc)
 		<< poisoner
 		<< attacker
 		<< extralight
-		<< fixedcolormap
-		<< xviewshift
-		<< morphTics
+		<< fixedcolormap;
+	if (SaveVersion < 233)
+	{
+		int xviewshift;
+		arc << xviewshift;
+	}
+	arc << morphTics
 		<< PremorphWeapon
 		<< chickenPeck
 		<< jumpTics

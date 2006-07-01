@@ -45,6 +45,7 @@
 #include "i_video.h"
 #include "i_system.h"
 #include "vectors.h"
+#include "a_sharedglobal.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1082,13 +1083,16 @@ void R_SetupFrame (AActor *actor)
 		viewz = theZ;
 	}
 
-	if (player && player->xviewshift && !paused)
+	if (!paused)
 	{
-		int intensity = player->xviewshift;
-		viewx += ((pr_torchflicker() % (intensity<<2))
-					-(intensity<<1))<<FRACBITS;
-		viewy += ((pr_torchflicker() % (intensity<<2))
-					-(intensity<<1))<<FRACBITS;
+		int intensity = DEarthquake::StaticGetQuakeIntensity (camera);
+		if (intensity != 0)
+		{
+			viewx += ((pr_torchflicker() % (intensity<<2))
+						-(intensity<<1))<<FRACBITS;
+			viewy += ((pr_torchflicker() % (intensity<<2))
+						-(intensity<<1))<<FRACBITS;
+		}
 	}
 
 	extralight = camera->player ? camera->player->extralight : 0;

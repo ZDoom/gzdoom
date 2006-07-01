@@ -1,3 +1,7 @@
+June 30, 2006
+- Changed the earthquake view shaking so that it works for anything and not
+  just players.
+
 July 1, 2006 (Changes by Graf Zahl)
 - Fixed: In multiplayer games, when trying to change targets, A_Chase forgot
   to check whether the new target was the same as the old one and treated 

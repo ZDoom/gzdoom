@@ -216,6 +216,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, EXPLODEONWATER, AActor, flags5),
 	DEFINE_FLAG(MF5, NODAMAGE, AActor, flags5),
 	DEFINE_FLAG(MF5, BLOODSPLATTER, AActor, flags5),
+	DEFINE_FLAG(MF5, OLDRADIUSDMG, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -499,6 +500,7 @@ ACTOR(CountdownArg)
 ACTOR(CustomMeleeAttack)
 ACTOR(Light)
 ACTOR(Burst)
+ACTOR(RadiusThrust)
 
 
 #include "d_dehackedactions.h"
@@ -688,6 +690,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_CountdownArg, "X")
 	FUNC(A_CustomMeleeAttack, "XXXsty" )
 	FUNC(A_Burst, "M")
+	FUNC(A_RadiusThrust, "xxy")
 };
 
 //==========================================================================

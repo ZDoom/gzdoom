@@ -3415,6 +3415,7 @@ bool	DamageSource;
 int		bombmod;
 vec3_t	bombvec;
 bool	bombthrustless;
+bool	bombdodamage;
 
 //=============================================================================
 //
@@ -3463,9 +3464,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 	// them far too "active." BossBrains also use the old code
 	// because some user levels require they have a height of 16,
 	// which can make them near impossible to hit with the new code.
-	if (!bombspot->IsKindOf (RUNTIME_CLASS(AExplosiveBarrel)) &&
-		!thing->IsKindOf (RUNTIME_CLASS(AExplosiveBarrel)) &&
-		!thing->IsKindOf (RUNTIME_CLASS(ABossBrain)))
+	if (!bombdodamage || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG))
 	{
 		// [RH] New code. The bounding box only covers the
 		// height of the thing and not the height of the map.
@@ -3523,11 +3522,13 @@ BOOL PIT_RadiusAttack (AActor *thing)
 			float thrust;
 			int damage = (int)points;
 
-			P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
+			if (bombdodamage) P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
+			else thing->flags2 |= MF2_BLASTED;
+			
 			if (!(bombspot->flags2 & MF2_NODMGTHRUST) &&
 				!(thing->flags & MF_ICECORPSE))
 			{
-				P_TraceBleed (damage, thing, bombspot);
+				if (bombdodamage) P_TraceBleed (damage, thing, bombspot);
 
 				if (!bombthrustless)
 				{
@@ -3591,7 +3592,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 // Source is the creature that caused the explosion at spot.
 //
 void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int damageType,
-	bool hurtSource, bool thrustless)
+	bool hurtSource, bool thrustless, bool dodamage)
 {
 	static TArray<AActor *> radbt;
 
@@ -3616,6 +3617,7 @@ void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int
 	DamageSource = hurtSource;
 	bombdamagefloat = (float)damage;
 	bombmod = damageType;
+	bombdodamage = dodamage;
 	VectorPosition (spot, bombvec);
 
 	radbt.Clear();

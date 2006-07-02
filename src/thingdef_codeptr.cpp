@@ -484,6 +484,32 @@ void A_ExplodeParms (AActor *self)
 
 //==========================================================================
 //
+// A_RadiusThrust
+//
+//==========================================================================
+
+void A_RadiusThrust (AActor *self)
+{
+	int index=CheckIndex(3);
+	if (index<0) return;
+
+	int force = EvalExpressionI (StateParameters[index], self);
+	if (force==0) force=128;
+
+	int distance = EvalExpressionI (StateParameters[index+1], self);
+	if (distance==0) distance=128;
+
+	bool affectSource = EvalExpressionN (StateParameters[index+2], self);;
+
+	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false, false);
+	if (self->z <= self->floorz + (distance<<FRACBITS))
+	{
+		P_HitFloor (self);
+	}
+}
+
+//==========================================================================
+//
 // Execute a line special / script
 //
 //==========================================================================

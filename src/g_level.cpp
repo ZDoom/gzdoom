@@ -1372,10 +1372,12 @@ void G_NewInit ()
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
 		player_t *p = &players[i];
+		userinfo_t saved_ui = players[i].userinfo;
 		p->~player_t();
 		::new(p) player_t;
 		players[i].playerstate = PST_DEAD;
 		playeringame[i] = 0;
+		players[i].userinfo = saved_ui;
 	}
 	BackupSaveName = "";
 	consoleplayer = 0;

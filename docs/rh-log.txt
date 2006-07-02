@@ -1,11 +1,18 @@
-June 30, 2006
-- Changed the earthquake view shaking so that it works for anything and not
-  just players.
+July 2, 2006 (Changes by Graf Zahl)
+- Fixed: G_NewInit destroyed the players' userinfo data.
+- Changed the special radius damage handling for the barrel and boss brain
+  into an actor flag.
+- Added A_RadiusThrust code pointer for DECORATE and adjusted the radius 
+  attack functions accordingly.
 
 July 1, 2006 (Changes by Graf Zahl)
 - Fixed: In multiplayer games, when trying to change targets, A_Chase forgot
   to check whether the new target was the same as the old one and treated 
   this case as a real target change.
+
+June 30, 2006
+- Changed the earthquake view shaking so that it works for anything and not
+  just players.
 
 June 29, 2006
 - Added some hackery at the start of MouseRead_Win32() that prevents it from

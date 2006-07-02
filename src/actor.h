@@ -282,6 +282,7 @@ enum
 	MF5_NODAMAGE		= 0x00000040,	// Actor can be shot and reacts to being shot but takes no damage
 	MF5_CHASEGOAL		= 0x00000080,	// Walks to goal instead of target if a valid goal is set.
 	MF5_BLOODSPLATTER	= 0x00000100,	// Blood splatter like in Raven's games.
+	MF5_OLDRADIUSDMG	= 0x00000200,	// Use old radius damage code (for barrels and boss brain)
 
 // --- mobj.renderflags ---
 

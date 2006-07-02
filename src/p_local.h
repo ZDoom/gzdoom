@@ -315,7 +315,7 @@ extern	fixed_t CameraX, CameraY, CameraZ;
 extern	sector_t *CameraSector;
 
 // [RH] Means of death
-void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int damageType, bool hurtSelf, bool thrustless=false);
+void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int damageType, bool hurtSelf, bool thrustless=false, bool dodamage=true);
 
 void	P_DelSector_List();
 void	P_DelSeclist(msecnode_t *);							// phares 3/16/98

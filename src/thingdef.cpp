@@ -1214,6 +1214,12 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 	FName typeName;
 
 	SC_MustGetString();
+	
+	char * colon = strchr(sc_String, ':');
+	if (colon != NULL)
+	{
+		*colon++ = 0;
+	}
 
 	if (PClass::FindClass (sc_String) != NULL)
 	{
@@ -1226,19 +1232,38 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 	if (parentc)
 	{
 		*parentc = NULL;
-		SC_MustGetString();
-		if (SC_Compare(":"))
+		
+		// Do some tweaking so that a definition like 'Actor:Parent' which is read as a single token is recognized as well
+		// without having resort to C-mode (which disallows periods in actor names.)
+		if (colon == NULL)
 		{
-			SC_MustGetString();
-			parent = const_cast<PClass *> (PClass::FindClass (sc_String));
+			SC_MustGetString ();
+			if (sc_String[0]==':')
+			{
+				colon = sc_String + 1;
+			}
+		}
+		
+		if (colon != NULL)
+		{
+			if (colon[0] == 0)
+			{
+				SC_MustGetString ();
+				colon = sc_String;
+			}
+		}
+			
+		if (colon != NULL)
+		{
+			parent = const_cast<PClass *> (PClass::FindClass (colon));
 
 			if (parent == NULL)
 			{
-				SC_ScriptError ("Parent type '%s' not found", sc_String);
+				SC_ScriptError ("Parent type '%s' not found", colon);
 			}
 			else if (parent->ActorInfo == NULL)
 			{
-				SC_ScriptError ("Parent type '%s' is not an actor", sc_String);
+				SC_ScriptError ("Parent type '%s' is not an actor", colon);
 			}
 			else
 			{
@@ -1260,12 +1285,16 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 	bag->Info = info;
 
 	info->DoomEdNum=-1;
+
+	// Now, after the actor names have been parsed, it is time to switch to C-mode 
+	// for the rest of the actor definition.
+	SC_SetCMode (true);
 	if (SC_CheckNumber()) 
 	{
-		if (sc_Number>=-1 && sc_Number<32768) info->DoomEdNum=sc_Number;
+		if (sc_Number>=-1 && sc_Number<32768) info->DoomEdNum = sc_Number;
 		else SC_ScriptError ("DoomEdNum must be in the range [-1,32767]");
 	}
-	if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	if (parent == RUNTIME_CLASS(AWeapon))
 	{
 		// preinitialize kickback to the default for the game
 		((AWeapon*)(info->Class->Defaults))->Kickback=gameinfo.defKickback;
@@ -2148,7 +2177,6 @@ void ProcessActor(void (*process)(FState *, int))
 	{
 		FActorInfo * parent;
 
-		SC_SetCMode (true);
 
 		info=CreateNewActor(&parent, &bag);
 		defaults=(AActor*)info->Class->Defaults;

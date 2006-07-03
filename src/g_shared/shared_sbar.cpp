@@ -1115,7 +1115,7 @@ void FBaseStatusBar::Draw (EHudState state)
 
 	if (viewactive)
 	{
-		if (CPlayer && CPlayer->camera->player)
+		if (CPlayer && CPlayer->camera && CPlayer->camera->player)
 		{
 			DrawCrosshair ();
 		}

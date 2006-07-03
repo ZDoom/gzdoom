@@ -192,7 +192,9 @@ void AMagePlayer::SpecialInvulnerabilityHandling (EInvulState state, fixed_t * p
 
 // Mage Weapon Base Class ---------------------------------------------------
 
-IMPLEMENT_ABSTRACT_ACTOR (AMageWeapon)
+IMPLEMENT_STATELESS_ACTOR (AMageWeapon, Hexen, -1, 0)
+	PROP_Weapon_Kickback (150)
+END_DEFAULTS
 
 bool AMageWeapon::TryPickup (AActor *toucher)
 {

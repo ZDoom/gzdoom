@@ -277,7 +277,6 @@ void A_Beacon (AActor *self)
 {
 	AActor *owner = self->target;
 	ARebel *rebel;
-	int friendNum;
 	angle_t an;
 
 	rebel = Spawn<ARebel1> (self->x, self->y, ONFLOORZ);
@@ -290,8 +289,6 @@ void A_Beacon (AActor *self)
 	self->flags &= ~MF_SPECIAL;
 	static_cast<AInventory *>(self)->DropTime = 0;
 	// Set up the new rebel.
-	friendNum = owner->player != NULL ? int(owner->player - players + 1) : 0;
-	rebel->FriendPlayer = friendNum;
 	rebel->threshold = 100;
 	rebel->target = NULL;
 	rebel->flags4 |= MF4_INCOMBAT;
@@ -304,16 +301,15 @@ void A_Beacon (AActor *self)
 	{
 		// Rebels are the same color as their owner
 		rebel->Translation = owner->Translation;
+		rebel->FriendPlayer = owner->player != NULL ? int(owner->player - players + 1) : 0;
 		// Set the rebel's target to whatever last hurt the player, so long as it's not
 		// one of the player's other rebels.
-		if (owner->target != NULL &&
-			(!(owner->target->flags & MF_FRIENDLY) ||
-			 owner->target->FriendPlayer == 0 ||
-			 owner->target->FriendPlayer != friendNum))
+		if (owner->target != NULL && !rebel->IsFriend (owner->target))
 		{
 			rebel->target = owner->target;
 		}
 	}
+
 	rebel->SetState (rebel->SeeState);
 	rebel->angle = self->angle;
 	an = self->angle >> ANGLETOFINESHIFT;

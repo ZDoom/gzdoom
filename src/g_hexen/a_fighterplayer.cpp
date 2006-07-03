@@ -395,7 +395,9 @@ bool AFighterPlayer::DoHealingRadius (APlayerPawn *other)
 
 // Fighter Weapon Base Class ------------------------------------------------
 
-IMPLEMENT_ABSTRACT_ACTOR (AFighterWeapon)
+IMPLEMENT_STATELESS_ACTOR (AFighterWeapon, Hexen, -1, 0)
+	PROP_Weapon_Kickback (150)
+END_DEFAULTS
 
 bool AFighterWeapon::TryPickup (AActor *toucher)
 {

@@ -1,3 +1,16 @@
+July 3, 2006 (Changes by Graf Zahl)
+- Fixed: Changed initialization of Weapon.Kickback so that it is only done
+  for direct descendants of AWeapon and not for every weapon being defined.
+- Changed parsing of actor names back to not use C-mode. This change breaks
+  any definition that contains periods in their name and apparently there's
+  more than anyone could expect. Also altered the parser to manually check
+  for colons inside the parsed string so that placing spaces around them
+  is no longer necessary.
+- Fixed: Weapons could be picked up for ammo even if they gave none.
+- Fixed: A_Beacon was missing a NULL pointer check for the beacon's owner.
+- Fixed: The status bar tried to access CPlayer->camera without checking
+  its validity. In spy mode there is a possibility that it is NULL.
+
 July 2, 2006 (Changes by Graf Zahl)
 - Fixed: G_NewInit destroyed the players' userinfo data.
 - Changed the special radius damage handling for the barrel and boss brain

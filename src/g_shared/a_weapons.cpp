@@ -149,8 +149,8 @@ bool AWeapon::PickupForAmmo (AWeapon *ownedWeapon)
 	// Don't take ammo if the weapon sticks around.
 	if (!ShouldStay ())
 	{
-		gotstuff = AddExistingAmmo (ownedWeapon->Ammo1, AmmoGive1);
-		gotstuff |= AddExistingAmmo (ownedWeapon->Ammo2, AmmoGive2);
+		if (AmmoGive1 > 0) gotstuff = AddExistingAmmo (ownedWeapon->Ammo1, AmmoGive1);
+		if (AmmoGive2 > 0) gotstuff |= AddExistingAmmo (ownedWeapon->Ammo2, AmmoGive2);
 	}
 	return gotstuff;
 }

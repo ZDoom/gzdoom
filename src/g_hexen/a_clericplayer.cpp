@@ -186,7 +186,9 @@ void AClericPlayer::SpecialInvulnerabilityHandling (EInvulState state, fixed_t *
 
 // Cleric Weapon Base Class -------------------------------------------------
 
-IMPLEMENT_ABSTRACT_ACTOR (AClericWeapon)
+IMPLEMENT_STATELESS_ACTOR (AClericWeapon, Hexen, -1, 0)
+	PROP_Weapon_Kickback (150)
+END_DEFAULTS
 
 bool AClericWeapon::TryPickup (AActor *toucher)
 {

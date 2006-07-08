@@ -35,8 +35,8 @@ void	FixPathSeperator (char *path);
 void 	DefaultExtension (char *path, const char *extension);
 void 	DefaultExtension (FString &path, const char *extension);
 
-void	ExtractFilePath (const char *path, char *dest);
-void 	ExtractFileBase (const char *path, char *dest);
+FString	ExtractFilePath (const char *path);
+FString	ExtractFileBase (const char *path, bool keep_extension=false);
 
 int		ParseHex (char *str);
 int 	ParseNum (char *str);

@@ -474,12 +474,13 @@ CCMD (error_fatal)
 
 CCMD (dir)
 {
-	char dir[256], curdir[256];
-	char *match;
+	FString dir;
+	char curdir[256];
+	const char *match;
 	findstate_t c_file;
 	void *file;
 
-	if (!getcwd (curdir, 256))
+	if (!getcwd (curdir, countof(curdir)))
 	{
 		Printf ("Current path too long\n");
 		return;
@@ -487,21 +488,21 @@ CCMD (dir)
 
 	if (argv.argc() == 1 || chdir (argv[1]))
 	{
-		match = argv.argc() == 1 ? (char *)"./*" : argv[1];
+		match = argv.argc() == 1 ? "./*" : argv[1];
 
-		ExtractFilePath (match, dir);
-		if (dir[0])
+		dir = ExtractFilePath (match);
+		if (dir[0] != '\0')
 		{
-			match += strlen (dir);
+			match += dir.Len();
 		}
 		else
 		{
-			dir[0] = '.';
-			dir[1] = '/';
-			dir[2] = '\0';
+			dir = "./";
 		}
-		if (!match[0])
+		if (match[0] == '\0')
+		{
 			match = "*";
+		}
 
 		if (chdir (dir))
 		{
@@ -512,9 +513,11 @@ CCMD (dir)
 	else
 	{
 		match = "*";
-		strcpy (dir, argv[1]);
-		if (dir[strlen(dir) - 1] != '/')
-			strcat (dir, "/");
+		dir = argv[1];
+		if (dir[dir.Len()-1] != '/')
+		{
+			dir += '/';
+		}
 	}
 
 	if ( (file = I_FindFirst (match, &c_file)) == ((void *)(-1)))

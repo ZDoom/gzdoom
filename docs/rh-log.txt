@@ -1,3 +1,30 @@
+July 7, 2006
+- Added actor replacement for DECORATE. This works at a higher level than
+  using duplicate DoomEdNums and will affect all attempts to spawn the
+  replaced actor. However, because this happens for all spawns and not just
+  at map load, the replacing actor must be compatible with the replaced
+  actor, which means that an actor can only serve as a replacement for one
+  of its baseclasses. For example, if you want to use a modified imp, you can
+  use this DECORATE:
+      actor MyImp : DoomImp replaces DoompImp
+      {
+          // Put changed properties here
+      }
+- New: The IWAD dialog now remembers the last IWAD you picked and
+  automatically highlights it the next time you run the game. This also
+  applies if you check "Don't ask me this again": The IWAD selected will be
+  the one that gets automatically loaded, not the one located first. (Using
+  the -iwad parameter will not change the default IWAD.) In addition, you
+  can now bring the dialog up even if you disable it by holding down SHIFT
+  during startup.
+- Changed ExtractFilePath() and ExtractFileBase() to return FStrings instead
+  of writing to a provided output buffer. ExtractFileBase() can also
+  optionally keep the file's extension in the result.
+- Removed the -heapsize parameter entirely. The informational message should
+  no longer be needed.
+- Removed -maxdemo parameter. There's no point to having it around since
+  the demo buffer grows automatically.
+
 July 3, 2006 (Changes by Graf Zahl)
 - Fixed: Changed initialization of Weapon.Kickback so that it is only done
   for direct descendants of AWeapon and not for every weapon being defined.

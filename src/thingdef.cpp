@@ -1213,6 +1213,7 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 {
 	FName typeName;
 
+	// Get actor name
 	SC_MustGetString();
 	
 	char * colon = strchr(sc_String, ':');
@@ -1277,14 +1278,43 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 	FActorInfo * info = ti->ActorInfo;
 
 	Decorations.Push (info);
-	info->NumOwnedStates=0;
-	info->OwnedStates=NULL;
-	info->SpawnID=0;
+	info->NumOwnedStates = 0;
+	info->OwnedStates = NULL;
+	info->SpawnID = 0;
 
 	ResetBaggage (bag);
 	bag->Info = info;
 
-	info->DoomEdNum=-1;
+	info->DoomEdNum = -1;
+
+	// Check for "replaces"
+	SC_MustGetString ();
+	if (SC_Compare ("replaces"))
+	{
+		const PClass *replacee;
+
+		// Get actor name
+		SC_MustGetString ();
+		replacee = PClass::FindClass (sc_String);
+
+		if (replacee == NULL)
+		{
+			SC_ScriptError ("Replaced type '%s' not found", sc_String);
+		}
+		else if (replacee->ActorInfo == NULL)
+		{
+			SC_ScriptError ("Replaced type '%s' is not an actor", sc_String);
+		}
+		else if (!ti->IsDescendantOf (replacee))
+		{
+			SC_ScriptError ("'%s' must be derived from '%s' to replace it", typeName.GetChars(), sc_String);
+		}
+		replacee->ActorInfo->Replacement = ti->ActorInfo;
+	}
+	else
+	{
+		SC_UnGet();
+	}
 
 	// Now, after the actor names have been parsed, it is time to switch to C-mode 
 	// for the rest of the actor definition.

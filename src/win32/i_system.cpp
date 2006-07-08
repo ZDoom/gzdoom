@@ -569,7 +569,11 @@ void I_PrintStr (const char *cp, bool lineBreak)
 	char buf[256];
 	int bpos = 0;
 
-	SendMessage (edit, EM_SETSEL, (WPARAM)-1, 0);
+	int selstart, selend;
+	SendMessage (edit, EM_GETSEL, (WPARAM)&selstart, (LPARAM)&selend);
+
+//	SendMessage (edit, EM_SETSEL, (WPARAM)-1, 0);
+	SendMessage (edit, EM_SETSEL, INT_MAX, INT_MAX);
 
 	if (lineBreak && !newLine)
 	{
@@ -608,23 +612,35 @@ void I_PrintStr (const char *cp, bool lineBreak)
 		SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
 		newLine = buf[bpos-1] == '\n';
 	}
+	SendMessage (edit, EM_SETSEL, selstart, selend);
 }
 
 EXTERN_CVAR (Bool, queryiwad);
 static WadStuff *WadList;
 static int NumWads;
+static int DefaultWad;
 
 static void SetQueryIWad (HWND dialog)
 {
 	HWND checkbox = GetDlgItem (dialog, IDC_DONTASKIWAD);
 	int state = SendMessage (checkbox, BM_GETCHECK, 0, 0);
+	bool query = (state != BST_CHECKED);
 
-	queryiwad = (state != BST_CHECKED);
+	if (!query && queryiwad)
+	{
+		MessageBox (dialog,
+			"You have chosen not to show this dialog box in the future.\n"
+			"If you wish to see it again, hold down SHIFT while starting " GAMENAME ".",
+			"Don't ask me this again",
+			MB_OK | MB_ICONINFORMATION);
+	}
+
+	queryiwad = query;
 }
 
 BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	HWND list;
+	HWND ctrl;
 	int i;
 
 	switch (message)
@@ -640,7 +656,7 @@ BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			SetWindowText (hDlg, newlabel.GetChars());
 		}
 		// Populate the list with all the IWADs found
-		list = GetDlgItem (hDlg, IDC_IWADLIST);
+		ctrl = GetDlgItem (hDlg, IDC_IWADLIST);
 		for (i = 0; i < NumWads; i++)
 		{
 			FString work;
@@ -650,11 +666,17 @@ BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			else
 				filepart++;
 			work.Format ("%s (%s)", IWADTypeNames[WadList[i].Type], filepart);
-			SendMessage (list, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
-			SendMessage (list, LB_SETITEMDATA, i, (LPARAM)i);
+			SendMessage (ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
+			SendMessage (ctrl, LB_SETITEMDATA, i, (LPARAM)i);
 		}
-		SendMessage (list, LB_SETCURSEL, 0, 0);
-		SetFocus (list);
+		SendMessage (ctrl, LB_SETCURSEL, DefaultWad, 0);
+		SetFocus (ctrl);
+		// Set the state of the "Don't ask me again" checkbox
+		ctrl = GetDlgItem (hDlg, IDC_DONTASKIWAD);
+		SendMessage (ctrl, BM_SETCHECK, queryiwad ? BST_UNCHECKED : BST_CHECKED, 0);
+		// Make sure the dialog is in front. If SHIFT was pressed to force it visible,
+		// then the other window will normally be on top.
+		SetForegroundWindow (hDlg);
 		break;
 
 	case WM_COMMAND:
@@ -666,21 +688,26 @@ BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 			(LOWORD(wParam) == IDC_IWADLIST && HIWORD(wParam) == LBN_DBLCLK))
 		{
 			SetQueryIWad (hDlg);
-			list = GetDlgItem (hDlg, IDC_IWADLIST);
-			EndDialog (hDlg, SendMessage (list, LB_GETCURSEL, 0, 0));
+			ctrl = GetDlgItem (hDlg, IDC_IWADLIST);
+			EndDialog (hDlg, SendMessage (ctrl, LB_GETCURSEL, 0, 0));
 		}
 		break;
 	}
 	return FALSE;
 }
 
-int I_PickIWad (WadStuff *wads, int numwads)
+int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 {
-	WadList = wads;
-	NumWads = numwads;
+	if (showwin || GetAsyncKeyState(VK_SHIFT))
+	{
+		WadList = wads;
+		NumWads = numwads;
+		DefaultWad = defaultiwad;
 
-	return DialogBox (g_hInst, MAKEINTRESOURCE(IDD_IWADDIALOG),
-		(HWND)Window, (DLGPROC)IWADBoxCallback);
+		return DialogBox (g_hInst, MAKEINTRESOURCE(IDD_IWADDIALOG),
+			(HWND)Window, (DLGPROC)IWADBoxCallback);
+	}
+	return defaultiwad;
 }
 
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo)

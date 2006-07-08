@@ -785,11 +785,27 @@ AInventory *AActor::FindInventory (const PClass *type) const
 {
 	AInventory *item;
 
+	assert (type->ActorInfo != NULL);
 	for (item = Inventory; item != NULL; item = item->Inventory)
 	{
 		if (item->GetClass() == type)
 		{
 			break;
+		}
+	}
+	if (item == NULL && type->ActorInfo->Replacement != NULL)
+	{ // Try again with a replacement type
+		PClass *newtype = type->ActorInfo->GetReplacement()->Class;
+
+		if (newtype != type)
+		{
+			for (item = Inventory; item != NULL; item = item->Inventory)
+			{
+				if (item->GetClass() == newtype)
+				{
+					break;
+				}
+			}
 		}
 	}
 	return item;
@@ -3017,6 +3033,9 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	{
 		I_Error ("%s is not an actor\n", type->TypeName.GetChars());
 	}
+
+	// Handle decorate replacements.
+	type = type->ActorInfo->GetReplacement()->Class;
 
 	AActor *actor;
 

@@ -374,9 +374,11 @@ struct FActorInfo
 	void BuildDefaults ();
 	void ApplyDefaults (BYTE *defaults);
 	void RegisterIDs ();
+	FActorInfo *GetReplacement ();
 
 	PClass *Class;
 	FState *OwnedStates;
+	FActorInfo *Replacement;
 	int NumOwnedStates;
 	BYTE GameFilter;
 	BYTE SpawnID;

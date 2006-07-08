@@ -2150,10 +2150,7 @@ void G_RecordDemo (char* name)
 	FixPathSeperator (demoname);
 	DefaultExtension (demoname, ".lmp");
 	v = Args.CheckValue ("-maxdemo");
-	if (v)
-		maxdemosize = atoi(v)*1024;
-	if (maxdemosize < 0x20000)
-		maxdemosize = 0x20000;
+	maxdemosize = 0x20000;
 	demobuffer = (byte *)M_Malloc (maxdemosize);
 
 	demorecording = true; 

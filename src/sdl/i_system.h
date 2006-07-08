@@ -185,7 +185,7 @@ void I_PrintStr (const char *str, bool scroll);
 void I_SetTitleString (const char *title);
 
 // Pick from multiple IWADs to use
-int I_PickIWad (WadStuff *wads, int numwads);
+int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
 
 // [RH] Returns millisecond-accurate time
 unsigned int I_MSTime (void);

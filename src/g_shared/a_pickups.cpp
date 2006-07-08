@@ -143,11 +143,17 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo))
 	{
 		const PClass *type = GetParentAmmo();
+		assert (type->ActorInfo != NULL);
+		FActorInfo *replacesave = type->ActorInfo->Replacement;
 		if (!GoAway ())
 		{
 			Destroy ();
 		}
+		// If the base ammo class has a replacement defined, the replacement
+		// must not be used in the inventory.
+		type->ActorInfo->Replacement = NULL;
 		copy = static_cast<AInventory *>(Spawn (type, 0, 0, 0));
+		type->ActorInfo->Replacement = replacesave;
 		copy->Amount = amount;
 		copy->BecomeItem ();
 	}

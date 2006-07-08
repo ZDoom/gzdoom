@@ -306,6 +306,21 @@ void FActorInfo::StaticSpeedSet ()
 	}
 }
 
+FActorInfo *FActorInfo::GetReplacement ()
+{
+	if (Replacement == NULL)
+	{
+		return this;
+	}
+	// The Replacement field is temporarily NULLed to prevent
+	// potential infinite recursion.
+	FActorInfo *savedrep = Replacement;
+	Replacement = NULL;
+	FActorInfo *rep = savedrep->GetReplacement ();
+	Replacement = savedrep;
+	return rep;
+}
+
 FDoomEdMap DoomEdMap;
 
 FDoomEdMap::FDoomEdEntry *FDoomEdMap::DoomEdHash[DOOMED_HASHSIZE];

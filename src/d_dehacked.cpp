@@ -2105,11 +2105,8 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 		if (!PatchFile)
 		{
 			// Couldn't find it on disk, try reading it from a lump
-			strcpy (file, patchfile);
-			FixPathSeperator (file);
-			ExtractFileBase (file, file);
-			file[8] = 0;
-			lump = Wads.CheckNumForName (file);
+			FString filebase(ExtractFileBase (patchfile));
+			lump = Wads.CheckNumForName (filebase);
 			if (lump >= 0)
 			{
 				filelen = Wads.LumpLength (lump);

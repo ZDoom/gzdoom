@@ -655,13 +655,11 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 	}
 	else
 	{ // This is just a single lump file
-		char name[PATH_MAX];
-
 		fileinfo2free = NULL;
 		fileinfo = &singleinfo;
 		singleinfo.FilePos = 0;
 		singleinfo.Size = LittleLong(wadinfo->GetLength());
-		ExtractFileBase (filename, name);
+		FString name(ExtractFileBase (filename));
 		uppercopy(singleinfo.Name, name);
 		NumLumps++;
 	}

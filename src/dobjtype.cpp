@@ -208,6 +208,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		info->DoomEdNum = -1;
 		info->OwnedStates = NULL;
 		info->NumOwnedStates = 0;
+		info->Replacement = NULL;
 		m_RuntimeActors.Push (type);
 	}
 	else

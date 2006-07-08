@@ -151,6 +151,7 @@ extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 CVAR (Int, fraglimit, 0, CVAR_SERVERINFO);
 CVAR (Float, timelimit, 0.f, CVAR_SERVERINFO);
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
@@ -1595,15 +1596,36 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 					  "Did you install ZDoom properly? You can do either of the following:\n"
 					  "\n"
 					  "1. Place one or more of these wads in the same directory as ZDoom.\n"
-					  "2. Edit your zdoom.ini and add the directories of your iwads\n"
+					  "2. Edit your zdoom-username.ini and add the directories of your iwads\n"
 					  "to the list beneath [IWADSearch.Directories]");
 	}
 
 	pickwad = 0;
 
-	if (!iwadparmfound && numwads > 1 && queryiwad)
+	if (!iwadparmfound && numwads > 1)
 	{
-		pickwad = I_PickIWad (wads, (int)numwads);
+		int defiwad = 0;
+
+		// Locate the user's prefered IWAD, if it was found.
+		if (defaultiwad[0] != '\0')
+		{
+			for (i = 0; i < numwads; ++i)
+			{
+				FString basename = ExtractFileBase (wads[i].Path);
+				if (stricmp (basename, defaultiwad) == 0)
+				{
+					defiwad = (int)i;
+					break;
+				}
+			}
+		}
+		pickwad = I_PickIWad (wads, (int)numwads, queryiwad, defiwad);
+		if (pickwad >= 0)
+		{
+			// The newly selected IWAD becomes the new default
+			FString basename = ExtractFileBase (wads[pickwad].Path);
+			defaultiwad = basename;
+		}
 	}
 
 	if (pickwad < 0)
@@ -2203,13 +2225,6 @@ void D_DoomMain (void)
 	// [RH] Lock any cvars that should be locked now that we're
 	// about to begin the game.
 	FBaseCVar::EnableNoSet ();
-
-	// [RH] Print an informative message if -heapsize is used
-	if (Args.CheckParm ("-heapsize"))
-	{
-		Printf (TEXTCOLOR_ORANGE "Starting with -heapsize is unnecessary.\n"
-				TEXTCOLOR_ORANGE "The zone heap is not used anymore.\n");
-	}
 
 	// [RH] Run any saved commands from the command line or autoexec.cfg now.
 	gamestate = GS_FULLCONSOLE;

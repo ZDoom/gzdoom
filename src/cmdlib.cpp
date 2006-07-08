@@ -166,7 +166,7 @@ Extract file parts
 */
 // FIXME: should include the slash, otherwise
 // backing to an empty path will be wrong when appending a slash
-void ExtractFilePath (const char *path, char *dest)
+FString ExtractFilePath (const char *path)
 {
 	const char *src;
 
@@ -178,13 +178,12 @@ void ExtractFilePath (const char *path, char *dest)
 	while (src != path && !IsSeperator(*(src-1)))
 		src--;
 
-	memcpy (dest, path, src-path);
-	dest[src-path] = 0;
+	return FString(path, src - path);
 }
 
-void ExtractFileBase (const char *path, char *dest)
+FString ExtractFileBase (const char *path, bool include_extension)
 {
-	const char *src;
+	const char *src, *dot;
 
 	src = path + strlen(path) - 1;
 
@@ -203,12 +202,21 @@ void ExtractFileBase (const char *path, char *dest)
 		}
 #endif
 
-		while (*src && *src != '.')
+		if (!include_extension)
 		{
-			*dest++ = *src++;
+			dot = src;
+			while (*dot && *dot != '.')
+			{
+				dot++;
+			}
+			return FString(src, dot - src);
+		}
+		else
+		{
+			return FString(src);
 		}
 	}
-	*dest = 0;
+	return FString();
 }
 
 

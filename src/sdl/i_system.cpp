@@ -350,9 +350,7 @@ void I_PrintStr (const char *cp, bool scroll)
 	fflush (stdout);
 }
 
-EXTERN_CVAR (Bool, queryiwad)
-
-int I_PickIWad (WadStuff *wads, int numwads)
+int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad)
 {
 	int i;
 	

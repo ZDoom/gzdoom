@@ -2986,7 +2986,7 @@ static void ActorDecal (AActor *defaults, Baggage &bag)
 static void ActorMaxStepHeight (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetNumber ();
-	defaults->MaxStepHeight=sc_Number;
+	defaults->MaxStepHeight=sc_Number * FRACUNIT;
 }
 
 //==========================================================================
@@ -2995,7 +2995,7 @@ static void ActorMaxStepHeight (AActor *defaults, Baggage &bag)
 static void ActorMaxDropoffHeight (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetNumber ();
-	defaults->MaxDropOffHeight=sc_Number;
+	defaults->MaxDropOffHeight=sc_Number * FRACUNIT;
 }
 
 //==========================================================================

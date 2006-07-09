@@ -1675,7 +1675,7 @@ int DLevelScript::Random (int min, int max)
 	return min + pr_acs(max - min + 1);
 }
 
-int DLevelScript::ThingCount (int type, int tid)
+int DLevelScript::ThingCount (int type, int stringid, int tid)
 {
 	AActor *actor;
 	const PClass *kind;
@@ -1690,6 +1690,17 @@ int DLevelScript::ThingCount (int type, int tid)
 		kind = SpawnableThings[type];
 		if (kind == NULL)
 			return 0;
+	}
+	else if (stringid >= 0)
+	{
+		const char *type_name = FBehavior::StaticLookupString (stringid);
+		if (type_name == NULL)
+			return 0;
+	
+		kind = PClass::FindClass (type_name);
+		if (kind == NULL)
+			return 0;
+	
 	}
 	else
 	{
@@ -1857,6 +1868,19 @@ int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle)
 	while ( (aspot = iterator.Next ()) )
 	{
 		spawned = DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, angle);
+	}
+	return spawned;
+}
+
+int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid)
+{
+	FActorIterator iterator (spot);
+	AActor *aspot;
+	int spawned = 0;
+
+	while ( (aspot = iterator.Next ()) )
+	{
+		spawned = DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, aspot->angle);
 	}
 	return spawned;
 }
@@ -3119,13 +3143,18 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_THINGCOUNT:
-			STACK(2) = ThingCount (STACK(2), STACK(1));
+			STACK(2) = ThingCount (STACK(2), -1, STACK(1));
 			sp--;
 			break;
 
 		case PCD_THINGCOUNTDIRECT:
-			PushToStack (ThingCount (pc[0], pc[1]));
+			PushToStack (ThingCount (pc[0], -1, pc[1]));
 			pc += 2;
+			break;
+
+		case PCD_THINGCOUNTNAME:
+			STACK(2) = ThingCount (-1, STACK(2), STACK(1));
+			sp--;
 			break;
 
 		case PCD_TAGWAIT:
@@ -3832,6 +3861,11 @@ int DLevelScript::RunScript ()
 		case PCD_SPAWNSPOTDIRECT:
 			PushToStack (DoSpawnSpot (pc[0], pc[1], pc[2], pc[3]));
 			pc += 4;
+			break;
+
+		case PCD_SPAWNSPOTFACING:
+			STACK(3) = DoSpawnSpotFacing (STACK(3), STACK(2), STACK(1));
+			sp -= 2;
 			break;
 
 		case PCD_CLEARINVENTORY:

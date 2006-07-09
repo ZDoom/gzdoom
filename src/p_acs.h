@@ -491,6 +491,8 @@ public:
 		PCD_GIVEACTORINVENTORY,
 		PCD_TAKEACTORINVENTORY,
 		PCD_CHECKACTORINVENTORY,
+		PCD_THINGCOUNTNAME,
+		PCD_SPAWNSPOTFACING,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -590,12 +592,13 @@ protected:
 	void PutLast ();
 	void PutFirst ();
 	static int Random (int min, int max);
-	static int ThingCount (int type, int tid);
+	static int ThingCount (int type, int stringid, int tid);
 	static void ChangeFlat (int tag, int name, bool floorOrCeiling);
 	static int CountPlayers ();
 	static void SetLineTexture (int lineid, int side, int position, int name);
 	static int DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle);
 	static int DoSpawnSpot (int type, int spot, int tid, int angle);
+	static int DoSpawnSpotFacing (int type, int spot, int tid);
 
 	void DoFadeTo (int r, int g, int b, int a, fixed_t time);
 	void DoFadeRange (int r1, int g1, int b1, int a1,

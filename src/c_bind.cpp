@@ -368,19 +368,19 @@ CCMD (defaultbind)
 			Printf ("Unknown key \"%s\"\n", argv[1]);
 			return;
 		}
-		if (Bindings[key] != NULL)
+		if (!Bindings[key].IsEmpty())
 		{ // This key is already bound.
 			return;
 		}
 		for (int i = 0; i < NUM_KEYS; ++i)
 		{
-			if (Bindings[i] != NULL && stricmp (Bindings[i], argv[2]) == 0)
+			if (!Bindings[i].IsEmpty() && stricmp (Bindings[i], argv[2]) == 0)
 			{ // This command is already bound to a key.
 				return;
 			}
 		}
 		// It is safe to do the bind, so do it.
-		Bindings[key] = copystring (argv[2]);
+		Bindings[key] = argv[2];
 	}
 }
 

@@ -785,6 +785,8 @@ AInventory *AActor::FindInventory (const PClass *type) const
 {
 	AInventory *item;
 
+	if (type == NULL) return NULL;
+
 	assert (type->ActorInfo != NULL);
 	for (item = Inventory; item != NULL; item = item->Inventory)
 	{

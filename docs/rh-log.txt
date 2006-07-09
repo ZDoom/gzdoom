@@ -1,3 +1,11 @@
+July 9, 2006 (Changes by Graf Zahl)
+- Fixed: The defaultbind command still treated the bindings as char pointers and
+  as a result didn't work.
+- Added SpawnSpotFacing ACS function which is the same as SpawnSpot but it uses
+  the map spot's angle.
+- Added ThingCountName ACS function which is the same as ThingCount but it takes
+  an actor's type name instead of a spawn ID.
+
 July 9, 2006
 - Fixed: If the sector behind a seg was closed, but it was closed between the
   ceiling and floor of the front sector, the renderer did not add it to the

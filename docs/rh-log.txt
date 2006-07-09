@@ -1,9 +1,16 @@
+July 9, 2006
+- Fixed: If the sector behind a seg was closed, but it was closed between the
+  ceiling and floor of the front sector, the renderer did not add it to the
+  solid clip list.
+
 July 8, 2006 (Changes by Graf Zahl)
 - Fixed: Specifying 'strifefallingdamage' in MAPINFO cleared all other flags.
 - Fixed: maxstepheight and maxdropoffheight were stored as ints instead of 
   fixed_t's by the DECORATE parser.
 
 July 7, 2006
+- Blends created with the ACS fade commands now degrade to transparent overlays
+  when the console is visible, just as they do for the menu.
 - Added actor replacement for DECORATE. This works at a higher level than
   using duplicate DoomEdNums and will affect all attempts to spawn the
   replaced actor. However, because this happens for all spawns and not just

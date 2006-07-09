@@ -748,6 +748,13 @@ void R_AddLine (seg_t *line)
 		{
 			solid = true;
 		}
+		// [RH] Check for completely closed back sector. This worked in
+		// 1.22, so I assume I accidentally broke it when I added slopes.
+		else if (rw_backcz1 <= rw_backfz1 && rw_backcz2 <= rw_backfz2)
+		{
+			solid = true;
+			doorclosed = true;
+		}
 		else if (
 			(backsector->ceilingpic != skyflatnum ||
 			frontsector->ceilingpic != skyflatnum)

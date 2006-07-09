@@ -1193,6 +1193,18 @@ void C_DrawConsole ()
 				TickerVisible = false;
 			}
 		}
+
+		// Apply palette blend effects
+		if (StatusBar != NULL)
+		{
+			player_t *player = StatusBar->CPlayer;
+			if (player->camera != NULL && player->camera->player != NULL)
+			{
+				player = player->camera->player;
+			}
+			screen->Dim (PalEntry (player->BlendR*255, player->BlendG*255, player->BlendB*255),
+				player->BlendA, 0, ConBottom, screen->GetWidth(), screen->GetHeight() - ConBottom);
+		}
 	}
 
 	if (menuactive != MENU_Off)

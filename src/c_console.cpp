@@ -1202,7 +1202,7 @@ void C_DrawConsole ()
 			{
 				player = player->camera->player;
 			}
-			screen->Dim (PalEntry (player->BlendR*255, player->BlendG*255, player->BlendB*255),
+            screen->Dim (PalEntry ((unsigned char)(player->BlendR*255), (unsigned char)(player->BlendG*255), (unsigned char)(player->BlendB*255)),
 				player->BlendA, 0, ConBottom, screen->GetWidth(), screen->GetHeight() - ConBottom);
 		}
 	}

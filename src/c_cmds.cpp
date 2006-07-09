@@ -506,7 +506,7 @@ CCMD (dir)
 
 		if (chdir (dir))
 		{
-			Printf ("%s not found\n", dir);
+			Printf ("%s not found\n", dir.GetChars());
 			return;
 		}
 	}
@@ -521,10 +521,10 @@ CCMD (dir)
 	}
 
 	if ( (file = I_FindFirst (match, &c_file)) == ((void *)(-1)))
-		Printf ("Nothing matching %s%s\n", dir, match);
+		Printf ("Nothing matching %s%s\n", dir.GetChars(), match);
 	else
 	{
-		Printf ("Listing of %s%s:\n", dir, match);
+		Printf ("Listing of %s%s:\n", dir.GetChars(), match);
 		do
 		{
 			if (I_FindAttr (&c_file) & FA_DIREC)

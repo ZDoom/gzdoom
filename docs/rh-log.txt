@@ -1,4 +1,6 @@
 July 9, 2006 (Changes by Graf Zahl)
+- Fixed: The calls to DCanvas::Dim in c_console.cpp were missing some type casts.
+- Fixed: CCMD(dir) passes FStrings directly to Printf.
 - Fixed: The defaultbind command still treated the bindings as char pointers and
   as a result didn't work.
 - Added SpawnSpotFacing ACS function which is the same as SpawnSpot but it uses

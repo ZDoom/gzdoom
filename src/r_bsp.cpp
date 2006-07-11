@@ -748,23 +748,15 @@ void R_AddLine (seg_t *line)
 		{
 			solid = true;
 		}
-		// [RH] Check for completely closed back sector. This worked in
-		// 1.22, so I assume I accidentally broke it when I added slopes.
-		else if (rw_backcz1 <= rw_backfz1 && rw_backcz2 <= rw_backfz2)
-		{
-			solid = true;
-			doorclosed = true;
-		}
 		else if (
-			(backsector->ceilingpic != skyflatnum ||
-			frontsector->ceilingpic != skyflatnum)
+		// properly render skies (consider door "open" if both ceilings are sky):
+		(backsector->ceilingpic != skyflatnum || frontsector->ceilingpic != skyflatnum)
 
 		// if door is closed because back is shut:
 		&& rw_backcz1 <= rw_backfz1 && rw_backcz2 <= rw_backfz2
 
 		// preserve a kind of transparent door/lift special effect:
-		&& rw_backcz1 >= rw_frontcz1 && rw_backcz2 >= rw_frontcz2
-
+		&& ((rw_backcz1 >= rw_frontcz1 && rw_backcz2 >= rw_frontcz2) || line->sidedef->toptexture != 0)
 		&& ((rw_backfz1 <= rw_frontfz1 && rw_backfz2 <= rw_frontfz2) || line->sidedef->bottomtexture != 0))
 		{
 		// killough 1/18/98 -- This function is used to fix the automap bug which

@@ -161,6 +161,7 @@ const PClass *PClass::FindClass (FName zaname)
 DObject *PClass::CreateNew () const
 {
 	BYTE *mem = (BYTE *)M_Malloc (Size);
+	assert (mem != NULL);
 
 	// Set this object's defaults before constructing it.
 	if (Defaults!=NULL)

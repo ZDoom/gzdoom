@@ -384,8 +384,6 @@ clearfog:
 	return;
 }
 
-extern int *texturewidthmask;
-
 // prevlineasm1 is like vlineasm1 but skips the loop if only drawing one pixel
 inline fixed_t prevline1 (fixed_t vince, byte *colormap, int count, fixed_t vplce, const byte *bufplce, byte *dest)
 {
@@ -397,36 +395,6 @@ inline fixed_t prevline1 (fixed_t vince, byte *colormap, int count, fixed_t vplc
 	dc_dest = dest;
 	return doprevline1 ();
 }
-
-/*
-esp+00 = edi
-esp+04 = ebx
-esp+08 = esi
-esp+0c = ebp
-esp+13 = bad
-esp+14 = light
-esp+18 = &uwal[x]
-esp+1c = &lwal[x]
-esp+20 = x2
-esp+24 = &dwal[x]
-esp+28 = 
-esp+2c = xoffset
-esp+30 = yrepeat
-esp+34 = texturemid
-esp+40 = y1ve[]
-esp+50 = y2ve[]
-esp+54 =
-esp+58 =
-esp+5c =
-esp+60 = <return address>
-esp+64 = uwal
-esp+68 = dwal
-esp+6c = swal
-esp+70 = lwal
-esp+74 = getcol
-esi = x
-ebp = x2
-*/
 
 void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
 			   const BYTE *(*getcol)(FTexture *tex, int x))
@@ -474,6 +442,8 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
 		y2ve[0] = dwal[x];//min(dwal[x],dmost[x]);
 		if (y2ve[0] <= y1ve[0]) continue;
+		assert (y1ve[0] < viewheight);
+		assert (y2ve[0] <= viewheight);
 
 		if (!fixedcolormap)
 		{ // calculate lighting
@@ -497,6 +467,8 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			y1ve[z] = uwal[x+z];//max(uwal[x+z],umost[x+z]);
 			y2ve[z] = dwal[x+z];//min(dwal[x+z],dmost[x+z])-1;
 			if (y2ve[z] <= y1ve[z]) { bad += 1<<z; continue; }
+			assert (y1ve[z] < viewheight);
+			assert (y2ve[z] <= viewheight);
 
 			bufplce[z] = getcol (rw_pic, (lwal[x+z] + xoffset) >> FRACBITS);
 			vince[z] = swal[x+z] * yrepeat;
@@ -563,6 +535,8 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
 		y2ve[0] = dwal[x];//min(dwal[x],dmost[x]);
 		if (y2ve[0] <= y1ve[0]) continue;
+		assert (y1ve[0] < viewheight);
+		assert (y2ve[0] <= viewheight);
 
 		if (!fixedcolormap)
 		{ // calculate lighting

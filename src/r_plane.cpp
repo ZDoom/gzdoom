@@ -632,6 +632,9 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 	int unionl, unionh;
 	int x;
 
+	assert (start >= 0 && start < viewwidth);
+	assert (stop >= start && stop < viewwidth);
+
 	if (start < pl->minx)
 	{
 		intrl = pl->minx;

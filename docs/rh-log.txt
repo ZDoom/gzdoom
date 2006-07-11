@@ -1,3 +1,8 @@
+July 10, 2006
+- Fixed closed doors between the front sector's floor and ceiling the right way.
+  I was just missing a non-null texture check.
+- Removed references to texturewidthmask. What was that?
+
 July 10, 2006 (Changes by Graf Zahl)
 - Fixed: The earthquake code needs to check whether a quake's spot is still valid.
   Super Sonic Doom crashed due to this.

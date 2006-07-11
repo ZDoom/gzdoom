@@ -36,8 +36,6 @@
 #include "v_text.h"
 #include "gi.h"
 
-extern int *texturewidthmask;
-
 //
 // sky mapping
 //

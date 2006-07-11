@@ -259,7 +259,8 @@ static const char *MapInfoMapLevel[] =
 	"compat_soundtarget",	
 	"compat_dehhealth",	
 	"compat_trace",		
-	"compat_dropoff",		
+	"compat_dropoff",
+	"compat_boomscroll",
 
 	NULL
 };
@@ -359,7 +360,7 @@ MapHandlers[] =
 	{ MITYPE_REDIRECT,	lioffset(RedirectMap), 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_LAXMONSTERACTIVATION, LEVEL_LAXACTIVATIONMAPINFO },
 	{ MITYPE_SETFLAG,	LEVEL_LAXMONSTERACTIVATION, LEVEL_LAXACTIVATIONMAPINFO },
-	{ MITYPE_SETFLAG,	LEVEL_ADDITIVE_SCROLLERS, 0 },
+	{ MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
 	{ MITYPE_SETFLAG,	LEVEL_CAVERNS_OF_DARKNESS, 0 },
 	{ MITYPE_LUMPNAME,	lioffset(exitpic), 0 },
 	{ MITYPE_LUMPNAME,	lioffset(exitpic), 0 },
@@ -390,6 +391,7 @@ MapHandlers[] =
 	{ MITYPE_COMPATFLAG, COMPATF_DEHHEALTH},
 	{ MITYPE_COMPATFLAG, COMPATF_TRACE},
 	{ MITYPE_COMPATFLAG, COMPATF_DROPOFF},
+	{ MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -1000,7 +1002,8 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			break;
 
 		case MITYPE_COMPATFLAG:
-			SC_MustGetNumber();
+			if (!SC_CheckNumber()) sc_Number = 1;
+
 			if (levelinfo != NULL)
 			{
 				if (sc_Number) levelinfo->compatflags |= (DWORD)handler->data1;

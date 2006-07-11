@@ -2703,7 +2703,7 @@ void AActor::Tick ()
 		// Some levels designed with Boom in mind actually want things to accelerate
 		// at neighboring scrolling sector boundaries. But it is only important for
 		// non-player objects.
-		if (player != NULL || !(level.flags & LEVEL_ADDITIVE_SCROLLERS))
+		if (player != NULL || !(i_compatflags & COMPATF_BOOMSCROLL))
 		{
 			if (countx > 1)
 			{

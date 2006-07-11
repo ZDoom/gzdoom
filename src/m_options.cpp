@@ -987,6 +987,7 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,	"DEH health settings like Doom2.exe",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_DEHHEALTH} },
 	{ bitflag,	"Self ref. sectors don't block shots",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_TRACE} },
 	{ bitflag,	"Monsters get stuck over dropoffs",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_DROPOFF} },
+	{ bitflag,	"Boom scrollers are additive",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_BOOMSCROLL} },
 	
 	{ discrete, "Interpolate monster movement",	{&nomonsterinterpolation},		{2.0}, {0.0},	{0.0}, {NoYes} },
 };

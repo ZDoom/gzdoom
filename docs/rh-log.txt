@@ -1,3 +1,7 @@
+July 11, 2006 (Changes by Graf Zahl)
+- Changed the additive scrollers option into a compatibility flag so that it can
+  be changed from the menu.
+
 July 10, 2006
 - Fixed closed doors between the front sector's floor and ceiling the right way.
   I was just missing a non-null texture check.

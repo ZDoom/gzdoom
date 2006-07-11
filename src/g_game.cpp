@@ -1776,7 +1776,8 @@ void G_DoAutoSave ()
 	if (multiplayer ||
 		demoplayback ||
 		players[consoleplayer].playerstate != PST_LIVE ||
-		disableautosave >= 2)
+		disableautosave >= 2 ||
+		autosavecount == 0)
 	{
 		gameaction = ga_nothing;
 		return;

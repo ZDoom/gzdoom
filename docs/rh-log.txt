@@ -1,3 +1,8 @@
+July 10, 2006 (Changes by Graf Zahl)
+- Fixed: The earthquake code needs to check whether a quake's spot is still valid.
+  Super Sonic Doom crashed due to this.
+- Fixed: G_DoAutosave could divide by 0 if autosavecount was 0.
+
 July 9, 2006 (Changes by Graf Zahl)
 - Fixed: The calls to DCanvas::Dim in c_console.cpp were missing some type casts.
 - Fixed: CCMD(dir) passes FStrings directly to Printf.

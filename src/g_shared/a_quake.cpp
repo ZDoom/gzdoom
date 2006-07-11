@@ -133,11 +133,14 @@ int DEarthquake::StaticGetQuakeIntensity (AActor *victim)
 
 	while ( (quake = iterator.Next()) != NULL)
 	{
-		fixed_t dist = P_AproxDistance (victim->x - quake->m_Spot->x,
-			victim->y - quake->m_Spot->y);
-		if (dist < quake->m_TremorRadius)
+		if (quake->m_Spot != NULL)
 		{
-			intensity += quake->m_Intensity;
+			fixed_t dist = P_AproxDistance (victim->x - quake->m_Spot->x,
+				victim->y - quake->m_Spot->y);
+			if (dist < quake->m_TremorRadius)
+			{
+				intensity += quake->m_Intensity;
+			}
 		}
 	}
 	return intensity;

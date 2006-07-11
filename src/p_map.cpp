@@ -1686,7 +1686,8 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			else
 			{
 				// special logic to move a monster off a dropoff
-				if (thing->dropoffz - tmdropoffz > thing->MaxDropOffHeight) return false;
+				if (thing->floorz - floorz > thing->MaxDropOffHeight ||
+					thing->dropoffz - tmdropoffz > thing->MaxDropOffHeight) return false;
 			}
 		}
 		if (thing->flags2 & MF2_CANTLEAVEFLOORPIC

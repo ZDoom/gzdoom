@@ -456,9 +456,10 @@ extern int ConBottom;
 
 void R_ClearPlanes (bool fullclear)
 {
-	int i;
-	
-	for (i = 0; i < MAXVISPLANES; i++)	// new code -- killough
+	int i, max;
+
+	max = fullclear ? MAXVISPLANES : MAXVISPLANES-1;
+	for (i = 0; i <= max; i++)	// new code -- killough
 		for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
 			freehead = &(*freehead)->next;
 

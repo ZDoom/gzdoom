@@ -1031,6 +1031,7 @@ void R_RenderSegLoop ()
 			short bottom = floorclip[x];
 			if (top < bottom)
 			{
+				assert (bottom <= viewheight);
 				floorplane->top[x] = top;
 				floorplane->bottom[x] = bottom;
 			}

@@ -1,3 +1,10 @@
+July 11, 2006
+- Restored the previous level flag values to avoid needlessly breaking some
+  savegames at this point in time.
+- Fixed: R_ClearPlanes() did not clear skybox planes for a full clear.
+- Streamlined zip file loading by delaying the processing of the local file
+  header until it is actually needed.
+
 July 11, 2006 (Changes by Graf Zahl)
 - Changed the additive scrollers option into a compatibility flag so that it can
   be changed from the menu.

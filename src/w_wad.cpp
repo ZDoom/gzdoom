@@ -96,10 +96,10 @@ struct FWadCollection::LumpRecord
 
 enum
 {
-	LUMPF_BLOODCRYPT = 1,	// Lump uses Blood-style encryption
-	LUMPF_COMPRESSED = 2,	// Zip-compressed
-	LUMPF_ZIPFILE	 = 4,	// Inside a Zip file - used to enforce use of special directories insize Zips
-
+	LUMPF_BLOODCRYPT	= 1,	// Lump uses Blood-style encryption
+	LUMPF_COMPRESSED	= 2,	// Zip-compressed
+	LUMPF_ZIPFILE		= 4,	// Inside a Zip file - used to enforce use of special directories insize Zips
+	LUMPF_NEEDFILESTART	= 8,	// Still need to process local file header to find file start inside a zip
 };
 
 class FWadCollection::WadFileRecord : public FileReader
@@ -535,7 +535,6 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			FZipFileInfo * zip_fh = (FZipFileInfo*)dirptr;
 			char name[256];
 			char base[256];
-			FZipLocalHeader localHeader;
 
 			int len = LittleShort(zip_fh->wFileNameSize);
 			strncpy(name, dirptr + sizeof(FZipFileInfo), MIN<int>(len, 255));
@@ -592,7 +591,6 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			uppercopy(lump_p->name, base);
 			lump_p->name[8] = 0;
 			lump_p->fullname = copystring(name);
-			lump_p->position = LittleLong(zip_fh->dwFileOffset) + sizeof(FZipLocalHeader) + LittleShort(zip_fh->wFileNameSize);
 			lump_p->size = zip_fh->dwSize;
 
 			// Map some directories to WAD namespaces.
@@ -637,13 +635,9 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 				}
 			}
 
-			// Now it gets ugly: We must retrieve the actual offset where the data begins.
-			// Thanks to some bad file format design this has to do some additional steps.
-
-			// Read the local file header, which contains the correct extra field size (Info-ZIP!).
-			wadinfo->Seek(LittleLong(zip_fh->dwFileOffset), SEEK_SET);
-			wadinfo->Read(&localHeader, sizeof(localHeader));
-			lump_p->position += LittleShort(localHeader.wExtraSize);
+			// The start of the file will be determined the first time it is accessed.
+			lump_p->flags |= LUMPF_NEEDFILESTART;
+			lump_p->position = LittleLong(zip_fh->dwFileOffset);
 			lump_p++;
 		}
 		// Resize the lump record array to its actual size
@@ -1663,7 +1657,26 @@ FWadLump FWadCollection::OpenLumpNum (int lump)
 
 	l = &LumpInfo[lump];
 	wad = Wads[l->wadnum];
-	wad->Seek (l->position, SEEK_SET);
+
+	if (l->flags & LUMPF_NEEDFILESTART)
+	{
+		// This file is inside a zip and has not been opened before.
+		// Position points to the start of the local file header, which we must
+		// read and skip so that we can get to the actual file data.
+		FZipLocalHeader localHeader;
+		int skiplen;
+
+		wad->Seek (l->position, SEEK_SET);
+		wad->Read (&localHeader, sizeof(localHeader));
+		skiplen = LittleShort(localHeader.wFileNameSize) + LittleShort(localHeader.wExtraSize);
+		l->position += sizeof(localHeader) + skiplen;
+		wad->Seek (skiplen, SEEK_CUR);
+		l->flags &= ~LUMPF_NEEDFILESTART;
+	}
+	else
+	{
+		wad->Seek (l->position, SEEK_SET);
+	}
 
 	if (l->flags & LUMPF_COMPRESSED)
 	{
@@ -1713,6 +1726,23 @@ FWadLump *FWadCollection::ReopenLumpNum (int lump)
 	l = &LumpInfo[lump];
 	wad = Wads[l->wadnum];
 
+	if (l->flags & LUMPF_NEEDFILESTART)
+	{
+		// This file is inside a zip and has not been opened before.
+		// Position points to the start of the local file header, which we must
+		// read and skip so that we can get to the actual file data.
+		FZipLocalHeader localHeader;
+		int skiplen;
+		int address;
+
+		address = wad->Tell();
+		wad->Seek (l->position, SEEK_SET);
+		wad->Read (&localHeader, sizeof(localHeader));
+		skiplen = LittleShort(localHeader.wFileNameSize) + LittleShort(localHeader.wExtraSize);
+		l->position += sizeof(localHeader) + skiplen;
+		l->flags &= ~LUMPF_NEEDFILESTART;
+		wad->Seek (address, SEEK_SET);
+	}
 
 	if (l->flags & LUMPF_COMPRESSED)
 	{

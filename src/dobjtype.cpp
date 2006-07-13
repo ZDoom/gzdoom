@@ -187,7 +187,6 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	type->Pointers = NULL;
 	type->ConstructNative = ConstructNative;
 	type->ClassIndex = m_Types.Push (type);
-	type->InsertIntoHash();
 	type->Meta = Meta;
 	type->Defaults = new BYTE[size];
 	memcpy (type->Defaults, Defaults, Size);
@@ -197,6 +196,8 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	}
 	type->FlatPointers = NULL;
 	type->bRuntimeClass = true;
+	type->ActorInfo = NULL;
+	type->InsertIntoHash();
 
 	// If this class has an actor info, then any classes derived from it
 	// also need an actor info.
@@ -211,10 +212,6 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		info->NumOwnedStates = 0;
 		info->Replacement = NULL;
 		m_RuntimeActors.Push (type);
-	}
-	else
-	{
-		type->ActorInfo = NULL;
 	}
 	return type;
 }

@@ -2938,6 +2938,7 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
 
 		if (item->type == whitetext)
 		{
+			assert (item->e.command != NULL);
 			sprintf (subsection, "%s.Bindings", item->e.command);
 			M_DoSaveKeys (config, section, (int)i, false);
 			sprintf (subsection, "%s.DoubleBindings", item->e.command);
@@ -2952,7 +2953,7 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
 
 static int AddKeySpot;
 
-static void FreeKeySections()
+void FreeKeySections()
 {
 	const unsigned int numStdControls = countof(ControlsItems);
 	unsigned int i;
@@ -3008,7 +3009,6 @@ CCMD (addkeysection)
 		}
 	}
 
-	atterm (FreeKeySections);
 	if (i == last)
 	{ // Add the new section
 		// Limit the ini name to 32 chars

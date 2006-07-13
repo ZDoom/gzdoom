@@ -330,9 +330,10 @@ void APlayerPawn::RemoveInventory (AInventory *item)
 		}
 		if (item == player->ReadyWeapon)
 		{
-			// If the current weapon is removed, pick a new one.
+			// If the current weapon is removed, clear the refire counter and pick a new one.
 			pickWeap = true;
 			player->ReadyWeapon = NULL;
+			player->refire = 0;
 		}
 	}
 	Super::RemoveInventory (item);

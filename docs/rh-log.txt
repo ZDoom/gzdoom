@@ -1,4 +1,10 @@
 July 13, 2006 (Changes by Graf Zahl)
+- Removed the game filter check from addplayerclass. If a player class is added
+  here the game filter is irrelevant and there's nothing that should prevent
+  the HereticPlayer being added to a Hexen game, for example.
+- Changed: The addplayerclass CCMD was far too paranoid and needlessly aborted
+  the game for any error being encountered. Since an empty player class list
+  is checked for elsewhere outputting the messages to the console is sufficient.
 - Generalized Hexen's class-based spawning to be a property of the player class
   so now it is available in all games.
 - Replaced the call to A_FlameSnd in the HereticPlayer's burn death sequence

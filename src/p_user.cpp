@@ -142,18 +142,17 @@ CCMD (addplayerclass)
 
 		if (!ti)
 		{
-			I_FatalError ("Unknown player class '%s'", argv[1]);
+			Printf ("Unknown player class '%s'", argv[1]);
 		}
 		else if (!ti->IsDescendantOf (RUNTIME_CLASS (APlayerPawn)))
 		{
-			I_FatalError ("Invalid player class '%s'", argv[1]);
+			Printf ("Invalid player class '%s'", argv[1]);
 		}
 		else if (ti->Meta.GetMetaString (APMETA_DisplayName) == NULL)
 		{
-			I_FatalError ("Missing displayname for player class '%s'", argv[1]);
+			Printf ("Missing displayname for player class '%s'", argv[1]);
 		}
-		else if (ti->ActorInfo->GameFilter == GAME_Any ||
-			gameinfo.gametype & ti->ActorInfo->GameFilter)
+		else
 		{
 			FPlayerClass newclass;
 
@@ -169,7 +168,7 @@ CCMD (addplayerclass)
 				}
 				else
 				{
-					I_FatalError ("Unknown flag '%s' for player class '%s'", argv[arg], argv[1]);
+					Printf ("Unknown flag '%s' for player class '%s'", argv[arg], argv[1]);
 				}
 
 				arg++;

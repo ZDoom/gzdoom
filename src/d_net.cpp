@@ -2112,6 +2112,9 @@ void Net_DoCommand (int type, byte **stream, int player)
 			typeinfo = PClass::FindClass (s);
 			if (typeinfo != NULL && typeinfo->ActorInfo != NULL)
 			{
+				// Handle decorate replacements.
+				typeinfo = typeinfo->ActorInfo->GetReplacement()->Class;
+
 				AActor *source = players[player].mo;
 				if (source != NULL)
 				{

@@ -1305,10 +1305,6 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 		{
 			SC_ScriptError ("Replaced type '%s' is not an actor", sc_String);
 		}
-		else if (!ti->IsDescendantOf (replacee))
-		{
-			SC_ScriptError ("'%s' must be derived from '%s' to replace it", typeName.GetChars(), sc_String);
-		}
 		replacee->ActorInfo->Replacement = ti->ActorInfo;
 	}
 	else

@@ -64,6 +64,10 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 	if ( (kind = SpawnableThings[type]) == NULL)
 		return false;
 
+	
+	// Handle decorate replacements.
+	kind = kind->ActorInfo->GetReplacement()->Class;
+
 	if ((GetDefaultByType (kind)->flags3 & MF3_ISMONSTER) && (dmflags & DF_NO_MONSTERS))
 		return false;
 
@@ -176,9 +180,13 @@ bool P_Thing_Projectile (int tid, int type, const char * type_name, angle_t angl
 	}
 	else
 	{
-		if ((kind = PClass::FindClass(type_name)) == NULL)
+		if ((kind = PClass::FindClass(type_name)) == NULL || kind->ActorInfo == NULL)
 			return false;
 	}
+
+
+	// Handle decorate replacements.
+	kind = kind->ActorInfo->GetReplacement()->Class;
 
 	defflags3 = GetDefaultByType (kind)->flags3;
 	if ((defflags3 & MF3_ISMONSTER) && (dmflags & DF_NO_MONSTERS))

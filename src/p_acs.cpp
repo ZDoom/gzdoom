@@ -1680,6 +1680,7 @@ int DLevelScript::ThingCount (int type, int stringid, int tid)
 	AActor *actor;
 	const PClass *kind;
 	int count = 0;
+	bool replacemented = false;
 
 	if (type >= MAX_SPAWNABLES)
 	{
@@ -1698,7 +1699,7 @@ int DLevelScript::ThingCount (int type, int stringid, int tid)
 			return 0;
 	
 		kind = PClass::FindClass (type_name);
-		if (kind == NULL)
+		if (kind == NULL || kind->ActorInfo == NULL)
 			return 0;
 	
 	}
@@ -1706,7 +1707,8 @@ int DLevelScript::ThingCount (int type, int stringid, int tid)
 	{
 		kind = NULL;
 	}
-	
+
+do_count:
 	if (tid)
 	{
 		FActorIterator iterator (tid);
@@ -1739,6 +1741,17 @@ int DLevelScript::ThingCount (int type, int stringid, int tid)
 					count++;
 				}
 			}
+		}
+	}
+	if (!replacemented && kind != NULL)
+	{
+		// Again, with decorate replacements
+		replacemented = true;
+		PClass *newkind = kind->ActorInfo->GetReplacement()->Class;
+		if (newkind != kind)
+		{
+			kind = newkind;
+			goto do_count;
 		}
 	}
 	return count;
@@ -1827,6 +1840,8 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 
 	if (info != NULL)
 	{
+		// Handle decorate replacements.
+		info = info->ActorInfo->GetReplacement()->Class;
 		actor = Spawn (info, x, y, z);
 		if (actor != NULL)
 		{

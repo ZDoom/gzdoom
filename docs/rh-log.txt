@@ -1,4 +1,17 @@
 July 12, 2006
+- Changed decorate replacement to be opt-in instead of opt-out. This allows for
+  greater flexibility in what can be replaced (replaced actors need not be ancestors
+  of actors that replace them) at the expense of not having universal actor
+  replacement. Instances where replacements work:
+   - Line specials that spawn things (Thing_Spawn and related)
+   - ACS spawning commands (SpawnSpot and the like)
+   - Spawning mapthings at level load time in P_SpawnMapThing()
+   - Spawning items off of dead dudes in P_DropItem()
+   - The A_SpawnItem decorate function
+   - The summon and summonfriend console commands
+   - ThingCount will count both original actors and their replacements as the same
+     things.
+  TBD: Should the ACS inventory functions use replacements too, or not?
 - Fixed: The game would crash after informing you of a duplicate class registration
   because PClass::CreateDerivedClass() did not initialize everything before calling
   InsertIntoHash().

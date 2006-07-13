@@ -1143,12 +1143,15 @@ void A_SpawnItem(AActor * self)
 		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire)) return;
 	}
 
+	// Handle decorate replacements.
+	missile = missile->ActorInfo->GetReplacement()->Class;
+
 	AActor * mo = Spawn( missile, 
 					self->x + FixedMul(distance, finecosine[self->angle>>ANGLETOFINESHIFT]), 
 					self->y + FixedMul(distance, finesine[self->angle>>ANGLETOFINESHIFT]), 
 					self->z - self->floorclip + zheight);
 
-	if (mo) 
+	if (mo)
 	{
 		AActor * originator = self;
 

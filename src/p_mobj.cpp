@@ -795,21 +795,6 @@ AInventory *AActor::FindInventory (const PClass *type) const
 			break;
 		}
 	}
-	if (item == NULL && type->ActorInfo->Replacement != NULL)
-	{ // Try again with a replacement type
-		PClass *newtype = type->ActorInfo->GetReplacement()->Class;
-
-		if (newtype != type)
-		{
-			for (item = Inventory; item != NULL; item = item->Inventory)
-			{
-				if (item->GetClass() == newtype)
-				{
-					break;
-				}
-			}
-		}
-	}
 	return item;
 }
 
@@ -3036,9 +3021,6 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 		I_Error ("%s is not an actor\n", type->TypeName.GetChars());
 	}
 
-	// Handle decorate replacements.
-	type = type->ActorInfo->GetReplacement()->Class;
-
 	AActor *actor;
 
 	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
@@ -3729,6 +3711,9 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	//		it to the unknown thing.
 	else
 	{
+		// Handle decorate replacements.
+		i = i->ActorInfo->GetReplacement()->Class;
+
 		const AActor *defaults = GetDefaultByType (i);
 		if (defaults->SpawnState == NULL ||
 			sprites[defaults->SpawnState->sprite.index].numframes == 0)

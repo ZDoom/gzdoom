@@ -108,10 +108,8 @@ class AChickenPlayer : public APlayerPawn
 {
 	DECLARE_ACTOR (AChickenPlayer, APlayerPawn)
 public:
-	fixed_t GetJumpZ () { return FRACUNIT; }
 	void MorphPlayerThink ();
 	void ActivateMorphWeapon ();
-	void TweakSpeeds (int &forward, int &side);
 };
 
 FState AChickenPlayer::States[] =
@@ -160,6 +158,14 @@ IMPLEMENT_ACTOR (AChickenPlayer, Heretic, -1, 0)
 	PROP_MissileState (S_CHICPLAY_ATK)
 	PROP_DeathState (S_CHICPLAY_DIE)
 
+	// [GRB]
+	PROP_PlayerPawn_JumpZ (FRACUNIT)
+	PROP_PlayerPawn_ViewHeight (21*FRACUNIT)
+	PROP_PlayerPawn_ForwardMove1 (FRACUNIT * 2500 / 2048)
+	PROP_PlayerPawn_ForwardMove2 (FRACUNIT * 2500 / 2048)
+	PROP_PlayerPawn_SideMove1 (FRACUNIT * 2500 / 2048)
+	PROP_PlayerPawn_SideMove2 (FRACUNIT * 2500 / 2048)
+
 	PROP_PainSound ("chicken/pain")
 	PROP_DeathSound ("chicken/death")
 END_DEFAULTS
@@ -180,7 +186,7 @@ void AChickenPlayer::MorphPlayerThink ()
 	}
 	if ((z <= floorz) && (pr_chickenplayerthink() < 32))
 	{ // Jump and noise
-		momz += GetJumpZ ();
+		momz += JumpZ;
 		if (PainState != NULL)
 		{
 			SetState (PainState);
@@ -205,12 +211,6 @@ void AChickenPlayer::ActivateMorphWeapon ()
 	{
 		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
 	}
-}
-
-void AChickenPlayer::TweakSpeeds (int &forward, int &side)
-{
-	forward = forward * 2500 / 2048;
-	side = side * 2500 / 2048;
 }
 
 // Chicken (non-player) -----------------------------------------------------

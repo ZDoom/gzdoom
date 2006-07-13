@@ -47,17 +47,10 @@ enum
 	GENDER_NEUTER
 };
 
-enum
-{
-	PLAYERCLASS_Random = -1,
-	PLAYERCLASS_Fighter,
-	PLAYERCLASS_Cleric,
-	PALYERCLASS_Mage
-};
-extern const char *PlayerClassNames[4];
-
 int D_GenderToInt (const char *gender);
 extern const char *GenderNames[3];
+
+int D_PlayerClassToInt (const char *classname);
 
 struct userinfo_s
 {

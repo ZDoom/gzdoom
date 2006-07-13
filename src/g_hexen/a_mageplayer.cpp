@@ -103,17 +103,22 @@ IMPLEMENT_ACTOR (AMagePlayer, Hexen, -1, 0)
 	PROP_BDeathState (S_PLAY_M_FDTH)
 	PROP_IDeathState (S_MPLAY_ICE)
 
+	// [GRB]
+	PROP_PlayerPawn_JumpZ (FRACUNIT*39/4)	// ~9.75
+	PROP_PlayerPawn_ViewHeight (48*FRACUNIT)
+	PROP_PlayerPawn_ForwardMove1 (FRACUNIT * 0x16 / 0x19)
+	PROP_PlayerPawn_ForwardMove2 (FRACUNIT * 0x2e / 0x32)
+	PROP_PlayerPawn_SideMove1 (FRACUNIT * 0x15 / 0x18)
+	PROP_PlayerPawn_SideMove2 (FRACUNIT * 0x25 / 0x28)
+	PROP_PlayerPawn_ColorRange (146, 163)
+	PROP_PlayerPawn_SpawnMask (MTF_MAGE)
+
+	PROP_PlayerPawn_DisplayName ("Mage")
+	PROP_PlayerPawn_SoundClass ("mage")
+	PROP_PlayerPawn_ScoreIcon ("MAGEFACE")
 	PROP_PainSound ("PlayerMagePain")
 END_DEFAULTS
 
-const char *AMagePlayer::GetSoundClass ()
-{
-	if (player == NULL || player->userinfo.skin == 0)
-	{
-		return "mage";
-	}
-	return Super::GetSoundClass ();
-}
 void AMagePlayer::PlayAttacking2 ()
 {
 	SetState (MissileState);
@@ -121,9 +126,13 @@ void AMagePlayer::PlayAttacking2 ()
 
 void AMagePlayer::GiveDefaultInventory ()
 {
-	player->health = GetDefault()->health;
-	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
-		(GiveInventoryType (PClass::FindClass ("MWeapWand")));
+	Super::GiveDefaultInventory ();
+
+	if (!Inventory)
+	{
+		player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
+			(GiveInventoryType (PClass::FindClass ("MWeapWand")));
+	}
 	
 	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
 	AHexenArmor *armor = FindInventory<AHexenArmor>();
@@ -132,32 +141,6 @@ void AMagePlayer::GiveDefaultInventory ()
 	armor->SlotsIncrement[1] = 15*FRACUNIT;
 	armor->SlotsIncrement[2] = 10*FRACUNIT;
 	armor->SlotsIncrement[3] = 25*FRACUNIT;
-}
-
-void AMagePlayer::TweakSpeeds (int &forward, int &side)
-{
-	if ((unsigned int)(forward + 0x31ff) < 0x63ff)
-	{
-		forward = forward * 0x16 / 0x19;
-	}
-	else
-	{
-		forward = forward * 0x2e / 0x32;
-	}
-	if ((unsigned int)(side + 0x27ff) < 0x4fff)
-	{
-		side = side * 0x15 / 0x18;
-	}
-	else
-	{
-		side = side * 0x25 / 0x28;
-	}
-	Super::TweakSpeeds (forward, side);
-}
-
-fixed_t AMagePlayer::GetJumpZ ()
-{
-	return FRACUNIT*39/4;	// ~9.75
 }
 
 // Radius mana boost

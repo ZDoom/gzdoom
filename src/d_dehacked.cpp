@@ -1661,6 +1661,12 @@ static int PatchMisc (int dummy)
 		health->MaxAmount = deh.MaxSoulsphere;
 	}
 
+	APlayerPawn *player = static_cast<APlayerPawn *> (GetDefaultByName ("DoomPlayer"));
+	if (player != NULL)
+	{
+		player->health = deh.StartHealth;
+	}
+
 	// 0xDD means "enable infighting"
 	if (infighting == 0xDD)
 	{

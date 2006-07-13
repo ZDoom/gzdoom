@@ -529,6 +529,7 @@ $playersound	player	male	*grunt		plroof
 $playersounddup	player	male	*usefail	*grunt
 $playersounddup	player	male	*land		*grunt
 $playersound	player	male	*jump		plrjmp
+$playersound	player	male	*burndeath	hedat1
 
 chicken/sight			chicpai
 chicken/pain			chicpai

@@ -1,5 +1,6 @@
 #include "actor.h"
-#include "info.h"
+#include "thingdef.h"
+#include "p_conversation.h"
 #include "p_lnspec.h"
 #include "a_action.h"
 #include "m_random.h"
@@ -65,6 +66,55 @@ IMPLEMENT_ACTOR (AIceChunkHead, Any, -1, 0)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
+
+//----------------------------------------------------------------------------
+//
+// PROC A_NoBlocking
+//
+//----------------------------------------------------------------------------
+
+void A_NoBlocking (AActor *actor)
+{
+	// [RH] Andy Baker's stealth monsters
+	if (actor->flags & MF_STEALTH)
+	{
+		actor->alpha = OPAQUE;
+		actor->visdir = 0;
+	}
+
+	actor->flags &= ~MF_SOLID;
+
+	// If the actor has a conversation that sets an item to drop, drop that.
+	if (actor->Conversation != NULL && actor->Conversation->DropType != NULL)
+	{
+		P_DropItem (actor, actor->Conversation->DropType, -1, 256);
+		actor->Conversation = NULL;
+		return;
+	}
+
+	actor->Conversation = NULL;
+
+	// If the actor has attached metadata for items to drop, drop those.
+	// Otherwise, call NoBlockingSet() and let it decide what to drop.
+	if (!actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))	// [GRB]
+	{
+		FDropItem *di = GetDropItems(actor);
+
+		while (di != NULL)
+		{
+			if (di->Name != NAME_None)
+			{
+				const PClass *ti = PClass::FindClass(di->Name);
+				if (ti) P_DropItem (actor, ti, di->amount, di->probability);
+			}
+			di = di->Next;
+		}
+	}
+	else
+	{
+		actor->NoBlockingSet ();
+	}
+}
 
 //==========================================================================
 //
@@ -224,7 +274,7 @@ void A_FreezeDeathChunks (AActor *actor)
 	}
 	if (actor->player)
 	{ // attach the player's view to a chunk of ice
-		AIceChunkHead *head = Spawn<AIceChunkHead> (actor->x, actor->y, actor->z + actor->player->defaultviewheight);
+		AIceChunkHead *head = Spawn<AIceChunkHead> (actor->x, actor->y, actor->z + actor->player->mo->ViewHeight);
 		head->momz = FixedDiv(head->z-actor->z, actor->height)<<2;
 		head->momx = pr_freeze.Random2 () << (FRACBITS-7);
 		head->momy = pr_freeze.Random2 () << (FRACBITS-7);

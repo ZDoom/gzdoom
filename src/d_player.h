@@ -45,6 +45,15 @@
 //Added by MC:
 #include "b_bot.h"
 
+enum
+{
+	APMETA_BASE = 0x95000,
+
+	APMETA_DisplayName,		// display name (used in menus etc.)
+	APMETA_SoundClass,		// sound class
+	APMETA_ColorRange,		// skin color range
+};
+
 class player_s;
 
 class APlayerPawn : public AActor
@@ -64,8 +73,6 @@ public:
 	virtual void PlayAttacking2 ();
 	virtual void ThrowPoisonBag ();
 	virtual void GiveDefaultInventory ();
-	virtual const char *GetSoundClass ();
-	virtual fixed_t GetJumpZ ();
 	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
 	virtual bool DoHealingRadius (APlayerPawn *other);
 	virtual void MorphPlayerThink ();
@@ -74,6 +81,8 @@ public:
 	virtual AWeapon *BestWeapon (const PClass *ammotype);
 	virtual void GiveDeathmatchInventory ();
 	virtual void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
+
+	const char *GetSoundClass ();
 
 	enum EInvulState
 	{
@@ -88,8 +97,18 @@ public:
 	void BeginPlay ();
 	void Die (AActor *source, AActor *inflictor);
 
-	fixed_t		JumpZ;				// [GRB] Variable JumpZ
 	int			crouchsprite;
+	int			MaxHealth;
+
+	// [GRB] Player class properties
+	fixed_t		JumpZ;
+	fixed_t		ViewHeight;
+	fixed_t		ForwardMove1, ForwardMove2;
+	fixed_t		SideMove1, SideMove2;
+	int			ScoreIcon;
+	int			SpawnMask;
+
+	int GetMaxHealth() const;
 };
 
 class APlayerChunk : public APlayerPawn
@@ -177,7 +196,6 @@ public:
 	float		FOV;					// current field of vision
 	fixed_t		viewz;					// focal origin above r.z
 	fixed_t		viewheight;				// base height above floor for viewz
-	fixed_t		defaultviewheight;		// The normal view height when standing
 	fixed_t		deltaviewheight;		// squat speed.
 	fixed_t		bob;					// bounded/scaled total momentum
 
@@ -275,7 +293,6 @@ public:
 	fixed_t		oldx;
 	fixed_t		oldy;
 
-	FPlayerSkin	*skin;		// [RH] Sprite override
 	float		BlendR;		// [RH] Final blending values
 	float		BlendG;
 	float		BlendB;
@@ -291,7 +308,7 @@ public:
 
 	fixed_t GetDeltaViewHeight() const
 	{
-		return (defaultviewheight + crouchviewdelta - viewheight) >> 3;
+		return (mo->ViewHeight + crouchviewdelta - viewheight) >> 3;
 	}
 
 	void Uncrouch()
@@ -302,6 +319,8 @@ public:
 		crouching = 0;
 		crouchviewdelta = 0;
 	}
+
+	int GetSpawnClass();
 };
 
 typedef player_s player_t;
@@ -320,5 +339,28 @@ void P_CheckPlayerSprites();
 #define CROUCHSPEED (FRACUNIT/12)
 #define MAX_DN_ANGLE	56		// Max looking down angle
 #define MAX_UP_ANGLE	32		// Max looking up angle
+
+
+// [GRB] Custom player classes
+enum
+{
+	PCF_NOMENU			= 1,	// Hide in new game menu
+};
+
+class FPlayerClass
+{
+public:
+	FPlayerClass ();
+	FPlayerClass (const FPlayerClass &other);
+	~FPlayerClass ();
+
+	bool CheckSkin (int skin);
+
+	const PClass *Type;
+	DWORD Flags;
+	TArray<int> Skins;
+};
+
+extern TArray<FPlayerClass> PlayerClasses;
 
 #endif // __D_PLAYER_H__

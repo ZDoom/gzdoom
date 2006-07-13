@@ -90,8 +90,6 @@ class APigPlayer : public APlayerPawn
 {
 	DECLARE_ACTOR (APigPlayer, APlayerPawn)
 public:
-	fixed_t GetJumpZ () { return 6*FRACUNIT; }
-	void TweakSpeeds (int &forward, int &side);
 	void MorphPlayerThink ();
 	void ActivateMorphWeapon ();
 };
@@ -148,30 +146,17 @@ IMPLEMENT_ACTOR (APigPlayer, Hexen, -1, 0)
 	PROP_DeathState (S_PIGPLAY_DIE1)
 	PROP_IDeathState (S_PIGPLAY_ICE)
 
+	// [GRB]
+	PROP_PlayerPawn_JumpZ (6*FRACUNIT)
+	PROP_PlayerPawn_ViewHeight (28*FRACUNIT)
+	PROP_PlayerPawn_ForwardMove1 (FRACUNIT * 0x18 / 0x19)	// Yes, the pig is faster than a mage.
+	PROP_PlayerPawn_ForwardMove2 (FRACUNIT * 0x31 / 0x32)
+	PROP_PlayerPawn_SideMove1 (FRACUNIT * 0x17 / 0x18)
+	PROP_PlayerPawn_SideMove2 (FRACUNIT * 0x27 / 0x28)
+
 	PROP_PainSound ("PigPain")
 	PROP_DeathSound ("PigDeath")
 END_DEFAULTS
-
-void APigPlayer::TweakSpeeds (int &forward, int &side)
-{
-	// Yes, the pig is faster than a mage.
-	if ((unsigned int)(forward + 0x31ff) < 0x63ff)
-	{
-		forward = forward * 0x18 / 0x19;
-	}
-	else
-	{
-		forward = forward * 0x31 / 0x32;
-	}
-	if ((unsigned int)(side + 0x27ff) < 0x4fff)
-	{
-		side = side * 0x17 / 0x18;
-	}
-	else
-	{
-		side = side * 0x27 / 0x28;
-	}
-}
 
 void APigPlayer::MorphPlayerThink ()
 {

@@ -128,6 +128,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	AWeapon *const weapon = (AWeapon *)sgDefaults;
 	ASigil *const sigil = (ASigil *)sgDefaults;
 	AAmmo *const ammo = (AAmmo *)sgDefaults;
+	APlayerPawn *const player = (APlayerPawn *)sgDefaults;
 
 	switch (defnum)
 	{
@@ -313,6 +314,32 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_Weapon_AltHoldAtkState:weapon->AltHoldAtkState = datastate; break;
 	case ADEF_Weapon_FlashState:	weapon->FlashState = datastate; break;
 	case ADEF_Sigil_NumPieces:		sigil->NumPieces = dataint; break;
+
+	// [GRB] Player class properties
+	case ADEF_PlayerPawn_JumpZ:		player->JumpZ = dataint; break;
+	case ADEF_PlayerPawn_ViewHeight: player->ViewHeight = dataint; break;
+	case ADEF_PlayerPawn_ForwardMove1: player->ForwardMove1 = dataint; break;
+	case ADEF_PlayerPawn_ForwardMove2: player->ForwardMove2 = dataint; break;
+	case ADEF_PlayerPawn_SideMove1:	player->SideMove1 = dataint; break;
+	case ADEF_PlayerPawn_SideMove2:	player->SideMove2 = dataint; break;
+	case ADEF_PlayerPawn_ColorRange: sgClass->Meta.SetMetaInt (APMETA_ColorRange, dataint); break;
+	case ADEF_PlayerPawn_CrouchSprite: player->crouchsprite = GetSpriteIndex(datastr);	break;
+	case ADEF_PlayerPawn_SpawnMask:	player->SpawnMask = dataint; break;
+
+	case ADEF_PlayerPawn_DisplayName:
+		sgClass->Meta.SetMetaString (APMETA_DisplayName, datastr);
+		break;
+	case ADEF_PlayerPawn_SoundClass:
+		sgClass->Meta.SetMetaString (APMETA_SoundClass, datastr);
+		break;
+	case ADEF_PlayerPawn_ScoreIcon:
+		player->ScoreIcon = TexMan.AddPatch (datastr);
+		if (player->ScoreIcon <= 0)
+		{
+			player->ScoreIcon = TexMan.AddPatch (datastr, ns_sprites);
+		}
+		break;
+
 	}
 }
 

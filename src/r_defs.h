@@ -840,7 +840,7 @@ public:
 	byte		range0start;
 	byte		range0end;
 	byte		scale;
-	byte		game;
+	bool		othergame;	// [GRB]
 	int			sprite;
 	int			crouchsprite;
 	int			namespc;	// namespace for this skin

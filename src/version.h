@@ -54,7 +54,7 @@
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 207
+#define NETGAMEVERSION 208
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
@@ -73,8 +73,8 @@
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
-#define SAVEVER 233
-#define SAVESIG "ZDOOMSAVE233"
+#define SAVEVER 234
+#define SAVESIG "ZDOOMSAVE234"
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "ZDOOM"
@@ -89,7 +89,7 @@
 #endif
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 232	// Used by 2.1.0
+#define MINSAVEVER 234	// Used by 2.1.2
 
 // The maximum length of one save game description for the menus.
 #define SAVESTRINGSIZE		24

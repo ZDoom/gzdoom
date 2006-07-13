@@ -169,6 +169,24 @@ const PClass *FState::StaticFindStateOwner (const FState *state, const FActorInf
 	return NULL;
 }
 
+int GetSpriteIndex(const char * spritename)
+{
+	for (unsigned i = 0; i < sprites.Size (); ++i)
+	{
+		if (strncmp (sprites[i].name, spritename, 4) == 0)
+		{
+			return (int)i;
+		}
+	}
+	spritedef_t temp;
+	strncpy (temp.name, spritename, 4);
+	temp.name[4] = 0;
+	temp.numframes = 0;
+	temp.spriteframes = 0;
+	return (int)sprites.Push (temp);
+}
+
+
 // Change sprite names to indices
 static void ProcessStates (FState *states, int numstates)
 {
@@ -180,26 +198,7 @@ static void ProcessStates (FState *states, int numstates)
 	{
 		if (sprite == -1 || strncmp (sprites[sprite].name, states->sprite.name, 4) != 0)
 		{
-			unsigned int i;
-
-			sprite = -1;
-			for (i = 0; i < sprites.Size (); ++i)
-			{
-				if (strncmp (sprites[i].name, states->sprite.name, 4) == 0)
-				{
-					sprite = (int)i;
-					break;
-				}
-			}
-			if (sprite == -1)
-			{
-				spritedef_t temp;
-				strncpy (temp.name, states->sprite.name, 4);
-				temp.name[4] = 0;
-				temp.numframes = 0;
-				temp.spriteframes = 0;
-				sprite = (int)sprites.Push (temp);
-			}
+			sprite = GetSpriteIndex(states->sprite.name);
 		}
 		states->sprite.index = sprite;
 		states++;

@@ -104,17 +104,22 @@ IMPLEMENT_ACTOR (AFighterPlayer, Hexen, -1, 0)
 	PROP_BDeathState (S_PLAY_F_FDTH)
 	PROP_IDeathState (S_FPLAY_ICE)
 
+	// [GRB]
+	PROP_PlayerPawn_JumpZ (FRACUNIT*39/4)	// ~9.75
+	PROP_PlayerPawn_ViewHeight (48*FRACUNIT)
+	PROP_PlayerPawn_ForwardMove1 (FRACUNIT * 0x1d / 0x19)
+	PROP_PlayerPawn_ForwardMove2 (FRACUNIT * 0x3c / 0x32)
+	PROP_PlayerPawn_SideMove1 (FRACUNIT * 0x1b / 0x18)
+	PROP_PlayerPawn_SideMove2 (FRACUNIT * 0x3b / 0x28)	// The fighter is a very fast strafer when running!
+	PROP_PlayerPawn_ColorRange (246, 254)
+	PROP_PlayerPawn_SpawnMask (MTF_FIGHTER)
+	PROP_PlayerPawn_DisplayName ("Fighter")
+	PROP_PlayerPawn_SoundClass ("fighter")
+	PROP_PlayerPawn_ScoreIcon ("FITEFACE")
+
 	PROP_PainSound ("PlayerFighterPain")
 END_DEFAULTS
 
-const char *AFighterPlayer::GetSoundClass ()
-{
-	if (player == NULL || player->userinfo.skin == 0)
-	{
-		return "fighter";
-	}
-	return Super::GetSoundClass ();
-}
 void AFighterPlayer::PlayAttacking2 ()
 {
 	SetState (MissileState);
@@ -122,9 +127,13 @@ void AFighterPlayer::PlayAttacking2 ()
 
 void AFighterPlayer::GiveDefaultInventory ()
 {
-	player->health = GetDefault()->health;
-	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
-		(GiveInventoryType (PClass::FindClass ("FWeapFist")));
+	Super::GiveDefaultInventory ();
+
+	if (!Inventory)
+	{
+		player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
+			(GiveInventoryType (PClass::FindClass ("FWeapFist")));
+	}
 
 	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
 	AHexenArmor *armor = FindInventory<AHexenArmor>();
@@ -338,32 +347,6 @@ punchdone:
 		S_Sound (pmo, CHAN_VOICE, "*fistgrunt", 1, ATTN_NORM);
 	}
 	return;		
-}
-
-void AFighterPlayer::TweakSpeeds (int &forward, int &side)
-{
-	if ((unsigned int)(forward + 0x31ff) < 0x63ff)
-	{
-		forward = forward * 0x1d / 0x19;
-	}
-	else
-	{
-		forward = forward * 0x3c / 0x32;
-	}
-	if ((unsigned int)(side + 0x27ff) < 0x4fff)
-	{
-		side = side * 0x1b / 0x18;
-	}
-	else
-	{ // The fighter is a very fast strafer when running!
-		side = side * 0x3b / 0x28;
-	}
-	Super::TweakSpeeds (forward, side);
-}
-
-fixed_t AFighterPlayer::GetJumpZ ()
-{
-	return FRACUNIT*39/4;	// ~9.75
 }
 
 // Radius armor boost

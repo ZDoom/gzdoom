@@ -237,6 +237,7 @@ private:
 	static int STACK_ARGS lumpcmp(const void * a, const void * b);
 	void ScanForFlatHack (int startlump);
 	void RenameSprites (int startlump);
+	void SetLumpAddress(LumpRecord *l);
 };
 
 extern FWadCollection Wads;

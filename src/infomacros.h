@@ -210,6 +210,11 @@ public:
 #define PROP_Obituary(x)				ADD_STRING_PROP(ADEF_Obituary,"\21",x)
 #define PROP_HitObituary(x)				ADD_STRING_PROP(ADEF_HitObituary,"\22",x)
 #define PROP_Inventory_PickupMessage(x)	ADD_STRING_PROP(ADEF_Inventory_PickupMsg,"\23",x)
+// [GRB] Player class properties
+#define PROP_PlayerPawn_CrouchSprite(x)	ADD_STRING_PROP(ADEF_PlayerPawn_CrouchSprite,"\24",x)
+#define PROP_PlayerPawn_DisplayName(x)	ADD_STRING_PROP(ADEF_PlayerPawn_DisplayName,"\25",x)
+#define PROP_PlayerPawn_SoundClass(x)	ADD_STRING_PROP(ADEF_PlayerPawn_SoundClass,"\26",x)
+#define PROP_PlayerPawn_ScoreIcon(x)	ADD_STRING_PROP(ADEF_PlayerPawn_ScoreIcon,"\27",x)
 
 #define PROP_XScale(x)					ADD_BYTE_PROP(ADEF_XScale,x)
 #define PROP_YScale(x)					ADD_BYTE_PROP(ADEF_YScale,x)
@@ -323,5 +328,15 @@ public:
 #define PROP_Weapon_AltHoldAtkState(x)	ADD_BYTE_PROP(ADEF_Weapon_AltHoldAtkState,x)
 #define PROP_Weapon_FlashState(x)		ADD_BYTE_PROP(ADEF_Weapon_FlashState,x)
 #define PROP_Sigil_NumPieces(x)			ADD_BYTE_PROP(ADEF_Sigil_NumPieces,x)
+
+// [GRB] Player class properties
+#define PROP_PlayerPawn_JumpZ(x)		ADD_LONG_PROP(ADEF_PlayerPawn_JumpZ,x)
+#define PROP_PlayerPawn_ViewHeight(x)	ADD_LONG_PROP(ADEF_PlayerPawn_ViewHeight,x)
+#define PROP_PlayerPawn_ForwardMove1(x)	ADD_LONG_PROP(ADEF_PlayerPawn_ForwardMove1,x)
+#define PROP_PlayerPawn_ForwardMove2(x)	ADD_LONG_PROP(ADEF_PlayerPawn_ForwardMove2,x)
+#define PROP_PlayerPawn_SideMove1(x)	ADD_LONG_PROP(ADEF_PlayerPawn_SideMove1,x)
+#define PROP_PlayerPawn_SideMove2(x)	ADD_LONG_PROP(ADEF_PlayerPawn_SideMove2,x)
+#define PROP_PlayerPawn_ColorRange(x,y)	ADD_LONG_PROP(ADEF_PlayerPawn_ColorRange,x|(y<<8))
+#define PROP_PlayerPawn_SpawnMask(x)	ADD_BYTE_PROP(ADEF_PlayerPawn_SpawnMask, x)
 
 #endif //__INFOMACROS_H__

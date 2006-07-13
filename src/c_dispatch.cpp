@@ -61,7 +61,9 @@ static const char *KeyConfCommands[] =
 	"addmenukey",
 	"addslotdefault",
 	"weaponsection",
-	"setslot"
+	"setslot",
+	"addplayerclass",
+	"clearplayerclasses"
 };
 
 static long ParseCommandLine (const char *args, int *argc, char **argv);

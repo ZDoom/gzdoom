@@ -208,6 +208,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF4, NOEXTREMEDEATH, AActor, flags4),
 	DEFINE_FLAG(MF4, FRIGHTENED, AActor, flags4),
 	DEFINE_FLAG(MF4, NOBOUNCESOUND, AActor, flags4),
+	DEFINE_FLAG(MF4, NOSKIN, AActor, flags4),
 
 	DEFINE_FLAG(MF5, FASTER, AActor, flags5),
 	DEFINE_FLAG(MF5, FASTMELEE, AActor, flags5),
@@ -500,6 +501,9 @@ ACTOR(CountdownArg)
 ACTOR(CustomMeleeAttack)
 ACTOR(Light)
 ACTOR(Burst)
+ACTOR(SkullPop)
+ACTOR(CheckFloor)
+ACTOR(CheckSkullDone)
 ACTOR(RadiusThrust)
 
 
@@ -606,6 +610,8 @@ AFuncDesc AFTable[]=
 	FUNC(A_CentaurDefend, NULL)
 	FUNC(A_BishopMissileWeave, NULL)
 	FUNC(A_CStaffMissileSlither, NULL)
+	FUNC(A_SkullPop, "m")
+	{"A_CheckPlayerDone", A_CheckSkullDone, NULL },
 
 	// useful functions from Strife
 	FUNC(A_Wander, NULL)
@@ -675,6 +681,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_JumpIf, "XL")
 	FUNC(A_KillMaster, NULL)
 	FUNC(A_KillChildren, NULL)
+	FUNC(A_CheckFloor, "L")
 	{"A_BasicAttack", A_ComboAttack, "ISMF" },
 
 	// Weapon only functions
@@ -949,14 +956,6 @@ enum
 };
 
 
-struct FDropItem 
-{
-	FName Name;
-	int probability;
-	int amount;
-	FDropItem * Next;
-};
-
 static void FreeDropItemChain(FDropItem *chain)
 {
 	while (chain != NULL)
@@ -979,59 +978,17 @@ public:
 	}
 };
 
-FDropItemPtrArray DropItemList;
+static FDropItemPtrArray DropItemList;
 
-//----------------------------------------------------------------------------
-//
-// PROC A_NoBlocking
-//
-// (moved here so that it has access to FDropItemList's definition)
-//
-//----------------------------------------------------------------------------
-
-void A_NoBlocking (AActor *actor)
+FDropItem *GetDropItems(AActor * actor)
 {
-	// [RH] Andy Baker's stealth monsters
-	if (actor->flags & MF_STEALTH)
-	{
-		actor->alpha = OPAQUE;
-		actor->visdir = 0;
-	}
+	unsigned int index = actor->GetClass ()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
 
-	actor->flags &= ~MF_SOLID;
-
-	unsigned int index = actor->GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
-
-	// If the actor has a conversation that sets an item to drop, drop that.
-	if (actor->Conversation != NULL && actor->Conversation->DropType != NULL)
-	{
-		P_DropItem (actor, actor->Conversation->DropType, -1, 256);
-		actor->Conversation = NULL;
-		return;
-	}
-
-	actor->Conversation = NULL;
-
-	// If the actor has attached metadata for items to drop, drop those.
-	// Otherwise, call NoBlockingSet() and let it decide what to drop.
 	if (index >= 0 && index < DropItemList.Size())
 	{
-		FDropItem *di = DropItemList[index];
-
-		while (di != NULL)
-		{
-			if (di->Name != NAME_None)
-			{
-				const PClass *ti = PClass::FindClass(di->Name);
-				if (ti) P_DropItem (actor, ti, di->amount, di->probability);
-			}
-			di = di->Next;
-		}
+		return DropItemList[index];
 	}
-	else
-	{
-		actor->NoBlockingSet ();
-	}
+	return NULL;
 }
 
 //==========================================================================
@@ -1165,7 +1122,7 @@ FState ** FindState(AActor * actor, const PClass * type, const char * name)
 	}
 	else if (type->IsDescendantOf (RUNTIME_CLASS(ASwitchableDecoration)))
 	{
-		// These are the names that 2.1.0 will use
+		// These are the names that the code will use when custom labels are working.
 		if (!stricmp(name, "ACTIVE")) return &actor->SeeState;
 		if (!stricmp(name, "INACTIVE")) return &actor->MeleeState;
 	} 
@@ -2838,8 +2795,8 @@ static void ActorMeleeDamage (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorMeleeRange (AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->meleerange = sc_Number;
+	SC_MustGetFloat();
+	defaults->meleerange = fixed_t(sc_Float*FRACUNIT);
 }
 
 //==========================================================================
@@ -3526,6 +3483,181 @@ static void PowerupType (APowerupGiver *defaults, Baggage &bag)
 
 //==========================================================================
 //
+// [GRB] Special player properties
+//
+//==========================================================================
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerDisplayName (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	bag.Info->Class->Meta.SetMetaString (APMETA_DisplayName, sc_String);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerSoundClass (APlayerPawn *defaults, Baggage &bag)
+{
+	char tmp[256];
+
+	SC_MustGetString ();
+	sprintf (tmp, sc_String);
+
+	for (int i = 0; i < strlen (tmp); i++)
+		if (tmp[i] == ' ')
+			tmp[i] = '_';
+
+	bag.Info->Class->Meta.SetMetaString (APMETA_SoundClass, tmp);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerColorRange (APlayerPawn *defaults, Baggage &bag)
+{
+	int start, end;
+
+	SC_MustGetNumber ();
+	start = sc_Number;
+	SC_MustGetNumber ();
+	end = sc_Number;
+
+	if (start > end)
+		swap (start, end);
+
+	bag.Info->Class->Meta.SetMetaInt (APMETA_ColorRange, (start & 255) | ((end & 255) << 8));
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerJumpZ (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetFloat ();
+	defaults->JumpZ = FLOAT2FIXED (sc_Float);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerSpawnClass (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	if (SC_Compare ("Any"))
+		defaults->SpawnMask = 0;
+	else if (SC_Compare ("Fighter"))
+		defaults->SpawnMask |= MTF_FIGHTER;
+	else if (SC_Compare ("Cleric"))
+		defaults->SpawnMask |= MTF_CLERIC;
+	else if (SC_Compare ("Mage"))
+		defaults->SpawnMask |= MTF_MAGE;
+	else if (IsNum(sc_String))
+	{
+		int val = strtol(sc_String, NULL, 0);
+		defaults->SpawnMask = (val*MTF_FIGHTER) & (MTF_FIGHTER|MTF_CLERIC|MTF_MAGE);
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerViewHeight (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetFloat ();
+	defaults->ViewHeight = FLOAT2FIXED (sc_Float);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerForwardMove (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetFloat ();
+	defaults->ForwardMove1 = defaults->ForwardMove2 = FLOAT2FIXED (sc_Float);
+	if (SC_CheckFloat ())
+		defaults->ForwardMove2 = FLOAT2FIXED (sc_Float);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerSideMove (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetFloat ();
+	defaults->SideMove1 = defaults->SideMove2 = FLOAT2FIXED (sc_Float);
+	if (SC_CheckFloat ())
+		defaults->SideMove2 = FLOAT2FIXED (sc_Float);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerMaxHealth (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetNumber ();
+	defaults->MaxHealth = sc_Number;
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerScoreIcon (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	defaults->ScoreIcon = TexMan.AddPatch (sc_String);
+	if (defaults->ScoreIcon <= 0)
+	{
+		defaults->ScoreIcon = TexMan.AddPatch (sc_String, ns_sprites);
+		if (defaults->ScoreIcon <= 0)
+		{
+			Printf("Icon '%s' for '%s' not found\n", sc_String, bag.Info->Class->TypeName.GetChars ());
+		}
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerCrouchSprite (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	for (int i = 0; i < sc_StringLen; i++) sc_String[i] = toupper (sc_String[i]);
+	defaults->crouchsprite = GetSpriteIndex (sc_String);
+}
+
+//==========================================================================
+//
+// [GRB] Store start items in drop item list
+//
+//==========================================================================
+static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
+{
+	// create a linked list of dropitems
+	if (!bag.DropItemSet)
+	{
+		bag.DropItemSet = true;
+		bag.DropItemList = NULL;
+	}
+
+	FDropItem * di=new FDropItem;
+
+	SC_MustGetString();
+	di->Name=strdup(sc_String);
+	di->probability=255;
+	di->amount=0;
+	if (SC_CheckNumber())
+	{
+		di->amount=sc_Number;
+	}
+	di->Next = bag.DropItemList;
+	bag.DropItemList = di;
+}
+
+//==========================================================================
+//
 //==========================================================================
 static const ActorProps *APropSearch (const char *str, const ActorProps *props, int numprops)
 {
@@ -3625,6 +3757,18 @@ static const ActorProps props[] =
 	{ "pain",						ActorPainState,				RUNTIME_CLASS(AActor) },
 	{ "painchance",					ActorPainChance,			RUNTIME_CLASS(AActor) },
 	{ "painsound",					ActorPainSound,				RUNTIME_CLASS(AActor) },
+	{ "player.colorrange",			(apf)PlayerColorRange,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.crouchsprite",		(apf)PlayerCrouchSprite,	RUNTIME_CLASS(APlayerPawn) },
+	{ "player.displayname",			(apf)PlayerDisplayName,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.forwardmove",			(apf)PlayerForwardMove,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.jumpz",				(apf)PlayerJumpZ,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.maxhealth",			(apf)PlayerMaxHealth,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.scoreicon",			(apf)PlayerScoreIcon,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.sidemove",			(apf)PlayerSideMove,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.soundclass",			(apf)PlayerSoundClass,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.spawnclass",			(apf)PlayerSpawnClass,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.startitem",			(apf)PlayerStartItem,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.viewheight",			(apf)PlayerViewHeight,		RUNTIME_CLASS(APlayerPawn) },
 	{ "poisondamage",				ActorPoisonDamage,			RUNTIME_CLASS(AActor) },
 	{ "powerup.color",				(apf)PowerupColor,			RUNTIME_CLASS(APowerupGiver) },
 	{ "powerup.duration",			(apf)PowerupDuration,		RUNTIME_CLASS(APowerupGiver) },

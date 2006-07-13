@@ -221,7 +221,7 @@ static int NumPlayerReserves;
 static bool DoneReserving;
 static bool PlayerClassesIsSorted;
 
-static TArray<FPlayerClassLookup> PlayerClasses;
+static TArray<FPlayerClassLookup> PlayerClassLookups;
 static TArray<WORD> PlayerSounds;
 
 static char DefPlayerClassName[MAX_SNDNAME+1];
@@ -1121,7 +1121,7 @@ static int S_AddPlayerClass (const char *name)
 
 		memcpy (lookup.Name, name, namelen);
 		lookup.ListIndex[2] = lookup.ListIndex[1] = lookup.ListIndex[0] = 0xffff;
-		cnum = (int)PlayerClasses.Push (lookup);
+		cnum = (int)PlayerClassLookups.Push (lookup);
 		PlayerClassesIsSorted = false;
 
 		// The default player class is the first one added
@@ -1147,9 +1147,9 @@ static int S_FindPlayerClass (const char *name)
 	{
 		unsigned int i;
 
-		for (i = 0; i < PlayerClasses.Size(); ++i)
+		for (i = 0; i < PlayerClassLookups.Size(); ++i)
 		{
-			if (stricmp (name, PlayerClasses[i].Name) == 0)
+			if (stricmp (name, PlayerClassLookups[i].Name) == 0)
 			{
 				return (int)i;
 			}
@@ -1158,12 +1158,12 @@ static int S_FindPlayerClass (const char *name)
 	else
 	{
 		int min = 0;
-		int max = (int)(PlayerClasses.Size() - 1);
+		int max = (int)(PlayerClassLookups.Size() - 1);
 
 		while (min <= max)
 		{
 			int mid = (min + max) / 2;
-			int lexx = stricmp (PlayerClasses[mid].Name, name);
+			int lexx = stricmp (PlayerClassLookups[mid].Name, name);
 			if (lexx == 0)
 			{
 				return mid;
@@ -1193,13 +1193,13 @@ static int S_AddPlayerGender (int classnum, int gender)
 {
 	int index;
 
-	index = PlayerClasses[classnum].ListIndex[gender];
+	index = PlayerClassLookups[classnum].ListIndex[gender];
 	if (index == 0xffff)
 	{
 		WORD pushee = 0;
 
 		index = (int)PlayerSounds.Size ();
-		PlayerClasses[classnum].ListIndex[gender] = (WORD)index;
+		PlayerClassLookups[classnum].ListIndex[gender] = (WORD)index;
 		for (int i = NumPlayerReserves; i != 0; --i)
 		{
 			PlayerSounds.Push (pushee);
@@ -1213,15 +1213,15 @@ static int S_AddPlayerGender (int classnum, int gender)
 // S_ShrinkPlayerSoundLists
 //
 // Shrinks the arrays used by the player sounds to be just large enough
-// and also sorts the PlayerClasses array.
+// and also sorts the PlayerClassLookups array.
 //==========================================================================
 
 void S_ShrinkPlayerSoundLists ()
 {
 	PlayerSounds.ShrinkToFit ();
-	PlayerClasses.ShrinkToFit ();
+	PlayerClassLookups.ShrinkToFit ();
 
-	qsort (&PlayerClasses[0], PlayerClasses.Size(),
+	qsort (&PlayerClassLookups[0], PlayerClassLookups.Size(),
 		sizeof(FPlayerClassLookup), SortPlayerClasses);
 	PlayerClassesIsSorted = true;
 	DefPlayerClass = S_FindPlayerClass (DefPlayerClassName);
@@ -1269,14 +1269,14 @@ static int S_LookupPlayerSound (int classidx, int gender, int refid)
 		classidx = DefPlayerClass;
 	}
 
-	int listidx = PlayerClasses[classidx].ListIndex[gender];
+	int listidx = PlayerClassLookups[classidx].ListIndex[gender];
 	if (listidx == 0xffff)
 	{
 		int g;
 
 		for (g = 0; g < 3 && listidx == 0xffff; ++g)
 		{
-			listidx = PlayerClasses[classidx].ListIndex[g];
+			listidx = PlayerClassLookups[classidx].ListIndex[g];
 		}
 		if (g == 3)
 		{ // No sounds defined at all for this class (can this happen?)
@@ -1428,8 +1428,8 @@ int S_FindSkinnedSound (AActor *actor, int refid)
 	}
 	else
 	{
-		pclass = gameinfo.gametype != GAME_Hexen
-			? "player" : "fighter";
+		pclass =
+			((APlayerPawn *)GetDefaultByType (PlayerClasses[0].Type))->GetSoundClass ();
 		gender = GENDER_MALE;
 	}
 
@@ -1527,13 +1527,13 @@ CCMD (playersounds)
 		}
 	}
 
-	for (i = 0; i < PlayerClasses.Size(); ++i)
+	for (i = 0; i < PlayerClassLookups.Size(); ++i)
 	{
 		for (j = 0; j < 3; ++j)
 		{
-			if ((l = PlayerClasses[i].ListIndex[j]) != 0xffff)
+			if ((l = PlayerClassLookups[i].ListIndex[j]) != 0xffff)
 			{
-				Printf ("\n%s, %s:\n", PlayerClasses[i].Name, GenderNames[j]);
+				Printf ("\n%s, %s:\n", PlayerClassLookups[i].Name, GenderNames[j]);
 				for (k = 0; k < NumPlayerReserves; ++l, ++k)
 				{
 					Printf (" %-16s%s\n", reserveNames[k], S_sfx[PlayerSounds[l]].name);

@@ -106,17 +106,18 @@ IMPLEMENT_ACTOR (AClericPlayer, Hexen, -1, 0)
 	PROP_BDeathState (S_PLAY_C_FDTH)
 	PROP_IDeathState (S_CPLAY_ICE)
 
+	// [GRB]
+	PROP_PlayerPawn_JumpZ (FRACUNIT*39/4)	// ~9.75
+	PROP_PlayerPawn_ViewHeight (48*FRACUNIT)
+	PROP_PlayerPawn_ColorRange (146, 163)
+	PROP_PlayerPawn_SpawnMask (MTF_CLERIC)
+
+	PROP_PlayerPawn_DisplayName ("Cleric")
+	PROP_PlayerPawn_SoundClass ("cleric")
+	PROP_PlayerPawn_ScoreIcon ("CLERFACE")
 	PROP_PainSound ("PlayerClericPain")
 END_DEFAULTS
 
-const char *AClericPlayer::GetSoundClass ()
-{
-	if (player == NULL || player->userinfo.skin == 0)
-	{
-		return "cleric";
-	}
-	return Super::GetSoundClass ();
-}
 void AClericPlayer::PlayAttacking2 ()
 {
 	SetState (MissileState);
@@ -124,9 +125,13 @@ void AClericPlayer::PlayAttacking2 ()
 
 void AClericPlayer::GiveDefaultInventory ()
 {
-	player->health = GetDefault()->health;
-	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
-		(GiveInventoryType (PClass::FindClass ("CWeapMace")));
+	Super::GiveDefaultInventory ();
+
+	if (!Inventory)
+	{
+		player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
+			(GiveInventoryType (PClass::FindClass ("CWeapMace")));
+	}
 
 	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
 	AHexenArmor *armor = FindInventory<AHexenArmor>();
@@ -135,11 +140,6 @@ void AClericPlayer::GiveDefaultInventory ()
 	armor->SlotsIncrement[1] = 25*FRACUNIT;
 	armor->SlotsIncrement[2] =  5*FRACUNIT;
 	armor->SlotsIncrement[3] = 20*FRACUNIT;
-}
-
-fixed_t AClericPlayer::GetJumpZ ()
-{
-	return FRACUNIT*39/4;	// ~9.75
 }
 
 void AClericPlayer::SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha)

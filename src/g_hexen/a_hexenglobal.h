@@ -83,9 +83,6 @@ class AFighterPlayer : public APlayerPawn
 public:
 	void PlayAttacking2 ();
 	void GiveDefaultInventory ();
-	void TweakSpeeds (int &forward, int &side);
-	const char *GetSoundClass ();
-	fixed_t GetJumpZ ();
 	bool DoHealingRadius (APlayerPawn *other);
 };
 
@@ -102,8 +99,6 @@ class AClericPlayer : public APlayerPawn
 public:
 	void PlayAttacking2 ();
 	void GiveDefaultInventory ();
-	const char *GetSoundClass ();
-	fixed_t GetJumpZ ();
 	void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha);
 };
 
@@ -120,9 +115,6 @@ class AMagePlayer : public APlayerPawn
 public:
 	void PlayAttacking2 ();
 	void GiveDefaultInventory ();
-	void TweakSpeeds (int &forward, int &side);
-	const char *GetSoundClass ();
-	fixed_t GetJumpZ ();
 	bool DoHealingRadius (APlayerPawn *other);
 	void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha);
 };

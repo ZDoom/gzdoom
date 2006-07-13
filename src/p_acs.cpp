@@ -4606,6 +4606,17 @@ int DLevelScript::RunScript ()
 			}
 			sp -= 2;
 			break;
+
+		case PCD_PLAYERCLASS:		// [GRB]
+			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS || !playeringame[STACK(1)])
+			{
+				STACK(1) = -1;
+			}
+			else
+			{
+				STACK(1) = players[STACK(1)].CurrentPlayerClass;
+			}
+			break;
 		}
 	}
 

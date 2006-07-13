@@ -408,7 +408,12 @@ CCMD (useflechette)
 	if (m_Instigator == NULL)
 		return;
 
-	i = (m_Instigator->player->CurrentPlayerClass + 2) % 3;
+	if (m_Instigator->IsKindOf (PClass::FindClass (NAME_ClericPlayer)))
+		i = 0;
+	else if (m_Instigator->IsKindOf (PClass::FindClass (NAME_MagePlayer)))
+		i = 1;
+	else
+		i = 2;
 
 	for (j = 0; j < 3; ++j)
 	{

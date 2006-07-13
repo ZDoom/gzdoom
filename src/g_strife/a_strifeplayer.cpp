@@ -130,15 +130,24 @@ IMPLEMENT_ACTOR (AStrifePlayer, Strife, -1, 0)
 	PROP_XDeathState (S_PLAY_XDIE)
 	PROP_BDeathState (S_PLAY_BURNDEATH)
 	PROP_EDeathState (S_PLAY_ZAPDEATH)
+
+	// [GRB]
+	PROP_PlayerPawn_ColorRange (96, 111)
+	PROP_PlayerPawn_DisplayName ("Rebel")
 END_DEFAULTS
 
 void AStrifePlayer::GiveDefaultInventory ()
 {
-	AWeapon *weapon;
+	Super::GiveDefaultInventory ();
 
-	player->health = GetDefault()->health;
-	weapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (PClass::FindClass ("PunchDagger")));
-	player->ReadyWeapon = player->PendingWeapon = weapon;
+	if (!Inventory)
+	{
+		AWeapon *weapon;
+
+		player->health = GetDefault()->health;
+		weapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (PClass::FindClass ("PunchDagger")));
+		player->ReadyWeapon = player->PendingWeapon = weapon;
+	}
 }
 
 void AStrifePlayer::TweakSpeeds (int &forward, int &side)

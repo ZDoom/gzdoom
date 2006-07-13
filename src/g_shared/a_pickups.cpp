@@ -186,7 +186,7 @@ bool P_GiveBody (AActor *actor, int num)
 
 	if (player != NULL)
 	{
-		max = ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth) + player->stamina;
+		max = static_cast<APlayerPawn*>(actor)->GetMaxHealth() + player->stamina;
 		if (player->morphTics)
 		{
 			max = MAXMORPHHEALTH;
@@ -820,6 +820,7 @@ void AInventory::Hide ()
 	{
 		SetState (&States[S_HIDESPECIAL]);
 		tics = 1400;
+		if (ItemFlags & IF_PICKUPFLASH) tics += 30;
 	}
 	else
 	{
@@ -1090,16 +1091,6 @@ IMPLEMENT_STATELESS_ACTOR (APowerupGiver, Any, -1, 0)
 	PROP_Inventory_FlagsSet (IF_INVBAR|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
-
-AT_GAME_SET(PowerupGiver)
-{
-	APowerupGiver * giver = GetDefault<APowerupGiver>();
-
-	if (gameinfo.gametype & GAME_Raven)
-	{
-		giver->RespawnTics = 1400+30;
-	}
-}
 
 //===========================================================================
 //
@@ -1816,7 +1807,7 @@ bool AHealth::TryPickup (AActor *other)
 		PrevHealth = other->player->health;
 		if (max == 0)
 		{
-			max = ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth) + player->stamina;
+			max = static_cast<APlayerPawn*>(other)->GetMaxHealth() + player->stamina;
 			if (player->morphTics)
 			{
 				max = MAXMORPHHEALTH;

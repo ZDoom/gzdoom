@@ -166,11 +166,6 @@ struct FState
 	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);
 };
 
-// A truly awful hack to get to the state that called an action function
-// without knowing whether it has been called from a weapon or actor.
-extern FState * CallingState;
-int CheckIndex(int paramsize, FState ** pcallstate=NULL);
-
 
 FArchive &operator<< (FArchive &arc, FState *&state);
 
@@ -245,7 +240,12 @@ enum
 	ADEF_Obituary,
 	ADEF_HitObituary,
 	ADEF_Inventory_PickupMsg,
-	ADEF_LastString = ADEF_Inventory_PickupMsg,
+	// [GRB] Player class properties
+	ADEF_PlayerPawn_CrouchSprite,
+	ADEF_PlayerPawn_DisplayName,
+	ADEF_PlayerPawn_SoundClass,
+	ADEF_PlayerPawn_ScoreIcon,
+	ADEF_LastString = ADEF_PlayerPawn_ScoreIcon,
 
 	// The rest of the properties use their type field (upper 2 bits)
 	ADEF_XScale,
@@ -352,6 +352,16 @@ enum
 	ADEF_Weapon_FlashState,
 	ADEF_Sigil_NumPieces,
 
+	// [GRB] Player class properties
+	ADEF_PlayerPawn_JumpZ,
+	ADEF_PlayerPawn_ViewHeight,
+	ADEF_PlayerPawn_ForwardMove1,
+	ADEF_PlayerPawn_ForwardMove2,
+	ADEF_PlayerPawn_SideMove1,
+	ADEF_PlayerPawn_SideMove2,
+	ADEF_PlayerPawn_ColorRange,
+	ADEF_PlayerPawn_SpawnMask,
+
 	// The following are not properties but affect how the list is parsed
 	ADEF_FirstCommand,
 	ADEF_SkipSuper = ADEF_FirstCommand,	// Take defaults from AActor instead of superclass(es)
@@ -423,6 +433,8 @@ private:
 };
 
 extern FDoomEdMap DoomEdMap;
+
+int GetSpriteIndex(const char * spritename);
 
 #include "infomacros.h"
 

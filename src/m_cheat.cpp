@@ -289,7 +289,7 @@ void cht_DoCheat (player_t *player, int cheat)
 					player->morphTics = 0;
 				}
 				player->health = player->mo->health = player->mo->GetDefault()->health;
-				player->viewheight = player->defaultviewheight;
+				player->viewheight = ((APlayerPawn *)player->mo->GetDefault())->ViewHeight;
 				player->mo->flags = player->mo->GetDefault()->flags;
 				player->mo->height = player->mo->GetDefault()->height;
 				player->mo->SetState (player->mo->SpawnState);

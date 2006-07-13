@@ -303,6 +303,6 @@ DWORD R_BlendForColormap (DWORD map);		// [RH] return calculated blend for a col
 extern byte *realcolormaps;						// [RH] make the colormaps externally visible
 extern size_t numfakecmaps;
 
-int R_FindSkin (const char *name);	// [RH] Find a skin
+int R_FindSkin (const char *name, int pclass);	// [RH] Find a skin
 
 #endif

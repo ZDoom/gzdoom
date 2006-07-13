@@ -423,9 +423,11 @@ void R_InitSkins (void)
 	int j, k, base;
 	int lastlump;
 	int aliasid;
+	bool remove;
+	const PClass *basetype, *transtype;
 
 	key[sizeof(key)-1] = 0;
-	i = 0;
+	i = PlayerClasses.Size () - 1;
 	lastlump = 0;
 
 	for (j = 0; j < NUMSKINSOUNDS; ++j)
@@ -448,6 +450,9 @@ void R_InitSkins (void)
 		SC_OpenLumpNum (base, "S_SKIN");
 		intname = 0;
 		crouchname = 0;
+
+		remove = false;
+		basetype = NULL;
 
 		// Data is stored as "key = data".
 		while (SC_GetString ())
@@ -500,12 +505,61 @@ void R_InitSkins (void)
 			}
 			else if (0 == stricmp (key, "game"))
 			{
-				if (stricmp (sc_String, "heretic"))
+				if (gameinfo.gametype == GAME_Heretic)
+					basetype = PClass::FindClass (NAME_HereticPlayer);
+				else if (gameinfo.gametype == GAME_Strife)
+					basetype = PClass::FindClass (NAME_StrifePlayer);
+				else
+					basetype = PClass::FindClass (NAME_DoomPlayer);
+
+				transtype = basetype;
+
+				if (stricmp (sc_String, "heretic") == 0)
 				{
-					skins[i].game = GAME_Heretic;
-					skins[i].range0start = 225;
-					skins[i].range0end = 240;
+					if (gameinfo.gametype == GAME_Doom)
+					{
+						transtype = PClass::FindClass (NAME_HereticPlayer);
+						skins[i].othergame = true;
+					}
+					else if (gameinfo.gametype != GAME_Heretic)
+					{
+						remove = true;
+					}
 				}
+				else if (stricmp (sc_String, "strife") == 0)
+				{
+					if (gameinfo.gametype != GAME_Strife)
+					{
+						remove = true;
+					}
+				}
+				else
+				{
+					if (gameinfo.gametype == GAME_Heretic)
+					{
+						transtype = PClass::FindClass (NAME_DoomPlayer);
+						skins[i].othergame = true;
+					}
+					else if (gameinfo.gametype != GAME_Doom)
+					{
+						remove = true;
+					}
+				}
+
+				if (remove)
+					break;
+			}
+			else if (0 == stricmp (key, "class"))
+			{ // [GRB] Define the skin for a specific player class
+				int pclass = D_PlayerClassToInt (sc_String);
+
+				if (pclass < 0)
+				{
+					remove = true;
+					break;
+				}
+
+				basetype = transtype = PlayerClasses[pclass].Type;
 			}
 			else if (key[0] == '*')
 			{ // Player sound replacment (ZDoom extension)
@@ -554,71 +608,119 @@ void R_InitSkins (void)
 			}
 		}
 
-		if (skins[i].name[0] == 0)
-			sprintf (skins[i].name, "skin%d", i);
-
-		// Now collect the sprite frames for this skin. If the sprite name was not
-		// specified, use whatever immediately follows the specifier lump.
-		if (intname == 0)
+		// [GRB] Assume Doom skin by default
+		if (!remove && basetype == NULL)
 		{
-			char name[9];
-			Wads.GetLumpName (name, base+1);
-			intname = *(DWORD *)name;
+			if (gameinfo.gametype == GAME_Doom)
+			{
+				basetype = transtype = PClass::FindClass (NAME_DoomPlayer);
+			}
+			else if (gameinfo.gametype == GAME_Heretic)
+			{
+				basetype = PClass::FindClass (NAME_HereticPlayer);
+				transtype = PClass::FindClass (NAME_DoomPlayer);
+				skins[i].othergame = true;
+			}
+			else
+			{
+				remove = true;
+			}
 		}
 
-		int basens = Wads.GetLumpNamespace(base);
-
-		for(int spr = 0; spr<2; spr++)
+		if (!remove)
 		{
-			memset (sprtemp, 0xFFFF, sizeof(sprtemp));
-			for (k = 0; k < MAX_SPRITE_FRAMES; ++k)
-			{
-				sprtemp[k].Flip = 0;
-			}
-			maxframe = -1;
+			skins[i].range0start = transtype->Meta.GetMetaInt (APMETA_ColorRange) & 0xff;
+			skins[i].range0end = transtype->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
 
-			if (spr == 1)
+			remove = true;
+			for (j = 0; j < PlayerClasses.Size (); j++)
 			{
-				if (crouchname !=0 && crouchname != intname)
+				const PClass *type = PlayerClasses[j].Type;
+
+				if (type->IsDescendantOf (basetype) &&
+					GetDefaultByType (type)->SpawnState->sprite.index == GetDefaultByType (basetype)->SpawnState->sprite.index &&
+					type->Meta.GetMetaInt (APMETA_ColorRange) == basetype->Meta.GetMetaInt (APMETA_ColorRange))
 				{
-					intname = crouchname;
+					PlayerClasses[j].Skins.Push ((int)i);
+					remove = false;
 				}
-				else
+			}
+		}
+
+		if (!remove)
+		{
+			if (skins[i].name[0] == 0)
+				sprintf (skins[i].name, "skin%d", i);
+
+			// Now collect the sprite frames for this skin. If the sprite name was not
+			// specified, use whatever immediately follows the specifier lump.
+			if (intname == 0)
+			{
+				char name[9];
+				Wads.GetLumpName (name, base+1);
+				intname = *(DWORD *)name;
+			}
+
+			int basens = Wads.GetLumpNamespace(base);
+
+			for(int spr = 0; spr<2; spr++)
+			{
+				memset (sprtemp, 0xFFFF, sizeof(sprtemp));
+				for (k = 0; k < MAX_SPRITE_FRAMES; ++k)
 				{
-					skins[i].crouchsprite = -1;
+					sprtemp[k].Flip = 0;
+				}
+				maxframe = -1;
+
+				if (spr == 1)
+				{
+					if (crouchname !=0 && crouchname != intname)
+					{
+						intname = crouchname;
+					}
+					else
+					{
+						skins[i].crouchsprite = -1;
+						break;
+					}
+				}
+
+				for (k = base + 1; Wads.GetLumpNamespace(k) == basens; k++)
+				{
+					char lname[9];
+					Wads.GetLumpName (lname, k);
+					if (*(DWORD *)lname == intname)
+					{
+						int picnum = TexMan.CreateTexture(k, FTexture::TEX_SkinSprite);
+						R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false);
+
+						if (lname[6])
+							R_InstallSpriteLump (picnum, lname[6] - 'A', lname[7], true);
+					}
+				}
+
+				if (spr == 0 && maxframe <= 0)
+				{
+					Printf (PRINT_BOLD, "Skin %s (#%d) has no frames. Removing.\n", skins[i].name, i);
+					remove = true;
 					break;
 				}
+
+				Wads.GetLumpName (temp.name, base+1);
+				temp.name[4] = 0;
+				int sprno = (int)sprites.Push (temp);
+				if (spr==0)	skins[i].sprite = sprno;
+				else skins[i].crouchsprite = sprno;
+				R_InstallSprite (sprno);
 			}
+		}
 
-			for (k = base + 1; Wads.GetLumpNamespace(k) == basens; k++)
-			{
-				char lname[9];
-				Wads.GetLumpName (lname, k);
-				if (*(DWORD *)lname == intname)
-				{
-					int picnum = TexMan.CreateTexture(k, FTexture::TEX_SkinSprite);
-					R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false);
-
-					if (lname[6])
-						R_InstallSpriteLump (picnum, lname[6] - 'A', lname[7], true);
-				}
-			}
-
-			if (spr == 0 && maxframe <= 0)
-			{
-				Printf (PRINT_BOLD, "Skin %s (#%d) has no frames. Removing.\n", skins[i].name, i);
-				if (i < numskins-1)
-					memmove (&skins[i], &skins[i+1], sizeof(skins[0])*(numskins-i-1));
-				i--;
-				continue;
-			}
-
-			Wads.GetLumpName (temp.name, base+1);
-			temp.name[4] = 0;
-			int sprno = (int)sprites.Push (temp);
-			if (spr==0)	skins[i].sprite = sprno;
-			else skins[i].crouchsprite = sprno;
-			R_InstallSprite (sprno);
+		if (remove)
+		{
+			if (i < numskins-1)
+				memmove (&skins[i], &skins[i+1], sizeof(skins[0])*(numskins-i-1));
+			i--;
+			continue;
 		}
 
 		// Register any sounds this skin provides
@@ -649,7 +751,7 @@ void R_InitSkins (void)
 		}
 	}
 
-	if (numskins > 1)
+	if (numskins > PlayerClasses.Size ())
 	{ // The sound table may have changed, so rehash it.
 		S_HashSounds ();
 		S_ShrinkPlayerSoundLists ();
@@ -657,17 +759,17 @@ void R_InitSkins (void)
 }
 
 // [RH] Find a skin by name
-int R_FindSkin (const char *name)
+int R_FindSkin (const char *name, int pclass)
 {
 	int min, max, mid;
 	int lexx;
 
 	if (stricmp ("base", name) == 0)
 	{
-		return 0;
+		return pclass;
 	}
 
-	min = 1;
+	min = PlayerClasses.Size ();
 	max = (int)numskins-1;
 
 	while (min <= max)
@@ -675,13 +777,22 @@ int R_FindSkin (const char *name)
 		mid = (min + max)/2;
 		lexx = strnicmp (skins[mid].name, name, 16);
 		if (lexx == 0)
-			return mid;
+		{
+			if (PlayerClasses[pclass].CheckSkin (mid))
+				return mid;
+			else
+				return pclass;
+		}
 		else if (lexx < 0)
+		{
 			min = mid + 1;
+		}
 		else
+		{
 			max = mid - 1;
+		}
 	}
-	return 0;
+	return pclass;
 }
 
 // [RH] List the names of all installed skins
@@ -689,8 +800,8 @@ CCMD (skins)
 {
 	int i;
 
-	for (i = 0; i < (int)numskins; i++)
-		Printf ("% 3d %s\n", i, skins[i].name);
+	for (i = PlayerClasses.Size ()-1; i < (int)numskins; i++)
+		Printf ("% 3d %s\n", i-PlayerClasses.Size ()+1, skins[i].name);
 }
 
 //
@@ -726,27 +837,10 @@ static void R_CreateSkinTranslation (const char *palname)
 //
 void R_InitSprites ()
 {
-	byte rangestart, rangeend;
 	int lump, lastlump;
-	unsigned int i;
+	unsigned int i, j;
 
 	clearbufshort (zeroarray, MAXWIDTH, 0);
-
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		rangestart = 112;
-		rangeend = 127;
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		rangestart = 225;
-		rangeend = 240;
-	}
-	else // Hexen - Not used, because we don't do skins with Hexen
-	{
-		rangestart = 146;
-		rangeend = 163;
-	}
 
 	// [RH] Create a standard translation to map skins between Heretic and Doom
 	if (gameinfo.gametype == GAME_Doom)
@@ -759,14 +853,11 @@ void R_InitSprites ()
 	}
 
 	// [RH] Count the number of skins.
-	numskins = 1;
+	numskins = PlayerClasses.Size ();
 	lastlump = 0;
-	if (gameinfo.gametype != GAME_Hexen)
+	while ((lump = Wads.FindLump ("S_SKIN", &lastlump, true)) != -1)
 	{
-		while ((lump = Wads.FindLump ("S_SKIN", &lastlump, true)) != -1)
-		{
-			numskins++;
-		}
+		numskins++;
 	}
 
 	// [RH] Do some preliminary setup
@@ -774,44 +865,49 @@ void R_InitSprites ()
 	memset (skins, 0, sizeof(*skins) * numskins);
 	for (i = 0; i < numskins; i++)
 	{ // Assume Doom skin by default
-		skins[i].range0start = 112;
-		skins[i].range0end = 127;
-		skins[i].scale = 63;
-		skins[i].game = GAME_Doom;
+		const PClass *type = PlayerClasses[0].Type;
+		skins[i].range0start = type->Meta.GetMetaInt (APMETA_ColorRange) & 255;
+		skins[i].range0end = type->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
+		skins[i].scale = GetDefaultByType (type)->xscale;
 	}
 
 	R_InitSpriteDefs ();
 	NumStdSprites = sprites.Size();
-	if (gameinfo.gametype != GAME_Hexen)
-	{
-		R_InitSkins ();		// [RH] Finish loading skin data
-	}
+	R_InitSkins ();		// [RH] Finish loading skin data
 
 	// [RH] Set up base skin
-	strcpy (skins[0].name, "Base");
-	skins[0].face[0] = 'S';
-	skins[0].face[1] = 'T';
-	skins[0].face[2] = 'F';
-	skins[0].namespc = ns_global;
-	skins[0].scale = GetDefaultByName ("DoomPlayer")->xscale;
-	skins[0].game = gameinfo.gametype;
-	if (gameinfo.gametype == GAME_Heretic)
+	// [GRB] Each player class has its own base skin
+	for (i = 0; i < PlayerClasses.Size (); i++)
 	{
-		skins[0].range0start = 225;
-		skins[0].range0end = 240;
-	}
+		const PClass *basetype = PlayerClasses[i].Type;
 
-	for (i = 0; i < sprites.Size (); i++)
-	{
-		if (memcmp (sprites[i].name, deh.PlayerSprite, 4) == 0)
+		strcpy (skins[i].name, "Base");
+		skins[i].face[0] = 'S';
+		skins[i].face[1] = 'T';
+		skins[i].face[2] = 'F';
+		skins[i].range0start = basetype->Meta.GetMetaInt (APMETA_ColorRange) & 255;
+		skins[i].range0end = basetype->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
+		skins[i].scale = GetDefaultByType (basetype)->xscale;
+		skins[i].sprite = GetDefaultByType (basetype)->SpawnState->sprite.index;
+		skins[i].namespc = ns_global;
+
+		PlayerClasses[i].Skins.Push (i);
+
+		if (memcmp (sprites[skins[i].sprite].name, "PLAY", 4) == 0)
 		{
-			skins[0].sprite = (int)i;
-			break;
+			for (j = 0; j < sprites.Size (); j++)
+			{
+				if (memcmp (sprites[j].name, deh.PlayerSprite, 4) == 0)
+				{
+					skins[i].sprite = (int)j;
+					break;
+				}
+			}
 		}
 	}
 
 	// [RH] Sort the skins, but leave base as skin 0
-	qsort (&skins[1], numskins-1, sizeof(FPlayerSkin), skinsorter);
+	qsort (&skins[PlayerClasses.Size ()], numskins-PlayerClasses.Size (), sizeof(FPlayerSkin), skinsorter);
 }
 
 void R_DeinitSprites()

@@ -48,6 +48,9 @@
 #include "f_finale.h"
 #include "c_console.h"
 #include "doomdef.h"
+#include "c_dispatch.h"
+#include "tarray.h"
+#include "thingdef.h"
 
 static FRandom pr_healradius ("HealRadius");
 
@@ -59,6 +62,133 @@ CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 static player_t PredictionPlayerBackup;
 static BYTE PredictionActorBackup[sizeof(AActor)];
 static TArray<sector_t *> PredictionTouchingSectorsBackup;
+
+// [GRB] Custom player classes
+TArray<FPlayerClass> PlayerClasses;
+
+FPlayerClass::FPlayerClass ()
+{
+	Type = NULL;
+	Flags = 0;
+}
+
+FPlayerClass::FPlayerClass (const FPlayerClass &other)
+{
+	Type = other.Type;
+	Flags = other.Flags;
+	Skins = other.Skins;
+}
+
+FPlayerClass::~FPlayerClass ()
+{
+}
+
+bool FPlayerClass::CheckSkin (int skin)
+{
+	for (int i = 0; i < Skins.Size (); i++)
+	{
+		if (Skins[i] == skin)
+			return true;
+	}
+
+	return false;
+}
+
+void SetupPlayerClasses ()
+{
+	FPlayerClass newclass;
+
+	newclass.Flags = 0;
+
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		newclass.Type = PClass::FindClass (NAME_DoomPlayer);
+		PlayerClasses.Push (newclass);
+	}
+	else if (gameinfo.gametype == GAME_Heretic)
+	{
+		newclass.Type = PClass::FindClass (NAME_HereticPlayer);
+		PlayerClasses.Push (newclass);
+	}
+	else if (gameinfo.gametype == GAME_Hexen)
+	{
+		newclass.Type = PClass::FindClass (NAME_FighterPlayer);
+		PlayerClasses.Push (newclass);
+		newclass.Type = PClass::FindClass (NAME_ClericPlayer);
+		PlayerClasses.Push (newclass);
+		newclass.Type = PClass::FindClass (NAME_MagePlayer);
+		PlayerClasses.Push (newclass);
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		newclass.Type = PClass::FindClass (NAME_StrifePlayer);
+		PlayerClasses.Push (newclass);
+	}
+}
+
+CCMD (clearplayerclasses)
+{
+	if (ParsingKeyConf)
+	{
+		PlayerClasses.Clear ();
+	}
+}
+
+CCMD (addplayerclass)
+{
+	if (ParsingKeyConf && argv.argc () > 1)
+	{
+		const PClass *ti = PClass::FindClass (argv[1]);
+
+		if (!ti)
+		{
+			I_FatalError ("Unknown player class '%s'", argv[1]);
+		}
+		else if (!ti->IsDescendantOf (RUNTIME_CLASS (APlayerPawn)))
+		{
+			I_FatalError ("Invalid player class '%s'", argv[1]);
+		}
+		else if (ti->Meta.GetMetaString (APMETA_DisplayName) == NULL)
+		{
+			I_FatalError ("Missing displayname for player class '%s'", argv[1]);
+		}
+		else if (ti->ActorInfo->GameFilter == GAME_Any ||
+			gameinfo.gametype & ti->ActorInfo->GameFilter)
+		{
+			FPlayerClass newclass;
+
+			newclass.Type = ti;
+			newclass.Flags = 0;
+
+			int arg = 2;
+			while (arg < argv.argc ())
+			{
+				if (!stricmp (argv[arg], "nomenu"))
+				{
+					newclass.Flags |= PCF_NOMENU;
+				}
+				else
+				{
+					I_FatalError ("Unknown flag '%s' for player class '%s'", argv[arg], argv[1]);
+				}
+
+				arg++;
+			}
+
+			PlayerClasses.Push (newclass);
+		}
+	}
+}
+
+CCMD (playerclasses)
+{
+	for (int i = 0; i < PlayerClasses.Size (); i++)
+	{
+		Printf ("% 3d %s\n", i,
+			PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName));
+	}
+}
+
 
 //
 // Movement.
@@ -79,7 +209,6 @@ player_s::player_s()
   FOV(0),
   viewz(0),
   viewheight(0),
-  defaultviewheight(0),
   deltaviewheight(0),
   bob(0),
   momx(0),
@@ -146,7 +275,6 @@ player_s::player_s()
   allround(0),
   oldx(0),
   oldy(0),
-  skin(0),
   BlendR(0),
   BlendG(0),
   BlendB(0),
@@ -224,28 +352,94 @@ void player_s::SetLogText (const char *text)
 	LogText = text;
 }
 
+int player_t::GetSpawnClass()
+{
+	const PClass * type = PlayerClasses[players[consoleplayer].CurrentPlayerClass].Type;
+	return static_cast<APlayerPawn*>(GetDefaultByType(type))->SpawnMask;
+}
+
 //===========================================================================
 //
 // APlayerPawn
 //
 //===========================================================================
 
-IMPLEMENT_ABSTRACT_ACTOR (APlayerPawn)
+IMPLEMENT_STATELESS_ACTOR (APlayerPawn, Any, -1, 0)
+	PROP_SpawnHealth (100)
+	PROP_RadiusFixed (16)
+	PROP_HeightFixed (56)
+	PROP_Mass (100)
+	PROP_PainChance (255)
+	PROP_SpeedFixed (1)
+	// [GRB]
+	PROP_PlayerPawn_JumpZ (8*FRACUNIT)
+	PROP_PlayerPawn_ViewHeight (41*FRACUNIT)
+	PROP_PlayerPawn_ForwardMove1 (FRACUNIT)
+	PROP_PlayerPawn_ForwardMove2 (FRACUNIT)
+	PROP_PlayerPawn_SideMove1 (FRACUNIT)
+	PROP_PlayerPawn_SideMove2 (FRACUNIT)
+	PROP_PlayerPawn_ColorRange (0, 0)
+	PROP_PlayerPawn_SoundClass ("player")
+END_DEFAULTS
+
 IMPLEMENT_ABSTRACT_ACTOR (APlayerChunk)
 
 void APlayerPawn::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 
-	arc << JumpZ;
+	arc << JumpZ
+		<< MaxHealth
+		<< SpawnMask
+		<< ForwardMove1
+		<< ForwardMove2
+		<< SideMove1
+		<< SideMove2
+		<< ScoreIcon;
 }
+
+//===========================================================================
+//
+// APlayerPawn :: BeginPlay
+//
+//===========================================================================
 
 void APlayerPawn::BeginPlay ()
 {
 	Super::BeginPlay ();
 	ChangeStatNum (STAT_PLAYER);
-}
 
+	// Check whether a PWADs normal sprite is to be combined with the base WADs
+	// crouch sprite. In such a case the sprites normally don't match and it is
+	// best to disable the crouch sprite.
+	if (crouchsprite > 0)
+	{
+		// This assumes that player sprites always exist in rotated form and
+		// that the front view is always a separate sprite. So far this is
+		// true for anything that exists.
+		FString normspritename = sprites[SpawnState->sprite.index].name;
+		FString crouchspritename = sprites[crouchsprite].name;
+
+		int spritenorm = Wads.CheckNumForName(normspritename + "A1", ns_sprites);
+		int spritecrouch = Wads.CheckNumForName(crouchspritename + "A1", ns_sprites);
+		
+		if (spritenorm==-1 || spritecrouch ==-1) 
+		{
+			// Sprites do not exist so it is best to disable the crouch sprite.
+			crouchsprite = 0;
+			return;
+		}
+	
+		int wadnorm = Wads.GetLumpFile(spritenorm);
+		int wadcrouch = Wads.GetLumpFile(spritenorm);
+		
+		if (wadnorm > FWadCollection::IWAD_FILENUM && wadcrouch <= FWadCollection::IWAD_FILENUM) 
+		{
+			// Question: Add an option / disable crouching or do what?
+			crouchsprite = 0;
+		}
+	}
+}
 
 //===========================================================================
 //
@@ -591,20 +785,48 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 	PickNewWeapon (NULL);
 }
 
+//===========================================================================
+//
+// APlayerPawn :: GetSoundClass
+//
+//===========================================================================
+
 const char *APlayerPawn::GetSoundClass ()
 {
 	if (player != NULL &&
-		player->userinfo.skin != 0 &&
+		player->userinfo.skin >= PlayerClasses.Size () &&
 		(unsigned)player->userinfo.skin < numskins)
 	{
 		return skins[player->userinfo.skin].name;
 	}
-	return "player";
+
+	// [GRB]
+	const char *sclass = GetClass ()->Meta.GetMetaString (APMETA_SoundClass);
+	return sclass != NULL ? sclass : "player";
 }
+
+//===========================================================================
+//
+// APlayerPawn :: GetMaxHealth
+//
+// only needed because Boom screwed up Dehacked.
+//
+//===========================================================================
+
+int APlayerPawn::GetMaxHealth() const 
+{ 
+	return MaxHealth > 0? MaxHealth : ((i_compatflags&COMPATF_DEHHEALTH)? 100 : deh.MaxHealth);
+}
+
+//===========================================================================
+//
+// Animations
+//
+//===========================================================================
 
 void APlayerPawn::PlayIdle ()
 {
-	if (state >= SeeState && state < MissileState)
+	if (InStateSequence(state, SeeState))
 		SetState (SpawnState);
 }
 
@@ -628,8 +850,55 @@ void APlayerPawn::ThrowPoisonBag ()
 {
 }
 
+//===========================================================================
+//
+// APlayerPawn :: GiveDefaultInventory
+//
+//===========================================================================
+
 void APlayerPawn::GiveDefaultInventory ()
 {
+	// [GRB] Give inventory specified in DECORATE
+	player->health = GetDefault ()->health;
+
+	FDropItem *di = GetDropItems(this);
+
+	while (di)
+	{
+		const PClass *ti = PClass::FindClass (di->Name);
+		if (ti)
+		{
+			AInventory *item = FindInventory (ti);
+			if (item != NULL)
+			{
+				item->Amount = clamp<int>(
+					item->Amount + (di->amount ? di->amount : ((AInventory *)item->GetDefault ())->Amount),
+					0, item->MaxAmount);
+			}
+			else
+			{
+				AInventory *item = static_cast<AInventory *>(Spawn (ti, 0,0,0));
+				item->Amount = di->amount;
+				if (item->IsKindOf (RUNTIME_CLASS (AWeapon)))
+				{
+					// To allow better control any weapon is emptied of
+					// ammo before being given to the player.
+					static_cast<AWeapon*>(item)->AmmoGive1 =
+					static_cast<AWeapon*>(item)->AmmoGive2 = 0;
+				}
+				if (!item->TryPickup(this))
+				{
+					item->Destroy ();
+					item = NULL;
+				}
+			}
+			if (item != NULL && item->IsKindOf (RUNTIME_CLASS (AWeapon)))
+			{
+				player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
+			}
+		}
+		di = di->Next;
+	}
 }
 
 void APlayerPawn::MorphPlayerThink ()
@@ -640,10 +909,11 @@ void APlayerPawn::ActivateMorphWeapon ()
 {
 }
 
-fixed_t APlayerPawn::GetJumpZ ()
-{
-	return 8*FRACUNIT;
-}
+//===========================================================================
+//
+// APlayerPawn :: Die
+//
+//===========================================================================
 
 void APlayerPawn::Die (AActor *source, AActor *inflictor)
 {
@@ -700,8 +970,32 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 	}
 }
 
+//===========================================================================
+//
+// APlayerPawn :: TweakSpeeds
+//
+//===========================================================================
+
 void APlayerPawn::TweakSpeeds (int &forward, int &side)
 {
+	// [GRB]
+	if ((unsigned int)(forward + 0x31ff) < 0x63ff)
+	{
+		forward = FixedMul (forward, ForwardMove1);
+	}
+	else
+	{
+		forward = FixedMul (forward, ForwardMove2);
+	}
+	if ((unsigned int)(side + 0x27ff) < 0x4fff)
+	{
+		side = FixedMul (side, SideMove1);
+	}
+	else
+	{
+		side = FixedMul (side, SideMove2);
+	}
+
 	if ((player->Powers & PW_SPEED) && !player->morphTics)
 	{ // Adjust for a player with a speed artifact
 		forward = (3*forward)>>1;
@@ -753,8 +1047,7 @@ void P_CheckPlayerSprites()
 				defyscale = skins[player->userinfo.skin].scale;
 			}
 			
-			// FIXME: Handle skins
-			
+			// Set the crouch sprite
 			if (player->crouchfactor < FRACUNIT*3/4)
 			{
 
@@ -783,7 +1076,7 @@ void P_CheckPlayerSprites()
 					mo->yscale = player->crouchfactor < FRACUNIT*3/4 ? defyscale/2 : defyscale;
 				}
 			}
-			else
+			else	// Set the normal sprite
 			{
 				if (mo->sprite == mo->crouchsprite)
 				{
@@ -901,7 +1194,7 @@ void P_CalcHeight (player_t *player)
 		}
 	}
 
-	fixed_t defaultviewheight = player->defaultviewheight + player->crouchviewdelta;
+	fixed_t defaultviewheight = player->mo->ViewHeight + player->crouchviewdelta;
 
 	if (player->cheats & CF_NOMOMENTUM)
 	{
@@ -959,12 +1252,9 @@ void P_CalcHeight (player_t *player)
 
 	if (player->morphTics)
 	{
-		player->viewz = player->mo->z + player->viewheight - (20 * FRACUNIT);
+		bob = 0;
 	}
-	else
-	{
-		player->viewz = player->mo->z + player->viewheight + bob;
-	}
+	player->viewz = player->mo->z + player->viewheight + bob;
 	if (player->mo->floorclip && player->playerstate != PST_DEAD
 		&& player->mo->z <= player->mo->floorz)
 	{
@@ -1320,8 +1610,8 @@ void P_CrouchMove(player_t * player, int direction)
 	player->mo->height = savedheight;
 
 	player->crouchfactor = clamp<fixed_t>(player->crouchfactor, FRACUNIT/2, FRACUNIT);
-	player->viewheight = FixedMul(player->defaultviewheight, player->crouchfactor);
-	player->crouchviewdelta = player->viewheight - player->defaultviewheight;
+	player->viewheight = FixedMul(player->mo->ViewHeight, player->crouchfactor);
+	player->crouchviewdelta = player->viewheight - player->mo->ViewHeight;
 }
 
 //----------------------------------------------------------------------------
@@ -1448,7 +1738,7 @@ void P_PlayerThink (player_t *player)
 		player->Uncrouch();
 	}
 
-	player->crouchoffset = -FixedMul(player->defaultviewheight, (FRACUNIT - player->crouchfactor));
+	player->crouchoffset = -FixedMul(player->mo->ViewHeight, (FRACUNIT - player->crouchfactor));
 
 
 	if (player->playerstate == PST_DEAD)
@@ -1536,8 +1826,7 @@ void P_PlayerThink (player_t *player)
 			}
 			else if (!(dmflags & DF_NO_JUMP) && onground && !player->jumpTics)
 			{
-				fixed_t JumpZ = (player->mo->JumpZ > 0 ? player->mo->JumpZ : player->mo->GetJumpZ ());	// [GRB]
-				player->mo->momz += JumpZ*35/TICRATE;
+				player->mo->momz += player->mo->JumpZ * 35 / TICRATE;
 				S_Sound (player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
 				player->mo->flags2 &= ~MF2_ONMOBJ;
 				player->jumpTics = 18*TICRATE/35;
@@ -1792,7 +2081,6 @@ void player_s::Serialize (FArchive &arc)
 		<< DesiredFOV << FOV
 		<< viewz
 		<< viewheight
-		<< defaultviewheight
 		<< deltaviewheight
 		<< bob
 		<< momx
@@ -1821,13 +2109,8 @@ void player_s::Serialize (FArchive &arc)
 		<< poisoner
 		<< attacker
 		<< extralight
-		<< fixedcolormap;
-	if (SaveVersion < 233)
-	{
-		int xviewshift;
-		arc << xviewshift;
-	}
-	arc << morphTics
+		<< fixedcolormap
+		<< morphTics
 		<< PremorphWeapon
 		<< chickenPeck
 		<< jumpTics

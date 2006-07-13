@@ -83,11 +83,6 @@ enum
 	INFO_PlayerClass,
 };
 
-const char *PlayerClassNames[4] =
-{
-	"Random", "Fighter", "Cleric", "Mage"
-};
-
 const char *TeamNames[NUM_TEAMS] =
 {
 	"Red", "Blue", "Green", "Gold"
@@ -125,16 +120,25 @@ int D_GenderToInt (const char *gender)
 		return GENDER_MALE;
 }
 
-static int D_PlayerClassToInt (const char *classname)
+int D_PlayerClassToInt (const char *classname)
 {
-	for (int i = 1; i <= 3; ++i)
+	if (PlayerClasses.Size () > 1)
 	{
-		if (stricmp (PlayerClassNames[i], classname) == 0)
+		for (unsigned int i = 0; i < PlayerClasses.Size (); ++i)
 		{
-			return i-1;
+			const PClass *type = PlayerClasses[i].Type;
+
+			if (stricmp (type->Meta.GetMetaString (APMETA_DisplayName), classname) == 0)
+			{
+				return i;
+			}
 		}
+		return -1;
 	}
-	return -1;
+	else
+	{
+		return 0;
+	}
 }
 
 void D_GetPlayerColor (int player, float *h, float *s, float *v)
@@ -319,7 +323,7 @@ void D_SetupUserInfo ()
 		coninfo->aimdist = abs ((int)(autoaim * (float)ANGLE_1));
 	}
 	coninfo->color = color;
-	coninfo->skin = R_FindSkin (skin);
+	coninfo->skin = R_FindSkin (skin, 0);
 	coninfo->gender = D_GenderToInt (gender);
 	coninfo->neverswitch = neverswitchonpickup;
 	coninfo->MoveBob = (fixed_t)(65536.f * movebob);
@@ -494,6 +498,8 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 	{
 		userinfo_t *info = &players[i].userinfo;
 
+		const PClass *type = PlayerClasses[info->PlayerClass].Type;
+
 		if (!compact)
 		{
 			sprintf (*((char **)stream),
@@ -517,7 +523,8 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 					 info->neverswitch,
 					 (float)(info->MoveBob) / 65536.f,
 					 (float)(info->StillBob) / 65536.f,
-					 PlayerClassNames[info->PlayerClass+1]
+					 info->PlayerClass == -1 ? "Random" :
+						type->Meta.GetMetaString (APMETA_DisplayName)
 					);
 		}
 		else
@@ -545,7 +552,8 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 				info->neverswitch,
 				(float)(info->MoveBob) / 65536.f,
 				(float)(info->StillBob) / 65536.f,
-				PlayerClassNames[info->PlayerClass+1]
+				info->PlayerClass == -1 ? "Random" :
+					type->Meta.GetMetaString (APMETA_DisplayName)
 			);
 		}
 	}
@@ -647,24 +655,20 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 				break;
 
 			case INFO_Skin:
-				info->skin = R_FindSkin (value);
-				if (gameinfo.gametype != GAME_Hexen)
+				info->skin = R_FindSkin (value, players[i].CurrentPlayerClass);
+				if (players[i].mo != NULL)
 				{
-					if (players[i].mo != NULL && gameinfo.gametype != GAME_Hexen)
-					{
-						if (players[i].cls != NULL &&
-							players[i].mo->state->sprite.index ==
-							GetDefaultByType (players[i].cls)->SpawnState->sprite.index)
-						{ // Only change the sprite if the player is using a standard one
-							players[i].mo->sprite = skins[info->skin].sprite;
-							players[i].mo->xscale = players[i].mo->yscale = skins[info->skin].scale;
-						}
+					if (players[i].cls != NULL &&
+						players[i].mo->state->sprite.index ==
+						GetDefaultByType (players[i].cls)->SpawnState->sprite.index)
+					{ // Only change the sprite if the player is using a standard one
+						players[i].mo->sprite = skins[info->skin].sprite;
+						players[i].mo->xscale = players[i].mo->yscale = skins[info->skin].scale;
 					}
-					players[i].skin = &skins[info->skin];
-					// Rebuild translation in case the new skin uses a different range
-					// than the old one.
-					R_BuildPlayerTranslation (i);
 				}
+				// Rebuild translation in case the new skin uses a different range
+				// than the old one.
+				R_BuildPlayerTranslation (i);
 				if (StatusBar != NULL && i == StatusBar->GetPlayer())
 				{
 					StatusBar->SetFace (&skins[info->skin]);

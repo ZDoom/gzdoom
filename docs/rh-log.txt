@@ -1,3 +1,10 @@
+July 13, 2006 (Changes by Graf Zahl)
+- Generalized Hexen's class-based spawning to be a property of the player class
+  so now it is available in all games.
+- Replaced the call to A_FlameSnd in the HereticPlayer's burn death sequence
+  with A_FireScream and defined *burndeath for Heretic.
+- Added Grubber's custom player class support.
+
 July 12, 2006
 - Changed decorate replacement to be opt-in instead of opt-out. This allows for
   greater flexibility in what can be replaced (replaced actors need not be ancestors

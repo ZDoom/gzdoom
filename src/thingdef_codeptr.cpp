@@ -1658,3 +1658,19 @@ void A_Burst (AActor *actor)
    actor->Destroy ();
 }
 
+//===========================================================================
+//
+// A_CheckFloor
+// [GRB] Jumps if actor is standing on floor
+//
+//===========================================================================
+void A_CheckFloor (AActor *self)
+{
+	FState *CallingState;
+	int index = CheckIndex (1, &CallingState);
+
+	if (self->z <= self->floorz && index >= 0)
+	{
+		DoJump (self, CallingState, StateParameters[index]);
+	}
+}

@@ -52,6 +52,7 @@
 #include "a_action.h"
 #include "a_keys.h"
 #include "p_conversation.h"
+#include "thingdef.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -394,9 +395,13 @@ void AActor::Serialize (FArchive &arc)
 		SetShade (alphacolor);
 		if (player)
 		{
-			if (playeringame[player - players])
+			if (playeringame[player - players] && 
+				player->cls != NULL &&
+				state->sprite.index == 
+				GetDefaultByType (player->cls)->SpawnState->sprite.index)
 			{ // Give player back the skin
-				player->skin = &skins[player->userinfo.skin];
+				sprite = skins[player->userinfo.skin].sprite;
+				xscale = yscale = skins[player->userinfo.skin].scale;
 			}
 			if (Speed == 0)
 			{
@@ -3327,22 +3332,9 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 
 	if (p->cls == NULL)
 	{
-		p->CurrentPlayerClass = 0;
-		if (gameinfo.gametype == GAME_Doom)
+		// [GRB] Pick a class from player class list
+		if (PlayerClasses.Size () > 1)
 		{
-			p->cls = PClass::FindClass (NAME_DoomPlayer);
-		}
-		else if (gameinfo.gametype == GAME_Heretic)
-		{
-			p->cls = PClass::FindClass (NAME_HereticPlayer);
-		}
-		else if (gameinfo.gametype == GAME_Strife)
-		{
-			p->cls = PClass::FindClass (NAME_StrifePlayer);
-		}
-		else
-		{
-			static const ENamedName classes[3] = { NAME_FighterPlayer, NAME_ClericPlayer, NAME_MagePlayer };
 			int type;
 
 			if (!deathmatch || !multiplayer)
@@ -3354,12 +3346,16 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 				type = p->userinfo.PlayerClass;
 				if (type < 0)
 				{
-					type = pr_multiclasschoice() % 3;
+					type = pr_multiclasschoice() % PlayerClasses.Size ();
 				}
 			}
 			p->CurrentPlayerClass = type;
-			p->cls = PClass::FindClass (classes[type]);
 		}
+		else
+		{
+			p->CurrentPlayerClass = 0;
+		}
+		p->cls = PlayerClasses[p->CurrentPlayerClass].Type;
 	}
 
 	mobj = static_cast<APlayerPawn *>
@@ -3380,6 +3376,10 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 		mobj->ObtainInventory (oldactor);
 	}
 
+	// [GRB] Reset skin
+	p->userinfo.skin = R_FindSkin (skins[p->userinfo.skin].name, p->CurrentPlayerClass);
+	StatusBar->SetFace (&skins[p->userinfo.skin]);
+
 	// [RH] Be sure the player has the right translation
 	R_BuildPlayerTranslation (playernum);
 
@@ -3394,12 +3394,8 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
     mobj->id = playernum;
 
 	// [RH] Set player sprite based on skin
-	p->skin = &skins[p->userinfo.skin];
-	if (gameinfo.gametype != GAME_Hexen)
-	{
-		mobj->sprite = p->skin->sprite;
-		mobj->xscale = mobj->yscale = p->skin->scale;
-	}
+	mobj->sprite = skins[p->userinfo.skin].sprite;
+	mobj->xscale = mobj->yscale = skins[p->userinfo.skin].scale;
 
 	p->DesiredFOV = p->FOV = 90.f;
 	p->camera = p->mo;
@@ -3410,7 +3406,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 	p->morphTics = 0;
 	p->extralight = 0;
 	p->fixedcolormap = 0;
-	p->viewheight = p->defaultviewheight = gameinfo.gametype == GAME_Hexen? 48*FRACUNIT : 41*FRACUNIT;
+	p->viewheight = mobj->ViewHeight;
 	p->inconsistant = 0;
 	p->attacker = NULL;
 	p->spreecount = 0;
@@ -3505,7 +3501,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	{
 		MTF_FIGHTER,
 		MTF_CLERIC,
-		MTF_MAGE
+		MTF_MAGE,
 	};
 
 	if (mthing->type == 0 || mthing->type == -1)
@@ -3615,30 +3611,33 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 			return;
 		}
 
-		// Check current character classes with spawn flags
-		if (gameinfo.gametype == GAME_Hexen)
-		{
-			if (!multiplayer)
-			{ // Single player
-				if ((mthing->flags & classFlags[players[consoleplayer].CurrentPlayerClass]) == 0)
-				{ // Not for current class
-					return;
+		// Check class spawn masks. Now with player classes available
+		// this is enabled for all games.
+		if (!multiplayer)
+		{ // Single player
+			int spawnmask = players[consoleplayer].GetSpawnClass();
+			if (spawnmask != 0 && (mthing->flags & spawnmask) == 0)
+			{ // Not for current class
+				return;
+			}
+		}
+		else if (!deathmatch)
+		{ // Cooperative
+			mask = 0;
+			for (int i = 0; i < MAXPLAYERS; i++)
+			{
+				if (playeringame[i])
+				{
+					int spawnmask = players[i].GetSpawnClass();
+					if (spawnmask != 0)
+						mask |= spawnmask;
+					else 
+						mask = -1;
 				}
 			}
-			else if (!deathmatch)
-			{ // Cooperative
-				mask = 0;
-				for (int i = 0; i < MAXPLAYERS; i++)
-				{
-					if (playeringame[i])
-					{
-						mask |= classFlags[players[i].CurrentPlayerClass];
-					}
-				}
-				if ((mthing->flags & mask) == 0)
-				{
-					return;
-				}
+			if (mask != -1 && (mthing->flags & mask) == 0)
+			{
+				return;
 			}
 		}
 	}

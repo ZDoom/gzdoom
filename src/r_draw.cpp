@@ -1599,16 +1599,13 @@ void R_InitTranslationTables ()
 }
 
 // [RH] Create a player's translation table based on a given mid-range color.
-void R_BuildPlayerTranslation (int player)
+// [GRB] Split to 2 functions (because of player setup menu)
+static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *skin, BYTE *table, BYTE *alttable)
 {
-	byte *table = &translationtables[TRANSLATION_Players][player*256];
-	FPlayerSkin *skin = &skins[players[player].userinfo.skin];
-
 	int i;
 	byte start = skin->range0start;
 	byte end = skin->range0end;
 	float r, g, b;
-	float h, s, v;
 	float bases, basev;
 	float sdelta, vdelta;
 	float range;
@@ -1617,67 +1614,68 @@ void R_BuildPlayerTranslation (int player)
 	// for the current game, then this is just an identity translation.
 	// Otherwise, it remaps the colors from the skin's original palette to
 	// the current one.
-	if (skin->game & gameinfo.gametype)
+	if (skin->othergame)
+	{
+		memcpy (table, OtherGameSkinRemap, 256);
+	}
+	else
 	{
 		for (i = 0; i < 256; ++i)
 		{
 			table[i] = i;
 		}
 	}
-	else
-	{
-		memcpy (table, OtherGameSkinRemap, 256);
-	}
+
+	// [GRB] Don't translate skins with color range 0-0 (APlayerPawn default)
+	if (start == 0 && end == 0)
+		return;
 
 	range = (float)(end-start+1);
-
-	D_GetPlayerColor (player, &h, &s, &v);
 
 	bases = s;
 	basev = v;
 
-	if (gameinfo.gametype != GAME_Hexen)
+	if (gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Strife)
 	{
-		if (skin->game == GAME_Doom)
+		// Build player sprite translation
+		s -= 0.23f;
+		v += 0.1f;
+		sdelta = 0.23f / range;
+		vdelta = -0.94112f / range;
+
+		for (i = start; i <= end; i++)
 		{
-			// Build player sprite translation
-			s -= 0.23f;
-			v += 0.1f;
-			sdelta = 0.23f / range;
-			vdelta = -0.94112f / range;
-
-			for (i = start; i <= end; i++)
-			{
-				float uses, usev;
-				uses = clamp (s, 0.f, 1.f);
-				usev = clamp (v, 0.f, 1.f);
-				HSVtoRGB (&r, &g, &b, h, uses, usev);
-				table[i] = ColorMatcher.Pick (
-					clamp ((int)(r * 255.f), 0, 255),
-					clamp ((int)(g * 255.f), 0, 255),
-					clamp ((int)(b * 255.f), 0, 255));
-				s += sdelta;
-				v += vdelta;
-			}
+			float uses, usev;
+			uses = clamp (s, 0.f, 1.f);
+			usev = clamp (v, 0.f, 1.f);
+			HSVtoRGB (&r, &g, &b, h, uses, usev);
+			table[i] = ColorMatcher.Pick (
+				clamp ((int)(r * 255.f), 0, 255),
+				clamp ((int)(g * 255.f), 0, 255),
+				clamp ((int)(b * 255.f), 0, 255));
+			s += sdelta;
+			v += vdelta;
 		}
-		else
-		{ // This is not Doom, so it must be Heretic
-			float vdelta = 0.418916f / range;
+	}
+	else if (gameinfo.gametype == GAME_Heretic)
+	{
+		float vdelta = 0.418916f / range;
 
-			// Build player sprite translation
-			for (i = start; i <= end; i++)
-			{
-				v = vdelta * (float)(i - start) + basev - 0.2352937f;
-				v = clamp (v, 0.f, 1.f);
-				HSVtoRGB (&r, &g, &b, h, s, v);
-				table[i] = ColorMatcher.Pick (
-					clamp ((int)(r * 255.f), 0, 255),
-					clamp ((int)(g * 255.f), 0, 255),
-					clamp ((int)(b * 255.f), 0, 255));
-			}
+		// Build player sprite translation
+		for (i = start; i <= end; i++)
+		{
+			v = vdelta * (float)(i - start) + basev - 0.2352937f;
+			v = clamp (v, 0.f, 1.f);
+			HSVtoRGB (&r, &g, &b, h, s, v);
+			table[i] = ColorMatcher.Pick (
+				clamp ((int)(r * 255.f), 0, 255),
+				clamp ((int)(g * 255.f), 0, 255),
+				clamp ((int)(b * 255.f), 0, 255));
+		}
 
-			// Build rain/lifegem translation
-			table = &translationtables[TRANSLATION_PlayersExtra][player*256];
+		// Build rain/lifegem translation
+		if (alttable)
+		{
 			bases = MIN (bases*1.3f, 1.f);
 			basev = MIN (basev*1.3f, 1.f);
 			for (i = 145; i <= 168; i++)
@@ -1685,31 +1683,19 @@ void R_BuildPlayerTranslation (int player)
 				s = MIN (bases, 0.8965f - 0.0962f*(float)(i - 161));
 				v = MIN (1.f, (0.2102f + 0.0489f*(float)(i - 144)) * basev);
 				HSVtoRGB (&r, &g, &b, h, s, v);
-				table[i] = ColorMatcher.Pick (
+				alttable[i] = ColorMatcher.Pick (
 					clamp ((int)(r * 255.f), 0, 255),
 					clamp ((int)(g * 255.f), 0, 255),
 					clamp ((int)(b * 255.f), 0, 255));
 			}
 		}
 	}
-	else
-	{ // This is Hexen we are playing
-		bool fighter;
-
-		if (players[player].mo != NULL)
-		{
-			fighter = players[player].mo->IsKindOf (RUNTIME_CLASS(AFighterPlayer));
-		}
-		else
-		{
-			fighter = players[player].userinfo.PlayerClass == 0;
-		}
-		if (fighter)
+	else if (gameinfo.gametype == GAME_Hexen)
+	{
+		if (memcmp (sprites[skin->sprite].name, "PLAY", 4) == 0)
 		{ // The fighter is different! He gets a brown hairy loincloth, but the other
 		  // two have blue capes.
 			float vs[9] = { .28f, .32f, .38f, .42f, .47f, .5f, .58f, .71f, .83f };
-			start = 0xf6;
-			end = 0xfe;
 
 			// Build player sprite translation
 			//h = 45.f;
@@ -1717,7 +1703,7 @@ void R_BuildPlayerTranslation (int player)
 
 			for (i = start; i <= end; i++)
 			{
-				HSVtoRGB (&r, &g, &b, h, s, vs[i-start]*basev);
+				HSVtoRGB (&r, &g, &b, h, s, vs[(i-start)*9/(int)range]*basev);
 				table[i] = ColorMatcher.Pick (
 					clamp ((int)(r * 255.f), 0, 255),
 					clamp ((int)(g * 255.f), 0, 255),
@@ -1728,15 +1714,13 @@ void R_BuildPlayerTranslation (int player)
 		{
 			float ms[18] = { .95f, .96f, .89f, .97f, .97f, 1.f, 1.f, 1.f, .97f, .99f, .87f, .77f, .69f, .62f, .57f, .47f, .43f };
 			float mv[18] = { .16f, .19f, .22f, .25f, .31f, .35f, .38f, .41f, .47f, .54f, .60f, .65f, .71f, .77f, .83f, .89f, .94f, 1.f };
-			start = 0x92;
-			end = 0xa3;
 
 			// Build player sprite translation
 			v = MAX (0.1f, v);
 
 			for (i = start; i <= end; i++)
 			{
-				HSVtoRGB (&r, &g, &b, h, ms[i-start]*bases, mv[i-start]*basev);
+				HSVtoRGB (&r, &g, &b, h, ms[(i-start)*18/(int)range]*bases, mv[(i-start)*18/(int)range]*basev);
 				table[i] = ColorMatcher.Pick (
 					clamp ((int)(r * 255.f), 0, 255),
 					clamp ((int)(g * 255.f), 0, 255),
@@ -1745,22 +1729,44 @@ void R_BuildPlayerTranslation (int player)
 		}
 
 		// Build lifegem translation
-		table = &translationtables[TRANSLATION_PlayersExtra][player*256];
-		start = 0xa4;
-		end = 0xb9;
-		for (i = start; i <= end; ++i)
+		if (alttable)
 		{
-			const PalEntry *base = &GPalette.BaseColors[i];
-			float dummy;
+			for (i = 164; i <= 185; ++i)
+			{
+				const PalEntry *base = &GPalette.BaseColors[i];
+				float dummy;
 
-			RGBtoHSV (base->r/255.f, base->g/255.f, base->b/255.f, &dummy, &s, &v);
-			HSVtoRGB (&r, &g, &b, h, s*bases, v*basev);
-			table[i] = ColorMatcher.Pick (
-				clamp ((int)(r * 255.f), 0, 255),
-				clamp ((int)(g * 255.f), 0, 255),
-				clamp ((int)(b * 255.f), 0, 255));
+				RGBtoHSV (base->r/255.f, base->g/255.f, base->b/255.f, &dummy, &s, &v);
+				HSVtoRGB (&r, &g, &b, h, s*bases, v*basev);
+				alttable[i] = ColorMatcher.Pick (
+					clamp ((int)(r * 255.f), 0, 255),
+					clamp ((int)(g * 255.f), 0, 255),
+					clamp ((int)(b * 255.f), 0, 255));
+			}
 		}
 	}
+}
+
+void R_BuildPlayerTranslation (int player)
+{
+	float h, s, v;
+
+	D_GetPlayerColor (player, &h, &s, &v);
+
+	R_CreatePlayerTranslation (h, s, v,
+		&skins[players[player].userinfo.skin],
+		&translationtables[TRANSLATION_Players][player*256],
+		&translationtables[TRANSLATION_PlayersExtra][player*256]);
+}
+
+void R_GetPlayerTranslation (int color, FPlayerSkin *skin, BYTE *table)
+{
+	float h, s, v;
+
+	RGBtoHSV (RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f,
+		&h, &s, &v);
+
+	R_CreatePlayerTranslation (h, s, v, skin, table, NULL);
 }
 
 void R_DrawBorder (int x1, int y1, int x2, int y2)

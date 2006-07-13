@@ -75,9 +75,6 @@ FState ADoomPlayer::States[] =
 	S_NORMAL (PLAY, 'W',	5, NULL 						, &States[S_HTIC_XDIE+8]),
 	S_NORMAL (PLAY, 'X',	5, NULL 						, &States[S_HTIC_XDIE+9]),
 	S_NORMAL (PLAY, 'Y',   -1, NULL							, NULL),
-	
-#define S_CROUCH (S_HTIC_XDIE+10)	// only here so that the crouching sprite is entered into the sprite table.
-	S_NORMAL (PLYC, 'A',   -1, NULL 						, NULL),
 };
 
 IMPLEMENT_ACTOR (ADoomPlayer, Doom, -1, 0)
@@ -97,24 +94,32 @@ IMPLEMENT_ACTOR (ADoomPlayer, Doom, -1, 0)
 	PROP_MissileState (S_PLAY_ATK)
 	PROP_DeathState (S_PLAY_DIE)
 	PROP_XDeathState (S_PLAY_XDIE)
+
+	// [GRB]
+	PROP_PlayerPawn_ColorRange (112, 127)
+	PROP_PlayerPawn_DisplayName ("Marine")
+	PROP_PlayerPawn_CrouchSprite ("PLYC")
 END_DEFAULTS
 
 void ADoomPlayer::GiveDefaultInventory ()
 {
-	AInventory *fist, *pistol, *bullets;
+	Super::GiveDefaultInventory ();
 
-	player->health = deh.StartHealth;		// [RH] Used to be MAXHEALTH
-	health = deh.StartHealth;
-	fist = player->mo->GiveInventoryType (PClass::FindClass ("Fist"));
-	pistol = player->mo->GiveInventoryType (PClass::FindClass ("Pistol"));
-	// Adding the pistol automatically adds bullets
-	bullets = player->mo->FindInventory (PClass::FindClass ("Clip"));
-	if (bullets != NULL)
+	if (!Inventory)
 	{
-		bullets->Amount = deh.StartBullets;		// [RH] Used to be 50
+		AInventory *fist, *pistol, *bullets;
+
+		fist = player->mo->GiveInventoryType (PClass::FindClass ("Fist"));
+		pistol = player->mo->GiveInventoryType (PClass::FindClass ("Pistol"));
+		// Adding the pistol automatically adds bullets
+		bullets = player->mo->FindInventory (PClass::FindClass ("Clip"));
+		if (bullets != NULL)
+		{
+			bullets->Amount = deh.StartBullets;		// [RH] Used to be 50
+		}
+		player->ReadyWeapon = player->PendingWeapon =
+			static_cast<AWeapon *> (deh.StartBullets > 0 ? pistol : fist);
 	}
-	player->ReadyWeapon = player->PendingWeapon =
-		static_cast<AWeapon *> (deh.StartBullets > 0 ? pistol : fist);
 }
 
 void A_FireScream (AActor *self)
@@ -182,30 +187,6 @@ void A_PlayerScream (AActor *self)
 	S_SoundID (self, chan, sound, 1, ATTN_NORM);
 }
 
-AT_GAME_SET(DoomPlayer)
-{
-	// Sets the crouching sprite.
-	// Exception: If the normal sprite is from a PWAD and the crouching sprite from ZDoom.pk3
-	// it is assumed that they don't match and the crouching sprite is disabled.
-	// This code is not executed when the player already has a crouch sprite (set by DECORATE.)
-	if (gameinfo.gametype == GAME_Doom && GetDefault<ADoomPlayer>()->crouchsprite == 0)
-	{
-		int spritenorm = Wads.CheckNumForName("PLAYA1", ns_sprites);
-		int spritecrouch = Wads.CheckNumForName("PLYCA1", ns_sprites);
-		
-		if (spritenorm==-1 || spritecrouch ==-1) return;
-	
-		int wadnorm = Wads.GetLumpFile(spritenorm);
-		int wadcrouch = Wads.GetLumpFile(spritenorm);
-		
-		if (wadnorm > FWadCollection::IWAD_FILENUM && wadcrouch <= FWadCollection::IWAD_FILENUM) 
-		{
-			// Question: Add an option / disable crouching or do what?
-			return;
-		}
-	}
-	GetDefault<ADoomPlayer>()->crouchsprite = ADoomPlayer::States[S_CROUCH].sprite.index;
-}
 
 //==========================================================================
 //
@@ -216,7 +197,7 @@ AT_GAME_SET(DoomPlayer)
 void A_DoomSkinCheck1 (AActor *actor)
 {
 	if (actor->player != NULL &&
-		skins[actor->player->userinfo.skin].game != GAME_Doom)
+		skins[actor->player->userinfo.skin].othergame)
 	{
 		actor->SetState (&ADoomPlayer::States[S_HTIC_DIE]);
 	}
@@ -231,7 +212,7 @@ void A_DoomSkinCheck1 (AActor *actor)
 void A_DoomSkinCheck2 (AActor *actor)
 {
 	if (actor->player != NULL &&
-		skins[actor->player->userinfo.skin].game != GAME_Doom)
+		skins[actor->player->userinfo.skin].othergame)
 	{
 		actor->SetState (&ADoomPlayer::States[S_HTIC_XDIE]);
 	}

@@ -2923,7 +2923,7 @@ static void InitPlayerClasses ()
 			SinglePlayerClass[i] = players[i].userinfo.PlayerClass;
 			if (SinglePlayerClass[i] < 0 || !playeringame[i])
 			{
-				SinglePlayerClass[i] = (pr_classchoice() >> 6) % 3;
+				SinglePlayerClass[i] = (pr_classchoice()) % PlayerClasses.Size ();
 			}
 			players[i].cls = NULL;
 			players[i].CurrentPlayerClass = SinglePlayerClass[i];

@@ -1638,6 +1638,31 @@ FMemLump FWadCollection::ReadLump (int lump)
 
 //==========================================================================
 //
+// SetLumpAddress
+//
+//==========================================================================
+
+void FWadCollection::SetLumpAddress(LumpRecord *l)
+{
+	// This file is inside a zip and has not been opened before.
+	// Position points to the start of the local file header, which we must
+	// read and skip so that we can get to the actual file data.
+	FZipLocalHeader localHeader;
+	int skiplen;
+	int address;
+
+	WadFileRecord *wad = Wads[l->wadnum];
+
+	address = wad->Tell();
+	wad->Seek (l->position, SEEK_SET);
+	wad->Read (&localHeader, sizeof(localHeader));
+	skiplen = LittleShort(localHeader.wFileNameSize) + LittleShort(localHeader.wExtraSize);
+	l->position += sizeof(localHeader) + skiplen;
+	l->flags &= ~LUMPF_NEEDFILESTART;
+}
+
+//==========================================================================
+//
 // OpenLumpNum
 //
 // Returns a copy of the file object for a lump's wad and positions its
@@ -1660,23 +1685,10 @@ FWadLump FWadCollection::OpenLumpNum (int lump)
 
 	if (l->flags & LUMPF_NEEDFILESTART)
 	{
-		// This file is inside a zip and has not been opened before.
-		// Position points to the start of the local file header, which we must
-		// read and skip so that we can get to the actual file data.
-		FZipLocalHeader localHeader;
-		int skiplen;
+		SetLumpAddress(l);
+	}
 
-		wad->Seek (l->position, SEEK_SET);
-		wad->Read (&localHeader, sizeof(localHeader));
-		skiplen = LittleShort(localHeader.wFileNameSize) + LittleShort(localHeader.wExtraSize);
-		l->position += sizeof(localHeader) + skiplen;
-		wad->Seek (skiplen, SEEK_CUR);
-		l->flags &= ~LUMPF_NEEDFILESTART;
-	}
-	else
-	{
-		wad->Seek (l->position, SEEK_SET);
-	}
+	wad->Seek (l->position, SEEK_SET);
 
 	if (l->flags & LUMPF_COMPRESSED)
 	{
@@ -1728,20 +1740,7 @@ FWadLump *FWadCollection::ReopenLumpNum (int lump)
 
 	if (l->flags & LUMPF_NEEDFILESTART)
 	{
-		// This file is inside a zip and has not been opened before.
-		// Position points to the start of the local file header, which we must
-		// read and skip so that we can get to the actual file data.
-		FZipLocalHeader localHeader;
-		int skiplen;
-		int address;
-
-		address = wad->Tell();
-		wad->Seek (l->position, SEEK_SET);
-		wad->Read (&localHeader, sizeof(localHeader));
-		skiplen = LittleShort(localHeader.wFileNameSize) + LittleShort(localHeader.wExtraSize);
-		l->position += sizeof(localHeader) + skiplen;
-		l->flags &= ~LUMPF_NEEDFILESTART;
-		wad->Seek (address, SEEK_SET);
+		SetLumpAddress(l);
 	}
 
 	if (l->flags & LUMPF_COMPRESSED)

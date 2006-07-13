@@ -21,10 +21,31 @@ public:
 	}
 };
 
+
 int ParseExpression (bool _not);
 
 int EvalExpressionI (int id, AActor *self);
 float EvalExpressionF (int id, AActor *self);
 bool EvalExpressionN (int id, AActor *self);
+
+
+struct FDropItem 
+{
+	FName Name;
+	int probability;
+	int amount;
+	FDropItem * Next;
+};
+
+FDropItem *GetDropItems(AActor * actor);
+
+
+// A truly awful hack to get to the state that called an action function
+// without knowing whether it has been called from a weapon or actor.
+extern FState * CallingState;
+int CheckIndex(int paramsize, FState ** pcallstate=NULL);
+
+
+
 
 #endif

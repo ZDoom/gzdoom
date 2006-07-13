@@ -76,7 +76,7 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 	actor->renderflags |= RF_INVISIBLE;
 	p->morphTics = MORPHTICS;
 	p->health = morphed->health;
-	p->mo = static_cast<APlayerPawn *>(morphed);
+	p->mo = morphed;
 	p->momx = p->momy = 0;
 	morphed->ObtainInventory (actor);
 	// Remove all armor
@@ -94,6 +94,7 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 	{
 		p->camera = morphed;
 	}
+	morphed->ScoreIcon = actor->ScoreIcon;	// [GRB]
 	return true;
 }
 
@@ -148,6 +149,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
 
 	player->morphTics = 0;
+	player->viewheight = mo->ViewHeight;
 	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
 	if (level2 != NULL)
 	{

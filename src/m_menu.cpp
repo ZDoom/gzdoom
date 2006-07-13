@@ -84,6 +84,7 @@ struct FSaveGameNode : public Node
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void M_DrawSlider (int x, int y, float min, float max, float cur);
+void R_GetPlayerTranslation (int color, FPlayerSkin *skin, BYTE *table);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -106,6 +107,7 @@ static void M_GameFiles (int choice);
 static void M_ClearSaveStuff ();
 
 static void SCClass (int choice);
+static void M_ChooseClass (int choice);
 
 static void M_FinishReadThis (int choice);
 static void M_QuickSave ();
@@ -129,6 +131,7 @@ static void M_DrawLoad ();
 static void M_DrawSave ();
 static void DrawClassMenu ();
 static void DrawHexenSkillMenu ();
+static void M_DrawClassMenu ();
 
 static void M_DrawHereticMainMenu ();
 static void M_DrawFiles ();
@@ -151,6 +154,7 @@ static void M_PlayerNameChanged (FSaveGameNode *dummy);
 static void M_SlidePlayerRed (int choice);
 static void M_SlidePlayerGreen (int choice);
 static void M_SlidePlayerBlue (int choice);
+static void M_ChangeClass (int choice);
 static void M_ChangeGender (int choice);
 static void M_ChangeSkin (int choice);
 static void M_ChangeAutoAim (int choice);
@@ -179,7 +183,6 @@ bool			OptionsActive;
 
 static char		tempstring[80];
 static char		underscore[2];
-static int		MenuPClass;
 
 static FSaveGameNode *quickSaveSlot;	// NULL = no quicksave slot picked!
 static FSaveGameNode *lastSaveSlot;	// Used for highlighting the most recently used slot in the menu
@@ -219,11 +222,13 @@ static oldmenu_t *TopLevelMenu;		// The main menu everything hangs off of
 static DCanvas	*FireScreen;
 static byte		FireRemap[256];
 
-static char		*genders[3] = { "male", "female", "other" };
-static const PClass *PlayerClass;
-static FState	*PlayerState;
-static int		PlayerTics;
-static int		PlayerRotation;
+static char			*genders[3] = { "male", "female", "other" };
+static FPlayerClass	*PlayerClass;
+static int			PlayerSkin;
+static FState		*PlayerState;
+static int			PlayerTics;
+static int			PlayerRotation;
+static BYTE			PlayerTranslation[256];
 
 static DCanvas			*SavePic;
 static brokenlines_t	*SaveComment;
@@ -295,6 +300,30 @@ static oldmenu_t ClassMenu =
 	4, ClassItems,
 	DrawClassMenu,
 	66, 58,
+	0
+};
+
+//
+// [GRB] CLASS SELECT
+//
+oldmenuitem_t ClassMenuItems[8] =
+{
+	{1,1,0, NULL, M_ChooseClass },
+	{1,1,0, NULL, M_ChooseClass },
+	{1,1,0, NULL, M_ChooseClass },
+	{1,1,0, NULL, M_ChooseClass },
+	{1,1,0, NULL, M_ChooseClass },
+	{1,1,0, NULL, M_ChooseClass },
+	{1,1,0, NULL, M_ChooseClass },
+	{1,1,0, NULL, M_ChooseClass },
+};
+
+oldmenu_t ClassMenuDef =
+{
+	0,
+	ClassMenuItems,
+	M_DrawClassMenu,
+	48,63,
 	0
 };
 
@@ -416,8 +445,9 @@ static oldmenuitem_t PlayerSetupMenu[] =
 	{ 2,0,'r',NULL,M_SlidePlayerRed},
 	{ 2,0,'g',NULL,M_SlidePlayerGreen},
 	{ 2,0,'b',NULL,M_SlidePlayerBlue},
-	{ 2,0,'e',NULL,M_ChangeGender},
+	{ 2,0,'c',NULL,M_ChangeClass},
 	{ 2,0,'s',NULL,M_ChangeSkin},
+	{ 2,0,'e',NULL,M_ChangeGender},
 	{ 2,0,'a',NULL,M_ChangeAutoAim}
 };
 
@@ -1492,7 +1522,7 @@ void M_NewGame(int choice)
 	}
 	epi = 0;
 
-	if (gameinfo.gametype == GAME_Hexen)
+	if (gameinfo.gametype == GAME_Hexen && ClassMenuDef.numitems == 0)
 	{ // [RH] Make the default entry the last class the player used.
 		ClassMenu.lastOn = players[consoleplayer].userinfo.PlayerClass;
 		if (ClassMenu.lastOn < 0)
@@ -1501,27 +1531,54 @@ void M_NewGame(int choice)
 		}
 		M_SetupNextMenu (&ClassMenu);
 	}
-	else
+	// [GRB] Class select
+	else if (ClassMenuDef.numitems > 1)
 	{
-		if (EpiDef.numitems <= 1)
+		ClassMenuDef.lastOn = ClassMenuDef.numitems - 1;
+		if (players[consoleplayer].userinfo.PlayerClass >= 0)
 		{
-			if (EpisodeNoSkill[0])
+			int n = 0;
+			for (int i = 0; i < PlayerClasses.Size () && n < 7; i++)
 			{
-				M_ChooseSkill(2);
+				if (!(PlayerClasses[i].Flags & PCF_NOMENU))
+				{
+					if (i == players[consoleplayer].userinfo.PlayerClass)
+					{
+						ClassMenuDef.lastOn = n;
+						break;
+					}
+					n++;
+				}
 			}
-			else if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-			{
-				M_SetupNextMenu (&NewDef);
-			}
-			else
-			{
-				M_SetupNextMenu (&HereticSkillMenu);
-			}
+		}
+
+		PickPlayerClass ();
+
+		PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
+		PlayerTics = PlayerState->GetTics();
+
+		if (FireScreen == NULL)
+			FireScreen = new DSimpleCanvas (144, 160);
+		M_SetupNextMenu (&ClassMenuDef);
+	}
+	else if (EpiDef.numitems <= 1)
+	{
+		if (EpisodeNoSkill[0])
+		{
+			M_ChooseSkill(2);
+		}
+		else if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+		{
+			M_SetupNextMenu (&NewDef);
 		}
 		else
 		{
-			M_SetupNextMenu (&EpiDef);
+			M_SetupNextMenu (&HereticSkillMenu);
 		}
+	}
+	else
+	{
+		M_SetupNextMenu (&EpiDef);
 	}
 }
 
@@ -1559,6 +1616,53 @@ static void DrawClassMenu(void)
 
 	sprintf (name, walkLumpName[classnum], ((MenuTime >> 3) & 3) + 1);
 	screen->DrawTexture (TexMan[name], 174+24, 8+12, DTA_Clean, true, TAG_DONE);
+}
+
+// [GRB] Class select drawer
+static void M_DrawClassMenu ()
+{
+	int tit_y = 15;
+	
+	if (ClassMenuDef.numitems > 4 && gameinfo.gametype & GAME_Raven)
+		tit_y = 2;
+	
+	screen->DrawText (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
+		160 - BigFont->StringWidth ("CHOOSE CLASS:")/2,
+		tit_y,
+		"CHOOSE CLASS:", DTA_Clean, true, TAG_DONE);
+
+	int x = (200-160)*CleanXfac+(SCREENWIDTH>>1);
+	int y = (ClassMenuDef.y-100)*CleanYfac+(SCREENHEIGHT>>1);
+
+	if (!FireScreen)
+	{
+		screen->Clear (x, y, x + 72 * CleanXfac, y + 80 * CleanYfac-1, 0);
+	}
+	else
+	{
+		FireScreen->Lock ();
+		M_RenderPlayerBackdrop ();
+		M_DrawPlayerBackdrop (x, y - 1);
+		FireScreen->Unlock ();
+	}
+
+	M_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
+
+	spriteframe_t *sprframe = &SpriteFrames[sprites[PlayerState->sprite.index].spriteframes + PlayerState->GetFrame()];
+	int scale = GetDefaultByType (PlayerClass->Type)->xscale + 1;
+
+	if (sprframe != NULL)
+	{
+		FTexture *tex = TexMan(sprframe->Texture[0]);
+		if (tex != NULL && tex->UseType != FTexture::TEX_Null)
+		{
+			screen->DrawTexture (tex,
+				x + 36*CleanXfac, y + 71*CleanYfac,
+				DTA_DestWidth, MulScale6 (tex->GetWidth() * CleanXfac, scale),
+				DTA_DestHeight, MulScale6 (tex->GetHeight() * CleanYfac, scale),
+				TAG_DONE);
+		}
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -1605,10 +1709,6 @@ void M_ChooseSkill (int choice)
 
 	gameskill = choice;
 	gamestate = gamestate == GS_FULLCONSOLE ? GS_HIDECONSOLE : gamestate;
-	if (gameinfo.gametype == GAME_Hexen)
-	{
-		playerclass = PlayerClassNames[MenuPClass+1];
-	}
 	G_DeferedInitNew (EpisodeMaps[epi]);
 	gamestate = gamestate == GS_FULLCONSOLE ? GS_HIDECONSOLE : gamestate;
 	M_ClearMenus ();
@@ -1647,6 +1747,53 @@ void M_Episode (int choice)
 
 //==========================================================================
 //
+// Sets Hexen's skill menu according to player class
+//
+//==========================================================================
+
+static void SetHexenSkillMenu (const char * pclass)
+{
+	if (!stricmp(pclass, "fighter"))
+	{
+		HexenSkillMenu.x = 120;
+		HexenSkillItems[0].name = "SQUIRE";
+		HexenSkillItems[1].name = "KNIGHT";
+		HexenSkillItems[2].name = "WARRIOR";
+		HexenSkillItems[3].name = "BERSERKER";
+		HexenSkillItems[4].name = "TITAN";
+	}
+	else if (!stricmp(pclass, "cleric"))
+	{
+		HexenSkillMenu.x = 116;
+		HexenSkillItems[0].name = "ALTAR BOY";
+		HexenSkillItems[1].name = "ACOLYTE";
+		HexenSkillItems[2].name = "PRIEST";
+		HexenSkillItems[3].name = "CARDINAL";
+		HexenSkillItems[4].name = "POPE";
+	}
+	else if (!stricmp(pclass, "mage"))
+	{
+		HexenSkillMenu.x = 112;
+		HexenSkillItems[0].name = "APPRENTICE";
+		HexenSkillItems[1].name = "ENCHANTER";
+		HexenSkillItems[2].name = "SORCERER";
+		HexenSkillItems[3].name = "WARLOCK";
+		HexenSkillItems[4].name = "ARCHMAGE";
+	}
+	else
+	{
+		// Use Heretic's menu titles as default
+		HexenSkillMenu.x = HereticSkillMenu.x;
+		HexenSkillItems[0].name = HereticSkillItems[0].name;
+		HexenSkillItems[1].name = HereticSkillItems[1].name;
+		HexenSkillItems[2].name = HereticSkillItems[2].name;
+		HexenSkillItems[3].name = HereticSkillItems[3].name;
+		HexenSkillItems[4].name = HereticSkillItems[4].name;
+	}
+}
+
+//==========================================================================
+//
 // SCClass
 //
 //==========================================================================
@@ -1658,44 +1805,14 @@ static void SCClass (int option)
 		M_StartMessage (GStrings("NEWGAME"), NULL, false);
 		return;
 	}
-	MenuPClass = option < 3 ? option : -1;
-	switch (MenuPClass)
-	{
-	case 0/*PCLASS_FIGHTER*/:
-		HexenSkillMenu.x = 120;
-		HexenSkillItems[0].name = "SQUIRE";
-		HexenSkillItems[1].name = "KNIGHT";
-		HexenSkillItems[2].name = "WARRIOR";
-		HexenSkillItems[3].name = "BERSERKER";
-		HexenSkillItems[4].name = "TITAN";
-		break;
-	case 1/*PCLASS_CLERIC*/:
-		HexenSkillMenu.x = 116;
-		HexenSkillItems[0].name = "ALTAR BOY";
-		HexenSkillItems[1].name = "ACOLYTE";
-		HexenSkillItems[2].name = "PRIEST";
-		HexenSkillItems[3].name = "CARDINAL";
-		HexenSkillItems[4].name = "POPE";
-		break;
-	case 2/*PCLASS_MAGE*/:
-		HexenSkillMenu.x = 112;
-		HexenSkillItems[0].name = "APPRENTICE";
-		HexenSkillItems[1].name = "ENCHANTER";
-		HexenSkillItems[2].name = "SORCERER";
-		HexenSkillItems[3].name = "WARLOCK";
-		HexenSkillItems[4].name = "ARCHMAGE";
-		break;
-	case -1/*random*/: // [RH]
-		// Since Hexen is "Heretic 2", use the Heretic skill
-		// names when not playing as a specific class.
-		HexenSkillMenu.x = HereticSkillMenu.x;
-		HexenSkillItems[0].name = HereticSkillItems[0].name;
-		HexenSkillItems[1].name = HereticSkillItems[1].name;
-		HexenSkillItems[2].name = HereticSkillItems[2].name;
-		HexenSkillItems[3].name = HereticSkillItems[3].name;
-		HexenSkillItems[4].name = HereticSkillItems[4].name;
-		break;
-	}
+
+	if (option == 3)
+		playerclass = "Random";
+	else
+		playerclass = PlayerClasses[option].Type->Meta.GetMetaString (APMETA_DisplayName);
+
+	SetHexenSkillMenu(playerclass);
+
 	if (EpiDef.numitems > 1)
 	{
 		M_SetupNextMenu (&EpiDef);
@@ -1707,6 +1824,40 @@ static void SCClass (int option)
 	else
 	{
 		M_ChooseSkill(2);
+	}
+}
+
+// [GRB]
+static void M_ChooseClass (int choice)
+{
+	if (netgame)
+	{
+		M_StartMessage (GStrings("NEWGAME"), NULL, false);
+		return;
+	}
+
+	playerclass = (choice < ClassMenuDef.numitems-1) ? ClassMenuItems[choice].name : "Random";
+	SetHexenSkillMenu(playerclass);
+
+	if (EpiDef.numitems > 1)
+	{
+		M_SetupNextMenu (&EpiDef);
+	}
+	else if (!EpisodeNoSkill[0])
+	{
+		M_SetupNextMenu (&HexenSkillMenu);
+	}
+	else if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+	{
+		M_SetupNextMenu (&NewDef);
+	}
+	else if (gameinfo.gametype == GAME_Hexen)
+	{
+		M_SetupNextMenu (&HexenSkillMenu);
+	}
+	else
+	{
+		M_SetupNextMenu (&HereticSkillMenu);
 	}
 }
 
@@ -1847,9 +1998,11 @@ void M_PlayerSetup (void)
 	M_SetupNextMenu (&PSetupDef);
 	if (players[consoleplayer].mo != NULL)
 	{
-		PlayerClass = RUNTIME_TYPE(players[consoleplayer].mo);
+		PlayerClass = &PlayerClasses[players[consoleplayer].CurrentPlayerClass];
 	}
-	PlayerState = GetDefaultByType (PlayerClass)->SpawnState;
+	PlayerSkin = players[consoleplayer].userinfo.skin;
+	R_GetPlayerTranslation (players[consoleplayer].userinfo.color, &skins[PlayerSkin], PlayerTranslation);
+	PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
 	PlayerTics = PlayerState->GetTics();
 	if (FireScreen == NULL)
 		FireScreen = new DSimpleCanvas (144, 160);
@@ -1858,30 +2011,42 @@ void M_PlayerSetup (void)
 static void M_PlayerSetupTicker (void)
 {
 	// Based on code in f_finale.c
-	if (gameinfo.gametype == GAME_Hexen)
+	FPlayerClass *oldclass = PlayerClass;
+
+	if (currentMenu == &ClassMenuDef)
 	{
-		const PClass *oldclass = PlayerClass;
+		int item;
 
-		PickPlayerClass ();
-		if (PlayerClass != oldclass)
-		{
-			PlayerState = GetDefaultByType (PlayerClass)->SpawnState;
-			PlayerTics = PlayerState->GetTics();
-		}
-	}
+		if (itemOn < ClassMenuDef.numitems-1)
+			item = itemOn;
+		else
+			item = (MenuTime>>2) % (ClassMenuDef.numitems-1);
 
-	if (--PlayerTics > 0)
-		return;
-
-	if (PlayerState->GetTics() == -1 || PlayerState->GetNextState() == NULL)
-	{
-		PlayerState = GetDefaultByType (PlayerClass)->SeeState;
+		PlayerClass = &PlayerClasses[D_PlayerClassToInt (ClassMenuItems[item].name)];
 	}
 	else
 	{
-		PlayerState = PlayerState->GetNextState();
+		PickPlayerClass ();
 	}
-	PlayerTics = PlayerState->GetTics();
+
+	if (PlayerClass != oldclass)
+	{
+		PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
+		PlayerTics = PlayerState->GetTics();
+
+		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, PlayerClass - &PlayerClasses[0]);
+		R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
+			&skins[PlayerSkin], PlayerTranslation);
+	}
+
+	if (PlayerState->GetTics () != -1 && PlayerState->GetNextState () != NULL)
+	{
+		if (--PlayerTics > 0)
+			return;
+
+		PlayerState = PlayerState->GetNextState();
+		PlayerTics = PlayerState->GetTics();
+	}
 }
 
 static void M_PlayerSetupDrawer ()
@@ -1956,17 +2121,18 @@ static void M_PlayerSetupDrawer ()
 	{
 		spriteframe_t *sprframe;
 		int scale;
-		
-		if (gameinfo.gametype != GAME_Hexen)
+
+		if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
+			players[consoleplayer].userinfo.PlayerClass == -1 ||
+			PlayerState->sprite.index != GetDefaultByType (PlayerClass->Type)->SpawnState->sprite.index)
 		{
-			sprframe =
-				&SpriteFrames[sprites[skins[players[consoleplayer].userinfo.skin].sprite].spriteframes + PlayerState->GetFrame()];
-			scale = skins[players[consoleplayer].userinfo.skin].scale + 1;
+			sprframe = &SpriteFrames[sprites[PlayerState->sprite.index].spriteframes + PlayerState->GetFrame()];
+			scale = GetDefaultByType (PlayerClass->Type)->xscale + 1;
 		}
 		else
 		{
-			sprframe = &SpriteFrames[sprites[PlayerState->sprite.index].spriteframes + PlayerState->GetFrame()];
-			scale = GetDefault<APlayerPawn>()->xscale + 1;
+			sprframe = &SpriteFrames[sprites[skins[PlayerSkin].sprite].spriteframes + PlayerState->GetFrame()];
+			scale = skins[PlayerSkin].scale + 1;
 		}
 
 		if (sprframe != NULL)
@@ -1983,7 +2149,7 @@ static void M_PlayerSetupDrawer ()
 					(PSetupDef.y + LINEHEIGHT*3 + 57 - 104)*CleanYfac + (SCREENHEIGHT/2),
 					DTA_DestWidth, MulScale6 (tex->GetWidth() * CleanXfac, scale),
 					DTA_DestHeight, MulScale6 (tex->GetHeight() * CleanYfac, scale),
-					DTA_Translation, translationtables[TRANSLATION_Players] + consoleplayer*256,
+					DTA_Translation, PlayerTranslation,
 					TAG_DONE);
 			}
 		}
@@ -2014,33 +2180,38 @@ static void M_PlayerSetupDrawer ()
 	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*3+yo, 0.0f, 255.0f, GPART(color));
 	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*4+yo, 0.0f, 255.0f, BPART(color));
 
-	// Draw gender setting
-	x = SmallFont->StringWidth ("Gender") + 8 + PSetupDef.x;
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*5+yo, "Gender", DTA_Clean, true, TAG_DONE);
+	// [GRB] Draw class setting
+	int pclass = players[consoleplayer].userinfo.PlayerClass;
+	x = SmallFont->StringWidth ("Class") + 8 + PSetupDef.x;
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*5+yo, "Class", DTA_Clean, true, TAG_DONE);
 	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*5+yo,
-		genders[players[consoleplayer].userinfo.gender], DTA_Clean, true, TAG_DONE);
+		pclass == -1 ? "Random" : PlayerClasses[pclass].Type->Meta.GetMetaString (APMETA_DisplayName),
+		DTA_Clean, true, TAG_DONE);
 
 	// Draw skin setting
-	if (gameinfo.gametype != GAME_Hexen)
+	x = SmallFont->StringWidth ("Skin") + 8 + PSetupDef.x;
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Skin", DTA_Clean, true, TAG_DONE);
+	if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
+		players[consoleplayer].userinfo.PlayerClass == -1)
 	{
-		x = SmallFont->StringWidth ("Skin") + 8 + PSetupDef.x;
-		screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Skin", DTA_Clean, true, TAG_DONE);
-		screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*6+yo,
-			skins[players[consoleplayer].userinfo.skin].name, DTA_Clean, true, TAG_DONE);
+		screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*6+yo, "Base", DTA_Clean, true, TAG_DONE);
 	}
 	else
 	{
-		x = SmallFont->StringWidth ("Class") + 8 + PSetupDef.x;
-		screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Class", DTA_Clean, true, TAG_DONE);
 		screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*6+yo,
-			PlayerClassNames[players[consoleplayer].userinfo.PlayerClass+1], DTA_Clean, true, TAG_DONE);
+			skins[PlayerSkin].name, DTA_Clean, true, TAG_DONE);
 	}
+
+	// Draw gender setting
+	x = SmallFont->StringWidth ("Gender") + 8 + PSetupDef.x;
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*7+yo, "Gender", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*7+yo,
+		genders[players[consoleplayer].userinfo.gender], DTA_Clean, true, TAG_DONE);
 
 	// Draw autoaim setting
 	x = SmallFont->StringWidth ("Autoaim") + 8 + PSetupDef.x;
-
-	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*7+yo, "Autoaim", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*7+yo,
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*8+yo, "Autoaim", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*8+yo,
 		autoaim == 0 ? "Never" :
 		autoaim <= 0.25 ? "Very Low" :
 		autoaim <= 0.5 ? "Low" :
@@ -2261,6 +2432,45 @@ static void M_DrawPlayerBackdrop (int x, int y)
 	}
 }
 
+static void M_ChangeClass (int choice)
+{
+	if (PlayerClasses.Size () == 1)
+	{
+		return;
+	}
+
+	int type = players[consoleplayer].userinfo.PlayerClass;
+
+	if (!choice)
+		type = (type < 0) ? (int)PlayerClasses.Size () - 1 : type - 1;
+	else
+		type = (type < (int)PlayerClasses.Size () - 1) ? type + 1 : -1;
+
+	cvar_set ("playerclass", type < 0 ? "Random" :
+		PlayerClasses[type].Type->Meta.GetMetaString (APMETA_DisplayName));
+}
+
+static void M_ChangeSkin (int choice)
+{
+	if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
+		players[consoleplayer].userinfo.PlayerClass == -1)
+	{
+		return;
+	}
+
+	do
+	{
+		if (!choice)
+			PlayerSkin = (PlayerSkin == 0) ? (int)numskins - 1 : PlayerSkin - 1;
+		else
+			PlayerSkin = (PlayerSkin < (int)numskins - 1) ? PlayerSkin + 1 : 0;
+	} while (!PlayerClass->CheckSkin (PlayerSkin));
+
+	R_GetPlayerTranslation (players[consoleplayer].userinfo.color, &skins[PlayerSkin], PlayerTranslation);
+
+	cvar_set ("skin", skins[PlayerSkin].name);
+}
+
 static void M_ChangeGender (int choice)
 {
 	int gender = players[consoleplayer].userinfo.gender;
@@ -2271,32 +2481,6 @@ static void M_ChangeGender (int choice)
 		gender = (gender == 2) ? 0 : gender + 1;
 
 	cvar_set ("gender", genders[gender]);
-}
-
-static void M_ChangeSkin (int choice)
-{
-	if (gameinfo.gametype != GAME_Hexen)
-	{
-		size_t skin = players[consoleplayer].userinfo.skin;
-
-		if (!choice)
-			skin = (skin == 0) ? numskins - 1 : skin - 1;
-		else
-			skin = (skin < numskins - 1) ? skin + 1 : 0;
-
-		cvar_set ("skin", skins[skin].name);
-	}
-	else
-	{
-		int type = players[consoleplayer].userinfo.PlayerClass;
-
-		if (!choice)
-			type = (type < 0) ? 2 : type - 1;
-		else
-			type = (type < 2) ? type + 1 : -1;
-
-		cvar_set ("playerclass", PlayerClassNames[type+1]);
-	}
 }
 
 static void M_ChangeAutoAim (int choice)
@@ -2393,6 +2577,8 @@ static void SendNewColor (int red, int green, int blue)
 
 	sprintf (command, "color \"%02x %02x %02x\"", red, green, blue);
 	C_DoCommand (command);
+
+	R_GetPlayerTranslation (MAKERGB (red, green, blue), &skins[PlayerSkin], PlayerTranslation);
 }
 
 static void M_SlidePlayerRed (int choice)
@@ -2966,7 +3152,8 @@ void M_Drawer ()
 					if (currentMenu->menuitems[i].fulltext)
 					{
 						int color = CR_UNTRANSLATED;
-						if (currentMenu == &EpiDef && gameinfo.gametype == GAME_Doom)
+						if ((currentMenu == &EpiDef || currentMenu == &ClassMenuDef) &&
+							gameinfo.gametype == GAME_Doom)
 						{
 							color = CR_RED;
 						}
@@ -3136,7 +3323,7 @@ void M_Ticker (void)
 		whichSkull ^= 1;
 		skullAnimCounter = 8;
 	}
-	if (currentMenu == &PSetupDef)
+	if (currentMenu == &PSetupDef || currentMenu == &ClassMenuDef)
 		M_PlayerSetupTicker ();
 }
 
@@ -3215,6 +3402,55 @@ void M_Init (void)
 	}
 	M_OptInit ();
 
+	// [GRB] Set up player class menu
+	if (!(gameinfo.gametype == GAME_Hexen && PlayerClasses.Size () == 3 &&
+		PlayerClasses[0].Type->IsDescendantOf (PClass::FindClass (NAME_FighterPlayer)) &&
+		PlayerClasses[1].Type->IsDescendantOf (PClass::FindClass (NAME_ClericPlayer)) &&
+		PlayerClasses[2].Type->IsDescendantOf (PClass::FindClass (NAME_MagePlayer))))
+	{
+		int n = 0;
+
+		for (i = 0; i < PlayerClasses.Size () && n < 7; i++)
+		{
+			if (!(PlayerClasses[i].Flags & PCF_NOMENU))
+			{
+				ClassMenuItems[n].name =
+					PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName);
+				n++;
+			}
+		}
+
+		if (n > 1)
+		{
+			ClassMenuItems[n].name = "Random";
+			ClassMenuDef.numitems = n+1;
+		}
+		else
+		{
+			if (n == 0)
+			{
+				ClassMenuItems[0].name =
+					PlayerClasses[0].Type->Meta.GetMetaString (APMETA_DisplayName);
+			}
+			ClassMenuDef.numitems = 1;
+		}
+
+		if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+		{
+			ClassMenuDef.x = 48;
+			ClassMenuDef.y = 63;
+		}
+		else
+		{
+			ClassMenuDef.x = 80;
+			ClassMenuDef.y = 50;
+		}
+		if (ClassMenuDef.numitems > 4)
+		{
+			ClassMenuDef.y -= LINEHEIGHT;
+		}
+	}
+
 	// [RH] Build a palette translation table for the player setup effect
 	if (gameinfo.gametype != GAME_Hexen)
 	{
@@ -3235,25 +3471,18 @@ void M_Init (void)
 
 static void PickPlayerClass ()
 {
-	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-	{
-		PlayerClass = PClass::FindClass (NAME_DoomPlayer);
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		PlayerClass = PClass::FindClass (NAME_HereticPlayer);
-	}
-	else
-	{
-		static const ENamedName classnames[3] = { NAME_FighterPlayer, NAME_ClericPlayer, NAME_MagePlayer };
+	int pclass = 0;
 
-		int nowtype = players[consoleplayer].userinfo.PlayerClass;
+	// [GRB] Pick a class from player class list
+	if (PlayerClasses.Size () > 1)
+	{
+		pclass = players[consoleplayer].userinfo.PlayerClass;
 
-		if (nowtype < 0)
+		if (pclass < 0)
 		{
-			nowtype = (MenuTime>>7) % 3;
+			pclass = (MenuTime>>7) % PlayerClasses.Size ();
 		}
-
-		PlayerClass = PClass::FindClass (classnames[nowtype]);
 	}
+
+	PlayerClass = &PlayerClasses[pclass];
 }

@@ -51,8 +51,6 @@
 #include "i_input.h"
 #include "templates.h"
 
-static const char *FaceNames[3] = { "FITEFACE", "CLERFACE", "MAGEFACE" };
-
 static void HU_DrawTeamScores (player_t *, player_t *[MAXPLAYERS]);
 static void HU_DrawSingleScores (player_t *, player_t *[MAXPLAYERS]);
 static void HU_DrawTimeRemaining (int y);
@@ -244,10 +242,9 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 
 	screen->Clear (x, y, x + 24*CleanXfac, y + height, color);
 
-	if (gameinfo.gametype == GAME_Hexen &&
-		player->CurrentPlayerClass < 3)
+	if (player->mo->ScoreIcon > 0)
 	{
-		screen->DrawTexture (TexMan[FaceNames[player->CurrentPlayerClass]], x+(pack?20:32)*CleanXfac, y,
+		screen->DrawTexture (TexMan[player->mo->ScoreIcon], x+(pack?20:32)*CleanXfac, y,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
 

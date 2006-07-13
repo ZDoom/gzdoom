@@ -5,6 +5,7 @@
 #include "d_player.h"
 #include "a_action.h"
 #include "p_local.h"
+#include "thingdef.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -12,7 +13,7 @@ void A_Pain (AActor *);
 void A_PlayerScream (AActor *);
 void A_CheckSkullFloor (AActor *);
 void A_CheckSkullDone (AActor *);
-void A_FlameSnd (AActor *);
+void A_FireScream (AActor *);
 void A_HereticSkinCheck1 (AActor *);
 void A_HereticSkinCheck2 (AActor *);
 void A_XScream (AActor *);
@@ -69,13 +70,13 @@ FState AHereticPlayer::States[] =
 	S_NORMAL (PLAY, 'Y',   -1, NULL							, NULL),
 
 #define S_PLAY_FDTH (S_PLAY_XDIE+10)
-	S_BRIGHT (FDTH, 'A',	5, A_FlameSnd					, &States[S_PLAY_FDTH+1]),
+	S_BRIGHT (FDTH, 'A',	5, A_FireScream					, &States[S_PLAY_FDTH+1]),
 	S_BRIGHT (FDTH, 'B',	4, NULL 						, &States[S_PLAY_FDTH+2]),
 	S_BRIGHT (FDTH, 'C',	5, NULL 						, &States[S_PLAY_FDTH+3]),
 	S_BRIGHT (FDTH, 'D',	4, A_PlayerScream				, &States[S_PLAY_FDTH+4]),
 	S_BRIGHT (FDTH, 'E',	5, NULL 						, &States[S_PLAY_FDTH+5]),
 	S_BRIGHT (FDTH, 'F',	4, NULL 						, &States[S_PLAY_FDTH+6]),
-	S_BRIGHT (FDTH, 'G',	5, A_FlameSnd					, &States[S_PLAY_FDTH+7]),
+	S_BRIGHT (FDTH, 'G',	5, A_FireScream					, &States[S_PLAY_FDTH+7]),
 	S_BRIGHT (FDTH, 'H',	4, NULL 						, &States[S_PLAY_FDTH+8]),
 	S_BRIGHT (FDTH, 'I',	5, NULL 						, &States[S_PLAY_FDTH+9]),
 	S_BRIGHT (FDTH, 'J',	4, NULL 						, &States[S_PLAY_FDTH+10]),
@@ -128,19 +129,27 @@ IMPLEMENT_ACTOR (AHereticPlayer, Heretic, -1, 0)
 	PROP_DeathState (S_PLAY_DIE)
 	PROP_XDeathState (S_PLAY_XDIE)
 	PROP_BDeathState (S_PLAY_FDTH)
+
+	// [GRB]
+	PROP_PlayerPawn_ColorRange (225, 240)
+	PROP_PlayerPawn_DisplayName ("Corvus")
 END_DEFAULTS
 
 void AHereticPlayer::GiveDefaultInventory ()
 {
-	AInventory *wand, *ammo;
+	Super::GiveDefaultInventory ();
 
-	player->health = GetDefault()->health;
-	player->mo->GiveInventoryType (PClass::FindClass ("Staff"));
-	wand = player->mo->GiveInventoryType (PClass::FindClass ("GoldWand"));
-	// Adding the gold wand automatically adds its ammo
-	ammo = player->mo->FindInventory (PClass::FindClass ("GoldWandAmmo"));
-	ammo->Amount = 50;
-	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (wand);
+	if (!Inventory)
+	{
+		AInventory *wand, *ammo;
+
+		player->mo->GiveInventoryType (PClass::FindClass ("Staff"));
+		wand = player->mo->GiveInventoryType (PClass::FindClass ("GoldWand"));
+		// Adding the gold wand automatically adds its ammo
+		ammo = player->mo->FindInventory (PClass::FindClass ("GoldWandAmmo"));
+		ammo->Amount = 50;
+		player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (wand);
+	}
 }
 
 // The player's skull -------------------------------------------------------
@@ -185,8 +194,16 @@ void A_SkullPop (AActor *actor)
 	APlayerPawn *mo;
 	player_t *player;
 
+	// [GRB] Parameterized version
+	const PClass *spawntype = NULL;
+	int index = CheckIndex (1, NULL);
+	if (index >= 0)
+		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
+	if (!spawntype || !spawntype->IsDescendantOf (RUNTIME_CLASS (APlayerChunk)))
+		spawntype = RUNTIME_CLASS (ABloodySkull);
+
 	actor->flags &= ~MF_SOLID;
-	mo = Spawn<ABloodySkull> (actor->x, actor->y, actor->z + 48*FRACUNIT);
+	mo = (APlayerPawn *)Spawn (spawntype, actor->x, actor->y, actor->z + 48*FRACUNIT);
 	//mo->target = actor;
 	mo->momx = pr_skullpop.Random2() << 9;
 	mo->momy = pr_skullpop.Random2() << 9;
@@ -236,17 +253,6 @@ void A_CheckSkullDone (AActor *actor)
 	}
 }
 
-//----------------------------------------------------------------------------
-//
-// PROC A_FlameSnd
-//
-//----------------------------------------------------------------------------
-
-void A_FlameSnd (AActor *actor)
-{
-	S_Sound (actor, CHAN_BODY, "misc/burn", 1, ATTN_NORM);	// Burn sound
-}
-
 //==========================================================================
 //
 // A_HereticSkinCheck1
@@ -256,7 +262,7 @@ void A_FlameSnd (AActor *actor)
 void A_HereticSkinCheck1 (AActor *actor)
 {
 	if (actor->player != NULL &&
-		skins[actor->player->userinfo.skin].game == GAME_Doom)
+		skins[actor->player->userinfo.skin].othergame)
 	{
 		actor->SetState (&AHereticPlayer::States[S_DOOM_DIE]);
 	}
@@ -271,7 +277,7 @@ void A_HereticSkinCheck1 (AActor *actor)
 void A_HereticSkinCheck2 (AActor *actor)
 {
 	if (actor->player != NULL &&
-		skins[actor->player->userinfo.skin].game == GAME_Doom)
+		skins[actor->player->userinfo.skin].othergame)
 	{
 		actor->SetState (&AHereticPlayer::States[S_DOOM_XDIE]);
 	}

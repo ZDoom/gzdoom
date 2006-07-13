@@ -97,6 +97,7 @@ extern void M_RestoreMode ();
 extern void M_SetDefaultMode ();
 extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
+extern void SetupPlayerClasses ();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -2017,8 +2018,17 @@ void D_DoomMain (void)
 
 	FActorInfo::StaticInit ();
 
+	// [GRB] Initialize player class list
+	SetupPlayerClasses ();
+
 	// [RH] Load custom key and weapon settings from WADs
 	D_LoadWadSettings ();
+
+	// [GRB] Check if someone used clearplayerclasses but not addplayerclass
+	if (PlayerClasses.Size () == 0)
+	{
+		I_FatalError ("No player classes defined");
+	}
 
 	FActorInfo::StaticGameSet ();
 

@@ -394,12 +394,14 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		special = 0;
 	}
 
+	if (CountsAsKill())
+		level.killed_monsters++;
+		
 	if (source && source->player)
 	{
 		if (CountsAsKill())
 		{ // count for intermission
 			source->player->killcount++;
-			level.killed_monsters++;
 		}
 
 		// Don't count any frags at level start, because they're just telefrags
@@ -543,7 +545,6 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		// count all monster deaths,
 		// even those caused by other monsters
 		players[0].killcount++;
-		level.killed_monsters++;
 	}
 	
 	if (player)

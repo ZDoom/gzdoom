@@ -1092,16 +1092,6 @@ IMPLEMENT_STATELESS_ACTOR (APowerupGiver, Any, -1, 0)
 	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
-AT_GAME_SET(PowerupGiver)
-{
-	APowerupGiver * giver = GetDefault<APowerupGiver>();
-
-	if (gameinfo.gametype & GAME_Raven)
-	{
-		giver->RespawnTics = 1400+30;
-	}
-}
-
 //===========================================================================
 //
 // AInventory :: DoRespawn

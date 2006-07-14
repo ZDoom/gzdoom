@@ -1,3 +1,13 @@
+July 14, 2006 (Changes by Graf Zahl)
+- Fixed: Any kill in multiplayer games that could not be credited to a player
+  didn't count at all - not even toward the global level statistics.
+- ...and removed it again. It was not an accident. The only reason the PowerupGiver
+  had its own RespawnTics was to account for the pickup flash delay. 
+  But that is better handled by checking the flag and adding the additional 30 
+  tics in AInventory::Hide because then it affects all items that have one - 
+  and only those. The AT_GAME_SET function didn't work anyway because it was
+  called after parsing DECORATE.
+
 July 13, 2006
 - Restored the PowerupGiver AT_GAME_SET function. I assume its removal was an
   accident from merging in Grubber's custom player classes.

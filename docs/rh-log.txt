@@ -1,3 +1,7 @@
+July 13, 2006
+- Restored the PowerupGiver AT_GAME_SET function. I assume its removal was an
+  accident from merging in Grubber's custom player classes.
+
 July 13, 2006 (Changes by Graf Zahl)
 - Removed the game filter check from addplayerclass. If a player class is added
   here the game filter is irrelevant and there's nothing that should prevent

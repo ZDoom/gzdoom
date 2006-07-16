@@ -320,6 +320,21 @@ FActorInfo *FActorInfo::GetReplacement ()
 	return rep;
 }
 
+FActorInfo *FActorInfo::GetReplacee ()
+{
+	if (Replacee == NULL)
+	{
+		return this;
+	}
+	// The Replacee field is temporarily NULLed to prevent
+	// potential infinite recursion.
+	FActorInfo *savedrep = Replacee;
+	Replacee = NULL;
+	FActorInfo *rep = savedrep->GetReplacee ();
+	Replacee = savedrep;
+	return rep;
+}
+
 FDoomEdMap DoomEdMap;
 
 FDoomEdMap::FDoomEdEntry *FDoomEdMap::DoomEdHash[DOOMED_HASHSIZE];

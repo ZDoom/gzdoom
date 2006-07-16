@@ -2377,14 +2377,17 @@ bool CheckBossDeath (AActor *actor)
 //
 void A_BossDeath (AActor *actor)
 {
-	FName type = actor->GetClass()->TypeName;
+	FName mytype = actor->GetClass()->TypeName;
+
+	// Ugh...
+	FName type = actor->GetClass()->ActorInfo->GetReplacee()->Class->TypeName;
 	
 	// Do generic special death actions first
 	bool checked = false;
 	FSpecialAction *sa = level.info->specialactions;
 	while (sa)
 	{
-		if (type == sa->Type)
+		if (type == sa->Type || mytype == sa->Type)
 		{
 			if (!checked && !CheckBossDeath(actor))
 			{

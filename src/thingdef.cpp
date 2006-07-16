@@ -1263,6 +1263,7 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 			SC_ScriptError ("Replaced type '%s' is not an actor", sc_String);
 		}
 		replacee->ActorInfo->Replacement = ti->ActorInfo;
+		ti->ActorInfo->Replacee = replacee->ActorInfo;
 	}
 	else
 	{

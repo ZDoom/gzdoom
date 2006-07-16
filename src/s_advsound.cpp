@@ -602,7 +602,7 @@ static void S_ClearSoundData()
 	DoneReserving = false;
 	NumPlayerReserves = 0;
 	PlayerClassesIsSorted = false;
-	PlayerClasses.Clear();
+	PlayerClassLookups.Clear();
 	PlayerSounds.Clear();
 	DefPlayerClass = 0;
 	*DefPlayerClassName = 0;

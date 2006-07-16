@@ -1,4 +1,5 @@
 July 16, 2006 (Changes by Graf Zahl)
+- Fixed: S_ClearSoundData cleared PlayerClasses instead of PlayerClassLookups.
 - Added NecroMage's submission for bitwise/shift assignment operators for ACS.
 - Added replacement handling to A_BossDeath.
 - Fixed: The check for no skill menu was incorrect when a custom player

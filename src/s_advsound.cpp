@@ -1427,18 +1427,16 @@ int S_FindSkinnedSound (AActor *actor, const char *name)
 int S_FindSkinnedSound (AActor *actor, int refid)
 {
 	const char *pclass;
-	int gender;
+	int gender = GENDER_MALE;
 
-	if (actor != NULL && actor->player != NULL)
+	if (actor != NULL && actor->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 	{
-		pclass = actor->player->mo->GetSoundClass ();
-		gender = actor->player->userinfo.gender;
+		pclass = static_cast<APlayerPawn*>(actor)->GetSoundClass ();
+		if (actor->player != NULL) gender = actor->player->userinfo.gender;
 	}
 	else
 	{
-		pclass =
-			((APlayerPawn *)GetDefaultByType (PlayerClasses[0].Type))->GetSoundClass ();
-		gender = GENDER_MALE;
+		pclass = gameinfo.gametype == GAME_Hexen? "fighter" : "player";
 	}
 
 	return S_LookupPlayerSound (pclass, gender, refid);

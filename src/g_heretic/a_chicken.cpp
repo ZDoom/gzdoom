@@ -156,6 +156,7 @@ IMPLEMENT_ACTOR (AChickenPlayer, Heretic, -1, 0)
 	PROP_SeeState (S_CHICPLAY_RUN)
 	PROP_PainState (S_CHICPLAY_PAIN)
 	PROP_MissileState (S_CHICPLAY_ATK)
+	PROP_MeleeState (S_CHICPLAY_ATK)
 	PROP_DeathState (S_CHICPLAY_DIE)
 
 	// [GRB]

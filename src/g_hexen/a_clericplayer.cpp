@@ -101,6 +101,7 @@ IMPLEMENT_ACTOR (AClericPlayer, Hexen, -1, 0)
 	PROP_SeeState (S_CPLAY_RUN1)
 	PROP_PainState (S_CPLAY_PAIN)
 	PROP_MissileState (S_CPLAY_ATK1)
+	PROP_MeleeState (S_CPLAY_ATK1)
 	PROP_DeathState (S_CPLAY_DIE1)
 	PROP_XDeathState (S_CPLAY_XDIE1)
 	PROP_BDeathState (S_PLAY_C_FDTH)
@@ -117,11 +118,6 @@ IMPLEMENT_ACTOR (AClericPlayer, Hexen, -1, 0)
 	PROP_PlayerPawn_ScoreIcon ("CLERFACE")
 	PROP_PainSound ("PlayerClericPain")
 END_DEFAULTS
-
-void AClericPlayer::PlayAttacking2 ()
-{
-	SetState (MissileState);
-}
 
 void AClericPlayer::GiveDefaultInventory ()
 {

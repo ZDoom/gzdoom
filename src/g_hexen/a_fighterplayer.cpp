@@ -99,6 +99,7 @@ IMPLEMENT_ACTOR (AFighterPlayer, Hexen, -1, 0)
 	PROP_SeeState (S_FPLAY_RUN)
 	PROP_PainState (S_FPLAY_PAIN)
 	PROP_MissileState (S_FPLAY_ATK)
+	PROP_MeleeState (S_FPLAY_ATK)
 	PROP_DeathState (S_FPLAY_DIE)
 	PROP_XDeathState (S_FPLAY_XDIE)
 	PROP_BDeathState (S_PLAY_F_FDTH)
@@ -119,11 +120,6 @@ IMPLEMENT_ACTOR (AFighterPlayer, Hexen, -1, 0)
 
 	PROP_PainSound ("PlayerFighterPain")
 END_DEFAULTS
-
-void AFighterPlayer::PlayAttacking2 ()
-{
-	SetState (MissileState);
-}
 
 void AFighterPlayer::GiveDefaultInventory ()
 {

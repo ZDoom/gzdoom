@@ -92,6 +92,7 @@ IMPLEMENT_ACTOR (ADoomPlayer, Doom, -1, 0)
 	PROP_SeeState (S_PLAY_RUN)
 	PROP_PainState (S_PLAY_PAIN)
 	PROP_MissileState (S_PLAY_ATK)
+	PROP_MeleeState (S_PLAY_ATK+1)
 	PROP_DeathState (S_PLAY_DIE)
 	PROP_XDeathState (S_PLAY_XDIE)
 

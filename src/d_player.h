@@ -69,8 +69,6 @@ public:
 
 	virtual void PlayIdle ();
 	virtual void PlayRunning ();
-	virtual void PlayAttacking ();
-	virtual void PlayAttacking2 ();
 	virtual void ThrowPoisonBag ();
 	virtual void GiveDefaultInventory ();
 	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
@@ -82,6 +80,8 @@ public:
 	virtual void GiveDeathmatchInventory ();
 	virtual void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
+	void PlayAttacking ();
+	void PlayAttacking2 ();
 	const char *GetSoundClass ();
 
 	enum EInvulState

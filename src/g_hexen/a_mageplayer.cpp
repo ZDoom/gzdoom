@@ -98,6 +98,7 @@ IMPLEMENT_ACTOR (AMagePlayer, Hexen, -1, 0)
 	PROP_SeeState (S_MPLAY_RUN1)
 	PROP_PainState (S_MPLAY_PAIN)
 	PROP_MissileState (S_MPLAY_ATK1)
+	PROP_MeleeState (S_MPLAY_ATK1)
 	PROP_DeathState (S_MPLAY_DIE1)
 	PROP_XDeathState (S_MPLAY_XDIE1)
 	PROP_BDeathState (S_PLAY_M_FDTH)
@@ -118,11 +119,6 @@ IMPLEMENT_ACTOR (AMagePlayer, Hexen, -1, 0)
 	PROP_PlayerPawn_ScoreIcon ("MAGEFACE")
 	PROP_PainSound ("PlayerMagePain")
 END_DEFAULTS
-
-void AMagePlayer::PlayAttacking2 ()
-{
-	SetState (MissileState);
-}
 
 void AMagePlayer::GiveDefaultInventory ()
 {

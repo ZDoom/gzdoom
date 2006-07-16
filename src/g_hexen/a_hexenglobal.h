@@ -81,7 +81,6 @@ class AFighterPlayer : public APlayerPawn
 {
 	DECLARE_ACTOR (AFighterPlayer, APlayerPawn)
 public:
-	void PlayAttacking2 ();
 	void GiveDefaultInventory ();
 	bool DoHealingRadius (APlayerPawn *other);
 };
@@ -97,7 +96,6 @@ class AClericPlayer : public APlayerPawn
 {
 	DECLARE_ACTOR (AClericPlayer, APlayerPawn)
 public:
-	void PlayAttacking2 ();
 	void GiveDefaultInventory ();
 	void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha);
 };
@@ -113,7 +111,6 @@ class AMagePlayer : public APlayerPawn
 {
 	DECLARE_ACTOR (AMagePlayer, APlayerPawn)
 public:
-	void PlayAttacking2 ();
 	void GiveDefaultInventory ();
 	bool DoHealingRadius (APlayerPawn *other);
 	void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha);

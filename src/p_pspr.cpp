@@ -269,14 +269,7 @@ void P_FireWeapon (player_t *player)
 		return;
 	}
 
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		player->mo->PlayAttacking2 ();
-	}
-	else
-	{
-		player->mo->PlayAttacking ();
-	}
+	player->mo->PlayAttacking ();
 	weapon->bAltFire = false;
 	P_SetPsprite (player, ps_weapon,
 		player->refire ? weapon->GetHoldAtkState() : weapon->GetAtkState());
@@ -309,14 +302,7 @@ void P_FireWeaponAlt (player_t *player)
 		return;
 	}
 
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		player->mo->PlayAttacking2 ();
-	}
-	else
-	{
-		player->mo->PlayAttacking ();
-	}
+	player->mo->PlayAttacking ();
 	weapon->bAltFire = true;
 	P_SetPsprite (player, ps_weapon,
 		player->refire ? weapon->AltHoldAtkState : weapon->AltAtkState);

@@ -842,7 +842,7 @@ void APlayerPawn::PlayAttacking ()
 
 void APlayerPawn::PlayAttacking2 ()
 {
-	SetState (MissileState+1);
+	SetState (MeleeState);
 }
 
 void APlayerPawn::ThrowPoisonBag ()

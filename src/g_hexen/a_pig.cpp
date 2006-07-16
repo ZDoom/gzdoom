@@ -143,6 +143,7 @@ IMPLEMENT_ACTOR (APigPlayer, Hexen, -1, 0)
 	PROP_SeeState (S_PIGPLAY_RUN1)
 	PROP_PainState (S_PIGPLAY_PAIN)
 	PROP_MissileState (S_PIGPLAY_ATK1)
+	PROP_MeleeState (S_PIGPLAY_ATK1)
 	PROP_DeathState (S_PIGPLAY_DIE1)
 	PROP_IDeathState (S_PIGPLAY_ICE)
 

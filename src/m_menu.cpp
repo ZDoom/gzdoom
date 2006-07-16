@@ -1843,9 +1843,9 @@ static void M_ChooseClass (int choice)
 	{
 		M_SetupNextMenu (&EpiDef);
 	}
-	else if (!EpisodeNoSkill[0])
+	else if (EpisodeNoSkill[0])
 	{
-		M_SetupNextMenu (&HexenSkillMenu);
+		M_ChooseSkill(2);
 	}
 	else if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{

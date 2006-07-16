@@ -1,4 +1,14 @@
 July 16, 2006 (Changes by Graf Zahl)
+- Fixed: The check for no skill menu was incorrect when a custom player
+  class menu was present so instead of starting the game specific skill menu
+  it always started Hexen's.
+- Fixed: When a non-player tried to play a player sound it tried to access 
+  the actor object as an APlayerPawn.
+- Changed PlayAttacking2 to always use the melee state instead of different
+  implementations per player and hard coding it to MissileState+1. Also
+  changed PlayAttacking for the HereticPlayer to use the same animation as
+  PlayAttacking2. Now the special handling for Heretic in the FireWeapon
+  functions can be removed.
 - Fixed: PlayerStartItem created a duplicate of the item's class name before
   converting it into an FName.
 - Removed game check for Doom from P_BloodSplatter. The BloodSplatter actor

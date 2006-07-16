@@ -356,7 +356,7 @@ bool AFighterPlayer::DoHealingRadius (APlayerPawn *other)
 
 	for (int i = 0; i < 4; ++i)
 	{
-		AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0);
+		AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0, NO_REPLACE);
 		armor->health = i;
 		armor->Amount = 1;
 		if (!armor->TryPickup (player->mo))

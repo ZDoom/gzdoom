@@ -60,7 +60,7 @@ void A_Bang4Cloud (AActor *self)
 	spawnx = self->x + (pr_bang4cloud.Random2() & 3) * 10240;
 	spawny = self->y + (pr_bang4cloud.Random2() & 3) * 10240;
 
-	Spawn<ABang4Cloud> (spawnx, spawny, self->z);
+	Spawn<ABang4Cloud> (spawnx, spawny, self->z, ALLOW_REPLACE);
 }
 
 // Piston -------------------------------------------------------------------
@@ -74,7 +74,7 @@ void A_GiveQuestItem (AActor *self)
 	{
 		if (playeringame[i])
 		{
-			AInventory *item = static_cast<AInventory *>(Spawn (QuestItemClasses[questitem-1], 0,0,0));
+			AInventory *item = static_cast<AInventory *>(Spawn (QuestItemClasses[questitem-1], 0,0,0, NO_REPLACE));
 			if (!item->TryPickup (players[i].mo))
 			{
 				item->Destroy ();
@@ -272,7 +272,7 @@ void A_LightGoesOut (AActor *self)
 
 	for (int i = 0; i < 8; ++i)
 	{
-		foo = Spawn("Rubble1", self->x, self->y, self->z);
+		foo = Spawn("Rubble1", self->x, self->y, self->z, ALLOW_REPLACE);
 		if (foo != NULL)
 		{
 			int t = pr_lightout() & 15;

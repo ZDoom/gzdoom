@@ -454,7 +454,7 @@ void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 		x += ((pr_splat()-128)<<11);
 		y += ((pr_splat()-128)<<11);
 
-		mo = Spawn<AAxeBlood> (x, y, z);
+		mo = Spawn<AAxeBlood> (x, y, z, ALLOW_REPLACE);
 		mo->target = originator;
 
 		// colorize the blood!

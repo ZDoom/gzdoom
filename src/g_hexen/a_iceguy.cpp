@@ -289,7 +289,7 @@ void A_IceGuyLook (AActor *actor)
 		Spawn (WispTypes[pr_iceguylook()&1],
 			actor->x+FixedMul(dist, finecosine[an]),
 			actor->y+FixedMul(dist, finesine[an]),
-			actor->z+60*FRACUNIT);
+			actor->z+60*FRACUNIT, ALLOW_REPLACE);
 	}
 }
 
@@ -314,7 +314,7 @@ void A_IceGuyChase (AActor *actor)
 		mo = Spawn (WispTypes[pr_iceguychase()&1],
 			actor->x+FixedMul(dist, finecosine[an]),
 			actor->y+FixedMul(dist, finesine[an]),
-			actor->z+60*FRACUNIT);
+			actor->z+60*FRACUNIT, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->momx = actor->momx;
@@ -361,7 +361,7 @@ void A_IceGuyAttack (AActor *actor)
 void A_IceGuyMissilePuff (AActor *actor)
 {
 	AActor *mo;
-	mo = Spawn<AIceFXPuff> (actor->x, actor->y, actor->z+2*FRACUNIT);
+	mo = Spawn<AIceFXPuff> (actor->x, actor->y, actor->z+2*FRACUNIT, ALLOW_REPLACE);
 }
 
 //============================================================================

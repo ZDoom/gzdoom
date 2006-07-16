@@ -287,7 +287,7 @@ void A_InquisitorCheckLand (AActor *self)
 
 void A_TossArm (AActor *self)
 {
-	AActor *foo = Spawn<AInquisitorArm> (self->x, self->y, self->z + 24*FRACUNIT);
+	AActor *foo = Spawn<AInquisitorArm> (self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	foo->angle = self->angle - ANGLE_90 + (pr_inq.Random2() << 22);
 	foo->momx = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
 	foo->momy = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]) >> 3;

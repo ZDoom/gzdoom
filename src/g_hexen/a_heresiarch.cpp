@@ -672,15 +672,15 @@ void A_SorcSpinBalls(AActor *actor)
 	actor->special1 = ANGLE_1;
 	z = actor->z - actor->floorclip + actor->height;
 	
-	mo = Spawn<ASorcBall1> (actor->x, actor->y, z);
+	mo = Spawn<ASorcBall1> (actor->x, actor->y, z, NO_REPLACE);
 	if (mo)
 	{
 		mo->target = actor;
 		mo->special2 = SORCFX4_RAPIDFIRE_TIME;
 	}
-	mo = Spawn<ASorcBall2> (actor->x, actor->y, z);
+	mo = Spawn<ASorcBall2> (actor->x, actor->y, z, NO_REPLACE);
 	if (mo) mo->target = actor;
-	mo = Spawn<ASorcBall3> (actor->x, actor->y, z);
+	mo = Spawn<ASorcBall3> (actor->x, actor->y, z, NO_REPLACE);
 	if (mo) mo->target = actor;
 }
 
@@ -968,7 +968,7 @@ void ASorcBall2::CastSorcererSpell ()
 	AActor *mo;
 
 	fixed_t z = parent->z - parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT;
-	mo = Spawn<ASorcFX2> (x, y, z);
+	mo = Spawn<ASorcFX2> (x, y, z, ALLOW_REPLACE);
 	parent->flags2 |= MF2_REFLECTIVE|MF2_INVULNERABLE;
 	parent->args[0] = SORC_DEFENSE_TIME;
 	if (mo) mo->target = parent;
@@ -1134,7 +1134,7 @@ void A_SpawnFizzle(AActor *actor)
 	z = actor->z - actor->floorclip + (actor->height>>1);
 	for (ix=0; ix<5; ix++)
 	{
-		mo = Spawn<ASorcSpark1> (x, y, z);
+		mo = Spawn<ASorcSpark1> (x, y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			rangle = angle + ((pr_heresiarch()%5) << 1);
@@ -1181,7 +1181,7 @@ void A_SorcFX2Split(AActor *actor)
 {
 	AActor *mo;
 
-	mo = Spawn<ASorcFX2> (actor->x, actor->y, actor->z);
+	mo = Spawn<ASorcFX2> (actor->x, actor->y, actor->z, NO_REPLACE);
 	if (mo)
 	{
 		mo->target = actor->target;
@@ -1189,7 +1189,7 @@ void A_SorcFX2Split(AActor *actor)
 		mo->special1 = actor->angle;					// Set angle
 		mo->SetStateNF (&ASorcFX2::States[S_SORCFX2_ORBIT1]);
 	}
-	mo = Spawn<ASorcFX2> (actor->x, actor->y, actor->z);
+	mo = Spawn<ASorcFX2> (actor->x, actor->y, actor->z, NO_REPLACE);
 	if (mo)
 	{
 		mo->target = actor->target;
@@ -1249,7 +1249,7 @@ void A_SorcFX2Orbit (AActor *actor)
 		z = parent->z - parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT;
 		z += FixedMul(15*FRACUNIT,finecosine[angle]);
 		// Spawn trailer
-		Spawn<ASorcFX2T1> (x, y, z);
+		Spawn<ASorcFX2T1> (x, y, z, ALLOW_REPLACE);
 	}
 	else							// Clock wise
 	{
@@ -1260,7 +1260,7 @@ void A_SorcFX2Orbit (AActor *actor)
 		z = parent->z - parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT;
 		z += FixedMul(20*FRACUNIT,finesine[angle]);
 		// Spawn trailer
-		Spawn<ASorcFX2T1> (x, y, z);
+		Spawn<ASorcFX2T1> (x, y, z, ALLOW_REPLACE);
 	}
 
 	actor->SetOrigin (x, y, z);
@@ -1279,7 +1279,7 @@ void A_SorcFX2Orbit (AActor *actor)
 void A_SpawnBishop(AActor *actor)
 {
 	AActor *mo;
-	mo = Spawn<ABishop> (actor->x, actor->y, actor->z);
+	mo = Spawn<ABishop> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		if (!P_TestMobjLocation(mo))
@@ -1304,7 +1304,7 @@ void A_SpawnBishop(AActor *actor)
 
 void A_SorcererBishopEntry(AActor *actor)
 {
-	Spawn<ASorcFX3Explosion> (actor->x, actor->y, actor->z);
+	Spawn<ASorcFX3Explosion> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NORM);
 }
 

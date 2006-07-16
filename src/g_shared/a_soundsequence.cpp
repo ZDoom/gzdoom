@@ -147,7 +147,7 @@ void ASoundSequence::PostBeginPlay ()
 		}
 		if (master == NULL)
 		{
-			master = Spawn<ASoundSequenceSlot> (0, 0, 0);
+			master = Spawn<ASoundSequenceSlot> (0, 0, 0, NO_REPLACE);
 			master->Sequence = SN_StartSequence (master, slot, 0);
 		}
 		master->Sequence->AddChoice (args[0], SEQ_ENVIRONMENT);

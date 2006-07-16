@@ -69,7 +69,7 @@ AInventory *ACoin::CreateCopy (AActor *other)
 	{
 		return Super::CreateCopy (other);
 	}
-	AInventory *copy = Spawn<ACoin> (0,0,0);
+	AInventory *copy = Spawn<ACoin> (0,0,0, NO_REPLACE);
 	copy->Amount = Amount;
 	copy->BecomeItem ();
 	GoAwayAndDie ();
@@ -185,22 +185,22 @@ AInventory *ACoin::CreateTossable ()
 	if (Amount >= 50)
 	{
 		Amount -= 50;
-		tossed = Spawn<AGold50> (Owner->x, Owner->y, Owner->z);
+		tossed = Spawn<AGold50> (Owner->x, Owner->y, Owner->z, NO_REPLACE);
 	}
 	else if (Amount >= 25)
 	{
 		Amount -= 25;
-		tossed = Spawn<AGold25> (Owner->x, Owner->y, Owner->z);
+		tossed = Spawn<AGold25> (Owner->x, Owner->y, Owner->z, NO_REPLACE);
 	}
 	else if (Amount >= 10)
 	{
 		Amount -= 10;
-		tossed = Spawn<AGold10> (Owner->x, Owner->y, Owner->z);
+		tossed = Spawn<AGold10> (Owner->x, Owner->y, Owner->z, NO_REPLACE);
 	}
 	else if (Amount > 1)
 	{
 		Amount -= 1;
-		tossed = Spawn<ACoin> (Owner->x, Owner->y, Owner->z);
+		tossed = Spawn<ACoin> (Owner->x, Owner->y, Owner->z, NO_REPLACE);
 	}
 	else
 	{

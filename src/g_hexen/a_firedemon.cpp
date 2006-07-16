@@ -373,7 +373,7 @@ void A_FiredSpawnRock (AActor *actor)
 	x = actor->x + ((pr_firedemonrock() - 128) << 12);
 	y = actor->y + ((pr_firedemonrock() - 128) << 12);
 	z = actor->z + ( pr_firedemonrock() << 11);
-	mo = Spawn (rtype, x, y, z);
+	mo = Spawn (rtype, x, y, z, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = actor;
@@ -519,14 +519,14 @@ void A_FiredSplotch (AActor *actor)
 {
 	AActor *mo;
 
-	mo = Spawn<AFireDemonSplotch1> (actor->x, actor->y, actor->z);
+	mo = Spawn<AFireDemonSplotch1> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->momx = (pr_firedemonsplotch() - 128) << 11;
 		mo->momy = (pr_firedemonsplotch() - 128) << 11;
 		mo->momz = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
 	}
-	mo = Spawn<AFireDemonSplotch2> (actor->x, actor->y, actor->z);
+	mo = Spawn<AFireDemonSplotch2> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->momx = (pr_firedemonsplotch() - 128) << 11;

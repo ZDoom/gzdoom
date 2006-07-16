@@ -1025,7 +1025,7 @@ static void DoGiveInventory(AActor * self, AActor * receiver)
 	const PClass * mi=PClass::FindClass(item);
 	if (mi) 
 	{
-		AInventory *item = static_cast<AInventory *>(Spawn (mi, 0, 0, 0));
+		AInventory *item = static_cast<AInventory *>(Spawn (mi, 0, 0, 0, NO_REPLACE));
 		if (item->IsKindOf(RUNTIME_CLASS(AHealth)))
 		{
 			item->Amount *= amount;
@@ -1143,13 +1143,10 @@ void A_SpawnItem(AActor * self)
 		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire)) return;
 	}
 
-	// Handle decorate replacements.
-	missile = missile->ActorInfo->GetReplacement()->Class;
-
 	AActor * mo = Spawn( missile, 
 					self->x + FixedMul(distance, finecosine[self->angle>>ANGLETOFINESHIFT]), 
 					self->y + FixedMul(distance, finesine[self->angle>>ANGLETOFINESHIFT]), 
-					self->z - self->floorclip + zheight);
+					self->z - self->floorclip + zheight, ALLOW_REPLACE);
 
 	if (mo)
 	{
@@ -1236,7 +1233,8 @@ void A_ThrowGrenade(AActor * self)
 	AActor * bo;
 
 	bo = Spawn(missile, self->x, self->y, 
-			self->z - self->floorclip + zheight + 35*FRACUNIT + (self->player? self->player->crouchoffset : 0));
+			self->z - self->floorclip + zheight + 35*FRACUNIT + (self->player? self->player->crouchoffset : 0),
+			ALLOW_REPLACE);
 	if (bo)
 	{
 		int pitch = self->pitch;
@@ -1407,7 +1405,7 @@ void A_SpawnDebris(AActor * self)
 	{
 		mo = Spawn(debris, self->x+((pr_spawndebris()-128)<<12),
 			self->y+((pr_spawndebris()-128)<<12), 
-			self->z+(pr_spawndebris()*self->height/256));
+			self->z+(pr_spawndebris()*self->height/256), ALLOW_REPLACE);
 		if (mo && i < mo->GetClass()->ActorInfo->NumOwnedStates)
 		{
 			mo->SetState (mo->GetClass()->ActorInfo->OwnedStates + i);
@@ -1636,7 +1634,7 @@ void A_Burst (AActor *actor)
       mo = Spawn(chunk,
          actor->x + (((pr_burst()-128)*actor->radius)>>7),
          actor->y + (((pr_burst()-128)*actor->radius)>>7),
-         actor->z + (pr_burst()*actor->height/255));
+         actor->z + (pr_burst()*actor->height/255), ALLOW_REPLACE);
 
 	  if (mo)
       {

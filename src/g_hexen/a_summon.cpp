@@ -129,13 +129,13 @@ void A_Summon (AActor *actor)
 {
 	AMinotaurFriend *mo;
 
-	mo = Spawn<AMinotaurFriend> (actor->x, actor->y, actor->z);
+	mo = Spawn<AMinotaurFriend> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		if (P_TestMobjLocation(mo) == false || !actor->tracer)
 		{ // Didn't fit - change back to artifact
 			mo->Destroy ();
-			AActor *arti = Spawn<AArtiDarkServant> (actor->x, actor->y, actor->z);
+			AActor *arti = Spawn<AArtiDarkServant> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 			if (arti) arti->flags |= MF_DROPPED;
 			return;
 		}
@@ -148,7 +148,7 @@ void A_Summon (AActor *actor)
 		else
 		{
 			mo->tracer = actor->tracer;		// Pointer to master
-			AInventory *power = Spawn<APowerMinotaur> (0, 0, 0);
+			AInventory *power = Spawn<APowerMinotaur> (0, 0, 0, NO_REPLACE);
 			power->TryPickup (actor->tracer);
 			if (actor->tracer->player != NULL)
 			{
@@ -157,7 +157,7 @@ void A_Summon (AActor *actor)
 		}
 
 		// Make smoke puff
-		Spawn<AMinotaurSmoke> (actor->x, actor->y, actor->z);
+		Spawn<AMinotaurSmoke> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		S_SoundID (actor, CHAN_VOICE, mo->ActiveSound, 1, ATTN_NORM);
 	}
 }

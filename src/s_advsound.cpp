@@ -439,8 +439,9 @@ int S_FindSoundTentative (const char *name)
 
 int S_AddSound (const char *logicalname, const char *lumpname)
 {
-	return S_AddSound (logicalname,
-		lumpname ? Wads.CheckNumForName (lumpname, ns_sounds) : -1);
+	int lump = Wads.CheckNumForFullName (lumpname);
+	if (lump == -1) lump = Wads.CheckNumForName (lumpname, ns_sounds);
+	return S_AddSound (logicalname, lump);
 }
 
 static int S_AddSound (const char *logicalname, int lumpnum)
@@ -493,8 +494,15 @@ static int S_AddSound (const char *logicalname, int lumpnum)
 int S_AddPlayerSound (const char *pclass, int gender, int refid,
 	const char *lumpname)
 {
-	return S_AddPlayerSound (pclass, gender, refid,
-		lumpname ? Wads.CheckNumForName (lumpname, ns_sounds) : -1);
+	int lump;
+	
+	if (lumpname)
+	{
+		lump = Wads.CheckNumForFullName (lumpname);
+		if (lump == -1) lump = Wads.CheckNumForName (lumpname, ns_sounds);
+	}
+
+	return S_AddPlayerSound (pclass, gender, refid, lump);
 }
 
 int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool fromskin)

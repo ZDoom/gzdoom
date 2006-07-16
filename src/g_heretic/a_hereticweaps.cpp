@@ -779,7 +779,7 @@ void A_BoltSpark (AActor *bolt)
 
 	if (pr_boltspark() > 50)
 	{
-		spark = Spawn<ACrossbowFX4> (bolt->x, bolt->y, bolt->z);
+		spark = Spawn<ACrossbowFX4> (bolt->x, bolt->y, bolt->z, ALLOW_REPLACE);
 		spark->x += pr_boltspark.Random2() << 10;
 		spark->y += pr_boltspark.Random2() << 10;
 	}
@@ -1093,7 +1093,7 @@ void A_SpawnMace (AActor *self)
 	{ // Sometimes doesn't show up if not in deathmatch
 		return;
 	}
-	mace = Spawn<AMace> (self->x, self->y, self->z);
+	mace = Spawn<AMace> (self->x, self->y, self->z, ALLOW_REPLACE);
 	if (mace)
 	{
 		mace->FirstSpot = firstSpot;
@@ -1150,7 +1150,7 @@ void A_FireMacePL1B (AActor *actor)
 	}
 	pmo = player->mo;
 	ball = Spawn<AMaceFX2> (pmo->x, pmo->y, pmo->z + 28*FRACUNIT 
-		- pmo->floorclip);
+		- pmo->floorclip, ALLOW_REPLACE);
 	ball->momz = 2*FRACUNIT+/*((player->lookdir)<<(FRACBITS-5))*/
 		finetangent[FINEANGLES/4-(pmo->pitch>>ANGLETOFINESHIFT)];
 	angle = pmo->angle;
@@ -1295,7 +1295,7 @@ void A_MaceBallImpact2 (AActor *ball)
 		ball->momz = (ball->momz * 192) >> 8;
 		ball->SetState (ball->SpawnState);
 
-		tiny = Spawn<AMaceFX3> (ball->x, ball->y, ball->z);
+		tiny = Spawn<AMaceFX3> (ball->x, ball->y, ball->z, ALLOW_REPLACE);
 		angle = ball->angle+ANG90;
 		tiny->target = ball->target;
 		tiny->angle = angle;
@@ -1307,7 +1307,7 @@ void A_MaceBallImpact2 (AActor *ball)
 		tiny->momz = ball->momz;
 		P_CheckMissileSpawn (tiny);
 
-		tiny = Spawn<AMaceFX3> (ball->x, ball->y, ball->z);
+		tiny = Spawn<AMaceFX3> (ball->x, ball->y, ball->z, ALLOW_REPLACE);
 		angle = ball->angle-ANG90;
 		tiny->target = ball->target;
 		tiny->angle = angle;
@@ -2020,7 +2020,7 @@ void A_SpawnRippers (AActor *actor)
 
 	for(i = 0; i < 8; i++)
 	{
-		ripper = Spawn<ARipper> (actor->x, actor->y, actor->z);
+		ripper = Spawn<ARipper> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		angle = i*ANG45;
 		ripper->target = actor->target;
 		ripper->angle = angle;
@@ -2084,7 +2084,7 @@ void ABlasterFX1::Tick ()
 			}
 			if (changexy && (pr_bfx1t() < 64))
 			{
-				Spawn<ABlasterSmoke> (x, y, MAX<fixed_t> (z - 8 * FRACUNIT, floorz));
+				Spawn<ABlasterSmoke> (x, y, MAX<fixed_t> (z - 8 * FRACUNIT, floorz), ALLOW_REPLACE);
 			}
 		}
 	}
@@ -2526,7 +2526,7 @@ void A_SkullRodStorm (AActor *actor)
 	}
 	x = actor->x + ((pr_storm()&127) - 64) * FRACUNIT;
 	y = actor->y + ((pr_storm()&127) - 64) * FRACUNIT;
-	mo = Spawn<ARainPillar> (x, y, ONCEILINGZ);
+	mo = Spawn<ARainPillar> (x, y, ONCEILINGZ, ALLOW_REPLACE);
 	mo->Translation = multiplayer ?
 		TRANSLATION(TRANSLATION_PlayersExtra,actor->special2) : 0;
 	mo->target = actor->target;
@@ -2830,13 +2830,13 @@ void A_PhoenixPuff (AActor *actor)
 
 	//[RH] Heretic never sets the target for seeking
 	//P_SeekerMissile (actor, ANGLE_1*5, ANGLE_1*10);
-	puff = Spawn<APhoenixPuff> (actor->x, actor->y, actor->z);
+	puff = Spawn<APhoenixPuff> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	angle = actor->angle + ANG90;
 	angle >>= ANGLETOFINESHIFT;
 	puff->momx = FixedMul (FRACUNIT*13/10, finecosine[angle]);
 	puff->momy = FixedMul (FRACUNIT*13/10, finesine[angle]);
 	puff->momz = 0;
-	puff = Spawn<APhoenixPuff> (actor->x, actor->y, actor->z);
+	puff = Spawn<APhoenixPuff> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	angle = actor->angle - ANG90;
 	angle >>= ANGLETOFINESHIFT;
 	puff->momx = FixedMul (FRACUNIT*13/10, finecosine[angle]);
@@ -2903,7 +2903,7 @@ void A_FirePhoenixPL2 (AActor *actor)
 	z = pmo->z + 26*FRACUNIT + finetangent[FINEANGLES/4-(pmo->pitch>>ANGLETOFINESHIFT)];
 	z -= pmo->floorclip;
 	slope = finetangent[FINEANGLES/4-(pmo->pitch>>ANGLETOFINESHIFT)] + (FRACUNIT/10);
-	mo = Spawn<APhoenixFX2> (x, y, z);
+	mo = Spawn<APhoenixFX2> (x, y, z, ALLOW_REPLACE);
 	mo->target = pmo;
 	mo->angle = angle;
 	mo->momx = pmo->momx + FixedMul (mo->Speed, finecosine[angle>>ANGLETOFINESHIFT]);

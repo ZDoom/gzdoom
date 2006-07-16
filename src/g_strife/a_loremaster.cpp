@@ -205,7 +205,7 @@ void A_20598 (AActor *self)
 void A_205b0 (AActor *self)
 {
 	S_Sound (self, CHAN_BODY, "loremaster/active", 1, ATTN_NORM);
-	Spawn<ALoreShot2> (self->x, self->y, self->z);
-	Spawn<ALoreShot2> (self->x - (self->momx >> 1), self->y - (self->momy >> 1), self->z - (self->momz >> 1));
-	Spawn<ALoreShot2> (self->x - self->momx, self->y - self->momy, self->z - self->momz);
+	Spawn<ALoreShot2> (self->x, self->y, self->z, ALLOW_REPLACE);
+	Spawn<ALoreShot2> (self->x - (self->momx >> 1), self->y - (self->momy >> 1), self->z - (self->momz >> 1), ALLOW_REPLACE);
+	Spawn<ALoreShot2> (self->x - self->momx, self->y - self->momy, self->z - self->momz, ALLOW_REPLACE);
 }

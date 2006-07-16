@@ -155,7 +155,7 @@ bool AHealthTraining::TryPickup (AActor *toucher)
 	if (Super::TryPickup (toucher))
 	{
 		toucher->GiveInventoryType (RUNTIME_CLASS(AGunTraining));
-		AInventory *coin = Spawn<ACoin> (0,0,0);
+		AInventory *coin = Spawn<ACoin> (0,0,0, NO_REPLACE);
 		if (coin != NULL)
 		{
 			coin->Amount = toucher->player->accuracy*5 + 300;

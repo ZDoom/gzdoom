@@ -64,7 +64,6 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 	if ( (kind = SpawnableThings[type]) == NULL)
 		return false;
 
-	
 	// Handle decorate replacements.
 	kind = kind->ActorInfo->GetReplacement()->Class;
 
@@ -73,7 +72,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 
 	while ( (spot = iterator.Next ()) )
 	{
-		mobj = Spawn (kind, spot->x, spot->y, spot->z);
+		mobj = Spawn (kind, spot->x, spot->y, spot->z, ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -85,7 +84,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 				mobj->angle = (angle != ANGLE_MAX ? angle : spot->angle);
 				if (fog)
 				{
-					Spawn<ATeleportFog> (spot->x, spot->y, spot->z + TELEFOGHEIGHT);
+					Spawn<ATeleportFog> (spot->x, spot->y, spot->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
@@ -131,8 +130,8 @@ bool P_MoveThing(AActor * source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	{
 		if (fog)
 		{
-			Spawn<ATeleportFog> (x, y, z + TELEFOGHEIGHT);
-			Spawn<ATeleportFog> (oldx, oldy, oldz + TELEFOGHEIGHT);
+			Spawn<ATeleportFog> (x, y, z + TELEFOGHEIGHT, ALLOW_REPLACE);
+			Spawn<ATeleportFog> (oldx, oldy, oldz + TELEFOGHEIGHT, ALLOW_REPLACE);
 		}
 		return true;
 	}
@@ -213,7 +212,7 @@ bool P_Thing_Projectile (int tid, int type, const char * type_name, angle_t angl
 				{
 					z -= spot->floorclip;
 				}
-				mobj = Spawn (kind, spot->x, spot->y, z);
+				mobj = Spawn (kind, spot->x, spot->y, z, ALLOW_REPLACE);
 
 				if (mobj)
 				{

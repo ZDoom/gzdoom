@@ -375,7 +375,7 @@ void A_BishopSpawnBlur (AActor *actor)
 			actor->SetState (actor->MissileState);
 		}
 	}
-	mo = Spawn<ABishopBlur> (actor->x, actor->y, actor->z);
+	mo = Spawn<ABishopBlur> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->angle = actor->angle;
@@ -405,7 +405,7 @@ void A_BishopPuff (AActor *actor)
 {
 	AActor *mo;
 
-	mo = Spawn<ABishopPuff> (actor->x, actor->y, actor->z + 40*FRACUNIT);
+	mo = Spawn<ABishopPuff> (actor->x, actor->y, actor->z + 40*FRACUNIT, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->momz = FRACUNIT/2;
@@ -430,7 +430,7 @@ void A_BishopPainBlur (AActor *actor)
 	fixed_t x = actor->x + (pr_pain.Random2()<<12);
 	fixed_t y = actor->y + (pr_pain.Random2()<<12);
 	fixed_t z = actor->z + (pr_pain.Random2()<<11);
-	mo = Spawn<ABishopPainBlur> (x, y, z);
+	mo = Spawn<ABishopPainBlur> (x, y, z, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->angle = actor->angle;

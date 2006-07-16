@@ -175,7 +175,7 @@ static void DoGiveInv (AActor *actor, const PClass *info, int amount)
 		? actor->player->PendingWeapon : NULL;
 	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
 
-	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0));
+	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0, NO_REPLACE));
 
 	// This shouldn't count for the item statistics!
 	if (item->flags & MF_COUNTITEM) 
@@ -1840,9 +1840,7 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 
 	if (info != NULL)
 	{
-		// Handle decorate replacements.
-		info = info->ActorInfo->GetReplacement()->Class;
-		actor = Spawn (info, x, y, z);
+		actor = Spawn (info, x, y, z, ALLOW_REPLACE);
 		if (actor != NULL)
 		{
 			if (P_TestMobjLocation (actor))

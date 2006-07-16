@@ -363,7 +363,7 @@ bool AHolySpirit::Slam (AActor *thing)
 			P_DamageMobj (thing, this, target, dam, MOD_HIT);
 			if (pr_spiritslam() < 128)
 			{
-				Spawn<AHolyPuff> (x, y, z);
+				Spawn<AHolyPuff> (x, y, z, ALLOW_REPLACE);
 				S_Sound (this, CHAN_WEAPON, "SpiritAttack", 1, ATTN_NORM);
 				if (thing->flags3&MF3_ISMONSTER && pr_spiritslam() < 128)
 				{
@@ -481,7 +481,7 @@ void A_CHolyAttack2 (AActor *actor)
 
 	for (j = 0; j < 4; j++)
 	{
-		mo = Spawn<AHolySpirit> (actor->x, actor->y, actor->z);
+		mo = Spawn<AHolySpirit> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if (!mo)
 		{
 			continue;
@@ -533,11 +533,11 @@ void SpawnSpiritTail (AActor *spirit)
 	AActor *tail, *next;
 	int i;
 	
-	tail = Spawn<AHolyTail> (spirit->x, spirit->y, spirit->z);
+	tail = Spawn<AHolyTail> (spirit->x, spirit->y, spirit->z, ALLOW_REPLACE);
 	tail->target = spirit; // parent
 	for (i = 1; i < 3; i++)
 	{
-		next = Spawn<AHolyTailTrail> (spirit->x, spirit->y, spirit->z);
+		next = Spawn<AHolyTailTrail> (spirit->x, spirit->y, spirit->z, ALLOW_REPLACE);
 		tail->tracer = next;
 		tail = next;
 	}
@@ -868,7 +868,7 @@ void A_CHolyCheckScream (AActor *actor)
 
 void A_CHolySpawnPuff (AActor *actor)
 {
-	Spawn<AHolyMissilePuff> (actor->x, actor->y, actor->z);
+	Spawn<AHolyMissilePuff> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 }
 
 void AClericWeaponPiece::BeginPlay ()
@@ -894,7 +894,7 @@ void A_DropWraithvergePieces (AActor *actor)
 
 	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
 	{
-		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z);
+		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if (piece != NULL)
 		{
 			piece->momx = actor->momx + finecosine[fineang];

@@ -233,12 +233,12 @@ void A_ImpExplode (AActor *self)
 
 	self->flags &= ~MF_NOGRAVITY;
 
-	chunk = Spawn<AHereticImpChunk1> (self->x, self->y, self->z);
+	chunk = Spawn<AHereticImpChunk1> (self->x, self->y, self->z, ALLOW_REPLACE);
 	chunk->momx = pr_imp.Random2 () << 10;
 	chunk->momy = pr_imp.Random2 () << 10;
 	chunk->momz = 9*FRACUNIT;
 
-	chunk = Spawn<AHereticImpChunk2> (self->x, self->y, self->z);
+	chunk = Spawn<AHereticImpChunk2> (self->x, self->y, self->z, ALLOW_REPLACE);
 	chunk->momx = pr_imp.Random2 () << 10;
 	chunk->momy = pr_imp.Random2 () << 10;
 	chunk->momz = 9*FRACUNIT;

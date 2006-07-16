@@ -22,7 +22,7 @@ public:
 	{
 		player_t *player = Owner->player;
 
-		ABasicArmorPickup *armor = static_cast<ABasicArmorPickup *> (Spawn ("BlueArmor", 0,0,0));
+		ABasicArmorPickup *armor = static_cast<ABasicArmorPickup *> (Spawn ("BlueArmor", 0,0,0, NO_REPLACE));
 		if (!armor->TryPickup (Owner))
 		{
 			armor->Destroy ();

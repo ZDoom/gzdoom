@@ -42,7 +42,7 @@ IMPLEMENT_ABSTRACT_ACTOR (APowerup)
 
 bool APowerupGiver::Use (bool pickup)
 {
-	APowerup *power = static_cast<APowerup *> (Spawn (PowerupType, 0, 0, 0));
+	APowerup *power = static_cast<APowerup *> (Spawn (PowerupType, 0, 0, 0, NO_REPLACE));
 
 	if (EffectTics != 0)
 	{
@@ -966,7 +966,7 @@ void APowerSpeed::DoEffect ()
 	if (P_AproxDistance (Owner->momx, Owner->momy) <= 12*FRACUNIT)
 		return;
 
-	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->x, Owner->y, Owner->z);
+	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->x, Owner->y, Owner->z, NO_REPLACE);
 	if (speedMo)
 	{
 		speedMo->angle = Owner->angle;

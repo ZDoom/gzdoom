@@ -307,7 +307,7 @@ void A_CentaurDropStuff (AActor *actor)
 	{
 		AActor *mo;
 
-		mo = Spawn (DropTypes[i], actor->x, actor->y, actor->z+45*FRACUNIT);
+		mo = Spawn (DropTypes[i], actor->x, actor->y, actor->z+45*FRACUNIT, ALLOW_REPLACE);
 		if (mo)
 		{
 			angle_t angle = actor->angle + (i ? ANGLE_90 : ANGLE_270);

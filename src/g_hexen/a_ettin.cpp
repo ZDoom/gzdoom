@@ -173,7 +173,7 @@ void A_DropMace (AActor *actor)
 	AEttinMace *mo;
 
 	mo = Spawn<AEttinMace> (actor->x, actor->y,
-		actor->z + (actor->height>>1));
+		actor->z + (actor->height>>1), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->momx = (pr_dropmace()-128) << 11;

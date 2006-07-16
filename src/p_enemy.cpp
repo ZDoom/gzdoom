@@ -2210,10 +2210,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int special, int cha
 				spawnz += source->height / 2;
 			}
 		}
-		// Handle decorate replacements.
-		type = type->ActorInfo->GetReplacement()->Class;
-
-		mo = Spawn (type, source->x, source->y, spawnz);
+		mo = Spawn (type, source->x, source->y, spawnz, ALLOW_REPLACE);
 		mo->flags |= MF_DROPPED;
 		mo->flags &= ~MF_NOGRAVITY;	// [RH] Make sure it is affected by gravity
 		if (mo->IsKindOf (RUNTIME_CLASS(AInventory)))

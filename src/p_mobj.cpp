@@ -813,7 +813,7 @@ AInventory *AActor::GiveInventoryType (const PClass *type)
 {
 	AInventory *item;
 
-	item = static_cast<AInventory *>(Spawn (type, 0,0,0));
+	item = static_cast<AInventory *>(Spawn (type, 0,0,0, NO_REPLACE));
 	if (!item->TryPickup (this))
 	{
 		item->Destroy ();
@@ -832,7 +832,7 @@ AInventory *AActor::GiveInventoryType (const PClass *type)
 
 bool AActor::GiveAmmo (const PClass *type, int amount)
 {
-	AInventory *item = static_cast<AInventory *>(Spawn (type, 0, 0, 0));
+	AInventory *item = static_cast<AInventory *>(Spawn (type, 0, 0, 0, NO_REPLACE));
 	item->Amount = amount;
 	item->flags |= MF_DROPPED;
 	if (!item->TryPickup (this))
@@ -2147,7 +2147,7 @@ void P_NightmareRespawn (AActor *mobj)
 	// spawn it
 	x = mobj->SpawnPoint[0] << FRACBITS;
 	y = mobj->SpawnPoint[1] << FRACBITS;
-	mo = Spawn (RUNTIME_TYPE(mobj), x, y, z);
+	mo = Spawn (RUNTIME_TYPE(mobj), x, y, z, NO_REPLACE);
 
 	if (z == ONFLOORZ)
 		mo->z += mo->SpawnPoint[2] << FRACBITS;
@@ -2179,14 +2179,14 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->Translation = mobj->Translation;
 
 	// spawn a teleport fog at old spot because of removal of the body?
-	mo = Spawn ("TeleportFog", mobj->x, mobj->y, mobj->z);
+	mo = Spawn ("TeleportFog", mobj->x, mobj->y, mobj->z, ALLOW_REPLACE);
 	if (mo != NULL)
 	{
 		mo->z += TELEFOGHEIGHT;
 	}
 
 	// spawn a teleport fog at the new spot
-	mo = Spawn ("TeleportFog", x, y, z);
+	mo = Spawn ("TeleportFog", x, y, z, ALLOW_REPLACE);
 	if (mo != NULL)
 	{
 		mo->z += TELEFOGHEIGHT;
@@ -3014,7 +3014,7 @@ END_DEFAULTS
 //
 //==========================================================================
 
-AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t iz)
+AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t iz, replace_t allowreplacement)
 {
 	if (type == NULL)
 	{
@@ -3025,6 +3025,10 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	{
 		I_Error ("%s is not an actor\n", type->TypeName.GetChars());
 	}
+
+	if (allowreplacement)
+		type = type->ActorInfo->GetReplacement()->Class;
+
 
 	AActor *actor;
 
@@ -3359,7 +3363,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 	}
 
 	mobj = static_cast<APlayerPawn *>
-		(Spawn (p->cls, mthing->x << FRACBITS, mthing->y << FRACBITS, ONFLOORZ));
+		(Spawn (p->cls, mthing->x << FRACBITS, mthing->y << FRACBITS, ONFLOORZ, NO_REPLACE));
 
 	mobj->FriendPlayer = playernum + 1;	// [RH] players are their own friends
 	oldactor = p->mo;
@@ -3457,7 +3461,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 	if (multiplayer)
 	{
 		unsigned an = ( ANG45 * (mthing->angle/45) ) >> ANGLETOFINESHIFT;
-		Spawn ("TeleportFog", mobj->x+20*finecosine[an], mobj->y+20*finesine[an], mobj->z + TELEFOGHEIGHT);
+		Spawn ("TeleportFog", mobj->x+20*finecosine[an], mobj->y+20*finesine[an], mobj->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	}
 
 	// "Fix" for one of the starts on exec.wad MAP01: If you start inside the ceiling,
@@ -3710,7 +3714,8 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	//		it to the unknown thing.
 	else
 	{
-		// Handle decorate replacements.
+		// Handle decorate replacements explicitly here
+		// to check for missing frames in the replacement object.
 		i = i->ActorInfo->GetReplacement()->Class;
 
 		const AActor *defaults = GetDefaultByType (i);
@@ -3785,7 +3790,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		z = ONFLOORZ;
 
 	SpawningMapThing = true;
-	mobj = Spawn (i, x, y, z);
+	mobj = Spawn (i, x, y, z, NO_REPLACE);
 	SpawningMapThing = false;
 
 	if (z == ONFLOORZ)
@@ -3833,7 +3838,7 @@ AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, an
 
 	z += pr_spawnpuff.Random2 () << 10;
 
-	puff = Spawn (pufftype, x, y, z);
+	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
@@ -3905,7 +3910,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 	if (cl_bloodtype <= 1)
 	{
 		z += pr_spawnblood.Random2 () << 10;
-		th = Spawn<ABlood> (x, y, z);
+		th = Spawn<ABlood> (x, y, z, ALLOW_REPLACE);
 		th->momz = FRACUNIT*2;
 		th->angle = dir;
 		if (gameinfo.gametype == GAME_Doom)
@@ -3967,14 +3972,7 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	{
 		AActor *mo;
 
-		if (gameinfo.gametype == GAME_Doom)
-		{
-			mo = Spawn<ABlood> (x, y, z);
-		}
-		else
-		{
-			mo = Spawn<ABloodSplatter> (x, y, z);
-		}
+		mo = Spawn<ABloodSplatter> (x, y, z, ALLOW_REPLACE);
 		mo->target = originator;
 		mo->momx = pr_splatter.Random2 () << 10;
 		mo->momy = pr_splatter.Random2 () << 10;
@@ -4006,7 +4004,7 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	if (cl_bloodtype <= 1)
 	{
 		AActor *th;
-		th = Spawn<ABlood> (x, y, z);
+		th = Spawn<ABlood> (x, y, z, ALLOW_REPLACE);
 		if (gameinfo.gametype == GAME_Heretic)
 			th->flags |= MF_NOGRAVITY;
 		th->momx = mo->momx >> 1;
@@ -4093,14 +4091,14 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 
 	if (smallsplash && splash->SmallSplash)
 	{
-		mo = Spawn (splash->SmallSplash, thing->x, thing->y, z);
+		mo = Spawn (splash->SmallSplash, thing->x, thing->y, z, ALLOW_REPLACE);
 		if (mo) mo->floorclip += splash->SmallSplashClip;
 	}
 	else
 	{
 		if (splash->SplashChunk)
 		{
-			mo = Spawn (splash->SplashChunk, thing->x, thing->y, z);
+			mo = Spawn (splash->SplashChunk, thing->x, thing->y, z, ALLOW_REPLACE);
 			mo->target = thing;
 			if (splash->ChunkXVelShift != 255)
 			{
@@ -4114,7 +4112,7 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 		}
 		if (splash->SplashBase)
 		{
-			mo = Spawn (splash->SplashBase, thing->x, thing->y, z);
+			mo = Spawn (splash->SplashBase, thing->x, thing->y, z, ALLOW_REPLACE);
 		}
 		if (thing->player && !splash->NoAlert)
 		{
@@ -4264,7 +4262,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		z -= source->floorclip;
 	}
 
-	AActor *th = Spawn (type, x, y, z);
+	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
 	
 	if (th->SeeSound)
 		S_SoundID (th, CHAN_VOICE, th->SeeSound, 1, ATTN_NORM);
@@ -4392,7 +4390,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 	{
 		z -= source->floorclip;
 	}
-	mo = Spawn (type, source->x, source->y, z);
+	mo = Spawn (type, source->x, source->y, z, ALLOW_REPLACE);
 	if (mo->SeeSound)
 	{
 		S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
@@ -4467,7 +4465,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	{
 		z += 4*8*FRACUNIT - source->floorclip + (source->player? source->player->crouchoffset : 0);
 	}
-	MissileActor = Spawn (type, x, y, z);
+	MissileActor = Spawn (type, x, y, z, ALLOW_REPLACE);
 
 	if (MissileActor->SeeSound)
 	{

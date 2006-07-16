@@ -352,6 +352,13 @@ enum ERenderStyle
 #define HX_SHADOW			(0x9800)
 #define HX_ALTSHADOW		(0x6800)
 
+// This could easily be a bool but then it'd be much harder to find later. ;)
+enum replace_t
+{
+	NO_REPLACE = 0,
+	ALLOW_REPLACE = 1
+};
+
 // [RH] Like msecnode_t, but for the blockmap
 struct FBlockNode
 {
@@ -421,7 +428,7 @@ public:
 
 	void Serialize (FArchive &arc);
 
-	static AActor *StaticSpawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z);
+	static AActor *StaticSpawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 
 	inline AActor *GetDefault () const
 	{
@@ -788,20 +795,20 @@ public:
 	}
 };
 
-inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z)
+inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
-	return AActor::StaticSpawn (type, x, y, z);
+	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
 }
 
-inline AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z)
+inline AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
-	return AActor::StaticSpawn (PClass::FindClass(type), x, y, z);
+	return AActor::StaticSpawn (PClass::FindClass(type), x, y, z, allowreplacement);
 }
 
 template<class T>
-inline T *Spawn (fixed_t x, fixed_t y, fixed_t z)
+inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), x, y, z));
+	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), x, y, z, allowreplacement));
 }
 
 #define S_FREETARGMOBJ	1

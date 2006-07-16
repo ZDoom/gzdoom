@@ -343,7 +343,7 @@ END_DEFAULTS
 
 static void GenericSpectreSpawn (AActor *actor, const PClass *type)
 {
-	AActor *spectre = Spawn (type, actor->x, actor->y, actor->z);
+	AActor *spectre = Spawn (type, actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	if (spectre != NULL)
 	{
 		spectre->momz = pr_spectrespawn() << 9;
@@ -377,7 +377,7 @@ void A_SpawnSpectre5 (AActor *actor)
 
 void A_212e4 (AActor *self)
 {
-	AActor *foo = Spawn<AAlienChunkSmall> (self->x, self->y, self->z + 10*FRACUNIT);
+	AActor *foo = Spawn<AAlienChunkSmall> (self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
 
 	if (foo != NULL)
 	{
@@ -395,7 +395,7 @@ void A_212e4 (AActor *self)
 
 void A_2134c (AActor *self)
 {
-	AActor *foo = Spawn<AAlienChunkLarge> (self->x, self->y, self->z + 10*FRACUNIT);
+	AActor *foo = Spawn<AAlienChunkLarge> (self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
 
 	if (foo != NULL)
 	{
@@ -464,7 +464,7 @@ void A_20334 (AActor *self)
 	if (self->target == NULL)
 		return;
 
-	AActor *foo = Spawn<ASpectralLightningV2> (self->x, self->y, self->z + 32*FRACUNIT);
+	AActor *foo = Spawn<ASpectralLightningV2> (self->x, self->y, self->z + 32*FRACUNIT, ALLOW_REPLACE);
 
 	foo->momz = -12*FRACUNIT;
 	foo->target = self;

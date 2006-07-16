@@ -203,7 +203,7 @@ void A_SkullPop (AActor *actor)
 		spawntype = RUNTIME_CLASS (ABloodySkull);
 
 	actor->flags &= ~MF_SOLID;
-	mo = (APlayerPawn *)Spawn (spawntype, actor->x, actor->y, actor->z + 48*FRACUNIT);
+	mo = (APlayerPawn *)Spawn (spawntype, actor->x, actor->y, actor->z + 48*FRACUNIT, NO_REPLACE);
 	//mo->target = actor;
 	mo->momx = pr_skullpop.Random2() << 9;
 	mo->momy = pr_skullpop.Random2() << 9;

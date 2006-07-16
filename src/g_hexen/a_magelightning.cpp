@@ -451,7 +451,7 @@ void A_LightningZap (AActor *actor)
 	}
 	mo = Spawn<ALightningZap> (actor->x+((pr_zap()-128)*actor->radius/256), 
 		actor->y+((pr_zap()-128)*actor->radius/256), 
-		actor->z+deltaZ);
+		actor->z+deltaZ, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->lastenemy = actor;
@@ -554,7 +554,7 @@ void A_LastZap (AActor *actor)
 {
 	AActor *mo;
 
-	mo = Spawn<ALightningZap> (actor->x, actor->y, actor->z);
+	mo = Spawn<ALightningZap> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->SetState (&ALightningZap::States[S_LIGHTNING_ZAP_X1]);

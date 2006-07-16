@@ -746,7 +746,7 @@ END_DEFAULTS
 
 AInventory *AAssaultGunStanding::CreateCopy (AActor *other)
 {
-	AAssaultGun *copy = Spawn<AAssaultGun> (0,0,0);
+	AAssaultGun *copy = Spawn<AAssaultGun> (0,0,0, NO_REPLACE);
 	copy->AmmoGive1 = AmmoGive1;
 	copy->AmmoGive2 = AmmoGive2;
 	GoAwayAndDie ();
@@ -933,7 +933,7 @@ void A_RocketInFlight (AActor *self)
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
 	P_SpawnPuff (RUNTIME_CLASS(AMiniMissilePuff), self->x, self->y, self->z, self->angle - ANGLE_180, 2, true);
-	trail = Spawn<ARocketTrail> (self->x - self->momx, self->y - self->momy, self->z);
+	trail = Spawn<ARocketTrail> (self->x - self->momx, self->y - self->momy, self->z, ALLOW_REPLACE);
 	if (trail != NULL)
 	{
 		trail->momz = FRACUNIT;
@@ -1396,7 +1396,7 @@ void A_MaulerTorpedoWave (AActor *self)
 
 AActor *P_SpawnSubMissile (AActor *source, PClass *type, AActor *target)
 {
-	AActor *other = Spawn (type, source->x, source->y, source->z);
+	AActor *other = Spawn (type, source->x, source->y, source->z, ALLOW_REPLACE);
 
 	if (other == NULL)
 	{
@@ -1576,7 +1576,7 @@ int APhosphorousFire::DoSpecialDamage (AActor *target, int damage)
 
 void A_SpawnBurn (AActor *self)
 {
-	Spawn<APhosphorousFire> (self->x, self->y, self->z);
+	Spawn<APhosphorousFire> (self->x, self->y, self->z, ALLOW_REPLACE);
 }
 
 void A_BurnArea (AActor *self)
@@ -1627,7 +1627,7 @@ void A_Burnination (AActor *self)
 
 		AActor *drop = Spawn<APhosphorousFire> (
 			x, y,
-			self->z + 4*FRACUNIT);
+			self->z + 4*FRACUNIT, ALLOW_REPLACE);
 		if (drop != NULL)
 		{
 			drop->momx = self->momx + ((pr_phburn.Random2 (7)) << FRACBITS);
@@ -2047,7 +2047,7 @@ bool ASigil::HandlePickup (AInventory *item)
 
 AInventory *ASigil::CreateCopy (AActor *other)
 {
-	ASigil *copy = Spawn<ASigil> (0,0,0);
+	ASigil *copy = Spawn<ASigil> (0,0,0, NO_REPLACE);
 	copy->Amount = Amount;
 	copy->MaxAmount = MaxAmount;
 	copy->NumPieces = NumPieces;
@@ -2199,7 +2199,7 @@ void A_FireSigil1 (AActor *actor)
 	P_BulletSlope (actor);
 	if (linetarget != NULL)
 	{
-		spot = Spawn<ASpectralLightningSpot> (linetarget->x, linetarget->y, ONFLOORZ);
+		spot = Spawn<ASpectralLightningSpot> (linetarget->x, linetarget->y, ONFLOORZ, ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;
@@ -2207,7 +2207,7 @@ void A_FireSigil1 (AActor *actor)
 	}
 	else
 	{
-		spot = Spawn<ASpectralLightningSpot> (actor->x, actor->y, actor->z);
+		spot = Spawn<ASpectralLightningSpot> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->momx += 28 * finecosine[actor->angle >> ANGLETOFINESHIFT];
@@ -2380,7 +2380,7 @@ int ASigil::GiveSigilPiece (AActor *receiver)
 	sigil = receiver->FindInventory<ASigil> ();
 	if (sigil == NULL)
 	{
-		sigil = Spawn<ASigil1> (0,0,0);
+		sigil = Spawn<ASigil1> (0,0,0, NO_REPLACE);
 		if (!sigil->TryPickup (receiver))
 		{
 			sigil->Destroy ();

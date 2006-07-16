@@ -81,7 +81,7 @@ void A_BarrelRespawn (AActor *actor)
 		actor->flags2 = defs->flags2;
 		actor->SetState (actor->SpawnState);
 		actor->renderflags &= ~RF_INVISIBLE;
-		Spawn<ATeleportFog> (x, y, actor->z + TELEFOGHEIGHT);
+		Spawn<ATeleportFog> (x, y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	}
 	else
 	{

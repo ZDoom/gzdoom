@@ -163,7 +163,7 @@ void A_SentinelAttack (AActor *self)
 			trail = Spawn<ASentinelFX1> (
 				self->x + FixedMul (missile->radius * i, finecosine[missile->angle >> ANGLETOFINESHIFT]),
 				self->y + FixedMul (missile->radius * i, finesine[missile->angle >> ANGLETOFINESHIFT]),
-				missile->z + (missile->momz / 4 * i));
+				missile->z + (missile->momz / 4 * i), ALLOW_REPLACE);
 			if (trail != NULL)
 			{
 				trail->target = self;

@@ -100,19 +100,22 @@ void A_NoBlocking (AActor *actor)
 	{
 		FDropItem *di = GetDropItems(actor);
 
-		while (di != NULL)
+		if (di != NULL)
 		{
-			if (di->Name != NAME_None)
+			while (di != NULL)
 			{
-				const PClass *ti = PClass::FindClass(di->Name);
-				if (ti) P_DropItem (actor, ti, di->amount, di->probability);
+				if (di->Name != NAME_None)
+				{
+					const PClass *ti = PClass::FindClass(di->Name);
+					if (ti) P_DropItem (actor, ti, di->amount, di->probability);
+				}
+				di = di->Next;
 			}
-			di = di->Next;
 		}
-	}
-	else
-	{
-		actor->NoBlockingSet ();
+		else
+		{
+			actor->NoBlockingSet ();
+		}
 	}
 }
 
@@ -260,7 +263,7 @@ void A_FreezeDeathChunks (AActor *actor)
 		mo = Spawn<AIceChunk> (
 			actor->x + (((pr_freeze()-128)*actor->radius)>>7), 
 			actor->y + (((pr_freeze()-128)*actor->radius)>>7), 
-			actor->z + (pr_freeze()*actor->height/255));
+			actor->z + (pr_freeze()*actor->height/255), ALLOW_REPLACE);
 		mo->SetState (mo->SpawnState + (pr_freeze()%3));
 		if (mo)
 		{
@@ -274,7 +277,8 @@ void A_FreezeDeathChunks (AActor *actor)
 	}
 	if (actor->player)
 	{ // attach the player's view to a chunk of ice
-		AIceChunkHead *head = Spawn<AIceChunkHead> (actor->x, actor->y, actor->z + actor->player->mo->ViewHeight);
+		AIceChunkHead *head = Spawn<AIceChunkHead> (actor->x, actor->y, 
+													actor->z + actor->player->mo->ViewHeight, ALLOW_REPLACE);
 		head->momz = FixedDiv(head->z-actor->z, actor->height)<<2;
 		head->momx = pr_freeze.Random2 () << (FRACBITS-7);
 		head->momy = pr_freeze.Random2 () << (FRACBITS-7);

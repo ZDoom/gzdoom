@@ -181,7 +181,7 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 		x = victim->x + FixedMul (victim->radius+FRACUNIT, finecosine[ang]);
 		y = victim->y + FixedMul (victim->radius+FRACUNIT, finesine[ang]);
 		z = victim->z - victim->floorclip + (victim->height>>1);
-		mo = Spawn<ABlastEffect> (x, y, z);
+		mo = Spawn<ABlastEffect> (x, y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->momx = victim->momx;

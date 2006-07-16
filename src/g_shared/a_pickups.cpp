@@ -144,16 +144,12 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 	{
 		const PClass *type = GetParentAmmo();
 		assert (type->ActorInfo != NULL);
-		FActorInfo *replacesave = type->ActorInfo->Replacement;
 		if (!GoAway ())
 		{
 			Destroy ();
 		}
-		// If the base ammo class has a replacement defined, the replacement
-		// must not be used in the inventory.
-		type->ActorInfo->Replacement = NULL;
-		copy = static_cast<AInventory *>(Spawn (type, 0, 0, 0));
-		type->ActorInfo->Replacement = replacesave;
+
+		copy = static_cast<AInventory *>(Spawn (type, 0, 0, 0, NO_REPLACE));
 		copy->Amount = amount;
 		copy->BecomeItem ();
 	}
@@ -318,7 +314,7 @@ void A_RestoreSpecialDoomThing (AActor *self)
 	{
 		self->SetState (self->SpawnState);
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
-		Spawn<AItemFog> (self->x, self->y, self->z);
+		Spawn<AItemFog> (self->x, self->y, self->z, ALLOW_REPLACE);
 	}
 }
 
@@ -594,7 +590,7 @@ bool AInventory::GoAway ()
 	{
 		if (ItemFlags & IF_PICKUPFLASH)
 		{
-			Spawn<APickupFlash> (x, y, z);
+			Spawn<APickupFlash> (x, y, z, ALLOW_REPLACE);
 		}
 		return false;
 	}
@@ -603,7 +599,7 @@ bool AInventory::GoAway ()
 	{
 		if (ItemFlags & IF_PICKUPFLASH)
 		{
-			Spawn<APickupFlash> (x, y, z);
+			Spawn<APickupFlash> (x, y, z, ALLOW_REPLACE);
 		}
 		Hide ();
 		if (ShouldRespawn ())
@@ -649,7 +645,7 @@ AInventory *AInventory::CreateCopy (AActor *other)
 
 	if (GoAway ())
 	{
-		copy = static_cast<AInventory *>(Spawn (GetClass(), 0, 0, 0));
+		copy = static_cast<AInventory *>(Spawn (GetClass(), 0, 0, 0, NO_REPLACE));
 		copy->Amount = Amount;
 		copy->MaxAmount = MaxAmount;
 	}
@@ -693,7 +689,7 @@ AInventory *AInventory::CreateTossable ()
 		return this;
 	}
 	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->x,
-		Owner->y, Owner->z));
+		Owner->y, Owner->z, NO_REPLACE));
 	if (copy != NULL)
 	{
 		copy->MaxAmount = MaxAmount;
@@ -1365,7 +1361,7 @@ bool ABasicArmorPickup::Use (bool pickup)
 
 	if (armor == NULL)
 	{
-		armor = Spawn<ABasicArmor> (0,0,0);
+		armor = Spawn<ABasicArmor> (0,0,0, NO_REPLACE);
 		armor->BecomeItem ();
 		armor->SavePercent = SavePercent;
 		armor->Amount = armor->MaxAmount = SaveAmount;
@@ -1436,7 +1432,7 @@ bool ABasicArmorBonus::Use (bool pickup)
 	}
 	if (armor == NULL)
 	{
-		armor = Spawn<ABasicArmor> (0,0,0);
+		armor = Spawn<ABasicArmor> (0,0,0, NO_REPLACE);
 		armor->BecomeItem ();
 		armor->SavePercent = SavePercent;
 		armor->Amount = saveAmount;
@@ -1518,7 +1514,7 @@ AInventory *ABasicArmor::CreateCopy (AActor *other)
 {
 	// BasicArmor that is in use is stored in the inventory as BasicArmor.
 	// BasicArmor that is in reserve is not.
-	ABasicArmor *copy = Spawn<ABasicArmor> (0, 0, 0);
+	ABasicArmor *copy = Spawn<ABasicArmor> (0, 0, 0, NO_REPLACE);
 	copy->SavePercent = SavePercent != 0 ? SavePercent : FRACUNIT/3;
 	copy->Amount = Amount;
 	copy->MaxAmount = MaxAmount;
@@ -1622,7 +1618,7 @@ AInventory *AHexenArmor::CreateCopy (AActor *other)
 	// Like BasicArmor, HexenArmor is used in the inventory but not the map.
 	// health is the slot this armor occupies.
 	// Amount is the quantity to give (0 = normal max).
-	AHexenArmor *copy = Spawn<AHexenArmor> (0, 0, 0);
+	AHexenArmor *copy = Spawn<AHexenArmor> (0, 0, 0, NO_REPLACE);
 	copy->AddArmorToSlot (other, health, Amount);
 	GoAwayAndDie ();
 	return copy;
@@ -1948,7 +1944,7 @@ AInventory *ABackpack::CreateCopy (AActor *other)
 			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory (type));
 			if (ammo == NULL)
 			{ // The player did not have the ammo. Add it.
-				ammo = static_cast<AAmmo *>(Spawn (type, 0, 0, 0));
+				ammo = static_cast<AAmmo *>(Spawn (type, 0, 0, 0, NO_REPLACE));
 				ammo->Amount = bDepleted ? 0 : ammo->BackpackAmount;
 				ammo->MaxAmount = ammo->BackpackMaxAmount;
 				ammo->AttachToOwner (other);

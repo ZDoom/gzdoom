@@ -607,7 +607,7 @@ void A_SerpentMissileAttack (AActor *actor)
 
 void A_SerpentHeadPop (AActor *actor)
 {
-	Spawn<ASerpentHead> (actor->x, actor->y, actor->z+45*FRACUNIT);
+	Spawn<ASerpentHead> (actor->x, actor->y, actor->z+45*FRACUNIT, ALLOW_REPLACE);
 }
 
 //============================================================================
@@ -631,7 +631,7 @@ void A_SerpentSpawnGibs (AActor *actor)
 		mo = Spawn (GibTypes[i],
 			actor->x+((pr_serpentgibs()-128)<<12), 
 			actor->y+((pr_serpentgibs()-128)<<12),
-			actor->floorz+FRACUNIT);
+			actor->floorz+FRACUNIT, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->momx = (pr_serpentgibs()-128)<<6;

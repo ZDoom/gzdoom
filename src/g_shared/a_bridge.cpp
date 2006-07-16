@@ -124,15 +124,15 @@ void A_BridgeInit (AActor *self)
 	self->special1 = 0;
 
 	// Spawn triad into world
-	ball1 = Spawn<ABridgeBall> (cx, cy, cz);
+	ball1 = Spawn<ABridgeBall> (cx, cy, cz, ALLOW_REPLACE);
 	ball1->angle = startangle;
 	ball1->target = self;
 
-	ball2 = Spawn<ABridgeBall> (cx, cy, cz);
+	ball2 = Spawn<ABridgeBall> (cx, cy, cz, ALLOW_REPLACE);
 	ball2->angle = startangle + ANGLE_45/32*85;
 	ball2->target = self;
 
-	ball3 = Spawn<ABridgeBall> (cx, cy, cz);
+	ball3 = Spawn<ABridgeBall> (cx, cy, cz, ALLOW_REPLACE);
 	ball3->angle = startangle + (angle_t)ANGLE_45/32*170;
 	ball3->target = self;
 

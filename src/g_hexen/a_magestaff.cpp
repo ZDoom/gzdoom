@@ -488,7 +488,7 @@ void A_DropBloodscourgePieces (AActor *actor)
 
 	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
 	{
-		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z);
+		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if (piece != NULL)
 		{
 			piece->momx = actor->momx + finecosine[fineang];

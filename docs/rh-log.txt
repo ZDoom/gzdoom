@@ -1,3 +1,16 @@
+July 16, 2006 (Changes by Graf Zahl)
+- Fixed: PlayerStartItem created a duplicate of the item's class name before
+  converting it into an FName.
+- Removed game check for Doom from P_BloodSplatter. The BloodSplatter actor
+  is compatible with all games now so the explicit handling is no longer needed.
+- Moved replacement handling back into AActor::StaticSpawn but controlled
+  by a (mandatory) parameter. Also added replacement to most other
+  instances in the game where non-inventory items are spawned. Replacement is safe 
+  nearly everywhere except for inventory related spawns.
+- Fixed: Due to the player class inclusion A_NoBlocking never called
+  NoBlockingSet for monsters.
+- Changed: Sounds can be specified by full path now in SNDINFO and S_SKIN.
+
 July 15, 2006
 - Fixed: Makefile.mgw was mysteriously missing some targets. After fixing that,
   I also removed some of GCC's warnings.

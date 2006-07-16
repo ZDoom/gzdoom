@@ -2595,7 +2595,7 @@ void A_SpawnDehackedPickup (AActor *actor)
 {
 	if ((size_t)actor->health < DehackedPickups.Size())
 	{
-		AActor *real = Spawn (DehackedPickups[actor->health], actor->x, actor->y, actor->z);
+		AActor *real = Spawn (DehackedPickups[actor->health], actor->x, actor->y, actor->z, NO_REPLACE);
 		if (real != NULL)
 		{
 			// Copy properties from the original item to the dehacked pickup it spawns
@@ -2621,7 +2621,7 @@ bool ADehackedPickup::TryPickup (AActor *toucher)
 	{
 		return false;
 	}
-	RealPickup = static_cast<AInventory *>(Spawn (type, x, y, z));
+	RealPickup = static_cast<AInventory *>(Spawn (type, x, y, z, NO_REPLACE));
 	if (RealPickup != NULL)
 	{
 		if (!(flags & MF_DROPPED))

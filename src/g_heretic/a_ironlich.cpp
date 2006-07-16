@@ -321,7 +321,7 @@ void A_LichAttack (AActor *actor)
 			for (i = 0; i < 5; i++)
 			{
 				fire = Spawn<AHeadFX3> (baseFire->x, baseFire->y,
-					baseFire->z);
+					baseFire->z, ALLOW_REPLACE);
 				if (i == 0)
 				{
 					S_Sound (actor, CHAN_BODY, "ironlich/attack1", 1, ATTN_NORM);
@@ -394,7 +394,7 @@ void A_LichIceImpact (AActor *ice)
 
 	for (i = 0; i < 8; i++)
 	{
-		shard = Spawn<AHeadFX2> (ice->x, ice->y, ice->z);
+		shard = Spawn<AHeadFX2> (ice->x, ice->y, ice->z, ALLOW_REPLACE);
 		angle = i*ANG45;
 		shard->target = ice->target;
 		shard->angle = angle;

@@ -430,7 +430,7 @@ void A_DragonFX2 (AActor *actor)
 		fixed_t y = actor->y+((pr_dragonfx2()-128)<<14);
 		fixed_t z = actor->z+((pr_dragonfx2()-128)<<12);
 
-		mo = Spawn<ADragonExplosion> (x, y, z);
+		mo = Spawn<ADragonExplosion> (x, y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->tics = delay+(pr_dragonfx2()&3)*i*2;

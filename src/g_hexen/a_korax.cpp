@@ -434,7 +434,7 @@ void A_KoraxCommand (AActor *actor)
 	x = actor->x + KORAX_COMMAND_OFFSET * finecosine[ang];
 	y = actor->y + KORAX_COMMAND_OFFSET * finesine[ang];
 	z = actor->z + KORAX_COMMAND_HEIGHT*FRACUNIT;
-	Spawn<AKoraxBolt> (x, y, z);
+	Spawn<AKoraxBolt> (x, y, z, ALLOW_REPLACE);
 
 	if (actor->health <= (actor->GetDefault()->health >> 1))
 	{
@@ -656,7 +656,7 @@ void A_KBoltRaise (AActor *actor)
 
 	if ((z + KORAX_BOLT_HEIGHT) < actor->ceilingz)
 	{
-		mo = Spawn<AKoraxBolt> (actor->x, actor->y, z);
+		mo = Spawn<AKoraxBolt> (actor->x, actor->y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->special1 = KORAX_BOLT_LIFETIME;
@@ -682,7 +682,7 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	int dist;
 
 	z -= source->floorclip;
-	th = Spawn (type, x, y, z);
+	th = Spawn (type, x, y, z, ALLOW_REPLACE);
 	if (th->SeeSound)
 	{
 		S_SoundID (th, CHAN_BODY, th->SeeSound, 1, ATTN_NORM);

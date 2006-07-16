@@ -158,7 +158,7 @@ void A_PodPain (AActor *actor)
 	}
 	for (count = chance > 240 ? 2 : 1; count; count--)
 	{
-		goo = Spawn<APodGoo> (actor->x, actor->y, actor->z + 48*FRACUNIT);
+		goo = Spawn<APodGoo> (actor->x, actor->y, actor->z + 48*FRACUNIT, ALLOW_REPLACE);
 		goo->target = actor;
 		goo->momx = pr_podpain.Random2() << 9;
 		goo->momy = pr_podpain.Random2() << 9;
@@ -207,7 +207,7 @@ void A_MakePod (AActor *actor)
 	x = actor->x;
 	y = actor->y;
 	z = actor->z;
-	mo = Spawn<APod> (x, y, ONFLOORZ);
+	mo = Spawn<APod> (x, y, ONFLOORZ, ALLOW_REPLACE);
 	if (P_CheckPosition (mo, x, y) == false)
 	{ // Didn't fit
 		mo->Destroy ();
@@ -322,7 +322,7 @@ void A_SpawnTeleGlitter (AActor *actor)
 	fixed_t y = actor->y+((pr_teleg()&31)-16)*FRACUNIT;
 
 	mo = Spawn<ATeleGlitter1> (x, y,
-		actor->Sector->floorplane.ZatPoint (actor->x, actor->y));
+		actor->Sector->floorplane.ZatPoint (actor->x, actor->y), ALLOW_REPLACE);
 	mo->momz = FRACUNIT/4;
 }
 
@@ -339,7 +339,7 @@ void A_SpawnTeleGlitter2 (AActor *actor)
 	fixed_t y = actor->y+((pr_teleg2()&31)-16)*FRACUNIT;
 
 	mo = Spawn<ATeleGlitter2> (x, y,
-		actor->Sector->floorplane.ZatPoint (actor->x, actor->y));
+		actor->Sector->floorplane.ZatPoint (actor->x, actor->y), ALLOW_REPLACE);
 	mo->momz = FRACUNIT/4;
 }
 
@@ -493,7 +493,7 @@ void A_VolcanoBlast (AActor *volcano)
 	for (i = 0; i < count; i++)
 	{
 		blast = Spawn<AVolcanoBlast> (volcano->x, volcano->y,
-			volcano->z + 44*FRACUNIT);
+			volcano->z + 44*FRACUNIT, ALLOW_REPLACE);
 		blast->target = volcano;
 		angle = pr_blast () << 24;
 		blast->angle = angle;
@@ -528,7 +528,7 @@ void A_VolcBallImpact (AActor *ball)
 	P_RadiusAttack (ball, ball->target, 25, 25, MOD_FIRE, true);
 	for (i = 0; i < 4; i++)
 	{
-		tiny = Spawn<AVolcanoTBlast> (ball->x, ball->y, ball->z);
+		tiny = Spawn<AVolcanoTBlast> (ball->x, ball->y, ball->z, ALLOW_REPLACE);
 		tiny->target = ball;
 		angle = i*ANG90;
 		tiny->angle = angle;

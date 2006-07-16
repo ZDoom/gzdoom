@@ -3641,7 +3641,7 @@ static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
 	FDropItem * di=new FDropItem;
 
 	SC_MustGetString();
-	di->Name=strdup(sc_String);
+	di->Name = sc_String;
 	di->probability=255;
 	di->amount=0;
 	if (SC_CheckNumber())

@@ -348,7 +348,7 @@ void ACFlameMissile::Tick ()
 					{
 						newz = floorz;
 					}
-					mo = Spawn<ACFlameFloor> (x, y, newz);
+					mo = Spawn<ACFlameFloor> (x, y, newz, ALLOW_REPLACE);
 					if (mo)
 					{
 						mo->angle = angle;
@@ -434,7 +434,7 @@ void A_CFlameMissile (AActor *actor)
 			an90 = (i*ANG45+ANG90)>>ANGLETOFINESHIFT;
 			mo = Spawn<ACircleFlame> (BlockingMobj->x+FixedMul(dist, finecosine[an]),
 				BlockingMobj->y+FixedMul(dist, finesine[an]), 
-				BlockingMobj->z+5*FRACUNIT);
+				BlockingMobj->z+5*FRACUNIT, ALLOW_REPLACE);
 			if (mo)
 			{
 				mo->angle = an<<ANGLETOFINESHIFT;
@@ -445,7 +445,7 @@ void A_CFlameMissile (AActor *actor)
 			}
 			mo = Spawn<ACircleFlame> (BlockingMobj->x-FixedMul(dist, finecosine[an]),
 				BlockingMobj->y-FixedMul(dist, finesine[an]), 
-				BlockingMobj->z+5*FRACUNIT);
+				BlockingMobj->z+5*FRACUNIT, ALLOW_REPLACE);
 			if(mo)
 			{
 				mo->angle = ANG180+(an<<ANGLETOFINESHIFT);

@@ -171,7 +171,7 @@ void AMageWandMissile::Tick ()
 					{
 						hitz = floorz;
 					}
-					Spawn<AMageWandSmoke> (x, y, hitz);
+					Spawn<AMageWandSmoke> (x, y, hitz, ALLOW_REPLACE);
 				}
 			}
 		}

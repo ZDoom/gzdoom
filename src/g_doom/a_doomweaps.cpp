@@ -1080,7 +1080,7 @@ void A_BFGSpray (AActor *mo)
 			continue;
 
 		Spawn (spraytype, linetarget->x, linetarget->y,
-			linetarget->z + (linetarget->height>>2));
+			linetarget->z + (linetarget->height>>2), ALLOW_REPLACE);
 		
 		damage = 0;
 		for (j = 0; j < damagecnt; ++j)

@@ -279,7 +279,7 @@ void A_Beacon (AActor *self)
 	ARebel *rebel;
 	angle_t an;
 
-	rebel = Spawn<ARebel1> (self->x, self->y, ONFLOORZ);
+	rebel = Spawn<ARebel1> (self->x, self->y, ONFLOORZ, ALLOW_REPLACE);
 	if (!P_TryMove (rebel, rebel->x, rebel->y, true))
 	{
 		rebel->Destroy ();
@@ -313,7 +313,7 @@ void A_Beacon (AActor *self)
 	rebel->SetState (rebel->SeeState);
 	rebel->angle = self->angle;
 	an = self->angle >> ANGLETOFINESHIFT;
-	Spawn<ATeleportFog> (rebel->x + 20*finecosine[an], rebel->y + 20*finesine[an], rebel->z + TELEFOGHEIGHT);
+	Spawn<ATeleportFog> (rebel->x + 20*finecosine[an], rebel->y + 20*finesine[an], rebel->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	if (--self->health < 0)
 	{
 		self->Destroy ();

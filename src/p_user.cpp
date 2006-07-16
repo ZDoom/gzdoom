@@ -666,7 +666,7 @@ void APlayerPawn::GiveDeathmatchInventory()
 			AKey *key = (AKey *)GetDefaultByType (PClass::m_Types[i]);
 			if (key->KeyNumber != 0)
 			{
-				key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0));
+				key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0, NO_REPLACE));
 				if (!key->TryPickup (this))
 				{
 					key->Destroy ();
@@ -876,7 +876,7 @@ void APlayerPawn::GiveDefaultInventory ()
 			}
 			else
 			{
-				AInventory *item = static_cast<AInventory *>(Spawn (ti, 0,0,0));
+				AInventory *item = static_cast<AInventory *>(Spawn (ti, 0,0,0, NO_REPLACE));
 				item->Amount = di->amount;
 				if (item->IsKindOf (RUNTIME_CLASS (AWeapon)))
 				{

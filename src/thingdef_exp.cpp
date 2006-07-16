@@ -785,7 +785,7 @@ static ExpData *ParseExpressionA ()
 		{
 			if (!stricmp (sc_String, ExpVars[i].name))
 			{
-				varid = i;
+				varid = (int)i;
 				break;
 			}
 		}

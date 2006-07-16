@@ -464,14 +464,14 @@ void DCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 		if (body1)
 			body1->SetOrigin (x, y, z);
 		else
-			body1 = Spawn<ACajunBodyNode> (x, y, z);
+			body1 = Spawn<ACajunBodyNode> (x, y, z, NO_REPLACE);
 	}
 	else if (hostnum == 2)
 	{
 		if (body2)
 			body2->SetOrigin (x, y, z);
 		else
-			body2 = Spawn<ACajunBodyNode> (x, y, z);
+			body2 = Spawn<ACajunBodyNode> (x, y, z, NO_REPLACE);
 	}
 }
 
@@ -499,7 +499,7 @@ END_DEFAULTS
 //Emulates missile travel. Returns distance travelled.
 fixed_t DCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
-	AActor *th = Spawn<ACajunTrace> (source->x, source->y, source->z + 4*8*FRACUNIT);
+	AActor *th = Spawn<ACajunTrace> (source->x, source->y, source->z + 4*8*FRACUNIT, NO_REPLACE);
 	
 	th->target = source;		// where it came from
 

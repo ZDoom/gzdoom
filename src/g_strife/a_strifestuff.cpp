@@ -768,7 +768,7 @@ END_DEFAULTS
 void A_TossGib (AActor *self)
 {
 	const PClass *gibtype = (self->flags & MF_NOBLOOD) ? RUNTIME_CLASS(AJunk) : RUNTIME_CLASS(AMeat);
-	AActor *gib = Spawn (gibtype, self->x, self->y, self->z + 24*FRACUNIT);
+	AActor *gib = Spawn (gibtype, self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	angle_t an;
 	int speed;
 
@@ -965,7 +965,7 @@ void A_ItBurnsItBurns (AActor *self)
 
 void A_DropFire (AActor *self)
 {
-	AActor *drop = Spawn<AFireDroplet> (self->x, self->y, self->z + 24*FRACUNIT);
+	AActor *drop = Spawn<AFireDroplet> (self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	drop->momz = -FRACUNIT;
 	P_RadiusAttack (self, self, 64, 64, MOD_FIRE, false);
 }

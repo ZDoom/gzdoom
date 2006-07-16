@@ -45,7 +45,7 @@ void P_SpawnDirt (AActor *actor, fixed_t radius)
 	dtype = PClass::FindClass(fmt);
 	if (dtype)
 	{
-		mo = Spawn (dtype, x, y, z);
+		mo = Spawn (dtype, x, y, z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->momz = pr_dirt()<<10;

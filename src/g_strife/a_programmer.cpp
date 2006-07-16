@@ -247,7 +247,7 @@ void A_SpotLightning (AActor *self)
 	if (self->target == NULL)
 		return;
 
-	spot = Spawn<ASpectralLightningSpot> (self->target->x, self->target->y, ONFLOORZ);
+	spot = Spawn<ASpectralLightningSpot> (self->target->x, self->target->y, ONFLOORZ, ALLOW_REPLACE);
 	if (spot != NULL)
 	{
 		spot->threshold = 25;
@@ -265,7 +265,7 @@ void A_SpotLightning (AActor *self)
 
 void A_SpawnProgrammerBase (AActor *self)
 {
-	AActor *foo = Spawn<AProgrammerBase> (self->x, self->y, self->z + 24*FRACUNIT);
+	AActor *foo = Spawn<AProgrammerBase> (self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	if (foo != NULL)
 	{
 		foo->angle = self->angle + ANGLE_180 + (pr_prog.Random2() << 22);

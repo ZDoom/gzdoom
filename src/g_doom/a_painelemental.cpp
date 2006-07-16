@@ -167,7 +167,7 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 		return;
 	}
 
-	other = Spawn (spawntype, x, y, z);
+	other = Spawn (spawntype, x, y, z, ALLOW_REPLACE);
 
 
 	// Check to see if the new Lost Soul's z value is above the

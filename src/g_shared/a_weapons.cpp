@@ -253,7 +253,7 @@ AAmmo *AWeapon::AddAmmo (AActor *other, const PClass *ammotype, int amount)
 	ammo = static_cast<AAmmo *>(other->FindInventory (ammotype));
 	if (ammo == NULL)
 	{
-		ammo = static_cast<AAmmo *>(Spawn (ammotype, 0, 0, 0));
+		ammo = static_cast<AAmmo *>(Spawn (ammotype, 0, 0, 0, NO_REPLACE));
 		ammo->Amount = MIN (amount, ammo->MaxAmount);
 		ammo->AttachToOwner (other);
 	}
@@ -309,7 +309,7 @@ AWeapon *AWeapon::AddWeapon (const PClass *weapontype)
 	weap = static_cast<AWeapon *>(Owner->FindInventory (weapontype));
 	if (weap == NULL)
 	{
-		weap = static_cast<AWeapon *>(Spawn (weapontype, 0, 0, 0));
+		weap = static_cast<AWeapon *>(Spawn (weapontype, 0, 0, 0, NO_REPLACE));
 		weap->AttachToOwner (Owner);
 	}
 	return weap;

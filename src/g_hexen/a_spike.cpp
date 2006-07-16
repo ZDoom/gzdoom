@@ -264,7 +264,7 @@ void A_ThrustInitDn (AActor *actor)
 	actor->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
 	actor->renderflags = RF_INVISIBLE;
 	static_cast<AThrustFloor *>(actor)->DirtClump =
-		Spawn<ADirtClump> (actor->x, actor->y, actor->z);
+		Spawn<ADirtClump> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 }
 
 

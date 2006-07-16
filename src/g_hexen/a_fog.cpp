@@ -165,7 +165,7 @@ void A_FogSpawn (AActor *actor)
 
 	actor->special1 = actor->args[2];		// Reset frequency count
 
-	mo = Spawn (fogs[pr_fogspawn()%3], actor->x, actor->y, actor->z);
+	mo = Spawn (fogs[pr_fogspawn()%3], actor->x, actor->y, actor->z, ALLOW_REPLACE);
 
 	if (mo)
 	{

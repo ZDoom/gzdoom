@@ -2112,9 +2112,6 @@ void Net_DoCommand (int type, byte **stream, int player)
 			typeinfo = PClass::FindClass (s);
 			if (typeinfo != NULL && typeinfo->ActorInfo != NULL)
 			{
-				// Handle decorate replacements.
-				typeinfo = typeinfo->ActorInfo->GetReplacement()->Class;
-
 				AActor *source = players[player].mo;
 				if (source != NULL)
 				{
@@ -2128,7 +2125,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 						AActor *spawned = Spawn (typeinfo,
 							source->x + FixedMul (def->radius * 2 + source->radius, finecosine[source->angle>>ANGLETOFINESHIFT]),
 							source->y + FixedMul (def->radius * 2 + source->radius, finesine[source->angle>>ANGLETOFINESHIFT]),
-							source->z + 8 * FRACUNIT);
+							source->z + 8 * FRACUNIT, ALLOW_REPLACE);
 						if (spawned != NULL && type == DEM_SUMMONFRIEND)
 						{
 							spawned->FriendPlayer = player + 1;

@@ -207,7 +207,7 @@ void A_Tracer (AActor *self)
 	P_SpawnPuff (RUNTIME_CLASS(ABulletPuff), self->x, self->y, self->z, 0, 3);
 		
 	smoke = Spawn<ARevenantTracerSmoke> (self->x - self->momx,
-		self->y - self->momy, self->z);
+		self->y - self->momy, self->z, ALLOW_REPLACE);
 	
 	smoke->momz = FRACUNIT;
 	smoke->tics -= pr_tracer()&3;

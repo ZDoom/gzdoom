@@ -186,7 +186,7 @@ bool AArtiPoisonBag1::Use (bool pickup)
 	mo = Spawn<APoisonBag> (
 		Owner->x+16*finecosine[angle],
 		Owner->y+24*finesine[angle], Owner->z-
-		Owner->floorclip+8*FRACUNIT);
+		Owner->floorclip+8*FRACUNIT, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = Owner;
@@ -216,7 +216,7 @@ bool AArtiPoisonBag2::Use (bool pickup)
 	mo = Spawn<AFireBomb> (
 		Owner->x+16*finecosine[angle],
 		Owner->y+24*finesine[angle], Owner->z-
-		Owner->floorclip+8*FRACUNIT);
+		Owner->floorclip+8*FRACUNIT, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = Owner;
@@ -243,7 +243,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 	AActor *mo;
 
 	mo = Spawn<AThrowingBomb> (Owner->x, Owner->y, 
-		Owner->z-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0));
+		Owner->z-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0), ALLOW_REPLACE);
 	if (mo)
 	{
 		angle_t pitch = (angle_t)Owner->pitch >> ANGLETOFINESHIFT;
@@ -339,7 +339,7 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 	{
 		spawntype = RUNTIME_CLASS(AArtiPoisonBag3);
 	}
-	copy = static_cast<AInventory *>(Spawn (spawntype, 0, 0, 0));
+	copy = static_cast<AInventory *>(Spawn (spawntype, 0, 0, 0, NO_REPLACE));
 	copy->Amount = Amount;
 	copy->MaxAmount = MaxAmount;
 	GoAwayAndDie ();
@@ -476,7 +476,7 @@ void A_PoisonBagInit (AActor *actor)
 {
 	AActor *mo;
 	
-	mo = Spawn<APoisonCloud> (actor->x, actor->y, actor->z+28*FRACUNIT);
+	mo = Spawn<APoisonCloud> (actor->x, actor->y, actor->z+28*FRACUNIT, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = actor->target;

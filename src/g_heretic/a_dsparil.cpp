@@ -511,7 +511,7 @@ void A_SorcererRise (AActor *actor)
 	AActor *mo;
 
 	actor->flags &= ~MF_SOLID;
-	mo = Spawn<ASorcerer2> (actor->x, actor->y, actor->z);
+	mo = Spawn<ASorcerer2> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	mo->SetState (&ASorcerer2::States[S_SOR2_RISE]);
 	mo->angle = actor->angle;
 	mo->CopyFriendliness (actor, true);
@@ -563,7 +563,7 @@ void P_DSparilTeleport (AActor *actor)
 	prevZ = actor->z;
 	if (P_TeleportMove (actor, spot->x, spot->y, spot->z, false))
 	{
-		mo = Spawn<ASorcerer2Telefade> (prevX, prevY, prevZ);
+		mo = Spawn<ASorcerer2Telefade> (prevX, prevY, prevZ, ALLOW_REPLACE);
 		S_Sound (mo, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
 		actor->SetState (&ASorcerer2::States[S_SOR2_TELE]);
 		S_Sound (actor, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
@@ -648,7 +648,7 @@ void A_BlueSpark (AActor *actor)
 
 	for (i = 0; i < 2; i++)
 	{
-		mo = Spawn<ASorcerer2FXSpark> (actor->x, actor->y, actor->z);
+		mo = Spawn<ASorcerer2FXSpark> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		mo->momx = pr_bluespark.Random2() << 9;
 		mo->momy = pr_bluespark.Random2() << 9;
 		mo->momz = FRACUNIT + (pr_bluespark()<<8);
@@ -665,7 +665,7 @@ void A_GenWizard (AActor *actor)
 {
 	AActor *mo;
 
-	mo = Spawn<AWizard> (actor->x, actor->y, actor->z - GetDefault<AWizard>()->height/2);
+	mo = Spawn<AWizard> (actor->x, actor->y, actor->z - GetDefault<AWizard>()->height/2, ALLOW_REPLACE);
 	if (mo != NULL)
 	{
 		if (!P_TestMobjLocation (mo))
@@ -682,7 +682,7 @@ void A_GenWizard (AActor *actor)
 			actor->flags &= ~MF_MISSILE;
 			mo->master = actor->target;
 			// Heretic did not offset it by TELEFOGHEIGHT, so I won't either.
-			Spawn<ATeleportFog> (actor->x, actor->y, actor->z);
+			Spawn<ATeleportFog> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		}
 	}
 }

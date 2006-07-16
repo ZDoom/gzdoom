@@ -149,7 +149,7 @@ END_DEFAULTS
 
 void A_2046c (AActor *self)
 {
-	AActor *foo = Spawn<ASpectralLightningHTail> (self->x - self->momx, self->y - self->momy, self->z);
+	AActor *foo = Spawn<ASpectralLightningHTail> (self->x - self->momx, self->y - self->momy, self->z, ALLOW_REPLACE);
 
 	foo->angle = self->angle;
 	foo->health = self->health;
@@ -290,13 +290,13 @@ void A_201fc (AActor *self)
 	y = self->y + pr_zap5.Random2(3) * FRACUNIT * 50;
 
 	flash = Spawn (self->threshold > 25 ? RUNTIME_CLASS(ASpectralLightningV2) :
-		RUNTIME_CLASS(ASpectralLightningV1), x, y, ONCEILINGZ);
+		RUNTIME_CLASS(ASpectralLightningV1), x, y, ONCEILINGZ, ALLOW_REPLACE);
 
 	flash->target = self->target;
 	flash->momz = -18*FRACUNIT;
 	flash->health = self->health;
 
-	flash = Spawn<ASpectralLightningV2> (self->x, self->y, ONCEILINGZ);
+	flash = Spawn<ASpectralLightningV2> (self->x, self->y, ONCEILINGZ, ALLOW_REPLACE);
 
 	flash->target = self->target;
 	flash->momz = -18*FRACUNIT;

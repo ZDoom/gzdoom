@@ -295,7 +295,7 @@ void A_200e0 (AActor *self)
 	case 0:
 		if (self->target != NULL)
 		{
-			bar = Spawn<ASpectralLightningSpot> (self->x, self->y, ONFLOORZ);
+			bar = Spawn<ASpectralLightningSpot> (self->x, self->y, ONFLOORZ, ALLOW_REPLACE);
 			bar->threshold = 25;
 			bar->target = self;
 			bar->tracer = self->target;
@@ -347,7 +347,7 @@ void A_200e0 (AActor *self)
 
 void A_SpawnEntity (AActor *self)
 {
-	AActor *entity = Spawn<AEntityBoss> (self->x, self->y, self->z + 70*FRACUNIT);
+	AActor *entity = Spawn<AEntityBoss> (self->x, self->y, self->z + 70*FRACUNIT, ALLOW_REPLACE);
 	if (entity != NULL)
 	{
 		entity->angle = self->angle;
@@ -365,7 +365,7 @@ void A_20c74 (AActor *selfa)
 	
 	an = self->angle >> ANGLETOFINESHIFT;
 	second = Spawn<AEntitySecond> (self->SpawnX + FixedMul (secondRadius, finecosine[an]),
-		self->SpawnY + FixedMul (secondRadius, finesine[an]), self->SpawnZ);
+		self->SpawnY + FixedMul (secondRadius, finesine[an]), self->SpawnZ, ALLOW_REPLACE);
 	second->target = self->target;
 	A_FaceTarget (second);
 	an = second->angle >> ANGLETOFINESHIFT;
@@ -374,7 +374,7 @@ void A_20c74 (AActor *selfa)
 
 	an = (self->angle + ANGLE_90) >> ANGLETOFINESHIFT;
 	second = Spawn<AEntitySecond> (self->SpawnX + FixedMul (secondRadius, finecosine[an]),
-		self->SpawnY + FixedMul (secondRadius, finesine[an]), self->SpawnZ);
+		self->SpawnY + FixedMul (secondRadius, finesine[an]), self->SpawnZ, ALLOW_REPLACE);
 	second->target = self->target;
 	second->momx = FixedMul (secondRadius, finecosine[an]) << 2;
 	second->momy = FixedMul (secondRadius, finesine[an]) << 2;
@@ -382,7 +382,7 @@ void A_20c74 (AActor *selfa)
 
 	an = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
 	second = Spawn<AEntitySecond> (self->SpawnX + FixedMul (secondRadius, finecosine[an]),
-		self->SpawnY + FixedMul (secondRadius, finesine[an]), self->SpawnZ);
+		self->SpawnY + FixedMul (secondRadius, finesine[an]), self->SpawnZ, ALLOW_REPLACE);
 	second->target = self->target;
 	second->momx = FixedMul (secondRadius, finecosine[an]) << 2;
 	second->momy = FixedMul (secondRadius, finesine[an]) << 2;

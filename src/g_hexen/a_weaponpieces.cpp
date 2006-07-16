@@ -138,7 +138,7 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 
 	if (gaveWeapon)
 	{
-		TempFourthWeapon = static_cast<AInventory *>(Spawn (FourthWeaponClass, x, y, z));
+		TempFourthWeapon = static_cast<AInventory *>(Spawn (FourthWeaponClass, x, y, z, NO_REPLACE));
 		if (TempFourthWeapon != NULL)
 		{
 			gaveWeapon = TempFourthWeapon->TryPickup (toucher);

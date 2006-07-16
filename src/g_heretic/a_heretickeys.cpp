@@ -103,7 +103,7 @@ void A_InitKeyGizmo (AActor *gizmo)
 {
 	AActor *floater;
 
-	floater = Spawn<AKeyGizmoFloat> (gizmo->x, gizmo->y, gizmo->z+60*FRACUNIT);
+	floater = Spawn<AKeyGizmoFloat> (gizmo->x, gizmo->y, gizmo->z+60*FRACUNIT, NO_REPLACE);
 	floater->SetState (&AKeyGizmoFloat::
 		States[static_cast<AKeyGizmo *>(gizmo)->GetFloatState ()]);
 }

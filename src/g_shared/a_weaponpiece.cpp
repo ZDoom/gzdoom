@@ -64,7 +64,7 @@ bool AWeaponPiece::TryPickup (AActor *toucher)
 	}
 	if (!hold)
 	{
-		hold=static_cast<AWeaponHolder*>(Spawn(RUNTIME_CLASS(AWeaponHolder), 0, 0, 0));
+		hold=static_cast<AWeaponHolder*>(Spawn(RUNTIME_CLASS(AWeaponHolder), 0, 0, 0, NO_REPLACE));
 		hold->BecomeItem();
 		hold->AttachToOwner(toucher);
 		hold->PieceMask=0;
@@ -105,7 +105,7 @@ bool AWeaponPiece::TryPickup (AActor *toucher)
 	{
 		if (!toucher->FindInventory (WeaponClass))
 		{
-			FullWeapon= static_cast<AWeapon*>(Spawn(WeaponClass, 0, 0, 0));
+			FullWeapon= static_cast<AWeapon*>(Spawn(WeaponClass, 0, 0, 0, NO_REPLACE));
 			
 			// The weapon itself should not give more ammo to the player!
 			FullWeapon->AmmoGive1=0;

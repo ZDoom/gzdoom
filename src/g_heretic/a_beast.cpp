@@ -211,6 +211,6 @@ void A_BeastPuff (AActor *actor)
 		x = actor->x + (pr_beastpuff.Random2 () << 10);
 		y = actor->y + (pr_beastpuff.Random2 () << 10);
 		z = actor->z + (pr_beastpuff.Random2 () << 10);
-		Spawn<APuffy> (x, y, z);
+		Spawn<APuffy> (x, y, z, ALLOW_REPLACE);
 	}
 }

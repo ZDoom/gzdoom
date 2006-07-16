@@ -187,7 +187,7 @@ void A_PotteryExplode (AActor *actor)
 
 	for(i = (pr_pottery()&3)+3; i; i--)
 	{
-		mo = Spawn<APotteryBit> (actor->x, actor->y, actor->z);
+		mo = Spawn<APotteryBit> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		mo->SetState (mo->SpawnState + (pr_pottery()%5));
 		if (mo)
 		{
@@ -203,7 +203,7 @@ void A_PotteryExplode (AActor *actor)
 		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
 			Spawn (SpawnableThings[actor->args[0]],
-				actor->x, actor->y, actor->z);
+				actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		}
 	}
 }
@@ -288,7 +288,7 @@ END_DEFAULTS
 void AZCorpseLynchedNoHeart::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
-	Spawn<ABloodPool> (x, y, ONFLOORZ);
+	Spawn<ABloodPool> (x, y, ONFLOORZ, ALLOW_REPLACE);
 }
 
 // CorpseBloodDrip ----------------------------------------------------------
@@ -331,7 +331,7 @@ void A_CorpseBloodDrip (AActor *actor)
 {
 	if (pr_drip() <= 128)
 	{
-		Spawn<ACorpseBloodDrip> (actor->x, actor->y, actor->z + actor->height/2);
+		Spawn<ACorpseBloodDrip> (actor->x, actor->y, actor->z + actor->height/2, ALLOW_REPLACE);
 	}
 }
 
@@ -400,7 +400,7 @@ void A_CorpseExplode (AActor *actor)
 
 	for (i = (pr_foo()&3)+3; i; i--)
 	{
-		mo = Spawn<ACorpseBit> (actor->x, actor->y, actor->z);
+		mo = Spawn<ACorpseBit> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		mo->SetState (mo->SpawnState + (pr_foo()%3));
 		if (mo)
 		{
@@ -410,7 +410,7 @@ void A_CorpseExplode (AActor *actor)
 		}
 	}
 	// Spawn a skull
-	mo = Spawn<ACorpseBit> (actor->x, actor->y, actor->z);
+	mo = Spawn<ACorpseBit> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 	mo->SetState (mo->SpawnState + 3);
 	if (mo)
 	{
@@ -537,7 +537,7 @@ void A_LeafSpawn (AActor *actor)
 		mo = Spawn (pr_leaf()&1 ? RUNTIME_CLASS(ALeaf1) : RUNTIME_CLASS(ALeaf2),
 			actor->x + (pr_leaf.Random2()<<14),
 			actor->y + (pr_leaf.Random2()<<14),
-			actor->z + (pr_leaf()<<14));
+			actor->z + (pr_leaf()<<14), ALLOW_REPLACE);
 		if (mo)
 		{
 			P_ThrustMobj (mo, actor->angle, (pr_leaf()<<9)+3*FRACUNIT);
@@ -720,7 +720,7 @@ void A_SoAExplode (AActor *actor)
 	{
 		mo = Spawn<AZArmorChunk> (actor->x+((pr_soaexplode()-128)<<12),
 			actor->y+((pr_soaexplode()-128)<<12), 
-			actor->z+(pr_soaexplode()*actor->height/256));
+			actor->z+(pr_soaexplode()*actor->height/256), ALLOW_REPLACE);
 		mo->SetState (mo->SpawnState + i);
 		if (mo)
 		{
@@ -735,7 +735,7 @@ void A_SoAExplode (AActor *actor)
 		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
 			Spawn (SpawnableThings[actor->args[0]],
-				actor->x, actor->y, actor->z);
+				actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		}
 	}
 	S_SoundID (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_NORM);

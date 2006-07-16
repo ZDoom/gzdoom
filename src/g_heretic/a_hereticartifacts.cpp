@@ -118,7 +118,7 @@ bool AArtiTimeBomb::Use (bool pickup)
 	AActor *mo = Spawn<AActivatedTimeBomb> (
 		Owner->x + 24*finecosine[angle],
 		Owner->y + 24*finesine[angle],
-		Owner->z - Owner->floorclip);
+		Owner->z - Owner->floorclip, ALLOW_REPLACE);
 	mo->target = Owner;
 	return true;
 }

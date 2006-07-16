@@ -416,7 +416,7 @@ void A_WraithFX2 (AActor *actor)
 
 	for (i = 2; i; --i)
 	{
-		mo = Spawn<AWraithFX2> (actor->x, actor->y, actor->z);
+		mo = Spawn<AWraithFX2> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if(mo)
 		{
 			if (pr_wraithfx2 ()<128)
@@ -453,7 +453,7 @@ void A_WraithFX3 (AActor *actor)
 
 	while (numdropped-- > 0)
 	{
-		mo = Spawn<AWraithFX3> (actor->x, actor->y, actor->z);
+		mo = Spawn<AWraithFX3> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->x += (pr_wraithfx3()-128)<<11;
@@ -501,7 +501,7 @@ void A_WraithFX4 (AActor *actor)
 
 	if (spawn4)
 	{
-		mo = Spawn<AWraithFX4> (actor->x, actor->y, actor->z);
+		mo = Spawn<AWraithFX4> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->x += (pr_wraithfx4()-128)<<12;
@@ -512,7 +512,7 @@ void A_WraithFX4 (AActor *actor)
 	}
 	if (spawn5)
 	{
-		mo = Spawn<AWraithFX5> (actor->x, actor->y, actor->z);
+		mo = Spawn<AWraithFX5> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->x += (pr_wraithfx4()-128)<<11;

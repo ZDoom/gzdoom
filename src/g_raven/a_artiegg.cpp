@@ -54,7 +54,7 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 		return false;
 	}
 
-	morphed = static_cast<APlayerPawn *>(Spawn (spawntype, actor->x, actor->y, actor->z));
+	morphed = static_cast<APlayerPawn *>(Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE));
 	DObject::PointerSubstitution (actor, morphed);
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
@@ -69,7 +69,7 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 	morphed->flags  |= actor->flags & (MF_SHADOW|MF_NOGRAVITY);
 	morphed->flags2 |= actor->flags2 & MF2_FLY;
 	morphed->flags3 |= actor->flags3 & MF3_GHOST;
-	Spawn<ATeleportFog> (actor->x, actor->y, actor->z + TELEFOGHEIGHT);
+	Spawn<ATeleportFog> (actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	actor->player = NULL;
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
@@ -163,7 +163,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	}
 	angle = mo->angle >> ANGLETOFINESHIFT;
 	Spawn<ATeleportFog> (pmo->x + 20*finecosine[angle],
-		pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT);
+		pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	beastweap = player->ReadyWeapon;
 	if (player->PremorphWeapon != NULL)
 	{
@@ -205,7 +205,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype)
 		return false;
 	}
 
-	morphed = Spawn (spawntype, actor->x, actor->y, actor->z);
+	morphed = Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE);
 	DObject::PointerSubstitution (actor, morphed);
 	morphed->tid = actor->tid;
 	morphed->angle = actor->angle;
@@ -230,7 +230,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype)
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
 	actor->renderflags |= RF_INVISIBLE;
-	Spawn<ATeleportFog> (actor->x, actor->y, actor->z + TELEFOGHEIGHT);
+	Spawn<ATeleportFog> (actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	return true;
 }
 
@@ -285,7 +285,7 @@ bool P_UpdateMorphedMonster (AActor *beast, int tics)
 	beast->tracer = NULL;
 	DObject::PointerSubstitution (beast, actor);
 	beast->Destroy ();
-	Spawn<ATeleportFog> (beast->x, beast->y, beast->z + TELEFOGHEIGHT);
+	Spawn<ATeleportFog> (beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	return true;
 }
 

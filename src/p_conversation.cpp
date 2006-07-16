@@ -903,7 +903,7 @@ static void PickConversationReply ()
 	
 			if (takestuff)
 			{
-				AInventory *item = static_cast<AInventory *> (Spawn (reply->GiveType, 0, 0, 0));
+				AInventory *item = static_cast<AInventory *> (Spawn (reply->GiveType, 0, 0, 0, NO_REPLACE));
 				// Items given here should not count as items!
 				if (item->flags & MF_COUNTITEM)
 				{

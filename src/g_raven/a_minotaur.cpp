@@ -598,7 +598,7 @@ void A_MinotaurCharge (AActor *actor)
 		{
 			type = PClass::FindClass ("PunchPuff");
 		}
-		puff = Spawn (type, actor->x, actor->y, actor->z);
+		puff = Spawn (type, actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		puff->momz = 2*FRACUNIT;
 		actor->special1--;
 	}
@@ -714,7 +714,7 @@ void A_MntrFloorFire (AActor *actor)
 	actor->z = actor->floorz;
 	x = actor->x + (pr_fire.Random2 () << 10);
 	y = actor->y + (pr_fire.Random2 () << 10);
-	mo = Spawn<AMinotaurFX3> (x, y, ONFLOORZ);
+	mo = Spawn<AMinotaurFX3> (x, y, ONFLOORZ, ALLOW_REPLACE);
 	mo->target = actor->target;
 	mo->momx = 1; // Force block checking
 	P_CheckMissileSpawn (mo);
@@ -967,5 +967,5 @@ void A_SmokePuffEntry(mobj_t *actor)
 
 void A_SmokePuffExit (AActor *actor)
 {
-	Spawn<AMinotaurSmokeExit> (actor->x, actor->y, actor->z);
+	Spawn<AMinotaurSmokeExit> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
 }

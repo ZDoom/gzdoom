@@ -347,7 +347,7 @@ void A_FSwordFlames (AActor *actor)
 		fixed_t x = actor->x+((pr_fswordflame()-128)<<12);
 		fixed_t y = actor->y+((pr_fswordflame()-128)<<12);
 		fixed_t z = actor->z+((pr_fswordflame()-128)<<11);
-		Spawn<AFSwordFlame> (x, y, z);
+		Spawn<AFSwordFlame> (x, y, z, ALLOW_REPLACE);
 	}
 }
 
@@ -368,7 +368,7 @@ void A_DropQuietusPieces (AActor *actor)
 
 	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
 	{
-		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z);
+		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		if (piece != NULL)
 		{
 			piece->momx = actor->momx + finecosine[fineang];

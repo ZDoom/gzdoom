@@ -3053,7 +3053,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	}
 	if (trace.CrossedWater)
 	{
-		AActor *puff = Spawn<ABulletPuff> (0, 0, 0);
+		AActor *puff = Spawn<ABulletPuff> (0, 0, 0, ALLOW_REPLACE);
 		if (puff != NULL)
 		{
 			SpawnDeepSplash (source, trace, puff, vx, vy, vz);
@@ -3858,7 +3858,7 @@ void P_DoCrunch (AActor *thing)
 		}
 		if (!(thing->flags & MF_NOBLOOD))
 		{
-			AActor *gib = Spawn<ARealGibs> (thing->x, thing->y, thing->z);
+			AActor *gib = Spawn<ARealGibs> (thing->x, thing->y, thing->z, ALLOW_REPLACE);
 			gib->RenderStyle = thing->RenderStyle;
 			gib->alpha = thing->alpha;
 			gib->height = 0;
@@ -3921,7 +3921,7 @@ void P_DoCrunch (AActor *thing)
 				AActor *mo;
 
 				mo = Spawn<ABlood> (thing->x, thing->y,
-					thing->z + thing->height/2);
+					thing->z + thing->height/2, ALLOW_REPLACE);
 
 				mo->momx = pr_crunch.Random2 () << 12;
 				mo->momy = pr_crunch.Random2 () << 12;

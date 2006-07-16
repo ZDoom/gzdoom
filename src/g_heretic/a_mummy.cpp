@@ -282,7 +282,7 @@ void A_MummySoul (AActor *mummy)
 {
 	AActor *mo;
 
-	mo = Spawn<AMummySoul> (mummy->x, mummy->y, mummy->z+10*FRACUNIT);
+	mo = Spawn<AMummySoul> (mummy->x, mummy->y, mummy->z+10*FRACUNIT, ALLOW_REPLACE);
 	mo->momz = FRACUNIT;
 }
 

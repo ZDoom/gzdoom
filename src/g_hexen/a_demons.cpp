@@ -645,7 +645,7 @@ static void TossChunks (AActor *actor, const PClass *const chunks[])
 
 	for (i = 4; i >= 0; --i)
 	{
-		mo = Spawn (chunks[i], actor->x, actor->y, actor->z+45*FRACUNIT);
+		mo = Spawn (chunks[i], actor->x, actor->y, actor->z+45*FRACUNIT, ALLOW_REPLACE);
 		if (mo)
 		{
 			angle = actor->angle + (i<4 ? ANGLE_270 : ANGLE_90);

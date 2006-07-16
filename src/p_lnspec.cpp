@@ -2591,7 +2591,7 @@ FUNC(LS_GlassBreak)
 
 			for (int i = 0; i < 7; ++i)
 			{
-				glass = Spawn<AGlassJunk> (x, y, ONFLOORZ);
+				glass = Spawn<AGlassJunk> (x, y, ONFLOORZ, ALLOW_REPLACE);
 
 				glass->z += 24 * FRACUNIT;
 				glass->SetState (&AGlassJunk::States[3 + pr_glass() % 3]);

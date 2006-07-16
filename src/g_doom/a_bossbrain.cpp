@@ -184,7 +184,7 @@ void A_BrainPain (AActor *self)
 
 static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 {
-	AActor *boom = Spawn<ARocket> (x, y, z);
+	AActor *boom = Spawn<ARocket> (x, y, z, NO_REPLACE);
 	if (boom != NULL)
 	{
 		boom->momz = pr_brainscream() << 9;
@@ -281,7 +281,7 @@ void A_SpawnFly (AActor *self)
 	targ = self->target;
 
 	// First spawn teleport fire.
-	fog = Spawn<ASpawnFire> (targ->x, targ->y, targ->z);
+	fog = Spawn<ASpawnFire> (targ->x, targ->y, targ->z, ALLOW_REPLACE);
 	S_Sound (fog, CHAN_BODY, "brain/spawn", 1, ATTN_NORM);
 
 	// Randomly select monster to spawn.
@@ -301,7 +301,7 @@ void A_SpawnFly (AActor *self)
 	else if (r < 246) type = "HellKnight";
 	else			  type = "BaronOfHell";
 
-	newmobj = Spawn (type, targ->x, targ->y, targ->z);
+	newmobj = Spawn (type, targ->x, targ->y, targ->z, ALLOW_REPLACE);
 	if (newmobj != NULL)
 	{
 		// Make the new monster hate what the boss eye hates

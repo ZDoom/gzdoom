@@ -420,7 +420,7 @@ void A_Feathers (AActor *actor)
 	}
 	for (i = 0; i < count; i++)
 	{
-		mo = Spawn<AFeather> (actor->x, actor->y, actor->z+20*FRACUNIT);
+		mo = Spawn<AFeather> (actor->x, actor->y, actor->z+20*FRACUNIT, NO_REPLACE);
 		mo->target = actor;
 		mo->momx = pr_feathers.Random2() << 8;
 		mo->momy = pr_feathers.Random2() << 8;

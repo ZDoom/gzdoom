@@ -3010,6 +3010,243 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		//[MW] start
+		case PCD_ANDSCRIPTVAR:
+			locals[NEXTBYTE] &= STACK(1);
+			sp--;
+			break;
+
+		case PCD_ANDMAPVAR:
+			*(activeBehavior->MapVars[NEXTBYTE]) &= STACK(1);
+			sp--;
+			break;
+
+		case PCD_ANDWORLDVAR:
+			ACS_WorldVars[NEXTBYTE] &= STACK(1);
+			sp--;
+			break;
+
+		case PCD_ANDGLOBALVAR:
+			ACS_GlobalVars[NEXTBYTE] &= STACK(1);
+			sp--;
+			break;
+
+		case PCD_ANDMAPARRAY:
+			{
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
+				int i = STACK(2);
+				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) & STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_ANDWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) & STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_ANDGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) & STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_EORSCRIPTVAR:
+			locals[NEXTBYTE] ^= STACK(1);
+			sp--;
+			break;
+
+		case PCD_EORMAPVAR:
+			*(activeBehavior->MapVars[NEXTBYTE]) ^= STACK(1);
+			sp--;
+			break;
+
+		case PCD_EORWORLDVAR:
+			ACS_WorldVars[NEXTBYTE] ^= STACK(1);
+			sp--;
+			break;
+
+		case PCD_EORGLOBALVAR:
+			ACS_GlobalVars[NEXTBYTE] ^= STACK(1);
+			sp--;
+			break;
+
+		case PCD_EORMAPARRAY:
+			{
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
+				int i = STACK(2);
+				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) ^ STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_EORWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) ^ STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_EORGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) ^ STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_ORSCRIPTVAR:
+			locals[NEXTBYTE] |= STACK(1);
+			sp--;
+			break;
+
+		case PCD_ORMAPVAR:
+			*(activeBehavior->MapVars[NEXTBYTE]) |= STACK(1);
+			sp--;
+			break;
+
+		case PCD_ORWORLDVAR:
+			ACS_WorldVars[NEXTBYTE] |= STACK(1);
+			sp--;
+			break;
+
+		case PCD_ORGLOBALVAR:
+			ACS_GlobalVars[NEXTBYTE] |= STACK(1);
+			sp--;
+			break;
+
+		case PCD_ORMAPARRAY:
+			{
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
+				int i = STACK(2);
+				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) | STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_ORWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) | STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_ORGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) | STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_LSSCRIPTVAR:
+			locals[NEXTBYTE] <<= STACK(1);
+			sp--;
+			break;
+
+		case PCD_LSMAPVAR:
+			*(activeBehavior->MapVars[NEXTBYTE]) <<= STACK(1);
+			sp--;
+			break;
+
+		case PCD_LSWORLDVAR:
+			ACS_WorldVars[NEXTBYTE] <<= STACK(1);
+			sp--;
+			break;
+
+		case PCD_LSGLOBALVAR:
+			ACS_GlobalVars[NEXTBYTE] <<= STACK(1);
+			sp--;
+			break;
+
+		case PCD_LSMAPARRAY:
+			{
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
+				int i = STACK(2);
+				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) << STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_LSWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) << STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_LSGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) << STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_RSSCRIPTVAR:
+			locals[NEXTBYTE] >>= STACK(1);
+			sp--;
+			break;
+
+		case PCD_RSMAPVAR:
+			*(activeBehavior->MapVars[NEXTBYTE]) >>= STACK(1);
+			sp--;
+			break;
+
+		case PCD_RSWORLDVAR:
+			ACS_WorldVars[NEXTBYTE] >>= STACK(1);
+			sp--;
+			break;
+
+		case PCD_RSGLOBALVAR:
+			ACS_GlobalVars[NEXTBYTE] >>= STACK(1);
+			sp--;
+			break;
+
+		case PCD_RSMAPARRAY:
+			{
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
+				int i = STACK(2);
+				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) >> STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_RSWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) >> STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_RSGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) >> STACK(1));
+				sp -= 2;
+			}
+			break;
+		//[MW] end
+
 		case PCD_INCSCRIPTVAR:
 			++locals[NEXTBYTE];
 			break;
@@ -4615,6 +4852,7 @@ int DLevelScript::RunScript ()
 				STACK(1) = players[STACK(1)].CurrentPlayerClass;
 			}
 			break;
+
 		}
 	}
 

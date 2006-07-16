@@ -19,10 +19,13 @@ $(RELEASETARGET): game
 $(DEBUGTARGET): debuggame
 
 basetools: ccdv.exe
-	$(MAKE) -C tools/lemon -f Makefile
-	$(MAKE) -C tools/re2c -f Makefile
-	$(MAKE) -C wadsrc -f Makefile
+	$(MAKE) -C tools/lemon
+	$(MAKE) -C tools/re2c
 	$(MAKE) -C zlib -f Makefile.mgw
+	$(MAKE) -C tools/makewad
+	$(MAKE) -C tools/dehsupp
+	$(MAKE) -C tools/xlatcc
+	$(MAKE) -C wadsrc
 	$(MAKE) -C flac -f Makefile.mgw
 
 cleanexe:

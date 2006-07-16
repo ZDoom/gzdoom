@@ -1,3 +1,7 @@
+July 15, 2006
+- Fixed: Makefile.mgw was mysteriously missing some targets. After fixing that,
+  I also removed some of GCC's warnings.
+
 July 14, 2006 (Changes by Graf Zahl)
 - Fixed: Any kill in multiplayer games that could not be credited to a player
   didn't count at all - not even toward the global level statistics.

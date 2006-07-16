@@ -3501,15 +3501,11 @@ static void PlayerDisplayName (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 static void PlayerSoundClass (APlayerPawn *defaults, Baggage &bag)
 {
-	char tmp[256];
+	FString tmp;
 
 	SC_MustGetString ();
-	sprintf (tmp, sc_String);
-
-	for (int i = 0; i < strlen (tmp); i++)
-		if (tmp[i] == ' ')
-			tmp[i] = '_';
-
+	tmp = sc_String;
+	tmp.ReplaceChars (' ', '_');
 	bag.Info->Class->Meta.SetMetaString (APMETA_SoundClass, tmp);
 }
 

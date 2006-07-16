@@ -633,7 +633,7 @@ void R_InitSkins (void)
 			skins[i].range0end = transtype->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
 
 			remove = true;
-			for (j = 0; j < PlayerClasses.Size (); j++)
+			for (j = 0; j < (int)PlayerClasses.Size (); j++)
 			{
 				const PClass *type = PlayerClasses[j].Type;
 

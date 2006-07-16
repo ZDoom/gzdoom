@@ -219,7 +219,7 @@ ExpVal GetZ (AActor *actor, int id)
 	return val;
 }
 
-static struct
+static struct FExpVar
 {
 	const char *name;	// identifier
 	int array;			// array size (0 if not an array)
@@ -381,7 +381,7 @@ int ParseExpression (bool _not)
 		data->EvalConst ();
 	}
 
-	for (int i = 0; i < StateExpressions.Size (); i++)
+	for (unsigned int i = 0; i < StateExpressions.Size (); i++)
 	{
 		if (StateExpressions[i]->Compare (data))
 		{
@@ -781,7 +781,7 @@ static ExpData *ParseExpressionA ()
 		SC_MustGetString ();
 
 		int varid = -1;
-		for (int i = 0; i < sizeof(ExpVars)/sizeof(ExpVars[0]); i++)
+		for (size_t i = 0; i < countof(ExpVars); i++)
 		{
 			if (!stricmp (sc_String, ExpVars[i].name))
 			{
@@ -820,7 +820,7 @@ static ExpData *ParseExpressionA ()
 
 int EvalExpressionI (int id, AActor *self)
 {
-	if (StateExpressions.Size()<= id) return 0;
+	if (StateExpressions.Size() <= (unsigned int)id) return 0;
 
 	ExpVal val = EvalExpression (StateExpressions[id], self);
 
@@ -841,7 +841,7 @@ bool EvalExpressionN(int id, AActor * self)
 
 float EvalExpressionF (int id, AActor *self)
 {
-	if (StateExpressions.Size()<= id) return 0.f;
+	if (StateExpressions.Size() <= (unsigned int)id) return 0.f;
 
 	ExpVal val = EvalExpression (StateExpressions[id], self);
 
@@ -861,6 +861,8 @@ static ExpVal EvalExpression (ExpData *data, AActor *self)
 	
 	switch (data->Type)
 	{
+	case EX_NOP:
+		break;
 	case EX_Const:
 		val = data->Value;
 		break;
@@ -1406,7 +1408,7 @@ static ExpVal EvalExpression (ExpData *data, AActor *self)
 	case EX_Sin:
 		{
 			ExpVal a = EvalExpression (data->Children[0], self);
-			angle_t angle = ((a.Type == VAL_Int) ? (float)a.Int : a.Float) * ANGLE_1;
+			angle_t angle = (a.Type == VAL_Int) ? (a.Int * ANGLE_1) : angle_t(a.Float * ANGLE_1);
 
 			val.Type = VAL_Float;
 			val.Float = FIXED2FLOAT (finesine[angle>>ANGLETOFINESHIFT]);
@@ -1416,7 +1418,7 @@ static ExpVal EvalExpression (ExpData *data, AActor *self)
 	case EX_Cos:
 		{
 			ExpVal a = EvalExpression (data->Children[0], self);
-			angle_t angle = ((a.Type == VAL_Int) ? (float)a.Int : a.Float) * ANGLE_1;
+			angle_t angle = (a.Type == VAL_Int) ? (a.Int * ANGLE_1) : angle_t(a.Float * ANGLE_1);
 
 			val.Type = VAL_Float;
 			val.Float = FIXED2FLOAT (finecosine[angle>>ANGLETOFINESHIFT]);

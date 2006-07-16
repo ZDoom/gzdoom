@@ -85,7 +85,7 @@ FPlayerClass::~FPlayerClass ()
 
 bool FPlayerClass::CheckSkin (int skin)
 {
-	for (int i = 0; i < Skins.Size (); i++)
+	for (unsigned int i = 0; i < Skins.Size (); i++)
 	{
 		if (Skins[i] == skin)
 			return true;
@@ -181,7 +181,7 @@ CCMD (addplayerclass)
 
 CCMD (playerclasses)
 {
-	for (int i = 0; i < PlayerClasses.Size (); i++)
+	for (unsigned int i = 0; i < PlayerClasses.Size (); i++)
 	{
 		Printf ("% 3d %s\n", i,
 			PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName));
@@ -793,8 +793,8 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 const char *APlayerPawn::GetSoundClass ()
 {
 	if (player != NULL &&
-		player->userinfo.skin >= PlayerClasses.Size () &&
-		(unsigned)player->userinfo.skin < numskins)
+		(unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
+		(size_t)player->userinfo.skin < numskins)
 	{
 		return skins[player->userinfo.skin].name;
 	}

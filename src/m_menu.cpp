@@ -1538,7 +1538,7 @@ void M_NewGame(int choice)
 		if (players[consoleplayer].userinfo.PlayerClass >= 0)
 		{
 			int n = 0;
-			for (int i = 0; i < PlayerClasses.Size () && n < 7; i++)
+			for (int i = 0; i < (int)PlayerClasses.Size () && n < 7; i++)
 			{
 				if (!(PlayerClasses[i].Flags & PCF_NOMENU))
 				{
@@ -3335,7 +3335,7 @@ EXTERN_CVAR (Int, screenblocks)
 
 void M_Init (void)
 {
-	int i;
+	unsigned int i;
 
 	atterm (M_Deinit);
 

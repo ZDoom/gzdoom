@@ -1,3 +1,6 @@
+July 17, 2006 (Changes by Graf Zahl)
+- Fixed: PClass::CreateDerivedClass forgot to NULL FActorInfo::Replacee.
+
 July 16, 2006 (Changes by Graf Zahl)
 - Fixed: S_ClearSoundData cleared PlayerClasses instead of PlayerClassLookups.
 - Added NecroMage's submission for bitwise/shift assignment operators for ACS.

@@ -494,7 +494,7 @@ static int S_AddSound (const char *logicalname, int lumpnum)
 int S_AddPlayerSound (const char *pclass, int gender, int refid,
 	const char *lumpname)
 {
-	int lump;
+	int lump=-1;
 	
 	if (lumpname)
 	{

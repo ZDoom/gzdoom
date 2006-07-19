@@ -1814,6 +1814,9 @@ static const char logbar[] = "\n<------------------------------->\n";
 
 void C_MidPrint (const char *msg)
 {
+	if (StatusBar == NULL)
+		return;
+
 	if (msg)
 	{
 		AddToConsole (-1, bar1);

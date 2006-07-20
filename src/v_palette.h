@@ -54,9 +54,11 @@ struct FPalette
 
 	void MakeGoodRemap ();
 
-	//PalEntry	Colors[256];		// gamma corrected palette
 	PalEntry	BaseColors[256];	// non-gamma corrected palette
 	BYTE		Remap[256];			// remap original palette indices to in-game indices
+
+	BYTE		WhiteIndex;			// white in original palette index
+	BYTE		BlackIndex;			// black in original palette index
 
 	// Given an array of colors, fills in remap with values to remap the
 	// passed array of colors to this palette.

@@ -1,3 +1,12 @@
+July 19, 2006
+- Added some simple translucency map analysis for BOOM maps to more
+  intelligently pick the value to use for TranslucentLine's second argument.
+- Added a queryiwad_key cvar to control which key can force the IWAD selection
+  to appear. It can be either "shift" or "control". Any other value will
+  disable its functionality.
+- Fixed: A_SkullPop() and A_FreezeDeathChunks() did not transfer the player's
+  inventory to the new dismembered head "player".
+
 July 18, 2006
 - Fixed: C_midPrint() needs a NULL status bar check.
 

@@ -120,6 +120,7 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 		struct
 		{
 			short tag, special;
+			short alpha;
 			DWORD map;
 		} a;
 
@@ -1715,12 +1716,18 @@ void P_FinishLoadingLineDefs ()
 		switch (ld->special)
 		{						// killough 4/11/98: handle special types
 			int j;
+			int alpha;
 
 		case TranslucentLine:			// killough 4/11/98: translucent 2s textures
 			// [RH] Second arg controls how opaque it is.
+			alpha = sidetemp[ld->sidenum[0]].a.alpha;
+			if (alpha < 0)
+			{
+				alpha = ld->args[1];
+			}
 			if (!ld->args[0])
 			{
-				ld->alpha = (byte)ld->args[1];
+				ld->alpha = (BYTE)alpha;
 				if (ld->args[2] == 1)
 				{
 					sides[ld->sidenum[0]].Flags |= WALLF_ADDTRANS;
@@ -1736,7 +1743,7 @@ void P_FinishLoadingLineDefs ()
 				{
 					if (lines[j].id == ld->args[0])
 					{
-						lines[j].alpha = (byte)ld->args[1];
+						lines[j].alpha = (BYTE)alpha;
 						if (lines[j].args[2] == 1)
 						{
 							sides[lines[j].sidenum[0]].Flags |= WALLF_ADDTRANS;
@@ -1930,6 +1937,7 @@ static void P_AllocateSideDefs (int count)
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
+		sidetemp[i].a.alpha = -1;
 		sidetemp[i].a.map = NO_SIDE;
 	}
 	if (count < numsides)
@@ -2075,6 +2083,28 @@ static void P_LoopSidedefs ()
 	sidetemp = NULL;
 }
 
+int P_DetermineTranslucency (int lumpnum)
+{
+	FWadLump tranmap = Wads.OpenLumpNum (lumpnum);
+	BYTE index;
+	PalEntry newcolor;
+
+	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, SEEK_SET);
+	tranmap.Read (&index, 1);
+
+	newcolor = GPalette.BaseColors[GPalette.Remap[index]];
+
+	if (developer)
+	{
+		char lumpname[9];
+		lumpname[8] = 0;
+		Wads.GetLumpName (lumpname, lumpnum);
+		Printf ("%s appears to be translucency %d (%d%%)\n", lumpname, newcolor.r,
+			newcolor.r*100/255);
+	}
+	return newcolor.r;
+}
+
 // killough 4/4/98: delay using texture names until
 // after linedefs are loaded, to allow overloading.
 // killough 5/3/98: reformatted, cleaned up
@@ -2171,8 +2201,37 @@ void P_LoadSideDefs2 (MapData * map)
 			}
 			break;
 
-/*
-		  case TranslucentLine:	// killough 4/11/98: apply translucency to 2s normal texture
+		case TranslucentLine:	// killough 4/11/98: apply translucency to 2s normal texture
+			if (!map->HasBehavior)
+			{
+				int lumpnum;
+
+				if (strnicmp ("TRANMAP", msd->midtexture, 8) == 0)
+				{
+					// The translator set the alpha argument already; no reason to do it again.
+					sd->midtexture = 0;
+				}
+				else if ((lumpnum = Wads.CheckNumForName (msd->midtexture)) > 0 &&
+					Wads.LumpLength (lumpnum) == 65536)
+				{
+					sidetemp[i].a.alpha = P_DetermineTranslucency (lumpnum);
+					sd->midtexture = 0;
+				}
+				else
+				{
+					strncpy (name, msd->midtexture, 8);
+					sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+				}
+
+				strncpy (name, msd->toptexture, 8);
+				sd->toptexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+
+				strncpy (name, msd->bottomtexture, 8);
+				sd->bottomtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+				break;
+			}
+			// Fallthrough for Hexen maps is intentional
+#if 0
 			sd->midtexture = strncasecmp("TRANMAP", msd->midtexture, 8) ?
 				(sd->special = W_CheckNumForName(msd->midtexture)) < 0 ||
 				W_LumpLength(sd->special) != 65536 ?
@@ -2180,8 +2239,8 @@ void P_LoadSideDefs2 (MapData * map)
 					(sd->special++, 0) : (sd->special=0);
 			sd->toptexture = R_TextureNumForName(msd->toptexture);
 			sd->bottomtexture = R_TextureNumForName(msd->bottomtexture);
-			break;
-*/
+#endif
+
 		default:			// normal cases
 			strncpy (name, msd->midtexture, 8);
 			sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);

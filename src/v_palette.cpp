@@ -148,6 +148,12 @@ void FPalette::SetPalette (const BYTE *colors)
 		BaseColors[i] = PalEntry (colors[0], colors[1], colors[2]);
 		Remap[i] = i;
 	}
+
+	// Find white and black from the original palette so that they can be
+	// used to make an educated guess of the translucency % for a BOOM
+	// translucency map.
+	WhiteIndex = BestColor ((DWORD *)BaseColors, 255, 255, 255);
+	BlackIndex = BestColor ((DWORD *)BaseColors, 0, 0, 0);
 }
 
 // In ZDoom's new texture system, color 0 is used as the transparent color.

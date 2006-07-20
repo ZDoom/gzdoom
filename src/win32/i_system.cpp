@@ -616,6 +616,7 @@ void I_PrintStr (const char *cp, bool lineBreak)
 }
 
 EXTERN_CVAR (Bool, queryiwad);
+CVAR (String, queryiwad_key, "shift", CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 static WadStuff *WadList;
 static int NumWads;
 static int DefaultWad;
@@ -698,7 +699,21 @@ BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 
 int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 {
-	if (showwin || GetAsyncKeyState(VK_SHIFT))
+	int vkey;
+
+	if (stricmp (queryiwad_key, "shift") == 0)
+	{
+		vkey = VK_SHIFT;
+	}
+	else if (stricmp (queryiwad_key, "control") == 0 || stricmp (queryiwad_key, "ctrl") == 0)
+	{
+		vkey = VK_CONTROL;
+	}
+	else
+	{
+		vkey = 0;
+	}
+	if (showwin || (vkey != 0 && GetAsyncKeyState(vkey)))
 	{
 		WadList = wads;
 		NumWads = numwads;

@@ -212,6 +212,7 @@ void A_SkullPop (AActor *actor)
 	// Attach player mobj to bloody skull
 	player = actor->player;
 	actor->player = NULL;
+	mo->ObtainInventory (actor);
 	mo->player = player;
 	mo->health = actor->health;
 	mo->angle = actor->angle;

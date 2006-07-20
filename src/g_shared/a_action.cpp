@@ -284,6 +284,7 @@ void A_FreezeDeathChunks (AActor *actor)
 		head->momy = pr_freeze.Random2 () << (FRACBITS-7);
 		head->player = actor->player;
 		actor->player = NULL;
+		head->ObtainInventory (actor);
 		head->health = actor->health;
 		head->angle = actor->angle;
 		head->player->mo = head;

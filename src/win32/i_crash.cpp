@@ -41,7 +41,9 @@
 #include <richedit.h>
 #include <winuser.h>
 #include <tlhelp32.h>
+#ifndef __GNUC__
 #include <dbghelp.h>
+#endif
 #include <commctrl.h>
 #include <commdlg.h>
 #include <winsock2.h>
@@ -60,6 +62,51 @@
 #include <stdarg.h>
 #include <time.h>
 #include <zlib.h>
+
+// DBGHELP.H ---------------------------------------------------------------
+
+// w32api does not include dbghelp.h, so if I don't include these here,
+// a person using GCC will need to download the Platform SDK, grab dbghelp.h
+// from it, and edit it so it works with GCC.
+#ifdef __GNUC__
+typedef enum _MINIDUMP_TYPE
+{
+    MiniDumpNormal
+	// Other types omitted.
+} MINIDUMP_TYPE;
+
+typedef struct _MINIDUMP_EXCEPTION_INFORMATION {
+    DWORD ThreadId;
+    PEXCEPTION_POINTERS ExceptionPointers;
+    BOOL ClientPointers;
+} MINIDUMP_EXCEPTION_INFORMATION, *PMINIDUMP_EXCEPTION_INFORMATION;
+
+typedef struct _MINIDUMP_USER_STREAM_INFORMATION {
+    ULONG UserStreamCount;
+    void *UserStreamArray;			// Not really void *
+} MINIDUMP_USER_STREAM_INFORMATION, *PMINIDUMP_USER_STREAM_INFORMATION;
+
+typedef BOOL (WINAPI * MINIDUMP_CALLBACK_ROUTINE) (
+    IN PVOID CallbackParam,
+    IN CONST void *CallbackInput,	// Not really void *
+    IN OUT void *CallbackOutput		// Not really void *
+    );
+
+typedef struct _MINIDUMP_CALLBACK_INFORMATION {
+    MINIDUMP_CALLBACK_ROUTINE CallbackRoutine;
+    PVOID CallbackParam;
+} MINIDUMP_CALLBACK_INFORMATION, *PMINIDUMP_CALLBACK_INFORMATION;
+#endif
+
+// Dbghelp.dll is loaded at runtime so we don't create any needless
+// dependencies on it.
+typedef BOOL (WINAPI *THREADWALK) (HANDLE, LPTHREADENTRY32);
+typedef BOOL (WINAPI *MODULEWALK) (HANDLE, LPMODULEENTRY32);
+typedef HANDLE (WINAPI *CREATESNAPSHOT) (DWORD, DWORD);
+typedef BOOL (WINAPI *WRITEDUMP) (HANDLE, DWORD, HANDLE, MINIDUMP_TYPE,
+								  PMINIDUMP_EXCEPTION_INFORMATION,
+								  PMINIDUMP_USER_STREAM_INFORMATION,
+								  PMINIDUMP_CALLBACK_INFORMATION);
 
 // MACROS ------------------------------------------------------------------
 
@@ -166,14 +213,6 @@ struct TarFile
 	DWORD		CRC32;
 	bool		Deflated;
 };
-
-typedef BOOL (WINAPI *THREADWALK) (HANDLE, LPTHREADENTRY32);
-typedef BOOL (WINAPI *MODULEWALK) (HANDLE, LPMODULEENTRY32);
-typedef HANDLE (WINAPI *CREATESNAPSHOT) (DWORD, DWORD);
-typedef BOOL (WINAPI *WRITEDUMP) (HANDLE, DWORD, HANDLE, MINIDUMP_TYPE,
-								  PMINIDUMP_EXCEPTION_INFORMATION,
-								  PMINIDUMP_USER_STREAM_INFORMATION,
-								  PMINIDUMP_CALLBACK_INFORMATION);
 
 struct MiniDumpThreadData
 {

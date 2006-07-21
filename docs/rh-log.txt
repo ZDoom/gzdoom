@@ -1,3 +1,7 @@
+July 21, 2006
+- Here's something MinGW users will probably like: i_crash.cpp no longer needs
+  dbghelp.h if you compile with GCC.
+
 July 19, 2006
 - Added some simple translucency map analysis for BOOM maps to more
   intelligently pick the value to use for TranslucentLine's second argument.

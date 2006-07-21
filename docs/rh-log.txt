@@ -1,4 +1,5 @@
 July 21, 2006
+- Made SafeReadMemory() in i_crash.cpp more readable.
 - Here's something MinGW users will probably like: i_crash.cpp no longer needs
   dbghelp.h if you compile with GCC.
 

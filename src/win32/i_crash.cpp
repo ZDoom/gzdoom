@@ -63,6 +63,37 @@
 #include <time.h>
 #include <zlib.h>
 
+// MACROS ------------------------------------------------------------------
+
+#define BUGS_FORUM_URL	"http://forum.zdoom.org/index.php?c=3"
+
+#define REMOTE_HOST		"localhost"
+#define REMOTE_PORT		"80"
+#define UPLOAD_URI		"/test.php"
+#define UPLOAD_BOUNDARY	"Von-DnrNbJl0 P9d_BD;cEEsQVWpYMq0pbZ6NUmYHus;yIbFbkgB?.N=YC5O=BGZm+Rab5"
+#define DBGHELP_URI		"/msredist/dbghelp.dl_"
+
+// If you are working on your own modified version of ZDoom, change
+// the last part of the UPLOAD_AGENT (between parentheses) to your
+// own program's name. e.g. (Skulltag) or (ZDaemon) or (ZDoomFu)
+#define UPLOAD_AGENT	"ZDoom/" DOTVERSIONSTR " (" GAMESIG ")"
+
+// Time, in milliseconds, to wait for a send() or recv() to complete.
+#define TIMEOUT			60000
+
+// Maximum number of files that might appear in a crash report.
+#define MAX_FILES 5
+
+#ifndef WORDS_BIGENDIAN
+#define MAKE_ID(a,b,c,d)	((a)|((b)<<8)|((c)<<16)|((d)<<24))
+#else
+#define MAKE_ID(a,b,c,d)	((d)|((c)<<8)|((b)<<16)|((a)<<24))
+#endif
+
+#define ZIP_LOCALFILE	MAKE_ID('P','K',3,4)
+#define ZIP_CENTRALFILE	MAKE_ID('P','K',1,2)
+#define ZIP_ENDOFDIR	MAKE_ID('P','K',5,6)
+
 // DBGHELP.H ---------------------------------------------------------------
 
 // w32api does not include dbghelp.h, so if I don't include these here,
@@ -107,37 +138,6 @@ typedef BOOL (WINAPI *WRITEDUMP) (HANDLE, DWORD, HANDLE, MINIDUMP_TYPE,
 								  PMINIDUMP_EXCEPTION_INFORMATION,
 								  PMINIDUMP_USER_STREAM_INFORMATION,
 								  PMINIDUMP_CALLBACK_INFORMATION);
-
-// MACROS ------------------------------------------------------------------
-
-#define BUGS_FORUM_URL	"http://forum.zdoom.org/index.php?c=3"
-
-#define REMOTE_HOST		"localhost"
-#define REMOTE_PORT		"80"
-#define UPLOAD_URI		"/test.php"
-#define UPLOAD_BOUNDARY	"Von-DnrNbJl0 P9d_BD;cEEsQVWpYMq0pbZ6NUmYHus;yIbFbkgB?.N=YC5O=BGZm+Rab5"
-#define DBGHELP_URI		"/msredist/dbghelp.dl_"
-
-// If you are working on your own modified version of ZDoom, change
-// the last part of the UPLOAD_AGENT (between parentheses) to your
-// own program's name. e.g. (Skulltag) or (ZDaemon) or (ZDoomFu)
-#define UPLOAD_AGENT	"ZDoom/" DOTVERSIONSTR " (" GAMESIG ")"
-
-// Time, in milliseconds, to wait for a send() or recv() to complete.
-#define TIMEOUT			60000
-
-// Maximum number of files that might appear in a crash report.
-#define MAX_FILES 5
-
-#ifndef WORDS_BIGENDIAN
-#define MAKE_ID(a,b,c,d)	((a)|((b)<<8)|((c)<<16)|((d)<<24))
-#else
-#define MAKE_ID(a,b,c,d)	((d)|((c)<<8)|((b)<<16)|((a)<<24))
-#endif
-
-#define ZIP_LOCALFILE	MAKE_ID('P','K',3,4)
-#define ZIP_CENTRALFILE	MAKE_ID('P','K',1,2)
-#define ZIP_ENDOFDIR	MAKE_ID('P','K',5,6)
 
 // TYPES -------------------------------------------------------------------
 
@@ -331,33 +331,33 @@ static WNDPROC StdStaticProc;
 
 static bool SafeReadMemory (const void *base, void *buffer, size_t len)
 {
-	// Non-GCC version: Use SEH to catch any bad reads immediately when
-	// they happen instead of trying to catch them beforehand.
-	//
+#ifdef __GNUC__
 	// GCC version: Test the memory beforehand and hope it doesn't become
 	// unreadable while we read it. GCC is the only Windows compiler (that
 	// I know of) that can't do SEH.
-#ifdef __GNUC__
-	if (IsBadReadPtr (base, len) != 0)
+
+	if (IsBadReadPtr (base, len))
 	{
 		return false;
 	}
-#endif
+	memcpy (buffer, base, len);
+	return true;
+#else
+	// Non-GCC version: Use SEH to catch any bad reads immediately when
+	// they happen instead of trying to catch them beforehand.
+
 	bool success = false;
 
-#ifndef __GNUC__
 	__try
 	{
-#endif
 		memcpy (buffer, base, len);
 		success = true;
-#ifndef __GNUC__
 	}
 	__except(EXCEPTION_EXECUTE_HANDLER)
 	{
 	}
-#endif
 	return success;
+#endif
 }
 
 //==========================================================================

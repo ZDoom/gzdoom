@@ -1418,7 +1418,7 @@ void R_InitTranslationTables ()
 {
 	static BYTE MainTranslationTables[256*
 		(NUMCOLORMAPS*16			// Shaded
-		 +MAXPLAYERS*2				// Players + PlayersExtra
+		 +MAXPLAYERS*2+1			// Players + PlayersExtra
 		 +8							// Standard	(7 for Strife, 3 for the rest)
 		 +MAX_ACS_TRANSLATIONS		// LevelScripted
 		 +BODYQUESIZE				// PlayerCorpses
@@ -1436,7 +1436,7 @@ void R_InitTranslationTables ()
 
 	// Extra player translations, one for each player, unused by Doom
 	translationtables[TRANSLATION_PlayersExtra] =
-		translationtables[TRANSLATION_Players] + MAXPLAYERS*256;
+		translationtables[TRANSLATION_Players] + (MAXPLAYERS+1)*256;
 
 	// The three standard translations from Doom or Heretic (seven for Strife),
 	// plus the generic ice translation.

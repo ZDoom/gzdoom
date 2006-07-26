@@ -1,3 +1,8 @@
+July 26, 2006 (Changes by Graf Zahl)
+- Changed player sprite translation for the menu so that it uses a regular
+  translation table instead of a local custom buffer.
+- Fixed: ResetBaggage must set MeleeDamage to 0.
+
 July 21, 2006
 - Made SafeReadMemory() in i_crash.cpp more readable.
 - Here's something MinGW users will probably like: i_crash.cpp no longer needs

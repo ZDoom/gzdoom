@@ -228,7 +228,6 @@ static int			PlayerSkin;
 static FState		*PlayerState;
 static int			PlayerTics;
 static int			PlayerRotation;
-static BYTE			PlayerTranslation[256];
 
 static DCanvas			*SavePic;
 static brokenlines_t	*SaveComment;
@@ -2001,7 +2000,7 @@ void M_PlayerSetup (void)
 		PlayerClass = &PlayerClasses[players[consoleplayer].CurrentPlayerClass];
 	}
 	PlayerSkin = players[consoleplayer].userinfo.skin;
-	R_GetPlayerTranslation (players[consoleplayer].userinfo.color, &skins[PlayerSkin], PlayerTranslation);
+	R_GetPlayerTranslation (players[consoleplayer].userinfo.color, &skins[PlayerSkin], translationtables[TRANSLATION_Players] + 256 * MAXPLAYERS);
 	PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
 	PlayerTics = PlayerState->GetTics();
 	if (FireScreen == NULL)
@@ -2036,7 +2035,7 @@ static void M_PlayerSetupTicker (void)
 
 		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, PlayerClass - &PlayerClasses[0]);
 		R_GetPlayerTranslation (players[consoleplayer].userinfo.color,
-			&skins[PlayerSkin], PlayerTranslation);
+			&skins[PlayerSkin], translationtables[TRANSLATION_Players] + 256 * MAXPLAYERS);
 	}
 
 	if (PlayerState->GetTics () != -1 && PlayerState->GetNextState () != NULL)
@@ -2149,7 +2148,7 @@ static void M_PlayerSetupDrawer ()
 					(PSetupDef.y + LINEHEIGHT*3 + 57 - 104)*CleanYfac + (SCREENHEIGHT/2),
 					DTA_DestWidth, MulScale6 (tex->GetWidth() * CleanXfac, scale),
 					DTA_DestHeight, MulScale6 (tex->GetHeight() * CleanYfac, scale),
-					DTA_Translation, PlayerTranslation,
+					DTA_Translation, translationtables[TRANSLATION_Players] + 256 * MAXPLAYERS,
 					TAG_DONE);
 			}
 		}
@@ -2466,7 +2465,7 @@ static void M_ChangeSkin (int choice)
 			PlayerSkin = (PlayerSkin < (int)numskins - 1) ? PlayerSkin + 1 : 0;
 	} while (!PlayerClass->CheckSkin (PlayerSkin));
 
-	R_GetPlayerTranslation (players[consoleplayer].userinfo.color, &skins[PlayerSkin], PlayerTranslation);
+	R_GetPlayerTranslation (players[consoleplayer].userinfo.color, &skins[PlayerSkin], translationtables[TRANSLATION_Players] + 256 * MAXPLAYERS);
 
 	cvar_set ("skin", skins[PlayerSkin].name);
 }
@@ -2578,7 +2577,7 @@ static void SendNewColor (int red, int green, int blue)
 	sprintf (command, "color \"%02x %02x %02x\"", red, green, blue);
 	C_DoCommand (command);
 
-	R_GetPlayerTranslation (MAKERGB (red, green, blue), &skins[PlayerSkin], PlayerTranslation);
+	R_GetPlayerTranslation (MAKERGB (red, green, blue), &skins[PlayerSkin], translationtables[TRANSLATION_Players] + 256 * MAXPLAYERS);
 }
 
 static void M_SlidePlayerRed (int choice)

@@ -1141,6 +1141,7 @@ static void ResetBaggage (Baggage *bag)
 	bag->EParms.ExplosionDamage = bag->EParms.ExplosionRadius = 128;
 	bag->EParms.HurtShooter = true;
 	bag->DropItemList = NULL;
+	bag->BAttack.MeleeDamage = 0;
 	bag->BAttack.MissileHeight = 32*FRACUNIT;
 	bag->BAttack.MeleeSound = 0;
 	bag->BAttack.MissileName = NAME_None;

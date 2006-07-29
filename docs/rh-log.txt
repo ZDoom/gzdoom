@@ -1,3 +1,16 @@
+July 29, 2008 (Changes by Graf Zahl)
+- Used the new explosion handling to clean up the old style projectile 
+  definitions. The SimpleProjectile class is gone and it uses the meta
+  data and A_ExplodeParms instead now.
+- Removed the deprecation warnings for explosion parameters again because 
+  the new system is fully inheritable and therefore useful again.
+- Changed the explosion properties into meta data and adjusted A_ExplodeParams
+  to use these when called without any parameters. Also removed all special
+  parsing for A_Explode so now this function can be called with expressions
+  like any other function.
+- Changed DECORATE parsing so that functions with completely optional 
+  parameter lists don't create an empty list when called without parameters.
+
 July 28, 2008
 - Version bump to 2.1.4.
 - Fixed: Friendlies would not turn to face you when you engaged them in

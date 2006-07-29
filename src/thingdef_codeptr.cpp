@@ -456,22 +456,24 @@ void A_JumpIfInTargetInventory(AActor * self)
 
 void A_ExplodeParms (AActor *self)
 {
-	int damage = 128;
-	int distance = 128;
-	bool hurtSource = true;
+	int damage;
+	int distance;
+	bool hurtSource;
 
 	int index=CheckIndex(3);
 	if (index>=0) 
 	{
-		if (StateParameters[index] != 0)
-		{
-			damage = StateParameters[index];
-		}
-		if (StateParameters[index+1] != 0)
-		{
-			distance = StateParameters[index+1];
-		}
-		hurtSource = !!StateParameters[index+2];
+		damage = EvalExpressionI (StateParameters[index], self);
+		distance = EvalExpressionI (StateParameters[index+1], self);
+		hurtSource = EvalExpressionN (StateParameters[index+2], self);
+		if (damage == 0) damage = 128;
+		if (distance == 0) distance = damage;
+	}
+	else
+	{
+		damage = self->GetClass()->Meta.GetMetaInt (ACMETA_ExplosionDamage, 128);
+		distance = self->GetClass()->Meta.GetMetaInt (ACMETA_ExplosionRadius, damage);
+		hurtSource = !self->GetClass()->Meta.GetMetaInt (ACMETA_DontHurtShooter);
 	}
 
 	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, hurtSource);
@@ -490,16 +492,19 @@ void A_ExplodeParms (AActor *self)
 
 void A_RadiusThrust (AActor *self)
 {
+	int force = 0;
+	int distance = 0;
+	bool affectSource = true;
+	
 	int index=CheckIndex(3);
-	if (index<0) return;
-
-	int force = EvalExpressionI (StateParameters[index], self);
-	if (force==0) force=128;
-
-	int distance = EvalExpressionI (StateParameters[index+1], self);
-	if (distance==0) distance=128;
-
-	bool affectSource = EvalExpressionN (StateParameters[index+2], self);;
+	if (index>=0) 
+	{
+		force = EvalExpressionI (StateParameters[index], self);
+		distance = EvalExpressionI (StateParameters[index+1], self);
+		affectSource = EvalExpressionN (StateParameters[index+2], self);
+	}
+	if (force == 0) force = 128;
+	if (distance == 0) distance = force;
 
 	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false, false);
 	if (self->z <= self->floorz + (distance<<FRACBITS))
@@ -1353,10 +1358,14 @@ void A_SetTranslucent(AActor * self)
 //===========================================================================
 void A_FadeIn(AActor * self)
 {
+	fixed_t reduce = 0;
+	
 	int index=CheckIndex(1, NULL);
-	if (index<0) return;
-
-	fixed_t reduce = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
+	if (index>=0) 
+	{
+		reduce = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
+	}
+	
 	if (reduce == 0) reduce = FRACUNIT/10;
 
 	if (self->RenderStyle==STYLE_Normal) self->RenderStyle=STYLE_Translucent;
@@ -1373,10 +1382,14 @@ void A_FadeIn(AActor * self)
 //===========================================================================
 void A_FadeOut(AActor * self)
 {
+	fixed_t reduce = 0;
+	
 	int index=CheckIndex(1, NULL);
-	if (index<0) return;
-
-	fixed_t reduce = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
+	if (index>=0) 
+	{
+		reduce = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
+	}
+	
 	if (reduce == 0) reduce = FRACUNIT/10;
 
 	if (self->RenderStyle==STYLE_Normal) self->RenderStyle=STYLE_Translucent;

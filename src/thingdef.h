@@ -45,6 +45,17 @@ FDropItem *GetDropItems(AActor * actor);
 extern FState * CallingState;
 int CheckIndex(int paramsize, FState ** pcallstate=NULL);
 
+void A_ExplodeParms(AActor * self);
+
+enum
+{
+	ACMETA_BASE				= 0x83000,
+	ACMETA_DropItems,		// Int (index into DropItemList)
+	ACMETA_ExplosionDamage,
+	ACMETA_ExplosionRadius,
+	ACMETA_DontHurtShooter,
+};
+
 
 
 

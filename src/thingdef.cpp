@@ -610,6 +610,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_CentaurDefend, NULL)
 	FUNC(A_BishopMissileWeave, NULL)
 	FUNC(A_CStaffMissileSlither, NULL)
+	FUNC(A_PlayerScream, NULL)
 	FUNC(A_SkullPop, "m")
 	{"A_CheckPlayerDone", A_CheckSkullDone, NULL },
 
@@ -698,6 +699,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_CustomMeleeAttack, "XXXsty" )
 	FUNC(A_Burst, "M")
 	FUNC(A_RadiusThrust, "xxy")
+	{"A_Explode", A_ExplodeParms, "xxy" },
 };
 
 //==========================================================================
@@ -949,13 +951,6 @@ static int CreateBloodTranslation(PalEntry color)
 //
 //----------------------------------------------------------------------------
 
-enum
-{
-	ACMETA_BASE				= 0x83000,
-	ACMETA_DropItems,		// Int (index into DropItemList)
-};
-
-
 static void FreeDropItemChain(FDropItem *chain)
 {
 	while (chain != NULL)
@@ -1000,12 +995,6 @@ FDropItem *GetDropItems(AActor * actor)
 //
 //==========================================================================
 
-struct FExplodeParms
-{
-	bool HurtShooter;
-	int ExplosionRadius, ExplosionDamage;
-};
-
 struct FBasicAttack
 {
 	int MeleeDamage;
@@ -1021,17 +1010,8 @@ struct Baggage
 	bool StateSet;
 	int CurrentState;
 
-	FExplodeParms EParms;
 	FDropItem *DropItemList;
 	FBasicAttack BAttack;
-
-	const char *PuffType;
-	const char *HitPuffType;
-	int AttackSound;
-	int AmmoGive;
-
-	int WeapNum;
-
 };
 
 
@@ -1138,8 +1118,6 @@ FState ** FindState(AActor * actor, const PClass * type, const char * name)
 
 static void ResetBaggage (Baggage *bag)
 {
-	bag->EParms.ExplosionDamage = bag->EParms.ExplosionRadius = 128;
-	bag->EParms.HurtShooter = true;
 	bag->DropItemList = NULL;
 	bag->BAttack.MeleeDamage = 0;
 	bag->BAttack.MissileHeight = 32*FRACUNIT;
@@ -1370,35 +1348,6 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 			SC_ScriptError ("Too many arguments to %s", spec->name);
 		}
 		state.Action = A_CallSpecial;
-		return true;
-	}
-
-	// Override the normal A_Explode with a parameterized version
-	if (SC_Compare ("A_Explode"))
-	{
-		int paramindex=PrepareStateParameters(&state, 3);
-
-		FExplodeParms local_eparms = bag.EParms;
-
-		if (SC_CheckString ("("))	// Parameters are optional
-		{
-			SC_MustGetNumber ();
-			local_eparms.ExplosionDamage = sc_Number;
-			SC_MustGetStringName (",");
-			SC_MustGetNumber ();
-			local_eparms.ExplosionRadius = sc_Number;
-			if (SC_CheckString(","))
-			{
-				SC_MustGetNumber ();
-				local_eparms.HurtShooter = !!sc_Number;
-			}
-			SC_MustGetStringName (")");
-		}
-
-		StateParameters[paramindex] = local_eparms.ExplosionDamage;
-		StateParameters[paramindex+1] = local_eparms.ExplosionRadius;
-		StateParameters[paramindex+2] = local_eparms.HurtShooter;
-		state.Action = A_ExplodeParms;
 		return true;
 	}
 
@@ -1649,7 +1598,6 @@ do_stop:
 					{
 						const char * params = afd->parameters;
 						int numparams = (int)strlen(params);
-						int paramindex = PrepareStateParameters(&state, numparams);
 						int v;
 
 						if (!islower(*params))
@@ -1660,6 +1608,8 @@ do_stop:
 						{
 							if (!SC_CheckString("(")) goto endofstate;
 						}
+						
+						int paramindex = PrepareStateParameters(&state, numparams);
 						while (*params)
 						{
 							switch(*params)
@@ -2739,9 +2689,7 @@ static void ActorHitObituary (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorDontHurtShooter (AActor *defaults, Baggage &bag)
 {
-	Printf (TEXTCOLOR_YELLOW "DontHurtShooter in %s is deprecated and will be removed in 2.2.0.\n",
-		bag.Info->Class->TypeName.GetChars());
-	bag.EParms.HurtShooter=false;
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_DontHurtShooter, true);
 }
 
 //==========================================================================
@@ -2749,10 +2697,8 @@ static void ActorDontHurtShooter (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorExplosionRadius (AActor *defaults, Baggage &bag)
 {
-	Printf (TEXTCOLOR_YELLOW "ExplosionRadius in %s is deprecated and will be removed in 2.2.0.\n",
-		bag.Info->Class->TypeName.GetChars());
 	SC_MustGetNumber();
-	bag.EParms.ExplosionRadius=sc_Number;
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionRadius, sc_Number);
 }
 
 //==========================================================================
@@ -2760,10 +2706,8 @@ static void ActorExplosionRadius (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorExplosionDamage (AActor *defaults, Baggage &bag)
 {
-	Printf (TEXTCOLOR_YELLOW "ExplosionDamage in %s is deprecated and will be removed in 2.2.0.\n",
-		bag.Info->Class->TypeName.GetChars());
 	SC_MustGetNumber();
-	bag.EParms.ExplosionDamage=sc_Number;
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionDamage, sc_Number);
 }
 
 //==========================================================================

@@ -50,6 +50,7 @@
 #include "a_action.h"
 #include "decallib.h"
 #include "i_system.h"
+#include "thingdef.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -72,32 +73,9 @@ struct FExtraInfo
 	unsigned int FireDeathStart, FireDeathEnd;
 	bool bSolidOnDeath, bSolidOnBurn;
 	bool bBurnAway, bDiesAway, bGenericIceDeath;
+	bool bExplosive;
 	fixed_t DeathHeight, BurnHeight;
-	int ExplosionRadius, ExplosionDamage;
-	bool ExplosionShooterImmune;
 };
-
-class ASimpleProjectile : public AActor
-{
-	DECLARE_STATELESS_ACTOR (ASimpleProjectile, AActor);
-public:
-	void Serialize (FArchive &arc)
-	{
-		Super::Serialize (arc);
-		arc << HurtShooter << ExplosionRadius << ExplosionDamage;
-	}
-
-	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
-	{
-		damage = ExplosionDamage;
-		dist = ExplosionRadius;
-		hurtSource = HurtShooter;
-	}
-
-	bool HurtShooter;
-	int ExplosionRadius, ExplosionDamage;
-};
-IMPLEMENT_ABSTRACT_ACTOR (ASimpleProjectile)
 
 class AFakeInventory : public AInventory
 {
@@ -352,7 +330,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 		}
 		else if (SC_Compare ("Projectile"))
 		{
-			parent = RUNTIME_CLASS(ASimpleProjectile);
+			parent = RUNTIME_CLASS(AActor);
 			def = DEF_Projectile;
 			SC_MustGetString ();
 		}
@@ -479,9 +457,9 @@ static void ParseDecorate (void (*process)(FState *, int))
 
 				if (def == DEF_Projectile)
 				{
-					if (extra.ExplosionRadius > 0)
+					if (extra.bExplosive)
 					{
-						info->OwnedStates[extra.DeathStart].Action = A_Explode;
+						info->OwnedStates[extra.DeathStart].Action = A_ExplodeParms;
 					}
 				}
 				else
@@ -577,15 +555,6 @@ static void ParseDecorate (void (*process)(FState *, int))
 		}
 		if (def == DEF_Projectile)
 		{
-			if (extra.ExplosionRadius > 0)
-			{
-				((ASimpleProjectile *)(type->Defaults))->ExplosionRadius =
-					extra.ExplosionRadius;
-				((ASimpleProjectile *)(type->Defaults))->ExplosionDamage =
-					extra.ExplosionDamage > 0 ? extra.ExplosionDamage : extra.ExplosionRadius;
-				((ASimpleProjectile *)(type->Defaults))->HurtShooter =
-					!extra.ExplosionShooterImmune;
-			}
 			((AActor *)(type->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
 		}
 		((AActor *)(type->Defaults))->SpawnState = &info->OwnedStates[extra.SpawnStart];
@@ -736,16 +705,18 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		else if (def == DEF_Projectile && SC_Compare ("ExplosionRadius"))
 		{
 			SC_MustGetNumber ();
-			extra.ExplosionRadius = sc_Number;
+			info->Class->Meta.SetMetaInt(ACMETA_ExplosionRadius, sc_Number);
+			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && SC_Compare ("ExplosionDamage"))
 		{
 			SC_MustGetNumber ();
-			extra.ExplosionDamage = sc_Number;
+			info->Class->Meta.SetMetaInt(ACMETA_ExplosionDamage, sc_Number);
+			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && SC_Compare ("DoNotHurtShooter"))
 		{
-			extra.ExplosionShooterImmune = true;
+			info->Class->Meta.SetMetaInt(ACMETA_DontHurtShooter, true);
 		}
 		else if (def == DEF_Projectile && SC_Compare ("Damage"))
 		{

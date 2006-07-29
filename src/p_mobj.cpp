@@ -3860,30 +3860,6 @@ AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, an
 		puff->renderflags |= RF_INVISIBLE;
 	}
 
-
-	/* This code assumes that no object can be used outside its own game.
-	   Since that is no longer the case it doesn't work anymore.
-
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		// don't make punches spark on the wall
-		if (attackrange == MELEERANGE)
-		{
-			FState *state = puff->state;
-			int i;
-
-			for (i = 0; i < 2 && state->GetNextState(); i++)
-				state = state->GetNextState();
-
-			puff->SetState (state);
-		}
-		if (cl_pufftype && updown != 3)
-		{
-			P_DrawSplash2 (32, x, y, z, dir, updown, 1);
-			puff->renderflags |= RF_INVISIBLE;
-		}
-	}*/
-
 	if (hitthing && puff->SeeSound)
 	{ // Hit thing sound
 		S_SoundID (puff, CHAN_BODY, puff->SeeSound, 1, ATTN_NORM);

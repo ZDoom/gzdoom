@@ -1,3 +1,17 @@
+July 28, 2008
+- Version bump to 2.1.4.
+- Fixed: Friendlies would not turn to face you when you engaged them in
+  conversation, nor would they reliably return to their original facing when
+  you stopped talking to them.
+- Added deprecation warnings for the DontHurtShooter, ExplosionRadius, and
+  ExplosionDamage actor "properties." They were considered deprecated before;
+  now this is explicitly stated when they are used. The problem with them is
+  that they are not really properties and do not behave like other properties
+  and cannot be inherited, because they are really just an alternate way of
+  specifying parameters for A_Explode. (Anything that currently prints a
+  deprecation warning will be removed completely in 2.2.0, which will be the
+  version where custom state labels make their debut.)
+
 July 26, 2006 (Changes by Graf Zahl)
 - Changed player sprite translation for the menu so that it uses a regular
   translation table instead of a local custom buffer.

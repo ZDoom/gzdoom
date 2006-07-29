@@ -2664,7 +2664,7 @@ FUNC(LS_StartConversation)
 	{
 		// Give the NPC a chance to play a brief animation
 		target->ConversationAnimation (0);
-		P_StartConversation (target, it, !!arg1);
+		P_StartConversation (target, it, !!arg1, true);
 		return true;
 	}
 	return false;

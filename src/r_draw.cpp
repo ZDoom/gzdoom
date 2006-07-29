@@ -1418,7 +1418,7 @@ void R_InitTranslationTables ()
 {
 	static BYTE MainTranslationTables[256*
 		(NUMCOLORMAPS*16			// Shaded
-		 +MAXPLAYERS*2+1			// Players + PlayersExtra
+		 +MAXPLAYERS*2+1			// Players + PlayersExtra + Menu player
 		 +8							// Standard	(7 for Strife, 3 for the rest)
 		 +MAX_ACS_TRANSLATIONS		// LevelScripted
 		 +BODYQUESIZE				// PlayerCorpses

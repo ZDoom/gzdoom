@@ -2223,7 +2223,7 @@ static void StatePropertyIsDeprecated (const char *actorname, const char *prop)
 {
 	static bool warned = false;
 
-	Printf (TEXTCOLOR_YELLOW "In actor %s, the %s property is deprecated.\n",
+	Printf (TEXTCOLOR_YELLOW "In actor %s, the %s property is deprecated and will be removed in 2.2.0.\n",
 		actorname, prop);
 	if (!warned)
 	{
@@ -2739,6 +2739,8 @@ static void ActorHitObituary (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorDontHurtShooter (AActor *defaults, Baggage &bag)
 {
+	Printf (TEXTCOLOR_YELLOW "DontHurtShooter in %s is deprecated and will be removed in 2.2.0.\n",
+		bag.Info->Class->TypeName.GetChars());
 	bag.EParms.HurtShooter=false;
 }
 
@@ -2747,6 +2749,8 @@ static void ActorDontHurtShooter (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorExplosionRadius (AActor *defaults, Baggage &bag)
 {
+	Printf (TEXTCOLOR_YELLOW "ExplosionRadius in %s is deprecated and will be removed in 2.2.0.\n",
+		bag.Info->Class->TypeName.GetChars());
 	SC_MustGetNumber();
 	bag.EParms.ExplosionRadius=sc_Number;
 }
@@ -2756,6 +2760,8 @@ static void ActorExplosionRadius (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorExplosionDamage (AActor *defaults, Baggage &bag)
 {
+	Printf (TEXTCOLOR_YELLOW "ExplosionDamage in %s is deprecated and will be removed in 2.2.0.\n",
+		bag.Info->Class->TypeName.GetChars());
 	SC_MustGetNumber();
 	bag.EParms.ExplosionDamage=sc_Number;
 }

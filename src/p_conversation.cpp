@@ -79,6 +79,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
 static void DrawConversationMenu ();
 static void PickConversationReply ();
 static void CleanupConversationMenu ();
+static void ConversationMenuEscaped ();
 
 static FStrifeDialogueNode *CurNode, *PrevNode;
 static brokenlines_t *DialogueLines;
@@ -602,8 +603,9 @@ CUSTOM_CVAR(Float, dlg_musicvolume, 1.0f, CVAR_ARCHIVE)
 //
 //============================================================================
 
-void P_StartConversation (AActor *npc, AActor *pc, bool facetalker)
+void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle)
 {
+	AActor *oldtarget;
 	FStrifeDialogueReply *reply;
 	menuitem_t item;
 	const char *toSay;
@@ -626,16 +628,21 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker)
 	}
 
 	npc->reactiontime = 2;
-	if (!(npc->flags & MF_FRIENDLY) && !(npc->flags4 & MF4_NOHATEPLAYERS))
-	{
-		npc->target = pc;
-	}
 	ConversationFaceTalker = facetalker;
-	ConversationNPCAngle = npc->angle;
+	if (saveangle)
+	{
+		ConversationNPCAngle = npc->angle;
+	}
+	oldtarget = npc->target;
+	npc->target = pc;
 	if (facetalker)
 	{
 		A_FaceTarget (npc);
 		pc->angle = R_PointToAngle2 (pc->x, pc->y, npc->x, npc->y);
+	}
+	if ((npc->flags & MF_FRIENDLY) || (npc->flags4 & MF4_NOHATEPLAYERS))
+	{
+		npc->target = oldtarget;
 	}
 
 	// Check if we should jump to another node
@@ -662,7 +669,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker)
 
 	// Set up the menu
 	ConversationMenu.PreDraw = DrawConversationMenu;
-	ConversationMenu.EscapeHandler = CleanupConversationMenu;
+	ConversationMenu.EscapeHandler = ConversationMenuEscaped;
 
 	// Format the speaker's message.
 	toSay = CurNode->Dialogue;
@@ -747,7 +754,7 @@ void P_ResumeConversation ()
 {
 	if (ConversationPC != NULL && ConversationNPC != NULL)
 	{
-		P_StartConversation (ConversationNPC, ConversationPC, ConversationFaceTalker);
+		P_StartConversation (ConversationNPC, ConversationPC, ConversationFaceTalker, false);
 	}
 }
 
@@ -866,6 +873,7 @@ static void PickConversationReply ()
 	CleanupConversationMenu ();
 	if (reply == NULL)
 	{
+		ConversationNPC->angle = ConversationNPCAngle;
 		return;
 	}
 
@@ -880,6 +888,7 @@ static void PickConversationReply ()
 				Printf ("%s\n", reply->QuickNo);
 			}
 			ConversationNPC->ConversationAnimation (2);
+			ConversationNPC->angle = ConversationNPCAngle;
 			return;
 		}
 	}
@@ -967,7 +976,7 @@ static void PickConversationReply ()
 			ConversationNPC->Conversation = StrifeDialogues[rootnode - reply->NextNode - 1];
 			if (gameaction != ga_slideshow)
 			{
-				P_StartConversation (ConversationNPC, players[consoleplayer].mo, ConversationFaceTalker);
+				P_StartConversation (ConversationNPC, players[consoleplayer].mo, ConversationFaceTalker, false);
 				return;
 			}
 			else
@@ -1018,3 +1027,16 @@ void CleanupConversationMenu ()
 	I_SetMusicVolume(1.f);
 }
 
+//============================================================================
+//
+// ConversationMenuEscaped
+//
+// Called when the user presses escape to leave tho conversation menu.
+//
+//============================================================================
+
+void ConversationMenuEscaped ()
+{
+	CleanupConversationMenu ();
+	ConversationNPC->angle = ConversationNPCAngle;
+}

@@ -3167,7 +3167,7 @@ BOOL PTR_UseTraverse (intercept_t *in)
 		{
 			// Give the NPC a chance to play a brief animation
 			in->d.thing->ConversationAnimation (0);
-			P_StartConversation (in->d.thing, usething, true);
+			P_StartConversation (in->d.thing, usething, true, true);
 			return false;
 		}
 		return true;

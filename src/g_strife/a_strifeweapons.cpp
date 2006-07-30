@@ -271,7 +271,11 @@ END_DEFAULTS
 
 void A_AlertMonsters (AActor *self)
 {
-	if (self->target != NULL && self->target->player != NULL)
+	if (self->player != NULL)
+	{
+		P_NoiseAlert(self, self);
+	}
+	else if (self->target != NULL && self->target->player != NULL)
 	{
 		P_NoiseAlert (self->target, self);
 	}

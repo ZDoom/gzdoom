@@ -181,6 +181,13 @@ void A_FreezeDeath (AActor *actor)
 	actor->height = actor->GetDefault()->height;
 	S_Sound (actor, CHAN_BODY, "misc/freeze", 1, ATTN_NORM);
 
+	// [RH] Andy Baker's stealth monsters
+	if (actor->flags & MF_STEALTH)
+	{
+		actor->alpha = OPAQUE;
+		actor->visdir = 0;
+	}
+
 	if (actor->player)
 	{
 		actor->player->damagecount = 0;

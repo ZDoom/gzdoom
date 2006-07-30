@@ -1,4 +1,11 @@
-July 29, 2008 (Changes by Graf Zahl)
+July 30, 2006 (Changes by Graf Zahl)
+- Fixed: Starting a game without skill menu always started the first episode.
+- Changed A_AlertMonsters so that it can be placed directly in a weapon state.
+
+July 29, 2006 (Changes by Graf Zahl)
+- Fixed: Frozen corpses of stealth monsters were invisible.
+- Added: Calling Radius_Quake with a tid of 0 now uses the activator
+  as the quake's center.
 - Used the new explosion handling to clean up the old style projectile 
   definitions. The SimpleProjectile class is gone and it uses the meta
   data and A_ExplodeParms instead now.
@@ -11,7 +18,7 @@ July 29, 2008 (Changes by Graf Zahl)
 - Changed DECORATE parsing so that functions with completely optional 
   parameter lists don't create an empty list when called without parameters.
 
-July 28, 2008
+July 28, 2006
 - Version bump to 2.1.4.
 - Fixed: Friendlies would not turn to face you when you engaged them in
   conversation, nor would they reliably return to their original facing when

@@ -1729,13 +1729,14 @@ void M_Episode (int choice)
 		return;
 	}
 
+	epi = choice;
+
 	if (EpisodeNoSkill[choice])
 	{
 		M_ChooseSkill(2);
 		return;
 	}
 
-	epi = choice;
 	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 		M_SetupNextMenu (&NewDef);
 	else if (gameinfo.gametype == GAME_Hexen)

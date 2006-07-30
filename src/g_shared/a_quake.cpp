@@ -152,18 +152,29 @@ int DEarthquake::StaticGetQuakeIntensity (AActor *victim)
 //
 //==========================================================================
 
-bool P_StartQuake (int tid, int intensity, int duration, int damrad, int tremrad)
+bool P_StartQuake (AActor *activator, int tid, int intensity, int duration, int damrad, int tremrad)
 {
 	AActor *center;
-	FActorIterator iterator (tid);
 	bool res = false;
 
 	intensity = clamp (intensity, 1, 9);
 
-	while ( (center = iterator.Next ()) )
+	if (tid == 0)
 	{
-		res = true;
-		new DEarthquake (center, intensity, duration, damrad, tremrad);
+		if (activator != NULL)
+		{
+			new DEarthquake(activator, intensity, duration, damrad, tremrad);
+			return true;
+		}
+	}
+	else
+	{
+		FActorIterator iterator (tid);
+		while ( (center = iterator.Next ()) )
+		{
+			res = true;
+			new DEarthquake (center, intensity, duration, damrad, tremrad);
+		}
 	}
 	
 	return res;

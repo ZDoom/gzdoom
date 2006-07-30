@@ -4853,6 +4853,30 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_GETPLAYERINFO:		// [GRB]
+			if (STACK(2) < 0 || STACK(2) >= MAXPLAYERS || !playeringame[STACK(2)])
+			{
+				STACK(2) = -1;
+			}
+			else
+			{
+				userinfo_t *userinfo = &players[STACK(2)].userinfo;
+				switch (STACK(1))
+				{
+				case PLAYERINFO_TEAM:			STACK(2) = userinfo->team;
+				case PLAYERINFO_AIMDIST:		STACK(2) = userinfo->aimdist;
+				case PLAYERINFO_COLOR:			STACK(2) = userinfo->color;
+				case PLAYERINFO_GENDER:			STACK(2) = userinfo->gender;
+				case PLAYERINFO_NEVERSWITCH:	STACK(2) = userinfo->neverswitch;
+				case PLAYERINFO_MOVEBOB:		STACK(2) = userinfo->MoveBob;
+				case PLAYERINFO_STILLBOB:		STACK(2) = userinfo->StillBob;
+				case PLAYERINFO_PLAYERCLASS:	STACK(2) = userinfo->PlayerClass;
+				default:						STACK(2) = 0;
+				}
+			}
+			sp -= 1;
+			break;
+
 		}
 	}
 

@@ -1,4 +1,5 @@
 July 30, 2006 (Changes by Graf Zahl)
+- Added Grubber's GetPlayerInfo ACS function.
 - Fixed: Starting a game without skill menu always started the first episode.
 - Changed A_AlertMonsters so that it can be placed directly in a weapon state.
 

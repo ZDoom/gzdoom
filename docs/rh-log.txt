@@ -1,3 +1,22 @@
+July 31, 2006 (Changes by Graf Zahl)
+- Added a type check to Spawn(actorname,...) to allow it to print a 
+  meaningful message instead of the nondescript 
+  'Tried to spawn a class-less actor'.
+- Converted AGlassJunk to DECORATE and made the spawn function a little
+  more flexible so that replacing the shard is easier.
+- Converted ABloodSplatter to DECORATE.
+- Removed A_Jiggle because it never worked properly.
+- Changed DECORATE parser to allow commas between arguments for multi-
+  argument properties. For all newly added properties this format will
+  become mandatory but for backwards compatibility it is optional for
+  old ones.
+- Added a check for negative indices to TAutoGrowArray::SetVal to prevent
+  passing an index of -1 from crashing the game.
+- Fixed: Morphing must clear the weapon's flash sprite.
+- Fixed: Resurrecting a morphed player caused a crash.
+- Fixed: Random sounds that recursively refer to themselves caused a stack
+  overflow. Now they print a warning and get ignored.
+
 July 30, 2006 (Changes by Graf Zahl)
 - Added Grubber's GetPlayerInfo ACS function.
 - Fixed: Starting a game without skill menu always started the first episode.

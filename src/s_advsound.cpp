@@ -966,6 +966,11 @@ static void S_AddSNDINFO (int lump)
 				while (SC_GetString () && !SC_Compare ("}"))
 				{
 					WORD sfxto = S_FindSoundTentative (sc_String);
+					if (sfxto == random.SfxHead)
+					{
+						Printf("Definition of random sound '%s' refers to itself recursively.", sc_String);
+						continue;
+					}
 					list.Push (sfxto);
 				}
 				if (list.Size() == 1)

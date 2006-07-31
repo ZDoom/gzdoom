@@ -212,6 +212,11 @@ void AChickenPlayer::ActivateMorphWeapon ()
 	{
 		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
 	}
+	else
+	{
+		P_SetPsprite (player, ps_weapon, NULL);
+	}
+	P_SetPsprite (player, ps_flash, NULL);
 }
 
 // Chicken (non-player) -----------------------------------------------------

@@ -2523,41 +2523,6 @@ FUNC(LS_ClearForceField)
 	return rtn;
 }
 
-class AGlassJunk : public AActor
-{
-	DECLARE_ACTOR (AGlassJunk, AActor);
-};
-
-// [RH] Slowly fade the shards away instead of abruptly removing them.
-void A_GlassAway (AActor *self)
-{
-	self->alpha -= FRACUNIT/32;
-	if (self->alpha <= 0)
-	{
-		self->Destroy ();
-	}
-}
-
-FState AGlassJunk::States[] =
-{
-	// Are the first three frames used anywhere?
-	S_NORMAL (SHAR, 'A', 128, NULL, &States[6]),
-	S_NORMAL (SHAR, 'B', 128, NULL, &States[6]),
-	S_NORMAL (SHAR, 'C', 128, NULL, &States[6]),
-	S_NORMAL (SHAR, 'D', 128, NULL, &States[6]),
-	S_NORMAL (SHAR, 'E', 128, NULL, &States[6]),
-	S_NORMAL (SHAR, 'F', 128, NULL, &States[6]),
-
-	S_NORMAL (----, 'A', 1, A_GlassAway, &States[6])
-};
-
-IMPLEMENT_ACTOR (AGlassJunk, Any, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_NOCLIP | MF_NOBLOCKMAP | MF_STRIFEx8000000)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_SHADOW)
-END_DEFAULTS
-
 FUNC(LS_GlassBreak)
 // GlassBreak (bNoJunk)
 {
@@ -2591,10 +2556,10 @@ FUNC(LS_GlassBreak)
 
 			for (int i = 0; i < 7; ++i)
 			{
-				glass = Spawn<AGlassJunk> (x, y, ONFLOORZ, ALLOW_REPLACE);
+				glass = Spawn("GlassJunk", x, y, ONFLOORZ, ALLOW_REPLACE);
 
 				glass->z += 24 * FRACUNIT;
-				glass->SetState (&AGlassJunk::States[3 + pr_glass() % 3]);
+				glass->SetState (glass->SpawnState + (pr_glass() % glass->health));
 				an = pr_glass() << (32-8);
 				glass->angle = an;
 				an >>= ANGLETOFINESHIFT;

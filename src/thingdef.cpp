@@ -485,7 +485,6 @@ ACTOR(BishopMissileWeave)
 ACTOR(CStaffMissileSlither)
 ACTOR(CheckSight)
 ACTOR(ExtChase)
-ACTOR(Jiggle)
 ACTOR(DropInventory)
 ACTOR(SetBlend)
 ACTOR(JumpIf)
@@ -675,7 +674,6 @@ AFuncDesc AFTable[]=
 	FUNC(A_SpawnDebris, "M")
 	FUNC(A_CheckSight, "L")
 	FUNC(A_ExtChase, "XXyx")
-	FUNC(A_Jiggle, "XX")
 	FUNC(A_DropInventory, "M")
 	FUNC(A_SetBlend, "CXXc")
 	FUNC(A_ChangeFlag, "TX")
@@ -2034,7 +2032,36 @@ static FState *CheckState(int statenum, PClass *type)
 }
 
 
+//==========================================================================
+//
+// Checks for a numeric parameter which may or may not be preceded by a comma
+//
+//==========================================================================
+static bool CheckNumParm()
+{
+	if (SC_CheckString(","))
+	{
+		SC_MustGetNumber();
+		return true;
+	}
+	else
+	{
+		return !!SC_CheckNumber();
+	}
+}
 
+static bool CheckFloatParm()
+{
+	if (SC_CheckString(","))
+	{
+		SC_MustGetFloat();
+		return true;
+	}
+	else
+	{
+		return !!SC_CheckFloat();
+	}
+}
 
 //==========================================================================
 //
@@ -2464,6 +2491,8 @@ static void ActorActiveSound (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorDropItem (AActor *defaults, Baggage &bag)
 {
+	bool res;
+
 	// create a linked list of dropitems
 	if (!bag.DropItemSet)
 	{
@@ -2477,10 +2506,11 @@ static void ActorDropItem (AActor *defaults, Baggage &bag)
 	di->Name=sc_String;
 	di->probability=255;
 	di->amount=-1;
-	if (SC_CheckNumber())
+
+	if (CheckNumParm())
 	{
 		di->probability=sc_Number;
-		if (SC_CheckNumber())
+		if (CheckNumParm())
 		{
 			di->amount=sc_Number;
 		}
@@ -2817,8 +2847,10 @@ static void ActorBloodColor (AActor *defaults, Baggage &bag)
 	{
 		SC_MustGetNumber();
 		r=clamp<int>(sc_Number, 0, 255);
+		SC_CheckString(",");
 		SC_MustGetNumber();
 		g=clamp<int>(sc_Number, 0, 255);
+		SC_CheckString(",");
 		SC_MustGetNumber();
 		b=clamp<int>(sc_Number, 0, 255);
 	}
@@ -3159,7 +3191,7 @@ static void InventoryPickupmsg (AInventory *defaults, Baggage &bag)
 	SC_MustGetString();
 	int game = SC_MatchString(games);
 
-	if (game!=-1)
+	if (game!=-1 && SC_CheckString(","))
 	{
 		SC_MustGetString();
 		if (!(gameinfo.gametype&gamemode[game])) return;
@@ -3368,8 +3400,10 @@ static void PowerupColor (APowerupGiver *defaults, Baggage &bag)
 	if (SC_CheckNumber())
 	{
 		r=clamp<int>(sc_Number, 0, 255);
+		SC_CheckString(",");
 		SC_MustGetNumber();
 		g=clamp<int>(sc_Number, 0, 255);
+		SC_CheckString(",");
 		SC_MustGetNumber();
 		b=clamp<int>(sc_Number, 0, 255);
 	}
@@ -3393,6 +3427,7 @@ static void PowerupColor (APowerupGiver *defaults, Baggage &bag)
 		g=GPART(c);
 		b=BPART(c);
 	}
+	SC_CheckString(",");
 	SC_MustGetFloat();
 	alpha=int(sc_Float*255);
 	alpha=clamp<int>(alpha, 0, 255);
@@ -3470,6 +3505,7 @@ static void PlayerColorRange (APlayerPawn *defaults, Baggage &bag)
 
 	SC_MustGetNumber ();
 	start = sc_Number;
+	SC_CheckString(",");
 	SC_MustGetNumber ();
 	end = sc_Number;
 
@@ -3525,7 +3561,7 @@ static void PlayerForwardMove (APlayerPawn *defaults, Baggage &bag)
 {
 	SC_MustGetFloat ();
 	defaults->ForwardMove1 = defaults->ForwardMove2 = FLOAT2FIXED (sc_Float);
-	if (SC_CheckFloat ())
+	if (CheckFloatParm ())
 		defaults->ForwardMove2 = FLOAT2FIXED (sc_Float);
 }
 
@@ -3536,7 +3572,7 @@ static void PlayerSideMove (APlayerPawn *defaults, Baggage &bag)
 {
 	SC_MustGetFloat ();
 	defaults->SideMove1 = defaults->SideMove2 = FLOAT2FIXED (sc_Float);
-	if (SC_CheckFloat ())
+	if (CheckFloatParm ())
 		defaults->SideMove2 = FLOAT2FIXED (sc_Float);
 }
 
@@ -3596,7 +3632,7 @@ static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
 	di->Name = sc_String;
 	di->probability=255;
 	di->amount=0;
-	if (SC_CheckNumber())
+	if (CheckNumParm())
 	{
 		di->amount=sc_Number;
 	}

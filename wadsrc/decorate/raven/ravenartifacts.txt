@@ -77,7 +77,7 @@ ACTOR ArtiInvulnerability : PowerupGiver 84
 	Inventory.RespawnTics 4230
 	Inventory.Icon ARTIINVU
 	Inventory.PickupMessage "$TXT_ARTIINVULNERABILITY"
-	Inventory.PickupMessage Hexen "$TXT_ARTIINVULNERABILITY2"
+	Inventory.PickupMessage Hexen, "$TXT_ARTIINVULNERABILITY2"
 	Powerup.Type Invulnerable
 	States
 	{

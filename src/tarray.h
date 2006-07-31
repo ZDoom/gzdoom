@@ -288,6 +288,8 @@ public:
 	}
 	void SetVal (unsigned int index, T val)
 	{
+		if ((int)index < 0) return;	// These always result in an out of memory condition.
+
 		if (index >= this->Size())
 		{
 			this->Resize (index + 1);

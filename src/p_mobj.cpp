@@ -3150,6 +3150,16 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	return actor;
 }
 
+AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
+{
+	const PClass *cls = PClass::FindClass(type);
+	if (cls == NULL) 
+	{
+		I_Error("Attempt to spawn actor of unknown type '%s'\n", type);
+	}
+	return AActor::StaticSpawn (cls, x, y, z, allowreplacement);
+}
+
 void AActor::LevelSpawned ()
 {
 	if (tics > 0 && !(flags4 & MF4_SYNCHRONIZED))
@@ -3906,34 +3916,6 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 		P_DrawSplash2 (40, x, y, z, dir, 2, bloodcolor);
 }
 
-// Blood splatter -----------------------------------------------------------
-
-class ABloodSplatter : public AActor
-{
-	DECLARE_ACTOR (ABloodSplatter, AActor)
-};
-
-FState ABloodSplatter::States[] =
-{
-#define S_BLOODSPLATTER 0
-	S_NORMAL (BLUD, 'C',	8, NULL, &States[S_BLOODSPLATTER+1]),
-	S_NORMAL (BLUD, 'B',	8, NULL, &States[S_BLOODSPLATTER+2]),
-	S_NORMAL (BLUD, 'A',	8, NULL, NULL),
-
-#define S_BLOODSPLATTERX (S_BLOODSPLATTER+3)
-	S_NORMAL (BLUD, 'A',	6, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (ABloodSplatter, Raven, -1, 0)
-	PROP_SpawnState (S_BLOODSPLATTER)
-	PROP_DeathState (S_BLOODSPLATTERX)
-	PROP_RadiusFixed (2)
-	PROP_HeightFixed (4)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_CANNOTPUSH)
-	PROP_Mass (5)
-END_DEFAULTS
-
 //---------------------------------------------------------------------------
 //
 // PROC P_BloodSplatter
@@ -3948,7 +3930,7 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	{
 		AActor *mo;
 
-		mo = Spawn<ABloodSplatter> (x, y, z, ALLOW_REPLACE);
+		mo = Spawn("BloodSplatter", x, y, z, ALLOW_REPLACE);
 		mo->target = originator;
 		mo->momx = pr_splatter.Random2 () << 10;
 		mo->momy = pr_splatter.Random2 () << 10;

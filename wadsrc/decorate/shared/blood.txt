@@ -1,0 +1,25 @@
+// Blood splatter -----------------------------------------------------------
+
+ACTOR BloodSplatter
+{
+	Game Raven
+	Radius 2
+	Height 4
+	+NOBLOCKMAP
+	+MISSILE
+	+DROPOFF
+	+NOTELEPORT
+	+CANNOTPUSH
+	Mass 5
+	States
+	{
+	Spawn:
+		BLUD CBA 8
+		Stop
+	Death:
+		BLUD A 6
+		Stop
+	}
+}
+	
+	

@@ -800,10 +800,7 @@ inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, repla
 	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
 }
 
-inline AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
-{
-	return AActor::StaticSpawn (PClass::FindClass(type), x, y, z, allowreplacement);
-}
+AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 
 template<class T>
 inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)

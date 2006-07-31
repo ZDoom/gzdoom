@@ -370,3 +370,31 @@ ACTOR SGShard0 : GlassShard
 	}
 }
 
+ACTOR GlassJunk
+{
+	+NOCLIP
+	+NOBLOCKMAP
+	RenderStyle Translucent
+	Alpha 0.4
+	Health 3	// Number of different shards
+	States
+	{
+		// Are the first three frames used anywhere?
+		SHAR A 128
+		Goto Death
+		SHAR B 128
+		Goto Death
+		SHAR C 128
+		Goto Death
+	Spawn:
+		SHAR D 128
+		Goto Death
+		SHAR E 128
+		Goto Death
+		SHAR F 128
+		Goto Death
+	Death:
+		"----" A 1 A_FadeOut(0.03)
+		Wait
+	}
+}

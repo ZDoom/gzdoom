@@ -194,6 +194,7 @@ void APigPlayer::ActivateMorphWeapon ()
 	{
 		P_SetPsprite (player, ps_weapon, NULL);
 	}
+	P_SetPsprite (player, ps_flash, NULL);
 }
 
 // Pig (non-player) ---------------------------------------------------------

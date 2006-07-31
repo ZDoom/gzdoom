@@ -77,7 +77,6 @@ static FRandom pr_cwpunch ("CustomWpPunch");
 static FRandom pr_grenade ("ThrowGrenade");
 static FRandom pr_crailgun ("CustomRailgun");
 static FRandom pr_spawndebris ("SpawnDebris");
-static FRandom pr_jiggle ("Jiggle");
 static FRandom pr_burst ("Burst");
 
 
@@ -1470,29 +1469,6 @@ void A_ExtChase(AActor * self)
 		!!EvalExpressionI (StateParameters[index+3], self));
 }
 
-
-//===========================================================================
-//
-// Weapon jiggling
-//
-//===========================================================================
-void A_Jiggle(AActor * self)
-{
-	int index=CheckIndex(2, &CallingState);
-	if (index<0) return;
-	int xmax = EvalExpressionI (StateParameters[index], self);
-	int ymax = EvalExpressionI (StateParameters[index+1], self);
-
-	if (self->player)
-	{
-		int rand_x = (pr_jiggle()%(xmax*2))-xmax;
-		int rand_y = (pr_jiggle()%(ymax*2))-ymax;
-		self->player->psprites[0].sx += rand_x;
-		self->player->psprites[0].sy += rand_y;
-		self->player->psprites[1].sx += rand_x;
-		self->player->psprites[1].sy += rand_y;
-	}
-}
 
 //===========================================================================
 //

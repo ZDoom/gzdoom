@@ -279,15 +279,6 @@ void cht_DoCheat (player_t *player, int cheat)
 			else
 			{
 				player->playerstate = PST_LIVE;
-				if (player->mo->tracer != NULL)
-				{
-					APlayerPawn * pmo = player->mo;
-					player->mo = (APlayerPawn*)player->mo->tracer;
-					pmo->Destroy();
-					player->mo->player=player;
-					player->mo->renderflags &= ~RF_INVISIBLE;
-					player->morphTics = 0;
-				}
 				player->health = player->mo->health = player->mo->GetDefault()->health;
 				player->viewheight = ((APlayerPawn *)player->mo->GetDefault())->ViewHeight;
 				player->mo->flags = player->mo->GetDefault()->flags;
@@ -296,7 +287,16 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
 				player->mo->DamageType = MOD_UNKNOWN;
 //				player->mo->GiveDefaultInventory();
-				P_SetPsprite(player, ps_weapon, player->ReadyWeapon->UpState);
+				if (player->ReadyWeapon != NULL)
+				{
+					P_SetPsprite(player, ps_weapon, player->ReadyWeapon->UpState);
+				}
+
+				if (player->morphTics > 0)
+				{
+					P_UndoPlayerMorph(player);
+				}
+
 			}
 		}
 		break;

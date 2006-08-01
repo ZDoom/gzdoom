@@ -862,7 +862,8 @@ void AActor::CopyFriendliness (const AActor *other, bool changeTarget)
 	FriendPlayer = other->FriendPlayer;
 	if (changeTarget)
 	{
-		target = other->target;
+		// LastHeard must be set as well so that A_Look can react to the new target if called
+		LastHeard = target = other->target;
 	}
 	level.total_monsters += CountsAsKill();
 }

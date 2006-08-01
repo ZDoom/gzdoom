@@ -144,7 +144,10 @@ void P_ThinkParticles ()
 //
 void P_RunEffects ()
 {
-	int pnum = int(players[consoleplayer].camera->Sector - sectors) * numsectors;
+	if (players[consoleplayer].camera == NULL) return;
+
+	int	pnum = int(players[consoleplayer].camera->Sector - sectors) * numsectors;
+
 	AActor *actor;
 	TThinkerIterator<AActor> iterator;
 

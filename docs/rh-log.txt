@@ -1,3 +1,11 @@
+August 1, 2006 (Changes by Graf Zahl)
+- Fixed: The pickup message for Hexen's fighter's axe was assigned to the
+  AxePuff, not the weapon itself.
+- Fixed: P_RunEffects used the consoleplayer's camera without checking its
+  validity.
+- Fixed: CopyFriendliness needs to copy target to LastHeard as well in order
+  to make newly spawned monsters chase their spawner's target.
+
 July 31, 2006 (Changes by Graf Zahl)
 - Added a type check to Spawn(actorname,...) to allow it to print a 
   meaningful message instead of the nondescript 

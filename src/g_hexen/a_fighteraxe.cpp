@@ -116,6 +116,7 @@ IMPLEMENT_ACTOR (AFWeapAxe, Hexen, 8010, 27)
 	PROP_Weapon_Kickback (150)
 	PROP_Weapon_YAdjust (0-12)
 	PROP_Weapon_AmmoType1 ("Mana1")
+	PROP_Inventory_PickupMessage("$TXT_WEAPON_F2")
 END_DEFAULTS
 
 FState *AFWeapAxe::GetUpState ()
@@ -170,7 +171,6 @@ IMPLEMENT_ACTOR (AAxePuff, Hexen, -1, 0)
 	PROP_SeeSound ("FighterAxeHitThing")
 	PROP_AttackSound ("FighterHammerHitWall")
 	PROP_ActiveSound ("FighterHammerMiss")
-	PROP_Inventory_PickupMessage("$TXT_WEAPON_F2")
 END_DEFAULTS
 
 // Glowing Axe Puff ---------------------------------------------------------

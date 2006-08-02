@@ -61,7 +61,8 @@ endif
 SRCS = $(CSRCS) $(CPPSRCS) $(ASRCS)
 CPPOBJFILES = $(notdir $(CPPSRCS:%.cpp=%.o))
 COBJFILES = $(notdir $(CSRCS:%.c=%.o))
-AOBJFILES = $(notdir $(ASRCS:%.nas=%.o))
+# win32/wrappers.nas should be built *only* for Visual C++ 2005 to enable execution on Windows 95
+AOBJFILES = $(filter-out %/wrappers.o,$(notdir $(ASRCS:%.nas=%.o)))
 RCOBJFILES = $(notdir $(RCSRCS:%.rc=%.o))
 
 COBJS = $(addprefix $(OBJDIR)/,$(CPPOBJFILES) $(COBJFILES) $(RCOBJFILES))

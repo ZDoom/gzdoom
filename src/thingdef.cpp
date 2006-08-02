@@ -2491,8 +2491,6 @@ static void ActorActiveSound (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorDropItem (AActor *defaults, Baggage &bag)
 {
-	bool res;
-
 	// create a linked list of dropitems
 	if (!bag.DropItemSet)
 	{

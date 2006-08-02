@@ -91,8 +91,6 @@ DWORD			MainThreadID;
 
 HMODULE			hwtsapi32;		// handle to wtsapi32.dll
 
-BOOL			(*pIsDebuggerPresent)(VOID);
-
 extern UINT TimerPeriod;
 extern HCURSOR TheArrowCursor, TheInvisibleCursor;
 
@@ -218,10 +216,6 @@ void DoMain (HINSTANCE hInstance)
 		// Since we need to remain binary compatible with older versions of Windows, we
 		// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
 		HMODULE kernel = GetModuleHandle ("kernel32.dll");
-		if (kernel != 0)
-		{
-			pIsDebuggerPresent = (BOOL(*)())GetProcAddress (kernel, "IsDebuggerPresent");
-		}
 
 		// NASM does not support creating writeable code sections (even though this
 		// is a perfectly valid configuration for Microsoft's COFF format), so I

@@ -1,3 +1,10 @@
+August 1, 2006
+- It turns out that the Visual C++ 2005 runtime calls IsDebuggerPresent, which
+  is not available under Windows 95. Since this is (or at least should be) the
+  only thing preventing us from running under Windows 95, I added a stub that
+  replaces __imp__IsDebuggerPresent@0 with a pointer to a function that checks
+  for the real thing.
+
 August 1, 2006 (Changes by Graf Zahl)
 - Fixed: The pickup message for Hexen's fighter's axe was assigned to the
   AxePuff, not the weapon itself.

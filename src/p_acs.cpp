@@ -758,7 +758,15 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	else
 	{
 		UnencryptStrings ();
-		StringTable = FindChunk (MAKE_ID('S','T','R','L')) - Data + 8;
+		BYTE *strings = FindChunk (MAKE_ID('S','T','R','L'));
+		if (strings != NULL)
+		{
+			StringTable = strings - Data + 8;
+		}
+		else
+		{
+			StringTable = 0;
+		}
 	}
 
 	if (Format == ACS_Old)
@@ -1388,6 +1396,10 @@ const char *FBehavior::StaticLookupString (DWORD index)
 
 const char *FBehavior::LookupString (DWORD index) const
 {
+	if (StringTable == 0)
+	{
+		return NULL;
+	}
 	if (Format == ACS_Old)
 	{
 		DWORD *list = (DWORD *)(Data + StringTable);

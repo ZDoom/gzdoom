@@ -1,3 +1,11 @@
+August 2, 2006
+- Fixed: The ACS VM made no checks for object files without strings, assuming
+  that if it didn't have any strings, then it didn't matter what it calculated
+  for the location of the string table because it would never be referenced.
+  While this is true for a script all by itself, it means a crash if you have
+  a map script without strings that imports a library with strings and the
+  library tries to use one of its strings.
+
 August 1, 2006
 - It turns out that the Visual C++ 2005 runtime calls IsDebuggerPresent, which
   is not available under Windows 95. Since this is (or at least should be) the

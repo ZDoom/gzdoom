@@ -3415,7 +3415,6 @@ float	bombdistancefloat;
 bool	DamageSource;
 int		bombmod;
 vec3_t	bombvec;
-bool	bombthrustless;
 bool	bombdodamage;
 
 //=============================================================================
@@ -3525,13 +3524,12 @@ BOOL PIT_RadiusAttack (AActor *thing)
 
 			if (bombdodamage) P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
 			else thing->flags2 |= MF2_BLASTED;
-			
-			if (!(bombspot->flags2 & MF2_NODMGTHRUST) &&
-				!(thing->flags & MF_ICECORPSE))
-			{
-				if (bombdodamage) P_TraceBleed (damage, thing, bombspot);
 
-				if (!bombthrustless)
+			if (!(thing->flags & MF_ICECORPSE))
+			{
+				if (bombdodamage && !(bombspot->flags3 & MF3_BLOODLESSIMPACT)) P_TraceBleed (damage, thing, bombspot);
+
+				if (!(bombspot->flags2 & MF2_NODMGTHRUST))
 				{
 					thrust = points * 0.5f / (float)thing->Mass;
 					if (bombsource == thing)
@@ -3593,7 +3591,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 // Source is the creature that caused the explosion at spot.
 //
 void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int damageType,
-	bool hurtSource, bool thrustless, bool dodamage)
+	bool hurtSource, bool dodamage)
 {
 	static TArray<AActor *> radbt;
 
@@ -3614,7 +3612,6 @@ void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int
 	bombdamage = damage;
 	bombdistance = distance;
 	bombdistancefloat = 1.f / (float)distance;
-	bombthrustless = thrustless;
 	DamageSource = hurtSource;
 	bombdamagefloat = (float)damage;
 	bombmod = damageType;

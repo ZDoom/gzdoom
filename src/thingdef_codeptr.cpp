@@ -505,7 +505,7 @@ void A_RadiusThrust (AActor *self)
 	if (force == 0) force = 128;
 	if (distance == 0) distance = force;
 
-	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false, false);
+	P_RadiusAttack (self, self->target, force, distance, self->DamageType, affectSource, false);
 	if (self->z <= self->floorz + (distance<<FRACBITS))
 	{
 		P_HitFloor (self);

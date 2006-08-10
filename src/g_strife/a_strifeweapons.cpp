@@ -1565,7 +1565,7 @@ IMPLEMENT_ACTOR (APhosphorousFire, Strife, -1, 0)
 	PROP_ReactionTime (120)
 	PROP_DamageType (MOD_FIRE)
 	PROP_Flags (MF_NOBLOCKMAP)
-	PROP_Flags2 (MF2_FLOORCLIP|MF2_NOTELEPORT)
+	PROP_Flags2 (MF2_FLOORCLIP|MF2_NOTELEPORT|MF2_NODMGTHRUST)
 	PROP_RenderStyle (STYLE_Add)
 END_DEFAULTS
 
@@ -1585,7 +1585,7 @@ void A_SpawnBurn (AActor *self)
 
 void A_BurnArea (AActor *self)
 {
-	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true, true);
+	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true);
 }
 
 void A_Burnination (AActor *self)

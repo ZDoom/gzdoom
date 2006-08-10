@@ -1,4 +1,11 @@
 August 10, 2006 (Changes by Graf Zahl)
+- Gave Strife's PhosphorousFire the MF2_NODMGTHRUST flag so that its
+  damage is truly thrustless. The 'thrustless' parameter disabled all
+  thrust done by PIT_RadiusDamage but not the one done by P_DamageMobj.
+  Also gave Hexen's poison cloud the MF3_BLOODLESSIMPACT flag and made
+  spawning of blood decals in PIT_RadiusAttack depend on that. Since with
+  these changes the 'bombthrustless' argument to P_RadiusAttack is no 
+  longer useful I removed it.
 - Fixed: CheckActorInventory stored the return value in the wrong address
   on the ACS stack.
 - Fixed: Skin sounds weren't properly restored after a SNDINFO reset.

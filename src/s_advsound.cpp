@@ -523,8 +523,6 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bo
 
 	PlayerSounds[soundlist + S_sfx[refid].link] = id;
 
-	Printf("Player sound %s: Classnum %d Gender %d, Refid %d, Lump %d, fromskin %d\n", pclass, classnum, gender, refid, lumpnum, fromskin);
-
 	if (fromskin) S_SavePlayerSound(pclass, gender, refid, lumpnum, false);
 
 	return id;
@@ -544,9 +542,6 @@ int S_AddPlayerSoundExisting (const char *pclass, int gender, int refid,
 	int soundlist = S_AddPlayerGender (classnum, gender);
 
 	PlayerSounds[soundlist + S_sfx[refid].link] = aliasto;
-
-
-	Printf("Player alias %s: Classnum %d Gender %d, Refid %d, Aliasto %d, fromskin %d\n", pclass, classnum, gender, refid, aliasto, fromskin);
 
 	if (fromskin) S_SavePlayerSound(pclass, gender, refid, aliasto, true);
 

@@ -574,11 +574,11 @@ void R_InitSkins (void)
 					if (stricmp (key, "*pain") == 0)
 					{ // Replace all pain sounds in one go
 						aliasid = S_AddPlayerSound (skins[i].name, skins[i].gender,
-							playersoundrefs[0], lump);
+							playersoundrefs[0], lump, true);
 						for (int l = 3; l > 0; --l)
 						{
 							S_AddPlayerSoundExisting (skins[i].name, skins[i].gender,
-								playersoundrefs[l], aliasid);
+								playersoundrefs[l], aliasid, true);
 						}
 					}
 					else
@@ -586,7 +586,7 @@ void R_InitSkins (void)
 						int sndref = S_FindSoundNoHash (key);
 						if (sndref != 0)
 						{
-							S_AddPlayerSound (skins[i].name, skins[i].gender, sndref, lump);
+							S_AddPlayerSound (skins[i].name, skins[i].gender, sndref, lump, true);
 						}
 					}
 				}

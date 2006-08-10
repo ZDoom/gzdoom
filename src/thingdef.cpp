@@ -645,7 +645,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_Punch, NULL)
 	FUNC(A_CheckReload, NULL)
 	FUNC(A_GunFlash, NULL)
-	FUNC(A_Saw, NULL)
+	FUNC(A_Saw, "ssxm")
 
 	// DECORATE specific functions
 	FUNC(A_BulletAttack, NULL)

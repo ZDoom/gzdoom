@@ -1,3 +1,16 @@
+August 10, 2006 (Changes by Graf Zahl)
+- Fixed: CheckActorInventory stored the return value in the wrong address
+  on the ACS stack.
+- Fixed: Skin sounds weren't properly restored after a SNDINFO reset.
+
+August 6, 2006 (Changes by Graf Zahl)
+- Added a more flexible ACS ChangeLevel function. It gets passed a level name
+  instead of a level number and has several additional options (e.g. changing
+  skill, starting the map without monsters and clearing the players' inventories.
+- Changed Thing_Activate so that passing a tid of 0 activates the calling actor.
+- Changed Thing_Remove so that passing a tid of 0 removes the calling actor.
+- Added DECORATE parameters to A_Saw.
+
 August 2, 2006
 - Fixed: The ACS VM made no checks for object files without strings, assuming
   that if it didn't have any strings, then it didn't matter what it calculated

@@ -532,6 +532,7 @@ public:
 		PCD_RSGLOBALARRAY, 
 		//[MW] end my p-codes
 		PCD_GETPLAYERINFO,			// [GRB]
+		PCD_CHANGELEVEL,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -610,6 +611,16 @@ public:
 		SCRIPT_DivideBy0,
 		SCRIPT_ModulusBy0,
 	};
+
+	enum 
+	{
+		CHANGELEVEL_KEEPFACING = 1,
+		CHANGELEVEL_RESETINVENTORY = 2,
+		CHANGELEVEL_NOMONSTERS = 4,
+		CHANGELEVEL_CHANGESKILL = 8,
+		CHANGELEVEL_NOINTERMISSION = 16
+	};
+
 
 	DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
 		bool backSide, int arg0, int arg1, int arg2, int always, bool delay);

@@ -4176,7 +4176,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHECKACTORINVENTORY:
-			STACK(1) = CheckInventory (SingleActorFromTID(STACK(2), NULL),  
+			STACK(2) = CheckInventory (SingleActorFromTID(STACK(2), NULL),  
 										FBehavior::StaticLookupString (STACK(1)));
 			sp--;
 			break;
@@ -4887,6 +4887,17 @@ int DLevelScript::RunScript ()
 				}
 			}
 			sp -= 1;
+
+		case PCD_CHANGELEVEL:
+			{
+				int flags = STACK(2);
+				G_ChangeLevel(FBehavior::StaticLookupString(STACK(4)), STACK(3), 
+					!!(flags & CHANGELEVEL_KEEPFACING), STACK(1),
+					!!(flags & CHANGELEVEL_NOINTERMISSION),
+					!!(flags & CHANGELEVEL_RESETINVENTORY),
+					!!(flags & CHANGELEVEL_NOMONSTERS));
+				sp -= 4;
+			}
 			break;
 
 		}

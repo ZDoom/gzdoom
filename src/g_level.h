@@ -301,6 +301,10 @@ void G_DeferedInitNew (char *mapname);
 
 void G_ExitLevel (int position, bool keepFacing);
 void G_SecretExitLevel (int position);
+
+void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int nextSkill, 
+				   bool showintermission, bool resetinventory, bool nomonsters);
+
 void G_SetForEndGame (char *nextmap);
 
 void G_StartTravel ();

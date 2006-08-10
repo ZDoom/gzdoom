@@ -72,7 +72,7 @@ enum EFinishLevelType
 	FINISH_NoHub
 };
 
-void G_PlayerFinishLevel (int player, EFinishLevelType mode);
+void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory);
 
 // Adds pitch to consoleplayer's viewpitch and clamps it
 void G_AddViewPitch (int look);

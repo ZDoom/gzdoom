@@ -241,8 +241,12 @@ END_DEFAULTS
 void A_Saw (AActor *actor)
 {
 	angle_t 	angle;
-	int 		damage;
+	int 		damage=0;
 	player_t *player;
+	
+	int fullsound;
+	int hitsound;
+	const PClass * pufftype = NULL;
 
 	if (NULL == (player = actor->player))
 	{
@@ -256,25 +260,37 @@ void A_Saw (AActor *actor)
 			return;
 	}
 
-	damage = 2 * (pr_saw()%10+1);
+	int index = CheckIndex (4, NULL);
+	if (index >= 0) 
+	{
+		fullsound = StateParameters[index];
+		hitsound = StateParameters[index+1];
+		damage = EvalExpressionI (StateParameters[index+2], actor);
+		pufftype = PClass::FindClass ((ENamedName)StateParameters[index+3]);
+	}
+	else
+	{
+		fullsound = S_FindSound("weapons/sawfull");
+		hitsound = S_FindSound("weapons/sawhit");
+	}
+	if (pufftype == NULL) pufftype = RUNTIME_CLASS(ABulletPuff);
+	if (damage == 0) damage = 2;
+	
+	damage *= (pr_saw()%10+1);
 	angle = actor->angle;
 	angle += pr_saw.Random2() << 18;
 	
-	// use meleerange + 1 so the puff doesn't skip the flash
-	// [RH] What I think that really means is that they want the puff to show
-	// up on walls. If the distance to P_LineAttack is <= MELEERANGE, then it
-	// won't puff the wall, which is why the fist does not create puffs on
-	// the walls.
+	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
 	P_LineAttack (actor, angle, MELEERANGE+1,
 				  P_AimLineAttack (actor, angle, MELEERANGE+1), damage,
-				  MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
+				  MOD_UNKNOWN, pufftype);
 
 	if (!linetarget)
 	{
-		S_Sound (actor, CHAN_WEAPON, "weapons/sawfull", 1, ATTN_NORM);
+		S_SoundID (actor, CHAN_WEAPON, fullsound, 1, ATTN_NORM);
 		return;
 	}
-	S_Sound (actor, CHAN_WEAPON, "weapons/sawhit", 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 		
 	// turn to face target
 	angle = R_PointToAngle2 (actor->x, actor->y,

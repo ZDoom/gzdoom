@@ -1559,11 +1559,13 @@ BOOL 			secretexit;
 static int		startpos;	// [RH] Support for multiple starts per level
 extern BOOL		NoWipe;		// [RH] Don't wipe when travelling in hubs
 static bool		startkeepfacing;	// [RH] Support for keeping your facing angle
+static bool		resetinventory;	// Reset the inventory to the player's default for the next level
 
 // [RH] The position parameter to these next three functions should
 //		match the first parameter of the single player start spots
 //		that should appear in the next map.
-static void goOn (int position, bool keepFacing, bool secret)
+
+static void goOn (int position, bool keepFacing, bool secret, bool resetinv)
 {
 	static bool unloading;
 
@@ -1580,6 +1582,8 @@ static void goOn (int position, bool keepFacing, bool secret)
 	startkeepfacing = keepFacing;
 	gameaction = ga_completed;
 	secretexit = secret;
+	resetinventory = resetinv;
+
 	bglobal.End();	//Added by MC:
 
 	// [RH] Give scripts a chance to do something
@@ -1603,7 +1607,7 @@ static void goOn (int position, bool keepFacing, bool secret)
 
 void G_ExitLevel (int position, bool keepFacing)
 {
-	goOn (position, keepFacing, false);
+	goOn (position, keepFacing, false, false);
 }
 
 // Here's for the german edition.
@@ -1612,7 +1616,23 @@ void G_SecretExitLevel (int position)
 	// [RH] Check for secret levels is done in 
 	//		G_DoCompleted()
 
-	goOn (position, false, true);
+	goOn (position, false, true, false);
+}
+
+void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int nextSkill, 
+				   bool nointermission, bool resetinventory, bool nomonsters)
+{
+	strncpy (level.nextmap, levelname, 8);
+	level.nextmap[8] = 0;
+
+	if (nextSkill != -1) NextSkill = nextSkill;
+
+	if (!nomonsters) dmflags = dmflags & ~DF_NO_MONSTERS;
+	else dmflags = dmflags | DF_NO_MONSTERS;
+
+	if (nointermission) level.flags |= LEVEL_NOINTERMISSION;
+
+	goOn(position, keepFacing, false, resetinventory);
 }
 
 void G_DoCompleted (void)
@@ -1738,7 +1758,7 @@ void G_DoCompleted (void)
 	{
 		if (playeringame[i])
 		{ // take away appropriate inventory
-			G_PlayerFinishLevel (i, mode);
+			G_PlayerFinishLevel (i, mode, resetinventory);
 		}
 	}
 

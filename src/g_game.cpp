@@ -1034,7 +1034,7 @@ void G_Ticker ()
 // G_PlayerFinishLevel
 // Called when a player completes a level.
 //
-void G_PlayerFinishLevel (int player, EFinishLevelType mode)
+void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory)
 {
 	AInventory *item, *next;
 	player_t *p;
@@ -1101,6 +1101,32 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode)
 	if (p->morphTics)
 	{ // Undo morph
 		P_UndoPlayerMorph (p, true);
+	}
+
+	// Clears the entire inventory and gives back the defaults for starting a game
+	if (resetinventory)
+	{
+		AInventory *inv = p->mo->Inventory;
+
+		while (inv != NULL)
+		{
+			AInventory *next = inv->Inventory;
+			if (!(inv->ItemFlags & IF_UNDROPPABLE))
+			{
+				inv->Destroy ();
+			}
+			else if (inv->GetClass() == RUNTIME_CLASS(AHexenArmor))
+			{
+				AHexenArmor *harmor = static_cast<AHexenArmor *> (inv);
+				harmor->Slots[3] = harmor->Slots[2] = harmor->Slots[1] = harmor->Slots[0] = 0;
+			}
+			inv = next;
+		}
+		p->ReadyWeapon = NULL;
+		p->PendingWeapon = WP_NOCHANGE;
+		p->psprites[ps_weapon].state = NULL;
+		p->psprites[ps_flash].state = NULL;
+		p->mo->GiveDefaultInventory();
 	}
 }
 

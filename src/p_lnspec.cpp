@@ -983,22 +983,31 @@ FUNC(LS_HealThing)
 FUNC(LS_Thing_Activate)
 // Thing_Activate (tid)
 {
-	AActor *actor;
-	FActorIterator iterator (arg0);
-	int count = 0;
-
-	actor = iterator.Next ();
-	while (actor)
+	if (arg0 != 0)
 	{
-		// Actor might remove itself as part of activation, so get next
-		// one before activating it.
-		AActor *temp = iterator.Next ();
-		actor->Activate (it);
-		actor = temp;
-		count++;
-	}
+		AActor *actor;
+		FActorIterator iterator (arg0);
+		int count = 0;
 
-	return count != 0;
+		actor = iterator.Next ();
+		while (actor)
+		{
+			// Actor might remove itself as part of activation, so get next
+			// one before activating it.
+			AActor *temp = iterator.Next ();
+			actor->Activate (it);
+			actor = temp;
+			count++;
+		}
+
+		return count != 0;
+	}
+	else if (it != NULL)
+	{
+		it->Activate(it);
+		return true;
+	}
+	return false;
 }
 
 FUNC(LS_Thing_Deactivate)
@@ -1022,26 +1031,38 @@ FUNC(LS_Thing_Deactivate)
 	return count != 0;
 }
 
+static void RemoveThing(AActor * actor)
+{
+	// Don't remove live players.
+	if (actor->player == NULL || actor != actor->player->mo)
+	{
+		// be friendly to the level statistics. ;)
+		if (actor->CountsAsKill() && actor->health > 0) level.total_monsters--;
+		if (actor->flags&MF_COUNTITEM) level.total_items--;
+		actor->Destroy ();
+	}
+}
+
 FUNC(LS_Thing_Remove)
 // Thing_Remove (tid)
 {
-	FActorIterator iterator (arg0);
-	AActor *actor;
-
-	actor = iterator.Next ();
-	while (actor)
+	if (arg0 != 0)
 	{
-		AActor *temp = iterator.Next ();
+		FActorIterator iterator (arg0);
+		AActor *actor;
 
-		// Don't remove live players.
-		if (actor->player == NULL || actor != actor->player->mo)
+		actor = iterator.Next ();
+		while (actor)
 		{
-			// be friendly to the level statistics. ;)
-			if (actor->CountsAsKill() && actor->health > 0) level.total_monsters--;
-			if (actor->flags&MF_COUNTITEM) level.total_items--;
-			actor->Destroy ();
+			AActor *temp = iterator.Next ();
+
+			RemoveThing(actor);
+			actor = temp;
 		}
-		actor = temp;
+	}
+	else if (it != NULL)
+	{
+		RemoveThing(it);
 	}
 
 	return true;

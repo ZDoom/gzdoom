@@ -202,6 +202,7 @@ static int REGPARM(2) Slurp(HANDLE fd, HANDLE hStdOut)
 	DWORD waitstate;
 	DWORD exitcode;
 	DWORD out;
+	DWORD threadid;
 	const char *trail = "/-\\|", *trailcp;
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	CONSOLE_CURSOR_INFO cursorInfo;
@@ -215,7 +216,7 @@ static int REGPARM(2) Slurp(HANDLE fd, HANDLE hStdOut)
 	}
 
 	handles[0] = gCCP.hProcess;
-	handles[1] = CreateThread(NULL, 0, SlurpThread, (LPVOID)fd, 0, NULL);
+	handles[1] = CreateThread(NULL, 0, SlurpThread, (LPVOID)fd, 0, &threadid);
 
 	if(handles[1] == 0)
 	{

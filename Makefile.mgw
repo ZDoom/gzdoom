@@ -25,23 +25,27 @@ basetools: ccdv.exe
 	$(MAKE) -C tools/makewad
 	$(MAKE) -C tools/dehsupp
 	$(MAKE) -C tools/xlatcc
-	$(MAKE) -C wadsrc
+	$(MAKE) -C wadsrc -f Makefile.mgw
 	$(MAKE) -C flac -f Makefile.mgw
 
 cleanexe:
 	@$(MAKE) -C . -f Makefile.mingw clean
 
 clean:
-	@$(MAKE) -C tools/lemon -f Makefile clean
-	@$(MAKE) -C tools/re2c -f Makefile clean
-	@$(MAKE) -C tools/dehsupp -f Makefile clean
-	@$(MAKE) -C tools/makewad -f Makefile clean
-	@$(MAKE) -C tools/xlatcc -f Makefile clean
+	@$(MAKE) -C tools/lemon clean
+	@$(MAKE) -C tools/re2c clean
+	@$(MAKE) -C tools/dehsupp clean
+	@$(MAKE) -C tools/makewad clean
+	@$(MAKE) -C tools/xlatcc clean
 	@$(MAKE) -C wadsrc -f Makefile.mgw clean
 	@$(MAKE) -C . -f Makefile.mingw clean
 	@$(MAKE) -C zlib -f Makefile.mgw clean
 	@$(MAKE) -C flac -f Makefile.mgw clean
+ifeq (msys,$(OSTYPE))
+	rm -f ccdv.exe
+else
 	del /q /f ccdv.exe 2>nul
+endif
 
 ccdv.exe: ccdv-win32.c
 	@gcc -Os -s -nostdlib -fomit-frame-pointer -o ccdv.exe ccdv-win32.c -lkernel32 -luser32

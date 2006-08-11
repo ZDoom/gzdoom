@@ -194,7 +194,7 @@ int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 //   - otherwise, we're writing lumps into a wad/zip
 // 
 */
-int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
+int buildwad (FILE *listfile, char *listfilename, const char *makecmd, char *makefile)
 {
 	// destination we're writing output into - 
 	// one of these:
@@ -442,6 +442,7 @@ int buildwad (FILE *listfile, char *listfilename, char *makecmd, char *makefile)
 
 int __cdecl main (int argc, char **argv)
 {
+	const char *makecmd;
 	FILE *listfile = NULL;
 	char *listfilename = NULL;
 	char *makefile = NULL;
@@ -480,7 +481,16 @@ int __cdecl main (int argc, char **argv)
 		return 1;
 	}
 
-	ret = buildwad (listfile ? listfile : stdin, listfilename, argv[0], makefile);
+	// Hack for msys
+	if ((makecmd = getenv("OSTYPE")) != NULL && strcmp (makecmd, "msys") == 0)
+	{
+		makecmd = "../tools/makewad/makewad.exe";
+	}
+	else
+	{
+		makecmd = argv[0];
+	}
+	ret = buildwad (listfile ? listfile : stdin, listfilename, makecmd, makefile);
 	if (listfile != NULL)
 	{
 		fclose (listfile);

@@ -18,10 +18,20 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#define COLOR_SUCCESS	(FOREGROUND_GREEN|FOREGROUND_INTENSITY)                 /* green */
-#define COLOR_FAILURE	(FOREGROUND_RED|FOREGROUND_INTENSITY)                   /* red */
-#define COLOR_WARNING	(FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_INTENSITY)  /* yellow */
-#define COLOR_COMMAND	(FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY) /* cyan */
+#define COLOR_SUCCESS		(FOREGROUND_GREEN|FOREGROUND_INTENSITY)									/* green */
+#define COLOR_FAILURE		(FOREGROUND_RED|FOREGROUND_INTENSITY)									/* red */
+#define COLOR_WARNING		(FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_INTENSITY)					/* yellow */
+#define COLOR_COMMAND		(FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY)					/* cyan */
+#define COLOR_ERROROUTPUT	(FOREGROUND_RED|FOREGROUND_BLUE|FOREGROUND_INTENSITY)					/* magenta */
+#define COLOR_WARNINGOUTPUT	(FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY)	/* white */
+
+#define SETCOLOR_SUCCESS		"\033[1;32m"		/* green */
+#define SETCOLOR_FAILURE		"\033[1;31m"		/* red */
+#define SETCOLOR_WARNING		"\033[0;33m"		/* dark yellow */
+#define SETCOLOR_COMMAND        "\033[1;35m"		/* magenta */
+#define SETCOLOR_ERROROUTPUT    "\033[1;31m"		/* red */
+#define SETCOLOR_WARNINGOUTPUT  "\033[1;39m"		/* bold */
+#define SETCOLOR_NORMAL			"\033[0;39m"		/* normal */
 
 #define TEXT_BLOCK_SIZE 8192
 #define INDENT 2
@@ -36,6 +46,7 @@ char *gArLibraryTarget;
 BOOL  gDumpCmdArgs;
 char *gArgsStr;
 int gColumns;
+BOOL gRxvt;
 int gExitStatus;
 HANDLE gHeap;
 
@@ -50,25 +61,47 @@ HANDLE gStdOut, gStdErr;
 void REGPARM(1) perror(const char *string)
 {
 	char *buffer;
+	char errcode[9];
 	DWORD error = GetLastError();
 	DWORD len = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL, error, 0, (LPTSTR)&buffer, 0, NULL);
 	DWORD wrote;
 	WriteFile (gStdErr, string, lstrlen(string), &wrote, NULL);
-	if(len == 0)
+	wsprintf(errcode, "%08x", error);
+	WriteFile (gStdErr, ": Error 0x", 10, &wrote, NULL);
+	WriteFile (gStdErr, errcode, 8, &wrote, NULL);
+	if(len != 0)
 	{
-		char errcode[9];
-		wsprintf(errcode, "%08x", error);
-		WriteFile (gStdErr, ": Error ", 8, &wrote, NULL);
-		WriteFile (gStdErr, errcode, 8, &wrote, NULL);
-	}
-	else
-	{
-		WriteFile (gStdErr, ": ", 2, &wrote, NULL);
+		WriteFile (gStdErr, "\n", 1, &wrote, NULL);
 		WriteFile (gStdErr, buffer, len, &wrote, NULL);
 		LocalFree(buffer);
 	}
 	WriteFile (gStdErr, "\n", 1, &wrote, NULL);
+	gColumns = 0;
+}
+
+static int REGPARM(1) str2int(const char *string)
+{
+	int out = 0;
+
+	while (*string >= '0' && *string <= '9')
+	{
+		out = out * 10 + *string++ - '0';
+	}
+	return out;
+}
+
+static void Writef(HANDLE hFile, const char *fmt, ...)
+{
+	char buf[1024];
+	int buflen;
+	va_list arglist;
+	DWORD wrote;
+
+	va_start(arglist, fmt);
+	buflen = wvsprintf(buf, fmt, arglist);
+	va_end(arglist);
+	WriteFile(hFile, buf, buflen, &wrote, NULL);
 }
 
 static void DumpFormattedOutput()
@@ -82,18 +115,42 @@ static void DumpFormattedOutput()
 	int curcol;
 	int i;
 
-	if(!GetConsoleScreenBufferInfo(gStdOut, &info))
-	{
-		WriteFile(gStdOut, gBuf, lstrlen(gBuf), &out, NULL);
-		WriteFile(gStdOut, "\n", 1, &out, NULL);
-		return;
-	}
-
 	for(i = 0; i < 8; ++i)
 	{
 		spaces[i] = ' ';
 	}
 	spaces[i] = '\0';
+
+	if(gRxvt)
+	{
+		curcol = 0;
+		saved = NULL;
+		if(gDumpCmdArgs)
+		{
+			Writef(gStdOut, SETCOLOR_COMMAND "%s" SETCOLOR_NORMAL "\n", gArgsStr);
+			for(i = gColumns; i > 0; i -= 7)
+			{
+				WriteFile(gStdOut, "=======", i > 7 ? 7 : i, &out, NULL);
+			}
+			WriteFile(gStdOut, SETCOLOR_ERROROUTPUT, sizeof(SETCOLOR_ERROROUTPUT), &out, NULL);
+		}
+		else
+		{
+			WriteFile(gStdOut, SETCOLOR_WARNINGOUTPUT, sizeof(SETCOLOR_WARNINGOUTPUT), &out, NULL);
+		}
+		WriteFile(gStdOut, gBuf + lstrlen(gArgsStr), lstrlen(gBuf + lstrlen(gArgsStr)), &out, NULL);
+		WriteFile(gStdOut, SETCOLOR_NORMAL, sizeof(SETCOLOR_NORMAL), &out, NULL);
+		HeapFree(gHeap, 0, gBuf);
+		return;
+	}
+
+	if(!GetConsoleScreenBufferInfo(gStdOut, &info))
+	{
+		WriteFile(gStdOut, gBuf, lstrlen(gBuf), &out, NULL);
+		WriteFile(gStdOut, "\n", 1, &out, NULL);
+		HeapFree(gHeap, 0, gBuf);
+		return;
+	}
 
 	color = info.wAttributes & ~(FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY);
 	curcol = 0;
@@ -103,41 +160,19 @@ static void DumpFormattedOutput()
 		SetConsoleTextAttribute(gStdOut, color | COLOR_COMMAND); 
 		WriteConsole(gStdOut, gBuf, lstrlen(gArgsStr)+1, &out, NULL);
 		SetConsoleTextAttribute(gStdOut, info.wAttributes);
+		for(i = gColumns; i > 0; i -= 7)
+		{
+			WriteConsole(gStdOut, "=======", i > 7 ? 7 : i, &out, NULL);
+		}
+		color |= COLOR_ERROROUTPUT;
 	}
-	for(cp = gBuf + lstrlen(gArgsStr) + 1;; cp++)
+	else
 	{
-		if(*cp == '\0')
-		{
-			if(saved != NULL)
-			{
-				cp = saved;
-				saved = NULL;
-			}
-			else
-				break;
-		}
-		if(*cp == '\r')
-			continue;
-		if(*cp == '\t')
-		{
-			saved = cp + 1;
-			cp = spaces + 8 - (8 - ((curcol - INDENT - 1) % 8));
-		}
-		if(curcol == 0)
-		{
-			for(i = INDENT; --i >= 0;)
-				WriteConsole(gStdOut, " " ,1, &out, NULL);
-			curcol = INDENT;
-		}
-		WriteConsole(gStdOut, cp, 1, &out, NULL);
-		if(++curcol == (gColumns - 1))
-		{
-			WriteConsole(gStdOut, "\n", 1, &out, NULL);
-			curcol = 0;
-		}
-		else if(*cp == '\n')
-			curcol = 0;
+		color |= COLOR_WARNINGOUTPUT;
 	}
+	SetConsoleTextAttribute(gStdOut, color);
+	WriteConsole(gStdOut, gBuf + lstrlen(gArgsStr) + 1, lstrlen(gBuf + lstrlen(gArgsStr) + 1), &out, NULL);
+	SetConsoleTextAttribute(gStdOut, info.wAttributes);
 	HeapFree(gHeap, 0, gBuf);
 }	/* DumpFormattedOutput */
 
@@ -226,8 +261,11 @@ static int REGPARM(2) Slurp(HANDLE fd, HANDLE hStdOut)
 
 	if(hStdOut != NULL)
 	{
-		GetConsoleScreenBufferInfo(hStdOut, &info);
-		info.dwCursorPosition.X = info.dwSize.X - 9;
+		if(!gRxvt)
+		{
+			GetConsoleScreenBufferInfo(hStdOut, &info);
+			info.dwCursorPosition.X = info.dwSize.X - 9;
+		}
 		if(GetConsoleCursorInfo(hStdOut, &cursorInfo))
 		{
 			cursorInfo.bVisible = FALSE;
@@ -248,8 +286,15 @@ static int REGPARM(2) Slurp(HANDLE fd, HANDLE hStdOut)
 		case WAIT_TIMEOUT:
 			if(hStdOut != NULL)
 			{
-				SetConsoleCursorPosition(hStdOut, info.dwCursorPosition);
-				WriteConsoleA(hStdOut, trailcp, 1, &out, NULL);
+				if(!gRxvt)
+				{
+					SetConsoleCursorPosition(hStdOut, info.dwCursorPosition);
+					WriteConsoleA(hStdOut, trailcp, 1, &out, NULL);
+				}
+				else
+				{
+					Writef(hStdOut, "\033[999C\033[9D%c", *trailcp);
+				}
 				if(*++trailcp == '\0')
 					trailcp = trail;
 			}
@@ -285,38 +330,58 @@ static int REGPARM(2) Slurp(HANDLE fd, HANDLE hStdOut)
 	}
 	if(hStdOut != NULL)
 	{
-		info.dwCursorPosition.X = 0;
-		SetConsoleCursorPosition(hStdOut, info.dwCursorPosition);
-		WriteAction(hStdOut, ":  ");
-		info.dwCursorPosition.X = info.dwSize.X - 10;
-		if(gExitStatus == 0)
+		if(!gRxvt)
 		{
+			info.dwCursorPosition.X = 0;
 			SetConsoleCursorPosition(hStdOut, info.dwCursorPosition);
-			WriteConsoleA(hStdOut, "[OK]     ", 9, &out, NULL);
-			color = ((gNBufUsed - lstrlen(gArgsStr)) < 4) ? COLOR_SUCCESS : COLOR_WARNING;
-			ncells = 2;
+			WriteAction(hStdOut, ":  ");
+			info.dwCursorPosition.X = info.dwSize.X - 10;
+			if(gExitStatus == 0)
+			{
+				SetConsoleCursorPosition(hStdOut, info.dwCursorPosition);
+				WriteConsoleA(hStdOut, "[OK]     ", 9, &out, NULL);
+				color = ((gNBufUsed - lstrlen(gArgsStr)) < 4) ? COLOR_SUCCESS : COLOR_WARNING;
+				ncells = 2;
+			}
+			else
+			{
+				SetConsoleCursorPosition(hStdOut, info.dwCursorPosition);
+				WriteConsoleA(hStdOut, "[ERROR]  ", 9, &out, NULL);
+				color = COLOR_FAILURE;
+				ncells = 5;
+				gDumpCmdArgs = 1;	/* print cmd when there are errors */
+			}
+			color |= info.wAttributes & ~(FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY);
+			for(i = 0; i < ncells; ++i)
+			{
+				colors[i] = color;
+			}
+			info.dwCursorPosition.X++;
+			WriteConsoleOutputAttribute(hStdOut, colors, ncells, info.dwCursorPosition, &out);
+			if(!cursorInfo.bVisible)
+			{
+				cursorInfo.bVisible = TRUE;
+				SetConsoleCursorInfo(hStdOut, &cursorInfo);
+			}
+			WriteConsole(hStdOut, "\n", 1, &out, NULL);
 		}
 		else
 		{
-			SetConsoleCursorPosition(hStdOut, info.dwCursorPosition);
-			WriteConsoleA(hStdOut, "[ERROR]  ", 9, &out, NULL);
-			color = COLOR_FAILURE;
-			ncells = 5;
-			gDumpCmdArgs = 1;	/* print cmd when there are errors */
+			WriteFile(hStdOut, "\033[255D", 6, &out, NULL);
+			WriteAction(hStdOut, ":  ");
+			if(gExitStatus == 0)
+			{
+				Writef(hStdOut, "\033[999C\033[10D[%sOK%s]",
+					   ((gNBufUsed - strlen(gArgsStr)) <
+						4) ? SETCOLOR_SUCCESS : SETCOLOR_WARNING, SETCOLOR_NORMAL);
+			}
+			else
+			{
+				Writef(hStdOut, "\033[999C\033[10D[%sERROR%s]\n",
+						SETCOLOR_FAILURE, SETCOLOR_NORMAL);
+				gDumpCmdArgs = 1;	/* print cmd when there are errors */
+			}
 		}
-		color |= info.wAttributes & ~(FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_INTENSITY);
-		for(i = 0; i < ncells; ++i)
-		{
-			colors[i] = color;
-		}
-		info.dwCursorPosition.X++;
-		WriteConsoleOutputAttribute(hStdOut, colors, ncells, info.dwCursorPosition, &out);
-		if(!cursorInfo.bVisible)
-		{
-			cursorInfo.bVisible = TRUE;
-			SetConsoleCursorInfo(hStdOut, &cursorInfo);
-		}
-		WriteConsole(hStdOut, "\n", 1, &out, NULL);
 	}
 	else
 	{
@@ -455,6 +520,38 @@ void mainCRTStartup(void)
 		!StepCmdLine(&cmdline, &arg, &arglen))		// Read name of process to run
 	{
 		Usage();
+	}
+
+	if(GetConsoleScreenBufferInfo(gStdOut, &bufferInfo))
+	{
+		gColumns = bufferInfo.dwSize.X;
+	}
+	else
+	{
+		char envbuf[16];
+		DWORD envlen;
+
+		// Check for MSYS by checking for an rxvt COLORTERM.
+		envlen = GetEnvironmentVariable("COLORTERM", envbuf, sizeof(envbuf));
+		if(envlen > 0 && envlen < sizeof(envbuf) - 1)
+		{
+			if(lstrcmp(envbuf, "rxvt") == 0)
+			{
+				gRxvt = TRUE;
+
+				// We're in an rxvt, so check the number of columns.
+				// Unfortunately, COLUMNS is not exported by default by MSYS.
+				envlen = GetEnvironmentVariable("COLUMNS", envbuf, sizeof(envbuf));
+				if(envlen > 0 && envlen < sizeof(envbuf) - 1)
+				{
+					gColumns = str2int(envbuf);
+				}
+				else
+				{
+					gColumns = 80;
+				}
+			}
+		}
 	}
 
 	// "Running *argv[1]*"
@@ -620,15 +717,14 @@ void mainCRTStartup(void)
 	}
 	CloseHandle(gCCP.hThread);
 
-	if(GetConsoleScreenBufferInfo(gStdOut, &bufferInfo))
+	if(!gRxvt)
 	{
-		gColumns = bufferInfo.dwSize.X;
 		if(Slurp(pipeRdDup, gStdOut) < 0)
 			goto panic;
 	}
 	else
 	{
-		if(Slurp(pipeRdDup, NULL) < 0)
+		if(Slurp(pipeRdDup, gStdOut) < 0)
 			goto panic;
 	}
 	DumpFormattedOutput();

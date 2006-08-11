@@ -1,13 +1,21 @@
 ifeq (Windows_NT,$(OS))
+  WIN=1
+  WINCMD=1
+endif
+ifeq (msys,$(OSTYPE))
+  WIN=1
+  WINCMD=0
+endif
+
+ifeq (1,$(WIN))
   EXE = lemon.exe
-  CCDV = @../../ccdv
   CFLAGS = $(LOC) -D_WIN32 -Os -Wall -Wno-implicit -fomit-frame-pointer
 else
   EXE = lemon
-  CCDV = @../../ccdv
   CFLAGS = -Os -Wall -Wno-implicit -fomit-frame-pointer
 endif
 
+CCDV = @../../ccdv
 CC = gcc
 LDFLAGS = -s
 
@@ -24,7 +32,7 @@ $(EXE): $(OBJS)
 .PHONY: clean
 
 clean:
-ifeq (Windows_NT,$(OS))
+ifeq (1,$(WINCMD))
 	-del /q /f $(EXE) 2>nul
 	-del /q /f *.o 2>nul
 else

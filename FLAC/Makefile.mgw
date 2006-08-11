@@ -7,6 +7,15 @@
 # Copyright (C) 1995-2003 Jean-loup Gailly.
 # For conditions of distribution and use, see copyright notice in zlib.h
 
+ifeq (Windows_NT,$(OS))
+  WIN=1
+  WINCMD=1
+endif
+ifeq (msys,$(OSTYPE))
+  WIN=1
+  WINCMD=0
+endif
+
 STATICLIB = libflac.a
 
 #LOC = -DASMV
@@ -44,8 +53,13 @@ $(STATICLIB): $(OBJS)
 .PHONY: clean
 
 clean:
+ifeq (1,$(WINCMD))
 	-del /q /f $(STATICLIB) 2>nul
 	-del /q /f *.o 2>nul
+else
+	rm -f $(STATICLIB)
+	rm -f *.o
+endif
 
 cpu_asm.o: ia32/cpu_asm.nasm
 	$(CCDV) $(NASM) -o $@ $(NASMFLAGS) $<

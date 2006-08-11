@@ -1,15 +1,23 @@
+ifeq (Windows_NT,$(OS))
+  WIN=1
+  WINCMD=1
+endif
+ifeq (msys,$(OSTYPE))
+  WIN=1
+  WINCMD=0
+endif
+
 CC = gcc
 CFLAGS = -Os -Wall -fomit-frame-pointer
 LDFLAGS = -s
 
-ifeq (Windows_NT,$(OS))
+ifeq (1,$(WIN))
   EXE = updaterevision.exe
-  CCDV = @../../ccdv
 else
   EXE = updaterevision
-  CCDV = @../../ccdv
-  CFLAGS = -Os -Wall -fomit-frame-pointer
 endif
+
+CCDV = @../../ccdv
 
 OBJS = updaterevision.o
 
@@ -21,7 +29,7 @@ $(EXE): $(OBJS)
 .PHONY: clean
 
 clean:
-ifeq (Windows_NT,$(OS))
+ifeq (1,$(WINCMD))
 	-del /q /f $(EXE) 2>nul
 	-del /q /f *.o 2>nul
 else

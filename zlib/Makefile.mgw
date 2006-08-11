@@ -63,10 +63,17 @@ minigzip: minigzip.o $(STATICLIB)
 .PHONY: clean
 
 clean:
+ifeq (msys,$(OSTYPE))
+	rm -f $(STATICLIB)
+	rm -f *.o
+	rm -f *.exe
+	rm -f foo.gz
+else
 	-del /q /f $(STATICLIB) 2>nul
 	-del /q /f *.o 2>nul
 	-del /q /f *.exe 2>nul
 	-del /q /f foo.gz 2>nul
+endif
 
 adler32.o: zlib.h zconf.h
 compress.o: zlib.h zconf.h

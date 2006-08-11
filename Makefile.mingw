@@ -4,6 +4,12 @@
 # Where did you install the FMOD API to? Change this line so that the build process can find it.
 FMODDIR = "c:/program files/fmodapi375win"
 
+ifeq (msys,$(OSTYPE))
+  WINCMD=0
+else
+  WINCMD=1
+endif
+
 CC ?= gcc
 CXX ?= g++
 
@@ -93,6 +99,7 @@ $(OBJDIR)/%.o : %.rc
 $(TARGET): testobjdir updaterev $(OBJS)
 	$(CCDV) $(CXX) -o $@ $(OBJS) $(LDFLAGS)
 
+ifeq (1,$(WINCMD))
 clean:
 	-del /q /f $(RELEASETARGET) 2>nul
 	-del /q /f $(DEBUGTARGET) 2>nul
@@ -102,9 +109,24 @@ clean:
 cleandep:
 	-del /q /f $(DEBUGOBJDIR)\*.d 2>nul
 	-del /q /f $(RELEASEOBJDIR)\*.d 2>nul
+else
+clean:
+	rm -f $(RELEASETARGET)
+	rm -f $(DEBUGTARGET)
+	rm -fr $(DEBUGOBJDIR)
+	rm -fr $(RELEASEOBJDIR)
+
+cleandep:
+	rm -f $(DEBUGOBJDIR)\*.d
+	rm -f $(RELEASEOBJDIR)\*.d
+endif
 	
 testobjdir:
+ifeq (1,$(WINCMD))
 	-@if not exist $(OBJDIR) mkdir $(OBJDIR)
+else
+	-@if [ ! -e $(OBJDIR) ]; then mkdir $(OBJDIR); fi
+endif
 
 updaterev: tools/updaterevision/updaterevision.exe
 	@tools/updaterevision/updaterevision . src/svnrevision.h

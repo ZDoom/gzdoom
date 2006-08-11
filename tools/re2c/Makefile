@@ -1,13 +1,21 @@
 ifeq (Windows_NT,$(OS))
+  WIN=1
+  WINCMD=1
+endif
+ifeq (msys,$(OSTYPE))
+  WIN=1
+  WINCMD=0
+endif
+
+ifeq (1,$(WIN))
 	EXE = re2c.exe
-	CCDV = @../../ccdv
 	CXXFLAGS = $(LOC) -D_WIN32 -DNDEBUG -Os -Wall -Wno-unused
 else
 	EXE = re2c
-	CCDV = @../../ccdv
 	CXXFLAGS = -DHAVE_CONFIG_H -DNDEBUG -Os -Wall -Wno-unused
 endif
 
+CCDV = @../../ccdv
 CXX = g++
 LDFLAGS= -s
 
@@ -24,7 +32,7 @@ $(EXE): $(OBJS)
 .PHONY: clean
 
 clean:
-ifeq (Windows_NT,$(OS))
+ifeq (1,$(WINCMD))
 	-del /q /f $(EXE) 2>nul
 	-del /q /f *.o 2>nul
 else

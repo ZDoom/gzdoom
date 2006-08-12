@@ -949,6 +949,7 @@ void V_Shutdown()
 }
 
 EXTERN_CVAR (Bool, vid_tft)
+CVAR (Bool, vid_nowidescreen, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
 // Tries to guess the physical dimensions of the screen based on the
 // screen's pixel dimensions. Can return:
@@ -958,6 +959,14 @@ EXTERN_CVAR (Bool, vid_tft)
 // 4: 5:4
 int CheckRatio (int width, int height)
 {
+	if (vid_nowidescreen)
+	{
+		if (!vid_tft)
+		{
+			return 0;
+		}
+		return (height * 5/4 == width) ? 4 : 0;
+	}
 	// If the size is approximately 16:9, consider it so.
 	if (abs (height * 16/9 - width) < 10)
 	{

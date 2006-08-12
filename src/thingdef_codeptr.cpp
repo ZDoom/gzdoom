@@ -318,7 +318,7 @@ void A_BulletAttack (AActor *self)
 	slope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
 	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
-	for (i=0 ; i<self->damage ; i++)
+	for (i = self->GetMissileDamage (0, 1); i > 0; --i)
     {
 		int angle = bangle + (pr_cabullet.Random2() << 20);
 		int damage = ((pr_cabullet()%5)+1)*3;

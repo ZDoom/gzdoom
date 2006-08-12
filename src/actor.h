@@ -590,6 +590,9 @@ public:
 		return (flags & MF_COUNTKILL) && !(flags & MF_FRIENDLY);
 	}
 
+	// Calculate amount of missile damage
+	virtual int GetMissileDamage(int mask, int add);
+
 // info for drawing
 // NOTE: The first member variable *must* be x.
 	fixed_t	 		x,y,z;
@@ -621,7 +624,7 @@ public:
 	fixed_t			momx, momy, momz;	// momentums
 	SDWORD			tics;				// state tic counter
 	FState			*state;
-	SDWORD			damage;			// For missiles and monster railgun
+	SDWORD			Damage;			// For missiles and monster railgun
 	DWORD			flags;
 	DWORD			flags2;			// Heretic flags
 	DWORD			flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable

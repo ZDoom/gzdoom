@@ -124,18 +124,17 @@ void PClass::InsertIntoHash ()
 // Find a type, passed the name as a string
 const PClass *PClass::FindClass (const char *zaname)
 {
-	FName namename (zaname, true);
-
-	if (namename == NAME_None)
-	{
-		return NULL;
-	}
-	return FindClass (namename);
+	return FindClass (FName (zaname, true));
 }
 
 // Find a type, passed the name as a name
 const PClass *PClass::FindClass (FName zaname)
 {
+	if (zaname == NAME_None)
+	{
+		return NULL;
+	}
+
 	PClass *cls = TypeHash[zaname % HASH_SIZE];
 
 	while (cls != 0)

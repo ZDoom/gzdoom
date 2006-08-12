@@ -839,9 +839,9 @@ FConsoleCommand::~FConsoleCommand ()
 	delete[] m_Name;
 }
 
-void FConsoleCommand::Run (FCommandLine &argv, AActor *instigator, int key)
+void FConsoleCommand::Run (FCommandLine &argv, APlayerPawn *who, int key)
 {
-	m_RunFunc (argv, instigator, key);
+	m_RunFunc (argv, who, key);
 }
 
 FConsoleAlias::FConsoleAlias (const char *name, const char *command, bool noSave)
@@ -1097,7 +1097,7 @@ bool FConsoleAlias::IsAlias ()
 	return true;
 }
 
-void FConsoleAlias::Run (FCommandLine &args, AActor *m_Instigator, int key)
+void FConsoleAlias::Run (FCommandLine &args, APlayerPawn *who, int key)
 {
 	if (bRunning)
 	{

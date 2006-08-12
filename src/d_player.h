@@ -59,6 +59,7 @@ class player_s;
 class APlayerPawn : public AActor
 {
 	DECLARE_STATELESS_ACTOR (APlayerPawn, AActor)
+	HAS_OBJECT_POINTERS
 public:
 	virtual void Serialize (FArchive &arc);
 
@@ -99,6 +100,8 @@ public:
 
 	int			crouchsprite;
 	int			MaxHealth;
+	AInventory *InvFirst;				// first inventory item displayed on inventory bar
+	AInventory *InvSel;					// selected inventory item
 
 	// [GRB] Player class properties
 	fixed_t		JumpZ;
@@ -212,8 +215,6 @@ public:
 	int			health;					// only used between levels, mo->health
 										// is used during levels
 
-	AInventory *InvFirst;				// first inventory item displayed on inventory bar
-	AInventory *InvSel;					// selected inventory item
 	int			inventorytics;
 	BYTE		CurrentPlayerClass;		// class # for this player instance
 	int			pieces;					// Fourth Weapon pieces

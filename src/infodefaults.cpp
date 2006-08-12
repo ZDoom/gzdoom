@@ -202,7 +202,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_Radius:			actor->radius = dataint;			break;
 	case ADEF_Height:			actor->height = dataint;			break;
 	case ADEF_Mass:				actor->Mass = dataint;				break;
-	case ADEF_Damage:			actor->damage = dataint;			break;
+	case ADEF_Damage:			actor->Damage = dataint;			break;
 	case ADEF_DamageType:		actor->DamageType = dataint;		break;
 	case ADEF_Flags:			actor->flags = dataint;				break;
 	case ADEF_Flags2:			actor->flags2 = dataint;			break;

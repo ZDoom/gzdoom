@@ -2140,7 +2140,7 @@ void A_MonsterRail (AActor *actor)
 		actor->angle += pr_railface.Random2() << 21;
     }
 
-	P_RailAttack (actor, actor->damage, 0);
+	P_RailAttack (actor, actor->GetMissileDamage (0, 1), 0);
 }
 
 void A_Scream (AActor *actor)
@@ -2306,8 +2306,9 @@ void A_Die (AActor *actor)
 
 void A_Detonate (AActor *mo)
 {
-	P_RadiusAttack (mo, mo->target, mo->damage, mo->damage, mo->DamageType, true);
-	if (mo->z <= mo->floorz + (mo->damage<<FRACBITS))
+	int damage = mo->GetMissileDamage (0, 1);
+	P_RadiusAttack (mo, mo->target, damage, damage, mo->DamageType, true);
+	if (mo->z <= mo->floorz + (damage << FRACBITS))
 	{
 		P_HitFloor (mo);
 	}

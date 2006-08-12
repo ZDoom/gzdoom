@@ -331,7 +331,7 @@ void A_LichAttack (AActor *actor)
 				fire->momx = baseFire->momx;
 				fire->momy = baseFire->momy;
 				fire->momz = baseFire->momz;
-				fire->damage = 0;
+				fire->Damage = 0;
 				fire->health = (i+1) * 2;
 				P_CheckMissileSpawn (fire);
 			}
@@ -418,7 +418,7 @@ void A_LichFireGrow (AActor *fire)
 	fire->z += 9*FRACUNIT;
 	if (fire->health == 0)
 	{
-		fire->damage = fire->GetDefault()->damage;
+		fire->Damage = fire->GetDefault()->Damage;
 		fire->SetState (&AHeadFX3::States[S_HEADFX3+3]);
 	}
 }

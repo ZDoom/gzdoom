@@ -301,13 +301,13 @@ CCMD (hxvisit)
 
 CCMD (changemap)
 {
-	if (m_Instigator == NULL)
+	if (who == NULL)
 	{
 		Printf ("Use the map command when not in a game.\n");
 		return;
 	}
 
-	if (m_Instigator->player - players != Net_Arbitrator && multiplayer)
+	if (who->player - players != Net_Arbitrator && multiplayer)
 	{
 		Printf ("Only player %d can change the map.\n", Net_Arbitrator+1);
 		return;
@@ -540,8 +540,7 @@ CCMD (dir)
 
 CCMD (fov)
 {
-	player_t *player = m_Instigator ? m_Instigator->player
-		: &players[consoleplayer];
+	player_t *player = who ? who->player : &players[consoleplayer];
 
 	if (argv.argc() != 2)
 	{

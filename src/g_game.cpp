@@ -308,56 +308,56 @@ CCMD (invnext)
 {
 	AInventory *next;
 
-	if (m_Instigator == NULL)
+	if (who == NULL)
 		return;
 
-	if (m_Instigator->player->InvSel != NULL)
+	if (who->InvSel != NULL)
 	{
-		if ((next = m_Instigator->player->InvSel->NextInv()) != NULL)
+		if ((next = who->InvSel->NextInv()) != NULL)
 		{
-			m_Instigator->player->InvSel = next;
+			who->InvSel = next;
 		}
 		else
 		{
 			// Select the first item in the inventory
-			if (!(m_Instigator->Inventory->ItemFlags & IF_INVBAR))
+			if (!(who->Inventory->ItemFlags & IF_INVBAR))
 			{
-				m_Instigator->player->InvSel = m_Instigator->Inventory->NextInv();
+				who->InvSel = who->Inventory->NextInv();
 			}
 			else
 			{
-				m_Instigator->player->InvSel = m_Instigator->Inventory;
+				who->InvSel = who->Inventory;
 			}
 		}
 	}
-	m_Instigator->player->inventorytics = 5*TICRATE;
+	who->player->inventorytics = 5*TICRATE;
 }
 
 CCMD (invprev)
 {
 	AInventory *item, *newitem;
 
-	if (m_Instigator == NULL)
+	if (who == NULL)
 		return;
 
-	if (m_Instigator->player->InvSel != NULL)
+	if (who->InvSel != NULL)
 	{
-		if ((item = m_Instigator->player->InvSel->PrevInv()) != NULL)
+		if ((item = who->InvSel->PrevInv()) != NULL)
 		{
-			m_Instigator->player->InvSel = item;
+			who->InvSel = item;
 		}
 		else
 		{
 			// Select the last item in the inventory
-			item = m_Instigator->player->InvSel;
+			item = who->InvSel;
 			while ((newitem = item->NextInv()) != NULL)
 			{
 				item = newitem;
 			}
-			m_Instigator->player->InvSel = item;
+			who->InvSel = item;
 		}
 	}
-	m_Instigator->player->inventorytics = 5*TICRATE;
+	who->player->inventorytics = 5*TICRATE;
 }
 
 CCMD (invuseall)
@@ -369,29 +369,29 @@ CCMD (invuse)
 {
 	if (players[consoleplayer].inventorytics == 0 || gameinfo.gametype == GAME_Strife)
 	{
-		SendItemUse = players[consoleplayer].InvSel;
+		SendItemUse = players[consoleplayer].mo->InvSel;
 	}
 	players[consoleplayer].inventorytics = 0;
 }
 
 CCMD (use)
 {
-	if (argv.argc() > 1 && m_Instigator != NULL)
+	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemUse = m_Instigator->FindInventory (PClass::FindClass (argv[1]));
+		SendItemUse = who->FindInventory (PClass::FindClass (argv[1]));
 	}
 }
 
 CCMD (invdrop)
 {
-	SendItemDrop = players[consoleplayer].InvSel;
+	SendItemDrop = players[consoleplayer].mo->InvSel;
 }
 
 CCMD (drop)
 {
-	if (argv.argc() > 1 && m_Instigator != NULL)
+	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemDrop = m_Instigator->FindInventory (PClass::FindClass (argv[1]));
+		SendItemDrop = who->FindInventory (PClass::FindClass (argv[1]));
 	}
 }
 
@@ -405,12 +405,12 @@ CCMD (useflechette)
 	};
 	int i, j;
 
-	if (m_Instigator == NULL)
+	if (who == NULL)
 		return;
 
-	if (m_Instigator->IsKindOf (PClass::FindClass (NAME_ClericPlayer)))
+	if (who->IsKindOf (PClass::FindClass (NAME_ClericPlayer)))
 		i = 0;
-	else if (m_Instigator->IsKindOf (PClass::FindClass (NAME_MagePlayer)))
+	else if (who->IsKindOf (PClass::FindClass (NAME_MagePlayer)))
 		i = 1;
 	else
 		i = 2;
@@ -419,7 +419,7 @@ CCMD (useflechette)
 	{
 		const PClass *type = PClass::FindClass (bagnames[(i+j)%3]);
 		AInventory *item;
-		if (type != NULL && (item = m_Instigator->FindInventory (type)))
+		if (type != NULL && (item = who->FindInventory (type)))
 		{
 			SendItemUse = item;
 			break;
@@ -431,13 +431,13 @@ CCMD (select)
 {
 	if (argv.argc() > 1)
 	{
-		AInventory *item = m_Instigator->FindInventory (PClass::FindClass (argv[1]));
+		AInventory *item = who->FindInventory (PClass::FindClass (argv[1]));
 		if (item != NULL)
 		{
-			m_Instigator->player->InvSel = item;
+			who->InvSel = item;
 		}
 	}
-	m_Instigator->player->inventorytics = 5*TICRATE;
+	who->player->inventorytics = 5*TICRATE;
 }
 
 //

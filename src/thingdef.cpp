@@ -2365,8 +2365,22 @@ static void ActorPainChance (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorDamage (AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->damage=sc_Number;
+	// Damage can either be a single number, in which case it is subject
+	// to the original damage calculation rules. Or, it can be an expression
+	// and will be calculated as-is, ignoring the original rules. For
+	// compatibility reasons, expressions must be enclosed within
+	// parentheses.
+
+	if (SC_CheckString ("("))
+	{
+		SC_UnGet();
+		defaults->Damage = 0x40000000 | ParseExpression (false);
+	}
+	else
+	{
+		SC_MustGetNumber ();
+		defaults->Damage = sc_Number;
+	}
 }
 
 //==========================================================================

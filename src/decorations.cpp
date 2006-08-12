@@ -721,7 +721,7 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		else if (def == DEF_Projectile && SC_Compare ("Damage"))
 		{
 			SC_MustGetNumber ();
-			defaults->damage = sc_Number;
+			defaults->Damage = sc_Number;
 		}
 		else if (def == DEF_Projectile && SC_Compare ("DamageType"))
 		{

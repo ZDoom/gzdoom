@@ -918,7 +918,7 @@ BOOL PIT_CheckThing (AActor *thing)
 
 		if (tmthing->flags2 & MF2_BOUNCE2)
 		{
-			if (tmthing->damage == 0)
+			if (tmthing->Damage == 0)
 			{
 				return (tmthing->target == thing || !(thing->flags & MF_SOLID));
 			}
@@ -1023,7 +1023,7 @@ BOOL PIT_CheckThing (AActor *thing)
 					P_RipperBlood (tmthing, thing);
 				}
 				S_Sound (tmthing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
-				damage = ((pr_checkthing()&3)+2)*tmthing->damage;
+				damage = tmthing->GetMissileDamage (3, 2);
 				P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->DamageType);
 				if (!(tmthing->flags3 & MF3_BLOODLESSIMPACT))
 				{
@@ -1040,16 +1040,7 @@ BOOL PIT_CheckThing (AActor *thing)
 			return true;
 		}
 		// Do damage
-		damage = pr_checkthing();
-		if (tmthing->flags4 & MF4_STRIFEDAMAGE)
-		{
-			damage &= 3;
-		}
-		else
-		{
-			damage &= 7;
-		}
-		damage = (damage + 1) * tmthing->damage;
+		damage = tmthing->GetMissileDamage ((tmthing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
 		if (damage > 0)
 		{
 			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->DamageType);

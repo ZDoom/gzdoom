@@ -1484,60 +1484,60 @@ AInventory *FBaseStatusBar::ValidateInvFirst (int numVisible) const
 	AInventory *item;
 	int i;
 
-	if (CPlayer->InvFirst == NULL)
+	if (CPlayer->mo->InvFirst == NULL)
 	{
-		CPlayer->InvFirst = CPlayer->mo->FirstInv();
-		if (CPlayer->InvFirst == NULL)
+		CPlayer->mo->InvFirst = CPlayer->mo->FirstInv();
+		if (CPlayer->mo->InvFirst == NULL)
 		{ // Nothing to show
 			return NULL;
 		}
 	}
 
-	assert (CPlayer->InvFirst->Owner == CPlayer->mo);
+	assert (CPlayer->mo->InvFirst->Owner == CPlayer->mo);
 
 	// If there are fewer than numVisible items shown, see if we can shift the
 	// view left to show more.
-	for (i = 0, item = CPlayer->InvFirst; item != NULL && i < numVisible; ++i, item = item->NextInv())
+	for (i = 0, item = CPlayer->mo->InvFirst; item != NULL && i < numVisible; ++i, item = item->NextInv())
 	{ }
 
 	while (i < numVisible)
 	{
-		item = CPlayer->InvFirst->PrevInv ();
+		item = CPlayer->mo->InvFirst->PrevInv ();
 		if (item == NULL)
 		{
 			break;
 		}
 		else
 		{
-			CPlayer->InvFirst = item;
+			CPlayer->mo->InvFirst = item;
 			++i;
 		}
 	}
 
-	if (CPlayer->InvSel == NULL)
+	if (CPlayer->mo->InvSel == NULL)
 	{
 		// Nothing selected, so don't move the view.
-		return CPlayer->InvFirst == NULL ? CPlayer->mo->Inventory : CPlayer->InvFirst;
+		return CPlayer->mo->InvFirst == NULL ? CPlayer->mo->Inventory : CPlayer->mo->InvFirst;
 	}
 	else
 	{
 		// Check if InvSel is already visible
-		for (item = CPlayer->InvFirst, i = numVisible;
+		for (item = CPlayer->mo->InvFirst, i = numVisible;
 			 item != NULL && i != 0;
 			 item = item->NextInv(), --i)
 		{
-			if (item == CPlayer->InvSel)
+			if (item == CPlayer->mo->InvSel)
 			{
-				return CPlayer->InvFirst;
+				return CPlayer->mo->InvFirst;
 			}
 		}
 		// Check if InvSel is to the right of the visible range
 		for (i = 1; item != NULL; item = item->NextInv(), ++i)
 		{
-			if (item == CPlayer->InvSel)
+			if (item == CPlayer->mo->InvSel)
 			{
 				// Found it. Now advance InvFirst
-				for (item = CPlayer->InvFirst; i != 0; --i)
+				for (item = CPlayer->mo->InvFirst; i != 0; --i)
 				{
 					item = item->NextInv();
 				}
@@ -1546,7 +1546,7 @@ AInventory *FBaseStatusBar::ValidateInvFirst (int numVisible) const
 		}
 		// Check if InvSel is to the left of the visible range
 		for (item = CPlayer->mo->Inventory;
-			item != CPlayer->InvSel;
+			item != CPlayer->mo->InvSel;
 			item = item->NextInv())
 		{ }
 		if (item != NULL)
@@ -1557,7 +1557,7 @@ AInventory *FBaseStatusBar::ValidateInvFirst (int numVisible) const
 		// Didn't find the selected item, so don't move the view.
 		// This should never happen, so let debug builds assert.
 		assert (item != NULL);
-		return CPlayer->InvFirst;
+		return CPlayer->mo->InvFirst;
 	}
 }
 

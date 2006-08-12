@@ -217,8 +217,6 @@ player_s::player_s()
   oldbuttons(0),
   attackdown(0),
   health(0),
-  InvFirst(0),
-  InvSel(0),
   inventorytics(0),
   CurrentPlayerClass(0),
   pieces(0),
@@ -363,7 +361,12 @@ int player_t::GetSpawnClass()
 //
 //===========================================================================
 
-IMPLEMENT_STATELESS_ACTOR (APlayerPawn, Any, -1, 0)
+IMPLEMENT_POINTY_CLASS (APlayerPawn)
+ DECLARE_POINTER(InvFirst)
+ DECLARE_POINTER(InvSel)
+END_POINTERS
+
+BEGIN_STATELESS_DEFAULTS (APlayerPawn, Any, -1, 0)
 	PROP_SpawnHealth (100)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (56)
@@ -394,7 +397,9 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< ForwardMove2
 		<< SideMove1
 		<< SideMove2
-		<< ScoreIcon;
+		<< ScoreIcon
+		<< InvFirst
+		<< InvSel;
 }
 
 //===========================================================================
@@ -478,9 +483,9 @@ void APlayerPawn::AddInventory (AInventory *item)
 	Super::AddInventory (item);
 
 	// If nothing is selected, select this item.
-	if (player != NULL && player->InvSel == NULL && (item->ItemFlags & IF_INVBAR))
+	if (InvSel == NULL && (item->ItemFlags & IF_INVBAR))
 	{
-		player->InvSel = item;
+		InvSel = item;
 	}
 }
 
@@ -501,20 +506,20 @@ void APlayerPawn::RemoveInventory (AInventory *item)
 	// item, if there is one, or the previous item.
 	if (player != NULL)
 	{
-		if (player->InvSel == item)
+		if (InvSel == item)
 		{
-			player->InvSel = item->NextInv ();
-			if (player->InvSel == NULL)
+			InvSel = item->NextInv ();
+			if (InvSel == NULL)
 			{
-				player->InvSel = item->PrevInv ();
+				InvSel = item->PrevInv ();
 			}
 		}
-		if (player->InvFirst == item)
+		if (InvFirst == item)
 		{
-			player->InvFirst = item->NextInv ();
-			if (player->InvFirst == NULL)
+			InvFirst = item->NextInv ();
+			if (InvFirst == NULL)
 			{
-				player->InvFirst = item->PrevInv ();
+				InvFirst = item->PrevInv ();
 			}
 		}
 		if (item == player->PendingWeapon)
@@ -2087,7 +2092,6 @@ void player_s::Serialize (FArchive &arc)
 		<< centering
 		<< health
 		<< inventorytics
-		<< InvFirst << InvSel
 		<< pieces
 		<< backpack
 		<< fragcount

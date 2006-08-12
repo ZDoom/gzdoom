@@ -1,3 +1,22 @@
+August 11, 2006
+- Added the ACS commands
+  ReplaceTextures (str old_texture, str new_texture, optional bool not_lower,
+      optional bool not_mid, optional bool not_upper, optional bool not_floor,
+      optional bool not_ceiling); and
+  SectorDamage (int tag, int amount, str type, bool players_only, bool in_air,
+      str protection_item, bool subclasses_okay);
+- Added the vid_nowidescreen cvar to disable widescreen aspect ratio
+  correction. When this is enabled, the only display ratio available is 4:3
+  (and 5:4 if vid_tft is set).
+- Added support for setting an actor's damage property to an expression
+  through decorate. Just enclose it within parentheses, and the expression
+  will be evaluated exactly as-is without the normal Doom damage calculation.
+  So if you want something that does exactly 6 damage, use a "Damage (6)"
+  property. To deal normal Doom missile damage, you can use
+  "Damage (random(1,8)*6)" instead of "Damage 6".
+- Moved InvFirst and InvSel into APlayerPawn so that they can be consistantly
+  maintained by ObtainInventory.
+
 August 10, 2006 (Changes by Graf Zahl)
 - Gave Strife's PhosphorousFire the MF2_NODMGTHRUST flag so that its
   damage is truly thrustless. The 'thrustless' parameter disabled all

@@ -1845,6 +1845,44 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 	}
 }
 
+void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, BOOL not_lower, BOOL not_mid, BOOL not_upper, BOOL not_floor, BOOL not_ceil)
+{
+	const char *fromname = FBehavior::StaticLookupString (fromnamei);
+	const char *toname = FBehavior::StaticLookupString (tonamei);
+	int picnum1, picnum2;
+
+	if (fromname == NULL)
+		return;
+
+	if (!(not_lower | not_mid | not_upper))
+	{
+		picnum1 = TexMan.GetTexture (fromname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+		picnum2 = TexMan.GetTexture (toname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+
+		for (int i = 0; i < numsides; ++i)
+		{
+			side_t *wal = &sides[i];
+
+			if (!not_lower && wal->bottomtexture == picnum1)	wal->bottomtexture = picnum2;
+			if (!not_mid && wal->midtexture == picnum1)			wal->midtexture = picnum2;
+			if (!not_upper && wal->toptexture == picnum1)		wal->toptexture = picnum2;
+		}
+	}
+	if (!(not_floor | not_ceil))
+	{
+		picnum1 = TexMan.GetTexture (fromname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+		picnum2 = TexMan.GetTexture (toname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+
+		for (int i = 0; i < numsectors; ++i)
+		{
+			sector_t *sec = &sectors[i];
+
+			if (!not_floor && sec->floorpic == picnum1)			sec->floorpic = picnum2;
+			if (!not_ceil && sec->ceilingpic == picnum1)		sec->ceilingpic = picnum2;
+		}
+	}
+}
+
 int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle)
 {
 	const PClass *info = PClass::FindClass (FBehavior::StaticLookupString (type));
@@ -2084,7 +2122,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Damage:
-		actor->damage = value;
+		actor->Damage = value;
 		break;
 
 	case APROP_Alpha:
@@ -2169,7 +2207,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	{
 	case APROP_Health:		return actor->health;
 	case APROP_Speed:		return actor->Speed;
-	case APROP_Damage:		return actor->damage;
+	case APROP_Damage:		return actor->Damage;	// Should this call GetMissileDamage() instead?
 	case APROP_Alpha:		return actor->alpha;
 	case APROP_RenderStyle:	return actor->RenderStyle;
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
@@ -3973,6 +4011,11 @@ int DLevelScript::RunScript ()
 			sp -= 4;
 			break;
 
+		case PCD_REPLACETEXTURES:
+			ReplaceTextures (STACK(7), STACK(6), STACK(5), STACK(4), STACK(3), STACK(2), STACK(1));
+			sp -= 7;
+			break;
+
 		case PCD_SETLINEBLOCKING:
 			{
 				int line = -1;
@@ -4900,6 +4943,73 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_SECTORDAMAGE:
+			{
+				int tag = STACK(7);
+				int amount = STACK(6);
+				FName type = FBehavior::StaticLookupString(STACK(5));
+				BOOL playersOnly = STACK(4);
+				BOOL inAirToo = STACK(3);
+				FName protection = FName (FBehavior::StaticLookupString(STACK(2)), true);
+				const PClass *protectClass = PClass::FindClass (protection);
+				BOOL subclassesOkay = STACK(1);
+				sp -= 7;
+
+				// Oh, give me custom damage types! :-)
+				int modtype;
+
+				switch (type)
+				{
+				case NAME_Fire:		modtype = MOD_FIRE;		break;
+				case NAME_Ice:		modtype = MOD_ICE;		break;
+				default:			modtype = MOD_UNKNOWN;	break;
+				}
+
+				int secnum = -1;
+				
+				while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+				{
+					AActor *actor, *next;
+					sector_t *sec = &sectors[secnum];
+
+					for (actor = sec->thinglist; actor != NULL; actor = next)
+					{
+						next = actor->snext;
+
+						if (!(actor->flags & MF_SHOOTABLE))
+							continue;
+
+						if (playersOnly && actor->player == NULL)
+							continue;
+
+						if (!inAirToo && actor->z != sec->floorplane.ZatPoint (actor->x, actor->y) && !actor->waterlevel)
+							continue;
+
+						if (protectClass != NULL)
+						{
+							if (!subclassesOkay)
+							{
+								if (actor->FindInventory (protectClass))
+									continue;
+							}
+							else
+							{
+								AInventory *item;
+
+								for (item = actor->Inventory; item != NULL; item = item->Inventory)
+								{
+									if (item->IsKindOf (protectClass))
+										break;
+								}
+								if (item != NULL)
+									continue;
+							}
+						}
+
+						P_DamageMobj (actor, NULL, NULL, amount, modtype);
+					}
+				}
+			}
 		}
 	}
 

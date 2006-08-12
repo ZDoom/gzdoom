@@ -559,7 +559,7 @@ void A_LastZap (AActor *actor)
 	{
 		mo->SetState (&ALightningZap::States[S_LIGHTNING_ZAP_X1]);
 		mo->momz = 40*FRACUNIT;
-		mo->damage = 0;
+		mo->Damage = 0;
 	}
 }
 

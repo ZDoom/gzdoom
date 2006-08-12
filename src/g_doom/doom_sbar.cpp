@@ -460,23 +460,23 @@ private:
 			FaceRefresh = screen->GetPageCount ();
 			OldFaceIndex = FaceIndex;
 		}
-		if (FaceRefresh || (CPlayer->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR)))
+		if (FaceRefresh || (CPlayer->mo->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR)))
 		{
 			if (FaceRefresh)
 			{
 				FaceRefresh--;
 			}
 			DrawPartialImage (&StatusBarTex, 142, 37);
-			if (CPlayer->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR))
+			if (CPlayer->mo->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR))
 			{
 				DrawImage (Faces[FaceIndex], 143, 0);
 			}
 			else
 			{
-				DrawImage (TexMan(CPlayer->InvSel->Icon), 144, 0);
-				if (CPlayer->InvSel->Amount != 1)
+				DrawImage (TexMan(CPlayer->mo->InvSel->Icon), 144, 0);
+				if (CPlayer->mo->InvSel->Amount != 1)
 				{
-					DrSmallNumber (CPlayer->InvSel->Amount, 165, 24);
+					DrSmallNumber (CPlayer->mo->InvSel->Amount, 165, 24);
 				}
 				OldFaceIndex = -1;
 			}
@@ -553,10 +553,10 @@ private:
 		int i;
 
 		// If the player has no artifacts, don't draw the bar
-		CPlayer->InvFirst = ValidateInvFirst (7);
-		if (CPlayer->InvFirst != NULL)
+		CPlayer->mo->InvFirst = ValidateInvFirst (7);
+		if (CPlayer->mo->InvFirst != NULL)
 		{
-			for (item = CPlayer->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
+			for (item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
 			{
 				DrawImage (Images[imgARTIBOX], 50+i*31, 2);
 				DrawImage (TexMan(item->Icon), 50+i*31, 2);
@@ -564,7 +564,7 @@ private:
 				{
 					DrSmallNumber (item->Amount, 66+i*31, 24);
 				}
-				if (item == CPlayer->InvSel)
+				if (item == CPlayer->mo->InvSel)
 				{
 					DrawImage (Images[imgSELECTBOX], 50+i*31, 2);
 				}
@@ -574,7 +574,7 @@ private:
 				DrawImage (Images[imgARTIBOX], 50+i*31, 2);
 			}
 			// Is there something to the left?
-			if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
+			if (CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
 			{
 				DrawImage (Images[!(gametic & 4) ?
 					imgINVLFGEM1 : imgINVLFGEM2], 38, 2);
@@ -697,22 +697,22 @@ private:
 		{
 			if (CPlayer->inventorytics == 0)
 			{
-				if (CPlayer->InvSel != NULL)
+				if (CPlayer->mo->InvSel != NULL)
 				{
-					screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -14, ammotop - 1/*-24*/,
+					screen->DrawTexture (TexMan(CPlayer->mo->InvSel->Icon), -14, ammotop - 1/*-24*/,
 						DTA_HUDRules, HUD_Normal,
 						DTA_CenterBottomOffset, true,
 						TAG_DONE);
-					DrBNumberOuter (CPlayer->InvSel->Amount, -68, ammotop - 18/*-41*/);
+					DrBNumberOuter (CPlayer->mo->InvSel->Amount, -68, ammotop - 18/*-41*/);
 				}
 			}
 			else
 			{
-				CPlayer->InvFirst = ValidateInvFirst (7);
+				CPlayer->mo->InvFirst = ValidateInvFirst (7);
 				i = 0;
-				if (CPlayer->InvFirst != NULL)
+				if (CPlayer->mo->InvFirst != NULL)
 				{
-					for (item = CPlayer->InvFirst; item != NULL && i < 7; item = item->NextInv(), ++i)
+					for (item = CPlayer->mo->InvFirst; item != NULL && i < 7; item = item->NextInv(), ++i)
 					{
 						screen->DrawTexture (Images[imgARTIBOX], -106+i*31, -32,
 							DTA_HUDRules, HUD_HorizCenter,
@@ -725,7 +725,7 @@ private:
 						{
 							DrSmallNumberOuter (item->Amount, -90+i*31, -10, true);
 						}
-						if (item == CPlayer->InvSel)
+						if (item == CPlayer->mo->InvSel)
 						{
 							screen->DrawTexture (Images[imgSELECTBOX], -91+i*31, -3,
 								DTA_HUDRules, HUD_HorizCenter,
@@ -741,7 +741,7 @@ private:
 							TAG_DONE);
 					}
 					// Is there something to the left?
-					if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
+					if (CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
 					{
 						screen->DrawTexture (Images[!(gametic & 4) ?
 							imgINVLFGEM1 : imgINVLFGEM2], -118, -33,

@@ -891,7 +891,7 @@ menu_t ModesMenu =
 	ModesItems,
 };
 
-CUSTOM_CVAR (Bool, vid_tft, false, CVAR_ARCHIVE)
+CUSTOM_CVAR (Bool, vid_tft, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self)
 	{

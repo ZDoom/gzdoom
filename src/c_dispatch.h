@@ -37,6 +37,7 @@
 #include "dobject.h"
 
 class FConfigFile;
+class APlayerPawn;
 
 void C_ExecCmdLineParams ();
 
@@ -76,7 +77,7 @@ private:
 	long argsize;
 };
 
-typedef void (*CCmdRun) (FCommandLine &argv, AActor *instigator, int key);
+typedef void (*CCmdRun) (FCommandLine &argv, APlayerPawn *instigator, int key);
 
 class FConsoleCommand
 {
@@ -86,7 +87,7 @@ public:
 	virtual bool IsAlias ();
 	void PrintCommand () { Printf ("%s\n", m_Name); }
 
-	virtual void Run (FCommandLine &args, AActor *instigator, int key);
+	virtual void Run (FCommandLine &args, APlayerPawn *instigator, int key);
 
 	FConsoleCommand *m_Next, **m_Prev;
 	char *m_Name;
@@ -102,9 +103,9 @@ protected:
 };
 
 #define CCMD(n) \
-	void Cmd_##n (FCommandLine &, AActor *, int key); \
-	FConsoleCommand Cmd_##n##_ (#n, Cmd_##n); \
-	void Cmd_##n (FCommandLine &argv, AActor *m_Instigator, int key)
+	void Cmd_##n (FCommandLine &, APlayerPawn *, int key); \
+	FConsoleCommand Cmd_##n##_Ref (#n, Cmd_##n); \
+	void Cmd_##n (FCommandLine &argv, APlayerPawn *who, int key)
 
 const int KEY_DBLCLICKED = 0x8000;
 
@@ -113,7 +114,7 @@ class FConsoleAlias : public FConsoleCommand
 public:
 	FConsoleAlias (const char *name, const char *command, bool noSave);
 	~FConsoleAlias ();
-	void Run (FCommandLine &args, AActor *Instigator, int key);
+	void Run (FCommandLine &args, APlayerPawn *Instigator, int key);
 	bool IsAlias ();
 	void PrintAlias ();
 	void Archive (FConfigFile *f);

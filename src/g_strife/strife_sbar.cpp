@@ -425,10 +425,10 @@ private:
 		}
 
 		// Inventory
-		CPlayer->InvFirst = ValidateInvFirst (6);
-		for (item = CPlayer->InvFirst, i = 0; item != NULL && i < 6; item = item->NextInv(), ++i)
+		CPlayer->mo->InvFirst = ValidateInvFirst (6);
+		for (item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < 6; item = item->NextInv(), ++i)
 		{
-			if (item == CPlayer->InvSel)
+			if (item == CPlayer->mo->InvSel)
 			{
 				screen->DrawTexture (Images[CursorImage],
 					42 + 35*i + ST_X, 12 + ST_Y,
@@ -496,7 +496,7 @@ private:
 		// Draw inventory
 		if (CPlayer->inventorytics == 0)
 		{
-			if (CPlayer->InvSel != 0)
+			if (CPlayer->mo->InvSel != 0)
 			{
 				if (ItemFlash > 0)
 				{
@@ -508,8 +508,8 @@ private:
 						DTA_Alpha, ItemFlash,
 						TAG_DONE);
 				}
-				DrINumberOuter (CPlayer->InvSel->Amount, -51, -10, false, 7);
-				screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -42, -17,
+				DrINumberOuter (CPlayer->mo->InvSel->Amount, -51, -10, false, 7);
+				screen->DrawTexture (TexMan(CPlayer->mo->InvSel->Icon), -42, -17,
 					DTA_HUDRules, HUD_Normal,
 					DTA_CenterBottomOffset, true,
 					TAG_DONE);
@@ -517,14 +517,14 @@ private:
 		}
 		else
 		{
-			CPlayer->InvFirst = ValidateInvFirst (6);
+			CPlayer->mo->InvFirst = ValidateInvFirst (6);
 			int i = 0;
 			AInventory *item;
-			if (CPlayer->InvFirst != NULL)
+			if (CPlayer->mo->InvFirst != NULL)
 			{
-				for (item = CPlayer->InvFirst; item != NULL && i < 6; item = item->NextInv(), ++i)
+				for (item = CPlayer->mo->InvFirst; item != NULL && i < 6; item = item->NextInv(), ++i)
 				{
-					if (item == CPlayer->InvSel)
+					if (item == CPlayer->mo->InvSel)
 					{
 						screen->DrawTexture (Images[CursorImage], -100+i*35, -21,
 							DTA_HUDRules, HUD_HorizCenter,

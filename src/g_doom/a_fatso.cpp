@@ -246,7 +246,7 @@ void A_FatAttack3 (AActor *self)
 
 void A_Mushroom (AActor *actor)
 {
-	int i, j, n = actor->damage;
+	int i, j, n = actor->GetMissileDamage (0, 1);
 
 	const PClass *spawntype = NULL;
 	int index = CheckIndex (1, NULL);
@@ -255,7 +255,7 @@ void A_Mushroom (AActor *actor)
 		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
 		n = EvalExpressionI (StateParameters[index+1], actor);
 		if (n == 0)
-			n = actor->damage;
+			n = actor->GetMissileDamage (0, 1);
 	}
 	if (spawntype == NULL) spawntype = RUNTIME_CLASS(AFatShot);
 

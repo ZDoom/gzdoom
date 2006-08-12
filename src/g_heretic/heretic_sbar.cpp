@@ -310,10 +310,10 @@ private:
 			DrawImage (Images[imgUSEARTIA + ArtifactFlash], 182, 3);
 			oldarti = NULL; // so that the correct artifact fills in after the flash
 		}
-		else if (oldarti != CPlayer->InvSel
+		else if (oldarti != CPlayer->mo->InvSel
 			|| (oldarti != NULL && oldartiCount != oldarti->Amount))
 		{
-			oldarti = CPlayer->InvSel;
+			oldarti = CPlayer->mo->InvSel;
 			oldartiCount = oldarti != NULL ? oldarti->Amount : 0;
 			ArtiRefresh = screen->GetPageCount ();
 		}
@@ -478,23 +478,23 @@ private:
 		int i;
 
 		DrawImage (Images[imgINVBAR], 34, 2);
-		CPlayer->InvFirst = ValidateInvFirst (7);
-		if (CPlayer->InvFirst != NULL)
+		CPlayer->mo->InvFirst = ValidateInvFirst (7);
+		if (CPlayer->mo->InvFirst != NULL)
 		{
-			for (item = CPlayer->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
+			for (item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
 			{
 				DrawImage (TexMan(item->Icon), 50+i*31, 2);
 				if (item->Amount != 1)
 				{
 					DrSmallNumber (item->Amount, 65+i*31, 24);
 				}
-				if (item == CPlayer->InvSel)
+				if (item == CPlayer->mo->InvSel)
 				{
 					DrawImage (Images[imgSELECTBOX], 50+i*31, 31);
 				}
 			}
 			// Is there something to the left?
-			if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
+			if (CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
 			{
 				DrawImage (Images[!(gametic & 4) ?
 					imgINVLFGEM1 : imgINVLFGEM2], 38, 1);
@@ -630,28 +630,28 @@ private:
 					DTA_HUDRules, HUD_Normal,
 					TAG_DONE);
 			}
-			else if (CPlayer->InvSel != NULL)
+			else if (CPlayer->mo->InvSel != NULL)
 			{
 				screen->DrawTexture (Images[imgARTIBOX], -61, -31,
 					DTA_HUDRules, HUD_Normal,
 					DTA_Alpha, TRANSLUC50,
 					TAG_DONE);
-				screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -61, -31,
+				screen->DrawTexture (TexMan(CPlayer->mo->InvSel->Icon), -61, -31,
 					DTA_HUDRules, HUD_Normal,
 					TAG_DONE);
-				if (CPlayer->InvSel->Amount != 1)
+				if (CPlayer->mo->InvSel->Amount != 1)
 				{
-					DrSmallNumberOuter (CPlayer->InvSel->Amount, -46, -9, false);
+					DrSmallNumberOuter (CPlayer->mo->InvSel->Amount, -46, -9, false);
 				}
 			}
 		}
 		else
 		{
-			CPlayer->InvFirst = ValidateInvFirst (7);
+			CPlayer->mo->InvFirst = ValidateInvFirst (7);
 			i = 0;
-			if (CPlayer->InvFirst != NULL)
+			if (CPlayer->mo->InvFirst != NULL)
 			{
-				for (item = CPlayer->InvFirst; item != NULL && i < 7; item = item->NextInv(), ++i)
+				for (item = CPlayer->mo->InvFirst; item != NULL && i < 7; item = item->NextInv(), ++i)
 				{
 					screen->DrawTexture (Images[imgARTIBOX], -100+i*31, -32,
 						DTA_HUDRules, HUD_HorizCenter,
@@ -664,7 +664,7 @@ private:
 					{
 						DrSmallNumberOuter (item->Amount, -84+i*31, -10, true);
 					}
-					if (item == CPlayer->InvSel)
+					if (item == CPlayer->mo->InvSel)
 					{
 						screen->DrawTexture (Images[imgSELECTBOX], -100+i*31, -3,
 							DTA_HUDRules, HUD_HorizCenter,
@@ -672,7 +672,7 @@ private:
 					}
 				}
 				// Is there something to the left?
-				if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
+				if (CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
 				{
 					screen->DrawTexture (Images[!(gametic & 4) ?
 						imgINVLFGEM1 : imgINVLFGEM2], -112, -33,

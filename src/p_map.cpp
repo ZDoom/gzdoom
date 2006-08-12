@@ -1171,13 +1171,17 @@ BOOL PIT_CheckOnmobjZ (AActor *thing)
 	{ // under thing
 		return true;
 	}
+	else if (!tmflags && onmobj != NULL && thing->z + thing->height < onmobj->z + onmobj->height)
+	{ // something higher is in the way
+		return true;
+	}
 	fixed_t blockdist = thing->radius+tmthing->radius;
 	if (abs(thing->x-tmx) >= blockdist || abs(thing->y-tmy) >= blockdist)
 	{ // Didn't hit thing
 		return true;
 	}
 	onmobj = thing;
-	return false;
+	return !tmflags;
 }
 
 /*
@@ -1421,7 +1425,7 @@ AActor *P_CheckOnmobj (AActor *thing)
 
 	oldz = thing->z;
 	P_FakeZMovement (thing);
-	good = P_TestMobjZ (thing);
+	good = P_TestMobjZ (thing, false);
 	thing->z = oldz;
 
 	return good ? NULL : onmobj;
@@ -1433,19 +1437,21 @@ AActor *P_CheckOnmobj (AActor *thing)
 //
 //=============================================================================
 
-bool P_TestMobjZ (AActor *actor)
+bool P_TestMobjZ (AActor *actor, bool quick)
 {
 	static TArray<AActor *> mobjzbt;
 
 	int	xl,xh,yl,yh,bx,by;
 	fixed_t x, y;
 
+	onmobj = NULL;
 	if (actor->flags & MF_NOCLIP)
 		return true;
 
 	tmx = x = actor->x;
 	tmy = y = actor->y;
 	tmthing = actor;
+	tmflags = quick;
 
 	tmbbox[BOXTOP] = y + actor->radius;
 	tmbbox[BOXBOTTOM] = y - actor->radius;
@@ -1468,7 +1474,7 @@ bool P_TestMobjZ (AActor *actor)
 			if (!P_BlockThingsIterator (bx, by, PIT_CheckOnmobjZ, mobjzbt))
 				return false;
 
-	return true;
+	return onmobj == NULL;
 }
 
 //=============================================================================

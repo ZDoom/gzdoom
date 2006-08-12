@@ -277,7 +277,7 @@ extern bool				DoRipping;
 extern AActor			*LastRipped;
 
 BOOL	P_TestMobjLocation (AActor *mobj);
-bool	P_TestMobjZ (AActor *mobj);
+bool	P_TestMobjZ (AActor *mobj, bool quick=true);
 BOOL	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y);
 AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);

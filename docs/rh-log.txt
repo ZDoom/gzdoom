@@ -1,4 +1,6 @@
 August 11, 2006 (Changes by Graf Zahl)
+- Fixed: P_CheckOnMobjZ returned the first thing an actor could stand on, 
+  not the highest possible.
 - Added disintegration damage to SectorDamage.
 - Bumped savegame version, min. savegame version, netgame version and
   demo version because the inventory and damage changes are incompatible

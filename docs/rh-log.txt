@@ -1,3 +1,9 @@
+August 11, 2006 (Changes by Graf Zahl)
+- Added disintegration damage to SectorDamage.
+- Bumped savegame version, min. savegame version, netgame version and
+  demo version because the inventory and damage changes are incompatible
+  with the old code.
+
 August 11, 2006
 - Added the ACS commands
   ReplaceTextures (str old_texture, str new_texture, optional bool not_lower,

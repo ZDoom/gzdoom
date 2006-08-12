@@ -4962,6 +4962,7 @@ int DLevelScript::RunScript ()
 				{
 				case NAME_Fire:		modtype = MOD_FIRE;		break;
 				case NAME_Ice:		modtype = MOD_ICE;		break;
+				case NAME_Disintegrate: modtype = MOD_DISINTEGRATE; break;
 				default:			modtype = MOD_UNKNOWN;	break;
 				}
 

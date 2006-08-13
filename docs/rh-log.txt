@@ -1,3 +1,8 @@
+August 12, 2006
+- Added support for truecolor PNG textures. They still get resampled to the
+  global palette, but at least they are visible now.
+- Optimized UnfilterRow() in m_png.cpp a little.
+
 August 11, 2006 (Changes by Graf Zahl)
 - Fixed: P_CheckOnMobjZ returned the first thing an actor could stand on, 
   not the highest possible.

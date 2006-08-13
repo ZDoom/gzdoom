@@ -99,7 +99,7 @@ static inline void MakeChunk (void *where, DWORD type, size_t len);
 static inline void StuffPalette (const PalEntry *from, BYTE *to);
 static bool StuffBitmap (const DCanvas *canvas, FILE *file);
 static bool WriteIDAT (FILE *file, const BYTE *data, int len);
-static void UnfilterRow (int width, BYTE *dest, BYTE *stream, BYTE *prev);
+static void UnfilterRow (int width, BYTE *dest, BYTE *stream, BYTE *prev, int bpp);
 static void UnpackPixels (int width, int bytesPerRow, int bitdepth, BYTE *row);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -532,17 +532,30 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 	int y;
 	bool lastIDAT;
 	int bytesPerRowIn;
+	int bytesPerPixel;
 
-	inputLine = (Byte *)alloca (1+width*2);
-	prev = inputLine + 1 + width;
-	memset (prev, 0, width);
+	switch (colortype)
+	{
+	case 2:		bytesPerPixel = 3;		break;		// RGB
+	case 4:		bytesPerPixel = 2;		break;		// LA
+	case 6:		bytesPerPixel = 4;		break;		// RGBA
+	default:	bytesPerPixel = 1;		break;
+	}
+	inputLine = (Byte *)alloca (1 + width*bytesPerPixel*2);
+	prev = inputLine + 1 + width*bytesPerPixel;
+	memset (prev, 0, width*bytesPerPixel);
+
+	if (bytesPerPixel == 1 && bitdepth != 8)
+	{ // This is an invalid combination for PNG files
+		return false;
+	}
 
 	switch (bitdepth)
 	{
-	case 8:		bytesPerRowIn = width;			break;
-	case 4:		bytesPerRowIn = (width+1)/2;	break;
-	case 2:		bytesPerRowIn = (width+3)/4;	break;
-	case 1:		bytesPerRowIn = (width+7)/8;	break;
+	case 8:		bytesPerRowIn = width * bytesPerPixel;	break;
+	case 4:		bytesPerRowIn = (width+1)/2;			break;
+	case 2:		bytesPerRowIn = (width+3)/4;			break;
+	case 1:		bytesPerRowIn = (width+7)/8;			break;
 	default:	return false;
 	}
 
@@ -581,7 +594,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 
 			if (stream.avail_out == 0)
 			{
-				UnfilterRow (bytesPerRowIn, curr, inputLine, prev);
+				UnfilterRow (bytesPerRowIn, curr, inputLine, prev, bytesPerPixel);
 				prev = curr;
 				curr += pitch;
 				y++;
@@ -800,51 +813,77 @@ static bool WriteIDAT (FILE *file, const BYTE *data, int len)
 // UnfilterRow
 //
 // Unfilters the given row. Unknown filter types are silently ignored.
+// bpp is bytes per pixel, not bits per pixel.
+// width is in bytes, not pixels.
 //
 //==========================================================================
 
-void UnfilterRow (int width, BYTE *dest, BYTE *row, BYTE *prev)
+void UnfilterRow (int width, BYTE *dest, BYTE *row, BYTE *prev, int bpp)
 {
 	int x;
 
 	switch (*row++)
 	{
 	case 1:		// Sub
-		dest[0] = row[0];
-		for (x = 1; x < width; ++x)
+		x = bpp;
+		do
 		{
-			dest[x] = row[x] + dest[x-1];
+			*dest++ = *row++;
+		}
+		while (--x);
+		for (x = width - bpp; x > 0; --x)
+		{
+			*dest = *row++ + *(dest - bpp);
+			dest++;
 		}
 		break;
 
 	case 2:		// Up
-		for (x = 0; x < width; ++x)
+		x = width;
+		do
 		{
-			dest[x] = row[x] + prev[x];
+			*dest++ = *row++ + *prev++;
 		}
+		while (--x);
 		break;
 
 	case 3:		// Average
-		dest[0] = row[0] + prev[0]/2;
-		for (x = 1; x < width; ++x)
+		x = bpp;
+		do
 		{
-			dest[x] = row[x] + (BYTE)(((unsigned)dest[x-1] + (unsigned)prev[x])/2);
+			*dest++ = *row++ + (*prev++)/2;
+		}
+		while (--x);
+		for (x = width - bpp; x > 0; --x)
+		{
+			*dest = *row++ + (BYTE)((unsigned(*(dest - bpp)) + unsigned(*prev++)) >> 1);
+			dest++;
 		}
 		break;
 
 	case 4:		// Paeth
-		dest[0] = row[0] + prev[0];
-		for (x = 1; x < width; ++x)
+		x = bpp;
+		do
+		{
+			*dest++ = *row++ + *prev++;
+		}
+		while (--x);
+		for (x = width - bpp; x > 0; --x)
 		{
 			int a, b, c, pa, pb, pc;
 
-			a = dest[x-1];
-			b = prev[x];
-			c = prev[x-1];
-			pa = abs (b - c);
-			pb = abs (a - c);
-			pc = abs (a + b - c - c);
-			dest[x] = row[x] + (BYTE)((pa <= pb && pa <= pc) ? a : (pb <= pc) ? b : c);
+			a = *(dest - bpp);
+			b = *(prev);
+			c = *(prev - bpp);
+			pa = b - c;
+			pb = a - c;
+			pc = abs (pa + pb);
+			pa = abs (pa);
+			pb = abs (pb);
+			*dest = *row + (BYTE)((pa <= pb && pa <= pc) ? a : (pb <= pc) ? b : c);
+			dest++;
+			row++;
+			prev++;
 		}
 		break;
 

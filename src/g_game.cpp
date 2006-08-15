@@ -187,7 +187,7 @@ FString			savegamefile;
 char			savedescription[SAVESTRINGSIZE];
 
 // [RH] Name of screenshot file to generate (usually NULL)
-char			*shotfile;
+FString			shotfile;
 
 AActor* 		bodyque[BODYQUESIZE]; 
 int 			bodyqueslot; 
@@ -890,11 +890,7 @@ void G_Ticker ()
 			break;
 		case ga_screenshot:
 			M_ScreenShot (shotfile);
-			if (shotfile)
-			{
-				free (shotfile);
-				shotfile = NULL;
-			}
+			shotfile = "";
 			gameaction = ga_nothing;
 			break;
 		case ga_fullconsole:

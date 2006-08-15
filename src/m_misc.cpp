@@ -537,14 +537,14 @@ static BOOL FindFreeName (FString &fullname, const char *extension)
 	return false;
 }
 
-void M_ScreenShot (char *filename)
+void M_ScreenShot (const char *filename)
 {
 	FILE *file;
 	FString autoname;
 	bool writepcx = (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
 
 	// find a file name to save it to
-	if (filename == NULL)
+	if (filename == NULL || filename[0] == '\0')
 	{
 #ifndef unix
 		if (Args.CheckParm ("-cdrom"))

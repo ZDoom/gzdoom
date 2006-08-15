@@ -36,7 +36,7 @@ void M_FindResponseFile (void);
 
 // [RH] M_ScreenShot now accepts a filename parameter.
 //		Pass a NULL to get the original behavior.
-void M_ScreenShot (char *filename);
+void M_ScreenShot (const char *filename);
 
 void M_LoadDefaults ();
 

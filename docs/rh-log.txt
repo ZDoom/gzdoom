@@ -1,3 +1,18 @@
+August 14, 2006
+- Added JPEG texture support, courtesy of Ken's Picture Library. I will
+  probably switch to the IJG library once I pare it down. (Ken's code is 18K
+  of C source but does not support progressive JPEG. The IJG library is over
+  a megabyte of source and supports pretty much everything you would ever
+  need ever.)
+- Fixed endianness issue in FTextureManager::CreateTexture().
+- Added support for interlaced PNGs. Now ZDoom is a mostly complete PNG
+  reader. The only thing missing is 48-bit RGB and 16-bit grayscale support,
+  which are just wastes of bits here, but also less likely to appear than
+  an interlaced PNG. (However, if you are using interlaced PNGs for textures,
+  then you are needlessly wasting space, since the image won't display
+  progressively.)
+- Fixed: Writing named screenshots didn't work.
+
 August 12, 2006
 - Added support for truecolor PNG textures. They still get resampled to the
   global palette, but at least they are visible now.

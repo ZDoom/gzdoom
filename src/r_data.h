@@ -212,6 +212,25 @@ protected:
 };
 
 
+// A JPEG image
+class FJPEGTexture : public FTexture
+{
+public:
+	FJPEGTexture (int lumpnum, int width, int height);
+	~FJPEGTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+protected:
+	int SourceLump;
+	BYTE *Pixels;
+	Span DummySpans[2];
+
+	void MakeTexture ();
+};
+
 // A texture that returns a wiggly version of another texture.
 class FWarpTexture : public FTexture
 {

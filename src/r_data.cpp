@@ -238,6 +238,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 	{
 		DWORD dw;
 		WORD w[2];
+		BYTE b[4];
 	} first4bytes;
 
 	// Must check the length of the lump. Zero length flat markers (F1_START etc.) will come through here.
@@ -250,7 +251,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 	{
 		FWadLump data = Wads.OpenLumpNum (lumpnum);
 
-		data >> first4bytes.dw;
+		data.Read (first4bytes.b, 4);
 		if (first4bytes.dw == MAKE_ID('I','M','G','Z'))
 		{
 			type = t_imgz;
@@ -263,11 +264,11 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 			// This is most likely a PNG, but make sure. (Note that if the
 			// first 4 bytes match, but later bytes don't, we assume it's
 			// a corrupt PNG.)
-			data >> first4bytes.dw;
+			data.Read (first4bytes.b, 4);
 			if (first4bytes.dw != MAKE_ID(13,10,26,10))		return -1;
-			data >> first4bytes.dw;
+			data.Read (first4bytes.b, 4);
 			if (first4bytes.dw != MAKE_ID(0,0,0,13))		return -1;
-			data >> first4bytes.dw;
+			data.Read (first4bytes.b, 4);
 			if (first4bytes.dw != MAKE_ID('I','H','D','R'))	return -1;
 
 			// The PNG looks valid so far. Check the IHDR to make sure it's a
@@ -275,7 +276,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 			data >> width >> height
 				 >> bitdepth >> colortype >> compression >> filter >> interlace;
 
-			if (compression != 0 || filter != 0 || interlace != 0)
+			if (compression != 0 || filter != 0 || interlace > 1)
 			{
 				return -1;
 			}
@@ -290,10 +291,11 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 
 			// Just for completeness, make sure the PNG has something more than an
 			// IHDR.
-			data >> first4bytes.dw >> first4bytes.dw;
+			data.Seek (4, SEEK_CUR);
+			data.Read (first4bytes.b, 4);
 			if (first4bytes.dw == 0)
 			{
-				data >> first4bytes.dw;
+				data.Read (first4bytes.b, 4);
 				if (first4bytes.dw == MAKE_ID('I','E','N','D'))
 				{
 					return -1;
@@ -303,6 +305,39 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 			type = t_png;
 			out = new FPNGTexture (lumpnum, BigLong((int)width), BigLong((int)height),
 				bitdepth, colortype, interlace);
+		}
+		else if (first4bytes.b[0] == 0xFF && first4bytes.b[1] == 0xD8 && first4bytes.b[2] == 0xFF)
+		{
+			// JPEG, I presume
+
+			// Find the SOFn marker to extract the image dimensions,
+			// where n is 0, 1, or 2 (other types are unsupported).
+			while ((unsigned)first4bytes.b[3] - 0xC0 >= 3)
+			{
+				if (data.Read (first4bytes.w, 2) != 2)
+				{
+					return -1;
+				}
+				data.Seek (BigShort(first4bytes.w[0]) - 2, SEEK_CUR);
+				if (data.Read (first4bytes.b + 2, 2) != 2 || first4bytes.b[2] != 0xFF)
+				{
+					return -1;
+				}
+			}
+			if (data.Read (first4bytes.b, 3) != 3)
+			{
+				return -1;
+			}
+			if (BigShort (first4bytes.w[0]) <5)
+			{
+				return -1;
+			}
+			if (data.Read (first4bytes.b, 4) != 4)
+			{
+				return -1;
+			}
+			type = t_png;
+			out = new FJPEGTexture (lumpnum, BigShort(first4bytes.w[1]), BigShort(first4bytes.w[0]));
 		}
 		else if (usetype == FTexture::TEX_Flat)
 		{
@@ -2091,6 +2126,111 @@ void FPNGTexture::MakeTexture ()
 	}
 }
 
+int kpegrend (const char *kfilebuf, int kfilength,
+	unsigned char *daframeplace, int dabytesperline, int daxres, int dayres,
+	int daglobxoffs, int daglobyoffs);
+
+FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
+: SourceLump(lumpnum), Pixels(0)
+{
+	Wads.GetLumpName (Name, lumpnum);
+	Name[8] = 0;
+
+	UseType = TEX_MiscPatch;
+	LeftOffset = 0;
+	TopOffset = 0;
+	bMasked = false;
+
+	Width = width;
+	Height = height;
+	CalcBitSize ();
+
+	DummySpans[0].TopOffset = 0;
+	DummySpans[0].Length = Height;
+	DummySpans[1].TopOffset = 0;
+	DummySpans[1].Length = 0;
+}
+
+FJPEGTexture::~FJPEGTexture ()
+{
+	Unload ();
+}
+
+void FJPEGTexture::Unload ()
+{
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
+}
+
+const BYTE *FJPEGTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		if (WidthMask + 1 == Width)
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= Width;
+		}
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = DummySpans;
+	}
+	return Pixels + column*Height;
+}
+
+const BYTE *FJPEGTexture::GetPixels ()
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+void FJPEGTexture::MakeTexture ()
+{
+	FMemLump lump = Wads.ReadLump (SourceLump);
+	BYTE *rgb = new BYTE[Width * Height * 4];
+
+	Pixels = new BYTE[Width * Height];
+	if (kpegrend ((char *)lump.GetMem(), Wads.LumpLength (SourceLump), rgb, Width * 4, Width, Height, 0, 0) < 0)
+	{ // Failed to read the JPEG
+		memset (Pixels, 0xBA, Width * Height);
+	}
+	else
+	{
+		BYTE *in, *out;
+		int x, y, pitch, backstep;
+
+		in = rgb;
+		out = Pixels;
+
+		// Convert from source format to paletted, column-major.
+		pitch = Width * 4;
+		backstep = Height * pitch - 4;
+		for (x = Width; x > 0; --x)
+		{
+			for (y = Height; y > 0; --y)
+			{
+				*out++ = RGB32k[in[2]>>3][in[1]>>3][in[0]>>3];
+				in += pitch;
+			}
+			in -= backstep;
+		}
+	}
+	delete[] rgb;
+}
 
 FBuildTexture::FBuildTexture (int tilenum, const BYTE *pixels, int width, int height, int left, int top)
 : Pixels (pixels), Spans (NULL)

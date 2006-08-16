@@ -1,0 +1,63 @@
+# Makefile for libjpeg, derived from zlib/Makefile.mgw.
+
+STATICLIB = libjpeg.a
+
+CCDV = @../ccdv
+
+CC = gcc
+CFLAGS = $(LOC) -O2 -Wall -fomit-frame-pointer
+
+AS = $(CC)
+ASFLAGS = $(LOC) -Wall
+
+LD = $(CC)
+LDFLAGS = $(LOC) -s
+
+AR = ar
+ARFLAGS = rcs
+
+OBJS = jcomapi.o jdapimin.o jdapistd.o jdatasrc.o jdcoefct.o jdcolor.o \
+       jddctmgr.o jdhuff.o jdinput.o jdmainct.o jdmarker.o jdmaster.o \
+       jdmerge.o jdphuff.o jdpostct.o jdsample.o jerror.o jidctint.o \
+       jmemmgr.o jutils.o
+
+all: $(STATICLIB)
+
+.c.o:
+	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<
+
+$(STATICLIB): $(OBJS)
+	$(CCDV) $(AR) $(ARFLAGS) $@ $(OBJS)
+
+
+.PHONY: clean
+
+clean:
+ifeq (msys,$(OSTYPE))
+	rm -f $(STATICLIB)
+	rm -f *.o
+else
+	-del /q /f $(STATICLIB) 2>nul
+	-del /q /f *.o 2>nul
+endif
+
+jcomapi.o: jcomapi.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdapimin.o: jdapimin.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdapistd.o: jdapistd.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdatasrc.o: jdatasrc.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h
+jdcoefct.o: jdcoefct.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdcolor.o: jdcolor.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jddctmgr.o: jddctmgr.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h jdct.h
+jdhuff.o: jdhuff.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h jdhuff.h
+jdinput.o: jdinput.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdmainct.o: jdmainct.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdmarker.o: jdmarker.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdmaster.o: jdmaster.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdmerge.o: jdmerge.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdphuff.o: jdphuff.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h jdhuff.h
+jdpostct.o: jdpostct.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jdsample.o: jdsample.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jerror.o: jerror.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jversion.h jerror.h
+jidctint.o: jidctint.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h jdct.h
+jutils.o: jutils.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h
+jmemmgr.o: jmemmgr.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h

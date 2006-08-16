@@ -16,7 +16,7 @@ ifdef GC
 endif
 CFLAGS += -MMD -DHAVE_FILELENGTH -D__forceinline=inline -Izlib -IFLAC `sdl-config --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
-LDFLAGS += -lFLAC++ -lFLAC -lz -lfmod `sdl-config --libs`
+LDFLAGS += -lFLAC++ -lFLAC -lz -ljpeg -lfmod `sdl-config --libs`
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
 SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/)

@@ -1,3 +1,4 @@
+
 // Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
@@ -35,6 +36,11 @@
 
 #include <stddef.h>
 #include <malloc.h>
+#include <stdio.h>
+extern "C"
+{
+#include <jpeglib.h>
+}
 
 #include "i_system.h"
 #include "m_alloc.h"
@@ -57,6 +63,7 @@
 
 #include "v_palette.h"
 #include "v_video.h"
+#include "v_text.h"
 #include "gi.h"
 #include "cmdlib.h"
 #include "templates.h"
@@ -1806,7 +1813,18 @@ void FIMGZTexture::MakeTexture ()
 }
 
 
-BYTE FPNGTexture::GrayMap[256];
+static BYTE GrayMap[256];
+
+static void InitGrayMap()
+{
+	if (GrayMap[0] == GrayMap[255])
+	{
+		for (int i = 0; i < 256; ++i)
+		{
+			GrayMap[i] = ColorMatcher.Pick (i, i, i);
+		}
+	}
+}
 
 FPNGTexture::FPNGTexture (int lumpnum, int width, int height,
 						  BYTE depth, BYTE colortype, BYTE interlace)
@@ -1901,13 +1919,7 @@ FPNGTexture::FPNGTexture (int lumpnum, int width, int height,
 	case 0:		// Grayscale
 		if (!bAlphaTexture)
 		{
-			if (GrayMap[0] == GrayMap[255])
-			{ // Initialize the GrayMap
-				for (i = 0; i < 256; ++i)
-				{
-					GrayMap[i] = ColorMatcher.Pick (i, i, i);
-				}
-			}
+			InitGrayMap();
 			if (colortype == 0 && havetRNS && trans[0] != 0)
 			{
 				bMasked = true;
@@ -2126,9 +2138,81 @@ void FPNGTexture::MakeTexture ()
 	}
 }
 
-int kpegrend (const char *kfilebuf, int kfilength,
-	unsigned char *daframeplace, int dabytesperline, int daxres, int dayres,
-	int daglobxoffs, int daglobyoffs);
+struct FLumpSourceMgr : public jpeg_source_mgr
+{
+	FWadLump &Lump;
+	JOCTET Buffer[4096];
+	bool StartOfFile;
+
+	FLumpSourceMgr (FWadLump &lump, j_decompress_ptr cinfo)
+	: Lump (lump)
+	{
+		cinfo->src = this;
+		init_source = InitSource;
+		fill_input_buffer = FillInputBuffer;
+		skip_input_data = SkipInputData;
+		resync_to_restart = jpeg_resync_to_restart;
+		term_source = TermSource;
+		bytes_in_buffer = 0;
+		next_input_byte = NULL;
+	}
+
+	static void InitSource (j_decompress_ptr cinfo)
+	{
+		((FLumpSourceMgr *)(cinfo->src))->StartOfFile = true;
+	}
+
+	static boolean FillInputBuffer (j_decompress_ptr cinfo)
+	{
+		FLumpSourceMgr *me = (FLumpSourceMgr *)(cinfo->src);
+		long nbytes = me->Lump.Read (me->Buffer, sizeof(me->Buffer));
+
+		if (nbytes <= 0)
+		{
+			me->Buffer[0] = (JOCTET)0xFF;
+			me->Buffer[1] = (JOCTET)JPEG_EOI;
+			nbytes = 2;
+		}
+		me->next_input_byte = me->Buffer;
+		me->bytes_in_buffer = nbytes;
+		me->StartOfFile = false;
+		return TRUE;
+	}
+
+	static void SkipInputData (j_decompress_ptr cinfo, long num_bytes)
+	{
+		FLumpSourceMgr *me = (FLumpSourceMgr *)(cinfo->src);
+		if (num_bytes <= (long)me->bytes_in_buffer)
+		{
+			me->bytes_in_buffer -= num_bytes;
+			me->next_input_byte += num_bytes;
+		}
+		else
+		{
+			num_bytes -= (long)me->bytes_in_buffer;
+			me->Lump.Seek (num_bytes, SEEK_CUR);
+			FillInputBuffer (cinfo);
+		}
+	}
+
+	static void TermSource (j_decompress_ptr cinfo)
+	{
+	}
+};
+
+static void JPEG_ErrorExit (j_common_ptr cinfo)
+{
+	(*cinfo->err->output_message) (cinfo);
+	throw -1;
+}
+
+static void JPEG_OutputMessage (j_common_ptr cinfo)
+{
+	char buffer[JMSG_LENGTH_MAX];
+
+	(*cinfo->err->format_message) (cinfo, buffer);
+	Printf (TEXTCOLOR_ORANGE "JPEG failure: %s\n", buffer);
+}
 
 FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 : SourceLump(lumpnum), Pixels(0)
@@ -2200,36 +2284,94 @@ const BYTE *FJPEGTexture::GetPixels ()
 
 void FJPEGTexture::MakeTexture ()
 {
-	FMemLump lump = Wads.ReadLump (SourceLump);
-	BYTE *rgb = new BYTE[Width * Height * 4];
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	JSAMPLE *buff = NULL;
+
+	jpeg_decompress_struct cinfo;
+	jpeg_error_mgr jerr;
 
 	Pixels = new BYTE[Width * Height];
-	if (kpegrend ((char *)lump.GetMem(), Wads.LumpLength (SourceLump), rgb, Width * 4, Width, Height, 0, 0) < 0)
-	{ // Failed to read the JPEG
-		memset (Pixels, 0xBA, Width * Height);
-	}
-	else
+	memset (Pixels, 0xBA, Width * Height);
+
+	cinfo.err = jpeg_std_error(&jerr);
+	cinfo.err->output_message = JPEG_OutputMessage;
+	cinfo.err->error_exit = JPEG_ErrorExit;
+	jpeg_create_decompress(&cinfo);
+	try
 	{
-		BYTE *in, *out;
-		int x, y, pitch, backstep;
-
-		in = rgb;
-		out = Pixels;
-
-		// Convert from source format to paletted, column-major.
-		pitch = Width * 4;
-		backstep = Height * pitch - 4;
-		for (x = Width; x > 0; --x)
+		FLumpSourceMgr sourcemgr(lump, &cinfo);
+		jpeg_read_header(&cinfo, TRUE);
+		if (!((cinfo.out_color_space == JCS_RGB && cinfo.num_components == 3) ||
+			  (cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
+			  (cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			for (y = Height; y > 0; --y)
-			{
-				*out++ = RGB32k[in[2]>>3][in[1]>>3][in[0]>>3];
-				in += pitch;
-			}
-			in -= backstep;
+			Printf (TEXTCOLOR_ORANGE "Unsupported color format\n", Name);
+			throw -1;
 		}
+		if (cinfo.out_color_space == JCS_GRAYSCALE)
+		{
+			InitGrayMap();
+		}
+
+		jpeg_start_decompress(&cinfo);
+
+		int y = 0;
+		buff = new BYTE[cinfo.output_width * cinfo.output_components];
+
+		while (cinfo.output_scanline < cinfo.output_height)
+		{
+			int num_scanlines = jpeg_read_scanlines(&cinfo, &buff, 1);
+			BYTE *in = buff;
+			BYTE *out = Pixels + y;
+			switch (cinfo.out_color_space)
+			{
+			case JCS_RGB:
+				for (int x = Width; x > 0; --x)
+				{
+					*out = RGB32k[in[0]>>3][in[1]>>3][in[2]>>3];
+					out += Height;
+					in += 3;
+				}
+				break;
+
+			case JCS_GRAYSCALE:
+				for (int x = Width; x > 0; --x)
+				{
+					*out = GrayMap[in[0]];
+					out += Height;
+					in += 1;
+				}
+				break;
+
+			case JCS_CMYK:
+				// What are you doing using a CMYK image? :)
+				for (int x = Width; x > 0; --x)
+				{
+					// To be precise, these calculations should use 255, but
+					// 256 is much faster and virtually indistinguishable.
+					int r = in[3] - (((256-in[0])*in[3]) >> 8);
+					int g = in[3] - (((256-in[1])*in[3]) >> 8);
+					int b = in[3] - (((256-in[2])*in[3]) >> 8);
+					*out = RGB32k[r >> 3][g >> 3][b >> 3];
+					out += Height;
+					in += 4;
+				}
+				break;
+			}
+			y++;
+		}
+		jpeg_finish_decompress(&cinfo);
+		jpeg_destroy_decompress(&cinfo);
 	}
-	delete[] rgb;
+	catch (int)
+	{
+		Printf (TEXTCOLOR_ORANGE "   in texture %s\n", Name);
+		jpeg_destroy_decompress(&cinfo);
+	}
+	if (buff != NULL)
+	{
+		delete[] buff;
+	}
 }
 
 FBuildTexture::FBuildTexture (int tilenum, const BYTE *pixels, int width, int height, int left, int top)

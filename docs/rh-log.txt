@@ -1,3 +1,10 @@
+August 16, 2006
+- Switched to IJG code for reading JPEG images. I have included a stripped-
+  down version of the library with the ZDoom source. (It actually uses less
+  space than zlib now.) Unix users probably ought to use the system-supplied
+  libjpeg instead. I modified Makefile.linux to hopefully do that. I'm sure
+  Jim or someone will correct me if it doesn't actually work.
+
 August 14, 2006
 - Added JPEG texture support, courtesy of Ken's Picture Library. I will
   probably switch to the IJG library once I pare it down. (Ken's code is 18K

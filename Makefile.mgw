@@ -27,6 +27,7 @@ basetools: ccdv.exe
 	$(MAKE) -C tools/xlatcc
 	$(MAKE) -C wadsrc -f Makefile.mgw
 	$(MAKE) -C flac -f Makefile.mgw
+	$(MAKE) -C jpeg-6b -f Makefile.mgw
 
 cleanexe:
 	@$(MAKE) -C . -f Makefile.mingw clean
@@ -41,6 +42,7 @@ clean:
 	@$(MAKE) -C . -f Makefile.mingw clean
 	@$(MAKE) -C zlib -f Makefile.mgw clean
 	@$(MAKE) -C flac -f Makefile.mgw clean
+	@$(MAKE) -C jpeg-6b -f Makefile.mgw clean
 ifeq (msys,$(OSTYPE))
 	rm -f ccdv.exe
 else

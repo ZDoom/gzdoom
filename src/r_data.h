@@ -206,8 +206,6 @@ protected:
 	int PaletteSize;
 	DWORD StartOfIDAT;
 
-	static BYTE GrayMap[256];
-
 	void MakeTexture ();
 };
 

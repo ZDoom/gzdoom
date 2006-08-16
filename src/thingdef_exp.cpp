@@ -46,6 +46,8 @@
 #include "i_system.h"
 #include "m_random.h"
 #include "a_pickups.h"
+#include "thingdef.h"
+#include "p_lnspec.h"
 
 void InitExpressions ();
 void ClearExpressions ();
@@ -87,6 +89,8 @@ enum ExpOp
 	EX_Sin,			// sin (angle)
 	EX_Cos,			// cos (angle)
 	EX_InvCount,	// invcount (type)
+	EX_ActionSpecial,
+	EX_Right,
 };
 
 enum ExpValType
@@ -251,12 +255,12 @@ struct ExpData
 		Type = EX_NOP;
 		Value.Type = VAL_Int;
 		Value.Int = 0;
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < 2; i++)
 			Children[i] = NULL;
 	}
 	~ExpData ()
 	{
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < 2; i++)
 		{
 			if (Children[i])
 			{
@@ -287,12 +291,14 @@ struct ExpData
 			if (Children[0]->Type == EX_Const)
 			{
 				bool cond = (Children[0]->Value.Type == VAL_Int) ? (Children[0]->Value.Int != 0) : (Children[0]->Value.Float != 0);
-				ExpData *data = Children[cond ? 1 : 2];
-				delete Children[cond ? 2 : 1];
+				ExpData *data = Children[1]->Children[cond];
+				delete Children[1]->Children[!cond];
+				delete Children[1];
+				delete Children[0];
 
 				Type = data->Type;
 				Value = data->Value;
-				for (int i = 0; i < 3; i++)
+				for (int i = 0; i < 2; i++)
 				{
 					Children[i] = data->Children[i];
 					data->Children[i] = NULL;
@@ -301,7 +307,7 @@ struct ExpData
 				delete data;
 			}
 		}
-		else if (Type != EX_Random && Type != EX_Sin && Type != EX_Cos && Type != EX_InvCount)
+		else if (Type != EX_Random && Type != EX_Sin && Type != EX_Cos && Type != EX_InvCount && Type != EX_ActionSpecial)
 		{
 			if (Children[0]->Type == EX_Const && Children[1]->Type == EX_Const)
 			{
@@ -324,7 +330,7 @@ struct ExpData
 			return false;
 		}
 
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < 2; i++)
 		{
 			if (Children[i] && !Children[i]->Compare (other->Children[i]))
 				return false;
@@ -335,7 +341,7 @@ struct ExpData
 
 	ExpOp Type;
 	ExpVal Value;
-	ExpData *Children[3];
+	ExpData *Children[2];
 };
 
 TArray<ExpData *> StateExpressions;
@@ -402,10 +408,13 @@ static ExpData *ParseExpressionM ()
 		ExpData *data = new ExpData;
 		data->Type = EX_Cond;
 		data->Children[0] = tmp;
-		data->Children[1] = ParseExpressionM ();
+		ExpData *choices = new ExpData;
+		data->Children[1] = choices;
+		choices->Type = EX_Right;
+		choices->Children[0] = ParseExpressionM ();
 		if (!SC_CheckString (":"))
 			SC_ScriptError ("':' expected");
-		data->Children[2] = ParseExpressionM ();
+		choices->Children[1] = ParseExpressionM ();
 		data->EvalConst ();
 		return data;
 	}
@@ -778,8 +787,47 @@ static ExpData *ParseExpressionA ()
 	}
 	else
 	{
+		int specnum, min_args, max_args;
+
 		SC_MustGetString ();
 
+		// Check if this is an action special
+		strlwr (sc_String);
+		specnum = FindLineSpecialEx (sc_String, &min_args, &max_args);
+		if (specnum != 0)
+		{
+			int i;
+
+			if (!SC_CheckString ("("))
+				SC_ScriptError ("'(' expected");
+
+			ExpData *data = new ExpData, **left;
+			data->Type = EX_ActionSpecial;
+			data->Value.Int = specnum;
+
+			data->Children[0] = ParseExpressionM ();
+			left = &data->Children[1];
+
+			for (i = 1; i < 5 && SC_CheckString (","); ++i)
+			{
+				ExpData *right = new ExpData;
+				right->Type = EX_Right;
+				right->Children[0] = ParseExpressionM ();
+				*left = right;
+				left = &right->Children[1];
+			}
+			*left = NULL;
+			if (!SC_CheckString (")"))
+				SC_ScriptError ("')' expected");
+			if (i < min_args)
+				SC_ScriptError ("Not enough arguments to action special");
+			if (i > max_args)
+				SC_ScriptError ("Too many arguments to action special");
+
+			return data;
+		}
+
+		// Check if it's a variable we understand
 		int varid = -1;
 		for (size_t i = 0; i < countof(ExpVars); i++)
 		{
@@ -1363,10 +1411,10 @@ static ExpVal EvalExpression (ExpData *data, AActor *self)
 		{
 			ExpVal a = EvalExpression (data->Children[0], self);
 
-			if (a.Type == VAL_Int)
-				val = a.Int ? EvalExpression (data->Children[1], self) : EvalExpression (data->Children[2], self);
-			else
-				val = a.Float ? EvalExpression (data->Children[1], self) : EvalExpression (data->Children[2], self);
+			if (a.Type == VAL_Float)
+				a.Int = (int)a.Float;
+
+			val = EvalExpression (data->Children[1]->Children[!!a.Int], self);
 		}
 		break;
 
@@ -1441,6 +1489,38 @@ static ExpVal EvalExpression (ExpData *data, AActor *self)
 			if (item)
 				val.Int = item->Amount;
 		}
+		break;
+
+	case EX_ActionSpecial:
+		{
+			int parms[5] = { 0, 0, 0, 0 };
+			int i = 0;
+			ExpData *parm = data;
+			
+			while (parm != NULL && i < 5)
+			{
+				ExpVal val = EvalExpression (parm->Children[0], self);
+				if (val.Type == VAL_Int)
+				{
+					parms[i] = val.Int;
+				}
+				else
+				{
+					parms[i] = (int)val.Float;
+				}
+				i++;
+				parm = parm->Children[1];
+			}
+
+			val.Type = VAL_Int;
+			val.Int = LineSpecials[data->Value.Int] (NULL, self, false,
+				parms[0], parms[1], parms[2], parms[3], parms[4]);
+		}
+		break;
+
+	case EX_Right:
+		// This should never be a top-level expression.
+		assert (data->Type != EX_Right);
 		break;
 	}
 

@@ -1,4 +1,7 @@
 August 16, 2006
+- Added action special support to the thingdef expression evaluator. Now you
+  can use them like normal functions, which is probably most useful for
+  ACS_ExecuteWithResult.
 - Switched to IJG code for reading JPEG images. I have included a stripped-
   down version of the library with the ZDoom source. (It actually uses less
   space than zlib now.) Unix users probably ought to use the system-supplied

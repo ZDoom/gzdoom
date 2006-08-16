@@ -1308,6 +1308,29 @@ int FindLineSpecial(const char * string)
 
 //==========================================================================
 //
+// FindLineSpecialEx
+//
+// Like FindLineSpecial, but also returns the min and max argument count.
+//
+//==========================================================================
+
+int FindLineSpecialEx (const char *string, int *min_args, int *max_args)
+{
+	const ACSspecials *spec;
+
+	spec = is_special(string, (unsigned int)strlen(string));
+	if (spec != NULL)
+	{
+		*min_args = spec->MinArgs;
+		*max_args = MAX(spec->MinArgs, spec->MaxArgs);
+		return spec->Special;
+	}
+	*min_args = *max_args = 0;
+	return 0;
+}
+
+//==========================================================================
+//
 // DoSpecialFunctions
 // handles special functions that can't be dealt with by the generic routine
 //

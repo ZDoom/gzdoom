@@ -8,7 +8,7 @@ bool P_MorphPlayer (player_s *player);
 bool P_UndoPlayerMorph (player_s *player, bool force);
 
 bool P_MorphMonster (AActor *actor, const PClass *morphClass);
-bool P_UpdateMorphedMonster (AActor *actor, int tics);
+bool P_UpdateMorphedMonster (AActor *actor);
 
 class AMinotaur : public AActor
 {
@@ -34,6 +34,31 @@ public:
 	bool OkayToSwitchTarget (AActor *other);
 	void BeginPlay ();
 	void Serialize (FArchive &arc);
+};
+
+class AEggFX : public AActor
+{
+	DECLARE_ACTOR (AEggFX, AActor)
+public:
+	int DoSpecialDamage (AActor *target, int damage);
+	void Serialize (FArchive &arc);
+
+	int PlayerClass, MonsterClass;		// actually names
+};
+
+class AMorphedMonster : public AActor
+{
+	DECLARE_ACTOR (AMorphedMonster, AActor)
+	HAS_OBJECT_POINTERS
+public:
+	void Tick ();
+	void Serialize (FArchive &arc);
+	void Die (AActor *source, AActor *inflictor);
+	void Destroy ();
+
+	AActor *UnmorphedMe;
+	int UnmorphTime;
+	DWORD FlagsSave;
 };
 
 #endif //__RAVENSHARED_H__

@@ -1,4 +1,26 @@
 August 16, 2006
+- Updated thingdef_specials.h for the new thingdef_specials.gperf file.
+- Created a new MorphedMonster class that Chicken and Pig now derive from.
+  This class automatically takes care of unmorphing the monster when its
+  time is up.
+- Made PlayerClass and MonsterClass properties of EggFX. You can override
+  these in a subclass to create new kinds of morpher projectiles. Along with
+  that, MorphWeapon is a new property of PlayerPawn that controls what type
+  of weapon you have available while morphed ("None" means you have no
+  weapons).
+- Changed morphed monsters to record the time when they want to unmorph, not
+  the time left until they unmorph. This simplifies calling
+  P_UpdateMorhpedMonster() because you don't need to pass it a tic count.
+- Added an optional second parameter to A_SpawnDebris and an optional
+  fifth parameter to A_SpawnItem that both do the same thing: If you set it
+  to 1, then the spawned actor will be assigned the same translation table
+  as the actor that called the function.
+- Moved the blood colorization in P_SpawnBlood() ahead of the SetDamage()
+  call so that the blood color will available to the states of the blood
+  actor.
+- Extended the puke command so that giving it a negative script number will
+  act like ACS_ExecuteAlways and always execute the script. (Ugh. Why did I
+  use's Raven's cheat code to name this command?)
 - Added action special support to the thingdef expression evaluator. Now you
   can use them like normal functions, which is probably most useful for
   ACS_ExecuteWithResult.

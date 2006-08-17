@@ -24,9 +24,6 @@ void A_BeakAttackPL1 (AActor *);
 void A_BeakAttackPL2 (AActor *);
 
 void A_Feathers (AActor *);
-void A_ChicLook (AActor *);
-void A_ChicChase (AActor *);
-void A_ChicPain (AActor *);
 void A_ChicAttack (AActor *);
 
 void P_UpdateBeak (AActor *);
@@ -109,7 +106,6 @@ class AChickenPlayer : public APlayerPawn
 	DECLARE_ACTOR (AChickenPlayer, APlayerPawn)
 public:
 	void MorphPlayerThink ();
-	void ActivateMorphWeapon ();
 };
 
 FState AChickenPlayer::States[] =
@@ -166,6 +162,7 @@ IMPLEMENT_ACTOR (AChickenPlayer, Heretic, -1, 0)
 	PROP_PlayerPawn_ForwardMove2 (FRACUNIT * 2500 / 2048)
 	PROP_PlayerPawn_SideMove1 (FRACUNIT * 2500 / 2048)
 	PROP_PlayerPawn_SideMove2 (FRACUNIT * 2500 / 2048)
+	PROP_PlayerPawn_MorphWeapon ("Beak")
 
 	PROP_PainSound ("chicken/pain")
 	PROP_DeathSound ("chicken/death")
@@ -199,49 +196,26 @@ void AChickenPlayer::MorphPlayerThink ()
 	}
 }
 
-void AChickenPlayer::ActivateMorphWeapon ()
-{
-	player->PendingWeapon = WP_NOCHANGE;
-	player->psprites[ps_weapon].sy = WEAPONTOP;
-	player->ReadyWeapon = player->mo->FindInventory<ABeak> ();
-	if (player->ReadyWeapon == NULL)
-	{
-		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (RUNTIME_CLASS(ABeak)));
-	}
-	if (player->ReadyWeapon != NULL)
-	{
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
-	}
-	else
-	{
-		P_SetPsprite (player, ps_weapon, NULL);
-	}
-	P_SetPsprite (player, ps_flash, NULL);
-}
-
 // Chicken (non-player) -----------------------------------------------------
 
-class AChicken : public AActor
+class AChicken : public AMorphedMonster
 {
-	DECLARE_ACTOR (AChicken, AActor)
-public:
-	void Destroy ();
-	void Die (AActor *source, AActor *inflictor);
+	DECLARE_ACTOR (AChicken, AMorphedMonster)
 };
 
 FState AChicken::States[] =
 {
 #define S_CHICKEN_LOOK 0
-	S_NORMAL (CHKN, 'A',   10, A_ChicLook				, &States[S_CHICKEN_LOOK+1]),
-	S_NORMAL (CHKN, 'B',   10, A_ChicLook				, &States[S_CHICKEN_LOOK+0]),
+	S_NORMAL (CHKN, 'A',   10, A_Look					, &States[S_CHICKEN_LOOK+1]),
+	S_NORMAL (CHKN, 'B',   10, A_Look					, &States[S_CHICKEN_LOOK+0]),
 
 #define S_CHICKEN_WALK (S_CHICKEN_LOOK+2)
-	S_NORMAL (CHKN, 'A',	3, A_ChicChase				, &States[S_CHICKEN_WALK+1]),
-	S_NORMAL (CHKN, 'B',	3, A_ChicChase				, &States[S_CHICKEN_WALK+0]),
+	S_NORMAL (CHKN, 'A',	3, A_Chase					, &States[S_CHICKEN_WALK+1]),
+	S_NORMAL (CHKN, 'B',	3, A_Chase					, &States[S_CHICKEN_WALK+0]),
 
 #define S_CHICKEN_PAIN (S_CHICKEN_WALK+2)
 	S_NORMAL (CHKN, 'D',	5, A_Feathers				, &States[S_CHICKEN_PAIN+1]),
-	S_NORMAL (CHKN, 'C',	5, A_ChicPain				, &States[S_CHICKEN_WALK+0]),
+	S_NORMAL (CHKN, 'C',	5, A_Pain					, &States[S_CHICKEN_WALK+0]),
 
 #define S_CHICKEN_ATK (S_CHICKEN_PAIN+2)
 	S_NORMAL (CHKN, 'A',	8, A_FaceTarget 			, &States[S_CHICKEN_ATK+1]),
@@ -282,24 +256,6 @@ IMPLEMENT_ACTOR (AChicken, Heretic, -1, 122)
 	PROP_ActiveSound ("chicken/active")
 	PROP_Obituary("$OB_CHICKEN")
 END_DEFAULTS
-
-void AChicken::Destroy ()
-{
-	if (tracer != NULL)
-	{
-		tracer->Destroy ();
-	}
-	Super::Destroy ();
-}
-
-void AChicken::Die (AActor *source, AActor *inflictor)
-{
-	Super::Die (source, inflictor);
-	if (tracer != NULL && (tracer->flags & MF_UNMORPHED))
-	{
-		tracer->Die (source, inflictor);
-	}
-}
 
 // Feather ------------------------------------------------------------------
 
@@ -343,10 +299,6 @@ END_DEFAULTS
 
 void A_ChicAttack (AActor *actor)
 {
-	if (P_UpdateMorphedMonster(actor, 18))
-	{
-		return;
-	}
 	if (!actor->target)
 	{
 		return;
@@ -357,51 +309,6 @@ void A_ChicAttack (AActor *actor)
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC A_ChicLook
-//
-//----------------------------------------------------------------------------
-
-void A_ChicLook (AActor *actor)
-{
-	if (P_UpdateMorphedMonster (actor, 10))
-	{
-		return;
-	}
-	A_Look (actor);
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC A_ChicChase
-//
-//----------------------------------------------------------------------------
-
-void A_ChicChase (AActor *actor)
-{
-	if (P_UpdateMorphedMonster (actor, 3))
-	{
-		return;
-	}
-	A_Chase (actor);
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC A_ChicPain
-//
-//----------------------------------------------------------------------------
-
-void A_ChicPain (AActor *actor)
-{
-	if (P_UpdateMorphedMonster (actor, 10))
-	{
-		return;
-	}
-	S_SoundID (actor, CHAN_BODY, actor->PainSound, 1, ATTN_NORM);
 }
 
 //----------------------------------------------------------------------------

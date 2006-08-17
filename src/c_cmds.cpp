@@ -428,6 +428,11 @@ CCMD (puke)
 	else
 	{
 		int script = atoi (argv[1]);
+
+		if (script == 0)
+		{ // Script 0 is reserved for Strife support. It is not pukable.
+			return;
+		}
 		int arg[3] = { 0, 0, 0 };
 		int argn = MIN (argc - 2, 3), i;
 
@@ -436,8 +441,16 @@ CCMD (puke)
 			arg[i] = atoi (argv[2+i]);
 		}
 
-		Net_WriteByte (DEM_RUNSCRIPT);
-		Net_WriteWord (script);
+		if (script > 0)
+		{
+			Net_WriteByte (DEM_RUNSCRIPT);
+			Net_WriteWord (script);
+		}
+		else
+		{
+			Net_WriteByte (DEM_RUNSCRIPT2);
+			Net_WriteWord (-script);
+		}
 		Net_WriteByte (argn);
 		for (i = 0; i < argn; ++i)
 		{

@@ -67,6 +67,7 @@
 #include "p_conversation.h"
 #include "v_text.h"
 #include "thingdef.h"
+#include "ravenshared.h"
 
 
 const PClass *QuestItemClasses[31];
@@ -508,6 +509,19 @@ ACTOR(RadiusThrust)
 
 #include "d_dehackedactions.h"
 
+/* What do the parameter letters mean?
+ *
+ * If the letter is uppercase, it is required. Lowercase letters are optional.
+ *   i = integer
+ *   f = fixed point
+ *   s = sound name
+ *   m = actor name
+ *   t = string
+ *   l = jump label
+ *   c = color
+ *   x = expression
+ *   y = expression
+ */
 #define FUNC(name, parm) { #name, name, parm },
 // Declare the code pointer table
 AFuncDesc AFTable[]=
@@ -664,14 +678,14 @@ AFuncDesc AFTable[]=
 	FUNC(A_JumpIfInventory, "MXL" )
 	FUNC(A_GiveInventory, "Mx" )
 	FUNC(A_TakeInventory, "Mx" )
-	FUNC(A_SpawnItem, "Mxxy" )
+	FUNC(A_SpawnItem, "Mxxyx" )
 	FUNC(A_ThrowGrenade, "Mxxxy" )
 	FUNC(A_SelectWeapon, "M")
 	FUNC(A_Print, "T")
 	FUNC(A_SetTranslucent, "Xx")
 	FUNC(A_FadeIn, "x")
 	FUNC(A_FadeOut, "x")
-	FUNC(A_SpawnDebris, "M")
+	FUNC(A_SpawnDebris, "Mx")
 	FUNC(A_CheckSight, "L")
 	FUNC(A_ExtChase, "XXyx")
 	FUNC(A_DropInventory, "M")
@@ -1710,7 +1724,7 @@ do_stop:
 								break;
 
 							case 'C':
-							case 'c':
+							case 'c':		// Color
 								SC_MustGetString ();
 								if (SC_Compare("none"))
 								{
@@ -3623,6 +3637,15 @@ static void PlayerMaxHealth (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void PlayerMorphWeapon (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	defaults->MorphWeapon = FName(sc_String);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void PlayerScoreIcon (APlayerPawn *defaults, Baggage &bag)
 {
 	SC_MustGetString ();
@@ -3673,6 +3696,24 @@ static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void EggFXMonsterClass (AEggFX *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	defaults->MonsterClass = FName(sc_String);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void EggFXPlayerClass (AEggFX *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	defaults->PlayerClass = FName(sc_String);
 }
 
 //==========================================================================
@@ -3739,6 +3780,8 @@ static const ActorProps props[] =
 	{ "disintegrate",				ActorDisintegrateState,		RUNTIME_CLASS(AActor) },
 	{ "donthurtshooter",			ActorDontHurtShooter,		RUNTIME_CLASS(AActor) },
 	{ "dropitem",					ActorDropItem,				RUNTIME_CLASS(AActor) },
+	{ "eggfx.playerclass",			(apf)EggFXPlayerClass,		RUNTIME_CLASS(AEggFX) },
+	{ "eggfx.monsterclass",			(apf)EggFXMonsterClass,		RUNTIME_CLASS(AEggFX) },
 	{ "explosiondamage",			ActorExplosionDamage,		RUNTIME_CLASS(AActor) },
 	{ "explosionradius",			ActorExplosionRadius,		RUNTIME_CLASS(AActor) },
 	{ "fastspeed",					ActorFastSpeed,				RUNTIME_CLASS(AActor) },
@@ -3782,6 +3825,7 @@ static const ActorProps props[] =
 	{ "player.forwardmove",			(apf)PlayerForwardMove,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.jumpz",				(apf)PlayerJumpZ,			RUNTIME_CLASS(APlayerPawn) },
 	{ "player.maxhealth",			(apf)PlayerMaxHealth,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.morphweapon",			(apf)PlayerMorphWeapon,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.scoreicon",			(apf)PlayerScoreIcon,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.sidemove",			(apf)PlayerSideMove,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.soundclass",			(apf)PlayerSoundClass,		RUNTIME_CLASS(APlayerPawn) },

@@ -8,6 +8,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_sharedglobal.h"
+#include "ravenshared.h"
 
 #define MORPHTICS (40*TICRATE)
 
@@ -196,25 +197,26 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 
 bool P_MorphMonster (AActor *actor, const PClass *spawntype)
 {
-	AActor *morphed;
+	AMorphedMonster *morphed;
 
-	if (actor->player ||
+	if (actor->player || spawntype == NULL ||
 		actor->flags3 & MF3_DONTMORPH ||
-		!(actor->flags3 & MF3_ISMONSTER))
+		!(actor->flags3 & MF3_ISMONSTER) ||
+		!spawntype->IsDescendantOf (RUNTIME_CLASS(AMorphedMonster)))
 	{
 		return false;
 	}
 
-	morphed = Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE);
+	morphed = static_cast<AMorphedMonster *>(Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE));
 	DObject::PointerSubstitution (actor, morphed);
 	morphed->tid = actor->tid;
 	morphed->angle = actor->angle;
-	morphed->tracer = actor;
+	morphed->UnmorphedMe = actor;
 	morphed->alpha = actor->alpha;
 	morphed->RenderStyle = actor->RenderStyle;
 
-	morphed->special1 = MORPHTICS + pr_morphmonst();
-	morphed->special2 = actor->flags & ~MF_JUSTHIT;
+	morphed->UnmorphTime = level.time + MORPHTICS + pr_morphmonst();
+	morphed->FlagsSave = actor->flags & ~MF_JUSTHIT;
 	//morphed->special = actor->special;
 	//memcpy (morphed->args, actor->args, sizeof(actor->args));
 	morphed->CopyFriendliness (actor, true);
@@ -222,7 +224,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype)
 	morphed->flags3 |= actor->flags3 & MF3_GHOST;
 	if (actor->renderflags & RF_INVISIBLE)
 	{
-		morphed->special2 |= MF_JUSTHIT;
+		morphed->FlagsSave |= MF_JUSTHIT;
 	}
 	morphed->AddToHash ();
 	actor->RemoveFromHash ();
@@ -242,18 +244,18 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype)
 //
 //----------------------------------------------------------------------------
 
-bool P_UpdateMorphedMonster (AActor *beast, int tics)
+bool P_UpdateMorphedMonster (AMorphedMonster *beast)
 {
 	AActor *actor;
 
-	beast->special1 -= tics;
-	if (beast->special1 > 0 ||
-		beast->tracer == NULL ||
+	if (beast->UnmorphTime == 0 ||
+		beast->UnmorphTime > level.time ||
+		beast->UnmorphedMe == NULL ||
 		beast->flags3 & MF3_STAYMORPHED)
 	{
 		return false;
 	}
-	actor = beast->tracer;
+	actor = beast->UnmorphedMe;
 	actor->SetOrigin (beast->x, beast->y, beast->z);
 	actor->flags |= MF_SOLID;
 	beast->flags &= ~MF_SOLID;
@@ -261,18 +263,18 @@ bool P_UpdateMorphedMonster (AActor *beast, int tics)
 	{ // Didn't fit
 		actor->flags &= ~MF_SOLID;
 		beast->flags |= MF_SOLID;
-		beast->special1 = 5*TICRATE; // Next try in 5 seconds
+		beast->UnmorphTime = level.time + 5*TICRATE; // Next try in 5 seconds
 		return false;
 	}
 	actor->angle = beast->angle;
 	actor->target = beast->target;
 	actor->FriendPlayer = beast->FriendPlayer;
-	actor->flags = beast->special2 & ~MF_JUSTHIT;
+	actor->flags = beast->FlagsSave & ~MF_JUSTHIT;
 	actor->flags  = (actor->flags & ~(MF_FRIENDLY|MF_SHADOW)) | (beast->flags & (MF_FRIENDLY|MF_SHADOW));
 	actor->flags3 = (actor->flags3 & ~(MF3_NOSIGHTCHECK|MF3_HUNTPLAYERS|MF3_GHOST))
 					| (beast->flags3 & (MF3_NOSIGHTCHECK|MF3_HUNTPLAYERS|MF3_GHOST));
 	actor->flags4 = (actor->flags4 & ~MF4_NOHATEPLAYERS) | (beast->flags4 & MF4_NOHATEPLAYERS);
-	if (!(beast->special2 & MF_JUSTHIT))
+	if (!(beast->FlagsSave & MF_JUSTHIT))
 		actor->renderflags &= ~RF_INVISIBLE;
 	actor->health = actor->GetDefault()->health;
 	actor->momx = beast->momx;
@@ -282,7 +284,7 @@ bool P_UpdateMorphedMonster (AActor *beast, int tics)
 	actor->special = beast->special;
 	memcpy (actor->args, beast->args, sizeof(actor->args));
 	actor->AddToHash ();
-	beast->tracer = NULL;
+	beast->UnmorphedMe = NULL;
 	DObject::PointerSubstitution (beast, actor);
 	beast->Destroy ();
 	Spawn<ATeleportFog> (beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
@@ -290,13 +292,6 @@ bool P_UpdateMorphedMonster (AActor *beast, int tics)
 }
 
 // Egg ----------------------------------------------------------------------
-
-class AEggFX : public AActor
-{
-	DECLARE_ACTOR (AEggFX, AActor)
-public:
-	int DoSpecialDamage (AActor *target, int damage);
-};
 
 FState AEggFX::States[] =
 {
@@ -324,19 +319,28 @@ IMPLEMENT_ACTOR (AEggFX, Heretic, -1, 40)
 
 	PROP_SpawnState (S_EGGFX)
 	PROP_DeathState (S_EGGFXI1)
+
+	PROP_EggFX_PlayerClass ("ChickenPlayer")
+	PROP_EggFX_MonsterClass ("Chicken")
 END_DEFAULTS
 
 int AEggFX::DoSpecialDamage (AActor *target, int damage)
 {
 	if (target->player)
 	{
-		P_MorphPlayer (target->player, PClass::FindClass (NAME_ChickenPlayer));
+		P_MorphPlayer (target->player, PClass::FindClass (ENamedName(PlayerClass)));
 	}
 	else
 	{
-		P_MorphMonster (target, PClass::FindClass (NAME_Chicken));
+		P_MorphMonster (target, PClass::FindClass (ENamedName(MonsterClass)));
 	}
 	return -1;
+}
+
+void AEggFX::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << PlayerClass << MonsterClass;
 }
 
 // Morph Ovum ----------------------------------------------------------------
@@ -379,11 +383,9 @@ bool AArtiEgg::Use (bool pickup)
 
 // Pork missile --------------------------------------------------------------
 
-class APorkFX : public AActor
+class APorkFX : public AEggFX
 {
-	DECLARE_ACTOR (APorkFX, AActor)
-public:
-	int DoSpecialDamage (AActor *target, int damage);
+	DECLARE_ACTOR (APorkFX, AEggFX)
 };
 
 FState APorkFX::States[] =
@@ -412,20 +414,10 @@ IMPLEMENT_ACTOR (APorkFX, Hexen, -1, 40)
 
 	PROP_SpawnState (S_EGGFX)
 	PROP_DeathState (S_EGGFXI2)
-END_DEFAULTS
 
-int APorkFX::DoSpecialDamage (AActor *target, int damage)
-{
-	if (target->player)
-	{
-		P_MorphPlayer (target->player, PClass::FindClass (NAME_PigPlayer));
-	}
-	else
-	{
-		P_MorphMonster (target, PClass::FindClass (NAME_Pig));
-	}
-	return -1;
-}
+	PROP_EggFX_PlayerClass ("PigPlayer")
+	PROP_EggFX_MonsterClass ("Pig")
+END_DEFAULTS
 
 // Porkalator ---------------------------------------------------------------
 
@@ -469,3 +461,49 @@ bool AArtiPork::Use (bool pickup)
 	return true;
 }
 
+// Morphed Monster (you must subclass this to do something useful) ---------
+
+IMPLEMENT_POINTY_CLASS (AMorphedMonster)
+ DECLARE_POINTER (UnmorphedMe)
+END_POINTERS
+
+BEGIN_STATELESS_DEFAULTS (AMorphedMonster, Any, -1, 0)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE)
+	PROP_Flags2 (MF2_MCROSS|MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL)
+	PROP_Flags3 (MF3_DONTMORPH|MF3_ISMONSTER)
+END_DEFAULTS
+
+void AMorphedMonster::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << UnmorphedMe << UnmorphTime << FlagsSave;
+}
+
+void AMorphedMonster::Destroy ()
+{
+	if (UnmorphedMe != NULL)
+	{
+		UnmorphedMe->Destroy ();
+	}
+	Super::Destroy ();
+}
+
+void AMorphedMonster::Die (AActor *source, AActor *inflictor)
+{
+	// Dead things don't unmorph
+	source->flags3 |= MF3_STAYMORPHED;
+	Super::Die (source, inflictor);
+	if (UnmorphedMe != NULL && (UnmorphedMe->flags & MF_UNMORPHED))
+	{
+		UnmorphedMe->health = health;
+		UnmorphedMe->Die (source, inflictor);
+	}
+}
+
+void AMorphedMonster::Tick ()
+{
+	if (!P_UpdateMorphedMonster (this))
+	{
+		Super::Tick ();
+	}
+}

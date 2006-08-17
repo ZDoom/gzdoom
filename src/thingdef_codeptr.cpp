@@ -1118,13 +1118,14 @@ void A_TakeFromTarget(AActor * self)
 void A_SpawnItem(AActor * self)
 {
 	FState * CallingState;
-	int index=CheckIndex(4, &CallingState);
+	int index=CheckIndex(5, &CallingState);
 	if (index<0) return;
 
 	const PClass * missile= PClass::FindClass((ENamedName)StateParameters[index]);
 	fixed_t distance = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	bool useammo = EvalExpressionN (StateParameters[index+3], self);
+	BOOL transfer_translation = EvalExpressionI (StateParameters[index+4], self);
 
 	if (!missile) 
 	{
@@ -1155,6 +1156,11 @@ void A_SpawnItem(AActor * self)
 	if (mo)
 	{
 		AActor * originator = self;
+
+		if (transfer_translation)
+		{
+			mo->Translation = self->Translation;
+		}
 
 		mo->angle=self->angle;
 		while (originator && isMissile(originator)) originator = originator->target;
@@ -1407,8 +1413,10 @@ void A_SpawnDebris(AActor * self)
 	AActor * mo;
 	const PClass * debris;
 
-	int index=CheckIndex(1, NULL);
+	int index=CheckIndex(2, NULL);
 	if (index<0) return;
+
+	BOOL transfer_translation = EvalExpressionI (StateParameters[index+1], self);
 
 	debris = PClass::FindClass((ENamedName)StateParameters[index]);
 	if (debris == NULL) return;
@@ -1418,6 +1426,10 @@ void A_SpawnDebris(AActor * self)
 		mo = Spawn(debris, self->x+((pr_spawndebris()-128)<<12),
 			self->y+((pr_spawndebris()-128)<<12), 
 			self->z+(pr_spawndebris()*self->height/256), ALLOW_REPLACE);
+		if (mo && transfer_translation)
+		{
+			mo->Translation = self->Translation;
+		}
 		if (mo && i < mo->GetClass()->ActorInfo->NumOwnedStates)
 		{
 			mo->SetState (mo->GetClass()->ActorInfo->OwnedStates + i);

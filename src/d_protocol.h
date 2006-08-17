@@ -138,6 +138,7 @@ enum EDemoCommand
 	DEM_SUMMONFRIEND,	// 37 String: Thing to fabricate
 	DEM_SPRAY,			// 38 String: The decal to spray
 	DEM_CROUCH,			// 39
+	DEM_RUNSCRIPT2		// 40 Same as DEM_RUNSCRIPT, but always executes
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

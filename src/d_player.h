@@ -110,6 +110,7 @@ public:
 	fixed_t		SideMove1, SideMove2;
 	int			ScoreIcon;
 	int			SpawnMask;
+	int			MorphWeapon;			// actually a name
 
 	int GetMaxHealth() const;
 };

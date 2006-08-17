@@ -46,6 +46,7 @@
 #include "w_wad.h"
 #include "a_strifeglobal.h"
 #include "thingdef.h"
+#include "ravenshared.h"
 
 void FActorInfo::BuildDefaults ()
 {
@@ -129,6 +130,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	ASigil *const sigil = (ASigil *)sgDefaults;
 	AAmmo *const ammo = (AAmmo *)sgDefaults;
 	APlayerPawn *const player = (APlayerPawn *)sgDefaults;
+	AEggFX *const eggfx = (AEggFX *)sgDefaults;
 
 	switch (defnum)
 	{
@@ -325,6 +327,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_PlayerPawn_ColorRange: sgClass->Meta.SetMetaInt (APMETA_ColorRange, dataint); break;
 	case ADEF_PlayerPawn_CrouchSprite: player->crouchsprite = GetSpriteIndex(datastr);	break;
 	case ADEF_PlayerPawn_SpawnMask:	player->SpawnMask = dataint; break;
+	case ADEF_PlayerPawn_MorphWeapon: player->MorphWeapon = FName(datastr); break;
 
 	case ADEF_PlayerPawn_DisplayName:
 		sgClass->Meta.SetMetaString (APMETA_DisplayName, datastr);
@@ -339,6 +342,9 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 			player->ScoreIcon = TexMan.AddPatch (datastr, ns_sprites);
 		}
 		break;
+
+	case ADEF_EggFX_PlayerClass:	eggfx->PlayerClass = FName(datastr); break;
+	case ADEF_EggFX_MonsterClass:	eggfx->MonsterClass = FName(datastr); break;
 
 	}
 }

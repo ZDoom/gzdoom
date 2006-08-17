@@ -2242,6 +2242,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 		break;
 
 	case DEM_RUNSCRIPT:
+	case DEM_RUNSCRIPT2:
 		{
 			int snum = ReadWord (stream);
 			int argn = ReadByte (stream);
@@ -2252,7 +2253,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 				arg[i] = ReadLong (stream);
 			}
 			P_StartScript (players[player].mo, NULL, snum, level.mapname, false,
-				arg[0], arg[1], arg[2], false, false, true);
+				arg[0], arg[1], arg[2], type == DEM_RUNSCRIPT2, false, true);
 		}
 		break;
 
@@ -2345,6 +2346,7 @@ void Net_SkipCommand (int type, byte **stream)
 			break;
 
 		case DEM_RUNSCRIPT:
+		case DEM_RUNSCRIPT2:
 			skip = 3 + *(*stream + 2) * 4;
 			break;
 

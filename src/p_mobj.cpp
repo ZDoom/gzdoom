@@ -3942,10 +3942,12 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 			if (th->tics < 1)
 				th->tics = 1;
 		}
-		th->SetDamage (damage);
-
 		// colorize the blood!
-		if (bloodcolor!=0) th->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+		if (bloodcolor != 0)
+		{
+			th->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+		}
+		th->SetDamage (damage);
 	}
 
 	if (cl_bloodtype >= 1)

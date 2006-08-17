@@ -22,8 +22,6 @@ extern void AdjustPlayerAngle (AActor *);
 void A_SnoutAttack (AActor *actor);
 
 void A_PigPain (AActor *);
-void A_PigLook (AActor *);
-void A_PigChase (AActor *);
 void A_PigAttack (AActor *);
 
 // Snout puff ---------------------------------------------------------------
@@ -91,7 +89,6 @@ class APigPlayer : public APlayerPawn
 	DECLARE_ACTOR (APigPlayer, APlayerPawn)
 public:
 	void MorphPlayerThink ();
-	void ActivateMorphWeapon ();
 };
 
 FState APigPlayer::States[] =
@@ -154,6 +151,7 @@ IMPLEMENT_ACTOR (APigPlayer, Hexen, -1, 0)
 	PROP_PlayerPawn_ForwardMove2 (FRACUNIT * 0x31 / 0x32)
 	PROP_PlayerPawn_SideMove1 (FRACUNIT * 0x17 / 0x18)
 	PROP_PlayerPawn_SideMove2 (FRACUNIT * 0x27 / 0x28)
+	PROP_PlayerPawn_MorphWeapon ("Snout")
 
 	PROP_PainSound ("PigPain")
 	PROP_DeathSound ("PigDeath")
@@ -177,46 +175,23 @@ void APigPlayer::MorphPlayerThink ()
 	}
 }
 
-void APigPlayer::ActivateMorphWeapon ()
-{
-	player->PendingWeapon = WP_NOCHANGE;
-	player->psprites[ps_weapon].sy = WEAPONTOP;
-	player->ReadyWeapon = player->mo->FindInventory<ASnout> ();
-	if (player->ReadyWeapon == NULL)
-	{
-		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (RUNTIME_CLASS(ASnout)));
-	}
-	if (player->ReadyWeapon != NULL)
-	{
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
-	}
-	else
-	{
-		P_SetPsprite (player, ps_weapon, NULL);
-	}
-	P_SetPsprite (player, ps_flash, NULL);
-}
-
 // Pig (non-player) ---------------------------------------------------------
 
-class APig : public AActor
+class APig : public AMorphedMonster
 {
-	DECLARE_ACTOR (APig, AActor)
-public:
-	void Destroy ();
-	void Die (AActor *source, AActor *inflictor);
+	DECLARE_ACTOR (APig, AMorphedMonster)
 };
 
 FState APig::States[] =
 {
 #define S_PIG_LOOK1 0
-	S_NORMAL (PIGY, 'B',   10, A_PigLook			    , &States[S_PIG_LOOK1]),
+	S_NORMAL (PIGY, 'B',   10, A_Look				    , &States[S_PIG_LOOK1]),
 
 #define S_PIG_WALK1 (S_PIG_LOOK1+1)
-	S_NORMAL (PIGY, 'A',	3, A_PigChase			    , &States[S_PIG_WALK1+1]),
-	S_NORMAL (PIGY, 'B',	3, A_PigChase			    , &States[S_PIG_WALK1+2]),
-	S_NORMAL (PIGY, 'C',	3, A_PigChase			    , &States[S_PIG_WALK1+3]),
-	S_NORMAL (PIGY, 'D',	3, A_PigChase			    , &States[S_PIG_WALK1]),
+	S_NORMAL (PIGY, 'A',	3, A_Chase				    , &States[S_PIG_WALK1+1]),
+	S_NORMAL (PIGY, 'B',	3, A_Chase				    , &States[S_PIG_WALK1+2]),
+	S_NORMAL (PIGY, 'C',	3, A_Chase				    , &States[S_PIG_WALK1+3]),
+	S_NORMAL (PIGY, 'D',	3, A_Chase				    , &States[S_PIG_WALK1]),
 
 #define S_PIG_PAIN (S_PIG_WALK1+4)
 	S_NORMAL (PIGY, 'D',	4, A_PigPain			    , &States[S_PIG_WALK1]),
@@ -265,24 +240,6 @@ IMPLEMENT_ACTOR (APig, Hexen, -1, 0)
 	PROP_ActiveSound ("PigActive1")
 END_DEFAULTS
 
-void APig::Destroy ()
-{
-	if (tracer != NULL)
-	{
-		tracer->Destroy ();
-	}
-	Super::Destroy ();
-}
-
-void APig::Die (AActor *source, AActor *inflictor)
-{
-	Super::Die (source, inflictor);
-	if (tracer != NULL && (tracer->flags & MF_UNMORPHED))
-	{
-		tracer->Die (source, inflictor);
-	}
-}
-
 //============================================================================
 //
 // A_SnoutAttack
@@ -317,36 +274,6 @@ void A_SnoutAttack (AActor *actor)
 	}
 }
 
-//----------------------------------------------------------------------------
-//
-// PROC A_PigLook
-//
-//----------------------------------------------------------------------------
-
-void A_PigLook (AActor *actor)
-{
-	if (P_UpdateMorphedMonster (actor, 10))
-	{
-		return;
-	}
-	A_Look (actor);
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC A_PigChase
-//
-//----------------------------------------------------------------------------
-
-void A_PigChase (AActor *actor)
-{
-	if (P_UpdateMorphedMonster (actor, 3))
-	{
-		return;
-	}
-	A_Chase(actor);
-}
-
 //============================================================================
 //
 // A_PigAttack
@@ -355,10 +282,6 @@ void A_PigChase (AActor *actor)
 
 void A_PigAttack (AActor *actor)
 {
-	if (P_UpdateMorphedMonster (actor, 18))
-	{
-		return;
-	}
 	if (!actor->target)
 	{
 		return;

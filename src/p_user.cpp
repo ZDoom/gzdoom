@@ -382,6 +382,7 @@ BEGIN_STATELESS_DEFAULTS (APlayerPawn, Any, -1, 0)
 	PROP_PlayerPawn_SideMove2 (FRACUNIT)
 	PROP_PlayerPawn_ColorRange (0, 0)
 	PROP_PlayerPawn_SoundClass ("player")
+	PROP_PlayerPawn_MorphWeapon ("None")
 END_DEFAULTS
 
 IMPLEMENT_ABSTRACT_ACTOR (APlayerChunk)
@@ -399,7 +400,8 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< SideMove2
 		<< ScoreIcon
 		<< InvFirst
-		<< InvSel;
+		<< InvSel
+		<< MorphWeapon;
 }
 
 //===========================================================================
@@ -911,6 +913,32 @@ void APlayerPawn::MorphPlayerThink ()
 
 void APlayerPawn::ActivateMorphWeapon ()
 {
+	const PClass *morphweapon = PClass::FindClass (ENamedName(MorphWeapon));
+	player->PendingWeapon = WP_NOCHANGE;
+	player->psprites[ps_weapon].sy = WEAPONTOP;
+
+	if (morphweapon == NULL || !morphweapon->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+	{ // No weapon at all while morphed!
+		player->ReadyWeapon = NULL;
+		P_SetPsprite (player, ps_weapon, NULL);
+	}
+	else
+	{
+		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->FindInventory (morphweapon));
+		if (player->ReadyWeapon == NULL)
+		{
+			player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (morphweapon));
+		}
+		if (player->ReadyWeapon != NULL)
+		{
+			P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+		}
+		else
+		{
+			P_SetPsprite (player, ps_weapon, NULL);
+		}
+	}
+	P_SetPsprite (player, ps_flash, NULL);
 }
 
 //===========================================================================

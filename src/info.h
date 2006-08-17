@@ -245,7 +245,10 @@ enum
 	ADEF_PlayerPawn_DisplayName,
 	ADEF_PlayerPawn_SoundClass,
 	ADEF_PlayerPawn_ScoreIcon,
-	ADEF_LastString = ADEF_PlayerPawn_ScoreIcon,
+	ADEF_PlayerPawn_MorphWeapon,
+	ADEF_EggFX_PlayerClass,
+	ADEF_EggFX_MonsterClass,
+	ADEF_LastString = ADEF_EggFX_MonsterClass,
 
 	// The rest of the properties use their type field (upper 2 bits)
 	ADEF_XScale,

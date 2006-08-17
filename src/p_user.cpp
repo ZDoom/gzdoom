@@ -400,8 +400,12 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< SideMove2
 		<< ScoreIcon
 		<< InvFirst
-		<< InvSel
-		<< MorphWeapon;
+		<< InvSel;
+
+	// Serialize the name, not the index
+	FName MorphWeaponName = ENamedName(MorphWeapon);
+	arc << MorphWeaponName;
+	MorphWeapon = MorphWeaponName;
 }
 
 //===========================================================================

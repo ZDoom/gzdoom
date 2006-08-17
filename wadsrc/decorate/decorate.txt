@@ -11,6 +11,7 @@
 #include "actors/doom/doomdecorations.txt"
 #include "actors/doom/stealthmonsters.txt"
 
+#include "actors/raven/artiegg.txt"
 #include "actors/raven/ravenartifacts.txt"
 #include "actors/raven/ravenhealth.txt"
 

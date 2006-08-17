@@ -10,7 +10,6 @@
 #include "a_sharedglobal.h"
 #include "p_enemy.h"
 #include "d_event.h"
-#include "ravenshared.h"
 #include "gstrings.h"
 
 static FRandom pr_chickenplayerthink ("ChickenPlayerThink");

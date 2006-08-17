@@ -1,3 +1,21 @@
+August 17, 2006 (Changes by Graf Zahl)
+- Took MF2_WINDTHRUST off AMorphedMonster. This is something that should not
+  be a default setting.
+- Moved a_artiegg.cpp to g_shared and renamed it to a_morph.cpp to better reflect
+  its meaning.
+- Fixed: AMorphProjectile's PlayerClass and MonsterClass members must be serialized
+  as FNames. Serializing them as ints is not safe because name indices are not 
+  guaranteed to be the same each time the game is started. Same for APlayerPawn's
+  MorphWeapon member.
+- Converted EggFX, ArtiEgg, PorkFX and ArtiPork to DECORATE. 
+- Added a new parameter to A_FireCustomMissile. Previously it always aimed
+  straight ahead and altered the projectile's angle according to the resulting
+  direction. If the 6th parameter is 1 now it will aim at the specified angle
+  directly.
+- Changed custom morphing to be based on a new MorphProjectile class, not
+  the Heretic specific EggFX. The EggFX properties are now prefixed with
+  'MorphProjectile.'. 
+
 August 16, 2006
 - Updated thingdef_specials.h for the new thingdef_specials.gperf file.
 - Created a new MorphedMonster class that Chicken and Pig now derive from.

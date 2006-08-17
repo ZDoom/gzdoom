@@ -204,4 +204,29 @@ private:
 	DEarthquake ();
 };
 
+class AMorphProjectile : public AActor
+{
+	DECLARE_ACTOR (AMorphProjectile, AActor)
+public:
+	int DoSpecialDamage (AActor *target, int damage);
+	void Serialize (FArchive &arc);
+
+	int PlayerClass, MonsterClass;	// really FNames but they would be destroyed by the construction process
+};
+
+class AMorphedMonster : public AActor
+{
+	DECLARE_ACTOR (AMorphedMonster, AActor)
+	HAS_OBJECT_POINTERS
+public:
+	void Tick ();
+	void Serialize (FArchive &arc);
+	void Die (AActor *source, AActor *inflictor);
+	void Destroy ();
+
+	AActor *UnmorphedMe;
+	int UnmorphTime;
+	DWORD FlagsSave;
+};
+
 #endif //__A_SHAREDGLOBAL_H__

@@ -67,7 +67,7 @@
 #include "p_conversation.h"
 #include "v_text.h"
 #include "thingdef.h"
-#include "ravenshared.h"
+#include "a_sharedglobal.h"
 
 
 const PClass *QuestItemClasses[31];
@@ -701,7 +701,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_JumpIfNoAmmo, "L" )
 	FUNC(A_CustomPunch, "Xxymx" )
 	FUNC(A_FireBullets, "XXXXmyx" )
-	FUNC(A_FireCustomMissile, "Mxyxx" )
+	FUNC(A_FireCustomMissile, "Mxyxxx" )
 	FUNC(A_RailAttack, "Xxyccxx" )
 	FUNC(A_Recoil, "X")
 	FUNC(A_JumpIfInTargetInventory, "MXL" )
@@ -3701,7 +3701,7 @@ static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void EggFXMonsterClass (AEggFX *defaults, Baggage &bag)
+static void EggFXMonsterClass (AMorphProjectile *defaults, Baggage &bag)
 {
 	SC_MustGetString ();
 	defaults->MonsterClass = FName(sc_String);
@@ -3710,7 +3710,7 @@ static void EggFXMonsterClass (AEggFX *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void EggFXPlayerClass (AEggFX *defaults, Baggage &bag)
+static void EggFXPlayerClass (AMorphProjectile *defaults, Baggage &bag)
 {
 	SC_MustGetString ();
 	defaults->PlayerClass = FName(sc_String);
@@ -3780,8 +3780,6 @@ static const ActorProps props[] =
 	{ "disintegrate",				ActorDisintegrateState,		RUNTIME_CLASS(AActor) },
 	{ "donthurtshooter",			ActorDontHurtShooter,		RUNTIME_CLASS(AActor) },
 	{ "dropitem",					ActorDropItem,				RUNTIME_CLASS(AActor) },
-	{ "eggfx.playerclass",			(apf)EggFXPlayerClass,		RUNTIME_CLASS(AEggFX) },
-	{ "eggfx.monsterclass",			(apf)EggFXMonsterClass,		RUNTIME_CLASS(AEggFX) },
 	{ "explosiondamage",			ActorExplosionDamage,		RUNTIME_CLASS(AActor) },
 	{ "explosionradius",			ActorExplosionRadius,		RUNTIME_CLASS(AActor) },
 	{ "fastspeed",					ActorFastSpeed,				RUNTIME_CLASS(AActor) },
@@ -3815,6 +3813,8 @@ static const ActorProps props[] =
 	{ "missileheight",				ActorMissileHeight,			RUNTIME_CLASS(AActor) },
 	{ "missiletype",				ActorMissileType,			RUNTIME_CLASS(AActor) },
 	{ "monster",					ActorMonster,				RUNTIME_CLASS(AActor) },
+	{ "morphprojectile.monsterclass",(apf)EggFXMonsterClass,	RUNTIME_CLASS(AMorphProjectile) },
+	{ "morphprojectile.playerclass",(apf)EggFXPlayerClass,		RUNTIME_CLASS(AMorphProjectile) },
 	{ "obituary",					ActorObituary,				RUNTIME_CLASS(AActor) },
 	{ "pain",						ActorPainState,				RUNTIME_CLASS(AActor) },
 	{ "painchance",					ActorPainChance,			RUNTIME_CLASS(AActor) },

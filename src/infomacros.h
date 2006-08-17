@@ -216,8 +216,6 @@ public:
 #define PROP_PlayerPawn_SoundClass(x)	ADD_STRING_PROP(ADEF_PlayerPawn_SoundClass,"\26",x)
 #define PROP_PlayerPawn_ScoreIcon(x)	ADD_STRING_PROP(ADEF_PlayerPawn_ScoreIcon,"\27",x)
 #define PROP_PlayerPawn_MorphWeapon(x)	ADD_STRING_PROP(ADEF_PlayerPawn_MorphWeapon,"\30",x)
-#define PROP_EggFX_PlayerClass(x)		ADD_STRING_PROP(ADEF_EggFX_PlayerClass,"\31",x)
-#define PROP_EggFX_MonsterClass(x)		ADD_STRING_PROP(ADEF_EggFX_MonsterClass,"\32",x)
 
 #define PROP_XScale(x)					ADD_BYTE_PROP(ADEF_XScale,x)
 #define PROP_YScale(x)					ADD_BYTE_PROP(ADEF_YScale,x)

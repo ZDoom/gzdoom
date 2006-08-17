@@ -8,7 +8,6 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_sharedglobal.h"
-#include "ravenshared.h"
 
 #define MORPHTICS (40*TICRATE)
 
@@ -291,40 +290,15 @@ bool P_UpdateMorphedMonster (AMorphedMonster *beast)
 	return true;
 }
 
-// Egg ----------------------------------------------------------------------
+// Base class for morphing projectiles --------------------------------------
 
-FState AEggFX::States[] =
-{
-#define S_EGGFX 0
-	S_NORMAL (EGGM, 'A',	4, NULL, &States[S_EGGFX+1]),
-	S_NORMAL (EGGM, 'B',	4, NULL, &States[S_EGGFX+2]),
-	S_NORMAL (EGGM, 'C',	4, NULL, &States[S_EGGFX+3]),
-	S_NORMAL (EGGM, 'D',	4, NULL, &States[S_EGGFX+4]),
-	S_NORMAL (EGGM, 'E',	4, NULL, &States[S_EGGFX+0]),
-
-#define S_EGGFXI1 (S_EGGFX+5)
-	S_BRIGHT (FX01, 'E',	3, NULL, &States[S_EGGFXI1+1]),
-	S_BRIGHT (FX01, 'F',	3, NULL, &States[S_EGGFXI1+2]),
-	S_BRIGHT (FX01, 'G',	3, NULL, &States[S_EGGFXI1+3]),
-	S_BRIGHT (FX01, 'H',	3, NULL, NULL),
-};
-
-IMPLEMENT_ACTOR (AEggFX, Heretic, -1, 40)
-	PROP_RadiusFixed (8)
-	PROP_HeightFixed (8)
-	PROP_SpeedFixed (18)
+IMPLEMENT_STATELESS_ACTOR(AMorphProjectile, Any, -1, 0)
 	PROP_Damage (1)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_NOTELEPORT)
-
-	PROP_SpawnState (S_EGGFX)
-	PROP_DeathState (S_EGGFXI1)
-
-	PROP_EggFX_PlayerClass ("ChickenPlayer")
-	PROP_EggFX_MonsterClass ("Chicken")
 END_DEFAULTS
 
-int AEggFX::DoSpecialDamage (AActor *target, int damage)
+int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 {
 	if (target->player)
 	{
@@ -337,129 +311,23 @@ int AEggFX::DoSpecialDamage (AActor *target, int damage)
 	return -1;
 }
 
-void AEggFX::Serialize (FArchive &arc)
+void AMorphProjectile::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << PlayerClass << MonsterClass;
+
+	// Hack alert: The classes have to be serialized as names.
+	// But due to the way an actor is constructed they cannot
+	// be declared as names.
+	FName PlayerClassName = ENamedName(PlayerClass);
+	FName MonsterClassName = ENamedName(MonsterClass);
+
+	arc << PlayerClassName << MonsterClassName;
+
+	PlayerClass = PlayerClassName;
+	MonsterClass = MonsterClassName;
+
 }
 
-// Morph Ovum ----------------------------------------------------------------
-
-class AArtiEgg : public AInventory
-{
-	DECLARE_ACTOR (AArtiEgg, AInventory)
-public:
-	bool Use (bool pickup);
-};
-
-FState AArtiEgg::States[] =
-{
-	S_NORMAL (EGGC, 'A',	6, NULL, &States[1]),
-	S_NORMAL (EGGC, 'B',	6, NULL, &States[2]),
-	S_NORMAL (EGGC, 'C',	6, NULL, &States[3]),
-	S_NORMAL (EGGC, 'B',	6, NULL, &States[0]),
-};
-
-IMPLEMENT_ACTOR (AArtiEgg, Heretic, 30, 14)
-	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (0)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
-	PROP_Inventory_Icon ("ARTIEGGC")
-	PROP_Inventory_PickupSound ("misc/p_pkup")
-	PROP_Inventory_PickupMessage("$TXT_ARTIEGG")
-END_DEFAULTS
-
-bool AArtiEgg::Use (bool pickup)
-{
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX));
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle-(ANG45/6));
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle+(ANG45/6));
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle-(ANG45/3));
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle+(ANG45/3));
-	return true;
-}
-
-// Pork missile --------------------------------------------------------------
-
-class APorkFX : public AEggFX
-{
-	DECLARE_ACTOR (APorkFX, AEggFX)
-};
-
-FState APorkFX::States[] =
-{
-//#define S_EGGFX 0
-	S_NORMAL (PRKM, 'A',	4, NULL, &States[S_EGGFX+1]),
-	S_NORMAL (PRKM, 'B',	4, NULL, &States[S_EGGFX+2]),
-	S_NORMAL (PRKM, 'C',	4, NULL, &States[S_EGGFX+3]),
-	S_NORMAL (PRKM, 'D',	4, NULL, &States[S_EGGFX+4]),
-	S_NORMAL (PRKM, 'E',	4, NULL, &States[S_EGGFX+0]),
-
-#define S_EGGFXI2 (S_EGGFX+5)
-	S_BRIGHT (FHFX, 'I',	3, NULL, &States[S_EGGFXI2+1]),
-	S_BRIGHT (FHFX, 'J',	3, NULL, &States[S_EGGFXI2+2]),
-	S_BRIGHT (FHFX, 'K',	3, NULL, &States[S_EGGFXI2+3]),
-	S_BRIGHT (FHFX, 'L',	3, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (APorkFX, Hexen, -1, 40)
-	PROP_RadiusFixed (8)
-	PROP_HeightFixed (8)
-	PROP_SpeedFixed (18)
-	PROP_Damage (1)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-
-	PROP_SpawnState (S_EGGFX)
-	PROP_DeathState (S_EGGFXI2)
-
-	PROP_EggFX_PlayerClass ("PigPlayer")
-	PROP_EggFX_MonsterClass ("Pig")
-END_DEFAULTS
-
-// Porkalator ---------------------------------------------------------------
-
-class AArtiPork : public AInventory
-{
-	DECLARE_ACTOR (AArtiPork, AInventory)
-public:
-	bool Use (bool pickup);
-};
-
-FState AArtiPork::States[] =
-{
-	S_NORMAL (PORK, 'A',	5, NULL, &States[1]),
-	S_NORMAL (PORK, 'B',	5, NULL, &States[2]),
-	S_NORMAL (PORK, 'C',	5, NULL, &States[3]),
-	S_NORMAL (PORK, 'D',	5, NULL, &States[4]),
-	S_NORMAL (PORK, 'E',	5, NULL, &States[5]),
-	S_NORMAL (PORK, 'F',	5, NULL, &States[6]),
-	S_NORMAL (PORK, 'G',	5, NULL, &States[7]),
-	S_NORMAL (PORK, 'H',	5, NULL, &States[0])
-};
-
-IMPLEMENT_ACTOR (AArtiPork, Hexen, 30, 14)
-	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (0)
-	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
-	PROP_Inventory_Icon ("ARTIPORK")
-	PROP_Inventory_PickupSound ("misc/p_pkup")
-	PROP_Inventory_PickupMessage("$TXT_ARTIEGG2")
-END_DEFAULTS
-
-bool AArtiPork::Use (bool pickup)
-{
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX));
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX), Owner->angle-(ANG45/6));
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX), Owner->angle+(ANG45/6));
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX), Owner->angle-(ANG45/3));
-	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX), Owner->angle+(ANG45/3));
-	return true;
-}
 
 // Morphed Monster (you must subclass this to do something useful) ---------
 
@@ -469,7 +337,7 @@ END_POINTERS
 
 BEGIN_STATELESS_DEFAULTS (AMorphedMonster, Any, -1, 0)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE)
-	PROP_Flags2 (MF2_MCROSS|MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL)
+	PROP_Flags2 (MF2_MCROSS|MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL)
 	PROP_Flags3 (MF3_DONTMORPH|MF3_ISMONSTER)
 END_DEFAULTS
 

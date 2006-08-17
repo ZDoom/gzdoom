@@ -254,7 +254,6 @@ void A_MummyAttack2 (AActor *actor)
 		return;
 	}
 	mo = P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(AMummyFX1));
-	//mo = P_SpawnMissile(actor, actor->target, MT_EGGFX);
 	if (mo != NULL)
 	{
 		mo->tracer = actor->target;

@@ -46,7 +46,6 @@
 #include "w_wad.h"
 #include "a_strifeglobal.h"
 #include "thingdef.h"
-#include "ravenshared.h"
 
 void FActorInfo::BuildDefaults ()
 {
@@ -130,7 +129,6 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	ASigil *const sigil = (ASigil *)sgDefaults;
 	AAmmo *const ammo = (AAmmo *)sgDefaults;
 	APlayerPawn *const player = (APlayerPawn *)sgDefaults;
-	AEggFX *const eggfx = (AEggFX *)sgDefaults;
 
 	switch (defnum)
 	{
@@ -342,10 +340,6 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 			player->ScoreIcon = TexMan.AddPatch (datastr, ns_sprites);
 		}
 		break;
-
-	case ADEF_EggFX_PlayerClass:	eggfx->PlayerClass = FName(datastr); break;
-	case ADEF_EggFX_MonsterClass:	eggfx->MonsterClass = FName(datastr); break;
-
 	}
 }
 

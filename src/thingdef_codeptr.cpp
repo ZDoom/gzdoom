@@ -824,7 +824,7 @@ void A_FireBullets (AActor *self)
 //==========================================================================
 void A_FireCustomMissile (AActor * self)
 {
-	int index=CheckIndex(5);
+	int index=CheckIndex(6);
 	if (index<0 || !self->player) return;
 
 	ENamedName MissileName=(ENamedName)StateParameters[index];
@@ -832,6 +832,7 @@ void A_FireCustomMissile (AActor * self)
 	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
 	int SpawnOfs_XY=EvalExpressionI (StateParameters[index+3], self);
 	fixed_t SpawnHeight=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
+	BOOL AimAtAngle=EvalExpressionI (StateParameters[index+5], self);
 
 	player_t *player=self->player;
 	AWeapon * weapon=player->ReadyWeapon;
@@ -848,19 +849,26 @@ void A_FireCustomMissile (AActor * self)
 		fixed_t x = SpawnOfs_XY * finecosine[ang];
 		fixed_t y = SpawnOfs_XY * finesine[ang];
 		fixed_t z = SpawnHeight;
+		fixed_t shootangle = self->angle;
 
-		AActor * misl=P_SpawnPlayerMissile (self, self->x+x, self->y+y, self->z+z, ti, self->angle);
+		if (AimAtAngle) shootangle+=Angle;
+
+		AActor * misl=P_SpawnPlayerMissile (self, self->x+x, self->y+y, self->z+z, ti, shootangle);
 		// automatic handling of seeker missiles
 		if (misl)
 		{
-			vec3_t velocity = { misl->momx, misl->momy, 0 };
-			fixed_t missilespeed=(fixed_t)VectorLength(velocity);
-
 			if (linetarget && misl->flags2&MF2_SEEKERMISSILE) misl->tracer=linetarget;
-			misl->angle += Angle;
-			angle_t an = misl->angle >> ANGLETOFINESHIFT;
-			misl->momx = FixedMul (missilespeed, finecosine[an]);
-			misl->momy = FixedMul (missilespeed, finesine[an]);
+			if (!AimAtAngle)
+			{
+				// This original implementation is to aim straight ahead and then offset
+				// the angle from the resulting direction. 
+				vec3_t velocity = { misl->momx, misl->momy, 0 };
+				fixed_t missilespeed=(fixed_t)VectorLength(velocity);
+				misl->angle += Angle;
+				angle_t an = misl->angle >> ANGLETOFINESHIFT;
+				misl->momx = FixedMul (missilespeed, finecosine[an]);
+				misl->momy = FixedMul (missilespeed, finesine[an]);
+			}
 			if (misl->flags4&MF4_SPECTRAL) misl->health=-1;
 		}
 	}

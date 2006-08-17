@@ -1,4 +1,10 @@
 August 17, 2006 (Changes by Graf Zahl)
+- Added a check to the map loader to check whether the map label
+  is in the same WAD as the following lump.
+- Did some minor reorganization of code in r_data.cpp (mostly to make
+  handling of textures easier in GZDoom.)
+- Did some preparations to allow loading folders on the HD into the lump
+  directory.
 - Took MF2_WINDTHRUST off AMorphedMonster. This is something that should not
   be a default setting.
 - Moved a_artiegg.cpp to g_shared and renamed it to a_morph.cpp to better reflect

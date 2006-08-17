@@ -37,10 +37,8 @@
 #include <stddef.h>
 #include <malloc.h>
 #include <stdio.h>
-extern "C"
-{
-#include <jpeglib.h>
-}
+
+#include "r_jpeg.h"
 
 #include "i_system.h"
 #include "m_alloc.h"
@@ -235,9 +233,10 @@ int FTextureManager::AddTexture (FTexture *texture)
 	return trans;
 }
 
+
 // Examines the lump contents to decide what type of texture to create,
-// creates the texture, and adds it to the manager.
-int FTextureManager::CreateTexture (int lumpnum, int usetype)
+// and creates the texture.
+FTexture * FTextureManager::DoCreateTexture (int lumpnum, int usetype)
 {
 	FTexture *out = NULL;
     enum { t_patch, t_raw, t_imgz, t_png } type = t_patch;
@@ -252,7 +251,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 	// 13 is the minimum length of anything valid (i.e a 1x1 pixel Doom patch.)
 	if (lumpnum < 0 || Wads.LumpLength(lumpnum)<13)
 	{
-		return -1;
+		return NULL;
 	}
 	else
 	{
@@ -272,11 +271,11 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 			// first 4 bytes match, but later bytes don't, we assume it's
 			// a corrupt PNG.)
 			data.Read (first4bytes.b, 4);
-			if (first4bytes.dw != MAKE_ID(13,10,26,10))		return -1;
+			if (first4bytes.dw != MAKE_ID(13,10,26,10))		return NULL;
 			data.Read (first4bytes.b, 4);
-			if (first4bytes.dw != MAKE_ID(0,0,0,13))		return -1;
+			if (first4bytes.dw != MAKE_ID(0,0,0,13))		return NULL;
 			data.Read (first4bytes.b, 4);
-			if (first4bytes.dw != MAKE_ID('I','H','D','R'))	return -1;
+			if (first4bytes.dw != MAKE_ID('I','H','D','R'))	return NULL;
 
 			// The PNG looks valid so far. Check the IHDR to make sure it's a
 			// type of PNG we support.
@@ -285,15 +284,15 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 
 			if (compression != 0 || filter != 0 || interlace > 1)
 			{
-				return -1;
+				return NULL;
 			}
 			if (!((1 << colortype) & 0x5D))
 			{
-				return -1;
+				return NULL;
 			}
 			if (!((1 << bitdepth) & 0x116))
 			{
-				return -1;
+				return NULL;
 			}
 
 			// Just for completeness, make sure the PNG has something more than an
@@ -305,7 +304,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 				data.Read (first4bytes.b, 4);
 				if (first4bytes.dw == MAKE_ID('I','E','N','D'))
 				{
-					return -1;
+					return NULL;
 				}
 			}
 
@@ -323,25 +322,25 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 			{
 				if (data.Read (first4bytes.w, 2) != 2)
 				{
-					return -1;
+					return NULL;
 				}
 				data.Seek (BigShort(first4bytes.w[0]) - 2, SEEK_CUR);
 				if (data.Read (first4bytes.b + 2, 2) != 2 || first4bytes.b[2] != 0xFF)
 				{
-					return -1;
+					return NULL;
 				}
 			}
 			if (data.Read (first4bytes.b, 3) != 3)
 			{
-				return -1;
+				return NULL;
 			}
 			if (BigShort (first4bytes.w[0]) <5)
 			{
-				return -1;
+				return NULL;
 			}
 			if (data.Read (first4bytes.b, 4) != 4)
 			{
-				return -1;
+				return NULL;
 			}
 			type = t_png;
 			out = new FJPEGTexture (lumpnum, BigShort(first4bytes.w[1]), BigShort(first4bytes.w[0]));
@@ -349,7 +348,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 		else if (usetype == FTexture::TEX_Flat)
 		{
 			// allow PNGs as flats but not Doom patches.
-			return -1;
+			return NULL;
 		}
 		else if ((gameinfo.flags & GI_PAGESARERAW) && data.GetLength() == 64000)
 		{
@@ -438,8 +437,16 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 		{
 			out->UseType = usetype;
 		}
-		return AddTexture (out);
 	}
+	return out;
+}
+
+// Calls DoCreateTexture and adds the texture to the manager.
+int FTextureManager::CreateTexture (int lumpnum, int usetype)
+{
+	FTexture *out = DoCreateTexture(lumpnum, usetype);
+
+	if (out != NULL) return AddTexture (out);
 	return -1;
 }
 
@@ -2138,75 +2145,68 @@ void FPNGTexture::MakeTexture ()
 	}
 }
 
-struct FLumpSourceMgr : public jpeg_source_mgr
+FLumpSourceMgr::FLumpSourceMgr (FileReader *lump, j_decompress_ptr cinfo)
+: Lump (lump)
 {
-	FWadLump &Lump;
-	JOCTET Buffer[4096];
-	bool StartOfFile;
+	cinfo->src = this;
+	init_source = InitSource;
+	fill_input_buffer = FillInputBuffer;
+	skip_input_data = SkipInputData;
+	resync_to_restart = jpeg_resync_to_restart;
+	term_source = TermSource;
+	bytes_in_buffer = 0;
+	next_input_byte = NULL;
+}
 
-	FLumpSourceMgr (FWadLump &lump, j_decompress_ptr cinfo)
-	: Lump (lump)
+void FLumpSourceMgr::InitSource (j_decompress_ptr cinfo)
+{
+	((FLumpSourceMgr *)(cinfo->src))->StartOfFile = true;
+}
+
+boolean FLumpSourceMgr::FillInputBuffer (j_decompress_ptr cinfo)
+{
+	FLumpSourceMgr *me = (FLumpSourceMgr *)(cinfo->src);
+	long nbytes = me->Lump->Read (me->Buffer, sizeof(me->Buffer));
+
+	if (nbytes <= 0)
 	{
-		cinfo->src = this;
-		init_source = InitSource;
-		fill_input_buffer = FillInputBuffer;
-		skip_input_data = SkipInputData;
-		resync_to_restart = jpeg_resync_to_restart;
-		term_source = TermSource;
-		bytes_in_buffer = 0;
-		next_input_byte = NULL;
+		me->Buffer[0] = (JOCTET)0xFF;
+		me->Buffer[1] = (JOCTET)JPEG_EOI;
+		nbytes = 2;
 	}
+	me->next_input_byte = me->Buffer;
+	me->bytes_in_buffer = nbytes;
+	me->StartOfFile = false;
+	return TRUE;
+}
 
-	static void InitSource (j_decompress_ptr cinfo)
+void FLumpSourceMgr::SkipInputData (j_decompress_ptr cinfo, long num_bytes)
+{
+	FLumpSourceMgr *me = (FLumpSourceMgr *)(cinfo->src);
+	if (num_bytes <= (long)me->bytes_in_buffer)
 	{
-		((FLumpSourceMgr *)(cinfo->src))->StartOfFile = true;
+		me->bytes_in_buffer -= num_bytes;
+		me->next_input_byte += num_bytes;
 	}
-
-	static boolean FillInputBuffer (j_decompress_ptr cinfo)
+	else
 	{
-		FLumpSourceMgr *me = (FLumpSourceMgr *)(cinfo->src);
-		long nbytes = me->Lump.Read (me->Buffer, sizeof(me->Buffer));
-
-		if (nbytes <= 0)
-		{
-			me->Buffer[0] = (JOCTET)0xFF;
-			me->Buffer[1] = (JOCTET)JPEG_EOI;
-			nbytes = 2;
-		}
-		me->next_input_byte = me->Buffer;
-		me->bytes_in_buffer = nbytes;
-		me->StartOfFile = false;
-		return TRUE;
+		num_bytes -= (long)me->bytes_in_buffer;
+		me->Lump->Seek (num_bytes, SEEK_CUR);
+		FillInputBuffer (cinfo);
 	}
+}
 
-	static void SkipInputData (j_decompress_ptr cinfo, long num_bytes)
-	{
-		FLumpSourceMgr *me = (FLumpSourceMgr *)(cinfo->src);
-		if (num_bytes <= (long)me->bytes_in_buffer)
-		{
-			me->bytes_in_buffer -= num_bytes;
-			me->next_input_byte += num_bytes;
-		}
-		else
-		{
-			num_bytes -= (long)me->bytes_in_buffer;
-			me->Lump.Seek (num_bytes, SEEK_CUR);
-			FillInputBuffer (cinfo);
-		}
-	}
+void FLumpSourceMgr::TermSource (j_decompress_ptr cinfo)
+{
+}
 
-	static void TermSource (j_decompress_ptr cinfo)
-	{
-	}
-};
-
-static void JPEG_ErrorExit (j_common_ptr cinfo)
+void JPEG_ErrorExit (j_common_ptr cinfo)
 {
 	(*cinfo->err->output_message) (cinfo);
 	throw -1;
 }
 
-static void JPEG_OutputMessage (j_common_ptr cinfo)
+void JPEG_OutputMessage (j_common_ptr cinfo)
 {
 	char buffer[JMSG_LENGTH_MAX];
 
@@ -2299,7 +2299,7 @@ void FJPEGTexture::MakeTexture ()
 	jpeg_create_decompress(&cinfo);
 	try
 	{
-		FLumpSourceMgr sourcemgr(lump, &cinfo);
+		FLumpSourceMgr sourcemgr(&lump, &cinfo);
 		jpeg_read_header(&cinfo, TRUE);
 		if (!((cinfo.out_color_space == JCS_RGB && cinfo.num_components == 3) ||
 			  (cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||

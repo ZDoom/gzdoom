@@ -731,6 +731,7 @@ public:
 	void AddTiles (void *tileFile);
 	void AddExtraTextures ();	// Adds patches in the ns_newtextures namespace
 
+	static FTexture *DoCreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);
 	int CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	int AddTexture (FTexture *texture);
 	int AddPatch (const char *patchname, int namespc=0);

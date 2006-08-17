@@ -9434,6 +9434,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\r_jpeg.h"
+					>
+				</File>
+				<File
 					RelativePath=".\src\r_local.h"
 					>
 				</File>

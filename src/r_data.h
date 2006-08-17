@@ -29,6 +29,7 @@
 #include "v_video.h"
 
 
+
 // A texture that doesn't really exist
 class FDummyTexture : public FTexture
 {
@@ -208,6 +209,7 @@ protected:
 
 	void MakeTexture ();
 };
+
 
 
 // A JPEG image

@@ -271,7 +271,19 @@ MapData *P_OpenMapData(const char * mapname)
 		
 		if (lump_name > lump_wad && lump_name > lump_map && lump_name != -1)
 		{
-			map->file = Wads.GetFileReader(Wads.GetLumpFile (lump_name));
+			int lumpfile=Wads.GetLumpFile(lump_name);
+			int nextfile=Wads.GetLumpFile(lump_name+1);
+
+			if (lumpfile != nextfile)
+			{
+				// The following lump is from a different file so whatever this is,
+				// it is not a multi-lump Doom level.
+				return map;
+			}
+
+			// This case can only happen if the lump is inside a real WAD file.
+			// As such any special handling for other types of lumps is skipped.
+			map->file = Wads.GetFileReader(lumpfile);
 			map->CloseOnDestruct = false;
 			map->lumpnum = lump_name;
 

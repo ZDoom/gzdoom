@@ -25,6 +25,7 @@
 
 #include "files.h"
 #include "doomdef.h"
+#include "tarray.h"
 
 // [RH] Compare wad header as ints instead of chars
 #define IWAD_ID		MAKE_ID('I','W','A','D')
@@ -209,6 +210,8 @@ public:
 
 	int GetNumLumps () const;
 
+	int AddExternalFile(const char *filename);
+
 protected:
 	class WadFileRecord;
 	struct LumpRecord;
@@ -220,9 +223,9 @@ protected:
 	WORD *NextLumpIndex_FullName;
 
 
-	LumpRecord *LumpInfo;
-	WadFileRecord **Wads;
-	DWORD NumLumps;
+	TArray<LumpRecord> LumpInfo;
+	TArray<WadFileRecord *>Wads;
+	DWORD NumLumps;					// Not necessarily the same as LumpInfo.Size()
 	DWORD NumWads;
 
 	void SkinHack (int baselump);

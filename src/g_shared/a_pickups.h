@@ -76,6 +76,7 @@ enum
 	AIMETA_DropAmount,			// specifies the amount for a dropped ammo item
 	AIMETA_LowHealth,
 	AIMETA_LowHealthMessage,
+	AIMETA_PuzzFailMessage,
 };
 
 enum

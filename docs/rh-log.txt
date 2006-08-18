@@ -1,3 +1,6 @@
+August 19, 2006 (Changes by Graf Zahl)
+- Added custom fail messages to the puzzle items.
+
 August 17, 2006 (Changes by Graf Zahl)
 - Added a check to the map loader to check whether the map label
   is in the same WAD as the following lump.

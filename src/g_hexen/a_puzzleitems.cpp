@@ -39,7 +39,10 @@ bool APuzzleItem::Use (bool pickup)
 	}
 	// [RH] Always play the sound if the use fails.
 	S_Sound (Owner, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
-	C_MidPrintBold (GStrings("TXT_USEPUZZLEFAILED"));
+	const char *message = GetClass()->Meta.GetMetaString (AIMETA_PuzzFailMessage);
+	if (message != NULL && *message=='$') message = GStrings[message + 1];
+	if (message == NULL) message = GStrings("TXT_USEPUZZLEFAILED");
+	C_MidPrintBold (message);
 	return false;
 }
 

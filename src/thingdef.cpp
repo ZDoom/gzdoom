@@ -3278,7 +3278,7 @@ static void InventoryUsesound (AInventory *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void InventoryGiveQuest (APuzzleItem *defaults, Baggage &bag)
+static void InventoryGiveQuest (AInventory *defaults, Baggage &bag)
 {
 	SC_MustGetNumber();
 	bag.Info->Class->Meta.SetMetaInt(AIMETA_GiveQuest, sc_Number);
@@ -3303,6 +3303,15 @@ static void PuzzleitemNumber (APuzzleItem *defaults, Baggage &bag)
 {
 	SC_MustGetNumber();
 	defaults->PuzzleItemNumber=sc_Number;
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PuzzleitemFailMsg (APuzzleItem *defaults, Baggage &bag)
+{
+	SC_MustGetString();
+	bag.Info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, sc_String);
 }
 
 //==========================================================================
@@ -3837,6 +3846,7 @@ static const ActorProps props[] =
 	{ "powerup.duration",			(apf)PowerupDuration,		RUNTIME_CLASS(APowerupGiver) },
 	{ "powerup.type",				(apf)PowerupType,			RUNTIME_CLASS(APowerupGiver) },
 	{ "projectile",					ActorProjectile,			RUNTIME_CLASS(AActor) },
+	{ "puzzleitem.failmessage",		(apf)PuzzleitemFailMsg,		RUNTIME_CLASS(APuzzleItem) },
 	{ "puzzleitem.number",			(apf)PuzzleitemNumber,		RUNTIME_CLASS(APuzzleItem) },
 	{ "radius",						ActorRadius,				RUNTIME_CLASS(AActor) },
 	{ "radiusdamagefactor",			ActorRadiusDamageFactor,	RUNTIME_CLASS(AActor) },

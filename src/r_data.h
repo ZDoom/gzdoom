@@ -287,7 +287,9 @@ protected:
 	friend class FTexture;
 };
 
-// A texture that is just a single patch
+// A TGA texture
+struct TGAHeader;
+
 class FTGATexture : public FTexture
 {
 public:
@@ -304,7 +306,7 @@ protected:
 
 	static bool Check(FileReader & file);
 	static FTexture *Create(FileReader & file, int lumpnum);
-	FTGATexture (int lumpnum, int width, int height);
+	FTGATexture (int lumpnum, TGAHeader *);
 	void ReadCompressed(FileReader &lump, BYTE * buffer, int bytesperpixel);
 
 	virtual void MakeTexture ();

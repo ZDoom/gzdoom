@@ -97,13 +97,15 @@ FTexture *FTGATexture::Create(FileReader & file, int lumpnum)
 }
 
 
-FTGATexture::FTGATexture (int lumpnum, int w, int h)
+FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
 : SourceLump(lumpnum), Pixels(0), Spans(0)
 {
 	Wads.GetLumpName (Name, lumpnum);
 	Name[8] = 0;
-	Width = w;
-	Height = h;
+	Width = hdr->width;
+	Height = hdr->height;
+	// Alpha channel is used only for 32 bit RGBA and paletted images with RGBA palettes.
+	bMasked = (hdr->img_desc&15)==8 && (hdr->bpp==32 || (hdr->img_type==1 && hdr->cm_size==32));
 	CalcBitSize();
 }
 
@@ -211,7 +213,6 @@ void FTGATexture::MakeTexture ()
 	hdr.cm_length = LittleShort(hdr.cm_length);
 #endif
 
-	bMasked = false;
 	if (hdr.has_cm)
 	{
 		memset(PaletteMap, 0, 256);
@@ -236,7 +237,6 @@ void FTGATexture::MakeTexture ()
 			case 32:
 				lump >> b >> g >> r >> a;
 				if ((hdr.img_desc&15)!=8) a=255;
-				else if (a<128) bMasked=true;
 				break;
 				
 			default:	// should never happen
@@ -333,8 +333,6 @@ void FTGATexture::MakeTexture ()
 			}
 			else
 			{
-				bMasked=true;
-
 				for(int y=0;y<Height;y++)
 				{
 					BYTE * p = ptr + y * Pitch;

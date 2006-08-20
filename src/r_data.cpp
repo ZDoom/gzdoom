@@ -1,4 +1,3 @@
-
 // Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
@@ -207,17 +206,21 @@ int FTextureManager::AddTexture (FTexture *texture)
 	return trans;
 }
 
-// Calls DoCreateTexture and adds the texture to the manager.
+// Calls FTexture::CreateTexture and adds the texture to the manager.
 int FTextureManager::CreateTexture (int lumpnum, int usetype)
 {
-	FTexture *out = FTexture::CreateTexture(lumpnum, usetype);
-
-	if (out != NULL) return AddTexture (out);
-	else
+	if (lumpnum != -1)
 	{
-		Printf (TEXTCOLOR_ORANGE "Invalid data encountered for texture %s\n", Wads.GetLumpFullName(lumpnum));
-		return -1;
+		FTexture *out = FTexture::CreateTexture(lumpnum, usetype);
+
+		if (out != NULL) return AddTexture (out);
+		else
+		{
+			Printf (TEXTCOLOR_ORANGE "Invalid data encountered for texture %s\n", Wads.GetLumpFullName(lumpnum));
+			return -1;
+		}
 	}
+	return -1;
 }
 
 void FTextureManager::ReplaceTexture (int picnum, FTexture *newtexture, bool free)

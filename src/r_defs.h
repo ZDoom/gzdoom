@@ -586,11 +586,13 @@ struct patch_t
 	// the [0] is &columnofs[width] 
 };
 
+class FileReader;
+
 // Base texture class
 class FTexture
 {
 public:
-	FTexture ();
+	static FTexture *CreateTexture(int lumpnum, int usetype);
 	virtual ~FTexture ();
 
 	SWORD LeftOffset, TopOffset;
@@ -608,6 +610,7 @@ public:
 	BYTE bAlphaTexture:1;	// Texture is an alpha channel without color information
 	BYTE bHasCanvas:1;		// Texture is based off FCanvasTexture
 	BYTE bWarped:2;			// This is a warped texture. Used to avoid multiple warps on one texture
+	BYTE bIsPatch:1;		// 1 if an FPatchTexture. Required to fix FMultipatchTexture::CheckForHacks
 
 	WORD Rotations;
 
@@ -624,6 +627,7 @@ public:
 		TEX_MiscPatch,
 		TEX_FontChar,
 		TEX_Override,	// For patches between TX_START/TX_END
+		TEX_Autopage,	// Automap background - used to enable the use of FAutomapTexture
 		TEX_Null,
 	};
 
@@ -641,8 +645,8 @@ public:
 
 	virtual void Unload () = 0;
 
-	int GetWidth () { if (Width == 0xFFFF) { GetDimensions(); } return Width; }
-	int GetHeight () { if (Width == 0xFFFF) { GetDimensions(); } return Height; }
+	int GetWidth () { return Width; }
+	int GetHeight () { return Height; }
 
 	virtual void SetFrontSkyLayer();
 
@@ -652,11 +656,13 @@ public:
 	// last call to GetPixels(). This should be considered valid only if a call to CheckModified()
 	// is immediately followed by a call to GetPixels().
 	virtual bool CheckModified ();
+	static void InitGrayMap();
 
 protected:
 	WORD Width, Height, WidthMask;
+	static BYTE GrayMap[256];
 
-	virtual void GetDimensions ();
+	FTexture ();
 
 	Span **CreateSpans (const BYTE *pixels) const;
 	void FreeSpans (Span **spans) const;
@@ -725,13 +731,10 @@ public:
 
 	void AddTexturesLump (const void *lumpdata, int lumpsize, int patcheslump, int firstdup=0, bool texture1=false);
 	void AddTexturesLumps (int lump1, int lump2, int patcheslump);
-	void AddFlats ();
-	void AddSprites ();
+	void AddGroup(const char * startlump, const char * endlump, int ns, int usetype);
 	void AddPatches (int lumpnum);
 	void AddTiles (void *tileFile);
-	void AddExtraTextures ();	// Adds patches in the ns_newtextures namespace
 
-	static FTexture *DoCreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);
 	int CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	int AddTexture (FTexture *texture);
 	int AddPatch (const char *patchname, int namespc=0);
@@ -749,6 +752,7 @@ public:
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
+
 private:
 	struct TextureHash
 	{
@@ -760,6 +764,8 @@ private:
 	TArray<WORD> Translation;
 	WORD HashFirst[HASH_SIZE];
 	int DefaultTexture;
+
+	friend void R_InitData ();
 };
 
 extern FTextureManager TexMan;

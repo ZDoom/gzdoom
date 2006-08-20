@@ -4334,6 +4334,62 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Textures"
+				>
+				<File
+					RelativePath=".\src\textures\automaptexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\buildtexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\canvastexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\flattexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\imgztexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\jpegtexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\multipatchtexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\patchtexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\pngtexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\rawpagetexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\texture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\tgatexture.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\textures\warptexture.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="A Header Files"

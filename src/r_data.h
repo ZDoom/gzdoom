@@ -46,7 +46,6 @@ public:
 class FPatchTexture : public FTexture
 {
 public:
-	FPatchTexture (int lumpnum, int usetype);
 	~FPatchTexture ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
@@ -58,10 +57,14 @@ protected:
 	BYTE *Pixels;
 	Span **Spans;
 
+	static bool Check(FileReader & file);
+	static FTexture *Create(FileReader & file, int lumpnum);
+	FPatchTexture (int lumpnum, patch_t *header);
+
 	virtual void MakeTexture ();
 	void HackHack (int newheight);
-	void GetDimensions ();
 
+	friend class FTexture;
 	friend class FMultiPatchTexture;
 };
 
@@ -108,7 +111,6 @@ private:
 class FFlatTexture : public FTexture
 {
 public:
-	FFlatTexture (int lumpnum);
 	~FFlatTexture ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
@@ -120,7 +122,13 @@ protected:
 	BYTE *Pixels;
 	Span DummySpans[2];
 
+	static bool Check(FileReader & file);
+	static FTexture *Create(FileReader & file, int lumpnum);
+	FFlatTexture (int lumpnum);
+
 	void MakeTexture ();
+
+	friend class FTexture;
 };
 
 // A texture defined in a Build TILESxxx.ART file
@@ -144,7 +152,6 @@ protected:
 class FRawPageTexture : public FTexture
 {
 public:
-	FRawPageTexture (int lumpnum);
 	~FRawPageTexture ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
@@ -152,19 +159,50 @@ public:
 	void Unload ();
 
 protected:
+	static bool Check(FileReader & file);
+	static FTexture *Create(FileReader & file, int lumpnum);
+	FRawPageTexture (int lumpnum);
+
 	int SourceLump;
 	BYTE *Pixels;
 	static const Span DummySpans[2];
 
 	void MakeTexture ();
+
+	friend class FTexture;
 };
+
+// A raw 320x? graphic used by Heretic and Hexen for the automap parchment
+class FAutomapTexture : public FTexture
+{
+public:
+	~FAutomapTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	void MakeTexture ();
+
+private:
+
+	static bool Check(FileReader & file);
+	static FTexture *Create(FileReader & file, int lumpnum);
+	FAutomapTexture (int lumpnum);
+
+
+	BYTE *Pixels;
+	Span DummySpan[2];
+	int LumpNum;
+
+	friend class FTexture;
+};
+
 
 
 // An IMGZ image (mostly just crosshairs)
 class FIMGZTexture : public FTexture
 {
 public:
-	FIMGZTexture (int lumpnum);
 	~FIMGZTexture ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
@@ -172,14 +210,19 @@ public:
 	void Unload ();
 
 protected:
+
+	static bool Check(FileReader & file);
+	static FTexture *Create(FileReader & file, int lumpnum);
+	FIMGZTexture (int lumpnum, WORD w, WORD h, SWORD l, SWORD t);
+
 	int SourceLump;
 	BYTE *Pixels;
 	Span **Spans;
 
-	void GetDimensions ();
 	void MakeTexture ();
 
 	struct ImageHeader;
+	friend class FTexture;
 };
 
 
@@ -187,7 +230,6 @@ protected:
 class FPNGTexture : public FTexture
 {
 public:
-	FPNGTexture (int lumpnum, int width, int height, BYTE bitdepth, BYTE colortype, BYTE interlace);
 	~FPNGTexture ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
@@ -195,6 +237,12 @@ public:
 	void Unload ();
 
 protected:
+
+	static bool Check(FileReader & file);
+	static FTexture *Create(FileReader & file, int lumpnum);
+	FPNGTexture (FileReader &lump, int lumpnum, int width, int height, BYTE bitdepth, BYTE colortype, BYTE interlace);
+
+
 	int SourceLump;
 	BYTE *Pixels;
 	Span **Spans;
@@ -208,6 +256,8 @@ protected:
 	DWORD StartOfIDAT;
 
 	void MakeTexture ();
+
+	friend class FTexture;
 };
 
 
@@ -216,8 +266,32 @@ protected:
 class FJPEGTexture : public FTexture
 {
 public:
-	FJPEGTexture (int lumpnum, int width, int height);
 	~FJPEGTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+protected:
+
+	static bool Check(FileReader & file);
+	static FTexture *Create(FileReader & file, int lumpnum);
+	FJPEGTexture (int lumpnum, int width, int height);
+
+	int SourceLump;
+	BYTE *Pixels;
+	Span DummySpans[2];
+
+	void MakeTexture ();
+
+	friend class FTexture;
+};
+
+// A texture that is just a single patch
+class FTGATexture : public FTexture
+{
+public:
+	~FTGATexture ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
@@ -226,9 +300,16 @@ public:
 protected:
 	int SourceLump;
 	BYTE *Pixels;
-	Span DummySpans[2];
+	Span **Spans;
 
-	void MakeTexture ();
+	static bool Check(FileReader & file);
+	static FTexture *Create(FileReader & file, int lumpnum);
+	FTGATexture (int lumpnum, int width, int height);
+	void ReadCompressed(FileReader &lump, BYTE * buffer, int bytesperpixel);
+
+	virtual void MakeTexture ();
+
+	friend class FTexture;
 };
 
 // A texture that returns a wiggly version of another texture.

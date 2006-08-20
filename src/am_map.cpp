@@ -320,24 +320,7 @@ static int markpointnum = 0; // next point to be assigned
 
 static int followplayer = 1; // specifies whether to follow the player around
 
-class FAutomapTexture : public FTexture
-{
-public:
-	FAutomapTexture (int lumpnum);
-	~FAutomapTexture ();
-
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
-	void Unload ();
-	void MakeTexture ();
-
-private:
-	BYTE *Pixels;
-	Span DummySpan[2];
-	int LumpNum;
-};
-
-static FAutomapTexture *mapback;	// the automap background
+static FTexture *mapback;	// the automap background
 static fixed_t mapystart=0; // y-value for the start of the map bitmap...used in the parallax stuff.
 static fixed_t mapxstart=0; //x-value for the bitmap.
 
@@ -784,7 +767,7 @@ void AM_loadPics ()
 		i = Wads.CheckNumForName ("AUTOPAGE");
 		if (i >= 0)
 		{
-			mapback = new FAutomapTexture (i);
+			mapback = FTexture::CreateTexture(i, FTexture::TEX_Autopage);
 		}
 	}
 }
@@ -2201,73 +2184,3 @@ void AM_Drawer ()
 	AM_drawMarks();
 }
 
-FAutomapTexture::FAutomapTexture (int lumpnum)
-: Pixels(NULL), LumpNum(lumpnum)
-{
-	UseType = TEX_MiscPatch;
-	Width = 320;
-	Height = Wads.LumpLength(lumpnum) / 320;
-	CalcBitSize ();
-
-	DummySpan[0].TopOffset = 0;
-	DummySpan[0].Length = Height;
-	DummySpan[1].TopOffset = 0;
-	DummySpan[1].Length = 0;
-}
-
-FAutomapTexture::~FAutomapTexture ()
-{
-	Unload ();
-}
-
-void FAutomapTexture::Unload ()
-{
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
-}
-
-void FAutomapTexture::MakeTexture ()
-{
-	int x, y;
-	FMemLump data = Wads.ReadLump (LumpNum);
-	const BYTE *indata = (const BYTE *)data.GetMem();
-
-	Pixels = new BYTE[Width * Height];
-
-	for (x = 0; x < Width; ++x)
-	{
-		for (y = 0; y < Height; ++y)
-		{
-			Pixels[x*Height+y] = indata[x+320*y];
-		}
-	}
-}
-
-const BYTE *FAutomapTexture::GetPixels ()
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	return Pixels;
-}
-
-const BYTE *FAutomapTexture::GetColumn (unsigned int column, const Span **spans_out)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	if ((unsigned)column >= (unsigned)Width)
-	{
-		column %= Width;
-	}
-	if (spans_out != NULL)
-	{
-		*spans_out = DummySpan;
-	}
-	return Pixels + column*Height;
-}

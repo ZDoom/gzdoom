@@ -1,3 +1,27 @@
+
+August 20, 2006 (Changes by Graf Zahl)
+- Changed: Patch and IMGZ textures now initialize their dimensions upon creation.
+  The lump is open anyway at that time so deferring this action until the information
+  is needed doesn't give any speed improvements. Now GetDimensions and all its
+  associated overhead is gone.
+- Added support for TGA textures. It can handle all of the common variations
+  of this format.
+- Changed: GI_PAGESARERAW is no longer checked. It wasn't really necessary before
+  because the chance of texture misidentification is absolutely minimal.
+  But raw pages are now restricted to textures of type TEX_MiscPatch only.
+- Changed the automap parchment to use a regular texture. The previous 
+  FAutomapTexture is only used as a last resort fallback now. If the code
+  finds a recognizable graphic it will create a proper texture for it now.
+- Fixed: Flats were only auto-scaled when in Doom flat format.
+- Fixed: FMultiPatchTexture::CheckForHacks blindly assumed that all patches
+  were FPstchTextures. Since the texture code does not have any type information
+  I added a new flag bIsPatch for this purpose.
+- Moved all texture classes into their own source files and created a new
+  subdirectory 'textures' for that.
+- Cleaned up the texture management code and added some stricter checks for
+  the validity of Doom patches. The old code liked to crash when being passed
+  some non-graphic data.
+
 August 19, 2006 (Changes by Graf Zahl)
 - Added custom fail messages to the puzzle items.
 

@@ -77,7 +77,7 @@ teleport,70,1
 teleport_nofog,71,1,2
 teleport_newmap,74,2
 teleport_endgame,75,0
-thrustthing,72,2,3
+thrustthing,72,2,4
 damagething,73,1
 thing_activate,130,1
 thing_deactivate,131,1
@@ -169,3 +169,12 @@ ceiling_raisetonearest,252,2
 ceiling_lowertolowest,253,2
 ceiling_lowertofloor,254,2
 ceiling_crushraiseandstaysila,255,4
+door_animated,14,3
+clearforcefield,34,1
+teleport_zombiechanger,39,2
+acs_executewithresult,84,1,4
+plat_upnearestwaitdownstay,172,3
+noisealert,173,2
+thing_raise,17,1
+startconversation,18,1,2
+acs_lockedexecutedoor,85,5

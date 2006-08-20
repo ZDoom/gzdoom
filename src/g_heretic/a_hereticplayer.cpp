@@ -148,7 +148,7 @@ void AHereticPlayer::GiveDefaultInventory ()
 		wand = player->mo->GiveInventoryType (PClass::FindClass ("GoldWand"));
 		// Adding the gold wand automatically adds its ammo
 		ammo = player->mo->FindInventory (PClass::FindClass ("GoldWandAmmo"));
-		ammo->Amount = 50;
+		if (ammo != NULL) ammo->Amount = 50;
 		player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (wand);
 	}
 }

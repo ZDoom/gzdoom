@@ -92,8 +92,12 @@ FTexture *FTGATexture::Create(FileReader & file, int lumpnum)
 	TGAHeader hdr;
 	file.Seek(0, SEEK_SET);
 	file.Read(&hdr, sizeof(hdr));
+#ifdef WORDS_BIGENDIAN
+	hdr.width = LittleShort(hdr.width);
+	hdr.height = LittleShort(hdr.height);
+#endif
 
-	return new FTGATexture(lumpnum, LittleShort(hdr.width), LittleShort(hdr.height));
+	return new FTGATexture(lumpnum, &hdr);
 }
 
 

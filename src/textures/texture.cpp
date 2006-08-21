@@ -68,6 +68,7 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 		{ FPNGTexture::Check, FPNGTexture::Create, FTexture::TEX_Any },
 		{ FJPEGTexture::Check, FJPEGTexture::Create, FTexture::TEX_Any },
 		{ FTGATexture::Check, FTGATexture::Create, FTexture::TEX_Any },
+		{ FPCXTexture::Check, FPCXTexture::Create, FTexture::TEX_Any },
 		{ FRawPageTexture::Check, FRawPageTexture::Create, FTexture::TEX_MiscPatch },
 		{ FFlatTexture::Check, FFlatTexture::Create, FTexture::TEX_Flat },
 		{ FPatchTexture::Check, FPatchTexture::Create, FTexture::TEX_Any },

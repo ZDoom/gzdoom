@@ -4370,6 +4370,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\textures\pcxtexture.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\src\textures\pngtexture.cpp"
 					>
 				</File>

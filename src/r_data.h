@@ -288,6 +288,28 @@ protected:
 };
 
 // A TGA texture
+
+#pragma pack(1)
+
+struct TGAHeader
+{
+	BYTE		id_len;
+	BYTE		has_cm;
+	BYTE		img_type;
+	SWORD		cm_first;
+	SWORD		cm_length;
+	BYTE		cm_size;
+	
+	SWORD		x_origin;
+	SWORD		y_origin;
+	SWORD		width;
+	SWORD		height;
+	BYTE		bpp;
+	BYTE		img_desc;
+};
+
+#pragma pack()
+
 struct TGAHeader;
 
 class FTGATexture : public FTexture
@@ -313,6 +335,63 @@ protected:
 
 	friend class FTexture;
 };
+
+// A PCX texture
+
+#pragma pack(1)
+
+struct PCXHeader
+{
+  BYTE manufacturer;
+  BYTE version;
+  BYTE encoding;
+  BYTE bitsPerPixel;
+
+  WORD xmin, ymin;
+  WORD xmax, ymax;
+  WORD horzRes, vertRes;
+
+  BYTE palette[48];
+  BYTE reserved;
+  BYTE numColorPlanes;
+
+  WORD bytesPerScanLine;
+  WORD paletteType;
+  WORD horzSize, vertSize;
+
+  BYTE padding[54];
+
+};
+#pragma pack()
+
+class FPCXTexture : public FTexture
+{
+public:
+	~FPCXTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+protected:
+	int SourceLump;
+	BYTE *Pixels;
+	Span DummySpans[2];
+
+	static bool Check(FileReader & file);
+	static FTexture *Create(FileReader & file, int lumpnum);
+	FPCXTexture (int lumpnum, PCXHeader &);
+	void ReadPCX1bit (BYTE *dst, FileReader & lump, PCXHeader *hdr);
+	void ReadPCX4bits (BYTE *dst, FileReader & lump, PCXHeader *hdr);
+	void ReadPCX8bits (BYTE *dst, FileReader & lump, PCXHeader *hdr);
+	void ReadPCX24bits (BYTE *dst, FileReader & lump, PCXHeader *hdr, int planes);
+
+	virtual void MakeTexture ();
+
+	friend class FTexture;
+};
+
+
 
 // A texture that returns a wiggly version of another texture.
 class FWarpTexture : public FTexture

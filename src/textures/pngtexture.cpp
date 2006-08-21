@@ -1,5 +1,5 @@
 /*
-** pmgtexture.cpp
+** pngtexture.cpp
 ** Texture class for PNG images
 **
 **---------------------------------------------------------------------------

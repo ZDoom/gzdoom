@@ -1,5 +1,5 @@
 /*
-** pmgtexture.cpp
+** tgatexture.cpp
 ** Texture class for TGA images
 **
 **---------------------------------------------------------------------------
@@ -39,28 +39,6 @@
 #include "w_wad.h"
 #include "templates.h"
 
-
-
-#pragma pack(1)
-
-struct TGAHeader
-{
-	BYTE		id_len;
-	BYTE		has_cm;
-	BYTE		img_type;
-	SWORD		cm_first;
-	SWORD		cm_length;
-	BYTE		cm_size;
-	
-	SWORD		x_origin;
-	SWORD		y_origin;
-	SWORD		width;
-	SWORD		height;
-	BYTE		bpp;
-	BYTE		img_desc;
-};
-
-#pragma pack()
 
 bool FTGATexture::Check(FileReader & data)
 {

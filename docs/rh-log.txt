@@ -1,3 +1,5 @@
+August 21, 2006 (Changes by Graf Zahl)
+- Added support for PCX textures (1, 4, 8 and 24 bit variants.)
 
 August 20, 2006 (Changes by Graf Zahl)
 - Changed: Patch and IMGZ textures now initialize their dimensions upon creation.

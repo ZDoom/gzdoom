@@ -1,4 +1,6 @@
 August 22, 2006
+- Added Martin Howe's code for replacing environment variables in partial IWAD
+  search paths.
 - Added support for casting color names in ACS print-type statements. What that
   means is that instead of writing this:
     print (s:"\cDSome text");

@@ -1455,24 +1455,92 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 
 //==========================================================================
 //
-// CheckIWADinEnvDir
+// ExpandEnvVars
 //
-// Checks for an IWAD in a directory specified in an environment variable.
+// Expands environment variable references in a string. Intended primarily
+// for use with IWAD search paths in config files.
 //
 //==========================================================================
 
-static int CheckIWADinEnvDir (const char *envname, WadStuff *wads)
+static FString ExpandEnvVars(const char *searchpathstring)
 {
-	char dir[512];
-	const char *envdir = getenv (envname);
+	static const char envvarnamechars[] =
+		"01234567890"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"_"
+		"abcdefghijklmnopqrstuvwxyz";
 
-	if (envdir)
+	if (searchpathstring == NULL)
+		return FString ("");
+
+	const char *dollar = strchr (searchpathstring,'$');
+	if (dollar == NULL)
 	{
-		strcpy (dir, envdir);
+		return FString (searchpathstring);
+	}
+
+	const char *nextchars = searchpathstring;
+	FString out = FString (searchpathstring, dollar - searchpathstring);
+	while ( (dollar != NULL) && (*nextchars != 0) )
+	{
+		size_t length = strspn(dollar + 1, envvarnamechars);
+		if (length != 0)
+		{
+			FString varname = FString (dollar + 1, length);
+			if (stricmp (varname, "progdir") == 0)
+			{
+				out += progdir;
+			}
+			else
+			{
+				char *varvalue = getenv (varname);
+				if ( (varvalue != NULL) && (strlen(varvalue) != 0) )
+				{
+					out += varvalue;
+				}
+			}
+		}
+		else
+		{
+			out += '$';
+		}
+		nextchars = dollar + length + 1;
+		dollar = strchr (nextchars, '$');
+		if (dollar != NULL)
+		{
+			out += FString (nextchars, dollar - nextchars);
+		}
+	}
+	if (*nextchars != 0)
+	{
+		out += nextchars;
+	}
+	return out;
+}
+
+//==========================================================================
+//
+// CheckIWADinEnvDir
+//
+// Checks for an IWAD in a path that contains one or more environment
+// variables.
+//
+//==========================================================================
+
+static int CheckIWADinEnvDir (const char *str, WadStuff *wads)
+{
+	FString expanded = ExpandEnvVars (str);
+
+	if (!expanded.IsEmpty())
+	{
+		char *dir = expanded.LockBuffer ();
 		FixPathSeperator (dir);
-		if (dir[strlen(dir) - 1] != '/')
-			strcat (dir, "/");
-		return CheckIWAD (dir, wads);
+		expanded.UnlockBuffer ();
+		if (expanded[expanded.Len() - 1] != '/')
+		{
+			expanded += '/';
+		}
+		return CheckIWAD (expanded, wads);
 	}
 	return false;
 }
@@ -1537,16 +1605,9 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 			{
 				if (stricmp (key, "Path") == 0)
 				{
-					if (*value == '$')
+					if (strchr (value, '$') != NULL)
 					{
-						if (stricmp (value + 1, "progdir") == 0)
-						{
-							CheckIWAD (progdir, wads);
-						}
-						else
-						{
-							CheckIWADinEnvDir (value + 1, wads);
-						}
+						CheckIWADinEnvDir (value, wads);
 					}
 #ifdef unix
 					else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))

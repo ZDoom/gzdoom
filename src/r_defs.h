@@ -648,6 +648,12 @@ public:
 	int GetWidth () { return Width; }
 	int GetHeight () { return Height; }
 
+	int GetScaledWidth () { return DivScale3(Width, ScaleX); }
+	int GetScaledHeight () { return DivScale3(Height, ScaleY); }
+
+	int GetScaledLeftOffset () { return DivScale3(LeftOffset, ScaleX); }
+	int GetScaledTopOffset () { return DivScale3(TopOffset, ScaleY); }
+
 	virtual void SetFrontSkyLayer();
 
 	void CopyToBlock (BYTE *dest, int dwidth, int dheight, int x, int y, const BYTE *translation=NULL);
@@ -734,6 +740,8 @@ public:
 	void AddGroup(const char * startlump, const char * endlump, int ns, int usetype);
 	void AddPatches (int lumpnum);
 	void AddTiles (void *tileFile);
+	void AddHiresTextures ();
+	void LoadHiresTex();
 
 	int CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	int AddTexture (FTexture *texture);

@@ -792,6 +792,11 @@ static bool StuffBitmap (const DCanvas *canvas, FILE *file)
 	const int height = canvas->GetHeight();
 	BYTE *from = canvas->GetBuffer();
 
+	return M_SaveBitmap(from, width, height, pitch, file);
+}
+
+bool M_SaveBitmap(BYTE * from, int width, int height, int pitch, FILE *file)
+{
 	Byte buffer[PNG_WRITE_SIZE];
 	Byte zero = 0;
 	z_stream stream;

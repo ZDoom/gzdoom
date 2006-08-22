@@ -45,6 +45,7 @@
 #include "c_dispatch.h"
 #include "c_console.h"
 #include "r_data.h"
+#include "sc_man.h"
 
 #include "v_palette.h"
 #include "v_video.h"
@@ -290,6 +291,146 @@ void FTextureManager::AddGroup(const char * startlump, const char * endlump, int
 	}
 }
 
+//==========================================================================
+//
+// Adds all hires texture definitions.
+//
+//==========================================================================
+
+void FTextureManager::AddHiresTextures ()
+{
+	int firsttx = Wads.CheckNumForName ("HI_START");
+	int lasttx = Wads.CheckNumForName ("HI_END");
+	char name[9];
+
+	if (firsttx == -1 || lasttx == -1)
+	{
+		return;
+	}
+
+	name[8] = 0;
+
+	for (firsttx += 1; firsttx < lasttx; ++firsttx)
+	{
+		Wads.GetLumpName (name, firsttx);
+
+		if (Wads.CheckNumForName (name, ns_hires) == firsttx)
+		{
+			FTexture * newtex = FTexture::CreateTexture (firsttx, FTexture::TEX_Any);
+			int oldtexno = CheckForTexture(name, FTexture::TEX_Wall, TEXMAN_Overridable|TEXMAN_TryAny);
+
+			if (oldtexno<0)
+			{
+				// A texture with this name does not yet exist
+				newtex->UseType=FTexture::TEX_Override;
+				AddTexture(newtex);
+			}
+			else
+			{
+				FTexture * oldtex = Textures[oldtexno].Texture;
+
+				// Replace the entire texture and adjust the scaling and offset factors.
+				newtex->ScaleX = 8 * newtex->GetWidth() / oldtex->GetWidth();
+				newtex->ScaleY = 8 * newtex->GetHeight() / oldtex->GetHeight();
+				newtex->LeftOffset = Scale(oldtex->LeftOffset, newtex->ScaleX, 8);
+				newtex->TopOffset = Scale(oldtex->TopOffset, newtex->ScaleY, 8);
+				ReplaceTexture(oldtexno, newtex, true);
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// Loads the HIRESTEX lumps
+//
+//==========================================================================
+
+void FTextureManager::LoadHiresTex()
+{
+	int remapLump, lastLump;
+	char src[9];
+	bool is32bit;
+	int width, height;
+	int type,mode;
+
+	lastLump = 0;
+	src[8] = '\0';
+
+	while ((remapLump = Wads.FindLump("HIRESTEX", &lastLump)) != -1)
+	{
+		SC_OpenLumpNum(remapLump, "HIRESTEX");
+		while (SC_GetString())
+		{
+			if (SC_Compare("remap")) // remap an existing texture
+			{
+				SC_MustGetString();
+				
+				// allow selection by type
+				if (SC_Compare("wall")) type=FTexture::TEX_Wall, mode=FTextureManager::TEXMAN_Overridable;
+				else if (SC_Compare("flat")) type=FTexture::TEX_Flat, mode=FTextureManager::TEXMAN_Overridable;
+				else if (SC_Compare("sprite")) type=FTexture::TEX_Sprite, mode=0;
+				else type = FTexture::TEX_Any;
+				
+				sc_String[8]=0;
+
+				int tex = TexMan.CheckForTexture(sc_String, type, mode);
+
+				SC_MustGetString();
+				int lumpnum = Wads.CheckNumForFullName(sc_String);
+				if (lumpnum < 0) lumpnum = Wads.CheckNumForName(sc_String, ns_graphics);
+
+				if (tex>0) 
+				{
+					FTexture * oldtex = TexMan[tex];
+					FTexture * newtex = FTexture::CreateTexture (lumpnum, FTexture::TEX_Any);
+
+					// Replace the entire texture and adjust the scaling and offset factors.
+					newtex->ScaleX = 8 * newtex->GetWidth() / oldtex->GetWidth();
+					newtex->ScaleY = 8 * newtex->GetHeight() / oldtex->GetHeight();
+					newtex->LeftOffset = Scale(oldtex->LeftOffset, newtex->ScaleX, 8);
+					newtex->TopOffset = Scale(oldtex->TopOffset, newtex->ScaleY, 8);
+					ReplaceTexture(tex, newtex, true);
+				}
+			}
+			else if (SC_Compare("define")) // define a new "fake" texture
+			{
+				SC_GetString();
+				memcpy(src, sc_String, 8);
+
+				int lumpnum = Wads.CheckNumForFullName(sc_String);
+				if (lumpnum < 0) lumpnum = Wads.CheckNumForName(sc_String, ns_graphics);
+
+				SC_GetString();
+				is32bit = !!SC_Compare("force32bit");
+				if (!is32bit) SC_UnGet();
+
+				SC_GetNumber();
+				width = sc_Number;
+				SC_GetNumber();
+				height = sc_Number;
+
+				if (lumpnum>=0)
+				{
+					FTexture *newtex = FTexture::CreateTexture(lumpnum, FTexture::TEX_Override);
+
+					// Replace the entire texture and adjust the scaling and offset factors.
+					newtex->ScaleX = 8 * width / newtex->GetWidth();
+					newtex->ScaleY = 8 * height / newtex->GetHeight();
+					newtex->LeftOffset = Scale(newtex->LeftOffset, newtex->ScaleX, 8);
+					newtex->TopOffset = Scale(newtex->TopOffset, newtex->ScaleY, 8);
+					memcpy(newtex->Name, src, sizeof(newtex->Name));
+
+					int oldtex = TexMan.CheckForTexture(src, FTexture::TEX_Override);
+					if (oldtex>=0) TexMan.ReplaceTexture(oldtex, newtex, true);
+					else TexMan.AddTexture(newtex);
+				}				
+				//else Printf("Unable to define hires texture '%s'\n", tex->Name);
+			}
+		}
+		SC_Close();
+	}
+}
 
 void FTextureManager::AddPatches (int lumpnum)
 {
@@ -563,6 +704,8 @@ void R_InitData ()
 	TexMan.AddGroup("F_START", "F_END", ns_flats, FTexture::TEX_Flat);
 	R_InitBuildTiles ();
 	TexMan.AddGroup("TX_START", "TX_END", ns_newtextures, FTexture::TEX_Override);
+	TexMan.AddHiresTextures ();
+	TexMan.LoadHiresTex ();
 	TexMan.DefaultTexture = TexMan.CheckForTexture ("-NOFLAT-", FTexture::TEX_Override, 0);
 
 	R_InitColormaps ();

@@ -1127,7 +1127,6 @@ void FDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, 
 	pic = TexMan[name];
 	if (pic != NULL)
 	{
-		pic->GetWidth();
 		x -= pic->LeftOffset;
 		pic->CopyToBlock (Pixels, Width, Height, x, y, colormap);
 	}

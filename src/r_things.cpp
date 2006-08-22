@@ -1175,7 +1175,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	int 				picnum;
 	FTexture			*tex;
-	int					picwidth;
 	
 	WORD 				flip;
 	
@@ -1298,9 +1297,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	{
 		return;
 	}
-
-	// Getting the width now ensures that the texture's dimensions are loaded
-	picwidth = tex->GetWidth ();
 
 	// [RH] Added scaling
 	gzt = fz + (tex->TopOffset << (FRACBITS-6-3)) * (thing->yscale+1) * tex->ScaleX;
@@ -1479,7 +1475,6 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	spritedef_t*		sprdef;
 	spriteframe_t*		sprframe;
 	int 				picnum;
-	int					picwidth;
 	WORD				flip;
 	FTexture*			tex;
 	vissprite_t*		vis;
@@ -1506,19 +1501,18 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	if (tex->UseType == FTexture::TEX_Null)
 		return;
 
-	picwidth = tex->GetWidth ();
-
 	// calculate edges of the shape
 	tx = sx-((320/2)<<FRACBITS);
-		
-	tx -= tex->LeftOffset << FRACBITS;
+
+	tx -= tex->GetScaledLeftOffset() << FRACBITS;
 	x1 = (centerxfrac + FixedMul (tx, pspritexscale)) >>FRACBITS;
+
 
 	// off the right side
 	if (x1 > viewwidth)
 		return; 
 
-	tx += tex->GetWidth() << FRACBITS;
+	tx += tex->GetScaledWidth() << FRACBITS;
 	x2 = ((centerxfrac + FixedMul (tx, pspritexscale)) >>FRACBITS) - 1;
 
 	// off the left side
@@ -1529,7 +1523,11 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	vis = &avis;
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
-	vis->texturemid = (BASEYCENTER<<FRACBITS) - (sy - (tex->TopOffset << FRACBITS));
+
+
+	vis->texturemid = MulScale3((BASEYCENTER<<FRACBITS) - sy, tex->ScaleY) + (tex->TopOffset << FRACBITS);
+
+
 	if (camera->player && (RenderTarget != screen ||
 		realviewheight == RenderTarget->GetHeight() ||
 		(RenderTarget->GetWidth() > 320 && !st_scale)))
@@ -1558,19 +1556,19 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	}
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
-	vis->xscale = pspritexscale;
-	vis->yscale = pspriteyscale;
+	vis->xscale = DivScale3(pspritexscale, tex->ScaleX);
+	vis->yscale = DivScale3(pspriteyscale, tex->ScaleY);
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->pic = tex;
 
 	if (flip)
 	{
-		vis->xiscale = -pspritexiscale;
+		vis->xiscale = -MulScale3(pspritexiscale, tex->ScaleX);
 		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
 	}
 	else
 	{
-		vis->xiscale = pspritexiscale;
+		vis->xiscale = MulScale3(pspritexiscale, tex->ScaleX);
 		vis->startfrac = 0;
 	}
 

@@ -1,3 +1,9 @@
+August 22, 2006 (Changes by Graf Zahl)
+- Removed a few redundant calls to FTexture::GetWidth because all textures
+  are now fully initialized when being created.
+- Added GZDoom's HI_START/HI_END namespace and HIRESTEX support.
+- Added sprite scaling support to the weapon drawing code
+
 August 21, 2006 (Changes by Graf Zahl)
 - Added support for PCX textures (1, 4, 8 and 24 bit variants.)
 

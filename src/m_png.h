@@ -53,6 +53,8 @@ bool M_AppendPNGText (FILE *file, const char *keyword, const char *text);
 // Appends the IEND chunk to a PNG file.
 bool M_FinishPNG (FILE *file);
 
+bool M_SaveBitmap(BYTE * from, int width, int height, int pitch, FILE *file);
+
 // PNG Reading --------------------------------------------------------------
 
 class FileReader;

@@ -1,3 +1,15 @@
+August 22, 2006
+- Added support for casting color names in ACS print-type statements. What that
+  means is that instead of writing this:
+    print (s:"\cDSome text");
+  You can write this:
+    print (r:CR_GREEN, s:"Some text");
+- Added some new colors, based on the ones jimmy91 posted in the forum: cream,
+  light blue, black, olive, dark green, dark red, dark brown, purple, and dark
+  gray.
+- Simplified FFont::BuildTranslations() and BuildTranslations2() to make adding
+  new colors easier.
+
 August 22, 2006 (Changes by Graf Zahl)
 - Removed a few redundant calls to FTexture::GetWidth because all textures
   are now fully initialized when being created.

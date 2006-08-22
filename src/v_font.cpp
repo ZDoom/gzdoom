@@ -50,6 +50,15 @@
 #include "cmdlib.h"
 #include "sc_man.h"
 
+// This structure is used by BuildTranslations() to hold color information.
+struct TranslationParm
+{
+	short RangeStart;	// First level for this range
+	short RangeEnd;		// Last level for this range
+	BYTE Start[3];		// Start color for this range
+	BYTE End[3];		// End color for this range
+};
+
 // This is a font character that loads a texture and recolors it.
 class FFontChar1 : public FTexture
 {
@@ -397,101 +406,74 @@ int FFont::SimpleTranslation (byte *colorsused, byte *translation, byte *reverse
 	return j;
 }
 
+// Build translations for most text in the game. The console font uses
+// BuildTranslations2, which fades to white.
+
 void FFont::BuildTranslations (const double *luminosity, const BYTE *identity)
 {
-	static const struct tp { double mul, add; } transParm[CR_YELLOW][3] =
+	static const TranslationParm transParm[NUM_TEXT_COLORS][3] =
 	{
-		{{ 184.0,  71.0 }, { 184.0,  0.0 }, { 184.0,  0.0 }},	// CR_BRICK
-		{{ 204.0,  51.0 }, { 192.0, 43.0 }, { 204.0, 19.0 }},	// CR_TAN
-		{{ 200.0,  39.0 }, { 200.0, 39.0 }, { 200.0, 39.0 }},	// CR_GRAY
-		{{ 108.0,  11.0 }, { 232.0, 23.0 }, { 104.0,  7.0 }},	// CR_GREEN
-		{{ 108.0,  83.0 }, { 104.0, 63.0 }, {  96.0, 47.0 }},	// CR_BROWN
-		{{ 140.0, 115.0 }, { 212.0, 43.0 }, { 115.0,  0.0 }},	// CR_GOLD
-		{{ 192.0,  63.0 }, {   0.0,  0.0 }, {   0.0,  0.0 }},	// CR_RED
-		{{   0.0,   0.0 }, {   0.0,  0.0 }, { 216.0, 39.0 }},	// CR_BLUE
-		{{ 223.0,  32.0 }, { 128.0,  0.0 }, {   0.0,  0.0 }},	// CR_ORANGE
-		{{ 219.0,  36.0 }, { 219.0, 36.0 }, { 219.0, 36.0 }}	// CR_WHITE
+		{ {   0, 256, {  71,   0,   0 }, { 255, 184, 184 } } },		// CR_BRICK
+		{ {   0, 256, {  51,  43,  19 }, { 255, 235, 223 } } },		// CR_TAN
+		{ {   0, 256, {  39,  39,  39 }, { 239, 239, 239 } } },		// CR_GRAY
+		{ {   0, 256, {  11,  23,   7 }, { 119, 255, 111 } } },		// CR_GREEN
+		{ {   0, 256, {  83,  63,  47 }, { 191, 167, 143 } } },		// CR_BROWN
+		{ {   0, 256, { 115,  43,   0 }, { 255, 255, 115 } } },		// CR_GOLD
+		{ {   0, 256, {  63,   0,   0 }, { 255,   0,   0 } } },		// CR_RED
+		{ {   0, 256, {   0,   0,  39 }, {   0,   0, 255 } } },		// CR_BLUE
+		{ {   0, 256, {  32,   0,   0 }, { 255, 128,   0 } } },		// CR_ORANGE
+		{ {   0, 256, {  36,  36,  36 }, { 255, 255, 255 } } },		// CR_WHITE
+		{ {   0,  64, {  39,  39,  39 }, {  81,  81,  81 } },		// CR_YELLOW
+		  {  80, 192, { 134,  83,  24 }, { 235, 159,  24 } },
+		  { 208, 256, { 243, 168,  42 }, { 252, 208,  67 } } },
+		{},															// CR_UNTRANSLATED
+		{ {   0, 256, {  19,  19,  19 }, {  80,  80,  80 } } },		// CR_BLACK
+		{ {   0, 256, {   0,   0, 115 }, { 180, 180, 255 } } },		// CR_LIGHTBLUE
+		{ {   0, 256, { 207, 131,  83 }, { 255, 215, 187 } } },		// CR_CREAM
+		{ {   0, 256, {  47,  55,  31 }, { 123, 127,  80 } } },		// CR_OLIVE
+		{ {   0, 256, {  11,  23,   7 }, {  67, 147,  55 } } },		// CR_DARKGREEN
+		{ {   0, 256, {  43,   0,   0 }, { 175,  43,  43 } } },		// CR_DARKRED
+		{ {   0, 256, {  31,  23,  11 }, { 163, 107,  63 } } },		// CR_DARKBROWN
+		{ {   0, 256, {  35,   0,  35 }, { 207,   0, 207 } } },		// CR_PURPLE
+		{ {   0, 256, {  35,  35,  35 }, { 139, 139, 139 } } },		// CR_DARKGRAY
 	};
 
-	byte colors[3*17];
 	int i, j, k;
-	double v;
-	byte *base;
-	byte *range;
+	BYTE *range;
 
 	range = Ranges = new byte[NUM_TEXT_COLORS * ActiveColors];
 
 	// Create different translations for different color ranges
-	for (i = 0; i < CR_UNTRANSLATED; i++)
+	for (i = 0; i < NUM_TEXT_COLORS; i++)
 	{
-		const tp *parms = &transParm[i][0];
-		base = colors;
-
-		if (i != CR_YELLOW)
+		if (i == CR_UNTRANSLATED)
 		{
-			for (v = 0.0, k = 17; k > 0; k--, v += 0.0625f)
-			{
-				base[0] = toint(v * parms[0].mul + parms[0].add);	// red
-				base[1] = toint(v * parms[1].mul + parms[1].add);	// green
-				base[2] = toint(v * parms[2].mul + parms[2].add);	// blue
-				base += 3;
-			}
-		}
-		else
-		{ // Hexen yellow
-			for (v = 0.0, k = 17; k > 0; k--, v += 0.0625f)
-			{
-				if (v <= 0.25)
-				{
-					base[0] = toint((v * 168.0) + 39.0);
-					base[1] = toint((v * 168.0) + 39.0);
-					base[2] = toint((v * 168.0) + 39.0);
-				}
-				else if (v < 0.8125)
-				{
-					base[0] = toint((v * 230.0) + 61.9);
-					base[1] = toint((v * 172.5) + 29.4);
-					base[2] = 24;
-				}
-				else
-				{
-					base[0] = toint((v * 46.8) + 205.2);
-					base[1] = toint((v * 210.6) - 2.6);
-					base[2] = toint((v * 292.5) - 195.5);
-				}
-				base += 3;
-			}
+			memcpy (range, identity, ActiveColors);
+			range += ActiveColors;
+			continue;
 		}
 
 		*range++ = 0;
 
 		for (j = 1; j < ActiveColors; j++)
 		{
-			double p1 = luminosity[j];
-			double i1 = p1 * 16.0;
-			double index, frac;
-			int r, g, b;
+			int v = int(luminosity[j] * 256.0);
 
-			frac = modf (i1, &index);
-
-			if (p1 < 1.0)
+			// Find the color range that this luminosity value lies within.
+			const TranslationParm *parms = &transParm[i][0];
+			for (k = 0; k < 2; ++k, ++parms)
 			{
-				double ifrac = 1.0 - frac;
-				k = toint(index) * 3;
-				r = toint(colors[k+0] * ifrac + colors[k+3] * frac);
-				g = toint(colors[k+1] * ifrac + colors[k+4] * frac);
-				b = toint(colors[k+2] * ifrac + colors[k+5] * frac);
+				if (parms->RangeStart <= v && parms->RangeEnd >= v)
+					break;
 			}
-			else
-			{
-				r = colors[3*16+0];
-				g = colors[3*16+1];
-				b = colors[3*16+2];
-			}
+			// Linearly interpolate to find out which color this luminosity level gets.
+			int rangev = ((v - parms->RangeStart) << 8) / (parms->RangeEnd - parms->RangeStart);
+			int r = ((parms->Start[0] << 8) + rangev * (parms->End[0] - parms->Start[0])) >> 8; // red
+			int g = ((parms->Start[1] << 8) + rangev * (parms->End[1] - parms->Start[1])) >> 8; // green
+			int b = ((parms->Start[2] << 8) + rangev * (parms->End[2] - parms->Start[2])) >> 8; // blue
 			*range++ = ColorMatcher.Pick (r, g, b);
 		}
 	}
-	memcpy (range, identity, ActiveColors);
 }
 
 byte *FFont::GetColorTranslation (EColorRange range) const
@@ -824,63 +806,96 @@ void FSingleLumpFont::BuildTranslations2 ()
 {
 	// Create different translations for different color ranges
 	// These are not the same as FFont::BuildTranslations()
-	static const struct tp { short mul, add; } transParmLo[CR_UNTRANSLATED][3] =
+	// These translations are used by the console font.
+
+	// The bottom half of the character's palette uses a darker range.
+	static const BYTE transParmLo[NUM_TEXT_COLORS][2][3] =
 	{
-		{{ 184, 71 }, { 184,  0 }, { 184,  0 }},	// CR_BRICK
-		{{ 204, 51 }, { 192, 43 }, { 204, 19 }},	// CR_TAN
-		{{ 200, 39 }, { 200, 39 }, { 200, 39 }},	// CR_GRAY
-		{{   0,  0 }, { 255,  0 }, {   0,  0 }},	// CR_GREEN
-		{{ 255,  0 }, { 128,  0 }, {   0,  0 }},	// CR_BROWN
-		{{ 255,  0 }, { 383,  0 }, { 128,  0 }},	// CR_GOLD
-		{{ 255,  0 }, {   0,  0 }, {   0,  0 }},	// CR_RED
-		{{   0,  0 }, {   0,  0 }, { 255,  0 }},	// CR_BLUE
-		{{ 223, 32 }, { 128,  0 }, {   0,  0 }},	// CR_ORANGE
-		{{ 255,  0 }, { 255,  0 }, { 255,  0 }},	// CR_WHITE
-		{{ 255,  0 }, { 255,  0 }, {   0,  0 }}		// CR_YELLOW
+		{ {  71,   0,   0 }, { 163,  92,  92 } },	// CR_BRICK
+		{ {  51,  43,  19 }, { 153, 139, 121 } },	// CR_TAN
+		{ {  39,  39,  39 }, { 139, 139, 139 } },	// CR_GRAY
+		{ {   0,   0,   0 }, {   0, 127,   0 } },	// CR_GREEN
+		{ {   0,   0,   0 }, { 127,  64,   0 } },	// CR_BROWN
+		{ {   0,   0,   0 }, { 127, 192,  64 } },	// CR_GOLD
+		{ {   0,   0,   0 }, { 127,   0,   0 } },	// CR_RED
+		{ {   0,   0,   0 }, {   0,   0, 127 } },	// CR_BLUE
+		{ {  32,   0,   0 }, { 144,  64,   0 } },	// CR_ORANGE
+		{ {   0,   0,   0 }, { 127, 127, 127 } },	// CR_WHITE
+		{ {   0,   0,   0 }, { 127, 127,   0 } },	// CR_YELLOW
+		{},											// CR_UNTRANSLATED
+		{ {   0,   0,   0 }, {  50,  50,  50 } },	// CR_BLACK
+		{ {   0,   0,  60 }, {  80,  80, 255 } },	// CR_LIGHTBLUE
+		{ {  43,  35,  15 }, { 191, 123,  75 } },	// CR_CREAM
+		{ {  55,  63,  39 }, { 123, 127,  99 } },	// CR_OLIVE
+		{ {   0,   0,   0 }, {   0,  88,   0 } },	// CR_DARKGREEN
+		{ {   0,   0,   0 }, { 115,   0,   0 } },	// CR_DARKRED
+		{ {  43,  35,  15 }, { 119,  48,   0 } },	// CR_DARKBROWN
+		{ {   0,   0,   0 }, { 159,   0, 155 } },	// CR_PURPLE
+		{ {   0,   0,   0 }, { 100, 100, 100 } },	// CR_DARKGRAY
 	};
-	static const tp transParmHi[CR_UNTRANSLATED][3] =
+
+	// And the top half of the character's palette uses a lighter range that
+	// generally fades to white.
+	static const BYTE transParmHi[NUM_TEXT_COLORS][2][3] =
 	{
-		{{ 127, 128 }, { 254,   0 }, { 254,   0 }},	// CR_BRICK
-		{{ 102, 153 }, { 116, 139 }, { 134, 121 }},	// CR_TAN
-		{{ 192,  63 }, { 192,  63 }, { 192,  63 }},	// CR_GRAY
-		{{ 254,   0 }, {   0, 255 }, { 254,   0 }},	// CR_GREEN
-		{{ 188,  67 }, { 184,  47 }, { 176,  31 }},	// CR_BROWN
-		{{   0, 223 }, {  64, 191 }, { 254,   0 }},	// CR_GOLD
-		{{   0, 255 }, { 254,   0 }, { 254,   0 }},	// CR_RED
-		{{ 191,  64 }, { 191,  64 }, {   0, 255 }},	// CR_BLUE
-		{{   0, 255 }, { 127, 127 }, { 254,   0 }},	// CR_ORANGE
-		{{ 127, 128 }, { 127, 128 }, { 127, 128 }},	// CR_WHITE
-		{{   0, 255 }, {   0, 255 }, { 254,   0 }}	// CR_YELLOW
+		{ { 128,   0,   0 }, { 255, 254, 254 } },	// CR_BRICK
+		{ { 153, 139, 121 }, { 255, 255, 255 } },	// CR_TAN
+		{ {  80,  80,  80 }, { 255, 255, 255 } },	// CR_GRAY
+		{ {   0, 255,   0 }, { 254, 255, 254 } },	// CR_GREEN
+		{ {  67,  47,  31 }, { 255, 231, 207 } },	// CR_BROWN
+		{ { 223, 191,   0 }, { 223, 255, 254 } },	// CR_GOLD
+		{ { 255,   0,   0 }, { 255, 254, 254 } },	// CR_RED
+		{ {  64,  64, 255 }, { 222, 222, 255 } },	// CR_BLUE
+		{ { 255, 127,   0 }, { 255, 254, 254 } },	// CR_ORANGE
+		{ { 128, 128, 128 }, { 255, 255, 255 } },	// CR_WHITE
+		{ { 255, 255,   0 }, { 255, 255, 255 } },	// CR_YELLOW
+		{},											// CR_UNTRANSLATED
+		{ {  10,  10,  10 }, {  80,  80,  80 } },	// CR_BLACK
+		{ { 128, 128, 255 }, { 255, 255, 255 } },	// CR_LIGHTBLUE
+		{ { 255, 179, 131 }, { 255, 255, 255 } },	// CR_CREAM
+		{ { 103, 107,  79 }, { 209, 216, 168 } },	// CR_OLIVE
+		{ {   0, 140,   0 }, { 220, 255, 220 } },	// CR_DARKGREEN
+		{ { 128,   0,   0 }, { 255, 220, 220 } },	// CR_DARKRED
+		{ { 115,  87,  67 }, { 247, 189,  88 } },	// CR_DARKBROWN
+		{ { 255,   0, 255 }, { 255, 255, 255 } },	// CR_PURPLE
+		{ {  64,  64,  64 }, { 180, 180, 180 } },	// CR_DARKGRAY
 	};
+
+	assert (ActiveColors == 255);
 
 	byte *range;
 	range = Ranges = new byte[NUM_TEXT_COLORS * ActiveColors];
 	int i, j, r, g, b;
 
-	for (i = 0; i < CR_UNTRANSLATED; i++)
+	for (i = 0; i < NUM_TEXT_COLORS; i++)
 	{
-		const tp *parm;
+		const BYTE (*parm)[3];
+
+		if (i == CR_UNTRANSLATED)
+		{
+			memcpy (range, Ranges + CR_WHITE * ActiveColors, ActiveColors);
+			range += ActiveColors;
+			continue;
+		}
 
 		parm = &transParmLo[i][0];
 		for (j = 0; j < 127; j++)
 		{
-			r = j * parm[0].mul / 255 + parm[0].add;
-			g = j * parm[1].mul / 255 + parm[1].add;
-			b = j * parm[2].mul / 255 + parm[2].add;
+			r = parm[0][0] + (parm[1][0] - parm[0][0]) * j / 126;
+			g = parm[0][1] + (parm[1][1] - parm[0][1]) * j / 126;
+			b = parm[0][2] + (parm[1][2] - parm[0][2]) * j / 126;
 			*range++ = ColorMatcher.Pick (r, g, b);
 		}
 
 		parm = &transParmHi[i][0];
 		for (j = 0; j < 128; j++)
 		{
-			r = j * parm[0].mul / 127 + parm[0].add;
-			g = MIN (j * parm[1].mul / 127 + parm[1].add, 255);
-			b = j * parm[2].mul / 127 + parm[2].add;
+			r = parm[0][0] + (parm[1][0] - parm[0][0]) * j / 127;
+			g = parm[0][1] + (parm[1][1] - parm[0][1]) * j / 127;
+			b = parm[0][2] + (parm[1][2] - parm[0][2]) * j / 127;
 			*range++ = ColorMatcher.Pick (r, g, b);
 		}
 	}
-	// Make CR_UNTRANSLATED a valid translation!
-	memcpy(range, range-ActiveColors, ActiveColors);
 }
 
 FFontChar1::FFontChar1 (int sourcelump, const BYTE *sourceremap)

@@ -45,23 +45,33 @@ struct brokenlines_t
 	char *string;
 };
 
-#define TEXTCOLOR_ESCAPE	'\x1c'
+#define TEXTCOLOR_ESCAPE		'\034'
 
-#define TEXTCOLOR_BRICK		"\x1c""A"
-#define TEXTCOLOR_TAN		"\x1c""B"
-#define TEXTCOLOR_GRAY		"\x1c""C"
-#define TEXTCOLOR_GREY		"\x1c""C"
-#define TEXTCOLOR_GREEN		"\x1c""D"
-#define TEXTCOLOR_BROWN		"\x1c""E"
-#define TEXTCOLOR_GOLD		"\x1c""F"
-#define TEXTCOLOR_RED		"\x1c""G"
-#define TEXTCOLOR_BLUE		"\x1c""H"
-#define TEXTCOLOR_ORANGE	"\x1c""I"
-#define TEXTCOLOR_WHITE		"\x1c""J"
-#define TEXTCOLOR_YELLOW	"\x1c""K"
+#define TEXTCOLOR_BRICK			"\034A"
+#define TEXTCOLOR_TAN			"\034B"
+#define TEXTCOLOR_GRAY			"\034C"
+#define TEXTCOLOR_GREY			"\034C"
+#define TEXTCOLOR_GREEN			"\034D"
+#define TEXTCOLOR_BROWN			"\034E"
+#define TEXTCOLOR_GOLD			"\034F"
+#define TEXTCOLOR_RED			"\034G"
+#define TEXTCOLOR_BLUE			"\034H"
+#define TEXTCOLOR_ORANGE		"\034I"
+#define TEXTCOLOR_WHITE			"\034J"
+#define TEXTCOLOR_YELLOW		"\034K"
+#define TEXTCOLOR_UNTRANSLATED	"\034L"
+#define TEXTCOLOR_BLACK			"\034M"
+#define TEXTCOLOR_LIGHTBLUE		"\034N"
+#define TEXTCOLOR_CREAM			"\034O"
+#define TEXTCOLOR_OLIVE			"\034P"
+#define TEXTCOLOR_DARKGREEN		"\034Q"
+#define TEXTCOLOR_DARKRED		"\034R"
+#define TEXTCOLOR_DARKBROWN		"\034S"
+#define TEXTCOLOR_PURPLE		"\034T"
+#define TEXTCOLOR_DARKGRAY		"\034U"
 
-#define TEXTCOLOR_NORMAL	"\x1c-"
-#define TEXTCOLOR_BOLD		"\x1c+"
+#define TEXTCOLOR_NORMAL		"\034-"
+#define TEXTCOLOR_BOLD			"\034+"
 
 brokenlines_t *V_BreakLines (int maxwidth, const byte *str, bool keepspace=false);
 void V_FreeBrokenLines (brokenlines_t *lines);

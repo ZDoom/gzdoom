@@ -754,7 +754,16 @@ static value_t TextColors[] =
 	{ 8.0, "orange" },
 	{ 9.0, "white" },
 	{ 10.0, "yellow" },
-	{ 11.0, "default" }
+	{ 11.0, "default" },
+	{ 12.0, "black" },
+	{ 13.0, "light blue" },
+	{ 14.0, "cream" },
+	{ 15.0, "olive" },
+	{ 16.0, "dark green" },
+	{ 17.0, "dark red" },
+	{ 18.0, "dark brown" },
+	{ 19.0, "purple" },
+	{ 20.0, "dark gray" },
 };
 
 static value_t MessageLevels[] = {
@@ -772,12 +781,12 @@ static menuitem_t MessagesItems[] = {
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ whitetext, "Message Colors",		{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ cdiscrete, "Item Pickup",			{&msg0color},		   	{12.0}, {0.0},	{0.0}, {TextColors} },
-	{ cdiscrete, "Obituaries",			{&msg1color},		   	{12.0}, {0.0},	{0.0}, {TextColors} },
-	{ cdiscrete, "Critical Messages",	{&msg2color},		   	{12.0}, {0.0},	{0.0}, {TextColors} },
-	{ cdiscrete, "Chat Messages",		{&msg3color},		   	{12.0}, {0.0},	{0.0}, {TextColors} },
-	{ cdiscrete, "Team Messages",		{&msg4color},		   	{12.0}, {0.0},	{0.0}, {TextColors} },
-	{ cdiscrete, "Centered Messages",	{&msgmidcolor},			{12.0}, {0.0},	{0.0}, {TextColors} }
+	{ cdiscrete, "Item Pickup",			{&msg0color},		   	{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Obituaries",			{&msg1color},		   	{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Critical Messages",	{&msg2color},		   	{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Chat Messages",		{&msg3color},		   	{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Team Messages",		{&msg4color},		   	{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Centered Messages",	{&msgmidcolor},			{21.0}, {0.0},	{0.0}, {TextColors} }
 };
 
 menu_t MessagesMenu =

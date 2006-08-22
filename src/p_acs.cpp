@@ -73,7 +73,7 @@ FRandom pr_acs ("ACS");
 // potentially get used with recursive functions.
 #define STACK_SIZE 4096
 
-#define CLAMPCOLOR(c)	(EColorRange)((unsigned)(c)>CR_UNTRANSLATED?CR_UNTRANSLATED:(c))
+#define CLAMPCOLOR(c)	(EColorRange)((unsigned)(c) >= NUM_TEXT_COLORS ? CR_UNTRANSLATED : (c))
 #define HUDMSG_LOG		(0x80000000)
 #define LANGREGIONMASK	MAKE_ID(0,0,0xff,0xff)	
 
@@ -3699,6 +3699,12 @@ int DLevelScript::RunScript ()
 				}
 				sp--;
 			}
+			break;
+
+		case PCD_PRINTCOLOR:
+			work += TEXTCOLOR_ESCAPE;
+			work += 'A' + CLAMPCOLOR(STACK(1));
+			sp--;
 			break;
 
 		// [JB] Print map character array

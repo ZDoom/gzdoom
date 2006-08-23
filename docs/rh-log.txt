@@ -1,3 +1,6 @@
+August 23, 2006
+- Fixed incorrect spawn ID for cell pack.
+
 August 22, 2006
 - Added Martin Howe's code for replacing environment variables in partial IWAD
   search paths.

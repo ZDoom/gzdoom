@@ -95,7 +95,7 @@ ACTOR Cell : Ammo 2047
 ACTOR CellPack : Cell 17
 {
 	Game Doom
-	SpawnID 11
+	SpawnID 142
 	Inventory.PickupMessage "$GOTCELLBOX"
 	Inventory.Amount 100
 	States

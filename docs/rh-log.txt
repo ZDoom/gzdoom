@@ -1,4 +1,8 @@
 August 24, 2006
+- Removed the 64 seg limit for polyobjects defined with Polyobj_ExplicitLine.
+- Polyobj_StartLine and Polyobj_ExplicitLine can now set a line's ID. This is
+  the fourth parameter for Polyobj_StartLine and the fifth parameter for
+  Polyobj_ExplicitLine.
 - Added support for DDS textures compressed with DXT1, DXT3, or DXT5.
 
 August 23, 2006

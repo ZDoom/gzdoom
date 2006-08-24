@@ -1260,9 +1260,6 @@ static void SpawnPolyobj (int index, int tag, int type)
 	unsigned int ii;
 	int i;
 	int j;
-	int psIndex;
-	int psIndexOld;
-	seg_t *polySegList[PO_MAXPOLYSEGS];
 
 	for (ii = 0; ii < KnownPolySegs.Size(); ++ii)
 	{
@@ -1302,11 +1299,12 @@ static void SpawnPolyobj (int index, int tag, int type)
 	}
 	if (!polyobjs[index].segs)
 	{ // didn't find a polyobj through PO_LINE_START
-		psIndex = 0;
+		TArray<seg_t *> polySegList;
+		unsigned int psIndexOld;
 		polyobjs[index].numsegs = 0;
 		for (j = 1; j < PO_MAXPOLYSEGS; j++)
 		{
-			psIndexOld = psIndex;
+			psIndexOld = polySegList.Size();
 			for (ii = 0; ii < KnownPolySegs.Size(); ++ii)
 			{
 				i = KnownPolySegs[ii];
@@ -1322,13 +1320,8 @@ static void SpawnPolyobj (int index, int tag, int type)
 					}
 					if (segs[i].linedef->args[1] == j)
 					{
-						polySegList[psIndex] = &segs[i];
+						polySegList.Push (&segs[i]);
 						polyobjs[index].numsegs++;
-						psIndex++;
-						if (psIndex > PO_MAXPOLYSEGS)
-						{
-							I_Error ("SpawnPolyobj: psIndex > PO_MAXPOLYSEGS\n");
-						}
 					}
 				}
 			}
@@ -1347,7 +1340,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 					KnownPolySegs[ii] = -1;
 				}
 			}
-			if (psIndex == psIndexOld)
+			if (polySegList.Size() == psIndexOld)
 			{ // Check if an explicit line order has been skipped.
 			  // A line has been skipped if there are any more explicit
 			  // lines with the current tag value. [RH] Can this actually happen?

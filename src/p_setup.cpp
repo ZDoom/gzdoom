@@ -1649,21 +1649,30 @@ void P_AdjustLine (line_t *ld)
 	// the tag doesn't always go into the first arg.
 	if (level.flags & LEVEL_HEXENFORMAT)	
 	{
-		if (ld->special == Line_SetIdentification)
+		switch (ld->special)
 		{
+		case Line_SetIdentification:
 			ld->id = ld->args[0];
 			ld->flags |= ld->args[1]<<16;
-		}
-		else if (ld->special == TranslucentLine)
-		{
+			break;
+
+		case TranslucentLine:
 			ld->id = ld->args[0];
 			ld->flags |= ld->args[3]<<16;
-		}
-		else if (
-			ld->special == Teleport_Line ||
-			ld->special == Scroll_Texture_Model)
-		{
+			break;
+
+		case Teleport_Line:
+		case Scroll_Texture_Model:
 			ld->id = ld->args[0];
+			break;
+
+		case Polyobj_StartLine:
+			ld->id = ld->args[3];
+			break;
+
+		case Polyobj_ExplicitLine:
+			ld->id = ld->args[4];
+			break;
 		}
 	}
 }

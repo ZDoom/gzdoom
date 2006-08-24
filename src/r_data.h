@@ -28,6 +28,7 @@
 #include "r_state.h"
 #include "v_video.h"
 
+class FWadLump;
 
 
 // A texture that doesn't really exist
@@ -238,10 +239,9 @@ public:
 
 protected:
 
-	static bool Check(FileReader & file);
-	static FTexture *Create(FileReader & file, int lumpnum);
+	static bool Check (FileReader &file);
+	static FTexture *Create (FileReader &file, int lumpnum);
 	FPNGTexture (FileReader &lump, int lumpnum, int width, int height, BYTE bitdepth, BYTE colortype, BYTE interlace);
-
 
 	int SourceLump;
 	BYTE *Pixels;
@@ -261,6 +261,44 @@ protected:
 };
 
 
+// A DDS image, with DXTx compression
+class FDDSTexture : public FTexture
+{
+public:
+	~FDDSTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+protected:
+	static bool Check (FileReader &file);
+	static FTexture *Create (FileReader &file, int lumpnum);
+	FDDSTexture (FileReader &lump, int lumpnum, void *surfdesc);
+
+	int SourceLump;
+	BYTE *Pixels;
+	Span **Spans;
+
+	DWORD Format;
+
+	DWORD RMask, GMask, BMask, AMask;
+	BYTE RShiftL, GShiftL, BShiftL, AShiftL;
+	BYTE RShiftR, GShiftR, BShiftR, AShiftR;
+
+	SDWORD Pitch;
+	DWORD LinearSize;
+
+	static void CalcBitShift (DWORD mask, BYTE *lshift, BYTE *rshift);
+
+	void MakeTexture ();
+	void ReadRGB (FWadLump &lump);
+	void DecompressDXT1 (FWadLump &lump);
+	void DecompressDXT3 (FWadLump &lump, bool premultiplied);
+	void DecompressDXT5 (FWadLump &lump, bool premultiplied);
+
+	friend class FTexture;
+};
 
 // A JPEG image
 class FJPEGTexture : public FTexture
@@ -274,8 +312,8 @@ public:
 
 protected:
 
-	static bool Check(FileReader & file);
-	static FTexture *Create(FileReader & file, int lumpnum);
+	static bool Check (FileReader &file);
+	static FTexture *Create (FileReader &file, int lumpnum);
 	FJPEGTexture (int lumpnum, int width, int height);
 
 	int SourceLump;

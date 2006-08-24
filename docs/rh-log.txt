@@ -1,3 +1,6 @@
+August 24, 2006
+- Added support for DDS textures compressed with DXT1, DXT3, or DXT5.
+
 August 23, 2006
 - Fixed incorrect spawn ID for cell pack.
 

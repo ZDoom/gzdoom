@@ -57,13 +57,14 @@ typedef enum
 	SS_STRING_END,
 	SS_STRING_STOPSOUND,
 	SS_STRING_ATTENUATION,
-	SS_STRING_DOOR,
-	SS_STRING_PLATFORM,
-	SS_STRING_ENVIRONMENT,
 	SS_STRING_NOSTOPCUTOFF,
 	SS_STRING_SLOT,
 	SS_STRING_RANDOMSEQUENCE,
 	SS_STRING_RESTART,
+	// These must be last and in the same order as they appear in seqtype_t
+	SS_STRING_PLATFORM,
+	SS_STRING_DOOR,
+	SS_STRING_ENVIRONMENT
 } ssstrings_t;
 
 typedef enum
@@ -190,13 +191,14 @@ static const char *SSStrings[] = {
 	"end",
 	"stopsound",
 	"attenuation",
-	"door",
-	"platform",
-	"environment",
 	"nostopcutoff",
 	"slot",
 	"randomsequence",
 	"restart",
+	// These must be last and in the same order as they appear in seqtype_t
+	"platform",
+	"door",
+	"environment",
 	NULL
 };
 static const char *Attenuations[] = {
@@ -529,10 +531,16 @@ void S_ParseSndSeq (int levellump)
 				else
 				{ // Add a selection
 					SC_UnGet();
-					SC_MustGetNumber();
-					ScriptTemp.Push (sc_Number);
-					SC_MustGetString();
-					ScriptTemp.Push (FName(sc_String));
+					if (SC_CheckNumber())
+					{
+						ScriptTemp.Push (sc_Number);
+						SC_MustGetString();
+						ScriptTemp.Push (FName(sc_String));
+					}
+					else
+					{
+						AssignTranslations (curseq, seqtype_t(SC_MustMatchString (SSStrings + SS_STRING_PLATFORM)));
+					}
 				}
 				continue;
 			}

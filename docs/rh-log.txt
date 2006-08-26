@@ -1,3 +1,7 @@
+August 25, 2006
+- Fixed: Multiple-choice sound sequences could not be assigned IDs for use
+  with polyobjects and the sound sequence selector things.
+
 August 24, 2006
 - Removed the 64 seg limit for polyobjects defined with Polyobj_ExplicitLine.
 - Polyobj_StartLine and Polyobj_ExplicitLine can now set a line's ID. This is

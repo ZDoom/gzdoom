@@ -1,3 +1,6 @@
+August 27, 2006 (Changes by Graf Zahl)
+- fixed: callstatechain didn`t check for NULL code pointers
+
 August 25, 2006
 - Fixed: Multiple-choice sound sequences could not be assigned IDs for use
   with polyobjects and the sound sequence selector things.

@@ -109,12 +109,15 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 	while (State != NULL)
 	{
 		// Assume success. The code pointer will set this to false if necessary
-		StateCall.Result = true;	
 		CallingState = StateCall.State = State;
-		State->GetAction() (actor);
+		if (State->GetAction() != NULL) 
+		{
+			StateCall.Result = true;	
+			State->GetAction() (actor);
+			// collect all the results. Even one successful call signifies overall success.
+			result |= StateCall.Result;
+		}
 
-		// collect all the results. Even one successful call signifies overall success.
-		result |= StateCall.Result;
 
 		// Since there are no delays it is a good idea to check for infinite loops here!
 		counter++;

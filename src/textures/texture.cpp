@@ -64,22 +64,22 @@ void FTexture::InitGrayMap()
 FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 {
 	static TexCreateInfo CreateInfo[]={
-		{ FIMGZTexture::Check, FIMGZTexture::Create, FTexture::TEX_Any },
-		{ FPNGTexture::Check, FPNGTexture::Create, FTexture::TEX_Any },
-		{ FJPEGTexture::Check, FJPEGTexture::Create, FTexture::TEX_Any },
-		{ FDDSTexture::Check, FDDSTexture::Create, FTexture::TEX_Any },
-		{ FPCXTexture::Check, FPCXTexture::Create, FTexture::TEX_Any },
-		{ FTGATexture::Check, FTGATexture::Create, FTexture::TEX_Any },
-		{ FRawPageTexture::Check, FRawPageTexture::Create, FTexture::TEX_MiscPatch },
-		{ FFlatTexture::Check, FFlatTexture::Create, FTexture::TEX_Flat },
-		{ FPatchTexture::Check, FPatchTexture::Create, FTexture::TEX_Any },
-		{ FAutomapTexture::Check, FAutomapTexture::Create, FTexture::TEX_Autopage },
+		{ FIMGZTexture::Check,		FIMGZTexture::Create,		TEX_Any },
+		{ FPNGTexture::Check,		FPNGTexture::Create,		TEX_Any },
+		{ FJPEGTexture::Check,		FJPEGTexture::Create,		TEX_Any },
+		{ FDDSTexture::Check,		FDDSTexture::Create,		TEX_Any },
+		{ FPCXTexture::Check,		FPCXTexture::Create,		TEX_Any },
+		{ FTGATexture::Check,		FTGATexture::Create,		TEX_Any },
+		{ FRawPageTexture::Check,	FRawPageTexture::Create,	TEX_MiscPatch },
+		{ FFlatTexture::Check,		FFlatTexture::Create,		TEX_Flat },
+		{ FPatchTexture::Check,		FPatchTexture::Create,		TEX_Any },
+		{ FAutomapTexture::Check,	FAutomapTexture::Create,	TEX_Autopage },
 	};
 
 
 	FWadLump data = Wads.OpenLumpNum (lumpnum);
 
-	for(int i = 0; i < countof(CreateInfo); i++)
+	for(size_t i = 0; i < countof(CreateInfo); i++)
 	{
 		if ((CreateInfo[i].usetype == usetype || CreateInfo[i].usetype == TEX_Any) &&
 			CreateInfo[i].Check(data))

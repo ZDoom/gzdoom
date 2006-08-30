@@ -231,6 +231,9 @@ acs/strfhelp.o				strfhelp.o
 
 
 ========
+# Font color ranges
+textcolors.txt				textcolors.txt
+
 ========
 # Decorate stuff
 

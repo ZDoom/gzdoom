@@ -249,7 +249,7 @@ void FJPEGTexture::MakeTexture ()
 			  (cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
 			  (cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf (TEXTCOLOR_ORANGE "Unsupported color format\n", Name);
+			Printf (TEXTCOLOR_ORANGE "Unsupported color format\n");
 			throw -1;
 		}
 
@@ -296,6 +296,11 @@ void FJPEGTexture::MakeTexture ()
 					out += Height;
 					in += 4;
 				}
+				break;
+
+			default:
+				// The other colorspaces were considered above and discarded,
+				// but GCC will complain without a default for them here.
 				break;
 			}
 			y++;

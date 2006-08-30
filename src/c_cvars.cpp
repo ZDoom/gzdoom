@@ -904,15 +904,14 @@ int FColorCVar::ToInt2 (UCVarValue value, ECVarType type)
 
 	if (type == CVAR_String)
 	{
-		char *string;
+		FString string;
 		// Only allow named colors after the screen exists (i.e. after
 		// we've got some lumps loaded, so X11R6RGB can be read). Since
 		// the only time this might be called before that is when loading
-		// zdoom.cfg, this shouldn't be a problem.
-		if (screen && (string = V_GetColorStringByName (value.String)) )
+		// zdoom.ini, this shouldn't be a problem.
+		if (screen && !(string = V_GetColorStringByName (value.String)).IsEmpty() )
 		{
 			ret = V_GetColorFromString (NULL, string);
-			delete[] string;
 		}
 		else
 		{

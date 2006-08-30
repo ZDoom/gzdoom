@@ -4,6 +4,8 @@ xx(None)
 xx(Super)
 xx(Object)
 
+xx(Untranslated)
+
 // Hexen sound sequence names
 xx(Platform)
 xx(PlatformMetal)

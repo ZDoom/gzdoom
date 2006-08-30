@@ -42,10 +42,9 @@
 
 bool FTGATexture::Check(FileReader & data)
 {
-	
 	TGAHeader hdr;
 	
-	if (data.GetLength() < sizeof(hdr)) return false;
+	if (data.GetLength() < (long)sizeof(hdr)) return false;
 	
 	data.Seek(0, SEEK_SET);
 	data.Read(&hdr, sizeof(hdr));

@@ -486,7 +486,7 @@ void V_ForceBlend (int blendr, int blendg, int blendb, int blenda)
 
 CCMD (testblend)
 {
-	char *colorstring;
+	FString colorstring;
 	int color;
 	float amt;
 
@@ -496,10 +496,9 @@ CCMD (testblend)
 	}
 	else
 	{
-		if ( (colorstring = V_GetColorStringByName (argv[1])) )
+		if ( !(colorstring = V_GetColorStringByName (argv[1])).IsEmpty() )
 		{
 			color = V_GetColorFromString (NULL, colorstring);
-			delete[] colorstring;
 		}
 		else
 		{
@@ -519,7 +518,7 @@ CCMD (testblend)
 
 CCMD (testfade)
 {
-	char *colorstring;
+	FString colorstring;
 	DWORD color;
 
 	if (argv.argc() < 2)
@@ -528,10 +527,9 @@ CCMD (testfade)
 	}
 	else
 	{
-		if ( (colorstring = V_GetColorStringByName (argv[1])) )
+		if ( !(colorstring = V_GetColorStringByName (argv[1])).IsEmpty() )
 		{
 			color = V_GetColorFromString (NULL, colorstring);
-			delete[] colorstring;
 		}
 		else
 		{
@@ -762,7 +760,7 @@ void FDynamicColormap::ChangeColorFade (PalEntry lightcolor, PalEntry fadecolor)
 
 CCMD (testcolor)
 {
-	char *colorstring;
+	FString colorstring;
 	DWORD color;
 	int desaturate;
 
@@ -772,10 +770,9 @@ CCMD (testcolor)
 	}
 	else
 	{
-		if ( (colorstring = V_GetColorStringByName (argv[1])) )
+		if ( !(colorstring = V_GetColorStringByName (argv[1])).IsEmpty() )
 		{
 			color = V_GetColorFromString (NULL, colorstring);
-			delete[] colorstring;
 		}
 		else
 		{

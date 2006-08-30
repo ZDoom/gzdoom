@@ -97,7 +97,7 @@ public:
 protected:
 	FFont ();
 
-	void BuildTranslations (const double *luminosity, const BYTE *identity);
+	void BuildTranslations (const double *luminosity, const BYTE *identity, const void *ranges);
 
 	static int SimpleTranslation (byte *colorsused, byte *translation, byte *identity, double **luminosity);
 
@@ -121,19 +121,13 @@ protected:
 
 	friend void V_Shutdown();
 
-#if defined(_MSC_VER) && _MSC_VER < 1310
-	template<> friend FArchive &operator<< (FArchive &arc, FFont* &font);
-#else
 	friend FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font);
-#endif
 };
 
-#if !defined(_MSC_VER) || _MSC_VER >= 1310
 template<> inline FArchive &operator<< <FFont> (FArchive &arc, FFont* &font)
 {
 	return SerializeFFontPtr (arc, font);
 }
-#endif
 
 class FSingleLumpFont : public FFont
 {
@@ -141,6 +135,7 @@ public:
 	FSingleLumpFont (const char *fontname, int lump);
 
 protected:
+	void CheckFON1Chars (int lump, const BYTE *data, double *luminosity);
 	void BuildTranslations2 ();
 	void FixupPalette (BYTE *identity, double *luminosity, const BYTE *palette, bool rescale);
 	void LoadFON1 (int lump, const BYTE *data);
@@ -153,5 +148,7 @@ void RecordTextureColors (FTexture *pic, byte *colorsused);
 extern FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
 
 void V_InitCustomFonts ();
+void V_InitFontColors ();
+EColorRange V_FindFontColor (const char *name);
 
 #endif //__V_FONT_H__

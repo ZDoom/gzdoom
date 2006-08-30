@@ -32,6 +32,8 @@
 **
 */
 
+// HEADER FILES ------------------------------------------------------------
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -50,6 +52,10 @@
 #include "cmdlib.h"
 #include "sc_man.h"
 
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
 // This structure is used by BuildTranslations() to hold color information.
 struct TranslationParm
 {
@@ -57,6 +63,12 @@ struct TranslationParm
 	short RangeEnd;		// Last level for this range
 	BYTE Start[3];		// Start color for this range
 	BYTE End[3];		// End color for this range
+};
+
+struct TranslationMap
+{
+	FName Name;
+	int Number;
 };
 
 // This is a font character that loads a texture and recolors it.
@@ -72,7 +84,7 @@ public:
 protected:
    void MakeTexture ();
 
-   FTexture * BaseTexture;
+   FTexture *BaseTexture;
    BYTE *Pixels;
    const BYTE *SourceRemap;
 };
@@ -81,7 +93,7 @@ protected:
 class FFontChar2 : public FTexture
 {
 public:
-	FFontChar2 (int sourcelump, int sourcepos, int width, int height);
+	FFontChar2 (int sourcelump, const BYTE *sourceremap, int sourcepos, int width, int height);
 	~FFontChar2 ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
@@ -93,9 +105,26 @@ protected:
 	int SourcePos;
 	BYTE *Pixels;
 	Span **Spans;
+	const BYTE *SourceRemap;
 
 	void MakeTexture ();
 };
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static int STACK_ARGS TranslationMapCompare (const void *a, const void *b);
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+FFont *FFont::FirstFont = NULL;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static const byte myislower[256] =
 {
@@ -117,13 +146,19 @@ static const byte myislower[256] =
 	1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0
 };
 
-FFont *FFont::FirstFont = NULL;
+static TArray<TranslationParm> TranslationParms[2];
+static TArray<TranslationMap> TranslationLookup;
+static int NumTextColors;
 
-#if defined(_MSC_VER) && _MSC_VER < 1310
-template<> FArchive &operator<< (FArchive &arc, FFont* &font)
-#else
+// CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// SerializeFFontPtr
+//
+//==========================================================================
+
 FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font)
-#endif
 {
 	if (arc.IsStoring ())
 	{
@@ -173,6 +208,13 @@ FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font)
 	return arc;
 }
 
+//==========================================================================
+//
+// FFont :: FFont
+//
+// Loads a multi-texture font.
+//
+//==========================================================================
 
 FFont::FFont (const char *name, const char *nametemplate, int first, int count, int start)
 {
@@ -257,11 +299,17 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	{
 		SpaceWidth = 4;
 	}
-	BuildTranslations (luminosity, identity);
+	BuildTranslations (luminosity, identity, &TranslationParms[0][0]);
 
 	delete[] luminosity;
 	delete[] charlumps;
 }
+
+//==========================================================================
+//
+// FFont :: ~FFont
+//
+//==========================================================================
 
 FFont::~FFont ()
 {
@@ -310,6 +358,15 @@ FFont::~FFont ()
 	}
 }
 
+//==========================================================================
+//
+// FFont :: FindFont
+//
+// Searches for the named font in the list of loaded fonts, returning the
+// font if it was found. The disk is not checked if it cannot be found.
+//
+//==========================================================================
+
 FFont *FFont::FindFont (const char *name)
 {
 	if (name == NULL)
@@ -326,6 +383,15 @@ FFont *FFont::FindFont (const char *name)
 	}
 	return font;
 }
+
+//==========================================================================
+//
+// RecordTextureColors
+//
+// Given a 256 entry buffer, sets every entry that corresponds to a color
+// used by the texture to 1.
+//
+//==========================================================================
 
 void RecordTextureColors (FTexture *pic, byte *usedcolors)
 {
@@ -351,6 +417,14 @@ void RecordTextureColors (FTexture *pic, byte *usedcolors)
 	}
 }
 
+//==========================================================================
+//
+// compare
+//
+// Used for sorting colors by brightness.
+//
+//==========================================================================
+
 static int STACK_ARGS compare (const void *arg1, const void *arg2)
 {
 	if (RPART(GPalette.BaseColors[*((byte *)arg1)]) * 299 +
@@ -363,6 +437,25 @@ static int STACK_ARGS compare (const void *arg1, const void *arg2)
 	else
 		return 1;
 }
+
+//==========================================================================
+//
+// FFont :: SimpleTranslation
+//
+// Colorsused, translation, and reverse must all be 256 entry buffers.
+// Colorsused must already be filled out.
+// Translation be set to remap the source colors to a new range of
+// consecutive colors based at 1 (0 is transparent).
+// Reverse will be just the opposite of translation: It maps the new color
+// range to the original colors.
+// *Luminosity will be an array just large enough to hold the brightness
+// levels of all the used colors, in consecutive order. It is sorted from
+// darkest to lightest and scaled such that the darkest color is 0.0 and
+// the brightest color is 1.0.
+// The return value is the number of used colors and thus the number of
+// entries in *luminosity.
+//
+//==========================================================================
 
 int FFont::SimpleTranslation (byte *colorsused, byte *translation, byte *reverse, double **luminosity)
 {
@@ -406,52 +499,45 @@ int FFont::SimpleTranslation (byte *colorsused, byte *translation, byte *reverse
 	return j;
 }
 
-// Build translations for most text in the game. The console font uses
-// BuildTranslations2, which fades to white.
+//==========================================================================
+//
+// FFont :: BuildTranslations
+//
+// Build color translations for this font. Luminosity is an array of
+// brightness levels. The ActiveColors member must be set to indicate how
+// large this array is. Identity is an array that remaps the colors to
+// their original values; it is only used for CR_UNTRANSLATED. Ranges
+// is an array of TranslationParm structs defining the ranges for every
+// possible color, in order.
+//
+//==========================================================================
 
-void FFont::BuildTranslations (const double *luminosity, const BYTE *identity)
+void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, const void *ranges)
 {
-	static const TranslationParm transParm[NUM_TEXT_COLORS][3] =
-	{
-		{ {   0, 256, {  71,   0,   0 }, { 255, 184, 184 } } },		// CR_BRICK
-		{ {   0, 256, {  51,  43,  19 }, { 255, 235, 223 } } },		// CR_TAN
-		{ {   0, 256, {  39,  39,  39 }, { 239, 239, 239 } } },		// CR_GRAY
-		{ {   0, 256, {  11,  23,   7 }, { 119, 255, 111 } } },		// CR_GREEN
-		{ {   0, 256, {  83,  63,  47 }, { 191, 167, 143 } } },		// CR_BROWN
-		{ {   0, 256, { 115,  43,   0 }, { 255, 255, 115 } } },		// CR_GOLD
-		{ {   0, 256, {  63,   0,   0 }, { 255,   0,   0 } } },		// CR_RED
-		{ {   0, 256, {   0,   0,  39 }, {   0,   0, 255 } } },		// CR_BLUE
-		{ {   0, 256, {  32,   0,   0 }, { 255, 128,   0 } } },		// CR_ORANGE
-		{ {   0, 256, {  36,  36,  36 }, { 255, 255, 255 } } },		// CR_WHITE
-		{ {   0,  64, {  39,  39,  39 }, {  81,  81,  81 } },		// CR_YELLOW
-		  {  80, 192, { 134,  83,  24 }, { 235, 159,  24 } },
-		  { 208, 256, { 243, 168,  42 }, { 252, 208,  67 } } },
-		{},															// CR_UNTRANSLATED
-		{ {   0, 256, {  19,  19,  19 }, {  80,  80,  80 } } },		// CR_BLACK
-		{ {   0, 256, {   0,   0, 115 }, { 180, 180, 255 } } },		// CR_LIGHTBLUE
-		{ {   0, 256, { 207, 131,  83 }, { 255, 215, 187 } } },		// CR_CREAM
-		{ {   0, 256, {  47,  55,  31 }, { 123, 127,  80 } } },		// CR_OLIVE
-		{ {   0, 256, {  11,  23,   7 }, {  67, 147,  55 } } },		// CR_DARKGREEN
-		{ {   0, 256, {  43,   0,   0 }, { 175,  43,  43 } } },		// CR_DARKRED
-		{ {   0, 256, {  31,  23,  11 }, { 163, 107,  63 } } },		// CR_DARKBROWN
-		{ {   0, 256, {  35,   0,  35 }, { 207,   0, 207 } } },		// CR_PURPLE
-		{ {   0, 256, {  35,  35,  35 }, { 139, 139, 139 } } },		// CR_DARKGRAY
-	};
-
-	int i, j, k;
+	int i, j;
+	const TranslationParm *parmstart = (const TranslationParm *)ranges;
 	BYTE *range;
 
-	range = Ranges = new byte[NUM_TEXT_COLORS * ActiveColors];
+	range = Ranges = new byte[NumTextColors * ActiveColors];
 
 	// Create different translations for different color ranges
-	for (i = 0; i < NUM_TEXT_COLORS; i++)
+	for (i = 0; i < NumTextColors; i++)
 	{
 		if (i == CR_UNTRANSLATED)
 		{
-			memcpy (range, identity, ActiveColors);
+			if (identity != NULL)
+			{
+				memcpy (range, identity, ActiveColors);
+			}
+			else
+			{
+				memcpy (range, Ranges, ActiveColors);
+			}
 			range += ActiveColors;
 			continue;
 		}
+
+		assert(parmstart->RangeStart >= 0);
 
 		*range++ = 0;
 
@@ -460,12 +546,15 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity)
 			int v = int(luminosity[j] * 256.0);
 
 			// Find the color range that this luminosity value lies within.
-			const TranslationParm *parms = &transParm[i][0];
-			for (k = 0; k < 2; ++k, ++parms)
+			const TranslationParm *parms = parmstart - 1;
+			do
 			{
+				parms++;
 				if (parms->RangeStart <= v && parms->RangeEnd >= v)
 					break;
 			}
+			while (parms[1].RangeStart > parms[0].RangeEnd);
+
 			// Linearly interpolate to find out which color this luminosity level gets.
 			int rangev = ((v - parms->RangeStart) << 8) / (parms->RangeEnd - parms->RangeStart);
 			int r = ((parms->Start[0] << 8) + rangev * (parms->End[0] - parms->Start[0])) >> 8; // red
@@ -473,18 +562,36 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity)
 			int b = ((parms->Start[2] << 8) + rangev * (parms->End[2] - parms->Start[2])) >> 8; // blue
 			*range++ = ColorMatcher.Pick (r, g, b);
 		}
+
+		// Advance to the next color range.
+		while (parmstart[1].RangeStart > parmstart[0].RangeEnd)
+		{
+			parmstart++;
+		}
+		parmstart++;
 	}
 }
+
+//==========================================================================
+//
+// FFont :: GetColorTranslation
+//
+//==========================================================================
 
 byte *FFont::GetColorTranslation (EColorRange range) const
 {
 	if (ActiveColors == 0)
 		return NULL;
-	else if (range < NUM_TEXT_COLORS)
-		return Ranges + ActiveColors * range;
-	else
-		return Ranges + ActiveColors * CR_UNTRANSLATED;
+	else if (range >= NumTextColors)
+		range = CR_UNTRANSLATED;
+	return Ranges + ActiveColors * range;
 }
+
+//==========================================================================
+//
+// FFont :: GetChar
+//
+//==========================================================================
 
 FTexture *FFont::GetChar (int code, int *const width) const
 {
@@ -515,6 +622,12 @@ FTexture *FFont::GetChar (int code, int *const width) const
 	return Chars[code].Pic;
 }
 
+//==========================================================================
+//
+// FFont :: GetCharWidth
+//
+//==========================================================================
+
 int FFont::GetCharWidth (int code) const
 {
 	if (code < FirstChar ||
@@ -541,6 +654,12 @@ int FFont::GetCharWidth (int code) const
 }
 
 
+//==========================================================================
+//
+// FFont :: FFont - default constructor
+//
+//==========================================================================
+
 FFont::FFont ()
 {
 	Chars = NULL;
@@ -548,6 +667,14 @@ FFont::FFont ()
 	PatchRemap = NULL;
 	Name = NULL;
 }
+
+//==========================================================================
+//
+// FSingleLumpFont :: FSingleLumpFont
+//
+// Loads a FON1 or FON2 font resource or a single texture.
+//
+//==========================================================================
 
 FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 {
@@ -598,6 +725,12 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 	FirstFont = this;
 }
 
+//==========================================================================
+//
+// FSingleLumpFont :: CreateFontFromPic
+//
+//==========================================================================
+
 void FSingleLumpFont::CreateFontFromPic (int picnum)
 {
 	FTexture *pic = TexMan[picnum];
@@ -614,10 +747,18 @@ void FSingleLumpFont::CreateFontFromPic (int picnum)
 	ActiveColors = 0;
 }
 
+//==========================================================================
+//
+// FSingleLumpFont :: LoadFON1
+//
+// FON1 is used for the console font.
+//
+//==========================================================================
+
 void FSingleLumpFont::LoadFON1 (int lump, const BYTE *data)
 {
-	const BYTE *data_p;
-	int w, h, i;
+	double luminosity[256];
+	int w, h;
 
 	Chars = new CharData[256];
 
@@ -626,38 +767,23 @@ void FSingleLumpFont::LoadFON1 (int lump, const BYTE *data)
 
 	FontHeight = h;
 	SpaceWidth = w;
-	ActiveColors = 255;
 	FirstChar = 0;
 	LastChar = 255;
 	GlobalKerning = 0;
+	PatchRemap = new BYTE[256];
 
-	BuildTranslations2 ();
-
-	data_p = data + 8;
-
-	for (i = 0; i < 256; i++)
-	{
-		int destSize = w*h;
-
-		Chars[i].Pic = new FFontChar2 (lump, data_p - data, w, h);
-
-		// Advance to next char's data
-		do
-		{
-			SBYTE code = *data_p++;
-			if (code >= 0)
-			{
-				data_p += code+1;
-				destSize -= code+1;
-			}
-			else if (code != -128)
-			{
-				data_p++;
-				destSize -= (-code)+1;
-			}
-		} while (destSize > 0);
-	}
+	CheckFON1Chars (lump, data, luminosity);
+	BuildTranslations (luminosity, NULL, &TranslationParms[1][0]);
 }
+
+//==========================================================================
+//
+// FSingleLumpFont :: LoadFON2
+//
+// FON2 is used for everything but the console font. The console font should
+// probably use FON2 as well, but oh well.
+//
+//==========================================================================
 
 void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 {
@@ -736,7 +862,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		}
 		else
 		{
-			Chars[i].Pic = new FFontChar2 (lump, data_p - data, widths2[i], FontHeight);
+			Chars[i].Pic = new FFontChar2 (lump, NULL, data_p - data, widths2[i], FontHeight);
 			do
 			{
 				SBYTE code = *data_p++;
@@ -759,9 +885,80 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		}
 	}
 
-	BuildTranslations (luminosity, identity);
+	BuildTranslations (luminosity, identity, &TranslationParms[0][0]);
 	delete[] widths2;
 }
+
+//==========================================================================
+//
+// FSingleLumpFont :: CheckFON1Chars
+//
+// Scans a FON1 resource for all the color values it uses and sets up
+// some tables like SimpleTranslation. Data points to the RLE data for
+// the characters. Also sets up the character textures.
+//
+//==========================================================================
+
+void FSingleLumpFont::CheckFON1Chars (int lump, const BYTE *data, double *luminosity)
+{
+	BYTE used[256], reverse[256];
+	const BYTE *data_p;
+	int i, j;
+
+	memset (used, 0, 256);
+	data_p = data + 8;
+
+	for (i = 0; i < 256; ++i)
+	{
+		int destSize = SpaceWidth * FontHeight;
+
+		Chars[i].Pic = new FFontChar2 (lump, PatchRemap, data_p - data, SpaceWidth, FontHeight);
+
+		// Advance to next char's data and count the used colors.
+		do
+		{
+			SBYTE code = *data_p++;
+			if (code >= 0)
+			{
+				destSize -= code+1;
+				while (code-- >= 0)
+				{
+					used[*data_p++] = 1;
+				}
+			}
+			else if (code != -128)
+			{
+				used[*data_p++] = 1;
+				destSize -= 1 - code;
+			}
+		} while (destSize > 0);
+	}
+
+	memset (PatchRemap, 0, 256);
+	reverse[0] = 0;
+	for (i = 1, j = 1; i < 256; ++i)
+	{
+		if (used[i])
+		{
+			reverse[j++] = i;
+		}
+	}
+	for (i = 1; i < j; ++i)
+	{
+		PatchRemap[reverse[i]] = i;
+		luminosity[i] = (reverse[i] - 1) / 254.0;
+	}
+	ActiveColors = j;
+}
+
+//==========================================================================
+//
+// FSingleLumpFont :: FixupPalette
+//
+// Finds the best matches for the colors used by a FON2 font and sets up
+// some tables like SimpleTranslation.
+//
+//==========================================================================
 
 void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BYTE *palette, bool rescale)
 {
@@ -802,101 +999,13 @@ void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BY
 	}
 }
 
-void FSingleLumpFont::BuildTranslations2 ()
-{
-	// Create different translations for different color ranges
-	// These are not the same as FFont::BuildTranslations()
-	// These translations are used by the console font.
-
-	// The bottom half of the character's palette uses a darker range.
-	static const BYTE transParmLo[NUM_TEXT_COLORS][2][3] =
-	{
-		{ {  71,   0,   0 }, { 163,  92,  92 } },	// CR_BRICK
-		{ {  51,  43,  19 }, { 153, 139, 121 } },	// CR_TAN
-		{ {  39,  39,  39 }, { 139, 139, 139 } },	// CR_GRAY
-		{ {   0,   0,   0 }, {   0, 127,   0 } },	// CR_GREEN
-		{ {   0,   0,   0 }, { 127,  64,   0 } },	// CR_BROWN
-		{ {   0,   0,   0 }, { 127, 192,  64 } },	// CR_GOLD
-		{ {   0,   0,   0 }, { 127,   0,   0 } },	// CR_RED
-		{ {   0,   0,   0 }, {   0,   0, 127 } },	// CR_BLUE
-		{ {  32,   0,   0 }, { 144,  64,   0 } },	// CR_ORANGE
-		{ {   0,   0,   0 }, { 127, 127, 127 } },	// CR_WHITE
-		{ {   0,   0,   0 }, { 127, 127,   0 } },	// CR_YELLOW
-		{},											// CR_UNTRANSLATED
-		{ {   0,   0,   0 }, {  50,  50,  50 } },	// CR_BLACK
-		{ {   0,   0,  60 }, {  80,  80, 255 } },	// CR_LIGHTBLUE
-		{ {  43,  35,  15 }, { 191, 123,  75 } },	// CR_CREAM
-		{ {  55,  63,  39 }, { 123, 127,  99 } },	// CR_OLIVE
-		{ {   0,   0,   0 }, {   0,  88,   0 } },	// CR_DARKGREEN
-		{ {   0,   0,   0 }, { 115,   0,   0 } },	// CR_DARKRED
-		{ {  43,  35,  15 }, { 119,  48,   0 } },	// CR_DARKBROWN
-		{ {   0,   0,   0 }, { 159,   0, 155 } },	// CR_PURPLE
-		{ {   0,   0,   0 }, { 100, 100, 100 } },	// CR_DARKGRAY
-	};
-
-	// And the top half of the character's palette uses a lighter range that
-	// generally fades to white.
-	static const BYTE transParmHi[NUM_TEXT_COLORS][2][3] =
-	{
-		{ { 128,   0,   0 }, { 255, 254, 254 } },	// CR_BRICK
-		{ { 153, 139, 121 }, { 255, 255, 255 } },	// CR_TAN
-		{ {  80,  80,  80 }, { 255, 255, 255 } },	// CR_GRAY
-		{ {   0, 255,   0 }, { 254, 255, 254 } },	// CR_GREEN
-		{ {  67,  47,  31 }, { 255, 231, 207 } },	// CR_BROWN
-		{ { 223, 191,   0 }, { 223, 255, 254 } },	// CR_GOLD
-		{ { 255,   0,   0 }, { 255, 254, 254 } },	// CR_RED
-		{ {  64,  64, 255 }, { 222, 222, 255 } },	// CR_BLUE
-		{ { 255, 127,   0 }, { 255, 254, 254 } },	// CR_ORANGE
-		{ { 128, 128, 128 }, { 255, 255, 255 } },	// CR_WHITE
-		{ { 255, 255,   0 }, { 255, 255, 255 } },	// CR_YELLOW
-		{},											// CR_UNTRANSLATED
-		{ {  10,  10,  10 }, {  80,  80,  80 } },	// CR_BLACK
-		{ { 128, 128, 255 }, { 255, 255, 255 } },	// CR_LIGHTBLUE
-		{ { 255, 179, 131 }, { 255, 255, 255 } },	// CR_CREAM
-		{ { 103, 107,  79 }, { 209, 216, 168 } },	// CR_OLIVE
-		{ {   0, 140,   0 }, { 220, 255, 220 } },	// CR_DARKGREEN
-		{ { 128,   0,   0 }, { 255, 220, 220 } },	// CR_DARKRED
-		{ { 115,  87,  67 }, { 247, 189,  88 } },	// CR_DARKBROWN
-		{ { 255,   0, 255 }, { 255, 255, 255 } },	// CR_PURPLE
-		{ {  64,  64,  64 }, { 180, 180, 180 } },	// CR_DARKGRAY
-	};
-
-	assert (ActiveColors == 255);
-
-	byte *range;
-	range = Ranges = new byte[NUM_TEXT_COLORS * ActiveColors];
-	int i, j, r, g, b;
-
-	for (i = 0; i < NUM_TEXT_COLORS; i++)
-	{
-		const BYTE (*parm)[3];
-
-		if (i == CR_UNTRANSLATED)
-		{
-			memcpy (range, Ranges + CR_WHITE * ActiveColors, ActiveColors);
-			range += ActiveColors;
-			continue;
-		}
-
-		parm = &transParmLo[i][0];
-		for (j = 0; j < 127; j++)
-		{
-			r = parm[0][0] + (parm[1][0] - parm[0][0]) * j / 126;
-			g = parm[0][1] + (parm[1][1] - parm[0][1]) * j / 126;
-			b = parm[0][2] + (parm[1][2] - parm[0][2]) * j / 126;
-			*range++ = ColorMatcher.Pick (r, g, b);
-		}
-
-		parm = &transParmHi[i][0];
-		for (j = 0; j < 128; j++)
-		{
-			r = parm[0][0] + (parm[1][0] - parm[0][0]) * j / 127;
-			g = parm[0][1] + (parm[1][1] - parm[0][1]) * j / 127;
-			b = parm[0][2] + (parm[1][2] - parm[0][2]) * j / 127;
-			*range++ = ColorMatcher.Pick (r, g, b);
-		}
-	}
-}
+//==========================================================================
+//
+// FFontChar1 :: FFontChar1
+//
+// Used by fonts made from textures.
+//
+//==========================================================================
 
 FFontChar1::FFontChar1 (int sourcelump, const BYTE *sourceremap)
 : SourceRemap (sourceremap)
@@ -920,6 +1029,12 @@ FFontChar1::FFontChar1 (int sourcelump, const BYTE *sourceremap)
 	Pixels = NULL;
 }
 
+//==========================================================================
+//
+// FFontChar1 :: GetPixels
+//
+//==========================================================================
+
 const BYTE *FFontChar1::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -928,6 +1043,12 @@ const BYTE *FFontChar1::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+// FFontChar1 :: MakeTexture
+//
+//==========================================================================
 
 void FFontChar1::MakeTexture ()
 {
@@ -938,9 +1059,15 @@ void FFontChar1::MakeTexture ()
 
 	for (int x = 0; x < Width*Height; ++x)
 	{
-		Pixels[x]=SourceRemap[pix[x]];
+		Pixels[x] = SourceRemap[pix[x]];
 	}
 }
+
+//==========================================================================
+//
+// FFontChar1 :: GetColumn
+//
+//==========================================================================
 
 const BYTE *FFontChar1::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -953,6 +1080,12 @@ const BYTE *FFontChar1::GetColumn (unsigned int column, const Span **spans_out)
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+// FFontChar1 :: Unload
+//
+//==========================================================================
+
 void FFontChar1::Unload ()
 {
 	if (Pixels != NULL)
@@ -962,13 +1095,27 @@ void FFontChar1::Unload ()
 	}
 }
 
+//==========================================================================
+//
+// FFontChar1 :: ~FFontChar1
+//
+//==========================================================================
+
 FFontChar1::~FFontChar1 ()
 {
 	Unload ();
 }
 
-FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height)
-: SourceLump (sourcelump), SourcePos (sourcepos), Pixels (0), Spans (0)
+//==========================================================================
+//
+// FFontChar2 :: FFontChar2
+//
+// Used by FON1 and FON2 fonts.
+//
+//==========================================================================
+
+FFontChar2::FFontChar2 (int sourcelump, const BYTE *sourceremap, int sourcepos, int width, int height)
+: SourceLump (sourcelump), SourcePos (sourcepos), Pixels (0), Spans (0), SourceRemap(sourceremap)
 {
 	UseType = TEX_FontChar;
 	Width = width;
@@ -977,6 +1124,12 @@ FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height)
 	LeftOffset = 0;
 	CalcBitSize ();
 }
+
+//==========================================================================
+//
+// FFontChar2 :: ~FFontChar2
+//
+//==========================================================================
 
 FFontChar2::~FFontChar2 ()
 {
@@ -988,6 +1141,12 @@ FFontChar2::~FFontChar2 ()
 	}
 }
 
+//==========================================================================
+//
+// FFontChar2 :: Unload
+//
+//==========================================================================
+
 void FFontChar2::Unload ()
 {
 	if (Pixels != NULL)
@@ -997,6 +1156,12 @@ void FFontChar2::Unload ()
 	}
 }
 
+//==========================================================================
+//
+// FFontChar2 :: GetPixels
+//
+//==========================================================================
+
 const BYTE *FFontChar2::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -1005,6 +1170,12 @@ const BYTE *FFontChar2::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+// FFontChar2 :: GetColumn
+//
+//==========================================================================
 
 const BYTE *FFontChar2::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -1022,6 +1193,12 @@ const BYTE *FFontChar2::GetColumn (unsigned int column, const Span **spans_out)
 	}
 	return Pixels + column*Height;
 }
+
+//==========================================================================
+//
+// FFontChar2 :: MakeTexture
+//
+//==========================================================================
 
 void FFontChar2::MakeTexture ()
 {
@@ -1063,6 +1240,10 @@ void FFontChar2::MakeTexture ()
 
 				lump >> color;
 				*dest_p = MIN (color, max);
+				if (SourceRemap != NULL)
+				{
+					*dest_p = SourceRemap[*dest_p];
+				}
 				dest_p += dest_adv;
 				x--;
 				runlen--;
@@ -1090,6 +1271,10 @@ void FFontChar2::MakeTexture ()
 					lump >> color;
 					setlen = (-code) + 1;
 					setval = MIN (color, max);
+					if (SourceRemap != NULL)
+					{
+						setval = SourceRemap[setval];
+					}
 				}
 			}
 		}
@@ -1122,6 +1307,11 @@ public:
 	FSpecialFont (const char *name, int first, int count, int *lumplist, const bool *notranslate);
 };
 
+//==========================================================================
+//
+// FSpecialFont :: FSpecialFont
+//
+//==========================================================================
 
 FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplist, const bool *notranslate)
 {
@@ -1218,14 +1408,14 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 		SpaceWidth = 4;
 	}
 
-	BuildTranslations (luminosity, identity);
+	BuildTranslations (luminosity, identity, &TranslationParms[0][0]);
 
 	// add the untranslated colors to the Ranges table
 	if (ActiveColors < TotalColors)
 	{
 		int factor = 1;
 		byte *oldranges = Ranges;
-		Ranges = new byte[NUM_TEXT_COLORS * TotalColors * factor];
+		Ranges = new byte[NumTextColors * TotalColors * factor];
 
 		for (i = 0; i < CR_UNTRANSLATED; i++)
 		{
@@ -1238,18 +1428,20 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 		}
 		delete[] oldranges;
 	}
-	ActiveColors=TotalColors;
+	ActiveColors = TotalColors;
 
 	delete[] luminosity;
 	delete[] charlumps;
 }
 
 
-//===========================================================================
-// 
+//==========================================================================
+//
+// V_InitCustomFonts
+//
 // Initialize a list of custom multipatch fonts
 //
-//===========================================================================
+//==========================================================================
 
 void V_InitCustomFonts()
 {
@@ -1263,7 +1455,6 @@ void V_InitCustomFonts()
 	int start;
 	int first;
 	int count;
-
 
 	while ((llump = Wads.FindLump ("FONTDEFS", &lastlump)) != -1)
 	{
@@ -1366,4 +1557,258 @@ void V_InitCustomFonts()
 
 wrong:
 	SC_ScriptError ("Invalid combination of properties in font '%s'", namebuffer);
+}
+
+//==========================================================================
+//
+// V_InitFontColors
+//
+// Reads the list of color translation definitions into memory.
+//
+//==========================================================================
+
+void V_InitFontColors ()
+{
+	struct TempParmInfo
+	{
+		unsigned int StartParm[2];
+		unsigned int ParmLen[2];
+		int Index;
+	};
+	struct TempColorInfo
+	{
+		FName Name;
+		unsigned int ParmInfo;
+	};
+
+	TArray<FName> names;
+	int lump, lastlump = 0;
+	TranslationParm tparm;
+	TArray<TranslationParm> parms;
+	TArray<TempParmInfo> parminfo;
+	TArray<TempColorInfo> colorinfo;
+	int c, parmchoice;
+	TempParmInfo info;
+	TempColorInfo cinfo;
+	unsigned int i, j;
+	int k, index;
+
+	info.Index = -1;
+
+	while ((lump = Wads.FindLump ("TEXTCOLO", &lastlump)) != -1)
+	{
+		SC_OpenLumpNum (lump, "textcolors.txt");
+		while (SC_GetString())
+		{
+			names.Clear();
+
+			// Everything until the '{' is considered a valid name for the
+			// color range.
+			names.Push (sc_String);
+			while (SC_MustGetString(), !SC_Compare ("{"))
+			{
+				if (names[0] == NAME_Untranslated)
+				{
+					SC_ScriptError ("The \"untranslated\" color may not have any other names");
+				}
+				names.Push (sc_String);
+			}
+
+			parmchoice = 0;
+			info.StartParm[0] = parms.Size();
+			info.StartParm[1] = 0;
+			info.ParmLen[1] = info.ParmLen[0] = 0;
+			tparm.RangeEnd = tparm.RangeStart = -1;
+
+			while (SC_MustGetString(), !SC_Compare ("}"))
+			{
+				if (SC_Compare ("Console:"))
+				{
+					if (parmchoice == 1)
+					{
+						SC_ScriptError ("Each color may only have one set of console ranges");
+					}
+					parmchoice = 1;
+					info.StartParm[1] = parms.Size();
+					info.ParmLen[0] = info.StartParm[1] - info.StartParm[0];
+					tparm.RangeEnd = tparm.RangeStart = -1;
+				}
+				else
+				{
+					// Get first color
+					c = V_GetColor (NULL, sc_String);
+					tparm.Start[0] = RPART(c);
+					tparm.Start[1] = GPART(c);
+					tparm.Start[2] = BPART(c);
+
+					// Get second color
+					SC_MustGetString();
+					c = V_GetColor (NULL, sc_String);
+					tparm.End[0] = RPART(c);
+					tparm.End[1] = GPART(c);
+					tparm.End[2] = BPART(c);
+
+					// Check for range specifier
+					if (SC_CheckNumber())
+					{
+						if (tparm.RangeStart == -1 && sc_Number != 0)
+						{
+							SC_ScriptError ("The first color range must start at position 0");
+						}
+						if (sc_Number < 0 || sc_Number > 256)
+						{
+							SC_ScriptError ("The color range must be within positions [0,256]");
+						}
+						if (sc_Number <= tparm.RangeEnd)
+						{
+							SC_ScriptError ("The color range must not start before the previous one ends");
+						}
+						tparm.RangeStart = sc_Number;
+
+						SC_MustGetNumber();
+						if (sc_Number < 0 || sc_Number > 256)
+						{
+							SC_ScriptError ("The color range must be within positions [0,256]");
+						}
+						if (sc_Number <= tparm.RangeStart)
+						{
+							SC_ScriptError ("The color range end position must be larger than the start position");
+						}
+						tparm.RangeEnd = sc_Number;
+					}
+					else
+					{
+						tparm.RangeStart = tparm.RangeEnd + 1;
+						tparm.RangeEnd = 256;
+						if (tparm.RangeStart >= tparm.RangeEnd)
+						{
+							SC_ScriptError ("The color has too many ranges");
+						}
+					}
+					parms.Push (tparm);
+				}
+			}
+			info.ParmLen[parmchoice] = parms.Size() - info.StartParm[parmchoice];
+			if (info.ParmLen[0] == 0)
+			{
+				if (names[0] != NAME_Untranslated)
+				{
+					SC_ScriptError ("There must be at least one normal range for a color");
+				}
+			}
+			else
+			{
+				if (names[0] == NAME_Untranslated)
+				{
+					SC_ScriptError ("The \"untranslated\" color must be left undefined");
+				}
+			}
+			if (info.ParmLen[1] == 0 && names[0] != NAME_Untranslated)
+			{ // If a console translation is unspecified, make it white, since the console
+			  // font has no color information stored with it.
+				tparm.RangeStart = 0;
+				tparm.RangeEnd = 256;
+				tparm.Start[2] = tparm.Start[1] = tparm.Start[0] = 0;
+				tparm.End[2] = tparm.End[1] = tparm.End[0] = 255;
+				info.StartParm[1] = parms.Push (tparm);
+				info.ParmLen[1] = 1;
+			}
+			cinfo.ParmInfo = parminfo.Push (info);
+			// Record this color information for each name it goes by
+			for (i = 0; i < names.Size(); ++i)
+			{
+				// Redefine duplicates in-place
+				for (j = 0; j < colorinfo.Size(); ++j)
+				{
+					if (colorinfo[j].Name == names[i])
+					{
+						colorinfo[j].ParmInfo = cinfo.ParmInfo;
+						break;
+					}
+				}
+				if (j == colorinfo.Size())
+				{
+					cinfo.Name = names[i];
+					colorinfo.Push (cinfo);
+				}
+			}
+		}
+		SC_Close ();
+	}
+	// Make permananent copies of all the color information we found.
+	for (i = 0, index = 0; i < colorinfo.Size(); ++i)
+	{
+		TranslationMap tmap;
+		TempParmInfo *pinfo;
+
+		tmap.Name = colorinfo[i].Name;
+		pinfo = &parminfo[colorinfo[i].ParmInfo];
+		if (pinfo->Index < 0)
+		{
+			// Write out the set of remappings for this color.
+			for (k = 0; k < 2; ++k)
+			{
+				for (j = 0; j < pinfo->ParmLen[k]; ++j)
+				{
+					TranslationParms[k].Push (parms[pinfo->StartParm[k] + j]);
+				}
+			}
+			pinfo->Index = index++;
+		}
+		tmap.Number = pinfo->Index;
+		TranslationLookup.Push (tmap);
+	}
+	// Leave a terminating marker at the ends of the lists.
+	tparm.RangeStart = -1;
+	TranslationParms[0].Push (tparm);
+	TranslationParms[1].Push (tparm);
+	// Sort the translation lookups for fast binary searching.
+	qsort (&TranslationLookup[0], TranslationLookup.Size(), sizeof(TranslationLookup[0]), TranslationMapCompare);
+
+	NumTextColors = index;
+	assert (NumTextColors >= NUM_TEXT_COLORS);
+}
+
+//==========================================================================
+//
+// TranslationMapCompare
+//
+//==========================================================================
+
+static int STACK_ARGS TranslationMapCompare (const void *a, const void *b)
+{
+	return int(((const TranslationMap *)a)->Name) - int(((const TranslationMap *)b)->Name);
+}
+
+//==========================================================================
+//
+// V_FindFontColor
+//
+// Returns the color number for a particular named color range.
+//
+//==========================================================================
+
+EColorRange V_FindFontColor (const char *daname)
+{
+	FName name(daname, true);
+	unsigned int min = 0, max = TranslationLookup.Size() - 1;
+
+	while (min <= max)
+	{
+		unsigned int mid = (min + max) / 2;
+		const TranslationMap *probe = &TranslationLookup[mid];
+		if (probe->Name == name)
+		{
+			return EColorRange(probe->Number);
+		}
+		else if (probe->Name < name)
+		{
+			min = mid + 1;
+		}
+		else
+		{
+			max = mid - 1;
+		}
+	}
+	return CR_UNTRANSLATED;
 }

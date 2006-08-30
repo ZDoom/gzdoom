@@ -261,59 +261,94 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h) 
 int V_GetColorFromString (const DWORD *palette, const char *cstr)
 {
 	int c[3], i, p;
-	char val[5];
-	const char *s, *g;
+	char val[3];
 
-	val[4] = 0;
-	for (s = cstr, i = 0; i < 3; i++)
+	val[2] = '\0';
+
+	// Check for HTML-style #RRGGBB or #RGB color string
+	if (cstr[0] == '#')
 	{
-		c[i] = 0;
-		while ((*s <= ' ') && (*s != 0))
-			s++;
-		if (*s)
+		size_t len = strlen (cstr);
+
+		if (len == 7)
 		{
-			p = 0;
-			while (*s > ' ')
+			// Extract each eight-bit component into c[].
+			for (i = 0; i < 3; ++i)
 			{
-				if (p < 4)
+				val[0] = cstr[1 + i*2];
+				val[1] = cstr[2 + i*2];
+				c[i] = ParseHex (val);
+			}
+		}
+		else if (len == 4)
+		{
+			// Extract each four-bit component into c[], expanding to eight bits.
+			for (i = 0; i < 3; ++i)
+			{
+				val[1] = val[0] = cstr[1 + i];
+				c[i] = ParseHex (val);
+			}
+		}
+		else
+		{
+			// Bad HTML-style; pretend it's black.
+			c[2] = c[1] = c[0] = 0;
+		}
+	}
+	else
+	{
+		// Treat it as a space-delemited hexadecimal string
+		for (i = 0; i < 3; ++i)
+		{
+			// Skip leading whitespace
+			while (*cstr <= ' ' && *cstr != '\0')
+			{
+				cstr++;
+			}
+			// Extract a component and convert it to eight-bit
+			for (p = 0; *cstr > ' '; ++p, ++cstr)
+			{
+				if (p < 2)
 				{
-					val[p++] = *s;
+					val[p] = *cstr;
 				}
-				s++;
 			}
-			g = val;
-			while (p < 4)
+			if (p == 0)
 			{
-				val[p++] = *g++;
+				c[i] = 0;
 			}
-			c[i] = ParseHex (val);
+			else
+			{
+				if (p == 1)
+				{
+					val[1] = val[0];
+				}
+				c[i] = ParseHex (val);
+			}
 		}
 	}
 	if (palette)
 		return ColorMatcher.Pick (c[0]>>8, c[1]>>8, c[2]>>8);
 	else
-		return ((c[0] << 8) & 0xff0000) |
-			   ((c[1])      & 0x00ff00) |
-			   ((c[2] >> 8));
+		return MAKERGB(c[0], c[1], c[2]);
 }
 
-char *V_GetColorStringByName (const char *name)
+FString V_GetColorStringByName (const char *name)
 {
 	FMemLump rgbNames;
 	char *rgbEnd;
 	char *rgb, *endp;
-	char descr[5*3];
 	int rgblump;
 	int c[3], step;
 	size_t namelen;
 
-	if (Wads.GetNumLumps()==0) return NULL;
+	if (Wads.GetNumLumps()==0) return FString();
 
 	rgblump = Wads.CheckNumForName ("X11R6RGB");
 	if (rgblump == -1)
 	{
 		Printf ("X11R6RGB lump not found\n");
-		return NULL;
+		return FString();
 	}
 
 	rgbNames = Wads.ReadLump (rgblump);
@@ -364,8 +399,9 @@ char *V_GetColorStringByName (const char *name)
 			size_t checklen = ++endp - rgb;
 			if (checklen == namelen && strnicmp (rgb, name, checklen) == 0)
 			{
-				sprintf (descr, "%02x %02x %02x", c[0], c[1], c[2]);
-				return copystring (descr);
+				FString descr;
+				descr.Format ("#%02x%02x%02x", c[0], c[1], c[2]);
+				return descr;
 			}
 			rgb = endp;
 			step = 0;
@@ -375,42 +411,23 @@ char *V_GetColorStringByName (const char *name)
 	{
 		Printf ("X11R6RGB lump is corrupt\n");
 	}
-	return NULL;
+	return FString();
 }
 
 int V_GetColor (const DWORD *palette, const char *str)
 {
-	char *string = V_GetColorStringByName (str);
+	FString string = V_GetColorStringByName (str);
 	int res;
 
-	if (string != NULL)
+	if (!string.IsEmpty())
 	{
 		res = V_GetColorFromString (palette, string);
-		delete[] string;
 	}
 	else
 	{
 		res = V_GetColorFromString (palette, str);
 	}
 	return res;
-}
-
-CCMD (setcolor)
-{
-	char *desc, setcmd[256];
-
-	if (argv.argc() < 3)
-	{
-		Printf ("Usage: setcolor <cvar> <color>\n");
-		return;
-	}
-
-	if ( (desc = V_GetColorStringByName (argv[2])) )
-	{
-		sprintf (setcmd, "set %s \"%s\"", argv[1], desc);
-		C_DoCommand (setcmd);
-		delete[] desc;
-	}
 }
 
 // Build the tables necessary for blending
@@ -858,36 +875,6 @@ void V_Init (void)
 	// [RH] Initialize palette management
 	InitPalette ();
 
-	// load the heads-up font
-	if (Wads.CheckNumForName ("FONTA_S") >= 0)
-	{
-		SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
-	}
-	else
-	{
-		SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
-	}
-	if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
-	{
-		SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
-	}
-	else
-	{
-		SmallFont2 = SmallFont;
-	}
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("SBIGFONT"));
-	}
-	else
-	{
-		BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1);
-	}
-
 	width = height = bits = 0;
 
 	if ( (i = Args.CheckValue ("-width")) )
@@ -929,6 +916,37 @@ void V_Init (void)
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	FBaseCVar::ResetColors ();
+	V_InitFontColors ();
+
+	// load the heads-up font
+	if (Wads.CheckNumForName ("FONTA_S") >= 0)
+	{
+		SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+	}
+	else
+	{
+		SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+	}
+	if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
+	{
+		SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+	}
+	else
+	{
+		SmallFont2 = SmallFont;
+	}
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("SBIGFONT"));
+	}
+	else
+	{
+		BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+	}
 	ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
 	V_InitCustomFonts ();
 

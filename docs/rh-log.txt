@@ -1,3 +1,13 @@
+August 29, 2006
+- Moved the text color definitions out of the executable and into an external
+  data file.
+- Removed the setcolor CCMD. It's been obsolete for years, ever since color-
+  aware cvars were added.
+- Changed V_GetColorStringByName() to return an FString, because it did a
+  copystring() call.
+- Extended V_GetColorFromString() so that it accepts HTML-style #RRGGBB and
+  #RGB color strings.
+
 August 27, 2006 (Changes by Graf Zahl)
 - fixed: callstatechain didn`t check for NULL code pointers
 

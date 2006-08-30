@@ -292,7 +292,7 @@ void V_MarkRect (int x, int y, int width, int height);
 int V_GetColorFromString (const DWORD *palette, const char *colorstring);
 // Scans through the X11R6RGB lump for a matching color
 // and returns a color string suitable for V_GetColorFromString.
-char *V_GetColorStringByName (const char *name);
+FString V_GetColorStringByName (const char *name);
 
 // Tries to get color by name, then by string
 int V_GetColor (const DWORD *palette, const char *str);

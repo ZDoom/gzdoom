@@ -3703,7 +3703,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_PRINTCOLOR:
 			work += TEXTCOLOR_ESCAPE;
-			work += 'A' + CLAMPCOLOR(STACK(1));
+			work += 'A' + char(CLAMPCOLOR(STACK(1)));
 			sp--;
 			break;
 

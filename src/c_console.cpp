@@ -666,7 +666,7 @@ void AddToConsole (int printlevel, const char *text)
 
 	char *work_p;
 	char *linestart;
-	FString cc = 'A' + CR_TAN;
+	FString cc('A' + char(CR_TAN));
 	int size, len;
 	int x;
 	int maxwidth;

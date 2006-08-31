@@ -110,6 +110,18 @@ protected:
 	void MakeTexture ();
 };
 
+struct TempParmInfo
+{
+	unsigned int StartParm[2];
+	unsigned int ParmLen[2];
+	int Index;
+};
+struct TempColorInfo
+{
+	FName Name;
+	unsigned int ParmInfo;
+};
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -1569,18 +1581,6 @@ wrong:
 
 void V_InitFontColors ()
 {
-	struct TempParmInfo
-	{
-		unsigned int StartParm[2];
-		unsigned int ParmLen[2];
-		int Index;
-	};
-	struct TempColorInfo
-	{
-		FName Name;
-		unsigned int ParmInfo;
-	};
-
 	TArray<FName> names;
 	int lump, lastlump = 0;
 	TranslationParm tparm;

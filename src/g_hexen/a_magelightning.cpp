@@ -138,7 +138,7 @@ int ALightning::SpecialMissileHit (AActor *thing)
 			{
 				P_DamageMobj(thing, this, target, 3, MOD_ELECTRIC);
 			}
-			if (!(S_IsActorPlayingSomething (this, CHAN_WEAPON)))
+			if (!(S_IsActorPlayingSomething (this, CHAN_WEAPON, -1)))
 			{
 				S_Sound (this, CHAN_WEAPON, "MageLightningZap", 1, ATTN_NORM);
 			}

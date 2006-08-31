@@ -62,7 +62,7 @@ void STACK_ARGS DCanvas::DrawChar (int normalcolor, int x, int y, byte character
 	if (Font == NULL)
 		return;
 
-	if (normalcolor >= NUM_TEXT_COLORS)
+	if (normalcolor >= NumTextColors)
 		normalcolor = CR_UNTRANSLATED;
 
 	FTexture *pic;
@@ -89,6 +89,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 	DWORD tag;
 	BOOL boolval;
 
+	int			maxstrlen = INT_MAX;
 	int 		w, maxwidth;
 	const byte *ch;
 	int 		c;
@@ -104,9 +105,9 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 	if (Font == NULL || string == NULL)
 		return;
 
-	if (normalcolor >= NUM_TEXT_COLORS)
+	if (normalcolor >= NumTextColors)
 		normalcolor = CR_UNTRANSLATED;
-	boldcolor = normalcolor ? normalcolor - 1 : NUM_TEXT_COLORS - 1;
+	boldcolor = normalcolor ? normalcolor - 1 : NumTextColors - 1;
 
 	range = Font->GetColorTranslation ((EColorRange)normalcolor);
 	height = Font->GetHeight () + 1;
@@ -181,13 +182,17 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 			maxwidth = va_arg (tags, int);
 			scalex = scaley = 1;
 			break;
+
+		case DTA_TextLen:
+			maxstrlen = va_arg (tags, int);
+			break;
 		}
 		tag = va_arg (tags, DWORD);
 	}
 
 	height *= scaley;
 		
-	for (;;)
+	while ((const char *)ch - string < maxstrlen)
 	{
 		c = *ch++;
 		if (!c)
@@ -195,25 +200,43 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 
 		if (c == TEXTCOLOR_ESCAPE)
 		{
-			int newcolor = toupper(*ch++);
+			int newcolor = *ch++;
 
-			if (newcolor == 0)
+			if (newcolor == '\0')
 			{
 				return;
 			}
-			else if (newcolor == '-')
+			else if (newcolor == '-')		// Normal
 			{
 				newcolor = normalcolor;
 			}
-			else if (newcolor >= 'A' && newcolor < NUM_TEXT_COLORS + 'A')
-			{
-				newcolor -= 'A';
-			}
-			else if (newcolor == '+')
+			else if (newcolor == '+')		// Bold
 			{
 				newcolor = boldcolor;
 			}
-			else
+			else if (newcolor == '[')		// Named
+			{
+				const byte *namestart = ch;
+				while (*ch != ']' && *ch != '\0')
+				{
+					ch++;
+				}
+				FName rangename((const char *)namestart, int(ch - namestart), true);
+				if (*ch != '\0')
+				{
+					ch++;
+				}
+				newcolor = V_FindFontColor (rangename);
+			}
+			else if (newcolor >= 'A' && newcolor < NUM_TEXT_COLORS + 'A')	// Standard, uppercase
+			{
+				newcolor -= 'A';
+			}
+			else if (newcolor >= 'a' && newcolor < NUM_TEXT_COLORS + 'a')	// Standard, lowercase
+			{
+				newcolor -= 'a';
+			}
+			else							// Incomplete!
 			{
 				continue;
 			}
@@ -251,8 +274,18 @@ int FFont::StringWidth (const BYTE *string) const
 	{
 		if (*string == TEXTCOLOR_ESCAPE)
 		{
-			if (*(++string))
+			++string;
+			if (*string == '[')
+			{
+				while (*string != '\0' && *string != ']')
+				{
+					++string;
+				}
+			}
+			else if (*string != '\0')
+			{
 				++string;
+			}
 			continue;
 		}
 		else if (*string == '\n')
@@ -274,10 +307,8 @@ int FFont::StringWidth (const BYTE *string) const
 //
 // Break long lines of text into multiple lines no longer than maxwidth pixels
 //
-static void breakit (brokenlines_t *line, const byte *start, const byte *string, bool keepspace, char linecolor)
+static void breakit (FBrokenLines *line, const byte *start, const byte *string, bool keepspace, FString &linecolor)
 {
-	int extra;
-
 	// Leave out trailing white space
 	if (!keepspace)
 	{
@@ -285,34 +316,23 @@ static void breakit (brokenlines_t *line, const byte *start, const byte *string,
 			string--;
 	}
 
-	if (linecolor == 0)
+	if (!linecolor.IsEmpty())
 	{
-		extra = 0;
+		line->Text = TEXTCOLOR_ESCAPE;
+		line->Text += linecolor;
 	}
-	else
-	{
-		extra = 2;
-	}
-
-	line->string = new char[string - start + extra + 1];
-	if (linecolor)
-	{
-		line->string[0] = TEXTCOLOR_ESCAPE;
-		line->string[1] = linecolor;
-	}
-	strncpy (line->string + extra, (char *)start, string - start);
-	line->string[string - start + extra] = 0;
-	line->width = screen->Font->StringWidth (line->string);
+	line->Text.AppendCStrPart ((const char *)start, string - start);
+	line->Width = screen->Font->StringWidth (line->Text);
 }
 
-brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
+FBrokenLines *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 {
-	brokenlines_t lines[128];	// Support up to 128 lines (should be plenty)
+	FBrokenLines lines[128];	// Support up to 128 lines (should be plenty)
 
 	const byte *space = NULL, *start = string;
 	int i, c, w, nw;
-	char lastcolor = 0, linecolor = 0;
-	BOOL lastWasSpace = false;
+	FString lastcolor, linecolor;
+	bool lastWasSpace = false;
 	int kerning = screen->Font->GetDefaultKerning ();
 
 	i = w = 0;
@@ -323,7 +343,23 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 		{
 			if (*string)
 			{
-				lastcolor = *string++;
+				if (*string == '[')
+				{
+					const byte *start = string;
+					while (*string != ']' && *string != '\0')
+					{
+						string++;
+					}
+					if (*string != '\0')
+					{
+						string++;
+					}
+					lastcolor = FString((const char *)start, string - start);
+				}
+				else
+				{
+					lastcolor = *string++;
+				}
 			}
 			continue;
 		}
@@ -348,11 +384,12 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 			if (!space)
 				space = string - 1;
 
-			lines[i].nlterminated = (c == '\n');
+			lines[i].NLTerminated = (c == '\n');
 			breakit (&lines[i], start, space, keepspace, linecolor);
 			if (c == '\n')
 			{
-				linecolor = lastcolor = 0;
+				// Why did I do it like this? Why? Oh why?
+				linecolor = lastcolor = "";
 			}
 			else
 			{
@@ -388,7 +425,7 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 		{
 			if (keepspace || !isspace (*s))
 			{
-				lines[i].nlterminated = (*s == '\n');
+				lines[i].NLTerminated = (*s == '\n');
 				s++;
 				breakit (&lines[i++], start, string, keepspace, linecolor);
 				break;
@@ -397,30 +434,22 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 		}
 	}
 
+	// Make a copy of the broken lines and return them
+	FBrokenLines *broken = new FBrokenLines[i+1];
+
+	for (c = 0; c < i; ++c)
 	{
-		// Make a copy of the broken lines and return them
-		brokenlines_t *broken = new brokenlines_t[i+1];
-
-		memcpy (broken, lines, sizeof(brokenlines_t) * i);
-		broken[i].string = NULL;
-		broken[i].width = -1;
-
-		return broken;
+		broken[c] = lines[c];
 	}
+	broken[c].Width = -1;
+
+	return broken;
 }
 
-void V_FreeBrokenLines (brokenlines_t *lines)
+void V_FreeBrokenLines (FBrokenLines *lines)
 {
 	if (lines)
 	{
-		int i = 0;
-
-		while (lines[i].width != -1)
-		{
-			delete[] lines[i].string;
-			lines[i].string = NULL;
-			i++;
-		}
 		delete[] lines;
 	}
 }

@@ -400,12 +400,8 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< SideMove2
 		<< ScoreIcon
 		<< InvFirst
-		<< InvSel;
-
-	// Serialize the name, not the index
-	FName MorphWeaponName = ENamedName(MorphWeapon);
-	arc << MorphWeaponName;
-	MorphWeapon = MorphWeaponName;
+		<< InvSel
+		<< MorphWeapon;
 }
 
 //===========================================================================
@@ -917,7 +913,7 @@ void APlayerPawn::MorphPlayerThink ()
 
 void APlayerPawn::ActivateMorphWeapon ()
 {
-	const PClass *morphweapon = PClass::FindClass (ENamedName(MorphWeapon));
+	const PClass *morphweapon = PClass::FindClass (MorphWeapon);
 	player->PendingWeapon = WP_NOCHANGE;
 	player->psprites[ps_weapon].sy = WEAPONTOP;
 

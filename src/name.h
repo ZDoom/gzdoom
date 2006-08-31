@@ -49,6 +49,7 @@ public:
 	FName () : Index(0) {}
 	FName (const char *text) { Index = NameData.FindName (text, false); }
 	FName (const char *text, bool noCreate) { Index = NameData.FindName (text, noCreate); }
+	FName (const char *text, size_t textlen, bool noCreate) { Index = NameData.FindName (text, textlen, noCreate); }
 	FName (const FName &other) { Index = other.Index; }
 	FName (ENamedName index) { Index = index; }
  //   ~FName () {}	// Names can be added but never removed.
@@ -82,7 +83,7 @@ public:
 	bool operator >  (ENamedName index) const { return Index >  index; }
 	bool operator >= (ENamedName index) const { return Index >= index; }
 
-private:
+protected:
 	int Index;
 
 	struct NameEntry
@@ -108,6 +109,7 @@ private:
 		int Buckets[HASH_SIZE];
 
 		int FindName (const char *text, bool noCreate);
+		int FindName (const char *text, size_t textlen, bool noCreate);
 		int AddName (const char *text, unsigned int hash, unsigned int bucket);
 		NameBlock *AddBlock (size_t len);
 		void InitBuckets ();
@@ -115,6 +117,19 @@ private:
 	};
 
 	static NameManager NameData;
+
+	enum EDummy { NoInit };
+	FName (EDummy) {}
+};
+
+class FNameNoInit : public FName
+{
+public:
+	FNameNoInit() : FName(NoInit) {}
+
+	FName &operator = (const char *text) { Index = NameData.FindName (text, false); return *this; }
+	FName &operator = (const FName &other) { Index = int(other); return *this; }
+	FName &operator = (ENamedName index) { Index = index; return *this; }
 };
 
 #endif

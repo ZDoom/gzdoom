@@ -165,9 +165,9 @@ CVAR (String, con_ctrl_d, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 static struct NotifyText
 {
-	int timeout;
-	int printlevel;
-	byte text[256];
+	int TimeOut;
+	int PrintLevel;
+	FString Text;
 } NotifyStrings[NUMNOTIFIES];
 
 static int NotifyTop, NotifyTopGoal;
@@ -556,7 +556,7 @@ void C_AddNotifyString (int printlevel, const char *source)
 		REPLACELINE
 	} addtype = NEWLINE;
 
-	brokenlines_t *lines;
+	FBrokenLines *lines;
 	int i, len, width;
 
 	if ((printlevel != 128 && !show_messages) ||
@@ -573,11 +573,9 @@ void C_AddNotifyString (int printlevel, const char *source)
 
 	width = con_scaletext > 1 ? DisplayWidth/2 : con_scaletext == 1 ? DisplayWidth / CleanXfac : DisplayWidth;
 
-	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].printlevel == printlevel)
+	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].PrintLevel == printlevel)
 	{
-		FString str;
-
-		str.Format("%s%s", NotifyStrings[NUMNOTIFIES-1].text, source);
+		FString str = NotifyStrings[NUMNOTIFIES-1].Text + source;
 		lines = V_BreakLines (width, str);
 	}
 	else
@@ -589,17 +587,23 @@ void C_AddNotifyString (int printlevel, const char *source)
 	if (lines == NULL)
 		return;
 
-	for (i = 0; lines[i].width != -1; i++)
+	for (i = 0; lines[i].Width >= 0; i++)
 	{
 		if (addtype == NEWLINE)
-			memmove (&NotifyStrings[0], &NotifyStrings[1], sizeof(struct NotifyText) * (NUMNOTIFIES-1));
-		strcpy ((char *)NotifyStrings[NUMNOTIFIES-1].text, lines[i].string);
-		NotifyStrings[NUMNOTIFIES-1].timeout = gametic + (int)(con_notifytime * TICRATE);
-		NotifyStrings[NUMNOTIFIES-1].printlevel = printlevel;
+		{
+			for (int j = 0; j < NUMNOTIFIES-1; ++j)
+			{
+				NotifyStrings[j] = NotifyStrings[j+1];
+			}
+		}
+		NotifyStrings[NUMNOTIFIES-1].Text = lines[i].Text;
+		NotifyStrings[NUMNOTIFIES-1].TimeOut = gametic + (int)(con_notifytime * TICRATE);
+		NotifyStrings[NUMNOTIFIES-1].PrintLevel = printlevel;
 		addtype = NEWLINE;
 	}
 
 	V_FreeBrokenLines (lines);
+	lines = NULL;
 
 	switch (source[len-1])
 	{
@@ -662,7 +666,7 @@ void AddToConsole (int printlevel, const char *text)
 
 	char *work_p;
 	char *linestart;
-	int cc = CR_TAN;
+	FString cc = 'A' + CR_TAN;
 	int size, len;
 	int x;
 	int maxwidth;
@@ -738,8 +742,23 @@ void AddToConsole (int printlevel, const char *text)
 			if (*work_p == TEXTCOLOR_ESCAPE)
 			{
 				work_p++;
-				if (*work_p)
+				if (*work_p == '[')
+				{
+					char *start = work_p;
+					while (*work_p != ']' && *work_p != '\0')
+					{
+						work_p++;
+					}
+					if (*work_p != '\0')
+					{
+						work_p++;
+					}
+					cc = FString(start, work_p - start);
+				}
+				else if (*work_p != '\0')
+				{
 					cc = *work_p++;
+				}
 				continue;
 			}
 			int w = ConFont->GetCharWidth (*work_p);
@@ -757,9 +776,9 @@ void AddToConsole (int printlevel, const char *text)
 				}
 				if (*work_p)
 				{
-					linestart = work_p - 2;
+					linestart = work_p - 1 - cc.Len();
 					linestart[0] = TEXTCOLOR_ESCAPE;
-					linestart[1] = cc;
+					strncpy (linestart + 1, cc, cc.Len());
 				}
 				else
 				{
@@ -908,7 +927,7 @@ void C_FlushDisplay ()
 	int i;
 
 	for (i = 0; i < NUMNOTIFIES; i++)
-		NotifyStrings[i].timeout = 0;
+		NotifyStrings[i].TimeOut = 0;
 }
 
 void C_AdjustBottom ()
@@ -996,13 +1015,13 @@ static void C_DrawNotifyText ()
 
 	for (i = 0; i < NUMNOTIFIES; i++)
 	{
-		if (NotifyStrings[i].timeout == 0)
+		if (NotifyStrings[i].TimeOut == 0)
 			continue;
 
-		j = NotifyStrings[i].timeout - gametic;
+		j = NotifyStrings[i].TimeOut - gametic;
 		if (j > 0)
 		{
-			if (!show_messages && NotifyStrings[i].printlevel != 128)
+			if (!show_messages && NotifyStrings[i].PrintLevel != 128)
 				continue;
 
 			fixed_t alpha;
@@ -1016,45 +1035,45 @@ static void C_DrawNotifyText ()
 				alpha = OPAQUE;
 			}
 
-			if (NotifyStrings[i].printlevel >= PRINTLEVELS)
+			if (NotifyStrings[i].PrintLevel >= PRINTLEVELS)
 				color = CR_UNTRANSLATED;
 			else
-				color = PrintColors[NotifyStrings[i].printlevel];
+				color = PrintColors[NotifyStrings[i].PrintLevel];
 
 			if (con_scaletext == 1)
 			{
 				if (!center)
-					screen->DrawText (color, 0, line, (char *)NotifyStrings[i].text,
-					DTA_CleanNoMove, true, DTA_Alpha, alpha, TAG_DONE);
+					screen->DrawText (color, 0, line, NotifyStrings[i].Text,
+						DTA_CleanNoMove, true, DTA_Alpha, alpha, TAG_DONE);
 				else
 					screen->DrawText (color, (SCREENWIDTH -
-						SmallFont->StringWidth (NotifyStrings[i].text)*CleanXfac)/2,
-						line, (char *)NotifyStrings[i].text, DTA_CleanNoMove, true,
+						SmallFont->StringWidth (NotifyStrings[i].Text)*CleanXfac)/2,
+						line, NotifyStrings[i].Text, DTA_CleanNoMove, true,
 						DTA_Alpha, alpha, TAG_DONE);
 			}
 			else if (con_scaletext == 0)
 			{
 				if (!center)
-					screen->DrawText (color, 0, line, (char *)NotifyStrings[i].text,
+					screen->DrawText (color, 0, line, NotifyStrings[i].Text,
 						DTA_Alpha, alpha, TAG_DONE);
 				else
 					screen->DrawText (color, (SCREENWIDTH -
-						SmallFont->StringWidth (NotifyStrings[i].text))/2,
-						line, (char *)NotifyStrings[i].text,
+						SmallFont->StringWidth (NotifyStrings[i].Text))/2,
+						line, NotifyStrings[i].Text,
 						DTA_Alpha, alpha, TAG_DONE);
 			}
 			else
 			{
 				if (!center)
-					screen->DrawText (color, 0, line, (char *)NotifyStrings[i].text,
+					screen->DrawText (color, 0, line, NotifyStrings[i].Text,
 						DTA_VirtualWidth, screen->GetWidth() / 2, 
 						DTA_VirtualHeight, screen->GetHeight() / 2,
 						DTA_KeepRatio, true,
 						DTA_Alpha, alpha, TAG_DONE);
 				else
 					screen->DrawText (color, (screen->GetWidth() / 2 -
-						SmallFont->StringWidth (NotifyStrings[i].text))/2,
-						line, (char *)NotifyStrings[i].text,
+						SmallFont->StringWidth (NotifyStrings[i].Text))/2,
+						line, NotifyStrings[i].Text,
 						DTA_VirtualWidth, screen->GetWidth() / 2, 
 						DTA_VirtualHeight, screen->GetHeight() / 2,
 						DTA_KeepRatio, true,
@@ -1071,7 +1090,7 @@ static void C_DrawNotifyText ()
 				line += lineadv;
 				skip++;
 			}
-			NotifyStrings[i].timeout = 0;
+			NotifyStrings[i].TimeOut = 0;
 		}
 	}
 	if (canskip)

@@ -2391,7 +2391,7 @@ bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 
 void AActor::PlayActiveSound ()
 {
-	if (ActiveSound && !S_IsActorPlayingSomething (this, CHAN_VOICE))
+	if (ActiveSound && !S_IsActorPlayingSomething (this, CHAN_VOICE, -1))
 	{
 		S_SoundID (this, CHAN_VOICE, ActiveSound, 1,
 			(flags3 & MF3_FULLVOLACTIVE) ? ATTN_NONE : ATTN_IDLE);

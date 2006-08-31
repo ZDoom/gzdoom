@@ -65,7 +65,7 @@ END_DEFAULTS
 
 void A_WindSound (AActor *self)
 {
-	if (!S_IsActorPlayingSomething (self, 6))
+	if (!S_IsActorPlayingSomething (self, 6, -1))
 	{
 		S_LoopedSound (self, 6, "world/wind", 1, ATTN_NORM);
 	}
@@ -79,7 +79,7 @@ void A_WindSound (AActor *self)
 
 void A_WaterfallSound (AActor *self)
 {
-	if (!S_IsActorPlayingSomething (self, 6))
+	if (!S_IsActorPlayingSomething (self, 6, -1))
 	{
 		S_LoopedSound (self, 6, "world/waterfall", 1, ATTN_NORM);
 	}

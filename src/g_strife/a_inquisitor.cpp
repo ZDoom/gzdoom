@@ -277,7 +277,7 @@ void A_InquisitorCheckLand (AActor *self)
 		A_ShutUp (self);
 		return;
 	}
-	if (!S_IsActorPlayingSomething (self, CHAN_ITEM))
+	if (!S_IsActorPlayingSomething (self, CHAN_ITEM, -1))
 	{
 		S_LoopedSound (self, CHAN_ITEM, "inquisitor/jump", 1, ATTN_NORM);
 	}

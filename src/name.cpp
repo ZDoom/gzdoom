@@ -124,6 +124,50 @@ int FName::NameManager::FindName (const char *text, bool noCreate)
 
 //==========================================================================
 //
+// The same as above, but the text length is also passed, for creating
+// a name from a substring.
+//
+//==========================================================================
+
+int FName::NameManager::FindName (const char *text, size_t textLen, bool noCreate)
+{
+	if (!Inited)
+	{
+		InitBuckets ();
+	}
+
+	if (text == NULL)
+	{
+		return 0;
+	}
+
+	unsigned int hash = MakeKey (text, textLen);
+	unsigned int bucket = hash % HASH_SIZE;
+	int scanner = Buckets[bucket];
+
+	// See if the name already exists.
+	while (scanner >= 0)
+	{
+		if (NameArray[scanner].Hash == hash &&
+			strnicmp (NameArray[scanner].Text, text, textLen) == 0 &&
+			NameArray[scanner].Text[textLen] == '\0')
+		{
+			return scanner;
+		}
+		scanner = NameArray[scanner].NextHash;
+	}
+
+	// If we get here, then the name does not exist.
+	if (noCreate)
+	{
+		return 0;
+	}
+
+	return AddName (text, hash, bucket);
+}
+
+//==========================================================================
+//
 // FName :: NameManager :: InitBuckets
 //
 // Sets up the hash table and inserts all the default names into the table.

@@ -82,7 +82,7 @@ static void CleanupConversationMenu ();
 static void ConversationMenuEscaped ();
 
 static FStrifeDialogueNode *CurNode, *PrevNode;
-static brokenlines_t *DialogueLines;
+static FBrokenLines *DialogueLines;
 static AActor *ConversationNPC, *ConversationPC;
 static angle_t ConversationNPCAngle;
 static bool ConversationFaceTalker;
@@ -695,9 +695,9 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		}
 		ShowGold |= reply->NeedsGold;
 		reply->ReplyLines = V_BreakLines (320-50-10, reply->Reply);
-		for (j = 0; reply->ReplyLines[j].width != -1; ++j)
+		for (j = 0; reply->ReplyLines[j].Width >= 0; ++j)
 		{
-			item.label = reply->ReplyLines[j].string;
+			item.label = reply->ReplyLines[j].Text.LockBuffer();
 			item.b.position = j == 0 ? i : 0;
 			item.c.extra = reply;
 			ConversationItems.Push (item);
@@ -715,7 +715,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	// Determine where the top of the reply list should be positioned.
 	i = (gameinfo.gametype & GAME_Raven) ? 9 : 8;
 	ConversationMenu.y = MIN<int> (140, 192 - ConversationItems.Size() * i);
-	for (i = 0; DialogueLines[i].width != -1; ++i)
+	for (i = 0; DialogueLines[i].Width >= 0; ++i)
 	{ }
 	i = 44 + i * 10;
 	if (ConversationMenu.y - 100 < i - screen->GetHeight() / CleanYfac / 2)
@@ -808,7 +808,7 @@ static void DrawConversationMenu ()
 	// Dim the screen behind the dialogue (but only if there is no backdrop).
 	if (CurNode->Backdrop <= 0)
 	{
-		for (i = 0; DialogueLines[i].width != -1; ++i)
+		for (i = 0; DialogueLines[i].Width >= 0; ++i)
 		{ }
 		screen->Dim (0, 0.45f, 14 * screen->GetWidth() / 320, 13 * screen->GetHeight() / 200,
 			308 * screen->GetWidth() / 320 - 14 * screen->GetWidth () / 320,
@@ -830,9 +830,9 @@ static void DrawConversationMenu ()
 		y += linesize * 3 / 2;
 	}
 	x = 24 * screen->GetWidth() / 320;
-	for (i = 0; DialogueLines[i].width >= 0; ++i)
+	for (i = 0; DialogueLines[i].Width >= 0; ++i)
 	{
-		screen->DrawText (CR_UNTRANSLATED, x, y, DialogueLines[i].string,
+		screen->DrawText (CR_UNTRANSLATED, x, y, DialogueLines[i].Text,
 			DTA_CleanNoMove, true, TAG_DONE);
 		y += linesize;
 	}

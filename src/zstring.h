@@ -104,6 +104,7 @@ public:
 	FString &operator += (const FString &tail);
 	FString &operator += (const char *tail);
 	FString &operator += (char tail);
+	FString &AppendCStrPart (const char *tail, size_t tailLen);
 
 	FString Left (size_t numChars) const;
 	FString Right (size_t numChars) const;

@@ -37,12 +37,12 @@
 #include "doomtype.h"
 #include "v_font.h"
 
-struct brokenlines_t
+struct FBrokenLines
 {
-	short width;
-	byte nlterminated;
-	byte pad;
-	char *string;
+	short	Width;
+	BYTE	NLTerminated;
+	BYTE	Pad;
+	FString	Text;
 };
 
 #define TEXTCOLOR_ESCAPE		'\034'
@@ -73,9 +73,9 @@ struct brokenlines_t
 #define TEXTCOLOR_NORMAL		"\034-"
 #define TEXTCOLOR_BOLD			"\034+"
 
-brokenlines_t *V_BreakLines (int maxwidth, const byte *str, bool keepspace=false);
-void V_FreeBrokenLines (brokenlines_t *lines);
-inline brokenlines_t *V_BreakLines (int maxwidth, const char *str, bool keepspace=false)
+FBrokenLines *V_BreakLines (int maxwidth, const byte *str, bool keepspace=false);
+void V_FreeBrokenLines (FBrokenLines *lines);
+inline FBrokenLines *V_BreakLines (int maxwidth, const char *str, bool keepspace=false)
  { return V_BreakLines (maxwidth, (const byte *)str, keepspace); }
 
 #endif //__V_TEXT_H__

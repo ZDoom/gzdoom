@@ -731,20 +731,20 @@ int WI_DrawName(int y,const char * levelname, bool nomove=false)
 	if (!l) return 0;
 
 	screen->SetFont(BigFont);
-	brokenlines_t * lines = V_BreakLines(320, p);
+	FBrokenLines *lines = V_BreakLines(320, p);
 
 	if (lines)
 	{
-		for (i=0; lines[i].width != -1; i++)
+		for (i = 0; lines[i].Width >= 0; i++)
 		{
 			if (!nomove)
 			{
-				screen->DrawText(CR_UNTRANSLATED, 160 - lines[i].width/2, y+h, lines[i].string, DTA_Clean, true, TAG_DONE);
+				screen->DrawText(CR_UNTRANSLATED, 160 - lines[i].Width/2, y+h, lines[i].Text, DTA_Clean, true, TAG_DONE);
 			}
 			else
 			{
-				screen->DrawText(CR_UNTRANSLATED, (SCREENWIDTH - lines[i].width * CleanXfac) / 2, (y+h) * CleanYfac, 
-					lines[i].string, DTA_CleanNoMove, true, TAG_DONE);
+				screen->DrawText(CR_UNTRANSLATED, (SCREENWIDTH - lines[i].Width * CleanXfac) / 2, (y+h) * CleanYfac, 
+					lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
 			}
 			h+=lumph;
 		}

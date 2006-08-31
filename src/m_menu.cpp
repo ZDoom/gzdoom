@@ -230,7 +230,7 @@ static int			PlayerTics;
 static int			PlayerRotation;
 
 static DCanvas			*SavePic;
-static brokenlines_t	*SaveComment;
+static FBrokenLines		*SaveComment;
 static List				SaveGames;
 static FSaveGameNode	*TopSaveGame;
 static FSaveGameNode	*SelSaveGame;
@@ -1079,10 +1079,10 @@ static void M_DrawSaveLoadCommon ()
 		// I'm not sure why SaveComment would go NULL in this loop, but I got
 		// a crash report where it was NULL when i reached 1, so now I check
 		// for that.
-		for (i = 0; SaveComment != NULL && SaveComment[i].width != -1 && i < 6; ++i)
+		for (i = 0; SaveComment != NULL && SaveComment[i].Width >= 0 && i < 6; ++i)
 		{
 			screen->DrawText (CR_GOLD, commentLeft, commentTop
-				+ SmallFont->GetHeight()*i*CleanYfac, SaveComment[i].string,
+				+ SmallFont->GetHeight()*i*CleanYfac, SaveComment[i].Text,
 				DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
@@ -3099,15 +3099,15 @@ void M_Drawer ()
 		BorderNeedRefresh = screen->GetPageCount ();
 		SB_state = screen->GetPageCount ();
 
-		brokenlines_t *lines = V_BreakLines (320, messageString);
+		FBrokenLines *lines = V_BreakLines (320, messageString);
 		y = 100;
 
-		for (i = 0; lines[i].width != -1; i++)
+		for (i = 0; lines[i].Width >= 0; i++)
 			y -= screen->Font->GetHeight () / 2;
 
-		for (i = 0; lines[i].width != -1; i++)
+		for (i = 0; lines[i].Width >= 0; i++)
 		{
-			screen->DrawText (CR_UNTRANSLATED, 160 - lines[i].width/2, y, lines[i].string,
+			screen->DrawText (CR_UNTRANSLATED, 160 - lines[i].Width/2, y, lines[i].Text,
 				DTA_Clean, true, TAG_DONE);
 			y += screen->Font->GetHeight ();
 		}

@@ -302,11 +302,11 @@ int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 {
 	if (target->player)
 	{
-		P_MorphPlayer (target->player, PClass::FindClass (ENamedName(PlayerClass)));
+		P_MorphPlayer (target->player, PClass::FindClass (PlayerClass));
 	}
 	else
 	{
-		P_MorphMonster (target, PClass::FindClass (ENamedName(MonsterClass)));
+		P_MorphMonster (target, PClass::FindClass (MonsterClass));
 	}
 	return -1;
 }
@@ -314,18 +314,7 @@ int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 void AMorphProjectile::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-
-	// Hack alert: The classes have to be serialized as names.
-	// But due to the way an actor is constructed they cannot
-	// be declared as names.
-	FName PlayerClassName = ENamedName(PlayerClass);
-	FName MonsterClassName = ENamedName(MonsterClass);
-
-	arc << PlayerClassName << MonsterClassName;
-
-	PlayerClass = PlayerClassName;
-	MonsterClass = MonsterClassName;
-
+	arc << PlayerClass << MonsterClass;
 }
 
 

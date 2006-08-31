@@ -123,6 +123,7 @@ static int STACK_ARGS TranslationMapCompare (const void *a, const void *b);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 FFont *FFont::FirstFont = NULL;
+int NumTextColors;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -148,7 +149,6 @@ static const byte myislower[256] =
 
 static TArray<TranslationParm> TranslationParms[2];
 static TArray<TranslationMap> TranslationLookup;
-static int NumTextColors;
 
 // CODE --------------------------------------------------------------------
 
@@ -1788,10 +1788,9 @@ static int STACK_ARGS TranslationMapCompare (const void *a, const void *b)
 //
 //==========================================================================
 
-EColorRange V_FindFontColor (const char *daname)
+EColorRange V_FindFontColor (FName name)
 {
-	FName name(daname, true);
-	unsigned int min = 0, max = TranslationLookup.Size() - 1;
+	int min = 0, max = TranslationLookup.Size() - 1;
 
 	while (min <= max)
 	{

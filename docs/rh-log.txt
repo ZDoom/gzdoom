@@ -1,3 +1,21 @@
+August 30, 2006
+- Added the FNameNoInit class that is exactly like FName except it does not
+  initialize its index, so it can be used from inside Actors without
+  overwriting the runtime default value.
+- V_BreakLines() now returns an array of FStrings instead of char *'s.
+- Added support for custom text colors in messages like this:
+    print (s:"\c[Chartreuce]This text is in the color 'Bleargh'");
+  This also obsoletes some of the functionality of the r: print specifier
+  before it was even saw a release version, because you can do this with the
+  standard colors too:
+    print (s:"\c[Green]Some text");
+- Added two new decorate functionns: A_PlaySoundEx("sound_name", "channel"
+  [, bLooping]) and A_StopSoundEx("channel"), where "channel" is "Auto",
+  "Weapon", "Voice", "Item", "Body", "SoundSlot5", "SoundSlot6", or
+  "SoundSlot7".
+- Added a third parameter to S_IsActorPlayingSomething() to allow it to check
+  if the actor is playing a specific sound.
+
 August 29, 2006
 - Moved the text color definitions out of the executable and into an external
   data file.
@@ -9,7 +27,7 @@ August 29, 2006
   #RGB color strings.
 
 August 27, 2006 (Changes by Graf Zahl)
-- fixed: callstatechain didn`t check for NULL code pointers
+- fixed: callstatechain didn't check for NULL code pointers
 
 August 25, 2006
 - Fixed: Multiple-choice sound sequences could not be assigned IDs for use

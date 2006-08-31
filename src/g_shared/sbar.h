@@ -69,7 +69,7 @@ public:
 	virtual void ScreenSizeChanged ();
 
 protected:
-	brokenlines_t *Lines;
+	FBrokenLines *Lines;
 	int Width, Height, NumLines;
 	float Left, Top;
 	bool CenterX;

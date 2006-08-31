@@ -1195,7 +1195,7 @@ bool S_GetSoundPlayingInfo (AActor *ent, int sound_id)
 //
 //==========================================================================
 
-bool S_IsActorPlayingSomething (AActor *actor, int channel)
+bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id)
 {
 	int i;
 
@@ -1210,7 +1210,7 @@ bool S_IsActorPlayingSomething (AActor *actor, int channel)
 		{
 			if (channel == 0 || Channel[i].entchannel == channel)
 			{
-				return true;
+				return sound_id < 0 || Channel[i].sound_id == sound_id;
 			}
 		}
 	}

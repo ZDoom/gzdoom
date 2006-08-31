@@ -10,7 +10,7 @@
 
 struct FStrifeDialogueReply;
 class FTexture;
-struct brokenlines_t;
+struct FBrokenLines;
 
 // FStrifeDialogueNode holds text an NPC says to the player
 struct FStrifeDialogueNode
@@ -45,7 +45,7 @@ struct FStrifeDialogueReply
 	char *QuickNo;
 	bool NeedsGold;
 
-	brokenlines_t *ReplyLines;
+	FBrokenLines *ReplyLines;
 };
 
 extern TArray<FStrifeDialogueNode *> StrifeDialogues;

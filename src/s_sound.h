@@ -150,7 +150,7 @@ void S_StopAllChannels (void);
 // Is the sound playing on one of the entity's channels?
 bool S_GetSoundPlayingInfo (AActor *ent, int sound_id);
 bool S_GetSoundPlayingInfo (fixed_t *pt, int sound_id);
-bool S_IsActorPlayingSomething (AActor *actor, int channel);
+bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id);
 
 // Moves all sounds from one mobj to another
 void S_RelinkSound (AActor *from, AActor *to);

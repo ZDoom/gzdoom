@@ -211,7 +211,7 @@ public:
 	int DoSpecialDamage (AActor *target, int damage);
 	void Serialize (FArchive &arc);
 
-	int PlayerClass, MonsterClass;	// really FNames but they would be destroyed by the construction process
+	FNameNoInit	PlayerClass, MonsterClass;
 };
 
 class AMorphedMonster : public AActor

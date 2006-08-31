@@ -1584,7 +1584,7 @@ void AAmbientSound::Tick ()
 
 	if ((ambient->type & CONTINUOUS) == CONTINUOUS)
 	{
-		if (S_IsActorPlayingSomething (this, CHAN_BODY))
+		if (S_IsActorPlayingSomething (this, CHAN_BODY, -1))
 			return;
 
 		if (ambient->sound[0])

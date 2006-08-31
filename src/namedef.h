@@ -6,6 +6,16 @@ xx(Object)
 
 xx(Untranslated)
 
+// Per-actor sound channels
+xx(Auto)
+xx(Weapon)
+xx(Voice)
+xx(Item)
+xx(Body)
+xx(SoundSlot5)
+xx(SoundSlot6)
+xx(SoundSlot7)
+
 // Hexen sound sequence names
 xx(Platform)
 xx(PlatformMetal)

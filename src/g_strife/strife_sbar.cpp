@@ -584,11 +584,11 @@ private:
 
 			if (CPlayer->LogText != NULL)
 			{
-				brokenlines_t *lines = V_BreakLines (272, CPlayer->LogText);
-				for (i = 0; lines[i].width >= 0; ++i)
+				FBrokenLines *lines = V_BreakLines (272, CPlayer->LogText);
+				for (i = 0; lines[i].Width >= 0; ++i)
 				{
 					screen->DrawText (CR_UNTRANSLATED, left+24*xscale, top+(18+i*12)*yscale,
-						lines[i].string, DTA_CleanNoMove, true, TAG_DONE);
+						lines[i].Text, DTA_CleanNoMove, true, TAG_DONE);
 				}
 				V_FreeBrokenLines (lines);
 			}

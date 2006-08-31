@@ -67,6 +67,8 @@ enum EColorRange
 	NUM_TEXT_COLORS
 };
 
+extern int NumTextColors;
+
 inline FArchive &operator<< (FArchive &arc, EColorRange &i)
 {
 	BYTE val = (BYTE)i;
@@ -149,6 +151,6 @@ extern FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
 
 void V_InitCustomFonts ();
 void V_InitFontColors ();
-EColorRange V_FindFontColor (const char *name);
+EColorRange V_FindFontColor (FName name);
 
 #endif //__V_FONT_H__

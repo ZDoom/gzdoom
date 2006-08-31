@@ -287,6 +287,46 @@ void A_StopSound(AActor * self)
 	S_StopSound(self, CHAN_VOICE);
 }
 
+void A_PlaySoundEx (AActor *self)
+{
+	int index = CheckIndex(3);
+	if (index < 0) return;
+
+	int soundid = StateParameters[index];
+	ENamedName channel = ENamedName(StateParameters[index + 1]);
+	BOOL looping = StateParameters[index + 2];
+
+	if (channel < NAME_Auto || channel > NAME_SoundSlot7)
+	{
+		channel = NAME_Auto;
+	}
+
+	if (!looping)
+	{
+		S_SoundID (self, channel - NAME_Auto, soundid, 1, ATTN_NORM);
+	}
+	else
+	{
+		if (!S_IsActorPlayingSomething (self, channel - NAME_Auto, soundid))
+		{
+			S_LoopedSoundID (self, channel - NAME_Auto, soundid, 1, ATTN_NORM);
+		}
+	}
+}
+
+void A_StopSoundEx (AActor *self)
+{
+	int index = CheckIndex (1);
+	if (index < 0) return;
+
+	ENamedName channel = ENamedName(StateParameters[index]);
+
+	if (channel > NAME_Auto && channel <= NAME_SoundSlot7)
+	{
+		S_StopSound (self, channel - NAME_Auto);
+	}
+}
+
 //==========================================================================
 //
 // Generic seeker missile function

@@ -6,7 +6,7 @@ August 30, 2006
 - Added support for custom text colors in messages like this:
     print (s:"\c[Chartreuce]This text is in the color 'Bleargh'");
   This also obsoletes some of the functionality of the r: print specifier
-  before it was even saw a release version, because you can do this with the
+  before it even saw a release version, because you can do this with the
   standard colors too:
     print (s:"\c[Green]Some text");
 - Added two new decorate functionns: A_PlaySoundEx("sound_name", "channel"

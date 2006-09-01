@@ -1,3 +1,13 @@
+August 31, 2006
+- Removed the r: ACS print cast. You can do it yourself with s: and an array.
+- Changed all the bool arguments to the ACS ReplaceTextures and SectorDamage
+  commands with a single flags argument. SectorDamage also gained extended
+  functionality: you can now make it hurt only players, only non-players, or
+  both. Previously, hurting only non-players was not possible.
+- Added the HUDMSG_COLORSTRING flag for ACS hudmessages. If you OR it in with
+  the message type, the color will be treated as a string naming the color
+  you want to use, so now you can use custom colors with hudmessages.
+
 August 30, 2006
 - Added the FNameNoInit class that is exactly like FName except it does not
   initialize its index, so it can be used from inside Actors without

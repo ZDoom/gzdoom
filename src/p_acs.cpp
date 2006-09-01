@@ -73,9 +73,24 @@ FRandom pr_acs ("ACS");
 // potentially get used with recursive functions.
 #define STACK_SIZE 4096
 
-#define CLAMPCOLOR(c)	(EColorRange)((unsigned)(c) >= NUM_TEXT_COLORS ? CR_UNTRANSLATED : (c))
-#define HUDMSG_LOG		(0x80000000)
-#define LANGREGIONMASK	MAKE_ID(0,0,0xff,0xff)	
+#define CLAMPCOLOR(c)		(EColorRange)((unsigned)(c) >= NUM_TEXT_COLORS ? CR_UNTRANSLATED : (c))
+#define HUDMSG_LOG			(0x80000000)
+#define HUDMSG_COLORSTRING	(0x40000000)
+#define LANGREGIONMASK		MAKE_ID(0,0,0xff,0xff)	
+
+// Flags for ReplaceTextures
+#define NOT_BOTTOM			1
+#define NOT_MIDDLE			2
+#define NOT_TOP				4
+#define NOT_FLOOR			8
+#define NOT_CEILING			16
+
+// Flags for SectorDamage
+
+#define DAMAGE_PLAYERS				1
+#define DAMAGE_NONPLAYERS			2
+#define DAMAGE_IN_AIR				4
+#define DAMAGE_SUBCLASSES_PROTECT	8
 
 struct CallReturn
 {
@@ -1845,7 +1860,7 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 	}
 }
 
-void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, BOOL not_lower, BOOL not_mid, BOOL not_upper, BOOL not_floor, BOOL not_ceil)
+void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 {
 	const char *fromname = FBehavior::StaticLookupString (fromnamei);
 	const char *toname = FBehavior::StaticLookupString (tonamei);
@@ -1854,7 +1869,7 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, BOOL not_lower, 
 	if (fromname == NULL)
 		return;
 
-	if (!(not_lower | not_mid | not_upper))
+	if ((flags ^ (NOT_BOTTOM | NOT_MIDDLE | NOT_TOP)) != 0)
 	{
 		picnum1 = TexMan.GetTexture (fromname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 		picnum2 = TexMan.GetTexture (toname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
@@ -1863,12 +1878,12 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, BOOL not_lower, 
 		{
 			side_t *wal = &sides[i];
 
-			if (!not_lower && wal->bottomtexture == picnum1)	wal->bottomtexture = picnum2;
-			if (!not_mid && wal->midtexture == picnum1)			wal->midtexture = picnum2;
-			if (!not_upper && wal->toptexture == picnum1)		wal->toptexture = picnum2;
+			if (!(flags & NOT_BOTTOM) && wal->bottomtexture == picnum1)	wal->bottomtexture = picnum2;
+			if (!(flags & NOT_MIDDLE) && wal->midtexture == picnum1)	wal->midtexture = picnum2;
+			if (!(flags & NOT_TOP) && wal->toptexture == picnum1)		wal->toptexture = picnum2;
 		}
 	}
-	if (!(not_floor | not_ceil))
+	if ((flags ^ (NOT_FLOOR | NOT_CEILING)) != 0)
 	{
 		picnum1 = TexMan.GetTexture (fromname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 		picnum2 = TexMan.GetTexture (toname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
@@ -1877,8 +1892,8 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, BOOL not_lower, 
 		{
 			sector_t *sec = &sectors[i];
 
-			if (!not_floor && sec->floorpic == picnum1)			sec->floorpic = picnum2;
-			if (!not_ceil && sec->ceilingpic == picnum1)		sec->ceilingpic = picnum2;
+			if (!(flags & NOT_FLOOR) && sec->floorpic == picnum1)		sec->floorpic = picnum2;
+			if (!(flags & NOT_CEILING) && sec->ceilingpic == picnum1)	sec->ceilingpic = picnum2;
 		}
 	}
 }
@@ -3701,12 +3716,6 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
-		case PCD_PRINTCOLOR:
-			work += TEXTCOLOR_ESCAPE;
-			work += 'A' + char(CLAMPCOLOR(STACK(1)));
-			sp--;
-			break;
-
 		// [JB] Print map character array
 		case PCD_PRINTMAPCHARARRAY:
 			{
@@ -3808,13 +3817,22 @@ int DLevelScript::RunScript ()
 				{
 					int type = Stack[optstart-6];
 					int id = Stack[optstart-5];
-					EColorRange color = CLAMPCOLOR(Stack[optstart-4]);
+					EColorRange color;
 					float x = FIXED2FLOAT(Stack[optstart-3]);
 					float y = FIXED2FLOAT(Stack[optstart-2]);
 					float holdTime = FIXED2FLOAT(Stack[optstart-1]);
 					DHUDMessage *msg;
 
-					switch (type & ~HUDMSG_LOG)
+					if (type & HUDMSG_COLORSTRING)
+					{
+						color = V_FindFontColor(FBehavior::StaticLookupString(Stack[optstart-4]));
+					}
+					else
+					{
+						color = CLAMPCOLOR(Stack[optstart-4]);
+					}
+
+					switch (type & 0xFFFF)
 					{
 					default:	// normal
 						msg = new DHUDMessage (work, x, y, hudwidth, hudheight, color, holdTime);
@@ -4018,8 +4036,8 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_REPLACETEXTURES:
-			ReplaceTextures (STACK(7), STACK(6), STACK(5), STACK(4), STACK(3), STACK(2), STACK(1));
-			sp -= 7;
+			ReplaceTextures (STACK(3), STACK(2), STACK(1));
+			sp -= 3;
 			break;
 
 		case PCD_SETLINEBLOCKING:
@@ -4951,15 +4969,13 @@ int DLevelScript::RunScript ()
 
 		case PCD_SECTORDAMAGE:
 			{
-				int tag = STACK(7);
-				int amount = STACK(6);
-				FName type = FBehavior::StaticLookupString(STACK(5));
-				BOOL playersOnly = STACK(4);
-				BOOL inAirToo = STACK(3);
+				int tag = STACK(5);
+				int amount = STACK(4);
+				FName type = FBehavior::StaticLookupString(STACK(3));
 				FName protection = FName (FBehavior::StaticLookupString(STACK(2)), true);
 				const PClass *protectClass = PClass::FindClass (protection);
-				BOOL subclassesOkay = STACK(1);
-				sp -= 7;
+				int flags = STACK(1);
+				sp -= 5;
 
 				// Oh, give me custom damage types! :-)
 				int modtype;
@@ -4986,15 +5002,18 @@ int DLevelScript::RunScript ()
 						if (!(actor->flags & MF_SHOOTABLE))
 							continue;
 
-						if (playersOnly && actor->player == NULL)
+						if (!(flags & DAMAGE_NONPLAYERS) && actor->player == NULL)
 							continue;
 
-						if (!inAirToo && actor->z != sec->floorplane.ZatPoint (actor->x, actor->y) && !actor->waterlevel)
+						if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
+							continue;
+
+						if (!(flags & DAMAGE_IN_AIR) && actor->z != sec->floorplane.ZatPoint (actor->x, actor->y) && !actor->waterlevel)
 							continue;
 
 						if (protectClass != NULL)
 						{
-							if (!subclassesOkay)
+							if (!(flags & DAMAGE_SUBCLASSES_PROTECT))
 							{
 								if (actor->FindInventory (protectClass))
 									continue;

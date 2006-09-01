@@ -1140,6 +1140,7 @@ void G_PlayerReborn (int player)
 	int 		killcount;
 	int 		itemcount;
 	int 		secretcount;
+	int			chasecam;
 	BYTE		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
 	botskill_t  b_skill;//Added by MC:
@@ -1160,6 +1161,7 @@ void G_PlayerReborn (int player)
 	actor = p->mo;
 	cls = p->cls;
 	log = p->LogText;
+	chasecam = p->cheats & CF_CHASECAM;
 
 	// Reset player structure to its defaults
 	p->~player_t();
@@ -1175,6 +1177,7 @@ void G_PlayerReborn (int player)
 	p->mo = actor;
 	p->cls = cls;
 	p->LogText = log;
+	p->cheats |= chasecam;
 
     p->skill = b_skill;	//Added by MC:
 

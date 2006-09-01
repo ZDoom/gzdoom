@@ -1,6 +1,7 @@
 August 31, 2006
+- Changed: Starting a new game or reloading an old one reset the chasecam.
 - Removed the r: ACS print cast. You can do it yourself with s: and an array.
-- Changed all the bool arguments to the ACS ReplaceTextures and SectorDamage
+- Replaced all the bool arguments to the ACS ReplaceTextures and SectorDamage
   commands with a single flags argument. SectorDamage also gained extended
   functionality: you can now make it hurt only players, only non-players, or
   both. Previously, hurting only non-players was not possible.
@@ -19,7 +20,7 @@ August 30, 2006
   before it even saw a release version, because you can do this with the
   standard colors too:
     print (s:"\c[Green]Some text");
-- Added two new decorate functionns: A_PlaySoundEx("sound_name", "channel"
+- Added two new decorate functions: A_PlaySoundEx("sound_name", "channel"
   [, bLooping]) and A_StopSoundEx("channel"), where "channel" is "Auto",
   "Weapon", "Voice", "Item", "Body", "SoundSlot5", "SoundSlot6", or
   "SoundSlot7".

@@ -224,7 +224,9 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 	// The userinfo needs to be saved for real players, but it
 	// needs to come from the save for bots.
 	userinfo_t uibackup = dst->userinfo;
+	int chasecam = dst->cheats & CF_CHASECAM;	// Remember the chasecam setting
 	*dst = *src;
+	dst->cheats |= chasecam;
 
 	if (dst->isbot)
 	{

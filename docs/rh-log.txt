@@ -1,3 +1,7 @@
+September 1, 2006
+- Version bump to 2.1.5.
+- Fixed: P_LoadSegs() checked for invalid vertices too late.
+
 August 31, 2006
 - Changed: Starting a new game or reloading an old one reset the chasecam.
 - Removed the r: ACS print cast. You can do it yourself with s: and an array.

@@ -40,13 +40,13 @@
 
 /** Lots of different version numbers **/
 
-#define DOTVERSIONSTR_NOREV "2.1.4"
+#define DOTVERSIONSTR_NOREV "2.1.5"
 
 // The version string the user actually sees.
 #define DOTVERSIONSTR DOTVERSIONSTR_NOREV " (r" SVN_REVISION_STRING ")"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 2,1,4,SVN_REVISION_NUMBER
+#define RC_FILEVERSION 2,1,5,SVN_REVISION_NUMBER
 #define RC_PRODUCTVERSION 2,1,0,0
 #define RC_FILEVERSION2 DOTVERSIONSTR
 #define RC_PRODUCTVERSION2 "2.1"
@@ -89,7 +89,7 @@
 #endif
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 235	// Used by 2.1.2
+#define MINSAVEVER 235	// Used by 2.1.5
 
 // The maximum length of one save game description for the menus.
 #define SAVESTRINGSIZE		24

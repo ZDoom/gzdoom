@@ -816,8 +816,16 @@ void P_LoadSegs (MapData * map)
 			int side, linedef;
 			line_t *ldef;
 
-			li->v1 = &vertexes[LittleShort(ml->v1)];
-			li->v2 = &vertexes[LittleShort(ml->v2)];
+			vnum1 = LittleShort(ml->v1);
+			vnum2 = LittleShort(ml->v2);
+
+			if (vnum1 >= numvertexes || vnum2 >= numvertexes)
+			{
+				throw i * 4;
+			}
+
+			li->v1 = &vertexes[vnum1];
+			li->v2 = &vertexes[vnum2];
 			li->PartnerSeg = NULL;
 
 			segangle = (WORD)LittleShort(ml->angle);
@@ -855,14 +863,6 @@ void P_LoadSegs (MapData * map)
 			ptp_angle = R_PointToAngle2 (li->v1->x, li->v1->y, li->v2->x, li->v2->y);
 			dis = 0;
 			delta_angle = (abs(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
-
-			vnum1 = li->v1 - vertexes;
-			vnum2 = li->v2 - vertexes;
-
-			if (vnum1 >= numvertexes || vnum2 >= numvertexes)
-			{
-				throw i * 4;
-			}
 
 			if (delta_angle != 0)
 			{

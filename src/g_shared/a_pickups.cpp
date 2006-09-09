@@ -79,7 +79,7 @@ bool AAmmo::HandlePickup (AInventory *item)
 			if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
 			{
 				if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-					receiving <<= 1;
+					receiving += receiving;
 				else
 					receiving += receiving >> 1;
 			}

@@ -214,9 +214,10 @@ void FWarp2Texture::MakeTexture (DWORD time)
 	}
 
 	DWORD timebase = time * 40 / 28;
-	for (x = xsize-1; x >= 0; x--)
+	for (x = 0; x < xsize; ++x)
 	{
-		for (y = ysize-1; y >= 0; y--)
+		BYTE *dest = Pixels + (x << ybits);
+		for (y = 0; y < ysize; ++y)
 		{
 			int xt = (x + 128
 				+ ((finesine[(y*128 + timebase*5 + 900) & FINEMASK]*2)>>FRACBITS)
@@ -224,9 +225,7 @@ void FWarp2Texture::MakeTexture (DWORD time)
 			int yt = (y + 128
 				+ ((finesine[(y*128 + timebase*3 + 700) & FINEMASK]*2)>>FRACBITS)
 				+ ((finesine[(x*256 + timebase*4 + 1200) & FINEMASK]*2)>>FRACBITS)) & ymask;
-			const BYTE *source = otherpix + (xt << ybits) + yt;
-			BYTE *dest = Pixels + (x << ybits) + y;
-			*dest = *source;
+			*dest++ = otherpix[(xt << ybits) + yt];
 		}
 	}
 }

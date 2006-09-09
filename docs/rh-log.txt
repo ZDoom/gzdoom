@@ -1,3 +1,17 @@
+September 8, 2006
+- Fixed: Weapons did not give you double ammo at baby and nightmare skills.
+- Fixed: SetTexture() in p_setup.cpp assumed that all color values were
+  six characters. Although this was the intended way to specify colors,
+  earlier versions did no error checking, so other lengths worked too.
+- Fixed: FPatchTexture waited until MakeTexture() to call CalcBitSize(),
+  so the width and height bit sizes weren't available when using it as a
+  source for a warp texture.
+- Fixed: R_InitSkyMap() should only warn about two sky textures not being
+  the same height when they are used as part of a double sky.
+- Added a NULL state check in AActor::Tick() before advancing the current
+  state. Note that this should not happen, so there's an assert there for
+  the debug build as well as a regular check for the release build.
+
 September 1, 2006
 - Version bump to 2.1.5.
 - Fixed: P_LoadSegs() checked for invalid vertices too late.

@@ -2479,6 +2479,13 @@ void AActor::Tick ()
 	AActor *onmo;
 	int i;
 
+	assert (state != NULL);
+	if (state == NULL)
+	{
+		Destroy();
+		return;
+	}
+
 	PrevX = x;
 	PrevY = y;
 	PrevZ = z;
@@ -2895,6 +2902,12 @@ void AActor::Tick ()
 		// of 0 tics work as expected.
 		if (tics <= 0)
 		{
+			assert (state != NULL);
+			if (state == NULL)
+			{
+				Destroy();
+				return;
+			}
 			if (!SetState (state->GetNextState()))
 				return; 		// freed itself
 		}

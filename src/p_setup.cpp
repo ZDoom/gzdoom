@@ -428,7 +428,7 @@ static void SetTextureNoErr (short *texture, DWORD *color, char *name8, bool *va
 		name2[8] = 0;
 		*color = strtoul (name2, &stop, 16);
 		*texture = 0;
-		*validcolor = (*stop == 0) && (stop == name2 + 6);
+		*validcolor = (*stop == 0) && (stop >= name2 + 2) && (stop <= name2 + 6);
 	}
 	else
 	{

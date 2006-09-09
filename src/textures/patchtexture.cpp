@@ -102,6 +102,7 @@ FPatchTexture::FPatchTexture (int lumpnum, patch_t * header)
 	Height = header->height;
 	LeftOffset = header->leftoffset;
 	TopOffset = header->topoffset;
+	CalcBitSize ();
 }
 
 FPatchTexture::~FPatchTexture ()
@@ -184,15 +185,6 @@ void FPatchTexture::MakeTexture ()
 		patch = (const patch_t *)lump.GetMem();
 		Printf (PRINT_BOLD, "Patch %s is too big.\n", Name);
 	}
-
-	if (Width == 0xFFFF)
-	{
-		Width = LittleShort(patch->width);
-		Height = LittleShort(patch->height);
-		LeftOffset = LittleShort(patch->leftoffset);
-		TopOffset = LittleShort(patch->topoffset);
-	}
-	CalcBitSize ();
 
 	// Add a little extra space at the end if the texture's height is not
 	// a power of 2, in case somebody accidentally makes it repeat vertically.

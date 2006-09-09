@@ -79,7 +79,7 @@ void R_InitSkyMap ()
 	if (skytex1 == NULL)
 		return;
 
-	if (skytex1->GetHeight() != skytex2->GetHeight())
+	if ((level.flags & LEVEL_DOUBLESKY) && skytex1->GetHeight() != skytex2->GetHeight())
 	{
 		Printf (TEXTCOLOR_BOLD "Both sky textures must be the same height." TEXTCOLOR_NORMAL "\n");
 		sky2texture = sky1texture;

@@ -202,6 +202,7 @@ AInventory *AWeapon::CreateTossable ()
 		{
 			SisterWeapon->Destroy ();
 		}
+		// To avoid exploits, the tossed weapon must not have any ammo.
 		copy->AmmoGive1 = 0;
 		copy->AmmoGive2 = 0;
 	}
@@ -250,6 +251,14 @@ AAmmo *AWeapon::AddAmmo (AActor *other, const PClass *ammotype, int amount)
 	{
 		return NULL;
 	}
+	// extra ammo in baby mode and nightmare mode
+	if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+	{
+		if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+			amount += amount;
+		else
+			amount += amount >> 1;
+	}
 	ammo = static_cast<AAmmo *>(other->FindInventory (ammotype));
 	if (ammo == NULL)
 	{
@@ -280,6 +289,14 @@ bool AWeapon::AddExistingAmmo (AAmmo *ammo, int amount)
 {
 	if (ammo != NULL && ammo->Amount < ammo->MaxAmount)
 	{
+		// extra ammo in baby mode and nightmare mode
+		if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+		{
+			if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+				amount += amount;
+			else
+				amount += amount >> 1;
+		}
 		ammo->Amount += amount;
 		if (ammo->Amount > ammo->MaxAmount)
 		{

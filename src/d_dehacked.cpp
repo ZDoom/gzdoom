@@ -129,7 +129,7 @@ DehInfo deh =
 {
 	100,	// .StartHealth
 	 50,	// .StartBullets
-	 -1,	// .MaxHealth
+	100,	// .MaxHealth
 	200,	// .MaxArmor
 	  1,	// .GreenAC
 	  2,	// .BlueAC
@@ -1649,9 +1649,9 @@ static int PatchMisc (int dummy)
 
 	AHealth *health;
 	health = static_cast<AHealth *> (GetDefaultByName ("HealthBonus"));
-	if (deh.MaxHealth != -1 && health!=NULL) 
+	if (health!=NULL) 
 	{
-		health->MaxAmount = deh.MaxHealth;
+		health->MaxAmount = 2 * deh.MaxHealth;
 	}
 
 	health = static_cast<AHealth *> (GetDefaultByName ("Soulsphere"));
@@ -2541,10 +2541,6 @@ void FinishDehPatch ()
 
 		DPrintf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
 	}
-
-	// Since deh.MaxHealth was used incorrectly this can only be set
-	// after finishing with the DEH stuff.
-	if (deh.MaxHealth == -1) deh.MaxHealth = 100;
 
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
 	if (StateMap != NULL)

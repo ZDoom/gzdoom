@@ -388,8 +388,8 @@ void FTextureManager::LoadHiresTex()
 					// Replace the entire texture and adjust the scaling and offset factors.
 					newtex->ScaleX = 8 * newtex->GetWidth() / oldtex->GetWidth();
 					newtex->ScaleY = 8 * newtex->GetHeight() / oldtex->GetHeight();
-					newtex->LeftOffset = Scale(oldtex->LeftOffset, newtex->ScaleX, 8);
-					newtex->TopOffset = Scale(oldtex->TopOffset, newtex->ScaleY, 8);
+					newtex->LeftOffset = MulScale3(oldtex->LeftOffset, newtex->ScaleX);
+					newtex->TopOffset = MulScale3(oldtex->TopOffset, newtex->ScaleY);
 					ReplaceTexture(tex, newtex, true);
 				}
 			}
@@ -417,8 +417,8 @@ void FTextureManager::LoadHiresTex()
 					// Replace the entire texture and adjust the scaling and offset factors.
 					newtex->ScaleX = 8 * width / newtex->GetWidth();
 					newtex->ScaleY = 8 * height / newtex->GetHeight();
-					newtex->LeftOffset = Scale(newtex->LeftOffset, newtex->ScaleX, 8);
-					newtex->TopOffset = Scale(newtex->TopOffset, newtex->ScaleY, 8);
+					newtex->LeftOffset = MulScale3(newtex->LeftOffset, newtex->ScaleX);
+					newtex->TopOffset = MulScale3(newtex->TopOffset, newtex->ScaleY);
 					memcpy(newtex->Name, src, sizeof(newtex->Name));
 
 					int oldtex = TexMan.CheckForTexture(src, FTexture::TEX_Override);

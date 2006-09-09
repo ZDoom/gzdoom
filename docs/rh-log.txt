@@ -1,3 +1,9 @@
+September 9, 2006 (Changes by Graf Zahl)
+- Added support for scaled textures to DCanvas::DrawTexture.
+- Changed deh.MaxHealth use to be consistent with other source ports.
+- Added NULL pointer checks to APlayerPawn's state set functions. If these
+  remove the player from the game a crash is the inevitable result.
+
 September 8, 2006
 - Fixed: Weapons did not give you double ammo at baby and nightmare skills.
 - Fixed: SetTexture() in p_setup.cpp assumed that all color values were

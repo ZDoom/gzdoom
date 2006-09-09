@@ -71,16 +71,19 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 		return;
 	}
 
+	int texwidth = img->GetScaledWidth();
+	int texheight = img->GetScaledHeight();
+
 	int windowleft = 0;
-	int windowright = img->GetWidth();
+	int windowright = texwidth;
 	int dclip = this->GetHeight();
 	int uclip = 0;
 	int lclip = 0;
 	int rclip = this->GetWidth();
 	int destwidth = windowright << FRACBITS;
-	int destheight = img->GetHeight() << FRACBITS;
-	int top = img->TopOffset;
-	int left = img->LeftOffset;
+	int destheight = texheight << FRACBITS;
+	int top = img->GetScaledTopOffset();
+	int left = img->GetScaledLeftOffset();
 	fixed_t alpha = FRACUNIT;
 	int fillcolor = -1;
 	const BYTE *translation = NULL;
@@ -137,8 +140,8 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			{
 				x0 = (x0 - 160*FRACUNIT) * CleanXfac + (Width * (FRACUNIT/2));
 				y0 = (y0 - 100*FRACUNIT) * CleanYfac + (Height * (FRACUNIT/2));
-				destwidth = img->GetWidth() * CleanXfac * FRACUNIT;
-				destheight = img->GetHeight() * CleanYfac * FRACUNIT;
+				destwidth = texwidth * CleanXfac * FRACUNIT;
+				destheight = texheight * CleanYfac * FRACUNIT;
 			}
 			break;
 
@@ -146,8 +149,8 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			boolval = va_arg (tags, BOOL);
 			if (boolval)
 			{
-				destwidth = img->GetWidth() * CleanXfac * FRACUNIT;
-				destheight = img->GetHeight() * CleanYfac * FRACUNIT;
+				destwidth = texwidth * CleanXfac * FRACUNIT;
+				destheight = texheight * CleanYfac * FRACUNIT;
 			}
 			break;
 
@@ -176,8 +179,8 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 					y0 *= CleanYfac;
 					if (ybot)
 						y0 = Height * FRACUNIT + y0;
-					destwidth = img->GetWidth() * CleanXfac * FRACUNIT;
-					destheight = img->GetHeight() * CleanYfac * FRACUNIT;
+					destwidth = texwidth * CleanXfac * FRACUNIT;
+					destheight = texheight * CleanYfac * FRACUNIT;
 				}
 				else
 				{
@@ -230,16 +233,16 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 		case DTA_CenterOffset:
 			if (va_arg (tags, int))
 			{
-				left = img->GetWidth() / 2;
-				top = img->GetHeight() / 2;
+				left = texwidth / 2;
+				top = texheight / 2;
 			}
 			break;
 
 		case DTA_CenterBottomOffset:
 			if (va_arg (tags, int))
 			{
-				left = img->GetWidth() / 2;
-				top = img->GetHeight();
+				left = texwidth / 2;
+				top = texheight;
 			}
 			break;
 
@@ -395,8 +398,8 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 	BYTE *destorgsave = dc_destorg;
 	dc_destorg = screen->GetBuffer();
 
-	x0 -= Scale (left, destwidth, img->GetWidth());
-	y0 -= Scale (top, destheight, img->GetHeight());
+	x0 -= Scale (left, destwidth, texwidth);
+	y0 -= Scale (top, destheight, texheight);
 
 	if (mode != DontDraw)
 	{
@@ -461,12 +464,12 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 		}
 
 		dc_x = x0 >> FRACBITS;
-		if (windowleft > 0 || windowright < img->GetWidth())
+		if (windowleft > 0 || windowright < texwidth)
 		{
-			fixed_t xscale = destwidth / img->GetWidth();
+			fixed_t xscale = destwidth / texwidth;
 			dc_x += (windowleft * xscale) >> FRACBITS;
 			frac += windowleft << FRACBITS;
-			x2 -= ((img->GetWidth() - windowright) * xscale) >> FRACBITS;
+			x2 -= ((texwidth - windowright) * xscale) >> FRACBITS;
 		}
 		if (dc_x < lclip)
 		{

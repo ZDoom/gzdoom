@@ -838,18 +838,18 @@ void APlayerPawn::PlayIdle ()
 
 void APlayerPawn::PlayRunning ()
 {
-	if (state == SpawnState)
+	if (InStateSequence(state, SpawnState) && SeeState != NULL)
 		SetState (SeeState);
 }
 
 void APlayerPawn::PlayAttacking ()
 {
-	SetState (MissileState);
+	if (MissileState != NULL) SetState (MissileState);
 }
 
 void APlayerPawn::PlayAttacking2 ()
 {
-	SetState (MeleeState);
+	if (MeleeState != NULL) SetState (MeleeState);
 }
 
 void APlayerPawn::ThrowPoisonBag ()

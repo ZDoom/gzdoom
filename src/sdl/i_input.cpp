@@ -23,7 +23,7 @@ static void I_CheckNativeMouse ();
 static bool GUICapture;
 static bool NativeMouse = true;
 
-extern BOOL paused;
+extern int paused;
 
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

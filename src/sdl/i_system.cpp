@@ -25,14 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fnmatch.h>
-
-#ifdef OSF1
-#define _XOPEN_SOURCE_EXTENDED
-#endif
 #include <unistd.h>
-#ifdef OSF1
-#undef _XOPEN_SOURCE_EXTENDED
-#endif
 
 #include <stdarg.h>
 #include <sys/types.h>
@@ -66,7 +59,7 @@
 EXTERN_CVAR (String, language)
 
 #ifdef USEASM
-extern "C" BOOL STACK_ARGS CheckMMX (CPUInfo *cpu);
+extern "C" void STACK_ARGS CheckMMX (CPUInfo *cpu);
 #endif
 
 extern "C"
@@ -295,7 +288,7 @@ bool gameisdead;
 
 void STACK_ARGS I_FatalError (const char *error, ...)
 {
-    static BOOL alreadyThrown = false;
+    static bool alreadyThrown = false;
     gameisdead = true;
 
     if (!alreadyThrown)		// ignore all but the first message -- killough

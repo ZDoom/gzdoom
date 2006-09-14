@@ -38,12 +38,12 @@
 #include <mmsystem.h>
 #include "resource.h"
 extern HWND Window;
+#define USE_WINDOWS_DWORD
 #else
 #define FALSE 0
 #define TRUE 1
 #endif
 
-#define USE_WINDOWS_DWORD
 #include "templates.h"
 #include "fmodsound.h"
 #include "c_cvars.h"

@@ -37,6 +37,7 @@
 #	define WIN32_LEAN_AND_MEAN
 #	include <windows.h>
 #	include <winsock.h>
+#define USE_WINDOWS_DWORD
 #else
 #	include <sys/socket.h>
 #	include <netinet/in.h>
@@ -47,7 +48,6 @@
 #	include <sys/ioctl.h>
 #endif
 
-#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 #include "i_system.h"
 #include "d_event.h"

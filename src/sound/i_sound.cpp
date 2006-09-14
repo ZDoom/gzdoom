@@ -39,6 +39,7 @@
 #include "resource.h"
 extern HWND Window;
 extern HINSTANCE g_hInst;
+#define USE_WINDOWS_DWORD
 #else
 #define FALSE 0
 #define TRUE 1
@@ -48,7 +49,6 @@ extern HINSTANCE g_hInst;
 #include <stdlib.h>
 #include <stdarg.h>
 
-#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 #include "m_alloc.h"
 #include <math.h>

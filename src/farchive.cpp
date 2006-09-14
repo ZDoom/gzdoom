@@ -204,7 +204,7 @@ void FCompressedFile::PostOpen ()
 			sizes[0] = SWAP_DWORD (sizes[0]);
 			sizes[1] = SWAP_DWORD (sizes[1]);
 			unsigned int len = sizes[0] == 0 ? sizes[1] : sizes[0];
-			m_Buffer = (byte *)M_Malloc (len+8);
+			m_Buffer = (BYTE *)M_Malloc (len+8);
 			fread (m_Buffer+8, len, 1, m_File);
 			sizes[0] = SWAP_DWORD (sizes[0]);
 			sizes[1] = SWAP_DWORD (sizes[1]);
@@ -258,7 +258,7 @@ FFile &FCompressedFile::Write (const void *mem, unsigned int len)
 				m_MaxBufferSize = m_MaxBufferSize ? m_MaxBufferSize * 2 : 16384;
 			}
 			while (m_Pos + len > m_MaxBufferSize);
-			m_Buffer = (byte *)M_Realloc (m_Buffer, m_MaxBufferSize);
+			m_Buffer = (BYTE *)M_Realloc (m_Buffer, m_MaxBufferSize);
 		}
 		if (len == 1)
 			m_Buffer[m_Pos] = *(BYTE *)mem;
@@ -325,7 +325,7 @@ void FCompressedFile::Implode ()
 	uLong outlen;
 	uLong len = m_BufferSize;
 	Byte *compressed = NULL;
-	byte *oldbuf = m_Buffer;
+	BYTE *oldbuf = m_Buffer;
 	int r;
 
 	if (!nofilecompression && !m_NoCompress)
@@ -560,7 +560,7 @@ FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id)
 FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id, size_t chunklen)
 	: FCompressedFile (file, EReading, true, false), m_ChunkID (id)
 {
-	m_Buffer = (byte *)M_Malloc (chunklen);
+	m_Buffer = (BYTE *)M_Malloc (chunklen);
 	m_BufferSize = (unsigned int)chunklen;
 	fread (m_Buffer, chunklen, 1, m_File);
 	// Skip the CRC for now. Maybe later it will be used.
@@ -693,7 +693,7 @@ void FArchive::Close ()
 	{
 		m_File->Close ();
 		m_File = NULL;
-		DPrintf ("Processed %ld objects\n", m_ObjectCount);
+		DPrintf ("Processed %u objects\n", m_ObjectCount);
 	}
 }
 
@@ -770,7 +770,7 @@ const char *FArchive::ReadName ()
 		DWORD index = ReadCount ();
 		if (index >= m_Names.Size())
 		{
-			I_Error ("Name %lu has not been read yet\n", index);
+			I_Error ("Name %u has not been read yet\n", index);
 		}
 		return &m_NameStorage[m_Names[index].StringStart];
 	}
@@ -988,7 +988,7 @@ FArchive &FArchive::SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize)
 		w = ReadCount ();
 		if (w != ~0u)
 		{
-			*(void **)ptr = (byte *)ptrbase + w * elemSize;
+			*(void **)ptr = (BYTE *)ptrbase + w * elemSize;
 		}
 		else
 		{
@@ -1122,7 +1122,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 		index = ReadCount ();
 		if (index >= m_ObjectCount)
 		{
-			I_Error ("Object reference too high (%lu; max is %lu)\n", index, m_ObjectCount);
+			I_Error ("Object reference too high (%u; max is %u)\n", index, m_ObjectCount);
 		}
 		obj = (DObject *)m_ObjectMap[index].object;
 		break;
@@ -1254,7 +1254,7 @@ int FArchive::ReadSprite ()
 		DWORD index = ReadCount ();
 		if (index >= m_NumSprites)
 		{
-			I_Error ("Sprite %lu has not been read yet\n", index);
+			I_Error ("Sprite %u has not been read yet\n", index);
 		}
 		return m_SpriteMap[index];
 	}
@@ -1402,7 +1402,7 @@ const PClass *FArchive::ReadStoredClass (const PClass *wanttype)
 	DWORD index = ReadCount ();
 	if (index >= m_ClassCount)
 	{
-		I_Error ("Class reference too high (%lu; max is %lu)\n", index, m_ClassCount);
+		I_Error ("Class reference too high (%u; max is %u)\n", index, m_ClassCount);
 	}
 	const PClass *type = m_TypeMap[index].toCurrent;
 	if (!type->IsDescendantOf (wanttype))

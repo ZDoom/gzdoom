@@ -67,8 +67,8 @@ extern const char *GameNames[9];
 
 typedef struct
 {
-	byte offset;
-	byte size;
+	BYTE offset;
+	BYTE size;
 	char tl[8];
 	char t[8];
 	char tr[8];

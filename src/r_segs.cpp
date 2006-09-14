@@ -65,7 +65,7 @@ extern fixed_t globaluclip, globaldclip;
 
 // killough 1/6/98: replaced globals with statics where appropriate
 
-static BOOL		segtextured;	// True if any of the segs textures might be visible.
+static bool		segtextured;	// True if any of the segs textures might be visible.
 bool		markfloor;		// False if the back side is the same plane.
 bool		markceiling;
 FTexture *toptexture;
@@ -385,7 +385,7 @@ clearfog:
 }
 
 // prevlineasm1 is like vlineasm1 but skips the loop if only drawing one pixel
-inline fixed_t prevline1 (fixed_t vince, byte *colormap, int count, fixed_t vplce, const byte *bufplce, byte *dest)
+inline fixed_t prevline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
@@ -560,11 +560,11 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal)
 {
 	bool flooding = false;
-	byte *startcolormap = basecolormap;
+	BYTE *startcolormap = basecolormap;
 	int startshade = wallshade;
 	bool fogginess = foggy;
 
-	byte *floodcolormap = startcolormap;
+	BYTE *floodcolormap = startcolormap;
 	int floodshade = startshade;
 	bool floodfoggy = foggy;
 
@@ -630,7 +630,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	wallshade = startshade;
 }
 
-inline fixed_t mvline1 (fixed_t vince, byte *colormap, int count, fixed_t vplce, const byte *bufplce, byte *dest)
+inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
@@ -798,7 +798,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 	NetUpdate ();
 }
 
-inline void preptmvline1 (fixed_t vince, byte *colormap, int count, fixed_t vplce, const byte *bufplce, byte *dest)
+inline void preptmvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
@@ -2113,7 +2113,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	int x1, x2;
 	fixed_t xscale, yscale;
 	fixed_t topoff;
-	byte flipx;
+	BYTE flipx;
 	fixed_t zpos;
 	int needrepeat = 0;
 	sector_t *front, *back;
@@ -2165,7 +2165,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	yscale = decal->ScaleY;
 
 	WallSpriteTile = TexMan(decal->PicNum);
-	flipx = (byte)(decal->RenderFlags & RF_XFLIP);
+	flipx = (BYTE)(decal->RenderFlags & RF_XFLIP);
 
 	if (WallSpriteTile->UseType == FTexture::TEX_Null)
 	{

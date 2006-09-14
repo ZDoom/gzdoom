@@ -430,8 +430,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 
 // [RH] Modified to support different source and destination ids.
 // [RH] Modified some more to be accurate.
-bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
-							BOOL reverse)
+bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse)
 {
 	int i;
 	line_t *l;

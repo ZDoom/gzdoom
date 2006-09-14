@@ -245,7 +245,7 @@ DehSpriteMappings[] =
 static char *PatchFile, *PatchPt, *PatchName;
 static char *Line1, *Line2;
 static int	 dversion, pversion;
-static BOOL  including, includenotext;
+static bool  including, includenotext;
 
 static const char *unknown_str = "Unknown key %s encountered in %s %d.\n";
 
@@ -265,7 +265,7 @@ static int NumNames;
 // These are the original heights of every Doom 2 thing. They are used if a patch
 // specifies that a thing should be hanging from the ceiling but doesn't specify
 // a height for the thing, since these are the heights it probably wants.
-static byte *OrgHeights;
+static BYTE *OrgHeights;
 static int NumOrgHeights;
 
 // This is a list of all the action functions used by each of Doom's states.
@@ -380,8 +380,8 @@ static const struct {
 };
 
 static int HandleMode (const char *mode, int num);
-static BOOL HandleKey (const struct Key *keys, void *structure, const char *key, int value);
-static BOOL ReadChars (char **stuff, int size);
+static bool HandleKey (const struct Key *keys, void *structure, const char *key, int value);
+static bool ReadChars (char **stuff, int size);
 static char *igets (void);
 static int GetLine (void);
 
@@ -435,13 +435,13 @@ static int HandleMode (const char *mode, int num)
 	return i;
 }
 
-static BOOL HandleKey (const struct Key *keys, void *structure, const char *key, int value)
+static bool HandleKey (const struct Key *keys, void *structure, const char *key, int value)
 {
 	while (keys->name && stricmp (keys->name, key))
 		keys++;
 
 	if (keys->name) {
-		*((int *)(((byte *)structure) + keys->offset)) = value;
+		*((int *)(((BYTE *)structure) + keys->offset)) = value;
 		return false;
 	}
 
@@ -514,7 +514,7 @@ int FindStyle (const char *namestr)
 	return -1;
 }
 
-static BOOL ReadChars (char **stuff, int size)
+static bool ReadChars (char **stuff, int size)
 {
 	char *str = *stuff;
 
@@ -1006,8 +1006,8 @@ static int PatchThing (int thingy)
 					else
 						info->renderflags &= ~RF_INVISIBLE;
 				}
-				DPrintf ("Bits: %ld,%ld (0x%08lx,0x%08lx)\n", info->flags, info->flags2,
-															    info->flags, info->flags2);
+				DPrintf ("Bits: %d,%d (0x%08x,0x%08x)\n", info->flags, info->flags2,
+													      info->flags, info->flags2);
 			}
 			else if (stricmp (Line1, "ID #") == 0)
 			{
@@ -1804,7 +1804,7 @@ static int PatchText (int oldSize)
 	char *oldStr;
 	char *newStr;
 	char *temp;
-	BOOL good;
+	INTBOOL good;
 	int result;
 	int i;
 
@@ -2052,7 +2052,7 @@ static int DoInclude (int dummy)
 	return GetLine();
 }
 
-void DoDehPatch (const char *patchfile, BOOL autoloading)
+void DoDehPatch (const char *patchfile, bool autoloading)
 {
 	char file[256];
 	int cont;

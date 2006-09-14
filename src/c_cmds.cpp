@@ -77,7 +77,7 @@ CCMD (toggleconsole)
 	C_ToggleConsole();
 }
 
-BOOL CheckCheatmode ()
+bool CheckCheatmode ()
 {
 	if (((gameskill == sk_nightmare) || netgame || deathmatch) && (!sv_cheats))
 	{
@@ -762,7 +762,7 @@ CCMD(monster)
 	{
 		if (mo->flags3&MF3_ISMONSTER && !(mo->flags&MF_CORPSE) && !(mo->flags&MF_FRIENDLY))
 		{
-			Printf ("%s at (%ld,%ld,%ld)\n",
+			Printf ("%s at (%d,%d,%d)\n",
 				mo->GetClass()->TypeName.GetChars(),
 				mo->x >> FRACBITS, mo->y >> FRACBITS, mo->z >> FRACBITS);
 		}
@@ -785,7 +785,7 @@ CCMD(items)
 	{
 		if (mo->IsKindOf(RUNTIME_CLASS(AInventory)) && mo->flags&MF_SPECIAL)
 		{
-			Printf ("%s at (%ld,%ld,%ld)\n",
+			Printf ("%s at (%d,%d,%d)\n",
 				mo->GetClass()->TypeName.GetChars(),
 				mo->x >> FRACBITS, mo->y >> FRACBITS, mo->z >> FRACBITS);
 		}

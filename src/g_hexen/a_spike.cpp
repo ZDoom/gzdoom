@@ -37,7 +37,7 @@ void A_ThrustImpale (AActor *);
 
 AActor *tsthing;
 
-BOOL PIT_ThrustStompThing (AActor *thing)
+bool PIT_ThrustStompThing (AActor *thing)
 {
 	fixed_t blockdist;
 

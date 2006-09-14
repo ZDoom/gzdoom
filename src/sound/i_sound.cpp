@@ -48,6 +48,7 @@ extern HINSTANCE g_hInst;
 #include <stdlib.h>
 #include <stdarg.h>
 
+#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 #include "m_alloc.h"
 #include <math.h>
@@ -153,7 +154,7 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOI
 #ifdef _WIN32
 // [RH] Dialog procedure for the error dialog that appears if FMOD
 //		could not be initialized for some reason.
-BOOL CALLBACK InitBoxCallback (HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+bool CALLBACK InitBoxCallback (HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
@@ -284,15 +285,15 @@ CCMD (snd_listdrivers)
 	}
 }
 
-ADD_STAT (sound, out)
+ADD_STAT (sound)
 {
 	if (GSnd != NULL)
 	{
-		GSnd->GatherStats (out);
+		return GSnd->GatherStats ();
 	}
 	else
 	{
-		strcpy (out, "no sound");
+		return "no sound";
 	}
 }
 
@@ -327,9 +328,9 @@ void SoundRenderer::UpdateSounds ()
 {
 }
 
-void SoundRenderer::GatherStats (char *outstring)
+FString SoundRenderer::GatherStats ()
 {
-	sprintf (outstring, "No stats for this sound renderer.");
+	return "No stats for this sound renderer.";
 }
 
 void SoundRenderer::ResetEnvironment ()

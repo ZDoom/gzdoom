@@ -1,6 +1,8 @@
 #ifndef __FMOPL_H_
 #define __FMOPL_H_
 
+#include "zstring.h"
+
 /* select output bits size of output : 8 or 16 */
 #define OPL_SAMPLE_BITS 16
 
@@ -42,6 +44,6 @@ void YM3812SetTimerHandler(int which, OPL_TIMERHANDLER TimerHandler, int channel
 void YM3812SetIRQHandler(int which, OPL_IRQHANDLER IRQHandler, int param);
 void YM3812SetUpdateHandler(int which, OPL_UPDATEHANDLER UpdateHandler, int param);
 
-void YM3812GetVoiceString(char *out);
+FString YM3812GetVoiceString();
 
 #endif

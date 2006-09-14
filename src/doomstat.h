@@ -54,7 +54,7 @@ extern EGameSpeed GameSpeed;
 // ------------------------
 // Command line parameters.
 //
-extern	BOOL			devparm;		// DEBUG: launched with -devparm
+extern	bool			devparm;		// DEBUG: launched with -devparm
 
 
 
@@ -70,7 +70,7 @@ extern GameMission_t	gamemission;
 
 extern	char			startmap[8];		// [RH] Actual map name now
 
-extern	BOOL 			autostart;
+extern	bool 			autostart;
 
 // Selected by user. 
 EXTERN_CVAR (Int, gameskill);
@@ -80,10 +80,10 @@ extern	int				NextSkill;			// [RH] Skill to use at next level load
 extern	int 			respawnmonsters;
 
 // Netgame? Only true if >1 player.
-extern	BOOL			netgame;
+extern	bool			netgame;
 
 // Bot game? Like netgame, but doesn't involve network communication.
-extern	BOOL			multiplayer;
+extern	bool			multiplayer;
 
 // Flag: true only if started as net deathmatch.
 EXTERN_CVAR (Int, deathmatch)
@@ -127,8 +127,8 @@ extern	int				paused; 		// Game Pause?
 
 extern	bool			viewactive;
 
-extern	BOOL	 		nodrawers;
-extern	BOOL	 		noblit;
+extern	bool	 		nodrawers;
+extern	bool	 		noblit;
 
 extern	int 			viewwindowx;
 extern	int 			viewwindowy;
@@ -166,7 +166,7 @@ extern	bool			demorecording;
 extern	int				demover;
 
 // Quit after playing a demo from cmdline.
-extern	BOOL			singledemo; 	
+extern	bool			singledemo; 	
 
 
 
@@ -217,7 +217,7 @@ extern	struct wbstartstruct_s wminfo;
 extern	FILE*			debugfile;
 
 // if true, load all graphics at level load
-extern	BOOL	 		precache;
+extern	bool	 		precache;
 
 
 //-------
@@ -228,7 +228,7 @@ extern	BOOL	 		precache;
 //	to force a wipe on the next draw
 extern gamestate_t wipegamestate;
 extern bool setsizeneeded;
-extern BOOL setmodeneeded;
+extern bool setmodeneeded;
 
 extern int BorderNeedRefresh;
 extern int BorderTopRefresh;
@@ -237,7 +237,7 @@ extern int BorderTopRefresh;
 EXTERN_CVAR (Float, mouse_sensitivity)
 //?
 // debug flag to cancel adaptiveness
-extern	BOOL	 		singletics; 	
+extern	bool	 		singletics; 	
 
 extern	int 			bodyqueslot;
 

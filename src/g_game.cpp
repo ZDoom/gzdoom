@@ -83,7 +83,7 @@ static FRandom pr_dmspawn ("DMSpawn");
 const int SAVEPICWIDTH = 216;
 const int SAVEPICHEIGHT = 162;
 
-BOOL	G_CheckDemoStatus (void);
+bool	G_CheckDemoStatus (void);
 void	G_ReadDemoTiccmd (ticcmd_t *cmd, int player);
 void	G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf);
 void	G_PlayerReborn (int player);
@@ -115,14 +115,14 @@ bool			sendturn180;			// [RH] send a 180 degree turn next tic
 bool 			usergame;				// ok to save / end game
 bool			insave;					// Game is saving - used to block exit commands
 
-BOOL			timingdemo; 			// if true, exit with report on completion 
-BOOL 			nodrawers;				// for comparative timing purposes 
-BOOL 			noblit; 				// for comparative timing purposes 
+bool			timingdemo; 			// if true, exit with report on completion 
+bool 			nodrawers;				// for comparative timing purposes 
+bool 			noblit; 				// for comparative timing purposes 
 
 bool	 		viewactive;
 
-BOOL 			netgame;				// only true if packets are broadcast 
-BOOL			multiplayer;
+bool 			netgame;				// only true if packets are broadcast 
+bool			multiplayer;
 player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 
@@ -136,22 +136,22 @@ bool 			demoplayback;
 bool 			netdemo;
 bool			demonew;				// [RH] Only used around G_InitNew for demos
 int				demover;
-byte*			demobuffer;
-byte*			demo_p;
-byte*			democompspot;
-byte*			demobodyspot;
+BYTE*			demobuffer;
+BYTE*			demo_p;
+BYTE*			democompspot;
+BYTE*			demobodyspot;
 size_t			maxdemosize;
-byte*			zdemformend;			// end of FORM ZDEM chunk
-byte*			zdembodyend;			// end of ZDEM BODY chunk
-BOOL 			singledemo; 			// quit after playing a demo from cmdline 
+BYTE*			zdemformend;			// end of FORM ZDEM chunk
+BYTE*			zdembodyend;			// end of ZDEM BODY chunk
+bool 			singledemo; 			// quit after playing a demo from cmdline 
  
-BOOL 			precache = true;		// if true, load all graphics at start 
+bool 			precache = true;		// if true, load all graphics at start 
  
 wbstartstruct_t wminfo; 				// parms for world map / intermission 
  
 short			consistancy[MAXPLAYERS][BACKUPTICS];
  
-byte*			savebuffer;
+BYTE*			savebuffer;
  
  
 #define MAXPLMOVE				(forwardmove[1]) 
@@ -230,7 +230,7 @@ CCMD (turnspeeds)
 {
 	if (argv.argc() == 1)
 	{
-		Printf ("Current turn speeds: %ld %ld %ld %ld\n", angleturn[0],
+		Printf ("Current turn speeds: %d %d %d %d\n", angleturn[0],
 			angleturn[1], angleturn[2], angleturn[3]);
 	}
 	else
@@ -736,7 +736,7 @@ CCMD (spyprev)
 // G_Responder
 // Get info needed to make ticcmd_ts for the players.
 //
-BOOL G_Responder (event_t *ev)
+bool G_Responder (event_t *ev)
 {
 	// any other key pops up menu if in demos
 	// [RH] But only if the key isn't bound to a "special" command
@@ -1213,7 +1213,7 @@ void G_PlayerReborn (int player)
 // because something is occupying it 
 //
 
-BOOL G_CheckSpot (int playernum, mapthing2_t *mthing)
+bool G_CheckSpot (int playernum, mapthing2_t *mthing)
 {
 	fixed_t x;
 	fixed_t y;
@@ -1675,7 +1675,7 @@ void G_DoLoadGame ()
 	text = M_GetPNGText (png, "Important CVARs");
 	if (text != NULL)
 	{
-		byte *vars_p = (byte *)text;
+		BYTE *vars_p = (BYTE *)text;
 		C_ReadCVars (&vars_p);
 		delete[] text;
 	}
@@ -1999,7 +1999,7 @@ void G_DoSaveGame (bool okForQuicksave)
 	G_WriteHubInfo(stdfile);
 
 	{
-		byte vars[4096], *vars_p;
+		BYTE vars[4096], *vars_p;
 		vars_p = vars;
 		C_WriteCVars (&vars_p, CVAR_SERVERINFO);
 		*vars_p = 0;
@@ -2102,7 +2102,7 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
 
 		case DEM_DROPPLAYER:
 			{
-				byte i = ReadByte (&demo_p);
+				BYTE i = ReadByte (&demo_p);
 				if (i < MAXPLAYERS)
 					playeringame[i] = false;
 			}
@@ -2115,18 +2115,18 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
 	}
 } 
 
-BOOL stoprecording;
+bool stoprecording;
 
 CCMD (stop)
 {
 	stoprecording = true;
 }
 
-extern byte *lenspot;
+extern BYTE *lenspot;
 
 void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 {
-	byte *specdata;
+	BYTE *specdata;
 	int speclen;
 
 	if (stoprecording)
@@ -2159,7 +2159,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 		ptrdiff_t body = demobodyspot - demobuffer;
 		// [RH] Allocate more space for the demo
 		maxdemosize += 0x20000;
-		demobuffer = (byte *)M_Realloc (demobuffer, maxdemosize);
+		demobuffer = (BYTE *)M_Realloc (demobuffer, maxdemosize);
 		demo_p = demobuffer + pos;
 		lenspot = demobuffer + spot;
 		democompspot = demobuffer + comp;
@@ -2182,7 +2182,7 @@ void G_RecordDemo (char* name)
 	DefaultExtension (demoname, ".lmp");
 	v = Args.CheckValue ("-maxdemo");
 	maxdemosize = 0x20000;
-	demobuffer = (byte *)M_Malloc (maxdemosize);
+	demobuffer = (BYTE *)M_Malloc (maxdemosize);
 
 	demorecording = true; 
 }
@@ -2225,7 +2225,7 @@ void G_BeginRecording (const char *startmap)
 		if (playeringame[i])
 		{
 			StartChunk (UINF_ID, &demo_p);
-			WriteByte ((byte)i, &demo_p);
+			WriteByte ((BYTE)i, &demo_p);
 			D_WriteUserInfoStrings (i, &demo_p);
 			FinishChunk (&demo_p);
 		}
@@ -2280,14 +2280,14 @@ CCMD (timedemo)
 
 // [RH] Process all the information in a FORM ZDEM
 //		until a BODY chunk is entered.
-BOOL G_ProcessIFFDemo (char *mapname)
+bool G_ProcessIFFDemo (char *mapname)
 {
-	BOOL headerHit = false;
-	BOOL bodyHit = false;
+	bool headerHit = false;
+	bool bodyHit = false;
 	int numPlayers = 0;
 	int id, len, i;
 	uLong uncompSize = 0;
-	byte *nextchunk;
+	BYTE *nextchunk;
 
 	demoplayback = true;
 
@@ -2418,7 +2418,7 @@ void G_DoPlayDemo (void)
 	if (demolump >= 0)
 	{
 		int demolen = Wads.LumpLength (demolump);
-		demobuffer = new byte[demolen];
+		demobuffer = new BYTE[demolen];
 		Wads.ReadLump (demolump, demobuffer);
 	}
 	else
@@ -2472,8 +2472,8 @@ void G_DoPlayDemo (void)
 //
 void G_TimeDemo (char* name)
 {
-	nodrawers = Args.CheckParm ("-nodraw");
-	noblit = Args.CheckParm ("-noblit");
+	nodrawers = !!Args.CheckParm ("-nodraw");
+	noblit = !!Args.CheckParm ("-noblit");
 	timingdemo = true;
 	singletics = true;
 
@@ -2492,7 +2492,7 @@ void G_TimeDemo (char* name)
 ===================
 */
 
-BOOL G_CheckDemoStatus (void)
+bool G_CheckDemoStatus (void)
 {
 	if (!demorecording)
 	{ // [RH] Restore the player's userinfo settings.
@@ -2552,7 +2552,7 @@ BOOL G_CheckDemoStatus (void)
 
 	if (demorecording)
 	{
-		byte *formlen;
+		BYTE *formlen;
 
 		WriteByte (DEM_STOP, &demo_p);
 

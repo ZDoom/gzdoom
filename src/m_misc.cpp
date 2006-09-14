@@ -92,7 +92,7 @@ static long ParseCommandLine (const char *args, int *argc, char **argv);
 #define O_BINARY 0
 #endif
 
-BOOL M_WriteFile (char const *name, void *source, int length)
+bool M_WriteFile (char const *name, void *source, int length)
 {
 	int handle;
 	int count;
@@ -115,11 +115,11 @@ BOOL M_WriteFile (char const *name, void *source, int length)
 //
 // M_ReadFile
 //
-int M_ReadFile (char const *name, byte **buffer)
+int M_ReadFile (char const *name, BYTE **buffer)
 {
 	int handle, count, length;
 	struct stat fileinfo;
-	byte *buf;
+	BYTE *buf;
 
 	handle = open (name, O_RDONLY | O_BINARY, 0666);
 	if (handle == -1)
@@ -520,7 +520,7 @@ void WritePNGfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 //
 // M_ScreenShot
 //
-static BOOL FindFreeName (FString &fullname, const char *extension)
+static bool FindFreeName (FString &fullname, const char *extension)
 {
 	FString lbmname;
 	int i;

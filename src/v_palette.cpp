@@ -77,7 +77,7 @@ static int STACK_ARGS sortforremap2 (const void *a, const void *b);
 /* Gamma correction stuff */
 /**************************/
 
-byte newgamma[256];
+BYTE newgamma[256];
 CUSTOM_CVAR (Float, Gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self == 0.f)
@@ -99,10 +99,10 @@ CUSTOM_CVAR (Float, Gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 extern "C"
 {
-	byte BestColor_MMX (DWORD rgb, const DWORD *pal);
+	BYTE BestColor_MMX (DWORD rgb, const DWORD *pal);
 }
 
-int BestColor (const DWORD *pal_in, int r, int g, int b, int first, int num)
+int BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
 {
 #ifdef USEASM
 	if (CPU.bMMX)

@@ -196,7 +196,7 @@ CCMD (playerclasses)
 // 16 pixels of bob
 #define MAXBOB			0x100000
 
-BOOL onground;
+bool onground;
 
 // The player_s constructor. Since LogText is not a POD, we cannot just
 // memset it all to 0.
@@ -1386,7 +1386,7 @@ void P_MovePlayer (player_t *player)
 
 		if (debugfile)
 		{
-			fprintf (debugfile, "move player for pl %d%c: (%ld,%ld,%ld) (%ld,%ld) %d %d w%d [", player-players,
+			fprintf (debugfile, "move player for pl %d%c: (%d,%d,%d) (%d,%d) %d %d w%d [", player-players,
 				player->cheats&CF_PREDICTING?'p':' ',
 				player->mo->x, player->mo->y, player->mo->z,forwardmove, sidemove, movefactor, friction, player->mo->waterlevel);
 			msecnode_t *n = player->mo->touching_sectorlist;
@@ -1663,7 +1663,7 @@ void P_PlayerThink (player_t *player)
 
 	if (debugfile && !(player->cheats & CF_PREDICTING))
 	{
-		fprintf (debugfile, "tic %d for pl %d: (%ld, %ld, %ld, %lu) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
+		fprintf (debugfile, "tic %d for pl %d: (%d, %d, %d, %u) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
 			gametic, player-players, player->mo->x, player->mo->y, player->mo->z,
 			player->mo->angle>>ANGLETOFINESHIFT, player->cmd.ucmd.buttons,
 			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,

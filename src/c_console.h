@@ -50,7 +50,7 @@ typedef enum cstate_t {
 extern constate_e ConsoleState;
 
 // Initialize the console
-void C_InitConsole (int width, int height, BOOL ingame);
+void C_InitConsole (int width, int height, bool ingame);
 void C_DeinitConsole ();
 
 // Adjust the console for a new screen mode
@@ -75,7 +75,7 @@ void C_SetTicker (unsigned int at, bool forceUpdate=false);
 void C_MidPrint (const char *message);
 void C_MidPrintBold (const char *message);
 
-BOOL C_Responder (event_t *ev);
+bool C_Responder (event_t *ev);
 
 void C_AddTabCommand (const char *name);
 void C_RemoveTabCommand (const char *name);

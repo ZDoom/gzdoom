@@ -170,12 +170,12 @@ public:
 	int CheckNumForName (const char *name, int namespc, int wadfile);
 	int GetNumForName (const char *name, int namespc);
 
-	inline int CheckNumForName (const byte *name) { return CheckNumForName ((const char *)name, ns_global); }
+	inline int CheckNumForName (const BYTE *name) { return CheckNumForName ((const char *)name, ns_global); }
 	inline int CheckNumForName (const char *name) { return CheckNumForName (name, ns_global); }
-	inline int CheckNumForName (const byte *name, int ns) { return CheckNumForName ((const char *)name, ns); }
+	inline int CheckNumForName (const BYTE *name, int ns) { return CheckNumForName ((const char *)name, ns); }
 	inline int GetNumForName (const char *name) { return GetNumForName (name, ns_global); }
-	inline int GetNumForName (const byte *name) { return GetNumForName ((const char *)name); }
-	inline int GetNumForName (const byte *name, int ns) { return GetNumForName ((const char *)name, ns); }
+	inline int GetNumForName (const BYTE *name) { return GetNumForName ((const char *)name); }
+	inline int GetNumForName (const BYTE *name, int ns) { return GetNumForName ((const char *)name, ns); }
 
 	int CheckNumForFullName (const char *name);
 	int CheckNumForFullName (const char *name, int wadfile);

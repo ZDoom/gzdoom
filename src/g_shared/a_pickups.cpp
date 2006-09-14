@@ -1204,7 +1204,7 @@ CCMD (printinv)
 	}
 	for (item = players[consoleplayer].mo->Inventory; item != NULL; item = item->Inventory)
 	{
-		Printf ("%s #%lu (%d/%d)\n", item->GetClass()->TypeName.GetChars(),
+		Printf ("%s #%u (%d/%d)\n", item->GetClass()->TypeName.GetChars(),
 			item->InventoryID,
 			item->Amount, item->MaxAmount);
 	}

@@ -25,7 +25,7 @@
 #include "d_event.h"
 
 // Called by main loop.
-BOOL AM_Responder (event_t* ev);
+bool AM_Responder (event_t* ev);
 
 // Called by main loop.
 void AM_Ticker (void);

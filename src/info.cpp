@@ -461,7 +461,7 @@ CCMD (dumpmapthings)
 	FDoomEdMap::DumpMapThings ();
 }
 
-BOOL CheckCheatmode ();
+bool CheckCheatmode ();
 
 CCMD (summon)
 {

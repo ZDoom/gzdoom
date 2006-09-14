@@ -89,13 +89,13 @@ class AActor;
 class FBaseCVar
 {
 public:
-	FBaseCVar (const char *name, DWORD flags, void (*callback)(FBaseCVar &));
+	FBaseCVar (const char *name, uint32 flags, void (*callback)(FBaseCVar &));
 	virtual ~FBaseCVar ();
 
 	inline void Callback () { if (m_Callback) m_Callback (*this); }
 
 	inline const char *GetName () const { return Name; }
-	inline DWORD GetFlags () const { return Flags; }
+	inline uint32 GetFlags () const { return Flags; }
 
 	void CmdSet (const char *newval);
 	void ForceSet (UCVarValue value, ECVarType type);
@@ -137,11 +137,11 @@ protected:
 	static UCVarValue FromGUID (const GUID &value, ECVarType type);
 
 	char *Name;
-	DWORD Flags;
+	uint32 Flags;
 
 private:
 	FBaseCVar (const FBaseCVar &var);
-	FBaseCVar (const char *name, DWORD flags);
+	FBaseCVar (const char *name, uint32 flags);
 
 	void (*m_Callback)(FBaseCVar &);
 	FBaseCVar *m_Next;
@@ -149,24 +149,24 @@ private:
 	static bool m_UseCallback;
 	static bool m_DoNoSet;
 
-	friend void C_WriteCVars (byte **demo_p, DWORD filter, bool compact);
-	friend void C_ReadCVars (byte **demo_p);
+	friend void C_WriteCVars (BYTE **demo_p, uint32 filter, bool compact);
+	friend void C_ReadCVars (BYTE **demo_p);
 	friend void C_BackupCVars (void);
 	friend FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 	friend FBaseCVar *FindCVarSub (const char *var_name, int namelen);
 	friend void UnlatchCVars (void);
 	friend void C_ArchiveCVars (FConfigFile *f, int type);
 	friend void C_SetCVarsToDefaults (void);
-	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter);
+	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32 filter);
 	friend void C_DeinitConsole();
 };
 
 // Writes all cvars that could effect demo sync to *demo_p. These are
 // cvars that have either CVAR_SERVERINFO or CVAR_DEMOSAVE set.
-void C_WriteCVars (byte **demo_p, DWORD filter, bool compact=false);
+void C_WriteCVars (BYTE **demo_p, uint32 filter, bool compact=false);
 
 // Read all cvars from *demo_p and set them appropriately.
-void C_ReadCVars (byte **demo_p);
+void C_ReadCVars (BYTE **demo_p);
 
 // Backup demo cvars. Called before a demo starts playing to save all
 // cvars the demo might change.
@@ -185,14 +185,14 @@ void C_ArchiveCVars (FConfigFile *f, int type);
 // initialize cvars to default values after they are created
 void C_SetCVarsToDefaults (void);
 
-void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter);
+void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32 filter);
 
 void C_DeinitConsole();
 
 class FBoolCVar : public FBaseCVar
 {
 public:
-	FBoolCVar (const char *name, bool def, DWORD flags, void (*callback)(FBoolCVar &)=NULL);
+	FBoolCVar (const char *name, bool def, uint32 flags, void (*callback)(FBoolCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 
@@ -217,7 +217,7 @@ protected:
 class FIntCVar : public FBaseCVar
 {
 public:
-	FIntCVar (const char *name, int def, DWORD flags, void (*callback)(FIntCVar &)=NULL);
+	FIntCVar (const char *name, int def, uint32 flags, void (*callback)(FIntCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 
@@ -244,7 +244,7 @@ protected:
 class FFloatCVar : public FBaseCVar
 {
 public:
-	FFloatCVar (const char *name, float def, DWORD flags, void (*callback)(FFloatCVar &)=NULL);
+	FFloatCVar (const char *name, float def, uint32 flags, void (*callback)(FFloatCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 
@@ -269,7 +269,7 @@ protected:
 class FStringCVar : public FBaseCVar
 {
 public:
-	FStringCVar (const char *name, const char *def, DWORD flags, void (*callback)(FStringCVar &)=NULL);
+	FStringCVar (const char *name, const char *def, uint32 flags, void (*callback)(FStringCVar &)=NULL);
 	~FStringCVar ();
 
 	virtual ECVarType GetRealType () const;
@@ -295,7 +295,7 @@ protected:
 class FColorCVar : public FIntCVar
 {
 public:
-	FColorCVar (const char *name, int def, DWORD flags, void (*callback)(FColorCVar &)=NULL);
+	FColorCVar (const char *name, int def, uint32 flags, void (*callback)(FColorCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 
@@ -303,8 +303,8 @@ public:
 	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
 	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
 
-	inline operator DWORD () const { return Value; }
-	inline DWORD operator *() const { return Value; }
+	inline operator uint32 () const { return Value; }
+	inline uint32 operator *() const { return Value; }
 	inline int GetIndex () const { return Index; }
 
 protected:
@@ -319,7 +319,7 @@ protected:
 class FFlagCVar : public FBaseCVar
 {
 public:
-	FFlagCVar (const char *name, FIntCVar &realvar, DWORD bitval);
+	FFlagCVar (const char *name, FIntCVar &realvar, uint32 bitval);
 
 	virtual ECVarType GetRealType () const;
 
@@ -338,14 +338,14 @@ protected:
 	virtual void DoSet (UCVarValue value, ECVarType type);
 
 	FIntCVar &ValueVar;
-	DWORD BitVal;
+	uint32 BitVal;
 	int BitNum;
 };
 
 class FGUIDCVar : public FBaseCVar
 {
 public:
-	FGUIDCVar (const char *name, const GUID *defguid, DWORD flags, void (*callback)(FGUIDCVar &)=NULL);
+	FGUIDCVar (const char *name, const GUID *defguid, uint32 flags, void (*callback)(FGUIDCVar &)=NULL);
 
 	virtual ECVarType GetRealType () const;
 
@@ -372,8 +372,8 @@ extern int cvar_defflags;
 FBaseCVar *cvar_set (const char *var_name, const char *value);
 FBaseCVar *cvar_forceset (const char *var_name, const char *value);
 
-inline FBaseCVar *cvar_set (const char *var_name, const byte *value) { return cvar_set (var_name, (const char *)value); }
-inline FBaseCVar *cvar_forceset (const char *var_name, const byte *value) { return cvar_forceset (var_name, (const char *)value); }
+inline FBaseCVar *cvar_set (const char *var_name, const BYTE *value) { return cvar_set (var_name, (const char *)value); }
+inline FBaseCVar *cvar_forceset (const char *var_name, const BYTE *value) { return cvar_forceset (var_name, (const char *)value); }
 
 
 

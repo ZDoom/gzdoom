@@ -164,7 +164,7 @@ FBlockNode**	blocklinks;		// for thing chains
 // Without special effect, this could be
 //	used as a PVS lookup as well.
 //
-byte*			rejectmatrix;
+BYTE*			rejectmatrix;
 
 static bool		ForceNodeBuild;
 
@@ -765,8 +765,8 @@ static void P_LoadZNodes (FileReader &dalump, DWORD id)
 void P_LoadSegs (MapData * map)
 {
 	int  i;
-	byte *data;
-	byte *vertchanged = new byte[numvertexes];	// phares 10/4/98
+	BYTE *data;
+	BYTE *vertchanged = new BYTE[numvertexes];	// phares 10/4/98
 	DWORD segangle;
 	line_t* line;		// phares 10/4/98
 	int ptp_angle;		// phares 10/4/98
@@ -793,7 +793,7 @@ void P_LoadSegs (MapData * map)
 	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
 
-	data = new byte[lumplen];
+	data = new BYTE[lumplen];
 	map->Read(ML_SEGS, data);
 
 	// phares: 10/4/98: Vertchanged is an array that represents the vertices.
@@ -987,7 +987,7 @@ void P_LoadSubsectors (MapData * map)
 
 		if (subsectors[i].firstline >= maxseg)
 		{
-			Printf ("Subsector %d contains invalid segs %lu-%lu\n"
+			Printf ("Subsector %d contains invalid segs %u-%u\n"
 				"The BSP will be rebuilt.\n", i, subsectors[i].firstline,
 				subsectors[i].firstline + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
@@ -997,7 +997,7 @@ void P_LoadSubsectors (MapData * map)
 		}
 		else if (subsectors[i].firstline + subsectors[i].numlines > maxseg)
 		{
-			Printf ("Subsector %d contains invalid segs %lu-%lu\n"
+			Printf ("Subsector %d contains invalid segs %u-%u\n"
 				"The BSP will be rebuilt.\n", i, maxseg,
 				subsectors[i].firstline + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
@@ -1268,7 +1268,7 @@ void P_LoadThings (MapData * map, int position)
 //
 //===========================================================================
 
-static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, BOOL slopeCeil)
+static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, bool slopeCeil)
 {
 	int linenum = -1;
 
@@ -1344,7 +1344,7 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, BOO
 //
 //===========================================================================
 
-static void P_CopyPlane (int tag, fixed_t x, fixed_t y, BOOL copyCeil)
+static void P_CopyPlane (int tag, fixed_t x, fixed_t y, bool copyCeil)
 {
 	sector_t *dest = R_PointInSubsector (x, y)->sector;
 	sector_t *source;
@@ -1376,7 +1376,7 @@ static void P_CopyPlane (int tag, fixed_t x, fixed_t y, BOOL copyCeil)
 //
 //===========================================================================
 
-void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
+void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
 	fixed_t x, fixed_t y, fixed_t z)
 {
 	angle_t xyang;
@@ -2703,7 +2703,7 @@ void P_LoadBlockMap (MapData * map)
 	}
 	else
 	{
-		byte * data = new byte[count];
+		BYTE *data = new BYTE[count];
 		map->Read(ML_BLOCKMAP, data);
 		const short *wadblockmaplump = (short *)data;
 		int i;
@@ -3019,11 +3019,7 @@ static void P_GroupLines (bool buildmap)
 		Printf ("---Group Lines Times---\n");
 		for (i = 0; i < 7; ++i)
 		{
-#ifdef _MSC_VER
-			Printf (" time %d:%10I64u\n", i, times[i]);
-#else
-			Printf (" time %d:%10lu\n", i, times[i]);
-#endif
+			Printf (" time %d:%10llu\n", i, times[i]);
 		}
 	}
 }
@@ -3743,11 +3739,7 @@ void P_SetupLevel (char *lumpname, int position)
 				"init polys",
 				"precache"
 			};
-#ifdef _MSC_VER
-			Printf ("Time%3d:%10I64u cycles (%s)\n", i, times[i], timenames[i]);
-#else
-			Printf ("Time%3d:%10lu cycles (%s)\n", i, times[i], timenames[i]);
-#endif
+			Printf ("Time%3d:%10llu cycles (%s)\n", i, times[i], timenames[i]);
 		}
 	}
 }
@@ -3795,7 +3787,7 @@ CCMD (lineloc)
 	{
 		Printf ("No such line\n");
 	}
-	Printf ("(%ld,%ld) -> (%ld,%ld)\n", lines[linenum].v1->x >> FRACBITS,
+	Printf ("(%d,%d) -> (%d,%d)\n", lines[linenum].v1->x >> FRACBITS,
 		lines[linenum].v1->y >> FRACBITS,
 		lines[linenum].v2->x >> FRACBITS,
 		lines[linenum].v2->y >> FRACBITS);

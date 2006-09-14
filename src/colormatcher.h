@@ -60,7 +60,7 @@ public:
 	FColorMatcher (const FColorMatcher &other);
 
 	void SetPalette (const DWORD *palette);
-	byte Pick (int r, int g, int b);
+	BYTE Pick (int r, int g, int b);
 	FColorMatcher &operator= (const FColorMatcher &other);
 
 private:
@@ -69,11 +69,11 @@ private:
 	struct PalEntry;
 
 	const PalEntry *Pal;
-	byte FirstColor[CHISIZE+1][CHISIZE+1][CHISIZE+1];
-	byte NextColor[256];
+	BYTE FirstColor[CHISIZE+1][CHISIZE+1][CHISIZE+1];
+	BYTE NextColor[256];
 
 	int FillPlane (int r1, int r2, int g1, int g2, int b1, int b2,
-		byte seedspread[CHISIZE+1][CHISIZE+1][CHISIZE+1],
+		BYTE seedspread[CHISIZE+1][CHISIZE+1][CHISIZE+1],
 		Seed *seeds, int thisseed);
 };
 

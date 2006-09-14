@@ -42,7 +42,7 @@
 #include "cmdlib.h"
 
 
-char *ReadString (byte **stream)
+char *ReadString (BYTE **stream)
 {
 	char *string = *((char **)stream);
 
@@ -50,28 +50,28 @@ char *ReadString (byte **stream)
 	return copystring (string);
 }
 
-int ReadByte (byte **stream)
+int ReadByte (BYTE **stream)
 {
-	byte v = **stream;
+	BYTE v = **stream;
 	*stream += 1;
 	return v;
 }
 
-int ReadWord (byte **stream)
+int ReadWord (BYTE **stream)
 {
 	short v = (((*stream)[0]) << 8) | (((*stream)[1]));
 	*stream += 2;
 	return v;
 }
 
-int ReadLong (byte **stream)
+int ReadLong (BYTE **stream)
 {
 	int v = (((*stream)[0]) << 24) | (((*stream)[1]) << 16) | (((*stream)[2]) << 8) | (((*stream)[3]));
 	*stream += 4;
 	return v;
 }
 
-float ReadFloat (byte **stream)
+float ReadFloat (BYTE **stream)
 {
 	union
 	{
@@ -82,7 +82,7 @@ float ReadFloat (byte **stream)
 	return fakeint.f;
 }
 
-void WriteString (const char *string, byte **stream)
+void WriteString (const char *string, BYTE **stream)
 {
 	char *p = *((char **)stream);
 
@@ -91,24 +91,24 @@ void WriteString (const char *string, byte **stream)
 	}
 
 	*p++ = 0;
-	*stream = (byte *)p;
+	*stream = (BYTE *)p;
 }
 
 
-void WriteByte (byte v, byte **stream)
+void WriteByte (BYTE v, BYTE **stream)
 {
 	**stream = v;
 	*stream += 1;
 }
 
-void WriteWord (short v, byte **stream)
+void WriteWord (short v, BYTE **stream)
 {
 	(*stream)[0] = v >> 8;
 	(*stream)[1] = v & 255;
 	*stream += 2;
 }
 
-void WriteLong (int v, byte **stream)
+void WriteLong (int v, BYTE **stream)
 {
 	(*stream)[0] = v >> 24;
 	(*stream)[1] = (v >> 16) & 255;
@@ -117,7 +117,7 @@ void WriteLong (int v, byte **stream)
 	*stream += 4;
 }
 
-void WriteFloat (float v, byte **stream)
+void WriteFloat (float v, BYTE **stream)
 {
 	union
 	{
@@ -129,10 +129,10 @@ void WriteFloat (float v, byte **stream)
 }
 
 // Returns the number of bytes read
-int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, byte **stream)
+int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 {
-	byte *start = *stream;
-	byte flags;
+	BYTE *start = *stream;
+	BYTE flags;
 
 	if (basis != NULL)
 	{
@@ -170,11 +170,11 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, byte **stream)
 }
 
 // Returns the number of bytes written
-int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, byte **stream)
+int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 {
-	byte flags = 0;
-	byte *temp = *stream;
-	byte *start = *stream;
+	BYTE flags = 0;
+	BYTE *temp = *stream;
+	BYTE *start = *stream;
 	usercmd_t blank;
 
 	if (basis == NULL)
@@ -229,8 +229,8 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, byte **stream)
 
 FArchive &operator<< (FArchive &arc, usercmd_t &cmd)
 {
-	byte bytes[256];
-	byte *stream = bytes;
+	BYTE bytes[256];
+	BYTE *stream = bytes;
 	if (arc.IsStoring ())
 	{
 		BYTE len = PackUserCmd (&cmd, NULL, &stream);
@@ -247,7 +247,7 @@ FArchive &operator<< (FArchive &arc, usercmd_t &cmd)
 	return arc;
 }
 
-int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, byte **stream)
+int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 {
 	if (basis == NULL)
 	{
@@ -281,10 +281,10 @@ int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, byte **stream)
 }
 
 
-int SkipTicCmd (byte **stream, int count)
+int SkipTicCmd (BYTE **stream, int count)
 {
 	int i, skip;
-	byte *flow = *stream;
+	BYTE *flow = *stream;
 
 	for (i = count; i > 0; i--)
 	{
@@ -293,7 +293,7 @@ int SkipTicCmd (byte **stream, int count)
 		flow += 2;		// Skip consistancy marker
 		while (moreticdata)
 		{
-			byte type = *flow++;
+			BYTE type = *flow++;
 
 			if (type == DEM_USERCMD)
 			{
@@ -327,10 +327,10 @@ int SkipTicCmd (byte **stream, int count)
 
 #include <assert.h>
 extern short consistancy[MAXPLAYERS][BACKUPTICS];
-void ReadTicCmd (byte **stream, int player, int tic)
+void ReadTicCmd (BYTE **stream, int player, int tic)
 {
 	int type;
-	byte *start;
+	BYTE *start;
 	ticcmd_t *tcmd;
 
 	int ticmod = tic % BACKUPTICS;
@@ -368,7 +368,7 @@ void ReadTicCmd (byte **stream, int player, int tic)
 
 void RunNetSpecs (int player, int buf)
 {
-	byte *stream;
+	BYTE *stream;
 	int len;
 
 	if (gametic % ticdup == 0)
@@ -376,7 +376,7 @@ void RunNetSpecs (int player, int buf)
 		stream = NetSpecs[player][buf].GetData (&len);
 		if (stream)
 		{
-			byte *end = stream + len;
+			BYTE *end = stream + len;
 			while (stream < end)
 			{
 				int type = ReadByte (&stream);
@@ -388,11 +388,11 @@ void RunNetSpecs (int player, int buf)
 	}
 }
 
-byte *lenspot;
+BYTE *lenspot;
 
 // Write the header of an IFF chunk and leave space
 // for the length field.
-void StartChunk (int id, byte **stream)
+void StartChunk (int id, BYTE **stream)
 {
 	WriteLong (id, stream);
 	lenspot = *stream;
@@ -401,7 +401,7 @@ void StartChunk (int id, byte **stream)
 
 // Write the length field for the chunk and insert
 // pad byte if the chunk is odd-sized.
-void FinishChunk (byte **stream)
+void FinishChunk (BYTE **stream)
 {
 	int len;
 	
@@ -418,7 +418,7 @@ void FinishChunk (byte **stream)
 
 // Skip past an unknown chunk. *stream should be
 // pointing to the chunk's length field.
-void SkipChunk (byte **stream)
+void SkipChunk (BYTE **stream)
 {
 	int len;
 

@@ -7,6 +7,12 @@
 #include <stddef.h>
 #include "tarray.h"
 
+#ifdef __GNUC__
+#define PRINTFISH(x) __attribute__((format(printf, 2, x)))
+#else
+#define PRINTFISH(x)
+#endif
+
 struct FStringData
 {
 	unsigned int Len;		// Length of string, excluding terminating null
@@ -166,10 +172,10 @@ public:
 	void Substitute (const char *oldstr, const char *newstr);
 	void Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen);
 
-	void Format (const char *fmt, ...);
-	void AppendFormat (const char *fmt, ...);
-	void VFormat (const char *fmt, va_list arglist);
-	void VAppendFormat (const char *fmt, va_list arglist);
+	void Format (const char *fmt, ...) PRINTFISH(3);
+	void AppendFormat (const char *fmt, ...) PRINTFISH(3);
+	void VFormat (const char *fmt, va_list arglist) PRINTFISH(0);
+	void VAppendFormat (const char *fmt, va_list arglist) PRINTFISH(0);
 
 	bool IsInt () const;
 	bool IsFloat () const;
@@ -234,5 +240,7 @@ namespace StringFormat
 	int VWorker (OutputFunc output, void *outputData, const char *fmt, va_list arglist);
 	int Worker (OutputFunc output, void *outputData, const char *fmt, ...);
 };
+
+#undef PRINTFISH
 
 #endif

@@ -47,6 +47,7 @@
 #	include <sys/ioctl.h>
 #endif
 
+#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 #include "i_system.h"
 #include "d_event.h"
@@ -83,7 +84,7 @@ typedef int SOCKET;
 typedef int socklen_t;
 #endif
 
-extern BOOL CheckAbort (void);
+extern bool CheckAbort (void);
 
 
 //

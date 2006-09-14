@@ -27,8 +27,8 @@
 //
 // Globally visible constants.
 //
-const byte HU_FONTSTART = '!';	// the first font characters
-const byte HU_FONTEND   = 'ß';	// the last font characters
+const BYTE HU_FONTSTART = '!';	// the first font characters
+const BYTE HU_FONTEND   = 'ß';	// the last font characters
 
 // Calculate # of glyphs in font.
 const int HU_FONTSIZE = HU_FONTEND - HU_FONTSTART + 1;
@@ -38,7 +38,7 @@ const int HU_FONTSIZE = HU_FONTEND - HU_FONTSTART + 1;
 //
 
 void CT_Init (void);
-BOOL CT_Responder (event_t* ev);
+bool CT_Responder (event_t* ev);
 void CT_Drawer (void);
 
 extern int chatmodeon;

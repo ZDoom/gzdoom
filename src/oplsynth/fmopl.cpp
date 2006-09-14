@@ -1853,11 +1853,12 @@ static bool CalcVoice (FM_OPL *OPL, int voice, INT32 *buffer, int length)
 	return true;
 }
 
-void YM3812GetVoiceString(char *out)
+FString YM3812GetVoiceString()
 {
 	FM_OPL *OPL = OPL_YM3812[0];
-	int i;
-	for (i = 0; i <= 8; ++i)
+	char out[9*3];
+
+	for (int i = 0; i <= 8; ++i)
 	{
 		int color;
 
@@ -1873,5 +1874,5 @@ void YM3812GetVoiceString(char *out)
 		out[i*3+1] = color;
 		out[i*3+2] = '*';
 	}
-	out[i*3] = 0;
+	return FString (out, 9*3);
 }

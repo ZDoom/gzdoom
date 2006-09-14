@@ -47,7 +47,7 @@ public:
 
 	void PrintStatus ();
 	void PrintDriversList ();
-	void GatherStats (char *outstring);
+	FString GatherStats ();
 
 private:
 	struct Channel;

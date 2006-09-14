@@ -51,12 +51,12 @@ void G_BeginRecording (const char *startmap);
 
 void G_PlayDemo (char* name);
 void G_TimeDemo (char* name);
-BOOL G_CheckDemoStatus (void);
+bool G_CheckDemoStatus (void);
 
 void G_WorldDone (void);
 
 void G_Ticker (void);
-BOOL G_Responder (event_t*	ev);
+bool G_Responder (event_t*	ev);
 
 void G_ScreenShot (char *filename);
 

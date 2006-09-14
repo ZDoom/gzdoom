@@ -287,7 +287,7 @@ bool P_CheckMeleeRange2 (AActor *actor)
 // P_CheckMissileRange
 //
 //=============================================================================
-BOOL P_CheckMissileRange (AActor *actor)
+bool P_CheckMissileRange (AActor *actor)
 {
 	fixed_t dist;
 		
@@ -366,11 +366,11 @@ bool P_HitFriend(AActor * self)
 // Move in the current direction,
 // returns false if the move is blocked.
 //
-BOOL P_Move (AActor *actor)
+bool P_Move (AActor *actor)
 {
 
 	fixed_t tryx, tryy, deltax, deltay, origx, origy;
-	BOOL try_ok;
+	bool try_ok;
 	int speed;
 	int movefactor = ORIG_FRICTION_FACTOR;
 	int friction = ORIG_FRICTION;
@@ -550,7 +550,7 @@ BOOL P_Move (AActor *actor)
 //
 //=============================================================================
 
-BOOL P_TryWalk (AActor *actor)
+bool P_TryWalk (AActor *actor)
 {
 	if (!P_Move (actor))
 	{
@@ -699,7 +699,7 @@ struct avoiddropoff_t
 	fixed_t t_bbox[4];
 } a;
 
-static BOOL PIT_AvoidDropoff(line_t *line)
+static bool PIT_AvoidDropoff(line_t *line)
 {
 	if (line->backsector                          && // Ignore one-sided linedefs
 		a.t_bbox[BOXRIGHT]  > line->bbox[BOXLEFT]   &&
@@ -987,7 +987,7 @@ void P_RandomChaseDir (AActor *actor)
 #define MONS_LOOK_RANGE (20*64*FRACUNIT)
 #define MONS_LOOK_LIMIT 64
 
-BOOL P_LookForMonsters (AActor *actor)
+bool P_LookForMonsters (AActor *actor)
 {
 	int count;
 	AActor *mo;
@@ -1120,7 +1120,7 @@ AActor *LookForTIDinBlock (AActor *lookee, int index)
 //
 //============================================================================
 
-BOOL P_LookForTID (AActor *actor, BOOL allaround)
+bool P_LookForTID (AActor *actor, INTBOOL allaround)
 {
 	AActor *other;
 
@@ -1327,7 +1327,7 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index)
 //
 //============================================================================
 
-BOOL P_LookForEnemies (AActor *actor, BOOL allaround)
+bool P_LookForEnemies (AActor *actor, INTBOOL allaround)
 {
 	AActor *other;
 
@@ -1372,7 +1372,7 @@ BOOL P_LookForEnemies (AActor *actor, BOOL allaround)
 ================
 */
 
-BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
+bool P_LookForPlayers (AActor *actor, INTBOOL allaround)
 {
 	int 		c;
 	int 		stop;
@@ -2003,7 +2003,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		&& !P_CheckSight (actor, actor->target, 0) )
 	{
 		bool lookForBetter = false;
-		BOOL gotNew;
+		bool gotNew;
 		if (actor->flags3 & MF3_NOSIGHTCHECK)
 		{
 			actor->flags3 &= ~MF3_NOSIGHTCHECK;

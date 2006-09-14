@@ -166,9 +166,9 @@ public:
 
 	void SetScaled (bool scale);
 
-	void AttachMessage (DHUDMessage *msg, DWORD id=0);
+	void AttachMessage (DHUDMessage *msg, uint32 id=0);
 	DHUDMessage *DetachMessage (DHUDMessage *msg);
-	DHUDMessage *DetachMessage (DWORD id);
+	DHUDMessage *DetachMessage (uint32 id);
 	void DetachAllMessages ();
 	bool CheckMessage (DHUDMessage *msg);
 	void ShowPlayerName ();
@@ -198,7 +198,7 @@ protected:
 	void DrawPowerups ();
 
 	void UpdateRect (int x, int y, int width, int height) const;
-	void DrawImage (FTexture *image, int x, int y, byte *translation=NULL) const;
+	void DrawImage (FTexture *image, int x, int y, BYTE *translation=NULL) const;
 	void DrawFadedImage (FTexture *image, int x, int y, fixed_t shade) const;
 	void DrawPartialImage (FTexture *image, int wx, int ww) const;
 
@@ -246,7 +246,7 @@ private:
 	void DrawMessages (int bottom) const;
 	void DrawConsistancy () const;
 
-	static byte DamageToAlpha[114];
+	static BYTE DamageToAlpha[114];
 
 	DHUDMessage *Messages;
 };

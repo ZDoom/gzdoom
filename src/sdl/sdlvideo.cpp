@@ -496,11 +496,13 @@ bool SDLFB::IsFullscreen ()
 	return (Screen->flags & SDL_FULLSCREEN) != 0;
 }
 
-ADD_STAT (blit, out)
+ADD_STAT (blit)
 {
-	sprintf (out,
+	FString out;
+	out.Format (
 		"blit=%04.1f ms  flip=%04.1f ms",
 		(double)BlitCycles * SecondsPerCycle * 1000,
 		(double)SDLFlipCycles * SecondsPerCycle * 1000
 		);
+	return out;
 }

@@ -724,7 +724,7 @@ void ADecal::BeginPlay ()
 	{
 		if (tpl->PicNum == 65535)
 		{
-			Printf("Decal actor at (%ld,%ld) does not have a valid texture\n", x>>FRACBITS, y>>FRACBITS);
+			Printf("Decal actor at (%d,%d) does not have a valid texture\n", x>>FRACBITS, y>>FRACBITS);
 			
 		}
 		else
@@ -751,13 +751,13 @@ void ADecal::BeginPlay ()
 			}
 			else
 			{
-				DPrintf ("Could not find a wall to stick decal to at (%ld,%ld)\n", x>>FRACBITS, y>>FRACBITS);
+				DPrintf ("Could not find a wall to stick decal to at (%d,%d)\n", x>>FRACBITS, y>>FRACBITS);
 			}
 		}
 	}
 	else
 	{
-		DPrintf ("Decal actor at (%ld,%ld) does not have a good template\n", x>>FRACBITS, y>>FRACBITS);
+		DPrintf ("Decal actor at (%d,%d) does not have a good template\n", x>>FRACBITS, y>>FRACBITS);
 	}
 	// This actor doesn't need to stick around anymore.
 	Destroy();

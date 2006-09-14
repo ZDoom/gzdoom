@@ -119,7 +119,7 @@ public:
 	virtual bool IsValid () = 0;
 	virtual void PrintStatus () = 0;
 	virtual void PrintDriversList () = 0;
-	virtual void GatherStats (char *outstring);
+	virtual FString GatherStats ();
 	virtual void ResetEnvironment ();
 
 	bool Sound3D;

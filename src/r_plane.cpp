@@ -118,7 +118,7 @@ extern "C" {
 // spanend holds the end of a plane span in each screen row
 //
 short					spanend[MAXHEIGHT];
-byte					*tiltlighting[MAXWIDTH];
+BYTE					*tiltlighting[MAXWIDTH];
 
 int						planeshade;
 vec3_t					plane_sz, plane_su, plane_sv;
@@ -135,11 +135,11 @@ static DWORD			xstepscale, ystepscale;
 static DWORD			basexfrac, baseyfrac;
 
 #ifdef USEASM
-extern "C" void R_SetSpanSource_ASM (const byte *flat);
+extern "C" void R_SetSpanSource_ASM (const BYTE *flat);
 extern "C" void STACK_ARGS R_SetSpanSize_ASM (int xbits, int ybits);
-extern "C" void R_SetSpanColormap_ASM (byte *colormap);
-extern "C" void R_SetTiltedSpanSource_ASM (const byte *flat);
-extern "C" byte *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
+extern "C" void R_SetSpanColormap_ASM (BYTE *colormap);
+extern "C" void R_SetTiltedSpanSource_ASM (const BYTE *flat);
+extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
 #endif
 void					R_DrawSinglePlane (visplane_t *, fixed_t alpha, bool masked);
 
@@ -235,7 +235,7 @@ extern "C" {
 void STACK_ARGS R_CalcTiltedLighting (fixed_t lval, fixed_t lend, int width)
 {
 	fixed_t lstep;
-	byte *lightfiller;
+	BYTE *lightfiller;
 	int i = 0;
 
 	lval = planeshade - lval;
@@ -255,7 +255,7 @@ void STACK_ARGS R_CalcTiltedLighting (fixed_t lval, fixed_t lend, int width)
 		{
 			if (lval >= NUMCOLORMAPS*FRACUNIT)
 			{ // Starts beyond the dark end
-				byte *clight = basecolormap + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
+				BYTE *clight = basecolormap + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
 				while (lval >= NUMCOLORMAPS*FRACUNIT && i <= width)
 				{
 					tiltlighting[i++] = clight;
@@ -314,7 +314,7 @@ void R_MapTiltedPlane (int y, int x1)
 	int x2 = spanend[y];
 	int width = x2 - x1;
 	float iz, uz, vz;
-	byte *fb;
+	BYTE *fb;
 	DWORD u, v;
 	int i;
 
@@ -1221,9 +1221,11 @@ void R_DrawSkyBoxes ()
 		freehead = &(*freehead)->next;
 }
 
-ADD_STAT(skyboxes, out)
+ADD_STAT(skyboxes)
 {
-	sprintf (out, "%d skybox planes", numskyboxes);
+	FString out;
+	out.Format (out, "%d skybox planes", numskyboxes);
+	return out;
 }
 
 //==========================================================================
@@ -1617,7 +1619,7 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1))
 //
 //==========================================================================
 
-BOOL R_PlaneInitData ()
+bool R_PlaneInitData ()
 {
 	int i;
 	visplane_t *pl;

@@ -55,9 +55,9 @@ extern	int		ST_Y;
 //	and the total size == width*height*depth/8.,
 //
 
-extern byte decorate_translations[];
+extern BYTE decorate_translations[];
 
-byte*			viewimage;
+BYTE*			viewimage;
 extern "C" {
 int 			viewwidth;
 int				halfviewwidth;
@@ -77,9 +77,9 @@ int				detailyshift;		// [RH] Y shift for vertical detail level
 }
 
 #ifdef USEASM
-extern "C" void STACK_ARGS DoubleHoriz_MMX (int height, int width, byte *dest, int pitch);
-extern "C" void STACK_ARGS DoubleHorizVert_MMX (int height, int width, byte *dest, int pitch);
-extern "C" void STACK_ARGS DoubleVert_ASM (int height, int width, byte *dest, int pitch);
+extern "C" void STACK_ARGS DoubleHoriz_MMX (int height, int width, BYTE *dest, int pitch);
+extern "C" void STACK_ARGS DoubleHorizVert_MMX (int height, int width, BYTE *dest, int pitch);
+extern "C" void STACK_ARGS DoubleVert_ASM (int height, int width, BYTE *dest, int pitch);
 #endif
 
 // [RH] Pointers to the different column drawers.
@@ -115,9 +115,9 @@ DWORD			*dc_srcblend;			// [RH] Source and destination
 DWORD			*dc_destblend;			// blending lookups
 
 // first pixel in a column (possibly virtual) 
-const byte*		dc_source;				
+const BYTE*		dc_source;				
 
-byte*			dc_dest;
+BYTE*			dc_dest;
 int				dc_count;
 
 DWORD			vplce[4];
@@ -132,8 +132,8 @@ int 			dccount;
 cycle_t			DetailDoubleCycles;
 
 int dc_fillcolor;
-byte *dc_translation;
-byte *translationtables[NUM_TRANSLATION_TABLES];
+BYTE *dc_translation;
+BYTE *translationtables[NUM_TRANSLATION_TABLES];
 
 /************************************/
 /*									*/
@@ -152,7 +152,7 @@ byte *translationtables[NUM_TRANSLATION_TABLES];
 void R_DrawColumnP_C (void)
 {
 	int 				count;
-	byte*				dest;
+	BYTE*				dest;
 	fixed_t 			frac;
 	fixed_t 			fracstep;
 
@@ -173,8 +173,8 @@ void R_DrawColumnP_C (void)
 	{
 		// [RH] Get local copies of these variables so that the compiler
 		//		has a better chance of optimizing this well.
-		byte *colormap = dc_colormap;
-		const byte *source = dc_source;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
 
 		// Inner loop that does the actual texture mapping,
@@ -198,7 +198,7 @@ void R_DrawColumnP_C (void)
 void R_FillColumnP (void)
 {
 	int 				count;
-	byte*				dest;
+	BYTE*				dest;
 
 	count = dc_count;
 
@@ -209,7 +209,7 @@ void R_FillColumnP (void)
 
 	{
 		int pitch = dc_pitch;
-		byte color = dc_color;
+		BYTE color = dc_color;
 
 		do
 		{
@@ -296,7 +296,7 @@ void R_InitFuzzTable (int fuzzoff)
 void R_DrawFuzzColumnP_C (void)
 {
 	int count;
-	byte *dest;
+	BYTE *dest;
 
 	// Adjust borders. Low...
 	if (dc_yl == 0)
@@ -323,7 +323,7 @@ void R_DrawFuzzColumnP_C (void)
 		int pitch = dc_pitch;
 		int fuzz = fuzzpos;
 		int cnt;
-		byte *map = &NormalLight.Maps[6*256];
+		BYTE *map = &NormalLight.Maps[6*256];
 
 		// [RH] Split this into three separate loops to minimize
 		// the number of times fuzzpos needs to be clamped.
@@ -414,7 +414,7 @@ algorithm that uses RGB tables.
 void R_DrawAddColumnP_C (void)
 {
 	int count;
-	byte *dest;
+	BYTE *dest;
 	fixed_t frac;
 	fixed_t fracstep;
 
@@ -430,8 +430,8 @@ void R_DrawAddColumnP_C (void)
 	{
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
-		byte *colormap = dc_colormap;
-		const byte *source = dc_source;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
 
 		do
@@ -460,7 +460,7 @@ void R_DrawAddColumnP_C (void)
 void R_DrawTranslatedColumnP_C (void)
 { 
 	int 				count;
-	byte*				dest;
+	BYTE*				dest;
 	fixed_t 			frac;
 	fixed_t 			fracstep;
 
@@ -475,9 +475,9 @@ void R_DrawTranslatedColumnP_C (void)
 
 	{
 		// [RH] Local copies of global vars to improve compiler optimizations
-		byte *colormap = dc_colormap;
-		byte *translation = dc_translation;
-		const byte *source = dc_source;
+		BYTE *colormap = dc_colormap;
+		BYTE *translation = dc_translation;
+		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
 
 		do
@@ -494,7 +494,7 @@ void R_DrawTranslatedColumnP_C (void)
 void R_DrawTlatedAddColumnP_C (void)
 {
 	int count;
-	byte *dest;
+	BYTE *dest;
 	fixed_t frac;
 	fixed_t fracstep;
 
@@ -510,9 +510,9 @@ void R_DrawTlatedAddColumnP_C (void)
 	{
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
-		byte *translation = dc_translation;
-		byte *colormap = dc_colormap;
-		const byte *source = dc_source;
+		BYTE *translation = dc_translation;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
 
 		do
@@ -535,7 +535,7 @@ void R_DrawTlatedAddColumnP_C (void)
 void R_DrawShadedColumnP_C (void)
 {
 	int  count;
-	byte *dest;
+	BYTE *dest;
 	fixed_t frac, fracstep;
 
 	count = dc_count;
@@ -549,8 +549,8 @@ void R_DrawShadedColumnP_C (void)
 	frac = dc_texturefrac;
 
 	{
-		const byte *source = dc_source;
-		byte *colormap = dc_colormap;
+		const BYTE *source = dc_source;
+		BYTE *colormap = dc_colormap;
 		int pitch = dc_pitch;
 		DWORD *fgstart = &Col2RGB8[0][dc_color];
 
@@ -571,7 +571,7 @@ void R_DrawShadedColumnP_C (void)
 void R_DrawAddClampColumnP_C ()
 {
 	int count;
-	byte *dest;
+	BYTE *dest;
 	fixed_t frac;
 	fixed_t fracstep;
 
@@ -585,8 +585,8 @@ void R_DrawAddClampColumnP_C ()
 	frac = dc_texturefrac;
 
 	{
-		byte *colormap = dc_colormap;
-		const byte *source = dc_source;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
@@ -613,7 +613,7 @@ void R_DrawAddClampColumnP_C ()
 void R_DrawAddClampTranslatedColumnP_C ()
 {
 	int count;
-	byte *dest;
+	BYTE *dest;
 	fixed_t frac;
 	fixed_t fracstep;
 
@@ -627,9 +627,9 @@ void R_DrawAddClampTranslatedColumnP_C ()
 	frac = dc_texturefrac;
 
 	{
-		byte *translation = dc_translation;
-		byte *colormap = dc_colormap;
-		const byte *source = dc_source;
+		BYTE *translation = dc_translation;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
@@ -691,7 +691,7 @@ int						ds_xbits;
 int						ds_ybits;
 
 // start of a floor/ceiling tile image 
-const byte*				ds_source;
+const BYTE*				ds_source;
 
 // just for profiling
 int 					dscount;
@@ -706,9 +706,9 @@ void R_DrawSpanP_C (void)
 	dsfixed_t			yfrac;
 	dsfixed_t			xstep;
 	dsfixed_t			ystep;
-	byte*				dest;
-	const byte*			source = ds_source;
-	const byte*			colormap = ds_colormap;
+	BYTE*				dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
 
@@ -777,9 +777,9 @@ void R_DrawSpanMaskedP_C (void)
 	dsfixed_t			yfrac;
 	dsfixed_t			xstep;
 	dsfixed_t			ystep;
-	byte*				dest;
-	const byte*			source = ds_source;
-	const byte*			colormap = ds_colormap;
+	BYTE*				dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
 
@@ -840,9 +840,9 @@ void R_DrawSpanTranslucentP_C (void)
 	dsfixed_t			yfrac;
 	dsfixed_t			xstep;
 	dsfixed_t			ystep;
-	byte*				dest;
-	const byte*			source = ds_source;
-	const byte*			colormap = ds_colormap;
+	BYTE*				dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
 	DWORD *fg2rgb = dc_srcblend;
@@ -900,9 +900,9 @@ void R_DrawSpanMaskedTranslucentP_C (void)
 	dsfixed_t			yfrac;
 	dsfixed_t			xstep;
 	dsfixed_t			ystep;
-	byte*				dest;
-	const byte*			source = ds_source;
-	const byte*			colormap = ds_colormap;
+	BYTE*				dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
 	DWORD *fg2rgb = dc_srcblend;
@@ -1603,8 +1603,8 @@ void R_InitTranslationTables ()
 static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *skin, BYTE *table, BYTE *alttable)
 {
 	int i;
-	byte start = skin->range0start;
-	byte end = skin->range0end;
+	BYTE start = skin->range0start;
+	BYTE end = skin->range0end;
 	float r, g, b;
 	float bases, basev;
 	float sdelta, vdelta;
@@ -1890,7 +1890,7 @@ void R_DetailDouble ()
 			int rowsize = realviewwidth;
 			int pitch = RenderTarget->GetPitch();
 			int y;
-			byte *line;
+			BYTE *line;
 
 			line = dc_destorg;
 			for (y = viewheight; y != 0; --y, line += pitch<<1)
@@ -1913,7 +1913,7 @@ void R_DetailDouble ()
 			int rowsize = viewwidth;
 			int pitch = RenderTarget->GetPitch();
 			int y,x;
-			byte *linefrom, *lineto;
+			BYTE *linefrom, *lineto;
 
 			linefrom = dc_destorg;
 			for (y = viewheight; y != 0; --y, linefrom += pitch)
@@ -1921,7 +1921,7 @@ void R_DetailDouble ()
 				lineto = linefrom - viewwidth;
 				for (x = 0; x < rowsize; ++x)
 				{
-					byte c = linefrom[x];
+					BYTE c = linefrom[x];
 					lineto[x*2] = c;
 					lineto[x*2+1] = c;
 				}
@@ -1942,7 +1942,7 @@ void R_DetailDouble ()
 			int realpitch = RenderTarget->GetPitch();
 			int pitch = realpitch << 1;
 			int y,x;
-			byte *linefrom, *lineto;
+			BYTE *linefrom, *lineto;
 
 			linefrom = dc_destorg;
 			for (y = viewheight; y != 0; --y, linefrom += pitch)
@@ -1950,7 +1950,7 @@ void R_DetailDouble ()
 				lineto = linefrom - viewwidth;
 				for (x = 0; x < rowsize; ++x)
 				{
-					byte c = linefrom[x];
+					BYTE c = linefrom[x];
 					lineto[x*2] = c;
 					lineto[x*2+1] = c;
 					lineto[x*2+realpitch] = c;
@@ -1964,9 +1964,11 @@ void R_DetailDouble ()
 	unclock (DetailDoubleCycles);
 }
 
-ADD_STAT(detail,out)
+ADD_STAT(detail)
 {
-	sprintf (out, "doubling = %04.1f ms", (double)DetailDoubleCycles * 1000 * SecondsPerCycle);
+	FString out;
+	out.Format ("doubling = %04.1f ms", (double)DetailDoubleCycles * 1000 * SecondsPerCycle);
+	return out;
 }
 
 // [RH] Initialize the column drawer pointers

@@ -73,7 +73,7 @@ FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
 extern "C" {
 DWORD *Col2RGB8_LessPrecision[65];
 DWORD Col2RGB8[65][256];
-byte RGB32k[32][32][32];
+BYTE RGB32k[32][32][32];
 }
 
 static DWORD Col2RGB8_2[63][256];
@@ -103,7 +103,7 @@ CUSTOM_CVAR (Float, dimamount, 0.2f, CVAR_ARCHIVE)
 CVAR (Color, dimcolor, 0xffd700, CVAR_ARCHIVE)
 
 // [RH] Set true when vid_setmode command has been executed
-BOOL	setmodeneeded = false;
+bool	setmodeneeded = false;
 // [RH] Resolution to change to when setmodeneeded is true
 int		NewWidth, NewHeight, NewBits;
 
@@ -186,7 +186,7 @@ void DCanvas::FlatFill (int left, int top, int right, int bottom, FTexture *src)
 void DCanvas::Clear (int left, int top, int right, int bottom, int color) const
 {
 	int x, y;
-	byte *dest;
+	BYTE *dest;
 
 	dest = Buffer + top * Pitch + left;
 	x = right - left;
@@ -227,7 +227,7 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h) 
 	DWORD *bg2rgb;
 	DWORD fg;
 	int gap;
-	byte *spot;
+	BYTE *spot;
 	int x, y;
 
 	{
@@ -490,9 +490,9 @@ void DCanvas::Blit (int srcx, int srcy, int srcwidth, int srcheight,
 	fracystep = (srcheight << FRACBITS) / destheight;
 	fracxstep = (srcwidth << FRACBITS) / destwidth;
 
-	byte *destline, *srcline;
-	byte *destbuffer = dest->Buffer;
-	byte *srcbuffer = Buffer;
+	BYTE *destline, *srcline;
+	BYTE *destbuffer = dest->Buffer;
+	BYTE *srcbuffer = Buffer;
 
 	if (fracxstep == FRACUNIT)
 	{
@@ -626,14 +626,14 @@ void DFrameBuffer::DrawRateStuff ()
 	// Draws frame time and cumulative fps
 	if (vid_fps)
 	{
-		QWORD ms = I_MSTime ();
-		DWORD howlong = DWORD(ms - LastMS);
+		DWORD ms = I_MSTime ();
+		DWORD howlong = ms - LastMS;
 		if (howlong > 0)
 		{
 			char fpsbuff[40];
 			int chars;
 
-			chars = sprintf (fpsbuff, "%2lu ms (%3lu fps)", howlong, LastCount);
+			chars = sprintf (fpsbuff, "%2u ms (%3u fps)", howlong, LastCount);
 			Clear (0, screen->GetHeight() - 8, chars * 8, screen->GetHeight(), 0);
 			SetFont (ConFont);
 			DrawText (CR_WHITE, 0, screen->GetHeight() - 8, (char *)&fpsbuff[0], TAG_DONE);
@@ -817,7 +817,7 @@ bool V_SetResolution (int width, int height, int bits)
 
 CCMD (vid_setmode)
 {
-	BOOL	goodmode = false;
+	bool	goodmode = false;
 	int		width = 0, height = SCREENHEIGHT;
 	int		bits = DisplayBits;
 

@@ -893,7 +893,7 @@ char *BuildString (int argc, char **argv)
 	}
 }
 
-static int DumpHash (FConsoleCommand **table, BOOL aliases, const char *pattern=NULL)
+static int DumpHash (FConsoleCommand **table, bool aliases, const char *pattern=NULL)
 {
 	int bucket, count;
 	FConsoleCommand *cmd;
@@ -1152,7 +1152,7 @@ void FConsoleAlias::SafeDelete ()
 }
 
 extern void D_AddFile (const char *file);
-static byte PullinBad = 2;
+static BYTE PullinBad = 2;
 static const char *PullinFile;
 
 int C_ExecFile (const char *file, bool usePullin)

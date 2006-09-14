@@ -86,7 +86,7 @@ static FRandom pr_crunch ("DoCrunch");
 
 // If "floatok" true, move would be ok
 // if within "tmfloorz - tmceilingz".
-BOOL 			floatok;
+bool 			floatok;
 
 fixed_t 		tmfloorz;
 fixed_t 		tmceilingz;
@@ -137,7 +137,7 @@ AActor *LastRipped;
 //
 //==========================================================================
 
-static BOOL PIT_FindFloorCeiling (line_t *ld)
+static bool PIT_FindFloorCeiling (line_t *ld)
 {
 	if (tmfbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
 		|| tmfbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
@@ -256,9 +256,9 @@ void P_FindFloorCeiling (AActor *actor)
 //
 // PIT_StompThing
 //
-static BOOL StompAlwaysFrags;
+static bool StompAlwaysFrags;
 
-BOOL PIT_StompThing (AActor *thing)
+bool PIT_StompThing (AActor *thing)
 {
 	fixed_t blockdist;
 
@@ -310,7 +310,7 @@ BOOL PIT_StompThing (AActor *thing)
 //		move was made, so the height checking I added for 1.13 could
 //		potentially erroneously indicate the move was okay if the thing
 //		was being teleported between two non-overlapping height ranges.
-BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag)
+bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag)
 {
 	static TArray<AActor *> telebt;
 
@@ -424,7 +424,7 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 // Like P_TeleportMove, but it doesn't move anything, and only monsters and other
 // players get telefragged.
 //
-BOOL PIT_StompThing2 (AActor *thing)
+bool PIT_StompThing2 (AActor *thing)
 {
 	fixed_t blockdist;
 
@@ -616,7 +616,7 @@ int P_GetMoveFactor (const AActor *mo, int *frictionp)
 //
 
 static // killough 3/26/98: make static
-BOOL PIT_CrossLine (line_t* ld)
+bool PIT_CrossLine (line_t* ld)
 {
 	if (!(ld->flags & ML_TWOSIDED) ||
 		(ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS|ML_BLOCKEVERYTHING)))
@@ -635,7 +635,7 @@ BOOL PIT_CrossLine (line_t* ld)
 //
 
 static // killough 3/26/98: make static
-BOOL PIT_CheckLine (line_t *ld)
+bool PIT_CheckLine (line_t *ld)
 {
 	bool rail = false;
 
@@ -812,11 +812,11 @@ BOOL PIT_CheckLine (line_t *ld)
 
 static AActor *stepthing;
 
-BOOL PIT_CheckThing (AActor *thing)
+bool PIT_CheckThing (AActor *thing)
 {
 	fixed_t topz;
 	fixed_t blockdist;
-	BOOL 	solid;
+	bool 	solid;
 	int 	damage;
 				
 	// don't clip against self
@@ -1106,7 +1106,7 @@ BOOL PIT_CheckThing (AActor *thing)
 // sides of the blocking line. If so, return true, otherwise
 // false.
 
-BOOL Check_Sides(AActor* actor, int x, int y)
+bool Check_Sides(AActor* actor, int x, int y)
 {
 	int bx,by,xl,xh,yl,yh;
 
@@ -1145,7 +1145,7 @@ BOOL Check_Sides(AActor* actor, int x, int y)
 //
 //---------------------------------------------------------------------------
 
-BOOL PIT_CheckOnmobjZ (AActor *thing)
+bool PIT_CheckOnmobjZ (AActor *thing)
 {
 	if (!(thing->flags & MF_SOLID))
 	{ // Can't hit thing
@@ -1201,7 +1201,7 @@ BOOL PIT_CheckOnmobjZ (AActor *thing)
 //
 //----------------------------------------------------------------------------
 
-BOOL P_TestMobjLocation (AActor *mobj)
+bool P_TestMobjLocation (AActor *mobj)
 {
 	int flags;
 
@@ -1248,7 +1248,7 @@ BOOL P_TestMobjLocation (AActor *mobj)
 //	numspeciallines
 //  AActor *BlockingMobj = pointer to thing that blocked position (NULL if not
 //   blocked, or blocked by a line).
-BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
+bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 {
 	static TArray<AActor *> checkpbt;
 
@@ -1549,8 +1549,8 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 // Attempt to move to a new position,
 // crossing special lines unless MF_TELEPORT is set.
 //
-BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
-				BOOL dropoff, // killough 3/15/98: allow dropoff as option
+bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
+				bool dropoff, // killough 3/15/98: allow dropoff as option
 				bool onfloor) // [RH] Let P_TryMove keep the thing on the floor
 {
 	fixed_t 	oldx;
@@ -1897,7 +1897,7 @@ AActor* 		slidemo;
 fixed_t 		tmxmove;
 fixed_t 		tmymove;
 
-extern BOOL		onground;
+extern bool		onground;
 
 
 //
@@ -1915,7 +1915,7 @@ void P_HitSlideLine (line_t* ld)
 	angle_t deltaangle;
 	
 	fixed_t movelen;
-	BOOL	icyfloor;	// is floor icy?							// phares
+	bool	icyfloor;	// is floor icy?							// phares
 																	//   |
 	// Under icy conditions, if the angle of approach to the wall	//   V
 	// is more than 45 degrees, then you'll bounce and lose half
@@ -2042,7 +2042,7 @@ void P_HitSlideLine (line_t* ld)
 //
 // PTR_SlideTraverse
 //
-BOOL PTR_SlideTraverse (intercept_t* in)
+bool PTR_SlideTraverse (intercept_t* in)
 {
 	line_t* 	li;
 		
@@ -2329,7 +2329,7 @@ bool P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove)
 //
 //============================================================================
 
-BOOL PTR_BounceTraverse (intercept_t *in)
+bool PTR_BounceTraverse (intercept_t *in)
 {
 	line_t  *li;
 
@@ -2509,7 +2509,7 @@ static fixed_t	bottompitch;
 // PTR_AimTraverse
 // Sets linetaget and aimpitch when a target is aimed at.
 //
-BOOL PTR_AimTraverse (intercept_t* in)
+bool PTR_AimTraverse (intercept_t* in)
 {
 	line_t* 			li;
 	AActor* 			th;
@@ -3135,7 +3135,7 @@ void P_AimCamera (AActor *t1)
 AActor *usething;
 bool foundline;
 
-BOOL PTR_UseTraverse (intercept_t *in)
+bool PTR_UseTraverse (intercept_t *in)
 {
 	// [RH] Check for things to talk with or use a puzzle item on
 	if (!in->isaline)
@@ -3259,7 +3259,7 @@ blocked:
 // by Lee Killough
 //
 
-BOOL PTR_NoWayTraverse (intercept_t *in)
+bool PTR_NoWayTraverse (intercept_t *in)
 {
 	line_t *ld = in->d.line;
 
@@ -3327,7 +3327,7 @@ static AActor *PuzzleItemUser;
 static int PuzzleItemType;
 static bool PuzzleActivated;
 
-BOOL PTR_PuzzleItemTraverse (intercept_t *in)
+bool PTR_PuzzleItemTraverse (intercept_t *in)
 {
 	AActor *mobj;
 
@@ -3434,7 +3434,7 @@ CUSTOM_CVAR (Float, splashfactor, 1.f, CVAR_SERVERINFO)
 		selfthrustscale = 1.f / self;
 }
 
-BOOL PIT_RadiusAttack (AActor *thing)
+bool PIT_RadiusAttack (AActor *thing)
 {
 	if (!(thing->flags & MF_SHOOTABLE) )
 		return true;
@@ -3657,9 +3657,9 @@ EXTERN_CVAR (Int, cl_bloodtype)
 //
 //=============================================================================
 
-BOOL P_AdjustFloorCeil (AActor *thing)
+bool P_AdjustFloorCeil (AActor *thing)
 {
-	BOOL isgood = P_CheckPosition (thing, thing->x, thing->y);
+	bool isgood = P_CheckPosition (thing, thing->x, thing->y);
 	thing->floorz = tmfloorz;
 	thing->ceilingz = tmceilingz;
 	thing->dropoffz = tmdropoffz;		// killough 11/98: remember dropoffs
@@ -3676,7 +3676,7 @@ BOOL P_AdjustFloorCeil (AActor *thing)
 //
 //=============================================================================
 
-BOOL PIT_FindAboveIntersectors (AActor *thing)
+bool PIT_FindAboveIntersectors (AActor *thing)
 {
 	if (!(thing->flags & MF_SOLID))
 	{ // Can't hit thing
@@ -3709,7 +3709,7 @@ BOOL PIT_FindAboveIntersectors (AActor *thing)
 //
 //=============================================================================
 
-BOOL PIT_FindBelowIntersectors (AActor *thing)
+bool PIT_FindBelowIntersectors (AActor *thing)
 {
 	if (!(thing->flags & MF_SOLID))
 	{ // Can't hit thing
@@ -4153,7 +4153,7 @@ void PIT_CeilingLower (AActor *thing)
 
 void PIT_CeilingRaise (AActor *thing)
 {
-	BOOL isgood = P_AdjustFloorCeil (thing);
+	bool isgood = P_AdjustFloorCeil (thing);
 
 	// For DOOM compatibility, only move things that are inside the floor.
 	// (or something else?) Things marked as hanging from the ceiling will
@@ -4438,7 +4438,7 @@ void P_DelSeclist (msecnode_t *node)
 // blocking lines.
 //=============================================================================
 
-BOOL PIT_GetSectors (line_t *ld)
+bool PIT_GetSectors (line_t *ld)
 {
 	if (tmbbox[BOXRIGHT]	  <= ld->bbox[BOXLEFT]	 ||
 			tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT]  ||

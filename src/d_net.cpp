@@ -87,7 +87,7 @@ int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backS
 //
 // Setup packets are different, and are described just before D_ArbitrateNetStart().
 
-extern byte		*demo_p;		// [RH] Special "ticcmds" get recorded in demos
+extern BYTE		*demo_p;		// [RH] Special "ticcmds" get recorded in demos
 extern char		savedescription[SAVESTRINGSIZE];
 extern FString	savegamefile;
 
@@ -118,9 +118,9 @@ ticcmd_t		localcmds[LOCALCMDTICS];
 FDynamicBuffer	NetSpecs[MAXPLAYERS][BACKUPTICS];
 ticcmd_t		netcmds[MAXPLAYERS][BACKUPTICS];
 int 			nettics[MAXNETNODES];
-BOOL 			nodeingame[MAXNETNODES];				// set false as nodes leave game
+bool 			nodeingame[MAXNETNODES];				// set false as nodes leave game
 bool			nodejustleft[MAXNETNODES];				// set when a node just left
-BOOL	 		remoteresend[MAXNETNODES];				// set when local needs tics
+bool	 		remoteresend[MAXNETNODES];				// set when local needs tics
 int 			resendto[MAXNETNODES];					// set when remote needs tics
 int 			resendcount[MAXNETNODES];
 
@@ -151,20 +151,20 @@ int		mastertics;
 static int 	entertic;
 static int	oldentertics;
 
-extern	BOOL	 advancedemo;
+extern	bool	 advancedemo;
 
 CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // [RH] Special "ticcmds" get stored in here
 static struct TicSpecial
 {
-	byte *streams[BACKUPTICS];
+	BYTE *streams[BACKUPTICS];
 	size_t used[BACKUPTICS];
-	byte *streamptr;
+	BYTE *streamptr;
 	size_t streamoffs;
 	int   specialsize;
 	int	  lastmaketic;
-	BOOL  okay;
+	bool  okay;
 
 	TicSpecial ()
 	{
@@ -178,7 +178,7 @@ static struct TicSpecial
 
 		for (i = 0; i < BACKUPTICS; i++)
 		{
-			streams[i] = (byte *)M_Malloc (256);
+			streams[i] = (BYTE *)M_Malloc (256);
 			used[i] = 0;
 		}
 		okay = true;
@@ -210,7 +210,7 @@ static struct TicSpecial
 		DPrintf ("Expanding special size to %d\n", specialsize);
 
 		for (i = 0; i < BACKUPTICS; i++)
-			streams[i] = (byte *)M_Realloc (streams[i], specialsize);
+			streams[i] = (BYTE *)M_Realloc (streams[i], specialsize);
 
 		streamptr = streams[(maketic/ticdup)%BACKUPTICS] + streamoffs;
 	}
@@ -238,7 +238,7 @@ static struct TicSpecial
 		streamoffs = 0;
 	}
 
-	TicSpecial &operator << (byte it)
+	TicSpecial &operator << (BYTE it)
 	{
 		if (streamptr)
 		{
@@ -365,7 +365,7 @@ int NetbufferSize ()
 		return k + 3 * count * numtics;
 	}
 
-	byte *skipper = &netbuffer[k];
+	BYTE *skipper = &netbuffer[k];
 	if ((netbuffer[0] & NCMD_EXIT) == 0)
 	{
 		while (count-- > 0)
@@ -412,13 +412,13 @@ void HSendPacket (int node, int len)
 		{
 			fprintf (debugfile,"%i/%i send %i = SETUP [%3i]", gametic, maketic, node, len);
 			for (i = 0; i < len; i++)
-				fprintf (debugfile," %2x", ((byte *)netbuffer)[i]);
+				fprintf (debugfile," %2x", ((BYTE *)netbuffer)[i]);
 		}
 		else if (netbuffer[0] & NCMD_EXIT)
 		{
 			fprintf (debugfile,"%i/%i send %i = EXIT [%3i]", gametic, maketic, node, len);
 			for (i = 0; i < len; i++)
-				fprintf (debugfile," %2x", ((byte *)netbuffer)[i]);
+				fprintf (debugfile," %2x", ((BYTE *)netbuffer)[i]);
 		}
 		else
 		{
@@ -446,7 +446,7 @@ void HSendPacket (int node, int len)
 					numtics, realretrans, len);
 			
 			for (i = 0; i < len; i++)
-				fprintf (debugfile, "%c%2x", i==k?'|':' ', ((byte *)netbuffer)[i]);
+				fprintf (debugfile, "%c%2x", i==k?'|':' ', ((BYTE *)netbuffer)[i]);
 		}
 		fprintf (debugfile, " [[ ");
 		for (i = 0; i < doomcom.numnodes; ++i)
@@ -496,7 +496,7 @@ void HSendPacket (int node, int len)
 // HGetPacket
 // Returns false if no packet is waiting
 //
-BOOL HGetPacket (void)
+bool HGetPacket (void)
 {
 	if (reboundpacket)
 	{
@@ -526,14 +526,14 @@ BOOL HGetPacket (void)
 		{
 			fprintf (debugfile,"%i/%i  get %i = SETUP [%3i]", gametic, maketic, doomcom.remotenode, doomcom.datalength);
 			for (i = 0; i < doomcom.datalength; i++)
-				fprintf (debugfile, " %2x", ((byte *)netbuffer)[i]);
+				fprintf (debugfile, " %2x", ((BYTE *)netbuffer)[i]);
 			fprintf (debugfile, "\n");
 		}
 		else if (netbuffer[0] & NCMD_EXIT)
 		{
 			fprintf (debugfile,"%i/%i  get %i = EXIT [%3i]", gametic, maketic, doomcom.remotenode, doomcom.datalength);
 			for (i = 0; i < doomcom.datalength; i++)
-				fprintf (debugfile, " %2x", ((byte *)netbuffer)[i]);
+				fprintf (debugfile, " %2x", ((BYTE *)netbuffer)[i]);
 			fprintf (debugfile, "\n");
 		}
 		else		{
@@ -561,7 +561,7 @@ BOOL HGetPacket (void)
 					numtics, realretrans, doomcom.datalength);
 			
 			for (i = 0; i < doomcom.datalength; i++)
-				fprintf (debugfile, "%c%2x", i==k?'|':' ', ((byte *)netbuffer)[i]);
+				fprintf (debugfile, "%c%2x", i==k?'|':' ', ((BYTE *)netbuffer)[i]);
 			if (numtics)
 				fprintf (debugfile, " <<%4x>>\n",
 					consistancy[playerfornode[doomcom.remotenode]][nettics[doomcom.remotenode]%BACKUPTICS] & 0xFFFF);
@@ -664,7 +664,7 @@ void PlayerIsGone (int netnode, int netconsole)
 		G_CheckDemoStatus ();
 
 		//WriteByte (DEM_DROPPLAYER, &demo_p);
-		//WriteByte ((byte)netconsole, &demo_p);
+		//WriteByte ((BYTE)netconsole, &demo_p);
 	}
 }
 
@@ -829,7 +829,7 @@ void GetPackets (void)
 
 		// update command store from the packet
 		{
-			byte *start;
+			BYTE *start;
 			int i, tics;
 			remoteresend[netnode] = false;
 
@@ -909,7 +909,7 @@ void NetUpdate (void)
 	int 	newtics;
 	int 	i,j;
 	int 	realstart;
-	byte	*cmddata;
+	BYTE	*cmddata;
 	bool	resendOnly;
 
 	if (ticdup == 0)
@@ -1264,10 +1264,10 @@ void NetUpdate (void)
 //
 // CheckAbort
 //
-BOOL CheckAbort (void)
+bool CheckAbort (void)
 {
 	event_t *ev;
-	BOOL res = false;
+	bool res = false;
 
 	PrintString (PRINT_HIGH, "");	// [RH] Give the console a chance to redraw itself
 	// This WaitForTic is to avoid flooding the network with packets on startup.
@@ -1336,7 +1336,7 @@ void D_ArbitrateNetStart (void)
 	DWORD	 	playersdetected[MAXNETNODES];
 	BYTE		gotsetup[MAXNETNODES];
 	char		*s;
-	byte		*stream;
+	BYTE		*stream;
 	int			node;
 	bool		allset = false;
 
@@ -1855,7 +1855,7 @@ void Net_NewMakeTic (void)
 	specials.NewMakeTic ();
 }
 
-void Net_WriteByte (byte it)
+void Net_WriteByte (BYTE it)
 {
 	specials << it;
 }
@@ -1880,7 +1880,7 @@ void Net_WriteString (const char *it)
 	specials << it;
 }
 
-void Net_WriteBytes (const byte *block, int len)
+void Net_WriteBytes (const BYTE *block, int len)
 {
 	while (len--)
 		specials << *block++;
@@ -1908,12 +1908,12 @@ FDynamicBuffer::~FDynamicBuffer ()
 	m_Len = m_BufferLen = 0;
 }
 
-void FDynamicBuffer::SetData (const byte *data, int len)
+void FDynamicBuffer::SetData (const BYTE *data, int len)
 {
 	if (len > m_BufferLen)
 	{
 		m_BufferLen = (len + 255) & ~255;
-		m_Data = (byte *)M_Realloc (m_Data, m_BufferLen);
+		m_Data = (BYTE *)M_Realloc (m_Data, m_BufferLen);
 	}
 	if (data)
 	{
@@ -1926,7 +1926,7 @@ void FDynamicBuffer::SetData (const byte *data, int len)
 	}
 }
 
-byte *FDynamicBuffer::GetData (int *len)
+BYTE *FDynamicBuffer::GetData (int *len)
 {
 	if (len)
 		*len = m_Len;
@@ -1937,9 +1937,9 @@ byte *FDynamicBuffer::GetData (int *len)
 // [RH] Execute a special "ticcmd". The type byte should
 //		have already been read, and the stream is positioned
 //		at the beginning of the command's actual data.
-void Net_DoCommand (int type, byte **stream, int player)
+void Net_DoCommand (int type, BYTE **stream, int player)
 {
-	byte pos = 0;
+	BYTE pos = 0;
 	char *s = NULL;
 	int i;
 
@@ -1948,7 +1948,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 	case DEM_SAY:
 		{
 			const char *name = players[player].userinfo.netname;
-			byte who = ReadByte (stream);
+			BYTE who = ReadByte (stream);
 
 			s = ReadString (stream);
 			if (((who & 1) == 0) || players[player].userinfo.team == TEAM_None)
@@ -2042,7 +2042,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 	case DEM_ADDBOT:
 		{
-			byte num = ReadByte (stream);
+			BYTE num = ReadByte (stream);
 			bglobal.DoAddBot (num, s = ReadString (stream));
 		}
 		break;
@@ -2275,7 +2275,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 		delete[] s;
 }
 
-void Net_SkipCommand (int type, byte **stream)
+void Net_SkipCommand (int type, BYTE **stream)
 {
 	BYTE t;
 	size_t skip;

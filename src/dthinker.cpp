@@ -418,8 +418,10 @@ DThinker *FThinkerIterator::Next ()
 	return NULL;
 }
 
-ADD_STAT (think, out)
+ADD_STAT (think)
 {
-	sprintf (out, "Think time = %04.1f ms",
+	FString out;
+	out.Format ("Think time = %04.1f ms",
 		SecondsPerCycle * (double)ThinkCycles * 1000);
+	return out;
 }

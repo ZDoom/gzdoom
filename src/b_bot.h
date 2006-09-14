@@ -101,7 +101,7 @@ public:
 
 	//(B_move.c)
 	void Roam (AActor *actor, ticcmd_t *cmd);
-	BOOL Move (AActor *actor, ticcmd_t *cmd);
+	bool Move (AActor *actor, ticcmd_t *cmd);
 	bool TryWalk (AActor *actor, ticcmd_t *cmd);
 	void NewChaseDir (AActor *actor, ticcmd_t *cmd);
 	bool CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cmd);

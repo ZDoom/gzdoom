@@ -32,11 +32,14 @@
 */
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * If you do not have dshow.h, either download the latest DirectX SDK from
- * <http://msdn.microsoft.com/library/default.asp?url=/nhp/Default.asp?contentid=28000410>
+ * If you do not have dshow.h, either download the latest DirectX SDK
  * or #define I_DO_NOT_LIKE_BIG_DOWNLOADS
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#define USE_WINDOWS_DWORD
 
 #include "c_cvars.h"
 
@@ -59,11 +62,7 @@ int I_PlayMovie (const char *movie)
 
 #else
 
-#define WIN32_LEAN_AND_MEAN
-
-#include <windows.h>
 #include <dshow.h>
-
 #include "i_movie.h"
 #include "i_sound.h"
 #include "v_video.h"

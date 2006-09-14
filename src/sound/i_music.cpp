@@ -56,10 +56,10 @@ extern void ChildSigHandler (int signum);
 #include <assert.h>
 #include <stdio.h>
 
+#include "i_musicinterns.h"
 #include "doomtype.h"
 #include "m_argv.h"
 #include "i_music.h"
-#include "i_musicinterns.h"
 #include "w_wad.h"
 #include "c_console.h"
 #include "c_dispatch.h"

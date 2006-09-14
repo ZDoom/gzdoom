@@ -40,7 +40,7 @@
 
 class FConfigFile;
 
-BOOL C_DoKey (event_t *ev);
+bool C_DoKey (event_t *ev);
 void C_ArchiveBindings (FConfigFile *f, bool dodouble, const char *matchcmd=NULL);
 
 // Stuff used by the customize controls menu

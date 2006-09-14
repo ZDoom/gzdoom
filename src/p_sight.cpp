@@ -543,12 +543,14 @@ done:
 	return res;
 }
 
-ADD_STAT (sight, out)
+ADD_STAT (sight)
 {
-	sprintf (out, "%04.1f ms (%04.1f max), %5d %2d%4d%4d%4d%4d\n",
+	FString out;
+	out.Format ("%04.1f ms (%04.1f max), %5d %2d%4d%4d%4d%4d\n",
 		(double)SightCycles * 1000 * SecondsPerCycle,
 		(double)MaxSightCycles * 1000 * SecondsPerCycle,
 		sightcounts[3], sightcounts[0], sightcounts[1], sightcounts[2], sightcounts[4], sightcounts[5]);
+	return out;
 }
 
 void P_ResetSightCounters (bool full)

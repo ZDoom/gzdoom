@@ -35,6 +35,7 @@
 #define __STATS_H__
 
 #include "i_system.h"
+#include "zstring.h"
 extern "C" double SecondsPerCycle;
 extern "C" double CyclesPerSecond;
 
@@ -55,14 +56,14 @@ inline cycle_t GetClockCycle ()
 
 #elif (defined __GNUG__)
 
-typedef DWORD cycle_t;
+typedef QWORD cycle_t;
 
 inline cycle_t GetClockCycle()
 {
 	if (CPU.bRDTSC)
 	{
 		cycle_t res;
-		asm volatile ("rdtsc" : "=a" (res) : : "%edx");
+		asm volatile ("rdtsc" : "=A" (res));
 		return res;
 	}
 	else
@@ -90,7 +91,8 @@ public:
 	FStat (const char *name);
 	virtual ~FStat ();
 
-	virtual void GetStats (char *out) = 0;
+	virtual FString GetStats () = 0;
+
 	static void PrintStat ();
 	static FStat *FindStat (const char *name);
 	static void SelectStat (const char *name);
@@ -107,11 +109,11 @@ private:
 	static FStat *m_CurrStat;
 };
 
-#define ADD_STAT(n,out) \
+#define ADD_STAT(n) \
 	static class Stat_##n : public FStat { \
 		public: \
 			Stat_##n () : FStat (#n) {} \
-		void GetStats (char *out); } Istaticstat##n; \
-	void Stat_##n::GetStats (char *out)
+		FString GetStats (); } Istaticstat##n; \
+	FString Stat_##n::GetStats ()
 
 #endif //__STATS_H__

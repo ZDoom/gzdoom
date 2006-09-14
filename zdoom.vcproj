@@ -4428,10 +4428,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\d_textur.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\d_ticcmd.h"
 				>
 			</File>

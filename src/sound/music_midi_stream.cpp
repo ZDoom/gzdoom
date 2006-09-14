@@ -1,6 +1,6 @@
 #ifdef _WIN32
-#include "c_dispatch.h"
 #include "i_musicinterns.h"
+#include "c_dispatch.h"
 #include "i_music.h"
 
 #include "templates.h"

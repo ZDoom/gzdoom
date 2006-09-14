@@ -85,14 +85,14 @@ static bool conline;
 
 extern int		gametic;
 extern bool		automapactive;	// in AM_map.c
-extern BOOL		advancedemo;
+extern bool		advancedemo;
 
 extern FBaseCVar *CVars;
 extern FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
 
 int			ConCols, PhysRows;
-BOOL		vidactive = false, gotconback = false;
-BOOL		cursoron = false;
+bool		vidactive = false, gotconback = false;
+bool		cursoron = false;
 int			ConBottom, ConScroll, RowAdjust;
 int			CursorTicker;
 constate_e	ConsoleState = c_up;
@@ -143,7 +143,7 @@ struct History
 // CmdLine[1]  = cursor position
 // CmdLine[2+] = command line (max 255 chars + NULL)
 // CmdLine[259]= offset from beginning of cmdline to display
-static byte CmdLine[260];
+static BYTE CmdLine[260];
 
 #define MAXHISTSIZE 50
 static struct History *HistHead = NULL, *HistTail = NULL, *HistPos = NULL;
@@ -286,7 +286,7 @@ void DequeueConsoleText ()
 	EnqueuedTextTail = &EnqueuedText;
 }
 
-void C_InitConsole (int width, int height, BOOL ingame)
+void C_InitConsole (int width, int height, bool ingame)
 {
 	if ( (vidactive = ingame) )
 	{
@@ -868,7 +868,7 @@ int PrintString (int printlevel, const char *outline)
 	return (int)strlen (outline);
 }
 
-extern BOOL gameisdead;
+extern bool gameisdead;
 
 int VPrintf (int printlevel, const char *format, va_list parms)
 {
@@ -1193,7 +1193,7 @@ void C_DrawConsole ()
 				tickstr[tickend + 2] = ' ';
 				if (TickerPercent)
 				{
-					sprintf (tickstr + tickend + 3, "%lu%%", Scale (TickerAt, 100, TickerMax));
+					sprintf (tickstr + tickend + 3, "%d%%", Scale (TickerAt, 100, TickerMax));
 				}
 				else
 				{
@@ -1386,7 +1386,7 @@ static void makestartposgood ()
 	CmdLine[259] = n;
 }
 
-static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
+static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 {
 	int i;
 	int data1 = ev->data1;
@@ -1780,7 +1780,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 	return true;
 }
 
-BOOL C_Responder (event_t *ev)
+bool C_Responder (event_t *ev)
 {
 	if (ev->type != EV_GUI_Event ||
 		ConsoleState == c_up ||
@@ -1910,7 +1910,7 @@ static int TabPos;				// Last TabCommand tabbed to
 static int TabStart;			// First char in CmdLine to use for tab completion
 static int TabSize;				// Size of tab string
 
-static BOOL FindTabCommand (const char *name, int *stoppos, int len)
+static bool FindTabCommand (const char *name, int *stoppos, int len)
 {
 	FName aname(name);
 	unsigned int i;

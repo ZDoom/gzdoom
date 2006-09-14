@@ -120,7 +120,7 @@ static FSaveGameNode *M_RemoveSaveSlot (FSaveGameNode *file);
 static void M_ExtractSaveData (const FSaveGameNode *file);
 static void M_UnloadSaveData ();
 static void M_InsertSaveNode (FSaveGameNode *node);
-static BOOL M_SaveLoadResponder (event_t *ev);
+static bool M_SaveLoadResponder (event_t *ev);
 static void M_DeleteSaveResponse (int choice);
 
 static void M_DrawMainMenu ();
@@ -220,7 +220,7 @@ static oldmenu_t *currentMenu;		// current menudef
 static oldmenu_t *TopLevelMenu;		// The main menu everything hangs off of
 
 static DCanvas	*FireScreen;
-static byte		FireRemap[256];
+static BYTE		FireRemap[256];
 
 static char			*genders[3] = { "male", "female", "other" };
 static FPlayerClass	*PlayerClass;
@@ -2297,7 +2297,7 @@ static BYTE smoke[1024] =
 
 static void M_RenderPlayerBackdrop ()
 {
-	byte *from;
+	BYTE *from;
 	int width, height, pitch;
 
 	width = FireScreen->GetWidth();
@@ -2395,7 +2395,7 @@ static void M_DrawPlayerBackdrop (int x, int y)
 {
 	DCanvas *src = FireScreen;
 	DCanvas *dest = screen;
-	byte *destline, *srcline;
+	BYTE *destline, *srcline;
 	const int destwidth = src->GetWidth() * CleanXfac / 2;
 	const int destheight = src->GetHeight() * CleanYfac / 2;
 	const int desty = y;
@@ -2688,7 +2688,7 @@ int M_StringHeight (const char *string)
 //
 // M_Responder
 //
-BOOL M_Responder (event_t *ev)
+bool M_Responder (event_t *ev)
 {
 	int ch;
 	int i;
@@ -2905,7 +2905,7 @@ BOOL M_Responder (event_t *ev)
 	return (ev->subtype == EV_GUI_KeyDown);
 }
 
-BOOL M_SaveLoadResponder (event_t *ev)
+bool M_SaveLoadResponder (event_t *ev)
 {
 	char workbuf[512];
 

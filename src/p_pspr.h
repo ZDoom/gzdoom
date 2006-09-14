@@ -91,7 +91,7 @@ void P_FireWeapon (player_s *player);
 void P_DropWeapon (player_s *player);
 void P_BobWeapon (player_s *player, pspdef_t *psp, fixed_t *x, fixed_t *y);
 void P_BulletSlope (AActor *mo);
-void P_GunShot (AActor *mo, BOOL accurate, const PClass *pufftype);
+void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype);
 
 void A_WeaponReady (AActor *actor);
 void A_ReFire (AActor *actor);

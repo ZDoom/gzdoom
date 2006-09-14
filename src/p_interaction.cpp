@@ -176,7 +176,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	const char *message;
 	const char *messagename;
 	char gendermessage[1024];
-	BOOL friendly;
+	INTBOOL friendly;
 	int  gender;
 
 	// No obituaries for non-players, voodoo dolls or when not wanted
@@ -1336,7 +1336,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 */
 }
 
-BOOL CheckCheatmode ();
+bool CheckCheatmode ();
 
 CCMD (kill)
 {

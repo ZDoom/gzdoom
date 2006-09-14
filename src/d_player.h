@@ -210,7 +210,7 @@ public:
 	fixed_t		momx, momy;				// killough 10/98
 
 	bool		centering;
-	byte		turnticks;
+	BYTE		turnticks;
 	short		oldbuttons;
 	bool		attackdown;
 	int			health;					// only used between levels, mo->health
@@ -224,8 +224,8 @@ public:
 	int			frags[MAXPLAYERS];		// kills of other players
 	int			fragcount;				// [RH] Cumulative frags for this player
 	int			lastkilltime;			// [RH] For multikills
-	byte		multicount;
-	byte		spreecount;				// [RH] Keep track of killing sprees
+	BYTE		multicount;
+	BYTE		spreecount;				// [RH] Keep track of killing sprees
 
 	AWeapon	   *ReadyWeapon;
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
@@ -302,8 +302,8 @@ public:
 
 	FString		LogText;	// [RH] Log for Strife
 
-	signed char crouching;
-	signed char	crouchdir;
+	SBYTE	crouching;
+	SBYTE	crouchdir;
 	fixed_t crouchfactor;
 	fixed_t crouchoffset;
 	fixed_t crouchviewdelta;

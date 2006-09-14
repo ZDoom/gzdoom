@@ -136,11 +136,11 @@ extern gameinfo_t StrifeTeaserGameInfo;
 extern gameinfo_t StrifeTeaser2GameInfo;
 
 extern int testingmode;
-extern BOOL setmodeneeded;
-extern BOOL netdemo;
+extern bool setmodeneeded;
+extern bool netdemo;
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 EXTERN_CVAR (Bool, st_scale)
-extern BOOL gameisdead;
+extern bool gameisdead;
 extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
@@ -157,13 +157,13 @@ CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 wadlist_t *wadfiles;		// [RH] remove limit on # of loaded wads
-BOOL devparm;				// started game with -devparm
+bool devparm;				// started game with -devparm
 char *D_DrawIcon;			// [RH] Patch name of icon to draw on next refresh
 int NoWipe;					// [RH] Allow wipe? (Needs to be set each time)
-BOOL singletics = false;	// debug flag to cancel adaptiveness
+bool singletics = false;	// debug flag to cancel adaptiveness
 char startmap[8];
-BOOL autostart;
-BOOL advancedemo;
+bool autostart;
+bool advancedemo;
 FILE *debugfile;
 event_t events[MAXEVENTS];
 int eventhead;
@@ -597,7 +597,7 @@ void D_Display (bool screenshot)
 	{
 		// wipe update
 		int wipestart, nowtime, tics;
-		BOOL done;
+		bool done;
 
 		wipe_EndScreen ();
 		screen->Unlock ();
@@ -2162,7 +2162,7 @@ void D_DoomMain (void)
 	if (Args.CheckParm ("-respawn"))		flags |= DF_MONSTERS_RESPAWN;
 	if (Args.CheckParm ("-fast"))			flags |= DF_FAST_MONSTERS;
 
-	devparm = Args.CheckParm ("-devparm");
+	devparm = !!Args.CheckParm ("-devparm");
 
 	if (Args.CheckParm ("-altdeath"))
 	{
@@ -2375,15 +2375,16 @@ void D_DoomMain (void)
 //
 //==========================================================================
 
-ADD_STAT (fps, out)
+ADD_STAT (fps)
 {
-	sprintf (out,
-		"frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
+	FString out;
+	out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
 		(double)FrameCycles * SecondsPerCycle * 1000,
 		(double)WallCycles * SecondsPerCycle * 1000,
 		(double)PlaneCycles * SecondsPerCycle * 1000,
 		(double)MaskedCycles * SecondsPerCycle * 1000
 		);
+	return out;
 }
 
 //==========================================================================
@@ -2396,11 +2397,13 @@ ADD_STAT (fps, out)
 
 static cycle_t bestwallcycles = INT_MAX;
 
-ADD_STAT (wallcycles, out)
+ADD_STAT (wallcycles)
 {
+	FString out;
 	if (WallCycles && WallCycles < bestwallcycles)
 		bestwallcycles = WallCycles;
-	sprintf (out, "%lu", bestwallcycles);
+	out.Format ("%llu", bestwallcycles);
+	return out;
 }
 
 //==========================================================================
@@ -2420,11 +2423,13 @@ CCMD (clearwallcycles)
 // To use these, also uncomment the clock/unclock in wallscan
 static cycle_t bestscancycles = INT_MAX;
 
-ADD_STAT (scancycles, out)
+ADD_STAT (scancycles)
 {
+	FString out;
 	if (WallScanCycles && WallScanCycles < bestscancycles)
 		bestscancycles = WallScanCycles;
-	sprintf (out, "%lu", bestscancycles);
+	out.Format ("%llu", bestscancycles);
+	return out;
 }
 
 CCMD (clearscancycles)

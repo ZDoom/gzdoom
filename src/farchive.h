@@ -193,7 +193,6 @@ virtual void Read (void *mem, unsigned int len);
 		void WriteSprite (int spritenum);
 		int ReadSprite ();
 
-inline	FArchive& operator<< (char &c) { return operator<< ((BYTE &)c); }
 inline	FArchive& operator<< (SBYTE &c) { return operator<< ((BYTE &)c); }
 inline	FArchive& operator<< (SWORD &s) { return operator<< ((WORD &)s); }
 inline	FArchive& operator<< (SDWORD &i) { return operator<< ((DWORD &)i); }
@@ -201,8 +200,6 @@ inline	FArchive& operator<< (SQWORD &i) { return operator<< ((QWORD &)i); }
 inline	FArchive& operator<< (unsigned char *&str) { return operator<< ((char *&)str); }
 inline	FArchive& operator<< (signed char *&str) { return operator<< ((char *&)str); }
 inline	FArchive& operator<< (bool &b) { return operator<< ((BYTE &)b); }
-inline	FArchive& operator<< (int &i) { return operator<< ((DWORD &)i); }
-inline	FArchive& operator<< (unsigned int &i) { return operator<< ((DWORD &)i); }
 inline  FArchive& operator<< (DObject* &object) { return ReadObject (object, RUNTIME_CLASS(DObject)); }
 
 protected:

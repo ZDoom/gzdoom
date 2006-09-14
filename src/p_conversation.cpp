@@ -348,7 +348,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FWadLump *lump, DWORD &prevSpeakerTy
 	// The speaker's voice for this node, if any.
 	if (speech.VoiceNumber != 0)
 	{
-		sprintf (fullsound, "svox/voc%lu", speech.VoiceNumber);
+		sprintf (fullsound, "svox/voc%u", speech.VoiceNumber);
 		node->SpeakerVoice = S_FindSound (fullsound);
 	}
 	else
@@ -442,7 +442,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		{
 			char moneystr[128];
 
-			sprintf (moneystr, "%s for %lu", rsp->Reply, rsp->Count[0]);
+			sprintf (moneystr, "%s for %u", rsp->Reply, rsp->Count[0]);
 			reply->Reply = copystring (moneystr);
 			reply->NeedsGold = true;
 		}

@@ -55,7 +55,7 @@
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
-extern BOOL st_firsttime;
+extern bool st_firsttime;
 EXTERN_CVAR (Bool, teamplay)
 
 CVAR (Float,	autoaim,				5000.f,		CVAR_USERINFO | CVAR_ARCHIVE);
@@ -179,7 +179,7 @@ void D_PickRandomTeam (int player)
 {
 	static char teamline[8] = "\\team\\X";
 
-	byte *foo = (byte *)teamline;
+	BYTE *foo = (BYTE *)teamline;
 	teamline[6] = D_PickRandomTeam() + '0';
 	D_ReadUserInfoStrings (player, &foo, teamplay);
 }
@@ -361,7 +361,7 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 	Net_WriteString (foo);
 }
 
-static const char *SetServerVar (char *name, ECVarType type, byte **stream, bool singlebit)
+static const char *SetServerVar (char *name, ECVarType type, BYTE **stream, bool singlebit)
 {
 	FBaseCVar *var = FindCVar (name, NULL);
 	UCVarValue value;
@@ -466,7 +466,7 @@ void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set)
 	Net_WriteByte (bitnum | (set << 5));
 }
 
-void D_DoServerInfoChange (byte **stream, bool singlebit)
+void D_DoServerInfoChange (BYTE **stream, bool singlebit)
 {
 	const char *value;
 	char name[64];
@@ -488,7 +488,7 @@ void D_DoServerInfoChange (byte **stream, bool singlebit)
 	}
 }
 
-void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
+void D_WriteUserInfoStrings (int i, BYTE **stream, bool compact)
 {
 	if (i >= MAXPLAYERS)
 	{
@@ -561,7 +561,7 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 	*stream += strlen (*((char **)stream)) + 1;
 }
 
-void D_ReadUserInfoStrings (int i, byte **stream, bool update)
+void D_ReadUserInfoStrings (int i, BYTE **stream, bool update)
 {
 	userinfo_t *info = &players[i].userinfo;
 	char *ptr = *((char **)stream);

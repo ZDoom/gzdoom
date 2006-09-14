@@ -153,10 +153,10 @@ static AActor *vileobj;
 static fixed_t viletryx;
 static fixed_t viletryy;
 
-BOOL PIT_VileCheck (AActor *thing)
+bool PIT_VileCheck (AActor *thing)
 {
 	int maxdist;
-	BOOL check;
+	bool check;
 		
 	if (!(thing->flags & MF_CORPSE) )
 		return true;	// not a monster

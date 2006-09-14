@@ -88,10 +88,10 @@ void D_UserInfoChanged (FBaseCVar *info);
 
 void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType type);
 void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set);
-void D_DoServerInfoChange (byte **stream, bool singlebit);
+void D_DoServerInfoChange (BYTE **stream, bool singlebit);
 
-void D_WriteUserInfoStrings (int player, byte **stream, bool compact=false);
-void D_ReadUserInfoStrings (int player, byte **stream, bool update);
+void D_WriteUserInfoStrings (int player, BYTE **stream, bool compact=false);
+void D_ReadUserInfoStrings (int player, BYTE **stream, bool update);
 
 void D_GetPlayerColor (int player, float *h, float *s, float *v);
 void D_PickRandomTeam (int player);

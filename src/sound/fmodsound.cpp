@@ -43,6 +43,7 @@ extern HWND Window;
 #define TRUE 1
 #endif
 
+#define USE_WINDOWS_DWORD
 #include "templates.h"
 #include "fmodsound.h"
 #include "c_cvars.h"
@@ -529,19 +530,20 @@ void FMODSoundRenderer::PrintStatus ()
 
 void FMODSoundRenderer::PrintDriversList ()
 {
-	long numdrivers = FSOUND_GetNumDrivers ();
-	long i;
+	int numdrivers = FSOUND_GetNumDrivers ();
 
-	for (i = 0; i < numdrivers; i++)
+	for (int i = 0; i < numdrivers; i++)
 	{
-		Printf ("%ld. %s\n", i, FSOUND_GetDriverName (i));
+		Printf ("%d. %s\n", i, FSOUND_GetDriverName (i));
 	}
 }
 
-void FMODSoundRenderer::GatherStats (char *outstring)
+FString FMODSoundRenderer::GatherStats ()
 {
-	sprintf (outstring, "%d channels, %.2f%% CPU", FSOUND_GetChannelsPlaying(),
+	FString out;
+	out.Format ("%d channels, %.2f%% CPU", FSOUND_GetChannelsPlaying(),
 		FSOUND_GetCPUUsage());
+	return out;
 }
 
 void FMODSoundRenderer::MovieDisableSound ()
@@ -685,9 +687,7 @@ long FMODSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch,
 	
 	if (chan != -1)
 	{
-		//FSOUND_SetReserved (chan, TRUE);
 		FSOUND_SetSurround (chan, sep == -1 ? TRUE : FALSE);
-		//printf ("%ld\n", freq);
 		FSOUND_SetFrequency (chan, freq);
 		FSOUND_SetVolume (chan, vol);
 		FSOUND_SetPan (chan, pan);
@@ -1072,7 +1072,7 @@ void FMODSoundRenderer::DoLoad (void **slot, sfxinfo_t *sfx)
 		}
 
 		FWadLump wlump = Wads.OpenLumpNum (sfx->lumpnum);
-		sfxdata = new byte[size];
+		sfxdata = new BYTE[size];
 		wlump.Read (sfxdata, size);
 		SDWORD len = ((SDWORD *)sfxdata)[1];
 

@@ -133,7 +133,7 @@ extern float S_GetMusicVolume (const char *music);
 static fixed_t P_AproxDistance2 (fixed_t *listener, fixed_t x, fixed_t y);
 static void S_StopChannel (int cnum);
 static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
-	int sound_id, float volume, float attenuation, BOOL looping);
+	int sound_id, float volume, float attenuation, bool looping);
 static void S_ActivatePlayList (bool goBack);
 static void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3],
 	float vel[3]);
@@ -146,7 +146,7 @@ static bool		SoundPaused;		// whether sound effects are paused
 static bool		MusicPaused;		// whether music is paused
 static MusPlayingInfo mus_playing;	// music currently being played
 static FString	 LastSong;			// last music that was played
-static byte		*SoundCurve;
+static BYTE		*SoundCurve;
 static int		nextcleanup;
 static FPlayList *PlayList;
 
@@ -241,15 +241,15 @@ void S_NoiseDebug (void)
 			Wads.GetLumpName (temp, Channel[i].sfxinfo->lumpnum);
 			temp[8] = 0;
 			screen->DrawText (color, 0, y, temp, TAG_DONE);
-			sprintf (temp, "%ld", ox / FRACUNIT);
+			sprintf (temp, "%d", ox >> FRACBITS);
 			screen->DrawText (color, 70, y, temp, TAG_DONE);
-			sprintf (temp, "%ld", oy / FRACUNIT);
+			sprintf (temp, "%d", oy >> FRACBITS);
 			screen->DrawText (color, 120, y, temp, TAG_DONE);
 			sprintf (temp, "%g", Channel[i].volume);
 			screen->DrawText (color, 170, y, temp, TAG_DONE);
 			sprintf (temp, "%d", Channel[i].priority);
 			screen->DrawText (color, 200, y, temp, TAG_DONE);
-			sprintf (temp, "%ld", P_AproxDistance2 (players[consoleplayer].camera, ox, oy) / FRACUNIT);
+			sprintf (temp, "%d", P_AproxDistance2 (players[consoleplayer].camera, ox, oy) / FRACUNIT);
 			screen->DrawText (color, 240, y, temp, TAG_DONE);
 			sprintf (temp, "%d", Channel[i].entchannel);
 			screen->DrawText (color, 280, y, temp, TAG_DONE);
@@ -1035,7 +1035,7 @@ void S_LoopedSound (AActor *ent, int channel, const char *name, float volume, in
 // Stops more than <limit> copies of the sound from playing at once.
 //==========================================================================
 
-BOOL S_StopSoundID (int sound_id, int priority, int limit, bool singular, fixed_t x, fixed_t y)
+bool S_StopSoundID (int sound_id, int priority, int limit, bool singular, fixed_t x, fixed_t y)
 {
 	int i;
 	int lp; //least priority

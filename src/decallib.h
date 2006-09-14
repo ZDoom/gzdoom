@@ -95,7 +95,7 @@ public:
 	void ReadDecals ();		// SC_Open() should have just been called
 	void ReadAllDecals ();
 
-	const FDecalTemplate *GetDecalByNum (byte num) const;
+	const FDecalTemplate *GetDecalByNum (BYTE num) const;
 	const FDecalTemplate *GetDecalByName (const char *name) const;
 
 private:
@@ -105,7 +105,7 @@ private:
 	static FDecalBase *ScanTreeForNum (const BYTE num, FDecalBase *root);
 	static FDecalBase *ScanTreeForName (const char *name, FDecalBase *root);
 	FTranslation *GenerateTranslation (DWORD start, DWORD end);
-	void AddDecal (const char *name, byte num, const FDecalTemplate &decal);
+	void AddDecal (const char *name, BYTE num, const FDecalTemplate &decal);
 	void AddDecal (FDecalBase *decal);
 	FDecalAnimator *FindAnimator (const char *name);
 

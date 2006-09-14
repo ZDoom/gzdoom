@@ -29,7 +29,7 @@
 
 int wipe_StartScreen (int type);
 int wipe_EndScreen (void);
-int wipe_ScreenWipe (int ticks);
+bool wipe_ScreenWipe (int ticks);
 
 enum
 {

@@ -62,8 +62,8 @@ struct FTraceResults
 	AActor *Actor;		// valid if hit an actor
 
 	line_t *Line;		// valid if hit a line
-	byte Side;
-	byte Tier;
+	BYTE Side;
+	BYTE Tier;
 	ETraceResult HitType;
 	sector_t *CrossedWater;
 };

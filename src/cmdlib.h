@@ -26,7 +26,7 @@
 #define myoffsetof(type,identifier) ((size_t)&((type *)0)->identifier)
 
 int		Q_filelength (FILE *f);
-BOOL FileExists (const char *filename);
+bool FileExists (const char *filename);
 
 extern	char	progdir[1024];
 
@@ -40,7 +40,7 @@ FString	ExtractFileBase (const char *path, bool keep_extension=false);
 
 int		ParseHex (char *str);
 int 	ParseNum (char *str);
-BOOL	IsNum (char *str);		// [RH] added
+bool	IsNum (char *str);		// [RH] added
 
 char	*copystring(const char *s);
 void	ReplaceString (char **ptr, const char *str);

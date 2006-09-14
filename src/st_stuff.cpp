@@ -39,21 +39,21 @@ struct cheatseq_t
 	BYTE DontCheck;
 	BYTE CurrentArg;
 	BYTE Args[2];
-	BOOL (*Handler)(cheatseq_t *);
+	bool (*Handler)(cheatseq_t *);
 };
 
-static bool CheatAddKey (cheatseq_t *cheat, byte key, BOOL *eat);
-static BOOL Cht_Generic (cheatseq_t *);
-static BOOL Cht_Music (cheatseq_t *);
-static BOOL Cht_BeholdMenu (cheatseq_t *);
-static BOOL Cht_PumpupMenu (cheatseq_t *);
-static BOOL Cht_AutoMap (cheatseq_t *);
-static BOOL Cht_ChangeLevel (cheatseq_t *);
-static BOOL Cht_ChangeStartSpot (cheatseq_t *);
-static BOOL Cht_WarpTransLevel (cheatseq_t *);
-static BOOL Cht_MyPos (cheatseq_t *);
-static BOOL Cht_Sound (cheatseq_t *);
-static BOOL Cht_Ticker (cheatseq_t *);
+static bool CheatAddKey (cheatseq_t *cheat, BYTE key, bool *eat);
+static bool Cht_Generic (cheatseq_t *);
+static bool Cht_Music (cheatseq_t *);
+static bool Cht_BeholdMenu (cheatseq_t *);
+static bool Cht_PumpupMenu (cheatseq_t *);
+static bool Cht_AutoMap (cheatseq_t *);
+static bool Cht_ChangeLevel (cheatseq_t *);
+static bool Cht_ChangeStartSpot (cheatseq_t *);
+static bool Cht_WarpTransLevel (cheatseq_t *);
+static bool Cht_MyPos (cheatseq_t *);
+static bool Cht_Sound (cheatseq_t *);
+static bool Cht_Ticker (cheatseq_t *);
 
 BYTE CheatPowerup[7][10] =
 {
@@ -221,13 +221,13 @@ static cheatseq_t StrifeCheats[] =
 	{ CheatLego,			0, 0, 0, {CHT_LEGO,0},		Cht_Generic },
 };
 
-extern BOOL CheckCheatmode ();
+extern bool CheckCheatmode ();
 
 // Respond to keyboard input events, intercept cheats.
 // [RH] Cheats eat the last keypress used to trigger them
-BOOL ST_Responder (event_t *ev)
+bool ST_Responder (event_t *ev)
 {
-	BOOL eat = false;
+	bool eat = false;
 
 	if (ev->type == EV_KeyDown)
 	{
@@ -263,7 +263,7 @@ BOOL ST_Responder (event_t *ev)
 
 		for (i = 0; i < numcheats; i++, cheats++)
 		{
-			if (CheatAddKey (cheats, (byte)ev->data2, &eat))
+			if (CheatAddKey (cheats, (BYTE)ev->data2, &eat))
 			{
 				if (cheats->DontCheck || !CheckCheatmode ())
 				{
@@ -289,7 +289,7 @@ BOOL ST_Responder (event_t *ev)
 //
 //--------------------------------------------------------------------------
 
-static bool CheatAddKey (cheatseq_t *cheat, byte key, BOOL *eat)
+static bool CheatAddKey (cheatseq_t *cheat, BYTE key, bool *eat)
 {
 	if (cheat->Pos == NULL)
 	{
@@ -326,14 +326,14 @@ static bool CheatAddKey (cheatseq_t *cheat, byte key, BOOL *eat)
 //
 //--------------------------------------------------------------------------
 
-static BOOL Cht_Generic (cheatseq_t *cheat)
+static bool Cht_Generic (cheatseq_t *cheat)
 {
 	Net_WriteByte (DEM_GENERICCHEAT);
 	Net_WriteByte (cheat->Args[0]);
 	return true;
 }
 
-static BOOL Cht_Music (cheatseq_t *cheat)
+static bool Cht_Music (cheatseq_t *cheat)
 {
 	char buf[9] = "idmus xx";
 
@@ -343,13 +343,13 @@ static BOOL Cht_Music (cheatseq_t *cheat)
 	return true;
 }
 
-static BOOL Cht_BeholdMenu (cheatseq_t *cheat)
+static bool Cht_BeholdMenu (cheatseq_t *cheat)
 {
 	Printf ("%s\n", GStrings("STSTR_BEHOLD"));
 	return false;
 }
 
-static BOOL Cht_PumpupMenu (cheatseq_t *cheat)
+static bool Cht_PumpupMenu (cheatseq_t *cheat)
 {
 	// How many people knew about the PUMPUPT cheat, since
 	// it isn't printed in the list?
@@ -357,7 +357,7 @@ static BOOL Cht_PumpupMenu (cheatseq_t *cheat)
 	return false;
 }
 
-static BOOL Cht_AutoMap (cheatseq_t *cheat)
+static bool Cht_AutoMap (cheatseq_t *cheat)
 {
 	if (automapactive)
 	{
@@ -370,7 +370,7 @@ static BOOL Cht_AutoMap (cheatseq_t *cheat)
 	}
 }
 
-static BOOL Cht_ChangeLevel (cheatseq_t *cheat)
+static bool Cht_ChangeLevel (cheatseq_t *cheat)
 {
 	char cmd[10] = "idclev xx";
 
@@ -380,7 +380,7 @@ static BOOL Cht_ChangeLevel (cheatseq_t *cheat)
 	return true;
 }
 
-static BOOL Cht_ChangeStartSpot (cheatseq_t *cheat)
+static bool Cht_ChangeStartSpot (cheatseq_t *cheat)
 {
 	char cmd[64];
 	
@@ -389,7 +389,7 @@ static BOOL Cht_ChangeStartSpot (cheatseq_t *cheat)
 	return true;
 }
 
-static BOOL Cht_WarpTransLevel (cheatseq_t *cheat)
+static bool Cht_WarpTransLevel (cheatseq_t *cheat)
 {
 	char cmd[11] = "hxvisit xx";
 	cmd[8] = cheat->Args[0];
@@ -398,20 +398,20 @@ static BOOL Cht_WarpTransLevel (cheatseq_t *cheat)
 	return true;
 }
 
-static BOOL Cht_MyPos (cheatseq_t *cheat)
+static bool Cht_MyPos (cheatseq_t *cheat)
 {
 	C_DoCommand ("toggle idmypos");
 	return true;
 }
 
-static BOOL Cht_Ticker (cheatseq_t *cheat)
+static bool Cht_Ticker (cheatseq_t *cheat)
 {
 	ticker = !ticker;
 	Printf ("%s\n", GStrings(ticker ? "TXT_CHEATTICKERON" : "TXT_CHEATTICKEROFF"));
 	return true;
 }
 
-static BOOL Cht_Sound (cheatseq_t *cheat)
+static bool Cht_Sound (cheatseq_t *cheat)
 {
 	noisedebug = !noisedebug;
 	Printf ("%s\n", GStrings(noisedebug ? "TXT_CHEATSOUNDON" : "TXT_CHEATSOUNDOFF"));

@@ -354,7 +354,7 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 
 void DCajunMaster::DoAddBot (int bnum, char *info)
 {
-	byte *infob = (byte *)info;
+	BYTE *infob = (BYTE *)info;
 	D_ReadUserInfoStrings (bnum, &infob, false);
 	if (!deathmatch && playerstarts[bnum].type == 0)
 	{
@@ -646,10 +646,12 @@ bool DCajunMaster::LoadBots ()
 	return true;
 }
 
-ADD_STAT (bots, out)
+ADD_STAT (bots)
 {
-	sprintf (out, "think = %04.1f ms  support = %04.1f ms  wtg = %lu",
+	FString out;
+	out.Format ("think = %04.1f ms  support = %04.1f ms  wtg = %llu",
 		(double)BotThinkCycles * 1000 * SecondsPerCycle,
 		(double)BotSupportCycles * 1000 * SecondsPerCycle,
 		BotWTG);
+	return out;
 }

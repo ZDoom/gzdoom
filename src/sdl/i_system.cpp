@@ -145,7 +145,7 @@ int I_WaitForTicPolled (int prevtic)
 }
 
 // Returns the fractional amount of a tic passed since the most recent tic
-fixed_t I_GetTimeFrac (DWORD *ms)
+fixed_t I_GetTimeFrac (uint32 *ms)
 {
 	DWORD now = SDL_GetTicks ();
 	if (ms) *ms = TicNext;
@@ -291,7 +291,7 @@ void I_Quit (void)
 // I_Error
 //
 extern FILE *Logfile;
-BOOL gameisdead;
+bool gameisdead;
 
 void STACK_ARGS I_FatalError (const char *error, ...)
 {

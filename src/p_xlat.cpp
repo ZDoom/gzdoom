@@ -68,7 +68,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	short special = LittleShort(mld->special);
 	short tag = LittleShort(mld->tag);
 	DWORD flags = LittleShort(mld->flags);
-	BOOL passthrough;
+	INTBOOL passthrough;
 	int i;
 
 	if (flags & ML_TRANSLUCENT_STRIFE)

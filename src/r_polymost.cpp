@@ -526,7 +526,7 @@ CVAR(Bool, testpolymost, false, 0)
 static int pmx, pmy;
 static int pt, px0, py0, px1, py1;
 static struct polypt { float x, y; } polypts[80];
-static byte polysize[32];
+static BYTE polysize[32];
 static int numpoly, polypt;
 PolyClipper TestPoly;
 
@@ -1489,7 +1489,7 @@ void RP_Subsector (subsector_t *sub)
 
 extern "C" const int checkcoord[12][4];
 
-static BOOL RP_CheckBBox (fixed_t *bspcoord)
+static bool RP_CheckBBox (fixed_t *bspcoord)
 {
 	int 				boxx;
 	int 				boxy;

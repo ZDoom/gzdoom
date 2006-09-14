@@ -49,7 +49,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define SET_FIELD(type,val) *((type*)((byte *)fields + \
+#define SET_FIELD(type,val) *((type*)((BYTE *)fields + \
 							parser[keyword].u.Offset)) = val;
 
 // TYPES -------------------------------------------------------------------
@@ -136,7 +136,7 @@ static void ParseFriction (int keyword, void *fields);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-TArray<byte>TerrainTypes;
+TArray<BYTE> TerrainTypes;
 TArray<FSplashDef> Splashes;
 TArray<FTerrainDef> Terrains;
 
@@ -270,7 +270,7 @@ void P_InitTerrainTypes ()
 	int lump;
 	int size;
 
-	size = (TexMan.NumTextures()+1)*sizeof(byte);
+	size = (TexMan.NumTextures()+1)*sizeof(BYTE);
 	TerrainTypes.Resize(size);
 	memset (&TerrainTypes[0], 0, size);
 
@@ -590,7 +590,7 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 
 		case GEN_Byte:
 			SC_MustGetNumber ();
-			SET_FIELD (byte, sc_Number);
+			SET_FIELD (BYTE, sc_Number);
 			break;
 
 		case GEN_Class:

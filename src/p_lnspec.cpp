@@ -793,7 +793,7 @@ FUNC(LS_Teleport_Line)
 	return EV_SilentLineTeleport (ln, backSide, it, arg1, arg2);
 }
 
-static void ThrustThingHelper (AActor *it, angle_t angle, int force, BOOL nolimit);
+static void ThrustThingHelper (AActor *it, angle_t angle, int force, INTBOOL nolimit);
 FUNC(LS_ThrustThing)
 // ThrustThing (angle, force, nolimit, tid)
 {
@@ -814,7 +814,7 @@ FUNC(LS_ThrustThing)
 	return false;
 }
 
-static void ThrustThingHelper (AActor *it, angle_t angle, int force, BOOL nolimit)
+static void ThrustThingHelper (AActor *it, angle_t angle, int force, INTBOOL nolimit)
 {
 	angle >>= ANGLETOFINESHIFT;
 	it->momx += force * finecosine[angle];

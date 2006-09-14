@@ -132,7 +132,7 @@ extern int (*I_WaitForTic) (int);
 int I_GetTimePolled (bool saveMS);
 int I_GetTimeFake (void);
 
-fixed_t I_GetTimeFrac (DWORD *ms);
+fixed_t I_GetTimeFrac (uint32 *ms);
 
 
 //

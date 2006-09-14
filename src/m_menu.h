@@ -34,7 +34,7 @@
 // Even when the menu is not displayed,
 // this can resize the view and change game parameters.
 // Does all the real work of the menu interaction.
-BOOL M_Responder (event_t *ev);
+bool M_Responder (event_t *ev);
 
 // Called by main loop,
 // only used for menu (skull cursor) animation.

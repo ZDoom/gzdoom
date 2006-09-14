@@ -691,7 +691,7 @@ void P_BulletSlope (AActor *mo)
 //
 // P_GunShot
 //
-void P_GunShot (AActor *mo, BOOL accurate, const PClass *pufftype)
+void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype)
 {
 	angle_t 	angle;
 	int 		damage;

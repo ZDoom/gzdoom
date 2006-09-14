@@ -59,7 +59,7 @@ static int grey1, grey2, grey3, grey4, red, green, blue, yellow, black,
 
 static const struct ColorList {
 	int *color;
-	byte r, g, b;
+	BYTE r, g, b;
 } Colors[] = {
 	{&grey1,	85,  85,  85 },
 	{&grey2,	171, 171, 171},
@@ -110,7 +110,7 @@ void P_ThinkParticles ()
 	prev = NULL;
 	while (i != NO_PARTICLE)
 	{
-		byte oldtrans;
+		BYTE oldtrans;
 
 		particle = Particles + i;
 		i = particle->tnext;

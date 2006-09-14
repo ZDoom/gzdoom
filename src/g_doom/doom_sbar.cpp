@@ -323,7 +323,7 @@ private:
 
 	void DrawArms ()
 	{
-		byte arms[6];
+		BYTE arms[6];
 		int i, j;
 
 		// Catalog the weapons the player owns
@@ -1008,7 +1008,7 @@ private:
 	int FaceCount;
 	int RandomNumber;
 	int OldFaceIndex;
-	byte OldArms[6];
+	BYTE OldArms[6];
 	int OldKeys;
 	int OldAmmo[4];
 	int OldMaxAmmo[4];

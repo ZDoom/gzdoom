@@ -275,7 +275,7 @@ static void R_InitAnimDefs ()
 			else if (SC_Compare ("warp") || SC_Compare ("warp2"))
 			{
 				bool isflat = false;
-				BOOL type2 = SC_Compare ("warp2");	// [GRB]
+				bool type2 = SC_Compare ("warp2");	// [GRB]
 				SC_MustGetString ();
 				if (SC_Compare ("flat"))
 				{

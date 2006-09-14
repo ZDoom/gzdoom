@@ -303,7 +303,7 @@ struct sector_t
 	BYTE		lightlevel;
 
 	AActor *	SoundTarget;
-	byte 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
+	BYTE 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 
 	short		special;
 	short		tag;
@@ -425,8 +425,8 @@ struct line_s
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
 	fixed_t 	dx, dy;		// precalculated v2 - v1 for side checking
 	DWORD		flags;
-	byte		special;	// [RH] specials are only one byte (like Hexen)
-	byte		alpha;		// <--- translucency (0-255/255=opaque)
+	BYTE		special;	// [RH] specials are only one byte (like Hexen)
+	BYTE		alpha;		// <--- translucency (0-255/255=opaque)
 	short		id;			// <--- same as tag or set with Line_SetIdentification
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	int			firstid, nextid;
@@ -463,7 +463,7 @@ typedef struct msecnode_s
 	struct msecnode_s	*m_tnext;	// next msecnode_t for this thing
 	struct msecnode_s	*m_sprev;	// prev msecnode_t for this sector
 	struct msecnode_s	*m_snext;	// next msecnode_t for this sector
-	BOOL visited;	// killough 4/4/98, 4/7/98: used in search algorithms
+	bool visited;	// killough 4/4/98, 4/7/98: used in search algorithms
 } msecnode_t;
 
 //
@@ -556,8 +556,8 @@ typedef struct polyblock_s
 // posts are runs of non masked source pixels
 struct post_s
 {
-	byte		topdelta;		// -1 is the last post in a column
-	byte		length; 		// length data bytes follows
+	BYTE		topdelta;		// -1 is the last post in a column
+	BYTE		length; 		// length data bytes follows
 };
 typedef struct post_s post_t;
 
@@ -570,7 +570,7 @@ typedef post_t	column_t;
 // OTHER TYPES
 //
 
-typedef byte lighttable_t;	// This could be wider for >8 bit display.
+typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 
 // Patches.
 // A patch holds one or more columns.
@@ -851,10 +851,10 @@ class FPlayerSkin
 public:
 	char		name[17];	// 16 chars + NULL
 	char		face[3];
-	byte		gender;		// This skin's gender (not really used)
-	byte		range0start;
-	byte		range0end;
-	byte		scale;
+	BYTE		gender;		// This skin's gender (not really used)
+	BYTE		range0start;
+	BYTE		range0end;
+	BYTE		scale;
 	bool		othergame;	// [GRB]
 	int			sprite;
 	int			crouchsprite;

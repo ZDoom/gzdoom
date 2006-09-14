@@ -1,3 +1,22 @@
+September 13, 2006
+- Fixed: cycle_t was still a DWORD and not a QWORD under GCC.
+- The stat meters now return an FString instead of sprintfing into a fixed
+  output buffer.
+- NOASM is now automatically defined when compiling for a non-x86 target.
+- Some changes have been made to the integral types in doomtype.h:
+  - For consistancy with the other integral types, byte is no longer a
+    synonym for BYTE.
+  - Most uses of BOOL have been change to the standard C++ bool type. Those
+    that weren't were changed to INTBOOL to indicate they may contain values
+    other than 0 or 1 but are still used as a boolean.
+  - Compiler-provided types with explicit bit sizes are now used. In
+    particular, DWORD is no longer a long so it will work with both 64-bit
+    Windows and Linux.
+  - Since some files need to include Windows headers, uint32 is a synonym
+    for the non-Windows version of DWORD.
+- Removed d_textur.h. The pic_t struct it defined was used nowhere, and that
+  was all it contained.
+
 September 9, 2006 (Changes by Graf Zahl)
 - Added support for scaled textures to DCanvas::DrawTexture.
 - Changed deh.MaxHealth use to be consistent with other source ports.
@@ -6,7 +25,7 @@ September 9, 2006 (Changes by Graf Zahl)
 
 September 8, 2006
 - Fixed: Weapons did not give you double ammo at baby and nightmare skills.
-- Fixed: SetTexture() in p_setup.cpp assumed that all color values were
+- Fixed: SetTextureNoErr() in p_setup.cpp assumed that all color values were
   six characters. Although this was the intended way to specify colors,
   earlier versions did no error checking, so other lengths worked too.
 - Fixed: FPatchTexture waited until MakeTexture() to call CalcBitSize(),
@@ -12992,7 +13011,7 @@ June 19, 1998
 
 June 18, 1998
 - Removed R_OK #define from one of the source files and changed the typedef
-  for BOOL in doomtype.h. Also created dxcrap.c which holds some information
+  for bool in doomtype.h. Also created dxcrap.c which holds some information
   from dinput.lib and dxguid.lib since Microsoft seems to have left most of
   the Watcom DX libraries out of its DX 5 SDK.
 - Started work on player setup menu.
@@ -13442,10 +13461,10 @@ April 23, 1998
   rpcndr.h is the culprit with this line:
 	typedef unsigned char boolean;
   Went through all my files where I've defined __BYTEBOOL__ by hand and
-  changed all occurances of boolean to BOOL. Then I found out that that
+  changed all occurances of boolean to bool. Then I found out that that
   caused problems with variables that had been declared as boolean in
   header files, so I changed all the remaining instances of boolean to
-  BOOL.
+  bool.
 - Started work on the video modes menu.
 
 April 22, 1998

@@ -196,7 +196,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 	int secnum;
 	sector_t *sec;
 	bool rtn = false;
-	BOOL manual = false;
+	bool manual = false;
 	fixed_t newheight = 0;
 	vertex_t *spot;
 

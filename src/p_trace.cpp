@@ -47,7 +47,7 @@ static fixed_t EnterDist;
 static bool (*TraceCallback)(FTraceResults &res);
 static DWORD TraceFlags;
 
-static BOOL PTR_TraceIterator (intercept_t *);
+static bool PTR_TraceIterator (intercept_t *);
 static bool CheckSectorPlane (const sector_t *sector, bool checkFloor);
 static bool EditTraceResult (DWORD flags, FTraceResults &res);
 
@@ -122,7 +122,7 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	}
 }
 
-static BOOL PTR_TraceIterator (intercept_t *in)
+static bool PTR_TraceIterator (intercept_t *in)
 {
 	fixed_t hitx, hity, hitz;
 	fixed_t dist;

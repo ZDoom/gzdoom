@@ -22,10 +22,10 @@ extern fixed_t xspeed[8], yspeed[8];
 bool P_HitFriend (AActor *self);
 void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false);
 bool P_CheckMeleeRange2 (AActor *actor);
-BOOL P_Move (AActor *actor);
-BOOL P_TryWalk (AActor *actor);
+bool P_Move (AActor *actor);
+bool P_TryWalk (AActor *actor);
 void P_NewChaseDir (AActor *actor);
-BOOL P_LookForPlayers (AActor *actor, BOOL allaround);
+bool P_LookForPlayers (AActor *actor, INTBOOL allaround);
 AInventory *P_DropItem (AActor *source, const PClass *type, int special, int chance);
 inline AInventory *P_DropItem (AActor *source, const char *type, int special, int chance)
 {
@@ -58,6 +58,6 @@ bool A_SinkMobj (AActor *);
 
 bool CheckBossDeath (AActor *);
 int P_Massacre ();
-BOOL P_CheckMissileRange (AActor *actor);
+bool P_CheckMissileRange (AActor *actor);
 
 #endif //__P_ENEMY_H__

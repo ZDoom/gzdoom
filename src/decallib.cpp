@@ -433,7 +433,7 @@ BYTE FDecalLib::GetDecalID ()
 void FDecalLib::ParseDecal ()
 {
 	char decalName[64];
-	byte decalNum;
+	BYTE decalNum;
 	FDecalTemplate newdecal;
 	int code, picnum;
 
@@ -834,7 +834,7 @@ void FDecalLib::ParseCombiner ()
 	}
 }
 
-void FDecalLib::AddDecal (const char *name, byte num, const FDecalTemplate &decal)
+void FDecalLib::AddDecal (const char *name, BYTE num, const FDecalTemplate &decal)
 {
 	FDecalTemplate *newDecal = new FDecalTemplate;
 
@@ -903,7 +903,7 @@ void FDecalLib::AddDecal (FDecalBase *decal)
 	}
 }
 
-const FDecalTemplate *FDecalLib::GetDecalByNum (byte num) const
+const FDecalTemplate *FDecalLib::GetDecalByNum (BYTE num) const
 {
 	if (num == 0)
 	{

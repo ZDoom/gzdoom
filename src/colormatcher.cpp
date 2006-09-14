@@ -48,21 +48,21 @@
 
 struct FColorMatcher::Seed
 {
-	byte r, g, b;
-	byte bad;
-	byte color;
+	BYTE r, g, b;
+	BYTE bad;
+	BYTE color;
 };
 
 struct FColorMatcher::PalEntry
 {
 #ifndef WORDS_BIGENDIAN
-	byte b, g, r, a;
+	BYTE b, g, r, a;
 #else
-	byte a, r, g, b;
+	BYTE a, r, g, b;
 #endif
 };
 
-extern int BestColor (const DWORD *palette, int r, int g, int b, int first = 0, int num = 256);
+extern int BestColor (const uint32 *palette, int r, int g, int b, int first = 0, int num = 256);
 
 FColorMatcher::FColorMatcher ()
 {
@@ -97,7 +97,7 @@ void FColorMatcher::SetPalette (const DWORD *palette)
 
 #ifdef BEFAST
 	Seed seeds[255];
-	byte seedspread[CHISIZE+1][CHISIZE+1][CHISIZE+1];
+	BYTE seedspread[CHISIZE+1][CHISIZE+1][CHISIZE+1];
 	int numseeds;
 	int i, radius;
 
@@ -155,7 +155,7 @@ void FColorMatcher::SetPalette (const DWORD *palette)
 			b2 = seeds[i].b + radius;	/* v g (0,HISIZE,0)			*/
 
 			// Check to see which planes are acceptable
-			byte bad = 0;
+			BYTE bad = 0;
 			if (r1 < 0)			bad |= 1,  r1 = 0;
 			if (r2 > CHISIZE)	bad |= 2,  r2 = CHISIZE;
 			if (g1 < 0)			bad |= 4,  g1 = 0;
@@ -224,11 +224,11 @@ void FColorMatcher::SetPalette (const DWORD *palette)
 }
 
 int FColorMatcher::FillPlane (int r1, int r2, int g1, int g2, int b1, int b2,
-	byte seedspread[CHISIZE+1][CHISIZE+1][CHISIZE+1],
+	BYTE seedspread[CHISIZE+1][CHISIZE+1][CHISIZE+1],
 	Seed *seeds, int thisseed)
 {
 	const Seed *secnd = seeds + thisseed;
-	byte color = secnd->color;
+	BYTE color = secnd->color;
 	int r, g, b;
 	int numhits = 0;
 
@@ -267,16 +267,16 @@ int FColorMatcher::FillPlane (int r1, int r2, int g1, int g2, int b1, int b2,
 	return numhits;
 }
 
-byte FColorMatcher::Pick (int r, int g, int b)
+BYTE FColorMatcher::Pick (int r, int g, int b)
 {
 	if (Pal == NULL)
 		return 0;
 
 #ifdef BEFAST
-	byte bestcolor;
+	BYTE bestcolor;
 	int bestdist;
 
-	byte color = FirstColor[(r+CLOSIZE/2)>>CLOBITS][(g+CLOSIZE/2)>>CLOBITS][(b+CLOSIZE/2)>>CLOBITS];
+	BYTE color = FirstColor[(r+CLOSIZE/2)>>CLOBITS][(g+CLOSIZE/2)>>CLOBITS][(b+CLOSIZE/2)>>CLOBITS];
 	if (NextColor[color] == 0)
 		return color;
 
@@ -300,6 +300,6 @@ byte FColorMatcher::Pick (int r, int g, int b)
 	} while (color != 0);
 	return bestcolor;
 #else
-	return BestColor ((DWORD *)Pal, r, g, b);
+	return BestColor ((uint32 *)Pal, r, g, b);
 #endif
 }

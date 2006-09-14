@@ -36,7 +36,7 @@
 
 #include "doomtype.h"
 
-BOOL I_InitInput (void *hwnd);
+bool I_InitInput (void *hwnd);
 void I_ShutdownInput ();
 void I_PutInClipboard (const char *str);
 char *I_GetFromClipboard ();

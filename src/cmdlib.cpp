@@ -1,11 +1,6 @@
 // cmdlib.c (mostly borrowed from the Q2 source)
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include <direct.h>
-#endif
-
 #include "doomtype.h"
 #include "cmdlib.h"
 #include "i_system.h"
@@ -110,7 +105,7 @@ int Q_filelength (FILE *f)
 FileExists
 ==============
 */
-BOOL FileExists (const char *filename)
+bool FileExists (const char *filename)
 {
 	FILE *f;
 
@@ -265,7 +260,7 @@ int ParseNum (char *str)
 
 // [RH] Returns true if the specified string is a valid decimal number
 
-BOOL IsNum (char *str)
+bool IsNum (char *str)
 {
 	while (*str)
 	{
@@ -365,7 +360,7 @@ int i;
 	i=(int)strlen(p);
 	if (p[i-1]=='/' || p[i-1]=='\\') p[i-1]=0;
 	if (*path) DoCreatePath(p);
-	CreateDirectory(p,NULL);
+	_mkdir(p);
 #else
 	// FIXME: write me
 #endif

@@ -30,7 +30,7 @@
 //
 
 // Called by main loop.
-BOOL F_Responder (event_t* ev);
+bool F_Responder (event_t* ev);
 
 // Called by main loop.
 void F_Ticker ();
@@ -40,7 +40,7 @@ void F_Drawer ();
 
 
 void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid, char *flat, char *text,
-					BOOL textInLump, BOOL finalePic, BOOL lookupText);
+					INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText);
 
 void F_StartSlideshow ();
 

@@ -473,7 +473,7 @@ int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int 
 		return nosplitters ? -1 : 0;
 	}
 
-	D(Printf ("split seg %lu in set %d, score %d, step %d, nosplit %d\n", bestseg, set, bestvalue, step, nosplit));
+	D(Printf ("split seg %u in set %d, score %d, step %d, nosplit %d\n", bestseg, set, bestvalue, step, nosplit));
 
 	splitseg = bestseg;
 	SetNodeFromSeg (node, &Segs[bestseg]);
@@ -751,7 +751,7 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 
 			if (seg->loopnum)
 			{
-				Printf ("   Split seg %lu (%ld,%ld)-(%ld,%ld) of sector %d in loop %d\n",
+				Printf ("   Split seg %u (%d,%d)-(%d,%d) of sector %d in loop %d\n",
 					set,
 					Vertices[seg->v1].x>>16, Vertices[seg->v1].y>>16,
 					Vertices[seg->v2].x>>16, Vertices[seg->v2].y>>16,
@@ -991,7 +991,7 @@ void FNodeBuilder::PrintSet (int l, DWORD set)
 	Printf ("set %d:\n", l);
 	for (; set != DWORD_MAX; set = Segs[set].next)
 	{
-		Printf ("\t%lu(%d):%d(%ld,%ld)-%d(%ld,%ld) ", set, Segs[set].frontsector-sectors,
+		Printf ("\t%u(%d):%d(%d,%d)-%d(%d,%d) ", set, Segs[set].frontsector-sectors,
 			Segs[set].v1,
 			Vertices[Segs[set].v1].x>>16, Vertices[Segs[set].v1].y>>16,
 			Segs[set].v2,

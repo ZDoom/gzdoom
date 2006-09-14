@@ -72,11 +72,11 @@ void DCajunMaster::Roam (AActor *actor, ticcmd_t *cmd)
 	}
 }
 
-BOOL DCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
+bool DCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 {
 	fixed_t tryx, tryy;
 	bool try_ok;
-	BOOL good;
+	int good;
 
 	if (actor->movedir == DI_NODIR)
 		return false;

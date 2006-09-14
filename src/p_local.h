@@ -162,7 +162,7 @@ typedef struct
 
 extern TArray<intercept_t> intercepts;
 
-typedef BOOL (*traverser_t) (intercept_t *in);
+typedef bool (*traverser_t) (intercept_t *in);
 
 fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);
 
@@ -218,8 +218,8 @@ extern fixed_t			lowfloor;
 
 void	P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0);
 
-BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*));
-BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), TArray<AActor *> &checkarray, AActor *start=NULL);
+bool P_BlockLinesIterator (int x, int y, bool(*func)(line_t*));
+bool P_BlockThingsIterator (int x, int y, bool(*func)(AActor*), TArray<AActor *> &checkarray, AActor *start=NULL);
 
 
 #define PT_ADDLINES 	1
@@ -228,14 +228,14 @@ BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), TArray<AActor *>
 
 extern divline_t		trace;
 
-BOOL
+bool
 P_PathTraverse
 ( fixed_t		x1,
   fixed_t		y1,
   fixed_t		x2,
   fixed_t		y2,
   int			flags,
-  BOOL		(*trav) (intercept_t *));
+  bool		(*trav) (intercept_t *));
 
 AActor *P_BlockmapSearch (AActor *origin, int distance, AActor *(*func)(AActor *, int));
 AActor *P_RoughMonsterSearch (AActor *mo, int distance);
@@ -246,7 +246,7 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance);
 
 // If "floatok" true, move would be ok
 // if within "tmfloorz - tmceilingz".
-extern BOOL				floatok;
+extern bool				floatok;
 extern fixed_t			tmfloorz;
 extern fixed_t			tmceilingz;
 extern msecnode_t		*sector_list;		// phares 3/16/98
@@ -276,13 +276,13 @@ extern TArray<line_t *> spechit;
 extern bool				DoRipping;
 extern AActor			*LastRipped;
 
-BOOL	P_TestMobjLocation (AActor *mobj);
+bool	P_TestMobjLocation (AActor *mobj);
 bool	P_TestMobjZ (AActor *mobj, bool quick=true);
-BOOL	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y);
+bool	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y);
 AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);
-BOOL	P_TryMove (AActor* thing, fixed_t x, fixed_t y, BOOL dropoff, bool onfloor = false);
-BOOL	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag);	// [RH] Added z and telefrag parameters
+bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, bool dropoff, bool onfloor = false);
+bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag);	// [RH] Added z and telefrag parameters
 void	P_PlayerStartStomp (AActor *actor);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);
@@ -322,7 +322,7 @@ void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
 void	P_CreateSecNodeList(AActor*,fixed_t,fixed_t);		// phares 3/14/98
 int		P_GetMoveFactor(const AActor *mo, int *frictionp);	// phares  3/6/98
 int		P_GetFriction(const AActor *mo, int *frictionfactor);
-BOOL	Check_Sides(AActor *, int, int);					// phares
+bool	Check_Sides(AActor *, int, int);					// phares
 
 // [RH] 
 bool	P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove);
@@ -330,7 +330,7 @@ bool	P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove);
 //
 // P_SETUP
 //
-extern byte*			rejectmatrix;	// for fast sight rejection
+extern BYTE*			rejectmatrix;	// for fast sight rejection
 extern int*				blockmaplump;	// offsets in blockmap are from here
 extern int*				blockmap;
 extern int				bmapwidth;
@@ -406,12 +406,12 @@ public:
 private:
 	DRotatePoly ();
 
-	friend bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
+	friend bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
 };
 
-bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
+bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
 
-bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
+bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
 
 class DMovePoly : public DPolyAction
 {
@@ -426,10 +426,10 @@ protected:
 	fixed_t m_xSpeed; // for sliding walls
 	fixed_t m_ySpeed;
 
-	friend bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, BOOL overRide);
+	friend bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, bool overRide);
 };
 
-bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, BOOL overRide);
+bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, bool overRide);
 
 class DPolyDoor : public DMovePoly
 {
@@ -485,10 +485,10 @@ extern int po_NumPolyobjs;
 extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 
 
-BOOL PO_MovePolyobj (int num, int x, int y);
-BOOL PO_RotatePolyobj (int num, angle_t angle);
+bool PO_MovePolyobj (int num, int x, int y);
+bool PO_RotatePolyobj (int num, angle_t angle);
 void PO_Init ();
-BOOL PO_Busy (int polyobj);
+bool PO_Busy (int polyobj);
 
 //
 // P_SPEC

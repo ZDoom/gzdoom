@@ -73,7 +73,7 @@ static char *FinaleFlat;
 
 void	F_StartCast (void);
 void	F_CastTicker (void);
-BOOL	F_CastResponder (event_t *ev);
+bool	F_CastResponder (event_t *ev);
 void	F_CastDrawer (void);
 void	F_AdvanceSlideshow ();
 
@@ -81,7 +81,7 @@ void	F_AdvanceSlideshow ();
 // F_StartFinale
 //
 void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid, char *flat, char *text,
-					BOOL textInLump, BOOL finalePic, BOOL lookupText)
+					INTBOOL textInLump, INTBOOL finalePic, INTBOOL lookupText)
 {
 	bool ending = strncmp (level.nextmap, "enDSeQ", 6) == 0;
 	bool loopmusic = ending ? !(gameinfo.flags & GI_NOLOOPFINALEMUSIC) : true;
@@ -175,7 +175,7 @@ void F_EndFinale ()
 	FinaleTextLen = 0;
 }
 
-BOOL F_Responder (event_t *event)
+bool F_Responder (event_t *event)
 {
 	if (FinaleStage == 3)
 	{
@@ -375,7 +375,7 @@ void F_TextWrite (void)
 	int c;
 	int cx;
 	int cy;
-	const byte *range;
+	const BYTE *range;
 	int leftmargin;
 	int rowheight;
 	bool scale;
@@ -481,8 +481,8 @@ castinfo_t castorder[] =
 static struct
 {
 	const char *type;
-	byte melee;
-	byte ofs;
+	BYTE melee;
+	BYTE ofs;
 	const char *sound;
 	FState *match;
 } atkstates[] =
@@ -521,10 +521,10 @@ int 			casttics;
 int				castsprite;			// [RH] For overriding the player sprite with a skin
 const BYTE *	casttranslation;	// [RH] Draw "our hero" with their chosen suit color
 FState*			caststate;
-BOOL	 		castdeath;
+bool	 		castdeath;
 int 			castframes;
 int 			castonmelee;
-BOOL	 		castattacking;
+bool	 		castattacking;
 
 static FState *advplayerstate;
 
@@ -698,7 +698,7 @@ void F_CastTicker (void)
 // F_CastResponder
 //
 
-BOOL F_CastResponder (event_t* ev)
+bool F_CastResponder (event_t* ev)
 {
 	if (ev->type != EV_KeyDown)
 		return false;
@@ -834,12 +834,12 @@ void F_DrawUnderwater(void)
 	case 1:
 		{
 		PalEntry *palette;
-		const byte *orgpal;
+		const BYTE *orgpal;
 		FMemLump lump;
 		int i;
 
 		lump = Wads.ReadLump ("E2PAL");
-		orgpal = (byte *)lump.GetMem();
+		orgpal = (BYTE *)lump.GetMem();
 		palette = screen->GetPalette ();
 		for (i = 256; i > 0; i--, orgpal += 3)
 		{

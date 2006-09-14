@@ -42,7 +42,7 @@ static int *y;
 // [RH] Fire Wipe
 #define FIREWIDTH	64
 #define FIREHEIGHT	64
-static byte *burnarray;
+static BYTE *burnarray;
 static int density;
 static int burntime;
 
@@ -74,7 +74,7 @@ int wipe_initMelt (int ticks)
 	int i, r;
 	
 	// copy start screen to main screen
-	screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (byte *)wipe_scr_start);
+	screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
 	
 	// makes this wipe faster (in theory)
 	// to have stuff in column-major format
@@ -105,7 +105,7 @@ int wipe_doMelt (int ticks)
 	
 	short*		s;
 	short*		d;
-	BOOL	 	done = true;
+	bool	 	done = true;
 
 	int width = SCREENWIDTH / 2;
 
@@ -162,7 +162,7 @@ int wipe_exitMelt (int ticks)
 
 int wipe_initBurn (int ticks)
 {
-	burnarray = new byte[FIREWIDTH * (FIREHEIGHT+5)];
+	burnarray = new BYTE[FIREWIDTH * (FIREHEIGHT+5)];
 	memset (burnarray, 0, FIREWIDTH * (FIREHEIGHT+5));
 	density = 4;
 	burntime = 0;
@@ -172,7 +172,7 @@ int wipe_initBurn (int ticks)
 int wipe_doBurn (int ticks)
 {
 	static int voop;
-	BOOL done;
+	bool done;
 
 	// This is a modified version of the fire from the player
 	// setup menu.
@@ -183,7 +183,7 @@ int wipe_doBurn (int ticks)
 	while (ticks--)
 	{
 		int a, b;
-		byte *from;
+		BYTE *from;
 
 		// generator
 		from = burnarray + FIREHEIGHT * FIREWIDTH;
@@ -206,10 +206,10 @@ int wipe_doBurn (int ticks)
 		from = burnarray;
 		for (b = 0; b <= FIREHEIGHT; b += 2)
 		{
-			byte *pixel = from;
+			BYTE *pixel = from;
 
 			// special case: first pixel on line
-			byte *p = pixel + (FIREWIDTH << 1);
+			BYTE *p = pixel + (FIREWIDTH << 1);
 			unsigned int top = *p + *(p + FIREWIDTH - 1) + *(p + 1);
 			unsigned int bottom = *(pixel + (FIREWIDTH << 2));
 			unsigned int c1 = (top + bottom) >> 2;
@@ -258,13 +258,13 @@ int wipe_doBurn (int ticks)
 	{
 		fixed_t xstep, ystep, firex, firey;
 		int x, y;
-		byte *to, *fromold, *fromnew;
+		BYTE *to, *fromold, *fromnew;
 
 		xstep = (FIREWIDTH * FRACUNIT) / SCREENWIDTH;
 		ystep = (FIREHEIGHT * FRACUNIT) / SCREENHEIGHT;
 		to = screen->GetBuffer();
-		fromold = (byte *)wipe_scr_start;
-		fromnew = (byte *)wipe_scr_end;
+		fromold = (BYTE *)wipe_scr_start;
+		fromnew = (BYTE *)wipe_scr_end;
 		done = true;
 
 		for (y = 0, firey = 0; y < SCREENHEIGHT; y++, firey += ystep)
@@ -325,7 +325,7 @@ int wipe_doFade (int ticks)
 	fade += ticks;
 	if (fade > 64)
 	{
-		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (byte *)wipe_scr_end);
+		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
 		return 1;
 	}
 	else
@@ -334,9 +334,9 @@ int wipe_doFade (int ticks)
 		fixed_t bglevel = 64 - fade;
 		DWORD *fg2rgb = Col2RGB8[fade];
 		DWORD *bg2rgb = Col2RGB8[bglevel];
-		byte *fromnew = (byte *)wipe_scr_end;
-		byte *fromold = (byte *)wipe_scr_start;
-		byte *to = screen->GetBuffer();
+		BYTE *fromnew = (BYTE *)wipe_scr_end;
+		BYTE *fromold = (BYTE *)wipe_scr_start;
+		BYTE *to = screen->GetBuffer();
 
 		for (y = 0; y < SCREENHEIGHT; y++)
 		{
@@ -375,7 +375,7 @@ int wipe_StartScreen (int type)
 	{
 		wipe_scr_start = new short[SCREENWIDTH * SCREENHEIGHT / 2];
 
-		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (byte *)wipe_scr_start);
+		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
 	}
 
 	return 0;
@@ -387,16 +387,16 @@ int wipe_EndScreen (void)
 	{
 		wipe_scr_end = new short[SCREENWIDTH * SCREENHEIGHT / 2];
 
-		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (byte *)wipe_scr_end);
-		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (byte *)wipe_scr_start); // restore start scr.
+		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
+		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start); // restore start scr.
 	}
 
 	return 0;
 }
 
-int wipe_ScreenWipe (int ticks)
+bool wipe_ScreenWipe (int ticks)
 {
-	static BOOL	go = 0;		// when zero, stop the wipe
+	static bool	go = 0;		// when zero, stop the wipe
 	static int (*wipes[])(int) =
 	{
 		wipe_initMelt, wipe_doMelt, wipe_exitMelt,

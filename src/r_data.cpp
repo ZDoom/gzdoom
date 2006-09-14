@@ -68,7 +68,7 @@ void R_DeinitBuildTiles();
 
 // for global animation
 bool*			flatwarp;
-byte**			warpedflats;
+BYTE**			warpedflats;
 int*			flatwarpedwhen;
 
 
@@ -352,7 +352,7 @@ void FTextureManager::LoadHiresTex()
 	char src[9];
 	bool is32bit;
 	int width, height;
-	int type,mode;
+	int type, mode;
 
 	lastLump = 0;
 	src[8] = '\0';
@@ -370,7 +370,7 @@ void FTextureManager::LoadHiresTex()
 				if (SC_Compare("wall")) type=FTexture::TEX_Wall, mode=FTextureManager::TEXMAN_Overridable;
 				else if (SC_Compare("flat")) type=FTexture::TEX_Flat, mode=FTextureManager::TEXMAN_Overridable;
 				else if (SC_Compare("sprite")) type=FTexture::TEX_Sprite, mode=0;
-				else type = FTexture::TEX_Any;
+				else type = FTexture::TEX_Any, mode = 0;
 				
 				sc_String[8]=0;
 
@@ -524,7 +524,7 @@ static struct FakeCmap {
 } *fakecmaps;
 size_t numfakecmaps;
 int firstfakecmap;
-byte *realcolormaps;
+BYTE *realcolormaps;
 int lastusedcolormap;
 
 void R_SetDefaultColormap (const char *name)

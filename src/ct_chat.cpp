@@ -41,7 +41,7 @@ EXTERN_CVAR (Int, con_scaletext)
 
 void CT_Init ();
 void CT_Drawer ();
-BOOL CT_Responder (event_t *ev);
+bool CT_Responder (event_t *ev);
 
 int chatmodeon;
 
@@ -54,7 +54,7 @@ static void ShoveChatStr (const char *str, BYTE who);
 static bool DoSubstitution (char *out, const char *in);
 
 static int len;
-static byte ChatQueue[QUEUESIZE];
+static BYTE ChatQueue[QUEUESIZE];
 
 CVAR (String, chatmacro1, "I'm ready to kick butt!", CVAR_ARCHIVE)
 CVAR (String, chatmacro2, "I'm OK.", CVAR_ARCHIVE)
@@ -114,7 +114,7 @@ void CT_Stop ()
 //
 //===========================================================================
 
-BOOL CT_Responder (event_t *ev)
+bool CT_Responder (event_t *ev)
 {
 	if (chatmodeon && ev->type == EV_GUI_Event)
 	{

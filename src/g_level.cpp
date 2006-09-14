@@ -105,7 +105,7 @@ static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
 TArray<EndSequence> EndSequences;
 
-extern int timingdemo;
+extern bool timingdemo;
 
 // Start time for timing demos
 int starttime;
@@ -742,9 +742,9 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 {
 	int entry;
 	MapInfoHandler *handler;
-	byte *info;
+	BYTE *info;
 
-	info = levelinfo ? (byte *)levelinfo : (byte *)clusterinfo;
+	info = levelinfo ? (BYTE *)levelinfo : (BYTE *)clusterinfo;
 
 	while (SC_GetString ())
 	{
@@ -1557,9 +1557,9 @@ void G_InitNew (char *mapname, bool bTitleLevel)
 //
 // G_DoCompleted
 //
-BOOL 			secretexit;
+bool 			secretexit;
 static int		startpos;	// [RH] Support for multiple starts per level
-extern BOOL		NoWipe;		// [RH] Don't wipe when travelling in hubs
+extern int		NoWipe;		// [RH] Don't wipe when travelling in hubs
 static bool		startkeepfacing;	// [RH] Support for keeping your facing angle
 static bool		resetinventory;	// Reset the inventory to the player's default for the next level
 
@@ -1917,7 +1917,7 @@ void G_DoLoadLevel (int position, bool autosave)
 
 	if (timingdemo)
 	{
-		static BOOL firstTime = true;
+		static bool firstTime = true;
 
 		if (firstTime)
 		{

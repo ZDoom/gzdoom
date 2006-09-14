@@ -217,7 +217,7 @@ static int WriteNODES (FILE *file)
 			WORD child;
 			if ((size_t)nodes[i].children[j] & 1)
 			{
-				child = NF_SUBSECTOR | WORD((subsector_t *)((byte *)nodes[i].children[j] - 1) - subsectors);
+				child = NF_SUBSECTOR | WORD((subsector_t *)((BYTE *)nodes[i].children[j] - 1) - subsectors);
 			}
 			else
 			{

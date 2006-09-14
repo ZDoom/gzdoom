@@ -1160,15 +1160,15 @@ void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter)
 	}
 }
 
-void C_WriteCVars (byte **demo_p, DWORD filter, bool compact)
+void C_WriteCVars (BYTE **demo_p, DWORD filter, bool compact)
 {
 	FBaseCVar *cvar = CVars;
-	byte *ptr = *demo_p;
+	BYTE *ptr = *demo_p;
 
 	if (compact)
 	{
 		TArray<FBaseCVar *> cvars;
-		ptr += sprintf ((char *)ptr, "\\\\%lux", filter);
+		ptr += sprintf ((char *)ptr, "\\\\%ux", filter);
 		FilterCompactCVars (cvars, filter);
 		while (cvars.Pop (cvar))
 		{
@@ -1194,7 +1194,7 @@ void C_WriteCVars (byte **demo_p, DWORD filter, bool compact)
 	*demo_p = ptr + 1;
 }
 
-void C_ReadCVars (byte **demo_p)
+void C_ReadCVars (BYTE **demo_p)
 {
 	char *ptr = *((char **)demo_p);
 	char *breakpt;

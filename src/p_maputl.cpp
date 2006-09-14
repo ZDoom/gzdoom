@@ -550,7 +550,7 @@ sector_t *AActor::LinkToWorldForMapThing ()
 						num = (SQWORD)(x-ldef->v1->x)*ldef->dx+(SQWORD)(y-ldef->v1->y)*ldef->dy;
 						if (num >= 0 && num <= den)
 						{
-							DPrintf ("%s at (%ld,%ld) lies directly on line %d\n",
+							DPrintf ("%s at (%d,%d) lies directly on line %d\n",
 								this->GetClass()->TypeName.GetChars(), x>>FRACBITS, y>>FRACBITS, ldef-lines);
 							angle_t finean = R_PointToAngle2 (0, 0, ldef->dx, ldef->dy);
 							if (ldef->backsector != NULL && ldef->backsector == ssec->sector)
@@ -635,7 +635,7 @@ void FBlockNode::Release ()
 //
 extern polyblock_t **PolyBlockMap;
 
-BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*))
+bool P_BlockLinesIterator (int x, int y, bool(*func)(line_t*))
 {
 	if (x<0 || y<0 || x>=bmapwidth || y>=bmapheight)
 	{
@@ -702,7 +702,7 @@ BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*))
 // P_BlockThingsIterator
 //
 
-BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), TArray<AActor *> &checkarray, AActor *actor)
+bool P_BlockThingsIterator (int x, int y, bool(*func)(AActor*), TArray<AActor *> &checkarray, AActor *actor)
 {
 	if ((unsigned int)x >= (unsigned int)bmapwidth ||
 		(unsigned int)y >= (unsigned int)bmapheight)
@@ -765,7 +765,7 @@ BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), TArray<AActor *>
 TArray<intercept_t> intercepts (128);
 
 divline_t		trace;
-BOOL 			earlyout;
+INTBOOL			earlyout;
 int 			ptflags;
 
 //
@@ -778,7 +778,7 @@ int 			ptflags;
 // are on opposite sides of the trace.
 // Returns true if earlyout and a solid line hit.
 //
-BOOL PIT_AddLineIntercepts (line_t *ld)
+bool PIT_AddLineIntercepts (line_t *ld)
 {
 	int 				s1;
 	int 				s2;
@@ -834,7 +834,7 @@ BOOL PIT_AddLineIntercepts (line_t *ld)
 //
 // PIT_AddThingIntercepts
 //
-BOOL PIT_AddThingIntercepts (AActor* thing)
+bool PIT_AddThingIntercepts (AActor* thing)
 {
 	int numfronts = 0;
 	divline_t line;
@@ -925,7 +925,7 @@ BOOL PIT_AddThingIntercepts (AActor* thing)
 // Returns true if the traverser function returns true
 // for all lines.
 // 
-BOOL P_TraverseIntercepts (traverser_t func, fixed_t maxfrac)
+bool P_TraverseIntercepts (traverser_t func, fixed_t maxfrac)
 {
 	unsigned int count;
 	fixed_t 	 dist;
@@ -970,7 +970,7 @@ BOOL P_TraverseIntercepts (traverser_t func, fixed_t maxfrac)
 // Returns true if the traverser function returns true
 // for all lines.
 //
-BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, BOOL (*trav) (intercept_t *))
+bool P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, bool (*trav) (intercept_t *))
 {
 	static TArray<AActor *> pathbt;
 

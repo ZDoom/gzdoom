@@ -335,7 +335,7 @@ bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *source, const secplan
 
 sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 					 int *floorlightlevel, int *ceilinglightlevel,
-					 BOOL back)
+					 bool back)
 {
 	// [RH] allow per-plane lighting
 	if (floorlightlevel != NULL)
@@ -873,7 +873,7 @@ extern "C" const int checkcoord[12][4] =
 };
 
 
-static BOOL R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
+static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 {
 	int 				boxx;
 	int 				boxy;
@@ -979,7 +979,7 @@ static BOOL R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 
 void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 {
-	byte *floodcolormap;
+	BYTE *floodcolormap;
 	int floodlight;
 	bool flooding;
 	vertex_t **triangle;

@@ -45,6 +45,7 @@
 #include <stdarg.h>
 #include <math.h>
 
+#define USE_WINDOWS_DWORD
 #include "doomerrors.h"
 #include "hardware.h"
 

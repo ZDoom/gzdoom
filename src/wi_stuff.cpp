@@ -1071,7 +1071,7 @@ void WI_updateNoState ()
 	}
 }
 
-static BOOL snl_pointeron = false;
+static bool snl_pointeron = false;
 
 void WI_initShowNextLoc ()
 {
@@ -1185,7 +1185,7 @@ void WI_updateDeathmatchStats ()
 {
 	/*
 	int i, j;
-	BOOL stillticking;
+	bool stillticking;
 	*/
 
 	WI_updateAnimatedBack();
@@ -1408,7 +1408,7 @@ void WI_updateNetgameStats ()
 
 	int i;
 	int fsum;
-	BOOL stillticking;
+	bool stillticking;
 
 	WI_updateAnimatedBack ();
 

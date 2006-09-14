@@ -40,7 +40,7 @@ void I_FinishUpdateNoBlit (void);
 // Wait for vertical retrace or pause a bit.
 void I_WaitVBL(int count);
 
-void I_ReadScreen (byte *scr);
+void I_ReadScreen (BYTE *scr);
 
 bool I_CheckResolution (int width, int height, int bits);
 void I_ClosestResolution (int *width, int *height, int bits);

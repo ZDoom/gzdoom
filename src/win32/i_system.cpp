@@ -36,6 +36,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 
+#define USE_WINDOWS_DWORD
 #include "hardware.h"
 #include "doomerrors.h"
 #include <math.h>
@@ -81,7 +82,7 @@ UINT TimerPeriod;
 UINT TimerEventID;
 UINT MillisecondsPerTic;
 HANDLE NewTicArrived;
-DWORD LanguageIDs[4];
+uint32 LanguageIDs[4];
 void CalculateCPUSpeed ();
 
 int (*I_GetTime) (bool saveMS);
@@ -151,7 +152,7 @@ int I_WaitForTicPolled (int prevtic)
 
 
 static int tics;
-DWORD ted_start, ted_next;
+static DWORD ted_start, ted_next;
 
 int I_GetTimeEventDriven (bool saveMS)
 {
@@ -182,7 +183,7 @@ void CALLBACK TimerTicked (UINT id, UINT msg, DWORD user, DWORD dw1, DWORD dw2)
 }
 
 // Returns the fractional amount of a tic passed since the most recent tic
-fixed_t I_GetTimeFrac (DWORD *ms)
+fixed_t I_GetTimeFrac (uint32 *ms)
 {
 	DWORD now = timeGetTime();
 	if (ms) *ms = TicNext;
@@ -505,7 +506,7 @@ void I_Quit (void)
 // I_Error
 //
 extern FILE *Logfile;
-BOOL gameisdead;
+bool gameisdead;
 
 void STACK_ARGS I_FatalError (const char *error, ...)
 {
@@ -519,8 +520,6 @@ void STACK_ARGS I_FatalError (const char *error, ...)
 		va_list argptr;
 		va_start (argptr, error);
 		index = vsprintf (errortext, error, argptr);
-// GetLastError() is usually useless because we don't do a lot of Win32 stuff
-//		sprintf (errortext + index, "\nGetLastError = %ld", GetLastError());
 		va_end (argptr);
 
 		// Record error to log (if logging)

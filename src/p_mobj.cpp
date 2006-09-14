@@ -427,12 +427,12 @@ AActor::AActor () throw()
 
 AActor::AActor (const AActor &other) throw()
 {
-	memcpy (&x, &other.x, (byte *)&this[1] - (byte *)&x);
+	memcpy (&x, &other.x, (BYTE *)&this[1] - (BYTE *)&x);
 }
 
 AActor &AActor::operator= (const AActor &other)
 {
-	memcpy (&x, &other.x, (byte *)&this[1] - (byte *)&x);
+	memcpy (&x, &other.x, (BYTE *)&this[1] - (BYTE *)&x);
 	return *this;
 }
 
@@ -2459,9 +2459,9 @@ void AActor::SetShade (int r, int g, int b)
 void AActor::Tick ()
 {
 	// [RH] Data for Heretic/Hexen scrolling sectors
-	static const byte HexenScrollDirs[8] = { 64, 0, 192, 128, 96, 32, 224, 160 };
-	static const char HexenSpeedMuls[3] = { 5, 10, 25 };
-	static const char HexenScrollies[24][2] =
+	static const BYTE HexenScrollDirs[8] = { 64, 0, 192, 128, 96, 32, 224, 160 };
+	static const BYTE HexenSpeedMuls[3] = { 5, 10, 25 };
+	static const SBYTE HexenScrollies[24][2] =
 	{
 		{  0,  1 }, {  0,  2 }, {  0,  4 },
 		{ -1,  0 }, { -2,  0 }, { -4,  0 },
@@ -2473,8 +2473,8 @@ void AActor::Tick ()
 		{  1, -1 }, {  2, -2 }, {  4, -4 }
 	};
 
-	static const byte HereticScrollDirs[4] = { 6, 9, 1, 4 };
-	static const char HereticSpeedMuls[5] = { 5, 10, 25, 30, 35 };
+	static const BYTE HereticScrollDirs[4] = { 6, 9, 1, 4 };
+	static const BYTE HereticSpeedMuls[5] = { 5, 10, 25, 30, 35 };
 
 	AActor *onmo;
 	int i;
@@ -2670,7 +2670,7 @@ void AActor::Tick ()
 						 scrolltype <= Carry_West35)
 				{ // Heretic scroll special
 					scrolltype -= Carry_East5;
-					byte dir = HereticScrollDirs[scrolltype / 5];
+					BYTE dir = HereticScrollDirs[scrolltype / 5];
 					fixed_t carryspeed = DivScale32 (HereticSpeedMuls[scrolltype % 5], 32*CARRYFACTOR);
 					if (scrolltype<=Carry_East35 && !(i_compatflags&COMPATF_RAVENSCROLL)) 
 					{
@@ -2943,7 +2943,7 @@ void AActor::Tick ()
 
 bool AActor::UpdateWaterLevel (fixed_t oldz)
 {
-	byte lastwaterlevel = waterlevel;
+	BYTE lastwaterlevel = waterlevel;
 
 	waterlevel = 0;
 

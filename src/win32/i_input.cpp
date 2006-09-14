@@ -74,6 +74,7 @@
 #include <pbt.h>
 #endif
 
+#define USE_WINDOWS_DWORD
 #include "c_dispatch.h"
 #include "doomtype.h"
 #include "doomdef.h"
@@ -362,7 +363,7 @@ static int ActiveDIKState;
 static void SetSoundPaused (int state);
 
 // Convert DIK_* code to ASCII using Qwerty keymap
-static const byte Convert [256] =
+static const BYTE Convert [256] =
 {
   //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
 	  0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',   8,   9, // 0
@@ -1401,7 +1402,7 @@ static BOOL I_GetDIMouse ()
 	return TRUE;
 }
 
-BOOL I_InitInput (void *hwnd)
+bool I_InitInput (void *hwnd)
 {
 	HRESULT hr;
 

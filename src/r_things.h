@@ -29,10 +29,10 @@ struct particle_t
 	fixed_t	x,y,z;
 	fixed_t velx,vely,velz;
 	fixed_t accx,accy,accz;
-	byte	ttl;
-	byte	trans;
-	byte	size;
-	byte	fade;
+	BYTE	ttl;
+	BYTE	trans;
+	BYTE	size;
+	BYTE	fade;
 	int		color;
 	WORD	tnext;
 	WORD	snext;

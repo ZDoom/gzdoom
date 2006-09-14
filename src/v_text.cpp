@@ -57,7 +57,7 @@ void DCanvas::SetFont (FFont *font)
 	Font = font;
 }
 
-void STACK_ARGS DCanvas::DrawChar (int normalcolor, int x, int y, byte character, ...)
+void STACK_ARGS DCanvas::DrawChar (int normalcolor, int x, int y, BYTE character, ...)
 {
 	if (Font == NULL)
 		return;
@@ -87,16 +87,16 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 {
 	va_list tags;
 	DWORD tag;
-	BOOL boolval;
+	INTBOOL boolval;
 
 	int			maxstrlen = INT_MAX;
 	int 		w, maxwidth;
-	const byte *ch;
+	const BYTE *ch;
 	int 		c;
 	int 		cx;
 	int 		cy;
 	int			boldcolor;
-	const byte *range;
+	const BYTE *range;
 	int			height;
 	int			scalex, scaley;
 	int			kerning;
@@ -113,7 +113,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 	height = Font->GetHeight () + 1;
 	kerning = Font->GetDefaultKerning ();
 
-	ch = (const byte *)string;
+	ch = (const BYTE *)string;
 	cx = x;
 	cy = y;
 
@@ -159,7 +159,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 			break;
 
 		case DTA_CleanNoMove:
-			boolval = va_arg (tags, BOOL);
+			boolval = va_arg (tags, INTBOOL);
 			if (boolval)
 			{
 				scalex = CleanXfac;
@@ -170,7 +170,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 
 		case DTA_Clean:
 		case DTA_320x200:
-			boolval = va_arg (tags, BOOL);
+			boolval = va_arg (tags, INTBOOL);
 			if (boolval)
 			{
 				scalex = scaley = 1;
@@ -216,7 +216,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 			}
 			else if (newcolor == '[')		// Named
 			{
-				const byte *namestart = ch;
+				const BYTE *namestart = ch;
 				while (*ch != ']' && *ch != '\0')
 				{
 					ch++;
@@ -307,7 +307,7 @@ int FFont::StringWidth (const BYTE *string) const
 //
 // Break long lines of text into multiple lines no longer than maxwidth pixels
 //
-static void breakit (FBrokenLines *line, const byte *start, const byte *string, bool keepspace, FString &linecolor)
+static void breakit (FBrokenLines *line, const BYTE *start, const BYTE *string, bool keepspace, FString &linecolor)
 {
 	// Leave out trailing white space
 	if (!keepspace)
@@ -325,11 +325,11 @@ static void breakit (FBrokenLines *line, const byte *start, const byte *string, 
 	line->Width = screen->Font->StringWidth (line->Text);
 }
 
-FBrokenLines *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
+FBrokenLines *V_BreakLines (int maxwidth, const BYTE *string, bool keepspace)
 {
 	FBrokenLines lines[128];	// Support up to 128 lines (should be plenty)
 
-	const byte *space = NULL, *start = string;
+	const BYTE *space = NULL, *start = string;
 	int i, c, w, nw;
 	FString lastcolor, linecolor;
 	bool lastWasSpace = false;
@@ -345,7 +345,7 @@ FBrokenLines *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 			{
 				if (*string == '[')
 				{
-					const byte *start = string;
+					const BYTE *start = string;
 					while (*string != ']' && *string != '\0')
 					{
 						string++;
@@ -419,7 +419,7 @@ FBrokenLines *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 
 	if (string - start > 1)
 	{
-		const byte *s = start;
+		const BYTE *s = start;
 
 		while (s < string)
 		{

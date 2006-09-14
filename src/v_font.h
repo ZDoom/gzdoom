@@ -85,7 +85,7 @@ public:
 
 	FTexture *GetChar (int code, int *const width) const;
 	int GetCharWidth (int code) const;
-	byte *GetColorTranslation (EColorRange range) const;
+	BYTE *GetColorTranslation (EColorRange range) const;
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
 	int GetDefaultKerning () const { return GlobalKerning; }
@@ -93,15 +93,15 @@ public:
 	static FFont *FindFont (const char *fontname);
 
 	// Return width of string in pixels (unscaled)
-	int StringWidth (const byte *str) const;
-	inline int StringWidth (const char *str) const { return StringWidth ((const byte *)str); }
+	int StringWidth (const BYTE *str) const;
+	inline int StringWidth (const char *str) const { return StringWidth ((const BYTE *)str); }
 
 protected:
 	FFont ();
 
 	void BuildTranslations (const double *luminosity, const BYTE *identity, const void *ranges);
 
-	static int SimpleTranslation (byte *colorsused, byte *translation, byte *identity, double **luminosity);
+	static int SimpleTranslation (BYTE *colorsused, BYTE *translation, BYTE *identity, double **luminosity);
 
 	int FirstChar, LastChar;
 	int SpaceWidth;
@@ -145,7 +145,7 @@ protected:
 	void CreateFontFromPic (int picnum);
 };
 
-void RecordTextureColors (FTexture *pic, byte *colorsused);
+void RecordTextureColors (FTexture *pic, BYTE *colorsused);
 
 extern FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
 

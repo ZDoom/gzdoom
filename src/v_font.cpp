@@ -139,7 +139,7 @@ int NumTextColors;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const byte myislower[256] =
+static const BYTE myislower[256] =
 {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -233,7 +233,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	int i, lump;
 	char buffer[12];
 	int *charlumps;
-	byte usedcolors[256], identity[256];
+	BYTE usedcolors[256], identity[256];
 	double *luminosity;
 	int maxyoffs;
 	bool doomtemplate = gameinfo.gametype == GAME_Doom ? strncmp (nametemplate, "STCFN", 5) == 0 : false;
@@ -405,7 +405,7 @@ FFont *FFont::FindFont (const char *name)
 //
 //==========================================================================
 
-void RecordTextureColors (FTexture *pic, byte *usedcolors)
+void RecordTextureColors (FTexture *pic, BYTE *usedcolors)
 {
 	int x;
 
@@ -439,12 +439,12 @@ void RecordTextureColors (FTexture *pic, byte *usedcolors)
 
 static int STACK_ARGS compare (const void *arg1, const void *arg2)
 {
-	if (RPART(GPalette.BaseColors[*((byte *)arg1)]) * 299 +
-		GPART(GPalette.BaseColors[*((byte *)arg1)]) * 587 +
-		BPART(GPalette.BaseColors[*((byte *)arg1)]) * 114  <
-		RPART(GPalette.BaseColors[*((byte *)arg2)]) * 299 +
-		GPART(GPalette.BaseColors[*((byte *)arg2)]) * 587 +
-		BPART(GPalette.BaseColors[*((byte *)arg2)]) * 114)
+	if (RPART(GPalette.BaseColors[*((BYTE *)arg1)]) * 299 +
+		GPART(GPalette.BaseColors[*((BYTE *)arg1)]) * 587 +
+		BPART(GPalette.BaseColors[*((BYTE *)arg1)]) * 114  <
+		RPART(GPalette.BaseColors[*((BYTE *)arg2)]) * 299 +
+		GPART(GPalette.BaseColors[*((BYTE *)arg2)]) * 587 +
+		BPART(GPalette.BaseColors[*((BYTE *)arg2)]) * 114)
 		return -1;
 	else
 		return 1;
@@ -469,7 +469,7 @@ static int STACK_ARGS compare (const void *arg1, const void *arg2)
 //
 //==========================================================================
 
-int FFont::SimpleTranslation (byte *colorsused, byte *translation, byte *reverse, double **luminosity)
+int FFont::SimpleTranslation (BYTE *colorsused, BYTE *translation, BYTE *reverse, double **luminosity)
 {
 	double min, max, diver;
 	int i, j;
@@ -530,7 +530,7 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, c
 	const TranslationParm *parmstart = (const TranslationParm *)ranges;
 	BYTE *range;
 
-	range = Ranges = new byte[NumTextColors * ActiveColors];
+	range = Ranges = new BYTE[NumTextColors * ActiveColors];
 
 	// Create different translations for different color ranges
 	for (i = 0; i < NumTextColors; i++)
@@ -590,7 +590,7 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, c
 //
 //==========================================================================
 
-byte *FFont::GetColorTranslation (EColorRange range) const
+BYTE *FFont::GetColorTranslation (EColorRange range) const
 {
 	if (ActiveColors == 0)
 		return NULL;
@@ -1330,7 +1330,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 	int i, j, lump;
 	char buffer[12];
 	int *charlumps;
-	byte usedcolors[256], identity[256];
+	BYTE usedcolors[256], identity[256];
 	double *luminosity;
 	int maxyoffs;
 	int TotalColors;
@@ -1426,8 +1426,8 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 	if (ActiveColors < TotalColors)
 	{
 		int factor = 1;
-		byte *oldranges = Ranges;
-		Ranges = new byte[NumTextColors * TotalColors * factor];
+		BYTE *oldranges = Ranges;
+		Ranges = new BYTE[NumTextColors * TotalColors * factor];
 
 		for (i = 0; i < CR_UNTRANSLATED; i++)
 		{

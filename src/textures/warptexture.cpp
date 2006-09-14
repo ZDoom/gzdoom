@@ -144,7 +144,7 @@ void FWarpTexture::MakeTexture (DWORD time)
 
 	GenTime = time;
 
-	byte *buffer = (byte *)alloca (MAX (Width, Height));
+	BYTE *buffer = (BYTE *)alloca (MAX (Width, Height));
 	int xsize = Width;
 	int ysize = Height;
 	int xmask = WidthMask;

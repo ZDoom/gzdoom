@@ -214,7 +214,7 @@ void DHUDMessage::ResetText (const char *text)
 
 	screen->SetFont (Font);
 
-	Lines = V_BreakLines (width, (byte *)text);
+	Lines = V_BreakLines (width, (BYTE *)text);
 
 	NumLines = 0;
 	Width = 0;

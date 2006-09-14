@@ -247,7 +247,7 @@ const char *KeyNames[NUM_KEYS] =
 static FString Bindings[NUM_KEYS];
 static FString DoubleBindings[NUM_KEYS];
 static unsigned int DClickTime[NUM_KEYS];
-static byte DClicked[(NUM_KEYS+7)/8];
+static BYTE DClicked[(NUM_KEYS+7)/8];
 
 static int GetKeyFromName (const char *name)
 {
@@ -507,12 +507,12 @@ void C_SetDefaultBindings ()
 	C_BindDefaults ();
 }
 
-BOOL C_DoKey (event_t *ev)
+bool C_DoKey (event_t *ev)
 {
 	FString binding;
 	bool dclick;
 	int dclickspot;
-	byte dclickmask;
+	BYTE dclickmask;
 
 	if (ev->type != EV_KeyDown && ev->type != EV_KeyUp)
 		return false;

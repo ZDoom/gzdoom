@@ -698,7 +698,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		return;
 	}
 
-	object = new byte[len];
+	object = new BYTE[len];
 	if (fr == NULL)
 	{
 		Wads.ReadLump (lumpnum, object);
@@ -1018,7 +1018,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 							if (lib->ArrayStore[impNum].ArraySize != expectedSize)
 							{
 								Format = ACS_Unknown;
-								Printf ("The array %s in %s has %ld elements, but %s expects it to only have %ld.\n",
+								Printf ("The array %s in %s has %u elements, but %s expects it to only have %u.\n",
 									parse, lib->ModuleName, lib->ArrayStore[impNum].ArraySize,
 									ModuleName, expectedSize);
 							}
@@ -3663,7 +3663,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_PRINTNUMBER:
-			work.AppendFormat ("%ld", STACK(1));
+			work.AppendFormat ("%d", STACK(1));
 			--sp;
 			break;
 
@@ -3696,7 +3696,7 @@ int DLevelScript::RunScript ()
 				}
 				else
 				{
-					work.AppendFormat ("Player %ld", STACK(1));
+					work.AppendFormat ("Player %d", STACK(1));
 					sp--;
 					break;
 				}
@@ -4379,7 +4379,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_SETACTORPOSITION:
 			{
-				BOOL result = false;
+				bool result = false;
 				AActor *actor = SingleActorFromTID (STACK(5), activator);
 				if (actor != NULL)
 					result = P_MoveThing(actor, STACK(4), STACK(3), STACK(2), !!STACK(1));

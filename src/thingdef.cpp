@@ -786,7 +786,7 @@ static const actionf_p BasicAttacks[3] =
 //----------------------------------------------------------------------------
 static int NumUsedTranslations;
 static int NumUsedBloodTranslations;
-byte decorate_translations[256*256*2];
+BYTE decorate_translations[256*256*2];
 PalEntry BloodTranslations[256];
 
 void InitDecorateTranslations()

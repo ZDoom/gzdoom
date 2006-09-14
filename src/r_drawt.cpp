@@ -54,7 +54,7 @@
 // dc_ctspan points into dc_tspans.
 // But what is horizspan, and what is its relation with dc_ctspan?
 
-byte dc_temp[MAXHEIGHT*4];
+BYTE dc_temp[MAXHEIGHT*4];
 unsigned int dc_tspans[4][MAXHEIGHT];
 unsigned int *dc_ctspan[4];
 unsigned int *horizspan[4];
@@ -63,8 +63,8 @@ unsigned int *horizspan[4];
 // Copies one span at hx to the screen at sx.
 void rt_copy1col_c (int hx, int sx, int yl, int yh)
 {
-	byte *source;
-	byte *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -137,9 +137,9 @@ void rt_copy4cols_c (int sx, int yl, int yh)
 // Maps one span at hx to the screen at sx.
 void rt_map1col_c (int hx, int sx, int yl, int yh)
 {
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -172,9 +172,9 @@ void rt_map1col_c (int hx, int sx, int yl, int yh)
 // Maps all four spans to the screen starting at sx.
 void rt_map4cols_c (int sx, int yl, int yh)
 {
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -217,10 +217,10 @@ void rt_map4cols_c (int sx, int yl, int yh)
 // Translates one span at hx to the screen at sx.
 void rt_tlate1col (int hx, int sx, int yl, int yh)
 {
-	byte *translation;
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *translation;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -245,10 +245,10 @@ void rt_tlate1col (int hx, int sx, int yl, int yh)
 // Translates all four spans to the screen starting at sx.
 void rt_tlate4cols (int sx, int yl, int yh)
 {
-	byte *translation;
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *translation;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -276,9 +276,9 @@ void rt_tlate4cols (int sx, int yl, int yh)
 // Adds one span at hx to the screen at sx without clamping.
 void rt_add1col (int hx, int sx, int yl, int yh)
 {
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -310,9 +310,9 @@ void rt_add1col (int hx, int sx, int yl, int yh)
 // Adds all four spans to the screen starting at sx without clamping.
 void rt_add4cols (int sx, int yl, int yh)
 {
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -366,10 +366,10 @@ void rt_add4cols (int sx, int yl, int yh)
 // Translates and adds one span at hx to the screen at sx without clamping.
 void rt_tlateadd1col (int hx, int sx, int yl, int yh)
 {
-	byte *translation;
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *translation;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -402,10 +402,10 @@ void rt_tlateadd1col (int hx, int sx, int yl, int yh)
 // Translates and adds all four spans to the screen starting at sx without clamping.
 void rt_tlateadd4cols (int sx, int yl, int yh)
 {
-	byte *translation;
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *translation;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -461,9 +461,9 @@ void rt_tlateadd4cols (int sx, int yl, int yh)
 void rt_shaded1col (int hx, int sx, int yl, int yh)
 {
 	DWORD *fgstart;
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -493,9 +493,9 @@ void rt_shaded4cols (int sx, int yl, int yh)
 {
 	BYTE fill;
 	DWORD *fgstart;
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -572,9 +572,9 @@ void rt_shaded4cols (int sx, int yl, int yh)
 // Adds one span at hx to the screen at sx with clamping.
 void rt_addclamp1col (int hx, int sx, int yl, int yh)
 {
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -608,9 +608,9 @@ void rt_addclamp1col (int hx, int sx, int yl, int yh)
 // Adds all four spans to the screen starting at sx with clamping.
 void rt_addclamp4cols (int sx, int yl, int yh)
 {
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -672,10 +672,10 @@ void rt_addclamp4cols (int sx, int yl, int yh)
 // Translates and adds one span at hx to the screen at sx with clamping.
 void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh)
 {
-	byte *translation;
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *translation;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -710,10 +710,10 @@ void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh)
 // Translates and adds all four spans to the screen starting at sx with clamping.
 void rt_tlateaddclamp4cols (int sx, int yl, int yh)
 {
-	byte *translation;
-	byte *colormap;
-	byte *source;
-	byte *dest;
+	BYTE *translation;
+	BYTE *colormap;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -925,7 +925,7 @@ void rt_initcols (void)
 void R_DrawColumnHorizP_C (void)
 {
 	int count = dc_count;
-	byte *dest;
+	BYTE *dest;
 	fixed_t fracstep;
 	fixed_t frac;
 
@@ -946,7 +946,7 @@ void R_DrawColumnHorizP_C (void)
 	frac = dc_texturefrac;
 
 	{
-		const byte *source = dc_source;
+		const BYTE *source = dc_source;
 
 		if (count & 1) {
 			*dest = source[frac>>FRACBITS];
@@ -1001,8 +1001,8 @@ void R_DrawColumnHorizP_C (void)
 void R_FillColumnHorizP (void)
 {
 	int count = dc_count;
-	byte color = dc_color;
-	byte *dest;
+	BYTE color = dc_color;
+	BYTE *dest;
 
 	if (count <= 0)
 		return;

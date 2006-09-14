@@ -39,6 +39,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"

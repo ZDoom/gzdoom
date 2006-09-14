@@ -125,7 +125,7 @@ CVAR (Bool, idmypos, false, 0);
 
 // [RH] Amount of red flash for up to 114 damage points. Calculated by hand
 //		using a logarithmic scale and my trusty HP48G.
-byte FBaseStatusBar::DamageToAlpha[114] =
+BYTE FBaseStatusBar::DamageToAlpha[114] =
 {
 	  0,   8,  16,  23,  30,  36,  42,  47,  53,  58,  62,  67,  71,  75,  79,
 	 83,  87,  90,  94,  97, 100, 103, 107, 109, 112, 115, 118, 120, 123, 125,
@@ -410,7 +410,7 @@ void FBaseStatusBar::ShowPlayerName ()
 //---------------------------------------------------------------------------
 
 void FBaseStatusBar::DrawImage (FTexture *img,
-	int x, int y, byte *translation) const
+	int x, int y, BYTE *translation) const
 {
 	if (img != NULL)
 	{
@@ -1108,7 +1108,7 @@ void FBaseStatusBar::Draw (EHudState state)
 		value = &CPlayer->mo->z;
 		for (i = 2, value = &CPlayer->mo->z; i >= 0; y -= height, --value, --i)
 		{
-			sprintf (line, "%c: %ld", labels[i], *value >> FRACBITS);
+			sprintf (line, "%c: %d", labels[i], *value >> FRACBITS);
 			screen->DrawText (CR_GREEN, SCREENWIDTH - 80, y, line, TAG_DONE);
 			BorderNeedRefresh = screen->GetPageCount();
 		}

@@ -62,7 +62,7 @@ static int Background, YourColor, WallColor, TSWallColor,
 		   SecretSectorColor;
 
 static int DoomColors[11];
-static byte DoomPaletteVals[11*3] =
+static BYTE DoomPaletteVals[11*3] =
 {
 	0x00,0x00,0x00, 0xff,0xff,0xff, 0x10,0x10,0x10,
 	0xfc,0x00,0x00, 0x80,0x80,0x80, 0xbc,0x78,0x48,
@@ -277,7 +277,7 @@ static int	f_w;
 static int	f_h;
 static int	f_p;				// [RH] # of bytes from start of a line to start of next
 
-static byte *fb;				// pseudo-frame buffer
+static BYTE *fb;				// pseudo-frame buffer
 static int	amclock;
 
 static mpoint_t	m_paninc;		// how far the window pans each tic (map coords)
@@ -324,7 +324,7 @@ static FTexture *mapback;	// the automap background
 static fixed_t mapystart=0; // y-value for the start of the map bitmap...used in the parallax stuff.
 static fixed_t mapxstart=0; //x-value for the bitmap.
 
-static BOOL stopped = true;
+static bool stopped = true;
 
 
 #define NUMALIASES		3
@@ -336,15 +336,15 @@ static BOOL stopped = true;
 #define WEIGHTSHIFT		(16-WEIGHTBITS)
 #define NUMWEIGHTS		(1<<WEIGHTBITS)
 #define WEIGHTMASK		(NUMWEIGHTS-1)
-static byte antialias[NUMALIASES][NUMWEIGHTS];
+static BYTE antialias[NUMALIASES][NUMWEIGHTS];
 
 
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
 void AM_rotate (fixed_t *x, fixed_t *y, angle_t an);
 
-void DrawWuLine (int X0, int Y0, int X1, int Y1, byte *BaseColor);
-void DrawTransWuLine (int X0, int Y0, int X1, int Y1, byte BaseColor);
+void DrawWuLine (int X0, int Y0, int X1, int Y1, BYTE *BaseColor);
+void DrawTransWuLine (int X0, int Y0, int X1, int Y1, BYTE BaseColor);
 
 // Calculates the slope and slope according to the x-axis of a line
 // segment in map coordinates (with the upright y-axis n' all) so
@@ -612,7 +612,7 @@ static void GetComponents (int color, DWORD *palette, float &r, float &g, float 
 	b = (float)BPART(color);
 }
 
-static void AM_initColors (BOOL overlayed)
+static void AM_initColors (bool overlayed)
 {
 	static DWORD *lastpal = NULL;
 	static int lastback = -1;
@@ -891,9 +891,9 @@ void AM_ToggleMap ()
 //
 // Handle events (user inputs) in automap mode
 //
-BOOL AM_Responder (event_t *ev)
+bool AM_Responder (event_t *ev)
 {
-	int rc;
+	bool rc;
 	static int cheatstate = 0;
 	static int bigstate = 0;
 
@@ -1120,7 +1120,7 @@ void AM_clearFB (int color)
 // faster reject and precalculated slopes.  If the speed is needed,
 // use a hash algorithm to handle the common cases.
 //
-BOOL AM_clipMline (mline_t *ml, fline_t *fl)
+bool AM_clipMline (mline_t *ml, fline_t *fl)
 {
 	enum {
 		LEFT	=1,
@@ -1293,7 +1293,7 @@ void AM_drawFline (fline_t *fl, int color)
 			if (ax > ay) {
 				d = ay - ax/2;
 				for (;;) {
-					PUTDOTP(x,y,(byte)color);
+					PUTDOTP(x,y,(BYTE)color);
 					if (x == fl->b.x)
 						return;
 					if (d>=0) {
@@ -1306,7 +1306,7 @@ void AM_drawFline (fline_t *fl, int color)
 			} else {
 				d = ax - ay/2;
 				for (;;) {
-					PUTDOTP(x, y, (byte)color);
+					PUTDOTP(x, y, (BYTE)color);
 					if (y == fl->b.y)
 						return;
 					if (d >= 0) {
@@ -1331,11 +1331,11 @@ void AM_drawFline (fline_t *fl, int color)
  * IntensityBits = log base 2 of NumLevels; the # of bits used to describe
  *          the intensity of the drawing color. 2**IntensityBits==NumLevels
  */
-void PUTDOT (int xx, int yy,byte *cc, byte *cm)
+void PUTDOT (int xx, int yy, BYTE *cc, BYTE *cm)
 {
 	static int oldyy;
 	static int oldyyshifted;
-	byte *oldcc=cc;
+	BYTE *oldcc=cc;
 
 #if 0
 	if(xx < 32)
@@ -1376,7 +1376,7 @@ void PUTDOT (int xx, int yy,byte *cc, byte *cm)
 	fb[oldyyshifted+xx] = *(cc);
 }
 
-void DrawWuLine (int x0, int y0, int x1, int y1, byte *baseColor)
+void DrawWuLine (int x0, int y0, int x1, int y1, BYTE *baseColor)
 {
 	int deltaX, deltaY, xDir;
 
@@ -1549,7 +1549,7 @@ void PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 		oldyyshifted = yy*SCREENPITCH;
 	}
 
-	byte *spot = fb + oldyyshifted + xx;
+	BYTE *spot = fb + oldyyshifted + xx;
 	DWORD *bg2rgb = Col2RGB8[1+level];
 	DWORD *fg2rgb = Col2RGB8[63-level];
 	DWORD fg = fg2rgb[basecolor];
@@ -1558,7 +1558,7 @@ void PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	*spot = RGB32k[0][0][bg&(bg>>15)];
 }
 
-void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
+void DrawTransWuLine (int x0, int y0, int x1, int y1, BYTE baseColor)
 {
 	int deltaX, deltaY, xDir;
 
@@ -1591,7 +1591,7 @@ void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
 	}
 	if (deltaX == 0)
 	{ // vertical line
-		byte *spot = screen->GetBuffer() + y0*screen->GetPitch() + x0;
+		BYTE *spot = screen->GetBuffer() + y0*screen->GetPitch() + x0;
 		int pitch = screen->GetPitch ();
 		do
 		{
@@ -1602,7 +1602,7 @@ void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
 	}
 	if (deltaX == deltaY)
 	{ // diagonal line.
-		byte *spot = screen->GetBuffer() + y0*screen->GetPitch() + x0;
+		BYTE *spot = screen->GetBuffer() + y0*screen->GetPitch() + x0;
 		int advance = screen->GetPitch() + xDir;
 		do
 		{
@@ -2129,7 +2129,7 @@ void AM_drawMarks ()
 
 void AM_drawCrosshair (int color)
 {
-	fb[f_p*((f_h+1)/2)+(f_w/2)] = (byte)color; // single point for now
+	fb[f_p*((f_h+1)/2)+(f_w/2)] = (BYTE)color; // single point for now
 }
 
 void AM_Drawer ()

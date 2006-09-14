@@ -50,7 +50,7 @@ public:
 
 	void PrintStatus ();
 	void PrintDriversList ();
-	void GatherStats (char *outstring);
+	FString GatherStats ();
 	void ResetEnvironment ();
 
 private:

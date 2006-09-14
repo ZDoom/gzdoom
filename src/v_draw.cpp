@@ -63,7 +63,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	va_list tags;
 	DWORD tag;
-	BOOL boolval;
+	INTBOOL boolval;
 	int intval;
 
 	if (img == NULL || img->UseType == FTexture::TEX_Null)
@@ -87,13 +87,13 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 	fixed_t alpha = FRACUNIT;
 	int fillcolor = -1;
 	const BYTE *translation = NULL;
-	BOOL alphaChannel = false;
-	BOOL flipX = false;
+	INTBOOL alphaChannel = false;
+	INTBOOL flipX = false;
 	fixed_t shadowAlpha = 0;
 	int shadowColor = 0;
 	int virtWidth = this->GetWidth();
 	int virtHeight = this->GetHeight();
-	BOOL keepratio = false;
+	INTBOOL keepratio = false;
 
 	x0 <<= FRACBITS;
 	y0 <<= FRACBITS;
@@ -135,7 +135,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_Clean:
-			boolval = va_arg (tags, BOOL);
+			boolval = va_arg (tags, INTBOOL);
 			if (boolval)
 			{
 				x0 = (x0 - 160*FRACUNIT) * CleanXfac + (Width * (FRACUNIT/2));
@@ -146,7 +146,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_CleanNoMove:
-			boolval = va_arg (tags, BOOL);
+			boolval = va_arg (tags, INTBOOL);
 			if (boolval)
 			{
 				destwidth = texwidth * CleanXfac * FRACUNIT;
@@ -155,7 +155,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_320x200:
-			boolval = va_arg (tags, BOOL);
+			boolval = va_arg (tags, INTBOOL);
 			if (boolval)
 			{
 				virtWidth = 320;
@@ -207,7 +207,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_AlphaChannel:
-			alphaChannel = va_arg (tags, BOOL);
+			alphaChannel = va_arg (tags, INTBOOL);
 			break;
 
 		case DTA_FillColor:
@@ -219,7 +219,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_FlipX:
-			flipX = va_arg (tags, BOOL);
+			flipX = va_arg (tags, INTBOOL);
 			break;
 
 		case DTA_TopOffset:
@@ -295,7 +295,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_Shadow:
-			boolval = va_arg (tags, BOOL);
+			boolval = va_arg (tags, INTBOOL);
 			if (boolval)
 			{
 				shadowAlpha = FRACUNIT/2;
@@ -308,7 +308,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_Masked:
-			boolval = va_arg (tags, BOOL);
+			boolval = va_arg (tags, INTBOOL);
 			if (boolval)
 			{
 				spanptr = &spans;
@@ -320,7 +320,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_KeepRatio:
-			keepratio = va_arg (tags, BOOL);
+			keepratio = va_arg (tags, INTBOOL);
 			break;
 		}
 		tag = va_arg (tags, DWORD);
@@ -591,11 +591,11 @@ void DCanvas::FillBorder (FTexture *img)
 // V_DrawBlock
 // Draw a linear block of pixels into the view buffer.
 //
-void DCanvas::DrawBlock (int x, int y, int _width, int _height, const byte *src) const
+void DCanvas::DrawBlock (int x, int y, int _width, int _height, const BYTE *src) const
 {
 	int srcpitch = _width;
 	int destpitch;
-	byte *dest;
+	BYTE *dest;
 
 	if (ClipBox (x, y, _width, _height, src, srcpitch))
 	{
@@ -617,9 +617,9 @@ void DCanvas::DrawBlock (int x, int y, int _width, int _height, const byte *src)
 // V_GetBlock
 // Gets a linear block of pixels from the view buffer.
 //
-void DCanvas::GetBlock (int x, int y, int _width, int _height, byte *dest) const
+void DCanvas::GetBlock (int x, int y, int _width, int _height, BYTE *dest) const
 {
-	const byte *src;
+	const BYTE *src;
 
 #ifdef RANGECHECK 
 	if (x<0
@@ -642,7 +642,7 @@ void DCanvas::GetBlock (int x, int y, int _width, int _height, byte *dest) const
 }
 
 // Returns true if the box was completely clipped. False otherwise.
-bool DCanvas::ClipBox (int &x, int &y, int &w, int &h, const byte *&src, const int srcpitch) const
+bool DCanvas::ClipBox (int &x, int &y, int &w, int &h, const BYTE *&src, const int srcpitch) const
 {
 	if (x >= Width || y >= Height || x+w <= 0 || y+h <= 0)
 	{ // Completely clipped off screen

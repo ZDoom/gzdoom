@@ -217,7 +217,7 @@ void P_ProcessSwitchDef ()
 	char *picname;
 	FSwitchDef *def1, *def2;
 	SWORD picnum;
-	byte max;
+	BYTE max;
 	bool quest = false;
 
 	def1 = def2 = NULL;
@@ -492,7 +492,7 @@ static int TryFindSwitch (SWORD texture)
 // Function that changes wall texture.
 // Tell it if switch is ok to use again (1=yes, it's a button).
 //
-bool P_ChangeSwitchTexture (side_t *side, int useAgain, byte special, bool *quest)
+bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest)
 {
 	DActiveButton::EWhere where;
 	short *texture;

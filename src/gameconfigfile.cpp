@@ -41,6 +41,7 @@
 #include <lmcons.h>
 #include <shlobj.h>
 extern HWND Window;
+#define USE_WINDOWS_DWORD
 #endif
 
 #include "doomdef.h"

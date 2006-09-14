@@ -32,8 +32,8 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-BOOL PO_MovePolyobj (int num, int x, int y);
-BOOL PO_RotatePolyobj (int num, angle_t angle);
+bool PO_MovePolyobj (int num, int x, int y);
+bool PO_RotatePolyobj (int num, angle_t angle);
 void PO_Init (void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -45,7 +45,7 @@ static void RotatePt (int an, fixed_t *x, fixed_t *y, fixed_t startSpotX,
 	fixed_t startSpotY);
 static void UnLinkPolyobj (polyobj_t *po);
 static void LinkPolyobj (polyobj_t *po);
-static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po);
+static bool CheckMobjBlocking (seg_t *seg, polyobj_t *po);
 static void InitBlockMap (void);
 static void IterFindPolySegs (vertex_t *v1, vertex_t *v2, seg_t **segList);
 static void SpawnPolyobj (int index, int tag, int type);
@@ -219,7 +219,7 @@ void DRotatePoly::Tick ()
 
 
 bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
-					int direction, BOOL overRide)
+					int direction, bool overRide)
 {
 	int mirror;
 	DRotatePoly *pe;
@@ -332,7 +332,7 @@ void DMovePoly::Tick ()
 //==========================================================================
 
 bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
-				  fixed_t dist, BOOL overRide)
+				  fixed_t dist, bool overRide)
 {
 	int mirror;
 	DMovePoly *pe;
@@ -757,7 +757,7 @@ static void UpdateSegBBox (seg_t *seg)
 //
 //==========================================================================
 
-BOOL PO_MovePolyobj (int num, int x, int y)
+bool PO_MovePolyobj (int num, int x, int y)
 {
 	int count;
 	seg_t **segList;
@@ -860,7 +860,7 @@ static void RotatePt (int an, fixed_t *x, fixed_t *y, fixed_t startSpotX, fixed_
 //
 //==========================================================================
 
-BOOL PO_RotatePolyobj (int num, angle_t angle)
+bool PO_RotatePolyobj (int num, angle_t angle)
 {
 	int count;
 	seg_t **segList;
@@ -868,7 +868,7 @@ BOOL PO_RotatePolyobj (int num, angle_t angle)
 	vertex_t *prevPts;
 	int an;
 	polyobj_t *po;
-	BOOL blocked;
+	bool blocked;
 
 	if(!(po = GetPolyobj(num)))
 	{
@@ -1061,7 +1061,7 @@ static void LinkPolyobj (polyobj_t *po)
 //
 //==========================================================================
 
-static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po)
+static bool CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 {
 	static TArray<AActor *> checker;
 	FBlockNode *block;
@@ -1070,7 +1070,7 @@ static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 	int left, right, top, bottom;
 	fixed_t tmbbox[4];
 	line_t *ld;
-	BOOL blocked;
+	bool blocked;
 
 	ld = seg->linedef;
 
@@ -1244,7 +1244,7 @@ static void IterFindPolySegs (vertex_t *v1, vertex_t *v2p, seg_t **segList)
 		}
 		v2 = int(segs[j].v2 - vertexes);
 	}
-	I_Error ("IterFindPolySegs: Non-closed Polyobj around (%ld,%ld).\n",
+	I_Error ("IterFindPolySegs: Non-closed Polyobj around (%d,%d).\n",
 		v1->x >> FRACBITS, v1->y >> FRACBITS);
 }
 
@@ -1540,7 +1540,7 @@ void PO_Init (void)
 //
 //==========================================================================
 
-BOOL PO_Busy (int polyobj)
+bool PO_Busy (int polyobj)
 {
 	polyobj_t *poly;
 

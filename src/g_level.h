@@ -249,7 +249,7 @@ enum EndTypes
 
 struct EndSequence
 {
-	byte EndType;
+	BYTE EndType;
 	char PicName[9];
 };
 

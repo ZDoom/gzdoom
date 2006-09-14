@@ -120,7 +120,7 @@ CVAR (Bool, r_particles, true, 0);
 // [RH] Removed checks for coexistance of rotation 0 with other
 //		rotations and made it look more like BOOM's version.
 //
-static void R_InstallSpriteLump (int lump, unsigned frame, char rot, BOOL flipped)
+static void R_InstallSpriteLump (int lump, unsigned frame, char rot, bool flipped)
 {
 	unsigned rotation;
 
@@ -453,6 +453,7 @@ void R_InitSkins (void)
 
 		remove = false;
 		basetype = NULL;
+		transtype = NULL;
 
 		// Data is stored as "key = data".
 		while (SC_GetString ())
@@ -2194,7 +2195,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	int 				x1, x2, y1, y2;
 	vissprite_t*		vis;
 	sector_t*			heightsec = NULL;
-	byte*				map;
+	BYTE*				map;
 
 	// transform the origin point
 	tr_x = particle->x - viewx;
@@ -2366,9 +2367,9 @@ void R_DrawParticle (vissprite_t *vis)
 {
 	DWORD *bg2rgb;
 	int spacing;
-	byte *dest;
+	BYTE *dest;
 	DWORD fg;
-	byte color = vis->colormap[vis->startfrac];
+	BYTE color = vis->colormap[vis->startfrac];
 	int yl = vis->gz;
 	int ycount = vis->gzt - yl + 1;
 	int x1 = vis->x1;

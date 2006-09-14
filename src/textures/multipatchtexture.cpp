@@ -45,7 +45,7 @@
 // all and only while initing the textures is beyond me.
 
 #ifdef ALPHA
-#define SAFESHORT(s)	((short)(((byte *)&(s))[0] + ((byte *)&(s))[1] * 256))
+#define SAFESHORT(s)	((short)(((BYTE *)&(s))[0] + ((BYTE *)&(s))[1] * 256))
 #else
 #define SAFESHORT(s)	LittleShort(s)
 #endif
@@ -91,7 +91,7 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	Parts = new TexPart[NumParts];
 	Width = SAFESHORT(mtexture.d->width);
 	Height = SAFESHORT(mtexture.d->height);
-	strncpy (Name, mtexture.d->name, 8);
+	strncpy (Name, (const char *)mtexture.d->name, 8);
 	Name[8] = 0;
 
 	CalcBitSize ();
@@ -355,12 +355,12 @@ void FMultiPatchTexture::CheckForHacks ()
 				{
 					for (x = 0; x < x2; ++x)
 					{
-						const column_t *col = (column_t*)((byte*)realpatch+LittleLong(cofs[x]));
+						const column_t *col = (column_t*)((BYTE*)realpatch+LittleLong(cofs[x]));
 						if (col->topdelta != 0 || col->length != 0)
 						{
 							break;	// It's not bad!
 						}
-						col = (column_t *)((byte *)col + 256 + 4);
+						col = (column_t *)((BYTE *)col + 256 + 4);
 						if (col->topdelta != 0xFF)
 						{
 							break;	// More than one post in a column!
@@ -403,7 +403,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int p
 		int lumplength = Wads.LumpLength(patcheslump);
 		if (numpatches > DWORD((lumplength-4)/8))
 		{
-			Printf("PNAMES lump is shorter than required (%ld entries reported but only %d bytes (%d entries) long\n",
+			Printf("PNAMES lump is shorter than required (%u entries reported but only %d bytes (%d entries) long\n",
 				numpatches, lumplength, (lumplength-4)/8);
 			// Truncate but continue reading. Who knows how many such lumps exist?
 			numpatches = (lumplength-4)/8;

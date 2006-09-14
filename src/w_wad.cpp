@@ -422,7 +422,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 		wadinfo->Seek (header.wad.InfoTableOfs, SEEK_SET);
 		wadinfo->Read (fileinfo, header.wad.NumLumps * sizeof(wadlump_t));
 		NumLumps += header.wad.NumLumps;
-		Printf (" (%ld lumps)", header.wad.NumLumps);
+		Printf (" (%u lumps)", header.wad.NumLumps);
 	}
 	else if (header.magic[0] == RFF_ID)
 	{ // This is a Blood RFF file
@@ -477,7 +477,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 
 			lump_p++;
 		}
-		Printf (" (%ld files)", header.rff.NumLumps);
+		Printf (" (%u files)", header.rff.NumLumps);
 		delete[] lumps;
 	}
 	else if (header.magic[0] == GRP_ID_0 && header.magic[1] == GRP_ID_1 && header.magic[2] == GRP_ID_2)
@@ -509,7 +509,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			lump_p->namespc = ns_global;
 			lump_p++;
 		}
-		Printf (" (%ld files)", header.grp.NumLumps);
+		Printf (" (%u files)", header.grp.NumLumps);
 		delete[] lumps;
 	}
 	else if (header.magic[0] == ZIP_ID)
@@ -1364,7 +1364,7 @@ int FWadCollection::MergeLumps (const char *start, const char *end, int space)
 	int newlumps, oldlumps;
 	int markerpos = -1;
     unsigned int i;
-	BOOL insideBlock;
+	bool insideBlock;
 
 	uppercopy (ustart, start);
 	uppercopy (uend, end);
@@ -2022,41 +2022,6 @@ void BloodCrypt (void *data, int key, int len)
 	}
 }
 
-//==========================================================================
-//
-// PrintLastError
-//
-//==========================================================================
-
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
-static void PrintLastError ()
-{
-	char *lpMsgBuf;
-	FormatMessageA( 
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-		FORMAT_MESSAGE_FROM_SYSTEM | 
-		FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		GetLastError(),
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-		(LPTSTR)&lpMsgBuf,
-		0,
-		NULL 
-	);
-	Printf (TEXTCOLOR_RED "  %s\n", lpMsgBuf);
-	// Free the buffer.
-	LocalFree( lpMsgBuf );
-}
-#else
-static void PrintLastError ()
-{
-	Printf (TEXTCOLOR_RED "  %s\n", strerror(errno));
-}
-#endif
-
 // WadFileRecord ------------------------------------------------------------
 
 FWadCollection::WadFileRecord::WadFileRecord (FILE *file)
@@ -2302,3 +2267,51 @@ FMemLump::~FMemLump ()
 		delete[] Block;
 	}
 }
+
+//==========================================================================
+//
+// PrintLastError
+//
+//==========================================================================
+
+#ifdef _WIN32
+//#define WIN32_LEAN_AND_MEAN
+//#include <windows.h>
+
+extern "C" {
+__declspec(dllimport) unsigned long __stdcall FormatMessageA(
+    unsigned long dwFlags,
+    const void *lpSource,
+    unsigned long dwMessageId,
+    unsigned long dwLanguageId,
+    char **lpBuffer,
+    unsigned long nSize,
+    va_list *Arguments
+    );
+__declspec(dllimport) void * __stdcall LocalFree (void *);
+__declspec(dllimport) unsigned long __stdcall GetLastError ();
+}
+
+static void PrintLastError ()
+{
+	char *lpMsgBuf;
+	FormatMessageA(0x1300 /*FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+							FORMAT_MESSAGE_FROM_SYSTEM | 
+							FORMAT_MESSAGE_IGNORE_INSERTS*/,
+		NULL,
+		GetLastError(),
+		1 << 10 /*MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)*/, // Default language
+		&lpMsgBuf,
+		0,
+		NULL 
+	);
+	Printf (TEXTCOLOR_RED "  %s\n", lpMsgBuf);
+	// Free the buffer.
+	LocalFree( lpMsgBuf );
+}
+#else
+static void PrintLastError ()
+{
+	Printf (TEXTCOLOR_RED "  %s\n", strerror(errno));
+}
+#endif

@@ -519,7 +519,7 @@ void R_PrecacheLevel (void);
 DWORD R_ColormapNumForName(const char *name);	// killough 4/4/98
 void R_SetDefaultColormap (const char *name);	// [RH] change normal fadetable
 DWORD R_BlendForColormap (DWORD map);		// [RH] return calculated blend for a colormap
-extern byte *realcolormaps;						// [RH] make the colormaps externally visible
+extern BYTE *realcolormaps;						// [RH] make the colormaps externally visible
 extern size_t numfakecmaps;
 
 int R_FindSkin (const char *name, int pclass);	// [RH] Find a skin

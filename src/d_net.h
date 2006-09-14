@@ -93,11 +93,11 @@ public:
 	FDynamicBuffer ();
 	~FDynamicBuffer ();
 
-	void SetData (const byte *data, int len);
-	byte *GetData (int *len = NULL);
+	void SetData (const BYTE *data, int len);
+	BYTE *GetData (int *len = NULL);
 
 private:
-	byte *m_Data;
+	BYTE *m_Data;
 	int m_Len, m_BufferLen;
 };
 
@@ -115,15 +115,15 @@ void TryRunTics (void);
 
 // [RH] Functions for making and using special "ticcmds"
 void Net_NewMakeTic ();
-void Net_WriteByte (byte);
+void Net_WriteByte (BYTE);
 void Net_WriteWord (short);
 void Net_WriteLong (int);
 void Net_WriteFloat (float);
 void Net_WriteString (const char *);
-void Net_WriteBytes (const byte *, int len);
+void Net_WriteBytes (const BYTE *, int len);
 
-void Net_DoCommand (int type, byte **stream, int player);
-void Net_SkipCommand (int type, byte **stream);
+void Net_DoCommand (int type, BYTE **stream, int player);
+void Net_SkipCommand (int type, BYTE **stream);
 
 void Net_ClearBuffers ();
 

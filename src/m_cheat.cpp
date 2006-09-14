@@ -452,7 +452,7 @@ void GiveSpawner (player_t *player, const PClass *type, int amount)
 
 void cht_Give (player_t *player, char *name, int amount)
 {
-	BOOL giveall;
+	bool giveall;
 	int i;
 	const PClass *type;
 
@@ -687,7 +687,7 @@ void cht_Suicide (player_t *plyr)
 	}
 }
 
-BOOL CheckCheatmode ();
+bool CheckCheatmode ();
 
 CCMD (mdk)
 {

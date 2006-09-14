@@ -138,7 +138,7 @@ void S_CacheRandomSound (sfxinfo_t *sfx);
 
 // [RH] From Hexen.
 //		Prevents too many of the same sound from playing simultaneously.
-BOOL S_StopSoundID (int sound_id, int priority, int limit, bool singular, fixed_t x, fixed_t y);
+bool S_StopSoundID (int sound_id, int priority, int limit, bool singular, fixed_t x, fixed_t y);
 
 // Stops a sound emanating from one of an entity's channels
 void S_StopSound (AActor *ent, int channel);

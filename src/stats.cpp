@@ -109,9 +109,7 @@ void FStat::PrintStat ()
 {
 	if (m_CurrStat)
 	{
-		char stattext[256];
-
-		m_CurrStat->GetStats (stattext);
+		FString stattext(m_CurrStat->GetStats());
 		screen->SetFont (ConFont);
 		screen->DrawText (CR_GREEN, 5, SCREENHEIGHT -
 			SmallFont->GetHeight(), stattext, TAG_DONE);

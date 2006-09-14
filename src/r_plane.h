@@ -40,7 +40,7 @@ struct visplane_s
 	int			lightlevel;
 	fixed_t		xoffs, yoffs;		// killough 2/28/98: Support scrolling flats
 	int			minx, maxx;
-	byte		*colormap;			// [RH] Support multiple colormaps
+	BYTE		*colormap;			// [RH] Support multiple colormaps
 	fixed_t		xscale, yscale;		// [RH] Support flat scaling
 	angle_t		angle;				// [RH] Support flat rotation
 	ASkyViewpoint *skybox;			// [RH] Support sky boxes
@@ -106,7 +106,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop);
 bool R_AlignFlat (int linenum, int side, int fc);
 
 // [RH] Added for multires support
-BOOL R_PlaneInitData (void);
+bool R_PlaneInitData (void);
 
 
 extern visplane_t*		floorplane;

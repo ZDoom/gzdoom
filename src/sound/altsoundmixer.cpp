@@ -1,5 +1,6 @@
 #ifdef _WIN32
 
+#define USE_WINDOWS_DWORD
 #include "altsound.h"
 #include "c_cvars.h"
 

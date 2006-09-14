@@ -620,8 +620,10 @@ void DObject::CheckIfSerialized () const
 	}
 }
 
-ADD_STAT (destroys, out)
+ADD_STAT (destroys)
 {
-	sprintf (out, "Pointer fixing: %d in %04.1f ms",
+	FString out;
+	out.Format ("Pointer fixing: %d in %04.1f ms",
 		StaleCount, SecondsPerCycle * (double)StaleCycles * 1000);
+	return out;
 }

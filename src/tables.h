@@ -89,7 +89,7 @@ extern fixed_t			finetangent[FINEANGLES/2];
 #define SLOPEBITS		11
 #define DBITS			(FRACBITS-SLOPEBITS)
 
-typedef DWORD			angle_t;
+typedef uint32			angle_t;
 
 // Avoid "ambiguous call to overloaded function" errors
 // Only to be used when you have subtracted two angles.

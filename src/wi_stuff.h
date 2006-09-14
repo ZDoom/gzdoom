@@ -30,7 +30,7 @@
 //
 typedef struct wbplayerstruct_s
 {
-	BOOL		in;			// whether the player is in game
+	bool		in;			// whether the player is in game
 	
 	// Player stats, kills, collected items etc.
 	int			skills;

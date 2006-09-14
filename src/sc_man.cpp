@@ -56,9 +56,9 @@ int sc_StringLen;
 int sc_Number;
 float sc_Float;
 int sc_Line;
-BOOL sc_End;
-BOOL sc_Crossed;
-BOOL sc_FileScripts = false;
+bool sc_End;
+bool sc_Crossed;
+bool sc_FileScripts = false;
 char *sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -104,7 +104,7 @@ void SC_Open (const char *name)
 
 void SC_OpenFile (const char *name)
 {
-	byte *filebuf;
+	BYTE *filebuf;
 
 	SC_Close ();
 	ScriptSize = M_ReadFile (name, &filebuf);
@@ -271,7 +271,7 @@ void SC_SetEscape (bool esc)
 //
 //==========================================================================
 
-BOOL SC_GetString ()
+bool SC_GetString ()
 {
 	char *marker, *tok;
 
@@ -349,7 +349,7 @@ bool SC_CheckString (const char *name)
 //
 //==========================================================================
 
-BOOL SC_GetNumber (void)
+bool SC_GetNumber (void)
 {
 	char *stopper;
 
@@ -399,7 +399,7 @@ void SC_MustGetNumber (void)
 //
 //==========================================================================
 
-BOOL SC_CheckNumber (void)
+bool SC_CheckNumber (void)
 {
 	char *stopper;
 
@@ -435,7 +435,7 @@ BOOL SC_CheckNumber (void)
 //
 //==========================================================================
 
-BOOL SC_CheckFloat (void)
+bool SC_CheckFloat (void)
 {
 	char *stopper;
 
@@ -463,7 +463,7 @@ BOOL SC_CheckFloat (void)
 //
 //==========================================================================
 
-BOOL SC_GetFloat (void)
+bool SC_GetFloat (void)
 {
 	char *stopper;
 
@@ -521,7 +521,7 @@ void SC_UnGet (void)
 //==========================================================================
 
 /*
-BOOL SC_Check(void)
+bool SC_Check(void)
 {
 	char *text;
 
@@ -598,7 +598,7 @@ int SC_MustMatchString (const char **strings)
 //
 //==========================================================================
 
-BOOL SC_Compare (const char *text)
+bool SC_Compare (const char *text)
 {
 	return (stricmp (text, sc_String) == 0);
 }
@@ -655,9 +655,9 @@ static void CheckOpen(void)
 struct SavedScript
 {
 	int sc_Line;
-	BOOL sc_End;
-	BOOL sc_Crossed;
-	BOOL sc_FileScripts;
+	bool sc_End;
+	bool sc_Crossed;
+	bool sc_FileScripts;
 
 	FString *ScriptName;
 	char *ScriptBuffer;

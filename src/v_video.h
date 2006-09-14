@@ -143,10 +143,10 @@ public:
 	virtual void Blit (int srcx, int srcy, int srcwidth, int srcheight, DCanvas *dest, int destx, int desty, int destwidth, int destheight);
 
 	// Draw a linear block of pixels into the canvas
-	virtual void DrawBlock (int x, int y, int width, int height, const byte *src) const;
+	virtual void DrawBlock (int x, int y, int width, int height, const BYTE *src) const;
 
 	// Reads a linear block of pixels into the view buffer.
-	virtual void GetBlock (int x, int y, int width, int height, byte *dest) const;
+	virtual void GetBlock (int x, int y, int width, int height, BYTE *dest) const;
 
 	// Dim the entire canvas for the menus
 	virtual void Dim (PalEntry color = 0) const;
@@ -182,7 +182,7 @@ protected:
 	int Pitch;
 	int LockCount;
 
-	bool ClipBox (int &left, int &top, int &width, int &height, const byte *&src, const int srcpitch) const;
+	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 
 private:
 	// Keep track of canvases, for automatic destruction at exit
@@ -278,7 +278,7 @@ EXTERN_CVAR (Float, Gamma)
 
 // Translucency tables
 extern "C" DWORD Col2RGB8[65][256];
-extern "C" byte RGB32k[32][32][32];
+extern "C" BYTE RGB32k[32][32][32];
 extern "C" DWORD *Col2RGB8_LessPrecision[65];
 
 // Allocates buffer screens, call before R_Init.

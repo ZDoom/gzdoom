@@ -35,7 +35,7 @@ enum
 	LANGIDX_SysPreferred,
 	LANGIDX_SysDefault
 };
-extern DWORD LanguageIDs[4];
+extern uint32 LanguageIDs[4];
 extern void SetLanguageIDs ();
 
 // [RH] Detects the OS the game is running under.
@@ -138,7 +138,7 @@ extern int (*I_WaitForTic) (int);
 int I_GetTimePolled (bool saveMS);
 int I_GetTimeFake (void);
 
-fixed_t I_GetTimeFrac (DWORD *ms);
+fixed_t I_GetTimeFrac (uint32 *ms);
 
 
 //

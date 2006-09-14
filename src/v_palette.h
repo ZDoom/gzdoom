@@ -87,7 +87,7 @@ extern FDynamicColormap NormalLight;
 }
 extern int Near255;		// A color near 255 in appearance, but not 255
 
-int BestColor (const DWORD *pal, int r, int g, int b, int first = 0, int num=256);
+int BestColor (const uint32 *pal, int r, int g, int b, int first = 0, int num=256);
 
 void InitPalette ();
 

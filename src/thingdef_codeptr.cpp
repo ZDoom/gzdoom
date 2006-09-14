@@ -294,7 +294,7 @@ void A_PlaySoundEx (AActor *self)
 
 	int soundid = StateParameters[index];
 	ENamedName channel = ENamedName(StateParameters[index + 1]);
-	BOOL looping = StateParameters[index + 2];
+	INTBOOL looping = StateParameters[index + 2];
 
 	if (channel < NAME_Auto || channel > NAME_SoundSlot7)
 	{
@@ -875,7 +875,7 @@ void A_FireCustomMissile (AActor * self)
 	bool UseAmmo=EvalExpressionN (StateParameters[index+2], self);
 	int SpawnOfs_XY=EvalExpressionI (StateParameters[index+3], self);
 	fixed_t SpawnHeight=fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
-	BOOL AimAtAngle=EvalExpressionI (StateParameters[index+5], self);
+	INTBOOL AimAtAngle=EvalExpressionI (StateParameters[index+5], self);
 
 	player_t *player=self->player;
 	AWeapon * weapon=player->ReadyWeapon;
@@ -1176,7 +1176,7 @@ void A_SpawnItem(AActor * self)
 	fixed_t distance = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	fixed_t zheight = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
 	bool useammo = EvalExpressionN (StateParameters[index+3], self);
-	BOOL transfer_translation = EvalExpressionI (StateParameters[index+4], self);
+	INTBOOL transfer_translation = EvalExpressionI (StateParameters[index+4], self);
 
 	if (!missile) 
 	{
@@ -1467,7 +1467,7 @@ void A_SpawnDebris(AActor * self)
 	int index=CheckIndex(2, NULL);
 	if (index<0) return;
 
-	BOOL transfer_translation = EvalExpressionI (StateParameters[index+1], self);
+	INTBOOL transfer_translation = EvalExpressionI (StateParameters[index+1], self);
 
 	debris = PClass::FindClass((ENamedName)StateParameters[index]);
 	if (debris == NULL) return;

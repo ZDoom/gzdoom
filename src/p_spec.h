@@ -135,10 +135,10 @@ protected:
 	int m_Y;				// Y of point source if point pusher
 	int m_Affectee;			// Number of affected sector
 
-	friend BOOL PIT_PushThing (AActor *thing);
+	friend bool PIT_PushThing (AActor *thing);
 };
 
-BOOL PIT_PushThing (AActor *thing);
+bool PIT_PushThing (AActor *thing);
 
 inline FArchive &operator<< (FArchive &arc, DPusher::EPusher &type)
 {
@@ -164,8 +164,8 @@ void	P_SpawnSpecials (void);
 void	P_UpdateSpecials (void);
 
 // when needed
-BOOL	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType);
-BOOL	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType);
+bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType);
+bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType);
 
 void	P_PlayerInSpecialSector (player_t *player);
 void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
@@ -348,8 +348,8 @@ public:
 	void		Serialize (FArchive &arc);
 	void		Tick ();
 protected:
-	byte		m_BaseLevel;
-	byte		m_Phase;
+	BYTE		m_BaseLevel;
+	BYTE		m_Phase;
 private:
 	DPhased ();
 	DPhased (sector_t *sector, int baselevel);
@@ -382,7 +382,7 @@ void	EV_StartLightFading (int tag, int value, int tics);
 
 #define BUTTONTIME TICRATE		// 1 second, in ticks. 
 
-bool	P_ChangeSwitchTexture (side_t *side, int useAgain, byte special, bool *quest=NULL);
+bool	P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest=NULL);
 
 void	P_InitSwitchList ();
 void	P_ProcessSwitchDef ();
@@ -433,7 +433,7 @@ protected:
 	int 		m_Count;
 	EPlatState	m_Status;
 	EPlatState	m_OldStatus;
-	BOOL 		m_Crush;
+	int			m_Crush;
 	int 		m_Tag;
 	EPlatType	m_Type;
 
@@ -931,8 +931,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag);
 //
 bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, bool useFog, bool sourceFog, bool keepOrientation);
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog, bool sourceFog, bool keepOrientation);
-bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
-							BOOL reverse);
+bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse);
 bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);
 bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog);
 bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int group_tid);

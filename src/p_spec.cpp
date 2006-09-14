@@ -180,12 +180,12 @@ int P_FindLineFromID (int id, int start)
 //
 //============================================================================
 
-BOOL P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
+bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 {
 	int lineActivation;
-	BOOL repeat;
-	BOOL buttonSuccess;
-	byte special;
+	INTBOOL repeat;
+	INTBOOL buttonSuccess;
+	BYTE special;
 
 	if (!P_TestActivateLine (line, mo, side, activationType))
 	{
@@ -249,7 +249,7 @@ BOOL P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 //
 //============================================================================
 
-BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
+bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 {
 	int lineActivation;
 
@@ -1589,7 +1589,7 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 
 DPusher *tmpusher; // pusher structure for blockmap searches
 
-BOOL PIT_PushThing (AActor *thing)
+bool PIT_PushThing (AActor *thing)
 {
 	if ((thing->flags2 & MF2_WINDTHRUST) && !(thing->flags & MF_NOCLIP))
 	{

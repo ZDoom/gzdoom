@@ -805,7 +805,7 @@ menu_t MessagesMenu =
  *
  *=======================================*/
 
-extern BOOL setmodeneeded;
+extern bool setmodeneeded;
 extern int NewWidth, NewHeight, NewBits;
 extern int DisplayBits;
 
@@ -814,7 +814,7 @@ int OldWidth, OldHeight, OldBits;
 
 void M_FreeModesList ();
 static void BuildModesList (int hiwidth, int hiheight, int hi_id);
-static BOOL GetSelectedSize (int line, int *width, int *height);
+static bool GetSelectedSize (int line, int *width, int *height);
 static void SetModesMenu (int w, int h, int bits);
 
 EXTERN_CVAR (Int, vid_defwidth)
@@ -1187,7 +1187,7 @@ static void ConfirmIsAGo ()
 //
 //		Set some stuff up for the video modes menu
 //
-static byte BitTranslate[16];
+static BYTE BitTranslate[16];
 
 void M_OptInit (void)
 {
@@ -2792,7 +2792,7 @@ void M_FreeModesList ()
 	}
 }
 
-static BOOL GetSelectedSize (int line, int *width, int *height)
+static bool GetSelectedSize (int line, int *width, int *height)
 {
 	if (ModesItems[line].type != screenres)
 	{

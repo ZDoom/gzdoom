@@ -4,9 +4,9 @@
 #include <string.h>
 #include <assert.h>
 
+#include "opl_mus_player.h"
 #include "doomtype.h"
 #include "fmopl.h"
-#include "opl_mus_player.h"
 #include "w_wad.h"
 #include "templates.h"
 #include "c_cvars.h"
@@ -422,41 +422,37 @@ int OPLmusicBlock::PlayTick ()
 	return 0;
 }
 
-ADD_STAT (opl, out)
+ADD_STAT (opl)
 {
-	uint i;
-
 	if (BlockForStats != NULL)
 	{
-		for (i = 0; i < BlockForStats->io->OPLchannels; ++i)
+		FString out;
+		char star[3] = { TEXTCOLOR_ESCAPE, 'A', '*' };
+		for (uint i = 0; i < BlockForStats->io->OPLchannels; ++i)
 		{
-			int color;
-
 			if (BlockForStats->channels[i].flags & CH_FREE)
 			{
-				color = CR_BRICK;
+				star[1] = CR_BRICK + 'A';
 			}
 			else if (BlockForStats->channels[i].flags & CH_SUSTAIN)
 			{
-				color = CR_ORANGE;
+				star[1] = CR_ORANGE + 'A';
 			}
 			else if (BlockForStats->channels[i].flags & CH_SECONDARY)
 			{
-				color = CR_BLUE;
+				star[1] = CR_BLUE + 'A';
 			}
 			else
 			{
-				color = CR_GREEN;
+				star[1] = CR_GREEN + 'A';
 			}
-			out[i*3+0] = '\x1c';
-			out[i*3+1] = 'A'+color;
-			out[i*3+2] = '*';
+			out.AppendCStrPart (star, 3);
 		}
-		out[i*3] = 0;
+		return out;
 	}
 	else
 	{
-		YM3812GetVoiceString (out);
+		return YM3812GetVoiceString ();
 	}
 }
 

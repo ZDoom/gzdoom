@@ -33,7 +33,7 @@ static fixed_t last_z;
 static sector_t *last_s;
 static fixed_t estimated_dist;
 
-static int PTR_Reachable (intercept_t *in)
+static bool PTR_Reachable (intercept_t *in)
 {
 	fixed_t hitx, hity;
 	fixed_t frac;

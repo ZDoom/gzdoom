@@ -57,19 +57,19 @@
 
 
 struct zdemoheader_s {
-	byte	demovermajor;
-	byte	demoverminor;
-	byte	minvermajor;
-	byte	minverminor;
-	byte	map[8];
+	BYTE	demovermajor;
+	BYTE	demoverminor;
+	BYTE	minvermajor;
+	BYTE	minverminor;
+	BYTE	map[8];
 	unsigned int rngseed;
-	byte	consoleplayer;
+	BYTE	consoleplayer;
 };
 
 struct usercmd_s
 {
-	byte	buttons;
-	byte	pad;
+	BYTE	buttons;
+	BYTE	pad;
 	short	pitch;			// up/down
 	short	yaw;			// left/right	// If you haven't guessed, I just
 	short	roll;			// tilt			// ripped these from Quake2's usercmd.
@@ -182,29 +182,29 @@ enum ECheatCommand
 	CHT_RESSURECT,		// [GRB]
 };
 
-void StartChunk (int id, byte **stream);
-void FinishChunk (byte **stream);
-void SkipChunk (byte **stream);
+void StartChunk (int id, BYTE **stream);
+void FinishChunk (BYTE **stream);
+void SkipChunk (BYTE **stream);
 
-int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, byte **stream);
-int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, byte **stream);
-int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, byte **stream);
+int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream);
+int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream);
+int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream);
 
 struct ticcmd_t;
 
-int SkipTicCmd (byte **stream, int count);
-void ReadTicCmd (byte **stream, int player, int tic);
+int SkipTicCmd (BYTE **stream, int count);
+void ReadTicCmd (BYTE **stream, int player, int tic);
 void RunNetSpecs (int player, int buf);
 
-int ReadByte (byte **stream);
-int ReadWord (byte **stream);
-int ReadLong (byte **stream);
-float ReadFloat (byte **stream);
-char *ReadString (byte **stream);
-void WriteByte (byte val, byte **stream);
-void WriteWord (short val, byte **stream);
-void WriteLong (int val, byte **stream);
-void WriteFloat (float val, byte **stream);
-void WriteString (const char *string, byte **stream);
+int ReadByte (BYTE **stream);
+int ReadWord (BYTE **stream);
+int ReadLong (BYTE **stream);
+float ReadFloat (BYTE **stream);
+char *ReadString (BYTE **stream);
+void WriteByte (BYTE val, BYTE **stream);
+void WriteWord (short val, BYTE **stream);
+void WriteLong (int val, BYTE **stream);
+void WriteFloat (float val, BYTE **stream);
+void WriteString (const char *string, BYTE **stream);
 
 #endif //__D_PROTOCOL_H__

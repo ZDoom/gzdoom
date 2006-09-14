@@ -2044,10 +2044,12 @@ FArchive &operator << (FArchive &arc, FActiveInterpolation *&interp)
 	return arc;
 }
 
-ADD_STAT (interpolations, out)
+ADD_STAT (interpolations)
 {
 	int inuse, minuse, maxuse, total;
+	FString out;
 	total = FActiveInterpolation::CountInterpolations (&inuse, &minuse, &maxuse);
-	sprintf (out, "%d interpolations  buckets:%3d  min:%3d  max:%3d  avg:%3d  %d%% full  %d%% buckfull",
+	out.Format ("%d interpolations  buckets:%3d  min:%3d  max:%3d  avg:%3d  %d%% full  %d%% buckfull",
 		total, inuse, minuse, maxuse, inuse?total/inuse:0, total*100/INTERPOLATION_BUCKETS, inuse*100/INTERPOLATION_BUCKETS);
+	return out;
 }

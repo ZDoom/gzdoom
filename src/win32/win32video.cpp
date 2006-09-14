@@ -42,7 +42,7 @@
 #include <ddraw.h>
 #include <stdio.h>
 
-#define __BYTEBOOL__
+#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 
 #include "c_dispatch.h"
@@ -1161,7 +1161,7 @@ void DDrawFB::RebuildColorTable ()
 		}
 		for (i = 0; i < 256; i++)
 		{
-			GPfxPal.Pal8[i] = BestColor ((DWORD *)syspal, PalEntries[i].peRed,
+			GPfxPal.Pal8[i] = BestColor ((uint32 *)syspal, PalEntries[i].peRed,
 				PalEntries[i].peGreen, PalEntries[i].peBlue);
 		}
 	}
@@ -1713,10 +1713,12 @@ CCMD (vid_speedtest)
 	}
 }
 
-ADD_STAT (blit, out)
+ADD_STAT (blit)
 {
-	sprintf (out,
+	FString out;
+	out.Format (
 		"blit=%04.1f ms",
 		(double)BlitCycles * SecondsPerCycle * 1000
 		);
+	return out;
 }

@@ -39,7 +39,7 @@
 #include "tarray.h"
 #include "name.h"
 
-extern TArray<byte> TerrainTypes;
+extern TArray<BYTE> TerrainTypes;
 
 // at game start
 void P_InitTerrainTypes ();
@@ -52,9 +52,9 @@ struct FSplashDef
 	const PClass *SmallSplash;
 	const PClass *SplashBase;
 	const PClass *SplashChunk;
-	byte ChunkXVelShift;
-	byte ChunkYVelShift;
-	byte ChunkZVelShift;
+	BYTE ChunkXVelShift;
+	BYTE ChunkYVelShift;
+	BYTE ChunkZVelShift;
 	fixed_t ChunkBaseZVel;
 	fixed_t SmallSplashClip;
 	bool NoAlert;

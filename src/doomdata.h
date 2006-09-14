@@ -100,8 +100,8 @@ typedef struct
 	WORD	v1;
 	WORD	v2;
 	WORD	flags;
-	byte	special;
-	byte	args[5];
+	BYTE	special;
+	BYTE	args[5];
 	WORD	sidenum[2];
 } maplinedef2_t;
 
@@ -248,8 +248,8 @@ typedef struct MapThing
 	short		angle;
 	short		type;
 	short		flags;
-	byte		special;
-	byte		args[5];
+	BYTE		special;
+	BYTE		args[5];
 
 	void Serialize (FArchive &);
 } mapthing2_t;
@@ -306,11 +306,11 @@ typedef struct MapThing
 //
 typedef struct
 {
-	short	originx;
-	short	originy;
-	short	patch;
-	short	stepdir;
-	short	colormap;
+	SWORD	originx;
+	SWORD	originy;
+	SWORD	patch;
+	SWORD	stepdir;
+	SWORD	colormap;
 } mappatch_t;
 
 //
@@ -319,14 +319,14 @@ typedef struct
 //
 typedef struct
 {
-	char		name[8];
+	BYTE		name[8];
 	WORD		Flags;				// [RH] Was unused
 	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
 	BYTE		ScaleY;				// [RH] Same as above
-	short		width;
-	short		height;
-	byte		columndirectory[4];	// OBSOLETE
-	short		patchcount;
+	SWORD		width;
+	SWORD		height;
+	BYTE		columndirectory[4];	// OBSOLETE
+	SWORD		patchcount;
 	mappatch_t	patches[1];
 } maptexture_t;
 
@@ -337,9 +337,9 @@ typedef struct
 
 typedef struct
 {
-	short	originx;
-	short	originy;
-	short	patch;
+	SWORD	originx;
+	SWORD	originy;
+	SWORD	patch;
 } strifemappatch_t;
 
 //
@@ -348,13 +348,13 @@ typedef struct
 //
 typedef struct
 {
-	char		name[8];
-	WORD		Flags;				// [RH] Was nused
+	BYTE		name[8];
+	WORD		Flags;				// [RH] Was unused
 	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
 	BYTE		ScaleY;				// [RH] Same as above
-	short		width;
-	short		height;
-	short		patchcount;
+	SWORD		width;
+	SWORD		height;
+	SWORD		patchcount;
 	strifemappatch_t	patches[1];
 } strifemaptexture_t;
 

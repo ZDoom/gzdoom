@@ -1,4 +1,6 @@
 September 13, 2006
+- Moved the vid_fps display to the upper-right of the screen.
+- The stat display can now show multiple stats at once.
 - Fixed: cycle_t was still a DWORD and not a QWORD under GCC.
 - The stat meters now return an FString instead of sprintfing into a fixed
   output buffer.

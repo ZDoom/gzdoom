@@ -41,19 +41,19 @@
 #include "c_dispatch.h"
 #include "m_swap.h"
 
-FStat *FStat::m_FirstStat;
-FStat *FStat::m_CurrStat;
+FStat *FStat::FirstStat;
 
 FStat::FStat (const char *name)
 {
 	m_Name = name;
-	m_Next = m_FirstStat;
-	m_FirstStat = this;
+	m_Active = false;
+	m_Next = FirstStat;
+	FirstStat = this;
 }
 
 FStat::~FStat ()
 {
-	FStat **prev = &m_FirstStat;
+	FStat **prev = &FirstStat;
 
 	while (*prev && *prev != this)
 		prev = &((*prev)->m_Next)->m_Next;
@@ -64,7 +64,7 @@ FStat::~FStat ()
 
 FStat *FStat::FindStat (const char *name)
 {
-	FStat *stat = m_FirstStat;
+	FStat *stat = FirstStat;
 
 	while (stat && stricmp (name, stat->m_Name))
 		stat = stat->m_Next;
@@ -72,60 +72,52 @@ FStat *FStat::FindStat (const char *name)
 	return stat;
 }
 
-void FStat::SelectStat (const char *name)
-{
-	FStat *stat = FindStat (name);
-	if (stat)
-		SelectStat (stat);
-	else
-		Printf ("Unknown stat: %s\n", name);
-}
-
-void FStat::SelectStat (FStat *stat)
-{
-	m_CurrStat = stat;
-	SB_state = screen->GetPageCount ();
-}
-
 void FStat::ToggleStat (const char *name)
 {
 	FStat *stat = FindStat (name);
 	if (stat)
-		ToggleStat (stat);
+		stat->ToggleStat ();
 	else
 		Printf ("Unknown stat: %s\n", name);
 }
 
-void FStat::ToggleStat (FStat *stat)
+void FStat::ToggleStat ()
 {
-	if (m_CurrStat == stat)
-		m_CurrStat = NULL;
-	else
-		m_CurrStat = stat;
+	m_Active = !m_Active;
 	SB_state = screen->GetPageCount ();
 }
 
 void FStat::PrintStat ()
 {
-	if (m_CurrStat)
+	int y = SCREENHEIGHT - SmallFont->GetHeight();
+	int count = 0;
+
+	screen->SetFont (ConFont);
+	for (FStat *stat = FirstStat; stat != NULL; stat = stat->m_Next)
 	{
-		FString stattext(m_CurrStat->GetStats());
-		screen->SetFont (ConFont);
-		screen->DrawText (CR_GREEN, 5, SCREENHEIGHT -
-			SmallFont->GetHeight(), stattext, TAG_DONE);
-		screen->SetFont (SmallFont);
+		if (stat->m_Active)
+		{
+			FString stattext(stat->GetStats());
+			screen->DrawText (CR_GREEN, 5, y, stattext, TAG_DONE);
+			y -= SmallFont->GetHeight() + 1;
+			count++;
+		}
+	}
+	screen->SetFont (SmallFont);
+	if (count)
+	{
 		SB_state = screen->GetPageCount ();
 	}
 }
 
 void FStat::DumpRegisteredStats ()
 {
-	FStat *stat = m_FirstStat;
+	FStat *stat = FirstStat;
 
 	Printf ("Available stats:\n");
 	while (stat)
 	{
-		Printf ("  %s\n", stat->m_Name);
+		Printf (" %c%s\n", stat->m_Active ? '*' : ' ', stat->m_Name);
 		stat = stat->m_Next;
 	}
 }

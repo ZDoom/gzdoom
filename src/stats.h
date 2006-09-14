@@ -93,20 +93,19 @@ public:
 
 	virtual FString GetStats () = 0;
 
+	void ToggleStat ();
+
 	static void PrintStat ();
 	static FStat *FindStat (const char *name);
-	static void SelectStat (const char *name);
-	static void SelectStat (FStat *stat);
 	static void ToggleStat (const char *name);
-	static void ToggleStat (FStat *stat);
-	inline static FStat *ActiveStat () { return m_CurrStat; }
 	static void DumpRegisteredStats ();
 
 private:
 	FStat *m_Next;
 	const char *m_Name;
-	static FStat *m_FirstStat;
-	static FStat *m_CurrStat;
+	bool m_Active;
+
+	static FStat *FirstStat;
 };
 
 #define ADD_STAT(n) \

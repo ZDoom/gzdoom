@@ -164,6 +164,39 @@ static TArray<TranslationMap> TranslationLookup;
 
 // CODE --------------------------------------------------------------------
 
+FFont * V_GetFont(const char *name)
+{
+	FFont *font = FFont::FindFont (name);
+	if (font == NULL)
+	{
+		int lump = Wads.CheckNumForName (name);
+		if (lump != -1)
+		{
+			char head[3];
+			{
+				FWadLump lumpy = Wads.OpenLumpNum (lump);
+				lumpy.Read (head, 3);
+			}
+			if (head[0] == 'F' && head[1] == 'O' && head[2] == 'N')
+			{
+				font = new FSingleLumpFont (name, lump);
+			}
+		}
+		if (font == NULL)
+		{
+			int picnum = TexMan.CheckForTexture (name, FTexture::TEX_Any);
+			if (picnum <= 0)
+			{
+				picnum = TexMan.AddPatch (name);
+			}
+			if (picnum > 0)
+			{
+				font = new FSingleLumpFont (name, -1);
+			}
+		}
+	}
+	return font;
+}
 //==========================================================================
 //
 // SerializeFFontPtr
@@ -181,39 +214,11 @@ FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font)
 		char *name = NULL;
 
 		arc << name;
-		font = FFont::FindFont (name);
+		font = V_GetFont(name);
 		if (font == NULL)
 		{
-			int lump = Wads.CheckNumForName (name);
-			if (lump != -1)
-			{
-				char head[3];
-				{
-					FWadLump lumpy = Wads.OpenLumpNum (lump);
-					lumpy.Read (head, 3);
-				}
-				if (head[0] == 'F' && head[1] == 'O' && head[2] == 'N')
-				{
-					font = new FSingleLumpFont (name, lump);
-				}
-			}
-			if (font == NULL)
-			{
-				int picnum = TexMan.CheckForTexture (name, FTexture::TEX_Any);
-				if (picnum <= 0)
-				{
-					picnum = TexMan.AddPatch (name);
-				}
-				if (picnum > 0)
-				{
-					font = new FSingleLumpFont (name, -1);
-				}
-			}
-			if (font == NULL)
-			{
-				Printf ("Could not load font %s\n", name);
-				font = SmallFont;
-			}
+			Printf ("Could not load font %s\n", name);
+			font = SmallFont;
 		}
 		delete[] name;
 	}

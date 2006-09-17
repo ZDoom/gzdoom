@@ -563,6 +563,9 @@ bool AActor::SetState (FState *newstate)
 			CallingState = newstate;
 
 			newstate->GetAction() (this);
+
+			// Check whether the called action function resulted in destroying the actor
+			if (ObjectFlags & OF_MassDestruction) return false;
 		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
@@ -3437,6 +3440,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 	{
 		// Move the voodoo doll's inventory to the new player.
 		mobj->ObtainInventory (oldactor);
+		FBehavior::StaticStopMyScripts (oldactor);	// cancel all ENTER/RESPAWN scripts for the voodoo doll
 	}
 
 	// [GRB] Reset skin

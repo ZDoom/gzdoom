@@ -685,7 +685,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_SpawnItem, "Mxxyx" )
 	FUNC(A_ThrowGrenade, "Mxxxy" )
 	FUNC(A_SelectWeapon, "M")
-	FUNC(A_Print, "T")
+	FUNC(A_Print, "Txt")
 	FUNC(A_SetTranslucent, "Xx")
 	FUNC(A_FadeIn, "x")
 	FUNC(A_FadeOut, "x")
@@ -712,7 +712,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_GiveToTarget, "Mx" )
 	FUNC(A_TakeFromTarget, "Mx" )
 	FUNC(A_CountdownArg, "X")
-	FUNC(A_CustomMeleeAttack, "XXXsty" )
+	FUNC(A_CustomMeleeAttack, "Xsty" )
 	FUNC(A_Burst, "M")
 	FUNC(A_RadiusThrust, "xxy")
 	{"A_Explode", A_ExplodeParms, "xxy" },
@@ -2414,8 +2414,8 @@ static void ActorDamage (AActor *defaults, Baggage &bag)
 
 	if (SC_CheckString ("("))
 	{
-		SC_UnGet();
 		defaults->Damage = 0x40000000 | ParseExpression (false);
+		SC_MustGetStringName(")");
 	}
 	else
 	{

@@ -2043,38 +2043,10 @@ showme:
 void DLevelScript::DoSetFont (int fontnum)
 {
 	const char *fontname = FBehavior::StaticLookupString (fontnum);
-	activefont = FFont::FindFont (fontname);
+	activefont = V_GetFont (fontname);
 	if (activefont == NULL)
 	{
-		int num = Wads.CheckNumForName (fontname);
-		if (num != -1)
-		{
-			char head[3];
-			{
-				FWadLump lump = Wads.OpenLumpNum (num);
-				lump.Read (head, 3);
-			}
-			if (head[0] == 'F' && head[1] == 'O' && head[2] == 'N')
-			{
-				activefont = new FSingleLumpFont (fontname, num);
-			}
-		}
-		if (activefont == NULL)
-		{
-			num = TexMan.CheckForTexture (fontname, FTexture::TEX_Any);
-			if (num <= 0)
-			{
-				num = TexMan.AddPatch(fontname);
-			}
-			if (num > 0)
-			{
-				activefont = new FSingleLumpFont (fontname, -1);
-			}
-			else
-			{
-				activefont = SmallFont;
-			}
-		}
+		activefont = SmallFont;
 	}
 	if (screen != NULL)
 	{

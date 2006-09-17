@@ -29,7 +29,7 @@ ACTOR Peasant : StrifeHumanoid
 		Loop
 	Melee:
 		PEAS E 10 A_FaceTarget
-		PEAS F 8 A_CustomMeleeAttack(2, 5, 2)
+		PEAS F 8 A_CustomMeleeAttack(2*random(1,5)+2)
 		PEAS E 8
 		Goto See
 	Pain:

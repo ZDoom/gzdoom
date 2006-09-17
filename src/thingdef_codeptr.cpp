@@ -64,13 +64,13 @@
 #include "a_sharedglobal.h"
 #include "a_doomglobal.h"
 #include "thingdef.h"
+#include "v_video.h"
 
 
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_camelee ("CustomMelee");
 static FRandom pr_cabullet ("CustomBullet");
 static FRandom pr_cajump ("CustomJump");
-static FRandom pr_custommelee ("CustomMelee2");
 static FRandom pr_cwbullet ("CustomWpBullet");
 static FRandom pr_cwjump ("CustomWpJump");
 static FRandom pr_cwpunch ("CustomWpPunch");
@@ -750,15 +750,13 @@ void A_CustomBulletAttack (AActor *self)
 //==========================================================================
 void A_CustomMeleeAttack (AActor *self)
 {
-	int index=CheckIndex(6);
+	int index=CheckIndex(4);
 	if (index<0) return;
 
-	int Multiplier = EvalExpressionI (StateParameters[index], self);
-	int Modulus = EvalExpressionI (StateParameters[index+1], self);
-	int Adder = EvalExpressionI (StateParameters[index+2], self);
-	int MeleeSound=StateParameters[index+3];
-	ENamedName DamageType = (ENamedName)StateParameters[index+4];
-	bool bleed = EvalExpressionN (StateParameters[index+5], self);
+	int damage = EvalExpressionI (StateParameters[index], self);
+	int MeleeSound=StateParameters[index+1];
+	ENamedName DamageType = (ENamedName)StateParameters[index+2];
+	bool bleed = EvalExpressionN (StateParameters[index+3], self);
 	int mod;
 
 	// This needs to be redesigned once the customizable damage type system is working
@@ -773,7 +771,6 @@ void A_CustomMeleeAttack (AActor *self)
 	A_FaceTarget (self);
 	if (self->CheckMeleeRange ())
 	{
-		int damage = ((pr_custommelee()%Modulus)*Multiplier)+Adder;
 		if (MeleeSound) S_SoundID (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		if (bleed) P_TraceBleed (damage, self->target, self);
@@ -1367,15 +1364,35 @@ void A_SelectWeapon(AActor * actor)
 // A_Print
 //
 //===========================================================================
+EXTERN_CVAR(Float, con_midtime)
+
 void A_Print(AActor * actor)
 {
-	int index=CheckIndex(1, NULL);
+	int index=CheckIndex(3, NULL);
 	if (index<0) return;
 
 	if (actor->CheckLocalView (consoleplayer) ||
 		(actor->target!=NULL && actor->target->CheckLocalView (consoleplayer)))
 	{
+		float time = EvalExpressionF (StateParameters[index+1], actor);
+		FName fontname = (ENamedName)StateParameters[index+2];
+		FFont * oldfont = screen->Font;
+		float saved = con_midtime;
+
+		
+		if (fontname != NAME_None)
+		{
+			FFont * font = V_GetFont(fontname);
+			if (font != NULL) screen->SetFont(font);
+		}
+		if (time > 0)
+		{
+			con_midtime = time;
+		}
+		
 		C_MidPrint(FName((ENamedName)StateParameters[index]).GetChars());
+		screen->SetFont(oldfont);
+		con_midtime = saved;
 	}
 }
 

@@ -1,3 +1,19 @@
+September 17, 2006 (Changes by Graf Zahl)
+- Fixed: The sky scrolling calculations caused an integer multiplication overflow.
+- Fixed: Voodoo dolls should not start ENTER scripts.
+- Fixed: ActorDamage must not parse the enclosing parentheses as part of the 
+  expression. That will produce an error if a flag set or clear command immediately
+  follows.
+- Fixed: P_DamageMobj ignored MF2_NODMGTHRUST if the damaging object had no
+  owner.
+- Added a 'font' parameter to A_Print.
+- Changed A_CustomMeleeAttack to take one damage parameter only. Since expressions
+  can be used this value is not used as a factor for a random value but as
+  a direct damage value instead.
+- Fixed: AActor::SetState must check whether a called action function resulted
+  in the actor's destruction. A_Jump constructs to a 0-length terminating
+  state will hang if this isn't checked.
+
 September 13, 2006
 - Moved the vid_fps display to the upper-right of the screen.
 - The stat display can now show multiple stats at once.

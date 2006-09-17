@@ -1426,7 +1426,6 @@ AActor *P_CheckOnmobj (AActor *thing)
 	oldz = thing->z;
 	P_FakeZMovement (thing);
 	good = P_TestMobjZ (thing, false);
-
 	thing->z = oldz;
 
 	return good ? NULL : onmobj;

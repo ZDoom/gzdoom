@@ -30,7 +30,7 @@ ACTOR Beggar : StrifeHumanoid
 		Loop
 	Melee:
 		BEGR D 8
-		BEGR D 8 A_CustomMeleeAttack(2, 5, 2)
+		BEGR D 8 A_CustomMeleeAttack(2*random(1,5)+2)
 		BEGR E 1 A_Chase
 		BEGR D 8 A_SentinelRefire
 		Loop

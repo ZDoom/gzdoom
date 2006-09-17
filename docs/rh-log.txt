@@ -1,4 +1,5 @@
 September 17, 2006 (Changes by Graf Zahl)
+- Fixed: Texture scale calculations for HIRESTEX were incorrect.
 - Fixed: The sky scrolling calculations caused an integer multiplication overflow.
 - Fixed: Voodoo dolls should not start ENTER scripts.
 - Fixed: ActorDamage must not parse the enclosing parentheses as part of the 

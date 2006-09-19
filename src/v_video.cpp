@@ -188,6 +188,11 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int color) const
 	int x, y;
 	BYTE *dest;
 
+	if (left == right || top == bottom)
+	{
+		return;
+	}
+
 	assert (left < right);
 	assert (top < bottom);
 

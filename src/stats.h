@@ -54,7 +54,7 @@ inline cycle_t GetClockCycle ()
 #endif
 }
 
-#elif (defined __GNUG__)
+#elif defined(__GNUG__) && defined(__i386__)
 
 typedef QWORD cycle_t;
 

@@ -158,6 +158,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\textcolors.txt"
+				>
+			</File>
+			<File
 				RelativePath=".\x11r6rgb.txt"
 				>
 			</File>

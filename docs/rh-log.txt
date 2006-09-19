@@ -1,3 +1,24 @@
+September 19, 2006
+- Assembly code is disabled when building with __APPLE__ defined, for now.
+- If you aren't targeting x86, m_fixed.h only includes basicinlines.h now.
+- Moved x64inlines.h into basicinlines.h.
+- Replaced uses of __int64 with types from doomtype.h.
+- The stop console command no longer ends single player games, just the demo
+  that was being recorded.
+- In C mode, the sc_man parser no longer allows multi-line string constants
+  without using the \ character to preface the newline character. This makes
+  it much easier to diagnose errors where you forget the closing quote of a
+  string.
+- Fixed: V_BreakLines() added the terminating '\0' to the last line of the
+  input string.
+- Added font as a parameter to V_BreakLines and removed its keepspace
+  parameter, which was never passed as anything other than the default.
+
+September 18, 2006
+- Removed REGEXEPEEK. It was only there for a Dev-C++ project, and the Dev-C++
+  project was long ago removed, thanks to that particular IDE being so agonizingly
+  slow.
+
 September 17, 2006 (Changes by Graf Zahl)
 - Fixed: Texture scale calculations for HIRESTEX were incorrect.
 - Fixed: The sky scrolling calculations caused an integer multiplication overflow.

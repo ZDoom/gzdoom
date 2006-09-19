@@ -656,7 +656,7 @@ FProduction *ProdNeqStr (FStringProd *prod1, FStringProd *prod2)
 
 FProduction *ProdXorDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 {
-	return NewDoubleProd ((double)((__int64)prod1->Value ^ (__int64)prod2->Value));
+	return NewDoubleProd ((double)((SQWORD)prod1->Value ^ (SQWORD)prod2->Value));
 }
 
 //==========================================================================
@@ -667,7 +667,7 @@ FProduction *ProdXorDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 
 FProduction *ProdAndDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 {
-	return NewDoubleProd ((double)((__int64)prod1->Value & (__int64)prod2->Value));
+	return NewDoubleProd ((double)((SQWORD)prod1->Value & (SQWORD)prod2->Value));
 }
 
 //==========================================================================
@@ -678,7 +678,7 @@ FProduction *ProdAndDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 
 FProduction *ProdOrDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 {
-	return NewDoubleProd ((double)((__int64)prod1->Value | (__int64)prod2->Value));
+	return NewDoubleProd ((double)((SQWORD)prod1->Value | (SQWORD)prod2->Value));
 }
 
 //==========================================================================
@@ -689,7 +689,7 @@ FProduction *ProdOrDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 
 FProduction *ProdLAndDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 {
-	return NewDoubleProd ((double)((__int64)prod1->Value && (__int64)prod2->Value));
+	return NewDoubleProd ((double)((SQWORD)prod1->Value && (SQWORD)prod2->Value));
 }
 
 //==========================================================================
@@ -700,7 +700,7 @@ FProduction *ProdLAndDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 
 FProduction *ProdLOrDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 {
-	return NewDoubleProd ((double)((__int64)prod1->Value || (__int64)prod2->Value));
+	return NewDoubleProd ((double)((SQWORD)prod1->Value || (SQWORD)prod2->Value));
 }
 
 

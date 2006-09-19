@@ -195,7 +195,6 @@ void DHUDMessage::ScreenSizeChanged ()
 
 void DHUDMessage::ResetText (const char *text)
 {
-	FFont *oldfont = screen->Font;
 	int width;
 
 	if (HUDWidth != 0)
@@ -212,9 +211,7 @@ void DHUDMessage::ResetText (const char *text)
 		V_FreeBrokenLines (Lines);
 	}
 
-	screen->SetFont (Font);
-
-	Lines = V_BreakLines (width, (BYTE *)text);
+	Lines = V_BreakLines (Font, width, (BYTE *)text);
 
 	NumLines = 0;
 	Width = 0;
@@ -228,8 +225,6 @@ void DHUDMessage::ResetText (const char *text)
 			Width = MAX<int> (Width, Lines[NumLines].Width);
 		}
 	}
-
-	screen->SetFont (oldfont);
 }
 
 //============================================================================

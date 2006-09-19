@@ -42,6 +42,7 @@ class FTexture;
 
 enum EColorRange
 {
+	CR_UNDEFINED = -1,
 	CR_BRICK,
 	CR_TAN,
 	CR_GRAY,

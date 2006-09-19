@@ -32,20 +32,25 @@
 **
 */
 
-#if defined(__GNUC__) && defined(_WIN32)
+#ifndef AUTOSEGS_H
+#define AUTOSEGS_H
 
-void InitAutoSegMarkers ();
-
-#define REGEXEPEEK
-#define REGMARKER(x) (*x)
-typedef void **REGINFO;
-
+#ifdef __GNUC__
+#ifdef __MACH__
+#define AREG_SECTION "__DATA,areg"
+#define CREG_SECTION "__DATA,creg"
+#define GREG_SECTION "__DATA,greg"
+#define SREG_SECTION "__DATA,sreg"
 #else
+#define AREG_SECTION "areg"
+#define CREG_SECTION "creg"
+#define GREG_SECTION "greg"
+#define SREG_SECTION "sreg"
+#endif
+#endif
 
 #define REGMARKER(x) (x)
 typedef void *REGINFO;
-
-#endif
 
 // List of ActorInfos and the TypeInfos they belong to
 extern REGINFO ARegHead;
@@ -63,13 +68,24 @@ extern REGINFO SRegTail;
 extern REGINFO CRegHead;
 extern REGINFO CRegTail;
 
-template<class T, REGINFO *head, REGINFO *tail>
+template<class T, REGINFO *_head, REGINFO *_tail>
 class TAutoSegIteratorNoArrow
 {
 	public:
 		TAutoSegIteratorNoArrow ()
 		{
-			Probe = (T *)REGMARKER(head);
+			// Weirdness. Mingw's linker puts these together backwards.
+			if (_head < _tail)
+			{
+				Head = _head;
+				Tail = _tail;
+			}
+			else
+			{
+				Head = _tail;
+				Tail = _head;
+			}
+			Probe = (T *)REGMARKER(Head);
 		}
 		operator T () const
 		{
@@ -80,16 +96,18 @@ class TAutoSegIteratorNoArrow
 			do
 			{
 				++Probe;
-			} while (*Probe == 0 && Probe < (T *)REGMARKER(tail));
+			} while (*Probe == 0 && Probe < (T *)REGMARKER(Tail));
 			return *this;
 		}
 		void Reset ()
 		{
-			Probe = (T *)REGMARKER(head);
+			Probe = (T *)REGMARKER(Head);
 		}
 
 	protected:
 		T *Probe;
+		REGINFO *Head;
+		REGINFO *Tail;
 };
 
 template<class T, REGINFO *head, REGINFO *tail>
@@ -101,3 +119,5 @@ class TAutoSegIterator : public TAutoSegIteratorNoArrow<T, head, tail>
 			return *(this->Probe);
 		}
 };
+
+#endif

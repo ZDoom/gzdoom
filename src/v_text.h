@@ -39,10 +39,8 @@
 
 struct FBrokenLines
 {
-	short	Width;
-	BYTE	NLTerminated;
-	BYTE	Pad;
-	FString	Text;
+	int			Width;
+	FString		Text;
 };
 
 #define TEXTCOLOR_ESCAPE		'\034'
@@ -73,9 +71,9 @@ struct FBrokenLines
 #define TEXTCOLOR_NORMAL		"\034-"
 #define TEXTCOLOR_BOLD			"\034+"
 
-FBrokenLines *V_BreakLines (int maxwidth, const BYTE *str, bool keepspace=false);
+FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *str);
 void V_FreeBrokenLines (FBrokenLines *lines);
-inline FBrokenLines *V_BreakLines (int maxwidth, const char *str, bool keepspace=false)
- { return V_BreakLines (maxwidth, (const BYTE *)str, keepspace); }
+inline FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const char *str)
+ { return V_BreakLines (font, maxwidth, (const BYTE *)str); }
 
 #endif //__V_TEXT_H__

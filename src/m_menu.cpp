@@ -983,7 +983,7 @@ static void M_ExtractSaveData (const FSaveGameNode *node)
 					memcpy (comment + timelen, pcomment, commentlen);
 				}
 				comment[timelen+commentlen] = 0;
-				SaveComment = V_BreakLines (216*screen->GetWidth()/640/CleanXfac, comment);
+				SaveComment = V_BreakLines (screen->Font, 216*screen->GetWidth()/640/CleanXfac, comment);
 				delete[] comment;
 				delete[] time;
 				delete[] pcomment;
@@ -2921,7 +2921,7 @@ bool M_SaveLoadResponder (event_t *ev)
 				{
 					V_FreeBrokenLines (SaveComment);
 				}
-				SaveComment = V_BreakLines (216*screen->GetWidth()/640/CleanXfac, workbuf);
+				SaveComment = V_BreakLines (screen->Font, 216*screen->GetWidth()/640/CleanXfac, workbuf);
 			}
 			break;
 
@@ -3099,7 +3099,7 @@ void M_Drawer ()
 		BorderNeedRefresh = screen->GetPageCount ();
 		SB_state = screen->GetPageCount ();
 
-		FBrokenLines *lines = V_BreakLines (320, messageString);
+		FBrokenLines *lines = V_BreakLines (screen->Font, 320, messageString);
 		y = 100;
 
 		for (i = 0; lines[i].Width >= 0; i++)

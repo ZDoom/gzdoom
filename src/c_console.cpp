@@ -576,11 +576,11 @@ void C_AddNotifyString (int printlevel, const char *source)
 	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].PrintLevel == printlevel)
 	{
 		FString str = NotifyStrings[NUMNOTIFIES-1].Text + source;
-		lines = V_BreakLines (width, str);
+		lines = V_BreakLines (screen->Font, width, str);
 	}
 	else
 	{
-		lines = V_BreakLines (width, source);
+		lines = V_BreakLines (screen->Font, width, source);
 		addtype = (addtype == APPENDLINE) ? NEWLINE : addtype;
 	}
 

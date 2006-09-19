@@ -55,23 +55,10 @@ void *SRegTail = 0;
 
 #elif defined(__GNUC__)
 
-#ifndef _WIN32
-void *ARegTail __attribute__((section("areg"))) = 0;
-void *CRegTail __attribute__((section("creg"))) = 0;
-void *GRegTail __attribute__((section("greg"))) = 0;
-void *SRegTail __attribute__((section("sreg"))) = 0;
-#else
-
-// I can't find any way to specify the order to link files with
-// Dev C++, so when compiling with GCC under WIN32, I inspect
-// the executable instead of letting the linker do all the work for
-// me.
-
-void **ARegTail;
-void **CRegTail;
-void **GRegTail;
-void **SRegTail;
-#endif
+void *ARegTail __attribute__((section(AREG_SECTION))) = 0;
+void *CRegTail __attribute__((section(CREG_SECTION))) = 0;
+void *GRegTail __attribute__((section(GREG_SECTION))) = 0;
+void *SRegTail __attribute__((section(SREG_SECTION))) = 0;
 
 #elif
 

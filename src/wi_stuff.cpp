@@ -731,7 +731,7 @@ int WI_DrawName(int y,const char * levelname, bool nomove=false)
 	if (!l) return 0;
 
 	screen->SetFont(BigFont);
-	FBrokenLines *lines = V_BreakLines(320, p);
+	FBrokenLines *lines = V_BreakLines(BigFont, 320, p);
 
 	if (lines)
 	{

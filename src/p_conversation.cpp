@@ -681,7 +681,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		toSay = GStrings[dlgtext.GetChars()];
 		if (toSay==NULL) toSay = "Go away!";	// Ok, it's lame - but it doesn't look like an error to the player. ;)
 	}
-	DialogueLines = V_BreakLines (screen->GetWidth()/CleanXfac-24*2, toSay);
+	DialogueLines = V_BreakLines (screen->Font, screen->GetWidth()/CleanXfac-24*2, toSay);
 
 	// Fill out the possible choices
 	ShowGold = false;
@@ -694,7 +694,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			continue;
 		}
 		ShowGold |= reply->NeedsGold;
-		reply->ReplyLines = V_BreakLines (320-50-10, reply->Reply);
+		reply->ReplyLines = V_BreakLines (screen->Font, 320-50-10, reply->Reply);
 		for (j = 0; reply->ReplyLines[j].Width >= 0; ++j)
 		{
 			item.label = reply->ReplyLines[j].Text.LockBuffer();

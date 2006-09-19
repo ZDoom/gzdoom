@@ -307,25 +307,18 @@ int FFont::StringWidth (const BYTE *string) const
 //
 // Break long lines of text into multiple lines no longer than maxwidth pixels
 //
-static void breakit (FBrokenLines *line, const BYTE *start, const BYTE *string, bool keepspace, FString &linecolor)
+static void breakit (FBrokenLines *line, FFont *font, const BYTE *start, const BYTE *stop, FString &linecolor)
 {
-	// Leave out trailing white space
-	if (!keepspace)
-	{
-		while (string > start && isspace (*(string - 1)))
-			string--;
-	}
-
 	if (!linecolor.IsEmpty())
 	{
 		line->Text = TEXTCOLOR_ESCAPE;
 		line->Text += linecolor;
 	}
-	line->Text.AppendCStrPart ((const char *)start, string - start);
-	line->Width = screen->Font->StringWidth (line->Text);
+	line->Text.AppendCStrPart ((const char *)start, stop - start);
+	line->Width = font->StringWidth (line->Text);
 }
 
-FBrokenLines *V_BreakLines (int maxwidth, const BYTE *string, bool keepspace)
+FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string)
 {
 	FBrokenLines lines[128];	// Support up to 128 lines (should be plenty)
 
@@ -333,7 +326,7 @@ FBrokenLines *V_BreakLines (int maxwidth, const BYTE *string, bool keepspace)
 	int i, c, w, nw;
 	FString lastcolor, linecolor;
 	bool lastWasSpace = false;
-	int kerning = screen->Font->GetDefaultKerning ();
+	int kerning = font->GetDefaultKerning ();
 
 	i = w = 0;
 
@@ -377,24 +370,19 @@ FBrokenLines *V_BreakLines (int maxwidth, const BYTE *string, bool keepspace)
 			lastWasSpace = false;
 		}
 
-		nw = screen->Font->GetCharWidth (c);
+		nw = font->GetCharWidth (c);
 
 		if ((w > 0 && w + nw > maxwidth) || c == '\n')
 		{ // Time to break the line
 			if (!space)
 				space = string - 1;
 
-			lines[i].NLTerminated = (c == '\n');
-			breakit (&lines[i], start, space, keepspace, linecolor);
+			breakit (&lines[i], font, start, space, linecolor);
 			if (c == '\n')
 			{
-				// Why did I do it like this? Why? Oh why?
-				linecolor = lastcolor = "";
+				lastcolor = "";		// Why, oh why, did I do it like this?
 			}
-			else
-			{
-				linecolor = lastcolor;
-			}
+			linecolor = lastcolor;
 
 			i++;
 			w = 0;
@@ -417,20 +405,19 @@ FBrokenLines *V_BreakLines (int maxwidth, const BYTE *string, bool keepspace)
 		}
 	}
 
-	if (string - start > 1)
+	// String here is pointing one character after the '\0'
+	if (i < 128 && --string - start > 1)
 	{
 		const BYTE *s = start;
 
 		while (s < string)
 		{
-			if (keepspace || !isspace (*s))
+			// If there is any non-white space in the remainder of the string, add it.
+			if (!isspace (*s++))
 			{
-				lines[i].NLTerminated = (*s == '\n');
-				s++;
-				breakit (&lines[i++], start, string, keepspace, linecolor);
+				breakit (&lines[i++], font, start, string, linecolor);
 				break;
 			}
-			s++;
 		}
 	}
 

@@ -42,8 +42,9 @@
 
 // Since this file is included by everything, it seems an appropriate place
 // to check the NOASM/USEASM macros.
-#if !defined(_M_IX86) && !defined(__i386__)
+#if (!defined(_M_IX86) && !defined(__i386__)) || defined(__APPLE__)
 // The assembly code requires an x86 processor.
+// And needs to be tweaked for Mach-O before enabled on Macs.
 #define NOASM
 #endif
 

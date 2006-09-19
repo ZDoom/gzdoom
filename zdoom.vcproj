@@ -4764,10 +4764,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\x64inlines.h"
-				>
-			</File>
-			<File
 				RelativePath=".\src\zstring.h"
 				>
 			</File>

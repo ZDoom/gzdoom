@@ -832,7 +832,7 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 
 	while (i != NULL_INDEX)
 	{
-		if (*(__int64 *)&LumpInfo[i].name == *(__int64 *)&uname)
+		if (*(QWORD *)&LumpInfo[i].name == *(QWORD *)&uname)
 		{
 			if (LumpInfo[i].namespc == space) break;
 			// If the lump is from one of the special namespaces exclusive to Zips
@@ -864,7 +864,7 @@ int FWadCollection::CheckNumForName (const char *name, int space, int wadnum)
 	i = FirstLumpIndex[LumpNameHash (uname) % NumLumps];
 
 	while (i != NULL_INDEX &&
-		(*(__int64 *)&LumpInfo[i].name != *(__int64 *)&uname ||
+		(*(QWORD *)&LumpInfo[i].name != *(QWORD *)&uname ||
 		 LumpInfo[i].namespc != space ||
 		 LumpInfo[i].wadnum != wadnum))
 	{
@@ -1520,7 +1520,7 @@ int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 	while (lump_p < &LumpInfo[NumLumps])
 	{
 		if ((anyns || lump_p->namespc == ns_global) &&
-			*(__int64 *)&lump_p->name == *(__int64 *)&name8)
+			*(QWORD *)&lump_p->name == *(QWORD *)&name8)
 		{
 			int lump = lump_p - &LumpInfo[0];
 			*lastlump = lump + 1;

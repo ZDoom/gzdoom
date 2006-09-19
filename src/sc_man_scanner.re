@@ -151,12 +151,27 @@ string:
 		{
 			cursor++;
 		}
+		else if (*cursor == '\r' && *(cursor + 1) == '\n')
+		{
+			cursor++;	// convert CR-LF to simply LF
+		}
 		else if (*cursor == '"')
 		{
 			break;
 		}
 		if (*cursor == '\n')
 		{
+			if (CMode)
+			{
+				if (!Escape || sc_StringLen == 0 || sc_String[sc_StringLen - 1] != '\\')
+				{
+					SC_ScriptError ("Unterminated string constant");
+				}
+				else
+				{
+					sc_StringLen--;		// overwrite the \ character with \n
+				}
+			}
 			sc_Line++;
 			sc_Crossed = true;
 		}

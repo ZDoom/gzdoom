@@ -150,6 +150,10 @@ IndexType BinarySearchFlexible (IndexType max, const KeyType key, IndexType noIn
 // Returns the minimum of a and b.
 //==========================================================================
 
+#ifdef MIN
+#undef MIN
+#endif
+
 template<class T>
 inline
 const T MIN (const T a, const T b)
@@ -163,6 +167,10 @@ const T MIN (const T a, const T b)
 //
 // Returns the maximum of a and b.
 //==========================================================================
+
+#ifdef MAX
+#undef MAX
+#endif
 
 template<class T>
 inline

@@ -584,7 +584,7 @@ private:
 
 			if (CPlayer->LogText != NULL)
 			{
-				FBrokenLines *lines = V_BreakLines (272, CPlayer->LogText);
+				FBrokenLines *lines = V_BreakLines (SmallFont2, 272, CPlayer->LogText);
 				for (i = 0; lines[i].Width >= 0; ++i)
 				{
 					screen->DrawText (CR_UNTRANSLATED, left+24*xscale, top+(18+i*12)*yscale,

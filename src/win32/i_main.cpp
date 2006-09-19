@@ -557,10 +557,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	}
 #endif
 
-#ifdef REGEXEPEEK
-	InitAutoSegMarkers ();
-#endif
-
 	MainThread = INVALID_HANDLE_VALUE;
 	DuplicateHandle (GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &MainThread,
 		0, FALSE, DUPLICATE_SAME_ACCESS);

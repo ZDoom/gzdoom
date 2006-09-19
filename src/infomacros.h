@@ -114,6 +114,8 @@ typedef void (*voidfunc_)();
 ************* Non-Visual C++ macros ************
 ************************************************/
 
+#include "autosegs.h"
+
 #define DOOMEDNUMOF(actor) actor##ActorInfo.DoomEdNum
 
 extern void ApplyActorDefault (int defnum, const char *datastr);
@@ -125,7 +127,7 @@ extern void ApplyActorDefault (int defnum, int dataint);
 	extern FActorInfo actor##ActorInfo; \
 	extern FActorInfo *actor##DefaultsReg; \
 	extern void actor##DefaultsConstructor(); \
-	FActorInfo *actor##DefaultsReg __attribute__((section("areg"))) = &actor##ActorInfo; \
+	FActorInfo *actor##DefaultsReg __attribute__((section(AREG_SECTION))) = &actor##ActorInfo; \
 	FActorInfo actor##ActorInfo = {
 
 #define BEGIN_DEFAULTS_POST(actor,game,ednum,id) \
@@ -142,14 +144,14 @@ extern void ApplyActorDefault (int defnum, int dataint);
 	
 #define AT_GAME_SET(ns) \
 	extern void ns##_gs(); \
-	voidfunc_ ns##_gsr __attribute__((section("greg"))) = ns##_gs; \
+	voidfunc_ ns##_gsr __attribute__((section(GREG_SECTION))) = ns##_gs; \
 	void ns##_gs ()
 
 //typedef void (*speedfunc)(EGameSpeed);
 
 #define AT_SPEED_SET(ns,varname) \
 	extern void ns##_ss(EGameSpeed); \
-	void (*ns##_gsr)(EGameSpeed) __attribute__((section("sreg"))) = ns##_ss; \
+	void (*ns##_gsr)(EGameSpeed) __attribute__((section(SREG_SECTION))) = ns##_ss; \
 	void ns##_ss (EGameSpeed varname)
 
 #endif

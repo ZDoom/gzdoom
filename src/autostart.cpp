@@ -83,73 +83,13 @@ void *SRegHead = 0;
 
 #elif defined(__GNUC__)
 
-#ifndef _WIN32
-void *ARegHead __attribute__((section("areg"))) = 0;
-void *CRegHead __attribute__((section("creg"))) = 0;
-void *GRegHead __attribute__((section("greg"))) = 0;
-void *SRegHead __attribute__((section("sreg"))) = 0;
-#else
-
-// I can't find any way to specify the order to link files with
-// Dev C++, so when compiling with GCC under WIN32, I inspect
-// the executable instead of letting the linker do all the work for
-// me.
-
-void **ARegHead;
-void **CRegHead;
-void **GRegHead;
-void **SRegHead;
-
-#endif
+void *ARegHead __attribute__((section(AREG_SECTION))) = 0;
+void *CRegHead __attribute__((section(CREG_SECTION))) = 0;
+void *GRegHead __attribute__((section(GREG_SECTION))) = 0;
+void *SRegHead __attribute__((section(SREG_SECTION))) = 0;
 
 #elif
 
 #error Please fix autostart.cpp for your compiler
-
-#endif
-
-
-#ifdef REGEXEPEEK
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <winnt.h>
-
-struct AutoSegStuff
-{
-	char name[IMAGE_SIZEOF_SHORT_NAME];
-	REGINFO *HeadPtr;
-	REGINFO *TailPtr;
-};
-
-static const AutoSegStuff Stuff[5] =
-{
-	{ "areg", &ARegHead, &ARegTail },
-	{ "creg", &CRegHead, &CRegTail },
-	{ "greg", &GRegHead, &GRegTail },
-	{ "sreg", &SRegHead, &SRegTail },
-};
-
-void InitAutoSegMarkers ()
-{
-	BYTE *module = (BYTE *)GetModuleHandle (NULL);
-	IMAGE_DOS_HEADER *dosHeader = (IMAGE_DOS_HEADER *)module;
-	IMAGE_NT_HEADERS *ntHeaders = (IMAGE_NT_HEADERS *)(module + dosHeader->e_lfanew);
-	IMAGE_SECTION_HEADER *sections = IMAGE_FIRST_SECTION (ntHeaders);
-	int i, j;
-
-	for (i = 0; i < 5; ++i)
-	{
-		for (j = 0; j < ntHeaders->FileHeader.NumberOfSections; ++j)
-		{
-			if (memcmp (sections[j].Name, Stuff[i].name, IMAGE_SIZEOF_SHORT_NAME) == 0)
-			{
-				*Stuff[i].HeadPtr = (REGINFO)(sections[j].VirtualAddress + module - 4);
-				*Stuff[i].TailPtr = (REGINFO)(sections[j].VirtualAddress + module + sections[j].Misc.VirtualSize);
-				break;
-			}
-		}
-	}
-}
 
 #endif

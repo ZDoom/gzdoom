@@ -2128,6 +2128,10 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 							source->z + 8 * FRACUNIT, ALLOW_REPLACE);
 						if (spawned != NULL && type == DEM_SUMMONFRIEND)
 						{
+							if (spawned->CountsAsKill()) 
+							{
+								level.total_monsters--;
+							}
 							spawned->FriendPlayer = player + 1;
 							spawned->flags |= MF_FRIENDLY;
 							spawned->LastHeard = players[player].mo;

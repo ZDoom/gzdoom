@@ -348,8 +348,6 @@ struct TGAHeader
 
 #pragma pack()
 
-struct TGAHeader;
-
 class FTGATexture : public FTexture
 {
 public:

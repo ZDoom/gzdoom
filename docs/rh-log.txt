@@ -1,3 +1,6 @@
+September 20, 2006 (Changes by Graf Zahl)
+- Fixed: Summoned friendly monsters added to the total kill count.
+
 September 19, 2006
 - Added a dialog that gives the user the chance to fix things if the config
   could not be saved for some reason.

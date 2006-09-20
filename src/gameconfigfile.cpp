@@ -519,7 +519,7 @@ FString FGameConfigFile::GetConfigPath (bool tryProg)
 	HRESULT hr;
 
 	TCHAR uname[UNLEN+1];
-	DWORD unamelen = sizeof(uname);
+	DWORD unamelen = countof(uname);
 
 	// Because people complained, try for a user-specific .ini in the program directory first.
 	// If that is not writeable, use the one in the home directory instead.

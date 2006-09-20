@@ -61,7 +61,7 @@ public:
 	void ChangePathName (const char *path);
 
 	void LoadConfigFile (void (*nosechandler)(const char *pathname, FConfigFile *config, void *userdata), void *userdata);
-	void WriteConfigFile () const;
+	bool WriteConfigFile () const;
 
 protected:
 	virtual void WriteCommentHeader (FILE *file) const;

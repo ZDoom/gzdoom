@@ -55,6 +55,7 @@
 #include "stats.h"
 #include "hardware.h"
 #include "zstring.h"
+#include "gameconfigfile.h"
 
 EXTERN_CVAR (String, language)
 
@@ -362,6 +363,13 @@ int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad)
 	if (i > numwads)
 		return -1;
 	return i-1;
+}
+
+bool I_WriteIniFailed ()
+{
+	printf ("The config file %s could not be saved:\n%s\n", GameConfig->GetPathName(), strerror(errno));
+	return false;
+	// return true to retry
 }
 
 static const char *pattern;

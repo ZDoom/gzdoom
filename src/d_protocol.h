@@ -51,6 +51,7 @@
 #define UINF_ID		BIGE_ID('U','I','N','F')
 #define COMP_ID		BIGE_ID('C','O','M','P')
 #define BODY_ID		BIGE_ID('B','O','D','Y')
+#define NETD_ID		BIGE_ID('N','E','T','D')
 
 #define	ANGLE2SHORT(x)	((((x)/360) & 65535)
 #define	SHORT2ANGLE(x)	((x)*360)

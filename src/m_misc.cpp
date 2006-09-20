@@ -339,18 +339,51 @@ FString GetUserFile (const char *file, bool nodir)
 // M_SaveDefaults
 //
 
-void M_SaveDefaults ()
+bool M_SaveDefaults (const char *filename)
 {
+	FString oldpath;
+	bool success;
+
+	if (filename != NULL)
+	{
+		oldpath = GameConfig->GetPathName();
+		GameConfig->ChangePathName (filename);
+	}
 	GameConfig->ArchiveGlobalData ();
 	if (GameNames[gameinfo.gametype] != NULL)
 	{
 		GameConfig->ArchiveGameData (GameNames[gameinfo.gametype]);
 	}
-	GameConfig->WriteConfigFile ();
+	success = GameConfig->WriteConfigFile ();
+	if (filename != NULL)
+	{
+		GameConfig->ChangePathName (filename);
+	}
+	return success;
+}
+
+void M_SaveDefaultsFinal ()
+{
+	while (!M_SaveDefaults (NULL) && I_WriteIniFailed ())
+	{
+		/* Loop until the config saves or I_WriteIniFailed() returns false */
+	}
 	delete GameConfig;
 	GameConfig = NULL;
 }
 
+CCMD (writeini)
+{
+	const char *filename = (argv.argc() == 1) ? NULL : argv[1];
+	if (!M_SaveDefaults (filename))
+	{
+		Printf ("Writing config failed: %s\n", strerror(errno));
+	}
+	else
+	{
+		Printf ("Config saved.\n");
+	}
+}
 
 //
 // M_LoadDefaults
@@ -361,7 +394,7 @@ void M_LoadDefaults ()
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
 	atterm (FreeKeySections);
-	atterm (M_SaveDefaults);
+	atterm (M_SaveDefaultsFinal);
 }
 
 

@@ -195,6 +195,9 @@ void I_SetTitleString (const char *title);
 // Pick from multiple IWADs to use
 int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
 
+// The ini could not be saved at exit
+bool I_WriteIniFailed ();
+
 // [RH] Returns millisecond-accurate time
 unsigned int I_MSTime (void);
 

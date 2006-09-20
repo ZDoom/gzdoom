@@ -398,14 +398,14 @@ char *FConfigFile::ReadLine (char *string, int n, void *file) const
 	return fgets (string, n, (FILE *)file);
 }
 
-void FConfigFile::WriteConfigFile () const
+bool FConfigFile::WriteConfigFile () const
 {
 	FILE *file = fopen (PathName, "w");
 	FConfigSection *section;
 	FConfigEntry *entry;
 
 	if (file == NULL)
-		return;
+		return false;
 
 	WriteCommentHeader (file);
 
@@ -423,6 +423,7 @@ void FConfigFile::WriteConfigFile () const
 		fprintf (file, "\n");
 	}
 	fclose (file);
+	return true;
 }
 
 void FConfigFile::WriteCommentHeader (FILE *file) const

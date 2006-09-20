@@ -2231,6 +2231,15 @@ void G_BeginRecording (const char *startmap)
 		}
 	}
 
+	// It is possible to start a "multiplayer" game with only one player,
+	// so checking the number of players when playing back the demo is not
+	// enough.
+	if (multiplayer)
+	{
+		StartChunk (NETD_ID, &demo_p);
+		FinishChunk (&demo_p);
+	}
+
 	// Write cvars chunk
 	StartChunk (VARS_ID, &demo_p);
 	C_WriteCVars (&demo_p, CVAR_SERVERINFO|CVAR_DEMOSAVE);
@@ -2356,6 +2365,10 @@ bool G_ProcessIFFDemo (char *mapname)
 				numPlayers++;
 			}
 			D_ReadUserInfoStrings (i, &demo_p, false);
+			break;
+
+		case NETD_ID:
+			multiplayer = netgame = netdemo = true;
 			break;
 
 		case BODY_ID:

@@ -1,4 +1,11 @@
 September 19, 2006
+- Added a dialog that gives the user the chance to fix things if the config
+  could not be saved for some reason.
+- Added the writeini console command to write the config file, optionally
+  specifying a specific file name for it.
+- Fixed: "Multiplayer" demos that only had one player were not played back
+  properly because the demo playback code only checked the number of players
+  to determine if it should be played as a netdemo.
 - Assembly code is disabled when building with __APPLE__ defined, for now.
 - If you aren't targeting x86, m_fixed.h only includes basicinlines.h now.
 - Moved x64inlines.h into basicinlines.h.

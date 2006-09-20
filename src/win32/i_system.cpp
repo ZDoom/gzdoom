@@ -59,6 +59,7 @@
 #include "i_system.h"
 #include "c_dispatch.h"
 #include "templates.h"
+#include "gameconfigfile.h"
 
 #include "stats.h"
 
@@ -722,6 +723,26 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 			(HWND)Window, (DLGPROC)IWADBoxCallback);
 	}
 	return defaultiwad;
+}
+
+bool I_WriteIniFailed ()
+{
+	char *lpMsgBuf;
+	FString errortext;
+
+	FormatMessageA (FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+					FORMAT_MESSAGE_FROM_SYSTEM | 
+					FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		GetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+		(LPSTR)&lpMsgBuf,
+		0,
+		NULL 
+	);
+	errortext.Format ("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
+	LocalFree (lpMsgBuf);
+	return MessageBox (Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
 }
 
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo)

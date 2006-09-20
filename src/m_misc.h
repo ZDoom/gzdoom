@@ -40,7 +40,7 @@ void M_ScreenShot (const char *filename);
 
 void M_LoadDefaults ();
 
-void M_SaveDefaults ();
+bool M_SaveDefaults (const char *filename);
 void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection);
 
 FString GetUserFile (const char *path, bool nodir=false);

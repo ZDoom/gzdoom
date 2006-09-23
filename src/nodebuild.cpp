@@ -398,7 +398,7 @@ bool FNodeBuilder::ShoveSegBehind (DWORD set, node_t &node, DWORD seg, DWORD mat
 		node.dx = -node.dx;
 		node.dy = -node.dy;
 	}
-	return Heuristic (node, set, false) != 0;
+	return Heuristic (node, set, false) > 0;
 }
 
 // Splitters are chosen to coincide with segs in the given set. To reduce the

@@ -1,3 +1,6 @@
+September 23, 2006 (Changes by Graf Zahl)
+- Fixed: Starting a new game didn't remove the deferred scripts.
+
 September 22, 2006
 - Fixed: FNodeBuilder::ShoveSegBehind needs to check that the result from
   Heuristic is positive, not just non-zero.

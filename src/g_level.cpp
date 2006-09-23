@@ -1404,11 +1404,11 @@ void G_InitNew (char *mapname, bool bTitleLevel)
 	int i;
 
 	if (!savegamerestore)
-		G_ClearSnapshots ();
-
-	// [RH] Mark all levels as not visited
-	if (!savegamerestore)
 	{
+		G_ClearSnapshots ();
+		P_RemoveDefereds ();
+
+		// [RH] Mark all levels as not visited
 		for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 			wadlevelinfos[i].flags = wadlevelinfos[i].flags & ~LEVEL_VISITED;
 	}

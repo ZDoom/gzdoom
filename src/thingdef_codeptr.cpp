@@ -90,7 +90,7 @@ struct StateCallData
 	bool Result;
 };
 
-StateCallData StateCall;
+StateCallData * pStateCall;
 
 //==========================================================================
 //
@@ -103,9 +103,12 @@ StateCallData StateCall;
 
 bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 {
+	StateCallData StateCall;
+	StateCallData *pSavedCall = pStateCall;
 	bool result = false;
 	int counter = 0;
 
+	pStateCall = &StateCall;
 	while (State != NULL)
 	{
 		// Assume success. The code pointer will set this to false if necessary
@@ -128,7 +131,7 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 			// Abort immediately if the state jumps to itself!
 			if (State == State->GetNextState()) 
 			{
-				StateCall.State = NULL;
+				pStateCall = pSavedCall;
 				return false;
 			}
 			
@@ -141,7 +144,7 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 			State = StateCall.State;
 		}
 	}
-	StateCall.State = NULL;
+	pStateCall = pSavedCall;
 	return result;
 }
 
@@ -377,23 +380,22 @@ void A_BulletAttack (AActor *self)
 //==========================================================================
 static void DoJump(AActor * self, FState * CallingState, int offset)
 {
-	if (!self->player) 
+	if (pStateCall != NULL && CallingState == pStateCall->State)
 	{
-		self->SetState (CallingState + offset);
+		pStateCall->State += offset;
 	}
-	else if (CallingState == self->player->psprites[ps_weapon].state)
+	else if (self->player != NULL && CallingState == self->player->psprites[ps_weapon].state)
 	{
 		P_SetPsprite(self->player, ps_weapon, CallingState + offset);
 	}
-	else if (CallingState == self->player->psprites[ps_flash].state)
+	else if (self->player != NULL && CallingState == self->player->psprites[ps_flash].state)
 	{
 		P_SetPsprite(self->player, ps_flash, CallingState + offset);
 	}
-	else if (CallingState == StateCall.State)
+	else
 	{
-		StateCall.State += offset;
+		self->SetState (CallingState + offset);
 	}
-	StateCall.Result=false;	// Jumps should never set the result for inventory state chains!
 }
 //==========================================================================
 //
@@ -407,6 +409,8 @@ void A_Jump(AActor * self)
 
 	if (index>=0 && pr_cajump() < clamp<int>(EvalExpressionI (StateParameters[index], self), 0, 255))
 		DoJump(self, CallingState, StateParameters[index+1]);
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }
 
 //==========================================================================
@@ -421,6 +425,8 @@ void A_JumpIfHealthLower(AActor * self)
 
 	if (index>=0 && self->health < EvalExpressionI (StateParameters[index], self))
 		DoJump(self, CallingState, StateParameters[index+1]);
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }
 
 //==========================================================================
@@ -445,6 +451,8 @@ void A_JumpIfCloser(AActor * self)
 		target = linetarget;
 	}
 
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+
 	// No target - no jump
 	if (target==NULL) return;
 
@@ -468,6 +476,8 @@ void DoJumpIfInventory(AActor * self, AActor * owner)
 	int ItemAmount = EvalExpressionI (StateParameters[index+1], self);
 	int JumpOffset = StateParameters[index+2];
 	const PClass * Type=PClass::FindClass(ItemType);
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 
 	if (!Type) return;
 
@@ -565,12 +575,14 @@ void A_CallSpecial(AActor * self)
 	int index=CheckIndex(6);
 	if (index<0) return;
 
-	StateCall.Result = !!LineSpecials[StateParameters[index]](NULL, self, false,
+	bool res = !!LineSpecials[StateParameters[index]](NULL, self, false,
 		EvalExpressionI (StateParameters[index+1], self),
 		EvalExpressionI (StateParameters[index+2], self),
 		EvalExpressionI (StateParameters[index+3], self),
 		EvalExpressionI (StateParameters[index+4], self),
 		EvalExpressionI (StateParameters[index+5], self));
+
+	if (pStateCall != NULL) pStateCall->Result = res;
 }
 
 //==========================================================================
@@ -790,6 +802,8 @@ void A_JumpIfNoAmmo(AActor * self)
 
 	if (!self->player->ReadyWeapon->CheckAmmo(self->player->ReadyWeapon->bAltFire, false, true))
 		DoJump(self, CallingState, StateParameters[index]);
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }
 
 
@@ -1068,6 +1082,7 @@ void A_CustomRailgun (AActor *actor)
 static void DoGiveInventory(AActor * self, AActor * receiver)
 {
 	int index=CheckIndex(2);
+	bool res=true;
 	if (index<0 || receiver == NULL) return;
 
 	ENamedName item =(ENamedName)StateParameters[index];
@@ -1095,11 +1110,13 @@ static void DoGiveInventory(AActor * self, AActor * receiver)
 		if (!item->TryPickup (receiver))
 		{
 			item->Destroy ();
-			StateCall.Result = false;
+			res = false;
 		}
-		else StateCall.Result = true;
+		else res = true;
 	}
-	else StateCall.Result = false;
+	else res = false;
+	if (pStateCall != NULL) pStateCall->Result = res;
+
 }	
 
 void A_GiveInventory(AActor * self)
@@ -1128,14 +1145,14 @@ void DoTakeInventory(AActor * self, AActor * receiver)
 
 	const PClass * mi=PClass::FindClass(item);
 
-	StateCall.Result=false;
+	if (pStateCall != NULL) pStateCall->Result=false;
 	if (mi) 
 	{
 		AInventory * inv = receiver->FindInventory(mi);
 
 		if (inv && !inv->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
 		{
-			if (inv->Amount > 0) StateCall.Result=true;
+			if (inv->Amount > 0 && pStateCall != NULL) pStateCall->Result=true;
 			if (!amount || amount>=inv->Amount) 
 			{
 				if (inv->IsKindOf(RUNTIME_CLASS(AAmmo))) inv->Amount=0;
@@ -1177,7 +1194,7 @@ void A_SpawnItem(AActor * self)
 
 	if (!missile) 
 	{
-		StateCall.Result=false;
+		if (pStateCall != NULL) pStateCall->Result=false;
 		return;
 	}
 
@@ -1187,7 +1204,7 @@ void A_SpawnItem(AActor * self)
 		distance=(self->radius+GetDefaultByType(missile)->radius)>>FRACBITS;
 	}
 
-	if (self->player && CallingState != self->state && CallingState != StateCall.State)
+	if (self->player && CallingState != self->state && (pStateCall==NULL || CallingState != pStateCall->State))
 	{
 		// Used from a weapon so use some ammo
 		AWeapon * weapon=self->player->ReadyWeapon;
@@ -1220,7 +1237,7 @@ void A_SpawnItem(AActor * self)
 				// The monster is blocked so don't spawn it at all!
 				if (mo->CountsAsKill()) level.total_monsters--;
 				mo->Destroy();
-				StateCall.Result=false;	// for an inventory iten's use state
+				if (pStateCall != NULL) pStateCall->Result=false;	// for an inventory iten's use state
 				return;
 			}
 			else if (originator)
@@ -1256,7 +1273,6 @@ void A_SpawnItem(AActor * self)
 			mo->target=originator? originator : self;
 		}
 	}
-	StateCall.Result=true;
 }
 
 //===========================================================================
@@ -1278,7 +1294,7 @@ void A_ThrowGrenade(AActor * self)
 	fixed_t zmom = fixed_t(EvalExpressionF (StateParameters[index+3], self) * FRACUNIT);
 	bool useammo = EvalExpressionN (StateParameters[index+4], self);
 
-	if (self->player && CallingState != self->state && CallingState != StateCall.State)
+	if (self->player && CallingState != self->state && (pStateCall==NULL || CallingState != pStateCall->State))
 	{
 		// Used from a weapon so use some ammo
 		AWeapon * weapon=self->player->ReadyWeapon;
@@ -1311,9 +1327,8 @@ void A_ThrowGrenade(AActor * self)
 			if (bo->tics<1) bo->tics=1;
 		}
 		P_CheckMissileSpawn (bo);
-		StateCall.Result=true;
 	} 
-	else StateCall.Result=false;
+	else if (pStateCall != NULL) pStateCall->Result=false;
 }
 
 
@@ -1354,9 +1369,8 @@ void A_SelectWeapon(AActor * actor)
 		{
 			actor->player->PendingWeapon = weaponitem;
 		}
-		StateCall.Result=true;
 	}
-	else StateCall.Result=false;
+	else if (pStateCall != NULL) pStateCall->Result=false;
 }
 
 //===========================================================================
@@ -1526,6 +1540,8 @@ void A_CheckSight(AActor * self)
 	int index=CheckIndex(1, &CallingState);
 
 	if (index>=0) DoJump(self, CallingState, StateParameters[index]);
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }
 
 
@@ -1609,6 +1625,8 @@ void A_JumpIf(AActor * self)
 	int expression = EvalExpressionI (StateParameters[index], self);
 
 	if (index>=0 && expression) DoJump(self, CallingState, StateParameters[index+1]);
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }
 
 //===========================================================================
@@ -1740,4 +1758,6 @@ void A_CheckFloor (AActor *self)
 	{
 		DoJump (self, CallingState, StateParameters[index]);
 	}
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }

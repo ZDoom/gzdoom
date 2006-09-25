@@ -1,3 +1,10 @@
+September 25, 2006 (Changes by Graf Zahl)
+- Fixed: ACustomInventory::CallStateChain couldn't be called recursively
+  so any item that was giving another CustomInventory item didn't work
+  as intended.
+- Fixed: CustomInventory items didn't process A_Jump... commands properly
+  for non-players.
+
 September 23, 2006 (Changes by Graf Zahl)
 - Fixed: Starting a new game didn't remove the deferred scripts.
 

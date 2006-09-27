@@ -1470,8 +1470,14 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked)
 	pviewy = MulScale (pl->yoffs, pl->yscale, ds_ybits);
 
 	ang = (ANG270 - viewangle) >> ANGLETOFINESHIFT;
+//	Printf ("%u %d %d\n", ang, finecosine[ang], finesine[ang]);
 	p[0] = FIXED2FLOAT(DMulScale16 (viewx, finecosine[ang], -viewy, finesine[ang]));
 	p[2] = FIXED2FLOAT(DMulScale16 (viewx, finesine[ang], viewy, finecosine[ang]));
+//	double dang = 1.5*M_PI - double(viewangle)*M_PI/2147483648.0;
+//	double vx = viewx/65536.0, vy = viewy/65536.0;
+//	double dcos = cos(dang), dsin = sin(dang);
+//	p[0] = vx * dcos - vy * dsin;
+//	p[2] = vx * dsin + vy * dcos;
 	p[1] = FIXED2FLOAT(pl->height.ZatPoint (0, 0) - viewz);
 
 	// m is the v direction vector in view space
@@ -1671,7 +1677,7 @@ bool R_AlignFlat (int linenum, int side, int fc)
 	angle_t angle = R_PointToAngle2 (x, y, line->v2->x, line->v2->y);
 	angle_t norm = (angle-ANGLE_90) >> ANGLETOFINESHIFT;
 
-	fixed_t dist = -FixedMul (finecosine[norm], x) - FixedMul (finesine[norm], y);
+	fixed_t dist = -DMulScale16 (finecosine[norm], x, finesine[norm], y);
 
 	if (side)
 	{

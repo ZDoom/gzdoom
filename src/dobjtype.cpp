@@ -2,6 +2,7 @@
 #include "i_system.h"
 #include "actor.h"
 #include "autosegs.h"
+#include "templates.h"
 
 TArray<PClass *> PClass::m_RuntimeActors;
 TArray<PClass *> PClass::m_Types;
@@ -10,9 +11,30 @@ PClass *PClass::TypeHash[PClass::HASH_SIZE];
 // A harmless non_NULL FlatPointer for classes without pointers.
 static const size_t TheEnd = ~0;
 
+static int STACK_ARGS cregcmp (const void *a, const void *b)
+{
+	// VC++ introduces NULLs in the sequence. GCC seems to work as expected and not do it.
+	const ClassReg *class1 = *(const ClassReg **)a;
+	const ClassReg *class2 = *(const ClassReg **)b;
+	if (class1 == NULL) return 1;
+	if (class2 == NULL) return -1;
+	return strcmp (class1->Name, class2->Name);
+}
+
 void PClass::StaticInit ()
 {
 	atterm (StaticShutdown);
+
+	// Sort classes by name to remove dependance on how the compiler ordered them.
+	REGINFO *head = &CRegHead;
+	REGINFO *tail = &CRegTail;
+
+	// MinGW's linker is linking the object files backwards for me now...
+	if (head > tail)
+	{
+		swap (head, tail);
+	}
+	qsort (head + 1, tail - head - 1, sizeof(REGINFO), cregcmp);
 
 	TAutoSegIterator<ClassReg *, &CRegHead, &CRegTail> probe;
 

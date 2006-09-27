@@ -38,6 +38,9 @@
 #include "tarray.h"
 #include "doomtype.h"
 #include "m_alloc.h"
+#ifndef _MSC_VER
+#include "autosegs.h"
+#endif
 
 struct PClass;
 

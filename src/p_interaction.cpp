@@ -273,25 +273,28 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 		}
 		else
 		{
-			if (inflictor != NULL)
-			{
-				message = inflictor->GetClass()->Meta.GetMetaString (AMETA_Obituary);
-			}
-			if (message == NULL && attacker->player->ReadyWeapon != NULL)
-			{
-				message = attacker->player->ReadyWeapon->GetClass()->Meta.GetMetaString (AMETA_Obituary);
-			}
+			if (mod == MOD_TELEFRAG) message = GStrings("OB_MPTELEFRAG");
 			if (message == NULL)
 			{
-				switch (mod)
+				if (inflictor != NULL)
 				{
-				case MOD_R_SPLASH:		messagename = "OB_MPR_SPLASH";		break;
-				case MOD_BFG_SPLASH:	messagename = "OB_MPBFG_SPLASH";	break;
-				case MOD_TELEFRAG:		messagename = "OB_MPTELEFRAG";		break;
-				case MOD_RAILGUN:		messagename = "OB_RAILGUN";			break;
+					message = inflictor->GetClass()->Meta.GetMetaString (AMETA_Obituary);
 				}
-				if (messagename != NULL)
-					message = GStrings(messagename);
+				if (message == NULL && attacker->player->ReadyWeapon != NULL)
+				{
+					message = attacker->player->ReadyWeapon->GetClass()->Meta.GetMetaString (AMETA_Obituary);
+				}
+				if (message == NULL)
+				{
+					switch (mod)
+					{
+					case MOD_R_SPLASH:		messagename = "OB_MPR_SPLASH";		break;
+					case MOD_BFG_SPLASH:	messagename = "OB_MPBFG_SPLASH";	break;
+					case MOD_RAILGUN:		messagename = "OB_RAILGUN";			break;
+					}
+					if (messagename != NULL)
+						message = GStrings(messagename);
+				}
 			}
 		}
 	}

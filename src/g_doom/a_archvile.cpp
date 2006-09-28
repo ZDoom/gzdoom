@@ -241,6 +241,14 @@ void A_VileChase (AActor *self)
 					temp = self->target;
 					self->target = corpsehit;
 					A_FaceTarget (self);
+					if (self->flags & MF_FRIENDLY)
+					{
+						// If this is a friendly Arch-Vile (which is turning the resurrected monster into its friend)
+						// and the Arch-Vile is currently targetting the resurrected monster the target must be cleared.
+						if (self->lastenemy == temp) self->lastenemy = NULL;
+						if (temp == self->target) temp = NULL;
+						
+					}
 					self->target = temp;
 										
 					// Make the state the monster enters customizable - but leave the

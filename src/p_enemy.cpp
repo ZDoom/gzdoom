@@ -1210,9 +1210,16 @@ bool P_LookForTID (AActor *actor, INTBOOL allaround)
 		// Use last known enemy if no hatee sighted -- killough 2/15/98:
 		if (actor->lastenemy != NULL && actor->lastenemy->health > 0)
 		{
-			actor->target = actor->lastenemy;
-			actor->lastenemy = NULL;
-			return true;
+			if (!actor->IsFriend(actor->lastenemy))
+			{
+				actor->target = actor->lastenemy;
+				actor->lastenemy = NULL;
+				return true;
+			}
+			else
+			{
+				actor->lastenemy = NULL;
+			}
 		}
 	}
 	return false;
@@ -1351,12 +1358,19 @@ bool P_LookForEnemies (AActor *actor, INTBOOL allaround)
 			actor->target = actor->goal;
 			return true;
 		}
-		// Use last known enemy if no enemies sighted -- killough 2/15/98:
+		// Use last known enemy if no hatee sighted -- killough 2/15/98:
 		if (actor->lastenemy != NULL && actor->lastenemy->health > 0)
 		{
-			actor->target = actor->lastenemy;
-			actor->lastenemy = NULL;
-			return true;
+			if (!actor->IsFriend(actor->lastenemy))
+			{
+				actor->target = actor->lastenemy;
+				actor->lastenemy = NULL;
+				return true;
+			}
+			else
+			{
+				actor->lastenemy = NULL;
+			}
 		}
 	}
 	return false;
@@ -1437,12 +1451,19 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround)
 					actor->target = actor->goal;
 					return true;
 				}
-				// Use last known enemy if no players sighted -- killough 2/15/98:
+				// Use last known enemy if no hatee sighted -- killough 2/15/98:
 				if (actor->lastenemy != NULL && actor->lastenemy->health > 0)
 				{
-					actor->target = actor->lastenemy;
-					actor->lastenemy = NULL;
-					return true;
+					if (!actor->IsFriend(actor->lastenemy))
+					{
+						actor->target = actor->lastenemy;
+						actor->lastenemy = NULL;
+						return true;
+					}
+					else
+					{
+						actor->lastenemy = NULL;
+					}
 				}
 			}
 			return actor->target == actor->goal && actor->goal != NULL;
@@ -1799,8 +1820,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 	}
 
-	// [RH] If the target is dead (and not a goal), stop chasing it.
-	if (actor->target && actor->target != actor->goal && actor->target->health <= 0)
+	// [RH] If the target is dead or a friend (and not a goal), stop chasing it.
+	if (actor->target && actor->target != actor->goal && (actor->target->health <= 0 || actor->IsFriend(actor->target)))
 		actor->target = NULL;
 
 	// [RH] Friendly monsters will consider chasing whoever hurts a player if they

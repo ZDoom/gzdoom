@@ -1,3 +1,9 @@
+September 27, 2006 (Changes by Graf Zahl)
+- Fixed: Monsters should never target friends, even if the friendliness
+  state has changed since the target has been acquired.
+- Fixed: Multiplayer telefrag obituaries must be handled before weapon
+  dependent obituary messages.
+
 September 26, 2006
 - PClass::StaticInit() now sorts the class metadata so that operations that
   iterate over it (such as the "give all" cheat) are compiler-independant.

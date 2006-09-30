@@ -4926,6 +4926,7 @@ int DLevelScript::RunScript ()
 				}
 			}
 			sp -= 1;
+			break;
 
 		case PCD_CHANGELEVEL:
 			{

@@ -1,3 +1,7 @@
+September 30, 2006 (Changes by Graf Zahl)
+- Fixed: Default flags for APlayerPawn and APlayerChunk were not defined.
+- Fixed: The PCD_GETPLAYERINFO case in p_acs.cpp was missing a break.
+
 September 27, 2006 (Changes by Graf Zahl)
 - Fixed: Monsters should never target friends, even if the friendliness
   state has changed since the target has been acquired.

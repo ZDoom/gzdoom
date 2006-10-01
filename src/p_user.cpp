@@ -351,7 +351,7 @@ void player_s::SetLogText (const char *text)
 
 int player_t::GetSpawnClass()
 {
-	const PClass * type = PlayerClasses[players[consoleplayer].CurrentPlayerClass].Type;
+	const PClass * type = PlayerClasses[CurrentPlayerClass].Type;
 	return static_cast<APlayerPawn*>(GetDefaultByType(type))->SpawnMask;
 }
 

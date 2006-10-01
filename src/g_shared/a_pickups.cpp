@@ -1197,12 +1197,24 @@ bool AInventory::TryPickup (AActor *toucher)
 CCMD (printinv)
 {
 	AInventory *item;
+	int pnum = consoleplayer;
 
-	if (players[consoleplayer].mo == NULL)
+#ifdef _DEBUG
+	// Only allow peeking on other players' inventory in debug builds.
+	if (argv.argc() > 1)
+	{
+		pnum = atoi (argv[1]);
+		if (pnum < 0 || pnum >= MAXPLAYERS)
+		{
+			return;
+		}
+	}
+#endif
+	if (players[pnum].mo == NULL)
 	{
 		return;
 	}
-	for (item = players[consoleplayer].mo->Inventory; item != NULL; item = item->Inventory)
+	for (item = players[pnum].mo->Inventory; item != NULL; item = item->Inventory)
 	{
 		Printf ("%s #%u (%d/%d)\n", item->GetClass()->TypeName.GetChars(),
 			item->InventoryID,

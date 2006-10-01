@@ -1,3 +1,8 @@
+September 30, 2006
+- Fixed: player_t::GetSpawnClass() always returned the spawn flags for the
+  local player, so co-op games would spawn only the things relevant for the
+  local player and not all the things relevant for all players.
+
 September 30, 2006 (Changes by Graf Zahl)
 - Fixed: Default flags for APlayerPawn and APlayerChunk were not defined.
 - Fixed: The PCD_GETPLAYERINFO case in p_acs.cpp was missing a break.

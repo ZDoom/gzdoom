@@ -3389,7 +3389,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_DELAY:
-			statedata = STACK(1);
+			statedata = STACK(1) + (fmt == ACS_Old && gameinfo.gametype == GAME_Hexen);
 			if (statedata > 0)
 			{
 				state = SCRIPT_Delayed;
@@ -3398,7 +3398,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_DELAYDIRECT:
-			statedata = NEXTWORD;
+			statedata = NEXTWORD + (fmt == ACS_Old && gameinfo.gametype == GAME_Hexen);
 			if (statedata > 0)
 			{
 				state = SCRIPT_Delayed;
@@ -3406,7 +3406,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_DELAYDIRECTB:
-			statedata = *(BYTE *)pc;
+			statedata = *(BYTE *)pc + (fmt == ACS_Old && gameinfo.gametype == GAME_Hexen);
 			if (statedata > 0)
 			{
 				state = SCRIPT_Delayed;

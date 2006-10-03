@@ -406,7 +406,7 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string)
 	}
 
 	// String here is pointing one character after the '\0'
-	if (i < 128 && --string - start > 1)
+	if (i < 128 && --string - start >= 1)
 	{
 		const BYTE *s = start;
 

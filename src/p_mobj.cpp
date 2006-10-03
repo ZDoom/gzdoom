@@ -3367,7 +3367,7 @@ void AActor::AdjustFloorClip ()
 EXTERN_CVAR (Bool, chasedemo)
 extern bool demonew;
 
-void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
+void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 {
 	int		  playernum;
 	player_t *p;
@@ -3436,7 +3436,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 	{
 		G_PlayerReborn (playernum);
 	}
-	else if (oldactor != NULL && oldactor->player == p)
+	else if (oldactor != NULL && oldactor->player == p && !tempplayer)
 	{
 		// Move the voodoo doll's inventory to the new player.
 		mobj->ObtainInventory (oldactor);
@@ -3495,7 +3495,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 		p->cheats = CF_CHASECAM;
 
 	// setup gun psprite
-	if (startenterscripts)
+	if (!tempplayer)
 	{
 		// This can also start a script so don't do it for
 		// the dummy player.
@@ -3538,7 +3538,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 	P_PlayerStartStomp (mobj);
 
 	// [BC] Do script stuff
-	if (startenterscripts)
+	if (!tempplayer)
 	{
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
@@ -3546,6 +3546,8 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool startenterscripts)
 		}
 		else if (state == PST_REBORN)
 		{
+			assert (oldactor != NULL);
+			DObject::PointerSubstitution (oldactor, p->mo);
 			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}

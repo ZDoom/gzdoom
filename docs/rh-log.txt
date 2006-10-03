@@ -1,3 +1,18 @@
+October 2, 2006
+- Fixed: V_BreakLines() failed to produce output for the final line if it was
+  only one character long.
+- Fixed: When players respawned in multiplayer, scripts that started on their
+  old body kept executing on that body instead of being transferred to the new
+  one. I'm doing this with general pointer substitution now, so everything
+  that pointed to the old body will use the new one; not sure if that's best,
+  or if it should applied exclusively to scripts, though.
+- Fixed: Hexen's delay ACS command actually waited one extra tic. Now if
+  you're playing Hexen and an old-style ACS script delays it will wait one
+  extra tic in ZDoom as well.
+- Fixed: When G_FinishTravel() created a temporary player, P_SpawnPlayer()
+  thought the old player actor was a voodoo doll and stopped its scripts
+  and moved its inventory.
+
 September 30, 2006
 - Fixed: player_t::GetSpawnClass() always returned the spawn flags for the
   local player, so co-op games would spawn only the things relevant for the

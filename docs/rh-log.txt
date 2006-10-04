@@ -1,3 +1,8 @@
+October 4, 2006 (Changes by Graf Zahl)
+- When exiting the level on a damaging floor the player could be in the pain
+  state and make its pain noise at the start of the next level.
+- Fixed: The FPS counter obstructed the key display in Doom's fullscreen HUD.
+
 October 2, 2006
 - Fixed: V_BreakLines() failed to produce output for the final line if it was
   only one character long.

@@ -22,6 +22,9 @@
 
 #define ST_MUCHPAIN 			20
 
+EXTERN_CVAR (Bool, vid_fps)
+
+
 class FDoomStatusBar : public FBaseStatusBar
 {
 public:
@@ -655,8 +658,8 @@ private:
 		{ // Draw keys (not DM)
 			int maxw = 0;
 			int count = 0;
-			int x = -2;
-			int y = 2;
+			int x =  -2;
+			int y = vid_fps? 12 : 2;
 
 			for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
 			{
@@ -679,7 +682,7 @@ private:
 						if (++count == 3)
 						{
 							count = 0;
-							y = 2;
+							y = vid_fps? 12 : 2;
 							x -= maxw + 2;
 							maxw = 0;
 						}

@@ -1451,7 +1451,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround)
 					actor->target = actor->goal;
 					return true;
 				}
-				// Use last known enemy if no hatee sighted -- killough 2/15/98:
+				// Use last known enemy if no players sighted -- killough 2/15/98:
 				if (actor->lastenemy != NULL && actor->lastenemy->health > 0)
 				{
 					if (!actor->IsFriend(actor->lastenemy))

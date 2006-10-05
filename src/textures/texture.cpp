@@ -94,8 +94,16 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 					int h = tex->GetHeight();
 
 					// Auto-scale flats with dimensions 128x128 and 256x256
-					if (w==128 && h==128) tex->ScaleX = tex->ScaleY = 16;
-					else if (w==256 && h==256) tex->ScaleX = tex->ScaleY = 32;
+					if (w==128 && h==128) 
+					{
+						tex->ScaleX = tex->ScaleY = 16;
+						tex->bWorldPanning = true;
+					}
+					else if (w==256 && h==256) 
+					{
+						tex->ScaleX = tex->ScaleY = 32;
+						tex->bWorldPanning = true;
+					}
 				}
 				return tex;
 			}

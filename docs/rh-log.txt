@@ -1,3 +1,15 @@
+October 5, 2006 (Changes by Graf Zahl)
+- Fixed: Hires texture replacements and auto-scaled flats require the 
+  bWorldPanning flag. Also added some NULL pointer checks to the
+  hires texture loading code.
+- Added Sector_SetFloorScale2 and Sector_SetCeilingScale2 line specials.
+  They are mostly the same as Sector_Set*Scale but take fixed point parameters.
+  This makes them easier to use and more precise than the old ones which
+  offered very small fractional precision.
+- Changed Thing_Deactivate so that passing a tid of 0 deactivates the calling 
+  actor.
+- Added MeansOfDeath parameter to DamageThing.
+
 October 4, 2006
 - Added alias parameter substitution. Instances of %x in the alias command
   string will be replaced with parameter x when the alias is executed.

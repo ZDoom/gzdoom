@@ -190,12 +190,15 @@ typedef enum {
 
 	Sector_ChangeSound = 140,
 
-	// GZDoom/Vavoom specials (put here so that they don't accidentally redefined)
+	// GZDoom/Vavoom specials (put here so that they don't get accidentally redefined)
 	Sector_SetPlaneReflection = 159,
 	Sector_Set3DFloor = 160,
 	Sector_SetContents = 161,
 
 // [RH] Begin new specials for ZDoom
+	Sector_SetCeilingScale2 = 170,
+	Sector_SetFloorScale2 = 171,
+	
 	Plat_UpNearestWaitDownStay = 172,
 	NoiseAlert = 173,
 	SendToCommunicator = 174,

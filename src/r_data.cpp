@@ -317,24 +317,28 @@ void FTextureManager::AddHiresTextures ()
 		if (Wads.CheckNumForName (name, ns_hires) == firsttx)
 		{
 			FTexture * newtex = FTexture::CreateTexture (firsttx, FTexture::TEX_Any);
-			int oldtexno = CheckForTexture(name, FTexture::TEX_Wall, TEXMAN_Overridable|TEXMAN_TryAny);
-
-			if (oldtexno<0)
+			if (newtex != NULL)
 			{
-				// A texture with this name does not yet exist
-				newtex->UseType=FTexture::TEX_Override;
-				AddTexture(newtex);
-			}
-			else
-			{
-				FTexture * oldtex = Textures[oldtexno].Texture;
-
-				// Replace the entire texture and adjust the scaling and offset factors.
-				newtex->ScaleX = 8 * newtex->GetWidth() / oldtex->GetWidth();
-				newtex->ScaleY = 8 * newtex->GetHeight() / oldtex->GetHeight();
-				newtex->LeftOffset = Scale(oldtex->LeftOffset, newtex->ScaleX, 8);
-				newtex->TopOffset = Scale(oldtex->TopOffset, newtex->ScaleY, 8);
-				ReplaceTexture(oldtexno, newtex, true);
+				int oldtexno = CheckForTexture(name, FTexture::TEX_Wall, TEXMAN_Overridable|TEXMAN_TryAny);
+	
+				newtex->bWorldPanning = true;
+				if (oldtexno<0)
+				{
+					// A texture with this name does not yet exist
+					newtex->UseType=FTexture::TEX_Override;
+					AddTexture(newtex);
+				}
+				else
+				{
+					FTexture * oldtex = Textures[oldtexno].Texture;
+	
+					// Replace the entire texture and adjust the scaling and offset factors.
+					newtex->ScaleX = 8 * newtex->GetWidth() / oldtex->GetWidth();
+					newtex->ScaleY = 8 * newtex->GetHeight() / oldtex->GetHeight();
+					newtex->LeftOffset = Scale(oldtex->LeftOffset, newtex->ScaleX, 8);
+					newtex->TopOffset = Scale(oldtex->TopOffset, newtex->ScaleY, 8);
+					ReplaceTexture(oldtexno, newtex, true);
+				}
 			}
 		}
 	}
@@ -385,12 +389,16 @@ void FTextureManager::LoadHiresTex()
 					FTexture * oldtex = TexMan[tex];
 					FTexture * newtex = FTexture::CreateTexture (lumpnum, FTexture::TEX_Any);
 
-					// Replace the entire texture and adjust the scaling and offset factors.
-					newtex->ScaleX = 8 * newtex->GetWidth() / oldtex->GetScaledWidth();
-					newtex->ScaleY = 8 * newtex->GetHeight() / oldtex->GetScaledHeight();
-					newtex->LeftOffset = MulScale3(oldtex->GetScaledLeftOffset(), newtex->ScaleX);
-					newtex->TopOffset = MulScale3(oldtex->GetScaledTopOffset(), newtex->ScaleY);
-					ReplaceTexture(tex, newtex, true);
+					if (newtex != NULL)
+					{
+						// Replace the entire texture and adjust the scaling and offset factors.
+						newtex->bWorldPanning = true;
+						newtex->ScaleX = 8 * newtex->GetWidth() / oldtex->GetScaledWidth();
+						newtex->ScaleY = 8 * newtex->GetHeight() / oldtex->GetScaledHeight();
+						newtex->LeftOffset = MulScale3(oldtex->GetScaledLeftOffset(), newtex->ScaleX);
+						newtex->TopOffset = MulScale3(oldtex->GetScaledTopOffset(), newtex->ScaleY);
+						ReplaceTexture(tex, newtex, true);
+					}
 				}
 			}
 			else if (SC_Compare("define")) // define a new "fake" texture
@@ -414,14 +422,18 @@ void FTextureManager::LoadHiresTex()
 				{
 					FTexture *newtex = FTexture::CreateTexture(lumpnum, FTexture::TEX_Override);
 
-					// Replace the entire texture and adjust the scaling and offset factors.
-					newtex->ScaleX = 8 * newtex->GetWidth() / width;
-					newtex->ScaleY = 8 * newtex->GetHeight() / height;
-					memcpy(newtex->Name, src, sizeof(newtex->Name));
-
-					int oldtex = TexMan.CheckForTexture(src, FTexture::TEX_Override);
-					if (oldtex>=0) TexMan.ReplaceTexture(oldtex, newtex, true);
-					else TexMan.AddTexture(newtex);
+					if (newtex != NULL)
+					{
+						// Replace the entire texture and adjust the scaling and offset factors.
+						newtex->bWorldPanning = true;
+						newtex->ScaleX = 8 * newtex->GetWidth() / width;
+						newtex->ScaleY = 8 * newtex->GetHeight() / height;
+						memcpy(newtex->Name, src, sizeof(newtex->Name));
+	
+						int oldtex = TexMan.CheckForTexture(src, FTexture::TEX_Override);
+						if (oldtex>=0) TexMan.ReplaceTexture(oldtex, newtex, true);
+						else TexMan.AddTexture(newtex);
+					}
 				}				
 				//else Printf("Unable to define hires texture '%s'\n", tex->Name);
 			}

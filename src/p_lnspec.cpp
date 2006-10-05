@@ -916,7 +916,7 @@ FUNC(LS_Thing_ChangeTID)
 }
 
 FUNC(LS_DamageThing)
-// DamageThing (damage)
+// DamageThing (damage, mod)
 {
 	if (it)
 	{
@@ -935,11 +935,11 @@ FUNC(LS_DamageThing)
 		}
 		else if (arg0 > 0)
 		{
-			P_DamageMobj (it, NULL, NULL, arg0, MOD_UNKNOWN);
+			P_DamageMobj (it, NULL, NULL, arg0, arg1);
 		}
 		else
 		{ // If zero damage, guarantee a kill
-			P_DamageMobj (it, NULL, NULL, 1000000, MOD_UNKNOWN);
+			P_DamageMobj (it, NULL, NULL, 1000000, arg1);
 		}
 	}
 
@@ -1013,22 +1013,31 @@ FUNC(LS_Thing_Activate)
 FUNC(LS_Thing_Deactivate)
 // Thing_Deactivate (tid)
 {
-	AActor *actor;
-	FActorIterator iterator (arg0);
-	int count = 0;
-
-	actor = iterator.Next ();
-	while (actor)
+	if (arg0 != 0)
 	{
-		// Actor might removes itself as part of deactivation, so get next
-		// one before we activate it.
-		AActor *temp = iterator.Next ();
-		actor->Deactivate (it);
-		actor = temp;
-		count++;
+		AActor *actor;
+		FActorIterator iterator (arg0);
+		int count = 0;
+	
+		actor = iterator.Next ();
+		while (actor)
+		{
+			// Actor might removes itself as part of deactivation, so get next
+			// one before we activate it.
+			AActor *temp = iterator.Next ();
+			actor->Deactivate (it);
+			actor = temp;
+			count++;
+		}
+	
+		return count != 0;
 	}
-
-	return count != 0;
+	else if (it != NULL)
+	{
+		it->Deactivate(it);
+		return true;
+	}
+	return false;
 }
 
 static void RemoveThing(AActor * actor)
@@ -2068,6 +2077,46 @@ FUNC(LS_Sector_SetCeilingScale)
 	return true;
 }
 
+FUNC(LS_Sector_SetFloorScale2)
+// Sector_SetFloorScale2 (tag, x-factor, y-factor)
+{
+	int secnum = -1;
+
+	if (arg1)
+		arg1 = FixedDiv (FRACUNIT, arg1);
+	if (arg2)
+		arg2 = FixedDiv (FRACUNIT, arg2);
+
+	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
+	{
+		if (arg1)
+			sectors[secnum].floor_xscale = arg1;
+		if (arg2)
+			sectors[secnum].floor_yscale = arg2;
+	}
+	return true;
+}
+
+FUNC(LS_Sector_SetCeilingScale2)
+// Sector_SetFloorScale2 (tag, x-factor, y-factor)
+{
+	int secnum = -1;
+
+	if (arg1)
+		arg1 = FixedDiv (FRACUNIT, arg1);
+	if (arg2)
+		arg2 = FixedDiv (FRACUNIT, arg2);
+
+	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
+	{
+		if (arg1)
+			sectors[secnum].ceiling_xscale = arg1;
+		if (arg2)
+			sectors[secnum].ceiling_yscale = arg2;
+	}
+	return true;
+}
+
 FUNC(LS_Sector_SetFloorScale)
 // Sector_SetFloorScale (tag, x-int, x-frac, y-int, y-frac)
 {
@@ -2829,8 +2878,8 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 167
 	LS_NOP,		// 168
 	LS_NOP,		// 169
-	LS_NOP,		// 170
-	LS_NOP,		// 171
+	LS_Sector_SetCeilingScale2,
+	LS_Sector_SetFloorScale2,
 	LS_Plat_UpNearestWaitDownStay,
 	LS_NoiseAlert,
 	LS_SendToCommunicator,

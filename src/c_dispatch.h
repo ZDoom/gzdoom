@@ -58,7 +58,7 @@ void C_ArchiveAliases (FConfigFile *f);
 void C_SetAlias (const char *name, const char *cmd);
 
 // build a single string out of multiple strings
-char *BuildString (int argc, char **argv);
+FString BuildString (int argc, char **argv);
 
 // Class that can parse command lines
 class FCommandLine
@@ -121,7 +121,8 @@ public:
 	void Realias (const char *command, bool noSave);
 	void SafeDelete ();
 protected:
-	char *m_Command[2];
+	FString m_Command[2];	// Slot 0 is saved to the ini, slot 1 is not.
+	bool bDoSubstitution;
 	bool bRunning;
 	bool bKill;
 };

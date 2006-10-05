@@ -8,6 +8,70 @@
  *
  */
 
+/* From muslib175.zip/README.1ST:
+
+1.1 - Disclaimer of Warranties
+------------------------------
+
+#ifdef LAWYER
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+#else
+
+Use this software at your own risk.
+
+#endif
+
+
+1.2 - Terms of Use
+------------------
+
+This library may be used in any freeware or shareware product free of
+charge. The product may not be sold for profit (except for shareware) and
+should be freely available to the public. It would be nice of you if you
+credited me in your product and notified me if you use this library.
+
+If you want to use this library in a commercial product, contact me
+and we will make an agreement. It is a violation of the law to make money
+of this product without prior signing an agreement and paying a license fee.
+This licence will allow its holder to sell any products based on MUSLib,
+royalty-free. There is no need to buy separate licences for different
+products once the licence fee is paid.
+
+
+1.3 - Contacting the Author
+---------------------------
+
+Internet (address valid probably until the end of year 1998):
+  xarnos00@dcse.fee.vutbr.cz
+
+FIDO:
+  2:423/36.2
+
+Snail-mail:
+
+  Vladimir Arnost
+  Ceska 921
+  Chrudim 4
+  537 01
+  CZECH REPUBLIC
+
+Voice-mail (Czech language only, not recommended; weekends only):
+
+  +42-455-2154
+*/
+
 #ifndef __MUSLIB_H_
 #define __MUSLIB_H_
 

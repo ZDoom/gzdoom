@@ -1,3 +1,12 @@
+October 4, 2006
+- Added alias parameter substitution. Instances of %x in the alias command
+  string will be replaced with parameter x when the alias is executed.
+- Fixed: When FString::LockBuffer() had to create a new string because the
+  RefCount was higher than one, the new string was not actually locked.
+- FConsoleAlias now stores the commands in FStrings.
+- BuildString() now returns an FString.
+- Added the muslib license text to muslib.h.
+
 October 4, 2006 (Changes by Graf Zahl)
 - When exiting the level on a damaging floor the player could be in the pain
   state and make its pain noise at the start of the next level.

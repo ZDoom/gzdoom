@@ -138,6 +138,7 @@ char *FString::LockBuffer()
 		AllocBuffer (old->Len);
 		StrCopy (Chars, old->Chars(), old->Len);
 		old->Release();
+		Data()->RefCount = -1;
 	}
 	return Chars;
 }

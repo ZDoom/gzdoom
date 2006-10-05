@@ -846,51 +846,115 @@ void FConsoleCommand::Run (FCommandLine &argv, APlayerPawn *who, int key)
 
 FConsoleAlias::FConsoleAlias (const char *name, const char *command, bool noSave)
 	: FConsoleCommand (name, NULL),
-	  bRunning (false), bKill (false)
+	  bRunning(false), bKill(false)
 {
-	m_Command[noSave] = copystring (command);
-	m_Command[!noSave] = NULL;
+	m_Command[noSave] = command;
+	m_Command[!noSave] = FString();
+	// If the command contains % characters, assume they are parameter markers
+	// for substitution when the command is executed.
+	bDoSubstitution = (strchr (command, '%') != NULL);
 }
 
 FConsoleAlias::~FConsoleAlias ()
 {
-	for (int i = 0; i < 2; ++i)
-	{
-		if (m_Command[i] != NULL)
-		{
-			delete[] m_Command[i];
-			m_Command[i] = NULL;
-		}
-	}
+	m_Command[1] = m_Command[0] = FString();
 }
 
-char *BuildString (int argc, char **argv)
+FString BuildString (int argc, char **argv)
 {
-	char temp[1024];
-	char *cur;
-	int arg;
-
 	if (argc == 1)
 	{
-		return copystring (*argv);
+		return *argv;
 	}
 	else
 	{
-		cur = temp;
+		FString buf;
+		int arg;
+
 		for (arg = 0; arg < argc; arg++)
 		{
 			if (strchr (argv[arg], ' '))
 			{
-				cur += sprintf (cur, "\"%s\" ", argv[arg]);
+				buf.AppendFormat ("\"%s\" ", argv[arg]);
 			}
 			else
 			{
-				cur += sprintf (cur, "%s ", argv[arg]);
+				buf.AppendFormat ("%s ", argv[arg]);
 			}
 		}
-		temp[strlen (temp) - 1] = 0;
-		return copystring (temp);
+		return buf;
 	}
+}
+
+//===========================================================================
+//
+// SubstituteAliasParams
+//
+// Given an command line and a set of arguments, replace instances of
+// %x or %{x} in the command line with argument x. If argument x does not
+// exist, then the empty string is substituted in its place.
+//
+// Substitution is not done inside of quoted strings.
+//
+// To avoid a substitution, use %%. The %% will be replaced by a single %.
+//
+//===========================================================================
+
+FString SubstituteAliasParams (FString &command, FCommandLine &args)
+{
+	// Do substitution by replacing %x with the argument x.
+	// If there is no argument x, then %x is simply removed.
+
+	// For some reason, strtoul's stop parameter is non-const.
+	char *p = command.LockBuffer(), *start = p;
+	unsigned long argnum;
+	FString buf;
+
+	while (*p != '\0')
+	{
+		if (*p == '%' && ((p[1] >= '0' && p[1] <= '9') || p[1] == '{' || p[1] == '%'))
+		{
+			if (p[1] == '%')
+			{
+				// Do not substitute. Just collapse to a single %.
+				buf.AppendCStrPart (start, p - start + 1);
+				start = p = p + 2;
+				continue;
+			}
+
+			// Do a substitution. Output what came before this.
+			buf.AppendCStrPart (start, p - start);
+
+			// Extract the argument number and substitute the corresponding argument.
+			argnum = strtoul (p + 1 + (p[1] == '{'), &start, 10);
+			if ((p[1] != '{' || *start == '}') && argnum < args.argc())
+			{
+				buf += args[argnum];
+			}
+			p = (start += (p[1] == '{' && *start == '}'));
+		}
+		else if (*p == '"')
+		{
+			// Don't substitute inside quoted strings.
+			p++;
+			while (*p != '\0' && (*p != '"' || *(p-1) == '\\'))
+				p++;
+			if (*p != '\0')
+				p++;
+		}
+		else
+		{
+			p++;
+		}
+	}
+	// Return whatever was after the final substitution.
+	if (p > start)
+	{
+		buf.AppendCStrPart (start, p - start);
+	}
+	command.UnlockBuffer();
+
+	return buf;
 }
 
 static int DumpHash (FConsoleCommand **table, bool aliases, const char *pattern=NULL)
@@ -939,7 +1003,7 @@ void FConsoleAlias::PrintAlias ()
 
 void FConsoleAlias::Archive (FConfigFile *f)
 {
-	if (f != NULL && m_Command[0] != NULL)
+	if (f != NULL && !m_Command[0].IsEmpty())
 	{
 		f->SetValueForKey ("Name", m_Name, true);
 		f->SetValueForKey ("Command", m_Command[0], true);
@@ -1066,7 +1130,7 @@ void C_ExecCmdLineParams ()
 	{
 		if (*Args.GetArg (currArg++) == '+')
 		{
-			char *cmdString;
+			FString cmdString;
 			int cmdlen = 1;
 			int argstart = currArg - 1;
 
@@ -1078,10 +1142,10 @@ void C_ExecCmdLineParams ()
 				cmdlen++;
 			}
 
-			if ( (cmdString = BuildString (cmdlen, Args.GetArgList (argstart))) )
+			cmdString = BuildString (cmdlen, Args.GetArgList (argstart));
+			if (!cmdString.IsEmpty())
 			{
-				C_DoCommand (cmdString + 1);
-				delete[] cmdString;
+				C_DoCommand (&cmdString[1]);
 			}
 		}
 	}
@@ -1105,19 +1169,29 @@ void FConsoleAlias::Run (FCommandLine &args, APlayerPawn *who, int key)
 		return;
 	}
 
-	int index = m_Command[1] != NULL;
-	char *mycommand = m_Command[index];
-	m_Command[index] = NULL;
-	bRunning = true;
-	AddCommandString (mycommand, key);
-	bRunning = false;
-	if (m_Command[index] != NULL)
-	{ // The alias realiased itself, so delete the memory used by this command.
-		delete[] mycommand;
+	int index = !m_Command[1].IsEmpty();
+	FString savedcommand = m_Command[index], mycommand;
+	m_Command[index] = FString();
+
+	if (bDoSubstitution)
+	{
+		mycommand = SubstituteAliasParams (savedcommand, args);
 	}
 	else
+	{
+		mycommand = savedcommand;
+	}
+
+	bRunning = true;
+	AddCommandString (mycommand.LockBuffer(), key);
+	mycommand.UnlockBuffer();
+	bRunning = false;
+	if (m_Command[index].IsEmpty())
 	{ // The alias is unchanged, so put the command back so it can be used again.
-		m_Command[index] = mycommand;
+	  // If the command had been non-empty, then that means that executing this
+	  // alias caused it to realias itself, so the old command will be forgotten
+	  // once this function returns.
+		m_Command[index] = savedcommand;
 	}
 	if (bKill)
 	{ // The alias wants to remove itself
@@ -1127,15 +1201,15 @@ void FConsoleAlias::Run (FCommandLine &args, APlayerPawn *who, int key)
 
 void FConsoleAlias::Realias (const char *command, bool noSave)
 {
-	if (m_Command[1] != NULL)
+	if (!noSave && !m_Command[1].IsEmpty())
 	{
 		noSave = true;
 	}
-	if (m_Command[noSave] != NULL)
-	{
-		delete[] m_Command[noSave];
-	}
-	m_Command[noSave] = copystring (command);
+	m_Command[noSave] = command;
+
+	// If the command contains % characters, assume they are parameter markers
+	// for substitution when the command is executed.
+	bDoSubstitution = (strchr (command, '%') != NULL);
 	bKill = false;
 }
 

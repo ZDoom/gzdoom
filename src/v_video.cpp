@@ -924,39 +924,6 @@ void V_Init (void)
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	FBaseCVar::ResetColors ();
-	V_InitFontColors ();
-
-	// load the heads-up font
-	if (Wads.CheckNumForName ("FONTA_S") >= 0)
-	{
-		SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
-	}
-	else
-	{
-		SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
-	}
-	if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
-	{
-		SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
-	}
-	else
-	{
-		SmallFont2 = SmallFont;
-	}
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("SBIGFONT"));
-	}
-	else
-	{
-		BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1);
-	}
-	ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
-	V_InitCustomFonts ();
 
 	BuildTransTable (GPalette.BaseColors);
 }

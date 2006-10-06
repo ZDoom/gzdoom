@@ -51,6 +51,7 @@
 #include "gi.h"
 #include "cmdlib.h"
 #include "sc_man.h"
+#include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -278,8 +279,8 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		if (lump >= 0)
 		{
 			FTexture *pic = TexMan[TexMan.AddPatch (buffer)];
-			int height = pic->GetHeight();
-			int yoffs = pic->TopOffset;
+			int height = pic->GetScaledHeight();
+			int yoffs = pic->GetScaledTopOffset();
 
 			if (yoffs > maxyoffs)
 			{
@@ -310,7 +311,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 	if ('N'-first>=0 && 'N'-first<count && Chars['N' - first].Pic)
 	{
-		SpaceWidth = (Chars['N' - first].Pic->GetWidth() + 1) / 2;
+		SpaceWidth = (Chars['N' - first].Pic->GetScaledWidth() + 1) / 2;
 	}
 	else
 	{
@@ -635,7 +636,7 @@ FTexture *FFont::GetChar (int code, int *const width) const
 	}
 
 	code -= FirstChar;
-	*width = Chars[code].Pic->GetWidth();
+	*width = Chars[code].Pic->GetScaledWidth();
 	return Chars[code].Pic;
 }
 
@@ -667,7 +668,7 @@ int FFont::GetCharWidth (int code) const
 		}
 	}
 
-	return Chars[code - FirstChar].Pic->GetWidth();
+	return Chars[code - FirstChar].Pic->GetScaledWidth();
 }
 
 
@@ -1362,8 +1363,8 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 		{
 			Wads.GetLumpName(buffer, lump);
 			FTexture *pic = TexMan[TexMan.AddPatch (buffer)];
-			int height = pic->GetHeight();
-			int yoffs = pic->TopOffset;
+			int height = pic->GetScaledHeight();
+			int yoffs = pic->GetScaledTopOffset();
 
 			if (yoffs > maxyoffs)
 			{
@@ -1418,7 +1419,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 	// Special fonts normally don't have all characters so be careful here!
 	if ('N'-first>=0 && 'N'-first<count && Chars['N' - first].Pic) 
 	{
-		SpaceWidth = (Chars['N' - first].Pic->GetWidth() + 1) / 2;
+		SpaceWidth = (Chars['N' - first].Pic->GetScaledWidth() + 1) / 2;
 	}
 	else
 	{
@@ -1815,4 +1816,48 @@ EColorRange V_FindFontColor (FName name)
 		}
 	}
 	return CR_UNTRANSLATED;
+}
+
+//==========================================================================
+//
+// V_InitFonts
+//
+//==========================================================================
+
+void V_InitFonts()
+{
+	V_InitFontColors ();
+
+	// load the heads-up font
+	if (Wads.CheckNumForName ("FONTA_S") >= 0)
+	{
+		SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+	}
+	else
+	{
+		SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+	}
+	if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
+	{
+		SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+	}
+	else
+	{
+		SmallFont2 = SmallFont;
+	}
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("SBIGFONT"));
+	}
+	else
+	{
+		BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+	}
+	ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
+	V_InitCustomFonts ();
+	screen->SetFont(SmallFont);
 }

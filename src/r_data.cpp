@@ -320,7 +320,11 @@ void FTextureManager::AddHiresTextures ()
 			if (newtex != NULL)
 			{
 				int oldtexno = CheckForTexture(name, FTexture::TEX_Wall, TEXMAN_Overridable|TEXMAN_TryAny);
-	
+
+				if (oldtexno<0)
+				{
+					oldtexno = AddPatch(name);
+				}
 				newtex->bWorldPanning = true;
 				if (oldtexno<0)
 				{
@@ -379,6 +383,11 @@ void FTextureManager::LoadHiresTex()
 				sc_String[8]=0;
 
 				int tex = TexMan.CheckForTexture(sc_String, type, mode);
+
+				if (tex<0)
+				{
+					tex= AddPatch(sc_String);
+				}
 
 				SC_MustGetString();
 				int lumpnum = Wads.CheckNumForFullName(sc_String);
@@ -717,6 +726,7 @@ void R_InitData ()
 	TexMan.AddHiresTextures ();
 	TexMan.LoadHiresTex ();
 	TexMan.DefaultTexture = TexMan.CheckForTexture ("-NOFLAT-", FTexture::TEX_Override, 0);
+	V_InitFonts();
 
 	R_InitColormaps ();
 	C_InitConsole (SCREENWIDTH, SCREENHEIGHT, true);

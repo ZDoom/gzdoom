@@ -150,8 +150,7 @@ void RecordTextureColors (FTexture *pic, BYTE *colorsused);
 
 extern FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
 
-void V_InitCustomFonts ();
-void V_InitFontColors ();
+void V_InitFonts();
 EColorRange V_FindFontColor (FName name);
 FFont * V_GetFont(const char *);
 

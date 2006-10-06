@@ -2134,10 +2134,7 @@ void G_FinishTravel ()
 			pawndup->Destroy ();
 			pawn->LinkToWorld ();
 			pawn->AddToHash ();
-			if (pawn->InStateSequence(pawn->state, pawn->PainState))
-			{
-				pawn->SetState(pawn->SeeState);
-			}
+			pawn->SetState(pawn->SpawnState);
 
 			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 			{

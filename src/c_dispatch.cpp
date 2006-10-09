@@ -993,11 +993,11 @@ void FConsoleAlias::PrintAlias ()
 {
 	if (m_Command[0])
 	{
-		Printf (TEXTCOLOR_YELLOW "%s : %s\n", m_Name, m_Command[0]);
+		Printf (TEXTCOLOR_YELLOW "%s : %s\n", m_Name, m_Command[0].GetChars());
 	}
 	if (m_Command[1])
 	{
-		Printf (TEXTCOLOR_ORANGE "%s : %s\n", m_Name, m_Command[1]);
+		Printf (TEXTCOLOR_ORANGE "%s : %s\n", m_Name, m_Command[1].GetChars());
 	}
 }
 

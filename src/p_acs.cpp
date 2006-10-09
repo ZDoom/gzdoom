@@ -3524,6 +3524,10 @@ int DLevelScript::RunScript ()
 			STACK(1) = !STACK(1);
 			break;
 
+		case PCD_NEGATEBINARY:
+			STACK(1) = ~STACK(1);
+			break;
+
 		case PCD_LSHIFT:
 			STACK(2) = (STACK(2) << STACK(1));
 			sp--;

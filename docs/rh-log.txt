@@ -1,3 +1,7 @@
+October 7, 2006 (Changes by Graf Zahl)
+- Fixed: PrintAlias passed FString objects directly to Printf.
+- Added bitwise not (~) operator to ACS.
+
 October 6, 2006 (Changes by Graf Zahl)
 - Fixed: Hires texture replacements must call AddPatch if the texture
   isn't defined yet in order to replace lumps that are not in the

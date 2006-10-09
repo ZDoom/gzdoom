@@ -1,6 +1,8 @@
 // cmdlib.c (mostly borrowed from the Q2 source)
 
+#ifdef _WIN32
 #include <direct.h>
+#endif
 #include "doomtype.h"
 #include "cmdlib.h"
 #include "i_system.h"

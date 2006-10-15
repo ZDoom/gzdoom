@@ -1078,7 +1078,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 	if (mo->DeathState != NULL)
 	{
 		// [RH] Change render style of exploding rockets
-		if (mo->IsKindOf (RUNTIME_CLASS(ARocket)))
+		if (mo->flags5 & MF5_DEHEXPLOSION)
 		{
 			if (deh.ExplosionStyle == 255)
 			{

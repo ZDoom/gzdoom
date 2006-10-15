@@ -706,6 +706,8 @@ IMPLEMENT_ACTOR (ARocket, Doom, -1, 127)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_PCROSS|MF2_IMPACT|MF2_NOTELEPORT)
 	PROP_Flags4 (MF4_RANDOMIZE)
+	PROP_Flags5 (MF5_DEHEXPLOSION)
+	PROP_FXFlags (FX_ROCKET)
 
 	PROP_SpawnState (S_ROCKET)
 	PROP_DeathState (S_EXPLODE)
@@ -714,12 +716,6 @@ IMPLEMENT_ACTOR (ARocket, Doom, -1, 127)
 	PROP_DeathSound ("weapons/rocklx")
 	PROP_Obituary("$OB_MPROCKET")
 END_DEFAULTS
-
-void ARocket::BeginPlay ()
-{
-	Super::BeginPlay ();
-	effects |= FX_ROCKET;
-}
 
 //
 // A_FireMissile

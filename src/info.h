@@ -287,6 +287,7 @@ enum
 	ADEF_BounceCount,
 	ADEF_FloatSpeed,
 	ADEF_RDFactor,
+	ADEF_FXFlags,
 
 	ADEF_SpawnState,
 	ADEF_SeeState,

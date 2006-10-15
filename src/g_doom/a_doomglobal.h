@@ -26,7 +26,6 @@ class ARocket : public AActor
 {
 	DECLARE_ACTOR (ARocket, AActor)
 public:
-	void BeginPlay ();
 };
 
 class AArchvile : public AActor

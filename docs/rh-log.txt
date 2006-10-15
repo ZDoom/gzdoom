@@ -1,3 +1,10 @@
+October 15, 2006 (Changes by Graf Zahl)
+- Changed the rocket so that the FX_ROCKET flag is set in the actor
+  definition and not in BeginPlay.
+- Changed the special explosion behavior of the rocket to a flag
+  (MF5_DEHEXPLOSION) so that its effects can be used on other actors
+  as well without having to inherit from the rocket.
+
 October 7, 2006 (Changes by Graf Zahl)
 - Fixed: PrintAlias passed FString objects directly to Printf.
 - Added bitwise not (~) operator to ACS.

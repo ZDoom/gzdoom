@@ -218,11 +218,6 @@ void I_DetectOS (void)
 
 	switch (info.dwPlatformId)
 	{
-	case VER_PLATFORM_WIN32s:
-		OSPlatform = os_Win32s;
-		osname = "3.x";
-		break;
-
 	case VER_PLATFORM_WIN32_WINDOWS:
 		OSPlatform = os_Win95;
 		if (info.dwMinorVersion < 10)
@@ -240,18 +235,26 @@ void I_DetectOS (void)
 		break;
 
 	case VER_PLATFORM_WIN32_NT:
-		OSPlatform = info.dwMajorVersion < 5 ? os_WinNT : os_Win2k;
-		if (OSPlatform == os_WinNT)
+		OSPlatform = info.dwMajorVersion < 5 ? os_WinNT4 : os_Win2k;
+		osname = "NT";
+		if (info.dwMajorVersion == 5)
 		{
-			osname = "NT";
+			if (info.dwMinorVersion == 0)
+			{
+				osname = "2000";
+			}
+			if (info.dwMinorVersion == 1)
+			{
+				osname = "XP";
+			}
+			else if (info.dwMinorVersion == 2)
+			{
+				osname = "Server 2003";
+			}
 		}
-		else if (info.dwMinorVersion == 0)
+		else if (info.dwMajorVersion == 6 && info.dwMinorVersion == 0)
 		{
-			osname = "2000";
-		}
-		else
-		{
-			osname = "XP";
+			osname = "Vista";
 		}
 		break;
 
@@ -270,12 +273,7 @@ void I_DetectOS (void)
 		Printf ("    %s\n", info.szCSDVersion);
 	}
 
-	if (OSPlatform == os_Win32s)
-	{
-		I_FatalError ("Sorry, Win32s is not supported.\n"
-					  "Upgrade to a newer version of Windows.");
-	}
-	else if (OSPlatform == os_unknown)
+	if (OSPlatform == os_unknown)
 	{
 		Printf ("(Assuming Windows 95)\n");
 		OSPlatform = os_Win95;

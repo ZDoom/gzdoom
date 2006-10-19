@@ -2470,7 +2470,7 @@ FUNC(LS_Autosave)
 {
 	if (gameaction != ga_savegame)
 	{
-		gameaction = ga_autosave;
+		Net_WriteByte (DEM_CHECKAUTOSAVE);
 	}
 	return true;
 }

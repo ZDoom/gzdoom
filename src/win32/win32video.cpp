@@ -625,7 +625,7 @@ bool DDrawFB::CreateResources ()
 		}
 		LOG3 ("Mode set to %d x %d x %d\n", Width, Height, bits);
 
-		if (vid_attachedsurfaces && OSPlatform == os_WinNT)
+		if (vid_attachedsurfaces && OSPlatform == os_WinNT4)
 		{
 			if (!CreateSurfacesAttached ())
 				return false;

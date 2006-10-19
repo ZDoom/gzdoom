@@ -339,7 +339,7 @@ CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	{
 		int new_mousemode;
 
-		if (self == 1 || (self == 0 && OSPlatform == os_WinNT))
+		if (self == 1 || (self == 0 && OSPlatform == os_WinNT4))
 			new_mousemode = win32;
 		else
 			new_mousemode = dinput;
@@ -1327,7 +1327,7 @@ static BOOL I_GetDIMouse ()
 	mousemode = win32;	// Assume failure
 	UngrabMouse_Win32 ();
 
-	if (in_mouse == 1 || (in_mouse == 0 && OSPlatform == os_WinNT))
+	if (in_mouse == 1 || (in_mouse == 0 && OSPlatform == os_WinNT4))
 		return FALSE;
 
 	// Obtain an interface to the system mouse device.

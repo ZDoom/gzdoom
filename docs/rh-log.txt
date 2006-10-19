@@ -1,9 +1,32 @@
+October 19, 2006
+- Modified the way autosaves are done. Instead of setting gameaction to
+  ga_autosave, write DEM_CHECKAUTOSAVE to the net stream. When this is
+  processed, it will check if it's okay to do an autosave. If it is, it writes
+  DEM_DOAUTOSAVE to the net stream, which the sets gameaction to ga_autosave.
+  Essentially, about half of the functionality was moved out of G_DoAutoSave()
+  and into Net_DoCommand().
+- Minor changes to OS detection: The os_WinNT enumeration has been renamed to
+  os_WinNT4, since every new OS coming out of Microsoft these days is
+  essentially NT. NT 5.2 and 6.0 are now properly identified as "Windows
+  Server 2003" and "Windows Vista" respectively, and any unknown NT versions
+  Microsoft introduces in the future will now be displayed as "Windows NT"
+  instead of "Windows 2000" if the minor version is 0 and "Windows XP" if the
+  minor version is non-0. Win32s detection has also been removed. Presumably
+  if somebody is foolish enough to try to run this on Windows 3.x with Win32s,
+  it won't even load due to missing DLLs.
+
 October 15, 2006 (Changes by Graf Zahl)
 - Changed the rocket so that the FX_ROCKET flag is set in the actor
   definition and not in BeginPlay.
 - Changed the special explosion behavior of the rocket to a flag
   (MF5_DEHEXPLOSION) so that its effects can be used on other actors
   as well without having to inherit from the rocket.
+
+October 9, 2006
+- Fixed: Demos with NETD chunks should not set netgame to true unless they
+  have more than one player. And since netdemo is ignored if netgame is
+  false, it doesn't need to set that either.
+- Fixed: FTexture::GetScaled* functions did not check for scale values of 0.
 
 October 7, 2006 (Changes by Graf Zahl)
 - Fixed: PrintAlias passed FString objects directly to Printf.

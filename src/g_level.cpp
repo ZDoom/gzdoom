@@ -1819,7 +1819,7 @@ IMPLEMENT_CLASS (DAutosaver)
 
 void DAutosaver::Tick ()
 {
-	gameaction = ga_autosave;
+	Net_WriteByte (DEM_CHECKAUTOSAVE);
 	Destroy ();
 }
 

@@ -44,9 +44,8 @@ void I_DetectOS (void);
 typedef enum {
 	os_unknown,
 	os_Win95,
-	os_WinNT,
-	os_Win2k,
-	os_Win32s
+	os_WinNT4,
+	os_Win2k
 } os_t;
 
 extern os_t OSPlatform;

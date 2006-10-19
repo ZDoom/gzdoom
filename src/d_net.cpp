@@ -55,6 +55,9 @@
 int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
 					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net);
 
+EXTERN_CVAR (Int, disableautosave)
+EXTERN_CVAR (Int, autosavecount)
+
 //#define SIMULATEERRORS		(RAND_MAX/3)
 #define SIMULATEERRORS			0
 
@@ -2218,6 +2221,25 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			}
 		}
 		gameaction = ga_savegame;
+		break;
+
+	case DEM_CHECKAUTOSAVE:
+		// Do not autosave in multiplayer games or when dead.
+		// For demo playback, DEM_DOAUTOSAVE already exists in the demo if the
+		// autosave happened. And if it doesn't, we must not generate it.
+		if (multiplayer ||
+			demoplayback ||
+			players[consoleplayer].playerstate != PST_LIVE ||
+			disableautosave >= 2 ||
+			autosavecount == 0)
+		{
+			break;
+		}
+		Net_WriteByte (DEM_DOAUTOSAVE);
+		break;
+
+	case DEM_DOAUTOSAVE:
+		gameaction = ga_autosave;
 		break;
 
 	case DEM_FOV:

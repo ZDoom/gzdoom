@@ -139,7 +139,9 @@ enum EDemoCommand
 	DEM_SUMMONFRIEND,	// 37 String: Thing to fabricate
 	DEM_SPRAY,			// 38 String: The decal to spray
 	DEM_CROUCH,			// 39
-	DEM_RUNSCRIPT2		// 40 Same as DEM_RUNSCRIPT, but always executes
+	DEM_RUNSCRIPT2,		// 40 Same as DEM_RUNSCRIPT, but always executes
+	DEM_CHECKAUTOSAVE,	// 41 Check if the user has autosaves enabled. Ignored for demoplayback.
+	DEM_DOAUTOSAVE,		// 42 An autosave should be made
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

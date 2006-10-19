@@ -302,7 +302,7 @@ bool FMODSoundRenderer::Init ()
 	{
 		// If snd_3d is true, try for a3d output if snd_output was not recognized above.
 		// However, if running under NT 4.0, a3d will only be tried if specifically requested.
-		outindex = (OSPlatform == os_WinNT) ? 1 : 0;
+		outindex = (OSPlatform == os_WinNT4) ? 1 : 0;
 #if 0
 		// FMOD 3.6 no longer supports a3d. Keep this code here in case support comes back.
 		if (stricmp (snd_output, "a3d") == 0 || (outindex == 0 && snd_3d))
@@ -342,7 +342,7 @@ bool FMODSoundRenderer::Init ()
 	}
 
 #ifdef _WIN32
-	if (OSPlatform == os_WinNT)
+	if (OSPlatform == os_WinNT4)
 	{
 		// If running Windows NT 4, we need to initialize DirectSound before
 		// using WinMM. If we don't, then FSOUND_Close will corrupt a

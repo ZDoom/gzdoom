@@ -97,7 +97,7 @@ void	G_DoCompleted (void);
 void	G_DoVictory (void);
 void	G_DoWorldDone (void);
 void	G_DoSaveGame (bool okForQuicksave);
-void	G_DoAutoSave (void);
+void	G_DoAutoSave ();
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
@@ -1700,7 +1700,9 @@ void G_DoLoadGame ()
 
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
+	bool demoplaybacksave = demoplayback;
 	G_InitNew (map, false);
+	demoplayback = demoplaybacksave;
 	delete[] map;
 	savegamerestore = false;
 
@@ -1802,22 +1804,12 @@ extern void P_CalcHeight (player_t *);
 
 void G_DoAutoSave ()
 {
-	// Do not autosave in multiplayer games or demos or when dead
-	if (multiplayer ||
-		demoplayback ||
-		players[consoleplayer].playerstate != PST_LIVE ||
-		disableautosave >= 2 ||
-		autosavecount == 0)
-	{
-		gameaction = ga_nothing;
-		return;
-	}
-
 	// Keep up to four autosaves at a time
 	UCVarValue num;
 	char *readableTime;
+	int count = autosavecount != 0 ? autosavecount : 1;
 	
-	num.Int = (autosavenum + 1) % autosavecount;
+	num.Int = (autosavenum + 1) % count;
 	autosavenum.ForceSet (num, CVAR_Int);
 
 	savegamefile = G_BuildSaveName ("auto", num.Int);
@@ -1967,11 +1959,10 @@ void G_DoSaveGame (bool okForQuicksave)
 {
 	if (demoplayback)
 	{
-		gameaction = ga_nothing;
-		return;
+		savegamefile = G_BuildSaveName ("demosave.zds", -1);
 	}
 
-	insave=true;
+	insave = true;
 	G_SnapshotLevel ();
 
 	FILE *stdfile = fopen (savegamefile.GetChars(), "wb");
@@ -2368,7 +2359,7 @@ bool G_ProcessIFFDemo (char *mapname)
 			break;
 
 		case NETD_ID:
-			multiplayer = netgame = netdemo = true;
+			multiplayer = true;
 			break;
 
 		case BODY_ID:

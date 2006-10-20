@@ -1,4 +1,16 @@
 October 19, 2006
+- Added a new MapMarker actor. Instead of appearing in the 3D view, it appears
+  on the automap instead. If its first argument is zero, the map marker itself
+  appears on the automap, otherwise it is drawn on top of any actor with a TID
+  matching that argument. If the second argument is one, then the map marker
+  will only be appear if the player has previously seen the sector it is one.
+  You can use Thing_Activate and Thing_Deactivate on markers to turn them on
+  and off. And if you subclass MapMarker with DECORATE, you can easily make
+  your own custom markers.
+- Fixed: Map markers could not be drawn partially off the map. They were
+  drawn either fully or not at all.
+- Fixed: Map markers appeared in the wrong place on a rotated overlay map if
+  screenblocks < 10.
 - Added the MF2_PASSMOBJ for P_Thing_Spawn() from January 4, 2003, to
   DLevelScript::DoSpawn().
 - Changed VectorNormalize() (and VectorNormalize2) to use doubles for storing

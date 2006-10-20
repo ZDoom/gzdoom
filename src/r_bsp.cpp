@@ -1052,6 +1052,7 @@ void R_Subsector (subsector_t *sub)
 #endif
 
 	frontsector = sub->sector;
+	frontsector->MoreFlags |= SECF_DRAWN;
 	count = sub->numlines;
 	line = &segs[sub->firstline];
 

@@ -31,6 +31,8 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "w_wad.h"
+#include "a_sharedglobal.h"
+#include "statnums.h"
 
 #include "m_cheat.h"
 #include "i_system.h"
@@ -2098,31 +2100,100 @@ void AM_drawThings (int _color)
 	}
 }
 
+static void DrawMarker (FTexture *tex, fixed_t x, fixed_t y, int yadjust,
+	INTBOOL flip, int xscale, int yscale, int translation, fixed_t alpha, DWORD alphacolor, int renderstyle)
+{
+	if (tex == NULL || tex->UseType == FTexture::TEX_Null)
+	{
+		return;
+	}
+	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+	{
+		AM_rotatePoint (&x, &y);
+	}
+	screen->DrawTexture (tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
+		DTA_DestWidth, MulScale6 (tex->GetScaledWidth() * CleanXfac, xscale),
+		DTA_DestHeight, MulScale6 (tex->GetScaledHeight() * CleanYfac, yscale),
+		DTA_ClipTop, f_y,
+		DTA_ClipBottom, f_y + f_h,
+		DTA_ClipLeft, f_x,
+		DTA_ClipRight, f_x + f_w,
+		DTA_FlipX, flip,
+		DTA_Translation, translation != 0 ? translationtables[(translation&0xff00)>>8] + (translation&0x00ff)*256 : NULL,
+		DTA_Alpha, alpha,
+		DTA_FillColor, alphacolor,
+		DTA_RenderStyle, renderstyle,
+		TAG_DONE);
+}
+
 void AM_drawMarks ()
 {
-	int i, fx, fy, w, h;
-	mpoint_t pt;
-
-	for (i = 0; i < AM_NUMMARKPOINTS; i++)
+	for (int i = 0; i < AM_NUMMARKPOINTS; i++)
 	{
 		if (markpoints[i].x != -1)
 		{
-			//      w = TileSizes[i].width;
-			//      h = TileSizes[i].height;
-			w = 5; // because something's wrong with the wad, i guess
-			h = 6; // because something's wrong with the wad, i guess
+			DrawMarker (TexMan(marknums[i]), markpoints[i].x, markpoints[i].y, -3, 0, 64, 64, 0, FRACUNIT, 0, STYLE_Normal);
+		}
+	}
+}
 
-			pt.x = markpoints[i].x;
-			pt.y = markpoints[i].y;
+void AM_drawAuthorMarkers ()
+{
+	// [RH] Draw any actors derived from AMapMarker on the automap.
+	// If args[0] is 0, then the actor's sprite is drawn at its own location.
+	// Otherwise, its sprite is drawn at the location of any actors whose TIDs match args[0].
+	TThinkerIterator<AMapMarker> it (STAT_MAPMARKER);
+	AMapMarker *mark;
 
-			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
-				AM_rotatePoint (&pt.x, &pt.y);
+	while ((mark = it.Next()) != NULL)
+	{
+		if (mark->flags2 & MF2_DORMANT)
+		{
+			continue;
+		}
 
-			fx = CXMTOF(pt.x);
-			fy = CYMTOF(pt.y) - 3;
+		int picnum;
+		FTexture *tex;
+		WORD flip = 0;
 
-			if (fx >= f_x && fx <= f_w - w && fy >= f_y && fy <= f_h - h && marknums[i] != -1)
-				screen->DrawTexture (TexMan(marknums[i]), fx, fy, DTA_CleanNoMove, true, TAG_DONE);
+		if (mark->picnum != 0xFFFF)
+		{
+			tex = TexMan(mark->picnum);
+			if (tex->Rotations != 0xFFFF)
+			{
+				spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
+				picnum = sprframe->Texture[0];
+				flip = sprframe->Flip & 1;
+				tex = TexMan[picnum];
+			}
+		}
+		else
+		{
+			spritedef_t *sprdef = &sprites[mark->sprite];
+			if (mark->frame >= sprdef->numframes)
+			{
+				continue;
+			}
+			else
+			{
+				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + mark->frame];
+				picnum = sprframe->Texture[0];
+				flip = sprframe->Flip & 1;
+				tex = TexMan[picnum];
+			}
+		}
+		FActorIterator it (mark->args[0]);
+		AActor *marked = mark->args[0] == 0 ? mark : it.Next();
+
+		while (marked != NULL)
+		{
+			if (mark->args[1] == 0 || (mark->args[1] == 1 && marked->Sector->MoreFlags & SECF_DRAWN))
+			{
+				DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
+					flip, mark->xscale+1, mark->yscale+1, mark->Translation,
+					mark->alpha, mark->alphacolor, mark->RenderStyle);
+			}
+			marked = mark->args[0] != 0 ? it.Next() : NULL;
 		}
 	}
 }
@@ -2177,6 +2248,7 @@ void AM_Drawer ()
 	AM_drawPlayers();
 	if (am_cheat >= 2 || allthings)
 		AM_drawThings(ThingColor);
+	AM_drawAuthorMarkers();
 
 	if (!viewactive)
 		AM_drawCrosshair(XHairColor);

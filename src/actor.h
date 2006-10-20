@@ -331,7 +331,9 @@ enum ERenderStyle
 	STYLE_Translucent=64,	// Draw translucent
 	STYLE_Add,				// Draw additive
 	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
-	STYLE_TranslucentStencil
+	STYLE_TranslucentStencil,
+
+	STYLE_Count
 };
 
 #define TRANSLUC25			(FRACUNIT/4)

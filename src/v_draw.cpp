@@ -94,6 +94,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 	int virtWidth = this->GetWidth();
 	int virtHeight = this->GetHeight();
 	INTBOOL keepratio = false;
+	ERenderStyle style = STYLE_Count;
 
 	x0 <<= FRACBITS;
 	y0 <<= FRACBITS;
@@ -322,6 +323,10 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 		case DTA_KeepRatio:
 			keepratio = va_arg (tags, INTBOOL);
 			break;
+
+		case DTA_RenderStyle:
+			style = ERenderStyle(va_arg (tags, int));
+			break;
 		}
 		tag = va_arg (tags, DWORD);
 	}
@@ -354,34 +359,35 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 		return;
 	}
 
-	ERenderStyle style;
-
-	if (fillcolor >= 0)
+	if (style == STYLE_Count)
 	{
-		if (alphaChannel)
+		if (fillcolor != -1)
 		{
-			style = STYLE_Shaded;
+			if (alphaChannel)
+			{
+				style = STYLE_Shaded;
+			}
+			else if (alpha < FRACUNIT)
+			{
+				style = STYLE_TranslucentStencil;
+			}
+			else
+			{
+				style = STYLE_Stencil;
+			}
 		}
 		else if (alpha < FRACUNIT)
 		{
-			style = STYLE_TranslucentStencil;
+			style = STYLE_Translucent;
 		}
 		else
 		{
-			style = STYLE_Stencil;
+			style = STYLE_Normal;
 		}
-	}
-	else if (alpha < FRACUNIT)
-	{
-		style = STYLE_Translucent;
-	}
-	else
-	{
-		style = STYLE_Normal;
 	}
 
 	fixedcolormap = identitymap;
-	ESPSResult mode = R_SetPatchStyle (style, alpha, 0, fillcolor<<24);
+	ESPSResult mode = R_SetPatchStyle (style, alpha, 0, fillcolor);
 
 	if (style != STYLE_Shaded)
 	{

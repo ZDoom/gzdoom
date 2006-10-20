@@ -1041,7 +1041,7 @@ void FBaseStatusBar::DrawCrosshair ()
 		DTA_DestWidth, w,
 		DTA_DestHeight, h,
 		DTA_AlphaChannel, true,
-		DTA_FillColor, palettecolor,
+		DTA_FillColor, (palettecolor << 24) | (color & 0xFFFFFF),
 		TAG_DONE);
 }
 

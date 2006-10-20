@@ -1236,26 +1236,23 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		}
 		flip = 0;
 
-		if (thing->picnum != 0xFFFF)
+		if (tex->Rotations != 0xFFFF)
 		{
-			if (tex->Rotations != 0xFFFF)
+			// choose a different rotation based on player view
+			spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
+			angle_t ang = R_PointToAngle (fx, fy);
+			angle_t rot;
+			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				// choose a different rotation based on player view
-				spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
-				angle_t ang = R_PointToAngle (fx, fy);
-				angle_t rot;
-				if (sprframe->Texture[0] == sprframe->Texture[1])
-				{
-					rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
-				}
-				else
-				{
-					rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
-				}
-				picnum = sprframe->Texture[rot];
-				flip = sprframe->Flip & (1 << rot);
-				tex = TexMan[picnum];	// Do not animate the rotation
+				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
 			}
+			else
+			{
+				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
+			}
+			picnum = sprframe->Texture[rot];
+			flip = sprframe->Flip & (1 << rot);
+			tex = TexMan[picnum];	// Do not animate the rotation
 		}
 	}
 	else

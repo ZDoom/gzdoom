@@ -5759,6 +5759,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\g_shared\a_mapmarker.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\g_shared\a_morph.cpp"
 				>
 			</File>

@@ -227,7 +227,8 @@ enum
 	SECF_IGNOREHEIGHTSEC= 16,	// heightsec is only for triggering sector actions
 	SECF_UNDERWATER		= 32,	// sector is underwater
 	SECF_FORCEDUNDERWATER= 64,	// sector is forced to be underwater
-	SECF_UNDERWATERMASK	= 32+64
+	SECF_UNDERWATERMASK	= 32+64,
+	SECF_DRAWN			= 128,	// sector has been drawn at least once
 };
 
 struct FDynamicColormap;

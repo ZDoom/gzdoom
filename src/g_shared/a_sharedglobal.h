@@ -229,4 +229,13 @@ public:
 	DWORD FlagsSave;
 };
 
+class AMapMarker : public AActor
+{
+	DECLARE_ACTOR(AMapMarker, AActor)
+public:
+	void BeginPlay ();
+	void Activate (AActor *activator);
+	void Deactivate (AActor *activator);
+};
+
 #endif //__A_SHAREDGLOBAL_H__

@@ -2526,6 +2526,8 @@ bool G_CheckDemoStatus (void)
 				playeringame[i] = 0;
 		}
 		consoleplayer = 0;
+		players[0].camera = NULL;
+		StatusBar->AttachToPlayer (&players[0]);
 
 		if (singledemo || timingdemo)
 		{

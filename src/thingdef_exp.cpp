@@ -88,7 +88,6 @@ enum ExpOp
 	EX_Random,		// random (min, max)
 	EX_Sin,			// sin (angle)
 	EX_Cos,			// cos (angle)
-	EX_InvCount,	// invcount (type)
 	EX_ActionSpecial,
 	EX_Right,
 };
@@ -264,10 +263,7 @@ struct ExpData
 		{
 			if (Children[i])
 			{
-				if (Type == EX_InvCount)
-					free (Children[i]);
-				else
-					delete Children[i];
+				delete Children[i];
 			}
 		}
 	}
@@ -307,7 +303,7 @@ struct ExpData
 				delete data;
 			}
 		}
-		else if (Type != EX_Random && Type != EX_Sin && Type != EX_Cos && Type != EX_InvCount && Type != EX_ActionSpecial)
+		else if (Type != EX_Random && Type != EX_Sin && Type != EX_Cos && Type != EX_ActionSpecial)
 		{
 			if (Children[0]->Type == EX_Const && Children[1]->Type == EX_Const)
 			{
@@ -745,22 +741,6 @@ static ExpData *ParseExpressionA ()
 		data->Type = EX_Cos;
 
 		data->Children[0] = ParseExpressionM ();
-
-		if (!SC_CheckString (")"))
-			SC_ScriptError ("')' expected");
-
-		return data;
-	}
-	else if (SC_CheckString ("invcount"))
-	{
-		if (!SC_CheckString ("("))
-			SC_ScriptError ("'(' expected");
-
-		ExpData *data = new ExpData;
-		data->Type = EX_InvCount;
-
-		SC_MustGetString ();
-		data->Children[0] = (ExpData *)strdup (sc_String);
 
 		if (!SC_CheckString (")"))
 			SC_ScriptError ("')' expected");
@@ -1470,24 +1450,6 @@ static ExpVal EvalExpression (ExpData *data, AActor *self)
 
 			val.Type = VAL_Float;
 			val.Float = FIXED2FLOAT (finecosine[angle>>ANGLETOFINESHIFT]);
-		}
-		break;
-
-	case EX_InvCount:
-		{
-			const char *name = (const char *)data->Children[0];
-			const PClass *type = PClass::FindClass (name);
-
-			val.Type = VAL_Int;
-			val.Int = 0;
-
-			if (!type)
-				break;
-
-			AInventory *item = self->FindInventory (type);
-
-			if (item)
-				val.Int = item->Amount;
 		}
 		break;
 

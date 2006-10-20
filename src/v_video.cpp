@@ -942,7 +942,14 @@ void V_Shutdown()
 }
 
 EXTERN_CVAR (Bool, vid_tft)
-CVAR (Bool, vid_nowidescreen, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+CUSTOM_CVAR (Bool, vid_nowidescreen, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+{
+	setsizeneeded = true;
+	if (StatusBar != NULL)
+	{
+		StatusBar->ScreenSizeChanged();
+	}
+}
 
 // Tries to guess the physical dimensions of the screen based on the
 // screen's pixel dimensions. Can return:

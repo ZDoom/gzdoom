@@ -96,9 +96,6 @@ static SOCKET mysocket = INVALID_SOCKET;
 static sockaddr_in sendaddress[MAXNETNODES];
 static BYTE sendplayer[MAXNETNODES];
 
-void (*netget) (void);
-void (*netsend) (void);
-
 #ifdef __WIN32__
 char	*neterror (void);
 #else
@@ -351,8 +348,6 @@ void StartNetwork (bool autoPort)
 
 	atterm (CloseNetwork);
 
-	netsend = PacketSend;
-	netget = PacketGet;
 	netgame = true;
 	multiplayer = true;
 	
@@ -828,11 +823,11 @@ void I_NetCmd (void)
 {
 	if (doomcom.command == CMD_SEND)
 	{
-		netsend ();
+		PacketSend ();
 	}
 	else if (doomcom.command == CMD_GET)
 	{
-		netget ();
+		PacketGet ();
 	}
 	else
 		I_Error ("Bad net cmd: %i\n",doomcom.command);

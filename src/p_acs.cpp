@@ -1908,6 +1908,8 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 		actor = Spawn (info, x, y, z, ALLOW_REPLACE);
 		if (actor != NULL)
 		{
+			DWORD oldFlags2 = actor->flags2;
+			actor->flags2 |= MF2_PASSMOBJ;
 			if (P_TestMobjLocation (actor))
 			{
 				actor->angle = angle << 24;
@@ -1915,6 +1917,7 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 				actor->AddToHash ();
 				if (actor->flags & MF_SPECIAL)
 					actor->flags |= MF_DROPPED;  // Don't respawn
+				actor->flags2 = oldFlags2;
 			}
 			else
 			{

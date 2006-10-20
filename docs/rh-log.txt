@@ -1,4 +1,22 @@
 October 19, 2006
+- Added the MF2_PASSMOBJ for P_Thing_Spawn() from January 4, 2003, to
+  DLevelScript::DoSpawn().
+- Changed VectorNormalize() (and VectorNormalize2) to use doubles for storing
+  the vector lengths, fixing desyncs between GCC/VC++ games that happened
+  because the two compilers produced slightly different results for some
+  slopes. GCC kept them in registers, so they were never truncated to floats.
+  VC++ stored them to memory and reloaded them in order to truncate them to
+  the defined precision. Lesson learned: Floating point numbers in local
+  variables should always be doubles to produce the best code with VC++ that
+  has the best chance of matching GCC's default behavior.
+- Removed netget and netsend function pointers. PacketGet and PacketSend are
+  now called directly.
+- Fixed: Watching a demo from the point of view of someone other than the
+  first player could cause a crash when the demo ended.
+- Removed invcount from the expression evaluator at Grubber's suggestion,
+  because it doesn't work.
+- Fixed: vid_nowidescreen should fire off setsizeneeded so that changes to it
+  can happen immediately instead of at the next resolution change.
 - Modified the way autosaves are done. Instead of setting gameaction to
   ga_autosave, write DEM_CHECKAUTOSAVE to the net stream. When this is
   processed, it will check if it's okay to do an autosave. If it is, it writes

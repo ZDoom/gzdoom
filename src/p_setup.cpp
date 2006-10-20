@@ -1318,7 +1318,6 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 			return;
 		}
 		VectorNormalize (cross);
-
 		// Fix backward normals
 		if ((cross[2] < 0 && !slopeCeil) || (cross[2] > 0 && slopeCeil))
 		{

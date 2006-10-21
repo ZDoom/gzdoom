@@ -1,3 +1,8 @@
+October 20, 2006
+- Fixed: ExpData::EvalConst() did not NULL the children pointers for binary
+  operators after deleting them, so ~ExpData() would try to delete them again
+  later.
+
 October 19, 2006
 - Added a new MapMarker actor. Instead of appearing in the 3D view, it appears
   on the automap instead. If its first argument is zero, the map marker itself

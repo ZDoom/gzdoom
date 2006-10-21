@@ -309,8 +309,8 @@ struct ExpData
 			{
 				Value = EvalExpression (this, NULL);
 				Type = EX_Const;
-				delete Children[0];
-				delete Children[1];
+				delete Children[0]; Children[0] = NULL;
+				delete Children[1]; Children[1] = NULL;
 			}
 		}
 	}

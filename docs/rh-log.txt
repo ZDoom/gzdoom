@@ -1,3 +1,10 @@
+October 21, 2006 (Changes by Graf Zahl)
+- Fixed: The yellow color range contained gaps in its definition which 
+  resulted in incorrect colors.
+- Fixed: FFont::BuildTranslations didn't clamp the RGB color values. This
+  can happen if some font colors overflow or underflow due to incomplete
+  range specifications.
+
 October 20, 2006
 - Fixed: ExpData::EvalConst() did not NULL the children pointers for binary
   operators after deleting them, so ~ExpData() would try to delete them again

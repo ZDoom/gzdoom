@@ -578,6 +578,9 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, c
 			int r = ((parms->Start[0] << 8) + rangev * (parms->End[0] - parms->Start[0])) >> 8; // red
 			int g = ((parms->Start[1] << 8) + rangev * (parms->End[1] - parms->Start[1])) >> 8; // green
 			int b = ((parms->Start[2] << 8) + rangev * (parms->End[2] - parms->Start[2])) >> 8; // blue
+			r=clamp(r, 0, 255);
+			g=clamp(g, 0, 255);
+			b=clamp(b, 0, 255);
 			*range++ = ColorMatcher.Pick (r, g, b);
 		}
 

@@ -141,7 +141,7 @@ void AMageWandMissile::Tick ()
 				LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
 				if (!P_TryMove (this, x+xfrac,y+yfrac, true))
 				{ // Blocked move
-					P_ExplodeMissile (this, BlockingLine);
+					P_ExplodeMissile (this, BlockingLine, BlockingMobj);
 					DoRipping = false;
 					return;
 				}
@@ -151,14 +151,14 @@ void AMageWandMissile::Tick ()
 			{ // Hit the floor
 				z = floorz;
 				P_HitFloor (this);
-				P_ExplodeMissile (this, NULL);
+				P_ExplodeMissile (this, NULL, NULL);
 				DoRipping = false;
 				return;
 			}
 			if (z+height > ceilingz)
 			{ // Hit the ceiling
 				z = ceilingz-height;
-				P_ExplodeMissile (this, NULL);
+				P_ExplodeMissile (this, NULL, NULL);
 				DoRipping = false;
 				return;
 			}

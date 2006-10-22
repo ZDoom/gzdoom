@@ -320,7 +320,7 @@ void ACFlameMissile::Tick ()
 			{
 				if (!P_TryMove (this, x+xfrac, y+yfrac, true))
 				{ // Blocked move
-					P_ExplodeMissile (this, BlockingLine);
+					P_ExplodeMissile (this, BlockingLine, BlockingMobj);
 					return;
 				}
 			}
@@ -329,13 +329,13 @@ void ACFlameMissile::Tick ()
 			{ // Hit the floor
 				z = floorz;
 				P_HitFloor (this);
-				P_ExplodeMissile (this, NULL);
+				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}
 			if (z+height > ceilingz)
 			{ // Hit the ceiling
 				z = ceilingz-height;
-				P_ExplodeMissile (this, NULL);
+				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}
 			if (changexy)

@@ -1677,7 +1677,7 @@ void A_CountdownArg(AActor * self)
 	{
 		if (self->flags&MF_MISSILE)
 		{
-			P_ExplodeMissile(self, NULL);
+			P_ExplodeMissile(self, NULL, NULL);
 		}
 		else if (self->flags&MF_SHOOTABLE)
 		{
@@ -1760,4 +1760,15 @@ void A_CheckFloor (AActor *self)
 	}
 
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+}
+
+//===========================================================================
+//
+// A_Stop
+// resets all momentum of the actor to 0
+//
+//===========================================================================
+void A_Stop (AActor *self)
+{
+	self->momx = self->momy = self->momz = 0;
 }

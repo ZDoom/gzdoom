@@ -2807,7 +2807,18 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 						trace.Actor, srcangle, srcpitch);
 				}
 			}
-			if (damage) P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType);
+			if (damage) 
+			{
+				int flags = 0;
+				// Allow MF5_PIERCEARMOR on a weapon as well.
+				if (t1->player != NULL && t1->player->ReadyWeapon != NULL &&
+					t1->player->ReadyWeapon->flags5 & MF5_PIERCEARMOR)
+				{
+					flags |= DMG_NO_ARMOR;
+				}
+			
+				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, flags);
+			}
 		}
 		if (trace.CrossedWater)
 		{

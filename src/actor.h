@@ -284,6 +284,7 @@ enum
 	MF5_BLOODSPLATTER	= 0x00000100,	// Blood splatter like in Raven's games.
 	MF5_OLDRADIUSDMG	= 0x00000200,	// Use old radius damage code (for barrels and boss brain)
 	MF5_DEHEXPLOSION	= 0x00000400,	// Use the DEHACKED explosion options when this projectile explodes
+	MF5_PIERCEARMOR		= 0x00000800,	// Armor doesn't protect against damage from this actor
 
 // --- mobj.renderflags ---
 
@@ -415,6 +416,7 @@ enum
 	AMETA_PoisonDamage,		// Amount of poison damage
 	AMETA_FastSpeed,		// Speed in fast mode
 	AMETA_RDFactor,			// Radius damage factor
+	AMETA_CameraHeight,		// Height of camera when used as such
 };
 
 // Map Object definition.

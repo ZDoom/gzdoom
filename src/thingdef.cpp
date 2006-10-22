@@ -220,6 +220,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, BLOODSPLATTER, AActor, flags5),
 	DEFINE_FLAG(MF5, OLDRADIUSDMG, AActor, flags5),
 	DEFINE_FLAG(MF5, DEHEXPLOSION, AActor, flags5),
+	DEFINE_FLAG(MF5, PIERCEARMOR, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -508,6 +509,7 @@ ACTOR(SkullPop)
 ACTOR(CheckFloor)
 ACTOR(CheckSkullDone)
 ACTOR(RadiusThrust)
+ACTOR(Stop)
 
 
 #include "d_dehackedactions.h"
@@ -717,6 +719,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_Burst, "M")
 	FUNC(A_RadiusThrust, "xxy")
 	{"A_Explode", A_ExplodeParms, "xxy" },
+	FUNC(A_Stop, NULL)
 };
 
 //==========================================================================
@@ -3019,9 +3022,18 @@ static void ActorRadiusDamageFactor (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorCameraheight (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetFloat();
+	bag.Info->Class->Meta.SetMetaFixed (AMETA_CameraHeight, fixed_t(sc_Float*FRACUNIT));
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorClearFlags (AActor *defaults, Baggage &bag)
 {
-	defaults->flags=defaults->flags2=defaults->flags3=defaults->flags4=0;
+	defaults->flags=defaults->flags2=defaults->flags3=defaults->flags4=defaults->flags5=0;
 }
 
 //==========================================================================
@@ -3781,6 +3793,7 @@ static const ActorProps props[] =
 	{ "bouncefactor",				ActorBounceFactor,			RUNTIME_CLASS(AActor) },
 	{ "burn",						ActorBurnState,				RUNTIME_CLASS(AActor) },
 	{ "burnheight",					ActorBurnHeight,			RUNTIME_CLASS(AActor) },
+	{ "cameraheight",				ActorCameraheight,			RUNTIME_CLASS(AActor) },
 	{ "clearflags",					ActorClearFlags,			RUNTIME_CLASS(AActor) },
 	{ "conversationid",				ActorConversationID,		RUNTIME_CLASS(AActor) },
 	{ "crash",						ActorCrashState,			RUNTIME_CLASS(AActor) },

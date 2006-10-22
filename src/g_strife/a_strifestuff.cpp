@@ -799,7 +799,7 @@ void A_Countdown (AActor *self)
 {
 	if (--self->reactiontime <= 0)
 	{
-		P_ExplodeMissile (self, NULL);
+		P_ExplodeMissile (self, NULL, NULL);
 		self->flags &= ~MF_SKULLFLY;
 	}
 }

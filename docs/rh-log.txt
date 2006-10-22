@@ -1,3 +1,11 @@
+October 22, 2006 (Changes by Graf Zahl)
+- Added MF5_PIERCEARMOR flag that allows damaging objects that aren't
+  affected by armor.
+- Added an unfreeze CCMD so that frozen players can be unfrozen for testing.
+- Added special death states for projectiles hitting actors.
+- Added ACS SetActorPitch/GetActorPitch functions.
+- Added cameraheight property for actors.
+
 October 21, 2006 (Changes by Graf Zahl)
 - Fixed: The yellow color range contained gaps in its definition which 
   resulted in incorrect colors.

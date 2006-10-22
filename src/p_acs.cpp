@@ -4420,6 +4420,21 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_GETACTORPITCH:
+			{
+				AActor *actor = SingleActorFromTID (STACK(1), activator);
+
+				if (actor == NULL)
+				{
+					STACK(1) = 0;
+				}
+				else
+				{
+					STACK(1) = actor->pitch >> 16;
+				}
+			}
+			break;
+
 		case PCD_GETLINEROWOFFSET:
 			if (activationline)
 			{
@@ -4895,6 +4910,19 @@ int DLevelScript::RunScript ()
 				while ( (actor = iterator.Next ()) )
 				{
 					actor->angle = STACK(1) << 16;
+				}
+			}
+			sp -= 2;
+			break;
+
+		case PCD_SETACTORPITCH:
+			{
+				FActorIterator iterator (STACK(2));
+				AActor *actor;
+
+				while ( (actor = iterator.Next ()) )
+				{
+					actor->pitch = STACK(1) << 16;
 				}
 			}
 			sp -= 2;

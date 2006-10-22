@@ -1007,7 +1007,7 @@ bool AActor::Massacre ()
 //
 //----------------------------------------------------------------------------
 
-void P_ExplodeMissile (AActor *mo, line_t *line)
+void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 {
 	if (mo->flags3 & MF3_EXPLOCOUNT)
 	{
@@ -1018,7 +1018,17 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 	}
 	mo->momx = mo->momy = mo->momz = 0;
 	mo->effects = 0;		// [RH]
-	mo->SetState (mo->DeathState);
+	
+	FState *nextstate=NULL;
+	
+	if (target != NULL && target->flags & MF_SHOOTABLE)
+	{
+		if (target->flags & MF_NOBLOOD) nextstate = mo->CrashState;
+		if (nextstate == NULL) nextstate = mo->XDeathState;
+	}
+	if (nextstate == NULL) nextstate = mo->DeathState;
+	mo->SetState (nextstate);
+	
 	if (mo->ObjectFlags & OF_MassDestruction)
 	{
 		return;
@@ -1131,7 +1141,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		// Landed in some sort of liquid
 		if (flags5 & MF5_EXPLODEONWATER)
 		{
-			P_ExplodeMissile(this, NULL);
+			P_ExplodeMissile(this, NULL, NULL);
 			return true;
 		}
 		if (!(flags3 & MF3_CANBOUNCEWATER))
@@ -1144,7 +1154,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	// The amount of bounces is limited
 	if (bouncecount>0 && --bouncecount==0)
 	{
-		P_ExplodeMissile(this, NULL);
+		P_ExplodeMissile(this, NULL, NULL);
 		return true;
 	}
 
@@ -1589,7 +1599,7 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						}
 						else
 						{ // Struck a player/creature
-							P_ExplodeMissile (mo, NULL);
+							P_ExplodeMissile (mo, NULL, BlockingMobj);
 							DoRipping = false;
 							return;
 						}
@@ -1656,7 +1666,7 @@ explode:
 					DoRipping = false;
 					return;
 				}
-				P_ExplodeMissile (mo, BlockingLine);
+				P_ExplodeMissile (mo, BlockingLine, BlockingMobj);
 				DoRipping = false;
 				return;
 			}
@@ -1926,7 +1936,7 @@ void P_ZMovement (AActor *mo)
 						return;
 					}
 					P_HitFloor (mo);
-					P_ExplodeMissile (mo, NULL);
+					P_ExplodeMissile (mo, NULL, NULL);
 					return;
 				}
 			}
@@ -2026,7 +2036,7 @@ void P_ZMovement (AActor *mo)
 					mo->Destroy ();
 					return;
 				}
-				P_ExplodeMissile (mo, NULL);
+				P_ExplodeMissile (mo, NULL, NULL);
 				return;
 			}
 		}
@@ -4230,7 +4240,7 @@ bool P_CheckMissileSpawn (AActor* th)
 			}
 			else
 			{
-				P_ExplodeMissile (th, NULL);
+				P_ExplodeMissile (th, NULL, NULL);
 			}
 			return false;
 		}

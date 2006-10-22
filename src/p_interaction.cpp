@@ -348,7 +348,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 	if (flags & MF_MISSILE)
 	{ // [RH] When missiles die, they just explode
-		P_ExplodeMissile (this, NULL);
+		P_ExplodeMissile (this, NULL, NULL);
 		return;
 	}
 	// [RH] Set the target to the thing that killed it. Strife apparently does this.
@@ -852,6 +852,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 		
 	}
+	if (inflictor != NULL)
+	{
+		if (inflictor->flags5 & MF5_PIERCEARMOR) flags |= DMG_NO_ARMOR;
+	}
+	
 	MeansOfDeath = mod;
 	// [RH] Andy Baker's Stealth monsters
 	if (target->flags & MF_STEALTH)

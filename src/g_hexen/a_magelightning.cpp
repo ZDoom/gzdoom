@@ -409,7 +409,7 @@ void A_LightningClip (AActor *actor)
 	{
 		if(target->health <= 0)
 		{
-			P_ExplodeMissile(actor, NULL);
+			P_ExplodeMissile(actor, NULL, NULL);
 		}
 		else
 		{
@@ -534,7 +534,7 @@ void A_ZapMimic (AActor *actor)
 	{
 		if (mo->state >= mo->DeathState)
 		{
-			P_ExplodeMissile (actor, NULL);
+			P_ExplodeMissile (actor, NULL, NULL);
 		}
 		else
 		{
@@ -577,6 +577,6 @@ void A_LightningRemove (AActor *actor)
 	if (mo)
 	{
 		mo->lastenemy = NULL;
-		P_ExplodeMissile (mo, NULL);
+		P_ExplodeMissile (mo, NULL, NULL);
 	}
 }

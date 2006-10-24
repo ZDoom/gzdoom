@@ -418,6 +418,28 @@ void A_Jump(AActor * self)
 // State jump function
 //
 //==========================================================================
+void A_JumpSet(AActor * self)
+{
+	FState * CallingState;
+	int index=CheckIndex(21, &CallingState);
+	int i;
+
+	if (index>=0 && pr_cajump() < clamp<int>(EvalExpressionI (StateParameters[index], self), 0, 256))
+	{
+		// Find out how many targets are actually used
+		for (i = 0; i < 20 && StateParameters[index+i+1] != 0; ++i)
+		{ }
+		DoJump(self, CallingState, StateParameters[index + (pr_cajump() % i) + 1]);
+	}
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+}
+
+//==========================================================================
+//
+// State jump function
+//
+//==========================================================================
 void A_JumpIfHealthLower(AActor * self)
 {
 	FState * CallingState;

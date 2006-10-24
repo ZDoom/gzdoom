@@ -817,7 +817,11 @@ CCMD(changesky)
 //
 //
 //-----------------------------------------------------------------------------
-CCMD(unfreeze)
+CCMD(thaw)
 {
-	if (who != NULL) who->player->cheats &= ~(CF_FROZEN|CF_TOTALLYFROZEN);
+	if (CheckCheatmode())
+		return;
+
+	Net_WriteByte (DEM_GENERICCHEAT);
+	Net_WriteByte (CHT_CLEARFROZENPROPS);
 }

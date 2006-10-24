@@ -399,6 +399,11 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "UpgradeAccuracy");
 		msg = "you got the stuff!";
 		break;
+
+	case CHT_CLEARFROZENPROPS:
+		player->cheats &= ~(CF_FROZEN|CF_TOTALLYFROZEN);
+		msg = "Frozen player properties turned off";
+		break;
 	}
 
 	if (!*msg)              // [SO] Don't print blank lines!

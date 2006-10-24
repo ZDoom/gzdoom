@@ -1,3 +1,13 @@
+October 23, 2006
+- Added the A_JumpSet function for what seems to be a fairly common scenario.
+  It is like A_Jump, except it accepts up to 20 jump targets. The jump
+  probability is still the first parameter and controls whether any jump is
+  taken at all; use 256 if you always want to jump. If a jump is taken, then
+  one of the jump targets will be chosen at random, with each target having
+  an equal chance of being chosen.
+- Fixed: The unfreeze ccmd was not multiplayer-safe. And I renamed it to thaw,
+  since it has nothing to do with the freeze ccmd.
+
 October 22, 2006 (Changes by Graf Zahl)
 - Added MF5_PIERCEARMOR flag that allows damaging objects that aren't
   affected by armor.

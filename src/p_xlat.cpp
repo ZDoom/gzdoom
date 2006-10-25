@@ -46,6 +46,8 @@
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "w_wad.h"
+#include "sc_man.h"
+#include "cmdlib.h"
 
 // define names for the TriggerType field of the general linedefs
 
@@ -414,6 +416,121 @@ void P_TranslateTeleportThings ()
 	}
 }
 
+static short sectortables[2][256];
+static int boommask=0, boomshift=0;
+static bool secparsed;
+
+void P_ReadSectorSpecials()
+{
+	secparsed=true;
+	for(int i=0;i<256;i++)
+	{
+		sectortables[0][i]=-1;
+		sectortables[1][i]=i;
+	}
+	
+	int lastlump=0, lump;
+
+	lastlump = 0;
+	while ((lump = Wads.FindLump ("SECTORX", &lastlump)) != -1)
+	{
+		SC_OpenLumpNum (lump, "SECTORX");
+		SC_SetCMode(true);
+		while (SC_GetString())
+		{
+			if (SC_Compare("IFDOOM"))
+			{
+				SC_MustGetStringName("{");
+				if (gameinfo.gametype != GAME_Doom)
+				{
+					do
+					{
+						if (!SC_GetString())
+						{
+							SC_ScriptError("Unexpected end of file");
+						}
+					}
+					while (!SC_Compare("}"));
+				}
+			}
+			else if (SC_Compare("IFHERETIC"))
+			{
+				SC_MustGetStringName("{");
+				if (gameinfo.gametype != GAME_Heretic)
+				{
+					do
+					{
+						if (!SC_GetString())
+						{
+							SC_ScriptError("Unexpected end of file");
+						}
+					}
+					while (!SC_Compare("}"));
+				}
+			}
+			else if (SC_Compare("IFSTRIFE"))
+			{
+				SC_MustGetStringName("{");
+				if (gameinfo.gametype != GAME_Strife)
+				{
+					do
+					{
+						if (!SC_GetString())
+						{
+							SC_ScriptError("Unexpected end of file");
+						}
+					}
+					while (!SC_Compare("}"));
+				}
+			}
+			else if (SC_Compare("}"))
+			{
+				// ignore
+			}
+			else if (SC_Compare("BOOMMASK"))
+			{
+				SC_MustGetNumber();
+				boommask = sc_Number;
+				SC_MustGetStringName(",");
+				SC_MustGetNumber();
+				boomshift = sc_Number;
+			}
+			else if (SC_Compare("["))
+			{
+				int start;
+				int end;
+				
+				SC_MustGetNumber();
+				start = sc_Number;
+				SC_MustGetStringName(",");
+				SC_MustGetNumber();
+				end = sc_Number;
+				SC_MustGetStringName("]");
+				SC_MustGetStringName(":");
+				SC_MustGetNumber();
+				for(int j=start;j<=end;j++)
+				{
+					sectortables[!!boommask][j]=sc_Number + j - start;
+				}
+			}
+			else if (IsNum(sc_String))
+			{
+				int start;
+				
+				start = atoi(sc_String);
+				SC_MustGetStringName(":");
+				SC_MustGetNumber();
+				sectortables[!!boommask][start]=sc_Number;
+			}
+			else
+			{
+				SC_ScriptError(NULL);
+			}
+		}
+		SC_Close ();
+	}
+}
+
 int P_TranslateSectorSpecial (int special)
 {
 	int high;
@@ -425,63 +542,14 @@ int P_TranslateSectorSpecial (int special)
 		return special & 0x7fff;
 	}
 	
-	if (special == 9)
+	if (!secparsed) P_ReadSectorSpecials();
+	
+	if (special>=0 && special<=255)
 	{
-		return SECRET_MASK;
+		if (sectortables[0][special]>=0) return sectortables[0][special];
 	}
-
-	if (gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Strife)
-	{
-		// This supports phased lighting with specials 21-24
-		high = (special & 0xfe0) << 3;
-		special &= 0x1f;
-		if (special < 21)
-		{
-			if (gameinfo.gametype == GAME_Strife)
-			{
-				if (special == 4 || special == 5 || special == 15 || special == 16 || special == 18)
-				{
-					return high | (special + 100);
-				}
-			}
-			else if (level.flags & LEVEL_CAVERNS_OF_DARKNESS)
-			{
-				// CoD uses 18 as an instant death sector type and 19 for healing the player
-				if (special == 18) return high | Damage_InstantDeath;
-				if (special == 19) return high | Sector_Heal;
-			}
-			return high | (special + 64);
-		}
-		else if (special < 40)
-		{
-			return high | (special - 20);
-		}
-	}
-	else
-	{
-		high = (special & 0xfc0) << 3;
-		special &= 0x3f;
-		if (special == 5)
-		{
-			return high | dDamage_LavaWimpy;
-		}
-		else if (special == 16)
-		{
-			return high | dDamage_LavaHefty;
-		}
-		else if (special == 4)
-		{
-			return high | dScroll_EastLavaDamage;
-		}
-		else if (special < 20)
-		{
-			return high | (special + 64);
-		}
-		else if (special < 40)
-		{
-			return high | (special + 205);
-		}
-	}
-
-	return high | special;
+	high = (special & boommask) << boomshift;
+	special &= (~boommask) & 255;
+	
+	return sectortables[1][special] | high;
 }

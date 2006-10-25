@@ -1,3 +1,8 @@
+October 25, 2006 (Changes by Graf Zahl)
+- Moved the sector type translation for Doom format maps into a simple lump 
+  in zdoom.pk3.
+- Changed Line_SetIdentification so that the fifth arg is a high-byte for the line ID.
+
 October 23, 2006
 - Added the A_JumpSet function for what seems to be a fairly common scenario.
   It is like A_Jump, except it accepts up to 20 jump targets. The jump

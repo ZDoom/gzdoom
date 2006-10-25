@@ -1651,7 +1651,7 @@ void P_AdjustLine (line_t *ld)
 		switch (ld->special)
 		{
 		case Line_SetIdentification:
-			ld->id = ld->args[0];
+			ld->id = ld->args[0] + 256 * ld->args[4];
 			ld->flags |= ld->args[1]<<16;
 			break;
 

@@ -66,6 +66,7 @@ dehsupp.lmp	                dehsupp.lmp
 doomx.lmp	                xlat/doom.x
 hereticx.lmp                xlat/heretic.x
 strifex.lmp	                xlat/strife.x
+sectorx.txt					sectorx.txt
 
 animated.lmp                animated.lmp
 spaldoom.lmp                spaldoom.lmp

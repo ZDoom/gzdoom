@@ -142,6 +142,7 @@ enum EDemoCommand
 	DEM_RUNSCRIPT2,		// 40 Same as DEM_RUNSCRIPT, but always executes
 	DEM_CHECKAUTOSAVE,	// 41 Check if the user has autosaves enabled. Ignored for demoplayback.
 	DEM_DOAUTOSAVE,		// 42 An autosave should be made
+	DEM_MORPHEX,		// 43 String: The class to morph to.
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

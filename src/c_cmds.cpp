@@ -175,8 +175,16 @@ CCMD (morphme)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_MORPH);
+	if (argv.argc() == 1)
+	{
+		Net_WriteByte (DEM_GENERICCHEAT);
+		Net_WriteByte (CHT_MORPH);
+	}
+	else
+	{
+		Net_WriteByte (DEM_MORPHEX);
+		Net_WriteString (argv[1]);
+	}
 }
 
 CCMD (anubis)

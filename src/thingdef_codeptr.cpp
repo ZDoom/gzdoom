@@ -405,33 +405,23 @@ static void DoJump(AActor * self, FState * CallingState, int offset)
 void A_Jump(AActor * self)
 {
 	FState * CallingState;
-	int index=CheckIndex(2, &CallingState);
+	int index = CheckIndex(3, &CallingState);
+	int maxchance;
 
-	if (index>=0 && pr_cajump() < clamp<int>(EvalExpressionI (StateParameters[index], self), 0, 255))
-		DoJump(self, CallingState, StateParameters[index+1]);
-
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
-}
-
-//==========================================================================
-//
-// State jump function
-//
-//==========================================================================
-void A_JumpSet(AActor * self)
-{
-	FState * CallingState;
-	int index=CheckIndex(21, &CallingState);
-	int i;
-
-	if (index>=0 && pr_cajump() < clamp<int>(EvalExpressionI (StateParameters[index], self), 0, 256))
+	if (index >= 0 &&
+		StateParameters[index] >= 2 &&
+		(maxchance = clamp<int>(EvalExpressionI (StateParameters[index + 1], self), 0, 256),
+		 maxchance == 256 || pr_cajump() < maxchance))
 	{
-		// Find out how many targets are actually used
-		for (i = 0; i < 20 && StateParameters[index+i+1] != 0; ++i)
-		{ }
-		DoJump(self, CallingState, StateParameters[index + (pr_cajump() % i) + 1]);
+		if (StateParameters[index] == 2)
+		{
+			DoJump(self, CallingState, StateParameters[index + 2]);
+		}
+		else
+		{
+			DoJump(self, CallingState, StateParameters[index + (pr_cajump() % (StateParameters[index] - 1)) + 2]);
+		}
 	}
-
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }
 

@@ -457,7 +457,6 @@ ACTOR(PlaySoundEx)
 ACTOR(StopSoundEx)
 ACTOR(SeekerMissile)
 ACTOR(Jump)
-ACTOR(JumpSet)
 ACTOR(ExplodeParms)
 ACTOR(CallSpecial)
 ACTOR(CustomMissile)
@@ -527,6 +526,9 @@ ACTOR(Stop)
  *   c = color
  *   x = expression
  *   y = expression
+ * If the final character is a +, the previous parameter is repeated indefinitely,
+ * and an "imaginary" first parameter is inserted containing the total number of
+ * parameters passed.
  */
 #define FUNC(name, parm) { #name, name, parm },
 // Declare the code pointer table
@@ -677,8 +679,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_PlaySoundEx, "STi" )
 	FUNC(A_StopSoundEx, "T" )
 	FUNC(A_SeekerMissile, "XX" )
-	FUNC(A_Jump, "XL" )
-	FUNC(A_JumpSet, "XLLllllllllllllllllll")
+	FUNC(A_Jump, "XL+" )
 	FUNC(A_CustomMissile, "MXXxxx" )
 	FUNC(A_CustomBulletAttack, "XXXXmx" )
 	FUNC(A_CustomRailgun, "Xxccxxx" )
@@ -1655,6 +1656,14 @@ do_stop:
 						}
 						
 						int paramindex = PrepareStateParameters(&state, numparams);
+						int paramstart = paramindex;
+						bool varargs = params[numparams - 1] == '+';
+
+						if (varargs)
+						{
+							StateParameters[paramindex++] = 0;
+						}
+
 						while (*params)
 						{
 							switch(*params)
@@ -1763,11 +1772,28 @@ do_stop:
 								v = -1;
 								break;
 							}
-							StateParameters[paramindex++]=v;
+							StateParameters[paramindex++] = v;
 							params++;
+							if (varargs)
+							{
+								StateParameters[paramstart]++;
+							}
 							if (*params)
 							{
-								if ((islower(*params) || *params=='!') && SC_CheckString(")")) goto endofstate;
+								if (*params == '+')
+								{
+									if (SC_CheckString(")"))
+									{
+										goto endofstate;
+									}
+									params--;
+									v = 0;
+									StateParameters.Push(v);
+								}
+								else if ((islower(*params) || *params=='!') && SC_CheckString(")"))
+								{
+									goto endofstate;
+								}
 								ChkCom();
 							}
 						}

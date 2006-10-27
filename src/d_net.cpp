@@ -2291,6 +2291,16 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		}
 		break;
 
+	case DEM_MORPHEX:
+		{
+			s = ReadString (stream);
+			const char *msg = cht_Morph (players + player, PClass::FindClass (s), false);
+			if (player == consoleplayer)
+			{
+				Printf ("%s\n", *msg != '\0' ? msg : "Morph failed.");
+			}
+		}
+		break;
 
 	default:
 		I_Error ("Unknown net command: %d", type);
@@ -2325,6 +2335,7 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_SUMMON:
 		case DEM_SUMMONFRIEND:
 		case DEM_SPRAY:
+		case DEM_MORPHEX:
 			skip = strlen ((char *)(*stream)) + 1;
 			break;
 

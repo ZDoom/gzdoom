@@ -48,8 +48,11 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 	{ // Dead players cannot morph
 		return false;
 	}
-
 	if (spawntype == NULL)
+	{
+		return false;
+	}
+	if (!spawntype->IsDescendantOf (RUNTIME_CLASS(APlayerPawn)))
 	{
 		return false;
 	}

@@ -1,7 +1,18 @@
+October 26, 2006
+- Removed A_JumpSet and merged its functionality with A_Jump by turning
+  A_Jump into a varargs function.
+- Fixed: P_MorphPlayer() should check that the desired type is actually a
+  PlayerPawn.
+- Added an optional parameter to the morphme ccmd that specifies the player
+  class to morph into.
+- Changed the SetActorPitch, SetActorAngle, Thing_Spawn*, Thing_Projectile*,
+  and Thing_Move functions so that TID 0 affects the activator.
+
 October 25, 2006 (Changes by Graf Zahl)
 - Moved the sector type translation for Doom format maps into a simple lump 
   in zdoom.pk3.
-- Changed Line_SetIdentification so that the fifth arg is a high-byte for the line ID.
+- Changed Line_SetIdentification so that the fifth arg is a high-byte for the
+  line ID.
 
 October 23, 2006
 - Added the A_JumpSet function for what seems to be a fairly common scenario.

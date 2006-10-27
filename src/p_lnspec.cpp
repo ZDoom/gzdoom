@@ -1138,14 +1138,14 @@ FUNC(LS_Thing_Damage)
 FUNC(LS_Thing_Projectile)
 // Thing_Projectile (tid, type, angle, speed, vspeed)
 {
-	return P_Thing_Projectile (arg0, arg1, NULL, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
+	return P_Thing_Projectile (arg0, it, arg1, NULL, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
 		arg4<<(FRACBITS-3), 0, NULL, 0, 0, false);
 }
 
 FUNC(LS_Thing_ProjectileGravity)
 // Thing_ProjectileGravity (tid, type, angle, speed, vspeed)
 {
-	return P_Thing_Projectile (arg0, arg1, NULL, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
+	return P_Thing_Projectile (arg0, it, arg1, NULL, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
 		arg4<<(FRACBITS-3), 0, NULL, 1, 0, false);
 }
 
@@ -1315,35 +1315,35 @@ FUNC(LS_Thing_Hate)
 FUNC(LS_Thing_ProjectileAimed)
 // Thing_ProjectileAimed (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, arg1, NULL, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, false);
+	return P_Thing_Projectile (arg0, it, arg1, NULL, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, false);
 }
 
 FUNC(LS_Thing_ProjectileIntercept)
 // Thing_ProjectileIntercept (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, arg1, NULL, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, true);
+	return P_Thing_Projectile (arg0, it, arg1, NULL, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, true);
 }
 
 // [BC] added newtid for next two
 FUNC(LS_Thing_Spawn)
 // Thing_Spawn (tid, type, angle, newtid)
 {
-	return P_Thing_Spawn (arg0, arg1, BYTEANGLE(arg2), true, arg3);
+	return P_Thing_Spawn (arg0, it, arg1, BYTEANGLE(arg2), true, arg3);
 }
 
 FUNC(LS_Thing_SpawnNoFog)
 // Thing_SpawnNoFog (tid, type, angle, newtid)
 {
-	return P_Thing_Spawn (arg0, arg1, BYTEANGLE(arg2), false, arg3);
+	return P_Thing_Spawn (arg0, it, arg1, BYTEANGLE(arg2), false, arg3);
 }
 
 FUNC(LS_Thing_SpawnFacing)
 // Thing_SpawnFacing (tid, type, nofog, newtid)
 {
-	return P_Thing_Spawn (arg0, arg1, ANGLE_MAX, arg2 ? false : true, arg3);
+	return P_Thing_Spawn (arg0, it, arg1, ANGLE_MAX, arg2 ? false : true, arg3);
 }
 
-static bool DoThingRaise(AActor * thing)
+static bool DoThingRaise(AActor *thing)
 {
 	if (thing == NULL)
 		return false;	// not valid
@@ -1448,7 +1448,7 @@ FUNC(LS_Thing_SetGoal)
 FUNC(LS_Thing_Move)		// [BC]
 // Thing_Move (tid, mapspot, nofog)
 {
-	return P_Thing_Move (arg0, arg1, arg2 ? false : true);
+	return P_Thing_Move (arg0, it, arg1, arg2 ? false : true);
 }
 
 FUNC(LS_Thing_SetTranslation)

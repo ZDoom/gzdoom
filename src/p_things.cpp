@@ -51,7 +51,7 @@ const PClass *SpawnableThings[MAX_SPAWNABLES];
 
 static FRandom pr_leadtarget ("LeadTarget");
 
-bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
+bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, int newtid)
 {
 	int rtn = 0;
 	const PClass *kind;
@@ -70,7 +70,15 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 	if ((GetDefaultByType (kind)->flags3 & MF3_ISMONSTER) && (dmflags & DF_NO_MONSTERS))
 		return false;
 
-	while ( (spot = iterator.Next ()) )
+	if (tid == 0)
+	{
+		spot = source;
+	}
+	else
+	{
+		spot = iterator.Next();
+	}
+	while (spot != NULL)
 	{
 		mobj = Spawn (kind, spot->x, spot->y, spot->z, ALLOW_REPLACE);
 
@@ -109,6 +117,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 				rtn = false;
 			}
 		}
+		spot = iterator.Next();
 	}
 
 	return rtn != 0;
@@ -117,7 +126,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 // [BC] Added
 // [RH] Fixed
 
-bool P_MoveThing(AActor * source, fixed_t x, fixed_t y, fixed_t z, bool fog)
+bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 {
 	fixed_t oldx, oldy, oldz;
 
@@ -142,13 +151,16 @@ bool P_MoveThing(AActor * source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	}
 }
 
-bool P_Thing_Move (int tid, int mapspot, bool fog)
+bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 {
-	FActorIterator iterator1 (tid);
-	FActorIterator iterator2 (mapspot);
-	AActor *source, *target;
+	AActor *target;
 
-	source = iterator1.Next ();
+	if (tid != 0)
+	{
+		FActorIterator iterator1(tid);
+		source = iterator1.Next();
+	}
+	FActorIterator iterator2 (mapspot);
 	target = iterator2.Next ();
 
 	if (source != NULL && target != NULL)
@@ -158,7 +170,7 @@ bool P_Thing_Move (int tid, int mapspot, bool fog)
 	return false;
 }
 
-bool P_Thing_Projectile (int tid, int type, const char * type_name, angle_t angle,
+bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, angle_t angle,
 	fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
@@ -191,7 +203,15 @@ bool P_Thing_Projectile (int tid, int type, const char * type_name, angle_t angl
 	if ((defflags3 & MF3_ISMONSTER) && (dmflags & DF_NO_MONSTERS))
 		return false;
 
-	while ( (spot = iterator.Next ()) )
+	if (tid == 0)
+	{
+		spot = source;
+	}
+	else
+	{
+		spot = iterator.Next();
+	}
+	while (spot != NULL)
 	{
 		FActorIterator tit (dest);
 
@@ -375,7 +395,8 @@ nolead:
 					}
 				}
 			} while (dest != 0 && (targ = tit.Next()));
-		} 
+		}
+		spot = iterator.Next();
 	}
 
 	return rtn != 0;

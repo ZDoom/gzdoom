@@ -122,18 +122,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_MORPH:
-		if (player->morphTics)
-		{
-			if (P_UndoPlayerMorph (player))
-			{
-				msg = "You feel like yourself again";
-			}
-		}
-		else if (P_MorphPlayer (player,
-			PClass::FindClass (gameinfo.gametype == GAME_Heretic ? NAME_ChickenPlayer : NAME_PigPlayer)))
-		{
-			msg = "You feel strange...";
-		}
+		msg = cht_Morph (player, PClass::FindClass (gameinfo.gametype == GAME_Heretic ? NAME_ChickenPlayer : NAME_PigPlayer), true);
 		break;
 
 	case CHT_NOTARGET:
@@ -413,6 +402,31 @@ void cht_DoCheat (player_t *player, int cheat)
 		Printf ("%s\n", msg);
 	else
 		Printf ("%s is a cheater: %s\n", player->userinfo.netname, msg);
+}
+
+const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickundo)
+{
+	if (player->mo == NULL)
+	{
+		return "";
+	}
+	PClass *oldclass = player->mo->GetClass();
+	if (player->morphTics)
+	{
+		if (P_UndoPlayerMorph (player))
+		{
+			if (!quickundo && oldclass != morphclass && P_MorphPlayer (player, morphclass))
+			{
+				return "You feel even stranger.";
+			}
+			return "You feel like yourself again.";
+		}
+	}
+	else if (P_MorphPlayer (player, morphclass))
+	{
+		return "You feel strange...";
+	}
+	return "";
 }
 
 void GiveSpawner (player_t *player, const PClass *type, int amount)

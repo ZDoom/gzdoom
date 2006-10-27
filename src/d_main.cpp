@@ -932,6 +932,7 @@ void D_DoAdvanceDemo (void)
 	MapData * map = P_OpenMapData("TITLEMAP");
 	if (map != NULL)
 	{
+		delete map;
 		G_InitNew ("TITLEMAP", true);
 		return;
 	}

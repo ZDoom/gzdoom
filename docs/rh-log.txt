@@ -9,6 +9,7 @@ October 26, 2006
   and Thing_Move functions so that TID 0 affects the activator.
 
 October 25, 2006 (Changes by Graf Zahl)
+- Fixed: The MinotaurFriend's MF4_NOTARGETSWITCH was put on AMinotaurFX1.
 - Moved the sector type translation for Doom format maps into a simple lump 
   in zdoom.pk3.
 - Changed Line_SetIdentification so that the fifth arg is a high-byte for the

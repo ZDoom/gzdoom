@@ -1300,21 +1300,10 @@ int PrepareStateParameters(FState * state, int numparams)
 	int paramindex=StateParameters.Size();
 	int i, v;
 
-	if (state->Frame&SF_BIGTIC)
-	{
-		SC_ScriptError("You cannot use a parameterized code pointer with a state duration larger than 254!");
-	}
-
-	v=state->Misc1;
-	StateParameters.Push(v);
-	v=state->Misc2;
-	StateParameters.Push(v);
 	v=0;
 	for(i=0;i<numparams;i++) StateParameters.Push(v);
-	state->SetMisc1_2(paramindex);
-	state->Frame|=SF_STATEPARAM;
-
-	return paramindex+2;	// return the index of the first actual state parameter
+	state->ParameterIndex = paramindex+1;
+	return paramindex;
 }
 
 //==========================================================================
@@ -1454,11 +1443,28 @@ static void RetargetStates (intptr_t count, const char *target, const PClass *cl
 
 //==========================================================================
 //
+// Reads a state label that may contain '.'s.
+// processes a state block
+//
+//==========================================================================
+static void ParseStateString(char * statestring)
+{
+	SC_MustGetString();
+	strncpy (statestring, sc_String, 255);
+	while (SC_CheckString ("."))
+	{
+		SC_MustGetString ();
+		strcat (statestring, ".");
+		strcat (statestring, sc_String);
+	}
+}
+
+//==========================================================================
+//
 // ProcessStates
 // processes a state block
 //
 //==========================================================================
-
 static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 {
 	char statestring[256];
@@ -1472,20 +1478,15 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 	statestring[255] = 0;
 
 	ChkBraceOpn();
+	SC_SetEscape(false);	// disable escape sequences in the state parser
 	while (!TestBraceCls() && !sc_End)
 	{
 		memset(&state,0,sizeof(state));
-		SC_MustGetString();
-		if (SC_Compare("GOTO"))
+		ParseStateString(statestring);
+		if (!stricmp(statestring, "GOTO"))
 		{
-do_goto:	SC_MustGetString();
-			strncpy (statestring, sc_String, 255);
-			if (SC_CheckString ("."))
-			{
-				SC_MustGetString ();
-				strcat (statestring, ".");
-				strcat (statestring, sc_String);
-			}
+do_goto:	
+			ParseStateString(statestring);
 			if (SC_CheckString ("+"))
 			{
 				SC_MustGetNumber ();
@@ -1506,7 +1507,7 @@ do_goto:	SC_MustGetString();
 				SC_ScriptError("GOTO before first state");
 			}
 		}
-		else if (SC_Compare("STOP"))
+		else if (!stricmp(statestring, "STOP"))
 		{
 do_stop:
 			if (laststate!=NULL)
@@ -1523,7 +1524,7 @@ do_stop:
 				continue;
 			}
 		}
-		else if (SC_Compare("WAIT") || SC_Compare("FAIL"))
+		else if (!stricmp(statestring, "WAIT") || !stricmp(statestring, "FAIL"))
 		{
 			if (!laststate) 
 			{
@@ -1532,7 +1533,7 @@ do_stop:
 			}
 			laststate->NextState=(FState*)-2;
 		}
-		else if (SC_Compare("LOOP"))
+		else if (!stricmp(statestring, "LOOP"))
 		{
 			if (!laststate) 
 			{
@@ -1545,11 +1546,7 @@ do_stop:
 		{
 			char * statestrp;
 
-			strncpy(statestring, sc_String, 255);
-			SC_SetEscape(false);
-			SC_MustGetString();	// this can read the frame string so escape characters have to be disabled
-			SC_SetEscape(true);
-
+			SC_MustGetString();
 			if (SC_Compare (":"))
 			{
 				laststate = NULL;
@@ -1560,16 +1557,16 @@ do_stop:
 					if (stp) *stp=(FState *) (count+1);
 					else 
 						SC_ScriptError("Unknown state label %s", statestring);
-					SC_MustGetString ();
-					if (SC_Compare ("Goto"))
+						
+					ParseStateString(statestring);
+					if (!stricmp(statestring, "GOTO"))
 					{
 						goto do_goto;
 					}
-					else if (SC_Compare("Stop"))
+					else if (!stricmp(statestring, "STOP"))
 					{
 						goto do_stop;
 					}
-					strncpy(statestring, sc_String, 255);
 					SC_MustGetString ();
 				} while (SC_Compare (":"));
 //				continue;
@@ -1584,9 +1581,8 @@ do_stop:
 
 			memcpy(state.sprite.name, statestring, 4);
 			state.Misc1=state.Misc2=0;
-			SC_SetEscape(false);
-			SC_MustGetString();	// This reads the frame string so escape characters have to be disabled
-			SC_SetEscape(true);
+			state.ParameterIndex=0;
+			SC_MustGetString();
 			strncpy(statestring, sc_String + 1, 255);
 			statestrp = statestring;
 			state.Frame=(*sc_String&223)-'A';
@@ -1716,7 +1712,9 @@ do_stop:
 							case 'm':		// Actor name
 							case 'T':
 							case 't':		// String
+								SC_SetEscape(true);
 								SC_MustGetString();
+								SC_SetEscape(false);
 								v = (int)(sc_String[0] ? FName(sc_String) : NAME_None);
 								break;
 
@@ -1825,7 +1823,7 @@ endofstate:
 					frame=0;
 				}
 
-				state.Frame=(state.Frame&(SF_FULLBRIGHT|SF_BIGTIC|SF_STATEPARAM))|frame;
+				state.Frame=(state.Frame&(SF_FULLBRIGHT|SF_BIGTIC))|frame;
 				StateArray.Push(state);
 				count++;
 			}
@@ -1837,6 +1835,7 @@ endofstate:
 	{
 		SC_ScriptError("A_Jump offset out of range in %s", actor->Class->TypeName.GetChars());
 	}
+	SC_SetEscape(true);	// re-enable escape sequences
 	return count;
 }
 

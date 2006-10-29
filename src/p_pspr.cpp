@@ -91,33 +91,15 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 		else
 			psp->tics = state->GetTics(); // could be 0
 
-		if (!(state->Frame & SF_STATEPARAM))
-		{
-			if (state->GetMisc1())
-			{ // Set coordinates.
-				psp->sx = state->GetMisc1()<<FRACBITS;
-			}
-			if (state->GetMisc2())
-			{
-				psp->sy = state->GetMisc2()<<FRACBITS;
-			}
+		if (state->GetMisc1())
+		{ // Set coordinates.
+			psp->sx = state->GetMisc1()<<FRACBITS;
 		}
-		else	// for parameterized action functions this must be done differently!
+		if (state->GetMisc2())
 		{
-			unsigned int index = state->GetMisc1_2();
+			psp->sy = state->GetMisc2()<<FRACBITS;
+		}
 
-			if (index > 0 && index < StateParameters.Size() - 2)
-			{
-				if (StateParameters[index])
-				{ // Set coordinates.
-					psp->sx = (fixed_t)StateParameters[index] << FRACBITS;
-				}
-				if (StateParameters[index+1])
-				{
-					psp->sy = (fixed_t)StateParameters[index+1] << FRACBITS;
-				}
-			}
-		}
 		if (state->GetAction())
 		{ 
 			// The parameterized action functions need access to the current state and
@@ -163,31 +145,13 @@ void P_SetPspriteNF (player_t *player, int position, FState *state)
 		psp->state = state;
 		psp->tics = state->GetTics(); // could be 0
 
-		if (!(state->Frame & SF_STATEPARAM))
-		{
-			if (state->GetMisc1())
-			{ // Set coordinates.
-				psp->sx = state->GetMisc1()<<FRACBITS;
-			}
-			if (state->GetMisc2())
-			{
-				psp->sy = state->GetMisc2()<<FRACBITS;
-			}
+		if (state->GetMisc1())
+		{ // Set coordinates.
+			psp->sx = state->GetMisc1()<<FRACBITS;
 		}
-		else	// for parameterized action functions this must be done differently!
+		if (state->GetMisc2())
 		{
-			unsigned int index = state->GetMisc1_2();
-			if (index > 0 && index < StateParameters.Size()-2)
-			{
-				if (StateParameters[index])
-				{ // Set coordinates.
-					psp->sx = (fixed_t)StateParameters[index] << FRACBITS;
-				}
-				if (StateParameters[index+1])
-				{
-					psp->sy = (fixed_t)StateParameters[index+1] << FRACBITS;
-				}
-			}
+			psp->sy = state->GetMisc2()<<FRACBITS;
 		}
 		state = psp->state->GetNextState();
 	} while (!psp->tics); // An initial state of 0 could cycle through.

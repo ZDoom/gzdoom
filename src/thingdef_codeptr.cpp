@@ -156,12 +156,12 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState * State)
 //==========================================================================
 int CheckIndex(int paramsize, FState ** pcallstate)
 {
-	if (!(CallingState->Frame&SF_STATEPARAM)) return -1;
+	if (CallingState->ParameterIndex == 0) return -1;
 
-	unsigned int index = CallingState->GetMisc1_2();
-	if (index > StateParameters.Size()-paramsize-2) return -1;
+	unsigned int index = (unsigned int) CallingState->ParameterIndex-1;
+	if (index > StateParameters.Size()-paramsize) return -1;
 	if (pcallstate) *pcallstate=CallingState;
-	return index+2;	// skip the misc parameters
+	return index;
 }
 
 

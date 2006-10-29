@@ -1,3 +1,11 @@
+October 28, 2006 (Changes by Graf Zahl)
+- Changed parameter storage for states to use a separate member variable
+  instead of forcing it into misc1/misc2. Although this increases the EXE's
+  size by 30k it has several advantages:
+  * State parameters are no longer limited to 65535 for all states combined.
+  * State parameters can be used with long durations.
+  * Some special handling in the weapon state set functions can be removed.
+
 October 26, 2006
 - Removed A_JumpSet and merged its functionality with A_Jump by turning
   A_Jump into a varargs function.

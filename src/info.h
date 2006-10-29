@@ -78,7 +78,6 @@
 #include "doomdef.h"
 #include "name.h"
 
-const BYTE SF_STATEPARAM = 0x20;
 const BYTE SF_FULLBRIGHT = 0x40;
 const BYTE SF_BIGTIC	 = 0x80;
 
@@ -105,10 +104,11 @@ struct FState
 	BYTE		Frame;
 	actionf_p	Action;
 	FState		*NextState;
+	int			ParameterIndex;
 
 	inline int GetFrame() const
 	{
-		return Frame & ~(SF_FULLBRIGHT|SF_BIGTIC|SF_STATEPARAM);
+		return Frame & ~(SF_FULLBRIGHT|SF_BIGTIC);
 	}
 	inline int GetFullbright() const
 	{
@@ -137,17 +137,6 @@ struct FState
 	inline int GetMisc2() const
 	{
 		return Misc2;
-	}
-	inline int GetMisc1_2() const
-	{
-		return ((*(DWORD *)&Tics) >> 8) & 0xFFFF;
-	}
-	inline void SetMisc1_2 (WORD val)
-	{
-		DWORD x = *(DWORD *)&Tics;
-		x &= 0xFF0000FF;
-		x |= (DWORD)val << 8;
-		*(DWORD *)&Tics = x;
 	}
 	inline FState *GetNextState() const
 	{

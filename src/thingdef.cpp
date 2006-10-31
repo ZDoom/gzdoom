@@ -1699,7 +1699,6 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 	FState state;
 	FState * laststate = NULL;
 	intptr_t lastlabel = -1;
-	FStateDefine * stp;
 	int minrequiredstate = -1;
 
 	statestring[255] = 0;

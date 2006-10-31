@@ -453,23 +453,37 @@ FState *AActor::FindState (FName label) const
 //
 // HasStates
 //
-// Checks whether the actor has substates for the given name.
+// Checks whether the actor has special death states.
 //
 //===========================================================================
 
-bool AActor::HasStates (FName label) const
+bool AActor::HasSpecialDeathStates () const
 {
 	const FActorInfo *info = GetClass()->ActorInfo;
 	FStateLabel *slabel;
+	TArray<FName> checkedTypes;
 
 	while (info != NULL)
 	{
 		if (info->StateList != NULL)
 		{
-			slabel = info->StateList->FindLabel (label);
-			if (slabel != NULL)
+			slabel = info->StateList->FindLabel (NAME_Death);
+			if (slabel != NULL && slabel->Children != NULL)
 			{
-				return true;
+				for(int i=0;i<slabel->Children->NumLabels;i++)
+				{
+					unsigned int j;
+					for(j=0;j<checkedTypes.Size();j++)
+					{
+						if (slabel->Children->Labels[i].Label == checkedTypes[j]) break;
+					}
+					// Only check if this damage type hasn't been checked by another class with higher priority.
+					if (j==checkedTypes.Size())
+					{
+						if (slabel->Children->Labels[i].State != NULL) return true;
+						else if (slabel->Children->Labels[i].valid) checkedTypes.Push(slabel->Children->Labels[i].Label);
+					}
+				}
 			}
 		}
 		info = info->Class->ParentClass->ActorInfo;

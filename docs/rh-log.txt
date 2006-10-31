@@ -1,4 +1,8 @@
 October 31, 2006 (Changes by Graf Zahl)
+- Fixed: SetActorPitch with a 0-tid (i.e. affect the activator) set the angle
+  instead of the pitch.
+- Fixed: The check for special death states in AActor::TakeSpecialDamage didn't
+  work.
 - Fixed: The global WeaponSection string was never freed. It has been replaced
   with an FString now.
 - Fixed: The music strings in the default level info were never freed and

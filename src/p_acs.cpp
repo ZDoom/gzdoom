@@ -4923,7 +4923,7 @@ int DLevelScript::RunScript ()
 		case PCD_SETACTORPITCH:
 			if (STACK(2) == 0)
 			{
-				activator->angle = STACK(1) << 16;
+				activator->pitch = STACK(1) << 16;
 			}
 			else
 			{

@@ -743,7 +743,7 @@ public:
 	FState *FindState (FName label) const;
 	FState *FindState (int numnames, int first, ...) const;
 	FState *FindState (int numnames, va_list arglist) const;
-	bool HasStates (FName label) const;
+	bool HasSpecialDeathStates () const;
 
 	static FState States[];
 

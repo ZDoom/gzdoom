@@ -4639,7 +4639,7 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 	// it needs to work.
 
 	// Always kill if there is a regular death state or no death states at all.
-	if (FindState (NAME_Death) != NULL || !HasStates(NAME_Death))
+	if (FindState (NAME_Death) != NULL || !HasSpecialDeathStates())
 	{
 		return damage;
 	}

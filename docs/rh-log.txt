@@ -1,3 +1,23 @@
+October 31, 2006 (Changes by Graf Zahl)
+- Fixed: The global WeaponSection string was never freed. It has been replaced
+  with an FString now.
+- Fixed: The music strings in the default level info were never freed and
+  caused memory leaks when used repeatedly.
+- Fixed: The intermusic string in the level info was never freed.
+- Fixed: The default fire obituary should only be printed if the damage
+  came from the environment. If it comes from a monster the monster specific
+  obituary should be used instead.
+- Added custom damage types from the floating point test release.
+- Changed Pain Elemental's massacre check. Now A_PainDie checks for the damage 
+  type and doesn't spawn anything if it is NAME_Massacre. A_PainDie can also 
+  be used by other actors so a more generalized approach is needed than hard
+  coding it into the Pain Elemental.
+- Converted a few of Doom's monsters to DECORATE because I couldn't test the
+  first version of the custom state code with the corpses inheriting from them.
+- Added custom states from last year's floating point test release and fixed
+  some bugs I found in that code. Unfortunately it wasn't all salvageable
+  and it was easier to recreate some parts from scratch.
+
 October 30, 2006
 - Version bump to 2.1.7.
 - Fixed: Placing a /* */ comment at the very end of a file without a

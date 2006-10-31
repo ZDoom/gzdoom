@@ -472,7 +472,7 @@ public:
 	virtual int DoSpecialDamage (AActor *target, int damage);
 
 	// Like DoSpecialDamage, but called on the actor receiving the damage.
-	virtual int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype);
+	virtual int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	virtual void Howl ();
@@ -699,26 +699,12 @@ public:
 	fixed_t MaxDropOffHeight, MaxStepHeight;
 	SDWORD Mass;
 	SWORD PainChance;
-	BYTE DamageType;
+	FNameNoInit DamageType;
 
 	FState *SpawnState;
 	FState *SeeState;
-	FState *PainState;
 	FState *MeleeState;
 	FState *MissileState;
-	FState *CrashState;
-	FState *DeathState;
-	FState *XDeathState;
-	FState *BDeathState;
-	FState *IDeathState;
-	FState *EDeathState;
-	FState *RaiseState;
-	FState *WoundState;
-	FState *HealState;
-	FState *CrushState;
-	FState *YesState;
-	FState *NoState;
-	FState *GreetingsState;
 
 	// [RH] The dialogue to show when this actor is "used."
 	FStrifeDialogueNode *Conversation;
@@ -753,6 +739,11 @@ public:
 	bool SetState (FState *newstate);
 	bool SetStateNF (FState *newstate);
 	bool UpdateWaterLevel (fixed_t oldz);
+
+	FState *FindState (FName label) const;
+	FState *FindState (int numnames, int first, ...) const;
+	FState *FindState (int numnames, va_list arglist) const;
+	bool HasStates (FName label) const;
 
 	static FState States[];
 

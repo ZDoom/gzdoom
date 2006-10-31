@@ -548,6 +548,8 @@ static void G_DoParseMapInfo (int lump)
 		switch (SC_MustMatchString (MapInfoTopLevel))
 		{
 		case MITL_DEFAULTMAP:
+			if (defaultinfo.music != NULL) delete [] defaultinfo.music;
+			if (defaultinfo.intermusic != NULL) delete [] defaultinfo.intermusic;
 			SetLevelDefaults (&defaultinfo);
 			ParseMapInfoLower (MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags);
 			break;
@@ -582,6 +584,10 @@ static void G_DoParseMapInfo (int lump)
 			if (levelinfo->music != NULL)
 			{
 				levelinfo->music = copystring (levelinfo->music);
+			}
+			if (levelinfo->intermusic != NULL)
+			{
+				levelinfo->intermusic = copystring (levelinfo->intermusic);
 			}
 			if (HexenHack)
 			{
@@ -676,6 +682,14 @@ static void G_DoParseMapInfo (int lump)
 		}
 	}
 	SC_Close ();
+	if (defaultinfo.music != NULL)
+	{
+		delete [] defaultinfo.music;
+	}
+	if (defaultinfo.intermusic != NULL)
+	{
+		delete [] defaultinfo.intermusic;
+	}
 }
 
 static void ClearLevelInfoStrings(level_info_t *linfo)
@@ -684,6 +698,11 @@ static void ClearLevelInfoStrings(level_info_t *linfo)
 	{
 		delete[] linfo->music;
 		linfo->music = NULL;
+	}
+	if (linfo->intermusic != NULL)
+	{
+		delete[] linfo->intermusic;
+		linfo->intermusic = NULL;
 	}
 	if (linfo->level_name != NULL)
 	{

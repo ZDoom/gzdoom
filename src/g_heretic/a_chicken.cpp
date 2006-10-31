@@ -184,10 +184,9 @@ void AChickenPlayer::MorphPlayerThink ()
 	if ((z <= floorz) && (pr_chickenplayerthink() < 32))
 	{ // Jump and noise
 		momz += JumpZ;
-		if (PainState != NULL)
-		{
-			SetState (PainState);
-		}
+
+		FState * painstate = FindState(NAME_Pain);
+		if (painstate != NULL) SetState (painstate);
 	}
 	if (pr_chickenplayerthink () < 48)
 	{ // Just noise
@@ -305,7 +304,7 @@ void A_ChicAttack (AActor *actor)
 	if (actor->CheckMeleeRange())
 	{
 		int damage = 1 + (pr_chicattack() & 1);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 	}
 }
@@ -406,7 +405,7 @@ void A_BeakAttackPL1 (AActor *actor)
 	damage = 1 + (pr_beakatkpl1()&3);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(ABeakPuff));
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(ABeakPuff));
 	if (linetarget)
 	{
 		player->mo->angle = R_PointToAngle2 (player->mo->x,
@@ -438,7 +437,7 @@ void A_BeakAttackPL2 (AActor *actor)
 	damage = pr_beakatkpl2.HitDice (4);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(ABeakPuff));
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(ABeakPuff));
 	if (linetarget)
 	{
 		player->mo->angle = R_PointToAngle2 (player->mo->x,

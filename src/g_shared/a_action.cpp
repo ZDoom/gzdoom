@@ -60,7 +60,7 @@ IMPLEMENT_ACTOR (AIceChunkHead, Any, -1, 0)
 	PROP_RadiusFixed (3)
 	PROP_HeightFixed (4)
 	PROP_Mass(5)
-	PROP_DamageType (MOD_ICE)
+	PROP_DamageType (NAME_Ice)
 	PROP_Flags (MF_DROPOFF)
 	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH)
 
@@ -214,11 +214,11 @@ void A_IceSetTics (AActor *actor)
 
 	actor->tics = 70+(pr_icesettics()&63);
 	floor = P_GetThingFloorType (actor);
-	if (Terrains[floor].DamageMOD == MOD_FIRE)
+	if (Terrains[floor].DamageMOD == NAME_Fire)
 	{
 		actor->tics >>= 2;
 	}
-	else if (Terrains[floor].DamageMOD == MOD_ICE)
+	else if (Terrains[floor].DamageMOD == NAME_Ice)
 	{
 		actor->tics <<= 1;
 	}

@@ -551,9 +551,9 @@ END_DEFAULTS
 //
 //===========================================================================
 
-void APowerIronFeet::AbsorbDamage (int damage, int damageType, int &newdamage)
+void APowerIronFeet::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
-	if (damageType == MOD_WATER)
+	if (damageType == NAME_Water)
 	{
 		newdamage = 0;
 		if (Owner->player != NULL)
@@ -582,9 +582,9 @@ END_DEFAULTS
 //
 //===========================================================================
 
-void APowerMask::AbsorbDamage (int damage, int damageType, int &newdamage)
+void APowerMask::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
-	if (damageType == MOD_FIRE)
+	if (damageType == NAME_Fire)
 	{
 		newdamage = 0;
 	}

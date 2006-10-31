@@ -78,7 +78,7 @@ typedef void (*voidfunc_)();
 	FActorInfo actor##ActorInfo = {
 
 #define BEGIN_DEFAULTS_POST(actor,game,ednum,id) \
-	GAME_##game, id, ednum,
+	GAME_##game, id, ednum, NULL,
 
 #ifdef WORDS_BIGENDIAN
 #define END_DEFAULTS "\xED\x5E" };
@@ -280,9 +280,6 @@ public:
 #define PROP_EDeathState(x)				ADD_BYTE_PROP(ADEF_EDeathState,x)
 #define PROP_RaiseState(x)				ADD_BYTE_PROP(ADEF_RaiseState,x)
 #define PROP_WoundState(x)				ADD_BYTE_PROP(ADEF_WoundState,x)
-#define PROP_YesState(x)				ADD_BYTE_PROP(ADEF_YesState,x)
-#define PROP_NoState(x)					ADD_BYTE_PROP(ADEF_NoState,x)
-#define PROP_GreetingsState(x)			ADD_BYTE_PROP(ADEF_GreetingsState,x)
 
 #define PROP_StrifeType(x)				ADD_WORD_PROP(ADEF_StrifeType,x)
 #define PROP_StrifeTeaserType(x)		ADD_WORD_PROP(ADEF_StrifeTeaserType,x)
@@ -329,8 +326,6 @@ public:
 #define PROP_Weapon_ReadyState(x)		ADD_BYTE_PROP(ADEF_Weapon_ReadyState,x)
 #define PROP_Weapon_AtkState(x)			ADD_BYTE_PROP(ADEF_Weapon_AtkState,x)
 #define PROP_Weapon_HoldAtkState(x)		ADD_BYTE_PROP(ADEF_Weapon_HoldAtkState,x)
-#define PROP_Weapon_AltAtkState(x)		ADD_BYTE_PROP(ADEF_Weapon_AltAtkState,x)
-#define PROP_Weapon_AltHoldAtkState(x)	ADD_BYTE_PROP(ADEF_Weapon_AltHoldAtkState,x)
 #define PROP_Weapon_FlashState(x)		ADD_BYTE_PROP(ADEF_Weapon_FlashState,x)
 #define PROP_Sigil_NumPieces(x)			ADD_BYTE_PROP(ADEF_Sigil_NumPieces,x)
 

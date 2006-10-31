@@ -708,7 +708,7 @@ bool F_CastResponder (event_t* ev)
 				
 	// go into death frame
 	castdeath = true;
-	caststate = castorder[castnum].info->DeathState;
+	caststate = castorder[castnum].info->FindState(NAME_Death);
 	if (caststate != NULL)
 	{
 		casttics = caststate->GetTics();

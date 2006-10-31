@@ -764,7 +764,7 @@ void AInventory::BecomePickup ()
 //
 //===========================================================================
 
-void AInventory::AbsorbDamage (int damage, int damageType, int &newdamage)
+void AInventory::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
 	if (Inventory != NULL)
 	{
@@ -1252,25 +1252,13 @@ END_DEFAULTS
 
 //===========================================================================
 //
-// ACustomInventory :: Serialize
-//
-//===========================================================================
-
-void ACustomInventory::Serialize (FArchive &arc)
-{
-	Super::Serialize (arc);
-	arc << UseState << PickupState << DropState;
-}
-
-//===========================================================================
-//
 // ACustomInventory :: SpecialDropAction
 //
 //===========================================================================
 
 bool ACustomInventory::SpecialDropAction (AActor *dropper)
 {
-	return CallStateChain (dropper, DropState);
+	return CallStateChain (dropper, FindState(NAME_Drop));
 }
 
 //===========================================================================
@@ -1281,7 +1269,7 @@ bool ACustomInventory::SpecialDropAction (AActor *dropper)
 
 bool ACustomInventory::Use (bool pickup)
 {
-	return CallStateChain (Owner, UseState);
+	return CallStateChain (Owner, FindState(NAME_Use));
 }
 
 //===========================================================================
@@ -1292,8 +1280,9 @@ bool ACustomInventory::Use (bool pickup)
 
 bool ACustomInventory::TryPickup (AActor *toucher)
 {
-	bool useok = CallStateChain (toucher, PickupState);
-	if ((useok || PickupState == NULL) && UseState != NULL)
+	FState *pickupstate = FindState(NAME_Pickup);
+	bool useok = CallStateChain (toucher, pickupstate);
+	if ((useok || pickupstate == NULL) && FindState(NAME_Use) != NULL)
 	{
 		useok = Super::TryPickup (toucher);
 	}
@@ -1561,9 +1550,9 @@ bool ABasicArmor::HandlePickup (AInventory *item)
 //
 //===========================================================================
 
-void ABasicArmor::AbsorbDamage (int damage, int damageType, int &newdamage)
+void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
-	if (damageType != MOD_WATER)
+	if (damageType != NAME_Water)
 	{
 		int saved = FixedMul (damage, SavePercent);
 		if (Amount < saved)
@@ -1725,9 +1714,9 @@ bool AHexenArmor::AddArmorToSlot (AActor *actor, int slot, int amount)
 //
 //===========================================================================
 
-void AHexenArmor::AbsorbDamage (int damage, int damageType, int &newdamage)
+void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
-	if (damageType != MOD_WATER)
+	if (damageType != NAME_Water)
 	{
 		fixed_t savedPercent = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
 		APlayerPawn *ppawn = Owner->player != NULL ? Owner->player->mo : NULL;

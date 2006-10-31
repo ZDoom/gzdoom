@@ -128,7 +128,7 @@ void A_BatMove (AActor *actor)
 
 	if (actor->special2 < 0)
 	{
-		actor->SetState (actor->DeathState);
+		actor->SetState (actor->FindState(NAME_Death));
 	}
 	actor->special2 -= 2;		// Called every 2 tics
 

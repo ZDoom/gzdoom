@@ -105,7 +105,7 @@ IMPLEMENT_ACTOR (AFrostMissile, Hexen, -1, 0)
 	PROP_RadiusFixed (13)
 	PROP_HeightFixed (8)
 	PROP_Damage (1)
-	PROP_DamageType (MOD_ICE)
+	PROP_DamageType (NAME_Ice)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
 
@@ -139,7 +139,7 @@ FState AIceShard::States[] =
 };
 
 IMPLEMENT_ACTOR (AIceShard, Hexen, -1, 65)
-	PROP_DamageType (MOD_ICE)
+	PROP_DamageType (NAME_Ice)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -180,7 +180,7 @@ void A_FireConePL1 (AActor *actor)
 		slope = P_AimLineAttack (actor, angle, MELEERANGE);
 		if (linetarget)
 		{
-			P_DamageMobj (linetarget, actor, actor, damage, MOD_ICE);
+			P_DamageMobj (linetarget, actor, actor, damage, NAME_Ice);
 			conedone = true;
 			break;
 		}

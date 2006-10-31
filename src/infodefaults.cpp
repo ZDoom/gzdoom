@@ -98,6 +98,7 @@ static FState *DefaultStates (PClass *type)
 static PClass *sgClass;
 static BYTE *sgDefaults;
 
+
 static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 {
 	int datasound = 0;
@@ -203,7 +204,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_Height:			actor->height = dataint;			break;
 	case ADEF_Mass:				actor->Mass = dataint;				break;
 	case ADEF_Damage:			actor->Damage = dataint;			break;
-	case ADEF_DamageType:		actor->DamageType = dataint;		break;
+	case ADEF_DamageType:		actor->DamageType = (ENamedName)dataint;		break;
 	case ADEF_Flags:			actor->flags = dataint;				break;
 	case ADEF_Flags2:			actor->flags2 = dataint;			break;
 	case ADEF_Flags3:			actor->flags3 = dataint;			break;
@@ -232,22 +233,19 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_RDFactor:			sgClass->Meta.SetMetaFixed (AMETA_RDFactor, dataint); break;
 	case ADEF_FXFlags:			actor->effects = dataint;			break;
 
-	case ADEF_SpawnState:		actor->SpawnState = datastate;		break;
-	case ADEF_SeeState:			actor->SeeState = datastate;		break;
-	case ADEF_PainState:		actor->PainState = datastate;		break;
-	case ADEF_MeleeState:		actor->MeleeState = datastate;		break;
-	case ADEF_MissileState:		actor->MissileState = datastate;	break;
-	case ADEF_CrashState:		actor->CrashState = datastate;		break;
-	case ADEF_DeathState:		actor->DeathState = datastate;		break;
-	case ADEF_XDeathState:		actor->XDeathState = datastate;		break;
-	case ADEF_BDeathState:		actor->BDeathState = datastate;		break;
-	case ADEF_IDeathState:		actor->IDeathState = datastate;		break;
-	case ADEF_EDeathState:		actor->EDeathState = datastate;		break;
-	case ADEF_RaiseState:		actor->RaiseState = datastate;		break;
-	case ADEF_WoundState:		actor->WoundState = datastate;		break;
-	case ADEF_YesState:			actor->YesState = datastate;		break;
-	case ADEF_NoState:			actor->NoState = datastate;			break;
-	case ADEF_GreetingsState:	actor->GreetingsState = datastate;	break;
+	case ADEF_SpawnState:		AddState("Spawn", datastate);		break;
+	case ADEF_SeeState:			AddState("See", datastate);			break;
+	case ADEF_PainState:		AddState("Pain", datastate);		break;
+	case ADEF_MeleeState:		AddState("Melee", datastate);		break;
+	case ADEF_MissileState:		AddState("Missile", datastate);		break;
+	case ADEF_CrashState:		AddState("Crash", datastate);		break;
+	case ADEF_DeathState:		AddState("Death", datastate);		break;
+	case ADEF_XDeathState:		AddState("XDeath", datastate);		break;
+	case ADEF_BDeathState:		AddState("Burn", datastate);		break;
+	case ADEF_IDeathState:		AddState("Ice", datastate);			break;
+	case ADEF_EDeathState:		AddState("Disintegrate", datastate);break;
+	case ADEF_RaiseState:		AddState("Raise", datastate);		break;
+	case ADEF_WoundState:		AddState("Wound", datastate);		break;
 
 	case ADEF_StrifeType:	if (!(gameinfo.flags & GI_SHAREWARE)) StrifeTypes[dataint] = sgClass;	break;
 	case ADEF_StrifeTeaserType:
@@ -306,14 +304,13 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_Weapon_YAdjust:		weapon->YAdjust = (dataint<<8)>>8; break;
 	case ADEF_Weapon_SelectionOrder:weapon->SelectionOrder = dataint; break;
 	case ADEF_Weapon_MoveCombatDist:weapon->MoveCombatDist = dataint; break;
-	case ADEF_Weapon_UpState:		weapon->UpState = datastate; break;
-	case ADEF_Weapon_DownState:		weapon->DownState = datastate; break;
-	case ADEF_Weapon_ReadyState:	weapon->ReadyState = datastate; break;
-	case ADEF_Weapon_AtkState:		weapon->AtkState = datastate; break;
-	case ADEF_Weapon_HoldAtkState:	weapon->HoldAtkState = datastate; break;
-	case ADEF_Weapon_AltAtkState:	weapon->AltAtkState = datastate; break;
-	case ADEF_Weapon_AltHoldAtkState:weapon->AltHoldAtkState = datastate; break;
-	case ADEF_Weapon_FlashState:	weapon->FlashState = datastate; break;
+
+	case ADEF_Weapon_UpState:		AddState("Select", datastate);		break;
+	case ADEF_Weapon_DownState:		AddState("Deselect", datastate);	break;
+	case ADEF_Weapon_ReadyState:	AddState("Ready", datastate);		break;
+	case ADEF_Weapon_AtkState:		AddState("Fire", datastate);		break;
+	case ADEF_Weapon_HoldAtkState:	AddState("Hold", datastate);		break;
+	case ADEF_Weapon_FlashState:	AddState("Flash", datastate);		break;
 	case ADEF_Sigil_NumPieces:		sigil->NumPieces = dataint; break;
 
 	// [GRB] Player class properties
@@ -360,6 +357,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 	sgClass = Class;
 	sgDefaults = defaults;
 
+	ClearStateLabels();
 #if _MSC_VER
 	const BYTE *parser = DefaultList;
 
@@ -410,6 +408,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 #else
 	DefaultsConstructor ();
 #endif
+	InstallStates(this, ((AActor *)defaults));
 	// Anything that is CountKill is also a monster, even if it doesn't specify it.
 	if (((AActor *)defaults)->flags & MF_COUNTKILL)
 	{

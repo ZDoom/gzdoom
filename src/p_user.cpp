@@ -651,7 +651,7 @@ AWeapon *APlayerPawn::PickNewWeapon (const PClass *ammotype)
 		player->PendingWeapon = best;
 		if (player->ReadyWeapon != NULL)
 		{
-			P_SetPsprite (player, ps_weapon, player->ReadyWeapon->DownState);
+			P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetDownState());
 		}
 		else if (player->PendingWeapon != WP_NOCHANGE)
 		{
@@ -1506,7 +1506,7 @@ void P_FallingDamage (AActor *actor)
 			damage = 999;
 		}
 	}
-	P_DamageMobj (actor, NULL, NULL, damage, MOD_FALLING);
+	P_DamageMobj (actor, NULL, NULL, damage, NAME_Falling);
 }
 
 //==========================================================================
@@ -1537,7 +1537,7 @@ void P_DeathThink (player_t *player)
 			}
 		}
 	}
-	else if (player->mo->DamageType != MOD_ICE)
+	else if (!(player->mo->flags & MF_ICECORPSE))
 	{ // Fall to ground (if not frozen)
 		player->deltaviewheight = 0;
 		if (player->viewheight > 6*FRACUNIT)
@@ -1961,7 +1961,7 @@ void P_PlayerThink (player_t *player)
 		{
 			player->hazardcount--;
 			if (!(level.time & 31) && player->hazardcount > 16*TICRATE)
-				P_DamageMobj (player->mo, NULL, NULL, 5, MOD_SLIME);
+				P_DamageMobj (player->mo, NULL, NULL, 5, NAME_Slime);
 		}
 
 		if (player->poisoncount && !(level.time & 15))
@@ -1985,7 +1985,7 @@ void P_PlayerThink (player_t *player)
 			}
 			else if (player->air_finished <= level.time && !(level.time & 31))
 			{
-				P_DamageMobj (player->mo, NULL, NULL, 2 + 2*((level.time-player->air_finished)/TICRATE), MOD_WATER);
+				P_DamageMobj (player->mo, NULL, NULL, 2 + 2*((level.time-player->air_finished)/TICRATE), NAME_Water);
 			}
 		}
 	}

@@ -124,7 +124,7 @@ IMPLEMENT_ACTOR (ADragonFireball, Hexen, -1, 0)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (10)
 	PROP_Damage (6)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_RenderStyle (STYLE_Add)
@@ -163,7 +163,7 @@ FState ADragonExplosion::States[] =
 IMPLEMENT_ACTOR (ADragonExplosion, Hexen, -1, 0)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (8)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_RenderFlags (RF_INVISIBLE)
@@ -251,7 +251,7 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 			if (actor->CheckMeleeRange ())
 			{
 				int damage = pr_dragonseek.HitDice (10);
-				P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+				P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 				P_TraceBleed (damage, actor->target, actor);
 				S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 			}
@@ -365,7 +365,7 @@ void A_DragonFlight (AActor *actor)
 		if (abs(actor->angle-angle) < ANGLE_45/2 && actor->CheckMeleeRange())
 		{
 			int damage = pr_dragonflight.HitDice (8);
-			P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+			P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 			P_TraceBleed (damage, actor->target, actor);
 			S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 		}

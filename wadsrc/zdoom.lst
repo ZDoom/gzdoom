@@ -245,6 +245,13 @@ actors/shared/blood.txt						decorate/shared/blood.txt
 actors/shared/debris.txt					decorate/shared/debris.txt
 actors/shared/splashes.txt					decorate/shared/splashes.txt
 
+actors/doom/possessed.txt					decorate/doom/possessed.txt
+actors/doom/doomimp.txt						decorate/doom/doomimp.txt
+actors/doom/demon.txt						decorate/doom/demon.txt
+actors/doom/lostsoul.txt					decorate/doom/lostsoul.txt
+actors/doom/cacodemon.txt					decorate/doom/cacodemon.txt
+actors/doom/bruiser.txt						decorate/doom/bruiser.txt
+
 actors/doom/deadthings.txt					decorate/doom/deadthings.txt
 actors/doom/doomammo.txt					decorate/doom/doomammo.txt
 actors/doom/doomarmor.txt					decorate/doom/doomarmor.txt

@@ -85,6 +85,8 @@ void PClass::StaticFreeData (PClass *type)
 		delete[] type->Defaults;
 		type->Defaults = NULL;
 	}
+	type->FreeStateList ();
+
 	if (type->bRuntimeClass)
 	{
 		if (type->ActorInfo != NULL)
@@ -99,6 +101,7 @@ void PClass::StaticFreeData (PClass *type)
 		}
 		delete type;
 	}
+
 }
 
 void ClassReg::RegisterClass ()
@@ -288,3 +291,14 @@ void PClass::BuildFlatPointers ()
 		}
 	}
 }
+
+void PClass::FreeStateList ()
+{
+	if (ActorInfo != NULL && ActorInfo->StateList != NULL)
+	{
+		ActorInfo->StateList->Destroy();
+		free (ActorInfo->StateList);
+		ActorInfo->StateList = NULL;
+	}
+}
+

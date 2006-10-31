@@ -118,7 +118,7 @@ void A_ReaverMelee (AActor *self)
 
 			S_Sound (self, CHAN_WEAPON, "reaver/blade", 1, ATTN_NORM);
 			damage = ((pr_reaverattack() & 7) + 1) * 3;
-			P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+			P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 			P_TraceBleed (damage, self->target, self);
 		}
 	}
@@ -140,7 +140,7 @@ void A_ReaverRanged (AActor *self)
 		{
 			angle_t angle = bangle + (pr_reaverattack.Random2() << 20);
 			int damage = ((pr_reaverattack() & 7) + 1) * 3;
-			P_LineAttack (self, angle, MISSILERANGE, pitch, damage, MOD_UNKNOWN, RUNTIME_CLASS(AStrifePuff));
+			P_LineAttack (self, angle, MISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AStrifePuff));
 		}
 	}
 }

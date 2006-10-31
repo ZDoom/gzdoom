@@ -89,7 +89,7 @@ void A_Punch (AActor *actor)
 
 	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (actor, angle, MELEERANGE);
-	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
+	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(ABulletPuff));
 
 	// turn to face target
 	if (linetarget)
@@ -169,7 +169,7 @@ void A_FirePistol (AActor *actor)
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
 				return;
 
-			P_SetPsprite (actor->player, ps_flash, weapon->FlashState);
+			P_SetPsprite (actor->player, ps_flash, weapon->FindState(NAME_Flash));
 		}
 		actor->player->mo->PlayAttacking2 ();
 
@@ -283,7 +283,7 @@ void A_Saw (AActor *actor)
 	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
 	P_LineAttack (actor, angle, MELEERANGE+1,
 				  P_AimLineAttack (actor, angle, MELEERANGE+1), damage,
-				  MOD_UNKNOWN, pufftype);
+				  NAME_None, pufftype);
 
 	if (!linetarget)
 	{
@@ -392,7 +392,7 @@ void A_FireShotgun (AActor *actor)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
-		P_SetPsprite (player, ps_flash, weapon->FlashState);
+		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
 	}
 	player->mo->PlayAttacking2 ();
 
@@ -492,7 +492,7 @@ void A_FireShotgun2 (AActor *actor)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
-		P_SetPsprite (player, ps_flash, weapon->FlashState);
+		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
 	}
 	player->mo->PlayAttacking2 ();
 
@@ -515,7 +515,7 @@ void A_FireShotgun2 (AActor *actor)
 					  angle,
 					  PLAYERMISSILERANGE,
 					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage,
-					  MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
+					  NAME_None, RUNTIME_CLASS(ABulletPuff));
 	}
 }
 
@@ -608,17 +608,21 @@ void A_FireCGun (AActor *actor)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
-		if (weapon->FlashState != NULL)
+		
+		FState *flash = weapon->FindState(NAME_Flash);
+		if (flash != NULL)
 		{
 			// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
-			int theflash = clamp (int(players->psprites[ps_weapon].state - weapon->AtkState), 0, 1);
+			FState * atk = weapon->FindState(NAME_Fire);
 
-			if (weapon->FlashState[theflash].sprite.index != weapon->FlashState->sprite.index)
+			int theflash = clamp (int(players->psprites[ps_weapon].state - atk), 0, 1);
+
+			if (flash[theflash].sprite.index != flash->sprite.index)
 			{
 				theflash = 0;
 			}
 
-			P_SetPsprite (player, ps_flash, weapon->FlashState + theflash);
+			P_SetPsprite (player, ps_flash, flash + theflash);
 		}
 
 	}
@@ -841,9 +845,11 @@ void A_FirePlasma (AActor *actor)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
-		if (weapon->FlashState != NULL)
+
+		FState *flash = weapon->FindState(NAME_Flash);
+		if (flash != NULL)
 		{
-			P_SetPsprite (player, ps_flash, weapon->FlashState + (pr_fireplasma()&1));
+			P_SetPsprite (player, ps_flash, flash + (pr_fireplasma()&1));
 		}
 	}
 
@@ -870,9 +876,11 @@ void A_FireRailgun (AActor *actor)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
-		if (weapon->FlashState != NULL)
+
+		FState *flash = weapon->FindState(NAME_Flash);
+		if (flash != NULL)
 		{
-			P_SetPsprite (player, ps_flash, weapon->FlashState + (pr_firerail()&1));
+			P_SetPsprite (player, ps_flash, flash + (pr_firerail()&1));
 		}
 	}
 
@@ -1099,7 +1107,7 @@ void A_BFGSpray (AActor *mo)
 			damage += (pr_bfgspray() & 7) + 1;
 
 		thingToHit = linetarget;
-		P_DamageMobj (thingToHit, mo->target, mo->target, damage, MOD_BFG_SPLASH);
+		P_DamageMobj (thingToHit, mo->target, mo->target, damage, NAME_BFGSplash);
 		P_TraceBleed (damage, thingToHit, mo->target);
 	}
 }

@@ -12,63 +12,6 @@
 
  FRandom pr_lost ("LostMissileRange");
 
-void A_SkullAttack (AActor *);
-
-FState ALostSoul::States[] =
-{
-#define S_SKULL_STND 0
-	S_BRIGHT (SKUL, 'A',   10, A_Look						, &States[S_SKULL_STND+1]),
-	S_BRIGHT (SKUL, 'B',   10, A_Look						, &States[S_SKULL_STND]),
-
-#define S_SKULL_RUN (S_SKULL_STND+2)
-	S_BRIGHT (SKUL, 'A',	6, A_Chase						, &States[S_SKULL_RUN+1]),
-	S_BRIGHT (SKUL, 'B',	6, A_Chase						, &States[S_SKULL_RUN+0]),
-
-#define S_SKULL_ATK (S_SKULL_RUN+2)
-	S_BRIGHT (SKUL, 'C',   10, A_FaceTarget 				, &States[S_SKULL_ATK+1]),
-	S_BRIGHT (SKUL, 'D',	4, A_SkullAttack				, &States[S_SKULL_ATK+2]),
-	S_BRIGHT (SKUL, 'C',	4, NULL 						, &States[S_SKULL_ATK+3]),
-	S_BRIGHT (SKUL, 'D',	4, NULL 						, &States[S_SKULL_ATK+2]),
-
-#define S_SKULL_PAIN (S_SKULL_ATK+4)
-	S_BRIGHT (SKUL, 'E',	3, NULL 						, &States[S_SKULL_PAIN+1]),
-	S_BRIGHT (SKUL, 'E',	3, A_Pain						, &States[S_SKULL_RUN+0]),
-
-#define S_SKULL_DIE (S_SKULL_PAIN+2)
-	S_BRIGHT (SKUL, 'F',	6, NULL 						, &States[S_SKULL_DIE+1]),
-	S_BRIGHT (SKUL, 'G',	6, A_Scream 					, &States[S_SKULL_DIE+2]),
-	S_BRIGHT (SKUL, 'H',	6, NULL 						, &States[S_SKULL_DIE+3]),
-	S_BRIGHT (SKUL, 'I',	6, A_NoBlocking					, &States[S_SKULL_DIE+4]),
-	S_NORMAL (SKUL, 'J',	6, NULL 						, &States[S_SKULL_DIE+5]),
-	S_NORMAL (SKUL, 'K',	6, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ALostSoul, Doom, 3006, 110)
-	PROP_SpawnHealth (100)
-	PROP_RadiusFixed (16)
-	PROP_HeightFixed (56)
-	PROP_Mass (50)
-	PROP_SpeedFixed (8)
-	PROP_Damage (3)
-	PROP_MaxPainChance
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_FLOAT|MF_NOGRAVITY|MF_COUNTKILL)
-	PROP_Flags2 (MF2_MCROSS|MF2_PUSHWALL|MF2_PASSMOBJ)
-	PROP_Flags4 (MF4_NOICEDEATH|MF4_MISSILEMORE|MF4_DONTFALL)
-	PROP_RenderStyle (STYLE_SoulTrans)
-
-	PROP_SpawnState (S_SKULL_STND)
-	PROP_SeeState (S_SKULL_RUN)
-	PROP_PainState (S_SKULL_PAIN)
-	PROP_MissileState (S_SKULL_ATK)
-	PROP_DeathState (S_SKULL_DIE)
-
-	PROP_AttackSound ("skull/melee")
-	PROP_PainSound ("skull/pain")
-	PROP_DeathSound ("skull/death")
-	PROP_ActiveSound ("skull/active")
-	PROP_Obituary("$OB_SKULL")
-END_DEFAULTS
-
 //
 // SkullAttack
 // Fly at the player like a missile.

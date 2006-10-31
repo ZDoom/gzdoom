@@ -103,15 +103,55 @@ xx(Mauler)
 xx(Chicken)
 xx(Pig)
 
+// Standard animator names.
+xx(Spawn)
+xx(See)
+xx(Pain)
+xx(Melee)
+xx(Missile)
+xx(Crash)
+xx(Death)
+xx(Raise)
+xx(Wound)
+xx(Heal)
+xx(Crush)
+xx(Yes)
+xx(No)
+xx(Greetings)
+
+// Compatible death names for the decorate parser.
+xx(XDeath)
+xx(Burn)
+//xx(Ice)			// already defined above
+xx(Disintegrate)
+
+// Weapon animator names.
+xx(Select)
+xx(Deselect)
+xx(Ready)
+xx(Fire)
+xx(Hold)
+xx(AltFire)
+xx(AltHold)
+xx(Flash)
+xx(AltFlash)
+
+// State names used by ASwitchableDecoration
+xx(Active)
+xx(Inactive)
+
+// State names used by ACustomInventory
+xx(Pickup)
+xx(Use)
+xx(Drop)
 
 // Damage types
-xx(Fire)
-//xx(Ice)	already defined above
-xx(Disintegrate)
-#if 0
-xx(Water)
+//xx(Fire)		already defined above
+//xx(Ice)
+//xx(Disintegrate)
+//xx(Water)
 xx(Slime)
-xx(Crush)
+//xx(Crush)
 xx(Telefrag)
 xx(Falling)
 xx(Suicide)
@@ -124,39 +164,8 @@ xx(DrainLife)	// A weapon like the Sigil that drains your life away.
 xx(Massacre)	// For death by a cheater!
 //(Melee)		already defined above, so don't define it again
 
-
-// Standard animator names.
-xx(Spawn)
-xx(See)
-xx(Pain)
-xx(Melee)
-xx(Missile)
-xx(Crash)
-xx(Death)
-xx(Raise)
-xx(Wound)
-
-// Weapon animator names.
-xx(Up)
-xx(Down)
-xx(Ready)
-xx(Flash)
-xx(Attack)
-xx(HoldAttack)
-xx(AltAttack)
-xx(AltHoldAttack)
-
 // Special death name for getting killed excessively. Could be used as
 // a damage type if you wanted to force an extreme death.
 xx(Extreme)
 
-// Compatible death names for the decorate parser.
-xx(XDeath)
-xx(BDeath)
-xx(IDeath)
-xx(EDeath)
 
-// State names used by ASwitchableDecoration
-xx(Active)
-xx(Inactive)
-#endif

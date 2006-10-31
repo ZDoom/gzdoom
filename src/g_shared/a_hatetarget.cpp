@@ -43,7 +43,7 @@ class AHateTarget : public AActor
 public:
 	void BeginPlay ();
 	angle_t AngleIncrements (void);
-	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype);
+	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
 FState AHateTarget::States[] =
@@ -76,7 +76,7 @@ void AHateTarget::BeginPlay ()
 	}
 }
 
-int AHateTarget::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype)
+int AHateTarget::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
 	if (special2 != 0)
 	{

@@ -130,7 +130,7 @@ END_DEFAULTS
 
 void AAlienSpectre1::Touch (AActor *toucher)
 {
-	P_DamageMobj (toucher, this, this, 5, MOD_HIT);
+	P_DamageMobj (toucher, this, this, 5, NAME_Melee);
 }
 
 // Alien Spectre 2 -----------------------------------------------------------

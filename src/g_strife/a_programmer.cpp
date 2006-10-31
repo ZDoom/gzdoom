@@ -230,7 +230,7 @@ void A_ProgrammerMelee (AActor *self)
 	S_Sound (self, CHAN_WEAPON, "programmer/clank", 1, ATTN_NORM);
 
 	damage = ((pr_prog() % 10) + 1) * 6;
-	P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+	P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 	P_TraceBleed (damage, self->target, self);
 }
 

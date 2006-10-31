@@ -274,11 +274,11 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->height = player->mo->GetDefault()->height;
 				player->mo->SetState (player->mo->SpawnState);
 				player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
-				player->mo->DamageType = MOD_UNKNOWN;
+				player->mo->DamageType = NAME_None;
 //				player->mo->GiveDefaultInventory();
 				if (player->ReadyWeapon != NULL)
 				{
-					P_SetPsprite(player, ps_weapon, player->ReadyWeapon->UpState);
+					P_SetPsprite(player, ps_weapon, player->ReadyWeapon->GetUpState());
 				}
 
 				if (player->morphTics > 0)
@@ -342,7 +342,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			// a very very cheap kill.
 			P_LineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE,
 				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), 1000000,
-				MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
+				NAME_None, RUNTIME_CLASS(ABulletPuff));
 		}
 		break;
 
@@ -701,7 +701,7 @@ void cht_Suicide (player_t *plyr)
 	{
 		plyr->mo->flags |= MF_SHOOTABLE;
 		plyr->mo->flags2 &= ~MF2_INVULNERABLE;
-		P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, 1000000, MOD_SUICIDE);
+		P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, 1000000, NAME_Suicide);
 		plyr->mo->flags &= ~MF_SHOOTABLE;
 	}
 }

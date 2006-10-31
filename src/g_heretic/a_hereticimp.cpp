@@ -264,7 +264,7 @@ void A_ImpMeAttack (AActor *self)
 	if (self->CheckMeleeRange ())
 	{
 		int damage = 5+(pr_impmeatk()&7);
-		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (damage, self->target, self);
 	}
 }
@@ -320,7 +320,7 @@ void A_ImpMsAttack2 (AActor *self)
 	if (self->CheckMeleeRange ())
 	{
 		int damage = 5+(pr_impmsatk2()&7);
-		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (damage, self->target, self);
 		return;
 	}

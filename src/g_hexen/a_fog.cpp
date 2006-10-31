@@ -197,7 +197,7 @@ void A_FogMove (AActor *actor)
 
 	if (actor->args[3]-- <= 0)
 	{
-		actor->SetStateNF (actor->DeathState);
+		actor->SetStateNF (actor->FindState(NAME_Death));
 		return;
 	}
 

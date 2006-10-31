@@ -1366,7 +1366,7 @@ void FBaseStatusBar::BlendView (float blend[4])
 	{
 		AddBlend (0.f, 1.f, 0.f, 0.125f, blend);
 	}
-	if (CPlayer->mo->DamageType == MOD_ICE)
+	if (CPlayer->mo->DamageType == NAME_Ice)
 	{
 		AddBlend (0.25f, 0.25f, 0.853f, 0.4f, blend);
 	}

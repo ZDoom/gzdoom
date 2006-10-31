@@ -28,6 +28,11 @@ int EvalExpressionI (int id, AActor *self);
 float EvalExpressionF (int id, AActor *self);
 bool EvalExpressionN (int id, AActor *self);
 
+void ClearStateLabels();
+void AddState (const char * statename, FState * state);
+FState * FindState(AActor * actor, const PClass * type, const char * name);
+void InstallStates(FActorInfo *info, AActor *defaults);
+void MakeStateDefines(const FStateLabels *list);
 
 struct FDropItem 
 {

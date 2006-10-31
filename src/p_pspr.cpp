@@ -235,8 +235,7 @@ void P_FireWeapon (player_t *player)
 
 	player->mo->PlayAttacking ();
 	weapon->bAltFire = false;
-	P_SetPsprite (player, ps_weapon,
-		player->refire ? weapon->GetHoldAtkState() : weapon->GetAtkState());
+	P_SetPsprite (player, ps_weapon, weapon->GetAtkState(!!player->refire));
 	if (!(weapon->WeaponFlags & WIF_NOALERT))
 	{
 		P_NoiseAlert (player->mo, player->mo, false);
@@ -261,15 +260,16 @@ void P_FireWeaponAlt (player_t *player)
 	}
 
 	weapon = player->ReadyWeapon;
-	if (weapon == NULL || weapon->AltAtkState == NULL || !weapon->CheckAmmo (AWeapon::AltFire, true))
+	if (weapon == NULL || weapon->FindState(NAME_AltFire) == NULL || !weapon->CheckAmmo (AWeapon::AltFire, true))
 	{
 		return;
 	}
 
 	player->mo->PlayAttacking ();
 	weapon->bAltFire = true;
-	P_SetPsprite (player, ps_weapon,
-		player->refire ? weapon->AltHoldAtkState : weapon->AltAtkState);
+
+
+	P_SetPsprite (player, ps_weapon, weapon->GetAltAtkState(!!player->refire));
 	if (!(weapon->WeaponFlags & WIF_NOALERT))
 	{
 		P_NoiseAlert (player->mo, player->mo, false);
@@ -382,14 +382,14 @@ void A_WeaponReady(AActor *actor)
 	}
 
 	// Change player from attack state
-	if (actor->state >= actor->MissileState &&
-		actor->state < actor->PainState)
+	if (actor->InStateSequence(actor->state, actor->MissileState) ||
+		actor->InStateSequence(actor->state, actor->MeleeState))
 	{
 		static_cast<APlayerPawn *>(actor)->PlayIdle ();
 	}
 
 	// Play ready sound, if any.
-	if (weapon->ReadySound && player->psprites[ps_weapon].state == weapon->ReadyState)
+	if (weapon->ReadySound && player->psprites[ps_weapon].state == weapon->FindState(NAME_Ready))
 	{
 		if (!(weapon->WeaponFlags & WIF_READYSNDHALF) || pr_wpnreadysnd() < 128)
 		{
@@ -613,8 +613,11 @@ void A_GunFlash (AActor *actor)
 		return;
 	}
 	player->mo->PlayAttacking2 ();
-	P_SetPsprite (player, ps_flash, (player->ReadyWeapon->bAltFire && player->ReadyWeapon->AltFlashState != NULL) ?
-		player->ReadyWeapon->AltFlashState : player->ReadyWeapon->FlashState);
+
+	FState * flash=NULL;
+	if (player->ReadyWeapon->bAltFire) flash = player->ReadyWeapon->FindState(NAME_AltFlash);
+	if (flash == NULL) flash = player->ReadyWeapon->FindState(NAME_Flash);
+	P_SetPsprite (player, ps_flash, flash);
 }
 
 
@@ -668,7 +671,7 @@ void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype)
 		angle += pr_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, MOD_UNKNOWN, pufftype);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, pufftype);
 }
 
 void A_Light0 (AActor *actor)
@@ -742,7 +745,7 @@ void P_MovePsprites (player_t *player)
 	FState *state;
 
 	// [RH] If you don't have a weapon, then the psprites should be NULL.
-	if (player->ReadyWeapon == NULL && (player->health > 0 || player->mo->DamageType != MOD_FIRE))
+	if (player->ReadyWeapon == NULL && (player->health > 0 || player->mo->DamageType != NAME_Fire))
 	{
 		P_SetPsprite (player, ps_weapon, NULL);
 		P_SetPsprite (player, ps_flash, NULL);

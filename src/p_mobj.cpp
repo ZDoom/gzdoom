@@ -303,22 +303,8 @@ void AActor::Serialize (FArchive &arc)
 		<< PainChance
 		<< SpawnState
 		<< SeeState
-		<< PainState
 		<< MeleeState
 		<< MissileState
-		<< CrashState
-		<< DeathState
-		<< XDeathState
-		<< BDeathState
-		<< IDeathState
-		<< EDeathState
-		<< RaiseState
-		<< WoundState
-		<< HealState
-		<< YesState
-		<< NoState
-		<< GreetingsState
-		<< CrushState
 		<< MaxDropOffHeight 
 		<< MaxStepHeight
 		<< bouncefactor
@@ -947,18 +933,20 @@ bool AActor::CheckLocalView (int playernum) const
 
 void AActor::ConversationAnimation (int animnum)
 {
+	FState * state = NULL;
 	switch (animnum)
 	{
 	case 0:
-		if (GreetingsState != NULL) SetState (GreetingsState);
+		state = FindState(NAME_Greetings);
 		break;
 	case 1:
-		if (YesState != NULL) SetState (YesState);
+		state = FindState(NAME_Yes);
 		break;
 	case 2:
-		if (NoState != NULL) SetState (NoState);
+		state = FindState(NAME_No);
 		break;
 	}
+	if (state != NULL) SetState(state);
 }
 
 //============================================================================
@@ -993,7 +981,7 @@ bool AActor::Massacre ()
 		do
 		{
 			prevhealth = health;
-			P_DamageMobj (this, NULL, NULL, 1000000, MOD_MASSACRE);
+			P_DamageMobj (this, NULL, NULL, 1000000, NAME_Massacre);
 		}
 		while (health != prevhealth && health > 0);	//abort if the actor wasn't hurt.
 		return true;
@@ -1021,12 +1009,12 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	
 	FState *nextstate=NULL;
 	
-	if (target != NULL && target->flags & MF_SHOOTABLE)
+	if (target != NULL && target->flags & (MF_SHOOTABLE|MF_CORPSE))
 	{
-		if (target->flags & MF_NOBLOOD) nextstate = mo->CrashState;
-		if (nextstate == NULL) nextstate = mo->XDeathState;
+		if (target->flags & MF_NOBLOOD) nextstate = mo->FindState(NAME_Crash);
+		if (nextstate == NULL) nextstate = mo->FindState(2, NAME_Death, NAME_Extreme);
 	}
-	if (nextstate == NULL) nextstate = mo->DeathState;
+	if (nextstate == NULL) nextstate = mo->FindState(NAME_Death);
 	mo->SetState (nextstate);
 	
 	if (mo->ObjectFlags & OF_MassDestruction)
@@ -1085,7 +1073,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 		}
 	}
 
-	if (mo->DeathState != NULL)
+	if (nextstate != NULL)
 	{
 		// [RH] Change render style of exploding rockets
 		if (mo->flags5 & MF5_DEHEXPLOSION)
@@ -1167,7 +1155,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		momz -= MulScale15 (plane.c, dot);
 		angle = R_PointToAngle2 (0, 0, momx, momy);
 		flags |= MF_INBOUNCE;
-		SetState (DeathState);
+		SetState (FindState(NAME_Death));
 		flags &= ~MF_INBOUNCE;
 		return false;
 	}
@@ -1813,7 +1801,7 @@ void P_MonsterFallingDamage (AActor *mo)
 		damage = ((mom - (23*FRACUNIT))*6)>>FRACBITS;
 	}
 	damage = 1000000;	// always kill 'em
-	P_DamageMobj (mo, NULL, NULL, damage, MOD_FALLING);
+	P_DamageMobj (mo, NULL, NULL, damage, NAME_Falling);
 }
 
 //
@@ -1957,7 +1945,7 @@ void P_ZMovement (AActor *mo)
 
 				// Spawn splashes, etc.
 				P_HitFloor (mo);
-				if (mo->DamageType == MOD_ICE && mom < minmom)
+				if (mo->DamageType == NAME_Ice && mom < minmom)
 				{
 					mo->tics = 1;
 					mo->momx = 0;
@@ -1984,13 +1972,13 @@ void P_ZMovement (AActor *mo)
 			{ // The skull slammed into something
 				mo->momz = -mo->momz;
 			}
-			if (mo->CrashState &&
-				(mo->flags & MF_CORPSE) &&
+			if ((mo->flags & MF_CORPSE) &&
 				!(mo->flags3 & MF3_CRASHED) &&
-				mo->DamageType != MOD_ICE)
+				mo->DamageType != NAME_Ice)
 			{
+				FState * crashstate = mo->FindState(NAME_Crash);
+				if (crashstate != NULL) mo->SetState(crashstate);
 				mo->flags3 |= MF3_CRASHED;
-				mo->SetState (mo->CrashState);
 			}
 		}
 	}
@@ -2353,7 +2341,7 @@ void AActor::HitFloor ()
 bool AActor::Slam (AActor *thing)
 {
 	int dam = GetMissileDamage (7, 1);
-	P_DamageMobj (thing, this, this, dam, MOD_HIT);
+	P_DamageMobj (thing, this, this, dam, NAME_Melee);
 	P_TraceBleed (dam, thing, this);
 	flags &= ~MF_SKULLFLY;
 	momx = momy = momz = 0;
@@ -2864,13 +2852,13 @@ void AActor::Tick ()
 				}
 				flags2 |= MF2_ONMOBJ;
 				momz = 0;
-				if (CrashState &&
-					(flags & MF_CORPSE) &&
+				if ((flags & MF_CORPSE) &&
 					!(flags3 & MF3_CRASHED) &&
-					DamageType != MOD_ICE)
+					DamageType != NAME_Ice)
 				{
+					FState * crashstate = FindState(NAME_Crash);
+					if (crashstate != NULL) SetState(crashstate);
 					flags3 |= MF3_CRASHED;
-					SetState (CrashState);
 				}
 			}
 		}
@@ -2884,13 +2872,13 @@ void AActor::Tick ()
 	}
 	else if (z <= floorz)
 	{
-		if (CrashState &&
-			(flags & MF_CORPSE) &&
+		if ((flags & MF_CORPSE) &&
 			!(flags3 & MF3_CRASHED) &&
-			DamageType != MOD_ICE)
+			DamageType != NAME_Ice)
 		{
+			FState * crashstate = FindState(NAME_Crash);
+			if (crashstate != NULL) SetState(crashstate);
 			flags3 |= MF3_CRASHED;
-			SetState (CrashState);
 		}
 	}
 
@@ -3918,9 +3906,10 @@ AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, an
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
 	// and BlasterPuff.
-	if (hitthing == false && puff->CrashState != NULL)
+	FState *crashstate;
+	if (hitthing == false && (crashstate = puff->FindState(NAME_Crash)) != NULL)
 	{
-		puff->SetState (puff->CrashState);
+		puff->SetState (crashstate);
 	}
 	else if (attackrange == MELEERANGE && puff->MeleeState != NULL)
 	{
@@ -4625,7 +4614,7 @@ int AActor::DoSpecialDamage (AActor *target, int damage)
 	}
 }
 
-int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype)
+int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
 	// If the actor does not have a corresponding death state, then it does not take damage.
 	// Note that DeathState matches every kind of damagetype, so if an actor has that, it can
@@ -4636,48 +4625,36 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, in
 	if (flags5 & MF5_NODAMAGE)
 	{
 		target = source;
-		if (PainState != NULL && pr_takedamage() < PainChance)
+		if (pr_takedamage() < PainChance)
 		{
-			SetState (PainState);
+			FState * painstate = FindState(2,NAME_Pain, (int)damagetype);
+			if (painstate != NULL) SetState (painstate);
 		}
 		return -1;
 	}
 
-	if (DeathState != NULL)
+	// If the actor does not have a corresponding death state, then it does not take damage.
+	// Note that DeathState matches every kind of damagetype, so an actor has that, it can
+	// be hurt with any type of damage. Exception: Massacre damage always succeeds, because
+	// it needs to work.
+
+	// Always kill if there is a regular death state or no death states at all.
+	if (FindState (NAME_Death) != NULL || !HasStates(NAME_Death))
 	{
 		return damage;
 	}
-	if (EDeathState==NULL && BDeathState==NULL && IDeathState==NULL)
+	if (damagetype == NAME_Ice)
 	{
-		// If there is no death state at all, kill it always.
-		return damage;
-	}
-
-	switch (damagetype)
-	{
-	case MOD_MASSACRE:
-		return damage;
-
-	case MOD_DISINTEGRATE:
-		death = EDeathState;
-		break;
-
-	case MOD_FIRE:
-		death = BDeathState;
-		break;
-
-	case MOD_ICE:
-		death = IDeathState;
+		death = GetClass()->ActorInfo->FindStateExact (2, NAME_Death, NAME_Ice);
 		if (death == NULL && !deh.NoAutofreeze && !(flags4 & MF4_NOICEDEATH) &&
 			(player || (flags3 & MF3_ISMONSTER)))
 		{
 			death = &AActor::States[S_GENERICFREEZEDEATH];
 		}
-		break;
-
-	default:
-		death = NULL;
-		break;
+	}
+	else
+	{
+		death = FindState (2, NAME_Death, int(damagetype));
 	}
 	return (death == NULL) ? -1 : damage;
 }

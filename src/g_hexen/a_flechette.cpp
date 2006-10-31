@@ -75,7 +75,7 @@ FState AFireBomb::States[] =
 };
 
 IMPLEMENT_ACTOR (AFireBomb, Hexen, -1, 0)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOGRAVITY)
 	PROP_Flags3 (MF3_FOILINVUL)
 	PROP_RenderStyle (STYLE_Translucent)
@@ -127,7 +127,7 @@ IMPLEMENT_ACTOR (AThrowingBomb, Hexen, -1, 0)
 	PROP_SpeedFixed (12)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (10)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_HEXENBOUNCE)
 
@@ -527,7 +527,7 @@ void A_CheckThrowBomb (AActor *actor)
 {
 	if (--actor->health <= 0)
 	{
-		actor->SetState (actor->DeathState);
+		actor->SetState (actor->FindState(NAME_Death));
 	}
 }
 

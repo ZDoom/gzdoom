@@ -200,7 +200,7 @@ void A_CheckTeleRing (AActor *actor)
 {
 	if (actor->special1-- <= 0)
 	{
-		actor->SetState (actor->DeathState);
+		actor->SetState (actor->FindState(NAME_Death));
 	}
 }
 

@@ -360,7 +360,7 @@ bool AHolySpirit::Slam (AActor *thing)
 				// ghost burns out faster when attacking players/bosses
 				health -= 6;
 			}
-			P_DamageMobj (thing, this, target, dam, MOD_HIT);
+			P_DamageMobj (thing, this, target, dam, NAME_Melee);
 			if (pr_spiritslam() < 128)
 			{
 				Spawn<AHolyPuff> (x, y, z, ALLOW_REPLACE);
@@ -666,7 +666,7 @@ void A_CHolyTail (AActor *actor)
 
 	parent = actor->target;
 
-	if (parent == NULL || parent->state >= parent->DeathState)
+	if (parent == NULL || parent->health <= 0)	// better check for health than current state - it's safer!
 	{ // Ghost removed, so remove all tail parts
 		CHolyTailRemove (actor);
 		return;
@@ -825,7 +825,7 @@ void A_CHolySeek (AActor *actor)
 		actor->momx >>= 2;
 		actor->momy >>= 2;
 		actor->momz = 0;
-		actor->SetState (actor->DeathState);
+		actor->SetState (actor->FindState(NAME_Death));
 		actor->tics -= pr_holyseek()&3;
 		return;
 	}

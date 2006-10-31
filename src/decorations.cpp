@@ -345,6 +345,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 		info = type->ActorInfo;
 		info->GameFilter = 0x80;
 		Decorations.Push (info);
+		ClearStateLabels();
 
 		SC_MustGetString ();
 		while (!SC_Compare ("{"))
@@ -482,7 +483,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 					if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(type->Defaults))->height;
 					info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, extra.DeathHeight);
 				}
-				((AActor *)(type->Defaults))->DeathState = &info->OwnedStates[extra.DeathStart];
+				AddState("Death", &info->OwnedStates[extra.DeathStart]);
 			}
 
 			// Burn states are the same as death states, except they can optionally terminate
@@ -521,7 +522,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 				if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
 				type->Meta.SetMetaFixed (AMETA_BurnHeight, extra.BurnHeight);
 
-				((AActor *)(type->Defaults))->BDeathState = &info->OwnedStates[extra.FireDeathStart];
+				AddState("Burn", &info->OwnedStates[extra.FireDeathStart]);
 			}
 
 			// Ice states are similar to burn and death, except their final frame enters
@@ -542,11 +543,11 @@ static void ParseDecorate (void (*process)(FState *, int))
 				info->OwnedStates[i].Tics = 2;
 				info->OwnedStates[i].Misc1 = 0;
 				info->OwnedStates[i].Action = A_FreezeDeathChunks;
-				((AActor *)(type->Defaults))->IDeathState = &info->OwnedStates[extra.IceDeathStart];
+				AddState("Ice", &info->OwnedStates[extra.IceDeathStart]);
 			}
 			else if (extra.bGenericIceDeath)
 			{
-				((AActor *)(type->Defaults))->IDeathState = &AActor::States[AActor::S_GENERICFREEZEDEATH];
+				AddState("Ice", &AActor::States[AActor::S_GENERICFREEZEDEATH]);
 			}
 		}
 		if (def == DEF_BreakableDecoration)
@@ -557,7 +558,8 @@ static void ParseDecorate (void (*process)(FState *, int))
 		{
 			((AActor *)(type->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
 		}
-		((AActor *)(type->Defaults))->SpawnState = &info->OwnedStates[extra.SpawnStart];
+		AddState("Spawn", &info->OwnedStates[extra.SpawnStart]);
+		InstallStates(info, ((AActor *)(type->Defaults)));
 		process (info->OwnedStates, info->NumOwnedStates);
 	}
 }
@@ -728,15 +730,15 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 			SC_MustGetString ();
 			if (SC_Compare ("Normal"))
 			{
-				defaults->DamageType = 0;
+				defaults->DamageType = NAME_None;
 			}
 			else if (SC_Compare ("Ice"))
 			{
-				defaults->DamageType = MOD_ICE;
+				defaults->DamageType = NAME_Ice;
 			}
 			else if (SC_Compare ("Fire"))
 			{
-				defaults->DamageType = MOD_FIRE;
+				defaults->DamageType = NAME_Fire;
 			}
 			else
 			{

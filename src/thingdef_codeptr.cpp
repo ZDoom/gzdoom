@@ -213,7 +213,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 	{
 		int damage = pr_camelee.HitDice(MeleeDamage);
 		if (MeleeSound) S_SoundID (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
-		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (damage, self->target, self);
 	}
 	else if (domissile && MissileName != NAME_None)
@@ -781,13 +781,8 @@ void A_CustomMeleeAttack (AActor *self)
 	int MeleeSound=StateParameters[index+1];
 	ENamedName DamageType = (ENamedName)StateParameters[index+2];
 	bool bleed = EvalExpressionN (StateParameters[index+3], self);
-	int mod;
 
-	// This needs to be redesigned once the customizable damage type system is working
-	if (DamageType==NAME_Fire) mod=MOD_FIRE;
-	else if (DamageType==NAME_Ice) mod=MOD_ICE;
-	else if (DamageType==NAME_Disintegrate) mod=MOD_DISINTEGRATE;
-	else mod=MOD_HIT;
+	if (DamageType==NAME_None) DamageType = NAME_Melee;	// Melee is the default type
 
 	if (!self->target)
 		return;
@@ -796,7 +791,7 @@ void A_CustomMeleeAttack (AActor *self)
 	if (self->CheckMeleeRange ())
 	{
 		if (MeleeSound) S_SoundID (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
-		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		P_DamageMobj (self->target, self, self, damage, DamageType);
 		if (bleed) P_TraceBleed (damage, self->target, self);
 	}
 }
@@ -1209,6 +1204,9 @@ void A_SpawnItem(AActor * self)
 		if (pStateCall != NULL) pStateCall->Result=false;
 		return;
 	}
+
+	// Don't spawn monsters if this actor has been massacred
+	if (self->DamageType == NAME_Massacre && GetDefaultByType(missile)->flags3&MF3_ISMONSTER) return;
 
 	if (distance==0) 
 	{
@@ -1650,7 +1648,7 @@ void A_KillMaster(AActor * self)
 {
 	if (self->master != NULL)
 	{
-		P_DamageMobj(self->master, self, self, self->master->health, MOD_UNKNOWN, DMG_NO_ARMOR);
+		P_DamageMobj(self->master, self, self, self->master->health, NAME_None, DMG_NO_ARMOR);
 	}
 }
 
@@ -1668,7 +1666,7 @@ void A_KillChildren(AActor * self)
 	{
 		if (mo->master == self)
 		{
-			P_DamageMobj(mo, self, self, mo->health, MOD_UNKNOWN, DMG_NO_ARMOR);
+			P_DamageMobj(mo, self, self, mo->health, NAME_None, DMG_NO_ARMOR);
 		}
 	}
 }
@@ -1693,11 +1691,11 @@ void A_CountdownArg(AActor * self)
 		}
 		else if (self->flags&MF_SHOOTABLE)
 		{
-			P_DamageMobj (self, NULL, NULL, self->health, MOD_UNKNOWN);
+			P_DamageMobj (self, NULL, NULL, self->health, NAME_None);
 		}
 		else
 		{
-			self->SetState(self->DeathState);
+			self->SetState(self->FindState(NAME_Death));
 		}
 	}
 

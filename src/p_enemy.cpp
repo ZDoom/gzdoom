@@ -2317,7 +2317,7 @@ void A_Pain (AActor *actor)
 // killough 11/98: kill an object
 void A_Die (AActor *actor)
 {
-	P_DamageMobj (actor, NULL, NULL, actor->health, MOD_UNKNOWN);
+	P_DamageMobj (actor, NULL, NULL, actor->health, NAME_None);
 }
 
 //

@@ -122,7 +122,7 @@ void A_ShootGun (AActor *self)
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 	P_LineAttack (self, self->angle + (pr_shootgun.Random2() << 19),
 		MISSILERANGE, pitch,
-		3*(pr_shootgun() % 5 + 1), MOD_UNKNOWN, RUNTIME_CLASS(AStrifePuff));
+		3*(pr_shootgun() % 5 + 1), NAME_None, RUNTIME_CLASS(AStrifePuff));
 }
 
 // Rebel 1 ------------------------------------------------------------------

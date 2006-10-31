@@ -272,7 +272,7 @@ IMPLEMENT_ACTOR (AMageStaffFX2, Hexen, -1, 0)
 	PROP_SpeedFixed (17)
 	PROP_HeightFixed (8)
 	PROP_Damage (4)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS|MF2_SEEKERMISSILE)
 
@@ -295,7 +295,7 @@ int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 		!victim->player &&
 		!(victim->flags2 & MF2_BOSS))
 	{
-		P_DamageMobj (victim, this, target, 10, MOD_FIRE);
+		P_DamageMobj (victim, this, target, 10, NAME_Fire);
 		return 1;	// Keep going
 	}
 	return -1;

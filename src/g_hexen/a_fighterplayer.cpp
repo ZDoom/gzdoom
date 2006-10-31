@@ -300,7 +300,7 @@ void A_FPunchAttack (AActor *actor)
 				power = 6*FRACUNIT;
 				pufftype = RUNTIME_CLASS(AHammerPuff);
 			}
-			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, MOD_HIT, pufftype);
+			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -319,7 +319,7 @@ void A_FPunchAttack (AActor *actor)
 				power = 6*FRACUNIT;
 				pufftype = RUNTIME_CLASS(AHammerPuff);
 			}
-			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, MOD_HIT, pufftype);
+			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -333,7 +333,7 @@ void A_FPunchAttack (AActor *actor)
 
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
-	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, MOD_HIT, pufftype);
+	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, NAME_Melee, pufftype);
 
 punchdone:
 	if (pmo->special1 == 3)

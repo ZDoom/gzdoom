@@ -31,6 +31,7 @@ struct PClass
 	DObject *CreateNew () const;
 	PClass *CreateDerivedClass (FName name, unsigned int size);
 	void BuildFlatPointers ();
+	void FreeStateList();
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.
 	bool IsAncestorOf (const PClass *ti) const

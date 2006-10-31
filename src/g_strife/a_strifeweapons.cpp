@@ -153,9 +153,10 @@ void P_DaggerAlert (AActor *target, AActor *emitter)
 	emitter->flags4 |= MF4_INCOMBAT;
 
 	emitter->target = target;
-	if (emitter->PainState != NULL)
+	FState * painstate = emitter->FindState(NAME_Pain);
+	if (painstate != NULL)
 	{
-		emitter->SetState (emitter->PainState);
+		emitter->SetState (painstate);
 	}
 
 	for (looker = sec->thinglist; looker != NULL; looker = looker->snext)
@@ -208,7 +209,7 @@ void A_JabDagger (AActor *actor)
 
 	angle = actor->angle + (pr_jabdagger.Random2() << 18);
 	pitch = P_AimLineAttack (actor, angle, 80*FRACUNIT);
-	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage, MOD_HIT, RUNTIME_CLASS(AStrifeSpark));
+	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, RUNTIME_CLASS(AStrifeSpark));
 
 	// turn to face target
 	if (linetarget)
@@ -689,7 +690,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate)
 		angle += pr_sgunshot.Random2() << (20 - mo->player->accuracy * 5 / 100);
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, MOD_UNKNOWN, RUNTIME_CLASS(AStrifePuff));
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, RUNTIME_CLASS(AStrifePuff));
 }
 
 //============================================================================
@@ -1025,7 +1026,7 @@ IMPLEMENT_ACTOR (AFlameMissile, Strife, -1, 0)
 	PROP_HeightFixed (11)
 	PROP_Mass (10)
 	PROP_Damage (4)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_ReactionTime (8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
@@ -1209,7 +1210,7 @@ FState AMaulerPuff::States[] =
 
 IMPLEMENT_ACTOR (AMaulerPuff, Strife, -1, 0)
 	PROP_SpawnState (0)
-	PROP_DamageType (MOD_DISINTEGRATE)
+	PROP_DamageType (NAME_Disintegrate)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_Flags3 (MF3_PUFFONACTORS)
 	PROP_RenderStyle (STYLE_Add)
@@ -1243,7 +1244,7 @@ IMPLEMENT_ACTOR (AMaulerTorpedo, Strife, -1, 0)
 	PROP_RadiusFixed (13)
 	PROP_HeightFixed (8)
 	PROP_Damage (1)
-	PROP_DamageType (MOD_DISINTEGRATE)
+	PROP_DamageType (NAME_Disintegrate)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
@@ -1274,7 +1275,7 @@ IMPLEMENT_ACTOR (AMaulerTorpedoWave, Strife, -1, 0)
 	PROP_RadiusFixed (13)
 	PROP_HeightFixed (13)
 	PROP_Damage (10)
-	PROP_DamageType (MOD_DISINTEGRATE)
+	PROP_DamageType (NAME_Disintegrate)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
@@ -1320,7 +1321,7 @@ void A_FireMauler1 (AActor *self)
 		// it should use a different puff. ZDoom's default range is longer
 		// than this, so let's not handicap it by being too faithful to the
 		// original.
-		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, MOD_DISINTEGRATE, RUNTIME_CLASS(AMaulerPuff));
+		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Disintegrate, RUNTIME_CLASS(AMaulerPuff));
 	}
 }
 
@@ -1563,7 +1564,7 @@ IMPLEMENT_ACTOR (APhosphorousFire, Strife, -1, 0)
 	PROP_SpawnState (S_BURNINATION)
 	PROP_DeathState (S_BURNDWINDLE)
 	PROP_ReactionTime (120)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_NOTELEPORT|MF2_NODMGTHRUST)
 	PROP_RenderStyle (STYLE_Add)
@@ -1783,8 +1784,8 @@ void A_FireGrenade (AActor *self)
 		return;
 
 	// Make it flash
-	P_SetPsprite (player, ps_flash, weapon->FlashState +
-		(player->psprites[ps_weapon].state - weapon->GetAtkState()));
+	P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash) +
+		(player->psprites[ps_weapon].state - weapon->GetAtkState(false)));
 
 	self->z += 32*FRACUNIT;
 	grenade = P_SpawnSubMissile (self, grenadetype, self);
@@ -1804,7 +1805,7 @@ void A_FireGrenade (AActor *self)
 	grenade->x += FixedMul (finecosine[an], tworadii);
 	grenade->y += FixedMul (finesine[an], tworadii);
 
-	if (weapon->GetAtkState() == player->psprites[ps_weapon].state)
+	if (weapon->GetAtkState(false) == player->psprites[ps_weapon].state)
 	{
 		an = self->angle - ANGLE_90;
 	}

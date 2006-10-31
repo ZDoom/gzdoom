@@ -391,7 +391,7 @@ class AForceFieldGuard : public AActor
 {
 	DECLARE_ACTOR (AForceFieldGuard, AActor)
 public:
-	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype);
+	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
 FState AForceFieldGuard::States[] =
@@ -412,7 +412,7 @@ IMPLEMENT_ACTOR (AForceFieldGuard, Strife, 25, 0)
 	PROP_Flags4 (MF4_INCOMBAT)
 END_DEFAULTS
 
-int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype)
+int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
 	if (inflictor == NULL || !inflictor->IsKindOf (RUNTIME_CLASS(ADegninOre)))
 	{
@@ -820,7 +820,7 @@ void A_CheckTerrain (AActor *self)
 	{
 		if ((sec->special & 0xFF) == Damage_InstantDeath)
 		{
-			P_DamageMobj (self, NULL, NULL, 999, MOD_UNKNOWN);
+			P_DamageMobj (self, NULL, NULL, 999, NAME_None);
 		}
 		else if ((sec->special & 0xFF) == Scroll_StrifeCurrent)
 		{
@@ -967,7 +967,7 @@ void A_DropFire (AActor *self)
 {
 	AActor *drop = Spawn<AFireDroplet> (self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
 	drop->momz = -FRACUNIT;
-	P_RadiusAttack (self, self, 64, 64, MOD_FIRE, false);
+	P_RadiusAttack (self, self, 64, 64, NAME_Fire, false);
 }
 
 void A_CrispyPlayer (AActor *self)

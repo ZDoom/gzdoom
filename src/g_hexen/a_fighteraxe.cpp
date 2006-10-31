@@ -37,8 +37,7 @@ public:
 	FState *GetUpState ();
 	FState *GetDownState ();
 	FState *GetReadyState ();
-	FState *GetAtkState ();
-	FState *GetHoldAtkState ();
+	FState *GetAtkState (bool hold);
 };
 
 FState AFWeapAxe::States[] =
@@ -121,27 +120,22 @@ END_DEFAULTS
 
 FState *AFWeapAxe::GetUpState ()
 {
-	return Ammo1->Amount ? &States[S_FAXEUP_G] : UpState;
+	return Ammo1->Amount ? &States[S_FAXEUP_G] : Super::GetUpState();
 }
 
 FState *AFWeapAxe::GetDownState ()
 {
-	return Ammo1->Amount ? &States[S_FAXEDOWN_G] : DownState;
+	return Ammo1->Amount ? &States[S_FAXEDOWN_G] : Super::GetDownState();
 }
 
 FState *AFWeapAxe::GetReadyState ()
 {
-	return Ammo1->Amount ? &States[S_FAXEREADY_G] : ReadyState;
+	return Ammo1->Amount ? &States[S_FAXEREADY_G] : Super::GetReadyState();
 }
 
-FState *AFWeapAxe::GetAtkState ()
+FState *AFWeapAxe::GetAtkState (bool hold)
 {
-	return Ammo1->Amount ? &States[S_FAXEATK_G] : AtkState;
-}
-
-FState *AFWeapAxe::GetHoldAtkState ()
-{
-	return Ammo1->Amount ? &States[S_FAXEATK_G] : HoldAtkState;
+	return Ammo1->Amount ? &States[S_FAXEATK_G] :  Super::GetAtkState(hold);
 }
 
 // Axe Puff -----------------------------------------------------------------
@@ -388,7 +382,7 @@ void A_FAxeAttack (AActor *actor)
 		slope = P_AimLineAttack (pmo, angle, AXERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, MOD_HIT, pufftype);
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -401,7 +395,7 @@ void A_FAxeAttack (AActor *actor)
 		slope = P_AimLineAttack (pmo, angle, AXERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, MOD_HIT, pufftype);
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -416,7 +410,7 @@ void A_FAxeAttack (AActor *actor)
 
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
-	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, MOD_HIT, pufftype);
+	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, NAME_Melee, pufftype);
 
 axedone:
 	if (useMana == 2)

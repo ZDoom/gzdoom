@@ -82,8 +82,6 @@ const BYTE SF_FULLBRIGHT = 0x40;
 const BYTE SF_BIGTIC	 = 0x80;
 
 // All state parameters are stored in this array now.
-// The first 2 parameters for each function call represent 
-// the old misc1/misc2 values, even for non-weapons
 
 extern TArray<int> StateParameters;
 
@@ -154,6 +152,26 @@ struct FState
 	static const PClass *StaticFindStateOwner (const FState *state);
 	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);
 };
+
+struct FStateLabels;
+struct FStateLabel
+{
+	FName Label;
+	bool valid;		// needed to recognize genuine NULL states
+	FState *State;
+	FStateLabels *Children;
+};
+
+struct FStateLabels
+{
+	int NumLabels;
+	FStateLabel Labels[1];
+
+	FStateLabel *FindLabel (FName label);
+
+	void Destroy();	// intentionally not a destructor!
+};
+
 
 
 FArchive &operator<< (FArchive &arc, FState *&state);
@@ -291,9 +309,6 @@ enum
 	ADEF_EDeathState,
 	ADEF_RaiseState,
 	ADEF_WoundState,
-	ADEF_YesState,
-	ADEF_NoState,
-	ADEF_GreetingsState,
 
 	ADEF_StrifeType,	// Not really a property. Used to init StrifeTypes[] in p_conversation.h.
 	ADEF_StrifeTeaserType,
@@ -338,8 +353,6 @@ enum
 	ADEF_Weapon_ReadyState,
 	ADEF_Weapon_AtkState,
 	ADEF_Weapon_HoldAtkState,
-	ADEF_Weapon_AltAtkState,
-	ADEF_Weapon_AltHoldAtkState,
 	ADEF_Weapon_FlashState,
 	ADEF_Sigil_NumPieces,
 
@@ -375,6 +388,14 @@ struct FActorInfo
 	void BuildDefaults ();
 	void ApplyDefaults (BYTE *defaults);
 	void RegisterIDs ();
+
+	FState *FindState (int numnames, ...) const;
+	FState *FindState (int numnames, va_list arglist) const;
+	void ChangeState (FName label, FState * newstate) const;
+
+	FState *FindStateExact (int numnames, ...) const;
+	FState *FindStateExact (int numnames, va_list arglist) const;
+
 	FActorInfo *GetReplacement ();
 	FActorInfo *GetReplacee ();
 
@@ -386,6 +407,7 @@ struct FActorInfo
 	BYTE GameFilter;
 	BYTE SpawnID;
 	SWORD DoomEdNum;
+	FStateLabels * StateList;
 
 #if _MSC_VER
 	// A 0-terminated list of default properties

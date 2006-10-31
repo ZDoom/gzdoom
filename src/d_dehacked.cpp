@@ -63,6 +63,7 @@
 #include "r_draw.h"
 #include "v_palette.h"
 #include "a_sharedglobal.h"
+#include "thingdef.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -712,6 +713,7 @@ static int PatchThing (int thingy)
 	bool hadHeight = false;
 	bool hadTranslucency = false;
 	bool hadStyle = false;
+	bool patchedStates = false;
 	int oldflags;
 	const PClass *type;
 	SWORD *ednum, dummyed;
@@ -841,27 +843,38 @@ static int PatchThing (int thingy)
 			{
 				FState *state = FindState (val);
 
+				if (type != NULL && !patchedStates)
+				{
+					MakeStateDefines(type->ActorInfo->StateList);
+					patchedStates = true;
+				}
+
 				if (!strnicmp (Line1, "Initial", 7))
-					info->SpawnState = state ? state : GetDefault<AActor>()->SpawnState;
+					AddState("Spawn", state ? state : GetDefault<AActor>()->SpawnState);
 				else if (!strnicmp (Line1, "First moving", 12))
-					info->SeeState = state;
+					AddState("See", state);
 				else if (!strnicmp (Line1, "Injury", 6))
-					info->PainState = state;
+					AddState("Pain", state);
 				else if (!strnicmp (Line1, "Close attack", 12))
-					info->MeleeState = state;
+				{
+					if (thingy != 1)	// Not for players!
+					{
+						AddState("Melee", state);
+					}
+				}
 				else if (!strnicmp (Line1, "Far attack", 10))
 				{
 					if (thingy != 1)	// Not for players!
 					{
-						info->MissileState = state;
+						AddState("Missile", state);
 					}
 				}
 				else if (!strnicmp (Line1, "Death", 5))
-					info->DeathState = state;
+					AddState("Death", state);
 				else if (!strnicmp (Line1, "Exploding", 9))
-					info->XDeathState = state;
+					AddState("XDeath", state);
 				else if (!strnicmp (Line1, "Respawn", 7))
-					info->RaiseState = state;
+					AddState("Raise", state);
 			}
 			else if (stricmp (Line1 + linelen - 6, " sound") == 0)
 			{
@@ -979,12 +992,12 @@ static int PatchThing (int thingy)
 					// Damage types that once were flags but now are not
 					if (info->flags2 & 0x20000000)
 					{
-						info->DamageType = MOD_ICE;
+						info->DamageType = NAME_Ice;
 						info->flags2 &= ~0x20000000;
 					}
 					if (info->flags2 & 0x10000)
 					{
-						info->DamageType = MOD_FIRE;
+						info->DamageType = NAME_Fire;
 						info->flags2 &= ~0x10000;
 					}
 				}
@@ -1063,6 +1076,10 @@ static int PatchThing (int thingy)
 		else
 		{
 			info->flags3 &= ~MF3_ISMONSTER;
+		}
+		if (patchedStates)
+		{
+			InstallStates(type->ActorInfo, info);
 		}
 	}
 
@@ -1370,17 +1387,21 @@ static int PatchAmmo (int ammoNum)
 static int PatchWeapon (int weapNum)
 {
 	int result;
+	const PClass *type;
 	AWeapon *info;
 	BYTE dummy[sizeof(AWeapon)];
+	bool patchedStates = false;
 
 	if (weapNum >= 0 && weapNum < 9)
 	{
-		info = (AWeapon *)GetDefaultByName (WeaponNames[weapNum]);
+		type = PClass::FindClass(WeaponNames[weapNum]);
+		info = (AWeapon *)GetDefaultByType (type);
 		DPrintf ("Weapon %d\n", weapNum);
 	}
 	else
 	{
 		info = (AWeapon *)&dummy;
+		type = NULL;
 		Printf ("Weapon %d out of range.\n", weapNum);
 	}
 
@@ -1394,16 +1415,22 @@ static int PatchWeapon (int weapNum)
 			{
 				FState *state = FindState (val);
 
+				if (type != NULL && !patchedStates)
+				{
+					MakeStateDefines(type->ActorInfo->StateList);
+					patchedStates = true;
+				}
+
 				if (strnicmp (Line1, "Deselect", 8) == 0)
-					info->UpState = state;
+					AddState("Select", state);
 				else if (strnicmp (Line1, "Select", 6) == 0)
-					info->DownState = state;
+					AddState("Deselect", state);
 				else if (strnicmp (Line1, "Bobbing", 7) == 0)
-					info->ReadyState = state;
+					AddState("Ready", state);
 				else if (strnicmp (Line1, "Shooting", 8) == 0)
-					info->AtkState = info->HoldAtkState = state;
+					AddState("Fire", state);
 				else if (strnicmp (Line1, "Firing", 6) == 0)
-					info->FlashState = state;
+					AddState("Flash", state);
 			}
 			else if (stricmp (Line1, "Ammo type") == 0)
 			{
@@ -1456,6 +1483,11 @@ static int PatchWeapon (int weapNum)
 	if (info->AmmoType1 == NULL)
 	{
 		info->AmmoUse1 = 0;
+	}
+
+	if (patchedStates)
+	{
+		InstallStates(type->ActorInfo, info);
 	}
 
 	return result;
@@ -2446,7 +2478,7 @@ static bool LoadDehSupp ()
 							StateMap[i].State = def->SpawnState;
 							break;
 						case DeathState:
-							StateMap[i].State = def->DeathState;
+							StateMap[i].State = type->ActorInfo->FindStateExact(1, NAME_Death);
 							break;
 						}
 						StateMap[i].StateSpan = supp[6+i*4+3];

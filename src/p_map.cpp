@@ -295,7 +295,7 @@ bool PIT_StompThing (AActor *thing)
 	// [RH] Some Heretic/Hexen monsters can telestomp
 	if (StompAlwaysFrags || (tmthing->flags2 & MF2_TELESTOMP))
 	{
-		P_DamageMobj (thing, tmthing, tmthing, 1000000, MOD_TELEFRAG);
+		P_DamageMobj (thing, tmthing, tmthing, 1000000, NAME_Telefrag);
 		return true;
 	}
 	return false;
@@ -453,7 +453,7 @@ bool PIT_StompThing2 (AActor *thing)
 	if (tmthing->z + tmthing->height < thing->z)
 		return true;        // underneath
 
-	P_DamageMobj (thing, tmthing, tmthing, 1000000, MOD_TELEFRAG);
+	P_DamageMobj (thing, tmthing, tmthing, 1000000, NAME_Telefrag);
 	return true;
 }
 
@@ -662,7 +662,7 @@ bool PIT_CheckLine (line_t *ld)
 	{ // One sided line
 		if (tmthing->flags2 & MF2_BLASTED)
 		{
-			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, MOD_HIT);
+			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, NAME_Melee);
 		}
 		BlockingLine = ld;
 		CheckForPushSpecial (ld, 0, tmthing);
@@ -681,7 +681,7 @@ bool PIT_CheckLine (line_t *ld)
 		{
 			if (tmthing->flags2 & MF2_BLASTED)
 			{
-				P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, MOD_HIT);
+				P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, NAME_Melee);
 			}
 			BlockingLine = ld;
 			CheckForPushSpecial (ld, 0, tmthing);
@@ -1867,7 +1867,7 @@ pushline:
 
 		if (tmthing->flags2 & MF2_BLASTED)
 		{
-			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, MOD_HIT);
+			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, NAME_Melee);
 		}
 		numSpecHitTemp = (int)spechit.Size ();
 		while (numSpecHitTemp > 0)
@@ -2683,7 +2683,7 @@ static bool CheckForSpectral (FTraceResults &res)
 }
 
 void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, int damageType, const PClass *pufftype)
+				   int pitch, int damage, FName damageType, const PClass *pufftype)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
@@ -3089,7 +3089,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		{
 			P_SpawnBlood (x, y, z, source->angle - ANG180, damage, RailHits[i].HitActor);
 		}
-		P_DamageMobj (RailHits[i].HitActor, source, source, damage, MOD_RAILGUN);
+		P_DamageMobj (RailHits[i].HitActor, source, source, damage, NAME_Railgun);
 		P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, angle, pitch);
 	}
 
@@ -3421,7 +3421,7 @@ float	bombdamagefloat;
 int		bombdistance;
 float	bombdistancefloat;
 bool	DamageSource;
-int		bombmod;
+FName	bombmod;
 vec3_t	bombvec;
 bool	bombdodamage;
 
@@ -3598,7 +3598,7 @@ bool PIT_RadiusAttack (AActor *thing)
 // P_RadiusAttack
 // Source is the creature that caused the explosion at spot.
 //
-void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int damageType,
+void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, FName damageType,
 	bool hurtSource, bool dodamage)
 {
 	static TArray<AActor *> radbt;
@@ -3853,12 +3853,13 @@ void P_DoCrunch (AActor *thing)
 		!(thing->flags3 & MF3_DONTGIB) &&
 		(thing->health <= 0))
 	{
-		if (thing->CrushState && !(thing->flags & MF_ICECORPSE))
+		FState * state = thing->FindState(NAME_Crush);
+		if (state != NULL && !(thing->flags & MF_ICECORPSE))
 		{
 			// Clear MF_CORPSE so that this isn't done more than once
 			thing->flags &= ~(MF_CORPSE|MF_SOLID);
 			thing->height = thing->radius = 0;
-			thing->SetState (thing->CrushState);
+			thing->SetState (state);
 			return;
 		}
 		if (!(thing->flags & MF_NOBLOOD))
@@ -3912,7 +3913,7 @@ void P_DoCrunch (AActor *thing)
 
 	if ((crushchange > 0) && !(level.maptime & 3))
 	{
-		P_DamageMobj (thing, NULL, NULL, crushchange, MOD_CRUSH);
+		P_DamageMobj (thing, NULL, NULL, crushchange, NAME_Crush);
 
 		// spray blood in a random direction
 		if ((!(thing->flags&MF_NOBLOOD)) &&

@@ -152,6 +152,7 @@ static AActor *corpsehit;
 static AActor *vileobj;
 static fixed_t viletryx;
 static fixed_t viletryy;
+static FState *raisestate;
 
 bool PIT_VileCheck (AActor *thing)
 {
@@ -164,7 +165,8 @@ bool PIT_VileCheck (AActor *thing)
 	if (thing->tics != -1)
 		return true;	// not lying still yet
 	
-	if (thing->RaiseState == NULL)
+	raisestate = thing->FindState(NAME_Raise);
+	if (raisestate == NULL)
 		return true;	// monster doesn't have a raise state
 	
   	// This may be a potential problem if this is used by something other
@@ -253,9 +255,10 @@ void A_VileChase (AActor *self)
 										
 					// Make the state the monster enters customizable - but leave the
 					// default for Dehacked compatibility!
-					if (self->HealState != NULL)
+					FState * state = self->FindState(NAME_Heal);
+					if (state != NULL)
 					{
-						self->SetState (self->HealState);
+						self->SetState (state);
 					}
 					else
 					{
@@ -264,7 +267,7 @@ void A_VileChase (AActor *self)
 					S_Sound (corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 					info = corpsehit->GetDefault ();
 					
-					corpsehit->SetState (info->RaiseState);
+					corpsehit->SetState (raisestate);
 					corpsehit->height = info->height;	// [RH] Use real mobj height
 					corpsehit->radius = info->radius;	// [RH] Use real radius
 					/*
@@ -390,7 +393,7 @@ void A_VileAttack (AActor *actor)
 		return;
 
 	S_Sound (actor, CHAN_WEAPON, "vile/stop", 1, ATTN_NORM);
-	P_DamageMobj (actor->target, actor, actor, 20, MOD_UNKNOWN);
+	P_DamageMobj (actor->target, actor, actor, 20, NAME_None);
 	P_TraceBleed (20, actor->target);
 	actor->target->momz = 1000 * FRACUNIT / actor->target->Mass;
 		
@@ -404,5 +407,5 @@ void A_VileAttack (AActor *actor)
 	// move the fire between the vile and the player
 	fire->x = actor->target->x - FixedMul (24*FRACUNIT, finecosine[an]);
 	fire->y = actor->target->y - FixedMul (24*FRACUNIT, finesine[an]);	
-	P_RadiusAttack (fire, actor, 70, 70, MOD_FIRE, false);
+	P_RadiusAttack (fire, actor, 70, 70, NAME_Fire, false);
 }

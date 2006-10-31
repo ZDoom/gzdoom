@@ -427,6 +427,8 @@ typedef enum {
 struct line_s;
 class AActor;
 
+FName MODtoDamageType (int mod);
+
 typedef int (*lnSpecFunc)(struct line_s	*line,
 						  class AActor	*activator,
 						  bool			backSide,

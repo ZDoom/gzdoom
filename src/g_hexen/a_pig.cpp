@@ -76,7 +76,7 @@ IMPLEMENT_ACTOR (ASnout, Hexen, -1, 0)
 	PROP_Weapon_DownState (S_SNOUTDOWN)
 	PROP_Weapon_ReadyState (S_SNOUTREADY)
 	PROP_Weapon_AtkState (S_SNOUTATK)
-	PROP_Weapon_HoldAtkState (S_SNOUTATK)
+	PROP_Weapon_FlashState (S_SNOUTATK+1)	// Not really - but it will do until this gets exported from the EXE
 	PROP_Weapon_Kickback (150)
 	PROP_Weapon_YAdjust (10)
 END_DEFAULTS
@@ -164,7 +164,10 @@ void APigPlayer::MorphPlayerThink ()
 	}
 	if(!(momx | momy) && pr_pigplayerthink() < 64)
 	{ // Snout sniff
-		P_SetPspriteNF (player, ps_weapon, ((ASnout*)GetDefaultByType(RUNTIME_CLASS(ASnout)))->AtkState + 1);
+		if (player->ReadyWeapon != NULL)
+		{
+			P_SetPspriteNF(player, ps_weapon, player->ReadyWeapon->FindState(NAME_Flash));
+		}
 		S_Sound (this, CHAN_VOICE, "PigActive1", 1, ATTN_NORM); // snort
 		return;
 	}
@@ -261,7 +264,7 @@ void A_SnoutAttack (AActor *actor)
 	angle = player->mo->angle;
 	slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
 	PuffSpawned = NULL;
-	P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(ASnoutPuff));
+	P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(ASnoutPuff));
 	S_Sound(player->mo, CHAN_VOICE, "PigActive", 1, ATTN_NORM);
 	if(linetarget)
 	{
@@ -287,7 +290,7 @@ void A_PigAttack (AActor *actor)
 	}
 	if (actor->CheckMeleeRange ())
 	{
-		P_DamageMobj(actor->target, actor, actor, 2+(pr_pigattack()&1), MOD_HIT);
+		P_DamageMobj(actor->target, actor, actor, 2+(pr_pigattack()&1), NAME_Melee);
 		S_Sound(actor, CHAN_WEAPON, "PigAttack", 1, ATTN_NORM);
 	}
 }

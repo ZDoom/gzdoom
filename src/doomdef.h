@@ -289,29 +289,6 @@ enum
 #define FRICTION_LOW			0xf900
 #define FRICTION_FLY			0xeb00
 
-// [RH] Means of death flags (based on Quake2's)
-#define MOD_UNKNOWN			0
-#define MOD_ROCKET			5
-#define MOD_R_SPLASH		6
-#define MOD_BFG_SPLASH		9
-#define MOD_WATER			12
-#define MOD_SLIME			13
-#define MOD_FIRE			14
-#define MOD_CRUSH			15
-#define MOD_TELEFRAG		16
-#define MOD_FALLING			17
-#define MOD_SUICIDE			18
-#define MOD_BARREL			19
-#define MOD_EXIT			20
-#define MOD_SPLASH			21
-#define MOD_HIT				22
-#define MOD_RAILGUN			23
-#define MOD_ICE				24
-#define MOD_DISINTEGRATE	25
-#define MOD_POISON			26
-#define MOD_ELECTRIC		27
-#define MOD_MASSACRE		1000		// Damaged by the massacre cheat
-#define MOD_FRIENDLY_FIRE	0x80000000
 
 #define BLINKTHRESHOLD (4*32)
 

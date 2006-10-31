@@ -220,7 +220,7 @@ AT_GAME_SET (Minotaur)
 		AMinotaur::States[S_MNTR_ATK3+3].SetFrame ('I');
 		AMinotaur::States[S_MNTR_ATK4+0].SetFrame ('F');
 
-		GetDefault<AMinotaur>()->DeathState = &AMinotaur::States[S_MNTR_FADEOUT];
+		RUNTIME_CLASS(AMinotaur)->ActorInfo->ChangeState(NAME_Death, &AMinotaur::States[S_MNTR_FADEOUT]);
 	}
 }
 
@@ -349,7 +349,7 @@ IMPLEMENT_ACTOR (AMinotaurFX1, Raven, -1, 0)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (20)
 	PROP_Damage (3)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_RenderStyle (STYLE_Add)
@@ -503,7 +503,7 @@ void A_MinotaurAtk1 (AActor *actor)
 	if (actor->CheckMeleeRange())
 	{
 		int damage = pr_minotauratk1.HitDice (4);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 		if ((player = actor->target->player) != NULL &&
 			player->mo == actor->target)
@@ -635,7 +635,7 @@ void A_MinotaurAtk2 (AActor *actor)
 	{
 		int damage;
 		damage = pr_atk.HitDice (friendly ? 3 : 5);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
@@ -677,7 +677,7 @@ void A_MinotaurAtk3 (AActor *actor)
 		int damage;
 		
 		damage = pr_minotauratk3.HitDice (friendly ? 3 : 5);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 		if ((player = actor->target->player) != NULL &&
 			player->mo == actor->target)
@@ -738,7 +738,7 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 	target->momx += FixedMul (thrust, finecosine[angle]);
 	target->momy += FixedMul (thrust, finesine[angle]);
 	damage = pr_minotaurslam.HitDice (static_cast<AMinotaur *>(source) ? 4 : 6);
-	P_DamageMobj (target, NULL, NULL, damage, MOD_HIT);
+	P_DamageMobj (target, NULL, NULL, damage, NAME_Melee);
 	P_TraceBleed (damage, target, angle, 0);
 	if (target->player)
 	{
@@ -790,7 +790,7 @@ void A_MinotaurRoam (AActor *actor)
 
 	if (self->StartTime >= 0 && (level.maptime - self->StartTime) >= MAULATORTICS)
 	{
-		P_DamageMobj (actor, NULL, NULL, 1000000, MOD_UNKNOWN);
+		P_DamageMobj (actor, NULL, NULL, 1000000, NAME_None);
 		return;
 	}
 
@@ -909,7 +909,7 @@ void A_MinotaurChase (AActor *actor)
 
 	if (self->StartTime >= 0 && (level.maptime - self->StartTime) >= MAULATORTICS)
 	{
-		P_DamageMobj (actor, NULL, NULL, 1000000, MOD_UNKNOWN);
+		P_DamageMobj (actor, NULL, NULL, 1000000, NAME_None);
 		return;
 	}
 

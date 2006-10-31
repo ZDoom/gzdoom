@@ -119,7 +119,7 @@ class AMacil2 : public AMacil1
 	DECLARE_STATELESS_ACTOR (AMacil2, AMacil1)
 public:
 	void NoBlockingSet ();
-	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype);
+	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMacil2, Strife, 200, 0)
@@ -161,7 +161,7 @@ void AMacil2::NoBlockingSet ()
 //
 //============================================================================
 
-int AMacil2::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype)
+int AMacil2::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
 	if (inflictor != NULL && inflictor->IsKindOf (RUNTIME_CLASS(ASpectralLightningV1)))
 		return -1;

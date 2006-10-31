@@ -419,7 +419,7 @@ IMPLEMENT_ACTOR (AVolcanoBlast, Heretic, -1, 123)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (2)
 	PROP_Damage (2)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
 	PROP_Flags2 (MF2_LOGRAV|MF2_NOTELEPORT)
 
@@ -457,7 +457,7 @@ IMPLEMENT_ACTOR (AVolcanoTBlast, Heretic, -1, 124)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (2)
 	PROP_Damage (1)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
 	PROP_Flags2 (MF2_LOGRAV|MF2_NOTELEPORT)
 
@@ -525,7 +525,7 @@ void A_VolcBallImpact (AActor *ball)
 		ball->z += 28*FRACUNIT;
 		//ball->momz = 3*FRACUNIT;
 	}
-	P_RadiusAttack (ball, ball->target, 25, 25, MOD_FIRE, true);
+	P_RadiusAttack (ball, ball->target, 25, 25, NAME_Fire, true);
 	for (i = 0; i < 4; i++)
 	{
 		tiny = Spawn<AVolcanoTBlast> (ball->x, ball->y, ball->z, ALLOW_REPLACE);

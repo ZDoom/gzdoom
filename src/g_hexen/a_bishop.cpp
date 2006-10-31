@@ -239,7 +239,7 @@ void A_BishopAttack (AActor *actor)
 	if (actor->CheckMeleeRange())
 	{
 		int damage = pr_atk.HitDice (4);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}

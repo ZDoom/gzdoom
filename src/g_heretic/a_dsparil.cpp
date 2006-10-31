@@ -165,7 +165,7 @@ IMPLEMENT_ACTOR (ASorcererFX1, Heretic, -1, 144)
 	PROP_HeightFixed (10)
 	PROP_SpeedFixed (20)
 	PROP_Damage (10)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_RenderStyle (STYLE_Add)
@@ -467,7 +467,7 @@ void A_Srcr1Attack (AActor *actor)
 	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_scrc1atk.HitDice (8);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
@@ -617,7 +617,7 @@ void A_Srcr2Attack (AActor *actor)
 	if (actor->CheckMeleeRange())
 	{
 		int damage = pr_s2a.HitDice (20);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
@@ -678,7 +678,7 @@ void A_GenWizard (AActor *actor)
 			mo->CopyFriendliness (actor->target, true);
 
 			actor->momx = actor->momy = actor->momz = 0;
-			actor->SetState (actor->DeathState);
+			actor->SetState (actor->FindState(NAME_Death));
 			actor->flags &= ~MF_MISSILE;
 			mo->master = actor->target;
 			// Heretic did not offset it by TELEFOGHEIGHT, so I won't either.

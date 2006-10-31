@@ -96,7 +96,7 @@ void DEarthquake::Tick ()
 				{
 					if (pr_quake() < 50)
 					{
-						P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), MOD_UNKNOWN);
+						P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), NAME_None);
 					}
 					// Thrust player around
 					angle_t an = victim->angle + ANGLE_1*pr_quake();

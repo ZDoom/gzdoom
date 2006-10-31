@@ -221,7 +221,7 @@ void A_MummyAttack (AActor *actor)
 	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_atk.HitDice (2);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 		S_Sound (actor, CHAN_WEAPON, "mummy/attack2", 1, ATTN_NORM);
 		return;
@@ -249,7 +249,7 @@ void A_MummyAttack2 (AActor *actor)
 	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_ma2.HitDice (2);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}

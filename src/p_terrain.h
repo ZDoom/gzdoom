@@ -65,7 +65,7 @@ struct FTerrainDef
 	FName Name;
 	int Splash;
 	int DamageAmount;
-	int DamageMOD;
+	FName DamageMOD;
 	int DamageTimeMask;
 	fixed_t FootClip;
 	float StepVolume;

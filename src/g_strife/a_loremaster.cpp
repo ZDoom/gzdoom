@@ -190,7 +190,7 @@ void A_20538 (AActor *self)
 
 	damage = (pr_atk1() & 9) * 5;
 
-	P_DamageMobj (self->target, self, self, damage, MOD_UNKNOWN);
+	P_DamageMobj (self->target, self, self, damage, NAME_None);
 	P_TraceBleed (damage, self->target, self);
 }
 

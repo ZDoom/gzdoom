@@ -696,7 +696,7 @@ void A_SorcBallOrbit(AActor *ball)
 	// [RH] If no parent, then die instead of crashing
 	if (ball->target == NULL)
 	{
-		ball->SetState (ball->PainState);
+		ball->SetState (ball->FindState(NAME_Pain));
 		return;
 	}
 
@@ -715,7 +715,7 @@ void A_SorcBallOrbit(AActor *ball)
 	actor = static_cast<ASorcBall *> (ball);
 
 	if (actor->target->health <= 0)
-		actor->SetState (actor->PainState);
+		actor->SetState (actor->FindState(NAME_Pain));
 
 	baseangle = (angle_t)parent->special1;
 	angle = baseangle + actor->AngleOffset;
@@ -1226,7 +1226,7 @@ void A_SorcFX2Orbit (AActor *actor)
 	if ((parent->health <= 0) ||		// Sorcerer is dead
 		(!parent->args[0]))				// Time expired
 	{
-		actor->SetStateNF (actor->DeathState);
+		actor->SetStateNF (actor->FindState(NAME_Death));
 		parent->args[0] = 0;
 		parent->flags2 &= ~MF2_REFLECTIVE;
 		parent->flags2 &= ~MF2_INVULNERABLE;
@@ -1234,7 +1234,7 @@ void A_SorcFX2Orbit (AActor *actor)
 
 	if (actor->args[0] && (parent->args[0]-- <= 0))		// Time expired
 	{
-		actor->SetStateNF (actor->DeathState);
+		actor->SetStateNF (actor->FindState(NAME_Death));
 		parent->args[0] = 0;
 		parent->flags2 &= ~MF2_REFLECTIVE;
 	}
@@ -1320,7 +1320,7 @@ void A_SorcFX4Check(AActor *actor)
 {
 	if (actor->special2-- <= 0)
 	{
-		actor->SetStateNF (actor->DeathState);
+		actor->SetStateNF (actor->FindState(NAME_Death));
 	}
 }
 
@@ -1357,7 +1357,7 @@ void A_DoBounceCheck (AActor *actor, const char *sound)
 	{
 		if (actor->args[3]-- <= 0)
 		{
-			actor->SetState (actor->DeathState);
+			actor->SetState (actor->FindState(NAME_Death));
 			S_Sound (actor, CHAN_BODY, sound, 1, ATTN_NONE);
 		}
 		else

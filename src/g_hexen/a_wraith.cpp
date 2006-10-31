@@ -173,7 +173,7 @@ IMPLEMENT_ACTOR (AWraithFX1, Hexen, -1, 0)
 	PROP_HeightFixed (6)
 	PROP_Mass (5)
 	PROP_Damage (5)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
 
@@ -383,7 +383,7 @@ void A_WraithMelee (AActor *actor)
 	if (actor->CheckMeleeRange() && (pr_stealhealth()<220))
 	{
 		amount = pr_stealhealth.HitDice (2);
-		P_DamageMobj (actor->target, actor, actor, amount, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, amount, NAME_Melee);
 		actor->health += amount;
 	}
 }

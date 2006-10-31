@@ -283,7 +283,7 @@ IMPLEMENT_ACTOR (ADemon1FX1, Hexen, -1, 0)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (6)
 	PROP_Damage (5)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
 	PROP_RenderStyle (STYLE_Add)
@@ -529,7 +529,7 @@ IMPLEMENT_ACTOR (ADemon2FX1, Hexen, -1, 0)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (6)
 	PROP_Damage (5)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
 	PROP_RenderStyle (STYLE_Add)
@@ -551,7 +551,7 @@ void A_DemonAttack1 (AActor *actor)
 	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_atk.HitDice (2);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 	}
 }

@@ -263,7 +263,7 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage)
 	}
 	if (!(level.time & 7))
 	{
-		P_DamageMobj (target, NULL, this->target, 3, MOD_HIT);
+		P_DamageMobj (target, NULL, this->target, 3, NAME_Melee);
 	}
 	return -1;
 }
@@ -300,7 +300,7 @@ void A_LichAttack (AActor *actor)
 	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_atk.HitDice (6);
-		P_DamageMobj (target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, target, actor);
 		return;
 	}
@@ -364,7 +364,7 @@ void A_WhirlwindSeek (AActor *actor)
 	if (actor->health < 0)
 	{
 		actor->momx = actor->momy = actor->momz = 0;
-		actor->SetState (actor->DeathState);
+		actor->SetState (actor->FindState(NAME_Death));
 		actor->flags &= ~MF_MISSILE;
 		return;
 	}

@@ -218,7 +218,7 @@ void A_StaffAttackPL1 (AActor *actor)
 	angle = player->mo->angle;
 	angle += pr_sap.Random2() << 18;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(AStaffPuff));
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff));
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfhit);
@@ -257,7 +257,7 @@ void A_StaffAttackPL2 (AActor *actor)
 	angle = player->mo->angle;
 	angle += pr_sap2.Random2() << 18;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(AStaffPuff2));
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff2));
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfpow);
@@ -457,7 +457,7 @@ void A_FireGoldWandPL1 (AActor *actor)
 	{
 		angle += pr_fgw.Random2() << 18;
 	}
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, MOD_UNKNOWN, RUNTIME_CLASS(AGoldWandPuff1));
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff1));
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 }
 
@@ -497,7 +497,7 @@ void A_FireGoldWandPL2 (AActor *actor)
 	for(i = 0; i < 5; i++)
 	{
 		damage = 1+(pr_fgw2()&7);
-		P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, MOD_UNKNOWN, RUNTIME_CLASS(AGoldWandPuff2));
+		P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff2));
 		angle += ((ANG45/8)*2)/4;
 	}
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
@@ -1651,7 +1651,7 @@ void A_GauntletAttack (AActor *actor)
 		pufftype = RUNTIME_CLASS(AGauntletPuff1);
 	}
 	slope = P_AimLineAttack (player->mo, angle, dist);
-	P_LineAttack (player->mo, angle, dist, slope, damage, MOD_HIT, pufftype);
+	P_LineAttack (player->mo, angle, dist, slope, damage, NAME_Melee, pufftype);
 	if (!linetarget)
 	{
 		if (pr_gatk() > 64)
@@ -1976,7 +1976,7 @@ void A_FireBlasterPL1 (AActor *actor)
 	{
 		angle += pr_fb1.Random2() << 18;
 	}
-	P_LineAttack (actor, angle, PLAYERMISSILERANGE, bulletpitch, damage, MOD_UNKNOWN, RUNTIME_CLASS(ABlasterPuff));
+	P_LineAttack (actor, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, RUNTIME_CLASS(ABlasterPuff));
 	S_Sound (actor, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
 }
 
@@ -2692,7 +2692,7 @@ IMPLEMENT_ACTOR (APhoenixFX1, Heretic, -1, 163)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (20)
 	PROP_Damage (20)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_RenderStyle (STYLE_Add)
@@ -2770,7 +2770,7 @@ IMPLEMENT_ACTOR (APhoenixFX2, Heretic, -1, 0)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (10)
 	PROP_Damage (2)
-	PROP_DamageType (MOD_FIRE)
+	PROP_DamageType (NAME_Fire)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_RenderStyle (STYLE_Add)

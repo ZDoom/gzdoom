@@ -69,6 +69,10 @@ CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)
 EXTERN_CVAR (Bool, show_obituaries)
 
+
+FName MeansOfDeath;
+bool FriendlyFire;
+
 //
 // GET STUFF
 //
@@ -172,11 +176,11 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 //
 void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 {
-	int	mod;
+	FName mod;
 	const char *message;
 	const char *messagename;
 	char gendermessage[1024];
-	INTBOOL friendly;
+	bool friendly;
 	int  gender;
 
 	// No obituaries for non-players, voodoo dolls or when not wanted
@@ -187,19 +191,19 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 
 	// Treat voodoo dolls as unknown deaths
 	if (inflictor && inflictor->player == self->player)
-		MeansOfDeath = MOD_UNKNOWN;
+		MeansOfDeath = NAME_None;
 
 	if (multiplayer && !deathmatch)
-		MeansOfDeath |= MOD_FRIENDLY_FIRE;
+		FriendlyFire = true;
 
-	friendly = MeansOfDeath & MOD_FRIENDLY_FIRE;
-	mod = MeansOfDeath & ~MOD_FRIENDLY_FIRE;
+	friendly = FriendlyFire;
+	mod = MeansOfDeath;
 	message = NULL;
 	messagename = NULL;
 
 	if (attacker == NULL || attacker->player != NULL)
 	{
-		if (mod == MOD_TELEFRAG)
+		if (mod == NAME_Telefrag)
 		{
 			if (AnnounceTelefrag (attacker, self))
 				return;
@@ -213,15 +217,13 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 
 	switch (mod)
 	{
-	case MOD_SUICIDE:		messagename = "OB_SUICIDE";		break;
-	case MOD_FALLING:		messagename = "OB_FALLING";		break;
-	case MOD_CRUSH:			messagename = "OB_CRUSH";		break;
-	case MOD_EXIT:			messagename = "OB_EXIT";		break;
-	case MOD_WATER:			messagename = "OB_WATER";		break;
-	case MOD_SLIME:			messagename = "OB_SLIME";		break;
-	case MOD_FIRE:			messagename = "OB_LAVA";		break;
-	case MOD_BARREL:		messagename = "OB_BARREL";		break;
-	case MOD_SPLASH:		messagename = "OB_SPLASH";		break;
+	case NAME_Suicide:		messagename = "OB_SUICIDE";		break;
+	case NAME_Falling:		messagename = "OB_FALLING";		break;
+	case NAME_Crush:		messagename = "OB_CRUSH";		break;
+	case NAME_Exit:			messagename = "OB_EXIT";		break;
+	case NAME_Water:		messagename = "OB_WATER";		break;
+	case NAME_Slime:		messagename = "OB_SLIME";		break;
+	case NAME_Fire:			if (attacker == NULL) messagename = "OB_LAVA";		break;
 	}
 
 	if (messagename != NULL)
@@ -231,21 +233,15 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	{
 		if (attacker == self)
 		{
-			switch (mod)
-			{
-			case MOD_R_SPLASH:	messagename = "OB_R_SPLASH";		break;
-			case MOD_ROCKET:	messagename = "OB_ROCKET";			break;
-			default:			messagename = "OB_KILLEDSELF";		break;
-			}
-			message = GStrings(messagename);
+			message = GStrings("OB_KILLEDSELF");
 		}
 		else if (attacker->player == NULL)
 		{
-			if (mod == MOD_TELEFRAG)
+			if (mod == NAME_Telefrag)
 			{
 				message = GStrings("OB_MONTELEFRAG");
 			}
-			else if (mod == MOD_HIT)
+			else if (mod == NAME_Melee)
 			{
 				message = attacker->GetClass()->Meta.GetMetaString (AMETA_HitObituary);
 				if (message == NULL)
@@ -273,7 +269,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 		}
 		else
 		{
-			if (mod == MOD_TELEFRAG) message = GStrings("OB_MPTELEFRAG");
+			if (mod == NAME_Telefrag) message = GStrings("OB_MPTELEFRAG");
 			if (message == NULL)
 			{
 				if (inflictor != NULL)
@@ -288,9 +284,8 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 				{
 					switch (mod)
 					{
-					case MOD_R_SPLASH:		messagename = "OB_MPR_SPLASH";		break;
-					case MOD_BFG_SPLASH:	messagename = "OB_MPBFG_SPLASH";	break;
-					case MOD_RAILGUN:		messagename = "OB_RAILGUN";			break;
+					case NAME_BFGSplash:	messagename = "OB_MPBFG_SPLASH";	break;
+					case NAME_Railgun:		messagename = "OB_RAILGUN";			break;
 					}
 					if (messagename != NULL)
 						message = GStrings(messagename);
@@ -360,7 +355,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
 	if (!(flags4 & MF4_DONTFALL)) flags&=~MF_NOGRAVITY;
 	flags |= MF_DROPOFF;
-	if ((flags3 & MF3_ISMONSTER) || RaiseState != NULL)
+	if ((flags3 & MF3_ISMONSTER) || FindState(NAME_Raise) != NULL)
 	{	// [RH] Only monsters get to be corpses.
 		// Objects with a raise state should get the flag as well so they can
 		// be revived by an Arch-Vile. Batman Doom needs this.
@@ -368,7 +363,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	}
 	// [RH] Allow the death height to be overridden using metadata.
 	fixed_t metaheight = 0;
-	if (DamageType == MOD_FIRE)
+	if (DamageType == NAME_Fire)
 	{
 		metaheight = GetClass()->Meta.GetMetaFixed (AMETA_BurnHeight);
 	}
@@ -612,29 +607,26 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		return;
 	}
 
-	if (DamageType == MOD_DISINTEGRATE && EDeathState)
-	{ // Electrocution death
-		SetState (EDeathState);
-	}
-	else if (DamageType == MOD_FIRE && BDeathState)
-	{ // Burn death
-		SetState (BDeathState);
-	}
-	else if (DamageType == MOD_ICE &&
-		(IDeathState || (
-		(!deh.NoAutofreeze && !(flags4 & MF4_NOICEDEATH)) &&
-		(player || (flags3 & MF3_ISMONSTER)))))
-	{ // Ice death
-		if (IDeathState)
+
+
+	FState *diestate=NULL;
+
+	if (DamageType != NAME_None)
+	{
+		diestate = GetClass()->ActorInfo->FindStateExact (2, NAME_Death, int(DamageType));
+		if (diestate == NULL)
 		{
-			SetState (IDeathState);
-		}
-		else
-		{
-			SetState (&AActor::States[S_GENERICFREEZEDEATH]);
+			if (DamageType == NAME_Ice)
+			{ // If an actor doesn't have an ice death, we can still give them a generic one.
+
+				if (!deh.NoAutofreeze && !(flags4 & MF4_NOICEDEATH) && (player || (flags3 & MF3_ISMONSTER)))
+				{
+					diestate = &AActor::States[S_GENERICFREEZEDEATH];
+				}
+			}
 		}
 	}
-	else
+	if (diestate == NULL)
 	{
 		int flags4 = !inflictor ? 0 : inflictor->player && inflictor->player->ReadyWeapon ? 
 			inflictor->player->ReadyWeapon->flags4 : inflictor->flags4;
@@ -642,40 +634,30 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
 			gameinfo.gametype == GAME_Doom ? -GetDefault()->health : -GetDefault()->health/2));
 		
-		DamageType = MOD_UNKNOWN;	// [RH] "Frozen" barrels shouldn't do freezing damage
-		if (XDeathState && (health<gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
+		DamageType =NAME_None;	// Don't pass on a damage type this actor cannot handle
+								// (most importantly prevent barrels from passing on ice damage)
+		if ((health<gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
 		{ // Extreme death
-			SetState (XDeathState);
+			diestate = FindState (2, NAME_Death, NAME_Extreme);
 		}
 		else
 		{ // Normal death
-			DamageType = MOD_UNKNOWN;	// [RH] "Frozen" barrels shouldn't do freezing damage
-			if (DeathState != NULL)		// [RH] DeathState might be NULL, so try others as needed
-			{
-				SetState (DeathState);
-			}
-			else if (EDeathState != NULL)
-			{
-				SetState (EDeathState);
-			}
-			else if (BDeathState != NULL)
-			{
-				SetState (BDeathState);
-			}
-			else if (IDeathState != NULL)
-			{
-				SetState (IDeathState);
-			}
-			else
-			{
-				Destroy();
-			}
+			diestate = FindState (NAME_Death);
 		}
 	}
 
-	tics -= pr_killmobj() & 3;
-	if (tics < 1)
-		tics = 1;
+	if (diestate != NULL)
+	{
+		SetState (diestate);
+
+		tics -= pr_killmobj() & 3;
+		if (tics < 1)
+			tics = 1;
+	}
+	else
+	{
+		Destroy();
+	}
 }
 
 
@@ -794,9 +776,8 @@ void P_AutoUseStrifeHealth (player_t *player)
 ==================
 */
 
-int MeansOfDeath;
 
-void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int mod, int flags)
+void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags)
 {
 	unsigned ang;
 	player_t *player;
@@ -824,7 +805,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	if (target->health <= 0)
 	{
-		if (inflictor && mod == MOD_ICE)
+		if (inflictor && mod == NAME_Ice)
 		{
 			return;
 		}
@@ -858,6 +839,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	
 	MeansOfDeath = mod;
+	FriendlyFire = false;
 	// [RH] Andy Baker's Stealth monsters
 	if (target->flags & MF_STEALTH)
 	{
@@ -898,7 +880,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 					return;
 			}
 		}
-		if (mod == MOD_FIRE && target->flags4 & MF4_FIRERESIST)
+		if (mod == NAME_Fire && target->flags4 & MF4_FIRERESIST)
 		{
 			damage /= 2;
 		}
@@ -1000,7 +982,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		// [RH] Avoid friendly fire if enabled
 		if (source != NULL && player != source->player && target->IsTeammate (source))
 		{
-			MeansOfDeath |= MOD_FRIENDLY_FIRE;
+			FriendlyFire = true;
 			if (damage < 1000000)
 			{ // Still allow telefragging :-(
 				damage = (int)((float)damage * teamdamage);
@@ -1066,7 +1048,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			target->target = source;
 		}
 		// check for special fire damage or ice damage deaths
-		if (mod == MOD_FIRE)
+		if (mod == NAME_Fire)
 		{
 			if (player && !player->morphTics)
 			{ // Check for flame death
@@ -1074,12 +1056,12 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 					((target->health > -50) && (damage > 25)) ||
 					!inflictor->IsKindOf (RUNTIME_CLASS(APhoenixFX1)))
 				{
-					target->DamageType = MOD_FIRE;
+					target->DamageType = NAME_Fire;
 				}
 			}
 			else
 			{
-				target->DamageType = MOD_FIRE;
+				target->DamageType = NAME_Fire;
 			}
 		}
 		else
@@ -1103,28 +1085,27 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		target->Die (source, inflictor);
 		return;
 	}
-	if (target->WoundState != NULL)
+
+	FState * woundstate = target->FindState(2,NAME_Wound, (int)mod);
+	if (woundstate != NULL)
 	{
 		int woundhealth = RUNTIME_TYPE(target)->Meta.GetMetaInt (AMETA_WoundHealth, 6);
 
 		if (target->health <= woundhealth)
 		{
-			target->SetState (target->WoundState);
+			target->SetState (woundstate);
 			return;
 		}
 	}
-	if ((pr_damagemobj() < target->PainChance) && target->PainState != NULL
-		 && !(target->flags & MF_SKULLFLY))
+	if ((pr_damagemobj() < target->PainChance) && !(target->flags & MF_SKULLFLY))
 	{
 		if (inflictor && inflictor->IsKindOf (RUNTIME_CLASS(ALightning)))
 		{
 			if (pr_lightning() < 96)
 			{
 				target->flags |= MF_JUSTHIT; // fight back!
-				if (target->PainState != NULL)
-				{
-					target->SetState (target->PainState);
-				}
+				FState * painstate = target->FindState(2,NAME_Pain, (int)mod);
+				if (painstate != NULL) target->SetState (painstate);
 			}
 			else
 			{ // "electrocute" the target
@@ -1138,7 +1119,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		else
 		{
 			target->flags |= MF_JUSTHIT; // fight back!
-			target->SetState (target->PainState);
+			FState * painstate = target->FindState(2,NAME_Pain, (int)mod);
+			if (painstate != NULL) target->SetState (painstate);
 			if (inflictor && inflictor->IsKindOf (RUNTIME_CLASS(APoisonCloud)))
 			{
 				if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
@@ -1317,22 +1299,20 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		target->special1 = damage;
 		if (player && inflictor && !player->morphTics)
 		{ // Check for flame death
-			if ((inflictor->DamageType == MOD_FIRE)
+			if ((inflictor->DamageType == NAME_Fire)
 				&& (target->health > -50) && (damage > 25))
 			{
-				target->DamageType = MOD_FIRE;
+				target->DamageType = NAME_Fire;
 			}
-			if (inflictor->DamageType == MOD_ICE)
-			{
-				target->DamageType = MOD_ICE;
-			}
+			else target->DamageType = inflictor->DamageType;
 		}
 		target->Die (source, source);
 		return;
 	}
-	if (!(level.time&63) && playPainSound && target->PainState != NULL)
+	if (!(level.time&63) && playPainSound)
 	{
-		target->SetState (target->PainState);
+		FState * painstate = target->FindState(2,NAME_Pain, (int)target->DamageType);
+		if (painstate != NULL) target->SetState (painstate);
 	}
 /*
 	if((P_Random() < target->info->painchance)

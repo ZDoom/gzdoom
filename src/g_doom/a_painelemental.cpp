@@ -14,8 +14,6 @@ void A_SkullAttack (AActor *self);
 class APainElemental : public AActor
 {
 	DECLARE_ACTOR (APainElemental, AActor)
-public:
-	bool Massacre ();
 };
 
 FState APainElemental::States[] =
@@ -81,24 +79,6 @@ IMPLEMENT_ACTOR (APainElemental, Doom, 71, 115)
 	PROP_ActiveSound ("pain/active")
 END_DEFAULTS
 
-bool APainElemental::Massacre ()
-{
-	if (Super::Massacre ())
-	{
-		FState *deadstate;
-		A_NoBlocking (this);	// [RH] Use this instead of A_PainDie
-		deadstate = DeathState;
-		if (deadstate != NULL)
-		{
-			while (deadstate->GetNextState() != NULL)
-				deadstate = deadstate->GetNextState();
-			SetState (deadstate);
-		}
-		return true;
-	}
-	return false;
-}
-
 //
 // A_PainShootSkull
 // Spawn a lost soul and launch it at the target
@@ -113,12 +93,14 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 
 	const PClass *spawntype = NULL;
 
+	if (self->DamageType==NAME_Massacre) return;
+
 	int index=CheckIndex(1, NULL);
 	if (index>=0) 
 	{
 		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
 	}
-	if (spawntype == NULL) spawntype = RUNTIME_CLASS(ALostSoul);
+	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
 
 	// [RH] check to make sure it's not too close to the ceiling
 	if (self->z + self->height + 8*FRACUNIT > self->ceilingz)
@@ -178,7 +160,7 @@ void A_PainShootSkull (AActor *self, angle_t angle)
         (other->z < other->Sector->floorplane.ZatPoint (other->x, other->y)))
 	{
 		// kill it immediately
-		P_DamageMobj (other, self, self, 1000000, MOD_UNKNOWN);		//   ^
+		P_DamageMobj (other, self, self, 1000000, NAME_None);		//   ^
 		return;														//   |
 	}																// phares
 
@@ -187,7 +169,7 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	if (!P_CheckPosition (other, other->x, other->y))
 	{
 		// kill it immediately
-		P_DamageMobj (other, self, self, 1000000, MOD_UNKNOWN);		
+		P_DamageMobj (other, self, self, 1000000, NAME_None);		
 		return;
 	}
 

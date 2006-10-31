@@ -2,6 +2,13 @@
 #include "actors/shared/debris.txt"
 #include "actors/shared/splashes.txt"
 
+#include "actors/doom/possessed.txt"
+#include "actors/doom/doomimp.txt"
+#include "actors/doom/demon.txt"
+#include "actors/doom/lostsoul.txt"
+#include "actors/doom/cacodemon.txt"
+#include "actors/doom/bruiser.txt"
+
 #include "actors/doom/deadthings.txt"
 #include "actors/doom/doomammo.txt"
 #include "actors/doom/doomarmor.txt"

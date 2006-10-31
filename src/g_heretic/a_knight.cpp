@@ -209,7 +209,7 @@ void A_KnightAttack (AActor *actor)
 	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_knightatk.HitDice (3);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 		S_Sound (actor, CHAN_BODY, "hknight/melee", 1, ATTN_NORM);
 		return;

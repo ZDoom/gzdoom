@@ -98,7 +98,7 @@ void A_ClinkAttack (AActor *actor)
 	if (actor->CheckMeleeRange ())
 	{
 		damage = ((pr_clinkattack()%7)+3);
-		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 		P_TraceBleed (damage, actor->target, actor);
 	}
 }

@@ -104,14 +104,14 @@ class APowerIronFeet : public APowerup
 {
 	DECLARE_STATELESS_ACTOR (APowerIronFeet, APowerup)
 public:
-	void AbsorbDamage (int damage, int damageType, int &newdamage);
+	void AbsorbDamage (int damage, FName damageType, int &newdamage);
 };
 
 class APowerMask : public APowerIronFeet
 {
 	DECLARE_STATELESS_ACTOR (APowerMask, APowerIronFeet)
 public:
-	void AbsorbDamage (int damage, int damageType, int &newdamage);
+	void AbsorbDamage (int damage, FName damageType, int &newdamage);
 	void DoEffect ();
 };
 

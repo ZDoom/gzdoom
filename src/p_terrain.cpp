@@ -83,13 +83,6 @@ enum ETerrainKeywords
 	TR_FRICTION
 };
 
-enum EDamageKeywords
-{
-	DAM_Lava,
-	DAM_Ice,
-	DAM_Slime
-};
-
 enum EGenericType
 {
 	GEN_End,
@@ -187,14 +180,6 @@ static const char *TerrainKeywords[] =
 	"rightstepsounds",
 	"liquid",
 	"friction",
-	NULL
-};
-
-static const char *DamageKeywords[] =
-{
-	"lava",
-	"ice",
-	"slime",
 	NULL
 };
 
@@ -501,20 +486,9 @@ static void ParseDamage (int keyword, void *fields)
 	FTerrainDef *def = (FTerrainDef *)fields;
 
 	SC_MustGetString ();
-	switch (SC_MustMatchString (DamageKeywords))
-	{
-	case DAM_Lava:
-		def->DamageMOD = MOD_FIRE;
-		break;
-
-	case DAM_Ice:
-		def->DamageMOD = MOD_ICE;
-		break;
-
-	case DAM_Slime:
-		def->DamageMOD = MOD_SLIME;
-		break;
-	}
+	// Lava is synonymous with Fire here!
+	if (SC_Compare("Lava")) def->DamageMOD=NAME_Fire;
+	else def->DamageMOD=sc_String;
 }
 
 //==========================================================================

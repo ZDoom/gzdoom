@@ -634,8 +634,11 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
 			gameinfo.gametype == GAME_Doom ? -GetDefault()->health : -GetDefault()->health/2));
 		
-		DamageType =NAME_None;	// Don't pass on a damage type this actor cannot handle
-								// (most importantly prevent barrels from passing on ice damage)
+		// Don't pass on a damage type this actor cannot handle
+		// (most importantly prevent barrels from passing on ice damage)
+		// Massacre must be preserved though.
+		if (DamageType != NAME_Massacre) DamageType =NAME_None;	
+
 		if ((health<gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
 		{ // Extreme death
 			diestate = FindState (2, NAME_Death, NAME_Extreme);

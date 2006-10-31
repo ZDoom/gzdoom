@@ -2167,7 +2167,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	WallSpriteTile = TexMan(decal->PicNum);
 	flipx = (BYTE)(decal->RenderFlags & RF_XFLIP);
 
-	if (WallSpriteTile->UseType == FTexture::TEX_Null)
+	if (WallSpriteTile == NULL || WallSpriteTile->UseType == FTexture::TEX_Null)
 	{
 		return;
 	}

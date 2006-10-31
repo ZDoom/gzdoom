@@ -1,3 +1,9 @@
+October 30, 2006
+- Version bump to 2.1.7.
+- Fixed: Placing a /* */ comment at the very end of a file without a
+  terminating newline would not parse reliably.
+- Added a NULL WallSpriteTile check to R_RenderDecal().
+
 October 28, 2006 (Changes by Graf Zahl)
 - Changed parameter storage for states to use a separate member variable
   instead of forcing it into misc1/misc2. Although this increases the EXE's

@@ -495,12 +495,12 @@ comment:
 	++YYCURSOR;
 	if((yych = *YYCURSOR) == '/') goto yy85;
 yy81:
-#line 121 "src/sc_man_scanner.re"
+#line 129 "src/sc_man_scanner.re"
 	{ goto comment; }
 #line 501 "src/sc_man_scanner.h"
 yy82:
 	++YYCURSOR;
-#line 111 "src/sc_man_scanner.re"
+#line 119 "src/sc_man_scanner.re"
 	{
 			if (YYCURSOR >= YYLIMIT)
 			{
@@ -517,11 +517,18 @@ yy84:
 	goto yy81;
 yy85:
 	++YYCURSOR;
-#line 109 "src/sc_man_scanner.re"
-	{ goto std1; }
-#line 523 "src/sc_man_scanner.h"
+#line 110 "src/sc_man_scanner.re"
+	{
+			if (YYCURSOR >= YYLIMIT)
+			{
+				ScriptPtr = ScriptEndPtr;
+				return false;
+			}
+			goto std1;
+		}
+#line 530 "src/sc_man_scanner.h"
 }
-#line 122 "src/sc_man_scanner.re"
+#line 130 "src/sc_man_scanner.re"
 
 
 newline:

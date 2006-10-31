@@ -927,7 +927,7 @@ FString SubstituteAliasParams (FString &command, FCommandLine &args)
 
 			// Extract the argument number and substitute the corresponding argument.
 			argnum = strtoul (p + 1 + (p[1] == '{'), &start, 10);
-			if ((p[1] != '{' || *start == '}') && argnum < args.argc())
+			if ((p[1] != '{' || *start == '}') && argnum < (unsigned long)args.argc())
 			{
 				buf += args[argnum];
 			}

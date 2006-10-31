@@ -890,6 +890,8 @@ static ExpVal EvalExpression (ExpData *data, AActor *self)
 	switch (data->Type)
 	{
 	case EX_NOP:
+		assert (data->Type != EX_NOP);
+		val = data->Value;
 		break;
 	case EX_Const:
 		val = data->Value;

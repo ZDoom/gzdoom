@@ -106,7 +106,15 @@ negative_check:
 
 comment:
 /*!re2c
-	"*/"			{ goto std1; }
+	"*/"
+		{
+			if (YYCURSOR >= YYLIMIT)
+			{
+				ScriptPtr = ScriptEndPtr;
+				return false;
+			}
+			goto std1;
+		}
 	"\n"
 		{
 			if (YYCURSOR >= YYLIMIT)

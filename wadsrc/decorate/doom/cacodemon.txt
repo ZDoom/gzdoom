@@ -12,7 +12,6 @@ ACTOR Cacodemon 3005
 	Height 56
 	Mass 400
 	Speed 8
-	FastSpeed 20
 	PainChance 128
 	Monster
 	+FLOAT +NOGRAVITY

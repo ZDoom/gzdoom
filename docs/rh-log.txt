@@ -1,3 +1,7 @@
+November 1, 2006 (Changes by Graf Zahl)
+- Fixed: The Cacodemon had a FastSpeed definition even though it shouldn't.
+- Fixed: FastSpeed was used unconditionally when defined.
+
 October 31, 2006 (Changes by Graf Zahl)
 - Fixed: SetActorPitch with a 0-tid (i.e. affect the activator) set the angle
   instead of the pitch.

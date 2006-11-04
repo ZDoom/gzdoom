@@ -978,7 +978,8 @@ FUNC(LS_HealThing)
 
 		if (max == 0 || it->player == NULL)
 		{
-			max = it->GetDefault()->health;
+			P_GiveBody(it, arg0);
+			return true;
 		}
 		else if (max == 1)
 		{

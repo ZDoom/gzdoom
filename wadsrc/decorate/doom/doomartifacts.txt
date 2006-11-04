@@ -42,6 +42,34 @@ ACTOR Soulsphere : Health 2013
 	}
 }
 
+// Mega sphere --------------------------------------------------------------
+
+ACTOR MegasphereHealth : Health	// for manipulation by Dehacked
+{
+	Inventory.Amount 200
+	Inventory.MaxAmount 200
+	+INVENTORY.ALWAYSPICKUP
+}
+
+ACTOR Megasphere : CustomInventory 83
+{
+	Game Doom
+	SpawnID 132
+	+COUNTITEM
+	+INVENTORY.ALWAYSPICKUP
+	Inventory.PickupMessage "$GOTMSPHERE"
+	States
+	{
+	Spawn:
+		MEGA ABCD 6 BRIGHT
+		Loop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("BlueArmor", 1)
+		TNT1 A 0 A_GiveInventory("MegasphereHealth", 1)
+		Stop
+	}
+}	
+
 // Invisibility -------------------------------------------------------------
 
 ACTOR BlurSphere : PowerupGiver 2024
@@ -126,3 +154,25 @@ ACTOR Allmap : MapRevealer 2026
 	}
 }
 
+// Berserk ------------------------------------------------------------------
+
+ACTOR Berserk : CustomInventory 2023
+{
+	Game Doom
+	SpawnID 134
+	+COUNTITEM
+	+INVENTORY.ALWAYSPICKUP
+	Inventory.PickupMessage "$GOTBERSERK"
+	States
+	{
+	Spawn:
+		PSTR A -1
+		Stop
+	Pickup:
+		TNT1 A 0 A_GiveInventory("PowerStrength")
+		TNT1 A 0 HealThing(100, 0)
+		TNT1 A 0 A_SelectWeapon("Fist")
+		Stop
+	}
+}
+	

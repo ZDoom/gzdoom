@@ -32,6 +32,8 @@ xx(DoorCreak)
 xx(DoorMetal2)
 xx(Wind)
 
+xx(BulletPuff)
+
 // Special bosses A_BossDeath knows about
 xx(Fatso)
 xx(Arachnotron)

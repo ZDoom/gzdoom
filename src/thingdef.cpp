@@ -511,6 +511,8 @@ ACTOR(CheckSkullDone)
 ACTOR(RadiusThrust)
 ACTOR(Stop)
 ACTOR(SPosAttackUseAtkSound)
+ACTOR(Respawn)
+ACTOR(BarrelDestroy)
 
 
 #include "d_dehackedactions.h"
@@ -725,6 +727,8 @@ AFuncDesc AFTable[]=
 	FUNC(A_RadiusThrust, "xxy")
 	{"A_Explode", A_ExplodeParms, "xxy" },
 	FUNC(A_Stop, NULL)
+	FUNC(A_Respawn, "y")
+	FUNC(A_BarrelDestroy, NULL)
 };
 
 //==========================================================================
@@ -3257,6 +3261,15 @@ static void ActorCameraheight (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorVSpeed (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetFloat();
+	defaults->momz = fixed_t(sc_Float*FRACUNIT);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorClearFlags (AActor *defaults, Baggage &bag)
 {
 	defaults->flags=defaults->flags2=defaults->flags3=defaults->flags4=defaults->flags5=0;
@@ -4107,6 +4120,7 @@ static const ActorProps props[] =
 	{ "states",						ActorStates,				RUNTIME_CLASS(AActor) },
 	{ "tag",						ActorTag,					RUNTIME_CLASS(AActor) },
 	{ "translation",				ActorTranslation,			RUNTIME_CLASS(AActor) },
+	{ "vspeed",						ActorVSpeed,				RUNTIME_CLASS(AActor) },
 	{ "weapon.ammogive",			(apf)WeaponAmmoGive1,		RUNTIME_CLASS(AWeapon) },
 	{ "weapon.ammogive1",			(apf)WeaponAmmoGive1,		RUNTIME_CLASS(AWeapon) },
 	{ "weapon.ammogive2",			(apf)WeaponAmmoGive2,		RUNTIME_CLASS(AWeapon) },

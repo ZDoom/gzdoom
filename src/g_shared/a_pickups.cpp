@@ -1762,6 +1762,7 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 }
 
 IMPLEMENT_STATELESS_ACTOR (AHealth, Any, -1, 0)
+	PROP_Inventory_Amount (1)
 	PROP_Inventory_MaxAmount (0)
 	PROP_Inventory_PickupSound ("misc/health_pkup")
 END_DEFAULTS

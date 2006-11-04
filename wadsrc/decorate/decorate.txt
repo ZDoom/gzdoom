@@ -15,6 +15,7 @@
 #include "actors/doom/doomartifacts.txt"
 #include "actors/doom/doomhealth.txt"
 #include "actors/doom/doomkeys.txt"
+#include "actors/doom/doommisc.txt"
 #include "actors/doom/doomdecorations.txt"
 #include "actors/doom/stealthmonsters.txt"
 

@@ -32,7 +32,7 @@ void A_PosAttack (AActor *self)
 	S_Sound (self, CHAN_WEAPON, "grunt/attack", 1, ATTN_NORM);
 	angle += pr_posattack.Random2() << 20;
 	damage = ((pr_posattack()%5)+1)*3;
-	P_LineAttack (self, angle, MISSILERANGE, slope, damage, NAME_None, RUNTIME_CLASS(ABulletPuff));
+	P_LineAttack (self, angle, MISSILERANGE, slope, damage, NAME_None, NAME_BulletPuff);
 }
 
 static void A_SPosAttack2 (AActor *self)
@@ -49,7 +49,7 @@ static void A_SPosAttack2 (AActor *self)
     {
 		int angle = bangle + (pr_sposattack.Random2() << 20);
 		int damage = ((pr_sposattack()%5)+1)*3;
-		P_LineAttack(self, angle, MISSILERANGE, slope, damage, NAME_None, RUNTIME_CLASS(ABulletPuff));
+		P_LineAttack(self, angle, MISSILERANGE, slope, damage, NAME_None, NAME_BulletPuff);
     }
 }
 
@@ -96,7 +96,7 @@ void A_CPosAttack (AActor *self)
 
 	angle = bangle + (pr_cposattack.Random2() << 20);
 	damage = ((pr_cposattack()%5)+1)*3;
-	P_LineAttack (self, angle, MISSILERANGE, slope, damage, NAME_None, RUNTIME_CLASS(ABulletPuff));
+	P_LineAttack (self, angle, MISSILERANGE, slope, damage, NAME_None, NAME_BulletPuff);
 }
 
 void A_CPosRefire (AActor *self)

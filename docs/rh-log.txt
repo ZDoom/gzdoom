@@ -1,3 +1,20 @@
+November 4, 2006 (Changes by Graf Zahl)
+- Converted ExplosiveBarrel, BulletPuff and DoomUnusedStates to DECORATE.
+- Added VSpeed DECORATE property so that an actor can be given an initial
+  vertical speed.
+- Removed the barrel check in P_DamageMobj. AActor::Die is doing the same
+  operation unconditionally so this is redundant.
+- Added A_BarrelDestroy to the list of DECORATE code pointers so that
+  the same effect can be recreated for other items as well.
+- Renamed A_BarrelRespawn to A_Respawn, changed it so that it works for
+  monsters and added it to the list of DECORATE code pointers. Now Quake-style
+  zombies should be possible. ;)
+- Changed handling of MF4_RANDOMIZE so that it applies to all actors being
+  spawned and not just projectiles.
+- Converted Berserk and Megasphere to DECORATE.
+- Fixed: HealThing should respect the stamina a player has and the Dehacked
+  health compatibility flag if max is 0. To do that it calls P_GiveBody now.
+
 November 1, 2006 (Changes by Graf Zahl)
 - Fixed: The Cacodemon had a FastSpeed definition even though it shouldn't.
 - Fixed: FastSpeed was used unconditionally when defined.

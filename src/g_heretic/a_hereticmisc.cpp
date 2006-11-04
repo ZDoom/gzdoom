@@ -26,9 +26,9 @@ void A_MakePod (AActor *);
 
 // Pod ----------------------------------------------------------------------
 
-class APod : public AExplosiveBarrel
+class APod : public AActor
 {
-	DECLARE_ACTOR (APod, AExplosiveBarrel)
+	DECLARE_ACTOR (APod, AActor)
 	HAS_OBJECT_POINTERS
 public:
 	void BeginPlay ();

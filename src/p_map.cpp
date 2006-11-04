@@ -2838,6 +2838,20 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	}
 }
 
+void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
+				   int pitch, int damage, FName damageType, FName pufftype)
+{
+	const PClass * type = PClass::FindClass(pufftype);
+	if (type == NULL)
+	{
+		Printf("Attempt to spawn unknown actor type '%s'\n", pufftype.GetChars());
+	}
+	else
+	{
+		P_LineAttack(t1, angle, distance, pitch, damage, damageType, type);
+	}
+}
+
 void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, angle_t angle, int pitch)
 {
 	if (!cl_bloodsplats)
@@ -3061,7 +3075,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	}
 	if (trace.CrossedWater)
 	{
-		AActor *puff = Spawn<ABulletPuff> (0, 0, 0, ALLOW_REPLACE);
+		AActor *puff = Spawn ("BulletPuff", 0, 0, 0, ALLOW_REPLACE);
 		if (puff != NULL)
 		{
 			SpawnDeepSplash (source, trace, puff, vx, vy, vz);
@@ -3083,7 +3097,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
 			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
 		{
-			P_SpawnPuff (RUNTIME_CLASS(ABulletPuff), x, y, z, source->angle - ANG180, 1, true);
+			P_SpawnPuff (PClass::FindClass(NAME_BulletPuff), x, y, z, source->angle - ANG180, 1, true);
 		}
 		else
 		{

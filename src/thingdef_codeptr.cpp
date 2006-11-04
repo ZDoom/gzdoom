@@ -369,7 +369,7 @@ void A_BulletAttack (AActor *self)
 		int angle = bangle + (pr_cabullet.Random2() << 20);
 		int damage = ((pr_cabullet()%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage,
-			GetDefaultByType(RUNTIME_CLASS(ABulletPuff))->DamageType, RUNTIME_CLASS(ABulletPuff));
+			NAME_None, NAME_BulletPuff);
     }
 }
 
@@ -752,7 +752,7 @@ void A_CustomBulletAttack (AActor *self)
 		bangle = self->angle;
 
 		pufftype = PClass::FindClass(PuffType);
-		if (!pufftype) pufftype=RUNTIME_CLASS(ABulletPuff);
+		if (!pufftype) pufftype = PClass::FindClass(NAME_BulletPuff);
 
 		bslope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
@@ -855,7 +855,7 @@ void A_FireBullets (AActor *self)
 	bslope = bulletpitch;
 
 	PuffType = PClass::FindClass(PuffTypeName);
-	if (!PuffType) PuffType=RUNTIME_CLASS(ABulletPuff);
+	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
 
 	S_SoundID (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
 
@@ -977,7 +977,7 @@ void A_CustomPunch (AActor *self)
 	}
 
 	PuffType = PClass::FindClass(PuffTypeName);
-	if (!PuffType) PuffType=RUNTIME_CLASS(ABulletPuff);
+	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
 
 	P_LineAttack (self, angle, Range, pitch, Damage, GetDefaultByType(PuffType)->DamageType, PuffType);
 
@@ -1383,6 +1383,7 @@ void A_SelectWeapon(AActor * actor)
 	else if (pStateCall != NULL) pStateCall->Result=false;
 }
 
+
 //===========================================================================
 //
 // A_Print
@@ -1782,3 +1783,44 @@ void A_Stop (AActor *self)
 {
 	self->momx = self->momy = self->momz = 0;
 }
+
+//===========================================================================
+//
+// A_Respawn
+//
+//===========================================================================
+void A_Respawn (AActor *actor)
+{
+	fixed_t x = actor->SpawnPoint[0] << FRACBITS;
+	fixed_t y = actor->SpawnPoint[1] << FRACBITS;
+	sector_t *sec;
+
+	actor->flags |= MF_SOLID;
+	sec = R_PointInSubsector (x, y)->sector;
+	actor->SetOrigin (x, y, sec->floorplane.ZatPoint (x, y));
+	actor->height = actor->GetDefault()->height;
+	if (P_TestMobjLocation (actor))
+	{
+		AActor *defs = actor->GetDefault();
+		actor->health = defs->health;
+
+		actor->flags  = (defs->flags & ~MF_FRIENDLY) | (actor->flags & MF_FRIENDLY);
+		actor->flags2 = defs->flags2;
+		actor->flags3 = (defs->flags3 & ~(MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS)) | (actor->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS));
+		actor->flags4 = (defs->flags4 & ~MF4_NOHATEPLAYERS) | (actor->flags4 & MF4_NOHATEPLAYERS);
+		actor->flags5 = defs->flags5;
+		actor->SetState (actor->SpawnState);
+		actor->renderflags &= ~RF_INVISIBLE;
+
+		int index=CheckIndex(1, NULL);
+		if (index<0 || EvalExpressionN (StateParameters[index+2], actor))
+		{
+			Spawn<ATeleportFog> (x, y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+		}
+	}
+	else
+	{
+		actor->flags &= ~MF_SOLID;
+	}
+}
+

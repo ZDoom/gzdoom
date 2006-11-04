@@ -1,0 +1,77 @@
+// The barrel of green goop ------------------------------------------------
+
+ACTOR ExplosiveBarrel 2035
+{
+	Game Doom
+	SpawnID 125
+	Health 20
+	Radius 10
+	Height 34
+	+SOLID
+	+SHOOTABLE
+	+NOBLOOD
+	+ACTIVATEMCROSS
+	+DONTGIB
+	+NOICEDEATH
+	+OLDRADIUSDMG
+	DeathSound "world/barrelx"
+	Obituary "$OB_BARREL"
+	States
+	{
+	Spawn:
+		BAR1 AB 6
+		Loop
+	Death:
+		BEXP A 5 BRIGHT
+		BEXP B 5 BRIGHT A_Scream
+		BEXP C 5 BRIGHT
+		BEXP D 5 BRIGHT A_Explode
+		BEXP E 10 BRIGHT
+		BEXP E 1050 BRIGHT A_BarrelDestroy
+		BEXP E 5 A_Respawn
+		Wait
+	}
+}
+
+// Bullet puff -------------------------------------------------------------
+
+ACTOR BulletPuff
+{
+	Game Doom
+	SpawnID 131
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+ALLOWPARTICLES
+	+RANDOMIZE
+	RenderStyle Translucent
+	Alpha 0.5
+	VSpeed 1
+	Mass 5
+	States
+	{
+	Spawn:
+		PUFF A 4 Bright
+		PUFF B 4
+	Melee:
+		PUFF CD 4
+		Stop
+	}
+}
+	
+// Container for an unused state -------------------------------------------
+
+/* Doom defined the states S_STALAG, S_DEADTORSO, and S_DEADBOTTOM but never
+ * actually used them. For compatibility with DeHackEd patches, they still
+ * need to be kept around. This actor serves that purpose.
+ */
+
+ACTOR DoomUnusedStates
+{
+	States
+	{
+		SMT2 A -1
+	Death:
+		PLAY N -1
+		PLAY S -1
+	}
+}

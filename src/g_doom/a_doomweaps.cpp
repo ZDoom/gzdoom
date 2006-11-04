@@ -89,7 +89,7 @@ void A_Punch (AActor *actor)
 
 	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (actor, angle, MELEERANGE);
-	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(ABulletPuff));
+	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, NAME_None, NAME_BulletPuff);
 
 	// turn to face target
 	if (linetarget)
@@ -183,7 +183,7 @@ void A_FirePistol (AActor *actor)
 	S_Sound (actor, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 
 	P_BulletSlope (actor);
-	P_GunShot (actor, accurate, RUNTIME_CLASS(ABulletPuff));
+	P_GunShot (actor, accurate, PClass::FindClass(NAME_BulletPuff));
 }
 
 // Chainsaw -----------------------------------------------------------------
@@ -273,7 +273,7 @@ void A_Saw (AActor *actor)
 		fullsound = S_FindSound("weapons/sawfull");
 		hitsound = S_FindSound("weapons/sawhit");
 	}
-	if (pufftype == NULL) pufftype = RUNTIME_CLASS(ABulletPuff);
+	if (pufftype == NULL) pufftype = PClass::FindClass(NAME_BulletPuff);
 	if (damage == 0) damage = 2;
 	
 	damage *= (pr_saw()%10+1);
@@ -399,7 +399,7 @@ void A_FireShotgun (AActor *actor)
 	P_BulletSlope (actor);
 
 	for (i=0 ; i<7 ; i++)
-		P_GunShot (actor, false, RUNTIME_CLASS(ABulletPuff));
+		P_GunShot (actor, false, PClass::FindClass(NAME_BulletPuff));
 }
 
 // Super Shotgun ------------------------------------------------------------
@@ -515,7 +515,7 @@ void A_FireShotgun2 (AActor *actor)
 					  angle,
 					  PLAYERMISSILERANGE,
 					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage,
-					  NAME_None, RUNTIME_CLASS(ABulletPuff));
+					  NAME_None, NAME_BulletPuff);
 	}
 }
 
@@ -629,7 +629,7 @@ void A_FireCGun (AActor *actor)
 	player->mo->PlayAttacking2 ();
 
 	P_BulletSlope (actor);
-	P_GunShot (actor, !player->refire, RUNTIME_CLASS(ABulletPuff));
+	P_GunShot (actor, !player->refire, PClass::FindClass(NAME_BulletPuff));
 }
 
 // Rocket launcher ---------------------------------------------------------

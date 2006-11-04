@@ -398,7 +398,7 @@ void A_M_Saw (AActor *self)
 		
 		P_LineAttack (self, angle, MELEERANGE+1,
 					P_AimLineAttack (self, angle, MELEERANGE+1), damage,
-					NAME_Melee, RUNTIME_CLASS(ABulletPuff));
+					NAME_Melee, NAME_BulletPuff);
 
 		if (!linetarget)
 		{
@@ -451,7 +451,7 @@ void A_M_Punch (AActor *self)
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, MELEERANGE);
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, RUNTIME_CLASS(ABulletPuff));
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff);
 
 	// turn to face target
 	if (linetarget)
@@ -481,7 +481,7 @@ void A_M_BerserkPunch (AActor *self)
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, MELEERANGE);
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, RUNTIME_CLASS(ABulletPuff));
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff);
 
 	// turn to face target
 	if (linetarget)
@@ -527,7 +527,7 @@ void A_M_FirePistol (AActor *self)
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	P_GunShot2 (self, true, P_AimLineAttack (self, self->angle, MISSILERANGE),
-		RUNTIME_CLASS(ABulletPuff));
+		PClass::FindClass(NAME_BulletPuff));
 }
 
 //============================================================================
@@ -544,7 +544,7 @@ void A_M_FirePistolInaccurate (AActor *self)
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	P_GunShot2 (self, false, P_AimLineAttack (self, self->angle, MISSILERANGE),
-		RUNTIME_CLASS(ABulletPuff));
+		PClass::FindClass(NAME_BulletPuff));
 }
 
 //============================================================================
@@ -565,7 +565,7 @@ void A_M_FireShotgun (AActor *self)
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 	for (int i = 0; i < 7; ++i)
 	{
-		P_GunShot2 (self, false, pitch, RUNTIME_CLASS(ABulletPuff));
+		P_GunShot2 (self, false, pitch, PClass::FindClass(NAME_BulletPuff));
 	}
 	self->special1 = level.maptime + 27;
 }
@@ -611,7 +611,7 @@ void A_M_FireShotgun2 (AActor *self)
 
 		P_LineAttack (self, angle, MISSILERANGE,
 					  pitch + (pr_m_fireshotgun2.Random2() * 332063), damage,
-					  NAME_None, RUNTIME_CLASS(ABulletPuff));
+					  NAME_None, PClass::FindClass(NAME_BulletPuff));
 	}
 	self->special1 = level.maptime;
 }
@@ -630,7 +630,7 @@ void A_M_FireCGunAccurate (AActor *self)
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	P_GunShot2 (self, true, P_AimLineAttack (self, self->angle, MISSILERANGE),
-		RUNTIME_CLASS(ABulletPuff));
+		PClass::FindClass(NAME_BulletPuff));
 }
 
 //============================================================================
@@ -647,7 +647,7 @@ void A_M_FireCGun (AActor *self)
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	P_GunShot2 (self, false, P_AimLineAttack (self, self->angle, MISSILERANGE),
-		RUNTIME_CLASS(ABulletPuff));
+		PClass::FindClass(NAME_BulletPuff));
 }
 
 //============================================================================

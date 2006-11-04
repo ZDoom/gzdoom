@@ -1045,11 +1045,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	if (target->health <= 0)
 	{ // Death
 		target->special1 = damage;
-		if (source && target->IsKindOf (RUNTIME_CLASS(AExplosiveBarrel))
-			&& !source->IsKindOf (RUNTIME_CLASS(AExplosiveBarrel)))
-		{ // Make sure players get frags for chain-reaction kills
-			target->target = source;
-		}
 		// check for special fire damage or ice damage deaths
 		if (mod == NAME_Fire)
 		{

@@ -342,7 +342,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			// a very very cheap kill.
 			P_LineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE,
 				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), 1000000,
-				NAME_None, RUNTIME_CLASS(ABulletPuff));
+				NAME_None, NAME_BulletPuff);
 		}
 		break;
 

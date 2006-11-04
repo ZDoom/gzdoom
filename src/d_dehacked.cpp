@@ -1656,7 +1656,8 @@ static int PatchMisc (int dummy)
 		}
 	}
 
-	// Update default item properties
+	// Update default item properties by patching the affected items
+	// Note: This won't have any effect on DECORATE derivates of these items!
 	ABasicArmorPickup *armor;
 
 	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("GreenArmor"));
@@ -1691,6 +1692,12 @@ static int PatchMisc (int dummy)
 	{
 		health->Amount = deh.SoulsphereHealth;
 		health->MaxAmount = deh.MaxSoulsphere;
+	}
+
+	health = static_cast<AHealth *> (GetDefaultByName ("MegasphereHealth"));
+	if (health!=NULL)
+	{
+		health->Amount = health->MaxAmount = deh.MegasphereHealth;
 	}
 
 	APlayerPawn *player = static_cast<APlayerPawn *> (GetDefaultByName ("DoomPlayer"));

@@ -45,7 +45,7 @@ ACTOR Arachnotron 68
 		Goto See+1
 	Death:
 		BSPI J 20 A_Scream
-		BSPI K 7 A_Fall
+		BSPI K 7 A_NoBlocking
 		BSPI LMNO 7
 		BSPI P -1 A_BossDeath
 		Stop

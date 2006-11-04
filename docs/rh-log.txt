@@ -1,4 +1,13 @@
 November 4, 2006 (Changes by Graf Zahl)
+- Replaced the static string buffer in ProcessStates with an FString.
+- After doing some tests with state label scopes I had to conclude that
+  using '.' both for separating sub-state-labels and scope resolution 
+  identifiers does not work reliably unless all actor class names were
+  prohibited from being used as state labels.  Since that is undesirable
+  the only solution is to change the scope resolution operator. Fortunately 
+  no WADs so far have used it so implementing such a breaking change isn't 
+  a major issue. Now it uses '::', like C++ for this purpose.
+- Converted Revenant, Mancubus and Pain Elemental to DECORATE.
 - Converted Arachnotron, Archvile, Cyberdemon, Spidermastermind and
   CommanderKeen to DECORATE.
 - Converted ExplosiveBarrel, BulletPuff and DoomUnusedStates to DECORATE.

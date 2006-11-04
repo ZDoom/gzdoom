@@ -1,6 +1,7 @@
 #include "actors/shared/blood.txt"
 #include "actors/shared/debris.txt"
 #include "actors/shared/splashes.txt"
+#include "actors/shared/pickups.txt"
 
 #include "actors/doom/possessed.txt"
 #include "actors/doom/doomimp.txt"
@@ -8,7 +9,10 @@
 #include "actors/doom/lostsoul.txt"
 #include "actors/doom/cacodemon.txt"
 #include "actors/doom/bruiser.txt"
+#include "actors/doom/revenant.txt"
 #include "actors/doom/arachnotron.txt"
+#include "actors/doom/fatso.txt"
+#include "actors/doom/painelemental.txt"
 #include "actors/doom/archvile.txt"
 #include "actors/doom/cyberdemon.txt"
 #include "actors/doom/spidermaster.txt"

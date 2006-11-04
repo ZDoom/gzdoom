@@ -46,7 +46,7 @@ actor DeadZombieMan : ZombieMan 18
 	States
 	{
 	Spawn:
-		Goto Super.Death+4
+		Goto Super::Death+4
 	}
 }
 
@@ -60,7 +60,7 @@ actor DeadShotgunGuy : ShotgunGuy 19
 	States
 	{
 	Spawn:
-		Goto Super.Death+4
+		Goto Super::Death+4
 	}
 };
 
@@ -73,7 +73,7 @@ actor DeadDoomImp : DoomImp 20
 	States
 	{
 	Spawn:
-		Goto Super.Death+4
+		Goto Super::Death+4
 	}
 }
 
@@ -86,7 +86,7 @@ actor DeadDemon : Demon 21
 	States
 	{
 	Spawn:
-		Goto Super.Death+5
+		Goto Super::Death+5
 	}
 }
 
@@ -99,7 +99,7 @@ actor DeadCacodemon : Cacodemon 22
 	States
 	{
 	Spawn:
-		Goto Super.Death+5
+		Goto Super::Death+5
 	}
 }
 
@@ -118,6 +118,6 @@ actor DeadLostSoul : LostSoul 23
 	States
 	{
 	Spawn:
-		Goto Super.Death+5
+		Goto Super::Death+5
 	}
 }

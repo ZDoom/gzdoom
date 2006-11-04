@@ -45,7 +45,7 @@ ACTOR Cacodemon 3005
 		HEAD H 8 A_Scream
 		HEAD I 8
 		HEAD J 8
-		HEAD K 8 A_Fall
+		HEAD K 8 A_NoBlocking
 		HEAD L -1 A_SetFloorClip
 		Stop
 	Raise:

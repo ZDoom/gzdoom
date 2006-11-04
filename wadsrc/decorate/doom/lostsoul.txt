@@ -43,7 +43,7 @@ ACTOR LostSoul 3006
 		SKUL F 6 BRIGHT
 		SKUL G 6 BRIGHT A_Scream
 		SKUL H 6 BRIGHT
-		SKUL I 6 BRIGHT A_Fall
+		SKUL I 6 BRIGHT A_NoBlocking
 		SKUL J 6
 		SKUL K 6
 		Stop

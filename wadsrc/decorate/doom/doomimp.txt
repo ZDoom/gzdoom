@@ -42,14 +42,14 @@ ACTOR DoomImp 3001
 		TROO I 8
 		TROO J 8 A_Scream
 		TROO K 6
-		TROO L 6 A_Fall
+		TROO L 6 A_NoBlocking
 		TROO M -1
 		Stop
 	XDeath:
 		TROO N 5
 		TROO O 5 A_XScream
 		TROO P 5
-		TROO Q 5 A_Fall
+		TROO Q 5 A_NoBlocking
 		TROO RST 5
 		TROO U -1
 		Stop

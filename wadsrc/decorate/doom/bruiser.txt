@@ -42,7 +42,7 @@ ACTOR BaronOfHell 3003
 		BOSS I  8
 		BOSS J  8 A_Scream
 		BOSS K  8
-		BOSS L  8 A_Fall
+		BOSS L  8 A_NoBlocking
 		BOSS MN 8
 		BOSS O -1 A_BossDeath   
 		Stop
@@ -90,7 +90,7 @@ ACTOR HellKnight : BaronOfHell 69
 		BOS2 I  8
 		BOS2 J  8 A_Scream
 		BOS2 K  8
-		BOS2 L  8 A_Fall
+		BOS2 L  8 A_NoBlocking
 		BOS2 MN 8
 		BOS2 O -1
 		Stop

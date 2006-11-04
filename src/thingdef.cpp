@@ -514,6 +514,7 @@ ACTOR(Stop)
 ACTOR(SPosAttackUseAtkSound)
 ACTOR(Respawn)
 ACTOR(BarrelDestroy)
+ACTOR(PlayerSkinCheck)
 
 
 #include "d_dehackedactions.h"
@@ -710,6 +711,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_KillMaster, NULL)
 	FUNC(A_KillChildren, NULL)
 	FUNC(A_CheckFloor, "L")
+	FUNC(A_PlayerSkinCheck, "L")
 	{"A_BasicAttack", A_ComboAttack, "ISMF" },
 
 	// Weapon only functions
@@ -1679,16 +1681,25 @@ static void RetargetStates (intptr_t count, const char *target)
 // processes a state block
 //
 //==========================================================================
-static void ParseStateString(char * statestring)
+static FString ParseStateString()
 {
+	FString statestring;
+
 	SC_MustGetString();
-	strncpy (statestring, sc_String, 255);
+	statestring = sc_String;
+	if (SC_CheckString("::"))
+	{
+		SC_MustGetString ();
+		statestring += "::";
+		statestring += sc_String;
+	}
 	while (SC_CheckString ("."))
 	{
 		SC_MustGetString ();
-		strcat (statestring, ".");
-		strcat (statestring, sc_String);
+		statestring += ".";
+		statestring += sc_String;
 	}
+	return statestring;
 }
 
 //==========================================================================
@@ -1699,30 +1710,28 @@ static void ParseStateString(char * statestring)
 //==========================================================================
 static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 {
-	char statestring[256];
+	FString statestring;
 	intptr_t count = 0;
 	FState state;
 	FState * laststate = NULL;
 	intptr_t lastlabel = -1;
 	int minrequiredstate = -1;
 
-	statestring[255] = 0;
-
 	ChkBraceOpn();
 	SC_SetEscape(false);	// disable escape sequences in the state parser
 	while (!TestBraceCls() && !sc_End)
 	{
 		memset(&state,0,sizeof(state));
-		ParseStateString(statestring);
-		if (!stricmp(statestring, "GOTO"))
+		statestring = ParseStateString();
+		if (!statestring.CompareNoCase("GOTO"))
 		{
 do_goto:	
-			ParseStateString(statestring);
+			statestring = ParseStateString();
 			if (SC_CheckString ("+"))
 			{
 				SC_MustGetNumber ();
-				strcat (statestring, "+");
-				strcat (statestring, sc_String);
+				statestring += '+';
+				statestring += sc_String;
 			}
 			// copy the text - this must be resolved later!
 			if (laststate != NULL)
@@ -1738,7 +1747,7 @@ do_goto:
 				SC_ScriptError("GOTO before first state");
 			}
 		}
-		else if (!stricmp(statestring, "STOP"))
+		else if (!statestring.CompareNoCase("STOP"))
 		{
 do_stop:
 			if (laststate!=NULL)
@@ -1755,7 +1764,7 @@ do_stop:
 				continue;
 			}
 		}
-		else if (!stricmp(statestring, "WAIT") || !stricmp(statestring, "FAIL"))
+		else if (!statestring.CompareNoCase("WAIT") || !statestring.CompareNoCase("FAIL"))
 		{
 			if (!laststate) 
 			{
@@ -1764,7 +1773,7 @@ do_stop:
 			}
 			laststate->NextState=(FState*)-2;
 		}
-		else if (!stricmp(statestring, "LOOP"))
+		else if (!statestring.CompareNoCase("LOOP"))
 		{
 			if (!laststate) 
 			{
@@ -1775,7 +1784,7 @@ do_stop:
 		}
 		else
 		{
-			char * statestrp;
+			const char * statestrp;
 
 			SC_MustGetString();
 			if (SC_Compare (":"))
@@ -1785,12 +1794,12 @@ do_stop:
 				{
 					lastlabel = count;
 					AddState(statestring, (FState *) (count+1));
-					ParseStateString(statestring);
-					if (!stricmp(statestring, "GOTO"))
+					statestring = ParseStateString();
+					if (!statestring.CompareNoCase("GOTO"))
 					{
 						goto do_goto;
 					}
-					else if (!stricmp(statestring, "STOP"))
+					else if (!statestring.CompareNoCase("STOP"))
 					{
 						goto do_stop;
 					}
@@ -1801,7 +1810,7 @@ do_stop:
 
 			SC_UnGet ();
 
-			if (strlen (statestring) != 4)
+			if (statestring.Len() != 4)
 			{
 				SC_ScriptError ("Sprite names must be exactly 4 characters\n");
 			}
@@ -1810,7 +1819,7 @@ do_stop:
 			state.Misc1=state.Misc2=0;
 			state.ParameterIndex=0;
 			SC_MustGetString();
-			strncpy(statestring, sc_String + 1, 255);
+			statestring = (sc_String+1);
 			statestrp = statestring;
 			state.Frame=(*sc_String&223)-'A';
 			if ((*sc_String&223)<'A' || (*sc_String&223)>']')
@@ -1853,7 +1862,7 @@ do_stop:
 				strlwr (sc_String);
 
 				int minreq=count;
-				if (DoSpecialFunctions(state,strlen(statestring)>0, &minreq, bag))
+				if (DoSpecialFunctions(state, !statestring.IsEmpty(), &minreq, bag))
 				{
 					if (minreq>minrequiredstate) minrequiredstate=minreq;
 					goto endofstate;
@@ -2081,11 +2090,11 @@ static FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name
 	int v;
 
 	// Check for classname
-	if ((pt = strchr (name, '.')) != NULL)
+	if ((pt = strstr (name, "::")) != NULL)
 	{
 		const char *classname = name;
 		*pt = '\0';
-		name = pt + 1;
+		name = pt + 2;
 
 		// The classname may either be "Super" to identify this class's immediate
 		// superclass, or it may be the name of any class that this one derives from.
@@ -2094,7 +2103,7 @@ static FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name
 			type = type->ParentClass;
 			actor = GetDefaultByType (type);
 		}
-		else if (!FindState(actor, type, classname))
+		else
 		{
 			// first check whether a state of the desired name exists
 			const PClass *stype = PClass::FindClass (classname);
@@ -2116,12 +2125,6 @@ static FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name
 				type = stype;
 				actor = GetDefaultByType (type);
 			}
-		}
-		else
-		{
-			// Restore the period in the name
-			*pt='.';
-			name = (char*)classname;
 		}
 	}
 	label = name;

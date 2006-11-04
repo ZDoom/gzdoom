@@ -271,30 +271,6 @@ void A_RestoreSpecialThing2 (AActor *thing)
 	thing->SetState (thing->SpawnState);
 }
 
-/***************************************************************************/
-/* AItemFog, shown for respawning Doom and Strife items					   */
-/***************************************************************************/
-
-class AItemFog : public AActor
-{
-	DECLARE_ACTOR (AItemFog, AActor)
-};
-
-FState AItemFog::States[] =
-{
-	S_BRIGHT (IFOG, 'A',	6, NULL 						, &States[1]),
-	S_BRIGHT (IFOG, 'B',	6, NULL 						, &States[2]),
-	S_BRIGHT (IFOG, 'A',	6, NULL 						, &States[3]),
-	S_BRIGHT (IFOG, 'B',	6, NULL 						, &States[4]),
-	S_BRIGHT (IFOG, 'C',	6, NULL 						, &States[5]),
-	S_BRIGHT (IFOG, 'D',	6, NULL 						, &States[6]),
-	S_BRIGHT (IFOG, 'E',	6, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (AItemFog, Doom, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_SpawnState (0)
-END_DEFAULTS
 
 //---------------------------------------------------------------------------
 //
@@ -314,7 +290,7 @@ void A_RestoreSpecialDoomThing (AActor *self)
 	{
 		self->SetState (self->SpawnState);
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
-		Spawn<AItemFog> (self->x, self->y, self->z, ALLOW_REPLACE);
+		Spawn ("ItemFog", self->x, self->y, self->z, ALLOW_REPLACE);
 	}
 }
 

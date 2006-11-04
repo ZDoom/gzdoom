@@ -71,6 +71,7 @@ std2:
 
 		[-]						{ goto negative_check; }
 		((D* [.] D+) | (D+ [.] D*))	{ goto normal_token; }	/* decimal number */
+		"::"					{ goto normal_token; }
 		"&&"					{ goto normal_token; }
 		"=="					{ goto normal_token; }
 		"||"					{ goto normal_token; }

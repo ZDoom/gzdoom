@@ -12,153 +12,6 @@
 static FRandom pr_tracer ("Tracer");
 static FRandom pr_skelfist ("SkelFist");
 
-void A_SkelMissile (AActor *);
-void A_Tracer (AActor *);
-void A_SkelWhoosh (AActor *);
-void A_SkelFist (AActor *);
-
-class ARevenant : public AActor
-{
-	DECLARE_ACTOR (ARevenant, AActor)
-};
-
-FState ARevenant::States[] =
-{
-#define S_SKEL_STND 0
-	S_NORMAL (SKEL, 'A',   10, A_Look						, &States[S_SKEL_STND+1]),
-	S_NORMAL (SKEL, 'B',   10, A_Look						, &States[S_SKEL_STND]),
-
-#define S_SKEL_RUN (S_SKEL_STND+2)
-	S_NORMAL (SKEL, 'A',	2, A_Chase						, &States[S_SKEL_RUN+1]),
-	S_NORMAL (SKEL, 'A',	2, A_Chase						, &States[S_SKEL_RUN+2]),
-	S_NORMAL (SKEL, 'B',	2, A_Chase						, &States[S_SKEL_RUN+3]),
-	S_NORMAL (SKEL, 'B',	2, A_Chase						, &States[S_SKEL_RUN+4]),
-	S_NORMAL (SKEL, 'C',	2, A_Chase						, &States[S_SKEL_RUN+5]),
-	S_NORMAL (SKEL, 'C',	2, A_Chase						, &States[S_SKEL_RUN+6]),
-	S_NORMAL (SKEL, 'D',	2, A_Chase						, &States[S_SKEL_RUN+7]),
-	S_NORMAL (SKEL, 'D',	2, A_Chase						, &States[S_SKEL_RUN+8]),
-	S_NORMAL (SKEL, 'E',	2, A_Chase						, &States[S_SKEL_RUN+9]),
-	S_NORMAL (SKEL, 'E',	2, A_Chase						, &States[S_SKEL_RUN+10]),
-	S_NORMAL (SKEL, 'F',	2, A_Chase						, &States[S_SKEL_RUN+11]),
-	S_NORMAL (SKEL, 'F',	2, A_Chase						, &States[S_SKEL_RUN+0]),
-
-#define S_SKEL_FIST (S_SKEL_RUN+12)
-	S_NORMAL (SKEL, 'G',	0, A_FaceTarget 				, &States[S_SKEL_FIST+1]),
-	S_NORMAL (SKEL, 'G',	6, A_SkelWhoosh 				, &States[S_SKEL_FIST+2]),
-	S_NORMAL (SKEL, 'H',	6, A_FaceTarget 				, &States[S_SKEL_FIST+3]),
-	S_NORMAL (SKEL, 'I',	6, A_SkelFist					, &States[S_SKEL_RUN+0]),
-
-#define S_SKEL_MISS (S_SKEL_FIST+4)
-	S_BRIGHT (SKEL, 'J',	0, A_FaceTarget 				, &States[S_SKEL_MISS+1]),
-	S_BRIGHT (SKEL, 'J',   10, A_FaceTarget 				, &States[S_SKEL_MISS+2]),
-	S_NORMAL (SKEL, 'K',   10, A_SkelMissile				, &States[S_SKEL_MISS+3]),
-	S_NORMAL (SKEL, 'K',   10, A_FaceTarget 				, &States[S_SKEL_RUN+0]),
-
-#define S_SKEL_PAIN (S_SKEL_MISS+4)
-	S_NORMAL (SKEL, 'L',	5, NULL 						, &States[S_SKEL_PAIN+1]),
-	S_NORMAL (SKEL, 'L',	5, A_Pain						, &States[S_SKEL_RUN+0]),
-
-#define S_SKEL_DIE (S_SKEL_PAIN+2)
-	S_NORMAL (SKEL, 'L',	7, NULL 						, &States[S_SKEL_DIE+1]),
-	S_NORMAL (SKEL, 'M',	7, NULL 						, &States[S_SKEL_DIE+2]),
-	S_NORMAL (SKEL, 'N',	7, A_Scream 					, &States[S_SKEL_DIE+3]),
-	S_NORMAL (SKEL, 'O',	7, A_NoBlocking					, &States[S_SKEL_DIE+4]),
-	S_NORMAL (SKEL, 'P',	7, NULL 						, &States[S_SKEL_DIE+5]),
-	S_NORMAL (SKEL, 'Q',   -1, NULL 						, NULL),
-
-#define S_SKEL_RAISE (S_SKEL_DIE+6)
-	S_NORMAL (SKEL, 'Q',	5, NULL 						, &States[S_SKEL_RAISE+1]),
-	S_NORMAL (SKEL, 'P',	5, NULL 						, &States[S_SKEL_RAISE+2]),
-	S_NORMAL (SKEL, 'O',	5, NULL 						, &States[S_SKEL_RAISE+3]),
-	S_NORMAL (SKEL, 'N',	5, NULL 						, &States[S_SKEL_RAISE+4]),
-	S_NORMAL (SKEL, 'M',	5, NULL 						, &States[S_SKEL_RAISE+5]),
-	S_NORMAL (SKEL, 'L',	5, NULL 						, &States[S_SKEL_RUN+0])
-};
-
-IMPLEMENT_ACTOR (ARevenant, Doom, 66, 20)
-	PROP_SpawnHealth (300)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (56)
-	PROP_Mass (500)
-	PROP_SpeedFixed (10)
-	PROP_PainChance (100)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
-	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
-	PROP_Flags4 (MF4_LONGMELEERANGE|MF4_MISSILEMORE)
-
-	PROP_SpawnState (S_SKEL_STND)
-	PROP_SeeState (S_SKEL_RUN)
-	PROP_PainState (S_SKEL_PAIN)
-	PROP_MeleeState (S_SKEL_FIST)
-	PROP_MissileState (S_SKEL_MISS)
-	PROP_DeathState (S_SKEL_DIE)
-	PROP_RaiseState (S_SKEL_RAISE)
-
-	PROP_SeeSound ("skeleton/sight")
-	PROP_PainSound ("skeleton/pain")
-	PROP_DeathSound ("skeleton/death")
-	PROP_ActiveSound ("skeleton/active")
-	PROP_Obituary("$OB_UNDEAD")
-	PROP_HitObituary("$OB_UNDEADHIT")
-END_DEFAULTS
-
-
-class ARevenantTracer : public AActor
-{
-	DECLARE_ACTOR (ARevenantTracer, AActor)
-};
-
-FState ARevenantTracer::States[] =
-{
-#define S_TRACER 0
-	S_BRIGHT (FATB, 'A',	2, A_Tracer 					, &States[S_TRACER+1]),
-	S_BRIGHT (FATB, 'B',	2, A_Tracer 					, &States[S_TRACER]),
-
-#define S_TRACEEXP (S_TRACER+2)
-	S_BRIGHT (FBXP, 'A',	8, NULL 						, &States[S_TRACEEXP+1]),
-	S_BRIGHT (FBXP, 'B',	6, NULL 						, &States[S_TRACEEXP+2]),
-	S_BRIGHT (FBXP, 'C',	4, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ARevenantTracer, Doom, -1, 53)
-	PROP_RadiusFixed (11)
-	PROP_HeightFixed (8)
-	PROP_SpeedFixed (10)
-	PROP_Damage (10)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_PCROSS|MF2_IMPACT|MF2_NOTELEPORT|MF2_SEEKERMISSILE)
-	PROP_Flags4 (MF4_RANDOMIZE)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_TRACER)
-	PROP_DeathState (S_TRACEEXP)
-
-	PROP_SeeSound ("skeleton/attack")
-	PROP_DeathSound ("skeleton/tracex")
-END_DEFAULTS
-
-class ARevenantTracerSmoke : public AActor
-{
-	DECLARE_ACTOR (ARevenantTracerSmoke, AActor)
-};
-
-FState ARevenantTracerSmoke::States[] =
-{
-	S_NORMAL (PUFF, 'B',	4, NULL 						, &States[1]),
-	S_NORMAL (PUFF, 'C',	4, NULL 						, &States[2]),
-	S_NORMAL (PUFF, 'B',	4, NULL 						, &States[3]),
-	S_NORMAL (PUFF, 'C',	4, NULL 						, &States[4]),
-	S_NORMAL (PUFF, 'D',	4, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ARevenantTracerSmoke, Doom, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (TRANSLUC50)
-
-	PROP_SpawnState (0)
-END_DEFAULTS
-
 //
 // A_SkelMissile
 //
@@ -171,7 +24,7 @@ void A_SkelMissile (AActor *self)
 				
 	A_FaceTarget (self);
 	missile = P_SpawnMissileZ (self, self->z + 48*FRACUNIT,
-		self->target, RUNTIME_CLASS(ARevenantTracer));
+		self->target, PClass::FindClass("RevenantTracer"));
 
 	if (missile != NULL)
 	{
@@ -206,7 +59,7 @@ void A_Tracer (AActor *self)
 	// spawn a puff of smoke behind the rocket
 	P_SpawnPuff (PClass::FindClass(NAME_BulletPuff), self->x, self->y, self->z, 0, 3);
 		
-	smoke = Spawn<ARevenantTracerSmoke> (self->x - self->momx,
+	smoke = Spawn ("RevenantTracerSmoke", self->x - self->momx,
 		self->y - self->momy, self->z, ALLOW_REPLACE);
 	
 	smoke->momz = FRACUNIT;

@@ -102,7 +102,7 @@ ACTOR ZTwinedTorchUnlit : ZTwinedTorch 117
 	States
 	{
 	Spawn:
-		Goto Super.Inactive
+		Goto Super::Inactive
 	}
 }
 
@@ -134,7 +134,7 @@ ACTOR ZWallTorchUnlit : ZWallTorch 55
 	States
 	{
 	Spawn:
-		Goto Super.Inactive
+		Goto Super::Inactive
 	}
 }
 
@@ -219,7 +219,7 @@ ACTOR ZFireBullUnlit : ZFireBull 8043
 	States
 	{
 	Spawn:
-		Goto Super.Inactive+2
+		Goto Super::Inactive+2
 	}
 }
 
@@ -282,7 +282,7 @@ ACTOR ZCauldronUnlit : ZCauldron 8070
 	States
 	{
 	Spawn:
-		Goto Super.Inactive
+		Goto Super::Inactive
 	}
 }
 

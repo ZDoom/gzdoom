@@ -1,0 +1,117 @@
+//===========================================================================
+//
+// Revenant
+//
+//===========================================================================
+ACTOR Revenant 66
+{
+	Game Doom
+	SpawnID 20
+	Health 300
+	Radius 20
+	Height 56
+	Mass 500
+	Speed 10
+	PainChance 100
+	Monster
+	+LONGMELEERANGE 
+	+MISSILEMORE 
+	+FLOORCLIP
+	SeeSound "skeleton/sight"
+	PainSound "skeleton/pain"
+	DeathSound "skeleton/death"
+	ActiveSound "skeleton/active"
+	MeleeSound "skeleton/melee"
+	HitObituary "$OB_UNDEADHIT"
+	Obituary "$OB_UNDEAD"
+	States
+	{
+	Spawn:
+		SKEL AB 10 A_Look
+		Loop
+	See:
+		SKEL AABBCCDDEEFF 2 A_Chase
+		Loop
+	Melee:
+		SKEL G 1 A_FaceTarget
+		SKEL G 6 A_SkelWhoosh
+		SKEL H 6 A_FaceTarget
+		SKEL I 6 A_SkelFist
+		Goto See
+	Missile:
+		SKEL J 1 BRIGHT A_FaceTarget 
+		SKEL J 9 BRIGHT A_FaceTarget
+		SKEL K 10 A_SkelMissile
+		SKEL K 10 A_FaceTarget
+		Goto See
+	Pain:
+		SKEL L 5
+		SKEL L 5 A_Pain
+		Goto See
+	Death:
+		SKEL LM 7
+		SKEL N 7 A_Scream
+		SKEL O 7 A_NoBlocking
+		SKEL P 7
+		SKEL Q -1
+		Stop
+	Raise:
+		SKEL Q 5
+		SKEL PONML 5
+		Goto See
+	}
+}
+
+
+//===========================================================================
+//
+// Revenant Tracer
+//
+//===========================================================================
+ACTOR RevenantTracer
+{
+	Game Doom
+	SpawnID 53
+	Radius 11
+	Height 8
+	Speed 10
+	Damage 10
+	Projectile 
+	+SEEKERMISSILE 
+	+RANDOMIZE
+	SeeSound "skeleton/attack"
+	DeathSound "skeleton/tracex"
+	RenderStyle Add
+	States
+	{
+	Spawn:
+		FATB AB 2 BRIGHT A_Tracer
+		Loop
+	Death:
+		FBXP A 8 BRIGHT
+		FBXP B 6 BRIGHT
+		FBXP C 4 BRIGHT
+		Stop
+	}
+}
+
+
+//===========================================================================
+//
+// Revenant Tracer Smoke
+//
+//===========================================================================
+ACTOR RevenantTracerSmoke
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+NOTELEPORT
+	RenderStyle Translucent 
+	Alpha 0.5
+	States
+	{	
+	Spawn:
+		PUFF ABABC 4
+		Stop
+	}
+}

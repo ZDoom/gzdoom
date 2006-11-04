@@ -42,14 +42,14 @@ ACTOR ZombieMan 3004
 	Death:
 		POSS H 5
 		POSS I 5 A_Scream
-		POSS J 5 A_Fall
+		POSS J 5 A_NoBlocking
 		POSS K 5
 		POSS L -1
 		Stop
 	XDeath:
 		POSS M 5
 		POSS N 5 A_XScream
-		POSS O 5 A_Fall
+		POSS O 5 A_NoBlocking
 		POSS PQRST 5
 		POSS U -1
 		Stop
@@ -104,14 +104,14 @@ ACTOR ShotgunGuy 9
 	Death:
 		SPOS H 5
 		SPOS I 5 A_Scream
-		SPOS J 5 A_Fall
+		SPOS J 5 A_NoBlocking
 		SPOS K 5
 		SPOS L -1
 		Stop
 	XDeath:
 		SPOS M 5
 		SPOS N 5 A_XScream
-		SPOS O 5 A_Fall
+		SPOS O 5 A_NoBlocking
 		SPOS PQRST 5
 		SPOS U -1
 		Stop
@@ -166,14 +166,14 @@ ACTOR ChaingunGuy 65
 	Death:
 		CPOS H 5
 		CPOS I 5 A_Scream
-		CPOS J 5 A_Fall
+		CPOS J 5 A_NoBlocking
 		CPOS KLM 5
 		CPOS N -1
 		Stop
 	XDeath:
 		CPOS O 5 
 		CPOS P 5 A_XScream
-		CPOS Q 5 A_Fall
+		CPOS Q 5 A_NoBlocking
 		CPOS RS 5
 		CPOS T -1
 		Stop
@@ -229,14 +229,14 @@ ACTOR WolfensteinSS 84
 	Death:
 		SSWV I 5
 		SSWV J 5 A_Scream
-		SSWV K 5 A_Fall
+		SSWV K 5 A_NoBlocking
 		SSWV L 5
 		SSWV M -1
 		Stop
 	XDeath:
 		SSWV N 5 
 		SSWV O 5 A_XScream
-		SSWV P 5 A_Fall
+		SSWV P 5 A_NoBlocking
 		SSWV QRSTU 5
 		SSWV V -1
 		Stop

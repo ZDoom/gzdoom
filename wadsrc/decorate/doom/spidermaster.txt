@@ -41,10 +41,10 @@ ACTOR SpiderMastermind 7
 		SPID EFF 3 A_Chase
 		Loop
 	Missile:
-		SPID A BRIGHT 20 A_FaceTarget  
-		SPID G BRIGHT 4 A_SPosAttack
-		SPID H BRIGHT 4 A_SposAttack
-		SPID H BRIGHT 1 A_SpidRefire
+		SPID A 20 BRIGHT A_FaceTarget  
+		SPID G 4 BRIGHT A_SPosAttackUseAtkSound
+		SPID H 4 BRIGHT A_SposAttackUseAtkSound
+		SPID H 1 BRIGHT A_SpidRefire
 		Goto Missile+1
 	Pain:
 		SPID I 3
@@ -52,7 +52,7 @@ ACTOR SpiderMastermind 7
 		Goto See
 	Death:
 		SPID J 20 A_Scream
-		SPID K 10 A_Fall
+		SPID K 10 A_NoBlocking
 		SPID LMNOPQR 10
 		SPID S 30
 		SPID S -1 A_BossDeath    

@@ -1824,3 +1824,23 @@ void A_Respawn (AActor *actor)
 	}
 }
 
+
+//==========================================================================
+//
+// A_PlayerSkinCheck
+//
+//==========================================================================
+
+void A_PlayerSkinCheck (AActor *actor)
+{
+	if (actor->player != NULL &&
+		skins[actor->player->userinfo.skin].othergame)
+	{
+		int index = CheckIndex(1, &CallingState);
+	
+		if (index >= 0)
+		{
+			DoJump(actor, CallingState, StateParameters[index]);
+		}	
+	}
+}

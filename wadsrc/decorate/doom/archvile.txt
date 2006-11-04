@@ -51,7 +51,7 @@ ACTOR Archvile 64
 	Death:
 		VILE Q 7
 		VILE R 7 A_Scream
-		VILE S 7 A_Fall
+		VILE S 7 A_NoBlocking
 		VILE TUVWXY 7
 		VILE Z -1
 		Stop

@@ -244,6 +244,7 @@ decorate.txt				decorate/decorate.txt
 actors/shared/blood.txt						decorate/shared/blood.txt
 actors/shared/debris.txt					decorate/shared/debris.txt
 actors/shared/splashes.txt					decorate/shared/splashes.txt
+actors/shared/pickups.txt					decorate/shared/pickups.txt
 
 actors/doom/possessed.txt					decorate/doom/possessed.txt
 actors/doom/doomimp.txt						decorate/doom/doomimp.txt
@@ -252,6 +253,9 @@ actors/doom/lostsoul.txt					decorate/doom/lostsoul.txt
 actors/doom/cacodemon.txt					decorate/doom/cacodemon.txt
 actors/doom/bruiser.txt						decorate/doom/bruiser.txt
 actors/doom/arachnotron.txt					decorate/doom/arachnotron.txt
+actors/doom/fatso.txt						decorate/doom/fatso.txt
+actors/doom/revenant.txt					decorate/doom/revenant.txt
+actors/doom/painelemental.txt				decorate/doom/painelemental.txt
 actors/doom/archvile.txt					decorate/doom/archvile.txt
 actors/doom/cyberdemon.txt					decorate/doom/cyberdemon.txt
 actors/doom/spidermaster.txt				decorate/doom/spidermaster.txt

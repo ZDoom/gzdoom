@@ -1,0 +1,61 @@
+//===========================================================================
+//
+// Spider boss
+//
+//===========================================================================
+ACTOR SpiderMastermind 7
+{
+	Game Doom
+	SpawnID 7
+	Health 3000
+	Radius 100
+	Height 100
+	Mass 1000
+	Speed 12
+	PainChance 40
+	Monster
+	MinMissileChance 160
+	+BOSS
+	+MISSILEMORE
+	+FLOORCLIP
+	+NORADIUSDMG
+	+DONTMORPH
+	+BOSSDEATH
+	SeeSound "spider/sight"
+	AttackSound "spider/attack"
+	PainSound "spider/pain"
+	DeathSound "spider/death"
+	ActiveSound "spider/active"
+	Obituary "$OB_SPIDER"
+	States
+	{
+	Spawn:
+		SPID AB 10 A_Look
+		Loop
+	See:
+		SPID A 3 A_Metal
+		SPID ABB 3 A_Chase
+		SPID C 3 A_Metal
+		SPID CDD 3 A_Chase
+		SPID E 3 A_Metal
+		SPID EFF 3 A_Chase
+		Loop
+	Missile:
+		SPID A BRIGHT 20 A_FaceTarget  
+		SPID G BRIGHT 4 A_SPosAttack
+		SPID H BRIGHT 4 A_SposAttack
+		SPID H BRIGHT 1 A_SpidRefire
+		Goto Missile+1
+	Pain:
+		SPID I 3
+		SPID I 3 A_Pain
+		Goto See
+	Death:
+		SPID J 20 A_Scream
+		SPID K 10 A_Fall
+		SPID LMNOPQR 10
+		SPID S 30
+		SPID S -1 A_BossDeath    
+		Stop
+	}
+}

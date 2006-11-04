@@ -7,147 +7,12 @@
 #include "gstrings.h"
 #include "a_action.h"
 
-void A_VileChase (AActor *);
-void A_VileStart (AActor *);
-void A_StartFire (AActor *);
-void A_FireCrackle (AActor *);
-void A_Fire (AActor *);
-void A_VileTarget (AActor *);
-void A_VileAttack (AActor *);
-
-FState AArchvile::States[] =
-{
-#define S_VILE_STND 0
-	S_NORMAL (VILE, 'A',   10, A_Look						, &States[S_VILE_STND+1]),
-	S_NORMAL (VILE, 'B',   10, A_Look						, &States[S_VILE_STND]),
-
-#define S_VILE_RUN (S_VILE_STND+2)
-	S_NORMAL (VILE, 'A',	2, A_VileChase					, &States[S_VILE_RUN+1]),
-	S_NORMAL (VILE, 'A',	2, A_VileChase					, &States[S_VILE_RUN+2]),
-	S_NORMAL (VILE, 'B',	2, A_VileChase					, &States[S_VILE_RUN+3]),
-	S_NORMAL (VILE, 'B',	2, A_VileChase					, &States[S_VILE_RUN+4]),
-	S_NORMAL (VILE, 'C',	2, A_VileChase					, &States[S_VILE_RUN+5]),
-	S_NORMAL (VILE, 'C',	2, A_VileChase					, &States[S_VILE_RUN+6]),
-	S_NORMAL (VILE, 'D',	2, A_VileChase					, &States[S_VILE_RUN+7]),
-	S_NORMAL (VILE, 'D',	2, A_VileChase					, &States[S_VILE_RUN+8]),
-	S_NORMAL (VILE, 'E',	2, A_VileChase					, &States[S_VILE_RUN+9]),
-	S_NORMAL (VILE, 'E',	2, A_VileChase					, &States[S_VILE_RUN+10]),
-	S_NORMAL (VILE, 'F',	2, A_VileChase					, &States[S_VILE_RUN+11]),
-	S_NORMAL (VILE, 'F',	2, A_VileChase					, &States[S_VILE_RUN+0]),
-
-#define S_VILE_ATK (S_VILE_RUN+12)
-	S_BRIGHT (VILE, 'G',	0, A_VileStart					, &States[S_VILE_ATK+1]),
-	S_BRIGHT (VILE, 'G',   10, A_FaceTarget 				, &States[S_VILE_ATK+2]),
-	S_BRIGHT (VILE, 'H',	8, A_VileTarget 				, &States[S_VILE_ATK+3]),
-	S_BRIGHT (VILE, 'I',	8, A_FaceTarget 				, &States[S_VILE_ATK+4]),
-	S_BRIGHT (VILE, 'J',	8, A_FaceTarget 				, &States[S_VILE_ATK+5]),
-	S_BRIGHT (VILE, 'K',	8, A_FaceTarget 				, &States[S_VILE_ATK+6]),
-	S_BRIGHT (VILE, 'L',	8, A_FaceTarget 				, &States[S_VILE_ATK+7]),
-	S_BRIGHT (VILE, 'M',	8, A_FaceTarget 				, &States[S_VILE_ATK+8]),
-	S_BRIGHT (VILE, 'N',	8, A_FaceTarget 				, &States[S_VILE_ATK+9]),
-	S_BRIGHT (VILE, 'O',	8, A_VileAttack 				, &States[S_VILE_ATK+10]),
-	S_BRIGHT (VILE, 'P',   20, NULL 						, &States[S_VILE_RUN+0]),
-
-#define S_VILE_HEAL (S_VILE_ATK+11)
-	S_BRIGHT (VILE, '[',   10, NULL 						, &States[S_VILE_HEAL+1]),
-	S_BRIGHT (VILE, '\\',  10, NULL 						, &States[S_VILE_HEAL+2]),
-	S_BRIGHT (VILE, ']',   10, NULL 						, &States[S_VILE_RUN+0]),
-
-#define S_VILE_PAIN (S_VILE_HEAL+3)
-	S_NORMAL (VILE, 'Q',	5, NULL 						, &States[S_VILE_PAIN+1]),
-	S_NORMAL (VILE, 'Q',	5, A_Pain						, &States[S_VILE_RUN+0]),
-
-#define S_VILE_DIE (S_VILE_PAIN+2)
-	S_NORMAL (VILE, 'Q',	7, NULL 						, &States[S_VILE_DIE+1]),
-	S_NORMAL (VILE, 'R',	7, A_Scream 					, &States[S_VILE_DIE+2]),
-	S_NORMAL (VILE, 'S',	7, A_NoBlocking					, &States[S_VILE_DIE+3]),
-	S_NORMAL (VILE, 'T',	7, NULL 						, &States[S_VILE_DIE+4]),
-	S_NORMAL (VILE, 'U',	7, NULL 						, &States[S_VILE_DIE+5]),
-	S_NORMAL (VILE, 'V',	7, NULL 						, &States[S_VILE_DIE+6]),
-	S_NORMAL (VILE, 'W',	7, NULL 						, &States[S_VILE_DIE+7]),
-	S_NORMAL (VILE, 'X',	5, NULL 						, &States[S_VILE_DIE+8]),
-	S_NORMAL (VILE, 'Y',	5, NULL 						, &States[S_VILE_DIE+9]),
-	S_NORMAL (VILE, 'Z',   -1, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (AArchvile, Doom, 64, 111)
-	PROP_SpawnHealth (700)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (56)
-	PROP_Mass (500)
-	PROP_SpeedFixed (15)
-	PROP_PainChance (10)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
-	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
-	PROP_Flags3 (MF3_NOTARGET)
-	PROP_Flags4 (MF4_QUICKTORETALIATE|MF4_SHORTMISSILERANGE)
-
-	PROP_SpawnState (S_VILE_STND)
-	PROP_SeeState (S_VILE_RUN)
-	PROP_PainState (S_VILE_PAIN)
-	PROP_MissileState (S_VILE_ATK)
-	PROP_DeathState (S_VILE_DIE)
-
-	PROP_SeeSound ("vile/sight")
-	PROP_PainSound ("vile/pain")
-	PROP_DeathSound ("vile/death")
-	PROP_ActiveSound ("vile/active")
-	PROP_Obituary("$OB_VILE")
-
-END_DEFAULTS
-
-class AArchvileFire : public AActor
-{
-	DECLARE_ACTOR (AArchvileFire, AActor)
-};
-
-FState AArchvileFire::States[] =
-{
-	S_BRIGHT (FIRE, 'A',	2, A_StartFire					, &States[1]),
-	S_BRIGHT (FIRE, 'B',	2, A_Fire						, &States[2]),
-	S_BRIGHT (FIRE, 'A',	2, A_Fire						, &States[3]),
-	S_BRIGHT (FIRE, 'B',	2, A_Fire						, &States[4]),
-	S_BRIGHT (FIRE, 'C',	2, A_FireCrackle				, &States[5]),
-	S_BRIGHT (FIRE, 'B',	2, A_Fire						, &States[6]),
-	S_BRIGHT (FIRE, 'C',	2, A_Fire						, &States[7]),
-	S_BRIGHT (FIRE, 'B',	2, A_Fire						, &States[8]),
-	S_BRIGHT (FIRE, 'C',	2, A_Fire						, &States[9]),
-	S_BRIGHT (FIRE, 'D',	2, A_Fire						, &States[10]),
-	S_BRIGHT (FIRE, 'C',	2, A_Fire						, &States[11]),
-	S_BRIGHT (FIRE, 'D',	2, A_Fire						, &States[12]),
-	S_BRIGHT (FIRE, 'C',	2, A_Fire						, &States[13]),
-	S_BRIGHT (FIRE, 'D',	2, A_Fire						, &States[14]),
-	S_BRIGHT (FIRE, 'E',	2, A_Fire						, &States[15]),
-	S_BRIGHT (FIRE, 'D',	2, A_Fire						, &States[16]),
-	S_BRIGHT (FIRE, 'E',	2, A_Fire						, &States[17]),
-	S_BRIGHT (FIRE, 'D',	2, A_Fire						, &States[18]),
-	S_BRIGHT (FIRE, 'E',	2, A_FireCrackle				, &States[19]),
-	S_BRIGHT (FIRE, 'F',	2, A_Fire						, &States[20]),
-	S_BRIGHT (FIRE, 'E',	2, A_Fire						, &States[21]),
-	S_BRIGHT (FIRE, 'F',	2, A_Fire						, &States[22]),
-	S_BRIGHT (FIRE, 'E',	2, A_Fire						, &States[23]),
-	S_BRIGHT (FIRE, 'F',	2, A_Fire						, &States[24]),
-	S_BRIGHT (FIRE, 'G',	2, A_Fire						, &States[25]),
-	S_BRIGHT (FIRE, 'H',	2, A_Fire						, &States[26]),
-	S_BRIGHT (FIRE, 'G',	2, A_Fire						, &States[27]),
-	S_BRIGHT (FIRE, 'H',	2, A_Fire						, &States[28]),
-	S_BRIGHT (FIRE, 'G',	2, A_Fire						, &States[29]),
-	S_BRIGHT (FIRE, 'H',	2, A_Fire						, NULL)
-};
-
-IMPLEMENT_ACTOR (AArchvileFire, Doom, -1, 98)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-
 //
 // PIT_VileCheck
 // Detect a corpse that could be raised.
 //
+void A_Fire (AActor *self);
+
 static AActor *corpsehit;
 static AActor *vileobj;
 static fixed_t viletryx;
@@ -253,8 +118,7 @@ void A_VileChase (AActor *self)
 					}
 					self->target = temp;
 										
-					// Make the state the monster enters customizable - but leave the
-					// default for Dehacked compatibility!
+					// Make the state the monster enters customizable.
 					FState * state = self->FindState(NAME_Heal);
 					if (state != NULL)
 					{
@@ -262,7 +126,13 @@ void A_VileChase (AActor *self)
 					}
 					else
 					{
-						self->SetState (&AArchvile::States[S_VILE_HEAL]);
+						// For Dehacked compatibility this has to use the Arch Vile's
+						// heal state as a default if the actor doesn't define one itself.
+						const PClass *archvile = PClass::FindClass("Archvile");
+						if (archvile != NULL)
+						{
+							self->SetState (archvile->ActorInfo->FindState(NAME_Heal));
+						}
 					}
 					S_Sound (corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
 					info = corpsehit->GetDefault ();
@@ -364,7 +234,7 @@ void A_VileTarget (AActor *actor)
 
 	A_FaceTarget (actor);
 
-	fog = Spawn<AArchvileFire> (actor->target->x, actor->target->x,
+	fog = Spawn ("ArchvileFire", actor->target->x, actor->target->x,
 		actor->target->z, ALLOW_REPLACE);
 	
 	actor->tracer = fog;

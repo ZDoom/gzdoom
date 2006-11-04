@@ -94,7 +94,7 @@ ACTOR ShotgunGuy 9
 		Loop
 	Missile:
 		SPOS E 10 A_FaceTarget
-		SPOS F 10 A_SposAttackUseAtkSound
+		SPOS F 10 BRIGHT A_SposAttackUseAtkSound
 		SPOS E 10
 		Goto See
 	Pain:
@@ -156,7 +156,7 @@ ACTOR ChaingunGuy 65
 		Loop
 	Missile:
 		CPOS E 10 A_FaceTarget
-		CPOS FE 4 A_CPosAttack
+		CPOS FE 4 BRIGHT A_CPosAttack
 		CPOS F 1 A_CPosRefire
 		Goto Missile+1
 	Pain:
@@ -217,9 +217,9 @@ ACTOR WolfensteinSS 84
 	Missile:
 		SSWV E 10 A_FaceTarget
 		SSWV F 10 A_FaceTarget
-		SSWV G 4 A_CPosAttack
+		SSWV G 4 BRIGHT A_CPosAttack
 		SSWV F 6 A_FaceTarget
-		SSWV G 4 A_CPosAttack
+		SSWV G 4 BRIGHT A_CPosAttack
 		SSWV F 1 A_CPosRefire
 		Goto Missile+1
 	Pain:

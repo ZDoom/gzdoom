@@ -8,6 +8,11 @@
 #include "actors/doom/lostsoul.txt"
 #include "actors/doom/cacodemon.txt"
 #include "actors/doom/bruiser.txt"
+#include "actors/doom/arachnotron.txt"
+#include "actors/doom/archvile.txt"
+#include "actors/doom/cyberdemon.txt"
+#include "actors/doom/spidermaster.txt"
+#include "actors/doom/keen.txt"
 
 #include "actors/doom/deadthings.txt"
 #include "actors/doom/doomammo.txt"

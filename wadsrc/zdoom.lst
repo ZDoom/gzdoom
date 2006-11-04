@@ -251,6 +251,11 @@ actors/doom/demon.txt						decorate/doom/demon.txt
 actors/doom/lostsoul.txt					decorate/doom/lostsoul.txt
 actors/doom/cacodemon.txt					decorate/doom/cacodemon.txt
 actors/doom/bruiser.txt						decorate/doom/bruiser.txt
+actors/doom/arachnotron.txt					decorate/doom/arachnotron.txt
+actors/doom/archvile.txt					decorate/doom/archvile.txt
+actors/doom/cyberdemon.txt					decorate/doom/cyberdemon.txt
+actors/doom/spidermaster.txt				decorate/doom/spidermaster.txt
+actors/doom/keen.txt						decorate/doom/keen.txt
 
 actors/doom/deadthings.txt					decorate/doom/deadthings.txt
 actors/doom/doomammo.txt					decorate/doom/doomammo.txt

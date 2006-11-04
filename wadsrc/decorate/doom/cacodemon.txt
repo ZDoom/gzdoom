@@ -33,7 +33,7 @@ ACTOR Cacodemon 3005
 	Missile:
 		HEAD B 5 A_FaceTarget
 		HEAD C 5 A_FaceTarget
-		HEAD D 5 A_HeadAttack
+		HEAD D 5 BRIGHT A_HeadAttack
 		Goto See
 	Pain:
 		HEAD E 3

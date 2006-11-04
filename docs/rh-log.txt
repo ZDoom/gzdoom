@@ -1,4 +1,6 @@
 November 4, 2006 (Changes by Graf Zahl)
+- Converted Arachnotron, Archvile, Cyberdemon, Spidermastermind and
+  CommanderKeen to DECORATE.
 - Converted ExplosiveBarrel, BulletPuff and DoomUnusedStates to DECORATE.
 - Added VSpeed DECORATE property so that an actor can be given an initial
   vertical speed.

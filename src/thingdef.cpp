@@ -210,6 +210,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF4, FRIGHTENED, AActor, flags4),
 	DEFINE_FLAG(MF4, NOBOUNCESOUND, AActor, flags4),
 	DEFINE_FLAG(MF4, NOSKIN, AActor, flags4),
+	DEFINE_FLAG(MF4, BOSSDEATH, AActor, flags4),
 
 	DEFINE_FLAG(MF5, FASTER, AActor, flags5),
 	DEFINE_FLAG(MF5, FASTMELEE, AActor, flags5),

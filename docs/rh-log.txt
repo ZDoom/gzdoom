@@ -1,4 +1,7 @@
 November 5, 2006 (Changes by Graf Zahl)
+- Converted the DoomPlayer to DECORATE.
+- Extended all A_Jump commands to take labels as parameters in addition
+  to offsets.
 - Removed the deprecation warnings for the state assignment commands
   in DECORATE. While it is still recommended not to use them anymore
   they will continue to work with custom state support and existing 

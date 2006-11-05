@@ -246,6 +246,7 @@ actors/shared/debris.txt					decorate/shared/debris.txt
 actors/shared/splashes.txt					decorate/shared/splashes.txt
 actors/shared/pickups.txt					decorate/shared/pickups.txt
 
+actors/doom/doomplayer.txt					decorate/doom/doomplayer.txt
 actors/doom/possessed.txt					decorate/doom/possessed.txt
 actors/doom/doomimp.txt						decorate/doom/doomimp.txt
 actors/doom/demon.txt						decorate/doom/demon.txt

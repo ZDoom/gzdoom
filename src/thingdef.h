@@ -21,6 +21,10 @@ public:
 	}
 };
 
+// All state parameters are stored in this array now.
+extern TArray<int> StateParameters;
+extern TArray<int> JumpParameters;
+
 
 int ParseExpression (bool _not);
 
@@ -42,7 +46,7 @@ struct FDropItem
 	FDropItem * Next;
 };
 
-FDropItem *GetDropItems(AActor * actor);
+FDropItem *GetDropItems(const PClass * cls);
 
 
 // A truly awful hack to get to the state that called an action function

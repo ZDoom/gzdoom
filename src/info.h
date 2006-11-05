@@ -81,10 +81,6 @@
 const BYTE SF_FULLBRIGHT = 0x40;
 const BYTE SF_BIGTIC	 = 0x80;
 
-// All state parameters are stored in this array now.
-
-extern TArray<int> StateParameters;
-
 struct FState
 {
 	union

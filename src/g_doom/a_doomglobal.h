@@ -58,11 +58,4 @@ protected:
 	int SpriteOverride;
 };
 
-class ADoomPlayer : public APlayerPawn
-{
-	DECLARE_ACTOR (ADoomPlayer, APlayerPawn)
-public:
-	void GiveDefaultInventory ();
-};
-
 #endif //__A_DOOMGLOBAL_H__

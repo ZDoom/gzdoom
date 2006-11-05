@@ -79,6 +79,7 @@ extern TArray<FActorInfo *> Decorations;
 TArray<char*> DecalNames;
 // all state parameters
 TArray<int> StateParameters;
+TArray<int> JumpParameters;
 
 //==========================================================================
 //
@@ -1007,9 +1008,9 @@ public:
 
 static FDropItemPtrArray DropItemList;
 
-FDropItem *GetDropItems(AActor * actor)
+FDropItem *GetDropItems(const PClass *cls)
 {
-	unsigned int index = actor->GetClass ()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
+	unsigned int index = cls->Meta.GetMetaInt (ACMETA_DropItems) - 1;
 
 	if (index >= 0 && index < DropItemList.Size())
 	{
@@ -1962,16 +1963,78 @@ do_stop:
 									SC_ScriptError("You cannot use A_Jump commands on multistate definitions\n");
 								}
 
-								SC_MustGetNumber();
-								v=sc_Number;
-								if (v<1)
+								if (SC_CheckNumber())
 								{
-									SC_ScriptError("Negative jump offsets are not allowed");
-								}
+									v=sc_Number;
+									if (v<1)
+									{
+										SC_ScriptError("Negative jump offsets are not allowed");
+									}
 
+									{
+										int minreq=count+v;
+										if (minreq>minrequiredstate) minrequiredstate=minreq;
+									}
+								}
+								else
 								{
-									int minreq=count+v;
-									if (minreq>minrequiredstate) minrequiredstate=minreq;
+									if (JumpParameters.Size()==0) JumpParameters.Push(0);
+
+									v = -(int)JumpParameters.Size();
+									FString statestring = ParseStateString();
+									const PClass *stype=NULL;
+									int scope = statestring.IndexOf("::");
+									if (scope >= 0)
+									{
+										FName scopename = FName(statestring, scope, false);
+										if (scopename == NAME_Super)
+										{
+											// Super refers to the direct superclass
+											scopename = actor->Class->ParentClass->TypeName;
+										}
+										JumpParameters.Push(scopename);
+										statestring = statestring.Right(statestring.Len()-scope-2);
+
+										stype = PClass::FindClass (scopename);
+										if (stype == NULL)
+										{
+											SC_ScriptError ("%s is an unknown class.", scopename);
+										}
+										if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
+										{
+											SC_ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
+										}
+										if (!stype->IsAncestorOf (actor->Class))
+										{
+											SC_ScriptError ("%s is not derived from %s so cannot access its states.",
+												actor->Class->TypeName.GetChars(), stype->TypeName.GetChars());
+										}
+									}
+									else
+									{
+										// No class name is stored. This allows 'virtual' jumps to
+										// labels in subclasses.
+										// It also means that the validity of the given state cannot
+										// be checked here.
+										JumpParameters.Push(0);
+									}
+									TArray<FName> names;
+									MakeStateNameList(statestring, &names);
+
+									if (stype != NULL)
+									{
+										if (!stype->ActorInfo->FindState(names.Size(), (va_list)&names[0]))
+										{
+											SC_ScriptError("Jump to unknown state '%s' in class '%s'",
+												statestring.GetChars(), stype->TypeName.GetChars());
+										}
+									}
+									JumpParameters.Push(names.Size());
+									for(unsigned i=0;i<names.Size();i++)
+									{
+										JumpParameters.Push(names[i]);
+									}
+									// No offsets here. The point of jumping to labels is to avoid such things!
 								}
 
 								break;

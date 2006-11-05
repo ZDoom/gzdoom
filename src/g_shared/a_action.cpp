@@ -98,7 +98,7 @@ void A_NoBlocking (AActor *actor)
 	// Otherwise, call NoBlockingSet() and let it decide what to drop.
 	if (!actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))	// [GRB]
 	{
-		FDropItem *di = GetDropItems(actor);
+		FDropItem *di = GetDropItems(RUNTIME_TYPE(actor));
 
 		if (di != NULL)
 		{

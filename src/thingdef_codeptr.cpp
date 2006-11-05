@@ -380,21 +380,51 @@ void A_BulletAttack (AActor *self)
 //==========================================================================
 static void DoJump(AActor * self, FState * CallingState, int offset)
 {
-	if (pStateCall != NULL && CallingState == pStateCall->State)
+	FState *jumpto;
+
+	if (offset>=0)
 	{
-		pStateCall->State += offset;
-	}
-	else if (self->player != NULL && CallingState == self->player->psprites[ps_weapon].state)
-	{
-		P_SetPsprite(self->player, ps_weapon, CallingState + offset);
-	}
-	else if (self->player != NULL && CallingState == self->player->psprites[ps_flash].state)
-	{
-		P_SetPsprite(self->player, ps_flash, CallingState + offset);
+		jumpto = CallingState + offset;
 	}
 	else
 	{
-		self->SetState (CallingState + offset);
+		offset = -offset;
+
+		int classname = JumpParameters[offset];
+		const PClass *cls;
+		cls = classname==NAME_None?  RUNTIME_TYPE(self) : PClass::FindClass((ENamedName)classname);
+		if (cls==NULL || cls->ActorInfo==NULL) return;	// shouldn't happen
+		
+		jumpto = cls->ActorInfo->FindState(JumpParameters[offset+1], (va_list)&JumpParameters[offset+2]);
+		if (jumpto == NULL)
+		{
+			char * dot="";
+			Printf("Jump target '");
+			if (classname != NAME_None) Printf("%s::", ((FName)(ENamedName)classname).GetChars());
+			for (int i=0;i<JumpParameters[offset+1];i++)
+			{
+				Printf("%s%s", dot, ((FName)(ENamedName)JumpParameters[offset+2+i]));
+			}
+			Printf("not found in %s\n", self->GetClass()->TypeName.GetChars());
+			return;
+		}
+	}
+
+	if (pStateCall != NULL && CallingState == pStateCall->State)
+	{
+		pStateCall->State = jumpto;
+	}
+	else if (self->player != NULL && CallingState == self->player->psprites[ps_weapon].state)
+	{
+		P_SetPsprite(self->player, ps_weapon, jumpto);
+	}
+	else if (self->player != NULL && CallingState == self->player->psprites[ps_flash].state)
+	{
+		P_SetPsprite(self->player, ps_flash, jumpto);
+	}
+	else
+	{
+		self->SetState (jumpto);
 	}
 }
 //==========================================================================

@@ -873,7 +873,7 @@ void APlayerPawn::GiveDefaultInventory ()
 	// [GRB] Give inventory specified in DECORATE
 	player->health = GetDefault ()->health;
 
-	FDropItem *di = GetDropItems(this);
+	FDropItem *di = GetDropItems(RUNTIME_TYPE(this));
 
 	while (di)
 	{
@@ -904,7 +904,8 @@ void APlayerPawn::GiveDefaultInventory ()
 					item = NULL;
 				}
 			}
-			if (item != NULL && item->IsKindOf (RUNTIME_CLASS (AWeapon)))
+			if (item != NULL && item->IsKindOf (RUNTIME_CLASS (AWeapon)) && 
+				static_cast<AWeapon*>(item)->CheckAmmo(AWeapon::EitherFire, false))
 			{
 				player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (item);
 			}
@@ -1057,6 +1058,74 @@ void APlayerPawn::SpecialInvulnerabilityHandling (EInvulState setting, fixed_t *
 	if (setting == INVUL_GetAlpha && pAlpha!=NULL) *pAlpha=FIXED_MAX;	// indicates no change
 }
 
+
+//===========================================================================
+//
+// A_PlayerScream
+//
+// try to find the appropriate death sound and use suitable 
+// replacements if necessary
+//
+//===========================================================================
+
+void A_PlayerScream (AActor *self)
+{
+	int sound = 0;
+	int chan = CHAN_VOICE;
+
+	if (self->player == NULL || self->DeathSound != 0)
+	{
+		S_SoundID (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
+		return;
+	}
+
+	// Handle the different player death screams
+	if ((((level.flags >> 15) | (dmflags)) &
+		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX)) &&
+		self->momz <= -39*FRACUNIT)
+	{
+		sound = S_FindSkinnedSound (self, "*splat");
+		chan = CHAN_BODY;
+	}
+
+	if (!sound && self->special1<10)
+	{ // Wimpy death sound
+		sound = S_FindSkinnedSound (self, "*wimpydeath");
+	}
+	if (!sound && self->health <= -50)
+	{
+		if (self->health > -100)
+		{ // Crazy death sound
+			sound = S_FindSkinnedSound (self, "*crazydeath");
+		}
+		if (!sound)
+		{ // Extreme death sound
+			sound = S_FindSkinnedSound (self, "*xdeath");
+			if (!sound)
+			{
+				sound = S_FindSkinnedSound (self, "*gibbed");
+				chan = CHAN_BODY;
+			}
+		}
+	}
+	if (!sound)
+	{ // Normal death sound
+		sound=S_FindSkinnedSound (self, "*death");
+	}
+
+	if (chan != CHAN_VOICE)
+	{
+		for (int i = 0; i < 8; ++i)
+		{ // Stop most playing sounds from this player.
+		  // This is mainly to stop *land from messing up *splat.
+			if (i != CHAN_WEAPON && i != CHAN_VOICE)
+			{
+				S_StopSound (self, i);
+			}
+		}
+	}
+	S_SoundID (self, chan, sound, 1, ATTN_NORM);
+}
 
 
 //===========================================================================

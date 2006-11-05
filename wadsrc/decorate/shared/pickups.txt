@@ -1,0 +1,18 @@
+/***************************************************************************/
+//
+// shown for respawning Doom and Strife items
+//
+/***************************************************************************/
+
+ACTOR ItemFog
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		IFOG ABABCDE 6 BRIGHT
+		Stop
+	}
+}
+

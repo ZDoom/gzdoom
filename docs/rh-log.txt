@@ -1,3 +1,10 @@
+November 5, 2006 (Changes by Graf Zahl)
+- Removed the deprecation warnings for the state assignment commands
+  in DECORATE. While it is still recommended not to use them anymore
+  they will continue to work with custom state support and existing 
+  DECORATE code doesn't have to be changed. However, they will remain
+  limited to the existing functionality, nothing more.
+
 November 4, 2006 (Changes by Graf Zahl)
 - Replaced the static string buffer in ProcessStates with an FString.
 - After doing some tests with state label scopes I had to conclude that

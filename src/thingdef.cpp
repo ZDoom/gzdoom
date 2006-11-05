@@ -2474,16 +2474,14 @@ void ProcessActor(void (*process)(FState *, int))
 //
 // StatePropertyIsDeprecated
 //
-// Deprecated means it will be removed in a future version.
-//
 //==========================================================================
 
 static void StatePropertyIsDeprecated (const char *actorname, const char *prop)
 {
+	/*
 	static bool warned = false;
 
-	Printf (TEXTCOLOR_YELLOW "In actor %s, the %s property is deprecated and will be removed in 2.2.0.\n",
-		actorname, prop);
+	Printf (TEXTCOLOR_YELLOW "In actor %s, the %s property is deprecated.\n", actorname, prop);
 	if (!warned)
 	{
 		warned = true;
@@ -2491,6 +2489,7 @@ static void StatePropertyIsDeprecated (const char *actorname, const char *prop)
 				TEXTCOLOR_YELLOW "    %s:\n"
 				TEXTCOLOR_YELLOW "        Goto <state>\n", prop, prop);
 	}
+	*/
 }
 
 //==========================================================================

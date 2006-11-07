@@ -78,9 +78,7 @@ FState AFighterBoss::States[] =
 	S_BRIGHT (FDTH, 'S',	5, A_NoBlocking			    , &States[S_FIGHTER_BURN+15]),
 	S_BRIGHT (FDTH, 'T',	4, NULL					    , &States[S_FIGHTER_BURN+16]),
 	S_BRIGHT (FDTH, 'U',	5, NULL					    , &States[S_FIGHTER_BURN+17]),
-	S_BRIGHT (FDTH, 'V',	4, NULL					    , &States[S_FIGHTER_BURN+18]),
-	S_NORMAL (ACLO, 'E',   35, A_CheckBurnGone		    , &States[S_FIGHTER_BURN+18]),
-	S_NORMAL (ACLO, 'E',	8, NULL					    , NULL),
+	S_BRIGHT (FDTH, 'V',	4, NULL					    , NULL),
 };
 
 IMPLEMENT_ACTOR (AFighterBoss, Hexen, 10100, 0)

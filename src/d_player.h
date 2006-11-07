@@ -52,6 +52,13 @@ enum
 	APMETA_DisplayName,		// display name (used in menus etc.)
 	APMETA_SoundClass,		// sound class
 	APMETA_ColorRange,		// skin color range
+	APMETA_InvulMode,
+	APMETA_HealingRadius,
+	APMETA_Hexenarmor0,
+	APMETA_Hexenarmor1,
+	APMETA_Hexenarmor2,
+	APMETA_Hexenarmor3,
+	APMETA_Hexenarmor4,
 };
 
 class player_s;
@@ -73,7 +80,6 @@ public:
 	virtual void ThrowPoisonBag ();
 	virtual void GiveDefaultInventory ();
 	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
-	virtual bool DoHealingRadius (APlayerPawn *other);
 	virtual void MorphPlayerThink ();
 	virtual void ActivateMorphWeapon ();
 	virtual AWeapon *PickNewWeapon (const PClass *ammotype);
@@ -92,8 +98,6 @@ public:
 		INVUL_Stop,
 		INVUL_GetAlpha
 	};
-
-	virtual void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha=NULL);
 
 	void BeginPlay ();
 	void Die (AActor *source, AActor *inflictor);

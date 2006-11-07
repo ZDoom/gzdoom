@@ -77,14 +77,6 @@ protected:
 	bool PrivateShouldStay ();
 };
 
-class AFighterPlayer : public APlayerPawn
-{
-	DECLARE_ACTOR (AFighterPlayer, APlayerPawn)
-public:
-	void GiveDefaultInventory ();
-	bool DoHealingRadius (APlayerPawn *other);
-};
-
 class AFighterWeapon : public AWeapon
 {
 	DECLARE_STATELESS_ACTOR (AFighterWeapon, AWeapon);
@@ -92,28 +84,11 @@ public:
 	bool TryPickup (AActor *toucher);
 };
 
-class AClericPlayer : public APlayerPawn
-{
-	DECLARE_ACTOR (AClericPlayer, APlayerPawn)
-public:
-	void GiveDefaultInventory ();
-	void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha);
-};
-
 class AClericWeapon : public AWeapon
 {
 	DECLARE_STATELESS_ACTOR (AClericWeapon, AWeapon);
 public:
 	bool TryPickup (AActor *toucher);
-};
-
-class AMagePlayer : public APlayerPawn
-{
-	DECLARE_ACTOR (AMagePlayer, APlayerPawn)
-public:
-	void GiveDefaultInventory ();
-	bool DoHealingRadius (APlayerPawn *other);
-	void SpecialInvulnerabilityHandling (EInvulState state, fixed_t * pAlpha);
 };
 
 class AMageWeapon : public AWeapon

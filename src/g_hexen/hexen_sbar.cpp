@@ -310,13 +310,13 @@ public:
 		FBaseStatusBar::AttachToPlayer (player);
 		if (player->mo != NULL)
 		{
-			if (player->mo->IsKindOf (RUNTIME_CLASS(AMagePlayer)))
+			if (player->mo->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
 			{
 				FourthWeaponShift = 6;
 				FourthWeaponClass = 2;
 				LifeBarClass = 2;
 			}
-			else if (player->mo->IsKindOf (RUNTIME_CLASS(AClericPlayer)))
+			else if (player->mo->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
 			{
 				FourthWeaponShift = 3;
 				FourthWeaponClass = 1;

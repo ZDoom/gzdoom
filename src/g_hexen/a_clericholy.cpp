@@ -46,8 +46,8 @@ END_DEFAULTS
 
 bool AClericWeaponPiece::MatchPlayerClass (AActor *toucher)
 {
-	return !toucher->IsKindOf (RUNTIME_CLASS(AFighterPlayer)) &&
-		   !toucher->IsKindOf (RUNTIME_CLASS(AMagePlayer));
+	return !toucher->IsKindOf (PClass::FindClass(NAME_FighterPlayer)) &&
+		   !toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer));
 }
 
 //==========================================================================

@@ -22,5 +22,4 @@ void A_SetFloorClip (AActor *);
 void A_UnSetFloorClip (AActor *);
 void A_NoGravity (AActor *);
 void FaceMovementDirection (AActor *);
-void A_CheckBurnGone (AActor *);
 void A_SkullPop (AActor *);

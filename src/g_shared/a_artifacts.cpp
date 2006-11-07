@@ -52,6 +52,10 @@ bool APowerupGiver::Use (bool pickup)
 	{
 		power->BlendColor = BlendColor;
 	}
+	if (mode != NAME_None)
+	{
+		power->mode = mode;
+	}
 
 	power->ItemFlags |= ItemFlags & IF_ALWAYSPICKUP;
 	if (power->TryPickup (Owner))
@@ -72,7 +76,7 @@ void APowerupGiver::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << PowerupType;
-	arc << EffectTics << BlendColor;
+	arc << EffectTics << BlendColor << mode;
 }
 
 // Powerup -------------------------------------------------------------------
@@ -120,7 +124,7 @@ void APowerup::Tick ()
 void APowerup::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << EffectTics << BlendColor;
+	arc << EffectTics << BlendColor << mode;
 }
 
 //===========================================================================
@@ -322,7 +326,11 @@ void APowerInvulnerable::InitEffect ()
 {
 	Owner->effects &= ~FX_RESPAWNINVUL;
 	Owner->flags2 |= MF2_INVULNERABLE;
-	Owner->player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Start);
+	if (mode == NAME_None)
+	{
+		mode = (ENamedName)RUNTIME_TYPE(Owner)->Meta.GetMetaInt(APMETA_InvulMode);
+	}
+	if (mode == NAME_Reflective) Owner->flags2 |= MF2_REFLECTIVE;
 }
 
 //===========================================================================
@@ -333,7 +341,39 @@ void APowerInvulnerable::InitEffect ()
 
 void APowerInvulnerable::DoEffect ()
 {
-	Owner->player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Active);
+	if (Owner == NULL)
+	{
+		return;
+	}
+
+	if (mode == NAME_Ghost)
+	{
+		Owner->RenderStyle = STYLE_Translucent;
+		if (!(level.time & 7) && Owner->alpha > 0 && Owner->alpha < OPAQUE)
+		{
+			if (Owner->alpha == HX_SHADOW)
+			{
+				Owner->alpha = HX_ALTSHADOW;
+			}
+			else
+			{
+				Owner->alpha = 0;
+				Owner->flags2 |= MF2_NONSHOOTABLE;
+			}
+		}
+		if (!(level.time & 31))
+		{
+			if (Owner->alpha == 0)
+			{
+				Owner->flags2 &= ~MF2_NONSHOOTABLE;
+				Owner->alpha = HX_ALTSHADOW;
+			}
+			else
+			{
+				Owner->alpha = HX_SHADOW;
+			}
+		}
+	}
 }
 
 //===========================================================================
@@ -351,12 +391,19 @@ void APowerInvulnerable::EndEffect ()
 
 	Owner->flags2 &= ~MF2_INVULNERABLE;
 	Owner->effects &= ~FX_RESPAWNINVUL;
+	if (mode == NAME_Ghost)
+	{
+		Owner->flags2 &= ~MF2_NONSHOOTABLE;
+		Owner->RenderStyle = STYLE_Normal;
+		Owner->alpha = OPAQUE;
+	}
+	else if (mode == NAME_Reflective)
+	{
+		Owner->flags2 &= ~MF2_REFLECTIVE;
+	}
+
 	if (Owner->player != NULL)
 	{
-		if (Owner->player->mo != NULL)
-		{
-			Owner->player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Stop);
-		}
 		Owner->player->fixedcolormap = 0;
 	}
 }
@@ -369,11 +416,13 @@ void APowerInvulnerable::EndEffect ()
 
 void APowerInvulnerable::AlterWeaponSprite (vissprite_t *vis)
 {
-	if (Owner->player->mo != NULL)
+	if (Owner != NULL)
 	{
-		fixed_t wp_alpha;
-		Owner->player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_GetAlpha, &wp_alpha);
-		if (wp_alpha != FIXED_MAX) vis->alpha = wp_alpha;
+		if (mode == NAME_Ghost)
+		{
+			fixed_t wp_alpha = MIN<fixed_t>(FRACUNIT/4 + Owner->alpha*3/4, FRACUNIT);
+			if (wp_alpha != FIXED_MAX) vis->alpha = wp_alpha;
+		}
 	}
 }
 

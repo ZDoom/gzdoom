@@ -278,11 +278,11 @@ bool AArtiPoisonBag::HandlePickup (AInventory *item)
 
 	bool matched;
 
-	if (Owner->IsKindOf (RUNTIME_CLASS(AClericPlayer)))
+	if (Owner->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
 	{
 		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag1));
 	}
-	else if (Owner->IsKindOf (RUNTIME_CLASS(AMagePlayer)))
+	else if (Owner->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
 	{
 		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag2));
 	}
@@ -327,11 +327,11 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 	AInventory *copy;
 	const PClass *spawntype;
 
-	if (other->IsKindOf (RUNTIME_CLASS(AClericPlayer)))
+	if (other->IsKindOf (PClass::FindClass(NAME_ClericPlayer)))
 	{
 		spawntype = RUNTIME_CLASS(AArtiPoisonBag1);
 	}
-	else if (other->IsKindOf (RUNTIME_CLASS(AMagePlayer)))
+	else if (other->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
 	{
 		spawntype = RUNTIME_CLASS(AArtiPoisonBag2);
 	}

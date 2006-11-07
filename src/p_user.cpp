@@ -52,7 +52,8 @@
 #include "tarray.h"
 #include "thingdef.h"
 
-static FRandom pr_healradius ("HealRadius");
+static FRandom pr_skullpop ("SkullPop");
+
 
 // [RH] # of ticks to complete a turn180
 #define TURN180_TICKS	((TICRATE / 4) + 1)
@@ -374,7 +375,7 @@ BEGIN_STATELESS_DEFAULTS (APlayerPawn, Any, -1, 0)
 	PROP_PainChance (255)
 	PROP_SpeedFixed (1)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY)
-	PROP_Flags2 (MF2_SLIDE|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP|MF2_WINDTHRUST)
+	PROP_Flags2 (MF2_SLIDE|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP|MF2_WINDTHRUST|MF2_TELESTOMP)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 	// [GRB]
 	PROP_PlayerPawn_JumpZ (8*FRACUNIT)
@@ -912,6 +913,26 @@ void APlayerPawn::GiveDefaultInventory ()
 		}
 		di = di->Next;
 	}
+
+	fixed_t hx[5];
+	bool ishx;
+
+	for(int i=0;i<5;i++)
+	{
+		hx[i] = GetClass()->Meta.GetMetaFixed(APMETA_Hexenarmor0+i);
+		ishx |= !!hx[i];
+	}
+	if (ishx)
+	{
+		GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
+		AHexenArmor *armor = FindInventory<AHexenArmor>();
+		armor->Slots[4] = hx[0];
+		armor->SlotsIncrement[0] = hx[1];
+		armor->SlotsIncrement[1] = hx[2];
+		armor->SlotsIncrement[2] = hx[3];
+		armor->SlotsIncrement[3] = hx[4];
+	}
+
 }
 
 void APlayerPawn::MorphPlayerThink ()
@@ -1042,23 +1063,6 @@ void APlayerPawn::TweakSpeeds (int &forward, int &side)
 	}
 }
 
-// The standard healing radius behavior is the cleric's
-bool APlayerPawn::DoHealingRadius (APlayerPawn *other)
-{
-	if (P_GiveBody (other, 50 + (pr_healradius()%50)))
-	{
-		S_Sound (other, CHAN_AUTO, "MysticIncant", 1, ATTN_NORM);
-		return true;
-	}
-	return false;
-}
-
-void APlayerPawn::SpecialInvulnerabilityHandling (EInvulState setting, fixed_t * pAlpha)
-{
-	if (setting == INVUL_GetAlpha && pAlpha!=NULL) *pAlpha=FIXED_MAX;	// indicates no change
-}
-
-
 //===========================================================================
 //
 // A_PlayerScream
@@ -1127,6 +1131,66 @@ void A_PlayerScream (AActor *self)
 	S_SoundID (self, chan, sound, 1, ATTN_NORM);
 }
 
+
+//----------------------------------------------------------------------------
+//
+// PROC A_SkullPop
+//
+//----------------------------------------------------------------------------
+
+void A_SkullPop (AActor *actor)
+{
+	APlayerPawn *mo;
+	player_t *player;
+
+	// [GRB] Parameterized version
+	const PClass *spawntype = NULL;
+	int index = CheckIndex (1, NULL);
+	if (index >= 0)
+		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
+	if (!spawntype || !spawntype->IsDescendantOf (RUNTIME_CLASS (APlayerChunk)))
+	{
+		spawntype = PClass::FindClass("BloodySkull");
+		if (spawntype == NULL) return;
+	}
+
+	actor->flags &= ~MF_SOLID;
+	mo = (APlayerPawn *)Spawn (spawntype, actor->x, actor->y, actor->z + 48*FRACUNIT, NO_REPLACE);
+	//mo->target = actor;
+	mo->momx = pr_skullpop.Random2() << 9;
+	mo->momy = pr_skullpop.Random2() << 9;
+	mo->momz = 2*FRACUNIT + (pr_skullpop() << 6);
+	// Attach player mobj to bloody skull
+	player = actor->player;
+	actor->player = NULL;
+	mo->ObtainInventory (actor);
+	mo->player = player;
+	mo->health = actor->health;
+	mo->angle = actor->angle;
+	if (player != NULL)
+	{
+		player->mo = mo;
+		if (player->camera == actor)
+		{
+			player->camera = mo;
+		}
+		player->damagecount = 32;
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC A_CheckSkullDone
+//
+//----------------------------------------------------------------------------
+
+void A_CheckPlayerDone (AActor *actor)
+{
+	if (actor->player == NULL)
+	{
+		actor->Destroy ();
+	}
+}
 
 //===========================================================================
 //

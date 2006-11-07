@@ -6,6 +6,14 @@ xx(Object)
 
 xx(Untranslated)
 
+// Invulnerability types
+xx(Ghost)
+xx(Reflective)
+
+// Healingradius types
+xx(Mana)
+xx(Armor)
+
 // Per-actor sound channels
 xx(Auto)
 xx(Weapon)

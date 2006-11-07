@@ -34,8 +34,8 @@ END_DEFAULTS
 
 bool AFighterWeaponPiece::MatchPlayerClass (AActor *toucher)
 {
-	return !toucher->IsKindOf (RUNTIME_CLASS(AClericPlayer)) &&
-		   !toucher->IsKindOf (RUNTIME_CLASS(AMagePlayer));
+	return !toucher->IsKindOf (PClass::FindClass(NAME_ClericPlayer)) &&
+		   !toucher->IsKindOf (PClass::FindClass(NAME_MagePlayer));
 }
 
 //==========================================================================

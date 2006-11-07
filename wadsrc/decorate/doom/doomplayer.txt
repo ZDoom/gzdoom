@@ -30,7 +30,7 @@ ACTOR DoomPlayer : PlayerPawn
 		PLAY E 12 
 		Goto Spawn
 	Melee:
-		PLAY F 6 
+		PLAY F 6 BRIGHT
 		Goto Missile
 	Pain:
 		PLAY G 4 

@@ -36,6 +36,7 @@ public:
 
 	int EffectTics;
 	PalEntry BlendColor;
+	FNameNoInit mode;
 
 protected:
 	virtual void InitEffect ();
@@ -54,6 +55,7 @@ public:
 	const PClass *PowerupType;
 	int EffectTics;			// Non-0 to override the powerup's default tics
 	PalEntry BlendColor;	// Non-0 to override the powerup's default blend
+	FNameNoInit mode;		// Meaning depends on powerup - currently only of use for Invulnerability
 };
 
 class APowerInvulnerable : public APowerup

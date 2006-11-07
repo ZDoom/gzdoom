@@ -1,4 +1,9 @@
 November 5, 2006 (Changes by Graf Zahl)
+- Converted Heretic's and Hexen's players to DECORATE.
+- Made Hexenarmor factors configurable by DECORATE.
+- Added support for selecting the invulnerability mode per item as well.
+- Made Invulnerability and Healing radius behavior selectable by player
+  class instead of hard coding the special behavior to the Hexen classes.
 - Converted the DoomPlayer to DECORATE.
 - Extended all A_Jump commands to take labels as parameters in addition
   to offsets.

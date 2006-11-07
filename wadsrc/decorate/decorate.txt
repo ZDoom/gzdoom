@@ -33,12 +33,16 @@
 #include "actors/raven/ravenartifacts.txt"
 #include "actors/raven/ravenhealth.txt"
 
+#include "actors/heretic/hereticplayer.txt"
 #include "actors/heretic/hereticammo.txt"
 #include "actors/heretic/hereticarmor.txt"
 #include "actors/heretic/hereticartifacts.txt"
 #include "actors/heretic/heretickeys.txt"
 #include "actors/heretic/hereticdecorations.txt"
 
+#include "actors/hexen/fighterplayer.txt"
+#include "actors/hexen/clericplayer.txt"
+#include "actors/hexen/mageplayer.txt"
 #include "actors/hexen/flame.txt"
 #include "actors/hexen/hexenarmor.txt"
 #include "actors/hexen/hexendecorations.txt"

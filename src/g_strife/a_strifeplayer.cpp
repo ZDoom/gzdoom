@@ -16,6 +16,7 @@ void A_TossGib (AActor *);
 void A_ItBurnsItBurns (AActor *);
 void A_DropFire (AActor *);
 void A_CrispyPlayer (AActor *);
+void A_Yeargh (AActor *);
 void A_Wander (AActor *);
 
 // The player ---------------------------------------------------------------
@@ -97,7 +98,7 @@ FState AStrifePlayer::States[] =
 	S_NORMAL (BURN, 'V',-1, NULL,				NULL),
 
 #define S_PLAY_ZAPDEATH (S_PLAY_BURNDEATH+24)
-	S_NORMAL (DISR, 'A', 5, NULL,				&States[S_PLAY_ZAPDEATH+1]),
+	S_NORMAL (DISR, 'A', 5, A_Yeargh,			&States[S_PLAY_ZAPDEATH+1]),
 	S_NORMAL (DISR, 'B', 5, NULL,				&States[S_PLAY_ZAPDEATH+2]),
 	S_NORMAL (DISR, 'C', 5, NULL,				&States[S_PLAY_ZAPDEATH+3]),
 	S_NORMAL (DISR, 'D', 5, A_NoBlocking,		&States[S_PLAY_ZAPDEATH+4]),

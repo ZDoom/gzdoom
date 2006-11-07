@@ -509,7 +509,7 @@ ACTOR(Light)
 ACTOR(Burst)
 ACTOR(SkullPop)
 ACTOR(CheckFloor)
-ACTOR(CheckSkullDone)
+ACTOR(CheckPlayerDone)
 ACTOR(RadiusThrust)
 ACTOR(Stop)
 ACTOR(SPosAttackUseAtkSound)
@@ -640,7 +640,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_CStaffMissileSlither, NULL)
 	FUNC(A_PlayerScream, NULL)
 	FUNC(A_SkullPop, "m")
-	{"A_CheckPlayerDone", A_CheckSkullDone, NULL },
+	FUNC(A_CheckPlayerDone, NULL)
 
 	// useful functions from Strife
 	FUNC(A_Wander, NULL)
@@ -1958,13 +1958,13 @@ do_stop:
 							case 'L':
 							case 'l':		// Jump label
 
-								if (strlen(statestring)>0)
-								{
-									SC_ScriptError("You cannot use A_Jump commands on multistate definitions\n");
-								}
-
 								if (SC_CheckNumber())
 								{
+									if (strlen(statestring)>0)
+									{
+										SC_ScriptError("You cannot use A_Jump commands with a jump index on multistate definitions\n");
+									}
+
 									v=sc_Number;
 									if (v<1)
 									{
@@ -3827,6 +3827,15 @@ static void PowerupDuration (APowerupGiver *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void PowerupMode (APowerupGiver *defaults, Baggage &bag)
+{
+	SC_MustGetString();
+	defaults->mode = (FName)sc_String;
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void PowerupType (APowerupGiver *defaults, Baggage &bag)
 {
 	FString typestr;
@@ -4032,6 +4041,37 @@ static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void PlayerInvulMode (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	bag.Info->Class->Meta.SetMetaInt (APMETA_InvulMode, (FName)sc_String);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerHealRadius (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetString ();
+	bag.Info->Class->Meta.SetMetaInt (APMETA_HealingRadius, (FName)sc_String);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PlayerHexenArmor (APlayerPawn *defaults, Baggage &bag)
+{
+	for (int i=0;i<5;i++)
+	{
+		SC_MustGetFloat ();
+		bag.Info->Class->Meta.SetMetaFixed (APMETA_Hexenarmor0+i, FLOAT2FIXED (sc_Float));
+		if (i!=4) SC_MustGetStringName(",");
+	}
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void EggFXMonsterClass (AMorphProjectile *defaults, Baggage &bag)
 {
 	SC_MustGetString ();
@@ -4155,6 +4195,9 @@ static const ActorProps props[] =
 	{ "player.crouchsprite",		(apf)PlayerCrouchSprite,	RUNTIME_CLASS(APlayerPawn) },
 	{ "player.displayname",			(apf)PlayerDisplayName,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.forwardmove",			(apf)PlayerForwardMove,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.healradiustype",		(apf)PlayerHealRadius,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.hexenarmor",			(apf)PlayerHexenArmor,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.invulnerabilitymode",	(apf)PlayerInvulMode,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.jumpz",				(apf)PlayerJumpZ,			RUNTIME_CLASS(APlayerPawn) },
 	{ "player.maxhealth",			(apf)PlayerMaxHealth,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.morphweapon",			(apf)PlayerMorphWeapon,		RUNTIME_CLASS(APlayerPawn) },
@@ -4167,6 +4210,7 @@ static const ActorProps props[] =
 	{ "poisondamage",				ActorPoisonDamage,			RUNTIME_CLASS(AActor) },
 	{ "powerup.color",				(apf)PowerupColor,			RUNTIME_CLASS(APowerupGiver) },
 	{ "powerup.duration",			(apf)PowerupDuration,		RUNTIME_CLASS(APowerupGiver) },
+	{ "powerup.mode",				(apf)PowerupMode,			RUNTIME_CLASS(APowerupGiver) },
 	{ "powerup.type",				(apf)PowerupType,			RUNTIME_CLASS(APowerupGiver) },
 	{ "projectile",					ActorProjectile,			RUNTIME_CLASS(AActor) },
 	{ "puzzleitem.failmessage",		(apf)PuzzleitemFailMsg,		RUNTIME_CLASS(APuzzleItem) },

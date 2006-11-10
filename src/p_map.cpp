@@ -675,9 +675,10 @@ bool PIT_CheckLine (line_t *ld)
 		{
 			rail = true;
 		}
-		else if ((ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING)) || 	// explicitly blocking everything
-			(!(tmthing->flags3 & MF3_NOBLOCKMONST) && (ld->flags & ML_BLOCKMONSTERS)) || // block monsters only
-			((ld->flags & ML_BLOCK_FLOATERS) && (tmthing->flags & MF_FLOAT)))	// block floaters
+		else if ((ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING)) || 							// explicitly blocking everything
+			(!(tmthing->flags3 & MF3_NOBLOCKMONST) && (ld->flags & ML_BLOCKMONSTERS)) || 	// block monsters only
+			(tmthing->player != NULL && (ld->flags & ML_BLOCK_PLAYERS)) ||					// block players
+			((ld->flags & ML_BLOCK_FLOATERS) && (tmthing->flags & MF_FLOAT)))				// block floaters
 		{
 			if (tmthing->flags2 & MF2_BLASTED)
 			{
@@ -2063,6 +2064,10 @@ bool PTR_SlideTraverse (intercept_t* in)
 	{
 		goto isblocking;
 	}
+	if (li->flags & ML_BLOCK_PLAYERS && slidemo->player != NULL)
+	{
+		goto isblocking;
+	}
 
 	// set openrange, opentop, openbottom
 	P_LineOpening (li, trace.x + FixedMul (trace.dx, in->frac),
@@ -3290,7 +3295,7 @@ bool PTR_NoWayTraverse (intercept_t *in)
 	// [GrafZahl] de-obfuscated. Was I the only one who was unable to makes sense out of
 	// this convoluted mess?
 	if (ld->special) return true;
-	if (ld->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING)) return false;
+	if (ld->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS)) return false;
 	P_LineOpening(ld, trace.x+FixedMul(trace.dx, in->frac),trace.y+FixedMul(trace.dy, in->frac));
 	return  openrange >0 && 
 			openbottom <= usething->z + usething->MaxStepHeight &&

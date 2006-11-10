@@ -52,7 +52,7 @@ static bool PTR_Reachable (intercept_t *in)
 	{
 		line = in->d.line;
 
-		if (!(line->flags & ML_TWOSIDED) || (line->flags & ML_BLOCKING))
+		if (!(line->flags & ML_TWOSIDED) || (line->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS)))
 		{
 			return (reachable = false); //Cannot continue.
 		}

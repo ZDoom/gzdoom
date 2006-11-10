@@ -4028,20 +4028,24 @@ int DLevelScript::RunScript ()
 					switch (STACK(1))
 					{
 					case BLOCK_NOTHING:
-						lines[line].flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_RAILING);
+						lines[line].flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_RAILING|ML_BLOCK_PLAYERS);
 						break;
 					case BLOCK_CREATURES:
 					default:
-						lines[line].flags &= ~(ML_BLOCKEVERYTHING|ML_RAILING);
+						lines[line].flags &= ~(ML_BLOCKEVERYTHING|ML_RAILING|ML_BLOCK_PLAYERS);
 						lines[line].flags |= ML_BLOCKING;
 						break;
 					case BLOCK_EVERYTHING:
-						lines[line].flags &= ~ML_RAILING;
+						lines[line].flags &= ~(ML_RAILING|ML_BLOCK_PLAYERS);
 						lines[line].flags |= ML_BLOCKING|ML_BLOCKEVERYTHING;
 						break;
 					case BLOCK_RAILING:
-						lines[line].flags &= ~ML_BLOCKEVERYTHING;
+						lines[line].flags &= ~(ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS);
 						lines[line].flags |= ML_RAILING|ML_BLOCKING;
+						break;
+					case BLOCK_PLAYERS:
+						lines[line].flags &= ~(ML_BLOCKEVERYTHING|ML_BLOCKING|ML_RAILING);
+						lines[line].flags |= ML_BLOCK_PLAYERS;
 						break;
 					}
 				}

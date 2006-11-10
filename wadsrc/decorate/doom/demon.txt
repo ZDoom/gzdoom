@@ -59,6 +59,7 @@ ACTOR Demon 3002
 //===========================================================================
 ACTOR Spectre : Demon 58
 {
+	Game Doom
 	SpawnID 9
 	+SHADOW
 	RenderStyle OptFuzzy

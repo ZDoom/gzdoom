@@ -175,6 +175,7 @@ static inline int GET_SPAC (int flags)
 #define ML_BLOCK_FLOATERS			0x00040000
 #define ML_CLIP_MIDTEX				0x00080000	// Automatic for every Strife line
 #define ML_WRAP_MIDTEX				0x00100000
+#define ML_BLOCK_PLAYERS			0x00200000
 
 // Sector definition, from editing
 typedef struct

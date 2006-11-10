@@ -1,3 +1,8 @@
+November 10, 2006 (Changes by Graf Zahl)
+- Added a check to P_CheckMissileSpawn to decrease the monster counter
+  if it was called for spawning a monster with A_CustomMissile.
+- Added a ML_BLOCK_PLAYERS line flag.
+
 November 5, 2006 (Changes by Graf Zahl)
 - Converted Heretic's and Hexen's players to DECORATE.
 - Made Hexenarmor factors configurable by DECORATE.

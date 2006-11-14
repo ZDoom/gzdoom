@@ -40,7 +40,7 @@ FState AArtiTeleportOther::States[] =
 };
 
 IMPLEMENT_ACTOR (AArtiTeleportOther, Hexen, 10040, 17)
-	PROP_Flags (MF_SPECIAL)
+	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (S_ARTI_TELOTHER1)
 	PROP_Inventory_DefMaxAmount

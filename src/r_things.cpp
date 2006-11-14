@@ -502,7 +502,7 @@ void R_InitSkins (void)
 			}
 			else if (0 == stricmp (key, "scale"))
 			{
-				skins[i].scale = clamp ((int)(atof (sc_String) * 64), 1, 256) - 1;
+				skins[i].Scale = clamp<fixed_t> (FLOAT2FIXED(atof (sc_String)), 1, 256*FRACUNIT);
 			}
 			else if (0 == stricmp (key, "game"))
 			{
@@ -871,7 +871,7 @@ void R_InitSprites ()
 		const PClass *type = PlayerClasses[0].Type;
 		skins[i].range0start = type->Meta.GetMetaInt (APMETA_ColorRange) & 255;
 		skins[i].range0end = type->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
-		skins[i].scale = GetDefaultByType (type)->xscale;
+		skins[i].Scale = GetDefaultByType (type)->scaleX;
 	}
 
 	R_InitSpriteDefs ();
@@ -890,7 +890,7 @@ void R_InitSprites ()
 		skins[i].face[2] = 'F';
 		skins[i].range0start = basetype->Meta.GetMetaInt (APMETA_ColorRange) & 255;
 		skins[i].range0end = basetype->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
-		skins[i].scale = GetDefaultByType (basetype)->xscale;
+		skins[i].Scale = GetDefaultByType (basetype)->scaleX;
 		skins[i].sprite = GetDefaultByType (basetype)->SpawnState->sprite.index;
 		skins[i].namespc = ns_global;
 
@@ -1297,8 +1297,8 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	}
 
 	// [RH] Added scaling
-	gzt = fz + (tex->TopOffset << (FRACBITS-6-3)) * (thing->yscale+1) * tex->ScaleX;
-	gzb = fz + ((tex->TopOffset - tex->GetHeight()) << (FRACBITS-6-3)) * (thing->yscale+1) * tex->ScaleY;
+	gzt = fz + MulScale3(thing->scaleY, tex->TopOffset * tex->ScaleX);
+	gzb = fz + MulScale3(thing->scaleY, (tex->TopOffset - tex->GetHeight()) * tex->ScaleY);
 
 	// [RH] Reject sprites that are off the top or bottom of the screen
 	if (MulScale12 (globaluclip, tz) > viewz - gzb ||
@@ -1314,7 +1314,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	}
 
 	// calculate edges of the shape
-	const fixed_t thingxscalemul = ((thing->xscale+1) * tex->ScaleX) << (16-6-3);
+	const fixed_t thingxscalemul = MulScale3(thing->scaleX, tex->ScaleX);
 
 	tx -= (flip ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
 	x1 = centerx + MulScale32 (tx, xscale);
@@ -1330,7 +1330,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	if (x2 < WindowLeft || x2 <= x1)
 		return;
 
-	xscale = MulScale9 (thing->xscale+1, xscale * tex->ScaleX);
+	xscale = MulScale19 (thing->scaleX, xscale * tex->ScaleX);
 	iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 	x2--;
 
@@ -1377,16 +1377,16 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->RenderStyle = thing->RenderStyle;
 	vis->AlphaColor = thing->alphacolor;
 	vis->xscale = xscale;
-	vis->yscale = Scale (InvZtoScale, ((thing->yscale+1) * tex->ScaleY) << (6-3), tz);
+	vis->yscale = Scale (InvZtoScale, MulScale3(thing->scaleY, tex->ScaleY), tz)>>4;
 	vis->idepth = (DWORD)DivScale32 (1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but
 	vis->cx = tx2;									// signed math makes it 13.19
 	vis->gx = fx;
 	vis->gy = fy;
 	vis->gz = gzb;		// [RH] use gzb, not thing->z
 	vis->gzt = gzt;		// killough 3/27/98
-	vis->floorclip = SafeDivScale9 (thing->floorclip, (thing->yscale+1) * tex->ScaleY);
-	vis->texturemid = (tex->TopOffset << FRACBITS)
-		- SafeDivScale9 (viewz-fz+thing->floorclip, (thing->yscale+1) * tex->ScaleY);
+	vis->floorclip = FixedDiv (thing->floorclip, MulScale3(thing->scaleY, tex->ScaleY));
+	vis->texturemid = (tex->TopOffset << FRACBITS) - 
+		FixedDiv (viewz-fz+thing->floorclip, MulScale3(thing->scaleY, tex->ScaleY));
 	vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 	vis->x2 = x2 > WindowRight ? WindowRight : x2;
 	vis->Translation = thing->Translation;		// [RH] thing translation table

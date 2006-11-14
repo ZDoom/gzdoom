@@ -64,6 +64,7 @@
 #include "v_palette.h"
 #include "a_sharedglobal.h"
 #include "thingdef.h"
+#include "vectors.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -799,8 +800,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Scale") == 0)
 			{
-				info->xscale = clamp ((int)(atof (Line2) * 64), 1, 256) - 1;
-				info->yscale = clamp ((int)(atof (Line2) * 64), 1, 256) - 1;
+				info->scaleY = info->scaleX = clamp<fixed_t> (FLOAT2FIXED(atof (Line2)), 1, 256*FRACUNIT);
 			}
 			else if (stricmp (Line1, "Decal") == 0)
 			{

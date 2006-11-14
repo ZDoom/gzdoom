@@ -1211,11 +1211,11 @@ void P_CheckPlayerSprites()
 		if (playeringame[i] && mo != NULL)
 		{
 			int crouchspriteno;
-			int defyscale = mo->GetDefault()->yscale;
+			fixed_t defscaleY = mo->GetDefault()->scaleY;
 			
 			if (player->userinfo.skin != 0)
 			{
-				defyscale = skins[player->userinfo.skin].scale;
+				defscaleY = skins[player->userinfo.skin].Scale;
 			}
 			
 			// Set the crouch sprite
@@ -1240,11 +1240,11 @@ void P_CheckPlayerSprites()
 				if (crouchspriteno > 0) 
 				{
 					mo->sprite = crouchspriteno;
-					mo->yscale = defyscale;
+					mo->scaleY = defscaleY;
 				}
 				else if (player->playerstate != PST_DEAD)
 				{
-					mo->yscale = player->crouchfactor < FRACUNIT*3/4 ? defyscale/2 : defyscale;
+					mo->scaleY = player->crouchfactor < FRACUNIT*3/4 ? defscaleY/2 : defscaleY;
 				}
 			}
 			else	// Set the normal sprite
@@ -1257,7 +1257,7 @@ void P_CheckPlayerSprites()
 				{
 					mo->sprite = skins[player->userinfo.skin].sprite;
 				}
-				mo->yscale = defyscale;
+				mo->scaleY = defscaleY;
 			}
 		}
 	}

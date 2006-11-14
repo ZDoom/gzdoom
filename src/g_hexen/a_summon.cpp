@@ -25,7 +25,7 @@ FState AArtiDarkServant::States[] =
 };
 
 IMPLEMENT_ACTOR (AArtiDarkServant, Hexen, 86, 16)
-	PROP_Flags (MF_SPECIAL)
+	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (S_ARTI_SUMMON)
 	PROP_Inventory_RespawnTics (30+4200)

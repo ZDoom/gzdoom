@@ -2101,7 +2101,7 @@ void AM_drawThings (int _color)
 }
 
 static void DrawMarker (FTexture *tex, fixed_t x, fixed_t y, int yadjust,
-	INTBOOL flip, int xscale, int yscale, int translation, fixed_t alpha, DWORD alphacolor, int renderstyle)
+	INTBOOL flip, fixed_t xscale, fixed_t yscale, int translation, fixed_t alpha, DWORD alphacolor, int renderstyle)
 {
 	if (tex == NULL || tex->UseType == FTexture::TEX_Null)
 	{
@@ -2112,8 +2112,8 @@ static void DrawMarker (FTexture *tex, fixed_t x, fixed_t y, int yadjust,
 		AM_rotatePoint (&x, &y);
 	}
 	screen->DrawTexture (tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
-		DTA_DestWidth, MulScale6 (tex->GetScaledWidth() * CleanXfac, xscale),
-		DTA_DestHeight, MulScale6 (tex->GetScaledHeight() * CleanYfac, yscale),
+		DTA_DestWidth, MulScale16 (tex->GetScaledWidth() * CleanXfac, xscale),
+		DTA_DestHeight, MulScale16 (tex->GetScaledHeight() * CleanYfac, yscale),
 		DTA_ClipTop, f_y,
 		DTA_ClipBottom, f_y + f_h,
 		DTA_ClipLeft, f_x,
@@ -2190,7 +2190,7 @@ void AM_drawAuthorMarkers ()
 			if (mark->args[1] == 0 || (mark->args[1] == 1 && marked->Sector->MoreFlags & SECF_DRAWN))
 			{
 				DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
-					flip, mark->xscale+1, mark->yscale+1, mark->Translation,
+					flip, mark->scaleX, mark->scaleY, mark->Translation,
 					mark->alpha, mark->alphacolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;

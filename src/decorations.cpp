@@ -51,6 +51,7 @@
 #include "decallib.h"
 #include "i_system.h"
 #include "thingdef.h"
+#include "vectors.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -668,7 +669,7 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		else if (SC_Compare ("Scale"))
 		{
 			SC_MustGetFloat ();
-			defaults->xscale = defaults->yscale = clamp (int(sc_Float * 64.f), 1, 256) - 1;
+			defaults->scaleX = defaults->scaleY = FLOAT2FIXED(sc_Float);
 		}
 		else if (SC_Compare ("RenderStyle"))
 		{

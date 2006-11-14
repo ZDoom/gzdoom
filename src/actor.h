@@ -605,7 +605,7 @@ public:
 	angle_t			angle;
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
-	BYTE			xscale, yscale;		// Scaling values; 63 is normal size
+	fixed_t			scaleX, scaleY;		// Scaling values; FRACUNIT is normal size
 	BYTE			RenderStyle;		// Style to draw this actor with
 	DWORD			renderflags;		// Different rendering flags
 	WORD			picnum;				// Draw this instead of sprite if != 0xffff

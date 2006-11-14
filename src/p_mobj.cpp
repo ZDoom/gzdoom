@@ -194,8 +194,8 @@ void AActor::Serialize (FArchive &arc)
 		<< z
 		<< angle
 		<< frame
-		<< xscale
-		<< yscale
+		<< scaleX
+		<< scaleY
 		<< RenderStyle
 		<< renderflags;
 	if (arc.IsStoring ())
@@ -388,7 +388,7 @@ void AActor::Serialize (FArchive &arc)
 				GetDefaultByType (player->cls)->SpawnState->sprite.index)
 			{ // Give player back the skin
 				sprite = skins[player->userinfo.skin].sprite;
-				xscale = yscale = skins[player->userinfo.skin].scale;
+				scaleX = scaleY = skins[player->userinfo.skin].Scale;
 			}
 			if (Speed == 0)
 			{
@@ -3039,8 +3039,8 @@ FState AActor::States[] =
 };
 
 BEGIN_DEFAULTS (AActor, Any, -1, 0)
-	PROP_XScale (63)
-	PROP_YScale (63)
+	PROP_XScale (FRACUNIT)
+	PROP_YScale (FRACUNIT)
 	PROP_SpawnState (2)
 	PROP_SpawnHealth (1000)
 	PROP_ReactionTime (8)
@@ -3470,7 +3470,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 
 	// [RH] Set player sprite based on skin
 	mobj->sprite = skins[p->userinfo.skin].sprite;
-	mobj->xscale = mobj->yscale = skins[p->userinfo.skin].scale;
+	mobj->scaleX = mobj->scaleY = skins[p->userinfo.skin].Scale;
 
 	p->DesiredFOV = p->FOV = 90.f;
 	p->camera = p->mo;

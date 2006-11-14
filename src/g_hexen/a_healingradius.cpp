@@ -44,7 +44,7 @@ FState AArtiHealingRadius::States[] =
 };
 
 IMPLEMENT_ACTOR (AArtiHealingRadius, Hexen, 10120, 0)
-	PROP_Flags (MF_SPECIAL)
+	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount

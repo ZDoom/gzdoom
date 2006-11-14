@@ -238,8 +238,8 @@ void AScriptedMarine::BeginPlay ()
 	AActor * playerdef = GetDefaultByName("DoomPlayer");
 	if (playerdef != NULL)
 	{
-		xscale = playerdef->xscale;
-		yscale = playerdef->yscale;
+		scaleX = playerdef->scaleX;
+		scaleY = playerdef->scaleY;
 	}
 }
 
@@ -976,13 +976,13 @@ void AScriptedMarine::SetSprite (const PClass *source)
 		// Copy the standard player's scaling
 		AActor * playerdef = GetDefaultByName("DoomPlayer");
 		if (playerdef == NULL) playerdef = GetDefaultByType(RUNTIME_CLASS(AScriptedMarine));
-		xscale = playerdef->xscale;
-		yscale = playerdef->yscale;
+		scaleX = playerdef->scaleX;
+		scaleY = playerdef->scaleY;
 	}
 	else
 	{ // Use the same sprite the passed class spawns with
 		SpriteOverride = sprite = GetDefaultByType (source)->SpawnState->sprite.index;
-		xscale = GetDefaultByType(source)->xscale;
-		yscale = GetDefaultByType(source)->yscale;
+		scaleX = GetDefaultByType(source)->scaleX;
+		scaleY = GetDefaultByType(source)->scaleY;
 	}
 }

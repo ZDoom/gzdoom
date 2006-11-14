@@ -5,6 +5,7 @@ ACTOR ArtiSpeedBoots : PowerupGiver 8002
 	Game Hexen
 	SpawnID 13
 	+FLOATBOB
+	+COUNTITEM
 	+INVENTORY.PICKUPFLASH
 	Inventory.Icon ARTISPED
 	Inventory.PickupMessage "$TXT_ARTISPEED"

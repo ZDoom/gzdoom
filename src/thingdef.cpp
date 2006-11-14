@@ -1352,7 +1352,7 @@ void InstallStates(FActorInfo *info, AActor *defaults)
 static void MakeStateList(const FStateLabels *list, TArray<FStateDefine> &dest)
 {
 	dest.Clear();
-	for(int i=0;i<list->NumLabels;i++)
+	if (list != NULL) for(int i=0;i<list->NumLabels;i++)
 	{
 		FStateDefine def;
 
@@ -2778,7 +2778,7 @@ static void ActorMass (AActor *defaults, Baggage &bag)
 static void ActorXScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->xscale=BYTE(sc_Float*64-1);
+	defaults->scaleY = FLOAT2FIXED(sc_Float);
 }
 
 //==========================================================================
@@ -2787,7 +2787,7 @@ static void ActorXScale (AActor *defaults, Baggage &bag)
 static void ActorYScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->yscale=BYTE(sc_Float*64-1);
+	defaults->scaleY = FLOAT2FIXED(sc_Float);
 }
 
 //==========================================================================
@@ -2796,7 +2796,7 @@ static void ActorYScale (AActor *defaults, Baggage &bag)
 static void ActorScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->xscale=defaults->yscale=BYTE(sc_Float*64-1);
+	defaults->scaleX= defaults->scaleY = FLOAT2FIXED(sc_Float);
 }
 
 //==========================================================================

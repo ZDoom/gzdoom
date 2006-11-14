@@ -219,8 +219,8 @@ public:
 #define PROP_PlayerPawn_ScoreIcon(x)	ADD_STRING_PROP(ADEF_PlayerPawn_ScoreIcon,"\27",x)
 #define PROP_PlayerPawn_MorphWeapon(x)	ADD_STRING_PROP(ADEF_PlayerPawn_MorphWeapon,"\30",x)
 
-#define PROP_XScale(x)					ADD_BYTE_PROP(ADEF_XScale,x)
-#define PROP_YScale(x)					ADD_BYTE_PROP(ADEF_YScale,x)
+#define PROP_XScale(x)					ADD_LONG_PROP(ADEF_XScale,x)
+#define PROP_YScale(x)					ADD_LONG_PROP(ADEF_YScale,x)
 #define PROP_SpawnHealth(x)				ADD_WORD_PROP(ADEF_SpawnHealth,x)
 #define PROP_SpawnHealthLong(x)			ADD_LONG_PROP(ADEF_SpawnHealth,x)
 #define PROP_ReactionTime(x)			ADD_BYTE_PROP(ADEF_ReactionTime,x)

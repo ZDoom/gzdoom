@@ -60,8 +60,8 @@ IMPLEMENT_ACTOR(AMapMarker, Any, 9040, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_RenderFlags (RF_INVISIBLE)
 	PROP_SpawnState (0)
-	PROP_XScale (31)
-	PROP_YScale (31)
+	PROP_XScale (FRACUNIT/2)
+	PROP_YScale (FRACUNIT/2)
 END_DEFAULTS
 
 void AMapMarker::BeginPlay ()

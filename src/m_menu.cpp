@@ -1648,7 +1648,8 @@ static void M_DrawClassMenu ()
 	M_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
 
 	spriteframe_t *sprframe = &SpriteFrames[sprites[PlayerState->sprite.index].spriteframes + PlayerState->GetFrame()];
-	int scale = GetDefaultByType (PlayerClass->Type)->xscale + 1;
+	fixed_t scaleX = GetDefaultByType (PlayerClass->Type)->scaleX;
+	fixed_t scaleY = GetDefaultByType (PlayerClass->Type)->scaleY;
 
 	if (sprframe != NULL)
 	{
@@ -1657,8 +1658,8 @@ static void M_DrawClassMenu ()
 		{
 			screen->DrawTexture (tex,
 				x + 36*CleanXfac, y + 71*CleanYfac,
-				DTA_DestWidth, MulScale6 (tex->GetWidth() * CleanXfac, scale),
-				DTA_DestHeight, MulScale6 (tex->GetHeight() * CleanYfac, scale),
+				DTA_DestWidth, MulScale16 (tex->GetWidth() * CleanXfac, scaleX),
+				DTA_DestHeight, MulScale16 (tex->GetHeight() * CleanYfac, scaleY),
 				TAG_DONE);
 		}
 	}
@@ -2120,19 +2121,19 @@ static void M_PlayerSetupDrawer ()
 	}
 	{
 		spriteframe_t *sprframe;
-		int scale;
+		fixed_t Scale;
 
 		if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
 			players[consoleplayer].userinfo.PlayerClass == -1 ||
 			PlayerState->sprite.index != GetDefaultByType (PlayerClass->Type)->SpawnState->sprite.index)
 		{
 			sprframe = &SpriteFrames[sprites[PlayerState->sprite.index].spriteframes + PlayerState->GetFrame()];
-			scale = GetDefaultByType (PlayerClass->Type)->xscale + 1;
+			Scale = GetDefaultByType (PlayerClass->Type)->scaleX;
 		}
 		else
 		{
 			sprframe = &SpriteFrames[sprites[skins[PlayerSkin].sprite].spriteframes + PlayerState->GetFrame()];
-			scale = skins[PlayerSkin].scale + 1;
+			Scale = skins[PlayerSkin].Scale;
 		}
 
 		if (sprframe != NULL)
@@ -2147,8 +2148,8 @@ static void M_PlayerSetupDrawer ()
 				screen->DrawTexture (tex,
 					(320 - 52 - 32 + xo - 160)*CleanXfac + (SCREENWIDTH)/2,
 					(PSetupDef.y + LINEHEIGHT*3 + 57 - 104)*CleanYfac + (SCREENHEIGHT/2),
-					DTA_DestWidth, MulScale6 (tex->GetWidth() * CleanXfac, scale),
-					DTA_DestHeight, MulScale6 (tex->GetHeight() * CleanYfac, scale),
+					DTA_DestWidth, MulScale16 (tex->GetWidth() * CleanXfac, Scale),
+					DTA_DestHeight, MulScale16 (tex->GetHeight() * CleanYfac, Scale),
 					DTA_Translation, translationtables[TRANSLATION_Players] + 256 * MAXPLAYERS,
 					TAG_DONE);
 			}

@@ -185,6 +185,8 @@ protected:
 
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 
+	DCanvas() {}
+
 private:
 	// Keep track of canvases, for automatic destruction at exit
 	DCanvas *Next;
@@ -206,6 +208,8 @@ public:
 
 protected:
 	BYTE *MemBuffer;
+
+	DSimpleCanvas() {}
 };
 
 // A canvas that represents the actual display. The video code is responsible
@@ -253,6 +257,9 @@ public:
 	// Returns true if running fullscreen.
 	virtual bool IsFullscreen () = 0;
 
+	// Changes the vsync setting, if supported by the device.
+	virtual void SetVSync (bool vsync);
+
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
 	virtual int QueryNewPalette () = 0;
@@ -261,6 +268,8 @@ public:
 protected:
 	void DrawRateStuff ();
 	void CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest);
+
+	DFrameBuffer () {}
 
 private:
 	DWORD LastMS, LastSec, FrameCount, LastCount, LastTic;

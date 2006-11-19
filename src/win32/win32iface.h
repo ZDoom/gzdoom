@@ -31,18 +31,31 @@
 **
 */
 
+#ifndef DIRECTDRAW_VERSION
+#define DIRECTDRAW_VERSION 0x0300
+#endif
+#ifndef DIRECT3D_VERSION
+#define DIRECT3D_VERSION 0x0900
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <ddraw.h>
+#include <d3d9.h>
 
 #include "hardware.h"
 #include "v_video.h"
+
+EXTERN_CVAR (Bool, vid_vsync)
 
 class Win32Video : public IVideo
 {
  public:
 	Win32Video (int parm);
 	~Win32Video ();
+
+	bool InitD3D9();
+	void InitDDraw();
 
 	EDisplayType GetDisplayType () { return DISPLAY_Both; }
 	bool FullscreenChanged (bool fs);
@@ -82,20 +95,24 @@ class Win32Video : public IVideo
 	void AddMode (int x, int y, int bits, int baseHeight);
 	void FreeModes ();
 
-	void NewDDMode (int x, int y);
 	static HRESULT WINAPI EnumDDModesCB (LPDDSURFACEDESC desc, void *modes);
+	void AddD3DModes (D3DFORMAT format);
+	void AddLetterboxModes ();
 
 	friend class DDrawFB;
+	friend class D3DFB;
 };
 
 class BaseWinFB : public DFrameBuffer
 {
+	DECLARE_ABSTRACT_CLASS(BaseWinFB, DFrameBuffer)
 public:
 	BaseWinFB (int width, int height) : DFrameBuffer (width, height), Windowed (true) {}
 
 	bool IsFullscreen () { return !Windowed; }
 	virtual void Blank () = 0;
 	virtual bool PaintToWindow () = 0;
+	virtual HRESULT GetHR () = 0;
 
 protected:
 	virtual bool CreateResources () = 0;
@@ -105,10 +122,13 @@ protected:
 
 	friend int I_PlayMovie (const char *name);
 	friend class Win32Video;
+
+	BaseWinFB() {}
 };
 
 class DDrawFB : public BaseWinFB
 {
+	DECLARE_CLASS(DDrawFB, BaseWinFB)
 public:
 	DDrawFB (int width, int height, bool fullscreen);
 	~DDrawFB ();
@@ -128,11 +148,11 @@ public:
 	int GetPageCount ();
 	int QueryNewPalette ();
 	void PaletteChanged ();
-	HRESULT GetHR () { return LastHR; }
+	void SetVSync (bool vsync);
+	HRESULT GetHR ();
 
 	void Blank ();
 	bool PaintToWindow ();
-	void DoSpeedTest ();
 
 private:
 	enum LockSurfRes { NoGood, Good, GoodWasLost };
@@ -152,6 +172,7 @@ private:
 	BYTE GammaTable[3][256];
 	PalEntry SourcePalette[256];
 	PALETTEENTRY PalEntries[256];
+	DWORD FlipFlags;
 
 	LPDIRECTDRAWPALETTE Palette;
 	LPDIRECTDRAWSURFACE PrimarySurf;
@@ -160,7 +181,6 @@ private:
 	LPDIRECTDRAWSURFACE BlitSurf;
 	LPDIRECTDRAWSURFACE LockingSurf;
 	LPDIRECTDRAWCLIPPER Clipper;
-	//IDirectDrawGammaControl *GammaControl;
 	HPALETTE GDIPalette;
 	BYTE *ClipRegion;
 	DWORD ClipSize;
@@ -181,4 +201,88 @@ private:
 	bool UpdatePending;		// On final unlock, call Update()
 	bool UseBlitter;		// Use blitter to copy from sys mem to video mem
 	bool UsePfx;
+
+	DDrawFB() {}
 };
+
+class D3DFB : public BaseWinFB
+{
+	DECLARE_CLASS(D3DFB, BaseWinFB)
+public:
+	D3DFB (int width, int height, bool fullscreen);
+	~D3DFB ();
+
+	bool IsValid ();
+	bool Lock ();
+	bool Lock (bool buffered);
+	void Unlock ();
+	void Update ();
+	PalEntry *GetPalette ();
+	void GetFlashedPalette (PalEntry palette[256]);
+	void UpdatePalette ();
+	bool SetGamma (float gamma);
+	bool SetFlash (PalEntry rgb, int amount);
+	void GetFlash (PalEntry &rgb, int &amount);
+	int GetPageCount ();
+	bool IsFullscreen ();
+	void PaletteChanged ();
+	int QueryNewPalette ();
+	void Blank ();
+	bool PaintToWindow ();
+	void SetVSync (bool vsync);
+	HRESULT GetHR ();
+
+private:
+	bool CreateResources();
+	void ReleaseResources();
+	bool CreateFBTexture();
+	bool CreatePaletteTexture();
+	bool CreateVertexes();
+	void UploadPalette();
+	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
+	bool Reset();
+
+	BYTE GammaTable[256];
+	PalEntry SourcePalette[256];
+	float FlashConstants[2][4];
+	PalEntry FlashColor;
+	int FlashAmount;
+	int TrueHeight;
+	float Gamma;
+	bool UpdatePending;
+	bool NeedPalUpdate;
+	bool NeedGammaUpdate;
+	D3DFORMAT FBFormat;
+	D3DFORMAT PalFormat;
+	int FBWidth, FBHeight;
+	bool VSync;
+
+	IDirect3DDevice9 *D3DDevice;
+	IDirect3DVertexBuffer9 *VertexBuffer;
+	IDirect3DTexture9 *FBTexture;
+	IDirect3DTexture9 *PaletteTexture;
+	IDirect3DPixelShader9 *PalTexShader;
+
+	D3DFB() {}
+};
+
+#if 0
+#define STARTLOG		do { if (!dbg) dbg = fopen ("k:/vid.log", "w"); } while(0)
+#define STOPLOG			do { if (dbg) { fclose (dbg); dbg=NULL; } } while(0)
+#define LOG(x)			do { if (dbg) { fprintf (dbg, x); fflush (dbg); } } while(0)
+#define LOG1(x,y)		do { if (dbg) { fprintf (dbg, x, y); fflush (dbg); } } while(0)
+#define LOG2(x,y,z)		do { if (dbg) { fprintf (dbg, x, y, z); fflush (dbg); } } while(0)
+#define LOG3(x,y,z,zz)	do { if (dbg) { fprintf (dbg, x, y, z, zz); fflush (dbg); } } while(0)
+#define LOG4(x,y,z,a,b)	do { if (dbg) { fprintf (dbg, x, y, z, a, b); fflush (dbg); } } while(0)
+#define LOG5(x,y,z,a,b,c) do { if (dbg) { fprintf (dbg, x, y, z, a, b, c); fflush (dbg); } } while(0)
+FILE *dbg;
+#else
+#define STARTLOG
+#define STOPLOG
+#define LOG(x)
+#define LOG1(x,y)
+#define LOG2(x,y,z)
+#define LOG3(x,y,z,zz)
+#define LOG4(x,y,z,a,b)
+#define LOG5(x,y,z,a,b,c)
+#endif

@@ -1,3 +1,25 @@
+November 18, 2006
+- Fixed: DFrameBuffer and related classes did not use DECLARE_CLASS macros,
+  so there was no guarantee that they would allocate the proper amount of
+  memory. This tripped me up when I was using D3DFB and it was writing beyond
+  the end of allocated memory.
+- Added a new D3DFB class that should be more compatible with modern systems
+  than the 8-bit paletted DDrawFB.
+  Pros:
+    - Much cleaner code.
+    - No performance penalty when running in a window.
+    - Slightly faster fullscreen performance on Geforce 6 and 7 cards.
+    - Vista ought to love it.
+  Cons:
+    - Requires Pixel Shader 1.4 or better.
+    - Fullscreen on an ATI Mobility x300 is a little slower (but still faster
+      than DirectDraw in a window).
+  Note that this is not hardware accelerated rendering. The screen is still
+  drawn as before by the CPU to an 8-bit paletted surface. The difference is
+  in how that surface makes its way to the visible display. Here, the surface
+  is copied to an 8-bit texture, and a pixel shader converts it to RGB when
+  drawing it.
+
 November 14, 2006 (Changes by Graf Zahl)
 - Made AActor's xscale and yscale properties full precision fixed point
   so now larger scales than 4 can be done.

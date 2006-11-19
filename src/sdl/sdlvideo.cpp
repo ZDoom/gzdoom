@@ -20,6 +20,7 @@
 
 class SDLFB : public DFrameBuffer
 {
+	DECLARE_CLASS(SDLFB, DFrameBuffer)
 public:
 	SDLFB (int width, int height, bool fullscreen);
 	~SDLFB ();
@@ -56,7 +57,10 @@ private:
 	bool NotPaletted;
 	
 	void UpdateColors ();
+
+	SDLFB () {}
 };
+IMPLEMENT_CLASS(SDLFB, DFrameBuffer)
 
 struct MiniModeInfo
 {

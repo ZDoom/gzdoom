@@ -4269,6 +4269,12 @@ AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const PClass *
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	AActor *source, AActor *dest, const PClass *type)
 {
+	if (dest == NULL)
+	{
+		Printf ("P_SpawnMissilyXYZ: Tried to shoot %s from %s with no dest\n",
+			type->TypeName.GetChars(), source->GetClass()->TypeName.GetChars());
+		return NULL;
+	}
 	int defflags3 = GetDefaultByType (type)->flags3;
 
 	if (defflags3 & MF3_FLOORHUGGER)

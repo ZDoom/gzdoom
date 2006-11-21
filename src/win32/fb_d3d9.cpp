@@ -295,9 +295,9 @@ bool D3DFB::CreateResources ()
 {
 	if (!Windowed)
 	{
-		ShowWindow (Window, SW_SHOW);
 		// Remove the window border in fullscreen mode
 		SetWindowLongPtr (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE|WS_SYSMENU);
+		ShowWindow (Window, SW_SHOW);
 	}
 	else
 	{
@@ -309,10 +309,19 @@ bool D3DFB::CreateResources ()
 		VidResizing = true;
 		// Make sure the window has a border in windowed mode
 		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
-		if (!SetWindowPos (Window, NULL, 0, 0, sizew, sizeh,
-			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER))
+		if (GetWindowLong (Window, GWL_EXSTYLE) & WS_EX_TOPMOST)
 		{
-			LOG1 ("SetWindowPos failed because %08lx\n", GetLastError());
+			// Direct3D 9 will apparently add WS_EX_TOPMOST to fullscreen windows,
+			// and removing it is a little tricky. Using SetWindowLongPtr to clear it
+			// will not do the trick, but sending the window behind everything will.
+			SetWindowPos (Window, HWND_BOTTOM, 0, 0, sizew, sizeh,
+				SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE);
+			SetWindowPos (Window, HWND_TOP, 0, 0, 0, 0, SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOSIZE);
+		}
+		else
+		{
+			SetWindowPos (Window, NULL, 0, 0, sizew, sizeh,
+				SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 		}
 		VidResizing = false;
 		ShowWindow (Window, SW_SHOWNORMAL);

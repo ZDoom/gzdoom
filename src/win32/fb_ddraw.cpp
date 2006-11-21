@@ -232,7 +232,7 @@ bool DDrawFB::CreateResources ()
 	{
 		ShowWindow (Window, SW_SHOW);
 		// Remove the window border in fullscreen mode
-		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_SYSMENU);
+		SetWindowLongPtr (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE|WS_SYSMENU);
 
 		TrueHeight = Height;
 		for (Win32Video::ModeInfo *mode = static_cast<Win32Video *>(Video)->m_Modes; mode != NULL; mode = mode->next)

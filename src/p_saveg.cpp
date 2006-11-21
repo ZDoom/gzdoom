@@ -497,7 +497,7 @@ void P_SerializePolyobjs (FArchive &arc)
 			deltaX -= po->startSpot[0];
 			deltaY -= po->startSpot[1];
 			deltaZ -= po->startSpot[2];
-			PO_MovePolyobj (po->tag, deltaX, deltaY);
+			PO_MovePolyobj (po->tag, deltaX, deltaY, true);
 		}
 	}
 }

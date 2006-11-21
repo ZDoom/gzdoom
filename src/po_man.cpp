@@ -32,7 +32,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-bool PO_MovePolyobj (int num, int x, int y);
 bool PO_RotatePolyobj (int num, angle_t angle);
 void PO_Init (void);
 
@@ -757,12 +756,9 @@ static void UpdateSegBBox (seg_t *seg)
 //
 //==========================================================================
 
-bool PO_MovePolyobj (int num, int x, int y)
+bool PO_MovePolyobj (int num, int x, int y, bool force)
 {
-	int count;
-	seg_t **segList;
 	polyobj_t *po;
-	bool blocked;
 
 	if (!(po = GetPolyobj (num)))
 	{
@@ -772,21 +768,25 @@ bool PO_MovePolyobj (int num, int x, int y)
 	UnLinkPolyobj (po);
 	DoMovePolyobj (po, x, y);
 
-	segList = po->segs;
-	blocked = false;
-	for (count = po->numsegs; count; count--, segList++)
+	if (!force)
 	{
-		if (CheckMobjBlocking(*segList, po))
+		seg_t **segList = po->segs;
+		bool blocked = false;
+
+		for (int count = po->numsegs; count; count--, segList++)
 		{
-			blocked = true;
-			break;
+			if (CheckMobjBlocking(*segList, po))
+			{
+				blocked = true;
+				break;
+			}
 		}
-	}
-	if (blocked)
-	{
-		DoMovePolyobj (po, -x, -y);
-		LinkPolyobj(po);
-		return false;
+		if (blocked)
+		{
+			DoMovePolyobj (po, -x, -y);
+			LinkPolyobj(po);
+			return false;
+		}
 	}
 	po->startSpot[0] += x;
 	po->startSpot[1] += y;

@@ -1,3 +1,18 @@
+November 20, 2006
+- Fixed: Polyobjects are serialized before players, which means that a call
+  to PO_MovePolyobj() from P_SerializePolyobjs() for a crushing polyobject
+  that touches a player actor will not have a valid actor->player->mo chain
+  for P_DamageMobj and crash if it happens to touch the player. Since the
+  polyobject was presumably in a good spot when the game was saved, we can
+  just skip this step entirely and let it take care of itself the next time
+  it moves (by which time, the players will be valid).
+- Fixed: When transitioning from fullscreen to windowed mode with D3DFB, the
+  window kept the WS_EX_TOPMOST style.
+- Slight correctness fix: When in fullscreen, the window should have WS_POPUP
+  style.
+- Added a NULL target check to P_SpawnMissileXYZ(), A_DemonAttack1(),
+  A_DemonAttack2_1(), and A_DemonAttack2_2().
+
 November 18, 2006
 - Fixed: DFrameBuffer and related classes did not use DECLARE_CLASS macros,
   so there was no guarantee that they would allocate the proper amount of

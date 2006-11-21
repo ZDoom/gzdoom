@@ -484,7 +484,7 @@ extern int po_NumPolyobjs;
 extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 
 
-bool PO_MovePolyobj (int num, int x, int y);
+bool PO_MovePolyobj (int num, int x, int y, bool force=false);
 bool PO_RotatePolyobj (int num, angle_t angle);
 void PO_Init ();
 bool PO_Busy (int polyobj);

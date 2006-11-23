@@ -1,3 +1,9 @@
+November 22, 2006
+- Added a manifest with a trustinfo section to updaterevision.exe so that
+  the build process can run uninterrupted under Vista.
+- Fixed: DIRECT3DCREATE9FUNC needs WINAPI added to its prototype so that it
+  works properly in release build, which defaults to __fastcall.
+
 November 20, 2006
 - Fixed: Polyobjects are serialized before players, which means that a call
   to PO_MovePolyobj() from P_SerializePolyobjs() for a crushing polyobject

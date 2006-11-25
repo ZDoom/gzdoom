@@ -1,3 +1,9 @@
+November 24, 2006
+- Fixed: When P_SpawnPlayer() calls DObject::PointerSubstitution() to
+  redirect player pointers, it affects the bodyque too. That meant that in
+  multiplayer games, once the bodyque filled up, anybody was in danger of
+  being rudely destroyed the next time somebody respawned.
+
 November 22, 2006
 - Added a manifest with a trustinfo section to updaterevision.exe so that
   the build process can run uninterrupted under Vista.

@@ -53,6 +53,7 @@
 #include "a_keys.h"
 #include "p_conversation.h"
 #include "thingdef.h"
+#include "g_game.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -3556,6 +3557,10 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 		{
 			assert (oldactor != NULL);
 			DObject::PointerSubstitution (oldactor, p->mo);
+			// PointerSubstitution() will also affect the bodyque, so undo that now.
+			for (int ii=0; ii < BODYQUESIZE; ++ii)
+				if (bodyque[ii] == p->mo)
+					bodyque[ii] = oldactor;
 			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}

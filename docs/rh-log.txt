@@ -1,4 +1,5 @@
 November 24, 2006
+- Fixed: The backpack didn't give extra ammo in baby and nightmare modes.
 - Fixed: When P_SpawnPlayer() calls DObject::PointerSubstitution() to
   redirect player pointers, it affects the bodyque too. That meant that in
   multiplayer games, once the bodyque filled up, anybody was in danger of

@@ -1920,10 +1920,19 @@ AInventory *ABackpack::CreateCopy (AActor *other)
 			((AAmmo *)GetDefaultByType (type))->BackpackAmount > 0)
 		{
 			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory (type));
+			int amount = static_cast<AAmmo *>(GetDefaultByType(type))->BackpackAmount;
+			// extra ammo in baby mode and nightmare mode
+			if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+			{
+				if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+					amount <<= 1;
+				else
+					amount += amount >> 1;
+			}
 			if (ammo == NULL)
 			{ // The player did not have the ammo. Add it.
 				ammo = static_cast<AAmmo *>(Spawn (type, 0, 0, 0, NO_REPLACE));
-				ammo->Amount = bDepleted ? 0 : ammo->BackpackAmount;
+				ammo->Amount = bDepleted ? 0 : amount;
 				ammo->MaxAmount = ammo->BackpackMaxAmount;
 				ammo->AttachToOwner (other);
 			}
@@ -1935,7 +1944,7 @@ AInventory *ABackpack::CreateCopy (AActor *other)
 				}
 				if (!bDepleted && ammo->Amount < ammo->MaxAmount)
 				{
-					ammo->Amount += static_cast<AAmmo*>(ammo->GetDefault())->BackpackAmount;
+					ammo->Amount += amount;
 					if (ammo->Amount > ammo->MaxAmount)
 					{
 						ammo->Amount = ammo->MaxAmount;
@@ -1969,7 +1978,16 @@ bool ABackpack::HandlePickup (AInventory *item)
 			{
 				if (probe->Amount < probe->MaxAmount)
 				{
-					probe->Amount += static_cast<AAmmo*>(probe->GetDefault())->BackpackAmount;
+					int amount = static_cast<AAmmo*>(probe->GetDefault())->BackpackAmount;
+					// extra ammo in baby mode and nightmare mode
+					if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+					{
+						if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+							amount <<= 1;
+						else
+							amount += amount >> 1;
+					}
+					probe->Amount += amount;
 					if (probe->Amount > probe->MaxAmount)
 					{
 						probe->Amount = probe->MaxAmount;

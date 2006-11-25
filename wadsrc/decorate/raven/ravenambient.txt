@@ -1,0 +1,42 @@
+
+
+// Wind ---------------------------------------------------------------------
+
+ACTOR SoundWind 42
+{
+	Game Heretic
+	SpawnID 110
+	+NOBLOCKMAP
+	+NOSECTOR
+	+DONTSPLASH
+	States
+	{
+	Spawn:
+		TNT1 A 2 A_PlaySoundEx("world/wind", "SoundSlot6", 1)
+		Loop
+	}
+}
+
+ACTOR SoundWindHexen : SoundWind 1410
+{
+	Game Hexen
+	SpawnID 110
+}
+
+
+// Waterfall ----------------------------------------------------------------
+
+ACTOR SoundWaterfall 41
+{
+	Game Heretic
+	SpawnID 111
+	+NOBLOCKMAP
+	+NOSECTOR
+	+DONTSPLASH
+	States
+	{
+	Spawn:
+		TNT1 A 2 A_PlaySoundEx("world/waterfall", "SoundSlot6", 1)
+		Loop
+	}
+}

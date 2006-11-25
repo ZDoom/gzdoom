@@ -275,6 +275,7 @@ actors/doom/stealthmonsters.txt				decorate/doom/stealthmonsters.txt
 actors/raven/artiegg.txt					decorate/raven/artiegg.txt
 actors/raven/ravenartifacts.txt				decorate/raven/ravenartifacts.txt
 actors/raven/ravenhealth.txt				decorate/raven/ravenhealth.txt
+actors/raven/ravenambient.txt				decorate/raven/ravenambient.txt
 
 actors/heretic/hereticplayer.txt			decorate/heretic/hereticplayer.txt
 actors/heretic/hereticammo.txt				decorate/heretic/hereticammo.txt
@@ -282,6 +283,8 @@ actors/heretic/hereticarmor.txt				decorate/heretic/hereticarmor.txt
 actors/heretic/hereticartifacts.txt			decorate/heretic/hereticartifacts.txt
 actors/heretic/heretickeys.txt				decorate/heretic/heretickeys.txt
 actors/heretic/hereticdecorations.txt		decorate/heretic/hereticdecorations.txt
+actors/heretic/clink.txt					decorate/heretic/clink.txt
+actors/heretic/snake.txt					decorate/heretic/snake.txt
 
 actors/hexen/fighterplayer.txt				decorate/hexen/fighterplayer.txt
 actors/hexen/clericplayer.txt               decorate/hexen/clericplayer.txt 

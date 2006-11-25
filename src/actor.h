@@ -109,47 +109,48 @@ enum
 {
 // --- mobj.flags ---
 
-	MF_SPECIAL		= 0x00000001,	// call P_SpecialThing when touched
-	MF_SOLID		= 0x00000002,
-	MF_SHOOTABLE	= 0x00000004,
-	MF_NOSECTOR		= 0x00000008,	// don't use the sector links
-									// (invisible but touchable)
-	MF_NOBLOCKMAP	= 0x00000010,	// don't use the blocklinks
-									// (inert but displayable)
-	MF_AMBUSH		= 0x00000020,	// not activated by sound; deaf monster
-	MF_JUSTHIT		= 0x00000040,	// try to attack right back
-	MF_JUSTATTACKED	= 0x00000080,	// take at least one step before attacking
-	MF_SPAWNCEILING	= 0x00000100,	// hang from ceiling instead of floor
-	MF_NOGRAVITY	= 0x00000200,	// don't apply gravity every tic
+	MF_SPECIAL			= 0x00000001,	// call P_SpecialThing when touched
+	MF_SOLID			= 0x00000002,
+	MF_SHOOTABLE		= 0x00000004,
+	MF_NOSECTOR			= 0x00000008,	// don't use the sector links
+										// (invisible but touchable)
+	MF_NOBLOCKMAP		= 0x00000010,	// don't use the blocklinks
+										// (inert but displayable)
+	MF_AMBUSH			= 0x00000020,	// not activated by sound; deaf monster
+	MF_JUSTHIT			= 0x00000040,	// try to attack right back
+	MF_JUSTATTACKED		= 0x00000080,	// take at least one step before attacking
+	MF_SPAWNCEILING		= 0x00000100,	// hang from ceiling instead of floor
+	MF_NOGRAVITY		= 0x00000200,	// don't apply gravity every tic
 
 // movement flags
-	MF_DROPOFF		= 0x00000400,	// allow jumps from high places
-	MF_PICKUP		= 0x00000800,	// for players to pick up items
-	MF_NOCLIP		= 0x00001000,	// player cheat
-	MF_INCHASE		= 0x00002000,	// [RH] used by A_Chase and A_Look to avoid recursion
-	MF_FLOAT		= 0x00004000,	// allow moves to any height, no gravity
-	MF_TELEPORT		= 0x00008000,	// don't cross lines or look at heights
-	MF_MISSILE		= 0x00010000,	// don't hit same species, explode on block
+	MF_DROPOFF			= 0x00000400,	// allow jumps from high places
+	MF_PICKUP			= 0x00000800,	// for players to pick up items
+	MF_NOCLIP			= 0x00001000,	// player cheat
+	MF_INCHASE			= 0x00002000,	// [RH] used by A_Chase and A_Look to avoid recursion
+	MF_FLOAT			= 0x00004000,	// allow moves to any height, no gravity
+	MF_TELEPORT			= 0x00008000,	// don't cross lines or look at heights
+	MF_MISSILE			= 0x00010000,	// don't hit same species, explode on block
 
-	MF_DROPPED		= 0x00020000,	// dropped by a demon, not level spawned
-	MF_SHADOW		= 0x00040000,	// actor is hard for monsters to see
-	MF_NOBLOOD		= 0x00080000,	// don't bleed when shot (use puff)
-	MF_CORPSE		= 0x00100000,	// don't stop moving halfway off a step
-	MF_INFLOAT		= 0x00200000,	// floating to a height for a move, don't
-									// auto float to target's height
-	MF_INBOUNCE		= 0x00200000,	// used by Heretic bouncing missiles 
+	MF_DROPPED			= 0x00020000,	// dropped by a demon, not level spawned
+	MF_SHADOW			= 0x00040000,	// actor is hard for monsters to see
+	MF_NOBLOOD			= 0x00080000,	// don't bleed when shot (use puff)
+	MF_CORPSE			= 0x00100000,	// don't stop moving halfway off a step
+	MF_INFLOAT			= 0x00200000,	// floating to a height for a move, don't
+										// auto float to target's height
+	MF_INBOUNCE			= 0x00200000,	// used by Heretic bouncing missiles 
 
-	MF_COUNTKILL	= 0x00400000,	// count towards intermission kill total
-	MF_COUNTITEM	= 0x00800000,	// count towards intermission item total
+	MF_COUNTKILL		= 0x00400000,	// count towards intermission kill total
+	MF_COUNTITEM		= 0x00800000,	// count towards intermission item total
 
-	MF_SKULLFLY		= 0x01000000,	// skull in flight
-	MF_NOTDMATCH	= 0x02000000,	// don't spawn in death match (key cards)
+	MF_SKULLFLY			= 0x01000000,	// skull in flight
+	MF_NOTDMATCH		= 0x02000000,	// don't spawn in death match (key cards)
 
-	MF_FRIENDLY		= 0x08000000,	// [RH] Friendly monsters for Strife (and MBF)
-	MF_UNMORPHED	= 0x10000000,	// [RH] Actor is the unmorphed version of something else
-	MF_NOLIFTDROP	= 0x20000000,	// [RH] Used with MF_NOGRAVITY to avoid dropping with lifts
-	MF_STEALTH		= 0x40000000,	// [RH] Andy Baker's stealth monsters
-	MF_ICECORPSE	= 0x80000000,	// a frozen corpse (for blasting) [RH] was 0x800000
+	MF_SPAWNSOUNDSOURCE	= 0x04000000,	// Plays missile's see sound at spawning object.
+	MF_FRIENDLY			= 0x08000000,	// [RH] Friendly monsters for Strife (and MBF)
+	MF_UNMORPHED		= 0x10000000,	// [RH] Actor is the unmorphed version of something else
+	MF_NOLIFTDROP		= 0x20000000,	// [RH] Used with MF_NOGRAVITY to avoid dropping with lifts
+	MF_STEALTH			= 0x40000000,	// [RH] Andy Baker's stealth monsters
+	MF_ICECORPSE		= 0x80000000,	// a frozen corpse (for blasting) [RH] was 0x800000
 
 // --- mobj.flags2 ---
 

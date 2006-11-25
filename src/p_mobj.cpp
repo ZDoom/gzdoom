@@ -4253,6 +4253,37 @@ bool P_CheckMissileSpawn (AActor* th)
 
 //---------------------------------------------------------------------------
 //
+// FUNC P_PlaySpawnSound
+//
+// Plays a missiles spawn sound. Location depends on the
+// MF_SPAWNSOUNDSOURCE flag.
+//
+//---------------------------------------------------------------------------
+
+void P_PlaySpawnSound(AActor *missile, AActor *spawner)
+{
+	if (missile->SeeSound != 0)
+	{
+		if (!(missile->flags & MF_SPAWNSOUNDSOURCE))
+		{
+			S_SoundID (missile, CHAN_VOICE, missile->SeeSound, 1, ATTN_NORM);
+		}
+		else if (spawner != NULL)
+		{
+			S_SoundID (spawner, CHAN_WEAPON, missile->SeeSound, 1, ATTN_NORM);
+		}
+		else
+		{
+			// If there is no spawner use the spawn position.
+			// But not in a silenced sector.
+			if (!(missile->Sector->MoreFlags & SECF_SILENT))
+				S_SoundID (&missile->x, CHAN_WEAPON, missile->SeeSound, 1, ATTN_NORM);
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+//
 // FUNC P_SpawnMissile
 //
 // Returns NULL if the missile exploded immediately, otherwise returns
@@ -4297,9 +4328,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 
 	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
 	
-	if (th->SeeSound)
-		S_SoundID (th, CHAN_VOICE, th->SeeSound, 1, ATTN_NORM);
-
+	P_PlaySpawnSound(th, source);
 	th->target = source;		// record missile's originator
 
 	vec3_t velocity;
@@ -4424,10 +4453,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 		z -= source->floorclip;
 	}
 	mo = Spawn (type, source->x, source->y, z, ALLOW_REPLACE);
-	if (mo->SeeSound)
-	{
-		S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
-	}
+	P_PlaySpawnSound(mo, source);
 	mo->target = owner != NULL ? owner : source; // Originator
 	mo->angle = angle;
 	angle >>= ANGLETOFINESHIFT;
@@ -4499,11 +4525,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 		z += 4*8*FRACUNIT - source->floorclip + (source->player? source->player->crouchoffset : 0);
 	}
 	MissileActor = Spawn (type, x, y, z, ALLOW_REPLACE);
-
-	if (MissileActor->SeeSound)
-	{
-		S_SoundID (MissileActor, CHAN_VOICE, MissileActor->SeeSound, 1, ATTN_NORM);
-	}
+	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;
 	MissileActor->angle = an;
 

@@ -1,3 +1,14 @@
+November 25, 2006 (Changes by Graf Zahl)
+- Converted Heretic's Clink (Sabreclaw) to DECORATE.
+- Added MissSound parameter to A_CustomMeleeAttack.
+- Converted Heretic's Snake (Ophidian) to DECORATE.
+- Added an option to A_CustomMissile to jump to the see state if
+  the caller's target is dead.
+- Fixed: A_ThrowGrenade didn't play the missile's spawn sound.
+- Added MF_SPAWNSOUNDSOURCE flag so that Raven's missile spawning code 
+  pointers can be recreated with DECORATE.
+- Converted a_ravenambient.cpp to DECORATE.
+
 November 24, 2006
 - Fixed: The backpack didn't give extra ammo in baby and nightmare modes.
 - Fixed: When P_SpawnPlayer() calls DObject::PointerSubstitution() to

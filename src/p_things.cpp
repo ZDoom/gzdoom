@@ -238,10 +238,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 				{
 					mobj->tid = newtid;
 					mobj->AddToHash ();
-					if (mobj->SeeSound)
-					{
-						S_SoundID (mobj, CHAN_VOICE, mobj->SeeSound, 1, ATTN_NORM);
-					}
+					P_PlaySpawnSound(mobj, spot);
 					if (gravity)
 					{
 						mobj->flags &= ~MF_NOGRAVITY;

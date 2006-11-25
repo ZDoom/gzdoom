@@ -309,6 +309,7 @@ void	P_RailAttack (AActor *source, int damage, int offset, int color1 = 0, int c
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec);
 bool	P_CheckMissileSpawn (AActor *missile);
+void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 
 // [RH] Position the chasecam
 void	P_AimCamera (AActor *t1);

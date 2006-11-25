@@ -11,6 +11,13 @@ struct side_s;
 
 extern void P_SpawnDirt (AActor *actor, fixed_t radius);
 
+bool P_MorphPlayer (player_s *player);
+bool P_UndoPlayerMorph (player_s *player, bool force);
+
+bool P_MorphMonster (AActor *actor, const PClass *morphClass);
+bool P_UpdateMorphedMonster (AActor *actor);
+
+
 class AUnknown : public AActor
 {
 	DECLARE_ACTOR (AUnknown, AActor)

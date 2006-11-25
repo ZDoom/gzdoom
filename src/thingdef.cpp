@@ -124,6 +124,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF, COUNTITEM, AActor, flags),
 	DEFINE_FLAG(MF, SKULLFLY, AActor, flags),
 	DEFINE_FLAG(MF, NOTDMATCH, AActor, flags),
+	DEFINE_FLAG(MF, SPAWNSOUNDSOURCE, AActor, flags),
 	DEFINE_FLAG(MF, FRIENDLY, AActor, flags),
 	DEFINE_FLAG(MF, NOLIFTDROP, AActor, flags),
 	DEFINE_FLAG(MF, STEALTH, AActor, flags),
@@ -726,7 +727,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_GiveToTarget, "Mx" )
 	FUNC(A_TakeFromTarget, "Mx" )
 	FUNC(A_CountdownArg, "X")
-	FUNC(A_CustomMeleeAttack, "Xsty" )
+	FUNC(A_CustomMeleeAttack, "Xssty" )
 	FUNC(A_Burst, "M")
 	FUNC(A_RadiusThrust, "xxy")
 	{"A_Explode", A_ExplodeParms, "xxy" },

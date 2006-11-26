@@ -1,4 +1,5 @@
 November 25, 2006 (Changes by Graf Zahl)
+- Fixed: SecretTriggers that were activated in an OPEN script caused a crash.
 - Converted Heretic's Clink (Sabreclaw) to DECORATE.
 - Added MissSound parameter to A_CustomMeleeAttack.
 - Converted Heretic's Snake (Ophidian) to DECORATE.

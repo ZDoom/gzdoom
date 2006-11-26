@@ -62,19 +62,22 @@ void ASecretTrigger::PostBeginPlay ()
 
 void ASecretTrigger::Activate (AActor *activator)
 {
-	if (activator->CheckLocalView (consoleplayer))
+	if (activator != NULL)
 	{
-		if (args[0] <= 1)
+		if (activator->CheckLocalView (consoleplayer))
 		{
-			C_MidPrint (secretmessage);
+			if (args[0] <= 1)
+			{
+				C_MidPrint (secretmessage);
+			}
+			if (args[0] == 0 || args[0] == 2)
+			{
+				S_Sound (activator, CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
+			}
 		}
-		if (args[0] == 0 || args[0] == 2)
-		{
-			S_Sound (activator, CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
-		}
+		level.found_secrets++;
+		if (activator->player) activator->player->secretcount++;
+		Destroy ();
 	}
-	level.found_secrets++;
-	if (activator->player) activator->player->secretcount++;
-	Destroy ();
 }
 

@@ -131,7 +131,7 @@ extern void ApplyActorDefault (int defnum, int dataint);
 	FActorInfo actor##ActorInfo = {
 
 #define BEGIN_DEFAULTS_POST(actor,game,ednum,id) \
-	GAME_##game, id, ednum, actor##DefaultsConstructor }; \
+	GAME_##game, id, ednum, NULL, actor##DefaultsConstructor }; \
 	void actor##DefaultsConstructor() { \
 
 #define END_DEFAULTS }

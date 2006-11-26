@@ -3,6 +3,23 @@
  * Public domain. This program uses the svnversion command to get the
  * repository revision for a particular directory and writes it into
  * a header file so that it can be used as a project's build number.
+ *
+ * VERY IMPORTANT:
+ *
+ * When building with Visual Studio 2005, you must copy
+ * the mt.exe from %VSINSTALLDIR%\Common7\Tools\bin on top of the version
+ * in %VSINSTALLDIR%\VC\bin or your computer may restart while building.
+ * This is due to the interaction of two separate bugs in both the old
+ * mt.exe installed in the VC\bin directory and the loader in XP SP2.
+ * Microsoft has a hotfix for XP SP2 but has yet to release it to the
+ * general public, but fortunately they already have a fixed mt.exe
+ * available.
+ *
+ * To check that you have done this correctly, the project is now set to
+ * have the manifest tool output its version when it executes. The buggy
+ * version is 5.2.3790.2014, and the fixed version is 6.0.4071.0.
+ *
+ * Ignore any warnings about Unrecognized Element "trustInfo".
  */
 
 #define _CRT_SECURE_NO_DEPRECATE

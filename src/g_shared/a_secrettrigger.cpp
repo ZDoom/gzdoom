@@ -75,9 +75,9 @@ void ASecretTrigger::Activate (AActor *activator)
 				S_Sound (activator, CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
 			}
 		}
-		level.found_secrets++;
 		if (activator->player) activator->player->secretcount++;
-		Destroy ();
 	}
+	level.found_secrets++;
+	Destroy ();
 }
 

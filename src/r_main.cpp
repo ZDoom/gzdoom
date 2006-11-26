@@ -975,6 +975,11 @@ void R_CopyStackedViewParameters()
 
 void R_SetupFrame (AActor *actor)
 {
+	if (actor == NULL)
+	{
+		I_Error ("Tried to render from a NULL actor.");
+	}
+
 	player_t *player = actor->player;
 	unsigned int newblend;
 	InterpolationViewer *iview;

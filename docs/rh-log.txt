@@ -1,3 +1,15 @@
+November 25, 2006
+- Reverted updaterevision.vcproj to r385 and added a note as a build event
+  explaining the need to use mt.exe 6.0 or newer. Here is the note:
+  VERY IMPORTANT: You must copy the mt.exe from %VSINSTALLDIR%\Common7\Tools\bin
+  on top of the version in %VSINSTALLDIR%\VC\bin or your computer may restart
+  while building.
+- Changed the ASecretTrigger::Activate() fix: There's no reason open scripts
+  shouldn't be able to activate secret triggers; players just won't get
+  credit for it in coop.
+- Added a NULL actor check to R_SetupFrame().
+- Fixed: The player sounds in DEHSUPP were defined incorrectly.
+
 November 25, 2006 (Changes by Graf Zahl)
 - Fixed: SecretTriggers that were activated in an OPEN script caused a crash.
 - Converted Heretic's Clink (Sabreclaw) to DECORATE.

@@ -52,7 +52,7 @@
 void InitExpressions ();
 void ClearExpressions ();
 
-static FRandom pr_exrandom ("EX_Random");
+FRandom pr_exrandom ("EX_Random");
 
 enum ExpOp
 {
@@ -86,6 +86,7 @@ enum ExpOp
 	EX_Cond,		// exp ? exp : exp
 
 	EX_Random,		// random (min, max)
+	EX_Random2,		// random2 ([mask])
 	EX_Sin,			// sin (angle)
 	EX_Cos,			// cos (angle)
 	EX_ActionSpecial,
@@ -254,6 +255,7 @@ struct ExpData
 		Type = EX_NOP;
 		Value.Type = VAL_Int;
 		Value.Int = 0;
+		RNG = NULL;
 		for (int i = 0; i < 2; i++)
 			Children[i] = NULL;
 	}
@@ -321,7 +323,8 @@ struct ExpData
 
 		if (Type != other->Type ||
 			Value.Type != other->Value.Type ||
-			Value.Float != other->Value.Float)
+			Value.Float != other->Value.Float ||
+			RNG != other->RNG)
 		{
 			return false;
 		}
@@ -338,6 +341,7 @@ struct ExpData
 	ExpOp Type;
 	ExpVal Value;
 	ExpData *Children[2];
+	FRandom *RNG;	// only used by random and random2
 };
 
 TArray<ExpData *> StateExpressions;
@@ -699,11 +703,24 @@ static ExpData *ParseExpressionA ()
 	}
 	else if (SC_CheckString ("random"))
 	{
+		FRandom *rng;
+
+		if (SC_CheckString("["))
+		{
+			SC_MustGetString();
+			rng = FRandom::StaticFindRNG(sc_String);
+			SC_MustGetStringName("]");
+		}
+		else
+		{
+			rng = &pr_exrandom;
+		}
 		if (!SC_CheckString ("("))
 			SC_ScriptError ("'(' expected");
 
 		ExpData *data = new ExpData;
 		data->Type = EX_Random;
+		data->RNG = rng;
 
 		data->Children[0] = ParseExpressionM ();
 
@@ -715,6 +732,34 @@ static ExpData *ParseExpressionA ()
 		if (!SC_CheckString (")"))
 			SC_ScriptError ("')' expected");
 
+		return data;
+	}
+	else if (SC_CheckString ("random2"))
+	{
+		FRandom *rng;
+
+		if (SC_CheckString("["))
+		{
+			SC_MustGetString();
+			rng = FRandom::StaticFindRNG(sc_String);
+			SC_MustGetStringName("]");
+		}
+		else
+		{
+			rng = &pr_exrandom;
+		}
+
+		SC_MustGetStringName("(");
+
+		ExpData *data = new ExpData;
+		data->Type = EX_Random2;
+		data->RNG = rng;
+
+		if (!SC_CheckString(")"))
+		{
+			data->Children[0] = ParseExpressionM();
+			SC_MustGetStringName(")");
+		}
 		return data;
 	}
 	else if (SC_CheckString ("sin"))
@@ -1419,19 +1464,35 @@ static ExpVal EvalExpression (ExpData *data, AActor *self)
 			{
 				int num1,num2,num3,num4;
 
-				num1 = pr_exrandom();
-				num2 = pr_exrandom();
-				num3 = pr_exrandom();
-				num4 = pr_exrandom();
+				num1 = (*data->RNG)();
+				num2 = (*data->RNG)();
+				num3 = (*data->RNG)();
+				num4 = (*data->RNG)();
 
 				val.Int = ((num1 << 24) | (num2 << 16) | (num3 << 8) | num4);
 			}
 			else
 			{
-				val.Int = pr_exrandom();
+				val.Int = (*data->RNG)();
 			}
 			val.Int %= (max - min + 1);
 			val.Int += min;
+		}
+		break;
+
+	case EX_Random2:
+		{
+			if (data->Children[0] == NULL)
+			{
+				val.Type = VAL_Int;
+				val.Int = data->RNG->Random2();
+			}
+			else
+			{
+				ExpVal a = EvalExpression (data->Children[0], self);
+				val.Type = VAL_Int;
+				val.Int = data->RNG->Random2((a.Type == VAL_Int) ? a.Int : (int)a.Float);
+			}
 		}
 		break;
 

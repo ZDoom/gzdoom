@@ -1,3 +1,9 @@
+November 26, 2006 (Changes by Graf Zahl)
+- Added random2 function to DECORATE's expression evaluator. This is to
+  better emulate some calculation of internal code pointers.
+- Added named RNG support to DECORATE's expression evaluator. Just use
+  random[name](min, max).
+
 November 25, 2006
 - Reverted updaterevision.vcproj to r385 and added a note as a build event
   explaining the need to use mt.exe 6.0 or newer. Here is the note:

@@ -30,7 +30,7 @@ ACTOR Clink 90
 	Melee:
 		CLNK E 5 A_FaceTarget
 		CLNK F 4 A_FaceTarget
-		CLNK G 7 A_CustomMeleeAttack(random(3,9), "clink/attack", "clink/attack")
+		CLNK G 7 A_CustomMeleeAttack(random[ClinkAttack](3,9), "clink/attack", "clink/attack")
 		Goto See
 	Pain:
 		CLNK H 3

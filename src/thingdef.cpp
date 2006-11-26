@@ -1068,32 +1068,6 @@ static const ActorProps *is_actorprop (const char *str);
 
 //==========================================================================
 //
-// Some functions which check for simple tokens
-//
-//==========================================================================
-
-inline void ChkCom()
-{
-	SC_MustGetStringName (",");
-}
-	
-inline void ChkBraceOpn()
-{
-	SC_MustGetStringName ("{");
-}
-	
-inline bool TestBraceCls()
-{
-	return SC_CheckString ("}");
-}
-
-inline bool TestCom()
-{
-	return SC_CheckString (",");
-}
-
-//==========================================================================
-//
 // Find a state address
 //
 //==========================================================================
@@ -1610,7 +1584,7 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 			{
 				StateParameters[paramindex+i+1]=ParseExpression (false);
 				i++;
-				if (!TestCom()) break;
+				if (!SC_CheckString (",")) break;
 			}
 			SC_MustGetStringName (")");
 		}
@@ -1719,9 +1693,9 @@ static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 	intptr_t lastlabel = -1;
 	int minrequiredstate = -1;
 
-	ChkBraceOpn();
+	SC_MustGetStringName ("{");
 	SC_SetEscape(false);	// disable escape sequences in the state parser
-	while (!TestBraceCls() && !sc_End)
+	while (!SC_CheckString ("}") && !sc_End)
 	{
 		memset(&state,0,sizeof(state));
 		statestring = ParseStateString();
@@ -1853,7 +1827,7 @@ do_stop:
 					SC_MustGetStringName("(");
 					SC_MustGetNumber();
 					state.Misc1=sc_Number;
-					ChkCom();
+					SC_MustGetStringName (",");
 					SC_MustGetNumber();
 					state.Misc2=sc_Number;
 					SC_MustGetStringName(")");
@@ -2092,7 +2066,7 @@ do_stop:
 								{
 									goto endofstate;
 								}
-								ChkCom();
+								SC_MustGetStringName (",");
 							}
 						}
 						SC_MustGetStringName(")");
@@ -2418,8 +2392,8 @@ void ParseActorProperties (Baggage &bag)
 	const PClass *info;
 	const ActorProps *prop;
 
-	ChkBraceOpn ();
-	while (!TestBraceCls())
+	SC_MustGetStringName ("{");
+	while (!SC_CheckString ("}"))
 	{
 		if (sc_End)
 		{

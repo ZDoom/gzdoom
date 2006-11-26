@@ -77,6 +77,7 @@ public:
 	static DWORD StaticSumSeeds ();
 	static void StaticReadRNGState (PNGHandle *png);
 	static void StaticWriteRNGState (FILE *file);
+	static FRandom *StaticFindRNG(const char *name);
 
 #ifdef _DEBUG
 	static void StaticPrintSeeds ();

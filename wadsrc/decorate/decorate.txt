@@ -40,7 +40,9 @@
 #include "actors/heretic/hereticartifacts.txt"
 #include "actors/heretic/heretickeys.txt"
 #include "actors/heretic/hereticdecorations.txt"
+#include "actors/heretic/mummy.txt"
 #include "actors/heretic/clink.txt"
+#include "actors/heretic/beast.txt"
 #include "actors/heretic/snake.txt"
 
 #include "actors/hexen/fighterplayer.txt"
@@ -57,6 +59,7 @@
 #include "actors/hexen/speedboots.txt"
 #include "actors/hexen/ettin.txt"
 #include "actors/hexen/centaur.txt"
+#include "actors/hexen/demons.txt"
 
 #include "actors/strife/beggars.txt"
 #include "actors/strife/merchants.txt"

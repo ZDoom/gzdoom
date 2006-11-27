@@ -1,0 +1,142 @@
+
+// Mummy --------------------------------------------------------------------
+
+ACTOR Mummy 68
+{
+	Game Heretic
+	SpawnID 4
+	Health 80
+	Radius 22
+	Height 62
+	Mass 75
+	Speed 12
+	Painchance 128
+	Monster
+	+FLOORCLIP
+	SeeSound "mummy/sight"
+	AttackSound "mummy/attack1"
+	PainSound "mummy/pain"
+	DeathSound "mummy/death"
+	ActiveSound "mummy/active"
+	HitObituary "$OB_MUMMY"
+	DropItem "GoldWandAmmo", 84, 3
+	States
+	{
+	Spawn:
+		MUMM AB 10 A_Look
+		Loop
+	See:
+		MUMM ABCD 4 A_Chase
+		Loop
+	Melee:
+		MUMM E 6 A_FaceTarget
+		MUMM F 6 A_CustomMeleeAttack(random[MummyAttack](1,8)*2, "mummy/attack2", "mummy/attack")
+		MUMM G 6
+		Goto See
+	Pain:
+		MUMM H 4
+		MUMM H 4 A_Pain
+		Goto See
+	Death:
+		MUMM I 5
+		MUMM J 5 A_Scream
+		MUMM K 5 A_SpawnItemEx("MummySoul", 0,0,10, 0,0,1)
+		MUMM L 5
+		MUMM M 5 A_NoBlocking
+		MUMM NO 5
+		MUMM P -1
+		Stop
+	}
+}
+
+// Mummy leader -------------------------------------------------------------
+
+ACTOR MummyLeader : Mummy 45
+{
+	Game Heretic
+	SpawnID 2
+	Health 100
+	Painchance 64
+	Obituary "$OB_MUMMYLEADER"
+	States
+	{
+	Missile:
+		MUMM X 5 A_FaceTarget
+		MUMM Y 5 Bright A_FaceTarget
+		MUMM X 5 A_FaceTarget
+		MUMM Y 5 Bright A_FaceTarget
+		MUMM X 5 A_FaceTarget
+		MUMM Y 5 Bright A_CustomComboAttack("MummyFX1", 32, random[MummyAttack2](1,8)*2, "mummy/attack2")
+		Goto See
+	}
+}
+
+// Mummy ghost --------------------------------------------------------------
+
+ACTOR MummyGhost : Mummy 69
+{
+	Game Heretic
+	SpawnID 8
+	+SHADOW
+	+GHOST
+	RenderStyle Translucent
+	Alpha 0.4
+}
+
+// Mummy leader ghost -------------------------------------------------------
+
+ACTOR MummyLeaderGhost : MummyLeader 46
+{
+	Game Heretic
+	SpawnID 9
+	+SHADOW
+	+GHOST
+	RenderStyle Translucent
+	Alpha 0.4
+}
+
+// Mummy soul ---------------------------------------------------------------
+
+ACTOR MummySoul
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	States
+	{
+	Spawn:
+		MUMM QRS 5
+		MUMM TUVW 9
+		Stop
+	}
+}
+
+// Mummy FX 1 (flying head) -------------------------------------------------
+
+ACTOR MummyFX1
+{
+	Game Heretic
+	SpawnID 131
+	Radius 8
+	Height 14
+	Speed 9
+	FastSpeed 18
+	Damage 4
+	RenderStyle Add
+	Projectile
+	-ACTIVATEPCROSS
+	-ACTIVATEIMPACT
+	+SEEKERMISSILE
+	States
+	{
+	Spawn:
+		FX15 A 1 Bright
+		FX15 A 5 Bright A_PlaySound("mummy/head")
+		FX15 B 5 Bright A_SeekerMissile(10,20)
+		FX15 C 5 Bright
+		FX15 B 5 Bright A_SeekerMissile(10,20)
+		Goto Spawn+1
+	Death:
+		FX15 DEFG 5 Bright
+		Stop
+	}
+}

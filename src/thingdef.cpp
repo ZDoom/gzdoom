@@ -701,7 +701,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_GiveInventory, "Mx" )
 	FUNC(A_TakeInventory, "Mx" )
 	FUNC(A_SpawnItem, "Mxxyx" )
-	FUNC(A_SpawnItemEx, "Mxxxxxxxx" )
+	FUNC(A_SpawnItemEx, "Mxxxxxxxxx" )
 	FUNC(A_ThrowGrenade, "Mxxxy" )
 	FUNC(A_SelectWeapon, "M")
 	FUNC(A_Print, "Txt")

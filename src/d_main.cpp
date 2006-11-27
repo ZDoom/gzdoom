@@ -1972,33 +1972,36 @@ void D_DoomMain (void)
 	I_SetTitleString (IWADTypeNames[IdentifyVersion(wad)]);
 	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
 
-	// [RH] zvox.wad - A wad I had intended to be automatically generated
-	// from Q2's pak0.pak so the female and cyborg player could have
-	// voices. I never got around to writing the utility to do it, though.
-	// And I probably never will now. But I know at least one person uses
-	// it for something else, so this gets to stay here.
-	wad = BaseFileSearch ("zvox.wad", NULL);
-	if (wad)
-		D_AddFile (wad);
 
-	// [RH] Add any .wad files in the skins directory
-#ifdef unix
-	sprintf (file, "%sskins", SHARE_DIR);
-#else
-	sprintf (file, "%sskins", progdir);
-#endif
-	D_AddDirectory (file);
-
-	const char *home = getenv ("HOME");
-	if (home)
-	{
-		sprintf (file, "%s%s.zdoom/skins", home,
-			home[strlen(home)-1] == '/' ? "" : "/");
-		D_AddDirectory (file);
-	}
 
 	if (!(gameinfo.flags & GI_SHAREWARE))
 	{
+		// [RH] zvox.wad - A wad I had intended to be automatically generated
+		// from Q2's pak0.pak so the female and cyborg player could have
+		// voices. I never got around to writing the utility to do it, though.
+		// And I probably never will now. But I know at least one person uses
+		// it for something else, so this gets to stay here.
+		wad = BaseFileSearch ("zvox.wad", NULL);
+		if (wad)
+			D_AddFile (wad);
+	
+		// [RH] Add any .wad files in the skins directory
+#ifdef unix
+		sprintf (file, "%sskins", SHARE_DIR);
+#else
+		sprintf (file, "%sskins", progdir);
+#endif
+		D_AddDirectory (file);
+	
+		const char *home = getenv ("HOME");
+		if (home)
+		{
+			sprintf (file, "%s%s.zdoom/skins", home,
+				home[strlen(home)-1] == '/' ? "" : "/");
+			D_AddDirectory (file);
+		}
+	
+	
 		// Add common (global) wads
 		D_AddConfigWads ("Global.Autoload");
 

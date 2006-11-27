@@ -1,3 +1,17 @@
+November 27, 2006 (Changes by Graf Zahl)
+- Changed: When playing a shareware game no external WADs are loaded at all,
+  not even zvox.wad or the skins directory.
+- Minor improvement of Hexen's Demons: They now transfer the translation
+  to the chunks they spawn so that they look correct if they are color
+  translated. See Resurrection of Chaos for an example.
+- Converted Key gizmos to DECORATE.
+- Converted Heretic's Beast (Weredragon) to DECORATE.
+- Added a randomness parameter to A_SpawnItemEx. This allows
+  spawning objects with a random chance without the need to write
+  complicated A_Jump constructs.
+- Converted Heretic's Mummy to DECORATE.
+- Converted Hexen's Demons to DECORATE.
+
 November 26, 2006 (Changes by Graf Zahl)
 - Converted Ettin and Centaur to DECORATE.
 - Made the Ettin's and Centaur's howling sound an actor property.

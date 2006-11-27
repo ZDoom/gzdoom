@@ -77,6 +77,7 @@ static FRandom pr_cwpunch ("CustomWpPunch");
 static FRandom pr_grenade ("ThrowGrenade");
 static FRandom pr_crailgun ("CustomRailgun");
 static FRandom pr_spawndebris ("SpawnDebris");
+static FRandom pr_spawnitemex ("SpawnItemEx");
 static FRandom pr_burst ("Burst");
 
 
@@ -1433,6 +1434,7 @@ void A_SpawnItemEx(AActor * self)
 	fixed_t zmom = fixed_t(EvalExpressionF (StateParameters[index+6], self) * FRACUNIT);
 	angle_t Angle= angle_t(EvalExpressionF (StateParameters[index+7], self) * ANGLE_1);
 	int flags = EvalExpressionI (StateParameters[index+8], self);
+	int chance = EvalExpressionI (StateParameters[index+9], self);
 
 	if (!missile) 
 	{
@@ -1440,10 +1442,12 @@ void A_SpawnItemEx(AActor * self)
 		return;
 	}
 
+	if (chance > 0 && pr_spawnitemex()<chance) return;
+
 	// Don't spawn monsters if this actor has been massacred
 	if (self->DamageType == NAME_Massacre && GetDefaultByType(missile)->flags3&MF3_ISMONSTER) return;
 
-	fixed_t x,y,z;
+	fixed_t x,y;
 
 	if (!(flags & SIXF_ABSOLUTEANGLE))
 	{

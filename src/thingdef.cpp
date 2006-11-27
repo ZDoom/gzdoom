@@ -132,6 +132,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG2(MF2_LOGRAV, LOWGRAVITY, AActor, flags2),
 	DEFINE_FLAG(MF2, WINDTHRUST, AActor, flags2),
 	DEFINE_FLAG(MF2, HERETICBOUNCE , AActor, flags2),
+	DEFINE_FLAG(MF2, BLASTED, AActor, flags2),
 	DEFINE_FLAG(MF2, FLOORCLIP, AActor, flags2),
 	DEFINE_FLAG(MF2, SPAWNFLOAT, AActor, flags2),
 	DEFINE_FLAG(MF2, NOTELEPORT, AActor, flags2),
@@ -477,6 +478,7 @@ ACTOR(LightInverse)
 ACTOR(GiveInventory)
 ACTOR(TakeInventory)
 ACTOR(SpawnItem)
+ACTOR(SpawnItemEx)
 ACTOR(ThrowGrenade)
 ACTOR(Recoil)
 ACTOR(SelectWeapon)
@@ -506,6 +508,7 @@ ACTOR(TakeFromTarget)
 ACTOR(JumpIfInTargetInventory)
 ACTOR(CountdownArg)
 ACTOR(CustomMeleeAttack)
+ACTOR(CustomComboAttack)
 ACTOR(Light)
 ACTOR(Burst)
 ACTOR(SkullPop)
@@ -517,6 +520,7 @@ ACTOR(SPosAttackUseAtkSound)
 ACTOR(Respawn)
 ACTOR(BarrelDestroy)
 ACTOR(PlayerSkinCheck)
+ACTOR(QueueCorpse)
 
 
 #include "d_dehackedactions.h"
@@ -697,6 +701,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_GiveInventory, "Mx" )
 	FUNC(A_TakeInventory, "Mx" )
 	FUNC(A_SpawnItem, "Mxxyx" )
+	FUNC(A_SpawnItemEx, "Mxxxxxxxx" )
 	FUNC(A_ThrowGrenade, "Mxxxy" )
 	FUNC(A_SelectWeapon, "M")
 	FUNC(A_Print, "Txt")
@@ -728,12 +733,14 @@ AFuncDesc AFTable[]=
 	FUNC(A_TakeFromTarget, "Mx" )
 	FUNC(A_CountdownArg, "X")
 	FUNC(A_CustomMeleeAttack, "Xssty" )
+	FUNC(A_CustomComboAttack, "MXXsty" )
 	FUNC(A_Burst, "M")
 	FUNC(A_RadiusThrust, "xxy")
 	{"A_Explode", A_ExplodeParms, "xxy" },
 	FUNC(A_Stop, NULL)
 	FUNC(A_Respawn, "y")
 	FUNC(A_BarrelDestroy, NULL)
+	FUNC(A_QueueCorpse, NULL)
 };
 
 //==========================================================================
@@ -2822,6 +2829,15 @@ static void ActorActiveSound (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorHowlSound (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetString();
+	bag.Info->Class->Meta.SetMetaInt (AMETA_HowlSound, S_FindSound(sc_String));
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorDropItem (AActor *defaults, Baggage &bag)
 {
 	// create a linked list of dropitems
@@ -4138,6 +4154,7 @@ static const ActorProps props[] =
 	{ "health.lowmessage",			(apf)HealthLowMessage,		RUNTIME_CLASS(AHealth) },
 	{ "height",						ActorHeight,				RUNTIME_CLASS(AActor) },
 	{ "hitobituary",				ActorHitObituary,			RUNTIME_CLASS(AActor) },
+	{ "howlsound",					ActorHowlSound,				RUNTIME_CLASS(AActor) },
 	{ "ice",						ActorIceState,				RUNTIME_CLASS(AActor) },
 	{ "inventory.amount",			(apf)InventoryAmount,		RUNTIME_CLASS(AInventory) },
 	{ "inventory.defmaxamount",		(apf)InventoryDefMaxAmount,	RUNTIME_CLASS(AInventory) },

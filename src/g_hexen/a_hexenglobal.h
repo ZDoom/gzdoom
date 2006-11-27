@@ -52,13 +52,6 @@ public:
 	void BeginPlay ();
 };
 
-class ACentaur : public AActor
-{
-	DECLARE_ACTOR (ACentaur, AActor)
-public:
-	void Howl ();
-};
-
 class AFourthWeaponPiece : public AInventory
 {
 	DECLARE_STATELESS_ACTOR (AFourthWeaponPiece, AInventory)

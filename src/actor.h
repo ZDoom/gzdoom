@@ -418,6 +418,7 @@ enum
 	AMETA_FastSpeed,		// Speed in fast mode
 	AMETA_RDFactor,			// Radius damage factor
 	AMETA_CameraHeight,		// Height of camera when used as such
+	AMETA_HowlSound,		// Sound being played when electrocuted or poisoned
 };
 
 // Map Object definition.
@@ -476,7 +477,8 @@ public:
 	virtual int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
 
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
-	virtual void Howl ();
+	// Made a metadata property so no longer virtual
+	void Howl ();
 
 	// Called by A_NoBlocking in case the actor wants to drop some presents
 	virtual void NoBlockingSet ();
@@ -503,9 +505,6 @@ public:
 
 	// Called by RoughBlockCheck
 	virtual bool IsOkayToAttack (AActor *target);
-
-	virtual void ChangeSpecial (int special, int data1, int data2,
-		int data3, int data4, int data5);
 
 	// Plays the actor's ActiveSound if its voice isn't already making noise.
 	void PlayActiveSound ();

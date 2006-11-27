@@ -683,10 +683,6 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 
 	z -= source->floorclip;
 	th = Spawn (type, x, y, z, ALLOW_REPLACE);
-	if (th->SeeSound)
-	{
-		S_SoundID (th, CHAN_BODY, th->SeeSound, 1, ATTN_NORM);
-	}
 	th->target = source; // Originator
 	an = R_PointToAngle2(x, y, dest->x, dest->y);
 	if (dest->flags & MF_SHADOW)

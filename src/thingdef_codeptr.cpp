@@ -846,6 +846,63 @@ void A_CustomMeleeAttack (AActor *self)
 
 //==========================================================================
 //
+// A fully customizable combo attack
+//
+//==========================================================================
+void A_CustomComboAttack (AActor *self)
+{
+	int index=CheckIndex(6);
+	if (index<0) return;
+
+	ENamedName MissileName=(ENamedName)StateParameters[index];
+	fixed_t SpawnHeight=fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
+	int damage = EvalExpressionI (StateParameters[index+2], self);
+	int MeleeSound = StateParameters[index+3];
+	ENamedName DamageType = (ENamedName)StateParameters[index+4];
+	bool bleed = EvalExpressionN (StateParameters[index+5], self);
+
+
+	if (!self->target)
+		return;
+				
+	A_FaceTarget (self);
+	if (self->CheckMeleeRange ())
+	{
+		if (DamageType==NAME_None) DamageType = NAME_Melee;	// Melee is the default type
+		if (MeleeSound) S_SoundID (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
+		P_DamageMobj (self->target, self, self, damage, DamageType);
+		if (bleed) P_TraceBleed (damage, self->target, self);
+	}
+	else
+	{
+		const PClass * ti=PClass::FindClass(MissileName);
+		if (ti) 
+		{
+			// Although there is a P_SpawnMissileZ function its
+			// aiming is much too bad to be of any use
+			self->z+=SpawnHeight-32*FRACUNIT;
+			AActor * missile = P_SpawnMissile (self, self->target, ti);
+			self->z-=SpawnHeight-32*FRACUNIT;
+
+			if (missile)
+			{
+				// automatic handling of seeker missiles
+				if (missile->flags2&MF2_SEEKERMISSILE)
+				{
+					missile->tracer=self->target;
+				}
+				// set the health value so that the missile works properly
+				if (missile->flags4&MF4_SPECTRAL)
+				{
+					missile->health=-2;
+				}
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // State jump function
 //
 //==========================================================================
@@ -1230,11 +1287,77 @@ void A_TakeFromTarget(AActor * self)
 
 //===========================================================================
 //
+// Common code for A_SpawnItem and A_SpawnItemEx
+//
+//===========================================================================
+
+static void InitSpawnedItem(AActor *self, AActor *mo, INTBOOL transfer_translation, INTBOOL setmaster)
+{
+	if (mo)
+	{
+		AActor * originator = self;
+
+		if (transfer_translation)
+		{
+			mo->Translation = self->Translation;
+		}
+
+		mo->angle=self->angle;
+		while (originator && isMissile(originator)) originator = originator->target;
+
+		if (mo->flags3&MF3_ISMONSTER)
+		{
+			if (!P_TestMobjLocation(mo))
+			{
+				// The monster is blocked so don't spawn it at all!
+				if (mo->CountsAsKill()) level.total_monsters--;
+				mo->Destroy();
+				if (pStateCall != NULL) pStateCall->Result=false;	// for an inventory iten's use state
+				return;
+			}
+			else if (originator)
+			{
+				if (originator->flags3&MF3_ISMONSTER)
+				{
+					// If this is a monster transfer all friendliness information
+					mo->CopyFriendliness(originator, true);
+					if (setmaster) mo->master = originator;	// don't let it attack you (optional)!
+				}
+				else if (originator->player)
+				{
+					// A player always spawns a monster friendly to him
+					mo->flags|=MF_FRIENDLY;
+					mo->FriendPlayer = originator->player-players+1;
+
+					AActor * attacker=originator->player->attacker;
+					if (attacker)
+					{
+						if (!(attacker->flags&MF_FRIENDLY) || 
+							(deathmatch && attacker->FriendPlayer!=0 && attacker->FriendPlayer!=mo->FriendPlayer))
+						{
+							// Target the monster which last attacked the player
+							mo->target = attacker;
+						}
+					}
+				}
+			}
+		}
+		else 
+		{
+			// If this is a missile or something else set the target to the originator
+			mo->target=originator? originator : self;
+		}
+	}
+}
+
+//===========================================================================
+//
 // A_SpawnItem
 //
 // Spawns an item in front of the caller like Heretic's time bomb
 //
 //===========================================================================
+
 void A_SpawnItem(AActor * self)
 {
 	FState * CallingState;
@@ -1276,60 +1399,88 @@ void A_SpawnItem(AActor * self)
 					self->y + FixedMul(distance, finesine[self->angle>>ANGLETOFINESHIFT]), 
 					self->z - self->floorclip + zheight, ALLOW_REPLACE);
 
+	InitSpawnedItem(self, mo, transfer_translation, useammo);
+}
+
+//===========================================================================
+//
+// A_SpawnItemEx
+//
+// Enhanced spawning function
+//
+//===========================================================================
+enum SIX_Flags
+{
+	SIXF_TRANSFERTRANSLATION=1,
+	SIXF_ABSOLUTEPOSITION=2,
+	SIXF_ABSOLUTEANGLE=4,
+	SIXF_ABSOLUTEMOMENTUM=8,
+	SIXF_SETMASTER=16
+};
+
+void A_SpawnItemEx(AActor * self)
+{
+	FState * CallingState;
+	int index=CheckIndex(9, &CallingState);
+	if (index<0) return;
+
+	const PClass * missile= PClass::FindClass((ENamedName)StateParameters[index]);
+	fixed_t xofs = fixed_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
+	fixed_t yofs = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
+	fixed_t zofs = fixed_t(EvalExpressionF (StateParameters[index+3], self) * FRACUNIT);
+	fixed_t xmom = fixed_t(EvalExpressionF (StateParameters[index+4], self) * FRACUNIT);
+	fixed_t ymom = fixed_t(EvalExpressionF (StateParameters[index+5], self) * FRACUNIT);
+	fixed_t zmom = fixed_t(EvalExpressionF (StateParameters[index+6], self) * FRACUNIT);
+	angle_t Angle= angle_t(EvalExpressionF (StateParameters[index+7], self) * ANGLE_1);
+	int flags = EvalExpressionI (StateParameters[index+8], self);
+
+	if (!missile) 
+	{
+		if (pStateCall != NULL) pStateCall->Result=false;
+		return;
+	}
+
+	// Don't spawn monsters if this actor has been massacred
+	if (self->DamageType == NAME_Massacre && GetDefaultByType(missile)->flags3&MF3_ISMONSTER) return;
+
+	fixed_t x,y,z;
+
+	if (!(flags & SIXF_ABSOLUTEANGLE))
+	{
+		Angle += self->angle;
+	}
+
+	angle_t ang = Angle >> ANGLETOFINESHIFT;
+
+	if (flags & SIXF_ABSOLUTEPOSITION)
+	{
+		x = self->x + xofs;
+		y = self->y + yofs;
+	}
+	else
+	{
+		// in relative mode negative y values mean 'left' and positive ones mean 'right'
+		// This is the inverse orientation of the absolute mode!
+		x = self->x + FixedMul(xofs, finecosine[ang]) + FixedMul(yofs, finesine[ang]);
+		y = self->y + FixedMul(xofs, finesine[ang]) - FixedMul(yofs, finecosine[ang]);
+	}
+
+	if (!(flags & SIXF_ABSOLUTEMOMENTUM))
+	{
+		// Same orientation issue here!
+		fixed_t newxmom = FixedMul(xmom, finecosine[ang]) + FixedMul(ymom, finesine[ang]);
+		ymom = FixedMul(xmom, finesine[ang]) - FixedMul(ymom, finecosine[ang]);
+		xmom = newxmom;
+	}
+
+	AActor * mo = Spawn( missile, x, y, self->z + self->floorclip + zofs, ALLOW_REPLACE);
+	InitSpawnedItem(self, mo, (flags & SIXF_TRANSFERTRANSLATION), (flags&SIXF_SETMASTER));
 	if (mo)
 	{
-		AActor * originator = self;
-
-		if (transfer_translation)
-		{
-			mo->Translation = self->Translation;
-		}
-
-		mo->angle=self->angle;
-		while (originator && isMissile(originator)) originator = originator->target;
-
-		if (mo->flags3&MF3_ISMONSTER)
-		{
-			if (!P_TestMobjLocation(mo))
-			{
-				// The monster is blocked so don't spawn it at all!
-				if (mo->CountsAsKill()) level.total_monsters--;
-				mo->Destroy();
-				if (pStateCall != NULL) pStateCall->Result=false;	// for an inventory iten's use state
-				return;
-			}
-			else if (originator)
-			{
-				if (originator->flags3&MF3_ISMONSTER)
-				{
-					// If this is a monster transfer all friendliness information
-					mo->CopyFriendliness(originator, true);
-					if (useammo) mo->master = originator;	// don't let it attack you (optional)!
-				}
-				else if (originator->player)
-				{
-					// A player always spawns a monster friendly to him
-					mo->flags|=MF_FRIENDLY;
-					mo->FriendPlayer = originator->player-players+1;
-
-					AActor * attacker=originator->player->attacker;
-					if (attacker)
-					{
-						if (!(attacker->flags&MF_FRIENDLY) || 
-							(deathmatch && attacker->FriendPlayer!=0 && attacker->FriendPlayer!=mo->FriendPlayer))
-						{
-							// Target the monster which last attacked the player
-							mo->target = attacker;
-						}
-					}
-				}
-			}
-		}
-		else 
-		{
-			// If this is a missile or something else set the target to the originator
-			mo->target=originator? originator : self;
-		}
+		mo->momx=xmom;
+		mo->momy=ymom;
+		mo->momz=zmom;
+		mo->angle=Angle;
 	}
 }
 

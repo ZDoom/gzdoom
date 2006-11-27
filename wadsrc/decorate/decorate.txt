@@ -55,6 +55,8 @@
 #include "actors/hexen/puzzleitems.txt"
 #include "actors/hexen/scriptprojectiles.txt"
 #include "actors/hexen/speedboots.txt"
+#include "actors/hexen/ettin.txt"
+#include "actors/hexen/centaur.txt"
 
 #include "actors/strife/beggars.txt"
 #include "actors/strife/merchants.txt"

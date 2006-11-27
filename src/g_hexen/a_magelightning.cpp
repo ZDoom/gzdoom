@@ -130,7 +130,11 @@ int ALightning::SpecialMissileHit (AActor *thing)
 		if ((!thing->player && !(thing->flags2&MF2_BOSS))
 			|| !(level.time&1))
 		{
-			if (thing->IsKindOf(RUNTIME_CLASS(ACentaur)))
+			// There needs to be a better way to do this...
+			static const PClass *centaur=NULL;
+			if (!centaur) centaur = PClass::FindClass("Centaur");
+
+			if (thing->IsKindOf(centaur))
 			{ // Lightning does more damage to centaurs
 				P_DamageMobj(thing, this, target, 9, NAME_Electric);
 			}

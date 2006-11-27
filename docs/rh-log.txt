@@ -1,4 +1,14 @@
 November 26, 2006 (Changes by Graf Zahl)
+- Converted Ettin and Centaur to DECORATE.
+- Made the Ettin's and Centaur's howling sound an actor property.
+- Added A_CustomComboAttack function to finally have something that can
+  replace the old A_ComboAttack function.
+- Added A_SpawnItemEx function that removes the problems with A_SpawnItem
+  and which also should make most of the A_CustomMissile abuse unnecessary.
+- Added A_QueueCorpse to the list of DECORATE code pointers.
+- Made the size of Hexen's corpse queue configurable by CVAR
+  (sv_corpsequeuesize.) Setting this CVAR to -1 will disable corpse 
+  queuing completely so that even in Hexen all corpses will stay forever.
 - Added random2 function to DECORATE's expression evaluator. This is to
   better emulate some calculation of internal code pointers.
 - Added named RNG support to DECORATE's expression evaluator. Just use

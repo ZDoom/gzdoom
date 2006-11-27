@@ -54,7 +54,7 @@ ACTOR ZombieSpawner 170
 	States
 	{
 	Spawn:
-		TNT1 A 175 A_SpawnItem("Zombie", 0.1, 0)
+		TNT1 A 175 A_SpawnItemEx("Zombie")
 		Loop
 	}
 }

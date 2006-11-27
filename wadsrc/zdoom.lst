@@ -298,6 +298,8 @@ actors/hexen/mana.txt						decorate/hexen/mana.txt
 actors/hexen/puzzleitems.txt				decorate/hexen/puzzleitems.txt
 actors/hexen/scriptprojectiles.txt			decorate/hexen/scriptprojectiles.txt
 actors/hexen/speedboots.txt					decorate/hexen/speedboots.txt
+actors/hexen/ettin.txt						decorate/hexen/ettin.txt
+actors/hexen/centaur.txt                    decorate/hexen/centaur.txt
 
 actors/strife/beggars.txt					decorate/strife/beggars.txt
 actors/strife/merchants.txt                 decorate/strife/merchants.txt

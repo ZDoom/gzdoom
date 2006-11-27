@@ -140,6 +140,9 @@ static int DoomSpecificInfo (char *buffer, char *end)
 
 int main (int argc, char **argv)
 {
+	printf("ZDoom v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
+		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
+
 	{
 		int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
 		cc_install_handlers(4, s, "zdoom-crash.log", DoomSpecificInfo);

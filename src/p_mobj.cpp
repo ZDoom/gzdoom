@@ -2319,6 +2319,11 @@ int AActor::GetMissileDamage (int mask, int add)
 
 void AActor::Howl ()
 {
+	int howl = GetClass()->Meta.GetMetaInt(AMETA_HowlSound);
+	if (!S_GetSoundPlayingInfo (this, howl))
+	{
+		S_SoundID (this, CHAN_BODY, howl, 1, ATTN_NORM);
+	}
 }
 
 void AActor::NoBlockingSet ()
@@ -2431,17 +2436,6 @@ bool AActor::IsOkayToAttack (AActor *link)
 		}
 	}
 	return false;
-}
-
-void AActor::ChangeSpecial (int special, int data1, int data2,
-	int data3, int data4, int data5)
-{
-	this->special = special;
-	args[0] = data1;
-	args[1] = data2;
-	args[2] = data3;
-	args[3] = data4;
-	args[4] = data5;
 }
 
 void AActor::SetShade (DWORD rgb)

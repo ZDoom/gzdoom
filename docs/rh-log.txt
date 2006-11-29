@@ -1,3 +1,7 @@
+November 29, 2006 (Changes by Graf Zahl)
+- Made the constructor of PSymbolTable inline. Having this a real function 
+  adds 100kb to the EXE, mostly needless exception handling code.
+
 November 28, 2006 (Changes by Graf Zahl)
 - Fixed: The StrifePlayer couldn't obtain his default inventory because
   APlayerPawn::GiveDefaultInventory gave him some HexenArmor even though

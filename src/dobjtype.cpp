@@ -305,11 +305,6 @@ void PClass::FreeStateList ()
 
 // Symbol tables ------------------------------------------------------------
 
-PSymbolTable::PSymbolTable ()
-: ParentSymbolTable(NULL)
-{
-}
-
 PSymbolTable::~PSymbolTable ()
 {
 	for (unsigned int i = 0; i < Symbols.Size(); ++i)

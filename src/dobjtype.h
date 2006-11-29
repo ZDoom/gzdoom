@@ -56,7 +56,10 @@ struct PSymbolActionFunction : public PSymbol
 class PSymbolTable
 {
 public:
-	PSymbolTable();
+	PSymbolTable() : ParentSymbolTable(NULL)
+	{
+	}
+
 	~PSymbolTable();
 
 	// Sets the table to use for searches if this one doesn't contain the

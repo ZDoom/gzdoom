@@ -1,8 +1,28 @@
+
+// Blood sprite ------------------------------------------------------------
+
+ACTOR Blood
+{
+	SpawnID 130
+	Mass 5
+	+NOBLOCKMAP
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		BLUD CBA 8
+		Stop
+	Spray:
+		SPRY ABCDEF 3
+		SPRY G 2
+		Stop
+	}
+}
+
 // Blood splatter -----------------------------------------------------------
 
 ACTOR BloodSplatter
 {
-	Game Raven
 	Radius 2
 	Height 4
 	+NOBLOCKMAP
@@ -22,4 +42,26 @@ ACTOR BloodSplatter
 	}
 }
 	
+// Axe Blood ----------------------------------------------------------------
+
+ACTOR AxeBlood
+{
+	Radius 2
+	Height 4
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DROPOFF
+	+NOTELEPORT
+	+CANNOTPUSH
+	Mass 5
+	States
+	{
+	Spawn:
+		FAXE FGHIJ 3
+	Death:
+		FAXE G 3
+		Stop
+	}
+}
+
 	

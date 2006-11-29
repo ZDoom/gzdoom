@@ -144,6 +144,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF2, THRUGHOST, AActor, flags2),
 	DEFINE_FLAG(MF2, BOSS, AActor, flags2),
 	DEFINE_FLAG2(MF2_NODMGTHRUST, NODAMAGETHRUST, AActor, flags2),
+	DEFINE_FLAG(MF2, DONTTRANSLATE, AActor, flags2),
 	DEFINE_FLAG(MF2, TELESTOMP, AActor, flags2),
 	DEFINE_FLAG(MF2, FLOATBOB, AActor, flags2),
 	DEFINE_FLAG(MF2, HEXENBOUNCE, AActor, flags2),
@@ -693,7 +694,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_Jump, "XL+" )
 	FUNC(A_CustomMissile, "MXXxxx" )
 	FUNC(A_CustomBulletAttack, "XXXXmx" )
-	FUNC(A_CustomRailgun, "Xxccxxx" )
+	FUNC(A_CustomRailgun, "Xxccxxxm" )
 	FUNC(A_JumpIfHealthLower, "XL" )
 	FUNC(A_JumpIfCloser, "XL" )
 	FUNC(A_JumpIfInventory, "MXL" )
@@ -725,7 +726,7 @@ AFuncDesc AFTable[]=
 	FUNC(A_CustomPunch, "Xxymx" )
 	FUNC(A_FireBullets, "XXXXmyx" )
 	FUNC(A_FireCustomMissile, "Mxyxxx" )
-	FUNC(A_RailAttack, "Xxyccxx" )
+	FUNC(A_RailAttack, "Xxyccxxm" )
 	FUNC(A_Recoil, "X")
 	FUNC(A_JumpIfInTargetInventory, "MXL" )
 	FUNC(A_GiveToTarget, "Mx" )
@@ -3350,6 +3351,33 @@ static void ActorBloodColor (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorBloodType (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetString();
+	FName blood = sc_String;
+	// normal blood
+	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType, blood);
+
+	if (SC_CheckString(",")) 
+	{
+		SC_MustGetString();
+		blood = sc_String;
+	}
+	// blood splatter
+	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType2, blood);
+
+	if (SC_CheckString(",")) 
+	{
+		SC_MustGetString();
+		blood = sc_String;
+	}
+	// axe blood
+	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType3, blood);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorBounceFactor (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat ();
@@ -4258,6 +4286,7 @@ static const ActorProps props[] =
 	{ "armor.savepercent",			(apf)ArmorSavePercent,		RUNTIME_CLASS(AActor) },
 	{ "attacksound",				ActorAttackSound,			RUNTIME_CLASS(AActor) },
 	{ "bloodcolor",					ActorBloodColor,			RUNTIME_CLASS(AActor) },
+	{ "bloodtype",					ActorBloodType,				RUNTIME_CLASS(AActor) },
 	{ "bouncecount",				ActorBounceCount,			RUNTIME_CLASS(AActor) },
 	{ "bouncefactor",				ActorBounceFactor,			RUNTIME_CLASS(AActor) },
 	{ "burn",						ActorBurnState,				RUNTIME_CLASS(AActor) },

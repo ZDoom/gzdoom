@@ -641,9 +641,11 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 		if ((health<gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
 		{ // Extreme death
-			diestate = FindState (2, NAME_Death, NAME_Extreme);
+			diestate = GetClass()->ActorInfo->FindStateExact (2, NAME_Death, NAME_Extreme);
+			// if a non-player mark as extremely dead for the crash state.
+			if (diestate != NULL && player == NULL && health >= gibhealth) health = gibhealth-1;	
 		}
-		else
+		if (diestate == NULL)
 		{ // Normal death
 			diestate = FindState (NAME_Death);
 		}

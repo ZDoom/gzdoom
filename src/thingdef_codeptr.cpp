@@ -1117,6 +1117,7 @@ void A_RailAttack (AActor * self)
 	int Color2=StateParameters[index+4];
 	bool Silent=!!EvalExpressionI (StateParameters[index+5], self);
 	float MaxDiff=EvalExpressionF (StateParameters[index+6], self);
+	ENamedName PuffTypeName=(ENamedName)StateParameters[index+7];
 
 	AWeapon * weapon=self->player->ReadyWeapon;
 
@@ -1126,7 +1127,7 @@ void A_RailAttack (AActor * self)
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true)) return;	// out of ammo
 	}
 
-	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent);
+	P_RailAttack (self, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent, PuffTypeName);
 }
 
 //==========================================================================
@@ -1150,6 +1151,7 @@ void A_CustomRailgun (AActor *actor)
 	bool Silent=!!EvalExpressionI (StateParameters[index+4], actor);
 	bool aim=!!EvalExpressionI (StateParameters[index+5], actor);
 	float MaxDiff=EvalExpressionF (StateParameters[index+6], actor);
+	ENamedName PuffTypeName=(ENamedName)StateParameters[index+7];
 
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
@@ -1183,7 +1185,7 @@ void A_CustomRailgun (AActor *actor)
 		}
 	}
 
-	P_RailAttack (actor, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent);
+	P_RailAttack (actor, Damage, Spawnofs_XY, Color1, Color2, MaxDiff, Silent, PuffTypeName);
 }
 
 //===========================================================================
@@ -1298,7 +1300,7 @@ static void InitSpawnedItem(AActor *self, AActor *mo, INTBOOL transfer_translati
 	{
 		AActor * originator = self;
 
-		if (transfer_translation)
+		if (transfer_translation && !(mo->flags2 & MF2_DONTTRANSLATE))
 		{
 			mo->Translation = self->Translation;
 		}

@@ -7,6 +7,17 @@ xx(Actor)
 
 xx(Untranslated)
 
+xx(Doom)
+xx(Heretic)
+xx(Hexen)
+xx(Strife)
+
+// blood spawning
+xx(Blood)
+xx(BloodSplatter)
+xx(AxeBlood)
+xx(Spray)
+
 // Invulnerability types
 xx(Ghost)
 xx(Reflective)

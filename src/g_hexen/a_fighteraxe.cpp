@@ -15,7 +15,6 @@
 #define AXERANGE	((fixed_t)(2.25*MELEERANGE))
 
 static FRandom pr_atk ("FAxeAtk");
-static FRandom pr_splat ("FAxeSplatter");
 
 void A_FAxeCheckReady (AActor *actor);
 void A_FAxeCheckUp (AActor *actor);
@@ -190,34 +189,6 @@ IMPLEMENT_ACTOR (AAxePuffGlow, Hexen, -1, 0)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_Alpha (OPAQUE)
 	PROP_SpawnState (0)
-END_DEFAULTS
-
-// Axe Blood ----------------------------------------------------------------
-
-class AAxeBlood : public AActor
-{
-	DECLARE_ACTOR (AAxeBlood, AActor)
-};
-
-FState AAxeBlood::States[] =
-{
-	S_NORMAL (FAXE, 'F',	3, NULL					    , &States[1]),
-	S_NORMAL (FAXE, 'G',	3, NULL					    , &States[2]),
-	S_NORMAL (FAXE, 'H',	3, NULL					    , &States[3]),
-	S_NORMAL (FAXE, 'I',	3, NULL					    , &States[4]),
-	S_NORMAL (FAXE, 'J',	3, NULL					    , &States[5]),
-	S_NORMAL (FAXE, 'K',	3, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AAxeBlood, Hexen, -1, 0)
-	PROP_Mass (5)
-	PROP_RadiusFixed (2)
-	PROP_HeightFixed (4)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_CANNOTPUSH)
-
-	PROP_SpawnState (0)
-	PROP_DeathState (5)
 END_DEFAULTS
 
 //============================================================================
@@ -431,34 +402,3 @@ axedone:
 	return;		
 }
 
-//===========================================================================
-//
-//  P_BloodSplatter2
-//
-//===========================================================================
-
-void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
-{
-	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
-
-	if (cl_bloodtype <= 1)
-	{
-		AActor *mo;
-		
-		x += ((pr_splat()-128)<<11);
-		y += ((pr_splat()-128)<<11);
-
-		mo = Spawn<AAxeBlood> (x, y, z, ALLOW_REPLACE);
-		mo->target = originator;
-
-		// colorize the blood!
-		if (bloodcolor != 0)
-		{
-			mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
-		}
-	}
-	if (cl_bloodtype >= 1)
-	{
-		P_DrawSplash2 (100, x, y, z, R_PointToAngle2 (0, 0, originator->x - x, originator->y - y), 2, bloodcolor);
-	}
-}

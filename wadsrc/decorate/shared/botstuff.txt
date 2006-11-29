@@ -1,0 +1,19 @@
+
+ACTOR CajunBodyNode
+{
+	+NOSECTOR
+	+NOGRAVITY
+	+INVISIBLE
+}
+
+ACTOR CajunTrace
+{
+	Speed 12
+	Radius 6
+	Height 8
+	+NOBLOCKMAP
+	+DROPOFF
+	+MISSILE
+	+NOGRAVITY
+	+NOTELEPORT
+}

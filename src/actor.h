@@ -173,6 +173,7 @@ enum
 	MF2_THRUGHOST		= 0x00004000,	// missile will pass through ghosts [RH] was 8
 	MF2_BOSS			= 0x00008000,	// mobj is a major boss
 
+	MF2_DONTTRANSLATE	= 0x00010000,	// Don't apply palette translations
 	MF2_NODMGTHRUST		= 0x00020000,	// does not thrust target when damaging
 	MF2_TELESTOMP		= 0x00040000,	// mobj can stomp another
 	MF2_FLOATBOB		= 0x00080000,	// use float bobbing z movement
@@ -419,6 +420,9 @@ enum
 	AMETA_RDFactor,			// Radius damage factor
 	AMETA_CameraHeight,		// Height of camera when used as such
 	AMETA_HowlSound,		// Sound being played when electrocuted or poisoned
+	AMETA_BloodType,		// Blood replacement type
+	AMETA_BloodType2,		// Bloodsplatter replacement type
+	AMETA_BloodType3,		// AxeBlood replacement type
 };
 
 // Map Object definition.
@@ -589,6 +593,9 @@ public:
 	// What species am I?
 	virtual const PClass *GetSpecies();
 	
+	// Enter the crash state
+	void Crash();
+
 	// Check for monsters that count as kill but excludes all friendlies.
 	bool CountsAsKill() const
 	{

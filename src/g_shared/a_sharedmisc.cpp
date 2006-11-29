@@ -41,66 +41,6 @@ IMPLEMENT_STATELESS_ACTOR (APatrolSpecial, Any, 9047, 0)
 	PROP_RenderStyle (STYLE_None)
 END_DEFAULTS
 
-// Blood sprite - adjusts itself for each game -----------------------------
-
-FState ABlood::States[] =
-{
-#define S_DBLOOD 0
-	S_NORMAL (BLUD, 'C',	8, NULL 						, &States[S_DBLOOD+1]),
-	S_NORMAL (BLUD, 'B',	8, NULL 						, &States[S_DBLOOD+2]),
-	S_NORMAL (BLUD, 'A',	8, NULL 						, NULL),
-
-#define S_SBLOOD (S_DBLOOD+3)
-	S_NORMAL (SPRY, 'A',    3, NULL							, &States[S_SBLOOD+1]),
-	S_NORMAL (SPRY, 'B',    3, NULL							, &States[S_SBLOOD+2]),
-	S_NORMAL (SPRY, 'C',    3, NULL							, &States[S_SBLOOD+3]),
-	S_NORMAL (SPRY, 'D',    3, NULL							, &States[S_SBLOOD+4]),
-	S_NORMAL (SPRY, 'E',    3, NULL							, &States[S_SBLOOD+5]),
-	S_NORMAL (SPRY, 'F',    3, NULL							, &States[S_SBLOOD+6]),
-	S_NORMAL (SPRY, 'G',    2, NULL							, NULL),
-};
-
-IMPLEMENT_ACTOR (ABlood, Any, -1, 130)
-	PROP_Flags (MF_NOBLOCKMAP)
-	PROP_Flags2 (MF2_NOTELEPORT)
-	PROP_SpawnState(S_DBLOOD)
-	PROP_Mass (5)
-END_DEFAULTS
-
-void ABlood::SetDamage (int damage)
-{
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		if (damage <= 12 && damage >= 9)
-		{
-			SetState (SpawnState + 1);
-		}
-		else if (damage < 9)
-		{
-			SetState (SpawnState + 2);
-		}
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		if (damage > 13)
-		{
-			SetState (&States[S_SBLOOD]);
-		}
-		else if (damage >= 10)
-		{
-			SetState (&States[S_DBLOOD]);
-		}
-		else if (damage >= 7)
-		{
-			SetState (&States[S_DBLOOD+1]);
-		}
-		else
-		{
-			SetState (&States[S_DBLOOD+2]);
-		}
-	}
-}
-
 // Map spot ----------------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (AMapSpot, Any, 9001, 0)

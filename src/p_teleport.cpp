@@ -141,6 +141,67 @@ IMPLEMENT_STATELESS_ACTOR (ATeleportDest3, Any, 9043, 0)
 	PROP_FlagsClear (MF_NOGRAVITY)
 END_DEFAULTS
 
+//==========================================================================
+//
+// P_SpawnTeleportFog
+//
+// The beginning of customizable teleport fog
+// (not active yet)
+//
+//==========================================================================
+
+void P_SpawnTeleportFog(fixed_t x, fixed_t y, fixed_t z, int spawnid)
+{
+	const PClass *fog=NULL;
+
+	if (spawnid > 0 && spawnid < MAX_SPAWNABLES && SpawnableThings[spawnid] != NULL)
+	{
+		fog = SpawnableThings[spawnid];
+	}
+	/* if (fog != NULL && level.info->teleportfog != NAME_None)
+	{
+		fog = PClass::FindClass(level.info->teleportfog);
+	}
+	*/
+
+	if (fog == NULL)
+	{
+		AActor *mo = Spawn ("TeleportFog", x, y, z + TELEFOGHEIGHT, ALLOW_REPLACE);
+		if (mo != NULL)
+		{
+			FState * state = NULL;
+			
+			switch(gameinfo.gametype)
+			{
+			default:
+			case GAME_Doom:
+				state = mo->FindState(NAME_Doom);
+				break;
+			
+			case GAME_Heretic:
+				state = mo->FindState(NAME_Heretic);
+				break;
+			
+			case GAME_Hexen:
+				state = mo->FindState(NAME_Hexen);
+				break;
+			
+			case GAME_Strife:
+				state = mo->FindState(NAME_Strife);
+				break;
+			}
+			if (state == NULL) state = mo->SpawnState;	// allow execution of code pointers in the spawn state
+			
+			mo->SetState(state);
+		}
+	}
+	else
+	{
+		AActor *mo = Spawn (fog, x, y, z, ALLOW_REPLACE);
+		if (mo != NULL) mo->SetState(mo->SpawnState);
+	}
+}
+
 //
 // TELEPORTATION
 //

@@ -446,15 +446,6 @@ AActor *DCajunMaster::Find_enemy (AActor *bot)
 }
 
 
-class ACajunBodyNode : public AActor
-{
-	DECLARE_STATELESS_ACTOR (ACajunBodyNode, AActor)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ACajunBodyNode, Any, -1, 0)
-	PROP_Flags (MF_NOSECTOR | MF_NOGRAVITY)
-	PROP_RenderFlags (RF_INVISIBLE)
-END_DEFAULTS
 
 //Creates a temporary mobj (invisible) at the given location.
 void DCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
@@ -464,14 +455,14 @@ void DCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 		if (body1)
 			body1->SetOrigin (x, y, z);
 		else
-			body1 = Spawn<ACajunBodyNode> (x, y, z, NO_REPLACE);
+			body1 = Spawn ("ACajunBodyNode", x, y, z, NO_REPLACE);
 	}
 	else if (hostnum == 2)
 	{
 		if (body2)
 			body2->SetOrigin (x, y, z);
 		else
-			body2 = Spawn<ACajunBodyNode> (x, y, z, NO_REPLACE);
+			body2 = Spawn ("ACajunBodyNode", x, y, z, NO_REPLACE);
 	}
 }
 
@@ -483,23 +474,11 @@ void DCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 //This function assumes actor->player->angle
 //has been set an is the main aiming angle.
 
-class ACajunTrace : public AActor
-{
-	DECLARE_STATELESS_ACTOR (ACajunTrace, AActor)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ACajunTrace, Any, -1, 0)
-	PROP_SpeedFixed (12)
-	PROP_RadiusFixed (6)
-	PROP_HeightFixed (8)
-	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_NOTELEPORT)
-END_DEFAULTS
 
 //Emulates missile travel. Returns distance travelled.
 fixed_t DCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
-	AActor *th = Spawn<ACajunTrace> (source->x, source->y, source->z + 4*8*FRACUNIT, NO_REPLACE);
+	AActor *th = Spawn ("CajunTrace", source->x, source->y, source->z + 4*8*FRACUNIT, NO_REPLACE);
 	
 	th->target = source;		// where it came from
 

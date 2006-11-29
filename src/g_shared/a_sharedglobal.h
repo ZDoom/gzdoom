@@ -33,13 +33,6 @@ class APatrolSpecial : public AActor
 	DECLARE_STATELESS_ACTOR (APatrolSpecial, AActor)
 };
 
-class ABlood : public AActor
-{
-	DECLARE_ACTOR (ABlood, AActor)
-public:
-	void SetDamage (int damage);
-};
-
 class AMapSpot : public AActor
 {
 	DECLARE_STATELESS_ACTOR (AMapSpot, AActor)

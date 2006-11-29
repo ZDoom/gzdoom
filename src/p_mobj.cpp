@@ -92,6 +92,7 @@ static FRandom pr_spawnpuff ("SpawnPuff");
 static FRandom pr_spawnblood ("SpawnBlood");
 static FRandom pr_splatter ("BloodSplatter");
 static FRandom pr_takedamage ("TakeDamage");
+static FRandom pr_splat ("FAxeSplatter");
 static FRandom pr_ripperblood ("RipperBlood");
 static FRandom pr_chunk ("Chunk");
 static FRandom pr_checkmissilespawn ("CheckMissileSpawn");
@@ -1973,14 +1974,7 @@ void P_ZMovement (AActor *mo)
 			{ // The skull slammed into something
 				mo->momz = -mo->momz;
 			}
-			if ((mo->flags & MF_CORPSE) &&
-				!(mo->flags3 & MF3_CRASHED) &&
-				mo->DamageType != NAME_Ice)
-			{
-				FState * crashstate = mo->FindState(NAME_Crash);
-				if (crashstate != NULL) mo->SetState(crashstate);
-				mo->flags3 |= MF3_CRASHED;
-			}
+			mo->Crash();
 		}
 	}
 
@@ -2847,14 +2841,7 @@ void AActor::Tick ()
 				}
 				flags2 |= MF2_ONMOBJ;
 				momz = 0;
-				if ((flags & MF_CORPSE) &&
-					!(flags3 & MF3_CRASHED) &&
-					DamageType != NAME_Ice)
-				{
-					FState * crashstate = FindState(NAME_Crash);
-					if (crashstate != NULL) SetState(crashstate);
-					flags3 |= MF3_CRASHED;
-				}
+				Crash();
 			}
 		}
 		else
@@ -2867,14 +2854,7 @@ void AActor::Tick ()
 	}
 	else if (z <= floorz)
 	{
-		if ((flags & MF_CORPSE) &&
-			!(flags3 & MF3_CRASHED) &&
-			DamageType != NAME_Ice)
-		{
-			FState * crashstate = FindState(NAME_Crash);
-			if (crashstate != NULL) SetState(crashstate);
-			flags3 |= MF3_CRASHED;
-		}
+		Crash();
 	}
 
 	if (UpdateWaterLevel (oldz))
@@ -3948,18 +3928,22 @@ AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, an
 
 
 
+//---------------------------------------------------------------------------
 //
 // P_SpawnBlood
 // 
+//---------------------------------------------------------------------------
+
 void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator)
 {
-	ABlood *th;
+	AActor *th;
 	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+	const PClass *bloodcls = PClass::FindClass((ENamedName)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
 
-	if (cl_bloodtype <= 1)
+	if (bloodcls!=NULL && cl_bloodtype <= 1)
 	{
 		z += pr_spawnblood.Random2 () << 10;
-		th = Spawn<ABlood> (x, y, z, ALLOW_REPLACE);
+		th = Spawn (bloodcls, x, y, z, ALLOW_REPLACE);
 		th->momz = FRACUNIT*2;
 		th->angle = dir;
 		if (gameinfo.gametype == GAME_Doom)
@@ -3969,12 +3953,33 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 			if (th->tics < 1)
 				th->tics = 1;
 		}
-		// colorize the blood!
-		if (bloodcolor != 0)
+		// colorize the blood
+		if (bloodcolor != 0 && !(th->flags2 & MF2_DONTTRANSLATE))
 		{
 			th->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
 		}
-		th->SetDamage (damage);
+		
+		// Moved out of the blood actor so that replacing blood is easier
+		if (gameinfo.gametype & GAME_DoomStrife)
+		{
+			if (gameinfo.gametype == GAME_Strife)
+			{
+				if (damage > 13)
+				{
+					FState *state = th->FindState(NAME_Spray);
+					if (state != NULL) th->SetState (state);
+				}
+				else damage+=2;
+			}
+			if (damage <= 12 && damage >= 9)
+			{
+				th->SetState (th->SpawnState + 1);
+			}
+			else if (damage < 9)
+			{
+				th->SetState (th->SpawnState + 2);
+			}
+		}
 	}
 
 	if (cl_bloodtype >= 1)
@@ -3990,23 +3995,60 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 {
 	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+	const PClass *bloodcls = PClass::FindClass((ENamedName)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
 
-	if (cl_bloodtype <= 1)
+	if (bloodcls!=NULL && cl_bloodtype <= 1)
 	{
 		AActor *mo;
 
-		mo = Spawn("BloodSplatter", x, y, z, ALLOW_REPLACE);
+		mo = Spawn(bloodcls, x, y, z, ALLOW_REPLACE);
 		mo->target = originator;
 		mo->momx = pr_splatter.Random2 () << 10;
 		mo->momy = pr_splatter.Random2 () << 10;
 		mo->momz = 3*FRACUNIT;
 
 		// colorize the blood!
-		if (bloodcolor!=0) mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+		if (bloodcolor!=0 && !(mo->flags2 & MF2_DONTTRANSLATE)) 
+		{
+			mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+		}
 	}
 	if (cl_bloodtype >= 1)
 	{
 		P_DrawSplash2 (40, x, y, z, R_PointToAngle2 (x, y, originator->x, originator->y), 2, bloodcolor);
+	}
+}
+
+//===========================================================================
+//
+//  P_BloodSplatter2
+//
+//===========================================================================
+
+void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
+{
+	PalEntry bloodcolor = (PalEntry)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+	const PClass *bloodcls = PClass::FindClass((ENamedName)originator->GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
+
+	if (bloodcls!=NULL && cl_bloodtype <= 1)
+	{
+		AActor *mo;
+		
+		x += ((pr_splat()-128)<<11);
+		y += ((pr_splat()-128)<<11);
+
+		mo = Spawn (bloodcls, x, y, z, ALLOW_REPLACE);
+		mo->target = originator;
+
+		// colorize the blood!
+		if (bloodcolor != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
+		{
+			mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+		}
+	}
+	if (cl_bloodtype >= 1)
+	{
+		P_DrawSplash2 (100, x, y, z, R_PointToAngle2 (0, 0, originator->x - x, originator->y - y), 2, bloodcolor);
 	}
 }
 
@@ -4020,14 +4062,15 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 {
 	fixed_t x, y, z;
 	PalEntry bloodcolor = (PalEntry)bleeder->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+	const PClass *bloodcls = PClass::FindClass((ENamedName)bleeder->GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
 
 	x = mo->x + (pr_ripperblood.Random2 () << 12);
 	y = mo->y + (pr_ripperblood.Random2 () << 12);
 	z = mo->z + (pr_ripperblood.Random2 () << 12);
-	if (cl_bloodtype <= 1)
+	if (bloodcls!=NULL && cl_bloodtype <= 1)
 	{
 		AActor *th;
-		th = Spawn<ABlood> (x, y, z, ALLOW_REPLACE);
+		th = Spawn (bloodcls, x, y, z, ALLOW_REPLACE);
 		if (gameinfo.gametype == GAME_Heretic)
 			th->flags |= MF_NOGRAVITY;
 		th->momx = mo->momx >> 1;
@@ -4035,7 +4078,10 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 		th->tics += pr_ripperblood () & 3;
 
 		// colorize the blood!
-		if (bloodcolor!=0) th->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+		if (bloodcolor!=0 && !(th->flags2 & MF2_DONTTRANSLATE))
+		{
+			th->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+		}
 	}
 	if (cl_bloodtype >= 1)
 	{
@@ -4692,6 +4738,39 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 		death = FindState (2, NAME_Death, int(damagetype));
 	}
 	return (death == NULL) ? -1 : damage;
+}
+
+void AActor::Crash()
+{
+	if ((flags & MF_CORPSE) &&
+		!(flags3 & MF3_CRASHED) &&
+		!(flags & MF_ICECORPSE))
+	{
+		FState * crashstate=NULL;
+		
+		if (DamageType != NAME_None)
+		{
+			crashstate = GetClass()->ActorInfo->FindStateExact(2, NAME_Crash, DamageType);
+		}
+		if (crashstate == NULL)
+		{
+			int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
+				gameinfo.gametype == GAME_Doom ? -GetDefault()->health : -GetDefault()->health/2));
+
+			if (health<gibhealth)
+			{ // Extreme death
+				crashstate = FindState (2, NAME_Crash, NAME_Extreme);
+			}
+			else
+			{ // Normal death
+				crashstate = FindState (NAME_Crash);
+			}
+		}
+		if (crashstate != NULL) SetState(crashstate);
+		// Set MF3_CRASHED regardless of the presence of a crash state
+		// so this code doesn't have to be executed repeatedly.
+		flags3 |= MF3_CRASHED;
+	}
 }
 
 FArchive &operator<< (FArchive &arc, FSoundIndex &snd)

@@ -241,6 +241,7 @@ textcolors.txt				textcolors.txt
 
 decorate.txt				decorate/decorate.txt
 
+actors/shared/botstuff.txt					decorate/shared/botstuff.txt
 actors/shared/blood.txt						decorate/shared/blood.txt
 actors/shared/debris.txt					decorate/shared/debris.txt
 actors/shared/splashes.txt					decorate/shared/splashes.txt

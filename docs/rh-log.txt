@@ -1,8 +1,19 @@
+November 28, 2006 (Changes by Graf Zahl)
+- Fixed: The StrifePlayer couldn't obtain his default inventory because
+  APlayerPawn::GiveDefaultInventory gave him some HexenArmor even though
+  he doesn't need it.
+- Added custom blood type properties to DECORATE.
+- Converted Blood to DECORATE and made some minor changes to the code
+  in preparation for custom blood types.
+- Converted the bot helper things to DECORATE.
+- Added damage type specific crash states.
+
 November 28, 2006
 - Started adding action function declarations to objects.
 - Added integer constant declarations to objects.
 - Added a simple symbol table to PClass.
 
+>>>>>>> .r394
 November 27, 2006 (Changes by Graf Zahl)
 - Changed: When playing a shareware game no external WADs are loaded at all,
   not even zvox.wad or the skins directory.
@@ -3072,7 +3083,7 @@ February 10, 2005
   as fast as their Doom counterparts.
 - Fixed: Strife auto-uses the best ammo first, not the worst. I got confused because
   in Strife ARM1 is the best armor, but in Doom it's ARM2 that is best.
-- Fixed: Strife does not double ammo at it's highest skill level.
+- Fixed: Strife does not double ammo at its highest skill level.
 - New: Using Degnin Ore will drop it, similar to the Teleporter Beacon.
 - Fixed: In nightmare skill, every actor is spawned with a reactiontime of 0. This
   make's Strife's HE Grenades explode immediately, because they use their reactiontime
@@ -4793,7 +4804,7 @@ January 2, 2004
   nearest integer when determining TexelLength instead of always round down.
 - Fixed: Using an empty string with HUDMSG_TYPEON caused a crash.
 - Fixed: A buried wraith could enter its pain state while rising from the
-  ground and not properly finish raising, so it's bottom portion would remain
+  ground and not properly finish raising, so its bottom portion would remain
   clipped for the rest of its existance.
 - Fixed: Using a switch to start a script on another map would not make the
   switch switch.
@@ -5110,7 +5121,7 @@ November 1, 2003
 - Changed the sector soundorg calculation so that it can't overflow.
 
 October 31, 2003
-- Added Strife's Reaver. Aside from it's unknown flag, it should be fully
+- Added Strife's Reaver. Aside from its unknown flag, it should be fully
   functional.
 - Added Strife's dagger-wielding fist. It has a chance of doing 0 damage,
   which seems odd.
@@ -7633,7 +7644,7 @@ August 3, 2002
 
 July 31, 2002
 - Fixed some stuff with local doors already performing a ceiling action.
-  In particular, if the ceiling was moving but not as a door, it's thinker
+  In particular, if the ceiling was moving but not as a door, its thinker
   would be replaced with a door thinker instead of being left alone.
 - Wallrunning seems to be gone. I don't know when it disappeared. I
   certainly set out trying to fix it.
@@ -9579,7 +9590,7 @@ April 20, 2001
 April 17, 2001
 - Fixed: It was possible to stand at the very edge of a steep slope and not
   fall off of it. It is still possible to "balance" by running away from the
-  edge, but I think that will take more time to fix than it's work (especially
+  edge, but I think that will take more time to fix than it's worth (especially
   if I really do go ahead and rewrite the level geometry collision detection.)
 - Added in-air friction that depends on aircontrol: The greater aircontrol is,
   the more friction affects things. Only affects players.
@@ -11247,7 +11258,7 @@ February 12, 2000
   to find the following causes of the problem: 1. When monsters went up
   steps, they didn't check to make sure there was nothing in the way above
   them. 2. When P_CheckOnmobj() found a monster's move to be blocked, the
-  monster could still float down inside the head of it's blocker, causing
+  monster could still float down inside the head of its blocker, causing
   the blocking monster to get stuck until it floated up again.
 
 February 9, 2000
@@ -11765,7 +11776,7 @@ July 7, 1999
   removed the use of short ints.
 
 July 6, 1999
-- Restored Cmd_Exec to it's 1.17c version. I'm not sure what I was trying to
+- Restored Cmd_Exec to its 1.17c version. I'm not sure what I was trying to
   accomplish with the changes I made, but they broke it under certain
   situations.
 
@@ -13679,7 +13690,7 @@ May 19, 1998
   starting with ';'.
 - Changed the default config file to zdoom.cfg and added the -config
   parameter to choose alternate ones. (Blargh! Doom Legacy decided to
-  use config.cfg as it's default config file, when I've been using it
+  use config.cfg as its default config file, when I've been using it
   all along!)
 
 May 18, 1998

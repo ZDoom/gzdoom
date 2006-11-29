@@ -1,4 +1,6 @@
 November 29, 2006 (Changes by Graf Zahl)
+- Fixed: The DECORATE expression evaluator evaluated operators of same
+  precedence right to left instead of left to right.
 - Added global constants to DECORATE so that I can define meaningful flag 
   names for some DECORATE functions. Technically these will be constants 
   of the AActor class but that will make them accessible in all other actor 
@@ -21,7 +23,6 @@ November 28, 2006
 - Added integer constant declarations to objects.
 - Added a simple symbol table to PClass.
 
->>>>>>> .r394
 November 27, 2006 (Changes by Graf Zahl)
 - Changed: When playing a shareware game no external WADs are loaded at all,
   not even zvox.wad or the skins directory.

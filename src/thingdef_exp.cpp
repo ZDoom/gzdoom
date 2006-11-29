@@ -427,237 +427,180 @@ static ExpData *ParseExpressionL (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionK (cls);
 
-	if (SC_CheckToken(TK_OrOr))
+	while (SC_CheckToken(TK_OrOr))
 	{
-		ExpData *data = new ExpData;
+		ExpData *right = ParseExpressionK (cls);
+		ExpData *data =  new ExpData;
 		data->Type = EX_LogOr;
 		data->Children[0] = tmp;
-		data->Children[1] = ParseExpressionL (cls);
+		data->Children[1] = right;
 		data->EvalConst (cls);
-		return data;
+		tmp = data;
 	}
-	else
-	{
-		return tmp;
-	}
+	return tmp;
 }
 
 static ExpData *ParseExpressionK (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionJ (cls);
 
-	if (SC_CheckToken(TK_AndAnd))
+	while (SC_CheckToken(TK_AndAnd))
 	{
-		ExpData *data = new ExpData;
+		ExpData *right = ParseExpressionJ (cls);
+		ExpData *data =  new ExpData;
 		data->Type = EX_LogAnd;
 		data->Children[0] = tmp;
-		data->Children[1] = ParseExpressionK (cls);
+		data->Children[1] = right;
 		data->EvalConst (cls);
-		return data;
+		tmp = data;
 	}
-	else
-	{
-		return tmp;
-	}
+	return tmp;
 }
 
 static ExpData *ParseExpressionJ (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionI (cls);
 
-	if (SC_CheckToken('|'))
+	while (SC_CheckToken('|'))
 	{
-		ExpData *data = new ExpData;
+		ExpData *right = ParseExpressionI (cls);
+		ExpData *data =  new ExpData;
 		data->Type = EX_Or;
 		data->Children[0] = tmp;
-		data->Children[1] = ParseExpressionJ (cls);
+		data->Children[1] = right;
 		data->EvalConst (cls);
-		return data;
+		tmp = data;
 	}
-	else
-	{
-		return tmp;
-	}
+	return tmp;
 }
 
 static ExpData *ParseExpressionI (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionH (cls);
 
-	if (SC_CheckToken('^'))
+	while (SC_CheckToken('^'))
 	{
-		ExpData *data = new ExpData;
+		ExpData *right = ParseExpressionH (cls);
+		ExpData *data =  new ExpData;
 		data->Type = EX_Xor;
 		data->Children[0] = tmp;
-		data->Children[1] = ParseExpressionI (cls);
+		data->Children[1] = right;
 		data->EvalConst (cls);
-		return data;
+		tmp = data;
 	}
-	else
-	{
-		return tmp;
-	}
+	return tmp;
 }
 
 static ExpData *ParseExpressionH (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionG (cls);
 
-	if (SC_CheckToken('&'))
+	while (SC_CheckToken('&'))
 	{
-		ExpData *data = new ExpData;
+		ExpData *right = ParseExpressionG (cls);
+		ExpData *data =  new ExpData;
 		data->Type = EX_And;
 		data->Children[0] = tmp;
-		data->Children[1] = ParseExpressionH (cls);
+		data->Children[1] = right;
 		data->EvalConst (cls);
-		return data;
+		tmp = data;
 	}
-	else
-	{
-		return tmp;
-	}
+	return tmp;
 }
 
 static ExpData *ParseExpressionG (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionF (cls);
-	ExpData *data = new ExpData;
 
-	if (SC_CheckToken(TK_Eq))
+	while (SC_GetToken() && (sc_TokenType == TK_Eq || sc_TokenType == TK_Neq))
 	{
-		data->Type = EX_Eq;
+		int token = sc_TokenType;
+		ExpData *right = ParseExpressionF (cls);
+		ExpData *data =  new ExpData;
+		data->Type = token == TK_Eq? EX_Eq : EX_NE;
+		data->Children[0] = tmp;
+		data->Children[1] = right;
+		data->EvalConst (cls);
+		tmp = data;
 	}
-	else if (SC_CheckToken(TK_Neq))
-	{
-		data->Type = EX_NE;
-	}
-	else
-	{
-		delete data;
-		return tmp;
-	}
-
-	data->Children[0] = tmp;
-	data->Children[1] = ParseExpressionG (cls);
-	data->EvalConst (cls);
-
-	return data;
+	if (!sc_End) SC_UnGet();
+	return tmp;
 }
 
 static ExpData *ParseExpressionF (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionE (cls);
-	ExpData *data = new ExpData;
 
-	if (SC_CheckToken('<'))
+	while (SC_GetToken() && (sc_TokenType == '<' || sc_TokenType == '>' || sc_TokenType == TK_Leq || sc_TokenType == TK_Geq))
 	{
-		data->Type = EX_LT;
+		int token = sc_TokenType;
+		ExpData *right = ParseExpressionE (cls);
+		ExpData *data =  new ExpData;
+		data->Type = token == '<' ? EX_LT : sc_TokenType == '>' ? EX_GT : sc_TokenType == TK_Leq? EX_LE : EX_GE;
+		data->Children[0] = tmp;
+		data->Children[1] = right;
+		data->EvalConst (cls);
+		tmp = data;
 	}
-	else if (SC_CheckToken('>'))
-	{
-		data->Type = EX_GT;
-	}
-	else if (SC_CheckToken(TK_Leq))
-	{
-		data->Type = EX_LE;
-	}
-	else if (SC_CheckToken(TK_Geq))
-	{
-		data->Type = EX_GE;
-	}
-	else
-	{
-		delete data;
-		return tmp;
-	}
-
-	data->Children[0] = tmp;
-	data->Children[1] = ParseExpressionF (cls);
-	data->EvalConst (cls);
-
-	return data;
+	if (!sc_End) SC_UnGet();
+	return tmp;
 }
 
 static ExpData *ParseExpressionE (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionD (cls);
-	ExpData *data = new ExpData;
 
-	if (SC_CheckToken(TK_LShift))
+	while (SC_GetToken() && (sc_TokenType == TK_LShift || sc_TokenType == TK_RShift))
 	{
-		data->Type = EX_LShift;
+		int token = sc_TokenType;
+		ExpData *right = ParseExpressionD (cls);
+		ExpData *data =  new ExpData;
+		data->Type = token == TK_LShift? EX_LShift : EX_RShift;
+		data->Children[0] = tmp;
+		data->Children[1] = right;
+		data->EvalConst (cls);
+		tmp = data;
 	}
-	else if (SC_CheckToken(TK_RShift))
-	{
-		data->Type = EX_RShift;
-	}
-	else
-	{
-		delete data;
-		return tmp;
-	}
-
-	data->Children[0] = tmp;
-	data->Children[1] = ParseExpressionE (cls);
-	data->EvalConst (cls);
-
-	return data;
+	if (!sc_End) SC_UnGet();
+	return tmp;
 }
 
 static ExpData *ParseExpressionD (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionC (cls);
-	ExpData *data = new ExpData;
 
-	if (SC_CheckToken('+'))
+	while (SC_GetToken() && (sc_TokenType == '+' || sc_TokenType == '-'))
 	{
-		data->Type = EX_Add;
+		int token = sc_TokenType;
+		ExpData *right = ParseExpressionC (cls);
+		ExpData *data =  new ExpData;
+		data->Type = token == '+'? EX_Add : EX_Sub;
+		data->Children[0] = tmp;
+		data->Children[1] = right;
+		data->EvalConst (cls);
+		tmp = data;
 	}
-	else if (SC_CheckToken('-'))
-	{
-		data->Type = EX_Sub;
-	}
-	else
-	{
-		delete data;
-		return tmp;
-	}
-
-	data->Children[0] = tmp;
-	data->Children[1] = ParseExpressionD (cls);
-	data->EvalConst (cls);
-
-	return data;
+	if (!sc_End) SC_UnGet();
+	return tmp;
 }
 
 static ExpData *ParseExpressionC (const PClass *cls)
 {
 	ExpData *tmp = ParseExpressionB (cls);
-	ExpData *data = new ExpData;
 
-	if (SC_CheckToken('*'))
+	while (SC_GetToken() && (sc_TokenType == '*' || sc_TokenType == '/' || sc_TokenType == '%'))
 	{
-		data->Type = EX_Mul;
+		int token = sc_TokenType;
+		ExpData *right = ParseExpressionB (cls);
+		ExpData *data =  new ExpData;
+		data->Type = token == '*'? EX_Mul : sc_TokenType == '/'? EX_Div : EX_Mod;
+		data->Children[0] = tmp;
+		data->Children[1] = right;
+		data->EvalConst (cls);
+		tmp = data;
 	}
-	else if (SC_CheckToken('/'))
-	{
-		data->Type = EX_Div;
-	}
-	else if (SC_CheckToken('%'))
-	{
-		data->Type = EX_Mod;
-	}
-	else
-	{
-		delete data;
-		return tmp;
-	}
-
-	data->Children[0] = tmp;
-	data->Children[1] = ParseExpressionC (cls);
-	data->EvalConst (cls);
-
-	return data;
+	if (!sc_End) SC_UnGet();
+	return tmp;
 }
 
 static ExpData *ParseExpressionB (const PClass *cls)

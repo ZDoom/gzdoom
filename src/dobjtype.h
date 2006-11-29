@@ -5,6 +5,80 @@
 #error You must #include "dobject.h" to get dobjtype.h
 #endif
 
+// Symbol information -------------------------------------------------------
+
+enum ESymbolType
+{
+	SYM_Const,
+	SYM_ActionFunction
+};
+
+struct PSymbol
+{
+	ESymbolType SymbolType;
+	FName SymbolName;
+};
+
+// A constant value ---------------------------------------------------------
+
+struct PSymbolConst : public PSymbol
+{
+	int Value;
+};
+
+// An action function -------------------------------------------------------
+//
+// The Arguments string is a string of characters as understood by
+// the DECORATE parser:
+//
+// If the letter is uppercase, it is required. Lowercase letters are optional.
+//   i = integer
+//   f = fixed point
+//   s = sound name
+//   m = actor name
+//   t = string
+//   l = jump label
+//   c = color
+//   x = expression
+//   y = expression
+// If the final character is a +, the previous parameter is repeated indefinitely,
+// and an "imaginary" first parameter is inserted containing the total number of
+// parameters passed.
+
+struct PSymbolActionFunction : public PSymbol
+{
+	FString Arguments;
+	void (*Function)(AActor*);
+};
+
+// A symbol table -----------------------------------------------------------
+
+class PSymbolTable
+{
+public:
+	PSymbolTable();
+	~PSymbolTable();
+
+	// Sets the table to use for searches if this one doesn't contain the
+	// requested symbol.
+	void SetParentTable (PSymbolTable *parent);
+
+	// Finds a symbol in the table, optionally searching parent tables
+	// as well.
+	PSymbol *FindSymbol (FName symname, bool searchparents) const;
+
+	// Places the symbol in the table and returns a pointer to it or NULL if
+	// a symbol with the same name is already in the table. This symbol is
+	// not copied and will be freed when the symbol table is destroyed.
+	PSymbol *AddSymbol (PSymbol *sym);
+
+private:
+	PSymbolTable *ParentSymbolTable;
+	TArray<PSymbol *> Symbols;
+};
+
+// Meta-info for every class derived from DObject ---------------------------
+
 struct PClass
 {
 	static void StaticInit ();
@@ -23,6 +97,7 @@ struct PClass
 	BYTE				*Defaults;
 	bool				 bRuntimeClass;	// class was defined at run-time, not compile-time
 	unsigned short		 ClassIndex;
+	PSymbolTable		 Symbols;
 
 	void (*ConstructNative)(void *);
 

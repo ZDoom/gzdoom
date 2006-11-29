@@ -1479,8 +1479,6 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 
 //---- The ACS Interpreter ----//
 
-void strbin (char *str);
-
 IMPLEMENT_CLASS (DACSThinker)
 
 DACSThinker *DACSThinker::ActiveThinker = NULL;
@@ -5286,77 +5284,6 @@ void P_TerminateScript (int script, char *map)
 		addDefered (FindLevelInfo (map), acsdefered_t::defterminate, script, 0, 0, 0, NULL);
 	else
 		SetScriptState (script, DLevelScript::SCRIPT_PleaseRemove);
-}
-
-void strbin (char *str)
-{
-	char *p = str, c;
-	int i;
-
-	while ( (c = *p++) ) {
-		if (c != '\\') {
-			*str++ = c;
-		} else {
-			switch (*p) {
-				case 'c':
-					*str++ = TEXTCOLOR_ESCAPE;
-					break;
-				case 'n':
-					*str++ = '\n';
-					break;
-				case 't':
-					*str++ = '\t';
-					break;
-				case 'r':
-					*str++ = '\r';
-					break;
-				case '\n':
-					break;
-				case 'x':
-				case 'X':
-					c = 0;
-					p++;
-					for (i = 0; i < 2; i++) {
-						c <<= 4;
-						if (*p >= '0' && *p <= '9')
-							c += *p-'0';
-						else if (*p >= 'a' && *p <= 'f')
-							c += 10 + *p-'a';
-						else if (*p >= 'A' && *p <= 'F')
-							c += 10 + *p-'A';
-						else
-							break;
-						p++;
-					}
-					*str++ = c;
-					break;
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-					c = 0;
-					for (i = 0; i < 3; i++) {
-						c <<= 3;
-						if (*p >= '0' && *p <= '7')
-							c += *p-'0';
-						else
-							break;
-						p++;
-					}
-					*str++ = c;
-					break;
-				default:
-					*str++ = *p;
-					break;
-			}
-			p++;
-		}
-	}
-	*str = 0;
 }
 
 FArchive &operator<< (FArchive &arc, acsdefered_s *&defertop)

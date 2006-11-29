@@ -26,11 +26,11 @@ extern TArray<int> StateParameters;
 extern TArray<int> JumpParameters;
 
 
-int ParseExpression (bool _not);
+int ParseExpression (bool _not, PClass *cls);
 
-int EvalExpressionI (int id, AActor *self);
-float EvalExpressionF (int id, AActor *self);
-bool EvalExpressionN (int id, AActor *self);
+int EvalExpressionI (int id, AActor *self, const PClass *cls=NULL);
+float EvalExpressionF (int id, AActor *self, const PClass *cls=NULL);
+bool EvalExpressionN (int id, AActor *self, const PClass *cls=NULL);
 
 void ClearStateLabels();
 void AddState (const char * statename, FState * state);

@@ -45,16 +45,19 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void SC_PrepareScript (void);
+static bool SC_ScanString (bool tokens);
 static void CheckOpen (void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+int sc_TokenType;
 char *sc_String;
-int sc_StringLen;
+unsigned int sc_StringLen;
 int sc_Number;
-float sc_Float;
+double sc_Float;
+FName sc_Name;
 int sc_Line;
 bool sc_End;
 bool sc_Crossed;
@@ -71,6 +74,8 @@ static char StringBuffer[MAX_STRING_SIZE];
 static bool ScriptOpen = false;
 static int ScriptSize;
 static bool AlreadyGot = false;
+static bool LastGotToken = false;
+static char *LastGotPtr;
 static bool FreeScript = false;
 static char *SavedScriptPtr;
 static int SavedScriptLine;
@@ -108,7 +113,10 @@ void SC_OpenFile (const char *name)
 
 	SC_Close ();
 	ScriptSize = M_ReadFile (name, &filebuf);
-	ScriptBuffer = (char *)filebuf;
+	ScriptBuffer = new char[ScriptSize + 1];
+	memcpy (ScriptBuffer, filebuf, ScriptSize);
+	ScriptBuffer[ScriptSize++] = '\n';
+	delete[] filebuf;
 	ScriptName = name;	// This is used for error messages so the full file name is preferable
 	FreeScript = true;
 	SC_PrepareScript ();
@@ -119,7 +127,8 @@ void SC_OpenFile (const char *name)
 // SC_OpenMem
 //
 // Prepares a script that is already in memory for parsing. The caller is
-// responsible for freeing it, if needed.
+// responsible for freeing it, if needed. You MUST ensure that the script
+// ends with the newline character '\n'.
 //
 //==========================================================================
 
@@ -145,8 +154,9 @@ void SC_OpenLumpNum (int lump, const char *name)
 {
 	SC_Close ();
 	ScriptSize = Wads.LumpLength (lump);
-	ScriptBuffer = new char[ScriptSize];
+	ScriptBuffer = new char[ScriptSize + 1];
 	Wads.ReadLump (lump, ScriptBuffer);
+	ScriptBuffer[ScriptSize++] = '\n';
 	ScriptName = name;
 	FreeScript = true;
 	SC_PrepareScript ();
@@ -169,6 +179,8 @@ static void SC_PrepareScript (void)
 	ScriptOpen = true;
 	sc_String = StringBuffer;
 	AlreadyGot = false;
+	LastGotToken = false;
+	LastGotPtr = NULL;
 	SavedScriptPtr = NULL;
 	CMode = false;
 	Escape = true;
@@ -234,6 +246,7 @@ void SC_RestorePos (void)
 		sc_Line = SavedScriptLine;
 		sc_End = false;
 		AlreadyGot = false;
+		LastGotToken = false;
 	}
 }
 
@@ -267,20 +280,28 @@ void SC_SetEscape (bool esc)
 
 //==========================================================================
 //
-// SC_GetString
+// SC_ScanString
+//
+// Set tokens true if you want sc_TokenType to be set.
 //
 //==========================================================================
 
-bool SC_GetString ()
+static bool SC_ScanString (bool tokens)
 {
 	char *marker, *tok;
+	bool return_val;
 
 	CheckOpen();
 	if (AlreadyGot)
 	{
 		AlreadyGot = false;
-		return true;
+		if (!tokens || LastGotToken)
+		{
+			return true;
+		}
+		ScriptPtr = LastGotPtr;
 	}
+
 	sc_Crossed = false;
 	if (ScriptPtr >= ScriptEndPtr)
 	{
@@ -288,9 +309,24 @@ bool SC_GetString ()
 		return false;
 	}
 
+	LastGotPtr = ScriptPtr;
+
 	// In case the generated scanner does not use marker, avoid compiler warnings.
 	marker;
 #include "sc_man_scanner.h"
+	LastGotToken = tokens;
+	return return_val;
+}
+
+//==========================================================================
+//
+// SC_GetString
+//
+//==========================================================================
+
+bool SC_GetString ()
+{
+	return SC_ScanString (false);
 }
 
 //==========================================================================
@@ -335,6 +371,93 @@ bool SC_CheckString (const char *name)
 	if (SC_GetString ())
 	{
 		if (SC_Compare (name))
+		{
+			return true;
+		}
+		SC_UnGet ();
+	}
+	return false;
+}
+
+//==========================================================================
+//
+// SC_GetToken
+//
+// Sets sc_Float, sc_Number, and sc_Name based on sc_TokenType.
+//
+//==========================================================================
+
+bool SC_GetToken ()
+{
+	if (SC_ScanString (true))
+	{
+		if (sc_TokenType == TK_Identifier || sc_TokenType == TK_NameConst)
+		{
+			sc_Name = FName(sc_String);
+		}
+		else if (sc_TokenType == TK_IntConst)
+		{
+			char *stopper;
+			sc_Number = strtol(sc_String, &stopper, 0);
+			sc_Float = sc_Number;
+		}
+		else if (sc_TokenType == TK_FloatConst)
+		{
+			char *stopper;
+			sc_Float = strtod(sc_String, &stopper);
+		}
+		else if (sc_TokenType == TK_StringConst)
+		{
+			strbin (sc_String);
+		}
+		return true;
+	}
+	return false;
+}
+
+//==========================================================================
+//
+// SC_MustGetAnyToken
+//
+//==========================================================================
+
+void SC_MustGetAnyToken (void)
+{
+	if (SC_GetToken () == false)
+	{
+		SC_ScriptError ("Missing token (unexpected end of file).");
+	}
+}
+
+//==========================================================================
+//
+// SC_MustGetToken
+//
+//==========================================================================
+
+void SC_MustGetToken (int token)
+{
+	SC_MustGetAnyToken ();
+	if (sc_TokenType != token)
+	{
+		SC_ScriptError ("Expected %s but got %s instead.",
+			SC_TokenName(token), SC_TokenName(sc_TokenType, sc_String));
+	}
+}
+
+//==========================================================================
+//
+// SC_CheckToken
+//
+// Checks if the next token matches the specified token. Returns true if
+// it does. If it doesn't, it ungets it and returns false.
+//==========================================================================
+
+bool SC_CheckToken (int token)
+{
+	if (SC_GetToken ())
+	{
+		if (sc_TokenType == token)
 		{
 			return true;
 		}
@@ -605,6 +728,153 @@ bool SC_Compare (const char *text)
 
 //==========================================================================
 //
+// SC_TokenName
+//
+// Returns the name of a token.
+//
+//==========================================================================
+
+FString SC_TokenName (int token, const char *string)
+{
+	static const char *const names[] =
+	{
+		"an identifier",
+		"a string constant",
+		"a name constant",
+		"an integer constant",
+		"a float constant",
+		"'...'",
+		"'>>='",
+		"'<<='",
+		"'+='",
+		"'-='",
+		"'*='",
+		"'/='",
+		"'%='",
+		"'&='",
+		"'^='",
+		"'|='",
+		"'>>'",
+		"'<<'",
+		"'++'",
+		"'--'",
+		"'&&'",
+		"'||'",
+		"'<='",
+		"'>='",
+		"'=='",
+		"'!="
+		"'break'",
+		"'case'",
+		"'const'",
+		"'continue'",
+		"'default'",
+		"'do'",
+		"'else'",
+		"'for'",
+		"'if'",
+		"'return'",
+		"'states'",
+		"'switch'",
+		"'until'",
+		"'while'",
+		"'bool'",
+		"'float'",
+		"'double'",
+		"'char'",
+		"'byte'",
+		"'sbyte'",
+		"'short'",
+		"'ushort'",
+		"'int'",
+		"'uint'",
+		"'long'",
+		"'ulong'",
+		"'void'",
+		"'struct'",
+		"'class'",
+		"'mode'",
+		"'enum'",
+		"'name'",
+		"'string'",
+		"'sound'",
+		"'state'",
+		"'color'",
+		"'goto'",
+		"'abstract'",
+		"'foreach'",
+		"'true'",
+		"'false'",
+		"'none'",
+		"'new'",
+		"'instanceof'",
+		"'auto'",
+		"'exec'",
+		"'defaultproperties'",
+		"'native'",
+		"'out'",
+		"'ref'",
+		"'event'",
+		"'static'",
+		"'transient'",
+		"'volatile'",
+		"'final'",
+		"'throws'",
+		"'extends'",
+		"'public'",
+		"'protected'",
+		"'private'",
+		"'dot'",
+		"'cross'",
+		"'ignores'",
+		"'localized'",
+		"'latent'",
+		"'singular'",
+		"'config'",
+		"'coerce'",
+		"'iterator'",
+		"'optional'",
+		"'export'",
+		"'virtual'",
+		"'super'",
+		"'global'",
+		"'self'",
+		"'stop'",
+		"'eval'",
+		"'evalnot'",
+	};
+
+	FString work;
+
+	if (token > ' ' && token < 256)
+	{
+		work = '\'';
+		work += token;
+		work += '\'';
+	}
+	else if (token >= TK_Identifier && token < TK_LastToken)
+	{
+		work = names[token - TK_Identifier];
+		if (string != NULL && token >= TK_Identifier && token <= TK_FloatConst)
+		{
+			work += ' ';
+			char quote = (token == TK_StringConst) ? '"' : '\'';
+			work += quote;
+			work += string;
+			work += quote;
+		}
+	}
+	else
+	{
+		FString work;
+		work.Format ("Unknown(%d)", token);
+		return work;
+	}
+	return work;
+}
+
+//==========================================================================
+//
 // SC_ScriptError
 //
 //==========================================================================
@@ -723,5 +993,6 @@ void SC_RestoreScriptState()
 		Escape = ss.Escape;
 		SavedScripts.ShrinkToFit();
 		AlreadyGot = false;
+		LastGotToken = false;
 	}
 }

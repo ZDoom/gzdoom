@@ -380,3 +380,92 @@ void CreatePath(const char * fn)
 	}
 	else DoCreatePath(fn);
 }
+
+// [RH] Replaces the escape sequences in a string with actual escaped characters.
+// This operation is done in-place.
+
+void strbin (char *str)
+{
+	char *p = str, c;
+	int i;
+
+	while ( (c = *p++) ) {
+		if (c != '\\') {
+			*str++ = c;
+		} else {
+			switch (*p) {
+				case 'a':
+					*str++ = '\a';
+					break;
+				case 'b':
+					*str++ = '\b';
+					break;
+				case 'c':
+					*str++ = '\034';	// TEXTCOLOR_ESCAPE
+					break;
+				case 'f':
+					*str++ = '\f';
+					break;
+				case 'n':
+					*str++ = '\n';
+					break;
+				case 't':
+					*str++ = '\t';
+					break;
+				case 'r':
+					*str++ = '\r';
+					break;
+				case 'v':
+					*str++ = '\v';
+					break;
+				case '?':
+					*str++ = '\?';
+					break;
+				case '\n':
+					break;
+				case 'x':
+				case 'X':
+					c = 0;
+					p++;
+					for (i = 0; i < 2; i++) {
+						c <<= 4;
+						if (*p >= '0' && *p <= '9')
+							c += *p-'0';
+						else if (*p >= 'a' && *p <= 'f')
+							c += 10 + *p-'a';
+						else if (*p >= 'A' && *p <= 'F')
+							c += 10 + *p-'A';
+						else
+							break;
+						p++;
+					}
+					*str++ = c;
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+					c = 0;
+					for (i = 0; i < 3; i++) {
+						c <<= 3;
+						if (*p >= '0' && *p <= '7')
+							c += *p-'0';
+						else
+							break;
+						p++;
+					}
+					*str++ = c;
+					break;
+				default:
+					*str++ = *p;
+					break;
+			}
+			p++;
+		}
+	}
+	*str = 0;
+}

@@ -221,6 +221,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 	type->FlatPointers = NULL;
 	type->bRuntimeClass = true;
 	type->ActorInfo = NULL;
+	type->Symbols.SetParentTable (&this->Symbols);
 	type->InsertIntoHash();
 
 	// If this class has an actor info, then any classes derived from it
@@ -302,3 +303,86 @@ void PClass::FreeStateList ()
 	}
 }
 
+// Symbol tables ------------------------------------------------------------
+
+PSymbolTable::PSymbolTable ()
+: ParentSymbolTable(NULL)
+{
+}
+
+PSymbolTable::~PSymbolTable ()
+{
+	for (unsigned int i = 0; i < Symbols.Size(); ++i)
+	{
+		delete Symbols[i];
+	}
+}
+
+void PSymbolTable::SetParentTable (PSymbolTable *parent)
+{
+	ParentSymbolTable = parent;
+}
+
+PSymbol *PSymbolTable::FindSymbol (FName symname, bool searchparents) const
+{
+	int min, max;
+
+	min = 0;
+	max = (int)Symbols.Size() - 1;
+
+	while (min <= max)
+	{
+		unsigned int mid = (min + max) / 2;
+		PSymbol *sym = Symbols[mid];
+
+		if (sym->SymbolName == symname)
+		{
+			return sym;
+		}
+		else if (sym->SymbolName < symname)
+		{
+			min = mid + 1;
+		}
+		else
+		{
+			max = mid - 1;
+		}
+	}
+	if (searchparents && ParentSymbolTable != NULL)
+	{
+		return ParentSymbolTable->FindSymbol (symname, true);
+	}
+	return NULL;
+}
+
+PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
+{
+	// Insert it in sorted order.
+	int min, max, mid;
+
+	min = 0;
+	max = (int)Symbols.Size() - 1;
+
+	while (min <= max)
+	{
+		mid = (min + max) / 2;
+		PSymbol *tsym = Symbols[mid];
+
+		if (tsym->SymbolName == sym->SymbolName)
+		{ // A symbol with this name already exists in the table
+			return NULL;
+		}
+		else if (tsym->SymbolName < sym->SymbolName)
+		{
+			min = mid + 1;
+		}
+		else
+		{
+			max = mid - 1;
+		}
+	}
+
+	// Good. The symbol is not in the table yet.
+	Symbols.Insert (MAX(min, max), sym);
+	return sym;
+}

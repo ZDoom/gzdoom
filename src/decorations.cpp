@@ -664,7 +664,7 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		else if (SC_Compare ("Alpha"))
 		{
 			SC_MustGetFloat ();
-			defaults->alpha = int(clamp (sc_Float, 0.f, 1.f) * OPAQUE);
+			defaults->alpha = int(clamp (sc_Float, 0.0, 1.0) * OPAQUE);
 		}
 		else if (SC_Compare ("Scale"))
 		{

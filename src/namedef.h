@@ -3,6 +3,7 @@ xx(None)
 
 xx(Super)
 xx(Object)
+xx(Actor)
 
 xx(Untranslated)
 
@@ -178,4 +179,22 @@ xx(Massacre)	// For death by a cheater!
 // a damage type if you wanted to force an extreme death.
 xx(Extreme)
 
-
+// Special names for thingdef_exp.cpp
+xx(Random)
+xx(Random2)
+xx(Cos)
+xx(Sin)
+xx(Alpha)
+xx(Angle)
+xx(Args)
+xx(CeilingZ)
+xx(FloorZ)
+xx(Health)
+xx(Pitch)
+xx(Special)
+xx(TID)
+xx(TIDtoHate)
+xx(WaterLevel)
+xx(X)
+xx(Y)
+xx(Z)

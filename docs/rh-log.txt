@@ -1,3 +1,8 @@
+November 28, 2006
+- Started adding action function declarations to objects.
+- Added integer constant declarations to objects.
+- Added a simple symbol table to PClass.
+
 November 27, 2006 (Changes by Graf Zahl)
 - Changed: When playing a shareware game no external WADs are loaded at all,
   not even zvox.wad or the skins directory.

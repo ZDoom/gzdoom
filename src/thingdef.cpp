@@ -361,7 +361,6 @@ static flagdef *FindFlag (const PClass *type, const char *part1, const char *par
 	return NULL;
 }
 
-int EvalExpressionI (int id, AActor *self);
 //===========================================================================
 //
 // A_ChangeFlag
@@ -1589,7 +1588,7 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 		{
 			for (i = 0; i < 5;)
 			{
-				StateParameters[paramindex+i+1]=ParseExpression (false);
+				StateParameters[paramindex+i+1]=ParseExpression (false, bag.Info->Class);
 				i++;
 				if (!SC_CheckString (",")) break;
 			}
@@ -1851,6 +1850,16 @@ do_stop:
 					goto endofstate;
 				}
 
+				//AFuncDesc * afd = FindFunction(sc_String);
+				//PSymbolActionFunction *sym = bag.Info->Class->Symbols.FindSymbol (FName(sc_String, true), true);
+				//if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
+				//{
+				//	PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
+				//	state.Action = afd->Function;
+				//	if (!afd->Arguments.IsEmpty())
+				//	{
+				//		const char *params = afd->Arguments.GetChars();
+				//		int numparams = afd->Arguments.Len();
 				AFuncDesc * afd = FindFunction(sc_String);
 				if (afd != NULL)
 				{
@@ -1859,6 +1868,7 @@ do_stop:
 					{
 						const char * params = afd->parameters;
 						int numparams = (int)strlen(params);
+				
 						int v;
 
 						if (!islower(*params))
@@ -1883,31 +1893,6 @@ do_stop:
 						{
 							switch(*params)
 							{
-							/*
-							case 'A':
-							case 'a':		// Angle
-								SC_MustGetFloat();
-								v=(int)angle_t(sc_Float*ANGLE_1);
-								break;
-
-							case 'B':
-							case 'b':		// Byte
-								SC_MustGetNumber();
-								v=clamp<int>(sc_Number, 0, 255);
-								break;
-
-							case '9':		// 90 degree angle as integer
-								SC_MustGetNumber();
-								v=clamp<int>(sc_Number, 0, 90);
-								break;
-
-							case '!':		// not boolean (to simulate parameters which default to 1)
-								SC_MustGetNumber();
-								v=!sc_Number;
-								break;
-
-							*/
-
 							case 'I':
 							case 'i':		// Integer
 								SC_MustGetNumber();
@@ -2038,12 +2023,12 @@ do_stop:
 
 							case 'X':
 							case 'x':
-								v = ParseExpression (false);
+								v = ParseExpression (false, bag.Info->Class);
 								break;
 
 							case 'Y':
 							case 'y':
-								v = ParseExpression (true);
+								v = ParseExpression (true, bag.Info->Class);
 								break;
 
 							default:
@@ -2545,6 +2530,153 @@ static void StatePropertyIsDeprecated (const char *actorname, const char *prop)
 
 //==========================================================================
 //
+// ActorConstDef
+//
+// Parses a constant definition.
+//
+//==========================================================================
+
+static void ActorConstDef (AActor *defaults, Baggage &bag)
+{
+	// Read the type and make sure it's int.
+	// (Maybe there will be other types later.)
+	SC_MustGetToken(TK_Int);
+	SC_MustGetToken(TK_Identifier);
+	FName symname = sc_Name;
+	SC_MustGetToken('=');
+	int expr = ParseExpression (false, bag.Info->Class);
+	SC_MustGetToken(';');
+
+	int val = EvalExpressionI (expr, NULL, bag.Info->Class);
+	PSymbolConst *sym = new PSymbolConst;
+	sym->SymbolName = symname;
+	sym->SymbolType = SYM_Const;
+	sym->Value = val;
+	if (bag.Info->Class->Symbols.AddSymbol (sym) == NULL)
+	{
+		delete sym;
+		SC_ScriptError ("'%s' is already defined in class '%s'.",
+			symname.GetChars(), bag.Info->Class->TypeName.GetChars());
+	}
+}
+
+//==========================================================================
+//
+// ActorActionDef
+//
+// Parses an action function definition.
+//
+//==========================================================================
+
+static void ActorActionDef (AActor *defaults, Baggage &bag)
+{
+#define OPTIONAL		1
+#define EVAL			2
+#define EVALNOT			4
+
+	FName funcname;
+	FString args;
+
+	SC_MustGetToken(TK_Identifier);
+	funcname = sc_Name;
+	SC_MustGetToken('(');
+	while (sc_TokenType != ')')
+	{
+		int flags = 0;
+		char type = '@';
+
+		// Retrieve flags before type name
+		for (;;)
+		{
+			if (SC_CheckToken(TK_Optional))
+			{
+				flags |= OPTIONAL;
+			}
+			else if (SC_CheckToken(TK_Eval))
+			{
+				flags |= EVAL;
+			}
+			else if (SC_CheckToken(TK_EvalNot))
+			{
+				flags |= EVALNOT;
+			}
+			else if (SC_CheckToken(TK_Coerce) || SC_CheckToken(TK_Native))
+			{
+			}
+			else
+			{
+				break;
+			}
+		}
+		if (flags != 0)
+		{
+			SC_MustGetAnyToken();
+		}
+		switch (sc_TokenType)
+		{
+		case TK_Int:		type = 'i';		break;
+		case TK_Float:		type = 'f';		break;
+		case TK_Sound:		type = 's';		break;
+		case TK_String:		type = 't';		break;
+		case TK_State:		type = 'l';		break;
+		case TK_Color:		type = 'c';		break;
+		case TK_Class:
+			SC_MustGetToken('<');
+			SC_MustGetToken(TK_Identifier);
+			if (sc_Name != NAME_Actor)
+			{
+				SC_ScriptError ("Sorry, you can only use class<actor>");
+			}
+			SC_MustGetToken('>');
+			type = 'm';
+			break;
+		case TK_Ellipsis:
+			type = '+';
+			SC_MustGetToken(')');
+			SC_UnGet();
+			break;
+		default:
+			SC_ScriptError ("Unknown variable type %s", SC_TokenName(sc_TokenType, sc_String).GetChars());
+			break;
+		}
+		if (flags & EVALNOT)
+		{
+			type = 'y';
+		}
+		else if (flags & EVAL)
+		{
+			type = 'x';
+		}
+		if (!(flags & OPTIONAL))
+		{
+			type -= 'a' - 'A';
+			break;
+		}
+#undef OPTIONAL
+#undef EVAL
+#undef EVALNOT
+		args += type;
+		SC_MustGetAnyToken();
+		if (sc_TokenType != ',' && sc_TokenType != ')')
+		{
+			SC_ScriptError ("Expected ',' or ')' but got %s instead", SC_TokenName(sc_TokenType, sc_String).GetChars());
+		}
+	}
+	PSymbolActionFunction *sym = new PSymbolActionFunction;
+	sym->SymbolName = funcname;
+	sym->SymbolType = SYM_ActionFunction;
+	sym->Arguments = args;
+	sym->Function = NULL;
+	if (bag.Info->Class->Symbols.AddSymbol (sym) == NULL)
+	{
+		delete sym;
+		SC_ScriptError ("'%s' is already defined in class '%s'.",
+			funcname.GetChars(), bag.Info->Class->TypeName.GetChars());
+	}
+}
+
+//==========================================================================
+//
 //==========================================================================
 static void ActorSkipSuper (AActor *defaults, Baggage &bag)
 {
@@ -2699,7 +2831,7 @@ static void ActorDamage (AActor *defaults, Baggage &bag)
 
 	if (SC_CheckString ("("))
 	{
-		defaults->Damage = 0x40000000 | ParseExpression (false);
+		defaults->Damage = 0x40000000 | ParseExpression (false, bag.Info->Class);
 		SC_MustGetStringName(")");
 	}
 	else
@@ -3997,7 +4129,7 @@ static void PlayerScoreIcon (APlayerPawn *defaults, Baggage &bag)
 static void PlayerCrouchSprite (APlayerPawn *defaults, Baggage &bag)
 {
 	SC_MustGetString ();
-	for (int i = 0; i < sc_StringLen; i++) sc_String[i] = toupper (sc_String[i]);
+	for (unsigned int i = 0; i < sc_StringLen; i++) sc_String[i] = toupper (sc_String[i]);
 	defaults->crouchsprite = GetSpriteIndex (sc_String);
 }
 
@@ -4115,6 +4247,7 @@ static const ActorProps props[] =
 {
 	{ "+",							ActorFlagSetOrReset,		RUNTIME_CLASS(AActor) },
 	{ "-",							ActorFlagSetOrReset,		RUNTIME_CLASS(AActor) },
+	{ "action",						ActorActionDef,				RUNTIME_CLASS(AActor) },
 	{ "activesound",				ActorActiveSound,			RUNTIME_CLASS(AActor) },
 	{ "alpha",						ActorAlpha,					RUNTIME_CLASS(AActor) },
 	{ "ammo.backpackamount",		(apf)AmmoBackpackAmount,	RUNTIME_CLASS(AAmmo) },
@@ -4131,6 +4264,7 @@ static const ActorProps props[] =
 	{ "burnheight",					ActorBurnHeight,			RUNTIME_CLASS(AActor) },
 	{ "cameraheight",				ActorCameraheight,			RUNTIME_CLASS(AActor) },
 	{ "clearflags",					ActorClearFlags,			RUNTIME_CLASS(AActor) },
+	{ "const",						ActorConstDef,				RUNTIME_CLASS(AActor) },
 	{ "conversationid",				ActorConversationID,		RUNTIME_CLASS(AActor) },
 	{ "crash",						ActorCrashState,			RUNTIME_CLASS(AActor) },
 	{ "crush",						ActorCrushState,			RUNTIME_CLASS(AActor) },

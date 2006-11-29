@@ -491,8 +491,8 @@ static void ReadEAX ()
 			{
 				SC_MustGetFloat ();
 				props.*EAXFields[i].Float = clamp (sc_Float,
-					float(EAXFields[i].Min)/1000.f,
-					float(EAXFields[i].Max)/1000.f);
+					double(EAXFields[i].Min)/1000,
+					double(EAXFields[i].Max)/1000);
 			}
 			else if (EAXFields[i].Int)
 			{

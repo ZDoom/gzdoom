@@ -2563,6 +2563,23 @@ static void ActorConstDef (AActor *defaults, Baggage &bag)
 
 //==========================================================================
 //
+// ParseGlobalConst
+//
+// Parses a constant outside an actor definition
+// These will be inserted into AActor's symbol table
+//
+//==========================================================================
+
+void ParseGlobalConst()
+{
+	Baggage bag;
+
+	bag.Info = RUNTIME_CLASS(AActor)->ActorInfo;
+	ActorConstDef(GetDefault<AActor>(), bag);
+}
+
+//==========================================================================
+//
 // ActorActionDef
 //
 // Parses an action function definition.

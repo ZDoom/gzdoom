@@ -80,7 +80,8 @@ ACTOR BeastBall
 	States
 	{
 	Spawn:
-		FRB1 AABBCC 2 A_SpawnItemEx("Puffy", random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, 0,0,0,0,2, 64)
+		FRB1 AABBCC 2 A_SpawnItemEx("Puffy", random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, 
+									0,0,0,0,SXF_ABSOLUTEPOSITION, 64)
 		Loop
 	Death:
 		FRB1 DEFGH 4

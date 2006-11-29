@@ -19,6 +19,7 @@ ACTOR Demon1 31
 	PainSound "DemonPain"
 	DeathSound "DemonDeath"
 	ActiveSound "DemonActive"
+	const int ChunkFlags = SXF_TRANSFERTRANSLATION|SXF_ABSOLUTEMOMENTUM;
 	States
 	{
 	Spawn:
@@ -51,11 +52,11 @@ ACTOR Demon1 31
 		Stop
 	XDeath:
 		DEMN H 6
-		DEMN I 0 A_SpawnItemEx("Demon1Chunk1", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 90)
-		DEMN I 0 A_SpawnItemEx("Demon1Chunk2", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 270)
-		DEMN I 0 A_SpawnItemEx("Demon1Chunk3", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 270)
-		DEMN I 0 A_SpawnItemEx("Demon1Chunk4", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 270)
-		DEMN I 6 A_SpawnItemEx("Demon1Chunk5", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 270)
+		DEMN I 0 A_SpawnItemEx("Demon1Chunk1", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 90)
+		DEMN I 0 A_SpawnItemEx("Demon1Chunk2", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 270)
+		DEMN I 0 A_SpawnItemEx("Demon1Chunk3", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 270)
+		DEMN I 0 A_SpawnItemEx("Demon1Chunk4", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 270)
+		DEMN I 6 A_SpawnItemEx("Demon1Chunk5", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 270)
 		Goto Death+2	
 	Ice:
 		DEMN Q 5 A_FreezeDeath
@@ -245,11 +246,11 @@ ACTOR Demon2 : Demon1 8080
 		Stop
 	XDeath:
 		DEM2 H 6
-		DEM2 I 0 A_SpawnItemEx("Demon2Chunk1", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 90)
-		DEM2 I 0 A_SpawnItemEx("Demon2Chunk2", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 270)
-		DEM2 I 0 A_SpawnItemEx("Demon2Chunk3", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 270)
-		DEM2 I 0 A_SpawnItemEx("Demon2Chunk4", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 270)
-		DEM2 I 6 A_SpawnItemEx("Demon2Chunk5", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), 9, 270)
+		DEM2 I 0 A_SpawnItemEx("Demon2Chunk1", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 90)
+		DEM2 I 0 A_SpawnItemEx("Demon2Chunk2", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 270)
+		DEM2 I 0 A_SpawnItemEx("Demon2Chunk3", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 270)
+		DEM2 I 0 A_SpawnItemEx("Demon2Chunk4", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 270)
+		DEM2 I 6 A_SpawnItemEx("Demon2Chunk5", 0,0,45, 1+(random[DemonChunks](0,255)*0.015625), 1+(random[DemonChunks](0,255)*0.015625), ChunkFlags, 270)
 		Goto Death+2	
 	Ice:
 		DEM2 Q 5 A_FreezeDeath

@@ -239,7 +239,8 @@ textcolors.txt				textcolors.txt
 ========
 # Decorate stuff
 
-decorate.txt				decorate/decorate.txt
+decorate.txt								decorate/decorate.txt
+actors/constants.txt						decorate/constants.txt
 
 actors/shared/botstuff.txt					decorate/shared/botstuff.txt
 actors/shared/blood.txt						decorate/shared/blood.txt

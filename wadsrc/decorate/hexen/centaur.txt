@@ -87,9 +87,9 @@ ACTOR CentaurLeader : Centaur 115
 	{
 	Missile:
 		CENT E 10 A_FaceTarget
-		CENT F 8 Bright A_CustomMissile("CentaurFX", 45, 0, 0, 1)
+		CENT F 8 Bright A_CustomMissile("CentaurFX", 45, 0, 0, CMF_AIMOFFSET)
 		CENT E 10 A_FaceTarget
-		CENT F 8 Bright A_CustomMissile("CentaurFX", 45, 0, 0, 1)
+		CENT F 8 Bright A_CustomMissile("CentaurFX", 45, 0, 0, CMF_AIMOFFSET)
 		Goto See
 	}
 }		

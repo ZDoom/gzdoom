@@ -114,7 +114,7 @@ END_DEFAULTS
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void ProcessActor(void (*process)(FState *, int));
-void ProcessWeapon(void (*process)(FState *, int));
+void ParseGlobalConst();
 void FinishThingdef();
 void InitDecorateTranslations();
 
@@ -334,6 +334,11 @@ static void ParseDecorate (void (*process)(FState *, int))
 			parent = RUNTIME_CLASS(AActor);
 			def = DEF_Projectile;
 			SC_MustGetString ();
+		}
+		else if (SC_Compare ("Const"))
+		{
+			ParseGlobalConst();
+			continue;
 		}
 		else
 		{

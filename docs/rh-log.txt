@@ -1,4 +1,8 @@
 November 29, 2006 (Changes by Graf Zahl)
+- Added global constants to DECORATE so that I can define meaningful flag 
+  names for some DECORATE functions. Technically these will be constants 
+  of the AActor class but that will make them accessible in all other actor 
+  classes.
 - Made the constructor of PSymbolTable inline. Having this a real function 
   adds 100kb to the EXE, mostly needless exception handling code.
 

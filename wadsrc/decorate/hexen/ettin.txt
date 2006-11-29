@@ -50,7 +50,7 @@ ACTOR Ettin 10030
 		ETTB C 4 A_SpawnItemEx("EttinMace", 0,0,8.5, 
 								random[DropMace](-128,127) * 0.03125,
 								random[DropMace](-128,127) * 0.03125,
-								10 + random[DropMace](0,255) * 0.015625, 0, 4)
+								10 + random[DropMace](0,255) * 0.015625, 0, SXF_ABSOLUTEMOMENTUM)
 		ETTB D 4 A_Scream
 		ETTB E 4 A_QueueCorpse
 		ETTB FGHIJK 4

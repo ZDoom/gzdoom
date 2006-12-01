@@ -1,4 +1,10 @@
 November 30, 2006
+- Removed all the "fast" and unused code from FColorMatcher. Today's
+  computers are fast enough that the difference isn't even noticeable
+  unless you're doing hundreds of thousands of matches, and I never had
+  any plans to improve the algorithm the "fast" code used.
+- Fixed: BestColor() should not by default return 1 as a possible match,
+  since it's normally the transparent color.
 - The DSimpleCanvas constructor now fills MemBuffer with zeros.
 - Fixed: If the FBTexture wasn't exactly the same size as the screen,
   D3DFB::PaintToWindow() would still lock it with D3DLOCK_DISCARD. Alas,

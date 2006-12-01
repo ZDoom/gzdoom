@@ -238,6 +238,7 @@ private:
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
 	bool CreateVertexes();
+	void DoOffByOneCheck();
 	void UploadPalette();
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
 	bool Reset();
@@ -255,6 +256,7 @@ private:
 	D3DFORMAT FBFormat;
 	D3DFORMAT PalFormat;
 	int FBWidth, FBHeight;
+	int OffByOneAt;
 	bool VSync;
 
 	IDirect3DDevice9 *D3DDevice;

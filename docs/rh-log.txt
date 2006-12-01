@@ -1,3 +1,22 @@
+November 30, 2006
+- The DSimpleCanvas constructor now fills MemBuffer with zeros.
+- Fixed: If the FBTexture wasn't exactly the same size as the screen,
+  D3DFB::PaintToWindow() would still lock it with D3DLOCK_DISCARD. Alas,
+  I saw no speedup for using a dirty region. (Side note: The Radeons are
+  apparently slower compared to DirectDraw because they must do
+  power-of-2 textures. If they ever add non-power-of-2 support like nvidia,
+  I assume they will also see a speed gain.)
+- Changed fb_d3d9.cpp so that instead of trying to compensate for Geforce
+  off-by-one errors in the pixel shader, it automatically detects where
+  the error occurs and modifies the way the palette is uploaded to
+  compensate. Palette color 255 is then represented using the texture
+  border color instead of actually being part of the palette. This should
+  work correctly with all cards, since I had a report of an FX where the
+  off-by-one occurred in a different spot from the place where I observed
+  it on a 6 and 7 series cards. Since the shader now has one fewer
+  instruction, I notice a very marginal speedup. (Interestingly, removing
+  the flash blending from the shader had no perceivable performance gain.)
+
 November 29, 2006 (Changes by Graf Zahl)
 - Fixed: The DECORATE expression evaluator evaluated operators of same
   precedence right to left instead of left to right.
@@ -21,6 +40,9 @@ November 28, 2006 (Changes by Graf Zahl)
 November 28, 2006
 - Started adding action function declarations to objects.
 - Added integer constant declarations to objects.
+- Added some new token-based functions to sc_man.cpp that know about keywords
+  and record proper type information, so parsers don't need to treat
+  everything as strings.
 - Added a simple symbol table to PClass.
 
 November 27, 2006 (Changes by Graf Zahl)

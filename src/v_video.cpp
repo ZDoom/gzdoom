@@ -595,6 +595,7 @@ DSimpleCanvas::DSimpleCanvas (int width, int height)
 		}
 	}
 	MemBuffer = new BYTE[Pitch * height];
+	memset (MemBuffer, 0, Pitch * height);
 }
 
 DSimpleCanvas::~DSimpleCanvas ()

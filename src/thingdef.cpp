@@ -2598,88 +2598,90 @@ static void ActorActionDef (AActor *defaults, Baggage &bag)
 	SC_MustGetToken(TK_Identifier);
 	funcname = sc_Name;
 	SC_MustGetToken('(');
-	while (sc_TokenType != ')')
+	if (!SC_CheckToken(')'))
 	{
-		int flags = 0;
-		char type = '@';
-
-		// Retrieve flags before type name
-		for (;;)
+		while (sc_TokenType != ')')
 		{
-			if (SC_CheckToken(TK_Optional))
+			int flags = 0;
+			char type = '@';
+
+			// Retrieve flags before type name
+			for (;;)
 			{
-				flags |= OPTIONAL;
+				if (SC_CheckToken(TK_Optional))
+				{
+					flags |= OPTIONAL;
+				}
+				else if (SC_CheckToken(TK_Eval))
+				{
+					flags |= EVAL;
+				}
+				else if (SC_CheckToken(TK_EvalNot))
+				{
+					flags |= EVALNOT;
+				}
+				else if (SC_CheckToken(TK_Coerce) || SC_CheckToken(TK_Native))
+				{
+				}
+				else
+				{
+					break;
+				}
 			}
-			else if (SC_CheckToken(TK_Eval))
+			switch (sc_TokenType)
 			{
-				flags |= EVAL;
-			}
-			else if (SC_CheckToken(TK_EvalNot))
-			{
-				flags |= EVALNOT;
-			}
-			else if (SC_CheckToken(TK_Coerce) || SC_CheckToken(TK_Native))
-			{
-			}
-			else
-			{
+			case TK_Bool:		type = 'i';		break;
+			case TK_Int:		type = 'i';		break;
+			case TK_Float:		type = 'f';		break;
+			case TK_Sound:		type = 's';		break;
+			case TK_String:		type = 't';		break;
+			case TK_Name:		type = 't';		break;
+			case TK_State:		type = 'l';		break;
+			case TK_Color:		type = 'c';		break;
+			case TK_Class:
+				SC_MustGetToken('<');
+				SC_MustGetToken(TK_Identifier);
+				if (sc_Name != NAME_Actor)
+				{
+					SC_ScriptError ("Sorry, you can only use class<actor>");
+				}
+				SC_MustGetToken('>');
+				type = 'm';
+				break;
+			case TK_Ellipsis:
+				type = '+';
+				SC_MustGetToken(')');
+				SC_UnGet();
+				break;
+			default:
+				SC_ScriptError ("Unknown variable type %s", SC_TokenName(sc_TokenType, sc_String).GetChars());
 				break;
 			}
-		}
-		if (flags != 0)
-		{
-			SC_MustGetAnyToken();
-		}
-		switch (sc_TokenType)
-		{
-		case TK_Int:		type = 'i';		break;
-		case TK_Float:		type = 'f';		break;
-		case TK_Sound:		type = 's';		break;
-		case TK_String:		type = 't';		break;
-		case TK_State:		type = 'l';		break;
-		case TK_Color:		type = 'c';		break;
-		case TK_Class:
-			SC_MustGetToken('<');
-			SC_MustGetToken(TK_Identifier);
-			if (sc_Name != NAME_Actor)
+			if (flags & EVALNOT)
 			{
-				SC_ScriptError ("Sorry, you can only use class<actor>");
+				type = 'y';
 			}
-			SC_MustGetToken('>');
-			type = 'm';
-			break;
-		case TK_Ellipsis:
-			type = '+';
-			SC_MustGetToken(')');
-			SC_UnGet();
-			break;
-		default:
-			SC_ScriptError ("Unknown variable type %s", SC_TokenName(sc_TokenType, sc_String).GetChars());
-			break;
-		}
-		if (flags & EVALNOT)
-		{
-			type = 'y';
-		}
-		else if (flags & EVAL)
-		{
-			type = 'x';
-		}
-		if (!(flags & OPTIONAL))
-		{
-			type -= 'a' - 'A';
-			break;
-		}
-#undef OPTIONAL
-#undef EVAL
-#undef EVALNOT
-		args += type;
-		SC_MustGetAnyToken();
-		if (sc_TokenType != ',' && sc_TokenType != ')')
-		{
-			SC_ScriptError ("Expected ',' or ')' but got %s instead", SC_TokenName(sc_TokenType, sc_String).GetChars());
+			else if (flags & EVAL)
+			{
+				type = 'x';
+			}
+			if (!(flags & OPTIONAL))
+			{
+				type -= 'a' - 'A';
+				break;
+			}
+	#undef OPTIONAL
+	#undef EVAL
+	#undef EVALNOT
+			args += type;
+			SC_MustGetAnyToken();
+			if (sc_TokenType != ',' && sc_TokenType != ')')
+			{
+				SC_ScriptError ("Expected ',' or ')' but got %s instead", SC_TokenName(sc_TokenType, sc_String).GetChars());
+			}
 		}
 	}
+	SC_MustGetToken(';');
 	PSymbolActionFunction *sym = new PSymbolActionFunction;
 	sym->SymbolName = funcname;
 	sym->SymbolType = SYM_ActionFunction;

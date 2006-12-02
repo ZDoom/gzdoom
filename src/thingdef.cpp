@@ -2936,6 +2936,20 @@ static void ActorScale (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorArgs (AActor *defaults, Baggage &bag)
+{
+	for (int i=0;i<5;i++)
+	{
+		SC_MustGetNumber();
+		defaults->args[i] = sc_Number;
+		if (i < 4 && !SC_CheckToken(',')) break;
+	}
+	defaults->flags2|=MF2_ARGSDEFINED;
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorSeeSound (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetString();
@@ -3508,7 +3522,8 @@ static void ActorVSpeed (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorClearFlags (AActor *defaults, Baggage &bag)
 {
-	defaults->flags=defaults->flags2=defaults->flags3=defaults->flags4=defaults->flags5=0;
+	defaults->flags=defaults->flags3=defaults->flags4=defaults->flags5=0;
+	defaults->flags2&=MF2_ARGSDEFINED;	// this flag must not be cleared
 }
 
 //==========================================================================
@@ -4300,6 +4315,7 @@ static const ActorProps props[] =
 	{ "ammo.backpackamount",		(apf)AmmoBackpackAmount,	RUNTIME_CLASS(AAmmo) },
 	{ "ammo.backpackmaxamount",		(apf)AmmoBackpackMaxAmount,	RUNTIME_CLASS(AAmmo) },
 	{ "ammo.dropamount",			(apf)AmmoDropAmount,		RUNTIME_CLASS(AAmmo) },
+	{ "args",						ActorArgs,					RUNTIME_CLASS(AActor) },
 	{ "armor.maxsaveamount",		(apf)ArmorMaxSaveAmount,	RUNTIME_CLASS(ABasicArmorBonus) },
 	{ "armor.saveamount",			(apf)ArmorSaveAmount,		RUNTIME_CLASS(AActor) },
 	{ "armor.savepercent",			(apf)ArmorSavePercent,		RUNTIME_CLASS(AActor) },

@@ -3760,7 +3760,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		Printf ("Unknown type %i at (%i, %i)\n",
 				 mthing->type,
 				 mthing->x, mthing->y);
-		i = RUNTIME_CLASS(AUnknown);
+		i = PClass::FindClass("Unknown");
 	}
 	// [RH] If the thing's corresponding sprite has no frames, also map
 	//		it to the unknown thing.
@@ -3776,7 +3776,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		{
 			Printf ("%s at (%i, %i) has no frames\n",
 					i->TypeName.GetChars(), mthing->x, mthing->y);
-			i = RUNTIME_CLASS(AUnknown);
+			i = PClass::FindClass("Unknown");
 		}
 	}
 
@@ -3856,9 +3856,12 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	mobj->SpawnAngle = mthing->angle;
 	mobj->SpawnFlags = mthing->flags;
 
-	// [RH] Set the thing's special
-	mobj->special = mthing->special;
-	for(int j=0;j<5;j++) mobj->args[j]=mthing->args[j];
+	if (!(mobj->flags2 & MF2_ARGSDEFINED))
+	{
+		// [RH] Set the thing's special
+		mobj->special = mthing->special;
+		for(int j=0;j<5;j++) mobj->args[j]=mthing->args[j];
+	}
 
 	// [RH] Add ThingID to mobj and link it in with the others
 	mobj->tid = mthing->thingid;

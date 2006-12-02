@@ -1,0 +1,63 @@
+
+// Heretic Sound sequences -----------------------------------------------------------
+
+ACTOR HereticSoundSequence1 : SoundSequence 1200
+{
+	Game Heretic
+	Args 0
+}
+
+ACTOR HereticSoundSequence2 : SoundSequence 1201
+{
+	Game Heretic
+	Args 1
+}
+
+ACTOR HereticSoundSequence3 : SoundSequence 1202
+{
+	Game Heretic
+	Args 2
+}
+
+ACTOR HereticSoundSequence4 : SoundSequence 1203
+{
+	Game Heretic
+	Args 3
+}
+
+ACTOR HereticSoundSequence5 : SoundSequence 1204
+{
+	Game Heretic
+	Args 4
+}
+
+ACTOR HereticSoundSequence6 : SoundSequence 1205
+{
+	Game Heretic
+	Args 5
+}
+
+ACTOR HereticSoundSequence7 : SoundSequence 1206
+{
+	Game Heretic
+	Args 6
+}
+
+ACTOR HereticSoundSequence8 : SoundSequence 1207
+{
+	Game Heretic
+	Args 7
+}
+
+ACTOR HereticSoundSequence9 : SoundSequence 1208
+{
+	Game Heretic
+	Args 8
+}
+
+ACTOR HereticSoundSequence10 : SoundSequence 1209
+{
+	Game Heretic
+	Args 9
+}
+

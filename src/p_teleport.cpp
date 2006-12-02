@@ -352,7 +352,7 @@ static AActor *SelectTeleDest (int tid, int tag)
 		if (count == 0)
 		{
 			// Try to find a matching map spot (fixes Hexen MAP10)
-			TActorIterator<AMapSpot> it2 (tid);
+			NActorIterator it2 (NAME_MapSpot, tid);
 			searcher = it2.Next ();
 			if (searcher == NULL)
 			{

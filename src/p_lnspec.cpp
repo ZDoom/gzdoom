@@ -1447,9 +1447,9 @@ FUNC(LS_Thing_SetGoal)
 // Thing_SetGoal (tid, goal, delay, chasegoal)
 {
 	TActorIterator<AActor> selfiterator (arg0);
-	TActorIterator<APatrolPoint> goaliterator (arg1);
+	NActorIterator goaliterator (NAME_PatrolPoint, arg1);
 	AActor *self;
-	APatrolPoint *goal = goaliterator.Next ();
+	AActor *goal = goaliterator.Next ();
 	bool ok = false;
 
 	while ( (self = selfiterator.Next ()) )

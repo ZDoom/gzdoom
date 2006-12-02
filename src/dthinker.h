@@ -86,8 +86,9 @@ private:
 
 class FThinkerIterator
 {
-private:
+protected:
 	const PClass *m_ParentType;
+private:
 	Node *m_CurrThinker;
 	BYTE m_Stat;
 	bool m_SearchStats;
@@ -107,6 +108,15 @@ public:
 	{
 	}
 	TThinkerIterator (int statnum, DThinker *prev) : FThinkerIterator (RUNTIME_CLASS(T), statnum, prev)
+	{
+	}
+	TThinkerIterator (const PClass *subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(subclass, statnum)
+	{
+	}
+	TThinkerIterator (FName subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(PClass::FindClass(subclass), statnum)
+	{
+	}
+	TThinkerIterator (const char *subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(PClass::FindClass(subclass), statnum)
 	{
 	}
 	T *Next ()

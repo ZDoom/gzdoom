@@ -18,36 +18,6 @@ bool P_MorphMonster (AActor *actor, const PClass *morphClass);
 bool P_UpdateMorphedMonster (AActor *actor);
 
 
-class AUnknown : public AActor
-{
-	DECLARE_ACTOR (AUnknown, AActor)
-};
-
-class APatrolPoint : public AActor
-{
-	DECLARE_STATELESS_ACTOR (APatrolPoint, AActor)
-};
-
-class APatrolSpecial : public AActor
-{
-	DECLARE_STATELESS_ACTOR (APatrolSpecial, AActor)
-};
-
-class AMapSpot : public AActor
-{
-	DECLARE_STATELESS_ACTOR (AMapSpot, AActor)
-};
-
-class AMapSpotGravity : public AMapSpot
-{
-	DECLARE_STATELESS_ACTOR (AMapSpotGravity, AMapSpot)
-};
-
-class ARealGibs : public AActor
-{
-	DECLARE_ACTOR (ARealGibs, AActor)
-};
-
 struct side_s;
 
 class DBaseDecal : public DThinker

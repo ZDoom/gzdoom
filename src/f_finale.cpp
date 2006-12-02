@@ -453,6 +453,7 @@ typedef struct
 	const char		*name;
 	const char		*type;
 	const AActor	*info;
+	const PClass	*Class;
 } castinfo_t;
 
 castinfo_t castorder[] =
@@ -544,9 +545,15 @@ void F_StartCast (void)
 	{
 		type = PClass::FindClass (castorder[i].type);
 		if (type == NULL)
+		{
 			castorder[i].info = GetDefault<AActor>();
+			castorder[i].Class= RUNTIME_CLASS(AActor);
+		}
 		else
+		{
 			castorder[i].info = GetDefaultByType (type);
+			castorder[i].Class= type;
+		}
 	}
 
 	for (i = 0; atkstates[i].type; i++)
@@ -708,7 +715,7 @@ bool F_CastResponder (event_t* ev)
 				
 	// go into death frame
 	castdeath = true;
-	caststate = castorder[castnum].info->FindState(NAME_Death);
+	caststate = castorder[castnum].Class->ActorInfo->FindState(1, NAME_Death);
 	if (caststate != NULL)
 	{
 		casttics = caststate->GetTics();

@@ -34,8 +34,8 @@ ACTOR Archvile 64
 		VILE AABBCCDDEEFF 2 A_VileChase
 		Loop
 	Missile:
-		VILE G 1 BRIGHT A_VileStart
-		VILE G 9 BRIGHT A_FaceTarget 
+		VILE G 0 BRIGHT A_VileStart
+		VILE G 10 BRIGHT A_FaceTarget 
 		VILE H 8 BRIGHT A_VileTarget
 		VILE IJKLMN 8 BRIGHT A_FaceTarget 
 		VILE O 8 BRIGHT A_VileAttack
@@ -75,10 +75,10 @@ ACTOR ArchvileFire
 	Spawn:
 		FIRE A 2 BRIGHT  A_StartFire
 		FIRE BAB 2 BRIGHT  A_Fire
-		FIRE C 0 BRIGHT  A_FireCrackle
-		FIRE CBCBCDCDCDEDED 2 BRIGHT  A_Fire
-		FIRE E 0 BRIGHT  A_FireCrackle
-		FIRE EFEFEFGHGHGH 2 BRIGHT  A_Fire
+		FIRE C 2 BRIGHT  A_FireCrackle
+		FIRE BCBCDCDCDEDED 2 BRIGHT  A_Fire
+		FIRE E 2 BRIGHT  A_FireCrackle
+		FIRE FEFEFGHGHGH 2 BRIGHT  A_Fire
 		Stop
 	}
 }

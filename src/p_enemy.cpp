@@ -1542,7 +1542,7 @@ void A_Look (AActor *actor)
 	// [RH] Set goal now if appropriate
 	if (actor->special == Thing_SetGoal && actor->args[0] == 0) 
 	{
-		TActorIterator<APatrolPoint> iterator (actor->args[1]);
+		NActorIterator iterator (NAME_PatrolPoint, actor->args[1]);
 		actor->special = 0;
 		actor->goal = iterator.Next ();
 		actor->reactiontime = actor->args[2] * TICRATE + level.maptime;
@@ -1907,8 +1907,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		if (result)
 		{
 			// reached the goal
-			TActorIterator<APatrolPoint> iterator (actor->goal->args[0]);
-			TActorIterator<APatrolSpecial> specit (actor->goal->tid);
+			NActorIterator iterator (NAME_PatrolPoint, actor->goal->args[0]);
+			NActorIterator specit (NAME_PatrolSpecial, actor->goal->tid);
 			AActor *spec;
 
 			// Execute the specials of any PatrolSpecials with the same TID

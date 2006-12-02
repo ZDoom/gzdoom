@@ -63,6 +63,8 @@ void FActorInfo::BuildDefaults ()
 			parent = Class->ParentClass;
 			parent->ActorInfo->BuildDefaults ();
 			Class->Meta = parent->Meta;
+			Class->Symbols.SetParentTable (&parent->Symbols);
+			
 			assert (Class->Size >= parent->Size);
 			memcpy (Class->Defaults, parent->Defaults, parent->Size);
 			if (Class->Size > parent->Size)

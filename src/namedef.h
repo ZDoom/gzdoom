@@ -209,3 +209,8 @@ xx(WaterLevel)
 xx(X)
 xx(Y)
 xx(Z)
+
+// Various actor names which are used internally
+xx(MapSpot)
+xx(PatrolPoint)
+xx(PatrolSpecial)

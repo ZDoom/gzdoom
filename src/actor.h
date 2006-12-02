@@ -187,7 +187,8 @@ enum
 										// but still considered solid
 	MF2_INVULNERABLE	= 0x08000000,	// mobj is invulnerable
 	MF2_DORMANT			= 0x10000000,	// thing is dormant
-
+	MF2_ARGSDEFINED		= 0x20000000,	// Internal flag used by DECORATE to signal that the 
+										// args should not be taken from the mapthing definition
 	MF2_SEEKERMISSILE	= 0x40000000,	// is a seeker (for reflection)
 	MF2_REFLECTIVE		= 0x80000000,	// reflects missiles
 
@@ -798,6 +799,25 @@ public:
 			actor = FActorIterator::Next ();
 		} while (actor && !actor->IsKindOf (RUNTIME_CLASS(T)));
 		return static_cast<T *>(actor);
+	}
+};
+
+class NActorIterator : public FActorIterator
+{
+	const PClass *type;
+public:
+	NActorIterator (const PClass *cls, int id) : FActorIterator (id) { type = cls; }
+	NActorIterator (FName cls, int id) : FActorIterator (id) { type = PClass::FindClass(cls); }
+	NActorIterator (const char *cls, int id) : FActorIterator (id) { type = PClass::FindClass(cls); }
+	AActor *Next ()
+	{
+		AActor *actor;
+		if (type == NULL) return NULL;
+		do
+		{
+			actor = FActorIterator::Next ();
+		} while (actor && !actor->IsKindOf (type));
+		return actor;
 	}
 };
 

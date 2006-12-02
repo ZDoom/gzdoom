@@ -3884,7 +3884,7 @@ void P_DoCrunch (AActor *thing)
 		}
 		if (!(thing->flags & MF_NOBLOOD))
 		{
-			AActor *gib = Spawn<ARealGibs> (thing->x, thing->y, thing->z, ALLOW_REPLACE);
+			AActor *gib = Spawn ("RealGibs", thing->x, thing->y, thing->z, ALLOW_REPLACE);
 			gib->RenderStyle = thing->RenderStyle;
 			gib->alpha = thing->alpha;
 			gib->height = 0;

@@ -275,7 +275,9 @@ void A_VileAttack (AActor *actor)
 		return;
 				
 	// move the fire between the vile and the player
-	fire->x = actor->target->x - FixedMul (24*FRACUNIT, finecosine[an]);
-	fire->y = actor->target->y - FixedMul (24*FRACUNIT, finesine[an]);	
+	fire->SetOrigin (actor->target->x + FixedMul (24*FRACUNIT, finecosine[an]),
+					 actor->target->y + FixedMul (24*FRACUNIT, finesine[an]),
+					 actor->target->z);
+	
 	P_RadiusAttack (fire, actor, 70, 70, NAME_Fire, false);
 }

@@ -1,3 +1,20 @@
+December 2, 2006 (Changes by Graf Zahl)
+- Converted the Heretic sound sequences and the particle fountains to DECORATE.
+- Added DECORATE support for setting an actor's args. If this is done
+  it will also disable the actor's special that can be set in a map. This
+  is for actors that want to use A_CountdownArg or similar functions
+  that use the args for something different than the special's parameters.
+- Converted a_sharedmisc.cpp to DECORATE.
+- Added a new NActorIterator that can search for classes specified by name.
+- Added a new constructor to TThinkerIterator that can search
+  for DECORATE defined subclasses that are not represented by a real C++ class.
+- Fixed: BuildInfoDefaults must set the parent symbol table so that 
+  all actors can get to the global symbols stored in AActor.
+- Fixed some minor inconsistencies in the Arch-Vile's DECORATE definition.
+- Fixed: A_VileAttack moved the flame without relinking it into the sector 
+  lists. It also forgot to set the z-position correctly. (original Doom bug.)
+- Fixed: The Doom 2 cast finale didn't work with the dynamic state name handling.
+
 November 30, 2006
 - Removed all the "fast" and unused code from FColorMatcher. Today's
   computers are fast enough that the difference isn't even noticeable

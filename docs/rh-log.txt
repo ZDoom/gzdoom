@@ -1,3 +1,10 @@
+December 3, 2006
+- Modified the trustInfo for updaterevision.exe so that it should be
+  fine even with the buggy mt.exe that comes with Visual C++ 2005.
+  (Note that the Platform SDK for Windows Server 2003 R2, and later
+  versions of the Windows SDK also come with a working mt.exe that
+  work fine with the old trustInfo.)
+
 December 2, 2006 (Changes by Graf Zahl)
 - Converted the Heretic sound sequences and the particle fountains to DECORATE.
 - Added DECORATE support for setting an actor's args. If this is done

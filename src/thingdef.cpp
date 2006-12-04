@@ -413,335 +413,28 @@ void A_ChangeFlag(AActor * self)
 
 struct AFuncDesc
 {
-	const char * Name;
+	const char *Name;
 	actionf_p Function;
-	const char * parameters;
 };
 
 
 // Prototype the code pointers
 #define WEAPON(x)	void A_##x(AActor*);	
 #define ACTOR(x)	void A_##x(AActor*);
-ACTOR(MeleeAttack)
-ACTOR(MissileAttack)
-ACTOR(ComboAttack)
-ACTOR(BulletAttack)
-ACTOR(ScreamAndUnblock)
-ACTOR(ActiveAndUnblock)
-ACTOR(ActiveSound)
-ACTOR(FastChase)
-ACTOR(CentaurDefend)
-ACTOR(FreezeDeath)
-ACTOR(FreezeDeathChunks)
-ACTOR(GenericFreezeDeath)
-ACTOR(IceGuyDie)
-ACTOR(M_Saw)
-ACTOR(Wander)
-ACTOR(Look2)
-ACTOR(TossGib)
-ACTOR(SentinelBob)
-ACTOR(SentinelRefire)
-ACTOR(Tracer2)
-ACTOR(SetShadow)
-ACTOR(ClearShadow)
-ACTOR(GetHurt)
-ACTOR(TurretLook)
-ACTOR(KlaxonBlare)
-ACTOR(CheckTerrain)
-ACTOR(Countdown)
-ACTOR(AlertMonsters)
-ACTOR(ClearSoundTarget)
-ACTOR(FireAssaultGun)
-ACTOR(PlaySound)
-ACTOR(PlayWeaponSound)
-ACTOR(FLoopActiveSound)
-ACTOR(LoopActiveSound)
-ACTOR(StopSound)
-ACTOR(PlaySoundEx)
-ACTOR(StopSoundEx)
-ACTOR(SeekerMissile)
-ACTOR(Jump)
-ACTOR(ExplodeParms)
-ACTOR(CallSpecial)
-ACTOR(CustomMissile)
-ACTOR(CustomBulletAttack)
-ACTOR(JumpIfHealthLower)
-ACTOR(JumpIfCloser)
-ACTOR(JumpIfNoAmmo)
-ACTOR(JumpIfInventory)
-ACTOR(CustomPunch)
-ACTOR(FireBullets)
-ACTOR(FireCustomMissile)
-ACTOR(RailAttack)
-ACTOR(CustomRailgun)
-ACTOR(LightInverse)
-ACTOR(GiveInventory)
-ACTOR(TakeInventory)
-ACTOR(SpawnItem)
-ACTOR(SpawnItemEx)
-ACTOR(ThrowGrenade)
-ACTOR(Recoil)
-ACTOR(SelectWeapon)
-ACTOR(Print)
-ACTOR(SetTranslucent)
-ACTOR(FadeIn)
-ACTOR(FadeOut)
-ACTOR(SpawnDebris)
-ACTOR(SetSolid)
-ACTOR(UnsetSolid)
-ACTOR(SetFloat)
-ACTOR(UnsetFloat)
-ACTOR(BishopMissileWeave)
-ACTOR(CStaffMissileSlither)
-ACTOR(CheckSight)
-ACTOR(ExtChase)
-ACTOR(DropInventory)
-ACTOR(SetBlend)
-ACTOR(JumpIf)
-ACTOR(SetUserVar)
-ACTOR(SetUserVarRandom)
-ACTOR(KillMaster)
-ACTOR(KillChildren)
-ACTOR(DualPainAttack)
-ACTOR(GiveToTarget)
-ACTOR(TakeFromTarget)
-ACTOR(JumpIfInTargetInventory)
-ACTOR(CountdownArg)
-ACTOR(CustomMeleeAttack)
-ACTOR(CustomComboAttack)
-ACTOR(Light)
-ACTOR(Burst)
-ACTOR(SkullPop)
-ACTOR(CheckFloor)
-ACTOR(CheckPlayerDone)
-ACTOR(RadiusThrust)
-ACTOR(Stop)
-ACTOR(SPosAttackUseAtkSound)
-ACTOR(Respawn)
-ACTOR(BarrelDestroy)
-ACTOR(PlayerSkinCheck)
-ACTOR(QueueCorpse)
-
-
+#include "codepointers.h"
 #include "d_dehackedactions.h"
+void A_ComboAttack(AActor*);
 
-/* What do the parameter letters mean?
- *
- * If the letter is uppercase, it is required. Lowercase letters are optional.
- *   i = integer
- *   f = fixed point
- *   s = sound name
- *   m = actor name
- *   t = string
- *   l = jump label
- *   c = color
- *   x = expression
- *   y = expression
- * If the final character is a +, the previous parameter is repeated indefinitely,
- * and an "imaginary" first parameter is inserted containing the total number of
- * parameters passed.
- */
-#define FUNC(name, parm) { #name, name, parm },
-// Declare the code pointer table
-AFuncDesc AFTable[]=
+AFuncDesc AFTable[] =
 {
-
-	// most of the functions available in Dehacked
-	FUNC(A_MonsterRail, NULL)
-	FUNC(A_BFGSpray, "mxx")
-	FUNC(A_Pain, NULL)
-	FUNC(A_NoBlocking, NULL)
-	FUNC(A_XScream, NULL)
-	FUNC(A_Look, NULL)
-	FUNC(A_Chase, NULL)
-	FUNC(A_FaceTarget, NULL)
-	FUNC(A_PosAttack, NULL)
-	FUNC(A_Scream, NULL)
-	FUNC(A_SPosAttack, NULL)
-	FUNC(A_SPosAttackUseAtkSound, NULL)
-	FUNC(A_VileChase, NULL)
-	FUNC(A_VileStart, NULL)
-	FUNC(A_VileTarget, NULL)
-	FUNC(A_VileAttack, NULL)
-	FUNC(A_StartFire, NULL)
-	FUNC(A_Fire, NULL)
-	FUNC(A_FireCrackle, NULL)
-	FUNC(A_Tracer, NULL)
-	FUNC(A_SkelWhoosh, NULL)
-	FUNC(A_SkelFist, NULL)
-	FUNC(A_SkelMissile, NULL)
-	FUNC(A_FatRaise, NULL)
-	FUNC(A_FatAttack1, "m")
-	FUNC(A_FatAttack2, "m")
-	FUNC(A_FatAttack3, "m")
-	FUNC(A_BossDeath, NULL)
-	FUNC(A_CPosAttack, NULL)
-	FUNC(A_CPosRefire, NULL)
-	FUNC(A_TroopAttack, NULL)
-	FUNC(A_SargAttack, NULL)
-	FUNC(A_HeadAttack, NULL)
-	FUNC(A_BruisAttack, NULL)
-	FUNC(A_SkullAttack, NULL)
-	FUNC(A_Metal, NULL)
-	FUNC(A_SpidRefire, NULL)
-	FUNC(A_BabyMetal, NULL)
-	FUNC(A_BspiAttack, NULL)
-	FUNC(A_Hoof, NULL)
-	FUNC(A_CyberAttack, NULL)
-	FUNC(A_PainAttack, "m")
-	FUNC(A_DualPainAttack, "m")
-	FUNC(A_PainDie, "m")
-	FUNC(A_KeenDie, NULL)
-	FUNC(A_BrainPain, NULL)
-	FUNC(A_BrainScream, NULL)
-	FUNC(A_BrainDie, NULL)
-	FUNC(A_BrainAwake, NULL)
-	FUNC(A_BrainSpit, NULL)
-	FUNC(A_SpawnSound, NULL)
-	FUNC(A_SpawnFly, NULL)
-	FUNC(A_BrainExplode, NULL)
-	FUNC(A_Die, NULL)
-	FUNC(A_Detonate, NULL)
-	FUNC(A_Mushroom, "mx")
-
-	FUNC(A_SetFloorClip, NULL)
-	FUNC(A_UnSetFloorClip, NULL)
-	FUNC(A_HideThing, NULL)
-	FUNC(A_UnHideThing, NULL)
-	FUNC(A_SetInvulnerable, NULL)
-	FUNC(A_UnSetInvulnerable, NULL)
-	FUNC(A_SetReflective, NULL)
-	FUNC(A_UnSetReflective, NULL)
-	FUNC(A_SetReflectiveInvulnerable, NULL)
-	FUNC(A_UnSetReflectiveInvulnerable, NULL)
-	FUNC(A_SetShootable, NULL)
-	FUNC(A_UnSetShootable, NULL)
-	FUNC(A_NoGravity, NULL)
-	FUNC(A_Gravity, NULL)
-	FUNC(A_LowGravity, NULL)
-	{"A_Fall", A_NoBlocking, NULL},		// Allow Doom's old name, too, for this function
-	FUNC(A_SetSolid, NULL)
-	FUNC(A_UnsetSolid, NULL)
-	FUNC(A_SetFloat, NULL)
-	FUNC(A_UnsetFloat, NULL)
-
-	// For better chainsaw attacks
-	FUNC(A_M_Saw, NULL)
-
-	// some functions from the old DECORATE parser
-	FUNC(A_BulletAttack, NULL)
-	FUNC(A_ScreamAndUnblock, NULL)
-	FUNC(A_ActiveAndUnblock, NULL)
-	FUNC(A_ActiveSound, NULL)
-
-	// useful functions from Hexen
-	FUNC(A_FastChase, NULL)
-	FUNC(A_FreezeDeath, NULL)
-	FUNC(A_FreezeDeathChunks, NULL)
-	FUNC(A_GenericFreezeDeath, NULL)
-	FUNC(A_IceGuyDie, NULL)			// useful for bursting a monster into ice chunks without delay
-	FUNC(A_CentaurDefend, NULL)
-	FUNC(A_BishopMissileWeave, NULL)
-	FUNC(A_CStaffMissileSlither, NULL)
-	FUNC(A_PlayerScream, NULL)
-	FUNC(A_SkullPop, "m")
-	FUNC(A_CheckPlayerDone, NULL)
-
-	// useful functions from Strife
-	FUNC(A_Wander, NULL)
-	FUNC(A_Look2, NULL)
-	FUNC(A_TossGib, NULL)
-	FUNC(A_SentinelBob, NULL)
-	FUNC(A_SentinelRefire, NULL)
-	FUNC(A_Tracer2, NULL)
-	FUNC(A_SetShadow, NULL)
-	FUNC(A_ClearShadow, NULL)
-	FUNC(A_GetHurt, NULL)
-	FUNC(A_TurretLook, NULL)
-	FUNC(A_KlaxonBlare, NULL)
-	FUNC(A_Countdown, NULL)
-	FUNC(A_AlertMonsters, NULL)
-	FUNC(A_ClearSoundTarget, NULL)
-	FUNC(A_FireAssaultGun, NULL)
-	FUNC(A_CheckTerrain, NULL )
-
-	// Only selected original weapon functions will be available. 
-	// All the attack pointers are somewhat tricky due to the way the flash state is handled
-	FUNC(A_Light, "X")
-	FUNC(A_Light0, NULL)
-	FUNC(A_Light1, NULL)
-	FUNC(A_Light2, NULL)
-	FUNC(A_LightInverse, NULL)
-	FUNC(A_WeaponReady, NULL)
-	FUNC(A_Lower, NULL)
-	FUNC(A_Raise, NULL)
-	FUNC(A_ReFire, NULL)
-	FUNC(A_Punch, NULL)
-	FUNC(A_CheckReload, NULL)
-	FUNC(A_GunFlash, NULL)
-	FUNC(A_Saw, "ssxm")
-
-	// DECORATE specific functions
-	FUNC(A_BulletAttack, NULL)
-	FUNC(A_PlaySound, "S" )
-	FUNC(A_PlayWeaponSound, "S" )
-	FUNC(A_FLoopActiveSound, NULL )
-	FUNC(A_LoopActiveSound, NULL )
-	FUNC(A_StopSound, NULL )
-	FUNC(A_PlaySoundEx, "STi" )
-	FUNC(A_StopSoundEx, "T" )
-	FUNC(A_SeekerMissile, "XX" )
-	FUNC(A_Jump, "XL+" )
-	FUNC(A_CustomMissile, "MXXxxx" )
-	FUNC(A_CustomBulletAttack, "XXXXmx" )
-	FUNC(A_CustomRailgun, "Xxccxxxm" )
-	FUNC(A_JumpIfHealthLower, "XL" )
-	FUNC(A_JumpIfCloser, "XL" )
-	FUNC(A_JumpIfInventory, "MXL" )
-	FUNC(A_GiveInventory, "Mx" )
-	FUNC(A_TakeInventory, "Mx" )
-	FUNC(A_SpawnItem, "Mxxyx" )
-	FUNC(A_SpawnItemEx, "Mxxxxxxxxx" )
-	FUNC(A_ThrowGrenade, "Mxxxy" )
-	FUNC(A_SelectWeapon, "M")
-	FUNC(A_Print, "Txt")
-	FUNC(A_SetTranslucent, "Xx")
-	FUNC(A_FadeIn, "x")
-	FUNC(A_FadeOut, "x")
-	FUNC(A_SpawnDebris, "Mx")
-	FUNC(A_CheckSight, "L")
-	FUNC(A_ExtChase, "XXyx")
-	FUNC(A_DropInventory, "M")
-	FUNC(A_SetBlend, "CXXc")
-	FUNC(A_ChangeFlag, "TX")
-	FUNC(A_JumpIf, "XL")
-	FUNC(A_KillMaster, NULL)
-	FUNC(A_KillChildren, NULL)
-	FUNC(A_CheckFloor, "L")
-	FUNC(A_PlayerSkinCheck, "L")
-	{"A_BasicAttack", A_ComboAttack, "ISMF" },
-
-	// Weapon only functions
-	FUNC(A_JumpIfNoAmmo, "L" )
-	FUNC(A_CustomPunch, "Xxymx" )
-	FUNC(A_FireBullets, "XXXXmyx" )
-	FUNC(A_FireCustomMissile, "Mxyxxx" )
-	FUNC(A_RailAttack, "Xxyccxxm" )
-	FUNC(A_Recoil, "X")
-	FUNC(A_JumpIfInTargetInventory, "MXL" )
-	FUNC(A_GiveToTarget, "Mx" )
-	FUNC(A_TakeFromTarget, "Mx" )
-	FUNC(A_CountdownArg, "X")
-	FUNC(A_CustomMeleeAttack, "Xssty" )
-	FUNC(A_CustomComboAttack, "MXXsty" )
-	FUNC(A_Burst, "M")
-	FUNC(A_RadiusThrust, "xxy")
-	{"A_Explode", A_ExplodeParms, "xxy" },
-	FUNC(A_Stop, NULL)
-	FUNC(A_Respawn, "y")
-	FUNC(A_BarrelDestroy, NULL)
-	FUNC(A_QueueCorpse, NULL)
+#define WEAPON(x)	{ "A_" #x, A_##x },
+#define ACTOR(x)	{ "A_" #x, A_##x },
+#include "codepointers.h"
+#include "d_dehackedactions.h"
+	{ "A_Fall", A_NoBlocking },
+	{ "A_BasicAttack", A_ComboAttack }
 };
+
 
 //==========================================================================
 //
@@ -753,7 +446,7 @@ static int STACK_ARGS funccmp(const void * a, const void * b)
 	return stricmp( ((AFuncDesc*)a)->Name, ((AFuncDesc*)b)->Name);
 }
 
-static AFuncDesc * FindFunction(char * string)
+static AFuncDesc * FindFunction(const char * string)
 {
 	static bool funcsorted=false;
 
@@ -1851,24 +1544,15 @@ do_stop:
 					goto endofstate;
 				}
 
-				//AFuncDesc * afd = FindFunction(sc_String);
-				//PSymbolActionFunction *sym = bag.Info->Class->Symbols.FindSymbol (FName(sc_String, true), true);
-				//if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
-				//{
-				//	PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
-				//	state.Action = afd->Function;
-				//	if (!afd->Arguments.IsEmpty())
-				//	{
-				//		const char *params = afd->Arguments.GetChars();
-				//		int numparams = afd->Arguments.Len();
-				AFuncDesc * afd = FindFunction(sc_String);
-				if (afd != NULL)
+				PSymbol *sym = bag.Info->Class->Symbols.FindSymbol (FName(sc_String, true), true);
+				if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
 				{
+					PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
 					state.Action = afd->Function;
-					if (afd->parameters !=NULL)
+					if (!afd->Arguments.IsEmpty())
 					{
-						const char * params = afd->parameters;
-						int numparams = (int)strlen(params);
+						const char *params = afd->Arguments.GetChars();
+						int numparams = (int)afd->Arguments.Len();
 				
 						int v;
 
@@ -2582,7 +2266,9 @@ void ParseGlobalConst()
 //
 // ActorActionDef
 //
-// Parses an action function definition.
+// Parses an action function definition. A lot of this is essentially
+// documentation in the declaration for when I have a proper language
+// ready.
 //
 //==========================================================================
 
@@ -2592,11 +2278,18 @@ static void ActorActionDef (AActor *defaults, Baggage &bag)
 #define EVAL			2
 #define EVALNOT			4
 
+	AFuncDesc *afd;
 	FName funcname;
 	FString args;
 
+	SC_MustGetToken(TK_Native);
 	SC_MustGetToken(TK_Identifier);
 	funcname = sc_Name;
+	afd = FindFunction(sc_String);
+	if (afd == NULL)
+	{
+		SC_ScriptError ("The function '%s' has not been exported from the executable.", sc_String);
+	}
 	SC_MustGetToken('(');
 	if (!SC_CheckToken(')'))
 	{
@@ -2628,6 +2321,8 @@ static void ActorActionDef (AActor *defaults, Baggage &bag)
 					break;
 				}
 			}
+			// Read the variable type
+			SC_MustGetAnyToken();
 			switch (sc_TokenType)
 			{
 			case TK_Bool:		type = 'i';		break;
@@ -2640,11 +2335,7 @@ static void ActorActionDef (AActor *defaults, Baggage &bag)
 			case TK_Color:		type = 'c';		break;
 			case TK_Class:
 				SC_MustGetToken('<');
-				SC_MustGetToken(TK_Identifier);
-				if (sc_Name != NAME_Actor)
-				{
-					SC_ScriptError ("Sorry, you can only use class<actor>");
-				}
+				SC_MustGetToken(TK_Identifier);	// Skip class name, since the parser doesn't care
 				SC_MustGetToken('>');
 				type = 'm';
 				break;
@@ -2657,6 +2348,16 @@ static void ActorActionDef (AActor *defaults, Baggage &bag)
 				SC_ScriptError ("Unknown variable type %s", SC_TokenName(sc_TokenType, sc_String).GetChars());
 				break;
 			}
+			// Read the optional variable name
+			if (!SC_CheckToken(',') && !SC_CheckToken(')'))
+			{
+				SC_MustGetToken(TK_Identifier);
+			}
+			else
+			{
+				SC_UnGet();
+			}
+			// If eval or evalnot were a flag, hey the decorate parser doesn't actually care about the type.
 			if (flags & EVALNOT)
 			{
 				type = 'y';
@@ -2665,10 +2366,9 @@ static void ActorActionDef (AActor *defaults, Baggage &bag)
 			{
 				type = 'x';
 			}
-			if (!(flags & OPTIONAL))
+			if (!(flags & OPTIONAL) && type != '+')
 			{
 				type -= 'a' - 'A';
-				break;
 			}
 	#undef OPTIONAL
 	#undef EVAL
@@ -2686,7 +2386,7 @@ static void ActorActionDef (AActor *defaults, Baggage &bag)
 	sym->SymbolName = funcname;
 	sym->SymbolType = SYM_ActionFunction;
 	sym->Arguments = args;
-	sym->Function = NULL;
+	sym->Function = afd->Function;
 	if (bag.Info->Class->Symbols.AddSymbol (sym) == NULL)
 	{
 		delete sym;
@@ -4577,5 +4277,59 @@ void FinishThingdef()
 		char fmt[20];
 		sprintf(fmt, "QuestItem%d", i+1);
 		QuestItemClasses[i]=PClass::FindClass(fmt);
+	}
+}
+
+//==========================================================================
+//
+// ParseClass
+//
+// A minimal placeholder so that I can assign properties to some native
+// classes. Please, no end users use this until it's finalized.
+//
+//==========================================================================
+
+void ParseClass()
+{
+	Baggage bag;
+	const PClass *cls;
+	FName classname;
+	FName supername;
+
+	SC_MustGetToken(TK_Identifier);	// class name
+	classname = sc_Name;
+	SC_MustGetToken(TK_Extends);	// because I'm not supporting Object
+	SC_MustGetToken(TK_Identifier);	// superclass name
+	supername = sc_Name;
+	SC_MustGetToken(TK_Native);		// use actor definitions for your own stuff
+	SC_MustGetToken('{');
+
+	cls = PClass::FindClass (classname);
+	if (cls == NULL)
+	{
+		SC_ScriptError ("'%s' is not a native class", classname.GetChars());
+	}
+	if (cls->ParentClass == NULL || cls->ParentClass->TypeName != supername)
+	{
+		SC_ScriptError ("'%s' does not extend '%s'", classname.GetChars(), supername.GetChars());
+	}
+	bag.Info = cls->ActorInfo;
+
+	SC_MustGetAnyToken();
+	while (sc_TokenType != '}')
+	{
+		if (sc_TokenType == TK_Action)
+		{
+			ActorActionDef (0, bag);
+		}
+		else if (sc_TokenType == TK_Const)
+		{
+			ActorConstDef (0, bag);
+		}
+		else
+		{
+			SC_ScriptError ("Expected 'action' or 'const' but got %s", SC_TokenName(sc_TokenType, sc_String));
+		}
+		SC_MustGetAnyToken();
 	}
 }

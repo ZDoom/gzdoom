@@ -738,11 +738,11 @@ FString SC_TokenName (int token, const char *string)
 {
 	static const char *const names[] =
 	{
-		"an identifier",
-		"a string constant",
-		"a name constant",
-		"an integer constant",
-		"a float constant",
+		"identifier",
+		"string constant",
+		"name constant",
+		"integer constant",
+		"float constant",
 		"'...'",
 		"'>>='",
 		"'<<='",
@@ -763,7 +763,8 @@ FString SC_TokenName (int token, const char *string)
 		"'<='",
 		"'>='",
 		"'=='",
-		"'!="
+		"'!='",
+		"'action'",
 		"'break'",
 		"'case'",
 		"'const'",

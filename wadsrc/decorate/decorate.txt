@@ -1,3 +1,4 @@
+#include "actors/nativeclasses.txt"
 #include "actors/constants.txt"
 
 #include "actors/shared/botstuff.txt"

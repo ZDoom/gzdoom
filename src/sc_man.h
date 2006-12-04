@@ -63,6 +63,7 @@ enum
 	TK_Geq,				// >=
 	TK_Eq,				// ==
 	TK_Neq,				// !=
+	TK_Action,
 	TK_Break,
 	TK_Case,
 	TK_Const,

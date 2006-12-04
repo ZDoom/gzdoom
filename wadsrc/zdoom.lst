@@ -240,6 +240,7 @@ textcolors.txt				textcolors.txt
 # Decorate stuff
 
 decorate.txt								decorate/decorate.txt
+actors/nativeclasses.txt					decorate/nativeclasses.txt
 actors/constants.txt						decorate/constants.txt
 
 actors/shared/botstuff.txt					decorate/shared/botstuff.txt

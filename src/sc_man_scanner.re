@@ -139,8 +139,9 @@ std2:
 		'stop'						{ RET(TK_Stop); }
 
 		/* Needed for decorate action functions */
-		"eval"						{ RET(TK_Eval); }
-		"evalnot"					{ RET(TK_EvalNot); }
+		'eval'						{ RET(TK_Eval); }
+		'evalnot'					{ RET(TK_EvalNot); }
+		'action'					{ RET(TK_Action); }
 
 		L (L|D)*					{ RET(TK_Identifier); }
 

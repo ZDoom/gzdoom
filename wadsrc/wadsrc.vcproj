@@ -361,7 +361,15 @@
 				Name="Decorate"
 				>
 				<File
+					RelativePath=".\decorate\constants.txt"
+					>
+				</File>
+				<File
 					RelativePath=".\decorate\decorate.txt"
+					>
+				</File>
+				<File
+					RelativePath=".\decorate\nativeclasses.txt"
 					>
 				</File>
 				<Filter
@@ -528,7 +536,19 @@
 					Name="Shared"
 					>
 					<File
-						RelativePath=".\shared\debris.txt"
+						RelativePath=".\decorate\shared\blood.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\shared\botstuff.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\shared\debris.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\shared\pickups.txt"
 						>
 					</File>
 					<File

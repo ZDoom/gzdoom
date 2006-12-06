@@ -9,10 +9,6 @@ December 5, 2006 (Changes by Graf Zahl)
 - Converted Strife's Bishop to DECORATE.
 - Added momx, momy and momz variables to the DECORATE expression evaluator.
 
-December 5, 2006
-- Finished the framework for specifying all action functions externally,
-  including restricting them to particular classes.
-  
 December 3, 2006
 - Modified the trustInfo for updaterevision.exe so that it should be
   fine even with the buggy mt.exe that comes with Visual C++ 2005.

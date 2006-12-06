@@ -269,7 +269,6 @@ static flagdef WeaponFlags[] =
 	DEFINE_FLAG(WIF_BOT, BFG, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, CHEATNOTWEAPON, AWeapon, WeaponFlags),
 	//WIF_BOT_REACTION_SKILL_THING = 1<<31, // I don't understand this
-	//DEFINE_FLAG(WIF , HITS_GHOSTS, WeaponFlags),	// I think it would be smarter to remap the THRUGHOST flag to this
 };
 
 static const struct { const PClass *Type; flagdef *Defs; int NumDefs; } FlagLists[] =

@@ -104,6 +104,7 @@ IMPLEMENT_ACTOR (AMageBoss, Hexen, 10102, 0)
 
 	PROP_PainSound ("PlayerMagePain")
 	PROP_DeathSound ("PlayerMageCrazyDeath")
+	PROP_Obituary ("$OB_MBOSS")
 END_DEFAULTS
 
 

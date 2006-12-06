@@ -70,6 +70,7 @@ IMPLEMENT_ACTOR (ASentinel, Strife, 3006, 0)
 	PROP_SeeSound ("sentinel/sight")
 	PROP_DeathSound ("sentinel/death")
 	PROP_ActiveSound ("sentinel/active")
+	PROP_Obituary ("$OB_SENTINEL")
 END_DEFAULTS
 
 // Sentinel FX 1 ------------------------------------------------------------

@@ -145,6 +145,7 @@ IMPLEMENT_ACTOR (AHeresiarch, Hexen, 10080, 0)
 	PROP_PainSound ("SorcererPain")
 	PROP_DeathSound ("SorcererDeathScream")
 	PROP_ActiveSound ("SorcererActive")
+	PROP_Obituary ("$OB_HERESIARCH")
 END_DEFAULTS
 
 void AHeresiarch::Serialize (FArchive &arc)

@@ -113,6 +113,7 @@ IMPLEMENT_ACTOR (AAcolyte, Strife, -1, 0)
 	PROP_AttackSound ("acolyte/rifle")
 	PROP_DeathSound ("acolyte/death")
 	PROP_ActiveSound ("acolyte/active")
+	PROP_Obituary ("$OB_ACOLYTE")
 END_DEFAULTS
 
 // Acolyte 1 ----------------------------------------------------------------

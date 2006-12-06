@@ -170,6 +170,7 @@ IMPLEMENT_ACTOR (AKorax, Hexen, 10200, 0)
 	PROP_PainSound ("KoraxPain")
 	PROP_DeathSound ("KoraxDeath")
 	PROP_ActiveSound ("KoraxActive")
+	PROP_Obituary ("$OB_KORAX")
 END_DEFAULTS
 
 // Korax Spirit -------------------------------------------------------------

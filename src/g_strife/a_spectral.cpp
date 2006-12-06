@@ -302,3 +302,61 @@ void A_201fc (AActor *self)
 	flash->momz = -18*FRACUNIT;
 	flash->health = self->health;
 }
+
+// In Strife, this number is stored in the data segment, but it doesn't seem to be
+// altered anywhere.
+#define TRACEANGLE (0xe000000)
+
+void A_Tracer2 (AActor *self)
+{
+	AActor *dest;
+	angle_t exact;
+	fixed_t dist;
+	fixed_t slope;
+
+	dest = self->tracer;
+
+	if (dest == NULL || dest->health <= 0)
+		return;
+
+	// change angle
+	exact = R_PointToAngle2 (self->x, self->y, dest->x, dest->y);
+
+	if (exact != self->angle)
+	{
+		if (exact - self->angle > 0x80000000)
+		{
+			self->angle -= TRACEANGLE;
+			if (exact - self->angle < 0x80000000)
+				self->angle = exact;
+		}
+		else
+		{
+			self->angle += TRACEANGLE;
+			if (exact - self->angle > 0x80000000)
+				self->angle = exact;
+		}
+	}
+
+	exact = self->angle >> ANGLETOFINESHIFT;
+	self->momx = FixedMul (self->Speed, finecosine[exact]);
+	self->momy = FixedMul (self->Speed, finesine[exact]);
+
+	// change slope
+	dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
+	dist /= self->Speed;
+
+	if (dist < 1)
+	{
+		dist = 1;
+	}
+	slope = (dest->z + 40*FRACUNIT - self->z) / dist;
+	if (slope < self->momz)
+	{
+		self->momz -= FRACUNIT/8;
+	}
+	else
+	{
+		self->momz += FRACUNIT/8;
+	}
+}

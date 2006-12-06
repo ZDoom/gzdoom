@@ -21,6 +21,7 @@ ACTOR Ettin 10030
 	DeathSound "EttinDeath"
 	ActiveSound "EttinActive"
 	HowlSound "PuppyBeat"
+	Obituary "$OB_ETTIN"
 	States
 	{
 	Spawn:

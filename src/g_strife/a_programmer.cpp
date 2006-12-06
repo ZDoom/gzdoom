@@ -102,6 +102,7 @@ IMPLEMENT_ACTOR (AProgrammer, Strife, 71, 0)
 	PROP_PainSound ("programmer/pain")
 	PROP_DeathSound ("programmer/death")
 	PROP_ActiveSound ("programmer/active")
+	PROP_Obituary ("$OB_PROGRAMMER")
 END_DEFAULTS
 
 //============================================================================

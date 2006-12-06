@@ -16,6 +16,7 @@ ACTOR Beggar : StrifeHumanoid
 	Tag "Beggar"
 	MaxStepHeight 16
 	MaxDropoffHeight 32
+	HitObituary "$OB_BEGGAR"
 
 	AttackSound "beggar/attack"
 	PainSound "beggar/pain"

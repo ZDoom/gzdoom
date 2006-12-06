@@ -19,6 +19,7 @@ ACTOR Demon1 31
 	PainSound "DemonPain"
 	DeathSound "DemonDeath"
 	ActiveSound "DemonActive"
+	Obituary "$OB_DEMON1"
 	const int ChunkFlags = SXF_TRANSFERTRANSLATION|SXF_ABSOLUTEMOMENTUM;
 	States
 	{
@@ -214,6 +215,7 @@ ACTOR Demon1FX1
 ACTOR Demon2 : Demon1 8080
 {
 	Game Hexen
+	Obituary "$OB_DEMON2"
 	States
 	{
 	Spawn:

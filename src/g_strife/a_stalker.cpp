@@ -103,6 +103,7 @@ IMPLEMENT_ACTOR (AStalker, Strife, 186, 0)
 	PROP_PainSound ("stalker/pain")
 	PROP_DeathSound ("stalker/death")
 	PROP_ActiveSound ("stalker/active")
+	PROP_HitObituary ("$OB_STALKER")
 END_DEFAULTS
 
 void A_StalkerChaseDecide (AActor *self)

@@ -75,6 +75,7 @@ IMPLEMENT_ACTOR (AIceGuy, Hexen, 8020, 20)
 	PROP_SeeSound ("IceGuySight")
 	PROP_AttackSound ("IceGuyAttack")
 	PROP_ActiveSound ("IceGuyActive")
+	PROP_Obituary("$OB_ICEGUY")
 END_DEFAULTS
 
 void AIceGuy::Deactivate (AActor *activator)

@@ -744,17 +744,9 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 			{
 				defaults->DamageType = NAME_None;
 			}
-			else if (SC_Compare ("Ice"))
-			{
-				defaults->DamageType = NAME_Ice;
-			}
-			else if (SC_Compare ("Fire"))
-			{
-				defaults->DamageType = NAME_Fire;
-			}
 			else
 			{
-				SC_ScriptError ("Unknown damage type \"%s\"", sc_String);
+				defaults->DamageType = sc_String;
 			}
 		}
 		else if (def == DEF_Projectile && SC_Compare ("Speed"))

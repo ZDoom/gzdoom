@@ -96,6 +96,7 @@ IMPLEMENT_ACTOR (ACrusader, Strife, 3005, 0)
 	PROP_PainSound ("crusader/pain")
 	PROP_DeathSound ("crusader/death")
 	PROP_ActiveSound ("crusader/active")
+	PROP_Obituary ("$OB_CRUSADER")
 END_DEFAULTS
 
 // Fast Flame Projectile (used by Crusader) ---------------------------------

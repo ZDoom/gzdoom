@@ -71,6 +71,7 @@
 #include "actors/strife/beggars.txt"
 #include "actors/strife/merchants.txt"
 #include "actors/strife/peasants.txt"
+#include "actors/strife/strifebishop.txt"
 #include "actors/strife/questitems.txt"
 #include "actors/strife/ratbuddy.txt"
 #include "actors/strife/strifeammo.txt"

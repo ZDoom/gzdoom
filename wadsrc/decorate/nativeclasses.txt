@@ -138,7 +138,7 @@ class Actor extends Thinker
 	action native A_SetTranslucent(eval float alpha, optional eval int style);
 	action native A_FadeIn(optional eval float reduce);
 	action native A_FadeOut(optional eval float reduce);
-	action native A_SpawnDebris(class<Actor> spawntype, optional eval bool transfer_translation);
+	action native A_SpawnDebris(class<Actor> spawntype, optional eval bool transfer_translation, optional eval float mult_h, optional eval float mult_v);
 	action native A_CheckSight(state label);
 	action native A_ExtChase(eval bool usemelee, eval bool usemissile, optional evalnot bool playactive, optional eval bool nightmarefast);
 	action native A_DropInventory(class<Inventory> itemtype);
@@ -150,6 +150,7 @@ class Actor extends Thinker
 	action native A_CheckFloor(state label);
 	action native A_PlayerSkinCheck(state label);
 	action native A_BasicAttack(int meleedamage, sound meleesound, class<actor> missiletype, float missileheight);
+	action native A_ThrowGrenade(class<Actor> itemtype, optional eval float zheight, optional eval float xymom, optional eval float zmom, optional evalnot bool useammo);
 
 	action native A_Recoil(eval float xymom);
 	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, eval int amount, state label);
@@ -201,5 +202,4 @@ class Inventory extends Actor
 	action native A_CheckReload();
 	action native A_GunFlash();
 	action native A_Saw(optional coerce sound fullsound, optional coerce sound hitsound, optional eval int damage, optional class<Actor> pufftype);
-	action native A_ThrowGrenade(class<Actor> itemtype, optional eval float zheight, optional eval float xymom, optional eval float zmom, optional evalnot bool useammo);
 }

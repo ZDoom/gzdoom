@@ -165,6 +165,7 @@ IMPLEMENT_ACTOR (AEntityBoss, Strife, 128, 0)
 	PROP_PainSound ("entity/pain")
 	PROP_DeathSound ("entity/death")
 	PROP_ActiveSound ("entity/active")
+	PROP_Obituary ("$OB_ENTITY")
 END_DEFAULTS
 
 void AEntityBoss::Serialize (FArchive &arc)
@@ -269,6 +270,7 @@ IMPLEMENT_ACTOR (AEntitySecond, Strife, -1, 0)
 	PROP_PainSound ("alienspectre/pain")
 	PROP_DeathSound ("alienspectre/death")
 	PROP_ActiveSound ("alienspectre/active")
+	PROP_Obituary ("$OB_ENTITY")
 END_DEFAULTS
 
 void AEntitySecond::Touch (AActor *toucher)

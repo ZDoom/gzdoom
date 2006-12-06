@@ -89,6 +89,7 @@ IMPLEMENT_ACTOR (ADragon, Hexen, 254, 0)
 	PROP_PainSound ("DragonPain")
 	PROP_DeathSound ("DragonDeath")
 	PROP_ActiveSound ("DragonActive")
+	PROP_Obituary ("$OB_DRAGON")
 END_DEFAULTS
 
 

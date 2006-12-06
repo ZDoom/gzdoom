@@ -355,11 +355,6 @@ void A_SpawnSpectre1 (AActor *actor)
 	GenericSpectreSpawn (actor, RUNTIME_CLASS(AAlienSpectre1));
 }
 
-void A_SpawnSpectre2 (AActor *actor)
-{
-	GenericSpectreSpawn (actor, RUNTIME_CLASS(AAlienSpectre2));
-}
-
 void A_SpawnSpectre3 (AActor *actor)
 {
 	GenericSpectreSpawn (actor, RUNTIME_CLASS(AAlienSpectre3));

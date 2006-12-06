@@ -1,3 +1,18 @@
+December 5, 2006 (Changes by Graf Zahl)
+- Moved A_ThrowGrenade from Inventory to Actor because it can also be used by
+  monsters
+- Added velocity multiplicators to A_SpawnDebris.
+- Changed: A_JumpIfNoAmmo should have no effect for CustomInventory items.
+- Fixed: DECORATE jump commands must set the call state's result to 0
+  even when they have to return prematurely.
+- Added obituaries for Strife's and Hexen's monsters.
+- Converted Strife's Bishop to DECORATE.
+- Added momx, momy and momz variables to the DECORATE expression evaluator.
+
+December 5, 2006
+- Finished the framework for specifying all action functions externally,
+  including restricting them to particular classes.
+  
 December 3, 2006
 - Modified the trustInfo for updaterevision.exe so that it should be
   fine even with the buggy mt.exe that comes with Visual C++ 2005.

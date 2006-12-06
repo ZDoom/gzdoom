@@ -313,6 +313,7 @@ actors/hexen/demons.txt                     decorate/hexen/demons.txt
 actors/strife/beggars.txt					decorate/strife/beggars.txt
 actors/strife/merchants.txt                 decorate/strife/merchants.txt
 actors/strife/peasants.txt                  decorate/strife/peasants.txt
+actors/strife/strifebishop.txt              decorate/strife/strifebishop.txt
 actors/strife/questitems.txt                decorate/strife/questitems.txt
 actors/strife/ratbuddy.txt                  decorate/strife/ratbuddy.txt
 actors/strife/strifeammo.txt                decorate/strife/strifeammo.txt

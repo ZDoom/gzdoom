@@ -630,6 +630,48 @@ OB_SNAKE = "%o was rattled by an ophidian.";
 OB_WIZARD = "%o was cursed by a wizard.";
 OB_WIZARDHIT = "%o was palpated by a wizard.";
 
+OB_FIREDEMON = "%o tasted an Afrit's fire.";
+OB_DEMON1 = "%o was scalded by a Serpent.";
+OB_DEMON2 = "%o was poisoned by a Serpent.";
+OB_ETTIN = "%o was mashed by an Ettin.";
+OB_CENTAUR = "%o was cut up by a Centaur.";
+OB_SLAUGHTAURHIT = "%o was cut up by a Slaughtaur.";
+OB_SLAUGHTAUR = "%o was struck down by a Slaughtaur's fireball.";
+OB_BISHOP = "%o succumbed to a Bishop's dark power.";
+OB_ICEGUY = "%o was frozen solid by a Wendigo.";
+OB_SERPENTHIT = "%o was mauled by a Stalker.";
+OB_SERPENT = "%o was melted by a Stalker.";
+OB_WRAITH = "%o was charred by a Reiver.";
+OB_WRAITHHIT = "%o had his life stolen by a Reiver.";
+OB_DRAGON = "%o was incinerated by the Death Wyvern.";
+OB_KORAX = "%o was swept from the board by Korax.";
+OB_FBOSS = "%o was slain by Zedek.";
+OB_MBOSS = "%o couldn't absorb Menelkir's Mana.";
+OB_CBOSS = "%o was baptized by Traductus.";
+OB_HERESIARCH = "%o had his bones rolled by the Heresiarch."
+
+OB_ACOLYTE = "%o was zealously shot down by an Acolyte.";
+OB_MACIL = "%o should have never rebelled against Macil.";
+OB_REBEL = "%o was gunned down by a Rebel.";
+OB_BEGGAR = "%o was beaten to death by the poor.";
+OB_PEASANT = "%o should have never picked fights with civilians."
+OB_ALIENSPECTE = "%o struck down by the Spectre";
+OB_ENTITY = "%o felt the wrath of The One God.";
+OB_LOREMASTER = "%o couldn't escape from the Lore Master's grasp.";
+OB_PROGRAMMER = "%o was deleted by the Programmer.";
+OB_STFBISHOP = "%o was blown away by the Bishop.";
+OB_SENTINEL = "%o was shot down by a Sentinel.";
+OB_CRUSADER = "%o was swept away by a Crusader.";
+OB_INQUISITOR = "%o was sentenced by an Inquisitor.";
+OB_STALKER = "%o was bugged by a Stalker.";
+OB_TURRET = "%o triggered the automatic defenses.";
+OB_TEMPLARHIT = "%o was clawed by a Templar.";
+OB_TEMPLAR = "%o was vaporized by a Templar.";
+OB_REAVERHIT = "%o was sliced open by a Reaver.";
+OB_REAVER = "%o was shot down by a Reaver.";
+
+
+
 OB_MPFIST = "%o chewed on %k's fist.";
 OB_MPCHAINSAW = "%o was mowed over by %k's chainsaw.";
 OB_MPPISTOL = "%o was tickled by %k's pea shooter.";

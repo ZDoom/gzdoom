@@ -100,6 +100,8 @@ IMPLEMENT_ACTOR (ATemplar, Strife, 3003, 0)
 	PROP_DeathSound ("templar/death")
 	PROP_ActiveSound ("templar/active")
 	PROP_Tag ("TEMPLAR")	// Known as "Enforcer" in earlier versions.
+	PROP_HitObituary ("$OB_TEMPLARHIT")
+	PROP_Obituary ("$OB_TEMPLAR")
 END_DEFAULTS
 
 //============================================================================

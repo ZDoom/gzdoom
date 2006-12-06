@@ -102,6 +102,7 @@ IMPLEMENT_ACTOR (ABishop, Hexen, 114, 19)
 	PROP_PainSound ("BishopPain")
 	PROP_DeathSound ("BishopDeath")
 	PROP_ActiveSound ("BishopActiveSounds")
+	PROP_Obituary("$OB_BISHOP")
 END_DEFAULTS
 
 void ABishop::GetExplodeParms (int &damage, int &distance, bool &hurtSource)

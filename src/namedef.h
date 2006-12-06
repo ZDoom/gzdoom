@@ -209,6 +209,9 @@ xx(WaterLevel)
 xx(X)
 xx(Y)
 xx(Z)
+xx(MomX)
+xx(MomY)
+xx(MomZ)
 
 // Various actor names which are used internally
 xx(MapSpot)

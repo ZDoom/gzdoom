@@ -106,6 +106,7 @@ IMPLEMENT_ACTOR (AInquisitor, Strife, 16, 0)
 	PROP_SeeSound ("inquisitor/sight")
 	PROP_DeathSound ("inquisitor/death")
 	PROP_ActiveSound ("inquisitor/active")
+	PROP_Obituary ("$OB_INQUISITOR")
 END_DEFAULTS
 
 // Inquisitor Shot ----------------------------------------------------------

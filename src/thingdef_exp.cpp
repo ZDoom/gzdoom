@@ -223,6 +223,30 @@ ExpVal GetZ (AActor *actor, int id)
 	return val;
 }
 
+ExpVal GetMomX (AActor *actor, int id)
+{
+	ExpVal val;
+	val.Type = VAL_Float;
+	val.Float = FIXED2FLOAT (actor->momx);
+	return val;
+}
+
+ExpVal GetMomY (AActor *actor, int id)
+{
+	ExpVal val;
+	val.Type = VAL_Float;
+	val.Float = FIXED2FLOAT (actor->momy);
+	return val;
+}
+
+ExpVal GetMomZ (AActor *actor, int id)
+{
+	ExpVal val;
+	val.Type = VAL_Float;
+	val.Float = FIXED2FLOAT (actor->momz);
+	return val;
+}
+
 static struct FExpVar
 {
 	ENamedName name;	// identifier
@@ -243,6 +267,9 @@ static struct FExpVar
 	{ NAME_X,			0, GetX },
 	{ NAME_Y,			0, GetY },
 	{ NAME_Z,			0, GetZ },
+	{ NAME_MomX,		0, GetMomX },
+	{ NAME_MomY,		0, GetMomY },
+	{ NAME_MomZ,		0, GetMomZ },
 };
 
 struct ExpData;

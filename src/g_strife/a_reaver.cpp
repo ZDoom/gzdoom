@@ -104,6 +104,8 @@ IMPLEMENT_ACTOR (AReaver, Strife, 3001, 0)
 	PROP_PainSound ("reaver/pain")
 	PROP_DeathSound ("reaver/death")
 	PROP_ActiveSound ("reaver/active")
+	PROP_HitObituary ("$OB_REAVERHIT")
+	PROP_Obituary ("$OB_REAVER")
 END_DEFAULTS
 
 void A_ReaverMelee (AActor *self)

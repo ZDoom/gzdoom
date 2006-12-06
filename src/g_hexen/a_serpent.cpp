@@ -166,6 +166,7 @@ IMPLEMENT_ACTOR (ASerpent, Hexen, 121, 6)
 	PROP_AttackSound ("SerpentAttack")
 	PROP_PainSound ("SerpentPain")
 	PROP_DeathSound ("SerpentDeath")
+	PROP_HitObituary("$OB_SERPENTHIT")
 END_DEFAULTS
 
 void ASerpent::Serialize (FArchive &arc)
@@ -185,6 +186,7 @@ public:
 
 IMPLEMENT_STATELESS_ACTOR (ASerpentLeader, Hexen, 120, 7)
 	PROP_Mass (200)
+	PROP_Obituary("$OB_SERPENT")
 END_DEFAULTS
 
 void ASerpentLeader::BeginPlay ()

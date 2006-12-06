@@ -99,6 +99,7 @@ IMPLEMENT_ACTOR (AMacil1, Strife, 64, 0)
 	PROP_PainSound ("macil/pain")
 	PROP_ActiveSound ("macil/active")
 	PROP_Tag ("MACIL")
+	PROP_Obituary ("$OB_MACIL")
 END_DEFAULTS
 
 //============================================================================

@@ -19,6 +19,7 @@ ACTOR Peasant : StrifeHumanoid
 	AttackSound "peasant/attack"
 	PainSound "peasant/pain"
 	DeathSound "peasant/death"
+	HitObituary "$OB_PEASANT"
 	States
 	{
 	Spawn:

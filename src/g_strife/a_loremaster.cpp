@@ -100,6 +100,7 @@ IMPLEMENT_ACTOR (ALoremaster, Strife, 12, 0)
 	PROP_PainSound ("loremaster/pain")
 	PROP_DeathSound ("loremaster/death")
 	PROP_ActiveSound ("loremaster/active")
+	PROP_Obituary ("$OB_LOREMASTER")
 END_DEFAULTS
 
 

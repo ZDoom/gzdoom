@@ -103,6 +103,7 @@ IMPLEMENT_ACTOR (AFighterBoss, Hexen, 10100, 0)
 
 	PROP_PainSound ("PlayerFighterPain")
 	PROP_DeathSound ("PlayerFighterCrazyDeath")
+	PROP_Obituary ("$OB_FBOSS")
 END_DEFAULTS
 
 void A_FighterAttack (AActor *actor)

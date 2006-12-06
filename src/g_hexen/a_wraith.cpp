@@ -118,6 +118,8 @@ IMPLEMENT_ACTOR (AWraith, Hexen, 34, 8)
 	PROP_PainSound ("WraithPain")
 	PROP_DeathSound ("WraithDeath")
 	PROP_ActiveSound ("WraithActive")
+	PROP_HitObituary("$OB_WRAITHHIT")
+	PROP_Obituary("$OB_WRAITH")
 END_DEFAULTS
 
 // Buried wraith ------------------------------------------------------------

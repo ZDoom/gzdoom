@@ -513,7 +513,7 @@ void DoJumpIfInventory(AActor * self, AActor * owner)
 {
 	FState * CallingState;
 	int index=CheckIndex(3, &CallingState);
-	if (index<0 || owner == NULL) return;
+	if (index<0) return;
 
 	ENamedName ItemType=(ENamedName)StateParameters[index];
 	int ItemAmount = EvalExpressionI (StateParameters[index+1], self);
@@ -522,7 +522,7 @@ void DoJumpIfInventory(AActor * self, AActor * owner)
 
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 
-	if (!Type) return;
+	if (!Type || owner == NULL) return;
 
 	AInventory * Item=owner->FindInventory(Type);
 
@@ -911,12 +911,13 @@ void A_JumpIfNoAmmo(AActor * self)
 {
 	FState * CallingState;
 	int index=CheckIndex(1, &CallingState);
-	if (index<0 || !self->player || !self->player->ReadyWeapon) return;	// only for weapons!
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	if (index<0 || !self->player || !self->player->ReadyWeapon || pStateCall != NULL) return;	// only for weapons!
 
 	if (!self->player->ReadyWeapon->CheckAmmo(self->player->ReadyWeapon->bAltFire, false, true))
 		DoJump(self, CallingState, StateParameters[index]);
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }
 
 
@@ -1294,7 +1295,7 @@ void A_TakeFromTarget(AActor * self)
 //
 //===========================================================================
 
-static void InitSpawnedItem(AActor *self, AActor *mo, INTBOOL transfer_translation, INTBOOL setmaster)
+static void InitSpawnedItem(AActor *self, AActor *mo, INTBOOL transfer_translation, INTBOOL setmaster, INTBOOL nocheckpos)
 {
 	if (mo)
 	{
@@ -1310,12 +1311,12 @@ static void InitSpawnedItem(AActor *self, AActor *mo, INTBOOL transfer_translati
 
 		if (mo->flags3&MF3_ISMONSTER)
 		{
-			if (!P_TestMobjLocation(mo))
+			if (!nocheckpos && !P_TestMobjLocation(mo))
 			{
 				// The monster is blocked so don't spawn it at all!
 				if (mo->CountsAsKill()) level.total_monsters--;
 				mo->Destroy();
-				if (pStateCall != NULL) pStateCall->Result=false;	// for an inventory iten's use state
+				if (pStateCall != NULL) pStateCall->Result=false;	// for an inventory item's use state
 				return;
 			}
 			else if (originator)
@@ -1402,7 +1403,7 @@ void A_SpawnItem(AActor * self)
 					self->y + FixedMul(distance, finesine[self->angle>>ANGLETOFINESHIFT]), 
 					self->z - self->floorclip + zheight, ALLOW_REPLACE);
 
-	InitSpawnedItem(self, mo, transfer_translation, useammo);
+	InitSpawnedItem(self, mo, transfer_translation, useammo, false);
 }
 
 //===========================================================================
@@ -1418,7 +1419,8 @@ enum SIX_Flags
 	SIXF_ABSOLUTEPOSITION=2,
 	SIXF_ABSOLUTEANGLE=4,
 	SIXF_ABSOLUTEMOMENTUM=8,
-	SIXF_SETMASTER=16
+	SIXF_SETMASTER=16,
+	SIXF_NOCHECKPOSITION=32
 };
 
 void A_SpawnItemEx(AActor * self)
@@ -1480,7 +1482,7 @@ void A_SpawnItemEx(AActor * self)
 	}
 
 	AActor * mo = Spawn( missile, x, y, self->z + self->floorclip + zofs, ALLOW_REPLACE);
-	InitSpawnedItem(self, mo, (flags & SIXF_TRANSFERTRANSLATION), (flags&SIXF_SETMASTER));
+	InitSpawnedItem(self, mo, (flags & SIXF_TRANSFERTRANSLATION), (flags&SIXF_SETMASTER), (flags&SIXF_NOCHECKPOSITION));
 	if (mo)
 	{
 		mo->momx=xmom;
@@ -1712,14 +1714,20 @@ void A_SpawnDebris(AActor * self)
 	AActor * mo;
 	const PClass * debris;
 
-	int index=CheckIndex(2, NULL);
+	int index=CheckIndex(4, NULL);
 	if (index<0) return;
-
-	INTBOOL transfer_translation = EvalExpressionI (StateParameters[index+1], self);
 
 	debris = PClass::FindClass((ENamedName)StateParameters[index]);
 	if (debris == NULL) return;
 
+	INTBOOL transfer_translation = EvalExpressionI (StateParameters[index+1], self);
+	fixed_t mult_h = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
+	fixed_t mult_v = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
+
+	// only positive values make sense here
+	if (mult_v<=0) mult_v=FRACUNIT;
+	if (mult_h<=0) mult_h=FRACUNIT;
+	
 	for (i = 0; i < GetDefaultByType(debris)->health; i++)
 	{
 		mo = Spawn(debris, self->x+((pr_spawndebris()-128)<<12),
@@ -1732,9 +1740,9 @@ void A_SpawnDebris(AActor * self)
 		if (mo && i < mo->GetClass()->ActorInfo->NumOwnedStates)
 		{
 			mo->SetState (mo->GetClass()->ActorInfo->OwnedStates + i);
-			mo->momz = ((pr_spawndebris()&7)+5)*FRACUNIT;
-			mo->momx = pr_spawndebris.Random2()<<(FRACBITS-6);
-			mo->momy = pr_spawndebris.Random2()<<(FRACBITS-6);
+			mo->momz = FixedMul(mult_v, ((pr_spawndebris()&7)+5)*FRACUNIT);
+			mo->momx = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
+			mo->momy = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
 		}
 	}
 }
@@ -1748,6 +1756,8 @@ void A_SpawnDebris(AActor * self)
 //===========================================================================
 void A_CheckSight(AActor * self)
 {
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+
 	for (int i=0;i<MAXPLAYERS;i++) 
 	{
 		if (playeringame[i] && P_CheckSight(players[i].camera,self,true)) return;
@@ -1758,7 +1768,6 @@ void A_CheckSight(AActor * self)
 
 	if (index>=0) DoJump(self, CallingState, StateParameters[index]);
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }
 
 
@@ -1839,11 +1848,11 @@ void A_JumpIf(AActor * self)
 	FState * CallingState;
 	int index=CheckIndex(2, &CallingState);
 	if (index<0) return;
-	int expression = EvalExpressionI (StateParameters[index], self);
-
-	if (index>=0 && expression) DoJump(self, CallingState, StateParameters[index+1]);
+	INTBOOL expression = EvalExpressionI (StateParameters[index], self);
 
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+	if (expression) DoJump(self, CallingState, StateParameters[index+1]);
+
 }
 
 //===========================================================================
@@ -1971,12 +1980,12 @@ void A_CheckFloor (AActor *self)
 	FState *CallingState;
 	int index = CheckIndex (1, &CallingState);
 
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 	if (self->z <= self->floorz && index >= 0)
 	{
 		DoJump (self, CallingState, StateParameters[index]);
 	}
 
-	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 }
 
 //===========================================================================
@@ -2039,6 +2048,7 @@ void A_Respawn (AActor *actor)
 
 void A_PlayerSkinCheck (AActor *actor)
 {
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 	if (actor->player != NULL &&
 		skins[actor->player->userinfo.skin].othergame)
 	{

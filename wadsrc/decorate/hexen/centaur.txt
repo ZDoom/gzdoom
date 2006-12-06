@@ -19,6 +19,7 @@ ACTOR Centaur 107
 	DeathSound "CentaurDeath"
 	ActiveSound "CentaurActive"
 	HowlSound "PuppyBeat"
+	Obituary "$OB_CENTAUR"
 	States
 	{
 	Spawn:
@@ -83,6 +84,8 @@ ACTOR CentaurLeader : Centaur 115
 	Health 250
 	PainChance 96 
 	Speed 10
+	Obituary "$OB_SLAUGHTAUR"
+	HitObituary "$OB_SLAUGHTAURHIT"
 	States
 	{
 	Missile:

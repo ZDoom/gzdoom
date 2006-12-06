@@ -109,6 +109,7 @@ IMPLEMENT_ACTOR (AFireDemon, Hexen, 10060, 5)
 	PROP_PainSound ("FireDemonPain")
 	PROP_DeathSound ("FireDemonDeath")
 	PROP_ActiveSound ("FireDemonActive")
+	PROP_Obituary("$OB_FIREDEMON")
 END_DEFAULTS
 
 // AFireDemonSplotch1 -------------------------------------------------------

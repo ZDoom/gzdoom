@@ -102,6 +102,7 @@ IMPLEMENT_ACTOR (ARebel, Strife, -1, 0)
 	PROP_PainSound ("rebel/pain")
 	PROP_DeathSound ("rebel/death")
 	PROP_ActiveSound ("rebel/active")
+	PROP_Obituary ("$OB_REBEL")
 END_DEFAULTS
 
 //============================================================================

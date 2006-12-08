@@ -32,7 +32,7 @@ ACTOR FighterPlayer : PlayerPawn
 		Loop
 	Missile:
 	Melee:
-		CLER EF 8
+		PLAY EF 8
 		Goto Spawn
 	Pain:
 		PLAY G 4

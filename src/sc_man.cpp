@@ -440,8 +440,9 @@ void SC_MustGetToken (int token)
 	SC_MustGetAnyToken ();
 	if (sc_TokenType != token)
 	{
-		SC_ScriptError ("Expected %s but got %s instead.",
-			SC_TokenName(token), SC_TokenName(sc_TokenType, sc_String));
+		FString tok1 = SC_TokenName(token);
+		FString tok2 = SC_TokenName(sc_TokenType, sc_String);
+		SC_ScriptError ("Expected %s but got %s instead.", tok1.GetChars(), tok2.GetChars());
 	}
 }
 

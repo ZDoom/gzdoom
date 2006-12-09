@@ -1649,7 +1649,7 @@ do_stop:
 										stype = PClass::FindClass (scopename);
 										if (stype == NULL)
 										{
-											SC_ScriptError ("%s is an unknown class.", scopename);
+											SC_ScriptError ("%s is an unknown class.", scopename.GetChars());
 										}
 										if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
 										{
@@ -4327,7 +4327,8 @@ void ParseClass()
 		}
 		else
 		{
-			SC_ScriptError ("Expected 'action' or 'const' but got %s", SC_TokenName(sc_TokenType, sc_String));
+			FString tokname = SC_TokenName(sc_TokenType, sc_String);
+			SC_ScriptError ("Expected 'action' or 'const' but got %s", tokname.GetChars());
 		}
 		SC_MustGetAnyToken();
 	}

@@ -1197,7 +1197,7 @@ void RP_AddLine (seg_t *line)
 	}
 	else
 	{ // The seg is only part of the wall.
-		if (line->linedef->sidenum[0] != line->sidedef - sides)
+		if (line->linedef->sidenum[0] != DWORD(line->sidedef - sides))
 		{
 			swap (v1, v2);
 		}

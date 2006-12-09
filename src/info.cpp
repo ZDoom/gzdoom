@@ -509,8 +509,7 @@ bool AActor::HasSpecialDeathStates () const
 //
 //===========================================================================
 
-FState *AActor::FindState (int numnames, int first, ...) const	// The 'first' parameter is only here to 
-																// disambiguate from the single parameter version
+FState *AActor::FindState (int numnames, ...) const
 {
 	va_list arglist;
 	va_start (arglist, numnames);

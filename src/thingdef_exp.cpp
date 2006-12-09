@@ -885,7 +885,8 @@ static ExpData *ParseExpressionA (const PClass *cls)
 	}
 	else
 	{
-		SC_ScriptError ("Unexpected token %s", SC_TokenName(sc_TokenType, sc_String));
+		FString tokname = SC_TokenName(sc_TokenType, sc_String);
+		SC_ScriptError ("Unexpected token %s", tokname.GetChars());
 		return NULL;
 	}
 }
@@ -945,6 +946,8 @@ float EvalExpressionF (int id, AActor *self, const PClass *cls)
 static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls)
 {
 	ExpVal val;
+
+	val.Type = VAL_Int;		// Placate GCC
 
 	switch (data->Type)
 	{

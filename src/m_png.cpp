@@ -574,6 +574,12 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 	initpass = true;
 	pass = interlace ? 0 : 7;
 
+	// Silence GCC warnings. Due to initpass being true, these will be set
+	// before they're used, but it doesn't know that.
+	curr = prev = 0;
+	passwidth = passpitch = bytesPerRowIn = 0;
+	passbuff = 0;
+
 	while (err != Z_STREAM_END && pass < 8 - interlace)
 	{
 		if (initpass)

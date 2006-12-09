@@ -4753,7 +4753,7 @@ void AActor::Crash()
 		
 		if (DamageType != NAME_None)
 		{
-			crashstate = GetClass()->ActorInfo->FindStateExact(2, NAME_Crash, DamageType);
+			crashstate = GetClass()->ActorInfo->FindStateExact(2, NAME_Crash, int(DamageType));
 		}
 		if (crashstate == NULL)
 		{

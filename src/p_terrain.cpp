@@ -378,6 +378,27 @@ static void ParseOuter ()
 
 //==========================================================================
 //
+// SetSplashDefaults
+//
+//==========================================================================
+
+static void SetSplashDefaults (FSplashDef *splashdef)
+{
+	splashdef->SmallSplashSound =
+		splashdef->NormalSplashSound = 0;
+	splashdef->SmallSplash =
+		splashdef->SplashBase =
+		splashdef->SplashChunk = NULL;
+	splashdef->ChunkXVelShift =
+		splashdef->ChunkYVelShift =
+		splashdef->ChunkZVelShift = 8;
+	splashdef->ChunkBaseZVel = FRACUNIT;
+	splashdef->SmallSplashClip = 12*FRACUNIT;
+	splashdef->NoAlert = false;
+}
+
+//==========================================================================
+//
 // ParseSplash
 //
 //==========================================================================
@@ -395,6 +416,7 @@ void ParseSplash ()
 	if (splashnum < 0)
 	{
 		FSplashDef def;
+		SetSplashDefaults (&def);
 		def.Name = name;
 		splashnum = (int)Splashes.Push (def);
 		isnew = true;
@@ -402,19 +424,16 @@ void ParseSplash ()
 	splashdef = &Splashes[splashnum];
 
 	SC_MustGetString ();
-	if (!SC_Compare ("modify") || (SC_MustGetString(), isnew))
+	if (!SC_Compare ("modify"))
 	{ // Set defaults
-		splashdef->SmallSplashSound =
-			splashdef->NormalSplashSound = 0;
-		splashdef->SmallSplash =
-			splashdef->SplashBase =
-			splashdef->SplashChunk = NULL;
-		splashdef->ChunkXVelShift =
-			splashdef->ChunkYVelShift =
-			splashdef->ChunkZVelShift = 8;
-		splashdef->ChunkBaseZVel = FRACUNIT;
-		splashdef->SmallSplashClip = 12*FRACUNIT;
-		splashdef->NoAlert = false;
+		if (!isnew)
+		{ // New ones already have their defaults set before they're pushed.
+			SetSplashDefaults (splashdef);
+		}
+	}
+	else
+	{
+		SC_MustGetString();
 	}
 	if (!SC_Compare ("{"))
 	{

@@ -404,7 +404,7 @@ static void DoJump(AActor * self, FState * CallingState, int offset)
 			if (classname != NAME_None) Printf("%s::", ((FName)(ENamedName)classname).GetChars());
 			for (int i=0;i<JumpParameters[offset+1];i++)
 			{
-				Printf("%s%s", dot, ((FName)(ENamedName)JumpParameters[offset+2+i]));
+				Printf("%s%s", dot, ((FName)(ENamedName)JumpParameters[offset+2+i]).GetChars());
 			}
 			Printf("not found in %s\n", self->GetClass()->TypeName.GetChars());
 			return;

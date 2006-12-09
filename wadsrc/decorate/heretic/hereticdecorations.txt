@@ -236,7 +236,7 @@ ACTOR Moss2 49
 ACTOR WallTorch 50
 {
 	Game Heretic
-	Radius 20
+	Radius 6
 	Height 16
 	+NOGRAVITY
 	+FIXMAPTHINGPOS

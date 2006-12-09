@@ -115,6 +115,7 @@ ACTOR ZWallTorch : SwitchableDecoration 54
 	+NOBLOCKMAP
 	+NOGRAVITY
 	+FIXMAPTHINGPOS
+	Radius 6.5
 	States
 	{
 	Active:

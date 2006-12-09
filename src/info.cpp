@@ -509,7 +509,10 @@ bool AActor::HasSpecialDeathStates () const
 //
 //===========================================================================
 
-FState *AActor::FindState (int numnames, ...) const
+FState *AActor::FindState (int numnames, int first, ...) const	// The 'first' parameter is only here to 
+																// disambiguate from the single parameter version
+																// Please note that this code does *NOT* compile
+																// properly with VC++ when 'first' is removed!
 {
 	va_list arglist;
 	va_start (arglist, numnames);

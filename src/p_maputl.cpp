@@ -38,6 +38,7 @@
 // State.
 #include "r_state.h"
 #include "templates.h"
+#include "vectors.h"
 
 static AActor *RoughBlockCheck (AActor *mo, int index);
 
@@ -539,6 +540,51 @@ sector_t *AActor::LinkToWorldForMapThing ()
 					}
 				}
 
+#if 1
+				// Not inside the line's bounding box
+				if (x + radius <= ldef->bbox[BOXLEFT]
+					|| x - radius >= ldef->bbox[BOXRIGHT]
+					|| y + radius <= ldef->bbox[BOXBOTTOM]
+					|| y - radius >= ldef->bbox[BOXTOP] )
+					continue;
+
+				// Get the exact distance to the line
+				divline_t dll, dlv;
+				fixed_t linelen = (fixed_t)sqrt((double)ldef->dx*ldef->dx + (double)ldef->dy*ldef->dy);
+
+				P_MakeDivline (ldef, &dll);
+
+				dlv.x = x;
+				dlv.y = y;
+				dlv.dx = FixedDiv(dll.dy, linelen);
+				dlv.dy = -FixedDiv(dll.dx, linelen);
+
+				fixed_t distance = abs(P_InterceptVector(&dlv, &dll));
+
+				if (distance < radius)
+				{
+					DPrintf ("%s at (%d,%d) lies on %s line %d, distance = %f\n",
+						this->GetClass()->TypeName.GetChars(), x>>FRACBITS, y>>FRACBITS, 
+						ldef->dx == 0? "vertical" :	ldef->dy == 0? "horizontal" : "diagonal",
+						ldef-lines, FIXED2FLOAT(distance));
+					angle_t finean = R_PointToAngle2 (0, 0, ldef->dx, ldef->dy);
+					if (ldef->backsector != NULL && ldef->backsector == ssec->sector)
+					{
+						finean += ANGLE_90;
+					}
+					else
+					{
+						finean -= ANGLE_90;
+					}
+					finean >>= ANGLETOFINESHIFT;
+
+					// Get the distance we have to move the object away from the wall
+					distance = radius - distance;
+					x += FixedMul(distance, finecosine[finean]);
+					y += FixedMul(distance, finesine[finean]);
+					break;
+				}
+#else
 				if (DMulScale32 (y - ldef->v1->y, ldef->dx, ldef->v1->x - x, ldef->dy) == 0)
 				{
 					// It touches the infinite line; now make sure it touches the linedef
@@ -550,8 +596,10 @@ sector_t *AActor::LinkToWorldForMapThing ()
 						num = (SQWORD)(x-ldef->v1->x)*ldef->dx+(SQWORD)(y-ldef->v1->y)*ldef->dy;
 						if (num >= 0 && num <= den)
 						{
-							DPrintf ("%s at (%d,%d) lies directly on line %d\n",
-								this->GetClass()->TypeName.GetChars(), x>>FRACBITS, y>>FRACBITS, ldef-lines);
+							DPrintf ("%s at (%d,%d) lies directly on %s line %d\n",
+								this->GetClass()->TypeName.GetChars(), x>>FRACBITS, y>>FRACBITS, 
+								ldef->dx == 0? "vertical" :	ldef->dy == 0? "horizontal" : "diagonal",
+								ldef-lines);
 							angle_t finean = R_PointToAngle2 (0, 0, ldef->dx, ldef->dy);
 							if (ldef->backsector != NULL && ldef->backsector == ssec->sector)
 							{
@@ -562,12 +610,13 @@ sector_t *AActor::LinkToWorldForMapThing ()
 								finean -= ANGLE_90;
 							}
 							finean >>= ANGLETOFINESHIFT;
-							x += finecosine[finean] >> 2;
-							y += finesine[finean] >> 2;
+							x += finecosine[finean]) >> 2;
+							y += finesine[finean]) >> 2;
 							break;
 						}
 					}
 				}
+#endif
 			}
 		}
 	}

@@ -1,3 +1,14 @@
+December 9, 2006 (Changes by Graf Zahl)
+- Fixed: P_LookForTid should abort its search when it discovers that it has 
+  cycled through the entire list of actors.
+- Reverted AActor::FindState to its R407 version because the change in R408 
+  doesn't compile properly with VC++.
+- Changed FIXMAPTHINGPOS further so that it also affects objects that are 
+  not directly on a wall but closer than its radius.
+- Changed FIXEDMAPTHINGPOS to move objects completely out of the wall and 
+  adjusted the radii of all affected objects to actually represent half 
+  the sprite's width.
+
 December 8, 2006 (Changes by Graf Zahl)
 - Fixed: The Acolyte's obituary wasn't printed.
 - Fixed: The fighter player's attack state used the Cleric's sprite.

@@ -201,7 +201,7 @@ ACTOR ExplosiveBarrel2 : ExplosiveBarrel 94
 ACTOR LightSilverFluorescent 95
 {
 	Game Strife
-	Radius 4
+	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
@@ -219,7 +219,7 @@ ACTOR LightSilverFluorescent 95
 ACTOR LightBrownFluorescent 96
 {
 	Game Strife
-	Radius 4
+	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
@@ -237,7 +237,7 @@ ACTOR LightBrownFluorescent 96
 ACTOR LightGoldFluorescent 97
 {
 	Game Strife
-	Radius 4
+	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
@@ -772,7 +772,7 @@ ACTOR BurningBrazier 106
 ACTOR SmallTorchLit 107
 {
 	Game Strife
-	Radius 0.00007
+	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS
@@ -793,7 +793,7 @@ ACTOR SmallTorchLit 107
 ACTOR SmallTorchUnlit 108
 {
 	Game Strife
-	Radius 0.00007
+	Radius 2.5
 	Height 16
 	+NOBLOCKMAP
 	+FIXMAPTHINGPOS

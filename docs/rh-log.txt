@@ -1,3 +1,7 @@
+December 10, 2006 (Changes by Graf Zahl)
+- Fixed: When a DehackedPickup replacement object is created it must copy
+  the state labels of the parent object.
+
 December 9, 2006 (Changes by Graf Zahl)
 - Fixed: P_LookForTid should abort its search when it discovers that it has 
   cycled through the entire list of actors.

@@ -2581,6 +2581,9 @@ void FinishDehPatch ()
 		subclass->ActorInfo->GameFilter = type->ActorInfo->GameFilter;
 		subclass->ActorInfo->SpawnID = type->ActorInfo->SpawnID;
 		subclass->ActorInfo->DoomEdNum = type->ActorInfo->DoomEdNum;
+		// Make a copy the state labels 
+		MakeStateDefines(type->ActorInfo->StateList);
+		InstallStates(subclass->ActorInfo, defaults2);
 
 		// Alter the original class so that it just spawns the new one
 		//memcpy (defaults1, GetDefault<AActor>(), sizeof(AActor));

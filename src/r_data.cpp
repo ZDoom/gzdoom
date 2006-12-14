@@ -116,7 +116,8 @@ int FTextureManager::CheckForTexture (const char *name, int usetype, BITFIELD fl
 			// The name matches, so check the texture type
 			if (usetype == FTexture::TEX_Any)
 			{
-				return i;
+				// All NULL textures should actually return 0
+				return tex->UseType==FTexture::TEX_Null? 0 : i;
 			}
 			else if ((flags & TEXMAN_Overridable) && tex->UseType == FTexture::TEX_Override)
 			{

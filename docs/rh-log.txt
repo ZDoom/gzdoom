@@ -1,3 +1,10 @@
+December 13, 2006 (Changes by Graf Zahl)
+- Fixed: The particle fountains' names were different than before
+- Fixed: FTexture::CheckForTexture should return NULL if the texture it
+  finds is of type FTexture::TEX_Null. If this isn't done not all occurences
+  of AASHITTY being used to silence an editor's error checker will be handled
+  correctly. In particular the transparent door trick will break.
+
 December 10, 2006 (Changes by Graf Zahl)
 - Fixed: When a DehackedPickup replacement object is created it must copy
   the state labels of the parent object.

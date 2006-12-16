@@ -153,7 +153,6 @@ struct FStateLabels;
 struct FStateLabel
 {
 	FName Label;
-	bool valid;		// needed to recognize genuine NULL states
 	FState *State;
 	FStateLabels *Children;
 };

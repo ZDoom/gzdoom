@@ -432,19 +432,14 @@ void FStateLabels::Destroy ()
 FState *AActor::FindState (FName label) const
 {
 	const FActorInfo *info = GetClass()->ActorInfo;
-	FStateLabel *slabel;
 
-	while (info != NULL)
+	if (info->StateList != NULL)
 	{
-		if (info->StateList != NULL)
+		FStateLabel *slabel = info->StateList->FindLabel (label);
+		if (slabel != NULL)
 		{
-			slabel = info->StateList->FindLabel (label);
-			if (slabel != NULL && slabel->valid)
-			{
-				return slabel->State;
-			}
+			return slabel->State;
 		}
-		info = info->Class->ParentClass->ActorInfo;
 	}
 	return NULL;
 }
@@ -460,33 +455,17 @@ FState *AActor::FindState (FName label) const
 bool AActor::HasSpecialDeathStates () const
 {
 	const FActorInfo *info = GetClass()->ActorInfo;
-	FStateLabel *slabel;
-	TArray<FName> checkedTypes;
 
-	while (info != NULL)
+	if (info->StateList != NULL)
 	{
-		if (info->StateList != NULL)
+		FStateLabel *slabel = info->StateList->FindLabel (NAME_Death);
+		if (slabel != NULL && slabel->Children != NULL)
 		{
-			slabel = info->StateList->FindLabel (NAME_Death);
-			if (slabel != NULL && slabel->Children != NULL)
+			for(int i=0;i<slabel->Children->NumLabels;i++)
 			{
-				for(int i=0;i<slabel->Children->NumLabels;i++)
-				{
-					unsigned int j;
-					for(j=0;j<checkedTypes.Size();j++)
-					{
-						if (slabel->Children->Labels[i].Label == checkedTypes[j]) break;
-					}
-					// Only check if this damage type hasn't been checked by another class with higher priority.
-					if (j==checkedTypes.Size())
-					{
-						if (slabel->Children->Labels[i].State != NULL) return true;
-						else if (slabel->Children->Labels[i].valid) checkedTypes.Push(slabel->Children->Labels[i].Label);
-					}
-				}
+				if (slabel->Children->Labels[i].State != NULL) return true;
 			}
 		}
-		info = info->Class->ParentClass->ActorInfo;
 	}
 	return false;
 }
@@ -504,8 +483,6 @@ bool AActor::HasSpecialDeathStates () const
 // names until there are no more. If both the argument list and the state
 // are out of names, it's an exact match, so return it. If the state still
 // has names, ignore it. If the argument list still has names, remember it.
-// Repeat with each successive ancestor class. The state with the longest
-// match not exceeding the supplied number of names is returned.
 //
 //===========================================================================
 
@@ -533,53 +510,33 @@ FState *AActor::FindState (int numnames, va_list arglist) const
 
 FState *FActorInfo::FindState (int numnames, va_list arglist) const
 {
-	const FActorInfo *info = this;
+	FStateLabels *labels = StateList;
 	FState *best = NULL;
-	int bestcount = 0;
 
-	// Search this actor's class, plus all its ancestors for a match.
-	while (info != NULL && bestcount < numnames)
+	if (labels != NULL)
 	{
-		FStateLabels *labels = info->StateList;
+		va_list names = arglist;
+		int count = 0;
+		FStateLabel *slabel = NULL;
+		FName label;
 
-		if (labels != NULL)
+		// Find the best-matching label for this class.
+		while (labels != NULL && count < numnames)
 		{
-			va_list names = arglist;
-			int count = 0;
-			FStateLabel *slabel = NULL;
-			FName label;
+			label = ENamedName(va_arg (names, int));
+			slabel = labels->FindLabel (label);
 
-			// Find the best-matching label for this class.
-			while (labels != NULL && count < numnames)
+			if (slabel != NULL)
 			{
-				label = ENamedName(va_arg (names, int));
-				slabel = labels->FindLabel (label);
-
-				if (slabel != NULL)
-				{
-					count++;
-					labels = slabel->Children;
-
-					// Labels that are more specific than what we want do not match.
-					// Less specific labels do match.
-					if (slabel->valid && count > bestcount)
-					{
-						if (count == numnames)
-						{
-							return slabel->State;
-						}
-						bestcount = count;
-						best = slabel->State;
-					}
-				}
-				else
-				{
-					break;
-				}
+				count++;
+				labels = slabel->Children;
+				best = slabel->State;
+			}
+			else
+			{
+				break;
 			}
 		}
-		// Walk up the class hierarchy and repeat.
-		info = info->Class->ParentClass->ActorInfo;
 	}
 	return best;
 }
@@ -602,44 +559,36 @@ FState *FActorInfo::FindStateExact (int numnames, ...) const
 
 FState *FActorInfo::FindStateExact (int numnames, va_list arglist) const
 {
-	const FActorInfo *info = this;
+	FStateLabels *labels = StateList;
 
-	// Search this actor's class, plus all its ancestors for a match.
-	while (info != NULL)
+	if (labels != NULL)
 	{
-		FStateLabels *labels = info->StateList;
+		va_list names = arglist;
+		int count = 0;
+		FStateLabel *slabel = NULL;
+		FName label;
 
-		if (labels != NULL)
+		// Look for a matching label for this class.
+		while (labels != NULL && count < numnames)
 		{
-			va_list names = arglist;
-			int count = 0;
-			FStateLabel *slabel = NULL;
-			FName label;
+			label = ENamedName(va_arg (names, int));
+			slabel = labels->FindLabel (label);
 
-			// Look for a matching label for this class.
-			while (labels != NULL && count < numnames)
+			if (slabel != NULL)
 			{
-				label = ENamedName(va_arg (names, int));
-				slabel = labels->FindLabel (label);
-
-				if (slabel != NULL)
-				{
-					count++;
-					labels = slabel->Children;
-				}
-				else
-				{
-					break;
-				}
+				count++;
+				labels = slabel->Children;
 			}
-			// Only exact matches count.
-			if (slabel != NULL && slabel->valid && count == numnames)
+			else
 			{
-				return slabel->State;
+				break;
 			}
 		}
-		// Walk up the class hierarchy and repeat.
-		info = info->Class->ParentClass->ActorInfo;
+		// Only exact matches count.
+		if (slabel != NULL && count == numnames)
+		{
+			return slabel->State;
+		}
 	}
 	return NULL;
 }

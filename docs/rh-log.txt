@@ -1,4 +1,8 @@
 December 16, 2006 (Changes by Graf Zahl)
+- Changed state label storage so that each actor owns all the state labels itself
+  and doesn't have to traverse parent lists to find them. This is required for
+  Dehacked actors that inherit states (e.g. NonsolidMeat and Spectre) but it also
+  makes the data much easier to handle.
 - Merged the fallingdamage setting into one menu item and added Strife damage to it.
 - Moved deathmatch options into their own category in the gameplay options menu.
 - Added the sv_smartaim code from GZDoom which tries to avoid autoaiming

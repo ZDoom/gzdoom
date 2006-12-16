@@ -357,7 +357,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 		info = type->ActorInfo;
 		info->GameFilter = 0x80;
 		Decorations.Push (info);
-		ClearStateLabels();
+		MakeStateDefines(parent->ActorInfo->StateList);
 
 		SC_MustGetString ();
 		while (!SC_Compare ("{"))

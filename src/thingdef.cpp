@@ -774,7 +774,6 @@ static const ActorProps *is_actorprop (const char *str);
 struct FStateDefine
 {
 	FName Label;
-	bool valid;
 	TArray<FStateDefine> Children;
 	FState *State;
 };
@@ -803,7 +802,6 @@ static FStateDefine * FindStateLabelInList(TArray<FStateDefine> & list, FName na
 		FStateDefine def;
 		def.Label=name;
 		def.State=NULL;
-		def.valid=false;
 		return &list[list.Push(def)];
 	}
 	return NULL;
@@ -882,7 +880,6 @@ void AddState (const char * statename, FState * state)
 {
 	FStateDefine * std = FindStateAddress(statename);
 	std->State = state;
-	std->valid = true;
 }
 
 //==========================================================================
@@ -902,12 +899,7 @@ FState * FindState(AActor * actor, const PClass * type, const char * name)
 	for(unsigned i=0;i<namelist.Size();i++)
 	{
 		statedef = FindStateLabelInList(*statelist, namelist[i], false);
-		if (statedef == NULL)
-		{
-			FActorInfo * parentinfo = type->ParentClass->ActorInfo;
-			if (parentinfo) return parentinfo->FindStateExact(namelist.Size(), (va_list)&namelist[0]);
-			else return NULL;
-		}
+		if (statedef == NULL) return NULL;
 		statelist = &statedef->Children;
 	}
 	return statedef? statedef->State : NULL;
@@ -961,6 +953,15 @@ static int STACK_ARGS labelcmp(const void * a, const void * b)
 
 static FStateLabels * CreateStateLabelList(TArray<FStateDefine> & statelist)
 {
+	// First delete all empty labels from the list
+	for (int i=statelist.Size()-1;i>=0;i--)
+	{
+		if (statelist[i].Label == NAME_None || (statelist[i].State == NULL && statelist[i].Children.Size() == 0))
+		{
+			statelist.Delete(i);
+		}
+	}
+
 	int count=statelist.Size();
 
 	if (count == 0) return NULL;
@@ -968,17 +969,11 @@ static FStateLabels * CreateStateLabelList(TArray<FStateDefine> & statelist)
 	FStateLabels * list = (FStateLabels*)M_Malloc(sizeof(FStateLabels)+(count-1)*sizeof(FStateLabel));
 	list->NumLabels = count;
 
-	int j=0;
-	for (unsigned i=0;i<statelist.Size();i++)
+	for (int i=0;i<count;i++)
 	{
-		if (statelist[i].Label != NAME_None)
-		{
-			list->Labels[j].Label = statelist[i].Label;
-			list->Labels[j].State = statelist[i].State;
-			list->Labels[j].valid = statelist[i].valid;
-			list->Labels[j].Children = CreateStateLabelList(statelist[i].Children);
-			j++;
-		}
+		list->Labels[i].Label = statelist[i].Label;
+		list->Labels[i].State = statelist[i].State;
+		list->Labels[i].Children = CreateStateLabelList(statelist[i].Children);
 	}
 	qsort(list->Labels, count, sizeof(FStateLabel), labelcmp);
 	return list;
@@ -994,14 +989,28 @@ static FStateLabels * CreateStateLabelList(TArray<FStateDefine> & statelist)
 
 void InstallStates(FActorInfo *info, AActor *defaults)
 {
+	// First ensure we have a valid spawn state.
 	FState * state = FindState(defaults, info->Class, "Spawn");
-	// If the actor doesn't provide a valid spawn state we have to substutute it
-	// with the default.
-	if (state == &AActor::States[2] || state == NULL)
+
+	// Stateless actors that are direct subclasses of AActor
+	// have their spawnstate default to something that won't
+	// immediately destroy them.
+	if (state == &AActor::States[2] && info->Class->ParentClass == RUNTIME_CLASS(AActor))
 	{
 		AddState("Spawn", &AActor::States[0]);
 	}
+	else if (state == NULL)
+	{
+		// A NULL spawn state will crash the engine so set it to something that will make
+		// the actor disappear as quickly as possible.
+		AddState("Spawn", &AActor::States[2]);
+	}
 
+	if (info->StateList != NULL) 
+	{
+		info->StateList->Destroy();
+		free(info->StateList);
+	}
 	info->StateList = CreateStateLabelList(StateLabels);
 
 	// Cache these states as member veriables.
@@ -1032,7 +1041,6 @@ static void MakeStateList(const FStateLabels *list, TArray<FStateDefine> &dest)
 
 		def.Label = list->Labels[i].Label;
 		def.State = list->Labels[i].State;
-		def.valid = list->Labels[i].valid;
 		dest.Push(def);
 		if (list->Labels[i].Children != NULL)
 		{
@@ -1150,7 +1158,7 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 	FActorInfo * info = ti->ActorInfo;
 
 	Decorations.Push (info);
-	ClearStateLabels();
+	MakeStateDefines(parent->ActorInfo->StateList);
 	info->NumOwnedStates = 0;
 	info->OwnedStates = NULL;
 	info->SpawnID = 0;

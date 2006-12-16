@@ -62,6 +62,7 @@
 
 
 CVAR (Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
+CVAR (Int, sv_smartaim, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
 static void CheckForPushSpecial (line_t *line, int side, AActor *mobj);
 static void SpawnShootDecal (AActor *t1, const FTraceResults &trace);
@@ -2487,42 +2488,53 @@ bool P_BounceWall (AActor *mo)
 }
 
 
+//============================================================================
 //
-// P_LineAttack
+// Aiming
 //
-AActor* 		linetarget; 	// who got hit (or NULL)
-AActor* 		shootthing;
+//============================================================================
+AActor*			linetarget;		// who got hit (or NULL)
+AActor*			shootthing;
+fixed_t			shootz;			// Height if not aiming up or down
+fixed_t			attackrange;
+fixed_t			aimpitch;
 
-// Height if not aiming up or down
-// ???: use slope for monsters?
-fixed_t 		shootz; 
-
-fixed_t 		attackrange;
-
-fixed_t 		aimpitch;
-
-// slopes to top and bottom of target
-// killough 4/20/98: make static instead of using ones in p_sight.c
-// [RH] made these angles instead of slopes
-
-static fixed_t	toppitch;
-static fixed_t	bottompitch;
+struct aim_t
+{
 
 
+	fixed_t			toppitch, bottompitch;
+	AActor *		thing_friend, * thing_other;
+	angle_t			pitch_friend, pitch_other;
+	bool			notsmart;
+
+};
+
+aim_t aim;
+
+
+
+//============================================================================
 //
 // PTR_AimTraverse
 // Sets linetaget and aimpitch when a target is aimed at.
 //
+//============================================================================
+
 bool PTR_AimTraverse (intercept_t* in)
 {
+	fixed_t &			toppitch=aim.toppitch;
+	fixed_t &			bottompitch=aim.bottompitch;
+
 	line_t* 			li;
 	AActor* 			th;
 	fixed_t 			pitch;
 	fixed_t 			thingtoppitch;
 	fixed_t 			thingbottompitch;
 	fixed_t 			dist;
+	int					thingpitch;
 
-	if (in->isaline)
+	if (in->isaline) 
 	{
 		li = in->d.line;
 
@@ -2569,9 +2581,9 @@ bool PTR_AimTraverse (intercept_t* in)
 	{
 		return true;
 	}
-
-	// check angles to see if the thing can be aimed at
+		
 	dist = FixedMul (attackrange, in->frac);
+	// check angles to see if the thing can be aimed at
 
 	thingtoppitch = -(int)R_PointToAngle2 (0, shootz, dist, th->z + th->height);
 
@@ -2589,18 +2601,47 @@ bool PTR_AimTraverse (intercept_t* in)
 
 	if (thingbottompitch > bottompitch)
 		thingbottompitch = bottompitch;
+	
+	thingpitch = thingtoppitch/2 + thingbottompitch/2;
 
-	aimpitch = thingtoppitch/2 + thingbottompitch/2;
-	linetarget = th;
-
-	return false;						// don't go any farther
+	if (sv_smartaim && !aim.notsmart)
+	{
+		// try to be a little smarter about what to aim at!
+		// In particular avoid autoaiming at friends amd barrels.
+		if (th->IsFriend(shootthing) && sv_smartaim != 2)
+		{
+			// friends don't aim at friends (except players), at least not first
+			aim.thing_friend=th;
+			aim.pitch_friend=thingpitch;
+		}
+		else if (!(th->flags3&MF3_ISMONSTER) )
+		{
+			// don't autoaim at barrels and other shootable stuff unless no monsters have been found
+			aim.thing_other=th;
+			aim.pitch_other=thingpitch;
+		}
+		else
+		{
+			linetarget=th;
+			aimpitch=thingpitch;
+			return false;
+		}
+	}
+	else
+	{
+		linetarget=th;
+		aimpitch=thingpitch;
+		return false;
+	}
+	return true;
 }
 
-
+//============================================================================
 //
 // P_AimLineAttack
 //
-fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vrange)
+//============================================================================
+fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vrange, bool forcenosmart)
 {
 	fixed_t x2;
 	fixed_t y2;
@@ -2628,20 +2669,36 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vr
 			vrange = clamp (t1->player->userinfo.aimdist, ANGLE_1/2, ANGLE_1*35);
 		}
 	}
-	toppitch = t1->pitch - vrange;
-	bottompitch = t1->pitch + vrange;
+	aim.toppitch = t1->pitch - vrange;
+	aim.bottompitch = t1->pitch + vrange;
+	aim.notsmart = forcenosmart;
 
 	attackrange = distance;
 	linetarget = NULL;
 
+	// for smart aiming
+	aim.thing_friend=aim.thing_other=NULL;
+
+	// Information for tracking crossed 3D floors
+	aimpitch=t1->pitch;
 	P_PathTraverse (t1->x, t1->y, x2, y2, PT_ADDLINES|PT_ADDTHINGS, PTR_AimTraverse);
 
-	if (linetarget)
-		return aimpitch;
-
-	return t1->pitch;
+	if (!linetarget) 
+	{
+		if (aim.thing_other)
+		{
+			linetarget=aim.thing_other;
+			aimpitch=aim.pitch_other;
+		}
+		else if (aim.thing_friend)
+		{
+			linetarget=aim.thing_friend;
+			aimpitch=aim.pitch_friend;
+		}
+	}
+	return linetarget ? aimpitch : t1->pitch;
 }
- 
+
 
 /*
 =================

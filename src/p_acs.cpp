@@ -4088,17 +4088,29 @@ int DLevelScript::RunScript ()
 
 		case PCD_SETTHINGSPECIAL:
 			{
-				FActorIterator iterator (STACK(7));
-				AActor *actor;
-
-				while ( (actor = iterator.Next ()) )
+				if (STACK(7) != 0)
 				{
-					actor->special = STACK(6);
-					actor->args[0] = STACK(5);
-					actor->args[1] = STACK(4);
-					actor->args[2] = STACK(3);
-					actor->args[3] = STACK(2);
-					actor->args[4] = STACK(1);
+					FActorIterator iterator (STACK(7));
+					AActor *actor;
+	
+					while ( (actor = iterator.Next ()) )
+					{
+						actor->special = STACK(6);
+						actor->args[0] = STACK(5);
+						actor->args[1] = STACK(4);
+						actor->args[2] = STACK(3);
+						actor->args[3] = STACK(2);
+						actor->args[4] = STACK(1);
+					}
+				}
+				else if (activator != NULL)
+				{
+					activator->special = STACK(6);
+					activator->args[0] = STACK(5);
+					activator->args[1] = STACK(4);
+					activator->args[2] = STACK(3);
+					activator->args[3] = STACK(2);
+					activator->args[4] = STACK(1);
 				}
 				sp -= 7;
 			}

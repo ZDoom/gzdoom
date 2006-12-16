@@ -1,3 +1,10 @@
+December 16, 2006 (Changes by Graf Zahl)
+- Merged the fallingdamage setting into one menu item and added Strife damage to it.
+- Moved deathmatch options into their own category in the gameplay options menu.
+- Added the sv_smartaim code from GZDoom which tries to avoid autoaiming
+  at friendlies or shootable decorations if there are monsters that can be shot.
+- Added: SetThingSpecial treats a tid of 0 as the activator.
+
 December 13, 2006 (Changes by Graf Zahl)
 - Fixed: The particle fountains' names were different than before
 - Fixed: FTexture::CheckForTexture should return NULL if the texture it

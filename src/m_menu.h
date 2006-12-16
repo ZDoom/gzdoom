@@ -100,6 +100,7 @@ typedef enum {
 	control,
 	screenres,
 	bitflag,
+	bitmask,
 	listelement,
 	nochoice,
 	numberedmore,

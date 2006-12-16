@@ -98,6 +98,7 @@ EXTERN_CVAR (Int, snd_buffersize)
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_3d)
 EXTERN_CVAR (Bool, snd_waterreverb)
+EXTERN_CVAR (Int, sv_smartaim)
 
 static void CalcIndent (menu_t *menu);
 
@@ -924,35 +925,53 @@ CUSTOM_CVAR (Bool, vid_tft, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
  * Gameplay Options (dmflags) Menu
  *
  *=======================================*/
+value_t SmartAim[3] = {
+	{ 0.0, "Off" },
+	{ 1.0, "On" },
+	{ 2.0, "Never friends" }
+};
+
+value_t FallingDM[4] = {
+	{ 0, "Off" },
+	{ DF_FORCE_FALLINGZD, "Old" },
+	{ DF_FORCE_FALLINGHX, "Hexen" },
+	{ DF_FORCE_FALLINGZD|DF_FORCE_FALLINGHX, "Strife" }
+};
+
 
 static menuitem_t DMFlagsItems[] = {
 	{ discrete, "Teamplay",				{&teamplay},	{2.0}, {0.0}, {0.0}, {OnOff} },
 	{ slider,	"Team damage scalar",	{&teamdamage},	{0.0}, {1.0}, {0.05},{NULL} },
 	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
-	{ bitflag,	"Falling damage (old)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FORCE_FALLINGZD} },
-	{ bitflag,	"Falling damage (Hexen)",{&dmflags},	{0}, {0}, {0}, {(value_t *)DF_FORCE_FALLINGHX} },
-	{ bitflag,	"Weapons stay (DM)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_WEAPONS_STAY} },
-	{ bitflag,	"Allow powerups (DM)",	{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_ITEMS} },
-	{ bitflag,	"Allow health (DM)",	{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_HEALTH} },
-	{ bitflag,	"Allow armor (DM)",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_ARMOR} },
-	{ bitflag,	"Spawn farthest (DM)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_SPAWN_FARTHEST} },
-	{ bitflag,	"Same map (DM)",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_SAME_LEVEL} },
-	{ bitflag,	"Force respawn (DM)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FORCE_RESPAWN} },
-	{ bitflag,	"Allow exit (DM)",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_EXIT} },
-	{ bitflag,	"Barrels respawn (DM)",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_BARRELS_RESPAWN} },
-	{ bitflag,	"Respawn protection (DM)",{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_INVUL} },
+	{ discrete, "Smart Autoaim",		{&sv_smartaim},	{3.0}, {0.0}, {0.0}, {SmartAim} },
+	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
+	{ bitmask,	"Falling damage",		{&dmflags},		{4.0}, {DF_FORCE_FALLINGZD|DF_FORCE_FALLINGHX}, {0}, {FallingDM} },
+//	{ bitflag,	"Falling damage (old)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FORCE_FALLINGZD} },
+//	{ bitflag,	"Falling damage (Hexen)",{&dmflags},	{0}, {0}, {0}, {(value_t *)DF_FORCE_FALLINGHX} },
 	{ bitflag,	"Drop weapon",			{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_WEAPONDROP} },
 	{ bitflag,	"Infinite ammo",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_INFINITE_AMMO} },
 	{ bitflag,	"No monsters",			{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_NO_MONSTERS} },
 	{ bitflag,	"Monsters respawn",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_MONSTERS_RESPAWN} },
 	{ bitflag,	"Items respawn",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_ITEMS_RESPAWN} },
-	{ bitflag,	"Mega powerups respawn",{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_RESPAWN_SUPER} },
+	{ bitflag,	"Big powerups respawn",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_RESPAWN_SUPER} },
 	{ bitflag,	"Fast monsters",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FAST_MONSTERS} },
 	{ bitflag,	"Allow jump",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_JUMP} },
 	{ bitflag,	"Allow crouch",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_CROUCH} },
 	{ bitflag,	"Allow freelook",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FREELOOK} },
 	{ bitflag,	"Allow FOV",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FOV} },
 	{ bitflag,	"Allow BFG aiming",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NO_FREEAIMBFG} },
+	{ redtext,	" ",					{NULL},			{0}, {0}, {0}, {NULL} },
+	{ whitetext,"Deathmatch Settings",	{NULL},			{0}, {0}, {0}, {NULL} },
+	{ bitflag,	"Weapons stay",			{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_WEAPONS_STAY} },
+	{ bitflag,	"Allow powerups",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_ITEMS} },
+	{ bitflag,	"Allow health",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_HEALTH} },
+	{ bitflag,	"Allow armor",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_ARMOR} },
+	{ bitflag,	"Spawn farthest",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_SPAWN_FARTHEST} },
+	{ bitflag,	"Same map",				{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_SAME_LEVEL} },
+	{ bitflag,	"Force respawn",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FORCE_RESPAWN} },
+	{ bitflag,	"Allow exit",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_EXIT} },
+	{ bitflag,	"Barrels respawn",		{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_BARRELS_RESPAWN} },
+	{ bitflag,	"Respawn protection",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_INVUL} },
 	{ redtext,	" ",					{NULL},			{0}, {0}, {0}, {NULL} },
 	{ whitetext,"Cooperative Settings",	{NULL},			{0}, {0}, {0}, {NULL} },
 	{ bitflag,	"Spawn multi. weapons", {&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_COOP_WEAPON_SPAWN} },
@@ -1500,6 +1519,31 @@ void M_OptDrawer ()
 				}
 				break;
 
+			case bitmask:
+			{
+				int v, vals;
+
+				value = item->a.cvar->GetGenericRep (CVAR_Int);
+				value.Float = value.Int & int(item->c.max);
+				vals = (int)item->b.numvalues;
+
+				v = M_FindCurVal (value.Float, item->e.values, vals);
+
+				if (v == vals)
+				{
+					screen->DrawText (ValueColor, CurrentMenu->indent + 14, y, "Unknown",
+						DTA_Clean, true, TAG_DONE);
+				}
+				else
+				{
+					screen->DrawText (item->type == cdiscrete ? v : ValueColor,
+						CurrentMenu->indent + 14, y, item->e.values[v].name,
+						DTA_Clean, true, TAG_DONE);
+				}
+
+			}
+			break;
+			
 			case discrete:
 			case cdiscrete:
 			case inverter:
@@ -2014,6 +2058,25 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
 				break;
 
+			case bitmask:
+				{
+					int cur;
+					int numvals;
+					int bmask = int(item->c.max);
+
+					numvals = (int)item->b.min;
+					value = item->a.cvar->GetGenericRep (CVAR_Int);
+					
+					cur = M_FindCurVal (value.Int & bmask, item->e.values, numvals);
+					if (--cur < 0)
+						cur = numvals - 1;
+
+					value.Int = (value.Int & ~bmask) | int(item->e.values[cur].value);
+					item->a.cvar->SetGenericRep (value, CVAR_Int);
+				}
+				S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
+				break;
+
 			case discrete_guid:
 				{
 					int cur;
@@ -2125,6 +2188,25 @@ void M_OptResponder (event_t *ev)
 					// Hack hack. Rebuild list of resolutions
 					if (item->e.values == Depths)
 						BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
+				}
+				S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
+				break;
+
+			case bitmask:
+				{
+					int cur;
+					int numvals;
+					int bmask = int(item->c.max);
+
+					numvals = (int)item->b.min;
+					value = item->a.cvar->GetGenericRep (CVAR_Int);
+					
+					cur = M_FindCurVal (value.Int & bmask, item->e.values, numvals);
+					if (++cur >= numvals)
+						cur = 0;
+
+					value.Int = (value.Int & ~bmask) | int(item->e.values[cur].value);
+					item->a.cvar->SetGenericRep (value, CVAR_Int);
 				}
 				S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
 				break;

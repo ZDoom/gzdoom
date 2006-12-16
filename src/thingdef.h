@@ -23,7 +23,7 @@ public:
 
 // All state parameters are stored in this array now.
 extern TArray<int> StateParameters;
-extern TArray<int> JumpParameters;
+extern TArray<FName> JumpParameters;
 
 
 int ParseExpression (bool _not, PClass *cls);

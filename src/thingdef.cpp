@@ -79,7 +79,7 @@ extern TArray<FActorInfo *> Decorations;
 TArray<char*> DecalNames;
 // all state parameters
 TArray<int> StateParameters;
-TArray<int> JumpParameters;
+TArray<FName> JumpParameters;
 
 //==========================================================================
 //
@@ -917,7 +917,7 @@ FState * FindStateInClass(AActor * actor, const PClass * type, const char * name
 
 	MakeStateNameList(name, &namelist);
 	FActorInfo * info = type->ActorInfo;
-	if (info) return info->FindStateExact(namelist.Size(), (va_list)&namelist[0]);
+	if (info) return info->FindState(namelist.Size(), &namelist[0], true);
 	return NULL;
 }
 
@@ -1014,12 +1014,12 @@ void InstallStates(FActorInfo *info, AActor *defaults)
 	info->StateList = CreateStateLabelList(StateLabels);
 
 	// Cache these states as member veriables.
-	defaults->SpawnState = info->FindStateExact(1,NAME_Spawn);
-	defaults->SeeState = info->FindStateExact(1,NAME_See);
+	defaults->SpawnState = info->FindState(NAME_Spawn);
+	defaults->SeeState = info->FindState(NAME_See);
 	// Melee and Missile states are manipulated by the scripted marines so they
 	// have to be stored locally
-	defaults->MeleeState = info->FindStateExact(1,NAME_Melee);
-	defaults->MissileState = info->FindStateExact(1,NAME_Missile);
+	defaults->MeleeState = info->FindState(NAME_Melee);
+	defaults->MissileState = info->FindState(NAME_Missile);
 }
 
 
@@ -1637,7 +1637,7 @@ do_stop:
 								}
 								else
 								{
-									if (JumpParameters.Size()==0) JumpParameters.Push(0);
+									if (JumpParameters.Size()==0) JumpParameters.Push(NAME_None);
 
 									v = -(int)JumpParameters.Size();
 									FString statestring = ParseStateString();
@@ -1675,20 +1675,20 @@ do_stop:
 										// labels in subclasses.
 										// It also means that the validity of the given state cannot
 										// be checked here.
-										JumpParameters.Push(0);
+										JumpParameters.Push(NAME_None);
 									}
 									TArray<FName> names;
 									MakeStateNameList(statestring, &names);
 
 									if (stype != NULL)
 									{
-										if (!stype->ActorInfo->FindState(names.Size(), (va_list)&names[0]))
+										if (!stype->ActorInfo->FindState(names.Size(), &names[0]))
 										{
 											SC_ScriptError("Jump to unknown state '%s' in class '%s'",
 												statestring.GetChars(), stype->TypeName.GetChars());
 										}
 									}
-									JumpParameters.Push(names.Size());
+									JumpParameters.Push((ENamedName)names.Size());
 									for(unsigned i=0;i<names.Size();i++)
 									{
 										JumpParameters.Push(names[i]);
@@ -2003,7 +2003,7 @@ static FState *CheckState(PClass *type)
 
 			if (info != NULL)
 			{
-				state = info->FindStateExact(1, (int)FName(sc_String));
+				state = info->FindState(FName(sc_String));
 			}
 
 			if (SC_GetString ())
@@ -4249,10 +4249,10 @@ void FinishThingdef()
 			if (isRuntimeActor)
 			{
 				// Do some consistency checks. If these states are undefined the weapon cannot work!
-				if (!ti->ActorInfo->FindState(1, NAME_Ready)) I_Error("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
-				if (!ti->ActorInfo->FindState(1, NAME_Select)) I_Error("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
-				if (!ti->ActorInfo->FindState(1, NAME_Deselect)) I_Error("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
-				if (!ti->ActorInfo->FindState(1, NAME_Fire)) I_Error("Weapon %s doesn't define a fire state.\n", ti->TypeName.GetChars());
+				if (!ti->ActorInfo->FindState(NAME_Ready)) I_Error("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
+				if (!ti->ActorInfo->FindState(NAME_Select)) I_Error("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
+				if (!ti->ActorInfo->FindState(NAME_Deselect)) I_Error("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
+				if (!ti->ActorInfo->FindState(NAME_Fire)) I_Error("Weapon %s doesn't define a fire state.\n", ti->TypeName.GetChars());
 			}
 
 		}

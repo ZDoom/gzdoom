@@ -391,20 +391,21 @@ static void DoJump(AActor * self, FState * CallingState, int offset)
 	{
 		offset = -offset;
 
-		int classname = JumpParameters[offset];
+		FName classname = JumpParameters[offset];
 		const PClass *cls;
-		cls = classname==NAME_None?  RUNTIME_TYPE(self) : PClass::FindClass((ENamedName)classname);
+		cls = classname==NAME_None?  RUNTIME_TYPE(self) : PClass::FindClass(classname);
 		if (cls==NULL || cls->ActorInfo==NULL) return;	// shouldn't happen
 		
-		jumpto = cls->ActorInfo->FindState(JumpParameters[offset+1], (va_list)&JumpParameters[offset+2]);
+		int numnames = (int)JumpParameters[offset+1];
+		jumpto = cls->ActorInfo->FindState(numnames, &JumpParameters[offset+2]);
 		if (jumpto == NULL)
 		{
 			char * dot="";
 			Printf("Jump target '");
-			if (classname != NAME_None) Printf("%s::", ((FName)(ENamedName)classname).GetChars());
-			for (int i=0;i<JumpParameters[offset+1];i++)
+			if (classname != NAME_None) Printf("%s::", classname.GetChars());
+			for (int i=0;i<numnames;i++)
 			{
-				Printf("%s%s", dot, ((FName)(ENamedName)JumpParameters[offset+2+i]).GetChars());
+				Printf("%s%s", dot, JumpParameters[offset+2+i].GetChars());
 			}
 			Printf("not found in %s\n", self->GetClass()->TypeName.GetChars());
 			return;

@@ -2499,7 +2499,7 @@ static bool LoadDehSupp ()
 							StateMap[i].State = def->SpawnState;
 							break;
 						case DeathState:
-							StateMap[i].State = type->ActorInfo->FindStateExact(1, NAME_Death);
+							StateMap[i].State = type->ActorInfo->FindState(NAME_Death);
 							break;
 						}
 						StateMap[i].StateSpan = supp[6+i*4+3];

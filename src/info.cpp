@@ -423,29 +423,6 @@ void FStateLabels::Destroy ()
 
 //===========================================================================
 //
-// FindState (one name version)
-//
-// Finds a state with the exact specified name.
-//
-//===========================================================================
-
-FState *AActor::FindState (FName label) const
-{
-	const FActorInfo *info = GetClass()->ActorInfo;
-
-	if (info->StateList != NULL)
-	{
-		FStateLabel *slabel = info->StateList->FindLabel (label);
-		if (slabel != NULL)
-		{
-			return slabel->State;
-		}
-	}
-	return NULL;
-}
-
-//===========================================================================
-//
 // HasStates
 //
 // Checks whether the actor has special death states.
@@ -472,6 +449,58 @@ bool AActor::HasSpecialDeathStates () const
 
 //===========================================================================
 //
+// FindState (one name version)
+//
+// Finds a state with the exact specified name.
+//
+//===========================================================================
+
+FState *AActor::FindState (FName label) const
+{
+	const FActorInfo *info = GetClass()->ActorInfo;
+
+	if (info->StateList != NULL)
+	{
+		FStateLabel *slabel = info->StateList->FindLabel (label);
+		if (slabel != NULL)
+		{
+			return slabel->State;
+		}
+	}
+	return NULL;
+}
+
+//===========================================================================
+//
+// FindState (two name version)
+//
+//===========================================================================
+
+FState *AActor::FindState (FName label, FName sublabel, bool exact) const
+{
+	const FActorInfo *info = GetClass()->ActorInfo;
+
+	if (info->StateList != NULL)
+	{
+		FStateLabel *slabel = info->StateList->FindLabel (label);
+		if (slabel != NULL)
+		{
+			if (slabel->Children != NULL)
+			{
+				FStateLabel *slabel2 = slabel->Children->FindLabel(sublabel);
+				if (slabel2 != NULL)
+				{
+					return slabel2->State;
+				}
+			}
+			if (!exact) return slabel->State;
+		}
+	}
+	return NULL;
+}
+
+//===========================================================================
+//
 // FindState (multiple names version)
 //
 // Finds a state that matches as many of the supplied names as possible.
@@ -485,37 +514,18 @@ bool AActor::HasSpecialDeathStates () const
 // has names, ignore it. If the argument list still has names, remember it.
 //
 //===========================================================================
-
-FState *AActor::FindState (int numnames, int first, ...) const	// The 'first' parameter is only here to 
-																// disambiguate from the single parameter version
-																// Please note that this code does *NOT* compile
-																// properly with VC++ when 'first' is removed!
+FState *FActorInfo::FindState (FName name) const
 {
-	va_list arglist;
-	va_start (arglist, numnames);
-	return FindState (numnames, arglist);
+	return FindState(1, &name);
 }
 
-FState *FActorInfo::FindState (int numnames, ...) const
-{
-	va_list arglist;
-	va_start (arglist, numnames);
-	return FindState (numnames, arglist);
-}
-
-FState *AActor::FindState (int numnames, va_list arglist) const
-{
-	return GetClass()->ActorInfo->FindState (numnames, arglist);
-}
-
-FState *FActorInfo::FindState (int numnames, va_list arglist) const
+FState *FActorInfo::FindState (int numnames, FName *names, bool exact) const
 {
 	FStateLabels *labels = StateList;
 	FState *best = NULL;
 
 	if (labels != NULL)
 	{
-		va_list names = arglist;
 		int count = 0;
 		FStateLabel *slabel = NULL;
 		FName label;
@@ -523,7 +533,7 @@ FState *FActorInfo::FindState (int numnames, va_list arglist) const
 		// Find the best-matching label for this class.
 		while (labels != NULL && count < numnames)
 		{
-			label = ENamedName(va_arg (names, int));
+			label = *names++;
 			slabel = labels->FindLabel (label);
 
 			if (slabel != NULL)
@@ -537,60 +547,9 @@ FState *FActorInfo::FindState (int numnames, va_list arglist) const
 				break;
 			}
 		}
+		if (count < numnames && exact) return NULL;
 	}
 	return best;
-}
-
-//===========================================================================
-//
-// FindStateExact
-//
-// This is like FindState, except it will only return states whose labels
-// match the requested one exactly.
-//
-//===========================================================================
-
-FState *FActorInfo::FindStateExact (int numnames, ...) const
-{
-	va_list arglist;
-	va_start (arglist, numnames);
-	return FindStateExact (numnames, arglist);
-}
-
-FState *FActorInfo::FindStateExact (int numnames, va_list arglist) const
-{
-	FStateLabels *labels = StateList;
-
-	if (labels != NULL)
-	{
-		va_list names = arglist;
-		int count = 0;
-		FStateLabel *slabel = NULL;
-		FName label;
-
-		// Look for a matching label for this class.
-		while (labels != NULL && count < numnames)
-		{
-			label = ENamedName(va_arg (names, int));
-			slabel = labels->FindLabel (label);
-
-			if (slabel != NULL)
-			{
-				count++;
-				labels = slabel->Children;
-			}
-			else
-			{
-				break;
-			}
-		}
-		// Only exact matches count.
-		if (slabel != NULL && count == numnames)
-		{
-			return slabel->State;
-		}
-	}
-	return NULL;
 }
 
 //===========================================================================

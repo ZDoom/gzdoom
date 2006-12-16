@@ -613,7 +613,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 	if (DamageType != NAME_None)
 	{
-		diestate = GetClass()->ActorInfo->FindStateExact (2, NAME_Death, int(DamageType));
+		diestate = FindState (NAME_Death, DamageType, true);
 		if (diestate == NULL)
 		{
 			if (DamageType == NAME_Ice)
@@ -641,7 +641,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 		if ((health<gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
 		{ // Extreme death
-			diestate = GetClass()->ActorInfo->FindStateExact (2, NAME_Death, NAME_Extreme);
+			diestate = FindState (NAME_Death, NAME_Extreme, true);
 			// if a non-player mark as extremely dead for the crash state.
 			if (diestate != NULL && player == NULL && health >= gibhealth) health = gibhealth-1;	
 		}
@@ -1086,7 +1086,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		return;
 	}
 
-	FState * woundstate = target->FindState(2,NAME_Wound, (int)mod);
+	FState * woundstate = target->FindState(NAME_Wound, mod);
 	if (woundstate != NULL)
 	{
 		int woundhealth = RUNTIME_TYPE(target)->Meta.GetMetaInt (AMETA_WoundHealth, 6);
@@ -1104,7 +1104,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			if (pr_lightning() < 96)
 			{
 				target->flags |= MF_JUSTHIT; // fight back!
-				FState * painstate = target->FindState(2,NAME_Pain, (int)mod);
+				FState * painstate = target->FindState(NAME_Pain, mod);
 				if (painstate != NULL) target->SetState (painstate);
 			}
 			else
@@ -1119,7 +1119,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		else
 		{
 			target->flags |= MF_JUSTHIT; // fight back!
-			FState * painstate = target->FindState(2,NAME_Pain, (int)mod);
+			FState * painstate = target->FindState(NAME_Pain, mod);
 			if (painstate != NULL) target->SetState (painstate);
 			if (inflictor && inflictor->IsKindOf (RUNTIME_CLASS(APoisonCloud)))
 			{
@@ -1311,7 +1311,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	}
 	if (!(level.time&63) && playPainSound)
 	{
-		FState * painstate = target->FindState(2,NAME_Pain, (int)target->DamageType);
+		FState * painstate = target->FindState(NAME_Pain, target->DamageType);
 		if (painstate != NULL) target->SetState (painstate);
 	}
 /*

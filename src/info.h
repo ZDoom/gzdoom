@@ -384,12 +384,11 @@ struct FActorInfo
 	void ApplyDefaults (BYTE *defaults);
 	void RegisterIDs ();
 
-	FState *FindState (int numnames, ...) const;
-	FState *FindState (int numnames, va_list arglist) const;
+	FState *FindState (FName name) const;
+	FState *FindState (int numnames, FName *names, bool exact=false) const;
+
 	void ChangeState (FName label, FState * newstate) const;
 
-	FState *FindStateExact (int numnames, ...) const;
-	FState *FindStateExact (int numnames, va_list arglist) const;
 
 	FActorInfo *GetReplacement ();
 	FActorInfo *GetReplacee ();

@@ -1,4 +1,6 @@
 December 16, 2006 (Changes by Graf Zahl)
+- Fixed: The smartaim logic was incorrect. Also added another mode: Autoaim only
+  at monsters.
 - Merged FActorInfo::FindStateExact and FActorInfo::FindState into one function 
   because the differences are only minimal.
 - Removed all the varargs FindState functions because they aren't really needed.

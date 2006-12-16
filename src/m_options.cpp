@@ -925,10 +925,11 @@ CUSTOM_CVAR (Bool, vid_tft, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
  * Gameplay Options (dmflags) Menu
  *
  *=======================================*/
-value_t SmartAim[3] = {
+value_t SmartAim[4] = {
 	{ 0.0, "Off" },
 	{ 1.0, "On" },
-	{ 2.0, "Never friends" }
+	{ 2.0, "Never friends" },
+	{ 3.0, "Only monsters" }
 };
 
 value_t FallingDM[4] = {

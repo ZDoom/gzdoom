@@ -2608,17 +2608,23 @@ bool PTR_AimTraverse (intercept_t* in)
 	{
 		// try to be a little smarter about what to aim at!
 		// In particular avoid autoaiming at friends amd barrels.
-		if (th->IsFriend(shootthing) && sv_smartaim != 2)
+		if (th->IsFriend(shootthing))
 		{
-			// friends don't aim at friends (except players), at least not first
-			aim.thing_friend=th;
-			aim.pitch_friend=thingpitch;
+			if (sv_smartaim < 2)
+			{
+				// friends don't aim at friends (except players), at least not first
+				aim.thing_friend=th;
+				aim.pitch_friend=thingpitch;
+			}
 		}
 		else if (!(th->flags3&MF3_ISMONSTER) )
 		{
-			// don't autoaim at barrels and other shootable stuff unless no monsters have been found
-			aim.thing_other=th;
-			aim.pitch_other=thingpitch;
+			if (sv_smartaim < 3)
+			{
+				// don't autoaim at barrels and other shootable stuff unless no monsters have been found
+				aim.thing_other=th;
+				aim.pitch_other=thingpitch;
+			}
 		}
 		else
 		{

@@ -1,8 +1,9 @@
 /*
-** hardware.h
+** st_start.h
+** Interface for the startup screen.
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 2006 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -29,31 +30,14 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
+** The startup screen interface is based on a mix of Heretic and Hexen.
+** Actual implementation is system-specific.
 */
 
-#ifndef __HARDWARE_H__
-#define __HARDWARE_H__
-
-#include "i_video.h"
-#include "v_video.h"
-
-class IVideo
-{
- public:
-	virtual ~IVideo () {}
-
-	virtual EDisplayType GetDisplayType () = 0;
-	virtual void SetWindowedScale (float scale) = 0;
-
-	virtual DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old) = 0;
-
-	virtual void StartModeIterator (int bits, bool fs) = 0;
-	virtual bool NextMode (int *width, int *height, bool *letterbox) = 0;
-};
-
-void I_InitGraphics ();
-void I_ShutdownGraphics ();
-
-extern IVideo *Video;
-
-#endif	// __HARDWARE_H__
+extern void ST_Init(int maxProgress);
+extern void ST_Done();
+extern void ST_Progress();
+extern void ST_NetInit(const char *message, int numplayers);
+extern void ST_NetProgress(int count);
+extern void ST_NetDone();
+extern bool ST_NetLoop(bool (*timer_callback)(void *), void *userdata);

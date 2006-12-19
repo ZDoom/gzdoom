@@ -8,12 +8,11 @@ class SDLVideo : public IVideo
 	~SDLVideo ();
 
 	EDisplayType GetDisplayType () { return DISPLAY_Both; }
-	bool FullscreenChanged (bool fs);
 	void SetWindowedScale (float scale);
 
 	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
 
-	void StartModeIterator (int bits);
+	void StartModeIterator (int bits, bool fs);
 	bool NextMode (int *width, int *height, bool *letterbox);
 
 private:

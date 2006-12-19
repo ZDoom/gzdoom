@@ -55,6 +55,7 @@
 #include "templates.h"
 #include "i_system.h"
 #include "i_video.h"
+#include "i_input.h"
 #include "v_video.h"
 #include "v_pfx.h"
 #include "stats.h"
@@ -76,6 +77,8 @@ struct FBVERTEX
 	FLOAT tu, tv;
 };
 #define D3DFVF_FBVERTEX (D3DFVF_XYZRHW|D3DFVF_TEX1)
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -274,11 +277,11 @@ void D3DFB::FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, b
 
 bool D3DFB::CreateResources ()
 {
+	I_SetWndProc();
 	if (!Windowed)
 	{
 		// Remove the window border in fullscreen mode
-		SetWindowLongPtr (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE|WS_SYSMENU);
-		ShowWindow (Window, SW_SHOW);
+		SetWindowLongPtr (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE);
 	}
 	else
 	{
@@ -305,7 +308,6 @@ bool D3DFB::CreateResources ()
 				SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 		}
 		VidResizing = false;
-		ShowWindow (Window, SW_SHOWNORMAL);
 	}
 	if (FAILED(D3DDevice->CreatePixelShader (PalTexShaderDef, &PalTexShader)))
 	{

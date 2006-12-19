@@ -322,7 +322,7 @@ int I_PlayMovie (const char *name)
 	SetPriorityClass (GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 
 	I_CheckNativeMouse (true);
-	SetWindowLongPtr (Window, GWL_WNDPROC, (LONG_PTR)MovieWndProc);
+	SetWindowLongPtr (Window, GWLP_WNDPROC, (LONG_PTR)MovieWndProc);
 
 	if (FAILED (control->Run ()))
 	{
@@ -343,7 +343,7 @@ int I_PlayMovie (const char *name)
 								   MOVIE_Played;
 
 bomb4:
-	SetWindowLongPtr (Window, GWL_WNDPROC, (LONG_PTR)WndProc);
+	SetWindowLongPtr (Window, GWLP_WNDPROC, (LONG_PTR)WndProc);
 	SetPriorityClass (GetCurrentProcess(), INGAME_PRIORITY_CLASS);
 
 bomb3:

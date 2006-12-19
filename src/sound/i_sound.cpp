@@ -151,27 +151,6 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOI
 }
 
 
-#ifdef _WIN32
-// [RH] Dialog procedure for the error dialog that appears if FMOD
-//		could not be initialized for some reason.
-bool CALLBACK InitBoxCallback (HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-	case WM_COMMAND:
-		if (wParam == IDOK ||
-			wParam == IDC_NOSOUND ||
-			wParam == IDCANCEL)
-		{
-			EndDialog (hwndDlg, wParam);
-			return TRUE;
-		}
-		break;
-	}
-	return FALSE;
-}
-#endif
-
 void I_InitSound ()
 {
 	/* Get command line options: */
@@ -215,23 +194,7 @@ void I_InitSound ()
 	{
 		delete GSnd;
 		GSnd = NULL;
-#ifdef _WIN32
-		// If sound cannot be initialized, give the user some options.
-		switch (DialogBox (g_hInst,
-						   MAKEINTRESOURCE(IDD_FMODINITFAILED),
-						   (HWND)Window,
-						   (DLGPROC)InitBoxCallback))
-		{
-		case IDC_NOSOUND:
-			break;
-
-		case IDCANCEL:
-			exit (0);
-			break;
-		}
-#else
 		Printf ("Sound init failed. Using nosound.\n");
-#endif
 	}
 	I_InitMusic ();
 	snd_sfxvolume.Callback ();

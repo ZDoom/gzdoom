@@ -6,7 +6,6 @@
 #define IDNO2                           9
 #define IDI_ICON1                       101
 #define IDD_MIDASINITERROR              108
-#define IDD_FMODINITFAILED              111
 #define IDD_IWADDIALOG                  112
 #define IDC_INVISIBLECURSOR             114
 #define IDD_CRASHDIALOG                 122
@@ -31,7 +30,8 @@
 #define IDI_BOING8                      144
 #define IDD_BOING                       145
 #define IDD_CRASHOVERVIEW               147
-#define IDC_NOSOUND                     1000
+#define IDD_ERRORPANE                   148
+#define IDD_NETSTARTPANE                149
 #define IDC_ERRORMESSAGE                1004
 #define IDQUIT                          1005
 #define IDC_IWADLIST                    1006
@@ -92,6 +92,13 @@
 #define IDC_CRASHTAB                    1074
 #define IDC_RICHEDIT23                  1075
 #define IDC_CRASHSUMMARY                1075
+#define IDC_ERRORTEXT                   1076
+#define IDC_ICONPIC                     1077
+#define IDC_DIVIDERBAR                  1078
+#define IDC_PROGRESS1                   1079
+#define IDC_NETSTARTPROGRESS            1079
+#define IDC_NETSTARTMESSAGE             1080
+#define IDC_NETSTARTCOUNT               1081
 #define IDCE_ENVIRONMENTDIFFUSION       1085
 #define IDCS_ENVIRONMENTDIFFUSION       1086
 #define IDCE_ROOM                       1087
@@ -149,9 +156,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        148
+#define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1076
+#define _APS_NEXT_CONTROL_VALUE         1082
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

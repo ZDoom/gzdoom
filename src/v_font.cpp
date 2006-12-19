@@ -1862,5 +1862,4 @@ void V_InitFonts()
 	}
 	ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
 	V_InitCustomFonts ();
-	screen->SetFont(SmallFont);
 }

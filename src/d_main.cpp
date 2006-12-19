@@ -86,6 +86,7 @@
 #include "r_polymost.h"
 #include "version.h"
 #include "v_text.h"
+#include "st_start.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -175,22 +176,23 @@ FTexture *Advisory;
 
 cycle_t FrameCycles;
 
-const char *IWADTypeNames[NUM_IWAD_TYPES] =
+const IWADInfo IWADInfos[NUM_IWAD_TYPES] =
 {
-	"DOOM 2: TNT - Evilution",
-	"DOOM 2: Plutonia Experiment",
-	"Hexen: Beyond Heretic",
-	"Hexen: Deathkings of the Dark Citadel",
-	"DOOM 2: Hell on Earth",
-	"Heretic Shareware",
-	"Heretic: Shadow of the Serpent Riders",
-	"Heretic",
-	"DOOM Shareware",
-	"The Ultimate DOOM",
-	"DOOM Registered",
-	"Strife: Quest for the Sigil",
-	"Strife: Teaser (Old Version)",
-	"Strife: Teaser (New Version)"
+	// banner text,								fg color,				bg color
+	{ "DOOM 2: TNT - Evilution",				MAKERGB(168,0,0),		MAKERGB(168,168,168) },
+	{ "DOOM 2: Plutonia Experiment",			MAKERGB(168,0,0),		MAKERGB(168,168,168) },
+	{ "Hexen: Beyond Heretic",					MAKERGB(240,240,240),	MAKERGB(107,44,24) },
+	{ "Hexen: Deathkings of the Dark Citadel",	MAKERGB(240,240,240),	MAKERGB(139,68,9) },
+	{ "DOOM 2: Hell on Earth",					MAKERGB(168,0,0),		MAKERGB(168,168,168) },
+	{ "Heretic Shareware",						MAKERGB(252,252,0),		MAKERGB(168,0,0) },
+	{ "Heretic: Shadow of the Serpent Riders",	MAKERGB(252,252,0),		MAKERGB(168,0,0) },
+	{ "Heretic",								MAKERGB(252,252,0),		MAKERGB(168,0,0) },
+	{ "DOOM Shareware",							MAKERGB(168,0,0),		MAKERGB(168,168,168) },
+	{ "The Ultimate DOOM",						MAKERGB(84,84,84),		MAKERGB(168,168,168) },
+	{ "DOOM Registered",						MAKERGB(84,84,84),		MAKERGB(168,168,168) },
+	{ "Strife: Quest for the Sigil",			MAKERGB(224,173,153),	MAKERGB(0,107,101) },
+	{ "Strife: Teaser (Old Version)",			MAKERGB(224,173,153),	MAKERGB(0,107,101) },
+	{ "Strife: Teaser (New Version)",			MAKERGB(224,173,153),	MAKERGB(0,107,101) }
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -1958,6 +1960,8 @@ void D_DoomMain (void)
 	rngseed = (DWORD)time (NULL);
 	FRandom::StaticClearRandom ();
 	M_FindResponseFile ();
+
+	Printf ("M_LoadDefaults: Load system defaults.\n");
 	M_LoadDefaults ();			// load before initing other systems
 
 	// [RH] Make sure zdoom.pk3 is always loaded,
@@ -1969,10 +1973,8 @@ void D_DoomMain (void)
 		I_FatalError ("Cannot find " BASEWAD);
 	}
 
-	I_SetTitleString (IWADTypeNames[IdentifyVersion(wad)]);
+	I_SetIWADInfo (&IWADInfos[IdentifyVersion(wad)]);
 	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
-
-
 
 	if (!(gameinfo.flags & GI_SHAREWARE))
 	{
@@ -2052,8 +2054,8 @@ void D_DoomMain (void)
 	delete files1;
 	delete files2;
 
+	Printf ("W_Init: Init WADfiles.\n");
 	Wads.InitMultipleFiles (&wadfiles);
-
 
 	// [RH] Initialize localizable strings.
 	GStrings.LoadStrings (false);
@@ -2062,24 +2064,34 @@ void D_DoomMain (void)
 	//		startup output in a fullscreen console.
 
 	CT_Init ();
+
+	Printf ("I_Init: Setting up machine state.\n");
 	I_Init ();
 
+	Printf ("V_Init: allocate screen.\n");
 	V_Init ();
 
 	// Base systems have been inited; enable cvar callbacks
 	FBaseCVar::EnableCallbacks ();
 
+	// [RH] Parse any SNDINFO lumps
+	Printf ("S_ParseSndInfo: Load sound definitions.\n");
+	S_ParseSndInfo ();
+	S_ParseSndEax ();
+
+	Printf ("S_Init: Setting up sound.\n");
+	S_Init ();
+
+	Printf ("ST_Init: Init startup screen.\n");
+	ST_Init (R_GuesstimateNumTextures() + 5);
 
 	// [RH] Now that all text strings are set up,
 	// insert them into the level and cluster data.
 	G_MakeEpisodes ();
 	
 	// [RH] Parse through all loaded mapinfo lumps
+	Printf ("G_ParseMapInfo: Load map definitions.\n");
 	G_ParseMapInfo ();
-
-	// [RH] Parse any SNDINFO lumps
-	S_ParseSndInfo ();
-	S_ParseSndEax ();
 
 	FActorInfo::StaticInit ();
 
@@ -2096,10 +2108,12 @@ void D_DoomMain (void)
 	}
 
 	FActorInfo::StaticGameSet ();
+	ST_Progress ();
 
-	Printf ("Init DOOM refresh subsystem.\n");
+	Printf ("R_Init: Init %s refresh subsystem\n", GameNames[gameinfo.gametype]);
 	R_Init ();
 
+	Printf ("DecalLibrary: Load decals.\n");
 	DecalLibrary.Clear ();
 	DecalLibrary.ReadAllDecals ();
 
@@ -2161,7 +2175,8 @@ void D_DoomMain (void)
 	}
 
 	flags = dmflags;
-		
+
+	Printf ("P_Init: Checking cmd-line parameters...\n");
 	if (Args.CheckParm ("-nomonsters"))		flags |= DF_NO_MONSTERS;
 	if (Args.CheckParm ("-respawn"))		flags |= DF_MONSTERS_RESPAWN;
 	if (Args.CheckParm ("-fast"))			flags |= DF_FAST_MONSTERS;
@@ -2224,7 +2239,6 @@ void D_DoomMain (void)
 		autostart = true;
 	}
 
-	//I_Error ("Oh gnos!");
 	// [RH] Hack to handle +map
 	p = Args.CheckParm ("+map");
 	if (p && p < Args.NumArgs()-1)
@@ -2286,16 +2300,13 @@ void D_DoomMain (void)
 		timelimit = 20.f;
 	}
 
-	Printf ("Init miscellaneous info.\n");
+	Printf ("M_Init: Init miscellaneous info.\n");
 	M_Init ();
 
-	Printf ("Init Playloop state.\n");
+	Printf ("P_Init: Init Playloop state.\n");
 	P_Init ();
 
-	Printf ("Setting up sound.\n");
-	S_Init ();
-
-	Printf ("Checking network game status.\n");
+	Printf ("D_CheckNetGame: Checking network game status.\n");
 	D_CheckNetGame ();
 
 	// [RH] Lock any cvars that should be locked now that we're
@@ -2318,6 +2329,9 @@ void D_DoomMain (void)
 		G_RecordDemo (v);
 		autostart = true;
 	}
+
+	ST_Done();
+	V_Init2();
 
 	files = Args.GatherFiles ("-playdemo", ".lmp", false);
 	if (files->NumArgs() > 0)
@@ -2345,10 +2359,8 @@ void D_DoomMain (void)
 		G_LoadGame (file);
 	}
 
-
 	if (gameaction != ga_loadgame)
 	{
-		BorderNeedRefresh = screen->GetPageCount ();
 		if (autostart || netgame)
 		{
 			CheckWarpTransMap (startmap, true);

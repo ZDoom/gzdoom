@@ -135,8 +135,6 @@ Win32Video::~Win32Video ()
 		D3D = NULL;
 	}
 
-	ShowWindow (Window, SW_HIDE);
-
 	STOPLOG;
 }
 
@@ -396,18 +394,11 @@ void Win32Video::FreeModes ()
 	m_Modes = NULL;
 }
 
-// This only changes how the iterator lists modes
-bool Win32Video::FullscreenChanged (bool fs)
-{
-	LOG1 ("FS-changed: %d\n", fs);
-	m_IteratorFS = fs;
-	return true;
-}
-
-void Win32Video::StartModeIterator (int bits)
+void Win32Video::StartModeIterator (int bits, bool fs)
 {
 	m_IteratorMode = m_Modes;
 	m_IteratorBits = bits;
+	m_IteratorFS = fs;
 }
 
 bool Win32Video::NextMode (int *width, int *height, bool *letterbox)
@@ -528,11 +519,6 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
 	}
 	retry = 0;
-
-	if (fb->IsFullscreen() != fullscreen)
-	{
-		Video->FullscreenChanged (!fullscreen);
-	}
 
 	fb->SetFlash (flashColor, flashAmount);
 

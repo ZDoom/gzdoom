@@ -1,3 +1,35 @@
+December 18, 2006
+- Reorganized the network startup loops so now they are event driven. There is
+  a single function that gets called to drive it, and it uses callbacks to
+  perform the different stages of the synchronization. This lets me have a nice,
+  responsive abort button instead of the previous unannounced hit-escape-to-
+  abort behavior, and I think the rearranged code is slightly easier to
+  understand too.
+- Increased the number of bytes for version info during D_ArbitrateNetStart(),
+  in preparation for the day when NETGAMEVERSION requires more than one byte.
+- I noticed an issue with Vista RC1 and the new fatal error setup. Even after
+  releasing a DirectDraw or Direct3D interface, the DWM can still use the
+  last image drawn using them when it composites the window. It doesn't always
+  do it but it does often enough that it is a real problem. At this point, I
+  don't know if it's a problem with the release version of Vista or not.
+  After messing around, I discovered the problem was caused by ~Win32Video()
+  hiding the window and then having it immediately shown soon after. The DWM
+  kept an image of the window to do the transition effect with, and then when
+  it didn't get a chance to do the transition, it didn't properly forget about
+  its saved image and kept plastering it on top of everything else
+  underneath.
+
+December 16, 2006
+- Added a network synchronization panel to the window during netgame startup.
+- Fixed: PClass::CreateDerivedClass() must initialize StateList to NULL.
+  Otherwise, classic DECORATE definitions generate a big, fat crash.
+- Resurrected the R_Init progress bar, now as a standard Windows control.
+- Removed the sound failure dialog. The FMOD setup already defaulted to no
+  sound if initialization failed, so this only applies when snd_output is set
+  to "alternate" which now also falls back to no sound. In addition, it wasn't
+  working right, and I didn't feel like fixing it for the probably 0% of users
+  it affected.
+
 December 16, 2006 (Changes by Graf Zahl)
 - Fixed: The smartaim logic was incorrect. Also added another mode: Autoaim only
   at monsters.
@@ -16,6 +48,10 @@ December 16, 2006 (Changes by Graf Zahl)
   at friendlies or shootable decorations if there are monsters that can be shot.
 - Added: SetThingSpecial treats a tid of 0 as the activator.
 
+December 15, 2006
+- Fixed: The edit control used for logging output added text in reverse order
+  on Win9x.
+
 December 13, 2006 (Changes by Graf Zahl)
 - Fixed: The particle fountains' names were different than before
 - Fixed: FTexture::CheckForTexture should return NULL if the texture it
@@ -26,6 +62,30 @@ December 13, 2006 (Changes by Graf Zahl)
 December 10, 2006 (Changes by Graf Zahl)
 - Fixed: When a DehackedPickup replacement object is created it must copy
   the state labels of the parent object.
+
+December 9, 2006
+- Went back to the roots and made graphics initialization one of the last
+  things to happen during setup. Now the startup text is visible again. More
+  importantly, the main window is no longer created invisible, which seems
+  to cause trouble with it not always appearing in the taskbar. The fatal
+  error dialog is now also embedded in the main window instead of being a
+  separate modal dialog, so you can play with the log window to see any
+  problems that might be reported there.
+  
+  Rather than completely restoring the original startup order, I tried to
+  keep things as close to the way they were with early graphics startup. In
+  particular, V_Init() now creates a dummy screen so that things that need
+  screen dimensions can get them. It gets replaced by the real screen later
+  in I_InitGraphics(). Will need to check this under Linux to make sure it
+  didn't cause any problems there.
+- Removed the following stubs that just called functions in Video:
+    - I_StartModeIterator()
+    - I_NextMode()
+    - I_DisplayType()
+  I_FullscreenChanged() was also removed, and a new fullscreen parameter
+  was added to IVideo::StartModeIterator(), since that's all it controlled.
+- Renamed I_InitHardware() back to I_InitGraphics(), since that's all it's
+  initialized post-1.22.
 
 December 9, 2006 (Changes by Graf Zahl)
 - Fixed: P_LookForTid should abort its search when it discovers that it has 

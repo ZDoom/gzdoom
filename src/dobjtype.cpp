@@ -237,6 +237,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		info->NumOwnedStates = 0;
 		info->Replacement = NULL;
 		info->Replacee = NULL;
+		info->StateList = NULL;
 		m_RuntimeActors.Push (type);
 	}
 	return type;

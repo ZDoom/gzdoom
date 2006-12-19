@@ -1159,10 +1159,6 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 
 	Decorations.Push (info);
 	MakeStateDefines(parent->ActorInfo->StateList);
-	info->NumOwnedStates = 0;
-	info->OwnedStates = NULL;
-	info->SpawnID = 0;
-	info->StateList = NULL;
 
 	ResetBaggage (bag);
 	bag->Info = info;

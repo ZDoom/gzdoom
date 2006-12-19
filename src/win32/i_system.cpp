@@ -76,7 +76,7 @@ extern "C"
 	CPUInfo		CPU;
 }
 
-extern HWND Window, ConWindow;
+extern HWND Window, ConWindow, GameTitleWindow;
 extern HINSTANCE g_hInst;
 
 UINT TimerPeriod;
@@ -85,6 +85,8 @@ UINT MillisecondsPerTic;
 HANDLE NewTicArrived;
 uint32 LanguageIDs[4];
 void CalculateCPUSpeed ();
+
+const IWADInfo *DoomStartupInfo;
 
 int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
@@ -264,13 +266,19 @@ void I_DetectOS (void)
 		break;
 	}
 
-	Printf ("OS: Windows %s %lu.%lu (Build %lu)\n",
-			osname,
-			info.dwMajorVersion, info.dwMinorVersion,
-			OSPlatform == os_Win95 ? info.dwBuildNumber & 0xffff : info.dwBuildNumber);
-	if (info.szCSDVersion[0])
+	if (OSPlatform == os_Win95)
 	{
-		Printf ("    %s\n", info.szCSDVersion);
+		Printf ("OS: Windows %s %lu.%lu.%lu %s\n",
+				osname,
+				info.dwMajorVersion, info.dwMinorVersion,
+				info.dwBuildNumber & 0xffff, info.szCSDVersion);
+	}
+	else
+	{
+		Printf ("OS: Windows %s %lu.%lu (Build %lu)\n    %s\n",
+				osname,
+				info.dwMajorVersion, info.dwMinorVersion,
+				info.dwBuildNumber, info.szCSDVersion);
 	}
 
 	if (OSPlatform == os_unknown)
@@ -427,8 +435,6 @@ void I_Init (void)
 
 	atterm (I_ShutdownSound);
 	I_InitSound ();
-	I_InitInput (Window);
-	I_InitHardware ();
 }
 
 void CalculateCPUSpeed ()
@@ -547,38 +553,38 @@ void STACK_ARGS I_Error (const char *error, ...)
 	throw CRecoverableError (errortext);
 }
 
-char DoomStartupTitle[256] = { 0 };
+extern void LayoutMainWindow (HWND hWnd, HWND pane);
 
-void I_SetTitleString (const char *title)
+void I_SetIWADInfo (const IWADInfo *info)
 {
-	int i;
+	DoomStartupInfo = info;
 
-	for (i = 0; title[i]; i++)
-		DoomStartupTitle[i] = title[i];
+	// Make the startup banner show itself
+	LayoutMainWindow (Window, NULL);
 }
 
-void I_PrintStr (const char *cp, bool lineBreak)
+void I_PrintStr (const char *cp)
 {
 	if (ConWindow == NULL)
 		return;
 
 	static bool newLine = true;
-	HWND edit = (HWND)(LONG_PTR)GetWindowLongPtr (ConWindow, GWLP_USERDATA);
+	HWND edit = ConWindow;
 	char buf[256];
 	int bpos = 0;
+	INTBOOL visible = GetWindowLongPtr (ConWindow, GWL_STYLE) & WS_VISIBLE;
 
-	int selstart, selend;
-	SendMessage (edit, EM_GETSEL, (WPARAM)&selstart, (LPARAM)&selend);
+	int maxsel, selstart, selend, numlines1, numlines2;
 
-//	SendMessage (edit, EM_SETSEL, (WPARAM)-1, 0);
-	SendMessage (edit, EM_SETSEL, INT_MAX, INT_MAX);
-
-	if (lineBreak && !newLine)
+	if (visible)
 	{
-		buf[0] = '\r';
-		buf[1] = '\n';
-		bpos = 2;
+		SendMessage (edit, WM_SETREDRAW, FALSE, 0);
 	}
+	numlines1 = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
+	maxsel = SendMessage (edit, WM_GETTEXTLENGTH, 0, 0);
+	SendMessage (edit, EM_GETSEL, (WPARAM)&selstart, (LPARAM)&selend);
+	SendMessage (edit, EM_SETSEL, maxsel, maxsel);
+
 	while (*cp != 0)
 	{
 		if (*cp == 28)
@@ -611,6 +617,16 @@ void I_PrintStr (const char *cp, bool lineBreak)
 		newLine = buf[bpos-1] == '\n';
 	}
 	SendMessage (edit, EM_SETSEL, selstart, selend);
+	numlines2 = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
+	if (numlines2 > numlines1)
+	{
+		SendMessage (edit, EM_LINESCROLL, 0, numlines2 - numlines1);
+	}
+	if (visible)
+	{
+		SendMessage (edit, WM_SETREDRAW, TRUE, 0);
+		I_GetEvent ();
+	}
 }
 
 EXTERN_CVAR (Bool, queryiwad);
@@ -664,7 +680,7 @@ BOOL CALLBACK IWADBoxCallback (HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 				filepart = WadList[i].Path;
 			else
 				filepart++;
-			work.Format ("%s (%s)", IWADTypeNames[WadList[i].Type], filepart);
+			work.Format ("%s (%s)", IWADInfos[WadList[i].Type].Name, filepart);
 			SendMessage (ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
 			SendMessage (ctrl, LB_SETITEMDATA, i, (LPARAM)i);
 		}

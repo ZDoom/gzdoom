@@ -198,7 +198,11 @@ bool FCDThread::Init ()
 		return false;
 	}
 
-	SetWindowLongPtr (CD_Window, GWL_USERDATA, (LONG)(LONG_PTR)this);
+#ifdef _WIN64
+	SetWindowLongPtr (CD_Window, GWLP_USERDATA, (LONG_PTR)this);
+#else
+	SetWindowLong (CD_Window, GWL_USERDATA, (LONG)(LONG_PTR)this);
+#endif
 	SetThreadPriority (ThreadHandle, THREAD_PRIORITY_LOWEST);
 	return true;
 }

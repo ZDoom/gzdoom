@@ -51,6 +51,7 @@
 #include "p_acs.h"
 #include "p_trace.h"
 #include "a_sharedglobal.h"
+#include "st_start.h"
 
 int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
 					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net);
@@ -1263,53 +1264,17 @@ void NetUpdate (void)
 }
 
 
-
-//
-// CheckAbort
-//
-bool CheckAbort (void)
-{
-	event_t *ev;
-	bool res = false;
-
-	PrintString (PRINT_HIGH, "");	// [RH] Give the console a chance to redraw itself
-	// This WaitForTic is to avoid flooding the network with packets on startup.
-	I_WaitForTic (I_GetTime (false) + TICRATE/4);
-	I_StartTic ();
-	for ( ; eventtail != eventhead 
-		  ; eventtail = (eventtail+1)&(MAXEVENTS-1) ) 
-	{ 
-		ev = &events[eventtail]; 
-		if (ev->type == EV_KeyDown && ev->data1 == KEY_ESCAPE)
-		{
-			res = true;
-			break;
-		}
-		if (ev->type == EV_GUI_Event &&
-			(ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyRepeat) &&
-			ev->data1 == GK_ESCAPE)
-		{
-			res = true;
-			break;
-		}
-	}
-	eventhead = eventtail = 0;
-	return res;
-}
-
-
 //
 // D_ArbitrateNetStart
 //
 // User info packets look like this:
 //
-//  0 One byte set to NCMD_SETUP or NCMD_SETUP+1
-//    If NCMD_SETUP+1, omit byte 7
+//  0 One byte set to NCMD_SETUP or NCMD_SETUP+1; if NCMD_SETUP+1, omit byte 9
 //  1 One byte for the player's number
-//  2 One byte for the game version
-//3-7 A bit mask for each player the sender knows about
-//    (the high bit of byte 7 indicates the game info was received)
-//  8 A stream of bytes with the user info
+//2-4 Three bytes for the game version (255,high byte,low byte)
+//5-8 A bit mask for each player the sender knows about
+//  9 The high bit is set if the sender got the game info
+// 10 A stream of bytes with the user info
 //
 //    The guests always send NCMD_SETUP packets, and the host always
 //    sends NCMD_SETUP+1 packets.
@@ -1333,15 +1298,158 @@ bool CheckAbort (void)
 // Negotiation is done when all the guests have reported to the host that
 // they know about the other nodes.
 
+struct ArbitrateData
+{
+	DWORD playersdetected[MAXNETNODES];
+	BYTE  gotsetup[MAXNETNODES];
+};
+
+bool DoArbitrate (void *userdata)
+{
+	ArbitrateData *data = (ArbitrateData *)userdata;
+	char *s;
+	BYTE *stream;
+	int version;
+	int node;
+	int i, j;
+
+	while (HGetPacket ())
+	{
+		if (netbuffer[0] == NCMD_EXIT)
+		{
+			I_FatalError ("The game was aborted.");
+		}
+
+		if (doomcom.remotenode == 0)
+		{
+			continue;
+		}
+
+		if (netbuffer[0] == NCMD_SETUP || netbuffer[0] == NCMD_SETUP+1)		// got user info
+		{
+			node = (netbuffer[0] == NCMD_SETUP) ? doomcom.remotenode : nodeforplayer[netbuffer[1]];
+
+			data->playersdetected[node] =
+				(netbuffer[5] << 24) | (netbuffer[6] << 16) | (netbuffer[7] << 8) | netbuffer[8];
+
+			if (netbuffer[0] == NCMD_SETUP)
+			{ // Sent to host
+				data->gotsetup[node] = netbuffer[9] & 0x80;
+				stream = &netbuffer[10];
+			}
+			else
+			{ // Sent from host
+				stream = &netbuffer[9];
+			}
+
+			if (!nodeingame[node])
+			{
+				version = (netbuffer[2] << 16) | (netbuffer[3] << 8) | netbuffer[4];
+				if (version != (0xFF0000 | NETGAMEVERSION))
+				{
+					I_Error ("Different " GAMENAME " versions cannot play a net game");
+				}
+
+				playeringame[netbuffer[1]] = true;
+				nodeingame[node] = true;
+				data->playersdetected[0] |= 1 << netbuffer[1];
+
+				D_ReadUserInfoStrings (netbuffer[1], &stream, false);
+
+				Printf ("Found %s (node %d, player %d)\n",
+						players[netbuffer[1]].userinfo.netname,
+						node, netbuffer[1]+1);
+			}
+		}
+		else if (netbuffer[0] == NCMD_SETUP+2)	// got game info
+		{
+			data->gotsetup[0] = 0x80;
+
+			ticdup = doomcom.ticdup = netbuffer[1];
+			doomcom.extratics = netbuffer[2];
+			NetMode = netbuffer[3];
+
+			stream = &netbuffer[4];
+			s = ReadString (&stream);
+			strncpy (startmap, s, 8);
+			delete[] s;
+			rngseed = ReadLong (&stream);
+			C_ReadCVars (&stream);
+		}
+		else if (netbuffer[0] == NCMD_SETUP+3)
+		{
+			return true;
+		}
+	}
+
+	// If everybody already knows everything, it's time to go
+	if (consoleplayer == Net_Arbitrator)
+	{
+		for (i = 0; i < doomcom.numnodes; ++i)
+			if (data->playersdetected[i] != DWORD(1 << doomcom.numnodes) - 1 || !data->gotsetup[i])
+				break;
+
+		if (i == doomcom.numnodes)
+			return true;
+	}
+
+	netbuffer[2] = 255;
+	netbuffer[3] = (NETGAMEVERSION >> 8) & 255;
+	netbuffer[4] = NETGAMEVERSION & 255;
+	netbuffer[5] = data->playersdetected[0] >> 24;
+	netbuffer[6] = data->playersdetected[0] >> 16;
+	netbuffer[7] = data->playersdetected[0] >> 8;
+	netbuffer[8] = data->playersdetected[0];
+
+	if (consoleplayer != Net_Arbitrator)
+	{ // Send user info for the local node
+		netbuffer[0] = NCMD_SETUP;
+		netbuffer[1] = consoleplayer;
+		netbuffer[9] = data->gotsetup[0];
+		stream = &netbuffer[10];
+		D_WriteUserInfoStrings (consoleplayer, &stream, true);
+		SendSetup (data->playersdetected, data->gotsetup, stream - netbuffer);
+	}
+	else
+	{ // Send user info for all nodes
+		netbuffer[0] = NCMD_SETUP+1;
+		for (i = 1; i < doomcom.numnodes; ++i)
+		{
+			for (j = 0; j < doomcom.numnodes; ++j)
+			{
+				// Send info about player j to player i?
+				if (i != j && (data->playersdetected[0] & (1<<j)) && !(data->playersdetected[i] & (1<<j)))
+				{
+					netbuffer[1] = j;
+					stream = &netbuffer[9];
+					D_WriteUserInfoStrings (j, &stream, true);
+					HSendPacket (i, stream - netbuffer);
+				}
+			}
+		}
+	}
+
+	// If we're the host, send the game info, too
+	if (consoleplayer == Net_Arbitrator)
+	{
+		netbuffer[0] = NCMD_SETUP+2;
+		netbuffer[1] = doomcom.ticdup;
+		netbuffer[2] = doomcom.extratics;
+		netbuffer[3] = NetMode;
+		stream = &netbuffer[4];
+		WriteString (startmap, &stream);
+		WriteLong (rngseed, &stream);
+		C_WriteCVars (&stream, CVAR_SERVERINFO, true);
+
+		SendSetup (data->playersdetected, data->gotsetup, stream - netbuffer);
+	}
+	return false;
+}
+
 void D_ArbitrateNetStart (void)
 {
-	int 		i, j;
-	DWORD	 	playersdetected[MAXNETNODES];
-	BYTE		gotsetup[MAXNETNODES];
-	char		*s;
-	BYTE		*stream;
-	int			node;
-	bool		allset = false;
+	ArbitrateData data;
+	int i;
 
 	// Return right away if we're just playing with ourselves.
 	if (doomcom.numnodes == 1)
@@ -1349,13 +1457,16 @@ void D_ArbitrateNetStart (void)
 
 	autostart = true;
 
-	memset (playersdetected, 0, sizeof(playersdetected));
-	memset (gotsetup, 0, sizeof(gotsetup));
+	memset (data.playersdetected, 0, sizeof(data.playersdetected));
+	memset (data.gotsetup, 0, sizeof(data.gotsetup));
 
 	// Everyone know about themself
-	playersdetected[0] = 1 << consoleplayer;
+	data.playersdetected[0] = 1 << consoleplayer;
 
-	// Assign nodes to players
+	// Assign nodes to players. The local player is always node 0.
+	// If the local player is not the host, then the host is node 1.
+	// Any remaining players are assigned node numbers in the order
+	// they were detected.
 	playerfornode[0] = consoleplayer;
 	nodeforplayer[consoleplayer] = 0;
 	if (consoleplayer == Net_Arbitrator)
@@ -1387,150 +1498,19 @@ void D_ArbitrateNetStart (void)
 
 	if (consoleplayer == Net_Arbitrator)
 	{
-		gotsetup[0] = 0x80;
+		data.gotsetup[0] = 0x80;
 	}
 
-	while (!allset)
+	ST_NetInit ("Exchanging game information", 1);
+	if (!ST_NetLoop (DoArbitrate, &data))
 	{
-		if (CheckAbort ())
-			I_FatalError ("Network game synchronization aborted.");
-
-		I_WaitVBL (1);
-
-		while (HGetPacket ())
-		{
-			if (netbuffer[0] == NCMD_EXIT)
-			{
-				I_FatalError ("The game was aborted\n");
-			}
-
-			if (doomcom.remotenode == 0)
-			{
-				continue;
-			}
-
-			if (netbuffer[0] == NCMD_SETUP || netbuffer[0] == NCMD_SETUP+1)		// got user info
-			{
-				node = (netbuffer[0] == NCMD_SETUP) ? doomcom.remotenode
-					: nodeforplayer[netbuffer[1]];
-
-				playersdetected[node] =
-					(netbuffer[3] << 24) | (netbuffer[4] << 16) | (netbuffer[5] << 8) | netbuffer[6];
-
-				if (netbuffer[0] == NCMD_SETUP)
-				{ // Sent to host
-					gotsetup[node] = netbuffer[7] & 0x80;
-					stream = &netbuffer[8];
-				}
-				else
-				{ // Sent from host
-					stream = &netbuffer[7];
-				}
-
-				if (!nodeingame[node])
-				{
-					if (netbuffer[2] != NETGAMEVERSION)
-						I_Error ("Different DOOM versions cannot play a net game!");
-
-					playeringame[netbuffer[1]] = true;
-					nodeingame[node] = true;
-					playersdetected[0] |= 1 << netbuffer[1];
-
-					D_ReadUserInfoStrings (netbuffer[1], &stream, false);
-
-					Printf ("Found %s (node %d, player %d)\n",
-							players[netbuffer[1]].userinfo.netname,
-							node, netbuffer[1]+1);
-				}
-			}
-			else if (netbuffer[0] == NCMD_SETUP+2)	// got game info
-			{
-				gotsetup[0] = 0x80;
-
-				ticdup = doomcom.ticdup = netbuffer[1];
-				doomcom.extratics = netbuffer[2];
-				NetMode = netbuffer[3];
-
-				stream = &netbuffer[4];
-				s = ReadString (&stream);
-				strncpy (startmap, s, 8);
-				delete[] s;
-				rngseed = ReadLong (&stream);
-				C_ReadCVars (&stream);
-			}
-			else if (netbuffer[0] == NCMD_SETUP+3)
-			{
-				allset = true;
-			}
-		}
-
-		// If everybody already knows everything, it's time to go
-		if (consoleplayer == Net_Arbitrator)
-		{
-			for (i = 0; i < doomcom.numnodes; ++i)
-				if (playersdetected[i] != DWORD(1 << doomcom.numnodes) - 1 || !gotsetup[i])
-					break;
-
-			if (i == doomcom.numnodes)
-				break;
-		}
-
-		netbuffer[2] = NETGAMEVERSION;
-		netbuffer[3] = playersdetected[0] >> 24;
-		netbuffer[4] = playersdetected[0] >> 16;
-		netbuffer[5] = playersdetected[0] >> 8;
-		netbuffer[6] = playersdetected[0];
-
-		if (!allset && consoleplayer != Net_Arbitrator)
-		{ // Send user info for the local node
-			netbuffer[0] = NCMD_SETUP;
-			netbuffer[1] = consoleplayer;
-			netbuffer[7] = gotsetup[0];
-			stream = &netbuffer[8];
-			D_WriteUserInfoStrings (consoleplayer, &stream, true);
-			SendSetup (playersdetected, gotsetup, stream - netbuffer);
-		}
-		else
-		{ // Send user info for all nodes
-			netbuffer[0] = NCMD_SETUP+1;
-			netbuffer[2] = NETGAMEVERSION;
-			for (i = 1; i < doomcom.numnodes; ++i)
-			{
-				for (j = 0; j < doomcom.numnodes; ++j)
-				{
-					// Send info about player j to player i?
-					if (i != j && (playersdetected[0] & (1<<j)) &&
-						!(playersdetected[i] & (1<<j)))
-					{
-						netbuffer[1] = j;
-						stream = &netbuffer[7];
-						D_WriteUserInfoStrings (j, &stream, true);
-						HSendPacket (i, stream - netbuffer);
-					}
-				}
-			}
-		}
-
-		// If we're the host, send the game info, too
-		if (consoleplayer == Net_Arbitrator)
-		{
-			netbuffer[0] = NCMD_SETUP+2;
-			netbuffer[1] = doomcom.ticdup;
-			netbuffer[2] = doomcom.extratics;
-			netbuffer[3] = NetMode;
-			stream = &netbuffer[4];
-			WriteString (startmap, &stream);
-			WriteLong (rngseed, &stream);
-			C_WriteCVars (&stream, CVAR_SERVERINFO, true);
-
-			SendSetup (playersdetected, gotsetup, stream - netbuffer);
-		}
+		exit (0);
 	}
 
 	if (consoleplayer == Net_Arbitrator)
 	{
 		netbuffer[0] = NCMD_SETUP+3;
-		SendSetup (playersdetected, gotsetup, 1);
+		SendSetup (data.playersdetected, data.gotsetup, 1);
 	}
 
 	if (debugfile)
@@ -1540,6 +1520,7 @@ void D_ArbitrateNetStart (void)
 			fprintf (debugfile, "player %d is on node %d\n", i, nodeforplayer[i]);
 		}
 	}
+	ST_NetDone();
 }
 
 static void SendSetup (DWORD playersdetected[MAXNETNODES], BYTE gotsetup[MAXNETNODES], int len)
@@ -1548,7 +1529,7 @@ static void SendSetup (DWORD playersdetected[MAXNETNODES], BYTE gotsetup[MAXNETN
 	{
 		if (playersdetected[1] & (1 << consoleplayer))
 		{
-			HSendPacket (1, 8);
+			HSendPacket (1, 10);
 		}
 		else
 		{

@@ -279,7 +279,6 @@ void S_Init ()
 	int i;
 	int curvelump;
 
-	Printf ("S_Init\n");
 	atterm (S_Shutdown);
 
 	// remove old data (S_Init can be called multiple times!)

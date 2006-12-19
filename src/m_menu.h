@@ -68,6 +68,9 @@ void M_OptDrawer (void);
 // [RH] Initialize options menu
 void M_OptInit (void);
 
+// [RH] Initialize the video modes menu
+void M_InitVideoModesMenu (void);
+
 struct menu_s;
 void M_SwitchMenu (struct menu_s *menu);
 

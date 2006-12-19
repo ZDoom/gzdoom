@@ -62,6 +62,8 @@
 
 IMPLEMENT_CLASS(DDrawFB)
 
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
@@ -228,11 +230,12 @@ bool DDrawFB::CreateResources ()
 
 	BufferCount = 1;
 
+	I_SetWndProc();
+
 	if (!Windowed)
 	{
-		ShowWindow (Window, SW_SHOW);
 		// Remove the window border in fullscreen mode
-		SetWindowLongPtr (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE|WS_SYSMENU);
+		SetWindowLongPtr (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE);
 
 		TrueHeight = Height;
 		for (Win32Video::ModeInfo *mode = static_cast<Win32Video *>(Video)->m_Modes; mode != NULL; mode = mode->next)
@@ -313,7 +316,6 @@ bool DDrawFB::CreateResources ()
 			LOG1 ("SetWindowPos failed because %08lx\n", GetLastError());
 		}
 		VidResizing = false;
-		ShowWindow (Window, SW_SHOWNORMAL);
 
 		// Create the clipper
 		hr = DDraw->CreateClipper (0, &Clipper, NULL);

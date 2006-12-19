@@ -276,6 +276,7 @@ void FActorInfo::StaticInit ()
 		reg->BuildDefaults ();
 	}
 
+	Printf ("LoadDecorations: Load external actors.\n");
 	LoadDecorations (ProcessStates);
 }
 

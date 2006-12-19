@@ -53,10 +53,18 @@
 #include "gi.h"
 #include "cmdlib.h"
 #include "templates.h"
+#include "st_start.h"
 
 static void R_InitPatches ();
-void R_InitBuildTiles();
-void R_DeinitBuildTiles();
+static int R_CountGroup (const char *start, const char *end);
+static int R_CountTexturesX ();
+static int R_CountLumpTextures (int lumpnum);
+
+extern void R_InitBuildTiles();
+extern void R_DeinitBuildTiles();
+extern int R_CountBuildTiles();
+
+
 
 //
 // Graphics.
@@ -289,6 +297,7 @@ void FTextureManager::AddGroup(const char * startlump, const char * endlump, int
 		{
 			CreateTexture (firsttx, usetype);
 		}
+		ST_Progress();
 	}
 }
 
@@ -344,6 +353,7 @@ void FTextureManager::AddHiresTextures ()
 					newtex->TopOffset = Scale(oldtex->TopOffset, newtex->ScaleY, 8);
 					ReplaceTexture(oldtexno, newtex, true);
 				}
+				ST_Progress();
 			}
 		}
 	}
@@ -469,6 +479,7 @@ void FTextureManager::AddPatches (int lumpnum)
 		{
 			CreateTexture (Wads.CheckNumForName (name, ns_patches), FTexture::TEX_WallPatch);
 		}
+		ST_Progress();
 	}
 
 	delete file;
@@ -718,8 +729,10 @@ DWORD R_BlendForColormap (DWORD map)
 void R_InitData ()
 {
 	FTexture::InitGrayMap();
+	ST_Progress();
 	TexMan.AddGroup("S_START", "S_END", ns_sprites, FTexture::TEX_Sprite);
-	R_InitPatches ();
+	R_InitPatches ();	// Initializes "special" textures that have no external references
+	ST_Progress();
 	R_InitTextures ();
 	TexMan.AddGroup("F_START", "F_END", ns_flats, FTexture::TEX_Flat);
 	R_InitBuildTiles ();
@@ -728,10 +741,120 @@ void R_InitData ()
 	TexMan.LoadHiresTex ();
 	TexMan.DefaultTexture = TexMan.CheckForTexture ("-NOFLAT-", FTexture::TEX_Override, 0);
 	V_InitFonts();
-
+	ST_Progress();
 	R_InitColormaps ();
-	C_InitConsole (SCREENWIDTH, SCREENHEIGHT, true);
+	ST_Progress();
 }
+
+//===========================================================================
+//
+// R_GuesstimateNumTextures
+//
+// Returns an estimate of the number of textures R_InitData will have to
+// process. Used by D_DoomMain() when it calls ST_Init().
+//
+//===========================================================================
+
+int R_GuesstimateNumTextures ()
+{
+	int numtex;
+
+	numtex  = R_CountGroup ("S_START", "S_END");
+	numtex += R_CountGroup ("F_START", "F_END");
+	numtex += R_CountGroup ("TX_START", "TX_END");
+	numtex += R_CountGroup ("HI_START", "HI_END");
+	numtex += R_CountBuildTiles ();
+	numtex += R_CountTexturesX ();
+	return numtex;
+}
+
+//===========================================================================
+//
+// R_CountGroup
+//
+//===========================================================================
+
+static int R_CountGroup (const char *start, const char *end)
+{
+	int startl = Wads.CheckNumForName (start);
+	int endl = Wads.CheckNumForName (end);
+
+	if (startl < 0 || endl < 0)
+	{
+		return 0;
+	}
+	else
+	{
+		return endl - startl - 1;
+	}
+}
+
+//===========================================================================
+//
+// R_CountTexturesX
+//
+// See R_InitTextures() for the logic in deciding what lumps to check.
+//
+//===========================================================================
+
+static int R_CountTexturesX ()
+{
+	int lastlump = 0, lump;
+	int texlump1 = -1, texlump2 = -1, texlump1a, texlump2a;
+	int count = 0;
+	int pfile = -1;
+
+	while ((lump = Wads.FindLump ("PNAMES", &lastlump)) != -1)
+	{
+		pfile = Wads.GetLumpFile (lump);
+		count += R_CountLumpTextures (lump);
+		texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, pfile);
+		texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, pfile);
+		count += R_CountLumpTextures (texlump1) - 1;
+		count += R_CountLumpTextures (texlump2) - 1;
+	}
+	texlump1a = Wads.CheckNumForName ("TEXTURE1");
+	texlump2a = Wads.CheckNumForName ("TEXTURE2");
+	if (texlump1a != -1 && (texlump1a == texlump1 || Wads.GetLumpFile (texlump1a) <= pfile))
+	{
+		texlump1a = -1;
+	}
+	if (texlump2a != -1 && (texlump2a == texlump2 || Wads.GetLumpFile (texlump2a) <= pfile))
+	{
+		texlump2a = -1;
+	}
+	count += R_CountLumpTextures (texlump1a) - 1;
+	count += R_CountLumpTextures (texlump2a) - 1;
+
+	return count;
+}
+
+//===========================================================================
+//
+// R_CountLumpTextures
+//
+// Returns the number of patches in a PNAMES/TEXTURE1/TEXTURE2 lump.
+//
+//===========================================================================
+
+static int R_CountLumpTextures (int lumpnum)
+{
+	if (lumpnum >= 0)
+	{
+		FWadLump file = Wads.OpenLumpNum (lumpnum); 
+		DWORD numtex;
+
+		file >> numtex;
+		return numtex >= 0 ? numtex : 0;
+	}
+	return 0;
+}
+
+//===========================================================================
+//
+// R_DeinitData
+//
+//===========================================================================
 
 void R_DeinitData ()
 {
@@ -752,13 +875,15 @@ void R_DeinitData ()
 		free (drawsegs);
 		drawsegs = NULL;
 	}
-
 }
 
+//===========================================================================
 //
 // R_PrecacheLevel
+//
 // Preloads all relevant graphics for the level.
 //
+//===========================================================================
 
 void R_PrecacheLevel (void)
 {

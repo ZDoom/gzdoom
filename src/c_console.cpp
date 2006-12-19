@@ -414,11 +414,6 @@ void C_InitConsole (int width, int height, bool ingame)
 		if (fmtLines)
 			free (fmtLines);
 	}
-
-	if (ingame && gamestate == GS_STARTUP)
-	{
-		C_FullConsole ();
-	}
 }
 
 //==========================================================================
@@ -857,7 +852,7 @@ int PrintString (int printlevel, const char *outline)
 //#endif
 	}
 
-	I_PrintStr (outline, false);
+	I_PrintStr (outline);
 
 	AddToConsole (printlevel, outline);
 	if (vidactive && screen && screen->Font)
@@ -1271,11 +1266,7 @@ void C_DrawConsole ()
 
 		if (ConBottom >= 20)
 		{
-			if (gamestate == GS_STARTUP)
-			{
-				screen->DrawText (CR_GREEN, LEFTMARGIN, bottomline, DoomStartupTitle, TAG_DONE);
-			}
-			else
+			if (gamestate != GS_STARTUP)
 			{
 				// Make a copy of the command line, in case an input event is handled
 				// while we draw the console and it changes.
@@ -1350,9 +1341,7 @@ void C_ToggleConsole ()
 
 void C_HideConsole ()
 {
-	if (gamestate != GS_FULLCONSOLE &&
-		gamestate != GS_STARTUP &&
-		ConsoleState != c_up)
+	if (gamestate != GS_FULLCONSOLE)
 	{
 		ConsoleState = c_up;
 		ConBottom = 0;

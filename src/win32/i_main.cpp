@@ -23,7 +23,7 @@
 
 
 #define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0500
+#define _WIN32_WINNT 0x0501
 #include <windows.h>
 #include <mmsystem.h>
 #include <objbase.h>
@@ -57,14 +57,17 @@
 #include "version.h"
 #include "i_video.h"
 #include "i_sound.h"
+#include "i_input.h"
 #include "autosegs.h"
 #include "w_wad.h"
+#include "templates.h"
 
 #include "stats.h"
-
+#include "st_start.h"
 
 #include <assert.h>
 
+#define WINDOW_TITLE GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")"
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 
 void CreateCrashLog (char *custominfo, DWORD customsize);
@@ -80,15 +83,22 @@ extern EXCEPTION_POINTERS CrashPointers;
 
 DArgs Args;
 
-const char WinClassName[] = "ZDOOM WndClass";
-const char ConClassName[] = "ZDOOM Logview";
+const char WinClassName[] = "ZDoomMainWindow";
 
 HINSTANCE		g_hInst;
-WNDCLASS		WndClass;
-HWND			Window, ConWindow;
 DWORD			SessionID;
 HANDLE			MainThread;
 DWORD			MainThreadID;
+
+// The main window
+HWND			Window;
+
+// The subwindows used for startup and error output
+HWND			ConWindow, GameTitleWindow;
+HWND			ErrorPane, ProgressBar, NetStartPane;
+
+HFONT			GameTitleFont;
+LONG			GameTitleFontHeight;
 
 HMODULE			hwtsapi32;		// handle to wtsapi32.dll
 
@@ -98,6 +108,15 @@ extern HCURSOR TheArrowCursor, TheInvisibleCursor;
 #define MAX_TERMS	32
 void (*TermFuncs[MAX_TERMS])(void);
 static int NumTerms;
+
+//===========================================================================
+//
+// atterm
+//
+// Our own atexit because atexit can be problematic under Linux, though I
+// forget the circumstances that cause trouble.
+//
+//===========================================================================
 
 void atterm (void (*func)(void))
 {
@@ -117,11 +136,25 @@ void atterm (void (*func)(void))
 	TermFuncs[NumTerms++] = func;
 }
 
+//===========================================================================
+//
+// popterm
+//
+// Removes the most recently register atterm function.
+//
+//===========================================================================
+
 void popterm ()
 {
 	if (NumTerms)
 		NumTerms--;
 }
+
+//===========================================================================
+//
+// call_terms
+//
+//===========================================================================
 
 static void STACK_ARGS call_terms (void)
 {
@@ -139,10 +172,26 @@ static int STACK_ARGS NewFailure (size_t size)
 }
 #endif
 
+//===========================================================================
+//
+// UnCOM
+//
+// Called by atterm if CoInitialize() succeeded.
+//
+//===========================================================================
+
 static void UnCOM (void)
 {
 	CoUninitialize ();
 }
+
+//===========================================================================
+//
+// UnWTS
+//
+// Called by atterm if RegisterSessionNotification() succeeded.
+//
+//===========================================================================
 
 static void UnWTS (void)
 {
@@ -159,49 +208,445 @@ static void UnWTS (void)
 	}
 }
 
+//===========================================================================
+//
+// LayoutErrorPane
+//
+// Lays out the error pane to the desired width, returning the required
+// height.
+//
+//===========================================================================
+
+static int LayoutErrorPane (HWND pane, int w)
+{
+	HWND ctl;
+	RECT margin, rectc;
+	int cxicon, cyicon;
+	const char *text;
+	int textheight, textwidth, padding;
+
+	// Determine margin sizes.
+	SetRect (&margin, 7, 7, 0, 0);
+	MapDialogRect (pane, &margin);
+
+	// Get size of icon.
+	cxicon = GetSystemMetrics (SM_CXICON);
+	cyicon = GetSystemMetrics (SM_CYICON);
+
+	// Determine size of text control.
+	text = (const char *)(LONG_PTR)GetWindowLongPtr (pane, DWLP_USER);
+	textwidth = w - margin.left*3 - cxicon;
+	textheight = 0;
+	if (text != NULL)
+	{
+		HWND ctl;
+		HDC dc;
+		HGDIOBJ oldfont;
+		int len;
+
+		ctl = GetDlgItem (pane, IDC_ERRORTEXT);
+		rectc.top = rectc.left = 0;
+		rectc.right = textwidth;
+		rectc.bottom = 0;
+		len = (int)strlen(text);
+		dc = GetDC (pane);
+		oldfont = SelectObject (dc, (HFONT)SendMessage (ctl, WM_GETFONT, 0, 0));
+		DrawText (dc, text, len, &rectc, DT_CALCRECT | DT_EDITCONTROL | DT_NOPREFIX | DT_EXPANDTABS | DT_WORDBREAK | DT_NOCLIP);
+		SelectObject (dc, oldfont);
+		ReleaseDC (pane, dc);
+		textheight = rectc.bottom;
+	}
+
+	// Fill the text box to the determined size. If it is shorter than the icon,
+	// center it vertically.
+	padding = MAX (cyicon - textheight, 0);
+	ctl = GetDlgItem (pane, IDC_ERRORTEXT);
+	MoveWindow (ctl, margin.left*2 + cxicon, margin.top + padding/2, textwidth, textheight, TRUE);
+	InvalidateRect (ctl, NULL, TRUE);
+	textheight += padding;
+
+	// Center the Okay button horizontally, just underneath the text box.
+	ctl = GetDlgItem (pane, IDOK);
+	GetClientRect (ctl, &rectc);	// Find out how big it is.
+	MoveWindow (ctl, (w - rectc.right) / 2, margin.top*2 + textheight, rectc.right, rectc.bottom, TRUE);
+	InvalidateRect (ctl, NULL, TRUE);
+
+	// Return the needed height for this layout
+	return margin.top*3 + textheight + rectc.bottom;
+}
+
+//===========================================================================
+//
+// LayoutNetStartPane
+//
+// Lays out the network startup pane to the specified width, returning
+// its required height.
+//
+//===========================================================================
+
+int LayoutNetStartPane (HWND pane, int w)
+{
+	HWND ctl;
+	RECT margin, rectc;
+	int staticheight, barheight;
+
+	// Determine margin sizes.
+	SetRect (&margin, 7, 7, 0, 0);
+	MapDialogRect (pane, &margin);
+
+	// Stick the message text in the upper left corner.
+	ctl = GetDlgItem (pane, IDC_NETSTARTMESSAGE);
+	GetClientRect (ctl, &rectc);
+	MoveWindow (ctl, margin.left, margin.top, rectc.right, rectc.bottom, TRUE);
+
+	// Stick the count text in the upper right corner.
+	ctl = GetDlgItem (pane, IDC_NETSTARTCOUNT);
+	GetClientRect (ctl, &rectc);
+	MoveWindow (ctl, w - rectc.right - margin.left, margin.top, rectc.right, rectc.bottom, TRUE);
+	staticheight = rectc.bottom;
+
+	// Stretch the progress bar to fill the entire width.
+	ctl = GetDlgItem (pane, IDC_NETSTARTPROGRESS);
+	barheight = GetSystemMetrics (SM_CYVSCROLL);
+	MoveWindow (ctl, margin.left, margin.top*2 + staticheight, w - margin.left*2, barheight, TRUE);
+
+	// Center the abort button underneath the progress bar.
+	ctl = GetDlgItem (pane, IDCANCEL);
+	GetClientRect (ctl, &rectc);
+	MoveWindow (ctl, (w - rectc.right) / 2, margin.top*3 + staticheight + barheight, rectc.right, rectc.bottom, TRUE);
+
+	return margin.top*4 + staticheight + barheight + rectc.bottom;
+}
+
+//===========================================================================
+//
+// LayoutMainWindow
+//
+// Lays out the main window with the game title and log controls and
+// possibly the error pane and progress bar.
+//
+//===========================================================================
+
+void LayoutMainWindow (HWND hWnd, HWND pane)
+{
+	RECT rect;
+	int errorpaneheight = 0;
+	int bannerheight = 0;
+	int progressheight = 0;
+	int netpaneheight = 0;
+	int w, h;
+
+	GetClientRect (hWnd, &rect);
+	w = rect.right;
+	h = rect.bottom;
+
+	if (pane != NULL)
+	{
+		errorpaneheight = LayoutErrorPane (pane, w);
+		SetWindowPos (pane, HWND_TOP, 0, 0, w, errorpaneheight, 0);
+	}
+	if (DoomStartupInfo != NULL)
+	{
+		bannerheight = GameTitleFontHeight + 5;
+		MoveWindow (GameTitleWindow, 0, errorpaneheight, w, bannerheight, TRUE);
+		InvalidateRect (GameTitleWindow, NULL, FALSE);
+	}
+	if (ProgressBar != NULL)
+	{
+		// Base the height of the progress bar on the height of a scroll bar
+		// arrow, just as in the progress bar example.
+		progressheight = GetSystemMetrics (SM_CYVSCROLL);
+		MoveWindow (ProgressBar, 0, h - progressheight, w, progressheight, TRUE);
+	}
+	if (NetStartPane != NULL)
+	{
+		netpaneheight = LayoutNetStartPane (NetStartPane, w);
+		SetWindowPos (NetStartPane, HWND_TOP, 0, h - progressheight - netpaneheight, w, netpaneheight, SWP_SHOWWINDOW);
+		RECT foo;
+		GetClientRect (NetStartPane, &foo);
+		foo.bottom = foo.bottom;;
+	}
+	// The log window uses whatever space is left.
+	MoveWindow (ConWindow, 0, errorpaneheight + bannerheight, w,
+		h - bannerheight - errorpaneheight - progressheight - netpaneheight, TRUE);
+}
+
+//===========================================================================
+//
+// LConProc
+//
+// The main window's WndProc during startup. During gameplay, the WndProc
+// in i_input.cpp is used instead.
+//
+//===========================================================================
+
 LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	LPMINMAXINFO minmax;
 	HWND view;
+	HDC hdc;
+	HBRUSH hbr;
+	HGDIOBJ oldfont;
+	RECT rect;
+	int titlelen;
+	SIZE size;
+	LOGFONT lf;
+	TEXTMETRIC tm;
+	HINSTANCE inst = (HINSTANCE)(LONG_PTR)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+	HFONT font;
+	DRAWITEMSTRUCT *drawitem;
 
 	switch (msg)
 	{
-	case WM_SIZE:
-		if (wParam != SIZE_MAXHIDE && wParam != SIZE_MAXSHOW)
-		{
-			MoveWindow ((HWND)(LONG_PTR)GetWindowLongPtr (hWnd, GWLP_USERDATA),
-				0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
-		}
-		return 0;
-
-	case WM_GETMINMAXINFO:
-		minmax = (LPMINMAXINFO)lParam;
-		minmax->ptMinTrackSize.x *= 10;
-		minmax->ptMinTrackSize.y *= 8;
-		break;
-	
 	case WM_CREATE:
-		view = CreateWindow ("EDIT", NULL,
+		// Create game title static control
+		memset (&lf, 0, sizeof(lf));
+		hdc = GetDC (hWnd);
+		lf.lfHeight = -MulDiv(12, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+		lf.lfCharSet = ANSI_CHARSET;
+		lf.lfWeight = FW_BOLD;
+		lf.lfPitchAndFamily = VARIABLE_PITCH | FF_ROMAN;
+		strcpy (lf.lfFaceName, "Trebuchet MS");
+		GameTitleFont = CreateFontIndirect (&lf);
+
+		font = GameTitleFont != NULL ? GameTitleFont : (HFONT)GetStockObject (DEFAULT_GUI_FONT);
+		oldfont = SelectObject (hdc, font);
+		GetTextMetrics (hdc, &tm);
+		SelectObject (hdc, oldfont);
+		ReleaseDC (hWnd, hdc);
+
+		GameTitleFontHeight = tm.tmHeight;
+
+		// Create log read-only edit control
+		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE, "EDIT", NULL,
 			WS_CHILD | WS_VISIBLE | WS_VSCROLL |
-			ES_LEFT | ES_MULTILINE,
+			ES_LEFT | ES_MULTILINE | WS_CLIPSIBLINGS,
 			0, 0, 0, 0,
-			hWnd, NULL, (HINSTANCE)(LONG_PTR)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+			hWnd, NULL, inst, NULL);
 		if (view == NULL)
 		{
 			return -1;
 		}
-		SetWindowLongPtr (hWnd, GWLP_USERDATA, (LONG_PTR)view);
 		SendMessage (view, WM_SETFONT, (WPARAM)GetStockObject (DEFAULT_GUI_FONT), FALSE);
 		SendMessage (view, EM_SETREADONLY, TRUE, 0);
+		SendMessage (view, EM_SETLIMITTEXT, 0, 0);
+		ConWindow = view;
+
+		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, hWnd, NULL, inst, NULL);
+		if (view == NULL)
+		{
+			return -1;
+		}
+		GameTitleWindow = view;
+
 		return 0;
+
+	case WM_SIZE:
+		if (wParam != SIZE_MAXHIDE && wParam != SIZE_MAXSHOW)
+		{
+			LayoutMainWindow (hWnd, ErrorPane);
+		}
+		return 0;
+
+	case WM_DRAWITEM:
+		if (DoomStartupInfo != NULL)
+		{
+			const PalEntry *c;
+
+			// Draw the game title strip at the top of the window.
+			drawitem = (LPDRAWITEMSTRUCT)lParam;
+
+			// Draw the background.
+			rect = drawitem->rcItem;
+			rect.bottom -= 1;
+			c = (const PalEntry *)&DoomStartupInfo->BkColor;
+			hbr = CreateSolidBrush (RGB(c->r,c->g,c->b));
+			FillRect (drawitem->hDC, &drawitem->rcItem, hbr);
+			DeleteObject (hbr);
+
+			// Calculate width of the title string.
+			SetTextAlign (drawitem->hDC, TA_TOP);
+			oldfont = SelectObject (drawitem->hDC, GameTitleFont != NULL ? GameTitleFont : (HFONT)GetStockObject (DEFAULT_GUI_FONT));
+			titlelen = (int)strlen (DoomStartupInfo->Name);
+			GetTextExtentPoint32 (drawitem->hDC, DoomStartupInfo->Name, titlelen, &size);
+
+			// Draw the title.
+			c = (const PalEntry *)&DoomStartupInfo->FgColor;
+			SetTextColor (drawitem->hDC, RGB(c->r,c->g,c->b));
+			SetBkMode (drawitem->hDC, TRANSPARENT);
+			TextOut (drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, DoomStartupInfo->Name, titlelen);
+			SelectObject (drawitem->hDC, oldfont);
+			return TRUE;
+		}
+		return FALSE;
+
+	case WM_CLOSE:
+		PostQuitMessage (0);
+		break;
+
+	case WM_CTLCOLORSTATIC:
+		return (LRESULT)GetStockObject (WHITE_BRUSH);
+
+	case WM_DESTROY:
+		if (GameTitleFont != NULL)
+		{
+			DeleteObject (GameTitleFont);
+		}
+		break;
 	}
 	return DefWindowProc (hWnd, msg, wParam, lParam);
 }
 
+//===========================================================================
+//
+// ErrorPaneProc
+//
+// DialogProc for the error pane.
+//
+//===========================================================================
+
+INT_PTR CALLBACK ErrorPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	HWND ctl;
+
+	switch (msg)
+	{
+	case WM_INITDIALOG:
+		SetWindowLongPtr (hDlg, DWLP_USER, lParam);
+
+		// Set the static control to the error text.
+		ctl = GetDlgItem (hDlg, IDC_ERRORTEXT);
+		SetWindowText (ctl, (LPCSTR)lParam);
+
+		// Set the icon to the system default error icon.
+		ctl = GetDlgItem (hDlg, IDC_ICONPIC);
+		SendMessage (ctl, STM_SETICON, (WPARAM)LoadIcon (NULL, IDI_ERROR), 0);
+
+		// Appear in the main window.
+		LayoutMainWindow (GetParent (hDlg), hDlg);
+
+		// Make sure the last line of output is visible in the log window.
+		SendMessage (ConWindow, EM_LINESCROLL, 0, SendMessage (ConWindow, EM_GETLINECOUNT, 0, 0) -
+			SendMessage (ConWindow, EM_GETFIRSTVISIBLELINE, 0, 0));
+		return TRUE;
+
+	case WM_COMMAND:
+		// There is only one button, and it's "Ok" and makes us quit.
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			PostQuitMessage (0);
+			return TRUE;
+		}
+		break;
+	}
+	return FALSE;
+}
+
+//===========================================================================
+//
+// I_SetWndProc
+//
+// Sets the main WndProc, hides all the child windows, and starts up
+// in-game input.
+//
+//===========================================================================
+
+void I_SetWndProc()
+{
+	if (GetWindowLongPtr (Window, GWLP_USERDATA) == 0)
+	{
+		SetWindowLongPtr (Window, GWLP_USERDATA, 1);
+		SetWindowLongPtr (Window, GWLP_WNDPROC, (WLONG_PTR)WndProc);
+		ShowWindow (ConWindow, SW_HIDE);
+		ShowWindow (GameTitleWindow, SW_HIDE);
+		I_InitInput (Window);
+	}
+}
+
+//===========================================================================
+//
+// RestoreConView
+//
+// Returns the main window to its startup state.
+//
+//===========================================================================
+
+void RestoreConView()
+{
+	// Make sure the window has a frame in case it was fullscreened.
+	SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
+	if (GetWindowLong (Window, GWL_EXSTYLE) & WS_EX_TOPMOST)
+	{
+		SetWindowPos (Window, HWND_BOTTOM, 0, 0, 512, 384,
+			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE);
+		SetWindowPos (Window, HWND_TOP, 0, 0, 0, 0, SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOSIZE);
+	}
+	else
+	{
+		SetWindowPos (Window, NULL, 0, 0, 512, 384,
+			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
+	}
+
+	SetWindowLongPtr (Window, GWLP_WNDPROC, (WLONG_PTR)LConProc);
+	ShowWindow (ConWindow, SW_SHOW);
+	ShowWindow (GameTitleWindow, SW_SHOW);
+	// Make sure the progress bar isn't visible.
+	ST_Done();
+}
+
+//===========================================================================
+//
+// ShowErrorPane
+//
+// Shows an error message, preferably in the main window, but it can
+// use a normal message box too.
+//
+//===========================================================================
+
+void ShowErrorPane(const char *text)
+{
+	size_t len = strlen(text);
+
+	ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, (LPARAM)text);
+
+	if (ErrorPane == NULL)
+	{
+		MessageBox (Window, text,
+			"ZDOOM Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+	}
+	else
+	{
+		BOOL bRet;
+		MSG msg;
+
+		SetWindowText (Window, "Fatal Error - " WINDOW_TITLE);
+
+		while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
+		{
+			if (bRet == -1)
+			{
+				MessageBox (Window, text,
+					"ZDOOM Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+				return;
+			}
+			else if (!IsDialogMessage (ErrorPane, &msg))
+			{
+				TranslateMessage (&msg);
+				DispatchMessage (&msg);
+			}
+		}
+	}
+}
+
+//===========================================================================
+//
+// DoMain
+//
+//===========================================================================
+
 void DoMain (HINSTANCE hInstance)
 {
 	LONG WinWidth, WinHeight;
-	int height, width;
+	int height, width, x, y;
 	RECT cRect;
 	TIMECAPS tc;
 
@@ -286,16 +731,28 @@ void DoMain (HINSTANCE hInstance)
 		GetModuleFileName (NULL, progdir, 1024);
 		*(strrchr (progdir, '\\') + 1) = 0;
 		FixPathSeperator (progdir);
-
+/*
 		height = GetSystemMetrics (SM_CYFIXEDFRAME) * 2 +
 				GetSystemMetrics (SM_CYCAPTION) + 12 * 32;
 		width  = GetSystemMetrics (SM_CXFIXEDFRAME) * 2 + 8 * 78;
+*/
+		width = 512;
+		height = 384;
+
+		DEVMODE displaysettings = { sizeof(displaysettings) };
+		EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
+		x = (displaysettings.dmPelsWidth - width) / 2;
+		y = (displaysettings.dmPelsHeight - height) / 2;
+#if _DEBUG
+		x = y = 0;
+#endif
 
 		TheInvisibleCursor = LoadCursor (hInstance, MAKEINTRESOURCE(IDC_INVISIBLECURSOR));
 		TheArrowCursor = LoadCursor (NULL, IDC_ARROW);
 
+		WNDCLASS WndClass;
 		WndClass.style			= 0;
-		WndClass.lpfnWndProc	= WndProc;
+		WndClass.lpfnWndProc	= LConProc;
 		WndClass.cbClsExtra		= 0;
 		WndClass.cbWndExtra		= 0;
 		WndClass.hInstance		= hInstance;
@@ -310,10 +767,12 @@ void DoMain (HINSTANCE hInstance)
 			I_FatalError ("Could not register window class");
 		
 		/* create window */
-		Window = CreateWindow((LPCTSTR)WinClassName,
-				(LPCTSTR) GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")",
-				WS_OVERLAPPEDWINDOW,
-				0/*CW_USEDEFAULT*/, 1/*CW_USEDEFAULT*/, width, height,
+		Window = CreateWindowEx(
+				WS_EX_APPWINDOW,
+				(LPCTSTR)WinClassName,
+				(LPCTSTR)WINDOW_TITLE,
+				WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
+				x, y, width, height,
 				(HWND)   NULL,
 				(HMENU)  NULL,
 						hInstance,
@@ -321,20 +780,6 @@ void DoMain (HINSTANCE hInstance)
 
 		if (!Window)
 			I_FatalError ("Could not open window");
-
-		WndClass.lpfnWndProc = LConProc;
-		WndClass.lpszClassName = (LPCTSTR)ConClassName;
-		if (RegisterClass ((LPWNDCLASS)&WndClass))
-		{
-			ConWindow = CreateWindowEx (
-				WS_EX_PALETTEWINDOW & (~WS_EX_TOPMOST),
-				(LPCTSTR)ConClassName,
-				(LPCTSTR) "ZDoom Startup Viewer",
-				WS_OVERLAPPEDWINDOW/* | WS_VISIBLE*/,
-				CW_USEDEFAULT, CW_USEDEFAULT,
-				512, 384,
-				Window, NULL, hInstance, NULL);
-		}
 
 		if (kernel != 0)
 		{
@@ -378,18 +823,23 @@ void DoMain (HINSTANCE hInstance)
 	}
 	catch (class CDoomError &error)
 	{
-		I_ShutdownHardware ();
-		SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
-		if (ConWindow != NULL)
-		{
-			ShowWindow (ConWindow, SW_SHOW);
-		}
+		I_ShutdownGraphics ();
+		RestoreConView ();
 		if (error.GetMessage ())
-			MessageBox (Window, error.GetMessage(),
-				"ZDOOM Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+		{
+			ShowErrorPane (error.GetMessage());
+		}
 		exit (-1);
 	}
 }
+
+//===========================================================================
+//
+// DoomSpecificInfo
+//
+// Called by the crash logger to get application-specific information.
+//
+//===========================================================================
 
 void DoomSpecificInfo (char *buffer)
 {
@@ -459,26 +909,51 @@ extern FILE *Logfile;
 // To make this work with MinGW, you will need to use inline assembly
 // because GCC offers no native support for Windows' SEH.
 
+//===========================================================================
+//
+// SleepForever
+//
+//===========================================================================
+
 void SleepForever ()
 {
 	Sleep (INFINITE);
 }
 
+//===========================================================================
+//
+// ExitMessedUp
+//
+// An exception occurred while exiting, so don't do any standard processing.
+// Just die.
+//
+//===========================================================================
+
 LONG WINAPI ExitMessedUp (LPEXCEPTION_POINTERS foo)
 {
-	// An exception occurred while exiting, so don't do any
-	// standard processing. Just die.
 	ExitProcess (1000);
 }
+
+//===========================================================================
+//
+// ExitFatally
+//
+//===========================================================================
 
 void CALLBACK ExitFatally (ULONG_PTR dummy)
 {
 	SetUnhandledExceptionFilter (ExitMessedUp);
-	I_ShutdownHardware ();
-	SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
+	I_ShutdownGraphics ();
+	RestoreConView ();
 	DisplayCrashLog ();
 	exit (-1);
 }
+
+//===========================================================================
+//
+// CatchAllExceptions
+//
+//===========================================================================
 
 LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 {
@@ -514,6 +989,15 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	return EXCEPTION_CONTINUE_EXECUTION;
 }
 
+//===========================================================================
+//
+// infiniterecursion
+//
+// Debugging routine for testing the crash logger.
+//
+//===========================================================================
+
+#ifdef _DEBUG
 static void infiniterecursion(int foo)
 {
 	if (foo)
@@ -521,6 +1005,13 @@ static void infiniterecursion(int foo)
 		infiniterecursion(foo);
 	}
 }
+#endif
+
+//===========================================================================
+//
+// WinMain
+//
+//===========================================================================
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
@@ -584,8 +1075,19 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	return 0;
 }
 
+//===========================================================================
+//
+// CCMD crashout
+//
+// Debugging routine for testing the crash logger.
+// Useless in a debug build, because that doesn't enable the crash logger.
+//
+//===========================================================================
+
+#ifndef _DEBUG
 #include "c_dispatch.h"
 CCMD (crashout)
 {
 	*(int *)0 = 0;
 }
+#endif

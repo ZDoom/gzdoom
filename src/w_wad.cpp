@@ -1691,7 +1691,7 @@ FWadLump FWadCollection::OpenLumpNum (int lump)
 
 	if ((unsigned)lump >= (unsigned)LumpInfo.Size())
 	{
-		I_Error ("W_MapLumpNum: %u >= NumLumps",lump);
+		I_Error ("W_OpenLumpNum: %u >= NumLumps", lump);
 	}
 
 	l = &LumpInfo[lump];
@@ -1773,7 +1773,7 @@ FWadLump *FWadCollection::ReopenLumpNum (int lump)
 
 	if ((unsigned)lump >= (unsigned)LumpInfo.Size())
 	{
-		I_Error ("W_MapLumpNum: %u >= NumLumps",lump);
+		I_Error ("W_ReopenLumpNum: %u >= NumLumps", lump);
 	}
 
 	l = &LumpInfo[lump];

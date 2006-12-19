@@ -294,6 +294,9 @@ extern "C" DWORD *Col2RGB8_LessPrecision[65];
 // Allocates buffer screens, call before R_Init.
 void V_Init ();
 
+// Initializes graphics mode for the first time.
+void V_Init2 ();
+
 void V_Shutdown ();
 
 void V_MarkRect (int x, int y, int width, int height);

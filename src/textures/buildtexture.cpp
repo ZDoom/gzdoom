@@ -39,6 +39,7 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "cmdlib.h"
+#include "st_start.h"
 
 static TArray<BYTE *> BuildTileFiles;
 
@@ -97,7 +98,13 @@ const BYTE *FBuildTexture::GetColumn (unsigned int column, const Span **spans_ou
 	return Pixels + column*Height;
 }
 
-
+//===========================================================================
+//
+// AddTiles
+//
+// Adds all the tiles in an artfile to the texture manager.
+//
+//===========================================================================
 
 static void AddTiles (void *tiles)
 {
@@ -131,6 +138,7 @@ static void AddTiles (void *tiles)
 			tiledata++;
 			size--;
 		}
+		ST_Progress();
 
 		if ((picanm[pic] & 63) && (picanm[pic] & 192))
 		{
@@ -194,17 +202,44 @@ static void AddTiles (void *tiles)
 	}
 }
 
+//===========================================================================
 //
-// R_InitBuildTiles
+// CountTiles
 //
-// [RH] Support Build tiles!
+// Returns the number of tiles provided by an artfile
 //
+//===========================================================================
 
-void R_InitBuildTiles ()
+static int CountTiles (void *tiles)
+{
+	int version = LittleLong(*(DWORD *)tiles);
+	if (version != 1)
+	{
+		return 0;
+	}
+
+	int tilestart = LittleLong(((DWORD *)tiles)[2]);
+	int tileend = LittleLong(((DWORD *)tiles)[3]);
+
+	return tileend >= tilestart ? tileend - tilestart + 1 : 0;
+}
+
+//===========================================================================
+//
+// R_CountBuildTiles
+//
+// Returns the number of tiles found. Also loads all the data for
+// R_InitBuildTiles() to process later.
+//
+//===========================================================================
+
+int R_CountBuildTiles ()
 {
 	int numartfiles = 0;
 	char artfile[] = "tilesXXX.art";
 	int lumpnum;
+	int numtiles;
+	int totaltiles = 0;
 
 	lumpnum = Wads.CheckNumForFullName ("blood.pal");
 	if (lumpnum >= 0)
@@ -238,14 +273,14 @@ void R_InitBuildTiles ()
 
 			size_t len = Q_filelength (f);
 			BYTE *art = new BYTE[len];
-			if (fread (art, 1, len, f) != len || LittleLong(*(DWORD *)art) != 1)
+			if (fread (art, 1, len, f) != len || (numtiles = CountTiles(art)) == 0)
 			{
 				delete[] art;
 			}
 			else
 			{
 				BuildTileFiles.Push (art);
-				AddTiles (art);
+				totaltiles += numtiles;
 			}
 			fclose (f);
 		}
@@ -265,17 +300,40 @@ void R_InitBuildTiles ()
 		BYTE *art = new BYTE[Wads.LumpLength (lumpnum)];
 		Wads.ReadLump (lumpnum, art);
 
-		if (LittleLong(*(DWORD *)art) != 1)
+		if ((numtiles = CountTiles(art)) == 0)
 		{
 			delete[] art;
 		}
 		else
 		{
 			BuildTileFiles.Push (art);
-			AddTiles (art);
+			totaltiles += numtiles;
 		}
 	}
+	return totaltiles;
 }
+
+//===========================================================================
+//
+// R_InitBuildTiles
+//
+// [RH] Support Build tiles!
+//
+//===========================================================================
+
+void R_InitBuildTiles ()
+{
+	for (unsigned int i = 0; i < BuildTileFiles.Size(); ++i)
+	{
+		AddTiles (BuildTileFiles[i]);
+	}
+}
+
+//===========================================================================
+//
+// R_DeinitBuildTiles
+//
+//===========================================================================
 
 void R_DeinitBuildTiles ()
 {
@@ -285,4 +343,3 @@ void R_DeinitBuildTiles ()
 	}
 	BuildTileFiles.Clear();
 }
-

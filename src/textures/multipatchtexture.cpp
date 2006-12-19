@@ -39,6 +39,7 @@
 #include "w_wad.h"
 #include "i_system.h"
 #include "gi.h"
+#include "st_start.h"
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a
 // 4-byte boundary causes unaligned access warnings. Why it does this at
@@ -511,6 +512,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int p
 				tex->UseType = FTexture::TEX_Null;
 			}
 			TexMan.AddTexture (tex);
+			ST_Progress();
 		}
 	}
 }

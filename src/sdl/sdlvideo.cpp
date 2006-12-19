@@ -140,17 +140,11 @@ SDLVideo::~SDLVideo ()
 {
 }
 
-// This only changes how the iterator lists modes
-bool SDLVideo::FullscreenChanged (bool fs)
-{
-	IteratorFS = fs;
-	return true;
-}
-
-void SDLVideo::StartModeIterator (int bits)
+void SDLVideo::StartModeIterator (int bits, bool fs)
 {
 	IteratorMode = 0;
 	IteratorBits = bits;
+	IteratorFS = fs;
 }
 
 bool SDLVideo::NextMode (int *width, int *height, bool *letterbox)
@@ -254,11 +248,6 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 
 		++retry;
 		fb = static_cast<SDLFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
-	}
-
-	if (fb->IsFullscreen() != fullscreen)
-	{
-		Video->FullscreenChanged (!fullscreen);
 	}
 
 	fb->SetFlash (flashColor, flashAmount);

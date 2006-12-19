@@ -179,10 +179,11 @@ void addterm (void (*func)(void), const char *name);
 void popterm ();
 
 // Print a console string
-void I_PrintStr (const char *str, bool scroll);
+void I_PrintStr (const char *str);
 
 // Set the title string of the startup window
-void I_SetTitleString (const char *title);
+struct IWADInfo;
+void I_SetIWADInfo (const IWADInfo *info);
 
 // Pick from multiple IWADs to use
 int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
@@ -192,10 +193,6 @@ bool I_WriteIniFailed ();
 
 // [RH] Returns millisecond-accurate time
 unsigned int I_MSTime (void);
-
-// [RH] Title string to display at bottom of console during startup
-extern char DoomStartupTitle[256];
-
 
 
 // Directory searching routines

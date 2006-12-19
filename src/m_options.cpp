@@ -75,6 +75,7 @@
 #include "doomstat.h"
 
 #include "m_misc.h"
+#include "hardware.h"
 
 // Data.
 #include "m_menu.h"
@@ -917,7 +918,6 @@ CUSTOM_CVAR (Bool, vid_tft, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 			menu_screenratios = 0;
 		}
 	}
-	BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 }
 
 /*=======================================
@@ -1211,39 +1211,6 @@ static BYTE BitTranslate[16];
 
 void M_OptInit (void)
 {
-	int dummy1, dummy2;
-	size_t currval = 0;
-	char name[24];
-
-	for (unsigned int i = 1; i < 32 && currval < countof(Depths); i++)
-	{
-		I_StartModeIterator (i);
-		if (I_NextMode (&dummy1, &dummy2, NULL))
-		{
-			Depths[currval].value = currval;
-			sprintf (name, "%d bit", i);
-			Depths[currval].name = copystring (name);
-			BitTranslate[currval] = i;
-			currval++;
-		}
-	}
-
-	//ModesItems[VM_DEPTHITEM].b.min = (float)currval;
-
-	switch (I_DisplayType ())
-	{
-	case DISPLAY_FullscreenOnly:
-		ModesItems[2].type = nochoice;
-		ModesItems[2].b.min = 1.f;
-		break;
-	case DISPLAY_WindowOnly:
-		ModesItems[2].type = nochoice;
-		ModesItems[2].b.min = 0.f;
-		break;
-	default:
-		break;
-	}
-
 	if (gameinfo.gametype == GAME_Doom)
 	{
 		LabelColor = CR_UNTRANSLATED;
@@ -1261,6 +1228,44 @@ void M_OptInit (void)
 		LabelColor = CR_RED;
 		ValueColor = CR_UNTRANSLATED;
 		MoreColor = CR_UNTRANSLATED;
+	}
+}
+
+void M_InitVideoModesMenu ()
+{
+	int dummy1, dummy2;
+	size_t currval = 0;
+	char name[24];
+
+	M_RefreshModesList();
+
+	for (unsigned int i = 1; i < 32 && currval < countof(Depths); i++)
+	{
+		Video->StartModeIterator (i, screen->IsFullscreen());
+		if (Video->NextMode (&dummy1, &dummy2, NULL))
+		{
+			Depths[currval].value = currval;
+			sprintf (name, "%d bit", i);
+			Depths[currval].name = copystring (name);
+			BitTranslate[currval] = i;
+			currval++;
+		}
+	}
+
+	//ModesItems[VM_DEPTHITEM].b.min = (float)currval;
+
+	switch (Video->GetDisplayType ())
+	{
+	case DISPLAY_FullscreenOnly:
+		ModesItems[2].type = nochoice;
+		ModesItems[2].b.min = 1.f;
+		break;
+	case DISPLAY_WindowOnly:
+		ModesItems[2].type = nochoice;
+		ModesItems[2].b.min = 0.f;
+		break;
+	default:
+		break;
 	}
 }
 
@@ -2807,14 +2812,17 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 	}
 	showbits = BitTranslate[DummyDepthCvar];
 
-	I_StartModeIterator (showbits);
+	if (Video != NULL)
+	{
+		Video->StartModeIterator (showbits, screen->IsFullscreen());
+	}
 
 	for (i = VM_RESSTART; ModesItems[i].type == screenres; i++)
 	{
 		ModesItems[i].e.highlight = -1;
 		for (c = 0; c < 3; c++)
 		{
-			bool haveMode;
+			bool haveMode = false;
 
 			switch (c)
 			{
@@ -2822,9 +2830,12 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 			case 1:  str = &ModesItems[i].c.res2; break;
 			case 2:  str = &ModesItems[i].d.res3; break;
 			}
-			while ((haveMode = I_NextMode (&width, &height, &letterbox)) &&
-				(ratiomatch >= 0 && CheckRatio (width, height) != ratiomatch))
+			if (Video != NULL)
 			{
+				while ((haveMode = Video->NextMode (&width, &height, &letterbox)) &&
+					(ratiomatch >= 0 && CheckRatio (width, height) != ratiomatch))
+				{
+				}
 			}
 
 			if (haveMode)

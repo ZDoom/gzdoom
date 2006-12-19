@@ -186,10 +186,11 @@ void popterm ();
 void I_PaintConsole (void);
 
 // Print a console string
-void I_PrintStr (const char *cp, bool lineBreak);
+void I_PrintStr (const char *cp);
 
 // Set the title string of the startup window
-void I_SetTitleString (const char *title);
+struct IWADInfo;
+void I_SetIWADInfo (const IWADInfo *title);
 
 // Pick from multiple IWADs to use
 int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
@@ -200,9 +201,20 @@ bool I_WriteIniFailed ();
 // [RH] Returns millisecond-accurate time
 unsigned int I_MSTime (void);
 
-// [RH] Title string to display at bottom of console during startup
-extern char DoomStartupTitle[256];
+// [RH] Title banner to display during startup
+extern const IWADInfo *DoomStartupInfo;
 
+// [RH] Used by the display code to set the normal window procedure
+void I_SetWndProc();
+
+// Damn Microsoft for doing Get/SetWindowLongPtr half-assed. Instead of
+// giving them proper prototypes under Win32, they are just macros for
+// Get/SetWindowLong, meaning they take LONGs and not LONG_PTRs.
+#ifdef _WIN64
+typedef long long WLONG_PTR;
+#else
+typedef _W64 long WLONG_PTR;
+#endif
 
 // Directory searching routines
 

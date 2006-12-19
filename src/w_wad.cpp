@@ -283,7 +283,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 	LumpRecord lump;
 
 	lump.fullname = copystring(filename);
-	lump.name[0]=0;
+	memset(lump.name, 0, sizeof(lump.name));
 	lump.wadnum=-1;
 	lump.flags = LUMPF_EXTERNAL;
 	lump.position = 0;

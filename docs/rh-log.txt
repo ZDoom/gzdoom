@@ -1,3 +1,10 @@
+December 19, 2006 (Changes by Graf Zahl)
+- Fixed: Inventory.Icon printed error message for all the missing icons in 
+  Strife's teaser.
+- Fixed: st_start.cpp needed a 
+  #define _WIN32_WINNT 0x0501.
+- Fixed a few uninitialized variables warnings for GCC.
+
 December 18, 2006
 - Reorganized the network startup loops so now they are event driven. There is
   a single function that gets called to drive it, and it uses callbacks to

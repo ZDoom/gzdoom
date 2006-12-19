@@ -845,7 +845,7 @@ private:
 					FaceIndex = CalcPainOffset() + ST_OUCHOFFSET;
 					FacePriority = 8;
 				}
-				else
+				else if (CPlayer->mo != NULL)
 				{
 					badguyangle = R_PointToAngle2(CPlayer->mo->x,
 												  CPlayer->mo->y,

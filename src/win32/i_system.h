@@ -212,8 +212,10 @@ void I_SetWndProc();
 // Get/SetWindowLong, meaning they take LONGs and not LONG_PTRs.
 #ifdef _WIN64
 typedef long long WLONG_PTR;
-#else
+#elif _MSC_VER
 typedef _W64 long WLONG_PTR;
+#else
+typedef long WLONG_PTR;
 #endif
 
 // Directory searching routines

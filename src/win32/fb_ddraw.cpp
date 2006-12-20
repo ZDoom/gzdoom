@@ -230,8 +230,6 @@ bool DDrawFB::CreateResources ()
 
 	BufferCount = 1;
 
-	I_SetWndProc();
-
 	if (!Windowed)
 	{
 		// Remove the window border in fullscreen mode

@@ -110,6 +110,7 @@ Win32Video::Win32Video (int parm)
 : m_Modes (NULL),
   m_IsFullscreen (false)
 {
+	I_SetWndProc();
 	if (!InitD3D9())
 	{
 		InitDDraw();

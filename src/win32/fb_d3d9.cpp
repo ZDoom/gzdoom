@@ -277,7 +277,6 @@ void D3DFB::FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, b
 
 bool D3DFB::CreateResources ()
 {
-	I_SetWndProc();
 	if (!Windowed)
 	{
 		// Remove the window border in fullscreen mode
@@ -373,6 +372,14 @@ bool D3DFB::Reset ()
 	{
 		return false;
 	}
+	if (OffByOneAt < 256)
+	{
+		D3DDevice->SetSamplerState (1, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
+		D3DDevice->SetSamplerState (1, D3DSAMP_BORDERCOLOR,
+			D3DCOLOR_XRGB(GammaTable[SourcePalette[255].r],
+						  GammaTable[SourcePalette[255].g],
+						  GammaTable[SourcePalette[255].b]));
+	}
 	return true;
 }
 
@@ -383,7 +390,7 @@ bool D3DFB::Reset ()
 // Since NVidia hardware has an off-by-one error in the pixel shader.
 // On a Geforce 7950GT and a 6200, I have witnessed it skip palette entry
 // 240. I have a report that an FX card skips in a totally different spot.
-// So rather than try and detect it in the shader, we do it here and
+// So rather than try and correct it in the shader, we detect it here and
 // compensate when uploading the palette and when drawing by setting the
 // sampler mode for the palette to border and making the border color the
 // final color in the palette.

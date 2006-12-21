@@ -173,7 +173,7 @@ private: \
 // Taking the address of a field in an object at address 1 instead of
 // address 0 keeps GCC from complaining about possible misuse of offsetof.
 #define DECLARE_POINTER(field)	(size_t)&((ThisClass*)1)->field - 1,
-#define END_POINTERS			~0 };
+#define END_POINTERS			~(size_t)0 };
 
 #if defined(_MSC_VER)
 #	pragma data_seg(".creg$u")
@@ -289,12 +289,12 @@ public:
 protected:
 	// This form of placement new and delete is for use *only* by PClass's
 	// CreateNew() method. Do not use them for some other purpose.
-	void *operator new(size_t len, EInPlace *mem)
+	void *operator new(size_t, EInPlace *mem)
 	{
 		return (void *)mem;
 	}
 
-	void operator delete (void *mem, EInPlace *foo)
+	void operator delete (void *mem, EInPlace *)
 	{
 		free (mem);
 	}

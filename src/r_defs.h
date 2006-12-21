@@ -720,7 +720,7 @@ public:
 			{
 				totexnum = fromtexnum;
 			}
-			Translation[fromtexnum] = totexnum;
+			Translation[fromtexnum] = WORD(totexnum);
 		}
 	}
 

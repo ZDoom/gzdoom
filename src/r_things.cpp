@@ -105,9 +105,9 @@ size_t			numskins;
 BYTE			OtherGameSkinRemap[256];
 
 // [RH] particle globals
-int				NumParticles;
-int				ActiveParticles;
-int				InactiveParticles;
+WORD			NumParticles;
+WORD			ActiveParticles;
+WORD			InactiveParticles;
 particle_t		*Particles;
 
 CVAR (Bool, r_particles, true, 0);

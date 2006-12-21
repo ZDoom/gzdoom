@@ -715,13 +715,10 @@ static void WI_DrawCharPatch (FTexture *patch, int x, int y)
 
 int WI_DrawName(int y,const char * levelname, bool nomove=false)
 {
-	int i,len=0;
+	int i;
 	size_t l;
 	const char * p;
 	int h=0;
-	int lastlinelen=0;
-	int lastindex=0;
-	int firstindex=0;
 	int lumph;
 
 	lumph=BigFont->GetHeight();

@@ -604,8 +604,6 @@ void RestoreConView()
 
 void ShowErrorPane(const char *text)
 {
-	size_t len = strlen(text);
-
 	ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, (LPARAM)text);
 
 	if (ErrorPane == NULL)
@@ -649,6 +647,7 @@ void DoMain (HINSTANCE hInstance)
 	int height, width, x, y;
 	RECT cRect;
 	TIMECAPS tc;
+	DEVMODE displaysettings;
 
 	try
 	{
@@ -739,7 +738,10 @@ void DoMain (HINSTANCE hInstance)
 		width = 512;
 		height = 384;
 
-		DEVMODE displaysettings = { sizeof(displaysettings) };
+		// Many Windows structures that specify their size do so with the first
+		// element. DEVMODE is not one of those structures.
+		memset (&displaysettings, 0, sizeof(displaysettings));
+		displaysettings.dmSize = sizeof(displaysettings);
 		EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
 		x = (displaysettings.dmPelsWidth - width) / 2;
 		y = (displaysettings.dmPelsHeight - height) / 2;

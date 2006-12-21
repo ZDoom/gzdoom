@@ -290,6 +290,4 @@ DWORD FHelperThread::ThreadLoop ()
 			DefaultDispatch ();
 		}
 	}
-
-	return 0;
 }

@@ -211,7 +211,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 
 	for (i = 0; i < 256; i++)
 	{
-		GammaTable[i] = i;
+		GammaTable[i] = (BYTE)i;
 	}
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 
@@ -439,9 +439,9 @@ void D3DFB::DoOffByOneCheck ()
 	{
 		for (i = 0; i < 256; ++i)
 		{
-			Pal32[i][0] = (i & 0x03) << 6;		// blue
-			Pal32[i][1] = (i & 0x1C) << 3;		// green
-			Pal32[i][2] = (i & 0xE0);			// red;
+			Pal32[i][0] = BYTE(i & 0x03) << 6;		// blue
+			Pal32[i][1] = BYTE(i & 0x1C) << 3;		// green
+			Pal32[i][2] = BYTE(i & 0xE0);			// red;
 			Pal32[i][3] = 255;
 		}
 	}
@@ -449,9 +449,9 @@ void D3DFB::DoOffByOneCheck ()
 	{
 		for (i = 0; i < 256; ++i)
 		{
-			Pal16[i] = ((i & 0xE0) << 8) |		// red
-					   ((i & 0x1C) << 6) |		// green
-					   ((i & 0x03) << 3);		// blue
+			Pal16[i] = WORD((i & 0xE0) << 8) |		// red
+						   ((i & 0x1C) << 6) |		// green
+						   ((i & 0x03) << 3);		// blue
 		}
 	}
 	// Upload the palette
@@ -469,7 +469,7 @@ void D3DFB::DoOffByOneCheck ()
 	{
 		for (i = 0; i < 256; ++i)
 		{
-			((BYTE *)lockrect.pBits)[i] = i;
+			((BYTE *)lockrect.pBits)[i] = (BYTE)i;
 		}
 		FBTexture->UnlockRect (0);
 	}
@@ -713,10 +713,6 @@ void D3DFB::Unlock ()
 
 void D3DFB::Update ()
 {
-	bool pchanged = false;
-
-	LOG3 ("Update     <%d,%c:%d>\n", LockCount, AppActive?'Y':'N', SessionState);
-
 	if (LockCount != 1)
 	{
 		//I_FatalError ("Framebuffer must have exactly 1 lock to be updated");

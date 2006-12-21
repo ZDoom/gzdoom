@@ -1,3 +1,12 @@
+December 20, 2006
+- Turned on warning level 4 just to see what it would produce: a lot of
+  warnings. At first, I was going to try and clean them all up. Then I decided
+  that was a worthless cause and went about just acting on the ones that
+  might actually be helpful:
+   C4189 (local variable is initialized but not referenced)
+   C4702 (unreachable code)
+   C4512 (assignment operator could not be generated)
+
 December 19, 2006
 - Fixed: D3DFB::Reset() also needs to restore the texture border color,
   otherwise it gets reset to black and unused. 

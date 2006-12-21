@@ -1464,11 +1464,6 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 			srcplane->d = -TMulScale16 (srcplane->a, x,
 										srcplane->b, y,
 										srcplane->c, z);
-
-			int v=srcplane->ZatPoint(x,y);
-			int w=srcplane->ZatPoint(l->v1->x,l->v1->y);
-			int x=srcplane->ZatPoint(l->v2->x,l->v2->y);
-
 			return;
 		}
 	}

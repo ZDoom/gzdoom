@@ -200,8 +200,6 @@ void FBaseStatusBar::SetScaled (bool scale)
 	}
 	else
 	{
-		bool wide = !(CheckRatio (SCREENWIDTH, SCREENHEIGHT) & 3);
-		int basewidth = wide ? 1280 : 960;
 		ST_X = 0;
 		ST_Y = 200 - RelTop;
 		::ST_Y = Scale (ST_Y, SCREENHEIGHT, 200);

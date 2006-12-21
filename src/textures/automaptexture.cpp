@@ -46,7 +46,7 @@ bool FAutomapTexture::Check(FileReader & data)
 	return true;
 }
 
-FTexture *FAutomapTexture::Create(FileReader & file, int lumpnum)
+FTexture *FAutomapTexture::Create(FileReader &, int lumpnum)
 {
 	return new FAutomapTexture(lumpnum);
 }
@@ -55,7 +55,7 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 : Pixels(NULL), LumpNum(lumpnum)
 {
 	Width = 320;
-	Height = Wads.LumpLength(lumpnum) / 320;
+	Height = WORD(Wads.LumpLength(lumpnum) / 320);
 	CalcBitSize ();
 
 	DummySpan[0].TopOffset = 0;

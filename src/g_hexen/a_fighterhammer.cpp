@@ -132,6 +132,7 @@ END_DEFAULTS
 void AHammerMissile::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
 {
 	damage = 128;
+	dist;
 	hurtSource = false;
 }
 

@@ -27,11 +27,11 @@
 //
 // Globally visible constants.
 //
-const BYTE HU_FONTSTART = '!';	// the first font characters
-const BYTE HU_FONTEND   = 'ß';	// the last font characters
+#define HU_FONTSTART	BYTE('!')		// the first font characters
+#define HU_FONTEND		BYTE('ß')		// the last font characters
 
 // Calculate # of glyphs in font.
-const int HU_FONTSIZE = HU_FONTEND - HU_FONTSTART + 1;
+#define HU_FONTSIZE		(HU_FONTEND - HU_FONTSTART + 1)
 
 //
 // Chat routines

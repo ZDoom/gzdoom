@@ -1039,7 +1039,6 @@ int FMODSoundRenderer::PutSampleData (FSOUND_SAMPLE *sample, const BYTE *data, i
 			return FALSE;
 		}
 	}
-	return TRUE;
 }
 
 void FMODSoundRenderer::DoLoad (void **slot, sfxinfo_t *sfx)

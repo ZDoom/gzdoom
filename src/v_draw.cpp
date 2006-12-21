@@ -55,7 +55,7 @@ int CleanWidth, CleanHeight;
 
 CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
 
-void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
+void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, int tags_first, ...)
 {
 	FTexture::Span unmaskedSpan[2];
 	const FTexture::Span **spanptr, *spans;

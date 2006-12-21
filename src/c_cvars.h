@@ -331,6 +331,8 @@ public:
 
 	bool operator= (bool boolval)
 		{ UCVarValue val; val.Bool = boolval; SetGenericRep (val, CVAR_Bool); return boolval; }
+	bool operator= (FFlagCVar &flag)
+		{ UCVarValue val; val.Bool = !!flag; SetGenericRep (val, CVAR_Bool); return val.Bool; }
 	inline operator int () const { return (ValueVar & BitVal); }
 	inline int operator *() const { return (ValueVar & BitVal); }
 

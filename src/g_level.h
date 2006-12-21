@@ -43,60 +43,60 @@
 #define NUM_WORLDVARS			256
 #define NUM_GLOBALVARS			64
 
-#define LEVEL_NOINTERMISSION		0x00000001
-#define LEVEL_NOINVENTORYBAR		0x00000002		// This effects Doom only, since it's the only one without a standard inventory bar.
-#define	LEVEL_DOUBLESKY				0x00000004
-#define LEVEL_HASFADETABLE			0x00000008		// Level uses Hexen's fadetable mapinfo to get fog
+#define LEVEL_NOINTERMISSION		UCONST64(0x00000001)
+#define LEVEL_NOINVENTORYBAR		UCONST64(0x00000002)	// This effects Doom only, since it's the only one without a standard inventory bar.
+#define	LEVEL_DOUBLESKY				UCONST64(0x00000004)
+#define LEVEL_HASFADETABLE			UCONST64(0x00000008)	// Level uses Hexen's fadetable mapinfo to get fog
 
-#define LEVEL_MAP07SPECIAL			0x00000010
-#define LEVEL_BRUISERSPECIAL		0x00000020
-#define LEVEL_CYBORGSPECIAL			0x00000040
-#define LEVEL_SPIDERSPECIAL			0x00000080
+#define LEVEL_MAP07SPECIAL			UCONST64(0x00000010)
+#define LEVEL_BRUISERSPECIAL		UCONST64(0x00000020)
+#define LEVEL_CYBORGSPECIAL			UCONST64(0x00000040)
+#define LEVEL_SPIDERSPECIAL			UCONST64(0x00000080)
 
-#define LEVEL_SPECLOWERFLOOR		0x00000100
-#define LEVEL_SPECOPENDOOR			0x00000200
-#define LEVEL_SPECACTIONSMASK		0x00000300
+#define LEVEL_SPECLOWERFLOOR		UCONST64(0x00000100)
+#define LEVEL_SPECOPENDOOR			UCONST64(0x00000200)
+#define LEVEL_SPECACTIONSMASK		UCONST64(0x00000300)
 
-#define LEVEL_MONSTERSTELEFRAG		0x00000400
-#define LEVEL_ACTOWNSPECIAL			0x00000800
-#define LEVEL_SNDSEQTOTALCTRL		0x00001000
-#define LEVEL_FORCENOSKYSTRETCH		0x00002000
+#define LEVEL_MONSTERSTELEFRAG		UCONST64(0x00000400)
+#define LEVEL_ACTOWNSPECIAL			UCONST64(0x00000800)
+#define LEVEL_SNDSEQTOTALCTRL		UCONST64(0x00001000)
+#define LEVEL_FORCENOSKYSTRETCH		UCONST64(0x00002000)
 
-#define LEVEL_JUMP_NO				0x00004000
-#define LEVEL_JUMP_YES				0x00008000
-#define LEVEL_FREELOOK_NO			0x00010000
-#define LEVEL_FREELOOK_YES			0x00020000
+#define LEVEL_JUMP_NO				UCONST64(0x00004000)
+#define LEVEL_JUMP_YES				UCONST64(0x00008000)
+#define LEVEL_FREELOOK_NO			UCONST64(0x00010000)
+#define LEVEL_FREELOOK_YES			UCONST64(0x00020000)
 
 // The absence of both of the following bits means that this level does not
 // use falling damage (though damage can be forced with dmflags).
-#define LEVEL_FALLDMG_ZD			0x00040000		// Level uses ZDoom's falling damage
-#define LEVEL_FALLDMG_HX			0x00080000		// Level uses Hexen's falling damage
+#define LEVEL_FALLDMG_ZD			UCONST64(0x00040000)	// Level uses ZDoom's falling damage
+#define LEVEL_FALLDMG_HX			UCONST64(0x00080000)	// Level uses Hexen's falling damage
 
-#define LEVEL_HEADSPECIAL			0x00100000		// Heretic episode 1/4
-#define LEVEL_MINOTAURSPECIAL		0x00200000		// Heretic episode 2/5
-#define LEVEL_SORCERER2SPECIAL		0x00400000		// Heretic episode 3
-#define LEVEL_SPECKILLMONSTERS		0x00800000
+#define LEVEL_HEADSPECIAL			UCONST64(0x00100000)	// Heretic episode 1/4
+#define LEVEL_MINOTAURSPECIAL		UCONST64(0x00200000)	// Heretic episode 2/5
+#define LEVEL_SORCERER2SPECIAL		UCONST64(0x00400000)	// Heretic episode 3
+#define LEVEL_SPECKILLMONSTERS		UCONST64(0x00800000)
 
-#define LEVEL_STARTLIGHTNING		0x01000000		// Automatically start lightning
-#define LEVEL_FILTERSTARTS			0x02000000		// Apply mapthing filtering to player starts
-#define LEVEL_LOOKUPLEVELNAME		0x04000000		// Level name is the name of a language string
-#define LEVEL_HEXENFORMAT			0x08000000		// Level uses the Hexen map format
+#define LEVEL_STARTLIGHTNING		UCONST64(0x01000000)	// Automatically start lightning
+#define LEVEL_FILTERSTARTS			UCONST64(0x02000000)	// Apply mapthing filtering to player starts
+#define LEVEL_LOOKUPLEVELNAME		UCONST64(0x04000000)	// Level name is the name of a language string
+#define LEVEL_HEXENFORMAT			UCONST64(0x08000000)	// Level uses the Hexen map format
 
-#define LEVEL_SWAPSKIES				0x10000000		// Used by lightning
-#define LEVEL_NOALLIES				0x20000000		// i.e. Inside Strife's front base
-#define LEVEL_CHANGEMAPCHEAT		0x40000000		// Don't display cluster messages
-#define LEVEL_VISITED				UCONST64(0x80000000)		// Used for intermission map
+#define LEVEL_SWAPSKIES				UCONST64(0x10000000)	// Used by lightning
+#define LEVEL_NOALLIES				UCONST64(0x20000000)	// i.e. Inside Strife's front base
+#define LEVEL_CHANGEMAPCHEAT		UCONST64(0x40000000)	// Don't display cluster messages
+#define LEVEL_VISITED				UCONST64(0x80000000)	// Used for intermission map
 
-#define LEVEL_DEATHSLIDESHOW		UCONST64(0x100000000)		// Slideshow on death
-#define LEVEL_ALLMAP				UCONST64(0x200000000)		// The player picked up a map on this level
+#define LEVEL_DEATHSLIDESHOW		UCONST64(0x100000000)	// Slideshow on death
+#define LEVEL_ALLMAP				UCONST64(0x200000000)	// The player picked up a map on this level
 
-#define LEVEL_LAXMONSTERACTIVATION	UCONST64(0x400000000)		// Monsters can open doors depending on the door speed
-#define LEVEL_LAXACTIVATIONMAPINFO	UCONST64(0x800000000)		// LEVEL_LAXMONSTERACTIVATION is not a default.
+#define LEVEL_LAXMONSTERACTIVATION	UCONST64(0x400000000)	// Monsters can open doors depending on the door speed
+#define LEVEL_LAXACTIVATIONMAPINFO	UCONST64(0x800000000)	// LEVEL_LAXMONSTERACTIVATION is not a default.
 // some unused bits here!
 
-#define LEVEL_KEEPFULLINVENTORY		UCONST64(0x4000000000)		// doesn't reduce the amount of inventory items to 1
+#define LEVEL_KEEPFULLINVENTORY		UCONST64(0x4000000000)	// doesn't reduce the amount of inventory items to 1
 
-#define LEVEL_MUSICDEFINED			UCONST64(0x8000000000)		// a marker to disable the $map command in SNDINFO for this map
+#define LEVEL_MUSICDEFINED			UCONST64(0x8000000000)	// a marker to disable the $map command in SNDINFO for this map
 #define LEVEL_MONSTERFALLINGDAMAGE	UCONST64(0x10000000000)
 #define LEVEL_CLIPMIDTEX			UCONST64(0x20000000000)
 #define LEVEL_WRAPMIDTEX			UCONST64(0x40000000000)

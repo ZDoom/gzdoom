@@ -173,7 +173,7 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 
 #if _MSC_VER
 #define _S__SPRITE_(spr) \
-	{ {{(char)(#@spr>>24),(char)(#@spr>>16),(char)(#@spr>>8),(char)#@spr}}
+	{ {{(char)(#@spr>>24),(char)((#@spr>>16)&255),(char)((#@spr>>8)&255),(char)(#@spr&255)}}
 #else
 #define _S__SPRITE_(spr) \
 	{ {{#spr}}

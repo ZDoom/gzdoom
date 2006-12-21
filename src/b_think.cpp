@@ -335,7 +335,6 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
 	{
 		// FIXME
-		AWeapon *weapon = static_cast<AWeapon *> (item);
 		AWeapon *heldWeapon;
 
 		heldWeapon = static_cast<AWeapon *> (b->mo->FindInventory (item->GetClass()));

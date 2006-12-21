@@ -52,7 +52,6 @@ bool FPatchTexture::Check(FileReader & file)
 	
 	int height = LittleShort(foo->height);
 	int width = LittleShort(foo->width);
-	bool gapAtStart=true;
 	
 	if (height > 0 && height < 2048 && width > 0 && width <= 2048 && width < file.GetLength()/4)
 	{

@@ -258,8 +258,8 @@ protected:
 		void AttachToFile (FFile &file);
 
 private:
-		FArchive (const FArchive &src) {}
-		void operator= (const FArchive &src) {}
+		FArchive (const FArchive &) {}
+		void operator= (const FArchive &) {}
 };
 
 // Create an FPNGChunkFile and FArchive in one step

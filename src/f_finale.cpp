@@ -783,7 +783,6 @@ void F_DemonScroll ()
 {
 	int yval;
 	FTexture *final1 = TexMan("FINAL1");
-	FTexture *final2 = TexMan("FINAL2");
 	int fwidth = final1->GetWidth();
 	int fheight = final1->GetHeight();
 

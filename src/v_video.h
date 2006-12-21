@@ -67,7 +67,7 @@ class FTexture;
 #define TAG_MORE	(2)  /* Ends this list and continues with the	*/
 						 /* list pointed to in ti_Data 				*/
 
-#define TAG_USER	((DWORD)(1u<<31))
+#define TAG_USER	((DWORD)(1u<<30))
 
 enum
 {
@@ -169,7 +169,7 @@ public:
 	virtual void SetFont (FFont *font);
 
 	// 2D Texture drawing
-	void STACK_ARGS DrawTexture (FTexture *img, int x, int y, DWORD tags, ...);
+	void STACK_ARGS DrawTexture (FTexture *img, int x, int y, int tags, ...);
 	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 
 	// 2D Text drawing

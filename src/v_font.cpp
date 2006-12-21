@@ -1469,7 +1469,6 @@ void V_InitCustomFonts()
 	int lumplist[256];
 	bool notranslate[256];
 	char namebuffer[16], templatebuf[16];
-	int adder=0;
 	int i;
 	int llump,lastlump=0;
 	int format;

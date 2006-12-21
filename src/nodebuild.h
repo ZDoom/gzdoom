@@ -116,6 +116,8 @@ class FNodeBuilder
 			assert (y <= MaxY);
 			return (unsigned(x - MinX) >> BLOCK_SHIFT) + (unsigned(y - MinY) >> BLOCK_SHIFT) * BlocksWide;
 		}
+
+		FVertexMap &operator= (const FVertexMap &) { return *this; }
 	};
 
 	friend class FVertexMap;
@@ -233,6 +235,8 @@ private:
 	double InterceptVector (const node_t &splitter, const FPrivSeg &seg);
 
 	void PrintSet (int l, DWORD set);
+
+	FNodeBuilder &operator= (const FNodeBuilder &) { return *this; }
 };
 
 // Points within this distance of a line will be considered on the line.

@@ -2983,7 +2983,6 @@ static void SaveReport (HANDLE file)
 		else
 		{
 			DWORD fileLen = GetFileSize (file, NULL), fileLeft;
-			DWORD bytesCopied = 0;
 			char xferbuf[1024];
 
 			SetFilePointer (file, 0, NULL, FILE_BEGIN);

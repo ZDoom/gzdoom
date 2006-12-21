@@ -74,6 +74,8 @@ public:
 
 private:
 	TWeightedList<FDecalBase *> Choices;
+
+	FDecalGroup &operator= (const FDecalGroup &) { return *this; }
 };
 
 struct FDecalLib::FTranslation

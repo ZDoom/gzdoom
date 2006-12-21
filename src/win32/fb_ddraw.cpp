@@ -160,7 +160,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 		PalEntries[i].peRed = GPalette.BaseColors[i].r;
 		PalEntries[i].peGreen = GPalette.BaseColors[i].g;
 		PalEntries[i].peBlue = GPalette.BaseColors[i].b;
-		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
+		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = (BYTE)i;
 	}
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 
@@ -796,7 +796,7 @@ void DDrawFB::RebuildColorTable ()
 		}
 		for (i = 0; i < 256; i++)
 		{
-			GPfxPal.Pal8[i] = BestColor ((uint32 *)syspal, PalEntries[i].peRed,
+			GPfxPal.Pal8[i] = (BYTE)BestColor ((uint32 *)syspal, PalEntries[i].peRed,
 				PalEntries[i].peGreen, PalEntries[i].peBlue);
 		}
 	}
@@ -848,6 +848,7 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 	else
 	{
 		HRESULT hr GCCNOWARN = BlitSurf->Flip (NULL, DDFLIP_WAIT);
+		hr;
 		LOG1 ("Blit flip = %08lx\n", hr);
 		LockSurfRes res = LockSurf (NULL, BlitSurf);
 		

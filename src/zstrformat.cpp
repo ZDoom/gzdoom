@@ -391,14 +391,14 @@ namespace StringFormat
 			{ // Decimal
 				while (intarg != 0)
 				{
-					*--ibuff = (intarg % 10) + '0'; intarg /= 10;
+					*--ibuff = char(intarg % 10) + '0'; intarg /= 10;
 				}
 			}
 			else if (type == 'o')
 			{ // Octal
 				while (intarg != 0)
 				{
-					*--ibuff = (intarg & 7) + '0'; intarg >>= 3;
+					*--ibuff = char(intarg & 7) + '0'; intarg >>= 3;
 				}
 			}
 			else
@@ -437,7 +437,7 @@ namespace StringFormat
 		else if (type == 'c')
 		{
 			intarg = va_arg (arglist, int);
-			buffer[0] = intarg;
+			buffer[0] = char(intarg);
 			bufflen = 1;
 			obuff = buffer;
 		}
@@ -472,11 +472,11 @@ namespace StringFormat
 		{
 			if (size == F_HALFHALF)
 			{
-				*va_arg (arglist, char *) = inlen;
+				*va_arg (arglist, char *) = (char)inlen;
 			}
 			else if (size == F_HALF)
 			{
-				*va_arg (arglist, short *) = inlen;
+				*va_arg (arglist, short *) = (short)inlen;
 			}
 			else if (size == F_LONG)
 			{
@@ -605,6 +605,5 @@ namespace StringFormat
 		len += outlen;
 	}
 	}
-		return len;
 	}
 };

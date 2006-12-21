@@ -604,7 +604,6 @@ FUNC(LS_Generic_Ceiling)
 
 	return EV_DoCeiling (type, ln, arg0, SPEED(arg1), SPEED(arg1), arg2*FRACUNIT,
 						 (arg4 & 16) ? 20 : -1, 0, arg4 & 7);
-	return false;
 }
 
 FUNC(LS_Generic_Crusher)

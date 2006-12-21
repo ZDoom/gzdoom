@@ -72,6 +72,8 @@ class TWeightedList
 		FRandom &RandomClass;
 
 		void RecalcRandomVals ();
+
+		TWeightedList &operator= (const TWeightedList &) { return *this; }
 };
 
 template<class T> 

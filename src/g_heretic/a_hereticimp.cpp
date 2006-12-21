@@ -133,7 +133,7 @@ FState AHereticImpLeader::States[] =
 IMPLEMENT_ACTOR (AHereticImpLeader, Heretic, 5, 7)
 	PROP_SpawnHealth (80)
 	
-	PROP_MeleeState (~0)
+	PROP_MeleeState (PROP_CLEAR_STATE)
 	PROP_MissileState (S_IMP_MSATK2)
 	PROP_Flags4Clear(MF4_MISSILEMORE)	// The imp leader does have a 'normal' missile range!
 

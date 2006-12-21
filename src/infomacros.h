@@ -65,6 +65,8 @@ typedef void (*voidfunc_)();
 ************** Visual C++ macros ****************
 ************************************************/
 
+#pragma warning(disable: 4207)	// nonstandard extension used : extended initializer form
+
 #pragma data_seg(".areg$u")		// ActorInfo initializer list
 #pragma data_seg(".greg$u")		// AT_GAME_SET list
 #pragma data_seg(".sreg$u")		// AT_SPEED_SET list
@@ -87,7 +89,7 @@ typedef void (*voidfunc_)();
 #endif
 
 #define ADD_BYTE_PROP(prop,val) BREAK_WORD(prop|ADEFTYPE_Byte), val,
-#define ADD_FIXD_PROP(prop,val) BREAK_WORD(prop|ADEFTYPE_FixedMul), val,
+#define ADD_FIXD_PROP(prop,val) BREAK_WORD(prop|ADEFTYPE_FixedMul), (BYTE)(val),
 #define ADD_WORD_PROP(prop,val) BREAK_WORD(prop|ADEFTYPE_Word), BREAK_WORD(val),
 #define ADD_LONG_PROP(prop,val) BREAK_WORD(prop|ADEFTYPE_Long), BREAK_LONG(val),
 #ifdef WORDS_BIGENDIAN
@@ -280,6 +282,7 @@ public:
 #define PROP_EDeathState(x)				ADD_BYTE_PROP(ADEF_EDeathState,x)
 #define PROP_RaiseState(x)				ADD_BYTE_PROP(ADEF_RaiseState,x)
 #define PROP_WoundState(x)				ADD_BYTE_PROP(ADEF_WoundState,x)
+#define PROP_CLEAR_STATE				255
 
 #define PROP_StrifeType(x)				ADD_WORD_PROP(ADEF_StrifeType,x)
 #define PROP_StrifeTeaserType(x)		ADD_WORD_PROP(ADEF_StrifeTeaserType,x)

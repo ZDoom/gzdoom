@@ -1394,7 +1394,7 @@ void A_MaulerTorpedoWave (AActor *self)
 	for (int i = 0; i < 80; ++i)
 	{
 		self->angle += ANGLE_45/10;
-		AActor *wave = P_SpawnSubMissile (self, RUNTIME_CLASS(AMaulerTorpedoWave), self->target);
+		P_SpawnSubMissile (self, RUNTIME_CLASS(AMaulerTorpedoWave), self->target);
 	}
 	self->z = savedz;
 }

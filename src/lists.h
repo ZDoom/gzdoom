@@ -138,6 +138,9 @@ struct List
 		TailPred->Succ = (Node *)&Tail;
 		return node;
 	}
+
+private:
+	List &operator= (const List&) { return *this; }
 };
 
 #endif //__LISTS_H__

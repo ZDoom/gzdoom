@@ -207,7 +207,7 @@ void AProgLevelEnder::Tick ()
 
 PalEntry AProgLevelEnder::GetBlend ()
 {
-	return PalEntry (special1, 0, 0, 0);
+	return PalEntry ((BYTE)special1, 0, 0, 0);
 }
 
 //============================================================================

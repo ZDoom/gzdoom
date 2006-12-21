@@ -107,7 +107,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 			datasound = S_FindSound (datastr);
 		}
 	}
-	else if (defnum > ADEF_LastString && dataint >= 0 && dataint < 255)
+	else if (defnum > ADEF_LastString && dataint >= 0 && dataint < PROP_CLEAR_STATE)
 	{
 		datastate = DefaultStates (sgClass) + dataint;
 	}
@@ -120,7 +120,6 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	ABasicArmorPickup *const armorp = (ABasicArmorPickup *)sgDefaults;
 	APuzzleItem *const puzzl = (APuzzleItem *)sgDefaults;
 	APowerup *const power = (APowerup *)sgDefaults;
-	AKey *const key = (AKey *)sgDefaults;
 	AWeapon *const weapon = (AWeapon *)sgDefaults;
 	ASigil *const sigil = (ASigil *)sgDefaults;
 	AAmmo *const ammo = (AAmmo *)sgDefaults;

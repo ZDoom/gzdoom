@@ -832,7 +832,6 @@ void A_MinotaurLook (AActor *actor)
 		return;
 	}
 
-	AMinotaurFriend *self = static_cast<AMinotaurFriend *> (actor);
 	AActor *mo = NULL;
 	player_t *player;
 	fixed_t dist;

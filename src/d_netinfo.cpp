@@ -180,7 +180,7 @@ void D_PickRandomTeam (int player)
 	static char teamline[8] = "\\team\\X";
 
 	BYTE *foo = (BYTE *)teamline;
-	teamline[6] = D_PickRandomTeam() + '0';
+	teamline[6] = (char)D_PickRandomTeam() + '0';
 	D_ReadUserInfoStrings (player, &foo, teamplay);
 }
 
@@ -461,9 +461,9 @@ void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set)
 	namelen = (int)strlen (cvar->GetName ());
 
 	Net_WriteByte (DEM_SINFCHANGEDXOR);
-	Net_WriteByte (namelen);
+	Net_WriteByte ((BYTE)namelen);
 	Net_WriteBytes ((BYTE *)cvar->GetName (), namelen);
-	Net_WriteByte (bitnum | (set << 5));
+	Net_WriteByte (BYTE(bitnum | (set << 5)));
 }
 
 void D_DoServerInfoChange (BYTE **stream, bool singlebit)

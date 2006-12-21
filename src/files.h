@@ -131,6 +131,8 @@ private:
 	BYTE InBuff[BUFF_SIZE];
 
 	void FillBuffer ();
+
+	FileReaderZ &operator= (const FileReaderZ &) { return *this; }
 };
 
 

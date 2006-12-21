@@ -302,7 +302,7 @@ void A_Beacon (AActor *self)
 	{
 		// Rebels are the same color as their owner
 		rebel->Translation = owner->Translation;
-		rebel->FriendPlayer = owner->player != NULL ? int(owner->player - players + 1) : 0;
+		rebel->FriendPlayer = owner->player != NULL ? BYTE(owner->player - players + 1) : 0;
 		// Set the rebel's target to whatever last hurt the player, so long as it's not
 		// one of the player's other rebels.
 		if (owner->target != NULL && !rebel->IsFriend (owner->target))

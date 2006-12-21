@@ -478,7 +478,7 @@ void FString::ToUpper ()
 	size_t max = Len();
 	for (size_t i = 0; i < max; ++i)
 	{
-		Chars[i] = toupper(Chars[i]);
+		Chars[i] = (char)toupper(Chars[i]);
 	}
 	UnlockBuffer();
 }
@@ -489,7 +489,7 @@ void FString::ToLower ()
 	size_t max = Len();
 	for (size_t i = 0; i < max; ++i)
 	{
-		Chars[i] = tolower(Chars[i]);
+		Chars[i] = (char)tolower(Chars[i]);
 	}
 	UnlockBuffer();
 }
@@ -502,11 +502,11 @@ void FString::SwapCase ()
 	{
 		if (isupper(Chars[i]))
 		{
-			Chars[i] = tolower(Chars[i]);
+			Chars[i] = (char)tolower(Chars[i]);
 		}
 		else
 		{
-			Chars[i] = toupper(Chars[i]);
+			Chars[i] = (char)toupper(Chars[i]);
 		}
 	}
 	UnlockBuffer();

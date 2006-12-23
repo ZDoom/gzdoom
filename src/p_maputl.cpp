@@ -582,6 +582,7 @@ sector_t *AActor::LinkToWorldForMapThing ()
 					distance = radius - distance;
 					x += FixedMul(distance, finecosine[finean]);
 					y += FixedMul(distance, finesine[finean]);
+					ssec = R_PointInSubsector (x, y);
 					break;
 				}
 #else

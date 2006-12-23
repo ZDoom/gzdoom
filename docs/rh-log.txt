@@ -1,4 +1,6 @@
 December 23, 2006 (Changes by Graf Zahl)
+- Fixed: The Cacodemon doesn't have a melee attack defined as I mistakenly
+  assumed when writing its DECORATE code.
 - Fixed: Commander Keen's death sequence had one state duplicated.
 - Fixed: Due to the changes for custom states the internal weapons shouldn't
   define a holdatk state unless it differs from the attack state.

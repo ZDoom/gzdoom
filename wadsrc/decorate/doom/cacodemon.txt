@@ -29,7 +29,6 @@ ACTOR Cacodemon 3005
 	See:
 		HEAD A 3 A_Chase
 		Loop
-	Melee:
 	Missile:
 		HEAD B 5 A_FaceTarget
 		HEAD C 5 A_FaceTarget

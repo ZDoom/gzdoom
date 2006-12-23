@@ -102,12 +102,13 @@ char	*neterror (void);
 
 enum
 {
-	PRE_CONNECT,
-	PRE_DISCONNECT,
-	PRE_ALLHERE,
-	PRE_CONACK,
-	PRE_ALLHEREACK,
-	PRE_GO
+	PRE_CONNECT,			// Sent from guest to host for initial connection
+	PRE_DISCONNECT,			// Sent from guest that aborts the game
+	PRE_ALLHERE,			// Sent from host to guest when everybody has connected
+	PRE_CONACK,				// Sent from host to guest to acknowledge PRE_CONNECT receipt
+	PRE_ALLFULL,			// Sent from host to an unwanted guest
+	PRE_ALLHEREACK,			// Sent from guest to host to acknowledge PRE_ALLHEREACK receipt
+	PRE_GO					// Sent from host to guest to continue game startup
 };
 
 // Set PreGamePacket.fake to this so that the game rejects any pregame packets
@@ -116,13 +117,13 @@ enum
 
 struct PreGamePacket
 {
-	BYTE fake;
-	BYTE message;
-	BYTE numnodes;
+	BYTE Fake;
+	BYTE Message;
+	BYTE NumNodes;
 	union
 	{
-		BYTE consolenum;
-		BYTE numack;
+		BYTE ConsoleNum;
+		BYTE NumPresent;
 	};
 	struct
 	{
@@ -166,7 +167,7 @@ void BindToLocalPort (SOCKET s, u_short port)
 		I_FatalError ("BindToPort: %s", neterror ());
 }
 
-int FindNode (sockaddr_in *address)
+int FindNode (const sockaddr_in *address)
 {
 	int i;
 
@@ -264,9 +265,9 @@ sockaddr_in *PreGet (void *buffer, int bufferlen, bool noabort)
 	return &fromaddress;
 }
 
-void PreSend (const void *buffer, int bufferlen, sockaddr_in *to)
+void PreSend (const void *buffer, int bufferlen, const sockaddr_in *to)
 {
-	sendto (mysocket, (const char *)buffer, bufferlen, 0, (sockaddr *)to, sizeof(*to));
+	sendto (mysocket, (const char *)buffer, bufferlen, 0, (const sockaddr *)to, sizeof(*to));
 }
 
 void BuildAddress (sockaddr_in *address, char *name)
@@ -359,43 +360,48 @@ void StartNetwork (bool autoPort)
 	ioctlsocket (mysocket, FIONBIO, &trueval);
 }
 
-void WaitForPlayers (int i)
-{
-	if (i == Args.NumArgs() - 1)
-		I_FatalError ("Not enough parameters after -net");
-
-	StartNetwork (false);
-
-	// parse player number and host list
-	doomcom.consoleplayer = (short)(Args.GetArg (i+1)[0]-'1');
-	Printf ("Console player number: %d\n", doomcom.consoleplayer);
-
-	doomcom.numnodes = 1;		// this node for sure
-		
-	i++;
-	while (++i < Args.NumArgs() && Args.GetArg (i)[0] != '-' && Args.GetArg (i)[0] != '+')
-	{
-		BuildAddress (&sendaddress[doomcom.numnodes], Args.GetArg (i));
-		doomcom.numnodes++;
-	}
-
-	Printf ("Total players: %d\n", doomcom.numnodes);
-		
-	doomcom.id = DOOMCOM_ID;
-	doomcom.numplayers = doomcom.numnodes;
-}
-
 void SendAbort (void)
 {
 	BYTE dis[2] = { PRE_FAKE, PRE_DISCONNECT };
+	int i, j;
 
-	while (--doomcom.numnodes > 0)
+	if (doomcom.numnodes > 1)
 	{
-		PreSend (dis, 2, &sendaddress[doomcom.numnodes]);
-		PreSend (dis, 2, &sendaddress[doomcom.numnodes]);
-		PreSend (dis, 2, &sendaddress[doomcom.numnodes]);
-		PreSend (dis, 2, &sendaddress[doomcom.numnodes]);
+		if (consoleplayer == 0)
+		{
+			// The host needs to let everyone know
+			for (i = 1; i < doomcom.numnodes; ++i)
+			{
+				for (j = 4; j > 0; --j)
+				{
+					PreSend (dis, 2, &sendaddress[i]);
+				}
+			}
+		}
+		else
+		{
+			// Guests only need to let the host know.
+			for (i = 4; i > 0; --i)
+			{
+				PreSend (dis, 2, &sendaddress[1]);
+			}
+		}
 	}
+}
+
+static void SendConAck (int num_connected, int num_needed)
+{
+	PreGamePacket packet;
+
+	packet.Fake = PRE_FAKE;
+	packet.Message = PRE_CONACK;
+	packet.NumNodes = num_needed;
+	packet.NumPresent = num_connected;
+	for (int node = 1; node < doomcom.numnodes; ++node)
+	{
+		PreSend (&packet, 4, &sendaddress[node]);
+	}
+	ST_NetProgress (doomcom.numnodes);
 }
 
 bool Host_CheckForConnects (void *userdata)
@@ -407,25 +413,40 @@ bool Host_CheckForConnects (void *userdata)
 
 	while ( (from = PreGet (&packet, sizeof(packet), false)) )
 	{
-		if (packet.fake != PRE_FAKE)
+		if (packet.Fake != PRE_FAKE)
 		{
 			continue;
 		}
-		switch (packet.message)
+		switch (packet.Message)
 		{
 		case PRE_CONNECT:
 			node = FindNode (from);
-			if (node == -1)
+			if (doomcom.numnodes == numplayers)
 			{
-				node = doomcom.numnodes++;
-				sendaddress[node] = *from;
+				if (node == -1)
+				{
+					Printf ("Got extra connect from %d.%d.%d.%d:%d\n",
+						from->sin_addr.S_un.S_un_b.s_b1,
+						from->sin_addr.S_un.S_un_b.s_b2,
+						from->sin_addr.S_un.S_un_b.s_b3,
+						from->sin_addr.S_un.S_un_b.s_b4,
+						from->sin_port);
+					packet.Message = PRE_ALLFULL;
+					PreSend (&packet, 2, from);
+				}
 			}
-			Printf ("Got connect from node %d\n", node);
-			packet.message = PRE_CONACK;
-			packet.numnodes = numplayers;
-			packet.consolenum = node;
-			PreSend (&packet, 4, from);
-			ST_NetProgress (doomcom.numnodes);
+			else
+			{
+				if (node == -1)
+				{
+					node = doomcom.numnodes++;
+					sendaddress[node] = *from;
+				}
+				Printf ("Got connect from node %d\n", node);
+
+				// Let the new guest (and everyone else) know we got their message.
+				SendConAck (doomcom.numnodes, numplayers);
+			}
 			break;
 
 		case PRE_DISCONNECT:
@@ -439,7 +460,9 @@ bool Host_CheckForConnects (void *userdata)
 					sendaddress[node] = sendaddress[node+1];
 					node++;
 				}
-				ST_NetProgress (doomcom.numnodes);
+
+				// Let remaining guests know that somebody left.
+				SendConAck (doomcom.numnodes, numplayers);
 			}
 			break;
 		}
@@ -454,7 +477,7 @@ bool Host_CheckForConnects (void *userdata)
 	// Oh well. Better than nothing.
 	while ( (from = PreGet (&packet, sizeof(packet), false)) )
 	{
-		if (packet.fake == PRE_FAKE && packet.message == PRE_DISCONNECT)
+		if (packet.Fake == PRE_FAKE && packet.Message == PRE_DISCONNECT)
 		{
 			node = FindNode (from);
 			if (node >= 0)
@@ -465,6 +488,8 @@ bool Host_CheckForConnects (void *userdata)
 					sendaddress[node] = sendaddress[node+1];
 					node++;
 				}
+				// Let remaining guests know that somebody left.
+				SendConAck (doomcom.numnodes, numplayers);
 			}
 			break;
 		}
@@ -479,19 +504,15 @@ bool Host_SendAllHere (void *userdata)
 	int node;
 	sockaddr_in *from;
 
-	for (node = 1, packet.numack = 1; node < doomcom.numnodes; ++node)
-	{
-		packet.numack += gotack[node];
-	}
-
 	// Send out address information to all guests. Guests that have already
 	// acknowledged receipt effectively get just a heartbeat packet.
-	packet.fake = PRE_FAKE;
-	packet.message = PRE_ALLHERE;
+	packet.Fake = PRE_FAKE;
+	packet.Message = PRE_ALLHERE;
 	for (node = 1; node < doomcom.numnodes; node++)
 	{
 		int machine, spot = 0;
 
+		packet.ConsoleNum = node;
 		if (!gotack[node])
 		{
 			for (spot = 0, machine = 1; machine < doomcom.numnodes; machine++)
@@ -507,11 +528,11 @@ bool Host_SendAllHere (void *userdata)
 							// and storing in the packet the next address.
 				}
 			}
-			packet.numnodes = doomcom.numnodes - 2;
+			packet.NumNodes = doomcom.numnodes - 2;
 		}
 		else
 		{
-			packet.numnodes = 0;
+			packet.NumNodes = 0;
 		}
 		PreSend (&packet, 4 + spot*8, &sendaddress[node]);
 	}
@@ -519,7 +540,7 @@ bool Host_SendAllHere (void *userdata)
 	// Check for replies.
 	while ( (from = PreGet (&packet, sizeof(packet), false)) )
 	{
-		if (packet.fake == PRE_FAKE && packet.message == PRE_ALLHEREACK)
+		if (packet.Fake == PRE_FAKE && packet.Message == PRE_ALLHEREACK)
 		{
 			node = FindNode (from);
 			if (node >= 0)
@@ -594,8 +615,8 @@ void HostGame (int i)
 
 	// Now go
 	Printf ("Go\n");
-	packet.fake = PRE_FAKE;
-	packet.message = PRE_GO;
+	packet.Fake = PRE_FAKE;
+	packet.Message = PRE_GO;
 	for (node = 1; node < doomcom.numnodes; node++)
 	{
 		// If we send the packets eight times to each guest,
@@ -628,20 +649,32 @@ bool Guest_ContactHost (void *userdata)
 	PreGamePacket packet;
 
 	// Let the host know we are here.
-	packet.fake = PRE_FAKE;
-	packet.message = PRE_CONNECT;
+	packet.Fake = PRE_FAKE;
+	packet.Message = PRE_CONNECT;
 	PreSend (&packet, 2, &sendaddress[1]);
 
 	// Listen for a reply.
 	while ( (from = PreGet (&packet, sizeof(packet), true)) )
 	{
-		if (packet.fake == PRE_FAKE && packet.message == PRE_CONACK)
+		if (packet.Fake == PRE_FAKE && FindNode(from) == 1)
 		{
-			doomcom.consoleplayer = packet.consolenum;
-			sendplayer[0] = packet.consolenum;
-			Printf ("Console player number: %d\n", doomcom.consoleplayer);
-			*(int *)userdata = packet.numnodes;		// Really # of players in the game.
-			return true;
+			if (packet.Message == PRE_CONACK)
+			{
+				Printf ("Total players: %d\n", packet.NumNodes);
+				ST_NetInit ("Waiting for other players", packet.NumNodes);
+				ST_NetProgress (packet.NumPresent);
+				return true;
+			}
+			else if (packet.Message == PRE_DISCONNECT)
+			{
+				doomcom.numnodes = 0;
+				I_FatalError ("The host cancelled the game.");
+			}
+			else if (packet.Message = PRE_ALLFULL)
+			{
+				doomcom.numnodes = 0;
+				I_FatalError ("The game is full.");
+			}
 		}
 	}
 
@@ -658,20 +691,27 @@ bool Guest_WaitForOthers (void *userdata)
 
 	while ( (from = PreGet (&packet, sizeof(packet), false)) )
 	{
-		if (packet.fake != PRE_FAKE)
+		if (packet.Fake != PRE_FAKE || FindNode(from) != 1)
 		{
 			continue;
 		}
-		switch (packet.message)
+		switch (packet.Message)
 		{
+		case PRE_CONACK:
+			ST_NetProgress (packet.NumPresent);
+			break;
+
 		case PRE_ALLHERE:
-			if (doomcom.numnodes == 0)
+			if (doomcom.numnodes == 2)
 			{
 				int node;
 
-				packet.numnodes = packet.numnodes;
-				doomcom.numnodes = packet.numnodes + 2;
-				for (node = 0; node < packet.numnodes; node++)
+				packet.NumNodes = packet.NumNodes;
+				doomcom.numnodes = packet.NumNodes + 2;
+				sendplayer[0] = packet.ConsoleNum;	// My player number
+				doomcom.consoleplayer = packet.ConsoleNum;
+				Printf ("Console player number: %d\n", doomcom.consoleplayer);
+				for (node = 0; node < packet.NumNodes; node++)
 				{
 					sendaddress[node+2].sin_addr.s_addr = packet.machines[node].address;
 					sendaddress[node+2].sin_port = packet.machines[node].port;
@@ -683,11 +723,10 @@ bool Guest_WaitForOthers (void *userdata)
 					sendaddress[node+2].sin_family = AF_INET;
 				}
 			}
-			ST_NetProgress (packet.numack);
 
 			Printf ("Received All Here, sending ACK\n");
-			packet.fake = PRE_FAKE;
-			packet.message = PRE_ALLHEREACK;
+			packet.Fake = PRE_FAKE;
+			packet.Message = PRE_ALLHEREACK;
 			PreSend (&packet, 2, &sendaddress[1]);
 			break;
 
@@ -696,7 +735,7 @@ bool Guest_WaitForOthers (void *userdata)
 			return true;
 
 		case PRE_DISCONNECT:
-			I_FatalError ("Host cancelled the game");
+			I_FatalError ("The host cancelled the game.");
 			break;
 		}
 	}
@@ -706,8 +745,6 @@ bool Guest_WaitForOthers (void *userdata)
 
 void JoinGame (int i)
 {
-	int numplayers = 0;
-
 	if ((i == Args.NumArgs() - 1) ||
 		(Args.GetArg(i+1)[0] == '-') ||
 		(Args.GetArg(i+1)[0] == '+'))
@@ -718,24 +755,19 @@ void JoinGame (int i)
 	// Host is always node 1
 	BuildAddress (&sendaddress[1], Args.GetArg(i+1));
 	sendplayer[1] = 0;
+	doomcom.numnodes = 2;
 
 	atterm (SendAbort);
 
 	// Let host know we are here
 	ST_NetInit ("Contacting host", 0);
 
-	if (!ST_NetLoop (Guest_ContactHost, &numplayers))
+	if (!ST_NetLoop (Guest_ContactHost, NULL))
 	{
 		exit (0);
 	}
 
 	// Wait for everyone else to connect
-	Printf ("Total players: %d\n", numplayers);
-	ST_NetInit ("Waiting for players", numplayers);
-
-	// We know about ourself and the host; that's two players.
-	ST_NetProgress (2);
-
 	if (!ST_NetLoop (Guest_WaitForOthers, 0))
 	{
 		exit (0);
@@ -783,16 +815,16 @@ void I_InitNetwork (void)
 	}
 
 	// parse network game options,
-	//		-net <consoleplayer> <host> <host> ...
-	// -or-
 	//		player 1: -host <numplayers>
 	//		player x: -join <player 1's address>
-	if ( (i = Args.CheckParm ("-net")) )
-		WaitForPlayers (i);
-	else if ( (i = Args.CheckParm ("-host")) )
+	if ( (i = Args.CheckParm ("-host")) )
+	{
 		HostGame (i);
+	}
 	else if ( (i = Args.CheckParm ("-join")) )
+	{
 		JoinGame (i);
+	}
 	else
 	{
 		// single player game

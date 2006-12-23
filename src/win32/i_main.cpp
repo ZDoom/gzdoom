@@ -604,6 +604,9 @@ void RestoreConView()
 
 void ShowErrorPane(const char *text)
 {
+	// Ensure that the network pane is hidden.
+	ST_NetDone();
+
 	ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, (LPARAM)text);
 
 	if (ErrorPane == NULL)

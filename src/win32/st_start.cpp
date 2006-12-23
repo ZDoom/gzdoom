@@ -199,7 +199,7 @@ void ST_NetProgress(int count)
 //
 // ST_NetLoop
 //
-// The timer_callback function is called approximately four times per second
+// The timer_callback function is called approximately two times per second
 // and passed the userdata value. It should return true to stop the loop and
 // return control to the caller or false to continue the loop.
 //
@@ -214,7 +214,7 @@ bool ST_NetLoop(bool (*timer_callback)(void *), void *userdata)
 	BOOL bRet;
 	MSG msg;
 
-	if (SetTimer (Window, 1337, 250, NULL) == 0)
+	if (SetTimer (Window, 1337, 500, NULL) == 0)
 	{
 		I_FatalError ("Could not set network synchronization timer.");
 	}

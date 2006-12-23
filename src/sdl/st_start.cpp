@@ -137,7 +137,7 @@ bool ST_NetLoop(bool (*timer_callback)(void *), void *userdata)
 	{
 		// Don't flood the network with packets on startup.
 		tv.tv_sec = 0;
-		tv.tv_usec = 250000;
+		tv.tv_usec = 500000;
 
 		retval = select (1, &rfds, NULL, NULL, &tv);
 

@@ -1,3 +1,11 @@
+December 22, 2006
+- Guests can now watch as other guests connect during i_net handshaking.
+- Fixed: The host would let more than the desired number of players connect.
+- Decreased the frequency of packets in ST_NetLoop() to two per second.
+- Fixed: During the i_net handshaking, guests never verified that the messages
+  they received were from the host.
+- Removed the -net command line option. I'm not sure it even worked anymore.
+
 December 20, 2006
 - Turned on warning level 4 just to see what it would produce: a lot of
   warnings. At first, I was going to try and clean them all up. Then I decided

@@ -1,3 +1,14 @@
+December 23, 2006 (Changes by Graf Zahl)
+- Fixed: Commander Keen's death sequence had one state duplicated.
+- Fixed: Due to the changes for custom states the internal weapons shouldn't
+  define a holdatk state unless it differs from the attack state.
+- Fixed: The bot code tried to spawn ACajunBodyNode instead of CajunBodyNode.
+- Changed: MF2_BLASTED doesn't work well for players so I had to take it out
+  of A_BlastRadius.
+- Fixed: When MF2_BLASTED was cleared MF2_SLIDE got cleared as well, no matter
+  whether it was set by default or not. Now the MF2_SLIDE check checks both
+  flags and the BlastRadius code doesn't set MF2_SLIDE anymore.
+
 December 22, 2006
 - Guests can now watch as other guests connect during i_net handshaking.
 - Fixed: The host would let more than the desired number of players connect.
@@ -6,6 +17,7 @@ December 22, 2006
   they received were from the host.
 - Removed the -net command line option. I'm not sure it even worked anymore.
 
+>>>>>>> .r421
 December 20, 2006
 - Turned on warning level 4 just to see what it would produce: a lot of
   warnings. At first, I was going to try and clean them all up. Then I decided
@@ -15,6 +27,7 @@ December 20, 2006
    C4702 (unreachable code)
    C4512 (assignment operator could not be generated)
 
+>>>>>>> .r420
 December 19, 2006
 - Fixed: D3DFB::Reset() also needs to restore the texture border color,
   otherwise it gets reset to black and unused. 

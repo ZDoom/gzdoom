@@ -1666,15 +1666,16 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		// killough 3/15/98: Allow certain objects to drop off
 		if ((!dropoff && !(thing->flags & (MF_DROPOFF|MF_FLOAT|MF_MISSILE))) || (thing->flags5&MF5_NODROPOFF))
 		{
-			fixed_t floorz = tmfloorz;
-			// [RH] If the thing is standing on something, use its current z as the floorz.
-			// This is so that it does not walk off of things onto a drop off.
-			if (thing->flags2 & MF2_ONMOBJ)
-			{
-				floorz = MAX(thing->z, tmfloorz);
-			}
 			if (!(thing->flags5&MF5_AVOIDINGDROPOFF))
 			{
+				fixed_t floorz = tmfloorz;
+				// [RH] If the thing is standing on something, use its current z as the floorz.
+				// This is so that it does not walk off of things onto a drop off.
+				if (thing->flags2 & MF2_ONMOBJ)
+				{
+					floorz = MAX(thing->z, tmfloorz);
+				}
+				
 				if (floorz - tmdropoffz > thing->MaxDropOffHeight &&
 					!(thing->flags2 & MF2_BLASTED))
 				{ // Can't move over a dropoff unless it's been blasted
@@ -1685,7 +1686,8 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			else
 			{
 				// special logic to move a monster off a dropoff
-				if (thing->floorz - floorz > thing->MaxDropOffHeight ||
+				// this intentionally does not check for standing on things.
+				if (thing->floorz - tmfloorz > thing->MaxDropOffHeight ||
 					thing->dropoffz - tmdropoffz > thing->MaxDropOffHeight) return false;
 			}
 		}
@@ -3614,13 +3616,13 @@ bool PIT_RadiusAttack (AActor *thing)
 			int damage = (int)points;
 
 			if (bombdodamage) P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
-			else thing->flags2 |= MF2_BLASTED;
+			else if (thing->player == NULL) thing->flags2 |= MF2_BLASTED;
 
 			if (!(thing->flags & MF_ICECORPSE))
 			{
 				if (bombdodamage && !(bombspot->flags3 & MF3_BLOODLESSIMPACT)) P_TraceBleed (damage, thing, bombspot);
 
-				if (!(bombspot->flags2 & MF2_NODMGTHRUST))
+				if (!bombdodamage || !(bombspot->flags2 & MF2_NODMGTHRUST))
 				{
 					thrust = points * 0.5f / (float)thing->Mass;
 					if (bombsource == thing)
@@ -3639,7 +3641,7 @@ bool PIT_RadiusAttack (AActor *thing)
 					angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
 					thing->momx += fixed_t (finecosine[ang] * thrust);
 					thing->momy += fixed_t (finesine[ang] * thrust);
-					thing->momz += (fixed_t)momz;
+					if (bombdodamage) thing->momz += (fixed_t)momz;	// this really doesn't work well
 				}
 			}
 		}

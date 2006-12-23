@@ -180,7 +180,6 @@ IMPLEMENT_ACTOR (AFWeapFist, Hexen, -1, 0)
 	PROP_Weapon_DownState (S_PUNCHDOWN)
 	PROP_Weapon_ReadyState (S_PUNCHREADY)
 	PROP_Weapon_AtkState (S_PUNCHATK1)
-	PROP_Weapon_HoldAtkState (S_PUNCHATK1)
 	PROP_Weapon_Kickback (150)
 END_DEFAULTS
 

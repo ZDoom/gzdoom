@@ -26,7 +26,6 @@ ACTOR CommanderKeen 72
 		Loop
 	Death:
 		KEEN AB	6
-		KEEN B	6
 		KEEN C	6 A_Scream
 		KEEN DEFGH	6
 		KEEN I	6 A_NoBlocking

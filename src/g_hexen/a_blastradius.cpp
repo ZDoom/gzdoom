@@ -157,7 +157,7 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 		}
 		else
 		{
-			victim->flags2 |= MF2_SLIDE | MF2_BLASTED;
+			victim->flags2 |= MF2_BLASTED;
 		}
 	}
 	else	// full strength blast from artifact
@@ -207,14 +207,7 @@ void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 		}
 		else
 		{
-			if (victim->flags & MF_MISSILE)
-			{ // [RH] Missiles should not slide.
-				victim->flags2 |= MF2_BLASTED;
-			}
-			else
-			{
-				victim->flags2 |= MF2_SLIDE | MF2_BLASTED;
-			}
+			victim->flags2 |= MF2_BLASTED;
 		}
 	}
 }

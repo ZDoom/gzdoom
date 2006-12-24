@@ -1,4 +1,11 @@
 December 24, 2006 (Changes by Graf Zahl)
+- Replaced several calls to S_GetSoundPlayingInfo with S_IsActorPlayingSomething
+  because S_GetSoundPlayingInfo cannot properly resolve player and random sounds.
+- Fixed: S_IsActorPlayingSomething has to resolve aliases and player sounds.
+- Took S_ParseSndSeq call out of S_Init. This doesn't work when parsing SNDINFO
+  in D_DoomMain.
+- Moved SNDINFO reading back to its old place after MAPINFO. This is necessary
+  for Hexen's music definitions.
 - Added new flag MF5_NOBLOODDECALS that prevents bleeding actors from spawning
   blood decals.
 
@@ -23,7 +30,6 @@ December 22, 2006
   they received were from the host.
 - Removed the -net command line option. I'm not sure it even worked anymore.
 
->>>>>>> .r421
 December 20, 2006
 - Turned on warning level 4 just to see what it would produce: a lot of
   warnings. At first, I was going to try and clean them all up. Then I decided
@@ -33,7 +39,6 @@ December 20, 2006
    C4702 (unreachable code)
    C4512 (assignment operator could not be generated)
 
->>>>>>> .r420
 December 19, 2006
 - Fixed: D3DFB::Reset() also needs to restore the texture border color,
   otherwise it gets reset to black and unused. 

@@ -2074,11 +2074,6 @@ void D_DoomMain (void)
 	// Base systems have been inited; enable cvar callbacks
 	FBaseCVar::EnableCallbacks ();
 
-	// [RH] Parse any SNDINFO lumps
-	Printf ("S_ParseSndInfo: Load sound definitions.\n");
-	S_ParseSndInfo ();
-	S_ParseSndEax ();
-
 	Printf ("S_Init: Setting up sound.\n");
 	S_Init ();
 
@@ -2092,6 +2087,10 @@ void D_DoomMain (void)
 	// [RH] Parse through all loaded mapinfo lumps
 	Printf ("G_ParseMapInfo: Load map definitions.\n");
 	G_ParseMapInfo ();
+
+	// [RH] Parse any SNDINFO lumps
+	Printf ("S_InitData: Load sound definitions.\n");
+	S_InitData ();
 
 	FActorInfo::StaticInit ();
 

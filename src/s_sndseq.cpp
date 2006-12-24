@@ -104,7 +104,7 @@ public:
 	void Serialize (FArchive &arc);
 	void MakeSound () { S_SoundID (m_Actor, CHAN_BODY, m_CurrentSoundID, clamp(m_Volume, 0.f, 1.f), m_Atten); }
 	void MakeLoopedSound () { S_LoopedSoundID (m_Actor, CHAN_BODY, m_CurrentSoundID, clamp(m_Volume, 0.f, 1.f), m_Atten); }
-	bool IsPlaying () { return S_GetSoundPlayingInfo (m_Actor, m_CurrentSoundID); }
+	bool IsPlaying () { return S_IsActorPlayingSomething (m_Actor, CHAN_BODY, m_CurrentSoundID); }
 	void *Source () { return m_Actor; }
 	DSeqNode *SpawnChild (int seqnum) { return SN_StartSequence (m_Actor, seqnum, SEQ_NOTRANS, m_ModeNum, true); }
 private:

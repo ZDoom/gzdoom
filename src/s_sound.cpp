@@ -282,7 +282,6 @@ void S_Init ()
 	atterm (S_Shutdown);
 
 	// remove old data (S_Init can be called multiple times!)
-	LastLocalSndInfo = LastLocalSndSeq = "";
 	if (SoundCurve) delete [] SoundCurve;
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
@@ -310,9 +309,6 @@ void S_Init ()
 		}
 	}
 
-	// [RH] Read in sound sequences
-	S_ParseSndSeq (-1);
-
 	// Allocating the virtual channels
 	numChannels = GSnd ? GSnd->SetChannels (snd_channels) : 0;
 	if (Channel != NULL)
@@ -338,6 +334,20 @@ void S_Init ()
 	// Note that sounds have not been cached (yet).
 //	for (i=1; (size_t)i < S_sfx.Size (); i++)
 //		S_sfx[i].usefulness = -1;
+}
+
+//==========================================================================
+//
+// S_InitData
+//
+//==========================================================================
+
+void S_InitData ()
+{
+	LastLocalSndInfo = LastLocalSndSeq = "";
+	S_ParseSndInfo ();
+	S_ParseSndSeq (-1);
+	S_ParseSndEax ();
 }
 
 //==========================================================================
@@ -1172,7 +1182,7 @@ bool S_GetSoundPlayingInfo (fixed_t *pt, int sound_id)
 {
 	int i;
 
-	if (sound_id != 0)
+	if (sound_id > 0)
 	{
 		for (i = 0; i < numChannels; i++)
 		{
@@ -1201,6 +1211,29 @@ bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id)
 	if (i_compatflags & COMPATF_MAGICSILENCE)
 	{
 		channel = 0;
+	}
+
+	// Resolve player sounds, random sounds, and aliases
+	if (sound_id > 0)
+	{
+		while (S_sfx[sound_id].link != sfxinfo_t::NO_LINK)
+		{
+			if (S_sfx[sound_id].bPlayerReserve)
+			{
+				sound_id = S_FindSkinnedSound (actor, sound_id);
+			}
+			else if (S_sfx[sound_id].bRandomHeader)
+			{
+				// This can't really be checked properly
+				// so return true if the channel is playing something, no matter what.
+				sound_id = -1;
+				break;
+			}
+			else
+			{
+				sound_id = S_sfx[sound_id].link;
+			}
+		}
 	}
 
 	for (i = 0; i < numChannels; ++i)

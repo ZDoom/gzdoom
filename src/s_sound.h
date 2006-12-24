@@ -76,6 +76,7 @@ extern TArray<sfxinfo_t> S_sfx;
 //	allocates channel buffer, sets S_sfx lookup.
 //
 void S_Init ();
+void S_InitData ();
 void S_Shutdown ();
 
 // Per level startup code.

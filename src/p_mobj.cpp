@@ -2314,7 +2314,7 @@ int AActor::GetMissileDamage (int mask, int add)
 void AActor::Howl ()
 {
 	int howl = GetClass()->Meta.GetMetaInt(AMETA_HowlSound);
-	if (!S_GetSoundPlayingInfo (this, howl))
+	if (!S_IsActorPlayingSomething(this, CHAN_BODY, howl))
 	{
 		S_SoundID (this, CHAN_BODY, howl, 1, ATTN_NORM);
 	}

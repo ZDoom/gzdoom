@@ -78,7 +78,7 @@ void DEarthquake::Tick ()
 		return;
 	}
 
-	if (!S_GetSoundPlayingInfo (m_Spot, m_QuakeSFX))
+	if (!S_IsActorPlayingSomething (m_Spot, CHAN_BODY, m_QuakeSFX))
 		S_SoundID (m_Spot, CHAN_BODY, m_QuakeSFX, 1, ATTN_NORM);
 
 	if (m_DamageRadius > 0)

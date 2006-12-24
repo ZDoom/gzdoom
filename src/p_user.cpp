@@ -2058,7 +2058,7 @@ void P_PlayerThink (player_t *player)
 			player->mo->waterlevel == 0)
 		{
 			int id = S_FindSkinnedSound (player->mo, "*falling");
-			if (id != 0 && !S_GetSoundPlayingInfo (player->mo, id))
+			if (id != 0 && !S_IsActorPlayingSomething (player->mo, CHAN_VOICE, id))
 			{
 				S_SoundID (player->mo, CHAN_VOICE, id, 1, ATTN_NORM);
 			}

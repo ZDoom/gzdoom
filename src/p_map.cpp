@@ -2932,6 +2932,7 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 	int noise;
 
 	if ((actor->flags & MF_NOBLOOD) ||
+		(actor->flags5 & MF5_NOBLOODDECALS) ||
 		(actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)) ||
 		(actor->player && actor->player->cheats & CF_GODMODE))
 	{

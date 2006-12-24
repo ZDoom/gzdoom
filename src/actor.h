@@ -288,6 +288,7 @@ enum
 	MF5_OLDRADIUSDMG	= 0x00000200,	// Use old radius damage code (for barrels and boss brain)
 	MF5_DEHEXPLOSION	= 0x00000400,	// Use the DEHACKED explosion options when this projectile explodes
 	MF5_PIERCEARMOR		= 0x00000800,	// Armor doesn't protect against damage from this actor
+	MF5_NOBLOODDECALS	= 0x00001000,	// Actor bleeds but doesn't spawn blood decals
 
 // --- mobj.renderflags ---
 

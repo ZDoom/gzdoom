@@ -1,3 +1,7 @@
+December 24, 2006 (Changes by Graf Zahl)
+- Added new flag MF5_NOBLOODDECALS that prevents bleeding actors from spawning
+  blood decals.
+
 December 23, 2006 (Changes by Graf Zahl)
 - Fixed: The Cacodemon doesn't have a melee attack defined as I mistakenly
   assumed when writing its DECORATE code.

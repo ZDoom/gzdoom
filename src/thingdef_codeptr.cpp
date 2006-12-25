@@ -1260,23 +1260,19 @@ void DoTakeInventory(AActor * self, AActor * receiver)
 	ENamedName item =(ENamedName)StateParameters[index];
 	int amount=EvalExpressionI (StateParameters[index+1], self);
 
-	const PClass * mi=PClass::FindClass(item);
-
 	if (pStateCall != NULL) pStateCall->Result=false;
-	if (mi) 
-	{
-		AInventory * inv = receiver->FindInventory(mi);
 
-		if (inv && !inv->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
+	AInventory * inv = receiver->FindInventory(item);
+
+	if (inv && !inv->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
+	{
+		if (inv->Amount > 0 && pStateCall != NULL) pStateCall->Result=true;
+		if (!amount || amount>=inv->Amount) 
 		{
-			if (inv->Amount > 0 && pStateCall != NULL) pStateCall->Result=true;
-			if (!amount || amount>=inv->Amount) 
-			{
-				if (inv->IsKindOf(RUNTIME_CLASS(AAmmo))) inv->Amount=0;
-				else inv->Destroy();
-			}
-			else inv->Amount-=amount;
+			if (inv->IsKindOf(RUNTIME_CLASS(AAmmo))) inv->Amount=0;
+			else inv->Destroy();
 		}
+		else inv->Amount-=amount;
 	}
 }	
 
@@ -1579,8 +1575,7 @@ void A_SelectWeapon(AActor * actor)
 	int index=CheckIndex(1, NULL);
 	if (index<0 || actor->player == NULL) return;
 
-	const PClass * weapon= PClass::FindClass((ENamedName)StateParameters[index]);
-	AWeapon * weaponitem = static_cast<AWeapon*>(actor->FindInventory(weapon));
+	AWeapon * weaponitem = static_cast<AWeapon*>(actor->FindInventory((ENamedName)StateParameters[index]));
 
 	if (weaponitem != NULL && weaponitem->IsKindOf(RUNTIME_CLASS(AWeapon)))
 	{
@@ -1802,14 +1797,11 @@ void A_DropInventory(AActor * self)
 {
 	int index=CheckIndex(1, &CallingState);
 	if (index<0) return;
-	const PClass * ti = PClass::FindClass((ENamedName)StateParameters[index]);
-	if (ti)
+
+	AInventory * inv = self->FindInventory((ENamedName)StateParameters[index]);
+	if (inv)
 	{
-		AInventory * inv = self->FindInventory(ti);
-		if (inv)
-		{
-			self->DropInventory(inv);
-		}
+		self->DropInventory(inv);
 	}
 }
 

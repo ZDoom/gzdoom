@@ -550,6 +550,7 @@ public:
 
 	// Finds the first item of a particular type.
 	AInventory *FindInventory (const PClass *type) const;
+	AInventory *FindInventory (FName type) const;
 	template<class T> T *FindInventory () const
 	{
 		return static_cast<T *> (FindInventory (RUNTIME_CLASS(T)));

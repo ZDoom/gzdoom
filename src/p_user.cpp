@@ -2035,7 +2035,7 @@ void P_PlayerThink (player_t *player)
 			}
 			else if (cmd->ucmd.upmove > 0 && !(player->cheats & CF_PREDICTING))
 			{
-				AInventory *fly = player->mo->FindInventory (PClass::FindClass (NAME_ArtiFly));
+				AInventory *fly = player->mo->FindInventory (NAME_ArtiFly);
 				if (fly != NULL)
 				{
 					player->mo->UseInventory (fly);

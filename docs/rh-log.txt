@@ -1,3 +1,11 @@
+December 25, 2006 (Changes by Graf Zahl)
+- Converted the Communicator to DECORATE.
+- Renamed the new armor properties to use the same names as Skulltag to avoid
+  confusion. They still don't need a separate base class as in Skulltag though.
+- Added Skulltag-type armor bonus that increases the max amount that can be given
+  by other armor items.
+- Separated all armor related code from a_pickups.cpp into a_armor.cpp.
+
 December 24, 2006 (Changes by Graf Zahl)
 - Replaced several calls to S_GetSoundPlayingInfo with S_IsActorPlayingSomething
   because S_GetSoundPlayingInfo cannot properly resolve player and random sounds.

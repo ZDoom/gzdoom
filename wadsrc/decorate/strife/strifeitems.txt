@@ -352,3 +352,22 @@ ACTOR Targeter : PowerupGiver 207
 	}
 }
 	
+// Communicator -----------------------------------------------------------------
+
+ACTOR Communicator : Inventory 206
+{
+	Game Strife
+	ConversationID 176, 168, 172
+	+NOTDMATCH
+	Tag "Communicator"
+	Inventory.Icon "I_COMM"
+	Inventory.PickupSound  "misc/p_pkup"
+	Inventory.PickupMessage "$TXT_COMMUNICATOR"
+	States
+	{
+	Spawn:
+		COMM A -1
+		Stop
+	}
+}
+

@@ -417,9 +417,8 @@ CCMD (useflechette)
 
 	for (j = 0; j < 3; ++j)
 	{
-		const PClass *type = PClass::FindClass (bagnames[(i+j)%3]);
 		AInventory *item;
-		if (type != NULL && (item = who->FindInventory (type)))
+		if (item = who->FindInventory (bagnames[(i+j)%3]))
 		{
 			SendItemUse = item;
 			break;

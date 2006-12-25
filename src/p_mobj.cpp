@@ -795,6 +795,11 @@ AInventory *AActor::FindInventory (const PClass *type) const
 	return item;
 }
 
+AInventory *AActor::FindInventory (FName type) const
+{
+	return FindInventory(PClass::FindClass(type));
+}
+
 //============================================================================
 //
 // AActor :: GiveInventoryType

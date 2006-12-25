@@ -672,7 +672,7 @@ private:
 			DrINumber2 (i, left+268*xscale, top+76*yscale, 7*xscale, imgFONY0);
 
 			// Does the player have a communicator?
-			item = CPlayer->mo->FindInventory (RUNTIME_CLASS(ACommunicator));
+			item = CPlayer->mo->FindInventory (NAME_Communicator);
 			if (item != NULL)
 			{
 				screen->DrawTexture (TexMan(item->Icon),
@@ -730,7 +730,7 @@ private:
 			};
 			for (i = 0; i < 6; ++i)
 			{
-				item = CPlayer->mo->FindInventory (PClass::FindClass (WeaponList[i].TypeName));
+				item = CPlayer->mo->FindInventory (WeaponList[i].TypeName);
 
 				if (item != NULL)
 				{

@@ -2557,9 +2557,9 @@ FUNC(LS_SendToCommunicator)
 	if (arg1 && backSide)
 		return false;
 
-	if (it != NULL && it->player != NULL && it->FindInventory<ACommunicator>())
+	if (it != NULL && it->player != NULL && it->FindInventory(NAME_Communicator))
 	{
-		char name[32];
+		char name[32];									   
 		sprintf (name, "svox/voc%d", arg0);
 
 		if (!arg3)

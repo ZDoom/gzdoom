@@ -7,10 +7,11 @@
 # build the wad correctly with nmake. If you use GCC, then "make" is
 # sufficient to build the wad.
 
-MAKEWAD=../tools/makewad/makewad
-XLATCC=../tools/xlatcc/xlatcc
-DEHSUPP=../tools/dehsupp/dehsupp
 RM=rm -f
+SLASH=/
+MAKEWAD=..$(SLASH)tools$(SLASH)makewad$(SLASH)makewad
+XLATCC=..$(SLASH)tools$(SLASH)xlatcc$(SLASH)xlatcc
+DEHSUPP=..$(SLASH)tools$(SLASH)dehsupp$(SLASH)dehsupp
 
 makethewad: wadmake Makefile2
 	$(MAKE) $(NOLOGO) XLATCC=$(XLATCC) DEHSUPP=$(DEHSUPP) -f Makefile2
@@ -19,11 +20,11 @@ wadmake: zdoom.lst
 	$(MAKEWAD) -make wadmake zdoom.lst
 
 clean:
-	$(RM) wadmake zdoom.pk3 xlat/*.x dehsupp.lmp
+	$(RM) wadmake zdoom.pk3 xlat$(SLASH)*.x dehsupp.lmp
 
 # This target is for Visual C++'s Rebuild All command
 nrebuild: clean
-	$(MAKE) NOLOGO=$(NOLOGO) MAKEWAD=$(MAKEWAD) XLATCC=$(XLATCC) DEHSUPP=$(DEHSUPP)
+	$(MAKE) NOLOGO=$(NOLOGO) SLASH=$(SLASH)
 	copy zdoom.pk3 ..\..
 
 # Copy the wad to my testing area

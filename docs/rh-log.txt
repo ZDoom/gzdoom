@@ -1,4 +1,9 @@
 December 28, 2006
+- Fixed: The VC++ project was not set up to redefine RM using del in
+  wadsrc/Makefile, nor did it use the makefile for cleaning.
+- Added ST_NetMessage() for mixing miscellaneous messages with the network
+  startup meter, since they get mixed in the same space on the Linux terminal
+  and must be handled properly to avoid looking bad.
 - Fixed the new network status display for the Linux terminal.
 
 December 25, 2006 (Changes by Graf Zahl)
@@ -34,6 +39,9 @@ December 23, 2006 (Changes by Graf Zahl)
   flags and the BlastRadius code doesn't set MF2_SLIDE anymore.
 
 December 22, 2006
+- Fixed: If anyone other than the most recently-connected player aborted
+  during i_net handshaking, everybody who connected after them would have
+  the wrong idea of what their player number was.
 - Guests can now watch as other guests connect during i_net handshaking.
 - Fixed: The host would let more than the desired number of players connect.
 - Decreased the frequency of packets in ST_NetLoop() to two per second.

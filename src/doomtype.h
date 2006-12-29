@@ -70,8 +70,6 @@
 #define NOVTABLE
 #endif
 
-typedef long long __int64;
-
 #ifdef _MSC_VER
 typedef __int8					SBYTE;
 typedef unsigned __int8			BYTE;

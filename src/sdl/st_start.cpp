@@ -47,17 +47,51 @@ static int NetProgressMax, NetProgressTicker;
 static const char *NetMessage;
 static char SpinnyProgressChars[8] = { '|', '/', '-', '\\', '|', '/', '-', '\\' };
 
+//===========================================================================
+//
+// ST_Init
+//
+// Sets the size of the progress bar and displays the startup screen.
+//
+//===========================================================================
+
 void ST_Init(int maxProgress)
 {
 }
+
+//===========================================================================
+//
+// ST_Done
+//
+// Called just before entering graphics mode to deconstruct the startup
+// screen.
+//
+//===========================================================================
 
 void ST_Done()
 {
 }
 
+//===========================================================================
+//
+// ST_Progress
+//
+// Bumps the progress meter one notch.
+//
+//===========================================================================
+
 void ST_Progress()
 {
 }
+
+//===========================================================================
+//
+// ST_NetInit
+//
+// Sets stdin for unbuffered I/O, displays the given message, and shows
+// a progress meter.
+//
+//===========================================================================
 
 void ST_NetInit(const char *message, int numplayers)
 {
@@ -91,6 +125,14 @@ void ST_NetInit(const char *message, int numplayers)
 	ST_NetProgress(1);	// You always know about yourself
 }
 
+//===========================================================================
+//
+// ST_NetDone
+//
+// Restores the old stdin tty settings.
+//
+//===========================================================================
+
 void ST_NetDone()
 {
 	// Restore stdin settings
@@ -102,6 +144,16 @@ void ST_NetDone()
 	}
 }
 
+//===========================================================================
+//
+// ST_NetMessage
+//
+// Call this between ST_NetInit() and ST_NetDone() instead of Printf() to
+// display messages, because the progress meter is mixed in the same output
+// stream as normal messages.
+//
+//===========================================================================
+
 void ST_NetMessage(const char *format, ...)
 {
 	FString str;
@@ -111,11 +163,16 @@ void ST_NetMessage(const char *format, ...)
 	str.VFormat (format, argptr);
 	va_end (argptr);
 	fprintf (stderr, "\r%-40s\n", str.GetChars());
-	if (NetMessage == 0)
-	{
-		NetMessage = 0;
-	}
 }
+
+//===========================================================================
+//
+// ST_NetProgress
+//
+// Sets the network progress meter. If count is 0, it gets bumped by 1.
+// Otherwise, it is set to count.
+//
+//===========================================================================
 
 void ST_NetProgress(int count)
 {
@@ -147,6 +204,20 @@ void ST_NetProgress(int count)
 		fflush (stderr);
 	}
 }
+
+//===========================================================================
+//
+// ST_NetLoop
+//
+// The timer_callback function is called at least two times per second
+// and passed the userdata value. It should return true to stop the loop and
+// return control to the caller or false to continue the loop.
+//
+// ST_NetLoop will return true if the loop was halted by the callback and
+// false if the loop was halted because the user wants to abort the
+// network synchronization.
+//
+//===========================================================================
 
 bool ST_NetLoop(bool (*timer_callback)(void *), void *userdata)
 {

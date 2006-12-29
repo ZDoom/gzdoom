@@ -1,4 +1,12 @@
+December 29, 2006
+- Fixed: APlayerPawn::GiveDefaultInventory() used two different variables
+  both named item.
+- Switched ddraw.dll to be delay loaded. With D3D9 now being the default
+  display code, this avoids wasting time loading DDraw if it isn't needed.
+
 December 28, 2006
+- Fixed: The Win32 I_FatalError() did not set alreadyThrown, so it could get
+  stuck in an endless fatal error loop.
 - Fixed: The SDL input code must convert the event.data1 to uppercase.
 - Added more resolution options when playing windowed under SDL.
 - Changed SDL mouse handling to be basically identical to the (non-DirectInput)

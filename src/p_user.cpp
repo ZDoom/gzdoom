@@ -890,7 +890,7 @@ void APlayerPawn::GiveDefaultInventory ()
 			}
 			else
 			{
-				AInventory *item = static_cast<AInventory *>(Spawn (ti, 0,0,0, NO_REPLACE));
+				item = static_cast<AInventory *>(Spawn (ti, 0,0,0, NO_REPLACE));
 				item->Amount = di->amount;
 				if (item->IsKindOf (RUNTIME_CLASS (AWeapon)))
 				{

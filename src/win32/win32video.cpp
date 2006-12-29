@@ -73,6 +73,7 @@
 IMPLEMENT_ABSTRACT_CLASS(BaseWinFB)
 
 typedef IDirect3D9 *(WINAPI *DIRECT3DCREATE9FUNC)(UINT SDKVersion);
+typedef HRESULT (WINAPI *DIRECTDRAWCREATEFUNC)(GUID FAR *lpGUID, LPDIRECTDRAW FAR *lplpDD, IUnknown FAR *pUnkOuter);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -95,6 +96,7 @@ EXTERN_CVAR (Float, Gamma)
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static HMODULE D3D9_dll;
+static HMODULE DDraw_dll;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -154,7 +156,7 @@ bool Win32Video::InitD3D9 ()
 		return false;
 	}
 
-	// Create the IDirect3D object.
+	// Obtain an IDirect3D interface.
 	if ((direct3d_create_9 = (DIRECT3DCREATE9FUNC)GetProcAddress (D3D9_dll, "Direct3DCreate9")) == NULL)
 	{
 		goto closelib;
@@ -201,12 +203,25 @@ closelib:
 
 void Win32Video::InitDDraw ()
 {
+	DIRECTDRAWCREATEFUNC directdraw_create;
 	LPDIRECTDRAW ddraw1;
 	STARTLOG;
 
 	HRESULT dderr;
 
-	dderr = DirectDrawCreate (NULL, &ddraw1, NULL);
+	// Load the DirectDraw library.
+	if ((DDraw_dll = LoadLibraryA ("ddraw.dll")) == NULL)
+	{
+		I_FatalError ("Could not load ddraw.dll");
+	}
+
+	// Obtain an IDirectDraw interface.
+	if ((directdraw_create = (DIRECTDRAWCREATEFUNC)GetProcAddress (DDraw_dll, "DirectDrawCreate")) == NULL)
+	{
+		I_FatalError ("The system file ddraw.dll is missing the DirectDrawCreate export");
+	}
+
+	dderr = directdraw_create (NULL, &ddraw1, NULL);
 
 	if (FAILED(dderr))
 		I_FatalError ("Could not create DirectDraw object: %08lx", dderr);

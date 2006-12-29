@@ -60,7 +60,7 @@ private:
 
 	SDLFB () {}
 };
-IMPLEMENT_CLASS(SDLFB, DFrameBuffer)
+IMPLEMENT_CLASS(SDLFB)
 
 struct MiniModeInfo
 {

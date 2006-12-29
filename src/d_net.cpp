@@ -1356,7 +1356,7 @@ bool DoArbitrate (void *userdata)
 
 				D_ReadUserInfoStrings (netbuffer[1], &stream, false);
 
-				Printf ("Found %s (node %d, player %d)\n",
+				ST_NetMessage ("Found %s (node %d, player %d)",
 						players[netbuffer[1]].userinfo.netname,
 						node, netbuffer[1]+1);
 			}

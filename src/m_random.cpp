@@ -304,7 +304,7 @@ void FRandom::StaticPrintSeeds ()
 
 	while (rng != NULL)
 	{
-		Printf ("%s: %08lx\n", rng->Name, rng->Seed);
+		Printf ("%s: %08x\n", rng->Name, rng->Seed);
 		rng = rng->Next;
 	}
 }

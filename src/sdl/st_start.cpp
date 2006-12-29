@@ -39,11 +39,13 @@
 
 #include "st_start.h"
 #include "doomdef.h"
+#include "i_system.h"
 
-termios OldTermIOS;
-bool DidNetInit;
-int NetProgressMax, NetProgressTicker;
-char SpinnyProgressChars[8] = { '|', '/', '-', '\\', '|', '/', '-', '\\' };
+static termios OldTermIOS;
+static bool DidNetInit;
+static int NetProgressMax, NetProgressTicker;
+static const char *NetMessage;
+static char SpinnyProgressChars[8] = { '|', '/', '-', '\\', '|', '/', '-', '\\' };
 
 void ST_Init(int maxProgress)
 {
@@ -59,39 +61,60 @@ void ST_Progress()
 
 void ST_NetInit(const char *message, int numplayers)
 {
-	if (DidNetInit)
-	{
-		if (numplayers == 1)
-		{
-			// Status message without any real progress info.
-			printf ("\n%s.", message);
-		}
-		else
-		{
-			printf ("\n%s: ", message);
-		}
-	}
-	else
+	if (!DidNetInit)
 	{
 		termios rawtermios;
 
-		printf ("Press 'Q' to abort network game synchronization.\n%s: ", message);
+		fprintf (stderr, "Press 'Q' to abort network game synchronization.");
 		// Set stdin to raw mode so we can get keypresses in ST_CheckNetAbort()
 		// immediately without waiting for an EOL.
 		tcgetattr (STDIN_FILENO, &OldTermIOS);
 		rawtermios = OldTermIOS;
-		tcsetattr (STDIN_FILENO, &rawtermios);
+		rawtermios.c_lflag &= ~(ICANON | ECHO);
+		tcsetattr (STDIN_FILENO, TCSANOW, &rawtermios);
+		DidNetInit = true;
+		atterm (ST_NetDone);
 	}
+	if (numplayers == 1)
+	{
+		// Status message without any real progress info.
+		fprintf (stderr, "\n%s.", message);
+	}
+	else
+	{
+		fprintf (stderr, "\n%s: ", message);
+	}
+	fflush (stderr);
+	NetMessage = message;
 	NetProgressMax = numplayers;
 	NetProgressTicker = 0;
-	ST_NetProgress();	// You always know about yourself
+	ST_NetProgress(1);	// You always know about yourself
 }
 
 void ST_NetDone()
 {
 	// Restore stdin settings
-	tcsetattr (STDIN_FILENO, &OldTermIOS);
-	printf ("\n");
+	if (DidNetInit)
+	{
+		tcsetattr (STDIN_FILENO, TCSANOW, &OldTermIOS);
+		printf ("\n");
+		DidNetInit = false;
+	}
+}
+
+void ST_NetMessage(const char *format, ...)
+{
+	FString str;
+	va_list argptr;
+	
+	va_start (argptr, format);
+	str.VFormat (format, argptr);
+	va_end (argptr);
+	fprintf (stderr, "\r%-40s\n", str.GetChars());
+	if (NetMessage == 0)
+	{
+		NetMessage = 0;
+	}
 }
 
 void ST_NetProgress(int count)
@@ -102,24 +125,26 @@ void ST_NetProgress(int count)
 	{
 		NetProgressTicker++;
 	}
-	else
+	else if (count > 0)
 	{
 		NetProgressTicker = count;
 	}
 	if (NetProgressMax == 0)
 	{
-		// Spinny-type progress meter, because we're a guest.
-		printf ("%c\b", SpinnyProgressChars[NetProgressTicker & 7]);
+		// Spinny-type progress meter, because we're a guest waiting for the host.
+		fprintf (stderr, "\r%s: %c", NetMessage, SpinnyProgressChars[NetProgressTicker & 7]);
+		fflush (stderr);
 	}
 	else if (NetProgressMax > 1)
 	{
-		// Dotty-type progress meter, because we're a host.
-		printf (".%*c[%2d/%2d]", MAXPLAYERS + 1 - NetProgressTicker, NetProgressMax);
-		printf ("\b\b\b\b\b\b\b");
-		for (i = NetProgressTicker; i < MAXPLAYERS + 1; ++i)
+		// Dotty-type progress meter.
+		fprintf (stderr, "\r%s: ", NetMessage);
+		for (i = 0; i < NetProgressTicker; ++i)
 		{
-			printf ("\b");
+			fputc ('.', stderr);
 		}
+		fprintf (stderr, "%*c[%2d/%2d]", NetProgressMax + 1 - NetProgressTicker, ' ', NetProgressTicker, NetProgressMax);
+		fflush (stderr);
 	}
 }
 
@@ -130,14 +155,14 @@ bool ST_NetLoop(bool (*timer_callback)(void *), void *userdata)
 	int retval;
 	char k;
 
-	FD_ZERO (&rfds);
-	FD_SET (STDIN_FILENO, &rfds);
-
 	for (;;)
 	{
 		// Don't flood the network with packets on startup.
 		tv.tv_sec = 0;
 		tv.tv_usec = 500000;
+
+		FD_ZERO (&rfds);
+		FD_SET (STDIN_FILENO, &rfds);
 
 		retval = select (1, &rfds, NULL, NULL, &tv);
 
@@ -149,6 +174,7 @@ bool ST_NetLoop(bool (*timer_callback)(void *), void *userdata)
 		{
 			if (timer_callback (userdata))
 			{
+				fputc ('\n', stderr);
 				return true;
 			}
 		}
@@ -157,7 +183,7 @@ bool ST_NetLoop(bool (*timer_callback)(void *), void *userdata)
 			// Check input on stdin
 			if (k == 'q' || k == 'Q')
 			{
-				fprintf (stderr, "Network game synchronization aborted.");
+				fprintf (stderr, "\nNetwork game synchronization aborted.");
 				return false;
 			}
 		}

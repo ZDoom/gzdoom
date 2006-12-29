@@ -1,3 +1,6 @@
+December 28, 2006
+- Fixed the new network status display for the Linux terminal.
+
 December 25, 2006 (Changes by Graf Zahl)
 - Converted the Communicator to DECORATE.
 - Renamed the new armor properties to use the same names as Skulltag to avoid

@@ -418,7 +418,7 @@ CCMD (useflechette)
 	for (j = 0; j < 3; ++j)
 	{
 		AInventory *item;
-		if (item = who->FindInventory (bagnames[(i+j)%3]))
+		if ( (item = who->FindInventory (bagnames[(i+j)%3])) )
 		{
 			SendItemUse = item;
 			break;
@@ -844,8 +844,9 @@ void G_Ticker ()
 
 	if (ToggleFullscreen)
 	{
+		static char toggle_fullscreen[] = "toggle fullscreen";
 		ToggleFullscreen = false;
-		AddCommandString ("toggle fullscreen");
+		AddCommandString (toggle_fullscreen);
 	}
 
 	// do things to change the game state
@@ -1805,7 +1806,7 @@ void G_DoAutoSave ()
 {
 	// Keep up to four autosaves at a time
 	UCVarValue num;
-	char *readableTime;
+	const char *readableTime;
 	int count = autosavecount != 0 ? autosavecount : 1;
 	
 	num.Int = (autosavenum + 1) % count;
@@ -1841,7 +1842,7 @@ static void PutSaveWads (FILE *file)
 static void PutSaveComment (FILE *file)
 {
 	char comment[256];
-	char *readableTime;
+	const char *readableTime;
 	WORD len;
 	int levelTime;
 

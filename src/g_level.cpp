@@ -138,7 +138,25 @@ TArray<level_info_t> wadlevelinfos;
 // MAPINFO is parsed slightly differently when the map name is just a number.
 static bool HexenHack;
 
-static level_info_t TheDefaultLevelInfo = { "", 0, "", "", "", "SKY1", 0, 0, 0, 0, NULL, "Unnamed", "COLORMAP", +8, -8 };
+static char unnamed[] = "Unnamed";
+static level_info_t TheDefaultLevelInfo =
+{
+ 	"",			// mapname
+ 	0, 			// levelnum
+ 	"", 		// pname,
+ 	"", 		// nextmap
+ 	"",			// secretmap
+ 	"SKY1",		// skypic1
+ 	0, 			// cluster
+ 	0, 			// partime
+ 	0, 			// sucktime
+ 	0, 			// flags
+ 	NULL, 		// music
+ 	unnamed, 	// level_name
+ 	"COLORMAP",	// fadetable
+ 	+8, 		// WallVertLight
+ 	-8 			// WallHorizLight
+};
 
 static cluster_info_t TheDefaultClusterInfo = { 0 };
 
@@ -1316,7 +1334,7 @@ bool CheckWarpTransMap (char mapname[9], bool substitute)
 //
 static char d_mapname[256];
 
-void G_DeferedInitNew (char *mapname)
+void G_DeferedInitNew (const char *mapname)
 {
 	strncpy (d_mapname, mapname, 8);
 	CheckWarpTransMap (d_mapname, true);
@@ -1414,7 +1432,7 @@ void G_DoNewGame (void)
 	gameaction = ga_nothing;
 }
 
-void G_InitNew (char *mapname, bool bTitleLevel)
+void G_InitNew (const char *mapname, bool bTitleLevel)
 {
 	EGameSpeed oldSpeed;
 	bool wantFast;

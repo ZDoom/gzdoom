@@ -699,7 +699,8 @@ void AddToConsole (int printlevel, const char *text)
 	}
 	if (work == NULL)
 	{
-		work = TEXTCOLOR_RED "*** OUT OF MEMORY ***";
+		static char oom[] = TEXTCOLOR_RED "*** OUT OF MEMORY ***";
+		work = oom;
 		worklen = 0;
 	}
 	else

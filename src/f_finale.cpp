@@ -69,7 +69,7 @@ static bool FinaleHasPic;
 
 static FString FinaleText;
 static size_t FinaleTextLen;
-static char *FinaleFlat;
+static const char *FinaleFlat;
 
 void	F_StartCast (void);
 void	F_CastTicker (void);

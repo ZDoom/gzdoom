@@ -222,7 +222,7 @@ static oldmenu_t *TopLevelMenu;		// The main menu everything hangs off of
 static DCanvas	*FireScreen;
 static BYTE		FireRemap[256];
 
-static char			*genders[3] = { "male", "female", "other" };
+static const char		*genders[3] = { "male", "female", "other" };
 static FPlayerClass	*PlayerClass;
 static int			PlayerSkin;
 static FState		*PlayerState;

@@ -326,7 +326,7 @@ void FormatGUID (char *text, const GUID &guid)
 }
 
 // [RH] Returns the current local time as ASCII, even if it's too early
-char *myasctime ()
+const char *myasctime ()
 {
 	time_t clock;
 	struct tm *lt;

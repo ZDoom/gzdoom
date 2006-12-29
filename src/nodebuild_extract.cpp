@@ -352,6 +352,7 @@ DWORD FNodeBuilder::PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_
 	}
 	newseg.PartnerSeg = (seg_t *)(seg->partner == DWORD_MAX ? 0 : (size_t)seg->partner + 1);
 	newseg.bPolySeg = false;
+	newseg.Subsector = NULL;
 	return (DWORD)segs.Push (newseg);
 }
 
@@ -367,5 +368,6 @@ void FNodeBuilder::PushConnectingGLSeg (int subsector, TArray<seg_t> &segs, vert
 	newseg.sidedef = NULL;
 	newseg.PartnerSeg = NULL;
 	newseg.bPolySeg = false;
+	newseg.Subsector = NULL;
 	segs.Push (newseg);
 }

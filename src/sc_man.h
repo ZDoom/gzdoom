@@ -156,6 +156,5 @@ extern int sc_Line;
 extern bool sc_End;
 extern bool sc_Crossed;
 extern bool sc_FileScripts;
-extern char *sc_ScriptsDir;
 
 #endif //__SC_MAN_H__

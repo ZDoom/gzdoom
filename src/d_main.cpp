@@ -159,8 +159,8 @@ CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 wadlist_t *wadfiles;		// [RH] remove limit on # of loaded wads
 bool devparm;				// started game with -devparm
-char *D_DrawIcon;			// [RH] Patch name of icon to draw on next refresh
-int NoWipe;					// [RH] Allow wipe? (Needs to be set each time)
+const char *D_DrawIcon;	// [RH] Patch name of icon to draw on next refresh
+int NoWipe;				// [RH] Allow wipe? (Needs to be set each time)
 bool singletics = false;	// debug flag to cancel adaptiveness
 char startmap[8];
 bool autostart;
@@ -2274,10 +2274,11 @@ void D_DoomMain (void)
 	// turbo option  // [RH] (now a cvar)
 	{
 		UCVarValue value;
+		static char one_hundred[] = "100";
 
 		value.String = Args.CheckValue ("-turbo");
 		if (value.String == NULL)
-			value.String = "100";
+			value.String = one_hundred;
 		else
 			Printf ("turbo scale: %s%%\n", value.String);
 

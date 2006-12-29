@@ -52,7 +52,7 @@ void D_StartTitle (void);
 
 
 // [RH] Set this to something to draw an icon during the next screen refresh.
-extern char *D_DrawIcon;
+extern const char *D_DrawIcon;
 
 
 enum EIWADType

@@ -291,12 +291,12 @@ extern bool savegamerestore;
 // mapname will be changed if it is a valid warptrans
 bool CheckWarpTransMap (char mapname[9], bool substitute);
 
-void G_InitNew (char *mapname, bool bTitleLevel);
+void G_InitNew (const char *mapname, bool bTitleLevel);
 
 // Can be called by the startup code or M_Responder.
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
-void G_DeferedInitNew (char *mapname);
+void G_DeferedInitNew (const char *mapname);
 
 void G_ExitLevel (int position, bool keepFacing);
 void G_SecretExitLevel (int position);

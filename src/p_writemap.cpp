@@ -24,7 +24,7 @@ static int WriteBEHAVIOR (FILE *file);
 
 CCMD (dumpmap)
 {
-	char *mapname;
+	const char *mapname;
 	FILE *file;
 
 	if (argv.argc() < 2)

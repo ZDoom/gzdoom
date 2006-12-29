@@ -1,4 +1,6 @@
 December 28, 2006
+- Fixed all the warnings from GCC 4.2, including a handful that were present in
+  older GCCs.
 - Fixed: The VC++ project was not set up to redefine RM using del in
   wadsrc/Makefile, nor did it use the makefile for cleaning.
 - Added ST_NetMessage() for mixing miscellaneous messages with the network

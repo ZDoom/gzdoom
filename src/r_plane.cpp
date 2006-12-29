@@ -1045,7 +1045,7 @@ void R_DrawSkyBoxes ()
 	if (visplanes[MAXVISPLANES] == NULL)
 		return;
 
-	VisplaneAndAlpha vaAdder;
+	VisplaneAndAlpha vaAdder = { 0 };
 	int savedextralight = extralight;
 	fixed_t savedx = viewx;
 	fixed_t savedy = viewy;
@@ -1175,7 +1175,7 @@ void R_DrawSkyBoxes ()
 	// sake of nested skyboxes.
 	while (interestingStack.Pop (FirstInterestingDrawseg))
 	{
-		ptrdiff_t pd;
+		ptrdiff_t pd = 0;
 
 		drawsegStack.Pop (pd);
 		firstdrawseg = drawsegs + pd;

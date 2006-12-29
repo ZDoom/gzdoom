@@ -104,7 +104,7 @@ typedef struct
 			char numPages;
 		} indexed;
 	} info;
-	char **quitSounds;
+	const char **quitSounds;
 	int maxSwitch;
 	char borderFlat[9];
 	gameborder_t *border;

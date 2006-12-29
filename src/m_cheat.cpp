@@ -469,7 +469,7 @@ void GiveSpawner (player_t *player, const PClass *type, int amount)
 	}
 }
 
-void cht_Give (player_t *player, char *name, int amount)
+void cht_Give (player_t *player, const char *name, int amount)
 {
 	bool giveall;
 	int i;

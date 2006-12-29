@@ -400,7 +400,7 @@ static void DoJump(AActor * self, FState * CallingState, int offset)
 		jumpto = cls->ActorInfo->FindState(numnames, &JumpParameters[offset+2]);
 		if (jumpto == NULL)
 		{
-			char * dot="";
+			const char *dot="";
 			Printf("Jump target '");
 			if (classname != NAME_None) Printf("%s::", classname.GetChars());
 			for (int i=0;i<numnames;i++)

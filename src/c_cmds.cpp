@@ -403,7 +403,7 @@ CCMD (exec)
 
 CCMD (logfile)
 {
-	char *timestr = myasctime ();
+	const char *timestr = myasctime ();
 
 	if (Logfile)
 	{

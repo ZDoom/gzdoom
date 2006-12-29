@@ -232,6 +232,10 @@ DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD
 	newseg.loopnum = 0;
 	newseg.next = DWORD_MAX;
 	newseg.planefront = true;
+	newseg.hashnext = NULL;
+	newseg.storedseg = NULL;
+	newseg.frontsector = NULL;
+	newseg.backsector = NULL;
 
 	if (splitseg != DWORD_MAX)
 	{

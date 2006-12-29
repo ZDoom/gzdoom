@@ -934,7 +934,7 @@ static InterpolationViewer *FindPastViewer (AActor *actor)
 	}
 
 	// Not found, so make a new one
-	InterpolationViewer iview;
+	InterpolationViewer iview = { 0 };
 	iview.ViewActor = actor;
 	iview.otic = -1;
 	return &PastViewers[PastViewers.Push (iview)];

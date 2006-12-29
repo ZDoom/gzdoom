@@ -116,7 +116,7 @@ struct GUIDName;
 
 typedef struct menuitem_s {
 	itemtype		  type;
-	char			 *label;
+	const char		 *label;
 	union {
 		FBaseCVar		 *cvar;
 		FIntCVar		 *intcvar;
@@ -156,7 +156,7 @@ typedef struct menuitem_s {
 } menuitem_t;
 
 typedef struct menu_s {
-	char		   *texttitle;
+	const char	   *texttitle;
 	int				lastOn;
 	int				numitems;
 	int				indent;
@@ -171,7 +171,7 @@ typedef struct menu_s {
 
 typedef struct value_s {
 	float		value;
-	char		*name;
+	const char	*name;
 } value_t;
 
 typedef struct

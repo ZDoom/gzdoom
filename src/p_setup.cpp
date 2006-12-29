@@ -188,7 +188,7 @@ static void P_SetSideNum (DWORD *sidenum_p, WORD sidenum);
 
 struct checkstruct
 {
-	char *lumpname;
+	const char lumpname[9];
 	bool  required;
 };
 
@@ -196,7 +196,7 @@ static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname,
 {
 	static const checkstruct check[] = 
 	{
-		{NULL,		 true},
+		{"",		 true},
 		{"THINGS",	 true},
 		{"LINEDEFS", true},
 		{"SIDEDEFS", true},

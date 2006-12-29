@@ -327,7 +327,7 @@ int PolyClipper::DoMost (float x0, float y0, float x1, float y1, pmostcallbackty
 	double dx, d, n, t;
 	float spx[4], spy[4], cy[2], cv[2];
 	int j, k, z, scnt, dir, spt[4];
-	vsptype *vsp, *nvsp, *vcnt, *ni;
+	vsptype *vsp, *nvsp, *vcnt = NULL, *ni;
 	int did = 1;
 	
 	if (x0 < x1)
@@ -670,7 +670,7 @@ void printnum(int x, int y, int num)
 
 void drawpolymosttest()
 {
-	float cx0, cy0, fx0, fy0;
+	float cx0 = 0, cy0 = 0, fx0 = 0, fy0 = 0;
 	int ccol, fcol;
 	PolyClipper::vsptype *vsp, *ovsp = &TestPoly.UsedList, *nvsp;
 
@@ -1035,7 +1035,7 @@ void RP_AddLine (seg_t *line)
 	fixed_t			tx1, tx2, ty1, ty2;
 	fixed_t			fcz0, ffz0, fcz1, ffz1, bcz0, bfz0, bcz1, bfz1;
 	double x0, x1, xp0, yp0, xp1, yp1, oxp0, oyp0, nx0, ny0, nx1, ny1, ryp0, ryp1;
-	double cy0, fy0, cy1, fy1, ocy0, ofy0, ocy1, ofy1;
+	double cy0, fy0, cy1, fy1, ocy0 = 0, ofy0 = 0, ocy1 = 0, ofy1 = 0;
 	double t0, t1;
 	double x, y;
 

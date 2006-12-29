@@ -121,9 +121,11 @@ void I_BuildMIDIMenuList (struct value_s **outValues, float *numValues)
 				if (res == MMSYSERR_NOERROR)
 				{
 					size_t len = strlen (caps.szPname) + 1;
-					values[p].name = new char[len];
+					char *name = new char[len];
+
+					memcpy (name, caps.szPname, len);
+					values[p].name = name;
 					values[p].value = (float)id;
-					memcpy (values[p].name, caps.szPname, len);
 					++p;
 				}
 			}

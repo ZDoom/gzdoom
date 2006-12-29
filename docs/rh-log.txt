@@ -1,4 +1,13 @@
 December 28, 2006
+- Fixed: The SDL input code must convert the event.data1 to uppercase.
+- Added more resolution options when playing windowed under SDL.
+- Changed SDL mouse handling to be basically identical to the (non-DirectInput)
+  Win32 code. The mouse is polled periodically and constantly warped to the
+  center of the window. Despite what the SDL docs specify, SDL_WM_GrabInput()
+  is apparently no longer a reliable means of obtaining continuous relative
+  mouse motion events.
+- Fixed: The non-Windows implementation of I_FindClose() did not check for -1
+  handles.
 - Fixed all the warnings from GCC 4.2, including a handful that were present in
   older GCCs.
 - Fixed: The VC++ project was not set up to redefine RM using del in

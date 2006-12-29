@@ -225,13 +225,66 @@ static void I_CheckGUICapture ()
 	}
 }
 
+static void CenterMouse ()
+{
+	SDL_WarpMouse (screen->GetWidth()/2, screen->GetHeight()/2);
+	SDL_PumpEvents ();
+	SDL_GetRelativeMouseState (NULL, NULL);
+}
+
+static void PostMouseMove (int x, int y)
+{
+	static int lastx = 0, lasty = 0;
+	event_t ev = { 0 };
+	
+	if (m_filter)
+	{
+		ev.x = (x + lastx) / 2;
+		ev.y = (y + lasty) / 2;
+	}
+	else
+	{
+		ev.x = x;
+		ev.y = y;
+	}
+	lastx = x;
+	lasty = y;
+	if (ev.x | ev.y)
+	{
+		ev.type = EV_Mouse;
+		D_PostEvent (&ev);
+	}
+}
+
+static void MouseRead ()
+{
+	int x, y;
+
+	if (NativeMouse)
+	{
+		return;
+	}
+
+	SDL_GetRelativeMouseState (&x, &y);
+	if (!m_noprescale)
+	{
+		x *= 3;
+		y *= 2;
+	}
+	if (x | y)
+	{
+		CenterMouse ();
+		PostMouseMove (x, -y);
+	}
+}
+
 static void I_CheckNativeMouse ()
 {
 	bool focus = (SDL_GetAppState() & (SDL_APPINPUTFOCUS|SDL_APPACTIVE))
 			== (SDL_APPINPUTFOCUS|SDL_APPACTIVE);
 	bool fs = (SDL_GetVideoSurface ()->flags & SDL_FULLSCREEN) != 0;
 	
-	bool wantNative = !focus || (!fs && (GUICapture || paused));
+	bool wantNative = !focus || !use_mouse || (!fs && (GUICapture || paused));
 
 	if (wantNative != NativeMouse)
 	{
@@ -246,6 +299,7 @@ static void I_CheckNativeMouse ()
 		{
 			SDL_ShowCursor (0);
 			SDL_WM_GrabInput (SDL_GRAB_ON);
+			CenterMouse ();
 		}
 	}
 }
@@ -276,30 +330,6 @@ void MessagePump (const SDL_Event &sev)
 					S_ResumeSound ();
 			}
 		}
-		break;
-
-	case SDL_MOUSEMOTION:
-		x = sev.motion.xrel;
-		y = -sev.motion.yrel;
-		if (!m_noprescale)
-		{
-			x *= 3;
-			y *= 2;
-		}
-		if (m_filter)
-		{
-			event.x = (x + lastx) / 2;
-			event.y = (y + lasty) / 2;
-		}
-		else
-		{
-			event.x = x;
-			event.y = y;
-		}
-		lastx = x;
-		lasty = y;
-		event.type = EV_Mouse;
-		D_PostEvent (&event);
 		break;
 
 	case SDL_MOUSEBUTTONDOWN:
@@ -395,6 +425,7 @@ void MessagePump (const SDL_Event &sev)
 			event.data2 = sev.key.keysym.unicode & 0xff;
 			if (event.data1 < 128)
 			{
+				event.data1 = toupper(event.data1);
 				D_PostEvent (&event);
 			}
 			if (!iscntrl(event.data2) && event.subtype != EV_GUI_KeyUp)
@@ -416,6 +447,10 @@ void I_GetEvent ()
 	while (SDL_PollEvent (&sev))
 	{
 		MessagePump (sev);
+	}
+	if (use_mouse)
+	{
+		MouseRead ();
 	}
 }
 

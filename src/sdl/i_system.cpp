@@ -416,7 +416,7 @@ int I_FindNext (void *handle, findstate_t *fileinfo)
 int I_FindClose (void *handle)
 {
 	findstate_t *state = (findstate_t *)handle;
-	if (state->count > 0)
+	if (handle != (void*)-1 && state->count > 0)
 	{
 		state->count = 0;
 		free (state->namelist);

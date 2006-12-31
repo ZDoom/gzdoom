@@ -67,6 +67,8 @@ ACTOR Archvile 64
 
 ACTOR ArchvileFire
 {
+	Game Doom
+	SpawnID 98
 	+NOBLOCKMAP +NOGRAVITY
 	RenderStyle Add
 	Alpha 1

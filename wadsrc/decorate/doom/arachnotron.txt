@@ -63,6 +63,8 @@ ACTOR Arachnotron 68
 //===========================================================================
 ACTOR ArachnotronPlasma
 {
+	Game Doom
+	SpawnID 129
 	Radius 13
 	Height 8
 	Speed 25

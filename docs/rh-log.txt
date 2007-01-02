@@ -1,3 +1,8 @@
+January 2, 2007 (Changes by Graf Zahl)
+- Fixed: The ANIMATED parser must read the bytes for the speed as unsigned bytes.
+- Fixed: The screen wipe must be disabled for Heretic's underwater ending. If
+  not, the wipe will try to mix pictures with different palettes.
+
 December 31, 2006 (Changes by Graf Zahl)
 - Fixed: Several actors for Doom were missing their spawn ID.
 

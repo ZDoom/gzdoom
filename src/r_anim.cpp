@@ -184,10 +184,10 @@ void R_InitPicAnims (void)
 
 			// Speed is stored as tics, but we want ms so scale accordingly.
 			animspeed = /* .speed */
-				Scale ((anim_p[19] << 0) |
-					   (anim_p[20] << 8) |
-					   (anim_p[21] << 16) |
-					   (anim_p[22] << 24), 1000, 35);
+				Scale ((BYTE(anim_p[19]) << 0) |
+					   (BYTE(anim_p[20]) << 8) |
+					   (BYTE(anim_p[21]) << 16) |
+					   (BYTE(anim_p[22]) << 24), 1000, 35);
 
 			R_AddSimpleAnim (pic1, pic2 - pic1 + 1, animtype, animspeed);
 		}

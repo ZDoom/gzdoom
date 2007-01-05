@@ -278,6 +278,7 @@ static const char *MapInfoMapLevel[] =
 	"compat_trace",		
 	"compat_dropoff",
 	"compat_boomscroll",
+	"bordertexture",
 
 	NULL
 };
@@ -408,6 +409,7 @@ MapHandlers[] =
 	{ MITYPE_COMPATFLAG, COMPATF_TRACE},
 	{ MITYPE_COMPATFLAG, COMPATF_DROPOFF},
 	{ MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
+	{ MITYPE_LUMPNAME,	lioffset(bordertexture), 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -475,6 +477,7 @@ static void SetLevelDefaults (level_info_t *levelinfo)
 	strncpy (levelinfo->fadetable, "COLORMAP", 8);
 	strcpy (levelinfo->skypic1, "-NOFLAT-");
 	strcpy (levelinfo->skypic2, "-NOFLAT-");
+	strcpy (levelinfo->bordertexture, gameinfo.borderFlat);
 	if (gameinfo.gametype != GAME_Hexen)
 	{
 		// For maps without a BEHAVIOR, this will be cleared.

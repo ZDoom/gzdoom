@@ -369,7 +369,7 @@ void WI_LoadBackground(bool isenterpic)
 
 		case GAME_Strife:
 		default:
-			// Strife doesn't have an intermission pic so choose something neutral!
+			// Strife doesn't have an intermission pic so choose something neutral.
 			if (isenterpic) return;
 			lumpname = gameinfo.borderFlat;
 			break;

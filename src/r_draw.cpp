@@ -36,6 +36,7 @@
 #include "st_stuff.h"
 #include "a_hexenglobal.h"
 #include "g_game.h"
+#include "g_level.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -1773,7 +1774,15 @@ void R_DrawBorder (int x1, int y1, int x2, int y2)
 {
 	int picnum;
 
-	picnum = TexMan.CheckForTexture (gameinfo.borderFlat, FTexture::TEX_Flat);
+	if (level.info != NULL)
+	{
+		picnum = TexMan.CheckForTexture (level.info->bordertexture, FTexture::TEX_Flat);
+	}
+	else
+	{
+		picnum = TexMan.CheckForTexture (gameinfo.borderFlat, FTexture::TEX_Flat);
+	}
+
 	if (picnum >= 0)
 	{
 		screen->FlatFill (x1, y1, x2, y2, TexMan(picnum));

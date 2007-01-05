@@ -89,7 +89,7 @@
 #endif
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 235	// Used by 2.1.5
+#define MINSAVEVER 236	// Used by 2.1.7
 
 // The maximum length of one save game description for the menus.
 #define SAVESTRINGSIZE		24

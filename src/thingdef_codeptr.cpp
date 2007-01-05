@@ -374,18 +374,18 @@ void A_BulletAttack (AActor *self)
     }
 }
 
-//==========================================================================
-//
-// Do the state jump
-//
-//==========================================================================
-static void DoJump(AActor * self, FState * CallingState, int offset)
-{
-	FState *jumpto;
 
+//==========================================================================
+//
+// Resolves a label parameter
+//
+//==========================================================================
+
+FState *P_GetState(AActor *self, FState *CallingState, int offset)
+{
 	if (offset>=0)
 	{
-		jumpto = CallingState + offset;
+		return CallingState + offset;
 	}
 	else
 	{
@@ -394,10 +394,10 @@ static void DoJump(AActor * self, FState * CallingState, int offset)
 		FName classname = JumpParameters[offset];
 		const PClass *cls;
 		cls = classname==NAME_None?  RUNTIME_TYPE(self) : PClass::FindClass(classname);
-		if (cls==NULL || cls->ActorInfo==NULL) return;	// shouldn't happen
+		if (cls==NULL || cls->ActorInfo==NULL) return NULL;	// shouldn't happen
 		
 		int numnames = (int)JumpParameters[offset+1];
-		jumpto = cls->ActorInfo->FindState(numnames, &JumpParameters[offset+2]);
+		FState *jumpto = cls->ActorInfo->FindState(numnames, &JumpParameters[offset+2]);
 		if (jumpto == NULL)
 		{
 			const char *dot="";
@@ -406,11 +406,24 @@ static void DoJump(AActor * self, FState * CallingState, int offset)
 			for (int i=0;i<numnames;i++)
 			{
 				Printf("%s%s", dot, JumpParameters[offset+2+i].GetChars());
+				dot = ".";
 			}
 			Printf("not found in %s\n", self->GetClass()->TypeName.GetChars());
-			return;
 		}
+		return jumpto;
 	}
+}
+
+//==========================================================================
+//
+// Do the state jump
+//
+//==========================================================================
+static void DoJump(AActor * self, FState * CallingState, int offset)
+{
+	FState *jumpto = P_GetState(self, CallingState, offset);
+
+	if (jumpto == NULL) return;
 
 	if (pStateCall != NULL && CallingState == pStateCall->State)
 	{
@@ -1764,27 +1777,6 @@ void A_CheckSight(AActor * self)
 
 	if (index>=0) DoJump(self, CallingState, StateParameters[index]);
 
-}
-
-
-//===========================================================================
-//
-// A_ExtChase
-// A_Chase with optional parameters
-//
-//===========================================================================
-void A_DoChase(AActor * actor, bool fastchase, FState * meleestate, FState * missilestate, bool playactive, bool nightmarefast);
-
-void A_ExtChase(AActor * self)
-{
-	int index=CheckIndex(4, &CallingState);
-	if (index<0) return;
-
-	A_DoChase(self, false,
-		EvalExpressionI (StateParameters[index], self) ? self->MeleeState:NULL,
-		EvalExpressionI (StateParameters[index+1], self) ? self->MissileState:NULL,
-		EvalExpressionN (StateParameters[index+2], self),
-		!!EvalExpressionI (StateParameters[index+3], self));
 }
 
 

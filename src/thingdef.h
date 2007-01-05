@@ -37,6 +37,7 @@ void AddState (const char * statename, FState * state);
 FState * FindState(AActor * actor, const PClass * type, const char * name);
 void InstallStates(FActorInfo *info, AActor *defaults);
 void MakeStateDefines(const FStateLabels *list);
+FState *P_GetState(AActor *self, FState *CallingState, int offset);
 
 struct FDropItem 
 {

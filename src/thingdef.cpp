@@ -418,12 +418,14 @@ struct AFuncDesc
 };
 
 
+#define FROM_THINGDEF
 // Prototype the code pointers
 #define WEAPON(x)	void A_##x(AActor*);	
 #define ACTOR(x)	void A_##x(AActor*);
 #include "codepointers.h"
 #include "d_dehackedactions.h"
 void A_ComboAttack(AActor*);
+void A_ExplodeParms(AActor*);
 
 AFuncDesc AFTable[] =
 {
@@ -432,7 +434,8 @@ AFuncDesc AFTable[] =
 #include "codepointers.h"
 #include "d_dehackedactions.h"
 	{ "A_Fall", A_NoBlocking },
-	{ "A_BasicAttack", A_ComboAttack }
+	{ "A_BasicAttack", A_ComboAttack },
+	{ "A_Explode", A_ExplodeParms }
 };
 
 

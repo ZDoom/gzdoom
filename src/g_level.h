@@ -163,6 +163,7 @@ struct level_info_s
 
 	char		soundinfo[9];
 	char		sndseq[9];
+	char		bordertexture[9];
 	FSpecialAction * specialactions;
 };
 typedef struct level_info_s level_info_t;

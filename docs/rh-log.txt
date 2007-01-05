@@ -1,3 +1,10 @@
+January 5, 2007 (Changes by Graf Zahl)
+- Added customizable border textures. They will be defined with the 
+  MAPINFO keyword 'bordertexture' and are settable per map.
+- Fixed: When used in DECORATE A_Explode must use A_ExplodeParms.
+- Added custom label support to A_Chase. To enable resurrection from the
+  customizable version I also moved all A_VileChase stuff into p_enemy.cpp.
+
 January 4, 2007
 - Added simulation of Hexen's startup screen (currently minus net notches).
 

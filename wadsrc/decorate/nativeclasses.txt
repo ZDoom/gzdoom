@@ -7,7 +7,7 @@ class Actor extends Thinker
 	action native A_NoBlocking();
 	action native A_XScream();
 	action native A_Look();
-	action native A_Chase();
+	action native A_Chase(optional state melee, optional state missile, optional eval int flags);
 	action native A_FaceTarget();
 	action native A_PosAttack();
 	action native A_Scream();

@@ -99,6 +99,8 @@
 #define IDC_NETSTARTPROGRESS            1079
 #define IDC_NETSTARTMESSAGE             1080
 #define IDC_NETSTARTCOUNT               1081
+#define IDC_STATIC_TITLE				1082
+#define IDC_STATIC_STARTUP				1083
 #define IDCE_ENVIRONMENTDIFFUSION       1085
 #define IDCS_ENVIRONMENTDIFFUSION       1086
 #define IDCE_ROOM                       1087
@@ -158,7 +160,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1082
+#define _APS_NEXT_CONTROL_VALUE         1084
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

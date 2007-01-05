@@ -95,10 +95,17 @@ HWND			Window;
 
 // The subwindows used for startup and error output
 HWND			ConWindow, GameTitleWindow;
-HWND			ErrorPane, ProgressBar, NetStartPane;
+HWND			ErrorPane, ProgressBar, NetStartPane, StartupScreen;
 
 HFONT			GameTitleFont;
 LONG			GameTitleFontHeight;
+
+extern struct
+{
+	BITMAPINFOHEADER Header;
+	RGBQUAD			 Colors[16];
+} StartupBitmapInfo;
+extern BYTE *StartupBitmapBits;
 
 HMODULE			hwtsapi32;		// handle to wtsapi32.dll
 
@@ -366,9 +373,20 @@ void LayoutMainWindow (HWND hWnd, HWND pane)
 		GetClientRect (NetStartPane, &foo);
 		foo.bottom = foo.bottom;;
 	}
-	// The log window uses whatever space is left.
-	MoveWindow (ConWindow, 0, errorpaneheight + bannerheight, w,
-		h - bannerheight - errorpaneheight - progressheight - netpaneheight, TRUE);
+	// If there is a startup screen, it covers the log window
+	if (StartupScreen != NULL)
+	{
+		SetWindowPos (StartupScreen, HWND_TOP, 0, errorpaneheight + bannerheight, w,
+			h - bannerheight - errorpaneheight - progressheight - netpaneheight, SWP_SHOWWINDOW);
+		InvalidateRect (StartupScreen, NULL, FALSE);
+		MoveWindow (ConWindow, 0, 0, 0, 0, TRUE);
+	}
+	else
+	{
+		// The log window uses whatever space is left.
+		MoveWindow (ConWindow, 0, errorpaneheight + bannerheight, w,
+			h - bannerheight - errorpaneheight - progressheight - netpaneheight, TRUE);
+	}
 }
 
 //===========================================================================
@@ -436,6 +454,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			return -1;
 		}
+		SetWindowLong (view, GWL_ID, IDC_STATIC_TITLE);
 		GameTitleWindow = view;
 
 		return 0;
@@ -448,7 +467,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_DRAWITEM:
-		if (DoomStartupInfo != NULL)
+		if (wParam == IDC_STATIC_TITLE && DoomStartupInfo != NULL)
 		{
 			const PalEntry *c;
 
@@ -476,6 +495,20 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			TextOut (drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, DoomStartupInfo->Name, titlelen);
 			SelectObject (drawitem->hDC, oldfont);
 			return TRUE;
+		}
+		else if (wParam == IDC_STATIC_STARTUP)
+		{
+			if (StartupScreen != NULL)
+			{
+				drawitem = (LPDRAWITEMSTRUCT)lParam;
+
+				rect = drawitem->rcItem;
+				// Windows expects DIBs to be bottom-up but ours is top-down,
+				// so flip it vertically while drawing it.
+				StretchDIBits (drawitem->hDC, rect.left, rect.bottom - 1, rect.right - rect.left, rect.top - rect.bottom,
+					0, 0, StartupBitmapInfo.Header.biWidth, StartupBitmapInfo.Header.biHeight,
+					StartupBitmapBits, (BITMAPINFO *)&StartupBitmapInfo, DIB_RGB_COLORS, SRCCOPY);
+			}
 		}
 		return FALSE;
 

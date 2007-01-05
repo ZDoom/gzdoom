@@ -1,3 +1,6 @@
+January 4, 2007
+- Added simulation of Hexen's startup screen (currently minus net notches).
+
 January 2, 2007 (Changes by Graf Zahl)
 - Fixed: The ANIMATED parser must read the bytes for the speed as unsigned bytes.
 - Fixed: The screen wipe must be disabled for Heretic's underwater ending. If

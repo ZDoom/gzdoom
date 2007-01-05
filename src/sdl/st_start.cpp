@@ -3,7 +3,7 @@
 ** Handles the startup screen.
 **
 **---------------------------------------------------------------------------
-** Copyright 2006 Randy Heit
+** Copyright 2006-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 **
 */
 
+// HEADER FILES ------------------------------------------------------------
+
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -41,11 +43,45 @@
 #include "doomdef.h"
 #include "i_system.h"
 
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void ST_TTY_Done ();
+static void ST_TTY_Progress ();
+static void ST_TTY_NetInit (const char *message, int numplayers);
+static void ST_TTY_NetProgress (int count);
+static void ST_TTY_NetMessage (const char *format, ...);
+static void ST_TTY_NetDone ();
+static bool ST_TTY_NetLoop (bool (*timer_callback)(void *), void *userdata);
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+void (*ST_Done)();
+void (*ST_Progress)();
+void (*ST_NetInit)(const char *message, int numplayers);
+void (*ST_NetProgress)(int count);
+void (*ST_NetMessage)(const char *format, ...);
+void (*ST_NetDone)();
+bool (*ST_NetLoop)(bool (*timer_callback)(void *), void *userdata);
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
 static termios OldTermIOS;
 static bool DidNetInit;
 static int NetProgressMax, NetProgressTicker;
 static const char *NetMessage;
 static char SpinnyProgressChars[8] = { '|', '/', '-', '\\', '|', '/', '-', '\\' };
+
+// CODE --------------------------------------------------------------------
 
 //===========================================================================
 //
@@ -57,43 +93,50 @@ static char SpinnyProgressChars[8] = { '|', '/', '-', '\\', '|', '/', '-', '\\' 
 
 void ST_Init(int maxProgress)
 {
+	ST_Done = ST_TTY_Done;
+	ST_Progress = ST_TTY_Progress;
+	ST_NetInit = ST_TTY_NetInit;
+	ST_NetProgress = ST_TTY_NetProgress;
+	ST_NetMessage = ST_TTY_NetMessage;
+	ST_NetDone = ST_TTY_NetDone;
+	ST_NetLoop = ST_TTY_NetLoop;
 }
 
 //===========================================================================
 //
-// ST_Done
+// ST_TTY_Done
 //
 // Called just before entering graphics mode to deconstruct the startup
 // screen.
 //
 //===========================================================================
 
-void ST_Done()
+static void ST_TTY_Done()
 {
 }
 
 //===========================================================================
 //
-// ST_Progress
+// ST_TTY_Progress
 //
 // Bumps the progress meter one notch.
 //
 //===========================================================================
 
-void ST_Progress()
+static void ST_TTY_Progress()
 {
 }
 
 //===========================================================================
 //
-// ST_NetInit
+// ST_TTY_NetInit
 //
 // Sets stdin for unbuffered I/O, displays the given message, and shows
 // a progress meter.
 //
 //===========================================================================
 
-void ST_NetInit(const char *message, int numplayers)
+static void ST_TTY_NetInit(const char *message, int numplayers)
 {
 	if (!DidNetInit)
 	{
@@ -127,13 +170,13 @@ void ST_NetInit(const char *message, int numplayers)
 
 //===========================================================================
 //
-// ST_NetDone
+// ST_TTY_NetDone
 //
 // Restores the old stdin tty settings.
 //
 //===========================================================================
 
-void ST_NetDone()
+static void ST_TTY_NetDone()
 {
 	// Restore stdin settings
 	if (DidNetInit)
@@ -154,7 +197,7 @@ void ST_NetDone()
 //
 //===========================================================================
 
-void ST_NetMessage(const char *format, ...)
+static void ST_TTY_NetMessage(const char *format, ...)
 {
 	FString str;
 	va_list argptr;
@@ -174,7 +217,7 @@ void ST_NetMessage(const char *format, ...)
 //
 //===========================================================================
 
-void ST_NetProgress(int count)
+static void ST_TTY_NetProgress(int count)
 {
 	int i;
 
@@ -219,7 +262,7 @@ void ST_NetProgress(int count)
 //
 //===========================================================================
 
-bool ST_NetLoop(bool (*timer_callback)(void *), void *userdata)
+static bool ST_TTY_NetLoop(bool (*timer_callback)(void *), void *userdata)
 {
 	fd_set rfds;
 	struct timeval tv;

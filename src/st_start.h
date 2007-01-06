@@ -42,3 +42,4 @@ extern void (*ST_NetProgress)(int count);
 extern void (*ST_NetMessage)(const char *format, ...);	// cover for printf()
 extern void (*ST_NetDone)();
 extern bool (*ST_NetLoop)(bool (*timer_callback)(void *), void *userdata);
+extern void ST_Endoom();

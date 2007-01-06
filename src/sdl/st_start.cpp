@@ -303,3 +303,8 @@ static bool ST_TTY_NetLoop(bool (*timer_callback)(void *), void *userdata)
 		}
 	}
 }
+
+void ST_Endoom()
+{
+	exit(0);
+}

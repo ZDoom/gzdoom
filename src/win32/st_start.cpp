@@ -47,6 +47,7 @@
 #include "templates.h"
 #include "i_system.h"
 #include "i_input.h"
+#include "hardware.h"
 #include "gi.h"
 #include "w_wad.h"
 #include "s_sound.h"
@@ -83,6 +84,7 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+void RestoreConView();
 
 bool ST_Util_CreateStartupWindow ();
 void ST_Util_SizeWindowForBitmap ();
@@ -741,6 +743,80 @@ static void ST_Heretic_Progress()
 		}
 	}
 	I_GetEvent ();
+}
+
+
+//==========================================================================
+//
+// ST_Endoom
+//
+// Shows an ENDOOM text screen
+//
+//==========================================================================
+CVAR(Bool, showendoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+void ST_Endoom()
+{
+	if (!showendoom) return;
+
+	int endoom_lump = Wads.CheckNumForName (
+		gameinfo.gametype == GAME_Doom? "ENDOOM" : 
+		gameinfo.gametype == GAME_Heretic? "ENDTEXT" :
+		gameinfo.gametype == GAME_Strife? "ENDSTRF" : NULL);
+
+	BYTE endoom_screen[4000];
+	BYTE *font;
+	MSG mess;
+
+	if (endoom_lump < 0 || Wads.LumpLength (endoom_lump) != 4000)
+	{
+		exit(0);
+	}
+
+	font = ST_Util_LoadFont (TEXT_FONT_NAME, TEXT_FONT_HEIGHT);
+	if (font == NULL)
+	{
+		exit(0);
+	}
+
+	if (!ST_Util_CreateStartupWindow())
+	{
+		ST_Util_FreeFont (font);
+		exit(0);
+	}
+	ST_Done = ST_Basic_Done;
+
+	I_ShutdownGraphics ();
+	RestoreConView ();
+	S_StopMusic(true);
+
+	Wads.ReadLump (endoom_lump, endoom_screen);
+
+	// Draw the loading screen to a bitmap.
+	StartupBitmap = ST_Util_AllocTextBitmap (font);
+	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen, font);
+	ST_Util_FreeFont (font);
+
+	ST_Util_SizeWindowForBitmap ();
+	LayoutMainWindow (Window, NULL);
+	InvalidateRect (StartupScreen, NULL, TRUE);
+
+	// Wait until any key has been pressed or a quit message has been received
+
+	while (1)
+	{
+		if (PeekMessage (&mess, NULL, 0, 0, PM_REMOVE))
+		{
+			if (mess.message == WM_QUIT)
+				exit (int(mess.wParam));
+			if (mess.message == WM_KEYDOWN || mess.message == WM_SYSKEYDOWN || mess.message == WM_LBUTTONDOWN)
+				exit(0);
+
+			TranslateMessage (&mess);
+			DispatchMessage (&mess);
+		}
+		else WaitMessage();
+	}
 }
 
 //==========================================================================

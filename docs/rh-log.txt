@@ -1,3 +1,8 @@
+January 6, 2007 (Changes by Graf Zahl)
+- Added ENDOOM screen. It will only be shown when the game is exited via the
+  main menu and there is an option to switch it off for those who don't want
+  to wait.
+  
 January 5, 2007
 - Added simulation of Heretic's startup screen.
 - Changed copyright notice for i_main.cpp, since none of it is really id's

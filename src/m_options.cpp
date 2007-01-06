@@ -81,6 +81,7 @@
 #include "m_menu.h"
 
 EXTERN_CVAR(Bool, nomonsterinterpolation)
+EXTERN_CVAR(Bool, showendoom)
 //
 // defaulted values
 //
@@ -510,6 +511,7 @@ static menuitem_t VideoItems[] = {
 	{ discrete, "Stretch status bar",	{&st_scale},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Screen wipe style",	{&wipetype},			{4.0}, {0.0},	{0.0}, {Wipes} },
 #ifdef _WIN32
+	{ discrete,	"Show ENDOOM screen",	{&showendoom},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "DirectDraw palette hack", {&vid_palettehack},	{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Use attached surfaces", {&vid_attachedsurfaces},{2.0}, {0.0},	{0.0}, {OnOff} },
 #endif

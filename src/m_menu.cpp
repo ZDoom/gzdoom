@@ -64,6 +64,7 @@
 #include "lists.h"
 #include "gi.h"
 #include "p_tick.h"
+#include "st_start.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1956,7 +1957,7 @@ void M_QuitResponse(int ch)
 			I_WaitVBL (105);
 		}
 	}
-	exit (0);
+	ST_Endoom();
 }
 
 void M_QuitDOOM (int choice)

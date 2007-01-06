@@ -757,7 +757,7 @@ CVAR(Bool, showendoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void ST_Endoom()
 {
-	if (!showendoom) return;
+	if (!showendoom) exit(0);
 
 	int endoom_lump = Wads.CheckNumForName (
 		gameinfo.gametype == GAME_Doom? "ENDOOM" : 

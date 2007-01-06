@@ -68,6 +68,7 @@
 
 #define TEXT_FONT_HEIGHT		14
 #define TEXT_FONT_NAME			"vga-rom-font.14"
+#define HERETIC_MINOR_VERSION	'3'			// Since we're based on Heretic 1.3
 
 #define THERM_X					14
 #define THERM_Y					14
@@ -683,6 +684,13 @@ static void ST_Heretic_Init ()
 	}
 
 	Wads.ReadLump (loading_lump, loading_screen);
+
+	// Slap the Heretic minor version on the loading screen. Heretic
+	// did this inside the executable rather than coming with modified
+	// LOADING screens, so we need to do the same.
+	loading_screen[2*160 + 49*2] = HERETIC_MINOR_VERSION;
+
+	// Draw the loading screen to a bitmap.
 	StartupBitmap = ST_Util_AllocTextBitmap (font);
 	ST_Util_DrawTextScreen (StartupBitmap, loading_screen, font);
 	ST_Util_FreeFont (font);

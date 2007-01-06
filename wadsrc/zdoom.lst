@@ -2,6 +2,8 @@
 
 @zdoom.pk3
 
+vga-rom-font.14				vga-rom.f14
+
 graphics/invgemr2.lmp    	invgemr2.lmp
 graphics/invgemr1.lmp    	invgemr1.lmp
 graphics/invgeml2.lmp    	invgeml2.lmp

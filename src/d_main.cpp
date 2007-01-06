@@ -2109,7 +2109,7 @@ void D_DoomMain (void)
 	FActorInfo::StaticGameSet ();
 	ST_Progress ();
 
-	Printf ("R_Init: Init %s refresh subsystem\n", GameNames[gameinfo.gametype]);
+	Printf ("R_Init: Init %s refresh subsystem.\n", GameNames[gameinfo.gametype]);
 	R_Init ();
 
 	Printf ("DecalLibrary: Load decals.\n");

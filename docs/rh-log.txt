@@ -1,3 +1,8 @@
+January 5, 2007
+- Added simulation of Heretic's startup screen.
+- Changed copyright notice for i_main.cpp, since none of it is really id's
+  code.
+
 January 5, 2007 (Changes by Graf Zahl)
 - Added customizable border textures. They will be defined with the 
   MAPINFO keyword 'bordertexture' and are settable per map.

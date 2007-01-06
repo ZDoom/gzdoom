@@ -1,24 +1,38 @@
-// Emacs style mode select   -*- C++ -*-
-//-----------------------------------------------------------------------------
-//
-// $Id: i_main.c,v 1.8 1998/05/15 00:34:03 killough Exp $
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-//
-// DESCRIPTION:
-//      Main program, simply calls D_DoomMain high level loop.
-//
-//-----------------------------------------------------------------------------
+/*
+** i_main.cpp
+** System-specific startup code. Eventually calls D_DoomMain.
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2007 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+// HEADER FILES ------------------------------------------------------------
 
 #include <SDL.h>
 #include <unistd.h>
@@ -37,12 +51,35 @@
 #include "version.h"
 #include "w_wad.h"
 
+// MACROS ------------------------------------------------------------------
+
+// The maximum number of functions that can be registered with atterm.
+#define MAX_TERMS	32
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+extern "C" int cc_install_handlers(int, int*, const char*, int(*)(char*, char*));
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+// The command line arguments.
 DArgs Args;
 
-#define MAX_TERMS	32
-void (*TermFuncs[MAX_TERMS]) ();
-const char *TermNames[MAX_TERMS];
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static void (*TermFuncs[MAX_TERMS]) ();
+static const char *TermNames[MAX_TERMS];
 static int NumTerms;
+
+// CODE --------------------------------------------------------------------
 
 void addterm (void (*func) (), const char *name)
 {
@@ -85,7 +122,6 @@ static void STACK_ARGS NewFailure ()
     I_FatalError ("Failed to allocate memory from system heap");
 }
 
-extern "C" int cc_install_handlers(int, int*, const char*, int(*)(char*, char*));
 static int DoomSpecificInfo (char *buffer, char *end)
 {
 	const char *arg;

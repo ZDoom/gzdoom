@@ -50,14 +50,15 @@
 #include "gi.h"
 #include "w_wad.h"
 #include "s_sound.h"
+#include "m_alloc.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define ST_MAX_NOTCHES		32
-#define ST_NOTCH_WIDTH		16
-#define ST_NOTCH_HEIGHT		23
-#define ST_PROGRESS_X		64			// Start of notches x screen pos.
-#define ST_PROGRESS_Y		441			// Start of notches y screen pos.
+#define ST_MAX_NOTCHES			32
+#define ST_NOTCH_WIDTH			16
+#define ST_NOTCH_HEIGHT			23
+#define ST_PROGRESS_X			64			// Start of notches x screen pos.
+#define ST_PROGRESS_Y			441			// Start of notches y screen pos.
 
 #define ST_NETPROGRESS_X		288
 #define ST_NETPROGRESS_Y		32
@@ -65,12 +66,37 @@
 #define ST_NETNOTCH_HEIGHT		16
 #define ST_MAX_NETNOTCHES		8
 
+#define TEXT_FONT_HEIGHT		14
+#define TEXT_FONT_NAME			"vga-rom-font.14"
+
+#define THERM_X					14
+#define THERM_Y					14
+#define THERM_LEN				51
+#define THERM_COLOR				0xAA		// light green
+
+// Text mode color values
+#define LO						 85
+#define MD						170
+#define HI						255
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void ST_Util_PlanarToChunky4 (BYTE *dest, const BYTE *src, int width, int height);
-extern void ST_Util_DrawBlock (BYTE *dest, const BYTE *src, int bytewidth, int height, int destpitch);
+bool ST_Util_CreateStartupWindow ();
+void ST_Util_SizeWindowForBitmap ();
+BITMAPINFO *ST_Util_CreateBitmap (int width, int height, int color_bits);
+BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
+void ST_Util_FreeBitmap (BITMAPINFO *bitmap_info);
+void ST_Util_PlanarToChunky4 (BYTE *dest, const BYTE *src, int width, int height);
+void ST_Util_DrawBlock (BYTE *dest, const BYTE *src, int bytewidth, int height, int destpitch);
+void ST_Util_ClearBlock (BYTE *dest, BYTE fill, int bytewidth, int height, int destpitch);
+void ST_Util_InvalidateRect (HWND hwnd, BITMAPINFO *bitmap_info, int left, int top, int right, int bottom);
+BYTE *ST_Util_LoadFont (const char *filename, int height);
+void ST_Util_FreeFont (BYTE *font);
+BITMAPINFO *ST_Util_AllocTextBitmap (const BYTE *font);
+void ST_Util_DrawTextScreen (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font);
+void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE charnum, BYTE attrib);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -91,10 +117,13 @@ static void ST_Hexen_Init ();
 static void ST_Hexen_Done ();
 static void ST_Hexen_Progress ();
 
+static void ST_Heretic_Init ();
+static void ST_Heretic_Progress ();
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern HINSTANCE g_hInst;
-extern HWND Window, ConWindow, ProgressBar, NetStartPane, StartupScreen;
+extern HWND Window, ConWindow, ProgressBar, NetStartPane, StartupScreen, GameTitleWindow;
 extern void LayoutMainWindow (HWND hWnd, HWND pane);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -107,19 +136,35 @@ void (*ST_NetMessage)(const char *format, ...);
 void (*ST_NetDone)();
 bool (*ST_NetLoop)(bool (*timer_callback)(void *), void *userdata);
 
-struct
-{
-	BITMAPINFOHEADER Header;
-	RGBQUAD			 Colors[16];
-} StartupBitmapInfo;
-BYTE *StartupBitmapBits;
+BITMAPINFO *StartupBitmap;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int MaxPos, CurPos, NotchPos;
 static int NetMaxPos, NetCurPos;
 static LRESULT NetMarqueeMode;
-static RGBQUAD StartupPalette[16];
+static int ThermX, ThermY, ThermWidth, ThermHeight;
+
+static const RGBQUAD TextModePalette[16] =
+{
+	{  0,  0,  0, 0 },		// 0 black
+	{ MD,  0,  0, 0 },		// 1 blue
+	{  0, MD,  0, 0 },		// 2 green
+	{ MD, MD,  0, 0 },		// 3 cyan
+	{  0,  0, MD, 0 },		// 4 red
+	{ MD,  0, MD, 0 },		// 5 magenta
+	{  0, MD, MD, 0 },		// 6 brown
+	{ MD, MD, MD, 0 },		// 7 light gray
+
+	{ LO, LO, LO, 0 },		// 8 dark gray
+	{ HI, LO, LO, 0 },		// 9 light blue
+	{ LO, HI, LO, 0 },		// A light green
+	{ HI, HI, LO, 0 },		// B light cyan
+	{ LO, LO, HI, 0 },		// C light red
+	{ HI, LO, HI, 0 },		// D light magenta
+	{ LO, HI, HI, 0 },		// E yellow
+	{ HI, HI, HI, 0 },		// F white
+};
 
 // Hexen's notch graphics, converted to chunky pixels.
 
@@ -190,6 +235,10 @@ void ST_Init(int maxProgress)
 	if (gameinfo.gametype == GAME_Hexen)
 	{
 		ST_Hexen_Init ();
+	}
+	else if (gameinfo.gametype == GAME_Heretic)
+	{
+		ST_Heretic_Init ();
 	}
 	else
 	{
@@ -494,19 +543,11 @@ static void ST_Hexen_Init ()
 {
 	int startup_lump = Wads.CheckNumForName ("STARTUP");
 
-	if (startup_lump < 0 || Wads.LumpLength (startup_lump) != 153648)
+	if (startup_lump < 0 || Wads.LumpLength (startup_lump) != 153648 || !ST_Util_CreateStartupWindow())
 	{
 		ST_Basic_Init ();
 		return;
 	}
-
-	StartupScreen = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
-	if (StartupScreen == NULL)
-	{
-		ST_Basic_Init ();
-		return;
-	}
-	SetWindowLong (StartupScreen, GWL_ID, IDC_STATIC_STARTUP);
 
 	BYTE startup_screen[153648];
 	union
@@ -519,20 +560,9 @@ static void ST_Hexen_Init ()
 
 	color.rgbReserved = 0;
 
-	// Initialize the bitmap info header.
-	StartupBitmapInfo.Header.biSize = sizeof(BITMAPINFOHEADER);
-	StartupBitmapInfo.Header.biWidth = 640;
-	StartupBitmapInfo.Header.biHeight = 480;
-	StartupBitmapInfo.Header.biPlanes = 1;
-	StartupBitmapInfo.Header.biBitCount = 4;
-	StartupBitmapInfo.Header.biCompression = 0;
-	StartupBitmapInfo.Header.biSizeImage = 153600;
-	StartupBitmapInfo.Header.biXPelsPerMeter = 0;
-	StartupBitmapInfo.Header.biYPelsPerMeter = 0;
-	StartupBitmapInfo.Header.biClrUsed = 16;
-	StartupBitmapInfo.Header.biClrImportant = 16;
+	StartupBitmap = ST_Util_CreateBitmap (640, 480, 4);
 
-	// Initialize the bitmap header.
+	// Initialize the bitmap palette.
 	for (int i = 0; i < 16; ++i)
 	{
 		color.rgbRed = startup_screen[i*3+0];
@@ -540,15 +570,15 @@ static void ST_Hexen_Init ()
 		color.rgbBlue = startup_screen[i*3+2];
 		// Convert from 6-bit per component to 8-bit per component.
 		quad = (quad << 2) | ((quad >> 4) & 0x03030303);
-		StartupBitmapInfo.Colors[i] = color;
+		StartupBitmap->bmiColors[i] = color;
 	}
 
 	// Fill in the bitmap data. Convert to chunky, because I can't figure out
 	// if Windows actually supports planar images or not, despite the presence
 	// of biPlanes in the BITMAPINFOHEADER.
-	StartupBitmapBits = new BYTE[640*480/2];
-	ST_Util_PlanarToChunky4 (StartupBitmapBits, startup_screen + 48, 640, 480);
+	ST_Util_PlanarToChunky4 (ST_Util_BitsForBitmap(StartupBitmap), startup_screen + 48, 640, 480);
 
+	ST_Util_SizeWindowForBitmap ();
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
 
@@ -581,6 +611,11 @@ static void ST_Hexen_Done()
 		DestroyWindow (StartupScreen);
 		StartupScreen = NULL;
 	}
+	if (StartupBitmap != NULL)
+	{
+		ST_Util_FreeBitmap (StartupBitmap);
+		StartupBitmap = NULL;
+	}
 }
 
 //==========================================================================
@@ -594,7 +629,6 @@ static void ST_Hexen_Done()
 static void ST_Hexen_Progress()
 {
 	int notch_pos, x, y;
-	RECT rect;
 
 	if (CurPos < MaxPos)
 	{
@@ -606,18 +640,169 @@ static void ST_Hexen_Progress()
 			{
 				x = ST_PROGRESS_X + ST_NOTCH_WIDTH * NotchPos;
 				y = ST_PROGRESS_Y;
-				ST_Util_DrawBlock (StartupBitmapBits + x / 2 + y * 320, NotchBits, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT, 320);
-				GetClientRect (StartupScreen, &rect);
-				rect.left = x * rect.right / 640 - 1;
-				rect.top = y * rect.bottom / 480 - 1;
-				rect.right = (x + ST_NOTCH_WIDTH) * rect.right / 640 + 1;
-				rect.bottom = (y + ST_NOTCH_HEIGHT) * rect.bottom / 480 + 1;
-				InvalidateRect (StartupScreen, &rect, FALSE);
+				ST_Util_DrawBlock (ST_Util_BitsForBitmap(StartupBitmap) + x / 2 + y * 320,
+					NotchBits, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT, 320);
+				ST_Util_InvalidateRect (StartupScreen, StartupBitmap, x, y, x + ST_NOTCH_WIDTH, y + ST_NOTCH_HEIGHT);
 			}
 			S_Sound (CHAN_BODY, "StartupTick", 1, ATTN_NONE);
 		}
 	}
 	I_GetEvent ();
+}
+
+//==========================================================================
+//
+// ST_Heretic_Init
+//
+// Shows the Hexen startup screen. If the screen doesn't appear to be
+// valid, it falls back to ST_Basic_Init.
+//
+// The loading screen is an 80x25 text screen with character data and
+// attributes intermixed, which means it must be exactly 4000 bytes long.
+//
+//==========================================================================
+
+static void ST_Heretic_Init ()
+{
+	int loading_lump = Wads.CheckNumForName ("LOADING");
+	BYTE loading_screen[4000];
+	BYTE *font;
+
+	if (loading_lump < 0 || Wads.LumpLength (loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
+	{
+		ST_Basic_Init ();
+		return;
+	}
+
+	font = ST_Util_LoadFont (TEXT_FONT_NAME, TEXT_FONT_HEIGHT);
+	if (font == NULL)
+	{
+		DestroyWindow (StartupScreen);
+		ST_Basic_Init ();
+		return;
+	}
+
+	Wads.ReadLump (loading_lump, loading_screen);
+	StartupBitmap = ST_Util_AllocTextBitmap (font);
+	ST_Util_DrawTextScreen (StartupBitmap, loading_screen, font);
+	ST_Util_FreeFont (font);
+
+	ST_Util_SizeWindowForBitmap ();
+	LayoutMainWindow (Window, NULL);
+	InvalidateRect (StartupScreen, NULL, TRUE);
+
+	ThermX = THERM_X * 4;
+	ThermY = THERM_Y * TEXT_FONT_HEIGHT;
+	ThermWidth = THERM_LEN * 4;
+	ThermHeight = TEXT_FONT_HEIGHT;
+
+	ST_Done = ST_Hexen_Done;
+	ST_Progress = ST_Heretic_Progress;
+	ST_NetInit = ST_Basic_NetInit;
+	ST_NetProgress = ST_Basic_NetProgress;
+	ST_NetMessage = ST_Basic_NetMessage;
+	ST_NetDone = ST_Basic_NetDone;
+	ST_NetLoop = ST_Basic_NetLoop;
+}
+
+//==========================================================================
+//
+// ST_Heretic_Progress
+//
+// Bumps the progress meter one notch.
+//
+//==========================================================================
+
+static void ST_Heretic_Progress()
+{
+	int notch_pos;
+
+	if (CurPos < MaxPos)
+	{
+		CurPos++;
+		notch_pos = (CurPos * ThermWidth) / MaxPos;
+		if (notch_pos != NotchPos && (!(notch_pos & 7) || CurPos == MaxPos))
+		{ // Time to draw another notch.
+			int left = NotchPos + ThermX;
+			int top = ThermY;
+			int right = notch_pos + ThermX;
+			int bottom = top + ThermHeight;
+			ST_Util_ClearBlock (ST_Util_BitsForBitmap(StartupBitmap) + left + top * 320, THERM_COLOR, right - left, bottom - top, 320);
+			ST_Util_InvalidateRect (StartupScreen, StartupBitmap, left*2, top, right*2, bottom);
+			NotchPos = notch_pos;
+		Sleep (20);
+		}
+	}
+	I_GetEvent ();
+}
+
+//==========================================================================
+//
+// ST_Util_CreateStartupWindow
+//
+// Creates the static control that will draw the startup screen.
+//
+//==========================================================================
+
+bool ST_Util_CreateStartupWindow ()
+{
+	StartupScreen = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL,
+		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW,
+		0, 0, 0, 0, Window, NULL, g_hInst, NULL);
+	if (StartupScreen == NULL)
+	{
+		return false;
+	}
+	SetWindowLong (StartupScreen, GWL_ID, IDC_STATIC_STARTUP);
+	return true;
+}
+
+//==========================================================================
+//
+// ST_Util_SizeWindowForBitmap
+//
+// Resizes the main window so that the startup bitmap will be draw 1:1.
+//
+//==========================================================================
+
+void ST_Util_SizeWindowForBitmap ()
+{
+	DEVMODE displaysettings;
+	int w, h, cx, cy, x, y;
+	RECT rect;
+
+	GetClientRect (GameTitleWindow, &rect);
+	w = StartupBitmap->bmiHeader.biWidth + GetSystemMetrics (SM_CXSIZEFRAME)*2;
+	h = StartupBitmap->bmiHeader.biHeight + rect.bottom
+		+ GetSystemMetrics (SM_CYSIZEFRAME) * 2 + GetSystemMetrics (SM_CYCAPTION);
+
+	// Resize the window, but keep its center point the same, unless that
+	// puts it partially offscreen.
+	memset (&displaysettings, 0, sizeof(displaysettings));
+	displaysettings.dmSize = sizeof(displaysettings);
+	EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
+	GetWindowRect (Window, &rect);
+	cx = (rect.left + rect.right) / 2;
+	cy = (rect.top + rect.bottom) / 2;
+	x = cx - w / 2;
+	y = cy - h / 2;
+	if (x + w > (int)displaysettings.dmPelsWidth)
+	{
+		x = displaysettings.dmPelsWidth - w;
+	}
+	if (x < 0)
+	{
+		x = 0;
+	}
+	if (y + h > (int)displaysettings.dmPelsHeight)
+	{
+		y = displaysettings.dmPelsHeight - h;
+	}
+	if (y < 0)
+	{
+		y = 0;
+	}
+	MoveWindow (Window, x, y, w, h, TRUE);
 }
 
 //==========================================================================
@@ -690,5 +875,214 @@ void ST_Util_DrawBlock (BYTE *dest, const BYTE *src, int bytewidth, int height, 
 			dest += destpitch;
 			src += 2;
 		}
+	}
+}
+
+//==========================================================================
+//
+// ST_Util_ClearBlock
+//
+//==========================================================================
+
+void ST_Util_ClearBlock (BYTE *dest, BYTE fill, int bytewidth, int height, int destpitch)
+{
+	while (height > 0)
+	{
+		memset (dest, fill, bytewidth);
+		dest += destpitch;
+		height--;
+	}
+}
+
+//==========================================================================
+//
+// ST_Util_CreateBitmap
+//
+// Creates a BITMAPINFOHEADER, RGBQUAD, and pixel data arranged
+// consecutively in memory (in other words, a normal Windows BMP file).
+// The BITMAPINFOHEADER will be filled in, and the caller must fill
+// in the color and pixel data.
+//
+// You must pass 4 or 8 for color_bits.
+//
+//==========================================================================
+
+BITMAPINFO *ST_Util_CreateBitmap (int width, int height, int color_bits)
+{
+	DWORD size_image = (width * height) >> int(color_bits == 4);
+	BITMAPINFO *bitmap_info = (BITMAPINFO *)M_Malloc (sizeof(BITMAPINFOHEADER) +
+		(sizeof(RGBQUAD) << color_bits) + size_image);
+
+	// Initialize the header.
+	bitmap_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bitmap_info->bmiHeader.biWidth = width;
+	bitmap_info->bmiHeader.biHeight = height;
+	bitmap_info->bmiHeader.biPlanes = 1;
+	bitmap_info->bmiHeader.biBitCount = color_bits;
+	bitmap_info->bmiHeader.biCompression = 0;
+	bitmap_info->bmiHeader.biSizeImage = size_image;
+	bitmap_info->bmiHeader.biXPelsPerMeter = 0;
+	bitmap_info->bmiHeader.biYPelsPerMeter = 0;
+	bitmap_info->bmiHeader.biClrUsed = 1 << color_bits;
+	bitmap_info->bmiHeader.biClrImportant = 0;
+
+	return bitmap_info;
+}
+
+//==========================================================================
+//
+// ST_Util_BitsForBitmap
+//
+// Given a bitmap created by ST_Util_CreateBitmap, returns the start
+// address for the pixel data for the bitmap.
+//
+//==========================================================================
+
+BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info)
+{
+	return (BYTE *)bitmap_info + sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) << bitmap_info->bmiHeader.biBitCount);
+}
+
+//==========================================================================
+//
+// ST_Util_FreeBitmap
+//
+// Frees all the data for a bitmap created by ST_Util_CreateBitmap.
+//
+//==========================================================================
+
+void ST_Util_FreeBitmap (BITMAPINFO *bitmap_info)
+{
+	free (bitmap_info);
+}
+
+//==========================================================================
+//
+// ST_Util_InvalidateRect
+//
+// Invalidates the portion of the window that the specified rect of the
+// bitmap appears in.
+//
+//==========================================================================
+
+void ST_Util_InvalidateRect (HWND hwnd, BITMAPINFO *bitmap_info, int left, int top, int right, int bottom)
+{
+	RECT rect;
+
+	GetClientRect (hwnd, &rect);
+	rect.left = left * rect.right / bitmap_info->bmiHeader.biWidth - 1;
+	rect.top = top * rect.bottom / bitmap_info->bmiHeader.biHeight - 1;
+	rect.right = right * rect.right / bitmap_info->bmiHeader.biWidth + 1;
+	rect.bottom = bottom * rect.bottom / bitmap_info->bmiHeader.biHeight + 1;
+	InvalidateRect (hwnd, &rect, FALSE);
+}
+
+//==========================================================================
+//
+// ST_Util_LoadFont
+//
+// Loads a monochrome fixed-width font. Every character is one byte
+// (eight pixels) wide.
+//
+//==========================================================================
+
+BYTE *ST_Util_LoadFont (const char *filename, int height)
+{
+	int lumpnum, lumplen;
+	BYTE *font;
+	
+	lumpnum = Wads.CheckNumForFullName (filename);
+	if (lumpnum < 0)
+	{ // font not found
+		return NULL;
+	}
+	lumplen = Wads.LumpLength (lumpnum);
+	if (lumplen != height << 8)
+	{ // font is a bad size
+		return NULL;
+	}
+	font = new BYTE[lumplen + 1];
+	font[0] = height;	// Store font height in the first byte.
+	Wads.ReadLump (lumpnum, font + 1);
+	return font;
+}
+
+void ST_Util_FreeFont (BYTE *font)
+{
+	delete[] font;
+}
+
+//==========================================================================
+//
+// ST_Util_AllocTextBitmap
+//
+// Returns a bitmap properly sized to hold an 80x25 display of characters
+// using the specified font.
+//
+//==========================================================================
+
+BITMAPINFO *ST_Util_AllocTextBitmap (const BYTE *font)
+{
+	BITMAPINFO *bitmap = ST_Util_CreateBitmap (80 * 8, 25 * font[0], 4);
+	memcpy (bitmap->bmiColors, TextModePalette, sizeof(TextModePalette));
+	return bitmap;
+}
+
+//==========================================================================
+//
+// ST_Util_DrawTextScreen
+//
+// Draws the text screen to the bitmap. The bitmap must be the proper size
+// for the font.
+//
+//==========================================================================
+
+void ST_Util_DrawTextScreen (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font)
+{
+	int x, y;
+
+	for (y = 0; y < 25; ++y)
+	{
+		for (x = 0; x < 80; ++x)
+		{
+			ST_Util_DrawChar (bitmap_info, font, x, y, text_screen[0], text_screen[1]);
+			text_screen += 2;
+		}
+	}
+}
+
+//==========================================================================
+//
+// ST_Util_DrawChar
+//
+// Draws a character on the bitmap. X and Y specify the character cell,
+// and fg and bg are 4-bit colors.
+//
+//==========================================================================
+
+void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE charnum, BYTE attrib)
+{
+	const BYTE bg_left = attrib & 0xF0;
+	const BYTE fg      = attrib & 0x0F;
+	const BYTE fg_left = fg << 4;
+	const BYTE bg      = bg_left >> 4;
+	const BYTE color_array[4] = { bg_left | bg, attrib, fg_left | bg, fg_left | fg };
+	const BYTE *src = font + 1 + charnum * font[0];
+	int pitch = screen->bmiHeader.biWidth >> 1;
+	BYTE *dest = ST_Util_BitsForBitmap(screen) + x*4 + y * font[0] * pitch;
+
+	for (y = font[0]; y > 0; --y)
+	{
+		BYTE srcbyte = *src++;
+
+		// Pixels 0 and 1
+		dest[0] = color_array[(srcbyte >> 6) & 3];
+		// Pixels 2 and 3
+		dest[1] = color_array[(srcbyte >> 4) & 3];
+		// Pixels 4 and 5
+		dest[2] = color_array[(srcbyte >> 2) & 3];
+		// Pixels 6 and 7
+		dest[3] = color_array[(srcbyte)      & 3];
+		dest += pitch;
 	}
 }

@@ -1,26 +1,38 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log:$
-//
-// DESCRIPTION:
-//	Main program, simply calls D_DoomMain high level loop.
-//
-//-----------------------------------------------------------------------------
+/*
+** i_main.cpp
+** System-specific startup code. Eventually calls D_DoomMain.
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2007 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
+// HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0501
@@ -67,23 +79,38 @@
 
 #include <assert.h>
 
+// MACROS ------------------------------------------------------------------
+
+// The main window's title.
 #define WINDOW_TITLE GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")"
+
+// The maximum number of functions that can be registered with atterm.
+#define MAX_TERMS	32
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
-
 void CreateCrashLog (char *custominfo, DWORD customsize);
-extern void DisplayCrashLog ();
+void DisplayCrashLog ();
+extern BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
 extern EXCEPTION_POINTERS CrashPointers;
+extern BITMAPINFO *StartupBitmap;
+extern UINT TimerPeriod;
+extern HCURSOR TheArrowCursor, TheInvisibleCursor;
 
-// Will this work with something besides VC++?
-// Answer: yes it will.
-// Which brings up the question, what won't it work with?
-//
-//extern int __argc;
-//extern char **__argv;
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+// The command line arguments.
 DArgs Args;
-
-const char WinClassName[] = "ZDoomMainWindow";
 
 HINSTANCE		g_hInst;
 DWORD			SessionID;
@@ -100,30 +127,23 @@ HWND			ErrorPane, ProgressBar, NetStartPane, StartupScreen;
 HFONT			GameTitleFont;
 LONG			GameTitleFontHeight;
 
-extern struct
-{
-	BITMAPINFOHEADER Header;
-	RGBQUAD			 Colors[16];
-} StartupBitmapInfo;
-extern BYTE *StartupBitmapBits;
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-HMODULE			hwtsapi32;		// handle to wtsapi32.dll
-
-extern UINT TimerPeriod;
-extern HCURSOR TheArrowCursor, TheInvisibleCursor;
-
-#define MAX_TERMS	32
-void (*TermFuncs[MAX_TERMS])(void);
+static const char WinClassName[] = "ZDoomMainWindow";
+static HMODULE hwtsapi32;		// handle to wtsapi32.dll
+static void (*TermFuncs[MAX_TERMS])(void);
 static int NumTerms;
 
-//===========================================================================
+// CODE --------------------------------------------------------------------
+
+//==========================================================================
 //
 // atterm
 //
 // Our own atexit because atexit can be problematic under Linux, though I
 // forget the circumstances that cause trouble.
 //
-//===========================================================================
+//==========================================================================
 
 void atterm (void (*func)(void))
 {
@@ -143,13 +163,13 @@ void atterm (void (*func)(void))
 	TermFuncs[NumTerms++] = func;
 }
 
-//===========================================================================
+//==========================================================================
 //
 // popterm
 //
 // Removes the most recently register atterm function.
 //
-//===========================================================================
+//==========================================================================
 
 void popterm ()
 {
@@ -157,11 +177,11 @@ void popterm ()
 		NumTerms--;
 }
 
-//===========================================================================
+//==========================================================================
 //
 // call_terms
 //
-//===========================================================================
+//==========================================================================
 
 static void STACK_ARGS call_terms (void)
 {
@@ -179,26 +199,26 @@ static int STACK_ARGS NewFailure (size_t size)
 }
 #endif
 
-//===========================================================================
+//==========================================================================
 //
 // UnCOM
 //
 // Called by atterm if CoInitialize() succeeded.
 //
-//===========================================================================
+//==========================================================================
 
 static void UnCOM (void)
 {
 	CoUninitialize ();
 }
 
-//===========================================================================
+//==========================================================================
 //
 // UnWTS
 //
 // Called by atterm if RegisterSessionNotification() succeeded.
 //
-//===========================================================================
+//==========================================================================
 
 static void UnWTS (void)
 {
@@ -215,14 +235,14 @@ static void UnWTS (void)
 	}
 }
 
-//===========================================================================
+//==========================================================================
 //
 // LayoutErrorPane
 //
 // Lays out the error pane to the desired width, returning the required
 // height.
 //
-//===========================================================================
+//==========================================================================
 
 static int LayoutErrorPane (HWND pane, int w)
 {
@@ -282,14 +302,14 @@ static int LayoutErrorPane (HWND pane, int w)
 	return margin.top*3 + textheight + rectc.bottom;
 }
 
-//===========================================================================
+//==========================================================================
 //
 // LayoutNetStartPane
 //
 // Lays out the network startup pane to the specified width, returning
 // its required height.
 //
-//===========================================================================
+//==========================================================================
 
 int LayoutNetStartPane (HWND pane, int w)
 {
@@ -325,14 +345,14 @@ int LayoutNetStartPane (HWND pane, int w)
 	return margin.top*4 + staticheight + barheight + rectc.bottom;
 }
 
-//===========================================================================
+//==========================================================================
 //
 // LayoutMainWindow
 //
 // Lays out the main window with the game title and log controls and
 // possibly the error pane and progress bar.
 //
-//===========================================================================
+//==========================================================================
 
 void LayoutMainWindow (HWND hWnd, HWND pane)
 {
@@ -389,14 +409,14 @@ void LayoutMainWindow (HWND hWnd, HWND pane)
 	}
 }
 
-//===========================================================================
+//==========================================================================
 //
 // LConProc
 //
 // The main window's WndProc during startup. During gameplay, the WndProc
 // in i_input.cpp is used instead.
 //
-//===========================================================================
+//==========================================================================
 
 LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -506,8 +526,8 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// Windows expects DIBs to be bottom-up but ours is top-down,
 				// so flip it vertically while drawing it.
 				StretchDIBits (drawitem->hDC, rect.left, rect.bottom - 1, rect.right - rect.left, rect.top - rect.bottom,
-					0, 0, StartupBitmapInfo.Header.biWidth, StartupBitmapInfo.Header.biHeight,
-					StartupBitmapBits, (BITMAPINFO *)&StartupBitmapInfo, DIB_RGB_COLORS, SRCCOPY);
+					0, 0, StartupBitmap->bmiHeader.biWidth, StartupBitmap->bmiHeader.biHeight,
+					ST_Util_BitsForBitmap(StartupBitmap), StartupBitmap, DIB_RGB_COLORS, SRCCOPY);
 			}
 		}
 		return FALSE;
@@ -529,13 +549,13 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc (hWnd, msg, wParam, lParam);
 }
 
-//===========================================================================
+//==========================================================================
 //
 // ErrorPaneProc
 //
 // DialogProc for the error pane.
 //
-//===========================================================================
+//==========================================================================
 
 INT_PTR CALLBACK ErrorPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -574,14 +594,14 @@ INT_PTR CALLBACK ErrorPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
 	return FALSE;
 }
 
-//===========================================================================
+//==========================================================================
 //
 // I_SetWndProc
 //
 // Sets the main WndProc, hides all the child windows, and starts up
 // in-game input.
 //
-//===========================================================================
+//==========================================================================
 
 void I_SetWndProc()
 {
@@ -595,13 +615,13 @@ void I_SetWndProc()
 	}
 }
 
-//===========================================================================
+//==========================================================================
 //
 // RestoreConView
 //
 // Returns the main window to its startup state.
 //
-//===========================================================================
+//==========================================================================
 
 void RestoreConView()
 {
@@ -623,17 +643,20 @@ void RestoreConView()
 	ShowWindow (ConWindow, SW_SHOW);
 	ShowWindow (GameTitleWindow, SW_SHOW);
 	// Make sure the progress bar isn't visible.
-	ST_Done();
+	if (ST_Done != NULL)
+	{
+		ST_Done();
+	}
 }
 
-//===========================================================================
+//==========================================================================
 //
 // ShowErrorPane
 //
 // Shows an error message, preferably in the main window, but it can
 // use a normal message box too.
 //
-//===========================================================================
+//==========================================================================
 
 void ShowErrorPane(const char *text)
 {
@@ -671,11 +694,11 @@ void ShowErrorPane(const char *text)
 	}
 }
 
-//===========================================================================
+//==========================================================================
 //
 // DoMain
 //
-//===========================================================================
+//==========================================================================
 
 void DoMain (HINSTANCE hInstance)
 {
@@ -871,13 +894,13 @@ void DoMain (HINSTANCE hInstance)
 	}
 }
 
-//===========================================================================
+//==========================================================================
 //
 // DoomSpecificInfo
 //
 // Called by the crash logger to get application-specific information.
 //
-//===========================================================================
+//==========================================================================
 
 void DoomSpecificInfo (char *buffer)
 {
@@ -947,36 +970,36 @@ extern FILE *Logfile;
 // To make this work with MinGW, you will need to use inline assembly
 // because GCC offers no native support for Windows' SEH.
 
-//===========================================================================
+//==========================================================================
 //
 // SleepForever
 //
-//===========================================================================
+//==========================================================================
 
 void SleepForever ()
 {
 	Sleep (INFINITE);
 }
 
-//===========================================================================
+//==========================================================================
 //
 // ExitMessedUp
 //
 // An exception occurred while exiting, so don't do any standard processing.
 // Just die.
 //
-//===========================================================================
+//==========================================================================
 
 LONG WINAPI ExitMessedUp (LPEXCEPTION_POINTERS foo)
 {
 	ExitProcess (1000);
 }
 
-//===========================================================================
+//==========================================================================
 //
 // ExitFatally
 //
-//===========================================================================
+//==========================================================================
 
 void CALLBACK ExitFatally (ULONG_PTR dummy)
 {
@@ -987,11 +1010,11 @@ void CALLBACK ExitFatally (ULONG_PTR dummy)
 	exit (-1);
 }
 
-//===========================================================================
+//==========================================================================
 //
 // CatchAllExceptions
 //
-//===========================================================================
+//==========================================================================
 
 LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 {
@@ -1027,13 +1050,13 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	return EXCEPTION_CONTINUE_EXECUTION;
 }
 
-//===========================================================================
+//==========================================================================
 //
 // infiniterecursion
 //
 // Debugging routine for testing the crash logger.
 //
-//===========================================================================
+//==========================================================================
 
 #ifdef _DEBUG
 static void infiniterecursion(int foo)
@@ -1045,11 +1068,11 @@ static void infiniterecursion(int foo)
 }
 #endif
 
-//===========================================================================
+//==========================================================================
 //
 // WinMain
 //
-//===========================================================================
+//==========================================================================
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
@@ -1113,14 +1136,14 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	return 0;
 }
 
-//===========================================================================
+//==========================================================================
 //
 // CCMD crashout
 //
 // Debugging routine for testing the crash logger.
 // Useless in a debug build, because that doesn't enable the crash logger.
 //
-//===========================================================================
+//==========================================================================
 
 #ifndef _DEBUG
 #include "c_dispatch.h"

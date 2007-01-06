@@ -721,7 +721,7 @@ static void ST_Heretic_Progress()
 	{
 		CurPos++;
 		notch_pos = (CurPos * ThermWidth) / MaxPos;
-		if (notch_pos != NotchPos && (!(notch_pos & 7) || CurPos == MaxPos))
+		if (notch_pos != NotchPos && !(notch_pos & 3))
 		{ // Time to draw another notch.
 			int left = NotchPos + ThermX;
 			int top = ThermY;
@@ -730,7 +730,6 @@ static void ST_Heretic_Progress()
 			ST_Util_ClearBlock (ST_Util_BitsForBitmap(StartupBitmap) + left + top * 320, THERM_COLOR, right - left, bottom - top, 320);
 			ST_Util_InvalidateRect (StartupScreen, StartupBitmap, left*2, top, right*2, bottom);
 			NotchPos = notch_pos;
-		Sleep (20);
 		}
 	}
 	I_GetEvent ();

@@ -363,7 +363,7 @@ int STACK_ARGS FWadCollection::lumpcmp(const void * a, const void * b)
 	FWadCollection::LumpRecord * rec1 = (FWadCollection::LumpRecord *)a;
 	FWadCollection::LumpRecord * rec2 = (FWadCollection::LumpRecord *)b;
 
-	return !stricmp(rec1->fullname, rec2->fullname);
+	return stricmp(rec1->fullname, rec2->fullname);
 }
 
 

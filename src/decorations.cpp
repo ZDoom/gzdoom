@@ -262,7 +262,7 @@ void LoadDecorations (void (*process)(FState *, int))
 	lastlump = 0;
 	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (lump, "DECORATE");
+		SC_OpenLumpNum (lump, Wads.GetLumpFullName(lump));
 		ParseDecorate (process);
 		SC_Close ();
 	}

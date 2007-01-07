@@ -1,3 +1,8 @@
+January 6, 2007
+- Added simulation of Strife's startup screen.
+- Switched from a 14-pixel tall VGA font to a 16-pixel tall one for the
+  Heretic loading screen (and ENDOOM).
+
 January 6, 2007 (Changes by Graf Zahl)
 - Added ENDOOM screen. It will only be shown when the game is exited via the
   main menu and there is an option to switch it off for those who don't want

@@ -55,6 +55,7 @@
 
 // MACROS ------------------------------------------------------------------
 
+// Hexen startup screen
 #define ST_MAX_NOTCHES			32
 #define ST_NOTCH_WIDTH			16
 #define ST_NOTCH_HEIGHT			23
@@ -67,8 +68,7 @@
 #define ST_NETNOTCH_HEIGHT		16
 #define ST_MAX_NETNOTCHES		8
 
-#define TEXT_FONT_HEIGHT		14
-#define TEXT_FONT_NAME			"vga-rom-font.14"
+// Heretic startup screen
 #define HERETIC_MINOR_VERSION	'3'			// Since we're based on Heretic 1.3
 
 #define THERM_X					14
@@ -76,26 +76,51 @@
 #define THERM_LEN				51
 #define THERM_COLOR				0xAA		// light green
 
+// Strife startup screen
+#define PEASANT_INDEX			0
+#define LASER_INDEX				4
+#define BOT_INDEX				6
+
+#define ST_LASERSPACE_X			60
+#define ST_LASERSPACE_Y			156
+#define ST_LASERSPACE_WIDTH		200
+#define ST_LASER_WIDTH			16
+#define ST_LASER_HEIGHT			16
+
+#define ST_BOT_X				14
+#define ST_BOT_Y				138
+#define ST_BOT_WIDTH			48
+#define ST_BOT_HEIGHT			48
+
+#define ST_PEASANT_X			262
+#define ST_PEASANT_Y			136
+#define ST_PEASANT_WIDTH		32
+#define ST_PEASANT_HEIGHT		64
+
 // Text mode color values
 #define LO						 85
 #define MD						170
 #define HI						255
 
+#define TEXT_FONT_NAME			"vga-rom-font.16"
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
 void RestoreConView();
 
 bool ST_Util_CreateStartupWindow ();
-void ST_Util_SizeWindowForBitmap ();
+void ST_Util_SizeWindowForBitmap (int scale);
 BITMAPINFO *ST_Util_CreateBitmap (int width, int height, int color_bits);
 BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
 void ST_Util_FreeBitmap (BITMAPINFO *bitmap_info);
+void ST_Util_BitmapColorsFromPlaypal (BITMAPINFO *bitmap_info);
 void ST_Util_PlanarToChunky4 (BYTE *dest, const BYTE *src, int width, int height);
-void ST_Util_DrawBlock (BYTE *dest, const BYTE *src, int bytewidth, int height, int destpitch);
-void ST_Util_ClearBlock (BYTE *dest, BYTE fill, int bytewidth, int height, int destpitch);
+void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, int bytewidth, int height);
+void ST_Util_ClearBlock (BITMAPINFO *bitmap_info, BYTE fill, int x, int y, int bytewidth, int height);
 void ST_Util_InvalidateRect (HWND hwnd, BITMAPINFO *bitmap_info, int left, int top, int right, int bottom);
-BYTE *ST_Util_LoadFont (const char *filename, int height);
+BYTE *ST_Util_LoadFont (const char *filename);
 void ST_Util_FreeFont (BYTE *font);
 BITMAPINFO *ST_Util_AllocTextBitmap (const BYTE *font);
 void ST_Util_DrawTextScreen (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font);
@@ -123,6 +148,11 @@ static void ST_Hexen_Progress ();
 static void ST_Heretic_Init ();
 static void ST_Heretic_Progress ();
 
+static void ST_Strife_Init ();
+static void ST_Strife_Done ();
+static void ST_Strife_Progress ();
+static void ST_Strife_DrawStuff (int old_laser, int new_laser);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern HINSTANCE g_hInst;
@@ -141,12 +171,28 @@ bool (*ST_NetLoop)(bool (*timer_callback)(void *), void *userdata);
 
 BITMAPINFO *StartupBitmap;
 
+CVAR(Bool, showendoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int MaxPos, CurPos, NotchPos;
 static int NetMaxPos, NetCurPos;
 static LRESULT NetMarqueeMode;
 static int ThermX, ThermY, ThermWidth, ThermHeight;
+static BYTE *StrifeStartupPics[4+2+1];
+
+static const char *StrifeStartupPicNames[4+2+1] =
+{
+	"STRTPA1", "STRTPB1", "STRTPC1", "STRTPD1",
+	"STRTLZ1", "STRTLZ2",
+	"STRTBOT"
+};
+static const int StrifeStartupPicSizes[4+2+1] =
+{
+	2048, 2048, 2048, 2048,
+	256, 256,
+	2304
+};
 
 static const RGBQUAD TextModePalette[16] =
 {
@@ -242,6 +288,10 @@ void ST_Init(int maxProgress)
 	else if (gameinfo.gametype == GAME_Heretic)
 	{
 		ST_Heretic_Init ();
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		ST_Strife_Init ();
 	}
 	else
 	{
@@ -581,7 +631,7 @@ static void ST_Hexen_Init ()
 	// of biPlanes in the BITMAPINFOHEADER.
 	ST_Util_PlanarToChunky4 (ST_Util_BitsForBitmap(StartupBitmap), startup_screen + 48, 640, 480);
 
-	ST_Util_SizeWindowForBitmap ();
+	ST_Util_SizeWindowForBitmap (1);
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
 
@@ -643,9 +693,7 @@ static void ST_Hexen_Progress()
 			{
 				x = ST_PROGRESS_X + ST_NOTCH_WIDTH * NotchPos;
 				y = ST_PROGRESS_Y;
-				ST_Util_DrawBlock (ST_Util_BitsForBitmap(StartupBitmap) + x / 2 + y * 320,
-					NotchBits, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT, 320);
-				ST_Util_InvalidateRect (StartupScreen, StartupBitmap, x, y, x + ST_NOTCH_WIDTH, y + ST_NOTCH_HEIGHT);
+				ST_Util_DrawBlock (StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
 			}
 			S_Sound (CHAN_BODY, "StartupTick", 1, ATTN_NONE);
 		}
@@ -657,7 +705,7 @@ static void ST_Hexen_Progress()
 //
 // ST_Heretic_Init
 //
-// Shows the Hexen startup screen. If the screen doesn't appear to be
+// Shows the Heretic startup screen. If the screen doesn't appear to be
 // valid, it falls back to ST_Basic_Init.
 //
 // The loading screen is an 80x25 text screen with character data and
@@ -677,7 +725,7 @@ static void ST_Heretic_Init ()
 		return;
 	}
 
-	font = ST_Util_LoadFont (TEXT_FONT_NAME, TEXT_FONT_HEIGHT);
+	font = ST_Util_LoadFont (TEXT_FONT_NAME);
 	if (font == NULL)
 	{
 		DestroyWindow (StartupScreen);
@@ -695,16 +743,17 @@ static void ST_Heretic_Init ()
 	// Draw the loading screen to a bitmap.
 	StartupBitmap = ST_Util_AllocTextBitmap (font);
 	ST_Util_DrawTextScreen (StartupBitmap, loading_screen, font);
+
+	ThermX = THERM_X * 8;
+	ThermY = THERM_Y * font[0];
+	ThermWidth = THERM_LEN * 8 - 4;
+	ThermHeight = font[0];
+
 	ST_Util_FreeFont (font);
 
-	ST_Util_SizeWindowForBitmap ();
+	ST_Util_SizeWindowForBitmap (1);
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
-
-	ThermX = THERM_X * 4;
-	ThermY = THERM_Y * TEXT_FONT_HEIGHT;
-	ThermWidth = THERM_LEN * 4;
-	ThermHeight = TEXT_FONT_HEIGHT;
 
 	ST_Done = ST_Hexen_Done;
 	ST_Progress = ST_Heretic_Progress;
@@ -737,14 +786,178 @@ static void ST_Heretic_Progress()
 			int top = ThermY;
 			int right = notch_pos + ThermX;
 			int bottom = top + ThermHeight;
-			ST_Util_ClearBlock (ST_Util_BitsForBitmap(StartupBitmap) + left + top * 320, THERM_COLOR, right - left, bottom - top, 320);
-			ST_Util_InvalidateRect (StartupScreen, StartupBitmap, left*2, top, right*2, bottom);
+			ST_Util_ClearBlock (StartupBitmap, THERM_COLOR, left, top, right - left, bottom - top);
 			NotchPos = notch_pos;
 		}
 	}
 	I_GetEvent ();
 }
 
+//==========================================================================
+//
+// ST_Strife_Init
+//
+// Shows the Strife startup screen. If the screen doesn't appear to be
+// valid, it falls back to ST_Basic_Init.
+//
+// The startup background is a raw 320x200 image, however Strife only
+// actually uses 95 rows from it, starting at row 57. The rest of the image
+// is discarded. (What a shame.)
+//
+// The peasants are raw 32x64 images. The laser dots are raw 16x16 images.
+// The bot is a raw 48x48 image. All use the standard PLAYPAL.
+//
+//==========================================================================
+
+static void ST_Strife_Init ()
+{
+	int startup_lump = Wads.CheckNumForName ("STARTUP0");
+	int i;
+
+	if (startup_lump < 0 || Wads.LumpLength (startup_lump) != 64000 || !ST_Util_CreateStartupWindow())
+	{
+		ST_Basic_Init ();
+		return;
+	}
+
+	StartupBitmap = ST_Util_CreateBitmap (320, 200, 8);
+	ST_Util_BitmapColorsFromPlaypal (StartupBitmap);
+
+	// Fill bitmap with the startup image.
+	memset (ST_Util_BitsForBitmap(StartupBitmap), 0xF0, 64000);
+	FWadLump lumpr = Wads.OpenLumpNum (startup_lump);
+	lumpr.Seek (57 * 320, SEEK_SET);
+	lumpr.Read (ST_Util_BitsForBitmap(StartupBitmap) + 41 * 320, 95 * 320);
+
+	// Load the animated overlays.
+	for (i = 0; i < 4+2+1; ++i)
+	{
+		int lumpnum = Wads.CheckNumForName (StrifeStartupPicNames[i]);
+		int lumplen;
+
+		if (lumpnum < 0 || (lumplen = Wads.LumpLength (lumpnum)) != StrifeStartupPicSizes[i])
+		{
+			StrifeStartupPics[i] = NULL;
+		}
+		else
+		{
+			FWadLump lumpr = Wads.OpenLumpNum (lumpnum);
+			StrifeStartupPics[i] = new BYTE[lumplen];
+			lumpr.Read (StrifeStartupPics[i], lumplen);
+		}
+	}
+
+	// Make the startup image appear.
+	ST_Strife_DrawStuff (0, 0);
+	ST_Util_SizeWindowForBitmap (2);
+	LayoutMainWindow (Window, NULL);
+	InvalidateRect (StartupScreen, NULL, TRUE);
+
+	ST_Done = ST_Strife_Done;
+	ST_Progress = ST_Strife_Progress;
+	ST_NetInit = ST_Basic_NetInit;
+	ST_NetProgress = ST_Basic_NetProgress;
+	ST_NetMessage = ST_Basic_NetMessage;
+	ST_NetDone = ST_Basic_NetDone;
+	ST_NetLoop = ST_Basic_NetLoop;
+}
+
+//==========================================================================
+//
+// ST_Strife_Done
+//
+// Called just before entering graphics mode to deconstruct the startup
+// screen.
+//
+//==========================================================================
+
+static void ST_Strife_Done()
+{
+	int i;
+
+	for (i = 0; i < 4+2+1; ++i)
+	{
+		if (StrifeStartupPics[i] != NULL)
+		{
+			delete[] StrifeStartupPics[i];
+		}
+		StrifeStartupPics[i] = NULL;
+	}
+	if (StartupScreen != NULL)
+	{
+		DestroyWindow (StartupScreen);
+		StartupScreen = NULL;
+	}
+	if (StartupBitmap != NULL)
+	{
+		ST_Util_FreeBitmap (StartupBitmap);
+		StartupBitmap = NULL;
+	}
+}
+
+//==========================================================================
+//
+// ST_Strife_Progress
+//
+// Bumps the progress meter one notch.
+//
+//==========================================================================
+
+static void ST_Strife_Progress()
+{
+	int notch_pos;
+
+	if (CurPos < MaxPos)
+	{
+		CurPos++;
+		notch_pos = (CurPos * (ST_LASERSPACE_WIDTH - ST_LASER_WIDTH)) / MaxPos;
+		if (notch_pos != NotchPos)
+		{ // Time to update.
+			ST_Strife_DrawStuff (NotchPos, notch_pos);
+			NotchPos = notch_pos;
+		}
+	}
+	I_GetEvent ();
+}
+
+//==========================================================================
+//
+// ST_Strife_DrawStuff
+//
+// Draws all the moving parts of Strife's startup screen. If you're
+// running off a slow drive, it can look kind of good. Otherwise, it
+// borders on crazy insane fast.
+//
+//==========================================================================
+
+static void ST_Strife_DrawStuff (int old_laser, int new_laser)
+{
+	int y;
+
+	// Clear old laser
+	ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_LASERSPACE_X + old_laser,
+		ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
+	// Draw new laser
+	ST_Util_DrawBlock (StartupBitmap, StrifeStartupPics[LASER_INDEX + (new_laser & 1)],
+		ST_LASERSPACE_X + new_laser, ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
+
+	// The bot jumps up and down like crazy.
+	y = MAX(0, new_laser % 5 - 2);
+	if (y > 0)
+	{
+		ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, y);
+	}
+	ST_Util_DrawBlock (StartupBitmap, StrifeStartupPics[BOT_INDEX], ST_BOT_X, ST_BOT_Y + y, ST_BOT_WIDTH, ST_BOT_HEIGHT);
+	if (y < (5 - 1) - 2)
+	{
+		ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_BOT_X, ST_BOT_Y + ST_BOT_HEIGHT + y, ST_BOT_WIDTH, 2 - y);
+	}
+
+	// The peasant desperately runs in place, trying to get away from the laser.
+	// Yet, despite all his limb flailing, he never manages to get anywhere.
+	ST_Util_DrawBlock (StartupBitmap, StrifeStartupPics[PEASANT_INDEX + (new_laser & 3)],
+		ST_PEASANT_X, ST_PEASANT_Y, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT);
+}
 
 //==========================================================================
 //
@@ -753,7 +966,6 @@ static void ST_Heretic_Progress()
 // Shows an ENDOOM text screen
 //
 //==========================================================================
-CVAR(Bool, showendoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void ST_Endoom()
 {
@@ -773,7 +985,7 @@ void ST_Endoom()
 		exit(0);
 	}
 
-	font = ST_Util_LoadFont (TEXT_FONT_NAME, TEXT_FONT_HEIGHT);
+	font = ST_Util_LoadFont (TEXT_FONT_NAME);
 	if (font == NULL)
 	{
 		exit(0);
@@ -797,7 +1009,7 @@ void ST_Endoom()
 	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen, font);
 	ST_Util_FreeFont (font);
 
-	ST_Util_SizeWindowForBitmap ();
+	ST_Util_SizeWindowForBitmap (1);
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
 
@@ -844,19 +1056,20 @@ bool ST_Util_CreateStartupWindow ()
 //
 // ST_Util_SizeWindowForBitmap
 //
-// Resizes the main window so that the startup bitmap will be draw 1:1.
+// Resizes the main window so that the startup bitmap will be drawn
+// at the desired scale.
 //
 //==========================================================================
 
-void ST_Util_SizeWindowForBitmap ()
+void ST_Util_SizeWindowForBitmap (int scale)
 {
 	DEVMODE displaysettings;
 	int w, h, cx, cy, x, y;
 	RECT rect;
 
 	GetClientRect (GameTitleWindow, &rect);
-	w = StartupBitmap->bmiHeader.biWidth + GetSystemMetrics (SM_CXSIZEFRAME)*2;
-	h = StartupBitmap->bmiHeader.biHeight + rect.bottom
+	w = StartupBitmap->bmiHeader.biWidth * scale + GetSystemMetrics (SM_CXSIZEFRAME)*2;
+	h = StartupBitmap->bmiHeader.biHeight * scale + rect.bottom
 		+ GetSystemMetrics (SM_CYSIZEFRAME) * 2 + GetSystemMetrics (SM_CYCAPTION);
 
 	// Resize the window, but keep its center point the same, unless that
@@ -938,8 +1151,14 @@ void ST_Util_PlanarToChunky4 (BYTE *dest, const BYTE *src, int width, int height
 //
 //==========================================================================
 
-void ST_Util_DrawBlock (BYTE *dest, const BYTE *src, int bytewidth, int height, int destpitch)
+void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, int bytewidth, int height)
 {
+	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
+	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
+	BYTE *dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+
+	ST_Util_InvalidateRect (StartupScreen, bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+
 	if (bytewidth == 8)
 	{ // progress notches
 		for (; height > 0; --height)
@@ -959,6 +1178,15 @@ void ST_Util_DrawBlock (BYTE *dest, const BYTE *src, int bytewidth, int height, 
 			src += 2;
 		}
 	}
+	else
+	{
+		for (; height > 0; --height)
+		{
+			memcpy (dest, src, bytewidth);
+			dest += destpitch;
+			src += bytewidth;
+		}
+	}
 }
 
 //==========================================================================
@@ -967,8 +1195,14 @@ void ST_Util_DrawBlock (BYTE *dest, const BYTE *src, int bytewidth, int height, 
 //
 //==========================================================================
 
-void ST_Util_ClearBlock (BYTE *dest, BYTE fill, int bytewidth, int height, int destpitch)
+void ST_Util_ClearBlock (BITMAPINFO *bitmap_info, BYTE fill, int x, int y, int bytewidth, int height)
 {
+	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
+	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
+	BYTE *dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+
+	ST_Util_InvalidateRect (StartupScreen, bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+
 	while (height > 0)
 	{
 		memset (dest, fill, bytewidth);
@@ -1041,6 +1275,32 @@ void ST_Util_FreeBitmap (BITMAPINFO *bitmap_info)
 
 //==========================================================================
 //
+// ST_Util_BitmapColorsFromPlaypal
+//
+// Fills the bitmap palette from the PLAYPAL lump.
+//
+//==========================================================================
+
+void ST_Util_BitmapColorsFromPlaypal (BITMAPINFO *bitmap_info)
+{
+	BYTE playpal[768];
+	int i;
+
+	{
+		FWadLump lumpr = Wads.OpenLumpName ("PLAYPAL");
+		lumpr.Read (playpal, 768);
+	}
+	for (i = 0; i < 256; ++i)
+	{
+		bitmap_info->bmiColors[i].rgbBlue	= playpal[i*3+2];
+		bitmap_info->bmiColors[i].rgbGreen	= playpal[i*3+1];
+		bitmap_info->bmiColors[i].rgbRed	= playpal[i*3];
+		bitmap_info->bmiColors[i].rgbReserved = 0;
+	}
+}
+
+//==========================================================================
+//
 // ST_Util_InvalidateRect
 //
 // Invalidates the portion of the window that the specified rect of the
@@ -1065,13 +1325,14 @@ void ST_Util_InvalidateRect (HWND hwnd, BITMAPINFO *bitmap_info, int left, int t
 // ST_Util_LoadFont
 //
 // Loads a monochrome fixed-width font. Every character is one byte
-// (eight pixels) wide.
+// (eight pixels) wide, so we can deduce the height of each character
+// by looking at the size of the font data.
 //
 //==========================================================================
 
-BYTE *ST_Util_LoadFont (const char *filename, int height)
+BYTE *ST_Util_LoadFont (const char *filename)
 {
-	int lumpnum, lumplen;
+	int lumpnum, lumplen, height;
 	BYTE *font;
 	
 	lumpnum = Wads.CheckNumForFullName (filename);
@@ -1080,8 +1341,13 @@ BYTE *ST_Util_LoadFont (const char *filename, int height)
 		return NULL;
 	}
 	lumplen = Wads.LumpLength (lumpnum);
-	if (lumplen != height << 8)
+	height = lumplen / 256;
+	if (height * 256 != lumplen)
 	{ // font is a bad size
+		return NULL;
+	}
+	if (height < 6 || height > 36)
+	{ // let's be reasonable here
 		return NULL;
 	}
 	font = new BYTE[lumplen + 1];

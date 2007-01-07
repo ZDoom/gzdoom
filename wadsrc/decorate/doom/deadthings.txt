@@ -3,6 +3,7 @@
 actor GibbedMarine 10
 {
 	Game Doom
+	SpawnID 145
 	States
 	{
 	Spawn:

@@ -81,7 +81,7 @@
 #include "m_menu.h"
 
 EXTERN_CVAR(Bool, nomonsterinterpolation)
-EXTERN_CVAR(Bool, showendoom)
+EXTERN_CVAR(Int, showendoom)
 //
 // defaulted values
 //
@@ -498,6 +498,12 @@ static value_t Wipes[] = {
 	{ 3.0, "Crossfade" }
 };
 
+static value_t Endoom[] = {
+	{ 0.0, "Off" },
+	{ 1.0, "On" },
+	{ 2.0, "Only modified" }
+};
+
 static menuitem_t VideoItems[] = {
 	{ more,		"Message Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartMessagesMenu} },
 	{ more,		"Automap Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartAutomapMenu} },
@@ -511,7 +517,7 @@ static menuitem_t VideoItems[] = {
 	{ discrete, "Stretch status bar",	{&st_scale},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Screen wipe style",	{&wipetype},			{4.0}, {0.0},	{0.0}, {Wipes} },
 #ifdef _WIN32
-	{ discrete,	"Show ENDOOM screen",	{&showendoom},			{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete,	"Show ENDOOM screen",	{&showendoom},			{3.0}, {0.0},	{0.0}, {Endoom} },
 	{ discrete, "DirectDraw palette hack", {&vid_palettehack},	{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Use attached surfaces", {&vid_attachedsurfaces},{2.0}, {0.0},	{0.0}, {OnOff} },
 #endif

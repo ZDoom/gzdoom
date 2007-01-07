@@ -1,3 +1,8 @@
+January 7, 2007 (Changes by Graf Zahl)
+- Ported GZDoom's deep water splash code so that splashes are handled properly
+  in Boom maps with non-swimmable water.
+- Changed ENDOOM CVAR so that there is an option to show only modified versions.
+
 January 6, 2007
 - Added simulation of Strife's startup screen.
 - Switched from a 14-pixel tall VGA font to a 16-pixel tall one for the

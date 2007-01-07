@@ -400,6 +400,7 @@ void AActor::Serialize (FArchive &arc)
 		PrevX = x;
 		PrevY = y;
 		PrevZ = z;
+		UpdateWaterLevel(z, false);
 	}
 }
 
@@ -2858,10 +2859,7 @@ void AActor::Tick ()
 		Crash();
 	}
 
-	if (UpdateWaterLevel (oldz))
-	{
-		P_HitWater (this, Sector);
-	}
+	UpdateWaterLevel (oldz);
 
 	// [RH] Don't advance if predicting a player
 	if (player && (player->cheats & CF_PREDICTING))
@@ -2918,9 +2916,11 @@ void AActor::Tick ()
 //
 //==========================================================================
 
-bool AActor::UpdateWaterLevel (fixed_t oldz)
+bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 {
 	BYTE lastwaterlevel = waterlevel;
+	fixed_t fh=FIXED_MIN;
+	bool reset=false;
 
 	waterlevel = 0;
 
@@ -2938,8 +2938,8 @@ bool AActor::UpdateWaterLevel (fixed_t oldz)
 		const sector_t *hsec = Sector->heightsec;
 		if (hsec != NULL && !(hsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 		{
-			fixed_t fh = hsec->floorplane.ZatPoint (x, y);
-			if (hsec->MoreFlags & SECF_UNDERWATERMASK)
+			fh = hsec->floorplane.ZatPoint (x, y);
+			//if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors!
 			{
 				if (z < fh)
 				{
@@ -2958,15 +2958,24 @@ bool AActor::UpdateWaterLevel (fixed_t oldz)
 				{
 					waterlevel = 3;
 				}
+				else
+				{
+					waterlevel=0;
+				}
 			}
-			else
-			{
-				return (oldz >= fh) && (z < fh);
-			}
+			// even non-swimmable deep water must be checked here to do the splashes correctly
+			// But the water level must be reset when this function returns!
+			if (!(hsec->MoreFlags&SECF_UNDERWATER)) reset=true;
 		}
 	}
 
-	return (lastwaterlevel == 0 && waterlevel != 0);
+		
+	// some additional checks to make deep sectors à la Boom splash without setting
+	// the water flags. 
+	if (boomwaterlevel == 0 && waterlevel != 0 && dosplash) P_HitWater(this, Sector, fh);
+	boomwaterlevel=waterlevel;
+	if (reset) waterlevel=lastwaterlevel;
+	return false;	// we did the splash ourselves! ;)
 }
 
 //----------------------------------------------------------------------------
@@ -3156,7 +3165,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	{
 		actor->floorclip = 0;
 	}
-	actor->UpdateWaterLevel (actor->z);
+	actor->UpdateWaterLevel (actor->z, false);
 	if (!SpawningMapThing)
 	{
 		actor->BeginPlay ();
@@ -4110,7 +4119,7 @@ int P_GetThingFloorType (AActor *thing)
 // Returns true if hit liquid and splashed, false if not.
 //---------------------------------------------------------------------------
 
-bool P_HitWater (AActor *thing, sector_t *sec)
+bool P_HitWater (AActor * thing, sector_t * sec, fixed_t z)
 {
 	if (thing->flags2 & MF2_FLOATBOB || thing->flags3 & MF3_DONTSPLASH)
 		return false;
@@ -4122,6 +4131,9 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 	FSplashDef *splash;
 	int terrainnum;
 	
+	if (z==FIXED_MIN) z=thing->z;
+	// don't splash above the object
+	else if (z>thing->z+(thing->height>>1)) return false;
 	if (sec->heightsec == NULL ||
 		//!sec->heightsec->waterzone ||
 		(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) ||
@@ -4137,16 +4149,21 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 	int splashnum = Terrains[terrainnum].Splash;
 	bool smallsplash = false;
 	const secplane_t *plane;
-	fixed_t z;
 
 	if (splashnum == -1)
 		return Terrains[terrainnum].IsLiquid;
+
+	// don't splash when touching an underwater floor
+	if (thing->waterlevel>=1 && z<=thing->floorz) return Terrains[terrainnum].IsLiquid;
 
 	plane = (sec->heightsec != NULL &&
 		//sec->heightsec->waterzone &&
 		!(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	  ? &sec->heightsec->floorplane : &sec->floorplane;
-	z = plane->ZatPoint (thing->x, thing->y);
+
+	// Don't splash for living things with small vertical velocities.
+	// There are levels where the constant splashing from the monsters gets extremely annoying
+	if ((thing->flags3&MF3_ISMONSTER || thing->player) && thing->momz>=-5*FRACUNIT) return Terrains[terrainnum].IsLiquid;
 
 	splash = &Splashes[splashnum];
 

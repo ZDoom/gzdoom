@@ -171,7 +171,11 @@ bool (*ST_NetLoop)(bool (*timer_callback)(void *), void *userdata);
 
 BITMAPINFO *StartupBitmap;
 
-CVAR(Bool, showendoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0) self = 0;
+	else if (self > 2) self=2;
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -966,10 +970,9 @@ static void ST_Strife_DrawStuff (int old_laser, int new_laser)
 // Shows an ENDOOM text screen
 //
 //==========================================================================
-
 void ST_Endoom()
 {
-	if (!showendoom) exit(0);
+	if (showendoom == 0) exit(0);
 
 	int endoom_lump = Wads.CheckNumForName (
 		gameinfo.gametype == GAME_Doom? "ENDOOM" : 
@@ -982,6 +985,12 @@ void ST_Endoom()
 
 	if (endoom_lump < 0 || Wads.LumpLength (endoom_lump) != 4000)
 	{
+		exit(0);
+	}
+
+	if (Wads.GetLumpFile(endoom_lump) == FWadCollection::IWAD_FILENUM && showendoom == 2)
+	{
+		// showendoom==2 means to show only lumps from PWADs.
 		exit(0);
 	}
 

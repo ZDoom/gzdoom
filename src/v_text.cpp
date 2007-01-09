@@ -200,47 +200,11 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 
 		if (c == TEXTCOLOR_ESCAPE)
 		{
-			int newcolor = *ch++;
-
-			if (newcolor == '\0')
+			EColorRange newcolor = V_ParseFontColor (ch, normalcolor, boldcolor);
+			if (newcolor != CR_UNDEFINED)
 			{
-				return;
+				range = Font->GetColorTranslation (newcolor);
 			}
-			else if (newcolor == '-')		// Normal
-			{
-				newcolor = normalcolor;
-			}
-			else if (newcolor == '+')		// Bold
-			{
-				newcolor = boldcolor;
-			}
-			else if (newcolor == '[')		// Named
-			{
-				const BYTE *namestart = ch;
-				while (*ch != ']' && *ch != '\0')
-				{
-					ch++;
-				}
-				FName rangename((const char *)namestart, int(ch - namestart), true);
-				if (*ch != '\0')
-				{
-					ch++;
-				}
-				newcolor = V_FindFontColor (rangename);
-			}
-			else if (newcolor >= 'A' && newcolor < NUM_TEXT_COLORS + 'A')	// Standard, uppercase
-			{
-				newcolor -= 'A';
-			}
-			else if (newcolor >= 'a' && newcolor < NUM_TEXT_COLORS + 'a')	// Standard, lowercase
-			{
-				newcolor -= 'a';
-			}
-			else							// Incomplete!
-			{
-				continue;
-			}
-			range = Font->GetColorTranslation ((EColorRange)newcolor);
 			continue;
 		}
 		

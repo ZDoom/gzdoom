@@ -152,6 +152,8 @@ extern FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
 
 void V_InitFonts();
 EColorRange V_FindFontColor (FName name);
-FFont * V_GetFont(const char *);
+PalEntry V_LogColorFromColorRange (EColorRange range);
+EColorRange V_ParseFontColor (const BYTE *&color_value, int normalcolor, int boldcolor);
+FFont *V_GetFont(const char *);
 
 #endif //__V_FONT_H__

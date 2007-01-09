@@ -109,6 +109,7 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void RestoreConView();
+void LayoutMainWindow (HWND hWnd, HWND pane);
 
 bool ST_Util_CreateStartupWindow ();
 void ST_Util_SizeWindowForBitmap (int scale);
@@ -157,7 +158,6 @@ static void ST_Strife_DrawStuff (int old_laser, int new_laser);
 
 extern HINSTANCE g_hInst;
 extern HWND Window, ConWindow, ProgressBar, NetStartPane, StartupScreen, GameTitleWindow;
-extern void LayoutMainWindow (HWND hWnd, HWND pane);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -915,7 +915,7 @@ static void ST_Strife_Progress()
 	{
 		CurPos++;
 		notch_pos = (CurPos * (ST_LASERSPACE_WIDTH - ST_LASER_WIDTH)) / MaxPos;
-		if (notch_pos != NotchPos)
+		if (notch_pos != NotchPos && !(notch_pos & 1))
 		{ // Time to update.
 			ST_Strife_DrawStuff (NotchPos, notch_pos);
 			NotchPos = notch_pos;
@@ -946,7 +946,7 @@ static void ST_Strife_DrawStuff (int old_laser, int new_laser)
 		ST_LASERSPACE_X + new_laser, ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
 
 	// The bot jumps up and down like crazy.
-	y = MAX(0, new_laser % 5 - 2);
+	y = MAX(0, (new_laser >> 1) % 5 - 2);
 	if (y > 0)
 	{
 		ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, y);
@@ -959,7 +959,7 @@ static void ST_Strife_DrawStuff (int old_laser, int new_laser)
 
 	// The peasant desperately runs in place, trying to get away from the laser.
 	// Yet, despite all his limb flailing, he never manages to get anywhere.
-	ST_Util_DrawBlock (StartupBitmap, StrifeStartupPics[PEASANT_INDEX + (new_laser & 3)],
+	ST_Util_DrawBlock (StartupBitmap, StrifeStartupPics[PEASANT_INDEX + ((new_laser >> 1) & 3)],
 		ST_PEASANT_X, ST_PEASANT_Y, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT);
 }
 
@@ -970,6 +970,7 @@ static void ST_Strife_DrawStuff (int old_laser, int new_laser)
 // Shows an ENDOOM text screen
 //
 //==========================================================================
+
 void ST_Endoom()
 {
 	if (showendoom == 0) exit(0);
@@ -1017,6 +1018,13 @@ void ST_Endoom()
 	StartupBitmap = ST_Util_AllocTextBitmap (font);
 	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen, font);
 	ST_Util_FreeFont (font);
+
+	// Make the title banner go away.
+	if (GameTitleWindow != NULL)
+	{
+		DestroyWindow (GameTitleWindow);
+		GameTitleWindow = NULL;
+	}
 
 	ST_Util_SizeWindowForBitmap (1);
 	LayoutMainWindow (Window, NULL);
@@ -1076,7 +1084,14 @@ void ST_Util_SizeWindowForBitmap (int scale)
 	int w, h, cx, cy, x, y;
 	RECT rect;
 
-	GetClientRect (GameTitleWindow, &rect);
+	if (GameTitleWindow != NULL)
+	{
+		GetClientRect (GameTitleWindow, &rect);
+	}
+	else
+	{
+		rect.bottom = 0;
+	}
 	w = StartupBitmap->bmiHeader.biWidth * scale + GetSystemMetrics (SM_CXSIZEFRAME)*2;
 	h = StartupBitmap->bmiHeader.biHeight * scale + rect.bottom
 		+ GetSystemMetrics (SM_CYSIZEFRAME) * 2 + GetSystemMetrics (SM_CYCAPTION);

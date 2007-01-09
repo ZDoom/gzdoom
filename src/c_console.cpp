@@ -1805,6 +1805,7 @@ CCMD (echo)
 	int last = argv.argc()-1;
 	for (int i = 1; i <= last; ++i)
 	{
+		strbin (argv[i]);
 		Printf ("%s%s", argv[i], i!=last ? " " : "\n");
 	}
 }

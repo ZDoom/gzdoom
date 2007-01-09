@@ -387,7 +387,7 @@ bool D3DFB::Reset ()
 //
 // DoOffByOneCheck
 //
-// Since NVidia hardware has an off-by-one error in the pixel shader.
+// NVidia hardware has an off-by-one error in the pixel shader.
 // On a Geforce 7950GT and a 6200, I have witnessed it skip palette entry
 // 240. I have a report that an FX card skips in a totally different spot.
 // So rather than try and correct it in the shader, we detect it here and
@@ -622,7 +622,7 @@ bool D3DFB::CreateVertexes ()
 {
 	float top = (TrueHeight - Height) * 0.5f - 0.5f;
 	float right = float(Width) - 0.5f;
-	float bot = float(Height) + top + 1.f;
+	float bot = float(Height) + top;
 	float texright = float(Width) / float(FBWidth);
 	float texbot = float(Height) / float(FBHeight);
 	FBVERTEX verts[4] =

@@ -1,3 +1,17 @@
+January 8, 2007
+- Added escape code support to the echo CCMD, so you can use colors with it.
+- Changed the color scheme for the startup log to light text on a dark
+  background and added color support to it.
+- When a fatal error occurs, the log window is now scrolled so the final
+  lines are guaranteed to be visible.
+- Fixed: ShowErrorPane() crashed if it was called before the main window was
+  created.
+- Removed the game title banner for the ENDOOM display and replaced it with a
+  short prompt at the bottom of the window.
+- Halved the number of times the Strife startup screen updates the progress
+  bar so that it spends less time drawing and gets done loading faster.
+- Fixed: The quad FBD3D draws to the screen was one pixel too tall.
+
 January 7, 2007 (Changes by Graf Zahl)
 - Fixed: Sorting of files in Zips was broken.
 - Ported GZDoom's deep water splash code so that splashes are handled properly

@@ -35,6 +35,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
+#include <richedit.h>
 
 #define USE_WINDOWS_DWORD
 #include "hardware.h"
@@ -60,6 +61,7 @@
 #include "c_dispatch.h"
 #include "templates.h"
 #include "gameconfigfile.h"
+#include "v_font.h"
 
 #include "stats.h"
 
@@ -573,61 +575,79 @@ void I_PrintStr (const char *cp)
 	HWND edit = ConWindow;
 	char buf[256];
 	int bpos = 0;
-	INTBOOL visible = GetWindowLongPtr (ConWindow, GWL_STYLE) & WS_VISIBLE;
+	CHARRANGE selection;
+	CHARRANGE endselection;
+	LONG lines_before, lines_after;
+	CHARFORMAT format;
 
-	int maxsel, selstart, selend, numlines1, numlines2;
+	// Store the current selection and set it to the end so we can append text.
+	SendMessage (edit, EM_EXGETSEL, 0, (LPARAM)&selection);
+	endselection.cpMax = endselection.cpMin = GetWindowTextLength (edit);
+	SendMessage (edit, EM_EXSETSEL, 0, (LPARAM)&endselection);
 
-	if (visible)
-	{
-		SendMessage (edit, WM_SETREDRAW, FALSE, 0);
-	}
-	numlines1 = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
-	maxsel = SendMessage (edit, WM_GETTEXTLENGTH, 0, 0);
-	SendMessage (edit, EM_GETSEL, (WPARAM)&selstart, (LPARAM)&selend);
-	SendMessage (edit, EM_SETSEL, maxsel, maxsel);
+	// GetWindowTextLength and EM_EXSETSEL can disagree on where the end of
+	// the text is. Find out what EM_EXSETSEL thought it was and use that later.
+	SendMessage (edit, EM_EXGETSEL, 0, (LPARAM)&endselection);
+
+	// Remember how many lines there were before we added text.
+	lines_before = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
 
 	while (*cp != 0)
 	{
-		if (*cp == 28)
-		{ // Skip color changes
-			if (*++cp != 0)
-				cp++;
-			continue;
-		}
-		if (bpos < 253)
-		{
-			// Stupid edit controls need CR-LF pairs
-			if (*cp == '\n')
-			{
-				buf[bpos++] = '\r';
-			}
-		}
-		else
+		// 28 is the escape code for a color change.
+		if ((*cp == 28 && bpos != 0) || bpos == 255)
 		{
 			buf[bpos] = 0;
 			SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
 			newLine = buf[bpos-1] == '\n';
 			bpos = 0;
 		}
-		buf[bpos++] = *cp++;
+		if (*cp != 28)
+		{
+			buf[bpos++] = *cp++;
+		}
+		else
+		{
+			const BYTE *color_id = (const BYTE *)cp + 1;
+			EColorRange range = V_ParseFontColor (color_id, CR_UNTRANSLATED, CR_YELLOW);
+			cp = (const char *)color_id;
+
+			if (range != CR_UNDEFINED)
+			{
+				// Change the color of future text added to the control.
+				PalEntry color = V_LogColorFromColorRange (range);
+				// GDI uses BGR colors, but color is RGB, so swap the R and the B.
+				swap (color.r, color.b);
+				// Change the color.
+				format.cbSize = sizeof(format);
+				format.dwMask = CFM_COLOR;
+				format.crTextColor = color;
+				SendMessage (edit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&format);
+			}
+		}
 	}
 	if (bpos != 0)
 	{
 		buf[bpos] = 0;
-		SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
+		SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf); 
 		newLine = buf[bpos-1] == '\n';
 	}
-	SendMessage (edit, EM_SETSEL, selstart, selend);
-	numlines2 = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
-	if (numlines2 > numlines1)
+
+	// If the old selection was at the end of the text, keep it at the end and
+	// scroll. Don't scroll if the selection is anywhere else.
+	if (selection.cpMin == endselection.cpMin && selection.cpMax == endselection.cpMax)
 	{
-		SendMessage (edit, EM_LINESCROLL, 0, numlines2 - numlines1);
+		selection.cpMax = selection.cpMin = GetWindowTextLength (edit);
+		lines_after = SendMessage (edit, EM_GETLINECOUNT, 0, 0);
+		if (lines_after > lines_before)
+		{
+			SendMessage (edit, EM_LINESCROLL, 0, lines_after - lines_before);
+		}
 	}
-	if (visible)
-	{
-		SendMessage (edit, WM_SETREDRAW, TRUE, 0);
-		I_GetEvent ();
-	}
+	// Restore the previous selection.
+	SendMessage (edit, EM_EXSETSEL, 0, (LPARAM)&selection);
+	// Give the edit control a chance to redraw itself.
+	I_GetEvent ();
 }
 
 EXTERN_CVAR (Bool, queryiwad);

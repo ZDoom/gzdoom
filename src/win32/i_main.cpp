@@ -40,6 +40,7 @@
 #include <mmsystem.h>
 #include <objbase.h>
 #include <commctrl.h>
+#include <richedit.h>
 
 //#include <wtsapi32.h>
 #define NOTIFY_FOR_THIS_SESSION 0
@@ -126,6 +127,7 @@ HWND			ErrorPane, ProgressBar, NetStartPane, StartupScreen;
 
 HFONT			GameTitleFont;
 LONG			GameTitleFontHeight;
+LONG			DefaultGUIFontHeight;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -372,7 +374,7 @@ void LayoutMainWindow (HWND hWnd, HWND pane)
 		errorpaneheight = LayoutErrorPane (pane, w);
 		SetWindowPos (pane, HWND_TOP, 0, 0, w, errorpaneheight, 0);
 	}
-	if (DoomStartupInfo != NULL)
+	if (DoomStartupInfo != NULL && GameTitleWindow != NULL)
 	{
 		bannerheight = GameTitleFontHeight + 5;
 		MoveWindow (GameTitleWindow, 0, errorpaneheight, w, bannerheight, TRUE);
@@ -430,8 +432,8 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	LOGFONT lf;
 	TEXTMETRIC tm;
 	HINSTANCE inst = (HINSTANCE)(LONG_PTR)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
-	HFONT font;
 	DRAWITEMSTRUCT *drawitem;
+	CHARFORMAT2 format;
 
 	switch (msg)
 	{
@@ -446,28 +448,50 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		strcpy (lf.lfFaceName, "Trebuchet MS");
 		GameTitleFont = CreateFontIndirect (&lf);
 
-		font = GameTitleFont != NULL ? GameTitleFont : (HFONT)GetStockObject (DEFAULT_GUI_FONT);
-		oldfont = SelectObject (hdc, font);
+		oldfont = SelectObject (hdc, GetStockObject (DEFAULT_GUI_FONT));
 		GetTextMetrics (hdc, &tm);
+		DefaultGUIFontHeight = tm.tmHeight;
+		if (GameTitleFont == NULL)
+		{
+			GameTitleFontHeight = DefaultGUIFontHeight;
+		}
+		else
+		{
+			SelectObject (hdc, GameTitleFont);
+			GetTextMetrics (hdc, &tm);
+			GameTitleFontHeight = tm.tmHeight;
+		}
 		SelectObject (hdc, oldfont);
-		ReleaseDC (hWnd, hdc);
-
-		GameTitleFontHeight = tm.tmHeight;
 
 		// Create log read-only edit control
-		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE, "EDIT", NULL,
+		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY, RICHEDIT_CLASS, NULL,
 			WS_CHILD | WS_VISIBLE | WS_VSCROLL |
 			ES_LEFT | ES_MULTILINE | WS_CLIPSIBLINGS,
 			0, 0, 0, 0,
 			hWnd, NULL, inst, NULL);
+		HRESULT hr;
+		hr = GetLastError();
 		if (view == NULL)
 		{
+			ReleaseDC (hWnd, hdc);
 			return -1;
 		}
-		SendMessage (view, WM_SETFONT, (WPARAM)GetStockObject (DEFAULT_GUI_FONT), FALSE);
 		SendMessage (view, EM_SETREADONLY, TRUE, 0);
-		SendMessage (view, EM_SETLIMITTEXT, 0, 0);
+		SendMessage (view, EM_EXLIMITTEXT, 0, 0x7FFFFFFE);
+		SendMessage (view, EM_SETBKGNDCOLOR, 0, RGB(70,70,70));
+		// Setup default font for the log.
+		//SendMessage (view, WM_SETFONT, (WPARAM)GetStockObject (DEFAULT_GUI_FONT), FALSE);
+		format.cbSize = sizeof(format);
+		format.dwMask = CFM_BOLD | CFM_COLOR | CFM_FACE | CFM_SIZE;
+		format.dwEffects = 0;
+		format.yHeight = 200;
+		format.crTextColor = RGB(223,223,223);
+		format.bPitchAndFamily = FF_SWISS | VARIABLE_PITCH;
+		strcpy (format.szFaceName, "Bitstream Vera Sans");	// At least I have it. :p
+		SendMessage (view, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
+
 		ConWindow = view;
+		ReleaseDC (hWnd, hdc);
 
 		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, hWnd, NULL, inst, NULL);
 		if (view == NULL)
@@ -528,6 +552,19 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				StretchDIBits (drawitem->hDC, rect.left, rect.bottom - 1, rect.right - rect.left, rect.top - rect.bottom,
 					0, 0, StartupBitmap->bmiHeader.biWidth, StartupBitmap->bmiHeader.biHeight,
 					ST_Util_BitsForBitmap(StartupBitmap), StartupBitmap, DIB_RGB_COLORS, SRCCOPY);
+
+				// If the title banner is gone, then this is an ENDOOM screen, so draw a short prompt
+				// where the command prompt would have been in DOS.
+				if (GameTitleWindow == NULL)
+				{
+					static const char QuitText[] = "Press any key or click anywhere in the window to quit.";
+
+					SetTextColor (drawitem->hDC, RGB(240,240,240));
+					SetBkMode (drawitem->hDC, TRANSPARENT);
+					oldfont = SelectObject (drawitem->hDC, (HFONT)GetStockObject (DEFAULT_GUI_FONT));
+					TextOut (drawitem->hDC, 3, drawitem->rcItem.bottom - DefaultGUIFontHeight - 3, QuitText, countof(QuitText)-1);
+					SelectObject (drawitem->hDC, oldfont);
+				}
 			}
 		}
 		return FALSE;
@@ -535,9 +572,6 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_CLOSE:
 		PostQuitMessage (0);
 		break;
-
-	case WM_CTLCOLORSTATIC:
-		return (LRESULT)GetStockObject (WHITE_BRUSH);
 
 	case WM_DESTROY:
 		if (GameTitleFont != NULL)
@@ -660,10 +694,21 @@ void RestoreConView()
 
 void ShowErrorPane(const char *text)
 {
-	// Ensure that the network pane is hidden.
-	ST_NetDone();
+	if (Window != NULL)
+	{
+	
+		ST_NetDone();	// Ensure that the network pane is hidden.
+		ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, (LPARAM)text);
+	}
+	POINT zero = { 0, 0 };
 
-	ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, (LPARAM)text);
+	SetWindowText (Window, "Fatal Error - " WINDOW_TITLE);
+
+	// Make sure the last line of the log window is visible.
+	SendMessage (ConWindow, EM_LINESCROLL, 0, SendMessage (ConWindow, EM_GETLINECOUNT, 0, 0));
+	// The above line scrolled everything off the screen. Pretend to move the scroll
+	// bar thumb, which clamps to not show any extra lines if it doesn't need to.
+	SendMessage (ConWindow, EM_SCROLL, SB_PAGEDOWN, 0);
 
 	if (ErrorPane == NULL)
 	{
@@ -674,8 +719,6 @@ void ShowErrorPane(const char *text)
 	{
 		BOOL bRet;
 		MSG msg;
-
-		SetWindowText (Window, "Fatal Error - " WINDOW_TITLE);
 
 		while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
 		{
@@ -944,8 +987,6 @@ void DoomSpecificInfo (char *buffer)
 	*buffer++ = '\0';
 }
 
-extern FILE *Logfile;
-
 // Here is how the error logging system works.
 //
 // To catch exceptions that occur in secondary threads, CatchAllExceptions is
@@ -1078,7 +1119,17 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 {
 	g_hInst = hInstance;
 
-	InitCommonControls ();	// Be pretty under XP
+	InitCommonControls ();			// Load some needed controls and be pretty under XP
+
+	if (NULL == LoadLibrary ("riched20.dll"))
+	{
+		// Technically, it isn't really Internet Explorer that is needed, but this
+		// is an example of a specific program that will provide riched20.dll.
+		// But considering how extra stuff needs to be installed to make Windows 95
+		// useable with pretty much any recent software, the chances are high that
+		// the user already has riched20.dll installed.
+		I_FatalError ("Sorry, you need to install Internet Explorer 3 or higher to play ZDoom on Windows 95.");
+	}
 
 #if !defined(__GNUC__) && defined(_DEBUG)
 	if (__argc == 2 && strcmp (__argv[1], "TestCrash") == 0)

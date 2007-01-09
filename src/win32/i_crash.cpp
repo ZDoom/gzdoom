@@ -3013,10 +3013,9 @@ static void SaveReport (HANDLE file)
 
 void DisplayCrashLog ()
 {
-	HINSTANCE riched;
 	HANDLE file;
 
-	if (NumFiles == 0 || (riched = LoadLibrary ("riched20.dll")) == NULL)
+	if (NumFiles == 0)
 	{
 		char ohPoo[] =
 			GAMENAME" crashed but was unable to produce\n"
@@ -3051,7 +3050,6 @@ void DisplayCrashLog ()
 			SaveReport (file);
 			CloseHandle (file);
 		}
-		FreeLibrary (riched);
 		if (uxtheme != NULL)
 		{
 			FreeLibrary (uxtheme);

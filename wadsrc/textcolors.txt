@@ -4,6 +4,8 @@ Brick
 Console:
 	#470000  #A35C5C    0 127
 	#800000  #FFFEFE  128 256
+Flat:
+	#CC3333
 }
 
 Tan
@@ -12,6 +14,8 @@ Tan
 Console:
 	#332B13  #998B79    0 127
 	#998B79  #FFFFFF  128 256
+Flat:
+	#D2B48C
 }
 
 Gray Grey
@@ -20,6 +24,8 @@ Gray Grey
 Console:
 	#272727  #8B8B8B    0 127
 	#505050  #FFFFFF  128 256
+Flat:
+	#CCCCCC
 }
 
 Green
@@ -28,6 +34,8 @@ Green
 Console:
 	#000000  #007F00    0 127
 	#00FF00  #FEFFFE  128 256
+Flat:
+	#00CC00
 }
 
 Brown
@@ -36,6 +44,8 @@ Brown
 Console:
 	#000000  #7F4000    0 127
 	#432F1F  #FFE7CF  128 256
+Flat:
+	#996633
 }
 
 Gold
@@ -44,6 +54,8 @@ Gold
 Console:
 	#000000  #7FC040    0 127
 	#DFBF00  #DFFFFE  128 256
+Flat:
+	#FFCC00
 }
 
 Red
@@ -52,6 +64,8 @@ Red
 Console:
 	#000000  #7F0000    0 127
 	#FF0000  #FFFEFE  128 256
+Flat:
+	#DD0000
 }
 
 Blue
@@ -60,6 +74,8 @@ Blue
 Console:
 	#000000  #00007F    0 127
 	#4040FF  #DEDEFF  128 256
+Flat:
+	#9999FF
 }
 
 Orange
@@ -68,6 +84,8 @@ Orange
 Console:
 	#200000  #904000    0 127
 	#FF7F00  #FFFEFE  128 256
+Flat:
+	#FFAA00
 }
 
 // This is designed to match the white Heretic/Hexen font.
@@ -78,6 +96,8 @@ White
 Console:
 	#000000  #7F7F7F    0 127
 	#808080  #FFFFFF  128 256
+Flat:
+	#DFDFDF
 }
 
 // This is designed to match the yellow Hexen font, which has a
@@ -90,6 +110,8 @@ Yellow
 Console:
 	#000000  #7F7F00    0 127
 	#FFFF00  #FFFFFF  128 256
+Flat:
+	#EEEE33
 }
 
 Untranslated
@@ -102,6 +124,8 @@ Black
 Console:
 	#000000  #323232    0 127
 	#0A0A0A  #505050  128 256
+Flat:
+	#000000
 }
 
 LightBlue "Light Blue"
@@ -110,6 +134,8 @@ LightBlue "Light Blue"
 Console:
 	#00003C  #5050FF    0 127
 	#8080FF  #FFFFFF  128 256
+Flat:
+	#33EEFF
 }
 
 Cream
@@ -118,6 +144,8 @@ Cream
 Console:
 	#2B230F  #BF7B4B    0 127
 	#FFB383  #FFFFFF  128 256
+Flat:
+	#FFCC99
 }
 
 Olive
@@ -126,6 +154,8 @@ Olive
 Console:
 	#373F27  #7B7F63    0 127
 	#676B4F  #D1D8A8  128 256
+Flat:
+	#D1D8A8
 }
 
 DarkGreen "Dark Green"
@@ -134,6 +164,8 @@ DarkGreen "Dark Green"
 Console:
 	#000000  #005800    0 127
 	#008C00  #DCFFDC  128 256
+Flat:
+	#008C00
 }
 
 DarkRed "Dark Red"
@@ -142,6 +174,8 @@ DarkRed "Dark Red"
 Console:
 	#000000  #730000    0 127
 	#800000  #FFDCDC  128 255
+Flat:
+	#800000
 }
 
 DarkBrown "Dark Brown"
@@ -150,6 +184,8 @@ DarkBrown "Dark Brown"
 Console:
 	#2B230F  #773000    0 127
 	#735743  #F7BD58  128 256
+Flat:
+	#663333
 }
 
 Purple
@@ -158,6 +194,8 @@ Purple
 Console:
 	#000000  #9F009B    0 127
 	#FF00FF  #FFFFFF  128 256
+Flat:
+	#9966CC
 }
 
 DarkGray DarkGrey "Dark Gray" "Dark Grey"
@@ -166,4 +204,6 @@ DarkGray DarkGrey "Dark Gray" "Dark Grey"
 Console:
 	#000000  #646464    0 127
 	#404040  #B4B4B4  128 256
+Flat:
+	#808080
 }

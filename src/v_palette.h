@@ -81,6 +81,9 @@ struct FDynamicColormap
 
 extern BYTE InverseColormap[NUMCOLORMAPS*256];
 extern BYTE GoldColormap[NUMCOLORMAPS*256];
+// [BC] New Skulltag colormaps.
+extern BYTE RedColormap[NUMCOLORMAPS*256];
+extern BYTE GreenColormap[NUMCOLORMAPS*256];
 extern FPalette GPalette;
 extern "C" {
 extern FDynamicColormap NormalLight;

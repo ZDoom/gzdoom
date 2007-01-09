@@ -360,8 +360,9 @@ void FPCXTexture::MakeTexture()
 			BYTE c;
 			lump.Seek(-769, SEEK_END);
 			lump >> c;
-			if (c !=0x0c) memcpy(PaletteMap, GrayMap, 256);	// Fallback for files without palette
-			else for(int i=0;i<256;i++)
+			//if (c !=0x0c) memcpy(PaletteMap, GrayMap, 256);	// Fallback for files without palette
+			//else 
+			for(int i=0;i<256;i++)
 			{
 				BYTE r,g,b;
 				lump >> r >> g >> b;

@@ -7,6 +7,10 @@
 #define INVERSECOLOR 0x00345678
 #define GOLDCOLOR 0x009abcde
 
+// [BC] More hacks!
+#define REDCOLOR 0x00beefee
+#define GREENCOLOR 0x00beefad
+
 #define STREAM_ENUM(e) \
 	inline FArchive &operator<< (FArchive &arc, e &i) \
 	{ \

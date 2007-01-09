@@ -2119,15 +2119,34 @@ void R_DrawMasked (void)
 // [RH] Particle functions
 //
 
+// [BC] Allow the maximum number of particles to be specified by a cvar (so people
+// with lots of nice hardware can have lots of particles!).
+CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
+{
+	if ( self == 0 )
+		self = 4000;
+	else if ( self < 100 )
+		self = 100;
+
+	if ( gamestate != GS_STARTUP )
+	{
+		R_DeinitParticles( );
+		R_InitParticles( );
+	}
+}
+
 void R_InitParticles ()
 {
 	char *i;
 
 	if ((i = Args.CheckValue ("-numparticles")))
 		NumParticles = atoi (i);
-	if (NumParticles == 0)
-		NumParticles = 4000;
-	else if (NumParticles < 100)
+	// [BC] Use r_maxparticles now.
+	else
+		NumParticles = r_maxparticles;
+
+	// This should be good, but eh...
+	if ( NumParticles < 100 )
 		NumParticles = 100;
 
 	Particles = new particle_t[NumParticles];

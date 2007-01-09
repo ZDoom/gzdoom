@@ -91,6 +91,8 @@ extern bool				r_dontmaplines;
 
 #define INVERSECOLORMAP			32
 #define GOLDCOLORMAP			33
+#define REDCOLORMAP				34
+#define GREENCOLORMAP			35
 
 // The size of a single colormap, in bits
 #define COLORMAPSHIFT			8

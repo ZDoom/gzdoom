@@ -61,6 +61,9 @@ FDynamicColormap NormalLight;
 FPalette GPalette;
 BYTE InverseColormap[NUMCOLORMAPS*256];
 BYTE GoldColormap[NUMCOLORMAPS*256];
+// [BC] New Skulltag colormaps.
+BYTE RedColormap[NUMCOLORMAPS*256];
+BYTE GreenColormap[NUMCOLORMAPS*256];
 int Near255;
 
 static void FreeSpecialLights();;
@@ -409,6 +412,28 @@ void InitPalette ()
 					GPalette.BaseColors[c].b * 37;
 		*shade++ = ColorMatcher.Pick (
 			MIN (255, (intensity+intensity/2)>>8), intensity>>8, 0);
+	}
+
+	// [BC] Build the Doomsphere colormap. It is red!
+	shade = RedColormap;
+	for (c = 0; c < 256; c++)
+	{
+		intensity = ((GPalette.BaseColors[c].r * 77 +
+			 GPalette.BaseColors[c].g * 143 +
+			 GPalette.BaseColors[c].b * 37));
+		*shade++ = ColorMatcher.Pick (
+			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), 0, 0 );
+	}
+
+	// [BC] Build the Guardsphere colormap. It's a greenish-white kind of thing.
+	shade = GreenColormap;
+	for (c = 0; c < 256; c++)
+	{
+		intensity = GPalette.BaseColors[c].r * 77 +
+					GPalette.BaseColors[c].g * 143 +
+					GPalette.BaseColors[c].b * 37;
+		*shade++ = ColorMatcher.Pick (
+			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), intensity>>8 );
 	}
 }
 

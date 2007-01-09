@@ -99,11 +99,27 @@ void APowerup::Tick ()
 
 		if (EffectTics > BLINKTHRESHOLD || (EffectTics & 8))
 		{
-			if (BlendColor == INVERSECOLOR) Owner->player->fixedcolormap = INVERSECOLORMAP;
-			else if (BlendColor == GOLDCOLOR) Owner->player->fixedcolormap = GOLDCOLORMAP;
+			if (BlendColor == INVERSECOLOR)
+			{
+				Owner->player->fixedcolormap = INVERSECOLORMAP;
+			}
+			else if (BlendColor == GOLDCOLOR)
+			{
+				Owner->player->fixedcolormap = GOLDCOLORMAP;
+			}
+			else if (BlendColor == REDCOLOR)
+			{
+				Owner->player->fixedcolormap = REDCOLORMAP;
+			}
+			else if (BlendColor == GREENCOLOR)
+			{
+				Owner->player->fixedcolormap = GREENCOLORMAP;
+			}
 		}
 		else if ((BlendColor == INVERSECOLOR && Owner->player->fixedcolormap == INVERSECOLORMAP) || 
-				 (BlendColor == GOLDCOLOR && Owner->player->fixedcolormap == GOLDCOLORMAP))
+				 (BlendColor == GOLDCOLOR && Owner->player->fixedcolormap == GOLDCOLORMAP) ||
+				 (BlendColor == REDCOLOR && Owner->player->fixedcolormap == REDCOLORMAP) ||
+				 (BlendColor == GREENCOLOR && Owner->player->fixedcolormap == GREENCOLORMAP))
 		{
 			Owner->player->fixedcolormap = 0;
 		}
@@ -138,7 +154,11 @@ PalEntry APowerup::GetBlend ()
 	if (EffectTics <= BLINKTHRESHOLD && !(EffectTics & 8))
 		return 0;
 
-	if (BlendColor == INVERSECOLOR || BlendColor == GOLDCOLOR) 
+	if (BlendColor == INVERSECOLOR ||
+		BlendColor == GOLDCOLOR ||
+		// [BC] HAX!
+		BlendColor == REDCOLOR ||
+		BlendColor == GREENCOLOR) 
 		return 0;
 
 	return BlendColor;
@@ -1024,6 +1044,11 @@ void APowerSpeed::DoEffect ()
 		speedMo->sprite = Owner->sprite;
 		speedMo->frame = Owner->frame;
 		speedMo->floorclip = Owner->floorclip;
+
+		// [BC] Also get the scale from the owner.
+		speedMo->scaleX = Owner->scaleX;
+		speedMo->scaleY = Owner->scaleY;
+
 		if (Owner == players[consoleplayer].camera &&
 			!(Owner->player->cheats & CF_CHASECAM))
 		{

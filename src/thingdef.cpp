@@ -3716,6 +3716,17 @@ static void PowerupColor (APowerupGiver *defaults, Baggage &bag)
 			defaults->BlendColor = GOLDCOLOR;
 			return;
 		}
+		// [BC] Yay, more hacks.
+		else if ( SC_Compare( "REDMAP" ))
+		{
+			defaults->BlendColor = REDCOLOR;
+			return;
+		}
+		else if ( SC_Compare( "GREENMAP" ))
+		{
+			defaults->BlendColor = GREENCOLOR;
+			return;
+		}
 
 		int c = V_GetColor(NULL, sc_String);
 		r=RPART(c);

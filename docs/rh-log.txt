@@ -1,3 +1,11 @@
+January 9, 2007 (Changes by Graf Zahl)
+- Added Skulltag's REDMAP and GREENMAP.
+- Fixed: The PlayerSpeedTrail must copy the player's scaling information
+  (from Skulltag)
+- Added r_maxparticles CVAR from Skulltag.
+- Changed PCX loader so that it always loads the last 768 bytes of 8 bit graphics 
+  as a palette
+
 January 8, 2007
 - Added escape code support to the echo CCMD, so you can use colors with it.
 - Changed the color scheme for the startup log to light text on a dark

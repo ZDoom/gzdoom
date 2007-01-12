@@ -316,7 +316,7 @@ void A_Tracer2 (AActor *self)
 
 	dest = self->tracer;
 
-	if (dest == NULL || dest->health <= 0)
+	if (dest == NULL || dest->health <= 0 || self->Speed == 0)
 		return;
 
 	// change angle

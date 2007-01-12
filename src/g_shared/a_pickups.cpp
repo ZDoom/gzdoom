@@ -494,6 +494,19 @@ void AInventory::BeginPlay ()
 
 //===========================================================================
 //
+// AInventory :: DoEffect
+//
+// Handles any effect an item might apply to its owner
+// Normally only used by subclasses of APowerup
+//
+//===========================================================================
+
+void AInventory::DoEffect ()
+{
+}
+
+//===========================================================================
+//
 // AInventory :: Travelled
 //
 // Called when an item in somebody's inventory is carried over to another

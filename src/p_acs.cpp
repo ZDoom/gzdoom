@@ -288,10 +288,16 @@ static void DoTakeInv (AActor *actor, const PClass *info, int amount)
 		item->Amount -= amount;
 		if (item->Amount <= 0)
 		{
-			// If it's not ammo, destroy it. Ammo needs to stick around, even
-			// when it's zero for the benefit of the weapons that use it and 
-			// to maintain the maximum ammo amounts a backpack might have given.
-			if (item->GetClass()->ParentClass != RUNTIME_CLASS(AAmmo))
+			// If it's not ammo or an internal armor, destroy it. 
+			// Ammo needs to stick around, even when it's zero for the benefit 
+			// of the weapons that use it and to maintain the maximum ammo 
+			// amounts a backpack might have given.
+			// Armor shouldn't be removed because they only work properly when
+			// they are the last items in the inventory.
+			if (item->GetClass()->ParentClass != RUNTIME_CLASS(AAmmo) &&
+				item->GetClass() != RUNTIME_CLASS(ABasicArmor) &&
+				item->GetClass() != RUNTIME_CLASS(AHexenArmor)
+				)
 			{
 				item->Destroy ();
 			}

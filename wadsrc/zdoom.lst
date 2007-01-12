@@ -312,6 +312,7 @@ actors/hexen/ettin.txt						decorate/hexen/ettin.txt
 actors/hexen/centaur.txt                    decorate/hexen/centaur.txt
 actors/hexen/demons.txt                     decorate/hexen/demons.txt
 
+actors/strife/strifeplayer.txt				decorate/strife/strifeplayer.txt
 actors/strife/beggars.txt					decorate/strife/beggars.txt
 actors/strife/merchants.txt                 decorate/strife/merchants.txt
 actors/strife/peasants.txt                  decorate/strife/peasants.txt

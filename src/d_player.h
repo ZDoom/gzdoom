@@ -78,7 +78,6 @@ public:
 	virtual void PlayIdle ();
 	virtual void PlayRunning ();
 	virtual void ThrowPoisonBag ();
-	virtual void GiveDefaultInventory ();
 	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
 	virtual void MorphPlayerThink ();
 	virtual void ActivateMorphWeapon ();
@@ -87,6 +86,7 @@ public:
 	virtual void GiveDeathmatchInventory ();
 	virtual void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
+	void GiveDefaultInventory ();
 	void PlayAttacking ();
 	void PlayAttacking2 ();
 	const char *GetSoundClass ();
@@ -104,6 +104,7 @@ public:
 
 	int			crouchsprite;
 	int			MaxHealth;
+	int			RunHealth;
 	AInventory *InvFirst;				// first inventory item displayed on inventory bar
 	AInventory *InvSel;					// selected inventory item
 

@@ -70,7 +70,7 @@ void A_Tracer (AActor *self)
 	// adjust direction
 	dest = self->tracer;
 		
-	if (!dest || dest->health <= 0)
+	if (!dest || dest->health <= 0 || self->Speed == 0)
 		return;
 	
 	// change angle 	

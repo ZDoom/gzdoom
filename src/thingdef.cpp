@@ -3903,6 +3903,15 @@ static void PlayerMaxHealth (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void PlayerRunHealth (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetNumber ();
+	defaults->RunHealth = sc_Number;
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void PlayerMorphWeapon (APlayerPawn *defaults, Baggage &bag)
 {
 	SC_MustGetString ();
@@ -4134,6 +4143,7 @@ static const ActorProps props[] =
 	{ "player.jumpz",				(apf)PlayerJumpZ,			RUNTIME_CLASS(APlayerPawn) },
 	{ "player.maxhealth",			(apf)PlayerMaxHealth,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.morphweapon",			(apf)PlayerMorphWeapon,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.runhealth",			(apf)PlayerRunHealth,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.scoreicon",			(apf)PlayerScoreIcon,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.sidemove",			(apf)PlayerSideMove,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.soundclass",			(apf)PlayerSoundClass,		RUNTIME_CLASS(APlayerPawn) },

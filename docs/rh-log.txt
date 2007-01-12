@@ -1,3 +1,29 @@
+January 12, 2007 (Changes by Graf Zahl)
+- Converted the StrifePlayer to DECORATE. Even though it requires exporting
+  3 new code pointers without general use it was necessary to handle
+  GiveDefaultInventory consistently for all players without the need to 
+  subclass this function.
+- Added a Player.RunHealth property to expose the StrifePlayer's behavior of
+  not being able to run when its health is below 10.
+- Changed APlayerPawn::GiveDefaultInventory so that it always adds a HexenArmor
+  and a BasicArmor item to the inventory. If these items are not the first ones
+  added to the inventory anything else that might absorb damage is not guaranteed 
+  to work consistently because their function depends on the order in the inventory.
+- Changed handling of APowerup's DoEffect so that it is called from the owner's
+  Tick function, not the item's. This is so that the order of execution is
+  determined by the order in the inventory. When done in the item's Tick function
+  order depends on the global thinker table which can cause problems with the
+  order in which conflicting powerups apply their effect. Now it is guaranteed
+  that the item that was added to the inventory first applies its effect last.
+- Fixed: Added checks for Speed==0 to A_Tracer and A_Tracer2 because this could
+  cause a divide by zero.
+- Fixed: P_MoveThing must also set the moved actor's previous position to
+  prevent interpolation of the move.
+- Fixed: APowerInvisibility and its subclasses need to constantly update
+  the owner's translucency information in case of interference between different
+  subclasses. Also changed Hexen's Cleric's invulnerability mode to disable
+  the translucency effect if an invisibility powerup is active.
+
 January 9, 2007 (Changes by Graf Zahl)
 - Added Skulltag's REDMAP and GREENMAP.
 - Fixed: The PlayerSpeedTrail must copy the player's scaling information

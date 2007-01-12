@@ -400,6 +400,7 @@ void APlayerPawn::Serialize (FArchive &arc)
 
 	arc << JumpZ
 		<< MaxHealth
+		<< RunHealth
 		<< SpawnMask
 		<< ForwardMove1
 		<< ForwardMove2
@@ -874,6 +875,32 @@ void APlayerPawn::GiveDefaultInventory ()
 	// [GRB] Give inventory specified in DECORATE
 	player->health = GetDefault ()->health;
 
+	// HexenArmor must always be the first item in the inventory because
+	// it provides player class based protection that should not affect
+	// any other protection item.
+	fixed_t hx[5];
+	for(int i=0;i<5;i++)
+	{
+		hx[i] = GetClass()->Meta.GetMetaFixed(APMETA_Hexenarmor0+i);
+	}
+	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
+	AHexenArmor *harmor = FindInventory<AHexenArmor>();
+	harmor->Slots[4] = hx[0];
+	harmor->SlotsIncrement[0] = hx[1];
+	harmor->SlotsIncrement[1] = hx[2];
+	harmor->SlotsIncrement[2] = hx[3];
+	harmor->SlotsIncrement[3] = hx[4];
+
+	// BasicArmor must come right after that. It should not affect any
+	// other protection item as well but needs to process the damage
+	// before the HexenArmor does.
+	ABasicArmor *barmor = Spawn<ABasicArmor> (0,0,0, NO_REPLACE);
+	barmor->BecomeItem ();
+	barmor->SavePercent = 0;
+	barmor->Amount = 0;
+	AddInventory (barmor);
+
+	// Now add the items from the DECORATE definition
 	FDropItem *di = GetDropItems(RUNTIME_TYPE(this));
 
 	while (di)
@@ -913,26 +940,6 @@ void APlayerPawn::GiveDefaultInventory ()
 		}
 		di = di->Next;
 	}
-
-	fixed_t hx[5];
-	bool ishx=false;
-
-	for(int i=0;i<5;i++)
-	{
-		hx[i] = GetClass()->Meta.GetMetaFixed(APMETA_Hexenarmor0+i);
-		ishx |= !!hx[i];
-	}
-	if (ishx)
-	{
-		GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
-		AHexenArmor *armor = FindInventory<AHexenArmor>();
-		armor->Slots[4] = hx[0];
-		armor->SlotsIncrement[0] = hx[1];
-		armor->SlotsIncrement[1] = hx[2];
-		armor->SlotsIncrement[2] = hx[3];
-		armor->SlotsIncrement[3] = hx[4];
-	}
-
 }
 
 void APlayerPawn::MorphPlayerThink ()
@@ -1038,6 +1045,13 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 
 void APlayerPawn::TweakSpeeds (int &forward, int &side)
 {
+	// Strife's player can't run when its healh is below 10
+	if (health <= RunHealth)
+	{
+		forward = clamp(forward, -0x1900, 0x1900);
+		side = clamp(side, -0x1800, 0x1800);
+	}
+
 	// [GRB]
 	if ((unsigned int)(forward + 0x31ff) < 0x63ff)
 	{

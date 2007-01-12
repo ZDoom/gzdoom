@@ -79,7 +79,7 @@ public:
 	PalEntry GetBlend ();
 protected:
 	void InitEffect ();
-	void DoEffect ();
+	void Tick ();
 	bool HandlePickup (AInventory *item);
 };
 
@@ -88,6 +88,7 @@ class APowerInvisibility : public APowerup
 	DECLARE_STATELESS_ACTOR (APowerInvisibility, APowerup)
 protected:
 	void InitEffect ();
+	void DoEffect ();
 	void EndEffect ();
 	void AlterWeaponSprite (vissprite_t *vis);
 };
@@ -148,7 +149,7 @@ public:
 
 protected:
 	void InitEffect ();
-	void DoEffect ();
+	void Tick ();
 	void EndEffect ();
 
 	bool HitCenterFrame;

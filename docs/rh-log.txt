@@ -1,3 +1,7 @@
+January 13, 2007 (Changes by Graf Zahl)
+- Adjusted AlterWeaponSprite so that it properly handles multiple
+  invisibility powerups at the same time.
+
 January 13, 2007
 - Integrated the fatal error display into the text logger.
   Next: Figure out how to do all this fancy new startup window stuff with GTK+

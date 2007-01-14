@@ -151,7 +151,7 @@ public:
 	virtual void OwnerDied ();
 
 	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage);
-	virtual void AlterWeaponSprite (vissprite_t *vis);
+	virtual int AlterWeaponSprite (vissprite_t *vis);
 
 	virtual PalEntry GetBlend ();
 

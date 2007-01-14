@@ -2619,7 +2619,7 @@ static void ActorMass (AActor *defaults, Baggage &bag)
 static void ActorXScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->scaleY = FLOAT2FIXED(sc_Float);
+	defaults->scaleX = FLOAT2FIXED(sc_Float);
 }
 
 //==========================================================================

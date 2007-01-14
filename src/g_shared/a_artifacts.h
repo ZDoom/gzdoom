@@ -69,7 +69,7 @@ protected:
 	void InitEffect ();
 	void DoEffect ();
 	void EndEffect ();
-	void AlterWeaponSprite (vissprite_t *vis);
+	int AlterWeaponSprite (vissprite_t *vis);
 };
 
 class APowerStrength : public APowerup
@@ -90,7 +90,7 @@ protected:
 	void InitEffect ();
 	void DoEffect ();
 	void EndEffect ();
-	void AlterWeaponSprite (vissprite_t *vis);
+	int AlterWeaponSprite (vissprite_t *vis);
 };
 
 class APowerGhost : public APowerInvisibility
@@ -98,6 +98,7 @@ class APowerGhost : public APowerInvisibility
 	DECLARE_STATELESS_ACTOR (APowerGhost, APowerInvisibility)
 protected:
 	void InitEffect ();
+	int AlterWeaponSprite (vissprite_t *vis);
 };
 
 class APowerShadow : public APowerInvisibility
@@ -105,6 +106,7 @@ class APowerShadow : public APowerInvisibility
 	DECLARE_STATELESS_ACTOR (APowerShadow, APowerInvisibility)
 protected:
 	void InitEffect ();
+	int AlterWeaponSprite (vissprite_t *vis);
 };
 
 class APowerIronFeet : public APowerup

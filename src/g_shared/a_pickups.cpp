@@ -768,12 +768,13 @@ void AInventory::AbsorbDamage (int damage, FName damageType, int &newdamage)
 //
 //===========================================================================
 
-void AInventory::AlterWeaponSprite (vissprite_t *vis)
+int AInventory::AlterWeaponSprite (vissprite_t *vis)
 {
 	if (Inventory != NULL)
 	{
-		Inventory->AlterWeaponSprite (vis);
+		return Inventory->AlterWeaponSprite (vis);
 	}
+	return 0;
 }
 
 //===========================================================================

@@ -123,11 +123,12 @@ HWND			Window;
 
 // The subwindows used for startup and error output
 HWND			ConWindow, GameTitleWindow;
-HWND			ErrorPane, ProgressBar, NetStartPane, StartupScreen;
+HWND			ErrorPane, ProgressBar, NetStartPane, StartupScreen, ErrorIcon;
 
 HFONT			GameTitleFont;
 LONG			GameTitleFontHeight;
 LONG			DefaultGUIFontHeight;
+LONG			ErrorIconChar;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -249,59 +250,16 @@ static void UnWTS (void)
 static int LayoutErrorPane (HWND pane, int w)
 {
 	HWND ctl;
-	RECT margin, rectc;
-	int cxicon, cyicon;
-	const char *text;
-	int textheight, textwidth, padding;
+	RECT rectc;
 
-	// Determine margin sizes.
-	SetRect (&margin, 7, 7, 0, 0);
-	MapDialogRect (pane, &margin);
-
-	// Get size of icon.
-	cxicon = GetSystemMetrics (SM_CXICON);
-	cyicon = GetSystemMetrics (SM_CYICON);
-
-	// Determine size of text control.
-	text = (const char *)(LONG_PTR)GetWindowLongPtr (pane, DWLP_USER);
-	textwidth = w - margin.left*3 - cxicon;
-	textheight = 0;
-	if (text != NULL)
-	{
-		HWND ctl;
-		HDC dc;
-		HGDIOBJ oldfont;
-		int len;
-
-		ctl = GetDlgItem (pane, IDC_ERRORTEXT);
-		rectc.top = rectc.left = 0;
-		rectc.right = textwidth;
-		rectc.bottom = 0;
-		len = (int)strlen(text);
-		dc = GetDC (pane);
-		oldfont = SelectObject (dc, (HFONT)SendMessage (ctl, WM_GETFONT, 0, 0));
-		DrawText (dc, text, len, &rectc, DT_CALCRECT | DT_EDITCONTROL | DT_NOPREFIX | DT_EXPANDTABS | DT_WORDBREAK | DT_NOCLIP);
-		SelectObject (dc, oldfont);
-		ReleaseDC (pane, dc);
-		textheight = rectc.bottom;
-	}
-
-	// Fill the text box to the determined size. If it is shorter than the icon,
-	// center it vertically.
-	padding = MAX (cyicon - textheight, 0);
-	ctl = GetDlgItem (pane, IDC_ERRORTEXT);
-	MoveWindow (ctl, margin.left*2 + cxicon, margin.top + padding/2, textwidth, textheight, TRUE);
-	InvalidateRect (ctl, NULL, TRUE);
-	textheight += padding;
-
-	// Center the Okay button horizontally, just underneath the text box.
+	// Right-align the Quit button.
 	ctl = GetDlgItem (pane, IDOK);
 	GetClientRect (ctl, &rectc);	// Find out how big it is.
-	MoveWindow (ctl, (w - rectc.right) / 2, margin.top*2 + textheight, rectc.right, rectc.bottom, TRUE);
+	MoveWindow (ctl, w - rectc.right - 1, 1, rectc.right, rectc.bottom, TRUE);
 	InvalidateRect (ctl, NULL, TRUE);
 
 	// Return the needed height for this layout
-	return margin.top*3 + textheight + rectc.bottom;
+	return rectc.bottom + 2;
 }
 
 //==========================================================================
@@ -363,21 +321,17 @@ void LayoutMainWindow (HWND hWnd, HWND pane)
 	int bannerheight = 0;
 	int progressheight = 0;
 	int netpaneheight = 0;
+	int leftside = 0;
 	int w, h;
 
 	GetClientRect (hWnd, &rect);
 	w = rect.right;
 	h = rect.bottom;
 
-	if (pane != NULL)
-	{
-		errorpaneheight = LayoutErrorPane (pane, w);
-		SetWindowPos (pane, HWND_TOP, 0, 0, w, errorpaneheight, 0);
-	}
 	if (DoomStartupInfo != NULL && GameTitleWindow != NULL)
 	{
 		bannerheight = GameTitleFontHeight + 5;
-		MoveWindow (GameTitleWindow, 0, errorpaneheight, w, bannerheight, TRUE);
+		MoveWindow (GameTitleWindow, 0, 0, w, bannerheight, TRUE);
 		InvalidateRect (GameTitleWindow, NULL, FALSE);
 	}
 	if (ProgressBar != NULL)
@@ -391,14 +345,21 @@ void LayoutMainWindow (HWND hWnd, HWND pane)
 	{
 		netpaneheight = LayoutNetStartPane (NetStartPane, w);
 		SetWindowPos (NetStartPane, HWND_TOP, 0, h - progressheight - netpaneheight, w, netpaneheight, SWP_SHOWWINDOW);
-		RECT foo;
-		GetClientRect (NetStartPane, &foo);
-		foo.bottom = foo.bottom;;
+	}
+	if (pane != NULL)
+	{
+		errorpaneheight = LayoutErrorPane (pane, w);
+		SetWindowPos (pane, HWND_TOP, 0, h - progressheight - netpaneheight - errorpaneheight, w, errorpaneheight, 0);
+	}
+	if (ErrorIcon != NULL)
+	{
+		leftside = GetSystemMetrics (SM_CXICON) + 6;
+		MoveWindow (ErrorIcon, 0, bannerheight, leftside, h - bannerheight - errorpaneheight - progressheight - netpaneheight, TRUE);
 	}
 	// If there is a startup screen, it covers the log window
 	if (StartupScreen != NULL)
 	{
-		SetWindowPos (StartupScreen, HWND_TOP, 0, errorpaneheight + bannerheight, w,
+		SetWindowPos (StartupScreen, HWND_TOP, leftside, bannerheight, w - leftside,
 			h - bannerheight - errorpaneheight - progressheight - netpaneheight, SWP_SHOWWINDOW);
 		InvalidateRect (StartupScreen, NULL, FALSE);
 		MoveWindow (ConWindow, 0, 0, 0, 0, TRUE);
@@ -406,7 +367,7 @@ void LayoutMainWindow (HWND hWnd, HWND pane)
 	else
 	{
 		// The log window uses whatever space is left.
-		MoveWindow (ConWindow, 0, errorpaneheight + bannerheight, w,
+		MoveWindow (ConWindow, leftside, bannerheight, w - leftside,
 			h - bannerheight - errorpaneheight - progressheight - netpaneheight, TRUE);
 	}
 }
@@ -511,6 +472,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_DRAWITEM:
+		// Draw title banner.
 		if (wParam == IDC_STATIC_TITLE && DoomStartupInfo != NULL)
 		{
 			const PalEntry *c;
@@ -540,6 +502,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			SelectObject (drawitem->hDC, oldfont);
 			return TRUE;
 		}
+		// Draw startup screen
 		else if (wParam == IDC_STATIC_STARTUP)
 		{
 			if (StartupScreen != NULL)
@@ -565,9 +528,37 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					TextOut (drawitem->hDC, 3, drawitem->rcItem.bottom - DefaultGUIFontHeight - 3, QuitText, countof(QuitText)-1);
 					SelectObject (drawitem->hDC, oldfont);
 				}
+				return TRUE;
 			}
 		}
+		// Draw stop icon.
+		else if (wParam == IDC_ICONPIC)
+		{
+			HICON icon;
+			POINTL char_pos;
+			drawitem = (LPDRAWITEMSTRUCT)lParam;
+
+			// This background color should match the edit control's.
+			hbr = CreateSolidBrush (RGB(70,70,70));
+			FillRect (drawitem->hDC, &drawitem->rcItem, hbr);
+			DeleteObject (hbr);
+
+			// Draw the icon aligned with the first line of error text.
+			SendMessage (ConWindow, EM_POSFROMCHAR, (WPARAM)&char_pos, ErrorIconChar);
+			icon = (HICON)LoadImage (0, IDI_ERROR, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+			DrawIcon (drawitem->hDC, 6, char_pos.y, icon);
+			return TRUE;
+		}
 		return FALSE;
+
+	case WM_COMMAND:
+		if (ErrorIcon != NULL && (HWND)lParam == ConWindow && HIWORD(wParam) == EN_UPDATE)
+		{
+			// Be sure to redraw the error icon if the edit control changes.
+			InvalidateRect (ErrorIcon, NULL, TRUE);
+			return 0;
+		}
+		break;
 
 	case WM_CLOSE:
 		PostQuitMessage (0);
@@ -593,27 +584,11 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 INT_PTR CALLBACK ErrorPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	HWND ctl;
-
 	switch (msg)
 	{
 	case WM_INITDIALOG:
-		SetWindowLongPtr (hDlg, DWLP_USER, lParam);
-
-		// Set the static control to the error text.
-		ctl = GetDlgItem (hDlg, IDC_ERRORTEXT);
-		SetWindowText (ctl, (LPCSTR)lParam);
-
-		// Set the icon to the system default error icon.
-		ctl = GetDlgItem (hDlg, IDC_ICONPIC);
-		SendMessage (ctl, STM_SETICON, (WPARAM)LoadIcon (NULL, IDI_ERROR), 0);
-
 		// Appear in the main window.
 		LayoutMainWindow (GetParent (hDlg), hDlg);
-
-		// Make sure the last line of output is visible in the log window.
-		SendMessage (ConWindow, EM_LINESCROLL, 0, SendMessage (ConWindow, EM_GETLINECOUNT, 0, 0) -
-			SendMessage (ConWindow, EM_GETFIRSTVISIBLELINE, 0, 0));
 		return TRUE;
 
 	case WM_COMMAND:
@@ -694,45 +669,84 @@ void RestoreConView()
 
 void ShowErrorPane(const char *text)
 {
-	if (Window != NULL)
+	if (Window == NULL || ConWindow == NULL)
 	{
-	
-		ST_NetDone();	// Ensure that the network pane is hidden.
-		ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, (LPARAM)text);
+		MessageBox (Window, text,
+			GAMESIG " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+		return;
 	}
-	POINT zero = { 0, 0 };
 
 	SetWindowText (Window, "Fatal Error - " WINDOW_TITLE);
+	ST_NetDone();	// Ensure that the network pane is hidden.
+	ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
+	if (ErrorIcon != NULL)
+	{
+		SetWindowLong (ErrorIcon, GWL_ID, IDC_ICONPIC);
+	}
+	ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, NULL);
 
-	// Make sure the last line of the log window is visible.
+	CHARRANGE end;
+	CHARFORMAT2 oldformat, newformat;
+	PARAFORMAT2 paraformat;
+
+	// Append the error message to the log.
+	end.cpMax = end.cpMin = GetWindowTextLength (ConWindow);
+	SendMessage (ConWindow, EM_EXSETSEL, 0, (LPARAM)&end);
+
+	// Remember current charformat.
+	oldformat.cbSize = sizeof(oldformat);
+	SendMessage (ConWindow, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&oldformat);
+
+	// Use bigger font and standout colors.
+	newformat.cbSize = sizeof(newformat);
+	newformat.dwMask = CFM_BOLD | CFM_COLOR | CFM_SIZE;
+	newformat.dwEffects = CFE_BOLD;
+	newformat.yHeight = oldformat.yHeight * 5 / 4;
+	newformat.crTextColor = RGB(255,170,170);
+	SendMessage (ConWindow, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&newformat);
+
+	// Indent the rest of the text to make the error message stand out a little more.
+	paraformat.cbSize = sizeof(paraformat);
+	paraformat.dwMask = PFM_STARTINDENT | PFM_OFFSETINDENT | PFM_RIGHTINDENT;
+	paraformat.dxStartIndent = paraformat.dxOffset = paraformat.dxRightIndent = 120;
+	SendMessage (ConWindow, EM_SETPARAFORMAT, 0, (LPARAM)&paraformat);
+	SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"\n");
+
+	// Find out where the error lines start for the error icon display control.
+	SendMessage (ConWindow, EM_EXGETSEL, 0, (LPARAM)&end);
+	ErrorIconChar = end.cpMax;
+
+	// Now start adding the actualy error message.
+	SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"Execution could not continue.\n\n");
+
+	// Restore old charformat but with light yellow text.
+	oldformat.crTextColor = RGB(255,255,170);
+	SendMessage (ConWindow, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&oldformat);
+
+	// Add the error text.
+	SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)text);
+
+	// Make sure the error text is not scrolled below the window.
 	SendMessage (ConWindow, EM_LINESCROLL, 0, SendMessage (ConWindow, EM_GETLINECOUNT, 0, 0));
-	// The above line scrolled everything off the screen. Pretend to move the scroll
+	// The above line scrolled everything off the screen, so pretend to move the scroll
 	// bar thumb, which clamps to not show any extra lines if it doesn't need to.
 	SendMessage (ConWindow, EM_SCROLL, SB_PAGEDOWN, 0);
 
-	if (ErrorPane == NULL)
-	{
-		MessageBox (Window, text,
-			"ZDOOM Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
-	}
-	else
-	{
-		BOOL bRet;
-		MSG msg;
+	BOOL bRet;
+	MSG msg;
 
-		while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
+	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
+	{
+		if (bRet == -1)
 		{
-			if (bRet == -1)
-			{
-				MessageBox (Window, text,
-					"ZDOOM Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
-				return;
-			}
-			else if (!IsDialogMessage (ErrorPane, &msg))
-			{
-				TranslateMessage (&msg);
-				DispatchMessage (&msg);
-			}
+			MessageBox (Window, text,
+				GAMESIG " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+			return;
+		}
+		else if (!IsDialogMessage (ErrorPane, &msg))
+		{
+			TranslateMessage (&msg);
+			DispatchMessage (&msg);
 		}
 	}
 }

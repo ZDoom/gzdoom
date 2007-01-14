@@ -1,3 +1,8 @@
+January 13, 2007
+- Integrated the fatal error display into the text logger.
+  Next: Figure out how to do all this fancy new startup window stuff with GTK+
+  so Linux users don't feel left out.
+
 January 12, 2007 (Changes by Graf Zahl)
 - Converted the StrifePlayer to DECORATE. Even though it requires exporting
   3 new code pointers without general use it was necessary to handle

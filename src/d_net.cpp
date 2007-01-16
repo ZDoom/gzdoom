@@ -2089,6 +2089,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 	case DEM_SUMMON:
 	case DEM_SUMMONFRIEND:
+	case DEM_SUMMONFOE:
 		{
 			const PClass *typeinfo;
 
@@ -2110,15 +2111,23 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 							source->x + FixedMul (def->radius * 2 + source->radius, finecosine[source->angle>>ANGLETOFINESHIFT]),
 							source->y + FixedMul (def->radius * 2 + source->radius, finesine[source->angle>>ANGLETOFINESHIFT]),
 							source->z + 8 * FRACUNIT, ALLOW_REPLACE);
-						if (spawned != NULL && type == DEM_SUMMONFRIEND)
+						if (spawned != NULL)
 						{
-							if (spawned->CountsAsKill()) 
+							if (type == DEM_SUMMONFRIEND)
 							{
-								level.total_monsters--;
+								if (spawned->CountsAsKill()) 
+								{
+									level.total_monsters--;
+								}
+								spawned->FriendPlayer = player + 1;
+								spawned->flags |= MF_FRIENDLY;
+								spawned->LastHeard = players[player].mo;
 							}
-							spawned->FriendPlayer = player + 1;
-							spawned->flags |= MF_FRIENDLY;
-							spawned->LastHeard = players[player].mo;
+							else if (type == DEM_SUMMONFOE)
+							{
+								spawned->FriendPlayer = 0;
+								spawned->flags &= ~MF_FRIENDLY;
+							}
 						}
 					}
 				}
@@ -2315,6 +2324,7 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_CHANGEMAP:
 		case DEM_SUMMON:
 		case DEM_SUMMONFRIEND:
+		case DEM_SUMMONFOE:
 		case DEM_SPRAY:
 		case DEM_MORPHEX:
 			skip = strlen ((char *)(*stream)) + 1;

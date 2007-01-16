@@ -1845,7 +1845,7 @@ EColorRange V_FindFontColor (FName name)
 
 PalEntry V_LogColorFromColorRange (EColorRange range)
 {
-	if (range < 0 || range >= TranslationColors.Size())
+	if ((unsigned int)range >= TranslationColors.Size())
 	{ // Return default color
 		return DEFAULT_LOG_COLOR;
 	}

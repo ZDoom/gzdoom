@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <new>
 #include <sys/param.h>
+#include <gtk/gtk.h>
 
 #include "doomerrors.h"
 #include "m_argv.h"
@@ -69,6 +70,8 @@ extern "C" int cc_install_handlers(int, int*, const char*, int(*)(char*, char*))
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+bool GtkAvailable;
 
 // The command line arguments.
 DArgs Args;
@@ -187,6 +190,8 @@ int main (int argc, char **argv)
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
 
+	GtkAvailable = gtk_init_check (&argc, &argv);
+	
 	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE) == -1)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());

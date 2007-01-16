@@ -460,7 +460,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	// Create the "Don't ask" checkbox.
 	check = gtk_check_button_new_with_label ("Don't ask me this again");
 	gtk_box_pack_start (GTK_BOX(hbox), check, false, false, 0);
-	gtk_toggle_button_set_mode (GTK_TOGGLE_BUTTON(check), showwin);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(check), !showwin);
 
 	// Create the OK/Cancel button box.
 	bbox = gtk_hbutton_box_new ();
@@ -498,7 +498,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		g_value_unset (&value);
 		
 		// Set state of queryiwad based on the checkbox.
-		queryiwad = !gtk_toggle_button_get_mode (GTK_TOGGLE_BUTTON(check));
+		queryiwad = !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(check));
 	}
 	else
 	{

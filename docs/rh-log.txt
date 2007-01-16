@@ -1,4 +1,5 @@
 January 15, 2007
+- Changed the default snd_output under Linux to OSS.
 - Added a GTK+ version of the IWAD selection dialog box. That brings the
   Linux port one step closer to feature parity with the Windows version.
 

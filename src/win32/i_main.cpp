@@ -683,7 +683,7 @@ void ShowErrorPane(const char *text)
 	{
 		SetWindowLong (ErrorIcon, GWL_ID, IDC_ICONPIC);
 	}
-	ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, NULL);
+	ErrorPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_ERRORPANE), Window, ErrorPaneProc, (LONG_PTR)NULL);
 
 	CHARRANGE end;
 	CHARFORMAT2 oldformat, newformat;

@@ -121,7 +121,7 @@ short					spanend[MAXHEIGHT];
 BYTE					*tiltlighting[MAXWIDTH];
 
 int						planeshade;
-vec3_t					plane_sz, plane_su, plane_sv;
+FVector3				plane_sz, plane_su, plane_sv;
 float					planelightfloat;
 bool					plane_shade;
 fixed_t					pviewx, pviewy;
@@ -1446,7 +1446,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked)
 	float xscale, yscale;
 	fixed_t ixscale, iyscale;
 	angle_t ang;
-	vec3_t p, m, n;
+	FVector3 p, m, n;
 	fixed_t zeroheight;
 
 	if (alpha <= 0)
@@ -1503,21 +1503,21 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked)
 		viewx + MulScale16 (ixscale, finesine[ang]),
 		viewy + MulScale16 (ixscale, finecosine[ang])) - zeroheight);
 
-	CrossProduct (p, m, plane_su);
-	CrossProduct (p, n, plane_sv);
-	CrossProduct (m, n, plane_sz);
+	plane_su = p ^ m;
+	plane_sv = p ^ n;
+	plane_sz = m ^ n;
 
-	plane_su[2] *= FocalLengthXfloat;
-	plane_sv[2] *= FocalLengthXfloat;
-	plane_sz[2] *= FocalLengthXfloat;
+	plane_su.Z *= FocalLengthXfloat;
+	plane_sv.Z *= FocalLengthXfloat;
+	plane_sz.Z *= FocalLengthXfloat;
 
-	plane_su[1] *= iyaspectmulfloat;
-	plane_sv[1] *= iyaspectmulfloat;
-	plane_sz[1] *= iyaspectmulfloat;
+	plane_su.Y *= iyaspectmulfloat;
+	plane_sv.Y *= iyaspectmulfloat;
+	plane_sz.Y *= iyaspectmulfloat;
 
 	// Premultiply the texture vectors with the scale factors
-	VectorScale2 (plane_su, 4294967296.f);
-	VectorScale2 (plane_sv, 4294967296.f);
+	plane_su *= 4294967296.f;
+	plane_sv *= 4294967296.f;
 
 	if (MirrorFlags & RF_XFLIP)
 	{

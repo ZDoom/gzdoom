@@ -736,9 +736,9 @@ void A_CustomMissile(AActor * self)
 				// Use the actual momentum instead of the missile's Speed property
 				// so that this can handle missiles with a high vertical velocity 
 				// component properly.
-				vec3_t velocity = { missile->momx, missile->momy, 0 };
+				FVector3 velocity (missile->momx, missile->momy, 0);
 
-				fixed_t missilespeed=(fixed_t)VectorLength(velocity);
+				fixed_t missilespeed = (fixed_t)velocity.Length();
 
 				missile->angle += Angle;
 				ang = missile->angle >> ANGLETOFINESHIFT;
@@ -1044,8 +1044,8 @@ void A_FireCustomMissile (AActor * self)
 			{
 				// This original implementation is to aim straight ahead and then offset
 				// the angle from the resulting direction. 
-				vec3_t velocity = { misl->momx, misl->momy, 0 };
-				fixed_t missilespeed=(fixed_t)VectorLength(velocity);
+				FVector3 velocity(misl->momx, misl->momy, 0);
+				fixed_t missilespeed = (fixed_t)velocity.Length();
 				misl->angle += Angle;
 				angle_t an = misl->angle >> ANGLETOFINESHIFT;
 				misl->momx = FixedMul (missilespeed, finecosine[an]);

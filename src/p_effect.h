@@ -32,6 +32,7 @@
 */
 
 #include "vectors.h"
+#include "tables.h"
 
 #define FX_ROCKET			0x00000001
 #define FX_GRENADE			0x00000002
@@ -58,7 +59,7 @@ void P_RunEffects (void);
 
 void P_RunEffect (AActor *actor, int effects);
 
-void P_DrawRailTrail (AActor * source, vec3_t start, vec3_t end, int color1, int color2, float maxdiff = 0, bool silent = false);
+void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, float maxdiff = 0, bool silent = false);
 void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int kind);
 void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int updown, int kind);
 void P_DisconnectEffect (AActor *actor);

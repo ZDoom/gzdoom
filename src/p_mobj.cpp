@@ -4402,7 +4402,6 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	P_PlaySpawnSound(th, source);
 	th->target = source;		// record missile's originator
 
-	vec3_t velocity;
 	float speed = (float)(th->Speed);
 
 	// [RH]
@@ -4411,23 +4410,21 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	// missile? I'll leave it like this for now.
 	// Answer. No, because this way, you can set up sets of parallel missiles.
 
-	velocity[0] = (float)(dest->x - source->x);
-	velocity[1] = (float)(dest->y - source->y);
-	velocity[2] = (float)(dest->z - source->z);
+	FVector3 velocity(dest->x - source->x, dest->y - source->y, dest->z - source->z);
 	// Floor and ceiling huggers should never have a vertical component to their velocity
 	if (defflags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 	{
-		velocity[2] = 0.f;
+		velocity.Z = 0;
 	}
 	// [RH] Adjust the trajectory if the missile will go over the player's head.
 	else if (z - source->z >= dest->height)
 	{
-		velocity[2] += (float)(dest->height - z + source->z);
+		velocity.Z += dest->height - z + source->z;
 	}
-	VectorNormalize (velocity);
-	th->momx = (fixed_t)(velocity[0] * speed);
-	th->momy = (fixed_t)(velocity[1] * speed);
-	th->momz = (fixed_t)(velocity[2] * speed);
+	velocity.Resize (speed);
+	th->momx = (fixed_t)(velocity.X);
+	th->momy = (fixed_t)(velocity.Y);
+	th->momz = (fixed_t)(velocity.Z);
 
 	// invisible target: rotate velocity vector in 2D
 	if (dest->flags & MF_SHADOW)

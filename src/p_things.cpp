@@ -259,12 +259,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 					if (targ != NULL)
 					{
 						fixed_t spot[3] = { targ->x, targ->y, targ->z+targ->height/2 };
-						vec3_t aim =
-						{
-							float(spot[0] - mobj->x),
-							float(spot[1] - mobj->y),
-							float(spot[2] - mobj->z)
-						};
+						FVector3 aim(float(spot[0] - mobj->x), float(spot[1] - mobj->y), float(spot[2] - mobj->z));
 
 						if (leadTarget && speed > 0 && (targ->momx | targ->momy | targ->momz))
 						{
@@ -275,55 +270,35 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 							// with the math. I don't think I would have thought of using
 							// trig alone had I been left to solve it by myself.
 
-							double tvel[3] = { double(targ->momx), double(targ->momy), double(targ->momz) };
+							FVector3 tvel(targ->momx, targ->momy, targ->momz);
 							if (!(targ->flags & MF_NOGRAVITY) && targ->waterlevel < 3)
 							{ // If the target is subject to gravity and not underwater,
 							  // assume that it isn't moving vertically. Thanks to gravity,
 							  // even if we did consider the vertical component of the target's
 							  // velocity, we would still miss more often than not.
-								tvel[2] = 0.0;
+								tvel.Z = 0.0;
 								if ((targ->momx | targ->momy) == 0)
 								{
 									goto nolead;
 								}
 							}
-							double dist = sqrt (aim[0]*aim[0] + aim[1]*aim[1] + aim[2]*aim[2]);
-							double targspeed = sqrt (tvel[0]*tvel[0] + tvel[1]*tvel[1] + tvel[2]*tvel[2]);
-							double ydotx = -aim[0]*tvel[0] - aim[1]*tvel[1] - aim[2]*tvel[2];
+							double dist = aim | aim;
+							double targspeed = tvel.Length();
+							double ydotx = -aim | tvel;
 							double a = acos (clamp (ydotx / targspeed / dist, -1.0, 1.0));
 							double multiplier = double(pr_leadtarget.Random2())*0.1/255+1.1;
 							double sinb = clamp (targspeed*multiplier * sin(a) / fspeed, -1.0, 1.0);
-							double cosb = cos (asin (sinb));
 
 							// Use the cross product of two of the triangle's sides to get a
 							// rotation vector.
-							double rv[3] =
-							{
-								tvel[1]*aim[2] - tvel[2]*aim[1],
-								tvel[2]*aim[0] - tvel[0]*aim[2],
-								tvel[0]*aim[1] - tvel[1]*aim[0]
-							};
+							FVector3 rv(tvel ^ aim);
 							// The vector must be normalized.
-							double irvlen = 1.0 / sqrt(rv[0]*rv[0] + rv[1]*rv[1] + rv[2]*rv[2]);
-							rv[0] *= irvlen;
-							rv[1] *= irvlen;
-							rv[2] *= irvlen;
+							rv.MakeUnit();
 							// Now combine the rotation vector with angle b to get a rotation matrix.
-							double t = 1.0 - cosb;
-							double rm[3][3] =
-							{
-								{t*rv[0]*rv[0]+cosb, t*rv[0]*rv[1]-sinb*rv[2], t*rv[0]*rv[2]+sinb*rv[1]},
-								{t*rv[0]*rv[1]+sinb*rv[2], t*rv[1]*rv[1]+cosb, t*rv[1]*rv[2]-sinb*rv[0]},
-								{t*rv[0]*rv[2]-sinb*rv[1], t*rv[1]*rv[2]+sinb*rv[0], t*rv[2]*rv[2]+cosb}
-							};
+							FMatrix3x3 rm(rv, cos(asin(sinb)), sinb);
 							// And multiply the original aim vector with the matrix to get a
 							// new aim vector that leads the target.
-							double aimvec[3] =
-							{
-								rm[0][0]*aim[0] + rm[1][0]*aim[1] + rm[2][0]*aim[2],
-								rm[0][1]*aim[0] + rm[1][1]*aim[1] + rm[2][1]*aim[2],
-								rm[0][2]*aim[0] + rm[1][2]*aim[1] + rm[2][2]*aim[2]
-							};
+							FVector3 aimvec = rm * aim;
 							// And make the projectile follow that vector at the desired speed.
 							double aimscale = fspeed / dist;
 							mobj->momx = fixed_t (aimvec[0] * aimscale);
@@ -335,10 +310,10 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 						{
 nolead:
 							mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
-							VectorNormalize (aim);
-							mobj->momx = fixed_t(aim[0] * fspeed);
-							mobj->momy = fixed_t(aim[1] * fspeed);
-							mobj->momz = fixed_t(aim[2] * fspeed);
+							aim.Resize (fspeed);
+							mobj->momx = fixed_t(aim[0]);
+							mobj->momy = fixed_t(aim[1]);
+							mobj->momz = fixed_t(aim[2]);
 						}
 						if (mobj->flags2 & MF2_SEEKERMISSILE)
 						{

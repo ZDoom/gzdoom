@@ -423,21 +423,20 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 	}
 }
 
-void P_DrawRailTrail (AActor * source, vec3_t start, vec3_t end, int color1, int color2, float maxdiff, bool silent)
+void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end, int color1, int color2, float maxdiff, bool silent)
 {
-	float length;
+	double length, lengthsquared;
 	int steps, i;
-	float deg;
-	vec3_t step, dir, pos, extend;
+	FAngle deg;
+	FVector3 step, dir, pos, extend;
 
-	VectorSubtract (end, start, dir);
-	length = VectorLength (dir);
-	steps = (int)(length*0.3333f);
+	dir = end - start;
+	lengthsquared = dir | dir;
+	length = sqrt(lengthsquared);
+	steps = int(length / 3);
 
-	if (length)
+	if (steps)
 	{
-		length = 1 / length;
-
 		if (!silent)
 		{
 			int sound;
@@ -451,27 +450,27 @@ void P_DrawRailTrail (AActor * source, vec3_t start, vec3_t end, int color1, int
 			// The railgun's sound is special. It gets played from the
 			// point on the slug's trail that is closest to the hearing player.
 			AActor *mo = players[consoleplayer].camera;
-			vec3_t point;
-			float r;
+			FVector3 point;
+			double r;
 			float dirz;
 
-			if (abs(mo->x - FLOAT2FIXED(start[0])) < 20 * FRACUNIT
-				&& (mo->y - FLOAT2FIXED(start[1])) < 20 * FRACUNIT)
+			if (abs(mo->x - FLOAT2FIXED(start.X)) < 20 * FRACUNIT
+				&& (mo->y - FLOAT2FIXED(start.Y)) < 20 * FRACUNIT)
 			{ // This player (probably) fired the railgun
 				S_SoundID (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 			else
 			{
 				// Only consider sound in 2D (for now, anyway)
-				r = ((start[1] - FIXED2FLOAT(mo->y)) * (-dir[1]) -
-					(start[0] - FIXED2FLOAT(mo->x)) * (dir[0])) * length * length;
+				r = ((start.Y - FIXED2FLOAT(mo->y)) * (-dir.Y) -
+					(start.X - FIXED2FLOAT(mo->x)) * (dir.X)) * length * length;
 
-				dirz = dir[2];
-				dir[2] = 0;
-				VectorMA (start, r, dir, point);
-				dir[2] = dirz;
+				dirz = dir.Z;
+				dir.Z = 0;
+				point = start + r * dir;
+				dir.Z = dirz;
 
-				S_SoundID (FLOAT2FIXED(point[0]), FLOAT2FIXED(point[1]), mo->z,
+				S_SoundID (FLOAT2FIXED(point.X), FLOAT2FIXED(point.Y), mo->z,
 					CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 		}
@@ -482,20 +481,37 @@ void P_DrawRailTrail (AActor * source, vec3_t start, vec3_t end, int color1, int
 		return;
 	}
 
-	VectorScale2 (dir, length);
-	PerpendicularVector (extend, dir);
-	VectorScale2 (extend, 3);
-	VectorScale (dir, 3, step);
+	dir /= length;
 
+	//Calculate PerpendicularVector (extend, dir):
+	double minelem = 1;
+	int epos;
+	for (epos = 0, i = 0; i < 3; ++i)
+	{
+		if (fabs(dir[i]) < minelem)
+		{
+			epos = i;
+			minelem = fabs(dir[i]);
+		}
+	}
+	FVector3 tempvec(0,0,0);
+	tempvec[epos] = 1;
+	extend = tempvec - (dir | tempvec) * dir;
+	//
+
+	extend *= 3;
+	step = dir * 3;
+
+	// Create the outer spiral.
 	if (color1 != -1)
 	{
-		color1 = color1==0? -1: ColorMatcher.Pick(RPART(color1), GPART(color1), BPART(color1));
-		VectorCopy (start, pos);
-		deg = 270;
+		color1 = color1 == 0 ? -1 : ColorMatcher.Pick(RPART(color1), GPART(color1), BPART(color1));
+		pos = start;
+		deg = FAngle(270);
 		for (i = steps; i; i--)
 		{
 			particle_t *p = NewParticle ();
-			vec3_t tempvec;
+			FVector3 tempvec;
 
 			if (!p)
 				return;
@@ -505,20 +521,18 @@ void P_DrawRailTrail (AActor * source, vec3_t start, vec3_t end, int color1, int
 			p->fade = FADEFROMTTL(35);
 			p->size = 3;
 
-			RotatePointAroundVector (tempvec, dir, extend, deg);
-			p->velx = FLOAT2FIXED(tempvec[0])>>4;
-			p->vely = FLOAT2FIXED(tempvec[1])>>4;
-			p->velz = FLOAT2FIXED(tempvec[2])>>4;
-			VectorAdd (tempvec, pos, tempvec);
-			deg += 14;
-			if (deg >= 360)
-				deg -= 360;
-			p->x = FLOAT2FIXED(tempvec[0]);
-			p->y = FLOAT2FIXED(tempvec[1]);
-			p->z = FLOAT2FIXED(tempvec[2]);
-			VectorAdd (pos, step, pos);
+			tempvec = FMatrix3x3(dir, deg) * extend;
+			p->velx = FLOAT2FIXED(tempvec.X)>>4;
+			p->vely = FLOAT2FIXED(tempvec.Y)>>4;
+			p->velz = FLOAT2FIXED(tempvec.Z)>>4;
+			tempvec += pos;
+			p->x = FLOAT2FIXED(tempvec.X);
+			p->y = FLOAT2FIXED(tempvec.Y);
+			p->z = FLOAT2FIXED(tempvec.Z);
+			pos += step;
+			deg += FAngle(14);
 
-			if (color1==-1)
+			if (color1 == -1)
 			{
 				int rand = M_Random();
 
@@ -538,13 +552,13 @@ void P_DrawRailTrail (AActor * source, vec3_t start, vec3_t end, int color1, int
 		}
 	}
 
+	// Create the inner trail.
 	if (color2 != -1)
 	{
-		color2 = color2==0? -1: ColorMatcher.Pick(RPART(color2), GPART(color2), BPART(color2));
-		vec3_t diff;
-		VectorSet (diff, 0, 0, 0);
+		color2 = color2 == 0 ? -1 : ColorMatcher.Pick(RPART(color2), GPART(color2), BPART(color2));
+		FVector3 diff(0, 0, 0);
 
-		VectorCopy (start, pos);
+		pos = start;
 		for (i = steps; i; i--)
 		{
 			particle_t *p = JitterParticle (33);
@@ -556,38 +570,33 @@ void P_DrawRailTrail (AActor * source, vec3_t start, vec3_t end, int color1, int
 			{
 				int rnd = M_Random ();
 				if (rnd & 1)
-					diff[0] = clamp<float> (diff[0] + ((rnd & 8) ? 1 : -1), -maxdiff, maxdiff);
+					diff.X = clamp<float> (diff.X + ((rnd & 8) ? 1 : -1), -maxdiff, maxdiff);
 				if (rnd & 2)
-					diff[1] = clamp<float> (diff[1] + ((rnd & 16) ? 1 : -1), -maxdiff, maxdiff);
+					diff.Y = clamp<float> (diff.Y + ((rnd & 16) ? 1 : -1), -maxdiff, maxdiff);
 				if (rnd & 4)
-					diff[2] = clamp<float> (diff[2] + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
+					diff.Z = clamp<float> (diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
 			}
 
-			vec3_t postmp;
-			VectorCopy (pos, postmp);
-			VectorAdd (postmp, diff, postmp);
+			FVector3 postmp = pos + diff;
 
 			p->size = 2;
-			p->x = FLOAT2FIXED(postmp[0]);
-			p->y = FLOAT2FIXED(postmp[1]);
-			p->z = FLOAT2FIXED(postmp[2]);
+			p->x = FLOAT2FIXED(postmp.X);
+			p->y = FLOAT2FIXED(postmp.Y);
+			p->z = FLOAT2FIXED(postmp.Z);
 			if (color1 != -1)
 				p->accz -= FRACUNIT/4096;
-			VectorAdd (pos, step, pos);
+			pos += step;
 
-			if (color2==-1)
+			if (color2 == -1)
 			{
-				{
-					int rand = M_Random();
+				int rand = M_Random();
 
-					if (rand < 85)
-						p->color = grey4;
-					else if (rand < 170)
-						p->color = grey2;
-					else
-						p->color = grey1;
-				}
-				p->color = white;
+				if (rand < 85)
+					p->color = grey4;
+				else if (rand < 170)
+					p->color = grey2;
+				else
+					p->color = grey1;
 			}
 			else 
 			{

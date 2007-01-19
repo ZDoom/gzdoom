@@ -692,7 +692,7 @@ static void CreateStartSpot (fixed_t *pos, mapthing2_t *start)
 
 static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 {
-	vec3_t pt[3];
+	FVector3 pt[3];
 	long j;
 
 	slope.x[0] = slope.wal->x;  slope.y[0] = slope.wal->y;
@@ -711,23 +711,13 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 		-slope.dy, slope.x[2]-slope.wal->x);
 	slope.z[2] += Scale (slope.heinum, j, slope.i);
 
-	pt[0][0] = float(slope.dx);
-	pt[0][1] = float(-slope.dy);
-	pt[0][2] = 0.f;
+	pt[0] = FVector3(slope.dx, -slope.dy, 0);
+	pt[1] = FVector3(slope.x[2] - slope.x[0], slope.y[0] - slope.y[2], (slope.z[2] - slope.z[0]) / 16);
+	pt[2] = (pt[0] ^ pt[1]).Unit();
 
-	pt[1][0] = float(slope.x[2] - slope.x[0]);
-	pt[1][1] = float(slope.y[0] - slope.y[2]);
-	pt[1][2] = float(slope.z[2] - slope.z[0]) / 16.f;
-
-	CrossProduct (pt[0], pt[1], pt[2]);
-	VectorNormalize (pt[2]);
-
-	if ((pt[2][2] < 0 && plane.c > 0) ||
-		(pt[2][2] > 0 && plane.c < 0))
+	if ((pt[2][2] < 0 && plane.c > 0) || (pt[2][2] > 0 && plane.c < 0))
 	{
-		pt[2][0] = -pt[2][0];
-		pt[2][1] = -pt[2][1];
-		pt[2][2] = -pt[2][2];
+		pt[2] = -pt[2];
 	}
 
 	plane.a = fixed_t(pt[2][0]*65536.f);

@@ -482,13 +482,13 @@ fixed_t DCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 	
 	th->target = source;		// where it came from
 
-	vec3_t velocity;
 	float speed = (float)th->Speed;
 
+	FVector3 velocity;
 	velocity[0] = FIXED2FLOAT(dest->x - source->x);
 	velocity[1] = FIXED2FLOAT(dest->y - source->y);
 	velocity[2] = FIXED2FLOAT(dest->z - source->z);
-	VectorNormalize (velocity);
+	velocity.MakeUnit();
 	th->momx = FLOAT2FIXED(velocity[0] * speed);
 	th->momy = FLOAT2FIXED(velocity[1] * speed);
 	th->momz = FLOAT2FIXED(velocity[2] * speed);

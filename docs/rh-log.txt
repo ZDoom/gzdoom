@@ -1,3 +1,6 @@
+January 18, 2007
+- Replaced the vector math routines with the ones I developed for the FP code.
+
 January 15, 2007
 - Added a summonfoe CCMD, which is analagous to summonfriend but forces the
   summoned creature to be hostile instead.

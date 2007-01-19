@@ -1299,7 +1299,7 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 			plane = &sec->floorplane;
 		}
 
-		vec3_t p, v1, v2, cross;
+		FVector3 p, v1, v2, cross;
 
 		p[0] = FIXED2FLOAT (line->v1->x);
 		p[1] = FIXED2FLOAT (line->v1->y);
@@ -1311,19 +1311,18 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 		v2[1] = FIXED2FLOAT (y - line->v1->y);
 		v2[2] = FIXED2FLOAT (z) - p[2];
 
-		CrossProduct (v1, v2, cross);
-		if (VectorLength (cross) == 0)
+		cross = v1 ^ v2;
+		double len = cross.Length();
+		if (len == 0)
 		{
 			Printf ("Slope thing at (%d,%d) lies directly on its target line.\n", int(x>>16), int(y>>16));
 			return;
 		}
-		VectorNormalize (cross);
+		cross /= len;
 		// Fix backward normals
-		if ((cross[2] < 0 && !slopeCeil) || (cross[2] > 0 && slopeCeil))
+		if ((cross.Z < 0 && !slopeCeil) || (cross.Z > 0 && slopeCeil))
 		{
-			cross[0] = -cross[0];
-			cross[1] = -cross[1];
-			cross[2] = -cross[2];
+			cross = -cross;
 		}
 
 		plane->a = FLOAT2FIXED (cross[0]);
@@ -1401,12 +1400,12 @@ void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
 
 	xyang = (angle_t)Scale (xyangi, ANGLE_90, 90 << ANGLETOFINESHIFT);
 
-	vec3_t norm;
+	FVector3 norm;
 
 	norm[0] = float(finecosine[zang]) * float(finecosine[xyang]);
 	norm[1] = float(finecosine[zang]) * float(finesine[xyang]);
 	norm[2] = float(finesine[zang]) * 65536.f;
-	VectorNormalize (norm);
+	norm.MakeUnit();
 	plane->a = (int)(norm[0] * 65536.f);
 	plane->b = (int)(norm[1] * 65536.f);
 	plane->c = (int)(norm[2] * 65536.f);
@@ -1432,7 +1431,7 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 
 		if (l->args[0]==id)
 		{
-			vec3_t v1, v2, cross;
+			FVector3 v1, v2, cross;
 			secplane_t *srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
 			fixed_t srcheight = (which == 0) ? sec->floortexz : sec->ceilingtexz;
 
@@ -1444,15 +1443,19 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 			v2[1] = FIXED2FLOAT (y - l->v1->y);
 			v2[2] = FIXED2FLOAT (z - srcheight);
 
-			CrossProduct (v1, v2, cross);
-			VectorNormalize (cross);
+			cross = v1 ^ v2;
+			double len = cross.Length();
+			if (len == 0)
+			{
+				Printf ("Slope thing at (%d,%d) lies directly on its target line.\n", int(x>>16), int(y>>16));
+				return;
+			}
+			cross /= len;
 
 			// Fix backward normals
-			if ((cross[2] < 0 && which == 0) || (cross[2] > 0 && which == 1))
+			if ((cross.Z < 0 && which == 0) || (cross.Z > 0 && which == 1))
 			{
-				cross[0] = -cross[0];
-				cross[1] = -cross[1];
-				cross[2] = -cross[2];
+				cross = -cross;
 			}
 
 
@@ -2322,14 +2325,7 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 
 	refsec = line->frontsector == sec ? line->backsector : line->frontsector;
 
-	vec3_t p, v1, v2, cross;
-
-	p[0] = FIXED2FLOAT (line->v1->x);
-	p[1] = FIXED2FLOAT (line->v1->y);
-	v1[0] = FIXED2FLOAT (line->dx);
-	v1[1] = FIXED2FLOAT (line->dy);
-	v2[0] = FIXED2FLOAT (refvert->x - line->v1->x);
-	v2[1] = FIXED2FLOAT (refvert->y - line->v1->y);
+	FVector3 p, v1, v2, cross;
 
 	const secplane_t *refplane;
 	secplane_t *srcplane;
@@ -2340,19 +2336,22 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 	srcheight = (which == 0) ? sec->floortexz : sec->ceilingtexz;
 	destheight = (which == 0) ? refsec->floortexz : refsec->ceilingtexz;
 
+	p[0] = FIXED2FLOAT (line->v1->x);
+	p[1] = FIXED2FLOAT (line->v1->y);
 	p[2] = FIXED2FLOAT (destheight);
+	v1[0] = FIXED2FLOAT (line->dx);
+	v1[1] = FIXED2FLOAT (line->dy);
 	v1[2] = 0;
+	v2[0] = FIXED2FLOAT (refvert->x - line->v1->x);
+	v2[1] = FIXED2FLOAT (refvert->y - line->v1->y);
 	v2[2] = FIXED2FLOAT (srcheight - destheight);
 
-	CrossProduct (v1, v2, cross);
-	VectorNormalize (cross);
+	cross = (v1 ^ v2).Unit();
 
 	// Fix backward normals
-	if ((cross[2] < 0 && which == 0) || (cross[2] > 0 && which == 1))
+	if ((cross.Z < 0 && which == 0) || (cross.Z > 0 && which == 1))
 	{
-		cross[0] = -cross[0];
-		cross[1] = -cross[1];
-		cross[2] = -cross[2];
+		cross = -cross;
 	}
 
 	srcplane->a = FLOAT2FIXED (cross[0]);

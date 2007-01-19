@@ -235,7 +235,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	HRESULT hr;
 
 	if (FAILED(hr = D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-		D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &D3DDevice)))
+		D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
 	{
 		D3DDevice = NULL;
 		if (fullscreen)

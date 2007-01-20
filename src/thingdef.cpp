@@ -129,7 +129,6 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF, NOLIFTDROP, AActor, flags),
 	DEFINE_FLAG(MF, STEALTH, AActor, flags),
 	DEFINE_FLAG(MF, ICECORPSE, AActor, flags),
-	DEFINE_FLAG2(MF2_LOGRAV, LOWGRAVITY, AActor, flags2),
 	DEFINE_FLAG(MF2, WINDTHRUST, AActor, flags2),
 	DEFINE_FLAG(MF2, HERETICBOUNCE , AActor, flags2),
 	DEFINE_FLAG(MF2, BLASTED, AActor, flags2),
@@ -3227,6 +3226,22 @@ static void ActorVSpeed (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorGravity (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetFloat ();
+
+	if (sc_Float < 0.f || sc_Float > 1.f)
+		SC_ScriptError ("Gravity must be in the range [0,1]");
+
+	defaults->gravity = FLOAT2FIXED (sc_Float);
+
+	if (sc_Float == 0.f)
+		defaults->flags |= MF_NOGRAVITY;
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorClearFlags (AActor *defaults, Baggage &bag)
 {
 	defaults->flags=defaults->flags3=defaults->flags4=defaults->flags5=0;
@@ -3275,6 +3290,11 @@ static void ActorFlagSetOrReset (AActor *defaults, Baggage &bag)
 	{
 		if (mod == '+') defaults->DamageType = NAME_Ice;
 		else defaults->DamageType = NAME_None;
+	}
+	else if (SC_Compare ("LOWGRAVITY"))
+	{
+		if (mod == '+') defaults->gravity = FRACUNIT/8;
+		else defaults->gravity = FRACUNIT;
 	}
 	else
 	{
@@ -4099,6 +4119,7 @@ static const ActorProps props[] =
 	{ "floatspeed",					ActorFloatSpeed,			RUNTIME_CLASS(AActor) },
 	{ "game",						ActorGame,					RUNTIME_CLASS(AActor) },
 	{ "gibhealth",					ActorGibHealth,				RUNTIME_CLASS(AActor) },
+	{ "gravity",					ActorGravity,				RUNTIME_CLASS(AActor) },
 	{ "heal",						ActorHealState,				RUNTIME_CLASS(AActor) },
 	{ "health",						ActorHealth,				RUNTIME_CLASS(AActor) },
 	{ "health.lowmessage",			(apf)HealthLowMessage,		RUNTIME_CLASS(AHealth) },

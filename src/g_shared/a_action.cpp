@@ -35,8 +35,9 @@ IMPLEMENT_ACTOR (AIceChunk, Any, -1, 0)
 	PROP_RadiusFixed (3)
 	PROP_HeightFixed (4)
 	PROP_Mass(5)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_Flags (MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH|MF2_FLOORCLIP|MF2_NOTELEPORT)
+	PROP_Flags2 (MF2_CANNOTPUSH|MF2_FLOORCLIP|MF2_NOTELEPORT)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -61,8 +62,9 @@ IMPLEMENT_ACTOR (AIceChunkHead, Any, -1, 0)
 	PROP_HeightFixed (4)
 	PROP_Mass(5)
 	PROP_DamageType (NAME_Ice)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_Flags (MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH)
+	PROP_Flags2 (MF2_CANNOTPUSH)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -545,7 +547,7 @@ void A_NoGravity (AActor *actor)
 void A_Gravity (AActor *actor)
 {
 	actor->flags &= ~MF_NOGRAVITY;
-	actor->flags2 &= ~MF2_LOGRAV;
+	actor->gravity = FRACUNIT;
 }
 
 //===========================================================================
@@ -557,7 +559,7 @@ void A_Gravity (AActor *actor)
 void A_LowGravity (AActor *actor)
 {
 	actor->flags &= ~MF_NOGRAVITY;
-	actor->flags2 |= MF2_LOGRAV;
+	actor->gravity = FRACUNIT/8;
 }
 
 //===========================================================================

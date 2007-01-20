@@ -267,6 +267,7 @@ public:
 #define PROP_BounceCount(x)				ADD_LONG_PROP(ADEF_BounceCount,x)
 #define PROP_RadiusdamageFactor(x)		ADD_LONG_PROP(ADEF_RDFactor,x)
 #define PROP_FXFlags(x)					ADD_LONG_PROP(ADEF_FXFlags,x)
+#define PROP_Gravity(x)					ADD_LONG_PROP(ADEF_Gravity,x)
 
 
 #define PROP_SpawnState(x)				ADD_BYTE_PROP(ADEF_SpawnState,x)

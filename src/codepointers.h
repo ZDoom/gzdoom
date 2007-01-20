@@ -96,6 +96,7 @@ ACTOR(Respawn)
 ACTOR(BarrelDestroy)
 ACTOR(PlayerSkinCheck)
 ACTOR(QueueCorpse)
+ACTOR(SetGravity)
 
 // Special code pointers for Strife's player - not to be used elsewhere!
 ACTOR(ItBurnsItBurns)

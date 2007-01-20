@@ -170,7 +170,7 @@ class ACustomInventory : public AInventory
 public:
 
 	// This is used when an inventory item's use state sequence is executed.
-	static bool CallStateChain (AActor *actor, FState *state);
+	bool CallStateChain (AActor *actor, FState *state);
 
 	bool TryPickup (AActor *toucher);
 	bool Use (bool pickup);

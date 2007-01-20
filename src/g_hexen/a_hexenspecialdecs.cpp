@@ -313,8 +313,8 @@ FState ACorpseBloodDrip::States[] =
 IMPLEMENT_ACTOR (ACorpseBloodDrip, Hexen, -1, 0)
 	PROP_RadiusFixed (1)
 	PROP_HeightFixed (4)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_Flags (MF_MISSILE)
-	PROP_Flags2 (MF2_LOGRAV)
 	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_CORPSEBLOODDRIP)
@@ -480,8 +480,9 @@ FState ALeaf1::States[] =
 IMPLEMENT_ACTOR (ALeaf1, Hexen, -1, 0)
 	PROP_RadiusFixed (2)
 	PROP_HeightFixed (4)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_LOGRAV)
+	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_Flags3 (MF3_DONTSPLASH)
 	PROP_Flags4 (MF4_NOICEDEATH)
 

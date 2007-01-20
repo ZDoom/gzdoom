@@ -268,8 +268,8 @@ FState ASerpentHead::States[] =
 IMPLEMENT_ACTOR (ASerpentHead, Hexen, -1, 0)
 	PROP_RadiusFixed (5)
 	PROP_HeightFixed (10)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_Flags (MF_NOBLOCKMAP)
-	PROP_Flags2 (MF2_LOGRAV)
 
 	PROP_SpawnState (S_SERPENT_HEAD1)
 	PROP_DeathState (S_SERPENT_HEAD_X1)

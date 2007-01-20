@@ -154,7 +154,6 @@ enum
 
 // --- mobj.flags2 ---
 
-	MF2_LOGRAV			= 0x00000001,	// alternate gravity setting
 	MF2_WINDTHRUST		= 0x00000002,	// gets pushed around by the wind specials
 	MF2_BOUNCE1			= 0x00000004,
 	MF2_BLASTED			= 0x00000008,	// actor will temporarily take damage from impact
@@ -683,6 +682,7 @@ public:
 	fixed_t			meleerange;
 	fixed_t			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
+	fixed_t			gravity;		// [GRB] Gravity factor
 
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98

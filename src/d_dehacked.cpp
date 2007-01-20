@@ -1000,6 +1000,11 @@ static int PatchThing (int thingy)
 						info->DamageType = NAME_Fire;
 						info->flags2 &= ~0x10000;
 					}
+					if (info->flags2 & 1)
+					{
+						info->gravity = FRACUNIT/4;
+						info->flags2 &= ~1;
+					}
 				}
 				if (vchanged[2])
 				{

@@ -73,6 +73,7 @@ class Actor extends Thinker
 	action native A_NoGravity();
 	action native A_Gravity();
 	action native A_LowGravity();
+	action native A_SetGravity(eval float gravity);
 	action native A_Fall();
 	action native A_SetSolid();
 	action native A_UnsetSolid();

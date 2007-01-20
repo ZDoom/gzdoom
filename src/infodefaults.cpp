@@ -226,6 +226,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_BounceCount:		actor->bouncecount = dataint;		break;
 	case ADEF_RDFactor:			sgClass->Meta.SetMetaFixed (AMETA_RDFactor, dataint); break;
 	case ADEF_FXFlags:			actor->effects = dataint;			break;
+	case ADEF_Gravity:			actor->gravity = dataint;			break;
 
 	case ADEF_SpawnState:		AddState("Spawn", datastate);		break;
 	case ADEF_SeeState:			AddState("See", datastate);			break;

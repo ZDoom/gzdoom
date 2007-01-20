@@ -290,6 +290,7 @@ enum
 	ADEF_FloatSpeed,
 	ADEF_RDFactor,
 	ADEF_FXFlags,
+	ADEF_Gravity,
 
 	ADEF_SpawnState,
 	ADEF_SeeState,

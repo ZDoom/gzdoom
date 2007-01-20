@@ -698,7 +698,7 @@ FState ACrossbowFX4::States[] =
 
 IMPLEMENT_ACTOR (ACrossbowFX4, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP)
-	PROP_Flags2 (MF2_LOGRAV)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (S_CRBOWFX4)
 END_DEFAULTS
@@ -944,8 +944,9 @@ IMPLEMENT_ACTOR (AMaceFX2, Heretic, -1, 156)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (10)
 	PROP_Damage (6)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags2 (MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 
 	PROP_SpawnState (S_MACEFX2)
 	PROP_DeathState (S_MACEFXI2)
@@ -968,8 +969,9 @@ FState AMaceFX3::States[] =
 IMPLEMENT_ACTOR (AMaceFX3, Heretic, -1, 155)
 	PROP_SpeedFixed (7)
 	PROP_Damage (4)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags2 (MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 
 	PROP_SpawnState (S_MACEFX3)
 END_DEFAULTS
@@ -997,8 +999,9 @@ IMPLEMENT_ACTOR (AMaceFX4, Heretic, -1, 153)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (7)
 	PROP_Damage (18)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_TELESTOMP|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags2 (MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_TELESTOMP|MF2_PCROSS|MF2_IMPACT)
 
 	PROP_SpawnState (S_MACEFX4)
 	PROP_DeathState (S_MACEFXI4)
@@ -1213,7 +1216,7 @@ void A_MacePL1Check (AActor *ball)
 	}
 	ball->special1 = 0;
 	ball->flags &= ~MF_NOGRAVITY;
-	ball->flags2 |= MF2_LOGRAV;
+	ball->gravity = FRACUNIT/8;
 	// [RH] Avoid some precision loss by scaling the momentum directly
 #if 0
 	angle_t angle = ball->angle>>ANGLETOFINESHIFT;
@@ -1249,7 +1252,7 @@ void A_MaceBallImpact (AActor *ball)
 	{ // Explode
 		ball->momx = ball->momy = ball->momz = 0;
 		ball->flags |= MF_NOGRAVITY;
-		ball->flags2 &= ~MF2_LOGRAV;
+		ball->gravity = FRACUNIT;
 		S_Sound (ball, CHAN_BODY, "weapons/macehit", 1, ATTN_NORM);
 	}
 }
@@ -1317,7 +1320,8 @@ void A_MaceBallImpact2 (AActor *ball)
 boom:
 		ball->momx = ball->momy = ball->momz = 0;
 		ball->flags |= MF_NOGRAVITY;
-		ball->flags2 &= ~(MF2_LOGRAV|MF2_BOUNCETYPE);
+		ball->flags2 &= ~MF2_BOUNCETYPE;
+		ball->gravity = FRACUNIT;
 	}
 }
 
@@ -1443,7 +1447,7 @@ void A_DeathBallImpact (AActor *ball)
 boom:
 		ball->momx = ball->momy = ball->momz = 0;
 		ball->flags |= MF_NOGRAVITY;
-		ball->flags2 &= ~MF2_LOGRAV;
+		ball->gravity = FRACUNIT;
 		S_Sound (ball, CHAN_BODY, "weapons/maceexplode", 1, ATTN_NORM);
 	}
 }

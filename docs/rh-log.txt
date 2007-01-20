@@ -13,6 +13,12 @@ January 15, 2007
 - Added a GTK+ version of the IWAD selection dialog box. That brings the
   Linux port one step closer to feature parity with the Windows version.
 
+January 15, 2007 (Changes by Graf Zahl)
+- added Grubber's submission for customizable gravity per actor.
+
+January 14, 2007 (Changes by Graf Zahl)
+- Fixed: A_Jump didn't work for weapons or CustomInventory items.
+
 January 13, 2007 (Changes by Graf Zahl)
 - Adjusted AlterWeaponSprite so that it properly handles multiple
   invisibility powerups at the same time.

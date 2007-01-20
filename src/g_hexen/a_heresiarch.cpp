@@ -613,8 +613,9 @@ FState ASorcSpark1::States[] =
 IMPLEMENT_ACTOR (ASorcSpark1, Hexen, -1, 0)
 	PROP_RadiusFixed (5)
 	PROP_HeightFixed (5)
+	PROP_Gravity (FRACUNIT/8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_NOTELEPORT)
+	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_SORCSPARK1)
@@ -1337,7 +1338,7 @@ void A_SorcBallPop(AActor *actor)
 {
 	S_Sound (actor, CHAN_BODY, "SorcererBallPop", 1, ATTN_NONE);
 	actor->flags &= ~MF_NOGRAVITY;
-	actor->flags2 |= MF2_LOGRAV;
+	actor->gravity = FRACUNIT/8;
 	actor->momx = ((pr_heresiarch()%10)-5) << FRACBITS;
 	actor->momy = ((pr_heresiarch()%10)-5) << FRACBITS;
 	actor->momz = (2+(pr_heresiarch()%3)) << FRACBITS;

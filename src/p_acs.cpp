@@ -2071,6 +2071,7 @@ void DLevelScript::DoSetFont (int fontnum)
 #define APROP_JumpZ			12	// [GRB]
 #define APROP_ChaseGoal		13
 #define APROP_Frightened	14
+#define APROP_Gravity		15
 #define APROP_SeeSound		5	// Sounds can only be set, not gotten
 #define APROP_AttackSound	6
 #define APROP_PainSound		7
@@ -2153,6 +2154,10 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		else
 			actor->flags4 &= ~MF4_FRIGHTENED;
 		break;
+		
+	case APROP_Gravity:
+		actor->gravity = value;
+		break;
 
 	case APROP_SeeSound:
 		actor->SeeSound = S_FindSound (FBehavior::StaticLookupString (value));
@@ -2204,6 +2209,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Damage:		return actor->Damage;	// Should this call GetMissileDamage() instead?
 	case APROP_Alpha:		return actor->alpha;
 	case APROP_RenderStyle:	return actor->RenderStyle;
+	case APROP_Gravity:		return actor->gravity;
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
 	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);
 	case APROP_Frightened:	return !!(actor->flags4 & MF4_FRIGHTENED);

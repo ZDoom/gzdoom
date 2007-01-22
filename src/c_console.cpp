@@ -1217,8 +1217,13 @@ void C_DrawConsole ()
 			{
 				player = player->camera->player;
 			}
-            screen->Dim (PalEntry ((unsigned char)(player->BlendR*255), (unsigned char)(player->BlendG*255), (unsigned char)(player->BlendB*255)),
-				player->BlendA, 0, ConBottom, screen->GetWidth(), screen->GetHeight() - ConBottom);
+			if (player->BlendA != 0)
+			{
+				screen->Dim (PalEntry ((unsigned char)(player->BlendR*255), (unsigned char)(player->BlendG*255), (unsigned char)(player->BlendB*255)),
+					player->BlendA, 0, ConBottom, screen->GetWidth(), screen->GetHeight() - ConBottom);
+				SB_state = screen->GetPageCount ();
+				BorderNeedRefresh = screen->GetPageCount ();
+			}
 		}
 	}
 

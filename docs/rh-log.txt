@@ -1,4 +1,6 @@
 January 22, 2007
+- Fixed: The simulated palette blend used when the console is down needs to
+  force a full screen update the next frame.
 - Fixed: LocalViewPitch could overflow and wrap around when a netgame stalls.
 - Changed the vertheight and rounding-error-checking code in
   DCanvas::DrawTexture() to calculate off the actual bottom of the image

@@ -1,4 +1,5 @@
 January 22, 2007
+- Fixed: LocalViewPitch could overflow and wrap around when a netgame stalls.
 - Changed the vertheight and rounding-error-checking code in
   DCanvas::DrawTexture() to calculate off the actual bottom of the image
   instead of the height, improving precision. Now the scaled status bar is

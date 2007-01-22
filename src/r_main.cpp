@@ -877,7 +877,34 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		!LocalKeyboardTurner)
 	{
 		viewangle = iview->nviewangle + (LocalViewAngle & 0xFFFF0000);
-		viewpitch = clamp<int> (iview->nviewpitch - (LocalViewPitch & 0xFFFF0000), -ANGLE_1*MAX_UP_ANGLE, +ANGLE_1*MAX_DN_ANGLE);
+
+		fixed_t delta = -(signed)(LocalViewPitch & 0xFFFF0000);
+
+		viewpitch = iview->nviewpitch;
+		if (delta > 0)
+		{
+			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
+			if (viewpitch + delta <= viewpitch)
+			{
+				viewpitch = +ANGLE_1*MAX_DN_ANGLE;
+			}
+			else
+			{
+				viewpitch = MIN(viewpitch + delta, +ANGLE_1*MAX_DN_ANGLE);
+			}
+		}
+		else if (delta < 0)
+		{
+			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
+			if (viewpitch + delta >= viewpitch)
+			{
+				viewpitch = -ANGLE_1*MAX_UP_ANGLE;
+			}
+			else
+			{
+				viewpitch = MAX(viewpitch + delta, -ANGLE_1*MAX_UP_ANGLE);
+			}
+		}
 	}
 	else
 	{

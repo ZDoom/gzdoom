@@ -646,13 +646,34 @@ void G_AddViewPitch (int look)
 	{
 		return;
 	}
+	look <<= 16;
 	if (dmflags & DF_NO_FREELOOK)
 	{
 		LocalViewPitch = 0;
 	}
-	else
+	else if (look > 0)
 	{
-		LocalViewPitch += look << 16;
+		// Avoid overflowing
+		if (LocalViewPitch + look <= LocalViewPitch)
+		{
+			LocalViewPitch = 0x78000000;
+		}
+		else
+		{
+			LocalViewPitch = MIN(LocalViewPitch + look, 0x78000000);
+		}
+	}
+	else if (look < 0)
+	{
+		// Avoid overflowing
+		if (LocalViewPitch + look >= LocalViewPitch)
+		{
+			LocalViewPitch = -0x78000000;
+		}
+		else
+		{
+			LocalViewPitch = MAX(LocalViewPitch + look, -0x78000000);
+		}
 	}
 	if (look != 0)
 	{

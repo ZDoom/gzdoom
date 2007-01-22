@@ -704,10 +704,11 @@ void GetPackets (void)
 		netnode = doomcom.remotenode;
 		netconsole = playerfornode[netnode] & ~PL_DRONE;
 
-		// [RH] Get "ping" times
+		// [RH] Get "ping" times - totally useless, since it's bound to the frequency
+		// packets go out at.
 		lastrecvtime[netconsole] = currrecvtime[netconsole];
 		currrecvtime[netconsole] = I_MSTime ();
-		
+
 		// check for exiting the game
 		if (netbuffer[0] & NCMD_EXIT)
 		{

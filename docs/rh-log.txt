@@ -1,4 +1,8 @@
 January 22, 2007
+- Changed the vertheight and rounding-error-checking code in
+  DCanvas::DrawTexture() to calculate off the actual bottom of the image
+  instead of the height, improving precision. Now the scaled status bar is
+  flush with the bottom of the screen at 1280x1024, for instance.
 - Added a new WIF_NO_AUTO_SWITCH flag for weapons that should never be
   switched to automatically when the player picks them up.
 

@@ -335,23 +335,24 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, int tags_fi
 	if (virtWidth != Width || virtHeight != Height)
 	{
 		int myratio = CheckRatio (Width, Height);
-		if (myratio != 0 && !keepratio)
+		int right = x0 + destwidth;
+		int bottom = y0 + destheight;
+
+		if (myratio != 0 && myratio != 4 && !keepratio)
 		{ // The target surface is not 4:3, so expand the specified
 		  // virtual size to avoid undesired stretching of the image.
 		  // Does not handle non-4:3 virtual sizes. I'll worry about
 		  // those if somebody expresses a desire to use them.
-			x0 = Scale (Width*960, x0-virtWidth*FRACUNIT/2, virtWidth*BaseRatioSizes[myratio][0]) + Width*FRACUNIT/2;
-			y0 = Scale (Height, y0, virtHeight);
-			destwidth = FixedDiv (Width*960 * (destwidth>>FRACBITS), virtWidth*BaseRatioSizes[myratio][0]);
-			destheight = FixedDiv (Height * (destheight>>FRACBITS), virtHeight);
+			x0 = Scale (x0-virtWidth*FRACUNIT/2, Width*960, virtWidth*BaseRatioSizes[myratio][0]) + Width*FRACUNIT/2;
+			destwidth = Scale (right-virtWidth*FRACUNIT/2, Width*960, virtWidth*BaseRatioSizes[myratio][0]) + Width*FRACUNIT/2 - x0;
 		}
 		else
 		{
-			x0 = Scale (Width, x0, virtWidth);
-			y0 = Scale (Height, y0, virtHeight);
-			destwidth = FixedDiv (Width * (destwidth>>FRACBITS), virtWidth);
-			destheight = FixedDiv (Height * (destheight>>FRACBITS), virtHeight);
+			x0 = Scale (x0, Width, virtWidth);
+			destwidth = Scale (right, Width, virtWidth) - x0;
 		}
+		y0 = Scale (y0, Height, virtHeight);
+		destheight = Scale (bottom, Height, virtHeight) - y0;
 	}
 
 	if (destwidth <= 0 || destheight <= 0)
@@ -428,8 +429,10 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, int tags_fi
 		spryscale = destheight / img->GetHeight();
 
 		// Fix precision errors that are noticeable at some resolutions
-		if ((spryscale * img->GetHeight()) >> FRACBITS != destheight >> FRACBITS)
+		if (((y0 + destheight) >> FRACBITS) > ((y0 + spryscale * img->GetHeight()) >> FRACBITS))
+		{
 			spryscale++;
+		}
 
 		sprflipvert = false;
 		dc_iscale = 0xffffffffu / (unsigned)spryscale;

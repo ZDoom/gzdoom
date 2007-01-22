@@ -1065,9 +1065,9 @@ int CheckRatio (int width, int height)
 // Fourth column: Width or height multiplier
 const int BaseRatioSizes[5][4] =
 {
-	{  960, 600, 0,                   48 },			// 320,      200,      multiplied by three
-	{ 1280, 450, 0,                   48*3/4 },		// 426.6667, 150,      multiplied by three
-	{ 1152, 500, 0,                   48*5/6 },		// 386,      166.6667, multiplied by three
+	{  960, 600, 0,                   48 },			//  4:3   320,      200,      multiplied by three
+	{ 1280, 450, 0,                   48*3/4 },		// 16:9   426.6667, 150,      multiplied by three
+	{ 1152, 500, 0,                   48*5/6 },		// 16:10  386,      166.6667, multiplied by three
 	{  960, 600, 0,                   48 },
-	{  960, 640, (int)(6.5*FRACUNIT), 48*15/16 }	// 320,      213.3333, multiplied by three
+	{  960, 640, (int)(6.5*FRACUNIT), 48*15/16 }	//  5:4   320,      213.3333, multiplied by three
 };

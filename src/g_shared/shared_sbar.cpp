@@ -921,11 +921,6 @@ void FBaseStatusBar::RefreshBackground () const
 			R_DrawBorder (0, y, x, SCREENHEIGHT);
 			R_DrawBorder (x2, y, SCREENWIDTH, SCREENHEIGHT);
 
-			if (Scaled && ::ST_Y + RelTop*SCREENHEIGHT/200 != SCREENHEIGHT)
-			{ // Fill the thin line beneath the status bar that we got thanks to rounding error
-				R_DrawBorder (x, SCREENHEIGHT-1, x2, SCREENHEIGHT);
-			}
-
 			if (setblocks >= 10)
 			{
 				const gameborder_t *border = gameinfo.border;

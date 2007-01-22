@@ -376,7 +376,31 @@
 					Name="Doom"
 					>
 					<File
+						RelativePath=".\decorate\doom\arachnotron.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\archvile.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\bruiser.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\cacodemon.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\cyberdemon.txt"
+						>
+					</File>
+					<File
 						RelativePath=".\decorate\doom\deadthings.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\demon.txt"
 						>
 					</File>
 					<File
@@ -400,7 +424,47 @@
 						>
 					</File>
 					<File
+						RelativePath=".\decorate\doom\doomimp.txt"
+						>
+					</File>
+					<File
 						RelativePath=".\decorate\doom\doomkeys.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\doommisc.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\doomplayer.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\fatso.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\keen.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\lostsoul.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\painelemental.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\possessed.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\revenant.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\spidermaster.txt"
 						>
 					</File>
 					<File
@@ -411,6 +475,14 @@
 				<Filter
 					Name="Heretic"
 					>
+					<File
+						RelativePath=".\decorate\heretic\beast.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\heretic\clink.txt"
+						>
+					</File>
 					<File
 						RelativePath=".\decorate\heretic\hereticammo.txt"
 						>
@@ -431,10 +503,42 @@
 						RelativePath=".\decorate\heretic\heretickeys.txt"
 						>
 					</File>
+					<File
+						RelativePath=".\decorate\heretic\hereticplayer.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\heretic\mummy.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\heretic\snake.txt"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="Hexen"
 					>
+					<File
+						RelativePath=".\decorate\hexen\centaur.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\clericplayer.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\demons.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\ettin.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\fighterplayer.txt"
+						>
+					</File>
 					<File
 						RelativePath=".\decorate\hexen\flame.txt"
 						>
@@ -453,6 +557,10 @@
 					</File>
 					<File
 						RelativePath=".\decorate\hexen\hexenspecialdecs.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\hexen\mageplayer.txt"
 						>
 					</File>
 					<File
@@ -504,11 +612,19 @@
 						>
 					</File>
 					<File
+						RelativePath=".\decorate\strife\strifebishop.txt"
+						>
+					</File>
+					<File
 						RelativePath=".\decorate\strife\strifeitems.txt"
 						>
 					</File>
 					<File
 						RelativePath=".\decorate\strife\strifekeys.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\strife\strifeplayer.txt"
 						>
 					</File>
 					<File
@@ -523,6 +639,14 @@
 				<Filter
 					Name="Raven"
 					>
+					<File
+						RelativePath=".\decorate\raven\artiegg.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\raven\ravenambient.txt"
+						>
+					</File>
 					<File
 						RelativePath=".\decorate\raven\ravenartifacts.txt"
 						>
@@ -548,7 +672,19 @@
 						>
 					</File>
 					<File
+						RelativePath=".\decorate\shared\fountain.txt"
+						>
+					</File>
+					<File
 						RelativePath=".\decorate\shared\pickups.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\shared\sharedmisc.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\shared\soundsequence.txt"
 						>
 					</File>
 					<File

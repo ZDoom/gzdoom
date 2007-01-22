@@ -1,3 +1,7 @@
+January 22, 2007
+- Added a new WIF_NO_AUTO_SWITCH flag for weapons that should never be
+  switched to automatically when the player picks them up.
+
 January 18, 2007
 - Added D3DCREATE_FPU_PRESERVE to the IDirect3D9::CreateDevice() call.
   Normally Direct3D sets the FPU to single precision. We don't want that,

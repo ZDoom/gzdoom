@@ -3085,7 +3085,7 @@ void M_Drawer ()
 	PalEntry fade = 0;
 
 	const player_t *player = &players[consoleplayer];
-	if (player->camera != NULL)
+	if (player->camera != NULL && (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL))
 	{
 		if (player->camera->player != NULL)
 		{

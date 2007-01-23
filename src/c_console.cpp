@@ -1222,7 +1222,7 @@ void C_DrawConsole ()
 			{
 				player = player->camera->player;
 			}
-			if (player->BlendA != 0)
+			if (player->BlendA != 0 && (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL))
 			{
 				screen->Dim (PalEntry ((unsigned char)(player->BlendR*255), (unsigned char)(player->BlendG*255), (unsigned char)(player->BlendB*255)),
 					player->BlendA, 0, ConBottom, screen->GetWidth(), screen->GetHeight() - ConBottom);

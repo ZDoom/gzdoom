@@ -1,4 +1,7 @@
 January 22, 2007
+- Fixed: The simulated palette blends when the menu or console are open
+  were applied even when the status bar wasn't drawn. (In other words, even
+  in situations where a real palette blend wouldn't have happened.)
 - Added a range check for the PNG grAb chunks.
 - Fixed: AddLine() could corrupt memory if the length of the text being
   added was longer than the console buffer.

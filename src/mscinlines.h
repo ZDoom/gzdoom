@@ -23,9 +23,8 @@
 __forceinline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 {
 	__asm mov eax,a
-	__asm mov ecx,c
 	__asm imul b
-	__asm idiv ecx
+	__asm idiv c
 }
 
 __forceinline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)

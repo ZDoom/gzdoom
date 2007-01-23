@@ -1,4 +1,10 @@
 January 22, 2007
+- Added a range check for the PNG grAb chunks.
+- Fixed: AddLine() could corrupt memory if the length of the text being
+  added was longer than the console buffer.
+- Fixed: FTexture::GetScaled(Left|Top)Offset returned the Width and Height
+  instead when the scale values were 0.
+- Removed the unnecessary "mov ecx,c" from mscinlines.h:Scale().
 - Fixed: The simulated palette blend used when the console is down needs to
   force a full screen update the next frame.
 - Fixed: LocalViewPitch could overflow and wrap around when a netgame stalls.

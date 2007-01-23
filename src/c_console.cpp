@@ -637,6 +637,11 @@ static void AddLine (const char *text, bool more, int len)
 		TopLine = FlushLines (BufferRover, ConsoleBuffer + CONSOLESIZE);
 		BufferRover = ConsoleBuffer;
 	}
+	if (len >= CONSOLESIZE - 1)
+	{
+		text = text + len - CONSOLESIZE + 1;
+		len = CONSOLESIZE - 1;
+	}
 	TopLine = FlushLines (BufferRover, BufferRover + len + 1);
 	memcpy (BufferRover, text, len);
 	BufferRover[len] = 0;

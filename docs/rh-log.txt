@@ -1,3 +1,21 @@
+January 24, 2007
+- Fixed: If you called the FString assignment operator that accepts a
+  const char * with a string inside its buffer, it released the buffer
+  before copying the string.
+- Added a new FString constructor that creates the string from a lump.
+
+January 23, 2007
+- Fixed: G_DoReborn() calls G_InitNew() with mapname set to level.mapname.
+  G_InitNew() then copies it onto level.mapname, which is undefined
+  behavior (although it does work as we want it to).
+- Modified FMemLump to store its data using FString. That class provides
+  a convenient method of storing reference counted data, so now FMemLump
+  doesn't need to muck about sneakily using const_casts and possibly
+  tricking its users into thinking that an old one is still valid after
+  being assigned to a new one.
+- Fixed: The IMGZ, PNG, PCX, and JPEG loaders assumed the files were
+  large enough for their headers without actually checking.
+
 January 22, 2007
 - Fixed: The simulated palette blends when the menu or console are open
   were applied even when the status bar wasn't drawn. (In other words, even

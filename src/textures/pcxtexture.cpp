@@ -46,7 +46,10 @@ bool FPCXTexture::Check(FileReader & file)
 	PCXHeader hdr;
 
 	file.Seek(0, SEEK_SET);
-	file.Read(&hdr, sizeof(hdr));
+	if (file.Read(&hdr, sizeof(hdr)) != sizeof(hdr))
+	{
+		return false;
+	}
 
 #ifdef WORDS_BIGENDIAN
 	hdr.xmin = LittleShort(hdr.xmin);

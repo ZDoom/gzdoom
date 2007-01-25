@@ -45,8 +45,7 @@ bool FPNGTexture::Check(FileReader & file)
 {
 	DWORD id;
 	file.Seek(0, SEEK_SET);
-	file.Read(&id, 4);
-	return (id == MAKE_ID(137,'P','N','G'));
+	return file.Read(&id, 4) == 4 && id == MAKE_ID(137,'P','N','G');
 }
 
 FTexture *FPNGTexture::Create(FileReader & data, int lumpnum)

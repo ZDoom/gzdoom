@@ -172,17 +172,34 @@ FString &FString::operator = (const FString &other)
 }
 FString &FString::operator = (const char *copyStr)
 {
-	Data()->Release();
-	if (copyStr == NULL || *copyStr == '\0')
+	if (copyStr != Chars)
 	{
-		NullString.RefCount++;
-		Chars = &NullString.Nothing[0];
-	}
-	else
-	{
-		size_t len = strlen (copyStr);
-		AllocBuffer (len);
-		StrCopy (Chars, copyStr, len);
+		if (copyStr == NULL || *copyStr == '\0')
+		{
+			NullString.RefCount++;
+			Chars = &NullString.Nothing[0];
+		}
+		else
+		{
+			// In case copyStr is inside us, we can't release it until
+			// we've finished the copy.
+			FStringData *old = Data();
+
+			if (copyStr < Chars || copyStr >= Chars + old->Len)
+			{
+				// We know the string isn't in our buffer, so release it now
+				// to reduce the potential for needless memory fragmentation.
+				old->Release();
+				old = NULL;
+			}
+			size_t len = strlen (copyStr);
+			AllocBuffer (len);
+			StrCopy (Chars, copyStr, len);
+			if (old != NULL)
+			{
+				old->Release();
+			}
+		}
 	}
 	return *this;
 }

@@ -51,7 +51,10 @@ ifdef DEBUG
 else
   OBJDIR = $(RELEASEOBJ)
   CFLAGS += -DNDEBUG
-  LDFLAGS += -s -Wl,-Map=$(ZDOOM).map
+  LDFLAGS += -Wl,-Map=$(ZDOOM).map
+  ifndef NOSTRIP
+    LDFLAGS += -s
+  endif
   ZDOOMBIN = $(ZDOOM)
 endif
 CXXFLAGS += $(CFLAGS)

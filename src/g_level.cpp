@@ -1580,7 +1580,10 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		bglobal.Init ();
 	}
 
-	strcpy (level.mapname, mapname);
+	if (mapname != level.mapname)
+	{
+		strcpy (level.mapname, mapname);
+	}
 	if (bTitleLevel)
 	{
 		gamestate = GS_TITLELEVEL;

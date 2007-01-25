@@ -100,8 +100,7 @@ bool FJPEGTexture::Check(FileReader & file)
 {
 	BYTE hdr[3];
 	file.Seek(0, SEEK_SET);
-	file.Read(hdr, 3);
-	return (hdr[0] == 0xFF && hdr[1] == 0xD8 && hdr[2] == 0xFF);
+	return file.Read(hdr, 3) == 3 && hdr[0] == 0xFF && hdr[1] == 0xD8 && hdr[2] == 0xFF;
 }
 
 FTexture *FJPEGTexture::Create(FileReader & data, int lumpnum)

@@ -68,6 +68,10 @@ struct FNullStringData
 	char Nothing[2];
 };
 
+enum ELumpNum
+{
+};
+
 class FString
 {
 public:
@@ -86,6 +90,9 @@ public:
 	FString (const char *head, const FString &tail);
 	FString (const char *head, const char *tail);
 	FString (char head, const FString &tail);
+
+	// Other constructors
+	FString (ELumpNum);	// Create from a lump
 
 	~FString ();
 

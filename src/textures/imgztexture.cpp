@@ -57,8 +57,7 @@ bool FIMGZTexture::Check(FileReader & file)
 {
 	DWORD id;
 	file.Seek(0, SEEK_SET);
-	file.Read(&id, 4);
-	return (id == MAKE_ID('I','M','G','Z'));
+	return file.Read(&id, 4) == 4 && id == MAKE_ID('I','M','G','Z');
 }
 
 FTexture *FIMGZTexture::Create(FileReader & file, int lumpnum)

@@ -2064,7 +2064,7 @@ void A_SetGravity(AActor * self)
 	int index=CheckIndex(1);
 	if (index<0) return;
 	
-	self->gravity = clamp<fixed_t> (EvalExpressionF (StateParameters[index], self), 0, FRACUNIT); 
+	self->gravity = clamp<fixed_t> (fixed_t(EvalExpressionF (StateParameters[index], self)*FRACUNIT), 0, FRACUNIT); 
 }
 
 

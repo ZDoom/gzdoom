@@ -123,29 +123,21 @@ private:
 };
 
 
-// A lump in memory. The destructor automatically deletes the memory
-// the lump was copied to. Note the copy contstructor is really more of
-// a transfer constructor. Once an FMemLump gets copied, the original
-// is no longer usable.
+// A lump in memory.
 class FMemLump
 {
 public:
 	FMemLump ();
-#ifdef __GNUC__
-	// Not really const! GCC forces me to declare it this way!
+
 	FMemLump (const FMemLump &copy);
 	FMemLump &operator= (const FMemLump &copy);
-#else
-	FMemLump (FMemLump &copy);
-	FMemLump &operator= (FMemLump &copy);
-#endif
 	~FMemLump ();
-	void *GetMem () { return (void *)Block; }
+	void *GetMem () { return (void *)Block.GetChars(); }
 
 private:
-	FMemLump (BYTE *data);
+	FMemLump (const FString &source);
 
-	BYTE *Block;
+	FString Block;
 
 	friend class FWadCollection;
 };

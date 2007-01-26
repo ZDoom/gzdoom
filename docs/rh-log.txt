@@ -1,3 +1,14 @@
+January 26, 2007 (Changes by Graf Zahl)
+- Fixed: The rewrite of FMemLump broke the non-standard use of it in 
+  P_TranslateLinedefs.
+- Fixed: ShowErrorPane can be called before ST_NetDone is valid so it has to
+  check whether it is NULL.
+- Fixed: The Megasphere had an incorrect pickup sound.
+
+January 25, 2007 (Changes by Graf Zahl)
+- Fixed: The new video initialization code could set the screen's Font pointer
+  to NULL, causing a crash with levels that start in a secret sector.
+
 January 24, 2007
 - Fixed: If you called the FString assignment operator that accepts a
   const char * with a string inside its buffer, it released the buffer

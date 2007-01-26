@@ -58,6 +58,7 @@ ACTOR Megasphere : CustomInventory 83
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	Inventory.PickupMessage "$GOTMSPHERE"
+	Inventory.PickupSound "misc/p_pkup"
 	States
 	{
 	Spawn:

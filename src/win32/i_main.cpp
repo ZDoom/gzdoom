@@ -677,7 +677,7 @@ void ShowErrorPane(const char *text)
 	}
 
 	SetWindowText (Window, "Fatal Error - " WINDOW_TITLE);
-	ST_NetDone();	// Ensure that the network pane is hidden.
+	if (ST_NetDone != NULL) ST_NetDone();	// Ensure that the network pane is hidden.
 	ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
 	if (ErrorIcon != NULL)
 	{

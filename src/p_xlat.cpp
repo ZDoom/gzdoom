@@ -48,6 +48,7 @@
 #include "w_wad.h"
 #include "sc_man.h"
 #include "cmdlib.h"
+#include "i_system.h"
 
 // define names for the TriggerType field of the general linedefs
 
@@ -63,10 +64,17 @@ typedef enum
 	PushMany,
 } triggertype_e;
 
+
+BYTE *tlatetab;
+
+static void Freetlate()
+{
+	if (tlatetab != NULL) delete [] tlatetab;
+	tlatetab = NULL;
+}
+
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 {
-	static FMemLump tlatebase;
-	const BYTE *tlate;
 	short special = LittleShort(mld->special);
 	short tag = LittleShort(mld->tag);
 	DWORD flags = LittleShort(mld->flags);
@@ -121,22 +129,31 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		return;
 	}
 
-	if (tlatebase.GetMem() == NULL)
+	if (tlatetab == NULL)
 	{
+		const char *lumpname;
+		int lumpnum, lumplen;
 		if (gameinfo.gametype == GAME_Doom)
 		{
-			tlatebase = Wads.ReadLump ("DOOMX");
+			lumpname = "DOOMX";
 		}
 		else if (gameinfo.gametype == GAME_Strife)
 		{
-			tlatebase = Wads.ReadLump ("STRIFEX");
+			lumpname = "STRIFEX";
 		}
 		else
 		{
-			tlatebase = Wads.ReadLump ("HERETICX");
+			lumpname = "HERETICX";
 		}
+
+		lumpnum = Wads.GetNumForName (lumpname);
+		lumplen = Wads.LumpLength(lumpnum);
+
+		tlatetab = new BYTE[lumplen];
+		Wads.ReadLump(lumpnum, tlatetab);
+		atterm(Freetlate);
 	}
-	tlate = (const BYTE *)tlatebase.GetMem();
+	BYTE *tlate = tlatetab;
 
 	// Check if this is a regular linetype
 	if (tlate[0] == 'N' && tlate[1] == 'O' && tlate[2] == 'R' && tlate[3] == 'M')

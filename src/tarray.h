@@ -3,7 +3,7 @@
 ** Templated, automatically resizing array
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -214,6 +214,10 @@ public:
 		Grow (amount);
 		unsigned int place = Count;
 		Count += amount;
+		for (unsigned int i = place; i < Count; ++i)
+		{
+			::new((void *)&Array[i]) T;
+		}
 		return place;
 	}
 	unsigned int Size () const

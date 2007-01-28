@@ -260,6 +260,8 @@ public:
 
 	WORD		accuracy, stamina;		// [RH] Strife stats
 
+	FName		LastDamageType;			// [RH] For damage-specific pain and death sounds
+
 	//Added by MC:
 	angle_t		savedyaw;
 	int			savedpitch;

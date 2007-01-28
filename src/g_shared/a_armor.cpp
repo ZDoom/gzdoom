@@ -124,7 +124,7 @@ bool ABasicArmor::HandlePickup (AInventory *item)
 
 void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
-	if (damageType != NAME_Water)
+	if (damageType != NAME_Drowning)
 	{
 		int saved = FixedMul (damage, SavePercent);
 		if (Amount < saved)
@@ -440,7 +440,7 @@ bool AHexenArmor::AddArmorToSlot (AActor *actor, int slot, int amount)
 
 void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
-	if (damageType != NAME_Water)
+	if (damageType != NAME_Drowning)
 	{
 		fixed_t savedPercent = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
 

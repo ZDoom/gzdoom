@@ -1,4 +1,9 @@
 January 27, 2007
+- Added support for damage-specific player pain sounds.
+- Removed the constraint that all $playerreserve SNDINFO commands must come
+  before the other $player commands.
+- Fixed: TArray::Reserve did not construct its newly allocated entries.
+- Changed the damage type for drowning from 'Water' to 'Drowning'.
 - Fixed: Since FMemLump is now implemented on top of FString, it never
   contains a NULL point, so the GetMem() method should fake it by
   returning NULL when the string is empty. Reverted p_xlat.cpp to its

@@ -3,7 +3,7 @@
 ** Routines for managing SNDINFO lumps and ambient sounds
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -85,6 +85,33 @@ struct FPlayerClassLookup
 {
 	char		Name[MAX_SNDNAME+1];
 	WORD		ListIndex[3];	// indices into PlayerSounds (0xffff means empty)
+};
+
+// Used to lookup a sound like "*grunt". This contains all player sounds for
+// a particular class and gender.
+class FPlayerSoundHashTable
+{
+public:
+	FPlayerSoundHashTable();
+	FPlayerSoundHashTable(const FPlayerSoundHashTable &other);
+	~FPlayerSoundHashTable();
+
+	void AddSound (int player_sound_id, int sfx_id);
+	int LookupSound (int player_sound_id);
+	FPlayerSoundHashTable &operator= (const FPlayerSoundHashTable &other);
+
+protected:
+	struct Entry
+	{
+		Entry *Next;
+		int PlayerSoundID;
+		int SfxID;
+	};
+	enum { NUM_BUCKETS = 23 };
+	Entry *Buckets[NUM_BUCKETS];
+
+	void Init ();
+	void Free ();
 };
 
 static struct AmbientSound
@@ -218,11 +245,10 @@ static FMusicVolume *MusicVolumes;
 static TArray<FSavedPlayerSoundInfo> SavedPlayerSounds;
 
 static int NumPlayerReserves;
-static bool DoneReserving;
 static bool PlayerClassesIsSorted;
 
 static TArray<FPlayerClassLookup> PlayerClassLookups;
-static TArray<WORD> PlayerSounds;
+static TArray<FPlayerSoundHashTable> PlayerSounds;
 
 static char DefPlayerClassName[MAX_SNDNAME+1];
 static int DefPlayerClass;
@@ -507,21 +533,20 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 
 int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bool fromskin)
 {
-	char fakename[MAX_SNDNAME+1];
-	size_t len;
+	FString fakename;
 	int id;
 
-	len = strlen (pclass);
-	memcpy (fakename, pclass, len);
-	fakename[len] = '|';
-	fakename[len+1] = gender + '0';
-	strcpy (&fakename[len+2], S_sfx[refid].name);
+	fakename = pclass;
+	fakename += ';';
+	fakename += '0' + gender;
+	fakename += ';';
+	fakename += S_sfx[refid].name;
 
 	id = S_AddSoundLump (fakename, lumpnum);
 	int classnum = S_AddPlayerClass (pclass);
 	int soundlist = S_AddPlayerGender (classnum, gender);
 
-	PlayerSounds[soundlist + S_sfx[refid].link] = id;
+	PlayerSounds[soundlist].AddSound (S_sfx[refid].link, id);
 
 	if (fromskin) S_SavePlayerSound(pclass, gender, refid, lumpnum, false);
 
@@ -541,7 +566,7 @@ int S_AddPlayerSoundExisting (const char *pclass, int gender, int refid,
 	int classnum = S_AddPlayerClass (pclass);
 	int soundlist = S_AddPlayerGender (classnum, gender);
 
-	PlayerSounds[soundlist + S_sfx[refid].link] = aliasto;
+	PlayerSounds[soundlist].AddSound (S_sfx[refid].link, aliasto);
 
 	if (fromskin) S_SavePlayerSound(pclass, gender, refid, aliasto, true);
 
@@ -559,6 +584,148 @@ int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref)
 {
 	int aliasto = S_LookupPlayerSound (pclass, gender, aliasref);
 	return S_AddPlayerSoundExisting (pclass, gender, refid, aliasto);
+}
+
+//==========================================================================
+//
+// FPlayerSoundHashTable constructor
+//
+//==========================================================================
+
+FPlayerSoundHashTable::FPlayerSoundHashTable ()
+{
+	Init();
+}
+
+//==========================================================================
+//
+// FPlayerSoundHashTable copy constructor
+//
+//==========================================================================
+
+FPlayerSoundHashTable::FPlayerSoundHashTable (const FPlayerSoundHashTable &other)
+{
+	Init();
+	*this = other;
+}
+
+//==========================================================================
+//
+// FPlayerSoundHashTable destructor
+//
+//==========================================================================
+
+FPlayerSoundHashTable::~FPlayerSoundHashTable ()
+{
+	Free ();
+}
+
+//==========================================================================
+//
+// FPlayerSoundHashTable :: Init
+//
+//==========================================================================
+
+void FPlayerSoundHashTable::Init ()
+{
+	for (int i = 0; i < NUM_BUCKETS; ++i)
+	{
+		Buckets[i] = NULL;
+	}
+}
+
+//==========================================================================
+//
+// FPlayerSoundHashTable :: Free
+//
+//==========================================================================
+
+void FPlayerSoundHashTable::Free ()
+{
+	for (int i = 0; i < NUM_BUCKETS; ++i)
+	{
+		Entry *entry, *next;
+
+		for (entry = Buckets[i]; entry != NULL; )
+		{
+			next = entry->Next;
+			delete entry;
+			entry = next;
+		}
+		Buckets[i] = NULL;
+	}
+}
+
+//==========================================================================
+//
+// FPlayerSoundHashTable :: operator=
+//
+//==========================================================================
+
+FPlayerSoundHashTable &FPlayerSoundHashTable::operator= (const FPlayerSoundHashTable &other)
+{
+	Free ();
+	for (int i = 0; i < NUM_BUCKETS; ++i)
+	{
+		Entry *entry;
+
+		for (entry = other.Buckets[i]; entry != NULL; entry = entry->Next)
+		{
+			AddSound (entry->PlayerSoundID, entry->SfxID);
+		}
+	}
+	return *this;
+}
+
+//==========================================================================
+//
+// FPlayerSoundHashTable :: AddSound
+//
+//==========================================================================
+
+void FPlayerSoundHashTable::AddSound (int player_sound_id, int sfx_id)
+{
+	Entry *entry;
+	unsigned bucket_num = (unsigned)player_sound_id % NUM_BUCKETS;
+
+	// See if the entry exists already.
+	for (entry = Buckets[bucket_num];
+		 entry != NULL && entry->PlayerSoundID != player_sound_id;
+		 entry = entry->Next)
+	{ }
+
+	if (entry != NULL)
+	{ // If the player sound is already present, redefine it.
+		entry->SfxID = sfx_id;
+	}
+	else
+	{ // Otherwise, add it to the start of its bucket.
+		entry = new Entry;
+		entry->Next = Buckets[bucket_num];
+		entry->PlayerSoundID = player_sound_id;
+		entry->SfxID = sfx_id;
+		Buckets[bucket_num] = entry;
+	}
+}
+
+//==========================================================================
+//
+// FPlayerSoundHashTable :: LookupSound
+//
+//==========================================================================
+
+int FPlayerSoundHashTable::LookupSound (int player_sound_id)
+{
+	Entry *entry;
+	unsigned bucket_num = (unsigned)player_sound_id % NUM_BUCKETS;
+
+	// See if the entry exists already.
+	for (entry = Buckets[bucket_num];
+		 entry != NULL && entry->PlayerSoundID != player_sound_id;
+		 entry = entry->Next)
+	{ }
+
+	return entry != NULL ? entry->SfxID : 0;
 }
 
 //==========================================================================
@@ -599,7 +766,6 @@ static void S_ClearSoundData()
 	}
 	S_rnd.Clear();
 
-	DoneReserving = false;
 	NumPlayerReserves = 0;
 	PlayerClassesIsSorted = false;
 	PlayerClassLookups.Clear();
@@ -836,11 +1002,6 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_PlayerReserve:
 				// $playerreserve <logical name>
-				if (DoneReserving)
-				{
-					SC_ScriptError ("All $playerreserves must come before any $playersounds or $playeraliases");
-				}
-				else
 				{
 					SC_MustGetString ();
 					int id = S_AddSound (sc_String, -1);
@@ -1102,7 +1263,6 @@ static void S_AddStrifeVoice (int lumpnum)
 
 static void S_ParsePlayerSoundCommon (char pclass[MAX_SNDNAME+1], int &gender, int &refid)
 {
-	DoneReserving = true;
 	SC_MustGetString ();
 	strcpy (pclass, sc_String);
 	SC_MustGetString ();
@@ -1204,19 +1364,13 @@ static int S_FindPlayerClass (const char *name)
 
 static int S_AddPlayerGender (int classnum, int gender)
 {
-	int index;
+	unsigned int index;
 
 	index = PlayerClassLookups[classnum].ListIndex[gender];
 	if (index == 0xffff)
 	{
-		WORD pushee = 0;
-
-		index = (int)PlayerSounds.Size ();
+		index = PlayerSounds.Reserve (1);
 		PlayerClassLookups[classnum].ListIndex[gender] = (WORD)index;
-		for (int i = NumPlayerReserves; i != 0; --i)
-		{
-			PlayerSounds.Push (pushee);
-		}
 	}
 	return index;
 }
@@ -1302,7 +1456,7 @@ static int S_LookupPlayerSound (int classidx, int gender, int refid)
 		gender = g;
 	}
 
-	int sndnum = PlayerSounds[listidx + S_sfx[refid].link];
+	int sndnum = PlayerSounds[listidx].LookupSound (S_sfx[refid].link);
 
 	// If we're not done parsing SNDINFO yet, assume that the target sound is valid
 	if (PlayerClassesIsSorted &&
@@ -1545,9 +1699,9 @@ CCMD (playersounds)
 			if ((l = PlayerClassLookups[i].ListIndex[j]) != 0xffff)
 			{
 				Printf ("\n%s, %s:\n", PlayerClassLookups[i].Name, GenderNames[j]);
-				for (k = 0; k < NumPlayerReserves; ++l, ++k)
+				for (k = 0; k < NumPlayerReserves; ++k)
 				{
-					Printf (" %-16s%s\n", reserveNames[k], S_sfx[PlayerSounds[l]].name);
+					Printf (" %-16s%s\n", reserveNames[k], S_sfx[PlayerSounds[l].LookupSound (k)].name);
 				}
 			}
 		}

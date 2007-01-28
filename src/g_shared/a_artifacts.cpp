@@ -722,7 +722,7 @@ END_DEFAULTS
 
 void APowerIronFeet::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
-	if (damageType == NAME_Water)
+	if (damageType == NAME_Drowning)
 	{
 		newdamage = 0;
 		if (Owner->player != NULL)

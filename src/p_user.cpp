@@ -2132,7 +2132,7 @@ void P_PlayerThink (player_t *player)
 			}
 			else if (player->air_finished <= level.time && !(level.time & 31))
 			{
-				P_DamageMobj (player->mo, NULL, NULL, 2 + 2*((level.time-player->air_finished)/TICRATE), NAME_Water);
+				P_DamageMobj (player->mo, NULL, NULL, 2 + 2*((level.time-player->air_finished)/TICRATE), NAME_Drowning);
 			}
 		}
 	}

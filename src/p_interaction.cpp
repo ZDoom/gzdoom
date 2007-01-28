@@ -221,7 +221,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	case NAME_Falling:		messagename = "OB_FALLING";		break;
 	case NAME_Crush:		messagename = "OB_CRUSH";		break;
 	case NAME_Exit:			messagename = "OB_EXIT";		break;
-	case NAME_Water:		messagename = "OB_WATER";		break;
+	case NAME_Drowning:		messagename = "OB_WATER";		break;
 	case NAME_Slime:		messagename = "OB_SLIME";		break;
 	case NAME_Fire:			if (attacker == NULL) messagename = "OB_LAVA";		break;
 	}
@@ -1024,6 +1024,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		{
 			player->health = 0;
 		}
+		player->LastDamageType = mod;
 		player->attacker = source;
 		player->damagecount += damage;	// add damage after armor / invuln
 		if (player->damagecount > 100)

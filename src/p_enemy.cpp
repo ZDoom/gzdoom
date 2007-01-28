@@ -2521,18 +2521,39 @@ void A_Pain (AActor *actor)
 	// [RH] Vary player pain sounds depending on health (ala Quake2)
 	if (actor->player && actor->player->morphTics == 0)
 	{
-		const char *painchoice;
+		const char *pain_amount;
+		int sfx_id = 0;
 
 		if (actor->health < 25)
-			painchoice = "*pain25";
+			pain_amount = "*pain25";
 		else if (actor->health < 50)
-			painchoice = "*pain50";
+			pain_amount = "*pain50";
 		else if (actor->health < 75)
-			painchoice = "*pain75";
+			pain_amount = "*pain75";
 		else
-			painchoice = "*pain100";
+			pain_amount = "*pain100";
 
-		S_Sound (actor, CHAN_VOICE, painchoice, 1, ATTN_NORM);
+		// Try for damage-specific sounds first.
+		if (actor->player->LastDamageType != NAME_None)
+		{
+			FString pain_sound = pain_amount;
+			pain_sound += '-';
+			pain_sound += actor->player->LastDamageType;
+			sfx_id = S_FindSound (pain_sound);
+			if (sfx_id == 0)
+			{
+				// Try again without a specific pain amount.
+				pain_sound = "*pain-";
+				pain_sound += actor->player->LastDamageType;
+				sfx_id = S_FindSound (pain_sound);
+			}
+		}
+		if (sfx_id == 0)
+		{
+			sfx_id = S_FindSound (pain_amount);
+		}
+
+		S_SoundID (actor, CHAN_VOICE, sfx_id, 1, ATTN_NORM);
 	}
 	else if (actor->PainSound)
 	{

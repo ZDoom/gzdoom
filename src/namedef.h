@@ -171,7 +171,7 @@ xx(Drop)
 //xx(Fire)		already defined above
 //xx(Ice)
 //xx(Disintegrate)
-//xx(Water)
+xx(Drowning)
 xx(Slime)
 //xx(Crush)
 xx(Telefrag)

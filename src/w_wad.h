@@ -132,7 +132,8 @@ public:
 	FMemLump (const FMemLump &copy);
 	FMemLump &operator= (const FMemLump &copy);
 	~FMemLump ();
-	void *GetMem () { return (void *)Block.GetChars(); }
+	void *GetMem () { return Block.Len() == 0 ? NULL : (void *)Block.GetChars(); }
+	unsigned int GetSize () { return Block.Len(); }
 
 private:
 	FMemLump (const FString &source);

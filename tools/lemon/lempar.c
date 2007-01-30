@@ -1,12 +1,9 @@
 /* Driver template for the LEMON parser generator.
 ** The author disclaims copyright to this source code.
 */
-/* First off, code is include which follows the "include" declaration
+/* First off, code is included which follows the "include" declaration
 ** in the input file. */
 #include <stdio.h>
-#ifndef NDEBUG
-#include <string.h>
-#endif
 %%
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
@@ -110,7 +107,7 @@
 **  yy_default[]       Default action for each state.
 */
 %%
-#define YY_SZ_ACTTAB (sizeof(yy_action)/sizeof(yy_action[0]))
+#define YY_SZ_ACTTAB (int)(sizeof(yy_action)/sizeof(yy_action[0]))
 
 /* The next table maps tokens into fallback tokens.  If a construct
 ** like the following:
@@ -324,7 +321,7 @@ void ParseFree(
 */
 static int yy_find_shift_action(
   yyParser *pParser,        /* The parser */
-  int iLookAhead            /* The look-ahead token */
+  YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
   int i;
   int stateno = pParser->yystack[pParser->yyidx].stateno;
@@ -337,19 +334,35 @@ static int yy_find_shift_action(
   }
   i += iLookAhead;
   if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
+    if( iLookAhead>0 ){
 #ifdef YYFALLBACK
-    int iFallback;            /* Fallback token */
-    if( iLookAhead<sizeof(yyFallback)/sizeof(yyFallback[0])
-           && (iFallback = yyFallback[iLookAhead])!=0 ){
+      int iFallback;            /* Fallback token */
+      if( iLookAhead<sizeof(yyFallback)/sizeof(yyFallback[0])
+             && (iFallback = yyFallback[iLookAhead])!=0 ){
 #ifndef NDEBUG
-      if( yyTraceFILE ){
-        fprintf(yyTraceFILE, "%sFALLBACK %s => %s\n",
-           yyTracePrompt, yyTokenName[iLookAhead], yyTokenName[iFallback]);
+        if( yyTraceFILE ){
+          fprintf(yyTraceFILE, "%sFALLBACK %s => %s\n",
+             yyTracePrompt, yyTokenName[iLookAhead], yyTokenName[iFallback]);
+        }
+#endif
+        return yy_find_shift_action(pParser, iFallback);
       }
 #endif
-      return yy_find_shift_action(pParser, iFallback);
+#ifdef YYWILDCARD
+      {
+        int j = i - iLookAhead + YYWILDCARD;
+        if( j>=0 && j<YY_SZ_ACTTAB && yy_lookahead[j]==YYWILDCARD ){
+#ifndef NDEBUG
+          if( yyTraceFILE ){
+            fprintf(yyTraceFILE, "%sWILDCARD %s => %s\n",
+               yyTracePrompt, yyTokenName[iLookAhead], yyTokenName[YYWILDCARD]);
+          }
+#endif /* NDEBUG */
+          return yy_action[j];
+        }
+      }
+#endif /* YYWILDCARD */
     }
-#endif
     return yy_default[stateno];
   }else{
     return yy_action[i];
@@ -366,7 +379,7 @@ static int yy_find_shift_action(
 */
 static int yy_find_reduce_action(
   int stateno,              /* Current state number */
-  int iLookAhead            /* The look-ahead token */
+  YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
   int i;
   /* int stateno = pParser->yystack[pParser->yyidx].stateno; */
@@ -457,13 +470,12 @@ static void yy_reduce(
   yymsp = &yypParser->yystack[yypParser->yyidx];
 #ifndef NDEBUG
   if( yyTraceFILE && yyruleno>=0 
-        && yyruleno<sizeof(yyRuleName)/sizeof(yyRuleName[0]) ){
+        && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0])) ){
     fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
       yyRuleName[yyruleno]);
   }
 #endif /* NDEBUG */
 
-#ifndef NDEBUG
   /* Silence complaints from purify about yygotominor being uninitialized
   ** in some cases when it is copied into the stack after the following
   ** switch.  yygotominor is uninitialized when a rule reduces that does
@@ -471,9 +483,15 @@ static void yy_reduce(
   ** value of the nonterminal uninitialized is utterly harmless as long
   ** as the value is never used.  So really the only thing this code
   ** accomplishes is to quieten purify.  
+  **
+  ** 2007-01-16:  The wireshark project (www.wireshark.org) reports that
+  ** without this code, their parser segfaults.  I'm not sure what there
+  ** parser is doing to make this happen.  This is the second bug report
+  ** from wireshark this week.  Clearly they are stressing Lemon in ways
+  ** that it has not been previously stressed...  (SQLite ticket #2172)
   */
   memset(&yygotominor, 0, sizeof(yygotominor));
-#endif
+
 
   switch( yyruleno ){
   /* Beginning here are the reduction cases.  A typical example

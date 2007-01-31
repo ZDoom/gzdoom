@@ -651,6 +651,7 @@ void RestoreConView()
 	SetWindowLongPtr (Window, GWLP_WNDPROC, (WLONG_PTR)LConProc);
 	ShowWindow (ConWindow, SW_SHOW);
 	ShowWindow (GameTitleWindow, SW_SHOW);
+	I_ShutdownInput ();		// Make sure the mouse pointer is available.
 	// Make sure the progress bar isn't visible.
 	if (ST_Done != NULL)
 	{

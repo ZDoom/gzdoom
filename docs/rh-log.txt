@@ -1,4 +1,8 @@
 January 30, 2007
+- Fixed: When quiting from fullscreen mode, RestoreConView() did not ungrab
+  the mouse.
+- Fixed an old Doom bug: Firing the chaingun with only one bullet still made
+  it play its sound twice.
 - Added an operator += for FString that takes an FName as input, since GCC
   is unable to synthesize one.
 - Converted xlatcc to use lemon during its build process. Now you don't need

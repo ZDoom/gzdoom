@@ -595,7 +595,6 @@ void A_FireCGun (AActor *actor)
 	{
 		return;
 	}
-	S_Sound (actor, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
@@ -603,6 +602,8 @@ void A_FireCGun (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 		
+		S_Sound (actor, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
+
 		FState *flash = weapon->FindState(NAME_Flash);
 		if (flash != NULL)
 		{

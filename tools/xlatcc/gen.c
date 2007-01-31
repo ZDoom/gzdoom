@@ -19,7 +19,7 @@ static char *NameStack[FILE_STACK];
 static int LineStack[FILE_STACK];
 static int SourceStackSize;
 
-int yyparse ();
+void yyparse (void);
 
 int CountSimpleTranslators (void)
 {

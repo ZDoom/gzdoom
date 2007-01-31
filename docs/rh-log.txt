@@ -1,3 +1,9 @@
+January 30, 2007
+- Added an operator += for FString that takes an FName as input, since GCC
+  is unable to synthesize one.
+- Converted xlatcc to use lemon during its build process. Now you don't need
+  bison to rebuild everything anymore.
+
 January 27, 2007
 - Added support for damage-specific player pain sounds.
 - Removed the constraint that all $playerreserve SNDINFO commands must come

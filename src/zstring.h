@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stddef.h>
 #include "tarray.h"
+#include "name.h"
 
 #ifdef __GNUC__
 #define PRINTFISH(x) __attribute__((format(printf, 2, x)))
@@ -117,6 +118,7 @@ public:
 	FString &operator += (const FString &tail);
 	FString &operator += (const char *tail);
 	FString &operator += (char tail);
+	FString &operator += (const FName &name) { return *this += name.GetChars(); }
 	FString &AppendCStrPart (const char *tail, size_t tailLen);
 
 	FString Left (size_t numChars) const;

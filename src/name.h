@@ -34,8 +34,6 @@
 #ifndef NAME_H
 #define NAME_H
 
-#include "doomtype.h"
-
 enum ENamedName
 {
 #define xx(n) NAME_##n,

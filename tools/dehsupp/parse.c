@@ -1,17 +1,15 @@
 /* Driver template for the LEMON parser generator.
 ** The author disclaims copyright to this source code.
 */
-/* First off, code is include which follows the "include" declaration
+/* First off, code is included which follows the "include" declaration
 ** in the input file. */
 #include <stdio.h>
-#ifndef NDEBUG
 #include <string.h>
-#endif
 #line 1 "parse.y"
 
 #include <malloc.h>
 #include "dehsupp.h"
-#line 16 "parse.c"
+#line 13 "parse.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -210,7 +208,7 @@ static const YYACTIONTYPE yy_default[] = {
  /*   120 */   146,  173,  211,  174,  171,  207,  145,  210,  209,  160,
  /*   130 */   144,  143,  170,  216,  191,  169,  212,  142,  215,  214,
 };
-#define YY_SZ_ACTTAB (sizeof(yy_action)/sizeof(yy_action[0]))
+#define YY_SZ_ACTTAB (int)(sizeof(yy_action)/sizeof(yy_action[0]))
 
 /* The next table maps tokens into fallback tokens.  If a construct
 ** like the following:
@@ -488,7 +486,7 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     case 34:
 #line 8 "parse.y"
 { if ((yypminor->yy0).string) free((yypminor->yy0).string); }
-#line 493 "parse.c"
+#line 490 "parse.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -552,7 +550,7 @@ void ParseFree(
 */
 static int yy_find_shift_action(
   yyParser *pParser,        /* The parser */
-  int iLookAhead            /* The look-ahead token */
+  YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
   int i;
   int stateno = pParser->yystack[pParser->yyidx].stateno;
@@ -565,19 +563,35 @@ static int yy_find_shift_action(
   }
   i += iLookAhead;
   if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
+    if( iLookAhead>0 ){
 #ifdef YYFALLBACK
-    int iFallback;            /* Fallback token */
-    if( iLookAhead<sizeof(yyFallback)/sizeof(yyFallback[0])
-           && (iFallback = yyFallback[iLookAhead])!=0 ){
+      int iFallback;            /* Fallback token */
+      if( iLookAhead<sizeof(yyFallback)/sizeof(yyFallback[0])
+             && (iFallback = yyFallback[iLookAhead])!=0 ){
 #ifndef NDEBUG
-      if( yyTraceFILE ){
-        fprintf(yyTraceFILE, "%sFALLBACK %s => %s\n",
-           yyTracePrompt, yyTokenName[iLookAhead], yyTokenName[iFallback]);
+        if( yyTraceFILE ){
+          fprintf(yyTraceFILE, "%sFALLBACK %s => %s\n",
+             yyTracePrompt, yyTokenName[iLookAhead], yyTokenName[iFallback]);
+        }
+#endif
+        return yy_find_shift_action(pParser, iFallback);
       }
 #endif
-      return yy_find_shift_action(pParser, iFallback);
+#ifdef YYWILDCARD
+      {
+        int j = i - iLookAhead + YYWILDCARD;
+        if( j>=0 && j<YY_SZ_ACTTAB && yy_lookahead[j]==YYWILDCARD ){
+#ifndef NDEBUG
+          if( yyTraceFILE ){
+            fprintf(yyTraceFILE, "%sWILDCARD %s => %s\n",
+               yyTracePrompt, yyTokenName[iLookAhead], yyTokenName[YYWILDCARD]);
+          }
+#endif /* NDEBUG */
+          return yy_action[j];
+        }
+      }
+#endif /* YYWILDCARD */
     }
-#endif
     return yy_default[stateno];
   }else{
     return yy_action[i];
@@ -594,7 +608,7 @@ static int yy_find_shift_action(
 */
 static int yy_find_reduce_action(
   int stateno,              /* Current state number */
-  int iLookAhead            /* The look-ahead token */
+  YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
   int i;
   /* int stateno = pParser->yystack[pParser->yyidx].stateno; */
@@ -635,7 +649,7 @@ static void yy_shift(
 #endif
      while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
      /* Here code is inserted which will execute if the parser
-     ** stack every overflows */
+     ** stack ever overflows */
      ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
      return;
   }
@@ -760,13 +774,12 @@ static void yy_reduce(
   yymsp = &yypParser->yystack[yypParser->yyidx];
 #ifndef NDEBUG
   if( yyTraceFILE && yyruleno>=0 
-        && yyruleno<sizeof(yyRuleName)/sizeof(yyRuleName[0]) ){
+        && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0])) ){
     fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
       yyRuleName[yyruleno]);
   }
 #endif /* NDEBUG */
 
-#ifndef NDEBUG
   /* Silence complaints from purify about yygotominor being uninitialized
   ** in some cases when it is copied into the stack after the following
   ** switch.  yygotominor is uninitialized when a rule reduces that does
@@ -774,9 +787,15 @@ static void yy_reduce(
   ** value of the nonterminal uninitialized is utterly harmless as long
   ** as the value is never used.  So really the only thing this code
   ** accomplishes is to quieten purify.  
+  **
+  ** 2007-01-16:  The wireshark project (www.wireshark.org) reports that
+  ** without this code, their parser segfaults.  I'm not sure what there
+  ** parser is doing to make this happen.  This is the second bug report
+  ** from wireshark this week.  Clearly they are stressing Lemon in ways
+  ** that it has not been previously stressed...  (SQLite ticket #2172)
   */
   memset(&yygotominor, 0, sizeof(yygotominor));
-#endif
+
 
   switch( yyruleno ){
   /* Beginning here are the reduction cases.  A typical example
@@ -795,198 +814,198 @@ static void yy_reduce(
   yy_destructor(11,&yymsp[-2].minor);
   yy_destructor(12,&yymsp[0].minor);
 }
-#line 800 "parse.c"
+#line 818 "parse.c"
         break;
       case 18:
 #line 45 "parse.y"
 { printf ("%s", yymsp[0].minor.yy0.string); }
-#line 805 "parse.c"
+#line 823 "parse.c"
         break;
       case 19:
 #line 46 "parse.y"
 { printf ("%d", yymsp[0].minor.yy62); }
-#line 810 "parse.c"
+#line 828 "parse.c"
         break;
       case 20:
 #line 47 "parse.y"
 { printf ("\n");   yy_destructor(15,&yymsp[0].minor);
 }
-#line 816 "parse.c"
+#line 834 "parse.c"
         break;
       case 21:
 #line 50 "parse.y"
 { yygotominor.yy62 = yymsp[0].minor.yy0.val; }
-#line 821 "parse.c"
+#line 839 "parse.c"
         break;
       case 22:
 #line 51 "parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 + yymsp[0].minor.yy62;   yy_destructor(5,&yymsp[-1].minor);
 }
-#line 827 "parse.c"
+#line 845 "parse.c"
         break;
       case 23:
 #line 52 "parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 - yymsp[0].minor.yy62;   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 833 "parse.c"
+#line 851 "parse.c"
         break;
       case 24:
 #line 53 "parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 * yymsp[0].minor.yy62;   yy_destructor(6,&yymsp[-1].minor);
 }
-#line 839 "parse.c"
+#line 857 "parse.c"
         break;
       case 25:
 #line 54 "parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 / yymsp[0].minor.yy62;   yy_destructor(7,&yymsp[-1].minor);
 }
-#line 845 "parse.c"
+#line 863 "parse.c"
         break;
       case 26:
 #line 55 "parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 | yymsp[0].minor.yy62;   yy_destructor(1,&yymsp[-1].minor);
 }
-#line 851 "parse.c"
+#line 869 "parse.c"
         break;
       case 27:
 #line 56 "parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 & yymsp[0].minor.yy62;   yy_destructor(3,&yymsp[-1].minor);
 }
-#line 857 "parse.c"
+#line 875 "parse.c"
         break;
       case 28:
 #line 57 "parse.y"
 { yygotominor.yy62 = yymsp[-2].minor.yy62 ^ yymsp[0].minor.yy62;   yy_destructor(2,&yymsp[-1].minor);
 }
-#line 863 "parse.c"
+#line 881 "parse.c"
         break;
       case 29:
 #line 58 "parse.y"
 { yygotominor.yy62 = -yymsp[0].minor.yy62;   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 869 "parse.c"
+#line 887 "parse.c"
         break;
       case 30:
 #line 59 "parse.y"
 { yygotominor.yy62 = yymsp[-1].minor.yy62;   yy_destructor(11,&yymsp[-2].minor);
   yy_destructor(12,&yymsp[0].minor);
 }
-#line 876 "parse.c"
+#line 894 "parse.c"
         break;
       case 33:
 #line 65 "parse.y"
 { AddAction (yymsp[0].minor.yy0.string); }
-#line 881 "parse.c"
+#line 899 "parse.c"
         break;
       case 34:
 #line 66 "parse.y"
 { AddAction (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 887 "parse.c"
+#line 905 "parse.c"
         break;
       case 37:
 #line 72 "parse.y"
 { AddHeight (yymsp[0].minor.yy62); }
-#line 892 "parse.c"
+#line 910 "parse.c"
         break;
       case 38:
 #line 73 "parse.y"
 { AddHeight (yymsp[0].minor.yy62);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 898 "parse.c"
+#line 916 "parse.c"
         break;
       case 41:
 #line 79 "parse.y"
 { AddActionMap (yymsp[0].minor.yy0.string); }
-#line 903 "parse.c"
+#line 921 "parse.c"
         break;
       case 42:
 #line 80 "parse.y"
 { AddActionMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 909 "parse.c"
+#line 927 "parse.c"
         break;
       case 45:
 #line 86 "parse.y"
 { AddCodeP (yymsp[0].minor.yy62); }
-#line 914 "parse.c"
+#line 932 "parse.c"
         break;
       case 46:
 #line 87 "parse.y"
 { AddCodeP (yymsp[0].minor.yy62);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 920 "parse.c"
+#line 938 "parse.c"
         break;
       case 49:
 #line 93 "parse.y"
 { AddSpriteName (yymsp[0].minor.yy0.string); }
-#line 925 "parse.c"
+#line 943 "parse.c"
         break;
       case 50:
 #line 94 "parse.y"
 { AddSpriteName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 931 "parse.c"
+#line 949 "parse.c"
         break;
       case 55:
 #line 103 "parse.y"
 { AddStateMap (yymsp[-4].minor.yy0.string, yymsp[-2].minor.yy62, yymsp[0].minor.yy62);   yy_destructor(13,&yymsp[-3].minor);
   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 938 "parse.c"
+#line 956 "parse.c"
         break;
       case 56:
 #line 106 "parse.y"
 { yygotominor.yy62 = 0;   yy_destructor(28,&yymsp[0].minor);
 }
-#line 944 "parse.c"
+#line 962 "parse.c"
         break;
       case 57:
 #line 107 "parse.y"
 { yygotominor.yy62 = 1;   yy_destructor(29,&yymsp[0].minor);
 }
-#line 950 "parse.c"
+#line 968 "parse.c"
         break;
       case 58:
 #line 108 "parse.y"
 { yygotominor.yy62 = 2;   yy_destructor(30,&yymsp[0].minor);
 }
-#line 956 "parse.c"
+#line 974 "parse.c"
         break;
       case 61:
 #line 114 "parse.y"
 { AddSoundMap (yymsp[0].minor.yy0.string); }
-#line 961 "parse.c"
+#line 979 "parse.c"
         break;
       case 62:
 #line 115 "parse.y"
 { AddSoundMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 967 "parse.c"
+#line 985 "parse.c"
         break;
       case 65:
 #line 121 "parse.y"
 { AddInfoName (yymsp[0].minor.yy0.string); }
-#line 972 "parse.c"
+#line 990 "parse.c"
         break;
       case 66:
 #line 122 "parse.y"
 { AddInfoName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 978 "parse.c"
+#line 996 "parse.c"
         break;
       case 71:
 #line 131 "parse.y"
 { AddThingBits (yymsp[0].minor.yy0.string, yymsp[-4].minor.yy62, yymsp[-2].minor.yy62);   yy_destructor(13,&yymsp[-3].minor);
   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 985 "parse.c"
+#line 1003 "parse.c"
         break;
       case 76:
 #line 140 "parse.y"
 { AddRenderStyle (yymsp[0].minor.yy0.string, yymsp[-2].minor.yy62);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 991 "parse.c"
+#line 1009 "parse.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -1123,6 +1142,9 @@ void Parse(
         yymajor = 0;
       }else{
         yymajor = YYNOCODE;
+        while( yypParser->yyidx>= 0 && (yyact = yy_find_shift_action(yypParser,YYNOCODE)) < YYNSTATE + YYNRULE ){
+          yy_reduce(yypParser,yyact-YYNSTATE);
+        }
       }
     }else if( yyact < YYNSTATE + YYNRULE ){
       yy_reduce(yypParser,yyact-YYNSTATE);

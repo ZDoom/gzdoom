@@ -19,10 +19,10 @@ CCDV = @../../ccdv
 CC = gcc
 LDFLAGS= -s
 
-BISON = bison
-BISONFLAGS = 
+LEMON = ../lemon/lemon
+LEMONFLAGS =
 
-OBJS = gen.o xlat-parse.tab.o
+OBJS = gen.o xlat-parse.o
 
 all: $(EXE)
 
@@ -40,11 +40,11 @@ else
 	rm -f *.o
 endif
 
-xlat-parse.tab.o: xlat-parse.tab.c xlat.h
+xlat-parse.o: xlat-parse.c xlat.h xlat-parse.h
 	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<
 
-xlat-parse.tab.c: xlat-parse.y
-	$(CCDV) $(BISON) $(BISONFLAGS) -o $@ $<
+xlat-parse.c xlat-parse.h: xlat-parse.y
+	$(CCDV) $(LEMON) $(LEMONFLAGS) $<
    
 gen.o: gen.c xlat.h
 	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<

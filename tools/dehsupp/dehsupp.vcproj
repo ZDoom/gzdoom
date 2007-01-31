@@ -377,7 +377,7 @@
 					Name="VCCustomBuildTool"
 					Description="Creating parse.c from parse.y"
 					CommandLine="..\lemon\lemon.exe -s &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
-					Outputs="$(InputDir)parse.c"
+					Outputs="$(InputDir)parse.c;$(InputDir)parse.h"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -397,7 +397,7 @@
 					Name="VCCustomBuildTool"
 					Description="Creating parse.c from parse.y"
 					CommandLine="..\lemon\lemon.exe -s &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
-					Outputs="$(InputDir)parse.c"
+					Outputs="$(InputDir)parse.c;$(InputDir)parse.h"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -424,7 +424,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Creating scanner.c from scanner.re"
-					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;"
+					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
 					Outputs="$(InputDir)scanner.c"
 				/>
 			</FileConfiguration>
@@ -434,7 +434,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Creating scanner.c from scanner.re"
-					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;"
+					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
 					Outputs="$(InputDir)scanner.c"
 				/>
 			</FileConfiguration>
@@ -444,7 +444,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Creating scanner.c from scanner.re"
-					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;"
+					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
 					Outputs="$(InputDir)scanner.c"
 				/>
 			</FileConfiguration>
@@ -454,7 +454,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Creating scanner.c from scanner.re"
-					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;"
+					CommandLine="..\re2c\re2c -s -o &quot;scanner.c&quot; &quot;$(InputFileName)&quot;&#x0D;&#x0A;"
 					Outputs="$(InputDir)scanner.c"
 				/>
 			</FileConfiguration>

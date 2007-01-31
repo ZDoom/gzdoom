@@ -16,7 +16,7 @@ special
 	219:Sector_SetFriction(),
 	222:Scroll_Texture_Model(),
 	225:Scroll_Texture_Offsets(),
-	227:PointPush_SetForce(),
+	227:PointPush_SetForce()
 ;
 
 // Static_Init types

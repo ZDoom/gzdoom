@@ -4,6 +4,7 @@
 /* First off, code is included which follows the "include" declaration
 ** in the input file. */
 #include <stdio.h>
+#include <string.h>
 %%
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
@@ -420,7 +421,7 @@ static void yy_shift(
 #endif
      while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
      /* Here code is inserted which will execute if the parser
-     ** stack every overflows */
+     ** stack ever overflows */
 %%
      ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
      return;
@@ -641,6 +642,9 @@ void Parse(
         yymajor = 0;
       }else{
         yymajor = YYNOCODE;
+        while( yypParser->yyidx>= 0 && (yyact = yy_find_shift_action(yypParser,YYNOCODE)) < YYNSTATE + YYNRULE ){
+          yy_reduce(yypParser,yyact-YYNSTATE);
+        }
       }
     }else if( yyact < YYNSTATE + YYNRULE ){
       yy_reduce(yypParser,yyact-YYNSTATE);

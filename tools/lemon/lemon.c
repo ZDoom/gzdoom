@@ -2287,7 +2287,7 @@ to follow the previous rule.");
     case WAITING_FOR_DESTRUCTOR_SYMBOL:
       if( !isalpha(x[0]) ){
         ErrorMsg(psp->filename,psp->tokenlineno,
-          "Symbol name missing after %destructor keyword");
+          "Symbol name missing after %%destructor keyword");
         psp->errorcnt++;
         psp->state = RESYNC_AFTER_DECL_ERROR;
       }else{
@@ -2300,7 +2300,7 @@ to follow the previous rule.");
     case WAITING_FOR_DATATYPE_SYMBOL:
       if( !isalpha(x[0]) ){
         ErrorMsg(psp->filename,psp->tokenlineno,
-          "Symbol name missing after %destructor keyword");
+          "Symbol name missing after %%destructor keyword");
         psp->errorcnt++;
         psp->state = RESYNC_AFTER_DECL_ERROR;
       }else{
@@ -2450,6 +2450,23 @@ static void preprocess_input(char *z){
   }
 }
 
+int strip_crlf(filebuf, filesize)
+char *filebuf;
+int filesize;
+{
+	int i, j;
+
+	for (i = j = 0; i < filesize; ++i, ++j)
+	{
+		if (filebuf[i] == '\r' && filebuf[i+1] == '\n')
+		{
+			++i;
+		}
+		filebuf[j] = filebuf[i];
+	}
+	return j;
+}
+
 /* In spite of its name, this function is really a scanner.  It read
 ** in the entire input file (all at once) then tokenizes it.  Each
 ** token is passed to the function "parseonetoken" which builds all
@@ -2498,6 +2515,7 @@ struct lemon *gp;
     return;
   }
   fclose(fp);
+  filesize = strip_crlf(filebuf, filesize);
   filebuf[filesize] = 0;
 
   /* Make an initial pass through the file to handle %ifdef and %ifndef */
@@ -3079,8 +3097,8 @@ int *lineno;
     putc('\n',out);
     (*lineno)++;
   }
-  tplt_linedir(out,*lineno+2,lemp->outname); 
-  (*lineno)+=2;
+  tplt_linedir(out,*lineno+1,lemp->outname); 
+  (*lineno)+=1;
   return;
 }
 

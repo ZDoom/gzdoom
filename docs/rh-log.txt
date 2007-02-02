@@ -1,3 +1,10 @@
+February 2, 2007
+- Fixed: The SafeDivScales used a signed shift for their if test. This fails
+  when a == 0x80000000, because the result of abs will still be negative as
+  long as we use signed math.
+- Fixed: SafeDivScale31 performed DivScale32 instead.
+- Fixed: R_DrawSpanP_ASM had a short jump into a different section.
+
 January 30, 2007
 - Fixed: When quiting from fullscreen mode, RestoreConView() did not ungrab
   the mouse.

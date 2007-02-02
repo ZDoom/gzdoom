@@ -321,7 +321,7 @@ R_DrawSpanP_ASM:
 	mov	eax,[ds_x2]
 	 mov	ecx,[ds_x1]
 	sub	eax,ecx
-	 jl	aret		; count < 0: nothing to do, so leave
+	 jl	near rdspret		; count < 0: nothing to do, so leave
 
 	push	ebx
 	push	edi

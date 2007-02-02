@@ -23,7 +23,7 @@
 #define MAKESAFEDIVSCALE(x) \
 	inline SDWORD SafeDivScale##x (SDWORD a, SDWORD b) \
 	{ \
-		if (abs(a) >> (31-x) >= abs (b)) \
+		if ((DWORD)abs(a) >> (31-x) >= (DWORD)abs (b)) \
 			return (a^b)<0 ? FIXED_MIN : FIXED_MAX; \
 		return DivScale##x (a, b); \
 	}
@@ -62,14 +62,14 @@ MAKESAFEDIVSCALE(30)
 
 inline SDWORD SafeDivScale31 (SDWORD a, SDWORD b)
 {
-	if (abs(a) >= abs (b))
+	if ((DWORD)abs(a) >= (DWORD)abs (b))
 		return (a^b)<0 ? FIXED_MIN : FIXED_MAX;
-	return DivScale32 (a, b);
+	return DivScale31 (a, b);
 }
 
 inline SDWORD SafeDivScale32 (SDWORD a, SDWORD b)
 {
-	if (abs(a) >= abs (b) >> 1)
+	if ((DWORD)abs(a) >= (DWORD)abs (b) >> 1)
 		return (a^b)<0 ? FIXED_MIN : FIXED_MAX;
 	return DivScale32 (a, b);
 }

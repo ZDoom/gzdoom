@@ -779,46 +779,6 @@ void DoMain (HINSTANCE hInstance)
 		// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
 		HMODULE kernel = GetModuleHandle ("kernel32.dll");
 
-		// NASM does not support creating writeable code sections (even though this
-		// is a perfectly valid configuration for Microsoft's COFF format), so I
-		// need to make the self-modifying code writeable after it's already loaded.
-#ifdef USEASM
-	{
-		BYTE *module = (BYTE *)GetModuleHandle (NULL);
-		IMAGE_DOS_HEADER *dosHeader = (IMAGE_DOS_HEADER *)module;
-		IMAGE_NT_HEADERS *ntHeaders = (IMAGE_NT_HEADERS *)(module + dosHeader->e_lfanew);
-		IMAGE_SECTION_HEADER *sections = IMAGE_FIRST_SECTION (ntHeaders);
-		int i;
-		LPVOID *start = NULL;
-		SIZE_T size = 0;
-		DWORD oldprotect;
-
-		for (i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i)
-		{
-			if (memcmp (sections[i].Name, ".rtext\0", 8) == 0)
-			{
-				start = (LPVOID *)(sections[i].VirtualAddress + module);
-				size = sections[i].Misc.VirtualSize;
-				break;
-			}
-		}
-
-		// I think these pages need to be mapped PAGE_EXECUTE_WRITECOPY (based on the
-		// description of PAGE_WRITECOPY), but PAGE_EXECUTE_READWRITE seems to work
-		// just as well; two instances of the program can be running with different
-		// resolutions at the same time either way. Perhaps the file mappings for
-		// executables are created with PAGE_WRITECOPY, so any attempts to give them
-		// write access are automatically transformed to copy-on-write?
-		//
-		// This used to be PAGE_EXECUTE_WRITECOPY until Timmie found out Win9x doesn't
-		// support it, although the MSDN does not indicate it.
-		if (!VirtualProtect (start, size, PAGE_EXECUTE_READWRITE, &oldprotect))
-		{
-			I_FatalError ("The self-modifying code section code not be made writeable.");
-		}
-	}
-#endif
-
 		// Set the timer to be as accurate as possible
 		if (timeGetDevCaps (&tc, sizeof(tc)) != TIMERR_NOERROR)
 			TimerPeriod = 1;	// Assume minimum resolution of 1 ms

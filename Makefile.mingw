@@ -91,6 +91,7 @@ $(OBJDIR)/%.o : %.cpp
 
 $(OBJDIR)/%.o : %.nas
 	$(CCDV) nasmw -o $@ -f win32 $<
+	@tools/fixrtext/fixrtext $@
 
 $(OBJDIR)/%.o : %.rc
 	$(CCDV) windres --include-dir=src/win32 -o $@ -i $<

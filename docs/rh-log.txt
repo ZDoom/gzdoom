@@ -1,4 +1,13 @@
 February 2, 2007
+- Added a new fixrtext tool that sets the IMAGE_SCN_MEM_WRITE flag for
+  .rtext files in the assembly object files. Now I can avoid doing this at
+  runtime, which means that ZDoom is now UPX-compatible if anyone wants to
+  pack it.
+  
+  You will need to do a rebuild or manually delete the old assembly .obj files
+  for the first build from this revision to succeed, since there are no
+  changes to the assembly files themselves, and the build process will not be
+  able to automatically detect that they need to be rebuilt.
 - Fixed: The SafeDivScales used a signed shift for their if test. This fails
   when a == 0x80000000, because the result of abs will still be negative as
   long as we use signed math.

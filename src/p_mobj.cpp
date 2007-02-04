@@ -3478,7 +3478,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 	p->multicount = 0;
 	p->lastkilltime = 0;
 	p->BlendR = p->BlendG = p->BlendB = p->BlendA = 0.f;
-	p->air_finished = level.time + level.airsupply;
+	p->mo->ResetAirSupply();
 	p->Uncrouch();
 
 	p->momx = p->momy = 0;		// killough 10/98: initialize bobbing to 0.

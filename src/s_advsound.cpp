@@ -128,7 +128,6 @@ enum SICommands
 {
 	SI_Ambient,
 	SI_Random,
-	SI_PlayerReserve,
 	SI_PlayerSound,
 	SI_PlayerSoundDup,
 	SI_PlayerCompat,
@@ -219,7 +218,6 @@ static const char *SICommandStrings[] =
 {
 	"$ambient",
 	"$random",
-	"$playerreserve",
 	"$playersound",
 	"$playersounddup",
 	"$playercompat",
@@ -452,7 +450,12 @@ int S_AddSoundLump (const char *logicalname, int lump)
 int S_FindSoundTentative (const char *name)
 {
 	int id = S_FindSoundNoHash (name);
-	return id != 0 ? id : S_AddSoundLump (name, -1);
+	if (id == 0)
+	{
+		id = S_AddSoundLump (name, -1);
+		S_sfx[id].bTentative = true;
+	}
+	return id;
 }
 
 //==========================================================================
@@ -500,6 +503,7 @@ static int S_AddSound (const char *logicalname, int lumpnum)
 		sfx->lumpnum = lumpnum;
 		sfx->bRandomHeader = false;
 		sfx->link = sfxinfo_t::NO_LINK;
+		sfx->bTentative = false;
 		//sfx->PitchMask = CurrentPitchMask;
 	}
 	else
@@ -537,9 +541,9 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum, bo
 	int id;
 
 	fakename = pclass;
-	fakename += ';';
+	fakename += '"';
 	fakename += '0' + gender;
-	fakename += ';';
+	fakename += '"';
 	fakename += S_sfx[refid].name;
 
 	id = S_AddSoundLump (fakename, lumpnum);
@@ -1000,16 +1004,6 @@ static void S_AddSNDINFO (int lump)
 				SC_MustGetString ();	// Unused for now
 				break;
 
-			case SI_PlayerReserve:
-				// $playerreserve <logical name>
-				{
-					SC_MustGetString ();
-					int id = S_AddSound (sc_String, -1);
-					S_sfx[id].link = NumPlayerReserves++;
-					S_sfx[id].bPlayerReserve = true;
-				}
-				break;
-
 			case SI_PlayerSound: {
 				// $playersound <player class> <gender> <logical name> <lump name>
 				char pclass[MAX_SNDNAME+1];
@@ -1269,9 +1263,20 @@ static void S_ParsePlayerSoundCommon (char pclass[MAX_SNDNAME+1], int &gender, i
 	gender = D_GenderToInt (sc_String);
 	SC_MustGetString ();
 	refid = S_FindSoundNoHash (sc_String);
-	if (!S_sfx[refid].bPlayerReserve)
+	if (refid != 0 && !S_sfx[refid].bPlayerReserve && !S_sfx[refid].bTentative)
 	{
-		SC_ScriptError ("%s has not been reserved for a player sound", sc_String);
+		SC_ScriptError ("%s has already been used for a non-player sound.", sc_String);
+	}
+	if (refid == 0)
+	{
+		refid = S_AddSound (sc_String, -1);
+		S_sfx[refid].bTentative = true;
+	}
+	if (S_sfx[refid].bTentative)
+	{
+		S_sfx[refid].link = NumPlayerReserves++;
+		S_sfx[refid].bTentative = false;
+		S_sfx[refid].bPlayerReserve = true;
 	}
 	SC_MustGetString ();
 }
@@ -1599,6 +1604,31 @@ int S_FindSkinnedSound (AActor *actor, int refid)
 	}
 
 	return S_LookupPlayerSound (pclass, gender, refid);
+}
+
+//==========================================================================
+//
+// S_FindSkinnedSoundEx
+//
+// Tries looking for both "name-extendedname" and "name" in that order.
+//==========================================================================
+
+int S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedname)
+{
+	FString fullname;
+	int id;
+
+	// Look for "name-extendedname";
+	fullname = name;
+	fullname += '-';
+	fullname += extendedname;
+	id = S_FindSound (fullname);
+
+	if (id == 0)
+	{ // Look for "name"
+		id = S_FindSound (name);
+	}
+	return S_FindSkinnedSound (actor, id);
 }
 
 //==========================================================================

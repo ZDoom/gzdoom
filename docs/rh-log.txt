@@ -1,3 +1,18 @@
+February 3, 2007
+- Reduced the rate at which drowning damage increases.
+- Added more player water sounds:
+    *dive - Played when your head goes below water.
+    *surface - Played when your head goes back above water.
+    *gasp - Played when you were drowning and get your air back.
+  If your head surfaces and you were drowning, only *gasp plays, not both.
+- Added damage-specific player death sounds, in the same fashion as the
+  damage-specific player pain sounds. It looks for a sound with a name like
+  "*death-damagetype" first and then "*death" if the first sound didn't exist.
+- Removed the constraint that player sounds must be reserved before they can
+  be assigned. Hence, the $playerreserve command has been eliminated, because
+  it is no longer needed and it was never accessible from user wads, so I
+  don't need to worry about breaking anything by removing it.
+
 February 2, 2007
 - Added a new fixrtext tool that sets the IMAGE_SCN_MEM_WRITE flag for
   .rtext files in the assembly object files. Now I can avoid doing this at

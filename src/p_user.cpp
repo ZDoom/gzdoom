@@ -834,6 +834,55 @@ int APlayerPawn::GetMaxHealth() const
 
 //===========================================================================
 //
+// APlayerPawn :: UpdateWaterLevel
+//
+// Plays surfacing and diving sounds, as appropriate.
+//
+//===========================================================================
+
+bool APlayerPawn::UpdateWaterLevel (fixed_t oldz, bool splash)
+{
+	int oldlevel = waterlevel;
+	bool retval = Super::UpdateWaterLevel (oldz, splash);
+	if (oldlevel < 3 && waterlevel == 3)
+	{ // Our head just went under.
+		S_Sound (this, CHAN_VOICE, "*dive", 1, ATTN_NORM);
+	}
+	else if (oldlevel == 3 && waterlevel < 3)
+	{ // Our head just came up.
+		if (player->air_finished > level.time)
+		{ // We hadn't run out of air yet.
+			S_Sound (this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
+		}
+		// If we were running out of air, then ResetAirSupply() will play *gasp.
+	}
+	return retval;
+}
+
+//===========================================================================
+//
+// APlayerPawn :: ResetAirSupply
+//
+// Gives the player a full "tank" of air. If they had previously completely
+// run out of air, also plays the *gasp sound. Returns true if the player
+// was drowning.
+//
+//===========================================================================
+
+bool APlayerPawn::ResetAirSupply ()
+{
+	bool wasdrowning = (player->air_finished < level.time);
+
+	if (wasdrowning)
+	{
+		S_Sound (this, CHAN_VOICE, "*gasp", 1, ATTN_NORM);
+	}
+	player->air_finished = level.time + level.airsupply;
+	return wasdrowning;
+}
+
+//===========================================================================
+//
 // Animations
 //
 //===========================================================================
@@ -1108,27 +1157,27 @@ void A_PlayerScream (AActor *self)
 
 	if (!sound && self->special1<10)
 	{ // Wimpy death sound
-		sound = S_FindSkinnedSound (self, "*wimpydeath");
+		sound = S_FindSkinnedSoundEx (self, "*wimpydeath", self->player->LastDamageType);
 	}
 	if (!sound && self->health <= -50)
 	{
 		if (self->health > -100)
 		{ // Crazy death sound
-			sound = S_FindSkinnedSound (self, "*crazydeath");
+			sound = S_FindSkinnedSoundEx (self, "*crazydeath", self->player->LastDamageType);
 		}
 		if (!sound)
 		{ // Extreme death sound
-			sound = S_FindSkinnedSound (self, "*xdeath");
+			sound = S_FindSkinnedSoundEx (self, "*xdeath", self->player->LastDamageType);
 			if (!sound)
 			{
-				sound = S_FindSkinnedSound (self, "*gibbed");
+				sound = S_FindSkinnedSoundEx (self, "*gibbed", self->player->LastDamageType);
 				chan = CHAN_BODY;
 			}
 		}
 	}
 	if (!sound)
 	{ // Normal death sound
-		sound=S_FindSkinnedSound (self, "*death");
+		sound = S_FindSkinnedSoundEx (self, "*death", self->player->LastDamageType);
 	}
 
 	if (chan != CHAN_VOICE)
@@ -2122,17 +2171,17 @@ void P_PlayerThink (player_t *player)
 		}
 
 		// Handle air supply
-		if (level.airsupply>0)
+		if (level.airsupply > 0)
 		{
 			if (player->mo->waterlevel < 3 ||
 				(player->mo->flags2 & MF2_INVULNERABLE) ||
 				(player->cheats & CF_GODMODE))
 			{
-				player->air_finished = level.time + level.airsupply;
+				player->mo->ResetAirSupply ();
 			}
 			else if (player->air_finished <= level.time && !(level.time & 31))
 			{
-				P_DamageMobj (player->mo, NULL, NULL, 2 + 2*((level.time-player->air_finished)/TICRATE), NAME_Drowning);
+				P_DamageMobj (player->mo, NULL, NULL, 2 + ((level.time-player->air_finished)/TICRATE), NAME_Drowning);
 			}
 		}
 	}

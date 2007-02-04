@@ -13,29 +13,6 @@
 //
 //===========================================================================
 
-$playerreserve			*death
-$playerreserve			*xdeath
-$playerreserve			*wimpydeath
-$playerreserve			*crazydeath
-$playerreserve			*burndeath
-$playerreserve			*gibbed
-$playerreserve			*splat
-$playerreserve			*pain100
-$playerreserve			*pain75
-$playerreserve			*pain50
-$playerreserve			*pain25
-$playerreserve			*grunt
-$playerreserve			*land
-$playerreserve			*falling
-$playerreserve			*jump
-$playerreserve			*fist
-$playerreserve			*fistgrunt
-$playerreserve			*usefail
-$playerreserve			*evillaugh
-$playerreserve			*weaponlaugh
-$playerreserve			*puzzfail
-$playerreserve			*poison
-
 // Use *pain in a script to play any of the pain sounds
 $random *pain			{ *pain100  *pain75  *pain50  *pain25 }
 

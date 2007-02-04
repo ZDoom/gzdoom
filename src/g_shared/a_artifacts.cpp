@@ -727,7 +727,7 @@ void APowerIronFeet::AbsorbDamage (int damage, FName damageType, int &newdamage)
 		newdamage = 0;
 		if (Owner->player != NULL)
 		{
-			Owner->player->air_finished = level.time + level.airsupply;
+			Owner->player->mo->ResetAirSupply ();
 		}
 	}
 	else if (Inventory != NULL)

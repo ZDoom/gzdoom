@@ -92,7 +92,9 @@
 
 #define LEVEL_LAXMONSTERACTIVATION	UCONST64(0x400000000)	// Monsters can open doors depending on the door speed
 #define LEVEL_LAXACTIVATIONMAPINFO	UCONST64(0x800000000)	// LEVEL_LAXMONSTERACTIVATION is not a default.
-// some unused bits here!
+
+#define LEVEL_MISSILESACTIVATEIMPACT UCONST64(0x1000000000)	// Missiles are the activators of SPAC_IMPACT events, not their shooters
+// an unused bit here!
 
 #define LEVEL_KEEPFULLINVENTORY		UCONST64(0x4000000000)	// doesn't reduce the amount of inventory items to 1
 

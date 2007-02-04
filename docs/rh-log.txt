@@ -1,4 +1,7 @@
 February 3, 2007
+- Added two new MAPINFO flags to control what actor activates impact lines:
+    * MissileShootersActivateImpactLines - the current behavior.
+    * MissilesActivateImpactLines - the original Hexen behavior.
 - Fixed: The changecamera special should remove "past viewer" information
   from the renderer in case the camera changed position or direction since
   the last time it was looked through. Otherwise, the renderer will

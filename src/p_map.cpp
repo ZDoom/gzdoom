@@ -1539,8 +1539,16 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 		}
 		else if (mobj->flags2 & MF2_IMPACT)
 		{
-			P_ActivateLine (line, ((mobj->flags & MF_MISSILE) && (mobj->target != NULL))
-				? mobj->target : mobj, side, SPAC_IMPACT);
+			if ((level.flags & LEVEL_MISSILESACTIVATEIMPACT) ||
+				!(mobj->flags & MF_MISSILE) ||
+				(mobj->target == NULL))
+			{
+				P_ActivateLine (line, mobj, side, SPAC_IMPACT);
+			}
+			else
+			{
+				P_ActivateLine (line, mobj->target, side, SPAC_IMPACT);
+			}
 		}	
 	}
 }

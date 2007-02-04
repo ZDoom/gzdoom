@@ -242,6 +242,8 @@ static const char *MapInfoMapLevel[] =
 	"filterstarts",
 	"activateowndeathspecials",
 	"killeractivatesdeathspecials",
+	"missilesactivateimpactlines",
+	"missileshootersactivetimpactlines",
 	"noinventorybar",
 	"deathslideshow",
 	"redirect",
@@ -373,6 +375,8 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_FILTERSTARTS, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_MISSILESACTIVATEIMPACT, 0 },
+	{ MITYPE_CLRFLAG,	LEVEL_MISSILESACTIVATEIMPACT, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_NOINVENTORYBAR, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_DEATHSLIDESHOW, 0 },
 	{ MITYPE_REDIRECT,	lioffset(RedirectMap), 0 },
@@ -562,7 +566,7 @@ static void G_DoParseMapInfo (int lump)
 
 	SetLevelDefaults (&defaultinfo);
 	SC_OpenLumpNum (lump, "MAPINFO");
-	HexenHack=false;
+	HexenHack = false;
 
 	while (SC_GetString ())
 	{
@@ -584,12 +588,14 @@ static void G_DoParseMapInfo (int lump)
 				sprintf (sc_String, "MAP%02d", map);
 				HexenHack = true;
 				// Hexen levels are automatically nointermission,
-				// no auto sound sequences, falling damage, and
-				// monsters activate their own specials.
+				// no auto sound sequences, falling damage,
+				// monsters activate their own specials, and missiles
+				// are always the activators of impact lines.
 				levelflags |= LEVEL_NOINTERMISSION
 							| LEVEL_SNDSEQTOTALCTRL
 							| LEVEL_FALLDMG_HX
-							| LEVEL_ACTOWNSPECIAL;
+							| LEVEL_ACTOWNSPECIAL
+							| LEVEL_MISSILESACTIVATEIMPACT;
 			}
 			levelindex = FindWadLevelInfo (sc_String);
 			if (levelindex == -1)

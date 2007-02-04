@@ -1497,7 +1497,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
 		{
 			musicname = level.music;
-			order = level.musicorder
+			order = level.musicorder;
 		}
 		else
 		{

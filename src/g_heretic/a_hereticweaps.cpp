@@ -882,6 +882,7 @@ IMPLEMENT_STATELESS_ACTOR (AMacePowered, Heretic, -1, 0)
 	PROP_Weapon_AmmoUse1 (USE_MACE_AMMO_2)
 	PROP_Weapon_AmmoGive1 (0)
 	PROP_Weapon_AtkState (S_MACEATK2)
+	PROP_Weapon_HoldAtkState (S_MACEATK2)
 	PROP_Weapon_SisterType ("Mace")
 	PROP_Weapon_ProjectileType ("MaceFX4")
 END_DEFAULTS

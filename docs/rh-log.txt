@@ -1,3 +1,8 @@
+February 4, 2007 (Changes by Graf Zahl)
+- Fixed: The powered up Mace was missing its HoldAtkState.
+- Added: Using "*" with ACS's music commands will play the level's default 
+  music set in MAPINFO.
+
 February 3, 2007
 - Added two new MAPINFO flags to control what actor activates impact lines:
     * MissileShootersActivateImpactLines - the current behavior.

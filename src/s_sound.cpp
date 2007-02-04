@@ -1491,13 +1491,27 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		return false;
 	}
 
+	// allow specifying "*" as a placeholder to play the level's default music.
+	if (musicname != NULL && !strcmp(musicname, "*"))
+	{
+		if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
+		{
+			musicname = level.music;
+			order = level.musicorder
+		}
+		else
+		{
+			musicname = NULL;
+		}
+	}
+
 	if (musicname == NULL || musicname[0] == 0)
 	{
 		// Don't choke if the map doesn't have a song attached
 		S_StopMusic (true);
 		return false;
 	}
-
+	
 	if (!mus_playing.name.IsEmpty() && stricmp (mus_playing.name, musicname) == 0)
 	{
 		if (order != mus_playing.baseorder)

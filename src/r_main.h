@@ -261,6 +261,7 @@ void clearinterpolations();
 void SerializeInterpolations(FArchive &arc);
 
 extern void R_FreePastViewers ();
+extern void R_ClearPastViewer (AActor *actor);
 
 extern int stacked_extralight;
 extern float stacked_visibility;

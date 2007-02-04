@@ -980,6 +980,33 @@ void R_FreePastViewers ()
 
 //==========================================================================
 //
+// R_ClearPastViewer
+//
+// If the actor changed in a non-interpolatable way, remove it.
+//
+//==========================================================================
+
+void R_ClearPastViewer (AActor *actor)
+{
+	for (unsigned int i = 0; i < PastViewers.Size(); ++i)
+	{
+		if (PastViewers[i].ViewActor == actor)
+		{
+			// Found it, so remove it.
+			if (i == PastViewers.Size())
+			{
+				PastViewers.Delete (i);
+			}
+			else
+			{
+				PastViewers.Pop (PastViewers[i]);
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // R_CopyStackedViewParameters
 //
 //==========================================================================

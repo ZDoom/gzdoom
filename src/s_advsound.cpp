@@ -1642,30 +1642,30 @@ CCMD (soundlist)
 		const sfxinfo_t *sfx = &S_sfx[i];
 		if (sfx->bRandomHeader)
 		{
-			Printf ("%3d. %s -> #%d {", i, sfx->name, sfx->link);
+			Printf ("%3d. %s -> #%d {", i, sfx->name.GetChars(), sfx->link);
 			const FRandomSoundList *list = &S_rnd[sfx->link];
 			for (size_t j = 0; j < list->NumSounds; ++j)
 			{
-				Printf (" %s ", S_sfx[list->Sounds[j]].name);
+				Printf (" %s ", S_sfx[list->Sounds[j]].name.GetChars());
 			}
 			Printf ("}\n");
 		}
 		else if (sfx->bPlayerReserve)
 		{
-			Printf ("%3d. %s <<player sound %d>>\n", i, sfx->name, sfx->link);
+			Printf ("%3d. %s <<player sound %d>>\n", i, sfx->name.GetChars(), sfx->link);
 		}
 		else if (S_sfx[i].lumpnum != -1)
 		{
 			Wads.GetLumpName (lumpname, sfx->lumpnum);
-			Printf ("%3d. %s (%s)\n", i, sfx->name, lumpname);
+			Printf ("%3d. %s (%s)\n", i, sfx->name.GetChars(), lumpname);
 		}
 		else if (S_sfx[i].link != sfxinfo_t::NO_LINK)
 		{
-			Printf ("%3d. %s -> %s\n", i, sfx->name, S_sfx[sfx->link].name);
+			Printf ("%3d. %s -> %s\n", i, sfx->name.GetChars(), S_sfx[sfx->link].name.GetChars());
 		}
 		else
 		{
-			Printf ("%3d. %s **not present**\n", i, sfx->name);
+			Printf ("%3d. %s **not present**\n", i, sfx->name.GetChars());
 		}
 	}
 }
@@ -1688,7 +1688,7 @@ CCMD (soundlinks)
 			!sfx->bRandomHeader &&
 			!sfx->bPlayerReserve)
 		{
-			Printf ("%s -> %s\n", sfx->name, S_sfx[sfx->link].name);
+			Printf ("%s -> %s\n", sfx->name.GetChars(), S_sfx[sfx->link].name.GetChars());
 		}
 	}
 }
@@ -1722,10 +1722,10 @@ CCMD (playersounds)
 		{
 			if ((l = PlayerClassLookups[i].ListIndex[j]) != 0xffff)
 			{
-				Printf ("\n%s, %s:\n", PlayerClassLookups[i].Name, GenderNames[j]);
+				Printf ("\n%s, %s:\n", PlayerClassLookups[i].Name.GetChars(), GenderNames[j]);
 				for (k = 0; k < NumPlayerReserves; ++k)
 				{
-					Printf (" %-16s%s\n", reserveNames[k], S_sfx[PlayerSounds[l].LookupSound (k)].name);
+					Printf (" %-16s%s\n", reserveNames[k], S_sfx[PlayerSounds[l].LookupSound (k)].name.GetChars());
 				}
 			}
 		}

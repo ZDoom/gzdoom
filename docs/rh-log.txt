@@ -1,4 +1,8 @@
 February 3, 2007
+- Fixed: The changecamera special should remove "past viewer" information
+  from the renderer in case the camera changed position or direction since
+  the last time it was looked through. Otherwise, the renderer will
+  interpolate from its previous view for one frame when it is switched to.
 - Removed the 63-character limit on sound names.
 - Reduced the rate at which drowning damage increases.
 - Added more player water sounds:

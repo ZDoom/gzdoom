@@ -701,7 +701,7 @@ long FMODSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch,
 		return channel + 1;
 	}
 
-	DPrintf ("Sound %s failed to play: %d\n", sfx->name, FSOUND_GetError ());
+	DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), FSOUND_GetError ());
 	return 0;
 }
 
@@ -737,7 +737,7 @@ long FMODSoundRenderer::StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int 
 		return channel + 1;
 	}
 
-	DPrintf ("Sound %s failed to play: %d (%d)\n", sfx->name, FSOUND_GetError (), FSOUND_GetChannelsPlaying ());
+	DPrintf ("Sound %s failed to play: %d (%d)\n", sfx->name.GetChars(), FSOUND_GetError (), FSOUND_GetChannelsPlaying ());
 	return 0;
 }
 
@@ -941,7 +941,7 @@ void FMODSoundRenderer::LoadSound (sfxinfo_t *sfx)
 {
 	if (!sfx->data)
 	{
-		DPrintf ("loading sound \"%s\" (%d) ", sfx->name, sfx - &S_sfx[0]);
+		DPrintf ("loading sound \"%s\" (%d) ", sfx->name.GetChars(), sfx - &S_sfx[0]);
 		getsfx (sfx);
 	}
 }
@@ -965,7 +965,7 @@ void FMODSoundRenderer::UnloadSound (sfxinfo_t *sfx)
 		sfx->data = NULL;
 	}
 
-	DPrintf ("Unloaded sound \"%s\" (%d)\n", sfx->name, sfx - &S_sfx[0]);
+	DPrintf ("Unloaded sound \"%s\" (%d)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 }
 
 // FSOUND_Sample_Upload seems to mess up the signedness of sound data when
@@ -1203,7 +1203,7 @@ void FMODSoundRenderer::getsfx (sfxinfo_t *sfx)
 	{
 		if (S_sfx[i].data && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum)
 		{
-			DPrintf ("Linked to %s (%d)\n", S_sfx[i].name, i);
+			DPrintf ("Linked to %s (%d)\n", S_sfx[i].name.GetChars(), i);
 			sfx->link = i;
 			sfx->ms = S_sfx[i].ms;
 			return;

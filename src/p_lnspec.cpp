@@ -2236,6 +2236,7 @@ FUNC(LS_ChangeCamera)
 			if (!playeringame[i])
 				continue;
 
+			AActor *oldcamera = players[i].camera;
 			if (camera)
 			{
 				players[i].camera = camera;
@@ -2247,10 +2248,15 @@ FUNC(LS_ChangeCamera)
 				players[i].camera = players[i].mo;
 				players[i].cheats &= ~CF_REVERTPLEASE;
 			}
+			if (oldcamera != players[i].camera)
+			{
+				R_ClearPastViewer (players[i].camera);
+			}
 		}
 	}
 	else
 	{
+		AActor *oldcamera = it->player->camera;
 		if (camera)
 		{
 			it->player->camera = camera;
@@ -2261,6 +2267,10 @@ FUNC(LS_ChangeCamera)
 		{
 			it->player->camera = it;
 			it->player->cheats &= ~CF_REVERTPLEASE;
+		}
+		if (oldcamera != it->player->camera)
+		{
+			R_ClearPastViewer (it->player->camera);
 		}
 	}
 

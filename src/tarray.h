@@ -130,8 +130,10 @@ public:
 		if (index < Count)
 		{
 			Array[index].~T();
-			memmove (&Array[index], &Array[index+1], sizeof(T)*(Count - index - 1));
-			Count--;
+			if (index < --Count)
+			{
+				memmove (&Array[index], &Array[index+1], sizeof(T)*(Count - index));
+			}
 		}
 	}
 	// Inserts an item into the array, shifting elements as needed

@@ -24,8 +24,6 @@
 #include "m_fixed.h"
 #include "tarray.h"
 
-#define MAX_SNDNAME	63
-
 class AActor;
 
 //
@@ -33,7 +31,7 @@ class AActor;
 //
 struct sfxinfo_t
 {
-	char		name[MAX_SNDNAME+1];	// [RH] Sound name defined in SNDINFO
+	FString		name;					// [RH] Sound name defined in SNDINFO
 	short 		lumpnum;				// lump number of sfx
 
 	BYTE		PitchMask;

@@ -4808,11 +4808,11 @@ FArchive &operator<< (FArchive &arc, FSoundIndex &snd)
 {
 	if (arc.IsStoring ())
 	{
-		arc.WriteName (snd.Index ? S_sfx[snd.Index].name : NULL);
+		arc.WriteName (snd.Index ? S_sfx[snd.Index].name.GetChars() : NULL);
 	}
 	else
 	{
-		const char *name = arc.ReadName ();;
+		const char *name = arc.ReadName ();
 		snd.Index = name != NULL ? S_FindSound (name) : 0;
 	}
 	return arc;

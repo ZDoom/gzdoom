@@ -1,4 +1,5 @@
 February 3, 2007
+- Removed the 63-character limit on sound names.
 - Reduced the rate at which drowning damage increases.
 - Added more player water sounds:
     *dive - Played when your head goes below water.

@@ -83,7 +83,7 @@ struct FRandomSoundList
 
 struct FPlayerClassLookup
 {
-	char		Name[MAX_SNDNAME+1];
+	FString		Name;
 	WORD		ListIndex[3];	// indices into PlayerSounds (0xffff means empty)
 };
 
@@ -121,7 +121,7 @@ static struct AmbientSound
 	int			periodmax;	// max # of tics for random ambients
 	float		volume;		// relative volume of sound
 	float		attenuation;
-	char		sound[MAX_SNDNAME+1]; // Logical name of sound to play
+	FString		sound;		// Logical name of sound to play
 } *Ambients[256];
 
 enum SICommands
@@ -196,7 +196,7 @@ static int S_AddPlayerClass (const char *name);
 static int S_AddPlayerGender (int classnum, int gender);
 static int S_FindPlayerClass (const char *name);
 static int S_LookupPlayerSound (int classidx, int gender, int refid);
-static void S_ParsePlayerSoundCommon (char pclass[MAX_SNDNAME+1], int &gender, int &refid);
+static void S_ParsePlayerSoundCommon (FString &pclass, int &gender, int &refid);
 static void S_AddSNDINFO (int lumpnum);
 static void S_AddBloodSFX (int lumpnum);
 static void S_AddStrifeVoice (int lumpnum);
@@ -248,7 +248,7 @@ static bool PlayerClassesIsSorted;
 static TArray<FPlayerClassLookup> PlayerClassLookups;
 static TArray<FPlayerSoundHashTable> PlayerSounds;
 
-static char DefPlayerClassName[MAX_SNDNAME+1];
+static FString DefPlayerClassName;
 static int DefPlayerClass;
 
 static BYTE CurrentPitchMask;
@@ -364,7 +364,7 @@ int S_FindSound (const char *logicalname)
 	{
 		i = S_sfx[MakeKey (logicalname) % S_sfx.Size ()].index;
 
-		while ((i != 0) && strnicmp (S_sfx[i].name, logicalname, MAX_SNDNAME))
+		while ((i != 0) && stricmp (S_sfx[i].name, logicalname))
 			i = S_sfx[i].next;
 
 		return i;
@@ -389,7 +389,7 @@ int S_FindSoundNoHash (const char *logicalname)
 
 	for (i = 1; i < S_sfx.Size (); i++)
 	{
-		if (strnicmp (S_sfx[i].name, logicalname, MAX_SNDNAME) == 0)
+		if (stricmp (S_sfx[i].name, logicalname) == 0)
 		{
 			return i;
 		}
@@ -429,8 +429,7 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	sfxinfo_t newsfx;
 
 	memset (&newsfx.lumpnum, 0, sizeof(newsfx)-sizeof(newsfx.name));
-	// logicalname MUST be < MAX_SNDNAME chars long
-	strcpy (newsfx.name, logicalname);
+	newsfx.name = logicalname;
 	newsfx.lumpnum = lump;
 	newsfx.link = sfxinfo_t::NO_LINK;
 	newsfx.PitchMask = CurrentPitchMask;
@@ -775,7 +774,7 @@ static void S_ClearSoundData()
 	PlayerClassLookups.Clear();
 	PlayerSounds.Clear();
 	DefPlayerClass = 0;
-	*DefPlayerClassName = 0;
+	DefPlayerClassName = "";
 }
 
 //==========================================================================
@@ -904,8 +903,7 @@ static void S_AddSNDINFO (int lump)
 				memset (ambient, 0, sizeof(AmbientSound));
 
 				SC_MustGetString ();
-				strncpy (ambient->sound, sc_String, MAX_SNDNAME);
-				ambient->sound[MAX_SNDNAME] = 0;
+				ambient->sound = sc_String;
 				ambient->attenuation = 0;
 
 				SC_MustGetString ();
@@ -1006,7 +1004,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_PlayerSound: {
 				// $playersound <player class> <gender> <logical name> <lump name>
-				char pclass[MAX_SNDNAME+1];
+				FString pclass;
 				int gender, refid;
 
 				S_ParsePlayerSoundCommon (pclass, gender, refid);
@@ -1016,7 +1014,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_PlayerSoundDup: {
 				// $playersounddup <player class> <gender> <logical name> <target sound name>
-				char pclass[MAX_SNDNAME+1];
+				FString pclass;
 				int gender, refid, targid;
 
 				S_ParsePlayerSoundCommon (pclass, gender, refid);
@@ -1031,7 +1029,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_PlayerCompat: {
 				// $playercompat <player class> <gender> <logical name> <compat sound name>
-				char pclass[MAX_SNDNAME+1];
+				FString pclass;
 				int gender, refid;
 				int sfxfrom, aliasto;
 
@@ -1045,7 +1043,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_PlayerAlias: {
 				// $playeralias <player class> <gender> <logical name> <logical name of existing sound>
-				char pclass[MAX_SNDNAME+1];
+				FString pclass;
 				int gender, refid;
 				int soundnum;
 
@@ -1186,10 +1184,7 @@ static void S_AddSNDINFO (int lump)
 		}
 		else
 		{ // Got a logical sound mapping
-			char name[MAX_SNDNAME+1];
-
-			strncpy (name, sc_String, MAX_SNDNAME);
-			name[MAX_SNDNAME] = 0;
+			FString name (sc_String);
 			SC_MustGetString ();
 			S_AddSound (name, sc_String);
 		}
@@ -1255,10 +1250,10 @@ static void S_AddStrifeVoice (int lumpnum)
 //	(player class, gender, and ref id)
 //==========================================================================
 
-static void S_ParsePlayerSoundCommon (char pclass[MAX_SNDNAME+1], int &gender, int &refid)
+static void S_ParsePlayerSoundCommon (FString &pclass, int &gender, int &refid)
 {
 	SC_MustGetString ();
-	strcpy (pclass, sc_String);
+	pclass = sc_String;
 	SC_MustGetString ();
 	gender = D_GenderToInt (sc_String);
 	SC_MustGetString ();
@@ -1295,17 +1290,16 @@ static int S_AddPlayerClass (const char *name)
 	if (cnum == -1)
 	{
 		FPlayerClassLookup lookup;
-		size_t namelen = strlen (name) + 1;
 
-		memcpy (lookup.Name, name, namelen);
+		lookup.Name = name;
 		lookup.ListIndex[2] = lookup.ListIndex[1] = lookup.ListIndex[0] = 0xffff;
 		cnum = (int)PlayerClassLookups.Push (lookup);
 		PlayerClassesIsSorted = false;
 
 		// The default player class is the first one added
-		if (DefPlayerClassName[0] == 0)
+		if (DefPlayerClassName.IsEmpty())
 		{
-			memcpy (DefPlayerClassName, name, namelen);
+			DefPlayerClassName = lookup.Name;
 			DefPlayerClass = cnum;
 		}
 	}

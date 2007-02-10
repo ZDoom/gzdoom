@@ -139,7 +139,8 @@ int DEarthquake::StaticGetQuakeIntensity (AActor *victim)
 				victim->y - quake->m_Spot->y);
 			if (dist < quake->m_TremorRadius)
 			{
-				intensity += quake->m_Intensity;
+				if (intensity < quake->m_Intensity)
+					intensity = quake->m_Intensity;
 			}
 		}
 	}

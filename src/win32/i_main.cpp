@@ -822,9 +822,11 @@ void DoMain (HINSTANCE hInstance)
 		EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
 		x = (displaysettings.dmPelsWidth - width) / 2;
 		y = (displaysettings.dmPelsHeight - height) / 2;
-#if _DEBUG
-		x = y = 0;
-#endif
+
+		if (Args.CheckParm ("-0"))
+		{
+			x = y = 0;
+		}
 
 		TheInvisibleCursor = LoadCursor (hInstance, MAKEINTRESOURCE(IDC_INVISIBLECURSOR));
 		TheArrowCursor = LoadCursor (NULL, IDC_ARROW);
@@ -1100,7 +1102,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	{
 		// Technically, it isn't really Internet Explorer that is needed, but this
 		// is an example of a specific program that will provide riched20.dll.
-		// But considering how extra stuff needs to be installed to make Windows 95
+		// But considering how much extra stuff needs to be installed to make Windows 95
 		// useable with pretty much any recent software, the chances are high that
 		// the user already has riched20.dll installed.
 		I_FatalError ("Sorry, you need to install Internet Explorer 3 or higher to play ZDoom on Windows 95.");

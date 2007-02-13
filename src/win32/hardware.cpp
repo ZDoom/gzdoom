@@ -49,6 +49,11 @@ EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Float, vid_winscale)
 
+CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+extern HWND Window;
+
 bool ForceWindowed;
 
 IVideo *Video;
@@ -162,6 +167,109 @@ void I_ClosestResolution (int *width, int *height, int bits)
 		}
 	}
 }	
+
+static void GetCenteredPos (int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
+{
+	DEVMODE displaysettings;
+	RECT rect;
+	int cx, cy;
+
+	memset (&displaysettings, 0, sizeof(displaysettings));
+	displaysettings.dmSize = sizeof(displaysettings);
+	EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
+	scrwidth = (int)displaysettings.dmPelsWidth;
+	scrheight = (int)displaysettings.dmPelsHeight;
+	GetWindowRect (Window, &rect);
+	cx = scrwidth / 2;
+	cy = scrheight / 2;
+	winx = cx - (winw = rect.right - rect.left) / 2;
+	winy = cy - (winh = rect.bottom - rect.top) / 2;
+}
+
+static void KeepWindowOnScreen (int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight)
+{
+	// If the window is too large to fit entirely on the screen, at least
+	// keep its upperleft corner visible.
+	if (winx + winw > scrwidth)
+	{
+		winx = scrwidth - winw;
+	}
+	if (winx < 0)
+	{
+		winx = 0;
+	}
+	if (winy + winh > scrheight)
+	{
+		winy = scrheight - winh;
+	}
+	if (winy < 0)
+	{
+		winy = 0;
+	}
+}
+
+void I_SaveWindowedPos ()
+{
+	// Don't save if we were run with the -0 option.
+	if (Args.CheckParm ("-0"))
+	{
+		return;
+	}
+	// Make sure we only save the window position if it's not fullscreen.
+	if ((GetWindowLong (Window, GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
+	{
+		RECT wrect;
+
+		if (GetWindowRect (Window, &wrect))
+		{
+			// If (win_x,win_y) specify to center the window, don't change them
+			// if the window is still centered.
+			if (win_x < 0 || win_y < 0)
+			{
+				int winx, winy, winw, winh, scrwidth, scrheight;
+
+				GetCenteredPos (winx, winy, winw, winh, scrwidth, scrheight);
+				KeepWindowOnScreen (winx, winy, winw, winh, scrwidth, scrheight);
+				if (win_x < 0 && winx == wrect.left)
+				{
+					wrect.left = win_x;
+				}
+				if (win_y < 0 && winy == wrect.top)
+				{
+					wrect.top = win_y;
+				}
+			}
+			win_x = wrect.left;
+			win_y = wrect.top;
+		}
+	}
+}
+
+void I_RestoreWindowedPos ()
+{
+	int winx, winy, winw, winh, scrwidth, scrheight;
+
+	GetCenteredPos (winx, winy, winw, winh, scrwidth, scrheight);
+
+	// Just move to (0,0) if we were run with the -0 option.
+	if (Args.CheckParm ("-0"))
+	{
+		winx = winy = 0;
+	}
+	else
+	{
+		if (win_x >= 0)
+		{
+			winx = win_x;
+		}
+		if (win_y >= 0)
+		{
+			winy = win_y;
+		}
+		KeepWindowOnScreen (winx, winy, winw, winh, scrwidth, scrheight);
+	}
+	MoveWindow (Window, winx, winy, winw, winh, TRUE);
+}
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 

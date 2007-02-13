@@ -54,6 +54,9 @@ class IVideo
 void I_InitGraphics ();
 void I_ShutdownGraphics ();
 
+void I_SaveWindowedPos ();
+void I_RestoreWindowedPos ();
+
 extern IVideo *Video;
 
 #endif	// __HARDWARE_H__

@@ -219,6 +219,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 
 DDrawFB::~DDrawFB ()
 {
+	I_SaveWindowedPos ();
 	ReleaseResources ();
 }
 
@@ -233,7 +234,7 @@ bool DDrawFB::CreateResources ()
 	if (!Windowed)
 	{
 		// Remove the window border in fullscreen mode
-		SetWindowLongPtr (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE);
+		SetWindowLong (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE|WS_SYSMENU);
 
 		TrueHeight = Height;
 		for (Win32Video::ModeInfo *mode = static_cast<Win32Video *>(Video)->m_Modes; mode != NULL; mode = mode->next)
@@ -307,12 +308,13 @@ bool DDrawFB::CreateResources ()
 		LOG2 ("Resize window to %dx%d\n", sizew, sizeh);
 		VidResizing = true;
 		// Make sure the window has a border in windowed mode
-		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
+		SetWindowLong (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
 		if (!SetWindowPos (Window, NULL, 0, 0, sizew, sizeh,
 			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER))
 		{
 			LOG1 ("SetWindowPos failed because %08lx\n", GetLastError());
 		}
+		I_RestoreWindowedPos ();
 		VidResizing = false;
 
 		// Create the clipper

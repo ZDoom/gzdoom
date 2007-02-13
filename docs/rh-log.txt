@@ -1,3 +1,10 @@
+February 12, 2007
+- Added two new cvars (win_x and win_y) that keep track of the window
+  position when not playing in fullscreen mode.
+- Changed the upper-left window positioning that was always used in debug
+  builds into a command line option (-0), so debug and release builds behave
+  the same.
+
 February 10, 2007 (Changes by Graf Zahl)
 - Changed earthquake code to not add all the intensities but use the maximum
   in DEarthQuake::StaticGetQuakeIntensity. The reason for this: Quakes were

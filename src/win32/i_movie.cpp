@@ -218,6 +218,7 @@ LRESULT CALLBACK MovieWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
 int I_PlayMovie (const char *name)
 {
+	HRESULT hr;
 	int returnval = MOVIE_Failed;
 	size_t namelen = strlen (name) + 1;
 	wchar_t *uniname = new wchar_t[namelen];
@@ -241,7 +242,7 @@ int I_PlayMovie (const char *name)
 			uniname[i] = L'\\';
 	}
 
-	if (FAILED(CoCreateInstance (CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+	if (FAILED(hr = CoCreateInstance (CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
 		IID_IGraphBuilder, (void **)&graph)))
 	{
 		goto bomb1;
@@ -253,7 +254,7 @@ int I_PlayMovie (const char *name)
 	audio = NULL;
 	video = NULL;
 
-	if (FAILED(graph->RenderFile (uniname, NULL)))
+	if (FAILED(hr = graph->RenderFile (uniname, NULL)))
 	{
 		goto bomb2;
 	}
@@ -295,7 +296,7 @@ int I_PlayMovie (const char *name)
 			static_cast<Win32Video *> (Video)->BlankForGDI ();
 			static_cast<Win32Video *> (Video)->GoFullscreen (false);
 			static_cast<BaseWinFB *> (screen)->ReleaseResources ();
-			if (FAILED (drainhr) || FAILED(vidwin->put_FullScreenMode (OATRUE)))
+			if (FAILED (drainhr) || FAILED(hr = vidwin->put_FullScreenMode (OATRUE)))
 			{
 				SizeWindowForVideo ();
 				FullVideo = false;
@@ -314,7 +315,7 @@ int I_PlayMovie (const char *name)
 		}
 	}
 
-	if (FAILED (event->SetNotifyWindow ((OAHWND)Window, WM_GRAPHNOTIFY, 0)))
+	if (FAILED (hr = event->SetNotifyWindow ((OAHWND)Window, WM_GRAPHNOTIFY, 0)))
 	{
 		goto bomb3;
 	}
@@ -324,7 +325,7 @@ int I_PlayMovie (const char *name)
 	I_CheckNativeMouse (true);
 	SetWindowLongPtr (Window, GWLP_WNDPROC, (LONG_PTR)MovieWndProc);
 
-	if (FAILED (control->Run ()))
+	if (FAILED (hr = control->Run ()))
 	{
 		goto bomb4;
 	}

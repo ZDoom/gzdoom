@@ -3,7 +3,7 @@
 ** Code to let ZDoom use Direct3D 9 as a simple framebuffer
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -280,7 +280,7 @@ bool D3DFB::CreateResources ()
 	if (!Windowed)
 	{
 		// Remove the window border in fullscreen mode
-		SetWindowLongPtr (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE);
+		SetWindowLong (Window, GWL_STYLE, WS_POPUP|WS_VISIBLE|WS_SYSMENU);
 	}
 	else
 	{
@@ -291,7 +291,7 @@ bool D3DFB::CreateResources ()
 		LOG2 ("Resize window to %dx%d\n", sizew, sizeh);
 		VidResizing = true;
 		// Make sure the window has a border in windowed mode
-		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
+		SetWindowLong (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
 		if (GetWindowLong (Window, GWL_EXSTYLE) & WS_EX_TOPMOST)
 		{
 			// Direct3D 9 will apparently add WS_EX_TOPMOST to fullscreen windows,
@@ -306,6 +306,7 @@ bool D3DFB::CreateResources ()
 			SetWindowPos (Window, NULL, 0, 0, sizew, sizeh,
 				SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 		}
+		I_RestoreWindowedPos ();
 		VidResizing = false;
 	}
 	if (FAILED(D3DDevice->CreatePixelShader (PalTexShaderDef, &PalTexShader)))
@@ -326,6 +327,7 @@ bool D3DFB::CreateResources ()
 
 void D3DFB::ReleaseResources ()
 {
+	I_SaveWindowedPos ();
 	if (FBTexture != NULL)
 	{
 		FBTexture->Release();

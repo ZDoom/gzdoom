@@ -3,7 +3,7 @@
 ** ACS-accessible thing utilities
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -114,7 +114,6 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 					level.total_items--;
 				}
 				mobj->Destroy ();
-				rtn = false;
 			}
 		}
 		spot = iterator.Next();

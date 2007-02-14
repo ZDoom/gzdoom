@@ -142,7 +142,7 @@ static void R_InstallSpriteLump (int lump, unsigned frame, char rot, bool flippe
 
 	if ((int)frame > maxframe)
 		maxframe = frame;
-				
+
 	if (rotation == 0)
 	{
 		// the lump should be used for all rotations
@@ -232,6 +232,11 @@ static void R_InstallSprite (int num)
 			for (rot = 1; rot < 16; ++rot)
 			{
 				sprtemp[frame].Texture[rot] = sprtemp[frame].Texture[0];
+			}
+			// If the frame is flipped, they all should be
+			if (sprtemp[frame].Flip & 1)
+			{
+				sprtemp[frame].Flip = 0xFFFF;
 			}
 			break;
 					

@@ -1,4 +1,24 @@
 February 14, 2007
+- Fixed: EV_Teleport() did not set players to their idle state, so if they
+  were running when the teleported, they would still be running afterward
+  even though they weren't moving anywhere. Normally, P_XYMovement() does
+  this when they stop due to friction.
+- Fixed: AActor::TakeSpecialDamage() completely bypassed the standard rules
+  for target switching on actors with MF5_NODAMAGE set.
+- Changed the return values of the ACS spawn, spawnspot, and spawnspotfacing
+  commands to be the total count of things spawned, rather than a pretty
+  much useless reference to the actor spawned at the last map spot.
+- Fixed: DLevelScript::DoSpawn() takes a byte angle, but DoSpawnSpotFacing()
+  passed it a full-length angle.
+- Fixed: When MF_SKULLFLY is removed because an actor slams into something,
+  it was set to a see or spawn state, resetting its tic count and bypassing
+  the effectiveness of the MF2_DORMANT flag. While I was at it, I decided
+  dormant skulls shouldn't do slamming damage, either.
+- Fixed: P_Thing_Spawn() returned success only if all thing instances were
+  successfully spawned. As long as at least one thing was spawned, it should
+  be considered a success.
+- Fixed: Flipped single rotation sprites were only flipped every other 22.5
+  degree interval.
 - Fixed: S_ClearSoundData() did not stop any channels before freeing the
   samples, a problem for the alternate sound renderer if it happened to be
   playing any sounds at the time, since it would try to keep on playing them.

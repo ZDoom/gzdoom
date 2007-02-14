@@ -1402,8 +1402,15 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 			// the skull slammed into something
 			mo->flags &= ~MF_SKULLFLY;
 			mo->momx = mo->momy = mo->momz = 0;
-
-			mo->SetState (mo->SeeState != NULL ? mo->SeeState : mo->SpawnState);
+			if (!(mo->flags2 & MF2_DORMANT))
+			{
+				mo->SetState (mo->SeeState != NULL ? mo->SeeState : mo->SpawnState);
+			}
+			else
+			{
+				mo->SetState (mo->SpawnState);
+				mo->tics = -1;
+			}
 		}
 		return;
 	}
@@ -2347,12 +2354,20 @@ void AActor::HitFloor ()
 
 bool AActor::Slam (AActor *thing)
 {
-	int dam = GetMissileDamage (7, 1);
-	P_DamageMobj (thing, this, this, dam, NAME_Melee);
-	P_TraceBleed (dam, thing, this);
 	flags &= ~MF_SKULLFLY;
 	momx = momy = momz = 0;
-	SetState (SeeState != NULL ? SeeState : SpawnState);
+	if (!(flags2 & MF2_DORMANT))
+	{
+		int dam = GetMissileDamage (7, 1);
+		P_DamageMobj (thing, this, this, dam, NAME_Melee);
+		P_TraceBleed (dam, thing, this);
+		SetState (SeeState != NULL ? SeeState : SpawnState);
+	}
+	else
+	{
+		SetState (SpawnState);
+		tics = -1;
+	}
 	return false;			// stop moving
 }
 
@@ -4736,13 +4751,7 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 
 	if (flags5 & MF5_NODAMAGE)
 	{
-		target = source;
-		if (pr_takedamage() < PainChance)
-		{
-			FState * painstate = FindState(NAME_Pain, damagetype);
-			if (painstate != NULL) SetState (painstate);
-		}
-		return -1;
+		return 0;
 	}
 
 	// If the actor does not have a corresponding death state, then it does not take damage.

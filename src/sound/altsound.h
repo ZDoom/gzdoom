@@ -30,6 +30,9 @@ public:
 	// Stops a sound channel.
 	void StopSound (long handle);
 
+	// Stops all sounds.
+	void StopAllChannels ();
+
 	// Pauses or resumes all sound effect channels.
 	void SetSfxPaused (bool paused);
 

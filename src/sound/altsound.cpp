@@ -548,6 +548,23 @@ void AltSoundRenderer::StopSound (long handle)
 
 //==========================================================================
 //
+// AltSoundRenderer :: StopAllChannels
+//
+//==========================================================================
+
+void AltSoundRenderer::StopAllChannels ()
+{
+	if (Channels != NULL)
+	{
+		for (int i = 0; i < NumChannels; ++i)
+		{
+			Channels[i].Sample = NULL;
+		}
+	}
+}
+
+//==========================================================================
+//
 // AltSoundRenderer :: SetSfxPaused
 //
 //==========================================================================

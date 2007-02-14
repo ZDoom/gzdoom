@@ -746,6 +746,7 @@ static void S_ClearSoundData()
 
 	if (GSnd != NULL)
 	{
+		GSnd->StopAllChannels();
 		for (i = 0; i < S_sfx.Size(); ++i)
 		{
 			GSnd->UnloadSound (&S_sfx[i]);

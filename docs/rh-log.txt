@@ -1,3 +1,8 @@
+February 14, 2007
+- Fixed: S_ClearSoundData() did not stop any channels before freeing the
+  samples, a problem for the alternate sound renderer if it happened to be
+  playing any sounds at the time, since it would try to keep on playing them.
+
 February 12, 2007
 - Added two new cvars (win_x and win_y) that keep track of the window
   position when not playing in fullscreen mode.
@@ -43,7 +48,7 @@ February 3, 2007
 
 February 2, 2007
 - Added a new fixrtext tool that sets the IMAGE_SCN_MEM_WRITE flag for
-  .rtext files in the assembly object files. Now I can avoid doing this at
+  .rtext sections in the assembly object files. Now I can avoid doing this at
   runtime, which means that ZDoom is now UPX-compatible if anyone wants to
   pack it.
   

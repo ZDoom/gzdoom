@@ -144,6 +144,8 @@ enum EDemoCommand
 	DEM_DOAUTOSAVE,		// 42 An autosave should be made
 	DEM_MORPHEX,		// 43 String: The class to morph to.
 	DEM_SUMMONFOE,		// 44 String: Thing to fabricate
+	DEM_WIPEON,			// 45 Player started a screen wipe
+	DEM_WIPEOFF,		// 46 Player finished a screen wipe
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

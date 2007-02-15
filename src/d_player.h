@@ -339,6 +339,7 @@ typedef player_s player_t;
 
 // Bookkeeping on players - state.
 extern player_s players[MAXPLAYERS];
+extern DWORD playerswiping;
 
 inline FArchive &operator<< (FArchive &arc, player_s *&p)
 {

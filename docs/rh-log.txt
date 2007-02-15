@@ -1,4 +1,7 @@
 February 14, 2007
+- Added two new net commands: DEM_WIPEON and DEM_WIPEOFF. They keep track of
+  when a player is going through a screen wipe and act like a pause, so the
+  game doesn't run several tics afterward to catch up with it.
 - Fixed: EV_Teleport() did not set players to their idle state, so if they
   were running when the teleported, they would still be running afterward
   even though they weren't moving anywhere. Normally, P_XYMovement() does

@@ -584,10 +584,9 @@ void D_Display (bool screenshot)
 		NoWipe = 10;
 	}
 
-	NetUpdate ();			// send out any new accumulation
-
 	if (!wipe || screenshot || NoWipe < 0)
 	{
+		NetUpdate ();		// send out any new accumulation
 		// normal update
 		C_DrawConsole ();	// draw console
 		M_Drawer ();		// menu is drawn even on top of everything
@@ -604,22 +603,25 @@ void D_Display (bool screenshot)
 		wipe_EndScreen ();
 		screen->Unlock ();
 
-		wipestart = I_GetTime (false) - 1;
+		wipestart = I_GetTime (false);
+
+		Net_WriteByte (DEM_WIPEON);
+		NetUpdate ();		// send out any new accumulation
 
 		do
 		{
-			do
-			{
-				nowtime = I_GetTime (false);
-				tics = nowtime - wipestart;
-			} while (!tics);
+			nowtime = I_WaitForTic (wipestart);
+			tics = nowtime - wipestart;
 			wipestart = nowtime;
 			screen->Lock (true);
 			done = wipe_ScreenWipe (tics);
 			C_DrawConsole ();
 			M_Drawer ();			// menu is drawn even on top of wipes
 			screen->Update ();		// page flip or blit buffer
+			NetUpdate ();
 		} while (!done);
+
+		Net_WriteByte (DEM_WIPEOFF);
 	}
 
 	unclock (cycles);
@@ -2363,6 +2365,8 @@ void D_DoomMain (void)
 	{
 		if (autostart || netgame)
 		{
+			// Do not do any screenwipes when autostarting a game.
+			NoWipe = 35;
 			CheckWarpTransMap (startmap, true);
 			if (demorecording)
 				G_BeginRecording (startmap);

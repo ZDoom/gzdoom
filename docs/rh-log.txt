@@ -1,3 +1,6 @@
+February 19, 2007
+- Fixed: Playing a demo in windowed mode no longer grabs the mouse.
+
 February 14, 2007
 - Added two new net commands: DEM_WIPEON and DEM_WIPEOFF. They keep track of
   when a player is going through a screen wipe and act like a pause, so the

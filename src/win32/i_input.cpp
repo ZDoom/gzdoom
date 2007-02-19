@@ -418,7 +418,7 @@ static void I_CheckGUICapture ()
 void I_CheckNativeMouse (bool preferNative)
 {
 	bool wantNative = !HaveFocus ||
-		((!screen || !screen->IsFullscreen()) && (GUICapture || paused || preferNative || !use_mouse));
+		((!screen || !screen->IsFullscreen()) && (GUICapture || paused || preferNative || !use_mouse || demoplayback));
 
 //		Printf ("%d -> %d\n", NativeMouse, wantNative);
 	if (wantNative != NativeMouse)
@@ -470,7 +470,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_PAINT:
-		if (screen != NULL)
+		if (screen != NULL && 0)
 		{
 			static_cast<BaseWinFB *> (screen)->PaintToWindow ();
 		}

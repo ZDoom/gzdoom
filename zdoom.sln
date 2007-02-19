@@ -45,8 +45,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jpeg-6b", "jpeg-6b\jpeg-6b.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fixrtext", "tools\fixrtext\fixrtext.vcproj", "{DA47396F-60C1-4BDE-A977-7F7DE461CF77}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mediahelper", "mediahelper\mediahelper.vcproj", "{B775D890-D329-4173-9DBA-7361334A23FB}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -147,12 +145,6 @@ Global
 		{DA47396F-60C1-4BDE-A977-7F7DE461CF77}.Release|Win32.ActiveCfg = Release|Win32
 		{DA47396F-60C1-4BDE-A977-7F7DE461CF77}.Release|Win32.Build.0 = Release|Win32
 		{DA47396F-60C1-4BDE-A977-7F7DE461CF77}.Release|x64.ActiveCfg = Release|Win32
-		{B775D890-D329-4173-9DBA-7361334A23FB}.Debug|Win32.ActiveCfg = Debug|Win32
-		{B775D890-D329-4173-9DBA-7361334A23FB}.Debug|Win32.Build.0 = Debug|Win32
-		{B775D890-D329-4173-9DBA-7361334A23FB}.Debug|x64.ActiveCfg = Debug|Win32
-		{B775D890-D329-4173-9DBA-7361334A23FB}.Release|Win32.ActiveCfg = Release|Win32
-		{B775D890-D329-4173-9DBA-7361334A23FB}.Release|Win32.Build.0 = Release|Win32
-		{B775D890-D329-4173-9DBA-7361334A23FB}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

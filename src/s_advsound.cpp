@@ -901,7 +901,12 @@ static void S_AddSNDINFO (int lump)
 				{
 					ambient = Ambients[sc_Number];
 				}
-				memset (ambient, 0, sizeof(AmbientSound));
+				ambient->type = 0;
+				ambient->periodmin = 0;
+				ambient->periodmax = 0;
+				ambient->volume = 0;
+				ambient->attenuation = 0;
+				ambient->sound = "";
 
 				SC_MustGetString ();
 				ambient->sound = sc_String;

@@ -72,7 +72,7 @@ void P_Ticker (void)
 	r_NoInterpolate = true;
 
 	// run the tic
-	if (paused || playerswiping || P_CheckTickerPaused())
+	if (paused || (playerswiping && !demoplayback) || P_CheckTickerPaused())
 		return;
 
 	S_ResumeSound ();

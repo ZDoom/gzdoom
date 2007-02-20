@@ -1,4 +1,6 @@
 February 19, 2007
+- Fixed: DEM_WIPEON/OFF commands should be ignored during demo playback and
+  not pause the game, or the whole thing will be out of sync.
 - Fixed: Playing a demo in windowed mode no longer grabs the mouse.
 
 February 14, 2007

@@ -44,6 +44,7 @@
 #include "p_conversation.h"
 #include "a_strifeglobal.h"
 #include "templates.h"
+#include "c_bind.h"
 
 static void FadePic ();
 static void GetFinaleText (const char *msgLumpName);
@@ -709,6 +710,11 @@ bool F_CastResponder (event_t* ev)
 {
 	if (ev->type != EV_KeyDown)
 		return false;
+			
+	const char *cmd = C_GetBinding (ev->data1);
+
+	if (cmd != NULL && !stricmp (cmd, "toggleconsole"))
+		return false;		
 				
 	if (castdeath)
 		return true;					// already in dying frames

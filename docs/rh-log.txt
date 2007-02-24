@@ -1,3 +1,13 @@
+February 24, 2007 (Changes by Graf Zahl)
+- Fixed: In the Doom2 cast finale it was impossible to toggle the console.
+- Added APROP_Friendly actor property for ACS.
+- Added a new flag, MF2_DONTREFLECT that prevents missiles from being reflected.
+- Fixed: ALoreShot::DoSpecialDamage must check whether the shooter is still
+  present. If it had been removed before the projectile hits its target
+  a crash could occur.
+- Fixed: GetPlayerInfo was missing breaks and always returned 0 as a result.
+- Added Grubber's submission for printing key bindings in ACS.
+
 February 19, 2007
 - Fixed: $Ambient SNDINFO commands zeroed the AmbientSound structure, which
   is a no-no when using FString.

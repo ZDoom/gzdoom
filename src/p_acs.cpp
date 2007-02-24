@@ -64,6 +64,7 @@
 #include "gstrings.h"
 #include "gi.h"
 #include "sc_man.h"
+#include "c_bind.h"
 
 extern FILE *Logfile;
 
@@ -2074,6 +2075,7 @@ void DLevelScript::DoSetFont (int fontnum)
 #define APROP_ChaseGoal		13
 #define APROP_Frightened	14
 #define APROP_Gravity		15
+#define APROP_Friendly		16
 #define APROP_SeeSound		5	// Sounds can only be set, not gotten
 #define APROP_AttackSound	6
 #define APROP_PainSound		7
@@ -2157,6 +2159,13 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 			actor->flags4 &= ~MF4_FRIGHTENED;
 		break;
 		
+	case APROP_Friendly:
+		if (value)
+			actor->flags |= MF_FRIENDLY;
+		else
+			actor->flags &= ~MF_FRIENDLY;
+		break;
+		
 	case APROP_Gravity:
 		actor->gravity = value;
 		break;
@@ -2215,6 +2224,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
 	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);
 	case APROP_Frightened:	return !!(actor->flags4 & MF4_FRIGHTENED);
+	case APROP_Friendly:	return !!(actor->flags & MF_FRIENDLY);
 	case APROP_JumpZ:		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
 								return static_cast<APlayerPawn *>(actor)->JumpZ;	// [GRB]
@@ -3749,6 +3759,25 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		// [GRB] Print key name(s) for a command
+		case PCD_PRINTBIND:
+			lookup = FBehavior::StaticLookupString (STACK(1));
+			if (lookup != NULL)
+			{
+				int key1 = 0, key2 = 0;
+
+				C_GetKeysForCommand ((char *)lookup, &key1, &key2);
+
+				if (key2)
+					work = work + KeyNames[key1] + " or " + KeyNames[key2];
+				else if (key1)
+					work += KeyNames[key1];
+				else
+					work += "???";
+			}
+			--sp;
+			break;
+
 		case PCD_ENDPRINT:
 		case PCD_ENDPRINTBOLD:
 		case PCD_MOREHUDMESSAGE:
@@ -4987,15 +5016,15 @@ int DLevelScript::RunScript ()
 				userinfo_t *userinfo = &players[STACK(2)].userinfo;
 				switch (STACK(1))
 				{
-				case PLAYERINFO_TEAM:			STACK(2) = userinfo->team;
-				case PLAYERINFO_AIMDIST:		STACK(2) = userinfo->aimdist;
-				case PLAYERINFO_COLOR:			STACK(2) = userinfo->color;
-				case PLAYERINFO_GENDER:			STACK(2) = userinfo->gender;
-				case PLAYERINFO_NEVERSWITCH:	STACK(2) = userinfo->neverswitch;
-				case PLAYERINFO_MOVEBOB:		STACK(2) = userinfo->MoveBob;
-				case PLAYERINFO_STILLBOB:		STACK(2) = userinfo->StillBob;
-				case PLAYERINFO_PLAYERCLASS:	STACK(2) = userinfo->PlayerClass;
-				default:						STACK(2) = 0;
+				case PLAYERINFO_TEAM:			STACK(2) = userinfo->team; break;
+				case PLAYERINFO_AIMDIST:		STACK(2) = userinfo->aimdist; break;
+				case PLAYERINFO_COLOR:			STACK(2) = userinfo->color; break;
+				case PLAYERINFO_GENDER:			STACK(2) = userinfo->gender; break;
+				case PLAYERINFO_NEVERSWITCH:	STACK(2) = userinfo->neverswitch; break;
+				case PLAYERINFO_MOVEBOB:		STACK(2) = userinfo->MoveBob; break;
+				case PLAYERINFO_STILLBOB:		STACK(2) = userinfo->StillBob; break;
+				case PLAYERINFO_PLAYERCLASS:	STACK(2) = userinfo->PlayerClass; break;
+				default:						STACK(2) = 0; break;
 				}
 			}
 			sp -= 1;

@@ -149,17 +149,20 @@ END_DEFAULTS
 int ALoreShot::DoSpecialDamage (AActor *target, int damage)
 {
 	FVector3 thrust;
-
-	thrust.X = float(this->target->x - target->x);
-	thrust.Y = float(this->target->y - target->y);
-	thrust.Z = float(this->target->z - target->z);
-
-	thrust.MakeUnit();
-	thrust *= float((255*50*FRACUNIT) / (target->Mass ? target->Mass : 1));
-
-	target->momx += fixed_t(thrust.X);
-	target->momy += fixed_t(thrust.Y);
-	target->momz += fixed_t(thrust.Z);
+	
+	if (this->target != NULL)
+	{
+		thrust.X = float(this->target->x - target->x);
+		thrust.Y = float(this->target->y - target->y);
+		thrust.Z = float(this->target->z - target->z);
+	
+		thrust.MakeUnit();
+		thrust *= float((255*50*FRACUNIT) / (target->Mass ? target->Mass : 1));
+	
+		target->momx += fixed_t(thrust.X);
+		target->momy += fixed_t(thrust.Y);
+		target->momz += fixed_t(thrust.Z);
+	}
 	return damage;
 }
 

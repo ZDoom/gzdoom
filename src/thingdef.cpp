@@ -129,6 +129,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF, NOLIFTDROP, AActor, flags),
 	DEFINE_FLAG(MF, STEALTH, AActor, flags),
 	DEFINE_FLAG(MF, ICECORPSE, AActor, flags),
+	DEFINE_FLAG(MF2, DONTREFLECT, AActor, flags2),
 	DEFINE_FLAG(MF2, WINDTHRUST, AActor, flags2),
 	DEFINE_FLAG(MF2, HERETICBOUNCE , AActor, flags2),
 	DEFINE_FLAG(MF2, BLASTED, AActor, flags2),

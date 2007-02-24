@@ -2383,6 +2383,8 @@ int AActor::SpecialMissileHit (AActor *victim)
 
 bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
 {
+	if (flags2 & MF2_DONTREFLECT) return true;
+
 	// Change angle for reflection
 	if (thing->flags4&MF4_SHIELDREFLECT)
 	{

@@ -154,6 +154,7 @@ enum
 
 // --- mobj.flags2 ---
 
+	MF2_DONTREFLECT		= 0x00000001,	// this projectile cannot be reflected
 	MF2_WINDTHRUST		= 0x00000002,	// gets pushed around by the wind specials
 	MF2_BOUNCE1			= 0x00000004,
 	MF2_BLASTED			= 0x00000008,	// actor will temporarily take damage from impact

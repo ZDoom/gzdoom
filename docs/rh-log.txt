@@ -1,3 +1,23 @@
+February 24, 2007
+- Added << operators for FString that function exactly like +=, except they
+  are left-associative, so you can use them like you would with an ostream
+  and append to a string in a single expression without any overhead from
+  allocating temporary strings as would happen if you used the + operator.
+  In other words, instead of this:
+     string += "Some string " + "that is assembled" + " in parts";
+  You can do this and be more efficient while still being just as readable:
+     string << "Some string " << "that is assembled" << " in parts";
+- Changed PCD_PRINTBIND to include the command in its output if it isn't
+  bound.
+- Fixed: ACS_ExecuteWithResultValue could not be used inside a script because
+  DLevelScript::RunScript() was not reentrant, thanks to having a global stack.
+  The stack should be local to each instance of RunScript.
+- Fixed: rt_draw4cols() could get stuck in rare situations where it thinks it
+  should be drawing something but doesn't. Since long-term I plan to just
+  replace all the masked drawing the variants of maskwallscan, I'm not going
+  to try and find the real cause and fix it there. Instead, it just detects
+  the situation and bails out when it finds it.
+
 February 24, 2007 (Changes by Graf Zahl)
 - Fixed: In the Doom2 cast finale it was impossible to toggle the console.
 - Added APROP_Friendly actor property for ACS.

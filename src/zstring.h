@@ -121,6 +121,11 @@ public:
 	FString &operator += (const FName &name) { return *this += name.GetChars(); }
 	FString &AppendCStrPart (const char *tail, size_t tailLen);
 
+	FString &operator << (const FString &tail) { return *this += tail; }
+	FString &operator << (const char *tail) { return *this += tail; }
+	FString &operator << (char tail) { return *this += tail; }
+	FString &operator << (const FName &name) { return *this += name.GetChars(); }
+
 	FString Left (size_t numChars) const;
 	FString Right (size_t numChars) const;
 	FString Mid (size_t pos, size_t numChars) const;

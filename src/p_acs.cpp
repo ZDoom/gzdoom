@@ -3,7 +3,7 @@
 ** General BEHAVIOR management and ACS execution environment
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -101,8 +101,6 @@ struct CallReturn
 	int ReturnAddress;
 	int bDiscardResult;
 };
-
-static SDWORD Stack[STACK_SIZE];
 
 static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
 	bool lineSide, int arg0, int arg1, int arg2, int always, bool delay);
@@ -2308,12 +2306,12 @@ int DLevelScript::RunScript ()
 		break;
 	}
 
-	int *pc = this->pc;
+	SDWORD Stack[STACK_SIZE];
 	int sp = 0;
+	int *pc = this->pc;
 	ACSFormat fmt = activeBehavior->GetFormat();
 	int runaway = 0;	// used to prevent infinite loops
 	int pcd;
-	//char workreal[4096], *const work = workreal+2, *workwhere = work;
 	FString work;
 	const char *lookup;
 	int optstart = -1;
@@ -3769,11 +3767,11 @@ int DLevelScript::RunScript ()
 				C_GetKeysForCommand ((char *)lookup, &key1, &key2);
 
 				if (key2)
-					work = work + KeyNames[key1] + " or " + KeyNames[key2];
+					work << KeyNames[key1] << " or " << KeyNames[key2];
 				else if (key1)
-					work += KeyNames[key1];
+					work << KeyNames[key1];
 				else
-					work += "???";
+					work << "??? (" << (char *)lookup << ')';
 			}
 			--sp;
 			break;

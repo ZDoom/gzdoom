@@ -861,6 +861,7 @@ void rt_draw4cols (int sx)
 		//			aBc
 		if (bad != 0 || maxtop > minbot)
 		{
+			int drawcount = 0;
 			for (x = 0; x < 4; ++x)
 			{
 				if (!(bad & 1))
@@ -869,14 +870,22 @@ void rt_draw4cols (int sx)
 					{
 						hcolfunc_post1 (x, sx+x, horizspan[x][0], horizspan[x][1]);
 						horizspan[x] += 2;
+						drawcount++;
 					}
 					else if (minnexttop > horizspan[x][0])
 					{
 						hcolfunc_post1 (x, sx+x, horizspan[x][0], minnexttop-1);
 						horizspan[x][0] = minnexttop;
+						drawcount++;
 					}
 				}
 				bad >>= 1;
+			}
+			// Drawcount *should* always be non-zero. The reality is that some situations
+			// can make this not true. Unfortunately, I'm not sure what those situations are.
+			if (drawcount == 0)
+			{
+				return;
 			}
 			continue;
 		}

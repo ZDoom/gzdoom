@@ -1,3 +1,13 @@
+February 28, 2007
+- Fixed: When starting a new game from the menu while the fullscreen console
+  was open, the game was frozen before its initial setup tick until the
+  console was closed. The most obvious result of this is that your view was
+  stuck on the floor until the console closed.
+- Fixed: Pressing ESC while editing your player name completely cleared the
+  menus instead of simply canceling the name change.
+- Fixed: The status bar still showed the rampage face if you held the fire
+  button down while frozen.
+
 February 24, 2007
 - Added << operators for FString that function exactly like +=, except they
   are left-associative, so you can use them like you would with an ostream

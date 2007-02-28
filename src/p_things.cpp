@@ -180,7 +180,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 	const PClass *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
-	float fspeed = float(speed);
+	double fspeed = speed;
 	int defflags3;
 
 	if (type_name == NULL)
@@ -307,8 +307,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 						}
 						else
 						{
-nolead:
-							mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
+nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
 							aim.Resize (fspeed);
 							mobj->momx = fixed_t(aim[0]);
 							mobj->momy = fixed_t(aim[1]);

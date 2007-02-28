@@ -913,9 +913,9 @@ private:
 		if (FacePriority < 6)
 		{
 			// rapid firing
-			if (CPlayer->cmd.ucmd.buttons & BT_ATTACK)
+			if ((CPlayer->cmd.ucmd.buttons & BT_ATTACK) && !(CPlayer->cheats & (CF_FROZEN | CF_TOTALLYFROZEN)))
 			{
-				if (FaceLastAttackDown==-1)
+				if (FaceLastAttackDown == -1)
 					FaceLastAttackDown = ST_RAMPAGEDELAY;
 				else if (!--FaceLastAttackDown)
 				{

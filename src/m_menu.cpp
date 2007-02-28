@@ -152,6 +152,7 @@ static void M_DrawPlayerBackdrop (int x, int y);
 static void M_EditPlayerName (int choice);
 static void M_ChangePlayerTeam (int choice);
 static void M_PlayerNameChanged (FSaveGameNode *dummy);
+static void M_PlayerNameNotChanged ();
 static void M_SlidePlayerRed (int choice);
 static void M_SlidePlayerGreen (int choice);
 static void M_SlidePlayerBlue (int choice);
@@ -197,6 +198,7 @@ static int		showSharewareMessage;
 static int 		genStringEnter;	// we are going to be entering a savegame string
 static size_t	genStringLen;	// [RH] Max # of chars that can be entered
 static void	  (*genStringEnd)(FSaveGameNode *);
+static void	  (*genStringCancel)();
 static int 		saveSlot;		// which slot to save in
 static size_t	saveCharIndex;	// which char we're editing
 
@@ -1709,9 +1711,12 @@ void M_ChooseSkill (int choice)
 	}
 
 	gameskill = choice;
-	gamestate = gamestate == GS_FULLCONSOLE ? GS_HIDECONSOLE : gamestate;
 	G_DeferedInitNew (EpisodeMaps[epi]);
-	gamestate = gamestate == GS_FULLCONSOLE ? GS_HIDECONSOLE : gamestate;
+	if (gamestate == GS_FULLCONSOLE)
+	{
+		gamestate = GS_HIDECONSOLE;
+		gameaction = ga_newgame;
+	}
 	M_ClearMenus ();
 }
 
@@ -2525,10 +2530,16 @@ static void M_EditPlayerName (int choice)
 	// we are going to be intercepting all chars
 	genStringEnter = 2;
 	genStringEnd = M_PlayerNameChanged;
+	genStringCancel = M_PlayerNameNotChanged;
 	genStringLen = MAXPLAYERNAME;
 	
 	saveSlot = 0;
 	saveCharIndex = strlen (savegamestring);
+}
+
+static void M_PlayerNameNotChanged ()
+{
+	strcpy (savegamestring, name);
 }
 
 static void M_PlayerNameChanged (FSaveGameNode *dummy)
@@ -2758,7 +2769,7 @@ bool M_Responder (event_t *ev)
 
 		case GK_ESCAPE:
 			genStringEnter = 0;
-			M_ClearMenus ();
+			genStringCancel ();	// [RH] Function to call when escape is pressed
 			break;
 								
 		case '\r':
@@ -3007,6 +3018,7 @@ static void M_LoadSelect (const FSaveGameNode *file)
 	BorderNeedRefresh = screen->GetPageCount ();
 }
 
+
 //
 // User wants to save. Start string input for M_Responder
 //
@@ -3015,6 +3027,7 @@ static void M_SaveSelect (const FSaveGameNode *file)
 	// we are going to be intercepting all chars
 	genStringEnter = 1;
 	genStringEnd = M_DoSave;
+	genStringCancel = M_ClearMenus;
 	genStringLen = SAVESTRINGSIZE-1;
 
 	if (file != &NewSaveNode)

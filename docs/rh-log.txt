@@ -1,4 +1,7 @@
 February 28, 2007
+- Fixed: When I converted the P_Thing_Projectile() code for target leading
+  to use the new vector routines, I had made dist calculate the squared
+  length of the aim vector instead of the correct length.
 - Fixed: When starting a new game from the menu while the fullscreen console
   was open, the game was frozen before its initial setup tick until the
   console was closed. The most obvious result of this is that your view was

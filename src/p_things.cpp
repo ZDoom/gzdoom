@@ -281,7 +281,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 									goto nolead;
 								}
 							}
-							double dist = aim | aim;
+							double dist = aim.Length();
 							double targspeed = tvel.Length();
 							double ydotx = -aim | tvel;
 							double a = acos (clamp (ydotx / targspeed / dist, -1.0, 1.0));

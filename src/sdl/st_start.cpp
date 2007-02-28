@@ -60,6 +60,8 @@ static void ST_TTY_NetProgress (int count);
 static void ST_TTY_NetMessage (const char *format, ...);
 static void ST_TTY_NetDone ();
 static bool ST_TTY_NetLoop (bool (*timer_callback)(void *), void *userdata);
+static void ST_Null_HereticMessage (const char *, int);
+static void ST_Null_HereticStatus (const char *);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -67,6 +69,8 @@ static bool ST_TTY_NetLoop (bool (*timer_callback)(void *), void *userdata);
 
 void (*ST_Done)();
 void (*ST_Progress)();
+void (*ST_HereticMessage)(const char *message, int attributes);
+void (*ST_HereticStatus)(const char *status);
 void (*ST_NetInit)(const char *message, int numplayers);
 void (*ST_NetProgress)(int count);
 void (*ST_NetMessage)(const char *format, ...);
@@ -302,6 +306,14 @@ static bool ST_TTY_NetLoop(bool (*timer_callback)(void *), void *userdata)
 			}
 		}
 	}
+}
+
+static void ST_Null_HereticMessage (const char *, int)
+{
+}
+
+static void ST_Null_HereticStatus (const char *)
+{
 }
 
 void ST_Endoom()

@@ -2082,102 +2082,8 @@ void D_DoomMain (void)
 	Printf ("ST_Init: Init startup screen.\n");
 	ST_Init (R_GuesstimateNumTextures() + 5);
 
-	// [RH] Now that all text strings are set up,
-	// insert them into the level and cluster data.
-	G_MakeEpisodes ();
-	
-	// [RH] Parse through all loaded mapinfo lumps
-	Printf ("G_ParseMapInfo: Load map definitions.\n");
-	G_ParseMapInfo ();
-
-	// [RH] Parse any SNDINFO lumps
-	Printf ("S_InitData: Load sound definitions.\n");
-	S_InitData ();
-
-	FActorInfo::StaticInit ();
-
-	// [GRB] Initialize player class list
-	SetupPlayerClasses ();
-
-	// [RH] Load custom key and weapon settings from WADs
-	D_LoadWadSettings ();
-
-	// [GRB] Check if someone used clearplayerclasses but not addplayerclass
-	if (PlayerClasses.Size () == 0)
-	{
-		I_FatalError ("No player classes defined");
-	}
-
-	FActorInfo::StaticGameSet ();
-	ST_Progress ();
-
-	Printf ("R_Init: Init %s refresh subsystem.\n", GameNames[gameinfo.gametype]);
-	R_Init ();
-
-	Printf ("DecalLibrary: Load decals.\n");
-	DecalLibrary.Clear ();
-	DecalLibrary.ReadAllDecals ();
-
-	// [RH] Try adding .deh and .bex files on the command line.
-	// If there are none, try adding any in the config file.
-
-	//if (gameinfo.gametype == GAME_Doom)
-	{
-		if (!ConsiderPatches ("-deh", ".deh") &&
-			!ConsiderPatches ("-bex", ".bex") &&
-			(gameinfo.gametype == GAME_Doom) &&
-			GameConfig->SetSection ("Doom.DefaultDehacked"))
-		{
-			const char *key;
-			const char *value;
-
-			while (GameConfig->NextInSection (key, value))
-			{
-				if (stricmp (key, "Path") == 0 && FileExists (value))
-				{
-					Printf ("Applying patch %s\n", value);
-					DoDehPatch (value, true);
-				}
-			}
-		}
-
-		DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
-		FinishDehPatch ();			// Create replacements for dehacked pickups
-	}
-	HandleNoSector ();	// clear NOSECTOR flag off all actors modified by Dehacked and the BossEye.
-
-	FActorInfo::StaticSetActorNums ();
-
-
-	// [RH] User-configurable startup strings. Because BOOM does.
-	static const char *startupString[5] = {
-		"STARTUP1", "STARTUP2", "STARTUP3", "STARTUP4", "STARTUP5"
-	};
-	for (p = 0; p < 5; ++p)
-	{
-		const char *str = GStrings[startupString[p]];
-		if (str != NULL && str[0] != '\0')
-		{
-			Printf ("%s\n", str);
-		}
-	}
-
-	//Added by MC:
-	bglobal.getspawned = Args.GatherFiles ("-bots", "", false);
-	if (bglobal.getspawned->NumArgs() == 0)
-	{
-		delete bglobal.getspawned;
-		bglobal.getspawned = NULL;
-	}
-	else
-	{
-		bglobal.spawn_tries = 0;
-		bglobal.wanted_botnum = bglobal.getspawned->NumArgs();
-	}
-
-	flags = dmflags;
-
 	Printf ("P_Init: Checking cmd-line parameters...\n");
+	flags = dmflags;
 	if (Args.CheckParm ("-nomonsters"))		flags |= DF_NO_MONSTERS;
 	if (Args.CheckParm ("-respawn"))		flags |= DF_MONSTERS_RESPAWN;
 	if (Args.CheckParm ("-fast"))			flags |= DF_FAST_MONSTERS;
@@ -2302,13 +2208,125 @@ void D_DoomMain (void)
 		timelimit = 20.f;
 	}
 
+	//
+	//  Build status bar line!
+	//
+	if (deathmatch)
+		ST_HereticStatus("DeathMatch...");
+	if (dmflags & DF_NO_MONSTERS)
+		ST_HereticStatus("No Monsters...");
+	if (dmflags & DF_MONSTERS_RESPAWN)
+		ST_HereticStatus("Respawning...");
+	if (autostart)
+	{
+		FString temp;
+		temp.Format ("Warp to map %s, Skill %d ", startmap, gameskill + 1);
+		ST_HereticStatus (temp);
+	}
+
+	// [RH] Now that all text strings are set up,
+	// insert them into the level and cluster data.
+	G_MakeEpisodes ();
+	
+	// [RH] Parse through all loaded mapinfo lumps
+	Printf ("G_ParseMapInfo: Load map definitions.\n");
+	G_ParseMapInfo ();
+
+	// [RH] Parse any SNDINFO lumps
+	Printf ("S_InitData: Load sound definitions.\n");
+	S_InitData ();
+
+	FActorInfo::StaticInit ();
+
+	// [GRB] Initialize player class list
+	SetupPlayerClasses ();
+
+	// [RH] Load custom key and weapon settings from WADs
+	D_LoadWadSettings ();
+
+	// [GRB] Check if someone used clearplayerclasses but not addplayerclass
+	if (PlayerClasses.Size () == 0)
+	{
+		I_FatalError ("No player classes defined");
+	}
+
+	FActorInfo::StaticGameSet ();
+	ST_Progress ();
+
+	Printf ("R_Init: Init %s refresh subsystem.\n", GameNames[gameinfo.gametype]);
+	ST_HereticMessage ("Loading graphics", 0x3f);
+	R_Init ();
+
+	Printf ("DecalLibrary: Load decals.\n");
+	DecalLibrary.Clear ();
+	DecalLibrary.ReadAllDecals ();
+
+	// [RH] Try adding .deh and .bex files on the command line.
+	// If there are none, try adding any in the config file.
+
+	//if (gameinfo.gametype == GAME_Doom)
+	{
+		if (!ConsiderPatches ("-deh", ".deh") &&
+			!ConsiderPatches ("-bex", ".bex") &&
+			(gameinfo.gametype == GAME_Doom) &&
+			GameConfig->SetSection ("Doom.DefaultDehacked"))
+		{
+			const char *key;
+			const char *value;
+
+			while (GameConfig->NextInSection (key, value))
+			{
+				if (stricmp (key, "Path") == 0 && FileExists (value))
+				{
+					Printf ("Applying patch %s\n", value);
+					DoDehPatch (value, true);
+				}
+			}
+		}
+
+		DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
+		FinishDehPatch ();			// Create replacements for dehacked pickups
+	}
+	HandleNoSector ();	// clear NOSECTOR flag off all actors modified by Dehacked and the BossEye.
+
+	FActorInfo::StaticSetActorNums ();
+
+
+	// [RH] User-configurable startup strings. Because BOOM does.
+	static const char *startupString[5] = {
+		"STARTUP1", "STARTUP2", "STARTUP3", "STARTUP4", "STARTUP5"
+	};
+	for (p = 0; p < 5; ++p)
+	{
+		const char *str = GStrings[startupString[p]];
+		if (str != NULL && str[0] != '\0')
+		{
+			Printf ("%s\n", str);
+		}
+	}
+
+	//Added by MC:
+	bglobal.getspawned = Args.GatherFiles ("-bots", "", false);
+	if (bglobal.getspawned->NumArgs() == 0)
+	{
+		delete bglobal.getspawned;
+		bglobal.getspawned = NULL;
+	}
+	else
+	{
+		bglobal.spawn_tries = 0;
+		bglobal.wanted_botnum = bglobal.getspawned->NumArgs();
+	}
+
 	Printf ("M_Init: Init miscellaneous info.\n");
 	M_Init ();
 
 	Printf ("P_Init: Init Playloop state.\n");
+	ST_HereticMessage ("Init game engine", 0x3f);
 	P_Init ();
 
 	Printf ("D_CheckNetGame: Checking network game status.\n");
+	ST_HereticMessage ("Checking network game status.", 0x3f);
 	D_CheckNetGame ();
 
 	// [RH] Lock any cvars that should be locked now that we're

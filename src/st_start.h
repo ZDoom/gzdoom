@@ -37,6 +37,8 @@
 extern void ST_Init(int maxProgress);
 extern void (*ST_Done)();
 extern void (*ST_Progress)();
+extern void (*ST_HereticMessage)(const char *message, int attributes);
+extern void (*ST_HereticStatus)(const char *status);
 extern void (*ST_NetInit)(const char *message, int numplayers);
 extern void (*ST_NetProgress)(int count);
 extern void (*ST_NetMessage)(const char *format, ...);	// cover for printf()

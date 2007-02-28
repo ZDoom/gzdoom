@@ -110,6 +110,7 @@
 
 void RestoreConView();
 void LayoutMainWindow (HWND hWnd, HWND pane);
+int LayoutNetStartPane (HWND pane, int w);
 
 bool ST_Util_CreateStartupWindow ();
 void ST_Util_SizeWindowForBitmap (int scale);
@@ -136,6 +137,8 @@ static INT_PTR CALLBACK NetStartPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LP
 static void ST_Basic_Init ();
 static void ST_Basic_Done ();
 static void ST_Basic_Progress ();
+static void ST_Basic_HereticMessage (const char *message, int attributes);
+static void ST_Basic_HereticStatus (const char *status);
 static void ST_Basic_NetInit (const char *message, int numplayers);
 static void ST_Basic_NetProgress (int count);
 static void ST_Basic_NetMessage (const char *format, ...);
@@ -145,9 +148,12 @@ static bool ST_Basic_NetLoop (bool (*timer_callback)(void *), void *userdata);
 static void ST_Hexen_Init ();
 static void ST_Hexen_Done ();
 static void ST_Hexen_Progress ();
+static void ST_Hexen_NetProgress (int count);
 
 static void ST_Heretic_Init ();
 static void ST_Heretic_Progress ();
+static void ST_Heretic_Message (const char *message, int attributes);
+static void ST_Heretic_Status (const char *status);
 
 static void ST_Strife_Init ();
 static void ST_Strife_Done ();
@@ -163,6 +169,8 @@ extern HWND Window, ConWindow, ProgressBar, NetStartPane, StartupScreen, GameTit
 
 void (*ST_Done)();
 void (*ST_Progress)();
+void (*ST_HereticMessage)(const char *message, int attributes);
+void (*ST_HereticStatus)(const char *status);
 void (*ST_NetInit)(const char *message, int numplayers);
 void (*ST_NetProgress)(int count);
 void (*ST_NetMessage)(const char *format, ...);
@@ -183,6 +191,7 @@ static int MaxPos, CurPos, NotchPos;
 static int NetMaxPos, NetCurPos;
 static LRESULT NetMarqueeMode;
 static int ThermX, ThermY, ThermWidth, ThermHeight;
+static int HMsgY, SMsgX;
 static BYTE *StrifeStartupPics[4+2+1];
 
 static const char *StrifeStartupPicNames[4+2+1] =
@@ -322,6 +331,8 @@ static void ST_Basic_Init ()
 
 	ST_Done = ST_Basic_Done;
 	ST_Progress = ST_Basic_Progress;
+	ST_HereticMessage = ST_Basic_HereticMessage;
+	ST_HereticStatus = ST_Basic_HereticStatus;
 	ST_NetInit = ST_Basic_NetInit;
 	ST_NetProgress = ST_Basic_NetProgress;
 	ST_NetMessage = ST_Basic_NetMessage;
@@ -367,6 +378,30 @@ static void ST_Basic_Progress()
 
 //==========================================================================
 //
+// ST_Basic_HereticMessage
+//
+// Only used by the Heretic startup screen.
+//
+//==========================================================================
+
+static void ST_Basic_HereticMessage (const char *, int)
+{
+}
+
+//==========================================================================
+//
+// ST_Basic_HereticStatus
+//
+// Only used by the Heretic startup screen.
+//
+//==========================================================================
+
+static void ST_Basic_HereticStatus (const char *)
+{
+}
+
+//==========================================================================
+//
 // ST_Basic_NetInit
 //
 // Shows the network startup pane if it isn't visible. Sets the message in
@@ -389,10 +424,12 @@ static void ST_Basic_NetInit(const char *message, int numplayers)
 			DestroyWindow (ProgressBar);
 			ProgressBar = NULL;
 		}
+		RECT winrect;
+		GetWindowRect (Window, &winrect);
+		SetWindowPos (Window, NULL, 0, 0,
+			winrect.right - winrect.left, winrect.bottom - winrect.top + LayoutNetStartPane (NetStartPane, 0),
+			SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 		LayoutMainWindow (Window, NULL);
-		// Make sure the last line of output is visible in the log window.
-		SendMessage (ConWindow, EM_LINESCROLL, 0, SendMessage (ConWindow, EM_GETLINECOUNT, 0, 0) -
-			SendMessage (ConWindow, EM_GETFIRSTVISIBLELINE, 0, 0));
 	}
 	if (NetStartPane != NULL)
 	{
@@ -641,8 +678,10 @@ static void ST_Hexen_Init ()
 
 	ST_Done = ST_Hexen_Done;
 	ST_Progress = ST_Hexen_Progress;
+	ST_HereticMessage = ST_Basic_HereticMessage;
+	ST_HereticStatus = ST_Basic_HereticStatus;
 	ST_NetInit = ST_Basic_NetInit;
-	ST_NetProgress = ST_Basic_NetProgress;
+	ST_NetProgress = ST_Hexen_NetProgress;
 	ST_NetMessage = ST_Basic_NetMessage;
 	ST_NetDone = ST_Basic_NetDone;
 	ST_NetLoop = ST_Basic_NetLoop;
@@ -707,6 +746,33 @@ static void ST_Hexen_Progress()
 
 //==========================================================================
 //
+// ST_Hexen_NetProgress
+//
+// Draws the red net noches in addition to the normal progress bar.
+//
+//==========================================================================
+
+static void ST_Hexen_NetProgress (int count)
+{
+	int oldpos = NetCurPos;
+	int x, y;
+
+	ST_Basic_NetProgress (count);
+	if (NetMaxPos != 0 && NetCurPos > oldpos)
+	{
+		for (; oldpos < NetCurPos && oldpos < ST_MAX_NETNOTCHES; ++oldpos)
+		{
+			x = ST_NETPROGRESS_X + ST_NETNOTCH_WIDTH * oldpos;
+			y = ST_NETPROGRESS_Y;
+			ST_Util_DrawBlock (StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
+		}
+		S_Sound (CHAN_BODY, "Drip", 1, ATTN_NONE);
+		I_GetEvent ();
+	}
+}
+
+//==========================================================================
+//
 // ST_Heretic_Init
 //
 // Shows the Heretic startup screen. If the screen doesn't appear to be
@@ -752,6 +818,8 @@ static void ST_Heretic_Init ()
 	ThermY = THERM_Y * font[0];
 	ThermWidth = THERM_LEN * 8 - 4;
 	ThermHeight = font[0];
+	HMsgY = 7;
+	SMsgX = 1;
 
 	ST_Util_FreeFont (font);
 
@@ -761,6 +829,8 @@ static void ST_Heretic_Init ()
 
 	ST_Done = ST_Hexen_Done;
 	ST_Progress = ST_Heretic_Progress;
+	ST_HereticMessage = ST_Heretic_Message;
+	ST_HereticStatus = ST_Heretic_Status;
 	ST_NetInit = ST_Basic_NetInit;
 	ST_NetProgress = ST_Basic_NetProgress;
 	ST_NetMessage = ST_Basic_NetMessage;
@@ -795,6 +865,58 @@ static void ST_Heretic_Progress()
 		}
 	}
 	I_GetEvent ();
+}
+
+//==========================================================================
+//
+// ST_Heretic_Message
+//
+// Prints text in the center box of the startup screen.
+//
+//==========================================================================
+
+static void ST_Heretic_Message (const char *message, int attributes)
+{
+	BYTE *font = ST_Util_LoadFont (TEXT_FONT_NAME);
+	if (font != NULL)
+	{
+		int x;
+
+		for (x = 0; message[x] != '\0'; ++x)
+		{
+			ST_Util_DrawChar (StartupBitmap, font, 17 + x, HMsgY, message[x], attributes);
+		}
+		ST_Util_InvalidateRect (StartupScreen, StartupBitmap, 17 * 8, HMsgY * font[0], (17 + x) * 8, HMsgY * font[0] + font[0]);
+		ST_Util_FreeFont (font);
+		HMsgY++;
+		I_GetEvent ();
+	}
+}
+
+//==========================================================================
+//
+// ST_Heretic_Status
+//
+// Appends text to Heretic's status line.
+//
+//==========================================================================
+
+static void ST_Heretic_Status (const char *status)
+{
+	BYTE *font = ST_Util_LoadFont (TEXT_FONT_NAME);
+	if (font != NULL)
+	{
+		int x;
+
+		for (x = 0; status[x] != '\0'; ++x)
+		{
+			ST_Util_DrawChar (StartupBitmap, font, SMsgX + x, 24, status[x], 0x1f);
+		}
+		ST_Util_InvalidateRect (StartupScreen, StartupBitmap, SMsgX * 8, 24 * font[0], (SMsgX + x) * 8, 25 * font[0]);
+		ST_Util_FreeFont (font);
+		SMsgX += x;
+		I_GetEvent ();
+	}
 }
 
 //==========================================================================
@@ -859,6 +981,8 @@ static void ST_Strife_Init ()
 
 	ST_Done = ST_Strife_Done;
 	ST_Progress = ST_Strife_Progress;
+	ST_HereticMessage = ST_Basic_HereticMessage;
+	ST_HereticStatus = ST_Basic_HereticStatus;
 	ST_NetInit = ST_Basic_NetInit;
 	ST_NetProgress = ST_Basic_NetProgress;
 	ST_NetMessage = ST_Basic_NetMessage;

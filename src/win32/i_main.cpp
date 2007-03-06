@@ -653,9 +653,10 @@ void RestoreConView()
 	ShowWindow (GameTitleWindow, SW_SHOW);
 	I_ShutdownInput ();		// Make sure the mouse pointer is available.
 	// Make sure the progress bar isn't visible.
-	if (ST_Done != NULL)
+	if (StartScreen != NULL)
 	{
-		ST_Done();
+		delete StartScreen;
+		StartScreen = NULL;
 	}
 }
 
@@ -678,7 +679,11 @@ void ShowErrorPane(const char *text)
 	}
 
 	SetWindowText (Window, "Fatal Error - " WINDOW_TITLE);
-	if (ST_NetDone != NULL) ST_NetDone();	// Ensure that the network pane is hidden.
+	if (StartScreen != NULL)	// Ensure that the network pane is hidden.
+	{
+		delete StartScreen;
+		StartScreen = NULL;
+	}
 	ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
 	if (ErrorIcon != NULL)
 	{

@@ -1358,7 +1358,7 @@ bool DoArbitrate (void *userdata)
 
 				D_ReadUserInfoStrings (netbuffer[1], &stream, false);
 
-				ST_NetMessage ("Found %s (node %d, player %d)",
+				StartScreen->NetMessage ("Found %s (node %d, player %d)",
 						players[netbuffer[1]].userinfo.netname,
 						node, netbuffer[1]+1);
 			}
@@ -1503,8 +1503,8 @@ void D_ArbitrateNetStart (void)
 		data.gotsetup[0] = 0x80;
 	}
 
-	ST_NetInit ("Exchanging game information", 1);
-	if (!ST_NetLoop (DoArbitrate, &data))
+	StartScreen->NetInit ("Exchanging game information", 1);
+	if (!StartScreen->NetLoop (DoArbitrate, &data))
 	{
 		exit (0);
 	}
@@ -1522,7 +1522,7 @@ void D_ArbitrateNetStart (void)
 			fprintf (debugfile, "player %d is on node %d\n", i, nodeforplayer[i]);
 		}
 	}
-	ST_NetDone();
+	StartScreen->NetDone();
 }
 
 static void SendSetup (DWORD playersdetected[MAXNETNODES], BYTE gotsetup[MAXNETNODES], int len)

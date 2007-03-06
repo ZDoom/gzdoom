@@ -1643,7 +1643,7 @@ static void goOn (int position, bool keepFacing, bool secret, bool resetinv)
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
 		if ((level.flags & LEVEL_NOINTERMISSION) || (nextcluster == thiscluster))
-			NoWipe = 4;
+			NoWipe = 35;
 		D_DrawIcon = "TELEICON";
 	}
 

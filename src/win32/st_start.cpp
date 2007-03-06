@@ -106,6 +106,66 @@
 
 // TYPES -------------------------------------------------------------------
 
+class FBasicStartupScreen : public FStartupScreen
+{
+public:
+	FBasicStartupScreen(int max_progress, bool show_bar);
+	~FBasicStartupScreen();
+
+	void Progress();
+	void NetInit(const char *message, int num_players);
+	void NetProgress(int count);
+	void NetMessage(const char *format, ...);	// cover for printf
+	void NetDone();
+	bool NetLoop(bool (*timer_callback)(void *), void *userdata);
+protected:
+	LRESULT NetMarqueeMode;
+	int NetMaxPos, NetCurPos;
+};
+
+class FGraphicalStartupScreen : public FBasicStartupScreen
+{
+public:
+	FGraphicalStartupScreen(int max_progress);
+	~FGraphicalStartupScreen();
+};
+
+class FHereticStartupScreen : public FGraphicalStartupScreen
+{
+public:
+	FHereticStartupScreen(int max_progress, HRESULT &hr);
+
+	void Progress();
+	void LoadingStatus(const char *message, int colors);
+	void AppendStatusLine(const char *status);
+protected:
+	int ThermX, ThermY, ThermWidth, ThermHeight;
+	int HMsgY, SMsgX;
+};
+
+class FHexenStartupScreen : public FGraphicalStartupScreen
+{
+public:
+	FHexenStartupScreen(int max_progress, HRESULT &hr);
+
+	void Progress();
+	void NetProgress(int count);
+	void NetDone();
+};
+
+class FStrifeStartupScreen : public FGraphicalStartupScreen
+{
+public:
+	FStrifeStartupScreen(int max_progress, HRESULT &hr);
+	~FStrifeStartupScreen();
+
+	void Progress();
+protected:
+	void DrawStuff(int old_laser, int new_laser);
+
+	BYTE *StartupPics[4+2+1];
+};
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void RestoreConView();
@@ -134,32 +194,6 @@ void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE 
 
 static INT_PTR CALLBACK NetStartPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
-static void ST_Basic_Init ();
-static void ST_Basic_Done ();
-static void ST_Basic_Progress ();
-static void ST_Basic_HereticMessage (const char *message, int attributes);
-static void ST_Basic_HereticStatus (const char *status);
-static void ST_Basic_NetInit (const char *message, int numplayers);
-static void ST_Basic_NetProgress (int count);
-static void ST_Basic_NetMessage (const char *format, ...);
-static void ST_Basic_NetDone ();
-static bool ST_Basic_NetLoop (bool (*timer_callback)(void *), void *userdata);
-
-static void ST_Hexen_Init ();
-static void ST_Hexen_Done ();
-static void ST_Hexen_Progress ();
-static void ST_Hexen_NetProgress (int count);
-
-static void ST_Heretic_Init ();
-static void ST_Heretic_Progress ();
-static void ST_Heretic_Message (const char *message, int attributes);
-static void ST_Heretic_Status (const char *status);
-
-static void ST_Strife_Init ();
-static void ST_Strife_Done ();
-static void ST_Strife_Progress ();
-static void ST_Strife_DrawStuff (int old_laser, int new_laser);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern HINSTANCE g_hInst;
@@ -167,16 +201,7 @@ extern HWND Window, ConWindow, ProgressBar, NetStartPane, StartupScreen, GameTit
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-void (*ST_Done)();
-void (*ST_Progress)();
-void (*ST_HereticMessage)(const char *message, int attributes);
-void (*ST_HereticStatus)(const char *status);
-void (*ST_NetInit)(const char *message, int numplayers);
-void (*ST_NetProgress)(int count);
-void (*ST_NetMessage)(const char *format, ...);
-void (*ST_NetDone)();
-bool (*ST_NetLoop)(bool (*timer_callback)(void *), void *userdata);
-
+FStartupScreen *StartScreen;
 BITMAPINFO *StartupBitmap;
 
 CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -186,13 +211,6 @@ CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 }
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int MaxPos, CurPos, NotchPos;
-static int NetMaxPos, NetCurPos;
-static LRESULT NetMarqueeMode;
-static int ThermX, ThermY, ThermWidth, ThermHeight;
-static int HMsgY, SMsgX;
-static BYTE *StrifeStartupPics[4+2+1];
 
 static const char *StrifeStartupPicNames[4+2+1] =
 {
@@ -281,75 +299,123 @@ static const BYTE NetNotchBits[] =
 
 //==========================================================================
 //
-// ST_Init
+// FStartupScreen :: CreateInstance
 //
 // Initializes the startup screen for the detected game.
 // Sets the size of the progress bar and displays the startup screen.
 //
 //==========================================================================
 
-void ST_Init(int maxProgress)
+FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
-	MaxPos = maxProgress;
-	CurPos = 0;
-	NotchPos = 0;
+	FStartupScreen *scr = NULL;
+	HRESULT hr;
 
 	if (gameinfo.gametype == GAME_Hexen)
 	{
-		ST_Hexen_Init ();
+		scr = new FHexenStartupScreen(max_progress, hr);
 	}
 	else if (gameinfo.gametype == GAME_Heretic)
 	{
-		ST_Heretic_Init ();
+		scr = new FHereticStartupScreen(max_progress, hr);
 	}
 	else if (gameinfo.gametype == GAME_Strife)
 	{
-		ST_Strife_Init ();
+		scr = new FStrifeStartupScreen(max_progress, hr);
 	}
-	else
+	if (scr != NULL && FAILED(hr))
 	{
-		ST_Basic_Init ();
+		delete scr;
+		scr = NULL;
 	}
+	if (scr == NULL)
+	{
+		scr = new FBasicStartupScreen(max_progress, true);
+	}
+	return scr;
 }
 
 //==========================================================================
 //
-// ST_Basic_Init
+// FStartupScreen Constructor
+//
+//==========================================================================
+
+FStartupScreen::FStartupScreen(int max_progress)
+{
+	MaxPos = max_progress;
+	CurPos = 0;
+	NotchPos = 0;
+}
+
+//==========================================================================
+//
+// FStartupScreen Destructor
+//
+//==========================================================================
+
+FStartupScreen::~FStartupScreen()
+{
+}
+
+//==========================================================================
+//
+// FStartupScreen :: LoadingStatus
+//
+// Used by Heretic for the Loading Status "window."
+//
+//==========================================================================
+
+void FStartupScreen::LoadingStatus(const char *message, int colors)
+{
+}
+
+//==========================================================================
+//
+// FStartupScreen :: AppendStatusLine
+//
+// Used by Heretic for the "status line" at the bottom of the screen.
+//
+//==========================================================================
+
+void FStartupScreen::AppendStatusLine(const char *status)
+{
+}
+
+//==========================================================================
+//
+// FBasicStartupScreen Constructor
 //
 // Shows a progress bar at the bottom of the window.
 //
 //==========================================================================
 
-static void ST_Basic_Init ()
+FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
+: FStartupScreen(max_progress)
 {
-	ProgressBar = CreateWindowEx(0, PROGRESS_CLASS,
-		NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
-		0, 0, 0, 0,
-		Window, 0, g_hInst, NULL);
-	SendMessage (ProgressBar, PBM_SETRANGE, 0, MAKELPARAM(0,MaxPos));
-	LayoutMainWindow (Window, NULL);
-
-	ST_Done = ST_Basic_Done;
-	ST_Progress = ST_Basic_Progress;
-	ST_HereticMessage = ST_Basic_HereticMessage;
-	ST_HereticStatus = ST_Basic_HereticStatus;
-	ST_NetInit = ST_Basic_NetInit;
-	ST_NetProgress = ST_Basic_NetProgress;
-	ST_NetMessage = ST_Basic_NetMessage;
-	ST_NetDone = ST_Basic_NetDone;
-	ST_NetLoop = ST_Basic_NetLoop;
+	if (show_bar)
+	{
+		ProgressBar = CreateWindowEx(0, PROGRESS_CLASS,
+			NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
+			0, 0, 0, 0,
+			Window, 0, g_hInst, NULL);
+		SendMessage (ProgressBar, PBM_SETRANGE, 0, MAKELPARAM(0,MaxPos));
+		LayoutMainWindow (Window, NULL);
+	}
+	NetMaxPos = 0;
+	NetCurPos = 0;
 }
 
 //==========================================================================
 //
-// ST_Basic_Done
+// FBasicStartupScreen Destructor
 //
 // Called just before entering graphics mode to deconstruct the startup
 // screen.
 //
 //==========================================================================
 
-static void ST_Basic_Done()
+FBasicStartupScreen::~FBasicStartupScreen()
 {
 	if (ProgressBar != NULL)
 	{
@@ -361,13 +427,13 @@ static void ST_Basic_Done()
 
 //==========================================================================
 //
-// ST_Basic_Progress
+// FBasicStartupScreen :: Progress
 //
 // Bumps the progress meter one notch.
 //
 //==========================================================================
 
-static void ST_Basic_Progress()
+void FBasicStartupScreen::Progress()
 {
 	if (CurPos < MaxPos)
 	{
@@ -378,31 +444,7 @@ static void ST_Basic_Progress()
 
 //==========================================================================
 //
-// ST_Basic_HereticMessage
-//
-// Only used by the Heretic startup screen.
-//
-//==========================================================================
-
-static void ST_Basic_HereticMessage (const char *, int)
-{
-}
-
-//==========================================================================
-//
-// ST_Basic_HereticStatus
-//
-// Only used by the Heretic startup screen.
-//
-//==========================================================================
-
-static void ST_Basic_HereticStatus (const char *)
-{
-}
-
-//==========================================================================
-//
-// ST_Basic_NetInit
+// FBasicStartupScreen :: NetInit
 //
 // Shows the network startup pane if it isn't visible. Sets the message in
 // the pane to the one provided. If numplayers is 0, then the progress bar
@@ -412,7 +454,7 @@ static void ST_Basic_HereticStatus (const char *)
 //
 //==========================================================================
 
-static void ST_Basic_NetInit(const char *message, int numplayers)
+void FBasicStartupScreen::NetInit(const char *message, int numplayers)
 {
 	NetMaxPos = numplayers;
 	if (NetStartPane == NULL)
@@ -430,6 +472,7 @@ static void ST_Basic_NetInit(const char *message, int numplayers)
 			winrect.right - winrect.left, winrect.bottom - winrect.top + LayoutNetStartPane (NetStartPane, 0),
 			SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
 		LayoutMainWindow (Window, NULL);
+		SetFocus (NetStartPane);
 	}
 	if (NetStartPane != NULL)
 	{
@@ -470,18 +513,18 @@ static void ST_Basic_NetInit(const char *message, int numplayers)
 	}
 	NetMaxPos = numplayers;
 	NetCurPos = 0;
-	ST_NetProgress(1);	// You always know about yourself
+	NetProgress(1);	// You always know about yourself
 }
 
 //==========================================================================
 //
-// ST_Basic_NetDone
+// FBasicStartupScreen :: NetDone
 //
 // Removes the network startup pane.
 //
 //==========================================================================
 
-static void ST_Basic_NetDone()
+void FBasicStartupScreen::NetDone()
 {
 	if (NetStartPane != NULL)
 	{
@@ -493,15 +536,15 @@ static void ST_Basic_NetDone()
 
 //==========================================================================
 //
-// ST_Basic_NetMessage
+// FBasicStartupScreen :: NetMessage
 //
-// Call this between ST_NetInit() and ST_NetDone() instead of Printf() to
+// Call this between NetInit() and NetDone() instead of Printf() to
 // display messages, in case the progress meter is mixed in the same output
 // stream as normal messages.
 //
 //==========================================================================
 
-static void ST_Basic_NetMessage(const char *format, ...)
+void FBasicStartupScreen::NetMessage(const char *format, ...)
 {
 	FString str;
 	va_list argptr;
@@ -514,14 +557,14 @@ static void ST_Basic_NetMessage(const char *format, ...)
 
 //==========================================================================
 //
-// ST_Basic_NetProgress
+// FBasicStartupScreen :: NetProgress
 //
 // Sets the network progress meter. If count is 0, it gets bumped by 1.
 // Otherwise, it is set to count.
 //
 //==========================================================================
 
-static void ST_Basic_NetProgress(int count)
+void FBasicStartupScreen :: NetProgress(int count)
 {
 	if (count == 0)
 	{
@@ -552,7 +595,7 @@ static void ST_Basic_NetProgress(int count)
 
 //==========================================================================
 //
-// ST_Basic_NetLoop
+// FBasicStartupScreen :: NetLoop
 //
 // The timer_callback function is called at least two times per second
 // and passed the userdata value. It should return true to stop the loop and
@@ -564,7 +607,7 @@ static void ST_Basic_NetProgress(int count)
 //
 //==========================================================================
 
-static bool ST_Basic_NetLoop(bool (*timer_callback)(void *), void *userdata)
+bool FBasicStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 {
 	BOOL bRet;
 	MSG msg;
@@ -613,7 +656,7 @@ static bool ST_Basic_NetLoop(bool (*timer_callback)(void *), void *userdata)
 
 static INT_PTR CALLBACK NetStartPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if (msg == WM_COMMAND && HIWORD(wParam) == BN_CLICKED)
+	if (msg == WM_COMMAND && HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDCANCEL)
 	{
 		PostQuitMessage (0);
 		return TRUE;
@@ -623,23 +666,58 @@ static INT_PTR CALLBACK NetStartPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LP
 
 //==========================================================================
 //
-// ST_Hexen_Init
+// FGraphicalStartupScreen Constructor
+//
+// This doesn't really do anything. The subclass is responsible for
+// creating the resources that will be freed by this class's destructor.
+//
+//==========================================================================
+
+FGraphicalStartupScreen::FGraphicalStartupScreen(int max_progress)
+: FBasicStartupScreen(max_progress, false)
+{
+}
+
+//==========================================================================
+//
+// FGraphicalStartupScreen Destructor
+//
+//==========================================================================
+
+FGraphicalStartupScreen::~FGraphicalStartupScreen()
+{
+	if (StartupScreen != NULL)
+	{
+		DestroyWindow (StartupScreen);
+		StartupScreen = NULL;
+	}
+	if (StartupBitmap != NULL)
+	{
+		ST_Util_FreeBitmap (StartupBitmap);
+		StartupBitmap = NULL;
+	}
+}
+
+//==========================================================================
+//
+// FHexenStartupScreen Constructor
 //
 // Shows the Hexen startup screen. If the screen doesn't appear to be
-// valid, it falls back to ST_Basic_Init.
+// valid, it sets hr for a failure.
 //
 // The startup graphic is a planar, 4-bit 640x480 graphic preceded by a
 // 16 entry (48 byte) VGA palette.
 //
 //==========================================================================
 
-static void ST_Hexen_Init ()
+FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
+: FGraphicalStartupScreen(max_progress)
 {
 	int startup_lump = Wads.CheckNumForName ("STARTUP");
+	hr = E_FAIL;
 
 	if (startup_lump < 0 || Wads.LumpLength (startup_lump) != 153648 || !ST_Util_CreateStartupWindow())
 	{
-		ST_Basic_Init ();
 		return;
 	}
 
@@ -676,53 +754,20 @@ static void ST_Hexen_Init ()
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
 
-	ST_Done = ST_Hexen_Done;
-	ST_Progress = ST_Hexen_Progress;
-	ST_HereticMessage = ST_Basic_HereticMessage;
-	ST_HereticStatus = ST_Basic_HereticStatus;
-	ST_NetInit = ST_Basic_NetInit;
-	ST_NetProgress = ST_Hexen_NetProgress;
-	ST_NetMessage = ST_Basic_NetMessage;
-	ST_NetDone = ST_Basic_NetDone;
-	ST_NetLoop = ST_Basic_NetLoop;
-
-	// Not that this screen will be around long enough for anyone to
-	// really hear the music, but start it anyway.
 	S_ChangeMusic ("orb", true, true);
+
+	hr = S_OK;
 }
 
 //==========================================================================
 //
-// ST_Hexen_Done
-//
-// Called just before entering graphics mode to deconstruct the startup
-// screen.
-//
-//==========================================================================
-
-static void ST_Hexen_Done()
-{
-	if (StartupScreen != NULL)
-	{
-		DestroyWindow (StartupScreen);
-		StartupScreen = NULL;
-	}
-	if (StartupBitmap != NULL)
-	{
-		ST_Util_FreeBitmap (StartupBitmap);
-		StartupBitmap = NULL;
-	}
-}
-
-//==========================================================================
-//
-// ST_Hexen_Progress
+// FHexenStartupScreen :: Progress
 //
 // Bumps the progress meter one notch.
 //
 //==========================================================================
 
-static void ST_Hexen_Progress()
+void FHexenStartupScreen::Progress()
 {
 	int notch_pos, x, y;
 
@@ -746,18 +791,18 @@ static void ST_Hexen_Progress()
 
 //==========================================================================
 //
-// ST_Hexen_NetProgress
+// FHexenStartupScreen :: NetProgress
 //
 // Draws the red net noches in addition to the normal progress bar.
 //
 //==========================================================================
 
-static void ST_Hexen_NetProgress (int count)
+void FHexenStartupScreen::NetProgress(int count)
 {
 	int oldpos = NetCurPos;
 	int x, y;
 
-	ST_Basic_NetProgress (count);
+	FGraphicalStartupScreen::NetProgress (count);
 	if (NetMaxPos != 0 && NetCurPos > oldpos)
 	{
 		for (; oldpos < NetCurPos && oldpos < ST_MAX_NETNOTCHES; ++oldpos)
@@ -773,25 +818,40 @@ static void ST_Hexen_NetProgress (int count)
 
 //==========================================================================
 //
-// ST_Heretic_Init
+// FHexenStartupScreen :: NetDone
+//
+// Aside from the standard processing, also plays a sound.
+//
+//==========================================================================
+
+void FHexenStartupScreen::NetDone()
+{
+	S_Sound (CHAN_BODY, "PickupWeapon", 1, ATTN_NORM);
+	FGraphicalStartupScreen::NetDone();
+}
+
+//==========================================================================
+//
+// FHereticStartupScreen Constructor
 //
 // Shows the Heretic startup screen. If the screen doesn't appear to be
-// valid, it falls back to ST_Basic_Init.
+// valid, it returns a failure code in hr.
 //
 // The loading screen is an 80x25 text screen with character data and
 // attributes intermixed, which means it must be exactly 4000 bytes long.
 //
 //==========================================================================
 
-static void ST_Heretic_Init ()
+FHereticStartupScreen::FHereticStartupScreen(int max_progress, HRESULT &hr)
+: FGraphicalStartupScreen(max_progress)
 {
 	int loading_lump = Wads.CheckNumForName ("LOADING");
 	BYTE loading_screen[4000];
 	BYTE *font;
 
+	hr = E_FAIL;
 	if (loading_lump < 0 || Wads.LumpLength (loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
 	{
-		ST_Basic_Init ();
 		return;
 	}
 
@@ -799,7 +859,6 @@ static void ST_Heretic_Init ()
 	if (font == NULL)
 	{
 		DestroyWindow (StartupScreen);
-		ST_Basic_Init ();
 		return;
 	}
 
@@ -826,27 +885,18 @@ static void ST_Heretic_Init ()
 	ST_Util_SizeWindowForBitmap (1);
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
-
-	ST_Done = ST_Hexen_Done;
-	ST_Progress = ST_Heretic_Progress;
-	ST_HereticMessage = ST_Heretic_Message;
-	ST_HereticStatus = ST_Heretic_Status;
-	ST_NetInit = ST_Basic_NetInit;
-	ST_NetProgress = ST_Basic_NetProgress;
-	ST_NetMessage = ST_Basic_NetMessage;
-	ST_NetDone = ST_Basic_NetDone;
-	ST_NetLoop = ST_Basic_NetLoop;
+	hr = S_OK;
 }
 
 //==========================================================================
 //
-// ST_Heretic_Progress
+// FHereticStartupScreen::Progress
 //
 // Bumps the progress meter one notch.
 //
 //==========================================================================
 
-static void ST_Heretic_Progress()
+void FHereticStartupScreen::Progress()
 {
 	int notch_pos;
 
@@ -869,13 +919,13 @@ static void ST_Heretic_Progress()
 
 //==========================================================================
 //
-// ST_Heretic_Message
+// FHereticStartupScreen :: LoadingStatus
 //
 // Prints text in the center box of the startup screen.
 //
 //==========================================================================
 
-static void ST_Heretic_Message (const char *message, int attributes)
+void FHereticStartupScreen::LoadingStatus(const char *message, int colors)
 {
 	BYTE *font = ST_Util_LoadFont (TEXT_FONT_NAME);
 	if (font != NULL)
@@ -884,7 +934,7 @@ static void ST_Heretic_Message (const char *message, int attributes)
 
 		for (x = 0; message[x] != '\0'; ++x)
 		{
-			ST_Util_DrawChar (StartupBitmap, font, 17 + x, HMsgY, message[x], attributes);
+			ST_Util_DrawChar (StartupBitmap, font, 17 + x, HMsgY, message[x], colors);
 		}
 		ST_Util_InvalidateRect (StartupScreen, StartupBitmap, 17 * 8, HMsgY * font[0], (17 + x) * 8, HMsgY * font[0] + font[0]);
 		ST_Util_FreeFont (font);
@@ -895,13 +945,13 @@ static void ST_Heretic_Message (const char *message, int attributes)
 
 //==========================================================================
 //
-// ST_Heretic_Status
+// FHereticStartupScreen :: AppendStatusLine
 //
 // Appends text to Heretic's status line.
 //
 //==========================================================================
 
-static void ST_Heretic_Status (const char *status)
+void FHereticStartupScreen::AppendStatusLine(const char *status)
 {
 	BYTE *font = ST_Util_LoadFont (TEXT_FONT_NAME);
 	if (font != NULL)
@@ -921,10 +971,10 @@ static void ST_Heretic_Status (const char *status)
 
 //==========================================================================
 //
-// ST_Strife_Init
+// FStrifeStartupScreen Constructor
 //
 // Shows the Strife startup screen. If the screen doesn't appear to be
-// valid, it falls back to ST_Basic_Init.
+// valid, it returns a failure code in hr.
 //
 // The startup background is a raw 320x200 image, however Strife only
 // actually uses 95 rows from it, starting at row 57. The rest of the image
@@ -935,14 +985,20 @@ static void ST_Heretic_Status (const char *status)
 //
 //==========================================================================
 
-static void ST_Strife_Init ()
+FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, HRESULT &hr)
+: FGraphicalStartupScreen(max_progress)
 {
 	int startup_lump = Wads.CheckNumForName ("STARTUP0");
 	int i;
 
+	hr = E_FAIL;
+	for (i = 0; i < 4+2+1; ++i)
+	{
+		StartupPics[i] = NULL;
+	}
+
 	if (startup_lump < 0 || Wads.LumpLength (startup_lump) != 64000 || !ST_Util_CreateStartupWindow())
 	{
-		ST_Basic_Init ();
 		return;
 	}
 
@@ -961,77 +1017,52 @@ static void ST_Strife_Init ()
 		int lumpnum = Wads.CheckNumForName (StrifeStartupPicNames[i]);
 		int lumplen;
 
-		if (lumpnum < 0 || (lumplen = Wads.LumpLength (lumpnum)) != StrifeStartupPicSizes[i])
-		{
-			StrifeStartupPics[i] = NULL;
-		}
-		else
+		if (lumpnum >= 0 && (lumplen = Wads.LumpLength (lumpnum)) == StrifeStartupPicSizes[i])
 		{
 			FWadLump lumpr = Wads.OpenLumpNum (lumpnum);
-			StrifeStartupPics[i] = new BYTE[lumplen];
-			lumpr.Read (StrifeStartupPics[i], lumplen);
+			StartupPics[i] = new BYTE[lumplen];
+			lumpr.Read (StartupPics[i], lumplen);
 		}
 	}
 
 	// Make the startup image appear.
-	ST_Strife_DrawStuff (0, 0);
+	DrawStuff (0, 0);
 	ST_Util_SizeWindowForBitmap (2);
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
 
-	ST_Done = ST_Strife_Done;
-	ST_Progress = ST_Strife_Progress;
-	ST_HereticMessage = ST_Basic_HereticMessage;
-	ST_HereticStatus = ST_Basic_HereticStatus;
-	ST_NetInit = ST_Basic_NetInit;
-	ST_NetProgress = ST_Basic_NetProgress;
-	ST_NetMessage = ST_Basic_NetMessage;
-	ST_NetDone = ST_Basic_NetDone;
-	ST_NetLoop = ST_Basic_NetLoop;
+	hr = S_OK;
 }
 
 //==========================================================================
 //
-// ST_Strife_Done
+// FStrifeStartupScreen Deconstructor
 //
-// Called just before entering graphics mode to deconstruct the startup
-// screen.
+// Frees the strife pictures.
 //
 //==========================================================================
 
-static void ST_Strife_Done()
+FStrifeStartupScreen::~FStrifeStartupScreen()
 {
-	int i;
-
-	for (i = 0; i < 4+2+1; ++i)
+	for (int i = 0; i < 4+2+1; ++i)
 	{
-		if (StrifeStartupPics[i] != NULL)
+		if (StartupPics[i] != NULL)
 		{
-			delete[] StrifeStartupPics[i];
+			delete[] StartupPics[i];
 		}
-		StrifeStartupPics[i] = NULL;
-	}
-	if (StartupScreen != NULL)
-	{
-		DestroyWindow (StartupScreen);
-		StartupScreen = NULL;
-	}
-	if (StartupBitmap != NULL)
-	{
-		ST_Util_FreeBitmap (StartupBitmap);
-		StartupBitmap = NULL;
+		StartupPics[i] = NULL;
 	}
 }
 
 //==========================================================================
 //
-// ST_Strife_Progress
+// FStrifeStartupScreen :: Progress
 //
 // Bumps the progress meter one notch.
 //
 //==========================================================================
 
-static void ST_Strife_Progress()
+void FStrifeStartupScreen::Progress()
 {
 	int notch_pos;
 
@@ -1041,7 +1072,7 @@ static void ST_Strife_Progress()
 		notch_pos = (CurPos * (ST_LASERSPACE_WIDTH - ST_LASER_WIDTH)) / MaxPos;
 		if (notch_pos != NotchPos && !(notch_pos & 1))
 		{ // Time to update.
-			ST_Strife_DrawStuff (NotchPos, notch_pos);
+			DrawStuff (NotchPos, notch_pos);
 			NotchPos = notch_pos;
 		}
 	}
@@ -1050,7 +1081,7 @@ static void ST_Strife_Progress()
 
 //==========================================================================
 //
-// ST_Strife_DrawStuff
+// FStrifeStartupScreen :: DrawStuff
 //
 // Draws all the moving parts of Strife's startup screen. If you're
 // running off a slow drive, it can look kind of good. Otherwise, it
@@ -1058,7 +1089,7 @@ static void ST_Strife_Progress()
 //
 //==========================================================================
 
-static void ST_Strife_DrawStuff (int old_laser, int new_laser)
+void FStrifeStartupScreen::DrawStuff(int old_laser, int new_laser)
 {
 	int y;
 
@@ -1066,7 +1097,7 @@ static void ST_Strife_DrawStuff (int old_laser, int new_laser)
 	ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_LASERSPACE_X + old_laser,
 		ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
 	// Draw new laser
-	ST_Util_DrawBlock (StartupBitmap, StrifeStartupPics[LASER_INDEX + (new_laser & 1)],
+	ST_Util_DrawBlock (StartupBitmap, StartupPics[LASER_INDEX + (new_laser & 1)],
 		ST_LASERSPACE_X + new_laser, ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
 
 	// The bot jumps up and down like crazy.
@@ -1075,7 +1106,7 @@ static void ST_Strife_DrawStuff (int old_laser, int new_laser)
 	{
 		ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, y);
 	}
-	ST_Util_DrawBlock (StartupBitmap, StrifeStartupPics[BOT_INDEX], ST_BOT_X, ST_BOT_Y + y, ST_BOT_WIDTH, ST_BOT_HEIGHT);
+	ST_Util_DrawBlock (StartupBitmap, StartupPics[BOT_INDEX], ST_BOT_X, ST_BOT_Y + y, ST_BOT_WIDTH, ST_BOT_HEIGHT);
 	if (y < (5 - 1) - 2)
 	{
 		ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_BOT_X, ST_BOT_Y + ST_BOT_HEIGHT + y, ST_BOT_WIDTH, 2 - y);
@@ -1083,7 +1114,7 @@ static void ST_Strife_DrawStuff (int old_laser, int new_laser)
 
 	// The peasant desperately runs in place, trying to get away from the laser.
 	// Yet, despite all his limb flailing, he never manages to get anywhere.
-	ST_Util_DrawBlock (StartupBitmap, StrifeStartupPics[PEASANT_INDEX + ((new_laser >> 1) & 3)],
+	ST_Util_DrawBlock (StartupBitmap, StartupPics[PEASANT_INDEX + ((new_laser >> 1) & 3)],
 		ST_PEASANT_X, ST_PEASANT_Y, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT);
 }
 
@@ -1107,6 +1138,7 @@ void ST_Endoom()
 	BYTE endoom_screen[4000];
 	BYTE *font;
 	MSG mess;
+	BOOL bRet;
 
 	if (endoom_lump < 0 || Wads.LumpLength (endoom_lump) != 4000)
 	{
@@ -1130,7 +1162,6 @@ void ST_Endoom()
 		ST_Util_FreeFont (font);
 		exit(0);
 	}
-	ST_Done = ST_Basic_Done;
 
 	I_ShutdownGraphics ();
 	RestoreConView ();
@@ -1156,19 +1187,21 @@ void ST_Endoom()
 
 	// Wait until any key has been pressed or a quit message has been received
 
-	while (1)
+	while ((bRet = GetMessage(&mess, NULL, 0, 0)) != 0)
 	{
-		if (PeekMessage (&mess, NULL, 0, 0, PM_REMOVE))
+		if (bRet == 0)	// Received WM_QUIT
 		{
-			if (mess.message == WM_QUIT)
-				exit (int(mess.wParam));
-			if (mess.message == WM_KEYDOWN || mess.message == WM_SYSKEYDOWN || mess.message == WM_LBUTTONDOWN)
-				exit(0);
-
-			TranslateMessage (&mess);
-			DispatchMessage (&mess);
+			exit (int(mess.wParam));
 		}
-		else WaitMessage();
+		else if (bRet != -1)
+		{
+			if (mess.message == WM_KEYDOWN || mess.message == WM_SYSKEYDOWN || mess.message == WM_LBUTTONDOWN)
+			{
+				exit (0);
+			}
+		}
+		TranslateMessage (&mess);
+		DispatchMessage (&mess);
 	}
 }
 
@@ -1301,6 +1334,11 @@ void ST_Util_PlanarToChunky4 (BYTE *dest, const BYTE *src, int width, int height
 
 void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, int bytewidth, int height)
 {
+	if (src == NULL)
+	{
+		return;
+	}
+
 	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
 	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
 	BYTE *dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;

@@ -138,7 +138,7 @@ static void AddTiles (void *tiles)
 			tiledata++;
 			size--;
 		}
-		ST_Progress();
+		StartScreen->Progress();
 
 		if ((picanm[pic] & 63) && (picanm[pic] & 192))
 		{

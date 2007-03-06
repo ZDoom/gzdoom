@@ -1,3 +1,13 @@
+March 5, 2007
+- Fixed: Thing_ProjectileAimed did not set the missile's speed correctly.
+
+March 3, 2007
+- The net start pane is now given focus when it is created, so it can
+  receive keyboard input.
+- Added playback of the "WeaponPickup" sound when a Hexen net game starts.
+- Separated the different startup screens into classes for better
+  modularization (which I should have done in the first place).
+
 February 28, 2007
 - Changed the net start pane to open underneath the existing window instead
   of scrunching the startup screen up to make room for it.

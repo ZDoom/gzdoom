@@ -224,7 +224,7 @@ void PacketGet (void)
 		if (err == WSAECONNRESET)
 		{ // The remote node aborted unexpectedly, so pretend it sent an exit packet
 
-			ST_NetMessage ("The connection from %s was dropped.\n",
+			StartScreen->NetMessage ("The connection from %s was dropped.\n",
 				players[sendplayer[node]].userinfo.netname);
 
 			doomcom.data[0] = 0x80;	// NCMD_EXIT
@@ -401,7 +401,7 @@ static void SendConAck (int num_connected, int num_needed)
 	{
 		PreSend (&packet, 4, &sendaddress[node]);
 	}
-	ST_NetProgress (doomcom.numnodes);
+	StartScreen->NetProgress (doomcom.numnodes);
 }
 
 bool Host_CheckForConnects (void *userdata)
@@ -426,7 +426,7 @@ bool Host_CheckForConnects (void *userdata)
 				if (node == -1)
 				{
 					const BYTE *s_addr_bytes = (const BYTE *)&from->sin_addr;
-					ST_NetMessage ("Got extra connect from %d.%d.%d.%d:%d",
+					StartScreen->NetMessage ("Got extra connect from %d.%d.%d.%d:%d",
 						s_addr_bytes[0], s_addr_bytes[1], s_addr_bytes[2], s_addr_bytes[3],
 						from->sin_port);
 					packet.Message = PRE_ALLFULL;
@@ -439,7 +439,7 @@ bool Host_CheckForConnects (void *userdata)
 				{
 					node = doomcom.numnodes++;
 					sendaddress[node] = *from;
-					ST_NetMessage ("Got connect from node %d.", node);
+					StartScreen->NetMessage ("Got connect from node %d.", node);
 				}
 
 				// Let the new guest (and everyone else) know we got their message.
@@ -451,7 +451,7 @@ bool Host_CheckForConnects (void *userdata)
 			node = FindNode (from);
 			if (node >= 0)
 			{
-				ST_NetMessage ("Got disconnect from node %d.", node);
+				StartScreen->NetMessage ("Got disconnect from node %d.", node);
 				doomcom.numnodes--;
 				while (node < doomcom.numnodes)
 				{
@@ -590,20 +590,20 @@ void HostGame (int i)
 
 	atterm (SendAbort);
 
-	ST_NetInit ("Waiting for players", numplayers);
+	StartScreen->NetInit ("Waiting for players", numplayers);
 
 	// Wait for numplayers-1 different connections
-	if (!ST_NetLoop (Host_CheckForConnects, (void *)(intptr_t)numplayers))
+	if (!StartScreen->NetLoop (Host_CheckForConnects, (void *)(intptr_t)numplayers))
 	{
 		exit (0);
 	}
 
 	// Now inform everyone of all machines involved in the game
 	memset (gotack, 0, sizeof(gotack));
-	ST_NetMessage ("Sending all here.");
-	ST_NetInit ("Done waiting", 1);
+	StartScreen->NetMessage ("Sending all here.");
+	StartScreen->NetInit ("Done waiting", 1);
 
-	if (!ST_NetLoop (Host_SendAllHere, (void *)gotack))
+	if (!StartScreen->NetLoop (Host_SendAllHere, (void *)gotack))
 	{
 		exit (0);
 	}
@@ -611,7 +611,7 @@ void HostGame (int i)
 	popterm ();
 
 	// Now go
-	ST_NetMessage ("Go");
+	StartScreen->NetMessage ("Go");
 	packet.Fake = PRE_FAKE;
 	packet.Message = PRE_GO;
 	for (node = 1; node < doomcom.numnodes; node++)
@@ -624,7 +624,7 @@ void HostGame (int i)
 		}
 	}
 
-	ST_NetMessage ("Total players: %d", doomcom.numnodes);
+	StartScreen->NetMessage ("Total players: %d", doomcom.numnodes);
 
 	doomcom.id = DOOMCOM_ID;
 	doomcom.numplayers = doomcom.numnodes;
@@ -657,9 +657,9 @@ bool Guest_ContactHost (void *userdata)
 		{
 			if (packet.Message == PRE_CONACK)
 			{
-				ST_NetMessage ("Total players: %d", packet.NumNodes);
-				ST_NetInit ("Waiting for other players", packet.NumNodes);
-				ST_NetProgress (packet.NumPresent);
+				StartScreen->NetMessage ("Total players: %d", packet.NumNodes);
+				StartScreen->NetInit ("Waiting for other players", packet.NumNodes);
+				StartScreen->NetProgress (packet.NumPresent);
 				return true;
 			}
 			else if (packet.Message == PRE_DISCONNECT)
@@ -676,7 +676,7 @@ bool Guest_ContactHost (void *userdata)
 	}
 
 	// In case the progress bar could not be marqueed, bump it.
-	ST_NetProgress (0);
+	StartScreen->NetProgress (0);
 
 	return false;
 }
@@ -695,7 +695,7 @@ bool Guest_WaitForOthers (void *userdata)
 		switch (packet.Message)
 		{
 		case PRE_CONACK:
-			ST_NetProgress (packet.NumPresent);
+			StartScreen->NetProgress (packet.NumPresent);
 			break;
 
 		case PRE_ALLHERE:
@@ -707,7 +707,7 @@ bool Guest_WaitForOthers (void *userdata)
 				doomcom.numnodes = packet.NumNodes + 2;
 				sendplayer[0] = packet.ConsoleNum;	// My player number
 				doomcom.consoleplayer = packet.ConsoleNum;
-				ST_NetMessage ("Console player number: %d", doomcom.consoleplayer);
+				StartScreen->NetMessage ("Console player number: %d", doomcom.consoleplayer);
 				for (node = 0; node < packet.NumNodes; node++)
 				{
 					sendaddress[node+2].sin_addr.s_addr = packet.machines[node].address;
@@ -721,14 +721,14 @@ bool Guest_WaitForOthers (void *userdata)
 				}
 			}
 
-			ST_NetMessage ("Received All Here, sending ACK.");
+			StartScreen->NetMessage ("Received All Here, sending ACK.");
 			packet.Fake = PRE_FAKE;
 			packet.Message = PRE_ALLHEREACK;
 			PreSend (&packet, 2, &sendaddress[1]);
 			break;
 
 		case PRE_GO:
-			ST_NetMessage ("Received \"Go.\"");
+			StartScreen->NetMessage ("Received \"Go.\"");
 			return true;
 
 		case PRE_DISCONNECT:
@@ -757,22 +757,22 @@ void JoinGame (int i)
 	atterm (SendAbort);
 
 	// Let host know we are here
-	ST_NetInit ("Contacting host", 0);
+	StartScreen->NetInit ("Contacting host", 0);
 
-	if (!ST_NetLoop (Guest_ContactHost, NULL))
+	if (!StartScreen->NetLoop (Guest_ContactHost, NULL))
 	{
 		exit (0);
 	}
 
 	// Wait for everyone else to connect
-	if (!ST_NetLoop (Guest_WaitForOthers, 0))
+	if (!StartScreen->NetLoop (Guest_WaitForOthers, 0))
 	{
 		exit (0);
 	}
 
 	popterm ();
 
-	ST_NetMessage ("Total players: %d", doomcom.numnodes);
+	StartScreen->NetMessage ("Total players: %d", doomcom.numnodes);
 
 	doomcom.id = DOOMCOM_ID;
 	doomcom.numplayers = doomcom.numnodes;

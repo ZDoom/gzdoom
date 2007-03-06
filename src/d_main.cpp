@@ -2080,7 +2080,7 @@ void D_DoomMain (void)
 	S_Init ();
 
 	Printf ("ST_Init: Init startup screen.\n");
-	ST_Init (R_GuesstimateNumTextures() + 5);
+	StartScreen = FStartupScreen::CreateInstance (R_GuesstimateNumTextures() + 5);
 
 	Printf ("P_Init: Checking cmd-line parameters...\n");
 	flags = dmflags;
@@ -2212,16 +2212,16 @@ void D_DoomMain (void)
 	//  Build status bar line!
 	//
 	if (deathmatch)
-		ST_HereticStatus("DeathMatch...");
+		StartScreen->AppendStatusLine("DeathMatch...");
 	if (dmflags & DF_NO_MONSTERS)
-		ST_HereticStatus("No Monsters...");
+		StartScreen->AppendStatusLine("No Monsters...");
 	if (dmflags & DF_MONSTERS_RESPAWN)
-		ST_HereticStatus("Respawning...");
+		StartScreen->AppendStatusLine("Respawning...");
 	if (autostart)
 	{
 		FString temp;
 		temp.Format ("Warp to map %s, Skill %d ", startmap, gameskill + 1);
-		ST_HereticStatus (temp);
+		StartScreen->AppendStatusLine(temp);
 	}
 
 	// [RH] Now that all text strings are set up,
@@ -2251,10 +2251,10 @@ void D_DoomMain (void)
 	}
 
 	FActorInfo::StaticGameSet ();
-	ST_Progress ();
+	StartScreen->Progress ();
 
 	Printf ("R_Init: Init %s refresh subsystem.\n", GameNames[gameinfo.gametype]);
-	ST_HereticMessage ("Loading graphics", 0x3f);
+	StartScreen->LoadingStatus ("Loading graphics", 0x3f);
 	R_Init ();
 
 	Printf ("DecalLibrary: Load decals.\n");
@@ -2322,11 +2322,11 @@ void D_DoomMain (void)
 	M_Init ();
 
 	Printf ("P_Init: Init Playloop state.\n");
-	ST_HereticMessage ("Init game engine", 0x3f);
+	StartScreen->LoadingStatus ("Init game engine", 0x3f);
 	P_Init ();
 
 	Printf ("D_CheckNetGame: Checking network game status.\n");
-	ST_HereticMessage ("Checking network game status.", 0x3f);
+	StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
 	D_CheckNetGame ();
 
 	// [RH] Lock any cvars that should be locked now that we're
@@ -2350,7 +2350,8 @@ void D_DoomMain (void)
 		autostart = true;
 	}
 
-	ST_Done();
+	delete StartScreen;
+	StartScreen = NULL;
 	V_Init2();
 
 	files = Args.GatherFiles ("-playdemo", ".lmp", false);

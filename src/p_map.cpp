@@ -2667,7 +2667,15 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vr
 
 	x2 = t1->x + (distance>>FRACBITS)*finecosine[angle];
 	y2 = t1->y + (distance>>FRACBITS)*finesine[angle];
-	shootz = t1->z + (t1->height>>1) + 8*FRACUNIT;
+	shootz = t1->z + (t1->height>>1) - t1->floorclip;
+	if (t1->player != NULL)
+	{
+		shootz += FixedMul (t1->player->mo->AttackZOffset, t1->player->crouchfactor);
+	}
+	else
+	{
+		shootz += 8*FRACUNIT;
+	}
 
 	// can't shoot outside view angles
 	if (vrange == 0)
@@ -2776,7 +2784,15 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	vy = FixedMul (finecosine[pitch], finesine[angle]);
 	vz = -finesine[pitch];
 
-	shootz = t1->z - t1->floorclip + (t1->height>>1) + 8*FRACUNIT;
+	shootz = t1->z - t1->floorclip + (t1->height>>1);
+	if (t1->player != NULL)
+	{
+		shootz += FixedMul (t1->player->mo->AttackZOffset, t1->player->crouchfactor);
+	}
+	else
+	{
+		shootz += 8*FRACUNIT;
+	}
 	attackrange = distance;
 	aimpitch = pitch;
 

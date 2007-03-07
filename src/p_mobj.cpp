@@ -4432,8 +4432,8 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	// [RH]
 	// Hexen calculates the missile velocity based on the source's location.
 	// Would it be more useful to base it on the actual position of the
-	// missile? I'll leave it like this for now.
-	// Answer. No, because this way, you can set up sets of parallel missiles.
+	// missile?
+	// Answer: No, because this way, you can set up sets of parallel missiles.
 
 	FVector3 velocity(dest->x - source->x, dest->y - source->y, dest->z - source->z);
 	// Floor and ceiling huggers should never have a vertical component to their velocity
@@ -4441,7 +4441,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	{
 		velocity.Z = 0;
 	}
-	// [RH] Adjust the trajectory if the missile will go over the player's head.
+	// [RH] Adjust the trajectory if the missile will go over the target's head.
 	else if (z - source->z >= dest->height)
 	{
 		velocity.Z += dest->height - z + source->z;
@@ -4567,12 +4567,12 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 
 AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type)
 {
-	return P_SpawnPlayerMissile (source, source->x, source->y, source->z, type, source->angle);
+	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->angle);
 }
 
 AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type, angle_t angle)
 {
-	return P_SpawnPlayerMissile (source, source->x, source->y, source->z, type, angle);
+	return P_SpawnPlayerMissile (source, 0, 0, 0, type, angle);
 }
 
 AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
@@ -4615,9 +4615,23 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	}
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
-		z += 4*8*FRACUNIT - source->floorclip + (source->player? source->player->crouchoffset : 0);
+		// Doom spawns missiles 4 units lower than hitscan attacks for players.
+		z += source->z + (source->height>>1) - source->floorclip;
+		if (source->player != NULL)	// Considering this is for player missiles, it better not be NULL.
+		{
+			z += FixedMul (source->player->mo->AttackZOffset - 4*FRACUNIT, source->player->crouchfactor);
+		}
+		else
+		{
+			z += 4*FRACUNIT;
+		}
+		// Do not fire beneath the floor.
+		if (z < source->floorz)
+		{
+			z = source->floorz;
+		}
 	}
-	MissileActor = Spawn (type, x, y, z, ALLOW_REPLACE);
+	MissileActor = Spawn (type, source->x + x, source->y + y, z, ALLOW_REPLACE);
 	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;
 	MissileActor->angle = an;

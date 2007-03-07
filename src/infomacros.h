@@ -2,7 +2,7 @@
 ** infomacros.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,13 @@
 ** This file contains macros for building Actor defaults lists
 ** Defaults lists are byte-packed arrays of keys and values.
 **
-** For Visual C++, a simple byte array will do, with one
-** restriction: Any strings must be at the end of the array.
+** For Visual C++, a simple byte array will do, with one restriction:
+** Any strings must be at the end of the array.
 **
-** For GCC, we need to get more complicated: Everything needs
-** to be a separate variable. Fortunately, GCC byte-aligns
-** char variables, so as long they appear in the right order
-** (which they do in all version I tried), this will work.
+** For GCC, an initializer function is created instead, since GCC doesn't
+** let you combine integers and strings in the same character array, and
+** there's no way to guarantee that consecutive variables will be
+** consecutive in the generated code.
 */
 
 #ifndef __INFOMACROS_H__
@@ -342,5 +342,6 @@ public:
 #define PROP_PlayerPawn_SideMove2(x)	ADD_LONG_PROP(ADEF_PlayerPawn_SideMove2,x)
 #define PROP_PlayerPawn_ColorRange(x,y)	ADD_LONG_PROP(ADEF_PlayerPawn_ColorRange,x|(y<<8))
 #define PROP_PlayerPawn_SpawnMask(x)	ADD_BYTE_PROP(ADEF_PlayerPawn_SpawnMask, x)
+#define PROP_PlayerPawn_AttackZOffset(x) ADD_FIXD_PROP(ADEF_PlayerPawn_AttackZOffset, x)
 
 #endif //__INFOMACROS_H__

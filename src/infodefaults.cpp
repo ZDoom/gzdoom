@@ -3,7 +3,7 @@
 ** Parses default lists to create default copies of actors
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -310,6 +310,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 
 	// [GRB] Player class properties
 	case ADEF_PlayerPawn_JumpZ:		player->JumpZ = dataint; break;
+	case ADEF_PlayerPawn_AttackZOffset:	player->AttackZOffset = dataint; break;
 	case ADEF_PlayerPawn_ViewHeight: player->ViewHeight = dataint; break;
 	case ADEF_PlayerPawn_ForwardMove1: player->ForwardMove1 = dataint; break;
 	case ADEF_PlayerPawn_ForwardMove2: player->ForwardMove2 = dataint; break;

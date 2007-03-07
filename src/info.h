@@ -2,7 +2,7 @@
 ** info.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -361,6 +361,7 @@ enum
 	ADEF_PlayerPawn_SideMove2,
 	ADEF_PlayerPawn_ColorRange,
 	ADEF_PlayerPawn_SpawnMask,
+	ADEF_PlayerPawn_AttackZOffset,
 
 	// The following are not properties but affect how the list is parsed
 	ADEF_FirstCommand,

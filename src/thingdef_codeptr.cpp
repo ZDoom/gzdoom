@@ -1043,7 +1043,7 @@ void A_FireCustomMissile (AActor * self)
 
 		if (AimAtAngle) shootangle+=Angle;
 
-		AActor * misl=P_SpawnPlayerMissile (self, self->x+x, self->y+y, self->z+z, ti, shootangle);
+		AActor * misl=P_SpawnPlayerMissile (self, x, y, z, ti, shootangle);
 		// automatic handling of seeker missiles
 		if (misl)
 		{

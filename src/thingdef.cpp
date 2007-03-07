@@ -3856,6 +3856,15 @@ static void PlayerColorRange (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void PlayerAttackZOffset (APlayerPawn *defaults, Baggage &bag)
+{
+	SC_MustGetFloat ();
+	defaults->AttackZOffset = FLOAT2FIXED (sc_Float);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void PlayerJumpZ (APlayerPawn *defaults, Baggage &bag)
 {
 	SC_MustGetFloat ();
@@ -4157,6 +4166,7 @@ static const ActorProps props[] =
 	{ "pain",						ActorPainState,				RUNTIME_CLASS(AActor) },
 	{ "painchance",					ActorPainChance,			RUNTIME_CLASS(AActor) },
 	{ "painsound",					ActorPainSound,				RUNTIME_CLASS(AActor) },
+	{ "player.attackzoffset",		(apf)PlayerAttackZOffset,	RUNTIME_CLASS(APlayerPawn) },
 	{ "player.colorrange",			(apf)PlayerColorRange,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.crouchsprite",		(apf)PlayerCrouchSprite,	RUNTIME_CLASS(APlayerPawn) },
 	{ "player.displayname",			(apf)PlayerDisplayName,		RUNTIME_CLASS(APlayerPawn) },

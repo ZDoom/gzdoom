@@ -1,7 +1,17 @@
+March 7, 2007
+- Changed P_SpawnPlayerMissile() to use the same height calculation as
+  P_(Aim)LineAttack().
+- Added an AttackZOffset to PlayerPawn. This is the offset from the
+  center of the player at which their attacks are fired and scales
+  according to their crouched height.
+- Changed the version of P_SpawnPlayerMissile() that takes coordinates
+  to use that location as an offset from the standard attack location
+  rather than as an explicit attack location.
+  
 March 6, 2007
 - Added an IF_KEEPDEPLETED flag for inventory items to keep them in the
   player's inventory even when they have been used up. If the item also
-  has an inventory bar icon, it will be drawn darkened when it is
+  has an inventory bar icon, it will be drawn darkened while it is
   depleted.
 
 March 5, 2007

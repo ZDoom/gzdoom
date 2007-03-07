@@ -17,6 +17,7 @@
 static FRandom pr_restore ("RestorePos");
 
 IMPLEMENT_STATELESS_ACTOR (AAmmo, Any, -1, 0)
+	PROP_Inventory_FlagsSet (IF_KEEPDEPLETED)
 	PROP_Inventory_PickupSound ("misc/ammo_pkup")
 END_DEFAULTS
 
@@ -668,7 +669,7 @@ AInventory *AInventory::CreateTossable ()
 	{
 		return NULL;
 	}
-	if (Amount == 1 && !IsKindOf (RUNTIME_CLASS(AAmmo)))
+	if (Amount == 1 && !(ItemFlags & IF_KEEPDEPLETED))
 	{
 		BecomePickup ();
 		DropTime = 30;

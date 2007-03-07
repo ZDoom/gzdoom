@@ -197,12 +197,12 @@ AInventory *ACoin::CreateTossable ()
 		Amount -= 10;
 		tossed = Spawn<AGold10> (Owner->x, Owner->y, Owner->z, NO_REPLACE);
 	}
-	else if (Amount > 1)
+	else if (Amount > 1 || (ItemFlags & IF_KEEPDEPLETED))
 	{
 		Amount -= 1;
 		tossed = Spawn<ACoin> (Owner->x, Owner->y, Owner->z, NO_REPLACE);
 	}
-	else
+	else // Amount == 1 && !(ItemFlags & IF_KEEPDEPLETED)
 	{
 		BecomePickup ();
 		tossed = this;

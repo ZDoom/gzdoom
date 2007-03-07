@@ -14,6 +14,9 @@
 #include "templates.h"
 #include "i_system.h"
 
+// The translation to use for depleted items
+#define DIM_MAP &NormalLight.Maps[NUMCOLORMAPS*2/3*256]
+
 #define ST_EVILGRINCOUNT		(2*TICRATE)
 #define ST_STRAIGHTFACECOUNT	(TICRATE/2)
 #define ST_TURNCOUNT			(1*TICRATE)
@@ -476,7 +479,7 @@ private:
 			}
 			else
 			{
-				DrawImage (TexMan(CPlayer->mo->InvSel->Icon), 144, 0);
+				DrawImage (TexMan(CPlayer->mo->InvSel->Icon), 144, 0, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP);
 				if (CPlayer->mo->InvSel->Amount != 1)
 				{
 					DrSmallNumber (CPlayer->mo->InvSel->Amount, 165, 24);
@@ -562,7 +565,7 @@ private:
 			for (item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
 			{
 				DrawImage (Images[imgARTIBOX], 50+i*31, 2);
-				DrawImage (TexMan(item->Icon), 50+i*31, 2);
+				DrawImage (TexMan(item->Icon), 50+i*31, 2, item->Amount > 0 ? NULL : DIM_MAP);
 				if (item->Amount != 1)
 				{
 					DrSmallNumber (item->Amount, 66+i*31, 24);
@@ -705,6 +708,7 @@ private:
 					screen->DrawTexture (TexMan(CPlayer->mo->InvSel->Icon), -14, ammotop - 1/*-24*/,
 						DTA_HUDRules, HUD_Normal,
 						DTA_CenterBottomOffset, true,
+						DTA_Translation, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP,
 						TAG_DONE);
 					DrBNumberOuter (CPlayer->mo->InvSel->Amount, -68, ammotop - 18/*-41*/);
 				}
@@ -723,6 +727,7 @@ private:
 							TAG_DONE);
 						screen->DrawTexture (TexMan(item->Icon), -105+i*31, -32,
 							DTA_HUDRules, HUD_HorizCenter,
+							DTA_Translation, item->Amount > 0 ? NULL : DIM_MAP,
 							TAG_DONE);
 						if (item->Amount != 1)
 						{

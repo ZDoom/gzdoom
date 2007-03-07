@@ -730,11 +730,16 @@ bool AActor::UseInventory (AInventory *item)
 	{
 		return false;
 	}
+	// Don't use it if you don't actually have any of it.
+	if (item->Amount <= 0)
+	{
+		return false;
+	}
 	if (!item->Use (false))
 	{
 		return false;
 	}
-	if (--item->Amount <= 0)
+	if (--item->Amount <= 0 && !(item->ItemFlags & IF_KEEPDEPLETED))
 	{
 		item->Destroy ();
 	}

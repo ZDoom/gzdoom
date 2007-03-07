@@ -94,6 +94,7 @@ enum
 	IF_ALWAYSPICKUP		= 1<<10,	// For IF_AUTOACTIVATE, MaxAmount=0 items: Always "pick up", even if it doesn't do anything
 	IF_FANCYPICKUPSOUND	= 1<<11,	// Play pickup sound in "surround" mode
 	IF_BIGPOWERUP		= 1<<12,	// Affected by RESPAWN_SUPER dmflag
+	IF_KEEPDEPLETED		= 1<<13,	// Items with this flag are retained even when they run out.
 };
 
 struct vissprite_t;

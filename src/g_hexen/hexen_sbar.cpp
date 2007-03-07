@@ -15,6 +15,9 @@
 #include "a_hexenglobal.h"
 #include "a_keys.h"
 
+// The translation to use for depleted items
+#define DIM_MAP &NormalLight.Maps[NUMCOLORMAPS*2/3*256]
+
 class FManaBar : public FTexture
 {
 public:
@@ -402,8 +405,7 @@ private:
 			DrawImage (Images[imgARTICLEAR], 144, -1);
 			if (oldarti != NULL)
 			{
-				assert (oldarti->Amount > 0);
-				DrawImage (TexMan(oldarti->Icon), 143, 2);
+				DrawImage (TexMan(oldarti->Icon), 143, 2, oldarti->Amount > 0 ? NULL : DIM_MAP);
 				if (oldartiCount != 1)
 				{
 					DrSmallNumber (oldartiCount, 162, 23);
@@ -713,7 +715,7 @@ private:
 		{
 			for (item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
 			{
-				DrawImage (TexMan(item->Icon), 50+i*31, 1);
+				DrawImage (TexMan(item->Icon), 50+i*31, 1, item->Amount > 0 ? NULL : DIM_MAP);
 				if (item->Amount != 1)
 				{
 					DrSmallNumber (item->Amount, 68+i*31, 23);
@@ -912,6 +914,7 @@ private:
 					TAG_DONE);
 				screen->DrawTexture (TexMan(CPlayer->mo->InvSel->Icon), -82, -31,
 					DTA_HUDRules, HUD_Normal,
+					DTA_Translation, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP,
 					TAG_DONE);
 				if (CPlayer->mo->InvSel->Amount != 1)
 				{
@@ -933,6 +936,7 @@ private:
 						TAG_DONE);
 					screen->DrawTexture (TexMan(item->Icon), -108+i*31, -33,
 						DTA_HUDRules, HUD_HorizCenter,
+						DTA_Translation, item->Amount > 0 ? NULL : DIM_MAP,
 						TAG_DONE);
 					if (item->Amount != 1)
 					{

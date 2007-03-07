@@ -293,16 +293,13 @@ static void DoTakeInv (AActor *actor, const PClass *info, int amount)
 			// amounts a backpack might have given.
 			// Armor shouldn't be removed because they only work properly when
 			// they are the last items in the inventory.
-			if (item->GetClass()->ParentClass != RUNTIME_CLASS(AAmmo) &&
-				item->GetClass() != RUNTIME_CLASS(ABasicArmor) &&
-				item->GetClass() != RUNTIME_CLASS(AHexenArmor)
-				)
+			if (item->ItemFlags & IF_KEEPDEPLETED)
 			{
-				item->Destroy ();
+				item->Amount = 0;
 			}
 			else
 			{
-				item->Amount = 0;
+				item->Destroy ();
 			}
 		}
 	}

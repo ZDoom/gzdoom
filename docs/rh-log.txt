@@ -1,3 +1,9 @@
+March 6, 2007
+- Added an IF_KEEPDEPLETED flag for inventory items to keep them in the
+  player's inventory even when they have been used up. If the item also
+  has an inventory bar icon, it will be drawn darkened when it is
+  depleted.
+
 March 5, 2007
 - Fixed: Thing_ProjectileAimed did not set the missile's speed correctly.
 

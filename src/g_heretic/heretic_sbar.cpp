@@ -14,6 +14,9 @@
 #include "templates.h"
 #include "a_keys.h"
 
+// The translation to use for depleted items
+#define DIM_MAP &NormalLight.Maps[NUMCOLORMAPS*2/3*256]
+
 static FRandom pr_chainwiggle;
 
 // This texture is used to shade each end of the health chain
@@ -323,8 +326,7 @@ private:
 			DrawImage (Images[imgBLACKSQ], 180, 3);
 			if (oldarti != NULL)
 			{
-				assert (oldarti->Amount > 0);
-				DrawImage (TexMan(oldarti->Icon), 179, 2);
+				DrawImage (TexMan(oldarti->Icon), 179, 2, oldarti->Amount > 0 ? NULL : DIM_MAP);
 				if (oldartiCount != 1)
 				{
 					DrSmallNumber (oldartiCount, 197, 24);
@@ -483,7 +485,7 @@ private:
 		{
 			for (item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
 			{
-				DrawImage (TexMan(item->Icon), 50+i*31, 2);
+				DrawImage (TexMan(item->Icon), 50+i*31, 2, item->Amount > 0 ? NULL : DIM_MAP);
 				if (item->Amount != 1)
 				{
 					DrSmallNumber (item->Amount, 65+i*31, 24);
@@ -638,6 +640,7 @@ private:
 					TAG_DONE);
 				screen->DrawTexture (TexMan(CPlayer->mo->InvSel->Icon), -61, -31,
 					DTA_HUDRules, HUD_Normal,
+					DTA_Translation, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP,
 					TAG_DONE);
 				if (CPlayer->mo->InvSel->Amount != 1)
 				{
@@ -659,6 +662,7 @@ private:
 						TAG_DONE);
 					screen->DrawTexture (TexMan(item->Icon), -100+i*31, -32,
 						DTA_HUDRules, HUD_HorizCenter,
+						DTA_Translation, item->Amount > 0 ? NULL : DIM_MAP,
 						TAG_DONE);
 					if (item->Amount != 1)
 					{

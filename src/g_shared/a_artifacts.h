@@ -105,6 +105,7 @@ class APowerShadow : public APowerInvisibility
 {
 	DECLARE_STATELESS_ACTOR (APowerShadow, APowerInvisibility)
 protected:
+	bool HandlePickup (AInventory *item);
 	void InitEffect ();
 	int AlterWeaponSprite (vissprite_t *vis);
 };

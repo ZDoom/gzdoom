@@ -1,3 +1,8 @@
+March 8, 2007
+- Fixed: In Strife, using the shadow armor a second time while it is still
+  active should make you completely invisible and your first-person weapon
+  inverse grayscale.
+
 March 7, 2007
 - Changed P_SpawnPlayerMissile() to use the same height calculation as
   P_(Aim)LineAttack().

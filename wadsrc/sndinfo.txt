@@ -880,6 +880,7 @@ $limit PlayerMageFailedUse	1
 $limit SorcererBallWoosh	4
 $limit SorcererBallBounce	3
 $limit SorcererBallExplode	3
+$limit SorcererBallPop		3
 $limit SorcererBigBallExplode	3
 $limit Ambient1			1
 $limit Ambient2			1

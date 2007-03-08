@@ -1,4 +1,6 @@
 March 8, 2007
+- Increased the limit for the SorcererBallPop to 3 to be inline with the
+  other Heresiarch ball sounds.
 - Fixed: In Strife, using the shadow armor a second time while it is still
   active should make you completely invisible and your first-person weapon
   inverse grayscale.

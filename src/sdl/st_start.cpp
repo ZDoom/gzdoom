@@ -47,100 +47,137 @@
 
 // TYPES -------------------------------------------------------------------
 
+class FTTYStartupScreen : public FStartupScreen
+{
+	public:
+		FTTYStartupScreen(int max_progress);
+		~FTTYStartupScreen();
+
+		void Progress();
+		void NetInit(const char *message, int num_players);
+		void NetProgress(int count);
+		void NetMessage(const char *format, ...);	// cover for printf
+		void NetDone();
+		bool NetLoop(bool (*timer_callback)(void *), void *userdata);
+	protected:
+		bool DidNetInit;
+		int NetMaxPos, NetCurPos;
+		const char *TheNetMessage;
+		termios OldTermIOS;
+};
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void ST_TTY_Done ();
-static void ST_TTY_Progress ();
-static void ST_TTY_NetInit (const char *message, int numplayers);
-static void ST_TTY_NetProgress (int count);
-static void ST_TTY_NetMessage (const char *format, ...);
-static void ST_TTY_NetDone ();
-static bool ST_TTY_NetLoop (bool (*timer_callback)(void *), void *userdata);
-static void ST_Null_HereticMessage (const char *, int);
-static void ST_Null_HereticStatus (const char *);
+static void DeleteStartupScreen();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-void (*ST_Done)();
-void (*ST_Progress)();
-void (*ST_HereticMessage)(const char *message, int attributes);
-void (*ST_HereticStatus)(const char *status);
-void (*ST_NetInit)(const char *message, int numplayers);
-void (*ST_NetProgress)(int count);
-void (*ST_NetMessage)(const char *format, ...);
-void (*ST_NetDone)();
-bool (*ST_NetLoop)(bool (*timer_callback)(void *), void *userdata);
+FStartupScreen *StartScreen;
+
+CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0) self = 0;
+	else if (self > 2) self=2;
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static termios OldTermIOS;
-static bool DidNetInit;
-static int NetProgressMax, NetProgressTicker;
-static const char *NetMessage;
-static char SpinnyProgressChars[8] = { '|', '/', '-', '\\', '|', '/', '-', '\\' };
+static const char SpinnyProgressChars[4] = { '|', '/', '-', '\\' };
 
 // CODE --------------------------------------------------------------------
 
+//==========================================================================
+//
+// FStartupScreen :: CreateInstance
+//
+// Initializes the startup screen for the detected game.
+// Sets the size of the progress bar and displays the startup screen.
+//
+//==========================================================================
+
+FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
+{
+	atterm(DeleteStartupScreen);
+	return new FTTYStartupScreen(max_progress);
+}
+
 //===========================================================================
 //
-// ST_Init
+// DeleteStartupScreen
+//
+// Makes sure the startup screen has been deleted before quitting.
+//
+//===========================================================================
+
+void DeleteStartupScreen()
+{
+	if (StartScreen != NULL)
+	{
+		delete StartScreen;
+		StartScreen = NULL;
+	}
+}
+
+//===========================================================================
+//
+// FTTYStartupScreen Constructor
 //
 // Sets the size of the progress bar and displays the startup screen.
 //
 //===========================================================================
 
-void ST_Init(int maxProgress)
+FTTYStartupScreen::FTTYStartupScreen(int max_progress)
+	: FStartupScreen(max_progress)
 {
-	ST_Done = ST_TTY_Done;
-	ST_Progress = ST_TTY_Progress;
-	ST_NetInit = ST_TTY_NetInit;
-	ST_NetProgress = ST_TTY_NetProgress;
-	ST_NetMessage = ST_TTY_NetMessage;
-	ST_NetDone = ST_TTY_NetDone;
-	ST_NetLoop = ST_TTY_NetLoop;
+	DidNetInit = false;
+	NetMaxPos = 0;
+	NetCurPos = 0;
+	TheNetMessage = NULL;
 }
 
 //===========================================================================
 //
-// ST_TTY_Done
+// FTTYStartupScreen Destructor
 //
 // Called just before entering graphics mode to deconstruct the startup
 // screen.
 //
 //===========================================================================
 
-static void ST_TTY_Done()
+FTTYStartupScreen::~FTTYStartupScreen()
+{
+	NetDone();	// Just in case it wasn't called yet and needs to be.
+}
+
+//===========================================================================
+//
+// FTTYStartupScreen :: Progress
+//
+// If there was a progress bar, this would move it. But the basic TTY
+// startup screen doesn't have one, so this function does nothing.
+//
+//===========================================================================
+
+void FTTYStartupScreen::Progress()
 {
 }
 
 //===========================================================================
 //
-// ST_TTY_Progress
-//
-// Bumps the progress meter one notch.
-//
-//===========================================================================
-
-static void ST_TTY_Progress()
-{
-}
-
-//===========================================================================
-//
-// ST_TTY_NetInit
+// FTTYStartupScreen :: NetInit
 //
 // Sets stdin for unbuffered I/O, displays the given message, and shows
 // a progress meter.
 //
 //===========================================================================
 
-static void ST_TTY_NetInit(const char *message, int numplayers)
+void FTTYStartupScreen::NetInit(const char *message, int numplayers)
 {
 	if (!DidNetInit)
 	{
@@ -154,7 +191,6 @@ static void ST_TTY_NetInit(const char *message, int numplayers)
 		rawtermios.c_lflag &= ~(ICANON | ECHO);
 		tcsetattr (STDIN_FILENO, TCSANOW, &rawtermios);
 		DidNetInit = true;
-		atterm (ST_NetDone);
 	}
 	if (numplayers == 1)
 	{
@@ -166,21 +202,21 @@ static void ST_TTY_NetInit(const char *message, int numplayers)
 		fprintf (stderr, "\n%s: ", message);
 	}
 	fflush (stderr);
-	NetMessage = message;
-	NetProgressMax = numplayers;
-	NetProgressTicker = 0;
-	ST_NetProgress(1);	// You always know about yourself
+	TheNetMessage = message;
+	NetMaxPos = numplayers;
+	NetCurPos = 0;
+	NetProgress(1);		// You always know about yourself
 }
 
 //===========================================================================
 //
-// ST_TTY_NetDone
+// FTTYStartupScreen :: NetDone
 //
 // Restores the old stdin tty settings.
 //
 //===========================================================================
 
-static void ST_TTY_NetDone()
+void FTTYStartupScreen::NetDone()
 {
 	// Restore stdin settings
 	if (DidNetInit)
@@ -193,15 +229,15 @@ static void ST_TTY_NetDone()
 
 //===========================================================================
 //
-// ST_NetMessage
+// FTTYStartupScreen :: NetMessage
 //
-// Call this between ST_NetInit() and ST_NetDone() instead of Printf() to
+// Call this between NetInit() and NetDone() instead of Printf() to
 // display messages, because the progress meter is mixed in the same output
 // stream as normal messages.
 //
 //===========================================================================
 
-static void ST_TTY_NetMessage(const char *format, ...)
+void FTTYStartupScreen::NetMessage(const char *format, ...)
 {
 	FString str;
 	va_list argptr;
@@ -214,47 +250,47 @@ static void ST_TTY_NetMessage(const char *format, ...)
 
 //===========================================================================
 //
-// ST_NetProgress
+// FTTYStartupScreen :: NetProgress
 //
 // Sets the network progress meter. If count is 0, it gets bumped by 1.
 // Otherwise, it is set to count.
 //
 //===========================================================================
 
-static void ST_TTY_NetProgress(int count)
+void FTTYStartupScreen::NetProgress(int count)
 {
 	int i;
 
 	if (count == 0)
 	{
-		NetProgressTicker++;
+		NetCurPos++;
 	}
 	else if (count > 0)
 	{
-		NetProgressTicker = count;
+		NetCurPos = count;
 	}
-	if (NetProgressMax == 0)
+	if (NetMaxPos == 0)
 	{
 		// Spinny-type progress meter, because we're a guest waiting for the host.
-		fprintf (stderr, "\r%s: %c", NetMessage, SpinnyProgressChars[NetProgressTicker & 7]);
+		fprintf (stderr, "\r%s: %c", TheNetMessage, SpinnyProgressChars[NetCurPos & 3]);
 		fflush (stderr);
 	}
-	else if (NetProgressMax > 1)
+	else if (NetMaxPos > 1)
 	{
 		// Dotty-type progress meter.
-		fprintf (stderr, "\r%s: ", NetMessage);
-		for (i = 0; i < NetProgressTicker; ++i)
+		fprintf (stderr, "\r%s: ", TheNetMessage);
+		for (i = 0; i < NetCurPos; ++i)
 		{
 			fputc ('.', stderr);
 		}
-		fprintf (stderr, "%*c[%2d/%2d]", NetProgressMax + 1 - NetProgressTicker, ' ', NetProgressTicker, NetProgressMax);
+		fprintf (stderr, "%*c[%2d/%2d]", NetMaxPos + 1 - NetCurPos, ' ', NetCurPos, NetMaxPos);
 		fflush (stderr);
 	}
 }
 
 //===========================================================================
 //
-// ST_NetLoop
+// FTTYStartupScreen :: NetLoop
 //
 // The timer_callback function is called at least two times per second
 // and passed the userdata value. It should return true to stop the loop and
@@ -266,7 +302,7 @@ static void ST_TTY_NetProgress(int count)
 //
 //===========================================================================
 
-static bool ST_TTY_NetLoop(bool (*timer_callback)(void *), void *userdata)
+bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 {
 	fd_set rfds;
 	struct timeval tv;
@@ -306,14 +342,6 @@ static bool ST_TTY_NetLoop(bool (*timer_callback)(void *), void *userdata)
 			}
 		}
 	}
-}
-
-static void ST_Null_HereticMessage (const char *, int)
-{
-}
-
-static void ST_Null_HereticStatus (const char *)
-{
 }
 
 void ST_Endoom()

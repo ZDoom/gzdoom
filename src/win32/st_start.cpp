@@ -337,53 +337,6 @@ FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 
 //==========================================================================
 //
-// FStartupScreen Constructor
-//
-//==========================================================================
-
-FStartupScreen::FStartupScreen(int max_progress)
-{
-	MaxPos = max_progress;
-	CurPos = 0;
-	NotchPos = 0;
-}
-
-//==========================================================================
-//
-// FStartupScreen Destructor
-//
-//==========================================================================
-
-FStartupScreen::~FStartupScreen()
-{
-}
-
-//==========================================================================
-//
-// FStartupScreen :: LoadingStatus
-//
-// Used by Heretic for the Loading Status "window."
-//
-//==========================================================================
-
-void FStartupScreen::LoadingStatus(const char *message, int colors)
-{
-}
-
-//==========================================================================
-//
-// FStartupScreen :: AppendStatusLine
-//
-// Used by Heretic for the "status line" at the bottom of the screen.
-//
-//==========================================================================
-
-void FStartupScreen::AppendStatusLine(const char *status)
-{
-}
-
-//==========================================================================
-//
 // FBasicStartupScreen Constructor
 //
 // Shows a progress bar at the bottom of the window.

@@ -1,3 +1,6 @@
+March 9, 2007
+- Converted the TTY startup screen to a class for Linux.
+
 March 8, 2007
 - Increased the limit for the SorcererBallPop to 3 to be inline with the
   other Heresiarch ball sounds.

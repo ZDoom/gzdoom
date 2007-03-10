@@ -2408,6 +2408,53 @@ void D_DoomMain (void)
 
 //==========================================================================
 //
+// FStartupScreen Constructor
+//
+//==========================================================================
+
+FStartupScreen::FStartupScreen(int max_progress)
+{
+	MaxPos = max_progress;
+	CurPos = 0;
+	NotchPos = 0;
+}
+
+//==========================================================================
+//
+// FStartupScreen Destructor
+//
+//==========================================================================
+
+FStartupScreen::~FStartupScreen()
+{
+}
+
+//==========================================================================
+//
+// FStartupScreen :: LoadingStatus
+//
+// Used by Heretic for the Loading Status "window."
+//
+//==========================================================================
+
+void FStartupScreen::LoadingStatus(const char *message, int colors)
+{
+}
+
+//==========================================================================
+//
+// FStartupScreen :: AppendStatusLine
+//
+// Used by Heretic for the "status line" at the bottom of the screen.
+//
+//==========================================================================
+
+void FStartupScreen::AppendStatusLine(const char *status)
+{
+}
+
+//==========================================================================
+//
 // STAT fps
 //
 // Displays statistics about rendering times

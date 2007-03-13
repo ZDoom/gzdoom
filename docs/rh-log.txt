@@ -1,3 +1,6 @@
+March 12, 2007
+- Changed the default player.startitem amount from 0 to 1.
+
 March 9, 2007
 - Converted the TTY startup screen to a class for Linux.
 

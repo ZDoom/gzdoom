@@ -3995,11 +3995,11 @@ static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
 
 	SC_MustGetString();
 	di->Name = sc_String;
-	di->probability=255;
-	di->amount=0;
+	di->probability = 255;
+	di->amount = 1;
 	if (CheckNumParm())
 	{
-		di->amount=sc_Number;
+		di->amount = sc_Number;
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;

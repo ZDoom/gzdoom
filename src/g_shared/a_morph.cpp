@@ -88,7 +88,25 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 		AInventory *next = item->Inventory;
 		if (item->IsKindOf (RUNTIME_CLASS(AArmor)))
 		{
-			item->Destroy ();
+			if (item->IsKindOf (RUNTIME_CLASS(AHexenArmor)))
+			{
+				// Set the HexenArmor slots to 0, except the class slot.
+				AHexenArmor *hxarmor = static_cast<AHexenArmor *>(item);
+				hxarmor->Slots[0] = 0;
+				hxarmor->Slots[1] = 0;
+				hxarmor->Slots[2] = 0;
+				hxarmor->Slots[3] = 0;
+				hxarmor->Slots[4] = spawntype->Meta.GetMetaFixed (APMETA_Hexenarmor0);
+			}
+			else if (item->ItemFlags & IF_KEEPDEPLETED)
+			{
+				// Set depletable armor to 0 (this includes BasicArmor).
+				item->Amount = 0;
+			}
+			else
+			{
+				item->Destroy ();
+			}
 		}
 		item = next;
 	}
@@ -186,6 +204,12 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	}
 	pmo->tracer = NULL;
 	pmo->Destroy ();
+	// Restore playerclass armor to its normal amount.
+	AHexenArmor *hxarmor = mo->FindInventory<AHexenArmor>();
+	if (hxarmor != NULL)
+	{
+		hxarmor->Slots[4] = mo->GetClass()->Meta.GetMetaFixed (APMETA_Hexenarmor0);
+	}
 	return true;
 }
 

@@ -883,6 +883,8 @@ void AActor::CopyFriendliness (const AActor *other, bool changeTarget)
 
 void AActor::ObtainInventory (AActor *other)
 {
+	assert (Inventory == NULL);
+
 	Inventory = other->Inventory;
 	InventoryID = other->InventoryID;
 	other->Inventory = NULL;

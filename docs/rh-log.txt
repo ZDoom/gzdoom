@@ -1,3 +1,7 @@
+March 13, 2007
+- Fixed: Morphed players did not regain their innate armor when unmorphing.
+  (Only Hexen has players with innate armor.)
+
 March 12, 2007
 - Changed the default player.startitem amount from 0 to 1.
 

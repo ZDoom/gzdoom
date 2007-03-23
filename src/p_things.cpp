@@ -375,6 +375,41 @@ nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
 	return rtn != 0;
 }
 
+int P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type)
+{
+	FActorIterator iterator (tid);
+	int count = 0;
+	AActor *actor;
+
+	actor = (tid == 0 ? whofor0 : iterator.Next());
+	while (actor)
+	{
+		AActor *next = tid == 0 ? NULL : iterator.Next ();
+		if (actor->flags & MF_SHOOTABLE)
+		{
+			if (amount > 0)
+			{
+				P_DamageMobj (actor, NULL, whofor0, amount, type);
+			}
+			else if (actor->health < actor->GetDefault()->health)
+			{
+				actor->health -= amount;
+				if (actor->health > actor->GetDefault()->health)
+				{
+					actor->health = actor->GetDefault()->health;
+				}
+				if (actor->player != NULL)
+				{
+					actor->player->health = actor->health;
+				}
+			}
+			count++;
+		}
+		actor = next;
+	}
+	return count;
+}
+
 CCMD (dumpspawnables)
 {
 	int i;

@@ -3,7 +3,7 @@
 ** ACS script stuff
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -539,6 +539,8 @@ public:
 		PCD_GETACTORPITCH,
 		PCD_SETACTORPITCH,
 		PCD_PRINTBIND,
+		PCD_SETACTORSTATE,
+		PCD_THINGDAMAGE2,
 
 		PCODE_COMMAND_COUNT
 	};

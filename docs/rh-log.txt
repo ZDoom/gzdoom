@@ -1,6 +1,31 @@
+March 20, 2007
+- Moved the implementation for the Thing_Damage special into another function
+  so that I can create the ACS function Thing_Damage2. It's exactly the same as
+  Thing_Damage, except the damage type is specified by name. When I did this,
+  I noticed that it didn't do anything useful for a TID of 0, so I made it
+  affect the activator in that case.
+
+March 19, 2007
+- Added a new SetActorState ACS function:
+    int SetActorState (int tid, str statename, optional bool exact);
+  If tid is 0, it affects the script activator, otherwise it affects all the
+  matching actors. Statename is the name of the state you want to put the
+  actor in. The final parameter, exact, specifies whether or not partial
+  state name matches are accepted. If you don't specify it or set it to
+  false, if you try to do something like:
+    SetActorState (0, "Foo.Bar");
+  And the actor has a Foo state but no Foo.Bar state, it will enter the Foo
+  state. If you set exact to true:
+    SetActorState (0, "Foo.Bar", true);
+  Then the actor must have a Foo.Bar state, or it will not change state at
+  all, even if it has a Foo state.
+  The return value for this function is the number of actors that successfully
+  changed state. Note that you should refrain from using this function to
+  enter special states such as Death, or unpredictable results could occur.
+
 March 13, 2007
 - Fixed: Morphed players did not regain their innate armor when unmorphing.
-  (Only Hexen has players with innate armor.)
+  (Only Hexen has players with innate armor, under normal conditions.)
 
 March 12, 2007
 - Changed the default player.startitem amount from 0 to 1.

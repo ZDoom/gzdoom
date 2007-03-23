@@ -486,7 +486,7 @@ FState *AActor::FindState (FName label, FName sublabel, bool exact) const
 		FStateLabel *slabel = info->StateList->FindLabel (label);
 		if (slabel != NULL)
 		{
-			if (slabel->Children != NULL)
+			if (sublabel != NAME_None && slabel->Children != NULL)
 			{
 				FStateLabel *slabel2 = slabel->Children->FindLabel(sublabel);
 				if (slabel2 != NULL)
@@ -494,7 +494,14 @@ FState *AActor::FindState (FName label, FName sublabel, bool exact) const
 					return slabel2->State;
 				}
 			}
-			if (!exact) return slabel->State;
+			if (sublabel == NAME_None && slabel->Children != NULL && exact)
+			{
+				return NULL;
+			}
+			if (!exact)
+			{
+				return slabel->State;
+			}
 		}
 	}
 	return NULL;

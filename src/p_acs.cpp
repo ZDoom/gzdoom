@@ -4990,6 +4990,57 @@ int DLevelScript::RunScript ()
 			sp -= 2;
 			break;
 
+		case PCD_SETACTORSTATE:
+			{
+				const char *statename = FBehavior::StaticLookupString (STACK(2));
+				const char *dot;
+				FName label1, label2;
+				FState *state;
+
+				dot = strchr (statename, '.');
+				if (dot != NULL)
+				{
+					label1 = FName(statename, dot - statename, true);
+					label2 = FName(dot + 1, true);
+				}
+				else
+				{
+					label1 = FName(statename, true);
+				}
+				if (STACK(3) == 0)
+				{
+					state = activator->FindState (label1, label2, !!STACK(1));
+					if (state != NULL)
+					{
+						activator->SetState (state);
+						STACK(3) = 1;
+					}
+					else
+					{
+						STACK(3) = 0;
+					}
+				}
+				else
+				{
+					FActorIterator iterator (STACK(3));
+					AActor *actor;
+					int count = 0;
+
+					while ( (actor = iterator.Next ()) )
+					{
+						state = actor->FindState (label1, label2, !!STACK(1));
+						if (state != NULL)
+						{
+							actor->SetState (state);
+							count++;
+						}
+					}
+					STACK(3) = count;
+				}
+				sp -= 2;
+			}
+			break;
+
 		case PCD_PLAYERCLASS:		// [GRB]
 			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS || !playeringame[STACK(1)])
 			{
@@ -5095,6 +5146,11 @@ int DLevelScript::RunScript ()
 					}
 				}
 			}
+
+		case PCD_THINGDAMAGE2:
+			STACK(3) = P_Thing_Damage (STACK(3), activator, STACK(2), FName(FBehavior::StaticLookupString(STACK(1))));
+			sp -= 2;
+			break;
 		}
 	}
 

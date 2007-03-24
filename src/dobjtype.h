@@ -127,7 +127,10 @@ struct PClass
 		return ti->IsAncestorOf (this);
 	}
 
-	static const PClass *FindClass (const char *name);
+	// Find a type, given its name.
+	static const PClass *FindClass (const char *name) { return FindClass (FName (name, true)); }
+	static const PClass *FindClass (const FString &name) { return FindClass (FName (name, true)); }
+	static const PClass *FindClass (ENamedName name) { return FindClass (FName (name)); }
 	static const PClass *FindClass (FName name);
 
 	static TArray<PClass *> m_Types;

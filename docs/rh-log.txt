@@ -1,3 +1,6 @@
+March 24, 2007
+- Changed MakeKey's hash algorithm from a CRC32 to Paul Hsieh's SuperFastHash.
+
 March 20, 2007
 - Moved the implementation for the Thing_Damage special into another function
   so that I can create the ACS function Thing_Damage2. It's exactly the same as

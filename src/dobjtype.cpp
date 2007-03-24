@@ -146,12 +146,6 @@ void PClass::InsertIntoHash ()
 	*hashpos = this;
 }
 
-// Find a type, passed the name as a string
-const PClass *PClass::FindClass (const char *zaname)
-{
-	return FindClass (FName (zaname, true));
-}
-
 // Find a type, passed the name as a name
 const PClass *PClass::FindClass (FName zaname)
 {

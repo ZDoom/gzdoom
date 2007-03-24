@@ -3,7 +3,7 @@
 ** Functions for executing console commands and aliases
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 **
 */
 
+// HEADER FILES ------------------------------------------------------------
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -51,24 +53,9 @@
 #include "m_crc32.h"
 #include "v_text.h"
 
-bool ParsingKeyConf;
+// MACROS ------------------------------------------------------------------
 
-static const char *KeyConfCommands[] =
-{
-	"alias",
-	"defaultbind",
-	"addkeysection",
-	"addmenukey",
-	"addslotdefault",
-	"weaponsection",
-	"setslot",
-	"addplayerclass",
-	"clearplayerclasses"
-};
-
-static long ParseCommandLine (const char *args, int *argc, char **argv);
-
-CVAR (Bool, lookspring, true, CVAR_ARCHIVE);	// Generate centerview when -mlook encountered?
+// TYPES -------------------------------------------------------------------
 
 class DWaitingCommand : public DThinker
 {
@@ -108,51 +95,78 @@ struct FActionMap
 	char			Name[12];
 };
 
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static long ParseCommandLine (const char *args, int *argc, char **argv);
 static FConsoleCommand *FindNameInHashTable (FConsoleCommand **table, const char *name, size_t namelen);
 static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *name, size_t namelen, FConsoleCommand **prev);
 
-FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR (Bool, lookspring, true, CVAR_ARCHIVE);	// Generate centerview when -mlook encountered?
+
+FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
 FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_Attack, Button_Speed, Button_MoveRight, Button_MoveLeft,
 	Button_Strafe, Button_LookDown, Button_LookUp, Button_Back,
 	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
 	Button_MoveUp, Button_Jump, Button_ShowScores, Button_Crouch;
 
+bool ParsingKeyConf;
+
 // To add new actions, go to the console and type "key <action name>".
 // This will give you the key value to use in the first column. Then
 // insert your new action into this list so that the keys remain sorted
 // in ascending order. No two keys can be identical. If yours matches
-// an existing key, either modify MakeKey(), or (preferably) change the
-// name of your action.
+// an existing key, change the name of your action.
 
 FActionMap ActionMaps[] =
 {
-	{ 0x0f26fef6, &Button_Speed,		"speed" },
-	{ 0x1ccf57bf, &Button_MoveUp,		"moveup" },
-	{ 0x22beba5f, &Button_Klook,		"klook" },
-	{ 0x47c02d3b, &Button_Attack,		"attack" },
-	{ 0x6dcec137, &Button_Back,			"back" },
-	{ 0x7a67e768, &Button_Left,			"left" },
-	{ 0x8076f318, &Button_Crouch,		"crouch" },
-	{ 0x84b8789a, &Button_MoveLeft,		"moveleft" },
-	{ 0x8fd9bf1e, &Button_ShowScores,	"showscores" },
-	{ 0x94b1cc4b, &Button_Use,			"use" },
-	{ 0xa7b30616, &Button_Jump,			"jump" },
-	{ 0xadfe4fff, &Button_Mlook,		"mlook" },
-	{ 0xb4ca7514, &Button_Right,		"right" },
-	{ 0xb563e265, &Button_LookDown,		"lookdown" },
-	{ 0xb67a0835, &Button_Strafe,		"strafe" },
-	{ 0xc4704c1d, &Button_AltAttack,	"altattack" },
-	{ 0xe2200fc9, &Button_MoveDown,		"movedown" },
-	{ 0xe78739bb, &Button_MoveRight,	"moveright" },
-	{ 0xe7912f86, &Button_Forward,		"forward" },
-	{ 0xf01cb105, &Button_LookUp,		"lookup" },
+	{ 0x1eefa611, &Button_Jump,			"jump" },
+	{ 0x201f1c55, &Button_Right,		"right" },
+	{ 0x23a99cd7, &Button_Back,			"back" },
+	{ 0x4463f43a, &Button_LookDown,		"lookdown" },
+	{ 0x5622bf42, &Button_Attack,		"attack" },
+	{ 0x57c25cb2, &Button_Klook,		"klook" },
+	{ 0x59f3e907, &Button_Forward,		"forward" },
+	{ 0x6167ce99, &Button_MoveDown,		"movedown" },
+	{ 0x676885b8, &Button_AltAttack,	"altattack" },
+	{ 0x6fa41b84, &Button_MoveLeft,		"moveleft" },
+	{ 0x818f08e6, &Button_MoveRight,	"moveright" },
+	{ 0xa2b62d8b, &Button_Mlook,		"mlook" },
+	{ 0xab2c3e71, &Button_Crouch,		"crouch" },
+	{ 0xb000b483, &Button_Left,			"left" },
+	{ 0xb62b1e49, &Button_LookUp,		"lookup" },
+	{ 0xb7e6a54b, &Button_Strafe,		"strafe" },
+	{ 0xd5897c73, &Button_ShowScores,	"showscores" },
+	{ 0xe0ccb317, &Button_Speed,		"speed" },
+	{ 0xe0cfc260, &Button_Use,			"use" },
+	{ 0xfdd701c7, &Button_MoveUp,		"moveup" },
 };
-
 #define NUM_ACTIONS countof(ActionMaps)
 
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static const char *KeyConfCommands[] =
+{
+	"alias",
+	"defaultbind",
+	"addkeysection",
+	"addmenukey",
+	"addslotdefault",
+	"weaponsection",
+	"setslot",
+	"addplayerclass",
+	"clearplayerclasses"
+};
+
+// CODE --------------------------------------------------------------------
 
 IMPLEMENT_CLASS (DWaitingCommand)
 
@@ -247,39 +261,141 @@ static int ListActionCommands (const char *pattern)
 	return count;
 }
 
+/* ======================================================================== */
+
+/* By Paul Hsieh (C) 2004, 2005.  Covered under the Paul Hsieh derivative 
+   license. See: 
+   http://www.azillionmonkeys.com/qed/weblicense.html for license details.
+
+   http://www.azillionmonkeys.com/qed/hash.html */
+
+#undef get16bits
+#if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
+  || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
+#define get16bits(d) (*((const WORD *) (d)))
+#endif
+
+#if !defined (get16bits)
+#define get16bits(d) ((((DWORD)(((const BYTE *)(d))[1])) << 8)\
+                       +(DWORD)(((const BYTE *)(d))[0]) )
+#endif
+
+DWORD SuperFastHash (const char *data, size_t len)
+{
+	DWORD hash = 0, tmp;
+	size_t rem;
+
+	if (len == 0 || data == NULL) return 0;
+
+	rem = len & 3;
+	len >>= 2;
+
+	/* Main loop */
+	for (;len > 0; len--)
+	{
+		hash  += get16bits (data);
+		tmp    = (get16bits (data+2) << 11) ^ hash;
+		hash   = (hash << 16) ^ tmp;
+		data  += 2*sizeof (WORD);
+		hash  += hash >> 11;
+	}
+
+	/* Handle end cases */
+	switch (rem)
+	{
+		case 3:	hash += get16bits (data);
+				hash ^= hash << 16;
+				hash ^= data[sizeof (WORD)] << 18;
+				hash += hash >> 11;
+				break;
+		case 2:	hash += get16bits (data);
+				hash ^= hash << 11;
+				hash += hash >> 17;
+				break;
+		case 1: hash += *data;
+				hash ^= hash << 10;
+				hash += hash >> 1;
+	}
+
+	/* Force "avalanching" of final 127 bits */
+	hash ^= hash << 3;
+	hash += hash >> 5;
+	hash ^= hash << 4;
+	hash += hash >> 17;
+	hash ^= hash << 25;
+	hash += hash >> 6;
+
+	return hash;
+}
+
+/* A modified version to do a case-insensitive hash */
+
+#undef get16bits
+#define get16bits(d) ((((DWORD)tolower(((const BYTE *)(d))[1])) << 8)\
+                       +(DWORD)tolower(((const BYTE *)(d))[0]) )
+
+DWORD SuperFastHashI (const char *data, size_t len)
+{
+	DWORD hash = 0, tmp;
+	size_t rem;
+
+	if (len <= 0 || data == NULL) return 0;
+
+	rem = len & 3;
+	len >>= 2;
+
+	/* Main loop */
+	for (;len > 0; len--)
+	{
+		hash  += get16bits (data);
+		tmp    = (get16bits (data+2) << 11) ^ hash;
+		hash   = (hash << 16) ^ tmp;
+		data  += 2*sizeof (WORD);
+		hash  += hash >> 11;
+	}
+
+	/* Handle end cases */
+	switch (rem)
+	{
+		case 3:	hash += get16bits (data);
+				hash ^= hash << 16;
+				hash ^= tolower(data[sizeof (WORD)]) << 18;
+				hash += hash >> 11;
+				break;
+		case 2:	hash += get16bits (data);
+				hash ^= hash << 11;
+				hash += hash >> 17;
+				break;
+		case 1: hash += tolower(*data);
+				hash ^= hash << 10;
+				hash += hash >> 1;
+	}
+
+	/* Force "avalanching" of final 127 bits */
+	hash ^= hash << 3;
+	hash += hash >> 5;
+	hash ^= hash << 4;
+	hash += hash >> 17;
+	hash ^= hash << 25;
+	hash += hash >> 6;
+
+	return hash;
+}
+
+/* ======================================================================== */
+
 unsigned int MakeKey (const char *s)
 {
 	if (s == NULL)
 	{
-		return 0xffffffff;
+		return 0;
 	}
-
-	DWORD key = 0xffffffff;
-	const DWORD *table = GetCRCTable ();
-
-	while (*s)
-	{
-		key = CRC1 (key, tolower (*s++), table);
-	}
-	return key ^ 0xffffffff;
+	return SuperFastHashI (s, strlen (s));
 }
 
 unsigned int MakeKey (const char *s, size_t len)
 {
-	if (len == 0 || s == NULL)
-	{
-		return 0xffffffff;
-	}
-
-	DWORD key = 0xffffffff;
-	const DWORD *table = GetCRCTable ();
-
-	while (len > 0)
-	{
-		key = CRC1 (key, tolower(*s++), table);
-		--len;
-	}
-	return key ^ 0xffffffff;
+	return SuperFastHashI (s, len);
 }
 
 // FindButton scans through the actionbits[] array
@@ -763,9 +879,6 @@ bool FConsoleCommand::AddToHash (FConsoleCommand **table)
 {
 	unsigned int key;
 	FConsoleCommand *insert, **bucket;
-
-	if (!stricmp (m_Name, "toggle"))
-		key = 1;
 
 	key = MakeKey (m_Name);
 	bucket = &table[key % HASH_SIZE];

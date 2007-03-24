@@ -2,7 +2,7 @@
 ** version.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -40,13 +40,13 @@
 
 /** Lots of different version numbers **/
 
-#define DOTVERSIONSTR_NOREV "2.1.7"
+#define DOTVERSIONSTR_NOREV "2.1.8"
 
 // The version string the user actually sees.
 #define DOTVERSIONSTR DOTVERSIONSTR_NOREV " (r" SVN_REVISION_STRING ")"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 2,1,7,SVN_REVISION_NUMBER
+#define RC_FILEVERSION 2,1,8,SVN_REVISION_NUMBER
 #define RC_PRODUCTVERSION 2,1,0,0
 #define RC_FILEVERSION2 DOTVERSIONSTR
 #define RC_PRODUCTVERSION2 "2.1"
@@ -73,8 +73,8 @@
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
-#define SAVEVER 236
-#define SAVESIG "ZDOOMSAVE236"
+#define SAVEVER 237
+#define SAVESIG "ZDOOMSAVE237"
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "ZDOOM"
@@ -89,7 +89,7 @@
 #endif
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 236	// Used by 2.1.7
+#define MINSAVEVER 237	// Used by 2.1.8
 
 // The maximum length of one save game description for the menus.
 #define SAVESTRINGSIZE		24

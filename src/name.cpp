@@ -3,7 +3,7 @@
 ** Implements int-as-string mapping.
 **
 **---------------------------------------------------------------------------
-** Copyright 2005-2006 Randy Heit
+** Copyright 2005-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,10 @@
 // The number of bytes to allocate to each NameBlock unless somebody is evil
 // and wants a really long name. In that case, it gets its own NameBlock
 // that is just large enough to hold it.
-#define BLOCK_SIZE			1024
+#define BLOCK_SIZE			4096
 
 // How many entries to grow the NameArray by when it needs to grow.
-#define NAME_GROW_AMOUNT	48
+#define NAME_GROW_AMOUNT	256
 
 // TYPES -------------------------------------------------------------------
 
@@ -125,7 +125,7 @@ int FName::NameManager::FindName (const char *text, bool noCreate)
 //==========================================================================
 //
 // The same as above, but the text length is also passed, for creating
-// a name from a substring.
+// a name from a substring or for speed if the length is already known.
 //
 //==========================================================================
 

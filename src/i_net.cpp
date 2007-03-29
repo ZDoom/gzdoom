@@ -95,7 +95,7 @@ static sockaddr_in sendaddress[MAXNETNODES];
 static BYTE sendplayer[MAXNETNODES];
 
 #ifdef __WIN32__
-char	*neterror (void);
+const char *neterror (void);
 #else
 #define neterror() strerror(errno)
 #endif
@@ -850,7 +850,7 @@ void I_NetCmd (void)
 }
 
 #ifdef __WIN32__
-char *neterror (void)
+const char *neterror (void)
 {
 	static char neterr[16];
 	int			code;

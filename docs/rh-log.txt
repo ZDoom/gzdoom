@@ -1,4 +1,7 @@
 March 28, 2007
+- Fixed some const char * -> char * conversions flagged by GCC 4.2.0 in the
+  Win32-specific code.
+- Fixed: The Win32 neterror() should return a const char *.
 - Adding blinky text to the ENDOOM screen.
 
 March 24, 2007

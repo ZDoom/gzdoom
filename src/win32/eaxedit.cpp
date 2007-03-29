@@ -799,14 +799,11 @@ INT_PTR CALLBACK NewEAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (0 == GetWindowText (GetDlgItem (hDlg, IDC_NEWENVNAME), buff, 32) ||
 				S_FindEnvironment (buff) != NULL)
 			{
-				static CHAR *texts[2] =
-				{
-					"That name is already used.",
-					"Please enter a name."
-				};
+				static CHAR text0[] = "That name is already used.";
+				static CHAR text1[] = "Please enter a name.";
 				ti.uId = 0;
 				ti.hwnd = GetDlgItem (hDlg, IDC_NEWENVNAME);
-				ti.lpszText = buff[0] ? texts[0] : texts[1];
+				ti.lpszText = buff[0] ? text0 : text1;
 				ShowErrorTip (ToolTip, ti, hDlg, "Bad Name");
 				return 0;
 			}
@@ -820,9 +817,10 @@ INT_PTR CALLBACK NewEAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			if (id1 > 255 || id2 > 255)
 			{
+				static CHAR text[] = "Please enter a number between 0 and 255.";
 				ti.uId = id1 > 255 ? 1 : 2;
 				ti.hwnd = GetDlgItem (hDlg, IDC_EDITID1 + ti.uId - 1);
-				ti.lpszText = "Please enter a number between 0 and 255.";
+				ti.lpszText = text;
 				ShowErrorTip (ToolTip, ti, hDlg, "Bad Value");
 			}
 			else if (NULL != (rev = S_FindEnvironment (MAKEWORD (id2, id1))))

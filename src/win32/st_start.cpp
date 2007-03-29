@@ -104,6 +104,12 @@
 
 #define TEXT_FONT_NAME			"vga-rom-font.16"
 
+// How many ms elapse between blinking text flips. On a standard VGA
+// adapter, the characters are on for 16 frames and then off for another 16.
+// The number here therefore corresponds roughly to the blink rate on a
+// 60 Hz display.
+#define BLINK_PERIOD			267
+
 // TYPES -------------------------------------------------------------------
 
 class FBasicStartupScreen : public FStartupScreen
@@ -186,6 +192,7 @@ BYTE *ST_Util_LoadFont (const char *filename);
 void ST_Util_FreeFont (BYTE *font);
 BITMAPINFO *ST_Util_AllocTextBitmap (const BYTE *font);
 void ST_Util_DrawTextScreen (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font);
+void ST_Util_UpdateTextBlink (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font, bool blink_on);
 void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE charnum, BYTE attrib);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -1092,6 +1099,8 @@ void ST_Endoom()
 	BYTE *font;
 	MSG mess;
 	BOOL bRet;
+	bool blinking = false, blinkstate = false;
+	int i;
 
 	if (endoom_lump < 0 || Wads.LumpLength (endoom_lump) != 4000)
 	{
@@ -1125,7 +1134,6 @@ void ST_Endoom()
 	// Draw the loading screen to a bitmap.
 	StartupBitmap = ST_Util_AllocTextBitmap (font);
 	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen, font);
-	ST_Util_FreeFont (font);
 
 	// Make the title banner go away.
 	if (GameTitleWindow != NULL)
@@ -1138,20 +1146,38 @@ void ST_Endoom()
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
 
-	// Wait until any key has been pressed or a quit message has been received
-
-	while ((bRet = GetMessage(&mess, NULL, 0, 0)) != 0)
+	// Does this screen need blinking?
+	for (i = 0; i < 80*25; ++i)
 	{
-		if (bRet == 0)	// Received WM_QUIT
+		if (endoom_screen[1+i*2] & 0x80)
 		{
-			exit (int(mess.wParam));
+			blinking = true;
+			break;
 		}
-		else if (bRet != -1)
+	}
+	if (blinking && SetTimer (Window, 0x5A15A, BLINK_PERIOD, NULL) == 0)
+	{
+		blinking = false;
+	}
+
+	// Wait until any key has been pressed or a quit message has been received
+	for (;;)
+	{
+		bRet = GetMessage (&mess, NULL, 0, 0);
+		if (bRet == 0 || bRet == -1 ||	// bRet == 0 means we received WM_QUIT
+			mess.message == WM_KEYDOWN || mess.message == WM_SYSKEYDOWN || mess.message == WM_LBUTTONDOWN)
 		{
-			if (mess.message == WM_KEYDOWN || mess.message == WM_SYSKEYDOWN || mess.message == WM_LBUTTONDOWN)
+			if (blinking)
 			{
-				exit (0);
+				KillTimer (Window, 0x5A15A);
 			}
+			ST_Util_FreeFont (font);
+			exit (int(bRet == 0 ? mess.wParam : 0));
+		}
+		else if (blinking && mess.message == WM_TIMER && mess.hwnd == Window && mess.wParam == 0x5A15A)
+		{
+			ST_Util_UpdateTextBlink (StartupBitmap, endoom_screen, font, blinkstate);
+			blinkstate = !blinkstate;
 		}
 		TranslateMessage (&mess);
 		DispatchMessage (&mess);
@@ -1550,11 +1576,11 @@ void ST_Util_DrawTextScreen (BITMAPINFO *bitmap_info, const BYTE *text_screen, c
 
 void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE charnum, BYTE attrib)
 {
-	const BYTE bg_left = attrib & 0xF0;
+	const BYTE bg_left = attrib & 0x70;
 	const BYTE fg      = attrib & 0x0F;
 	const BYTE fg_left = fg << 4;
 	const BYTE bg      = bg_left >> 4;
-	const BYTE color_array[4] = { bg_left | bg, attrib, fg_left | bg, fg_left | fg };
+	const BYTE color_array[4] = { bg_left | bg, attrib & 0x7F, fg_left | bg, fg_left | fg };
 	const BYTE *src = font + 1 + charnum * font[0];
 	int pitch = screen->bmiHeader.biWidth >> 1;
 	BYTE *dest = ST_Util_BitsForBitmap(screen) + x*4 + y * font[0] * pitch;
@@ -1572,5 +1598,32 @@ void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE 
 		// Pixels 6 and 7
 		dest[3] = color_array[(srcbyte)      & 3];
 		dest += pitch;
+	}
+}
+
+//==========================================================================
+//
+// ST_Util_UpdateTextBlink
+//
+// Draws the parts of the text screen that blink to the bitmap. The bitmap
+// must be the proper size for the font.
+//
+//==========================================================================
+
+void ST_Util_UpdateTextBlink (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font, bool on)
+{
+	int x, y;
+
+	for (y = 0; y < 25; ++y)
+	{
+		for (x = 0; x < 80; ++x)
+		{
+			if (text_screen[1] & 0x80)
+			{
+				ST_Util_DrawChar (bitmap_info, font, x, y, on ? text_screen[0] : ' ', text_screen[1]);
+				ST_Util_InvalidateRect (Window, bitmap_info, x*8, y*font[0], x*8+8, y*font[0]+font[0]);
+			}
+			text_screen += 2;
+		}
 	}
 }

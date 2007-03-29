@@ -1,3 +1,6 @@
+March 28, 2007
+- Adding blinky text to the ENDOOM screen.
+
 March 24, 2007
 - Changed MakeKey's hash algorithm from a CRC32 to Paul Hsieh's SuperFastHash.
 

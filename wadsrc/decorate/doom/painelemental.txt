@@ -39,11 +39,11 @@ ACTOR PainElemental 71
 		PAIN G 6 A_Pain
 		Goto See
 	Death:
-		PAIN H 8
-		PAIN I 8 A_Scream
-		PAIN JK 8
-		PAIN L 8 A_PainDie
-		PAIN M 8
+		PAIN H 8 BRIGHT
+		PAIN I 8 BRIGHT A_Scream
+		PAIN JK 8 BRIGHT
+		PAIN L 8 BRIGHT A_PainDie
+		PAIN M 8 BRIGHT
 		Stop
 	Raise:
 		PAIN MLKJIH 8

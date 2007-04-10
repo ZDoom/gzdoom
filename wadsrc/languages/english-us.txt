@@ -642,13 +642,13 @@ OB_ICEGUY = "%o was frozen solid by a Wendigo.";
 OB_SERPENTHIT = "%o was mauled by a Stalker.";
 OB_SERPENT = "%o was melted by a Stalker.";
 OB_WRAITH = "%o was charred by a Reiver.";
-OB_WRAITHHIT = "%o had %g life stolen by a Reiver.";
+OB_WRAITHHIT = "%o had %h life stolen by a Reiver.";
 OB_DRAGON = "%o was incinerated by the Death Wyvern.";
 OB_KORAX = "%o was swept from the board by Korax.";
 OB_FBOSS = "%o was slain by Zedek.";
 OB_MBOSS = "%o couldn't absorb Menelkir's Mana.";
 OB_CBOSS = "%o was baptized by Traductus.";
-OB_HERESIARCH = "%o had %g bones rolled by the Heresiarch.";
+OB_HERESIARCH = "%o had %h bones rolled by the Heresiarch.";
 
 OB_ACOLYTE = "%o was zealously shot down by an Acolyte.";
 OB_MACIL = "%o should have never rebelled against Macil.";

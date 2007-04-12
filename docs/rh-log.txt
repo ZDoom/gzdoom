@@ -1,3 +1,16 @@
+April 12, 2007
+- Switched ACS world and global arrays to the TMap class instead of
+  TAutoGrowArray. A map can handle a wide range of key values better than
+  an array.
+
+April 10, 2007
+- Added a templated associative array class, TMap, that uses Lua's "chained
+  scatter table with Brent's variation" algorithm. I had considered using
+  hash_map until I discovered that it's not standard STL, and there are two
+  major but incompatible implementations of it. So I rolled my own, and Lua
+  seemed like a good place to go to for an efficient algorithm, since it
+  makes heavy use of tables.
+
 March 28, 2007
 - Fixed some const char * -> char * conversions flagged by GCC 4.2.0 in the
   Win32-specific code.

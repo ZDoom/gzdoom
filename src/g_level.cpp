@@ -113,11 +113,11 @@ int starttime;
 
 // ACS variables with world scope
 SDWORD ACS_WorldVars[NUM_WORLDVARS];
-TAutoGrowArray<SDWORD> ACS_WorldArrays[NUM_WORLDVARS];
+FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
 
 // ACS variables with global scope
 SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
-TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
+FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern bool netdemo;
 extern FString BackupSaveName;

@@ -286,8 +286,19 @@ extern TArray<level_info_t> wadlevelinfos;
 
 extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
 extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
-extern TAutoGrowArray<SDWORD> ACS_WorldArrays[NUM_WORLDVARS];
-extern TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
+
+struct InitIntToZero
+{
+	void Init(int &v)
+	{
+		v = 0;
+	}
+};
+typedef TMap<SDWORD, SDWORD, THashTraits<SDWORD>, InitIntToZero> FWorldGlobalArray;
+typedef TMapIterator<SDWORD, SDWORD, FWorldGlobalArray> FWorldGlobalArrayIterator;
+
+extern FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
+extern FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern bool savegamerestore;
 

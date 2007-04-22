@@ -15,8 +15,6 @@
 #include "a_hexenglobal.h"
 #include "a_keys.h"
 
-// The translation to use for depleted items
-#define DIM_MAP &NormalLight.Maps[NUMCOLORMAPS*2/3*256]
 
 class FManaBar : public FTexture
 {

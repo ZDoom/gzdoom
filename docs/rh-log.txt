@@ -1,3 +1,11 @@
+April 22, 2007 (Changes by Graf Zahl)
+- Fixed: ShowErrorPane deleted the StartScreen instead of just calling
+  NetDone.
+- moved the DIM_MAP define into v_palette.h so that it can be accessed
+  from outside the status bar code.
+- Fixed: The check for non-swimmable water in UpdateWaterLevel checked for
+  SECF_UNDERWATER instead of SECF_UNDERWATERMASK.
+  
 April 12, 2007
 - Switched ACS world and global arrays to the TMap class instead of
   TAutoGrowArray. A map can handle a wide range of key values better than

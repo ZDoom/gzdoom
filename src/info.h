@@ -77,6 +77,7 @@
 #include "farchive.h"
 #include "doomdef.h"
 #include "name.h"
+#include "tarray.h"
 
 const BYTE SF_FULLBRIGHT = 0x40;
 const BYTE SF_BIGTIC	 = 0x80;
@@ -446,6 +447,7 @@ private:
 extern FDoomEdMap DoomEdMap;
 
 int GetSpriteIndex(const char * spritename);
+void MakeStateNameList(const char * fname, TArray<FName> * out);
 
 #include "infomacros.h"
 

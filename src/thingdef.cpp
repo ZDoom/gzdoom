@@ -815,52 +815,6 @@ static FStateDefine * FindStateLabelInList(TArray<FStateDefine> & list, FName na
 
 //==========================================================================
 //
-// Creates a list of names from a string. Dots are used as separator
-//
-//==========================================================================
-
-void MakeStateNameList(const char * fname, TArray<FName> * out)
-{
-	FName firstpart, secondpart;
-	char * c;
-
-	// Handle the old names for the existing death states
-	char * name = copystring(fname);
-	firstpart = strtok(name, ".");
-	switch (firstpart)
-	{
-	case NAME_Burn:
-		firstpart = NAME_Death;
-		secondpart = NAME_Fire;
-		break;
-	case NAME_Ice:
-		firstpart = NAME_Death;
-		secondpart = NAME_Ice;
-		break;
-	case NAME_Disintegrate:
-		firstpart = NAME_Death;
-		secondpart = NAME_Disintegrate;
-		break;
-	case NAME_XDeath:
-		firstpart = NAME_Death;
-		secondpart = NAME_Extreme;
-		break;
-	}
-
-	out->Clear();
-	out->Push(firstpart);
-	if (secondpart!=NAME_None) out->Push(secondpart);
-
-	while ((c = strtok(NULL, "."))!=NULL)
-	{
-		FName cc = c;
-		out->Push(cc);
-	}
-	delete [] name;
-}
-
-//==========================================================================
-//
 // Finds the address of a state given by name. 
 // Adds the state if it doesn't exist
 //

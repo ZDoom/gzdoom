@@ -50,6 +50,7 @@
 #include "i_system.h"
 #include "p_local.h"
 #include "templates.h"
+#include "cmdlib.h"
 
 extern void LoadDecorations (void (*process)(FState *, int));
 
@@ -486,7 +487,7 @@ FState *AActor::FindState (FName label, FName sublabel, bool exact) const
 		FStateLabel *slabel = info->StateList->FindLabel (label);
 		if (slabel != NULL)
 		{
-			if (sublabel != NAME_None && slabel->Children != NULL)
+			if (slabel->Children != NULL)
 			{
 				FStateLabel *slabel2 = slabel->Children->FindLabel(sublabel);
 				if (slabel2 != NULL)
@@ -494,14 +495,7 @@ FState *AActor::FindState (FName label, FName sublabel, bool exact) const
 					return slabel2->State;
 				}
 			}
-			if (sublabel == NAME_None && slabel->Children != NULL && exact)
-			{
-				return NULL;
-			}
-			if (!exact)
-			{
-				return slabel->State;
-			}
+			if (!exact) return slabel->State;
 		}
 	}
 	return NULL;
@@ -565,6 +559,8 @@ FState *FActorInfo::FindState (int numnames, FName *names, bool exact) const
 // Changes a single state
 //
 // If the given state does not exist it won't be changed
+// This is only used for postprocessing of actors that use different
+// spawn states for different games so more complex checks are not needed.
 //
 //===========================================================================
 
@@ -580,6 +576,52 @@ void FActorInfo::ChangeState (FName label, FState * newstate) const
 			slabel->State = newstate;
 		}
 	}
+}
+
+//==========================================================================
+//
+// Creates a list of names from a string. Dots are used as separator
+//
+//==========================================================================
+
+void MakeStateNameList(const char * fname, TArray<FName> * out)
+{
+	FName firstpart, secondpart;
+	char * c;
+
+	// Handle the old names for the existing death states
+	char * name = copystring(fname);
+	firstpart = strtok(name, ".");
+	switch (firstpart)
+	{
+	case NAME_Burn:
+		firstpart = NAME_Death;
+		secondpart = NAME_Fire;
+		break;
+	case NAME_Ice:
+		firstpart = NAME_Death;
+		secondpart = NAME_Ice;
+		break;
+	case NAME_Disintegrate:
+		firstpart = NAME_Death;
+		secondpart = NAME_Disintegrate;
+		break;
+	case NAME_XDeath:
+		firstpart = NAME_Death;
+		secondpart = NAME_Extreme;
+		break;
+	}
+
+	out->Clear();
+	out->Push(firstpart);
+	if (secondpart!=NAME_None) out->Push(secondpart);
+
+	while ((c = strtok(NULL, "."))!=NULL)
+	{
+		FName cc = c;
+		out->Push(cc);
+	}
+	delete [] name;
 }
 
 

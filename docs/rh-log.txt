@@ -1,4 +1,7 @@
 April 22, 2007 (Changes by Graf Zahl)
+- Changed ACS's SetActorState so that it isn't limited to only one sublabel.
+  This change also enables the implicit mapping of the old special death
+  state names.
 - Fixed: ShowErrorPane deleted the StartScreen instead of just calling
   NetDone.
 - moved the DIM_MAP define into v_palette.h so that it can be accessed

@@ -65,10 +65,12 @@
 #include "gi.h"
 #include "sc_man.h"
 #include "c_bind.h"
+#include "info.h"
 
 extern FILE *Logfile;
 
 FRandom pr_acs ("ACS");
+
 
 // I imagine this much stack space is probably overkill, but it could
 // potentially get used with recursive functions.
@@ -4971,23 +4973,14 @@ int DLevelScript::RunScript ()
 		case PCD_SETACTORSTATE:
 			{
 				const char *statename = FBehavior::StaticLookupString (STACK(2));
-				const char *dot;
-				FName label1, label2;
+				TArray<FName> statelist;
 				FState *state;
 
-				dot = strchr (statename, '.');
-				if (dot != NULL)
-				{
-					label1 = FName(statename, dot - statename, true);
-					label2 = FName(dot + 1, true);
-				}
-				else
-				{
-					label1 = FName(statename, true);
-				}
+				MakeStateNameList(statename, &statelist);
+				
 				if (STACK(3) == 0)
 				{
-					state = activator->FindState (label1, label2, !!STACK(1));
+					state = RUNTIME_TYPE(activator)->ActorInfo->FindState (statelist.Size(), &statelist[0], !!STACK(1));
 					if (state != NULL)
 					{
 						activator->SetState (state);
@@ -5006,7 +4999,7 @@ int DLevelScript::RunScript ()
 
 					while ( (actor = iterator.Next ()) )
 					{
-						state = actor->FindState (label1, label2, !!STACK(1));
+						state = RUNTIME_TYPE(activator)->ActorInfo->FindState (statelist.Size(), &statelist[0], !!STACK(1));
 						if (state != NULL)
 						{
 							actor->SetState (state);

@@ -14,7 +14,7 @@ ACTOR Revenant 66
 	Speed 10
 	PainChance 100
 	Monster
-	+LONGMELEERANGE 
+	MeleeThreshold 196
 	+MISSILEMORE 
 	+FLOORCLIP
 	SeeSound "skeleton/sight"

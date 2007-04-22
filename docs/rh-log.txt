@@ -1,4 +1,13 @@
 April 22, 2007 (Changes by Graf Zahl)
+- added a CANUSEWALLS flag which allows a monster to activate 'use' specials
+  like doors. This flag is on by default for any monster which was the
+  previous behavior.
+- Optimized the DECORATE flag parser so it can more efficiently handle
+  the deprecated flags. As a side effect of this optimization the deprecated
+  flags became usable in A_ChangeFlag again.
+- Changed LONGMELEERANGE flag into a MeleeThreshold property.
+- Changed SHORTMISSILERANGE flag into a MaxTargetRange property.
+- Added Thing_Stop action special.
 - Changed ACS's SetActorState so that it isn't limited to only one sublabel.
   This change also enables the implicit mapping of the old special death
   state names.

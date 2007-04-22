@@ -90,6 +90,7 @@ TArray<FName> JumpParameters;
 // [RH] Keep GCC quiet by not using offsetof on Actor types.
 #define DEFINE_FLAG(prefix, name, type, variable) { prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1 }
 #define DEFINE_FLAG2(symbol, name, type, variable) { symbol, #name, (int)(size_t)&((type*)1)->variable - 1 }
+#define DEFINE_DEPRECATED_FLAG(name, type, index) { index, #name, -1 }
 
 struct flagdef
 {
@@ -191,10 +192,9 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF4, FIXMAPTHINGPOS , AActor, flags4),
 	DEFINE_FLAG(MF4, ACTLIKEBRIDGE, AActor, flags4),
 	DEFINE_FLAG(MF4, STRIFEDAMAGE, AActor, flags4),
-	DEFINE_FLAG(MF4, LONGMELEERANGE, AActor, flags4),
+	DEFINE_FLAG(MF4, CANUSEWALLS, AActor, flags4),
 	DEFINE_FLAG(MF4, MISSILEMORE, AActor, flags4),
 	DEFINE_FLAG(MF4, MISSILEEVENMORE, AActor, flags4),
-	DEFINE_FLAG(MF4, SHORTMISSILERANGE, AActor, flags4),
 	DEFINE_FLAG(MF4, DONTFALL, AActor, flags4),
 	DEFINE_FLAG(MF4, SEESDAGGERS, AActor, flags4),
 	DEFINE_FLAG(MF4, INCOMBAT, AActor, flags4),
@@ -233,6 +233,13 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG2(FX_ROCKET, ROCKETTRAIL, AActor, effects),
 	DEFINE_FLAG2(FX_GRENADE, GRENADETRAIL, AActor, effects),
 	DEFINE_FLAG(RF, INVISIBLE, AActor, renderflags),
+
+	// Deprecated flags. Handling must be performed in HandleDeprecatedFlags
+	DEFINE_DEPRECATED_FLAG(FIREDAMAGE, AActor, 0),
+	DEFINE_DEPRECATED_FLAG(ICEDAMAGE, AActor, 1),
+	DEFINE_DEPRECATED_FLAG(LOWGRAVITY, AActor, 2),
+	DEFINE_DEPRECATED_FLAG(SHORTMISSILERANGE, AActor, 3),
+	DEFINE_DEPRECATED_FLAG(LONGMELEERANGE, AActor, 4),
 };
 
 static flagdef InventoryFlags[] =
@@ -364,6 +371,41 @@ static flagdef *FindFlag (const PClass *type, const char *part1, const char *par
 	return NULL;
 }
 
+
+//===========================================================================
+//
+// HandleDeprecatedFlags
+//
+// Handles the deprecated flags and sets the respective properties
+// to appropriate values. This is solely intended for backwards
+// compatibility so mixing this with code that is aware of the real
+// properties is not recommended
+//
+//===========================================================================
+static void HandleDeprecatedFlags(AActor *defaults, bool set, int index)
+{
+	switch (index)
+	{
+	case 0:	// FIREDAMAGE
+		defaults->DamageType = set? NAME_Fire : NAME_None;
+		break;
+	case 1:	// ICEDAMAGE
+		defaults->DamageType = set? NAME_Ice : NAME_None;
+		break;
+	case 2:	// LOWGRAVITY
+		defaults->gravity = set? FRACUNIT/8 : FRACUNIT;
+		break;
+	case 3:	// SHORTMISSILERANGE
+		defaults->maxtargetrange = set? 896*FRACUNIT : 0;
+		break;
+	case 4:	// LONGMELEERANGE
+		defaults->meleethreshold = set? 196*FRACUNIT : 0;
+		break;
+	default:
+		break;	// silence GCC
+	}
+}
+
 //===========================================================================
 //
 // A_ChangeFlag
@@ -392,10 +434,17 @@ void A_ChangeFlag(AActor * self)
 
 	if (fd != NULL)
 	{
-		int * flagp = (int*) (((char*)self) + fd->structoffset);
+		if (fd->structoffset == -1)
+		{
+			HandleDeprecatedFlags(self, !!expression, fd->flagbit);
+		}
+		else
+		{
+			int * flagp = (int*) (((char*)self) + fd->structoffset);
 
-		if (expression) *flagp |= fd->flagbit;
-		else *flagp &= ~fd->flagbit;
+			if (expression) *flagp |= fd->flagbit;
+			else *flagp &= ~fd->flagbit;
+		}
 	}
 	else
 	{
@@ -2942,6 +2991,24 @@ static void ActorBurnHeight (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorMaxTargetRange (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetFloat();
+	defaults->maxtargetrange = fixed_t(sc_Float*FRACUNIT);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void ActorMeleeThreshold (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetFloat();
+	defaults->meleethreshold = fixed_t(sc_Float*FRACUNIT);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorMeleeDamage (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetNumber();
@@ -3214,6 +3281,7 @@ static void ActorMonster (AActor *defaults, Baggage &bag)
 	defaults->flags|=MF_SHOOTABLE|MF_COUNTKILL|MF_SOLID; 
 	defaults->flags2|=MF2_PUSHWALL|MF2_MCROSS|MF2_PASSMOBJ;
 	defaults->flags3|=MF3_ISMONSTER;
+	defaults->flags4|=MF4_CANUSEWALLS;
 }
 
 //==========================================================================
@@ -3237,32 +3305,20 @@ static void ActorFlagSetOrReset (AActor *defaults, Baggage &bag)
 
 	SC_MustGetString ();
 
-	// Fire and ice damage were once flags but now are not.
-	if (SC_Compare ("FIREDAMAGE"))
+	FString part1 = sc_String;
+	const char *part2 = NULL;
+	if (SC_CheckString ("."))
 	{
-		if (mod == '+') defaults->DamageType = NAME_Fire;
-		else defaults->DamageType = NAME_None;
+		SC_MustGetString ();
+		part2 = sc_String;
 	}
-	else if (SC_Compare ("ICEDAMAGE"))
+	if ( (fd = FindFlag (bag.Info->Class, part1.GetChars(), part2)) )
 	{
-		if (mod == '+') defaults->DamageType = NAME_Ice;
-		else defaults->DamageType = NAME_None;
-	}
-	else if (SC_Compare ("LOWGRAVITY"))
-	{
-		if (mod == '+') defaults->gravity = FRACUNIT/8;
-		else defaults->gravity = FRACUNIT;
-	}
-	else
-	{
-		FString part1 = sc_String;
-		const char *part2 = NULL;
-		if (SC_CheckString ("."))
+		if (fd->structoffset == -1)	// this is a deprecated flag that has been changed into a real property
 		{
-			SC_MustGetString ();
-			part2 = sc_String;
+			HandleDeprecatedFlags(defaults, mod=='+', fd->flagbit);
 		}
-		if ( (fd = FindFlag (bag.Info->Class, part1.GetChars(), part2)) )
+		else
 		{
 			DWORD * flagvar = (DWORD*) ((char*)defaults + fd->structoffset);
 			if (mod == '+')
@@ -3274,16 +3330,16 @@ static void ActorFlagSetOrReset (AActor *defaults, Baggage &bag)
 				*flagvar &= ~fd->flagbit;
 			}
 		}
+	}
+	else
+	{
+		if (part2 == NULL)
+		{
+			SC_ScriptError("\"%s\" is an unknown flag\n", part1.GetChars());
+		}
 		else
 		{
-			if (part2 == NULL)
-			{
-				SC_ScriptError("\"%s\" is an unknown flag\n", part1.GetChars());
-			}
-			else
-			{
-				SC_ScriptError("\"%s.%s\" is an unknown flag\n", part1.GetChars(), part2);
-			}
+			SC_ScriptError("\"%s.%s\" is an unknown flag\n", part1.GetChars(), part2);
 		}
 	}
 }
@@ -4105,10 +4161,12 @@ static const ActorProps props[] =
 	{ "mass",						ActorMass,					RUNTIME_CLASS(AActor) },
 	{ "maxdropoffheight",			ActorMaxDropoffHeight,		RUNTIME_CLASS(AActor) },
 	{ "maxstepheight",				ActorMaxStepHeight,			RUNTIME_CLASS(AActor) },
+	{ "maxtargetrange",				ActorMaxTargetRange,		RUNTIME_CLASS(AActor) },
 	{ "melee",						ActorMeleeState,			RUNTIME_CLASS(AActor) },
 	{ "meleedamage",				ActorMeleeDamage,			RUNTIME_CLASS(AActor) },
 	{ "meleerange",					ActorMeleeRange,			RUNTIME_CLASS(AActor) },
 	{ "meleesound",					ActorMeleeSound,			RUNTIME_CLASS(AActor) },
+	{ "meleethreshold",				ActorMeleeThreshold,		RUNTIME_CLASS(AActor) },
 	{ "minmissilechance",			ActorMinMissileChance,		RUNTIME_CLASS(AActor) },
 	{ "missile",					ActorMissileState,			RUNTIME_CLASS(AActor) },
 	{ "missileheight",				ActorMissileHeight,			RUNTIME_CLASS(AActor) },

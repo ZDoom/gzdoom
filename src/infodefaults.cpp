@@ -416,6 +416,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 	if (((AActor *)defaults)->flags & MF_COUNTKILL)
 	{
 		((AActor *)defaults)->flags3 |= MF3_ISMONSTER;
+		((AActor *)defaults)->flags4 |= MF4_CANUSEWALLS;	// I won't bother changing all internal monster definitions so let's set this here.
 	}
 	// Any default projectile in Raven's games produces blood splatter
 	if (gameinfo.gametype & GAME_Raven && ((AActor *)defaults)->flags & MF_MISSILE)

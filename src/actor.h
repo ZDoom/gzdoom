@@ -252,11 +252,11 @@ enum
 	MF4_ACTLIKEBRIDGE	= 0x00000080,	// Pickups can "stand" on this actor
 	MF4_STRIFEDAMAGE	= 0x00000100,	// Strife projectiles only do up to 4x damage, not 8x
 
-	MF4_LONGMELEERANGE	= 0x00000200,
-	MF4_MISSILEMORE		= 0x00000400,
-	MF4_MISSILEEVENMORE	= 0x00000800,
-	MF4_SHORTMISSILERANGE=0x00001000,
-	MF4_DONTFALL		= 0x00002000,
+	MF4_CANUSEWALLS		= 0x00000200,	// Can activate 'use' specials
+	MF4_MISSILEMORE		= 0x00000400,	// increases the chance of a missile attack
+	MF4_MISSILEEVENMORE	= 0x00000800,	// significantly increases the chance of a missile attack
+	// unused flag
+	MF4_DONTFALL		= 0x00002000,	// Doesn't have NOGRAVITY disabled when dying.
 	MF4_SEESDAGGERS		= 0x00004000,	// This actor can see you striking with a dagger
 	MF4_INCOMBAT		= 0x00008000,	// Don't alert others when attacked by a dagger
 	MF4_LOOKALLAROUND	= 0x00010000,	// Monster has eyes in the back of its head
@@ -680,7 +680,11 @@ public:
 	BYTE			boomwaterlevel;	// splash information for non-swimmable water sectors
 	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
 	WORD			SpawnFlags;
-	fixed_t			meleerange;
+	fixed_t			meleerange;		// specifies how far a melee attack reaches.
+	fixed_t			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
+									// but instead tries to come closer for a melee attack.
+									// This is not the same as meleerange
+	fixed_t			maxtargetrange;	// any target farther away cannot be attacked
 	fixed_t			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	fixed_t			gravity;		// [GRB] Gravity factor

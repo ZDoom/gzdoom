@@ -59,6 +59,7 @@ typedef enum {
 	Transfer_WallLight = 16,
 	Thing_Raise = 17,
 	StartConversation = 18,
+	Thing_Stop = 19,
 
 	Floor_LowerByValue = 20,
 	Floor_LowerToLowest = 21,

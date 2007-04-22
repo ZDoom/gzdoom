@@ -15,8 +15,8 @@ ACTOR Archvile 64
 	Speed 15
 	PainChance 10
 	Monster
+	MaxTargetRange 896
 	+QUICKTORETALIATE 
-	+SHORTMISSILERANGE 
 	+FLOORCLIP 
 	+NOTARGET
 	SeeSound "vile/sight"

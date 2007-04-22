@@ -311,6 +311,8 @@ void AActor::Serialize (FArchive &arc)
 		<< MaxStepHeight
 		<< bouncefactor
 		<< bouncecount
+		<< maxtargetrange
+		<< meleethreshold
 		<< meleerange
 		<< DamageType
 		<< gravity;

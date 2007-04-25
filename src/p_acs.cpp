@@ -4999,7 +4999,7 @@ int DLevelScript::RunScript ()
 
 					while ( (actor = iterator.Next ()) )
 					{
-						state = RUNTIME_TYPE(activator)->ActorInfo->FindState (statelist.Size(), &statelist[0], !!STACK(1));
+						state = RUNTIME_TYPE(actor)->ActorInfo->FindState (statelist.Size(), &statelist[0], !!STACK(1));
 						if (state != NULL)
 						{
 							actor->SetState (state);

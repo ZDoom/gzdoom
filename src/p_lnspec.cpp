@@ -1426,6 +1426,7 @@ FUNC(LS_Thing_Stop)
 		if (it != NULL)
 		{
 			it->momx = it->momy = it->momz = 0;
+			if (it->player != NULL) it->player->momx = it->player->momy = 0;
 			ok = true;
 		}
 	}
@@ -1436,6 +1437,7 @@ FUNC(LS_Thing_Stop)
 		while ( (target = iterator.Next ()) )
 		{
 			target->momx = target->momy = target->momz = 0;
+			if (target->player != NULL) target->player->momx = target->player->momy = 0;
 			ok = true;
 		}
 	}

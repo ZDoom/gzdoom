@@ -214,7 +214,7 @@ ACTOR PhoenixRodHefty : PhoenixRodAmmo 23
 
 // --- Bag of holding -------------------------------------------------------
 
-ACTOR BagOfHolding : Backpack 8
+ACTOR BagOfHolding : BackpackItem 8
 {
 	Game Heretic
 	SpawnID 136

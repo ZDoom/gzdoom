@@ -410,7 +410,7 @@ FState *P_GetState(AActor *self, FState *CallingState, int offset)
 				Printf("%s%s", dot, JumpParameters[offset+2+i].GetChars());
 				dot = ".";
 			}
-			Printf("not found in %s\n", self->GetClass()->TypeName.GetChars());
+			Printf("' not found in %s\n", self->GetClass()->TypeName.GetChars());
 		}
 		return jumpto;
 	}

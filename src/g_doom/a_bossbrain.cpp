@@ -184,7 +184,7 @@ void A_BrainPain (AActor *self)
 
 static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 {
-	AActor *boom = Spawn<ARocket> (x, y, z, NO_REPLACE);
+	AActor *boom = Spawn("Rocket", x, y, z, NO_REPLACE);
 	if (boom != NULL)
 	{
 		boom->momz = pr_brainscream() << 9;

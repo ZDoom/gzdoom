@@ -197,6 +197,10 @@ class Inventory extends Actor
 	action native A_FireCGun();
 	action native A_FireMissile();
 	action native A_FirePlasma();
+	action native A_FireRailgun();
+	action native A_FireRailgunLeft();
+	action native A_FireRailgunRight();
+	action native A_RailWait();
 	action native A_BFGsound();
 	action native A_FireBFG();
 	action native A_ReFire();
@@ -204,3 +208,4 @@ class Inventory extends Actor
 	action native A_GunFlash();
 	action native A_Saw(optional coerce sound fullsound, optional coerce sound hitsound, optional eval int damage, optional class<Actor> pufftype);
 }
+

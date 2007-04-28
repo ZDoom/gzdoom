@@ -109,3 +109,57 @@ FArchive &operator<< (FArchive &arc, botskill_t &skill)
 {
 	return arc << skill.aiming << skill.perfection << skill.reaction << skill.isp;
 }
+
+// set the bot specific weapon information
+// This is intentionally not in the weapon definition anymore.
+AT_GAME_SET(BotStuff)
+{
+	AWeapon * w;
+	AActor * a;
+	
+	w = (AWeapon*)GetDefaultByName ("Pistol");
+	if (w != NULL)
+	{
+		w->MoveCombatDist=25000000;
+	}
+	w = (AWeapon*)GetDefaultByName ("Shotgun");
+	if (w != NULL)
+	{
+		w->MoveCombatDist=24000000;
+	}
+	w = (AWeapon*)GetDefaultByName ("SuperShotgun");
+	if (w != NULL)
+	{
+		w->MoveCombatDist=15000000;
+	}
+	w = (AWeapon*)GetDefaultByName ("Chaingun");
+	if (w != NULL)
+	{
+		w->MoveCombatDist=27000000;
+	}
+	w = (AWeapon*)GetDefaultByName ("RocketLauncher");
+	if (w != NULL)
+	{
+		w->MoveCombatDist=18350080;
+		w->WeaponFlags|=WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE;
+		w->ProjectileType=PClass::FindClass("Rocket");
+	}
+	w = (AWeapon*)GetDefaultByName ("PlasmaRifle");
+	if (w != NULL)
+	{
+		w->MoveCombatDist=27000000;
+		w->ProjectileType=PClass::FindClass("PlasmaBall");
+	}
+	a = GetDefaultByName ("PlasmaBall");
+	if (a != NULL)
+	{
+		a->flags3|=MF3_WARNBOT;
+	}
+	w = (AWeapon*)GetDefaultByName ("BFG9000");
+	if (w != NULL)
+	{
+		w->MoveCombatDist=10000000;
+		w->WeaponFlags|=WIF_BOT_REACTION_SKILL_THING|WIF_BOT_BFG;
+		w->ProjectileType=PClass::FindClass("BFGBall");
+	}
+}

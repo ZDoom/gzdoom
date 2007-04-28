@@ -1435,11 +1435,11 @@ bool AHealthPickup::Use (bool pickup)
 
 //===========================================================================
 //
-// ABackpack :: Serialize
+// ABackpackItem :: Serialize
 //
 //===========================================================================
 
-void ABackpack::Serialize (FArchive &arc)
+void ABackpackItem::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << bDepleted;
@@ -1447,14 +1447,14 @@ void ABackpack::Serialize (FArchive &arc)
 
 //===========================================================================
 //
-// ABackpack :: CreateCopy
+// ABackpackItem :: CreateCopy
 //
 // A backpack is being added to a player who doesn't yet have one. Give them
 // every kind of ammo, and increase their max amounts.
 //
 //===========================================================================
 
-AInventory *ABackpack::CreateCopy (AActor *other)
+AInventory *ABackpackItem::CreateCopy (AActor *other)
 {
 	// Find every unique type of ammo. Give it to the player if
 	// he doesn't have it already, and double it's maximum capacity.
@@ -1504,19 +1504,19 @@ AInventory *ABackpack::CreateCopy (AActor *other)
 
 //===========================================================================
 //
-// ABackpack :: HandlePickup
+// ABackpackItem :: HandlePickup
 //
 // When the player picks up another backpack, just give them more ammo.
 //
 //===========================================================================
 
-bool ABackpack::HandlePickup (AInventory *item)
+bool ABackpackItem::HandlePickup (AInventory *item)
 {
 	// Since you already have a backpack, that means you already have every
 	// kind of ammo in your inventory, so we don't need to look at the
 	// entire PClass list to discover what kinds of ammo exist, and we don't
 	// have to alter the MaxAmount either.
-	if (item->IsKindOf (RUNTIME_CLASS(ABackpack)))
+	if (item->IsKindOf (RUNTIME_CLASS(ABackpackItem)))
 	{
 		for (AInventory *probe = Owner->Inventory; probe != NULL; probe = probe->Inventory)
 		{
@@ -1557,27 +1557,27 @@ bool ABackpack::HandlePickup (AInventory *item)
 
 //===========================================================================
 //
-// ABackpack :: CreateTossable
+// ABackpackItem :: CreateTossable
 //
 // The tossed backpack must not give out any more ammo, otherwise a player
 // could cheat by dropping their backpack and picking it up for more ammo.
 //
 //===========================================================================
 
-AInventory *ABackpack::CreateTossable ()
+AInventory *ABackpackItem::CreateTossable ()
 {
-	ABackpack *pack = static_cast<ABackpack *>(Super::CreateTossable());
+	ABackpackItem *pack = static_cast<ABackpackItem *>(Super::CreateTossable());
 	pack->bDepleted = true;
 	return pack;
 }
 
 //===========================================================================
 //
-// ABackpack :: DetachFromOwner
+// ABackpackItem :: DetachFromOwner
 //
 //===========================================================================
 
-void ABackpack::DetachFromOwner ()
+void ABackpackItem::DetachFromOwner ()
 {
 	// When removing a backpack, drop the player's ammo maximums to normal
 	AInventory *item;
@@ -1602,17 +1602,7 @@ void ABackpack::DetachFromOwner ()
 //
 //===========================================================================
 
-FState ABackpack::States[] =
-{
-	S_NORMAL (BPAK, 'A',   -1, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ABackpack, Doom, 8, 144)
-	PROP_HeightFixed (26)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-	PROP_Inventory_PickupMessage("$GOTBACKPACK")
-END_DEFAULTS
+IMPLEMENT_ABSTRACT_ACTOR(ABackpackItem)
 
 IMPLEMENT_ABSTRACT_ACTOR (AMapRevealer)
 

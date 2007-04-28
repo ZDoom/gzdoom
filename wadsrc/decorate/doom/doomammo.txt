@@ -142,3 +142,19 @@ ACTOR ShellBox : Shell 2049
 	}
 }
 
+// Backpack ---------------------------------------------------------------
+
+ACTOR Backpack : BackpackItem 8
+{
+	Game Doom
+	SpawnID 144
+	Height 26
+	Inventory.PickupMessage "$GOTBACKPACK"
+	States
+	{
+	Spawn:
+		BPAK A -1
+		Stop
+	}
+}
+

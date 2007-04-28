@@ -1570,7 +1570,8 @@ void A_Look (AActor *actor)
 	}
 	else
 	{
-		targ = (i_compatflags & COMPATF_SOUNDTARGET)? actor->Sector->SoundTarget : actor->LastHeard;
+		targ = (i_compatflags & COMPATF_SOUNDTARGET || actor->flags & MF_NOSECTOR)? 
+			actor->Sector->SoundTarget : actor->LastHeard;
 
 		// [RH] If the soundtarget is dead, don't chase it
 		if (targ != NULL && targ->health <= 0)

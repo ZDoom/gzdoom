@@ -2238,6 +2238,9 @@ void D_DoomMain (void)
 
 	FActorInfo::StaticInit ();
 
+	// Now that all actors have been defined we can finally set up the weapon slots
+	GameConfig->DoWeaponSetup (GameNames[gameinfo.gametype]);
+
 	// [GRB] Initialize player class list
 	SetupPlayerClasses ();
 
@@ -2287,8 +2290,6 @@ void D_DoomMain (void)
 		DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
 		FinishDehPatch ();			// Create replacements for dehacked pickups
 	}
-	HandleNoSector ();	// clear NOSECTOR flag off all actors modified by Dehacked and the BossEye.
-
 	FActorInfo::StaticSetActorNums ();
 
 

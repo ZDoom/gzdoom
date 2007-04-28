@@ -1,3 +1,20 @@
+April 27, 2007 (Changes by Graf Zahl)
+- Added damage factors that allows to make monsters more or less resistant
+  to specific damage types.
+- Changed Dehacked parser to use the DECORATE symbol tables for code pointers
+  instead of creating its own ones.
+
+April 26, 2007 (Changes by Graf Zahl)
+- Removed the HandleNoSector hack and changed A_Look so that it uses the sector's
+  sound target for actors with MF_NOSECTOR regardless of compatibility settings.
+- Moved initialization of weapon slots after the actor initialization.
+  With default weapons exported to DECORATE it can't be done earlier.
+- Converted Doom weapons to DECORATE.
+- Changed backpack definition so that Doom's backpack is no longer the base
+  class that implements its functionality. Now there is an abstract base class
+  all backpack-like items derive from. Also moved the actual definition of Doom's
+  backpack to DECORATE.
+
 April 22, 2007 (Changes by Graf Zahl)
 - added a CANUSEWALLS flag which allows a monster to activate 'use' specials
   like doors. This flag is on by default for any monster which was the

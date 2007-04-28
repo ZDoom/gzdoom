@@ -523,7 +523,7 @@ angle_t DCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 	if (dist < SAFE_SELF_MISDIST)
 		return 0;
 	//Predict.
-	m = (((dist+1)/FRACUNIT) / GetDefault<ARocket>()->Speed);
+	m = (((dist+1)/FRACUNIT) / GetDefaultByName("Rocket")->Speed);
 
 	SetBodyAt (enemy->x + FixedMul (enemy->momx, (m+2*FRACUNIT)),
 			   enemy->y + FixedMul(enemy->momy, (m+2*FRACUNIT)), ONFLOORZ, 1);

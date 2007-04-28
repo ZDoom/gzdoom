@@ -1173,6 +1173,13 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 	bag->Info = info;
 
 	info->DoomEdNum = -1;
+	if (parent->ActorInfo->DamageFactors != NULL)
+	{
+		// copy damage factors from parent
+		info->DamageFactors = new DmgFactors;
+		*info->DamageFactors = *parent->ActorInfo->DamageFactors;
+	}
+	else info->DamageFactors = NULL;
 
 	// Check for "replaces"
 	SC_MustGetString ();
@@ -1290,15 +1297,15 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 		StateParameters[paramindex]=spec->Special;
 
 		// Make this consistent with all other parameter parsing
-		if (SC_CheckString("("))
+		if (SC_CheckToken('('))
 		{
 			for (i = 0; i < 5;)
 			{
 				StateParameters[paramindex+i+1]=ParseExpression (false, bag.Info->Class);
 				i++;
-				if (!SC_CheckString (",")) break;
+				if (!SC_CheckToken (',')) break;
 			}
-			SC_MustGetStringName (")");
+			SC_MustGetToken (')');
 		}
 		else i=0;
 
@@ -1378,14 +1385,12 @@ static FString ParseStateString()
 	if (SC_CheckString("::"))
 	{
 		SC_MustGetString ();
-		statestring += "::";
-		statestring += sc_String;
+		statestring << "::" << sc_String;
 	}
 	while (SC_CheckString ("."))
 	{
 		SC_MustGetString ();
-		statestring += ".";
-		statestring += sc_String;
+		statestring << "." << sc_String;
 	}
 	return statestring;
 }
@@ -3178,6 +3183,23 @@ static void ActorDamageType (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorDamageFactor (AActor *defaults, Baggage &bag)
+{
+	SC_MustGetString ();   
+	if (bag.Info->DamageFactors == NULL) bag.Info->DamageFactors=new DmgFactors;
+
+	FName dmgType;
+	if (SC_Compare("Normal")) dmgType = NAME_None;
+	else dmgType=sc_String;
+
+	SC_MustGetToken(',');
+	SC_MustGetFloat();
+	bag.Info->DamageFactors[dmgType]=(fixed_t)(sc_Float*FRACUNIT);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorDecal (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetString();
@@ -4127,6 +4149,7 @@ static const ActorProps props[] =
 	{ "crash",						ActorCrashState,			RUNTIME_CLASS(AActor) },
 	{ "crush",						ActorCrushState,			RUNTIME_CLASS(AActor) },
 	{ "damage",						ActorDamage,				RUNTIME_CLASS(AActor) },
+	{ "damagefactor",				ActorDamageFactor,			RUNTIME_CLASS(AActor) },
 	{ "damagetype",					ActorDamageType,			RUNTIME_CLASS(AActor) },
 	{ "death",						ActorDeathState,			RUNTIME_CLASS(AActor) },
 	{ "deathheight",				ActorDeathHeight,			RUNTIME_CLASS(AActor) },
@@ -4377,6 +4400,7 @@ void FinishThingdef()
 		sprintf(fmt, "QuestItem%d", i+1);
 		QuestItemClasses[i]=PClass::FindClass(fmt);
 	}
+
 }
 
 //==========================================================================
@@ -4432,4 +4456,14 @@ void ParseClass()
 		}
 		SC_MustGetAnyToken();
 	}
+}
+
+void ParseActionFunction()
+{
+	// for now only void functions with no parameters
+	SC_MustGetToken(TK_Void);
+	SC_MustGetString();
+	FName funcname = sc_String;
+	SC_MustGetToken('(');
+	SC_MustGetToken(')');
 }

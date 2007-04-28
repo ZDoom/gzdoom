@@ -65,6 +65,7 @@
 #include "a_sharedglobal.h"
 #include "thingdef.h"
 #include "vectors.h"
+#include "dobject.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -82,20 +83,7 @@ struct CodePtrMap
 
 static CodePtrMap *CodePtrNames;
 static int NumCodePtrs;
-
-// Prototype the dehacked code pointers
-#define WEAPON(x)	void A_##x(AActor*);
-#define ACTOR(x)	void A_##x(AActor*);
-#include "d_dehackedactions.h"
-
-// Declare the dehacked code pointers
-static const actionf_p CodePtrs[] =
-{
-	NULL,
-#define WEAPON(x)	A_##x,
-#define ACTOR(x)	A_##x,
-#include "d_dehackedactions.h"
-};
+static PSymbol ** CodePtrSymbols;
 
 static const char *const AmmoNames[12] =
 {
@@ -1498,6 +1486,31 @@ static int PatchWeapon (int weapNum)
 	return result;
 }
 
+static void SetPointer(FState *state, PSymbol *sym)
+{
+	if (sym==NULL)
+	{
+		state->Action = NULL;
+		state->ParameterIndex=0;
+	}
+	else switch (sym->SymbolType)
+	{
+	case SYM_ActionFunction:
+		state->Action = static_cast<PSymbolActionFunction*>(sym)->Function;
+		state->ParameterIndex=0;	// No parameters for patched code pointers
+		break;
+	/*
+	case SYM_ExternalFunction:
+		state->Action = A_CallExtFunction;
+		state->ParameterIndex = static_cast<PSymbolExternalFunction*>(sym->Data);
+		break;
+	*/
+	default:
+		state->Action = NULL;
+		state->ParameterIndex=0;
+	}
+}
+
 static int PatchPointer (int ptrNum)
 {
 	int result;
@@ -1516,12 +1529,13 @@ static int PatchPointer (int ptrNum)
 			FState *state = FindState (CodePConv[ptrNum]);
 			if (state)
 			{
-				if ((unsigned)(atoi (Line2)) >= (unsigned)NumActions)
+				int index = atoi(Line2);
+				if ((unsigned)(index) >= (unsigned)NumActions)
 					state->Action = NULL;
 				else
-					state->Action = CodePtrs[ActionList[atoi (Line2)]];
-
-				state->ParameterIndex=0;	// No parameters for patched code pointers
+				{
+					SetPointer(state, CodePtrSymbols[ActionList[index]]);
+				}
 			}
 			else
 			{
@@ -1845,10 +1859,9 @@ static int PatchCodePtrs (int dummy)
 					}
 					else
 					{
-						state->Action = CodePtrs[CodePtrNames[mid].num];
+						SetPointer(state, CodePtrSymbols[CodePtrNames[mid].num]);
 						DPrintf ("Frame %d set to %s\n", frame, GetName (CodePtrNames[mid].name));
 					}
-					state->ParameterIndex=0;	// No parameters for patched code pointers
 				}
 			}
 		}
@@ -2333,6 +2346,11 @@ static void UnloadDehSupp ()
 		DehUseCount = 0;
 		delete[] DehSuppLump;
 		DehSuppLump = NULL;
+		if (CodePtrSymbols != NULL)
+		{
+			delete[] CodePtrSymbols;
+			CodePtrSymbols = NULL;
+		}
 		if (OrgSprNames != NULL)
 		{
 			delete[] OrgSprNames[0];
@@ -2427,13 +2445,16 @@ static bool LoadDehSupp ()
 		else if (CompareLabel ("ACTF", supp))
 		{
 			NumCodePtrs = GetWord (supp + 4);
-			if ((unsigned)NumCodePtrs != countof(CodePtrs))
-			{
-				Printf ("DEHSUPP defines %d code pointers, but there should be %d\n",
-					NumCodePtrs, countof(CodePtrs));
-				return false;
-			}
 			CodePtrNames = (CodePtrMap *)GetWordSpace (supp + 6, NumCodePtrs*2);
+			CodePtrSymbols = new PSymbol*[NumCodePtrs];
+			for(int i=0;i<NumCodePtrs;i++)
+			{
+				// all relevant code pointers are either defined in AInventory 
+				// or AActor so this will find all of them.
+				FString name = "A_";
+				name << GetName(CodePtrNames[i].name);
+				CodePtrSymbols[CodePtrNames[i].num] = RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true);
+			}
 			supp += 6 + NumCodePtrs * 4;
 		}
 		else if (CompareLabel ("ACTM", supp))
@@ -2608,43 +2629,6 @@ void FinishDehPatch ()
 	{
 		delete[] StateMap;
 		StateMap = NULL;
-	}
-}
-
-void HandleNoSector()
-{
-	// MF_NOSECTOR is causing problems with monsters so remap it to RF_INVISIBLE 
-	// which in most cases is what this is used for anyway. 
-	// Do this for all actors touched by DEHACKED actors except the teleport spot.
-	unsigned int touchedIndex;
-
-	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
-	{
-		PClass *ti = TouchedActors[touchedIndex];
-
-		if (ti!=NULL && ti->ActorInfo!=NULL && !ti->IsDescendantOf(RUNTIME_CLASS(ATeleportDest)))
-		{
-			AActor * def = GetDefaultByType(ti);
-
-			if (def->flags&MF_NOSECTOR)
-			{
-				def->flags&=~MF_NOSECTOR;
-				def->renderflags|=RF_INVISIBLE;
-			}
-		}
-	}
-	// The BossEye must be handled even without any Dehacked interference
-	// because otherwise it would not react to sound.
-	const PClass * ti = PClass::FindClass("BossEye");
-	if (ti!=NULL)
-	{
-		AActor * def = GetDefaultByType(ti);
-
-		if (def->flags&MF_NOSECTOR)
-		{
-			def->flags&=~MF_NOSECTOR;
-			def->renderflags|=RF_INVISIBLE;
-		}
 	}
 }
 

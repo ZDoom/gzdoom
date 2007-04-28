@@ -212,7 +212,7 @@ ACTOR ElectricBolts : Ammo 114
 
 // Ammo Satchel -------------------------------------------------------------
 
-ACTOR AmmoSatchel : Backpack 183
+ACTOR AmmoSatchel : BackpackItem 183
 {
 	Game Strife
 	SpawnID 144

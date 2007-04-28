@@ -394,8 +394,13 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 			}
 		}
 	}
+}
 
+// Separated from DoGameSetup because it needs all the weapons properly defined
+void FGameConfigFile::DoWeaponSetup (const char *gamename)
+{
 	strcpy (subsection, "WeaponSlots");
+
 	if (!SetSection (section) || !LocalWeapons.RestoreSlots (*this))
 	{
 		SetupWeaponList (gamename);

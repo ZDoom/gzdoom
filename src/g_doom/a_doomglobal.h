@@ -10,22 +10,6 @@ class ABossBrain : public AActor
 	DECLARE_ACTOR (ABossBrain, AActor)
 };
 
-class ARocket : public AActor
-{
-	DECLARE_ACTOR (ARocket, AActor)
-public:
-};
-
-class APlasmaBall : public AActor
-{
-	DECLARE_ACTOR (APlasmaBall, AActor)
-};
-
-class ABFGBall : public AActor
-{
-	DECLARE_ACTOR (ABFGBall, AActor)
-};
-
 class AScriptedMarine : public AActor
 {
 	DECLARE_ACTOR (AScriptedMarine, AActor)

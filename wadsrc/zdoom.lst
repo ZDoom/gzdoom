@@ -278,6 +278,7 @@ actors/doom/doomhealth.txt					decorate/doom/doomhealth.txt
 actors/doom/doomkeys.txt					decorate/doom/doomkeys.txt
 actors/doom/doommisc.txt					decorate/doom/doommisc.txt
 actors/doom/doomdecorations.txt				decorate/doom/doomdecorations.txt
+actors/doom/doomweapons.txt					decorate/doom/doomweapons.txt
 actors/doom/stealthmonsters.txt				decorate/doom/stealthmonsters.txt
 
 actors/raven/artiegg.txt					decorate/raven/artiegg.txt

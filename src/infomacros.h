@@ -80,7 +80,7 @@ typedef void (*voidfunc_)();
 	FActorInfo actor##ActorInfo = {
 
 #define BEGIN_DEFAULTS_POST(actor,game,ednum,id) \
-	GAME_##game, id, ednum, NULL,
+	GAME_##game, id, ednum, NULL, NULL,
 
 #ifdef WORDS_BIGENDIAN
 #define END_DEFAULTS "\xED\x5E" };
@@ -133,7 +133,7 @@ extern void ApplyActorDefault (int defnum, int dataint);
 	FActorInfo actor##ActorInfo = {
 
 #define BEGIN_DEFAULTS_POST(actor,game,ednum,id) \
-	GAME_##game, id, ednum, NULL, actor##DefaultsConstructor }; \
+	GAME_##game, id, ednum, NULL, NULL, actor##DefaultsConstructor }; \
 	void actor##DefaultsConstructor() { \
 
 #define END_DEFAULTS }

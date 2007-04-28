@@ -396,9 +396,9 @@ public:
 
 // A backpack gives you one clip of each ammo and doubles your
 // normal maximum ammo amounts.
-class ABackpack : public AInventory
+class ABackpackItem : public AInventory
 {
-	DECLARE_ACTOR (ABackpack, AInventory)
+	DECLARE_ACTOR (ABackpackItem, AInventory)
 public:
 	void Serialize (FArchive &arc);
 	bool HandlePickup (AInventory *item);

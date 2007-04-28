@@ -676,7 +676,7 @@ void A_M_FireMissile (AActor *self)
 	else
 	{
 		A_FaceTarget (self);
-		P_SpawnMissile (self, self->target, RUNTIME_CLASS(ARocket));
+		P_SpawnMissile (self, self->target, PClass::FindClass("Rocket"));
 	}
 }
 
@@ -707,7 +707,7 @@ void A_M_FirePlasma (AActor *self)
 		return;
 
 	A_FaceTarget (self);
-	P_SpawnMissile (self, self->target, RUNTIME_CLASS(APlasmaBall));
+	P_SpawnMissile (self, self->target, PClass::FindClass("PlasmaBall"));
 	self->special1 = level.maptime + 20;
 }
 
@@ -747,7 +747,7 @@ void A_M_FireBFG (AActor *self)
 		return;
 
 	A_FaceTarget (self);
-	P_SpawnMissile (self, self->target, RUNTIME_CLASS(ABFGBall));
+	P_SpawnMissile (self, self->target, PClass::FindClass("BFGBall"));
 	self->special1 = level.maptime + 30;
 	self->PainChance = MARINE_PAIN_CHANCE;
 }

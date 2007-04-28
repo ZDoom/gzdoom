@@ -1179,7 +1179,6 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 		info->DamageFactors = new DmgFactors;
 		*info->DamageFactors = *parent->ActorInfo->DamageFactors;
 	}
-	else info->DamageFactors = NULL;
 
 	// Check for "replaces"
 	SC_MustGetString ();
@@ -3194,7 +3193,7 @@ static void ActorDamageFactor (AActor *defaults, Baggage &bag)
 
 	SC_MustGetToken(',');
 	SC_MustGetFloat();
-	bag.Info->DamageFactors[dmgType]=(fixed_t)(sc_Float*FRACUNIT);
+	(*bag.Info->DamageFactors)[dmgType]=(fixed_t)(sc_Float*FRACUNIT);
 }
 
 //==========================================================================

@@ -4362,11 +4362,21 @@ void FinishThingdef()
 
 			if (isRuntimeActor)
 			{
-				// Do some consistency checks. If these states are undefined the weapon cannot work!
-				if (!ti->ActorInfo->FindState(NAME_Ready)) I_Error("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
-				if (!ti->ActorInfo->FindState(NAME_Select)) I_Error("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
-				if (!ti->ActorInfo->FindState(NAME_Deselect)) I_Error("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
-				if (!ti->ActorInfo->FindState(NAME_Fire)) I_Error("Weapon %s doesn't define a fire state.\n", ti->TypeName.GetChars());
+				FState * ready = ti->ActorInfo->FindState(NAME_Ready);
+				FState * select = ti->ActorInfo->FindState(NAME_Select);
+				FState * deselect = ti->ActorInfo->FindState(NAME_Deselect);
+				FState * fire = ti->ActorInfo->FindState(NAME_Fire);
+
+				// Consider any weapon without any valid state abstract and don't output a warning
+				// This is for creating base classes for weapon groups that only set up some properties.
+				if (ready || select || deselect || fire)
+				{
+					// Do some consistency checks. If these states are undefined the weapon cannot work!
+					if (!ready) I_Error("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
+					if (!select) I_Error("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
+					if (!deselect) I_Error("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
+					if (!fire) I_Error("Weapon %s doesn't define a fire state.\n", ti->TypeName.GetChars());
+				}
 			}
 
 		}

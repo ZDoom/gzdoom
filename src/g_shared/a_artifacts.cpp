@@ -1108,13 +1108,21 @@ void APowerWeaponLevel2::EndEffect ()
 {
 	player_t *player = Owner != NULL ? Owner->player : NULL;
 
-	if (player != NULL &&
-		player->ReadyWeapon != NULL &&
-		player->ReadyWeapon->WeaponFlags & WIF_POWERED_UP)
+	if (player != NULL)
 	{
-		player->ReadyWeapon->EndPowerup ();
+
+		if (player->ReadyWeapon != NULL &&
+			player->ReadyWeapon->WeaponFlags & WIF_POWERED_UP)
+		{
+			player->ReadyWeapon->EndPowerup ();
+		}
+		if (player->PendingWeapon != NULL &&
+			player->PendingWeapon->WeaponFlags & WIF_POWERED_UP &&
+			player->PendingWeapon->SisterWeapon != NULL)
+		{
+			player->PendingWeapon = player->PendingWeapon->SisterWeapon;
+		}
 	}
-//	BorderTopRefresh = screen->GetPageCount ();
 }
 
 // Player Speed Trail (used by the Speed Powerup) ----------------------------

@@ -12,12 +12,6 @@ ACTOR DoomWeapon : Weapon
 	LightDone:
 		SHTG E 0 A_Light0
 		Stop
-	Ready:	// get around the consistency checks
-	Deselect:
-	Select:
-	Fire:
-		TNT1 A 0
-		Stop
 	}
 }
 

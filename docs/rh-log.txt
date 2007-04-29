@@ -1,3 +1,9 @@
+April 29, 2007 (Changes by Graf Zahl)
+- Added a simple check for abstract weapon classes so that I can properly define
+  the DoomWeapon base class.
+- Fixed: When the Tome of Power runs out it must also set any pending weapon
+  back to their regular state.
+  
 April 27, 2007 (Changes by Graf Zahl)
 - Added damage factors that allows to make monsters more or less resistant
   to specific damage types.

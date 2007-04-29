@@ -51,8 +51,8 @@
 #include "vectors.h"
 #include "a_sharedglobal.h"
 
-EXTERN_CVAR (Int, tx)
-EXTERN_CVAR (Int, ty)
+//EXTERN_CVAR (Int, tx)
+//EXTERN_CVAR (Int, ty)
 
 static void R_DrawSkyStriped (visplane_t *pl);
 
@@ -731,8 +731,9 @@ inline void R_MakeSpans (int x, int t1, int b1, int t2, int b2, void (*mapfunc)(
 static FTexture *frontskytex, *backskytex;
 static angle_t skyflip;
 static int frontpos, backpos;
-static int frontxscale, backxscale;
-static int frontyscale, frontiscale;
+static fixed_t frontxScale, backxScale;
+static fixed_t frontyScale;
+int frontiScale;
 
 extern fixed_t swall[MAXWIDTH];
 extern fixed_t lwall[MAXWIDTH];
@@ -749,7 +750,7 @@ static int skycolplace;
 // Get a column of sky when there is only one sky texture.
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
-	angle_t column = MulScale3 (frontxscale, viewangle + xtoviewangle[x]);
+	angle_t column = MulScale16 (frontxScale, viewangle + xtoviewangle[x]);
 
 	return fronttex->GetColumn ((((column^skyflip) >> sky1shift) + frontpos) >> FRACBITS, NULL);
 }
@@ -758,8 +759,8 @@ static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 {
 	DWORD ang = (viewangle + xtoviewangle[x])^skyflip;
-	DWORD angle1 = (((DWORD)MulScale3 (frontxscale, ang) >> sky1shift) + frontpos) >> FRACBITS;
-	DWORD angle2 = (((DWORD)MulScale3 (backxscale, ang) >> sky2shift) + backpos) >> FRACBITS;
+	DWORD angle1 = (((DWORD)MulScale16 (frontxScale, ang) >> sky1shift) + frontpos) >> FRACBITS;
+	DWORD angle2 = (((DWORD)MulScale16 (backxScale, ang) >> sky2shift) + backpos) >> FRACBITS;
 
 	// Check if this column has already been built. If so, there's
 	// no reason to waste time building it again.
@@ -804,7 +805,7 @@ static void R_DrawSky (visplane_t *pl)
 {
 	int x;
 
-	if (pl->minx > pl->maxx)
+ 	if (pl->minx > pl->maxx)
 		return;
 
 	dc_iscale = skyiscale >> skystretch;
@@ -835,14 +836,14 @@ static void R_DrawSky (visplane_t *pl)
 	rw_pic = frontskytex;
 	rw_offset = 0;
 
-	frontxscale = rw_pic->ScaleX ? rw_pic->ScaleX : tx;
+	frontxScale = rw_pic->xScale;
 	if (backskytex != NULL)
 	{
-		backxscale = backskytex->ScaleX ? backskytex->ScaleX : tx;
+		backxScale = backskytex->xScale;
 	}
 
-	frontyscale = rw_pic->ScaleY ? rw_pic->ScaleY : ty;
-	dc_texturemid = MulScale3 (skytexturemid/*-viewz*/, frontyscale);
+	frontyScale = rw_pic->yScale;
+	dc_texturemid = MulScale16 (skytexturemid/*-viewz*/, frontyScale);
 
 	if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
 	{ // The texture tiles nicely
@@ -855,8 +856,8 @@ static void R_DrawSky (visplane_t *pl)
 	}
 	else
 	{ // The texture does not tile nicely
-		frontyscale = DivScale3 (skyscale << skystretch, frontyscale);
-		frontiscale = DivScale32 (1, frontyscale);
+		frontyScale = DivScale16 (skyscale << skystretch, frontyScale);
+		frontiScale = DivScale32 (1, frontyScale);
 		R_DrawSkyStriped (pl);
 	}
 }
@@ -864,9 +865,9 @@ static void R_DrawSky (visplane_t *pl)
 static void R_DrawSkyStriped (visplane_t *pl)
 {
 	fixed_t centerysave = centeryfrac;
-	short drawheight = (short)MulScale16 (frontskytex->GetHeight(), frontyscale);
+	short drawheight = (short)MulScale16 (frontskytex->GetHeight(), frontyScale);
 	fixed_t topfrac;
-	fixed_t iscale = frontiscale;
+	fixed_t iscale = frontiScale;
 	short top[MAXWIDTH], bot[MAXWIDTH];
 	short yl, yh;
 	int x;
@@ -877,7 +878,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 	topfrac = (skytexturemid + iscale * (1-centery)) % (frontskytex->GetHeight() << FRACBITS);
 	if (topfrac < 0) topfrac += frontskytex->GetHeight() << FRACBITS;
 	yl = 0;
-	yh = (short)MulScale32 ((frontskytex->GetHeight() << FRACBITS) - topfrac, frontyscale);
+	yh = (short)MulScale32 ((frontskytex->GetHeight() << FRACBITS) - topfrac, frontyScale);
 	dc_texturemid = topfrac - iscale * (1-centery);
 
 	while (yl < viewheight)
@@ -981,8 +982,8 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 		{
 			ds_ybits--;
 		}
-		pl->xscale = MulScale3 (pl->xscale, tex->ScaleX ? tex->ScaleX : 8);
-		pl->yscale = MulScale3 (pl->yscale, tex->ScaleY ? tex->ScaleY : 8);
+		pl->xscale = MulScale16 (pl->xscale, tex->xScale);
+		pl->yscale = MulScale16 (pl->yscale, tex->yScale);
 #ifdef USEASM
 		R_SetSpanSize_ASM (ds_xbits, ds_ybits);
 #endif

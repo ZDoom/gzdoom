@@ -1050,15 +1050,7 @@ FDoomStatusBar::FDoomStatusBarTexture::FDoomStatusBarTexture ()
 	Name[0]=0;	// doesn't need a name
 
 	// now copy all the properties from the base texture
-	Width = BaseTexture->GetWidth();
-	Height = BaseTexture->GetHeight();
-	TopOffset = BaseTexture->TopOffset;
-	LeftOffset = BaseTexture->LeftOffset;
-	WidthBits = BaseTexture->WidthBits;
-	HeightBits = BaseTexture->HeightBits;
-	ScaleX = BaseTexture->ScaleX;
-	ScaleY = BaseTexture->ScaleY;
-	WidthMask = (1 << WidthBits) - 1;
+	CopySize(BaseTexture);
 	Pixels = NULL;
 }
 

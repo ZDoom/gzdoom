@@ -97,14 +97,8 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 
 	CalcBitSize ();
 
-	// [RH] Special for beta 29: Values of 0 will use the tx/ty cvars
-	// to determine scaling instead of defaulting to 8. I will likely
-	// remove this once I finish the betas, because by then, users
-	// should be able to actually create scaled textures.
-	// 10-June-2003: It's still here long after beta 29. Heh.
-
-	ScaleX = mtexture.d->ScaleX ? mtexture.d->ScaleX : 0;
-	ScaleY = mtexture.d->ScaleY ? mtexture.d->ScaleY : 0;
+	xScale = mtexture.d->ScaleX ? mtexture.d->ScaleX*(FRACUNIT/8) : FRACUNIT;
+	yScale = mtexture.d->ScaleY ? mtexture.d->ScaleY*(FRACUNIT/8) : FRACUNIT;
 
 	if (mtexture.d->Flags & MAPTEXF_WORLDPANNING)
 	{

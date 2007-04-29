@@ -1,4 +1,8 @@
 April 29, 2007 (Changes by Graf Zahl)
+- Increased precision of texture scaling factors to full fixed point. In the process
+  I got rid of the old tx and ty CVARs because they made the texture scaling
+  much more complicated than it was actually needed (and besides, they were completely
+  useless except for testing purposes anyway.)
 - Added a simple check for abstract weapon classes so that I can properly define
   the DoomWeapon base class.
 - Fixed: When the Tome of Power runs out it must also set any pending weapon

@@ -347,10 +347,9 @@ void FTextureManager::AddHiresTextures ()
 					FTexture * oldtex = Textures[oldtexno].Texture;
 	
 					// Replace the entire texture and adjust the scaling and offset factors.
-					newtex->ScaleX = 8 * newtex->GetWidth() / oldtex->GetWidth();
-					newtex->ScaleY = 8 * newtex->GetHeight() / oldtex->GetHeight();
-					newtex->LeftOffset = Scale(oldtex->LeftOffset, newtex->ScaleX, 8);
-					newtex->TopOffset = Scale(oldtex->TopOffset, newtex->ScaleY, 8);
+					newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
+					newtex->LeftOffset = FixedMul(oldtex->GetScaledLeftOffset(), newtex->xScale);
+					newtex->TopOffset = FixedMul(oldtex->GetScaledTopOffset(), newtex->yScale);
 					ReplaceTexture(oldtexno, newtex, true);
 				}
 				StartScreen->Progress();
@@ -413,10 +412,9 @@ void FTextureManager::LoadHiresTex()
 					{
 						// Replace the entire texture and adjust the scaling and offset factors.
 						newtex->bWorldPanning = true;
-						newtex->ScaleX = 8 * newtex->GetWidth() / oldtex->GetScaledWidth();
-						newtex->ScaleY = 8 * newtex->GetHeight() / oldtex->GetScaledHeight();
-						newtex->LeftOffset = MulScale3(oldtex->GetScaledLeftOffset(), newtex->ScaleX);
-						newtex->TopOffset = MulScale3(oldtex->GetScaledTopOffset(), newtex->ScaleY);
+						newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
+						newtex->LeftOffset = FixedMul(oldtex->GetScaledLeftOffset(), newtex->xScale);
+						newtex->TopOffset = FixedMul(oldtex->GetScaledTopOffset(), newtex->yScale);
 						ReplaceTexture(tex, newtex, true);
 					}
 				}
@@ -446,8 +444,7 @@ void FTextureManager::LoadHiresTex()
 					{
 						// Replace the entire texture and adjust the scaling and offset factors.
 						newtex->bWorldPanning = true;
-						newtex->ScaleX = 8 * newtex->GetWidth() / width;
-						newtex->ScaleY = 8 * newtex->GetHeight() / height;
+						newtex->SetScaledSize(width, height);
 						memcpy(newtex->Name, src, sizeof(newtex->Name));
 	
 						int oldtex = TexMan.CheckForTexture(src, FTexture::TEX_Override);

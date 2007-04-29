@@ -454,11 +454,13 @@ static inline void CheckShortestTex (int texnum, fixed_t &minsize)
 	if (texnum > 0 || (texnum == 0 && (i_compatflags & COMPATF_SHORTTEX)))
 	{
 		FTexture *tex = TexMan[texnum];
-		int yscale = tex->ScaleY ? tex->ScaleY : 8;
-		fixed_t h = DivScale19 (tex->GetHeight(), yscale);
-		if (h < minsize)
+		if (tex != NULL)
 		{
-			minsize = h;
+			fixed_t h = tex->GetScaledHeight()<<FRACBITS;
+			if (h < minsize)
+			{
+				minsize = h;
+			}
 		}
 	}
 }

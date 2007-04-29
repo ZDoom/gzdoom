@@ -340,8 +340,8 @@ static void R_InitAnimDefs ()
 				if (picnum != -1)
 				{
 					FTexture *oldtex = TexMan[picnum];
-					fitwidth = DivScale3 (oldtex->GetWidth (), oldtex->ScaleX ? oldtex->ScaleX : 8);
-					fitheight = DivScale3 (oldtex->GetHeight (), oldtex->ScaleY ? oldtex->ScaleY : 8);
+					fitwidth = oldtex->GetScaledWidth ();
+					fitheight = oldtex->GetScaledHeight ();
 					viewer->UseType = oldtex->UseType;
 					TexMan.ReplaceTexture (picnum, viewer, true);
 				}
@@ -367,8 +367,7 @@ static void R_InitAnimDefs ()
 						SC_UnGet ();
 					}
 				}
-				viewer->ScaleX = width * 8 / fitwidth;
-				viewer->ScaleY = height * 8 / fitheight;
+				viewer->SetScaledSize(fitwidth, fitheight);
 			}
 			else if (SC_Compare ("animatedDoor"))
 			{

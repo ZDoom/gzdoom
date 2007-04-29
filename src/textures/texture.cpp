@@ -96,12 +96,12 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 					// Auto-scale flats with dimensions 128x128 and 256x256
 					if (w==128 && h==128) 
 					{
-						tex->ScaleX = tex->ScaleY = 16;
+						tex->xScale = tex->yScale = 2*FRACUNIT;
 						tex->bWorldPanning = true;
 					}
 					else if (w==256 && h==256) 
 					{
-						tex->ScaleX = tex->ScaleY = 32;
+						tex->xScale = tex->yScale = 4*FRACUNIT;
 						tex->bWorldPanning = true;
 					}
 				}
@@ -114,7 +114,7 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 
 FTexture::FTexture ()
 : LeftOffset(0), TopOffset(0),
-  WidthBits(0), HeightBits(0), ScaleX(8), ScaleY(8),
+  WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bIsPatch(false),
   Rotations(0xFFFF), Width(0), Height(0), WidthMask(0)

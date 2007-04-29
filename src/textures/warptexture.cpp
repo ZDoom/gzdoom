@@ -42,15 +42,7 @@
 FWarpTexture::FWarpTexture (FTexture *source)
 : SourcePic (source), Pixels (0), Spans (0), GenTime (0)
 {
-	Width = source->GetWidth ();
-	Height = source->GetHeight ();
-	LeftOffset = source->LeftOffset;
-	TopOffset = source->TopOffset;
-	WidthBits = source->WidthBits;
-	HeightBits = source->HeightBits;
-	WidthMask = (1 << WidthBits) - 1;
-	ScaleX = source->ScaleX;
-	ScaleY = source->ScaleY;
+	CopySize(source);
 	bNoDecals = source->bNoDecals;
 	Rotations = source->Rotations;
 	bWarped = 1;

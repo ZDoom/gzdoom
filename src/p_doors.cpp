@@ -714,8 +714,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay)
 
 	// don't forget texture scaling here!
 	FTexture *tex = TexMan[picnum];
-	topdist = tex ? (tex->GetHeight() * 8 / (tex->ScaleY ? tex->ScaleY : 8)) : 64;	
-	//topdist = TexMan[picnum]->GetHeight();	// old non-scaling sensitive code!
+	topdist = tex ? tex->GetScaledHeight() : 64;
 
 	topdist = m_Sector->ceilingplane.d - topdist * m_Sector->ceilingplane.c;
 

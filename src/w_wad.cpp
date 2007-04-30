@@ -990,11 +990,16 @@ int FWadCollection::LumpLength (int lump) const
 //
 //==========================================================================
 
-int FWadCollection::GetLumpOffset (int lump) const
+int FWadCollection::GetLumpOffset (int lump)
 {
 	if ((size_t)lump >= NumLumps)
 	{
 		I_Error ("GetLumpOffset: %i >= NumLumps",lump);
+	}
+
+	if (LumpInfo[lump].flags & LUMPF_NEEDFILESTART)
+	{
+		SetLumpAddress(&LumpInfo[lump]);
 	}
 
 	return LumpInfo[lump].position;

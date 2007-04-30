@@ -142,7 +142,7 @@ ACTOR Shotgun : DoomWeapon 2001
 	Weapon.AmmoGive 8
 	Weapon.AmmoType "Shell"
 	Inventory.PickupMessage "$GOTSHOTGUN"
-	Obituary "OB_MPSHOTGUN"
+	Obituary "$OB_MPSHOTGUN"
 	States
 	{
 	Ready:
@@ -188,7 +188,7 @@ ACTOR SuperShotgun : DoomWeapon 82
 	Weapon.AmmoGive 8
 	Weapon.AmmoType "Shell"
 	Inventory.PickupMessage "$GOTSHOTGUN2"
-	Obituary "OB_MPSSHOTGUN"
+	Obituary "$OB_MPSSHOTGUN"
 	States
 	{
 	Ready:
@@ -241,7 +241,7 @@ ACTOR Chaingun : DoomWeapon 2002
 	Weapon.AmmoGive 20
 	Weapon.AmmoType "Clip"
 	Inventory.PickupMessage "$GOTCHAINGUN"
-	Obituary "OB_MPCHAINGUN"
+	Obituary "$OB_MPCHAINGUN"
 	States
 	{
 	Ready:

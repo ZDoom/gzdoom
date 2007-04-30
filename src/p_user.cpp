@@ -1050,6 +1050,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 				AInventory *item;
 
 				if (weap->SpawnState != NULL &&
+					weap->SpawnState != &AActor::States[0] &&
 					weap->SpawnState != &AActor::States[AActor::S_NULL])
 				{
 					item = P_DropItem (this, weap->GetClass(), -1, 256);

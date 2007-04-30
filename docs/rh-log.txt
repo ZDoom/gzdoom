@@ -1,3 +1,10 @@
+April 30, 2007 (Changes by Graf Zahl)
+- Fixed: GetLumpOffset must call SetLumpAddress when being called for uncompressed
+  Zip entries.
+- Fixed: Some of Doom's weapon obituaries didn't have the $-prefix that indicates a 
+  reference to the string table.
+- Fixed: The check for a valid weapon's spawn state for weapon dropping was incorrect.
+
 April 29, 2007 (Changes by Graf Zahl)
 - Increased precision of texture scaling factors to full fixed point. In the process
   I got rid of the old tx and ty CVARs because they made the texture scaling

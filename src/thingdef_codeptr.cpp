@@ -2021,7 +2021,7 @@ void A_Respawn (AActor *actor)
 		actor->renderflags &= ~RF_INVISIBLE;
 
 		int index=CheckIndex(1, NULL);
-		if (index<0 || EvalExpressionN (StateParameters[index+2], actor))
+		if (index<0 || EvalExpressionN (StateParameters[index], actor))
 		{
 			Spawn<ATeleportFog> (x, y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 		}

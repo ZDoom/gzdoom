@@ -205,7 +205,7 @@ static size_t	saveCharIndex;	// which char we're editing
 static int		LINEHEIGHT;
 
 static char		savegamestring[SAVESTRINGSIZE];
-static char		endstring[160];
+static FString	EndString;
 
 static short	itemOn; 			// menu item skull is on
 static short	whichSkull; 		// which skull to draw
@@ -270,11 +270,11 @@ static oldmenu_t MainDef =
 //
 static oldmenuitem_t HereticMainMenu[] =
 {
-	{1,1,'n',"NEW GAME",M_NewGame},
-	{1,1,'o',"OPTIONS",M_Options},
-	{1,1,'f',"GAME FILES",M_GameFiles},
-	{1,1,'i',"INFO",M_ReadThis},
-	{1,1,'q',"QUIT GAME",M_QuitDOOM}
+	{1,1,'n',"MNU_NEWGAME",M_NewGame},
+	{1,1,'o',"MNU_OPTIONS",M_Options},
+	{1,1,'f',"MNU_GAMEFILES",M_GameFiles},
+	{1,1,'i',"MNU_INFO",M_ReadThis},
+	{1,1,'q',"MNU_QUITGAME",M_QuitDOOM}
 };
 
 static oldmenu_t HereticMainDef =
@@ -291,10 +291,10 @@ static oldmenu_t HereticMainDef =
 //
 static oldmenuitem_t ClassItems[] =
 {
-	{ 1,1, 'f', "FIGHTER", SCClass },
-	{ 1,1, 'c', "CLERIC", SCClass },
-	{ 1,1, 'm', "MAGE", SCClass },
-	{ 1,1, 'r', "RANDOM", SCClass }	// [RH]
+	{ 1,1, 'f', "MNU_FIGHTER", SCClass },
+	{ 1,1, 'c', "MNU_CLERIC", SCClass },
+	{ 1,1, 'm', "MNU_MAGE", SCClass },
+	{ 1,1, 'r', "MNU_RANDOM", SCClass }	// [RH]
 };
 
 static oldmenu_t ClassMenu =
@@ -361,8 +361,8 @@ oldmenu_t EpiDef =
 //
 static oldmenuitem_t FilesItems[] =
 {
-	{1,1,'l',"LOAD GAME",M_LoadGame},
-	{1,1,'s',"SAVE GAME",M_SaveGame}
+	{1,1,'l',"MNU_LOADGAME",M_LoadGame},
+	{1,1,'s',"MNU_SAVEGAME",M_SaveGame}
 };
 
 static oldmenu_t FilesMenu =
@@ -400,11 +400,11 @@ static oldmenu_t NewDef =
 //
 static oldmenuitem_t HereticSkillItems[] =
 {
-	{1,1,'t',"THOU NEEDETH A WET-NURSE",M_ChooseSkill},
-	{1,1,'y',"YELLOWBELLIES-R-US",M_ChooseSkill},
-	{1,1,'b',"BRINGEST THEM ONETH",M_ChooseSkill},
-	{1,1,'t',"THOU ART A SMITE-MEISTER",M_ChooseSkill},
-	{1,1,'b',"BLACK PLAGUE POSSESSES THEE",M_ChooseSkill}
+	{1,1,'t',"MNU_WETNURSE",M_ChooseSkill},
+	{1,1,'y',"MNU_YELLOWBELLIES",M_ChooseSkill},
+	{1,1,'b',"MNU_BRINGEST",M_ChooseSkill},
+	{1,1,'t',"MNU_SMITE",M_ChooseSkill},
+	{1,1,'b',"MNU_BLACKPLAGUE",M_ChooseSkill}
 };
 
 static oldmenu_t HereticSkillMenu =
@@ -891,9 +891,10 @@ void M_DrawLoad (void)
 	}
 	else
 	{
+		const char *loadgame = GStrings("MNU_LOADGAME");
 		screen->DrawText (CR_UNTRANSLATED,
-			(SCREENWIDTH - BigFont->StringWidth ("LOAD GAME")*CleanXfac)/2, 10*CleanYfac,
-			"LOAD GAME", DTA_CleanNoMove, true, TAG_DONE);
+			(SCREENWIDTH - BigFont->StringWidth (loadgame)*CleanXfac)/2, 10*CleanYfac,
+			loadgame, DTA_CleanNoMove, true, TAG_DONE);
 	}
 	screen->SetFont (SmallFont);
 	M_DrawSaveLoadCommon ();
@@ -1065,7 +1066,7 @@ static void M_DrawSaveLoadCommon ()
 		{
 			const char *text =
 				(SelSaveGame == NULL || !SelSaveGame->bOldVersion)
-				? "No Picture" : "Different\nVersion";
+				? GStrings("MNU_NOPICTURE") : GStrings("MNU_DIFFVERSION");
 			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 
 			screen->DrawText (CR_GOLD, savepicLeft+(savepicWidth-textlen)/2,
@@ -1098,10 +1099,11 @@ static void M_DrawSaveLoadCommon ()
 
 		if (SaveGames.IsEmpty ())
 		{
-			const int textlen = SmallFont->StringWidth ("No files")*CleanXfac;
+			const char * text = GStrings("MNU_NOFILES");
+			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 
 			screen->DrawText (CR_GOLD, listboxLeft+(listboxWidth-textlen)/2,
-				listboxTop+(listboxHeight-rowHeight)/2, "No files",
+				listboxTop+(listboxHeight-rowHeight)/2, text,
 				DTA_CleanNoMove, true, TAG_DONE);
 			return;
 		}
@@ -1259,9 +1261,10 @@ void M_DrawSave()
 	}
 	else
 	{
+		const char * text = GStrings("MNU_SAVEGAME");
 		screen->DrawText (CR_UNTRANSLATED,
-			(SCREENWIDTH - BigFont->StringWidth ("SAVE GAME")*CleanXfac)/2, 10*CleanYfac,
-			"SAVE GAME", DTA_CleanNoMove, true, TAG_DONE);
+			(SCREENWIDTH - BigFont->StringWidth (text)*CleanXfac)/2, 10*CleanYfac,
+			text, DTA_CleanNoMove, true, TAG_DONE);
 	}
 	screen->SetFont (SmallFont);
 	M_DrawSaveLoadCommon ();
@@ -1608,7 +1611,8 @@ static void DrawClassMenu(void)
 		"M_MWALK%d"
 	};
 
-	screen->DrawText (CR_UNTRANSLATED, 34, 24, "CHOOSE CLASS:", DTA_Clean, true, TAG_DONE);
+	const char * text = GStrings("MNU_CHOOSECLASS");
+	screen->DrawText (CR_UNTRANSLATED, 34, 24, text, DTA_Clean, true, TAG_DONE);
 	classnum = itemOn;
 	if (classnum > 2)
 	{
@@ -1624,14 +1628,15 @@ static void DrawClassMenu(void)
 static void M_DrawClassMenu ()
 {
 	int tit_y = 15;
+	const char * text = GStrings("MNU_CHOOSECLASS");
 	
 	if (ClassMenuDef.numitems > 4 && gameinfo.gametype & GAME_Raven)
 		tit_y = 2;
 	
 	screen->DrawText (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
-		160 - BigFont->StringWidth ("CHOOSE CLASS:")/2,
+		160 - BigFont->StringWidth (text)/2,
 		tit_y,
-		"CHOOSE CLASS:", DTA_Clean, true, TAG_DONE);
+		text, DTA_Clean, true, TAG_DONE);
 
 	int x = (200-160)*CleanXfac+(SCREENWIDTH>>1);
 	int y = (ClassMenuDef.y-100)*CleanYfac+(SCREENHEIGHT>>1);
@@ -1676,7 +1681,7 @@ static void M_DrawClassMenu ()
 
 static void DrawHexenSkillMenu()
 {
-	screen->DrawText (CR_UNTRANSLATED, 74, 16, "CHOOSE SKILL LEVEL:", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (CR_UNTRANSLATED, 74, 16, GStrings("MNU_CHOOSESKILL"), DTA_Clean, true, TAG_DONE);
 }
 
 
@@ -1763,29 +1768,29 @@ static void SetHexenSkillMenu (const char * pclass)
 	if (!stricmp(pclass, "fighter"))
 	{
 		HexenSkillMenu.x = 120;
-		HexenSkillItems[0].name = "SQUIRE";
-		HexenSkillItems[1].name = "KNIGHT";
-		HexenSkillItems[2].name = "WARRIOR";
-		HexenSkillItems[3].name = "BERSERKER";
-		HexenSkillItems[4].name = "TITAN";
+		HexenSkillItems[0].name = "MNU_SQUIRE";
+		HexenSkillItems[1].name = "MNU_KNIGHT";
+		HexenSkillItems[2].name = "MNU_WARRIOR";
+		HexenSkillItems[3].name = "MNU_BERSERKER";
+		HexenSkillItems[4].name = "MNU_TITAN";
 	}
 	else if (!stricmp(pclass, "cleric"))
 	{
 		HexenSkillMenu.x = 116;
-		HexenSkillItems[0].name = "ALTAR BOY";
-		HexenSkillItems[1].name = "ACOLYTE";
-		HexenSkillItems[2].name = "PRIEST";
-		HexenSkillItems[3].name = "CARDINAL";
-		HexenSkillItems[4].name = "POPE";
+		HexenSkillItems[0].name = "MNU_ALTARBOY";
+		HexenSkillItems[1].name = "MNU_ACOLYTE";
+		HexenSkillItems[2].name = "MNU_PRIEST";
+		HexenSkillItems[3].name = "MNU_CARDINAL";
+		HexenSkillItems[4].name = "MNU_POPE";
 	}
 	else if (!stricmp(pclass, "mage"))
 	{
 		HexenSkillMenu.x = 112;
-		HexenSkillItems[0].name = "APPRENTICE";
-		HexenSkillItems[1].name = "ENCHANTER";
-		HexenSkillItems[2].name = "SORCERER";
-		HexenSkillItems[3].name = "WARLOCK";
-		HexenSkillItems[4].name = "ARCHMAGE";
+		HexenSkillItems[0].name = "MNU_APPRENTICE";
+		HexenSkillItems[1].name = "MNU_ENCHANTER";
+		HexenSkillItems[2].name = "MNU_SORCERER";
+		HexenSkillItems[3].name = "MNU_WARLOCK";
+		HexenSkillItems[4].name = "MNU_ARCHMAGE";
 	}
 	else
 	{
@@ -1974,20 +1979,20 @@ void M_QuitDOOM (int choice)
 		int quitmsg = gametic % NUM_QUITMESSAGES;
 		if (quitmsg != 0)
 		{
-			sprintf (endstring, "QUITMSG%d", quitmsg);
-			sprintf (endstring, "%s\n\n%s", GStrings(endstring), GStrings("DOSY"));
+			EndString.Format("QUITMSG%d", quitmsg);
+			EndString.Format("%s\n\n%s", GStrings(EndString), GStrings("DOSY"));
 		}
 		else
 		{
-			sprintf (endstring, "%s\n\n%s", GStrings("QUITMSG"), GStrings("DOSY"));
+			EndString.Format("%s\n\n%s", GStrings("QUITMSG"), GStrings("DOSY"));
 		}
 	}
 	else
 	{
-		strcpy (endstring, GStrings("RAVENQUITMSG"));
+		EndString = GStrings("RAVENQUITMSG");
 	}
 
-	M_StartMessage (endstring, M_QuitResponse, true);
+	M_StartMessage (EndString, M_QuitResponse, true);
 }
 
 
@@ -2077,10 +2082,11 @@ static void M_PlayerSetupDrawer ()
 	}
 
 	// Draw title
+	const char * text = GStrings("MNU_PLAYERSETUP");
 	screen->DrawText (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
-		160 - BigFont->StringWidth ("PLAYER SETUP")/2,
+		160 - BigFont->StringWidth (text)/2,
 		15,
-		"PLAYER SETUP", DTA_Clean, true, TAG_DONE);
+		text, DTA_Clean, true, TAG_DONE);
 
 	screen->SetFont (SmallFont);
 
@@ -2973,10 +2979,12 @@ bool M_SaveLoadResponder (event_t *ev)
 		case '\b':
 			if (SelSaveGame != &NewSaveNode)
 			{
-				sprintf (endstring, "Do you really want to delete the savegame\n"
-					TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\nPress Y or N.",
-					SelSaveGame->Title);
-				M_StartMessage (endstring, M_DeleteSaveResponse, true);
+				EndString
+				 << GStrings("MNU_DELETESG") << TEXTCOLOR_WHITE 
+				 << SelSaveGame->Title << TEXTCOLOR_NORMAL "?\n\n"
+				 << GStrings("MNU_PRESSYN");
+					
+				M_StartMessage (EndString, M_DeleteSaveResponse, true);
 			}
 			break;
 
@@ -3138,8 +3146,9 @@ void M_Drawer ()
 		// For Heretic shareware message:
 		if (showSharewareMessage)
 		{
-			screen->DrawText (CR_WHITE, 160 - SmallFont->StringWidth("ONLY AVAILABLE IN THE REGISTERED VERSION")/2,
-				8, "ONLY AVAILABLE IN THE REGISTERED VERSION", DTA_Clean, true, TAG_DONE);
+			const char * text = GStrings("MNU_ONLYREGISTERED");
+			screen->DrawText (CR_WHITE, 160 - SmallFont->StringWidth(text)/2,
+				8, text, DTA_Clean, true, TAG_DONE);
 		}
 
 		BorderNeedRefresh = screen->GetPageCount ();
@@ -3173,7 +3182,7 @@ void M_Drawer ()
 							color = CR_RED;
 						}
 						screen->DrawText (color, x, y,
-							currentMenu->menuitems[i].name,
+							GStrings(currentMenu->menuitems[i].name),
 							DTA_Clean, true, TAG_DONE);
 					}
 					else

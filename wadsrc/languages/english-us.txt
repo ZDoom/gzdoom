@@ -1235,8 +1235,7 @@ MNU_ARCHMAGE		= "ARCHMAGE";
 
 MNU_PLAYERSETUP		= "PLAYER SETUP";
 
-MNU_DELETESG		= "Do you really want to delete the savegame\n"
-MNU_PRESSYN			= "Press Y or N.";
+MNU_DELETESG		= "Do you really want to delete the savegame\n";
 
 MNU_ONLYREGISTERED	= "ONLY AVAILABLE IN THE REGISTERED VERSION";
 

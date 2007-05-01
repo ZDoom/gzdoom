@@ -2979,10 +2979,8 @@ bool M_SaveLoadResponder (event_t *ev)
 		case '\b':
 			if (SelSaveGame != &NewSaveNode)
 			{
-				EndString
-				 << GStrings("MNU_DELETESG") << TEXTCOLOR_WHITE 
-				 << SelSaveGame->Title << TEXTCOLOR_NORMAL "?\n\n"
-				 << GStrings("MNU_PRESSYN");
+				EndString.Format("%s" TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\n%s",
+					GStrings("MNU_DELETESG"), SelSaveGame->Title, GStrings("PRESSYN"));
 					
 				M_StartMessage (EndString, M_DeleteSaveResponse, true);
 			}

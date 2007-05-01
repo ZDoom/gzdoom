@@ -429,8 +429,8 @@ AActor *DCajunMaster::Find_enemy (AActor *bot)
 
 				//Too dark?
 				if (temp > DARK_DIST &&
-					client->mo->Sector->lightlevel < WHATS_DARK &&
-					bot->player->Powers & PW_INFRARED)
+					client->mo->Sector->lightlevel < WHATS_DARK /*&&
+					bot->player->Powers & PW_INFRARED*/)
 					continue;
 
 				if (temp < closest_dist)

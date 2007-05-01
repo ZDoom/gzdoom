@@ -204,6 +204,16 @@ protected:
 	void EndEffect ();
 };
 
+class APowerTimeFreezer : public APowerup
+{
+	DECLARE_STATELESS_ACTOR( APowerTimeFreezer, APowerup )
+protected:
+	void InitEffect( );
+	void DoEffect( );
+	void EndEffect( );
+};
+
+
 
 class player_s;
 

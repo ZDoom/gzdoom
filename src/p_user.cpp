@@ -2359,7 +2359,8 @@ void player_s::Serialize (FArchive &arc)
 		<< BlendB
 		<< BlendA
 		<< accuracy << stamina
-		<< LogText;
+		<< LogText
+		<< Powers;
 		
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];

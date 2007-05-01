@@ -1,4 +1,7 @@
 May 1, 2007 (Changes by Graf Zahl)
+- Fixed: player_t::Powers was not saved in a savegame.
+- Removed all unused PW_* player power flags.
+- Added Skulltag's TimeFreezer powerup.
 - Moved most of the menu strings (except options and player setup menu) into the
   string table.
 

@@ -27,6 +27,7 @@ static FRandom pr_torch ("Torch");
 #define FLIGHTTICS (60*TICRATE)
 #define SPEEDTICS (45*TICRATE)
 #define MAULATORTICS (25*TICRATE)
+#define	TIMEFREEZE_TICS	( 12 * TICRATE )
 
 EXTERN_CVAR (Bool, r_drawfuzz);
 
@@ -1359,3 +1360,95 @@ IMPLEMENT_STATELESS_ACTOR (APowerScanner, Any, -1, 0)
 	PROP_Powerup_EffectTics (80*TICRATE)
 	PROP_Inventory_FlagsSet (IF_HUBPOWER)
 END_DEFAULTS
+
+
+// Time freezer powerup -----------------------------------------------------
+
+IMPLEMENT_STATELESS_ACTOR( APowerTimeFreezer, Any, -1, 0 )
+	PROP_Powerup_EffectTics( TIMEFREEZE_TICS )
+END_DEFAULTS
+
+//===========================================================================
+//
+// APowerTimeFreezer :: InitEffect
+//
+//===========================================================================
+
+void APowerTimeFreezer::InitEffect( )
+{
+	int	ulIdx;
+
+	// When this powerup is in effect, pause the music.
+	S_PauseSound( false );
+
+	// Give the player and his teammates the power to move when time is frozen.
+	Owner->player->Powers |= PW_TIMEFREEZE;
+	for ( ulIdx = 0; ulIdx < MAXPLAYERS; ulIdx++ )
+	{
+		if ( playeringame[ulIdx] &&
+			 players[ulIdx].mo != NULL &&
+			 players[ulIdx].mo->IsTeammate( Owner )
+		   )
+		{
+			players[ulIdx].Powers |= PW_TIMEFREEZE;
+		}
+	}
+
+	// Finally, freeze the game.
+	level.flags|= LEVEL_FROZEN;
+}
+
+//===========================================================================
+//
+// APowerTimeFreezer :: DoEffect
+//
+//===========================================================================
+
+void APowerTimeFreezer::DoEffect( )
+{
+	if ( EffectTics > 4*32 
+		|| (( EffectTics > 3*32 && EffectTics <= 4*32 ) && EffectTics % 16 != 0 )
+		|| (( EffectTics > 2*32 && EffectTics <= 3*32 ) && EffectTics % 8 != 0 ) 
+		|| (( EffectTics > 32 && EffectTics <= 2*32 ) && EffectTics % 4 != 0 )
+		|| (( EffectTics > 0 && EffectTics <= 1*32 ) && EffectTics % 2 != 0 ))
+		level.flags |= LEVEL_FROZEN;
+	else
+		level.flags &= ~LEVEL_FROZEN;
+}
+
+//===========================================================================
+//
+// APowerTimeFreezer :: EndEffect
+//
+//===========================================================================
+
+void APowerTimeFreezer::EndEffect( )
+{
+	int	ulIdx;
+
+	// Allow other actors to move about freely once again.
+	level.flags &= ~LEVEL_FROZEN;
+
+	// Also, turn the music back on.
+	S_ResumeSound( );
+
+	// Nothing more to do if there's no owner.
+	if (( Owner == NULL ) || ( Owner->player == NULL ))
+	{
+		return;
+	}
+
+	// Take away the time freeze power, and his teammates.
+	Owner->player->Powers &= ~PW_TIMEFREEZE;
+	for ( ulIdx = 0; ulIdx < MAXPLAYERS; ulIdx++ )
+	{
+		if ( playeringame[ulIdx] &&
+			 players[ulIdx].mo != NULL &&
+			 players[ulIdx].mo->IsTeammate( Owner )
+		   )
+		{
+			players[ulIdx].Powers &= ~PW_TIMEFREEZE;
+		}
+	}
+}
+

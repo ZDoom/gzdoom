@@ -75,13 +75,24 @@ void P_Ticker (void)
 	if (paused || (playerswiping && !demoplayback) || P_CheckTickerPaused())
 		return;
 
-	S_ResumeSound ();
+	// [BC] Do a quick check to see if anyone has the freeze time power. If they do,
+	// then don't resume the sound, since one of the effects of that power is to shut
+	// off the music.
+	for (i = 0; i < MAXPLAYERS; i++ )
+	{
+		if (playeringame[i] && players[i].Powers & PW_TIMEFREEZE)
+			break;
+	}
+
+	if ( i == MAXPLAYERS )
+		S_ResumeSound ();
+
 	P_ResetSightCounters (false);
 
 	// Since things will be moving, it's okay to interpolate them in the renderer.
 	r_NoInterpolate = false;
 
-	if (!bglobal.freeze)
+	if (!bglobal.freeze && !(level.flags & LEVEL_FROZEN))
 	{
 		P_ThinkParticles ();	// [RH] make the particles think
 	}
@@ -96,7 +107,7 @@ void P_Ticker (void)
 	DThinker::RunThinkers ();
 
 	//if added by MC: Freeze mode.
-	if (!bglobal.freeze)
+	if (!bglobal.freeze && !(level.flags & LEVEL_FROZEN))
 	{
 		P_UpdateSpecials ();
 		P_RunEffects ();	// [RH] Run particle effects

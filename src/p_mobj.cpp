@@ -2534,6 +2534,13 @@ void AActor::Tick ()
 		return;
 	}
 
+	// Apply freeze mode.
+	if (( level.flags & LEVEL_FROZEN ) && ( player == NULL || !( player->Powers & PW_TIMEFREEZE )))
+	{
+		return;
+	}
+
+
 	fixed_t oldz = z;
 
 	// [RH] Give the pain elemental vertical friction

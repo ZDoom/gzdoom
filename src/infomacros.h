@@ -310,6 +310,7 @@ public:
 #define PROP_PowerupGiver_EffectTics(x)	ADD_LONG_PROP(ADEF_PowerupGiver_EffectTics,x)
 #define PROP_Powerup_EffectTics(x)		ADD_LONG_PROP(ADEF_Powerup_EffectTics,x)
 #define PROP_Powerup_Color(a,r,g,b)		ADD_LONG_PROP(ADEF_Powerup_Color,((a)<<24)|((r)<<16)|((g)<<8)|(b))
+#define PROP_Powerup_Colormap(m)		ADD_LONG_PROP(ADEF_Powerup_Color,m)
 
 #define PROP_Ammo_BackpackAmount(x)		ADD_WORD_PROP(ADEF_Ammo_BackpackAmount,x)
 #define PROP_Ammo_BackpackMaxAmount(x)	ADD_WORD_PROP(ADEF_Ammo_BackpackMaxAmount,x)

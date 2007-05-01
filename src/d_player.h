@@ -168,17 +168,9 @@ typedef enum
 
 enum
 {
-	PW_INVULNERABILITY	= 1,
-	PW_INVISIBILITY		= 2,
-	PW_INFRARED			= 4,
-
-// Powerups added in Heretic
-	PW_WEAPONLEVEL2		= 8,
-	PW_FLIGHT			= 16,
-
-// Powerups added in Hexen
-	PW_SPEED			= 32,
-	PW_MINOTAUR			= 64,
+	PW_SPEED			= 1,
+	PW_TIMEFREEZE		= 2,
+// 
 };
 
 #define WP_NOCHANGE ((AWeapon*)~0)

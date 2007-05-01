@@ -2360,7 +2360,7 @@ void player_s::Serialize (FArchive &arc)
 		<< BlendA
 		<< accuracy << stamina
 		<< LogText
-		<< Powers;
+		<< Powers; 
 		
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];

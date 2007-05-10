@@ -146,32 +146,33 @@ typedef enum
 //
 typedef enum
 {
-	CF_NOCLIP			= 1,	// No clipping, walk through barriers.
-	CF_GODMODE			= 2,	// No damage, no health loss.
-	CF_NOMOMENTUM		= 4,	// Not really a cheat, just a debug aid.
-	CF_NOTARGET			= 8,	// [RH] Monsters don't target
-	CF_FLY				= 16,	// [RH] Flying player
-	CF_CHASECAM			= 32,	// [RH] Put camera behind player
-	CF_FROZEN			= 64,	// [RH] Don't let the player move
-	CF_REVERTPLEASE		= 128,	// [RH] Stick camera in player's head if (s)he moves
-	CF_STEPLEFT			= 512,	// [RH] Play left footstep sound next time
-	CF_FRIGHTENING		= 1024,	// [RH] Scare monsters away
-	CF_INSTANTWEAPSWITCH= 2048,	// [RH] Switch weapons instantly
-	CF_TOTALLYFROZEN	= 4096, // [RH] All players can do is press +use
-	CF_PREDICTING		= 8192,	// [RH] Player movement is being predicted
-	CF_WEAPONREADY		= 16384,// [RH] Weapon is in the ready state, so bob it when walking
+	CF_NOCLIP			= 1,		// No clipping, walk through barriers.
+	CF_GODMODE			= 2,		// No damage, no health loss.
+	CF_NOMOMENTUM		= 4,		// Not really a cheat, just a debug aid.
+	CF_NOTARGET			= 8,		// [RH] Monsters don't target
+	CF_FLY				= 16,		// [RH] Flying player
+	CF_CHASECAM			= 32,		// [RH] Put camera behind player
+	CF_FROZEN			= 64,		// [RH] Don't let the player move
+	CF_REVERTPLEASE		= 128,		// [RH] Stick camera in player's head if (s)he moves
+	CF_STEPLEFT			= 512,		// [RH] Play left footstep sound next time
+	CF_FRIGHTENING		= 1024,		// [RH] Scare monsters away
+	CF_INSTANTWEAPSWITCH= 2048,		// [RH] Switch weapons instantly
+	CF_TOTALLYFROZEN	= 4096,		// [RH] All players can do is press +use
+	CF_PREDICTING		= 8192,		// [RH] Player movement is being predicted
+	CF_WEAPONREADY		= 16384,	// [RH] Weapon is in the ready state, so bob it when walking
+	CF_TIMEFREEZE		= 32768,	// Player has an active time freezer
+	CF_DRAIN			= 65536,	// Player owns a drain powerup
+	CF_SPEED			= 0x20000,	// Player owns a speed artifact
+	CF_REGENERATION		= 0x40000,	// Player owns a regeneration artifact
+	CF_HIGHJUMP			= 0x80000,	// more Skulltag flags. Implemetation not guaranteed though. ;)
+	CF_REFLECTION		= 0x100000,
+	CF_PROSPERITY		= 0x200000,
+	CF_DOUBLEFIRINGSPEED= 0x400000,
 } cheat_t;
 
 #define WPIECE1		1
 #define WPIECE2		2
 #define WPIECE3		4
-
-enum
-{
-	PW_SPEED			= 1,
-	PW_TIMEFREEZE		= 2,
-// 
-};
 
 #define WP_NOCHANGE ((AWeapon*)~0)
 
@@ -232,7 +233,6 @@ public:
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
 
 	int			cheats;					// bit flags
-	BITFIELD	Powers;					// powers
 	short		refire;					// refired shots are less accurate
 	short		inconsistant;
 	int			killcount, itemcount, secretcount;		// for intermission

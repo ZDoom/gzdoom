@@ -1117,7 +1117,7 @@ void APowerWeaponLevel2::EndEffect ()
 		{
 			player->ReadyWeapon->EndPowerup ();
 		}
-		if (player->PendingWeapon != NULL &&
+		if (player->PendingWeapon != NULL && player->PendingWeapon != WP_NOCHANGE &&
 			player->PendingWeapon->WeaponFlags & WIF_POWERED_UP &&
 			player->PendingWeapon->SisterWeapon != NULL)
 		{
@@ -1175,7 +1175,7 @@ END_DEFAULTS
 
 void APowerSpeed::InitEffect ()
 {
-	Owner->player->Powers |= PW_SPEED;
+	Owner->player->cheats |= CF_SPEED;
 }
 
 //===========================================================================
@@ -1229,7 +1229,7 @@ void APowerSpeed::EndEffect ()
 {
 	if (Owner != NULL && Owner->player != NULL)
 	{
-		Owner->player->Powers &= ~PW_SPEED;
+		Owner->player->cheats &= ~CF_SPEED;
 	}
 }
 
@@ -1382,7 +1382,7 @@ void APowerTimeFreezer::InitEffect( )
 	S_PauseSound( false );
 
 	// Give the player and his teammates the power to move when time is frozen.
-	Owner->player->Powers |= PW_TIMEFREEZE;
+	Owner->player->cheats |= CF_TIMEFREEZE;
 	for ( ulIdx = 0; ulIdx < MAXPLAYERS; ulIdx++ )
 	{
 		if ( playeringame[ulIdx] &&
@@ -1390,7 +1390,7 @@ void APowerTimeFreezer::InitEffect( )
 			 players[ulIdx].mo->IsTeammate( Owner )
 		   )
 		{
-			players[ulIdx].Powers |= PW_TIMEFREEZE;
+			players[ulIdx].cheats |= CF_TIMEFREEZE;
 		}
 	}
 
@@ -1439,7 +1439,7 @@ void APowerTimeFreezer::EndEffect( )
 	}
 
 	// Take away the time freeze power, and his teammates.
-	Owner->player->Powers &= ~PW_TIMEFREEZE;
+	Owner->player->cheats &= ~CF_TIMEFREEZE;
 	for ( ulIdx = 0; ulIdx < MAXPLAYERS; ulIdx++ )
 	{
 		if ( playeringame[ulIdx] &&
@@ -1447,8 +1447,221 @@ void APowerTimeFreezer::EndEffect( )
 			 players[ulIdx].mo->IsTeammate( Owner )
 		   )
 		{
-			players[ulIdx].Powers &= ~PW_TIMEFREEZE;
+			players[ulIdx].cheats &= ~CF_TIMEFREEZE;
 		}
+	}
+}
+
+// Damage powerup ------------------------------------------------------
+
+IMPLEMENT_STATELESS_ACTOR( APowerDamage, Any, -1, 0 )
+	PROP_Powerup_EffectTics( 25*TICRATE )
+END_DEFAULTS
+
+//===========================================================================
+//
+// APowerDamage :: InitEffect
+//
+//===========================================================================
+
+void APowerDamage::InitEffect( )
+{
+	// Use sound channel 5 to avoid interference with other actions.
+	if (Owner != NULL) S_SoundID(Owner, 5, SeeSound, 1.0f, ATTN_SURROUND);
+}
+
+//===========================================================================
+//
+// APowerDamage :: EndEffect
+//
+//===========================================================================
+
+void APowerDamage::EndEffect( )
+{
+	// Use sound channel 5 to avoid interference with other actions.
+	if (Owner != NULL) S_SoundID(Owner, 5, DeathSound, 1.0f, ATTN_SURROUND);
+}
+
+//===========================================================================
+//
+// APowerDamage :: AbsorbDamage
+//
+//===========================================================================
+
+void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bool passive)
+{
+	static const fixed_t def = 4*FRACUNIT;
+	if (!passive && damage > 0)
+	{
+		DmgFactors * df = GetClass()->ActorInfo->DamageFactors;
+		if (df != NULL)
+		{
+			const fixed_t * pdf = df->CheckKey(damageType);
+			if (pdf== NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
+			if (pdf == NULL) pdf = &def;
+
+			damage = newdamage = FixedMul(damage, *pdf);
+			if (*pdf > 0 && damage == 0) damage = newdamage = 1;	// don't allow zero damage as result of an underflow
+			if (Owner != NULL && *pdf > FRACUNIT) S_SoundID(Owner, 5, ActiveSound, 1.0f, ATTN_SURROUND);
+		}
+	}
+	if (Inventory != NULL) Inventory->ModifyDamage(damage, damageType, newdamage, passive);
+}
+
+// Quarter damage powerup ------------------------------------------------------
+
+IMPLEMENT_STATELESS_ACTOR( APowerProtection, Any, -1, 0 )
+	PROP_Powerup_EffectTics( 25*TICRATE )
+END_DEFAULTS
+
+//===========================================================================
+//
+// APowerProtection :: InitEffect
+//
+//===========================================================================
+
+void APowerProtection::InitEffect( )
+{
+	// Use sound channel 5 to avoid interference with other actions.
+	if (Owner != NULL) S_SoundID(Owner, 5, SeeSound, 1.0f, ATTN_SURROUND);
+}
+
+//===========================================================================
+//
+// APowerProtection :: EndEffect
+//
+//===========================================================================
+
+void APowerProtection::EndEffect( )
+{
+	// Use sound channel 5 to avoid interference with other actions.
+	if (Owner != NULL) S_SoundID(Owner, 5, DeathSound, 1.0f, ATTN_SURROUND);
+}
+
+//===========================================================================
+//
+// APowerProtection :: AbsorbDamage
+//
+//===========================================================================
+
+void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage, bool passive)
+{
+	static const fixed_t def = FRACUNIT/4;
+	if (passive && damage > 0)
+	{
+		DmgFactors * df = GetClass()->ActorInfo->DamageFactors;
+		if (df != NULL)
+		{
+			const fixed_t * pdf = df->CheckKey(damageType);
+			if (pdf== NULL && damageType != NAME_None) pdf = df->CheckKey(NAME_None);
+			if (pdf == NULL) pdf = &def;
+
+			damage = newdamage = FixedMul(damage, *pdf);
+			if (Owner != NULL && *pdf < FRACUNIT) S_SoundID(Owner, 5, ActiveSound, 1.0f, ATTN_SURROUND);
+		}
+	}
+	if (Inventory != NULL) Inventory->ModifyDamage(damage, damageType, newdamage, passive);
+}
+
+// Drain rune -------------------------------------------------------
+
+IMPLEMENT_STATELESS_ACTOR( APowerDrain, Any, -1, 0 )
+	PROP_Powerup_EffectTics( 60*TICRATE )
+END_DEFAULTS
+
+//===========================================================================
+//
+// ARuneDrain :: InitEffect
+//
+//===========================================================================
+
+void APowerDrain::InitEffect( )
+{
+	// Give the player the power to drain life from opponents when he damages them.
+	Owner->player->cheats |= CF_DRAIN;
+}
+
+//===========================================================================
+//
+// ARuneDrain :: EndEffect
+//
+//===========================================================================
+
+void APowerDrain::EndEffect( )
+{
+	// Nothing to do if there's no owner.
+	if (Owner != NULL && Owner->player != NULL)
+	{
+		// Take away the drain power.
+		Owner->player->cheats &= ~CF_DRAIN;
+	}
+}
+
+
+// Regeneration rune -------------------------------------------------------
+
+IMPLEMENT_STATELESS_ACTOR( APowerRegeneration, Any, -1, 0 )
+	PROP_Powerup_EffectTics( 120*TICRATE )
+END_DEFAULTS
+
+//===========================================================================
+//
+// ARuneRegeneration :: InitEffect
+//
+//===========================================================================
+
+void APowerRegeneration::InitEffect( )
+{
+	// Give the player the power to regnerate lost life.
+	Owner->player->cheats |= CF_REGENERATION;
+}
+
+//===========================================================================
+//
+// ARuneRegeneration :: EndEffect
+//
+//===========================================================================
+
+void APowerRegeneration::EndEffect( )
+{
+	// Nothing to do if there's no owner.
+	if (Owner != NULL && Owner->player != NULL)
+	{
+		// Take away the regeneration power.
+		Owner->player->cheats &= ~CF_REGENERATION;
+	}
+}
+
+// High jump rune -------------------------------------------------------
+
+IMPLEMENT_STATELESS_ACTOR( APowerHighJump, Any, -1, 0 )
+END_DEFAULTS
+
+//===========================================================================
+//
+// ARuneHighJump :: InitEffect
+//
+//===========================================================================
+
+void APowerHighJump::InitEffect( )
+{
+	// Give the player the power to jump much higher.
+	Owner->player->cheats |= CF_HIGHJUMP;
+}
+
+//===========================================================================
+//
+// ARuneHighJump :: EndEffect
+//
+//===========================================================================
+
+void APowerHighJump::EndEffect( )
+{
+	// Nothing to do if there's no owner.
+	if (Owner != NULL && Owner->player != NULL)
+	{
+		// Take away the high jump power.
+		Owner->player->cheats &= ~CF_HIGHJUMP;
 	}
 }
 

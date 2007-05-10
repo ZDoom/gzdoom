@@ -229,7 +229,6 @@ player_s::player_s()
   ReadyWeapon(0),
   PendingWeapon(0),
   cheats(0),
-  Powers(0),
   refire(0),
   inconsistant(0),
   killcount(0),
@@ -1121,7 +1120,7 @@ void APlayerPawn::TweakSpeeds (int &forward, int &side)
 		side = FixedMul (side, SideMove2);
 	}
 
-	if ((player->Powers & PW_SPEED) && !player->morphTics)
+	if ((player->cheats & CF_SPEED) && !player->morphTics)
 	{ // Adjust for a player with a speed artifact
 		forward = (3*forward)>>1;
 		side = (3*side)>>1;
@@ -2062,7 +2061,12 @@ void P_PlayerThink (player_t *player)
 			}
 			else if (!(dmflags & DF_NO_JUMP) && onground && !player->jumpTics)
 			{
-				player->mo->momz += player->mo->JumpZ * 35 / TICRATE;
+				fixed_t jumpmomz = player->mo->JumpZ * 35 / TICRATE;
+
+				// [BC] If the player has the high jump power, double his jump velocity.
+				if ( player->cheats & CF_HIGHJUMP )	jumpmomz *= 2;
+
+				player->mo->momz += jumpmomz;
 				S_Sound (player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
 				player->mo->flags2 &= ~MF2_ONMOBJ;
 				player->jumpTics = 18*TICRATE/35;
@@ -2170,6 +2174,15 @@ void P_PlayerThink (player_t *player)
 				player->poisoncount = 0;
 			}
 			P_PoisonDamage (player, player->poisoner, 1, true);
+		}
+
+		// [BC] Apply regeneration.
+		if (( level.time & 31 ) == 0 && ( player->cheats & CF_REGENERATION ) && ( player->health ))
+		{
+			if ( P_GiveBody( player->mo, 5 ))
+			{
+				S_Sound(player->mo, CHAN_ITEM, "*regenerate", 1, ATTN_NORM );
+			}
 		}
 
 		// Handle air supply
@@ -2359,8 +2372,7 @@ void player_s::Serialize (FArchive &arc)
 		<< BlendB
 		<< BlendA
 		<< accuracy << stamina
-		<< LogText
-		<< Powers; 
+		<< LogText;
 		
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];

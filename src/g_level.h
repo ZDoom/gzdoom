@@ -134,6 +134,7 @@ struct level_info_s
 	char		*level_name;
 	char		fadetable[9];
 	SBYTE		WallVertLight, WallHorizLight;
+	char		*f1;
 	// TheDefaultLevelInfo initializes everything above this line.
 	int			musicorder;
 	FCompressedMemFile	*snapshot;
@@ -231,6 +232,8 @@ struct level_locals_s
 
 	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls
 	SBYTE		WallHorizLight;
+
+	char		*f1;
 };
 typedef struct level_locals_s level_locals_t;
 

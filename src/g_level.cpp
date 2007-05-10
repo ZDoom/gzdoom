@@ -155,7 +155,8 @@ static level_info_t TheDefaultLevelInfo =
  	unnamed, 	// level_name
  	"COLORMAP",	// fadetable
  	+8, 		// WallVertLight
- 	-8 			// WallHorizLight
+ 	-8,			// WallHorizLight
+	"",			// [RC] F1
 };
 
 static cluster_info_t TheDefaultClusterInfo = { 0 };
@@ -281,7 +282,7 @@ static const char *MapInfoMapLevel[] =
 	"compat_dropoff",
 	"compat_boomscroll",
 	"bordertexture",
-
+	"f1", // [RC] F1 help
 	NULL
 };
 
@@ -307,6 +308,7 @@ enum EMIType
 	MITYPE_REDIRECT,
 	MITYPE_SPECIALACTION,
 	MITYPE_COMPATFLAG,
+	MITYPE_F1, // [RC] F1 help
 };
 
 struct MapInfoHandler
@@ -414,6 +416,7 @@ MapHandlers[] =
 	{ MITYPE_COMPATFLAG, COMPATF_DROPOFF},
 	{ MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
 	{ MITYPE_LUMPNAME,	lioffset(bordertexture), 0 },
+	{ MITYPE_F1,        lioffset(f1), 0, }, 
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -655,6 +658,10 @@ static void G_DoParseMapInfo (int lump)
 			if (strcmp (levelinfo->skypic2, "-NOFLAT-") == 0)
 			{
 				strcpy (levelinfo->skypic2, levelinfo->skypic1);
+			}
+			if (levelinfo->f1 != NULL)
+			{
+				levelinfo->f1 = copystring (levelinfo->f1);
 			}
 			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
 			if (levelinfo->pname[0] != 0)
@@ -990,6 +997,18 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 				SC_MustGetString ();
 			}
 			ReplaceString ((char **)(info + handler->data1), sc_String);
+			break;
+
+		case MITYPE_F1:
+			SC_MustGetString ();
+			{
+				char *colon = strchr (sc_String, ':');
+				if (colon)
+				{
+					*colon = 0;
+				}
+				ReplaceString ((char **)(info + handler->data1), sc_String);
+			}
 			break;
 
 		case MITYPE_MUSIC:
@@ -2256,6 +2275,7 @@ void G_InitLevelLocals ()
 		level.levelnum = info->levelnum;
 		level.music = info->music;
 		level.musicorder = info->musicorder;
+		level.f1 = info->f1; // [RC] And import the f1 name
 
 		strncpy (level.level_name, info->level_name, 63);
 		G_MaybeLookupLevelName (NULL);

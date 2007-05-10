@@ -56,6 +56,7 @@
 #include "gi.h"
 #include "templates.h"
 #include "sbar.h"
+#include "s_sound.h"
 
 static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");
@@ -886,32 +887,50 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			}
 		}
 
-		// to be removed and replaced by an actual damage factor 
-		// once the actors using it are converted to DECORATE.
-		if (mod == NAME_Fire && target->flags4 & MF4_FIRERESIST)
-		{
-			damage /= 2;
-		}
-		else
-		{
-			DmgFactors * df = target->GetClass()->ActorInfo->DamageFactors;
-			if (df != NULL)
-			{
-				fixed_t * pdf = df->CheckKey(mod);
-				if (pdf != NULL)
-				{
-					damage = FixedMul(damage, *pdf);
-					if (damage <= 0) return;
-				}
-			}
-		}
 		damage = inflictor->DoSpecialDamage (target, damage);
 		if (damage == -1)
 		{
 			return;
 		}
+
+		// Handle active damage modifiers (e.g. PowerDamage)
+		if (inflictor->Inventory != NULL)
+		{
+			int olddam = damage;
+			inflictor->Inventory->ModifyDamage(olddam, mod, damage, false);
+			if (olddam != damage && damage <= 0) return;
+		}
 	}
+	// Handle passive damage modifiers (e.g. PowerProtection)
+	if (target->Inventory != NULL)
+	{
+		int olddam = damage;
+		target->Inventory->ModifyDamage(olddam, mod, damage, true);
+		if (olddam != damage && damage <= 0) return;
+	}
+
+	// to be removed and replaced by an actual damage factor 
+	// once the actors using it are converted to DECORATE.
+	if (mod == NAME_Fire && target->flags4 & MF4_FIRERESIST)
+	{
+		damage /= 2;
+	}
+	else
+	{
+		DmgFactors * df = target->GetClass()->ActorInfo->DamageFactors;
+		if (df != NULL)
+		{
+			fixed_t * pdf = df->CheckKey(mod);
+			if (pdf != NULL)
+			{
+				damage = FixedMul(damage, *pdf);
+				if (damage <= 0) return;
+			}
+		}
+	}
+
 	damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
+
 	if (damage == -1)
 	{
 		return;
@@ -1061,6 +1080,21 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	//
 	// the damage has been dealt; now deal with the consequences
 	//
+
+	// If the damaging player has the power of drain, give the player 50% of the damage
+	// done in health.
+	if ( source && source->player && source->player->cheats & CF_DRAIN)
+	{
+		if (!target->player || target->player != source->player)
+		{
+			if ( P_GiveBody( source, damage / 2 ))
+			{
+				S_Sound( source, CHAN_ITEM, "*drainhealth", 1, ATTN_NORM );
+			}
+		}
+	}
+
+
 	if (target->health <= 0)
 	{ // Death
 		target->special1 = damage;

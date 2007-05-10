@@ -1427,6 +1427,13 @@ void M_DrawReadThis ()
 	else
 	{
 		tex = TexMan[gameinfo.info.infoPage[InfoType-1]];
+		// Did the mapper choose a custom help page via MAPINFO?
+		if((level.f1 != NULL) && (strcmp(level.f1, "") != 0)) {
+			if(TexMan.CheckForTexture(level.f1,0,0) == -1)
+				TexMan.AddPatch(level.f1); // Needs to be marked as a patch.
+			tex = TexMan[level.f1];
+		}
+
 		if (InfoType > 1)
 		{
 			prevpic = TexMan[gameinfo.info.infoPage[InfoType-2]];

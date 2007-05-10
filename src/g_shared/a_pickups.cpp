@@ -762,6 +762,29 @@ void AInventory::AbsorbDamage (int damage, FName damageType, int &newdamage)
 
 //===========================================================================
 //
+// AInventory :: ModifyDamage
+//
+// Allows inventory items to manipulate the amount of damage
+// inflicted. Damage is the amount of damage that would be done without manipulation,
+// and newdamage is the amount that should be done after the item has changed
+// it.
+// 'active' means it is called by the inflictor, 'passive' by the target.
+// It may seem that this is redundant and AbsorbDamage is the same. However,
+// AbsorbDamage is called only for players and also depends on other settings
+// which are undesirable for a protection artifact.
+//
+//===========================================================================
+
+void AInventory::ModifyDamage (int damage, FName damageType, int &newdamage, bool passive)
+{
+	if (Inventory != NULL)
+	{
+		Inventory->ModifyDamage (damage, damageType, newdamage, passive);
+	}
+}
+
+//===========================================================================
+//
 // AInventory :: AlterWeaponSprite
 //
 // Allows inventory items to alter a player's weapon sprite just before it

@@ -80,7 +80,7 @@ void P_Ticker (void)
 	// off the music.
 	for (i = 0; i < MAXPLAYERS; i++ )
 	{
-		if (playeringame[i] && players[i].Powers & PW_TIMEFREEZE)
+		if (playeringame[i] && players[i].cheats & CF_TIMEFREEZE)
 			break;
 	}
 

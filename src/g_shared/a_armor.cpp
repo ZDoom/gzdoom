@@ -159,6 +159,7 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 				Owner->UseInventory (best);
 			}
 		}
+		damage = newdamage;
 	}
 	if (Inventory != NULL)
 	{
@@ -477,6 +478,7 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 				saved = savedPercent >> (FRACBITS-1);
 			}
 			newdamage -= saved;
+			damage = newdamage;
 		}
 	}
 	if (Inventory != NULL)

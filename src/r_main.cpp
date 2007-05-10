@@ -1073,7 +1073,7 @@ void R_SetupFrame (AActor *actor)
 		iview->oviewangle = iview->nviewangle;
 	}
 
-	if (player != NULL &&
+	if (player != NULL && gamestate != GS_TITLELEVEL &&
 		((player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) &&
 		(camera->RenderStyle != STYLE_None) &&
 		!(camera->renderflags & RF_INVISIBLE) &&

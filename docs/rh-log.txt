@@ -1,4 +1,27 @@
+May 9, 2007 (Changes by Graf Zahl)
+- added Skulltag's custom F1 help screen MAPINFO option.
+
+May 4, 2007 (Changes by Graf Zahl)
+- Fixed: Resurrecting a player must restore all flags words, not just the first one.
+- Fixed: APowerWeaponLevel2::EndEffect must check PendingWeapon for WP_NOCHANGE.
+
+May 3, 2007 (Changes by Graf Zahl)
+- added Skulltag's high jump rune as a powerup
+
+May 2, 2007 (Changes by Graf Zahl)
+- Added Skulltag's Drain and Regeneration runes as powerups and used specific player
+  sounds for their sound effects instead of using misc/i_pkup.
+  (If I ever decide to implement runes it will be in a way that can use the regular
+  powerups instead of having to define specific classes for them.)
+- Added Skulltag's PowerQuadDamage and PowerQuarterDamage as more customizable
+  PowerDamage and PowerProtection. These new powerups allow free customization of
+  the damage modification per damage type by inheriting from these classes and
+  setting specific values. Such derived damage/protection powerups will be considered
+  as separate powers so that for example a QuadDamage and a DoubleDamage item can be
+  stacked which would result in 8x damage.
+  
 May 1, 2007 (Changes by Graf Zahl)
+- merged player_t::cheats and player_t::Powers into one variable.
 - Fixed: player_t::Powers was not saved in a savegame.
 - Removed all unused PW_* player power flags.
 - Added Skulltag's TimeFreezer powerup.

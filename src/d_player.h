@@ -162,12 +162,11 @@ typedef enum
 	CF_WEAPONREADY		= 16384,	// [RH] Weapon is in the ready state, so bob it when walking
 	CF_TIMEFREEZE		= 32768,	// Player has an active time freezer
 	CF_DRAIN			= 65536,	// Player owns a drain powerup
-	CF_SPEED			= 0x20000,	// Player owns a speed artifact
-	CF_REGENERATION		= 0x40000,	// Player owns a regeneration artifact
-	CF_HIGHJUMP			= 0x80000,	// more Skulltag flags. Implemetation not guaranteed though. ;)
-	CF_REFLECTION		= 0x100000,
-	CF_PROSPERITY		= 0x200000,
-	CF_DOUBLEFIRINGSPEED= 0x400000,
+	CF_REGENERATION		= 0x20000,	// Player owns a regeneration artifact
+	CF_HIGHJUMP			= 0x40000,	// more Skulltag flags. Implemetation not guaranteed though. ;)
+	CF_REFLECTION		= 0x80000,
+	CF_PROSPERITY		= 0x100000,
+	CF_DOUBLEFIRINGSPEED= 0x200000,
 } cheat_t;
 
 #define WPIECE1		1

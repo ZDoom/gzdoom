@@ -255,7 +255,7 @@ enum
 	MF4_CANUSEWALLS		= 0x00000200,	// Can activate 'use' specials
 	MF4_MISSILEMORE		= 0x00000400,	// increases the chance of a missile attack
 	MF4_MISSILEEVENMORE	= 0x00000800,	// significantly increases the chance of a missile attack
-	// unused flag
+	MF4_FORCERADIUSDMG	= 0x00001000,	// if put on an object it will override MF3_NORADIUSDMG
 	MF4_DONTFALL		= 0x00002000,	// Doesn't have NOGRAVITY disabled when dying.
 	MF4_SEESDAGGERS		= 0x00004000,	// This actor can see you striking with a dagger
 	MF4_INCOMBAT		= 0x00008000,	// Don't alert others when attacked by a dagger
@@ -289,6 +289,7 @@ enum
 	MF5_DEHEXPLOSION	= 0x00000400,	// Use the DEHACKED explosion options when this projectile explodes
 	MF5_PIERCEARMOR		= 0x00000800,	// Armor doesn't protect against damage from this actor
 	MF5_NOBLOODDECALS	= 0x00001000,	// Actor bleeds but doesn't spawn blood decals
+	MF5_USESPECIAL		= 0x00002000,	// Actor executes its special when being 'used'.
 
 // --- mobj.renderflags ---
 

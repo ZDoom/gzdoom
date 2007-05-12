@@ -151,6 +151,7 @@ static inline int GET_SPAC (int flags)
 
 // [RH] Monsters (as well as players) can active the line
 #define ML_MONSTERSCANACTIVATE		0x2000
+#define ML_BLOCK_PLAYERS			0x4000
 
 // [RH] BOOM's ML_PASSUSE flag (conflicts with ML_REPEATSPECIAL)
 #define ML_PASSUSE_BOOM				0x0200
@@ -175,7 +176,6 @@ static inline int GET_SPAC (int flags)
 #define ML_BLOCK_FLOATERS			0x00040000
 #define ML_CLIP_MIDTEX				0x00080000	// Automatic for every Strife line
 #define ML_WRAP_MIDTEX				0x00100000
-#define ML_BLOCK_PLAYERS			0x00200000
 
 // Sector definition, from editing
 typedef struct

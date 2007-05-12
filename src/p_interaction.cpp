@@ -629,8 +629,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	}
 	if (diestate == NULL)
 	{
-		int flags4 = !inflictor ? 0 : inflictor->player && inflictor->player->ReadyWeapon ? 
-			inflictor->player->ReadyWeapon->flags4 : inflictor->flags4;
+		int flags4 = inflictor == NULL ? 0 : inflictor->flags4;
 
 		int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
 			gameinfo.gametype == GAME_Doom ? -GetDefault()->health : -GetDefault()->health/2));
@@ -904,7 +903,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	// Handle passive damage modifiers (e.g. PowerProtection)
 	if (target->Inventory != NULL)
 	{
-		int olddam = damage;
+ 		int olddam = damage;
 		target->Inventory->ModifyDamage(olddam, mod, damage, true);
 		if (olddam != damage && damage <= 0) return;
 	}
@@ -1126,12 +1125,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			{
 				source = source->tracer;
 			}
-		}
-		if (source && (source->player) && source->player->ReadyWeapon != NULL &&
-			(source->player->ReadyWeapon->WeaponFlags & WIF_EXTREME_DEATH))
-		{
-			// Always extreme death from fourth weapon
-			target->health = -target->GetDefault()->health * 3;
 		}
 		target->Die (source, inflictor);
 		return;

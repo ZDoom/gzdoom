@@ -1,3 +1,19 @@
+May 12, 2007 (Changes by Graf Zahl)
+- Added a compatibility option to restore the original behavior of the Invisibility 
+  powerup.
+- Changed: Weapons are no longer checked for the EXTREMEDEATH and NOEXTREMEDEATH flags.
+  For all damage related actions it will always be the projectile (or puff for hitscan
+  attacks) that is treated as the damage inflictor.
+- Fixed: Hexen's fourth weapons made extreme death depend on the weapon the player
+  is holding, not the projectile that did the kill. The WIF_EXTREME_DEATH flag
+  no longer exists as a result.
+- Expanded PowerSpeed so that subclasses can be derived that alter the speed factor.
+- Added an MF5_USESPECIAL flag that allows using things to execute their specials.
+- added MF4_FORCERADIUSDMG flag so that exploding items can be created which
+  are able to hurt boss monsters.
+- moved ML_BLOCK_PLAYERS to the value 0x4000 to bring it in line with Skulltag's 
+  implementation.
+
 May 9, 2007 (Changes by Graf Zahl)
 - added Skulltag's custom F1 help screen MAPINFO option.
 

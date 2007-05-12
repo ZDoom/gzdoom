@@ -275,6 +275,7 @@ enum
 	COMPATF_TRACE			= 1 << 13,	// Trace ignores lines with the same sector on both sides
 	COMPATF_DROPOFF			= 1 << 14,	// Monsters cannot move when hanging over a dropoff
 	COMPATF_BOOMSCROLL		= 1 << 15,	// Scrolling sectors are additive like in Boom
+	COMPATF_INVISIBILITY	= 1 << 16,	// Monsters can see semi-invisible players
 };
 
 // phares 3/20/98:

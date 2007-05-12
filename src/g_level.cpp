@@ -281,6 +281,7 @@ static const char *MapInfoMapLevel[] =
 	"compat_trace",		
 	"compat_dropoff",
 	"compat_boomscroll",
+	"compat_invisibility",
 	"bordertexture",
 	"f1", // [RC] F1 help
 	NULL
@@ -415,6 +416,7 @@ MapHandlers[] =
 	{ MITYPE_COMPATFLAG, COMPATF_TRACE},
 	{ MITYPE_COMPATFLAG, COMPATF_DROPOFF},
 	{ MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
+	{ MITYPE_COMPATFLAG, COMPATF_INVISIBILITY},
 	{ MITYPE_LUMPNAME,	lioffset(bordertexture), 0 },
 	{ MITYPE_F1,        lioffset(f1), 0, }, 
 };

@@ -3267,10 +3267,10 @@ bool PTR_UseTraverse (intercept_t *in)
 		if (usething==in->d.thing) return true;
 		// Check thing
 
-		// Check for puzzle item use
-		if (in->d.thing->special == USE_PUZZLE_ITEM_SPECIAL)
+		// Check for puzzle item use or USESPECIAL flag
+		if (in->d.thing->flags5 & MF5_USESPECIAL || in->d.thing->special == USE_PUZZLE_ITEM_SPECIAL)
 		{
-			if (LineSpecials[USE_PUZZLE_ITEM_SPECIAL] (NULL, usething, false,
+			if (LineSpecials[in->d.thing->special] (NULL, usething, false,
 				in->d.thing->args[0], in->d.thing->args[1], in->d.thing->args[2],
 				in->d.thing->args[3], in->d.thing->args[4]))
 				return false;
@@ -3565,7 +3565,7 @@ bool PIT_RadiusAttack (AActor *thing)
 
 	// Boss spider and cyborg and Heretic's ep >= 2 bosses
 	// take no damage from concussion.
-	if (thing->flags3 & MF3_NORADIUSDMG)
+	if (thing->flags3 & MF3_NORADIUSDMG && !(bombspot->flags4 & MF4_FORCERADIUSDMG))
 		return true;
 
 	if (!DamageSource && thing == bombsource)

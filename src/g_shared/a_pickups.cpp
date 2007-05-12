@@ -785,6 +785,24 @@ void AInventory::ModifyDamage (int damage, FName damageType, int &newdamage, boo
 
 //===========================================================================
 //
+// AInventory :: GetSpeedFactor
+//
+//===========================================================================
+
+fixed_t AInventory::GetSpeedFactor ()
+{
+	if (Inventory != NULL)
+	{
+		return Inventory->GetSpeedFactor();
+	}
+	else
+	{
+		return FRACUNIT;
+	}
+}
+
+//===========================================================================
+//
 // AInventory :: AlterWeaponSprite
 //
 // Allows inventory items to alter a player's weapon sprite just before it

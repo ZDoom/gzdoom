@@ -1512,8 +1512,8 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround)
 					continue;	// behind back
 			}
 		}
-		if (player->mo->RenderStyle == STYLE_Translucent ||
-			player->mo->RenderStyle == STYLE_OptFuzzy)
+		if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
+			player->mo->flags3 & MF3_GHOST)
 		{
 			if ((P_AproxDistance (player->mo->x - actor->x,
 					player->mo->y - actor->y) > 2*MELEERANGE)

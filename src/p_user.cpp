@@ -1120,10 +1120,11 @@ void APlayerPawn::TweakSpeeds (int &forward, int &side)
 		side = FixedMul (side, SideMove2);
 	}
 
-	if ((player->cheats & CF_SPEED) && !player->morphTics)
-	{ // Adjust for a player with a speed artifact
-		forward = (3*forward)>>1;
-		side = (3*side)>>1;
+	if (!player->morphTics && Inventory != NULL)
+	{
+		fixed_t factor = Inventory->GetSpeedFactor ();
+		forward = FixedMul(forward, factor);
+		side = FixedMul(side, factor);
 	}
 }
 

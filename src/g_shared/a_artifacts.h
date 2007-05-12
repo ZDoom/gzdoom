@@ -170,9 +170,8 @@ class APowerSpeed : public APowerup
 {
 	DECLARE_STATELESS_ACTOR (APowerSpeed, APowerup)
 protected:
-	void InitEffect ();
 	void DoEffect ();
-	void EndEffect ();
+	fixed_t GetSpeedFactor();
 };
 
 class APowerMinotaur : public APowerup

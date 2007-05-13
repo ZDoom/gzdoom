@@ -2220,7 +2220,9 @@ void G_InitLevelLocals ()
 
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
 	NormalLight.Maps = realcolormaps;
-	NormalLight.Color = PalEntry (255, 255, 255);
+	//NormalLight.Color = PalEntry (255, 255, 255);
+	// [BB] Instead of just setting the color, we also have reset Desaturate and build the lights.
+	NormalLight.ChangeColor (PalEntry (255, 255, 255), 0);
 
 	level.gravity = sv_gravity * 35/TICRATE;
 	level.aircontrol = (fixed_t)(sv_aircontrol * 65536.f);

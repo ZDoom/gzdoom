@@ -759,8 +759,13 @@ void FDynamicColormap::ChangeColor (PalEntry lightcolor, int desaturate)
 	if (lightcolor != Color || desaturate != Desaturate)
 	{
 		Color = lightcolor;
+		// [BB] desaturate must be in [0,255]
+		if( desaturate > 255 )
+			desaturate = 255;
+		else if ( desaturate < 0 )
+			desaturate = 0;
 		Desaturate = desaturate;
-		BuildLights ();
+		if (Maps) BuildLights ();
 	}
 }
 
@@ -769,7 +774,7 @@ void FDynamicColormap::ChangeFade (PalEntry fadecolor)
 	if (fadecolor != Fade)
 	{
 		Fade = fadecolor;
-		BuildLights ();
+		if (Maps) BuildLights ();
 	}
 }
 
@@ -779,7 +784,7 @@ void FDynamicColormap::ChangeColorFade (PalEntry lightcolor, PalEntry fadecolor)
 	{
 		Color = lightcolor;
 		Fade = fadecolor;
-		BuildLights ();
+		if (Maps) BuildLights ();
 	}
 }
 

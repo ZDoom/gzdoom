@@ -938,6 +938,7 @@ bool PIT_CheckThing (AActor *thing)
 
 		// [Graf Zahl] Why do I have the feeling that this didn't really work anymore now
 		// that ZDoom supports friendly monsters?
+		
 
 		if (tmthing->target != NULL)
 		{
@@ -950,7 +951,12 @@ bool PIT_CheckThing (AActor *thing)
 			// to harm / be harmed by anything.
 			if (!thing->player && !tmthing->target->player)
 			{
-				if (infighting < 0)
+				int infight;
+				if (level.flags & LEVEL_TOTALINFIGHTING) infight=1;
+				else if (level.flags & LEVEL_NOINFIGHTING) infight=-1;
+				else infight = infighting;
+				
+				if (infight < 0)
 				{
 					// -1: Monsters cannot hurt each other, but make exceptions for
 					//     friendliness and hate status.
@@ -973,7 +979,7 @@ bool PIT_CheckThing (AActor *thing)
 						}
 					}
 				}
-				else if (infighting == 0)
+				else if (infight == 0)
 				{
 					//  0: Monsters cannot hurt same species except 
 					//     cases where they are clearly supposed to do that
@@ -1001,7 +1007,7 @@ bool PIT_CheckThing (AActor *thing)
 						}
 					}
 				}
-				// else if (infighting==1) any shot hurts anything - no further tests
+				// else if (infight==1) any shot hurts anything - no further tests
 			}
 		}
 		if (!(thing->flags & MF_SHOOTABLE))

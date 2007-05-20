@@ -284,6 +284,9 @@ static const char *MapInfoMapLevel[] =
 	"compat_invisibility",
 	"bordertexture",
 	"f1", // [RC] F1 help
+	"noinfighting",
+	"normalinfighting",
+	"totalinfighting",
 	NULL
 };
 
@@ -419,6 +422,9 @@ MapHandlers[] =
 	{ MITYPE_COMPATFLAG, COMPATF_INVISIBILITY},
 	{ MITYPE_LUMPNAME,	lioffset(bordertexture), 0 },
 	{ MITYPE_F1,        lioffset(f1), 0, }, 
+	{ MITYPE_SCFLAGS,	LEVEL_NOINFIGHTING, ~LEVEL_TOTALINFIGHTING },
+	{ MITYPE_SCFLAGS,	0, ~(LEVEL_NOINFIGHTING|LEVEL_TOTALINFIGHTING)},
+	{ MITYPE_SCFLAGS,	LEVEL_TOTALINFIGHTING, ~LEVEL_NOINFIGHTING },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -2220,7 +2226,7 @@ void G_InitLevelLocals ()
 
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
 	NormalLight.Maps = realcolormaps;
-	//NormalLight.Color = PalEntry (255, 255, 255);
+
 	// [BB] Instead of just setting the color, we also have reset Desaturate and build the lights.
 	NormalLight.ChangeColor (PalEntry (255, 255, 255), 0);
 

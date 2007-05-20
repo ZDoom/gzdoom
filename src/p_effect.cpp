@@ -462,8 +462,9 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			else
 			{
 				// Only consider sound in 2D (for now, anyway)
+				// [BB] You have to devide by lengthsquared here, not multiply with it.
 				r = ((start.Y - FIXED2FLOAT(mo->y)) * (-dir.Y) -
-					(start.X - FIXED2FLOAT(mo->x)) * (dir.X)) * length * length;
+					(start.X - FIXED2FLOAT(mo->x)) * (dir.X)) / lengthsquared;
 
 				dirz = dir.Z;
 				dir.Z = 0;

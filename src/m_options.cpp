@@ -1225,12 +1225,13 @@ void M_OptInit (void)
 
 void M_InitVideoModesMenu ()
 {
-	int dummy1, dummy2;
-	size_t currval = 0;
-	char name[24];
+	//int dummy1, dummy2;
+	//size_t currval = 0;
+	//char name[24];
 
 	M_RefreshModesList();
 
+	/*
 	for (unsigned int i = 1; i < 32 && currval < countof(Depths); i++)
 	{
 		Video->StartModeIterator (i, screen->IsFullscreen());
@@ -1243,6 +1244,7 @@ void M_InitVideoModesMenu ()
 			currval++;
 		}
 	}
+	*/
 
 	//ModesItems[VM_DEPTHITEM].b.min = (float)currval;
 

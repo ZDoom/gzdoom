@@ -1,3 +1,10 @@
+May 20, 2007 (Changes by Graf Zahl)
+- Copied railgun sound fix from Skulltag.
+
+May 19, 2007 (Changes by Graf Zahl)
+- Made infighting a level flag. The old method still exists but the level flags
+  will take precedence if set.
+
 May 13, 2007 (Changes by Graf Zahl)
 - fixed: meleethreshold only has meaning when the attacking monster actually
   has a melee attack.

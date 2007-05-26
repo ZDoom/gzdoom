@@ -229,6 +229,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, PIERCEARMOR, AActor, flags5),
 	DEFINE_FLAG(MF5, NOBLOODDECALS, AActor, flags5),
 	DEFINE_FLAG(MF5, USESPECIAL, AActor, flags5),
+	DEFINE_FLAG(MF5, NOPAIN, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -1180,6 +1181,12 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 		// copy damage factors from parent
 		info->DamageFactors = new DmgFactors;
 		*info->DamageFactors = *parent->ActorInfo->DamageFactors;
+	}
+	if (parent->ActorInfo->PainChances != NULL)
+	{
+		// copy pain chances from parent
+		info->PainChances = new PainChanceList;
+		*info->PainChances = *parent->ActorInfo->PainChances;
 	}
 
 	// Check for "replaces"
@@ -2552,7 +2559,18 @@ static void ActorReactionTime (AActor *defaults, Baggage &bag)
 //==========================================================================
 static void ActorPainChance (AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
+	if (!SC_CheckNumber())
+	{
+		FName painType;
+		if (SC_Compare("Normal")) painType = NAME_None;
+		else painType=sc_String;
+		SC_MustGetToken(',');
+		SC_MustGetNumber();
+	
+		if (bag.Info->PainChances == NULL) bag.Info->PainChances=new PainChanceList;
+		(*bag.Info->PainChances)[painType] = (BYTE)sc_Number;
+		return;
+	}
 	defaults->PainChance=sc_Number;
 }
 

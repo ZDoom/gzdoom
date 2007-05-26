@@ -233,6 +233,7 @@ PClass *PClass::CreateDerivedClass (FName name, unsigned int size)
 		info->Replacee = NULL;
 		info->StateList = NULL;
 		info->DamageFactors = NULL;
+		info->PainChances = NULL;
 		m_RuntimeActors.Push (type);
 	}
 	return type;

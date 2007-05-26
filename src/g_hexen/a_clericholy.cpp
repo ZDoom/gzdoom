@@ -396,11 +396,15 @@ bool AHolySpirit::IsOkayToAttack (AActor *link)
 		(link->player && link != target))
 		&& !(link->flags2&MF2_DORMANT))
 	{
+		if (target != NULL && link->IsFriend(target))
+		{
+			return false;
+		}
 		if (!(link->flags&MF_SHOOTABLE))
 		{
 			return false;
 		}
-		if (multiplayer && !deathmatch && link->player && target->player)
+		if (multiplayer && !deathmatch && link->player && target != NULL && target->player)
 		{
 			return false;
 		}

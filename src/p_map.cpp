@@ -2782,6 +2782,8 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	angle_t srcangle = angle;
 	int srcpitch = pitch;
 	bool hitGhosts;
+	bool killPuff = false;
+	AActor *puff = NULL;
 
 	angle >>= ANGLETOFINESHIFT;
 	pitch = (angle_t)(pitch) >> ANGLETOFINESHIFT;
@@ -2827,7 +2829,6 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	else
 	{
 		fixed_t hitx = 0, hity = 0, hitz = 0;
-		AActor *puff = NULL;
 
 		if (trace.HitType != TRACE_HitActor)
 		{
@@ -2917,12 +2918,18 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 					flags |= DMG_NO_ARMOR;
 				}
 			
+				if (puff == NULL)
+				{ 
+					// Since the puff is the damage inflictor we need it here 
+					// regardless of whether it is displayed or not.
+					puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, true);
+					killPuff = true;
+				}
 				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, flags);
 			}
 		}
 		if (trace.CrossedWater)
 		{
-			bool killPuff = false;
 
 			if (puff == NULL)
 			{ // Spawn puff just to get a mass for the splash
@@ -2930,11 +2937,11 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				killPuff = true;
 			}
 			SpawnDeepSplash (t1, trace, puff, vx, vy, vz);
-			if (killPuff)
-			{
-				puff->Destroy();
-			}
 		}
+	}
+	if (killPuff && puff != NULL)
+	{
+		puff->Destroy();
 	}
 }
 

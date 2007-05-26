@@ -717,7 +717,10 @@ void A_SorcBallOrbit(AActor *ball)
 	actor = static_cast<ASorcBall *> (ball);
 
 	if (actor->target->health <= 0)
+	{
 		actor->SetState (actor->FindState(NAME_Pain));
+		return;
+	}
 
 	baseangle = (angle_t)parent->special1;
 	angle = baseangle + actor->AngleOffset;

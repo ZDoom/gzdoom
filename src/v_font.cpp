@@ -1907,36 +1907,48 @@ EColorRange V_ParseFontColor (const BYTE *&color_value, int normalcolor, int bol
 void V_InitFonts()
 {
 	V_InitFontColors ();
+	V_InitCustomFonts ();
 
 	// load the heads-up font
-	if (Wads.CheckNumForName ("FONTA_S") >= 0)
+	if (!(SmallFont = FFont::FindFont("SmallFont")))
 	{
-		SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+		if (Wads.CheckNumForName ("FONTA_S") >= 0)
+		{
+			SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+		}
+		else
+		{
+			SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+		}
 	}
-	else
+	if (!(SmallFont2=FFont::FindFont("SmallFont2")))
 	{
-		SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+		if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
+		{
+			SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+		}
+		else
+		{
+			SmallFont2 = SmallFont;
+		}
 	}
-	if (Wads.CheckNumForName ("STBFN033", ns_graphics) >= 0)
+	if (!(BigFont=FFont::FindFont("BigFont")))
 	{
-		SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+		if (gameinfo.gametype == GAME_Doom)
+		{
+			BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
+		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("SBIGFONT"));
+		}
+		else
+		{
+			BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+		}
 	}
-	else
+	if (!(ConFont=FFont::FindFont("ConsoleFont")))
 	{
-		SmallFont2 = SmallFont;
+		ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
 	}
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("SBIGFONT"));
-	}
-	else
-	{
-		BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1);
-	}
-	ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
-	V_InitCustomFonts ();
 }

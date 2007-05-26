@@ -377,6 +377,7 @@ enum
 #endif
 
 typedef TMap<FName, fixed_t> DmgFactors;
+typedef TMap<FName, BYTE> PainChanceList;
 
 struct FActorInfo
 {
@@ -408,6 +409,7 @@ struct FActorInfo
 	SWORD DoomEdNum;
 	FStateLabels * StateList;
 	DmgFactors *DamageFactors;
+	PainChanceList * PainChances;
 
 #if _MSC_VER
 	// A 0-terminated list of default properties

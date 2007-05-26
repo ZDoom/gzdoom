@@ -1,3 +1,22 @@
+May 26, 2007 (Changes by Graf Zahl)
+- Fixed: Resurrecting a player must set mo->special1 to 0 because it is used 
+  as a counter by the Hexen fighter's fist weapon.
+
+May 25, 2007 (Changes by Graf Zahl)
+- Fixed: The Wraithwerge's spirits shouldn't attack friends.
+- Fixed: The Heresiarch's balls must not adjust their z-position after the
+  Heresiarch dies.
+
+May 24, 2007 (Changes by Graf Zahl)
+- Added damage type specific pain chances and an MF5_NOPAIN flag that can be used
+  to suppress entering the pain state altogether.
+- Changed font initialization so that you can define replacements for the default
+  fonts in FONTDEFS.
+- Removed the 'add a bot' menu option since bots are beyond repair and therefore
+  mostly useless.
+- Fixed: Hitscan attacks must always spawn a puff so that it and its properties
+  can be used as damage inflictor.
+  
 May 20, 2007 (Changes by Graf Zahl)
 - Copied railgun sound fix from Skulltag.
 

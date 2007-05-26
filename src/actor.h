@@ -290,6 +290,7 @@ enum
 	MF5_PIERCEARMOR		= 0x00000800,	// Armor doesn't protect against damage from this actor
 	MF5_NOBLOODDECALS	= 0x00001000,	// Actor bleeds but doesn't spawn blood decals
 	MF5_USESPECIAL		= 0x00002000,	// Actor executes its special when being 'used'.
+	MF5_NOPAIN			= 0x00004000,	// If set the pain state won't be entered
 
 // --- mobj.renderflags ---
 

@@ -1141,7 +1141,19 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			return;
 		}
 	}
-	if ((pr_damagemobj() < target->PainChance) && !(target->flags & MF_SKULLFLY))
+	
+	PainChanceList * pc = target->GetClass()->ActorInfo->PainChances;
+	int painchance = target->PainChance;
+	if (pc != NULL)
+	{
+		BYTE * ppc = pc->CheckKey(mod);
+		if (ppc != NULL)
+		{
+			painchance = *ppc;
+		}
+	}
+	
+	if (!(target->flags5 & MF5_NOPAIN) && (pr_damagemobj() < painchance) && !(target->flags & MF_SKULLFLY))
 	{
 		if (inflictor && inflictor->IsKindOf (RUNTIME_CLASS(ALightning)))
 		{

@@ -1,4 +1,6 @@
 May 27, 2007 (Changes by Graf Zahl)
+- Fixed: Hirestex replacements for sprites didn't work properly due to some
+  incorrect calculations in R_ProjectSprite.
 - Fixed: The speed definition of PowerSpeed used PROP_SpeedFixed instead of
   PROP_SpeedLong.
 - Fixed: The Chainsaw's kickback was initialized to the default - not 0.

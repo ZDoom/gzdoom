@@ -1302,8 +1302,10 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	}
 
 	// [RH] Added scaling
-	gzt = fz + MulScale16(thing->scaleY, tex->TopOffset * tex->yScale);
-	gzb = fz + MulScale16(thing->scaleY, (tex->TopOffset - tex->GetHeight()) * tex->yScale);
+	int scaled_to = tex->GetScaledTopOffset();
+	int scaled_bo = scaled_to - tex->GetScaledHeight();
+	gzt = fz + thing->scaleY * scaled_to;
+	gzb = fz + thing->scaleY * scaled_bo;
 
 	// [RH] Reject sprites that are off the top or bottom of the screen
 	if (MulScale12 (globaluclip, tz) > viewz - gzb ||
@@ -1319,7 +1321,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	}
 
 	// calculate edges of the shape
-	const fixed_t thingxscalemul = MulScale16(thing->scaleX, tex->xScale);
+	const fixed_t thingxscalemul = DivScale16(thing->scaleX, tex->xScale);
 
 	tx -= (flip ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
 	x1 = centerx + MulScale32 (tx, xscale);
@@ -1335,7 +1337,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	if (x2 < WindowLeft || x2 <= x1)
 		return;
 
-	xscale = FixedMul(FixedMul(thing->scaleX, xscale), tex->xScale);
+	xscale = FixedDiv(FixedMul(thing->scaleX, xscale), tex->xScale);
 	iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 	x2--;
 
@@ -1378,20 +1380,21 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->heightsec = heightsec;
 	vis->sector = thing->Sector;
 
+	fixed_t yscale = DivScale16(thing->scaleY, tex->yScale);
 	vis->renderflags = thing->renderflags;
 	vis->RenderStyle = thing->RenderStyle;
 	vis->AlphaColor = thing->alphacolor;
 	vis->xscale = xscale;
-	vis->yscale = Scale (InvZtoScale, MulScale16(thing->scaleY, tex->yScale), tz)>>4;
+	vis->yscale = Scale (InvZtoScale, yscale, tz)>>4;
 	vis->idepth = (DWORD)DivScale32 (1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but
 	vis->cx = tx2;									// signed math makes it 13.19
 	vis->gx = fx;
 	vis->gy = fy;
 	vis->gz = gzb;		// [RH] use gzb, not thing->z
 	vis->gzt = gzt;		// killough 3/27/98
-	vis->floorclip = FixedDiv (thing->floorclip, MulScale16(thing->scaleY, tex->yScale));
+	vis->floorclip = FixedDiv (thing->floorclip, yscale);
 	vis->texturemid = (tex->TopOffset << FRACBITS) - 
-		FixedDiv (viewz-fz+thing->floorclip, MulScale16(thing->scaleY, tex->yScale));
+		FixedDiv (viewz-fz+thing->floorclip, yscale);
 	vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 	vis->x2 = x2 > WindowRight ? WindowRight : x2;
 	vis->Translation = thing->Translation;		// [RH] thing translation table

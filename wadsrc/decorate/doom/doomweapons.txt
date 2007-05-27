@@ -99,6 +99,7 @@ ACTOR Chainsaw : Weapon 2005
 {
 	Game Doom
 	SpawnID 32
+	Weapon.Kickback 0
 	Weapon.SelectionOrder 2200
 	Weapon.UpSound "weapons/sawup"
 	Weapon.ReadySound "weapons/sawidle"

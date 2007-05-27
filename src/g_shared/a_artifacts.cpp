@@ -1163,7 +1163,7 @@ void APlayerSpeedTrail::Tick ()
 // Speed Powerup -------------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerSpeed, Any, -1, 0)
-	PROP_SpeedFixed(3*FRACUNIT/2)
+	PROP_SpeedLong(3*FRACUNIT/2)
 	PROP_Powerup_EffectTics (SPEEDTICS)
 	PROP_Inventory_Icon ("SPBOOT0")
 END_DEFAULTS

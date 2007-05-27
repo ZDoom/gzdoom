@@ -158,6 +158,7 @@ std2:
 									{ RET(TK_NameConst); }
 
 		"..."						{ RET(TK_Ellipsis); }
+		">>>="						{ RET(TK_URShiftEq); }
 		">>="						{ RET(TK_RShiftEq); }
 		"<<="						{ RET(TK_LShiftEq); }
 		"+="						{ RET(TK_AddEq); }
@@ -168,6 +169,7 @@ std2:
 		"&="						{ RET(TK_AndEq); }
 		"^="						{ RET(TK_XorEq); }
 		"|="						{ RET(TK_OrEq); }
+		">>>"						{ RET(TK_URShift); }
 		">>"						{ RET(TK_RShift); }
 		"<<"						{ RET(TK_LShift); }
 		"++"						{ RET(TK_Incr); }

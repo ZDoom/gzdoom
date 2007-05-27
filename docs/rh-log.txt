@@ -1,3 +1,8 @@
+May 27, 2007 (Changes by Graf Zahl)
+- Fixed: The speed definition of PowerSpeed used PROP_SpeedFixed instead of
+  PROP_SpeedLong.
+- Fixed: The Chainsaw's kickback was initialized to the default - not 0.
+
 May 26, 2007 (Changes by Graf Zahl)
 - Fixed: Resurrecting a player must set mo->special1 to 0 because it is used 
   as a counter by the Hexen fighter's fist weapon.

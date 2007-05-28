@@ -45,7 +45,7 @@
 #include "r_data.h"
 #include "w_wad.h"
 #include "a_strifeglobal.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 
 void FActorInfo::BuildDefaults ()
 {

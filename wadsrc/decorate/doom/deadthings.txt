@@ -63,7 +63,7 @@ actor DeadShotgunGuy : ShotgunGuy 19
 	Spawn:
 		Goto Super::Death+4
 	}
-};
+}
 
 // Dead imp ----------------------------------------------------------------
 

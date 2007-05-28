@@ -73,8 +73,6 @@
 const PClass *QuestItemClasses[31];
 
 
-extern TArray<FActorInfo *> Decorations;
-
 // allow decal specifications in DECORATE. Decals are loaded after DECORATE so the names must be stored here.
 TArray<char*> DecalNames;
 // all state parameters
@@ -1169,7 +1167,6 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 	PClass * ti = parent->CreateDerivedClass (typeName, parent->Size);
 	FActorInfo * info = ti->ActorInfo;
 
-	Decorations.Push (info);
 	MakeStateDefines(parent->ActorInfo->StateList);
 
 	ResetBaggage (bag);
@@ -2150,7 +2147,7 @@ void ParseActorProperties (Baggage &bag)
 // Reads an actor definition
 //
 //==========================================================================
-void ProcessActor(void (*process)(FState *, int))
+void ProcessActor()
 {
 	FActorInfo * info=NULL;
 	AActor * defaults;
@@ -2169,8 +2166,8 @@ void ProcessActor(void (*process)(FState *, int))
 
 		ParseActorProperties (bag);
 		FinishStates (info, defaults, bag);
-		InstallStates(info, defaults);
-		process(info->OwnedStates, info->NumOwnedStates);
+		InstallStates (info, defaults);
+		ProcessStates (info->OwnedStates, info->NumOwnedStates);
 		if (bag.DropItemSet)
 		{
 			if (bag.DropItemList == NULL)
@@ -2252,7 +2249,7 @@ static void ActorConstDef (AActor *defaults, Baggage &bag)
 	// (Maybe there will be other types later.)
 	SC_MustGetToken(TK_Int);
 	SC_MustGetToken(TK_Identifier);
-	FName symname = sc_Name;
+	FName symname = sc_String;
 	SC_MustGetToken('=');
 	int expr = ParseExpression (false, bag.Info->Class);
 	SC_MustGetToken(';');
@@ -2272,6 +2269,46 @@ static void ActorConstDef (AActor *defaults, Baggage &bag)
 
 //==========================================================================
 //
+// ActorEnumDef
+//
+// Parses an enum definition.
+//
+//==========================================================================
+
+static void ActorEnumDef (AActor *defaults, Baggage &bag)
+{
+	int currvalue = 0;
+
+	SC_MustGetToken('{');
+	while (!SC_CheckToken('}'))
+	{
+		SC_MustGetToken(TK_Identifier);
+		FName symname = sc_String;
+		if (SC_CheckToken('='))
+		{
+			int expr = ParseExpression(false, bag.Info->Class);
+			currvalue = EvalExpressionI (expr, NULL, bag.Info->Class);
+		}
+		PSymbolConst *sym = new PSymbolConst;
+		sym->SymbolName = symname;
+		sym->SymbolType = SYM_Const;
+		sym->Value = currvalue;
+		if (bag.Info->Class->Symbols.AddSymbol (sym) == NULL)
+		{
+			delete sym;
+			SC_ScriptError ("'%s' is already defined in class '%s'.",
+				symname.GetChars(), bag.Info->Class->TypeName.GetChars());
+		}
+		// This allows a comma after the last value but doesn't enforce it.
+		if (SC_CheckToken('}')) break;
+		SC_MustGetToken(',');
+		currvalue++;
+	}
+	SC_MustGetToken(';');
+}
+
+//==========================================================================
+//
 // ParseGlobalConst
 //
 // Parses a constant outside an actor definition
@@ -2285,6 +2322,14 @@ void ParseGlobalConst()
 
 	bag.Info = RUNTIME_CLASS(AActor)->ActorInfo;
 	ActorConstDef(GetDefault<AActor>(), bag);
+}
+
+void ParseGlobalEnum()
+{
+	Baggage bag;
+
+	bag.Info = RUNTIME_CLASS(AActor)->ActorInfo;
+	ActorEnumDef(GetDefault<AActor>(), bag);
 }
 
 //==========================================================================
@@ -2309,7 +2354,7 @@ static void ActorActionDef (AActor *defaults, Baggage &bag)
 
 	SC_MustGetToken(TK_Native);
 	SC_MustGetToken(TK_Identifier);
-	funcname = sc_Name;
+	funcname = sc_String;
 	afd = FindFunction(sc_String);
 	if (afd == NULL)
 	{
@@ -4177,6 +4222,7 @@ static const ActorProps props[] =
 	{ "disintegrate",				ActorDisintegrateState,		RUNTIME_CLASS(AActor) },
 	{ "donthurtshooter",			ActorDontHurtShooter,		RUNTIME_CLASS(AActor) },
 	{ "dropitem",					ActorDropItem,				RUNTIME_CLASS(AActor) },
+	{ "enum",						ActorEnumDef,				RUNTIME_CLASS(AActor) },
 	{ "explosiondamage",			ActorExplosionDamage,		RUNTIME_CLASS(AActor) },
 	{ "explosionradius",			ActorExplosionRadius,		RUNTIME_CLASS(AActor) },
 	{ "fastspeed",					ActorFastSpeed,				RUNTIME_CLASS(AActor) },
@@ -4449,10 +4495,10 @@ void ParseClass()
 	FName supername;
 
 	SC_MustGetToken(TK_Identifier);	// class name
-	classname = sc_Name;
+	classname = sc_String;
 	SC_MustGetToken(TK_Extends);	// because I'm not supporting Object
 	SC_MustGetToken(TK_Identifier);	// superclass name
-	supername = sc_Name;
+	supername = sc_String;
 	SC_MustGetToken(TK_Native);		// use actor definitions for your own stuff
 	SC_MustGetToken('{');
 
@@ -4478,190 +4524,15 @@ void ParseClass()
 		{
 			ActorConstDef (0, bag);
 		}
+		else if (sc_TokenType == TK_Enum)
+		{
+			ActorEnumDef (0, bag);
+		}
 		else
 		{
 			FString tokname = SC_TokenName(sc_TokenType, sc_String);
-			SC_ScriptError ("Expected 'action' or 'const' but got %s", tokname.GetChars());
+			SC_ScriptError ("Expected 'action', 'const' or 'enum' but got %s", tokname.GetChars());
 		}
 		SC_MustGetAnyToken();
 	}
-}
-
-
-bool ParseFunctionCall(Baggage &bag, FState & state)
-{
-	// Make the action name lowercase to satisfy the gperf hashers
-	strlwr (sc_String);
-	FString funcname = sc_String;
-
-	int minreq=0;
-	memset(&state, 0, sizeof(state));
-	if (DoSpecialFunctions(state, false, &minreq, bag))
-	{
-		return true;
-	}
-
-	PSymbol *sym = bag.Info->Class->Symbols.FindSymbol (FName(sc_String, true), true);
-	if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
-	{
-		PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
-		state.Action = afd->Function;
-		if (!afd->Arguments.IsEmpty())
-		{
-			const char *params = afd->Arguments.GetChars();
-			int numparams = (int)afd->Arguments.Len();
-	
-			int v;
-
-			if (!islower(*params))
-			{
-				SC_MustGetToken('(');
-			}
-			else
-			{
-				if (!SC_CheckToken('(')) 
-				{
-					return true;
-				}
-			}
-			
-			int paramindex = PrepareStateParameters(&state, numparams);
-			int paramstart = paramindex;
-			bool varargs = params[numparams - 1] == '+';
-
-			if (varargs)
-			{
-				StateParameters[paramindex++] = 0;
-			}
-
-			while (*params)
-			{
-				switch(*params)
-				{
-				case 'I':
-				case 'i':		// Integer
-					SC_MustGetNumber();
-					v=sc_Number;
-					break;
-
-				case 'F':
-				case 'f':		// Fixed point
-					SC_MustGetFloat();
-					v=fixed_t(sc_Float*FRACUNIT);
-					break;
-
-
-				case 'S':
-				case 's':		// Sound name
-					SC_MustGetString();
-					v=S_FindSound(sc_String);
-					break;
-
-				case 'M':
-				case 'm':		// Actor name
-				case 'T':
-				case 't':		// String
-					SC_MustGetString();
-					v = (int)(sc_String[0] ? FName(sc_String) : NAME_None);
-					break;
-
-				case 'L':
-				case 'l':		// Jump label
-
-					SC_ScriptError("You cannot use state jump calls in action functions (%s tries to call %s)\n",
-						funcname.GetChars(), afd->SymbolName.GetChars());
-					break;
-
-				case 'C':
-				case 'c':		// Color
-					SC_MustGetString ();
-					if (SC_Compare("none"))
-					{
-						v = -1;
-					}
-					else
-					{
-						int c = V_GetColor (NULL, sc_String);
-						// 0 needs to be the default so we have to mark the color.
-						v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
-					}
-					break;
-
-				case 'X':
-				case 'x':
-					v = ParseExpression (false, bag.Info->Class);
-					break;
-
-				case 'Y':
-				case 'y':
-					v = ParseExpression (true, bag.Info->Class);
-					break;
-
-				default:
-					assert(false);
-					v = -1;
-					break;
-				}
-				StateParameters[paramindex++] = v;
-				params++;
-				if (varargs)
-				{
-					StateParameters[paramstart]++;
-				}
-				if (*params)
-				{
-					if (*params == '+')
-					{
-						if (SC_CheckString(")"))
-						{
-							return true;
-						}
-						params--;
-						v = 0;
-						StateParameters.Push(v);
-					}
-					else if ((islower(*params) || *params=='!') && SC_CheckString(")"))
-					{
-						return true;
-					}
-					SC_MustGetStringName (",");
-				}
-			}
-			SC_MustGetStringName(")");
-		}
-		else 
-		{
-			SC_MustGetString();
-			if (SC_Compare("("))
-			{
-				SC_ScriptError("You cannot pass parameters to '%s'\n",funcname.GetChars());
-			}
-			SC_UnGet();
-		}
-		return true;
-	}
-	return false;
-}
-
-void ParseActionFunction()
-{
-	FState state;
-	Baggage bag;
-	bag.Info=RUNTIME_CLASS(AActor)->ActorInfo;
-
-	// for now only void functions with no parameters
-	SC_MustGetToken(TK_Void);
-	SC_MustGetString();
-	FName funcname = sc_String;
-	SC_MustGetToken('(');
-	SC_MustGetToken(')');
-	SC_MustGetToken('{');
-	// All this can do for the moment is parse a list of simple function calls, nothing more
-	while (SC_MustGetString(), sc_TokenType != '}');
-	{
-		ParseFunctionCall(bag, state);
-		SC_MustGetToken(';');
-		// Todo: Take the state's content and make a list of it.
-	}
-
 }

@@ -63,7 +63,7 @@
 #include "r_draw.h"
 #include "v_palette.h"
 #include "a_sharedglobal.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 #include "vectors.h"
 #include "dobject.h"
 

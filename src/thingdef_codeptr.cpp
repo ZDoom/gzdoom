@@ -63,7 +63,7 @@
 #include "vectors.h"
 #include "a_sharedglobal.h"
 #include "a_doomglobal.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 #include "v_video.h"
 
 

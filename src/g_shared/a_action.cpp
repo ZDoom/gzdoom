@@ -1,5 +1,5 @@
 #include "actor.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 #include "p_conversation.h"
 #include "p_lnspec.h"
 #include "a_action.h"

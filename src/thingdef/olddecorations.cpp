@@ -38,7 +38,6 @@
 #include "info.h"
 #include "sc_man.h"
 #include "tarray.h"
-#include "w_wad.h"
 #include "templates.h"
 #include "r_defs.h"
 #include "r_draw.h"
@@ -53,17 +52,7 @@
 #include "thingdef.h"
 #include "vectors.h"
 
-// MACROS ------------------------------------------------------------------
-
 // TYPES -------------------------------------------------------------------
-
-enum EDefinitionType
-{
-	DEF_Decoration,
-	DEF_BreakableDecoration,
-	DEF_Pickup,
-	DEF_Projectile,
-};
 
 struct FExtraInfo
 {
@@ -111,14 +100,6 @@ IMPLEMENT_STATELESS_ACTOR (AFakeInventory, Any, -1, 0)
 	PROP_Flags (MF_SPECIAL)
 END_DEFAULTS
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-void ProcessActor(void (*process)(FState *, int));
-void ParseClass();
-void ParseGlobalConst();
-void FinishThingdef();
-void InitDecorateTranslations();
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void A_ScreamAndUnblock (AActor *);
@@ -127,16 +108,9 @@ void A_ActiveSound (AActor *);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void ParseDecorate (void (*process)(FState *, int));
 static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 	TArray<FState> &states, FExtraInfo &extra, EDefinitionType def);
 static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-TArray<FActorInfo *> Decorations;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -248,332 +222,255 @@ static const char *FlagNames3[] =
 
 //==========================================================================
 //
-// LoadDecorations
+// ParseOldDecoration
 //
-// Called from FActor::StaticInit()
-//
-//==========================================================================
-
-void LoadDecorations (void (*process)(FState *, int))
-{
-	int lastlump, lump;
-
-	InitDecorateTranslations();
-	lastlump = 0;
-	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
-	{
-		SC_OpenLumpNum (lump, Wads.GetLumpFullName(lump));
-		ParseDecorate (process);
-		SC_Close ();
-	}
-	FinishThingdef();
-}
-
-//==========================================================================
-//
-// ParseDecorate
-//
-// Parses a single DECORATE lump
+// Reads an old style decoration object
 //
 //==========================================================================
 
-static void ParseDecorate (void (*process)(FState *, int))
+void ParseOldDecoration(EDefinitionType def)
 {
 	TArray<FState> states;
 	FExtraInfo extra;
 	PClass *type;
 	PClass *parent;
-	EDefinitionType def;
 	FActorInfo *info;
 	FName typeName;
-	int recursion=0;
 
-	// Get actor class name.
-	while (true)
+	if (def == DEF_Pickup) parent = RUNTIME_CLASS(AFakeInventory);
+	else parent = RUNTIME_CLASS(AActor);
+
+	SC_MustGetString();
+	typeName = FName(sc_String);
+	type = parent->CreateDerivedClass (typeName, parent->Size);
+	info = type->ActorInfo;
+	info->GameFilter = 0x80;
+	MakeStateDefines(parent->ActorInfo->StateList);
+
+	SC_MustGetString ();
+	while (!SC_Compare ("{"))
 	{
-		if (!SC_GetString ())
+		if (SC_Compare ("Doom"))
 		{
-			if (recursion==0) return;
-			SC_Close();
-			SC_RestoreScriptState();
-			recursion--;
-			continue;
+			info->GameFilter |= GAME_Doom;
 		}
-		if (SC_Compare ("#include"))
+		else if (SC_Compare ("Heretic"))
 		{
-			int lump;
-
-			SC_MustGetString();
-			// This is not using SC_Open because it can print a more useful error message when done here
-			lump = Wads.CheckNumForFullName(sc_String);
-			if (lump==-1) lump = Wads.CheckNumForName(sc_String);
-			if (lump==-1) SC_ScriptError("Lump '%s' not found", sc_String);
-			SC_SaveScriptState();
-			SC_OpenLumpNum(lump, sc_String);
-			recursion++;
-			continue;
+			info->GameFilter |= GAME_Heretic;
 		}
-		if (SC_Compare ("Actor"))
+		else if (SC_Compare ("Hexen"))
 		{
-			ProcessActor (process);
-			continue;
+			info->GameFilter |= GAME_Hexen;
 		}
-		if (SC_Compare ("Pickup"))
+		else if (SC_Compare ("Raven"))
 		{
-			parent = RUNTIME_CLASS(AFakeInventory);
-			def = DEF_Pickup;
-			SC_MustGetString ();
+			info->GameFilter |= GAME_Raven;
 		}
-		else if (SC_Compare ("Breakable"))
+		else if (SC_Compare ("Strife"))
 		{
-			parent = RUNTIME_CLASS(AActor);
-			def = DEF_BreakableDecoration;
-			SC_MustGetString ();
+			info->GameFilter |= GAME_Strife;
 		}
-		else if (SC_Compare ("Projectile"))
-		{
-			parent = RUNTIME_CLASS(AActor);
-			def = DEF_Projectile;
-			SC_MustGetString ();
-		}
-		else if (SC_Compare ("class"))
-		{
-			ParseClass();
-			continue;
-		}
-		else if (SC_Compare ("Const"))
-		{
-			ParseGlobalConst();
-			continue;
-		}
-		else
-		{
-			parent = RUNTIME_CLASS(AActor);
-			def = DEF_Decoration;
-		}
-
-		typeName = FName(sc_String);
-		type = parent->CreateDerivedClass (typeName, parent->Size);
-		info = type->ActorInfo;
-		info->GameFilter = 0x80;
-		Decorations.Push (info);
-		MakeStateDefines(parent->ActorInfo->StateList);
-
-		SC_MustGetString ();
-		while (!SC_Compare ("{"))
-		{
-			if (SC_Compare ("Doom"))
-			{
-				info->GameFilter |= GAME_Doom;
-			}
-			else if (SC_Compare ("Heretic"))
-			{
-				info->GameFilter |= GAME_Heretic;
-			}
-			else if (SC_Compare ("Hexen"))
-			{
-				info->GameFilter |= GAME_Hexen;
-			}
-			else if (SC_Compare ("Raven"))
-			{
-				info->GameFilter |= GAME_Raven;
-			}
-			else if (SC_Compare ("Strife"))
-			{
-				info->GameFilter |= GAME_Strife;
-			}
-			else if (SC_Compare ("Any"))
-			{
-				info->GameFilter = GAME_Any;
-			}
-			else
-			{
-				SC_ScriptError ("Unknown game type %s", sc_String);
-			}
-			SC_MustGetString ();
-		}
-		if (info->GameFilter == 0x80)
+		else if (SC_Compare ("Any"))
 		{
 			info->GameFilter = GAME_Any;
 		}
 		else
 		{
-			info->GameFilter &= ~0x80;
+			if (def != DEF_Decoration || info->GameFilter != 0x80) 
+			{
+				SC_ScriptError ("Unknown game type %s in %s", sc_String, typeName.GetChars());
+			}
+			else 
+			{
+				// If this is a regular decoration (without preceding keyword) and no game 
+				// filters defined this is more likely a general syntax error so output a 
+				// more meaningful message.
+				SC_ScriptError ("Syntax error: Unknown identifier '%s'", typeName.GetChars());
+			}
 		}
+		SC_MustGetString ();
+	}
+	if (info->GameFilter == 0x80)
+	{
+		info->GameFilter = GAME_Any;
+	}
+	else
+	{
+		info->GameFilter &= ~0x80;
+	}
 
-		states.Clear ();
-		memset (&extra, 0, sizeof(extra));
-		ParseInsideDecoration (info, (AActor *)(type->Defaults), states, extra, def);
+	states.Clear ();
+	memset (&extra, 0, sizeof(extra));
+	ParseInsideDecoration (info, (AActor *)(type->Defaults), states, extra, def);
 
-		info->NumOwnedStates = states.Size();
-		if (info->NumOwnedStates == 0)
-		{
-			SC_ScriptError ("%s does not define any animation frames", typeName.GetChars() );
-		}
-		else if (extra.SpawnEnd == 0)
-		{
-			SC_ScriptError ("%s does not have a Frames definition", typeName.GetChars() );
-		}
-		else if (def == DEF_BreakableDecoration && extra.DeathEnd == 0)
-		{
-			SC_ScriptError ("%s does not have a DeathFrames definition", typeName.GetChars() );
-		}
-		else if (extra.IceDeathEnd != 0 && extra.bGenericIceDeath)
-		{
-			SC_ScriptError ("You cannot use IceDeathFrames and GenericIceDeath together");
-		}
+	info->NumOwnedStates = states.Size();
+	if (info->NumOwnedStates == 0)
+	{
+		SC_ScriptError ("%s does not define any animation frames", typeName.GetChars() );
+	}
+	else if (extra.SpawnEnd == 0)
+	{
+		SC_ScriptError ("%s does not have a Frames definition", typeName.GetChars() );
+	}
+	else if (def == DEF_BreakableDecoration && extra.DeathEnd == 0)
+	{
+		SC_ScriptError ("%s does not have a DeathFrames definition", typeName.GetChars() );
+	}
+	else if (extra.IceDeathEnd != 0 && extra.bGenericIceDeath)
+	{
+		SC_ScriptError ("You cannot use IceDeathFrames and GenericIceDeath together");
+	}
 
-		if (extra.IceDeathEnd != 0)
-		{
-			// Make a copy of the final frozen frame for A_FreezeDeathChunks
-			FState icecopy = states[extra.IceDeathEnd-1];
-			states.Push (icecopy);
-			info->NumOwnedStates += 1;
-		}
+	if (extra.IceDeathEnd != 0)
+	{
+		// Make a copy of the final frozen frame for A_FreezeDeathChunks
+		FState icecopy = states[extra.IceDeathEnd-1];
+		states.Push (icecopy);
+		info->NumOwnedStates += 1;
+	}
 
-		info->OwnedStates = new FState[info->NumOwnedStates];
-		memcpy (info->OwnedStates, &states[0], info->NumOwnedStates * sizeof(info->OwnedStates[0]));
-		if (info->NumOwnedStates == 1)
-		{
-			info->OwnedStates->Tics = 0;
-			info->OwnedStates->Misc1 = 0;
-			info->OwnedStates->Frame &= ~SF_BIGTIC;
-		}
-		else
-		{
-			size_t i;
+	info->OwnedStates = new FState[info->NumOwnedStates];
+	memcpy (info->OwnedStates, &states[0], info->NumOwnedStates * sizeof(info->OwnedStates[0]));
+	if (info->NumOwnedStates == 1)
+	{
+		info->OwnedStates->Tics = 0;
+		info->OwnedStates->Misc1 = 0;
+		info->OwnedStates->Frame &= ~SF_BIGTIC;
+	}
+	else
+	{
+		size_t i;
 
-			// Spawn states loop endlessly
-			for (i = extra.SpawnStart; i < extra.SpawnEnd-1; ++i)
+		// Spawn states loop endlessly
+		for (i = extra.SpawnStart; i < extra.SpawnEnd-1; ++i)
+		{
+			info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+		}
+		info->OwnedStates[i].NextState = &info->OwnedStates[extra.SpawnStart];
+
+		// Death states are one-shot and freeze on the final state
+		if (extra.DeathEnd != 0)
+		{
+			for (i = extra.DeathStart; i < extra.DeathEnd-1; ++i)
 			{
 				info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
 			}
-			info->OwnedStates[i].NextState = &info->OwnedStates[extra.SpawnStart];
-
-			// Death states are one-shot and freeze on the final state
-			if (extra.DeathEnd != 0)
+			if (extra.bDiesAway || def == DEF_Projectile)
 			{
-				for (i = extra.DeathStart; i < extra.DeathEnd-1; ++i)
-				{
-					info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
-				}
-				if (extra.bDiesAway || def == DEF_Projectile)
-				{
-					info->OwnedStates[i].NextState = NULL;
-				}
-				else
-				{
-					info->OwnedStates[i].Tics = 0;
-					info->OwnedStates[i].Misc1 = 0;
-					info->OwnedStates[i].Frame &= ~SF_BIGTIC;
-				}
-
-				if (def == DEF_Projectile)
-				{
-					if (extra.bExplosive)
-					{
-						info->OwnedStates[extra.DeathStart].Action = A_ExplodeParms;
-					}
-				}
-				else
-				{
-					// The first frame plays the death sound and
-					// the second frame makes it nonsolid.
-					info->OwnedStates[extra.DeathStart].Action= A_Scream;
-					if (extra.bSolidOnDeath)
-					{
-					}
-					else if (extra.DeathStart + 1 < extra.DeathEnd)
-					{
-						info->OwnedStates[extra.DeathStart+1].Action = A_NoBlocking;
-					}
-					else
-					{
-						info->OwnedStates[extra.DeathStart].Action = A_ScreamAndUnblock;
-					}
-
-					if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(type->Defaults))->height;
-					info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, extra.DeathHeight);
-				}
-				AddState("Death", &info->OwnedStates[extra.DeathStart]);
+				info->OwnedStates[i].NextState = NULL;
+			}
+			else
+			{
+				info->OwnedStates[i].Tics = 0;
+				info->OwnedStates[i].Misc1 = 0;
+				info->OwnedStates[i].Frame &= ~SF_BIGTIC;
 			}
 
-			// Burn states are the same as death states, except they can optionally terminate
-			if (extra.FireDeathEnd != 0)
+			if (def == DEF_Projectile)
 			{
-				for (i = extra.FireDeathStart; i < extra.FireDeathEnd-1; ++i)
+				if (extra.bExplosive)
 				{
-					info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+					info->OwnedStates[extra.DeathStart].Action = A_ExplodeParms;
 				}
-				if (extra.bBurnAway)
-				{
-					info->OwnedStates[i].NextState = NULL;
-				}
-				else
-				{
-					info->OwnedStates[i].Tics = 0;
-					info->OwnedStates[i].Misc1 = 0;
-					info->OwnedStates[i].Frame &= ~SF_BIGTIC;
-				}
-
-				// The first frame plays the burn sound and
+			}
+			else
+			{
+				// The first frame plays the death sound and
 				// the second frame makes it nonsolid.
-				info->OwnedStates[extra.FireDeathStart].Action = A_ActiveSound;
-				if (extra.bSolidOnBurn)
+				info->OwnedStates[extra.DeathStart].Action= A_Scream;
+				if (extra.bSolidOnDeath)
 				{
 				}
-				else if (extra.FireDeathStart + 1 < extra.FireDeathEnd)
+				else if (extra.DeathStart + 1 < extra.DeathEnd)
 				{
-					info->OwnedStates[extra.FireDeathStart+1].Action = A_NoBlocking;
+					info->OwnedStates[extra.DeathStart+1].Action = A_NoBlocking;
 				}
 				else
 				{
-					info->OwnedStates[extra.FireDeathStart].Action = A_ActiveAndUnblock;
+					info->OwnedStates[extra.DeathStart].Action = A_ScreamAndUnblock;
 				}
 
-				if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
-				type->Meta.SetMetaFixed (AMETA_BurnHeight, extra.BurnHeight);
-
-				AddState("Burn", &info->OwnedStates[extra.FireDeathStart]);
+				if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(type->Defaults))->height;
+				info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, extra.DeathHeight);
 			}
-
-			// Ice states are similar to burn and death, except their final frame enters
-			// a loop that eventually causes them to bust to pieces.
-			if (extra.IceDeathEnd != 0)
-			{
-				for (i = extra.IceDeathStart; i < extra.IceDeathEnd-1; ++i)
-				{
-					info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
-				}
-				info->OwnedStates[i].NextState = &info->OwnedStates[info->NumOwnedStates-1];
-				info->OwnedStates[i].Tics = 6;
-				info->OwnedStates[i].Misc1 = 0;
-				info->OwnedStates[i].Action = A_FreezeDeath;
-
-				i = info->NumOwnedStates - 1;
-				info->OwnedStates[i].NextState = &info->OwnedStates[i];
-				info->OwnedStates[i].Tics = 2;
-				info->OwnedStates[i].Misc1 = 0;
-				info->OwnedStates[i].Action = A_FreezeDeathChunks;
-				AddState("Ice", &info->OwnedStates[extra.IceDeathStart]);
-			}
-			else if (extra.bGenericIceDeath)
-			{
-				AddState("Ice", &AActor::States[AActor::S_GENERICFREEZEDEATH]);
-			}
+			AddState("Death", &info->OwnedStates[extra.DeathStart]);
 		}
-		if (def == DEF_BreakableDecoration)
+
+		// Burn states are the same as death states, except they can optionally terminate
+		if (extra.FireDeathEnd != 0)
 		{
-			((AActor *)(type->Defaults))->flags |= MF_SHOOTABLE;
+			for (i = extra.FireDeathStart; i < extra.FireDeathEnd-1; ++i)
+			{
+				info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+			}
+			if (extra.bBurnAway)
+			{
+				info->OwnedStates[i].NextState = NULL;
+			}
+			else
+			{
+				info->OwnedStates[i].Tics = 0;
+				info->OwnedStates[i].Misc1 = 0;
+				info->OwnedStates[i].Frame &= ~SF_BIGTIC;
+			}
+
+			// The first frame plays the burn sound and
+			// the second frame makes it nonsolid.
+			info->OwnedStates[extra.FireDeathStart].Action = A_ActiveSound;
+			if (extra.bSolidOnBurn)
+			{
+			}
+			else if (extra.FireDeathStart + 1 < extra.FireDeathEnd)
+			{
+				info->OwnedStates[extra.FireDeathStart+1].Action = A_NoBlocking;
+			}
+			else
+			{
+				info->OwnedStates[extra.FireDeathStart].Action = A_ActiveAndUnblock;
+			}
+
+			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
+			type->Meta.SetMetaFixed (AMETA_BurnHeight, extra.BurnHeight);
+
+			AddState("Burn", &info->OwnedStates[extra.FireDeathStart]);
 		}
-		if (def == DEF_Projectile)
+
+		// Ice states are similar to burn and death, except their final frame enters
+		// a loop that eventually causes them to bust to pieces.
+		if (extra.IceDeathEnd != 0)
 		{
-			((AActor *)(type->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
+			for (i = extra.IceDeathStart; i < extra.IceDeathEnd-1; ++i)
+			{
+				info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+			}
+			info->OwnedStates[i].NextState = &info->OwnedStates[info->NumOwnedStates-1];
+			info->OwnedStates[i].Tics = 6;
+			info->OwnedStates[i].Misc1 = 0;
+			info->OwnedStates[i].Action = A_FreezeDeath;
+
+			i = info->NumOwnedStates - 1;
+			info->OwnedStates[i].NextState = &info->OwnedStates[i];
+			info->OwnedStates[i].Tics = 2;
+			info->OwnedStates[i].Misc1 = 0;
+			info->OwnedStates[i].Action = A_FreezeDeathChunks;
+			AddState("Ice", &info->OwnedStates[extra.IceDeathStart]);
 		}
-		AddState("Spawn", &info->OwnedStates[extra.SpawnStart]);
-		InstallStates(info, ((AActor *)(type->Defaults)));
-		process (info->OwnedStates, info->NumOwnedStates);
+		else if (extra.bGenericIceDeath)
+		{
+			AddState("Ice", &AActor::States[AActor::S_GENERICFREEZEDEATH]);
+		}
 	}
+	if (def == DEF_BreakableDecoration)
+	{
+		((AActor *)(type->Defaults))->flags |= MF_SHOOTABLE;
+	}
+	if (def == DEF_Projectile)
+	{
+		((AActor *)(type->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
+	}
+	AddState("Spawn", &info->OwnedStates[extra.SpawnStart]);
+	InstallStates (info, ((AActor *)(type->Defaults)));
+	ProcessStates (info->OwnedStates, info->NumOwnedStates);
 }
 
 //==========================================================================

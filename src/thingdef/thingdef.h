@@ -71,5 +71,15 @@ enum
 int FindLineSpecialEx (const char *string, int *minargs, int *maxargs);
 
 
+// Types of old style decorations
+enum EDefinitionType
+{
+	DEF_Decoration,
+	DEF_BreakableDecoration,
+	DEF_Pickup,
+	DEF_Projectile,
+};
+
+
 
 #endif

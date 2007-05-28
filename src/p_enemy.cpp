@@ -43,7 +43,7 @@
 #include "a_sharedglobal.h"
 #include "a_doomglobal.h"
 #include "a_action.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 
 #include "gi.h"
 

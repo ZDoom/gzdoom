@@ -145,6 +145,10 @@ enum
 	TK_Stop,
 	TK_Eval,
 	TK_EvalNot,
+	TK_Pickup,
+	TK_Breakable,
+	TK_Projectile,
+	TK_Include,
 
 	TK_LastToken
 };

@@ -1193,7 +1193,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	if (thing == NULL ||
 		(thing->renderflags & RF_INVISIBLE) ||
 		thing->RenderStyle == STYLE_None ||
-		(thing->RenderStyle >= STYLE_Translucent && thing->alpha <= 0))
+ 		(thing->RenderStyle >= STYLE_Translucent && thing->alpha <= 0))
 	{
 		return;
 	}

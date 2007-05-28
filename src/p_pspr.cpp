@@ -26,7 +26,7 @@
 #include "p_effect.h"
 #include "a_doomglobal.h"
 #include "templates.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 
 // MACROS ------------------------------------------------------------------
 

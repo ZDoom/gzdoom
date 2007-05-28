@@ -11,7 +11,7 @@
 #include "p_effect.h"
 #include "gi.h"
 #include "templates.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_punch ("Punch");
 static FRandom pr_saw ("Saw");

@@ -143,6 +143,12 @@ std2:
 		'evalnot'					{ RET(TK_EvalNot); }
 		'action'					{ RET(TK_Action); }
 
+		/* other DECORATE top level keywords */
+		'#include'					{ RET(TK_Include); }
+		'pickup'					{ RET(TK_Pickup); }
+		'breakable'					{ RET(TK_Breakable); }
+		'projectile'				{ RET(TK_Projectile); }
+
 		L (L|D)*					{ RET(TK_Identifier); }
 
 		("0" [xX] H+ IS?) | ("0" D+ IS?) | (D+ IS?)

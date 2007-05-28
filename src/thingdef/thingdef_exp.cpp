@@ -696,7 +696,7 @@ static ExpData *ParseExpressionA (const PClass *cls)
 		}
 		SC_MustGetToken('.');
 		SC_MustGetToken(TK_Identifier);
-		PSymbol *sym = cls->Symbols.FindSymbol (sc_Name, true);
+		PSymbol *sym = cls->Symbols.FindSymbol (sc_String, true);
 		if (sym != NULL && sym->SymbolType == SYM_Const)
 		{
 			ExpData *data = new ExpData;
@@ -713,7 +713,7 @@ static ExpData *ParseExpressionA (const PClass *cls)
 	}
 	else if (SC_CheckToken(TK_Identifier))
 	{
-		switch (sc_Name)
+		switch (FName(sc_String))
 		{
 		case NAME_Random:
 		{
@@ -842,7 +842,7 @@ static ExpData *ParseExpressionA (const PClass *cls)
 			// Check if this is a constant
 			if (cls != NULL)
 			{
-				PSymbol *sym = cls->Symbols.FindSymbol (sc_Name, true);
+				PSymbol *sym = cls->Symbols.FindSymbol (sc_String, true);
 				if (sym != NULL && sym->SymbolType == SYM_Const)
 				{
 					ExpData *data = new ExpData;
@@ -855,9 +855,10 @@ static ExpData *ParseExpressionA (const PClass *cls)
 
 			// Check if it's a variable we understand
 			int varid = -1;
+			FName vname = sc_String;
 			for (size_t i = 0; i < countof(ExpVars); i++)
 			{
-				if (sc_Name == ExpVars[i].name)
+				if (vname == ExpVars[i].name)
 				{
 					varid = (int)i;
 					break;

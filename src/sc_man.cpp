@@ -390,7 +390,7 @@ bool SC_GetToken ()
 {
 	if (SC_ScanString (true))
 	{
-		if (sc_TokenType == TK_Identifier || sc_TokenType == TK_NameConst)
+		if (sc_TokenType == TK_NameConst)
 		{
 			sc_Name = FName(sc_String);
 		}
@@ -854,6 +854,10 @@ FString SC_TokenName (int token, const char *string)
 		"'stop'",
 		"'eval'",
 		"'evalnot'",
+		"'pickup'",
+		"'breakable'",
+		"'projectile'",
+		"'#include'",
 	};
 
 	FString work;

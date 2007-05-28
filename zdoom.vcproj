@@ -4283,15 +4283,15 @@
 					>
 				</File>
 				<File
-					RelativePath=".\src\decorations.cpp"
+					RelativePath=".\src\thingdef\olddecorations.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\src\thingdef.cpp"
+					RelativePath=".\src\thingdef\thingdef.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\src\thingdef.h"
+					RelativePath=".\src\thingdef\thingdef.h"
 					>
 				</File>
 				<File
@@ -4299,7 +4299,15 @@
 					>
 				</File>
 				<File
-					RelativePath=".\src\thingdef_exp.cpp"
+					RelativePath=".\src\thingdef\thingdef_exp.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\thingdef\thingdef_main.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\thingdef\thingdef_specials.h"
 					>
 				</File>
 			</Filter>

@@ -1,3 +1,17 @@
+May 28, 2007 (Changes by Graf Zahl)
+- Fixed: deadthings.txt contained a superfluous ';' which created parsing errors
+  with my changed code.
+- Cleaned up DECORATE parser a little - moved the old style parsing code into its 
+  own file and rearranged a few things.
+- Made ProcessStates non-static so that it doesn't need to be passed as an argument
+  to all functions in the DECORATE parser.
+- Moved DECORATE parser files into their own subdirectory.
+- Optimization: SC_GetToken no longer sets sc_name for identifiers. In most cases
+  this creates needless overhead by adding a potentially unneeded name to the name
+  table and looking up the name. In almost all cases where a name is needed it's as
+  easy to assign sc_String to the name variable.
+- Added enum definitions to DECORATE.
+
 May 27, 2007 (Changes by Graf Zahl)
 - Fixed: Hirestex replacements for sprites didn't work properly due to some
   incorrect calculations in R_ProjectSprite.

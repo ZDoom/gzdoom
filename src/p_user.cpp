@@ -50,7 +50,7 @@
 #include "doomdef.h"
 #include "c_dispatch.h"
 #include "tarray.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_skullpop ("SkullPop");
 

@@ -4,7 +4,7 @@
 #include "p_local.h"
 #include "a_doomglobal.h"
 #include "a_action.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 
 void A_PainAttack (AActor *);
 void A_PainDie (AActor *);

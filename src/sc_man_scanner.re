@@ -68,7 +68,6 @@ std2:
 		'goto'						{ RET(TK_Goto); }
 		'if'						{ RET(TK_If); }
 		'return'					{ RET(TK_Return); }
-		'states'					{ RET(TK_States); }
 		'switch'					{ RET(TK_Switch); }
 		'until'						{ RET(TK_Until); }
 		'volatile'					{ RET(TK_Volatile); }

@@ -202,14 +202,27 @@ void A_UnsetFloat(AActor * self)
 static void DoAttack (AActor *self, bool domelee, bool domissile)
 {
 	int index=CheckIndex(4);
+	int MeleeDamage;
+	int MeleeSound;
+	FName MissileName;
+	fixed_t MissileHeight;
 
-	if (index<0) return;
 	if (self->target == NULL) return;
 
-	int MeleeDamage=StateParameters[index];
-	int MeleeSound=StateParameters[index+1];
-	FName MissileName=(ENamedName)StateParameters[index+2];
-	fixed_t MissileHeight=StateParameters[index+3];
+	if (index > 0)
+	{
+		MeleeDamage=StateParameters[index];
+		MeleeSound=StateParameters[index+1];
+		MissileName=(ENamedName)StateParameters[index+2];
+		MissileHeight=StateParameters[index+3];
+	}
+	else
+	{
+		MeleeDamage = self->GetClass()->Meta.GetMetaInt (ACMETA_MeleeDamage, 0);
+		MeleeSound =  self->GetClass()->Meta.GetMetaInt (ACMETA_MeleeSound, 0);
+		MissileName=(ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None);
+		MissileHeight= self->GetClass()->Meta.GetMetaFixed (ACMETA_MissileHeight, 32*FRACUNIT);
+	}
 
 	A_FaceTarget (self);
 	if (domelee && MeleeDamage>0 && self->CheckMeleeRange ())

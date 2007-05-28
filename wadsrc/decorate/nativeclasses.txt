@@ -115,6 +115,9 @@ class Actor extends Thinker
 	action native A_FireAssaultGun();
 	action native A_CheckTerrain();
 
+	action native A_MissileAttack();
+	action native A_MeleeAttack();
+	action native A_ComboAttack();
 	action native A_BulletAttack();
 	action native A_PlaySound(sound whattoplay);
 	action native A_PlayWeaponSound(sound whattoplay);

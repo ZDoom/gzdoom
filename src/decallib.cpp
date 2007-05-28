@@ -49,7 +49,6 @@ FDecalLib DecalLibrary;
 
 static fixed_t ReadScale ();
 static TArray<BYTE> DecalTranslations;
-extern TArray<char*> DecalNames;
 
 // A decal group holds multiple decals and returns one randomly
 // when GetDecal() is called.
@@ -355,19 +354,12 @@ void FDecalLib::ReadAllDecals ()
 	{
 		AActor *def = (AActor*)GetDefaultByType (PClass::m_RuntimeActors[i]);
 
-		intptr_t v = (intptr_t)def->DecalGenerator;
-		if (v > 0 && v <= (intptr_t)DecalNames.Size())
+		FName v = ENamedName(intptr_t(def->DecalGenerator));
+		if (v.IsValidName())
 		{
-			def->DecalGenerator = ScanTreeForName (DecalNames[v-1], Root);
+			def->DecalGenerator = ScanTreeForName (v, Root);
 		}
 	}
-	// Free the array which is no longer needed!
-	for (i = 0; i < DecalNames.Size(); i++)
-	{
-		delete[] DecalNames[i];
-	}
-	DecalNames.Clear();
-	DecalNames.ShrinkToFit();
 }
 
 void FDecalLib::ReadDecals ()

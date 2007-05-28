@@ -1,9 +1,13 @@
 #ifndef __THINGDEF_H
 #define __THINGDEF_H
 
+//==========================================================================
+//
 // This class is for storing a name inside a const PClass* field without
 // generating compiler warnings. It does not manipulate data in any other
 // way.
+//
+//==========================================================================
 class fuglyname : public FName
 {
 public:
@@ -21,23 +25,12 @@ public:
 	}
 };
 
-// All state parameters are stored in this array now.
-extern TArray<int> StateParameters;
-extern TArray<FName> JumpParameters;
 
-
-int ParseExpression (bool _not, PClass *cls);
-
-int EvalExpressionI (int id, AActor *self, const PClass *cls=NULL);
-float EvalExpressionF (int id, AActor *self, const PClass *cls=NULL);
-bool EvalExpressionN (int id, AActor *self, const PClass *cls=NULL);
-
-void ClearStateLabels();
-void AddState (const char * statename, FState * state);
-FState * FindState(AActor * actor, const PClass * type, const char * name);
-void InstallStates(FActorInfo *info, AActor *defaults);
-void MakeStateDefines(const FStateLabels *list);
-FState *P_GetState(AActor *self, FState *CallingState, int offset);
+//==========================================================================
+//
+// Dropitem list
+//
+//==========================================================================
 
 struct FDropItem 
 {
@@ -48,6 +41,86 @@ struct FDropItem
 };
 
 FDropItem *GetDropItems(const PClass * cls);
+
+//==========================================================================
+//
+// Extra info maintained while defining an actor.
+//
+//==========================================================================
+
+struct Baggage
+{
+	FActorInfo *Info;
+	bool DropItemSet;
+	bool StateSet;
+	int CurrentState;
+
+	FDropItem *DropItemList;
+};
+
+inline void ResetBaggage (Baggage *bag)
+{
+	bag->DropItemList = NULL;
+	bag->DropItemSet = false;
+	bag->CurrentState = 0;
+	bag->StateSet = false;
+}
+
+
+//==========================================================================
+//
+// Action function lookup
+//
+//==========================================================================
+
+struct AFuncDesc
+{
+	const char *Name;
+	actionf_p Function;
+};
+
+AFuncDesc * FindFunction(const char * string);
+
+
+//==========================================================================
+//
+// State parser
+//
+//==========================================================================
+
+extern TArray<int> StateParameters;
+extern TArray<FName> JumpParameters;
+
+void ClearStateLabels();
+void AddState (const char * statename, FState * state);
+FState * FindState(AActor * actor, const PClass * type, const char * name);
+void InstallStates(FActorInfo *info, AActor *defaults);
+void MakeStateDefines(const FStateLabels *list);
+FState *P_GetState(AActor *self, FState *CallingState, int offset);
+int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag);
+int ParseStates(FActorInfo * actor, AActor * defaults, Baggage &bag);
+FState *CheckState(PClass *type);
+
+
+//==========================================================================
+//
+// Property parser
+//
+//==========================================================================
+
+void ParseActorProperty(Baggage &bag);
+void ParseActorFlag (Baggage &bag, int mod);
+void FinishActor(FActorInfo *info, Baggage &bag);
+
+void ParseConstant (PSymbolTable * symt, PClass *cls);
+void ParseEnum (PSymbolTable * symt, PClass *cls);
+
+
+int ParseExpression (bool _not, PClass *cls);
+
+int EvalExpressionI (int id, AActor *self, const PClass *cls=NULL);
+float EvalExpressionF (int id, AActor *self, const PClass *cls=NULL);
+bool EvalExpressionN (int id, AActor *self, const PClass *cls=NULL);
 
 
 // A truly awful hack to get to the state that called an action function
@@ -64,6 +137,10 @@ enum
 	ACMETA_ExplosionDamage,
 	ACMETA_ExplosionRadius,
 	ACMETA_DontHurtShooter,
+	ACMETA_MeleeSound,
+	ACMETA_MeleeDamage,
+	ACMETA_MissileName,
+	ACMETA_MissileHeight,
 };
 
 

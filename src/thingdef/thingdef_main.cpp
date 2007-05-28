@@ -47,7 +47,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void ProcessActor();
+void ParseActor();
 void ParseClass();
 void ParseGlobalConst();
 void ParseGlobalEnum();
@@ -96,27 +96,27 @@ static void ParseDecorate ()
 			break;
 
 		case TK_Class:
-			ParseClass();
+			ParseClass ();
 			break;
 
 		case TK_Const:
-			ParseGlobalConst();
+			ParseConstant (&RUNTIME_CLASS(AActor)->Symbols, RUNTIME_CLASS(AActor));
 			break;
 
 		case TK_Enum:
-			ParseGlobalEnum();
+			ParseEnum (&RUNTIME_CLASS(AActor)->Symbols, RUNTIME_CLASS(AActor));
 			break;
 
 		case TK_Pickup:
-			ParseOldDecoration(DEF_Pickup);
+			ParseOldDecoration (DEF_Pickup);
 			break;
 
 		case TK_Breakable:
-			ParseOldDecoration(DEF_BreakableDecoration);
+			ParseOldDecoration (DEF_BreakableDecoration);
 			break;
 
 		case TK_Projectile:
-			ParseOldDecoration(DEF_Projectile);
+			ParseOldDecoration (DEF_Projectile);
 			break;
 
 		case ';':
@@ -132,7 +132,7 @@ static void ParseDecorate ()
 			// so let's do a special case for this.
 			if (SC_Compare("ACTOR"))
 			{
-				ProcessActor ();
+				ParseActor ();
 				break;
 			}
 

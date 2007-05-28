@@ -1,4 +1,8 @@
 May 28, 2007 (Changes by Graf Zahl)
+- Split thingdef.cpp into several files so that the state and property code
+  no longer gets in the way of the main parser.
+- Changed A_MissileAttack, A_MeleeAttack and A_ComboAttack so that they use
+  metadata. Now all the hack code associated with these functions can be removed.
 - Fixed: deadthings.txt contained a superfluous ';' which created parsing errors
   with my changed code.
 - Cleaned up DECORATE parser a little - moved the old style parsing code into its 

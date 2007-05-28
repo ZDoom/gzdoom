@@ -77,7 +77,6 @@ enum
 	TK_For,
 	TK_If,
 	TK_Return,
-	TK_States,
 	TK_Switch,
 	TK_Until,
 	TK_While,

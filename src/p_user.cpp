@@ -1035,6 +1035,8 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 {
 	Super::Die (source, inflictor);
 
+	if (player != NULL && player->mo == this) player->bonuscount = 0;
+
 	if (player != NULL && player->mo != this)
 	{ // Make the real player die, too
 		player->mo->Die (source, inflictor);

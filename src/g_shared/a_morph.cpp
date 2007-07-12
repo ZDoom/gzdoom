@@ -375,7 +375,7 @@ void AMorphedMonster::Destroy ()
 void AMorphedMonster::Die (AActor *source, AActor *inflictor)
 {
 	// Dead things don't unmorph
-	source->flags3 |= MF3_STAYMORPHED;
+	flags3 |= MF3_STAYMORPHED;
 	Super::Die (source, inflictor);
 	if (UnmorphedMe != NULL && (UnmorphedMe->flags & MF_UNMORPHED))
 	{

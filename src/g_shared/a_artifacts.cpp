@@ -1398,6 +1398,7 @@ void APowerTimeFreezer::InitEffect( )
 
 void APowerTimeFreezer::DoEffect( )
 {
+	Super::DoEffect();
 	if ( EffectTics > 4*32 
 		|| (( EffectTics > 3*32 && EffectTics <= 4*32 ) && EffectTics % 16 != 0 )
 		|| (( EffectTics > 2*32 && EffectTics <= 3*32 ) && EffectTics % 8 != 0 ) 

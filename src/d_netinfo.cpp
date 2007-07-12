@@ -589,7 +589,7 @@ void D_ReadUserInfoStrings (int i, BYTE **stream, bool update)
 				value = ptr;
 				infotype++;
 			}
-			else
+			else if (breakpt != NULL)
 			{
 				value = breakpt + 1;
 				if ( (breakpt = strchr (value, '\\')) )

@@ -1108,7 +1108,7 @@ void AM_clearFB (int color)
 		{
 			for (x = mapxstart >> MAPBITS; x < f_w; x += pwidth)
 			{
-				screen->DrawTexture (mapback, x, y, DTA_ClipBottom, f_h, TAG_DONE);
+				screen->DrawTexture (mapback, x, y, DTA_ClipBottom, f_h, DTA_TopOffset, 0, DTA_LeftOffset, 0, TAG_DONE);
 			}
 		}
 	}

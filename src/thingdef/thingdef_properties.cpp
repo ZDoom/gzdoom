@@ -609,6 +609,12 @@ static void AddToTranslation(unsigned char * translation, char * range)
 			gs = g2 - g1;
 			bs = b2 - b1;
 		}
+		r <<= FRACBITS;
+		g <<= FRACBITS;
+		b <<= FRACBITS;
+		rs <<= FRACBITS;
+		gs <<= FRACBITS;
+		bs <<= FRACBITS;
 		if (start == end)
 		{
 			translation[start] = ColorMatcher.Pick

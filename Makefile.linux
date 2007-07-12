@@ -19,7 +19,7 @@ CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
 LDFLAGS += -lFLAC++ -lFLAC -lz -ljpeg -lfmod `sdl-config --libs` `pkg-config gtk+-2.0 --libs`
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
-SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ )
+SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ thingdef/)
 VPATH = $(SRCDIRS)
 INCLUDES = $(addprefix -I,$(SRCDIRS))
 CFLAGS += $(INCLUDES)

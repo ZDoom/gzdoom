@@ -1,3 +1,20 @@
+July 12, 2007 (Changes by Graf Zahl)
+- Added DTA_TopOffset and DTA_LeftOffset values to the automap background drawer.
+- Fixed: DECORATE color translations with explicit colors didn't work because the
+  code treated byte values as fixed point.
+- Fixed: LEVEL_NOALLIES must clear MF_FRIENDLY off any spawned actor except players.
+  Otherwise it doesn't work properly.
+- Fixed: Entering a backslash in the player's name box caused a crash because 
+  the code analyzing the string was missing a NULL pointer check.
+- Fixed: Thing_Hate and Teleport_ZombieChanger unconditionally made state jumps,
+  even for dead monsters.
+- Fixed: The palette flash for item pickup was not reset upon a player's death.
+- Fixed: P_DamageMobj tried to get damage multiplier information from the
+  damage inflictor, not the attacker.
+- Fixed: PowerTimeFreezer::DoEffect did not call its superclass method.
+- fixed: When morphed monsters died they tried to set MF3_STAYMORPHED for the
+  attacker, not themselves. This caused a crash when they were killed by a crusher.
+
 May 28, 2007 (Changes by Graf Zahl)
 - Split thingdef.cpp into several files so that the state and property code
   no longer gets in the way of the main parser.

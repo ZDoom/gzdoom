@@ -194,6 +194,8 @@ int main (int argc, char **argv)
 
 	GtkAvailable = gtk_init_check (&argc, &argv);
 	
+	setlocale (LC_ALL, "C");
+
 	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE) == -1)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());

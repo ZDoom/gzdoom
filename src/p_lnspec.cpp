@@ -773,7 +773,7 @@ FUNC(LS_Teleport_ZombieChanger)
 	if (it != NULL)
 	{
 		EV_Teleport (arg0, arg1, ln, backSide, it, false, false, false);
-		it->SetState (it->FindState(NAME_Pain));
+		if (it->health >= 0) it->SetState (it->FindState(NAME_Pain));
 		return true;
 	}
 	return false;
@@ -1286,7 +1286,7 @@ FUNC(LS_Thing_Hate)
 				hater->target = hatee;
 				if (!(hater->flags2 & MF2_DORMANT))
 				{
-					hater->SetState (hater->SeeState);
+					if (hater->health > 0) hater->SetState (hater->SeeState);
 				}
 			}
 		}

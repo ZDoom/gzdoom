@@ -3220,6 +3220,10 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 			return NULL;
 		}
 	}
+	if (level.flags & LEVEL_NOALLIES && !actor->player)
+	{
+		actor->flags &= ~MF_FRIENDLY;
+	}
 	// [RH] Count monsters whenever they are spawned.
 	if (actor->CountsAsKill())
 	{

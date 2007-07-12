@@ -892,13 +892,13 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			return;
 		}
 
-		// Handle active damage modifiers (e.g. PowerDamage)
-		if (inflictor->Inventory != NULL)
-		{
-			int olddam = damage;
-			inflictor->Inventory->ModifyDamage(olddam, mod, damage, false);
-			if (olddam != damage && damage <= 0) return;
-		}
+	}
+	// Handle active damage modifiers (e.g. PowerDamage)
+	if (source != NULL && source->Inventory != NULL)
+	{
+		int olddam = damage;
+		source->Inventory->ModifyDamage(olddam, mod, damage, false);
+		if (olddam != damage && damage <= 0) return;
 	}
 	// Handle passive damage modifiers (e.g. PowerProtection)
 	if (target->Inventory != NULL)

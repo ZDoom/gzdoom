@@ -95,6 +95,7 @@ enum
 	IF_FANCYPICKUPSOUND	= 1<<11,	// Play pickup sound in "surround" mode
 	IF_BIGPOWERUP		= 1<<12,	// Affected by RESPAWN_SUPER dmflag
 	IF_KEEPDEPLETED		= 1<<13,	// Items with this flag are retained even when they run out.
+	IF_IGNORESKILL		= 1<<14,	// Ignores any skill related multiplicators when giving this item.
 };
 
 struct vissprite_t;
@@ -248,8 +249,8 @@ public:
 	bool DepleteAmmo (bool altFire, bool checkEnough=true);
 
 protected:
-	static AAmmo *AddAmmo (AActor *other, const PClass *ammotype, int amount);
-	static bool AddExistingAmmo (AAmmo *ammo, int amount);
+	AAmmo *AddAmmo (AActor *other, const PClass *ammotype, int amount);
+	bool AddExistingAmmo (AAmmo *ammo, int amount);
 	AWeapon *AddWeapon (const PClass *weapon);
 };
 

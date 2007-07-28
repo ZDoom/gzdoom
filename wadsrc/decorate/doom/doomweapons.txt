@@ -474,7 +474,7 @@ ACTOR BFGBall
 	Death:
 		BFE1 AB 8 Bright
 		BFE1 C 8 Bright A_BFGSpray
-		BFE1 EF 8 Bright
+		BFE1 DEF 8 Bright
 		Stop
 	}
 }

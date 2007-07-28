@@ -1,3 +1,19 @@
+July 28, 2007 (Changes by Graf Zahl)
+- fixed: The BFGBall's explosion sequence was missing a state.
+- fixed: The brown Chaos Serpent in Hexen had an incorrect sprite for its
+  ice death sequence set.
+- fixed: Ammo upon game start does not get multiplied when on easy skill.
+  Implementing this as an inventory flag IF_IGNORESKILL also allows to create
+  ammo/weapon/backpack types that don't multiply the ammo given when on this
+  skill.
+
+July 24, 2007 (Changes by Graf Zahl)
+- moved Doom exit sounds into SNDINFO as $random definitions.
+
+July 18, 2007 (Changes by Graf Zahl)
+- Fixed: Dying Lost Souls could be reset to their see state if they slammed into
+  something.
+
 July 12, 2007 (Changes by Graf Zahl)
 - Added DTA_TopOffset and DTA_LeftOffset values to the automap background drawer.
 - Fixed: DECORATE color translations with explicit colors didn't work because the

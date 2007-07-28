@@ -53,6 +53,7 @@
 #include "thingdef.h"
 #include "a_sharedglobal.h"
 #include "s_sound.h"
+#include "i_system.h"
 
 TArray<int> StateParameters;
 TArray<FName> JumpParameters;

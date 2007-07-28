@@ -1967,10 +1967,9 @@ void M_QuitResponse(int ch)
 		return;
 	if (!netgame)
 	{
-		if (gameinfo.quitSounds)
+		if (gameinfo.quitSound)
 		{
-			S_Sound (CHAN_VOICE, gameinfo.quitSounds[(gametic>>2)&7],
-				1, ATTN_SURROUND);
+			S_Sound (CHAN_VOICE, gameinfo.quitSound, 1, ATTN_SURROUND);
 			I_WaitVBL (105);
 		}
 	}

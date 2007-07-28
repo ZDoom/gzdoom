@@ -544,6 +544,7 @@ bool AActor::SetState (FState *newstate)
 				sprite = newsprite;
 			}
 		}
+
 		if (newstate->GetAction())
 		{
 			// The parameterized action functions need access to the current state and
@@ -553,7 +554,6 @@ bool AActor::SetState (FState *newstate)
 			// that does not involve changing stuff throughout the code. 
 			// Of course this should be rewritten ASAP.
 			CallingState = newstate;
-
 			newstate->GetAction() (this);
 
 			// Check whether the called action function resulted in destroying the actor
@@ -2365,17 +2365,20 @@ bool AActor::Slam (AActor *thing)
 {
 	flags &= ~MF_SKULLFLY;
 	momx = momy = momz = 0;
-	if (!(flags2 & MF2_DORMANT))
+	if (health > 0)
 	{
-		int dam = GetMissileDamage (7, 1);
-		P_DamageMobj (thing, this, this, dam, NAME_Melee);
-		P_TraceBleed (dam, thing, this);
-		SetState (SeeState != NULL ? SeeState : SpawnState);
-	}
-	else
-	{
-		SetState (SpawnState);
-		tics = -1;
+		if (!(flags2 & MF2_DORMANT))
+		{
+			int dam = GetMissileDamage (7, 1);
+			P_DamageMobj (thing, this, this, dam, NAME_Melee);
+			P_TraceBleed (dam, thing, this);
+			SetState (SeeState != NULL ? SeeState : SpawnState);
+		}
+		else
+		{
+			SetState (SpawnState);
+			tics = -1;
+		}
 	}
 	return false;			// stop moving
 }

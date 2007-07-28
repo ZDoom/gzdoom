@@ -41,6 +41,7 @@
 #include <new>
 #include <sys/param.h>
 #include <gtk/gtk.h>
+#include <locale.h>
 
 #include "doomerrors.h"
 #include "m_argv.h"

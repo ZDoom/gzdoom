@@ -76,13 +76,16 @@ bool AAmmo::HandlePickup (AInventory *item)
 		{
 			int receiving = item->Amount;
 
-			// extra ammo in baby mode and nightmare mode
-			if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+			if (!(item->ItemFlags&IF_IGNORESKILL))
 			{
-				if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-					receiving += receiving;
-				else
-					receiving += receiving >> 1;
+				// extra ammo in baby mode and nightmare mode
+				if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+				{
+					if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+						receiving += receiving;
+					else
+						receiving += receiving >> 1;
+				}
 			}
 			int oldamount = Amount;
 			Amount += receiving;
@@ -133,12 +136,15 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 	int amount = Amount;
 
 	// extra ammo in baby mode and nightmare mode
-	if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+	if (!(ItemFlags&IF_IGNORESKILL))
 	{
-		if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-			amount <<= 1;
-		else
-			amount += amount >> 1;
+		if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+		{
+			if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+				amount <<= 1;
+			else
+				amount += amount >> 1;
+		}
 	}
 
 	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo))
@@ -1509,12 +1515,15 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory (type));
 			int amount = static_cast<AAmmo *>(GetDefaultByType(type))->BackpackAmount;
 			// extra ammo in baby mode and nightmare mode
-			if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+			if (!(ItemFlags&IF_IGNORESKILL))
 			{
-				if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-					amount <<= 1;
-				else
-					amount += amount >> 1;
+				if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+				{
+					if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+						amount <<= 1;
+					else
+						amount += amount >> 1;
+				}
 			}
 			if (ammo == NULL)
 			{ // The player did not have the ammo. Add it.
@@ -1567,12 +1576,15 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 				{
 					int amount = static_cast<AAmmo*>(probe->GetDefault())->BackpackAmount;
 					// extra ammo in baby mode and nightmare mode
-					if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+					if (!(item->ItemFlags&IF_IGNORESKILL))
 					{
-						if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-							amount <<= 1;
-						else
-							amount += amount >> 1;
+						if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+						{
+							if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+								amount <<= 1;
+							else
+								amount += amount >> 1;
+						}
 					}
 					probe->Amount += amount;
 					if (probe->Amount > probe->MaxAmount)

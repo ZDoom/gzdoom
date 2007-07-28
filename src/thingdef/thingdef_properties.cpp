@@ -247,6 +247,7 @@ static flagdef InventoryFlags[] =
 	DEFINE_FLAG(IF, FANCYPICKUPSOUND, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, BIGPOWERUP, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, KEEPDEPLETED, AInventory, ItemFlags),
+	DEFINE_FLAG(IF, IGNORESKILL, AInventory, ItemFlags),
 };
 
 static flagdef WeaponFlags[] =

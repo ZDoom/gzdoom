@@ -1708,8 +1708,7 @@ void M_VerifyNightmare (int ch)
 	if (ch != 'y')
 		return;
 		
-	gameskill = 4;
-	G_DeferedInitNew (EpisodeMaps[epi]);
+	G_DeferedInitNew (EpisodeMaps[epi], 4);
 	gamestate = gamestate == GS_FULLCONSOLE ? GS_HIDECONSOLE : gamestate;
 	M_ClearMenus ();
 }
@@ -1722,8 +1721,7 @@ void M_ChooseSkill (int choice)
 		return;
 	}
 
-	gameskill = choice;
-	G_DeferedInitNew (EpisodeMaps[epi]);
+	G_DeferedInitNew (EpisodeMaps[epi], choice);
 	if (gamestate == GS_FULLCONSOLE)
 	{
 		gamestate = GS_HIDECONSOLE;

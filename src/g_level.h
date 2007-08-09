@@ -315,7 +315,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel);
 // Can be called by the startup code or M_Responder.
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
-void G_DeferedInitNew (const char *mapname);
+void G_DeferedInitNew (const char *mapname, int skill = -1);
 
 void G_ExitLevel (int position, bool keepFacing);
 void G_SecretExitLevel (int position);

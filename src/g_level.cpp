@@ -1369,10 +1369,12 @@ bool CheckWarpTransMap (char mapname[9], bool substitute)
 // consoleplayer, playeringame[] should be set.
 //
 static char d_mapname[256];
+static int d_skill;
 
-void G_DeferedInitNew (const char *mapname)
+void G_DeferedInitNew (const char *mapname, int newskill)
 {
 	strncpy (d_mapname, mapname, 8);
+	d_skill = newskill;
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 }
@@ -1419,6 +1421,7 @@ CCMD (open)
 		{
 			delete map;
 			gameaction = ga_newgame2;
+			d_skill = -1;
 		}
 	}
 	else
@@ -1464,6 +1467,7 @@ void G_DoNewGame (void)
 {
 	G_NewInit ();
 	playeringame[consoleplayer] = 1;
+	if (d_skill != -1) gameskill = d_skill;
 	G_InitNew (d_mapname, false);
 	gameaction = ga_nothing;
 }

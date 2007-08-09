@@ -1,3 +1,7 @@
+August 9, 2007 (Changes by Graf Zahl)
+- Moved setting of gameskill from M_ChooseSkill to G_DoNewGame because it
+  doesn't work in M_ChooseSkill when the full console is open.
+
 July 28, 2007 (Changes by Graf Zahl)
 - fixed: The BFGBall's explosion sequence was missing a state.
 - fixed: The brown Chaos Serpent in Hexen had an incorrect sprite for its

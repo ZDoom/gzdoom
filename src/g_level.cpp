@@ -1369,7 +1369,7 @@ bool CheckWarpTransMap (char mapname[9], bool substitute)
 // consoleplayer, playeringame[] should be set.
 //
 static char d_mapname[256];
-static int d_skill;
+static int d_skill=-1;
 
 void G_DeferedInitNew (const char *mapname, int newskill)
 {

@@ -32,6 +32,12 @@ CCMD (dumpmap)
 		Printf ("Usage: dumpmap <wadname> [mapname]\n");
 		return;
 	}
+	
+	if (gamestate != GS_LEVEL)
+	{
+		Printf ("You can only dump a map when inside a level.\n");
+		return;
+	}
 
 	if (argv.argc() < 3)
 	{

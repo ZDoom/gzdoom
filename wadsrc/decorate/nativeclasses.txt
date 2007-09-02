@@ -170,6 +170,7 @@ class Actor extends Thinker
 	action native A_Respawn(optional evalnot bool fog);
 	action native A_BarrelDestroy();
 	action native A_QueueCorpse();
+	action native A_DeQueueCorpse();
 	
 	action native A_SelectWeapon(class<Weapon> whichweapon);
 }

@@ -802,7 +802,7 @@ menu_t MessagesMenu =
 {
 	"MESSAGES",
 	0,
-	12,
+	countof(MessagesItems),
 	0,
 	MessagesItems,
 };

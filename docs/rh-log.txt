@@ -1,3 +1,10 @@
+August 19, 2007 (Changes by Graf Zahl)
+- Fixed: dumpmap crashed when used outside a map.
+
+August 10, 2007 (Changes by Graf Zahl)
+- Exported A_DeQueueCorpse to DECORATE. It seems I forgot this when exporting
+  A_QueueCorpse.
+
 August 9, 2007 (Changes by Graf Zahl)
 - Moved setting of gameskill from M_ChooseSkill to G_DoNewGame because it
   doesn't work in M_ChooseSkill when the full console is open.

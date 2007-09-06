@@ -1635,33 +1635,51 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 //
 // G_DoCompleted
 //
-bool 			secretexit;
+static char		nextlevel[9];
 static int		startpos;	// [RH] Support for multiple starts per level
 extern int		NoWipe;		// [RH] Don't wipe when travelling in hubs
 static bool		startkeepfacing;	// [RH] Support for keeping your facing angle
 static bool		resetinventory;	// Reset the inventory to the player's default for the next level
+static bool		unloading;
 
 // [RH] The position parameter to these next three functions should
 //		match the first parameter of the single player start spots
 //		that should appear in the next map.
 
-static void goOn (int position, bool keepFacing, bool secret, bool resetinv)
+void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int nextSkill, 
+				   bool nointermission, bool resetinv, bool nomonsters)
 {
-	static bool unloading;
-
 	if (unloading)
 	{
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
 		return;
 	}
 
+	strncpy (nextlevel, levelname, 8);
+	nextlevel[8] = 0;
+
+	if (strncmp(nextlevel, "enDSeQ", 6))
+	{
+		level_info_t *nextinfo = CheckLevelRedirect (FindLevelInfo (nextlevel));
+		if (nextinfo)
+		{
+			strncpy(nextlevel, nextinfo->mapname, 8);
+		}
+	}
+
+	if (nextSkill != -1) NextSkill = nextSkill;
+
+	if (!nomonsters) dmflags = dmflags & ~DF_NO_MONSTERS;
+	else dmflags = dmflags | DF_NO_MONSTERS;
+
+	if (nointermission) level.flags |= LEVEL_NOINTERMISSION;
+
 	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
-	cluster_info_t *nextcluster = FindClusterInfo (CheckLevelRedirect (FindLevelInfo (level.nextmap))->cluster);
+	cluster_info_t *nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
 
 	startpos = position;
 	startkeepfacing = keepFacing;
 	gameaction = ga_completed;
-	secretexit = secret;
 	resetinventory = resetinv;
 
 	bglobal.End();	//Added by MC:
@@ -1687,32 +1705,23 @@ static void goOn (int position, bool keepFacing, bool secret, bool resetinv)
 
 void G_ExitLevel (int position, bool keepFacing)
 {
-	goOn (position, keepFacing, false, false);
+	G_ChangeLevel(level.nextmap, position, keepFacing);
 }
 
-// Here's for the german edition.
 void G_SecretExitLevel (int position) 
 {
-	// [RH] Check for secret levels is done in 
-	//		G_DoCompleted()
+	const char *nextmap;
 
-	goOn (position, false, true, false);
-}
+	MapData * map = P_OpenMapData(level.secretmap);
+	if (map != NULL)
+	{
+		delete map;
+		nextmap = level.secretmap;
+	}
+	else
+		nextmap = level.nextmap;
 
-void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int nextSkill, 
-				   bool nointermission, bool resetinventory, bool nomonsters)
-{
-	strncpy (level.nextmap, levelname, 8);
-	level.nextmap[8] = 0;
-
-	if (nextSkill != -1) NextSkill = nextSkill;
-
-	if (!nomonsters) dmflags = dmflags & ~DF_NO_MONSTERS;
-	else dmflags = dmflags | DF_NO_MONSTERS;
-
-	if (nointermission) level.flags |= LEVEL_NOINTERMISSION;
-
-	goOn(position, keepFacing, false, resetinventory);
+	G_ChangeLevel(nextmap, position, false);
 }
 
 void G_DoCompleted (void)
@@ -1723,7 +1732,7 @@ void G_DoCompleted (void)
 
 	if (gamestate == GS_TITLELEVEL)
 	{
-		strncpy (level.mapname, level.nextmap, 8);
+		strncpy (level.mapname, nextlevel, 8);
 		G_DoLoadLevel (startpos, false);
 		startpos = 0;
 		viewactive = true;
@@ -1750,40 +1759,22 @@ void G_DoCompleted (void)
 	}
 	else
 	{
-		wminfo.next[0] = 0;
-		if (secretexit)
+		if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 		{
-			MapData * map = P_OpenMapData(level.secretmap);
-			if (map != NULL)
-			{
-				delete map;
-				strncpy (wminfo.next, level.secretmap, 8);
-				strncpy (wminfo.lname1, FindLevelInfo (level.secretmap)->pname, 8);
-			}
-			else
-			{
-				secretexit = false;
-			}
+			strncpy (wminfo.next, nextlevel, 8);
+			wminfo.lname1[0] = 0;
 		}
-		if (!wminfo.next[0])
+		else
 		{
-			if (strncmp (level.nextmap, "enDSeQ", 6) == 0)
-			{
-				strncpy (wminfo.next, level.nextmap, 8);
-				wminfo.lname1[0] = 0;
-			}
-			else
-			{
-				level_info_t *nextinfo = CheckLevelRedirect (FindLevelInfo (level.nextmap));
-				strncpy (wminfo.next, nextinfo->mapname, 8);
-				strncpy (wminfo.lname1, nextinfo->pname, 8);
-			}
+			level_info_t *nextinfo = FindLevelInfo (nextlevel);
+			strncpy (wminfo.next, nextinfo->mapname, 8);
+			strncpy (wminfo.lname1, nextinfo->pname, 8);
 		}
 	}
 
 	CheckWarpTransMap (wminfo.next, true);
 
-	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
+	wminfo.next_ep = FindLevelInfo (nextlevel)->cluster - 1;
 	wminfo.maxkills = level.total_monsters;
 	wminfo.maxitems = level.total_items;
 	wminfo.maxsecret = level.total_secrets;
@@ -1811,7 +1802,7 @@ void G_DoCompleted (void)
 	//		ordinary cluster (not a hub), take stuff from the player, but
 	//		leave the world vars alone.
 	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
-	cluster_info_t *nextcluster = FindClusterInfo (CheckLevelRedirect (FindLevelInfo (level.nextmap))->cluster);
+	cluster_info_t *nextcluster = FindClusterInfo (wminfo.next_ep+1);	// next_ep is cluster-1
 	EFinishLevelType mode;
 
 	if (thiscluster != nextcluster || deathmatch ||
@@ -2036,7 +2027,6 @@ void G_WorldDone (void)
 { 
 	cluster_info_t *nextcluster;
 	cluster_info_t *thiscluster;
-	char *nextmap;
 
 	gameaction = ga_worlddone; 
 
@@ -2044,9 +2034,8 @@ void G_WorldDone (void)
 		return;
 
 	thiscluster = FindClusterInfo (level.cluster);
-	nextmap = !secretexit || !level.secretmap[0] ? level.nextmap : level.secretmap;
 
-	if (strncmp (nextmap, "enDSeQ", 6) == 0)
+	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
 		F_StartFinale (thiscluster->messagemusic, thiscluster->musicorder,
 			thiscluster->cdtrack, thiscluster->cdid,
@@ -2057,7 +2046,7 @@ void G_WorldDone (void)
 	}
 	else
 	{
-		nextcluster = FindClusterInfo (CheckLevelRedirect (FindLevelInfo (nextmap))->cluster);
+		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
 
 		if (nextcluster->cluster != level.cluster && !deathmatch)
 		{
@@ -2095,7 +2084,7 @@ void G_DoWorldDone (void)
 	}
 	else
 	{
-		strncpy (level.mapname, wminfo.next, 8);
+		strncpy (level.mapname, nextlevel, 8);
 	}
 	G_StartTravel ();
 	G_DoLoadLevel (startpos, true);
@@ -2388,17 +2377,19 @@ level_info_t *CheckLevelRedirect (level_info_t *info)
 			{
 				if (playeringame[i] && players[i].mo->FindInventory (type))
 				{
-					level_info_t *newinfo = FindLevelInfo (info->RedirectMap);
-					if (newinfo != NULL)
+					// check for actual presence of the map.
+					MapData * map = P_OpenMapData(info->RedirectMap);
+					if (map != NULL)
 					{
-						info = newinfo;
+						delete map;
+						return FindLevelInfo(info->RedirectMap);
 					}
 					break;
 				}
 			}
 		}
 	}
-	return info;
+	return NULL;
 }
 
 static void SetLevelNum (level_info_t *info, int num)

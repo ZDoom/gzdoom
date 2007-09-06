@@ -746,8 +746,7 @@ FUNC(LS_Teleport_NewMap)
 
 		if (info && CheckIfExitIsGood (it))
 		{
-			strncpy (level.nextmap, info->mapname, 8);
-			G_ExitLevel (arg1, !!arg2);
+			G_ChangeLevel(info->mapname, arg1, !!arg2);
 			return true;
 		}
 	}

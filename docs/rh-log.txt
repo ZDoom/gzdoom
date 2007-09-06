@@ -1,3 +1,9 @@
+September 5, 2007 (Changes by Graf Zahl)
+- Fixed: Several options while changing maps only worked for the regular exit
+  but caused problems when used with the secret exit. Rewrote the code to
+  set the next map at the beginning and removed all subsequent parts that
+  tried to resolve it from the original data again.
+
 August 19, 2007 (Changes by Graf Zahl)
 - Fixed: dumpmap crashed when used outside a map.
 

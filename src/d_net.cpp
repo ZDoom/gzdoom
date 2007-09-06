@@ -2015,11 +2015,10 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_CHANGEMAP:
 		// Change to another map without disconnecting other players
 		s = ReadString (stream);
-		strncpy (level.nextmap, s, 8);
 		// Using LEVEL_NOINTERMISSION tends to throw the game out of sync.
 		// That was a long time ago. Maybe it works now?
 		level.flags |= LEVEL_CHANGEMAPCHEAT;
-		G_ExitLevel (pos, false);
+		G_ChangeLevel(s, pos, false);
 		break;
 
 	case DEM_SUICIDE:

@@ -1539,6 +1539,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	{
 		int lumpnum = -1;
 		int offset, length;
+		int device = -1;
+	
+
+		int * devp = MidiDevices.CheckKey(FName(musicname));
+		if (devp != NULL) device = *devp;
 
 		if (!FileExists (musicname))
 		{
@@ -1588,13 +1593,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		{
 			mus_playing.handle = I_RegisterSong (lumpnum != -1 ?
 				Wads.GetWadFullName (Wads.GetLumpFile (lumpnum)) :
-				musicname, NULL, offset, length);
+				musicname, NULL, offset, length, device);
 		}
 		else
 		{
-			// musiccache is used globally because otherwise I'd have to pass
-			// it as a parameter through several layers of code.
-			mus_playing.handle = I_RegisterSong (NULL, &musiccache[0], -1, length);
+			mus_playing.handle = I_RegisterSong (NULL, &musiccache[0], -1, length, device);
 		}
 	}
 

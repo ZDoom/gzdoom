@@ -1,3 +1,16 @@
+September 11, 2007 (Changes by Graf Zahl)
+- fixed: The Timidity player didn't close its temporary files and left them
+  behind because it couldn't delete them.
+- added a $MidiDevice option to SNDINFO which can either set the preferred
+  MIDI device for a song to Timidity or Windows' standard MIDI device.
+  The reason for this: About 80% of my MIDI music collection sounds better
+  with Timidity and the other 20% with Windows' standard synth and I'd like
+  to be able to use each with the one that sounds better. For MUS files you
+  can also force the use of OPL playback.
+
+September 8, 2007 (Changes by Graf Zahl)
+- added telefrag option to A_SpawnItemEx.
+
 September 5, 2007 (Changes by Graf Zahl)
 - Fixed: Several options while changing maps only worked for the regular exit
   but caused problems when used with the secret exit. Rewrote the code to

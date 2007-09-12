@@ -176,7 +176,7 @@ void MIDISong2::Play (bool looping)
 
 	// Find out if this an FM synth or not for EMIDI
 	DesignationMask = 0xFF0F;
-	if (MMSYSERR_NOERROR == midiOutGetDevCaps (mididevice, &caps, sizeof(caps)))
+	if (MMSYSERR_NOERROR == midiOutGetDevCaps (mididevice<0? MIDI_MAPPER:mididevice, &caps, sizeof(caps)))
 	{
 		if (caps.wTechnology == MOD_FMSYNTH)
 		{
@@ -188,7 +188,7 @@ void MIDISong2::Play (bool looping)
 		}
 	}
 
-	if (MMSYSERR_NOERROR != midiOutOpen (&MidiOut, mididevice, 0, 0, CALLBACK_NULL))
+	if (MMSYSERR_NOERROR != midiOutOpen (&MidiOut, mididevice<0? MIDI_MAPPER:mididevice, 0, 0, CALLBACK_NULL))
 	{
 		Printf (PRINT_BOLD, "Could not open MIDI out device\n");
 		return;

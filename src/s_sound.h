@@ -274,4 +274,8 @@ ReverbContainer *S_FindEnvironment (const char *name);
 ReverbContainer *S_FindEnvironment (int id);
 void S_AddEnvironment (ReverbContainer *settings);
 
+typedef TMap<FName, int> MidiDeviceMap;
+
+extern MidiDeviceMap MidiDevices;
+
 #endif

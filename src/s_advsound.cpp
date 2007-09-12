@@ -141,6 +141,7 @@ enum SICommands
 	SI_Registered,
 	SI_ArchivePath,
 	SI_MusicVolume,
+	SI_MidiDevice,
 	SI_IfDoom,
 	SI_IfHeretic,
 	SI_IfHexen,
@@ -177,6 +178,9 @@ struct FSavedPlayerSoundInfo
 	int lumpnum;
 	bool alias;
 };
+
+// This specifies whether Timidity or Windows playback is preferred for a certain song (only useful for Windows.)
+MidiDeviceMap MidiDevices;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -231,6 +235,7 @@ static const char *SICommandStrings[] =
 	"$registered",
 	"$archivepath",
 	"$musicvolume",
+	"$mididevice",
 	"$ifdoom",
 	"$ifheretic",
 	"$ifhexen",
@@ -1156,6 +1161,20 @@ static void S_AddSNDINFO (int lump)
 				strcpy (mv->MusicName, musname);
 				mv->Next = MusicVolumes;
 				MusicVolumes = mv;
+				}
+				break;
+
+			case SI_MidiDevice: {
+				SC_MustGetString();
+				FName nm = sc_String;
+				int tim;
+				SC_MustGetString();
+				if (SC_Compare("timidity")) tim = 1;
+				else if (SC_Compare("standard")) tim = 0;
+				else if (SC_Compare("opl")) tim = 2;
+				else if (SC_Compare("default")) tim = -1;
+				else SC_ScriptError("Unknown MIDI device %s\n", sc_String);
+				MidiDevices[nm]=tim;
 				}
 				break;
 

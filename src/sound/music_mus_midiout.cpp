@@ -114,7 +114,7 @@ void MUSSong2::Play (bool looping)
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	if (MMSYSERR_NOERROR != midiOutOpen (&MidiOut, mididevice, 0, 0, CALLBACK_NULL))
+	if (MMSYSERR_NOERROR != midiOutOpen (&MidiOut, mididevice<0? MIDI_MAPPER:mididevice, 0, 0, CALLBACK_NULL))
 	{
 		Printf (PRINT_BOLD, "Could not open MIDI out device\n");
 		return;

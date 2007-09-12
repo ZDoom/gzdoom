@@ -208,7 +208,7 @@ void I_UnRegisterSong (void *handle)
 	}
 }
 
-void *I_RegisterSong (const char *filename, char * musiccache, int offset, int len)
+void *I_RegisterSong (const char *filename, char * musiccache, int offset, int len, int device)
 {
 	FILE *file;
 	MusInfo *info = NULL;
@@ -254,18 +254,27 @@ void *I_RegisterSong (const char *filename, char * musiccache, int offset, int l
 	// Check for MUS format
 	if (id == MAKE_ID('M','U','S',0x1a))
 	{
-		if (GSnd != NULL && opl_enable)
+		if (GSnd != NULL && device != 0 && device != 1 && (opl_enable || device == 2) )
 		{
 			info = new OPLMUSSong (file, musiccache, len);
 		}
 		if (info == NULL)
 		{
 #ifdef _WIN32
-			if (snd_mididevice != -2)
+			if (device == 1 && GSnd != NULL)
+			{
+				info = new TimiditySong (file, musiccache, len);
+				if (!info->IsValid())
+				{
+					delete info;
+					info = NULL;
+				}
+			}
+			if (info == NULL && (snd_mididevice != -2 || device == 0))
 			{
 				info = new MUSSong2 (file, musiccache, len);
 			}
-			else if (GSnd != NULL)
+			else if (info == NULL && GSnd != NULL)
 #endif // _WIN32
 			{
 				info = new TimiditySong (file, musiccache, len);
@@ -277,11 +286,20 @@ void *I_RegisterSong (const char *filename, char * musiccache, int offset, int l
 	{
 		// This is a midi file
 #ifdef _WIN32
-		if (snd_mididevice != -2)
+		if (device == 1 && GSnd != NULL)
+		{
+			info = new TimiditySong (file, musiccache, len);
+			if (!info->IsValid())
+			{
+				delete info;
+				info = NULL;
+			}
+		}
+		if (info == NULL && (snd_mididevice != -2 || device == 0))
 		{
 			info = new MIDISong2 (file, musiccache, len);
 		}
-		else if (GSnd != NULL)
+		else if (info == NULL && GSnd != NULL)
 #endif // _WIN32
 		{
 			info = new TimiditySong (file, musiccache, len);

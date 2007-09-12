@@ -53,7 +53,7 @@ void I_PauseSong (void *handle);
 void I_ResumeSong (void *handle);
 
 // Registers a song handle to song data.
-void *I_RegisterSong (const char *file, char * musiccache, int offset, int length);
+void *I_RegisterSong (const char *file, char * musiccache, int offset, int length, int device);
 void *I_RegisterCDSong (int track, int cdid = 0);
 
 // Called by anything that wishes to start music.

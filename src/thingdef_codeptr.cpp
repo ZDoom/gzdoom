@@ -1451,7 +1451,8 @@ enum SIX_Flags
 	SIXF_ABSOLUTEANGLE=4,
 	SIXF_ABSOLUTEMOMENTUM=8,
 	SIXF_SETMASTER=16,
-	SIXF_NOCHECKPOSITION=32
+	SIXF_NOCHECKPOSITION=32,
+	SIXF_TELEFRAG=64
 };
 
 void A_SpawnItemEx(AActor * self)
@@ -1520,6 +1521,7 @@ void A_SpawnItemEx(AActor * self)
 		mo->momy=ymom;
 		mo->momz=zmom;
 		mo->angle=Angle;
+		if (flags & SIXF_TELEFRAG) P_TeleportMove(mo, mo->x, mo->y, mo->z, true);
 	}
 }
 

@@ -213,9 +213,9 @@ TimiditySong::TimiditySong (FILE *file, char * musiccache, int len)
 	{
 		success = ProduceMIDI (buf, f);
 	}
+	fclose (f);
 	if (file!=NULL) 
 	{
-		fclose (f);
 		delete[] buf;
 	}
 

@@ -88,8 +88,15 @@ static void ParseDecorate ()
 			SC_MustGetString();
 			// This is not using SC_Open because it can print a more useful error message when done here
 			lump = Wads.CheckNumForFullName(sc_String);
-			if (lump==-1) lump = Wads.CheckNumForName(sc_String);
-			if (lump==-1) SC_ScriptError("Lump '%s' not found", sc_String);
+
+			// Try a normal WAD name lookup only if it's a proper name without path separator and
+			// not longer than 8 characters.
+			if (lump==-1 && strlen(sc_String) <= 8 && !strchr(sc_String, '/')) 
+				lump = Wads.CheckNumForName(sc_String);
+
+			if (lump==-1) 
+				SC_ScriptError("Lump '%s' not found", sc_String);
+
 			SC_SaveScriptState();
 			SC_OpenLumpNum(lump, sc_String);
 			recursion++;

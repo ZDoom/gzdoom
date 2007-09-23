@@ -1,3 +1,8 @@
+September 23, 2007 (Changes by Graf Zahl)
+- fixed: The #include command in DECORATE always tried to look up the name
+  as a normal WAD lump name. It only should do that if the name is not longer
+  than 8 characters and doesn't contain any '/'-characters.
+
 September 11, 2007 (Changes by Graf Zahl)
 - fixed: The Timidity player didn't close its temporary files and left them
   behind because it couldn't delete them.

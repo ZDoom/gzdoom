@@ -1,3 +1,9 @@
+September 25, 2007 (Changes by Graf Zahl)
+- Fixed: AActor::CopyFriendliness must not copy the target if it has the 
+  MF3_NOTARGET flag set.
+- Fixed: Picking up weapons in deathmatch gives 2.5 times as much ammo as
+  in other modes.
+
 September 23, 2007 (Changes by Graf Zahl)
 - fixed: The #include command in DECORATE always tried to look up the name
   as a normal WAD lump name. It only should do that if the name is not longer

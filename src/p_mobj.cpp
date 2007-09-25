@@ -866,7 +866,7 @@ void AActor::CopyFriendliness (const AActor *other, bool changeTarget)
 	flags3 = (flags3 & ~(MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS)) | (other->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS));
 	flags4 = (flags4 & ~MF4_NOHATEPLAYERS) | (other->flags4 & MF4_NOHATEPLAYERS);
 	FriendPlayer = other->FriendPlayer;
-	if (changeTarget)
+	if (changeTarget && !(other->target->flags3 & MF3_NOTARGET))
 	{
 		// LastHeard must be set as well so that A_Look can react to the new target if called
 		LastHeard = target = other->target;

@@ -2042,7 +2042,8 @@ void G_WorldDone (void)
 			thiscluster->finaleflat, thiscluster->exittext,
 			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
 			thiscluster->flags & CLUSTER_FINALEPIC,
-			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT);
+			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
+			true);
 	}
 	else
 	{
@@ -2059,7 +2060,8 @@ void G_WorldDone (void)
 					nextcluster->finaleflat, nextcluster->entertext,
 					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
 					nextcluster->flags & CLUSTER_FINALEPIC,
-					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT);
+					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT,
+					false);
 			}
 			else if (thiscluster->exittext)
 			{
@@ -2068,7 +2070,8 @@ void G_WorldDone (void)
 					thiscluster->finaleflat, thiscluster->exittext,
 					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
 					thiscluster->flags & CLUSTER_FINALEPIC,
-					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT);
+					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
+					false);
 			}
 		}
 	}

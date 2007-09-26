@@ -1,3 +1,8 @@
+September 26, 2007 (Changes by Graf Zahl)
+- Fixed: F_StartFinale shouldn't get the information if the game is about
+  to end from level.nextmap. For example, this check is wrong for a secret
+  exit.
+
 September 25, 2007 (Changes by Graf Zahl)
 - Fixed: AActor::CopyFriendliness must not copy the target if it has the 
   MF3_NOTARGET flag set.

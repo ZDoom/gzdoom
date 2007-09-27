@@ -1078,7 +1078,7 @@ void FWadCollection::InitHashChains (void)
 
 bool FWadCollection::IsMarker (const FWadCollection::LumpRecord *lump, const char *marker) const
 {
-	if (lump->namespc != ns_global)
+	if (lump->namespc != ns_global || (lump->flags & LUMPF_ZIPFILE))
 	{
 		return false;
 	}

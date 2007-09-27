@@ -307,13 +307,32 @@ static bool PTR_TraceIterator (intercept_t *in)
 	hitz = StartZ + FixedMul (Vz, dist);
 
 	if (hitz > in->d.thing->z + in->d.thing->height)
-	{ // hit above actor
-		return true;
+	{ // trace enters above actor
+		if (Vz >= 0) return true;      // Going up: can't hit
+		
+		// Does it hit the top of the actor?
+		dist = StartZ - (in->d.thing->z + in->d.thing->height);
+		if (dist > MaxDist) return true;
+		in->frac = FixedDiv(dist, MaxDist);
+
+		hitx = trace.x + FixedMul (Vx, dist);
+		hity = trace.y + FixedMul (Vy, dist);
+		hitz = StartZ + FixedMul (Vz, dist);
 	}
 	else if (hitz < in->d.thing->z)
-	{ // hit below actor
-		return true;
+	{ // trace enters below actor
+		if (Vz <= 0) return true;      // Going down: can't hit
+		
+		// Does it hit the bottom of the actor?
+		dist = in->d.thing->z - StartZ;
+		if (dist > MaxDist) return true;
+		in->frac = FixedDiv(dist, MaxDist);
+
+		hitx = trace.x + FixedMul (Vx, dist);
+		hity = trace.y + FixedMul (Vy, dist);
+		hitz = StartZ + FixedMul (Vz, dist);
 	}
+
 
 	Results->HitType = TRACE_HitActor;
 	Results->X = hitx;

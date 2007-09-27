@@ -334,7 +334,7 @@ void A_FireCGun (AActor *actor)
 			// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
 			FState * atk = weapon->FindState(NAME_Fire);
 
-			int theflash = clamp (int(players->psprites[ps_weapon].state - atk), 0, 1);
+			int theflash = clamp (int(player->psprites[ps_weapon].state - atk), 0, 1);
 
 			if (flash[theflash].sprite.index != flash->sprite.index)
 			{

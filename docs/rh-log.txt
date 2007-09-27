@@ -1,4 +1,9 @@
 September 27, 2007 (Changes by Graf Zahl)
+- Fixed: When I changed the scaling of textures to full fixed point precision
+  I forgot to change the call that draws the automap marker numbers.
+- Fixed: The chaingun-flash-checking code always checked the first player,
+  not the calling one.
+- Fixed: Hitscan traces didn't hit actors when entering from above or below
 - Fixed: The DECORATE expression evaluator was reading the operator token
   from the wrong variable in a few places resulting in incorrect calculations.
 - Fixed: MP3/OGG music always looped because the looping flag was always

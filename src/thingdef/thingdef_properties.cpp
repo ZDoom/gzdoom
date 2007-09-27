@@ -1647,8 +1647,8 @@ static void ActorGravity (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat ();
 
-	if (sc_Float < 0.f || sc_Float > 1.f)
-		SC_ScriptError ("Gravity must be in the range [0,1]");
+	if (sc_Float < 0.f)
+		SC_ScriptError ("Gravity must not be negative.");
 
 	defaults->gravity = FLOAT2FIXED (sc_Float);
 

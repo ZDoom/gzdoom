@@ -563,7 +563,7 @@ static ExpData *ParseExpressionF (const PClass *cls)
 		int token = sc_TokenType;
 		ExpData *right = ParseExpressionE (cls);
 		ExpData *data =  new ExpData;
-		data->Type = token == '<' ? EX_LT : sc_TokenType == '>' ? EX_GT : sc_TokenType == TK_Leq? EX_LE : EX_GE;
+		data->Type = token == '<' ? EX_LT : token == '>' ? EX_GT : token == TK_Leq? EX_LE : EX_GE;
 		data->Children[0] = tmp;
 		data->Children[1] = right;
 		data->EvalConst (cls);
@@ -620,7 +620,7 @@ static ExpData *ParseExpressionC (const PClass *cls)
 		int token = sc_TokenType;
 		ExpData *right = ParseExpressionB (cls);
 		ExpData *data =  new ExpData;
-		data->Type = token == '*'? EX_Mul : sc_TokenType == '/'? EX_Div : EX_Mod;
+		data->Type = token == '*'? EX_Mul : token == '/'? EX_Div : EX_Mod;
 		data->Children[0] = tmp;
 		data->Children[1] = right;
 		data->EvalConst (cls);

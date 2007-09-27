@@ -1,3 +1,12 @@
+September 27, 2007 (Changes by Graf Zahl)
+- Fixed: The DECORATE expression evaluator was reading the operator token
+  from the wrong variable in a few places resulting in incorrect calculations.
+- Fixed: MP3/OGG music always looped because the looping flag was always
+  set when FMOD was called to play it.
+- Removed upper limit of 1 for an actor's gravity factor.
+- Fixed: A_VileTarget spawned the fire at coordinate (target->x, target->x)
+  instead of (target->x, target->y). (Old vanilla bug.)
+
 September 26, 2007 (Changes by Graf Zahl)
 - Fixed: F_StartFinale shouldn't get the information if the game is about
   to end from level.nextmap. For example, this check is wrong for a secret

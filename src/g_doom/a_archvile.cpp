@@ -75,7 +75,7 @@ void A_VileTarget (AActor *actor)
 
 	A_FaceTarget (actor);
 
-	fog = Spawn ("ArchvileFire", actor->target->x, actor->target->x,
+	fog = Spawn ("ArchvileFire", actor->target->x, actor->target->y,
 		actor->target->z, ALLOW_REPLACE);
 	
 	actor->tracer = fog;

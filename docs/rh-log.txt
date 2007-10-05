@@ -1,3 +1,20 @@
+October 5, 2007 (Changes by Graf Zahl)
+- Fixed: Tne Imp's raise state sequence was wrong due to a typo.
+- Fixed: The shotgun had spawn ID 21 instead of 27.
+- Fixed: All 3 states in the DoomUnusedStates actor need to end with a 'stop'.
+
+October 3, 2007 (Changes by Graf Zahl)
+- Fixed: The DECORATE TakeInventory functions didn't check the IF_KEEPDEPLETED
+  flag.
+
+September 29, 2007 (Changes by Graf Zahl)
+- Fixed: ClearInventory should leave ammo in the inventory because it might be
+  referenced by undroppable weapons.
+- Fixed: Several functions in a_artifacts.cpp were missing a check for a valid
+  owner.
+- Fixed: sc_man counted lines wrong when ungetting strings but getting tokens
+  next.
+
 September 27, 2007 (Changes by Graf Zahl)
 - Fixed: When I changed the scaling of textures to full fixed point precision
   I forgot to change the call that draws the automap marker numbers.

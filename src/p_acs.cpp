@@ -135,7 +135,14 @@ static void DoClearInv (AActor *actor)
 		AInventory *next = inv->Inventory;
 		if (!(inv->ItemFlags & IF_UNDROPPABLE))
 		{
-			inv->Destroy ();
+			// Fix for undroppable weapons. Is this ok?
+			if (inv->IsKindOf(RUNTIME_CLASS(AAmmo)))
+			{
+				AAmmo *ammo = static_cast<AAmmo*>(inv);
+				ammo->Amount = 0;
+			}
+			else 
+				inv->Destroy ();
 		}
 		else if (inv->GetClass() == RUNTIME_CLASS(AHexenArmor))
 		{

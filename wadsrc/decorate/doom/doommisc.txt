@@ -70,8 +70,11 @@ ACTOR DoomUnusedStates
 	States
 	{
 		SMT2 A -1
+		stop
 	Death:
 		PLAY N -1
+		stop
 		PLAY S -1
+		stop
 	}
 }

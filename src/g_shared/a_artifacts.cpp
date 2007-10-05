@@ -152,7 +152,7 @@ void APowerup::InitEffect ()
 
 void APowerup::DoEffect ()
 {
-	if (Owner == NULL)
+	if (Owner == NULL || Owner->player == NULL)
 	{
 		return;
 	}
@@ -1189,6 +1189,9 @@ fixed_t APowerSpeed ::GetSpeedFactor ()
 void APowerSpeed::DoEffect ()
 {
 	Super::DoEffect ();
+	
+	if (Owner == NULL || Owner->player == NULL)
+		return;
 
 	if (Owner->player->cheats & CF_PREDICTING)
 		return;
@@ -1308,8 +1311,11 @@ void APowerTargeter::PositionAccuracy ()
 {
 	player_t *player = Owner->player;
 
-	player->psprites[ps_targetleft].sx = (160-3)*FRACUNIT - ((100 - player->accuracy) << FRACBITS);
-	player->psprites[ps_targetright].sx = (160-3)*FRACUNIT + ((100 - player->accuracy) << FRACBITS);
+	if (player != NULL)
+	{
+		player->psprites[ps_targetleft].sx = (160-3)*FRACUNIT - ((100 - player->accuracy) << FRACBITS);
+		player->psprites[ps_targetright].sx = (160-3)*FRACUNIT + ((100 - player->accuracy) << FRACBITS);
+	}
 }
 
 // Frightener Powerup --------------------------------
@@ -1369,6 +1375,9 @@ END_DEFAULTS
 void APowerTimeFreezer::InitEffect( )
 {
 	int	ulIdx;
+
+	if (Owner== NULL || Owner->player == NULL)
+		return;
 
 	// When this powerup is in effect, pause the music.
 	S_PauseSound( false );
@@ -1570,6 +1579,9 @@ END_DEFAULTS
 
 void APowerDrain::InitEffect( )
 {
+	if (Owner== NULL || Owner->player == NULL)
+		return;
+
 	// Give the player the power to drain life from opponents when he damages them.
 	Owner->player->cheats |= CF_DRAIN;
 }
@@ -1605,6 +1617,9 @@ END_DEFAULTS
 
 void APowerRegeneration::InitEffect( )
 {
+	if (Owner== NULL || Owner->player == NULL)
+		return;
+
 	// Give the player the power to regnerate lost life.
 	Owner->player->cheats |= CF_REGENERATION;
 }
@@ -1638,6 +1653,9 @@ END_DEFAULTS
 
 void APowerHighJump::InitEffect( )
 {
+	if (Owner== NULL || Owner->player == NULL)
+		return;
+
 	// Give the player the power to jump much higher.
 	Owner->player->cheats |= CF_HIGHJUMP;
 }

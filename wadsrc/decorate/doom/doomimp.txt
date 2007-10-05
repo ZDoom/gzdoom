@@ -54,8 +54,7 @@ ACTOR DoomImp 3001
 		TROO U -1
 		Stop
 	Raise:
-		TROO M 8
-		TROO KLJI 8
+		TROO MLKJI 8
 		Goto See
 	}
 }

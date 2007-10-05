@@ -1303,7 +1303,7 @@ void DoTakeInventory(AActor * self, AActor * receiver)
 		if (inv->Amount > 0 && pStateCall != NULL) pStateCall->Result=true;
 		if (!amount || amount>=inv->Amount) 
 		{
-			if (inv->IsKindOf(RUNTIME_CLASS(AAmmo))) inv->Amount=0;
+			if (inv->ItemFlags&IF_KEEPDEPLETED) inv->Amount=0;
 			else inv->Destroy();
 		}
 		else inv->Amount-=amount;

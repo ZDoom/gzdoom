@@ -73,8 +73,10 @@ static char StringBuffer[MAX_STRING_SIZE];
 static bool ScriptOpen = false;
 static int ScriptSize;
 static bool AlreadyGot = false;
+static int AlreadyGotLine;
 static bool LastGotToken = false;
 static char *LastGotPtr;
+static int LastGotLine;
 static bool FreeScript = false;
 static char *SavedScriptPtr;
 static int SavedScriptLine;
@@ -180,6 +182,7 @@ static void SC_PrepareScript (void)
 	AlreadyGot = false;
 	LastGotToken = false;
 	LastGotPtr = NULL;
+	LastGotLine = 1;
 	SavedScriptPtr = NULL;
 	CMode = false;
 	Escape = true;
@@ -299,6 +302,7 @@ static bool SC_ScanString (bool tokens)
 			return true;
 		}
 		ScriptPtr = LastGotPtr;
+		sc_Line = LastGotLine;
 	}
 
 	sc_Crossed = false;
@@ -309,6 +313,7 @@ static bool SC_ScanString (bool tokens)
 	}
 
 	LastGotPtr = ScriptPtr;
+	LastGotLine = sc_Line;
 
 	// In case the generated scanner does not use marker, avoid compiler warnings.
 	marker;
@@ -644,6 +649,7 @@ void SC_MustGetFloat (void)
 void SC_UnGet (void)
 {
 	AlreadyGot = true;
+	AlreadyGotLine = LastGotLine;	// in case of an error we want the line of the last token.
 }
 
 //==========================================================================
@@ -912,7 +918,7 @@ void STACK_ARGS SC_ScriptError (const char *message, ...)
 	}
 
 	I_Error ("Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
-		sc_Line, composed.GetChars());
+		AlreadyGot? AlreadyGotLine : sc_Line, composed.GetChars());
 }
 
 //==========================================================================

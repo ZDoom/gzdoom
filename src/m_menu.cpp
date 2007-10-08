@@ -1709,7 +1709,11 @@ void M_VerifyNightmare (int ch)
 		return;
 		
 	G_DeferedInitNew (EpisodeMaps[epi], 4);
-	gamestate = gamestate == GS_FULLCONSOLE ? GS_HIDECONSOLE : gamestate;
+	if (gamestate == GS_FULLCONSOLE)
+	{
+		gamestate = GS_HIDECONSOLE;
+		gameaction = ga_newgame;
+	} 
 	M_ClearMenus ();
 }
 

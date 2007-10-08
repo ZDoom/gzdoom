@@ -1,3 +1,7 @@
+October 8, 2007 (Changes by Graf Zahl)
+- Fixed: The code that checked hitscans entering an actor from above and below
+  calculated the hit position wrong.
+
 October 5, 2007 (Changes by Graf Zahl)
 - Fixed: Tne Imp's raise state sequence was wrong due to a typo.
 - Fixed: The shotgun had spawn ID 21 instead of 27.

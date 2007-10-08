@@ -311,7 +311,8 @@ static bool PTR_TraceIterator (intercept_t *in)
 		if (Vz >= 0) return true;      // Going up: can't hit
 		
 		// Does it hit the top of the actor?
-		dist = StartZ - (in->d.thing->z + in->d.thing->height);
+		dist = FixedDiv(in->d.thing->z + in->d.thing->height - StartZ, Vz);
+
 		if (dist > MaxDist) return true;
 		in->frac = FixedDiv(dist, MaxDist);
 
@@ -324,7 +325,7 @@ static bool PTR_TraceIterator (intercept_t *in)
 		if (Vz <= 0) return true;      // Going down: can't hit
 		
 		// Does it hit the bottom of the actor?
-		dist = in->d.thing->z - StartZ;
+		dist = FixedDiv(in->d.thing->z - StartZ, Vz);
 		if (dist > MaxDist) return true;
 		in->frac = FixedDiv(dist, MaxDist);
 

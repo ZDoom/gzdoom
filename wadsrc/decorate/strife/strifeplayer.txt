@@ -31,6 +31,10 @@ ACTOR StrifePlayer : PlayerPawn
 	Melee:
 		PLAY F 6
 		goto Missile
+	Pain:
+		PLAY Q 4
+		PLAY Q 4 A_Pain
+		Goto Spawn
 	Death:
 		PLAY H 3
 		PLAY I 3 A_PlayerScream

@@ -183,7 +183,7 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 		}
 
 		//Strafing.
-		if (b->enemy->flags & MF3_ISMONSTER) //It's just a monster so take it down cool.
+		if (b->enemy->flags3 & MF3_ISMONSTER) //It's just a monster so take it down cool.
 		{
 			cmd->ucmd.sidemove = b->sleft ? -SIDEWALK : SIDEWALK;
 		}

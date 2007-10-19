@@ -29,7 +29,7 @@ ACTOR HereticPlayer : PlayerPawn
 		PLAY G 4 A_Pain
 		Goto Spawn
 	Death:
-		PLAY H 6 A_PlayerSkinCheck(AltSkinDeath)
+		PLAY H 6 A_PlayerSkinCheck("AltSkinDeath")
 		PLAY I 6 A_PlayerScream
 		PLAY JK 6
 		PLAY L 6 A_NoBlocking
@@ -37,7 +37,7 @@ ACTOR HereticPlayer : PlayerPawn
 		PLAY P -1
 		Stop
 	XDeath:
-		PLAY Q 0 A_PlayerSkinCheck(AltSkinXDeath)
+		PLAY Q 0 A_PlayerSkinCheck("AltSkinXDeath")
 		PLAY Q 5 A_PlayerScream
 		PLAY R 0 A_NoBlocking
 		PLAY R 5 A_SkullPop
@@ -99,7 +99,7 @@ ACTOR BloodySkull : PlayerChunk
 	{
 	Spawn:
 		BSKL A 0
-		BSKL ABCDE 5 A_CheckFloor(Hit)
+		BSKL ABCDE 5 A_CheckFloor("Hit")
 		Goto Spawn+1
 	Hit:
 		BSKL F 16 A_CheckPlayerDone

@@ -1273,7 +1273,7 @@ FUNC(LS_Thing_Hate)
 						hatee == hater ||					// can't hate self
 						!(hatee->flags & MF_SHOOTABLE) ||	// can't hate nonshootable things
 						hatee->health <= 0 ||				// can't hate dead things
-						(hatee->flags & MF2_DORMANT));		// can't target dormant things
+						(hatee->flags2 & MF2_DORMANT));	
 			}
 
 			if (hatee != NULL && hatee != hater && (arg2 == 0 || (hater->goal != NULL && hater->target != hater->goal)))

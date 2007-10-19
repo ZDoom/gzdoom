@@ -788,7 +788,9 @@ do_stop:
 									if (JumpParameters.Size()==0) JumpParameters.Push(NAME_None);
 
 									v = -(int)JumpParameters.Size();
-									FString statestring = ParseStateString();
+									// This forces quotation marks around the state name.
+									SC_MustGetToken(TK_StringConst);
+									FString statestring = sc_String; // ParseStateString();
 									const PClass *stype=NULL;
 									int scope = statestring.IndexOf("::");
 									if (scope >= 0)

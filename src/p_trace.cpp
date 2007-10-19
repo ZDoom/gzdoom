@@ -319,6 +319,10 @@ static bool PTR_TraceIterator (intercept_t *in)
 		hitx = trace.x + FixedMul (Vx, dist);
 		hity = trace.y + FixedMul (Vy, dist);
 		hitz = StartZ + FixedMul (Vz, dist);
+
+		// calculated coordinate is outside the actor's bounding box
+		if (abs(hitx - in->d.thing->x) > in->d.thing->radius ||
+			abs(hity - in->d.thing->y) > in->d.thing->radius) return true;
 	}
 	else if (hitz < in->d.thing->z)
 	{ // trace enters below actor
@@ -332,6 +336,10 @@ static bool PTR_TraceIterator (intercept_t *in)
 		hitx = trace.x + FixedMul (Vx, dist);
 		hity = trace.y + FixedMul (Vy, dist);
 		hitz = StartZ + FixedMul (Vz, dist);
+
+		// calculated coordinate is outside the actor's bounding box
+		if (abs(hitx - in->d.thing->x) > in->d.thing->radius ||
+			abs(hity - in->d.thing->y) > in->d.thing->radius) return true;
 	}
 
 

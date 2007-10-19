@@ -104,7 +104,15 @@ void A_Tracer (AActor *self)
 
 	if (dist < 1)
 		dist = 1;
-	slope = (dest->z+40*FRACUNIT - self->z) / dist;
+
+	if (dest->height >= 56*FRACUNIT)
+	{
+		slope = (dest->z+40*FRACUNIT - self->z) / dist;
+	}
+	else
+	{
+		slope = (dest->z + self->height*2/3 - self->z) / dist;
+	}
 
 	if (slope < self->momz)
 		self->momz -= FRACUNIT/8;

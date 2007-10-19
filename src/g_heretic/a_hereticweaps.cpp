@@ -1535,6 +1535,9 @@ END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (AGauntletsPowered, Heretic, -1, 0)
 	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_POWERED_UP|WIF_BOT_MELEE)
+	PROP_Weapon_UpState (S_GAUNTLETUP2)
+	PROP_Weapon_DownState (S_GAUNTLETDOWN2)
+	PROP_Weapon_ReadyState (S_GAUNTLETREADY2)
 	PROP_Weapon_AtkState (S_GAUNTLETATK2)
 	PROP_Weapon_HoldAtkState (S_GAUNTLETATK2+2)
 	PROP_Weapon_SisterType ("Gauntlets")

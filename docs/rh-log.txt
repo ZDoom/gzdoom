@@ -1,3 +1,23 @@
+October 19, 2007 (Changes by Graf Zahl)
+- Fixed: POwered up weapons with a different ready state than their base
+  weapon didn't change back when the powerup expired.
+- Fixed: The powered up version of Heretic's Gauntlets missed the proper
+  state assignments for Ready, Lower and Raise.
+
+October 17, 2007 (Changes by Graf Zahl)
+- Fixed: The Strife player was missing its pain state.
+
+October 12, 2007 (Changes by Graf Zahl)
+- Fixed: Revenant missiles couldn't home in on targets with a height lower than
+  40.
+- Fixed: The code which checked for hitscan traces hitting actors from above
+  and below must test whether the calculated hit position is actually inside 
+  the actor being checked. If it crosses the top/bottom plane outside the
+  bounding box there can't be a hit.
+- Changed: State labels in code pointer calls must now be enclosed in quotation marks.
+  This was done to ensure compatibility with parsers that will parse these as
+  identifier-aware script code later.
+
 October 8, 2007 (Changes by Graf Zahl)
 - Fixed: The code that checked hitscans entering an actor from above and below
   calculated the hit position wrong.

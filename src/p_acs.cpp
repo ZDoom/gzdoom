@@ -693,12 +693,28 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 	Arrays = NULL;
 	ArrayStore = NULL;
 	Chunks = NULL;
+	Data = NULL;
 	Format = ACS_Unknown;
 	LumpNum = lumpnum;
 	memset (MapVarStore, 0, sizeof(MapVarStore));
 	ModuleName[0] = 0;
 
+
+	// Now that everything is set up, record this module as being among the loaded modules.
+	// We need to do this before resolving any imports, because an import might (indirectly)
+	// need to resolve exports in this module. The only things that can be exported are
+	// functions and map variables, which must already be present if they're exported, so
+	// this is okay.
+
+	// This must be done first for 2 reasons:
+	// 1. If not, corrupt modules cause memory leaks
+	// 2. Corrupt modules won't be reported when a level is being loaded if this function quits before
+	//    adding it to the list.
+    LibraryID = StaticModules.Push (this) << 16;
+
 	if (fr == NULL) len = Wads.LumpLength (lumpnum);
+
+
 
 	// Any behaviors smaller than 32 bytes cannot possibly contain anything useful.
 	// (16 bytes for a completely empty behavior + 12 bytes for one script header
@@ -802,7 +818,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		{
 			MapVars[i] = &MapVarStore[i];
 		}
-		LibraryID = StaticModules.Push (this) << 16;
+		//LibraryID = StaticModules.Push (this) << 16;
 	}
 	else
 	{
@@ -885,13 +901,6 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 			}
 		}
 
-		// Now that everything is set up, record this module as being among the loaded modules.
-		// We need to do this before resolving any imports, because an import might (indirectly)
-		// need to resolve exports in this module. The only things that can be exported are
-		// functions and map variables, which must already be present if they're exported, so
-		// this is okay.
-        LibraryID = StaticModules.Push (this) << 16;
-
 		// Tag the library ID to any map variables that are initialized with strings
 		if (LibraryID != 0)
 		{
@@ -941,7 +950,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 					{
 						module = StaticLoadModule (lump);
 					}
-					Imports.Push (module);
+					if (module != NULL) Imports.Push (module);
 					do ; while (parse[++i]);
 				}
 				++i;

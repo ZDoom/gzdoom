@@ -14,7 +14,7 @@ static FRandom pr_serpentmeattack ("SerpentMeAttack");
 static FRandom pr_serpentgibs ("SerpentGibs");
 static FRandom pr_delaygib ("DelayGib");
 
-void A_DoChase(AActor * actor, bool fastchase, FState * meleestate, FState * missilestate, bool playactive, bool nightmarefast);
+void A_DoChase(AActor * actor, bool fastchase, FState * meleestate, FState * missilestate, bool playactive, bool nightmarefast,bool dontmove);
 
 void A_SerpentChase (AActor *);
 void A_SerpentHumpDecide (AActor *);
@@ -403,7 +403,7 @@ void A_SerpentHide (AActor *actor)
 
 void A_SerpentChase (AActor *actor)
 {
-	A_DoChase (actor, false, actor->MeleeState, NULL, false, true);
+	A_DoChase (actor, false, actor->MeleeState, NULL, false, true, false);
 }
 
 //============================================================================
@@ -501,7 +501,7 @@ void A_SerpentDiveSound (AActor *actor)
 
 void A_SerpentWalk (AActor *actor)
 {
-	A_DoChase (actor, false, &ASerpent::States[S_SERPENT_ATK1], NULL, true, true);
+	A_DoChase (actor, false, &ASerpent::States[S_SERPENT_ATK1], NULL, true, true, false);
 }
 
 //============================================================================

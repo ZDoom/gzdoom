@@ -1,4 +1,20 @@
+October 28, 2007 (Changes by Graf Zahl)
+- Fixed: The pointer cleanup code must also check a sector's sky box pointers.
+
+October 27, 2007 (Changes by Graf Zahl)
+- Fixed: Right after teleporting P_SlideMove could cause player movement.
+  Added a check for reactiontime to prevent that.
+- Fixed: PainChances and Damagefactors were never freed.
+- Added option to A_Chase that prevents the monster from moving.
+
+October 20, 2007 (Changes by Graf Zahl)
+- Added some NULL pointer checks to AActor::GiveAmmo.
+- Fixed: The FSwordMissile was missing the special damage handling that
+  reduces damage when hitting a player.
+
 October 19, 2007 (Changes by Graf Zahl)
+- Fixed: APlayerPawn::UpdateWaterLevel must check if the actor is still
+  connected to a player.
 - Fixed: POwered up weapons with a different ready state than their base
   weapon didn't change back when the powerup expired.
 - Fixed: The powered up version of Heretic's Gauntlets missed the proper

@@ -19,4 +19,5 @@ const int CHF_FASTCHASE = 1;
 const int CHF_NOPLAYACTIVE = 2;
 const int CHF_NIGHTMAREFAST = 4;
 const int CHF_RESURRECT = 8;
+const int CHF_DONTMOVE = 16;
 

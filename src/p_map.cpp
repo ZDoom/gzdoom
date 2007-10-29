@@ -2151,6 +2151,9 @@ void P_SlideMove (AActor *mo, fixed_t tryx, fixed_t tryy, int numsteps)
 
 	slidemo = mo;
 	hitcount = 3;
+
+	if (mo->player && mo->reactiontime > 0)
+		return;	// player coming right out of a teleporter.
 	
   retry:
 	if (!--hitcount)

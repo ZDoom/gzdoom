@@ -96,6 +96,16 @@ void PClass::StaticFreeData (PClass *type)
 				delete[] type->ActorInfo->OwnedStates;
 				type->ActorInfo->OwnedStates = NULL;
 			}
+			if (type->ActorInfo->DamageFactors != NULL)
+			{
+				delete type->ActorInfo->DamageFactors;
+				type->ActorInfo->DamageFactors = NULL;
+			}
+			if (type->ActorInfo->PainChances != NULL)
+			{
+				delete type->ActorInfo->PainChances;
+				type->ActorInfo->PainChances = NULL;
+			}
 			delete type->ActorInfo;
 			type->ActorInfo = NULL;
 		}

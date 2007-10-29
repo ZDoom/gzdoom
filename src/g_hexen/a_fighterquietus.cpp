@@ -213,6 +213,7 @@ class AFSwordMissile : public AActor
 	DECLARE_ACTOR (AFSwordMissile, AActor)
 public:
 	void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
+	int DoSpecialDamage(AActor *victim, AActor *source, int damage);
 };
 
 FState AFSwordMissile::States[] =
@@ -256,6 +257,16 @@ void AFSwordMissile::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
 	damage = 64;
 	hurtSource = false;
 }
+
+int AFSwordMissile::DoSpecialDamage(AActor *victim, AActor *source, int damage)
+{
+	if (victim->player)
+	{
+		damage -= damage >> 2;
+	}
+	return damage;
+}
+
 
 // Fighter Sword Flame ------------------------------------------------------
 

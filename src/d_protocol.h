@@ -188,6 +188,7 @@ enum ECheatCommand
 	CHT_LEGO,
 	CHT_RESSURECT,		// [GRB]
 	CHT_CLEARFROZENPROPS,
+	CHT_FREEZE,
 };
 
 void StartChunk (int id, BYTE **stream);

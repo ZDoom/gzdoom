@@ -178,6 +178,7 @@ ACTOR SGShard1 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{
@@ -198,6 +199,7 @@ ACTOR SGShard2 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{
@@ -218,6 +220,7 @@ ACTOR SGShard3 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{
@@ -238,6 +241,7 @@ ACTOR SGShard4 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{
@@ -258,6 +262,7 @@ ACTOR SGShard5 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{
@@ -278,6 +283,7 @@ ACTOR SGShard6 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{
@@ -298,6 +304,7 @@ ACTOR SGShard7 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{
@@ -318,6 +325,7 @@ ACTOR SGShard8 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{
@@ -338,6 +346,7 @@ ACTOR SGShard9 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{
@@ -358,6 +367,7 @@ ACTOR SGShard0 : GlassShard
 	Projectile
 	-ACTIVATEMCROSS
 	-ACTIVATEIMPACT
+	+HEXENBOUNCE
 	BounceFactor 0.3
 	States
 	{

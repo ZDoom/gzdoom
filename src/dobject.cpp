@@ -46,6 +46,7 @@
 #include "i_system.h"
 #include "r_state.h"
 #include "stats.h"
+#include "a_sharedglobal.h"
 
 #include "autosegs.h"
 
@@ -506,6 +507,14 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 			if (sectors[i].SoundTarget == old)
 			{
 				sectors[i].SoundTarget = static_cast<AActor *>(notOld);
+			}
+			if (sectors[i].CeilingSkyBox == old)
+			{
+				sectors[i].CeilingSkyBox = static_cast<ASkyViewpoint *>(notOld);
+			}
+			if (sectors[i].FloorSkyBox == old)
+			{
+				sectors[i].FloorSkyBox = static_cast<ASkyViewpoint *>(notOld);
 			}
 		}
 	}

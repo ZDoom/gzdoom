@@ -74,21 +74,21 @@ CCMD (removebots)
 	Net_WriteByte (DEM_KILLBOTS);
 }
 
+extern bool CheckCheatmode ();
+
 CCMD (freeze)
 {
-	if (!netgame)
-	{
-		if (bglobal.freeze)
-		{
-			bglobal.freeze = false;
-			Printf ("Freeze mode off\n");
-		}
-		else
-		{
-			bglobal.freeze = true;
-			Printf ("Freeze mode on\n");
-		}
-	}
+   if (CheckCheatmode ())
+      return;
+
+   if (netgame && consoleplayer != Net_Arbitrator)
+   {
+      Printf ("Only player %d can use freeze mode\n", Net_Arbitrator + 1);
+      return;
+   }
+
+   Net_WriteByte (DEM_GENERICCHEAT);
+   Net_WriteByte (CHT_FREEZE);
 }
 
 CCMD (listbots)

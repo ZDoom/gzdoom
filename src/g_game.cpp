@@ -370,7 +370,7 @@ CCMD (invuse)
 {
 	if (players[consoleplayer].inventorytics == 0 || gameinfo.gametype == GAME_Strife)
 	{
-		SendItemUse = players[consoleplayer].mo->InvSel;
+		if (players[consoleplayer].mo) SendItemUse = players[consoleplayer].mo->InvSel;
 	}
 	players[consoleplayer].inventorytics = 0;
 }
@@ -385,7 +385,7 @@ CCMD (use)
 
 CCMD (invdrop)
 {
-	SendItemDrop = players[consoleplayer].mo->InvSel;
+	if (players[consoleplayer].mo) SendItemDrop = players[consoleplayer].mo->InvSel;
 }
 
 CCMD (drop)

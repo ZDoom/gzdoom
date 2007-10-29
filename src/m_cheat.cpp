@@ -399,6 +399,19 @@ void cht_DoCheat (player_t *player, int cheat)
 		player->cheats &= ~(CF_FROZEN|CF_TOTALLYFROZEN);
 		msg = "Frozen player properties turned off";
 		break;
+
+	case CHT_FREEZE:
+		if (bglobal.freeze)
+		{
+			bglobal.freeze = false;
+			msg = "Freeze mode off\n";
+		}
+		else
+		{
+			bglobal.freeze = true;
+			msg = "Freeze mode on\n";
+		}
+		break;
 	}
 
 	if (!*msg)              // [SO] Don't print blank lines!

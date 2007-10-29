@@ -844,17 +844,20 @@ bool APlayerPawn::UpdateWaterLevel (fixed_t oldz, bool splash)
 {
 	int oldlevel = waterlevel;
 	bool retval = Super::UpdateWaterLevel (oldz, splash);
-	if (oldlevel < 3 && waterlevel == 3)
-	{ // Our head just went under.
-		S_Sound (this, CHAN_VOICE, "*dive", 1, ATTN_NORM);
-	}
-	else if (oldlevel == 3 && waterlevel < 3)
-	{ // Our head just came up.
-		if (player->air_finished > level.time)
-		{ // We hadn't run out of air yet.
-			S_Sound (this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
+	if (player != NULL)
+	{
+		if (oldlevel < 3 && waterlevel == 3)
+		{ // Our head just went under.
+			S_Sound (this, CHAN_VOICE, "*dive", 1, ATTN_NORM);
 		}
-		// If we were running out of air, then ResetAirSupply() will play *gasp.
+		else if (oldlevel == 3 && waterlevel < 3)
+		{ // Our head just came up.
+			if (player->air_finished > level.time)
+			{ // We hadn't run out of air yet.
+				S_Sound (this, CHAN_VOICE, "*surface", 1, ATTN_NORM);
+			}
+			// If we were running out of air, then ResetAirSupply() will play *gasp.
+		}
 	}
 	return retval;
 }

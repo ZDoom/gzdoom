@@ -6,6 +6,7 @@ October 27, 2007 (Changes by Graf Zahl)
   Added a check for reactiontime to prevent that.
 - Fixed: PainChances and Damagefactors were never freed.
 - Added option to A_Chase that prevents the monster from moving.
+- Fixed: The stained glass shards were missing the HEXENBOUNCE flag.
 
 October 20, 2007 (Changes by Graf Zahl)
 - Added some NULL pointer checks to AActor::GiveAmmo.

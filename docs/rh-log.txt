@@ -1,3 +1,14 @@
+October 29, 2007 (Changes by Graf Zahl)
+- added two new things which can set a sector's color without the need of tags
+  or scripts. ColorSetter (#9038) sets the sector's color and FadeSetter (#9039)
+  sets the fog color.
+- added new flags MF5_ALWAYSFAST and MF5_NEVERFAST. These flags unconditionally
+  enable or disable fast movement logic, regardless of skill settings.
+- added an abstraction layer for skill related settings. This is a preparation
+  for implementing custom skill definitions but right now all it does is
+  returning the original values but keeping the related information all in one
+  place
+
 October 28, 2007 (Changes by Graf Zahl)
 - Fixed: The pointer cleanup code must also check a sector's sky box pointers.
 

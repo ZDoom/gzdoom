@@ -79,13 +79,7 @@ bool AAmmo::HandlePickup (AInventory *item)
 			if (!(item->ItemFlags&IF_IGNORESKILL))
 			{
 				// extra ammo in baby mode and nightmare mode
-				if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
-				{
-					if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-						receiving += receiving;
-					else
-						receiving += receiving >> 1;
-				}
+				receiving = FixedMul(receiving, G_SkillProperty(SKILLP_AmmoFactor));
 			}
 			int oldamount = Amount;
 			Amount += receiving;
@@ -138,13 +132,7 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 	// extra ammo in baby mode and nightmare mode
 	if (!(ItemFlags&IF_IGNORESKILL))
 	{
-		if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
-		{
-			if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-				amount <<= 1;
-			else
-				amount += amount >> 1;
-		}
+		amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
 	}
 
 	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo))
@@ -1517,13 +1505,7 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 			// extra ammo in baby mode and nightmare mode
 			if (!(ItemFlags&IF_IGNORESKILL))
 			{
-				if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
-				{
-					if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-						amount <<= 1;
-					else
-						amount += amount >> 1;
-				}
+				amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
 			}
 			if (ammo == NULL)
 			{ // The player did not have the ammo. Add it.
@@ -1578,13 +1560,7 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 					// extra ammo in baby mode and nightmare mode
 					if (!(item->ItemFlags&IF_IGNORESKILL))
 					{
-						if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
-						{
-							if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-								amount <<= 1;
-							else
-								amount += amount >> 1;
-						}
+						amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
 					}
 					probe->Amount += amount;
 					if (probe->Amount > probe->MaxAmount)

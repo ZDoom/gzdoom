@@ -339,7 +339,7 @@ ABossTarget *DBrainState::GetTarget ()
 {
 	Easy = !Easy;
 
-	if (gameskill <= sk_easy && !Easy)
+	if (G_SkillProperty(SKILLP_EasyBossBrain) && !Easy)
 		return NULL;
 
 	ABossTarget *target;

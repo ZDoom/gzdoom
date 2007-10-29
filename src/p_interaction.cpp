@@ -687,7 +687,9 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
 	normalAmount = normalItem != NULL ? normalItem->Amount : 0;
 	superAmount = superItem != NULL ? superItem->Amount : 0;
 
-	if ((gameskill == sk_baby) && (normalAmount*25 >= saveHealth))
+	bool skilluse = !!G_SkillProperty(SKILLP_AutoUseHealth);
+
+	if (skilluse && (normalAmount*25 >= saveHealth))
 	{ // Use quartz flasks
 		count = (saveHealth+24)/25;
 		for(i = 0; i < count; i++)
@@ -713,7 +715,7 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
 			}
 		}
 	}
-	else if ((gameskill == sk_baby)
+	else if (skilluse
 		&& (superAmount*100+normalAmount*25 >= saveHealth))
 	{ // Use mystic urns and quartz flasks
 		count = (saveHealth+24)/25;
@@ -861,13 +863,10 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		return;
 	}
 	player = target->player;
-	if (player && gameskill == sk_baby)
+	if (player && damage > 1)
 	{
 		// Take half damage in trainer mode
-		if (damage > 1)
-		{
-			damage >>= 1;
-		}
+		damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
 	}
 	// Special damage types
 	if (inflictor)
@@ -1041,7 +1040,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 
 		if (damage >= player->health
-			&& ((gameskill == sk_baby) || deathmatch)
+			&& (G_SkillProperty(SKILLP_AutoUseHealth) || deathmatch)
 			&& !player->morphTics)
 		{ // Try to use some inventory health
 			P_AutoUseHealth (player, damage - player->health + 1);
@@ -1324,10 +1323,10 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	{ // target is invulnerable
 		return;
 	}
-	if (player && gameskill == sk_baby)
+	if (player)
 	{
 		// Take half damage in trainer mode
-		damage >>= 1;
+		damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
 	}
 	if(damage < 1000 && ((player->cheats&CF_GODMODE)
 		|| (player->mo->flags2 & MF2_INVULNERABLE)))
@@ -1335,7 +1334,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		return;
 	}
 	if (damage >= player->health
-		&& ((gameskill == sk_baby) || deathmatch)
+		&& (G_SkillProperty(SKILLP_AutoUseHealth) || deathmatch)
 		&& !player->morphTics)
 	{ // Try to use some inventory health
 		P_AutoUseHealth (player, damage - player->health+1);

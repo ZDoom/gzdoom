@@ -1549,23 +1549,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	}
 	delete map;
 
-	if (dmflags & DF_MONSTERS_RESPAWN)
-	{
-		respawnmonsters = TICRATE;
-	}
-	else if (gameinfo.gametype & (GAME_Doom|GAME_Strife) && gameskill == sk_nightmare)
-	{
-		respawnmonsters = TICRATE;
-	}
-	else
-	{
-		respawnmonsters = 0;
-	}
-	// Monsters wait longer before respawning in Strife.
-	respawnmonsters *= gameinfo.gametype != GAME_Strife ? 12 : 16;
-
 	oldSpeed = GameSpeed;
-	wantFast = (dmflags & DF_FAST_MONSTERS) || (gameskill == sk_nightmare);
+	wantFast = !!G_SkillProperty(SKILLP_FastMonsters);
 	GameSpeed = wantFast ? SPEED_Fast : SPEED_Normal;
 
 	if (oldSpeed != GameSpeed)
@@ -3027,4 +3012,55 @@ static void InitPlayerClasses ()
 			players[i].CurrentPlayerClass = SinglePlayerClass[i];
 		}
 	}
+}
+
+
+int G_SkillProperty(ESkillProperty prop)
+{
+	switch(prop)
+	{
+	case SKILLP_AmmoFactor:
+		if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+		{
+			if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+				return FRACUNIT;
+			else
+				return FRACUNIT*3/2;
+		}
+		return FRACUNIT;
+
+	case SKILLP_DamageFactor:
+		if (gameskill == sk_baby) return FRACUNIT/2;
+		return FRACUNIT;
+
+	case SKILLP_FastMonsters:
+		return (gameskill == sk_nightmare || (dmflags & DF_FAST_MONSTERS));
+
+	case SKILLP_Respawn:
+		if (dmflags & DF_MONSTERS_RESPAWN || 
+			gameinfo.gametype & (GAME_DoomStrife) && gameskill == sk_nightmare)
+		{
+			return TICRATE * (gameinfo.gametype != GAME_Strife ? 12 : 16);
+		}
+		else
+		{
+			return 0;
+		}
+
+	case SKILLP_Aggressiveness:
+		return FRACUNIT;
+
+	case SKILLP_DisableCheats:
+		return gameskill == sk_nightmare;
+
+	case SKILLP_AutoUseHealth:
+		return gameskill == sk_baby;
+
+	case SKILLP_EasyBossBrain:
+		return gameskill == sk_baby;
+
+	case SKILLP_SpawnFilter:
+		return gameskill <= sk_easy? MTF_EASY : gameskill == sk_medium? MTF_NORMAL : MTF_HARD;
+	}
+	return 0;
 }

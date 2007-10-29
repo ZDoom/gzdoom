@@ -272,6 +272,8 @@ struct sector_t
 	fixed_t FindLowestCeilingPoint (vertex_t **v) const;
 	fixed_t FindHighestFloorPoint (vertex_t **v) const;
 	void AdjustFloorClip () const;
+	void SetColor(int r, int g, int b, int desat);
+	void SetFade(int r, int g, int b);
 
 	// Member variables
 	fixed_t		CenterFloor () const { return floorplane.ZatPoint (soundorg[0], soundorg[1]); }

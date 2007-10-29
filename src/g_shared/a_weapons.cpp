@@ -257,13 +257,7 @@ AAmmo *AWeapon::AddAmmo (AActor *other, const PClass *ammotype, int amount)
 	// extra ammo in baby mode and nightmare mode
 	if (!(this->ItemFlags&IF_IGNORESKILL))
 	{
-		if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
-		{
-			if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-				amount += amount;
-			else
-				amount += amount >> 1;
-		}
+		amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
 	}
 	ammo = static_cast<AAmmo *>(other->FindInventory (ammotype));
 	if (ammo == NULL)
@@ -298,13 +292,7 @@ bool AWeapon::AddExistingAmmo (AAmmo *ammo, int amount)
 		// extra ammo in baby mode and nightmare mode
 		if (!(ItemFlags&IF_IGNORESKILL))
 		{
-			if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
-			{
-				if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-					amount += amount;
-				else
-					amount += amount >> 1;
-			}
+			amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
 		}
 		ammo->Amount += amount;
 		if (ammo->Amount > ammo->MaxAmount)

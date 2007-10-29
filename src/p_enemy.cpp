@@ -331,7 +331,8 @@ bool AActor::SuggestMissileAttack (fixed_t dist)
 	if (flags4 & MF4_MISSILEMORE) dist >>= 1;
 	if (flags4 & MF4_MISSILEEVENMORE) dist >>= 3;
 	
-	return pr_checkmissilerange() >= MIN<int> (dist >> FRACBITS, MinMissileChance);
+	int mmc = FixedMul(MinMissileChance, G_SkillProperty(SKILLP_Aggressiveness));
+	return pr_checkmissilerange() >= MIN<int> (dist >> FRACBITS, mmc);
 }
 
 //=============================================================================
@@ -1804,8 +1805,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 	}
 
-	if (nightmarefast &&
-		(gameskill == sk_nightmare || (dmflags & DF_FAST_MONSTERS)))
+	if (nightmarefast && G_SkillProperty(SKILLP_FastMonsters))
 	{ // Monsters move faster in nightmare mode
 		actor->tics -= actor->tics / 2;
 		if (actor->tics < 3)
@@ -1897,7 +1897,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	if (actor->flags & MF_JUSTATTACKED)
 	{
 		actor->flags &= ~MF_JUSTATTACKED;
-		if ((gameskill != sk_nightmare) && !(dmflags & DF_FAST_MONSTERS))
+		if (!actor->isFast())
 		{
 			P_NewChaseDir (actor);
 		}
@@ -2009,8 +2009,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		// check for missile attack
 		if (missilestate)
 		{
-			if (gameskill < sk_nightmare
-				&& actor->movecount && !(dmflags & DF_FAST_MONSTERS))
+			if (!actor->isFast() && actor->movecount)
 			{
 				goto nomissile;
 			}

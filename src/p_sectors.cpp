@@ -681,3 +681,16 @@ fixed_t sector_t::FindLowestCeilingPoint (vertex_t **v) const
 		*v = spot;
 	return height;
 }
+
+
+void sector_t::SetColor(int r, int g, int b, int desat)
+{
+	PalEntry color = PalEntry (r,g,b);
+	ColorMap = GetSpecialLights (color, ColorMap->Fade, desat);
+}
+
+void sector_t::SetFade(int r, int g, int b)
+{
+	PalEntry fade = PalEntry (r,g,b);
+	ColorMap = GetSpecialLights (ColorMap->Color, fade, ColorMap->Desaturate);
+}

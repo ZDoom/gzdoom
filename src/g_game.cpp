@@ -106,7 +106,6 @@ CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
-int 			respawnmonsters;
 
 int 			paused;
 bool 			sendpause;				// send a pause event next tic 

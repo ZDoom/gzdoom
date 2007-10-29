@@ -467,7 +467,7 @@ int AActor::GetTics(FState * newstate)
 {
 	int tics = newstate->GetTics();
 	
-	if (gameskill == sk_nightmare || (dmflags & DF_FAST_MONSTERS))
+	if (isFast())
 	{
 		if (flags5 & MF5_FASTER)
 		{
@@ -2943,13 +2943,14 @@ void AActor::Tick ()
 	}
 	else
 	{
+		int respawn_monsters = G_SkillProperty(SKILLP_Respawn);
 		// check for nightmare respawn
-		if (!respawnmonsters || !(flags3 & MF3_ISMONSTER) || (flags2 & MF2_DORMANT))
+		if (!respawn_monsters || !(flags3 & MF3_ISMONSTER) || (flags2 & MF2_DORMANT))
 			return;
 
 		movecount++;
 
-		if (movecount < respawnmonsters)
+		if (movecount < respawn_monsters)
 			return;
 
 		if (level.time & 31)
@@ -3132,7 +3133,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 
 	FRandom &rng = bglobal.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
 
-	if (gameskill == sk_nightmare && actor->flags3 & MF3_ISMONSTER)
+	if (actor->isFast() && actor->flags3 & MF3_ISMONSTER)
 		actor->reactiontime = 0;
 
 	if (actor->flags3 & MF3_ISMONSTER)
@@ -3152,7 +3153,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	actor->frame = st->GetFrame();
 	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | st->GetFullbright();
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
-	if (gameskill == sk_nightmare || (dmflags & DF_FAST_MONSTERS))
+	if (G_SkillProperty(SKILLP_FastMonsters))
 		actor->Speed = actor->GetClass()->Meta.GetMetaFixed(AMETA_FastSpeed, actor->Speed);
 
 	// set subsector and/or block links
@@ -3307,6 +3308,13 @@ void AActor::BeginPlay ()
 {
 }
 
+bool AActor::isFast()
+{
+	if (flags5&MF5_ALWAYSFAST) return true;
+	if (flags5&MF5_NEVERFAST) return false;
+	return !!G_SkillProperty(SKILLP_FastMonsters);
+}
+
 void AActor::Activate (AActor *activator)
 {
 	if ((flags3 & MF3_ISMONSTER) && (health > 0 || (flags & MF_ICECORPSE)))
@@ -3410,6 +3418,7 @@ void AActor::AdjustFloorClip ()
 // Most of the player structure stays unchanged between levels.
 //
 EXTERN_CVAR (Bool, chasedemo)
+
 extern bool demonew;
 
 void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
@@ -3711,19 +3720,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 			return;
 		}
 
-		// check for apropriate skill level
-		if (gameskill == sk_baby)
-		{
-			mask = MTF_EASY;
-		}
-		else if (gameskill == sk_nightmare)
-		{
-			mask = MTF_HARD;
-		}
-		else
-		{
-			mask = 1 << (gameskill - 1);
-		}
+		mask = G_SkillProperty(SKILLP_SpawnFilter);
 		if (!(mthing->flags & mask))
 		{
 			return;

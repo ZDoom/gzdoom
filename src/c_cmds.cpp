@@ -79,7 +79,7 @@ CCMD (toggleconsole)
 
 bool CheckCheatmode ()
 {
-	if (((gameskill == sk_nightmare) || netgame || deathmatch) && (!sv_cheats))
+	if ((G_SkillProperty(SKILLP_DisableCheats) || netgame || deathmatch) && (!sv_cheats))
 	{
 		Printf ("sv_cheats must be true to enable this command.\n");
 		return true;
@@ -230,7 +230,7 @@ CCMD (chase)
 	}
 	else
 	{
-		if (deathmatch && CheckCheatmode ())
+		if (gamestate == GS_LEVEL && deathmatch && CheckCheatmode ())
 			return;
 
 		Net_WriteByte (DEM_GENERICCHEAT);

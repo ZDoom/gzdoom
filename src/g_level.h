@@ -354,4 +354,19 @@ struct PNGHandle;
 void G_ReadSnapshots (PNGHandle *png);
 void G_WriteSnapshots (FILE *file);
 
+enum ESkillProperty
+{
+	SKILLP_AmmoFactor,
+	SKILLP_DamageFactor,
+	SKILLP_FastMonsters,
+	SKILLP_Respawn,
+	SKILLP_Aggressiveness,
+	SKILLP_DisableCheats,
+	SKILLP_AutoUseHealth,
+	SKILLP_SpawnFilter,
+	SKILLP_EasyBossBrain,
+};
+int G_SkillProperty(ESkillProperty prop);
+
+
 #endif //__G_LEVEL_H__

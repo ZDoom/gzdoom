@@ -218,6 +218,8 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, NOBLOODDECALS, AActor, flags5),
 	DEFINE_FLAG(MF5, USESPECIAL, AActor, flags5),
 	DEFINE_FLAG(MF5, NOPAIN, AActor, flags5),
+	DEFINE_FLAG(MF5, ALWAYSFAST, AActor, flags5),
+	DEFINE_FLAG(MF5, NEVERFAST, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

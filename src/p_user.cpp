@@ -1608,7 +1608,7 @@ void P_MovePlayer (player_t *player)
 			fprintf (debugfile, "]\n");
 		}
 
-		if (!(player->cheats & CF_PREDICTING))
+		if (!(player->cheats & CF_PREDICTING) && (forwardmove|sidemove))
 		{
 			player->mo->PlayRunning ();
 		}

@@ -3923,7 +3923,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_GAMESKILL:
-			PushToStack (gameskill);
+			PushToStack (G_SkillProperty(SKILLP_ACSReturn));
 			break;
 
 // [BC] Start ST PCD's

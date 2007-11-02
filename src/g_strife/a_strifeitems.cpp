@@ -11,6 +11,7 @@
 #include "d_event.h"
 #include "a_keys.h"
 #include "c_console.h"
+#include "templates.h"
 
 // Degnin Ore ---------------------------------------------------------------
 
@@ -461,7 +462,8 @@ bool AHealthFillup::TryPickup (AActor *toucher)
 {
 	static const int skillhealths[5] = { -100, -75, -50, -50, -100 };
 
-	if (!P_GiveBody (toucher, skillhealths[gameskill]))
+	int index = clamp<int>(gameskill, 0,4);
+	if (!P_GiveBody (toucher, skillhealths[index]))
 	{
 		return false;
 	}

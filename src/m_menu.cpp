@@ -377,65 +377,79 @@ static oldmenu_t FilesMenu =
 //
 // DOOM SKILL SELECT
 //
-static oldmenuitem_t NewGameMenu[]=
-{
-	{1,0,'i',"M_JKILL",M_ChooseSkill},
-	{1,0,'h',"M_ROUGH",M_ChooseSkill},
-	{1,0,'h',"M_HURT",M_ChooseSkill},
-	{1,0,'u',"M_ULTRA",M_ChooseSkill},
-	{1,0,'n',"M_NMARE",M_ChooseSkill}
+static oldmenuitem_t SkillSelectMenu[]={
+	{ 1, 0, 0, "", M_ChooseSkill},
+	{ 1, 0, 0, "", M_ChooseSkill},
+	{ 1, 0, 0, "", M_ChooseSkill},
+	{ 1, 0, 0, "", M_ChooseSkill},
+	{ 1, 0, 0, "", M_ChooseSkill},
+	{ 1, 0, 0, "", M_ChooseSkill},
+	{ 1, 0, 0, "", M_ChooseSkill},
+	{ 1, 0, 0, "", M_ChooseSkill},
 };
 
-static oldmenu_t NewDef =
+static oldmenu_t SkillDef =
 {
-	countof(NewGameMenu),
-	NewGameMenu,		// oldmenuitem_t ->
+	0,
+	SkillSelectMenu,		// oldmenuitem_t ->
 	M_DrawNewGame,		// drawing routine ->
 	48,63,				// x,y
 	2					// lastOn
 };
 
-//
-// HERETIC SKILL SELECT
-//
-static oldmenuitem_t HereticSkillItems[] =
-{
-	{1,1,'t',"MNU_WETNURSE",M_ChooseSkill},
-	{1,1,'y',"MNU_YELLOWBELLIES",M_ChooseSkill},
-	{1,1,'b',"MNU_BRINGEST",M_ChooseSkill},
-	{1,1,'t',"MNU_SMITE",M_ChooseSkill},
-	{1,1,'b',"MNU_BLACKPLAGUE",M_ChooseSkill}
-};
-
-static oldmenu_t HereticSkillMenu =
-{
-	countof(HereticSkillItems),
-	HereticSkillItems,
-	M_DrawNewGame,
-	38, 30,
-	2
-};
-
-//
-// HEXEN SKILL SELECT
-//
-static oldmenuitem_t HexenSkillItems[] =
-{
-	{ 1,1, '1', NULL, M_ChooseSkill },
-	{ 1,1, '2', NULL, M_ChooseSkill },
-	{ 1,1, '3', NULL, M_ChooseSkill },
-	{ 1,1, '4', NULL, M_ChooseSkill },
-	{ 1,1, '5', NULL, M_ChooseSkill }
-};
-
 static oldmenu_t HexenSkillMenu =
 {
-	5, HexenSkillItems,
+	0, 
+	SkillSelectMenu,		// oldmenuitem_t ->
 	DrawHexenSkillMenu,
 	120, 44,
 	2
 };
 
+
+void M_StartupSkillMenu(const char *playerclass)
+{
+	if (gameinfo.gametype & GAME_Raven)
+	{
+		SkillDef.x = 38;
+		SkillDef.y = 30;
+	}
+	SkillDef.numitems = HexenSkillMenu.numitems = 0;
+	for(int i=0;i<AllSkills.Size() && i<8;i++)
+	{
+		FSkillInfo &skill = AllSkills[i];
+
+		SkillSelectMenu[i].name = skill.MenuName;
+		SkillSelectMenu[i].fulltext = !skill.MenuNameIsLump;
+		SkillSelectMenu[i].alphaKey = skill.MenuNameIsLump? skill.shortcut : tolower(SkillSelectMenu[i].name[0]);
+
+		if (playerclass != NULL)
+		{
+			FString * pmnm = skill.MenuNamesForPlayerClass.CheckKey(playerclass);
+			if (pmnm != NULL)
+			{
+				SkillSelectMenu[i].name = *pmnm;
+				SkillSelectMenu[i].fulltext = true;
+				SkillSelectMenu[i].alphaKey = tolower(pmnm->GetChars()[0]);
+			}
+		}
+		SkillDef.numitems++;
+		HexenSkillMenu.numitems++;
+	}
+	// Hexen needs some manual coordinate adjustments based on player class
+	if (gameinfo.gametype == GAME_Hexen)
+	{
+		if (!stricmp(playerclass, "fighter")) HexenSkillMenu.x = 120;
+		else if (!stricmp(playerclass, "cleric")) HexenSkillMenu.x = 116;
+		else if (!stricmp(playerclass, "mage")) HexenSkillMenu.x = 112;
+		else HexenSkillMenu.x = 38;
+
+		M_SetupNextMenu(&HexenSkillMenu);
+	}
+	else
+		M_SetupNextMenu(&SkillDef);
+
+}
 
 //
 // [RH] Player Setup Menu
@@ -1579,14 +1593,11 @@ void M_NewGame(int choice)
 		{
 			M_ChooseSkill(2);
 		}
-		else if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-		{
-			M_SetupNextMenu (&NewDef);
-		}
 		else
 		{
-			M_SetupNextMenu (&HereticSkillMenu);
+			M_StartupSkillMenu(NULL);
 		}
+
 	}
 	else
 	{
@@ -1719,7 +1730,7 @@ void M_VerifyNightmare (int ch)
 
 void M_ChooseSkill (int choice)
 {
-	if (gameinfo.gametype == GAME_Doom && choice == NewDef.numitems - 1)
+	if (gameinfo.gametype == GAME_Doom && AllSkills[choice].MustConfirm)
 	{
 		M_StartMessage (GStrings("NIGHTMARE"), M_VerifyNightmare, true);
 		return;
@@ -1758,59 +1769,7 @@ void M_Episode (int choice)
 		return;
 	}
 
-	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-		M_SetupNextMenu (&NewDef);
-	else if (gameinfo.gametype == GAME_Hexen)
-		M_SetupNextMenu (&HexenSkillMenu);
-	else
-		M_SetupNextMenu (&HereticSkillMenu);
-}
-
-//==========================================================================
-//
-// Sets Hexen's skill menu according to player class
-//
-//==========================================================================
-
-static void SetHexenSkillMenu (const char * pclass)
-{
-	if (!stricmp(pclass, "fighter"))
-	{
-		HexenSkillMenu.x = 120;
-		HexenSkillItems[0].name = "MNU_SQUIRE";
-		HexenSkillItems[1].name = "MNU_KNIGHT";
-		HexenSkillItems[2].name = "MNU_WARRIOR";
-		HexenSkillItems[3].name = "MNU_BERSERKER";
-		HexenSkillItems[4].name = "MNU_TITAN";
-	}
-	else if (!stricmp(pclass, "cleric"))
-	{
-		HexenSkillMenu.x = 116;
-		HexenSkillItems[0].name = "MNU_ALTARBOY";
-		HexenSkillItems[1].name = "MNU_ACOLYTE";
-		HexenSkillItems[2].name = "MNU_PRIEST";
-		HexenSkillItems[3].name = "MNU_CARDINAL";
-		HexenSkillItems[4].name = "MNU_POPE";
-	}
-	else if (!stricmp(pclass, "mage"))
-	{
-		HexenSkillMenu.x = 112;
-		HexenSkillItems[0].name = "MNU_APPRENTICE";
-		HexenSkillItems[1].name = "MNU_ENCHANTER";
-		HexenSkillItems[2].name = "MNU_SORCERER";
-		HexenSkillItems[3].name = "MNU_WARLOCK";
-		HexenSkillItems[4].name = "MNU_ARCHMAGE";
-	}
-	else
-	{
-		// Use Heretic's menu titles as default
-		HexenSkillMenu.x = HereticSkillMenu.x;
-		HexenSkillItems[0].name = HereticSkillItems[0].name;
-		HexenSkillItems[1].name = HereticSkillItems[1].name;
-		HexenSkillItems[2].name = HereticSkillItems[2].name;
-		HexenSkillItems[3].name = HereticSkillItems[3].name;
-		HexenSkillItems[4].name = HereticSkillItems[4].name;
-	}
+	M_StartupSkillMenu(NULL);
 }
 
 //==========================================================================
@@ -1832,15 +1791,13 @@ static void SCClass (int option)
 	else
 		playerclass = PlayerClasses[option].Type->Meta.GetMetaString (APMETA_DisplayName);
 
-	SetHexenSkillMenu(playerclass);
-
 	if (EpiDef.numitems > 1)
 	{
 		M_SetupNextMenu (&EpiDef);
 	}
 	else if (!EpisodeNoSkill[0])
 	{
-		M_SetupNextMenu (&HexenSkillMenu);
+		M_StartupSkillMenu(playerclass);
 	}
 	else
 	{
@@ -1858,7 +1815,6 @@ static void M_ChooseClass (int choice)
 	}
 
 	playerclass = (choice < ClassMenuDef.numitems-1) ? ClassMenuItems[choice].name : "Random";
-	SetHexenSkillMenu(playerclass);
 
 	if (EpiDef.numitems > 1)
 	{
@@ -1868,17 +1824,9 @@ static void M_ChooseClass (int choice)
 	{
 		M_ChooseSkill(2);
 	}
-	else if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+	else 
 	{
-		M_SetupNextMenu (&NewDef);
-	}
-	else if (gameinfo.gametype == GAME_Hexen)
-	{
-		M_SetupNextMenu (&HexenSkillMenu);
-	}
-	else
-	{
-		M_SetupNextMenu (&HereticSkillMenu);
+		M_StartupSkillMenu(playerclass);
 	}
 }
 
@@ -3375,7 +3323,7 @@ void M_Init (void)
 		if (gameinfo.gametype == GAME_Strife)
 		{
 			MainDef.y = 45;
-			NewDef.lastOn = 1;
+			//NewDef.lastOn = 1;
 		}
 	}
 	else

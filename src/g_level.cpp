@@ -71,6 +71,7 @@
 #include "version.h"
 #include "m_menu.h"
 #include "statnums.h"
+#include "vectors.h"
 
 #include "gi.h"
 
@@ -100,6 +101,9 @@ static void SetLevelNum (level_info_t *info, int num);
 static void ClearEpisodes ();
 static void ClearLevelInfoStrings (level_info_t *linfo);
 static void ClearClusterInfoStrings (cluster_info_t *cinfo);
+static void ParseSkill ();
+static void G_VerifySkill();
+static void InitializeDefaultSkills();
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
@@ -134,6 +138,7 @@ level_locals_t level;			// info about current level
 
 static TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;
+TArray<FSkillInfo> AllSkills;
 
 // MAPINFO is parsed slightly differently when the map name is just a number.
 static bool HexenHack;
@@ -170,6 +175,8 @@ static const char *MapInfoTopLevel[] =
 	"clusterdef",
 	"episode",
 	"clearepisodes",
+	"skill",
+	"clearskills",
 	NULL
 };
 
@@ -179,7 +186,9 @@ enum
 	MITL_DEFAULTMAP,
 	MITL_CLUSTERDEF,
 	MITL_EPISODE,
-	MITL_CLEAREPISODES
+	MITL_CLEAREPISODES,
+	MITL_SKILL,
+	MITL_CLEARSKILLS,
 };
 
 static const char *MapInfoMapLevel[] =
@@ -515,6 +524,7 @@ void G_ParseMapInfo ()
 	int lump, lastlump = 0;
 
 	atterm (G_UnloadMapInfo);
+	InitializeDefaultSkills();
 
 	// Parse the default MAPINFO for the current game.
 	switch (gameinfo.gametype)
@@ -563,6 +573,10 @@ void G_ParseMapInfo ()
 	if (EpiDef.numitems == 0)
 	{
 		I_FatalError ("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
+	}
+	if (AllSkills.Size()==0)
+	{
+		InitializeDefaultSkills();
 	}
 }
 
@@ -721,6 +735,15 @@ static void G_DoParseMapInfo (int lump)
 		case MITL_CLEAREPISODES:
 			ClearEpisodes ();
 			break;
+
+		case MITL_SKILL:
+			ParseSkill();
+			break;
+
+		case MITL_CLEARSKILLS:
+			AllSkills.Clear();
+			break;
+
 		}
 	}
 	SC_Close ();
@@ -1489,12 +1512,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	}
 
 	UnlatchCVars ();
-
-	if (gameskill > sk_nightmare)
-		gameskill = sk_nightmare;
-	else if (gameskill < sk_baby)
-		gameskill = sk_baby;
-
+	G_VerifySkill();
 	UnlatchCVars ();
 
 	if (paused)
@@ -3015,52 +3033,252 @@ static void InitPlayerClasses ()
 }
 
 
-int G_SkillProperty(ESkillProperty prop)
+static void ParseSkill ()
 {
-	switch(prop)
+	FSkillInfo skill;
+
+	skill.AmmoFactor = FRACUNIT;
+	skill.DamageFactor = FRACUNIT;
+	skill.FastMonsters = false;
+	skill.DisableCheats = false;
+	skill.EasyBossBrain = false;
+	skill.AutoUseHealth = false;
+	skill.RespawnCounter = 0;
+	skill.Aggressiveness = FRACUNIT;
+	skill.SpawnFilter = 0;
+	skill.ACSReturn = AllSkills.Size();
+	skill.MenuNameIsLump = false;
+	skill.MustConfirm = false;
+	skill.shortcut=0;
+
+	SC_MustGetString();
+	skill.name = sc_String;
+
+	while (SC_GetString ())
 	{
-	case SKILLP_AmmoFactor:
-		if (gameskill == sk_baby || (gameskill == sk_nightmare && gameinfo.gametype != GAME_Strife))
+		if (SC_Compare ("ammofactor"))
 		{
-			if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
-				return FRACUNIT;
-			else
-				return FRACUNIT*3/2;
+			SC_MustGetFloat ();
+			skill.AmmoFactor = FLOAT2FIXED(sc_Float);
 		}
-		return FRACUNIT;
-
-	case SKILLP_DamageFactor:
-		if (gameskill == sk_baby) return FRACUNIT/2;
-		return FRACUNIT;
-
-	case SKILLP_FastMonsters:
-		return (gameskill == sk_nightmare || (dmflags & DF_FAST_MONSTERS));
-
-	case SKILLP_Respawn:
-		if (dmflags & DF_MONSTERS_RESPAWN || 
-			gameinfo.gametype & (GAME_DoomStrife) && gameskill == sk_nightmare)
+		else if (SC_Compare ("damagefactor"))
 		{
-			return TICRATE * (gameinfo.gametype != GAME_Strife ? 12 : 16);
+			SC_MustGetFloat ();
+			skill.AmmoFactor = FLOAT2FIXED(sc_Float);
+		}
+		else if (SC_Compare ("fastmonsters"))
+		{
+			skill.FastMonsters = true;
+		}
+		else if (SC_Compare ("disablecheats"))
+		{
+			skill.DisableCheats = true;
+		}
+		else if (SC_Compare ("easybossbrain"))
+		{
+			skill.EasyBossBrain = true;
+		}
+		else if (SC_Compare("autousehealth"))
+		{
+			skill.AutoUseHealth = true;
+		}
+		else if (SC_Compare("respawntime"))
+		{
+			SC_MustGetFloat ();
+			skill.RespawnCounter = int(sc_Float*TICRATE);
+		}
+		else if (SC_Compare("Aggressiveness"))
+		{
+			SC_MustGetFloat ();
+			skill.Aggressiveness = FRACUNIT - FLOAT2FIXED(clamp<float>(sc_Float, 0,1));
+		}
+		else if (SC_Compare("SpawnFilter"))
+		{
+			SC_MustGetString ();
+			strlwr(sc_String);
+			if (strstr(sc_String, "easy")) skill.SpawnFilter|=MTF_EASY;
+			if (strstr(sc_String, "normal")) skill.SpawnFilter|=MTF_NORMAL;
+			if (strstr(sc_String, "hard")) skill.SpawnFilter|=MTF_HARD;
+		}
+		else if (SC_Compare("ACSReturn"))
+		{
+			SC_MustGetNumber ();
+			skill.ACSReturn = sc_Number;
+		}
+		else if (SC_Compare("MenuName"))
+		{
+			SC_MustGetString ();
+			skill.MenuName = sc_String;
+			skill.MenuNameIsLump = false;
+		}
+		else if (SC_Compare("MenuLump"))
+		{
+			SC_MustGetString ();
+			skill.MenuName = sc_String;
+			skill.MenuNameIsLump = true;
+		}
+		else if (SC_Compare("MustConfirm"))
+		{
+			skill.MustConfirm = true;
 		}
 		else
 		{
-			return 0;
+			SC_UnGet ();
+			break;
 		}
+	}
+	for(int i=0;i<AllSkills.Size();i++)
+	{
+		if (AllSkills[i].name == skill.name)
+		{
+			AllSkills[i] = skill;
+			return;
+		}
+	}
+	AllSkills.Push(skill);
+}
 
-	case SKILLP_Aggressiveness:
-		return FRACUNIT;
+int G_SkillProperty(ESkillProperty prop)
+{
+	if (AllSkills.Size() > 0)
+	{
+		switch(prop)
+		{
+		case SKILLP_AmmoFactor:
+			return AllSkills[gameskill].AmmoFactor;
 
-	case SKILLP_DisableCheats:
-		return gameskill == sk_nightmare;
+		case SKILLP_DamageFactor:
+			return AllSkills[gameskill].DamageFactor;
 
-	case SKILLP_AutoUseHealth:
-		return gameskill == sk_baby;
+		case SKILLP_FastMonsters:
+			return AllSkills[gameskill].FastMonsters  || (dmflags & DF_FAST_MONSTERS);
 
-	case SKILLP_EasyBossBrain:
-		return gameskill == sk_baby;
+		case SKILLP_Respawn:
+			if (dmflags & DF_MONSTERS_RESPAWN && AllSkills[gameskill].RespawnCounter==0) 
+				return TICRATE * (gameinfo.gametype != GAME_Strife ? 12 : 16);
+			return AllSkills[gameskill].RespawnCounter;
 
-	case SKILLP_SpawnFilter:
-		return gameskill <= sk_easy? MTF_EASY : gameskill == sk_medium? MTF_NORMAL : MTF_HARD;
+		case SKILLP_Aggressiveness:
+			return AllSkills[gameskill].Aggressiveness;
+
+		case SKILLP_DisableCheats:
+			return AllSkills[gameskill].DisableCheats;
+
+		case SKILLP_AutoUseHealth:
+			return AllSkills[gameskill].AutoUseHealth;
+
+		case SKILLP_EasyBossBrain:
+			return AllSkills[gameskill].EasyBossBrain;
+
+		case SKILLP_SpawnFilter:
+			return AllSkills[gameskill].SpawnFilter;
+
+		case SKILLP_ACSReturn:
+			return AllSkills[gameskill].ACSReturn;
+		}
 	}
 	return 0;
+}
+
+static void InitializeDefaultSkills()
+{
+	FSkillInfo skill;
+	EGameType g = gameinfo.gametype;
+
+	skill.shortcut=0;
+
+	// sk_baby
+	skill.name = "baby";
+	skill.AmmoFactor = (g & GAME_DoomStrife) ? FRACUNIT*2 : FRACUNIT*3/2;
+	skill.DamageFactor = FRACUNIT/2;
+	skill.FastMonsters = false;
+	skill.DisableCheats = false;
+	skill.EasyBossBrain = true;
+	skill.AutoUseHealth = true;
+	skill.RespawnCounter = 0;
+	skill.Aggressiveness = FRACUNIT;
+	skill.SpawnFilter = MTF_EASY;
+	skill.ACSReturn = 0;
+	skill.MenuName = g&GAME_DoomStrife ? "M_JKILL" : "MNU_WETNURSE";
+	skill.MenuNameIsLump = !!(g&GAME_DoomStrife);
+	skill.MustConfirm = false;
+	if (g & GAME_Hexen)
+	{
+		skill.MenuNamesForPlayerClass["fighter"] = "MNU_SQUIRE";
+		skill.MenuNamesForPlayerClass["cleric"] = "MNU_ALTARBOY";
+		skill.MenuNamesForPlayerClass["mage"] = "MNU_APPRENTICE";
+	}
+	AllSkills.Push(skill);
+
+	// sk_easy
+	skill.name = "easy";
+	skill.AmmoFactor = FRACUNIT;
+	skill.DamageFactor = FRACUNIT;
+	skill.EasyBossBrain = false;
+	skill.AutoUseHealth = false;
+	skill.RespawnCounter = 0;
+	skill.Aggressiveness = FRACUNIT;
+	skill.SpawnFilter = MTF_EASY;
+	skill.ACSReturn = 1;
+	skill.MenuName = g&GAME_DoomStrife ? "M_ROUGH" : "MNU_YELLOWBELLIES";
+	if (g & GAME_Hexen)
+	{
+		skill.MenuNamesForPlayerClass["fighter"] = "MNU_KNIGHT";
+		skill.MenuNamesForPlayerClass["cleric"] = "MNU_ACOLYTE";
+		skill.MenuNamesForPlayerClass["mage"] = "MNU_ENCHANTER";
+	}
+	AllSkills.Push(skill);
+
+	// sk_normal
+	skill.name = "normal";
+	skill.SpawnFilter = MTF_NORMAL;
+	skill.ACSReturn = 2;
+	skill.MenuName = g&GAME_DoomStrife ? "M_HURT" : "MNU_BRINGEST";
+	if (g & GAME_Hexen)
+	{
+		skill.MenuNamesForPlayerClass["fighter"] = "MNU_WARRIOR";
+		skill.MenuNamesForPlayerClass["cleric"] = "MNU_PRIEST";
+		skill.MenuNamesForPlayerClass["mage"] = "MNU_SORCERER";
+	}
+	AllSkills.Push(skill);
+
+	// sk_hard
+	skill.name = "hard";
+	skill.SpawnFilter = MTF_HARD;
+	skill.ACSReturn = 3;
+	skill.MenuName = g&GAME_DoomStrife ? "M_ULTRA" : "MNU_SMITE";
+	if (g & GAME_Hexen)
+	{
+		skill.MenuNamesForPlayerClass["fighter"] = "MNU_BERSERKER";
+		skill.MenuNamesForPlayerClass["cleric"] = "MNU_CARDINAL";
+		skill.MenuNamesForPlayerClass["mage"] = "MNU_WARLOCK";
+	}
+	AllSkills.Push(skill);
+
+	// sk_nightmare
+	skill.name = "nightmare";
+	skill.AmmoFactor = (g & GAME_DoomStrife) ? FRACUNIT*2 : FRACUNIT*3/2;
+	skill.DamageFactor = FRACUNIT;
+	skill.FastMonsters = true;
+	skill.DisableCheats = true;
+	skill.RespawnCounter = (g & GAME_Raven)? 0 : TICRATE * (g != GAME_Strife ? 12 : 16);
+	skill.Aggressiveness = FRACUNIT;
+	skill.ACSReturn = 4;
+	skill.MenuName = g&GAME_DoomStrife ? "M_NMARE" : "MNU_BLACKPLAGUE";
+	skill.MustConfirm = true;
+	if (g & GAME_Hexen)
+	{
+		skill.MenuNamesForPlayerClass["fighter"] = "MNU_TITAN";
+		skill.MenuNamesForPlayerClass["cleric"] = "MNU_POPE";
+		skill.MenuNamesForPlayerClass["mage"] = "MNU_ARCHMAGE";
+	}
+	AllSkills.Push(skill);
+}
+
+void G_VerifySkill()
+{
+	if (gameskill >= AllSkills.Size())
+		gameskill = AllSkills.Size()-1;
+	else if (gameskill < 0)
+		gameskill = 0;
 }

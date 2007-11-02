@@ -365,8 +365,61 @@ enum ESkillProperty
 	SKILLP_AutoUseHealth,
 	SKILLP_SpawnFilter,
 	SKILLP_EasyBossBrain,
+	SKILLP_ACSReturn,
+	SKILLP_Confirm,
 };
 int G_SkillProperty(ESkillProperty prop);
+
+typedef TMap<FName, FString> SkillMenuNames;
+
+struct FSkillInfo
+{
+	FName name;
+	fixed_t AmmoFactor;
+	fixed_t DamageFactor;
+	bool FastMonsters;
+	bool DisableCheats;
+	bool AutoUseHealth;
+	bool EasyBossBrain;
+	int RespawnCounter;
+	fixed_t Aggressiveness;
+	int SpawnFilter;
+	int ACSReturn;
+	FString MenuName;
+	SkillMenuNames MenuNamesForPlayerClass;
+	bool MenuNameIsLump;
+	bool MustConfirm;
+	char shortcut;
+
+	FSkillInfo() {}
+	FSkillInfo(const FSkillInfo &other)
+	{
+		operator=(other);
+	}
+	FSkillInfo &operator=(const FSkillInfo &other)
+	{
+		name = other.name;
+		AmmoFactor = other.AmmoFactor;
+		DamageFactor = other.DamageFactor;
+		FastMonsters = other.FastMonsters;
+		DisableCheats = other.DisableCheats;
+		AutoUseHealth = other.AutoUseHealth;
+		EasyBossBrain = other.EasyBossBrain;
+		RespawnCounter= other.RespawnCounter;
+		Aggressiveness= other.Aggressiveness;
+		SpawnFilter = other.SpawnFilter;
+		ACSReturn = other.ACSReturn;
+		MenuName = other.MenuName;
+		MenuNamesForPlayerClass = other.MenuNamesForPlayerClass;
+		MenuNameIsLump = other.MenuNameIsLump;
+		MustConfirm = other.MustConfirm;
+		shortcut = other.shortcut;
+		return *this;
+	}
+};
+
+extern TArray<FSkillInfo> AllSkills;
+
 
 
 #endif //__G_LEVEL_H__

@@ -1,3 +1,6 @@
+November 2, 2007 (Changes by Graf Zahl)
+- Added skill definitions to MAPINFO.
+
 October 29, 2007 (Changes by Graf Zahl)
 - added two new things which can set a sector's color without the need of tags
   or scripts. ColorSetter (#9038) sets the sector's color and FadeSetter (#9039)

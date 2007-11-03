@@ -7,6 +7,7 @@ skill baby
 	Key i
 
 skill easy
+	EasyBossBrain
 	SpawnFilter "Easy"
 	PicName "M_ROUGH"
 	Key h

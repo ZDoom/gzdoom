@@ -2516,7 +2516,7 @@ FUNC(LS_Autosave)
 
 FUNC(LS_ChangeSkill)
 {
-	if (arg0 < 0 || arg0 > AllSkills.Size())
+	if ((unsigned)arg0 >= AllSkills.Size())
 	{
 		NextSkill = -1;
 	}

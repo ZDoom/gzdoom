@@ -5,23 +5,23 @@ skill baby
 	DamageFactor 0.5
 	EasyBossBrain
 	SpawnFilter "Easy"
-	MenuLump "M_JKILL"
-	Shortcut t
+	PicName "M_JKILL"
+	Key t
 
 skill easy
 	SpawnFilter "Easy"
-	MenuLump "M_ROUGH"
-	Shortcut r
+	PicName "M_ROUGH"
+	Key r
 
 skill normal
 	SpawnFilter "Normal"
-	MenuLump "M_HURT"
-	Shortcut v
+	PicName "M_HURT"
+	Key v
 
 skill hard
 	SpawnFilter "Normal"
-	MenuLump "M_ULTRA"
-	Shortcut e
+	PicName "M_ULTRA"
+	Key e
 
 skill nightmare
 	AmmoFactor 2
@@ -29,9 +29,9 @@ skill nightmare
 	DisableCheats
 	RespawnTime 16
 	SpawnFilter "Hard"
-	MenuLump "M_NMARE"
+	PicName "M_NMARE"
 	MustConfirm
-	Shortcut b
+	Key b
 
 defaultmap
 forcenoskystretch

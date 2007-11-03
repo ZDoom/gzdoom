@@ -5,26 +5,26 @@ skill baby
 	DamageFactor 0.5
 	EasyBossBrain
 	SpawnFilter "Easy"
-	MenuName "MNU_WETNURSE"
+	Name "MNU_WETNURSE"
 
 skill easy
 	SpawnFilter "Easy"
-	MenuName "MNU_YELLOWBELLIES"
+	Name "MNU_YELLOWBELLIES"
 
 skill normal
 	SpawnFilter "Normal"
-	MenuName "MNU_BRINGEST"
+	Name "MNU_BRINGEST"
 
 skill hard
 	SpawnFilter "Normal"
-	MenuName "MNU_SMITE"
+	Name "MNU_SMITE"
 
 skill nightmare
 	AmmoFactor 1.5
 	FastMonsters
 	DisableCheats
 	SpawnFilter "Hard"
-	MenuName "MNU_BLACKPLAGUE"
+	Name "MNU_BLACKPLAGUE"
 	MustConfirm
 
 

@@ -3105,7 +3105,7 @@ static void ParseSkill ()
 			SC_MustGetNumber ();
 			skill.ACSReturn = sc_Number;
 		}
-		else if (SC_Compare("MenuName"))
+		else if (SC_Compare("Name"))
 		{
 			SC_MustGetString ();
 			skill.MenuName = sc_String;
@@ -3118,7 +3118,7 @@ static void ParseSkill ()
 			SC_MustGetString ();
 			skill.MenuNamesForPlayerClass[pc]=sc_String;
 		}
-		else if (SC_Compare("MenuLump"))
+		else if (SC_Compare("PicName"))
 		{
 			SC_MustGetString ();
 			skill.MenuName = sc_String;
@@ -3128,7 +3128,7 @@ static void ParseSkill ()
 		{
 			skill.MustConfirm = true;
 		}
-		else if (SC_Compare("Shortcut"))
+		else if (SC_Compare("Key"))
 		{
 			SC_MustGetString();
 			skill.shortcut = tolower(sc_String[0]);

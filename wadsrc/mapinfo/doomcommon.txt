@@ -1,0 +1,32 @@
+skill baby
+	AmmoFactor 2
+	DamageFactor 0.5
+	EasyBossBrain
+	SpawnFilter "Easy"
+	MenuLump "M_JKILL"
+	Shortcut i
+
+skill easy
+	SpawnFilter "Easy"
+	MenuLump "M_ROUGH"
+	Shortcut h
+
+skill normal
+	SpawnFilter "Normal"
+	MenuLump "M_HURT"
+	Shortcut h
+
+skill hard
+	SpawnFilter "Normal"
+	MenuLump "M_ULTRA"
+	Shortcut u
+
+skill nightmare
+	AmmoFactor 2
+	FastMonsters
+	DisableCheats
+	RespawnTime 12
+	SpawnFilter "Hard"
+	MenuLump "M_NMARE"
+	MustConfirm
+	Shortcut n

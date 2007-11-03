@@ -221,9 +221,10 @@ sounds/railgf1.flac		    railgunfire.flac
 ========
 # Mapinfos
 
+mapinfo/doomcommon.txt		mapinfo/doomcommon.txt
 mapinfo/doom1.txt			mapinfo/doom1.txt
 mapinfo/doom2.txt			mapinfo/doom2.txt
-mapinfo/plutonia.txt			mapinfo/plutonia.txt
+mapinfo/plutonia.txt		mapinfo/plutonia.txt
 mapinfo/tnt.txt				mapinfo/tnt.txt
 mapinfo/heretic.txt			mapinfo/heretic.txt
 mapinfo/hexen.txt			mapinfo/hexen.txt

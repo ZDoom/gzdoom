@@ -1,5 +1,38 @@
 // MAPINFO for Strife (full version and teaser)
 
+skill baby
+	AmmoFactor 2
+	DamageFactor 0.5
+	EasyBossBrain
+	SpawnFilter "Easy"
+	MenuLump "M_JKILL"
+	Shortcut t
+
+skill easy
+	SpawnFilter "Easy"
+	MenuLump "M_ROUGH"
+	Shortcut r
+
+skill normal
+	SpawnFilter "Normal"
+	MenuLump "M_HURT"
+	Shortcut v
+
+skill hard
+	SpawnFilter "Normal"
+	MenuLump "M_ULTRA"
+	Shortcut e
+
+skill nightmare
+	AmmoFactor 2
+	FastMonsters
+	DisableCheats
+	RespawnTime 16
+	SpawnFilter "Hard"
+	MenuLump "M_NMARE"
+	MustConfirm
+	Shortcut b
+
 defaultmap
 forcenoskystretch
 strifefallingdamage

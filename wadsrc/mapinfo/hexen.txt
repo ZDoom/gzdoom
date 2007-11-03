@@ -1,6 +1,50 @@
 // A bare-bones MAPINFO for Hexen.
 // Most of the MAPINFO is still in hexen.wad.
 
+skill baby
+	AmmoFactor 1.5
+	DamageFactor 0.5
+	EasyBossBrain
+	SpawnFilter "Easy"
+	MenuName "MNU_WETNURSE"
+	PlayerClassName "fighter" "MNU_SQUIRE"
+	PlayerClassName "cleric" "MNU_ALTARBOY"
+	PlayerClassName "mage" "MNU_APPRENTICE"
+
+
+skill easy
+	SpawnFilter "Easy"
+	MenuName "MNU_YELLOWBELLIES"
+	PlayerClassName "fighter" "MNU_KNIGHT"
+	PlayerClassName "cleric" "MNU_ACOLYTE"
+	PlayerClassName "mage" "MNU_ENCHANTER"
+
+skill normal
+	SpawnFilter "Normal"
+	MenuName "MNU_BRINGEST"
+	PlayerClassName "fighter" "MNU_WARRIOR"
+	PlayerClassName "cleric" "MNU_PRIEST"
+	PlayerClassName "mage" "MNU_SORCERER"
+
+skill hard
+	SpawnFilter "Normal"
+	MenuName "MNU_SMITE"
+	PlayerClassName "fighter" "MNU_BERSERKER"
+	PlayerClassName "cleric" "MNU_CARDINAL"
+	PlayerClassName "mage" "MNU_WARLOCK"
+
+skill nightmare
+	AmmoFactor 1.5
+	FastMonsters
+	DisableCheats
+	SpawnFilter "Hard"
+	MenuName "MNU_BLACKPLAGUE"
+	PlayerClassName "fighter" "MNU_TITAN"
+	PlayerClassName "cleric" "MNU_POPE"
+	PlayerClassName "mage" "MNU_ARCHMAGE"
+	MustConfirm
+
+
 clusterdef 1
 hub
 exittext clus1msg

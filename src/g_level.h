@@ -390,6 +390,7 @@ struct FSkillInfo
 	bool MenuNameIsLump;
 	bool MustConfirm;
 	char shortcut;
+	int textcolor;
 
 	FSkillInfo() {}
 	FSkillInfo(const FSkillInfo &other)
@@ -414,6 +415,7 @@ struct FSkillInfo
 		MenuNameIsLump = other.MenuNameIsLump;
 		MustConfirm = other.MustConfirm;
 		shortcut = other.shortcut;
+		textcolor = other.textcolor;
 		return *this;
 	}
 };

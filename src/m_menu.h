@@ -189,6 +189,7 @@ typedef struct
 	// if status = 2,
 	//	 choice=0:leftarrow,1:rightarrow
 	void		(*routine)(int choice);
+	int			textcolor;
 } oldmenuitem_t;
 
 typedef struct oldmenu_s

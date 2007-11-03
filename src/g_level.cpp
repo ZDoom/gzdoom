@@ -103,7 +103,6 @@ static void ClearLevelInfoStrings (level_info_t *linfo);
 static void ClearClusterInfoStrings (cluster_info_t *cinfo);
 static void ParseSkill ();
 static void G_VerifySkill();
-static void InitializeDefaultSkills();
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
@@ -524,12 +523,12 @@ void G_ParseMapInfo ()
 	int lump, lastlump = 0;
 
 	atterm (G_UnloadMapInfo);
-	InitializeDefaultSkills();
 
 	// Parse the default MAPINFO for the current game.
 	switch (gameinfo.gametype)
 	{
 	case GAME_Doom:
+		G_DoParseMapInfo (Wads.GetNumForFullName ("mapinfo/doomcommon.txt"));
 		switch (gamemission)
 		{
 		case doom:
@@ -576,7 +575,7 @@ void G_ParseMapInfo ()
 	}
 	if (AllSkills.Size()==0)
 	{
-		InitializeDefaultSkills();
+		I_FatalError ("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");
 	}
 }
 
@@ -590,7 +589,7 @@ static void G_DoParseMapInfo (int lump)
 	QWORD levelflags;
 
 	SetLevelDefaults (&defaultinfo);
-	SC_OpenLumpNum (lump, "MAPINFO");
+	SC_OpenLumpNum (lump, Wads.GetLumpFullName(lump));
 	HexenHack = false;
 
 	while (SC_GetString ())
@@ -3050,6 +3049,7 @@ static void ParseSkill ()
 	skill.MenuNameIsLump = false;
 	skill.MustConfirm = false;
 	skill.shortcut=0;
+	skill.textcolor = CR_UNTRANSLATED;
 
 	SC_MustGetString();
 	skill.name = sc_String;
@@ -3111,6 +3111,13 @@ static void ParseSkill ()
 			skill.MenuName = sc_String;
 			skill.MenuNameIsLump = false;
 		}
+		else if (SC_Compare("PlayerClassName"))
+		{
+			SC_MustGetString ();
+			FName pc = sc_String;
+			SC_MustGetString ();
+			skill.MenuNamesForPlayerClass[pc]=sc_String;
+		}
 		else if (SC_Compare("MenuLump"))
 		{
 			SC_MustGetString ();
@@ -3120,6 +3127,24 @@ static void ParseSkill ()
 		else if (SC_Compare("MustConfirm"))
 		{
 			skill.MustConfirm = true;
+		}
+		else if (SC_Compare("Shortcut"))
+		{
+			SC_MustGetString();
+			skill.shortcut = tolower(sc_String[0]);
+		}
+		else if (SC_Compare("TextColor"))
+		{
+			SC_MustGetString();
+			FString c;
+			c.Format("[%s]", sc_String);
+			const BYTE * cp = (BYTE*)c.GetChars();
+			skill.textcolor = V_ParseFontColor(cp, 0, 0);
+			if (skill.textcolor == CR_UNDEFINED)
+			{
+				Printf("Undefined color '%s' in definition of skill %s\n", sc_String, skill.name.GetChars());
+				skill.textcolor = CR_UNTRANSLATED;
+			}
 		}
 		else
 		{
@@ -3180,100 +3205,6 @@ int G_SkillProperty(ESkillProperty prop)
 	return 0;
 }
 
-static void InitializeDefaultSkills()
-{
-	FSkillInfo skill;
-	EGameType g = gameinfo.gametype;
-
-	skill.shortcut=0;
-
-	// sk_baby
-	skill.name = "baby";
-	skill.AmmoFactor = (g & GAME_DoomStrife) ? FRACUNIT*2 : FRACUNIT*3/2;
-	skill.DamageFactor = FRACUNIT/2;
-	skill.FastMonsters = false;
-	skill.DisableCheats = false;
-	skill.EasyBossBrain = true;
-	skill.AutoUseHealth = true;
-	skill.RespawnCounter = 0;
-	skill.Aggressiveness = FRACUNIT;
-	skill.SpawnFilter = MTF_EASY;
-	skill.ACSReturn = 0;
-	skill.MenuName = g&GAME_DoomStrife ? "M_JKILL" : "MNU_WETNURSE";
-	skill.MenuNameIsLump = !!(g&GAME_DoomStrife);
-	skill.MustConfirm = false;
-	if (g & GAME_Hexen)
-	{
-		skill.MenuNamesForPlayerClass["fighter"] = "MNU_SQUIRE";
-		skill.MenuNamesForPlayerClass["cleric"] = "MNU_ALTARBOY";
-		skill.MenuNamesForPlayerClass["mage"] = "MNU_APPRENTICE";
-	}
-	AllSkills.Push(skill);
-
-	// sk_easy
-	skill.name = "easy";
-	skill.AmmoFactor = FRACUNIT;
-	skill.DamageFactor = FRACUNIT;
-	skill.EasyBossBrain = false;
-	skill.AutoUseHealth = false;
-	skill.RespawnCounter = 0;
-	skill.Aggressiveness = FRACUNIT;
-	skill.SpawnFilter = MTF_EASY;
-	skill.ACSReturn = 1;
-	skill.MenuName = g&GAME_DoomStrife ? "M_ROUGH" : "MNU_YELLOWBELLIES";
-	if (g & GAME_Hexen)
-	{
-		skill.MenuNamesForPlayerClass["fighter"] = "MNU_KNIGHT";
-		skill.MenuNamesForPlayerClass["cleric"] = "MNU_ACOLYTE";
-		skill.MenuNamesForPlayerClass["mage"] = "MNU_ENCHANTER";
-	}
-	AllSkills.Push(skill);
-
-	// sk_normal
-	skill.name = "normal";
-	skill.SpawnFilter = MTF_NORMAL;
-	skill.ACSReturn = 2;
-	skill.MenuName = g&GAME_DoomStrife ? "M_HURT" : "MNU_BRINGEST";
-	if (g & GAME_Hexen)
-	{
-		skill.MenuNamesForPlayerClass["fighter"] = "MNU_WARRIOR";
-		skill.MenuNamesForPlayerClass["cleric"] = "MNU_PRIEST";
-		skill.MenuNamesForPlayerClass["mage"] = "MNU_SORCERER";
-	}
-	AllSkills.Push(skill);
-
-	// sk_hard
-	skill.name = "hard";
-	skill.SpawnFilter = MTF_HARD;
-	skill.ACSReturn = 3;
-	skill.MenuName = g&GAME_DoomStrife ? "M_ULTRA" : "MNU_SMITE";
-	if (g & GAME_Hexen)
-	{
-		skill.MenuNamesForPlayerClass["fighter"] = "MNU_BERSERKER";
-		skill.MenuNamesForPlayerClass["cleric"] = "MNU_CARDINAL";
-		skill.MenuNamesForPlayerClass["mage"] = "MNU_WARLOCK";
-	}
-	AllSkills.Push(skill);
-
-	// sk_nightmare
-	skill.name = "nightmare";
-	skill.AmmoFactor = (g & GAME_DoomStrife) ? FRACUNIT*2 : FRACUNIT*3/2;
-	skill.DamageFactor = FRACUNIT;
-	skill.FastMonsters = true;
-	skill.DisableCheats = true;
-	skill.RespawnCounter = (g & GAME_Raven)? 0 : TICRATE * (g != GAME_Strife ? 12 : 16);
-	skill.Aggressiveness = FRACUNIT;
-	skill.ACSReturn = 4;
-	skill.MenuName = g&GAME_DoomStrife ? "M_NMARE" : "MNU_BLACKPLAGUE";
-	skill.MustConfirm = true;
-	if (g & GAME_Hexen)
-	{
-		skill.MenuNamesForPlayerClass["fighter"] = "MNU_TITAN";
-		skill.MenuNamesForPlayerClass["cleric"] = "MNU_POPE";
-		skill.MenuNamesForPlayerClass["mage"] = "MNU_ARCHMAGE";
-	}
-	AllSkills.Push(skill);
-}
 
 void G_VerifySkill()
 {

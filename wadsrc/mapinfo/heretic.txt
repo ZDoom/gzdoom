@@ -1,5 +1,34 @@
 // MAPINFO for Heretic (Shareware and Retail)
 
+skill baby
+	AmmoFactor 1.5
+	DamageFactor 0.5
+	EasyBossBrain
+	SpawnFilter "Easy"
+	MenuName "MNU_WETNURSE"
+
+skill easy
+	SpawnFilter "Easy"
+	MenuName "MNU_YELLOWBELLIES"
+
+skill normal
+	SpawnFilter "Normal"
+	MenuName "MNU_BRINGEST"
+
+skill hard
+	SpawnFilter "Normal"
+	MenuName "MNU_SMITE"
+
+skill nightmare
+	AmmoFactor 1.5
+	FastMonsters
+	DisableCheats
+	SpawnFilter "Hard"
+	MenuName "MNU_BLACKPLAGUE"
+	MustConfirm
+
+
+
 // Episode 1
 
 map E1M1 lookup HHUSTR_E1M1

@@ -1,3 +1,8 @@
+November 3, 2007 (Changes by Graf Zahl)
+- Added text color options to menu code so that the skill definitions can set
+  the color of the menu's text.
+- Externalized skill settings to ZDoom.pk3
+
 November 2, 2007 (Changes by Graf Zahl)
 - Added skill definitions to MAPINFO.
 

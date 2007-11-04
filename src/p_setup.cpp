@@ -384,7 +384,7 @@ MapData *P_OpenMapData(const char * mapname)
 //
 //===========================================================================
 
-static void SetTexture (short *texture, DWORD *blend, char *name8)
+static void SetTexture (int *texture, DWORD *blend, char *name8)
 {
 	char name[9];
 	strncpy (name, name8, 8);
@@ -413,7 +413,7 @@ static void SetTexture (short *texture, DWORD *blend, char *name8)
 	}
 }
 
-static void SetTextureNoErr (short *texture, DWORD *color, char *name8, bool *validcolor)
+static void SetTextureNoErr (int *texture, DWORD *color, char *name8, bool *validcolor)
 {
 	char name[9];
 	strncpy (name, name8, 8);

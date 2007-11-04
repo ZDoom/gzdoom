@@ -622,7 +622,7 @@ public:
 	fixed_t			scaleX, scaleY;		// Scaling values; FRACUNIT is normal size
 	BYTE			RenderStyle;		// Style to draw this actor with
 	DWORD			renderflags;		// Different rendering flags
-	WORD			picnum;				// Draw this instead of sprite if != 0xffff
+	int				picnum;				// Draw this instead of sprite if != 0xffff
 	SWORD			TIDtoHate;			// TID of things to hate (0 if none)
 	DWORD			effects;			// [RH] see p_effect.h
 	fixed_t			alpha;

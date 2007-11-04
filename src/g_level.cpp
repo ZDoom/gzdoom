@@ -3064,7 +3064,7 @@ static void ParseSkill ()
 		else if (SC_Compare ("damagefactor"))
 		{
 			SC_MustGetFloat ();
-			skill.AmmoFactor = FLOAT2FIXED(sc_Float);
+			skill.DamageFactor = FLOAT2FIXED(sc_Float);
 		}
 		else if (SC_Compare ("fastmonsters"))
 		{

@@ -302,7 +302,7 @@ struct sector_t
 
 	BYTE		FloorLight, CeilingLight;
 	BYTE		FloorFlags, CeilingFlags;
-	short		floorpic, ceilingpic;
+	int			floorpic, ceilingpic;
 	BYTE		lightlevel;
 
 	AActor *	SoundTarget;
@@ -399,7 +399,7 @@ struct side_s
 	fixed_t 	rowoffset;		// add this to the calculated texture top
 	sector_t*	sector;			// Sector the SideDef is facing.
 	DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
-	short		toptexture, bottomtexture, midtexture;	// texture indices
+	int			toptexture, bottomtexture, midtexture;	// texture indices
 	WORD		linenum;
 	DWORD		LeftSide, RightSide;	// [RH] Group walls into loops
 	WORD		TexelLength;

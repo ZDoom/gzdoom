@@ -3,6 +3,8 @@ November 8, 2007 (Changes by Graf Zahl)
   in a hub but by a level flag instead.
 
 November 7, 2007 (Changes by Graf Zahl)
+- Fixed: Floor and ceiling huggers must set themselves to floor and ceiling each
+  time they move.
 - Added a LEVEL_NOMONSTERS flag so that G_ChangeLevel doesn't have to mess with
   the dmflags CVAR to start the level without monsters.
 

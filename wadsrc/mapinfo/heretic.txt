@@ -16,7 +16,7 @@ skill normal
 	Name "MNU_BRINGEST"
 
 skill hard
-	SpawnFilter "Normal"
+	SpawnFilter "Hard"
 	Name "MNU_SMITE"
 
 skill nightmare

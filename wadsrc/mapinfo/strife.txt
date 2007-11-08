@@ -19,7 +19,7 @@ skill normal
 	Key v
 
 skill hard
-	SpawnFilter "Normal"
+	SpawnFilter "Hard"
 	PicName "M_ULTRA"
 	Key e
 

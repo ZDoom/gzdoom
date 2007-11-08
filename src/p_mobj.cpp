@@ -3856,7 +3856,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	}
 
 	// don't spawn any monsters if -nomonsters
-	if (dmflags & DF_NO_MONSTERS && info->flags3 & MF3_ISMONSTER )
+	if (((level.flags & LEVEL_NOMONSTERS) || (dmflags & DF_NO_MONSTERS)) && info->flags3 & MF3_ISMONSTER )
 	{
 		return;
 	}

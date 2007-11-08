@@ -295,6 +295,8 @@ static const char *MapInfoMapLevel[] =
 	"noinfighting",
 	"normalinfighting",
 	"totalinfighting",
+	"infiniteflightpowerup",
+	"noinfiniteflightpowerup",
 	NULL
 };
 
@@ -433,6 +435,8 @@ MapHandlers[] =
 	{ MITYPE_SCFLAGS,	LEVEL_NOINFIGHTING, ~LEVEL_TOTALINFIGHTING },
 	{ MITYPE_SCFLAGS,	0, ~(LEVEL_NOINFIGHTING|LEVEL_TOTALINFIGHTING)},
 	{ MITYPE_SCFLAGS,	LEVEL_TOTALINFIGHTING, ~LEVEL_NOINFIGHTING },
+	{ MITYPE_SETFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
+	{ MITYPE_CLRFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -619,7 +623,8 @@ static void G_DoParseMapInfo (int lump)
 							| LEVEL_SNDSEQTOTALCTRL
 							| LEVEL_FALLDMG_HX
 							| LEVEL_ACTOWNSPECIAL
-							| LEVEL_MISSILESACTIVATEIMPACT;
+							| LEVEL_MISSILESACTIVATEIMPACT
+							| LEVEL_INFINITE_FLIGHT;
 			}
 			levelindex = FindWadLevelInfo (sc_String);
 			if (levelindex == -1)
@@ -1643,6 +1648,7 @@ extern int		NoWipe;		// [RH] Don't wipe when travelling in hubs
 static bool		startkeepfacing;	// [RH] Support for keeping your facing angle
 static bool		resetinventory;	// Reset the inventory to the player's default for the next level
 static bool		unloading;
+static bool		g_nomonsters;
 
 // [RH] The position parameter to these next three functions should
 //		match the first parameter of the single player start spots
@@ -1671,8 +1677,7 @@ void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int ne
 
 	if (nextSkill != -1) NextSkill = nextSkill;
 
-	if (!nomonsters) dmflags = dmflags & ~DF_NO_MONSTERS;
-	else dmflags = dmflags | DF_NO_MONSTERS;
+	g_nomonsters = nomonsters;
 
 	if (nointermission) level.flags |= LEVEL_NOINTERMISSION;
 
@@ -1957,6 +1962,15 @@ void G_DoLoadLevel (int position, bool autosave)
 			players[i].playerstate = PST_ENTER;	// [BC]
 		memset (players[i].frags,0,sizeof(players[i].frags)); 
 		players[i].fragcount = 0;
+	}
+
+	if (g_nomonsters)
+	{
+		level.flags |= LEVEL_NOMONSTERS;
+	}
+	else
+	{
+		level.flags &= ~LEVEL_NOMONSTERS;
 	}
 
 	P_SetupLevel (level.mapname, position);

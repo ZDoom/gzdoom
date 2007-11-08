@@ -1613,6 +1613,15 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		}
 	}
 
+	if (thing->flags3 & MF3_FLOORHUGGER)
+	{
+		thing->z = tmfloorz;
+	}
+	else if (thing->flags3 & MF3_CEILINGHUGGER)
+	{
+		thing->z = tmceilingz - thing->height;
+	}
+
 	if (onfloor && tmfloorsector == thing->floorsector)
 	{
 		thing->z = tmfloorz;

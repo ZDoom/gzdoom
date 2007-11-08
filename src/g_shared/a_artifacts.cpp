@@ -973,7 +973,7 @@ void APowerFlight::InitEffect ()
 void APowerFlight::Tick ()
 {
 	// The Wings of Wrath only expire in multiplayer and non-hub games
-	if (!multiplayer && (level.clusterflags & CLUSTER_HUB))
+	if (!multiplayer && (level.flags & LEVEL_INFINITE_FLIGHT))
 	{
 		EffectTics++;
 	}

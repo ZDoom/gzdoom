@@ -404,12 +404,12 @@ void cht_DoCheat (player_t *player, int cheat)
 		if (bglobal.freeze)
 		{
 			bglobal.freeze = false;
-			msg = "Freeze mode off\n";
+			msg = "Freeze mode off";
 		}
 		else
 		{
 			bglobal.freeze = true;
-			msg = "Freeze mode on\n";
+			msg = "Freeze mode on";
 		}
 		break;
 	}

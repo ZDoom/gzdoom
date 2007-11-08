@@ -27,7 +27,7 @@ skill normal
 	PlayerClassName "mage" "MNU_SORCERER"
 
 skill hard
-	SpawnFilter "Normal"
+	SpawnFilter "Hard"
 	Name "MNU_SMITE"
 	PlayerClassName "fighter" "MNU_BERSERKER"
 	PlayerClassName "cleric" "MNU_CARDINAL"
@@ -73,6 +73,14 @@ exittextislump
 music hub
 pic interpic
 
+defaultmap
+	activateowndeathspecials
+	infiniteflightpowerup
+	fallingdamage
+	nointermission
+	noautosequences
+	missilesactivateimpactlines
+	
 // There is also support for showing a clus5msg after cluster 5, but
 // since it isn't used, and it would intefere with the finale if I
 // included it here, I'm leaving out the clusterdef for cluster 5.

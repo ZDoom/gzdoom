@@ -737,6 +737,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 
 	if (object[0] != 'A' || object[1] != 'C' || object[2] != 'S')
 	{
+		delete[] object;
 		return;
 	}
 
@@ -752,6 +753,7 @@ FBehavior::FBehavior (int lumpnum, FileReader * fr, int len)
 		Format = ACS_LittleEnhanced;
 		break;
 	default:
+		delete[] object;
 		return;
 	}
 

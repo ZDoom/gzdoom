@@ -687,7 +687,7 @@ void A_MinotaurAtk3 (AActor *actor)
 	}
 	else
 	{
-		mo = P_SpawnMissileZ (actor, ONFLOORZ, actor->target, RUNTIME_CLASS(AMinotaurFX2));
+		mo = P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(AMinotaurFX2));
 		if (mo != NULL)
 		{
 			S_Sound (mo, CHAN_WEAPON, "minotaur/attack1", 1, ATTN_NORM);

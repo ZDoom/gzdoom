@@ -20,7 +20,6 @@ ACTOR Fatso 67
 	PainSound "fatso/pain"
 	DeathSound "fatso/death"
 	ActiveSound "fatso/active"
-	AttackSound "fatso/raiseguns"
 	Obituary "$OB_FATSO"
 	States
 	{

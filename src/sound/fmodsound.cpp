@@ -137,8 +137,9 @@ public:
 		Stream = stream;
 	}
 
-	bool Play (float volume)
+	bool Play (bool looping, float volume)
 	{
+		FSOUND_Stream_SetMode(Stream, looping? FSOUND_LOOP_NORMAL : FSOUND_LOOP_OFF);
 		Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, Stream, NULL, true);
 		if (Channel != -1)
 		{

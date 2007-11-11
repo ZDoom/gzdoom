@@ -1,3 +1,16 @@
+November 11, 2007 (Changes by Graf Zahl)
+- Fixed: The FMOD stream player must specify whether it wants to play the
+  sound looped or not when playback is started, not when the stream is created.
+- Fixed: A_Saw didn't use the puff's damage type.
+- Fixed: The AxeBlood's death state was using the wrong sprite frame.
+
+November 10, 2007 (Changes by Graf Zahl)
+- Fixed: The Mancubus had an attack sound defined even though it shouldn't.
+
+November 9, 2007 (Changes by Graf Zahl)
+- Fixed: ACS's CheckWeapon must do a case insensitive string comparison to 
+  compare the weapon name with the ready weapon's type.
+
 November 8, 2007 (Changes by Graf Zahl)
 - Changed PowerFlight so that Hexen's infiniteness is not controlled by being
   in a hub but by a level flag instead.

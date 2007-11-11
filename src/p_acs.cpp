@@ -4679,7 +4679,7 @@ int DLevelScript::RunScript ()
 			}
 			else
 			{
-				STACK(1) = 0 == strcmp (FBehavior::StaticLookupString (STACK(1)),
+				STACK(1) = 0 == stricmp (FBehavior::StaticLookupString (STACK(1)),
 					activator->player->ReadyWeapon->GetClass()->TypeName.GetChars());
 			}
 			break;

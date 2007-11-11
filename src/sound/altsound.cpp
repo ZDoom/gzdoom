@@ -111,7 +111,7 @@ struct AltSoundRenderer::Stream : public SoundStream
 		DeleteCriticalSection (&CriticalSection);
 	}
 
-	bool Play (float volume)
+	bool Play (bool looping, float volume)
 	{
 		EnterCriticalSection (&CriticalSection);
 		Paused = false;

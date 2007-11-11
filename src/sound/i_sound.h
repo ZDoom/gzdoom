@@ -51,7 +51,7 @@ public:
 		Loop = 4
 	};
 
-	virtual bool Play (float volume) = 0;
+	virtual bool Play (bool looping, float volume) = 0;
 	virtual void Stop () = 0;
 	virtual void SetVolume (float volume) = 0;
 	virtual bool SetPaused (bool paused) = 0;

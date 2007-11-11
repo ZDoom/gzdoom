@@ -156,7 +156,7 @@ std2:
 		(D+ E FS?) | (D* "." D+ E? FS?) | (D+ "." D* E? FS?)
 									{ RET(TK_FloatConst); }
 
-		(["] (ESC|any\[\n\\"])* ["])
+		(["](([\\]["])|[^"])*["])
 									{ RET(TK_StringConst); }
 
 		(['] (any\[\n'])* ['])

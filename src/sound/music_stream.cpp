@@ -10,7 +10,7 @@ void StreamSong::Play (bool looping)
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	if (m_Stream->Play (snd_musicvolume))
+	if (m_Stream->Play (m_Looping, snd_musicvolume))
 	{
 		m_Status = STATE_Playing;
 		m_LastPos = 0;
@@ -56,7 +56,7 @@ StreamSong::~StreamSong ()
 
 StreamSong::StreamSong (const char *filename_or_data, int offset, int len)
 {
-	m_Stream = GSnd->OpenStream (filename_or_data, m_Looping? SoundStream::Loop : 0, offset, len);
+	m_Stream = GSnd->OpenStream (filename_or_data, SoundStream::Loop, offset, len);
 }
 
 bool StreamSong::IsPlaying ()

@@ -59,7 +59,7 @@ ACTOR AxeBlood
 	Spawn:
 		FAXE FGHIJ 3
 	Death:
-		FAXE G 3
+		FAXE K 3
 		Stop
 	}
 }

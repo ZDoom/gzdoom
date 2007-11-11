@@ -171,7 +171,7 @@ void SPCSong::Play (bool looping)
 	m_Status = STATE_Stopped;
 	m_Looping = true;
 
-	if (m_Stream->Play (snd_musicvolume))
+	if (m_Stream->Play (true, snd_musicvolume))
 	{
 		m_Status = STATE_Playing;
 	}

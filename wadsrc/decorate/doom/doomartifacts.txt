@@ -164,6 +164,7 @@ ACTOR Berserk : CustomInventory 2023
 	+COUNTITEM
 	+INVENTORY.ALWAYSPICKUP
 	Inventory.PickupMessage "$GOTBERSERK"
+	Inventory.PickupSound "misc/p_pkup"
 	States
 	{
 	Spawn:

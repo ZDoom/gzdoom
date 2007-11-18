@@ -1436,7 +1436,7 @@ ACTOR TableShit9 8508
 	States
 	{
 	Spawn:
-		TST1 A -1
+		TST9 A -1
 		Stop
 	}
 }

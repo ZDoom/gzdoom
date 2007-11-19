@@ -1,5 +1,5 @@
 // 'None' must always be the first name.
-xx(None)
+yy(None, "")
 
 xx(Super)
 xx(Object)

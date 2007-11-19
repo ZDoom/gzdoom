@@ -1,3 +1,9 @@
+November 19, 2007 (Changes by Graf Zahl)
+- Changed first name from 'none' to ''. The internal constant is still NAME_None,
+  though.
+- Fixed: Picking up a backpack incorrectly set the maximum amount for any ammo
+  type that didn't have a BackpackMaxAmount to 0.
+
 November 18, 2007 (Changes by Graf Zahl)
 - Fixed TableShit0 definition.
 

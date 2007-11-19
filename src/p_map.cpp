@@ -2922,7 +2922,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			}
 			if (damage) 
 			{
-				int flags = 0;
+				int flags = DMG_INFLICTOR_IS_PUFF;
 				// Allow MF5_PIERCEARMOR on a weapon as well.
 				if (t1->player != NULL && t1->player->ReadyWeapon != NULL &&
 					t1->player->ReadyWeapon->flags5 & MF5_PIERCEARMOR)

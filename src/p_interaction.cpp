@@ -948,7 +948,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 		if (kickback)
 		{
-			ang = R_PointToAngle2 (inflictor->x, inflictor->y,
+			AActor *origin = (source && (flags & DMG_INFLICTOR_IS_PUFF))? source : inflictor;
+			
+			ang = R_PointToAngle2 (origin->x, origin->y,
 				target->x, target->y);
 			thrust = damage*(FRACUNIT>>3)*kickback / target->Mass;
 			// [RH] If thrust overflows, use a more reasonable amount
@@ -958,7 +960,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			}
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
-				 && (target->z - inflictor->z > 64*FRACUNIT)
+				 && (target->z - origin->z > 64*FRACUNIT)
 				 && (pr_damagemobj()&1)
 				 // [RH] But only if not too fast and not flying
 				 && thrust < 10*FRACUNIT

@@ -1,3 +1,13 @@
+November 18, 2007 (Changes by Graf Zahl)
+- Fixed TableShit0 definition.
+
+November 13, 2007 (Changes by Graf Zahl)
+- Fixed Berserk pickup sound.
+- Fixed: When the DONTMOVE flag for A_Chase was used, movecount was not decreased
+  resulting in missile attacks not working.
+- Fixed: Hitscan attacks used the puff's position to calculate the trajectory for
+  weapon kickback.
+
 November 11, 2007 (Changes by Graf Zahl)
 - Fixed: The FMOD stream player must specify whether it wants to play the
   sound looped or not when playback is started, not when the stream is created.

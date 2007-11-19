@@ -356,7 +356,8 @@ bool P_MorphPlayer (player_t *player, const PClass *morphClass);
 void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison);
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);
 
-#define DMG_NO_ARMOR		1
+#define DMG_NO_ARMOR			1
+#define DMG_INFLICTOR_IS_PUFF	2
 
 
 // ===== PO_MAN =====

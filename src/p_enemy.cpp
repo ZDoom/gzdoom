@@ -2084,6 +2084,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			P_NewChaseDir (actor);
 		}
 	}
+	else if (dontmove && actor->movecount > 0) actor->movecount--;
 	
 	// make active sound
 	if (playactive && pr_chase() < 3)

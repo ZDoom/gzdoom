@@ -1717,16 +1717,17 @@ void G_ExitLevel (int position, bool keepFacing)
 
 void G_SecretExitLevel (int position) 
 {
-	const char *nextmap;
+	const char *nextmap = level.nextmap;
 
-	MapData * map = P_OpenMapData(level.secretmap);
-	if (map != NULL)
+	if (level.secretmap[0] != 0)
 	{
-		delete map;
-		nextmap = level.secretmap;
+		MapData * map = P_OpenMapData(level.secretmap);
+		if (map != NULL)
+		{
+			delete map;
+			nextmap = level.secretmap;
+		}
 	}
-	else
-		nextmap = level.nextmap;
 
 	G_ChangeLevel(nextmap, position, false);
 }

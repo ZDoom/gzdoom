@@ -2798,7 +2798,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_ClearForceField,
 	LS_Floor_RaiseByValueTimes8,
 	LS_Floor_LowerByValueTimes8,
-	LS_Floor_MoveToValue
+	LS_Floor_MoveToValue,
 	LS_Ceiling_Waggle,
 	LS_Teleport_ZombieChanger,
 	LS_Ceiling_LowerByValue,

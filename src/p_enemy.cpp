@@ -1963,13 +1963,13 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 
 	if (fastchase && !dontmove)
 	{
-		if (actor->special2 > 0)
+		if (actor->FastChaseStrafeCount > 0)
 		{
-			actor->special2--;
+			actor->FastChaseStrafeCount--;
 		}
 		else
 		{
-			actor->special2 = 0;
+			actor->FastChaseStrafeCount = 0;
 			actor->momx = 0;
 			actor->momy = 0;
 			fixed_t dist = P_AproxDistance (actor->x - actor->target->x, actor->y - actor->target->y);
@@ -1982,7 +1982,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 					else ang -= ANGLE_90;
 					actor->momx = 13 * finecosine[ang>>ANGLETOFINESHIFT];
 					actor->momy = 13 * finesine[ang>>ANGLETOFINESHIFT];
-					actor->special2 = 3;		// strafe time
+					actor->FastChaseStrafeCount = 3;		// strafe time
 				}
 			}
 		}
@@ -2056,7 +2056,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	//
 
 	// class bosses don't do this when strafing
-	if ((!fastchase || !actor->special2) && !dontmove)
+	if ((!fastchase || !actor->FastChaseStrafeCount) && !dontmove)
 	{
 		// CANTLEAVEFLOORPIC handling was completely missing in the non-serpent functions.
 		fixed_t oldX = actor->x;

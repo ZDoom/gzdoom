@@ -692,6 +692,7 @@ public:
 	fixed_t			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	fixed_t			gravity;		// [GRB] Gravity factor
+	int 			FastChaseStrafeCount;
 
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98

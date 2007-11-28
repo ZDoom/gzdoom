@@ -315,7 +315,8 @@ void AActor::Serialize (FArchive &arc)
 		<< meleethreshold
 		<< meleerange
 		<< DamageType
-		<< gravity;
+		<< gravity
+		<< FastChaseStrafeCount;
 
 	if (arc.IsStoring ())
 	{

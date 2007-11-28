@@ -1,3 +1,6 @@
+November 24, 2007 (Changes by Graf Zahl)
+- added Floor_MoveToValue and Ceiling_MoveToValue action specials.
+
 November 19, 2007 (Changes by Graf Zahl)
 - Changed first name from 'none' to ''. The internal constant is still NAME_None,
   though.

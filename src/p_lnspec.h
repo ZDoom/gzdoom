@@ -84,6 +84,7 @@ typedef enum {
 
 	Floor_RaiseByValueTimes8 = 35,
 	Floor_LowerByValueTimes8 = 36,
+	Floor_MoveToValue = 37,
 
 	Ceiling_Waggle = 38,	// [RH] Complement of Floor_Waggle
 	Teleport_ZombieChanger = 39,	// [RH] Needed for Strife
@@ -96,6 +97,7 @@ typedef enum {
 	Ceiling_CrushRaiseAndStay = 45,
 
 	Floor_CrushStop = 46,
+	Ceiling_MoveToValue = 47,
 
 	GlassBreak = 49,
 	ExtraFloor_LightOnly = 50,

@@ -322,6 +322,9 @@ enum
 	RF_VOXELSPRITE		= 0x3000,	// Voxel object
 	RF_INVISIBLE		= 0x8000,	// Don't bother drawing this actor
 
+	RF_FORCEYBILLBOARD		= 0x10000,	// [BB] OpenGL only: draw with y axis billboard, i.e. anchored to the floor (overrides gl_billboard_mode setting)
+	RF_FORCEXYBILLBOARD		= 0x20000,	// [BB] OpenGL only: draw with xy axis billboard, i.e. unanchored (overrides gl_billboard_mode setting)
+
 // --- dummies for unknown/unimplemented Strife flags ---
 
 	MF_STRIFEx8000000 = 0,		// seems related to MF_SHADOW

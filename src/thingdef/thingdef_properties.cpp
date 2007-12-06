@@ -226,6 +226,8 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG2(FX_ROCKET, ROCKETTRAIL, AActor, effects),
 	DEFINE_FLAG2(FX_GRENADE, GRENADETRAIL, AActor, effects),
 	DEFINE_FLAG(RF, INVISIBLE, AActor, renderflags),
+	DEFINE_FLAG(RF, FORCEYBILLBOARD, AActor, renderflags),
+	DEFINE_FLAG(RF, FORCEXYBILLBOARD, AActor, renderflags),
 
 	// Deprecated flags. Handling must be performed in HandleDeprecatedFlags
 	DEFINE_DEPRECATED_FLAG(FIREDAMAGE, AActor, 0),

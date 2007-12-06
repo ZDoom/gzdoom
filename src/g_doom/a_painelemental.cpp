@@ -11,11 +11,23 @@ void A_PainDie (AActor *);
 
 void A_SkullAttack (AActor *self);
 
+static const PClass *GetSpawnType()
+{
+	const PClass *spawntype = NULL;
+	int index=CheckIndex(1, NULL);
+	if (index>=0) 
+	{
+		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
+	}
+	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
+	return spawntype;
+}
+
 //
 // A_PainShootSkull
 // Spawn a lost soul and launch it at the target
 //
-void A_PainShootSkull (AActor *self, angle_t angle)
+void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
 {
 	fixed_t x, y, z;
 	
@@ -23,16 +35,7 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	angle_t an;
 	int prestep;
 
-	const PClass *spawntype = NULL;
-
 	if (self->DamageType==NAME_Massacre) return;
-
-	int index=CheckIndex(1, NULL);
-	if (index>=0) 
-	{
-		spawntype = PClass::FindClass((ENamedName)StateParameters[index]);
-	}
-	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
 
 	// [RH] check to make sure it's not too close to the ceiling
 	if (self->z + self->height + 8*FRACUNIT > self->ceilingz)
@@ -121,8 +124,9 @@ void A_PainAttack (AActor *self)
 	if (!self->target)
 		return;
 
+	const PClass *spawntype = GetSpawnType();
 	A_FaceTarget (self);
-	A_PainShootSkull (self, self->angle);
+	A_PainShootSkull (self, self->angle, spawntype);
 }
 
 void A_DualPainAttack (AActor *self)
@@ -130,9 +134,10 @@ void A_DualPainAttack (AActor *self)
 	if (!self->target)
 		return;
 
+	const PClass *spawntype = GetSpawnType();
 	A_FaceTarget (self);
-	A_PainShootSkull (self, self->angle + ANG45);
-	A_PainShootSkull (self, self->angle - ANG45);
+	A_PainShootSkull (self, self->angle + ANG45, spawntype);
+	A_PainShootSkull (self, self->angle - ANG45, spawntype);
 }
 
 void A_PainDie (AActor *self)
@@ -141,8 +146,9 @@ void A_PainDie (AActor *self)
 	{ // And I thought you were my friend!
 		self->flags &= ~MF_FRIENDLY;
 	}
+	const PClass *spawntype = GetSpawnType();
 	A_NoBlocking (self);
-	A_PainShootSkull (self, self->angle + ANG90);
-	A_PainShootSkull (self, self->angle + ANG180);
-	A_PainShootSkull (self, self->angle + ANG270);
+	A_PainShootSkull (self, self->angle + ANG90, spawntype);
+	A_PainShootSkull (self, self->angle + ANG180, spawntype);
+	A_PainShootSkull (self, self->angle + ANG270, spawntype);
 }

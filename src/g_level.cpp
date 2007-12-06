@@ -297,6 +297,7 @@ static const char *MapInfoMapLevel[] =
 	"totalinfighting",
 	"infiniteflightpowerup",
 	"noinfiniteflightpowerup",
+	"allowrespawn",
 	NULL
 };
 
@@ -437,6 +438,7 @@ MapHandlers[] =
 	{ MITYPE_SCFLAGS,	LEVEL_TOTALINFIGHTING, ~LEVEL_NOINFIGHTING },
 	{ MITYPE_SETFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_ALLOWRESPAWN, 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -3142,6 +3144,10 @@ static void ParseSkill ()
 		else if (SC_Compare("MustConfirm"))
 		{
 			skill.MustConfirm = true;
+			if (SC_CheckToken(TK_String))
+			{
+				skill.MustConfirmText = sc_String;
+			}
 		}
 		else if (SC_Compare("Key"))
 		{

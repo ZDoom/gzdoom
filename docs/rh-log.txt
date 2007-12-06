@@ -1,7 +1,22 @@
+December 6, 2007 (Changes by Graf Zahl)
+- Fixed: A_PainDie and A_DualPainAttack could fail to spawn the correct actor
+  if the first spawned one died and executed some code in its death state.
+
 December 5, 2007
 - Fixed: The Linux makefile should use the include files for the system FLAC
   installation, not the bundled copies which might not match what is installed.
 - Upgraded bundled FLAC from version 1.1.2 to version 1.2.1.
+
+December 2, 2007 (Changes by Graf Zahl)
+- Added Karate Chris's submission for 'allowrespawn' MAPINFO option.
+- Added Karate Chris's submission for customizable skill confirmation text.
+- Fixed: Doom's statusbar only checked for primary attacks, not secondary ones when
+  setting Doomguy's face. (Thanks to Karate Chris for the fix.)
+
+November 29, 2007 (Changes by Graf Zahl)
+- added Skulltag's FORCEYBILLBOARD and FORCEXYBILLBOARD flags to the DECORATE parser.
+  Even though the software renderer has no use for them it is necessary to support them
+  so that mods can use these flags without becoming incompatible with ZDoom.
 
 November 28, 2007 (Changes by Graf Zahl)
 - after looking at the most recent Vavoom update I realized that A_FastChase should not

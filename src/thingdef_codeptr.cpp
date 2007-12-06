@@ -2041,6 +2041,7 @@ void A_Respawn (AActor *actor)
 		{
 			Spawn<ATeleportFog> (x, y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 		}
+		if (actor->CountsAsKill()) level.total_monsters++;
 	}
 	else
 	{

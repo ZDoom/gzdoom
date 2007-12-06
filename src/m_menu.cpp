@@ -1741,7 +1741,10 @@ void M_ChooseSkill (int choice)
 {
 	if (gameinfo.gametype == GAME_Doom && AllSkills[choice].MustConfirm)
 	{
-		M_StartMessage (GStrings("NIGHTMARE"), M_VerifyNightmare, true);
+		const char *msg = AllSkills[choice].MustConfirmText;
+		if (*msg==0) msg = GStrings("NIGHTMARE");
+		if (*msg=='$') msg = GStrings(msg+1);
+		M_StartMessage (msg, M_VerifyNightmare, true);
 		return;
 	}
 

@@ -1405,7 +1405,7 @@ static void G_QueueBody (AActor *body)
 //
 void G_DoReborn (int playernum, bool freshbot)
 {
-	if (!multiplayer)
+	if (!multiplayer && !(level.flags & LEVEL_ALLOWRESPAWN))
 	{
 		if (BackupSaveName.Len() > 0 && FileExists (BackupSaveName.GetChars()))
 		{ // Load game from the last point it was saved

@@ -1,5 +1,7 @@
+;  vim:filetype=nasm ts=8
+
 ;  libFLAC - Free Lossless Audio Codec library
-;  Copyright (C) 2001,2002,2003,2004,2005  Josh Coalson
+;  Copyright (C) 2001,2002,2003,2004,2005,2006,2007  Josh Coalson
 ;
 ;  Redistribution and use in source and binary forms, with or without
 ;  modification, are permitted provided that the following conditions
@@ -615,7 +617,7 @@ cident FLAC__lpc_compute_autocorrelation_asm_ia32_sse_lag_12
 .end:
 	ret
 
-	align 16
+	ALIGN 16
 cident FLAC__lpc_compute_autocorrelation_asm_ia32_3dnow
 	;[ebp + 32] autoc
 	;[ebp + 28] lag
@@ -653,7 +655,7 @@ cident FLAC__lpc_compute_autocorrelation_asm_ia32_3dnow
 	cmp	esi, ecx
 	mov	eax, esi
 	ja	short .loop2_pre
-	align	16		;4 nops
+	ALIGN	16		;4 nops
 .loop1_i:
 	movd	mm0, [eax]
 	movd	mm2, [eax + 4]
@@ -664,7 +666,7 @@ cident FLAC__lpc_compute_autocorrelation_asm_ia32_3dnow
 	punpckldq	mm2, mm2
 	punpckldq	mm4, mm4
 	punpckldq	mm6, mm6
-	align	16		;3 nops
+	ALIGN	16		;3 nops
 .loop1_j:
 	sub	ebx, byte 2
 	movd	mm1, [eax + 4 * ebx]
@@ -957,8 +959,9 @@ cident FLAC__lpc_compute_residual_from_qlp_coefficients_asm_ia32
 	ret
 
 ; WATCHOUT: this routine works on 16 bit data which means bits-per-sample for
-; the channel must be <= 16.  Especially note that this routine cannot be used
-; for side-channel coded 16bps channels since the effective bps is 17.
+; the channel and qlp_coeffs must be <= 16.  Especially note that this routine
+; cannot be used for side-channel coded 16bps channels since the effective bps
+; is 17.
 	ALIGN	16
 cident FLAC__lpc_compute_residual_from_qlp_coefficients_asm_ia32_mmx
 	;[esp + 40]	residual[]
@@ -1020,7 +1023,7 @@ cident FLAC__lpc_compute_residual_from_qlp_coefficients_asm_ia32_mmx
 	cmp	eax, byte 4
 	jnbe	short .mmx_4more
 
-	align	16
+	ALIGN	16
 .mmx_4_loop_i:
 	movd	mm1, [esi]
 	movq	mm3, mm4
@@ -1059,7 +1062,7 @@ cident FLAC__lpc_compute_residual_from_qlp_coefficients_asm_ia32_mmx
 	neg	eax
 	add	eax, byte 16
 
-	align	16
+	ALIGN	16
 .mmx_4more_loop_i:
 	movd	mm1, [esi]
 	punpckldq	mm1, [esi + 4]
@@ -1081,7 +1084,7 @@ cident FLAC__lpc_compute_residual_from_qlp_coefficients_asm_ia32_mmx
 	add	ecx, eax
 	mov	edx, esp
 
-	align	16
+	ALIGN	16
 .mmx_4more_loop_j:
 	movd	mm0, [ecx - 16]
 	movd	mm7, [ecx - 8]
@@ -1359,8 +1362,9 @@ cident FLAC__lpc_restore_signal_asm_ia32
 	ret
 
 ; WATCHOUT: this routine works on 16 bit data which means bits-per-sample for
-; the channel must be <= 16.  Especially note that this routine cannot be used
-; for side-channel coded 16bps channels since the effective bps is 17.
+; the channel and qlp_coeffs must be <= 16.  Especially note that this routine
+; cannot be used for side-channel coded 16bps channels since the effective bps
+; is 17.
 ; WATCHOUT: this routine requires that each data array have a buffer of up to
 ; 3 zeroes in front (at negative indices) for alignment purposes, i.e. for each
 ; channel n, data[n][-1] through data[n][-3] should be accessible and zero.
@@ -1424,7 +1428,7 @@ cident FLAC__lpc_restore_signal_asm_ia32_mmx
 	cmp	eax, byte 4
 	jnbe	short .mmx_4more
 
-	align	16
+	ALIGN	16
 .mmx_4_loop_i:
 	movq	mm7, mm4
 	pmaddwd	mm7, mm5
@@ -1449,7 +1453,7 @@ cident FLAC__lpc_restore_signal_asm_ia32_mmx
 	shl	eax, 2
 	neg	eax
 	add	eax, byte 16
-	align	16
+	ALIGN	16
 .mmx_4more_loop_i:
 	mov	ecx, edi
 	add	ecx, eax
@@ -1458,7 +1462,7 @@ cident FLAC__lpc_restore_signal_asm_ia32_mmx
 	movq	mm7, mm4
 	pmaddwd	mm7, mm5
 
-	align	16
+	ALIGN	16
 .mmx_4more_loop_j:
 	movd	mm0, [ecx - 16]
 	punpckldq	mm0, [ecx - 12]
@@ -1501,3 +1505,7 @@ cident FLAC__lpc_restore_signal_asm_ia32_mmx
 	ret
 
 end
+
+%ifdef OBJ_FORMAT_elf
+       section .note.GNU-stack noalloc
+%endif

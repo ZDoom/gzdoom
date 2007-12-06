@@ -1,3 +1,8 @@
+December 5, 2007
+- Fixed: The Linux makefile should use the include files for the system FLAC
+  installation, not the bundled copies which might not match what is installed.
+- Upgraded bundled FLAC from version 1.1.2 to version 1.2.1.
+
 November 28, 2007 (Changes by Graf Zahl)
 - after looking at the most recent Vavoom update I realized that A_FastChase should not
   use the multi-purpose special2 as counter for strafing so I added a new variable

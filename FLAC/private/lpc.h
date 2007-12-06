@@ -1,5 +1,5 @@
 /* libFLAC - Free Lossless Audio Codec library
- * Copyright (C) 2000,2001,2002,2003,2004,2005  Josh Coalson
+ * Copyright (C) 2000,2001,2002,2003,2004,2005,2006,2007  Josh Coalson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +42,19 @@
 #ifndef FLAC__INTEGER_ONLY_LIBRARY
 
 /*
+ *	FLAC__lpc_window_data()
+ *	--------------------------------------------------------------------
+ *	Applies the given window to the data.
+ *  OPT: asm implementation
+ *
+ *	IN in[0,data_len-1]
+ *	IN window[0,data_len-1]
+ *	OUT out[0,lag-1]
+ *	IN data_len
+ */
+void FLAC__lpc_window_data(const FLAC__int32 in[], const FLAC__real window[], FLAC__real out[], unsigned data_len);
+
+/*
  *	FLAC__lpc_compute_autocorrelation()
  *	--------------------------------------------------------------------
  *	Compute the autocorrelation for lags between 0 and lag-1.
@@ -78,13 +91,16 @@ void FLAC__lpc_compute_autocorrelation_asm_ia32_3dnow(const FLAC__real data[], u
  *	OUT lp_coeff[0,max_order-1][0,max_order-1] LP coefficients for each order
  *	*** IMPORTANT:
  *	*** lp_coeff[0,max_order-1][max_order,FLAC__MAX_LPC_ORDER-1] are untouched
- *	OUT error[0,max_order-1]                   error for each order
+ *	OUT error[0,max_order-1]                   error for each order (more
+ *	                                           specifically, the variance of
+ *	                                           the error signal times # of
+ *	                                           samples in the signal)
  *
  *	Example: if max_order is 9, the LP coefficients for order 9 will be
  *	         in lp_coeff[8][0,8], the LP coefficients for order 8 will be
  *			 in lp_coeff[7][0,7], etc.
  */
-void FLAC__lpc_compute_lp_coefficients(const FLAC__real autoc[], unsigned max_order, FLAC__real lp_coeff[][FLAC__MAX_LPC_ORDER], FLAC__double error[]);
+void FLAC__lpc_compute_lp_coefficients(const FLAC__real autoc[], unsigned *max_order, FLAC__real lp_coeff[][FLAC__MAX_LPC_ORDER], FLAC__double error[]);
 
 /*
  *	FLAC__lpc_quantize_coefficients()
@@ -187,10 +203,11 @@ FLAC__double FLAC__lpc_compute_expected_bits_per_residual_sample_with_error_scal
  *	IN lpc_error[0,max_order-1] >= 0.0  error returned from calculating LP coefficients
  *	IN max_order > 0                    max LP order
  *	IN total_samples > 0                # of samples in residual signal
- *	IN bits_per_signal_sample           # of bits per sample in the original signal
+ *	IN overhead_bits_per_order          # of bits overhead for each increased LP order
+ *	                                    (includes warmup sample size and quantized LP coefficient)
  *	RETURN [1,max_order]                best order
  */
-unsigned FLAC__lpc_compute_best_order(const FLAC__double lpc_error[], unsigned max_order, unsigned total_samples, unsigned bits_per_signal_sample);
+unsigned FLAC__lpc_compute_best_order(const FLAC__double lpc_error[], unsigned max_order, unsigned total_samples, unsigned overhead_bits_per_order);
 
 #endif /* !defined FLAC__INTEGER_ONLY_LIBRARY */
 

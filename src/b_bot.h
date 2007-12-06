@@ -110,8 +110,9 @@ public:
 	bool IsDangerous (sector_t *sec);
 
 	DArgs *getspawned; //Array of bots (their names) which should be spawned when starting a game.
-	bool botingame[MAXPLAYERS]; 
-	bool freeze;    //Game in freeze mode.
+	bool botingame[MAXPLAYERS];
+	BYTE freeze:1;			//Game in freeze mode.
+	BYTE changefreeze:1;	//Game wants to change freeze mode.
 	int botnum;
 	botinfo_t *botinfo;
 	int spawn_tries;

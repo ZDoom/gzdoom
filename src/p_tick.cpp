@@ -75,6 +75,16 @@ void P_Ticker (void)
 	if (paused || (playerswiping && !demoplayback) || P_CheckTickerPaused())
 		return;
 
+	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
+	if ((level.time & 3) == 0)
+	{
+		if (bglobal.changefreeze)
+		{
+			bglobal.freeze ^= 1;
+			bglobal.changefreeze = 0;
+		}
+	}
+
 	// [BC] Do a quick check to see if anyone has the freeze time power. If they do,
 	// then don't resume the sound, since one of the effects of that power is to shut
 	// off the music.

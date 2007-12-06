@@ -29,5 +29,5 @@ skill nightmare
 	RespawnTime 12
 	SpawnFilter "Hard"
 	PicName "M_NMARE"
-	MustConfirm ""
+	MustConfirm
 	Key n

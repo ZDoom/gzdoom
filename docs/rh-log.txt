@@ -1,3 +1,8 @@
+December 6, 2007
+- Fixed: The FLAC/makefile.mgw should use md5.o as an OBJ, not md5.c.
+- Fixed: The Linux makefile probably shouldn't be using the bundled zlib headers,
+  either.
+
 December 6, 2007 (Changes by Graf Zahl)
 - Added Karate Chris's submission for scoreboard enhancement.
 - Fixed: A_PainDie and A_DualPainAttack could fail to spawn the correct actor

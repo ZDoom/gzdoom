@@ -37,6 +37,10 @@
 
 EXTERN_CVAR (Int, con_scaletext)
 
+EXTERN_CVAR (Bool, sb_cooperative_enable)
+EXTERN_CVAR (Bool, sb_deathmatch_enable)
+EXTERN_CVAR (Bool, sb_teamdeathmatch_enable)
+
 // Public data
 
 void CT_Init ();
@@ -244,7 +248,10 @@ void CT_Drawer (void)
 		BorderTopRefresh = screen->GetPageCount ();
 	}
 
-	if (players[consoleplayer].camera != NULL && deathmatch &&
+	if (players[consoleplayer].camera != NULL &&
+		((deathmatch && teamplay && sb_teamdeathmatch_enable) ||
+		(deathmatch && !teamplay && sb_deathmatch_enable) ||
+		(!deathmatch && multiplayer && sb_cooperative_enable)) &&
 		(Button_ShowScores.bDown ||
 		 players[consoleplayer].camera->health <= 0))
 	{

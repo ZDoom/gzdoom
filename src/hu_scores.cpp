@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2007 Chris Westley
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,36 +33,67 @@
 **
 */
 
-#include <string.h>
-#include <ctype.h>
-#include "doomdef.h"
-#include "m_swap.h"
-#include "hu_stuff.h"
-#include "w_wad.h"
-#include "s_sound.h"
-#include "doomstat.h"
+// HEADER FILES ------------------------------------------------------------
+
 #include "st_stuff.h"
 #include "c_console.h"
-#include "c_dispatch.h"
-#include "c_cvars.h"
-#include "v_text.h"
 #include "v_video.h"
-#include "gi.h"
-#include "d_gui.h"
-#include "i_input.h"
 #include "templates.h"
 
+// MACROS ------------------------------------------------------------------
+
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void HU_DrawNonTeamScores (player_t *, player_t *[MAXPLAYERS]);
 static void HU_DrawTeamScores (player_t *, player_t *[MAXPLAYERS]);
-static void HU_DrawSingleScores (player_t *, player_t *[MAXPLAYERS]);
+
 static void HU_DrawTimeRemaining (int y);
+
 static void HU_DrawPlayer (player_t *, bool, int, int, int, bool);
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+EXTERN_CVAR (Float, timelimit)
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR (Bool,	sb_cooperative_enable,				true,		CVAR_ARCHIVE)
+CVAR (Int,	sb_cooperative_headingcolor,		CR_RED,		CVAR_ARCHIVE)
+CVAR (Int,	sb_cooperative_yourplayercolor,		CR_GREEN,	CVAR_ARCHIVE)
+CVAR (Int,	sb_cooperative_otherplayercolor,	CR_GREY,	CVAR_ARCHIVE)
+
+CVAR (Bool,	sb_deathmatch_enable,				true,		CVAR_ARCHIVE)
+CVAR (Int,	sb_deathmatch_headingcolor,			CR_RED,		CVAR_ARCHIVE)
+CVAR (Int,	sb_deathmatch_yourplayercolor,		CR_GREEN,	CVAR_ARCHIVE)
+CVAR (Int,	sb_deathmatch_otherplayercolor,		CR_GREY,	CVAR_ARCHIVE)
+
+CVAR (Bool,	sb_teamdeathmatch_enable,			true,		CVAR_ARCHIVE)
+CVAR (Int,	sb_teamdeathmatch_yourplayercolor,	CR_GREEN,	CVAR_ARCHIVE)
+CVAR (Int,	sb_teamdeathmatch_otherplayercolor,	CR_GREY,	CVAR_ARCHIVE)
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int STACK_ARGS compare (const void *arg1, const void *arg2)
 {
-	return (*(player_t **)arg2)->fragcount - (*(player_t **)arg1)->fragcount;
+	if (deathmatch)
+		return (*(player_t **)arg2)->fragcount - (*(player_t **)arg1)->fragcount;
+	else
+		return (*(player_t **)arg2)->killcount - (*(player_t **)arg1)->killcount;
 }
 
-EXTERN_CVAR (Float, timelimit)
+// CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// HU_DrawScores
+//
+//==========================================================================
 
 void HU_DrawScores (player_t *player)
 {
@@ -81,24 +113,30 @@ void HU_DrawScores (player_t *player)
 
 	qsort (sortedplayers, MAXPLAYERS, sizeof(player_t *), compare);
 
-	if (teamplay)
-	{
+	if (deathmatch && teamplay)
 		HU_DrawTeamScores (player, sortedplayers);
-	}
 	else
-	{
-		HU_DrawSingleScores (player, sortedplayers);
-	}
+		HU_DrawNonTeamScores (player, sortedplayers);
 
 	BorderNeedRefresh = screen->GetPageCount ();
 }
 
-static void HU_DrawSingleScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
-{
-	int i, x, y, maxwidth;
-	int height = screen->Font->GetHeight() * CleanYfac;
+//==========================================================================
+//
+// HU_DrawNonTeamScores
+//
+//==========================================================================
 
-	maxwidth = 0;
+static void HU_DrawNonTeamScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
+{
+	int color;
+	int height = screen->Font->GetHeight() * CleanYfac;
+	int i;
+	int maxwidth = 0;
+	int x ,y;
+	
+	deathmatch ? color = sb_deathmatch_headingcolor : color = sb_cooperative_headingcolor;
+
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
@@ -109,12 +147,21 @@ static void HU_DrawSingleScores (player_t *player, player_t *sortedplayers[MAXPL
 		}
 	}
 
-	x = (SCREENWIDTH >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
-
-	y = (ST_Y >> 1) - (MAXPLAYERS * 6);
-	if (y < 48) y = 48;
+	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 4 : y = SCREENHEIGHT / 16;
 
 	HU_DrawTimeRemaining (ST_Y - height);
+
+	screen->DrawText (color, SCREENWIDTH / 32, y, "Color",
+		DTA_CleanNoMove, true, TAG_DONE);
+
+	screen->DrawText (color, SCREENWIDTH / 4, y, deathmatch ? "Frags" : "Kills",
+		DTA_CleanNoMove, true, TAG_DONE);
+
+	screen->DrawText (color, SCREENWIDTH / 2, y, "Name",
+		DTA_CleanNoMove, true, TAG_DONE);
+
+	x = (SCREENWIDTH >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
+	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 10;
 
 	for (i = 0; i < MAXPLAYERS && y < ST_Y - 12 * CleanYfac; i++)
 	{
@@ -125,6 +172,12 @@ static void HU_DrawSingleScores (player_t *player, player_t *sortedplayers[MAXPL
 		}
 	}
 }
+
+//==========================================================================
+//
+// HU_DrawTeamScores
+//
+//==========================================================================
 
 static void HU_DrawTeamScores (player_t *player, player_t *sorted[MAXPLAYERS])
 {
@@ -151,7 +204,7 @@ static void HU_DrawTeamScores (player_t *player, player_t *sorted[MAXPLAYERS])
 
 	if (numTeams == 0)
 	{
-		HU_DrawSingleScores (player, sorted);
+		HU_DrawNonTeamScores (player, sorted);
 		return;
 	}
 
@@ -179,7 +232,7 @@ static void HU_DrawTeamScores (player_t *player, player_t *sorted[MAXPLAYERS])
 			teamY[j] = (j&2) ? tallest : (gamestate==GS_LEVEL?32*CleanYfac:
 								(56-100)*CleanYfac+(SCREENHEIGHT/2));
 
-			sprintf (str, "%s %d", TeamNames[i], teamScore[i]);
+			sprintf (str, "%s: %d", TeamNames[i], teamScore[i]);
 			screen->DrawText (teamColors[i], teamX[j],
 				teamY[j] - 20*CleanYfac, str, DTA_CleanNoMove, true, TAG_DONE);
 
@@ -199,6 +252,12 @@ static void HU_DrawTeamScores (player_t *player, player_t *sorted[MAXPLAYERS])
 		}
 	}
 }
+
+//==========================================================================
+//
+// HU_DrawTimeRemaining
+//
+//==========================================================================
 
 static void HU_DrawTimeRemaining (int y)
 {
@@ -225,14 +284,19 @@ static void HU_DrawTimeRemaining (int y)
 		screen->DrawText (CR_GREY, SCREENWIDTH/2 - SmallFont->StringWidth (str)/2*CleanXfac,
 			y, str, DTA_CleanNoMove, true, TAG_DONE);
 	}
-
 }
+
+//==========================================================================
+//
+// HU_DrawPlayer
+//
+//==========================================================================
 
 static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int height, bool pack)
 {
-	char str[80];
 	float h, s, v, r, g, b;
 	int color;
+	char str[80];
 
 	D_GetPlayerColor (player - players, &h, &s, &v);
 	HSVtoRGB (&r, &g, &b, h, s, v);
@@ -240,27 +304,50 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 	color = ColorMatcher.Pick (clamp (int(r*255.f),0,255),
 		clamp (int(g*255.f),0,255), clamp (int(b*255.f),0,255));
 
-	screen->Clear (x, y, x + 24*CleanXfac, y + height, color);
-
-	if (player->mo->ScoreIcon > 0)
+	if (deathmatch && teamplay)
 	{
-		screen->DrawTexture (TexMan[player->mo->ScoreIcon], x+(pack?20:32)*CleanXfac, y,
+		screen->Clear (x, y, x + 24*CleanXfac, y + height, color);
+
+		if (player->mo->ScoreIcon > 0)
+		{
+			screen->DrawTexture (TexMan[player->mo->ScoreIcon], x+(pack?20:32)*CleanXfac, y,
+				DTA_CleanNoMove, true, TAG_DONE);
+		}
+
+		sprintf (str, "%d", player->fragcount);
+
+		if (!highlight)
+			color = sb_teamdeathmatch_otherplayercolor;
+		else
+			color = sb_teamdeathmatch_yourplayercolor;
+
+		screen->DrawText (color, x+(pack?28:40)*CleanXfac, y, str,
 			DTA_CleanNoMove, true, TAG_DONE);
-	}
 
-	sprintf (str, "%d", player->fragcount);
-	screen->DrawText (highlight ? CR_GREEN : CR_BRICK, x+(pack?28:40)*CleanXfac, y, str,
-		DTA_CleanNoMove, true, TAG_DONE);
-
-	if (!highlight)
-	{
-		color = (demoplayback && player == &players[consoleplayer]) ? CR_GOLD : CR_GREY;
+		screen->DrawText (color, x + (pack?54:72)*CleanXfac, y, player->userinfo.netname,
+			DTA_CleanNoMove, true, TAG_DONE);
 	}
 	else
 	{
-		color = CR_GREEN;
-	}
+		screen->Clear (SCREENWIDTH / 24, y, SCREENWIDTH / 24 + 24*CleanXfac, y + height, color);
 
-	screen->DrawText (color, x + (pack?54:72)*CleanXfac, y, player->userinfo.netname,
-		DTA_CleanNoMove, true, TAG_DONE);
+		if (!highlight)
+			deathmatch ? color = sb_deathmatch_otherplayercolor : color = sb_cooperative_otherplayercolor;
+		else
+			deathmatch ? color = sb_deathmatch_yourplayercolor : color = sb_cooperative_yourplayercolor;
+
+		sprintf (str, "%d", deathmatch ? player->fragcount : player->killcount);
+
+		screen->DrawText (color, SCREENWIDTH / 4, y, str,
+			DTA_CleanNoMove, true, TAG_DONE);
+
+		screen->DrawText (color, SCREENWIDTH / 2, y, player->userinfo.netname,
+			DTA_CleanNoMove, true, TAG_DONE);
+
+		if (player->mo->ScoreIcon > 0)
+		{
+			screen->DrawTexture (TexMan[player->mo->ScoreIcon], SCREENWIDTH / 2.25, y,
+				DTA_CleanNoMove, true, TAG_DONE);
+		}
+	}
 }

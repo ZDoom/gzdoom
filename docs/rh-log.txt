@@ -1,4 +1,5 @@
 December 6, 2007 (Changes by Graf Zahl)
+- Added Karate Chris's submission for scoreboard enhancement.
 - Fixed: A_PainDie and A_DualPainAttack could fail to spawn the correct actor
   if the first spawned one died and executed some code in its death state.
 

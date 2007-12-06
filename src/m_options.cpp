@@ -392,6 +392,7 @@ static menuitem_t ControlsItems[] =
 	{ control,	"Center view",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"centerview"} },
 	{ control,	"Run",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+speed"} },
 	{ control,	"Strafe",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+strafe"} },
+	{ control,	"Show Scoreboard",		{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"+showscores"} },
 	{ redtext,	" ",					{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
 	{ whitetext,"Chat",					{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
 	{ control,	"Say",					{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"messagemode"} },
@@ -440,6 +441,7 @@ menu_t ControlsMenu =
  *=======================================*/
 static void StartMessagesMenu (void);
 static void StartAutomapMenu (void);
+static void StartScoreboardMenu (void);
 
 EXTERN_CVAR (Bool, st_scale)
 EXTERN_CVAR (Int,  r_detail)
@@ -506,6 +508,7 @@ static value_t Endoom[] = {
 static menuitem_t VideoItems[] = {
 	{ more,		"Message Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartMessagesMenu} },
 	{ more,		"Automap Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartAutomapMenu} },
+	{ more,		"Scoreboard Options",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)StartScoreboardMenu} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ slider,	"Screen size",			{&screenblocks},	   	{3.0}, {12.0},	{1.0}, {NULL} },
 	{ slider,	"Brightness",			{&Gamma},			   	{1.0}, {3.0},	{0.1}, {NULL} },
@@ -805,6 +808,60 @@ menu_t MessagesMenu =
 	countof(MessagesItems),
 	0,
 	MessagesItems,
+};
+
+
+/*=======================================
+ *
+ * Scoreboard Menu
+ *
+ *=======================================*/
+
+EXTERN_CVAR (Bool, sb_cooperative_enable)
+EXTERN_CVAR (Int, sb_cooperative_headingcolor)
+EXTERN_CVAR (Int, sb_cooperative_yourplayercolor)
+EXTERN_CVAR (Int, sb_cooperative_otherplayercolor)
+
+EXTERN_CVAR (Bool, sb_deathmatch_enable)
+EXTERN_CVAR (Int, sb_deathmatch_headingcolor)
+EXTERN_CVAR (Int, sb_deathmatch_yourplayercolor)
+EXTERN_CVAR (Int, sb_deathmatch_otherplayercolor)
+
+EXTERN_CVAR (Bool, sb_teamdeathmatch_enable)
+EXTERN_CVAR (Int, sb_teamdeathmatch_yourplayercolor)
+EXTERN_CVAR (Int, sb_teamdeathmatch_otherplayercolor)
+
+static menuitem_t ScoreboardItems[] = {
+	{ whitetext, "Cooperative Options",		{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",						{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ discrete, "Enable Scoreboard",		{&sb_cooperative_enable},				{21.0}, {0.0},	{0.0}, {YesNo} },
+	{ cdiscrete, "Header Color",			{&sb_cooperative_headingcolor},			{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Your Player Color",		{&sb_cooperative_yourplayercolor},		{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Other Players' Color",	{&sb_cooperative_otherplayercolor},		{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ redtext,	" ",						{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",						{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ whitetext, "Deathmatch Options",		{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",						{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ discrete, "Enable Scoreboard",		{&sb_deathmatch_enable},				{21.0}, {0.0},	{0.0}, {YesNo} },
+	{ cdiscrete, "Header Color",			{&sb_deathmatch_headingcolor},			{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Your Player Color",		{&sb_deathmatch_yourplayercolor},		{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Other Players' Color",	{&sb_deathmatch_otherplayercolor},		{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ redtext,	" ",						{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",						{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ whitetext, "Team Deathmatch Options",	{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",						{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
+	{ discrete, "Enable Scoreboard",		{&sb_teamdeathmatch_enable},			{21.0}, {0.0},	{0.0}, {YesNo} },
+	{ cdiscrete, "Your Player Color",		{&sb_teamdeathmatch_yourplayercolor},	{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ cdiscrete, "Other Players' Color",	{&sb_teamdeathmatch_otherplayercolor},	{21.0}, {0.0},	{0.0}, {TextColors} }
+};
+
+menu_t ScoreboardMenu =
+{
+	"SCOREBOARD OPTIONS",
+	2,
+	countof(ScoreboardItems),
+	0,
+	ScoreboardItems,
 };
 
 
@@ -2457,6 +2514,11 @@ static void StartMessagesMenu (void)
 static void StartAutomapMenu (void)
 {
 	M_SwitchMenu (&AutomapMenu);
+}
+
+static void StartScoreboardMenu (void)
+{
+	M_SwitchMenu (&ScoreboardMenu);
 }
 
 CCMD (menu_automap)

@@ -3144,10 +3144,12 @@ static void ParseSkill ()
 		else if (SC_Compare("MustConfirm"))
 		{
 			skill.MustConfirm = true;
+			/*
 			if (SC_CheckToken(TK_String))
 			{
 				skill.MustConfirmText = sc_String;
 			}
+			*/
 		}
 		else if (SC_Compare("Key"))
 		{

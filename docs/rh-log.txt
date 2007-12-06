@@ -1,4 +1,16 @@
 December 6, 2007
+- Added IWAD-based [*.Autoload] ini support for games that have more than one
+  IWAD. They are:
+  * [Doom1.Autoload]
+  * [Doom2.Autoload]
+  * [Plutonia.Autoload]
+  * [TNT.Autoload]
+  * [HexenDK.Autoload]
+  These are loaded after the more general game-specific [Doom.Autoload] and
+  [Hexen.Autoload] sections if those are present.
+- Changed the banner texts for the Final Doom IWADs to identify them as Final
+  Doom rather than as DOOM 2. I know this differs from the original behavior,
+  but they're marketed as Final Doom, not Doom 2.
 - New: On Windows, the game now checks the registry to see if you have Steam
   installed. If so, it checks your SteamApps directory for any IWADs you may
   have purchased through Steam and adds any it finds to the list of available

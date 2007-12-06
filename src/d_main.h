@@ -85,9 +85,10 @@ struct WadStuff
 
 struct IWADInfo
 {
-	const char *Name;	// Title banner text for this IWAD
-	DWORD FgColor;		// Foreground color for title banner
-	DWORD BkColor;		// Background color for title banner
+	const char *Name;		// Title banner text for this IWAD
+	const char *Autoname;	// Name of autoload ini section for this IWAD
+	DWORD FgColor;			// Foreground color for title banner
+	DWORD BkColor;			// Background color for title banner
 };
 
 extern const IWADInfo IWADInfos[NUM_IWAD_TYPES];

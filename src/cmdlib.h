@@ -31,6 +31,7 @@ bool FileExists (const char *filename);
 extern	char	progdir[1024];
 
 void	FixPathSeperator (char *path);
+static void	inline FixPathSeperator (FString &path) { path.ReplaceChars('\\', '/'); }
 
 void 	DefaultExtension (char *path, const char *extension);
 void 	DefaultExtension (FString &path, const char *extension);

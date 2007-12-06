@@ -156,6 +156,15 @@ FString::~FString ()
 	Data()->Release();
 }
 
+char *FString::LockNewBuffer(size_t len)
+{
+	Data()->Release();
+	AllocBuffer(len);
+	assert(Data()->RefCount == 1);
+	Data()->RefCount = -1;
+	return Chars;
+}
+
 char *FString::LockBuffer()
 {
 	if (Data()->RefCount == 1)

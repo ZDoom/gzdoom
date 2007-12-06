@@ -793,3 +793,45 @@ int I_FindClose (void *handle)
 {
 	return FindClose ((HANDLE)handle);
 }
+
+static bool QueryPathKey(HKEY key, const char *keypath, const char *valname, FString &value)
+{
+	HKEY steamkey;
+	DWORD pathtype;
+	DWORD pathlen;
+	LONG res;
+
+	if(ERROR_SUCCESS == RegOpenKeyEx(key, keypath, 0, KEY_QUERY_VALUE, &steamkey))
+	{
+		if (ERROR_SUCCESS == RegQueryValueEx(steamkey, valname, 0, &pathtype, NULL, &pathlen) &&
+			pathtype == REG_SZ && pathlen != 0)
+		{
+			// Don't include terminating null in count
+			char *chars = value.LockNewBuffer(pathlen - 1);
+			res = RegQueryValueEx(steamkey, valname, 0, NULL, (LPBYTE)chars, &pathlen);
+			value.UnlockBuffer();
+			if (res != ERROR_SUCCESS)
+			{
+				value = "";
+			}
+		}
+		RegCloseKey(steamkey);
+	}
+	return value.IsNotEmpty();
+}
+
+FString I_GetSteamPath()
+{
+	FString path;
+
+	if (QueryPathKey(HKEY_CURRENT_USER, "Software\\Valve\\Steam", "SteamPath", path))
+	{
+		return path;
+	}
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, "Software\\Valve\\Steam", "InstallPath", path))
+	{
+		return path;
+	}
+	path = "";
+	return path;
+}

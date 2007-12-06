@@ -1629,6 +1629,26 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 				}
 			}
 		}
+#ifdef _WIN32
+		FString steam_path = I_GetSteamPath();
+		if (steam_path.IsNotEmpty())
+		{
+			static const char *const steam_dirs[] =
+			{
+				"doom 2/base",
+				"final doom/base",
+				"heretic shadow of the serpent riders/base",
+				"hexen/base",
+				"hexen deathkings of the dark citadel/base",
+				"ultimate doom/base"
+			};
+			steam_path += "/SteamApps/common/";
+			for (i = 0; i < countof(steam_dirs); ++i)
+			{
+				CheckIWAD (steam_path + steam_dirs[i], wads);
+			}
+		}
+#endif
 	}
 
 	if (iwadparm != NULL && !wads[0].Path.IsEmpty())
@@ -1636,7 +1656,7 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 		iwadparmfound = true;
 	}
 
-	for (i = numwads = 0; i < sizeof(IWADNames)/sizeof(char *); i++)
+	for (i = numwads = 0; i < countof(IWADNames); i++)
 	{
 		if (!wads[i].Path.IsEmpty())
 		{

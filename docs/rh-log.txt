@@ -1,4 +1,10 @@
 December 6, 2007
+- New: On Windows, the game now checks the registry to see if you have Steam
+  installed. If so, it checks your SteamApps directory for any IWADs you may
+  have purchased through Steam and adds any it finds to the list of available
+  IWADs you can play. This means that if you bought your id games through
+  Steam, you can just extract ZDoom anywhere you like and run it without doing
+  any additional setup.
 - Fixed: The FLAC/makefile.mgw should use md5.o as an OBJ, not md5.c.
 - Fixed: The Linux makefile probably shouldn't be using the bundled zlib headers,
   either.

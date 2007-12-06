@@ -130,6 +130,9 @@ public:
 
 	~FString ();
 
+	// Discard string's contents, create a new buffer, and lock it.
+	char *LockNewBuffer(size_t len);
+
 	char *LockBuffer();		// Obtain write access to the character buffer
 	void UnlockBuffer();	// Allow shared access to the character buffer
 
@@ -232,6 +235,7 @@ public:
 
 	size_t Len() const { return Data()->Len; }
 	bool IsEmpty() const { return Len() == 0; }
+	bool IsNotEmpty() const { return Len() != 0; }
 
 	void Truncate (long newlen);
 

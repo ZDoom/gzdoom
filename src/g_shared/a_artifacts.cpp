@@ -1395,8 +1395,22 @@ void APowerTimeFreezer::InitEffect( )
 		}
 	}
 
-	// Finally, freeze the game.
-	level.flags|= LEVEL_FROZEN;
+	// [RH] The effect ends one tic after the counter hits zero, so make
+	// sure we start at an odd count.
+	EffectTics += !(EffectTics & 1);
+	if ((EffectTics & 1) == 0)
+	{
+		EffectTics++;
+	}
+	// Make sure the effect starts and ends on an even tic.
+	if ((level.time & 1) == 0)
+	{
+		level.flags |= LEVEL_FROZEN;
+	}
+	else
+	{
+		EffectTics++;
+	}
 }
 
 //===========================================================================
@@ -1408,11 +1422,20 @@ void APowerTimeFreezer::InitEffect( )
 void APowerTimeFreezer::DoEffect( )
 {
 	Super::DoEffect();
+	// [RH] Do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer
+	// will get thrown off.
+	if (level.time & 1)
+	{
+		return;
+	}
+	// [RH] The "blinking" needs to check against level.time, not EffectTics,
+	// or it will never happen, because InitEffect ensures that EffectTics will
+	// always be odd when level.time is even.
 	if ( EffectTics > 4*32 
-		|| (( EffectTics > 3*32 && EffectTics <= 4*32 ) && EffectTics % 16 != 0 )
-		|| (( EffectTics > 2*32 && EffectTics <= 3*32 ) && EffectTics % 8 != 0 ) 
-		|| (( EffectTics > 32 && EffectTics <= 2*32 ) && EffectTics % 4 != 0 )
-		|| (( EffectTics > 0 && EffectTics <= 1*32 ) && EffectTics % 2 != 0 ))
+		|| (( EffectTics > 3*32 && EffectTics <= 4*32 ) && (level.time & 15) != 0 )
+		|| (( EffectTics > 2*32 && EffectTics <= 3*32 ) && (level.time & 7) != 0 )
+		|| (( EffectTics >   32 && EffectTics <= 2*32 ) && (level.time & 3) != 0 )
+		|| (( EffectTics >    0 && EffectTics <= 1*32 ) && (level.time & 1) != 0 ))
 		level.flags |= LEVEL_FROZEN;
 	else
 		level.flags &= ~LEVEL_FROZEN;

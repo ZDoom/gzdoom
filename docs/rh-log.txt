@@ -1,4 +1,7 @@
 December 6, 2007
+- Fixed the PowerTimeFreezer, too. It got easier once I realized that I only
+  need to be concerned about changing the flag on odd tics, since A_Tracer()
+  is called every two tics, not four.
 - Fixed: Using the freeze command would make the Revenant missiles switch
   their seekingness. The only sane way to deal with this seemed to be to
   sync the freeze changes with the timer check in A_Tracer(), so that's what

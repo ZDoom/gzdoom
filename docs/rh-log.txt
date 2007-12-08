@@ -1,3 +1,6 @@
+December 8, 2007
+- Reverted the 'None' name change from r569.
+
 December 6, 2007
 - Fixed the PowerTimeFreezer, too. It got easier once I realized that I only
   need to be concerned about changing the flag on odd tics, since A_Tracer()

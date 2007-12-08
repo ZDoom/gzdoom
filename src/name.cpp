@@ -71,10 +71,8 @@ FName::NameManager FName::NameData;
 static const char *PredefinedNames[] =
 {
 #define xx(n) #n,
-#define yy(n,s) s,
 #include "namedef.h"
 #undef xx
-#undef yy
 };
 
 // CODE --------------------------------------------------------------------

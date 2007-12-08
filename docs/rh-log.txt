@@ -1,4 +1,6 @@
 December 8, 2007
+- Fixed: MAPINFO is parsed before the text colors are read, so the TextColor
+  option for skills wouldn't work.
 - Changed the PowerTimeFreezer "blink" effect back to checking against
   EffectTics (now + 1), because I wasn't convinced of the correctness of
   using level.time.

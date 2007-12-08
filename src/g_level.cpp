@@ -3065,11 +3065,11 @@ static void ParseSkill ()
 	skill.ACSReturn = AllSkills.Size();
 	skill.MenuNameIsLump = false;
 	skill.MustConfirm = false;
-	skill.shortcut=0;
-	skill.textcolor = CR_UNTRANSLATED;
+	skill.Shortcut = 0;
+	skill.TextColor = "";
 
 	SC_MustGetString();
-	skill.name = sc_String;
+	skill.Name = sc_String;
 
 	while (SC_GetString ())
 	{
@@ -3154,20 +3154,13 @@ static void ParseSkill ()
 		else if (SC_Compare("Key"))
 		{
 			SC_MustGetString();
-			skill.shortcut = tolower(sc_String[0]);
+			skill.Shortcut = tolower(sc_String[0]);
 		}
 		else if (SC_Compare("TextColor"))
 		{
 			SC_MustGetString();
-			FString c;
-			c.Format("[%s]", sc_String);
-			const BYTE * cp = (BYTE*)c.GetChars();
-			skill.textcolor = V_ParseFontColor(cp, 0, 0);
-			if (skill.textcolor == CR_UNDEFINED)
-			{
-				Printf("Undefined color '%s' in definition of skill %s\n", sc_String, skill.name.GetChars());
-				skill.textcolor = CR_UNTRANSLATED;
-			}
+			skill.TextColor = '[';
+			skill.TextColor << sc_String << ']';
 		}
 		else
 		{
@@ -3175,9 +3168,9 @@ static void ParseSkill ()
 			break;
 		}
 	}
-	for(int i=0;i<AllSkills.Size();i++)
+	for(int i = 0; i < AllSkills.Size(); i++)
 	{
-		if (AllSkills[i].name == skill.name)
+		if (AllSkills[i].Name == skill.Name)
 		{
 			AllSkills[i] = skill;
 			return;
@@ -3235,4 +3228,43 @@ void G_VerifySkill()
 		gameskill = AllSkills.Size()-1;
 	else if (gameskill < 0)
 		gameskill = 0;
+}
+
+FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
+{
+	Name = other.Name;
+	AmmoFactor = other.AmmoFactor;
+	DamageFactor = other.DamageFactor;
+	FastMonsters = other.FastMonsters;
+	DisableCheats = other.DisableCheats;
+	AutoUseHealth = other.AutoUseHealth;
+	EasyBossBrain = other.EasyBossBrain;
+	RespawnCounter= other.RespawnCounter;
+	Aggressiveness= other.Aggressiveness;
+	SpawnFilter = other.SpawnFilter;
+	ACSReturn = other.ACSReturn;
+	MenuName = other.MenuName;
+	MenuNamesForPlayerClass = other.MenuNamesForPlayerClass;
+	MenuNameIsLump = other.MenuNameIsLump;
+	MustConfirm = other.MustConfirm;
+	MustConfirmText = other.MustConfirmText;
+	Shortcut = other.Shortcut;
+	TextColor = other.TextColor;
+	return *this;
+}
+
+int FSkillInfo::GetTextColor() const
+{
+	if (TextColor.IsEmpty())
+	{
+		return CR_UNTRANSLATED;
+	}
+	const BYTE *cp = (const BYTE *)TextColor.GetChars();
+	int color = V_ParseFontColor(cp, 0, 0);
+	if (color == CR_UNDEFINED)
+	{
+		Printf("Undefined color '%s' in definition of skill %s\n", TextColor.GetChars(), Name.GetChars());
+		color = CR_UNTRANSLATED;
+	}
+	return color;
 }

@@ -432,9 +432,9 @@ void M_StartupSkillMenu(const char *playerclass)
 
 		SkillSelectMenu[i].name = skill.MenuName;
 		SkillSelectMenu[i].fulltext = !skill.MenuNameIsLump;
-		SkillSelectMenu[i].alphaKey = skill.MenuNameIsLump? skill.shortcut : tolower(SkillSelectMenu[i].name[0]);
-		SkillSelectMenu[i].textcolor = skill.textcolor;
-		SkillSelectMenu[i].alphaKey = skill.shortcut;
+		SkillSelectMenu[i].alphaKey = skill.MenuNameIsLump? skill.Shortcut : tolower(SkillSelectMenu[i].name[0]);
+		SkillSelectMenu[i].textcolor = skill.GetTextColor();
+		SkillSelectMenu[i].alphaKey = skill.Shortcut;
 
 		if (playerclass != NULL)
 		{
@@ -443,7 +443,7 @@ void M_StartupSkillMenu(const char *playerclass)
 			{
 				SkillSelectMenu[i].name = GStrings(*pmnm);
 				SkillSelectMenu[i].fulltext = true;
-				if (skill.shortcut==0)
+				if (skill.Shortcut == 0)
 					SkillSelectMenu[i].alphaKey = tolower(SkillSelectMenu[i].name[0]);
 			}
 		}

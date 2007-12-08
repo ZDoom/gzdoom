@@ -1428,14 +1428,14 @@ void APowerTimeFreezer::DoEffect( )
 	{
 		return;
 	}
-	// [RH] The "blinking" needs to check against level.time, not EffectTics,
-	// or it will never happen, because InitEffect ensures that EffectTics will
-	// always be odd when level.time is even.
+	// [RH] The "blinking" can't check against EffectTics exactly or it will
+	// never happen, because InitEffect ensures that EffectTics will always
+	// be odd when level.time is even.
 	if ( EffectTics > 4*32 
-		|| (( EffectTics > 3*32 && EffectTics <= 4*32 ) && (level.time & 15) != 0 )
-		|| (( EffectTics > 2*32 && EffectTics <= 3*32 ) && (level.time & 7) != 0 )
-		|| (( EffectTics >   32 && EffectTics <= 2*32 ) && (level.time & 3) != 0 )
-		|| (( EffectTics >    0 && EffectTics <= 1*32 ) && (level.time & 1) != 0 ))
+		|| (( EffectTics > 3*32 && EffectTics <= 4*32 ) && ((EffectTics + 1) & 15) != 0 )
+		|| (( EffectTics > 2*32 && EffectTics <= 3*32 ) && ((EffectTics + 1) & 7) != 0 )
+		|| (( EffectTics >   32 && EffectTics <= 2*32 ) && ((EffectTics + 1) & 3) != 0 )
+		|| (( EffectTics >    0 && EffectTics <= 1*32 ) && ((EffectTics + 1) & 1) != 0 ))
 		level.flags |= LEVEL_FROZEN;
 	else
 		level.flags &= ~LEVEL_FROZEN;

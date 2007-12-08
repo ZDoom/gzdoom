@@ -545,7 +545,12 @@ bool SC_CheckNumber (void)
 	//CheckOpen ();
 	if (SC_GetString())
 	{
-		if (strcmp (sc_String, "MAXINT") == 0)
+		if (sc_String[0] == 0)
+		{
+			SC_UnGet();
+			return false;
+		}
+		else if (strcmp (sc_String, "MAXINT") == 0)
 		{
 			sc_Number = INT_MAX;
 		}

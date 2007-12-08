@@ -1,4 +1,8 @@
 December 8, 2007
+- Changed the PowerTimeFreezer "blink" effect back to checking against
+  EffectTics (now + 1), because I wasn't convinced of the correctness of
+  using level.time.
+- Fixed: SC_CheckNumber() considered the empty string "" as the number 0.
 - Reverted the 'None' name change from r569.
 
 December 6, 2007

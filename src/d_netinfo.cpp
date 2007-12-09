@@ -250,6 +250,10 @@ static void UpdateTeam (int pnum, int team, bool update)
 	userinfo_t *info = &players[pnum].userinfo;
 	int oldteam;
 
+	if (team < 0)
+	{
+		team = TEAM_None;
+	}
 	oldteam = info->team;
 	info->team = team;
 

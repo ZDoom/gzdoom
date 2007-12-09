@@ -1,4 +1,11 @@
 December 8, 2007
+- Fixed: SECSPAC_EyesSurface and SECSPAC_EyesDive did not trigger due to
+  crouching motion.
+- Fixed: The keypress for nightmare mode verification appeared in the console
+  if the fullscreen console was open while using the menu.
+- Added support for scaling down large console fonts in the customize
+  controls menu.
+- Fixed: Joining a negative team was possible.
 - Fixed: Skill level confirmation only worked with Doom. Also fixed parsing
   of MustConfirm: It looked for TK_String when it should have used TK_StringConst.
 - Fixed: When travelling to a new non-hub map, any items being carried with

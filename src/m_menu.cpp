@@ -1733,7 +1733,7 @@ void M_VerifyNightmare (int ch)
 	{
 		gamestate = GS_HIDECONSOLE;
 		gameaction = ga_newgame;
-	} 
+	}
 	M_ClearMenus ();
 }
 
@@ -2716,6 +2716,10 @@ bool M_Responder (event_t *ev)
 			}
 			return true;
 		}
+		else if (ev->subtype == EV_GUI_Char && messageToPrint && messageNeedsInput)
+		{
+			ch = ev->data1;
+		}
 	}
 	
 	if (OptionsActive && !chatmodeon)
@@ -2763,10 +2767,23 @@ bool M_Responder (event_t *ev)
 	if (messageToPrint)
 	{
 		ch = tolower (ch);
-		if (messageNeedsInput &&
-			ch != ' ' && ch != 'n' && ch != 'y' && ch != GK_ESCAPE)
+		if (messageNeedsInput)
 		{
-			return false;
+			// For each printable keystroke, both EV_GUI_KeyDown and
+			// EV_GUI_Char will be generated, in that order. If we close
+			// the menu after the first event arrives and the fullscreen
+			// console is up, the console will get the EV_GUI_Char event
+			// next. Therefore, the message input should only respond to
+			// EV_GUI_Char events (sans Escape, which only generates
+			// EV_GUI_KeyDown.)
+			if (ev->subtype != EV_GUI_Char && ch != GK_ESCAPE)
+			{
+				return false;
+			}
+			if (ch != ' ' && ch != 'n' && ch != 'y' && ch != GK_ESCAPE)
+			{
+				return false;
+			}
 		}
 
 		menuactive = messageLastMenuActive;

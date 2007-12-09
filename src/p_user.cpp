@@ -1833,6 +1833,7 @@ void P_CrouchMove(player_t * player, int direction)
 	fixed_t defaultheight = player->mo->GetDefault()->height;
 	fixed_t savedheight = player->mo->height;
 	fixed_t crouchspeed = direction * CROUCHSPEED;
+	fixed_t oldheight = player->viewheight;
 
 	player->crouchdir = (signed char) direction;
 	player->crouchfactor += crouchspeed;
@@ -1854,6 +1855,9 @@ void P_CrouchMove(player_t * player, int direction)
 	player->crouchfactor = clamp<fixed_t>(player->crouchfactor, FRACUNIT/2, FRACUNIT);
 	player->viewheight = FixedMul(player->mo->ViewHeight, player->crouchfactor);
 	player->crouchviewdelta = player->viewheight - player->mo->ViewHeight;
+
+	// Check for eyes going above/below fake floor due to crouching motion.
+	P_CheckFakeFloorTriggers(player->mo, player->mo->z + oldheight, true);
 }
 
 //----------------------------------------------------------------------------

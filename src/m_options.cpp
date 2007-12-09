@@ -1358,6 +1358,22 @@ CCMD (sizeup)
 	S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
 }
 
+// Draws a string in the console font, scaled to the 8x8 cells
+// used by the default console font.
+static void M_DrawConText (int color, int x, int y, const char *str)
+{
+	int len = (int)strlen(str);
+
+	screen->SetFont (ConFont);
+	x = (x - 160) * CleanXfac + screen->GetWidth() / 2;
+	y = (y - 100) * CleanYfac + screen->GetHeight() / 2;
+	screen->DrawText (color, x, y, str,
+		DTA_CellX, 8 * CleanXfac,
+		DTA_CellY, 8 * CleanYfac,
+		TAG_DONE);
+	screen->SetFont (SmallFont);
+}
+
 void M_BuildKeyList (menuitem_t *item, int numitems)
 {
 	int i;
@@ -1426,10 +1442,8 @@ void M_DrawSlider (int x, int y, float min, float max, float cur)
 
 	cur -= min;
 
-	screen->SetFont (ConFont);
-	screen->DrawText (CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12", DTA_Clean, true, TAG_DONE);
-	screen->DrawText (CR_ORANGE, x + 5 + (int)((cur * 78.f) / range), y, "\x13", DTA_Clean, true, TAG_DONE);
-	screen->SetFont (SmallFont);
+	M_DrawConText(CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
+	M_DrawConText(CR_ORANGE, x + 5 + (int)((cur * 78.f) / range), y, "\x13");
 }
 
 int M_FindCurVal (float cur, value_t *values, int numvals)
@@ -1676,10 +1690,7 @@ void M_OptDrawer ()
 				char description[64];
 
 				C_NameKeys (description, item->b.key1, item->c.key2);
-				screen->SetFont (ConFont);
-				screen->DrawText (CR_WHITE,
-					CurrentMenu->indent + 14, y-1+labelofs, description, DTA_Clean, true, TAG_DONE);
-				screen->SetFont (SmallFont);
+				M_DrawConText(CR_WHITE, CurrentMenu->indent + 14, y-1+labelofs, description);
 			}
 			break;
 
@@ -1768,10 +1779,7 @@ void M_OptDrawer ()
 				i == CurrentItem &&
 				(skullAnimCounter < 6 || menuactive == MENU_WaitKey))
 			{
-				screen->SetFont (ConFont);
-				screen->DrawText (CR_RED, CurrentMenu->indent + 3, y-1+labelofs, "\xd",
-					DTA_Clean, true, TAG_DONE);
-				screen->SetFont (SmallFont);
+				M_DrawConText(CR_RED, CurrentMenu->indent + 3, y-1+labelofs, "\xd");
 			}
 		}
 		else
@@ -1799,10 +1807,7 @@ void M_OptDrawer ()
 
 			if (i == CurrentItem && ((item->a.selmode != -1 && (skullAnimCounter < 6 || menuactive == MENU_WaitKey)) || testingmode))
 			{
-				screen->SetFont (ConFont);
-				screen->DrawText (CR_RED, item->a.selmode * 104 + 8, y-1 + labelofs, "\xd",
-					DTA_Clean, true, TAG_DONE);
-				screen->SetFont (SmallFont);
+				M_DrawConText(CR_RED, item->a.selmode * 104 + 8, y-1 + labelofs, "\xd");
 			}
 		}
 	}
@@ -1811,16 +1816,14 @@ void M_OptDrawer ()
 	CanScrollDown = (i < CurrentMenu->numitems);
 	VisBottom = i - 1;
 
-	screen->SetFont (ConFont);
 	if (CanScrollUp)
 	{
-		screen->DrawText (CR_ORANGE, 3, ytop + labelofs, "\x1a", DTA_Clean, true, TAG_DONE);
+		M_DrawConText(CR_ORANGE, 3, ytop + labelofs, "\x1a");
 	}
 	if (CanScrollDown)
 	{
-		screen->DrawText (CR_ORANGE, 3, y - 8 + labelofs, "\x1b", DTA_Clean, true, TAG_DONE);
+		M_DrawConText(CR_ORANGE, 3, y - 8 + labelofs, "\x1b");
 	}
-	screen->SetFont (SmallFont);
 
 	if (flagsvar)
 	{

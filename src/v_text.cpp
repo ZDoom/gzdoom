@@ -98,6 +98,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 	int			boldcolor;
 	const BYTE *range;
 	int			height;
+	int			forcedwidth = 0;
 	int			scalex, scaley;
 	int			kerning;
 	FTexture *pic;
@@ -147,12 +148,14 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 #endif
 			break;
 
+		// We don't handle these. :(
 		case DTA_DestWidth:
 		case DTA_DestHeight:
 			*(DWORD *)tags = TAG_IGNORE;
 			data = va_arg (tags, DWORD);
 			break;
 
+		// Translation is specified explicitly by the text.
 		case DTA_Translation:
 			*(DWORD *)tags = TAG_IGNORE;
 			ptrval = va_arg (tags, void*);
@@ -185,6 +188,14 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 
 		case DTA_TextLen:
 			maxstrlen = va_arg (tags, int);
+			break;
+
+		case DTA_CellX:
+			forcedwidth = va_arg (tags, int);
+			break;
+
+		case DTA_CellY:
+			height = va_arg (tags, int);
 			break;
 		}
 		tag = va_arg (tags, DWORD);
@@ -219,7 +230,21 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 		{
 			va_list taglist;
 			va_start (taglist, string);
-			DrawTexture (pic, cx, cy, DTA_Translation, range, TAG_MORE, &taglist);
+			if (forcedwidth)
+			{
+				w = forcedwidth;
+				DrawTexture (pic, cx, cy,
+					DTA_Translation, range,
+					DTA_DestWidth, forcedwidth,
+					DTA_DestHeight, height,
+					TAG_MORE, &taglist);
+			}
+			else
+			{
+				DrawTexture (pic, cx, cy,
+					DTA_Translation, range,
+					TAG_MORE, &taglist);
+			}
 			va_end (taglist);
 		}
 		cx += (w + kerning) * scalex;

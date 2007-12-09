@@ -2058,7 +2058,7 @@ void P_ZMovement (AActor *mo)
 	P_CheckFakeFloorTriggers (mo, oldz);
 }
 
-void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz)
+void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheight)
 {
 	if (mo->player && (mo->player->cheats & CF_PREDICTING))
 	{
@@ -2092,7 +2092,10 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz)
 		}
 
 		newz = mo->z + viewheight;
-		oldz += viewheight;
+		if (!oldz_has_viewheight)
+		{
+			oldz += viewheight;
+		}
 
 		if (oldz <= waterz && newz > waterz)
 		{ // View went above fake floor

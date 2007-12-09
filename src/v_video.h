@@ -102,6 +102,10 @@ enum
 	DTA_KeepRatio,		// doesn't adjust screen size for DTA_Virtual* if the aspect ratio is not 4:3
 	DTA_TextLen,		// for DrawText: stop after this many characters, even if \0 not hit
 	DTA_RenderStyle,	// same as render style for actors
+
+	// For DrawText calls:
+	DTA_CellX,			// horizontal size of character cell
+	DTA_CellY,			// vertical size of character cell
 };
 
 enum

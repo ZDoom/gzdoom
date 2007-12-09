@@ -586,6 +586,12 @@ bool SC_CheckFloat (void)
 	//CheckOpen ();
 	if (SC_GetString())
 	{
+		if (sc_String[0] == 0)
+		{
+			SC_UnGet();
+			return false;
+		}
+	
 		sc_Float = strtod (sc_String, &stopper);
 		if (*stopper != 0)
 		{

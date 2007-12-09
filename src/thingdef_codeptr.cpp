@@ -398,7 +398,11 @@ void A_BulletAttack (AActor *self)
 
 FState *P_GetState(AActor *self, FState *CallingState, int offset)
 {
-	if (offset>=0)
+	if (offset == 0)
+	{
+		return NULL;	// 0 means 'no state'
+	}
+	else if (offset>0)
 	{
 		return CallingState + offset;
 	}
@@ -410,7 +414,7 @@ FState *P_GetState(AActor *self, FState *CallingState, int offset)
 		const PClass *cls;
 		cls = classname==NAME_None?  RUNTIME_TYPE(self) : PClass::FindClass(classname);
 		if (cls==NULL || cls->ActorInfo==NULL) return NULL;	// shouldn't happen
-		
+
 		int numnames = (int)JumpParameters[offset+1];
 		FState *jumpto = cls->ActorInfo->FindState(numnames, &JumpParameters[offset+2]);
 		if (jumpto == NULL)

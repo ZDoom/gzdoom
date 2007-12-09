@@ -2286,8 +2286,8 @@ void A_Chase (AActor *actor)
 		int flags = EvalExpressionI (StateParameters[index+2], actor);
 		if (flags & CHF_RESURRECT && P_CheckForResurrection(actor, false)) return;
 
-		FState *melee = StateParameters[index]==0? NULL : P_GetState(actor, CallingState, StateParameters[index]);
-		FState *missile = StateParameters[index+1]==0? NULL : P_GetState(actor, CallingState, StateParameters[index+1]);
+		FState *melee = P_GetState(actor, CallingState, StateParameters[index]);
+		FState *missile = P_GetState(actor, CallingState, StateParameters[index+1]);
 		
 		A_DoChase(actor, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
 					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE));

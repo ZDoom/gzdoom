@@ -1,3 +1,8 @@
+December 9, 2007 (Changes by Graf Zahl)
+- Fixed: There was no working means to pass 'no state' to A_Chase.
+  Now 0 or an empty string will do that.
+- Copied the empty string fix for SC_CheckNumber to SC_CheckFloat.
+
 December 8, 2007
 - Fixed: SECSPAC_EyesSurface and SECSPAC_EyesDive did not trigger due to
   crouching motion.

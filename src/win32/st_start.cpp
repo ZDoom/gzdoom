@@ -383,6 +383,7 @@ FBasicStartupScreen::~FBasicStartupScreen()
 		ProgressBar = NULL;
 		LayoutMainWindow (Window, NULL);
 	}
+	KillTimer(Window, 1337);
 }
 
 //==========================================================================

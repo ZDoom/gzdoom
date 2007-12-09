@@ -1,4 +1,13 @@
 December 8, 2007
+- Fixed: When the game starts with the net pane open, the abort button
+  receives the input focus. When the pane is closed, the focus doesn't
+  return to any window, so even though the window is still active, it no
+  longer has the focus and does not receive input events.
+- Fixed: The network synch timer was still left running after the game
+  started. (Windows only)
+- Fixed: When a player leaves the game at the exact moment they are being
+  damaged, the game could crash because their actor still had a valid player
+  pointer, but the player's mo pointer had been NULLed.
 - Fixed: MAPINFO is parsed before the text colors are read, so the TextColor
   option for skills wouldn't work.
 - Changed the PowerTimeFreezer "blink" effect back to checking against

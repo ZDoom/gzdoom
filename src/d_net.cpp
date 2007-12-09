@@ -630,6 +630,7 @@ void PlayerIsGone (int netnode, int netconsole)
 	if (players[netconsole].mo != NULL)
 	{
 		P_DisconnectEffect (players[netconsole].mo);
+		players[netconsole].mo->player = NULL;
 		players[netconsole].mo->Destroy ();
 		players[netconsole].mo = NULL;
 		players[netconsole].camera = NULL;

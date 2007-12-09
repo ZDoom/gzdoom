@@ -420,7 +420,8 @@ void I_CheckNativeMouse (bool preferNative)
 	bool wantNative = !HaveFocus ||
 		((!screen || !screen->IsFullscreen()) && (GUICapture || paused || preferNative || !use_mouse || demoplayback));
 
-//		Printf ("%d -> %d\n", NativeMouse, wantNative);
+	//Printf ("%d %d %d %d\n", HaveFocus, GetFocus() == Window, AppActive, GetForegroundWindow() == Window);
+
 	if (wantNative != NativeMouse)
 	{
 		NativeMouse = wantNative;

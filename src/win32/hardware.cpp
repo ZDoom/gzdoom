@@ -70,6 +70,22 @@ void I_InitGraphics ()
 {
 	UCVarValue val;
 
+	// If the focus window is destroyed, it doesn't go back to the active window.
+	// (e.g. because the net pane was up, and a button on it had focus)
+	if (GetFocus() == NULL && GetActiveWindow() == Window)
+	{
+		// Make sure it's in the foreground and focused. (It probably is
+		// already foregrounded but may not be focused.)
+		SetForegroundWindow(Window);
+		SetFocus(Window);
+		// Note that when I start a 2-player game on the same machine, the
+		// window for the game that isn't focused, active, or foregrounded
+		// still receives a WM_ACTIVATEAPP message telling it that it's the
+		// active window. The window that is really the active window does
+		// not receive a WM_ACTIVATEAPP message, so both games think they
+		// are the active app. Huh?
+	}
+
 	val.Bool = !!Args.CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 	Video = new Win32Video (0);

@@ -1,4 +1,8 @@
 December 8, 2007
+- Fixed: Skill level confirmation only worked with Doom. Also fixed parsing
+  of MustConfirm: It looked for TK_String when it should have used TK_StringConst.
+- Fixed: When travelling to a new non-hub map, any items being carried with
+  amounts of 0 would be upped to 1.
 - Fixed: When the game starts with the net pane open, the abort button
   receives the input focus. When the pane is closed, the focus doesn't
   return to any window, so even though the window is still active, it no

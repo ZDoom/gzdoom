@@ -42,7 +42,6 @@ skill nightmare
 	PlayerClassName "fighter" "MNU_TITAN"
 	PlayerClassName "cleric" "MNU_POPE"
 	PlayerClassName "mage" "MNU_ARCHMAGE"
-	MustConfirm
 
 
 clusterdef 1

@@ -321,6 +321,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\mapinfo\doomcommon.txt"
+					>
+				</File>
+				<File
 					RelativePath=".\mapinfo\heretic.txt"
 					>
 				</File>

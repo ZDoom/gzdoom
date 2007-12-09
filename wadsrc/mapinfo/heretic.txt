@@ -25,7 +25,6 @@ skill nightmare
 	DisableCheats
 	SpawnFilter "Hard"
 	Name "MNU_BLACKPLAGUE"
-	MustConfirm
 
 
 

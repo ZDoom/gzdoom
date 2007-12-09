@@ -1108,7 +1108,9 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, bool resetinventory
 	{ // Reduce all owned (visible) inventory to 1 item each
 		for (item = p->mo->Inventory; item != NULL; item = item->Inventory)
 		{
-			if (item->ItemFlags & IF_INVBAR)
+			// There may be depletable items with an amount of 0.
+			// Those need to stay at 0; the rest get dropped to 1.
+			if (item->ItemFlags & IF_INVBAR && item->Amount > 1)
 			{
 				item->Amount = 1;
 			}

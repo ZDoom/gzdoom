@@ -1723,12 +1723,14 @@ void M_DrawEpisode ()
 	}
 }
 
+static int confirmskill;
+
 void M_VerifyNightmare (int ch)
 {
 	if (ch != 'y')
 		return;
 		
-	G_DeferedInitNew (EpisodeMaps[epi], 4);
+	G_DeferedInitNew (EpisodeMaps[epi], confirmskill);
 	if (gamestate == GS_FULLCONSOLE)
 	{
 		gamestate = GS_HIDECONSOLE;
@@ -1744,6 +1746,7 @@ void M_ChooseSkill (int choice)
 		const char *msg = AllSkills[choice].MustConfirmText;
 		if (*msg==0) msg = GStrings("NIGHTMARE");
 		if (*msg=='$') msg = GStrings(msg+1);
+		confirmskill = choice;
 		M_StartMessage (msg, M_VerifyNightmare, true);
 		return;
 	}

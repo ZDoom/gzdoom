@@ -1,3 +1,7 @@
+December 10, 2007 (Changes by Graf Zahl)
+- Fixed: M_VerifyNightmare must use the selected skill level to start the
+  game, not always 4.
+
 December 9, 2007 (Changes by Graf Zahl)
 - Fixed: There was no working means to pass 'no state' to A_Chase.
   Now 0 or an empty string will do that.

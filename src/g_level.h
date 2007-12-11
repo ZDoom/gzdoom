@@ -241,6 +241,10 @@ struct level_locals_s
 	SBYTE		WallHorizLight;
 
 	const char	*f1;
+
+	bool		IsJumpingAllowed() const;
+	bool		IsCrouchingAllowed() const;
+	bool		IsFreelookAllowed() const;
 };
 typedef struct level_locals_s level_locals_t;
 

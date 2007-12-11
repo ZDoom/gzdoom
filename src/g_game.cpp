@@ -647,7 +647,7 @@ void G_AddViewPitch (int look)
 		return;
 	}
 	look <<= 16;
-	if (dmflags & DF_NO_FREELOOK)
+	if (!level.IsFreelookAllowed())
 	{
 		LocalViewPitch = 0;
 	}

@@ -2698,7 +2698,7 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vr
 	// can't shoot outside view angles
 	if (vrange == 0)
 	{
-		if (t1->player == NULL || dmflags & DF_NO_FREELOOK)
+		if (t1->player == NULL || !level.IsFreelookAllowed())
 		{
 			vrange = ANGLE_1*35;
 		}

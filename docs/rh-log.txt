@@ -1,4 +1,8 @@
 December 10, 2007
+- Fixed: The MAPINFO flags that control jumping, crouching, and freelook,
+  rather than overriding the dmflags values, actually overwrote the dmflags
+  values, so they would continue to be in effect on later maps that didn't
+  explicitly specify them.
 - Fixed: Redefining a decal did not rebind any old references to the decal, so
   they would be left pointing at invalid data.
 - Fixed some more GCC warnings.

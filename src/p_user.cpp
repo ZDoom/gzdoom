@@ -1954,7 +1954,7 @@ void P_PlayerThink (player_t *player)
 
 	// Handle crouching
 	if (player->cmd.ucmd.buttons & BT_JUMP) player->cmd.ucmd.buttons &= ~BT_DUCK;
-	if (player->morphTics == 0 && player->health > 0 && !(dmflags & DF_NO_CROUCH))
+	if (player->morphTics == 0 && player->health > 0 && level.IsCrouchingAllowed())
 	{
 		if (!(player->cheats & CF_TOTALLYFROZEN))
 		{
@@ -2003,7 +2003,7 @@ void P_PlayerThink (player_t *player)
 	}
 
 	// [RH] Look up/down stuff
-	if (dmflags & DF_NO_FREELOOK)
+	if (!level.IsFreelookAllowed())
 	{
 		player->mo->pitch = 0;
 	}
@@ -2070,7 +2070,7 @@ void P_PlayerThink (player_t *player)
 			{
 				player->mo->momz = 3*FRACUNIT;
 			}
-			else if (!(dmflags & DF_NO_JUMP) && onground && !player->jumpTics)
+			else if (level.IsJumpingAllowed() && onground && !player->jumpTics)
 			{
 				fixed_t jumpmomz = player->mo->JumpZ * 35 / TICRATE;
 

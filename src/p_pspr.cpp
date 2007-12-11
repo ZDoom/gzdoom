@@ -646,7 +646,7 @@ void P_BulletSlope (AActor *mo)
 		bulletpitch = P_AimLineAttack (mo, an, 16*64*FRACUNIT);
 
 		if (mo->player != NULL &&
-			!(dmflags & DF_NO_FREELOOK) &&
+			level.IsFreelookAllowed() &&
 			mo->player->userinfo.aimdist <= ANGLE_1/2)
 		{
 			break;

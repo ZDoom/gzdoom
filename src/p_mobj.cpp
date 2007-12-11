@@ -4617,7 +4617,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 		pitch = P_AimLineAttack (source, an, 16*64*FRACUNIT);
 
 		if (source->player != NULL &&
-			!(dmflags & DF_NO_FREELOOK) &&
+			level.IsFreelookAllowed() &&
 			source->player->userinfo.aimdist <= ANGLE_1/2)
 		{
 			break;

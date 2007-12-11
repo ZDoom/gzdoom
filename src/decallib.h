@@ -52,6 +52,7 @@ class FDecalBase
 	friend class FDecalLib;
 public:
 	virtual const FDecalTemplate *GetDecal () const;
+	virtual void ReplaceDecalRef (FDecalBase *from, FDecalBase *to) = 0;
 	
 protected:
 	FDecalBase ();
@@ -71,6 +72,7 @@ public:
 
 	void ApplyToDecal (DBaseDecal *actor, side_s *wall) const;
 	const FDecalTemplate *GetDecal () const;
+	void ReplaceDecalRef (FDecalBase *from, FDecalBase *to);
 
 	fixed_t ScaleX, ScaleY;
 	DWORD ShadeColor;
@@ -104,6 +106,7 @@ private:
 	static void DelTree (FDecalBase *root);
 	static FDecalBase *ScanTreeForNum (const BYTE num, FDecalBase *root);
 	static FDecalBase *ScanTreeForName (const char *name, FDecalBase *root);
+	static void ReplaceDecalRef (FDecalBase *from, FDecalBase *to, FDecalBase *root);
 	FTranslation *GenerateTranslation (DWORD start, DWORD end);
 	void AddDecal (const char *name, BYTE num, const FDecalTemplate &decal);
 	void AddDecal (FDecalBase *decal);

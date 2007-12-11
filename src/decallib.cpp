@@ -66,6 +66,10 @@ class FDecalGroup : public FDecalBase
 public:
 	FDecalGroup () : Choices (pr_decalchoice) {}
 	const FDecalTemplate *GetDecal () const;
+	void ReplaceDecalRef (FDecalBase *from, FDecalBase *to)
+	{
+		Choices.ReplaceValues(from, to);
+	}
 	void AddDecal (FDecalBase *decal, WORD weight)
 	{
 		Choices.AddEntry (decal, weight);
@@ -299,6 +303,14 @@ enum
 const FDecalTemplate *FDecalBase::GetDecal () const
 {
 	return NULL;
+}
+
+void FDecalTemplate::ReplaceDecalRef(FDecalBase *from, FDecalBase *to)
+{
+	if (LowerDecal == from)
+	{
+		LowerDecal = to;
+	}
 }
 
 FDecalLib::FDecalLib ()
@@ -828,6 +840,17 @@ void FDecalLib::ParseCombiner ()
 	}
 }
 
+void FDecalLib::ReplaceDecalRef (FDecalBase *from, FDecalBase *to, FDecalBase *root)
+{
+	if (root == NULL)
+	{
+		return;
+	}
+	ReplaceDecalRef (from, to, root->Left);
+	ReplaceDecalRef (from, to, root->Right);
+	root->ReplaceDecalRef (from, to);
+}
+
 void FDecalLib::AddDecal (const char *name, BYTE num, const FDecalTemplate &decal)
 {
 	FDecalTemplate *newDecal = new FDecalTemplate;
@@ -873,6 +896,10 @@ void FDecalLib::AddDecal (FDecalBase *decal)
 	}
 	else
 	{ // Yes, replace the old one.
+		// If this decal has been used as the lowerdecal for another decal,
+		// be sure and update the lowerdecal to use the new decal.
+		ReplaceDecalRef(node, decal, Root);
+
 		decal->Left = node->Left;
 		decal->Right = node->Right;
 		*prev = decal;

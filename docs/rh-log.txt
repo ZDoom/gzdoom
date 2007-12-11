@@ -1,4 +1,6 @@
 December 10, 2007
+- Fixed: Redefining a decal did not rebind any old references to the decal, so
+  they would be left pointing at invalid data.
 - Fixed some more GCC warnings.
 - Updated project files for nasm 2.0, which is now named nasm.exe for the
   Windows version, rather than nasmw.exe. Also fixed the annoying new warnings

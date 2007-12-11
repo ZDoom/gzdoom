@@ -66,6 +66,7 @@ class TWeightedList
 
 		void AddEntry (T value, WORD weight);
 		T PickEntry () const;
+		void ReplaceValues (T oldval, T newval);
 
 	private:
 		Choice<T> *Choices;
@@ -146,5 +147,20 @@ void TWeightedList<T>::RecalcRandomVals ()
 	{
 		randVal += (double)choice->Weight * weightDenom;
 		choice->RandomVal = (BYTE)(randVal * 255.0);
+	}
+}
+
+// Replace all values that match oldval with newval
+template<class T>
+void TWeightedList<T>::ReplaceValues(T oldval, T newval)
+{
+	Choice<T> *choice;
+
+	for (choice = Choices; choice != NULL; choice = choice->Next)
+	{
+		if (choice->Value == oldval)
+		{
+			choice->Value = newval;
+		}
 	}
 }

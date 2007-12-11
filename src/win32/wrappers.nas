@@ -34,6 +34,6 @@ IsDebuggerPresent_Check:
 	test	eax,eax
 	jne		near .itis
 	mov		eax,IsDebuggerPresent_No
-.itis
+.itis:
 	mov		[__imp__IsDebuggerPresent@0],eax
 	jmp		eax

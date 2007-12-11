@@ -3166,7 +3166,7 @@ static void ParseSkill ()
 			break;
 		}
 	}
-	for(int i = 0; i < AllSkills.Size(); i++)
+	for(unsigned int i = 0; i < AllSkills.Size(); i++)
 	{
 		if (AllSkills[i].Name == skill.Name)
 		{
@@ -3222,7 +3222,7 @@ int G_SkillProperty(ESkillProperty prop)
 
 void G_VerifySkill()
 {
-	if (gameskill >= AllSkills.Size())
+	if (gameskill >= (int)AllSkills.Size())
 		gameskill = AllSkills.Size()-1;
 	else if (gameskill < 0)
 		gameskill = 0;

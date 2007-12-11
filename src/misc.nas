@@ -114,7 +114,7 @@ CheckMMX:
 	cmp	ecx,0x444d4163	; 'DMAc'
 	jne	.notamd
 	inc	byte [edi+87]
-.notamd
+.notamd:
 
 ; Get features flags and other info
 	mov	eax,1

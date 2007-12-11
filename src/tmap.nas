@@ -811,7 +811,7 @@ _R_DrawFuzzColumnP_ASM:
 
 ; third loop: Do whatever is left
 
-.chunked
+.chunked:
 	test	esi,esi
 	 jle	.savefuzzpos
 	mov	edx,[fuzzoffset+ecx*4]
@@ -1347,7 +1347,7 @@ _rt_map4cols_asm1:
 .even	and	ebx,ebx
 	jz	.done
 
-.loop
+.loop:
 	mov	dl,[ebp]
 	 mov	cl,[ebp+1]
 	add	ebp,8
@@ -1441,7 +1441,7 @@ _rt_map4cols_asm2:
 .even	and	ebx,ebx
 	jz	.done
 
-.loop
+.loop:
 	mov	dl,[ebp+3]
 	mov	ch,[esi+edx]
 	mov	dl,[ebp+2]

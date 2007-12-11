@@ -85,13 +85,13 @@ cident FLAC__cpu_info_asm_ia32
 	mov	ebx, [esp + 12]
 	mov	[ebx], ecx
 	jmp	.end
-.no_cpuid
+.no_cpuid:
 	xor	eax, eax
 	mov	ebx, [esp + 8]
 	mov	[ebx], eax
 	mov	ebx, [esp + 12]
 	mov	[ebx], eax
-.end
+.end:
 	pop	ebx
 	ret
 
@@ -108,13 +108,13 @@ cident FLAC__cpu_info_extended_amd_asm_ia32
 	cpuid
 	mov	eax, edx
 	jmp	.end
-.no_cpuid
+.no_cpuid:
 	xor	eax, eax
-.end
+.end:
 	pop	ebx
 	ret
 
-end
+end:
 
 %ifdef OBJ_FORMAT_elf
        section .note.GNU-stack noalloc

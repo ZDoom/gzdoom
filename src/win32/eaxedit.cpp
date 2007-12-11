@@ -762,10 +762,11 @@ INT_PTR CALLBACK NewEAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			hDlg, NULL, g_hInst, NULL);
 		if (ToolTip)
 		{
+			char zero = '\0';
 			ti.cbSize = sizeof(ti);
 			ti.uFlags = TTF_TRACK | TTF_TRANSPARENT;
 			ti.hinst = g_hInst;
-			ti.lpszText = "";
+			ti.lpszText = &zero;
 			for (i = 0; i < 3; ++i)
 			{
 				ti.uId = i;

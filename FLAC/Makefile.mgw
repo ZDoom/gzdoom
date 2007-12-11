@@ -29,7 +29,7 @@ CXX = g++
 CFLAGS = $(LOC) $(DEFINES) -O2 -Wall -Wno-unused-function -fomit-frame-pointer
 CXXFLAGS = $(LOC) $(DEFINES) -O2 -Wall
 
-NASM = nasmw
+NASM = nasm
 NASMFLAGS = -d OBJ_FORMAT_win32 -f win32
 
 AR = ar

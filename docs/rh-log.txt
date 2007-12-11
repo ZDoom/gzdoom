@@ -1,3 +1,9 @@
+December 10, 2007
+- Fixed some more GCC warnings.
+- Updated project files for nasm 2.0, which is now named nasm.exe for the
+  Windows version, rather than nasmw.exe. Also fixed the annoying new warnings
+  it generated.
+
 December 10, 2007 (Changes by Graf Zahl)
 - Fixed: M_VerifyNightmare must use the selected skill level to start the
   game, not always 4.

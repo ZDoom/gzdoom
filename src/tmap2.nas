@@ -382,7 +382,7 @@ StartDiv:
 	fld	st3			; 1/z | u | v | v/z | 1/z | u/z
 	fdivr	dword [fp_1]		; z | u | v | v/z | 1/z | u/z
 
-DrawFullSpan
+DrawFullSpan:
 	mov	ecx,[start_v]
 	mov	edx,[start_u]
 
@@ -589,7 +589,7 @@ CalcPartialSteps:
 
 	mov	esi,edx
 	mov	ebp,ecx
-endloop
+endloop:
 x10	shr	ebp,26
 m10	and	esi,0xfc000000
 

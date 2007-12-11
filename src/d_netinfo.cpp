@@ -611,6 +611,10 @@ void D_ReadUserInfoStrings (int i, BYTE **stream, bool update)
 					infotype = j;
 				}
 			}
+			else
+			{ // Shush, GCC.
+				value = NULL;
+			}
 
 			switch (infotype)
 			{

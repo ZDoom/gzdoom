@@ -1167,14 +1167,12 @@ static void S_AddSNDINFO (int lump)
 			case SI_MidiDevice: {
 				SC_MustGetString();
 				FName nm = sc_String;
-				int tim;
 				SC_MustGetString();
-				if (SC_Compare("timidity")) tim = 1;
-				else if (SC_Compare("standard")) tim = 0;
-				else if (SC_Compare("opl")) tim = 2;
-				else if (SC_Compare("default")) tim = -1;
+				if (SC_Compare("timidity")) MidiDevices[nm] = 1;
+				else if (SC_Compare("standard")) MidiDevices[nm] = 0;
+				else if (SC_Compare("opl")) MidiDevices[nm] = 2;
+				else if (SC_Compare("default")) MidiDevices[nm] = -1;
 				else SC_ScriptError("Unknown MIDI device %s\n", sc_String);
-				MidiDevices[nm]=tim;
 				}
 				break;
 

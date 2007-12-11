@@ -426,7 +426,7 @@ void M_StartupSkillMenu(const char *playerclass)
 		}
 	}
 	SkillDef.numitems = HexenSkillMenu.numitems = 0;
-	for(int i=0;i<AllSkills.Size() && i<8;i++)
+	for(unsigned int i=0;i<AllSkills.Size() && i<8;i++)
 	{
 		FSkillInfo &skill = AllSkills[i];
 

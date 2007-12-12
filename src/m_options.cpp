@@ -1008,7 +1008,7 @@ static menuitem_t DMFlagsItems[] = {
 	{ discrete, "Teamplay",				{&teamplay},	{2.0}, {0.0}, {0.0}, {OnOff} },
 	{ slider,	"Team damage scalar",	{&teamdamage},	{0.0}, {1.0}, {0.05},{NULL} },
 	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
-	{ discrete, "Smart Autoaim",		{&sv_smartaim},	{3.0}, {0.0}, {0.0}, {SmartAim} },
+	{ discrete, "Smart Autoaim",		{&sv_smartaim},	{4.0}, {0.0}, {0.0}, {SmartAim} },
 	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
 	{ bitmask,	"Falling damage",		{&dmflags},		{4.0}, {DF_FORCE_FALLINGZD|DF_FORCE_FALLINGHX}, {0}, {FallingDM} },
 //	{ bitflag,	"Falling damage (old)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FORCE_FALLINGZD} },

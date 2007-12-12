@@ -324,7 +324,7 @@ newline:
 
 normal_token:
 	ScriptPtr = (YYCURSOR >= YYLIMIT) ? ScriptEndPtr : cursor;
-	sc_StringLen = MIN (ScriptPtr - tok, MAX_STRING_SIZE-1);
+	sc_StringLen = (unsigned int)MIN<size_t> (ScriptPtr - tok, MAX_STRING_SIZE-1);
 	if (tokens && (sc_TokenType == TK_StringConst || sc_TokenType == TK_NameConst))
 	{
 		sc_StringLen -= 2;

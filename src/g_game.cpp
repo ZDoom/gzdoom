@@ -1394,10 +1394,14 @@ static void G_QueueBody (AActor *body)
 	}
 	bodyque[modslot] = body;
 
-	// Copy the player's translation in case they respawn as something that uses
-	// a different translation range.
-	R_CopyTranslation (TRANSLATION(TRANSLATION_PlayerCorpses,modslot), body->Translation);
-	body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
+	// Copy the player's translation, so that if they change their color later, only
+	// their current body will change and not all their old corpses.
+	if (GetTranslationType(body->Translation) == TRANSLATION_Players ||
+		GetTranslationType(body->Translation) == TRANSLATION_PlayersExtra)
+	{
+		R_CopyTranslation (TRANSLATION(TRANSLATION_PlayerCorpses,modslot), body->Translation);
+		body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
+	}
 
 	bodyqueslot++;
 }

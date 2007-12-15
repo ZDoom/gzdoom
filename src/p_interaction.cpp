@@ -532,7 +532,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 			// [RH] Implement fraglimit
 			if (deathmatch && fraglimit &&
-				fraglimit == D_GetFragCount (source->player))
+				fraglimit <= D_GetFragCount (source->player))
 			{
 				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
 				G_ExitLevel (0, false);

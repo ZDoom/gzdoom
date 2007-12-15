@@ -150,7 +150,24 @@ extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CVAR (Int, fraglimit, 0, CVAR_SERVERINFO);
+CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
+{
+	// Check for the fraglimit being hit because the fraglimit is being
+	// lowered below somebody's current frag count.
+	if (deathmatch && self > 0)
+	{
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && self <= D_GetFragCount(&players[i]))
+			{
+				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
+				G_ExitLevel (0, false);
+				break;
+			}
+		}
+	}
+}
+
 CVAR (Float, timelimit, 0.f, CVAR_SERVERINFO);
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);

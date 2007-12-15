@@ -223,6 +223,10 @@ inline WORD TRANSLATION(BYTE a, BYTE b)
 {
 	return (a<<8) | b;
 }
+inline int GetTranslationType(WORD trans)
+{
+	return trans >> 8;
+}
 
 const int MAX_ACS_TRANSLATIONS = 255;
 const int MAX_DECORATE_TRANSLATIONS = 255;

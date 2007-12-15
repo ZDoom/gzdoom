@@ -1,4 +1,8 @@
 December 14, 2007
+- Fixed: G_QueueBody() should only change the translation to one of its
+  private slots if the one currently used is a player range.
+- Fixed: Changing the fraglimit during the middle of a game would not trigger
+  a level change if somebody was already over the new limit.
 - Added "\c" support to ParseCommandLine() when it parses quoted strings.
 - Fixed: When changing your name from the menu, you got an extra " appended
   to your name if it ended with a backslash.

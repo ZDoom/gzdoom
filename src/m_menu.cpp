@@ -2078,7 +2078,7 @@ static void M_PlayerSetupDrawer ()
 	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT+yo, "Team",
 		DTA_Clean, true, TAG_DONE);
 	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT+yo,
-		players[consoleplayer].userinfo.team == TEAM_None ? "None" :
+		(unsigned)players[consoleplayer].userinfo.team >= NUM_TEAMS ? "None" :
 			TeamNames[players[consoleplayer].userinfo.team],
 		DTA_Clean, true, TAG_DONE);
 
@@ -2279,6 +2279,7 @@ static BYTE smoke[1024] =
 	  7, 7, 0, 5, 1, 6, 7, 9,12, 9,12,21,22,25,24,22,23,25,24,18,24,22,17,13,10, 9,10, 9, 6,11, 6, 5,
 };
 
+// This is one plasma and two rotozoomers. I think it turned out quite awesome.
 static void M_RenderPlayerBackdrop ()
 {
 	BYTE *from;
@@ -2521,9 +2522,19 @@ static void M_PlayerNameNotChanged ()
 
 static void M_PlayerNameChanged (FSaveGameNode *dummy)
 {
-	char command[SAVESTRINGSIZE+8];
+	const char *p;
+	FString command("name \"");
 
-	sprintf (command, "name \"%s\"", savegamestring);
+	// Escape any backslashes or quotation marks before sending the name to the console.
+	for (p = savegamestring; *p != '\0'; ++p)
+	{
+		if (*p == '"' || *p == '\\')
+		{
+			command << '\\';
+		}
+		command << *p;
+	}
+	command << '"';
 	C_DoCommand (command);
 }
 

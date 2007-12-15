@@ -718,8 +718,11 @@ void AddCommandString (char *cmd, int keynum)
 // to point to a buffer large enough to hold all the arguments. The
 // return value is the necessary size of this buffer.
 //
-// Special processing: Inside quoted strings, \" becomes just "
-// $<cvar> is replaced by the contents of <cvar>
+// Special processing:
+//   Inside quoted strings, \" becomes just "
+//                          \\ becomes just \
+//							\c becomes just TEXTCOLOR_ESCAPE
+//   $<cvar> is replaced by the contents of <cvar>
 
 static long ParseCommandLine (const char *args, int *argc, char **argv)
 {
@@ -758,6 +761,14 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 				if (stuff == '\\' && *args == '\"')
 				{
 					stuff = '\"', args++;
+				}
+				else if (stuff == '\\' && *args == '\\')
+				{
+					args++;
+				}
+				else if (stuff == '\\' && *args == 'c')
+				{
+					stuff = TEXTCOLOR_ESCAPE, args++;
 				}
 				else if (stuff == '\"')
 				{

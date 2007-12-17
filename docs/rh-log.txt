@@ -1,3 +1,7 @@
+December 17, 2007 (Changes by Graf Zahl)
+- Fixed: When a skybox viewpoint is destroyed it should clear all
+  sector references to itself.
+
 December 14, 2007
 - Fixed: G_QueueBody() should only change the translation to one of its
   private slots if the one currently used is a player range.

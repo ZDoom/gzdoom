@@ -72,6 +72,22 @@ void ASkyViewpoint::Serialize (FArchive &arc)
 	arc << bInSkybox << bAlways << Mate << PlaneAlpha;
 }
 
+void ASkyViewpoint::Destroy ()
+{
+	// remove all sector references to ourselves.
+	for (int i = 0; i <numsectors; i++)
+	{
+		if (sectors[i].FloorSkyBox == this)
+		{
+			sectors[i].FloorSkyBox = NULL;
+		}
+		if (sectors[i].CeilingSkyBox == this)
+		{
+			sectors[i].CeilingSkyBox = NULL;
+		}
+	}
+}
+
 //---------------------------------------------------------------------------
 
 // arg0 = tid of matching SkyViewpoint

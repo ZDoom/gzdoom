@@ -97,6 +97,11 @@ void R_InitSkyMap ()
 	{
 		skytexturemid = 199 * skytex1->yScale;
 		skystretch = 0;
+		// At heights above 600 pixels, the sky is drawn slightly too low.
+		if (SCREENHEIGHT > 600)
+		{
+			skytexturemid += FRACUNIT;
+		}
 	}
 	skyheight = fskyheight << skystretch;
 

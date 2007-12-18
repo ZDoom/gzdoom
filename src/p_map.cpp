@@ -2302,7 +2302,7 @@ bool P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove)
 			{ // Can't climb up slopes of ~45 degrees or more
 				if (actor->flags & MF_NOCLIP)
 				{
-					return true;
+					return (actor->floorsector == actor->Sector);
 				}
 				else
 				{
@@ -2338,7 +2338,7 @@ bool P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove)
 			desty -= FixedMul (plane->b, t);
 			xmove = destx - actor->x;
 			ymove = desty - actor->y;
-			return true;
+			return (actor->floorsector == actor->Sector);
 		}
 		else if (t > 0)
 		{ // Desired location is in front of (above) the plane
@@ -2349,7 +2349,7 @@ bool P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove)
 				desty += FixedMul (plane->b, t);
 				xmove = destx - actor->x;
 				ymove = desty - actor->y;
-				return true;//(plane->c >= STEEPSLOPE);
+				return (actor->floorsector == actor->Sector);//(plane->c >= STEEPSLOPE);
 			}
 		}
 	}

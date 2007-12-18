@@ -1,4 +1,13 @@
 December 17, 2007
+- Fixed: Heretic's mace never respawned in deathmatch games.
+- Fixed: At resolutions taller than 600 pixels or so, tall sky textures were
+  drawn a row too low. This was quite visible on Hexen MAP06.
+- Fixed: P_CheckSlopeWalk() must return false if floorsector != sector, or
+  the actor will be yanked down to the floorsector by P_TryMove().
+- Fixed: ClearActorInventory, GiveActorInventory, and TakeActorInventory
+  only affected the first actor with the given TID.
+- Fixed: The color boxes for the colorpicker menu items were drawn a little
+  too low.
 - Fixed: Clean scaling at 720x480 looked borked.
 - New: When using the D3D9 framebuffer, palette blending is now applied only
   to the 3D area of the screen. This means the console and (the primary

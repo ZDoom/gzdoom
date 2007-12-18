@@ -1096,6 +1096,8 @@ void A_SpawnMace (AActor *self)
 		mace->FirstSpot = firstSpot;
 		mace->NumMaceSpots = numspots;
 		mace->DoRespawn ();
+		// We want this mace to respawn.
+		mace->flags &= ~MF_DROPPED;
 	}
 }
 

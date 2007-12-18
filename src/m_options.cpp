@@ -1698,7 +1698,7 @@ void M_OptDrawer ()
 			{
 				int box_x, box_y;
 				box_x = (CurrentMenu->indent - 35 - 160) * CleanXfac + screen->GetWidth()/2;
-				box_y = (y - 98) * CleanYfac + screen->GetHeight()/2;
+				box_y = (y - ((gameinfo.gametype & GAME_Raven) ? 99 : 100)) * CleanYfac + screen->GetHeight()/2;
 				screen->Clear (box_x, box_y, box_x + 32*CleanXfac, box_y + (fontheight-1)*CleanYfac,
 					item->a.colorcvar->GetIndex());
 			}

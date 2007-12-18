@@ -1,7 +1,10 @@
 December 17, 2007
+- Fixed: Clean scaling at 720x480 looked borked.
 - New: When using the D3D9 framebuffer, palette blending is now applied only
   to the 3D area of the screen. This means the console and (the primary
-  rectangular area of) the status bar are no longer blended.
+  rectangular area of) the status bar are no longer blended. Maybe somedays
+  when I'm feeling adventurous, I'll exclude all the 2D graphics from the
+  blending.
 
 December 17, 2007 (Changes by Graf Zahl)
 - Fixed: When a skybox viewpoint is destroyed it should clear all

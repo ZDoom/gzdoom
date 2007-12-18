@@ -2359,9 +2359,9 @@ void M_OptResponder (event_t *ev)
 		}
 
 	case '\r':
-		if (CurrentMenu == &ModesMenu)
+		if (CurrentMenu == &ModesMenu && item->type == screenres)
 		{
-			if (!(item->type == screenres && GetSelectedSize (CurrentItem, &NewWidth, &NewHeight)))
+			if (!GetSelectedSize (CurrentItem, &NewWidth, &NewHeight))
 			{
 				NewWidth = SCREENWIDTH;
 				NewHeight = SCREENHEIGHT;

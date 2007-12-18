@@ -1,4 +1,6 @@
 December 17, 2007
+- Fixed: In the video modes menu, pressing Enter tried to change the screen
+  mode, even if the cursor wasn't on one of the mode items.
 - Fixed: Heretic's mace never respawned in deathmatch games.
 - Fixed: At resolutions taller than 600 pixels or so, tall sky textures were
   drawn a row too low. This was quite visible on Hexen MAP06.

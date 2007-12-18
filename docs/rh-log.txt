@@ -1,3 +1,8 @@
+December 17, 2007
+- New: When using the D3D9 framebuffer, palette blending is now applied only
+  to the 3D area of the screen. This means the console and (the primary
+  rectangular area of) the status bar are no longer blended.
+
 December 17, 2007 (Changes by Graf Zahl)
 - Fixed: When a skybox viewpoint is destroyed it should clear all
   sector references to itself.

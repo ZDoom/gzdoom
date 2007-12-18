@@ -50,6 +50,7 @@
 #include "v_video.h"
 #include "vectors.h"
 #include "a_sharedglobal.h"
+#include "c_console.h"
 
 //EXTERN_CVAR (Int, tx)
 //EXTERN_CVAR (Int, ty)
@@ -451,8 +452,6 @@ void R_MapColoredPlane (int y, int x1)
 // Called at the beginning of each frame.
 //
 //==========================================================================
-
-extern int ConBottom;
 
 void R_ClearPlanes (bool fullclear)
 {

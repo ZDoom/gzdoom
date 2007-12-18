@@ -67,6 +67,9 @@
 
 // MACROS ------------------------------------------------------------------
 
+// The number of vertices the vertex buffer should hold.
+#define NUM_VERTS	28
+
 // TYPES -------------------------------------------------------------------
 
 IMPLEMENT_CLASS(D3DFB)
@@ -194,6 +197,11 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	PalFormat = D3DFMT_UNKNOWN;
 	VSync = vid_vsync;
 	OffByOneAt = -1;
+	BlendingRect.left = 0;
+	BlendingRect.top = 0;
+	BlendingRect.right = FBWidth;
+	BlendingRect.bottom = FBHeight;
+	UseBlendingRect = false;
 
 	Gamma = 1.0;
 	memset (FlashConstants, 0, sizeof(FlashConstants));
@@ -622,31 +630,115 @@ bool D3DFB::CreatePaletteTexture ()
 
 bool D3DFB::CreateVertexes ()
 {
+	if (FAILED(D3DDevice->CreateVertexBuffer (sizeof(FBVERTEX)*NUM_VERTS, D3DUSAGE_WRITEONLY, D3DFVF_FBVERTEX, D3DPOOL_DEFAULT, &VertexBuffer, NULL)) ||
+		!UploadVertices())
+	{
+		return false;
+	}
+	return true;
+}
+
+bool D3DFB::UploadVertices()
+{
 	float top = (TrueHeight - Height) * 0.5f - 0.5f;
 	float right = float(Width) - 0.5f;
 	float bot = float(Height) + top;
 	float texright = float(Width) / float(FBWidth);
 	float texbot = float(Height) / float(FBHeight);
-	FBVERTEX verts[4] =
-	{
-		{ -0.5f, top, 0.5f, 1.f,      0.f,    0.f },
-		{ right, top, 0.5f, 1.f, texright,    0.f },
-		{ right, bot, 0.5f, 1.f, texright, texbot },
-		{ -0.5f, bot, 0.5f, 1.f,      0.f, texbot }
-	};
 	void *pverts;
 
-	if (FAILED(D3DDevice->CreateVertexBuffer (sizeof(verts), D3DUSAGE_WRITEONLY, D3DFVF_FBVERTEX, D3DPOOL_DEFAULT, &VertexBuffer, NULL)) ||
-		FAILED(VertexBuffer->Lock (0, sizeof(verts), &pverts, 0)))
+	if ((BlendingRect.left <= 0 && BlendingRect.right >= FBWidth &&
+		 BlendingRect.top <= 0 && BlendingRect.bottom >= FBHeight) ||
+		BlendingRect.left >= BlendingRect.right ||
+		BlendingRect.top >= BlendingRect.bottom)
 	{
+		// Blending rect covers the whole screen, so only need 4 verts.
+		FBVERTEX verts[4] =
+		{
+			{ -0.5f, top, 0.5f, 1.f,      0.f,    0.f },
+			{ right, top, 0.5f, 1.f, texright,    0.f },
+			{ right, bot, 0.5f, 1.f, texright, texbot },
+			{ -0.5f, bot, 0.5f, 1.f,      0.f, texbot }
+		};
+		if (SUCCEEDED(VertexBuffer->Lock(0, sizeof(verts), &pverts, 0)))
+		{
+			memcpy (pverts, verts, sizeof(verts));
+			VertexBuffer->Unlock();
+			return true;
+		}
 		return false;
 	}
-	else
+	// Only the 3D area of the screen is effected by palette flashes.
+	// So we create some boxes around it that can be drawn without the
+	// flash. These include the corners of the view area so I can be
+	// sure the texture interpolation is consistant. (Well, actually,
+	// since it's a 1-to-1 pixel mapping, it shouldn't matter.)
+	float mxl = float(BlendingRect.left) - 0.5f;
+	float mxr = float(BlendingRect.right) - 0.5f;
+	float myt = float(BlendingRect.top) + top;
+	float myb = float(BlendingRect.bottom) + top;
+	float tmxl = float(BlendingRect.left) / float(Width) * texright;
+	float tmxr = float(BlendingRect.right) / float(Width) * texright;
+	float tmyt = float(BlendingRect.top) / float(Height) * texbot;
+	float tmyb = float(BlendingRect.bottom) / float(Height) * texbot;
+	/*  +-------------------+
+	    |                   |
+		+-----+-------+-----+
+		|     |       |     |
+		|     |       |     |
+		|     |       |     |
+		+-----+-------+-----+
+		|                   |
+		+-------------------+  */
+	FBVERTEX verts[28] =
+	{
+		// The whole screen, for when no blending is happening
+		{ -0.5f, top, 0.5f, 1.f,      0.f,    0.f },		// 0
+		{ right, top, 0.5f, 1.f, texright,    0.f },
+		{ right, bot, 0.5f, 1.f, texright, texbot },
+		{ -0.5f, bot, 0.5f, 1.f,      0.f, texbot },
+
+		// Left area
+		{ -0.5f, myt, 0.5f, 1.f,      0.f,   tmyt },		// 4
+		{   mxl, myt, 0.5f, 1.f,     tmxl,   tmyt },
+		{   mxl, myb, 0.5f, 1.f,     tmxl,   tmyb },
+		{ -0.5f, myb, 0.5f, 1.f,      0.f,   tmyb },
+
+		// Right area
+		{   mxr, myt, 0.5f, 1.f,     tmxr,   tmyt },		// 8
+		{ right, myt, 0.5f, 1.f, texright,   tmyt },
+		{ right, myb, 0.5f, 1.f, texright,   tmyb },
+		{   mxr, myb, 0.5f, 1.f,     tmxr,   tmyb },
+
+		// Bottom area
+		{ -0.5f, bot, 0.5f, 1.f,      0.f, texbot },		// 12
+		{ -0.5f, myb, 0.5f, 1.f,      0.f,   tmyb },
+		{   mxl, myb, 0.5f, 1.f,     tmxl,   tmyb },
+		{   mxr, myb, 0.5f, 1.f,     tmxr,   tmyb },
+		{ right, myb, 0.5f, 1.f, texright,   tmyb },
+		{ right, bot, 0.5f, 1.f, texright, texbot },
+
+		// Top area
+		{ right, top, 0.5f, 1.f, texright,    0.f },		// 18
+		{ right, myt, 0.5f, 1.f, texright,   tmyt },
+		{   mxr, myt, 0.5f, 1.f,     tmxr,   tmyt },
+		{   mxl, myt, 0.5f, 1.f,     tmxl,   tmyt },
+		{ -0.5f, myt, 0.5f, 1.f,      0.f,   tmyt },
+		{ -0.5f, top, 0.5f, 1.f,      0.f,    0.f },
+
+		// Middle (blended) area
+		{   mxl, myt, 0.5f, 1.f,    tmxl,    tmyt },		// 24
+		{   mxr, myt, 0.5f, 1.f,    tmxr,    tmyt },
+		{   mxr, myb, 0.5f, 1.f,    tmxr,    tmyb },
+		{   mxl, myb, 0.5f, 1.f,    tmxl,    tmyb }
+	};
+	if (SUCCEEDED(VertexBuffer->Lock(0, sizeof(verts), &pverts, 0)))
 	{
 		memcpy (pverts, verts, sizeof(verts));
 		VertexBuffer->Unlock();
+		return true;
 	}
-	return true;
+	return false;
 }
 
 int D3DFB::GetPageCount ()
@@ -806,7 +898,25 @@ bool D3DFB::PaintToWindow ()
 	D3DDevice->SetFVF (D3DFVF_FBVERTEX);
 	D3DDevice->SetPixelShader (PalTexShader);
 	D3DDevice->SetPixelShaderConstantF (0, FlashConstants[0], 2);
-	D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 0, 2);
+	if (!UseBlendingRect || FlashConstants[1][0] == 1)
+	{ // The whole screen as a single quad.
+		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 0, 2);
+	}
+	else
+	{ // The screen split up so that only the 3D view is blended.
+		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 24, 2);	// middle
+
+		// The rest is drawn unblended, so reset the shader constant.
+		static const float FlashZero[2][4] =
+		{ { 0, 0, 0, 0 },
+		  { 1, 1, 1, 0 } };
+		D3DDevice->SetPixelShaderConstantF (0, FlashZero[0], 2);
+
+		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN,  4, 2);	// left
+		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN,  8, 2);	// right
+		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 12, 4);	// bottom
+		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 18, 4);	// top
+	}
 	D3DDevice->EndScene();
 	return SUCCEEDED(D3DDevice->Present(NULL, NULL, NULL, NULL));
 }
@@ -933,4 +1043,25 @@ void D3DFB::SetVSync (bool vsync)
 void D3DFB::Blank ()
 {
 	// Only used by movie player, which isn't working with D3D9 yet.
+}
+
+void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)
+{
+	if (BlendingRect.left != x1 ||
+		BlendingRect.top != y1 ||
+		BlendingRect.right != x2 ||
+		BlendingRect.bottom != y2)
+	{
+		BlendingRect.left = x1;
+		BlendingRect.top = y1;
+		BlendingRect.right = x2;
+		BlendingRect.bottom = y2;
+
+		if (UploadVertices())
+		{
+			UseBlendingRect = ((x1 > 0 || x2 < FBWidth || y1 > 0 || y2 < FBHeight)
+				&& BlendingRect.left < BlendingRect.right
+				&& BlendingRect.top < BlendingRect.bottom);
+		}
+	}
 }

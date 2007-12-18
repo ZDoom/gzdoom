@@ -48,6 +48,7 @@ typedef enum cstate_t {
 	c_up=0, c_down=1, c_falling=2, c_rising=3
 } constate_e;
 extern constate_e ConsoleState;
+extern int ConBottom;
 
 // Initialize the console
 void C_InitConsole (int width, int height, bool ingame);

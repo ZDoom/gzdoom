@@ -264,6 +264,9 @@ public:
 	// Changes the vsync setting, if supported by the device.
 	virtual void SetVSync (bool vsync);
 
+	// Set the rect defining the area effected by blending.
+	virtual void SetBlendingRect (int x1, int y1, int x2, int y2) {}
+
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
 	virtual int QueryNewPalette () = 0;

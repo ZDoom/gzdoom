@@ -1077,8 +1077,8 @@ static void M_DrawSaveLoadCommon ()
 	M_DrawFrame (savepicLeft, savepicTop, savepicWidth, savepicHeight);
 	if (SavePic != NULL)
 	{
-		SavePic->Blit (0, 0, SavePic->GetWidth(), SavePic->GetHeight(),
-			screen, savepicLeft, savepicTop, savepicWidth, savepicHeight);
+		screen->Blit(savepicLeft, savepicTop, savepicWidth, savepicHeight,
+					 SavePic, 0, 0, SavePic->GetWidth(), SavePic->GetHeight());
 	}
 	else
 	{

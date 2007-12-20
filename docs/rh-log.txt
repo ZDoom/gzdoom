@@ -1,4 +1,8 @@
 December 20, 2007 (Changes by Graf Zahl)
+- Fixed: DCanvas::Blit unlocked the destination twice instead of unlocking 
+  both dest and src. Also changed this function so that it is owned by the
+  destination canvas of the operation which is necessary if it needs to 
+  be overridden by subclasses.
 - Fixed: The StrifePlayer defined the wrong color range for its translations.
 
 December 19, 2007

@@ -145,7 +145,7 @@ public:
 	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
 
 	// Copy blocks from one canvas to another
-	virtual void Blit (int srcx, int srcy, int srcwidth, int srcheight, DCanvas *dest, int destx, int desty, int destwidth, int destheight);
+	virtual void Blit (int destx, int desty, int destwidth, int destheight, DCanvas *src, int srcx, int srcy, int srcwidth, int srcheight);
 
 	// Draw a linear block of pixels into the canvas
 	virtual void DrawBlock (int x, int y, int width, int height, const BYTE *src) const;
@@ -217,7 +217,7 @@ protected:
 	};
 
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
-	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
+	virtual void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
 	bool ParseDrawTextureTags (FTexture *img, int x, int y, uint32 tag, va_list tags, DrawParms *parms) const;
 
 	DCanvas() {}

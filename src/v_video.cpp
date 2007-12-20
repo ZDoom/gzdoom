@@ -515,13 +515,13 @@ static void BuildTransTable (const PalEntry *palette)
 	Col2RGB8_LessPrecision[64] = Col2RGB8[64];
 }
 
-void DCanvas::Blit (int srcx, int srcy, int srcwidth, int srcheight,
-			 DCanvas *dest, int destx, int desty, int destwidth, int destheight)
+void DCanvas::Blit (int destx, int desty, int destwidth, int destheight, DCanvas *src,
+					int srcx, int srcy, int srcwidth, int srcheight)
 {
 	fixed_t fracxstep, fracystep;
 	fixed_t fracx, fracy;
 	int x, y;
-	bool lockthis, lockdest;
+	bool lockthis, locksrc;
 
 	if ( (lockthis = (LockCount == 0)) )
 	{
@@ -532,9 +532,9 @@ void DCanvas::Blit (int srcx, int srcy, int srcwidth, int srcheight,
 		}
 	}
 
-	if ( (lockdest = (dest->LockCount == 0)) )
+	if ( (locksrc = (src->LockCount == 0)) )
 	{
-		dest->Lock ();
+		src->Lock ();
 	}
 
 	fracy = srcy << FRACBITS;
@@ -542,15 +542,15 @@ void DCanvas::Blit (int srcx, int srcy, int srcwidth, int srcheight,
 	fracxstep = (srcwidth << FRACBITS) / destwidth;
 
 	BYTE *destline, *srcline;
-	BYTE *destbuffer = dest->Buffer;
-	BYTE *srcbuffer = Buffer;
+	BYTE *destbuffer = Buffer;
+	BYTE *srcbuffer = src->Buffer;
 
 	if (fracxstep == FRACUNIT)
 	{
 		for (y = desty; y < desty + destheight; y++, fracy += fracystep)
 		{
-			memcpy (destbuffer + y * dest->Pitch + destx,
-					srcbuffer + (fracy >> FRACBITS) * Pitch + srcx,
+			memcpy (destbuffer + y * Pitch + destx,
+					srcbuffer + (fracy >> FRACBITS) * src->Pitch + srcx,
 					destwidth);
 		}
 	}
@@ -558,8 +558,8 @@ void DCanvas::Blit (int srcx, int srcy, int srcwidth, int srcheight,
 	{
 		for (y = desty; y < desty + destheight; y++, fracy += fracystep)
 		{
-			srcline = srcbuffer + (fracy >> FRACBITS) * Pitch + srcx;
-			destline = destbuffer + y * dest->Pitch + destx;
+			srcline = srcbuffer + (fracy >> FRACBITS) * src->Pitch + srcx;
+			destline = destbuffer + y * Pitch + destx;
 			for (x = fracx = 0; x < destwidth; x++, fracx += fracxstep)
 			{
 				destline[x] = srcline[fracx >> FRACBITS];
@@ -571,9 +571,9 @@ void DCanvas::Blit (int srcx, int srcy, int srcwidth, int srcheight,
 	{
 		Unlock ();
 	}
-	if (lockdest)
+	if (locksrc)
 	{
-		Unlock ();
+		src->Unlock ();
 	}
 }
 

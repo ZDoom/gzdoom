@@ -1,3 +1,12 @@
+December 19, 2007
+- Added a framework for drawing the 2D screen elements with Direct3D textures.
+  They are not actually drawn with it yet, nor is it complete, but it's
+  something to start with.
+- Split up DCanvas::DrawTexture() into more pieces to make it easier to
+  virtualize.
+- Removed support for non-32-bit palette textures from D3DFB. What kind of
+  card supports pixel shaders but not 32-bit textures?
+
 December 17, 2007
 - Fixed: In the video modes menu, pressing Enter tried to change the screen
   mode, even if the cursor wasn't on one of the mode items.

@@ -230,6 +230,11 @@ public:
 	bool PaintToWindow ();
 	void SetVSync (bool vsync);
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
+	void Begin2D ();
+	void End2D ();
+	FNativeTexture *CreateTexture (FTexture *gametex);
+	FNativeTexture *CreatePalette (FTexture *pal);
+	void STACK_ARGS DrawTexture (FTexture *img, int x, int y, int tags, ...);
 	HRESULT GetHR ();
 
 private:
@@ -237,12 +242,16 @@ private:
 	void ReleaseResources();
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
+	bool CreateStencilPaletteTexture();
+	bool CreateShadedPaletteTexture();
 	bool CreateVertexes();
 	void DoOffByOneCheck();
 	void UploadPalette();
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
 	bool UploadVertices();
 	bool Reset();
+	void Draw3DPart();
+	bool SetStyle(int style, fixed_t alpha, DWORD color, INTBOOL masked);
 
 	BYTE GammaTable[256];
 	PalEntry SourcePalette[256];
@@ -261,12 +270,16 @@ private:
 	bool VSync;
 	RECT BlendingRect;
 	bool UseBlendingRect;
+	int In2D;
 
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DVertexBuffer9 *VertexBuffer;
 	IDirect3DTexture9 *FBTexture;
 	IDirect3DTexture9 *PaletteTexture;
+	IDirect3DTexture9 *StencilPaletteTexture;
+	IDirect3DTexture9 *ShadedPaletteTexture;
 	IDirect3DPixelShader9 *PalTexShader;
+	IDirect3DPixelShader9 *PlainShader;
 
 	D3DFB() {}
 };

@@ -81,7 +81,7 @@ enum
 	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac
 	DTA_320x200,		// bool: scale texture size and position to fit on a virtual 320x200 screen
 	DTA_CleanNoMove,	// bool: like DTA_Clean but does not reposition output position
-	DTA_FlipX,			// bool: flip image horizontally
+	DTA_FlipX,			// bool: flip image horizontally	//FIXME: Does not work with DTA_Window(Left|Right)
 	DTA_ShadowColor,	// color of shadow
 	DTA_ShadowAlpha,	// alpha of shadow
 	DTA_Shadow,			// set shadow color and alphas to defaults
@@ -100,10 +100,10 @@ enum
 	DTA_Masked,			// true(default)=use masks from texture, false=ignore masks
 	DTA_HUDRules,		// use fullscreen HUD rules to position and size textures
 	DTA_KeepRatio,		// doesn't adjust screen size for DTA_Virtual* if the aspect ratio is not 4:3
-	DTA_TextLen,		// for DrawText: stop after this many characters, even if \0 not hit
 	DTA_RenderStyle,	// same as render style for actors
 
 	// For DrawText calls:
+	DTA_TextLen,		// stop after this many characters, even if \0 not hit
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
 };
@@ -173,7 +173,7 @@ public:
 	virtual void SetFont (FFont *font);
 
 	// 2D Texture drawing
-	void STACK_ARGS DrawTexture (FTexture *img, int x, int y, int tags, ...);
+	virtual void STACK_ARGS DrawTexture (FTexture *img, int x, int y, int tags, ...);
 	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 
 	// 2D Text drawing
@@ -187,7 +187,38 @@ protected:
 	int Pitch;
 	int LockCount;
 
+	struct DrawParms
+	{
+		fixed_t x, y;
+		int texwidth;
+		int texheight;
+		int windowleft;
+		int windowright;
+		int dclip;
+		int uclip;
+		int lclip;
+		int rclip;
+		fixed_t destwidth;
+		fixed_t destheight;
+		int top;
+		int left;
+		fixed_t alpha;
+		int fillcolor;
+		const BYTE *translation;
+		INTBOOL alphaChannel;
+		INTBOOL flipX;
+		fixed_t shadowAlpha;
+		int shadowColor;
+		int virtWidth;
+		int virtHeight;
+		INTBOOL keepratio;
+		INTBOOL masked;
+		ERenderStyle style;
+	};
+
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
+	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
+	bool ParseDrawTextureTags (FTexture *img, int x, int y, uint32 tag, va_list tags, DrawParms *parms) const;
 
 	DCanvas() {}
 
@@ -220,6 +251,7 @@ protected:
 // for actually implementing this. Built on top of SimpleCanvas, because it
 // needs a system memory buffer when buffered output is enabled.
 
+class FNativeTexture;
 class DFrameBuffer : public DSimpleCanvas
 {
 	DECLARE_ABSTRACT_CLASS (DFrameBuffer, DSimpleCanvas)
@@ -265,7 +297,24 @@ public:
 	virtual void SetVSync (bool vsync);
 
 	// Set the rect defining the area effected by blending.
-	virtual void SetBlendingRect (int x1, int y1, int x2, int y2) {}
+	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
+
+	bool IsComposited;	// If true, the following functions can be used.
+
+	// Begin 2D drawing operations. This is like Update, but it doesn't end
+	// the scene, and it doesn't present the image yet.
+	virtual void Begin2D();
+
+	// DrawTexture calls between Begin2D/End2D now use native textures.
+
+	// Finish 2D drawing operations.
+	virtual void End2D();
+
+	// Create a native texture from a game texture.
+	virtual FNativeTexture *CreateTexture(FTexture *gametex);
+
+	// Create a palette texture from a 256-entry palette.
+	virtual FNativeTexture *CreatePalette(const PalEntry *pal);
 
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
@@ -278,8 +327,17 @@ protected:
 
 	DFrameBuffer () {}
 
+	int RateX;
+
 private:
 	DWORD LastMS, LastSec, FrameCount, LastCount, LastTic;
+};
+
+// This class represents a native texture, as opposed to an FTexture.
+class FNativeTexture
+{
+public:
+	virtual ~FNativeTexture();
 };
 
 extern FColorMatcher ColorMatcher;

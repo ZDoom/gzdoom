@@ -3,7 +3,7 @@
 ** Texture class for DDS images
 **
 **---------------------------------------------------------------------------
-** Copyright 2006 Randy Heit
+** Copyright 2006-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -311,6 +311,19 @@ void FDDSTexture::Unload ()
 	{
 		delete[] Pixels;
 		Pixels = NULL;
+	}
+}
+
+FTextureFormat FDDSTexture::GetFormat()
+{
+	switch (Format)
+	{
+	case ID_DXT1:	return TEX_DXT1;
+	case ID_DXT2:	return TEX_DXT2;
+	case ID_DXT3:	return TEX_DXT3;
+	case ID_DXT4:	return TEX_DXT4;
+	case ID_DXT5:	return TEX_DXT5;
+	default:		return TEX_RGB;
 	}
 }
 

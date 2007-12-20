@@ -3,7 +3,7 @@
 ** Texture class for PNG images
 **
 **---------------------------------------------------------------------------
-** Copyright 2004-2006 Randy Heit
+** Copyright 2004-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -89,8 +89,7 @@ FTexture *FPNGTexture::Create(FileReader & data, int lumpnum)
 		return NULL;
 	}
 
-	// Just for completeness, make sure the PNG has something more than an
-	// IHDR.
+	// Just for completeness, make sure the PNG has something more than an IHDR.
 	data.Seek (4, SEEK_CUR);
 	data.Read (first4bytes.b, 4);
 	if (first4bytes.dw == 0)
@@ -266,6 +265,16 @@ void FPNGTexture::Unload ()
 	{
 		delete[] Pixels;
 		Pixels = NULL;
+	}
+}
+
+FTextureFormat FPNGTexture::GetFormat()
+{
+	switch (ColorType)
+	{
+	case 3:		return TEX_Pal;
+	case 0:		return TEX_Gray;
+	default:	return TEX_RGB;
 	}
 }
 

@@ -671,11 +671,13 @@ DFrameBuffer::DFrameBuffer (int width, int height)
 	: DSimpleCanvas (width, height)
 {
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
+	IsComposited = false;
 }
 
 void DFrameBuffer::DrawRateStuff ()
 {
 	// Draws frame time and cumulative fps
+	RateX = 0;
 	if (vid_fps)
 	{
 		DWORD ms = I_MSTime ();
@@ -686,9 +688,10 @@ void DFrameBuffer::DrawRateStuff ()
 			int chars;
 
 			chars = sprintf (fpsbuff, "%2u ms (%3u fps)", howlong, LastCount);
-			Clear (Width - chars * 8, 0, Width, 8, 0);
+			RateX = Width - chars * 8;
+			Clear (RateX, 0, Width, 8, 0);
 			SetFont (ConFont);
-			DrawText (CR_WHITE, Width - chars * 8, 0, (char *)&fpsbuff[0], TAG_DONE);
+			DrawText (CR_WHITE, RateX, 0, (char *)&fpsbuff[0], TAG_DONE);
 			SetFont (SmallFont);
 
 			DWORD thisSec = ms/1000;
@@ -769,6 +772,32 @@ void DFrameBuffer::CopyFromBuff (BYTE *src, int srcPitch, int width, int height,
 }
 
 void DFrameBuffer::SetVSync (bool vsync)
+{
+}
+
+void DFrameBuffer::SetBlendingRect (int x1, int y1, int x2, int y2)
+{
+}
+
+void DFrameBuffer::Begin2D ()
+{
+}
+
+void DFrameBuffer::End2D ()
+{
+}
+
+FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex)
+{
+	return NULL;
+}
+
+FNativeTexture *DFrameBuffer::CreatePalette(const PalEntry *pal)
+{
+	return NULL;
+}
+
+FNativeTexture::~FNativeTexture()
 {
 }
 

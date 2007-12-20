@@ -591,6 +591,22 @@ struct patch_t
 
 class FileReader;
 
+// All FTextures present their data to the world in 8-bit format, but if
+// the source data is something else, this is it.
+enum FTextureFormat
+{
+	TEX_Pal,
+	TEX_Gray,
+	TEX_RGB,		// Actually ARGB
+	TEX_DXT1,
+	TEX_DXT2,
+	TEX_DXT3,
+	TEX_DXT4,
+	TEX_DXT5,
+};
+
+class FNativeTexture;
+
 // Base texture class
 class FTexture
 {
@@ -651,6 +667,18 @@ public:
 
 	virtual void Unload () = 0;
 
+	// Returns the native pixel format for this image
+	virtual FTextureFormat GetFormat();
+
+	// Returns a native 3D representation of the texture
+	FNativeTexture *GetNative();
+
+	// Frees the native 3D representation of the texture
+	void KillNative();
+
+	// Fill the native texture buffer with pixel data for this image
+	virtual void FillBuffer(BYTE *buff, int pitch, FTextureFormat fmt);
+
 	int GetWidth () { return Width; }
 	int GetHeight () { return Height; }
 
@@ -668,6 +696,7 @@ public:
 	// last call to GetPixels(). This should be considered valid only if a call to CheckModified()
 	// is immediately followed by a call to GetPixels().
 	virtual bool CheckModified ();
+
 	static void InitGrayMap();
 
 	void CopySize(FTexture *BaseTexture)
@@ -695,6 +724,7 @@ public:
 protected:
 	WORD Width, Height, WidthMask;
 	static BYTE GrayMap[256];
+	FNativeTexture *Native;
 
 	FTexture ();
 

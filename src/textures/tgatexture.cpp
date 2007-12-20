@@ -110,6 +110,11 @@ void FTGATexture::Unload ()
 	}
 }
 
+FTextureFormat FTGATexture::GetFormat()
+{
+	return TEX_RGB;
+}
+
 const BYTE *FTGATexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)

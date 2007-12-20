@@ -3,7 +3,7 @@
 ** Texture class for JPEG images
 **
 **---------------------------------------------------------------------------
-** Copyright 2006 Randy Heit
+** Copyright 2006-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -133,7 +133,7 @@ FTexture *FJPEGTexture::Create(FileReader & data, int lumpnum)
 	{
 		return NULL;
 	}
-	if (BigShort (first4bytes.w[0]) <5)
+	if (BigShort (first4bytes.w[0]) < 5)
 	{
 		return NULL;
 	}
@@ -190,6 +190,11 @@ void FJPEGTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+}
+
+FTextureFormat FJPEGTexture::GetFormat()
+{
+	return TEX_RGB;
 }
 
 const BYTE *FJPEGTexture::GetColumn (unsigned int column, const Span **spans_out)

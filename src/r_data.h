@@ -236,6 +236,7 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
+	FTextureFormat GetFormat ();
 
 protected:
 
@@ -270,6 +271,7 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
+	FTextureFormat GetFormat ();
 
 protected:
 	static bool Check (FileReader &file);
@@ -309,6 +311,7 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
+	FTextureFormat GetFormat ();
 
 protected:
 
@@ -356,6 +359,7 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
+	FTextureFormat GetFormat ();
 
 protected:
 	int SourceLump;

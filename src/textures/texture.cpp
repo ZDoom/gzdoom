@@ -3,7 +3,7 @@
 ** The base texture class
 **
 **---------------------------------------------------------------------------
-** Copyright 2004-2006 Randy Heit
+** Copyright 2004-2007 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 #include "w_wad.h"
 #include "r_data.h"
 #include "templates.h"
+#include "i_system.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
 typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
@@ -117,9 +118,9 @@ FTexture::FTexture ()
   WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bIsPatch(false),
-  Rotations(0xFFFF), Width(0), Height(0), WidthMask(0)
+  Rotations(0xFFFF), Width(0), Height(0), WidthMask(0), Native(NULL)
 {
-	*Name=0;
+	*Name = 0;
 }
 
 FTexture::~FTexture ()
@@ -129,6 +130,11 @@ FTexture::~FTexture ()
 bool FTexture::CheckModified ()
 {
 	return false;
+}
+
+FTextureFormat FTexture::GetFormat()
+{
+	return TEX_Pal;
 }
 
 void FTexture::SetFrontSkyLayer ()
@@ -394,6 +400,83 @@ void FTexture::FlipNonSquareBlockRemap (BYTE *dst, const BYTE *src, int x, int y
 		{
 			dst[i*y+j] = remap[src[i+j*x]];
 		}
+	}
+}
+
+FNativeTexture *FTexture::GetNative()
+{
+	if (Native != NULL)
+	{
+		return Native;
+	}
+	Native = screen->CreateTexture(this);
+	return Native;
+}
+
+void FTexture::KillNative()
+{
+	if (Native != NULL)
+	{
+		delete Native;
+		Native = NULL;
+	}
+}
+
+// For this generic implementation, we just call GetPixels and copy that data
+// to the buffer. Texture formats that can do better than paletted images
+// should provide their own implementation that may preserve the original
+// color data. Note that the buffer expects row-major data, since that's
+// generally more convenient for any non-Doom image formats, and it doesn't
+// need to be used by any of Doom's column drawing routines.
+void FTexture::FillBuffer(BYTE *buff, int pitch, FTextureFormat fmt)
+{
+	const BYTE *pix;
+	int x, y, w, h, stride;
+
+	w = GetWidth();
+	h = GetHeight();
+	pix = GetPixels();
+
+	switch (fmt)
+	{
+	case TEX_Pal:
+	case TEX_Gray:
+		stride = pitch - w;
+		for (y = 0; y < h; ++y)
+		{
+			const BYTE *pix2 = pix;
+			for (x = 0; x < w; ++x)
+			{
+				*buff++ = *pix2;
+				pix2 += h;
+			}
+			pix++;
+			buff += stride;
+		}
+		break;
+
+	case TEX_RGB:
+		stride = pitch - w * 4;
+		for (y = 0; y < h; ++y)
+		{
+			const BYTE *pix2 = pix;
+			for (x = 0; x < w; ++x)
+			{
+				const PalEntry *pal = &GPalette.BaseColors[*pix2];
+				buff[0] = pal->b;
+				buff[1] = pal->g;
+				buff[2] = pal->r;
+				buff[3] = pal->a;
+				buff += 4;
+				pix2 += h;
+			}
+			pix++;
+			buff += stride;
+		}
+		break;
+
+	default:
+		I_Error("FTexture::FillBuffer: Unsupported format %d", fmt);
 	}
 }
 

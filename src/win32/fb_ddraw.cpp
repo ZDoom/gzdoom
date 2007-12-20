@@ -620,7 +620,7 @@ void DDrawFB::MaybeCreatePalette ()
 			{
 				pal.head.palPalEntry[i].peFlags = 0;
 			}
-			GDIPalette = CreatePalette (&pal.head);
+			GDIPalette = ::CreatePalette (&pal.head);
 			LOG ("Created GDI palette\n");
 			if (GDIPalette != NULL)
 			{

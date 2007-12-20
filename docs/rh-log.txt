@@ -1,4 +1,6 @@
 December 20, 2007 (Changes by Graf Zahl)
+- Added true color processing to FDDSTexture. This is untested so far 
+  because I don't have any DDS textures to check it with.
 - Fixed: FTexture::~FTexture() must destroy the associated native texture
   if present.
 - Modified GZDoom's true color texture copy functions and added them

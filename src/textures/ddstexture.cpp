@@ -390,7 +390,7 @@ void FDDSTexture::MakeTexture ()
 	}
 }
 
-void FDDSTexture::ReadRGB (FWadLump &lump)
+void FDDSTexture::ReadRGB (FWadLump &lump, BYTE *tcbuf)
 {
 	DWORD x, y;
 	DWORD amask = AMask == 0 ? 0 : 0x80000000 >> AShiftL;
@@ -399,7 +399,7 @@ void FDDSTexture::ReadRGB (FWadLump &lump)
 	for (y = Height; y > 0; --y)
 	{
 		BYTE *buffp = linebuff;
-		BYTE *pixelp = Pixels + y;
+		BYTE *pixelp = tcbuf? tcbuf + 4*y*Height : Pixels + y;
 		lump.Read (linebuff, Pitch);
 		for (x = Width; x > 0; --x)
 		{
@@ -420,25 +420,40 @@ void FDDSTexture::ReadRGB (FWadLump &lump)
 			{
 				c = *buffp++;
 			}
-			if (amask == 0 || (c & amask))
+			if (!tcbuf)
+			{
+				if (amask == 0 || (c & amask))
+				{
+					DWORD r = (c & RMask) << RShiftL; r |= r >> RShiftR;
+					DWORD g = (c & GMask) << GShiftL; g |= g >> GShiftR;
+					DWORD b = (c & BMask) << BShiftL; b |= b >> BShiftR;
+					*pixelp = RGB32k[r >> 27][g >> 27][b >> 27];
+				}
+				else
+				{
+					*pixelp = 0;
+					bMasked = true;
+				}
+				pixelp += Height;
+			}
+			else
 			{
 				DWORD r = (c & RMask) << RShiftL; r |= r >> RShiftR;
 				DWORD g = (c & GMask) << GShiftL; g |= g >> GShiftR;
 				DWORD b = (c & BMask) << BShiftL; b |= b >> BShiftR;
-				*pixelp = RGB32k[r >> 27][g >> 27][b >> 27];
+				DWORD a = (c & AMask) << AShiftL; a |= a >> AShiftR;
+				pixelp[0] = (BYTE)(r>>24);
+				pixelp[1] = (BYTE)(g>>24);
+				pixelp[2] = (BYTE)(b>>24);
+				pixelp[3] = (BYTE)(a>>24);
+				pixelp+=4;
 			}
-			else
-			{
-				*pixelp = 0;
-				bMasked = true;
-			}
-			pixelp += Height;
 		}
 	}
 	delete[] linebuff;
 }
 
-void FDDSTexture::DecompressDXT1 (FWadLump &lump)
+void FDDSTexture::DecompressDXT1 (FWadLump &lump, BYTE *tcbuf)
 {
 	const long blocklinelen = ((Width + 3) >> 2) << 3;
 	BYTE *blockbuff = new BYTE[blocklinelen];
@@ -490,7 +505,7 @@ void FDDSTexture::DecompressDXT1 (FWadLump &lump)
 				bMasked = true;
 			}
 			// Pick colors from the palette for each of the four colors.
-			for (i = 3; i >= 0; --i)
+			if (!tcbuf) for (i = 3; i >= 0; --i)
 			{
 				palcol[i] = color[i].a ? RGB32k[color[i].r >> 3][color[i].g >> 3][color[i].b >> 3] : 0;
 			}
@@ -508,7 +523,19 @@ void FDDSTexture::DecompressDXT1 (FWadLump &lump)
 					{
 						break;
 					}
-					Pixels[oy + y + (ox + x) * Height] = palcol[(yslice >> (x + x)) & 3];
+					if (!tcbuf) 
+					{
+						Pixels[oy + y + (ox + x) * Height] = palcol[(yslice >> (x + x)) & 3];
+					}
+					else
+					{
+						BYTE * tcp = &tcbuf[ox + x + (oy + y) * Width*4];
+						int c = (yslice >> (x + x)) & 3;
+						tcp[0] = color[c].r;
+						tcp[1] = color[c].g;
+						tcp[2] = color[c].b;
+						tcp[3] = color[c].a;
+					}
 				}
 			}
 			block += 8;
@@ -520,7 +547,7 @@ void FDDSTexture::DecompressDXT1 (FWadLump &lump)
 // DXT3: Decompression is identical to DXT1, except every 64-bit block is
 // preceded by another 64-bit block with explicit alpha values.
 
-void FDDSTexture::DecompressDXT3 (FWadLump &lump, bool premultiplied)
+void FDDSTexture::DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbuf)
 {
 	const long blocklinelen = ((Width + 3) >> 2) << 4;
 	BYTE *blockbuff = new BYTE[blocklinelen];
@@ -554,7 +581,7 @@ void FDDSTexture::DecompressDXT3 (FWadLump &lump, bool premultiplied)
 			color[3].b = (color[0].b + color[1].b + color[1].b + 1) / 3;
 
 			// Pick colors from the palette for each of the four colors.
-			for (i = 3; i >= 0; --i)
+			if (!tcbuf) for (i = 3; i >= 0; --i)
 			{
 				palcol[i] = RGB32k[color[i].r >> 3][color[i].g >> 3][color[i].b >> 3];
 			}
@@ -573,8 +600,20 @@ void FDDSTexture::DecompressDXT3 (FWadLump &lump, bool premultiplied)
 					{
 						break;
 					}
-					Pixels[oy + y + (ox + x) * Height] = ((yalphaslice >> (x*4)) & 15) < 8 ?
-						(bMasked = true, 0) : palcol[(yslice >> (x + x)) & 3];
+					if (!tcbuf)
+					{
+						Pixels[oy + y + (ox + x) * Height] = ((yalphaslice >> (x*4)) & 15) < 8 ?
+							(bMasked = true, 0) : palcol[(yslice >> (x + x)) & 3];
+					}
+					else
+					{
+						BYTE * tcp = &tcbuf[ox + x + (oy + y) * Width*4];
+						int c = (yslice >> (x + x)) & 3;
+						tcp[0] = color[c].r;
+						tcp[1] = color[c].g;
+						tcp[2] = color[c].b;
+						tcp[3] = color[c].a;
+					}
 				}
 			}
 			block += 16;
@@ -586,7 +625,7 @@ void FDDSTexture::DecompressDXT3 (FWadLump &lump, bool premultiplied)
 // DXT5: Decompression is identical to DXT3, except every 64-bit alpha block
 // contains interpolated alpha values, similar to the 64-bit color block.
 
-void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied)
+void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbuf)
 {
 	const long blocklinelen = ((Width + 3) >> 2) << 4;
 	BYTE *blockbuff = new BYTE[blocklinelen];
@@ -643,7 +682,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied)
 			color[3].b = (color[0].b + color[1].b + color[1].b + 1) / 3;
 
 			// Pick colors from the palette for each of the four colors.
-			for (i = 3; i >= 0; --i)
+			if (!tcbuf) for (i = 3; i >= 0; --i)
 			{
 				palcol[i] = RGB32k[color[i].r >> 3][color[i].g >> 3][color[i].b >> 3];
 			}
@@ -670,12 +709,71 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied)
 					{
 						break;
 					}
-					Pixels[oy + y + (ox + x) * Height] = alpha[((yalphaslice >> (x*3)) & 7)] < 128 ?
-						(bMasked = true, 0) : palcol[(yslice >> (x + x)) & 3];
+					if (!tcbuf)
+					{
+						Pixels[oy + y + (ox + x) * Height] = alpha[((yalphaslice >> (x*3)) & 7)] < 128 ?
+							(bMasked = true, 0) : palcol[(yslice >> (x + x)) & 3];
+					}
+					else
+					{
+						BYTE * tcp = &tcbuf[ox + x + (oy + y) * Width*4];
+						int c = (yslice >> (x + x)) & 3;
+						tcp[0] = color[c].r;
+						tcp[1] = color[c].g;
+						tcp[2] = color[c].b;
+						tcp[3] = alpha[((yalphaslice >> (x*3)) & 7)];
+					}
 				}
 			}
 			block += 16;
 		}
 	}
 	delete[] blockbuff;
+}
+
+//===========================================================================
+//
+// FDDSTexture::CopyTrueColorPixels
+//
+//===========================================================================
+
+int FDDSTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+{
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+
+	BYTE *TexBuffer = new BYTE[4*Width*Height];
+
+	lump.Seek (sizeof(DDSURFACEDESC2) + 4, SEEK_SET);
+
+	if (Format >= 1 && Format <= 4)		// RGB: Format is # of bytes per pixel
+	{
+		ReadRGB (lump, TexBuffer);
+	}
+	else if (Format == ID_DXT1)
+	{
+		DecompressDXT1 (lump, TexBuffer);
+	}
+	else if (Format == ID_DXT3 || Format == ID_DXT2)
+	{
+		DecompressDXT3 (lump, Format == ID_DXT2, TexBuffer);
+	}
+	else if (Format == ID_DXT5 || Format == ID_DXT4)
+	{
+		DecompressDXT5 (lump, Format == ID_DXT4, TexBuffer);
+	}
+
+	// All formats decompress to RGBA.
+	screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, TexBuffer, Width, Height, 4, Width*4, CF_RGBA);
+	delete [] TexBuffer;
+	return -1;
+}	
+
+//===========================================================================
+//
+//
+//===========================================================================
+
+bool FDDSTexture::UseBasePalette() 
+{ 
+	return false; 
 }

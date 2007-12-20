@@ -299,10 +299,13 @@ protected:
 	static void CalcBitShift (DWORD mask, BYTE *lshift, BYTE *rshift);
 
 	void MakeTexture ();
-	void ReadRGB (FWadLump &lump);
-	void DecompressDXT1 (FWadLump &lump);
-	void DecompressDXT3 (FWadLump &lump, bool premultiplied);
-	void DecompressDXT5 (FWadLump &lump, bool premultiplied);
+	void ReadRGB (FWadLump &lump, BYTE *tcbuf = NULL);
+	void DecompressDXT1 (FWadLump &lump, BYTE *tcbuf = NULL);
+	void DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
+	void DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
+
+	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	bool UseBasePalette();
 
 	friend class FTexture;
 };

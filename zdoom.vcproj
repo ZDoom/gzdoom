@@ -6184,6 +6184,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\g_shared\sbarinfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\g_shared\sbarinfo.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\g_shared\shared_sbar.cpp"
 				>
 				<FileConfiguration

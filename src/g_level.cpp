@@ -72,6 +72,7 @@
 #include "m_menu.h"
 #include "statnums.h"
 #include "vectors.h"
+#include "sbarinfo.h"
 
 #include "gi.h"
 
@@ -1527,6 +1528,13 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		S_ResumeSound ();
 	}
 
+	//SBarInfo support.
+	int stbar = gameinfo.gametype;
+	if(Wads.CheckNumForName("SBARINFO") != -1)
+	{
+		stbar = SBarInfoScript.ParseSBarInfo(Wads.GetNumForName("SBARINFO")); //load last SBARINFO lump to avoid clashes
+	}
+	//end most of the SBarInfo stuff
 	if (StatusBar != NULL)
 	{
 		delete StatusBar;
@@ -1535,21 +1543,25 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	{
 		StatusBar = new FBaseStatusBar (0);
 	}
-	else if (gameinfo.gametype == GAME_Doom)
+	else if (stbar == GAME_Doom)
 	{
 		StatusBar = CreateDoomStatusBar ();
 	}
-	else if (gameinfo.gametype == GAME_Heretic)
+	else if (stbar == GAME_Heretic)
 	{
 		StatusBar = CreateHereticStatusBar ();
 	}
-	else if (gameinfo.gametype == GAME_Hexen)
+	else if (stbar == GAME_Hexen)
 	{
 		StatusBar = CreateHexenStatusBar ();
 	}
-	else if (gameinfo.gametype == GAME_Strife)
+	else if (stbar == GAME_Strife)
 	{
 		StatusBar = CreateStrifeStatusBar ();
+	}
+	else if (stbar == GAME_Any)
+	{
+		StatusBar = CreateCustomStatusBar (); //SBARINFO is empty unless scripted.
 	}
 	else
 	{

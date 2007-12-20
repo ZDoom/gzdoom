@@ -9,7 +9,7 @@ ACTOR StrifePlayer : PlayerPawn
 	PainChance 255
 	Speed 1
 	MaxStepHeight 16
-	Player.ColorRange 96, 111
+	Player.ColorRange 128, 143
 	Player.DisplayName "Rebel"
 	Player.StartItem "PunchDagger"
 

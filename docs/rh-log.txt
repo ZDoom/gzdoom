@@ -1,3 +1,6 @@
+December 20, 2007 (Changes by Graf Zahl)
+- Fixed: The StrifePlayer defined the wrong color range for its translations.
+
 December 19, 2007
 - Added a framework for drawing the 2D screen elements with Direct3D textures.
   They are not actually drawn with it yet, nor is it complete, but it's

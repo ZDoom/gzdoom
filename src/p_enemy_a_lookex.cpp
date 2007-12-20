@@ -1,4 +1,4 @@
-﻿#include <stdlib.h>
+#include <stdlib.h>
 
 #include "templates.h"
 #include "m_random.h"

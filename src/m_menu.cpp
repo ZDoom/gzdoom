@@ -65,6 +65,7 @@
 #include "gi.h"
 #include "p_tick.h"
 #include "st_start.h"
+#include "teaminfo.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2078,8 +2079,8 @@ static void M_PlayerSetupDrawer ()
 	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT+yo, "Team",
 		DTA_Clean, true, TAG_DONE);
 	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT+yo,
-		(unsigned)players[consoleplayer].userinfo.team >= NUM_TEAMS ? "None" :
-			TeamNames[players[consoleplayer].userinfo.team],
+		!TEAMINFO_IsValidTeam (players[consoleplayer].userinfo.team) ? "None" :
+		teams[players[consoleplayer].userinfo.team].name,
 		DTA_Clean, true, TAG_DONE);
 
 	// Draw player character
@@ -2548,7 +2549,7 @@ static void M_ChangePlayerTeam (int choice)
 		}
 		else if (team == TEAM_None)
 		{
-			team = NUM_TEAMS-1;
+			team = teams.Size () - 1;
 		}
 		else
 		{
@@ -2557,7 +2558,7 @@ static void M_ChangePlayerTeam (int choice)
 	}
 	else
 	{
-		if (team == NUM_TEAMS-1)
+		if (team == teams.Size () - 1)
 		{
 			team = TEAM_None;
 		}

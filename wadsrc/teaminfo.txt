@@ -1,0 +1,49 @@
+ClearTeams
+
+Team "Blue"
+{
+	PlayerColor "00 00 FF"
+	TextColor "Blue"
+}
+
+Team "Red"
+{
+	PlayerColor "FF 00 00"
+	TextColor "Red"
+}
+
+Team "Green"
+{
+	PlayerColor "00 FF 00"
+	TextColor "Green"
+}
+
+Team "Gold"
+{
+	PlayerColor "FF FF 00"
+	TextColor "Gold"
+}
+
+Team "Black"
+{
+	PlayerColor "00 00 00"
+	TextColor "Black"
+}
+
+Team "White"
+{
+	PlayerColor "FF FF FF"
+	TextColor "White"
+}
+
+Team "Orange"
+{
+	PlayerColor "FF 80 00"
+	TextColor "Orange"
+}
+
+Team "Purple"
+{
+	PlayerColor "FF 00 FF"
+	TextColor "Purple"
+}

@@ -1,10 +1,10 @@
 /*
 ** hu_scores.cpp
-** Routines for drawing the deathmatch scoreboard.
+** Routines for drawing the scoreboards.
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
-** Copyright 2007 Chris Westley
+** Copyright 2007 Christopher Westley
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -35,10 +35,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "st_stuff.h"
 #include "c_console.h"
-#include "v_video.h"
+#include "st_stuff.h"
+#include "teaminfo.h"
 #include "templates.h"
+#include "v_video.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -50,11 +51,8 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void HU_DrawNonTeamScores (player_t *, player_t *[MAXPLAYERS]);
-static void HU_DrawTeamScores (player_t *, player_t *[MAXPLAYERS]);
-
+static void HU_DoDrawScores (player_t *, player_t *[MAXPLAYERS]);
 static void HU_DrawTimeRemaining (int y);
-
 static void HU_DrawPlayer (player_t *, bool, int, int, int, bool);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -74,17 +72,21 @@ CVAR (Int,	sb_deathmatch_yourplayercolor,		CR_GREEN,	CVAR_ARCHIVE)
 CVAR (Int,	sb_deathmatch_otherplayercolor,		CR_GREY,	CVAR_ARCHIVE)
 
 CVAR (Bool,	sb_teamdeathmatch_enable,			true,		CVAR_ARCHIVE)
-CVAR (Int,	sb_teamdeathmatch_yourplayercolor,	CR_GREEN,	CVAR_ARCHIVE)
-CVAR (Int,	sb_teamdeathmatch_otherplayercolor,	CR_GREY,	CVAR_ARCHIVE)
+CVAR (Int,	sb_teamdeathmatch_headingcolor,		CR_RED,		CVAR_ARCHIVE)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int STACK_ARGS compare (const void *arg1, const void *arg2)
+static int STACK_ARGS comparepoints (const void *arg1, const void *arg2)
 {
 	if (deathmatch)
 		return (*(player_t **)arg2)->fragcount - (*(player_t **)arg1)->fragcount;
 	else
 		return (*(player_t **)arg2)->killcount - (*(player_t **)arg1)->killcount;
+}
+
+static int STACK_ARGS compareteams (const void *arg1, const void *arg2)
+{
+	return (*(player_t **)arg1)->userinfo.team - (*(player_t **)arg2)->userinfo.team;
 }
 
 // CODE --------------------------------------------------------------------
@@ -97,6 +99,25 @@ static int STACK_ARGS compare (const void *arg1, const void *arg2)
 
 void HU_DrawScores (player_t *player)
 {
+	if (deathmatch)
+	{
+		if (teamplay)
+		{
+			if (!sb_teamdeathmatch_enable)
+				return;
+		}
+		else
+		{
+			if (!sb_deathmatch_enable)
+				return;
+		}
+	}
+	else
+	{
+		if (!sb_cooperative_enable)
+			return;
+	}
+
 	int i, j;
 	player_t *sortedplayers[MAXPLAYERS];
 
@@ -111,31 +132,42 @@ void HU_DrawScores (player_t *player)
 		sortedplayers[j] = &players[i];
 	}
 
-	qsort (sortedplayers, MAXPLAYERS, sizeof(player_t *), compare);
-
-	if (deathmatch && teamplay)
-		HU_DrawTeamScores (player, sortedplayers);
+	if (teamplay)
+		qsort (sortedplayers, MAXPLAYERS, sizeof(player_t *), compareteams);
 	else
-		HU_DrawNonTeamScores (player, sortedplayers);
+		qsort (sortedplayers, MAXPLAYERS, sizeof(player_t *), comparepoints);
+
+	HU_DoDrawScores (player, sortedplayers);
 
 	BorderNeedRefresh = screen->GetPageCount ();
 }
 
 //==========================================================================
 //
-// HU_DrawNonTeamScores
+// HU_DoDrawScores
 //
 //==========================================================================
 
-static void HU_DrawNonTeamScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
+static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
 {
 	int color;
 	int height = screen->Font->GetHeight() * CleanYfac;
 	int i;
 	int maxwidth = 0;
+	int numTeams = 0;
 	int x ,y;
 	
-	deathmatch ? color = sb_deathmatch_headingcolor : color = sb_cooperative_headingcolor;
+	if (deathmatch)
+	{
+		if (teamplay)
+			color = sb_teamdeathmatch_headingcolor;
+		else
+			color = sb_deathmatch_headingcolor;
+	}
+	else
+	{
+		color = sb_cooperative_headingcolor;
+	}
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -147,9 +179,48 @@ static void HU_DrawNonTeamScores (player_t *player, player_t *sortedplayers[MAXP
 		}
 	}
 
-	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 4 : y = SCREENHEIGHT / 16;
+	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 16;
 
 	HU_DrawTimeRemaining (ST_Y - height);
+
+	for (i = 0; i < teams.Size (); i++)
+	{
+		teams[i].players = 0;
+		teams[i].score = 0;
+	}
+
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[sortedplayers[i]-players] && TEAMINFO_IsValidTeam (sortedplayers[i]->userinfo.team))
+		{
+			if (teams[sortedplayers[i]->userinfo.team].players++ == 0)
+			{
+				numTeams++;
+			}
+
+			teams[sortedplayers[i]->userinfo.team].score += sortedplayers[i]->fragcount;
+		}
+	}
+
+	int scorexwidth = SCREENWIDTH / 32;
+	for (i = 0; i < teams.Size (); i++)
+	{
+		if (teams[i].players)
+		{
+			char score[80];
+			sprintf (score, "%d", teams[i].score);
+
+			screen->SetFont (BigFont);
+			screen->DrawText (teams[i].GetTextColor (), scorexwidth, gamestate == GS_INTERMISSION ? y / 1.25 : y / 2, score,
+				DTA_CleanNoMove, true, TAG_DONE);
+
+			scorexwidth += SCREENWIDTH / 8;
+		}
+	}
+
+	gamestate == GS_INTERMISSION ? y += 0 : y += SCREENWIDTH / 32;
+
+	screen->SetFont (SmallFont);
 
 	screen->DrawText (color, SCREENWIDTH / 32, y, "Color",
 		DTA_CleanNoMove, true, TAG_DONE);
@@ -163,92 +234,14 @@ static void HU_DrawNonTeamScores (player_t *player, player_t *sortedplayers[MAXP
 	x = (SCREENWIDTH >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
 	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 10;
 
+	y += SCREENWIDTH / 32;
+
 	for (i = 0; i < MAXPLAYERS && y < ST_Y - 12 * CleanYfac; i++)
 	{
 		if (playeringame[sortedplayers[i] - players])
 		{
 			HU_DrawPlayer (sortedplayers[i], player==sortedplayers[i], x, y, height, false);
 			y += height + CleanYfac;
-		}
-	}
-}
-
-//==========================================================================
-//
-// HU_DrawTeamScores
-//
-//==========================================================================
-
-static void HU_DrawTeamScores (player_t *player, player_t *sorted[MAXPLAYERS])
-{
-	static const int teamColors[NUM_TEAMS] = { CR_RED, CR_BLUE, CR_GREEN, CR_GOLD };
-
-	char str[80];
-	int height = screen->Font->GetHeight() * CleanYfac;
-	int teamPlayers[NUM_TEAMS] = { 0 }, teamSlot[NUM_TEAMS];
-	int teamX[NUM_TEAMS], teamY[NUM_TEAMS], teamScore[NUM_TEAMS] = { 0 };
-	int numTeams = 0;
-	int i, j, tallest;
-
-	for (i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (playeringame[sorted[i]-players] && sorted[i]->userinfo.team < NUM_TEAMS)
-		{
-			if (teamPlayers[sorted[i]->userinfo.team]++ == 0)
-			{
-				numTeams++;
-			}
-			teamScore[sorted[i]->userinfo.team] += sorted[i]->fragcount;
-		}
-	}
-
-	if (numTeams == 0)
-	{
-		HU_DrawNonTeamScores (player, sorted);
-		return;
-	}
-
-	HU_DrawTimeRemaining (ST_Y - height);
-
-	screen->SetFont (BigFont);
-
-	for (i = j = tallest = 0; i < NUM_TEAMS; ++i)
-	{
-		if (teamPlayers[i])
-		{
-			teamPlayers[j] = teamPlayers[i];
-			teamSlot[i] = j;
-
-			if (j < 2 && teamPlayers[i] > tallest)
-			{
-				tallest = teamPlayers[i];
-			}
-			else if (j == 2)
-			{
-				tallest = tallest * (height+CleanYfac) + 36*CleanYfac + teamY[0];
-			}
-
-			teamX[j] = (j&1) ? (SCREENWIDTH+teamX[0]) >> 1 : 10*CleanXfac;
-			teamY[j] = (j&2) ? tallest : (gamestate==GS_LEVEL?32*CleanYfac:
-								(56-100)*CleanYfac+(SCREENHEIGHT/2));
-
-			sprintf (str, "%s: %d", TeamNames[i], teamScore[i]);
-			screen->DrawText (teamColors[i], teamX[j],
-				teamY[j] - 20*CleanYfac, str, DTA_CleanNoMove, true, TAG_DONE);
-
-			j++;
-		}
-	}
-
-	screen->SetFont (SmallFont);
-
-	for (i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (playeringame[sorted[i]-players] && sorted[i]->userinfo.team < NUM_TEAMS)
-		{
-			int slot = teamSlot[sorted[i]->userinfo.team];
-			HU_DrawPlayer (sorted[i], player==sorted[i], teamX[slot], teamY[slot], height, true);
-			teamY[slot] += height + CleanYfac;
 		}
 	}
 }
@@ -304,50 +297,31 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 	color = ColorMatcher.Pick (clamp (int(r*255.f),0,255),
 		clamp (int(g*255.f),0,255), clamp (int(b*255.f),0,255));
 
-	if (deathmatch && teamplay)
+	screen->Clear (SCREENWIDTH / 24, y, SCREENWIDTH / 24 + 24*CleanXfac, y + height, color);
+
+	if (teamplay)
 	{
-		screen->Clear (x, y, x + 24*CleanXfac, y + height, color);
-
-		if (player->mo->ScoreIcon > 0)
-		{
-			screen->DrawTexture (TexMan[player->mo->ScoreIcon], x+(pack?20:32)*CleanXfac, y,
-				DTA_CleanNoMove, true, TAG_DONE);
-		}
-
-		sprintf (str, "%d", player->fragcount);
-
-		if (!highlight)
-			color = sb_teamdeathmatch_otherplayercolor;
-		else
-			color = sb_teamdeathmatch_yourplayercolor;
-
-		screen->DrawText (color, x+(pack?28:40)*CleanXfac, y, str,
-			DTA_CleanNoMove, true, TAG_DONE);
-
-		screen->DrawText (color, x + (pack?54:72)*CleanXfac, y, player->userinfo.netname,
-			DTA_CleanNoMove, true, TAG_DONE);
+		color = teams[player->userinfo.team].GetTextColor ();
 	}
 	else
 	{
-		screen->Clear (SCREENWIDTH / 24, y, SCREENWIDTH / 24 + 24*CleanXfac, y + height, color);
-
 		if (!highlight)
 			deathmatch ? color = sb_deathmatch_otherplayercolor : color = sb_cooperative_otherplayercolor;
 		else
 			deathmatch ? color = sb_deathmatch_yourplayercolor : color = sb_cooperative_yourplayercolor;
+	}
 
-		sprintf (str, "%d", deathmatch ? player->fragcount : player->killcount);
+	sprintf (str, "%d", deathmatch ? player->fragcount : player->killcount);
 
-		screen->DrawText (color, SCREENWIDTH / 4, y, str,
+	screen->DrawText (color, SCREENWIDTH / 4, y, str,
+		DTA_CleanNoMove, true, TAG_DONE);
+
+	screen->DrawText (color, SCREENWIDTH / 2, y, player->userinfo.netname,
+		DTA_CleanNoMove, true, TAG_DONE);
+
+	if (player->mo->ScoreIcon > 0)
+	{
+		screen->DrawTexture (TexMan[player->mo->ScoreIcon], SCREENWIDTH / 2.25, y,
 			DTA_CleanNoMove, true, TAG_DONE);
-
-		screen->DrawText (color, SCREENWIDTH / 2, y, player->userinfo.netname,
-			DTA_CleanNoMove, true, TAG_DONE);
-
-		if (player->mo->ScoreIcon > 0)
-		{
-			screen->DrawTexture (TexMan[player->mo->ScoreIcon], SCREENWIDTH / 2.25, y,
-				DTA_CleanNoMove, true, TAG_DONE);
-		}
 	}
 }

@@ -1,8 +1,9 @@
 /*
-** d_netinf.h
+** teaminfo.h
+** Implementation of the TEAMINFO lump.
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 2007 Christopher Westley
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -31,58 +32,28 @@
 **
 */
 
-#ifndef __D_NETINFO_H__
-#define __D_NETINFO_H__
+#ifndef __TEAMINFO_H__
+#define __TEAMINFO_H__
 
-#include "c_cvars.h"
+#define TEAM_None -1
 
-EXTERN_CVAR (Float, autoaim)
-
-#define MAXPLAYERNAME	15
-
-enum
+struct TEAMINFO
 {
-	GENDER_MALE,
-	GENDER_FEMALE,
-	GENDER_NEUTER
+	FString		name;
+	int			playercolor;
+	FString		textcolor;
+	int			GetTextColor () const;
+	int			players;
+	int			score;
+	int			present;
+	int			ties;
 };
 
-int D_GenderToInt (const char *gender);
-extern const char *GenderNames[3];
+extern TArray <TEAMINFO> teams;
 
-int D_PlayerClassToInt (const char *classname);
+extern void TEAMINFO_Init ();
+extern void TEAMINFO_ParseTeam ();
 
-struct userinfo_s
-{
-	char		netname[MAXPLAYERNAME+1];
-	int			team;
-	int			aimdist;
-	int			color;
-	int			skin;
-	int			gender;
-	bool		neverswitch;
-	fixed_t		MoveBob, StillBob;
-	int			PlayerClass;
-};
-typedef struct userinfo_s userinfo_t;
+extern bool TEAMINFO_IsValidTeam (int team);
 
-FArchive &operator<< (FArchive &arc, userinfo_t &info);
-
-void D_SetupUserInfo (void);
-
-void D_UserInfoChanged (FBaseCVar *info);
-
-void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType type);
-void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set);
-void D_DoServerInfoChange (BYTE **stream, bool singlebit);
-
-void D_WriteUserInfoStrings (int player, BYTE **stream, bool compact=false);
-void D_ReadUserInfoStrings (int player, BYTE **stream, bool update);
-
-void D_GetPlayerColor (int player, float *h, float *s, float *v);
-void D_PickRandomTeam (int player);
-int D_PickRandomTeam ();
-class player_s;
-int D_GetFragCount (player_s *player);
-
-#endif //__D_CLIENTINFO_H__
+#endif

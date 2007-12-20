@@ -828,8 +828,7 @@ EXTERN_CVAR (Int, sb_deathmatch_yourplayercolor)
 EXTERN_CVAR (Int, sb_deathmatch_otherplayercolor)
 
 EXTERN_CVAR (Bool, sb_teamdeathmatch_enable)
-EXTERN_CVAR (Int, sb_teamdeathmatch_yourplayercolor)
-EXTERN_CVAR (Int, sb_teamdeathmatch_otherplayercolor)
+EXTERN_CVAR (Int, sb_teamdeathmatch_headingcolor)
 
 static menuitem_t ScoreboardItems[] = {
 	{ whitetext, "Cooperative Options",		{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
@@ -851,8 +850,7 @@ static menuitem_t ScoreboardItems[] = {
 	{ whitetext, "Team Deathmatch Options",	{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",						{NULL},									{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Enable Scoreboard",		{&sb_teamdeathmatch_enable},			{21.0}, {0.0},	{0.0}, {YesNo} },
-	{ cdiscrete, "Your Player Color",		{&sb_teamdeathmatch_yourplayercolor},	{21.0}, {0.0},	{0.0}, {TextColors} },
-	{ cdiscrete, "Other Players' Color",	{&sb_teamdeathmatch_otherplayercolor},	{21.0}, {0.0},	{0.0}, {TextColors} }
+	{ cdiscrete, "Header Color",			{&sb_teamdeathmatch_headingcolor},			{21.0}, {0.0},	{0.0}, {TextColors} }
 };
 
 menu_t ScoreboardMenu =

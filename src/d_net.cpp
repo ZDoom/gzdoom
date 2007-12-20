@@ -52,6 +52,7 @@
 #include "p_trace.h"
 #include "a_sharedglobal.h"
 #include "st_start.h"
+#include "teaminfo.h"
 
 int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
 					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net);

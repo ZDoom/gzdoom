@@ -10,6 +10,7 @@
 #include "doomstat.h"
 #include "p_local.h"
 #include "cmdlib.h"
+#include "teaminfo.h"
 
 CVAR (Int, bot_next_color, 11, 0)
 CVAR (Bool, bot_observer, false, 0)

@@ -54,6 +54,7 @@
 #include "p_conversation.h"
 #include "thingdef/thingdef.h"
 #include "g_game.h"
+#include "teaminfo.h"
 
 // MACROS ------------------------------------------------------------------
 

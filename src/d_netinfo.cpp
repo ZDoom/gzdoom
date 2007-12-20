@@ -52,6 +52,7 @@
 #include "sbar.h"
 #include "gi.h"
 #include "m_random.h"
+#include "teaminfo.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
@@ -62,7 +63,7 @@ CVAR (Float,	autoaim,				5000.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	name,					"Player",	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Color,	color,					0x40cf00,	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	skin,					"base",		CVAR_USERINFO | CVAR_ARCHIVE);
-CVAR (Int,		team,					255,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Int,		team,					TEAM_None,	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	gender,					"male",		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Bool,		neverswitchonpickup,	false,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	movebob,				0.25f,		CVAR_USERINFO | CVAR_ARCHIVE);
@@ -81,16 +82,6 @@ enum
 	INFO_MoveBob,
 	INFO_StillBob,
 	INFO_PlayerClass,
-};
-
-const char *TeamNames[NUM_TEAMS] =
-{
-	"Red", "Blue", "Green", "Gold"
-};
-
-float TeamHues[NUM_TEAMS] =
-{
-	0.f, 240.f, 120.f, 60.f
 };
 
 const char *GenderNames[3] = { "male", "female", "other" };
@@ -192,29 +183,11 @@ int D_PlayerClassToInt (const char *classname)
 
 void D_GetPlayerColor (int player, float *h, float *s, float *v)
 {
-	int color = players[player].userinfo.color;
+	userinfo_t *info = &players[player].userinfo;
+	int color = teamplay ? teams[info->team].playercolor : info->color;
 
 	RGBtoHSV (RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f,
 		h, s, v);
-
-	if (teamplay && players[player].userinfo.team < NUM_TEAMS)
-	{
-		// In team play, force the player to use the team's hue
-		// and adjust the saturation and value so that the team
-		// hue is visible in the final color.
-		*h = TeamHues[players[player].userinfo.team];
-		if (gameinfo.gametype == GAME_Doom)
-		{
-			*s = *s*0.15f+0.8f;
-			*v = *v*0.5f+0.4f;
-		}
-		else
-		{
-			// I'm not really happy with the red team color in Heretic...
-			*s = team == 0 ? 0.6f : 0.8f;
-			*v = *v*0.4f+0.3f;
-		}
-	}
 }
 
 // Find out which teams are present. If there is only one,
@@ -235,7 +208,12 @@ void D_PickRandomTeam (int player)
 
 int D_PickRandomTeam ()
 {
-	int teamPresent[NUM_TEAMS] = { 0 };
+	for (int i = 0; i < (signed)teams.Size (); i++)
+	{
+		teams[i].present = 0;
+		teams[i].ties = 0;
+	}
+
 	int numTeams = 0;
 	int team;
 
@@ -243,9 +221,9 @@ int D_PickRandomTeam ()
 	{
 		if (playeringame[i])
 		{
-			if (players[i].userinfo.team < NUM_TEAMS)
+			if (TEAMINFO_IsValidTeam (players[i].userinfo.team))
 			{
-				if (teamPresent[players[i].userinfo.team]++ == 0)
+				if (teams[players[i].userinfo.team].present++ == 0)
 				{
 					numTeams++;
 				}
@@ -257,37 +235,36 @@ int D_PickRandomTeam ()
 	{
 		do
 		{
-			team = pr_pickteam() % NUM_TEAMS;
-		} while (teamPresent[team] != 0);
+			team = pr_pickteam() % teams.Size ();
+		} while (teams[team].present != 0);
 	}
 	else
 	{
 		int lowest = INT_MAX, lowestTie = 0, i;
-		int ties[NUM_TEAMS];
 
-		for (i = 0; i < NUM_TEAMS; ++i)
+		for (i = 0; i < (signed)teams.Size (); ++i)
 		{
-			if (teamPresent[i] > 0)
+			if (teams[i].present > 0)
 			{
-				if (teamPresent[i] < lowest)
+				if (teams[i].present < lowest)
 				{
-					lowest = teamPresent[i];
+					lowest = teams[i].present;
 					lowestTie = 0;
-					ties[0] = i;
+					teams[0].ties = i;
 				}
-				else if (teamPresent[i] == lowest)
+				else if (teams[i].present == lowest)
 				{
-					ties[++lowestTie] = i;
+					teams[++lowestTie].ties = i;
 				}
 			}
 		}
 		if (lowestTie == 0)
 		{
-			team = ties[0];
+			team = teams[0].ties;
 		}
 		else
 		{
-			team = ties[pr_pickteam() % (lowestTie+1)];
+			team = teams[pr_pickteam() % (lowestTie+1)].ties;
 		}
 	}
 
@@ -299,21 +276,21 @@ static void UpdateTeam (int pnum, int team, bool update)
 	userinfo_t *info = &players[pnum].userinfo;
 	int oldteam;
 
-	if (team < 0)
+	if (team < TEAM_None)
 	{
 		team = TEAM_None;
 	}
 	oldteam = info->team;
 	info->team = team;
 
-	if (teamplay && info->team >= NUM_TEAMS)
+	if (teamplay && !TEAMINFO_IsValidTeam (info->team))
 	{ // Force players onto teams in teamplay mode
 		info->team = D_PickRandomTeam ();
 	}
 	if (update && oldteam != info->team)
 	{
-		if (info->team < NUM_TEAMS)
-			Printf ("%s joined the %s team\n", info->netname, TeamNames[info->team]);
+		if (TEAMINFO_IsValidTeam (info->team))
+			Printf ("%s joined the %s team\n", info->netname, teams[info->team].name);
 		else
 			Printf ("%s is now a loner\n", info->netname);
 	}
@@ -323,13 +300,13 @@ static void UpdateTeam (int pnum, int team, bool update)
 	{
 		StatusBar->AttachToPlayer (&players[pnum]);
 	}
-	if ((unsigned)info->team >= NUM_TEAMS)
+	if (!TEAMINFO_IsValidTeam (info->team))
 		info->team = TEAM_None;
 }
 
 int D_GetFragCount (player_t *player)
 {
-	if (!teamplay || player->userinfo.team >= NUM_TEAMS)
+	if (!teamplay || !TEAMINFO_IsValidTeam (player->userinfo.team))
 	{
 		return player->fragcount;
 	}
@@ -359,7 +336,7 @@ void D_SetupUserInfo ()
 		memset (&players[i].userinfo, 0, sizeof(userinfo_t));
 
 	strncpy (coninfo->netname, name, MAXPLAYERNAME);
-	if (teamplay && team >= NUM_TEAMS)
+	if (teamplay && !TEAMINFO_IsValidTeam (team))
 	{
 		coninfo->team = D_PickRandomTeam ();
 	}

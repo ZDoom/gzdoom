@@ -56,6 +56,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "m_misc.h"
 #include "sbar.h"
 #include "p_acs.h"
+#include "teaminfo.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 
@@ -335,7 +336,7 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 		{
 			strcat (concat, colors[bot_next_color]);
 		}
-		if (thebot->lastteam < NUM_TEAMS)
+		if (TEAMINFO_IsValidTeam (thebot->lastteam))
 		{ // Keep the bot on the same team when switching levels
 			sprintf (concat+strlen(concat), "\\team\\%d\n", thebot->lastteam);
 		}
@@ -374,7 +375,11 @@ void DCajunMaster::DoAddBot (int bnum, char *info)
 		players[bnum].mo = NULL;
 		players[bnum].playerstate = PST_ENTER;
 		botingame[bnum] = true;
-		Printf ("%s joined the game\n", players[bnum].userinfo.netname);
+
+		if (teamplay)
+			Printf ("%s joined the %s team\n", players[bnum].userinfo.netname, teams[players[bnum].userinfo.team].name);
+		else
+			Printf ("%s joined the game\n", players[bnum].userinfo.netname);
 
 		G_DoReborn (bnum, true);
 		if (StatusBar != NULL)
@@ -589,7 +594,7 @@ bool DCajunMaster::LoadBots ()
 					if (IsNum (sc_String))
 					{
 						teamnum = atoi (sc_String);
-						if (teamnum >= NUM_TEAMS)
+						if (!TEAMINFO_IsValidTeam (teamnum))
 						{
 							teamnum = TEAM_None;
 						}
@@ -597,9 +602,9 @@ bool DCajunMaster::LoadBots ()
 					else
 					{
 						teamnum = TEAM_None;
-						for (int i = 0; i < NUM_TEAMS; ++i)
+						for (int i = 0; i < teams.Size (); ++i)
 						{
-							if (stricmp (TeamNames[i], sc_String) == 0)
+							if (stricmp (teams[i].name, sc_String) == 0)
 							{
 								teamnum = i;
 								break;

@@ -378,5 +378,159 @@ void FTGATexture::MakeTexture ()
 	}
 }	
 
+//===========================================================================
+//
+// FTGATexture::CopyTrueColorPixels
+//
+//===========================================================================
 
+int FTGATexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+{
+	PalEntry pe[256];
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	TGAHeader hdr;
+	WORD w;
+	BYTE r,g,b,a;
+	BYTE * sbuffer;
+	int transval = 0;
 
+	lump.Read(&hdr, sizeof(hdr));
+	lump.Seek(hdr.id_len, SEEK_CUR);
+	
+#ifdef WORDS_BIGENDIAN
+	hdr.width = LittleShort(hdr.width);
+	hdr.height = LittleShort(hdr.height);
+	hdr.cm_first = LittleShort(hdr.cm_first);
+	hdr.cm_length = LittleShort(hdr.cm_length);
+#endif
+
+	if (hdr.has_cm)
+	{
+		memset(pe, 0, 256*sizeof(PalEntry));
+		for (int i = hdr.cm_first; i < hdr.cm_first + hdr.cm_length && i < 256; i++)
+		{
+			switch (hdr.cm_size)
+			{
+			case 15:
+			case 16:
+				lump >> w;
+				r = (w & 0x001F) << 3;
+				g = (w & 0x03E0) >> 2;
+				b = (w & 0x7C00) >> 7;
+				a = 255;
+				break;
+				
+			case 24:
+				lump >> b >> g >> r;
+				a=255;
+				break;
+				
+			case 32:
+				lump >> b >> g >> r >> a;
+				if ((hdr.img_desc&15)!=8) a=255;
+				else if (a!=0 && a!=255) transval = true;
+				break;
+				
+			default:	// should never happen
+				r=g=b=a=0;
+				break;
+			}
+			pe[i] = PalEntry(255-a, r, g, b);
+		}
+    }
+    
+    int Size = Width * Height * (hdr.bpp>>3);
+   	sbuffer = new BYTE[Size];
+   	
+    if (hdr.img_type < 4)	// uncompressed
+    {
+    	lump.Read(sbuffer, Size);
+    }
+    else				// compressed
+    {
+    	ReadCompressed(lump, sbuffer, hdr.bpp>>3);
+    }
+    
+	BYTE * ptr = sbuffer;
+	int step_x = (hdr.bpp>>3);
+	int Pitch = Width * step_x;
+
+	if (hdr.img_desc&32)
+	{
+		ptr += (Width-1) * step_x;
+		step_x =- step_x;
+	}
+	if (!(hdr.img_desc&64))
+	{
+		ptr += (Height-1) * Pitch;
+		Pitch = -Pitch;
+	}
+
+    switch (hdr.img_type & 7)
+    {
+	case 1:	// paletted
+		screen->CopyPixelData(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, pe);
+		break;
+
+	case 2:	// RGB
+		switch (hdr.bpp)
+		{
+		case 15:
+		case 16:
+			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_RGB555);
+			break;
+		
+		case 24:
+			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_BGR);
+			break;
+		
+		case 32:
+			if ((hdr.img_desc&15)!=8)	// 32 bits without a valid alpha channel
+			{
+				screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_BGR);
+			}
+			else
+			{
+				screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_BGRA);
+				transval = -1;
+			}
+			break;
+		
+		default:
+			break;
+		}
+		break;
+	
+	case 3:	// Grayscale
+		switch (hdr.bpp)
+		{
+		case 8:
+			for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// gray map
+			screen->CopyPixelData(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, pe);
+			break;
+		
+		case 16:
+			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_I16);
+			break;
+		
+		default:
+			break;
+		}
+		break;
+
+	default:
+		break;
+    }
+	delete [] sbuffer;
+	return transval;
+}	
+
+//===========================================================================
+//
+//
+//===========================================================================
+
+bool FTGATexture::UseBasePalette() 
+{ 
+	return false; 
+}

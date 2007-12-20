@@ -371,6 +371,40 @@ void FMultiPatchTexture::CheckForHacks ()
 	}
 }
 
+//===========================================================================
+//
+// FMultipatchTexture::CopyTrueColorPixels
+//
+// Preserves the palettes of each individual patch
+//
+//===========================================================================
+
+int FMultiPatchTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+{
+	int retv = -1;
+
+	for(int i=0;i<NumParts;i++)
+	{
+		int ret = Parts[i].Texture->CopyTrueColorPixels(buffer, buf_width, buf_height, 
+											  x+Parts[i].OriginX, y+Parts[i].OriginY);
+
+		if (ret > retv) retv = ret;
+	}
+	return retv;
+}
+
+FTextureFormat FMultiPatchTexture::GetFormat() 
+{ 
+	if (NumParts == 1) return Parts[0].Texture->GetFormat();
+
+	for(int i=0;i<NumParts;i++)
+	{
+		if (!Parts[i].Texture->UseBasePalette()) return TEX_RGB;
+	}
+	return TEX_Pal;
+}
+
+
 void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int patcheslump, int firstdup, bool texture1)
 {
 	FPatchLookup *patchlookup;

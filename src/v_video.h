@@ -316,6 +316,16 @@ public:
 	// Create a palette texture from a 256-entry palette.
 	virtual FNativeTexture *CreatePalette(const PalEntry *pal);
 
+	// texture copy functions
+	virtual void CopyPixelDataRGB(BYTE * buffer, int texwidth, int texheight, int originx, int originy,
+					     const BYTE * patch, int pix_width, int pix_height, int step_x, int step_y,
+						 int ct);
+
+	virtual void CopyPixelData(BYTE * buffer, int texwidth, int texheight, int originx, int originy,
+					  const BYTE * patch, int pix_width, int pix_height, 
+					  int step_x, int step_y, PalEntry * palette);
+
+
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
 	virtual int QueryNewPalette () = 0;
@@ -326,6 +336,10 @@ protected:
 	void CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest);
 
 	DFrameBuffer () {}
+
+	bool ClipCopyPixelRect(int texwidth, int texheight, int &originx, int &originy,
+						const BYTE *&patch, int &srcwidth, int &srcheight, int step_x, int step_y);
+
 
 	int RateX;
 
@@ -384,5 +398,108 @@ extern "C" void ASM_PatchPitch (void);
 
 int CheckRatio (int width, int height);
 extern const int BaseRatioSizes[5][4];
+
+
+//===========================================================================
+// 
+// True color conversion classes for the different pixel formats
+// used by the supported texture formats
+//
+//===========================================================================
+struct cRGB
+{
+	static unsigned char R(const unsigned char * p) { return p[0]; }
+	static unsigned char G(const unsigned char * p) { return p[1]; }
+	static unsigned char B(const unsigned char * p) { return p[2]; }
+	static unsigned char A(const unsigned char * p) { return 255; }
+	static int Gray(const unsigned char * p) { return (p[0]*77 + p[1]*143 + p[2]*36)>>8; }
+};
+
+struct cRGBA
+{
+	static unsigned char R(const unsigned char * p) { return p[0]; }
+	static unsigned char G(const unsigned char * p) { return p[1]; }
+	static unsigned char B(const unsigned char * p) { return p[2]; }
+	static unsigned char A(const unsigned char * p) { return p[3]; }
+	static int Gray(const unsigned char * p) { return (p[0]*77 + p[1]*143 + p[2]*36)>>8; }
+};
+
+struct cIA
+{
+	static unsigned char R(const unsigned char * p) { return p[0]; }
+	static unsigned char G(const unsigned char * p) { return p[0]; }
+	static unsigned char B(const unsigned char * p) { return p[0]; }
+	static unsigned char A(const unsigned char * p) { return p[1]; }
+	static int Gray(const unsigned char * p) { return p[0]; }
+};
+
+struct cCMYK
+{
+	static unsigned char R(const unsigned char * p) { return p[3] - (((256-p[0])*p[3]) >> 8); }
+	static unsigned char G(const unsigned char * p) { return p[3] - (((256-p[1])*p[3]) >> 8); }
+	static unsigned char B(const unsigned char * p) { return p[3] - (((256-p[2])*p[3]) >> 8); }
+	static unsigned char A(const unsigned char * p) { return 255; }
+	static int Gray(const unsigned char * p) { return (R(p)*77 + G(p)*143 + B(p)*36)>>8; }
+};
+
+struct cBGR
+{
+	static unsigned char R(const unsigned char * p) { return p[2]; }
+	static unsigned char G(const unsigned char * p) { return p[1]; }
+	static unsigned char B(const unsigned char * p) { return p[0]; }
+	static unsigned char A(const unsigned char * p) { return 255; }
+	static int Gray(const unsigned char * p) { return (p[2]*77 + p[1]*143 + p[0]*36)>>8; }
+};
+
+struct cBGRA
+{
+	static unsigned char R(const unsigned char * p) { return p[2]; }
+	static unsigned char G(const unsigned char * p) { return p[1]; }
+	static unsigned char B(const unsigned char * p) { return p[0]; }
+	static unsigned char A(const unsigned char * p) { return p[3]; }
+	static int Gray(const unsigned char * p) { return (p[2]*77 + p[1]*143 + p[0]*36)>>8; }
+};
+
+struct cI16
+{
+	static unsigned char R(const unsigned char * p) { return p[1]; }
+	static unsigned char G(const unsigned char * p) { return p[1]; }
+	static unsigned char B(const unsigned char * p) { return p[1]; }
+	static unsigned char A(const unsigned char * p) { return 255; }
+	static int Gray(const unsigned char * p) { return p[1]; }
+};
+
+struct cRGB555
+{
+	static unsigned char R(const unsigned char * p) { return (((*(WORD*)p)&0x1f)<<3); }
+	static unsigned char G(const unsigned char * p) { return (((*(WORD*)p)&0x3e0)>>2); }
+	static unsigned char B(const unsigned char * p) { return (((*(WORD*)p)&0x7c00)>>7); }
+	static unsigned char A(const unsigned char * p) { return p[1]; }
+	static int Gray(const unsigned char * p) { return (R(p)*77 + G(p)*143 + B(p)*36)>>8; }
+};
+
+struct cPalEntry
+{
+	static unsigned char R(const unsigned char * p) { return ((PalEntry*)p)->r; }
+	static unsigned char G(const unsigned char * p) { return ((PalEntry*)p)->g; }
+	static unsigned char B(const unsigned char * p) { return ((PalEntry*)p)->b; }
+	static unsigned char A(const unsigned char * p) { return ((PalEntry*)p)->a; }
+	static int Gray(const unsigned char * p) { return (R(p)*77 + G(p)*143 + B(p)*36)>>8; }
+};
+
+enum ColorType
+{
+	CF_RGB,
+	CF_RGBA,
+	CF_IA,
+	CF_CMYK,
+	CF_BGR,
+	CF_BGRA,
+	CF_I16,
+	CF_RGB555,
+	CF_PalEntry
+};
+
+
 
 #endif // __V_VIDEO_H__

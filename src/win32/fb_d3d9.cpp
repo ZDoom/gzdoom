@@ -1200,7 +1200,7 @@ bool D3DTex::Update()
 	{
 		return false;
 	}
-	GameTex->FillBuffer((BYTE *)lrect.pBits, lrect.Pitch, ToTexFmt(desc.Format));
+	GameTex->FillBuffer((BYTE *)lrect.pBits, lrect.Pitch, rect.bottom, ToTexFmt(desc.Format));
 	Tex->UnlockRect(0);
 	return true;
 }

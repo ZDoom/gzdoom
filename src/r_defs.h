@@ -664,6 +664,9 @@ public:
 
 	// Returns the whole texture, stored in column-major order
 	virtual const BYTE *GetPixels () = 0;
+	
+	virtual int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	virtual bool UseBasePalette();
 
 	virtual void Unload () = 0;
 
@@ -677,7 +680,7 @@ public:
 	void KillNative();
 
 	// Fill the native texture buffer with pixel data for this image
-	virtual void FillBuffer(BYTE *buff, int pitch, FTextureFormat fmt);
+	virtual void FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt);
 
 	int GetWidth () { return Width; }
 	int GetHeight () { return Height; }

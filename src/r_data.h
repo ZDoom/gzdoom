@@ -85,8 +85,11 @@ public:
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
+	FTextureFormat GetFormat();
 	void Unload ();
 	virtual void SetFrontSkyLayer ();
+
+	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
 
 protected:
 	BYTE *Pixels;
@@ -237,6 +240,8 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
+	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	bool UseBasePalette();
 
 protected:
 
@@ -312,6 +317,8 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
+	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	bool UseBasePalette();
 
 protected:
 
@@ -360,6 +367,9 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
+
+	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	bool UseBasePalette();
 
 protected:
 	int SourceLump;
@@ -412,6 +422,10 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
+	FTextureFormat GetFormat ();
+
+	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	bool UseBasePalette();
 
 protected:
 	int SourceLump;

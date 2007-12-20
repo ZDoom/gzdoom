@@ -323,3 +323,91 @@ void FJPEGTexture::MakeTexture ()
 	}
 }
 
+
+//===========================================================================
+//
+// FJPEGTexture::CopyTrueColorPixels
+//
+// Preserves the full color information (unlike software mode)
+//
+//===========================================================================
+
+int FJPEGTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+{
+	PalEntry pe[256];
+
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	JSAMPLE *buff = NULL;
+
+	jpeg_decompress_struct cinfo;
+	jpeg_error_mgr jerr;
+
+	cinfo.err = jpeg_std_error(&jerr);
+	cinfo.err->output_message = JPEG_OutputMessage;
+	cinfo.err->error_exit = JPEG_ErrorExit;
+	jpeg_create_decompress(&cinfo);
+
+	try
+	{
+		FLumpSourceMgr sourcemgr(&lump, &cinfo);
+		jpeg_read_header(&cinfo, TRUE);
+
+		if (!((cinfo.out_color_space == JCS_RGB && cinfo.num_components == 3) ||
+			  (cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
+			  (cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
+		{
+			Printf (TEXTCOLOR_ORANGE "Unsupported color format\n");
+			throw -1;
+		}
+		jpeg_start_decompress(&cinfo);
+
+		int yc = 0;
+		buff = new BYTE[cinfo.output_height * cinfo.output_width * cinfo.output_components];
+
+
+		while (cinfo.output_scanline < cinfo.output_height)
+		{
+			BYTE * ptr = buff + cinfo.output_width * cinfo.output_components * yc;
+			jpeg_read_scanlines(&cinfo, &ptr, 1);
+			yc++;
+		}
+
+		switch (cinfo.out_color_space)
+		{
+		case JCS_RGB:
+			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
+				3, cinfo.output_width * cinfo.output_components, CF_RGB);
+			break;
+
+		case JCS_GRAYSCALE:
+			for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// default to a gray map
+			screen->CopyPixelData(buffer, buf_width, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
+				1, cinfo.output_width, pe);
+			break;
+
+		case JCS_CMYK:
+			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
+				4, cinfo.output_width * cinfo.output_components, CF_CMYK);
+			break;
+		}
+		jpeg_finish_decompress(&cinfo);
+	}
+	catch(int)
+	{
+		Printf (TEXTCOLOR_ORANGE "   in JPEG texture %s\n", Name);
+	}
+	jpeg_destroy_decompress(&cinfo);
+	if (buff != NULL) delete [] buff;
+	return 0;
+}
+
+
+//===========================================================================
+//
+//
+//===========================================================================
+
+bool FJPEGTexture::UseBasePalette() 
+{ 
+	return false; 
+}

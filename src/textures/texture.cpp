@@ -125,6 +125,7 @@ FTexture::FTexture ()
 
 FTexture::~FTexture ()
 {
+	KillNative();
 }
 
 bool FTexture::CheckModified ()
@@ -428,19 +429,19 @@ void FTexture::KillNative()
 // color data. Note that the buffer expects row-major data, since that's
 // generally more convenient for any non-Doom image formats, and it doesn't
 // need to be used by any of Doom's column drawing routines.
-void FTexture::FillBuffer(BYTE *buff, int pitch, FTextureFormat fmt)
+void FTexture::FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt)
 {
 	const BYTE *pix;
 	int x, y, w, h, stride;
 
 	w = GetWidth();
 	h = GetHeight();
-	pix = GetPixels();
 
 	switch (fmt)
 	{
 	case TEX_Pal:
 	case TEX_Gray:
+		pix = GetPixels();
 		stride = pitch - w;
 		for (y = 0; y < h; ++y)
 		{
@@ -456,29 +457,44 @@ void FTexture::FillBuffer(BYTE *buff, int pitch, FTextureFormat fmt)
 		break;
 
 	case TEX_RGB:
-		stride = pitch - w * 4;
-		for (y = 0; y < h; ++y)
-		{
-			const BYTE *pix2 = pix;
-			for (x = 0; x < w; ++x)
-			{
-				const PalEntry *pal = &GPalette.BaseColors[*pix2];
-				buff[0] = pal->b;
-				buff[1] = pal->g;
-				buff[2] = pal->r;
-				buff[3] = pal->a;
-				buff += 4;
-				pix2 += h;
-			}
-			pix++;
-			buff += stride;
-		}
+		CopyTrueColorPixels(buff, pitch, height, 0, 0); 
 		break;
 
 	default:
 		I_Error("FTexture::FillBuffer: Unsupported format %d", fmt);
 	}
 }
+
+//===========================================================================
+//
+// FTexture::CopyTrueColorPixels 
+//
+// this is the generic case that can handle
+// any properly implemented texture for software rendering.
+// Its drawback is that it is limited to the base palette which is
+// why all classes that handle different palettes should subclass this
+// method
+//
+//===========================================================================
+
+int FTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+{
+	PalEntry * palette = screen->GetPalette();
+	palette[0].a=255;	// temporarily modify the first color's alpha
+	screen->CopyPixelData(buffer, buf_width, buf_height, x, y,
+				  GetPixels(), Width, Height, Height, 1, 
+				  palette);
+
+	palette[0].a=0;
+	return 0;
+}
+
+bool FTexture::UseBasePalette() 
+{ 
+	return true; 
+}
+
+
 
 FDummyTexture::FDummyTexture ()
 {

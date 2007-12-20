@@ -111,6 +111,12 @@ void FPCXTexture::Unload ()
 	}
 }
 
+FTextureFormat FPCXTexture::GetFormat()
+{
+	return TEX_RGB;
+}
+
+
 const BYTE *FPCXTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)
@@ -404,3 +410,88 @@ void FPCXTexture::MakeTexture()
 	}
 }
 
+//===========================================================================
+//
+// FPCXTexture::CopyTrueColorPixels
+//
+// Preserves the full color information (unlike software mode)
+//
+//===========================================================================
+
+int FPCXTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+{
+	PalEntry pe[256];
+	PCXHeader header;
+	int bitcount;
+	BYTE * Pixels;
+
+	FWadLump lump = Wads.OpenLumpNum(SourceLump);
+
+	lump.Read(&header, sizeof(header));
+
+	bitcount = header.bitsPerPixel * header.numColorPlanes;
+
+	if (bitcount < 24)
+	{
+		Pixels = new BYTE[Width*Height];
+		if (bitcount < 8)
+		{
+			for (int i=0;i<16;i++)
+			{
+				pe[i] = PalEntry(header.palette[i*3],header.palette[i*3+1],header.palette[i*3+2]);
+			}
+
+			switch (bitcount)
+			{
+			default:
+			case 1:
+				ReadPCX1bit (Pixels, lump, &header);
+				break;
+
+			case 4:
+				ReadPCX4bits (Pixels, lump, &header);
+				break;
+			}
+		}
+		else if (bitcount == 8)
+		{
+			BYTE c;
+			lump.Seek(-769, SEEK_END);
+			lump >> c;
+			c=0x0c;	// Apparently there's many non-compliant PCXs out there...
+			if (c !=0x0c) 
+			{
+				for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// default to a gray map
+			}
+			else for(int i=0;i<256;i++)
+			{
+				BYTE r,g,b;
+				lump >> r >> g >> b;
+				pe[i] = PalEntry(r,g,b);
+			}
+			lump.Seek(sizeof(header), SEEK_SET);
+			ReadPCX8bits (Pixels, lump, &header);
+		}
+		screen->CopyPixelData(buffer, buf_width, buf_height, x, y, Pixels, Width, Height, 1, Width, pe);
+	}
+	else
+	{
+		Pixels = new BYTE[Width*Height * 3];
+		BYTE * row = buffer;
+		ReadPCX24bits (Pixels, lump, &header, 3);
+		screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, Pixels, Width, Height, 3, Width*3, CF_RGB);
+	}
+	delete [] Pixels;
+	return 0;
+}
+
+
+//===========================================================================
+//
+//
+//===========================================================================
+
+bool FPCXTexture::UseBasePalette() 
+{ 
+	return false; 
+}

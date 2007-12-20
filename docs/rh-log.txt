@@ -1,4 +1,12 @@
 December 20, 2007 (Changes by Graf Zahl)
+- Fixed: FTexture::~FTexture() must destroy the associated native texture
+  if present.
+- Modified GZDoom's true color texture copy functions and added them
+  to generate 32 bit D3D textures. Paletted TGAs and PCXs are also handled
+  this way but I don't think these 2 formats are worth some more special
+  handling.
+  (Question: Is it worth it to implement special handling for paletted PNGs
+   so that they are used as 8 bit textures internally?)
 - Fixed: DCanvas::Blit unlocked the destination twice instead of unlocking 
   both dest and src. Also changed this function so that it is owned by the
   destination canvas of the operation which is necessary if it needs to 

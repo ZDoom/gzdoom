@@ -2089,3 +2089,28 @@ void A_SetGravity(AActor * self)
 }
 
 
+// [KS] *** Start of my modifications ***
+
+//===========================================================================
+//
+// A_ClearTarget
+//
+//===========================================================================
+
+void A_ClearTarget(AActor * self)
+{
+	if (self->target != NULL)
+	{
+		self->target = NULL;
+	}
+	if (self->LastHeard != NULL)
+	{
+		self->LastHeard = NULL;
+	}
+	if (self->lastenemy != NULL)
+	{
+		self->lastenemy = NULL;
+	}
+}
+
+// [KS] *** End of my modifications ***

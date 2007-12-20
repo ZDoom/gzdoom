@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="zdoom"
 	ProjectGUID="{8049475B-5C87-46F9-9358-635218A4EF18}"
 	RootNamespace=" zdoom"
@@ -2588,6 +2588,10 @@
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\p_enemy_a_lookex.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\src\p_floor.cpp"

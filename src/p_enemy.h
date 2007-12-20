@@ -59,5 +59,6 @@ bool A_SinkMobj (AActor *);
 bool CheckBossDeath (AActor *);
 int P_Massacre ();
 bool P_CheckMissileRange (AActor *actor);
+void A_LookEx (AActor *actor);
 
 #endif //__P_ENEMY_H__

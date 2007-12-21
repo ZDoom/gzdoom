@@ -96,8 +96,8 @@ void TEAMINFO_Init ()
 		SC_Close();
 	}
 
-	if (teams.Size () == 0)
-		I_FatalError ("No teams defined in TEAMINFO");
+	if (teams.Size () < 2)
+		I_FatalError ("At least two teams must be defined in TEAMINFO");
 }
 
 //==========================================================================

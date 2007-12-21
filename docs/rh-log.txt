@@ -1,3 +1,6 @@
+December 21, 2007 (Changes by Graf Zahl)
+- Added Karate Chris's fix for TEAMINFO definitions with just one team.
+
 December 20, 2007 (Changes by Graf Zahl)
 - Added Blzut3's SBARINFO submission.
 - Added SnowKate709's A_LookEx submission.

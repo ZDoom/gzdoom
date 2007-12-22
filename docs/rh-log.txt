@@ -1,3 +1,6 @@
+December 22, 2007 (Changes by Graf Zahl)
+- Added Blzut3's SBARINFO update.
+
 December 21, 2007
 - Added versions of Dim and Clear to D3DFB for use in 2D mode.
 - Added a new color parameter to DCanvas::Clear() that specifies the

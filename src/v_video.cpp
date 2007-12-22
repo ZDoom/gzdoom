@@ -783,10 +783,6 @@ void DFrameBuffer::Begin2D ()
 {
 }
 
-void DFrameBuffer::End2D ()
-{
-}
-
 FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex)
 {
 	return NULL;

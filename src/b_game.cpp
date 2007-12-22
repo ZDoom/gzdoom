@@ -587,7 +587,7 @@ bool DCajunMaster::LoadBots ()
 
 			case BOTCFG_TEAM:
 				{
-					char teamstr[4];
+					char teamstr[16];
 					unsigned int teamnum;
 
 					SC_MustGetString ();
@@ -612,7 +612,7 @@ bool DCajunMaster::LoadBots ()
 						}
 					}
 					appendinfo (newinfo->info, "team");
-					sprintf (teamstr, "%u", teamnum);
+					sprintf (teamstr, "%d", teamnum);
 					appendinfo (newinfo->info, teamstr);
 					gotteam = true;
 					break;

@@ -646,7 +646,6 @@ void D_Display (bool screenshot)
 				DTA_FillColor, MAKEARGB(ColorMatcher.Pick(254,254,0),254,254,0),
 				DTA_AlphaChannel, true,
 				TAG_DONE);
-			screen->End2D();
 #endif
 			screen->Update ();	// page flip or blit buffer
 		}

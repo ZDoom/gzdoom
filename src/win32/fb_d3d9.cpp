@@ -803,17 +803,14 @@ void D3DFB::Unlock ()
 
 // When In2D == 0: Copy buffer to screen and present
 // When In2D == 1: Copy buffer to screen but do not present
-// When In2D == 2: Do nothing
-// When In2D == 3: Present and set In2D to 0
+// When In2D == 2: Present and set In2D to 0
 void D3DFB::Update ()
 {
-	assert(In2D != 2);
-
-	if (In2D == 3)
+	if (In2D == 2)
 	{
 		D3DDevice->EndScene();
 		D3DDevice->Present(NULL, NULL, NULL, NULL);
-		In2D = false;
+		In2D = 0;
 		return;
 	}
 
@@ -1290,14 +1287,6 @@ void D3DFB::Begin2D()
 	//D3DDevice->SetTexture(1, PaletteTexture);
 }
 
-void D3DFB::End2D()
-{
-	if (In2D == 2)
-	{
-		In2D = 3;
-	}
-}
-
 FNativeTexture *D3DFB::CreateTexture(FTexture *gametex)
 {
 	return new D3DTex(gametex, D3DDevice);
@@ -1305,21 +1294,18 @@ FNativeTexture *D3DFB::CreateTexture(FTexture *gametex)
 
 //==========================================================================
 //
-// D3DFB :: DrawTexture
+// D3DFB :: DrawTextureV
 //
 // If not in 2D mode, just call the normal software version.
 // If in 2D mode, then use Direct3D calls to perform the drawing.
 //
 //==========================================================================
 
-void STACK_ARGS D3DFB::DrawTexture (FTexture *img, int x, int y, int tags_first, ...)
+void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_first, va_list tags)
 {
-	va_list tags;
-	va_start(tags, tags_first);
-
 	if (In2D < 2)
 	{
-		DrawTextureV(img, x, y, tags_first, tags);
+		Super::DrawTextureV(img, x, y, tags_first, tags);
 		return;
 	}
 

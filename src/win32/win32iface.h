@@ -231,10 +231,9 @@ public:
 	void SetVSync (bool vsync);
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	void Begin2D ();
-	void End2D ();
 	FNativeTexture *CreateTexture (FTexture *gametex);
 	FNativeTexture *CreatePalette (FTexture *pal);
-	void STACK_ARGS DrawTexture (FTexture *img, int x, int y, int tags, ...);
+	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
 	HRESULT GetHR ();
 
 private:

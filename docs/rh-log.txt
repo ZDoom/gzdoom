@@ -1,3 +1,7 @@
+December 21, 2007
+- Fixed: TEAMINFO broke bot parsing for bots with invalid team names by
+  redefining TEAM_None from 255 to -1.
+
 December 21, 2007 (Changes by Graf Zahl)
 - Added Karate Chris's fix for TEAMINFO definitions with just one team.
 
@@ -24,7 +28,9 @@ December 20, 2007 (Changes by Graf Zahl)
 December 19, 2007
 - Added a framework for drawing the 2D screen elements with Direct3D textures.
   They are not actually drawn with it yet, nor is it complete, but it's
-  something to start with.
+  something to start with. While doing this, I noticed the DTA_Shadow stuff
+  doesn't do anything. I'll probably remove them rather than fix them, since
+  it's easier to draw the shadow with a separate DrawTexture call.
 - Split up DCanvas::DrawTexture() into more pieces to make it easier to
   virtualize.
 - Removed support for non-32-bit palette textures from D3DFB. What kind of

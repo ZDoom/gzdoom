@@ -23,7 +23,7 @@ struct SBarInfoCommand
 	int y;
 	int value;
 	int sprite;
-	char* string[2];
+	FString string[2];
 	FFont *font;
 	EColorRange translation;
 	SBarInfoBlock subBlock; //for type SBarInfo_CMD_GAMEMODE
@@ -33,7 +33,7 @@ struct SBarInfoCommand
 
 struct SBarInfo
 {
-	TArray<const char*> Images;
+	TArray<FString> Images;
 	SBarInfoBlock huds[6];
 	bool automapbar;
 	bool interpolateHealth;

@@ -1,3 +1,9 @@
+December 22, 2007
+- Had a look at sbarinfo.cpp and noticed a few places where it allocated
+  character arrays and never freed them. Those have been replaced with
+  uses of FString. (One of these was even an instance of a member variable
+  being set to point at a stack variable.)
+
 December 22, 2007 (Changes by Graf Zahl)
 - Added Karate Chris's teamdamage in MAPINFO submission.
 - Added Blzut3's second SBARINFO update.

@@ -737,20 +737,18 @@ int SBarInfo::newImage(const char* patchname)
 			return i;
 		}
 	}
-	char * name = new char[9];
-	memset(name, '\0', 9);
-	memcpy(name, patchname, 8);
-	this->Images.Push(name);
-	return this->Images.Size() - 1;
+	return this->Images.Push(patchname);
 }
 
 //converts a string into a tranlation.
 EColorRange SBarInfo::GetTranslation(char* translation)
 {
 	EColorRange returnVal = CR_UNTRANSLATED;
-	char* namedTranslation = new char[strlen(translation)+3]; //we must send in "[translation]"
-	sprintf(namedTranslation, "[%s]", translation);
-	if((returnVal = V_ParseFontColor((const BYTE*&) namedTranslation, CR_UNTRANSLATED, CR_UNTRANSLATED)) == CR_UNDEFINED)
+	FString namedTranslation; //we must send in "[translation]"
+	const BYTE *trans_ptr;
+	namedTranslation.Format("[%s]", translation);
+	trans_ptr = (const BYTE *)(&namedTranslation[0]);
+	if((returnVal = V_ParseFontColor(trans_ptr, CR_UNTRANSLATED, CR_UNTRANSLATED)) == CR_UNDEFINED)
 	{
 		SC_ScriptError("Missing definition for color %s.", translation);
 	}
@@ -783,9 +781,7 @@ void SBarInfoCommand::setString(const char* source, int strnum, int maxlength, b
 			return;
 		}
 	}
-	this->string[strnum] = new char[strlen(source) + 1];
-	memset(this->string[strnum], '\0', strlen(source) + 1);
-	memcpy(this->string[strnum], source, strlen(source));
+	string[strnum] = source;
 }
 
 SBarInfoCommand::SBarInfoCommand() //sets the default values for more predicable behavior
@@ -958,7 +954,7 @@ public:
 			oldHealth = 0;
 		}
 		mugshotHealth = -1;
-		lastPrefix = new char[4];
+		lastPrefix = "";
 		weaponGrin = false;
 		chainWiggle = 0;
 	}
@@ -1054,7 +1050,7 @@ public:
 	}
 private:
 	//code from doom_sbar.cpp but it should do fine.
-	void SetFace (FPlayerSkin *skin, char* defPrefix)
+	void SetFace (FPlayerSkin *skin, const char* defPrefix)
 	{
 		oldSkin = skin;
 		const char *nameptrs[ST_NUMFACES]; 
@@ -1297,7 +1293,7 @@ private:
 					bool xdth = false;
 					if(cmd.special2 != 0)
 						xdth = true;
-					SetFace(oldSkin, cmd.string[0]);
+					SetFace(oldSkin, cmd.string[0].GetChars());
 					DrawFace(cmd.special, xdth, cmd.x, cmd.y);
 					break;
 				}
@@ -1752,7 +1748,7 @@ private:
 	FImageCollection Faces;
 	FPlayerSkin *oldSkin;
 	FFont *drawingFont;
-	char* lastPrefix;
+	FString lastPrefix;
 	bool weaponGrin;
 	int faceTimer;
 	int faceIndex;

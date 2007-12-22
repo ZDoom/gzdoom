@@ -676,7 +676,7 @@ void drawpolymosttest()
 
 	fcol = 0; ccol = 0;
 
-	RenderTarget->Clear(0, 0, RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
+	RenderTarget->Clear(0, 0, RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0, 0);
 	for (vsp = ovsp->Next; vsp->Next != &TestPoly.UsedList; ovsp = vsp, vsp = nvsp)
 	{
 		nvsp = vsp->Next;

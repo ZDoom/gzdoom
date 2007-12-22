@@ -163,7 +163,7 @@ public:
 	virtual void FlatFill (int left, int top, int right, int bottom, FTexture *src);
 
 	// Set an area to a specified color
-	virtual void Clear (int left, int top, int right, int bottom, int color) const;
+	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color) const;
 
 	// Calculate gamma table
 	void CalcGamma (float gamma, BYTE gammalookup[256]);

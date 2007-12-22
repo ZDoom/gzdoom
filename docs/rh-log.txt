@@ -1,4 +1,8 @@
 December 21, 2007
+- Added versions of Dim and Clear to D3DFB for use in 2D mode.
+- Added a new color parameter to DCanvas::Clear() that specifies the
+  ARGB value of the color. This is used if the old color parameter,
+  which specifies a palette entry, is -1.
 - Fixed: TEAMINFO broke bot parsing for bots with invalid team names by
   redefining TEAM_None from 255 to -1.
 

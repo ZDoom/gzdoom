@@ -226,7 +226,7 @@ void DCanvas::FlatFill (int left, int top, int right, int bottom, FTexture *src)
 
 
 // [RH] Set an area to a specified color
-void DCanvas::Clear (int left, int top, int right, int bottom, int color) const
+void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color) const
 {
 	int x, y;
 	BYTE *dest;
@@ -236,14 +236,33 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int color) const
 		return;
 	}
 
-	assert (left < right);
-	assert (top < bottom);
+	assert(left < right);
+	assert(top < bottom);
+
+	if (palcolor < 0)
+	{
+		if (APART(color) != 255)
+		{
+			Dim(color, APART(color)/255.f, left, top, right - left, bottom - top);
+			return;
+		}
+
+		// Quick check for black.
+		if (color == MAKEARGB(255,0,0,0))
+		{
+			palcolor = 0;
+		}
+		else
+		{
+			palcolor = ColorMatcher.Pick(RPART(color), GPART(color), BPART(color));
+		}
+	}
 
 	dest = Buffer + top * Pitch + left;
 	x = right - left;
 	for (y = top; y < bottom; y++)
 	{
-		memset (dest, color, x);
+		memset(dest, palcolor, x);
 		dest += Pitch;
 	}
 }
@@ -689,7 +708,7 @@ void DFrameBuffer::DrawRateStuff ()
 
 			chars = sprintf (fpsbuff, "%2u ms (%3u fps)", howlong, LastCount);
 			RateX = Width - chars * 8;
-			Clear (RateX, 0, Width, 8, 0);
+			Clear (RateX, 0, Width, 8, 0, 0);
 			SetFont (ConFont);
 			DrawText (CR_WHITE, RateX, 0, (char *)&fpsbuff[0], TAG_DONE);
 			SetFont (SmallFont);

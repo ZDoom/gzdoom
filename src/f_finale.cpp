@@ -1197,7 +1197,7 @@ void F_Drawer (void)
 			}
 			else
 			{
-				screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0);
+				screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 			}
 		}
 		else

@@ -626,7 +626,7 @@ void WI_drawBackground()
 	}
 	else 
 	{
-		screen->Clear(0,0, SCREENWIDTH, SCREENHEIGHT, 0);
+		screen->Clear(0,0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 	}
 
 	for(i=0;i<anims.Size();i++)

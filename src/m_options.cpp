@@ -1698,7 +1698,7 @@ void M_OptDrawer ()
 				box_x = (CurrentMenu->indent - 35 - 160) * CleanXfac + screen->GetWidth()/2;
 				box_y = (y - ((gameinfo.gametype & GAME_Raven) ? 99 : 100)) * CleanYfac + screen->GetHeight()/2;
 				screen->Clear (box_x, box_y, box_x + 32*CleanXfac, box_y + (fontheight-1)*CleanYfac,
-					item->a.colorcvar->GetIndex());
+					item->a.colorcvar->GetIndex(), 0);
 			}
 			break;
 
@@ -1714,10 +1714,11 @@ void M_OptDrawer ()
 				box_x = (CurrentMenu->indent - 32 - 160) * CleanXfac + screen->GetWidth()/2;
 				for (x1 = 0, p = int(item->b.min * 16); x1 < 16; ++p, ++x1)
 				{
-					screen->Clear (box_x, box_y, box_x + w, box_y + h, p);
+					screen->Clear (box_x, box_y, box_x + w, box_y + h, p, 0);
 					if (p == CurrColorIndex || (i == CurrentItem && x1 == SelColorIndex))
 					{
-						int r, g, b, col;
+						int r, g, b;
+						DWORD col;
 						double blinky;
 						if (i == CurrentItem && x1 == SelColorIndex)
 						{
@@ -1730,12 +1731,12 @@ void M_OptDrawer ()
 						// Make sure the cursors stand out against similar colors
 						// by pulsing them.
 						blinky = fabs(sin(I_MSTime()/1000.0)) * 0.5 + 0.5;
-						col = ColorMatcher.Pick (int(r*blinky), int(g*blinky), int(b*blinky));
+						col = MAKEARGB(255,int(r*blinky),int(g*blinky),int(b*blinky));
 
-						screen->Clear (box_x, box_y, box_x + w, box_y + 1, col);
-						screen->Clear (box_x, box_y + h-1, box_x + w, box_y + h, col);
-						screen->Clear (box_x, box_y, box_x + 1, box_y + h, col);
-						screen->Clear (box_x + w - 1, box_y, box_x + w, box_y + h, col);
+						screen->Clear (box_x, box_y, box_x + w, box_y + 1, -1, col);
+						screen->Clear (box_x, box_y + h-1, box_x + w, box_y + h, -1, col);
+						screen->Clear (box_x, box_y, box_x + 1, box_y + h, -1, col);
+						screen->Clear (box_x + w - 1, box_y, box_x + w, box_y + h, -1, col);
 					}
 					box_x += w;
 				}
@@ -2555,17 +2556,17 @@ static void DefaultCustomColors ()
 
 static void ColorPickerDrawer ()
 {
-	int newColorIndex = ColorMatcher.Pick (
+	DWORD newColor = MAKEARGB(255,
 		int(ColorPickerItems[2].a.fval),
 		int(ColorPickerItems[3].a.fval),
 		int(ColorPickerItems[4].a.fval));
-	int oldColorIndex = ColorPickerItems[0].a.colorcvar->GetIndex();
+	DWORD oldColor = DWORD(*ColorPickerItems[0].a.colorcvar) | 0xFF000000;
 
 	int x = screen->GetWidth()*2/3;
 	int y = (15 + BigFont->GetHeight() + SmallFont->GetHeight()*2 - 102) * CleanYfac + screen->GetHeight()/2;
 
-	screen->Clear (x, y, x + 48*CleanXfac, y + 48*CleanYfac, oldColorIndex);
-	screen->Clear (x + 48*CleanXfac, y, x + 48*2*CleanXfac, y + 48*CleanYfac, newColorIndex);
+	screen->Clear (x, y, x + 48*CleanXfac, y + 48*CleanYfac, -1, oldColor);
+	screen->Clear (x + 48*CleanXfac, y, x + 48*2*CleanXfac, y + 48*CleanYfac, -1, newColor);
 
 	y += 49*CleanYfac;
 	screen->DrawText (CR_GRAY, x+(24-SmallFont->StringWidth("Old")/2)*CleanXfac, y,

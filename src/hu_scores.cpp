@@ -294,10 +294,10 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 	D_GetPlayerColor (player - players, &h, &s, &v);
 	HSVtoRGB (&r, &g, &b, h, s, v);
 
-	color = ColorMatcher.Pick (clamp (int(r*255.f),0,255),
-		clamp (int(g*255.f),0,255), clamp (int(b*255.f),0,255));
-
-	screen->Clear (SCREENWIDTH / 24, y, SCREENWIDTH / 24 + 24*CleanXfac, y + height, color);
+	screen->Clear (SCREENWIDTH / 24, y, SCREENWIDTH / 24 + 24*CleanXfac, y + height, -1,
+		MAKEARGB(255,clamp(int(r*255.f),0,255),
+					 clamp(int(g*255.f),0,255),
+					 clamp(int(b*255.f),0,255)));
 
 	if (teamplay)
 	{

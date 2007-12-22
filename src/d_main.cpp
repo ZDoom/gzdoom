@@ -595,7 +595,7 @@ void D_Display (bool screenshot)
 			break;
 		}
 	}
-
+	//screen->Begin2D();
 	// draw pause pic
 	if (paused && menuactive == MENU_Off)
 	{
@@ -820,7 +820,7 @@ void D_PageDrawer (void)
 	}
 	else
 	{
-		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0);
+		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 		if (!PageBlank)
 		{
 			screen->DrawText (CR_WHITE, 0, 0, "Page graphic goes here", TAG_DONE);

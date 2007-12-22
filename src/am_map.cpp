@@ -1095,7 +1095,7 @@ void AM_clearFB (int color)
 {
 	if (mapback == NULL || !am_drawmapback)
 	{
-		screen->Clear (0, 0, f_w, f_h, color);
+		screen->Clear (0, 0, f_w, f_h, color, 0);
 	}
 	else
 	{

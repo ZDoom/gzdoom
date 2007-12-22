@@ -274,11 +274,9 @@ bool D3DFB::CreateResources ()
 		I_RestoreWindowedPos ();
 		VidResizing = false;
 	}
-	if (FAILED(D3DDevice->CreatePixelShader (PalTexShaderDef, &PalTexShader)))
-	{
-		return false;
-	}
-	if (FAILED(D3DDevice->CreatePixelShader (PlainShaderDef, &PlainShader)))
+	if (FAILED(D3DDevice->CreatePixelShader (PalTexShaderDef, &PalTexShader)) ||
+		FAILED(D3DDevice->CreatePixelShader (PlainShaderDef, &PlainShader)) ||
+		FAILED(D3DDevice->CreatePixelShader (DimShaderDef, &DimShader)))
 	{
 		return false;
 	}
@@ -334,6 +332,11 @@ void D3DFB::ReleaseResources ()
 	{
 		PlainShader->Release();
 		PlainShader = NULL;
+	}
+	if (DimShader != NULL)
+	{
+		DimShader->Release();
+		DimShader = NULL;
 	}
 }
 
@@ -1290,6 +1293,70 @@ void D3DFB::Begin2D()
 FNativeTexture *D3DFB::CreateTexture(FTexture *gametex)
 {
 	return new D3DTex(gametex, D3DDevice);
+}
+
+//==========================================================================
+//
+// D3DFB :: Clear
+//
+// Fills the specified region with a color.
+//
+//==========================================================================
+
+void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color) const
+{
+	if (In2D < 2)
+	{
+		Super::Clear(left, top, right, bottom, palcolor, color);
+		return;
+	}
+	if (palcolor >= 0)
+	{
+		color = GPalette.BaseColors[palcolor];
+	}
+	D3DRECT rect = { left, top, right, bottom };
+	D3DDevice->Clear(1, &rect, D3DCLEAR_TARGET, color | 0xFF000000, 1.f, 0);
+}
+
+//==========================================================================
+//
+// D3DFB :: Dim
+//
+//==========================================================================
+
+void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h) const
+{
+	if (amount <= 0)
+		return;
+
+	if (In2D < 2)
+	{
+		Super::Dim(color, amount, x1, y1, w, h);
+		return;
+	}
+	if (amount >= 1)
+	{
+		D3DRECT rect = { x1, y1, x1 + w, y1 + h };
+		D3DDevice->Clear(1, &rect, D3DCLEAR_TARGET, color | 0xFF000000, 1.f, 0);
+	}
+	else
+	{
+		FBVERTEX verts[4] =
+		{
+			{ x1-0.5f,   y1-0.5f,   0.5f, 1, 0, 0 },
+			{ x1+w-0.5f, y1-0.5f,   0.5f, 1, 0, 0 },
+			{ x1+w-0.5f, y1+h-0.5f, 0.5f, 1, 0, 0 },
+			{ x1-0.5f,   y1+h-0.5f, 0.5f, 1, 0, 0 }
+		};
+		float constant[4] =
+		{
+			RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f, APART(color)/255.f,
+		};
+		D3DDevice->SetPixelShader(DimShader);
+		D3DDevice->SetPixelShaderConstantF(1, constant, 1);
+		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, &verts, sizeof(FBVERTEX));
+		D3DDevice->SetPixelShader(PalTexShader);
+	}
 }
 
 //==========================================================================

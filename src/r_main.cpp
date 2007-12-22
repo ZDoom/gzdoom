@@ -1577,7 +1577,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// draw a black line at the bottom of the view window.
 	if (detailyshift && viewwindowy == 0 && (realviewheight & 1))
 	{
-		screen->Clear (0, realviewheight-1, realviewwidth, realviewheight, 0);
+		screen->Clear (0, realviewheight-1, realviewwidth, realviewheight, 0, 0);
 	}
 
 	R_SetupBuffer (false);

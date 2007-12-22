@@ -16,6 +16,8 @@
 #include "sbarinfo.h"
 #include "sc_man.h"
 
+static FRandom pr_chainwiggle; //use the same method of chain wiggling as heretic.
+
 #define ST_FACETIME		(TICRATE/2)
 #define ST_PAINTIME		(TICRATE)
 #define ST_GRINTIME		(TICRATE*2)
@@ -40,11 +42,12 @@ enum //drawimage flags
 	DRAWIMAGE_PLAYERICON = 1,
 	DRAWIMAGE_AMMO1 = 2,
 	DRAWIMAGE_AMMO2 = 4,
-	DRAWIMAGE_TRANSLATABLE = 8,
-	DRAWIMAGE_WEAPONSLOT = 16,
-	DRAWIMAGE_SWITCHABLE_AND = 32,
-	DRAWIMAGE_INVULNERABILITY = 64,
-	DRAWIMAGE_OFFSET_CENTER = 128,
+	DRAWIMAGE_INVENTORYICON = 8,
+	DRAWIMAGE_TRANSLATABLE = 16,
+	DRAWIMAGE_WEAPONSLOT = 32,
+	DRAWIMAGE_SWITCHABLE_AND = 64,
+	DRAWIMAGE_INVULNERABILITY = 128,
+	DRAWIMAGE_OFFSET_CENTER = 256,
 };
 
 enum //drawnumber flags
@@ -75,6 +78,12 @@ enum //drawinventorybar flags
 {
 	DRAWINVENTORYBAR_ALWAYSSHOW = 1,
 	DRAWINVENTORYBAR_NOARTIBOX = 2,
+};
+
+enum //drawgem flags
+{
+	DRAWGEM_WIGGLE = 1,
+	DRAWGEM_TRANSLATABLE = 2,
 };
 
 static const char *SBarInfoTopLevel[] =
@@ -122,6 +131,7 @@ static const char *SBarInfoRoutineLevel[] =
 	"drawselectedinventory",
 	"drawinventorybar",
 	"drawbar",
+	"drawgem",
 	"gamemode",
 	"playerclass",
 	NULL
@@ -135,6 +145,7 @@ enum
 	SBARINFO_DRAWSELECTEDINVENTORY,
 	SBARINFO_DRAWINVENTORYBAR,
 	SBARINFO_DRAWBAR,
+	SBARINFO_DRAWGEM,
 	SBARINFO_GAMEMODE,
 	SBARINFO_PLAYERCLASS,
 };
@@ -294,7 +305,15 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 						getImage = true;
 					}
 					else
-						SC_ScriptError("Unknown imagetype '%s'.", sc_String);
+					{
+						cmd.flags += DRAWIMAGE_INVENTORYICON;
+						const PClass* item = PClass::FindClass(sc_String);
+						if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of Inventory
+						{
+							SC_ScriptError("'%s' is not a type of inventory item.", sc_String);
+						}
+						cmd.sprite = ((AInventory *)GetDefaultByType(item))->Icon;
+					}
 				}
 				if(getImage)
 				{
@@ -398,6 +417,8 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.setString(sc_String, 0, 3, true);
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst); //accuracy
+				if(sc_Number < 1 || sc_Number > 9)
+					SC_ScriptError("Exspected a number between 1 and 9, got %d instead.", sc_Number);
 				cmd.special = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst); //xdeath face (could be later used as flags
@@ -605,6 +626,35 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					cmd.special2 += DRAWBAR_REVERSE;
 					SC_MustGetToken(',');
 				}
+				SC_MustGetToken(TK_IntConst);
+				cmd.x = sc_Number;
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_IntConst);
+				cmd.y = sc_Number - (200 - SBarInfoScript.height);
+				SC_MustGetToken(';');
+				break;
+			case SBARINFO_DRAWGEM:
+				while(SC_CheckToken(TK_Identifier))
+				{
+					if(SC_Compare("wiggle"))
+						cmd.flags += DRAWGEM_WIGGLE;
+					else if(SC_Compare("translatable"))
+						cmd.flags += DRAWGEM_TRANSLATABLE;
+					else
+						SC_ScriptError("Unkown drawgem flag '%s'.", sc_String);
+					SC_MustGetToken(',');
+				}
+				SC_MustGetToken(TK_StringConst); //chain
+				cmd.special = newImage(sc_String);
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_StringConst); //gem
+				cmd.sprite = newImage(sc_String);
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_IntConst);
+				if(sc_Number <= 0)
+					SC_ScriptError("Size must be a positive number.");
+				cmd.special2 = sc_Number;
+				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
@@ -899,6 +949,7 @@ public:
 		mugshotHealth = -1;
 		lastPrefix = new char[4];
 		weaponGrin = false;
+		chainWiggle = 0;
 	}
 
 	~FSBarInfo ()
@@ -961,6 +1012,8 @@ public:
 	void Tick ()
 	{
 		FBaseStatusBar::Tick();
+		if(level.time & 1)
+			chainWiggle = pr_chainwiggle() & 1;
 		getNewFace(M_Random());
 		if(!SBarInfoScript.interpolateHealth)
 		{
@@ -1143,6 +1196,10 @@ private:
 						if(ammo2 != NULL)
 							DrawGraphic(TexMan[ammo2->Icon], cmd.x, cmd.y, cmd.flags);
 					}
+					else if((cmd.flags & DRAWIMAGE_INVENTORYICON) == DRAWIMAGE_INVENTORYICON)
+					{
+						DrawGraphic(TexMan[cmd.sprite], cmd.x, cmd.y, cmd.flags);
+					}
 					else
 					{
 						DrawGraphic(Images[cmd.sprite], cmd.x, cmd.y, cmd.flags);
@@ -1321,20 +1378,24 @@ private:
 					else if(cmd.flags == DRAWNUMBER_AMMO1)
 					{
 						value = ammocount1;
-						if(ammo1 == NULL) //no ammo, do not draw
+						if(ammo1 == NULL) //no ammo, draw as empty
 						{
-							continue;
+							value = 0;
+							max = 1;
 						}
-						max = ammo1->MaxAmount;
+						else
+							max = ammo1->MaxAmount;
 					}
 					else if(cmd.flags == DRAWNUMBER_AMMO2)
 					{
 						value = ammocount2;
-						if(ammo2 == NULL) //no ammo, do not draw
+						if(ammo2 == NULL) //no ammo, draw as empty
 						{
-							continue;
+							value = 0;
+							max = 1;
 						}
-						max = ammo2->MaxAmount;
+						else
+							max = ammo2->MaxAmount;
 					}
 					else if(cmd.flags == DRAWNUMBER_AMMO)
 					{
@@ -1384,6 +1445,29 @@ private:
 					else
 						bar->PrepareTexture(Images[cmd.sprite], NULL, value, horizontal, reverse);
 					DrawImage(bar, cmd.x, cmd.y);
+					break;
+				}
+				case SBARINFO_DRAWGEM:
+				{
+					int value = health;
+					int max = 100;
+					bool wiggle = false;
+					bool translate = (cmd.flags & DRAWGEM_TRANSLATABLE) == DRAWGEM_TRANSLATABLE;
+					if(max != 0 || value < 0)
+					{
+						value = (value*100)/max;
+						if(value > 100)
+							value = 100;
+					}
+					else
+					{
+						value = 0;
+					}
+					if(health != CPlayer->health)
+					{
+						wiggle = (cmd.flags & DRAWGEM_WIGGLE) == DRAWGEM_WIGGLE;
+					}
+					DrawGem(Images[cmd.special], Images[cmd.sprite], value, cmd.x, cmd.y, cmd.special2, wiggle, translate);
 					break;
 				}
 				case SBARINFO_GAMEMODE:
@@ -1625,6 +1709,31 @@ private:
 		}
 	}
 
+	//draws heretic/hexen style life gems
+	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int size, bool wiggle, bool translate)
+	{
+		if(value > 100)
+			value = 100;
+		else if(value < 0)
+			value = 0;
+		if(wiggle)
+			y += chainWiggle;
+		int gemWidth = gem->GetWidth();
+		int offset = (int) (((double) (size-gemWidth)/100)*value);
+		if(chain != NULL)
+		{
+			DrawImage(chain, x+offset, y);
+			DrawImage(chain, x-chain->GetWidth()+offset+7, y);
+		}
+		if(gem != NULL)
+			DrawImage(gem, x-gemWidth+offset, y, translate ? /*translationtables[TRANSLATION_Players] + (CPlayer-players)*256*/ getTranslation() : NULL);
+	}
+
+	BYTE* getTranslation()
+	{
+		return translationtables[TRANSLATION_Players] + (CPlayer - players)*256;
+	}
+
 	FImageCollection Images;
 	FImageCollection Faces;
 	FPlayerSkin *oldSkin;
@@ -1635,6 +1744,7 @@ private:
 	int faceIndex;
 	int oldHealth;
 	int mugshotHealth;
+	int chainWiggle;
 	unsigned int invBarOffset;
 };
 

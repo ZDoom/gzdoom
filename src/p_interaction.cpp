@@ -1025,7 +1025,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			FriendlyFire = true;
 			if (damage < 1000000)
 			{ // Still allow telefragging :-(
-				damage = (int)((float)damage * teamdamage);
+				damage = (int)((float)damage * level.teamdamage);
 				if (damage <= 0)
 					return;
 			}
@@ -1290,7 +1290,7 @@ void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 	}
 	if (source != NULL && source->player != player && player->mo->IsTeammate (source))
 	{
-		poison = (int)((float)poison * teamdamage);
+		poison = (int)((float)poison * level.teamdamage);
 	}
 	if (poison > 0)
 	{

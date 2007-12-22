@@ -51,7 +51,11 @@ CVAR (Bool, var_friction, true, CVAR_SERVERINFO);
 CVAR (Bool, var_pushers, true, CVAR_SERVERINFO);
 
 CVAR (Bool, alwaysapplydmflags, false, CVAR_SERVERINFO);
-CVAR (Float, teamdamage, 0.f, CVAR_SERVERINFO);
+
+CUSTOM_CVAR (Float, teamdamage, 0.f, CVAR_SERVERINFO)
+{
+	level.teamdamage = self;
+}
 
 CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
 {

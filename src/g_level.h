@@ -175,6 +175,8 @@ struct level_info_s
 	char		sndseq[9];
 	char		bordertexture[9];
 	FSpecialAction * specialactions;
+
+	float		teamdamage;
 };
 typedef struct level_info_s level_info_t;
 
@@ -241,6 +243,8 @@ struct level_locals_s
 	SBYTE		WallHorizLight;
 
 	const char	*f1;
+
+	float		teamdamage;
 
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;

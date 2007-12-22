@@ -15,6 +15,7 @@
 #include "i_system.h"
 #include "sbarinfo.h"
 #include "sc_man.h"
+#include "gi.h"
 
 static FRandom pr_chainwiggle; //use the same method of chain wiggling as heretic.
 
@@ -651,9 +652,19 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.sprite = newImage(sc_String);
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				if(sc_Number <= 0)
-					SC_ScriptError("Size must be a positive number.");
+				if(sc_Number < 0)
+					SC_ScriptError("Left padding must be a positive number.");
 				cmd.special2 = sc_Number;
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_IntConst);
+				if(sc_Number < 0)
+					SC_ScriptError("Right padding must be a positive number.");
+				cmd.special3 = sc_Number;
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_IntConst);
+				if(sc_Number < 0)
+					SC_ScriptError("Chain size must be a positive number.");
+				cmd.special4 = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
 				cmd.x = sc_Number;
@@ -1467,7 +1478,7 @@ private:
 					{
 						wiggle = (cmd.flags & DRAWGEM_WIGGLE) == DRAWGEM_WIGGLE;
 					}
-					DrawGem(Images[cmd.special], Images[cmd.sprite], value, cmd.x, cmd.y, cmd.special2, wiggle, translate);
+					DrawGem(Images[cmd.special], Images[cmd.sprite], value, cmd.x, cmd.y, cmd.special2, cmd.special3, cmd.special4-1, wiggle, translate);
 					break;
 				}
 				case SBARINFO_GAMEMODE:
@@ -1499,7 +1510,7 @@ private:
 			y -= (texture->GetHeight()/2)-texture->TopOffset;
 		}
 		if((flags & DRAWIMAGE_TRANSLATABLE) == DRAWIMAGE_TRANSLATABLE)
-			DrawImage(texture, x, y, translationtables[TRANSLATION_Players] + (CPlayer - players)*256);
+			DrawImage(texture, x, y, getTranslation());
 		else
 			DrawImage(texture, x, y);
 	}
@@ -1710,7 +1721,8 @@ private:
 	}
 
 	//draws heretic/hexen style life gems
-	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int size, bool wiggle, bool translate)
+	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int padleft, int padright, int chainsize, 
+				bool wiggle, bool translate)
 	{
 		if(value > 100)
 			value = 100;
@@ -1719,18 +1731,20 @@ private:
 		if(wiggle)
 			y += chainWiggle;
 		int gemWidth = gem->GetWidth();
-		int offset = (int) (((double) (size-gemWidth)/100)*value);
+		int chainWidth = chain->GetWidth();
+		int offset = (int) (((double) (chainWidth-padleft-padright)/100)*value);
 		if(chain != NULL)
 		{
-			DrawImage(chain, x+offset, y);
-			DrawImage(chain, x-chain->GetWidth()+offset+7, y);
+			DrawImage(chain, x+(offset%chainsize), y);
 		}
 		if(gem != NULL)
-			DrawImage(gem, x-gemWidth+offset, y, translate ? /*translationtables[TRANSLATION_Players] + (CPlayer-players)*256*/ getTranslation() : NULL);
+			DrawImage(gem, x+padleft+offset, y, translate ? getTranslation() : NULL);
 	}
 
 	BYTE* getTranslation()
 	{
+		if(gameinfo.gametype & GAME_Raven)
+			return translationtables[TRANSLATION_PlayersExtra] + (CPlayer - players)*256;
 		return translationtables[TRANSLATION_Players] + (CPlayer - players)*256;
 	}
 

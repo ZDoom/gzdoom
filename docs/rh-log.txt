@@ -1,4 +1,7 @@
 December 22, 2007 (Changes by Graf Zahl)
+- Added Karate Chris's teamdamage in MAPINFO submission.
+- Added Blzut3's second SBARINFO update.
+- Fixed: The second flash state of the chaingun called A_Light1 instead of A_Light2.
 - Added Blzut3's SBARINFO update.
 
 December 21, 2007

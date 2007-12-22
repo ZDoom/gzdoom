@@ -438,7 +438,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
 		}
 		else
 		{
-			dopoison = victim->player->poisoncount < (int)(4.f * teamdamage);
+			dopoison = victim->player->poisoncount < (int)(4.f * level.teamdamage);
 		}
 
 		if (dopoison)
@@ -446,7 +446,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
 			int damage = 15 + (pr_poisoncloudd()&15);
 			if (mate)
 			{
-				damage = (int)((float)damage * teamdamage);
+				damage = (int)((float)damage * level.teamdamage);
 			}
 			if (damage > 0)
 			{

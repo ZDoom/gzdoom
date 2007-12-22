@@ -299,6 +299,7 @@ static const char *MapInfoMapLevel[] =
 	"infiniteflightpowerup",
 	"noinfiniteflightpowerup",
 	"allowrespawn",
+	"teamdamage",
 	NULL
 };
 
@@ -440,6 +441,7 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_ALLOWRESPAWN, 0 },
+	{ MITYPE_FLOAT,		lioffset(teamdamage), 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -2259,6 +2261,7 @@ void G_InitLevelLocals ()
 
 	level.gravity = sv_gravity * 35/TICRATE;
 	level.aircontrol = (fixed_t)(sv_aircontrol * 65536.f);
+	level.teamdamage = teamdamage;
 	level.flags = 0;
 
 	info = FindLevelInfo (level.mapname);
@@ -2296,6 +2299,10 @@ void G_InitLevelLocals ()
 	if (info->aircontrol != 0.f)
 	{
 		level.aircontrol = (fixed_t)(info->aircontrol * 65536.f);
+	}
+	if (info->teamdamage != 0.f)
+	{
+		level.teamdamage = info->teamdamage;
 	}
 
 	G_AirControlChanged ();
@@ -2621,6 +2628,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		<< level.killed_monsters
 		<< level.gravity
 		<< level.aircontrol
+		<< level.teamdamage
 		<< level.maptime
 		<< i;
 

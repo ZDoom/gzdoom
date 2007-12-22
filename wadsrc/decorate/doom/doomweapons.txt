@@ -261,7 +261,7 @@ ACTOR Chaingun : DoomWeapon 2002
 	Flash:
 		CHGF A 5 Bright A_Light1
 		Goto LightDone
-		CHGF B 5 Bright A_Light1
+		CHGF B 5 Bright A_Light2
 		Goto LightDone
 	Spawn:
 		MGUN A -1

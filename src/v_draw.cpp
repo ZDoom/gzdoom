@@ -632,7 +632,7 @@ void DCanvas::FillBorder (FTexture *img)
 // non-software renderers must be able to override it.
 void DCanvas::DrawPlayerBackdrop (DCanvas *src, const BYTE *FireRemap, int x, int y)
 {
-	DCanvas *dest = screen;
+	DCanvas *dest = this;
 	BYTE *destline, *srcline;
 	const int destwidth = src->GetWidth() * CleanXfac / 2;
 	const int destheight = src->GetHeight() * CleanYfac / 2;

@@ -1491,8 +1491,8 @@ private:
 				case SBARINFO_DRAWBAR:
 				{
 					if(cmd.sprite == -1) break; //don't draw anything.
-					bool horizontal = ((cmd.special2 & DRAWBAR_HORIZONTAL));
-					bool reverse = ((cmd.special2 & DRAWBAR_REVERSE));
+					bool horizontal = !!((cmd.special2 & DRAWBAR_HORIZONTAL));
+					bool reverse = !!((cmd.special2 & DRAWBAR_REVERSE));
 					int value = 0;
 					int max = 0;
 					if(cmd.flags == DRAWNUMBER_HEALTH)
@@ -1637,8 +1637,8 @@ private:
 				}
 				case SBARINFO_DRAWSHADER:
 				{
-					bool vertical = (cmd.flags & DRAWSHADER_VERTICAL);
-					bool reverse = (cmd.flags & DRAWSHADER_REVERSE);
+					bool vertical = !!(cmd.flags & DRAWSHADER_VERTICAL);
+					bool reverse = !!(cmd.flags & DRAWSHADER_REVERSE);
 					FBarShader* shader = new FBarShader();
 					shader->PrepareShader(cmd.special, cmd.special2, vertical, reverse);
 					screen->DrawTexture (shader, ST_X+cmd.x, ST_Y+cmd.y,

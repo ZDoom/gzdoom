@@ -246,7 +246,7 @@ enum
 //#define DF2_YES_RUNEDROP		256		// Drop current rune upon death
 //#define DF2_YES_200MAX		512		// Don't all max. health/armor items to bring
 //										// health or armor over 200%
-//#define DF2_YES_DOUBLEAMMO	1024	// Doubles ammo like skill 1 and 5 do
+	DF2_YES_DOUBLEAMMO		= 1 << 10,	// Doubles ammo like skill 1 and 5 do
 //#define DF2_NO_CLEARFRAGS		2048	// Don't clear frags after each level
 //#define DF2_FORCE_NORESPAWN	4096	// Player cannot respawn
 //#define DF2_YES_DEGENERATION	8192	// Quake-style degeneration

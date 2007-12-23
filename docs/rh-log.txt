@@ -1,4 +1,5 @@
 December 23, 2007 (Changes by Graf Zahl)
+- Added Karate Chris's 'sv_doubleammo' submission.
 - Added Karate Chris's 'Take' console command submission.
 - Changed DTA_Translation parameter for DrawTexture to an integer to avoid
   passing renderer specific data to the function. Also added DTA_Font so

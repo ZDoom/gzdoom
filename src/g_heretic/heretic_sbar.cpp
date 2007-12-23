@@ -273,7 +273,7 @@ private:
 			DrawImage (Images[imgCHAINBACK], 0, 32);
 			DrawImage (Images[imgCHAIN], 2+(healthPos%17), chainY);
 			DrawImage (Images[imgLIFEGEM], 17+healthPos, chainY, multiplayer ?
-				translationtables[TRANSLATION_PlayersExtra] + (CPlayer-players)*256 : NULL);
+				TRANSLATION(TRANSLATION_PlayersExtra, BYTE(CPlayer-players)) : 0);
 			DrawImage (Images[imgLTFACE], 0, 32);
 			DrawImage (Images[imgRTFACE], 276, 32);
 			screen->DrawTexture (&ChainShade, ST_X+19, ST_Y+32,

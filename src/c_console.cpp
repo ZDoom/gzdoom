@@ -80,7 +80,7 @@ static bool TabbedList;		// True if tab list was shown
 CVAR (Bool, con_notablist, false, CVAR_ARCHIVE)
 
 static int conback;
-static BYTE conshade[256];
+static int conshade;
 static bool conline;
 
 extern int		gametic;
@@ -292,38 +292,17 @@ void C_InitConsole (int width, int height, bool ingame)
 	{
 		if (!gotconback)
 		{
-			int i;
-
 			conback = TexMan.CheckForTexture ("CONBACK", FTexture::TEX_MiscPatch);
 
 			if (conback <= 0)
 			{
-				BYTE unremap[256];
-				BYTE shadetmp[256];
-
+				conshade = DIM_MAP;
 				conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
-
-				FWadLump palookup = Wads.OpenLumpName ("COLORMAP");
-				palookup.Seek (22*256, SEEK_CUR);
-				palookup.Read (shadetmp, 256);
-				memset (unremap, 0, 256);
-				for (i = 0; i < 256; ++i)
-				{
-					unremap[GPalette.Remap[i]] = i;
-				}
-				for (i = 0; i < 256; ++i)
-				{
-					conshade[i] = GPalette.Remap[shadetmp[unremap[i]]];
-				}
 				conline = true;
-				conshade[0] = GPalette.Remap[0];
 			}
 			else
 			{
-				for (i = 0; i < 256; ++i)
-				{
-					conshade[i] = i;
-				}
+				conshade = 0;
 				conline = false;
 			}
 

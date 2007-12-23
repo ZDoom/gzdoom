@@ -408,11 +408,12 @@ void FBaseStatusBar::ShowPlayerName ()
 //---------------------------------------------------------------------------
 
 void FBaseStatusBar::DrawImage (FTexture *img,
-	int x, int y, BYTE *translation) const
+	int x, int y, int translation, FFont *font) const
 {
 	if (img != NULL)
 	{
 		screen->DrawTexture (img, x + ST_X, y + ST_Y,
+			DTA_Font, font,
 			DTA_Translation, translation,
 			DTA_320x200, Scaled,
 			TAG_DONE);
@@ -795,11 +796,13 @@ void FBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size)
 			DTA_HUDRules, HUD_Normal,
 			DTA_Alpha, HR_SHADOW,
 			DTA_FillColor, 0,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+			DTA_Font, BigFont,
+			DTA_TranslationPtr, CR_UNTRANSLATED,
 			TAG_DONE);
 		screen->DrawTexture (pic, xpos - v/2, y,
 			DTA_HUDRules, HUD_Normal,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+			DTA_Font, BigFont,
+			DTA_TranslationPtr, CR_UNTRANSLATED,
 			TAG_DONE);
 		return;
 	}
@@ -820,7 +823,8 @@ void FBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size)
 			DTA_HUDRules, HUD_Normal,
 			DTA_Alpha, HR_SHADOW,
 			DTA_FillColor, 0,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+			DTA_Font, BigFont,
+			DTA_TranslationPtr, CR_UNTRANSLATED,
 			TAG_DONE);
 		val /= 10;
 		xpos -= w;
@@ -834,7 +838,8 @@ void FBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size)
 				DTA_HUDRules, HUD_Normal,
 				DTA_Alpha, HR_SHADOW,
 				DTA_FillColor, 0,
-				DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+				DTA_Font, BigFont,
+				DTA_TranslationPtr, CR_UNTRANSLATED,
 				TAG_DONE);
 		}
 	}
@@ -847,7 +852,8 @@ void FBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size)
 		pic = BigFont->GetChar ('0' + val % 10, &v);
 		screen->DrawTexture (pic, xpos - v/2, y,
 			DTA_HUDRules, HUD_Normal,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+			DTA_Font, BigFont,
+			DTA_TranslationPtr, CR_UNTRANSLATED,
 			TAG_DONE);
 		val /= 10;
 		xpos -= w;
@@ -859,7 +865,8 @@ void FBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size)
 		{
 			screen->DrawTexture (pic, xpos - v/2, y,
 				DTA_HUDRules, HUD_Normal,
-				DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+				DTA_Font, BigFont,
+				DTA_TranslationPtr, CR_UNTRANSLATED,
 				TAG_DONE);
 		}
 	}

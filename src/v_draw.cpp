@@ -90,9 +90,13 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 
 	if (parms.style != STYLE_Shaded)
 	{
-		if (parms.translation != NULL)
+		if (parms.font != NULL)
 		{
-			dc_colormap = (lighttable_t *)parms.translation;
+			dc_colormap = parms.font->GetColorTranslation (EColorRange(parms.translation));
+		}
+		else if (parms.translation != 0)
+		{
+			dc_colormap = translationtables[(parms.translation&0xff00)>>8] + (parms.translation&0x00ff)*256;
 		}
 		else
 		{
@@ -251,6 +255,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 {
 	INTBOOL boolval;
 	int intval;
+	bool translationset = false;
 
 	if (img == NULL || img->UseType == FTexture::TEX_Null)
 	{
@@ -272,7 +277,8 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 	parms->left = img->GetScaledLeftOffset();
 	parms->alpha = FRACUNIT;
 	parms->fillcolor = -1;
-	parms->translation = NULL;
+	parms->font = NULL;
+	parms->translation = 0;
 	parms->alphaChannel = false;
 	parms->flipX = false;
 	parms->shadowAlpha = 0;
@@ -397,8 +403,19 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			parms->fillcolor = va_arg (tags, int);
 			break;
 
+		case DTA_Font:
+			parms->font = va_arg(tags, FFont*);
+			if (!translationset)
+			{
+				// default translation for fonts should be untranslated which unfortunately is not 0.
+				parms->translation = CR_UNTRANSLATED;
+				translationset = true;
+			}
+			break;
+
 		case DTA_Translation:
-			parms->translation = va_arg (tags, const BYTE *);
+			parms->translation = va_arg(tags, int);
+			translationset = true;
 			break;
 
 		case DTA_FlipX:

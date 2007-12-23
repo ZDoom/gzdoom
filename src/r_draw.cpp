@@ -1423,6 +1423,7 @@ void R_InitTranslationTables ()
 		 +8							// Standard	(7 for Strife, 3 for the rest)
 		 +MAX_ACS_TRANSLATIONS		// LevelScripted
 		 +BODYQUESIZE				// PlayerCorpses
+		 +1
 		 )];
 	int i, j;
 
@@ -1450,8 +1451,12 @@ void R_InitTranslationTables ()
 	translationtables[TRANSLATION_PlayerCorpses] =
 		translationtables[TRANSLATION_LevelScripted] + MAX_ACS_TRANSLATIONS*256;
 
+	translationtables[TRANSLATION_Dim] =
+		translationtables[TRANSLATION_PlayerCorpses] + BODYQUESIZE*256;
+
 	translationtables[TRANSLATION_Decorate] = decorate_translations;
 	translationtables[TRANSLATION_Blood] = decorate_translations + MAX_DECORATE_TRANSLATIONS*256;
+
 
 	// [RH] Each player now gets their own translation table. These are set
 	//		up during netgame arbitration and as-needed rather than in here.
@@ -1596,6 +1601,27 @@ void R_InitTranslationTables ()
 			}
 			table += 256;
 		}
+	}
+
+	// Dim map
+	{
+		BYTE *dim_map = translationtables[TRANSLATION_Dim];
+		BYTE unremap[256];
+		BYTE shadetmp[256];
+
+		FWadLump palookup = Wads.OpenLumpName ("COLORMAP");
+		palookup.Seek (22*256, SEEK_CUR);
+		palookup.Read (shadetmp, 256);
+		memset (unremap, 0, 256);
+		for (i = 0; i < 256; ++i)
+		{
+			unremap[GPalette.Remap[i]] = i;
+		}
+		for (i = 0; i < 256; ++i)
+		{
+			dim_map[i] = GPalette.Remap[shadetmp[unremap[i]]];
+		}
+		dim_map[0] = GPalette.Remap[0];
 	}
 }
 

@@ -1,3 +1,14 @@
+December 23, 2007 (Changes by Graf Zahl)
+- Changed DTA_Translation parameter for DrawTexture to an integer to avoid
+  passing renderer specific data to the function. Also added DTA_Font so
+  that the renderer can fetch font translations from the proper font.
+  DIM_MAP/ConShade had to be made a regular translation table to make it
+  work.
+- Added Karate Chris's fix for scoreboard displaying team play related data
+  in non teamplay games.
+- Fixed: The team selection menu didn't work.
+- Fixed: UpdateTeam passed an FString to Printf.
+
 December 22, 2007
 - Had a look at sbarinfo.cpp and noticed a few places where it allocated
   character arrays and never freed them. Those have been replaced with

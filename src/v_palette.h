@@ -89,9 +89,6 @@ extern "C" {
 extern FDynamicColormap NormalLight;
 }
 
-// The translation to use for depleted items
-#define DIM_MAP &NormalLight.Maps[NUMCOLORMAPS*2/3*256]
-
 extern int Near255;		// A color near 255 in appearance, but not 255
 
 int BestColor (const uint32 *pal, int r, int g, int b, int first=1, int num=255);

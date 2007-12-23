@@ -179,46 +179,52 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		}
 	}
 
-	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 16;
+	if (teamplay)
+		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 16;
+	else
+		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 4 : y = SCREENHEIGHT / 16;
 
 	HU_DrawTimeRemaining (ST_Y - height);
 
-	for (i = 0; i < teams.Size (); i++)
+	if (teamplay)
 	{
-		teams[i].players = 0;
-		teams[i].score = 0;
-	}
-
-	for (i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (playeringame[sortedplayers[i]-players] && TEAMINFO_IsValidTeam (sortedplayers[i]->userinfo.team))
+		for (i = 0; i < teams.Size (); i++)
 		{
-			if (teams[sortedplayers[i]->userinfo.team].players++ == 0)
+			teams[i].players = 0;
+			teams[i].score = 0;
+		}
+
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[sortedplayers[i]-players] && TEAMINFO_IsValidTeam (sortedplayers[i]->userinfo.team))
 			{
-				numTeams++;
+				if (teams[sortedplayers[i]->userinfo.team].players++ == 0)
+				{
+					numTeams++;
+				}
+
+				teams[sortedplayers[i]->userinfo.team].score += sortedplayers[i]->fragcount;
 			}
-
-			teams[sortedplayers[i]->userinfo.team].score += sortedplayers[i]->fragcount;
 		}
-	}
 
-	int scorexwidth = SCREENWIDTH / 32;
-	for (i = 0; i < teams.Size (); i++)
-	{
-		if (teams[i].players)
+		int scorexwidth = SCREENWIDTH / 32;
+		for (i = 0; i < teams.Size (); i++)
 		{
-			char score[80];
-			sprintf (score, "%d", teams[i].score);
+			if (teams[i].players)
+			{
+				char score[80];
+				sprintf (score, "%d", teams[i].score);
 
-			screen->SetFont (BigFont);
-			screen->DrawText (teams[i].GetTextColor (), scorexwidth, gamestate == GS_INTERMISSION ? y / 1.25 : y / 2, score,
-				DTA_CleanNoMove, true, TAG_DONE);
+				screen->SetFont (BigFont);
+				screen->DrawText (teams[i].GetTextColor (), scorexwidth, gamestate == GS_INTERMISSION ? y / 1.25 : y / 2, score,
+					DTA_CleanNoMove, true, TAG_DONE);
 
-			scorexwidth += SCREENWIDTH / 8;
+				scorexwidth += SCREENWIDTH / 8;
+			}
 		}
-	}
 
-	gamestate == GS_INTERMISSION ? y += 0 : y += SCREENWIDTH / 32;
+		gamestate == GS_INTERMISSION ? y += 0 : y += SCREENWIDTH / 32;
+	}
 
 	screen->SetFont (SmallFont);
 
@@ -234,7 +240,8 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	x = (SCREENWIDTH >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
 	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 10;
 
-	y += SCREENWIDTH / 32;
+	if (teamplay)
+		y += SCREENWIDTH / 32;
 
 	for (i = 0; i < MAXPLAYERS && y < ST_Y - 12 * CleanYfac; i++)
 	{

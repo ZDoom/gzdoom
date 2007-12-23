@@ -1524,7 +1524,7 @@ private:
 				continue;
 			}
 			x += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
-			DrawImage(character, x, y, drawingFont->GetColorTranslation(translation));
+			DrawImage(character, x, y, translation, drawingFont);
 			x += width + spacing - (character->LeftOffset+1);
 			str++;
 		}
@@ -1734,14 +1734,13 @@ private:
 			DrawImage(chain, x+(offset%chainsize), y);
 		}
 		if(gem != NULL)
-			DrawImage(gem, x+padleft+offset, y, translate ? getTranslation() : NULL);
+			DrawImage(gem, x+padleft+offset, y, translate ? getTranslation() : 0);
 	}
 
-	BYTE* getTranslation()
+	int getTranslation()
 	{
-		if(gameinfo.gametype & GAME_Raven)
-			return translationtables[TRANSLATION_PlayersExtra] + (CPlayer - players)*256;
-		return translationtables[TRANSLATION_Players] + (CPlayer - players)*256;
+		if(gameinfo.gametype & GAME_Raven) return TRANSLATION(TRANSLATION_PlayersExtra, BYTE(CPlayer - players));
+		else return TRANSLATION(TRANSLATION_Players, BYTE(CPlayer - players));
 	}
 
 	FImageCollection Images;

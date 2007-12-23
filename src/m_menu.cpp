@@ -2134,7 +2134,7 @@ static void M_PlayerSetupDrawer ()
 					(PSetupDef.y + LINEHEIGHT*3 + 57 - 104)*CleanYfac + (SCREENHEIGHT/2),
 					DTA_DestWidth, MulScale16 (tex->GetWidth() * CleanXfac, Scale),
 					DTA_DestHeight, MulScale16 (tex->GetHeight() * CleanYfac, Scale),
-					DTA_Translation, translationtables[TRANSLATION_Players] + 256 * MAXPLAYERS,
+					DTA_Translation, TRANSLATION(TRANSLATION_Players, 0),
 					TAG_DONE);
 			}
 		}
@@ -2547,7 +2547,7 @@ static void M_ChangePlayerTeam (int choice)
 		{
 			team = TEAM_None;
 		}
-		else if (team == TEAM_None)
+		else if (!TEAMINFO_IsValidTeam (team))
 		{
 			team = teams.Size () - 1;
 		}
@@ -2558,11 +2558,7 @@ static void M_ChangePlayerTeam (int choice)
 	}
 	else
 	{
-		if (team == teams.Size () - 1)
-		{
-			team = TEAM_None;
-		}
-		else if (team == TEAM_None)
+		if (!TEAMINFO_IsValidTeam (team))
 		{
 			team = 0;
 		}

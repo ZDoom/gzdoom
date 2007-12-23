@@ -698,7 +698,8 @@ static void WI_DrawCharPatch (FTexture *patch, int x, int y)
 		screen->DrawTexture (patch, x, y,
 			DTA_Clean, true,
 			DTA_ShadowAlpha, (gameinfo.gametype == GAME_Doom) ? 0 : FRACUNIT/2,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),	// otherwise it doesn't look good in Strife!
+			DTA_Font, BigFont,
+			DTA_Translation, CR_UNTRANSLATED,	// otherwise it doesn't look good in Strife!
 			TAG_DONE);
 	}
 }
@@ -1583,13 +1584,13 @@ void WI_drawNetgameStats ()
 			x = NG_STATSX;
 			// [RH] Only use one graphic for the face backgrounds
 			screen->DrawTexture (p, x - p->GetWidth(), y,
-				DTA_Translation, translationtables[TRANSLATION_Players] + i*256,
+				DTA_Translation, TRANSLATION(TRANSLATION_Players, i),
 				DTA_Clean, true,
 				TAG_DONE);
 
 			if (i == me)
 				screen->DrawTexture (star, x - p->GetWidth(), y,
-					DTA_Translation, translationtables[TRANSLATION_Players] + i*256,
+					DTA_Translation, TRANSLATION(TRANSLATION_Players, i),
 					DTA_Clean, true,
 					TAG_DONE);
 
@@ -1633,7 +1634,7 @@ void WI_drawNetgameStats ()
 			if (gameinfo.gametype == GAME_Heretic)
 			{
 				screen->DrawTexture (star, 25, y,
-					DTA_Translation, translationtables[TRANSLATION_Players] + i*256,
+					DTA_Translation, TRANSLATION(TRANSLATION_Players, i),
 					DTA_Clean, true,
 					TAG_DONE);
 			}

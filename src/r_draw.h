@@ -212,6 +212,7 @@ enum
 	TRANSLATION_PlayerCorpses,
 	TRANSLATION_Decorate,
 	TRANSLATION_Blood,
+	TRANSLATION_Dim,
 
 	NUM_TRANSLATION_TABLES
 };
@@ -227,6 +228,8 @@ inline int GetTranslationType(WORD trans)
 {
 	return trans >> 8;
 }
+
+#define DIM_MAP TRANSLATION(TRANSLATION_Dim, 0)
 
 const int MAX_ACS_TRANSLATIONS = 255;
 const int MAX_DECORATE_TRANSLATIONS = 255;

@@ -290,7 +290,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 	if (update && oldteam != info->team)
 	{
 		if (TEAMINFO_IsValidTeam (info->team))
-			Printf ("%s joined the %s team\n", info->netname, teams[info->team].name);
+			Printf ("%s joined the %s team\n", info->netname, teams[info->team].name.GetChars());
 		else
 			Printf ("%s is now a loner\n", info->netname);
 	}

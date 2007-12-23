@@ -198,7 +198,7 @@ protected:
 	void DrawPowerups ();
 
 	void UpdateRect (int x, int y, int width, int height) const;
-	void DrawImage (FTexture *image, int x, int y, BYTE *translation=NULL) const;
+	void DrawImage (FTexture *image, int x, int y, int translation=0, FFont *font=NULL) const;
 	void DrawFadedImage (FTexture *image, int x, int y, fixed_t shade) const;
 	void DrawPartialImage (FTexture *image, int wx, int ww) const;
 

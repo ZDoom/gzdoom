@@ -76,7 +76,9 @@ enum
 	DTA_DestHeight,		// height of area to draw to
 	DTA_Alpha,			// alpha value for translucency
 	DTA_FillColor,		// color to stencil onto the destination
+	DTA_Font,			// For characters: Font it belongs to
 	DTA_Translation,	// translation table to recolor the source
+	DTA_TranslationPtr,	// translation table to recolor the source
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
 	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac
 	DTA_320x200,		// bool: scale texture size and position to fit on a virtual 320x200 screen
@@ -204,7 +206,8 @@ protected:
 		int left;
 		fixed_t alpha;
 		int fillcolor;
-		const BYTE *translation;
+		FFont *font;
+		int translation;
 		INTBOOL alphaChannel;
 		INTBOOL flipX;
 		fixed_t shadowAlpha;

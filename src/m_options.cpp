@@ -1019,6 +1019,7 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Items respawn",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_ITEMS_RESPAWN} },
 	{ bitflag,	"Big powerups respawn",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_RESPAWN_SUPER} },
 	{ bitflag,	"Fast monsters",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FAST_MONSTERS} },
+	{ bitflag,	"Degeneration",			{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_DEGENERATION} },
 	{ bitflag,	"Allow jump",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_JUMP} },
 	{ bitflag,	"Allow crouch",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_CROUCH} },
 	{ bitflag,	"Allow freelook",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FREELOOK} },

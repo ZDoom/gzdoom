@@ -377,7 +377,7 @@ void DCajunMaster::DoAddBot (int bnum, char *info)
 		botingame[bnum] = true;
 
 		if (teamplay)
-			Printf ("%s joined the %s team\n", players[bnum].userinfo.netname, teams[players[bnum].userinfo.team].name);
+			Printf ("%s joined the %s team\n", players[bnum].userinfo.netname, teams[players[bnum].userinfo.team].name.GetChars ());
 		else
 			Printf ("%s joined the game\n", players[bnum].userinfo.netname);
 

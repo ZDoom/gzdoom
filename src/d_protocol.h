@@ -146,6 +146,7 @@ enum EDemoCommand
 	DEM_SUMMONFOE,		// 44 String: Thing to fabricate
 	DEM_WIPEON,			// 45 Player started a screen wipe
 	DEM_WIPEOFF,		// 46 Player finished a screen wipe
+	DEM_TAKECHEAT,		// 47 String: item to take, Word: quantity
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

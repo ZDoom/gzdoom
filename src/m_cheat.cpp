@@ -41,6 +41,7 @@
 #include "a_keys.h"
 #include "templates.h"
 #include "p_lnspec.h"
+#include "c_console.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -709,6 +710,241 @@ void cht_Give (player_t *player, const char *name, int amount)
 	else
 	{
 		GiveSpawner (player, type, amount);
+	}
+	return;
+}
+
+void cht_Take (player_t *player, const char *name, int amount)
+{
+	bool takeall;
+	const PClass *type;
+
+	if (player->mo == NULL || player->health <= 0)
+	{
+		return;
+	}
+
+	takeall = (stricmp (name, "all") == 0);
+
+	if (!takeall && stricmp (name, "health") == 0)
+	{
+		if (player->mo->health - amount <= 0
+			|| player->health - amount <= 0
+			|| amount == 0)
+		{
+
+			cht_Suicide (player);
+
+			if (player == &players[consoleplayer])
+				C_HideConsole ();
+
+			return;
+		}
+
+		if (amount > 0)
+		{
+			if (player->mo)
+			{
+				player->mo->health -= amount;
+	  			player->health = player->mo->health;
+			}
+			else
+			{
+				player->health -= amount;
+			}
+		}
+
+		if (!takeall)
+			return;
+	}
+
+	if (takeall || stricmp (name, "backpack") == 0)
+	{
+		// Select the correct type of backpack based on the game
+		if (gameinfo.gametype == GAME_Heretic)
+		{
+			type = PClass::FindClass ("BagOfHolding");
+		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			type = PClass::FindClass ("AmmoSatchel");
+		}
+		else if (gameinfo.gametype == GAME_Doom)
+		{
+			type = PClass::FindClass ("Backpack");
+		}
+		else
+		{ // Hexen doesn't have a backpack, foo!
+			type = NULL;
+		}
+		if (type != NULL)
+		{
+			AActor *backpack = player->mo->FindInventory (type);
+
+			if (backpack)
+				backpack->Destroy ();
+		}
+
+		if (!takeall)
+			return;
+	}
+
+	if (takeall || stricmp (name, "ammo") == 0)
+	{
+		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		{
+			const PClass *type = PClass::m_Types[i];
+
+			if (type->ParentClass == RUNTIME_CLASS (AAmmo))
+			{
+				AInventory *ammo = player->mo->FindInventory (type);
+
+				if (ammo)
+					ammo->Amount = 0;
+			}
+		}
+
+		if (!takeall)
+			return;
+	}
+
+	if (takeall || stricmp (name, "armor") == 0)
+	{
+		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		{
+			type = PClass::m_Types[i];
+
+			if (type->IsDescendantOf (RUNTIME_CLASS (AArmor)))
+			{
+				AActor *armor = player->mo->FindInventory (type);
+
+				if (armor)
+					armor->Destroy ();
+			}
+		}
+
+		if (!takeall)
+			return;
+	}
+
+	if (takeall || stricmp (name, "keys") == 0)
+	{
+		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		{
+			type = PClass::m_Types[i];
+
+			if (type->IsDescendantOf (RUNTIME_CLASS (AKey)))
+			{
+				AActor *key = player->mo->FindInventory (type);
+
+				if (key)
+					key->Destroy ();
+			}
+		}
+
+		if (!takeall)
+			return;
+	}
+
+	if (takeall || stricmp (name, "weapons") == 0)
+	{
+		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		{
+			type = PClass::m_Types[i];
+
+			if (type != RUNTIME_CLASS(AWeapon) &&
+				type->IsDescendantOf (RUNTIME_CLASS (AWeapon)))
+			{
+				AActor *weapon = player->mo->FindInventory (type);
+
+				if (weapon)
+					weapon->Destroy ();
+
+				player->ReadyWeapon = NULL;
+				player->PendingWeapon = WP_NOCHANGE;
+				player->psprites[ps_weapon].state = NULL;
+				player->psprites[ps_flash].state = NULL;
+			}
+		}
+
+		if (!takeall)
+			return;
+	}
+
+	if (takeall || stricmp (name, "artifacts") == 0)
+	{
+		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		{
+			type = PClass::m_Types[i];
+
+			if (type->IsDescendantOf (RUNTIME_CLASS (AInventory)))
+			{
+				if (!type->IsDescendantOf (RUNTIME_CLASS (APuzzleItem)) &&
+					!type->IsDescendantOf (RUNTIME_CLASS (APowerup)) &&
+					!type->IsDescendantOf (RUNTIME_CLASS (AArmor)) &&
+					!type->IsDescendantOf (RUNTIME_CLASS (AWeapon)) &&
+					!type->IsDescendantOf (RUNTIME_CLASS (AKey)))
+				{
+					AActor *artifact = player->mo->FindInventory (type);
+
+					if (artifact)
+						artifact->Destroy ();
+				}
+			}
+		}
+
+		if (!takeall)
+			return;
+	}
+
+	if (takeall || stricmp (name, "puzzlepieces") == 0)
+	{
+		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		{
+			type = PClass::m_Types[i];
+
+			if (type->IsDescendantOf (RUNTIME_CLASS (APuzzleItem)))
+			{
+				AActor *puzzlepiece = player->mo->FindInventory (type);
+
+				if (puzzlepiece)
+					puzzlepiece->Destroy ();
+			}
+		}
+
+		if (!takeall)
+			return;
+	}
+
+	if (takeall)
+		return;
+
+	type = PClass::FindClass (name);
+	if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS (AInventory)))
+	{
+		if (player == &players[consoleplayer])
+			Printf ("Unknown item \"%s\"\n", name);
+	}
+	else
+	{
+		AInventory *inventory = player->mo->FindInventory (type);
+
+		if (inventory != NULL)
+		{
+			inventory->Amount -= amount ? amount : 1;
+
+			if (inventory->Amount <= 0)
+			{
+				if (inventory->ItemFlags & IF_KEEPDEPLETED)
+				{
+					inventory->Amount = 0;
+				}
+				else
+				{
+					inventory->Destroy ();
+				}
+			}
+		}
 	}
 	return;
 }

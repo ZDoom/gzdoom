@@ -2113,4 +2113,56 @@ void A_ClearTarget(AActor * self)
 	}
 }
 
+//==========================================================================
+//
+// A_JumpIfTargetInLOS (fixed fov, state label)
+// Jumps if the actor can see it's target, or if the player has a linetarget.
+//
+//==========================================================================
+
+void A_JumpIfTargetInLOS(AActor * self)
+{
+	FState * CallingState;
+	int index = CheckIndex(2, &CallingState);
+	angle_t an;
+	angle_t fov = angle_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
+	AActor * target;
+
+	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
+
+	if (!self->player)
+	{
+		target=self->target;
+
+		if (!P_CheckSight (self, target, 1))
+			return; // [KS] Cannot see target - return
+
+		if (fov && (fov < ANGLE_MAX))
+		{
+			an = R_PointToAngle2 (self->x,
+								  self->y,
+								  target->x,
+								  target->y)
+				- self->angle;
+
+			if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
+			{
+				return; // [KS] Outside of FOV - return
+			}
+
+		}
+	}
+	else
+	{
+		// Does the player aim at something that can be shot?
+		P_BulletSlope(self);
+		target = linetarget;
+	}
+
+	// No target - return
+	if (target==NULL) return;
+
+	DoJump(self, CallingState, StateParameters[index+1]);
+}
+
 // [KS] *** End of my modifications ***

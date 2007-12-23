@@ -167,6 +167,9 @@ public:
 	// Set an area to a specified color
 	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color) const;
 
+	// renders the player backdrop for the menu
+	virtual void DrawPlayerBackdrop (DCanvas *src, const BYTE *FireRemap, int x, int y);
+
 	// Calculate gamma table
 	void CalcGamma (float gamma, BYTE gammalookup[256]);
 

@@ -104,5 +104,7 @@ ACTOR(SetGravity)
 ACTOR(ItBurnsItBurns)
 ACTOR(CrispyPlayer)
 ACTOR(DropFire)
+
 ACTOR(ClearTarget)
 ACTOR(LookEx)
+ACTOR(JumpIfTargetInLOS)

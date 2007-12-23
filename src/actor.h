@@ -696,6 +696,12 @@ public:
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	fixed_t			gravity;		// [GRB] Gravity factor
 	int 			FastChaseStrafeCount;
+	// [KS] These temporary-use properties are needed to allow A_LookEx to pass it's parameters to LookFor*InBlock in
+	// P_BlockmapSearch so that friendly enemies and monsters that look for other monsters can find their targets properly.
+	// If there's a cleaner way of doing this, feel free to remove these and use that method instead.
+	fixed_t			LookExMinDist;	// Minimum sight distance
+	fixed_t			LookExMaxDist;	// Maximum sight distance
+	angle_t			LookExFOV;		// Field of Vision
 
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98

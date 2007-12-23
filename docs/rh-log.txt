@@ -1,4 +1,10 @@
 December 23, 2007 (Changes by Graf Zahl)
+- Fixed a few font related problems.
+- Fixed: ASkyViewpoint::Destroy was missing the super call.
+- Added SnowKate709's A_LookEx update.
+- Moved M_DrawPlayerBackdrop into DCanvas as a virtual function. Since this
+  directly accesses the frame buffer it must be overridable for rendereres
+  that work differently.
 - Added Blzut3's third SBARINFO update:
  * Added drawshader to draw Heretic style transparency gradients.
  * Added artiflash flag to drawselectedinventory.

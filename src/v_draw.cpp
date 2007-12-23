@@ -92,7 +92,10 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 	{
 		if (parms.font != NULL)
 		{
-			dc_colormap = parms.font->GetColorTranslation (EColorRange(parms.translation));
+			if (img->UseType == FTexture::TEX_FontChar)
+				dc_colormap = parms.font->GetColorTranslation (EColorRange(parms.translation));
+			else
+				dc_colormap = identitymap;
 		}
 		else if (parms.translation != 0)
 		{
@@ -101,7 +104,7 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 		else
 		{
 			dc_colormap = identitymap;
-		}
+		}	
 	}
 
 	BYTE *destorgsave = dc_destorg;
@@ -623,6 +626,51 @@ void DCanvas::FillBorder (FTexture *img)
 		Clear (Width - bordright, bordtop, Width, Height - bordbottom, 0, 0);	// Right
 		Clear (0, Height - bordbottom, Width, Height, 0, 0);					// Bottom
 	}
+}
+
+// This was in m_menu.cpp but it's better to be here because 
+// non-software renderers must be able to override it.
+void DCanvas::DrawPlayerBackdrop (DCanvas *src, const BYTE *FireRemap, int x, int y)
+{
+	DCanvas *dest = screen;
+	BYTE *destline, *srcline;
+	const int destwidth = src->GetWidth() * CleanXfac / 2;
+	const int destheight = src->GetHeight() * CleanYfac / 2;
+	const int desty = y;
+	const int destx = x;
+	const fixed_t fracxstep = FRACUNIT*2 / CleanXfac;
+	const fixed_t fracystep = FRACUNIT*2 / CleanYfac;
+	fixed_t fracx, fracy = 0;
+
+	src->Lock();
+
+	if (fracxstep == FRACUNIT)
+	{
+		for (y = desty; y < desty + destheight; y++, fracy += fracystep)
+		{
+			srcline = src->GetBuffer() + (fracy >> FRACBITS) * src->GetPitch();
+			destline = dest->GetBuffer() + y * dest->GetPitch() + destx;
+
+			for (x = 0; x < destwidth; x++)
+			{
+				destline[x] = FireRemap[srcline[x]];
+			}
+		}
+	}
+	else
+	{
+		for (y = desty; y < desty + destheight; y++, fracy += fracystep)
+		{
+			srcline = src->GetBuffer() + (fracy >> FRACBITS) * src->GetPitch();
+			destline = dest->GetBuffer() + y * dest->GetPitch() + destx;
+			for (x = fracx = 0; x < destwidth; x++, fracx += fracxstep)
+			{
+				destline[x] = FireRemap[srcline[fracx >> FRACBITS]];
+			}
+		}
+	}
+
+	src->Unlock();
 }
 
 

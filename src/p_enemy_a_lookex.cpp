@@ -21,32 +21,324 @@
 
 #include "gi.h"
 
-AActor *LookForTIDinBlock (AActor *lookee, int index);
-bool P_LookForEnemies (AActor *actor, INTBOOL allaround);
 bool P_LookForMonsters (AActor *actor);
 
 static FRandom pr_look2 ("LookyLookyEx");
 static FRandom pr_look3 ("IGotHookyEx");
 static FRandom pr_lookforplayers ("LookForPlayersEx");
+static FRandom pr_skiptarget("SkipTargetEx");
 
 
 // [KS] *** Start additions by me - p_enemy.cpp ***
 
+// LookForTIDinBlockEx
+// LookForEnemiesInBlockEx
 // P_NewLookTID (copied from P_LookForTID)
 // P_NewLookPlayers (copied from P_LookForPlayers)
 // Takes FOV and sight distances into account when acquiring a target.
-// TODO: This is very unfriendly to the friendly monster logic due to the intermingled code.
-// TODO: Default the FOV to 360 if the monster has +LOOKALLAROUND set.
-//  ~Kate S. 12/19/2007
+// TODO: Not sure if using actor properties to pass parameters around indirectly is such a good idea. If there's a cleaner method, do it that way instead.
+//  ~Kate S.  Last updated on 12/23/2007
+
+AActor *LookForTIDinBlockEx (AActor *lookee, int index)
+{
+	FBlockNode *block;
+	AActor *link;
+	AActor *other;
+	fixed_t 	dist;
+	angle_t		an;
+	
+	for (block = blocklinks[index]; block != NULL; block = block->NextActor)
+	{
+		link = block->Me;
+
+        if (!(link->flags & MF_SHOOTABLE))
+			continue;			// not shootable (observer or dead)
+
+		if (link == lookee)
+			continue;
+
+		if (link->health <= 0)
+			continue;			// dead
+
+		if (link->flags2 & MF2_DORMANT)
+			continue;			// don't target dormant things
+
+		if (link->tid == lookee->TIDtoHate)
+		{
+			other = link;
+		}
+		else if (link->target != NULL && link->target->tid == lookee->TIDtoHate)
+		{
+			other = link->target;
+			if (!(other->flags & MF_SHOOTABLE) ||
+				other->health <= 0 ||
+				(other->flags2 & MF2_DORMANT))
+			{
+				continue;
+			}
+		}
+		else
+		{
+			continue;
+		}
+
+		if (!(lookee->flags3 & MF3_NOSIGHTCHECK))
+		{
+			if (!P_CheckSight (lookee, other, 2))
+				continue;			// out of sight
+
+			dist = P_AproxDistance (other->x - lookee->x,
+									other->y - lookee->y);
+
+			if (lookee->LookExMaxDist && dist > lookee->LookExMaxDist)
+				continue;			// [KS] too far
+
+			if (lookee->LookExMinDist && dist < lookee->LookExMinDist)
+				continue;			// [KS] too close
+
+			if (lookee->LookExFOV && lookee->LookExFOV < ANGLE_MAX)
+			{
+				an = R_PointToAngle2 (lookee->x,
+									  lookee->y, 
+									  other->x,
+									  other->y)
+					- lookee->angle;
+
+				if (an > (lookee->LookExFOV / 2) && an < (ANGLE_MAX - (lookee->LookExFOV / 2)))
+				{
+					// if real close, react anyway
+					// [KS] but respect minimum distance rules
+					if (lookee->LookExMinDist || dist > MELEERANGE)
+						continue;	// outside of fov
+				}
+			}
+			else
+			{
+				if(!(lookee->flags4 & MF4_LOOKALLAROUND) || (lookee->LookExFOV >= ANGLE_MAX)) // Just in case angle_t doesn't clamp stuff, because I can't be too sure.
+				{
+					an = R_PointToAngle2 (lookee->x,
+										  lookee->y, 
+										  other->x,
+										  other->y)
+						- lookee->angle;
+
+					if (an > ANG90 && an < ANG270)
+					{
+						// if real close, react anyway
+						// [KS] but respect minimum distance rules
+						if (lookee->LookExMinDist || dist > MELEERANGE)
+							continue;	// behind back
+					}
+				}
+			}
+		}
+
+		return other;
+	}
+	return NULL;
+}
+
+AActor *LookForEnemiesInBlockEx (AActor *lookee, int index)
+{
+	FBlockNode *block;
+	AActor *link;
+	AActor *other;
+	fixed_t 	dist;
+	angle_t		an;
+	
+	for (block = blocklinks[index]; block != NULL; block = block->NextActor)
+	{
+		link = block->Me;
+
+        if (!(link->flags & MF_SHOOTABLE))
+			continue;			// not shootable (observer or dead)
+
+		if (link == lookee)
+			continue;
+
+		if (link->health <= 0)
+			continue;			// dead
+
+		if (link->flags2 & MF2_DORMANT)
+			continue;			// don't target dormant things
+
+		if (!(link->flags3 & MF3_ISMONSTER))
+			continue;			// don't target it if it isn't a monster (could be a barrel)
+
+		other = NULL;
+		if (link->flags & MF_FRIENDLY)
+		{
+			if (deathmatch &&
+				lookee->FriendPlayer != 0 && link->FriendPlayer != 0 &&
+				lookee->FriendPlayer != link->FriendPlayer)
+			{
+				// This is somebody else's friend, so go after it
+				other = link;
+			}
+			else if (link->target != NULL && !(link->target->flags & MF_FRIENDLY))
+			{
+				other = link->target;
+				if (!(other->flags & MF_SHOOTABLE) ||
+					other->health <= 0 ||
+					(other->flags2 & MF2_DORMANT))
+				{
+					other = NULL;;
+				}
+			}
+		}
+		else
+		{
+			other = link;
+		}
+
+		// [MBF] If the monster is already engaged in a one-on-one attack
+		// with a healthy friend, don't attack around 60% the time.
+		
+		// [GrafZahl] This prevents friendlies from attacking all the same 
+		// target.
+		
+		if (other)
+		{
+			AActor *targ = other->target;
+			if (targ && targ->target == other && pr_skiptarget() > 100 && lookee->IsFriend (targ) &&
+				targ->health*2 >= targ->GetDefault()->health)
+			{
+				continue;
+			}
+		}
+
+		// [KS] Hey, shouldn't there be a check for MF3_NOSIGHTCHECK here?
+
+		if (other == NULL || !P_CheckSight (lookee, other, 2))
+			continue;			// out of sight
+
+		dist = P_AproxDistance (other->x - lookee->x,
+								other->y - lookee->y);
+
+		if (lookee->LookExMaxDist && dist > lookee->LookExMaxDist)
+			continue;			// [KS] too far
+
+		if (lookee->LookExMinDist && dist < lookee->LookExMinDist)
+			continue;			// [KS] too close
+
+		if (lookee->LookExFOV && lookee->LookExFOV < ANGLE_MAX)
+		{
+			an = R_PointToAngle2 (lookee->x,
+								  lookee->y, 
+								  other->x,
+								  other->y)
+				- lookee->angle;
+
+			if (an > (lookee->LookExFOV / 2) && an < (ANGLE_MAX - (lookee->LookExFOV / 2)))
+			{
+				// if real close, react anyway
+				// [KS] but respect minimum distance rules
+				if (lookee->LookExMinDist || dist > MELEERANGE)
+					continue;	// outside of fov
+			}
+		}
+		else
+		{
+			if(!(lookee->flags4 & MF4_LOOKALLAROUND) || (lookee->LookExFOV >= ANGLE_MAX)) // Just in case angle_t doesn't clamp stuff, because I can't be too sure.
+			{
+				an = R_PointToAngle2 (lookee->x,
+									  lookee->y, 
+									  other->x,
+									  other->y)
+					- lookee->angle;
+
+				if (an > ANG90 && an < ANG270)
+				{
+					// if real close, react anyway
+					// [KS] but respect minimum distance rules
+					if (lookee->LookExMinDist || dist > MELEERANGE)
+						continue;	// behind back
+				}
+			}
+		}
+
+		return other;
+	}
+	return NULL;
+}
 
 bool P_NewLookTID (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxdist, bool chasegoal)
 {
 	AActor *other;
+
+	actor->LookExMinDist = mindist;
+	actor->LookExMaxDist = maxdist;
+	actor->LookExFOV = fov;
+	other = P_BlockmapSearch (actor, 0, LookForTIDinBlockEx);
+
 	bool reachedend = false;
 	fixed_t 	dist;
 	angle_t		an;
 
-	other = P_BlockmapSearch (actor, 0, LookForTIDinBlock);
+	if (other != NULL)
+	{
+		if (!(actor->flags3 & MF3_NOSIGHTCHECK))
+		{
+			dist = P_AproxDistance (other->x - actor->x,
+									other->y - actor->y);
+
+			if (maxdist && dist > maxdist)
+			{
+				other = NULL;			// [KS] too far
+				goto endcheck;
+			}
+
+			if (mindist && dist < mindist)
+			{
+				other = NULL;			// [KS] too close
+				goto endcheck;
+			}
+
+			if (fov && fov < ANGLE_MAX)
+			{
+				an = R_PointToAngle2 (actor->x,
+									  actor->y, 
+									  other->x,
+									  other->y)
+					- actor->angle;
+
+				if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
+				{
+					// if real close, react anyway
+					// [KS] but respect minimum distance rules
+					if (mindist || dist > MELEERANGE)
+					{
+						other = NULL;	// outside of fov
+						goto endcheck;
+					}
+				}
+			}
+			else
+			{
+				if(!((actor->flags4 & MF4_LOOKALLAROUND) || (fov >= ANGLE_MAX))) // Just in case angle_t doesn't clamp stuff, because I can't be too sure.
+				{
+					an = R_PointToAngle2 (actor->x,
+										  actor->y, 
+										  other->x,
+										  other->y)
+						- actor->angle;
+
+					if (an > ANG90 && an < ANG270)
+					{
+						// if real close, react anyway
+						// [KS] but respect minimum distance rules
+						if (mindist || dist > MELEERANGE)
+						{
+							other = NULL;	// behind back
+							goto endcheck;
+						}
+					}
+				}
+			}
+		}
+	}
+
+  endcheck:
 
 	if (other != NULL)
 	{
@@ -113,7 +405,7 @@ bool P_NewLookTID (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxdist,
 			if (mindist && dist < mindist)
 				continue;			// [KS] too close
 
-			if (fov)
+			if (fov && fov < ANGLE_MAX)
 			{
 				an = R_PointToAngle2 (actor->x,
 									  actor->y, 
@@ -131,17 +423,21 @@ bool P_NewLookTID (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxdist,
 			}
 			else
 			{
-				an = R_PointToAngle2 (actor->x,
-									  actor->y, 
-									  other->x,
-									  other->y)
-					- actor->angle;
-
-				if (an > ANG90 && an < ANG270)
+				if(!((actor->flags4 & MF4_LOOKALLAROUND) || (fov >= ANGLE_MAX))) // Just in case angle_t doesn't clamp stuff, because I can't be too sure.
 				{
-					// if real close, react anyway
-					if (dist > MELEERANGE)
-						continue;	// behind back
+					an = R_PointToAngle2 (actor->x,
+										  actor->y, 
+										  other->x,
+										  other->y)
+						- actor->angle;
+
+					if (an > ANG90 && an < ANG270)
+					{
+						// if real close, react anyway
+						// [KS] but respect minimum distance rules
+						if (mindist || dist > MELEERANGE)
+							continue;	// behind back
+					}
 				}
 			}
 		}
@@ -160,6 +456,51 @@ bool P_NewLookTID (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxdist,
 	{
 		// [RH] use goal as target
 		if (actor->goal != NULL && chasegoal)
+		{
+			actor->target = actor->goal;
+			return true;
+		}
+		// Use last known enemy if no hatee sighted -- killough 2/15/98:
+		if (actor->lastenemy != NULL && actor->lastenemy->health > 0)
+		{
+			if (!actor->IsFriend(actor->lastenemy))
+			{
+				actor->target = actor->lastenemy;
+				actor->lastenemy = NULL;
+				return true;
+			}
+			else
+			{
+				actor->lastenemy = NULL;
+			}
+		}
+	}
+	return false;
+}
+
+bool P_NewLookEnemies (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxdist, bool chasegoal)
+{
+	AActor *other;
+
+	actor->LookExMinDist = mindist;
+	actor->LookExMaxDist = maxdist;
+	actor->LookExFOV = fov;
+	other = P_BlockmapSearch (actor, 10, LookForEnemiesInBlockEx);
+
+	if (other != NULL)
+	{
+		if (actor->goal && actor->target == actor->goal)
+			actor->reactiontime = 0;
+
+		actor->target = other;
+//		actor->LastLook.Actor = other;
+		return true;
+	}
+
+	if (actor->target == NULL)
+	{
+		// [RH] use goal as target
+		if (actor->goal != NULL)
 		{
 			actor->target = actor->goal;
 			return true;
@@ -204,7 +545,7 @@ bool P_NewLookPlayers (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxd
 	}
 	else if (actor->flags & MF_FRIENDLY)
 	{
-		return P_LookForEnemies (actor, fov? (fov > ANG270) : 0);
+		return P_NewLookEnemies (actor, fov, mindist, maxdist, chasegoal);
 	}
 
 	if (!(gameinfo.gametype & (GAME_Doom|GAME_Strife)) &&
@@ -307,17 +648,21 @@ bool P_NewLookPlayers (AActor *actor, angle_t fov, fixed_t mindist, fixed_t maxd
 		}
 		else
 		{
-			an = R_PointToAngle2 (actor->x,
-								  actor->y, 
-								  player->mo->x,
-								  player->mo->y)
-				- actor->angle;
-
-			if (an > ANG90 && an < ANG270)
+			if(!((actor->flags4 & MF4_LOOKALLAROUND) || (fov >= ANGLE_MAX)))
 			{
-				// if real close, react anyway
-				if (dist > MELEERANGE)
-					continue;	// behind back
+				an = R_PointToAngle2 (actor->x,
+									  actor->y, 
+									  player->mo->x,
+									  player->mo->y)
+					- actor->angle;
+
+				if (an > ANG90 && an < ANG270)
+				{
+					// if real close, react anyway
+					// [KS] but respect minimum distance rules
+					if (mindist || dist > MELEERANGE)
+						continue;	// behind back
+				}
 			}
 		}
 		if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
@@ -386,8 +731,6 @@ void A_LookEx (AActor *actor)
 	AActor *targ = NULL; // Shuts up gcc
 	fixed_t dist;
 
-	// [KS] I -had- some sanity checks for the parameters here but they caused the rest of the code to fail so I removed them again.
-
 	// [RH] Set goal now if appropriate
 	if (actor->special == Thing_SetGoal && actor->args[0] == 0) 
 	{
@@ -409,8 +752,7 @@ void A_LookEx (AActor *actor)
 	{
 		if (!(flags & LOF_NOSOUNDCHECK))
 		{
-			targ = (i_compatflags & COMPATF_SOUNDTARGET || actor->flags & MF_NOSECTOR)? 
-				actor->Sector->SoundTarget : actor->LastHeard;
+			targ = actor->LastHeard;
 			if (targ != NULL)
 			{
 				// [RH] If the soundtarget is dead, don't chase it
@@ -418,15 +760,17 @@ void A_LookEx (AActor *actor)
 				{
 					targ = NULL;
 				}
-
-				dist = P_AproxDistance (targ->x - actor->x,
-										targ->y - actor->y);
-
-				// [KS] If the target is too far away, don't respond to the sound.
-				if (maxheardist && dist > maxheardist)
+				else
 				{
-					targ = NULL;
-					actor->LastHeard = NULL;
+					dist = P_AproxDistance (targ->x - actor->x,
+											targ->y - actor->y);
+
+					// [KS] If the target is too far away, don't respond to the sound.
+					if (maxheardist && dist > maxheardist)
+					{
+						targ = NULL;
+						actor->LastHeard = NULL;
+					}
 				}
 			}
 
@@ -447,51 +791,57 @@ void A_LookEx (AActor *actor)
 	{
 		if (actor->IsFriend (targ))	// be a little more precise!
 		{
-			if (!(flags & LOF_NOSIGHTCHECK))
+			if (!(actor->flags4 & MF4_STANDSTILL))
 			{
-				// If we find a valid target here, the wandering logic should *not*
-				// be activated! If would cause the seestate to be set twice.
-				if (P_NewLookPlayers(actor, fov, minseedist, maxseedist, !(flags & LOF_DONTCHASEGOAL)))
-					goto seeyou;
-			}
-
-			// Let the actor wander around aimlessly looking for a fight
-			if (actor->SeeState != NULL)
-			{
-				if (!(actor->flags & MF_INCHASE))
+				if (!(flags & LOF_NOSIGHTCHECK))
 				{
-					if (seestate)
+					// If we find a valid target here, the wandering logic should *not*
+					// be activated! If would cause the seestate to be set twice.
+					if (P_NewLookPlayers(actor, fov, minseedist, maxseedist, !(flags & LOF_DONTCHASEGOAL)))
+						goto seeyou;
+				}
+
+				// Let the actor wander around aimlessly looking for a fight
+				if (actor->SeeState != NULL)
+				{
+					if (!(actor->flags & MF_INCHASE))
 					{
-						actor->SetState (seestate);
-					}
-					else
-					{
-						actor->SetState (actor->SeeState);
+						if (seestate)
+						{
+							actor->SetState (seestate);
+						}
+						else
+						{
+							actor->SetState (actor->SeeState);
+						}
 					}
 				}
-			}
-			else
-			{
-				A_Wander (actor);
+				else
+				{
+					A_Wander (actor);
+				}
 			}
 		}
 		else
 		{
 			actor->target = targ; //We already have a target?
 
-			if (actor->flags & MF_AMBUSH)
+			if (targ != NULL)
 			{
-				dist = P_AproxDistance (targ->x - actor->x,
-										targ->y - actor->y);
-				if (P_CheckSight (actor, actor->target, 2) &&
-					(!minseedist || dist > minseedist) &&
-					(!maxseedist || dist < maxseedist))
+				if (actor->flags & MF_AMBUSH)
 				{
-					goto seeyou;
+					dist = P_AproxDistance (targ->x - actor->x,
+											targ->y - actor->y);
+					if (P_CheckSight (actor, actor->target, 2) &&
+						(!minseedist || dist > minseedist) &&
+						(!maxseedist || dist < maxseedist))
+					{
+						goto seeyou;
+					}
 				}
+				else
+					goto seeyou;
 			}
-			else
-				goto seeyou;
 		}
 	}
 

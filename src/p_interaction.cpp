@@ -425,6 +425,9 @@ void AActor::Die (AActor *source, AActor *inflictor)
 			}
 			else
 			{
+				if ((dmflags2 & DF2_YES_LOSEFRAG) && deathmatch)
+					player->fragcount--;
+
 				++source->player->fragcount;
 				++source->player->spreecount;
 				if (source->player->morphTics)

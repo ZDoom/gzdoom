@@ -1037,6 +1037,7 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Allow exit",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_EXIT} },
 	{ bitflag,	"Barrels respawn",		{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_BARRELS_RESPAWN} },
 	{ bitflag,	"Respawn protection",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_INVUL} },
+	{ bitflag,	"Lose frag when fragged",{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_LOSEFRAG} },
 	{ redtext,	" ",					{NULL},			{0}, {0}, {0}, {NULL} },
 	{ whitetext,"Cooperative Settings",	{NULL},			{0}, {0}, {0}, {NULL} },
 	{ bitflag,	"Spawn multi. weapons", {&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_COOP_WEAPON_SPAWN} },

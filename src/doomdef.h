@@ -250,7 +250,7 @@ enum
 //#define DF2_NO_CLEARFRAGS		2048	// Don't clear frags after each level
 //#define DF2_FORCE_NORESPAWN	4096	// Player cannot respawn
 	DF2_YES_DEGENERATION	= 1 << 13,	// Quake-style degeneration
-//#define DF2_YES_LOSEFRAG		16384	// Lose a frag when killed. More incentive to try to
+	DF2_YES_LOSEFRAG		= 1 << 14,	// Lose a frag when killed. More incentive to try to
 //										// not get yerself killed
 	DF2_NO_FREEAIMBFG		= 1 << 15,	// Don't allow BFG to be aimed at the ground
 										// or ceiling. Prevents cheap BFG frags

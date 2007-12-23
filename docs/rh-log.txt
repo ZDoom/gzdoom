@@ -1,4 +1,5 @@
 December 23, 2007 (Changes by Graf Zahl)
+- Added Karate Chris's 'sv_losefrag' submission.
 - Added Karate Chris's 'sv_degeneration' submission.
 - Fixed: 'Bot joined the team' message was passing an FString to Printf.
 - Backported GZDoom's true color font mappings for use with native textures

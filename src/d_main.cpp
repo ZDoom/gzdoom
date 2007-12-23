@@ -390,6 +390,7 @@ CVAR (Int, dmflags2, 0, CVAR_SERVERINFO);
 CVAR (Flag, sv_weapondrop,		dmflags2, DF2_YES_WEAPONDROP);
 CVAR (Flag, sv_doubleammo,		dmflags2, DF2_YES_DOUBLEAMMO);
 CVAR (Flag, sv_degeneration,	dmflags2, DF2_YES_DEGENERATION);
+CVAR (Flag, sv_losefrag,		dmflags2, DF2_YES_LOSEFRAG);
 CVAR (Flag, sv_nobfgaim,		dmflags2, DF2_NO_FREEAIMBFG);
 CVAR (Flag, sv_respawnprotect,	dmflags2, DF2_YES_INVUL);
 CVAR (Flag, sv_barrelrespawn,	dmflags2, DF2_BARRELS_RESPAWN);

@@ -1,0 +1,33 @@
+
+// Fonts used by the alternative HUD
+
+HUDFONT_DOOM
+{
+	- STTMINUS
+	0 STTNUM0
+	1 STTNUM1
+	2 STTNUM2
+	3 STTNUM3
+	4 STTNUM4
+	5 STTNUM5
+	6 STTNUM6
+	7 STTNUM7
+	8 STTNUM8
+	9 STTNUM9
+	NOTRANSLATION 109	// don't touch the shadow color!
+}
+
+HUDFONT_RAVEN
+{
+	- NEGNUM
+	0 IN0
+	1 IN1
+	2 IN2
+	3 IN3
+	4 IN4
+	5 IN5
+	6 IN6
+	7 IN7
+	8 IN8
+	9 IN9
+}

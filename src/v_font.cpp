@@ -174,7 +174,19 @@ FFont * V_GetFont(const char *name)
 	FFont *font = FFont::FindFont (name);
 	if (font == NULL)
 	{
-		int lump = Wads.CheckNumForName (name);
+		int lump = -1;
+		FString fullname;
+		
+		if (strlen(name) > 8)
+		{
+			fullname.Format("%s.fon", name);
+			lump = Wads.CheckNumForFullName(name);
+		}
+		else
+		{
+			lump = Wads.CheckNumForName (name);
+		}
+		
 		if (lump != -1)
 		{
 			char head[3];

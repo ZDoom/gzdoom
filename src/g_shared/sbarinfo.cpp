@@ -25,6 +25,7 @@ static FRandom pr_chainwiggle; //use the same method of chain wiggling as hereti
 #define ST_RAMPAGETIME	(TICRATE*2)
 #define ST_XDTHTIME		(TICRATE*(3/2))
 #define ST_NUMFACES		80 //9 levels with 8 faces each, 1 god, 1 death, 6 xdeath
+#define ARTIFLASH_OFFSET (invBarOffset+6)
 
 EXTERN_CVAR(Int, fraglimit)
 
@@ -73,6 +74,7 @@ enum //drawbar flags (will go into special2)
 enum //drawselectedinventory flags
 {
 	DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY = 1,
+	DRAWSELECTEDINVENTORY_ARTIFLASH = 2,
 };
 
 enum //drawinventorybar flags
@@ -85,6 +87,12 @@ enum //drawgem flags
 {
 	DRAWGEM_WIGGLE = 1,
 	DRAWGEM_TRANSLATABLE = 2,
+};
+
+enum //drawshader flags
+{
+	DRAWSHADER_VERTICAL = 1,
+	DRAWSHADER_REVERSE = 2,
 };
 
 static const char *SBarInfoTopLevel[] =
@@ -133,6 +141,7 @@ static const char *SBarInfoRoutineLevel[] =
 	"drawinventorybar",
 	"drawbar",
 	"drawgem",
+	"drawshader",
 	"gamemode",
 	"playerclass",
 	NULL
@@ -147,6 +156,7 @@ enum
 	SBARINFO_DRAWINVENTORYBAR,
 	SBARINFO_DRAWBAR,
 	SBARINFO_DRAWGEM,
+	SBARINFO_DRAWSHADER,
 	SBARINFO_GAMEMODE,
 	SBARINFO_PLAYERCLASS,
 };
@@ -344,6 +354,8 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_Identifier);
 				cmd.font = V_GetFont(sc_String);
+				if(cmd.font == NULL)
+						SC_ScriptError("Unknown font '%s'.", sc_String);
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_Identifier);
 				cmd.translation = this->GetTranslation(sc_String);
@@ -435,16 +447,28 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 			case SBARINFO_DRAWSELECTEDINVENTORY:
 			{
 				bool alternateonempty = false;
-				SC_MustGetToken(TK_Identifier);
-				if(SC_Compare("alternateonempty"))
+				while(true) //go until we get a font (non-flag)
 				{
-					alternateonempty = true;
-					cmd.flags = DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY;
-					SC_MustGetToken(',');
 					SC_MustGetToken(TK_Identifier);
+					if(SC_Compare("alternateonempty"))
+					{
+						alternateonempty = true;
+						cmd.flags += DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY;
+					}
+					else if(SC_Compare("artiflash"))
+					{
+						cmd.flags += DRAWSELECTEDINVENTORY_ARTIFLASH;
+					}
+					else
+					{
+						cmd.font = V_GetFont(sc_String);
+						if(cmd.font == NULL)
+							SC_ScriptError("Unknown font '%s'.", sc_String);
+						SC_MustGetToken(',');
+						break;
+					}
+					SC_MustGetToken(',');
 				}
-				cmd.font = V_GetFont(sc_String);
-				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
@@ -512,6 +536,8 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					SC_MustGetToken(',');
 					SC_MustGetToken(TK_Identifier);
 					cmd.font = V_GetFont(sc_String);
+					if(cmd.font == NULL)
+						SC_ScriptError("Unknown font '%s'.", sc_String);
 				}
 				else
 				{
@@ -666,6 +692,39 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					SC_ScriptError("Chain size must be a positive number.");
 				cmd.special4 = sc_Number;
 				SC_MustGetToken(',');
+				SC_MustGetToken(TK_IntConst);
+				cmd.x = sc_Number;
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_IntConst);
+				cmd.y = sc_Number - (200 - SBarInfoScript.height);
+				SC_MustGetToken(';');
+				break;
+			case SBARINFO_DRAWSHADER:
+				SC_MustGetToken(TK_IntConst);
+				cmd.special = sc_Number;
+				if(sc_Number < 1)
+					SC_ScriptError("Width must be greater than 1.");
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_IntConst);
+				cmd.special2 = sc_Number;
+				if(sc_Number < 1)
+					SC_ScriptError("Height must be greater than 1.");
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_Identifier);
+				if(SC_Compare("vertical"))
+					cmd.flags += DRAWSHADER_VERTICAL;
+				else if(!SC_Compare("horizontal"))
+					SC_ScriptError("Unknown direction '%s'.", sc_String);
+				SC_MustGetToken(',');
+				if(SC_CheckToken(TK_Identifier))
+				{
+					if(!SC_Compare("reverse"))
+					{
+						SC_ScriptError("Exspected 'reverse', got '%s' instead.", sc_String);
+					}
+					cmd.flags += DRAWSHADER_REVERSE;
+					SC_MustGetToken(',');
+				}
 				SC_MustGetToken(TK_IntConst);
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
@@ -922,6 +981,87 @@ protected:
 	FTexture* image;
 };
 
+//Used for shadeing
+class FBarShader : public FTexture
+{
+public:
+	FBarShader()
+	{
+		WidthBits = 4;
+		HeightBits = 4;
+		WidthMask = 15;
+	}
+
+	const BYTE *GetColumn(unsigned int column, const Span **spans_out)
+	{
+		if(spans_out != NULL)
+		{
+			*spans_out = DummySpan;
+		}
+		return Pixels + 10*(column & (Width-1));
+	}
+
+	const BYTE *GetPixels()
+	{
+		return Pixels;
+	}
+
+	void Unload()
+	{
+	}
+
+	void PrepareShader(int width, int height, bool vertical, bool reverse) //make an alpha map
+	{
+		Width = width;
+		Height = height;
+		Pixels = new BYTE[width*height];
+		int value = vertical ? 256/height : 256/width;
+		int currentValue = value;
+		if(vertical)
+		{
+			for(int i = !reverse ? 0 : (width*height)-1;(!reverse && i < width*height) || (reverse && i >= 0);i += !reverse ? 1 : -1)
+			{
+				Pixels[i] = currentValue;
+				if(currentValue >= (value*height)) //time to reset
+				{
+					currentValue = value;
+					continue;
+				}
+				currentValue += value;
+				if(currentValue > 254)
+				{
+					currentValue = 254;
+				}
+			}
+		}
+		else
+		{
+			for(int i = reverse ? 0 : (width*height)-1;(reverse && i < width*height) || (!reverse && i >= 0);i += reverse ? 1 : -1)
+			{
+				Pixels[i] = currentValue;
+				if(i%height == 0)
+				{
+					if(currentValue >= (value*width)) //time to reset
+					{
+						currentValue = value;
+						continue;
+					}
+					currentValue += value;
+					if(currentValue > 254)
+					{
+						currentValue = 254;
+					}
+				}
+			}
+		}
+		Span Dummy[2] = {{0, height}, {0, 0}};
+		DummySpan = Dummy;
+	}
+private:
+	BYTE* Pixels;
+	Span* DummySpan;
+};
+
 //SBarInfo Display
 class FSBarInfo : public FBaseStatusBar
 {
@@ -932,15 +1072,16 @@ public:
 		{
 			"ARTIBOX",	"SELECTBO",	"INVGEML1",
 			"INVGEML2",	"INVGEMR1",	"INVGEMR2",
+			"USEARTIA", "USEARTIB", "USEARTIC", "USEARTID",
 		};
 		TArray<const char *> patchnames;
-		patchnames.Resize(SBarInfoScript.Images.Size()+6);
+		patchnames.Resize(SBarInfoScript.Images.Size()+10);
 		unsigned int i = 0;
 		for(i = 0;i < SBarInfoScript.Images.Size();i++)
 		{
 			patchnames[i] = SBarInfoScript.Images[i];
 		}
-		for(i = 0;i < 6;i++)
+		for(i = 0;i < 10;i++)
 		{
 			patchnames[i+SBarInfoScript.Images.Size()] = InventoryBarLumps[i];
 		}
@@ -957,6 +1098,7 @@ public:
 		lastPrefix = "";
 		weaponGrin = false;
 		chainWiggle = 0;
+		artiflash = 0;
 	}
 
 	~FSBarInfo ()
@@ -1037,6 +1179,10 @@ public:
 				oldHealth += clamp((CPlayer->health - oldHealth) >> 2, 1, 8);
 			}
 		}
+		if(artiflash)
+		{
+			artiflash--;
+		}
 	}
 
 	void SetFace (void *skn)
@@ -1047,6 +1193,11 @@ public:
 	void ReceivedWeapon (AWeapon *weapon)
 	{
 		weaponGrin = true;
+	}
+
+	void FlashItem(const PClass *itemtype)
+	{
+		artiflash = 4;
 	}
 private:
 	//code from doom_sbar.cpp but it should do fine.
@@ -1300,7 +1451,14 @@ private:
 				case SBARINFO_DRAWSELECTEDINVENTORY:
 					if(CPlayer->mo->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR))
 					{
-						DrawImage(TexMan(CPlayer->mo->InvSel->Icon), cmd.x, cmd.y, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP);
+						if((cmd.flags & DRAWSELECTEDINVENTORY_ARTIFLASH) && artiflash)
+						{
+							DrawImage(Images[ARTIFLASH_OFFSET+(4-artiflash)], cmd.x, cmd.y, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP);
+						}
+						else
+						{
+							DrawImage(TexMan(CPlayer->mo->InvSel->Icon), cmd.x, cmd.y, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP);
+						}
 						if(CPlayer->mo->InvSel->Amount != 1)
 						{
 							if(drawingFont != cmd.font)
@@ -1310,7 +1468,7 @@ private:
 							DrawNumber(CPlayer->mo->InvSel->Amount, 3, cmd.special2, cmd.special3, cmd.translation, cmd.special4);
 						}
 					}
-					else if((cmd.flags & DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY) == DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY)
+					else if((cmd.flags & DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY))
 					{
 						doCommands(cmd.subBlock);
 					}
@@ -1319,9 +1477,9 @@ private:
 				{
 					bool alwaysshow = false;
 					bool artibox = true;
-					if((cmd.flags & DRAWINVENTORYBAR_ALWAYSSHOW) == DRAWINVENTORYBAR_ALWAYSSHOW)
+					if((cmd.flags & DRAWINVENTORYBAR_ALWAYSSHOW))
 						alwaysshow = true;
-					if((cmd.flags & DRAWINVENTORYBAR_NOARTIBOX) == DRAWINVENTORYBAR_NOARTIBOX)
+					if((cmd.flags & DRAWINVENTORYBAR_NOARTIBOX))
 						artibox = false;
 					if(drawingFont != cmd.font)
 					{
@@ -1333,8 +1491,8 @@ private:
 				case SBARINFO_DRAWBAR:
 				{
 					if(cmd.sprite == -1) break; //don't draw anything.
-					bool horizontal = ((cmd.special2 & DRAWBAR_HORIZONTAL) == DRAWBAR_HORIZONTAL);
-					bool reverse = ((cmd.special2 & DRAWBAR_REVERSE) == DRAWBAR_REVERSE);
+					bool horizontal = ((cmd.special2 & DRAWBAR_HORIZONTAL));
+					bool reverse = ((cmd.special2 & DRAWBAR_REVERSE));
 					int value = 0;
 					int max = 0;
 					if(cmd.flags == DRAWNUMBER_HEALTH)
@@ -1344,7 +1502,7 @@ private:
 						{
 							value = 0;
 						}
-						if(!((cmd.special2 & DRAWBAR_COMPAREDEFAULTS) == DRAWBAR_COMPAREDEFAULTS))
+						if(!(cmd.special2 & DRAWBAR_COMPAREDEFAULTS))
 						{
 							AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0])); //max comparer
 							if(item != NULL)
@@ -1474,7 +1632,21 @@ private:
 					{
 						wiggle = (cmd.flags & DRAWGEM_WIGGLE) == DRAWGEM_WIGGLE;
 					}
-					DrawGem(Images[cmd.special], Images[cmd.sprite], value, cmd.x, cmd.y, cmd.special2, cmd.special3, cmd.special4-1, wiggle, translate);
+					DrawGem(Images[cmd.special], Images[cmd.sprite], value, cmd.x, cmd.y, cmd.special2, cmd.special3, cmd.special4+1, wiggle, translate);
+					break;
+				}
+				case SBARINFO_DRAWSHADER:
+				{
+					bool vertical = (cmd.flags & DRAWSHADER_VERTICAL);
+					bool reverse = (cmd.flags & DRAWSHADER_REVERSE);
+					FBarShader* shader = new FBarShader();
+					shader->PrepareShader(cmd.special, cmd.special2, vertical, reverse);
+					screen->DrawTexture (shader, ST_X+cmd.x, ST_Y+cmd.y,
+						DTA_320x200, Scaled,
+						DTA_AlphaChannel, true,
+						DTA_FillColor, 0,
+						TAG_DONE);
+					delete shader;
 					break;
 				}
 				case SBARINFO_GAMEMODE:
@@ -1754,6 +1926,7 @@ private:
 	int oldHealth;
 	int mugshotHealth;
 	int chainWiggle;
+	int artiflash;
 	unsigned int invBarOffset;
 };
 

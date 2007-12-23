@@ -1,4 +1,13 @@
 December 23, 2007 (Changes by Graf Zahl)
+- Added Blzut3's third SBARINFO update:
+ * Added drawshader to draw Heretic style transparency gradients.
+ * Added artiflash flag to drawselectedinventory.
+ * Fixed: Drawgem used the wrong operator when determining the chain size.
+ * Fixed: ZDoom would crash if an undefined font was used.
+ * I also started cleaning up the source a little.  I have been informed that
+ when checking for flags the "== flagname" is redundant.
+- Added indexfont anf hudfont from GZDoom to zdoom.pk3 so that they are always 
+  available when defining custom status bars.
 - Added Karate Chris's 'sv_losefrag' submission.
 - Added Karate Chris's 'sv_degeneration' submission.
 - Fixed: 'Bot joined the team' message was passing an FString to Printf.

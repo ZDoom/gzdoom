@@ -87,6 +87,7 @@ public:
 	FTexture *GetChar (int code, int *const width) const;
 	int GetCharWidth (int code) const;
 	BYTE *GetColorTranslation (EColorRange range) const;
+	PalEntry *GetTranslatedPalette (EColorRange range) const;
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
 	int GetDefaultKerning () const { return GlobalKerning; }
@@ -114,6 +115,7 @@ protected:
 	} *Chars;
 	int ActiveColors;
 	BYTE *Ranges;
+	PalEntry *PalRanges;
 	BYTE *PatchRemap;
 
 	char *Name;

@@ -1254,7 +1254,7 @@ static void ConfirmIsAGo ()
 //
 //		Set some stuff up for the video modes menu
 //
-static BYTE BitTranslate[16];
+static BYTE BitTranslate[32];
 
 void M_OptInit (void)
 {

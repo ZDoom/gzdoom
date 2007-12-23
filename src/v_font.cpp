@@ -252,6 +252,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	charlumps = new int[count];
 	PatchRemap = new BYTE[256];
 	Ranges = NULL;
+	PalRanges = NULL;
 	FirstChar = first;
 	LastChar = first + count - 1;
 	FontHeight = 0;
@@ -353,6 +354,11 @@ FFont::~FFont ()
 	{
 		delete[] Ranges;
 		Ranges = NULL;
+	}
+	if (PalRanges)
+	{
+		delete[] PalRanges;
+		PalRanges = NULL;
 	}
 	if (PatchRemap)
 	{
@@ -539,8 +545,11 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, c
 	int i, j;
 	const TranslationParm *parmstart = (const TranslationParm *)ranges;
 	BYTE *range;
+	PalEntry *prange;
 
 	range = Ranges = new BYTE[NumTextColors * ActiveColors];
+	// this is padded so that each palette can be treated as if it had 256 colors
+	prange = PalRanges = new PalEntry[NumTextColors * ActiveColors + 256];
 
 	// Create different translations for different color ranges
 	for (i = 0; i < NumTextColors; i++)
@@ -555,6 +564,10 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, c
 			{
 				memcpy (range, Ranges, ActiveColors);
 			}
+			for (j = 0; j < ActiveColors; j++)
+			{
+				*prange++ = GPalette.BaseColors[range[j]];
+			}
 			range += ActiveColors;
 			continue;
 		}
@@ -562,6 +575,7 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, c
 		assert(parmstart->RangeStart >= 0);
 
 		*range++ = 0;
+		*prange++ = PalEntry(0);
 
 		for (j = 1; j < ActiveColors; j++)
 		{
@@ -586,6 +600,7 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, c
 			g=clamp(g, 0, 255);
 			b=clamp(b, 0, 255);
 			*range++ = ColorMatcher.Pick (r, g, b);
+			*prange++ = PalEntry(r, g, b);
 		}
 
 		// Advance to the next color range.
@@ -611,6 +626,16 @@ BYTE *FFont::GetColorTranslation (EColorRange range) const
 		range = CR_UNTRANSLATED;
 	return Ranges + ActiveColors * range;
 }
+
+PalEntry *FFont::GetTranslatedPalette (EColorRange range) const
+{
+	if (ActiveColors == 0)
+		return NULL;
+	else if (range >= NumTextColors)
+		range = CR_UNTRANSLATED;
+	return PalRanges + ActiveColors * range;
+}
+
 
 //==========================================================================
 //
@@ -1432,18 +1457,24 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 	{
 		int factor = 1;
 		BYTE *oldranges = Ranges;
-		Ranges = new BYTE[NumTextColors * TotalColors * factor];
+		PalEntry *oldpranges = PalRanges;
 
-		for (i = 0; i < CR_UNTRANSLATED; i++)
+		Ranges = new BYTE[NumTextColors * TotalColors];	// palette map + true color map + padding
+		PalRanges = new PalEntry[NumTextColors * TotalColors + 256]; // padded so that each palette can be treated as if it had 256 colors
+
+		for (i = 0; i < NumTextColors; i++)
 		{
-			memcpy (&Ranges[i * TotalColors * factor], &oldranges[i * ActiveColors * factor], ActiveColors * factor);
+			memcpy(&Ranges [i * TotalColors], &oldranges [i * ActiveColors], ActiveColors);
+			memcpy(&PalRanges[i * TotalColors], &oldpranges[i * ActiveColors], ActiveColors*sizeof(PalEntry));
 
-			for (j = ActiveColors; j < TotalColors; j++)
+			for(j=ActiveColors;j<TotalColors;j++)
 			{
 				Ranges[TotalColors*i + j] = identity[j];
+				PalRanges[TotalColors*i + j] = GPalette.BaseColors[identity[j]];
 			}
 		}
 		delete[] oldranges;
+		delete[] oldpranges;
 	}
 	ActiveColors = TotalColors;
 

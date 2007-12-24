@@ -179,6 +179,9 @@ public:
 	// Calculate gamma table
 	void CalcGamma (float gamma, BYTE gammalookup[256]);
 
+	// Can be overridden so that the colormaps for sector color/fade won't be built.
+	virtual bool UsesColormap() const;
+
 	// Text drawing functions -----------------------------------------------
 
 	virtual void SetFont (FFont *font);

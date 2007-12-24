@@ -71,6 +71,7 @@ struct FDynamicColormap
 	void ChangeColor (PalEntry lightcolor, int desaturate);
 	void ChangeColorFade (PalEntry lightcolor, PalEntry fadecolor);
 	void BuildLights ();
+	static void RebuildAllLights();
 
 	BYTE *Maps;
 	PalEntry Color;

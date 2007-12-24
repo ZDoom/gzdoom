@@ -180,7 +180,7 @@ FFont * V_GetFont(const char *name)
 		if (strlen(name) > 8)
 		{
 			fullname.Format("%s.fon", name);
-			lump = Wads.CheckNumForFullName(name);
+			lump = Wads.CheckNumForFullName(fullname);
 		}
 		else
 		{

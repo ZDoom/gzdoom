@@ -328,6 +328,11 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h) 
 	}
 }
 
+bool DCanvas::UsesColormap() const
+{
+	return true;
+}
+
 int V_GetColorFromString (const DWORD *palette, const char *cstr)
 {
 	int c[3], i, p;

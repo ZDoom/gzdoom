@@ -1,4 +1,6 @@
 December 24, 2007 (Changes by Graf Zahl)
+- added some functionality to FDynamicColormap to allow not creating
+  the colormap data.
 - also replaced the AM crosshair drawer by a DCanvas::DrawPixel function.
 - moved the AM line drawer into DCanvas as a virtual function. While testing
   this code I discovered that the antialias precalculation was never used

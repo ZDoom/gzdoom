@@ -659,14 +659,18 @@ FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturat
 
 	// Not found. Create it.
 	colormap = new FDynamicColormap;
-	colormap->Maps = new BYTE[NUMCOLORMAPS*256];
 	colormap->Next = NormalLight.Next;
 	colormap->Color = color;
 	colormap->Fade = fade;
 	colormap->Desaturate = desaturate;
 	NormalLight.Next = colormap;
 
-	colormap->BuildLights ();
+	if (screen->UsesColormap())
+	{
+		colormap->Maps = new BYTE[NUMCOLORMAPS*256];
+		colormap->BuildLights ();
+	}
+	else colormap->Maps = NULL;
 
 	return colormap;
 }
@@ -787,6 +791,24 @@ void FDynamicColormap::ChangeColorFade (PalEntry lightcolor, PalEntry fadecolor)
 		if (Maps) BuildLights ();
 	}
 }
+
+void FDynamicColormap::RebuildAllLights()
+{
+	if (screen->UsesColormap())
+	{
+		FDynamicColormap *cm;
+
+		for (cm = &NormalLight; cm != NULL; cm = cm->Next)
+		{
+			if (cm->Maps == NULL)
+			{
+				cm->Maps = new BYTE[NUMCOLORMAPS*256];
+				cm->BuildLights ();
+			}
+		}
+	}
+}
+
 
 CCMD (testcolor)
 {

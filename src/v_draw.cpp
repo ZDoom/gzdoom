@@ -674,6 +674,246 @@ void DCanvas::DrawPlayerBackdrop (DCanvas *src, const BYTE *FireRemap, int x, in
 }
 
 
+void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
+{
+	static int oldyy;
+	static int oldyyshifted;
+
+#if 0
+	if(xx < 32)
+		cc += 7-(xx>>2);
+	else if(xx > (finit_width - 32))
+		cc += 7-((finit_width-xx) >> 2);
+//	if(cc==oldcc) //make sure that we don't double fade the corners.
+//	{
+		if(yy < 32)
+			cc += 7-(yy>>2);
+		else if(yy > (finit_height - 32))
+			cc += 7-((finit_height-yy) >> 2);
+//	}
+	if(cc > cm && cm != NULL)
+	{
+		cc = cm;
+	}
+	else if(cc > oldcc+6) // don't let the color escape from the fade table...
+	{
+		cc=oldcc+6;
+	}
+#endif
+	if (yy == oldyy+1)
+	{
+		oldyy++;
+		oldyyshifted += GetPitch();
+	}
+	else if (yy == oldyy-1)
+	{
+		oldyy--;
+		oldyyshifted -= GetPitch();
+	}
+	else if (yy != oldyy)
+	{
+		oldyy = yy;
+		oldyyshifted = yy * GetPitch();
+	}
+
+	BYTE *spot = GetBuffer() + oldyyshifted + xx;
+	DWORD *bg2rgb = Col2RGB8[1+level];
+	DWORD *fg2rgb = Col2RGB8[63-level];
+	DWORD fg = fg2rgb[basecolor];
+	DWORD bg = bg2rgb[*spot];
+	bg = (fg+bg) | 0x1f07c1f;
+	*spot = RGB32k[0][0][bg&(bg>>15)];
+}
+
+void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor)
+//void DrawTransWuLine (int x0, int y0, int x1, int y1, BYTE palColor)
+{
+	const int WeightingScale = 0;
+	const int WEIGHTBITS = 6;
+	const int WEIGHTSHIFT = 16-WEIGHTBITS;
+	const int NUMWEIGHTS = (1<<WEIGHTBITS);
+	const int WEIGHTMASK = (NUMWEIGHTS-1);
+
+	if (palColor < 0)
+	{
+		// Quick check for black.
+		if (realcolor == MAKEARGB(255,0,0,0))
+		{
+			palColor = 0;
+		}
+		else
+		{
+			palColor = ColorMatcher.Pick(RPART(realcolor), GPART(realcolor), BPART(realcolor));
+		}
+	}
+
+	Lock();
+	int deltaX, deltaY, xDir;
+
+	if (y0 > y1)
+	{
+		int temp = y0; y0 = y1; y1 = temp;
+		temp = x0; x0 = x1; x1 = temp;
+	}
+
+	PUTTRANSDOT (x0, y0, palColor, 0);
+
+	if ((deltaX = x1 - x0) >= 0)
+	{
+		xDir = 1;
+	}
+	else
+	{
+		xDir = -1;
+		deltaX = -deltaX;
+	}
+
+	if ((deltaY = y1 - y0) == 0)
+	{ // horizontal line
+		if (x0 > x1)
+		{
+			swap (x0, x1);
+		}
+		memset (GetBuffer() + y0*GetPitch() + x0, palColor, deltaX+1);
+	}
+	else if (deltaX == 0)
+	{ // vertical line
+		BYTE *spot = GetBuffer() + y0*GetPitch() + x0;
+		int pitch = GetPitch ();
+		do
+		{
+			*spot = palColor;
+			spot += pitch;
+		} while (--deltaY != 0);
+	}
+	else if (deltaX == deltaY)
+	{ // diagonal line.
+		BYTE *spot = GetBuffer() + y0*GetPitch() + x0;
+		int advance = GetPitch() + xDir;
+		do
+		{
+			*spot = palColor;
+			spot += advance;
+		} while (--deltaY != 0);
+	}
+	else
+	{
+		// line is not horizontal, diagonal, or vertical
+		fixed_t errorAcc = 0;
+
+		if (deltaY > deltaX)
+		{ // y-major line
+			fixed_t errorAdj = (((unsigned)deltaX << 16) / (unsigned)deltaY) & 0xffff;
+			if (xDir < 0)
+			{
+				if (WeightingScale == 0)
+				{
+					while (--deltaY)
+					{
+						errorAcc += errorAdj;
+						y0++;
+						int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
+						PUTTRANSDOT (x0 - (errorAcc >> 16), y0, palColor, weighting);
+						PUTTRANSDOT (x0 - (errorAcc >> 16) - 1, y0,
+								palColor, WEIGHTMASK - weighting);
+					}
+				}
+				else
+				{
+					while (--deltaY)
+					{
+						errorAcc += errorAdj;
+						y0++;
+						int weighting = ((errorAcc * WeightingScale) >> (WEIGHTSHIFT+8)) & WEIGHTMASK;
+						PUTTRANSDOT (x0 - (errorAcc >> 16), y0, palColor, weighting);
+						PUTTRANSDOT (x0 - (errorAcc >> 16) - 1, y0,
+								palColor, WEIGHTMASK - weighting);
+					}
+				}
+			}
+			else
+			{
+				if (WeightingScale == 0)
+				{
+					while (--deltaY)
+					{
+						errorAcc += errorAdj;
+						y0++;
+						int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
+						PUTTRANSDOT (x0 + (errorAcc >> 16), y0, palColor, weighting);
+						PUTTRANSDOT (x0 + (errorAcc >> 16) + xDir, y0,
+								palColor, WEIGHTMASK - weighting);
+					}
+				}
+				else
+				{
+					while (--deltaY)
+					{
+						errorAcc += errorAdj;
+						y0++;
+						int weighting = ((errorAcc * WeightingScale) >> (WEIGHTSHIFT+8)) & WEIGHTMASK;
+						PUTTRANSDOT (x0 + (errorAcc >> 16), y0, palColor, weighting);
+						PUTTRANSDOT (x0 + (errorAcc >> 16) + xDir, y0,
+								palColor, WEIGHTMASK - weighting);
+					}
+				}
+			}
+		}
+		else
+		{ // x-major line
+			fixed_t errorAdj = (((DWORD) deltaY << 16) / (DWORD) deltaX) & 0xffff;
+
+			if (WeightingScale == 0)
+			{
+				while (--deltaX)
+				{
+					errorAcc += errorAdj;
+					x0 += xDir;
+					int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
+					PUTTRANSDOT (x0, y0 + (errorAcc >> 16), palColor, weighting);
+					PUTTRANSDOT (x0, y0 + (errorAcc >> 16) + 1,
+							palColor, WEIGHTMASK - weighting);
+				}
+			}
+			else
+			{
+				while (--deltaX)
+				{
+					errorAcc += errorAdj;
+					x0 += xDir;
+					int weighting = ((errorAcc * WeightingScale) >> (WEIGHTSHIFT+8)) & WEIGHTMASK;
+					PUTTRANSDOT (x0, y0 + (errorAcc >> 16), palColor, weighting);
+					PUTTRANSDOT (x0, y0 + (errorAcc >> 16) + 1,
+							palColor, WEIGHTMASK - weighting);
+				}
+			}
+		}
+		PUTTRANSDOT (x1, y1, palColor, 0);
+	}
+	Unlock();
+}
+
+void DCanvas::DrawPixel(int x, int y, int palColor, uint32 realcolor)
+{
+	if (palColor < 0)
+	{
+		// Quick check for black.
+		if (realcolor == MAKEARGB(255,0,0,0))
+		{
+			palColor = 0;
+		}
+		else
+		{
+			palColor = ColorMatcher.Pick(RPART(realcolor), GPART(realcolor), BPART(realcolor));
+		}
+	}
+
+	Lock();
+	GetBuffer()[GetPitch() * y + x] = (BYTE)palColor;
+	Unlock();
+}
+
+
 /********************************/
 /*								*/
 /* Other miscellaneous routines */

@@ -1977,8 +1977,9 @@ void G_DoLoadLevel (int position, bool autosave)
 	{ 
 		if (playeringame[i] && (deathmatch || players[i].playerstate == PST_DEAD))
 			players[i].playerstate = PST_ENTER;	// [BC]
-		memset (players[i].frags,0,sizeof(players[i].frags)); 
-		players[i].fragcount = 0;
+		memset (players[i].frags,0,sizeof(players[i].frags));
+		if (!(dmflags2 & DF2_YES_KEEPFRAGS) && (alwaysapplydmflags || deathmatch))
+			players[i].fragcount = 0;
 	}
 
 	if (g_nomonsters)

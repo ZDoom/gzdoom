@@ -170,6 +170,12 @@ public:
 	// renders the player backdrop for the menu
 	virtual void DrawPlayerBackdrop (DCanvas *src, const BYTE *FireRemap, int x, int y);
 
+	// draws a line
+	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor);
+
+	// draws a single pixel
+	virtual void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor);
+
 	// Calculate gamma table
 	void CalcGamma (float gamma, BYTE gammalookup[256]);
 
@@ -232,6 +238,8 @@ private:
 	// Keep track of canvases, for automatic destruction at exit
 	DCanvas *Next;
 	static DCanvas *CanvasChain;
+
+	void PUTTRANSDOT (int xx, int yy, int basecolor, int level);
 };
 
 // A canvas in system memory.

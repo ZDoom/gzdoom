@@ -1890,7 +1890,7 @@ void WI_checkForAccelerate(void)
 		{
 			if ((player->cmd.ucmd.buttons ^ player->oldbuttons) &&
 				((players[i].cmd.ucmd.buttons & players[i].oldbuttons)
-					== players[i].oldbuttons))
+					== players[i].oldbuttons) && !player->isbot)
 			{
 				acceleratestage = 1;
 			}

@@ -143,7 +143,7 @@ void DCajunMaster::Main (int buf)
 	}
 
 	//Check if player should go observer. Or un observe
-	if (bot_observer && !observer)
+	if (bot_observer && !observer && !netgame)
 	{
 		Printf ("%s is now observer\n", players[consoleplayer].userinfo.netname);
 		observer = true;
@@ -152,7 +152,7 @@ void DCajunMaster::Main (int buf)
 		players[consoleplayer].mo->flags2 |= MF2_FLY;
 		players[consoleplayer].mo->LinkToWorld ();
 	}
-	else if (!bot_observer && observer) //Go back
+	else if (!bot_observer && observer && !netgame) //Go back
 	{
 		Printf ("%s returned to the fray\n", players[consoleplayer].userinfo.netname);
 		observer = false;

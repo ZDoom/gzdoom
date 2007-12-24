@@ -132,7 +132,7 @@ void HU_DrawScores (player_t *player)
 		sortedplayers[j] = &players[i];
 	}
 
-	if (teamplay)
+	if (teamplay && deathmatch)
 		qsort (sortedplayers, MAXPLAYERS, sizeof(player_t *), compareteams);
 	else
 		qsort (sortedplayers, MAXPLAYERS, sizeof(player_t *), comparepoints);
@@ -179,14 +179,14 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		}
 	}
 
-	if (teamplay)
+	if (teamplay && deathmatch)
 		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 16;
 	else
 		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 4 : y = SCREENHEIGHT / 16;
 
 	HU_DrawTimeRemaining (ST_Y - height);
 
-	if (teamplay)
+	if (teamplay && deathmatch)
 	{
 		for (i = 0; i < teams.Size (); i++)
 		{
@@ -240,7 +240,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	x = (SCREENWIDTH >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
 	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 10;
 
-	if (teamplay)
+	if (teamplay && deathmatch)
 		y += SCREENWIDTH / 32;
 
 	for (i = 0; i < MAXPLAYERS && y < ST_Y - 12 * CleanYfac; i++)
@@ -306,7 +306,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 					 clamp(int(g*255.f),0,255),
 					 clamp(int(b*255.f),0,255)));
 
-	if (teamplay)
+	if (teamplay && deathmatch)
 	{
 		color = teams[player->userinfo.team].GetTextColor ();
 	}
@@ -320,7 +320,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 
 	sprintf (str, "%d", deathmatch ? player->fragcount : player->killcount);
 
-	screen->DrawText (color, SCREENWIDTH / 4, y, str,
+	screen->DrawText (color, SCREENWIDTH / 4, y, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str,
 		DTA_CleanNoMove, true, TAG_DONE);
 
 	screen->DrawText (color, SCREENWIDTH / 2, y, player->userinfo.netname,

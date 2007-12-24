@@ -53,7 +53,25 @@
 #include "am_map.h"
 #include "a_artifacts.h"
 
-static int Background, YourColor, WallColor, TSWallColor,
+struct AMColor
+{
+	int Index;
+	uint32 RGB;
+
+	void FromCVar(FColorCVar & cv)
+	{
+		Index = cv.GetIndex();
+		RGB = uint32(cv) | MAKEARGB(255, 0, 0, 0);
+	}
+
+	void FromRGB(int r,int g, int b)
+	{
+		RGB = MAKEARGB(255, r, g, b);
+		Index = ColorMatcher.Pick(r, g, b);
+	}
+};
+
+static AMColor Background, YourColor, WallColor, TSWallColor,
 		   FDWallColor, CDWallColor, ThingColor,
 		   ThingColor_Item, ThingColor_Monster, ThingColor_Friend,
 		   SecretWallColor, GridColor, XHairColor,
@@ -63,7 +81,7 @@ static int Background, YourColor, WallColor, TSWallColor,
 		   IntraTeleportColor, InterTeleportColor,
 		   SecretSectorColor;
 
-static int DoomColors[11];
+static AMColor DoomColors[11];
 static BYTE DoomPaletteVals[11*3] =
 {
 	0x00,0x00,0x00, 0xff,0xff,0xff, 0x10,0x10,0x10,
@@ -96,7 +114,7 @@ inline fixed_t MTOF(fixed_t x)
 	return MulScale24 (x, scale_mtof);
 }
 
-static int WeightingScale;
+//static int WeightingScale;
 
 CVAR (Int,   am_rotate,				0,			CVAR_ARCHIVE);
 CVAR (Int,   am_overlay,			0,			CVAR_ARCHIVE);
@@ -279,7 +297,6 @@ static int	f_w;
 static int	f_h;
 static int	f_p;				// [RH] # of bytes from start of a line to start of next
 
-static BYTE *fb;				// pseudo-frame buffer
 static int	amclock;
 
 static mpoint_t	m_paninc;		// how far the window pans each tic (map coords)
@@ -329,24 +346,18 @@ static fixed_t mapxstart=0; //x-value for the bitmap.
 static bool stopped = true;
 
 
+/*
 #define NUMALIASES		3
 #define WALLCOLORS		-1
 #define FDWALLCOLORS	-2
 #define CDWALLCOLORS	-3
 
-#define WEIGHTBITS		6
-#define WEIGHTSHIFT		(16-WEIGHTBITS)
-#define NUMWEIGHTS		(1<<WEIGHTBITS)
-#define WEIGHTMASK		(NUMWEIGHTS-1)
 static BYTE antialias[NUMALIASES][NUMWEIGHTS];
-
+*/
 
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
 void AM_rotate (fixed_t *x, fixed_t *y, angle_t an);
-
-void DrawWuLine (int X0, int Y0, int X1, int Y1, BYTE *BaseColor);
-void DrawTransWuLine (int X0, int Y0, int X1, int Y1, BYTE BaseColor);
 
 // Calculates the slope and slope according to the x-axis of a line
 // segment in map coordinates (with the upright y-axis n' all) so
@@ -604,6 +615,7 @@ void AM_initVariables ()
 	old_m_h = m_h;
 }
 
+/*
 static void GetComponents (int color, DWORD *palette, float &r, float &g, float &b)
 {
 	if (palette)
@@ -613,11 +625,13 @@ static void GetComponents (int color, DWORD *palette, float &r, float &g, float 
 	g = (float)GPART(color);
 	b = (float)BPART(color);
 }
+*/
+
 
 static void AM_initColors (bool overlayed)
 {
 	static DWORD *lastpal = NULL;
-	static int lastback = -1;
+	//static int lastback = -1;
 	DWORD *palette;
 	
 	palette = (DWORD *)GPalette.BaseColors;
@@ -628,45 +642,47 @@ static void AM_initColors (bool overlayed)
 
 		for (i = j = 0; i < 11; i++, j += 3)
 		{
-			DoomColors[i] = palette
-				? ColorMatcher.Pick (DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2])
-				: MAKERGB(DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2]);
+			DoomColors[i].FromRGB(DoomPaletteVals[j], DoomPaletteVals[j+1], DoomPaletteVals[j+2]);
 		}
 	}
 
 	if (overlayed)
 	{
-		YourColor = am_ovyourcolor.GetIndex ();
-		SecretSectorColor = SecretWallColor = WallColor = am_ovwallcolor.GetIndex ();
-		ThingColor_Item = am_ovthingcolor_item.GetIndex();
-		ThingColor_Friend = am_ovthingcolor_friend.GetIndex();
-		ThingColor_Monster = am_ovthingcolor_monster.GetIndex();
-		ThingColor = am_ovthingcolor.GetIndex ();
-		FDWallColor = CDWallColor = LockedColor = am_ovotherwallscolor.GetIndex ();
-		NotSeenColor = TSWallColor = am_ovunseencolor.GetIndex ();
-		IntraTeleportColor = InterTeleportColor = am_ovtelecolor.GetIndex ();
+		YourColor.FromCVar (am_ovyourcolor);
+		WallColor.FromCVar (am_ovwallcolor);
+		SecretSectorColor = SecretWallColor = WallColor;
+		ThingColor_Item.FromCVar (am_ovthingcolor_item);
+		ThingColor_Friend.FromCVar (am_ovthingcolor_friend);
+		ThingColor_Monster.FromCVar (am_ovthingcolor_monster);
+		ThingColor.FromCVar (am_ovthingcolor);
+		LockedColor.FromCVar (am_ovotherwallscolor);
+		FDWallColor = CDWallColor = LockedColor;
+		TSWallColor.FromCVar (am_ovunseencolor);
+		NotSeenColor = TSWallColor;
+		InterTeleportColor.FromCVar (am_ovtelecolor);
+		IntraTeleportColor = InterTeleportColor;
 	}
 	else if (am_usecustomcolors)
 	{
 		/* Use the custom colors in the am_* cvars */
-		Background = am_backcolor.GetIndex ();
-		YourColor = am_yourcolor.GetIndex ();
-		SecretWallColor = am_secretwallcolor.GetIndex ();
-		WallColor = am_wallcolor.GetIndex ();
-		TSWallColor = am_tswallcolor.GetIndex ();
-		FDWallColor = am_fdwallcolor.GetIndex ();
-		CDWallColor = am_cdwallcolor.GetIndex ();
-		ThingColor_Item = am_thingcolor_item.GetIndex();
-		ThingColor_Friend = am_thingcolor_friend.GetIndex();
-		ThingColor_Monster = am_thingcolor_monster.GetIndex();
-		ThingColor = am_thingcolor.GetIndex ();
-		GridColor = am_gridcolor.GetIndex ();
-		XHairColor = am_xhaircolor.GetIndex ();
-		NotSeenColor = am_notseencolor.GetIndex ();
-		LockedColor = am_lockedcolor.GetIndex ();
-		InterTeleportColor = am_interlevelcolor.GetIndex ();
-		IntraTeleportColor = am_intralevelcolor.GetIndex ();
-		SecretSectorColor = am_secretsectorcolor.GetIndex ();
+		Background.FromCVar (am_backcolor);
+		YourColor.FromCVar (am_yourcolor);
+		SecretWallColor.FromCVar (am_secretwallcolor);
+		WallColor.FromCVar (am_wallcolor);
+		TSWallColor.FromCVar (am_tswallcolor);
+		FDWallColor.FromCVar (am_fdwallcolor);
+		CDWallColor.FromCVar (am_cdwallcolor);
+		ThingColor_Item.FromCVar (am_thingcolor_item);
+		ThingColor_Friend.FromCVar (am_thingcolor_friend);
+		ThingColor_Monster.FromCVar (am_thingcolor_monster);
+		ThingColor.FromCVar (am_thingcolor);
+		GridColor.FromCVar (am_gridcolor);
+		XHairColor.FromCVar (am_xhaircolor);
+		NotSeenColor.FromCVar (am_notseencolor);
+		LockedColor.FromCVar (am_lockedcolor);
+		InterTeleportColor.FromCVar (am_interlevelcolor);
+		IntraTeleportColor.FromCVar (am_intralevelcolor);
+		SecretSectorColor.FromCVar (am_secretsectorcolor);
 
 		DWORD ba = am_backcolor;
 
@@ -681,7 +697,7 @@ static void AM_initColors (bool overlayed)
 		if (b < 0)
 			b += 32;
 
-		AlmostBackground = ColorMatcher.Pick (r, g, b);
+		AlmostBackground.FromRGB(r, g, b);
 	}
 	else
 	{ // Use colors corresponding to the original Doom's
@@ -703,6 +719,11 @@ static void AM_initColors (bool overlayed)
 		XHairColor = DoomColors[9];
 		NotSeenColor = DoomColors[10];
 	}
+
+#if 0
+	// Due to a bug (marked below) precalculated antialiasing was never working properly.
+	// Also, tests show it provides no measurable performance improvement.
+	// And since it only complicates matters it's disabled for now.
 
 	// initialize the anti-aliased lines
 	static struct
@@ -743,11 +764,14 @@ static void AM_initColors (bool overlayed)
 //				else
 //					antialias[alias][i] = MAKERGB(red, green, blue);
 			}
-			*(aliasedLines[alias].color) = aliasedLines[alias].falseColor;
 		}
+		// This line was inside the 'if' block rendering the whole
+		// precalculation inoperable.
+		*(aliasedLines[alias].color) = aliasedLines[alias].falseColor;
 	}
-	lastpal = palette;
 	lastback = Background;
+#endif
+	lastpal = palette;
 }
 
 //
@@ -1091,11 +1115,11 @@ void AM_Ticker ()
 //
 // Clear automap frame buffer.
 //
-void AM_clearFB (int color)
+void AM_clearFB (const AMColor &color)
 {
 	if (mapback == NULL || !am_drawmapback)
 	{
-		screen->Clear (0, 0, f_w, f_h, color, 0);
+		screen->Clear (0, 0, f_w, f_h, color.Index, color.RGB);
 	}
 	else
 	{
@@ -1244,479 +1268,16 @@ bool AM_clipMline (mline_t *ml, fline_t *fl)
 
 
 //
-// Classic Bresenham w/ whatever optimizations needed for speed
-//
-void AM_drawFline (fline_t *fl, int color)
-{
-	fl->a.x += f_x;
-	fl->b.x += f_x;
-	fl->a.y += f_y;
-	fl->b.y += f_y;
-
-	switch (color)
-	{
-		case WALLCOLORS:
-			DrawWuLine (fl->a.x, fl->a.y, fl->b.x, fl->b.y, &antialias[0][0]);
-			break;
-		case FDWALLCOLORS:
-			DrawWuLine (fl->a.x, fl->a.y, fl->b.x, fl->b.y, &antialias[1][0]);
-			break;
-		case CDWALLCOLORS:
-			DrawWuLine (fl->a.x, fl->a.y, fl->b.x, fl->b.y, &antialias[2][0]);
-			break;
-		default:
-			DrawTransWuLine (fl->a.x, fl->a.y, fl->b.x, fl->b.y, color);
-			break;
-#if 0
-  		{
-			register int x;
-			register int y;
-			register int dx;
-			register int dy;
-			register int sx;
-			register int sy;
-			register int ax;
-			register int ay;
-			register int d;
-
-#define PUTDOTP(xx,yy,cc) fb[(yy)*f_p+(xx)]=(cc)
-
-			dx = fl->b.x - fl->a.x;
-			ax = 2 * (dx<0 ? -dx : dx);
-			sx = dx<0 ? -1 : 1;
-
-			dy = fl->b.y - fl->a.y;
-			ay = 2 * (dy<0 ? -dy : dy);
-			sy = dy<0 ? -1 : 1;
-
-			x = fl->a.x;
-			y = fl->a.y;
-
-			if (ax > ay) {
-				d = ay - ax/2;
-				for (;;) {
-					PUTDOTP(x,y,(BYTE)color);
-					if (x == fl->b.x)
-						return;
-					if (d>=0) {
-						y += sy;
-						d -= ax;
-					}
-					x += sx;
-					d += ay;
-				}
-			} else {
-				d = ax - ay/2;
-				for (;;) {
-					PUTDOTP(x, y, (BYTE)color);
-					if (y == fl->b.y)
-						return;
-					if (d >= 0) {
-						x += sx;
-						d -= ay;
-					}
-					y += sy;
-					d += ax;
-				}
-			}
-		}
-#endif
-	}
-}
-
-/* Wu antialiased line drawer.
- * (X0,Y0),(X1,Y1) = line to draw
- * BaseColor = color # of first color in block used for antialiasing, the
- *          100% intensity version of the drawing color
- * NumLevels = size of color block, with BaseColor+NumLevels-1 being the
- *          0% intensity version of the drawing color
- * IntensityBits = log base 2 of NumLevels; the # of bits used to describe
- *          the intensity of the drawing color. 2**IntensityBits==NumLevels
- */
-void PUTDOT (int xx, int yy, BYTE *cc, BYTE *cm)
-{
-	static int oldyy;
-	static int oldyyshifted;
-	BYTE *oldcc=cc;
-
-#if 0
-	if(xx < 32)
-		cc += 7-(xx>>2);
-	else if(xx > (finit_width - 32))
-		cc += 7-((finit_width-xx) >> 2);
-//	if(cc==oldcc) //make sure that we don't double fade the corners.
-//	{
-		if(yy < 32)
-			cc += 7-(yy>>2);
-		else if(yy > (finit_height - 32))
-			cc += 7-((finit_height-yy) >> 2);
-//	}
-#endif
-	if (cm != NULL && cc > cm)
-	{
-		cc = cm;
-	}
-	else if (cc > oldcc+6) // don't let the color escape from the fade table...
-	{
-		cc=oldcc+6;
-	}
-	if (yy == oldyy+1)
-	{
-		oldyy++;
-		oldyyshifted += SCREENPITCH;
-	}
-	else if (yy == oldyy-1)
-	{
-		oldyy--;
-		oldyyshifted -= SCREENPITCH;
-	}
-	else if (yy != oldyy)
-	{
-		oldyy = yy;
-		oldyyshifted = yy*SCREENPITCH;
-	}
-	fb[oldyyshifted+xx] = *(cc);
-}
-
-void DrawWuLine (int x0, int y0, int x1, int y1, BYTE *baseColor)
-{
-	int deltaX, deltaY, xDir;
-
-	if (viewactive)
-	{
-		// If the map is overlayed, use the translucent line drawer
-		// code to avoid nasty discolored spots along the edges of
-		// the lines. Otherwise, use this one to avoid reading from
-		// the framebuffer.
-		DrawTransWuLine (x0, y0, x1, y1, *baseColor);
-		return;
-	}
-
-	// Make sure the line runs top to bottom
-	if (y0 > y1)
-	{
-		int temp = y0; y0 = y1; y1 = temp;
-		temp = x0; x0 = x1; x1 = temp;
-	}
-
-	// Draw the initial pixel, which is always exactly intersected by
-	// the line and so needs no weighting
-	PUTDOT (x0, y0, &baseColor[0], NULL);
-
-	if ((deltaX = x1 - x0) >= 0)
-	{
-		xDir = 1;
-	}
-	else
-	{
-		xDir = -1;
-		deltaX = -deltaX;	// make deltaX positive
-	}
-	// Special-case horizontal, vertical, and diagonal lines, which
-	// require no weighting because they go right through the center of
-    // every pixel
-	if ((deltaY = y1 - y0) == 0)
-	{ // horizontal line
-		while (deltaX-- != 0)
-		{
-			x0 += xDir;
-			PUTDOT (x0, y0, &baseColor[0], NULL);
-		}
-		return;
-	}
-	if (deltaX == 0)
-	{ // vertical line
-		do
-		{
-			y0++;
-			PUTDOT (x0, y0, &baseColor[0], NULL);
-		} while (--deltaY != 0);
-		return;
-	}
-	if (deltaX == deltaY)
-	{ // diagonal line.
-		do
-		{
-			x0 += xDir;
-			y0++;
-			PUTDOT (x0, y0, &baseColor[0], NULL);
-		} while (--deltaY != 0);
-		return;
-	}
-
-	// Line is not horizontal, diagonal, or vertical
-	fixed_t errorAcc = 0;	// initialize the line error accumulator to 0
-
-	// Is this an X-major or Y-major line?
-	if (deltaY > deltaX)
-	{
-		// Y-major line; calculate 16-bit fixed-point fractional part of a
-		// pixel that X advances each time Y advances 1 pixel, truncating the
-		// result so that we won't overrun the endpoint along the X axis
-		fixed_t errorAdj = ((DWORD) deltaX << 16) / (DWORD) deltaY & 0xffff;
-
-		// Draw all pixels other than the first and last
-		if (xDir < 0)
-		{
-			while (--deltaY)
-			{
-				errorAcc += errorAdj;
-				y0++;	// Y-major, so always advance Y
-
-				// The most significant bits of ErrorAcc give us the intensity
-				// weighting for this pixel, and the complement of the weighting
-				// for the paired pixel
-				int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-				PUTDOT (x0 - (errorAcc >> 16), y0, &baseColor[weighting], &baseColor[NUMWEIGHTS-1]);
-				PUTDOT (x0 - (errorAcc >> 16) - 1, y0,
-						&baseColor[WEIGHTMASK - weighting], &baseColor[NUMWEIGHTS-1]);
-			}
-		}
-		else
-		{
-			while (--deltaY)
-			{
-				errorAcc += errorAdj;
-				y0++;	// Y-major, so always advance Y
-				int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-				PUTDOT (x0 + (errorAcc >> 16), y0, &baseColor[weighting], &baseColor[NUMWEIGHTS-1]);
-				PUTDOT (x0 + (errorAcc >> 16) + 1, y0,
-						&baseColor[WEIGHTMASK - weighting], &baseColor[NUMWEIGHTS-1]);
-			}
-		}
-	}
-	else
-	{
-		// It's an X-major line; calculate 16-bit fixed-point fractional part of a
-		// pixel that Y advances each time X advances 1 pixel, truncating the
-		// result to avoid overrunning the endpoint along the X axis
-		fixed_t errorAdj = ((DWORD) deltaY << 16) / (DWORD) deltaX;
-
-		// Draw all pixels other than the first and last
-		while (--deltaX)
-		{
-			errorAcc += errorAdj;
-			x0 += xDir;	// X-major, so always advance X
-			int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-			PUTDOT (x0, y0 + (errorAcc >> 16), &baseColor[weighting], &baseColor[NUMWEIGHTS-1]);
-			PUTDOT (x0, y0 + (errorAcc >> 16) + 1,
-					&baseColor[WEIGHTMASK - weighting], &baseColor[NUMWEIGHTS-1]);
-		}
-	}
-
-	// Draw the final pixel, which is always exactly intersected by the line
-	// and so needs no weighting
-	PUTDOT (x1, y1, &baseColor[0], NULL);
-}
-
-void PUTTRANSDOT (int xx, int yy, int basecolor, int level)
-{
-	static int oldyy;
-	static int oldyyshifted;
-
-#if 0
-	if(xx < 32)
-		cc += 7-(xx>>2);
-	else if(xx > (finit_width - 32))
-		cc += 7-((finit_width-xx) >> 2);
-//	if(cc==oldcc) //make sure that we don't double fade the corners.
-//	{
-		if(yy < 32)
-			cc += 7-(yy>>2);
-		else if(yy > (finit_height - 32))
-			cc += 7-((finit_height-yy) >> 2);
-//	}
-	if(cc > cm && cm != NULL)
-	{
-		cc = cm;
-	}
-	else if(cc > oldcc+6) // don't let the color escape from the fade table...
-	{
-		cc=oldcc+6;
-	}
-#endif
-	if (yy == oldyy+1)
-	{
-		oldyy++;
-		oldyyshifted += SCREENPITCH;
-	}
-	else if (yy == oldyy-1)
-	{
-		oldyy--;
-		oldyyshifted -= SCREENPITCH;
-	}
-	else if (yy != oldyy)
-	{
-		oldyy = yy;
-		oldyyshifted = yy*SCREENPITCH;
-	}
-
-	BYTE *spot = fb + oldyyshifted + xx;
-	DWORD *bg2rgb = Col2RGB8[1+level];
-	DWORD *fg2rgb = Col2RGB8[63-level];
-	DWORD fg = fg2rgb[basecolor];
-	DWORD bg = bg2rgb[*spot];
-	bg = (fg+bg) | 0x1f07c1f;
-	*spot = RGB32k[0][0][bg&(bg>>15)];
-}
-
-void DrawTransWuLine (int x0, int y0, int x1, int y1, BYTE baseColor)
-{
-	int deltaX, deltaY, xDir;
-
-	if (y0 > y1)
-	{
-		int temp = y0; y0 = y1; y1 = temp;
-		temp = x0; x0 = x1; x1 = temp;
-	}
-
-	PUTTRANSDOT (x0, y0, baseColor, 0);
-
-	if ((deltaX = x1 - x0) >= 0)
-	{
-		xDir = 1;
-	}
-	else
-	{
-		xDir = -1;
-		deltaX = -deltaX;
-	}
-
-	if ((deltaY = y1 - y0) == 0)
-	{ // horizontal line
-		if (x0 > x1)
-		{
-			swap (x0, x1);
-		}
-		memset (screen->GetBuffer() + y0*screen->GetPitch() + x0, baseColor, deltaX+1);
-		return;
-	}
-	if (deltaX == 0)
-	{ // vertical line
-		BYTE *spot = screen->GetBuffer() + y0*screen->GetPitch() + x0;
-		int pitch = screen->GetPitch ();
-		do
-		{
-			*spot = baseColor;
-			spot += pitch;
-		} while (--deltaY != 0);
-		return;
-	}
-	if (deltaX == deltaY)
-	{ // diagonal line.
-		BYTE *spot = screen->GetBuffer() + y0*screen->GetPitch() + x0;
-		int advance = screen->GetPitch() + xDir;
-		do
-		{
-			*spot = baseColor;
-			spot += advance;
-		} while (--deltaY != 0);
-		return;
-	}
-
-	// line is not horizontal, diagonal, or vertical
-	fixed_t errorAcc = 0;
-
-	if (deltaY > deltaX)
-	{ // y-major line
-		fixed_t errorAdj = (((unsigned)deltaX << 16) / (unsigned)deltaY) & 0xffff;
-		if (xDir < 0)
-		{
-			if (WeightingScale == 0)
-			{
-				while (--deltaY)
-				{
-					errorAcc += errorAdj;
-					y0++;
-					int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-					PUTTRANSDOT (x0 - (errorAcc >> 16), y0, baseColor, weighting);
-					PUTTRANSDOT (x0 - (errorAcc >> 16) - 1, y0,
-							baseColor, WEIGHTMASK - weighting);
-				}
-			}
-			else
-			{
-				while (--deltaY)
-				{
-					errorAcc += errorAdj;
-					y0++;
-					int weighting = ((errorAcc * WeightingScale) >> (WEIGHTSHIFT+8)) & WEIGHTMASK;
-					PUTTRANSDOT (x0 - (errorAcc >> 16), y0, baseColor, weighting);
-					PUTTRANSDOT (x0 - (errorAcc >> 16) - 1, y0,
-							baseColor, WEIGHTMASK - weighting);
-				}
-			}
-		}
-		else
-		{
-			if (WeightingScale == 0)
-			{
-				while (--deltaY)
-				{
-					errorAcc += errorAdj;
-					y0++;
-					int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-					PUTTRANSDOT (x0 + (errorAcc >> 16), y0, baseColor, weighting);
-					PUTTRANSDOT (x0 + (errorAcc >> 16) + xDir, y0,
-							baseColor, WEIGHTMASK - weighting);
-				}
-			}
-			else
-			{
-				while (--deltaY)
-				{
-					errorAcc += errorAdj;
-					y0++;
-					int weighting = ((errorAcc * WeightingScale) >> (WEIGHTSHIFT+8)) & WEIGHTMASK;
-					PUTTRANSDOT (x0 + (errorAcc >> 16), y0, baseColor, weighting);
-					PUTTRANSDOT (x0 + (errorAcc >> 16) + xDir, y0,
-							baseColor, WEIGHTMASK - weighting);
-				}
-			}
-		}
-	}
-	else
-	{ // x-major line
-		fixed_t errorAdj = (((DWORD) deltaY << 16) / (DWORD) deltaX) & 0xffff;
-
-		if (WeightingScale == 0)
-		{
-			while (--deltaX)
-			{
-				errorAcc += errorAdj;
-				x0 += xDir;
-				int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-				PUTTRANSDOT (x0, y0 + (errorAcc >> 16), baseColor, weighting);
-				PUTTRANSDOT (x0, y0 + (errorAcc >> 16) + 1,
-						baseColor, WEIGHTMASK - weighting);
-			}
-		}
-		else
-		{
-			while (--deltaX)
-			{
-				errorAcc += errorAdj;
-				x0 += xDir;
-				int weighting = ((errorAcc * WeightingScale) >> (WEIGHTSHIFT+8)) & WEIGHTMASK;
-				PUTTRANSDOT (x0, y0 + (errorAcc >> 16), baseColor, weighting);
-				PUTTRANSDOT (x0, y0 + (errorAcc >> 16) + 1,
-						baseColor, WEIGHTMASK - weighting);
-			}
-		}
-	}
-
-	PUTTRANSDOT (x1, y1, baseColor, 0);
-}
-
-//
 // Clip lines, draw visible parts of lines.
 //
-void AM_drawMline (mline_t *ml, int color)
+void AM_drawMline (mline_t *ml, const AMColor &color)
 {
-	static fline_t fl;
+	fline_t fl;
 
 	if (AM_clipMline (ml, &fl))
-		AM_drawFline (&fl, color); // draws it on frame buffer using fb coords
+	{
+		screen->DrawLine (f_x + fl.a.x, f_y + fl.a.y, f_x + fl.b.x, f_y + fl.b.y, color.Index, color.RGB);
+	}
 }
 
 
@@ -1724,7 +1285,7 @@ void AM_drawMline (mline_t *ml, int color)
 //
 // Draws flat (floor/ceiling tile) aligned grid lines.
 //
-void AM_drawGrid (int color)
+void AM_drawGrid (const AMColor &color)
 {
 	fixed_t x, y;
 	fixed_t start, end;
@@ -1866,13 +1427,12 @@ void AM_drawWalls (bool allmap)
 
 						int color = P_GetMapColorForLock(lock);
 
-						if (color > 0)
-						{
-							color = ColorMatcher.Pick(RPART(color), GPART(color), BPART(color));
-						}
-						else color = LockedColor;
+						AMColor c;
 
-						AM_drawMline (&l, color);
+						if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
+						else c = LockedColor;
+
+						AM_drawMline (&l, c);
 					}
 					else
 						AM_drawMline (&l, LockedColor);  // locked special
@@ -1931,7 +1491,7 @@ AM_drawLineCharacter
   int		lineguylines,
   fixed_t	scale,
   angle_t	angle,
-  int		color,
+  const AMColor &color,
   fixed_t	x,
   fixed_t	y )
 {
@@ -1997,7 +1557,7 @@ void AM_drawPlayers ()
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		player_t *p = &players[i];
-		int color;
+		AMColor color;
 		mpoint_t pt;
 
 		if (!playeringame[i] || p->mo == NULL)
@@ -2023,8 +1583,7 @@ void AM_drawPlayers ()
 			D_GetPlayerColor (i, &h, &s, &v);
 			HSVtoRGB (&r, &g, &b, h, s, v);
 
-			color = ColorMatcher.Pick (clamp (int(r*255.f),0,255),
-				clamp (int(g*255.f),0,255), clamp (int(b*255.f),0,255));
+			color.FromRGB(clamp (int(r*255.f),0,255), clamp (int(g*255.f),0,255), clamp (int(b*255.f),0,255));
 		}
 
 		if (p->mo != NULL)
@@ -2046,9 +1605,9 @@ void AM_drawPlayers ()
     }
 }
 
-void AM_drawThings (int _color)
+void AM_drawThings ()
 {
-	int color;
+	AMColor color;
 	int		 i;
 	AActor*	 t;
 	mpoint_t p;
@@ -2198,9 +1757,9 @@ void AM_drawAuthorMarkers ()
 	}
 }
 
-void AM_drawCrosshair (int color)
+void AM_drawCrosshair (const AMColor &color)
 {
-	fb[f_p*((f_h+1)/2)+(f_w/2)] = (BYTE)color; // single point for now
+	screen->DrawPixel(f_w/2, (f_h+1)/2, color.Index, color.RGB);
 }
 
 void AM_Drawer ()
@@ -2213,7 +1772,6 @@ void AM_Drawer ()
 
 	AM_initColors (viewactive);
 
-	fb = screen->GetBuffer ();
 	if (!viewactive)
 	{
 		// [RH] Set f_? here now to handle automap overlaying
@@ -2222,7 +1780,7 @@ void AM_Drawer ()
 		f_w = screen->GetWidth ();
 		f_h = ST_Y;
 		f_p = screen->GetPitch ();
-		WeightingScale = 0;
+		//WeightingScale = 0;
 
 		AM_clearFB(Background);
 	}
@@ -2233,11 +1791,13 @@ void AM_Drawer ()
 		f_w = realviewwidth;
 		f_h = realviewheight;
 		f_p = screen->GetPitch ();
+		/*
 		WeightingScale = (int)(am_ovtrans * 256.f);
 		if (WeightingScale < 0 || WeightingScale >= 256)
 		{
 			WeightingScale = 0;
 		}
+		*/
 	}
 	AM_activateNewScale();
 
@@ -2247,7 +1807,7 @@ void AM_Drawer ()
 	AM_drawWalls(allmap);
 	AM_drawPlayers();
 	if (am_cheat >= 2 || allthings)
-		AM_drawThings(ThingColor);
+		AM_drawThings();
 	AM_drawAuthorMarkers();
 
 	if (!viewactive)

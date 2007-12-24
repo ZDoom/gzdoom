@@ -241,14 +241,14 @@ enum
 //#define DF2_YES_IRETURN		8		// Instantly return skull when player carrying it dies
 //#define DF2_YES_RETURN		16		// Return dropped skulls after 30 seconds
 //#define DF2_YES_TEAMCOLORS	32		// Don't use player's base color in teamgames
-//#define DF2_NO_SWITCH			64		// Player is not allowed to switch teams
+	DF2_NO_TEAMSWITCH		= 1 << 6,	// Player is not allowed to switch teams
 //#define DF2_FORCE_RANDOM		128		// Player put on random team
 //#define DF2_YES_RUNEDROP		256		// Drop current rune upon death
 //#define DF2_YES_200MAX		512		// Don't all max. health/armor items to bring
 //										// health or armor over 200%
 	DF2_YES_DOUBLEAMMO		= 1 << 10,	// Doubles ammo like skill 1 and 5 do
-//#define DF2_NO_CLEARFRAGS		2048	// Don't clear frags after each level
-//#define DF2_FORCE_NORESPAWN	4096	// Player cannot respawn
+	DF2_YES_KEEPFRAGS		= 1 << 11,	// Don't clear frags after each level
+	DF2_NO_RESPAWN			= 1 << 12,	// Player cannot respawn
 	DF2_YES_DEGENERATION	= 1 << 13,	// Quake-style degeneration
 	DF2_YES_LOSEFRAG		= 1 << 14,	// Lose a frag when killed. More incentive to try to
 //										// not get yerself killed

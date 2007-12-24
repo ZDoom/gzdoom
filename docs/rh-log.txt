@@ -1,3 +1,28 @@
+December 24, 2007 (Changes by Graf Zahl)
+- also replaced the AM crosshair drawer by a DCanvas::DrawPixel function.
+- moved the AM line drawer into DCanvas as a virtual function. While testing
+  this code I discovered that the antialias precalculation was never used
+  except for the very first frame of AM drawing. However, since I couldn't
+  detect even a marginal performance improvement using this code on 2 computers
+  I just disabled it completely because it severely complicates a more generic
+  implementation. I also disabled am_ovtrans in the process because I couldn't
+  see any positive effects of using this cvar. All it does is adding some 
+  ugly distortion to the lines it affects without any apparent benefits.
+* Added fix by Karate Chris containing:
+- Added a 'No team changing' DMFlag2 which prevents players from changing teams 
+  unless they are not on a team.
+- Added a 'No respawn' DMFlag2 which prevents a player from respawning after 
+  they have died.
+- Added a 'Keep frags gained' DMFlag2 which allows you to choose whether you 
+  want to reset the frags of each player next level or not.
+- Added a small visual enhancement to the cooperative scoreboard to show 
+  if a player has died.
+- Fixed: If the 'teamplay' console variable was set to 'true' in a cooperative 
+  game, the scoreboard would show team play related items as opposed to 
+  cooperative items.
+- Fixed: The 'bot_observer' console variable should not work in network games.
+- Fixed: Bots made intermission skip really fast.
+  
 December 23, 2007 (Changes by Graf Zahl)
 - Fixed a few font related problems.
 - Fixed: ASkyViewpoint::Destroy was missing the super call.

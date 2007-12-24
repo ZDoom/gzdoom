@@ -461,7 +461,7 @@ int P_GetMapColorForLock (int lock)
 	{
 		if (locks[lock]) return locks[lock]->rgb;
 	}
-	return 0;
+	return -1;
 }
 
 //==========================================================================

@@ -330,6 +330,18 @@ bool	Check_Sides(AActor *, int, int);					// phares
 // [RH] 
 bool	P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove);
 
+//----------------------------------------------------------------------------------
+//
+// Added so that in the source there's a clear distinction between
+// game engine and renderer specific calls.
+// (For ZDoom itself this doesn't make any difference here but for GZDoom it does.)
+//
+//----------------------------------------------------------------------------------
+inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
+{
+	return R_PointInSubsector(x,y)->sector;
+}
+
 //
 // P_SETUP
 //

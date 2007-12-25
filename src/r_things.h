@@ -36,6 +36,7 @@ struct particle_t
 	int		color;
 	WORD	tnext;
 	WORD	snext;
+	subsector_t * subsector;
 };
 
 extern WORD	NumParticles;

@@ -223,7 +223,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	oldy = thing->y;
 	oldz = thing->z;
 	aboveFloor = thing->z - thing->floorz;
-	destsect = R_PointInSubsector (x, y)->sector;
+	destsect = P_PointInSector (x, y);
 	// killough 5/12/98: exclude voodoo dolls:
 	player = thing->player;
 	if (player && player->mo != thing)

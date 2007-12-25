@@ -229,7 +229,7 @@ void P_FindFloorCeiling (AActor *actor)
 	tmfbbox[BOXRIGHT] = x + actor->radius;
 	tmfbbox[BOXLEFT] = x - actor->radius;
 
-	sec = R_PointInSubsector (x, y)->sector;
+	sec = P_PointInSector (x, y);
 	tmffloorz = tmfdropoffz = sec->floorplane.ZatPoint (x, y);
 	tmfceilingz = sec->ceilingplane.ZatPoint (x, y);
 	tmffloorpic = sec->floorpic;
@@ -322,7 +322,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	int 				bx;
 	int 				by;
 	
-	subsector_t*		newsubsec;
+	sector_t*		newsec;
 	
 	// kill anything occupying the position
 	tmthing = thing;
@@ -337,17 +337,17 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	tmfbbox[BOXRIGHT] = tmbbox[BOXRIGHT] = x + tmthing->radius;
 	tmfbbox[BOXLEFT] = tmbbox[BOXLEFT] = x - tmthing->radius;
 
-	newsubsec = R_PointInSubsector (x,y);
+	newsec = P_PointInSector (x,y);
 	ceilingline = NULL;
 	
 	// The base floor/ceiling is from the subsector that contains the point.
 	// Any contacted lines the step closer together will adjust them.
-	tmffloorz = tmfdropoffz = newsubsec->sector->floorplane.ZatPoint (x, y);
-	tmfceilingz = newsubsec->sector->ceilingplane.ZatPoint (x, y);
-	tmffloorpic = newsubsec->sector->floorpic;
-	tmffloorsector = newsubsec->sector;
-	tmfceilingpic = newsubsec->sector->ceilingpic;
-	tmfceilingsector = newsubsec->sector;
+	tmffloorz = tmfdropoffz = newsec->floorplane.ZatPoint (x, y);
+	tmfceilingz = newsec->ceilingplane.ZatPoint (x, y);
+	tmffloorpic = newsec->floorpic;
+	tmffloorsector = newsec;
+	tmfceilingpic = newsec->ceilingpic;
+	tmfceilingsector = newsec;
 	tmfthing = tmthing;
 					
 	validcount++;
@@ -1263,7 +1263,7 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	int xl, xh;
 	int yl, yh;
 	int bx, by;
-	subsector_t *newsubsec;
+	sector_t *newsec;
 	AActor *thingblocker;
 	AActor *fakedblocker;
 	fixed_t realheight = thing->height;
@@ -1279,20 +1279,21 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	tmbbox[BOXRIGHT] = x + thing->radius;
 	tmbbox[BOXLEFT] = x - thing->radius;
 
-	newsubsec = R_PointInSubsector (x,y);
+	newsec = P_PointInSector (x,y);
 	ceilingline = BlockingLine = NULL;
 	
 // The base floor / ceiling is from the subsector that contains the point.
 // Any contacted lines the step closer together will adjust them.
-	tmfloorz = tmdropoffz = newsubsec->sector->floorplane.ZatPoint (x, y);
-	tmceilingz = newsubsec->sector->ceilingplane.ZatPoint (x, y);
-	tmfloorpic = newsubsec->sector->floorpic;
-	tmfloorsector = newsubsec->sector;
-	tmceilingpic = newsubsec->sector->ceilingpic;
-	tmceilingsector = newsubsec->sector;
+	tmfloorz = tmdropoffz = newsec->floorplane.ZatPoint (x, y);
+	tmceilingz = newsec->ceilingplane.ZatPoint (x, y);
+	tmfloorpic = newsec->floorpic;
+	tmfloorsector = newsec;
+	tmceilingpic = newsec->ceilingpic;
+	tmceilingsector = newsec;
 
 	//Added by MC: Fill the tmsector.
-	tmsector = newsubsec->sector;
+	tmsector = newsec;
+	
 
 	validcount++;
 	spechit.Clear ();

@@ -1,4 +1,7 @@
 December 25, 2007 (Changes by Graf Zahl)
+- added a P_PointInSector function and replaced all calls to retrieve an
+  actor's sector in the game engine code with it. This way there's a clear
+  distinction between renderer-specific and game-specific calls.
 - added UseInventory/UseActorInventory ACS functions.
 
 December 24, 2007 (Changes by Graf Zahl)

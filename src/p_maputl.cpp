@@ -336,7 +336,7 @@ void AActor::LinkToWorld (bool buggy)
 
 	if (!buggy || numnodes == 0)
 	{
-		sec = R_PointInSubsector (x, y)->sector;
+		sec = P_PointInSector (x, y);
 	}
 	else
 	{
@@ -582,8 +582,7 @@ sector_t *AActor::LinkToWorldForMapThing ()
 					distance = radius - distance;
 					x += FixedMul(distance, finecosine[finean]);
 					y += FixedMul(distance, finesine[finean]);
-					ssec = R_PointInSubsector (x, y);
-					break;
+					return P_PointInSector (x, y);
 				}
 #else
 				if (DMulScale32 (y - ldef->v1->y, ldef->dx, ldef->v1->x - x, ldef->dy) == 0)

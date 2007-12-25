@@ -1344,7 +1344,7 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 
 static void P_CopyPlane (int tag, fixed_t x, fixed_t y, bool copyCeil)
 {
-	sector_t *dest = R_PointInSubsector (x, y)->sector;
+	sector_t *dest = P_PointInSector (x, y);
 	sector_t *source;
 	int secnum;
 	size_t planeofs;
@@ -1506,7 +1506,7 @@ static void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 
 			x = mt->x << FRACBITS;
 			y = mt->y << FRACBITS;
-			sec = R_PointInSubsector (x, y)->sector;
+			sec = P_PointInSector (x, y);
 			if (mt->type & 1)
 			{
 				refplane = &sec->ceilingplane;

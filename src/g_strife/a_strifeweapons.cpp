@@ -1615,7 +1615,7 @@ void A_Burnination (AActor *self)
 
 		fixed_t x = self->x + (xofs << FRACBITS);
 		fixed_t y = self->y + (yofs << FRACBITS);
-		sector_t * sector = R_PointInSubsector(x, y)->sector;
+		sector_t * sector = P_PointInSector(x, y);
 
 		// The sector's floor is too high so spawn the flame elsewhere.
 		if (sector->floorplane.ZatPoint(x, y) > self->z + self->MaxStepHeight)

@@ -305,7 +305,7 @@ void A_RestoreSpecialPosition (AActor *self)
 
 	_x = self->SpawnPoint[0] << FRACBITS;
 	_y = self->SpawnPoint[1] << FRACBITS;
-	sec = R_PointInSubsector (_x, _y)->sector;
+	sec = P_PointInSector (_x, _y);
 
 	self->SetOrigin (_x, _y, sec->floorplane.ZatPoint (_x, _y));
 	P_CheckPosition (self, _x, _y);

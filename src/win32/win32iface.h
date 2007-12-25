@@ -31,6 +31,9 @@
 **
 */
 
+#ifndef __WIN32IFACE_H
+#define __WIN32IFACE_H
+
 #ifndef DIRECTDRAW_VERSION
 #define DIRECTDRAW_VERSION 0x0300
 #endif
@@ -306,3 +309,5 @@ FILE *dbg;
 #define LOG4(x,y,z,a,b)
 #define LOG5(x,y,z,a,b,c)
 #endif
+
+#endif // __WIN32IFACE_H

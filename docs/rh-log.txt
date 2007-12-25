@@ -1,3 +1,6 @@
+December 25, 2007 (Changes by Graf Zahl)
+- added UseInventory/UseActorInventory ACS functions.
+
 December 24, 2007 (Changes by Graf Zahl)
 - added some functionality to FDynamicColormap to allow not creating
   the colormap data.

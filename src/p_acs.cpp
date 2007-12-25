@@ -359,6 +359,61 @@ static void TakeInventory (AActor *activator, const char *type, int amount)
 
 //============================================================================
 //
+// DoUseInv
+//
+// Makes a single actor use an inventory item
+//
+//============================================================================
+
+static bool DoUseInv (AActor *actor, const PClass *info)
+{
+	AInventory *item = actor->FindInventory (info);
+	if (item != NULL)
+	{
+		return actor->UseInventory(item);
+	}
+	return false;
+}
+
+//============================================================================
+//
+// UseInventory
+//
+// makes one or more actors use an inventory item.
+//
+//============================================================================
+
+static int UseInventory (AActor *activator, const char *type)
+{
+	const PClass *info;
+	int ret = 0;
+
+	if (type == NULL)
+	{
+		return 0;
+	}
+	info = PClass::FindClass (type);
+	if (info == NULL)
+	{
+		return 0;
+	}
+	if (activator == NULL)
+	{
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i])
+				ret += DoUseInv (players[i].mo, info);
+		}
+	}
+	else
+	{
+		ret = DoUseInv (activator, info);
+	}
+	return ret;
+}
+
+//============================================================================
+//
 // CheckInventory
 //
 // Returns how much of a particular item an actor has.
@@ -4320,6 +4375,32 @@ int DLevelScript::RunScript ()
 		case PCD_CHECKINVENTORYDIRECT:
 			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (pc[0])));
 			pc += 1;
+			break;
+
+		case PCD_USEINVENTORY:
+			STACK(1) = UseInventory (activator, FBehavior::StaticLookupString (STACK(1)));
+			break;
+
+		case PCD_USEACTORINVENTORY:
+			{
+				int ret;
+				const char *type = FBehavior::StaticLookupString(STACK(1));
+				if (STACK(2) == 0)
+				{
+					ret = UseInventory(NULL, type);
+				}
+				else
+				{
+					FActorIterator it(STACK(2));
+					AActor *actor;
+					for (actor = it.Next(); actor != NULL; actor = it.Next())
+					{
+						ret += UseInventory(actor, type);
+					}
+				}
+				STACK(2) = ret;
+				sp--;
+			}
 			break;
 
 		case PCD_GETSIGILPIECES:

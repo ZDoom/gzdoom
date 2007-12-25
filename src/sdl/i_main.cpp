@@ -135,7 +135,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	SDL_Quit();
 
 	p = 0;
-	p += snprintf (buffer+p, size-p, "ZDoom version " DOTVERSIONSTR " (" __DATE__ ")\n");
+	p += snprintf (buffer+p, size-p, GAMENAME" version " DOTVERSIONSTR " (" __DATE__ ")\n");
 	p += snprintf (buffer+p, size-p, "\nCommand line:");
 	for (i = 0; i < Args.NumArgs(); ++i)
 	{
@@ -182,7 +182,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 
 int main (int argc, char **argv)
 {
-	printf("ZDoom v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
+	printf(GAMENAME" v%s - SVN revision %s - SDL version\nCompiled on %s\n\n",
 		DOTVERSIONSTR_NOREV,SVN_REVISION_STRING,__DATE__);
 
 	{

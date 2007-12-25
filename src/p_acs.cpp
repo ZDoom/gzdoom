@@ -4383,7 +4383,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_USEACTORINVENTORY:
 			{
-				int ret;
+				int ret = 0;
 				const char *type = FBehavior::StaticLookupString(STACK(1));
 				if (STACK(2) == 0)
 				{

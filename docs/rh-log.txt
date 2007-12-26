@@ -1,4 +1,5 @@
 December 25, 2007
+- Fixed: The fullscreen console crashed when opened before starting a game.
 - Discovered that Shader Model 1.4 clamps my constants, so I can't use
   palettes smaller than 256 entries with the shader I wrote for it. Is there
   a list of gotchas like this listed some where? I'd really like to see it.

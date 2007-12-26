@@ -2257,7 +2257,7 @@ void G_InitLevelLocals ()
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
 	NormalLight.Maps = realcolormaps;
 
-	// [BB] Instead of just setting the color, we also have reset Desaturate and build the lights.
+	// [BB] Instead of just setting the color, we also have to reset Desaturate and build the lights.
 	NormalLight.ChangeColor (PalEntry (255, 255, 255), 0);
 
 	level.gravity = sv_gravity * 35/TICRATE;
@@ -2690,7 +2690,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	FRemapTable *trans;
 	if (arc.IsStoring ())
 	{
-		for (i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
+		for (unsigned int i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
 		{
 			trans = translationtables[TRANSLATION_LevelScripted][i];
 			int j;

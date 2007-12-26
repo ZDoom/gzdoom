@@ -677,6 +677,7 @@ void R_InitColormaps ()
 			}
 		}
 	}
+	NormalLight.Maps = realcolormaps;
 }
 
 void R_DeinitColormaps ()

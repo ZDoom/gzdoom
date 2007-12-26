@@ -379,12 +379,9 @@ void InitPalette ()
 		}
 	}
 
-// NormalLight.Maps will be set to realcolormaps no later than G_InitLevelLocals()
-// (which occurs before it is ever needed)
-//	NormalLight.Maps = (BYTE *)Z_Malloc (NUMCOLORMAPS*256+255, PU_STATIC, 0);
-//	NormalLight.Maps = (BYTE *)(((ptrdiff_t)NormalLight.Maps + 255) & ~0xff);
 	NormalLight.Color = PalEntry (255, 255, 255);
 	NormalLight.Fade = 0;
+	// NormalLight.Maps is set by R_InitColormaps()
 
 	// build special maps (e.g. invulnerability)
 	int intensity;

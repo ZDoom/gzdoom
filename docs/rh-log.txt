@@ -9,6 +9,9 @@ December 25, 2007
   minor win for cards that support it.
 
 December 25, 2007 (Changes by Graf Zahl)
+- Replaced 'C:\\ZDOOMDAT' with a #define in version.h.
+- Moved screenshot code into DCanvas so that it can be overridden by
+  subclasses with a different buffer.
 - added a P_PointInSector function and replaced all calls to retrieve an
   actor's sector in the game engine code with it. This way there's a clear
   distinction between renderer-specific and game-specific calls.

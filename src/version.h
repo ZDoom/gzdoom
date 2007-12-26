@@ -86,6 +86,9 @@
 
 #ifdef unix
 #define HOME_DIR "~/.zdoom"
+#define GAME_DIR ".zdoom"
+#else
+#define CDROM_DIR "C:\\ZDOOMDAT"
 #endif
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.

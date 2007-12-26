@@ -306,9 +306,9 @@ FString GetUserFile (const char *file, bool nodir)
 
 	FString path = home;
 	if (path[path.Len()-1] != '/')
-		path += nodir ? "/" : "/.zdoom";
+		path += nodir ? "/" : "/"GAME_DIR;
 	else if (!nodir)
-		path += ".zdoom";
+		path += GAME_DIR;
 
 	if (!nodir)
 	{
@@ -542,7 +542,7 @@ void WritePCXfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 void WritePNGfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 {
 	if (!M_CreatePNG (file, canvas, palette) ||
-		!M_AppendPNGText (file, "Software", "ZDoom " DOTVERSIONSTR) ||
+		!M_AppendPNGText (file, "Software", GAMENAME DOTVERSIONSTR) ||
 		!M_FinishPNG (file))
 	{
 		Printf ("Could not create screenshot.\n");
@@ -572,9 +572,8 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 void M_ScreenShot (const char *filename)
 {
-	FILE *file;
 	FString autoname;
-	bool writepcx = (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
+	bool writepcx = screen->CanWritePCX() && (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
 
 	// find a file name to save it to
 	if (filename == NULL || filename[0] == '\0')
@@ -582,7 +581,7 @@ void M_ScreenShot (const char *filename)
 #ifndef unix
 		if (Args.CheckParm ("-cdrom"))
 		{
-			autoname = "C:\\ZDOOMDAT\\";
+			autoname = CDROM_DIR "\\";
 		}
 		else
 #endif
@@ -615,35 +614,46 @@ void M_ScreenShot (const char *filename)
 	CreatePath(screenshot_dir);
 
 	// save the screenshot
-	screen->Lock (true);
-	//D_Display (true);
-
-	PalEntry palette[256];
-	screen->GetFlashedPalette (palette);
-
-	file = fopen (autoname.GetChars(), "wb");
-	if (file == NULL)
-	{
-		Printf ("Could not open %s\n", autoname.GetChars());
-		screen->Unlock ();
-		return;
-	}
-
-	if (writepcx)
-	{
-		WritePCXfile (file, screen, palette);
-	}
-	else
-	{
-		WritePNGfile (file, screen, palette);
-	}
-	fclose (file);
-	screen->Unlock ();
+	screen->Save(autoname, writepcx);
 
 	if (!screenshot_quiet)
 	{
 		Printf ("Captured %s\n", autoname.GetChars());
 	}
+}
+
+bool DCanvas::CanWritePCX()
+{
+	return true;
+}
+
+void DCanvas::Save(const char *filename, bool writepcx)
+{
+	FILE *file;
+
+	Lock (true);
+
+	PalEntry palette[256];
+	screen->GetFlashedPalette (palette);
+
+	file = fopen (filename, "wb");
+	if (file == NULL)
+	{
+		Printf ("Could not open %s\n", filename);
+		Unlock ();
+		return;
+	}
+
+	if (writepcx)
+	{
+		WritePCXfile (file, this, palette);
+	}
+	else
+	{
+		WritePNGfile (file, this, palette);
+	}
+	fclose (file);
+	Unlock ();
 }
 
 CCMD (screenshot)

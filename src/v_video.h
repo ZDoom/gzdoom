@@ -142,6 +142,7 @@ public:
 
 	// Access control
 	virtual bool Lock () = 0;		// Returns true if the surface was lost since last time
+	virtual bool Lock (bool usesimplecanvas) { return Lock(); }	
 	virtual void Unlock () = 0;
 	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
 
@@ -180,6 +181,12 @@ public:
 
 	// Can be overridden so that the colormaps for sector color/fade won't be built.
 	virtual bool UsesColormap() const;
+
+	// software renderer always returns true but other renderers may not want to implement PCX.
+	bool CanWritePCX();
+
+	// Saves canvas to a file
+	void Save(const char *filename, bool writepcx);
 
 	// Text drawing functions -----------------------------------------------
 

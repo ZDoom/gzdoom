@@ -1850,7 +1850,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 #ifndef unix
 	else if (Args.CheckParm ("-cdrom"))
 	{
-		leader = "c:/zdoomdat/";
+		leader = CDROM_DIR "/";
 	}
 	else
 	{

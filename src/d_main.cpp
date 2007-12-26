@@ -2259,7 +2259,7 @@ void D_DoomMain (void)
 	if (Args.CheckParm("-cdrom"))
 	{
 		Printf (GStrings("D_CDROM"));
-		mkdir ("c:\\zdoomdat", 0);
+		mkdir (CDROM_DIR, 0);
 	}
 #endif
 

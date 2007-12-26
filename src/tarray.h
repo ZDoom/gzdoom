@@ -361,10 +361,22 @@ template<class VT> struct TValueTraits
 	}
 };
 
+template<class KT, class VT, class MapType> class TMapIterator;
+template<class KT, class VT, class MapType> class TMapConstIterator;
+
 template<class KT, class VT, class HashTraits=THashTraits<KT>, class ValueTraits=TValueTraits<VT> >
 class TMap
 {
+	template<class KTa, class VTa, class MTa> friend class TMapIterator;
+	template<class KTb, class VTb, class MTb> friend class TMapConstIterator;
+
 public:
+	typedef class TMap<KT, VT, HashTraits, ValueTraits> MyType;
+	typedef class TMapIterator<KT, VT, MyType> Iterator;
+	typedef class TMapConstIterator<KT, VT, MyType> ConstIterator;
+	typedef struct { const KT Key; VT Value; } Pair;
+	typedef const Pair ConstPair;
+
 	TMap() { NumUsed = 0; SetNodeVector(1); }
 	TMap(hash_t size) { NumUsed = 0; SetNodeVector(size); }
 	~TMap() { ClearNodeVector(); }
@@ -435,12 +447,12 @@ public:
 
 	VT &operator[] (const KT key)
 	{
-		return GetNode(key)->Value;
+		return GetNode(key)->Pair.Value;
 	}
 
 	const VT &operator[] (const KT key) const
 	{
-		return GetNode(key)->Value;
+		return GetNode(key)->Pair.Value;
 	}
 
 	//=======================================================================
@@ -455,13 +467,13 @@ public:
 	VT *CheckKey (const KT key)
 	{
 		Node *n = FindKey(key);
-		return n != NULL ? &n->Value : NULL;
+		return n != NULL ? &n->Pair.Value : NULL;
 	}
 
 	const VT *CheckKey (const KT key) const
 	{
-		Node *n = FindKey(key);
-		return n != NULL ? &n->Value : NULL;
+		const Node *n = FindKey(key);
+		return n != NULL ? &n->Pair.Value : NULL;
 	}
 
 	//=======================================================================
@@ -482,14 +494,14 @@ public:
 		Node *n = FindKey(key);
 		if (n != NULL)
 		{
-			n->Value = value;
+			n->Pair.Value = value;
 		}
 		else
 		{
 			n = NewKey(key);
-			::new(&n->Value) VT(value);
+			::new(&n->Pair.Value) VT(value);
 		}
-		return n->Value;
+		return n->Pair.Value;
 	}
 
 	//=======================================================================
@@ -506,15 +518,15 @@ public:
 	}
 
 protected:
-	template<class KTa, class VTa, class MTa> friend class TMapIterator;
-	template<class KTb, class VTb, class MTb> friend class TMapConstIterator;
-
+	struct IPair	// This must be the same as Pair above, but with a
+	{				// non-const Key.
+		KT Key;
+		VT Value;
+	};
 	struct Node
 	{
 		Node *Next;
-		KT Key;
-		VT Value;
-
+		IPair Pair;
 		void SetNil()
 		{
 			Next = (Node *)1;
@@ -588,8 +600,8 @@ protected:
 		{
 			if (!nold[i].IsNil())
 			{
-				Node *n = NewKey(nold[i].Key);
-				::new(&n->Value) VT(nold[i].Value);
+				Node *n = NewKey(nold[i].Pair.Key);
+				::new(&n->Pair.Value) VT(nold[i].Pair.Value);
 				nold[i].~Node();
 			}
 		}
@@ -634,7 +646,7 @@ protected:
 				Rehash();				/* grow table */
 				return NewKey(key);		/* re-insert key into grown table */
 			}
-			othern = MainPosition(mp->Key);
+			othern = MainPosition(mp->Pair.Key);
 			if (othern != mp)			/* is colliding node out of its main position? */
 			{	/* yes; move colliding node into free position */
 				while (othern->Next != mp)	/* find previous */
@@ -657,7 +669,7 @@ protected:
 			mp->Next = NULL;
 		}
 		++NumUsed;
-		::new(&mp->Key) KT(key);
+		::new(&mp->Pair.Key) KT(key);
 		return mp;
 	}
 
@@ -666,7 +678,7 @@ protected:
 		Node *mp = MainPosition(key), **mpp;
 		HashTraits Traits;
 
-		if (!mp->IsNil() && !Traits.Compare(mp->Key, key)) /* the key is in its main position */
+		if (!mp->IsNil() && !Traits.Compare(mp->Pair.Key, key)) /* the key is in its main position */
 		{
 			if (mp->Next != NULL)		/* move next node to its main position */
 			{
@@ -684,7 +696,7 @@ protected:
 		}
 		else	/* the key is either not present or not in its main position */
 		{
-			for (mpp = &mp->Next, mp = *mpp; mp != NULL && Traits.Compare(mp->Key, key); mpp = &mp->Next, mp = *mpp)
+			for (mpp = &mp->Next, mp = *mpp; mp != NULL && Traits.Compare(mp->Pair.Key, key); mpp = &mp->Next, mp = *mpp)
 			{ }							/* look for the key */
 			if (mp != NULL)				/* found it */
 			{
@@ -700,7 +712,18 @@ protected:
 	{
 		HashTraits Traits;
 		Node *n = MainPosition(key);
-		while (n != NULL && !n->IsNil() && Traits.Compare(n->Key, key))
+		while (n != NULL && !n->IsNil() && Traits.Compare(n->Pair.Key, key))
+		{
+			n = n->Next;
+		}
+		return n == NULL || n->IsNil() ? NULL : n;
+	}
+
+	const Node *FindKey(const KT key) const
+	{
+		HashTraits Traits;
+		const Node *n = MainPosition(key);
+		while (n != NULL && !n->IsNil() && Traits.Compare(n->Pair.Key, key))
 		{
 			n = n->Next;
 		}
@@ -716,7 +739,7 @@ protected:
 		}
 		n = NewKey(key);
 		ValueTraits traits;
-		traits.Init(n->Value);
+		traits.Init(n->Pair.Value);
 		return n;
 	}
 
@@ -733,8 +756,8 @@ protected:
 		{
 			if (!nodes->IsNil())
 			{
-				Node *n = NewKey(nodes->Key);
-				::new(&n->Value) VT(nodes->Value);
+				Node *n = NewKey(nodes->Pair.Key);
+				::new(&n->Pair.Value) VT(nodes->Pair.Value);
 			}
 		}
 	}
@@ -762,7 +785,7 @@ public:
 	//
 	//=======================================================================
 
-	bool NextPair(const KT *&key, VT *&value)
+	bool NextPair(typename MapType::Pair *&pair)
 	{
 		if (Position >= Map.Size)
 		{
@@ -772,8 +795,7 @@ public:
 		{
 			if (!Map.Nodes[Position].IsNil())
 			{
-				key = &Map.Nodes[Position].Key;
-				value = &Map.Nodes[Position].Value;
+				pair = reinterpret_cast<typename MapType::Pair *>(&Map.Nodes[Position].Pair);
 				Position += 1;
 				return true;
 			}
@@ -811,7 +833,7 @@ public:
 	{
 	}
 
-	bool NextPair(const KT *&key, const VT *&value)
+	bool NextPair(typename MapType::ConstPair *&pair)
 	{
 		if (Position >= Map.Size)
 		{
@@ -821,8 +843,7 @@ public:
 		{
 			if (!Map.Nodes[Position].IsNil())
 			{
-				key = &Map.Nodes[Position].Key;
-				value = &Map.Nodes[Position].Value;
+				pair = reinterpret_cast<typename MapType::Pair *>(&Map.Nodes[Position].Pair);
 				Position += 1;
 				return true;
 			}

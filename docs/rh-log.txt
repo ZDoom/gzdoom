@@ -1,3 +1,7 @@
+December 26, 2007
+- Enhanced TMap so that you can get at the iterator types by accessing them
+  like class members.
+
 December 26, 2007 (Changes by Graf Zahl)
 - Fixed: The FSpecialFont constructor copied the untranslated colors directly
   from the source palette instead of the font's identity map.

@@ -313,7 +313,6 @@ struct InitIntToZero
 	}
 };
 typedef TMap<SDWORD, SDWORD, THashTraits<SDWORD>, InitIntToZero> FWorldGlobalArray;
-typedef TMapIterator<SDWORD, SDWORD, FWorldGlobalArray> FWorldGlobalArrayIterator;
 
 extern FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
 extern FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];

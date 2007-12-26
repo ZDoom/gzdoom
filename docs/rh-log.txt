@@ -1,4 +1,6 @@
 December 26, 2007 (Changes by Graf Zahl)
+- Fixed: The FSpecialFont constructor copied the untranslated colors directly
+  from the source palette instead of the font's identity map.
 - Split off the entire translation code from r_draw.cpp into r_translate.cpp.
 - Moved the common code of ACS and DECORATE translation generation into the
   FRemapTable class.

@@ -1449,7 +1449,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 			for (j = ActiveColors; j < TotalColors; ++j)
 			{
 				remap->Remap[j] = identity[j];
-				remap->Palette[j] = GPalette.BaseColors[j];
+				remap->Palette[j] = GPalette.BaseColors[identity[j]];
 			}
 		}
 	}

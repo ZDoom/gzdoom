@@ -1400,7 +1400,7 @@ static void G_QueueBody (AActor *body)
 	if (GetTranslationType(body->Translation) == TRANSLATION_Players ||
 		GetTranslationType(body->Translation) == TRANSLATION_PlayersExtra)
 	{
-		translationtables[TRANSLATION_PlayerCorpses][modslot] = TranslationToTable(body->Translation);
+		*translationtables[TRANSLATION_PlayerCorpses][modslot] = *TranslationToTable(body->Translation);
 		body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
 	}
 

@@ -602,7 +602,7 @@ bool DCajunMaster::LoadBots ()
 					else
 					{
 						teamnum = TEAM_None;
-						for (int i = 0; i < teams.Size (); ++i)
+						for (int i = 0; i < int(teams.Size()); ++i)
 						{
 							if (stricmp (teams[i].name, sc_String) == 0)
 							{

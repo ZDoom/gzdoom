@@ -152,7 +152,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 {
 	int color;
 	int height = screen->Font->GetHeight() * CleanYfac;
-	int i;
+	unsigned int i;
 	int maxwidth = 0;
 	int numTeams = 0;
 	int x ,y;

@@ -2099,24 +2099,15 @@ void A_SetGravity(AActor * self)
 
 void A_ClearTarget(AActor * self)
 {
-	if (self->target != NULL)
-	{
-		self->target = NULL;
-	}
-	if (self->LastHeard != NULL)
-	{
-		self->LastHeard = NULL;
-	}
-	if (self->lastenemy != NULL)
-	{
-		self->lastenemy = NULL;
-	}
+	self->target = NULL;
+	self->LastHeard = NULL;
+	self->lastenemy = NULL;
 }
 
 //==========================================================================
 //
 // A_JumpIfTargetInLOS (fixed fov, state label)
-// Jumps if the actor can see it's target, or if the player has a linetarget.
+// Jumps if the actor can see its target, or if the player has a linetarget.
 //
 //==========================================================================
 

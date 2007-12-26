@@ -3407,7 +3407,7 @@ void P_SetupLevel (char *lumpname, int position)
 		players[i].mo = NULL;
 	}
 	// [RH] Clear any scripted translation colors the previous level may have set.
-	for (i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
+	for (i = 0; i < int(translationtables[TRANSLATION_LevelScripted].Size()); ++i)
 	{
 		FRemapTable *table = translationtables[TRANSLATION_LevelScripted][i];
 		if (table != NULL)

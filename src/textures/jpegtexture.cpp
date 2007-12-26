@@ -389,6 +389,10 @@ int FJPEGTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_heig
 			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
 				4, cinfo.output_width * cinfo.output_components, CF_CMYK);
 			break;
+
+		default:
+			assert(0);
+			break;
 		}
 		jpeg_finish_decompress(&cinfo);
 	}

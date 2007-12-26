@@ -1172,6 +1172,7 @@ void ST_Endoom()
 			{
 				KillTimer (Window, 0x5A15A);
 			}
+			ST_Util_FreeBitmap (StartupBitmap);
 			ST_Util_FreeFont (font);
 			exit (int(bRet == 0 ? mess.wParam : 0));
 		}

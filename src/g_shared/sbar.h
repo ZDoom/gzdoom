@@ -39,6 +39,7 @@
 
 struct patch_t;
 class player_s;
+struct FRemapTable;
 
 extern int SB_state;
 
@@ -198,7 +199,8 @@ protected:
 	void DrawPowerups ();
 
 	void UpdateRect (int x, int y, int width, int height) const;
-	void DrawImage (FTexture *image, int x, int y, int translation=0, FFont *font=NULL) const;
+	void DrawImage (FTexture *image, int x, int y, FRemapTable *translation=NULL) const;
+	void DrawDimImage (FTexture *image, int x, int y, bool dimmed) const;
 	void DrawFadedImage (FTexture *image, int x, int y, fixed_t shade) const;
 	void DrawPartialImage (FTexture *image, int wx, int ww) const;
 

@@ -2324,7 +2324,7 @@ int DLevelScript::RunScript ()
 	DACSThinker *controller = DACSThinker::ActiveThinker;
 	SDWORD *locals = localvars;
 	ScriptFunction *activeFunction = NULL;
-	BYTE *translation = 0;
+	FRemapTable *translation = 0;
 	int resultValue = 1;
 
 	switch (state)
@@ -4674,11 +4674,13 @@ int DLevelScript::RunScript ()
 				sp--;
 				if (i >= 1 && i <= MAX_ACS_TRANSLATIONS)
 				{
-					translation = &translationtables[TRANSLATION_LevelScripted][i*256-256];
-					for (i = 0; i < 256; ++i)
+					translation = translationtables[TRANSLATION_LevelScripted].GetVal(i - 1);
+					if (translation == NULL)
 					{
-						translation[i] = i;
+						translation = new FRemapTable;
+						translationtables[TRANSLATION_LevelScripted].SetVal(i - 1, translation);
 					}
+					translation->MakeIdentity();
 				}
 			}
 			break;
@@ -4703,14 +4705,16 @@ int DLevelScript::RunScript ()
 				}
 				else if (start == end)
 				{
-					translation[start] = pal1;
+					translation->Remap[start] = pal1;
+					translation->Palette[start] = GPalette.BaseColors[pal1];
 					break;
 				}
 				palcol = pal1 << FRACBITS;
 				palstep = ((pal2 << FRACBITS) - palcol) / (end - start);
 				for (int i = start; i <= end; palcol += palstep, ++i)
 				{
-					translation[i] = palcol >> FRACBITS;
+					translation->Remap[i] = palcol >> FRACBITS;
+					translation->Palette[i] = GPalette.BaseColors[palcol >> FRACBITS];
 				}
 			}
 			break;
@@ -4755,8 +4759,9 @@ int DLevelScript::RunScript ()
 				}
 				if (start == end)
 				{
-					translation[start] = ColorMatcher.Pick
+					translation->Remap[start] = ColorMatcher.Pick
 						(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+					translation->Palette[start] = PalEntry(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
 					break;
 				}
 				rs /= (end - start);
@@ -4764,8 +4769,9 @@ int DLevelScript::RunScript ()
 				bs /= (end - start);
 				for (int i = start; i <= end; ++i)
 				{
-					translation[i] = ColorMatcher.Pick
+					translation->Remap[i] = ColorMatcher.Pick
 						(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+					translation->Palette[i] = PalEntry(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
 					r += rs;
 					g += gs;
 					b += bs;
@@ -4776,6 +4782,7 @@ int DLevelScript::RunScript ()
 		case PCD_ENDTRANSLATION:
 			// This might be useful for hardware rendering, but
 			// for software it is superfluous.
+			translation->UpdateNative();
 			translation = NULL;
 			break;
 

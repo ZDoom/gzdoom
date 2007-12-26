@@ -3406,16 +3406,18 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		players[i].mo = NULL;
 	}
-	// [RH] Set default scripted translation colors
-	for (i = 0; i < 256; ++i)
+	// [RH] Clear any scripted translation colors the previous level may have set.
+	for (i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
 	{
-		translationtables[TRANSLATION_LevelScripted][i] = i;
+		FRemapTable *table = translationtables[TRANSLATION_LevelScripted][i];
+		if (table != NULL)
+		{
+			delete table;
+			translationtables[TRANSLATION_LevelScripted][i] = NULL;
+		}
 	}
-	for (i = 1; i < MAX_ACS_TRANSLATIONS; ++i)
-	{
-		memcpy (&translationtables[TRANSLATION_LevelScripted][i*256],
-				translationtables[TRANSLATION_LevelScripted], 256);
-	}
+	translationtables[TRANSLATION_LevelScripted].Clear();
+
 	// Initial height of PointOfView will be set by player think.
 	players[consoleplayer].viewz = 1; 
 

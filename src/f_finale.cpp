@@ -377,6 +377,7 @@ void F_TextWrite (void)
 	int c;
 	int cx;
 	int cy;
+	const FRemapTable *range;
 	int leftmargin;
 	int rowheight;
 	bool scale;
@@ -402,6 +403,7 @@ void F_TextWrite (void)
 	ch = FinaleText.GetChars();
 		
 	count = (FinaleCount - 10)/TEXTSPEED;
+	range = screen->Font->GetColorTranslation (CR_UNTRANSLATED);
 
 	for ( ; count ; count-- )
 	{
@@ -425,8 +427,7 @@ void F_TextWrite (void)
 				screen->DrawTexture (pic,
 					cx + 320 / 2,
 					cy + 200 / 2,
-					DTA_Font, screen->Font,
-					DTA_Translation, CR_UNTRANSLATED,
+					DTA_Translation, range,
 					DTA_Clean, true,
 					TAG_DONE);
 			}
@@ -435,8 +436,7 @@ void F_TextWrite (void)
 				screen->DrawTexture (pic,
 					cx + 320 / 2,
 					cy + 200 / 2,
-					DTA_Font, screen->Font,
-					DTA_Translation, CR_UNTRANSLATED,
+					DTA_Translation, range,
 					TAG_DONE);
 			}
 		}
@@ -522,7 +522,7 @@ static struct
 int 			castnum;
 int 			casttics;
 int				castsprite;			// [RH] For overriding the player sprite with a skin
-int				casttranslation;	// [RH] Draw "our hero" with their chosen suit color
+const FRemapTable *casttranslation;	// [RH] Draw "our hero" with their chosen suit color
 FState*			caststate;
 bool	 		castdeath;
 int 			castframes;
@@ -582,7 +582,7 @@ void F_StartCast (void)
 	castnum = 0;
 	caststate = castorder[castnum].info->SeeState;
 	castsprite = caststate->sprite.index;
-	casttranslation = 0;
+	casttranslation = NULL;
 	casttics = caststate->GetTics ();
 	castdeath = false;
 	FinaleStage = 3;
@@ -632,12 +632,12 @@ void F_CastTicker (void)
 		if (castnum == 16)
 		{
 			castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
-			casttranslation = TRANSLATION(TRANSLATION_Players, consoleplayer);
+			casttranslation = translationtables[TRANSLATION_Players][consoleplayer];
 		}
 		else
 		{
 			castsprite = caststate->sprite.index;
-			casttranslation = 0;
+			casttranslation = NULL;
 		}
 		castframes = 0;
 	}

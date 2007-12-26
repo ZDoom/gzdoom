@@ -437,7 +437,7 @@ CVAR (Flag, compat_invisibility,compatflags, COMPATF_INVISIBILITY);
 // Draw current display, possibly wiping it from the previous
 //
 //==========================================================================
-CVAR(Bool,test2d,true,0)
+CVAR(Bool,test2d,false,0)
 void D_Display (bool screenshot)
 {
 	bool wipe;
@@ -601,7 +601,10 @@ void D_Display (bool screenshot)
 			break;
 		}
 	}
-	//screen->Begin2D();
+	if (!screenshot && (!wipe || NoWipe) && test2d)
+	{
+		screen->Begin2D();
+	}
 	// draw pause pic
 	if (paused && menuactive == MENU_Off)
 	{
@@ -638,21 +641,6 @@ void D_Display (bool screenshot)
 		FStat::PrintStat ();
 		if (!screenshot)
 		{
-#if 0
-			if (test2d)
-				screen->Begin2D();
-			screen->DrawTexture(TexMan["M_HTIC"], 0, 0,
-				DTA_Clean, true,
-				TAG_DONE);
-			screen->DrawTexture(TexMan["XHAIRB3"], 200, 100,
-				DTA_DestWidth, 128,
-				DTA_DestHeight, 128,
-				DTA_Alpha, ((gametic & 31) + 1) << (16-5),
-//				DTA_RenderStyle, STYLE_Add,
-				DTA_FillColor, MAKEARGB(ColorMatcher.Pick(254,254,0),254,254,0),
-				DTA_AlphaChannel, true,
-				TAG_DONE);
-#endif
 			screen->Update ();	// page flip or blit buffer
 		}
 	}

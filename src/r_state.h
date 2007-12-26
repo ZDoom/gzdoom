@@ -46,6 +46,7 @@ extern size_t			numskins;	// [RH]
 extern FPlayerSkin	*	skins;		// [RH]
 
 extern BYTE				OtherGameSkinRemap[256];
+extern PalEntry			OtherGameSkinPalette[256];
 
 
 //

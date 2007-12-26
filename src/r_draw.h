@@ -203,7 +203,7 @@ extern "C" int				ds_color;		// [RH] For flat color (no texturing)
 
 enum
 {
-	TRANSLATION_Shaded,
+	TRANSLATION_Invalid,
 	TRANSLATION_Players,
 	TRANSLATION_PlayersExtra,
 	TRANSLATION_Standard,
@@ -217,8 +217,31 @@ enum
 	NUM_TRANSLATION_TABLES
 };
 
-extern BYTE*			translationtables[NUM_TRANSLATION_TABLES];
-extern BYTE*			dc_translation;
+struct FRemapTable
+{
+	FRemapTable(int count=256);
+	FRemapTable(const FRemapTable &o);
+	~FRemapTable();
+
+	FRemapTable &operator= (const FRemapTable &o);
+	void MakeIdentity();
+	void KillNative();
+	void UpdateNative();
+	FNativeTexture *GetNative();
+
+	BYTE *Remap;				// For the software renderer
+	PalEntry *Palette;			// The ideal palette this maps to
+	FNativeTexture *Native;		// The Palette stored in a HW texture
+	int NumEntries;				// # of elements in this table (usually 256)
+
+private:
+	void Free();
+	void Alloc(int count);
+};
+
+extern TAutoGrowArray<FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
+extern BYTE shadetables[NUMCOLORMAPS*16*256];
+extern BYTE *dc_translation;
 
 inline WORD TRANSLATION(BYTE a, BYTE b)
 {
@@ -228,6 +251,8 @@ inline int GetTranslationType(WORD trans)
 {
 	return trans >> 8;
 }
+// Retrieve the FRemapTable that an actor's translation value maps to.
+FRemapTable *TranslationToTable(int translation);
 
 #define DIM_MAP TRANSLATION(TRANSLATION_Dim, 0)
 
@@ -245,9 +270,9 @@ inline void R_CopyTranslation (WORD to, WORD from)
 void R_DetailDouble (void);
 
 
-// Initialize color translation tables,
-//	for player rendering etc.
+// Initialize color translation tables, for player rendering etc.
 void R_InitTranslationTables (void);
+void R_DeinitTranslationTables();
 
 // [RH] Actually create a player's translation table.
 void R_BuildPlayerTranslation (int player);

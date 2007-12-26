@@ -3,7 +3,7 @@
 ** Code to let ZDoom use Direct3D 9 as a simple framebuffer
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2007 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -60,6 +60,7 @@
 #include "v_pfx.h"
 #include "stats.h"
 #include "doomerrors.h"
+#include "r_draw.h"
 
 #include "win32iface.h"
 
@@ -100,6 +101,20 @@ public:
 	bool Update();
 	D3DFORMAT GetTexFormat();
 	FTextureFormat ToTexFmt(D3DFORMAT fmt);
+};
+
+class D3DPal : public FNativeTexture
+{
+public:
+	D3DPal(FRemapTable *remap, D3DFB *fb);
+	~D3DPal();
+
+	IDirect3DTexture9 *Tex;
+
+	bool Update();
+
+	FRemapTable *Remap;
+	int RoundedPaletteSize;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -152,7 +167,6 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	FBFormat = D3DFMT_UNKNOWN;
 	PalFormat = D3DFMT_UNKNOWN;
 	VSync = vid_vsync;
-	OffByOneAt = -1;
 	BlendingRect.left = 0;
 	BlendingRect.top = 0;
 	BlendingRect.right = FBWidth;
@@ -216,6 +230,12 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	if (D3DDevice != NULL)
 	{
 		CreateResources ();
+
+		// Be sure we know what the alpha blend is
+		D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		AlphaBlendEnabled = FALSE;
+		AlphaSrcBlend = D3DBLEND(0);
+		AlphaDestBlend = D3DBLEND(0);
 	}
 }
 
@@ -274,12 +294,19 @@ bool D3DFB::CreateResources ()
 		I_RestoreWindowedPos ();
 		VidResizing = false;
 	}
-	if (FAILED(D3DDevice->CreatePixelShader (PalTexShaderDef, &PalTexShader)) ||
-		FAILED(D3DDevice->CreatePixelShader (PlainShaderDef, &PlainShader)) ||
+	SM14 = false;
+	if (FAILED(D3DDevice->CreatePixelShader (PalTexShader20Def, &PalTexShader)) &&
+		(SM14 = true, FAILED(D3DDevice->CreatePixelShader (PalTexShader14Def, &PalTexShader))))
+	{
+		return false;
+	}
+	if (FAILED(D3DDevice->CreatePixelShader (PlainShaderDef, &PlainShader)) ||
 		FAILED(D3DDevice->CreatePixelShader (DimShaderDef, &DimShader)))
 	{
 		return false;
 	}
+	CurPixelShader = NULL;
+	memset(Constant, 0, sizeof(Constant));
 	if (!CreateFBTexture() ||
 		!CreatePaletteTexture() ||
 		!CreateStencilPaletteTexture() ||
@@ -292,6 +319,7 @@ bool D3DFB::CreateResources ()
 		return false;
 	}
 	SetGamma (Gamma);
+
 	return true;
 }
 
@@ -364,188 +392,7 @@ bool D3DFB::Reset ()
 	{
 		return false;
 	}
-	if (OffByOneAt < 256)
-	{
-		D3DDevice->SetSamplerState (1, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
-		D3DDevice->SetSamplerState (1, D3DSAMP_BORDERCOLOR,
-			D3DCOLOR_XRGB(GammaTable[SourcePalette[255].r],
-						  GammaTable[SourcePalette[255].g],
-						  GammaTable[SourcePalette[255].b]));
-	}
 	return true;
-}
-
-//==========================================================================
-//
-// DoOffByOneCheck
-//
-// NVidia hardware has an off-by-one error in the pixel shader.
-// On a Geforce 7950GT and a 6200, I have witnessed it skip palette entry
-// 240. I have a report that an FX card skips in a totally different spot.
-// So rather than try and correct it in the shader, we detect it here and
-// compensate when uploading the palette and when drawing by setting the
-// sampler mode for the palette to border and making the border color the
-// final color in the palette.
-//
-// Interestingly, a Radeon x300 doesn't have this problem. I am curious
-// if other ATI hardware is the same.
-//
-//==========================================================================
-
-void D3DFB::DoOffByOneCheck ()
-{
-	IDirect3DSurface9 *savedrendertarget;
-	IDirect3DSurface9 *testsurf, *readsurf;
-	D3DSURFACE_DESC desc;
-	D3DLOCKED_RECT lockrect;
-	RECT testrect = { 0, 0, 256, 1 };
-	float texright = 256.f / float(FBWidth);
-	float texbot = 1.f / float(FBHeight);
-	FBVERTEX verts[4] =
-	{
-		{ -0.5f,  -0.5f, 0.5f, 1.f,      0.f,    0.f },
-		{ 255.5f, -0.5f, 0.5f, 1.f, texright,    0.f },
-		{ 255.5f,  0.5f, 0.5f, 1.f, texright, texbot },
-		{ -0.5f,   0.5f, 0.5f, 1.f,      0.f, texbot }
-	};
-	float ps_constants[2][4] = { { 0, 0, 0, 0 }, { 1, 1, 1, 1 } };
-
-	union
-	{
-		BYTE Pal32[256][4];
-		WORD Pal16[256];
-	};
-	int i, c;
-
-	if (OffByOneAt >= 0)
-	{
-		return;
-	}
-
-	// Create an easily recognizable R3G3B2 palette.
-	for (i = 0; i < 256; ++i)
-	{
-		Pal32[i][0] = BYTE(i & 0x03) << 6;		// blue
-		Pal32[i][1] = BYTE(i & 0x1C) << 3;		// green
-		Pal32[i][2] = BYTE(i & 0xE0);			// red;
-		Pal32[i][3] = 255;
-	}
-
-	// Upload the palette
-	if (SUCCEEDED(PaletteTexture->LockRect (0, &lockrect, NULL, 0)))
-	{
-		memcpy (lockrect.pBits, Pal32, 256 * 4);
-		PaletteTexture->UnlockRect (0);
-	}
-	else
-	{
-		return;
-	}
-	// Prepare a texture with values 0-256.
-	if (SUCCEEDED(FBTexture->LockRect (0, &lockrect, &testrect, 0)))
-	{
-		for (i = 0; i < 256; ++i)
-		{
-			((BYTE *)lockrect.pBits)[i] = (BYTE)i;
-		}
-		FBTexture->UnlockRect (0);
-	}
-	else
-	{
-		return;
-	}
-	// Create a render target that we can draw it to.
-	if (FAILED(D3DDevice->GetRenderTarget (0, &savedrendertarget)))
-	{
-		return;
-	}
-	if (FAILED(D3DDevice->CreateRenderTarget (256, 1, PalFormat, D3DMULTISAMPLE_NONE, 0, FALSE, &testsurf, NULL)))
-	{
-		return;
-	}
-	if (FAILED(D3DDevice->CreateOffscreenPlainSurface (256, 1, PalFormat, D3DPOOL_SYSTEMMEM, &readsurf, NULL)))
-	{
-		testsurf->Release();
-		return;
-	}
-	if (FAILED(D3DDevice->SetRenderTarget (0, testsurf)))
-	{
-		testsurf->Release();
-		readsurf->Release();
-		return;
-	}
-	// Write it to the render target using the pixel shader.
-	D3DDevice->BeginScene();
-	D3DDevice->SetTexture (0, FBTexture);
-	D3DDevice->SetTexture (1, PaletteTexture);
-	D3DDevice->SetFVF (D3DFVF_FBVERTEX);
-	D3DDevice->SetPixelShader (PalTexShader);
-	D3DDevice->SetPixelShaderConstantF (0, ps_constants[0], 2);
-	D3DDevice->DrawPrimitiveUP (D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
-	D3DDevice->EndScene();
-	D3DDevice->SetRenderTarget (0, savedrendertarget);
-	savedrendertarget->Release();
-	// Now read it back and see where it skips an entry
-	if (SUCCEEDED(D3DDevice->GetRenderTargetData (testsurf, readsurf)) &&
-		SUCCEEDED(readsurf->LockRect (&lockrect, &testrect, D3DLOCK_READONLY)))
-	{
-		desc.Format = PalFormat;
-		if (desc.Format == D3DFMT_A8R8G8B8 || desc.Format == D3DFMT_X8R8G8B8)
-		{
-			const BYTE *pix = (const BYTE *)lockrect.pBits;
-			for (i = 0; i < 256; ++i, pix += 4)
-			{
-				c = (pix[0] >> 6) |					// blue
-					((pix[1] >> 5) << 2) |			// green
-					((pix[2] >> 5) << 5);			// red
-				if (c != i)
-				{
-					break;
-				}
-			}
-		}
-		else if (desc.Format == D3DFMT_A1R5G5B5 || desc.Format == D3DFMT_X1R5G5B5)
-		{
-			const WORD *pix = (const WORD *)lockrect.pBits;
-			for (i = 0; i < 256; ++i, ++pix)
-			{
-				c = ((*pix & 0x0018) >> 3) |			// blue
-					((*pix & 0x0380) >> 5) |			// green
-					((*pix & 0x7C00) >> 7) ;			// red
-				if (c != i)
-				{
-					break;
-				}
-			}
-		}
-		else if (desc.Format == D3DFMT_R5G6B5)
-		{
-			const WORD *pix = (const WORD *)lockrect.pBits;
-			for (i = 0; i < 256; ++i, ++pix)
-			{
-				c = ((*pix & 0x0018) >> 3) |			// blue
-					((*pix & 0x0700) >> 6) |			// green
-					((*pix & 0xE000) >> 8) ;			// red
-				if (c != i)
-				{
-					break;
-				}
-			}
-		}
-		else
-		{
-			// Huh? What kind of backbuffer is this?
-			i = 256;
-		}
-	}
-	readsurf->UnlockRect();
-	readsurf->Release();
-	testsurf->Release();
-	OffByOneAt = i;
-	if (i < 256)
-	{
-		D3DDevice->SetSamplerState (1, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
-	}
 }
 
 bool D3DFB::CreateFBTexture ()
@@ -811,6 +658,7 @@ void D3DFB::Update ()
 {
 	if (In2D == 2)
 	{
+		DrawRateStuff();
 		D3DDevice->EndScene();
 		D3DDevice->Present(NULL, NULL, NULL, NULL);
 		In2D = 0;
@@ -819,7 +667,7 @@ void D3DFB::Update ()
 
 	if (LockCount != 1)
 	{
-		//I_FatalError ("Framebuffer must have exactly 1 lock to be updated");
+		I_FatalError ("Framebuffer must have exactly 1 lock to be updated");
 		if (LockCount > 0)
 		{
 			UpdatePending = true;
@@ -828,7 +676,10 @@ void D3DFB::Update ()
 		return;
 	}
 
-	DrawRateStuff ();
+	if (In2D == 0)
+	{
+		DrawRateStuff();
+	}
 
 	if (NeedGammaUpdate)
 	{
@@ -915,13 +766,13 @@ void D3DFB::Draw3DPart()
 		D3DDevice->Clear (2, rects, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0,0,0), 1.f, 0);
 	}
 	D3DDevice->BeginScene();
-	D3DDevice->SetTexture (0, FBTexture);
-	D3DDevice->SetTexture (1, PaletteTexture);
+	SetTexture (0, FBTexture);
+	SetPaletteTexture(PaletteTexture, 256);
 	D3DDevice->SetStreamSource (0, VertexBuffer, 0, sizeof(FBVERTEX));
 	D3DDevice->SetFVF (D3DFVF_FBVERTEX);
-	D3DDevice->SetPixelShader (PalTexShader);
 	D3DDevice->SetPixelShaderConstantF (0, FlashConstants[0], 2);
-	D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+	memcpy(Constant, FlashConstants, sizeof(FlashConstants));
+	SetAlphaBlend(FALSE);
 	if (!UseBlendingRect || FlashConstants[1][0] == 1)
 	{ // The whole screen as a single quad.
 		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 0, 2);
@@ -933,31 +784,12 @@ void D3DFB::Draw3DPart()
 		// The rest is drawn unblended, so reset the shader constant.
 		static const float FlashZero[2][4] = { { 0, 0, 0, 0 }, { 1, 1, 1, 1 } };
 		D3DDevice->SetPixelShaderConstantF (0, FlashZero[0], 2);
+		memcpy(Constant, FlashZero, sizeof(FlashZero));
 
 		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN,  4, 2);	// left
 		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN,  8, 2);	// right
 		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 12, 4);	// bottom
 		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 18, 4);	// top
-	}
-	if (UseBlendingRect && FlashConstants[1][0] != 1 && RateX)
-	{
-		float left = float(RateX) - 0.5f;
-		float top = (TrueHeight - Height) * 0.5f - 0.5f;
-		float right = float(Width) - 0.5f;
-		float bot = float(8) + top;
-		float texleft = float(RateX) / float(FBWidth);
-		float texright = float(Width) / float(FBWidth);
-		float texbot = float(8) / float(FBHeight);
-
-		// Redraw the vid_fps part without the flash
-		FBVERTEX verts[4] =
-		{
-			{  left, top, 0.5f, 1.f,  texleft,    0.f },
-			{ right, top, 0.5f, 1.f, texright,    0.f },
-			{ right, bot, 0.5f, 1.f, texright, texbot },
-			{  left, bot, 0.5f, 1.f,  texleft, texbot }
-		};
-		D3DDevice->DrawPrimitiveUP (D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
 }
 
@@ -966,18 +798,10 @@ void D3DFB::UploadPalette ()
 	D3DLOCKED_RECT lockrect;
 	int i;
 
-	if (OffByOneAt < 0)
-	{
-		DoOffByOneCheck ();
-	}
 	if (SUCCEEDED(PaletteTexture->LockRect (0, &lockrect, NULL, 0)))
 	{
-		// Keep trying to update the palette if we haven't done the off-by-one
-		// check yet. Otherwise, wait until the next time the palette changes.
-		NeedPalUpdate = (OffByOneAt < 0);
-
 		BYTE *pix = (BYTE *)lockrect.pBits;
-		for (i = 0; i < OffByOneAt; ++i, pix += 4)
+		for (i = 0; i < 256; ++i, pix += 4)
 		{
 			pix[0] = GammaTable[SourcePalette[i].b];
 			pix[1] = GammaTable[SourcePalette[i].g];
@@ -985,21 +809,7 @@ void D3DFB::UploadPalette ()
 			pix[3] = (i == 0 ? 0 : 255);
 			// To let masked textures work, the first palette entry's alpha is 0.
 		}
-		for (; i < 256; ++i, pix += 4)
-		{
-			pix[0] = GammaTable[SourcePalette[i-1].b];
-			pix[1] = GammaTable[SourcePalette[i-1].g];
-			pix[2] = GammaTable[SourcePalette[i-1].r];
-			pix[3] = 255;
-		}
 		PaletteTexture->UnlockRect (0);
-	}
-	if (OffByOneAt < 256)
-	{
-		D3DDevice->SetSamplerState (1, D3DSAMP_BORDERCOLOR,
-			D3DCOLOR_XRGB(GammaTable[SourcePalette[255].r],
-						  GammaTable[SourcePalette[255].g],
-						  GammaTable[SourcePalette[255].b]));
 	}
 }
 
@@ -1145,8 +955,6 @@ bool D3DTex::Create(IDirect3DDevice9 *D3DDevice)
 	w = GameTex->GetWidth();
 	h = GameTex->GetHeight();
 
-	// We don't really want mip-maps, but specifying the flag is the only
-	// way to use D3DPOOL_MANAGED, according to the docs.
 	hr = D3DDevice->CreateTexture(w, h, 1, 0,
 		GetTexFormat(), D3DPOOL_MANAGED, &Tex, NULL);
 	if (FAILED(hr))
@@ -1262,6 +1070,97 @@ FTextureFormat D3DTex::ToTexFmt(D3DFORMAT fmt)
 
 //==========================================================================
 //
+// D3DPal Constructor
+//
+//==========================================================================
+
+D3DPal::D3DPal(FRemapTable *remap, D3DFB *fb)
+	: Tex(NULL), Remap(remap)
+{
+	int count;
+
+	// Palette textures must be 256 entries for Shader Model 1.4
+	if (fb->SM14)
+	{
+		count = 256;
+	}
+	else
+	{
+		int pow2count;
+
+		// Round up to the nearest power of 2.
+		for (pow2count = 1; pow2count < remap->NumEntries; pow2count <<= 1)
+		{ }
+		count = pow2count;
+	}
+	RoundedPaletteSize = count;
+	if (SUCCEEDED(fb->D3DDevice->CreateTexture(count, 1, 1, 0, 
+		D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &Tex, NULL)))
+	{
+		if (!Update())
+		{
+			Tex->Release();
+			Tex = NULL;
+		}
+	}
+}
+
+//==========================================================================
+//
+// D3DPal Destructor
+//
+//==========================================================================
+
+D3DPal::~D3DPal()
+{
+	if (Tex != NULL)
+	{
+		Tex->Release();
+		Tex = NULL;
+	}
+}
+
+//==========================================================================
+//
+// D3DPal :: Update
+//
+// Copies the palette to the texture.
+//
+//==========================================================================
+
+bool D3DPal::Update()
+{
+	D3DLOCKED_RECT lrect;
+	D3DCOLOR *buff;
+	const PalEntry *pal;
+
+	assert(Tex != NULL);
+
+	if (FAILED(Tex->LockRect(0, &lrect, NULL, 0)))
+	{
+		return false;
+	}
+	buff = (D3DCOLOR *)lrect.pBits;
+	pal = Remap->Palette;
+
+	// Should I allow the source palette to specify alpha values?
+	buff[0] = D3DCOLOR_ARGB(0,
+		static_cast<D3DFB *>(screen)->GammaTable[pal[0].r],
+		static_cast<D3DFB *>(screen)->GammaTable[pal[0].g],
+		static_cast<D3DFB *>(screen)->GammaTable[pal[0].b]);
+	for (int i = 1; i < Remap->NumEntries; ++i)
+	{
+		buff[i] = D3DCOLOR_XRGB(
+			static_cast<D3DFB *>(screen)->GammaTable[pal[i].r],
+			static_cast<D3DFB *>(screen)->GammaTable[pal[i].g],
+			static_cast<D3DFB *>(screen)->GammaTable[pal[i].b]);
+	}
+	Tex->UnlockRect(0);
+	return true;
+}
+
+//==========================================================================
+//
 // D3DFB :: Begin2D
 //
 // Begins 2D mode drawing operations. In particular, DrawTexture is
@@ -1280,19 +1179,47 @@ void D3DFB::Begin2D()
 	In2D = 2;
 
 	// Set default state for 2D rendering.
-	float ps_constants[2][4] = { { 0, 0, 0, 0 }, { 1, 1, 1, 1 } };
-	D3DDevice->SetPixelShaderConstantF (0, ps_constants[0], 2);
-	D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-	D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-	D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-
-	// This is set by Update()
-	//D3DDevice->SetTexture(1, PaletteTexture);
+	SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 }
+
+//==========================================================================
+//
+// D3DFB :: CreateTexture
+//
+// Returns a native texture that wraps a FTexture.
+//
+//==========================================================================
 
 FNativeTexture *D3DFB::CreateTexture(FTexture *gametex)
 {
-	return new D3DTex(gametex, D3DDevice);
+	D3DTex *tex = new D3DTex(gametex, D3DDevice);
+	if (tex->Tex == NULL)
+	{
+		delete tex;
+		return NULL;
+	}
+	return tex;
+}
+
+//==========================================================================
+//
+// D3DFB :: CreatePalette
+//
+// Returns a native texture that contains a palette.
+//
+// Pre: count is a power of 2
+//
+//==========================================================================
+
+FNativeTexture *D3DFB::CreatePalette(FRemapTable *remap)
+{
+	D3DPal *tex = new D3DPal(remap, this);
+	if (tex->Tex == NULL)
+	{
+		delete tex;
+		return NULL;
+	}
+	return tex;
 }
 
 //==========================================================================
@@ -1303,7 +1230,7 @@ FNativeTexture *D3DFB::CreateTexture(FTexture *gametex)
 //
 //==========================================================================
 
-void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color) const
+void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
 {
 	if (In2D < 2)
 	{
@@ -1313,6 +1240,11 @@ void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint3
 	if (palcolor >= 0)
 	{
 		color = GPalette.BaseColors[palcolor];
+	}
+	else if (APART(color) < 255)
+	{
+		Dim(color, APART(color)/255.f, left, top, right - left, bottom - top);
+		return;
 	}
 	D3DRECT rect = { left, top, right, bottom };
 	D3DDevice->Clear(1, &rect, D3DCLEAR_TARGET, color | 0xFF000000, 1.f, 0);
@@ -1324,7 +1256,7 @@ void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint3
 //
 //==========================================================================
 
-void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h) const
+void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h)
 {
 	if (amount <= 0)
 		return;
@@ -1348,14 +1280,10 @@ void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h) con
 			{ x1+w-0.5f, y1+h-0.5f, 0.5f, 1, 0, 0 },
 			{ x1-0.5f,   y1+h-0.5f, 0.5f, 1, 0, 0 }
 		};
-		float constant[4] =
-		{
-			RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f, APART(color)/255.f,
-		};
-		D3DDevice->SetPixelShader(DimShader);
-		D3DDevice->SetPixelShaderConstantF(1, constant, 1);
+		SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
+		SetPixelShader(DimShader);
+		SetConstant(1, color.r/255.f, color.g/255.f, color.b/255.f, amount);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, &verts, sizeof(FBVERTEX));
-		D3DDevice->SetPixelShader(PalTexShader);
 	}
 }
 
@@ -1378,7 +1306,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 
 	DrawParms parms;
 
-	if (!ParseDrawTextureTags(img, x, y, tags_first, tags, &parms))
+	if (!ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, true))
 	{
 		return;
 	}
@@ -1450,12 +1378,12 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 		{ x0, y1, 0.5f, 1.f, u0, v1 }
 	};
 
-	if (!SetStyle(parms.style, parms.alpha, parms.fillcolor, parms.masked))
+	if (!SetStyle(parms))
 	{
 		return;
 	}
 
-	D3DDevice->SetTexture(0, tex->Tex);
+	SetTexture(0, tex->Tex);
 	D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, &verts, sizeof(FBVERTEX));
 }
 
@@ -1467,13 +1395,14 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 //
 //==========================================================================
 
-bool D3DFB::SetStyle(int style, fixed_t alpha_fixed, DWORD color, INTBOOL masked)
+bool D3DFB::SetStyle(DrawParms &parms)
 {
+	ERenderStyle style = parms.style;
 	D3DBLEND fglevel, bglevel;
 	float alpha;
 	bool stencilling;
 
-	alpha = clamp<fixed_t> (alpha_fixed, 0, FRACUNIT) / 65536.f;
+	alpha = clamp<fixed_t> (parms.alpha, 0, FRACUNIT) / 65536.f;
 
 	if (style == STYLE_OptFuzzy)
 	{
@@ -1500,12 +1429,9 @@ bool D3DFB::SetStyle(int style, fixed_t alpha_fixed, DWORD color, INTBOOL masked
 	case STYLE_Shaded:
 		if (alpha > 0)
 		{
-			float constant[4] = { RPART(color)/255.f,GPART(color)/255.f,BPART(color)/255.f,alpha };
-			D3DDevice->SetPixelShaderConstantF(1, constant, 1);
-			D3DDevice->SetTexture(1, ShadedPaletteTexture);
-			D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-			D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-			D3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+			SetConstant(1, RPART(parms.fillcolor)/255.f, GPART(parms.fillcolor)/255.f, BPART(parms.fillcolor)/255.f, alpha);
+			SetPaletteTexture(ShadedPaletteTexture, 256);
+			SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 			return true;
 		}
 		return false;
@@ -1545,28 +1471,146 @@ bool D3DFB::SetStyle(int style, fixed_t alpha_fixed, DWORD color, INTBOOL masked
 
 	// Masking can only be turned off for STYLE_Normal, because it requires
 	// turning off the alpha blend.
-	if (!masked && style == STYLE_Normal)
+	if (!parms.masked && style == STYLE_Normal)
 	{
-		D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		SetAlphaBlend(FALSE);
+		SetColorOverlay(parms.colorOverlay, 1);
+		SetPaletteTexture(PaletteTexture, 256);
 	}
 	else
 	{
-		D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-		D3DDevice->SetRenderState(D3DRS_SRCBLEND, fglevel);
-		D3DDevice->SetRenderState(D3DRS_DESTBLEND, bglevel);
+		SetAlphaBlend(TRUE, fglevel, bglevel);
 
 		if (!stencilling)
 		{
-			float constant[4] = { 1,1,1,alpha };
-			D3DDevice->SetPixelShaderConstantF(1, constant, 1);
-			D3DDevice->SetTexture(1, PaletteTexture);
+			if (parms.remap != NULL)
+			{
+				D3DPal *pal = reinterpret_cast<D3DPal *>(parms.remap->GetNative());
+				SetPaletteTexture(pal->Tex, pal->RoundedPaletteSize);
+			}
+			else
+			{
+				SetPaletteTexture(PaletteTexture, 256);
+			}
+			SetColorOverlay(parms.colorOverlay, alpha);
 		}
 		else
 		{
-			float constant[4] = { RPART(color)/255.f,GPART(color)/255.f,BPART(color)/255.f,alpha };
-			D3DDevice->SetPixelShaderConstantF(1, constant, 1);
-			D3DDevice->SetTexture(1, StencilPaletteTexture);
+			SetConstant(1, RPART(parms.fillcolor)/255.f, GPART(parms.fillcolor)/255.f, BPART(parms.fillcolor)/255.f, alpha);
+			SetPaletteTexture(StencilPaletteTexture, 256);
 		}
 	}
 	return true;
+}
+
+void D3DFB::SetColorOverlay(DWORD color, float alpha)
+{
+	if (APART(color) != 0)
+	{
+		float a = 255.f / APART(color);
+		float r = RPART(color) * a;
+		float g = GPART(color) * a;
+		float b = BPART(color) * a;
+		SetConstant(0, r, g, b, 0);
+		a = 1 - 1 / a;
+		SetConstant(1, a, a, a, alpha);
+	}
+	else
+	{
+		SetConstant(0, 0, 0, 0, 0);
+		SetConstant(1, 1, 1, 1, alpha);
+	}
+}
+
+void D3DFB::SetAlphaBlend(BOOL enabled, D3DBLEND srcblend, D3DBLEND destblend)
+{
+	if (!enabled)
+	{ // Disable alpha blend
+		if (AlphaBlendEnabled)
+		{
+			AlphaBlendEnabled = FALSE;
+			D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		}
+	}
+	else
+	{ // Enable alpha blend
+		assert(srcblend != 0);
+		assert(destblend != 0);
+
+		if (!AlphaBlendEnabled)
+		{
+			AlphaBlendEnabled = TRUE;
+			D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		}
+		if (AlphaSrcBlend != srcblend)
+		{
+			AlphaSrcBlend = srcblend;
+			D3DDevice->SetRenderState(D3DRS_SRCBLEND, srcblend);
+		}
+		if (AlphaDestBlend != destblend)
+		{
+			AlphaDestBlend = destblend;
+			D3DDevice->SetRenderState(D3DRS_DESTBLEND, destblend);
+		}
+	}
+}
+
+void D3DFB::SetConstant(int cnum, float r, float g, float b, float a)
+{
+	if (Constant[cnum][0] != r ||
+		Constant[cnum][1] != g ||
+		Constant[cnum][2] != b ||
+		Constant[cnum][3] != a)
+	{
+		Constant[cnum][0] = r;
+		Constant[cnum][1] = g;
+		Constant[cnum][2] = b;
+		Constant[cnum][3] = a;
+		D3DDevice->SetPixelShaderConstantF(cnum, Constant[cnum], 1);
+	}
+}
+
+void D3DFB::SetPixelShader(IDirect3DPixelShader9 *shader)
+{
+	if (CurPixelShader != shader)
+	{
+		CurPixelShader = shader;
+		D3DDevice->SetPixelShader(shader);
+	}
+}
+
+void D3DFB::SetTexture(int tnum, IDirect3DTexture9 *texture)
+{
+	if (Texture[tnum] != texture)
+	{
+		Texture[tnum] = texture;
+		D3DDevice->SetTexture(tnum, texture);
+	}
+}
+
+void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count)
+{
+	if (SM14)
+	{
+		// Shader Model 1.4 only uses 256-color palettes.
+		SetConstant(2, 255 / 256.f, 0.5f / 256.f, 0, 0);
+	}
+	else
+	{
+		// The pixel shader receives color indexes in the range [0.0,1.0].
+		// The palette texture is also addressed in the range [0.0,1.0],
+		// HOWEVER the coordinate 1.0 is the right edge of the texture and
+		// not actually the texture itself. We need to scale and shift
+		// the palette indexes so they lie exactly in the center of each
+		// texel. For a normal palette with 256 entries, that means the
+		// range we use should be [0.5,255.5], adjusted so the coordinate
+		// is still with [0.0,1.0].
+		//
+		// The constant register c2 is used to hold the multiplier in the
+		// x part and the adder in the y part.
+		float fcount = 1 / float(count);
+		SetConstant(2, 255 * fcount, 0.5f * fcount, 0, 0);
+	}
+	SetTexture(1, texture);
+	SetPixelShader(PalTexShader);
 }

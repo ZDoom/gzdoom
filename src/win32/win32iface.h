@@ -235,10 +235,10 @@ public:
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	void Begin2D ();
 	FNativeTexture *CreateTexture (FTexture *gametex);
-	FNativeTexture *CreatePalette (FTexture *pal);
+	FNativeTexture *CreatePalette (FRemapTable *remap);
 	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
-	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color) const;
-	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h) const;
+	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
+	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
 	HRESULT GetHR ();
 
 private:
@@ -249,13 +249,27 @@ private:
 	bool CreateStencilPaletteTexture();
 	bool CreateShadedPaletteTexture();
 	bool CreateVertexes();
-	void DoOffByOneCheck();
 	void UploadPalette();
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
 	bool UploadVertices();
 	bool Reset();
 	void Draw3DPart();
-	bool SetStyle(int style, fixed_t alpha, DWORD color, INTBOOL masked);
+	bool SetStyle(DCanvas::DrawParms &parms);
+	void SetColorOverlay(DWORD color, float alpha);
+
+	// State
+	void SetAlphaBlend(BOOL enabled, D3DBLEND srcblend=D3DBLEND(0), D3DBLEND destblend=D3DBLEND(0));
+	void SetConstant(int cnum, float r, float g, float b, float a);
+	void SetPixelShader(IDirect3DPixelShader9 *shader);
+	void SetTexture(int tnum, IDirect3DTexture9 *texture);
+	void SetPaletteTexture(IDirect3DTexture9 *texture, int count);
+
+	BOOL AlphaBlendEnabled;
+	D3DBLEND AlphaSrcBlend;
+	D3DBLEND AlphaDestBlend;
+	float Constant[3][4];
+	IDirect3DPixelShader9 *CurPixelShader;
+	IDirect3DTexture9 *Texture[2];
 
 	BYTE GammaTable[256];
 	PalEntry SourcePalette[256];
@@ -270,11 +284,11 @@ private:
 	D3DFORMAT FBFormat;
 	D3DFORMAT PalFormat;
 	int FBWidth, FBHeight;
-	int OffByOneAt;
 	bool VSync;
 	RECT BlendingRect;
 	bool UseBlendingRect;
 	int In2D;
+	bool SM14;
 
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DVertexBuffer9 *VertexBuffer;
@@ -287,6 +301,8 @@ private:
 	IDirect3DPixelShader9 *DimShader;
 
 	D3DFB() {}
+
+	friend class D3DPal;
 };
 
 #if 0

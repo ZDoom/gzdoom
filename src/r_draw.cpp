@@ -56,8 +56,6 @@ extern	int		ST_Y;
 //	and the total size == width*height*depth/8.,
 //
 
-extern BYTE decorate_translations[];
-
 BYTE*			viewimage;
 extern "C" {
 int 			viewwidth;
@@ -134,7 +132,8 @@ cycle_t			DetailDoubleCycles;
 
 int dc_fillcolor;
 BYTE *dc_translation;
-BYTE *translationtables[NUM_TRANSLATION_TABLES];
+TAutoGrowArray<FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
+BYTE shadetables[NUMCOLORMAPS*16*256];
 
 /************************************/
 /*									*/
@@ -1410,6 +1409,133 @@ void tmvline4_addclamp ()
 /****************************************************/
 /****************************************************/
 
+FRemapTable::FRemapTable(int count)
+{
+	assert(count <= 256);
+
+	Alloc(count);
+
+	// Note that the tables are left uninitialized. It is assumed that
+	// the caller will do that next, if only by calling MakeIdentity().
+}
+
+FRemapTable::~FRemapTable()
+{
+	Free();
+}
+
+void FRemapTable::Alloc(int count)
+{
+	Remap = (BYTE *)M_Malloc(count*sizeof(*Remap) + count*sizeof(*Palette));
+	assert (Remap != NULL);
+	Palette = (PalEntry *)(Remap + count*(sizeof(*Remap)));
+	Native = NULL;
+	NumEntries = count;
+}
+
+void FRemapTable::Free()
+{
+	KillNative();
+	if (Remap != NULL)
+	{
+		free(Remap);
+		Remap = NULL;
+		Palette = NULL;
+		NumEntries = 0;
+	}
+}
+
+FRemapTable::FRemapTable(const FRemapTable &o)
+{
+	Remap = NULL;
+	Native = NULL;
+	NumEntries = 0;
+	operator= (o);
+}
+
+FRemapTable &FRemapTable::operator=(const FRemapTable &o)
+{
+	if (&o == this)
+	{
+		return *this;
+	}
+	if (o.NumEntries != NumEntries)
+	{
+		Free();
+	}
+	if (Remap == NULL)
+	{
+		Alloc(o.NumEntries);
+	}
+	memcpy(Remap, o.Remap, NumEntries*sizeof(*Remap) + NumEntries*sizeof(*Palette));
+	return *this;
+}
+
+void FRemapTable::MakeIdentity()
+{
+	int i;
+
+	for (i = 0; i < NumEntries; ++i)
+	{
+		Remap[i] = i;
+	}
+	for (i = 0; i < NumEntries; ++i)
+	{
+		Palette[i] = GPalette.BaseColors[i];
+	}
+}
+
+void FRemapTable::KillNative()
+{
+	if (Native != NULL)
+	{
+		delete Native;
+		Native = NULL;
+	}
+}
+
+void FRemapTable::UpdateNative()
+{
+	if (Native != NULL)
+	{
+		Native->Update();
+	}
+}
+
+FNativeTexture *FRemapTable::GetNative()
+{
+	if (Native == NULL)
+	{
+		Native = screen->CreatePalette(this);
+	}
+	return Native;
+}
+
+FRemapTable *TranslationToTable(int translation)
+{
+	unsigned int type =  (translation & 0xFF00) >> 8;
+	unsigned int index = (translation & 0x00FF);
+	TAutoGrowArray<FRemapTable *> *slots;
+
+	if (type <= 0 || type >= NUM_TRANSLATION_TABLES)
+	{
+		return NULL;
+	}
+	slots = &translationtables[type];
+	if (index >= slots->Size())
+	{
+		return NULL;
+	}
+	return slots->operator[](index);
+}
+
+static void PushIdentityTable(int slot)
+{
+	FRemapTable *table = new FRemapTable;
+	table->MakeIdentity();
+	translationtables[slot].Push(table);
+}
+
 //
 // R_InitTranslationTables
 // Creates the translation tables to map the green color ramp to gray,
@@ -1417,132 +1543,118 @@ void tmvline4_addclamp ()
 //
 void R_InitTranslationTables ()
 {
-	static BYTE MainTranslationTables[256*
-		(NUMCOLORMAPS*16			// Shaded
-		 +MAXPLAYERS*2+1			// Players + PlayersExtra + Menu player
-		 +8							// Standard	(7 for Strife, 3 for the rest)
-		 +MAX_ACS_TRANSLATIONS		// LevelScripted
-		 +BODYQUESIZE				// PlayerCorpses
-		 +1
-		 )];
 	int i, j;
 
-	// Diminishing translucency tables for shaded actors. Not really
-	// translation tables, but putting them here was convenient, particularly
-	// since translationtables[0] would otherwise be wasted.
-	translationtables[0] = MainTranslationTables;
-
-	// Player translations, one for each player
-	translationtables[TRANSLATION_Players] =
-		translationtables[0] + NUMCOLORMAPS*16*256;
-
-	// Extra player translations, one for each player, unused by Doom
-	translationtables[TRANSLATION_PlayersExtra] =
-		translationtables[TRANSLATION_Players] + (MAXPLAYERS+1)*256;
+	// Each player gets two translations. Doom and Strife don't use the
+	// extra ones, but Heretic and Hexen do. These are set up during
+	// netgame arbitration and as-needed, so they just get to be identity
+	// maps until then so they won't be invalid.
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		PushIdentityTable(TRANSLATION_Players);
+		PushIdentityTable(TRANSLATION_PlayersExtra);
+	}
+	// The menu player also gets a separate translation table
+	PushIdentityTable(TRANSLATION_Players);
 
 	// The three standard translations from Doom or Heretic (seven for Strife),
 	// plus the generic ice translation.
-	translationtables[TRANSLATION_Standard] =
-		translationtables[TRANSLATION_PlayersExtra] + MAXPLAYERS*256;
-
-	translationtables[TRANSLATION_LevelScripted] =
-		translationtables[TRANSLATION_Standard] + 8*256;
-
-	translationtables[TRANSLATION_PlayerCorpses] =
-		translationtables[TRANSLATION_LevelScripted] + MAX_ACS_TRANSLATIONS*256;
-
-	translationtables[TRANSLATION_Dim] =
-		translationtables[TRANSLATION_PlayerCorpses] + BODYQUESIZE*256;
-
-	translationtables[TRANSLATION_Decorate] = decorate_translations;
-	translationtables[TRANSLATION_Blood] = decorate_translations + MAX_DECORATE_TRANSLATIONS*256;
-
-
-	// [RH] Each player now gets their own translation table. These are set
-	//		up during netgame arbitration and as-needed rather than in here.
-
-	for (i = 0; i < 256; ++i)
+	for (i = 0; i < 8; ++i)
 	{
-		translationtables[0][i] = i;
+		PushIdentityTable(TRANSLATION_Standard);
 	}
-	for (i = 0; i < MAXPLAYERS; ++i)
+
+	// Each player corpse has its own translation so they won't change
+	// color if the player who created them changes theirs.
+	for (i = 0; i < BODYQUESIZE; ++i)
 	{
-		memcpy (translationtables[TRANSLATION_Players] + i*256, translationtables[0], 256);
-		memcpy (translationtables[TRANSLATION_PlayersExtra] + i*256, translationtables[0], 256);
+		PushIdentityTable(TRANSLATION_PlayerCorpses);
 	}
 
 	// Create the standard translation tables
-	for (i = 0; i < 7; ++i)
-	{
-		memcpy (translationtables[TRANSLATION_Standard] + i*256, translationtables[0], 256);
-	}
 	if (gameinfo.gametype == GAME_Doom)
 	{
 		for (i = 0x70; i < 0x80; i++)
 		{ // map green ramp to gray, brown, red
-			translationtables[TRANSLATION_Standard][i    ] = 0x60 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+256] = 0x40 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+512] = 0x20 + (i&0xf);
+			translationtables[TRANSLATION_Standard][0]->Remap[i] = 0x60 + (i&0xf);
+			translationtables[TRANSLATION_Standard][1]->Remap[i] = 0x40 + (i&0xf);
+			translationtables[TRANSLATION_Standard][2]->Remap[i] = 0x20 + (i&0xf);
+
+			translationtables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[0x60 + (i&0xf)];
+			translationtables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[0x40 + (i&0xf)];
+			translationtables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[0x20 + (i&0xf)];
 		}
 	}
 	else if (gameinfo.gametype == GAME_Heretic)
 	{
 		for (i = 225; i <= 240; i++)
 		{
-			translationtables[TRANSLATION_Standard][i    ] = 114+(i-225); // yellow
-			translationtables[TRANSLATION_Standard][i+256] = 145+(i-225); // red
-			translationtables[TRANSLATION_Standard][i+512] = 190+(i-225); // blue
+			translationtables[TRANSLATION_Standard][0]->Remap[i] = 114+(i-225); // yellow
+			translationtables[TRANSLATION_Standard][1]->Remap[i] = 145+(i-225); // red
+			translationtables[TRANSLATION_Standard][2]->Remap[i] = 190+(i-225); // blue
+			
+			translationtables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[114+(i-225)];
+			translationtables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[145+(i-225)];
+			translationtables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[190+(i-225)];
 		}
 	}
 	else if (gameinfo.gametype == GAME_Strife)
 	{
 		for (i = 0x20; i <= 0x3F; ++i)
 		{
-			translationtables[TRANSLATION_Standard][i      ] = i - 0x20;
-			translationtables[TRANSLATION_Standard][i+1*256] = i - 0x20;
-			translationtables[TRANSLATION_Standard][i+2*256] = 0xD0 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+3*256] = 0xD0 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+4*256] = i - 0x20;
-			translationtables[TRANSLATION_Standard][i+5*256] = i - 0x20;
-			translationtables[TRANSLATION_Standard][i+6*256] = i - 0x20;
+			translationtables[TRANSLATION_Standard][0]->Remap[i] = i - 0x20;
+			translationtables[TRANSLATION_Standard][1]->Remap[i] = i - 0x20;
+			translationtables[TRANSLATION_Standard][2]->Remap[i] = 0xD0 + (i&0xf);
+			translationtables[TRANSLATION_Standard][3]->Remap[i] = 0xD0 + (i&0xf);
+			translationtables[TRANSLATION_Standard][4]->Remap[i] = i - 0x20;
+			translationtables[TRANSLATION_Standard][5]->Remap[i] = i - 0x20;
+			translationtables[TRANSLATION_Standard][6]->Remap[i] = i - 0x20;
 		}
 		for (i = 0x50; i <= 0x5F; ++i)
 		{
 			// Merchant hair
-			translationtables[TRANSLATION_Standard][i+4*256] = 0x80 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+5*256] = 0x10 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+6*256] = 0x40 + (i&0xf);
+			translationtables[TRANSLATION_Standard][4]->Remap[i] = 0x80 + (i&0xf);
+			translationtables[TRANSLATION_Standard][5]->Remap[i] = 0x10 + (i&0xf);
+			translationtables[TRANSLATION_Standard][6]->Remap[i] = 0x40 + (i&0xf);
 		}
 		for (i = 0x80; i <= 0x8F; ++i)
 		{
-			translationtables[TRANSLATION_Standard][i      ] = 0x40 + (i&0xf); // red
-			translationtables[TRANSLATION_Standard][i+1*256] = 0xB0 + (i&0xf); // rust
-			translationtables[TRANSLATION_Standard][i+2*256] = 0x10 + (i&0xf); // gray
-			translationtables[TRANSLATION_Standard][i+3*256] = 0x30 + (i&0xf); // dark green
-			translationtables[TRANSLATION_Standard][i+4*256] = 0x50 + (i&0xf); // gold
-			translationtables[TRANSLATION_Standard][i+5*256] = 0x60 + (i&0xf); // bright green
-			translationtables[TRANSLATION_Standard][i+6*256] = 0x90 + (i&0xf); // blue
+			translationtables[TRANSLATION_Standard][0]->Remap[i] = 0x40 + (i&0xf); // red
+			translationtables[TRANSLATION_Standard][1]->Remap[i] = 0xB0 + (i&0xf); // rust
+			translationtables[TRANSLATION_Standard][2]->Remap[i] = 0x10 + (i&0xf); // gray
+			translationtables[TRANSLATION_Standard][3]->Remap[i] = 0x30 + (i&0xf); // dark green
+			translationtables[TRANSLATION_Standard][4]->Remap[i] = 0x50 + (i&0xf); // gold
+			translationtables[TRANSLATION_Standard][5]->Remap[i] = 0x60 + (i&0xf); // bright green
+			translationtables[TRANSLATION_Standard][6]->Remap[i] = 0x90 + (i&0xf); // blue
 		}
 		for (i = 0xC0; i <= 0xCF; ++i)
 		{
-			translationtables[TRANSLATION_Standard][i+4*256] = 0xA0 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+5*256] = 0x20 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+6*256] = (i&0xf);
+			translationtables[TRANSLATION_Standard][4]->Remap[i] = 0xA0 + (i&0xf);
+			translationtables[TRANSLATION_Standard][5]->Remap[i] = 0x20 + (i&0xf);
+			translationtables[TRANSLATION_Standard][6]->Remap[i] = (i&0xf);
 		}
-		translationtables[TRANSLATION_Standard][0xC0+6*256] = 1;
+		translationtables[TRANSLATION_Standard][6]->Remap[0xC0] = 1;
 		for (i = 0xD0; i <= 0xDF; ++i)
 		{
-			translationtables[TRANSLATION_Standard][i+4*256] = 0xB0 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+5*256] = 0x30 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+6*256] = 0x10 + (i&0xf);
+			translationtables[TRANSLATION_Standard][4]->Remap[i] = 0xB0 + (i&0xf);
+			translationtables[TRANSLATION_Standard][5]->Remap[i] = 0x30 + (i&0xf);
+			translationtables[TRANSLATION_Standard][6]->Remap[i] = 0x10 + (i&0xf);
 		}
 		for (i = 0xF1; i <= 0xF6; ++i)
 		{
-			translationtables[TRANSLATION_Standard][i      ] = 0xDF + (i&0xf);
+			translationtables[TRANSLATION_Standard][0]->Remap[i] = 0xDF + (i&0xf);
 		}
 		for (i = 0xF7; i <= 0xFB; ++i)
 		{
-			translationtables[TRANSLATION_Standard][i      ] = i - 6;
+			translationtables[TRANSLATION_Standard][0]->Remap[i] = i - 6;
+		}
+		for (i = 0; i < 7; ++i)
+		{
+			for (int j = 0x20; j <= 0xFB; ++j)
+			{
+				translationtables[TRANSLATION_Standard][i]->Palette[j] =
+					GPalette.BaseColors[translationtables[TRANSLATION_Standard][i]->Remap[j]];
+			}
 		}
 	}
 
@@ -1574,19 +1686,21 @@ void R_InitTranslationTables ()
 	{
 		IcePaletteRemap[i] = ColorMatcher.Pick (IcePalette[i][0], IcePalette[i][1], IcePalette[i][2]);
 	}
+	FRemapTable *remap = translationtables[TRANSLATION_Standard][7];
 	for (i = 0; i < 256; ++i)
 	{
 		int r = GPalette.BaseColors[i].r;
 		int g = GPalette.BaseColors[i].g;
 		int b = GPalette.BaseColors[i].b;
 		int v = (r*77 + g*143 + b*37) >> 12;
-		translationtables[TRANSLATION_Standard][7*256+i] = IcePaletteRemap[v];
+		remap->Remap[i] = IcePaletteRemap[v];
+		remap->Palette[i] = PalEntry(IcePalette[v][0], IcePalette[v][1], IcePalette[v][2]);
 	}
 
 	// set up shading tables for shaded columns
 	// 16 colormap sets, progressing from full alpha to minimum visible alpha
 
-	BYTE *table = translationtables[TRANSLATION_Shaded];
+	BYTE *table = shadetables;
 
 	// Full alpha
 	for (i = 0; i < 16; ++i)
@@ -1602,32 +1716,35 @@ void R_InitTranslationTables ()
 			table += 256;
 		}
 	}
+}
 
-	// Dim map
+void R_DeinitTranslationTables()
+{
+	for (int i = 0; i < NUM_TRANSLATION_TABLES; ++i)
 	{
-		BYTE *dim_map = translationtables[TRANSLATION_Dim];
-		BYTE unremap[256];
-		BYTE shadetmp[256];
-
-		FWadLump palookup = Wads.OpenLumpName ("COLORMAP");
-		palookup.Seek (22*256, SEEK_CUR);
-		palookup.Read (shadetmp, 256);
-		memset (unremap, 0, 256);
-		for (i = 0; i < 256; ++i)
+		for (unsigned int j = 0; j < translationtables[i].Size(); ++j)
 		{
-			unremap[GPalette.Remap[i]] = i;
+			if (translationtables[i][j] != NULL)
+			{
+				delete translationtables[i][j];
+				translationtables[i][j] = NULL;
+			}
 		}
-		for (i = 0; i < 256; ++i)
-		{
-			dim_map[i] = GPalette.Remap[shadetmp[unremap[i]]];
-		}
-		dim_map[0] = GPalette.Remap[0];
 	}
 }
 
 // [RH] Create a player's translation table based on a given mid-range color.
 // [GRB] Split to 2 functions (because of player setup menu)
-static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *skin, BYTE *table, BYTE *alttable)
+static void SetRemap(FRemapTable *table, int i, float r, float g, float b)
+{
+	int ir = clamp (int(r * 255.f), 0, 255);
+	int ig = clamp (int(g * 255.f), 0, 255);
+	int ib = clamp (int(b * 255.f), 0, 255);
+	table->Remap[i] = ColorMatcher.Pick (ir, ig, ib);
+	table->Palette[i] = PalEntry(ir, ig, ib);
+}
+
+static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *skin, FRemapTable *table, FRemapTable *alttable)
 {
 	int i;
 	BYTE start = skin->range0start;
@@ -1643,19 +1760,24 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 	// the current one.
 	if (skin->othergame)
 	{
-		memcpy (table, OtherGameSkinRemap, 256);
+		memcpy (table->Remap, OtherGameSkinRemap, 256);
+		memcpy (table->Palette, OtherGameSkinPalette, sizeof(table->Palette));
 	}
 	else
 	{
 		for (i = 0; i < 256; ++i)
 		{
-			table[i] = i;
+			table->Remap[i] = i;
 		}
+		memcpy(table->Palette, GPalette.BaseColors, sizeof(table->Palette));
 	}
 
 	// [GRB] Don't translate skins with color range 0-0 (APlayerPawn default)
 	if (start == 0 && end == 0)
+	{
+		table->UpdateNative();
 		return;
+	}
 
 	range = (float)(end-start+1);
 
@@ -1676,10 +1798,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 			uses = clamp (s, 0.f, 1.f);
 			usev = clamp (v, 0.f, 1.f);
 			HSVtoRGB (&r, &g, &b, h, uses, usev);
-			table[i] = ColorMatcher.Pick (
-				clamp ((int)(r * 255.f), 0, 255),
-				clamp ((int)(g * 255.f), 0, 255),
-				clamp ((int)(b * 255.f), 0, 255));
+			SetRemap(table, i, r, g, b);
 			s += sdelta;
 			v += vdelta;
 		}
@@ -1694,10 +1813,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 			v = vdelta * (float)(i - start) + basev - 0.2352937f;
 			v = clamp (v, 0.f, 1.f);
 			HSVtoRGB (&r, &g, &b, h, s, v);
-			table[i] = ColorMatcher.Pick (
-				clamp ((int)(r * 255.f), 0, 255),
-				clamp ((int)(g * 255.f), 0, 255),
-				clamp ((int)(b * 255.f), 0, 255));
+			SetRemap(table, i, r, g, b);
 		}
 
 		// Build rain/lifegem translation
@@ -1710,11 +1826,9 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 				s = MIN (bases, 0.8965f - 0.0962f*(float)(i - 161));
 				v = MIN (1.f, (0.2102f + 0.0489f*(float)(i - 144)) * basev);
 				HSVtoRGB (&r, &g, &b, h, s, v);
-				alttable[i] = ColorMatcher.Pick (
-					clamp ((int)(r * 255.f), 0, 255),
-					clamp ((int)(g * 255.f), 0, 255),
-					clamp ((int)(b * 255.f), 0, 255));
+				SetRemap(alttable, i, r, g, b);
 			}
+			alttable->UpdateNative();
 		}
 	}
 	else if (gameinfo.gametype == GAME_Hexen)
@@ -1731,10 +1845,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 			for (i = start; i <= end; i++)
 			{
 				HSVtoRGB (&r, &g, &b, h, s, vs[(i-start)*9/(int)range]*basev);
-				table[i] = ColorMatcher.Pick (
-					clamp ((int)(r * 255.f), 0, 255),
-					clamp ((int)(g * 255.f), 0, 255),
-					clamp ((int)(b * 255.f), 0, 255));
+				SetRemap(table, i, r, g, b);
 			}
 		}
 		else
@@ -1748,10 +1859,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 			for (i = start; i <= end; i++)
 			{
 				HSVtoRGB (&r, &g, &b, h, ms[(i-start)*18/(int)range]*bases, mv[(i-start)*18/(int)range]*basev);
-				table[i] = ColorMatcher.Pick (
-					clamp ((int)(r * 255.f), 0, 255),
-					clamp ((int)(g * 255.f), 0, 255),
-					clamp ((int)(b * 255.f), 0, 255));
+				SetRemap(table, i, r, g, b);
 			}
 		}
 
@@ -1765,13 +1873,12 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 
 				RGBtoHSV (base->r/255.f, base->g/255.f, base->b/255.f, &dummy, &s, &v);
 				HSVtoRGB (&r, &g, &b, h, s*bases, v*basev);
-				alttable[i] = ColorMatcher.Pick (
-					clamp ((int)(r * 255.f), 0, 255),
-					clamp ((int)(g * 255.f), 0, 255),
-					clamp ((int)(b * 255.f), 0, 255));
+				SetRemap(alttable, i, r, g, b);
 			}
+			alttable->UpdateNative();
 		}
 	}
+	table->UpdateNative();
 }
 
 void R_BuildPlayerTranslation (int player)
@@ -1782,11 +1889,11 @@ void R_BuildPlayerTranslation (int player)
 
 	R_CreatePlayerTranslation (h, s, v,
 		&skins[players[player].userinfo.skin],
-		&translationtables[TRANSLATION_Players][player*256],
-		&translationtables[TRANSLATION_PlayersExtra][player*256]);
+		translationtables[TRANSLATION_Players][player],
+		translationtables[TRANSLATION_PlayersExtra][player]);
 }
 
-void R_GetPlayerTranslation (int color, FPlayerSkin *skin, BYTE *table)
+void R_GetPlayerTranslation (int color, FPlayerSkin *skin, FRemapTable *table)
 {
 	float h, s, v;
 
@@ -2141,14 +2248,14 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD col
 
 	alpha = clamp<fixed_t> (alpha, 0, FRACUNIT);
 
+	dc_translation = NULL;
 	if (translation != 0)
 	{
-		dc_translation = translationtables[(translation&0xff00)>>8]
-			+ (translation&0x00ff)*256;
-	}
-	else
-	{
-		dc_translation = NULL;
+		FRemapTable *table = TranslationToTable(translation);
+		if (table != NULL)
+		{
+			dc_translation = table->Remap;
+		}
 	}
 	basecolormapsave = basecolormap;
 	stencilling = false;
@@ -2169,7 +2276,7 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD col
 		hcolfunc_post1 = rt_shaded1col;
 		hcolfunc_post4 = rt_shaded4cols;
 		dc_color = fixedcolormap ? fixedcolormap[APART(color)] : basecolormap[APART(color)];
-		dc_colormap = basecolormap = &translationtables[TRANSLATION_Shaded][((16-alpha)*NUMCOLORMAPS)*256];
+		dc_colormap = basecolormap = &shadetables[((16-alpha)*NUMCOLORMAPS)*256];
 		if (fixedlightlev)
 		{
 			dc_colormap += fixedlightlev;

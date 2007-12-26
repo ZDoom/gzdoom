@@ -2687,15 +2687,16 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	arc << level.total_monsters << level.total_items << level.total_secrets;
 
 	// Does this level have custom translations?
+	FRemapTable *trans;
 	if (arc.IsStoring ())
 	{
-		for (i = 0; i < MAX_ACS_TRANSLATIONS; ++i)
+		for (i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
 		{
-			BYTE *trans = &translationtables[TRANSLATION_LevelScripted][i*256];
+			trans = translationtables[TRANSLATION_LevelScripted][i];
 			int j;
 			for (j = 0; j < 256; ++j)
 			{
-				if (trans[j] != j)
+				if (trans->Remap[j] != j)
 				{
 					break;
 				}
@@ -2704,7 +2705,13 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 			{
 				t = i;
 				arc << t;
-				arc.Write (trans, 256);
+				arc.Write (trans->Remap, 256);
+				for (j = 0; j < 256; ++j)
+				{
+					arc << trans->Palette[j].r
+						<< trans->Palette[j].g
+						<< trans->Palette[j].b;
+				}
 			}
 		}
 		t = 255;
@@ -2719,7 +2726,19 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 			{ // hack hack to avoid crashing
 				t = 0;
 			}
-			arc.Read (&translationtables[TRANSLATION_LevelScripted][t*256], 256);
+			trans = translationtables[TRANSLATION_LevelScripted].GetVal(t);
+			if (trans == NULL)
+			{
+				trans = new FRemapTable;
+				translationtables[TRANSLATION_LevelScripted].SetVal(t, trans);
+			}
+			arc.Read (trans->Remap, 256);
+			for (int j = 0; j < 256; ++j)
+			{
+				arc << trans->Palette[j].r
+					<< trans->Palette[j].g
+					<< trans->Palette[j].b;
+			}		
 			arc << t;
 		}
 	}

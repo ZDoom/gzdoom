@@ -807,6 +807,7 @@ void R_Init ()
 static void R_Shutdown ()
 {
 	R_DeinitParticles();
+	R_DeinitTranslationTables();
 	R_DeinitPlanes();
 	R_DeinitData();
 }

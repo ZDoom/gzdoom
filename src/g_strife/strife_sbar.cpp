@@ -438,7 +438,7 @@ private:
 			}
 			if (item->Icon != 0)
 			{
-				DrawImage (TexMan(item->Icon), 48 + 35*i, 14, item->Amount > 0 ? NULL : DIM_MAP);
+				DrawDimImage (TexMan(item->Icon), 48 + 35*i, 14, item->Amount <= 0);
 			}
 			DrINumber (item->Amount, 74 + 35*i, 23, imgFONY0);
 		}
@@ -512,7 +512,7 @@ private:
 				screen->DrawTexture (TexMan(CPlayer->mo->InvSel->Icon), -42, -17,
 					DTA_HUDRules, HUD_Normal,
 					DTA_CenterBottomOffset, true,
-					DTA_Translation, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP,
+					DTA_ColorOverlay, CPlayer->mo->InvSel->Amount > 0 ? 0 : DIM_OVERLAY,
 					TAG_DONE);
 			}
 		}
@@ -536,7 +536,7 @@ private:
 					{
 						screen->DrawTexture (TexMan(item->Icon), -94 + i*35, -19,
 							DTA_HUDRules, HUD_HorizCenter,
-							DTA_Translation, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP,
+							DTA_ColorOverlay, CPlayer->mo->InvSel->Amount > 0 ? 0 : DIM_OVERLAY,
 							TAG_DONE);
 					}
 					DrINumberOuter (item->Amount, -89 + i*35, -10, true, 7);

@@ -3,7 +3,7 @@
 ** Font management
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,7 @@
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "hu_stuff.h"
+#include "r_draw.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -263,8 +264,6 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	Chars = new CharData[count];
 	charlumps = new int[count];
 	PatchRemap = new BYTE[256];
-	Ranges = NULL;
-	PalRanges = NULL;
 	FirstChar = first;
 	LastChar = first + count - 1;
 	FontHeight = 0;
@@ -334,7 +333,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	{
 		SpaceWidth = 4;
 	}
-	BuildTranslations (luminosity, identity, &TranslationParms[0][0]);
+	BuildTranslations (luminosity, identity, &TranslationParms[0][0], ActiveColors);
 
 	delete[] luminosity;
 	delete[] charlumps;
@@ -361,16 +360,6 @@ FFont::~FFont ()
 		}
 		delete[] Chars;
 		Chars = NULL;
-	}
-	if (Ranges)
-	{
-		delete[] Ranges;
-		Ranges = NULL;
-	}
-	if (PalRanges)
-	{
-		delete[] PalRanges;
-		PalRanges = NULL;
 	}
 	if (PatchRemap)
 	{
@@ -552,42 +541,40 @@ int FFont::SimpleTranslation (BYTE *colorsused, BYTE *translation, BYTE *reverse
 //
 //==========================================================================
 
-void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, const void *ranges)
+void FFont::BuildTranslations (const double *luminosity, const BYTE *identity,
+							   const void *ranges, int total_colors)
 {
 	int i, j;
 	const TranslationParm *parmstart = (const TranslationParm *)ranges;
-	BYTE *range;
-	PalEntry *prange;
 
-	range = Ranges = new BYTE[NumTextColors * ActiveColors];
-	// this is padded so that each palette can be treated as if it had 256 colors
-	prange = PalRanges = new PalEntry[NumTextColors * ActiveColors + 256];
+	FRemapTable remap(total_colors);
 
 	// Create different translations for different color ranges
+	Ranges.Clear();
 	for (i = 0; i < NumTextColors; i++)
 	{
 		if (i == CR_UNTRANSLATED)
 		{
 			if (identity != NULL)
 			{
-				memcpy (range, identity, ActiveColors);
+				memcpy (remap.Remap, identity, ActiveColors);
+				for (j = 0; j < ActiveColors; ++j)
+				{
+					remap.Palette[j] = GPalette.BaseColors[identity[j]];
+				}
 			}
 			else
 			{
-				memcpy (range, Ranges, ActiveColors);
+				remap = Ranges[0];
 			}
-			for (j = 0; j < ActiveColors; j++)
-			{
-				*prange++ = GPalette.BaseColors[range[j]];
-			}
-			range += ActiveColors;
+			Ranges.Push(remap);
 			continue;
 		}
 
 		assert(parmstart->RangeStart >= 0);
 
-		*range++ = 0;
-		*prange++ = PalEntry(0);
+		remap.Remap[0] = 0;
+		remap.Palette[0] = 0;
 
 		for (j = 1; j < ActiveColors; j++)
 		{
@@ -608,12 +595,13 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, c
 			int r = ((parms->Start[0] << 8) + rangev * (parms->End[0] - parms->Start[0])) >> 8; // red
 			int g = ((parms->Start[1] << 8) + rangev * (parms->End[1] - parms->Start[1])) >> 8; // green
 			int b = ((parms->Start[2] << 8) + rangev * (parms->End[2] - parms->Start[2])) >> 8; // blue
-			r=clamp(r, 0, 255);
-			g=clamp(g, 0, 255);
-			b=clamp(b, 0, 255);
-			*range++ = ColorMatcher.Pick (r, g, b);
-			*prange++ = PalEntry(r, g, b);
+			r = clamp(r, 0, 255);
+			g = clamp(g, 0, 255);
+			b = clamp(b, 0, 255);
+			remap.Remap[j] = ColorMatcher.Pick(r, g, b);
+			remap.Palette[j] = PalEntry(255,r,g,b);
 		}
+		Ranges.Push(remap);
 
 		// Advance to the next color range.
 		while (parmstart[1].RangeStart > parmstart[0].RangeEnd)
@@ -630,24 +618,14 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity, c
 //
 //==========================================================================
 
-BYTE *FFont::GetColorTranslation (EColorRange range) const
+FRemapTable *FFont::GetColorTranslation (EColorRange range) const
 {
 	if (ActiveColors == 0)
 		return NULL;
 	else if (range >= NumTextColors)
 		range = CR_UNTRANSLATED;
-	return Ranges + ActiveColors * range;
+	return &Ranges[range];
 }
-
-PalEntry *FFont::GetTranslatedPalette (EColorRange range) const
-{
-	if (ActiveColors == 0)
-		return NULL;
-	else if (range >= NumTextColors)
-		range = CR_UNTRANSLATED;
-	return PalRanges + ActiveColors * range;
-}
-
 
 //==========================================================================
 //
@@ -725,8 +703,6 @@ int FFont::GetCharWidth (int code) const
 FFont::FFont ()
 {
 	Chars = NULL;
-	Ranges = NULL;
-	PalRanges = NULL;
 	PatchRemap = NULL;
 	Name = NULL;
 }
@@ -836,7 +812,7 @@ void FSingleLumpFont::LoadFON1 (int lump, const BYTE *data)
 	PatchRemap = new BYTE[256];
 
 	CheckFON1Chars (lump, data, luminosity);
-	BuildTranslations (luminosity, NULL, &TranslationParms[1][0]);
+	BuildTranslations (luminosity, NULL, &TranslationParms[1][0], ActiveColors);
 }
 
 //==========================================================================
@@ -862,7 +838,6 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 	FirstChar = data[6];
 	LastChar = data[7];
 	ActiveColors = data[10];
-	Ranges = NULL;
 	
 	count = LastChar - FirstChar + 1;
 	Chars = new CharData[count];
@@ -948,7 +923,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		}
 	}
 
-	BuildTranslations (luminosity, identity, &TranslationParms[0][0]);
+	BuildTranslations (luminosity, identity, &TranslationParms[0][0], ActiveColors);
 	delete[] widths2;
 }
 
@@ -1382,7 +1357,6 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 	Chars = new CharData[count];
 	charlumps = new int[count];
 	PatchRemap = new BYTE[256];
-	Ranges = NULL;
 	FirstChar = first;
 	LastChar = first + count - 1;
 	FontHeight = 0;
@@ -1463,31 +1437,20 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 		SpaceWidth = 4;
 	}
 
-	BuildTranslations (luminosity, identity, &TranslationParms[0][0]);
+	BuildTranslations (luminosity, identity, &TranslationParms[0][0], TotalColors);
 
-	// add the untranslated colors to the Ranges table
+	// add the untranslated colors to the Ranges tables
 	if (ActiveColors < TotalColors)
 	{
-		int factor = 1;
-		BYTE *oldranges = Ranges;
-		PalEntry *oldpranges = PalRanges;
-
-		Ranges = new BYTE[NumTextColors * TotalColors];	// palette map + true color map + padding
-		PalRanges = new PalEntry[NumTextColors * TotalColors + 256]; // padded so that each palette can be treated as if it had 256 colors
-
 		for (i = 0; i < NumTextColors; i++)
 		{
-			memcpy(&Ranges [i * TotalColors], &oldranges [i * ActiveColors], ActiveColors);
-			memcpy(&PalRanges[i * TotalColors], &oldpranges[i * ActiveColors], ActiveColors*sizeof(PalEntry));
-
-			for(j=ActiveColors;j<TotalColors;j++)
+			FRemapTable *remap = &Ranges[i];
+			for (j = ActiveColors; j < TotalColors; ++j)
 			{
-				Ranges[TotalColors*i + j] = identity[j];
-				PalRanges[TotalColors*i + j] = GPalette.BaseColors[identity[j]];
+				remap->Remap[j] = identity[j];
+				remap->Palette[j] = GPalette.BaseColors[j];
 			}
 		}
-		delete[] oldranges;
-		delete[] oldpranges;
 	}
 	ActiveColors = TotalColors;
 

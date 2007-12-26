@@ -130,7 +130,7 @@ public:
 		{
 			// draw face background
 			StatusBarTex.DrawToBar ("STFBANY", 143, 1,
-				translationtables[TRANSLATION_Players] + (CPlayer - players)*256);
+				translationtables[TRANSLATION_Players][int(CPlayer - players)]->Remap);
 		}
 	}
 
@@ -147,7 +147,7 @@ public:
 		{
 			// draw face background
 			StatusBarTex.DrawToBar ("STFBANY", 143, 1,
-				translationtables[TRANSLATION_Players] + (CPlayer - players)*256);
+				translationtables[TRANSLATION_Players][int(CPlayer - players)]->Remap);
 		}
 		bEvilGrin = false;
 	}
@@ -203,7 +203,7 @@ private:
 		const BYTE *GetPixels ();
 		void Unload ();
 		~FDoomStatusBarTexture ();
-		void DrawToBar (const char *name, int x, int y, BYTE *colormap_in = NULL);
+		void DrawToBar (const char *name, int x, int y, const BYTE *colormap_in = NULL);
 
 	protected:
 		void MakeTexture ();
@@ -477,7 +477,7 @@ private:
 			}
 			else
 			{
-				DrawImage (TexMan(CPlayer->mo->InvSel->Icon), 144, 0, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP);
+				DrawDimImage (TexMan(CPlayer->mo->InvSel->Icon), 144, 0, CPlayer->mo->InvSel->Amount <= 0);
 				if (CPlayer->mo->InvSel->Amount != 1)
 				{
 					DrSmallNumber (CPlayer->mo->InvSel->Amount, 165, 24);
@@ -563,7 +563,7 @@ private:
 			for (item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
 			{
 				DrawImage (Images[imgARTIBOX], 50+i*31, 2);
-				DrawImage (TexMan(item->Icon), 50+i*31, 2, item->Amount > 0 ? NULL : DIM_MAP);
+				DrawDimImage (TexMan(item->Icon), 50+i*31, 2, item->Amount <= 0);
 				if (item->Amount != 1)
 				{
 					DrSmallNumber (item->Amount, 66+i*31, 24);
@@ -706,7 +706,7 @@ private:
 					screen->DrawTexture (TexMan(CPlayer->mo->InvSel->Icon), -14, ammotop - 1/*-24*/,
 						DTA_HUDRules, HUD_Normal,
 						DTA_CenterBottomOffset, true,
-						DTA_Translation, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP,
+						DTA_ColorOverlay, CPlayer->mo->InvSel->Amount > 0 ? 0 : DIM_OVERLAY,
 						TAG_DONE);
 					DrBNumberOuter (CPlayer->mo->InvSel->Amount, -68, ammotop - 18/*-41*/);
 				}
@@ -725,7 +725,7 @@ private:
 							TAG_DONE);
 						screen->DrawTexture (TexMan(item->Icon), -105+i*31, -32,
 							DTA_HUDRules, HUD_HorizCenter,
-							DTA_Translation, item->Amount > 0 ? NULL : DIM_MAP,
+							DTA_ColorOverlay, item->Amount > 0 ? 0 : DIM_OVERLAY,
 							TAG_DONE);
 						if (item->Amount != 1)
 						{
@@ -1096,7 +1096,7 @@ void FDoomStatusBar::FDoomStatusBarTexture::MakeTexture ()
 	memcpy(Pixels, pix, Width*Height);
 }
 
-void FDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, int y, BYTE *colormap_in)
+void FDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, int y, const BYTE *colormap_in)
 {
 	FTexture *pic;
 	BYTE colormap[256];

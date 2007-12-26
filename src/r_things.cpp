@@ -103,6 +103,7 @@ char*			spritename;
 FPlayerSkin		*skins;
 size_t			numskins;
 BYTE			OtherGameSkinRemap[256];
+PalEntry		OtherGameSkinPalette[256];
 
 // [RH] particle globals
 WORD			NumParticles;
@@ -834,6 +835,7 @@ static void R_CreateSkinTranslation (const char *palname)
 	for (int i = 0; i < 256; ++i)
 	{
 		OtherGameSkinRemap[i] = ColorMatcher.Pick (otherPal[0], otherPal[1], otherPal[2]);
+		OtherGameSkinPalette[i] = PalEntry(otherPal[0], otherPal[1], otherPal[2]);
 		otherPal += 3;
 	}
 }

@@ -80,7 +80,7 @@ static bool TabbedList;		// True if tab list was shown
 CVAR (Bool, con_notablist, false, CVAR_ARCHIVE)
 
 static int conback;
-static int conshade;
+static DWORD conshade;
 static bool conline;
 
 extern int		gametic;
@@ -296,8 +296,8 @@ void C_InitConsole (int width, int height, bool ingame)
 
 			if (conback <= 0)
 			{
-				conshade = DIM_MAP;
 				conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
+				conshade = MAKEARGB(80,0,0,0);
 				conline = true;
 			}
 			else
@@ -1137,7 +1137,7 @@ void C_DrawConsole ()
 		screen->DrawTexture (conpic, 0, visheight - screen->GetHeight(),
 			DTA_DestWidth, screen->GetWidth(),
 			DTA_DestHeight, screen->GetHeight(),
-			DTA_Translation, conshade,
+			DTA_ColorOverlay, conshade,
 			DTA_Masked, false,
 			TAG_DONE);
 		if (conline && visheight < screen->GetHeight())

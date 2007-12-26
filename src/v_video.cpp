@@ -102,6 +102,28 @@ IMPLEMENT_ABSTRACT_CLASS (DDummyFrameBuffer)
 // try to generate a CreateNew() function.
 IMPLEMENT_ABSTRACT_CLASS (DSimpleCanvas)
 
+class FPaletteTester : public FTexture
+{
+public:
+	FPaletteTester ();
+
+	const BYTE *GetColumn(unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels();
+	void Unload();
+	bool CheckModified();
+	void SetTranslation(int num);
+
+protected:
+	BYTE Pixels[16*16];
+	int CurTranslation;
+	int WantTranslation;
+	static const Span DummySpan[2];
+
+	void MakeTexture();
+};
+
+const FTexture::Span FPaletteTester::DummySpan[2] = { { 0, 24 }, { 0, 0 } };
+
 int DisplayWidth, DisplayHeight, DisplayBits;
 
 FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
@@ -226,7 +248,7 @@ void DCanvas::FlatFill (int left, int top, int right, int bottom, FTexture *src)
 
 
 // [RH] Set an area to a specified color
-void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color) const
+void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
 {
 	int x, y;
 	BYTE *dest;
@@ -267,7 +289,7 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 	}
 }
 
-void DCanvas::Dim (PalEntry color) const
+void DCanvas::Dim (PalEntry color)
 {
 	PalEntry dimmer;
 	float amount = dimamount;
@@ -289,7 +311,7 @@ void DCanvas::Dim (PalEntry color) const
 	Dim (dimmer, amount, 0, 0, Width, Height);
 }
 
-void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h) const
+void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 {
 	if (damount == 0.f)
 		return;
@@ -701,7 +723,6 @@ DFrameBuffer::DFrameBuffer (int width, int height)
 void DFrameBuffer::DrawRateStuff ()
 {
 	// Draws frame time and cumulative fps
-	RateX = 0;
 	if (vid_fps)
 	{
 		DWORD ms = I_MSTime ();
@@ -710,12 +731,13 @@ void DFrameBuffer::DrawRateStuff ()
 		{
 			char fpsbuff[40];
 			int chars;
+			int rate_x;
 
 			chars = sprintf (fpsbuff, "%2u ms (%3u fps)", howlong, LastCount);
-			RateX = Width - chars * 8;
-			Clear (RateX, 0, Width, 8, 0, 0);
+			rate_x = Width - chars * 8;
+			Clear (rate_x, 0, Width, 8, 0, 0);
 			SetFont (ConFont);
-			DrawText (CR_WHITE, RateX, 0, (char *)&fpsbuff[0], TAG_DONE);
+			DrawText (CR_WHITE, rate_x, 0, (char *)&fpsbuff[0], TAG_DONE);
 			SetFont (SmallFont);
 
 			DWORD thisSec = ms/1000;
@@ -735,47 +757,114 @@ void DFrameBuffer::DrawRateStuff ()
 	{
 		int i = I_GetTime(false);
 		int tics = i - LastTic;
-		BYTE *buffer = GetBuffer () + (GetHeight()-1)*GetPitch();
+		BYTE *buffer = GetBuffer();
 
 		LastTic = i;
 		if (tics > 20) tics = 20;
-		
-		for (i = 0; i < tics*2; i += 2)		buffer[i] = 0xff;
-		for ( ; i < 20*2; i += 2)			buffer[i] = 0x00;
+
+		// Buffer can be NULL if we're doing hardware accelerated 2D
+		if (buffer != NULL)
+		{
+			buffer += (GetHeight()-1)*GetPitch();
+			
+			for (i = 0; i < tics*2; i += 2)		buffer[i] = 0xff;
+			for ( ; i < 20*2; i += 2)			buffer[i] = 0x00;
+		}
+		else
+		{
+			for (i = 0; i < tics*2; i += 2)		Clear(i, Height-1, i+1, Height, 255, 0);
+			for ( ; i < 20*2; i += 2)			Clear(i, Height-1, i+1, Height, 0, 0);
+		}
 	}
 
 	// draws the palette for debugging
 	if (vid_showpalette)
 	{
-		int i, j, k, l;
+		// This used to just write the palette to the display buffer.
+		// With hardware-accelerated 2D, that doesn't work anymore.
+		// Drawing it as a texture does and continues to show how
+		// well the PalTex shader is working.
+		static FPaletteTester palette;
 
-		BYTE *buffer = GetBuffer();
-		for (i = k = 0; i < 16; ++i)
+		palette.SetTranslation(vid_showpalette);
+		DrawTexture(&palette, 0, 0,
+			DTA_DestWidth, 16*7,
+			DTA_DestHeight, 16*7,
+			DTA_Masked, false,
+			TAG_DONE);
+	}
+}
+
+FPaletteTester::FPaletteTester()
+{
+	Width = 16;
+	Height = 16;
+	WidthBits = 4;
+	HeightBits = 4;
+	WidthMask = 15;
+	CurTranslation = 0;
+	WantTranslation = 1;
+	MakeTexture();
+}
+
+bool FPaletteTester::CheckModified()
+{
+	return CurTranslation != WantTranslation;
+}
+
+void FPaletteTester::SetTranslation(int num)
+{
+	if (num >= 1 && num <= 9)
+	{
+		WantTranslation = num;
+	}
+}
+
+void FPaletteTester::Unload()
+{
+}
+
+const BYTE *FPaletteTester::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (CurTranslation != WantTranslation)
+	{
+		MakeTexture();
+	}
+	column &= 15;
+	if (spans_out != NULL)
+	{
+		*spans_out = DummySpan;
+	}
+	return Pixels + column*16;
+}
+
+const BYTE *FPaletteTester::GetPixels ()
+{
+	if (CurTranslation != WantTranslation)
+	{
+		MakeTexture();
+	}
+	return Pixels;
+}
+
+void FPaletteTester::MakeTexture()
+{
+	int i, j, k, t;
+	BYTE *p;
+
+	t = WantTranslation;
+	p = Pixels;
+	k = 0;
+	for (i = 0; i < 16; ++i)
+	{
+		for (j = 0; j < 16; ++j)
 		{
-			for (j = 0; j < 8; ++j)
-			{
-				for (l = 0; l < 16; ++l)
-				{
-					int color;
-
-					if (vid_showpalette > 1 && vid_showpalette < 9)
-					{
-						color = translationtables[TRANSLATION_Standard][(vid_showpalette-2)*256+k];
-					}
-					else
-					{
-						color = k;
-					}
-					memset (buffer, color, 8);
-					buffer += 8;
-					k++;
-				}
-				k -= 16;
-				buffer += GetPitch() - 16*8;
-			}
+			*p++ = (t > 1) ? translationtables[TRANSLATION_Standard][t - 2]->Remap[k] : k;
 			k += 16;
 		}
+		k -= 255;
 	}
+	CurTranslation = t;
 }
 
 void DFrameBuffer::CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest)
@@ -812,7 +901,7 @@ FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex)
 	return NULL;
 }
 
-FNativeTexture *DFrameBuffer::CreatePalette(const PalEntry *pal)
+FNativeTexture *DFrameBuffer::CreatePalette(FRemapTable *remap)
 {
 	return NULL;
 }

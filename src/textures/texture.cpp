@@ -408,6 +408,10 @@ FNativeTexture *FTexture::GetNative()
 {
 	if (Native != NULL)
 	{
+		if (CheckModified())
+		{
+			Native->Update();
+		}
 		return Native;
 	}
 	Native = screen->CreateTexture(this);

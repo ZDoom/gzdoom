@@ -367,7 +367,7 @@ private:
 			healthPos = clamp (HealthMarker, 0, 100);
 			DrawImage (ClassImages[lifeClass][imgCHAIN], 35+((healthPos*196/100)%9), 31);
 			DrawImage (ClassImages[lifeClass][imgLIFEGEM], 7+(healthPos*11/5), 31, multiplayer ?
-				TRANSLATION(TRANSLATION_PlayersExtra, BYTE(CPlayer-players)) : 0);
+				translationtables[TRANSLATION_PlayersExtra][int(CPlayer - players)] : NULL);
 			DrawImage (Images[imgLFEDGE], 0, 31);
 			DrawImage (Images[imgRTEDGE], 277, 31);
 		}
@@ -403,7 +403,7 @@ private:
 			DrawImage (Images[imgARTICLEAR], 144, -1);
 			if (oldarti != NULL)
 			{
-				DrawImage (TexMan(oldarti->Icon), 143, 2, oldarti->Amount > 0 ? NULL : DIM_MAP);
+				DrawDimImage (TexMan(oldarti->Icon), 143, 2, oldarti->Amount <= 0);
 				if (oldartiCount != 1)
 				{
 					DrSmallNumber (oldartiCount, 162, 23);
@@ -713,7 +713,7 @@ private:
 		{
 			for (item = CPlayer->mo->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
 			{
-				DrawImage (TexMan(item->Icon), 50+i*31, 1, item->Amount > 0 ? NULL : DIM_MAP);
+				DrawDimImage (TexMan(item->Icon), 50+i*31, 1, item->Amount <= 0);
 				if (item->Amount != 1)
 				{
 					DrSmallNumber (item->Amount, 68+i*31, 23);
@@ -912,7 +912,7 @@ private:
 					TAG_DONE);
 				screen->DrawTexture (TexMan(CPlayer->mo->InvSel->Icon), -82, -31,
 					DTA_HUDRules, HUD_Normal,
-					DTA_Translation, CPlayer->mo->InvSel->Amount > 0 ? NULL : DIM_MAP,
+					DTA_ColorOverlay, CPlayer->mo->InvSel->Amount > 0 ? 0 : DIM_OVERLAY,
 					TAG_DONE);
 				if (CPlayer->mo->InvSel->Amount != 1)
 				{
@@ -934,7 +934,7 @@ private:
 						TAG_DONE);
 					screen->DrawTexture (TexMan(item->Icon), -108+i*31, -33,
 						DTA_HUDRules, HUD_HorizCenter,
-						DTA_Translation, item->Amount > 0 ? NULL : DIM_MAP,
+						DTA_ColorOverlay, item->Amount > 0 ? 0 : DIM_OVERLAY,
 						TAG_DONE);
 					if (item->Amount != 1)
 					{

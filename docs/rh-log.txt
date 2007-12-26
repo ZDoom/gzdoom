@@ -1,8 +1,44 @@
+December 25, 2007
+- Discovered that Shader Model 1.4 clamps my constants, so I can't use
+  palettes smaller than 256 entries with the shader I wrote for it. Is there
+  a list of gotchas like this listed some where? I'd really like to see it.
+  
+  Well, when compiled with SM2.0, the PalTex shader seems to be every-so-
+  slightly faster on my GF7950GT than the SM1.4 version, so I guess it's a
+  minor win for cards that support it.
+
 December 25, 2007 (Changes by Graf Zahl)
 - added a P_PointInSector function and replaced all calls to retrieve an
   actor's sector in the game engine code with it. This way there's a clear
   distinction between renderer-specific and game-specific calls.
 - added UseInventory/UseActorInventory ACS functions.
+
+December 24, 2007
+- Fixed: ST_Endoom() failed to free the bitmap it used.
+- Added the DTA_ColorOverlay attribute to blend a color with the texture
+  being drawn. For software, this (currently) only works with black. For
+  hardware, it works with any color. The motiviation for this was so I could
+  rewrite the status bar calls that passed DIM_MAP to DTA_Translation to
+  draw darker icons into something that didn't require making a whole new
+  remap table.
+- After having an "OMG! How could I have been so stupid?" moment, I have
+  removed the off-by-one check from D3DFB. I had thought the off-by-one error
+  was caused by rounding errors by the shader hardware. Not so. Rather, I
+  wasn't sampling what I thought I was sampling. A texture that uses palette
+  index 255 passes the value 1.0 to the shader. The shader needs to adjust the
+  range of its palette indexes, or it will end up trying to read color 256
+  from the palette texture when it should be reading color 255. Doh!
+- The TranslationToTable() function has been added to map from translation
+  numbers used by actors to the tables those numbers represent. This function
+  performs validation for the input and returns NULL if the input value
+  is invalid.
+- Major changes to the way translation tables work: No longer are they each a
+  256-byte array. Instead, the FRemapTable structure is used to represent each
+  one. It includes a remap array for the software renderer, a palette array
+  for a hardware renderer, and a native texture pointer for D3DFB. The
+  translationtables array itself is now an array of TArrays that point to the
+  real tables. The DTA_Translation attribute must also be passed a pointer
+  to a FRemapTable, not a byte array as previously.
 
 December 24, 2007 (Changes by Graf Zahl)
 - added some functionality to FDynamicColormap to allow not creating
@@ -65,6 +101,9 @@ December 23, 2007 (Changes by Graf Zahl)
 - Fixed: UpdateTeam passed an FString to Printf.
 
 December 22, 2007
+- Modified DFrameBuffer::DrawRateStuff() so that it can do its thing properly
+  for D3DFB's 2D mode. Before, any fullscreen graphics (like help images)
+  covered it up.
 - Had a look at sbarinfo.cpp and noticed a few places where it allocated
   character arrays and never freed them. Those have been replaced with
   uses of FString. (One of these was even an instance of a member variable

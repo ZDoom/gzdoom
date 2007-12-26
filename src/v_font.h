@@ -2,7 +2,7 @@
 ** v_font.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 
 class DCanvas;
 class FTexture;
+struct FRemapTable;
 
 enum EColorRange
 {
@@ -86,8 +87,7 @@ public:
 
 	FTexture *GetChar (int code, int *const width) const;
 	int GetCharWidth (int code) const;
-	BYTE *GetColorTranslation (EColorRange range) const;
-	PalEntry *GetTranslatedPalette (EColorRange range) const;
+	FRemapTable *GetColorTranslation (EColorRange range) const;
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
 	int GetDefaultKerning () const { return GlobalKerning; }
@@ -101,7 +101,7 @@ public:
 protected:
 	FFont ();
 
-	void BuildTranslations (const double *luminosity, const BYTE *identity, const void *ranges);
+	void BuildTranslations (const double *luminosity, const BYTE *identity, const void *ranges, int total_colors);
 
 	static int SimpleTranslation (BYTE *colorsused, BYTE *translation, BYTE *identity, double **luminosity);
 
@@ -114,8 +114,7 @@ protected:
 		FTexture *Pic;
 	} *Chars;
 	int ActiveColors;
-	BYTE *Ranges;
-	PalEntry *PalRanges;
+	TArray<FRemapTable> Ranges;
 	BYTE *PatchRemap;
 
 	char *Name;

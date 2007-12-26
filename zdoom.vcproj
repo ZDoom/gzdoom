@@ -8962,6 +8962,10 @@
 						/>
 					</FileConfiguration>
 				</File>
+				<File
+					RelativePath=".\src\r_translate.cpp"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Render Headers"
@@ -9016,6 +9020,10 @@
 				</File>
 				<File
 					RelativePath=".\src\r_things.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\r_translate.h"
 					>
 				</File>
 			</Filter>

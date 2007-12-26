@@ -45,6 +45,7 @@
 #include "sc_man.h"
 #include "v_text.h"
 #include "gi.h"
+#include "r_translate.h"
 
 // States for the intermission
 typedef enum

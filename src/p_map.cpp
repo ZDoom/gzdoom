@@ -52,6 +52,7 @@
 #include "a_sharedglobal.h"
 #include "a_doomglobal.h"
 #include "p_conversation.h"
+#include "r_translate.h"
 
 #define WATER_SINK_FACTOR		3
 #define WATER_SINK_SMALL_FACTOR	4

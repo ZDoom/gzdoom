@@ -66,6 +66,7 @@
 #include "p_tick.h"
 #include "st_start.h"
 #include "teaminfo.h"
+#include "r_translate.h"
 
 // MACROS ------------------------------------------------------------------
 

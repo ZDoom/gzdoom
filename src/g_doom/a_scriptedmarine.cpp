@@ -6,6 +6,7 @@
 #include "p_local.h"
 #include "a_doomglobal.h"
 #include "s_sound.h"
+#include "r_translate.h"
 
 #define MARINE_PAIN_CHANCE 160
 

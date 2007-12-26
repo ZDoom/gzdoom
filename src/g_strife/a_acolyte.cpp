@@ -6,6 +6,7 @@
 #include "s_sound.h"
 #include "a_strifeglobal.h"
 #include "doomdata.h"
+#include "r_translate.h"
 
 void A_BeShadowyFoe (AActor *);
 void A_AcolyteBits (AActor *);

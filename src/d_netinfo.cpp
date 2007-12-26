@@ -53,6 +53,7 @@
 #include "gi.h"
 #include "m_random.h"
 #include "teaminfo.h"
+#include "r_translate.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 

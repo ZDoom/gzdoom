@@ -59,6 +59,7 @@
 #include "templates.h"
 #include "sbar.h"
 #include "hardware.h"
+#include "r_translate.h"
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)

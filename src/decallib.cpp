@@ -44,6 +44,7 @@
 #include "templates.h"
 #include "r_draw.h"
 #include "a_sharedglobal.h"
+#include "r_translate.h"
 
 FDecalLib DecalLibrary;
 

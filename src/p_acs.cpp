@@ -66,6 +66,7 @@
 #include "sc_man.h"
 #include "c_bind.h"
 #include "info.h"
+#include "r_translate.h"
 
 extern FILE *Logfile;
 
@@ -4691,31 +4692,10 @@ int DLevelScript::RunScript ()
 				int end = STACK(3);
 				int pal1 = STACK(2);
 				int pal2 = STACK(1);
-				fixed_t palcol, palstep;
 				sp -= 4;
 
-				if (translation == NULL)
-				{
-					break;
-				}
-				if (start > end)
-				{
-					swap (start, end);
-					swap (pal1, pal2);
-				}
-				else if (start == end)
-				{
-					translation->Remap[start] = pal1;
-					translation->Palette[start] = GPalette.BaseColors[pal1];
-					break;
-				}
-				palcol = pal1 << FRACBITS;
-				palstep = ((pal2 << FRACBITS) - palcol) / (end - start);
-				for (int i = start; i <= end; palcol += palstep, ++i)
-				{
-					translation->Remap[i] = palcol >> FRACBITS;
-					translation->Palette[i] = GPalette.BaseColors[palcol >> FRACBITS];
-				}
+				if (translation != NULL)
+					translation->AddIndexRange(start, end, pal1, pal2);
 			}
 			break;
 
@@ -4724,58 +4704,16 @@ int DLevelScript::RunScript ()
 			  // (would HSV be a good idea too?)
 				int start = STACK(8);
 				int end = STACK(7);
-				fixed_t r1 = STACK(6) << FRACBITS;
-				fixed_t g1 = STACK(5) << FRACBITS;
-				fixed_t b1 = STACK(4) << FRACBITS;
-				fixed_t r2 = STACK(3) << FRACBITS;
-				fixed_t g2 = STACK(2) << FRACBITS;
-				fixed_t b2 = STACK(1) << FRACBITS;
-				fixed_t r, g, b;
-				fixed_t rs, gs, bs;
+				int r1 = STACK(6);
+				int g1 = STACK(5);
+				int b1 = STACK(4);
+				int r2 = STACK(3);
+				int g2 = STACK(2);
+				int b2 = STACK(1);
 				sp -= 8;
 
-				if (translation == NULL)
-				{
-					break;
-				}
-				if (start > end)
-				{
-					swap (start, end);
-					r = r2;
-					g = g2;
-					b = b2;
-					rs = r1 - r2;
-					gs = g1 - g2;
-					bs = b1 - b2;
-				}
-				else
-				{
-					r = r1;
-					g = g1;
-					b = b1;
-					rs = r2 - r1;
-					gs = g2 - g1;
-					bs = b2 - b1;
-				}
-				if (start == end)
-				{
-					translation->Remap[start] = ColorMatcher.Pick
-						(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-					translation->Palette[start] = PalEntry(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-					break;
-				}
-				rs /= (end - start);
-				gs /= (end - start);
-				bs /= (end - start);
-				for (int i = start; i <= end; ++i)
-				{
-					translation->Remap[i] = ColorMatcher.Pick
-						(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-					translation->Palette[i] = PalEntry(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-					r += rs;
-					g += gs;
-					b += bs;
-				}
+				if (translation != NULL)
+					translation->AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
 			}
 			break;
 

@@ -72,6 +72,7 @@
 #include "gi.h"
 #include "a_keys.h"
 #include "a_artifacts.h"
+#include "r_translate.h"
 
 #include <zlib.h>
 
@@ -1399,7 +1400,7 @@ static void G_QueueBody (AActor *body)
 	if (GetTranslationType(body->Translation) == TRANSLATION_Players ||
 		GetTranslationType(body->Translation) == TRANSLATION_PlayersExtra)
 	{
-		R_CopyTranslation (TRANSLATION(TRANSLATION_PlayerCorpses,modslot), body->Translation);
+		translationtables[TRANSLATION_PlayerCorpses][modslot] = TranslationToTable(body->Translation);
 		body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
 	}
 

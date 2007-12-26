@@ -51,6 +51,7 @@
 #include "i_system.h"
 #include "thingdef.h"
 #include "vectors.h"
+#include "r_translate.h"
 
 // TYPES -------------------------------------------------------------------
 

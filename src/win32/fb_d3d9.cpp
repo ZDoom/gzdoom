@@ -61,6 +61,7 @@
 #include "stats.h"
 #include "doomerrors.h"
 #include "r_draw.h"
+#include "r_translate.h"
 
 #include "win32iface.h"
 

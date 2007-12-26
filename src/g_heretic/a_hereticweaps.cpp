@@ -13,6 +13,7 @@
 #include "gstrings.h"
 #include "p_enemy.h"
 #include "gi.h"
+#include "r_translate.h"
 
 static FRandom pr_sap ("StaffAtkPL1");
 static FRandom pr_sap2 ("StaffAtkPL2");

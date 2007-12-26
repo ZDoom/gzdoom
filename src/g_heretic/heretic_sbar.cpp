@@ -13,6 +13,7 @@
 #include "r_draw.h"
 #include "templates.h"
 #include "a_keys.h"
+#include "r_translate.h"
 
 
 static FRandom pr_chainwiggle;

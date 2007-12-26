@@ -53,6 +53,7 @@
 #include "sc_man.h"
 #include "hu_stuff.h"
 #include "r_draw.h"
+#include "r_translate.h"
 
 // MACROS ------------------------------------------------------------------
 

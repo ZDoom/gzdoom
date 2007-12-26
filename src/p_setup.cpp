@@ -58,6 +58,7 @@
 #include "s_sndseq.h"
 #include "sbar.h"
 #include "p_setup.h"
+#include "r_translate.h"
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t **things, int *numthings);

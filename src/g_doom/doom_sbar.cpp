@@ -13,6 +13,7 @@
 #include "a_keys.h"
 #include "templates.h"
 #include "i_system.h"
+#include "r_translate.h"
 
 
 #define ST_EVILGRINCOUNT		(2*TICRATE)

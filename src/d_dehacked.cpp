@@ -66,6 +66,7 @@
 #include "thingdef/thingdef.h"
 #include "vectors.h"
 #include "dobject.h"
+#include "r_translate.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO

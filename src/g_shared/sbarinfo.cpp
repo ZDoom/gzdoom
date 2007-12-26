@@ -16,6 +16,7 @@
 #include "sbarinfo.h"
 #include "sc_man.h"
 #include "gi.h"
+#include "r_translate.h"
 
 static FRandom pr_chainwiggle; //use the same method of chain wiggling as heretic.
 

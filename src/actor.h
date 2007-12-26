@@ -714,7 +714,7 @@ public:
 
 	BYTE FloatBobPhase;
 	BYTE FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
-	WORD Translation;
+	DWORD Translation;
 
 	// [RH] Stuff that used to be part of an Actor Info
 	WORD SeeSound;

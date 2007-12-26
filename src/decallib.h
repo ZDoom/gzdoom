@@ -76,7 +76,7 @@ public:
 
 	fixed_t ScaleX, ScaleY;
 	DWORD ShadeColor;
-	WORD Translation;
+	DWORD Translation;
 	BYTE RenderStyle;
 	WORD PicNum;
 	WORD RenderFlags;

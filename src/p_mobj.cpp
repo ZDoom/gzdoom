@@ -55,6 +55,7 @@
 #include "thingdef/thingdef.h"
 #include "g_game.h"
 #include "teaminfo.h"
+#include "r_translate.h"
 
 // MACROS ------------------------------------------------------------------
 

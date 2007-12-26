@@ -68,6 +68,7 @@
 #include "v_text.h"
 #include "thingdef.h"
 #include "a_sharedglobal.h"
+#include "r_translate.h"
 
 //==========================================================================
 //
@@ -506,17 +507,10 @@ void ParseActorFlag (Baggage &bag, int mod)
 //
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
-static int NumUsedTranslations;
-static int NumUsedBloodTranslations;
-BYTE decorate_translations[256*256*2];
-PalEntry BloodTranslations[256];
+FRemapTable CurrentTranslation;
+TArray<PalEntry> BloodTranslationColors;
 
-void InitDecorateTranslations()
-{
-	// The translation tables haven't been allocated yet so we may as easily use a static buffer instead!
-	NumUsedBloodTranslations = NumUsedTranslations = 0;
-	for(int i=0;i<256*256*2;i++) decorate_translations[i]=i&255;
-}
+PalEntry BloodTranslations[256];
 
 static bool Check(char *& range,  char c, bool error=true)
 {
@@ -534,7 +528,7 @@ static bool Check(char *& range,  char c, bool error=true)
 }
 
 
-static void AddToTranslation(unsigned char * translation, char * range)
+static void AddToTranslation(char * range)
 {
 	int start,end;
 
@@ -545,40 +539,17 @@ static void AddToTranslation(unsigned char * translation, char * range)
 	if (!Check(range, '[', false))
 	{
 		int pal1,pal2;
-		fixed_t palcol, palstep;
 
 		pal1=strtol(range, &range, 10);
 		if (!Check(range, ':')) return;
 		pal2=strtol(range, &range, 10);
 
-		if (start > end)
-		{
-			swap (start, end);
-			swap (pal1, pal2);
-		}
-		else if (start == end)
-		{
-			translation[start] = pal1;
-			return;
-		}
-		palcol = pal1 << FRACBITS;
-		palstep = ((pal2 << FRACBITS) - palcol) / (end - start);
-		for (int i = start; i <= end; palcol += palstep, ++i)
-		{
-			translation[i] = palcol >> FRACBITS;
-		}
+		CurrentTranslation.AddIndexRange(start, end, pal1, pal2);
 	}
 	else
 	{ 
 		// translation using RGB values
-		int r1;
-		int g1;
-		int b1;
-		int r2;
-		int g2;
-		int b2;
-		int r,g,b;
-		int rs,gs,bs;
+		int r1,g1,b1,r2,g2,b2;
 
 		r1=strtol(range, &range, 10);
 		if (!Check(range, ',')) return;
@@ -595,98 +566,62 @@ static void AddToTranslation(unsigned char * translation, char * range)
 		b2=strtol(range, &range, 10);
 		if (!Check(range, ']')) return;
 
-		if (start > end)
-		{
-			swap (start, end);
-			r = r2;
-			g = g2;
-			b = b2;
-			rs = r1 - r2;
-			gs = g1 - g2;
-			bs = b1 - b2;
-		}
-		else
-		{
-			r = r1;
-			g = g1;
-			b = b1;
-			rs = r2 - r1;
-			gs = g2 - g1;
-			bs = b2 - b1;
-		}
-		r <<= FRACBITS;
-		g <<= FRACBITS;
-		b <<= FRACBITS;
-		rs <<= FRACBITS;
-		gs <<= FRACBITS;
-		bs <<= FRACBITS;
-		if (start == end)
-		{
-			translation[start] = ColorMatcher.Pick
-				(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-			return;
-		}
-		rs /= (end - start);
-		gs /= (end - start);
-		bs /= (end - start);
-		for (int i = start; i <= end; ++i)
-		{
-			translation[i] = ColorMatcher.Pick
-				(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-			r += rs;
-			g += gs;
-			b += bs;
-		}
-
+		CurrentTranslation.AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
 	}
 }
 
-static int StoreTranslation(const unsigned char * translation)
+static int StoreTranslation()
 {
-	for (int i = 0; i < NumUsedTranslations; i++)
+	unsigned int i;
+
+	for (i = 0; i < translationtables[TRANSLATION_Decorate].Size(); i++)
 	{
-		if (!memcmp(translation, decorate_translations + i*256, 256))
+		if (CurrentTranslation == *translationtables[TRANSLATION_Decorate][i])
 		{
 			// A duplicate of this translation already exists
 			return TRANSLATION(TRANSLATION_Decorate, i);
 		}
 	}
-	if (NumUsedTranslations>=MAX_DECORATE_TRANSLATIONS)
+	if (translationtables[TRANSLATION_Decorate].Size() >= MAX_DECORATE_TRANSLATIONS)
 	{
 		SC_ScriptError("Too many translations in DECORATE");
 	}
-	memcpy(decorate_translations + NumUsedTranslations*256, translation, 256);
-	NumUsedTranslations++;
-	return TRANSLATION(TRANSLATION_Decorate, NumUsedTranslations-1);
+	FRemapTable *newtrans = new FRemapTable;
+	*newtrans = CurrentTranslation;
+	i = translationtables[TRANSLATION_Decorate].Push(newtrans);
+	return TRANSLATION(TRANSLATION_Decorate, i);
 }
 
 static int CreateBloodTranslation(PalEntry color)
 {
-	int i;
+	unsigned int i;
 
-	for (i = 0; i < NumUsedBloodTranslations; i++)
+	for (i = 0; i < BloodTranslationColors.Size(); i++)
 	{
-		if (color.r == BloodTranslations[i].r &&
-			color.g == BloodTranslations[i].g &&
-			color.b == BloodTranslations[i].b)
+		if (color.r == BloodTranslationColors[i].r &&
+			color.g == BloodTranslationColors[i].g &&
+			color.b == BloodTranslationColors[i].b)
 		{
 			// A duplicate of this translation already exists
 			return i;
 		}
 	}
-	if (NumUsedBloodTranslations>=MAX_DECORATE_TRANSLATIONS)
+	if (BloodTranslationColors.Size() >= MAX_DECORATE_TRANSLATIONS)
 	{
 		SC_ScriptError("Too many blood colors in DECORATE");
 	}
+	FRemapTable *trans = new FRemapTable;
 	for (i = 0; i < 256; i++)
 	{
 		int bright = MAX(MAX(GPalette.BaseColors[i].r, GPalette.BaseColors[i].g), GPalette.BaseColors[i].b);
-		int entry = ColorMatcher.Pick(color.r*bright/255, color.g*bright/255, color.b*bright/255);
+		PalEntry pe = PalEntry(color.r*bright/255, color.g*bright/255, color.b*bright/255);
+		int entry = ColorMatcher.Pick(pe.r, pe.g, pe.b);
 
-		*(decorate_translations + MAX_DECORATE_TRANSLATIONS*256 + NumUsedBloodTranslations*256 + i)=entry;
+		trans->Palette[i] = pe;
+		trans->Remap[i] = entry;
 	}
-	BloodTranslations[NumUsedBloodTranslations]=color;
-	return NumUsedBloodTranslations++;
+	translationtables[TRANSLATION_Blood].Push(trans);
+	return BloodTranslationColors.Push(color);
 }
 
 //----------------------------------------------------------------------------
@@ -1447,15 +1382,14 @@ static void ActorTranslation (AActor *defaults, Baggage &bag)
 	}
 	else
 	{
-		unsigned char translation[256];
-		for(int i=0;i<256;i++) translation[i]=i;
+		CurrentTranslation.MakeIdentity();
 		do
 		{
 			SC_GetString();
-			AddToTranslation(translation,sc_String);
+			AddToTranslation(sc_String);
 		}
 		while (SC_CheckString(","));
-		defaults->Translation = StoreTranslation (translation);
+		defaults->Translation = StoreTranslation ();
 	}
 }
 

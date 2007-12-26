@@ -862,7 +862,7 @@ struct vissprite_t
 	fixed_t			floorclip;
 	FTexture		*pic;
 	short 			renderflags;
-	WORD			Translation;	// [RH] for color translation
+	DWORD			Translation;	// [RH] for color translation
 	BYTE			RenderStyle;
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
 	BYTE			bSplitSprite;	// [RH] Sprite was split by a drawseg

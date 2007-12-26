@@ -1,3 +1,12 @@
+December 26, 2007 (Changes by Graf Zahl)
+- Split off the entire translation code from r_draw.cpp into r_translate.cpp.
+- Moved the common code of ACS and DECORATE translation generation into the
+  FRemapTable class.
+- Fixed: The DECORATE translation code was not changed for the new data structures.
+- Expanded range of ACS and DECORATE translations to 65535. 
+- Fixed: R_CopyTranslation was not altered for the new functionality.
+  I removed the function and replaced the one use with a simple assignment.
+
 December 25, 2007
 - Fixed: The fullscreen console crashed when opened before starting a game.
 - Discovered that Shader Model 1.4 clamps my constants, so I can't use

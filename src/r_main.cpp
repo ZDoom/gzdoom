@@ -46,6 +46,7 @@
 #include "i_system.h"
 #include "vectors.h"
 #include "a_sharedglobal.h"
+#include "r_translate.h"
 
 // MACROS ------------------------------------------------------------------
 

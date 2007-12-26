@@ -73,6 +73,7 @@
 #include "statnums.h"
 #include "vectors.h"
 #include "sbarinfo.h"
+#include "r_translate.h"
 
 #include "gi.h"
 
@@ -2688,58 +2689,37 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	// Does this level have custom translations?
 	FRemapTable *trans;
+	WORD w;
 	if (arc.IsStoring ())
 	{
 		for (unsigned int i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
 		{
 			trans = translationtables[TRANSLATION_LevelScripted][i];
-			int j;
-			for (j = 0; j < 256; ++j)
+			if (trans != NULL && !trans->IsIdentity())
 			{
-				if (trans->Remap[j] != j)
-				{
-					break;
-				}
-			}
-			if (j < 256)
-			{
-				t = i;
-				arc << t;
-				arc.Write (trans->Remap, 256);
-				for (j = 0; j < 256; ++j)
-				{
-					arc << trans->Palette[j].r
-						<< trans->Palette[j].g
-						<< trans->Palette[j].b;
-				}
+				w = WORD(i);
+				arc << w;
+				trans->Serialize(arc);
 			}
 		}
-		t = 255;
-		arc << t;
+		w = 0xffff;
+		arc << w;
 	}
 	else
 	{
-		arc << t;
-		while (t != 255)
+		while (arc << w, w != 0xffff)
 		{
-			if (t >= MAX_ACS_TRANSLATIONS)
+			if (w >= MAX_ACS_TRANSLATIONS)
 			{ // hack hack to avoid crashing
-				t = 0;
+				w = 0;
 			}
-			trans = translationtables[TRANSLATION_LevelScripted].GetVal(t);
+			trans = translationtables[TRANSLATION_LevelScripted].GetVal(w);
 			if (trans == NULL)
 			{
 				trans = new FRemapTable;
 				translationtables[TRANSLATION_LevelScripted].SetVal(t, trans);
 			}
-			arc.Read (trans->Remap, 256);
-			for (int j = 0; j < 256; ++j)
-			{
-				arc << trans->Palette[j].r
-					<< trans->Palette[j].g
-					<< trans->Palette[j].b;
-			}		
-			arc << t;
+			trans->Serialize(arc);
 		}
 	}
 

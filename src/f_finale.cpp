@@ -45,6 +45,7 @@
 #include "a_strifeglobal.h"
 #include "templates.h"
 #include "c_bind.h"
+#include "r_translate.h"
 
 static void FadePic ();
 static void GetFinaleText (const char *msgLumpName);

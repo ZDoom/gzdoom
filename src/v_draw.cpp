@@ -41,6 +41,7 @@
 #include "r_defs.h"
 #include "r_draw.h"
 #include "r_things.h"
+#include "r_translate.h"
 
 #include "i_system.h"
 #include "i_video.h"

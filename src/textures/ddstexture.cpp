@@ -316,6 +316,7 @@ void FDDSTexture::Unload ()
 
 FTextureFormat FDDSTexture::GetFormat()
 {
+#if 0
 	switch (Format)
 	{
 	case ID_DXT1:	return TEX_DXT1;
@@ -325,6 +326,10 @@ FTextureFormat FDDSTexture::GetFormat()
 	case ID_DXT5:	return TEX_DXT5;
 	default:		return TEX_RGB;
 	}
+#else
+	// For now, create a true color texture to preserve all colors.
+	return TEX_RGB;
+#endif
 }
 
 const BYTE *FDDSTexture::GetColumn (unsigned int column, const Span **spans_out)

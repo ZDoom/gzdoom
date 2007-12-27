@@ -1022,16 +1022,16 @@ void DFrameBuffer::CopyPixelData(BYTE * buffer, int texpitch, int texheight, int
 				int v=(unsigned char)patch[y*step_y+x*step_x];
 				if (palette[v].a==0)
 				{
-					buffer[pos]=palette[v].r;
+					buffer[pos]=palette[v].b;
 					buffer[pos+1]=palette[v].g;
-					buffer[pos+2]=palette[v].b;
+					buffer[pos+2]=palette[v].r;
 					buffer[pos+3]=255-palette[v].a;
 				}
 				else if (palette[v].a!=255)
 				{
-					buffer[pos  ] = (buffer[pos  ] * palette[v].a + palette[v].r * (1-palette[v].a)) / 255;
+					buffer[pos  ] = (buffer[pos  ] * palette[v].a + palette[v].b * (1-palette[v].a)) / 255;
 					buffer[pos+1] = (buffer[pos+1] * palette[v].a + palette[v].g * (1-palette[v].a)) / 255;
-					buffer[pos+2] = (buffer[pos+2] * palette[v].a + palette[v].b * (1-palette[v].a)) / 255;
+					buffer[pos+2] = (buffer[pos+2] * palette[v].a + palette[v].r * (1-palette[v].a)) / 255;
 					buffer[pos+3] = clamp<int>(buffer[pos+3] + (( 255-buffer[pos+3]) * (255-palette[v].a))/255, 0, 255);
 				}
 			}

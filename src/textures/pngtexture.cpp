@@ -270,12 +270,17 @@ void FPNGTexture::Unload ()
 
 FTextureFormat FPNGTexture::GetFormat()
 {
+#if 0
 	switch (ColorType)
 	{
 	case 3:		return TEX_Pal;
 	case 0:		return TEX_Gray;
 	default:	return TEX_RGB;
 	}
+#else
+	// For now, create a true color texture to preserve all colors.
+	return TEX_RGB;
+#endif
 }
 
 const BYTE *FPNGTexture::GetColumn (unsigned int column, const Span **spans_out)

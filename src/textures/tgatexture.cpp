@@ -384,7 +384,7 @@ void FTGATexture::MakeTexture ()
 //
 //===========================================================================
 
-int FTGATexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+int FTGATexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
 {
 	PalEntry pe[256];
 	FWadLump lump = Wads.OpenLumpNum (SourceLump);
@@ -469,7 +469,7 @@ int FTGATexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_heigh
     switch (hdr.img_type & 7)
     {
 	case 1:	// paletted
-		screen->CopyPixelData(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, pe);
+		screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y, ptr, Width, Height, step_x, Pitch, pe);
 		break;
 
 	case 2:	// RGB
@@ -477,21 +477,21 @@ int FTGATexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_heigh
 		{
 		case 15:
 		case 16:
-			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_RGB555);
+			screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_RGB555);
 			break;
 		
 		case 24:
-			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_BGR);
+			screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_BGR);
 			break;
 		
 		case 32:
 			if ((hdr.img_desc&15)!=8)	// 32 bits without a valid alpha channel
 			{
-				screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_BGR);
+				screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_BGR);
 			}
 			else
 			{
-				screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_BGRA);
+				screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_BGRA);
 				transval = -1;
 			}
 			break;
@@ -506,11 +506,11 @@ int FTGATexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_heigh
 		{
 		case 8:
 			for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// gray map
-			screen->CopyPixelData(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, pe);
+			screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y, ptr, Width, Height, step_x, Pitch, pe);
 			break;
 		
 		case 16:
-			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_I16);
+			screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, ptr, Width, Height, step_x, Pitch, CF_I16);
 			break;
 		
 		default:

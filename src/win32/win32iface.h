@@ -2,7 +2,7 @@
 ** win32iface.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -233,7 +233,7 @@ public:
 	bool PaintToWindow ();
 	void SetVSync (bool vsync);
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
-	void Begin2D ();
+	bool Begin2D ();
 	FNativeTexture *CreateTexture (FTexture *gametex);
 	FNativeTexture *CreatePalette (FRemapTable *remap);
 	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
@@ -242,10 +242,14 @@ public:
 	HRESULT GetHR ();
 
 private:
+	friend class D3DTex;
+	friend class D3DPal;
+
 	bool CreateResources();
 	void ReleaseResources();
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
+	bool CreateGrayPaletteTexture();
 	bool CreateStencilPaletteTexture();
 	bool CreateShadedPaletteTexture();
 	bool CreateVertexes();
@@ -253,9 +257,13 @@ private:
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
 	bool UploadVertices();
 	bool Reset();
+	void KillNativePals();
+	void KillNativeTexs();
+	void KillNativeNonPalettedTexs();
 	void Draw3DPart();
-	bool SetStyle(DCanvas::DrawParms &parms);
+	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms);
 	void SetColorOverlay(DWORD color, float alpha);
+	void DoWindowedGamma();
 
 	// State
 	void SetAlphaBlend(BOOL enabled, D3DBLEND srcblend=D3DBLEND(0), D3DBLEND destblend=D3DBLEND(0));
@@ -271,7 +279,6 @@ private:
 	IDirect3DPixelShader9 *CurPixelShader;
 	IDirect3DTexture9 *Texture[2];
 
-	BYTE GammaTable[256];
 	PalEntry SourcePalette[256];
 	float FlashConstants[2][4];
 	PalEntry FlashColor;
@@ -289,20 +296,24 @@ private:
 	bool UseBlendingRect;
 	int In2D;
 	bool SM14;
+	D3DPal *Palettes;
+	D3DTex *Textures;
 
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DVertexBuffer9 *VertexBuffer;
 	IDirect3DTexture9 *FBTexture;
+	IDirect3DTexture9 *WindowedRenderTexture;
 	IDirect3DTexture9 *PaletteTexture;
 	IDirect3DTexture9 *StencilPaletteTexture;
 	IDirect3DTexture9 *ShadedPaletteTexture;
 	IDirect3DPixelShader9 *PalTexShader;
 	IDirect3DPixelShader9 *PlainShader;
+	IDirect3DPixelShader9 *PlainStencilShader;
 	IDirect3DPixelShader9 *DimShader;
+	IDirect3DPixelShader9 *GammaFixerShader;
+	IDirect3DSurface9 *OldRenderTarget;
 
 	D3DFB() {}
-
-	friend class D3DPal;
 };
 
 #if 0

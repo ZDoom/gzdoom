@@ -379,13 +379,13 @@ void FMultiPatchTexture::CheckForHacks ()
 //
 //===========================================================================
 
-int FMultiPatchTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+int FMultiPatchTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
 {
 	int retv = -1;
 
 	for(int i=0;i<NumParts;i++)
 	{
-		int ret = Parts[i].Texture->CopyTrueColorPixels(buffer, buf_width, buf_height, 
+		int ret = Parts[i].Texture->CopyTrueColorPixels(buffer, buf_pitch, buf_height, 
 											  x+Parts[i].OriginX, y+Parts[i].OriginY);
 
 		if (ret > retv) retv = ret;

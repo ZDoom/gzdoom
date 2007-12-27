@@ -633,52 +633,6 @@ void DCanvas::FillBorder (FTexture *img)
 	}
 }
 
-// This was in m_menu.cpp but it's better to be here because 
-// non-software renderers must be able to override it.
-void DCanvas::DrawPlayerBackdrop (DCanvas *src, const BYTE *FireRemap, int x, int y)
-{
-	DCanvas *dest = this;
-	BYTE *destline, *srcline;
-	const int destwidth = src->GetWidth() * CleanXfac / 2;
-	const int destheight = src->GetHeight() * CleanYfac / 2;
-	const int desty = y;
-	const int destx = x;
-	const fixed_t fracxstep = FRACUNIT*2 / CleanXfac;
-	const fixed_t fracystep = FRACUNIT*2 / CleanYfac;
-	fixed_t fracx, fracy = 0;
-
-	src->Lock();
-
-	if (fracxstep == FRACUNIT)
-	{
-		for (y = desty; y < desty + destheight; y++, fracy += fracystep)
-		{
-			srcline = src->GetBuffer() + (fracy >> FRACBITS) * src->GetPitch();
-			destline = dest->GetBuffer() + y * dest->GetPitch() + destx;
-
-			for (x = 0; x < destwidth; x++)
-			{
-				destline[x] = FireRemap[srcline[x]];
-			}
-		}
-	}
-	else
-	{
-		for (y = desty; y < desty + destheight; y++, fracy += fracystep)
-		{
-			srcline = src->GetBuffer() + (fracy >> FRACBITS) * src->GetPitch();
-			destline = dest->GetBuffer() + y * dest->GetPitch() + destx;
-			for (x = fracx = 0; x < destwidth; x++, fracx += fracxstep)
-			{
-				destline[x] = FireRemap[srcline[fracx >> FRACBITS]];
-			}
-		}
-	}
-
-	src->Unlock();
-}
-
-
 void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 {
 	static int oldyy;

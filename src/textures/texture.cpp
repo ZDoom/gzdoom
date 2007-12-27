@@ -481,11 +481,11 @@ void FTexture::FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt)
 //
 //===========================================================================
 
-int FTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+int FTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
 {
 	PalEntry * palette = screen->GetPalette();
 	palette[0].a=255;	// temporarily modify the first color's alpha
-	screen->CopyPixelData(buffer, buf_width, buf_height, x, y,
+	screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y,
 				  GetPixels(), Width, Height, Height, 1, 
 				  palette);
 

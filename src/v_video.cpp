@@ -123,7 +123,7 @@ protected:
 	void MakeTexture();
 };
 
-const FTexture::Span FPaletteTester::DummySpan[2] = { { 0, 24 }, { 0, 0 } };
+const FTexture::Span FPaletteTester::DummySpan[2] = { { 0, 16 }, { 0, 0 } };
 
 int DisplayWidth, DisplayHeight, DisplayBits;
 
@@ -718,7 +718,7 @@ DFrameBuffer::DFrameBuffer (int width, int height)
 	: DSimpleCanvas (width, height)
 {
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
-	IsComposited = false;
+	Accel2D = false;
 }
 
 void DFrameBuffer::DrawRateStuff ()
@@ -728,7 +728,7 @@ void DFrameBuffer::DrawRateStuff ()
 	{
 		DWORD ms = I_MSTime ();
 		DWORD howlong = ms - LastMS;
-		if (howlong > 0)
+		if (howlong >= 0)
 		{
 			char fpsbuff[40];
 			int chars;
@@ -893,8 +893,9 @@ void DFrameBuffer::SetBlendingRect (int x1, int y1, int x2, int y2)
 {
 }
 
-void DFrameBuffer::Begin2D ()
+bool DFrameBuffer::Begin2D ()
 {
+	return false;
 }
 
 FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex)
@@ -914,20 +915,20 @@ FNativeTexture *DFrameBuffer::CreatePalette(FRemapTable *remap)
 //
 //===========================================================================
 template<class T>
-void iCopyColors(unsigned char * pout, const unsigned char * pin, int count, int step)
+void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step)
 {
 	for(int i=0;i<count;i++)
 	{
-		pout[0]=T::R(pin);
+		pout[0]=T::B(pin);
 		pout[1]=T::G(pin);
-		pout[2]=T::B(pin);
+		pout[2]=T::R(pin);
 		pout[3]=T::A(pin);
 		pout+=4;
 		pin+=step;
 	}
 }
 
-typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, int count, int step);
+typedef void (*CopyFunc)(BYTE *pout, const BYTE *pin, int count, int step);
 
 static CopyFunc copyfuncs[]={
 	iCopyColors<cRGB>,
@@ -984,16 +985,16 @@ bool DFrameBuffer::ClipCopyPixelRect(int texwidth, int texheight, int &originx, 
 // True Color texture copy function
 //
 //===========================================================================
-void DFrameBuffer::CopyPixelDataRGB(BYTE * buffer, int texwidth, int texheight, int originx, int originy,
-										const BYTE * patch, int srcwidth, int srcheight, int step_x, int step_y,
+void DFrameBuffer::CopyPixelDataRGB(BYTE *buffer, int texpitch, int texheight, int originx, int originy,
+										const BYTE *patch, int srcwidth, int srcheight, int step_x, int step_y,
 										int ct)
 {
-	if (ClipCopyPixelRect(texwidth, texheight, originx, originy, patch, srcwidth, srcheight, step_x, step_y))
+	if (ClipCopyPixelRect(texpitch/4, texheight, originx, originy, patch, srcwidth, srcheight, step_x, step_y))
 	{
-		buffer+=4*originx + 4*texwidth*originy;
+		buffer+=4*originx + texpitch*originy;
 		for (int y=0;y<srcheight;y++)
 		{
-			copyfuncs[ct](&buffer[4*y*texwidth], &patch[y*step_y], srcwidth, step_x);
+			copyfuncs[ct](&buffer[y*texpitch], &patch[y*step_y], srcwidth, step_x);
 		}
 	}
 }
@@ -1003,19 +1004,19 @@ void DFrameBuffer::CopyPixelDataRGB(BYTE * buffer, int texwidth, int texheight, 
 // Paletted to True Color texture copy function
 //
 //===========================================================================
-void DFrameBuffer::CopyPixelData(BYTE * buffer, int texwidth, int texheight, int originx, int originy,
+void DFrameBuffer::CopyPixelData(BYTE * buffer, int texpitch, int texheight, int originx, int originy,
 										const BYTE * patch, int srcwidth, int srcheight, 
 										int step_x, int step_y, PalEntry * palette)
 {
 	int x,y,pos;
 	
-	if (ClipCopyPixelRect(texwidth, texheight, originx, originy, patch, srcwidth, srcheight, step_x, step_y))
+	if (ClipCopyPixelRect(texpitch/4, texheight, originx, originy, patch, srcwidth, srcheight, step_x, step_y))
 	{
-		buffer+=4*originx + 4*texwidth*originy;
+		buffer+=4*originx + texpitch*originy;
 
 		for (y=0;y<srcheight;y++)
 		{
-			pos=4*(y*texwidth);
+			pos=y*texpitch;
 			for (x=0;x<srcwidth;x++,pos+=4)
 			{
 				int v=(unsigned char)patch[y*step_y+x*step_x];

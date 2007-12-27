@@ -236,7 +236,7 @@ static void maybedrawnow (bool tick, bool force)
 		if (nowtime - lastprinttime > 1 || force)
 		{
 			screen->Lock (false);
-			C_DrawConsole ();
+			C_DrawConsole (false);
 			screen->Update ();
 			lastprinttime = nowtime;
 		}
@@ -1094,7 +1094,7 @@ void C_SetTicker (unsigned int at, bool forceUpdate)
 	maybedrawnow (true, TickerVisible ? forceUpdate : false);
 }
 
-void C_DrawConsole ()
+void C_DrawConsole (bool hw2d)
 {
 	static int oldbottom = 0;
 	int lines, left, offset;
@@ -1138,6 +1138,7 @@ void C_DrawConsole ()
 			DTA_DestWidth, screen->GetWidth(),
 			DTA_DestHeight, screen->GetHeight(),
 			DTA_ColorOverlay, conshade,
+			DTA_Alpha, hw2d ? FRACUNIT*3/4 : FRACUNIT,
 			DTA_Masked, false,
 			TAG_DONE);
 		if (conline && visheight < screen->GetHeight())

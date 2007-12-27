@@ -332,7 +332,7 @@ void FJPEGTexture::MakeTexture ()
 //
 //===========================================================================
 
-int FJPEGTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+int FJPEGTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
 {
 	PalEntry pe[256];
 
@@ -375,18 +375,18 @@ int FJPEGTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_heig
 		switch (cinfo.out_color_space)
 		{
 		case JCS_RGB:
-			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
+			screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
 				3, cinfo.output_width * cinfo.output_components, CF_RGB);
 			break;
 
 		case JCS_GRAYSCALE:
 			for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// default to a gray map
-			screen->CopyPixelData(buffer, buf_width, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
+			screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
 				1, cinfo.output_width, pe);
 			break;
 
 		case JCS_CMYK:
-			screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
+			screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
 				4, cinfo.output_width * cinfo.output_components, CF_CMYK);
 			break;
 

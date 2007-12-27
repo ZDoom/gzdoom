@@ -84,6 +84,27 @@ struct FSaveGameNode : public Node
 	bool bMissingWads;
 };
 
+struct FBackdropTexture : public FTexture
+{
+public:
+	FBackdropTexture();
+
+	const BYTE *GetColumn(unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels();
+	void Unload();
+	bool CheckModified();
+
+protected:
+	BYTE Pixels[144*160];
+	static const Span DummySpan[2];
+	int LastRenderTic;
+
+	angle_t time1, time2, time3, time4;
+	angle_t t1ang, t2ang, z1ang, z2ang;
+
+	void Render();
+};
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void M_DrawSlider (int x, int y, float min, float max, float cur);
@@ -223,8 +244,8 @@ static const char cursName[8][8] =	// graphic names of Strife menu selector
 static oldmenu_t *currentMenu;		// current menudef
 static oldmenu_t *TopLevelMenu;		// The main menu everything hangs off of
 
-static DCanvas	*FireScreen;
-static BYTE		FireRemap[256];
+static FBackdropTexture	*FireTexture;
+static FRemapTable		FireRemap(256);
 
 static const char		*genders[3] = { "male", "female", "other" };
 static FPlayerClass	*PlayerClass;
@@ -1593,8 +1614,10 @@ void M_NewGame(int choice)
 		PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
 		PlayerTics = PlayerState->GetTics();
 
-		if (FireScreen == NULL)
-			FireScreen = new DSimpleCanvas (144, 160);
+		if (FireTexture == NULL)
+		{
+			FireTexture = new FBackdropTexture;
+		}
 		M_SetupNextMenu (&ClassMenuDef);
 	}
 	else if (EpiDef.numitems <= 1)
@@ -1669,16 +1692,18 @@ static void M_DrawClassMenu ()
 	int x = (200-160)*CleanXfac+(SCREENWIDTH>>1);
 	int y = (ClassMenuDef.y-100)*CleanYfac+(SCREENHEIGHT>>1);
 
-	if (!FireScreen)
+	if (!FireTexture)
 	{
 		screen->Clear (x, y, x + 72 * CleanXfac, y + 80 * CleanYfac-1, 0, 0);
 	}
 	else
 	{
-		FireScreen->Lock ();
-		M_RenderPlayerBackdrop ();
-		FireScreen->Unlock ();
-		screen->DrawPlayerBackdrop (FireScreen, FireRemap, x, y - 1);
+		screen->DrawTexture (FireTexture, x, y - 1,
+			DTA_DestWidth, 72 * CleanXfac,
+			DTA_DestHeight, 80 * CleanYfac,
+			DTA_Translation, &FireRemap,
+			DTA_Masked, true,
+			TAG_DONE);
 	}
 
 	M_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
@@ -1988,8 +2013,10 @@ void M_PlayerSetup (void)
 	R_GetPlayerTranslation (players[consoleplayer].userinfo.color, &skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	PlayerState = GetDefaultByType (PlayerClass->Type)->SeeState;
 	PlayerTics = PlayerState->GetTics();
-	if (FireScreen == NULL)
-		FireScreen = new DSimpleCanvas (144, 160);
+	if (FireTexture == NULL)
+	{
+		FireTexture = new FBackdropTexture;
+	}
 }
 
 static void M_PlayerSetupTicker (void)
@@ -2089,16 +2116,18 @@ static void M_PlayerSetupDrawer ()
 
 		x = (x-160)*CleanXfac+(SCREENWIDTH>>1);
 		y = (y-100)*CleanYfac+(SCREENHEIGHT>>1);
-		if (!FireScreen)
+		if (!FireTexture)
 		{
 			screen->Clear (x, y, x + 72 * CleanXfac, y + 80 * CleanYfac-1, 0, 0);
 		}
 		else
 		{
-			FireScreen->Lock ();
-			M_RenderPlayerBackdrop ();
-			FireScreen->Unlock ();
-			screen->DrawPlayerBackdrop (FireScreen, FireRemap, x, y - 1);
+			screen->DrawTexture (FireTexture, x, y - 1,
+				DTA_DestWidth, 72 * CleanXfac,
+				DTA_DestHeight, 80 * CleanYfac,
+				DTA_Translation, &FireRemap,
+				DTA_Masked, true,
+				TAG_DONE);
 		}
 
 		M_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
@@ -2206,45 +2235,45 @@ static void M_PlayerSetupDrawer ()
 		DTA_Clean, true, TAG_DONE);
 }
 
-// Something cut out from a scan and resized to fit in 32x32. Guess what it is.
-static BYTE naru[1024] =
+// A 32x32 cloud rendered with Photoshop, plus some other filters
+static BYTE pattern1[1024] =
 {
-	 11,11,11,11,13,15,18,17,16,16,15,14,11, 7, 6,11,14,12,10,10,12,15,13,11, 8, 8,10,13,14,12, 7,16,
-	 17,17,14,12,12,15,10,10, 9,10,10, 7, 6, 3, 1, 6, 9, 9, 5, 6,11,13,11, 8, 9,11, 9,11,14,14, 6,12,
-	 20,19,17,13, 9, 6, 5, 5, 4, 3, 2, 2, 2, 2, 2, 6,12, 8, 1, 1, 7, 6, 6, 9, 2, 9,13,14,15,13, 8,12,
-	 21,20,19,13, 7, 7,11, 8, 4, 2, 8, 6, 2, 0, 1, 7,13,11, 8, 8, 4, 6, 0,14, 7, 6,18,18,15,14,12, 9,
-	 19,19,16,12,11,19,14,11, 7, 8,13, 4, 2, 0, 0, 8,14,16,10,14, 5,13, 4,11,14, 6,14,24,19,17,15, 9,
-	 18,16,14,14,19,26,14,13,10,22,15, 6, 4, 0, 1, 6,14,19,14,14,11,12,10,10,18,11,12,21,21,16,16,17,
-	 18,14,10,10,26,23, 7,10,15,25,16,11,10, 3, 3, 6,12,21,16,17,15, 9,14, 4,19,13,10,12,14,15,16,17,
-	 21, 9, 5,15,22,12, 2, 8,17,13,13,15,11, 4, 6, 6,10,19,16, 9,17,11,14, 1,12,14, 7,13, 9,14,16,19,
-	 22,10, 6,11,14, 5, 4, 7,10, 8,14,14, 7, 4, 5, 5, 5,15,13, 7,10, 7,10, 5, 6,17, 8,13, 7,10,17,20,
-	 21, 7, 6, 8, 6, 6, 6, 5, 6, 7,16,13, 5,10, 8, 5, 3, 7, 9, 6, 4, 3, 3, 5, 4,14, 8,12, 6, 7,17,21,
-	 18, 6, 8, 8, 3, 8, 6, 3, 5, 9,17,16, 7,16,11, 4, 5, 4, 8, 7, 2, 3, 0, 4, 4,14, 9, 7, 8, 4,15,22,
-	 17,11, 9, 8, 4, 8, 5, 4, 5,13,20,18, 7,16,12,10, 3, 3, 4, 9, 4, 7, 3, 5, 4,14,10, 3, 8, 5,15,22,
-	 18,15,11, 8, 3, 9, 3, 3, 5,11,17,17, 7,17,16,14, 4, 5, 6, 9, 7, 1, 2, 6, 6,14, 9, 3, 6, 8,14,22,
-	 16,16,11, 6, 4, 8, 1, 1, 9,18,13, 9, 8,18,20,16,11, 6,11, 4, 3, 4, 4, 8, 3,11, 8, 4, 3, 7,11,20,
-	 13,14, 9, 4,10, 7, 2, 2,12,17,11, 0, 2,13,24,18,16, 7, 2, 1, 3, 0, 0, 6, 4, 8, 7, 4, 2, 4,10,17,
-	 11,11, 7, 5,14, 6, 3, 2, 6, 5, 8, 8, 8, 3,21,26,15, 4, 3,10,16,11, 7, 0, 1, 8, 8, 3, 3, 3,10,15,
-	  9,12, 7, 5,13, 3, 3, 1, 1, 5, 8, 9,15,16,10,26,11, 4, 9,13,18,20,18, 0, 0, 6, 9, 4, 2, 3,10,16,
-	 10,16, 9, 5,11, 3, 5, 0, 2, 7, 8, 9,13,20,13,25,11,10,16,15,16,17,18,11, 0, 6, 9, 4, 0, 3,12,19,
-	 19,21,11, 5,13, 4, 7, 0, 6,10,11,10,12,18,14,18, 8,16,21,18,18,17,17,15, 1, 3, 9, 5, 6, 1,14,21,
-	 23,22,14, 6,16, 9, 8, 0, 9,14,14,11,10,15,15,12,11,18,21,20,19,19,17,14, 4, 4, 8, 6,18, 4,15,21,
-	 22,20,19,11,17,13, 7, 0, 7,17,16,12, 7,11,12,19,20,14,19,18,18,20,17,11, 1, 5, 8, 7,17, 4,15,17,
-	 18,17,19,16,15,11, 5, 1, 7,21,18,13, 6, 9, 9,15,14, 8,12,16,17,19,17, 9, 4, 3, 6, 7,13, 5,14,13,
-	 15,17,18,17,12, 8, 5, 4, 8,13,18,14, 8, 6, 8,11, 9, 8, 6, 7, 9, 8, 7,12, 5, 2, 1, 3, 4, 4,10,11,
-	 16,18,17,16,12, 9, 8, 2, 4,14,10, 8,10,10,13,13, 7, 7,11,12, 9, 8,16,19, 5, 2, 0, 1, 1, 3, 8,10,
-	  6, 7, 5, 6,10, 9,11,10, 6, 7,14,16,17,17,16,14, 8, 8,11,16,19,20,22,18, 4, 2, 0, 2, 1, 2,10,10,
-	 12,12,10,11,11,12,13,13,11, 5,16,18,17,18,17,13,10, 7,11,17,22,22,21,14, 2, 3, 1, 3, 2, 6, 7, 9,
-	 18,18,19,18,13,13,13,12,12, 5, 9,16,16,14,12, 8, 6, 5,10,13,17,23,20, 5, 0, 3, 2, 4, 4, 5,10, 3,
-	 15,18,21,22,17,12,12,10,10, 3, 2, 7,12, 8, 8, 8, 9,10,13,17, 9,15, 6, 2, 4, 6, 9, 4, 4, 0, 5, 6,
-	 15,17,21,24,18,13,11, 9, 6, 2, 3, 2, 1, 9,12,11,10,10,13,16, 9, 0,11, 6, 1, 7,10, 6, 7, 5, 5, 6,
-	 14,15,19,23,19,14,10, 7, 6, 6, 1, 4, 2, 0, 5,10,10, 9,10, 6, 6, 5,13, 8, 2, 5, 8, 4, 8, 8, 5, 5,
-	 15,14,16,21,17,11, 6, 4, 7, 2, 5, 6, 4, 2, 0, 4, 4, 2, 3, 6, 9, 5,10, 8, 1, 5, 5, 3, 5, 4, 2, 4,
-	  9, 8,12,16, 9,10, 7, 5, 7, 5, 9, 7, 6, 4, 5, 8, 5, 4, 6, 8, 8, 4, 8, 8, 3, 5, 6, 4, 3, 4, 6, 6,
+	 5, 9, 7,10, 9,15, 9, 7, 8,10, 5, 3, 5, 7, 9, 8,14, 8, 4, 7, 8, 9, 5, 7,14, 7, 0, 7,13,13, 9, 6,
+	 2, 7, 9, 7, 7,10, 8, 8,11,10, 6, 7,10, 7, 5, 6, 6, 4, 7,13,15,16,11,15,11, 8, 0, 4,13,22,17,11,
+	 5, 9, 9, 7, 9,10, 4, 3, 6, 7, 8, 6, 5, 4, 2, 2, 1, 4, 6,11,15,15,14,13,17, 9, 5, 9,11,12,17,20,
+	 9,16, 9, 8,12,13, 7, 3, 7, 9, 5, 4, 2, 5, 5, 5, 7,11, 6, 7, 6,13,17,10,10, 9,12,17,14,12,16,15,
+	15,13, 5, 3, 9,10, 4,10,12,12, 7, 9, 8, 8, 8,10, 7, 6, 5, 5, 5, 6,11, 9, 3,13,16,18,21,16,23,18,
+	23,13, 0, 0, 0, 0, 0,12,18,14,15,16,13, 7, 7, 5, 9, 6, 6, 8, 4, 0, 0, 0, 0,14,19,17,14,20,21,25,
+	19,20,14,13, 7, 5,13,19,14,13,17,15,14, 7, 3, 5, 6,11, 7, 7, 8, 8,10, 9, 9,18,17,15,14,15,18,16,
+	16,29,24,23,18, 9,17,20,11, 5,12,15,15,12, 6, 3, 4, 6, 7,10,13,18,18,19,16,12,17,19,23,16,14,14,
+	 9,18,20,26,19, 5,18,18,10, 5,12,15,14,17,11, 6,11, 9,10,13,10,20,24,20,21,20,14,18,15,22,20,19,
+	 0, 6,16,18, 8, 7,15,18,10,13,17,17,13,11,15,11,19,12,13,10, 4,15,19,21,21,24,14, 9,17,20,24,17,
+	18,17, 7, 7,16,21,22,15, 5,14,20,14,13,21,13, 8,12,14, 7, 8,11,15,13,11,16,17, 7, 5,12,17,19,14,
+	25,23,17,16,23,18,15, 7, 0, 6,11, 6,11,15,11, 7,12, 7, 4,10,16,13, 7, 7,15,13, 9,15,21,14, 5, 0,
+	18,22,21,21,21,22,12, 6,14,20,15, 6,10,19,13, 8, 7, 3, 7,12,14,16, 9,12,22,15,12,18,24,19,17, 9,
+	 0,15,18,21,17,25,14,13,19,21,21,11, 6,13,16,16,12,10,12,11,13,20,14,13,18,13, 9,15,16,25,31,20,
+	 5,20,24,16, 7,14,14,11,18,19,19, 6, 0, 5,11,14,17,16,19,14,15,21,19,15,14,14, 8, 0, 7,24,18,16,
+	 9,17,15, 7, 6,14,12, 7,14,16,11, 4, 7, 6,13,16,15,13,12,20,21,20,21,17,18,26,14, 0,13,23,21,11,
+	 9,12,18,11,15,21,13, 8,13,13,10, 7,13, 8, 8,19,13, 7, 4,15,19,18,14,12,14,15, 8, 6,16,22,22,15,
+	 9,17,14,19,15,14,15, 9,11, 9, 6, 8,14,13,13,12, 5, 0, 0, 6,12,13, 7, 7, 9, 7, 0,12,21,16,15,18,
+	15,16,18,11, 6, 8,15, 9, 2, 0, 5,10,10,16, 9, 0, 4,12,15, 9,12, 9, 7, 7,12, 7, 0, 6,12, 6, 9,13,
+	12,19,15,14,11, 7, 8, 9,12,10, 5, 5, 7,12,12,10,14,16,16,11, 8,12,10,12,10, 8,10,10,14,12,16,16,
+	16,17,20,22,12,15,12,14,19,11, 6, 5,10,13,17,17,21,19,15, 9, 6, 9,15,18,10,10,18,14,20,15,16,17,
+	11,19,19,18,19,14,17,13,12,12, 7,11,18,17,16,15,19,19,10, 2, 0, 8,15,12, 8,11,12,10,19,20,19,19,
+	 6,14,18,13,13,16,16,12, 5, 8,10,12,10,13,18,12, 9,10, 7, 6, 5,11, 8, 6, 7,13,16,13,10,15,20,14,
+	 0, 5,12,12, 4, 0, 9,16, 9,10,12, 8, 0, 9,13, 9, 0, 2, 4, 7,10, 6, 7, 3, 4,11,16,18,10,11,21,21,
+	16,13,11,15, 8, 0, 5, 9, 8, 7, 6, 3, 0, 9,17, 9, 0, 0, 0, 3, 5, 4, 3, 5, 7,15,16,16,17,14,22,22,
+	24,14,15,12, 9, 0, 5,10, 8, 4, 7,12,10,11,12, 7, 6, 8, 6, 5, 7, 8, 8,11,13,10,15,14,12,18,20,16,
+	16,17,17,18,12, 9,12,16,10, 5, 6,20,13,15, 8, 4, 8, 9, 8, 7, 9,11,12,17,16,16,11,10, 9,10, 5, 0,
+	 0,14,18,18,15,16,14, 9,10, 9, 9,15,14,10, 4, 6,10, 8, 8, 7,10, 9,10,16,18,10, 0, 0, 7,12,10, 8,
+	 0,14,19,14, 9,11,11, 8, 8,10,15, 9,10, 7, 4,10,13, 9, 7, 5, 5, 7, 7, 7,13,13, 5, 5,14,22,18,16,
+	 0,10,14,10, 3, 6, 5, 6, 8, 9, 8, 9, 5, 9, 8, 9, 6, 8, 8, 8, 1, 0, 0, 0, 9,17,12,12,17,19,20,13,
+	 6,11,17,11, 5, 5, 8,10, 6, 5, 6, 6, 3, 7, 9, 7, 6, 8,12,10, 4, 8, 6, 6,11,16,16,15,16,17,17,16,
+	11, 9,10,10, 5, 6,12,10, 5, 1, 6,10, 5, 3, 3, 5, 4, 7,15,10, 7,13, 7, 8,15,11,15,15,15, 8,11,15,
 };
 
 // Just a 32x32 cloud rendered with the standard Photoshop filter
-static BYTE smoke[1024] =
+static BYTE pattern2[1024] =
 {
 	  9, 9, 8, 8, 8, 8, 6, 6,13,13,11,21,19,21,23,18,23,24,19,19,24,17,18,12, 9,14, 8,12,12, 5, 8, 6,
 	 11,10, 6, 7, 8, 8, 9,13,10,11,17,15,23,22,23,22,20,26,27,26,17,21,20,14,12, 8,11, 8,11, 7, 8, 7,
@@ -2280,25 +2309,70 @@ static BYTE smoke[1024] =
 	  7, 7, 0, 5, 1, 6, 7, 9,12, 9,12,21,22,25,24,22,23,25,24,18,24,22,17,13,10, 9,10, 9, 6,11, 6, 5,
 };
 
+const FTexture::Span FBackdropTexture::DummySpan[2] = { { 0, 160 }, { 0, 0 } };
+
+FBackdropTexture::FBackdropTexture()
+{
+	Width = 144;
+	Height = 160;
+	WidthBits = 8;
+	HeightBits = 8;
+	WidthMask = 255;
+	LastRenderTic = 0;
+
+	time1 = ANGLE_1*180;
+	time2 = ANGLE_1*56;
+	time3 = ANGLE_1*99;
+	time4 = ANGLE_1*1;
+	t1ang = ANGLE_90;
+	t2ang = 0;
+	z1ang = 0;
+	z2ang = ANGLE_90/2;
+}
+
+bool FBackdropTexture::CheckModified()
+{
+	return LastRenderTic != gametic;
+}
+
+void FBackdropTexture::Unload()
+{
+}
+
+const BYTE *FBackdropTexture::GetColumn(unsigned int column, const Span **spans_out)
+{
+	if (LastRenderTic != gametic)
+	{
+		Render();
+	}
+	column = clamp(column, 0u, 143u);
+	if (spans_out != NULL)
+	{
+		*spans_out = DummySpan;
+	}
+	return Pixels + column*160;
+}
+
+const BYTE *FBackdropTexture::GetPixels()
+{
+	if (LastRenderTic != gametic)
+	{
+		Render();
+	}
+	return Pixels;
+}
+
 // This is one plasma and two rotozoomers. I think it turned out quite awesome.
-static void M_RenderPlayerBackdrop ()
+void FBackdropTexture::Render()
 {
 	BYTE *from;
 	int width, height, pitch;
 
-	width = FireScreen->GetWidth();
-	height = FireScreen->GetHeight();
-	pitch = FireScreen->GetPitch();
+	width = 160;
+	height = 144;
+	pitch = width;
 
 	int x, y;
-	static angle_t time1 = ANGLE_1*180;
-	static angle_t time2 = ANGLE_1*56;
-	static angle_t time3 = ANGLE_1*99;
-	static angle_t time4 = ANGLE_1*1;
-	static angle_t t1ang = ANGLE_90;
-	static angle_t t2ang = 0;
-	static angle_t z1ang = 0;
-	static angle_t z2ang = ANGLE_90/2;
 
 	const angle_t a1add = ANGLE_1/2;
 	const angle_t a2add = ANGLE_MAX-ANGLE_1;
@@ -2320,7 +2394,7 @@ static void M_RenderPlayerBackdrop ()
 	DWORD ux, uy, uc, us;
 	DWORD ltx, lty, lux, luy;
 
-	from = FireScreen->GetBuffer ();
+	from = Pixels;
 
 	a3 = time3;
 	a4 = time4;
@@ -2353,8 +2427,8 @@ static void M_RenderPlayerBackdrop ()
 			c1 = finecosine[a1>>ANGLETOFINESHIFT];
 			c2 = finecosine[a2>>ANGLETOFINESHIFT];
 			from[x] = ((c1 + c2 + c3 + c4) >> (FRACBITS+3-7)) + 128	// plasma
-			 + naru[(tx>>27)+((ty>>22)&992)]						// rotozoomer 1
-			 + smoke[(ux>>27)+((uy>>22)&992)];						// rotozoomer 2
+			 + pattern1[(tx>>27)+((ty>>22)&992)]					// rotozoomer 1
+			 + pattern2[(ux>>27)+((uy>>22)&992)];					// rotozoomer 2
 			tx += tc;
 			ty += ts;
 			ux += uc;
@@ -2375,6 +2449,8 @@ static void M_RenderPlayerBackdrop ()
 	t2ang += x2add;
 	z1ang += z1add;
 	z2ang += z2add;
+
+	LastRenderTic = gametic;
 }
 
 static void M_ChangeClass (int choice)
@@ -3218,10 +3294,10 @@ static void M_ClearSaveStuff ()
 //
 void M_ClearMenus ()
 {
-	if (FireScreen)
+	if (FireTexture)
 	{
-		delete FireScreen;
-		FireScreen = NULL;
+		delete FireTexture;
+		FireTexture = NULL;
 	}
 	M_ClearSaveStuff ();
 	M_DeactivateMenuInput ();
@@ -3436,7 +3512,8 @@ void M_Init (void)
 	{
 		for (i = 0; i < 256; i++)
 		{
-			FireRemap[i] = ColorMatcher.Pick (i/2+32, 0, i/4);
+			FireRemap.Remap[i] = ColorMatcher.Pick (i/2+32, 0, i/4);
+			FireRemap.Palette[i] = PalEntry(i/2+32, 0, i/4);
 		}
 	}
 	else
@@ -3444,7 +3521,8 @@ void M_Init (void)
 	  // Hexen palette, so Hexen gets a greenish one instead.
 		for (i = 0; i < 256; ++i)
 		{
-			FireRemap[i] = ColorMatcher.Pick (i/4, i*13/40+7, i/4);
+			FireRemap.Remap[i] = ColorMatcher.Pick (i/4, i*13/40+7, i/4);
+			FireRemap.Palette[i] = PalEntry(i/4, i*13/40+7, i/4);
 		}
 	}
 }

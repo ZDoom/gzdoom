@@ -468,7 +468,7 @@ void R_ClearPlanes (bool fullclear)
 		clearbufshort (floorclip, viewwidth, viewheight);
 		// [RH] clip ceiling to console bottom
 		clearbufshort (ceilingclip, viewwidth,
-			ConBottom > viewwindowy && !bRenderingToCanvas
+			!screen->Accel2D && ConBottom > viewwindowy && !bRenderingToCanvas
 			? ((ConBottom - viewwindowy) >> detailyshift) : 0);
 
 		lastopening = 0;

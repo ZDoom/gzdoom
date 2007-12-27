@@ -1,4 +1,17 @@
 December 26, 2007
+- Changed the way gamma works for D3DFB: In windowed mode, the display is
+  drawn to a texture, then that texture is copied to the real back buffer
+  using a gamma-correcting pixel shader. In fullscreen mode, SetGammaRamp
+  is used.
+- Fixed flashing of vid_fps display when fps > 1000.
+- Fixed loading of RGB textures for native 2D mode.
+- Changed the first rotozoomer's data because it just became too obvious when
+  the backdrop is drawn with a full 256 distinct colors available.
+- Set the player backdrop to update no more frequently than 35 FPS, so opening
+  the player setup menu before starting a game won't produce a very fast
+  moving backdrop.
+- Changed the player backdrop into a texture so that it can be drawn like
+  anything else.
 - Enhanced TMap so that you can get at the iterator types by accessing them
   like class members.
 

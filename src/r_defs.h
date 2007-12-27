@@ -665,7 +665,7 @@ public:
 	// Returns the whole texture, stored in column-major order
 	virtual const BYTE *GetPixels () = 0;
 	
-	virtual int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	virtual int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	virtual bool UseBasePalette();
 
 	virtual void Unload () = 0;
@@ -739,6 +739,8 @@ protected:
 	static void FlipSquareBlockRemap (BYTE *block, int x, int y, const BYTE *remap);
 	static void FlipNonSquareBlock (BYTE *blockto, const BYTE *blockfrom, int x, int y, int srcpitch);
 	static void FlipNonSquareBlockRemap (BYTE *blockto, const BYTE *blockfrom, int x, int y, const BYTE *remap);
+
+	friend class D3DTex;
 };
 
 // Texture manager

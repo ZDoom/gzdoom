@@ -437,10 +437,11 @@ CVAR (Flag, compat_invisibility,compatflags, COMPATF_INVISIBILITY);
 // Draw current display, possibly wiping it from the previous
 //
 //==========================================================================
-CVAR(Bool,test2d,false,0)
+
 void D_Display (bool screenshot)
 {
 	bool wipe;
+	bool hw2d;
 
 	if (nodrawers)
 		return; 				// for comparative timing / profiling
@@ -521,10 +522,12 @@ void D_Display (bool screenshot)
 		wipe = false;
 	}
 
+	hw2d = false;
+
 	if (testpolymost)
 	{
 		drawpolymosttest();
-		C_DrawConsole();
+		C_DrawConsole(hw2d);
 		M_Drawer();
 	}
 	else
@@ -533,7 +536,11 @@ void D_Display (bool screenshot)
 		{
 		case GS_FULLCONSOLE:
 			screen->SetBlendingRect(0,0,0,0);
-			C_DrawConsole ();
+			if (!screenshot)
+			{
+				hw2d = screen->Begin2D();
+			}
+			C_DrawConsole (false);
 			M_Drawer ();
 			if (!screenshot)
 				screen->Update ();
@@ -566,6 +573,14 @@ void D_Display (bool screenshot)
 			{
 				AM_Drawer ();
 			}
+			if (!screenshot && (!wipe || NoWipe))
+			{
+				if ((hw2d = screen->Begin2D()))
+				{
+					// Redraw the status bar every frame when using 2D accel
+					SB_state = screen->GetPageCount();
+				}
+			}
 			if (realviewheight == SCREENHEIGHT && viewactive)
 			{
 				StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
@@ -581,18 +596,30 @@ void D_Display (bool screenshot)
 
 		case GS_INTERMISSION:
 			screen->SetBlendingRect(0,0,0,0);
+			if (!screenshot && (!wipe || NoWipe))
+			{
+				screen->Begin2D();
+			}
 			WI_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_FINALE:
 			screen->SetBlendingRect(0,0,0,0);
+			if (!screenshot && (!wipe || NoWipe))
+			{
+				screen->Begin2D();
+			}
 			F_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_DEMOSCREEN:
 			screen->SetBlendingRect(0,0,0,0);
+			if (!screenshot && (!wipe || NoWipe))
+			{
+				screen->Begin2D();
+			}
 			D_PageDrawer ();
 			CT_Drawer ();
 			break;
@@ -600,10 +627,6 @@ void D_Display (bool screenshot)
 		default:
 			break;
 		}
-	}
-	if (!screenshot && (!wipe || NoWipe) && test2d)
-	{
-		screen->Begin2D();
 	}
 	// draw pause pic
 	if (paused && menuactive == MENU_Off)
@@ -634,10 +657,10 @@ void D_Display (bool screenshot)
 
 	if (!wipe || screenshot || NoWipe < 0)
 	{
-		NetUpdate ();		// send out any new accumulation
+		NetUpdate ();			// send out any new accumulation
 		// normal update
-		C_DrawConsole ();	// draw console
-		M_Drawer ();		// menu is drawn even on top of everything
+		C_DrawConsole (hw2d);	// draw console
+		M_Drawer ();			// menu is drawn even on top of everything
 		FStat::PrintStat ();
 		if (!screenshot)
 		{
@@ -665,7 +688,7 @@ void D_Display (bool screenshot)
 			wipestart = nowtime;
 			screen->Lock (true);
 			done = wipe_ScreenWipe (tics);
-			C_DrawConsole ();
+			C_DrawConsole (hw2d);
 			M_Drawer ();			// menu is drawn even on top of wipes
 			screen->Update ();		// page flip or blit buffer
 			NetUpdate ();

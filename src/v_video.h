@@ -2,7 +2,7 @@
 ** v_video.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -167,9 +167,6 @@ public:
 	// Set an area to a specified color
 	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
 
-	// renders the player backdrop for the menu
-	virtual void DrawPlayerBackdrop (DCanvas *src, const BYTE *FireRemap, int x, int y);
-
 	// draws a line
 	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor);
 
@@ -323,11 +320,12 @@ public:
 	// Set the rect defining the area effected by blending.
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
-	bool IsComposited;	// If true, the following functions can be used.
+	bool Accel2D;	// If true, 2D drawing can be accelerated.
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end
-	// the scene, and it doesn't present the image yet.
-	virtual void Begin2D();
+	// the scene, and it doesn't present the image yet. Returns true if
+	// hardware-accelerated 2D has been entered, false if not.
+	virtual bool Begin2D();
 
 	// DrawTexture calls after Begin2D use native textures.
 
@@ -338,12 +336,12 @@ public:
 	virtual FNativeTexture *CreatePalette(FRemapTable *remap);
 
 	// texture copy functions
-	virtual void CopyPixelDataRGB(BYTE * buffer, int texwidth, int texheight, int originx, int originy,
-					     const BYTE * patch, int pix_width, int pix_height, int step_x, int step_y,
+	virtual void CopyPixelDataRGB(BYTE *buffer, int texpitch, int texheight, int originx, int originy,
+					     const BYTE *patch, int pix_width, int pix_height, int step_x, int step_y,
 						 int ct);
 
-	virtual void CopyPixelData(BYTE * buffer, int texwidth, int texheight, int originx, int originy,
-					  const BYTE * patch, int pix_width, int pix_height, 
+	virtual void CopyPixelData(BYTE *buffer, int texpitch, int texheight, int originx, int originy,
+					  const BYTE *patch, int pix_width, int pix_height, 
 					  int step_x, int step_y, PalEntry * palette);
 
 

@@ -89,7 +89,7 @@ public:
 	void Unload ();
 	virtual void SetFrontSkyLayer ();
 
-	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 
 protected:
 	BYTE *Pixels;
@@ -240,7 +240,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
-	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	bool UseBasePalette();
 
 protected:
@@ -304,7 +304,7 @@ protected:
 	void DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
 	void DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
 
-	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	bool UseBasePalette();
 
 	friend class FTexture;
@@ -320,7 +320,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
-	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	bool UseBasePalette();
 
 protected:
@@ -371,7 +371,7 @@ public:
 	void Unload ();
 	FTextureFormat GetFormat ();
 
-	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	bool UseBasePalette();
 
 protected:
@@ -427,7 +427,7 @@ public:
 	void Unload ();
 	FTextureFormat GetFormat ();
 
-	int CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	bool UseBasePalette();
 
 protected:

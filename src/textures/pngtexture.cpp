@@ -444,7 +444,7 @@ void FPNGTexture::MakeTexture ()
 //
 //===========================================================================
 
-int FPNGTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_height, int x, int y)
+int FPNGTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
 {
 	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
 	PalEntry pe[256];
@@ -469,7 +469,9 @@ int FPNGTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_heigh
 
 		case MAKE_ID('P','L','T','E'):
 			for(int i=0;i<PaletteSize;i++)
+			{
 				lump >> pe[i].r >> pe[i].g >> pe[i].b;
+			}
 			break;
 
 		case MAKE_ID('t','R','N','S'):
@@ -496,20 +498,20 @@ int FPNGTexture::CopyTrueColorPixels(BYTE * buffer, int buf_width, int buf_heigh
 	{
 	case 0:
 	case 3:
-		screen->CopyPixelData(buffer, buf_width, buf_height, x, y, Pixels, Width, Height, 1, Width, pe);
+		screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y, Pixels, Width, Height, 1, Width, pe);
 		break;
 
 	case 2:
-		screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, Pixels, Width, Height, 3, pixwidth, CF_RGB);
+		screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, Pixels, Width, Height, 3, pixwidth, CF_RGB);
 		break;
 
 	case 4:
-		screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, Pixels, Width, Height, 2, pixwidth, CF_IA);
+		screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, Pixels, Width, Height, 2, pixwidth, CF_IA);
 		transpal = -1;
 		break;
 
 	case 6:
-		screen->CopyPixelDataRGB(buffer, buf_width, buf_height, x, y, Pixels, Width, Height, 4, pixwidth, CF_RGBA);
+		screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, Pixels, Width, Height, 4, pixwidth, CF_RGBA);
 		transpal = -1;
 		break;
 

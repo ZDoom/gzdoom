@@ -174,6 +174,10 @@ struct level_info_s
 	char		soundinfo[9];
 	char		sndseq[9];
 	char		bordertexture[9];
+
+	int			fogdensity;
+	int			outsidefogdensity;
+	int			skyfog;
 	FSpecialAction * specialactions;
 
 	float		teamdamage;

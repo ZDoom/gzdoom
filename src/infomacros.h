@@ -258,7 +258,7 @@ public:
 #define PROP_Alpha(x)					ADD_LONG_PROP(ADEF_Alpha,x)
 #define PROP_RenderStyle(x)				ADD_BYTE_PROP(ADEF_RenderStyle,x)
 #define PROP_RenderFlags(x)				ADD_WORD_PROP(ADEF_RenderFlags,x)
-#define PROP_Translation(x,y)			ADD_WORD_PROP(ADEF_Translation,((x)<<8)|(y))
+#define PROP_Translation(x,y)			ADD_LONG_PROP(ADEF_Translation,((x)<<16)|(y))
 #define PROP_MinMissileChance(x)		ADD_BYTE_PROP(ADEF_MinMissileChance,x)
 #define PROP_MeleeRange(x)				ADD_FIXD_PROP(ADEF_MeleeRange,x)
 #define PROP_MaxDropOffHeight(x)		ADD_FIXD_PROP(ADEF_MaxDropOffHeight,x)

@@ -1,3 +1,12 @@
+December 27, 2007 (Changes by Graf Zahl)
+- Darkened the console background a little after finding out that on
+  very bright title pics it became quite hard to read the console's contents.
+- Fixed: PROP_Translation needed to be changed for the new value format.
+- Added GZDoom's MAPINFO fog parameters as no op dummies so I can use
+  WADs that contain them without constantly having to edit the MAPINFO.
+  It also allows using them to optimize hardware fog for WADs that should
+  run with ZDoom as well.
+
 December 26, 2007
 - Changed the way gamma works for D3DFB: In windowed mode, the display is
   drawn to a texture, then that texture is copied to the real back buffer

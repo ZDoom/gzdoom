@@ -301,6 +301,9 @@ static const char *MapInfoMapLevel[] =
 	"noinfiniteflightpowerup",
 	"allowrespawn",
 	"teamdamage",
+	"fogdensity",
+	"outsidefogdensity",
+	"skyfog",
 	NULL
 };
 
@@ -443,6 +446,9 @@ MapHandlers[] =
 	{ MITYPE_CLRFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_ALLOWRESPAWN, 0 },
 	{ MITYPE_FLOAT,		lioffset(teamdamage), 0 },
+	{ MITYPE_INT,		lioffset(fogdensity), 0 },
+	{ MITYPE_INT,		lioffset(outsidefogdensity), 0 },
+	{ MITYPE_INT,		lioffset(skyfog), 0 },
 };
 
 static const char *MapInfoClusterLevel[] =

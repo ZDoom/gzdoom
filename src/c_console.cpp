@@ -297,7 +297,7 @@ void C_InitConsole (int width, int height, bool ingame)
 			if (conback <= 0)
 			{
 				conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
-				conshade = MAKEARGB(80,0,0,0);
+				conshade = MAKEARGB(120,0,0,0);
 				conline = true;
 			}
 			else

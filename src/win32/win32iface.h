@@ -287,6 +287,8 @@ private:
 	PalEntry FlashColor;
 	int FlashAmount;
 	int TrueHeight;
+	int LBOffsetI;
+	float LBOffset;
 	float Gamma;
 	bool UpdatePending;
 	bool NeedPalUpdate;

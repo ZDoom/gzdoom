@@ -218,6 +218,9 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			}
 		}
 	}
+	// Offset from top of screen to top of letterboxed screen
+	LBOffsetI = (TrueHeight - Height) / 2;
+	LBOffset = float(LBOffsetI);
 
 	FillPresentParameters (&d3dpp, fullscreen, VSync);
 
@@ -586,7 +589,7 @@ bool D3DFB::CreateVertexes ()
 
 bool D3DFB::UploadVertices()
 {
-	float top = (TrueHeight - Height) * 0.5f - 0.5f;
+	float top = LBOffset - 0.5f;
 	float right = float(Width) - 0.5f;
 	float bot = float(Height) + top;
 	float texright = float(Width) / float(FBWidth);
@@ -879,8 +882,7 @@ void D3DFB::Draw3DPart()
 	if (TrueHeight != Height)
 	{
 		// Letterbox! Draw black top and bottom borders.
-		int topborder = (TrueHeight - Height) / 2;
-		D3DRECT rects[2] = { { 0, 0, Width, topborder }, { 0, Height + topborder, Width, TrueHeight } };
+		D3DRECT rects[2] = { { 0, 0, Width, LBOffsetI }, { 0, Height + LBOffsetI, Width, TrueHeight } };
 		D3DDevice->Clear (2, rects, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0,0,0), 1.f, 0);
 	}
 	D3DDevice->BeginScene();
@@ -1135,7 +1137,12 @@ bool D3DTex::Create(IDirect3DDevice9 *D3DDevice)
 
 	hr = D3DDevice->CreateTexture(w, h, 1, 0,
 		GetTexFormat(), D3DPOOL_MANAGED, &Tex, NULL);
-	if (FAILED(hr))
+	if (SUCCEEDED(hr))
+	{
+		TX = 1;
+		TY = 1;
+	}
+	else
 	{ // Try again, using power-of-2 sizes
 		int i;
 
@@ -1147,6 +1154,8 @@ bool D3DTex::Create(IDirect3DDevice9 *D3DDevice)
 		{
 			return false;
 		}
+		TX = GameTex->GetWidth() / float(w);
+		TY = GameTex->GetHeight() / float(h);
 	}
 	if (!Update())
 	{
@@ -1437,7 +1446,7 @@ void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint3
 		Dim(color, APART(color)/255.f, left, top, right - left, bottom - top);
 		return;
 	}
-	D3DRECT rect = { left, top, right, bottom };
+	D3DRECT rect = { left, top + LBOffsetI, right, bottom + LBOffsetI };
 	D3DDevice->Clear(1, &rect, D3DCLEAR_TARGET, color | 0xFF000000, 1.f, 0);
 }
 
@@ -1464,12 +1473,14 @@ void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h)
 	}
 	else
 	{
+		float x = float(x1) - 0.5f;
+		float y = float(y1) - 0.5f + LBOffset;
 		FBVERTEX verts[4] =
 		{
-			{ x1-0.5f,   y1-0.5f,   0.5f, 1, 0, 0 },
-			{ x1+w-0.5f, y1-0.5f,   0.5f, 1, 0, 0 },
-			{ x1+w-0.5f, y1+h-0.5f, 0.5f, 1, 0, 0 },
-			{ x1-0.5f,   y1+h-0.5f, 0.5f, 1, 0, 0 }
+			{ x,   y,   0.5f, 1, 0, 0 },
+			{ x+w, y,   0.5f, 1, 0, 0 },
+			{ x+w, y+h, 0.5f, 1, 0, 0 },
+			{ x,   y+h, 0.5f, 1, 0, 0 }
 		};
 		SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 		SetPixelShader(DimShader);
@@ -1518,8 +1529,8 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	float y1 = y0 + float(parms.destheight) / 65536.f;
 	float u0 = 0.f;
 	float v0 = 0.f;
-	float u1 = 1.f;
-	float v1 = 1.f;
+	float u1 = tex->TX;
+	float v1 = tex->TY;
 	float uscale = 1.f / parms.texwidth / u1;
 	float vscale = 1.f / parms.texheight / v1 / yscale;
 
@@ -1557,9 +1568,9 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	}
 
 	x0 -= 0.5f;
-	y0 -= 0.5f;
+	y0 -= 0.5f - LBOffset;
 	x1 -= 0.5f;
-	y1 -= 0.5f;
+	y1 -= 0.5f - LBOffset;
 
 	FBVERTEX verts[4] =
 	{

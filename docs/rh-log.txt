@@ -1,4 +1,9 @@
 December 27, 2007
+- Fixed cases where a larger power-of-2-sized native texture had to be
+  allocated. (I wonder if D3D actually handles this automatically when you use
+  D3DPOOL_MANAGED, because I'm pretty sure my laptops's x300 doesn't support
+  non-power-of-2 texture sizes, yet it worked just fine before.) 
+- Fixed vertical positioning of 2D elements in letterboxed modes.
 - Removed DCanvas::Blit(), as it's no longer used.
 - Added a function to create a texture from a stand-alone PNG file. The save/
   load menus now use this to get their thumbnails.

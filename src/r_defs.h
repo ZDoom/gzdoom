@@ -810,7 +810,7 @@ public:
 
 	int CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	int AddTexture (FTexture *texture);
-	int AddPatch (const char *patchname, int namespc=0);
+	int AddPatch (const char *patchname, int namespc=0, bool tryany = false);
 
 	// Replaces one texture with another. The new texture will be assigned
 	// the same name, slot, and use type as the texture it is replacing.

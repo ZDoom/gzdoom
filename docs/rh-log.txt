@@ -1,4 +1,6 @@
 December 28, 2007 (Changes by Graf Zahl)
+- Changed FImageCollection so that it accepts a matching texture of any type.
+  This is necessary to load hires sprite replacements for certain icons.
 - Added a check to Wads.CheckNumForName to return -1 for names longer than
   8 characters which contain path separators.
 - Fixed: Hires texture replacement must replace all matching textures, not

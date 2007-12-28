@@ -290,13 +290,13 @@ void FTextureManager::ReplaceTexture (int picnum, FTexture *newtexture, bool fre
 	}
 }
 
-int FTextureManager::AddPatch (const char *patchname, int namespc)
+int FTextureManager::AddPatch (const char *patchname, int namespc, bool tryany)
 {
 	if (patchname == NULL)
 	{
 		return -1;
 	}
-	int lumpnum = CheckForTexture (patchname, FTexture::TEX_MiscPatch, false);
+	int lumpnum = CheckForTexture (patchname, FTexture::TEX_MiscPatch, tryany);
 
 	if (lumpnum >= 0)
 	{

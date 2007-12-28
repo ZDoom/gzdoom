@@ -95,7 +95,7 @@ void BloodCrypt (void *data, int key, int len);
 
 // A very loose reference to a lump on disk. This is really just a wrapper
 // around the main wad's FILE object with a different length recorded. Since
-// the two lumps from the same wad share the same FILE, you cannot read from
+// two lumps from the same wad share the same FILE, you cannot read from
 // both of them independantly.
 class FWadLump : public FileReader
 {

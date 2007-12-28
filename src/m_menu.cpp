@@ -254,7 +254,7 @@ static FState		*PlayerState;
 static int			PlayerTics;
 static int			PlayerRotation;
 
-static DCanvas			*SavePic;
+static FTexture			*SavePic;
 static FBrokenLines		*SaveComment;
 static List				SaveGames;
 static FSaveGameNode	*TopSaveGame;
@@ -1039,7 +1039,7 @@ static void M_ExtractSaveData (const FSaveGameNode *node)
 			}
 
 			// Extract pic
-			SavePic = M_CreateCanvasFromPNG (png);
+			SavePic = FPNGTexture::CreateFromFile(png, node->Filename);
 
 			delete png;
 		}
@@ -1099,8 +1099,11 @@ static void M_DrawSaveLoadCommon ()
 	M_DrawFrame (savepicLeft, savepicTop, savepicWidth, savepicHeight);
 	if (SavePic != NULL)
 	{
-		screen->Blit(savepicLeft, savepicTop, savepicWidth, savepicHeight,
-					 SavePic, 0, 0, SavePic->GetWidth(), SavePic->GetHeight());
+		screen->DrawTexture(SavePic, savepicLeft, savepicTop,
+			DTA_DestWidth, savepicWidth,
+			DTA_DestHeight, savepicHeight,
+			DTA_Masked, false,
+			TAG_DONE);
 	}
 	else
 	{

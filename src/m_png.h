@@ -100,10 +100,6 @@ unsigned int M_NextPNGChunk (PNGHandle *png, DWORD chunkID);
 char *M_GetPNGText (PNGHandle *png, const char *keyword);
 bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buffsize);
 
-// Creates a simple canvas containing the contents of the PNG file's IDAT
-// chunk(s). Only 8-bit images are supported.
-DCanvas *M_CreateCanvasFromPNG (PNGHandle *png);
-
 // The file must be positioned at the start of the first IDAT. It reads
 // image data into the provided buffer. Returns true on success.
 bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitch,

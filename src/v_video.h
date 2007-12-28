@@ -146,9 +146,6 @@ public:
 	virtual void Unlock () = 0;
 	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
 
-	// Copy blocks from one canvas to another
-	virtual void Blit (int destx, int desty, int destwidth, int destheight, DCanvas *src, int srcx, int srcy, int srcwidth, int srcheight);
-
 	// Draw a linear block of pixels into the canvas
 	virtual void DrawBlock (int x, int y, int width, int height, const BYTE *src) const;
 

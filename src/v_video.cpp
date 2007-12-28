@@ -562,68 +562,6 @@ static void BuildTransTable (const PalEntry *palette)
 	Col2RGB8_LessPrecision[64] = Col2RGB8[64];
 }
 
-void DCanvas::Blit (int destx, int desty, int destwidth, int destheight, DCanvas *src,
-					int srcx, int srcy, int srcwidth, int srcheight)
-{
-	fixed_t fracxstep, fracystep;
-	fixed_t fracx, fracy;
-	int x, y;
-	bool lockthis, locksrc;
-
-	if ( (lockthis = (LockCount == 0)) )
-	{
-		if (Lock ())
-		{ // Surface was lost, so nothing to blit
-			Unlock ();
-			return;
-		}
-	}
-
-	if ( (locksrc = (src->LockCount == 0)) )
-	{
-		src->Lock ();
-	}
-
-	fracy = srcy << FRACBITS;
-	fracystep = (srcheight << FRACBITS) / destheight;
-	fracxstep = (srcwidth << FRACBITS) / destwidth;
-
-	BYTE *destline, *srcline;
-	BYTE *destbuffer = Buffer;
-	BYTE *srcbuffer = src->Buffer;
-
-	if (fracxstep == FRACUNIT)
-	{
-		for (y = desty; y < desty + destheight; y++, fracy += fracystep)
-		{
-			memcpy (destbuffer + y * Pitch + destx,
-					srcbuffer + (fracy >> FRACBITS) * src->Pitch + srcx,
-					destwidth);
-		}
-	}
-	else
-	{
-		for (y = desty; y < desty + destheight; y++, fracy += fracystep)
-		{
-			srcline = srcbuffer + (fracy >> FRACBITS) * src->Pitch + srcx;
-			destline = destbuffer + y * Pitch + destx;
-			for (x = fracx = 0; x < destwidth; x++, fracx += fracxstep)
-			{
-				destline[x] = srcline[fracx >> FRACBITS];
-			}
-		}
-	}
-
-	if (lockthis)
-	{
-		Unlock ();
-	}
-	if (locksrc)
-	{
-		src->Unlock ();
-	}
-}
-
 void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 {
 	// I found this formula on the web at

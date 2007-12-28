@@ -101,13 +101,44 @@ FTexture *FPNGTexture::Create(FileReader & data, int lumpnum)
 		}
 	}
 
-	return new FPNGTexture (data, lumpnum, BigLong((int)width), BigLong((int)height),
+	return new FPNGTexture (data, lumpnum, FString(), BigLong((int)width), BigLong((int)height),
 		bitdepth, colortype, interlace);
 }
 
-FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
+FTexture *FPNGTexture::CreateFromFile(PNGHandle *png, const FString &filename)
+{
+	DWORD width, height;
+	BYTE bitdepth, colortype, compression, filter, interlace;
+
+	if (M_FindPNGChunk(png, MAKE_ID('I','H','D','R')) == 0)
+	{
+		return NULL;
+	}
+
+	// Check the IHDR to make sure it's a type of PNG we support.
+	(*png->File) >> width >> height
+		 >> bitdepth >> colortype >> compression >> filter >> interlace;
+
+	if (compression != 0 || filter != 0 || interlace > 1)
+	{
+		return NULL;
+	}
+	if (!((1 << colortype) & 0x5D))
+	{
+		return NULL;
+	}
+	if (!((1 << bitdepth) & 0x116))
+	{
+		return NULL;
+	}
+
+	return new FPNGTexture (*png->File, -1, filename, BigLong((int)width), BigLong((int)height),
+		bitdepth, colortype, interlace);
+}
+
+FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height,
 						  BYTE depth, BYTE colortype, BYTE interlace)
-: SourceLump(lumpnum), Pixels(0), Spans(0),
+: SourceLump(lumpnum), SourceFile(filename), Pixels(0), Spans(0),
   BitDepth(depth), ColorType(colortype), Interlace(interlace),
   PaletteMap(0), PaletteSize(0), StartOfIDAT(0)
 {
@@ -318,7 +349,16 @@ const BYTE *FPNGTexture::GetPixels ()
 
 void FPNGTexture::MakeTexture ()
 {
-	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	FileReader *lump;
+
+	if (SourceLump >= 0)
+	{
+		lump = new FWadLump(Wads.OpenLumpNum(SourceLump));
+	}
+	else
+	{
+		lump = new FileReader(SourceFile.GetChars());
+	}
 
 	Pixels = new BYTE[Width*Height];
 	if (StartOfIDAT == 0)
@@ -328,12 +368,12 @@ void FPNGTexture::MakeTexture ()
 	else
 	{
 		DWORD len, id;
-		lump.Seek (StartOfIDAT, SEEK_SET);
-		lump >> len >> id;
+		lump->Seek (StartOfIDAT, SEEK_SET);
+		(*lump) >> len >> id;
 
 		if (ColorType == 0 || ColorType == 3)	/* Grayscale and paletted */
 		{
-			M_ReadIDAT (&lump, Pixels, Width, Height, Width, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
+			M_ReadIDAT (lump, Pixels, Width, Height, Width, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
 
 			if (Width == Height)
 			{
@@ -369,7 +409,7 @@ void FPNGTexture::MakeTexture ()
 			BYTE *in, *out;
 			int x, y, pitch, backstep;
 
-			M_ReadIDAT (&lump, tempix, Width, Height, Width*bytesPerPixel, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
+			M_ReadIDAT (lump, tempix, Width, Height, Width*bytesPerPixel, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
 			in = tempix;
 			out = Pixels;
 
@@ -437,6 +477,7 @@ void FPNGTexture::MakeTexture ()
 			delete[] tempix;
 		}
 	}
+	delete lump;
 	if (Spans == NULL)
 	{
 		Spans = CreateSpans (Pixels);
@@ -454,50 +495,60 @@ int FPNGTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height
 	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
 	PalEntry pe[256];
 	DWORD len, id;
-	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	FileReader *lump;
 	static char bpp[]={1, 0, 3, 1, 2, 0, 4};
 	int pixwidth = Width * bpp[ColorType];
 	int transpal=false;
 
-	lump.Seek (33, SEEK_SET);
+	if (SourceLump >= 0)
+	{
+		lump = new FWadLump(Wads.OpenLumpNum(SourceLump));
+	}
+	else
+	{
+		lump = new FileReader(SourceFile.GetChars());
+	}
+
+	lump->Seek (33, SEEK_SET);
 	for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// default to a gray map
 
-	lump >> len >> id;
+	(*lump) >> len >> id;
 	while (id != MAKE_ID('I','D','A','T') && id != MAKE_ID('I','E','N','D'))
 	{
 		len = BigLong((unsigned int)len);
 		switch (id)
 		{
 		default:
-			lump.Seek (len, SEEK_CUR);
+			lump->Seek (len, SEEK_CUR);
 			break;
 
 		case MAKE_ID('P','L','T','E'):
 			for(int i=0;i<PaletteSize;i++)
 			{
-				lump >> pe[i].r >> pe[i].g >> pe[i].b;
+				(*lump) >> pe[i].r >> pe[i].g >> pe[i].b;
 			}
 			break;
 
 		case MAKE_ID('t','R','N','S'):
 			for(DWORD i=0;i<len;i++)
 			{
-				lump >> pe[i].a;
+				(*lump) >> pe[i].a;
 				pe[i].a=255-pe[i].a;	// use inverse alpha so the default palette can be used unchanged
 				if (pe[i].a!=0 && pe[i].a!=255) transpal = true;
 			}
 			break;
 		}
-		lump >> len >> len;	// Skip CRC
+		(*lump) >> len >> len;	// Skip CRC
 		id = MAKE_ID('I','E','N','D');
-		lump >> id;
+		(*lump) >> id;
 	}
 
 	BYTE * Pixels = new BYTE[pixwidth * Height];
 
-	lump.Seek (StartOfIDAT, SEEK_SET);
-	lump >> len >> id;
-	M_ReadIDAT (&lump, Pixels, Width, Height, pixwidth, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
+	lump->Seek (StartOfIDAT, SEEK_SET);
+	(*lump) >> len >> id;
+	M_ReadIDAT (lump, Pixels, Width, Height, pixwidth, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
+	delete lump;
 
 	switch (ColorType)
 	{

@@ -30,9 +30,6 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** Currently, only 256-color paletted images are supported, as these are all
-** that ZDoom needs to support. Expect this to become more complete in the
-** future if I decide to add support for graphic patches stored as PNGs.
 */
 
 // HEADER FILES ------------------------------------------------------------
@@ -452,66 +449,6 @@ PNGHandle *M_VerifyPNG (FILE *file)
 void M_FreePNG (PNGHandle *png)
 {
 	delete png;
-}
-
-//==========================================================================
-//
-// M_CreateCanvasFromPNG
-//
-// Creates a simple canvas containing the contents of the PNG file's IDAT
-// chunk(s). Only 8-bit images are supported.
-//
-//==========================================================================
-
-DCanvas *M_CreateCanvasFromPNG (PNGHandle *png)
-{
-	IHDR imageHeader;
-	DSimpleCanvas *canvas;
-	int width, height;
-	unsigned int chunklen;
-
-	if (M_FindPNGChunk (png, MAKE_ID('I','H','D','R')) == 0)
-	{
-		return NULL;
-	}
-	if (png->File->Read (&imageHeader, sizeof(IHDR)) != sizeof(IHDR))
-	{
-		return NULL;
-	}
-	if (imageHeader.Width == 0 ||
-		imageHeader.Height == 0 ||
-		// Only images that M_CreatePNG can write are supported
-		imageHeader.BitDepth != 8 ||
-		imageHeader.ColorType != 3 ||
-		imageHeader.Compression != 0 ||
-		imageHeader.Filter != 0 ||
-		imageHeader.Interlace != 0
-		)
-	{
-		return NULL;
-	}
-	chunklen = M_FindPNGChunk (png, MAKE_ID('I','D','A','T'));
-	if (chunklen == 0)
-	{
-		return NULL;
-	}
-
-	width = BigLong((int)imageHeader.Width);
-	height = BigLong((int)imageHeader.Height);
-	canvas = new DSimpleCanvas (width, height);
-	if (canvas == NULL)
-	{
-		return NULL;
-	}
-	canvas->Lock ();
-	bool success = M_ReadIDAT (png->File, canvas->GetBuffer(), width, height, canvas->GetPitch(), 8, 3, 0, chunklen);
-	canvas->Unlock ();
-	if (!success)
-	{
-		delete canvas;
-		canvas = NULL;
-	}
-	return canvas;
 }
 
 //==========================================================================

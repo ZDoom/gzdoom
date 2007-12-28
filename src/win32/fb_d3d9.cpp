@@ -320,6 +320,7 @@ bool D3DFB::CreateResources ()
 	}
 	if (FAILED(D3DDevice->CreatePixelShader (GammaFixerDef, &GammaFixerShader)))
 	{
+		Printf ("Windowed mode gamma will not work.\n");
 		GammaFixerShader = NULL;
 	}
 	CurPixelShader = NULL;
@@ -1370,9 +1371,6 @@ bool D3DFB::Begin2D()
 	In2D = 1;
 	Update();
 	In2D = 2;
-
-	// Set default state for 2D rendering.
-	SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 
 	return true;
 }

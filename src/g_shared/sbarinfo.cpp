@@ -522,7 +522,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 						{
 							cmd.flags += DRAWINVENTORYBAR_ALWAYSSHOW;
 						}
-						else if(SC_Compare("noatribox"))
+						else if(SC_Compare("noartibox"))
 						{
 							cmd.flags += DRAWINVENTORYBAR_NOARTIBOX;
 						}

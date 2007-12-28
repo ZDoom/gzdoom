@@ -124,12 +124,12 @@ class Actor extends Thinker
 	action native A_FLoopActiveSound();
 	action native A_LoopActiveSound();
 	action native A_StopSound();
-	action native A_PlaySoundEx(sound whattoplay, coerce name slot, optional bool looping);
+	action native A_PlaySoundEx(sound whattoplay, coerce name slot, optional bool looping, optional eval int attenuation);
 	action native A_StopSoundEx(coerce name slot);
 	action native A_SeekerMissile(eval int threshold, eval int turnmax);
 	action native A_Jump(eval int chance, state label, ...);
 	action native A_CustomMissile(class<Actor> missiletype, eval float spawnheight, eval int spawnofs_xy, optional eval float angle, optional eval int flags, optional eval float pitch);
-	action native A_CustomBulletAttack(eval float spread_xy, eval float spread_z, eval int	numbullets, eval int damageperbullet, optional class<Actor> pufftype, optional eval float range);
+	action native A_CustomBulletAttack(eval float spread_xy, eval float spread_z, eval int	numbullets, eval int damageperbullet, optional class<Actor> pufftype, optional eval float range, optional eval bool aimfacing);
 	action native A_CustomRailgun(eval int damage, optional eval int spawnofs_xy, optional color color1, optional color color2, optional eval bool silent, optional eval bool aim, optional eval float maxdiff, optional class<Actor> pufftype);
 	action native A_JumpIfHealthLower(eval int health, state label);
 	action native A_JumpIfCloser(eval float distance, state label);

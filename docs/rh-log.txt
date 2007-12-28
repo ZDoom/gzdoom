@@ -1,3 +1,15 @@
+December 28, 2007 (Changes by Graf Zahl)
+- Added a check to Wads.CheckNumForName to return -1 for names longer than
+  8 characters which contain path separators.
+- Fixed: Hires texture replacement must replace all matching textures, not
+  just the first one found. This is particularly important for icons based
+  on sprites.
+- added a con_alpha CVAR to set the console's translucency.
+- Added MartinHowe's submission for A_CustomBulletAttack aimfacing parameter.
+- Added MartinHowe's submission for A_PlaySoundEx attenuation parameter.
+- Fixed: Bots shouldn't target friendly monsters.
+- Fixed a typo in sbarinfo.cpp (noatribox instead of noartibox.)
+
 December 27, 2007
 - Fixed cases where a larger power-of-2-sized native texture had to be
   allocated. (I wonder if D3D actually handles this automatically when you use

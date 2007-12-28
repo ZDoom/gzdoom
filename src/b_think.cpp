@@ -403,6 +403,6 @@ void DCajunMaster::Set_enemy (AActor *actor)
 			*enemy = oldenemy; //Try go for last (it will be NULL if there wasn't anyone)
 	}
 	//Verify that that enemy is really something alive that bot can kill.
-	if (*enemy && ((*enemy)->health < 0 || !((*enemy)->flags&MF_SHOOTABLE)))
+	if (*enemy && (((*enemy)->health < 0 || !((*enemy)->flags&MF_SHOOTABLE)) || actor->IsFriend(*enemy)))
 		*enemy = NULL;
 }

@@ -62,6 +62,7 @@
 #include "doomstat.h"
 #include "d_gui.h"
 #include "v_video.h"
+#include "vectors.h"
 
 #include "gi.h"
 
@@ -155,6 +156,12 @@ CUSTOM_CVAR (Int, con_scaletext, 0, CVAR_ARCHIVE)		// Scale notify text at high 
 {
 	if (self < 0) self = 0;
 	if (self > 2) self = 2;
+}
+
+CUSTOM_CVAR(Float, con_alpha, 0.75f, CVAR_ARCHIVE)
+{
+	if (self < 0.f) self = 0.f;
+	if (self > 1.f) self = 1.f;
 }
 
 // Command to run when Ctrl-D is pressed at start of line
@@ -1138,7 +1145,7 @@ void C_DrawConsole (bool hw2d)
 			DTA_DestWidth, screen->GetWidth(),
 			DTA_DestHeight, screen->GetHeight(),
 			DTA_ColorOverlay, conshade,
-			DTA_Alpha, hw2d ? FRACUNIT*3/4 : FRACUNIT,
+			DTA_Alpha, hw2d ? FLOAT2FIXED(con_alpha) : FRACUNIT,
 			DTA_Masked, false,
 			TAG_DONE);
 		if (conline && visheight < screen->GetHeight())

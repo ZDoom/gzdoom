@@ -53,6 +53,8 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 
+	int GetSourceLump() { return SourceLump; }
+
 protected:
 	int SourceLump;
 	BYTE *Pixels;
@@ -121,6 +123,8 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 
+	int GetSourceLump() { return SourceLump; }
+
 protected:
 	int SourceLump;
 	BYTE *Pixels;
@@ -162,6 +166,8 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 
+	int GetSourceLump() { return SourceLump; }
+
 protected:
 	static bool Check(FileReader & file);
 	static FTexture *Create(FileReader & file, int lumpnum);
@@ -186,6 +192,8 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	void MakeTexture ();
+
+	int GetSourceLump() { return LumpNum; }
 
 private:
 
@@ -212,6 +220,8 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
+
+	int GetSourceLump() { return SourceLump; }
 
 protected:
 
@@ -242,6 +252,7 @@ public:
 	FTextureFormat GetFormat ();
 	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	bool UseBasePalette();
+	int GetSourceLump() { return SourceLump; }
 
 	static FTexture *CreateFromFile (PNGHandle *png, const FString &filename);
 
@@ -279,6 +290,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
+	int GetSourceLump() { return SourceLump; }
 
 protected:
 	static bool Check (FileReader &file);
@@ -324,6 +336,7 @@ public:
 	FTextureFormat GetFormat ();
 	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	bool UseBasePalette();
+	int GetSourceLump() { return SourceLump; }
 
 protected:
 
@@ -375,6 +388,7 @@ public:
 
 	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	bool UseBasePalette();
+	int GetSourceLump() { return SourceLump; }
 
 protected:
 	int SourceLump;
@@ -431,6 +445,7 @@ public:
 
 	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	bool UseBasePalette();
+	int GetSourceLump() { return SourceLump; }
 
 protected:
 	int SourceLump;
@@ -463,6 +478,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	bool CheckModified ();
+	int GetSourceLump() { return SourcePic->GetSourceLump(); }
 
 protected:
 	FTexture *SourcePic;

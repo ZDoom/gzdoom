@@ -667,6 +667,7 @@ public:
 	
 	virtual int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
 	virtual bool UseBasePalette();
+	virtual int GetSourceLump() { return -1; }
 
 	virtual void Unload () = 0;
 
@@ -794,6 +795,7 @@ public:
 
 	int CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);
 	int GetTexture (const char *name, int usetype, BITFIELD flags=0);
+	int ListTextures (const char *name, TArray<int> &list);
 
 	void WriteTexture (FArchive &arc, int picnum);
 	int ReadTexture (FArchive &arc);

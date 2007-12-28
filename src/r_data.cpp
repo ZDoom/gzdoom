@@ -147,6 +147,46 @@ int FTextureManager::CheckForTexture (const char *name, int usetype, BITFIELD fl
 	return -1;
 }
 
+int FTextureManager::ListTextures (const char *name, TArray<int> &list)
+{
+	int i;
+
+	if (name == NULL || name[0] == '\0')
+	{
+		return 0;
+	}
+	// [RH] Doom counted anything beginning with '-' as "no texture".
+	// Hopefully nobody made use of that and had textures like "-EMPTY",
+	// because -NOFLAT- is a valid graphic for ZDoom.
+	if (name[0] == '-' && name[1] == '\0')
+	{
+		return 0;
+	}
+	i = HashFirst[MakeKey (name) % HASH_SIZE];
+
+	while (i != HASH_END)
+	{
+		const FTexture *tex = Textures[i].Texture;
+
+		if (stricmp (tex->Name, name) == 0)
+		{
+			// NULL textures must be ignored.
+			if (tex->UseType!=FTexture::TEX_Null) 
+			{
+				int j;
+				for(j = 0; j < list.Size(); j++)
+				{
+					// Check for overriding definitions from newer WADs
+					if (Textures[list[j]].Texture->UseType == tex->UseType) break;
+				}
+				if (j==list.Size()) list.Push(i);
+			}
+		}
+		i = Textures[i].HashNext;
+	}
+	return list.Size();
+}
+
 int FTextureManager::GetTexture (const char *name, int usetype, BITFIELD flags)
 {
 	int i;
@@ -312,6 +352,7 @@ void FTextureManager::AddHiresTextures ()
 	int firsttx = Wads.CheckNumForName ("HI_START");
 	int lasttx = Wads.CheckNumForName ("HI_END");
 	char name[9];
+	TArray<int> tlist;
 
 	if (firsttx == -1 || lasttx == -1)
 	{
@@ -322,38 +363,44 @@ void FTextureManager::AddHiresTextures ()
 
 	for (firsttx += 1; firsttx < lasttx; ++firsttx)
 	{
+		tlist.Clear();
 		Wads.GetLumpName (name, firsttx);
 
 		if (Wads.CheckNumForName (name, ns_hires) == firsttx)
 		{
-			FTexture * newtex = FTexture::CreateTexture (firsttx, FTexture::TEX_Any);
-			if (newtex != NULL)
+			int amount = ListTextures(name, tlist);
+			if (amount == 0)
 			{
-				int oldtexno = CheckForTexture(name, FTexture::TEX_Wall, TEXMAN_Overridable|TEXMAN_TryAny);
-
-				if (oldtexno<0)
-				{
-					oldtexno = AddPatch(name);
-				}
-				newtex->bWorldPanning = true;
-				if (oldtexno<0)
-				{
-					// A texture with this name does not yet exist
-					newtex->UseType=FTexture::TEX_Override;
-					AddTexture(newtex);
-				}
-				else
-				{
-					FTexture * oldtex = Textures[oldtexno].Texture;
-	
-					// Replace the entire texture and adjust the scaling and offset factors.
-					newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
-					newtex->LeftOffset = FixedMul(oldtex->GetScaledLeftOffset(), newtex->xScale);
-					newtex->TopOffset = FixedMul(oldtex->GetScaledTopOffset(), newtex->yScale);
-					ReplaceTexture(oldtexno, newtex, true);
-				}
-				StartScreen->Progress();
+				int oldtex = AddPatch(name);
+				if (oldtex >= 0) tlist.Push(oldtex);
 			}
+			if (tlist.Size() == 0)
+			{
+				// A texture with this name does not yet exist
+				FTexture * newtex = FTexture::CreateTexture (firsttx, FTexture::TEX_Any);
+				newtex->UseType=FTexture::TEX_Override;
+				AddTexture(newtex);
+			}
+			else
+			{
+				for(int i = 0; i < tlist.Size(); i++)
+				{
+					FTexture * newtex = FTexture::CreateTexture (firsttx, FTexture::TEX_Any);
+					if (newtex != NULL)
+					{
+						int oldtexno = tlist[i];
+						FTexture * oldtex = Textures[oldtexno].Texture;
+		
+						// Replace the entire texture and adjust the scaling and offset factors.
+						newtex->bWorldPanning = true;
+						newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
+						newtex->LeftOffset = FixedMul(oldtex->GetScaledLeftOffset(), newtex->xScale);
+						newtex->TopOffset = FixedMul(oldtex->GetScaledTopOffset(), newtex->yScale);
+						ReplaceTexture(oldtexno, newtex, true);
+					}
+				}
+			}
+			StartScreen->Progress();
 		}
 	}
 }
@@ -371,6 +418,7 @@ void FTextureManager::LoadHiresTex()
 	bool is32bit;
 	int width, height;
 	int type, mode;
+	TArray<int> tlist;
 
 	lastLump = 0;
 	src[8] = '\0';
@@ -392,30 +440,50 @@ void FTextureManager::LoadHiresTex()
 				
 				sc_String[8]=0;
 
-				int tex = TexMan.CheckForTexture(sc_String, type, mode);
-
-				if (tex<0)
+				tlist.Clear();
+				int amount = ListTextures(sc_String, tlist);
+				if (amount == 0)
 				{
-					tex= AddPatch(sc_String);
+					int oldtex = AddPatch(sc_String);
+					if (oldtex >= 0) tlist.Push(oldtex);
 				}
+				FName texname = sc_String;
 
 				SC_MustGetString();
 				int lumpnum = Wads.CheckNumForFullName(sc_String);
 				if (lumpnum < 0) lumpnum = Wads.CheckNumForName(sc_String, ns_graphics);
 
-				if (tex>0) 
+				if (tlist.Size() == 0)
 				{
-					FTexture * oldtex = TexMan[tex];
-					FTexture * newtex = FTexture::CreateTexture (lumpnum, FTexture::TEX_Any);
-
-					if (newtex != NULL)
+					Printf("Attempting to remap non-existent texture %s to %s\n",
+						texname.GetChars(), sc_String);
+				}
+				else
+				{
+					for(int i = 0; i < tlist.Size(); i++)
 					{
-						// Replace the entire texture and adjust the scaling and offset factors.
-						newtex->bWorldPanning = true;
-						newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
-						newtex->LeftOffset = FixedMul(oldtex->GetScaledLeftOffset(), newtex->xScale);
-						newtex->TopOffset = FixedMul(oldtex->GetScaledTopOffset(), newtex->yScale);
-						ReplaceTexture(tex, newtex, true);
+						FTexture * oldtex = Textures[tlist[i]].Texture;
+						int sl;
+
+						// only replace matching types. For sprites also replace any MiscPatches
+						// based on the same lump. These can be created for icons.
+						if (oldtex->UseType == type || type == FTexture::TEX_Any ||
+							(mode == TEXMAN_Overridable && oldtex->UseType == FTexture::TEX_Override) ||
+							(type == FTexture::TEX_Sprite && oldtex->UseType == FTexture::TEX_MiscPatch &&
+							 (sl=oldtex->GetSourceLump()) >= 0 && Wads.GetLumpNamespace(sl) == ns_sprites)
+						   )
+						{
+							FTexture * newtex = FTexture::CreateTexture (lumpnum, FTexture::TEX_Any);
+							if (newtex != NULL)
+							{
+								// Replace the entire texture and adjust the scaling and offset factors.
+								newtex->bWorldPanning = true;
+								newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
+								newtex->LeftOffset = FixedMul(oldtex->GetScaledLeftOffset(), newtex->xScale);
+								newtex->TopOffset = FixedMul(oldtex->GetScaledTopOffset(), newtex->yScale);
+								ReplaceTexture(tlist[i], newtex, true);
+							}
+						}
 					}
 				}
 			}

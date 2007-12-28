@@ -308,12 +308,23 @@ void A_StopSound(AActor * self)
 
 void A_PlaySoundEx (AActor *self)
 {
-	int index = CheckIndex(3);
+	int index = CheckIndex(4);
 	if (index < 0) return;
 
 	int soundid = StateParameters[index];
 	ENamedName channel = ENamedName(StateParameters[index + 1]);
 	INTBOOL looping = StateParameters[index + 2];
+	int attenuation_raw = EvalExpressionI(StateParameters[index + 3], self);
+
+	int attenuation;
+	switch (attenuation_raw)
+	{
+		case -1: attenuation=ATTN_STATIC;	break; // drop off rapidly
+		default:
+		case  0: attenuation=ATTN_NORM;		break; // normal
+		case  1: attenuation=ATTN_NONE;		break; // full volume
+		case  2: attenuation=ATTN_SURROUND;	break; // full volume surround
+	}
 
 	if (channel < NAME_Auto || channel > NAME_SoundSlot7)
 	{
@@ -322,13 +333,13 @@ void A_PlaySoundEx (AActor *self)
 
 	if (!looping)
 	{
-		S_SoundID (self, channel - NAME_Auto, soundid, 1, ATTN_NORM);
+		S_SoundID (self, channel - NAME_Auto, soundid, 1, attenuation);
 	}
 	else
 	{
 		if (!S_IsActorPlayingSomething (self, channel - NAME_Auto, soundid))
 		{
-			S_LoopedSoundID (self, channel - NAME_Auto, soundid, 1, ATTN_NORM);
+			S_LoopedSoundID (self, channel - NAME_Auto, soundid, 1, attenuation);
 		}
 	}
 }
@@ -811,7 +822,7 @@ void A_CustomMissile(AActor * self)
 //==========================================================================
 void A_CustomBulletAttack (AActor *self)
 {
-	int index=CheckIndex(6);
+	int index=CheckIndex(7);
 	if (index<0) return;
 
 	angle_t Spread_XY=angle_t(EvalExpressionF (StateParameters[index], self) * ANGLE_1);
@@ -820,6 +831,7 @@ void A_CustomBulletAttack (AActor *self)
 	int DamagePerBullet=EvalExpressionI (StateParameters[index+3], self);
 	ENamedName PuffType=(ENamedName)StateParameters[index+4];
 	fixed_t Range = fixed_t(EvalExpressionF (StateParameters[index+5], self) * FRACUNIT);
+	bool AimFacing = !!EvalExpressionI (StateParameters[index+6], self);
 
 	if(Range==0) Range=MISSILERANGE;
 
@@ -829,9 +841,9 @@ void A_CustomBulletAttack (AActor *self)
 	int bslope;
 	const PClass *pufftype;
 
-	if (self->target)
+	if (self->target || AimFacing)
 	{
-		A_FaceTarget (self);
+		if (!AimFacing) A_FaceTarget (self);
 		bangle = self->angle;
 
 		pufftype = PClass::FindClass(PuffType);

@@ -827,6 +827,13 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 		return -1;
 	}
 
+	// Let's not search for names that are longer than 8 characters and contain path separators
+	// They are almost certainly full path names passed to this function.
+	if (strlen(name) > 8 && strpbrk(name, "/."))
+	{
+		return -1;
+	}
+
 	uppercopy (uname, name);
 	i = FirstLumpIndex[LumpNameHash (uname) % NumLumps];
 

@@ -1,3 +1,7 @@
+December 29, 2007 (Changes by Graf Zahl)
+- Changed the FStatusBarTexture for Doom so that it can create a true color 
+  image.
+
 December 28, 2007
 - Fixed position of the Doom HUD selectbox as per SnowKate709's guidance.
 

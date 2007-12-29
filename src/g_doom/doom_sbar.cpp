@@ -129,9 +129,8 @@ public:
 		FBaseStatusBar::MultiplayerChanged ();
 		if (multiplayer)
 		{
-			// draw face background
-			StatusBarTex.DrawToBar ("STFBANY", 143, 1,
-				translationtables[TRANSLATION_Players][int(CPlayer - players)]->Remap);
+			// set face background color
+			StatusBarTex.SetPlayerRemap(translationtables[TRANSLATION_Players][int(CPlayer - players)]);
 		}
 	}
 
@@ -146,9 +145,8 @@ public:
 		}
 		if (multiplayer)
 		{
-			// draw face background
-			StatusBarTex.DrawToBar ("STFBANY", 143, 1,
-				translationtables[TRANSLATION_Players][int(CPlayer - players)]->Remap);
+			// set face background color
+			StatusBarTex.SetPlayerRemap(translationtables[TRANSLATION_Players][int(CPlayer - players)]);
 		}
 		bEvilGrin = false;
 	}
@@ -198,19 +196,29 @@ public:
 private:
 	struct FDoomStatusBarTexture : public FTexture
 	{
+		void DrawToBar (const char *name, int x, int y, const BYTE *colormap_in = NULL);
+
 	public:
 		FDoomStatusBarTexture ();
 		const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 		const BYTE *GetPixels ();
 		void Unload ();
 		~FDoomStatusBarTexture ();
-		void DrawToBar (const char *name, int x, int y, const BYTE *colormap_in = NULL);
+		void SetPlayerRemap(FRemapTable *remap);
+		int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+
+		FTextureFormat GetFormat()
+		{
+			return TEX_RGB;
+		}
+
 
 	protected:
 		void MakeTexture ();
 
-		FTexture * BaseTexture;
+		FTexture *BaseTexture;
 		BYTE *Pixels;
+		FRemapTable *STBFremap;
 	}
 	StatusBarTex;
 
@@ -239,13 +247,6 @@ private:
 		}
 
 		StatusBarTex.Unload ();
-		if (!deathmatch)
-		{
-			StatusBarTex.DrawToBar ("STARMS", 104, 0);
-		}
-
-		StatusBarTex.DrawToBar ("STTPRCNT", 90, 3);		// Health %
-		StatusBarTex.DrawToBar ("STTPRCNT", 221, 3);	// Armor %
 
 		SB_state = screen->GetPageCount ();
 		FaceLastAttackDown = -1;
@@ -1053,6 +1054,7 @@ FDoomStatusBar::FDoomStatusBarTexture::FDoomStatusBarTexture ()
 	// now copy all the properties from the base texture
 	CopySize(BaseTexture);
 	Pixels = NULL;
+	STBFremap = NULL;
 }
 
 const BYTE *FDoomStatusBar::FDoomStatusBarTexture::GetColumn (unsigned int column, const Span **spans_out)
@@ -1095,17 +1097,49 @@ void FDoomStatusBar::FDoomStatusBarTexture::MakeTexture ()
 	Pixels = new BYTE[Width*Height];
 	const BYTE *pix = BaseTexture->GetPixels();
 	memcpy(Pixels, pix, Width*Height);
+	if (!deathmatch) DrawToBar("STARMS", 104, 0, NULL);
+	DrawToBar("STTPRCNT", 90, 3, NULL);
+	DrawToBar("STTPRCNT", 221, 3, NULL);
+	if (multiplayer) DrawToBar("STFBANY", 143, 1, STBFremap? STBFremap->Remap : NULL);
 }
+
+int FDoomStatusBar::FDoomStatusBarTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
+{
+	FTexture *tex;
+
+	BaseTexture->CopyTrueColorPixels(buffer, buf_pitch, buf_height, x, y);
+	if (!deathmatch)
+	{
+		tex = TexMan["STARMS"];
+		if (tex != NULL)
+		{
+			tex->CopyTrueColorPixels(buffer, buf_pitch, buf_height, x+104, y);
+		}
+	}
+
+	tex = TexMan["STTPRCNT"];
+	if (tex != NULL)
+	{
+		tex->CopyTrueColorPixels(buffer, buf_pitch, buf_height, x+90, y+3);
+		tex->CopyTrueColorPixels(buffer, buf_pitch, buf_height, x+221, y+3);
+	}
+	if (multiplayer)
+	{
+		tex = TexMan["STFBANY"];
+		if (tex != NULL)
+		{
+			tex->CopyTrueColorTranslated(buffer, buf_pitch, buf_height, x+143, y+1, STBFremap);
+		}
+	}
+	return -1;
+}
+
+
 
 void FDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, int y, const BYTE *colormap_in)
 {
 	FTexture *pic;
 	BYTE colormap[256];
-
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
 
 	if (colormap_in != NULL)
 	{
@@ -1129,6 +1163,13 @@ void FDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, 
 		x -= pic->LeftOffset;
 		pic->CopyToBlock (Pixels, Width, Height, x, y, colormap);
 	}
+}
+
+void FDoomStatusBar::FDoomStatusBarTexture::SetPlayerRemap(FRemapTable *remap)
+{
+	Unload();
+	KillNative();
+	STBFremap = remap;
 }
 
 FBaseStatusBar *CreateDoomStatusBar ()

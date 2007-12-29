@@ -734,7 +734,7 @@ private:
 						}
 						if (item == CPlayer->mo->InvSel)
 						{
-							screen->DrawTexture (Images[imgSELECTBOX], -91+i*31, -3,
+							screen->DrawTexture (Images[imgSELECTBOX], -91+i*31, -2,
 								DTA_HUDRules, HUD_HorizCenter,
 								DTA_CenterBottomOffset, true,
 								TAG_DONE);

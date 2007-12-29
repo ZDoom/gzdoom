@@ -1,3 +1,6 @@
+December 28, 2007
+- Fixed position of the Doom HUD selectbox as per SnowKate709's guidance.
+
 December 28, 2007 (Changes by Graf Zahl)
 - Changed FImageCollection so that it accepts a matching texture of any type.
   This is necessary to load hires sprite replacements for certain icons.

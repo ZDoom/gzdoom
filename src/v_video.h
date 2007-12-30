@@ -341,6 +341,11 @@ public:
 					  const BYTE *patch, int pix_width, int pix_height, 
 					  int step_x, int step_y, PalEntry * palette);
 
+	// Screen wiping
+	virtual bool WipeStartScreen(int type);
+	virtual void WipeEndScreen();
+	virtual bool WipeDo(int ticks);
+	virtual void WipeCleanup();
 
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;

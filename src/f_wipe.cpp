@@ -28,6 +28,7 @@
 #include "doomdef.h"
 #include "f_wipe.h"
 #include "c_cvars.h"
+#include "templates.h"
 
 //
 //		SCREEN WIPE PACKAGE
@@ -69,7 +70,7 @@ void wipe_shittyColMajorXform (short *array)
 	delete[] dest;
 }
 
-int wipe_initMelt (int ticks)
+bool wipe_initMelt (int ticks)
 {
 	int i, r;
 	
@@ -96,7 +97,7 @@ int wipe_initMelt (int ticks)
 	return 0;
 }
 
-int wipe_doMelt (int ticks)
+bool wipe_doMelt (int ticks)
 {
 	int 		i;
 	int 		j;
@@ -147,20 +148,17 @@ int wipe_doMelt (int ticks)
 	}
 
 	return done;
-
 }
 
-int wipe_exitMelt (int ticks)
+bool wipe_exitMelt (int ticks)
 {
-	delete[] wipe_scr_start;
-	delete[] wipe_scr_end;
 	delete[] y;
 	return 0;
 }
 
 // Burn -------------------------------------------------------------
 
-int wipe_initBurn (int ticks)
+bool wipe_initBurn (int ticks)
 {
 	burnarray = new BYTE[FIREWIDTH * (FIREHEIGHT+5)];
 	memset (burnarray, 0, FIREWIDTH * (FIREHEIGHT+5));
@@ -169,7 +167,7 @@ int wipe_initBurn (int ticks)
 	return 0;
 }
 
-int wipe_doBurn (int ticks)
+bool wipe_doBurn (int ticks)
 {
 	static int voop;
 	bool done;
@@ -304,29 +302,27 @@ int wipe_doBurn (int ticks)
 	return done || (burntime > 40);
 }
 
-int wipe_exitBurn (int ticks)
+bool wipe_exitBurn (int ticks)
 {
-	delete[] wipe_scr_start;
-	delete[] wipe_scr_end;
 	delete[] burnarray;
 	return 0;
 }
 
 // Crossfade --------------------------------------------------------
 
-int wipe_initFade (int ticks)
+bool wipe_initFade (int ticks)
 {
 	fade = 0;
 	return 0;
 }
 
-int wipe_doFade (int ticks)
+bool wipe_doFade (int ticks)
 {
 	fade += ticks;
 	if (fade > 64)
 	{
 		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
-		return 1;
+		return true;
 	}
 	else
 	{
@@ -353,78 +349,79 @@ int wipe_doFade (int ticks)
 		}
 	}
 	fade++;
-	return 0;
+	return false;
 }
 
-int wipe_exitFade (int ticks)
+bool wipe_exitFade (int ticks)
 {
 	return 0;
 }
 
 // General Wipe Functions -------------------------------------------
 
-int wipe_StartScreen (int type)
+static bool (*wipes[])(int) =
 {
-	CurrentWipeType = type;
-	if (CurrentWipeType < 0)
-		CurrentWipeType = 0;
-	else if (CurrentWipeType >= wipe_NUMWIPES)
-		CurrentWipeType = wipe_NUMWIPES-1;
+	wipe_initMelt, wipe_doMelt, wipe_exitMelt,
+	wipe_initBurn, wipe_doBurn, wipe_exitBurn,
+	wipe_initFade, wipe_doFade, wipe_exitFade
+};
+
+// Returns true if the wipe should be performed.
+bool wipe_StartScreen (int type)
+{
+	CurrentWipeType = clamp(type, 0, wipe_NUMWIPES - 1);
 
 	if (CurrentWipeType)
 	{
 		wipe_scr_start = new short[SCREENWIDTH * SCREENHEIGHT / 2];
-
 		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
+		return true;
 	}
-
-	return 0;
+	return false;
 }
 
-int wipe_EndScreen (void)
+void wipe_EndScreen (void)
 {
 	if (CurrentWipeType)
 	{
 		wipe_scr_end = new short[SCREENWIDTH * SCREENHEIGHT / 2];
-
 		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
 		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start); // restore start scr.
+		// Initialize the wipe
+		(*wipes[(CurrentWipeType-1)*3])(0);
 	}
-
-	return 0;
 }
 
+// Returns true if the wipe is done.
 bool wipe_ScreenWipe (int ticks)
 {
-	static bool	go = 0;		// when zero, stop the wipe
-	static int (*wipes[])(int) =
-	{
-		wipe_initMelt, wipe_doMelt, wipe_exitMelt,
-		wipe_initBurn, wipe_doBurn, wipe_exitBurn,
-		wipe_initFade, wipe_doFade, wipe_exitFade
-	};
-	int rc;
+	bool rc;
 
 	if (CurrentWipeType == wipe_None)
 		return true;
-
-	// initial stuff
-	if (!go)
-	{
-		go = 1;
-		(*wipes[(CurrentWipeType-1)*3])(ticks);
-	}
 
 	// do a piece of wipe-in
 	V_MarkRect(0, 0, SCREENWIDTH, SCREENHEIGHT);
 	rc = (*wipes[(CurrentWipeType-1)*3+1])(ticks);
 
-	// final stuff
-	if (rc)
-	{
-		go = 0;
-		(*wipes[(CurrentWipeType-1)*3+2])(ticks);
-	}
+	return rc;
+}
 
-	return !go;
+// Final things for the wipe
+void wipe_Cleanup()
+{
+	if (wipe_scr_start != NULL)
+	{
+		delete[] wipe_scr_start;
+		wipe_scr_start = NULL;
+	}
+	if (wipe_scr_end != NULL)
+	{
+		delete[] wipe_scr_end;
+		wipe_scr_end = NULL;
+	}
+	if (CurrentWipeType > 0)
+	{
+		(*wipes[(CurrentWipeType-1)*3+2])(0);
+	}
 }

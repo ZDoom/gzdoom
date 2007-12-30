@@ -1,3 +1,7 @@
+December 29, 2007
+- Started writing Direct3D-friendly wipe code. It's just a Q&D crossfade for
+  now.
+
 December 29, 2007 (Changes by Graf Zahl)
 - Changed the FStatusBarTexture for Doom so that it can create a true color 
   image.

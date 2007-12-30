@@ -62,7 +62,8 @@
 #include "doomerrors.h"
 #include "r_draw.h"
 #include "r_translate.h"
-
+#include "f_wipe.h"
+#include "st_stuff.h"
 #include "win32iface.h"
 
 #include <mmsystem.h>
@@ -156,6 +157,11 @@ extern cycle_t BlitCycles;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+CUSTOM_CVAR(Bool, test2d, true, CVAR_NOINITCALL)
+{
+	BorderNeedRefresh = SB_state = screen->GetPageCount();
+}
+
 // CODE --------------------------------------------------------------------
 
 D3DFB::D3DFB (int width, int height, bool fullscreen)
@@ -166,7 +172,9 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	D3DDevice = NULL;
 	VertexBuffer = NULL;
 	FBTexture = NULL;
-	WindowedRenderTexture = NULL;
+	TempRenderTexture = NULL;
+	InitialWipeScreen = NULL;
+	FinalWipeScreen = NULL;
 	PaletteTexture = NULL;
 	StencilPaletteTexture = NULL;
 	ShadedPaletteTexture = NULL;
@@ -187,6 +195,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	Palettes = NULL;
 	Textures = NULL;
 	Accel2D = true;
+	GatheringWipeScreen = false;
 
 	Gamma = 1.0;
 	FlashConstants[0][3] = FlashConstants[0][2] = FlashConstants[0][1] = FlashConstants[0][0] = 0;
@@ -270,7 +279,7 @@ void D3DFB::FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, b
 	pp->SwapEffect = D3DSWAPEFFECT_DISCARD;
 	pp->BackBufferWidth = Width;
 	pp->BackBufferHeight = TrueHeight;
-	pp->BackBufferFormat = fullscreen ? D3DFMT_X8R8G8B8 : D3DFMT_UNKNOWN;
+	pp->BackBufferFormat = fullscreen ? D3DFMT_A8R8G8B8 : D3DFMT_UNKNOWN;
 	pp->hDeviceWindow = Window;
 	pp->PresentationInterval = vsync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 }
@@ -352,10 +361,23 @@ void D3DFB::ReleaseResources ()
 		FBTexture->Release();
 		FBTexture = NULL;
 	}
-	if (WindowedRenderTexture != NULL)
+	if (FinalWipeScreen != NULL)
 	{
-		WindowedRenderTexture->Release();
-		WindowedRenderTexture = NULL;
+		if (FinalWipeScreen != TempRenderTexture)
+		{
+			FinalWipeScreen->Release();
+		}
+		FinalWipeScreen = NULL;
+	}
+	if (TempRenderTexture != NULL)
+	{
+		TempRenderTexture->Release();
+		TempRenderTexture = NULL;
+	}
+	if (InitialWipeScreen != NULL)
+	{
+		InitialWipeScreen->Release();
+		InitialWipeScreen = NULL;
 	}
 	if (VertexBuffer != NULL)
 	{
@@ -414,10 +436,10 @@ bool D3DFB::Reset ()
 		FBTexture->Release();
 		FBTexture = NULL;
 	}
-	if (WindowedRenderTexture != NULL)
+	if (TempRenderTexture != NULL)
 	{
-		WindowedRenderTexture->Release();
-		WindowedRenderTexture = NULL;
+		TempRenderTexture->Release();
+		TempRenderTexture = NULL;
 	}
 	if (VertexBuffer != NULL)
 	{
@@ -468,29 +490,6 @@ void D3DFB::KillNativeTexs()
 	}
 }
 
-//==========================================================================
-//
-// D3DFB :: KillNativeNonPalettedTexs
-//
-// Frees all native textures that aren't paletted.
-//
-//==========================================================================
-
-void D3DFB::KillNativeNonPalettedTexs()
-{
-	D3DTex *tex;
-	D3DTex *next;
-
-	for (tex = Textures; tex != NULL; tex = next)
-	{
-		next = tex->Next;
-		if (tex->GetTexFormat() != D3DFMT_L8)
-		{
-			delete tex;
-		}
-	}
-}
-
 bool D3DFB::CreateFBTexture ()
 {
 	if (FAILED(D3DDevice->CreateTexture (Width, Height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
@@ -515,12 +514,9 @@ bool D3DFB::CreateFBTexture ()
 		FBWidth = Width;
 		FBHeight = Height;
 	}
-	if (Windowed && GammaFixerShader)
+	if (FAILED(D3DDevice->CreateTexture (FBWidth, FBHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &TempRenderTexture, NULL)))
 	{
-		if (FAILED(D3DDevice->CreateTexture (FBWidth, FBHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &WindowedRenderTexture, NULL)))
-		{
-			WindowedRenderTexture = false;
-		}
+		TempRenderTexture = NULL;
 	}
 	return true;
 }
@@ -879,18 +875,14 @@ void D3DFB::Draw3DPart()
 		}
 		FBTexture->UnlockRect (0);
 	}
-	if (TrueHeight != Height)
-	{
-		// Letterbox! Draw black top and bottom borders.
-		D3DRECT rects[2] = { { 0, 0, Width, LBOffsetI }, { 0, Height + LBOffsetI, Width, TrueHeight } };
-		D3DDevice->Clear (2, rects, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0,0,0), 1.f, 0);
-	}
+	DrawLetterbox();
 	D3DDevice->BeginScene();
 	OldRenderTarget = NULL;
-	if (WindowedRenderTexture != NULL)
+	if (TempRenderTexture != NULL &&
+		((Windowed && GammaFixerShader && TempRenderTexture != FinalWipeScreen) || GatheringWipeScreen))
 	{
 		IDirect3DSurface9 *targetsurf;
-		if (FAILED(WindowedRenderTexture->GetSurfaceLevel(0, &targetsurf)) ||
+		if (FAILED(TempRenderTexture->GetSurfaceLevel(0, &targetsurf)) ||
 			FAILED(D3DDevice->GetRenderTarget(0, &OldRenderTarget)) ||
 			FAILED(D3DDevice->SetRenderTarget(0, targetsurf)))
 		{
@@ -931,6 +923,24 @@ void D3DFB::Draw3DPart()
 
 //==========================================================================
 //
+// D3DFB :: DrawLetterbox
+//
+// Draws the black bars at the top and bottom of the screen for letterboxed
+// modes.
+//
+//==========================================================================
+
+void D3DFB::DrawLetterbox()
+{
+	if (TrueHeight != Height)
+	{
+		D3DRECT rects[2] = { { 0, 0, Width, LBOffsetI }, { 0, Height + LBOffsetI, Width, TrueHeight } };
+		D3DDevice->Clear (2, rects, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0,0,0), 1.f, 0);
+	}
+}
+
+//==========================================================================
+//
 // D3DFB :: DoWindowedGamma
 //
 // Draws the render target texture to the real back buffer using a gamma-
@@ -945,8 +955,8 @@ void D3DFB::DoWindowedGamma()
 		D3DDevice->SetRenderTarget(0, OldRenderTarget);
 		D3DDevice->SetStreamSource(0, VertexBuffer, 0, sizeof(FBVERTEX));
 		D3DDevice->SetFVF(D3DFVF_FBVERTEX);
-		SetTexture(0, WindowedRenderTexture);
-		SetPixelShader(GammaFixerShader);
+		SetTexture(0, TempRenderTexture);
+		SetPixelShader((Windowed && GammaFixerShader != NULL) ? GammaFixerShader : PlainShader);
 		SetAlphaBlend(FALSE);
 		D3DDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
 		OldRenderTarget = NULL;
@@ -1061,6 +1071,265 @@ void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)
 /**************************************************************************/
 /*                                  2D Stuff                              */
 /**************************************************************************/
+
+//==========================================================================
+//
+// D3DFB :: WipeStartScreen
+//
+// Called before the current screen has started rendering. This needs to
+// save what was drawn the previous frame so that it can be animated into
+// what gets drawn this frame.
+//
+// In fullscreen mode, we use GetFrontBufferData() to grab the data that
+// is visible on screen right now.
+//
+// In windowed mode, we can't do that because we'll get the whole desktop.
+// Instead, we can conveniently use the TempRenderTexture, which is normally
+// used for gamma-correcting copying the image to the back buffer.
+//
+//==========================================================================
+
+bool D3DFB::WipeStartScreen(int type)
+{
+	IDirect3DSurface9 *surf, *tsurf;
+	D3DSURFACE_DESC desc;
+
+	if (!test2d)
+	{
+		return Super::WipeStartScreen(type);
+	}
+	if (type != wipe_Fade)
+	{
+		return false;
+	}
+
+	if (Windowed)
+	{
+		// The InitialWipeScreen must have the same pixel format as
+		// the TempRenderTexture.
+		if (FAILED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)) ||
+			FAILED(tsurf->GetDesc(&desc)))
+		{
+			return false;
+		}
+	}
+	else
+	{
+		// GetFrontBufferData works only with this format
+		desc.Format = D3DFMT_A8R8G8B8;
+	}
+
+	if (FAILED(D3DDevice->CreateTexture(Width, TrueHeight, 1, 0,
+		desc.Format, D3DPOOL_SYSTEMMEM, &InitialWipeScreen, NULL)))
+	{
+		InitialWipeScreen = NULL;
+		return false;
+	}
+	if (FAILED(InitialWipeScreen->GetSurfaceLevel(0, &surf)))
+	{
+		InitialWipeScreen->Release();
+		InitialWipeScreen = NULL;
+		return false;
+	}
+	if (!Windowed)
+	{
+		if (FAILED(D3DDevice->GetFrontBufferData(0, surf)))
+		{
+			InitialWipeScreen->Release();
+			InitialWipeScreen = NULL;
+			return false;
+		}
+		FinalWipeScreen = TempRenderTexture;
+	}
+	else
+	{
+		if (FAILED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)) ||
+			FAILED(D3DDevice->GetRenderTargetData(tsurf, surf)))
+		{
+			InitialWipeScreen->Release();
+			InitialWipeScreen = NULL;
+			return false;
+		}
+		// Create another texture to copy the final wipe screen to so
+		// we can still gamma correct the wipe. Since this is just for
+		// gamma correction, it's okay to fail (though not desirable.)
+		if (GammaFixerShader != NULL && Gamma != 1)
+		{
+			if (FAILED(tsurf->GetDesc(&desc)) ||
+				FAILED(D3DDevice->CreateTexture(desc.Width, desc.Height,
+					1, D3DUSAGE_RENDERTARGET, desc.Format, D3DPOOL_DEFAULT,
+					&FinalWipeScreen, NULL)))
+			{
+				FinalWipeScreen = TempRenderTexture;
+			}
+		}
+		else
+		{
+			FinalWipeScreen = TempRenderTexture;
+		}
+	}
+	// Even fullscreen will render to the TempRenderTexture, so we can have
+	// a copy of the new screen readily available.
+	GatheringWipeScreen = true;
+	return true;
+}
+
+//==========================================================================
+//
+// D3DFB :: WipeEndScreen
+//
+// The screen we want to animate to has just been drawn. This function is
+// called in place of Update(), so it has not been Presented yet.
+//
+//==========================================================================
+
+void D3DFB::WipeEndScreen()
+{
+	if (!test2d)
+	{
+		Super::WipeEndScreen();
+		return;
+	}
+	WipeTime = 0;
+
+	// Don't do anything if there is no starting point.
+	if (InitialWipeScreen == NULL)
+	{
+		return;
+	}
+
+	// If the whole screen was drawn without 2D accel, get it in to
+	// video memory now.
+	if (!In2D)
+	{
+		Begin2D();
+	}
+
+	// Don't do anything if there is no ending point.
+	if (OldRenderTarget == NULL)
+	{
+		return;
+	}
+
+	// If these are different, reverse their roles so we don't need to
+	// waste time copying from TempRenderTexture to FinalWipeScreen.
+	swap(FinalWipeScreen, TempRenderTexture);
+
+	// At this point, InitialWipeScreen holds the screen we are wiping from.
+	// FinalWipeScreen holds the screen we are wiping to, which may be the
+	// same texture as TempRenderTexture.
+}
+
+//==========================================================================
+//
+// D3DFB :: WipeDo
+//
+// Perform the actual wipe animation. The number of tics since the last
+// time this function was called is passed in. Returns true when the wipe
+// is over. The first time this function has been called, the screen is
+// still locked from before and EndScene() still has not been called.
+// Successive times need to call BeginScene().
+//
+//==========================================================================
+
+bool D3DFB::WipeDo(int ticks)
+{
+	if (!test2d)
+	{
+		return Super::WipeDo(ticks);
+	}
+	WipeTime += ticks;
+
+	// Sanity checks.
+	if (InitialWipeScreen == NULL || FinalWipeScreen == NULL)
+	{
+		return true;
+	}
+	if (GatheringWipeScreen)
+	{ // This is the first time we've been called for this wipe.
+		GatheringWipeScreen = false;
+
+		if (OldRenderTarget == NULL)
+		{
+			return true;
+		}
+		D3DDevice->SetRenderTarget(0, OldRenderTarget);
+	}
+	else
+	{ // This is the second or later time we've been called for this wipe.
+		D3DDevice->BeginScene();
+	}
+	OldRenderTarget = NULL;
+	if (TempRenderTexture != NULL && TempRenderTexture != FinalWipeScreen &&
+		((Windowed && GammaFixerShader) || GatheringWipeScreen))
+	{
+		IDirect3DSurface9 *targetsurf;
+		if (FAILED(TempRenderTexture->GetSurfaceLevel(0, &targetsurf)) ||
+			FAILED(D3DDevice->GetRenderTarget(0, &OldRenderTarget)) ||
+			FAILED(D3DDevice->SetRenderTarget(0, targetsurf)))
+		{
+			// Setting the render target failed.
+			OldRenderTarget = NULL;
+		}
+	}
+	In2D = 2;
+	D3DDevice->SetStreamSource(0, VertexBuffer, 0, sizeof(FBVERTEX));
+	D3DDevice->SetFVF(D3DFVF_FBVERTEX);
+
+	/* Crossfade only for testing purposes, because it's the simplest.
+	 * More to come later.
+	 */
+
+	// Put the initial screen back to the buffer, presumably with DMA.
+	IDirect3DSurface9 *source, *target;
+
+	if (SUCCEEDED(InitialWipeScreen->GetSurfaceLevel(0, &source)) &&
+		SUCCEEDED(D3DDevice->GetRenderTarget(0, &target)))
+	{
+		D3DDevice->UpdateSurface(source, NULL, target, NULL);
+	}
+
+	// Draw the new screen on top of it.
+	SetTexture(0, FinalWipeScreen);
+	SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
+	SetConstant(0, 0, 0, 0, clamp(WipeTime / 32.f, 0.f, 1.f));
+	SetConstant(1, 1, 1, 1, 0);
+	SetPixelShader(PlainShader);
+	// FIXME: The FinalWipeScreen gets junk at the top in letterbox modes.
+	D3DDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
+
+	DrawLetterbox();
+
+	return WipeTime >= 32;
+}
+
+//==========================================================================
+//
+// D3DFB :: WipeCleanup
+//
+// Release any resources that were specifically created for the wipe.
+//
+//==========================================================================
+
+void D3DFB::WipeCleanup()
+{
+	if (!test2d)
+	{
+		Super::WipeCleanup();
+		return;
+	}
+	if (InitialWipeScreen != NULL)
+	{
+		InitialWipeScreen->Release();
+		InitialWipeScreen = NULL;
+	}
+	if (FinalWipeScreen != NULL && FinalWipeScreen != TempRenderTexture)
+	{
+		FinalWipeScreen->Release();
+	}
+	FinalWipeScreen = NULL;
+	GatheringWipeScreen = false;
+}
 
 //==========================================================================
 //
@@ -1369,7 +1638,6 @@ bool D3DPal::Update()
 //
 //==========================================================================
 
-CVAR(Bool,test2d,true,0)
 bool D3DFB::Begin2D()
 {
 	if (!test2d) return false;

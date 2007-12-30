@@ -242,6 +242,10 @@ public:
 	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
 	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
 	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
+	bool WipeStartScreen(int type);
+	void WipeEndScreen();
+	bool WipeDo(int ticks);
+	void WipeCleanup();
 	HRESULT GetHR ();
 
 private:
@@ -262,7 +266,7 @@ private:
 	bool Reset();
 	void KillNativePals();
 	void KillNativeTexs();
-	void KillNativeNonPalettedTexs();
+	void DrawLetterbox();
 	void Draw3DPart();
 	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms);
 	void SetColorOverlay(DWORD color, float alpha);
@@ -301,13 +305,16 @@ private:
 	bool UseBlendingRect;
 	int In2D;
 	bool SM14;
+	bool GatheringWipeScreen;
 	D3DPal *Palettes;
 	D3DTex *Textures;
+
+	int WipeTime;
 
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DVertexBuffer9 *VertexBuffer;
 	IDirect3DTexture9 *FBTexture;
-	IDirect3DTexture9 *WindowedRenderTexture;
+	IDirect3DTexture9 *TempRenderTexture;
 	IDirect3DTexture9 *PaletteTexture;
 	IDirect3DTexture9 *StencilPaletteTexture;
 	IDirect3DTexture9 *ShadedPaletteTexture;
@@ -317,6 +324,7 @@ private:
 	IDirect3DPixelShader9 *DimShader;
 	IDirect3DPixelShader9 *GammaFixerShader;
 	IDirect3DSurface9 *OldRenderTarget;
+	IDirect3DTexture9 *InitialWipeScreen, *FinalWipeScreen;
 
 	D3DFB() {}
 };

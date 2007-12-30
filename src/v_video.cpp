@@ -60,6 +60,7 @@
 #include "sbar.h"
 #include "hardware.h"
 #include "r_translate.h"
+#include "f_wipe.h"
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
@@ -844,6 +845,28 @@ FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex)
 FNativeTexture *DFrameBuffer::CreatePalette(FRemapTable *remap)
 {
 	return NULL;
+}
+
+bool DFrameBuffer::WipeStartScreen(int type)
+{
+	return wipe_StartScreen(type);
+}
+
+void DFrameBuffer::WipeEndScreen()
+{
+	wipe_EndScreen();
+	Unlock();
+}
+
+bool DFrameBuffer::WipeDo(int ticks)
+{
+	Lock(true);
+	return wipe_ScreenWipe(ticks);
+}
+
+void DFrameBuffer::WipeCleanup()
+{
+	wipe_Cleanup();
 }
 
 //===========================================================================

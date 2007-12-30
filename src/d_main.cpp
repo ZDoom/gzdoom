@@ -509,11 +509,11 @@ void D_Display (bool screenshot)
 		wipe = true;
 		if (wipegamestate != GS_FORCEWIPEFADE)
 		{
-			wipe_StartScreen (wipetype);
+			wipe = screen->WipeStartScreen (wipetype);
 		}
 		else
 		{
-			wipe_StartScreen (wipe_Fade);
+			wipe = screen->WipeStartScreen (wipe_Fade);
 		}
 		wipegamestate = gamestate;
 	}
@@ -573,7 +573,7 @@ void D_Display (bool screenshot)
 			{
 				AM_Drawer ();
 			}
-			if (!screenshot && (!wipe || NoWipe))
+			if (!screenshot)
 			{
 				if ((hw2d = screen->Begin2D()))
 				{
@@ -596,7 +596,7 @@ void D_Display (bool screenshot)
 
 		case GS_INTERMISSION:
 			screen->SetBlendingRect(0,0,0,0);
-			if (!screenshot && (!wipe || NoWipe))
+			if (!screenshot)
 			{
 				screen->Begin2D();
 			}
@@ -606,7 +606,7 @@ void D_Display (bool screenshot)
 
 		case GS_FINALE:
 			screen->SetBlendingRect(0,0,0,0);
-			if (!screenshot && (!wipe || NoWipe))
+			if (!screenshot)
 			{
 				screen->Begin2D();
 			}
@@ -616,7 +616,7 @@ void D_Display (bool screenshot)
 
 		case GS_DEMOSCREEN:
 			screen->SetBlendingRect(0,0,0,0);
-			if (!screenshot && (!wipe || NoWipe))
+			if (!screenshot)
 			{
 				screen->Begin2D();
 			}
@@ -673,8 +673,7 @@ void D_Display (bool screenshot)
 		int wipestart, nowtime, tics;
 		bool done;
 
-		wipe_EndScreen ();
-		screen->Unlock ();
+		screen->WipeEndScreen ();
 
 		wipestart = I_GetTime (false);
 
@@ -686,13 +685,13 @@ void D_Display (bool screenshot)
 			nowtime = I_WaitForTic (wipestart);
 			tics = nowtime - wipestart;
 			wipestart = nowtime;
-			screen->Lock (true);
-			done = wipe_ScreenWipe (tics);
-			C_DrawConsole (hw2d);
-			M_Drawer ();			// menu is drawn even on top of wipes
+			done = screen->WipeDo (tics);
+			C_DrawConsole (hw2d);	// console and
+			M_Drawer ();			// menu are drawn even on top of wipes
 			screen->Update ();		// page flip or blit buffer
 			NetUpdate ();
 		} while (!done);
+		screen->WipeCleanup();
 
 		Net_WriteByte (DEM_WIPEOFF);
 	}

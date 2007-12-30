@@ -27,9 +27,10 @@
 //						 SCREEN WIPE PACKAGE
 //
 
-int wipe_StartScreen (int type);
-int wipe_EndScreen (void);
+bool wipe_StartScreen (int type);
+void wipe_EndScreen (void);
 bool wipe_ScreenWipe (int ticks);
+void wipe_Cleanup ();
 
 enum
 {

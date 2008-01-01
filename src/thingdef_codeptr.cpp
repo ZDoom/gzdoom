@@ -2118,7 +2118,7 @@ void A_ClearTarget(AActor * self)
 
 //==========================================================================
 //
-// A_JumpIfTargetInLOS (fixed fov, state label)
+// A_JumpIfTargetInLOS (state label, optional fixed fov)
 // Jumps if the actor can see its target, or if the player has a linetarget.
 //
 //==========================================================================
@@ -2128,7 +2128,7 @@ void A_JumpIfTargetInLOS(AActor * self)
 	FState * CallingState;
 	int index = CheckIndex(2, &CallingState);
 	angle_t an;
-	angle_t fov = angle_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
+	angle_t fov = angle_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
 	AActor * target;
 
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
@@ -2165,7 +2165,7 @@ void A_JumpIfTargetInLOS(AActor * self)
 	// No target - return
 	if (target==NULL) return;
 
-	DoJump(self, CallingState, StateParameters[index+1]);
+	DoJump(self, CallingState, StateParameters[index]);
 }
 
 // [KS] *** End of my modifications ***

@@ -438,7 +438,7 @@ CVAR (Flag, compat_invisibility,compatflags, COMPATF_INVISIBILITY);
 //
 //==========================================================================
 
-void D_Display (bool screenshot)
+void D_Display ()
 {
 	bool wipe;
 	bool hw2d;
@@ -489,7 +489,7 @@ void D_Display (bool screenshot)
 	}
 	setmodeneeded = false;
 
-	if (screen->Lock (screenshot))
+	if (screen->Lock (false))
 	{
 		SB_state = screen->GetPageCount ();
 		BorderNeedRefresh = screen->GetPageCount ();
@@ -506,7 +506,6 @@ void D_Display (bool screenshot)
 	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
 	{ // save the current screen if about to wipe
 		BorderNeedRefresh = screen->GetPageCount ();
-		wipe = true;
 		if (wipegamestate != GS_FORCEWIPEFADE)
 		{
 			wipe = screen->WipeStartScreen (wipetype);
@@ -536,14 +535,10 @@ void D_Display (bool screenshot)
 		{
 		case GS_FULLCONSOLE:
 			screen->SetBlendingRect(0,0,0,0);
-			if (!screenshot)
-			{
-				hw2d = screen->Begin2D();
-			}
+			hw2d = screen->Begin2D();
 			C_DrawConsole (false);
 			M_Drawer ();
-			if (!screenshot)
-				screen->Update ();
+			screen->Update ();
 			return;
 
 		case GS_LEVEL:
@@ -573,13 +568,10 @@ void D_Display (bool screenshot)
 			{
 				AM_Drawer ();
 			}
-			if (!screenshot)
+			if ((hw2d = screen->Begin2D()))
 			{
-				if ((hw2d = screen->Begin2D()))
-				{
-					// Redraw the status bar every frame when using 2D accel
-					SB_state = screen->GetPageCount();
-				}
+				// Redraw the status bar every frame when using 2D accel
+				SB_state = screen->GetPageCount();
 			}
 			if (realviewheight == SCREENHEIGHT && viewactive)
 			{
@@ -596,30 +588,21 @@ void D_Display (bool screenshot)
 
 		case GS_INTERMISSION:
 			screen->SetBlendingRect(0,0,0,0);
-			if (!screenshot)
-			{
-				screen->Begin2D();
-			}
+			hw2d = screen->Begin2D();
 			WI_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_FINALE:
 			screen->SetBlendingRect(0,0,0,0);
-			if (!screenshot)
-			{
-				screen->Begin2D();
-			}
+			hw2d = screen->Begin2D();
 			F_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_DEMOSCREEN:
 			screen->SetBlendingRect(0,0,0,0);
-			if (!screenshot)
-			{
-				screen->Begin2D();
-			}
+			hw2d = screen->Begin2D();
 			D_PageDrawer ();
 			CT_Drawer ();
 			break;
@@ -655,17 +638,14 @@ void D_Display (bool screenshot)
 		NoWipe = 10;
 	}
 
-	if (!wipe || screenshot || NoWipe < 0)
+	if (!wipe || NoWipe < 0)
 	{
 		NetUpdate ();			// send out any new accumulation
 		// normal update
 		C_DrawConsole (hw2d);	// draw console
 		M_Drawer ();			// menu is drawn even on top of everything
 		FStat::PrintStat ();
-		if (!screenshot)
-		{
-			screen->Update ();	// page flip or blit buffer
-		}
+		screen->Update ();	// page flip or blit buffer
 	}
 	else
 	{
@@ -792,7 +772,7 @@ void D_DoomLoop ()
 			S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
 			// Update display, next frame, with current state.
 			I_StartTic ();
-			D_Display (false);
+			D_Display ();
 		}
 		catch (CRecoverableError &error)
 		{

@@ -1,3 +1,12 @@
+December 31, 2007
+- Removed the screenshot parameter from D_Display(), since it was a relic of
+  a long-abandoned experiment to write directly to video memory instead of
+  to a temporary buffer in system meroy.
+- Added Direct3D versions of the melt and burn screenwipes.
+- Fixed the strip sizes for the melt screenwipe to match what Doom would have
+  produced on a 320x200 screen, rather than producing more, thinner strips
+  for wider screens.
+
 December 29, 2007
 - Started writing Direct3D-friendly wipe code. It's just a Q&D crossfade for
   now.

@@ -264,6 +264,7 @@ private:
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
 	bool UploadVertices();
 	bool Reset();
+	void ReleaseDefaultPoolItems();
 	void KillNativePals();
 	void KillNativeTexs();
 	void DrawLetterbox();
@@ -309,8 +310,6 @@ private:
 	D3DPal *Palettes;
 	D3DTex *Textures;
 
-	int WipeTime;
-
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DVertexBuffer9 *VertexBuffer;
 	IDirect3DTexture9 *FBTexture;
@@ -323,11 +322,32 @@ private:
 	IDirect3DPixelShader9 *PlainStencilShader;
 	IDirect3DPixelShader9 *DimShader;
 	IDirect3DPixelShader9 *GammaFixerShader;
+	IDirect3DPixelShader9 *BurnShader;
 	IDirect3DSurface9 *OldRenderTarget;
 	IDirect3DTexture9 *InitialWipeScreen, *FinalWipeScreen;
 
 	D3DFB() {}
+
+	class Wiper
+	{
+	public:
+		virtual ~Wiper();
+		virtual bool Run(int ticks, D3DFB *fb) = 0;
+	};
+
+	class Wiper_Melt;			friend class Wiper_Melt;
+	class Wiper_Burn;			friend class Wiper_Burn;
+	class Wiper_Crossfade;		friend class Wiper_Crossfade;
+
+	Wiper *ScreenWipe;
 };
+
+struct FBVERTEX
+{
+	FLOAT x, y, z, rhw;
+	FLOAT tu, tv;
+};
+#define D3DFVF_FBVERTEX (D3DFVF_XYZRHW|D3DFVF_TEX1)
 
 #if 0
 #define STARTLOG		do { if (!dbg) dbg = fopen ("k:/vid.log", "w"); } while(0)

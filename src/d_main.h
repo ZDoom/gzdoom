@@ -38,8 +38,7 @@ void D_DoomMain (void);
 // Called by IO functions when input is detected.
 void D_PostEvent (const event_t* ev);
 
-// [RH] Passed true if just drawing for a screenshot
-void D_Display (bool screenshot);
+void D_Display ();
 
 
 //

@@ -32,6 +32,10 @@ void wipe_EndScreen (void);
 bool wipe_ScreenWipe (int ticks);
 void wipe_Cleanup ();
 
+// The buffer must have an additional 5 rows not included in height
+// to use for a seeding area.
+int wipe_CalcBurn (BYTE *buffer, int width, int height, int density);
+
 enum
 {
 	wipe_None,			// don't bother

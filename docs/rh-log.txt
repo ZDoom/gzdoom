@@ -1,3 +1,17 @@
+January 1, 2008
+- The mouse is no longer grabbed at all unless you're actually in a level.
+- Moved the view border drawing into the 2D mode part. When using Begin2D()
+  now, the only part of the software buffer that gets updated to the screen
+  is the part with the actual 3D scene and only if you tell it to.
+- Fixed a D3D memory leak on every frame in windowed mode and the same thing
+  for the screen wipes. Note to self: If it's an interface, be sure to
+  Release it, because it will be AddRef'ed before being returned to you.
+- Moved the BlendView() call out of FBaseStatusBar::Draw() so that it can be
+  applied before copying the 3D scene to the screen underneath the 2D parts.
+- Restored the console's darkening level to its old table-based amount.
+- Fixed D3DFB::SetColorOverlay()'s incorrect calculations.
+- Fixed the D3D screen wipes for letterboxed modes.
+
 January 1, 2008 (Changes by Graf Zahl)
 - Fixed: A_JumpIfTargetInLOS had inconsistent parameter definitions.
 

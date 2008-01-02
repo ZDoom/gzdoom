@@ -320,9 +320,11 @@ public:
 	bool Accel2D;	// If true, 2D drawing can be accelerated.
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end
-	// the scene, and it doesn't present the image yet. Returns true if
-	// hardware-accelerated 2D has been entered, false if not.
-	virtual bool Begin2D();
+	// the scene, and it doesn't present the image yet. If you are going to
+	// be covering the entire screen with 2D elements, then pass false to
+	// avoid copying the software bufferer to the screen.
+	// Returns true if hardware-accelerated 2D has been entered, false if not.
+	virtual bool Begin2D(bool copy3d);
 
 	// DrawTexture calls after Begin2D use native textures.
 

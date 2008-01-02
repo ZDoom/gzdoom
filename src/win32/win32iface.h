@@ -236,7 +236,7 @@ public:
 	bool PaintToWindow ();
 	void SetVSync (bool vsync);
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
-	bool Begin2D ();
+	bool Begin2D (bool copy3d);
 	FNativeTexture *CreateTexture (FTexture *gametex);
 	FNativeTexture *CreatePalette (FRemapTable *remap);
 	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
@@ -268,7 +268,7 @@ private:
 	void KillNativePals();
 	void KillNativeTexs();
 	void DrawLetterbox();
-	void Draw3DPart();
+	void Draw3DPart(bool copy3d);
 	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms);
 	void SetColorOverlay(DWORD color, float alpha);
 	void DoWindowedGamma();

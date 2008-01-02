@@ -535,7 +535,7 @@ void D_Display ()
 		{
 		case GS_FULLCONSOLE:
 			screen->SetBlendingRect(0,0,0,0);
-			hw2d = screen->Begin2D();
+			hw2d = screen->Begin2D(false);
 			C_DrawConsole (false);
 			M_Drawer ();
 			screen->Update ();
@@ -546,19 +546,13 @@ void D_Display ()
 			if (!gametic)
 				break;
 
-			if (!menuactive)
+			if (StatusBar != NULL)
 			{
-				screen->SetBlendingRect(viewwindowx, MAX(ConBottom,viewwindowy),
-					viewwindowx + realviewwidth, MAX(ConBottom,viewwindowy + realviewheight));
+				float blend[4] = { 0, 0, 0, 0 };
+				StatusBar->BlendView (blend);
 			}
-			else
-			{
-				// Don't chop the blending effect off at the status bar when the menu is
-				// active. Mostly, this is just to make Strife's dialogs with portrait
-				// images look okay when a blend is active.
-				screen->SetBlendingRect(0,0,0,0);
-			}
-			R_RefreshViewBorder ();
+			screen->SetBlendingRect(viewwindowx, viewwindowy,
+				viewwindowx + realviewwidth, viewwindowy + realviewheight);
 			P_CheckPlayerSprites();
 			R_RenderActorView (players[consoleplayer].mo);
 			R_DetailDouble ();		// [RH] Apply detail mode expansion
@@ -568,11 +562,13 @@ void D_Display ()
 			{
 				AM_Drawer ();
 			}
-			if ((hw2d = screen->Begin2D()))
+			if ((hw2d = screen->Begin2D(true)))
 			{
-				// Redraw the status bar every frame when using 2D accel
+				// Redraw everything every frame when using 2D accel
 				SB_state = screen->GetPageCount();
+				BorderNeedRefresh = screen->GetPageCount();
 			}
+			R_RefreshViewBorder ();
 			if (realviewheight == SCREENHEIGHT && viewactive)
 			{
 				StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
@@ -588,21 +584,21 @@ void D_Display ()
 
 		case GS_INTERMISSION:
 			screen->SetBlendingRect(0,0,0,0);
-			hw2d = screen->Begin2D();
+			hw2d = screen->Begin2D(false);
 			WI_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_FINALE:
 			screen->SetBlendingRect(0,0,0,0);
-			hw2d = screen->Begin2D();
+			hw2d = screen->Begin2D(false);
 			F_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_DEMOSCREEN:
 			screen->SetBlendingRect(0,0,0,0);
-			hw2d = screen->Begin2D();
+			hw2d = screen->Begin2D(false);
 			D_PageDrawer ();
 			CT_Drawer ();
 			break;

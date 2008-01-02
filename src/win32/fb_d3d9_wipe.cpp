@@ -165,16 +165,32 @@ bool D3DFB::WipeStartScreen(int type)
 	{
 		// The InitialWipeScreen must have the same pixel format as
 		// the TempRenderTexture.
-		if (FAILED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)) ||
-			FAILED(tsurf->GetDesc(&desc)))
+		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)))
+		{
+			if (FAILED(tsurf->GetDesc(&desc)))
+			{
+				tsurf->Release();
+				return false;
+			}
+			tsurf->Release();
+		}
+		else
 		{
 			return false;
 		}
 	}
 	else
 	{
-		if (FAILED(D3DDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &tsurf)) ||
-			FAILED(tsurf->GetDesc(&desc)))
+		if (SUCCEEDED(D3DDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &tsurf)))
+		{
+			if (FAILED(tsurf->GetDesc(&desc)))
+			{
+				tsurf->Release();
+				return false;
+			}
+			tsurf->Release();
+		}
+		else
 		{
 			return false;
 		}
@@ -198,6 +214,7 @@ bool D3DFB::WipeStartScreen(int type)
 	{
 		if (FAILED(D3DDevice->GetFrontBufferData(0, surf)))
 		{
+			surf->Release();
 			InitialWipeScreen->Release();
 			InitialWipeScreen = NULL;
 			return false;
@@ -206,8 +223,17 @@ bool D3DFB::WipeStartScreen(int type)
 	}
 	else
 	{
-		if (FAILED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)) ||
-			FAILED(D3DDevice->GetRenderTargetData(tsurf, surf)))
+		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)))
+		{
+			if (FAILED(D3DDevice->GetRenderTargetData(tsurf, surf)))
+			{
+				tsurf->Release();
+				InitialWipeScreen->Release();
+				InitialWipeScreen = NULL;
+				return false;
+			}
+		}
+		else
 		{
 			InitialWipeScreen->Release();
 			InitialWipeScreen = NULL;
@@ -230,10 +256,13 @@ bool D3DFB::WipeStartScreen(int type)
 		{
 			FinalWipeScreen = TempRenderTexture;
 		}
+		tsurf->Release();
 	}
+	surf->Release();
 	// Even fullscreen will render to the TempRenderTexture, so we can have
 	// a copy of the new screen readily available.
 	GatheringWipeScreen = true;
+	UploadVertices();
 	return true;
 }
 
@@ -264,7 +293,7 @@ void D3DFB::WipeEndScreen()
 	// video memory now.
 	if (!In2D)
 	{
-		Begin2D();
+		Begin2D(true);
 	}
 
 	// Don't do anything if there is no ending point.
@@ -309,6 +338,7 @@ bool D3DFB::WipeDo(int ticks)
 	if (GatheringWipeScreen)
 	{ // This is the first time we've been called for this wipe.
 		GatheringWipeScreen = false;
+		UploadVertices();
 
 		if (OldRenderTarget == NULL)
 		{
@@ -320,20 +350,28 @@ bool D3DFB::WipeDo(int ticks)
 	{ // This is the second or later time we've been called for this wipe.
 		D3DDevice->BeginScene();
 	}
-	OldRenderTarget = NULL;
+	if (OldRenderTarget != NULL)
+	{
+		OldRenderTarget->Release();
+		OldRenderTarget = NULL;
+	}
 	if (TempRenderTexture != NULL && TempRenderTexture != FinalWipeScreen &&
-		((Windowed && GammaFixerShader) || GatheringWipeScreen))
+		(Windowed && GammaFixerShader))
 	{
 		IDirect3DSurface9 *targetsurf;
-		if (FAILED(TempRenderTexture->GetSurfaceLevel(0, &targetsurf)) ||
-			FAILED(D3DDevice->GetRenderTarget(0, &OldRenderTarget)) ||
-			FAILED(D3DDevice->SetRenderTarget(0, targetsurf)))
+		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &targetsurf)))
 		{
-			// Setting the render target failed.
-			OldRenderTarget = NULL;
+			if (SUCCEEDED(D3DDevice->GetRenderTarget(0, &OldRenderTarget)))
+			{
+				if (FAILED(D3DDevice->SetRenderTarget(0, targetsurf)))
+				{
+					// Setting the render target failed.
+				}
+			}
+			targetsurf->Release();
 		}
 	}
-	In2D = 2;
+	In2D = 3;
 
 	bool done = ScreenWipe->Run(ticks, this);
 	DrawLetterbox();
@@ -409,12 +447,17 @@ bool D3DFB::Wiper_Crossfade::Run(int ticks, D3DFB *fb)
 	Clock += ticks;
 
 	// Put the initial screen back to the buffer, presumably with DMA.
-	IDirect3DSurface9 *source, *target;
+	IDirect3DSurface9 *source = NULL, *target = NULL;
 
 	if (SUCCEEDED(fb->InitialWipeScreen->GetSurfaceLevel(0, &source)) &&
 		SUCCEEDED(fb->D3DDevice->GetRenderTarget(0, &target)))
 	{
 		fb->D3DDevice->UpdateSurface(source, NULL, target, NULL);
+		target->Release();
+	}
+	if (source != NULL)
+	{
+		source->Release();
 	}
 
 	// Draw the new screen on top of it.
@@ -430,6 +473,8 @@ bool D3DFB::Wiper_Crossfade::Run(int ticks, D3DFB *fb)
 
 	return Clock >= 32;
 }
+
+// WIPE: MELT --------------------------------------------------------------
 
 //==========================================================================
 //
@@ -461,12 +506,16 @@ D3DFB::Wiper_Melt::Wiper_Melt()
 
 bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 {
-	IDirect3DSurface9 *source, *target;
+	IDirect3DSurface9 *source = NULL, *target;
 
 	if (FAILED(fb->InitialWipeScreen->GetSurfaceLevel(0, &source)) ||
 		FAILED(fb->D3DDevice->GetRenderTarget(0, &target)))
 	{
 		// A fat lot of good we can do if we can't get these two surfaces.
+		if (source != NULL)
+		{
+			source->Release();
+		}
 		return true;
 	}
 
@@ -508,9 +557,10 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 				dpt.x = i * fb->Width / WIDTH;
 				dpt.y = MAX(0, y[i] * fb->Height / HEIGHT);
 				rect.left = dpt.x;
-				rect.top = 0;
+				rect.top = fb->LBOffsetI;
 				rect.right = (i + 1) * fb->Width / WIDTH;
-				rect.bottom = fb->Height - dpt.y;
+				rect.bottom = fb->Height - dpt.y + fb->LBOffsetI;
+				dpt.y += fb->LBOffsetI;
 				if (rect.bottom > rect.top)
 				{
 					fb->D3DDevice->UpdateSurface(source, &rect, target, &dpt);
@@ -518,8 +568,12 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 			}
 		}
 	}
+	target->Release();
+	source->Release();
 	return done;
 }
+
+// WIPE: BURN --------------------------------------------------------------
 
 //==========================================================================
 //
@@ -593,12 +647,17 @@ bool D3DFB::Wiper_Burn::Run(int ticks, D3DFB *fb)
 	}
 
 	// Put the initial screen back to the buffer.
-	IDirect3DSurface9 *source, *target;
+	IDirect3DSurface9 *source = NULL, *target;
 
 	if (SUCCEEDED(fb->InitialWipeScreen->GetSurfaceLevel(0, &source)) &&
 		SUCCEEDED(fb->D3DDevice->GetRenderTarget(0, &target)))
 	{
 		fb->D3DDevice->UpdateSurface(source, NULL, target, NULL);
+		target->Release();
+	}
+	if (source != NULL)
+	{
+		source->Release();
 	}
 
 	// Burn the new screen on top of it.

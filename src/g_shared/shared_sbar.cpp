@@ -1095,11 +1095,7 @@ void FBaseStatusBar::DrawMessages (int bottom) const
 
 void FBaseStatusBar::Draw (EHudState state)
 {
-	float blend[4];
 	char line[64+10];
-
-	blend[0] = blend[1] = blend[2] = blend[3] = 0;
-	BlendView (blend);
 
 	if ((SB_state != 0 || BorderNeedRefresh) && state == HUD_StatusBar)
 	{

@@ -1,5 +1,24 @@
+January 2, 2008
+- Tried adding bilinear filtering support for paletted textures, but the
+  shader seems to be producing crappy output, so it's disabled for now.
+  Specifically, it produces distorted output at regular intervals for
+  textures that aren't power-of-2-sized, and it's still doing visible
+  filtering when the texture is rendered at its original size, so
+  obviously it's not doing something right.
+- Fixed the use of power-of-2-sized native textures for smaller game
+  textures again.
+- Fixed: D3DFB did not restore all the state it needed to after resetting
+  the device.
+- Fixed: R_DrawTopBorder() must clip itself around the 3D view, since it's
+  now drawn later.
+- With full software rendering, palette flashes once again effect the whole
+  screen.
+
 January 1, 2008
-- The mouse is no longer grabbed at all unless you're actually in a level.
+- The mouse is no longer grabbed at all unless you're actually in a level,
+  since I couldn't think of any reason why it should be grabbed at any other
+  time. (This only applies to windowed mode, where it makes sense to let the
+  OS have control of the pointer.)
 - Moved the view border drawing into the 2D mode part. When using Begin2D()
   now, the only part of the software buffer that gets updated to the screen
   is the part with the actual 3D scene and only if you tell it to.

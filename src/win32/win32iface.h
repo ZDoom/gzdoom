@@ -252,6 +252,7 @@ private:
 	friend class D3DTex;
 	friend class D3DPal;
 
+	void SetInitialState();
 	bool CreateResources();
 	void ReleaseResources();
 	bool CreateFBTexture();
@@ -278,7 +279,8 @@ private:
 	void SetConstant(int cnum, float r, float g, float b, float a);
 	void SetPixelShader(IDirect3DPixelShader9 *shader);
 	void SetTexture(int tnum, IDirect3DTexture9 *texture);
-	void SetPaletteTexture(IDirect3DTexture9 *texture, int count);
+	void SetPaletteTexture(IDirect3DTexture9 *texture, int count, INTBOOL bilinear);
+	void SetPalTexBilinearConstants(D3DTex *texture);
 
 	BOOL AlphaBlendEnabled;
 	D3DBLEND AlphaSrcBlend;
@@ -303,8 +305,8 @@ private:
 	int FBWidth, FBHeight;
 	bool VSync;
 	RECT BlendingRect;
-	bool UseBlendingRect;
 	int In2D;
+	bool InScene;
 	bool SM14;
 	bool GatheringWipeScreen;
 	D3DPal *Palettes;
@@ -317,12 +319,14 @@ private:
 	IDirect3DTexture9 *PaletteTexture;
 	IDirect3DTexture9 *StencilPaletteTexture;
 	IDirect3DTexture9 *ShadedPaletteTexture;
-	IDirect3DPixelShader9 *PalTexShader;
+
+	IDirect3DPixelShader9 *PalTexShader, *PalTexBilinearShader;
 	IDirect3DPixelShader9 *PlainShader;
 	IDirect3DPixelShader9 *PlainStencilShader;
 	IDirect3DPixelShader9 *DimShader;
 	IDirect3DPixelShader9 *GammaFixerShader;
 	IDirect3DPixelShader9 *BurnShader;
+
 	IDirect3DSurface9 *OldRenderTarget;
 	IDirect3DTexture9 *InitialWipeScreen, *FinalWipeScreen;
 

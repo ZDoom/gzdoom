@@ -262,7 +262,6 @@ bool D3DFB::WipeStartScreen(int type)
 	// Even fullscreen will render to the TempRenderTexture, so we can have
 	// a copy of the new screen readily available.
 	GatheringWipeScreen = true;
-	UploadVertices();
 	return true;
 }
 
@@ -338,7 +337,6 @@ bool D3DFB::WipeDo(int ticks)
 	if (GatheringWipeScreen)
 	{ // This is the first time we've been called for this wipe.
 		GatheringWipeScreen = false;
-		UploadVertices();
 
 		if (OldRenderTarget == NULL)
 		{
@@ -349,6 +347,7 @@ bool D3DFB::WipeDo(int ticks)
 	else
 	{ // This is the second or later time we've been called for this wipe.
 		D3DDevice->BeginScene();
+		InScene = true;
 	}
 	if (OldRenderTarget != NULL)
 	{
@@ -468,7 +467,6 @@ bool D3DFB::Wiper_Crossfade::Run(int ticks, D3DFB *fb)
 	fb->SetConstant(0, 0, 0, 0, clamp(Clock / 32.f, 0.f, 1.f));
 	fb->SetConstant(1, 1, 1, 1, 0);
 	fb->SetPixelShader(fb->PlainShader);
-	// FIXME: The FinalWipeScreen gets junk at the top in letterbox modes.
 	fb->D3DDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
 
 	return Clock >= 32;
@@ -681,12 +679,9 @@ bool D3DFB::Wiper_Burn::Run(int ticks, D3DFB *fb)
 	fb->SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 	fb->SetPixelShader(fb->BurnShader);
 	fb->D3DDevice->SetSamplerState(1, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-	fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-	fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(BURNVERTEX));
 	fb->D3DDevice->SetSamplerState(1, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-	fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-	fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 
 	// The fire may not always stabilize, so the wipe is forced to end
 	// after an arbitrary maximum time.

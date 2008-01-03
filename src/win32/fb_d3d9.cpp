@@ -71,7 +71,7 @@
 // MACROS ------------------------------------------------------------------
 
 // The number of vertices the vertex buffer should hold.
-#define NUM_VERTS	28
+#define NUM_VERTS	12
 
 // TYPES -------------------------------------------------------------------
 
@@ -171,6 +171,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	StencilPaletteTexture = NULL;
 	ShadedPaletteTexture = NULL;
 	PalTexShader = NULL;
+	PalTexBilinearShader = NULL;
 	PlainShader = NULL;
 	PlainStencilShader = NULL;
 	DimShader = NULL;
@@ -183,13 +184,13 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	BlendingRect.top = 0;
 	BlendingRect.right = FBWidth;
 	BlendingRect.bottom = FBHeight;
-	UseBlendingRect = false;
 	In2D = 0;
 	Palettes = NULL;
 	Textures = NULL;
 	Accel2D = true;
 	GatheringWipeScreen = false;
 	ScreenWipe = NULL;
+	InScene = false;
 
 	Gamma = 1.0;
 	FlashConstants[0][3] = FlashConstants[0][2] = FlashConstants[0][1] = FlashConstants[0][0] = 0;
@@ -246,12 +247,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	if (D3DDevice != NULL)
 	{
 		CreateResources ();
-
-		// Be sure we know what the alpha blend is
-		D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-		AlphaBlendEnabled = FALSE;
-		AlphaSrcBlend = D3DBLEND(0);
-		AlphaDestBlend = D3DBLEND(0);
+		SetInitialState ();
 	}
 }
 
@@ -262,6 +258,29 @@ D3DFB::~D3DFB ()
 	{
 		D3DDevice->Release();
 	}
+}
+
+// Called after initial device creation and reset, when everything is set
+// to D3D's defaults.
+void D3DFB::SetInitialState()
+{
+	D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+	AlphaBlendEnabled = FALSE;
+	AlphaSrcBlend = D3DBLEND(0);
+	AlphaDestBlend = D3DBLEND(0);
+
+	CurPixelShader = NULL;
+	memset(Constant, 0, sizeof(Constant));
+
+	Texture[0] = NULL;
+	Texture[1] = NULL;
+	D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+	D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+	D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+	D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+
+	SetGamma (Gamma);
+	OldRenderTarget = NULL;
 }
 
 void D3DFB::FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync)
@@ -327,13 +346,15 @@ bool D3DFB::CreateResources ()
 		Printf ("Windowed mode gamma will not work.\n");
 		GammaFixerShader = NULL;
 	}
+	if (FAILED(D3DDevice->CreatePixelShader(PalTexBilinearDef, &PalTexBilinearShader)))
+	{
+		PalTexBilinearShader = PalTexShader;
+	}
 	if (FAILED(D3DDevice->CreatePixelShader (BurnShaderDef, &BurnShader)))
 	{
 		Printf ("Burn screenwipe will not work in D3D mode.\n");
 		BurnShader = NULL;
 	}
-	CurPixelShader = NULL;
-	memset(Constant, 0, sizeof(Constant));
 	if (!CreateFBTexture() ||
 		!CreatePaletteTexture() ||
 		!CreateStencilPaletteTexture() ||
@@ -345,9 +366,6 @@ bool D3DFB::CreateResources ()
 	{
 		return false;
 	}
-	SetGamma (Gamma);
-	OldRenderTarget = NULL;
-
 	return true;
 }
 
@@ -371,6 +389,14 @@ void D3DFB::ReleaseResources ()
 	{
 		ShadedPaletteTexture->Release();
 		ShadedPaletteTexture = NULL;
+	}
+	if (PalTexBilinearShader != NULL)
+	{
+		if (PalTexBilinearShader != PalTexShader)
+		{
+			PalTexBilinearShader->Release();
+		}
+		PalTexBilinearShader = NULL;
 	}
 	if (PalTexShader != NULL)
 	{
@@ -457,6 +483,7 @@ bool D3DFB::Reset ()
 	{
 		return false;
 	}
+	SetInitialState();
 	return true;
 }
 
@@ -587,39 +614,13 @@ bool D3DFB::CreateVertexes ()
 
 bool D3DFB::UploadVertices()
 {
-	float top = GatheringWipeScreen ? -0.5f : LBOffset - 0.5f;
+	float top = LBOffset - 0.5f;
 	float right = float(Width) - 0.5f;
 	float bot = float(Height) + top;
 	float texright = float(Width) / float(FBWidth);
 	float texbot = float(Height) / float(FBHeight);
 	void *pverts;
 
-	if ((BlendingRect.left <= 0 && BlendingRect.right >= FBWidth &&
-		 BlendingRect.top <= 0 && BlendingRect.bottom >= FBHeight) ||
-		BlendingRect.left >= BlendingRect.right ||
-		BlendingRect.top >= BlendingRect.bottom)
-	{
-		// Blending rect covers the whole screen, so only need 4 verts.
-		FBVERTEX verts[4] =
-		{
-			{ -0.5f, top, 0.5f, 1.f,      0.f,    0.f },
-			{ right, top, 0.5f, 1.f, texright,    0.f },
-			{ right, bot, 0.5f, 1.f, texright, texbot },
-			{ -0.5f, bot, 0.5f, 1.f,      0.f, texbot }
-		};
-		if (SUCCEEDED(VertexBuffer->Lock(0, sizeof(verts), &pverts, 0)))
-		{
-			memcpy (pverts, verts, sizeof(verts));
-			VertexBuffer->Unlock();
-			return true;
-		}
-		return false;
-	}
-	// Only the 3D area of the screen is effected by palette flashes.
-	// So we create some boxes around it that can be drawn without the
-	// flash. These include the corners of the view area so I can be
-	// sure the texture interpolation is consistant. (Well, actually,
-	// since it's a 1-to-1 pixel mapping, it shouldn't matter.)
 	float mxl = float(BlendingRect.left) - 0.5f;
 	float mxr = float(BlendingRect.right) - 0.5f;
 	float myt = float(BlendingRect.top) + top;
@@ -628,56 +629,26 @@ bool D3DFB::UploadVertices()
 	float tmxr = float(BlendingRect.right) / float(Width) * texright;
 	float tmyt = float(BlendingRect.top) / float(Height) * texbot;
 	float tmyb = float(BlendingRect.bottom) / float(Height) * texbot;
-	/*  +-------------------+
-	    |                   |
-		+-----+-------+-----+
-		|     |       |     |
-		|     |       |     |
-		|     |       |     |
-		+-----+-------+-----+
-		|                   |
-		+-------------------+  */
-	FBVERTEX verts[28] =
+
+	FBVERTEX verts[NUM_VERTS] =
 	{
-		// The whole screen, for when no blending is happening
+		// The whole screen
 		{ -0.5f, top, 0.5f, 1.f,      0.f,    0.f },		// 0
 		{ right, top, 0.5f, 1.f, texright,    0.f },
 		{ right, bot, 0.5f, 1.f, texright, texbot },
 		{ -0.5f, bot, 0.5f, 1.f,      0.f, texbot },
 
-		// Left area
-		{ -0.5f, myt, 0.5f, 1.f,      0.f,   tmyt },		// 4
-		{   mxl, myt, 0.5f, 1.f,     tmxl,   tmyt },
-		{   mxl, myb, 0.5f, 1.f,     tmxl,   tmyb },
-		{ -0.5f, myb, 0.5f, 1.f,      0.f,   tmyb },
-
-		// Right area
-		{   mxr, myt, 0.5f, 1.f,     tmxr,   tmyt },		// 8
-		{ right, myt, 0.5f, 1.f, texright,   tmyt },
-		{ right, myb, 0.5f, 1.f, texright,   tmyb },
-		{   mxr, myb, 0.5f, 1.f,     tmxr,   tmyb },
-
-		// Bottom area
-		{ -0.5f, bot, 0.5f, 1.f,      0.f, texbot },		// 12
-		{ -0.5f, myb, 0.5f, 1.f,      0.f,   tmyb },
-		{   mxl, myb, 0.5f, 1.f,     tmxl,   tmyb },
-		{   mxr, myb, 0.5f, 1.f,     tmxr,   tmyb },
-		{ right, myb, 0.5f, 1.f, texright,   tmyb },
-		{ right, bot, 0.5f, 1.f, texright, texbot },
-
-		// Top area
-		{ right, top, 0.5f, 1.f, texright,    0.f },		// 18
-		{ right, myt, 0.5f, 1.f, texright,   tmyt },
-		{   mxr, myt, 0.5f, 1.f,     tmxr,   tmyt },
-		{   mxl, myt, 0.5f, 1.f,     tmxl,   tmyt },
-		{ -0.5f, myt, 0.5f, 1.f,      0.f,   tmyt },
-		{ -0.5f, top, 0.5f, 1.f,      0.f,    0.f },
-
-		// Middle (blended) area
-		{   mxl, myt, 0.5f, 1.f,    tmxl,    tmyt },		// 24
+		// 3D view part of the screen
+		{   mxl, myt, 0.5f, 1.f,    tmxl,    tmyt },		// 4
 		{   mxr, myt, 0.5f, 1.f,    tmxr,    tmyt },
 		{   mxr, myb, 0.5f, 1.f,    tmxr,    tmyb },
-		{   mxl, myb, 0.5f, 1.f,    tmxl,    tmyb }
+		{   mxl, myb, 0.5f, 1.f,    tmxl,    tmyb },
+
+		// Used when getting the end screen for wipes
+		{ -0.5f, -0.5f, 0.5f, 1.f,      0.f,    0.f },		// 8
+		{ right, -0.5f, 0.5f, 1.f, texright,    0.f },
+		{ right, float(Height) - 0.5f, 0.5f, 1.f, texright, texbot },
+		{ -0.5f, float(Height) - 0.5f, 0.5f, 1.f,      0.f, texbot },
 	};
 	if (SUCCEEDED(VertexBuffer->Lock(0, sizeof(verts), &pverts, 0)))
 	{
@@ -760,10 +731,14 @@ void D3DFB::Update ()
 {
 	if (In2D == 3)
 	{
-		DrawRateStuff();
-		DoWindowedGamma();
-		D3DDevice->EndScene();
-		D3DDevice->Present(NULL, NULL, NULL, NULL);
+		if (InScene)
+		{
+			DrawRateStuff();
+			DoWindowedGamma();
+			D3DDevice->EndScene();
+			D3DDevice->Present(NULL, NULL, NULL, NULL);
+			InScene = false;
+		}
 		In2D = 0;
 		return;
 	}
@@ -803,7 +778,7 @@ void D3DFB::Update ()
 		}
 		psgamma[2] = psgamma[1] = psgamma[0] = igamma;
 		psgamma[3] = 1;
-		D3DDevice->SetPixelShaderConstantF(4, psgamma, 1);
+		D3DDevice->SetPixelShaderConstantF(7, psgamma, 1);
 		NeedPalUpdate = true;
 	}
 	
@@ -828,6 +803,7 @@ void D3DFB::Update ()
 		DoWindowedGamma();
 		D3DDevice->EndScene();
 		D3DDevice->Present(NULL, NULL, NULL, NULL);
+		InScene = false;
 	}
 
 	unclock (BlitCycles);
@@ -888,6 +864,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 		}
 	}
 	DrawLetterbox();
+	InScene = true;
 	D3DDevice->BeginScene();
 	assert(OldRenderTarget == NULL);
 	if (TempRenderTexture != NULL &&
@@ -908,7 +885,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 	}
 
 	SetTexture (0, FBTexture);
-	SetPaletteTexture(PaletteTexture, 256);
+	SetPaletteTexture(PaletteTexture, 256, false);
 	D3DDevice->SetStreamSource (0, VertexBuffer, 0, sizeof(FBVERTEX));
 	D3DDevice->SetFVF (D3DFVF_FBVERTEX);
 	D3DDevice->SetPixelShaderConstantF (0, FlashConstants[0], 2);
@@ -916,27 +893,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 	SetAlphaBlend(FALSE);
 	if (copy3d)
 	{
-		if (!UseBlendingRect || FlashConstants[1][0] == 1)
-		{ // The whole screen as a single quad.
-			D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 0, 2);
-		}
-		else
-		{ // The screen split up so that only the 3D view is blended.
-			D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 24, 2);	// middle
-
-			if (!In2D)
-			{
-				// The rest is drawn unblended, so reset the shader constant.
-				static const float FlashZero[2][4] = { { 0, 0, 0, 0 }, { 1, 1, 1, 1 } };
-				D3DDevice->SetPixelShaderConstantF (0, FlashZero[0], 2);
-				memcpy(Constant, FlashZero, sizeof(FlashZero));
-
-				D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN,  4, 2);	// left
-				D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN,  8, 2);	// right
-				D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 12, 4);	// bottom
-				D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, 18, 4);	// top
-			}
-		}
+		D3DDevice->DrawPrimitive (D3DPT_TRIANGLEFAN, !test2d ? 0 : OldRenderTarget != NULL ? 8 : 4, 2);
 	}
 }
 
@@ -1079,12 +1036,7 @@ void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)
 		BlendingRect.right = x2;
 		BlendingRect.bottom = y2;
 
-		if (UploadVertices())
-		{
-			UseBlendingRect = ((x1 > 0 || x2 < FBWidth || y1 > 0 || y2 < FBHeight)
-				&& BlendingRect.left < BlendingRect.right
-				&& BlendingRect.top < BlendingRect.bottom);
-		}
+		UploadVertices();
 	}
 }
 
@@ -1165,8 +1117,12 @@ bool D3DTex::Create(IDirect3DDevice9 *D3DDevice)
 	w = GameTex->GetWidth();
 	h = GameTex->GetHeight();
 
+#if 1
 	hr = D3DDevice->CreateTexture(w, h, 1, 0,
 		GetTexFormat(), D3DPOOL_MANAGED, &Tex, NULL);
+#else
+	hr = E_FAIL;
+#endif
 	if (SUCCEEDED(hr))
 	{
 		TX = 1;
@@ -1401,7 +1357,6 @@ bool D3DPal::Update()
 
 bool D3DFB::Begin2D(bool copy3d)
 {
-	copy3d = true;
 	if (!test2d)
 	{
 		return false;
@@ -1470,6 +1425,10 @@ void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint3
 		Super::Clear(left, top, right, bottom, palcolor, color);
 		return;
 	}
+	if (!InScene)
+	{
+		return;
+	}
 	if (palcolor >= 0)
 	{
 		color = GPalette.BaseColors[palcolor];
@@ -1493,11 +1452,16 @@ void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint3
 void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h)
 {
 	if (amount <= 0)
+	{
 		return;
-
+	}
 	if (In2D < 2)
 	{
 		Super::Dim(color, amount, x1, y1, w, h);
+		return;
+	}
+	if (!InScene)
+	{
 		return;
 	}
 	if (amount >= 1)
@@ -1542,7 +1506,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 
 	DrawParms parms;
 
-	if (!ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, true))
+	if (!InScene || !ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, true))
 	{
 		return;
 	}
@@ -1565,17 +1529,17 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	float v0 = 0.f;
 	float u1 = tex->TX;
 	float v1 = tex->TY;
-	float uscale = 1.f / parms.texwidth / u1;
-	float vscale = 1.f / parms.texheight / v1 / yscale;
+	float uscale = 1.f / (parms.texwidth / u1);
+	float vscale = 1.f / (parms.texheight / v1) / yscale;
 
 	if (y0 < parms.uclip)
 	{
-		v0 += float(parms.uclip - y0) * vscale;
+		v0 += (float(parms.uclip) - y0) * vscale;
 		y0 = float(parms.uclip);
 	}
 	if (y1 > parms.dclip)
 	{
-		v1 -= float(y1 - parms.dclip) * vscale;
+		v1 -= (y1 - float(parms.dclip)) * vscale;
 		y1 = float(parms.dclip);
 	}
 
@@ -1615,6 +1579,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 		{ x0, y1, 0.5f, 1.f, u0, v1 }
 	};
 
+	parms.bilinear = false;
 	if (!SetStyle(tex, parms))
 	{
 		return;
@@ -1668,7 +1633,11 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms)
 		if (alpha > 0)
 		{
 			SetConstant(1, RPART(parms.fillcolor)/255.f, GPART(parms.fillcolor)/255.f, BPART(parms.fillcolor)/255.f, alpha);
-			SetPaletteTexture(ShadedPaletteTexture, 256);
+			SetPaletteTexture(ShadedPaletteTexture, 256, parms.bilinear);
+			if (parms.bilinear)
+			{
+				SetPalTexBilinearConstants(tex);
+			}
 			SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 			return true;
 		}
@@ -1715,8 +1684,11 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms)
 		SetColorOverlay(parms.colorOverlay, 1);
 		if (fmt == D3DFMT_L8 && !tex->IsGray)
 		{
-			SetPaletteTexture(PaletteTexture, 256);
-			SetPixelShader(PalTexShader);
+			SetPaletteTexture(PaletteTexture, 256, parms.bilinear);
+			if (parms.bilinear)
+			{
+				SetPalTexBilinearConstants(tex);
+			}
 		}
 		else
 		{
@@ -1734,7 +1706,11 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms)
 				if (parms.remap != NULL)
 				{
 					D3DPal *pal = reinterpret_cast<D3DPal *>(parms.remap->GetNative());
-					SetPaletteTexture(pal->Tex, pal->RoundedPaletteSize);
+					SetPaletteTexture(pal->Tex, pal->RoundedPaletteSize, parms.bilinear);
+					if (parms.bilinear)
+					{
+						SetPalTexBilinearConstants(tex);
+					}
 				}
 				else if (tex->IsGray)
 				{
@@ -1742,9 +1718,12 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms)
 				}
 				else
 				{
-					SetPaletteTexture(PaletteTexture, 256);
+					SetPaletteTexture(PaletteTexture, 256, parms.bilinear);
+					if (parms.bilinear)
+					{
+						SetPalTexBilinearConstants(tex);
+					}
 				}
-				SetPixelShader(PalTexShader);
 			}
 			else
 			{
@@ -1760,8 +1739,8 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms)
 				BPART(parms.fillcolor)/255.f, alpha);
 			if (fmt == D3DFMT_L8)
 			{
-				SetPaletteTexture(StencilPaletteTexture, 256);
-				SetPixelShader(PalTexShader);
+				// Doesn't seem to be much point in allowing bilinear with a stencil
+				SetPaletteTexture(StencilPaletteTexture, 256, false);
 			}
 			else
 			{
@@ -1857,7 +1836,7 @@ void D3DFB::SetTexture(int tnum, IDirect3DTexture9 *texture)
 	}
 }
 
-void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count)
+void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count, INTBOOL bilinear)
 {
 	if (count == 256 || SM14)
 	{
@@ -1881,5 +1860,27 @@ void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count)
 		SetConstant(2, 255 * fcount, 0.5f * fcount, 0, 0);
 	}
 	SetTexture(1, texture);
-	SetPixelShader(PalTexShader);
+	SetPixelShader(!bilinear ? PalTexShader : PalTexBilinearShader);
+}
+
+void D3DFB::SetPalTexBilinearConstants(D3DTex *tex)
+{
+	float con[8];
+
+	// Don't bother doing anything if the constants won't be used.
+	if (PalTexShader == PalTexBilinearShader)
+	{
+		return;
+	}
+
+	con[0] = tex->GameTex->GetWidth() / tex->TX;
+	con[1] = tex->GameTex->GetHeight() / tex->TY;
+	con[2] = 0;
+	con[3] = 1 / con[0];
+	con[4] = 0;
+	con[5] = 1 / con[1];
+	con[6] = con[5];
+	con[7] = con[3];
+
+	D3DDevice->SetPixelShaderConstantF(3, con, 2);
 }

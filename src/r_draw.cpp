@@ -1489,12 +1489,14 @@ void R_DrawTopBorder ()
 	if (realviewwidth == SCREENWIDTH)
 		return;
 
-	R_DrawBorder (0, 0, SCREENWIDTH, 34);
 	offset = gameinfo.border->offset;
 	size = gameinfo.border->size;
 
-	if (viewwindowy < 35)
+	if (viewwindowy < 34)
 	{
+		R_DrawBorder (0, 0, viewwindowx, 34);
+		R_DrawBorder (viewwindowx, 0, viewwindowx+realviewwidth, viewwindowy);
+		R_DrawBorder (viewwindowx+realviewwidth, 0, SCREENWIDTH, 34);
 		p1 = TexMan(gameinfo.border->t);
 		for (x = viewwindowx; x < viewwindowx + realviewwidth; x += size)
 		{
@@ -1514,6 +1516,10 @@ void R_DrawTopBorder ()
 
 		p1 = TexMan(gameinfo.border->tr);
 		screen->DrawTexture (p1, viewwindowx+realviewwidth, viewwindowy - offset, TAG_DONE);
+	}
+	else
+	{
+		R_DrawBorder (0, 0, SCREENWIDTH, 34);
 	}
 }
 

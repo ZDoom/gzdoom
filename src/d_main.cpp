@@ -807,6 +807,7 @@ void D_PageDrawer (void)
 			DTA_VirtualWidth, Page->GetWidth(),
 			DTA_VirtualHeight, Page->GetHeight(),
 			DTA_Masked, false,
+			DTA_BilinearFilter, true,
 			TAG_DONE);
 		screen->FillBorder (NULL);
 	}

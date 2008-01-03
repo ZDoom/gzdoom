@@ -101,7 +101,8 @@ enum
 	DTA_HUDRules,		// use fullscreen HUD rules to position and size textures
 	DTA_KeepRatio,		// doesn't adjust screen size for DTA_Virtual* if the aspect ratio is not 4:3
 	DTA_RenderStyle,	// same as render style for actors
-	DTA_ColorOverlay,	// DWORD: ARGB to overlay on top of image. Limited under software.
+	DTA_ColorOverlay,	// DWORD: ARGB to overlay on top of image; limited to black for software
+	DTA_BilinearFilter,	// bool: apply bilinear filtering to the image
 
 	// For DrawText calls:
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
@@ -229,6 +230,7 @@ protected:
 		int virtHeight;
 		INTBOOL keepratio;
 		INTBOOL masked;
+		INTBOOL bilinear;
 		ERenderStyle style;
 	};
 

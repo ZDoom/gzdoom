@@ -298,6 +298,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 	parms->keepratio = false;
 	parms->style = STYLE_Count;
 	parms->masked = true;
+	parms->bilinear = false;
 
 	parms->x = x << FRACBITS;
 	parms->y = y << FRACBITS;
@@ -512,6 +513,10 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 
 		case DTA_Masked:
 			parms->masked = va_arg (tags, INTBOOL);
+			break;
+
+		case DTA_BilinearFilter:
+			parms->bilinear = va_arg (tags, INTBOOL);
 			break;
 
 		case DTA_KeepRatio:

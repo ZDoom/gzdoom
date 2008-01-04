@@ -1,3 +1,11 @@
+January 3, 2008
+- Moved the pixel shaders' color information out of the constant registers
+  and into the vertex data.
+- Added functions for doing line drawing with Direct3D, including a new pair
+  of functions to do batched line drawing so that the map can actually be
+  drawn faster in hardware than in software (instead of an order of magnitude
+  slower).
+
 January 2, 2008
 - Tried adding bilinear filtering support for paletted textures, but the
   shader seems to be producing crappy output, so it's disabled for now.
@@ -11,7 +19,7 @@ January 2, 2008
   the device.
 - Fixed: R_DrawTopBorder() must clip itself around the 3D view, since it's
   now drawn later.
-- With full software rendering, palette flashes once again effect the whole
+- With full software rendering, palette flashes once again affect the whole
   screen.
 
 January 1, 2008

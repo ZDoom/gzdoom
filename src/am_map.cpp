@@ -1802,6 +1802,8 @@ void AM_Drawer ()
 	}
 	AM_activateNewScale();
 
+	screen->BeginLineDrawing();
+
 	if (grid)	
 		AM_drawGrid(GridColor);
 
@@ -1809,6 +1811,9 @@ void AM_Drawer ()
 	AM_drawPlayers();
 	if (am_cheat >= 2 || allthings)
 		AM_drawThings();
+
+	screen->EndLineDrawing();
+
 	AM_drawAuthorMarkers();
 
 	if (!viewactive)

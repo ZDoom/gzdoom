@@ -558,17 +558,20 @@ void D_Display ()
 			R_DetailDouble ();		// [RH] Apply detail mode expansion
 			// [RH] Let cameras draw onto textures that were visible this frame.
 			FCanvasTextureInfo::UpdateAll ();
-			if (automapactive)
-			{
-				AM_Drawer ();
-			}
-			if ((hw2d = screen->Begin2D(true)))
+			if ((hw2d = screen->Begin2D(viewactive)))
 			{
 				// Redraw everything every frame when using 2D accel
 				SB_state = screen->GetPageCount();
 				BorderNeedRefresh = screen->GetPageCount();
 			}
-			R_RefreshViewBorder ();
+			if (automapactive)
+			{
+				AM_Drawer ();
+			}
+			if (!automapactive || viewactive)
+			{
+				R_RefreshViewBorder ();
+			}
 			if (realviewheight == SCREENHEIGHT && viewactive)
 			{
 				StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);

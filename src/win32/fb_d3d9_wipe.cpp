@@ -460,14 +460,14 @@ bool D3DFB::Wiper_Crossfade::Run(int ticks, D3DFB *fb)
 	}
 
 	// Draw the new screen on top of it.
-	fb->D3DDevice->SetStreamSource(0, fb->VertexBuffer, 0, sizeof(FBVERTEX));
+	FBVERTEX verts[4];
+
+	fb->CalcFullscreenCoords(verts, false, D3DCOLOR_COLORVALUE(0,0,0,Clock / 32.f), D3DCOLOR_RGBA(255,255,255,0));
 	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 	fb->SetTexture(0, fb->FinalWipeScreen);
 	fb->SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
-	fb->SetConstant(0, 0, 0, 0, clamp(Clock / 32.f, 0.f, 1.f));
-	fb->SetConstant(1, 1, 1, 1, 0);
 	fb->SetPixelShader(fb->PlainShader);
-	fb->D3DDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
+	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 
 	return Clock >= 32;
 }
@@ -518,14 +518,14 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 	}
 
 	// Draw the new screen on the bottom.
-	fb->D3DDevice->SetStreamSource(0, fb->VertexBuffer, 0, sizeof(FBVERTEX));
+	FBVERTEX verts[4];
+
+	fb->CalcFullscreenCoords(verts, false, 0, 0xFFFFFFFF);
 	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 	fb->SetTexture(0, fb->FinalWipeScreen);
 	fb->SetAlphaBlend(FALSE);
-	fb->SetConstant(0, 0, 0, 0, 0);
-	fb->SetConstant(1, 1, 1, 1, 1);
 	fb->SetPixelShader(fb->PlainShader);
-	fb->D3DDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
+	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 
 	int i, dy;
 	bool done;

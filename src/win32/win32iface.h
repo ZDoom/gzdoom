@@ -242,6 +242,10 @@ public:
 	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
 	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
 	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
+	void BeginLineDrawing();
+	void EndLineDrawing();
+	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor);
+	void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor);
 	bool WipeStartScreen(int type);
 	void WipeEndScreen();
 	bool WipeDo(int ticks);
@@ -251,6 +255,14 @@ public:
 private:
 	friend class D3DTex;
 	friend class D3DPal;
+
+	struct FBVERTEX
+	{
+		FLOAT x, y, z, rhw;
+		D3DCOLOR color0, color1;
+		FLOAT tu, tv;
+	};
+#define D3DFVF_FBVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1)
 
 	void SetInitialState();
 	bool CreateResources();
@@ -263,15 +275,15 @@ private:
 	bool CreateVertexes();
 	void UploadPalette();
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
-	bool UploadVertices();
+	void CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, D3DCOLOR color0, D3DCOLOR color1) const;
 	bool Reset();
 	void ReleaseDefaultPoolItems();
 	void KillNativePals();
 	void KillNativeTexs();
 	void DrawLetterbox();
 	void Draw3DPart(bool copy3d);
-	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms);
-	void SetColorOverlay(DWORD color, float alpha);
+	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1);
+	static void SetColorOverlay(DWORD color, float alpha, D3DCOLOR &color0, D3DCOLOR &color1);
 	void DoWindowedGamma();
 
 	// State
@@ -290,7 +302,7 @@ private:
 	IDirect3DTexture9 *Texture[2];
 
 	PalEntry SourcePalette[256];
-	float FlashConstants[2][4];
+	D3DCOLOR FlashColor0, FlashColor1;
 	PalEntry FlashColor;
 	int FlashAmount;
 	int TrueHeight;
@@ -313,17 +325,20 @@ private:
 	D3DTex *Textures;
 
 	IDirect3DDevice9 *D3DDevice;
-	IDirect3DVertexBuffer9 *VertexBuffer;
 	IDirect3DTexture9 *FBTexture;
 	IDirect3DTexture9 *TempRenderTexture;
 	IDirect3DTexture9 *PaletteTexture;
 	IDirect3DTexture9 *StencilPaletteTexture;
 	IDirect3DTexture9 *ShadedPaletteTexture;
 
+	IDirect3DVertexBuffer9 *LineBuffer;
+	int LineBatchPos;
+	FBVERTEX *LineData;
+
 	IDirect3DPixelShader9 *PalTexShader, *PalTexBilinearShader;
 	IDirect3DPixelShader9 *PlainShader;
 	IDirect3DPixelShader9 *PlainStencilShader;
-	IDirect3DPixelShader9 *DimShader;
+	IDirect3DPixelShader9 *ColorOnlyShader;
 	IDirect3DPixelShader9 *GammaFixerShader;
 	IDirect3DPixelShader9 *BurnShader;
 
@@ -345,13 +360,6 @@ private:
 
 	Wiper *ScreenWipe;
 };
-
-struct FBVERTEX
-{
-	FLOAT x, y, z, rhw;
-	FLOAT tu, tv;
-};
-#define D3DFVF_FBVERTEX (D3DFVF_XYZRHW|D3DFVF_TEX1)
 
 #if 0
 #define STARTLOG		do { if (!dbg) dbg = fopen ("k:/vid.log", "w"); } while(0)

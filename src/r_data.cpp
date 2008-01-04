@@ -1106,15 +1106,6 @@ static void R_InitPatches ()
 		"M_EPI2",
 		"M_EPI3",
 		"M_EPI4",
-		"MAPE1",
-		"MAPE2",
-		"MAPE3",
-		"WIMAP0",
-		"WIURH0",
-		"WIURH1",
-		"WISPLAT",
-		"WIMAP1",
-		"WIMAP2",
 		"INTERPIC",
 		"WIOSTK",
 		"WIOSTI",
@@ -1230,34 +1221,6 @@ static void R_InitPatches ()
 		for (i = 0; i <= 15; ++i)
 		{
 			sprintf (name, spinners[j], i);
-			TexMan.AddPatch (name);
-		}
-	}
-
-	// Animating overlays for the Doom E1 map
-	for (i = 9; i >= 0; --i)
-	{
-		for (j = (i == 6) ? 3 : 2; j >= 0; --j)
-		{
-			sprintf (name, "WIA0%.2d%.2d", i, j);
-			TexMan.AddPatch (name);
-		}
-	}
-	// Animating overlays for the Doom E2 map
-	for (i = 7; i >= 0; --i)
-	{
-		for (j = (i == 7) ? 2 : 0; j >= 0; --j)
-		{
-			sprintf (name, "WIA1%.2d%.2d", i, j);
-			TexMan.AddPatch (name);
-		}
-	}
-	// Animating overlays for the Doom E3 map
-	for (i = 5; i >= 0; --i)
-	{
-		for (j = 2; j >= 0; --j)
-		{
-			sprintf (name, "WIA2%.2d%.2d", i, j);
 			TexMan.AddPatch (name);
 		}
 	}

@@ -1,3 +1,10 @@
+January 4, 2008 (Changes by Graf Zahl)
+- Removed the patches for the Doom/Heretic E1 intermission screens from 
+  R_InitPatches. This isn't needed anymore because all these are loaded through
+  an intermission script.
+- Fixed: A_SpawnDebris read the third and fourth arguments from the first one's
+  address.
+
 January 3, 2008
 - Moved the pixel shaders' color information out of the constant registers
   and into the vertex data.

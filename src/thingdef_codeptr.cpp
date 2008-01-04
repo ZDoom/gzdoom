@@ -1769,8 +1769,8 @@ void A_SpawnDebris(AActor * self)
 	if (debris == NULL) return;
 
 	INTBOOL transfer_translation = EvalExpressionI (StateParameters[index+1], self);
-	fixed_t mult_h = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
-	fixed_t mult_v = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
+	fixed_t mult_h = fixed_t(EvalExpressionF (StateParameters[index+2], self) * FRACUNIT);
+	fixed_t mult_v = fixed_t(EvalExpressionF (StateParameters[index+3], self) * FRACUNIT);
 
 	// only positive values make sense here
 	if (mult_v<=0) mult_v=FRACUNIT;

@@ -73,8 +73,8 @@
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
-#define SAVEVER 237
-#define SAVESIG "ZDOOMSAVE237"
+#define SAVEVER SVN_REVISION_NUMBER
+#define SAVESIG "ZDOOMSAVE"SVN_REVISION_STRING
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "ZDOOM"
@@ -92,7 +92,7 @@
 #endif
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 237	// Used by 2.1.8
+#define MINSAVEVER 665
 
 // The maximum length of one save game description for the menus.
 #define SAVESTRINGSIZE		24

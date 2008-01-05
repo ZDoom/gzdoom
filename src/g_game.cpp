@@ -1684,7 +1684,7 @@ static void ReadArrayVars (PNGHandle *png, FWorldGlobalArray *vars, size_t count
 
 void G_DoLoadGame ()
 {
-	char sigcheck[16];
+	char sigcheck[20];
 	char *text = NULL;
 	char *map;
 
@@ -1733,7 +1733,7 @@ void G_DoLoadGame ()
 		delete[] engine;
 	}
 
-	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 16) ||
+	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 20) ||
 		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
 		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
 	{

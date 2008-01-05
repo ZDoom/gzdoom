@@ -1,3 +1,9 @@
+January 5, 2008 (Changes by Graf Zahl)
+- Changed savegame versioning to use the SVN revision number instead of
+  an arbitrarily defined value. This reduces the amount of relevant values
+  that have to be defined in version.h to 1 (the minimum compatible savegame
+  version) instead of previously 3.
+
 January 4, 2008
 - Fixed: FBarShader::PrepareShader() set a member variable to point at a
   local variable just before returning. Then I made some more changes so that

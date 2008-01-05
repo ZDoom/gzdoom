@@ -1541,7 +1541,12 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	int stbar = gameinfo.gametype;
 	if(Wads.CheckNumForName("SBARINFO") != -1)
 	{
-		stbar = SBarInfoScript.ParseSBarInfo(Wads.GetNumForName("SBARINFO")); //load last SBARINFO lump to avoid clashes
+		if(SBarInfoScript != NULL)
+		{
+			delete SBarInfoScript;
+		}
+		SBarInfoScript = new SBarInfo();
+		stbar = SBarInfoScript->ParseSBarInfo(Wads.GetNumForName("SBARINFO")); //load last SBARINFO lump to avoid clashes
 	}
 	//end most of the SBarInfo stuff
 	if (StatusBar != NULL)

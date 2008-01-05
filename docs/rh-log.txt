@@ -1,3 +1,23 @@
+January 4, 2008
+- Fixed: FBarShader::PrepareShader() set a member variable to point at a
+  local variable just before returning. Then I made some more changes so that
+  it can be a properly functioning texture. After doing that, I decided to
+  rewrite the texture generation to be easier for me to read and hopefully
+  faster, since this thing is getting generated every frame. (Please don't
+  hurt me if I got it wrong. I'm basing this on the description in the wiki,
+  since I couldn't wrap my head around what the code was doing by looking
+  at it.) Then I realized that there's really no reason to have more than four
+  of these ever, and they can be statically generated, so I simplified it some
+  more.
+- Added Blzut3's latest SBARINFO patch:
+ * Fixed a massive memory leak in SBARINFO.  The leak also lead to progressive
+   CPU usage.
+ * Fixed: Playerclass didn't work in SBARINFO.
+ * Fixed: Artiflash was improperly initialized causing it not to display the
+   first time.
+ * Changed the variable SBarInfoScript to be a pointer to prevent more memory
+   leaks.
+
 January 4, 2008 (Changes by Graf Zahl)
 - Removed the patches for the Doom/Heretic E1 intermission screens from 
   R_InitPatches. This isn't needed anymore because all these are loaded through

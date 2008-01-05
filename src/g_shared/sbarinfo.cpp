@@ -30,7 +30,7 @@ static FRandom pr_chainwiggle; //use the same method of chain wiggling as hereti
 
 EXTERN_CVAR(Int, fraglimit)
 
-SBarInfo SBarInfoScript;
+SBarInfo *SBarInfoScript;
 
 enum //gametype flags
 {
@@ -337,7 +337,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript.height); //the position should be absolute on the screen.
+				cmd.y = sc_Number - (200 - SBarInfoScript->height); //the position should be absolute on the screen.
 				if(SC_CheckToken(','))
 				{
 					SC_MustGetToken(TK_Identifier);
@@ -418,7 +418,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript.height);
+				cmd.y = sc_Number - (200 - SBarInfoScript->height);
 				if(SC_CheckToken(','))
 				{
 					SC_MustGetToken(TK_IntConst);
@@ -442,7 +442,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript.height);
+				cmd.y = sc_Number - (200 - SBarInfoScript->height);
 				SC_MustGetToken(';');
 				break;
 			case SBARINFO_DRAWSELECTEDINVENTORY:
@@ -474,7 +474,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript.height);
+				cmd.y = sc_Number - (200 - SBarInfoScript->height);
 				cmd.special2 = cmd.x + 30;
 				cmd.special3 = cmd.y + 24;
 				cmd.translation = CR_GOLD;
@@ -484,7 +484,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					cmd.special2 = sc_Number;
 					SC_MustGetToken(',');
 					SC_MustGetToken(TK_IntConst);
-					cmd.special3 = sc_Number - (200 - SBarInfoScript.height);
+					cmd.special3 = sc_Number - (200 - SBarInfoScript->height);
 					if(SC_CheckToken(','))
 					{
 						SC_MustGetToken(TK_Identifier);
@@ -549,7 +549,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetNumber();
-				cmd.y = sc_Number - (200 - SBarInfoScript.height);
+				cmd.y = sc_Number - (200 - SBarInfoScript->height);
 				cmd.special2 = cmd.x + 26;
 				cmd.special3 = cmd.y + 22;
 				cmd.translation = CR_GOLD;
@@ -559,7 +559,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					cmd.special2 = sc_Number;
 					SC_MustGetToken(',');
 					SC_MustGetToken(TK_IntConst);
-					cmd.special3 = sc_Number - (200 - SBarInfoScript.height);
+					cmd.special3 = sc_Number - (200 - SBarInfoScript->height);
 					if(SC_CheckToken(','))
 					{
 						SC_MustGetToken(TK_Identifier);
@@ -658,7 +658,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript.height);
+				cmd.y = sc_Number - (200 - SBarInfoScript->height);
 				SC_MustGetToken(';');
 				break;
 			case SBARINFO_DRAWGEM:
@@ -697,7 +697,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript.height);
+				cmd.y = sc_Number - (200 - SBarInfoScript->height);
 				SC_MustGetToken(';');
 				break;
 			case SBARINFO_DRAWSHADER:
@@ -730,7 +730,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript.height);
+				cmd.y = sc_Number - (200 - SBarInfoScript->height);
 				SC_MustGetToken(';');
 				break;
 			case SBARINFO_GAMEMODE:
@@ -756,22 +756,28 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.special = cmd.special2 = cmd.special3 = -1;
 				for(int i = 0;i < 3 && SC_CheckToken(TK_Identifier);i++) //up to 3 classes
 				{
+					bool foundClass = false;
 					for(unsigned int c = 0;c < PlayerClasses.Size();c++)
 					{
 						if(stricmp(sc_String, PlayerClasses[c].Type->Meta.GetMetaString(APMETA_DisplayName)) == 0)
 						{
+							foundClass = true;
 							if(i == 0)
 								cmd.special = c;
 							else if(i == 1)
 								cmd.special2 = c;
 							else //should be 2
 								cmd.special3 = c;
-							if(SC_CheckToken('{') || i == 2)
-								break;
-							SC_MustGetToken(',');
+							break;
 						}
 					}
+					if(!foundClass)
+						SC_ScriptError("Unkown PlayerClass '%s'.", sc_String);
+					if(SC_CheckToken('{') || i == 2)
+						goto FinishPlayerClass;
+					SC_MustGetToken(',');
 				}
+			FinishPlayerClass:
 				this->ParseSBarInfoBlock(cmd.subBlock);
 				break;
 		}
@@ -982,24 +988,57 @@ protected:
 	FTexture* image;
 };
 
-//Used for shadeing
+//Used for shading
 class FBarShader : public FTexture
 {
 public:
-	FBarShader()
+	FBarShader(bool vertical, bool reverse) //make an alpha map
 	{
-		WidthBits = 4;
-		HeightBits = 4;
-		WidthMask = 15;
+		int i;
+
+		Width = vertical ? 1 : 256;
+		Height = vertical ? 256 : 1;
+		CalcBitSize();
+
+		// Fill the column/row with shading values.
+		// Vertical shaders have have minimum alpha at the top
+		// and maximum alpha at the bottom, unless flipped by
+		// setting reverse to true. Horizontal shaders are just
+		// the opposite.
+		if ((!reverse && vertical) || (reverse && !vertical))
+		{
+			for (i = 0; i < 256; ++i)
+			{
+				Pixels[i] = i;
+			}
+		}
+		else
+		{
+			for (i = 0; i < 256; ++i)
+			{
+				Pixels[i] = 255 - i;
+			}
+		}
+		DummySpan[0].TopOffset = 0;
+		DummySpan[0].Length = vertical ? 256 : 1;
+		DummySpan[1].TopOffset = 0;
+		DummySpan[1].Length = 0;
 	}
 
 	const BYTE *GetColumn(unsigned int column, const Span **spans_out)
 	{
-		if(spans_out != NULL)
+		if (spans_out != NULL)
 		{
 			*spans_out = DummySpan;
 		}
-		return Pixels + 10*(column & (Width-1));
+		if (Width == 1)
+		{
+			return Pixels;
+		}
+		else
+		{
+			return Pixels + (column & 255);
+		}
 	}
 
 	const BYTE *GetPixels()
@@ -1011,63 +1050,16 @@ public:
 	{
 	}
 
-	void PrepareShader(int width, int height, bool vertical, bool reverse) //make an alpha map
-	{
-		Width = width;
-		Height = height;
-		Pixels = new BYTE[width*height];
-		int value = vertical ? 256/height : 256/width;
-		int currentValue = value;
-		if(vertical)
-		{
-			for(int i = !reverse ? 0 : (width*height)-1;(!reverse && i < width*height) || (reverse && i >= 0);i += !reverse ? 1 : -1)
-			{
-				Pixels[i] = currentValue;
-				if(currentValue >= (value*height)) //time to reset
-				{
-					currentValue = value;
-					continue;
-				}
-				currentValue += value;
-				if(currentValue > 254)
-				{
-					currentValue = 254;
-				}
-			}
-		}
-		else
-		{
-			for(int i = reverse ? 0 : (width*height)-1;(reverse && i < width*height) || (!reverse && i >= 0);i += reverse ? 1 : -1)
-			{
-				Pixels[i] = currentValue;
-				if(i%height == 0)
-				{
-					if(currentValue >= (value*width)) //time to reset
-					{
-						currentValue = value;
-						continue;
-					}
-					currentValue += value;
-					if(currentValue > 254)
-					{
-						currentValue = 254;
-					}
-				}
-			}
-		}
-		Span Dummy[2] = {{0, height}, {0, 0}};
-		DummySpan = Dummy;
-	}
 private:
-	BYTE* Pixels;
-	Span* DummySpan;
+	BYTE Pixels[256];
+	Span DummySpan[2];
 };
 
 //SBarInfo Display
 class FSBarInfo : public FBaseStatusBar
 {
 public:
-	FSBarInfo () : FBaseStatusBar (SBarInfoScript.height)
+	FSBarInfo () : FBaseStatusBar (SBarInfoScript->height)
 	{
 		static const char *InventoryBarLumps[] =
 		{
@@ -1076,22 +1068,22 @@ public:
 			"USEARTIA", "USEARTIB", "USEARTIC", "USEARTID",
 		};
 		TArray<const char *> patchnames;
-		patchnames.Resize(SBarInfoScript.Images.Size()+10);
+		patchnames.Resize(SBarInfoScript->Images.Size()+10);
 		unsigned int i = 0;
-		for(i = 0;i < SBarInfoScript.Images.Size();i++)
+		for(i = 0;i < SBarInfoScript->Images.Size();i++)
 		{
-			patchnames[i] = SBarInfoScript.Images[i];
+			patchnames[i] = SBarInfoScript->Images[i];
 		}
 		for(i = 0;i < 10;i++)
 		{
-			patchnames[i+SBarInfoScript.Images.Size()] = InventoryBarLumps[i];
+			patchnames[i+SBarInfoScript->Images.Size()] = InventoryBarLumps[i];
 		}
-		invBarOffset = SBarInfoScript.Images.Size();
+		invBarOffset = SBarInfoScript->Images.Size();
 		Images.Init(&patchnames[0], patchnames.Size());
 		drawingFont = V_GetFont("ConFont");
 		faceTimer = ST_FACETIME;
 		faceIndex = 0;
-		if(SBarInfoScript.interpolateHealth)
+		if(SBarInfoScript->interpolateHealth)
 		{
 			oldHealth = 0;
 		}
@@ -1099,7 +1091,7 @@ public:
 		lastPrefix = "";
 		weaponGrin = false;
 		chainWiggle = 0;
-		artiflash = 0;
+		artiflash = 4;
 	}
 
 	~FSBarInfo ()
@@ -1114,7 +1106,7 @@ public:
 		int hud = 2;
 		if(state == HUD_StatusBar)
 		{
-			if(SBarInfoScript.automapbar && automapactive)
+			if(SBarInfoScript->automapbar && automapactive)
 			{
 				hud = 3;
 			}
@@ -1131,13 +1123,13 @@ public:
 		{
 			hud = 0;
 		}
-		doCommands(SBarInfoScript.huds[hud]);
+		doCommands(SBarInfoScript->huds[hud]);
 		if(CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR))
 		{
 			if(state == HUD_StatusBar)
-				doCommands(SBarInfoScript.huds[4]);
+				doCommands(SBarInfoScript->huds[4]);
 			else if(state == HUD_Fullscreen)
-				doCommands(SBarInfoScript.huds[5]);
+				doCommands(SBarInfoScript->huds[5]);
 		}
 	}
 
@@ -1165,7 +1157,7 @@ public:
 		if(level.time & 1)
 			chainWiggle = pr_chainwiggle() & 1;
 		getNewFace(M_Random());
-		if(!SBarInfoScript.interpolateHealth)
+		if(!SBarInfoScript->interpolateHealth)
 		{
 			oldHealth = CPlayer->health;
 		}
@@ -1273,7 +1265,7 @@ private:
 		int ammocount1, ammocount2;
 		GetCurrentAmmo(ammo1, ammo2, ammocount1, ammocount2);
 		int health = CPlayer->mo->health;
-		if(SBarInfoScript.interpolateHealth)
+		if(SBarInfoScript->interpolateHealth)
 		{
 			health = oldHealth;
 		}
@@ -1285,7 +1277,7 @@ private:
 				case SBARINFO_DRAWSWITCHABLEIMAGE: //draw the alt image if we don't have the item else this is like a normal drawimage
 				{
 					int drawAlt = 0;
-					if((cmd.flags & DRAWIMAGE_WEAPONSLOT) == DRAWIMAGE_WEAPONSLOT) //weaponslots
+					if((cmd.flags & DRAWIMAGE_WEAPONSLOT)) //weaponslots
 					{
 						drawAlt = 1; //draw off state until we know we have something.
 						for (int i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
@@ -1302,7 +1294,7 @@ private:
 							}
 						}
 					}
-					else if((cmd.flags & DRAWIMAGE_INVULNERABILITY) == DRAWIMAGE_INVULNERABILITY)
+					else if((cmd.flags & DRAWIMAGE_INVULNERABILITY))
 					{
 						if(CPlayer->cheats&CF_GODMODE)
 						{
@@ -1314,7 +1306,7 @@ private:
 						AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
 						if(item == NULL)
 							drawAlt = 1;
-						if((cmd.flags & DRAWIMAGE_SWITCHABLE_AND) == DRAWIMAGE_SWITCHABLE_AND)
+						if((cmd.flags & DRAWIMAGE_SWITCHABLE_AND))
 						{
 							item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[1]));
 							if(item != NULL && drawAlt == 0) //both
@@ -1343,19 +1335,19 @@ private:
 					}
 				}
 				case SBARINFO_DRAWIMAGE:
-					if((cmd.flags & DRAWIMAGE_PLAYERICON) == DRAWIMAGE_PLAYERICON)
+					if((cmd.flags & DRAWIMAGE_PLAYERICON))
 						DrawGraphic(TexMan[CPlayer->mo->ScoreIcon], cmd.x, cmd.y, cmd.flags);
-					else if((cmd.flags & DRAWIMAGE_AMMO1) == DRAWIMAGE_AMMO1)
+					else if((cmd.flags & DRAWIMAGE_AMMO1))
 					{
 						if(ammo1 != NULL)
 							DrawGraphic(TexMan[ammo1->Icon], cmd.x, cmd.y, cmd.flags);
 					}
-					else if((cmd.flags & DRAWIMAGE_AMMO2) == DRAWIMAGE_AMMO2)
+					else if((cmd.flags & DRAWIMAGE_AMMO2))
 					{
 						if(ammo2 != NULL)
 							DrawGraphic(TexMan[ammo2->Icon], cmd.x, cmd.y, cmd.flags);
 					}
-					else if((cmd.flags & DRAWIMAGE_INVENTORYICON) == DRAWIMAGE_INVENTORYICON)
+					else if((cmd.flags & DRAWIMAGE_INVENTORYICON))
 					{
 						DrawGraphic(TexMan[cmd.sprite], cmd.x, cmd.y, cmd.flags);
 					}
@@ -1618,7 +1610,7 @@ private:
 					int value = health;
 					int max = 100;
 					bool wiggle = false;
-					bool translate = (cmd.flags & DRAWGEM_TRANSLATABLE) == DRAWGEM_TRANSLATABLE;
+					bool translate = !!(cmd.flags & DRAWGEM_TRANSLATABLE);
 					if(max != 0 || value < 0)
 					{
 						value = (value*100)/max;
@@ -1631,30 +1623,38 @@ private:
 					}
 					if(health != CPlayer->health)
 					{
-						wiggle = (cmd.flags & DRAWGEM_WIGGLE) == DRAWGEM_WIGGLE;
+						wiggle = !!(cmd.flags & DRAWGEM_WIGGLE);
 					}
 					DrawGem(Images[cmd.special], Images[cmd.sprite], value, cmd.x, cmd.y, cmd.special2, cmd.special3, cmd.special4+1, wiggle, translate);
 					break;
 				}
 				case SBARINFO_DRAWSHADER:
 				{
+					static FBarShader shader_horz_normal(false, false);
+					static FBarShader shader_horz_reverse(false, true);
+					static FBarShader shader_vert_normal(true, false);
+					static FBarShader shader_vert_reverse(true, true);
+					static FBarShader *const shaders[4] =
+					{
+						&shader_horz_normal, &shader_horz_reverse,
+						&shader_vert_normal, &shader_vert_reverse
+					};
 					bool vertical = !!(cmd.flags & DRAWSHADER_VERTICAL);
 					bool reverse = !!(cmd.flags & DRAWSHADER_REVERSE);
-					FBarShader* shader = new FBarShader();
-					shader->PrepareShader(cmd.special, cmd.special2, vertical, reverse);
-					screen->DrawTexture (shader, ST_X+cmd.x, ST_Y+cmd.y,
+					screen->DrawTexture (shaders[(vertical << 1) + reverse], ST_X+cmd.x, ST_Y+cmd.y,
+						DTA_DestWidth, cmd.special,
+						DTA_DestHeight, cmd.special2,
 						DTA_320x200, Scaled,
 						DTA_AlphaChannel, true,
 						DTA_FillColor, 0,
 						TAG_DONE);
-					delete shader;
 					break;
 				}
 				case SBARINFO_GAMEMODE:
-					if(((cmd.flags & GAMETYPE_SINGLEPLAYER) == GAMETYPE_SINGLEPLAYER && !multiplayer) ||
-						((cmd.flags & GAMETYPE_DEATHMATCH) == GAMETYPE_DEATHMATCH && deathmatch) ||
-						((cmd.flags & GAMETYPE_COOPERATIVE) == GAMETYPE_COOPERATIVE && multiplayer && !deathmatch) ||
-						((cmd.flags & GAMETYPE_TEAMGAME) == GAMETYPE_TEAMGAME && teamplay))
+					if(((cmd.flags & GAMETYPE_SINGLEPLAYER) && !multiplayer) ||
+						((cmd.flags & GAMETYPE_DEATHMATCH) && deathmatch) ||
+						((cmd.flags & GAMETYPE_COOPERATIVE) && multiplayer && !deathmatch) ||
+						((cmd.flags & GAMETYPE_TEAMGAME) && teamplay))
 					{
 						doCommands(cmd.subBlock);
 					}
@@ -1673,12 +1673,12 @@ private:
 	//draws and image with the specified flags
 	void DrawGraphic(FTexture* texture, int x, int y, int flags)
 	{
-		if((flags & DRAWIMAGE_OFFSET_CENTER) == DRAWIMAGE_OFFSET_CENTER)
+		if((flags & DRAWIMAGE_OFFSET_CENTER))
 		{
 			x -= (texture->GetWidth()/2)-texture->LeftOffset;
 			y -= (texture->GetHeight()/2)-texture->TopOffset;
 		}
-		if((flags & DRAWIMAGE_TRANSLATABLE) == DRAWIMAGE_TRANSLATABLE)
+		if((flags & DRAWIMAGE_TRANSLATABLE))
 			DrawImage(texture, x, y, getTranslation());
 		else
 			DrawImage(texture, x, y);

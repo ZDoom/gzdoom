@@ -46,6 +46,6 @@ struct SBarInfo
 	SBarInfo();
 };
 
-extern SBarInfo SBarInfoScript;
+extern SBarInfo *SBarInfoScript;
 
 #endif //__SBarInfo_SBAR_H__

@@ -1,4 +1,7 @@
 January 5, 2008 (Changes by Graf Zahl)
+- Added: Automap markers are stored in savegames now. Also moved the call
+  to AM_LevelInit to its proper place in G_DoLoadLevel, right after
+  the call to P_SetupLevel to make it work as intended.
 - Changed savegame versioning to use the SVN revision number instead of
   an arbitrarily defined value. This reduces the amount of relevant values
   that have to be defined in version.h to 1 (the minimum compatible savegame

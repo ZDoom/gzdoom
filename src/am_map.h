@@ -39,6 +39,8 @@ void AM_Drawer (void);
 void AM_Stop (void);
 
 void AM_ToggleMap ();
+void AM_LevelInit ();
+void AM_SerializeMarkers(FArchive &arc);
 
 
 #endif

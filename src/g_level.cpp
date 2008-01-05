@@ -2004,6 +2004,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	}
 
 	P_SetupLevel (level.mapname, position);
+	AM_LevelInit();
 
 	// [RH] Start lightning, if MAPINFO tells us to
 	if (level.flags & LEVEL_STARTLIGHTNING)
@@ -2736,6 +2737,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	// This must be saved, too, of course!
 	FCanvasTextureInfo::Serialize (arc);
+	AM_SerializeMarkers(arc);
 
 	if (!hubLoad)
 	{

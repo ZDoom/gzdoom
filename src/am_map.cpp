@@ -817,8 +817,7 @@ bool AM_clearMarks ()
 }
 
 //
-// should be called at the start of every level
-// right now, i figure it out myself
+// called right after the level has been loaded
 //
 void AM_LevelInit ()
 {
@@ -853,15 +852,8 @@ void AM_Stop ()
 //
 void AM_Start ()
 {
-	static char lastmap[sizeof(level.mapname)] = "";
-
 	if (!stopped) AM_Stop();
 	stopped = false;
-	if (strcmp (lastmap, level.mapname))
-	{
-		AM_LevelInit();
-		strcpy (lastmap, level.mapname);
-	}
 	AM_initVariables();
 	AM_loadPics();
 }
@@ -1822,3 +1814,11 @@ void AM_Drawer ()
 	AM_drawMarks();
 }
 
+void AM_SerializeMarkers(FArchive &arc)
+{
+	arc << markpointnum;
+	for (int i=0; i<AM_NUMMARKPOINTS; i++)
+	{
+		arc << markpoints[i].x << markpoints[i].y;
+	}
+}

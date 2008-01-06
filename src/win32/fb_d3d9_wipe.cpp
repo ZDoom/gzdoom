@@ -295,6 +295,8 @@ void D3DFB::WipeEndScreen()
 		Begin2D(true);
 	}
 
+	EndQuadBatch();		// Make sure all quads have been drawn.
+
 	// Don't do anything if there is no ending point.
 	if (OldRenderTarget == NULL)
 	{

@@ -54,6 +54,7 @@
 #include "m_random.h"
 #include "teaminfo.h"
 #include "r_translate.h"
+#include "templates.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
@@ -185,10 +186,25 @@ int D_PlayerClassToInt (const char *classname)
 void D_GetPlayerColor (int player, float *h, float *s, float *v)
 {
 	userinfo_t *info = &players[player].userinfo;
-	int color = teamplay ? teams[info->team].playercolor : info->color;
+	int color = info->color;
 
 	RGBtoHSV (RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f,
 		h, s, v);
+
+	if (teamplay && TEAMINFO_IsValidTeam(info->team))
+	{
+		// In team play, force the player to use the team's hue
+		// and adjust the saturation and value so that the team
+		// hue is visible in the final color.
+		float ts, tv;
+		int tcolor = teams[info->team].playercolor;
+
+		RGBtoHSV (RPART(tcolor)/255.f, GPART(tcolor)/255.f, BPART(tcolor)/255.f,
+			h, &ts, &tv);
+
+		*s = clamp(ts + *s * 0.15f - 0.075f, 0.f, 1.f);
+		*v = clamp(tv + *v * 0.5f - 0.25f, 0.f, 1.f);
+	}
 }
 
 // Find out which teams are present. If there is only one,
@@ -284,7 +300,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 
 	int oldteam;
 
-	if (team < TEAM_None)
+	if (team < 0)
 	{
 		team = TEAM_None;
 	}

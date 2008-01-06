@@ -203,6 +203,9 @@ void FBaseStatusBar::SetScaled (bool scale)
 		ST_X = 0;
 		ST_Y = 200 - RelTop;
 		::ST_Y = Scale (ST_Y, SCREENHEIGHT, 200);
+		// If this is odd, add one to make it even and close the gap between the
+		// status bar and the rest of the screen
+		::ST_Y += (::ST_Y & 1);
 		Displacement = 0;
 	}
 	::ST_X = ST_X;
@@ -268,6 +271,16 @@ void FBaseStatusBar::Tick ()
 			prev = &msg->Next;
 		}
 		msg = next;
+	}
+
+	// If the crosshair has been enlarged, shrink it.
+	if (CrosshairSize > FRACUNIT)
+	{
+		CrosshairSize -= XHAIRSHRINKSIZE;
+		if (CrosshairSize < FRACUNIT)
+		{
+			CrosshairSize = FRACUNIT;
+		}
 	}
 }
 
@@ -973,15 +986,6 @@ void FBaseStatusBar::DrawCrosshair ()
 	DWORD color;
 	fixed_t size;
 	int w, h;
-
-	if (CrosshairSize > FRACUNIT)
-	{
-		CrosshairSize -= XHAIRSHRINKSIZE;
-		if (CrosshairSize < FRACUNIT)
-		{
-			CrosshairSize = FRACUNIT;
-		}
-	}
 
 	// Don't draw the crosshair in chasecam mode
 	if (players[consoleplayer].cheats & CF_CHASECAM)

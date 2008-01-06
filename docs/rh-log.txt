@@ -1,3 +1,17 @@
+January 6, 2008
+- Added back the code to allow some variation to the players' shades when
+  players are on teams.
+- Set TEAM_None back to 255. Since a player's team has already been accessible
+  through ACS, needlessly redefining this is a bad thing to do, since it can
+  break existing maps. 255 different teams should still be more than enough.
+- Fixed: At certain resolutions, there was a one pixel row between the status
+  bar and the rest of the screen, thanks to rounding error.
+- Added automatic batching of quads to D3DFB. Screens with a lot of text are
+  ever-so-slightly faster now, though still only about half the speed of
+  sofware-only text. I suppose the only way to see a marked improvement is
+  going to be by stuffing multiple glyphs in a single texture.
+- Fixed: Crosshairgrow's animation was not framerate-independent.
+
 January 5, 2008 (Changes by Graf Zahl)
 - Added: Automap markers are stored in savegames now. Also moved the call
   to AM_LevelInit to its proper place in G_DoLoadLevel, right after
@@ -19,7 +33,7 @@ January 4, 2008
   of these ever, and they can be statically generated, so I simplified it some
   more.
 - Added Blzut3's latest SBARINFO patch:
- * Fixed a massive memory leak in SBARINFO.  The leak also lead to progressive
+ * Fixed a massive memory leak in SBARINFO. The leak also lead to progressive
    CPU usage.
  * Fixed: Playerclass didn't work in SBARINFO.
  * Fixed: Artiflash was improperly initialized causing it not to display the

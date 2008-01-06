@@ -55,7 +55,7 @@ int D_PlayerClassToInt (const char *classname);
 struct userinfo_s
 {
 	char		netname[MAXPLAYERNAME+1];
-	int			team;
+	BYTE		team;
 	int			aimdist;
 	int			color;
 	int			skin;

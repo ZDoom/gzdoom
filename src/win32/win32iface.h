@@ -264,6 +264,22 @@ private:
 	};
 #define D3DFVF_FBVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1)
 
+	struct BufferedQuad
+	{
+		union
+		{
+			struct
+			{
+				BYTE Flags;
+				BYTE ShaderNum;
+				BYTE SrcBlend, DestBlend;
+			};
+			DWORD Group1;
+		};
+		D3DPal *Palette;
+		D3DTex *Texture;
+	};
+
 	void SetInitialState();
 	bool CreateResources();
 	void ReleaseResources();
@@ -282,16 +298,20 @@ private:
 	void KillNativeTexs();
 	void DrawLetterbox();
 	void Draw3DPart(bool copy3d);
-	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1);
+	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedQuad &quad);
 	static void SetColorOverlay(DWORD color, float alpha, D3DCOLOR &color0, D3DCOLOR &color1);
 	void DoWindowedGamma();
+	void AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR color);
+	void CheckQuadBatch();
+	void BeginQuadBatch();
+	void EndQuadBatch();
 
 	// State
 	void SetAlphaBlend(BOOL enabled, D3DBLEND srcblend=D3DBLEND(0), D3DBLEND destblend=D3DBLEND(0));
 	void SetConstant(int cnum, float r, float g, float b, float a);
 	void SetPixelShader(IDirect3DPixelShader9 *shader);
 	void SetTexture(int tnum, IDirect3DTexture9 *texture);
-	void SetPaletteTexture(IDirect3DTexture9 *texture, int count, INTBOOL bilinear);
+	void SetPaletteTexture(IDirect3DTexture9 *texture, int count);
 	void SetPalTexBilinearConstants(D3DTex *texture);
 
 	BOOL AlphaBlendEnabled;
@@ -332,8 +352,13 @@ private:
 	IDirect3DTexture9 *ShadedPaletteTexture;
 
 	IDirect3DVertexBuffer9 *LineBuffer;
-	int LineBatchPos;
 	FBVERTEX *LineData;
+	int LineBatchPos;
+
+	IDirect3DVertexBuffer9 *QuadBuffer;
+	FBVERTEX *QuadData;
+	BufferedQuad *QuadExtra;
+	int QuadBatchPos;
 
 	IDirect3DPixelShader9 *PalTexShader, *PalTexBilinearShader;
 	IDirect3DPixelShader9 *PlainShader;

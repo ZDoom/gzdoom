@@ -588,7 +588,7 @@ bool DCajunMaster::LoadBots ()
 			case BOTCFG_TEAM:
 				{
 					char teamstr[16];
-					unsigned int teamnum;
+					BYTE teamnum;
 
 					SC_MustGetString ();
 					if (IsNum (sc_String))

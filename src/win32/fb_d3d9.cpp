@@ -76,6 +76,9 @@
 // The number of line endpoints for the line vertex buffer.
 #define NUM_LINE_VERTS	10240
 
+// The number of quads we can batch together.
+#define MAX_QUAD_BATCH	1024
+
 // TYPES -------------------------------------------------------------------
 
 IMPLEMENT_CLASS(D3DFB)
@@ -119,6 +122,26 @@ public:
 
 	FRemapTable *Remap;
 	int RoundedPaletteSize;
+};
+
+// Flags for a buffered quad
+enum
+{
+	BQF_GamePalette		= 1,
+	BQF_ShadedPalette	= 2,
+	BQF_CustomPalette	= 3,
+	BQF_StencilPalette	= 4,
+		BQF_Paletted	= 7,
+	BQF_Bilinear		= 8,
+};
+
+// Shaders for a buffered quad
+enum
+{
+	BQS_PalTex,
+	BQS_Plain,
+	BQS_PlainStencil,
+	BQS_ColorOnly
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -166,6 +189,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 
 	D3DDevice = NULL;
 	LineBuffer = NULL;
+	QuadBuffer = NULL;
 	FBTexture = NULL;
 	TempRenderTexture = NULL;
 	InitialWipeScreen = NULL;
@@ -194,6 +218,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	GatheringWipeScreen = false;
 	ScreenWipe = NULL;
 	InScene = false;
+	QuadExtra = new BufferedQuad[MAX_QUAD_BATCH];
 
 	Gamma = 1.0;
 	FlashColor0 = 0;
@@ -261,6 +286,7 @@ D3DFB::~D3DFB ()
 	{
 		D3DDevice->Release();
 	}
+	delete[] QuadExtra;
 }
 
 // Called after initial device creation and reset, when everything is set
@@ -467,6 +493,11 @@ void D3DFB::ReleaseDefaultPoolItems()
 		InitialWipeScreen->Release();
 		InitialWipeScreen = NULL;
 	}
+	if (QuadBuffer != NULL)
+	{
+		QuadBuffer->Release();
+		QuadBuffer = NULL;
+	}
 	if (LineBuffer != NULL)
 	{
 		LineBuffer->Release();
@@ -615,6 +646,12 @@ bool D3DFB::CreateVertexes ()
 		return false;
 	}
 	LineBatchPos = -1;
+	if (FAILED(D3DDevice->CreateVertexBuffer(sizeof(FBVERTEX)*MAX_QUAD_BATCH*6,
+		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFVF_FBVERTEX, D3DPOOL_DEFAULT, &QuadBuffer, NULL)))
+	{
+		return false;
+	}
+	QuadBatchPos = -1;
 	return true;
 }
 
@@ -766,6 +803,7 @@ void D3DFB::Update ()
 		if (InScene)
 		{
 			DrawRateStuff();
+			EndQuadBatch();		// Make sure all quads are drawn
 			DoWindowedGamma();
 			D3DDevice->EndScene();
 			D3DDevice->Present(NULL, NULL, NULL, NULL);
@@ -917,7 +955,8 @@ void D3DFB::Draw3DPart(bool copy3d)
 	}
 
 	SetTexture (0, FBTexture);
-	SetPaletteTexture(PaletteTexture, 256, false);
+	SetPaletteTexture(PaletteTexture, 256);
+	SetPixelShader(PalTexShader);
 	D3DDevice->SetFVF (D3DFVF_FBVERTEX);
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(FALSE);
@@ -1460,9 +1499,7 @@ void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint3
 		Dim(color, APART(color)/255.f, left, top, right - left, bottom - top);
 		return;
 	}
-	int offs = GatheringWipeScreen ? 0 : LBOffsetI;
-	D3DRECT rect = { left, top + offs, right, bottom + offs };
-	D3DDevice->Clear(1, &rect, D3DCLEAR_TARGET, color | 0xFF000000, 1.f, 0);
+	AddColorOnlyQuad(left, top, right - left, bottom - top, color | 0xFF000000);
 }
 
 //==========================================================================
@@ -1486,27 +1523,11 @@ void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h)
 	{
 		return;
 	}
-	if (amount >= 1)
+	if (amount > 1)
 	{
-		D3DRECT rect = { x1, y1, x1 + w, y1 + h };
-		D3DDevice->Clear(1, &rect, D3DCLEAR_TARGET, color | 0xFF000000, 1.f, 0);
+		amount = 1;
 	}
-	else
-	{
-		float x = float(x1) - 0.5f;
-		float y = float(y1) - 0.5f + (GatheringWipeScreen ? 0 : LBOffset);
-		D3DCOLOR d3dcolor = color | (int(amount * 255) << 24);
-		FBVERTEX verts[4] =
-		{
-			{ x,   y,   0, 1, d3dcolor },
-			{ x+w, y,   0, 1, d3dcolor },
-			{ x+w, y+h, 0, 1, d3dcolor },
-			{ x,   y+h, 0, 1, d3dcolor }
-		};
-		SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
-		SetPixelShader(ColorOnlyShader);
-		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, &verts, sizeof(FBVERTEX));
-	}
+	AddColorOnlyQuad(x1, y1, w, h, color | (int(amount * 255) << 24));
 }
 
 //==========================================================================
@@ -1521,6 +1542,7 @@ void D3DFB::BeginLineDrawing()
 	{
 		return;
 	}
+	EndQuadBatch();		// Make sure all quads have been drawn first
 	LineBuffer->Lock(0, 0, (void **)&LineData, D3DLOCK_DISCARD);
 	LineBatchPos = 0;
 }
@@ -1661,6 +1683,8 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 		return;
 	}
 
+	CheckQuadBatch();
+
 	float xscale = float(parms.destwidth) / parms.texwidth / 65536.f;
 	float yscale = float(parms.destheight) / parms.texheight / 65536.f;
 	float x0 = float(parms.x) / 65536.f - float(parms.left) * xscale;
@@ -1706,6 +1730,19 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 		u1 -= float(x1 - parms.rclip) * uscale / xscale;
 		x1 = float(parms.rclip);
 	}
+	parms.bilinear = false;
+
+	D3DCOLOR color0, color1;
+	if (!SetStyle(tex, parms, color0, color1, QuadExtra[QuadBatchPos]))
+	{
+		return;
+	}
+
+	QuadExtra[QuadBatchPos].Texture = tex;
+	if (parms.bilinear)
+	{
+		QuadExtra[QuadBatchPos].Flags |= BQF_Bilinear;
+	}
 
 	float yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
 	x0 -= 0.5f;
@@ -1713,23 +1750,260 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	x1 -= 0.5f;
 	y1 -= yoffs;
 
-	D3DCOLOR color0, color1;
-	parms.bilinear = false;
-	if (!SetStyle(tex, parms, color0, color1))
+	FBVERTEX *vert = &QuadData[QuadBatchPos * 6];
+
+	vert[3].x = vert[0].x = x0;
+	vert[3].y = vert[0].y = y0;
+	vert[3].z = vert[0].z = 0;
+	vert[3].rhw = vert[0].rhw = 1;
+	vert[3].color0 = vert[0].color0 = color0;
+	vert[3].color1 = vert[0].color1 = color1;
+	vert[3].tu = vert[0].tu = u0;
+	vert[3].tv = vert[0].tv = v0;
+
+	vert[1].x = x1;
+	vert[1].y = y0;
+	vert[1].z = 0;
+	vert[1].rhw = 1;
+	vert[1].color0 = color0;
+	vert[1].color1 = color1;
+	vert[1].tu = u1;
+	vert[1].tv = v0;
+
+	vert[4].x = vert[2].x = x1;
+	vert[4].y = vert[2].y = y1;
+	vert[4].z = vert[2].z = 0;
+	vert[4].rhw = vert[2].rhw = 1;
+	vert[4].color0 = vert[2].color0 = color0;
+	vert[4].color1 = vert[2].color1 = color1;
+	vert[4].tu = vert[2].tu = u1;
+	vert[4].tv = vert[2].tv = v1;
+
+	vert[5].x = x0;
+	vert[5].y = y1;
+	vert[5].z = 0;
+	vert[5].rhw = 1;
+	vert[5].color0 = color0;
+	vert[5].color1 = color1;
+	vert[5].tu = u0;
+	vert[5].tv = v1;
+
+	QuadBatchPos++;
+}
+
+//==========================================================================
+//
+// D3DFB :: AddColorOnlyQuad
+//
+// Adds a single-color, untextured quad to the batch.
+//
+//==========================================================================
+
+void D3DFB::AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR color)
+{
+	BufferedQuad *quad;
+	FBVERTEX *verts;
+
+	CheckQuadBatch();
+	quad = &QuadExtra[QuadBatchPos];
+	verts = &QuadData[QuadBatchPos * 6];
+
+	float x = float(left) - 0.5f;
+	float y = float(top) - 0.5f + (GatheringWipeScreen ? 0 : LBOffset);
+
+	quad->Flags = 0;
+	quad->ShaderNum = BQS_ColorOnly;
+	if ((color & 0xFF000000) == 0xFF000000)
+	{
+		quad->SrcBlend = 0;
+		quad->DestBlend = 0;
+	}
+	else
+	{
+		quad->SrcBlend = D3DBLEND_SRCALPHA;
+		quad->DestBlend = D3DBLEND_INVSRCALPHA;
+	}
+	quad->Palette = NULL;
+	quad->Texture = NULL;
+
+	verts[3].x = verts[0].x = x;
+	verts[3].y = verts[0].y = y;
+	verts[3].z = verts[0].z = 0;
+	verts[3].rhw = verts[0].rhw = 1;
+	verts[3].color0 = verts[0].color0 = color;
+	verts[3].color1 = verts[0].color1 = 0;
+	verts[3].tu = verts[0].tu = 0;
+	verts[3].tv = verts[0].tv = 0;
+
+	verts[1].x = x + width;
+	verts[1].y = y;
+	verts[1].z = 0;
+	verts[1].rhw = 1;
+	verts[1].color0 = color;
+	verts[1].color1 = 0;
+	verts[1].tu = 0;
+	verts[1].tv = 0;
+
+	verts[4].x = verts[2].x = x + width;
+	verts[4].y = verts[2].y = y + height;
+	verts[4].z = verts[2].z = 0;
+	verts[4].rhw = verts[2].rhw = 1;
+	verts[4].color0 = verts[2].color0 = color;
+	verts[4].color1 = verts[2].color1 = 0;
+	verts[4].tu = verts[2].tu = 0;
+	verts[4].tv = verts[2].tv = 0;
+
+	verts[5].x = x;
+	verts[5].y = y + height;
+	verts[5].z = 0;
+	verts[5].rhw = 1;
+	verts[5].color0 = color;
+	verts[5].color1 = 0;
+	verts[5].tu = 0;
+	verts[5].tv = 0;
+
+	QuadBatchPos++;
+}
+
+//==========================================================================
+//
+// D3DFB :: CheckQuadBatch
+//
+// Make sure there's enough room in the batch for one more quad.
+//
+//==========================================================================
+
+void D3DFB::CheckQuadBatch()
+{
+	if (QuadBatchPos == MAX_QUAD_BATCH)
+	{
+		EndQuadBatch();
+	}
+	if (QuadBatchPos < 0)
+	{
+		BeginQuadBatch();
+	}
+}
+
+//==========================================================================
+//
+// D3DFB :: BeginQuadBatch
+//
+// Locks the vertex buffer for quads and sets the cursor to 0.
+//
+//==========================================================================
+
+void D3DFB::BeginQuadBatch()
+{
+	if (In2D < 2 || !InScene || QuadBatchPos >= 0)
 	{
 		return;
 	}
+	QuadBuffer->Lock(0, 0, (void **)&QuadData, D3DLOCK_DISCARD);
+	QuadBatchPos = 0;
+}
 
-	FBVERTEX verts[4] =
+//==========================================================================
+//
+// D3DFB :: EndQuadBatch
+//
+// Draws all the quads that have been batched up.
+//
+//==========================================================================
+
+void D3DFB::EndQuadBatch()
+{
+	if (In2D < 2 || !InScene || QuadBatchPos < 0)
 	{
-		{ x0, y0, 0, 1, color0, color1, u0, v0 },
-		{ x1, y0, 0, 1, color0, color1, u1, v0 },
-		{ x1, y1, 0, 1, color0, color1, u1, v1 },
-		{ x0, y1, 0, 1, color0, color1, u0, v1 }
-	};
+		return;
+	}
+	QuadBuffer->Unlock();
+	if (QuadBatchPos == 0)
+	{
+		QuadBatchPos = -1;
+		return;
+	}
+	D3DDevice->SetStreamSource(0, QuadBuffer, 0, sizeof(FBVERTEX));
+	for (int i = 0; i < QuadBatchPos; )
+	{
+		const BufferedQuad *quad = &QuadExtra[i];
+		int j;
 
-	SetTexture(0, tex->Tex);
-	D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, &verts, sizeof(FBVERTEX));
+		// Quads with matching parameters should be done with a single
+		// DrawPrimitive call.
+		for (j = i + 1; j < QuadBatchPos; ++j)
+		{
+			const BufferedQuad *q2 = &QuadExtra[j];
+			if (quad->Texture != q2->Texture ||
+				quad->Group1 != q2->Group1 ||
+				quad->Palette != q2->Palette)
+			{
+				break;
+			}
+		}
+
+		// Set the palette (if one)
+		if ((quad->Flags & BQF_Paletted) == BQF_GamePalette)
+		{
+			SetPaletteTexture(PaletteTexture, 256);
+		}
+		else if ((quad->Flags & BQF_Paletted) == BQF_CustomPalette)
+		{
+			SetPaletteTexture(quad->Palette->Tex, quad->Palette->RoundedPaletteSize);
+		}
+		else if ((quad->Flags & BQF_Paletted) == BQF_ShadedPalette)
+		{
+			SetPaletteTexture(ShadedPaletteTexture, 256);
+		}
+		else if ((quad->Flags & BQF_Paletted) == BQF_StencilPalette)
+		{
+			SetPaletteTexture(StencilPaletteTexture, 256);
+		}
+		// Set paletted bilinear filtering (IF IT WORKED RIGHT!)
+		if (quad->Flags & (BQF_Paletted | BQF_Bilinear))
+		{
+			SetPalTexBilinearConstants(quad->Texture);
+		}
+
+		// Set the alpha blending
+		if (quad->SrcBlend != 0)
+		{
+			SetAlphaBlend(TRUE, D3DBLEND(quad->SrcBlend), D3DBLEND(quad->DestBlend));
+		}
+		else
+		{
+			SetAlphaBlend(FALSE);
+		}
+
+		// Set the pixel shader
+		if (quad->ShaderNum == BQS_PalTex)
+		{
+			SetPixelShader(!(quad->Flags & BQF_Bilinear) ? PalTexShader : PalTexBilinearShader);
+		}
+		else if (quad->ShaderNum == BQS_Plain)
+		{
+			SetPixelShader(PlainShader);
+		}
+		else if (quad->ShaderNum == BQS_PlainStencil)
+		{
+			SetPixelShader(PlainStencilShader);
+		}
+		else if (quad->ShaderNum == BQS_ColorOnly)
+		{
+			SetPixelShader(ColorOnlyShader);
+		}
+
+		// Set the texture
+		if (quad->Texture != NULL)
+		{
+			SetTexture(0, quad->Texture->Tex);
+		}
+
+		// Draw the quad
+		D3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, i * 6, 2 * (j - i));
+		i = j;
+	}
+	QuadBatchPos = -1;
 }
 
 //==========================================================================
@@ -1740,7 +2014,7 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 //
 //==========================================================================
 
-bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1)
+bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedQuad &quad)
 {
 	D3DFORMAT fmt = tex->GetTexFormat();
 	ERenderStyle style = parms.style;
@@ -1768,6 +2042,7 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 	}
 
 	stencilling = false;
+	quad.Palette = NULL;
 
 	switch (style)
 	{
@@ -1777,12 +2052,10 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 		{
 			color0 = 0;
 			color1 = parms.fillcolor | (D3DCOLOR(alpha * 255) << 24);
-			SetPaletteTexture(ShadedPaletteTexture, 256, parms.bilinear);
-			if (parms.bilinear)
-			{
-				SetPalTexBilinearConstants(tex);
-			}
-			SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
+			quad.Flags = BQF_ShadedPalette;
+			quad.SrcBlend = D3DBLEND_SRCALPHA;
+			quad.DestBlend = D3DBLEND_INVSRCALPHA;
+			quad.ShaderNum = BQS_PalTex;
 			return true;
 		}
 		return false;
@@ -1824,24 +2097,24 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 	// turning off the alpha blend.
 	if (!parms.masked && style == STYLE_Normal)
 	{
-		SetAlphaBlend(FALSE);
+		quad.SrcBlend = 0;
+		quad.DestBlend = 0;
 		SetColorOverlay(parms.colorOverlay, 1, color0, color1);
 		if (fmt == D3DFMT_L8 && !tex->IsGray)
 		{
-			SetPaletteTexture(PaletteTexture, 256, parms.bilinear);
-			if (parms.bilinear)
-			{
-				SetPalTexBilinearConstants(tex);
-			}
+			quad.Flags = BQF_GamePalette;
+			quad.ShaderNum = BQS_PalTex;
 		}
 		else
 		{
-			SetPixelShader(PlainShader);
+			quad.Flags = 0;
+			quad.ShaderNum = BQS_Plain;
 		}
 	}
 	else
 	{
-		SetAlphaBlend(TRUE, fglevel, bglevel);
+		quad.SrcBlend = fglevel;
+		quad.DestBlend = bglevel;
 
 		if (!stencilling)
 		{
@@ -1849,29 +2122,25 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 			{
 				if (parms.remap != NULL)
 				{
-					D3DPal *pal = reinterpret_cast<D3DPal *>(parms.remap->GetNative());
-					SetPaletteTexture(pal->Tex, pal->RoundedPaletteSize, parms.bilinear);
-					if (parms.bilinear)
-					{
-						SetPalTexBilinearConstants(tex);
-					}
+					quad.Flags = BQF_CustomPalette;
+					quad.Palette = reinterpret_cast<D3DPal *>(parms.remap->GetNative());
+					quad.ShaderNum = BQS_PalTex;
 				}
 				else if (tex->IsGray)
 				{
-					SetPixelShader(PlainShader);
+					quad.Flags = 0;
+					quad.ShaderNum = BQS_Plain;
 				}
 				else
 				{
-					SetPaletteTexture(PaletteTexture, 256, parms.bilinear);
-					if (parms.bilinear)
-					{
-						SetPalTexBilinearConstants(tex);
-					}
+					quad.Flags = BQF_GamePalette;
+					quad.ShaderNum = BQS_PalTex;
 				}
 			}
 			else
 			{
-				SetPixelShader(PlainShader);
+				quad.Flags = 0;
+				quad.ShaderNum = BQS_Plain;
 			}
 			SetColorOverlay(parms.colorOverlay, alpha, color0, color1);
 		}
@@ -1881,12 +2150,13 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 			color1 = parms.fillcolor | (D3DCOLOR(alpha * 255) << 24);
 			if (fmt == D3DFMT_L8)
 			{
-				// Doesn't seem to be much point in allowing bilinear with a stencil
-				SetPaletteTexture(StencilPaletteTexture, 256, false);
+				quad.Flags = BQF_StencilPalette;
+				quad.ShaderNum = BQS_PalTex;
 			}
 			else
 			{
-				SetPixelShader(PlainStencilShader);
+				quad.Flags = 0;
+				quad.ShaderNum = BQS_PlainStencil;
 			}
 		}
 	}
@@ -1979,7 +2249,7 @@ void D3DFB::SetTexture(int tnum, IDirect3DTexture9 *texture)
 	}
 }
 
-void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count, INTBOOL bilinear)
+void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count)
 {
 	if (count == 256 || SM14)
 	{
@@ -2003,7 +2273,6 @@ void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count, INTBOOL bil
 		SetConstant(2, 255 * fcount, 0.5f * fcount, 0, 0);
 	}
 	SetTexture(1, texture);
-	SetPixelShader(!bilinear ? PalTexShader : PalTexBilinearShader);
 }
 
 void D3DFB::SetPalTexBilinearConstants(D3DTex *tex)

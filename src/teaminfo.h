@@ -35,7 +35,7 @@
 #ifndef __TEAMINFO_H__
 #define __TEAMINFO_H__
 
-#define TEAM_None -1
+#define TEAM_None 255
 
 struct TEAMINFO
 {

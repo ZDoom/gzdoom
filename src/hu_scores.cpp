@@ -114,7 +114,7 @@ void HU_DrawScores (player_t *player)
 	}
 	else
 	{
-		if (!sb_cooperative_enable)
+		if (!sb_cooperative_enable || !multiplayer)
 			return;
 	}
 
@@ -308,7 +308,10 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 
 	if (teamplay && deathmatch)
 	{
-		color = teams[player->userinfo.team].GetTextColor ();
+		if (TEAMINFO_IsValidTeam (player->userinfo.team))
+			color = teams[player->userinfo.team].GetTextColor ();
+		else
+			color = CR_GREY;
 	}
 	else
 	{

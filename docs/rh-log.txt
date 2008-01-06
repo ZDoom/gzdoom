@@ -1,4 +1,5 @@
 January 6, 2008 (Changes by Graf Zahl)
+- Added scoreboard fix by Karate Chris.
 - Added teamgame fix for menu by Karate Chris.
 - Added GZDoom's Sector_Outside sector type which forces outside fog
   regardless of ceiling texture.

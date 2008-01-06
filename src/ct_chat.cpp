@@ -249,9 +249,6 @@ void CT_Drawer (void)
 	}
 
 	if (players[consoleplayer].camera != NULL &&
-		((deathmatch && teamplay && sb_teamdeathmatch_enable) ||
-		(deathmatch && !teamplay && sb_deathmatch_enable) ||
-		(!deathmatch && multiplayer && sb_cooperative_enable)) &&
 		(Button_ShowScores.bDown ||
 		 players[consoleplayer].camera->health <= 0))
 	{

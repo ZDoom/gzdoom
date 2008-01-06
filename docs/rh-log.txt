@@ -1,4 +1,5 @@
 January 6, 2008 (Changes by Graf Zahl)
+- Re-converted icebreak.flac because the old version apparently didn't work.
 - Added SBARINFO update #5 by blzut3:
     - Fixed: Playerclass still didn't work due to comparing of improper numbers.
     - Fixed: The arrows on drawinventorybar had a hard coded location instead of

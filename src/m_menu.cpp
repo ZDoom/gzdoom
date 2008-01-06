@@ -2585,7 +2585,7 @@ static void M_ChangePlayerTeam (int choice)
 		{
 			team = TEAM_None;
 		}
-		else if (!TEAMINFO_IsValidTeam (team))
+		else if (team == TEAM_None)
 		{
 			team = teams.Size () - 1;
 		}
@@ -2596,7 +2596,11 @@ static void M_ChangePlayerTeam (int choice)
 	}
 	else
 	{
-		if (!TEAMINFO_IsValidTeam (team))
+		if (team == teams.Size () - 1)
+		{
+			team = TEAM_None;
+		}
+		else if (team == TEAM_None)
 		{
 			team = 0;
 		}

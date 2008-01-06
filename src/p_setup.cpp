@@ -1084,7 +1084,7 @@ void P_LoadSectors (MapData * map)
 
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.
-		if (level.outsidefog != 0xff000000 && ss->ceilingpic == skyflatnum)
+		if (level.outsidefog != 0xff000000 && (ss->ceilingpic == skyflatnum || (ss->special&0xff) == Sector_Outside))
 		{
 			if (fogMap == NULL)
 				fogMap = GetSpecialLights (PalEntry (255,255,255), level.outsidefog, 0);

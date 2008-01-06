@@ -300,7 +300,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 
 	int oldteam;
 
-	if (team < 0)
+	if (!TEAMINFO_IsValidTeam (team))
 	{
 		team = TEAM_None;
 	}

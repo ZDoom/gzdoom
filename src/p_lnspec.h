@@ -353,6 +353,7 @@ typedef enum {
 	dDamage_LavaWimpy = 82,
 	dDamage_LavaHefty = 83,
 	dScroll_EastLavaDamage = 84,
+	Sector_Outside = 87,
 
 	// And here are some for Strife
 	sLight_Strobe_Hurt = 104,

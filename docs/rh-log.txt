@@ -1,4 +1,14 @@
 January 6, 2008 (Changes by Graf Zahl)
+- Added SBARINFO update #5 by blzut3:
+    - Fixed: Playerclass still didn't work due to comparing of improper numbers.
+    - Fixed: The arrows on drawinventorybar had a hard coded location instead of
+      relative to the specified coordinates.
+    - Added noarrows flag to drawinventorybar to remove the blue arrows drawn when
+      there are more items to the left or right of the viewable bar.
+    - Added forcescaled flag to the statusbar command.  This is ignored on the
+      inventory and inventoryfullscreen types.
+- Added obituary fix for Strife peasants by Karate Chris.
+- Added fix for loading during demo playback by Karate Chris.
 - Added scoreboard fix by Karate Chris.
 - Added teamgame fix for menu by Karate Chris.
 - Added GZDoom's Sector_Outside sector type which forces outside fog

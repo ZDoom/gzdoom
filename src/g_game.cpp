@@ -1689,6 +1689,7 @@ void G_DoLoadGame ()
 	char *map;
 
 	gameaction = ga_nothing;
+	demoplayback = false;
 
 	FILE *stdfile = fopen (savename.GetChars(), "rb");
 	if (stdfile == NULL)

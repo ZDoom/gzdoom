@@ -9,6 +9,8 @@ struct SBarInfoCommand; //we need to be able to use this before it is defined.
 struct SBarInfoBlock
 {
 	TArray<SBarInfoCommand> commands;
+	bool forceScaled;
+	SBarInfoBlock();
 };
 
 struct SBarInfoCommand

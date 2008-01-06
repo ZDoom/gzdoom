@@ -32,6 +32,11 @@ EXTERN_CVAR(Int, fraglimit)
 
 SBarInfo *SBarInfoScript;
 
+enum //statusbar flags
+{
+	STATUSBARFLAG_FORCESCALED = 1,
+};
+
 enum //gametype flags
 {
 	GAMETYPE_SINGLEPLAYER = 1,
@@ -82,6 +87,7 @@ enum //drawinventorybar flags
 {
 	DRAWINVENTORYBAR_ALWAYSSHOW = 1,
 	DRAWINVENTORYBAR_NOARTIBOX = 2,
+	DRAWINVENTORYBAR_NOARROWS = 4,
 };
 
 enum //drawgem flags
@@ -228,6 +234,18 @@ int SBarInfo::ParseSBarInfo(int lump)
 			{
 				SC_MustGetToken(TK_Identifier);
 				int barNum = SC_MustMatchString(StatusBars);
+				while(SC_CheckToken(','))
+				{
+					SC_MustGetToken(TK_Identifier);
+					if(SC_Compare("forcescaled"))
+					{
+						this->huds[barNum].forceScaled = true;
+					}
+					else
+					{
+						SC_ScriptError("Unkown flag '%s'.", sc_String);
+					}
+				}
 				SC_MustGetToken('{');
 				if(barNum == STBAR_AUTOMAP)
 				{
@@ -526,6 +544,10 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 						{
 							cmd.flags += DRAWINVENTORYBAR_NOARTIBOX;
 						}
+						else if(SC_Compare("noarrows"))
+						{
+							cmd.flags += DRAWINVENTORYBAR_NOARROWS;
+						}
 						else
 						{
 							SC_ScriptError("Unknown flag '%s'.", sc_String);
@@ -763,11 +785,11 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 						{
 							foundClass = true;
 							if(i == 0)
-								cmd.special = c;
+								cmd.special = PlayerClasses[c].Type->ClassIndex;
 							else if(i == 1)
-								cmd.special2 = c;
+								cmd.special2 = PlayerClasses[c].Type->ClassIndex;
 							else //should be 2
-								cmd.special3 = c;
+								cmd.special3 = PlayerClasses[c].Type->ClassIndex;
 							break;
 						}
 					}
@@ -866,6 +888,11 @@ SBarInfoCommand::SBarInfoCommand() //sets the default values for more predicable
 	string[1] = "";
 	translation = CR_UNTRANSLATED;
 	font = V_GetFont("CONFONT");
+}
+
+SBarInfoBlock::SBarInfoBlock()
+{
+	forceScaled = false;
 }
 
 enum
@@ -1143,6 +1170,11 @@ public:
 		else
 		{
 			hud = 0;
+		}
+		if(SBarInfoScript->huds[hud].forceScaled) //scale the statusbar
+		{
+			SetScaled(true);
+			setsizeneeded = true;
 		}
 		doCommands(SBarInfoScript->huds[hud]);
 		if(CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR))
@@ -1491,15 +1523,18 @@ private:
 				{
 					bool alwaysshow = false;
 					bool artibox = true;
+					bool noarrows = false;
 					if((cmd.flags & DRAWINVENTORYBAR_ALWAYSSHOW))
 						alwaysshow = true;
 					if((cmd.flags & DRAWINVENTORYBAR_NOARTIBOX))
 						artibox = false;
+					if((cmd.flags & DRAWINVENTORYBAR_NOARROWS))
+						noarrows = true;
 					if(drawingFont != cmd.font)
 					{
 						drawingFont = cmd.font;
 					}
-					DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, alwaysshow, cmd.special2, cmd.special3, cmd.translation, artibox);
+					DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, alwaysshow, cmd.special2, cmd.special3, cmd.translation, artibox, noarrows);
 					break;
 				}
 				case SBARINFO_DRAWBAR:
@@ -1677,7 +1712,7 @@ private:
 					}
 					break;
 				case SBARINFO_PLAYERCLASS:
-					int spawnClass = CPlayer->GetSpawnClass();
+					int spawnClass = CPlayer->cls->ClassIndex;
 					if(cmd.special == spawnClass || cmd.special2 == spawnClass || cmd.special3 == spawnClass)
 					{
 						doCommands(cmd.subBlock);
@@ -1855,8 +1890,8 @@ private:
 	}
 
 	void DrawInventoryBar(int type, int num, int x, int y, bool alwaysshow, 
-		int counterx, int countery, EColorRange translation, bool drawArtiboxes) //yes, there is some Copy & Paste here too
-	{
+		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows)
+	{ //yes, there is some Copy & Paste here too
 		const AInventory *item;
 		int i;
 
@@ -1892,16 +1927,16 @@ private:
 				DrawImage (Images[invBarOffset + imgARTIBOX], x+i*31, y);
 			}
 			// Is there something to the left?
-			if (CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
+			if (!noArrows && CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
 			{
 				DrawImage (Images[!(gametic & 4) ?
-					invBarOffset + imgINVLFGEM1 : invBarOffset + imgINVLFGEM2], 38, 2);
+					invBarOffset + imgINVLFGEM1 : invBarOffset + imgINVLFGEM2], x-12, y);
 			}
 			// Is there something to the right?
-			if (item != NULL)
+			if (!noArrows && item != NULL)
 			{
 				DrawImage (Images[!(gametic & 4) ?
-					invBarOffset + imgINVRTGEM1 : invBarOffset + imgINVRTGEM2], 269, 2);
+					invBarOffset + imgINVRTGEM1 : invBarOffset + imgINVRTGEM2], x+num*31+2, y);
 			}
 		}
 	}

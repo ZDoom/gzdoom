@@ -1,4 +1,6 @@
 January 6, 2008
+- Fixed: Since the minimum size for a texture is 2x2, FBarShader can't use
+  a one-dimensional texture.
 - Added back the code to allow some variation to the players' shades when
   players are on teams.
 - Set TEAM_None back to 255. Since a player's team has already been accessible

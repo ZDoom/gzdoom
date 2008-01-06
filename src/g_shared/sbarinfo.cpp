@@ -996,8 +996,8 @@ public:
 	{
 		int i;
 
-		Width = vertical ? 1 : 256;
-		Height = vertical ? 256 : 1;
+		Width = vertical ? 2 : 256;
+		Height = vertical ? 256 : 2;
 		CalcBitSize();
 
 		// Fill the column/row with shading values.
@@ -1005,18 +1005,42 @@ public:
 		// and maximum alpha at the bottom, unless flipped by
 		// setting reverse to true. Horizontal shaders are just
 		// the opposite.
-		if ((!reverse && vertical) || (reverse && !vertical))
+		if (vertical)
 		{
-			for (i = 0; i < 256; ++i)
+			if (!reverse)
 			{
-				Pixels[i] = i;
+				for (i = 0; i < 256; ++i)
+				{
+					Pixels[i] = i;
+					Pixels[256+i] = i;
+				}
+			}
+			else
+			{
+				for (i = 0; i < 256; ++i)
+				{
+					Pixels[i] = 255 - i;
+					Pixels[256+i] = 255 -i;
+				}
 			}
 		}
 		else
 		{
-			for (i = 0; i < 256; ++i)
+			if (!reverse)
 			{
-				Pixels[i] = 255 - i;
+				for (i = 0; i < 256; ++i)
+				{
+					Pixels[i*2] = 255 - i;
+					Pixels[i*2+1] = 255 - i;
+				}
+			}
+			else
+			{
+				for (i = 0; i < 256; ++i)
+				{
+					Pixels[i*2] = i;
+					Pixels[i*2+1] = i;
+				}
 			}
 		}
 		DummySpan[0].TopOffset = 0;
@@ -1031,14 +1055,7 @@ public:
 		{
 			*spans_out = DummySpan;
 		}
-		if (Width == 1)
-		{
-			return Pixels;
-		}
-		else
-		{
-			return Pixels + (column & 255);
-		}
+		return Pixels + (column & WidthMask) * 256;
 	}
 
 	const BYTE *GetPixels()
@@ -1051,7 +1068,7 @@ public:
 	}
 
 private:
-	BYTE Pixels[256];
+	BYTE Pixels[512];
 	Span DummySpan[2];
 };
 
@@ -1059,7 +1076,11 @@ private:
 class FSBarInfo : public FBaseStatusBar
 {
 public:
-	FSBarInfo () : FBaseStatusBar (SBarInfoScript->height)
+	FSBarInfo () : FBaseStatusBar (SBarInfoScript->height),
+		shader_horz_normal(false, false),
+		shader_horz_reverse(false, true),
+		shader_vert_normal(true, false),
+		shader_vert_reverse(true, true)
 	{
 		static const char *InventoryBarLumps[] =
 		{
@@ -1630,11 +1651,7 @@ private:
 				}
 				case SBARINFO_DRAWSHADER:
 				{
-					static FBarShader shader_horz_normal(false, false);
-					static FBarShader shader_horz_reverse(false, true);
-					static FBarShader shader_vert_normal(true, false);
-					static FBarShader shader_vert_reverse(true, true);
-					static FBarShader *const shaders[4] =
+					FBarShader *const shaders[4] =
 					{
 						&shader_horz_normal, &shader_horz_reverse,
 						&shader_vert_normal, &shader_vert_reverse
@@ -1670,7 +1687,7 @@ private:
 		}
 	}
 
-	//draws and image with the specified flags
+	//draws an image with the specified flags
 	void DrawGraphic(FTexture* texture, int x, int y, int flags)
 	{
 		if((flags & DRAWIMAGE_OFFSET_CENTER))
@@ -1930,6 +1947,10 @@ private:
 	int chainWiggle;
 	int artiflash;
 	unsigned int invBarOffset;
+	FBarShader shader_horz_normal;
+	FBarShader shader_horz_reverse;
+	FBarShader shader_vert_normal;
+	FBarShader shader_vert_reverse;
 };
 
 FBaseStatusBar *CreateCustomStatusBar ()

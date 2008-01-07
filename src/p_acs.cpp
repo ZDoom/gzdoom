@@ -4675,11 +4675,13 @@ int DLevelScript::RunScript ()
 				sp--;
 				if (i >= 1 && i <= MAX_ACS_TRANSLATIONS)
 				{
-					translation = translationtables[TRANSLATION_LevelScripted].GetVal(i - 1);
+					TArray<FRemapTable*> &tt = translationtables[TRANSLATION_LevelScripted];
+					while (tt.Size() < i) tt.Push(NULL);
+					translation = tt[i-1];
 					if (translation == NULL)
 					{
 						translation = new FRemapTable;
-						translationtables[TRANSLATION_LevelScripted].SetVal(i - 1, translation);
+						tt[i-1] = translation;
 					}
 					translation->MakeIdentity();
 				}

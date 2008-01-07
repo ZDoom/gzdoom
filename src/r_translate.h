@@ -49,7 +49,7 @@ private:
 	void Alloc(int count);
 };
 
-extern TAutoGrowArray<FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
+extern TArray<FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
 
 #define TRANSLATION_SHIFT 16
 #define TRANSLATION_MASK ((1<<TRANSLATION_SHIFT)-1)

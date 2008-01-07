@@ -2719,17 +2719,19 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	}
 	else
 	{
+		TArray<FRemapTable*> &tt = translationtables[TRANSLATION_LevelScripted];
 		while (arc << w, w != 0xffff)
 		{
 			if (w >= MAX_ACS_TRANSLATIONS)
 			{ // hack hack to avoid crashing
 				w = 0;
 			}
-			trans = translationtables[TRANSLATION_LevelScripted].GetVal(w);
+			while (tt.Size() <= w) tt.Push(NULL);
+			trans = tt[w];
 			if (trans == NULL)
 			{
 				trans = new FRemapTable;
-				translationtables[TRANSLATION_LevelScripted].SetVal(t, trans);
+				tt[w] = trans;
 			}
 			trans->Serialize(arc);
 		}

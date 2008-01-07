@@ -1,4 +1,6 @@
 January 7, 2008 (Changes by Graf Zahl)
+- Fixed: translationtables cannot use a TAutoGrowArray because it doesn't 
+  initialize newly added fields when growing.
 - Added fix for Heretic IDKFA cheat by Karate Chris.
 - Added fix for Strife's AlienSpectre obituary by Karate Chris.
 

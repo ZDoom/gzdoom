@@ -1,3 +1,7 @@
+January 7, 2008 (Changes by Graf Zahl)
+- Added fix for Heretic IDKFA cheat by Karate Chris.
+- Added fix for Strife's AlienSpectre obituary by Karate Chris.
+
 January 6, 2008 (Changes by Graf Zahl)
 - Re-converted icebreak.flac because the old version apparently didn't work.
 - Added SBARINFO update #5 by blzut3:

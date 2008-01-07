@@ -299,7 +299,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_TAKEWEAPS:
-		if (player->morphTics || player->mo != NULL)
+		if (player->morphTics || player->mo == NULL || player->mo->health <= 0)
 		{
 			return;
 		}

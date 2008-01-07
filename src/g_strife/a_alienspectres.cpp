@@ -126,6 +126,7 @@ IMPLEMENT_ACTOR (AAlienSpectre1, Strife, 129, 0)
 	PROP_PainSound ("alienspectre/pain")
 	PROP_DeathSound ("alienspectre/death")
 	PROP_ActiveSound ("alienspectre/active")
+	PROP_Obituary ("$OB_ALIENSPECTE")
 END_DEFAULTS
 
 void AAlienSpectre1::Touch (AActor *toucher)

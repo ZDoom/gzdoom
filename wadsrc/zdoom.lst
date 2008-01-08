@@ -110,6 +110,8 @@ graphics/stfbany.lmp	    stfbany.lmp
 
 ========
 # Crosshairs
+xhairs.txt					xhairs.txt
+
 graphics/xhairs1.imgz	    xhairs1.imgz
 graphics/xhairs2.imgz	    xhairs2.imgz
 graphics/xhairs3.imgz	    xhairs3.imgz
@@ -119,7 +121,7 @@ graphics/xhairs6.imgz	    xhairs6.imgz
 graphics/xhairs7.imgz	    xhairs7.imgz
 
 graphics/xhairb1.imgz	    xhairb1.imgz
-graphics/xhairb2.imgz	    xhairb2.png
+graphics/xhairb2.png	    xhairb2.png
 graphics/xhairb3.imgz	    xhairb3.imgz
 graphics/xhairb4.imgz	    xhairb4.imgz
 graphics/xhairb5.imgz	    xhairb5.imgz

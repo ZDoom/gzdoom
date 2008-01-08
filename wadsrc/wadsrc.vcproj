@@ -169,6 +169,10 @@
 				RelativePath=".\x11r6rgb.txt"
 				>
 			</File>
+			<File
+				RelativePath=".\xhairs.txt"
+				>
+			</File>
 			<Filter
 				Name="Map Translators"
 				>

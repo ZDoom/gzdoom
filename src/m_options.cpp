@@ -76,6 +76,7 @@
 
 #include "m_misc.h"
 #include "hardware.h"
+#include "sc_man.h"
 
 // Data.
 #include "m_menu.h"
@@ -442,6 +443,7 @@ menu_t ControlsMenu =
 static void StartMessagesMenu (void);
 static void StartAutomapMenu (void);
 static void StartScoreboardMenu (void);
+static void InitCrosshairsList();
 
 EXTERN_CVAR (Bool, st_scale)
 EXTERN_CVAR (Int,  r_detail)
@@ -456,17 +458,7 @@ EXTERN_CVAR (Bool, vid_palettehack)
 EXTERN_CVAR (Bool, vid_attachedsurfaces)
 EXTERN_CVAR (Int,  screenblocks)
 
-static value_t Crosshairs[] =
-{
-	{ 0.0, "None" },
-	{ 1.0, "Cross 1" },
-	{ 2.0, "Cross 2" },
-	{ 3.0, "X" },
-	{ 4.0, "Circle" },
-	{ 5.0, "Angle" },
-	{ 6.0, "Triangle" },
-	{ 7.0, "Dot" }
-};
+static TArray<valuestring_t> Crosshairs;
 
 static value_t DetailModes[] =
 {
@@ -512,7 +504,7 @@ static menuitem_t VideoItems[] = {
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ slider,	"Screen size",			{&screenblocks},	   	{3.0}, {12.0},	{1.0}, {NULL} },
 	{ slider,	"Brightness",			{&Gamma},			   	{1.0}, {3.0},	{0.1}, {NULL} },
-	{ discrete,	"Crosshair",			{&crosshair},		   	{8.0}, {0.0},	{0.0}, {Crosshairs} },
+	{ discretes,"Crosshair",			{&crosshair},		   	{8.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Column render mode",	{&r_columnmethod},		{2.0}, {0.0},	{0.0}, {ColumnMethods} },
 	{ discrete, "Detail mode",			{&r_detail},		   	{4.0}, {0.0},	{0.0}, {DetailModes} },
 	{ discrete, "Stretch short skies",	{&r_stretchsky},	   	{2.0}, {0.0},	{0.0}, {OnOff} },
@@ -1461,6 +1453,17 @@ int M_FindCurVal (float cur, value_t *values, int numvals)
 	return v;
 }
 
+int M_FindCurVal (float cur, valuestring_t *values, int numvals)
+{
+	int v;
+
+	for (v = 0; v < numvals; v++)
+		if (values[v].value == cur)
+			break;
+
+	return v;
+}
+
 int M_FindCurGUID (const GUID &guid, GUIDName *values, int numvals)
 {
 	int v;
@@ -1615,7 +1618,8 @@ void M_OptDrawer ()
 
 			}
 			break;
-			
+
+			case discretes:
 			case discrete:
 			case cdiscrete:
 			case inverter:
@@ -1632,7 +1636,14 @@ void M_OptDrawer ()
 				{
 					vals = (int)item->b.numvalues;
 				}
-				v = M_FindCurVal (value.Float, item->e.values, vals);
+				if (item->type != discretes)
+				{
+					v = M_FindCurVal (value.Float, item->e.values, vals);
+				}
+				else
+				{
+					v = M_FindCurVal (value.Float, item->e.valuestrings, vals);
+				}
 
 				if (v == vals)
 				{
@@ -1642,7 +1653,8 @@ void M_OptDrawer ()
 				else
 				{
 					screen->DrawText (item->type == cdiscrete ? v : ValueColor,
-						CurrentMenu->indent + 14, y, item->e.values[v].name,
+						CurrentMenu->indent + 14, y,
+						item->type != discretes ? item->e.values[v].name : item->e.valuestrings[v].name,
 						DTA_Clean, true, TAG_DONE);
 				}
 
@@ -2098,6 +2110,7 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE, "menu/cursor", 1, ATTN_NONE);
 				break;
 
+			case discretes:
 			case discrete:
 			case cdiscrete:
 				{
@@ -2106,11 +2119,18 @@ void M_OptResponder (event_t *ev)
 
 					numvals = (int)item->b.min;
 					value = item->a.cvar->GetGenericRep (CVAR_Float);
-					cur = M_FindCurVal (value.Float, item->e.values, numvals);
+					if (item->type != discretes)
+					{
+						cur = M_FindCurVal (value.Float, item->e.values, numvals);
+					}
+					else
+					{
+						cur = M_FindCurVal (value.Float, item->e.valuestrings, numvals);
+					}
 					if (--cur < 0)
 						cur = numvals - 1;
 
-					value.Float = item->e.values[cur].value;
+					value.Float = item->type != discretes ? item->e.values[cur].value : item->e.valuestrings[cur].value;
 					item->a.cvar->SetGenericRep (value, CVAR_Float);
 
 					// Hack hack. Rebuild list of resolutions
@@ -2232,6 +2252,7 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE, "menu/cursor", 1, ATTN_NONE);
 				break;
 
+			case discretes:
 			case discrete:
 			case cdiscrete:
 				{
@@ -2240,11 +2261,18 @@ void M_OptResponder (event_t *ev)
 
 					numvals = (int)item->b.min;
 					value = item->a.cvar->GetGenericRep (CVAR_Float);
-					cur = M_FindCurVal (value.Float, item->e.values, numvals);
+					if (item->type != discretes)
+					{
+						cur = M_FindCurVal (value.Float, item->e.values, numvals);
+					}
+					else
+					{
+						cur = M_FindCurVal (value.Float, item->e.valuestrings, numvals);
+					}
 					if (++cur >= numvals)
 						cur = 0;
 
-					value.Float = item->e.values[cur].value;
+					value.Float = item->type != discretes ? item->e.values[cur].value : item->e.valuestrings[cur].value;
 					item->a.cvar->SetGenericRep (value, CVAR_Float);
 
 					// Hack hack. Rebuild list of resolutions
@@ -2398,18 +2426,25 @@ void M_OptResponder (event_t *ev)
 				item->e.mfunc();
 			}
 		}
-		else if (item->type == discrete || item->type == cdiscrete)
+		else if (item->type == discrete || item->type == cdiscrete || item->type == discretes)
 		{
 			int cur;
 			int numvals;
 
 			numvals = (int)item->b.min;
 			value = item->a.cvar->GetGenericRep (CVAR_Float);
-			cur = M_FindCurVal (value.Float, item->e.values, numvals);
+			if (item->type != discretes)
+			{
+				cur = M_FindCurVal (value.Float, item->e.values, numvals);
+			}
+			else
+			{
+				cur = M_FindCurVal (value.Float, item->e.valuestrings, numvals);
+			}
 			if (++cur >= numvals)
 				cur = 0;
 
-			value.Float = item->e.values[cur].value;
+			value.Float = item->type != discretes ? item->e.values[cur].value : item->e.valuestrings[cur].value;
 			item->a.cvar->SetGenericRep (value, CVAR_Float);
 
 			// Hack hack. Rebuild list of resolutions
@@ -2846,6 +2881,7 @@ static void MakeSoundChanges (void)
 
 static void VideoOptions (void)
 {
+	InitCrosshairsList();
 	M_SwitchMenu (&VideoMenu);
 }
 
@@ -2853,6 +2889,7 @@ CCMD (menu_display)
 {
 	M_StartControlPanel (true);
 	OptionsActive = true;
+	InitCrosshairsList();
 	M_SwitchMenu (&VideoMenu);
 }
 
@@ -3264,3 +3301,51 @@ void M_Deinit ()
 	M_FreeModesList();
 }
 
+// Reads any XHAIRS lumps for the names of crosshairs and
+// adds them to the display options menu.
+void InitCrosshairsList()
+{
+	int lastlump, lump;
+	valuestring_t value;
+
+	lastlump = 0;
+
+	Crosshairs.Clear();
+	value.value = 0;
+	value.name = "None";
+	Crosshairs.Push(value);
+
+	while ((lump = Wads.FindLump("XHAIRS", &lastlump)) != -1)
+	{
+		SC_OpenLumpNum(lump, "XHAIRS");
+		while (SC_GetNumber())
+		{
+			value.value = float(sc_Number);
+			SC_MustGetString();
+			value.name = sc_String;
+			if (value.value != 0)
+			{ // Check if it already exists. If not, add it.
+				unsigned int i;
+
+				for (i = 1; i < Crosshairs.Size(); ++i)
+				{
+					if (Crosshairs[i].value == value.value)
+					{
+						break;
+					}
+				}
+				if (i < Crosshairs.Size())
+				{
+					Crosshairs[i].name = value.name;
+				}
+				else
+				{
+					Crosshairs.Push(value);
+				}
+			}
+		}
+		SC_Close();
+	}
+	VideoItems[6].b.numvalues = float(Crosshairs.Size());
+	VideoItems[6].e.valuestrings = &Crosshairs[0];
+}

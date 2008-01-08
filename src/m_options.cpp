@@ -1654,7 +1654,7 @@ void M_OptDrawer ()
 				{
 					screen->DrawText (item->type == cdiscrete ? v : ValueColor,
 						CurrentMenu->indent + 14, y,
-						item->type != discretes ? item->e.values[v].name : item->e.valuestrings[v].name,
+						item->type != discretes ? item->e.values[v].name : item->e.valuestrings[v].name.GetString(),
 						DTA_Clean, true, TAG_DONE);
 				}
 

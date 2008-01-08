@@ -56,7 +56,7 @@ class FRemapTablePtr
 public:
 	FRemapTablePtr() throw() : Ptr(0) {}
 	FRemapTablePtr(FRemapTable *p) throw() : Ptr(p) {}
-	FRemapTablePtr(FRemapTablePtr &p) throw() : Ptr(p.Ptr) {}
+	FRemapTablePtr(const FRemapTablePtr &p) throw() : Ptr(p.Ptr) {}
 	operator FRemapTable *() const throw() { return Ptr; }
 	FRemapTablePtr &operator= (FRemapTable *p) throw() { Ptr = p; return *this; }
 	FRemapTablePtr &operator= (FRemapTablePtr &p) throw() { Ptr = p.Ptr; return *this; }
@@ -66,7 +66,7 @@ private:
 	FRemapTable *Ptr;
 };
 
-extern TAutoGrowArray<FRemapTablePtr> translationtables[NUM_TRANSLATION_TABLES];
+extern TAutoGrowArray<FRemapTablePtr, FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
 
 #define TRANSLATION_SHIFT 16
 #define TRANSLATION_MASK ((1<<TRANSLATION_SHIFT)-1)
@@ -87,8 +87,8 @@ inline int GetTranslationIndex(DWORD trans)
 // Retrieve the FRemapTable that an actor's translation value maps to.
 FRemapTable *TranslationToTable(int translation);
 
-const int MAX_ACS_TRANSLATIONS = 65535;
-const int MAX_DECORATE_TRANSLATIONS = 65535;
+#define MAX_ACS_TRANSLATIONS		65535
+#define MAX_DECORATE_TRANSLATIONS	65535
 
 // Initialize color translation tables, for player rendering etc.
 void R_InitTranslationTables (void);

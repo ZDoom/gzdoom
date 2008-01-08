@@ -530,7 +530,7 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 
 	int i, dy;
-	bool done;
+	bool done = true;
 
 	// Copy the old screen in vertical strips on top of the new one.
 	while (ticks--)

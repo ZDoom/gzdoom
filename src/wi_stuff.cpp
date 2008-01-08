@@ -1584,13 +1584,13 @@ void WI_drawNetgameStats ()
 			x = NG_STATSX;
 			// [RH] Only use one graphic for the face backgrounds
 			screen->DrawTexture (p, x - p->GetWidth(), y,
-				DTA_Translation, translationtables[TRANSLATION_Players][i],
+				DTA_Translation, translationtables[TRANSLATION_Players](i),
 				DTA_Clean, true,
 				TAG_DONE);
 
 			if (i == me)
 				screen->DrawTexture (star, x - p->GetWidth(), y,
-					DTA_Translation, translationtables[TRANSLATION_Players][i],
+					DTA_Translation, translationtables[TRANSLATION_Players](i),
 					DTA_Clean, true,
 					TAG_DONE);
 
@@ -1634,13 +1634,13 @@ void WI_drawNetgameStats ()
 			if (gameinfo.gametype == GAME_Heretic)
 			{
 				screen->DrawTexture (star, 25, y,
-					DTA_Translation, translationtables[TRANSLATION_Players][i],
+					DTA_Translation, translationtables[TRANSLATION_Players](i),
 					DTA_Clean, true,
 					TAG_DONE);
 			}
 			else	// Hexen and Strife don't have a face graphic for this.
 			{
-				char pstr[3]={'P', '1'+i};
+				char pstr[3]={'P', '1'+i, 0};
 				screen->SetFont (BigFont);
 				screen->DrawText(CR_UNTRANSLATED, 25, y+10, pstr, DTA_Clean, true, TAG_DONE);
 			}

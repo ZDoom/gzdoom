@@ -43,7 +43,9 @@
 
 // TArray -------------------------------------------------------------------
 
-template <class T>
+// T is the type stored in the array.
+// TT is the type returned by operator().
+template <class T, class TT=T>
 class TArray
 {
 public:
@@ -107,7 +109,13 @@ public:
 			Most = 0;
 		}
 	}
+	// Return a reference to an element
 	T &operator[] (unsigned int index) const
+	{
+		return Array[index];
+	}
+	// Returns the value of an element
+	TT operator() (unsigned int index) const
 	{
 		return Array[index];
 	}
@@ -283,8 +291,8 @@ private:
 // It can still be used as a normal TArray if needed. ACS uses this for
 // world and global arrays.
 
-template <class T>
-class TAutoGrowArray : public TArray<T>
+template <class T, class TT=T>
+class TAutoGrowArray : public TArray<T, TT>
 {
 public:
 	T GetVal (unsigned int index)

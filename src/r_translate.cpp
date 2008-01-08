@@ -44,7 +44,7 @@
 #include "gi.h"
 #include "stats.h"
 
-TAutoGrowArray<FRemapTablePtr> translationtables[NUM_TRANSLATION_TABLES];
+TAutoGrowArray<FRemapTablePtr, FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
 
 /****************************************************/
 /****************************************************/
@@ -281,7 +281,7 @@ FRemapTable *TranslationToTable(int translation)
 {
 	unsigned int type = GetTranslationType(translation);
 	unsigned int index = GetTranslationIndex(translation);
-	TAutoGrowArray<FRemapTablePtr> *slots;
+	TAutoGrowArray<FRemapTablePtr, FRemapTable *> *slots;
 
 	if (type <= 0 || type >= NUM_TRANSLATION_TABLES)
 	{

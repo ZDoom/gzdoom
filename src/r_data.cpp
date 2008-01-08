@@ -173,7 +173,7 @@ int FTextureManager::ListTextures (const char *name, TArray<int> &list)
 			// NULL textures must be ignored.
 			if (tex->UseType!=FTexture::TEX_Null) 
 			{
-				int j;
+				unsigned int j;
 				for(j = 0; j < list.Size(); j++)
 				{
 					// Check for overriding definitions from newer WADs
@@ -383,7 +383,7 @@ void FTextureManager::AddHiresTextures ()
 			}
 			else
 			{
-				for(int i = 0; i < tlist.Size(); i++)
+				for(unsigned int i = 0; i < tlist.Size(); i++)
 				{
 					FTexture * newtex = FTexture::CreateTexture (firsttx, FTexture::TEX_Any);
 					if (newtex != NULL)
@@ -460,7 +460,7 @@ void FTextureManager::LoadHiresTex()
 				}
 				else
 				{
-					for(int i = 0; i < tlist.Size(); i++)
+					for(unsigned int i = 0; i < tlist.Size(); i++)
 					{
 						FTexture * oldtex = Textures[tlist[i]].Texture;
 						int sl;

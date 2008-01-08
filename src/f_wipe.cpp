@@ -104,7 +104,7 @@ bool wipe_doMelt (int ticks)
 	int i, j, dy, x;
 	const short *s;
 	short *d;
-	bool done;
+	bool done = true;
 
 	while (ticks--)
 	{

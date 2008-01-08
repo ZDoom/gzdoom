@@ -1696,7 +1696,7 @@ private:
 					screen->DrawTexture (shaders[(vertical << 1) + reverse], ST_X+cmd.x, ST_Y+cmd.y,
 						DTA_DestWidth, cmd.special,
 						DTA_DestHeight, cmd.special2,
-						DTA_320x200, Scaled,
+						DTA_Bottom320x200, Scaled,
 						DTA_AlphaChannel, true,
 						DTA_FillColor, 0,
 						TAG_DONE);

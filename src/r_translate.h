@@ -49,7 +49,24 @@ private:
 	void Alloc(int count);
 };
 
-extern TArray<FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
+// A class that initializes unusued pointers to NULL. This is used so that when
+// the TAutoGrowArray below is expanded, the new elements will be NULLed.
+class FRemapTablePtr
+{
+public:
+	FRemapTablePtr() throw() : Ptr(0) {}
+	FRemapTablePtr(FRemapTable *p) throw() : Ptr(p) {}
+	FRemapTablePtr(FRemapTablePtr &p) throw() : Ptr(p.Ptr) {}
+	operator FRemapTable *() const throw() { return Ptr; }
+	FRemapTablePtr &operator= (FRemapTable *p) throw() { Ptr = p; return *this; }
+	FRemapTablePtr &operator= (FRemapTablePtr &p) throw() { Ptr = p.Ptr; return *this; }
+	FRemapTable &operator*() const throw() { return *Ptr; }
+	FRemapTable *operator->() const throw() { return Ptr; }
+private:
+	FRemapTable *Ptr;
+};
+
+extern TAutoGrowArray<FRemapTablePtr> translationtables[NUM_TRANSLATION_TABLES];
 
 #define TRANSLATION_SHIFT 16
 #define TRANSLATION_MASK ((1<<TRANSLATION_SHIFT)-1)

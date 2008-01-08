@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "doomtype.h"
 #include "configfile.h"
@@ -374,14 +375,14 @@ bool FConfigFile::ReadConfig (void *file)
 			{
 				// Remove white space in front of =
 				char *whiteprobe = equalpt - 1;
-				while (whiteprobe > start && *whiteprobe <= ' ')
+				while (whiteprobe > start && isspace(*whiteprobe))
 				{
 					whiteprobe--;
 				}
 				whiteprobe[1] = 0;
 				// Remove white space after =
 				whiteprobe = equalpt + 1;
-				while (*whiteprobe && *whiteprobe <= ' ')
+				while (*whiteprobe && isspace(*whiteprobe))
 				{
 					whiteprobe++;
 				}

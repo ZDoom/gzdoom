@@ -1,6 +1,15 @@
+January 7, 2008
+- Fixed: Thing_SetTranslation still used a 16-bit word to hold the translation.
+- Bumped the maximum resolution up to 2560x1600.
+- Fixed: DCanvas::DrawTexture() only expanded virtual screen sizes for widescreen
+  resolutions but left 5:4 modes alone. This fix neccessitated the addition of
+  DTA_Bottom320x200 for the status bar to use so that it could be flush with the
+  bottom of the screen rather than sitting slightly above it.
+- Fixed: FConfigFile::ReadConfig()'s definition of whitespace was too broad.
+- Fixed: Defining custom translation ranges in descending order and/or with gaps
+  made for crashes.
+
 January 7, 2008 (Changes by Graf Zahl)
-- Fixed: translationtables cannot use a TAutoGrowArray because it doesn't 
-  initialize newly added fields when growing.
 - Added fix for Heretic IDKFA cheat by Karate Chris.
 - Added fix for Strife's AlienSpectre obituary by Karate Chris.
 

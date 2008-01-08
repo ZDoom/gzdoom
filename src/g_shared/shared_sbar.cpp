@@ -202,7 +202,15 @@ void FBaseStatusBar::SetScaled (bool scale)
 	{
 		ST_X = 0;
 		ST_Y = 200 - RelTop;
-		::ST_Y = Scale (ST_Y, SCREENHEIGHT, 200);
+		if (CheckRatio(SCREENWIDTH, SCREENHEIGHT) != 4)
+		{ // Normal resolution
+			::ST_Y = Scale (ST_Y, SCREENHEIGHT, 200);
+		}
+		else
+		{ // 5:4 resolution
+			::ST_Y = Scale(ST_Y - 100, SCREENHEIGHT*3, BaseRatioSizes[4][1]) + SCREENHEIGHT/2
+				+ (SCREENHEIGHT - SCREENHEIGHT * BaseRatioSizes[4][3] / 48) / 2;
+		}
 		// If this is odd, add one to make it even and close the gap between the
 		// status bar and the rest of the screen
 		::ST_Y += (::ST_Y & 1);
@@ -427,7 +435,7 @@ void FBaseStatusBar::DrawImage (FTexture *img,
 	{
 		screen->DrawTexture (img, x + ST_X, y + ST_Y,
 			DTA_Translation, translation,
-			DTA_320x200, Scaled,
+			DTA_Bottom320x200, Scaled,
 			TAG_DONE);
 	}
 }
@@ -448,7 +456,7 @@ void FBaseStatusBar::DrawDimImage (FTexture *img,
 	{
 		screen->DrawTexture (img, x + ST_X, y + ST_Y,
 			DTA_ColorOverlay, dimmed ? DIM_OVERLAY : 0,
-			DTA_320x200, Scaled,
+			DTA_Bottom320x200, Scaled,
 			TAG_DONE);
 	}
 }
@@ -469,7 +477,7 @@ void FBaseStatusBar::DrawFadedImage (FTexture *img,
 	{
 		screen->DrawTexture (img, x + ST_X, y + ST_Y,
 			DTA_Alpha, shade,
-			DTA_320x200, Scaled,
+			DTA_Bottom320x200, Scaled,
 			TAG_DONE);
 	}
 }
@@ -491,7 +499,7 @@ void FBaseStatusBar::DrawPartialImage (FTexture *img, int wx, int ww) const
 		screen->DrawTexture (img, ST_X, ST_Y,
 			DTA_WindowLeft, wx,
 			DTA_WindowRight, wx + ww,
-			DTA_320x200, Scaled,
+			DTA_Bottom320x200, Scaled,
 			TAG_DONE);
 	}
 }

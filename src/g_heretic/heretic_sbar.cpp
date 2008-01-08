@@ -248,7 +248,7 @@ private:
 		DrawImage (Images[imgLTFCTOP], 0, -10);
 		//DrawImage (Images[imgRTFCTOP], 290, -10);
 		screen->DrawTexture (Images[imgRTFCTOP], ST_X+290, ST_Y,
-			DTA_320x200, Scaled,
+			DTA_Bottom320x200, Scaled,
 			DTA_TopOffset, Images[imgRTFCTOP]->GetHeight(),
 			TAG_DONE);
 
@@ -278,12 +278,12 @@ private:
 			DrawImage (Images[imgLTFACE], 0, 32);
 			DrawImage (Images[imgRTFACE], 276, 32);
 			screen->DrawTexture (&ChainShade, ST_X+19, ST_Y+32,
-				DTA_320x200, Scaled,
+				DTA_Bottom320x200, Scaled,
 				DTA_AlphaChannel, true,
 				DTA_FillColor, 0,
 				TAG_DONE);
 			screen->DrawTexture (&ChainShade, ST_X+277, ST_Y+32,
-				DTA_320x200, Scaled,
+				DTA_Bottom320x200, Scaled,
 				DTA_AlphaChannel, true,
 				DTA_FillColor, 0,
 				DTA_FlipX, true,
@@ -392,7 +392,7 @@ private:
 			screen->DrawTexture (Images[imgSTATBAR], ST_X+34, ST_Y+2,
 				DTA_WindowLeft, 119,
 				DTA_WindowRight, 129,
-				DTA_320x200, Scaled,
+				DTA_Bottom320x200, Scaled,
 				TAG_DONE);
 			if (playerkeys & 4)
 			{
@@ -432,12 +432,12 @@ private:
 			{ // Draw both ammos
 				screen->DrawTexture (TexMan[ammo1->Icon], 115+ST_X, 11+ST_Y,
 					DTA_CenterOffset, true,
-					DTA_320x200, Scaled,
+					DTA_Bottom320x200, Scaled,
 					TAG_DONE);
 				DrSmallNumber (ammo1->Amount, 124, 7);
 				screen->DrawTexture (TexMan[ammo2->Icon], 115+ST_X, 22+ST_Y,
 					DTA_CenterOffset, true,
-					DTA_320x200, Scaled,
+					DTA_Bottom320x200, Scaled,
 					TAG_DONE);
 				DrSmallNumber (ammo2->Amount, 124, 19);
 			}
@@ -446,7 +446,7 @@ private:
 				DrINumber (ammo1->Amount, 109, 4);
 				screen->DrawTexture (TexMan[ammo1->Icon], 123+ST_X, 22+ST_Y,
 					DTA_CenterOffset, true,
-					DTA_320x200, Scaled,
+					DTA_Bottom320x200, Scaled,
 					TAG_DONE);
 			}
 		}

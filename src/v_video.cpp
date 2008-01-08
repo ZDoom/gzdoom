@@ -986,10 +986,11 @@ void DFrameBuffer::CopyPixelData(BYTE * buffer, int texpitch, int texheight, int
 					buffer[pos]=palette[v].b;
 					buffer[pos+1]=palette[v].g;
 					buffer[pos+2]=palette[v].r;
-					buffer[pos+3]=255-palette[v].a;
+					buffer[pos+3]=255;
 				}
 				else if (palette[v].a!=255)
 				{
+					// [RH] Err... This can't be right, can it?
 					buffer[pos  ] = (buffer[pos  ] * palette[v].a + palette[v].b * (1-palette[v].a)) / 255;
 					buffer[pos+1] = (buffer[pos+1] * palette[v].a + palette[v].g * (1-palette[v].a)) / 255;
 					buffer[pos+2] = (buffer[pos+2] * palette[v].a + palette[v].r * (1-palette[v].a)) / 255;

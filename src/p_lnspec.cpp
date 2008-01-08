@@ -1496,7 +1496,7 @@ FUNC(LS_Thing_SetTranslation)
 // Thing_SetTranslation (tid, range)
 {
 	TActorIterator<AActor> iterator (arg0);
-	WORD range;
+	int range;
 	AActor *target;
 	bool ok = false;
 

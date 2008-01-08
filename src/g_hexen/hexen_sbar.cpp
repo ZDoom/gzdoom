@@ -538,13 +538,13 @@ private:
 				AmmoRefresh--;
 				screen->DrawTexture (TexMan[ammo1->Icon], 89+ST_X, 10+ST_Y,
 					DTA_CenterOffset, true,
-					DTA_320x200, true,
+					DTA_Bottom320x200, true,
 					TAG_DONE);
 				DrSmallNumber (ammo1->Amount, 86, 20);
 
 				screen->DrawTexture (TexMan[ammo2->Icon], 113+ST_X, 10+ST_Y,
 					DTA_CenterOffset, true,
-					DTA_320x200, true,
+					DTA_Bottom320x200, true,
 					TAG_DONE);
 				DrSmallNumber (ammo2->Amount, 110, 20);
 			}
@@ -552,7 +552,7 @@ private:
 			{ // Draw one ammo
 				screen->DrawTexture (TexMan[ammo1->Icon], 100+ST_X, 10+ST_Y,
 					DTA_CenterOffset, true,
-					DTA_320x200, true,
+					DTA_Bottom320x200, true,
 					TAG_DONE);
 				DrSmallNumber (ammo1->Amount, 97, 20);
 			}
@@ -588,7 +588,7 @@ private:
 			screen->DrawTexture (Images[imgSTATBAR], ST_X+38, ST_Y,
 				DTA_WindowLeft, 39,
 				DTA_WindowRight, 87,
-				DTA_320x200, Scaled,
+				DTA_Bottom320x200, Scaled,
 				TAG_DONE);
 		}
 

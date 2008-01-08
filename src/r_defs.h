@@ -38,8 +38,8 @@
 
 
 
-#define MAXWIDTH 2048
-#define MAXHEIGHT 1536
+#define MAXWIDTH 2560
+#define MAXHEIGHT 1600
 
 const WORD NO_INDEX = 0xffffu;
 const DWORD NO_SIDE = 0xffffffffu;

@@ -80,6 +80,7 @@ enum
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
 	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac
 	DTA_320x200,		// bool: scale texture size and position to fit on a virtual 320x200 screen
+	DTA_Bottom320x200,	// bool: same as DTA_320x200 but centers virtual screen on bottom for 1280x1024 targets
 	DTA_CleanNoMove,	// bool: like DTA_Clean but does not reposition output position
 	DTA_FlipX,			// bool: flip image horizontally	//FIXME: Does not work with DTA_Window(Left|Right)
 	DTA_ShadowColor,	// color of shadow

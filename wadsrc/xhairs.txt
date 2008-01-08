@@ -1,0 +1,7 @@
+1 "Cross 1"
+2 "Cross 2"
+3 "X"
+4 "Circle"
+5 "Angle"
+6 "Triangle"
+7 "Dot"

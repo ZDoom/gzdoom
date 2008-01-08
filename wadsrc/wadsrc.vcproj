@@ -40,27 +40,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
-			ConfigurationType="0"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			>
-			<Tool
-				Name="VCNMakeTool"
-				BuildCommandLine="nmake /nologo RM=&quot;del /f /q&quot; SLASH=\ andcopy"
-				ReBuildCommandLine="nmake /nologo RM=&quot;del /f /q&quot; SLASH=\ nrebuild"
-				CleanCommandLine="nmake /nologo RM=&quot;del /f /q&quot; SLASH=\ clean"
-				Output="zdoom.pk3"
-				PreprocessorDefinitions=""
-				IncludeSearchPath=""
-				ForcedIncludes=""
-				AssemblySearchPath=""
-				ForcedUsingAssemblies=""
-				CompileAsManaged=""
-			/>
-		</Configuration>
-		<Configuration
 			Name="Debug|x64"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -72,6 +51,27 @@
 				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo andcopy"
 				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
 				CleanCommandLine="del wadmake zdoom.pk3"
+				Output="zdoom.pk3"
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake /nologo RM=&quot;del /f /q&quot; SLASH=\ andcopy"
+				ReBuildCommandLine="nmake /nologo RM=&quot;del /f /q&quot; SLASH=\ nrebuild"
+				CleanCommandLine="nmake /nologo RM=&quot;del /f /q&quot; SLASH=\ clean"
 				Output="zdoom.pk3"
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
@@ -445,6 +445,10 @@
 					</File>
 					<File
 						RelativePath=".\decorate\doom\doomplayer.txt"
+						>
+					</File>
+					<File
+						RelativePath=".\decorate\doom\doomweapons.txt"
 						>
 					</File>
 					<File

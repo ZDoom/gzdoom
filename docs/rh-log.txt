@@ -1,4 +1,8 @@
 January 7, 2008
+- Fixed: P_BounceWall() cannot assume that BlockingLine is the line the actor
+  should bounce off of. Since the order lines in a blockmap cell are checked
+  for collision is essentially undefined, there could be another line closer to
+  the actor that it should bounce off of instead.
 - Fixed: Thing_SetTranslation still used a 16-bit word to hold the translation.
 - Bumped the maximum resolution up to 2560x1600.
 - Fixed: DCanvas::DrawTexture() only expanded virtual screen sizes for widescreen

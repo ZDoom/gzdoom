@@ -1,3 +1,9 @@
+January 9, 2008
+- Merged the separate line and quad vertex buffers in D3DFB back into a single
+  vertex buffer, made line batching automatic, and added an index buffer for
+  use when batching quads. The index buffer actually offered more of a
+  performance boost than simply batching the quads alone did.
+
 January 9, 2008 (Changes by Graf Zahl)
 - Fixed: 'Painchance' in DECORATE failed when reading custom damage type names.
 - Added Karate Chris's patch for menu opening console commands.

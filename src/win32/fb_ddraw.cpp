@@ -209,11 +209,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 
 	if (!CreateResources ())
 	{
-		if (PrimarySurf != NULL)
-		{
-			PrimarySurf->Release ();
-			PrimarySurf = NULL;
-		}
+		SAFE_RELEASE( PrimarySurf );
 	}
 }
 
@@ -684,37 +680,12 @@ void DDrawFB::ReleaseResources ()
 		delete[] ClipRegion;
 		ClipRegion = NULL;
 	}
-	if (Clipper != NULL)
-	{
-		Clipper->Release ();
-		Clipper = NULL;
-	}
-	if (PrimarySurf != NULL)
-	{
-		//Blank ();
-		PrimarySurf->Release ();
-		PrimarySurf = NULL;
-	}
-	if (BackSurf != NULL)
-	{
-		BackSurf->Release ();
-		BackSurf = NULL;
-	}
-	if (BackSurf2 != NULL)
-	{
-		BackSurf2->Release ();
-		BackSurf2 = NULL;
-	}
-	if (BlitSurf != NULL)
-	{
-		BlitSurf->Release ();
-		BlitSurf = NULL;
-	}
-	if (Palette != NULL)
-	{
-		Palette->Release ();
-		Palette = NULL;
-	}
+	SAFE_RELEASE( Clipper );
+	SAFE_RELEASE( PrimarySurf );
+	SAFE_RELEASE( BackSurf );
+	SAFE_RELEASE( BackSurf2 );
+	SAFE_RELEASE( BlitSurf );
+	SAFE_RELEASE( Palette );
 	if (GDIPalette != NULL)
 	{
 		HDC dc = GetDC (Window);

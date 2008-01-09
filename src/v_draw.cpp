@@ -720,14 +720,6 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	*spot = RGB32k[0][0][bg&(bg>>15)];
 }
 
-void DCanvas::BeginLineDrawing()
-{
-}
-
-void DCanvas::EndLineDrawing()
-{
-}
-
 void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor)
 //void DrawTransWuLine (int x0, int y0, int x1, int y1, BYTE palColor)
 {

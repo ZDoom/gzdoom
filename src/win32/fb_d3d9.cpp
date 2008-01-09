@@ -70,14 +70,14 @@
 
 // MACROS ------------------------------------------------------------------
 
-// The number of vertices the vertex buffer should hold.
-#define NUM_VERTS	12
+// The number of points for the vertex buffer.
+#define NUM_VERTS		10240
 
-// The number of line endpoints for the line vertex buffer.
-#define NUM_LINE_VERTS	10240
+// The number of indices for the index buffer.
+#define NUM_INDEXES		((NUM_VERTS * 6) / 4)
 
 // The number of quads we can batch together.
-#define MAX_QUAD_BATCH	1024
+#define MAX_QUAD_BATCH	(NUM_INDEXES / 6)
 
 // TYPES -------------------------------------------------------------------
 
@@ -188,8 +188,8 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	D3DPRESENT_PARAMETERS d3dpp;
 
 	D3DDevice = NULL;
-	LineBuffer = NULL;
-	QuadBuffer = NULL;
+	VertexBuffer = NULL;
+	IndexBuffer = NULL;
 	FBTexture = NULL;
 	TempRenderTexture = NULL;
 	InitialWipeScreen = NULL;
@@ -282,10 +282,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 D3DFB::~D3DFB ()
 {
 	ReleaseResources ();
-	if (D3DDevice != NULL)
-	{
-		D3DDevice->Release();
-	}
+	SAFE_RELEASE( D3DDevice );
 	delete[] QuadExtra;
 }
 
@@ -406,21 +403,9 @@ void D3DFB::ReleaseResources ()
 	KillNativeTexs();
 	KillNativePals();
 	ReleaseDefaultPoolItems();
-	if (PaletteTexture != NULL)
-	{
-		PaletteTexture->Release();
-		PaletteTexture = NULL;
-	}
-	if (StencilPaletteTexture != NULL)
-	{
-		StencilPaletteTexture->Release();
-		StencilPaletteTexture = NULL;
-	}
-	if (ShadedPaletteTexture != NULL)
-	{
-		ShadedPaletteTexture->Release();
-		ShadedPaletteTexture = NULL;
-	}
+	SAFE_RELEASE( PaletteTexture );
+	SAFE_RELEASE( StencilPaletteTexture );
+	SAFE_RELEASE( ShadedPaletteTexture );
 	if (PalTexBilinearShader != NULL)
 	{
 		if (PalTexBilinearShader != PalTexShader)
@@ -429,36 +414,12 @@ void D3DFB::ReleaseResources ()
 		}
 		PalTexBilinearShader = NULL;
 	}
-	if (PalTexShader != NULL)
-	{
-		PalTexShader->Release();
-		PalTexShader = NULL;
-	}
-	if (PlainShader != NULL)
-	{
-		PlainShader->Release();
-		PlainShader = NULL;
-	}
-	if (PlainStencilShader != NULL)
-	{
-		PlainStencilShader->Release();
-		PlainStencilShader = NULL;
-	}
-	if (ColorOnlyShader != NULL)
-	{
-		ColorOnlyShader->Release();
-		ColorOnlyShader = NULL;
-	}
-	if (GammaFixerShader != NULL)
-	{
-		GammaFixerShader->Release();
-		GammaFixerShader = NULL;
-	}
-	if (BurnShader != NULL)
-	{
-		BurnShader->Release();
-		BurnShader = NULL;
-	}
+	SAFE_RELEASE( PalTexShader );
+	SAFE_RELEASE( PlainShader );
+	SAFE_RELEASE( PlainStencilShader );
+	SAFE_RELEASE( ColorOnlyShader );
+	SAFE_RELEASE( GammaFixerShader );
+	SAFE_RELEASE( BurnShader );
 	if (ScreenWipe != NULL)
 	{
 		delete ScreenWipe;
@@ -470,11 +431,7 @@ void D3DFB::ReleaseResources ()
 // Free resources created with D3DPOOL_DEFAULT.
 void D3DFB::ReleaseDefaultPoolItems()
 {
-	if (FBTexture != NULL)
-	{
-		FBTexture->Release();
-		FBTexture = NULL;
-	}
+	SAFE_RELEASE( FBTexture );
 	if (FinalWipeScreen != NULL)
 	{
 		if (FinalWipeScreen != TempRenderTexture)
@@ -483,26 +440,10 @@ void D3DFB::ReleaseDefaultPoolItems()
 		}
 		FinalWipeScreen = NULL;
 	}
-	if (TempRenderTexture != NULL)
-	{
-		TempRenderTexture->Release();
-		TempRenderTexture = NULL;
-	}
-	if (InitialWipeScreen != NULL)
-	{
-		InitialWipeScreen->Release();
-		InitialWipeScreen = NULL;
-	}
-	if (QuadBuffer != NULL)
-	{
-		QuadBuffer->Release();
-		QuadBuffer = NULL;
-	}
-	if (LineBuffer != NULL)
-	{
-		LineBuffer->Release();
-		LineBuffer = NULL;
-	}
+	SAFE_RELEASE( TempRenderTexture );
+	SAFE_RELEASE( InitialWipeScreen );
+	SAFE_RELEASE( VertexBuffer );
+	SAFE_RELEASE( IndexBuffer );
 }
 
 bool D3DFB::Reset ()
@@ -640,18 +581,20 @@ bool D3DFB::CreateShadedPaletteTexture()
 
 bool D3DFB::CreateVertexes ()
 {
-	if (FAILED(D3DDevice->CreateVertexBuffer(sizeof(FBVERTEX)*NUM_LINE_VERTS, 
-		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFVF_FBVERTEX, D3DPOOL_DEFAULT, &LineBuffer, NULL)))
-	{
-		return false;
-	}
-	LineBatchPos = -1;
-	if (FAILED(D3DDevice->CreateVertexBuffer(sizeof(FBVERTEX)*MAX_QUAD_BATCH*6,
-		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFVF_FBVERTEX, D3DPOOL_DEFAULT, &QuadBuffer, NULL)))
-	{
-		return false;
-	}
+	VertexPos = -1;
+	IndexPos = -1;
 	QuadBatchPos = -1;
+	BatchType = BATCH_None;
+	if (FAILED(D3DDevice->CreateVertexBuffer(sizeof(FBVERTEX)*NUM_VERTS, 
+		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFVF_FBVERTEX, D3DPOOL_DEFAULT, &VertexBuffer, NULL)))
+	{
+		return false;
+	}
+	if (FAILED(D3DDevice->CreateIndexBuffer(sizeof(WORD)*NUM_INDEXES,
+		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &IndexBuffer, NULL)))
+	{
+		return false;
+	}
 	return true;
 }
 
@@ -803,7 +746,7 @@ void D3DFB::Update ()
 		if (InScene)
 		{
 			DrawRateStuff();
-			EndQuadBatch();		// Make sure all quads are drawn
+			EndBatch();		// Make sure all batched primitives are drawn.
 			DoWindowedGamma();
 			D3DDevice->EndScene();
 			D3DDevice->Present(NULL, NULL, NULL, NULL);
@@ -1137,11 +1080,7 @@ D3DTex::D3DTex(FTexture *tex, D3DFB *fb)
 
 D3DTex::~D3DTex()
 {
-	if (Tex != NULL)
-	{
-		Tex->Release();
-		Tex = NULL;
-	}
+	SAFE_RELEASE( Tex );
 	// Detach from the texture list
 	*Prev = Next;
 	if (Next != NULL)
@@ -1169,11 +1108,7 @@ bool D3DTex::Create(IDirect3DDevice9 *D3DDevice)
 	HRESULT hr;
 	int w, h;
 
-	if (Tex != NULL)
-	{
-		Tex->Release();
-		Tex = NULL;
-	}
+	SAFE_RELEASE( Tex );
 
 	w = GameTex->GetWidth();
 	h = GameTex->GetHeight();
@@ -1356,11 +1291,7 @@ D3DPal::D3DPal(FRemapTable *remap, D3DFB *fb)
 
 D3DPal::~D3DPal()
 {
-	if (Tex != NULL)
-	{
-		Tex->Release();
-		Tex = NULL;
-	}
+	SAFE_RELEASE( Tex );
 	// Detach from the palette list
 	*Prev = Next;
 	if (Next != NULL)
@@ -1532,42 +1463,44 @@ void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h)
 
 //==========================================================================
 //
-// D3DFB :: BeginLineDrawing
+// D3DFB :: BeginLineBatch
 //
 //==========================================================================
 
-void D3DFB::BeginLineDrawing()
+void D3DFB::BeginLineBatch()
 {
-	if (In2D < 2 || !InScene || LineBatchPos >= 0)
+	if (In2D < 2 || !InScene || BatchType == BATCH_Lines)
 	{
 		return;
 	}
-	EndQuadBatch();		// Make sure all quads have been drawn first
-	LineBuffer->Lock(0, 0, (void **)&LineData, D3DLOCK_DISCARD);
-	LineBatchPos = 0;
+	EndQuadBatch();		// Make sure all quads have been drawn first.
+	VertexBuffer->Lock(0, 0, (void **)&VertexData, D3DLOCK_DISCARD);
+	VertexPos = 0;
+	BatchType = BATCH_Lines;
 }
 
 //==========================================================================
 //
-// D3DFB :: EndLineDrawing
+// D3DFB :: EndLineBatch
 //
 //==========================================================================
 
-void D3DFB::EndLineDrawing()
+void D3DFB::EndLineBatch()
 {
-	if (In2D < 2 || !InScene || LineBatchPos < 0)
+	if (In2D < 2 || !InScene || BatchType != BATCH_Lines)
 	{
 		return;
 	}
-	LineBuffer->Unlock();
-	if (LineBatchPos > 0)
+	VertexBuffer->Unlock();
+	if (VertexPos > 0)
 	{
 		SetPixelShader(ColorOnlyShader);
 		SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
-		D3DDevice->SetStreamSource(0, LineBuffer, 0, sizeof(FBVERTEX));
-		D3DDevice->DrawPrimitive(D3DPT_LINELIST, 0, LineBatchPos / 2);
+		D3DDevice->SetStreamSource(0, VertexBuffer, 0, sizeof(FBVERTEX));
+		D3DDevice->DrawPrimitive(D3DPT_LINELIST, 0, VertexPos / 2);
 	}
-	LineBatchPos = -1;
+	VertexPos = -1;
+	BatchType = BATCH_None;
 }
 
 //==========================================================================
@@ -1587,42 +1520,35 @@ void D3DFB::DrawLine(int x0, int y0, int x1, int y1, int palcolor, uint32 color)
 	{
 		return;
 	}
-	if (LineBatchPos == NUM_LINE_VERTS)
-	{ // flush the buffer and refill it
-		EndLineDrawing();
-		BeginLineDrawing();
+	if (BatchType != BATCH_Lines)
+	{
+		BeginLineBatch();
 	}
-	if (LineBatchPos >= 0)
-	{ // Batched drawing: Add the endpoints to the vertex buffer.
-		LineData[LineBatchPos].x = float(x0);
-		LineData[LineBatchPos].y = float(y0) + LBOffset;
-		LineData[LineBatchPos].z = 0;
-		LineData[LineBatchPos].rhw = 1;
-		LineData[LineBatchPos].color0 = color;
-		LineData[LineBatchPos].color1 = 0;
-		LineData[LineBatchPos].tu = 0;
-		LineData[LineBatchPos].tv = 0;
-		LineData[LineBatchPos+1].x = float(x1);
-		LineData[LineBatchPos+1].y = float(y1) + LBOffset;
-		LineData[LineBatchPos+1].z = 0;
-		LineData[LineBatchPos+1].rhw = 1;
-		LineData[LineBatchPos+1].color0 = color;
-		LineData[LineBatchPos+1].color1 = 0;
-		LineData[LineBatchPos+1].tu = 0;
-		LineData[LineBatchPos+1].tv = 0;
-		LineBatchPos += 2;
+	if (VertexPos == NUM_VERTS)
+	{ // Flush the buffer and refill it.
+		EndLineBatch();
+		BeginLineBatch();
 	}
-	else
-	{ // Unbatched drawing: Draw it right now.
-		FBVERTEX endpts[2] =
-		{
-			{ float(x0), float(y0), 0, 1, color },
-			{ float(x1), float(y1), 0, 1, color }
-		};
-		SetPixelShader(ColorOnlyShader);
-		SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
-		D3DDevice->DrawPrimitiveUP(D3DPT_LINELIST, 1, endpts, sizeof(FBVERTEX));
-	}
+	// Add the endpoints to the vertex buffer.
+	VertexData[VertexPos].x = float(x0);
+	VertexData[VertexPos].y = float(y0) + LBOffset;
+	VertexData[VertexPos].z = 0;
+	VertexData[VertexPos].rhw = 1;
+	VertexData[VertexPos].color0 = color;
+	VertexData[VertexPos].color1 = 0;
+	VertexData[VertexPos].tu = 0;
+	VertexData[VertexPos].tv = 0;
+
+	VertexData[VertexPos+1].x = float(x1);
+	VertexData[VertexPos+1].y = float(y1) + LBOffset;
+	VertexData[VertexPos+1].z = 0;
+	VertexData[VertexPos+1].rhw = 1;
+	VertexData[VertexPos+1].color0 = color;
+	VertexData[VertexPos+1].color1 = 0;
+	VertexData[VertexPos+1].tu = 0;
+	VertexData[VertexPos+1].tv = 0;
+
+	VertexPos += 2;
 }
 
 //==========================================================================
@@ -1646,6 +1572,7 @@ void D3DFB::DrawPixel(int x, int y, int palcolor, uint32 color)
 	{
 		float(x), float(y), 0, 1, color
 	};
+	EndBatch();		// Draw out any batched operations.
 	SetPixelShader(ColorOnlyShader);
 	SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 	D3DDevice->DrawPrimitiveUP(D3DPT_POINTLIST, 1, &pt, sizeof(FBVERTEX));
@@ -1750,16 +1677,16 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	x1 -= 0.5f;
 	y1 -= yoffs;
 
-	FBVERTEX *vert = &QuadData[QuadBatchPos * 6];
+	FBVERTEX *vert = &VertexData[VertexPos];
 
-	vert[3].x = vert[0].x = x0;
-	vert[3].y = vert[0].y = y0;
-	vert[3].z = vert[0].z = 0;
-	vert[3].rhw = vert[0].rhw = 1;
-	vert[3].color0 = vert[0].color0 = color0;
-	vert[3].color1 = vert[0].color1 = color1;
-	vert[3].tu = vert[0].tu = u0;
-	vert[3].tv = vert[0].tv = v0;
+	vert[0].x = x0;
+	vert[0].y = y0;
+	vert[0].z = 0;
+	vert[0].rhw = 1;
+	vert[0].color0 = color0;
+	vert[0].color1 = color1;
+	vert[0].tu = u0;
+	vert[0].tv = v0;
 
 	vert[1].x = x1;
 	vert[1].y = y0;
@@ -1770,25 +1697,34 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	vert[1].tu = u1;
 	vert[1].tv = v0;
 
-	vert[4].x = vert[2].x = x1;
-	vert[4].y = vert[2].y = y1;
-	vert[4].z = vert[2].z = 0;
-	vert[4].rhw = vert[2].rhw = 1;
-	vert[4].color0 = vert[2].color0 = color0;
-	vert[4].color1 = vert[2].color1 = color1;
-	vert[4].tu = vert[2].tu = u1;
-	vert[4].tv = vert[2].tv = v1;
+	vert[2].x = x1;
+	vert[2].y = y1;
+	vert[2].z = 0;
+	vert[2].rhw = 1;
+	vert[2].color0 = color0;
+	vert[2].color1 = color1;
+	vert[2].tu = u1;
+	vert[2].tv = v1;
 
-	vert[5].x = x0;
-	vert[5].y = y1;
-	vert[5].z = 0;
-	vert[5].rhw = 1;
-	vert[5].color0 = color0;
-	vert[5].color1 = color1;
-	vert[5].tu = u0;
-	vert[5].tv = v1;
+	vert[3].x = x0;
+	vert[3].y = y1;
+	vert[3].z = 0;
+	vert[3].rhw = 1;
+	vert[3].color0 = color0;
+	vert[3].color1 = color1;
+	vert[3].tu = u0;
+	vert[3].tv = v1;
+
+	IndexData[IndexPos    ] = VertexPos;
+	IndexData[IndexPos + 1] = VertexPos + 1;
+	IndexData[IndexPos + 2] = VertexPos + 2;
+	IndexData[IndexPos + 3] = VertexPos;
+	IndexData[IndexPos + 4] = VertexPos + 2;
+	IndexData[IndexPos + 5] = VertexPos + 3;
 
 	QuadBatchPos++;
+	VertexPos += 4;
+	IndexPos += 6;
 }
 
 //==========================================================================
@@ -1806,7 +1742,7 @@ void D3DFB::AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR 
 
 	CheckQuadBatch();
 	quad = &QuadExtra[QuadBatchPos];
-	verts = &QuadData[QuadBatchPos * 6];
+	verts = &VertexData[VertexPos];
 
 	float x = float(left) - 0.5f;
 	float y = float(top) - 0.5f + (GatheringWipeScreen ? 0 : LBOffset);
@@ -1826,14 +1762,14 @@ void D3DFB::AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR 
 	quad->Palette = NULL;
 	quad->Texture = NULL;
 
-	verts[3].x = verts[0].x = x;
-	verts[3].y = verts[0].y = y;
-	verts[3].z = verts[0].z = 0;
-	verts[3].rhw = verts[0].rhw = 1;
-	verts[3].color0 = verts[0].color0 = color;
-	verts[3].color1 = verts[0].color1 = 0;
-	verts[3].tu = verts[0].tu = 0;
-	verts[3].tv = verts[0].tv = 0;
+	verts[0].x = x;
+	verts[0].y = y;
+	verts[0].z = 0;
+	verts[0].rhw = 1;
+	verts[0].color0 = color;
+	verts[0].color1 = 0;
+	verts[0].tu = 0;
+	verts[0].tv = 0;
 
 	verts[1].x = x + width;
 	verts[1].y = y;
@@ -1844,25 +1780,34 @@ void D3DFB::AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR 
 	verts[1].tu = 0;
 	verts[1].tv = 0;
 
-	verts[4].x = verts[2].x = x + width;
-	verts[4].y = verts[2].y = y + height;
-	verts[4].z = verts[2].z = 0;
-	verts[4].rhw = verts[2].rhw = 1;
-	verts[4].color0 = verts[2].color0 = color;
-	verts[4].color1 = verts[2].color1 = 0;
-	verts[4].tu = verts[2].tu = 0;
-	verts[4].tv = verts[2].tv = 0;
+	verts[2].x = x + width;
+	verts[2].y = y + height;
+	verts[2].z = 0;
+	verts[2].rhw = 1;
+	verts[2].color0 = color;
+	verts[2].color1 = 0;
+	verts[2].tu = 0;
+	verts[2].tv = 0;
 
-	verts[5].x = x;
-	verts[5].y = y + height;
-	verts[5].z = 0;
-	verts[5].rhw = 1;
-	verts[5].color0 = color;
-	verts[5].color1 = 0;
-	verts[5].tu = 0;
-	verts[5].tv = 0;
+	verts[3].x = x;
+	verts[3].y = y + height;
+	verts[3].z = 0;
+	verts[3].rhw = 1;
+	verts[3].color0 = color;
+	verts[3].color1 = 0;
+	verts[3].tu = 0;
+	verts[3].tv = 0;
+
+	IndexData[IndexPos    ] = VertexPos;
+	IndexData[IndexPos + 1] = VertexPos + 1;
+	IndexData[IndexPos + 2] = VertexPos + 2;
+	IndexData[IndexPos + 3] = VertexPos;
+	IndexData[IndexPos + 4] = VertexPos + 2;
+	IndexData[IndexPos + 5] = VertexPos + 3;
 
 	QuadBatchPos++;
+	VertexPos += 4;
+	IndexPos += 6;
 }
 
 //==========================================================================
@@ -1875,7 +1820,11 @@ void D3DFB::AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR 
 
 void D3DFB::CheckQuadBatch()
 {
-	if (QuadBatchPos == MAX_QUAD_BATCH)
+	if (BatchType == BATCH_Lines)
+	{
+		EndLineBatch();
+	}
+	else if (QuadBatchPos == MAX_QUAD_BATCH)
 	{
 		EndQuadBatch();
 	}
@@ -1899,8 +1848,13 @@ void D3DFB::BeginQuadBatch()
 	{
 		return;
 	}
-	QuadBuffer->Lock(0, 0, (void **)&QuadData, D3DLOCK_DISCARD);
+	EndLineBatch();		// Make sure all lines have been drawn first.
+	VertexBuffer->Lock(0, 0, (void **)&VertexData, D3DLOCK_DISCARD);
+	IndexBuffer->Lock(0, 0, (void **)&IndexData, D3DLOCK_DISCARD);
+	VertexPos = 0;
+	IndexPos = 0;
 	QuadBatchPos = 0;
+	BatchType = BATCH_Quads;
 }
 
 //==========================================================================
@@ -1913,17 +1867,22 @@ void D3DFB::BeginQuadBatch()
 
 void D3DFB::EndQuadBatch()
 {
-	if (In2D < 2 || !InScene || QuadBatchPos < 0)
+	if (In2D < 2 || !InScene || BatchType != BATCH_Quads)
 	{
 		return;
 	}
-	QuadBuffer->Unlock();
+	BatchType = BATCH_None;
+	VertexBuffer->Unlock();
+	IndexBuffer->Unlock();
 	if (QuadBatchPos == 0)
 	{
 		QuadBatchPos = -1;
+		VertexPos = -1;
+		IndexPos = -1;
 		return;
 	}
-	D3DDevice->SetStreamSource(0, QuadBuffer, 0, sizeof(FBVERTEX));
+	D3DDevice->SetStreamSource(0, VertexBuffer, 0, sizeof(FBVERTEX));
+	D3DDevice->SetIndices(IndexBuffer);
 	for (int i = 0; i < QuadBatchPos; )
 	{
 		const BufferedQuad *quad = &QuadExtra[i];
@@ -2000,10 +1959,32 @@ void D3DFB::EndQuadBatch()
 		}
 
 		// Draw the quad
-		D3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, i * 6, 2 * (j - i));
+		D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4 * i, 4 * (j - i), 6 * i, 2 * (j - i));
 		i = j;
 	}
 	QuadBatchPos = -1;
+	VertexPos = -1;
+	IndexPos = -1;
+}
+
+//==========================================================================
+//
+// D3DFB :: EndBatch
+//
+// Draws whichever type of primitive is currently being batched.
+//
+//==========================================================================
+
+void D3DFB::EndBatch()
+{
+	if (BatchType == BATCH_Quads)
+	{
+		EndQuadBatch();
+	}
+	else if (BatchType == BATCH_Lines)
+	{
+		EndLineBatch();
+	}
 }
 
 //==========================================================================

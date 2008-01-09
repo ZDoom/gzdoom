@@ -295,7 +295,7 @@ void D3DFB::WipeEndScreen()
 		Begin2D(true);
 	}
 
-	EndQuadBatch();		// Make sure all quads have been drawn.
+	EndBatch();			// Make sure all batched primitives have been drawn.
 
 	// Don't do anything if there is no ending point.
 	if (OldRenderTarget == NULL)
@@ -351,11 +351,7 @@ bool D3DFB::WipeDo(int ticks)
 		D3DDevice->BeginScene();
 		InScene = true;
 	}
-	if (OldRenderTarget != NULL)
-	{
-		OldRenderTarget->Release();
-		OldRenderTarget = NULL;
-	}
+	SAFE_RELEASE( OldRenderTarget );
 	if (TempRenderTexture != NULL && TempRenderTexture != FinalWipeScreen &&
 		(Windowed && GammaFixerShader))
 	{
@@ -394,11 +390,7 @@ void D3DFB::WipeCleanup()
 		delete ScreenWipe;
 		ScreenWipe = NULL;
 	}
-	if (InitialWipeScreen != NULL)
-	{
-		InitialWipeScreen->Release();
-		InitialWipeScreen = NULL;
-	}
+	SAFE_RELEASE( InitialWipeScreen );
 	if (FinalWipeScreen != NULL && FinalWipeScreen != TempRenderTexture)
 	{
 		FinalWipeScreen->Release();
@@ -601,11 +593,7 @@ D3DFB::Wiper_Burn::Wiper_Burn(D3DFB *fb)
 
 D3DFB::Wiper_Burn::~Wiper_Burn()
 {
-	if (BurnTexture != NULL)
-	{
-		BurnTexture->Release();
-		BurnTexture = NULL;
-	}
+	SAFE_RELEASE( BurnTexture );
 }
 
 //==========================================================================

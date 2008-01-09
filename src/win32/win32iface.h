@@ -49,6 +49,8 @@
 #include "hardware.h"
 #include "v_video.h"
 
+#define SAFE_RELEASE(x)		{ if (x != NULL) { x->Release(); x = NULL; } }
+
 EXTERN_CVAR (Bool, vid_vsync)
 
 class D3DTex;
@@ -242,8 +244,6 @@ public:
 	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
 	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
 	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
-	void BeginLineDrawing();
-	void EndLineDrawing();
 	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor);
 	void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor);
 	bool WipeStartScreen(int type);
@@ -305,6 +305,9 @@ private:
 	void CheckQuadBatch();
 	void BeginQuadBatch();
 	void EndQuadBatch();
+	void BeginLineBatch();
+	void EndLineBatch();
+	void EndBatch();
 
 	// State
 	void SetAlphaBlend(BOOL enabled, D3DBLEND srcblend=D3DBLEND(0), D3DBLEND destblend=D3DBLEND(0));
@@ -351,14 +354,15 @@ private:
 	IDirect3DTexture9 *StencilPaletteTexture;
 	IDirect3DTexture9 *ShadedPaletteTexture;
 
-	IDirect3DVertexBuffer9 *LineBuffer;
-	FBVERTEX *LineData;
-	int LineBatchPos;
-
-	IDirect3DVertexBuffer9 *QuadBuffer;
-	FBVERTEX *QuadData;
+	IDirect3DVertexBuffer9 *VertexBuffer;
+	FBVERTEX *VertexData;
+	IDirect3DIndexBuffer9 *IndexBuffer;
+	WORD *IndexData;
 	BufferedQuad *QuadExtra;
+	int VertexPos;
+	int IndexPos;
 	int QuadBatchPos;
+	enum { BATCH_None, BATCH_Quads, BATCH_Lines } BatchType;
 
 	IDirect3DPixelShader9 *PalTexShader, *PalTexBilinearShader;
 	IDirect3DPixelShader9 *PlainShader;

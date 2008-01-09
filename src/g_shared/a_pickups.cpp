@@ -76,15 +76,11 @@ bool AAmmo::HandlePickup (AInventory *item)
 		{
 			int receiving = item->Amount;
 
-			if (!(item->ItemFlags&IF_IGNORESKILL))
-			{
-				// extra ammo in baby mode and nightmare mode
+			if (!(item->ItemFlags & IF_IGNORESKILL))
+			{ // extra ammo in baby mode and nightmare mode
 				receiving = FixedMul(receiving, G_SkillProperty(SKILLP_AmmoFactor));
 			}
 			int oldamount = Amount;
-
-			if (dmflags2 & DF2_YES_DOUBLEAMMO)
-				receiving *= 2;
 
 			Amount += receiving;
 			if (Amount > MaxAmount)

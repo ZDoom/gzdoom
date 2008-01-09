@@ -1,3 +1,13 @@
+January 8, 2008
+- Fixed: When starting a teamplay netgame, players who did not specify a team
+  were not informed about which team they ended up joining.
+- Added Skulltag's DF2_SAME_SPAWN_SPOT flags.
+- Fixed: DF2_YES_DEGENERATION was pretty much guaranteed to go out of sync
+  because it used gametic for timing.
+- Added DoubleAmmoFactor as a skill property for the DF2_YES_DOUBLEAMMO flag.
+- Renumbered the dmflags2 entries to match Skulltag's again.
+- Added Karate Chris's infinite ammo patch.
+
 January 7, 2008
 - Added support for user-defined crosshairs in the Display Options menu. See
   xhairs.txt in zdoom.pk3. It's pretty simple.

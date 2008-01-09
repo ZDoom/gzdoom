@@ -3,6 +3,7 @@
 
 skill baby
 	AmmoFactor 1.5
+	DoubleAmmoFactor 1.5
 	DamageFactor 0.5
 	EasyBossBrain
 	SpawnFilter "Easy"
@@ -13,6 +14,7 @@ skill baby
 
 
 skill easy
+	DoubleAmmoFactor 1.5
 	SpawnFilter "Easy"
 	Name "MNU_YELLOWBELLIES"
 	PlayerClassName "fighter" "MNU_KNIGHT"
@@ -20,6 +22,7 @@ skill easy
 	PlayerClassName "mage" "MNU_ENCHANTER"
 
 skill normal
+	DoubleAmmoFactor 1.5
 	SpawnFilter "Normal"
 	Name "MNU_BRINGEST"
 	PlayerClassName "fighter" "MNU_WARRIOR"
@@ -27,6 +30,7 @@ skill normal
 	PlayerClassName "mage" "MNU_SORCERER"
 
 skill hard
+	DoubleAmmoFactor 1.5
 	SpawnFilter "Hard"
 	Name "MNU_SMITE"
 	PlayerClassName "fighter" "MNU_BERSERKER"
@@ -35,6 +39,7 @@ skill hard
 
 skill nightmare
 	AmmoFactor 1.5
+	DoubleAmmoFactor 1.5
 	FastMonsters
 	DisableCheats
 	SpawnFilter "Hard"

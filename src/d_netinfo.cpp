@@ -292,7 +292,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 {
 	userinfo_t *info = &players[pnum].userinfo;
 
-	if ((dmflags2 & DF2_NO_TEAMSWITCH) && (alwaysapplydmflags || deathmatch) && TEAMINFO_IsValidTeam (info->team))
+	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && TEAMINFO_IsValidTeam (info->team))
 	{
 		Printf ("Team changing has been disabled!\n");
 		return;

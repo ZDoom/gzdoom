@@ -1221,7 +1221,7 @@ void G_PlayerReborn (int player)
 		p->isbot = false;
 
 	// [BC] Handle temporary invulnerability when respawned
-	if ((dmflags2 & DF2_YES_INVUL) && (deathmatch || alwaysapplydmflags))
+	if ((dmflags2 & DF2_YES_RESPAWN_INVUL) && (deathmatch || alwaysapplydmflags))
 	{
 		APowerup *invul = static_cast<APowerup*>(actor->GiveInventoryType (RUNTIME_CLASS(APowerInvulnerable)));
 		invul->EffectTics = 2*TICRATE;

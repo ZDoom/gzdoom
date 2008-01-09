@@ -73,6 +73,11 @@ public:
 		return operator()();
 	}
 
+	DWORD GetSeed()
+	{
+		return Seed;
+	}
+
 	static void StaticClearRandom ();
 	static DWORD StaticSumSeeds ();
 	static void StaticReadRNGState (PNGHandle *png);

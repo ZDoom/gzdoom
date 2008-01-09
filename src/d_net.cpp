@@ -1346,6 +1346,7 @@ bool DoArbitrate (void *userdata)
 				stream = &netbuffer[9];
 			}
 
+			D_ReadUserInfoStrings (netbuffer[1], &stream, false);
 			if (!nodeingame[node])
 			{
 				version = (netbuffer[2] << 16) | (netbuffer[3] << 8) | netbuffer[4];
@@ -1356,9 +1357,8 @@ bool DoArbitrate (void *userdata)
 
 				playeringame[netbuffer[1]] = true;
 				nodeingame[node] = true;
-				data->playersdetected[0] |= 1 << netbuffer[1];
 
-				D_ReadUserInfoStrings (netbuffer[1], &stream, false);
+				data->playersdetected[0] |= 1 << netbuffer[1];
 
 				StartScreen->NetMessage ("Found %s (node %d, player %d)",
 						players[netbuffer[1]].userinfo.netname,
@@ -1422,7 +1422,7 @@ bool DoArbitrate (void *userdata)
 			for (j = 0; j < doomcom.numnodes; ++j)
 			{
 				// Send info about player j to player i?
-				if (i != j && (data->playersdetected[0] & (1<<j)) && !(data->playersdetected[i] & (1<<j)))
+				if ((data->playersdetected[0] & (1<<j)) && !(data->playersdetected[i] & (1<<j)))
 				{
 					netbuffer[1] = j;
 					stream = &netbuffer[9];
@@ -1464,8 +1464,13 @@ void D_ArbitrateNetStart (void)
 	memset (data.playersdetected, 0, sizeof(data.playersdetected));
 	memset (data.gotsetup, 0, sizeof(data.gotsetup));
 
-	// Everyone know about themself
-	data.playersdetected[0] = 1 << consoleplayer;
+	// The arbitrator knows about himself, but the other players must
+	// be told about themselves, in case the host had to adjust their
+	// userinfo (e.g. assign them to a different team).
+	if (consoleplayer == Net_Arbitrator)
+	{
+		data.playersdetected[0] = 1 << consoleplayer;
+	}
 
 	// Assign nodes to players. The local player is always node 0.
 	// If the local player is not the host, then the host is node 1.

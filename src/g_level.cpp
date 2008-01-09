@@ -3097,6 +3097,7 @@ static void ParseSkill ()
 	FSkillInfo skill;
 
 	skill.AmmoFactor = FRACUNIT;
+	skill.DoubleAmmoFactor = 2*FRACUNIT;
 	skill.DamageFactor = FRACUNIT;
 	skill.FastMonsters = false;
 	skill.DisableCheats = false;
@@ -3120,6 +3121,11 @@ static void ParseSkill ()
 		{
 			SC_MustGetFloat ();
 			skill.AmmoFactor = FLOAT2FIXED(sc_Float);
+		}
+		else if (SC_Compare ("doubleammofactor"))
+		{
+			SC_MustGetFloat ();
+			skill.DoubleAmmoFactor = FLOAT2FIXED(sc_Float);
 		}
 		else if (SC_Compare ("damagefactor"))
 		{
@@ -3227,6 +3233,10 @@ int G_SkillProperty(ESkillProperty prop)
 		switch(prop)
 		{
 		case SKILLP_AmmoFactor:
+			if (dmflags2 & DF2_YES_DOUBLEAMMO)
+			{
+				return AllSkills[gameskill].DoubleAmmoFactor;
+			}
 			return AllSkills[gameskill].AmmoFactor;
 
 		case SKILLP_DamageFactor:
@@ -3275,6 +3285,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 {
 	Name = other.Name;
 	AmmoFactor = other.AmmoFactor;
+	DoubleAmmoFactor = other.DoubleAmmoFactor;
 	DamageFactor = other.DamageFactor;
 	FastMonsters = other.FastMonsters;
 	DisableCheats = other.DisableCheats;

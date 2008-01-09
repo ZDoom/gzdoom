@@ -390,7 +390,7 @@ typedef TMap<FName, FString> SkillMenuNames;
 struct FSkillInfo
 {
 	FName Name;
-	fixed_t AmmoFactor;
+	fixed_t AmmoFactor, DoubleAmmoFactor;
 	fixed_t DamageFactor;
 	bool FastMonsters;
 	bool DisableCheats;

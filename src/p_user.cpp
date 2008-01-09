@@ -2199,7 +2199,7 @@ void P_PlayerThink (player_t *player)
 		// Apply degeneration.
 		if (dmflags2 & DF2_YES_DEGENERATION)
 		{
-			if ((gametic % TICRATE) == 0 && player->health > deh.MaxHealth)
+			if ((level.time % TICRATE) == 0 && player->health > deh.MaxHealth)
 			{
 				if (player->health - 5 < deh.MaxHealth)
 					player->health = deh.MaxHealth;

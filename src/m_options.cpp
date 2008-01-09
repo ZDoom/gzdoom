@@ -1006,6 +1006,7 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Drop weapon",			{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_WEAPONDROP} },
 	{ bitflag,	"Double ammo",			{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_DOUBLEAMMO} },
 	{ bitflag,	"Infinite ammo",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_INFINITE_AMMO} },
+	{ bitflag,	"Infinite inventory",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_INFINITE_INVENTORY} },
 	{ bitflag,	"No monsters",			{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_NO_MONSTERS} },
 	{ bitflag,	"Monsters respawn",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_MONSTERS_RESPAWN} },
 	{ bitflag,	"No respawn",			{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_NO_RESPAWN} },
@@ -1029,10 +1030,11 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Force respawn",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FORCE_RESPAWN} },
 	{ bitflag,	"Allow exit",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_EXIT} },
 	{ bitflag,	"Barrels respawn",		{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_BARRELS_RESPAWN} },
-	{ bitflag,	"Respawn protection",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_INVUL} },
+	{ bitflag,	"Respawn protection",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_RESPAWN_INVUL} },
 	{ bitflag,	"Lose frag if fragged",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_LOSEFRAG} },
 	{ bitflag,	"Keep frags gained",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_KEEPFRAGS} },
-	{ bitflag,	"No team changing",		{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_NO_TEAMSWITCH} },
+	{ bitflag,	"No team switching",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_NO_TEAM_SWITCH} },
+
 	{ redtext,	" ",					{NULL},			{0}, {0}, {0}, {NULL} },
 	{ whitetext,"Cooperative Settings",	{NULL},			{0}, {0}, {0}, {NULL} },
 	{ bitflag,	"Spawn multi. weapons", {&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_COOP_WEAPON_SPAWN} },
@@ -1043,6 +1045,7 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Keep powerups",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_COOP_LOSE_POWERUPS} },
 	{ bitflag,	"Keep ammo",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_COOP_LOSE_AMMO} },
 	{ bitflag,	"Lose half ammo",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_COOP_HALVE_AMMO} },
+	{ bitflag,	"Spawn where died",		{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_SAME_SPAWN_SPOT} },
 };
 
 static menu_t DMFlagsMenu =

@@ -744,6 +744,10 @@ bool AActor::UseInventory (AInventory *item)
 	{
 		return false;
 	}
+
+	if (dmflags2 & DF2_INFINITE_INVENTORY)
+		return true;
+
 	if (--item->Amount <= 0 && !(item->ItemFlags & IF_KEEPDEPLETED))
 	{
 		item->Destroy ();
@@ -3433,6 +3437,8 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 	player_t *p;
 	APlayerPawn *mobj, *oldactor;
 	BYTE	  state;
+	fixed_t spawn_x, spawn_y;
+	angle_t spawn_angle;
 
 	// [RH] Things 4001-? are also multiplayer starts. Just like 1-4.
 	//		To make things simpler, figure out which player is being
@@ -3484,8 +3490,25 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 		p->cls = PlayerClasses[p->CurrentPlayerClass].Type;
 	}
 
+    if (( dmflags2 & DF2_SAME_SPAWN_SPOT ) &&
+            ( p->playerstate == PST_REBORN ) &&
+            ( deathmatch == false ) &&
+            ( gameaction != ga_worlddone ) &&
+			( p->mo != NULL ))
+    {
+            spawn_x = p->mo->x;
+            spawn_y = p->mo->y;
+			spawn_angle = p->mo->angle;
+    }
+    else
+    {
+            spawn_x = mthing->x << FRACBITS;
+            spawn_y = mthing->y << FRACBITS;
+            spawn_angle = ANG45 * (mthing->angle/45);
+    }
+
 	mobj = static_cast<APlayerPawn *>
-		(Spawn (p->cls, mthing->x << FRACBITS, mthing->y << FRACBITS, ONFLOORZ, NO_REPLACE));
+		(Spawn (p->cls, spawn_x, spawn_y, ONFLOORZ, NO_REPLACE));
 
 	mobj->FriendPlayer = playernum + 1;	// [RH] players are their own friends
 	oldactor = p->mo;
@@ -3513,7 +3536,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 	// [RH] set color translations for player sprites
 	mobj->Translation = TRANSLATION(TRANSLATION_Players,playernum);
 
-	mobj->angle = ANG45 * (mthing->angle/45);
+	mobj->angle = spawn_angle;
 	mobj->pitch = mobj->roll = 0;
 	mobj->health = p->health;
 

@@ -244,6 +244,7 @@ public:
 	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
 	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
 	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
+	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin);
 	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor);
 	void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor);
 	bool WipeStartScreen(int type);

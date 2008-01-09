@@ -133,6 +133,7 @@ enum
 	BQF_StencilPalette	= 4,
 		BQF_Paletted	= 7,
 	BQF_Bilinear		= 8,
+	BQF_WrapUV			= 16,
 };
 
 // Shaders for a buffered quad
@@ -300,8 +301,8 @@ void D3DFB::SetInitialState()
 
 	Texture[0] = NULL;
 	Texture[1] = NULL;
-	D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-	D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+	D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
+	D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
 	D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
 	D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 
@@ -1729,6 +1730,115 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 
 //==========================================================================
 //
+// D3DFB :: FlatFill
+//
+// Fills an area with a repeating copy of the texture.
+//
+//==========================================================================
+
+void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
+{
+	if (In2D < 2)
+	{
+		Super::FlatFill(left, top, right, bottom, src, local_origin);
+		return;
+	}
+	if (!InScene)
+	{
+		return;
+	}
+	D3DTex *tex = static_cast<D3DTex *>(src->GetNative());
+	if (tex == NULL)
+	{
+		return;
+	}
+	float yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
+	float x0 = float(left);
+	float y0 = float(top);
+	float x1 = float(right);
+	float y1 = float(bottom);
+	float itw = 1.f / float(src->GetWidth());
+	float ith = 1.f / float(src->GetHeight());
+	float xo = local_origin ? x0 : 0;
+	float yo = local_origin ? y0 : 0;
+	float u0 = (x0 - xo) * itw;
+	float v0 = (y0 - yo) * ith;
+	float u1 = (x1 - xo) * itw;
+	float v1 = (y1 - yo) * ith;
+	x0 -= 0.5f;
+	y0 -= yoffs;
+	x1 -= 0.5f;
+	y1 -= yoffs;
+
+	CheckQuadBatch();
+
+	BufferedQuad *quad = &QuadExtra[QuadBatchPos];
+	FBVERTEX *vert = &VertexData[VertexPos];
+
+	if (tex->GetTexFormat() == D3DFMT_L8 && !tex->IsGray)
+	{
+		quad->Flags = BQF_WrapUV | BQF_GamePalette;
+		quad->ShaderNum = BQS_PalTex;
+	}
+	else
+	{
+		quad->Flags = BQF_WrapUV;
+		quad->ShaderNum = BQS_Plain;
+	}
+	quad->SrcBlend = 0;
+	quad->DestBlend = 0;
+	quad->Palette = NULL;
+	quad->Texture = tex;
+
+	vert[0].x = x0;
+	vert[0].y = y0;
+	vert[0].z = 0;
+	vert[0].rhw = 1;
+	vert[0].color0 = 0;
+	vert[0].color1 = 0xFFFFFFFF;
+	vert[0].tu = u0;
+	vert[0].tv = v0;
+
+	vert[1].x = x1;
+	vert[1].y = y0;
+	vert[1].z = 0;
+	vert[1].rhw = 1;
+	vert[1].color0 = 0;
+	vert[1].color1 = 0xFFFFFFFF;
+	vert[1].tu = u1;
+	vert[1].tv = v0;
+
+	vert[2].x = x1;
+	vert[2].y = y1;
+	vert[2].z = 0;
+	vert[2].rhw = 1;
+	vert[2].color0 = 0;
+	vert[2].color1 = 0xFFFFFFFF;
+	vert[2].tu = u1;
+	vert[2].tv = v1;
+
+	vert[3].x = x0;
+	vert[3].y = y1;
+	vert[3].z = 0;
+	vert[3].rhw = 1;
+	vert[3].color0 = 0;
+	vert[3].color1 = 0xFFFFFFFF;
+	vert[3].tu = u0;
+	vert[3].tv = v1;
+
+	IndexData[IndexPos    ] = VertexPos;
+	IndexData[IndexPos + 1] = VertexPos + 1;
+	IndexData[IndexPos + 2] = VertexPos + 2;
+	IndexData[IndexPos + 3] = VertexPos;
+	IndexData[IndexPos + 4] = VertexPos + 2;
+	IndexData[IndexPos + 5] = VertexPos + 3;
+
+	QuadBatchPos++;
+	VertexPos += 4;
+	IndexPos += 6;}
+
+//==========================================================================
+//
 // D3DFB :: AddColorOnlyQuad
 //
 // Adds a single-color, untextured quad to the batch.
@@ -1883,6 +1993,9 @@ void D3DFB::EndQuadBatch()
 	}
 	D3DDevice->SetStreamSource(0, VertexBuffer, 0, sizeof(FBVERTEX));
 	D3DDevice->SetIndices(IndexBuffer);
+	bool uv_wrapped = false;
+	bool uv_should_wrap;
+
 	for (int i = 0; i < QuadBatchPos; )
 	{
 		const BufferedQuad *quad = &QuadExtra[i];
@@ -1952,6 +2065,16 @@ void D3DFB::EndQuadBatch()
 			SetPixelShader(ColorOnlyShader);
 		}
 
+		// Set the texture clamp addressing mode
+		uv_should_wrap = !!(quad->Flags & BQF_WrapUV);
+		if (uv_wrapped != uv_should_wrap)
+		{
+			DWORD mode = uv_should_wrap ? D3DTADDRESS_WRAP : D3DTADDRESS_BORDER;
+			uv_wrapped = uv_should_wrap;
+			D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, mode);
+			D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, mode);
+		}
+
 		// Set the texture
 		if (quad->Texture != NULL)
 		{
@@ -1961,6 +2084,11 @@ void D3DFB::EndQuadBatch()
 		// Draw the quad
 		D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 4 * i, 4 * (j - i), 6 * i, 2 * (j - i));
 		i = j;
+	}
+	if (uv_wrapped)
+	{
+		D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
+		D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
 	}
 	QuadBatchPos = -1;
 	VertexPos = -1;

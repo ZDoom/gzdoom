@@ -132,7 +132,7 @@ static void SetCursorState (int visible);
 static HRESULT InitJoystick ();
 
 static bool GUICapture;
-static bool NativeMouse;
+static int NativeMouse;
 static bool MakeMouseEvents;
 static POINT UngrabbedPointerPos;
 
@@ -420,11 +420,10 @@ void I_CheckNativeMouse (bool preferNative)
 	bool wantNative = !HaveFocus ||
 		((!screen || !screen->IsFullscreen()) && (gamestate != GS_LEVEL || GUICapture || paused || preferNative || !use_mouse || demoplayback));
 
-	//Printf ("%d %d %d %d\n", HaveFocus, GetFocus() == Window, AppActive, GetForegroundWindow() == Window);
+	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);
 
-	if (wantNative != NativeMouse)
+	if (int(wantNative) != NativeMouse)
 	{
-		NativeMouse = wantNative;
 		if (wantNative)
 		{
 			if (mousemode == dinput)
@@ -442,7 +441,10 @@ void I_CheckNativeMouse (bool preferNative)
 		{
 			if (mousemode == win32)
 			{
-				GetCursorPos (&UngrabbedPointerPos);
+				if (NativeMouse >= 0)
+				{
+					GetCursorPos (&UngrabbedPointerPos);
+				}
 				GrabMouse_Win32 ();
 			}
 			else
@@ -450,6 +452,7 @@ void I_CheckNativeMouse (bool preferNative)
 				DI_Acquire (g_pMouse);
 			}
 		}
+		NativeMouse = wantNative;
 	}
 }
 
@@ -1397,7 +1400,8 @@ bool I_InitInput (void *hwnd)
 	Printf ("I_InitInput\n");
 	atterm (I_ShutdownInput);
 
-	NativeMouse = true;
+	NativeMouse = -1;
+	GetCursorPos (&UngrabbedPointerPos);
 
 	noidle = !!Args.CheckParm ("-noidle");
 	g_pdi = NULL;

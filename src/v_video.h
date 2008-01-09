@@ -161,7 +161,7 @@ public:
 	virtual void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
 
 	// Fill an area with a texture
-	virtual void FlatFill (int left, int top, int right, int bottom, FTexture *src);
+	virtual void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin=false);
 
 	// Set an area to a specified color
 	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);

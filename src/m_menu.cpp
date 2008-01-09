@@ -1241,33 +1241,23 @@ static void M_DrawSaveLoadCommon ()
 // frame graphics. The border is drawn outside the area, not in it.
 void M_DrawFrame (int left, int top, int width, int height)
 {
-	FTexture *p1, *p2;
+	FTexture *p;
 	const gameborder_t *border = gameinfo.border;
 	int offset = border->offset;
-	int size = border->size;
-	int x, y;
+	int right = left + width;
+	int bottom = top + height;
 
 	// Draw top and bottom sides.
-	p1 = TexMan[border->t];
-	p2 = TexMan[border->b];
-	for (x = left; x < left + width; x += size)
-	{
-		if (x + size > left + width)
-			x = left + width - size;
-		screen->DrawTexture (p1, x, top - offset, TAG_DONE);
-		screen->DrawTexture (p2, x, top + height, TAG_DONE);
-	}
+	p = TexMan[border->t];
+	screen->FlatFill(left, top - p->GetHeight(), right, top, p, true);
+	p = TexMan[border->b];
+	screen->FlatFill(left, bottom, right, bottom + p->GetHeight(), p, true);
 
 	// Draw left and right sides.
-	p1 = TexMan[border->l];
-	p2 = TexMan[border->r];
-	for (y = top; y < top + height; y += size)
-	{
-		if (y + size > top + height)
-			y = top + height - size;
-		screen->DrawTexture (p1, left - offset, y, TAG_DONE);
-		screen->DrawTexture (p2, left + width, y, TAG_DONE);
-	}
+	p = TexMan[border->l];
+	screen->FlatFill(left - p->GetWidth(), top, left, bottom, p, true);
+	p = TexMan[border->r];
+	screen->FlatFill(right, top, right + p->GetWidth(), bottom, p, true);
 
 	// Draw beveled corners.
 	screen->DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);

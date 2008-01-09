@@ -1,4 +1,11 @@
 January 9, 2008
+- Fixed: The mouse was being grabbed in windowed mode again.
+- Modified M_DrawFrame() and R_DrawTopBorder() so that they call FlatFill() to
+  draw the edges of the frames. This at least seems a bit faster for hardware
+  2D.
+- Implemented FlatFill() for D3DFB. It seems to be exactly as fast as the
+  default implementation that just calls DrawTexture() to tile the pieces onto
+  the screen, so I'm not sure it was worth the bother.
 - Merged the separate line and quad vertex buffers in D3DFB back into a single
   vertex buffer, made line batching automatic, and added an index buffer for
   use when batching quads. The index buffer actually offered more of a
@@ -16,7 +23,7 @@ January 8, 2008
   because it used gametic for timing.
 - Added DoubleAmmoFactor as a skill property for the DF2_YES_DOUBLEAMMO flag.
 - Renumbered the dmflags2 entries to match Skulltag's again.
-- Added Karate Chris's infinite ammo patch.
+- Added Karate Chris's infinite inventory patch.
 
 January 7, 2008
 - Added support for user-defined crosshairs in the Display Options menu. See

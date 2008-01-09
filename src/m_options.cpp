@@ -2567,11 +2567,25 @@ static void StartScoreboardMenu (void)
 	M_SwitchMenu (&ScoreboardMenu);
 }
 
+CCMD (menu_messages)
+{
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	StartMessagesMenu ();
+}
+
 CCMD (menu_automap)
 {
 	M_StartControlPanel (true);
 	OptionsActive = true;
 	StartAutomapMenu ();
+}
+
+CCMD (menu_scoreboard)
+{
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	StartScoreboardMenu ();
 }
 
 static void StartMapColorsMenu (void)

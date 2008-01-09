@@ -1,3 +1,7 @@
+January 9, 2008 (Changes by Graf Zahl)
+- Fixed: 'Painchance' in DECORATE failed when reading custom damage type names.
+- Added Karate Chris's patch for menu opening console commands.
+
 January 8, 2008
 - Fixed: When starting a teamplay netgame, players who did not specify a team
   were not informed about which team they ended up joining.

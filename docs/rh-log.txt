@@ -1,3 +1,10 @@
+January 10, 2008 (Changes by Graf Zahl)
+- defined a constant for the crosshair menu entry's index to get a direct
+  reference out of the function code. In GZDoom the menu contains different
+  information.
+- Fixed: The BrainExplosions should not perform any collision detection. To
+  achieve this their Damage value must be set to 0 when being spawned.
+
 January 9, 2008
 - Added Blzut3's SBARINFO update #6:
   * Fixed: A tutti-frutti like effect would occur if transparent images were used
@@ -27,6 +34,8 @@ January 9, 2008
   performance boost than simply batching the quads alone did.
 
 January 9, 2008 (Changes by Graf Zahl)
+- Added a safety check to savegame versioning so that an invalid revision
+  (reported as 0) will be handled without breaking savegame compatibility.
 - Fixed: 'Painchance' in DECORATE failed when reading custom damage type names.
 - Added Karate Chris's patch for menu opening console commands.
 

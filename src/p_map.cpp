@@ -1717,7 +1717,7 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			}
 		}
 		if (thing->flags2 & MF2_CANTLEAVEFLOORPIC
-			&& (tmfloorpic != thing->Sector->floorpic
+			&& (tmfloorpic != thing->floorpic
 				|| tmfloorz - thing->z != 0))
 		{ // must stay within a sector of a certain floor type
 			thing->z = oldz;

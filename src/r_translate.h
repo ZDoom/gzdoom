@@ -4,7 +4,7 @@
 #include "doomtype.h"
 #include "tarray.h"
 
-class FNativeTexture;
+class FNativePalette;
 class FArchive;
 
 enum

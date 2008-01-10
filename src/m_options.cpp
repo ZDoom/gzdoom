@@ -522,6 +522,8 @@ static menuitem_t VideoItems[] = {
 	{ discrete, "Bullet Puff Type",		{&cl_pufftype},			{2.0}, {0.0},	{0.0}, {PuffTypes} },
 };
 
+#define CROSSHAIR_INDEX 6
+
 menu_t VideoMenu =
 {
 	"DISPLAY OPTIONS",
@@ -3363,6 +3365,6 @@ void InitCrosshairsList()
 		}
 		SC_Close();
 	}
-	VideoItems[6].b.numvalues = float(Crosshairs.Size());
-	VideoItems[6].e.valuestrings = &Crosshairs[0];
+	VideoItems[CROSSHAIR_INDEX].b.numvalues = float(Crosshairs.Size());
+	VideoItems[CROSSHAIR_INDEX].e.valuestrings = &Crosshairs[0];
 }

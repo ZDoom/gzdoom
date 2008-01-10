@@ -33,7 +33,7 @@ struct FRemapTable
 	void MakeIdentity();
 	void KillNative();
 	void UpdateNative();
-	FNativeTexture *GetNative();
+	FNativePalette *GetNative();
 	bool IsIdentity() const;
 	void Serialize(FArchive &ar);
 	void AddIndexRange(int start, int end, int pal1, int pal2);
@@ -41,7 +41,7 @@ struct FRemapTable
 
 	BYTE *Remap;				// For the software renderer
 	PalEntry *Palette;			// The ideal palette this maps to
-	FNativeTexture *Native;		// The Palette stored in a HW texture
+	FNativePalette *Native;		// The Palette stored in a HW texture
 	int NumEntries;				// # of elements in this table (usually 256)
 
 private:

@@ -405,17 +405,25 @@ void FTexture::FlipNonSquareBlockRemap (BYTE *dst, const BYTE *src, int x, int y
 	}
 }
 
-FNativeTexture *FTexture::GetNative()
+FNativeTexture *FTexture::GetNative(bool wrapping)
 {
 	if (Native != NULL)
 	{
-		if (CheckModified())
-		{
-			Native->Update();
+		if (!Native->CheckWrapping(wrapping))
+		{ // Texture's wrapping mode is not compatible.
+		  // Destroy it and get a new one.
+			delete Native;
 		}
-		return Native;
+		else
+		{
+			if (CheckModified())
+			{
+				Native->Update();
+			}
+			return Native;
+		}
 	}
-	Native = screen->CreateTexture(this);
+	Native = screen->CreateTexture(this, wrapping);
 	return Native;
 }
 

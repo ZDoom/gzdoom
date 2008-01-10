@@ -239,8 +239,8 @@ public:
 	void SetVSync (bool vsync);
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	bool Begin2D (bool copy3d);
-	FNativeTexture *CreateTexture (FTexture *gametex);
-	FNativeTexture *CreatePalette (FRemapTable *remap);
+	FNativeTexture *CreateTexture (FTexture *gametex, bool wrapping);
+	FNativePalette *CreatePalette (FRemapTable *remap);
 	void STACK_ARGS DrawTextureV (FTexture *img, int x, int y, uint32 tag, va_list tags);
 	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
 	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
@@ -256,6 +256,9 @@ public:
 private:
 	friend class D3DTex;
 	friend class D3DPal;
+
+	struct PackedTexture;
+	struct PackingTexture;
 
 	struct FBVERTEX
 	{
@@ -278,7 +281,7 @@ private:
 			DWORD Group1;
 		};
 		D3DPal *Palette;
-		D3DTex *Texture;
+		PackingTexture *Texture;
 	};
 
 	void SetInitialState();
@@ -297,6 +300,8 @@ private:
 	void ReleaseDefaultPoolItems();
 	void KillNativePals();
 	void KillNativeTexs();
+	PackedTexture *AllocPackedTexture(int width, int height, bool wrapping, D3DFORMAT format);
+	void DrawPackedTextures(int packnum);
 	void DrawLetterbox();
 	void Draw3DPart(bool copy3d);
 	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedQuad &quad);
@@ -316,7 +321,7 @@ private:
 	void SetPixelShader(IDirect3DPixelShader9 *shader);
 	void SetTexture(int tnum, IDirect3DTexture9 *texture);
 	void SetPaletteTexture(IDirect3DTexture9 *texture, int count);
-	void SetPalTexBilinearConstants(D3DTex *texture);
+	void SetPalTexBilinearConstants(PackingTexture *texture);
 
 	BOOL AlphaBlendEnabled;
 	D3DBLEND AlphaSrcBlend;
@@ -347,6 +352,7 @@ private:
 	bool GatheringWipeScreen;
 	D3DPal *Palettes;
 	D3DTex *Textures;
+	PackingTexture *Packs;
 
 	IDirect3DDevice9 *D3DDevice;
 	IDirect3DTexture9 *FBTexture;

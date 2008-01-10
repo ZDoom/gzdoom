@@ -677,7 +677,7 @@ public:
 	virtual FTextureFormat GetFormat();
 
 	// Returns a native 3D representation of the texture
-	FNativeTexture *GetNative();
+	FNativeTexture *GetNative(bool wrapping);
 
 	// Frees the native 3D representation of the texture
 	void KillNative();

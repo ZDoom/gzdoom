@@ -190,7 +190,7 @@ void FRemapTable::UpdateNative()
 	}
 }
 
-FNativeTexture *FRemapTable::GetNative()
+FNativePalette *FRemapTable::GetNative()
 {
 	if (Native == NULL)
 	{

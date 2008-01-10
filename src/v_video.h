@@ -268,11 +268,27 @@ protected:
 	DSimpleCanvas() {}
 };
 
+// This class represents a native texture, as opposed to an FTexture.
+class FNativeTexture
+{
+public:
+	virtual ~FNativeTexture();
+	virtual bool Update() = 0;
+	virtual bool CheckWrapping(bool wrapping);
+};
+
+// This class represents a texture lookup palette.
+class FNativePalette
+{
+public:
+	virtual ~FNativePalette();
+	virtual bool Update() = 0;
+};
+
 // A canvas that represents the actual display. The video code is responsible
 // for actually implementing this. Built on top of SimpleCanvas, because it
 // needs a system memory buffer when buffered output is enabled.
 
-class FNativeTexture;
 class DFrameBuffer : public DSimpleCanvas
 {
 	DECLARE_ABSTRACT_CLASS (DFrameBuffer, DSimpleCanvas)
@@ -332,10 +348,10 @@ public:
 	// DrawTexture calls after Begin2D use native textures.
 
 	// Create a native texture from a game texture.
-	virtual FNativeTexture *CreateTexture(FTexture *gametex);
+	virtual FNativeTexture *CreateTexture(FTexture *gametex, bool wrapping);
 
-	// Create a palette texture from a palette.
-	virtual FNativeTexture *CreatePalette(FRemapTable *remap);
+	// Create a palette texture from a remap/palette table.
+	virtual FNativePalette *CreatePalette(FRemapTable *remap);
 
 	// texture copy functions
 	virtual void CopyPixelDataRGB(BYTE *buffer, int texpitch, int texheight, int originx, int originy,
@@ -368,14 +384,6 @@ protected:
 
 private:
 	DWORD LastMS, LastSec, FrameCount, LastCount, LastTic;
-};
-
-// This class represents a native texture, as opposed to an FTexture.
-class FNativeTexture
-{
-public:
-	virtual ~FNativeTexture();
-	virtual bool Update() = 0;
 };
 
 extern FColorMatcher ColorMatcher;

@@ -844,12 +844,12 @@ bool DFrameBuffer::Begin2D (bool copy3d)
 	return false;
 }
 
-FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex)
+FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex, bool wrapping)
 {
 	return NULL;
 }
 
-FNativeTexture *DFrameBuffer::CreatePalette(FRemapTable *remap)
+FNativePalette *DFrameBuffer::CreatePalette(FRemapTable *remap)
 {
 	return NULL;
 }
@@ -1008,8 +1008,17 @@ void DFrameBuffer::CopyPixelData(BYTE * buffer, int texpitch, int texheight, int
 	}
 }
 
+FNativePalette::~FNativePalette()
+{
+}
+
 FNativeTexture::~FNativeTexture()
 {
+}
+
+bool FNativeTexture::CheckWrapping(bool wrapping)
+{
+	return true;
 }
 
 CCMD(clean)

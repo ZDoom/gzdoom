@@ -1,4 +1,10 @@
 January 9, 2008
+- Added texture packing to D3DFB so that textures that are temporally related
+  can share the same hardware texture. This greatly reduces the number of
+  DrawPrimitive calls that need to be made when drawing text (or any 2D
+  graphics in general), so now hardware text is much faster than software text
+  all around. (As an example, one scenario went from 315 fps to over 1635 fps
+  for hardware, compared to 540 fps for software.)
 - Fixed: The mouse was being grabbed in windowed mode again.
 - Modified M_DrawFrame() and R_DrawTopBorder() so that they call FlatFill() to
   draw the edges of the frames. This at least seems a bit faster for hardware

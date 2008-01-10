@@ -949,12 +949,12 @@ void FBaseStatusBar::DrSmallNumberOuter (int val, int x, int y, bool center) con
 
 void FBaseStatusBar::RefreshBackground () const
 {
-	int x, x2, y, i, ratio;
+	int x, x2, y, ratio;
 
 	if (SCREENWIDTH > 320)
 	{
 		ratio = CheckRatio (SCREENWIDTH, SCREENHEIGHT);
-		x = !(ratio & 3) || !Scaled ? ST_X : SCREENWIDTH*(48-BaseRatioSizes[ratio][3])/(48*2);
+		x = (!(ratio & 3) || !Scaled) ? ST_X : SCREENWIDTH*(48-BaseRatioSizes[ratio][3])/(48*2);
 		if (x > 0)
 		{
 			y = x == ST_X ? ST_Y : ::ST_Y;
@@ -966,15 +966,11 @@ void FBaseStatusBar::RefreshBackground () const
 			if (setblocks >= 10)
 			{
 				const gameborder_t *border = gameinfo.border;
+				FTexture *p;
 
-				for (i = x - border->size; i > -border->size; i -= border->size)
-				{
-					screen->DrawTexture (TexMan[border->b], i, y, TAG_DONE);
-				}
-				for (i = x2; i < SCREENWIDTH; i += border->size)
-				{
-					screen->DrawTexture (TexMan[border->b], i, y, TAG_DONE);
-				}
+				p = TexMan[border->b];
+				screen->FlatFill(0, y, x, y + p->GetHeight(), p, true);
+				screen->FlatFill(x2, y, SCREENWIDTH, y + p->GetHeight(), p, true);
 			}
 		}
 	}

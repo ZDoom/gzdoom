@@ -56,6 +56,7 @@ enum //drawimage flags
 	DRAWIMAGE_SWITCHABLE_AND = 64,
 	DRAWIMAGE_INVULNERABILITY = 128,
 	DRAWIMAGE_OFFSET_CENTER = 256,
+	DRAWIMAGE_ARMOR = 512,
 };
 
 enum //drawnumber flags
@@ -81,6 +82,7 @@ enum //drawselectedinventory flags
 {
 	DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY = 1,
 	DRAWSELECTEDINVENTORY_ARTIFLASH = 2,
+	DRAWSELECTEDINVENTORY_ALWAYSSHOWCOUNTER = 4,
 };
 
 enum //drawinventorybar flags
@@ -88,6 +90,7 @@ enum //drawinventorybar flags
 	DRAWINVENTORYBAR_ALWAYSSHOW = 1,
 	DRAWINVENTORYBAR_NOARTIBOX = 2,
 	DRAWINVENTORYBAR_NOARROWS = 4,
+	DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER = 8,
 };
 
 enum //drawgem flags
@@ -329,6 +332,8 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 						cmd.flags += DRAWIMAGE_AMMO1;
 					else if(SC_Compare("ammoicon2"))
 						cmd.flags += DRAWIMAGE_AMMO2;
+					else if(SC_Compare("armoricon"))
+						cmd.flags += DRAWIMAGE_ARMOR;
 					else if(SC_Compare("translatable"))
 					{
 						cmd.flags += DRAWIMAGE_TRANSLATABLE;
@@ -368,6 +373,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				break;
 			}
 			case SBARINFO_DRAWNUMBER:
+				cmd.special4 = cmd.special3 = -1;
 				SC_MustGetToken(TK_IntConst);
 				cmd.special = sc_Number;
 				SC_MustGetToken(',');
@@ -439,8 +445,28 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.y = sc_Number - (200 - SBarInfoScript->height);
 				if(SC_CheckToken(','))
 				{
-					SC_MustGetToken(TK_IntConst);
-					cmd.special2 = sc_Number;
+					bool needsComma = false;
+					if(SC_CheckToken(TK_IntConst)) //font spacing
+					{
+						cmd.special2 = sc_Number;
+						needsComma = true;
+					}
+					if(!needsComma || SC_CheckToken(',')) //2nd coloring for "low-on" value
+					{
+						SC_MustGetToken(TK_Identifier);
+						cmd.translation2 = this->GetTranslation(sc_String);
+						SC_MustGetToken(',');
+						SC_MustGetToken(TK_IntConst);
+						cmd.special3 = sc_Number;
+						if(SC_CheckToken(',')) //3rd coloring for "high-on" value
+						{
+							SC_MustGetToken(TK_Identifier);
+							cmd.translation3 = this->GetTranslation(sc_String);
+							SC_MustGetToken(',');
+							SC_MustGetToken(TK_IntConst);
+							cmd.special4 = sc_Number;
+						}
+					}
 				}
 				SC_MustGetToken(';');
 				break;
@@ -477,6 +503,10 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					else if(SC_Compare("artiflash"))
 					{
 						cmd.flags += DRAWSELECTEDINVENTORY_ARTIFLASH;
+					}
+					else if(SC_Compare("alwaysshowcounter"))
+					{
+						cmd.flags += DRAWSELECTEDINVENTORY_ALWAYSSHOWCOUNTER;
 					}
 					else
 					{
@@ -547,6 +577,10 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 						else if(SC_Compare("noarrows"))
 						{
 							cmd.flags += DRAWINVENTORYBAR_NOARROWS;
+						}
+						else if(SC_Compare("alwaysshowcounter"))
+						{
+							cmd.flags += DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER;
 						}
 						else
 						{
@@ -887,6 +921,8 @@ SBarInfoCommand::SBarInfoCommand() //sets the default values for more predicable
 	string[0] = "";
 	string[1] = "";
 	translation = CR_UNTRANSLATED;
+	translation2 = CR_UNTRANSLATED;
+	translation3 = CR_UNTRANSLATED;
 	font = V_GetFont("CONFONT");
 }
 
@@ -962,6 +998,7 @@ public:
 			width = (int) (((double) width/100)*value);
 		}
 		Pixels = new BYTE[Width*Height];
+		memset(Pixels, 0, Width*Height); //Prevent garbage when using transparent images
 		bar->CopyToBlock(Pixels, Width, Height, 0, 0); //draw the bar
 		int run = bar->GetHeight() - (int) (((double) height/100)*value);
 		int visible = bar->GetHeight() - run;
@@ -1357,20 +1394,20 @@ private:
 					else //check the inventory items and draw selected sprite
 					{
 						AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
-						if(item == NULL)
+						if(item == NULL || item->Amount == 0)
 							drawAlt = 1;
 						if((cmd.flags & DRAWIMAGE_SWITCHABLE_AND))
 						{
 							item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[1]));
-							if(item != NULL && drawAlt == 0) //both
+							if((item != NULL && item->Amount != 0) && drawAlt == 0) //both
 							{
 								drawAlt = 0;
 							}
-							else if(item != NULL && drawAlt == 1) //2nd
+							else if((item != NULL && item->Amount != 0) && drawAlt == 1) //2nd
 							{
 								drawAlt = 3;
 							}
-							else if(item == NULL && drawAlt == 0) //1st
+							else if((item == NULL || item->Amount == 0) && drawAlt == 0) //1st
 							{
 								drawAlt = 2;
 							}
@@ -1399,6 +1436,12 @@ private:
 					{
 						if(ammo2 != NULL)
 							DrawGraphic(TexMan[ammo2->Icon], cmd.x, cmd.y, cmd.flags);
+					}
+					else if((cmd.flags & DRAWIMAGE_ARMOR))
+					{
+						ABasicArmor *armor = CPlayer->mo->FindInventory<ABasicArmor>();
+						if(armor != NULL && armor->Amount != 0)
+							DrawGraphic(TexMan(armor->Icon), cmd.x, cmd.y, cmd.flags);
 					}
 					else if((cmd.flags & DRAWIMAGE_INVENTORYICON))
 					{
@@ -1483,7 +1526,12 @@ private:
 							cmd.value = 0;
 						}
 					}
-					DrawNumber(cmd.value, cmd.special, cmd.x, cmd.y, cmd.translation, cmd.special2);
+					if(cmd.special3 != -1 && cmd.value <= cmd.special3) //low
+						DrawNumber(cmd.value, cmd.special, cmd.x, cmd.y, cmd.translation2, cmd.special2);
+					else if(cmd.special4 != -1 && cmd.value >= cmd.special4) //high
+						DrawNumber(cmd.value, cmd.special, cmd.x, cmd.y, cmd.translation3, cmd.special2);
+					else
+						DrawNumber(cmd.value, cmd.special, cmd.x, cmd.y, cmd.translation, cmd.special2);
 					break;
 				case SBARINFO_DRAWMUGSHOT:
 				{
@@ -1505,7 +1553,7 @@ private:
 						{
 							DrawDimImage(TexMan(CPlayer->mo->InvSel->Icon), cmd.x, cmd.y, CPlayer->mo->InvSel->Amount <= 0);
 						}
-						if(CPlayer->mo->InvSel->Amount != 1)
+						if((cmd.flags & DRAWSELECTEDINVENTORY_ALWAYSSHOWCOUNTER) || CPlayer->mo->InvSel->Amount != 1)
 						{
 							if(drawingFont != cmd.font)
 							{
@@ -1524,17 +1572,20 @@ private:
 					bool alwaysshow = false;
 					bool artibox = true;
 					bool noarrows = false;
+					bool alwaysshowcounter = false;
 					if((cmd.flags & DRAWINVENTORYBAR_ALWAYSSHOW))
 						alwaysshow = true;
 					if((cmd.flags & DRAWINVENTORYBAR_NOARTIBOX))
 						artibox = false;
 					if((cmd.flags & DRAWINVENTORYBAR_NOARROWS))
 						noarrows = true;
+					if((cmd.flags & DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER))
+						alwaysshowcounter = true;
 					if(drawingFont != cmd.font)
 					{
 						drawingFont = cmd.font;
 					}
-					DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, alwaysshow, cmd.special2, cmd.special3, cmd.translation, artibox, noarrows);
+					DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, alwaysshow, cmd.special2, cmd.special3, cmd.translation, artibox, noarrows, alwaysshowcounter);
 					break;
 				}
 				case SBARINFO_DRAWBAR:
@@ -1890,7 +1941,7 @@ private:
 	}
 
 	void DrawInventoryBar(int type, int num, int x, int y, bool alwaysshow, 
-		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows)
+		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter)
 	{ //yes, there is some Copy & Paste here too
 		const AInventory *item;
 		int i;
@@ -1906,7 +1957,7 @@ private:
 					DrawImage (Images[invBarOffset + imgARTIBOX], x+i*31, y);
 				}
 				DrawDimImage (TexMan(item->Icon), x+i*31, y, item->Amount <= 0);
-				if(item->Amount != 1)
+				if(alwaysshowcounter || item->Amount != 1)
 				{
 					DrawNumber(item->Amount, 3, counterx+i*31, countery, translation);
 				}

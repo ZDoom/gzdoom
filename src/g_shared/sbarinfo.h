@@ -28,6 +28,8 @@ struct SBarInfoCommand
 	FString string[2];
 	FFont *font;
 	EColorRange translation;
+	EColorRange translation2;
+	EColorRange translation3;
 	SBarInfoBlock subBlock; //for type SBarInfo_CMD_GAMEMODE
 	void setString(const char* source, int strnum, int maxlength=-1, bool exact=false);
 	SBarInfoCommand();

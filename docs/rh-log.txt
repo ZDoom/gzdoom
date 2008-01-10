@@ -1,4 +1,13 @@
 January 9, 2008
+- Added Blzut3's SBARINFO update #6:
+  * Fixed: A tutti-frutti like effect would occur if transparent images were used
+    in bars.
+  * Fixed: drawswitchableimage didn't count having 0 of an item as not having
+    the said item.
+  * Added alwaysshowcounter flag to both drawinventorybar and
+    drawselectedinventory.
+  * Added armoricon image type to drawimage.
+  * Added low-on secondary coloring and high-on coloring to drawnumber.
 - Added texture packing to D3DFB so that textures that are temporally related
   can share the same hardware texture. This greatly reduces the number of
   DrawPrimitive calls that need to be made when drawing text (or any 2D

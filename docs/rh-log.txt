@@ -1,4 +1,9 @@
 January 10, 2008
+- Fixed: Weapon positions were only adjusted in 1280x1024 if the status
+  bar was hidden.
+- Fixed: If you died in co-op and somebody else ended the map before you
+  respawned, you would start the next map with only default inventory, no
+  matter what dmflags was set to.
 - Applied Karate Chris's TEAMINFO logo patch.
 
 January 10, 2008 (Changes by Graf Zahl)
@@ -10,8 +15,8 @@ January 10, 2008 (Changes by Graf Zahl)
 
 January 9, 2008
 - Added Blzut3's SBARINFO update #6:
-  * Fixed: A tutti-frutti like effect would occur if transparent images were used
-    in bars.
+  * Fixed: A tutti-frutti like effect would occur if transparent images were
+    used in bars.
   * Fixed: drawswitchableimage didn't count having 0 of an item as not having
     the said item.
   * Added alwaysshowcounter flag to both drawinventorybar and

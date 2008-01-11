@@ -89,8 +89,6 @@ void	G_ReadDemoTiccmd (ticcmd_t *cmd, int player);
 void	G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf);
 void	G_PlayerReborn (int player);
 
-void	G_DoReborn (int playernum, bool freshbot);
-
 void	G_DoNewGame (void);
 void	G_DoLoadGame (void);
 void	G_DoPlayDemo (void);

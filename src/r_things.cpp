@@ -1545,22 +1545,22 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		{
 			weapon = camera->player->ReadyWeapon;
 		}
-		if (pspnum <= ps_flash)
+		if (pspnum <= ps_flash && weapon != NULL && weapon->YAdjust != 0)
 		{
-			if (weapon != NULL && weapon->YAdjust != 0)
+			if (RenderTarget != screen || realviewheight == RenderTarget->GetHeight())
 			{
-				if (RenderTarget != screen || realviewheight == RenderTarget->GetHeight())
-				{
-					vis->texturemid -= weapon->YAdjust;
-				}
-				else
-				{
-					vis->texturemid -= FixedMul (StatusBar->GetDisplacement (),
-						weapon->YAdjust);
-				}
+				vis->texturemid -= weapon->YAdjust;
 			}
-			vis->texturemid -= BaseRatioSizes[WidescreenRatio][2];
+			else
+			{
+				vis->texturemid -= FixedMul (StatusBar->GetDisplacement (),
+					weapon->YAdjust);
+			}
 		}
+	}
+	if (pspnum <= ps_flash)
+	{ // Move the weapon down for 1280x1024.
+		vis->texturemid -= BaseRatioSizes[WidescreenRatio][2];
 	}
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;

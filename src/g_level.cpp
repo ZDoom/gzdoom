@@ -1731,10 +1731,30 @@ void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int ne
 		D_DrawIcon = "TELEICON";
 	}
 
-	// un-crouch all players here
-	for(int i=0;i<MAXPLAYERS;i++)
+	for(int i = 0; i < MAXPLAYERS; i++)
 	{
-		players[i].Uncrouch();
+		if (playeringame[i])
+		{
+			player_t *player = &players[i];
+
+			// Un-crouch all players here.
+			player->Uncrouch();
+
+			// If this is co-op, respawn any dead players now so they can
+			// keep their inventory on the next map.
+			if (multiplayer && !deathmatch && player->playerstate == PST_DEAD)
+			{
+				// Copied from the end of P_DeathThink [[
+				player->cls = NULL;		// Force a new class if the player is using a random class
+				player->playerstate = PST_REBORN;
+				if (player->mo->special1 > 2)
+				{
+					player->mo->special1 = 0;
+				}
+				// ]]
+				G_DoReborn(i, false);
+			}
+		}
 	}
 }
 

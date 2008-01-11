@@ -1,3 +1,10 @@
+January 11, 2008 (Changes by Graf Zahl)
+- Added Skulltag's pickup sprite and related information to the pistol. This
+  will also double as the pistol's icon in the AltHUD.
+- Added a generic log display that can show Strife's log messages in all games
+  regardless of the current game, active status bar and HUD mode.
+- Added GZDoom's alt HUD.
+
 January 10, 2008
 - Fixed: Weapon positions were only adjusted in 1280x1024 if the status
   bar was hidden.

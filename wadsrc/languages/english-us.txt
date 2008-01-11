@@ -93,6 +93,7 @@ PD_REDSO = "You need a red skull to activate this object";
 PD_YELLOWSO = "You need a yellow skull to activate this object";
 GGSAVED = "game saved.";
 HUSTR_MSGU = "[Message unsent]";
+PICKUP_PISTOL_DROPPED = "Picked up a pistol.";
 
 // Level names
 HUSTR_E1M1 = "E1M1: Hangar";

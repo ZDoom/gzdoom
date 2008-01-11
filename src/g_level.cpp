@@ -1585,10 +1585,13 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	StatusBar->NewGame ();
 	setsizeneeded = true;
 
-	// Set the initial quest log text for Strife.
-	for (i = 0; i < MAXPLAYERS; ++i)
+	if (gameinfo.gametype == GAME_Strife)
 	{
-		players[i].SetLogText ("Find help");
+		// Set the initial quest log text for Strife.
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			players[i].SetLogText ("Find help");
+		}
 	}
 
 	// [RH] If this map doesn't exist, bomb out

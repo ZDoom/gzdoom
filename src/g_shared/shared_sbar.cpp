@@ -60,6 +60,7 @@ EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Bool, hud_scale)
+EXTERN_CVAR (Int, con_scaletext)
 
 FBaseStatusBar *StatusBar;
 
@@ -152,6 +153,7 @@ FBaseStatusBar::FBaseStatusBar (int reltop)
 	Messages = NULL;
 	Displacement = 0;
 	CPlayer = NULL;
+	ShowLog = false;
 
 	SetScaled (st_scale);
 }
@@ -1254,6 +1256,76 @@ void FBaseStatusBar::Draw (EHudState state)
 	}
 }
 
+
+void FBaseStatusBar::DrawLog ()
+{
+	int hudwidth, hudheight;
+
+	if (CPlayer->LogText && *CPlayer->LogText)
+	{
+		// This uses the same scaling as regular HUD messages
+		switch (con_scaletext)
+		{
+		default:
+			hudwidth = SCREENWIDTH;
+			hudheight = SCREENHEIGHT;
+			break;
+
+		case 1:
+			hudwidth = SCREENWIDTH / CleanXfac;
+			hudheight = SCREENHEIGHT / CleanYfac;
+			break;
+
+		case 2:
+			hudwidth = SCREENWIDTH / 2;
+			hudheight = SCREENHEIGHT / 2;
+			break;
+		}
+
+		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
+		FBrokenLines *lines = V_BreakLines (SmallFont, linelen, CPlayer->LogText);
+		int height = 20;
+
+		for (int i = 0; lines[i].Width != -1; i++) height += SmallFont->GetHeight () + 1;
+
+		int x,y,w;
+
+		if (linelen<560)
+		{
+			x=hudwidth/20;
+			y=hudheight/8;
+			w=hudwidth-2*x;
+		}
+		else
+		{
+			x=(hudwidth>>1)-300;
+			y=hudheight*3/10-(height>>1);
+			if (y<0) y=0;
+			w=600;
+		}
+		screen->Dim(0, 0.5f, Scale(x, SCREENWIDTH, hudwidth), Scale(y, SCREENHEIGHT, hudheight), 
+							 Scale(w, SCREENWIDTH, hudwidth), Scale(height, SCREENHEIGHT, hudheight));
+		x+=20;
+		y+=10;
+		screen->SetFont(SmallFont);
+		for (int i = 0; lines[i].Width != -1; i++)
+		{
+
+			screen->DrawText (CR_UNTRANSLATED, x, y, lines[i].Text,
+				DTA_KeepRatio, true,
+				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
+			y += SmallFont->GetHeight ()+1;
+		}
+
+		V_FreeBrokenLines (lines);
+	}
+}
+
+bool FBaseStatusBar::MustDrawLog(EHudState)
+{
+	return true;
+}
+
 //---------------------------------------------------------------------------
 //
 // DrawTopStuff
@@ -1282,6 +1354,7 @@ void FBaseStatusBar::DrawTopStuff (EHudState state)
 	}
 
 	DrawConsistancy ();
+	if (ShowLog && MustDrawLog(state)) DrawLog ();
 }
 
 //---------------------------------------------------------------------------
@@ -1464,6 +1537,7 @@ void FBaseStatusBar::SetInteger (int pname, int param)
 
 void FBaseStatusBar::ShowPop (int popnum)
 {
+	ShowLog = (popnum == POP_Log && !ShowLog);
 }
 
 void FBaseStatusBar::ReceivedWeapon (AWeapon *weapon)

@@ -83,6 +83,7 @@
 
 EXTERN_CVAR(Bool, nomonsterinterpolation)
 EXTERN_CVAR(Int, showendoom)
+EXTERN_CVAR(Bool, hud_althud)
 //
 // defaulted values
 //
@@ -509,6 +510,7 @@ static menuitem_t VideoItems[] = {
 	{ discrete, "Detail mode",			{&r_detail},		   	{4.0}, {0.0},	{0.0}, {DetailModes} },
 	{ discrete, "Stretch short skies",	{&r_stretchsky},	   	{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Stretch status bar",	{&st_scale},			{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Alternative HUD",		{&hud_althud},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Screen wipe style",	{&wipetype},			{4.0}, {0.0},	{0.0}, {Wipes} },
 #ifdef _WIN32
 	{ discrete,	"Show ENDOOM screen",	{&showendoom},			{3.0}, {0.0},	{0.0}, {Endoom} },

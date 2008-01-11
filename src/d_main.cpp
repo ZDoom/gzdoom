@@ -91,6 +91,9 @@
 #include "teaminfo.h"
 #include "hardware.h"
 
+EXTERN_CVAR(Bool, hud_althud)
+void DrawHUD();
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -566,12 +569,22 @@ void D_Display ()
 			}
 			if (automapactive)
 			{
+				int saved_ST_Y=ST_Y;
+				if (hud_althud && realviewheight == SCREENHEIGHT) ST_Y=realviewheight;
 				AM_Drawer ();
+				ST_Y = saved_ST_Y;
 			}
 			if (!automapactive || viewactive)
 			{
 				R_RefreshViewBorder ();
 			}
+
+			if (hud_althud && realviewheight == SCREENHEIGHT)
+			{
+				if (DrawFSHUD || automapactive) DrawHUD();
+				StatusBar->DrawTopStuff (HUD_None);
+			}
+			else 
 			if (realviewheight == SCREENHEIGHT && viewactive)
 			{
 				StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);

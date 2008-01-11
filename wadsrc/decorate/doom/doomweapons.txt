@@ -56,7 +56,7 @@ ACTOR Fist : Weapon
 //
 // --------------------------------------------------------------------------
 
-ACTOR Pistol : DoomWeapon
+ACTOR Pistol : DoomWeapon 5010
 {
 	Weapon.SelectionOrder 1900
 	Weapon.AmmoUse 1
@@ -64,6 +64,7 @@ ACTOR Pistol : DoomWeapon
 	Weapon.AmmoType "Clip"
 	Obituary "$OB_MPPISTOL"
 	+WEAPON.WIMPY_WEAPON
+	Inventory.Pickupmessage "$PICKUP_PISTOL_DROPPED"
 	States
 	{
 	Ready:
@@ -86,6 +87,9 @@ ACTOR Pistol : DoomWeapon
 		Goto LightDone
 		PISF A 7 Bright A_Light1
 		Goto LightDone
+ 	Spawn:
+		PIST A -1
+		Stop
 	}
 }
 		

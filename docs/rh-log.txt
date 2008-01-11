@@ -1,3 +1,6 @@
+January 10, 2008
+- Applied Karate Chris's TEAMINFO logo patch.
+
 January 10, 2008 (Changes by Graf Zahl)
 - defined a constant for the crosshair menu entry's index to get a direct
   reference out of the function code. In GZDoom the menu contains different

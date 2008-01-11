@@ -4,7 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
-** Copyright 2007 Christopher Westley
+** Copyright 2007-2008 Christopher Westley
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -328,6 +328,12 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 
 	screen->DrawText (color, SCREENWIDTH / 2, y, player->userinfo.netname,
 		DTA_CleanNoMove, true, TAG_DONE);
+
+	if (teamplay && teams[player->userinfo.team].logo.GetChars ())
+	{
+		screen->DrawTexture (TexMan[teams[player->userinfo.team].logo.GetChars ()], SCREENWIDTH / 5, y,
+			DTA_CleanNoMove, true, TAG_DONE);
+	}
 
 	if (player->mo->ScoreIcon > 0)
 	{

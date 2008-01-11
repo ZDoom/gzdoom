@@ -3,7 +3,7 @@
 ** Implementation of the TEAMINFO lump.
 **
 **---------------------------------------------------------------------------
-** Copyright 2007 Christopher Westley
+** Copyright 2007-2008 Christopher Westley
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,7 @@ TArray <TEAMINFO> teams;
 static const char *keywords_teaminfo [] = {
 	"PLAYERCOLOR",
 	"TEXTCOLOR",
+	"LOGO",
 	NULL
 };
 
@@ -131,6 +132,11 @@ void TEAMINFO_ParseTeam ()
 			SC_MustGetString();
 			team.textcolor = '[';
 			team.textcolor << sc_String << ']';
+			break;
+
+		case 2:
+			SC_MustGetString ();
+			team.logo = sc_String;
 			break;
 
 		default:

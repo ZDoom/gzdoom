@@ -3,7 +3,7 @@
 ** Implementation of the TEAMINFO lump.
 **
 **---------------------------------------------------------------------------
-** Copyright 2007 Christopher Westley
+** Copyright 2007-2008 Christopher Westley
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@ struct TEAMINFO
 	int			playercolor;
 	FString		textcolor;
 	int			GetTextColor () const;
+	FString		logo;
 	int			players;
 	int			score;
 	int			present;

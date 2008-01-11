@@ -336,6 +336,9 @@ public:
 	// Set the rect defining the area effected by blending.
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
+	// render 3D view
+	virtual void RenderView(player_t *player);
+
 	bool Accel2D;	// If true, 2D drawing can be accelerated.
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end
@@ -421,8 +424,6 @@ FString V_GetColorStringByName (const char *name);
 
 // Tries to get color by name, then by string
 int V_GetColor (const DWORD *palette, const char *str);
-
-bool V_SetResolution (int width, int height, int bpp);
 
 #ifdef USEASM
 extern "C" void ASM_PatchPitch (void);

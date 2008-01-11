@@ -1008,6 +1008,21 @@ void DFrameBuffer::CopyPixelData(BYTE * buffer, int texpitch, int texheight, int
 	}
 }
 
+//===========================================================================
+//
+// Render the view 
+//
+//===========================================================================
+void DFrameBuffer::RenderView(player_t *player)
+{
+	R_RenderActorView (player->mo);
+	R_DetailDouble ();		// [RH] Apply detail mode expansion
+	// [RH] Let cameras draw onto textures that were visible this frame.
+	FCanvasTextureInfo::UpdateAll ();
+}
+
+
+
 FNativePalette::~FNativePalette()
 {
 }
@@ -1106,7 +1121,7 @@ bool V_DoModeSetup (int width, int height, int bits)
 	return true;
 }
 
-bool V_SetResolution (int width, int height, int bits)
+bool IVideo::SetResolution (int width, int height, int bits)
 {
 	int oldwidth, oldheight;
 	int oldbits;
@@ -1253,7 +1268,7 @@ void V_Init2()
 	I_InitGraphics();
 	I_ClosestResolution (&width, &height, 8);
 
-	if (!V_SetResolution (width, height, 8))
+	if (!Video->SetResolution (width, height, 8))
 		I_FatalError ("Could not set resolution to %d x %d x %d", width, height, 8);
 	else
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);

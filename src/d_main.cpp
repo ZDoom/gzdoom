@@ -89,6 +89,7 @@
 #include "st_start.h"
 #include "templates.h"
 #include "teaminfo.h"
+#include "hardware.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -466,7 +467,7 @@ void D_Display ()
 	if (setmodeneeded)
 	{
 		// Change screen mode.
-		if (V_SetResolution (NewWidth, NewHeight, NewBits))
+		if (Video->SetResolution (NewWidth, NewHeight, NewBits))
 		{
 			// Recalculate various view parameters.
 			setsizeneeded = true;
@@ -556,10 +557,7 @@ void D_Display ()
 			screen->SetBlendingRect(viewwindowx, viewwindowy,
 				viewwindowx + realviewwidth, viewwindowy + realviewheight);
 			P_CheckPlayerSprites();
-			R_RenderActorView (players[consoleplayer].mo);
-			R_DetailDouble ();		// [RH] Apply detail mode expansion
-			// [RH] Let cameras draw onto textures that were visible this frame.
-			FCanvasTextureInfo::UpdateAll ();
+			screen->RenderView(&players[consoleplayer]);
 			if ((hw2d = screen->Begin2D(viewactive)))
 			{
 				// Redraw everything every frame when using 2D accel

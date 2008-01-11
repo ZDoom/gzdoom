@@ -7,6 +7,13 @@ January 10, 2008
 - Applied Karate Chris's TEAMINFO logo patch.
 
 January 10, 2008 (Changes by Graf Zahl)
+- Moved the code that renders the view from D_Display into a virtual function
+  of the frame buffer so I can get rid of the last remaining renderer check
+  outside the display code in GZDoom.
+- made V_SetResolution a virtual function in IVideo. It's probably not a perfect
+  solution but at least it allows overriding it (which I need in GZDoom.)
+  Note: There's a lot of redundancy between hardware.cpp/h in the SDL and Win32
+  folders so some cleaning up might be a good idea.
 - defined a constant for the crosshair menu entry's index to get a direct
   reference out of the function code. In GZDoom the menu contains different
   information.

@@ -49,6 +49,9 @@ class IVideo
 
 	virtual void StartModeIterator (int bits, bool fs) = 0;
 	virtual bool NextMode (int *width, int *height, bool *letterbox) = 0;
+
+	virtual bool SetResolution (int width, int height, int bits);
+
 };
 
 void I_InitGraphics ();

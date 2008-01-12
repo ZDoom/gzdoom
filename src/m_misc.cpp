@@ -494,6 +494,10 @@ void WritePCXfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
 			}
 			data = temprow;
 			break;
+
+		default:
+			// Should never happen.
+			return;
 		}
 		buffer += pitch;
 

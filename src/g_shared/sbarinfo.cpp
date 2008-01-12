@@ -25,7 +25,7 @@ static FRandom pr_chainwiggle; //use the same method of chain wiggling as hereti
 #define ST_GRINTIME		(TICRATE*2)
 #define ST_RAMPAGETIME	(TICRATE*2)
 #define ST_XDTHTIME		(TICRATE*(3/2))
-#define ST_NUMFACES		80 //9 levels with 8 faces each, 1 god, 1 death, 6 xdeath
+#define ST_NUMFACES		82 //9 levels with 8 faces each, 3 god, 1 death, 6 xdeath
 #define ARTIFLASH_OFFSET (invBarOffset+6)
 
 EXTERN_CVAR(Int, fraglimit)
@@ -57,6 +57,7 @@ enum //drawimage flags
 	DRAWIMAGE_INVULNERABILITY = 128,
 	DRAWIMAGE_OFFSET_CENTER = 256,
 	DRAWIMAGE_ARMOR = 512,
+	DRAWIMAGE_WEAPONICON = 1024,
 };
 
 enum //drawnumber flags
@@ -69,6 +70,12 @@ enum //drawnumber flags
 	DRAWNUMBER_AMMOCAPACITY = 32,
 	DRAWNUMBER_FRAGS = 64,
 	DRAWNUMBER_INVENTORY = 128,
+	DRAWNUMBER_KILLS = 256,
+	DRAWNUMBER_MONSTERS = 512,
+	DRAWNUMBER_ITEMS = 1024,
+	DRAWNUMBER_TOTALITEMS = 2048,
+	DRAWNUMBER_SECRETS = 4096,
+	DRAWNUMBER_TOTALSECRETS = 8192,
 };
 
 enum //drawbar flags (will go into special2)
@@ -103,6 +110,12 @@ enum //drawshader flags
 {
 	DRAWSHADER_VERTICAL = 1,
 	DRAWSHADER_REVERSE = 2,
+};
+
+enum //drawmugshot flags
+{
+	DRAWMUGSHOT_XDEATHFACE = 1,
+	DRAWMUGSHOT_ANIMATEDGODMODE = 2,
 };
 
 static const char *SBarInfoTopLevel[] =
@@ -152,6 +165,7 @@ static const char *SBarInfoRoutineLevel[] =
 	"drawbar",
 	"drawgem",
 	"drawshader",
+	"drawstring",
 	"gamemode",
 	"playerclass",
 	NULL
@@ -167,6 +181,7 @@ enum
 	SBARINFO_DRAWBAR,
 	SBARINFO_DRAWGEM,
 	SBARINFO_DRAWSHADER,
+	SBARINFO_DRAWSTRING,
 	SBARINFO_GAMEMODE,
 	SBARINFO_PLAYERCLASS,
 };
@@ -334,6 +349,8 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 						cmd.flags += DRAWIMAGE_AMMO2;
 					else if(SC_Compare("armoricon"))
 						cmd.flags += DRAWIMAGE_ARMOR;
+					else if(SC_Compare("weaponicon"))
+						cmd.flags += DRAWIMAGE_WEAPONICON;
 					else if(SC_Compare("translatable"))
 					{
 						cmd.flags += DRAWIMAGE_TRANSLATABLE;
@@ -380,7 +397,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				SC_MustGetToken(TK_Identifier);
 				cmd.font = V_GetFont(sc_String);
 				if(cmd.font == NULL)
-						SC_ScriptError("Unknown font '%s'.", sc_String);
+					SC_ScriptError("Unknown font '%s'.", sc_String);
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_Identifier);
 				cmd.translation = this->GetTranslation(sc_String);
@@ -425,6 +442,18 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					}
 					else if(SC_Compare("frags"))
 						cmd.flags = DRAWNUMBER_FRAGS;
+					else if(SC_Compare("kills"))
+						cmd.flags += DRAWNUMBER_KILLS;
+					else if(SC_Compare("monsters"))
+						cmd.flags += DRAWNUMBER_MONSTERS;
+					else if(SC_Compare("items"))
+						cmd.flags += DRAWNUMBER_ITEMS;
+					else if(SC_Compare("totalitems"))
+						cmd.flags += DRAWNUMBER_TOTALITEMS;
+					else if(SC_Compare("secrets"))
+						cmd.flags += DRAWNUMBER_SECRETS;
+					else if(SC_Compare("totalsecrets"))
+						cmd.flags += DRAWNUMBER_TOTALSECRETS;
 					else
 					{
 						cmd.flags = DRAWNUMBER_INVENTORY;
@@ -479,14 +508,28 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					SC_ScriptError("Exspected a number between 1 and 9, got %d instead.", sc_Number);
 				cmd.special = sc_Number;
 				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst); //xdeath face (could be later used as flags
-				cmd.special2 = sc_Number;
-				SC_MustGetToken(',');
+				while(SC_CheckToken(TK_Identifier))
+				{
+					if(SC_Compare("xdeathface"))
+						cmd.flags += DRAWMUGSHOT_XDEATHFACE;
+					else if(SC_Compare("animatedgodmode"))
+						cmd.flags += DRAWMUGSHOT_ANIMATEDGODMODE;
+					else
+						SC_ScriptError("Unknown flag '%s'.", sc_String);
+					SC_MustGetToken(',');
+				}
 				SC_MustGetToken(TK_IntConst);
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
 				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				if(SC_CheckToken(',')) //hmm I guess we had a numberic flag in there.
+				{
+					cmd.flags = cmd.x;
+					cmd.x = cmd.y + (200 - SBarInfoScript->height);
+					SC_MustGetToken(TK_IntConst);
+					cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				}
 				SC_MustGetToken(';');
 				break;
 			case SBARINFO_DRAWSELECTEDINVENTORY:
@@ -683,7 +726,13 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					}
 				}
 				else if(SC_Compare("frags"))
-						cmd.flags = DRAWNUMBER_FRAGS;
+					cmd.flags = DRAWNUMBER_FRAGS;
+				else if(SC_Compare("kills"))
+					cmd.flags = DRAWNUMBER_KILLS;
+				else if(SC_Compare("items"))
+					cmd.flags = DRAWNUMBER_ITEMS;
+				else if(SC_Compare("secrets"))
+					cmd.flags = DRAWNUMBER_SECRETS;
 				else
 				{
 					cmd.flags = DRAWNUMBER_INVENTORY;
@@ -782,6 +831,25 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					cmd.flags += DRAWSHADER_REVERSE;
 					SC_MustGetToken(',');
 				}
+				SC_MustGetToken(TK_IntConst);
+				cmd.x = sc_Number;
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_IntConst);
+				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				SC_MustGetToken(';');
+				break;
+			case SBARINFO_DRAWSTRING:
+				SC_MustGetToken(TK_Identifier);
+				cmd.font = V_GetFont(sc_String);
+				if(cmd.font == NULL)
+					SC_ScriptError("Unknown font '%s'.", sc_String);
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_Identifier);
+				cmd.translation = this->GetTranslation(sc_String);
+				SC_MustGetToken(',');
+				SC_MustGetToken(TK_StringConst);
+				cmd.setString(sc_String, 0, -1, false);
+				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
@@ -942,8 +1010,10 @@ enum
 	ST_FACEGRIN,
 	ST_FACEPAIN,
 	ST_FACEGOD = 72,
-	ST_FACEDEAD = 73,
-	ST_FACEXDEAD = 74,
+	ST_FACEGODRIGHT = 73, //switch the roles of 0 and 1 because 0 is taken by Doom.
+	ST_FACEGODLEFT = 74,
+	ST_FACEDEAD = 75,
+	ST_FACEXDEAD = 76,
 };
 
 enum
@@ -1167,6 +1237,7 @@ public:
 		Images.Init(&patchnames[0], patchnames.Size());
 		drawingFont = V_GetFont("ConFont");
 		faceTimer = ST_FACETIME;
+		rampageTimer = 0;
 		faceIndex = 0;
 		if(SBarInfoScript->interpolateHealth)
 		{
@@ -1335,7 +1406,8 @@ private:
 			sprintf (names[facenum++], "%sEVL%d", prefix, i);  // evil grin ;)
 			sprintf (names[facenum++], "%sKILL%d", prefix, i); // pissed off
 		}
-		sprintf (names[facenum++], "%sGOD0", prefix);
+		for (i = 0; i < 3; i++)
+			sprintf (names[facenum++], "%sGOD%d", prefix, i);
 		sprintf (names[facenum++], "%sDEAD0", prefix);
 		for(i = 0;i < 6;i++) //xdeath
 		{
@@ -1443,6 +1515,14 @@ private:
 						if(armor != NULL && armor->Amount != 0)
 							DrawGraphic(TexMan(armor->Icon), cmd.x, cmd.y, cmd.flags);
 					}
+					else if((cmd.flags & DRAWIMAGE_WEAPONICON))
+					{
+						AWeapon *weapon = CPlayer->ReadyWeapon;
+						if(weapon != NULL && weapon->Icon > 0)
+						{
+							DrawGraphic(TexMan[weapon->Icon], cmd.x, cmd.y, cmd.flags);
+						}
+					}
 					else if((cmd.flags & DRAWIMAGE_INVENTORYICON))
 					{
 						DrawGraphic(TexMan[cmd.sprite], cmd.x, cmd.y, cmd.flags);
@@ -1514,6 +1594,18 @@ private:
 					}
 					else if(cmd.flags == DRAWNUMBER_FRAGS)
 						cmd.value = CPlayer->fragcount;
+					else if(cmd.flags == DRAWNUMBER_KILLS)
+						cmd.value = level.killed_monsters;
+					else if(cmd.flags == DRAWNUMBER_MONSTERS)
+						cmd.value = level.total_monsters;
+					else if(cmd.flags == DRAWNUMBER_ITEMS)
+						cmd.value = level.found_items;
+					else if(cmd.flags == DRAWNUMBER_TOTALITEMS)
+						cmd.value = level.total_items;
+					else if(cmd.flags == DRAWNUMBER_SECRETS)
+						cmd.value = level.found_secrets;
+					else if(cmd.flags == DRAWNUMBER_TOTALSECRETS)
+						cmd.value = level.total_secrets;
 					else if(cmd.flags == DRAWNUMBER_INVENTORY)
 					{
 						AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
@@ -1536,10 +1628,13 @@ private:
 				case SBARINFO_DRAWMUGSHOT:
 				{
 					bool xdth = false;
-					if(cmd.special2 != 0)
+					bool animatedgodmode = false;
+					if(cmd.flags & DRAWMUGSHOT_XDEATHFACE)
 						xdth = true;
+					if(cmd.flags & DRAWMUGSHOT_ANIMATEDGODMODE)
+						animatedgodmode = true;
 					SetFace(oldSkin, cmd.string[0].GetChars());
-					DrawFace(cmd.special, xdth, cmd.x, cmd.y);
+					DrawFace(cmd.special, xdth, animatedgodmode, cmd.x, cmd.y);
 					break;
 				}
 				case SBARINFO_DRAWSELECTEDINVENTORY:
@@ -1681,6 +1776,21 @@ private:
 						value = CPlayer->fragcount;
 						max = fraglimit;
 					}
+					else if(cmd.flags == DRAWNUMBER_KILLS)
+					{
+						value = level.killed_monsters;
+						max = level.total_monsters;
+					}
+					else if(cmd.flags == DRAWNUMBER_ITEMS)
+					{
+						value = level.found_items;
+						max = level.total_items;
+					}
+					else if(cmd.flags == DRAWNUMBER_SECRETS)
+					{
+						value = level.found_secrets;
+						max = level.total_secrets;
+					}
 					else if(cmd.flags == DRAWNUMBER_INVENTORY)
 					{
 						AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
@@ -1753,6 +1863,13 @@ private:
 						TAG_DONE);
 					break;
 				}
+				case SBARINFO_DRAWSTRING:
+					if(drawingFont != cmd.font)
+					{
+						drawingFont = cmd.font;
+					}
+					DrawString(cmd.string[0], cmd.x - drawingFont->StringWidth(cmd.string[0]), cmd.y, cmd.translation);
+					break;
 				case SBARINFO_GAMEMODE:
 					if(((cmd.flags & GAMETYPE_SINGLEPLAYER) && !multiplayer) ||
 						((cmd.flags & GAMETYPE_DEATHMATCH) && deathmatch) ||
@@ -1792,6 +1909,12 @@ private:
 		x += spacing;
 		while(*str != '\0')
 		{
+			if(*str == ' ')
+			{
+				x += drawingFont->GetSpaceWidth();
+				str++;
+				continue;
+			}
 			int width = drawingFont->GetCharWidth((int) *str);
 			FTexture* character = drawingFont->GetChar((int) *str, &width);
 			if(character == NULL) //missing character.
@@ -1818,13 +1941,16 @@ private:
 	}
 
 	//draws the mug shot
-	void DrawFace(int accuracy, bool xdth, int x, int y)
+	void DrawFace(int accuracy, bool xdth, bool animatedgodmode, int x, int y)
 	{
 		if(CPlayer->health > 0)
 		{
-			if(faceIndex == ST_FACEGOD) //nothing fancy to do here
+			if(faceIndex == ST_FACEGOD || faceIndex == ST_FACEGODLEFT || faceIndex == ST_FACEGODRIGHT) //nothing fancy to do here
 			{
-				DrawImage(Faces[ST_FACEGOD], x, y);
+				if(animatedgodmode)
+					DrawImage(Faces[faceIndex], x, y);
+				else
+					DrawImage(Faces[ST_FACEGOD], x, y);
 			}
 			else
 			{
@@ -1842,7 +1968,7 @@ private:
 			}
 			else
 			{
-				if(faceIndex != ST_FACEXDEAD+6 && faceIndex >= ST_FACEXDEAD) //animate
+				if(faceIndex != ST_FACEXDEAD+5 && faceIndex >= ST_FACEXDEAD) //animate
 				{
 					if(faceTimer == 0)
 					{
@@ -1923,11 +2049,28 @@ private:
 				}
 				return;
 			}
-			// invulnerability
-			if ((CPlayer->cheats & CF_GODMODE) || (CPlayer->mo != NULL && CPlayer->mo->flags2 & MF2_INVULNERABLE))
+			if((CPlayer->cmd.ucmd.buttons & (BT_ATTACK|BT_ALTATTACK)) && !(CPlayer->cheats & (CF_FROZEN | CF_TOTALLYFROZEN)))
 			{
-				faceIndex = ST_FACEGOD;
-				faceTimer = 1;
+				if(rampageTimer == ST_RAMPAGETIME)
+				{
+					faceIndex = ST_FACEPAIN;
+					faceTimer = 1;
+				}
+				else
+				{
+					rampageTimer++;
+				}
+			}
+			else
+			{
+				rampageTimer = 0;
+			}
+			// invulnerability
+			if (((CPlayer->cheats & CF_GODMODE) || (CPlayer->mo != NULL && CPlayer->mo->flags2 & MF2_INVULNERABLE)) && 
+				(faceTimer == 0 || faceIndex <= 2))
+			{
+				faceIndex = ST_FACEGOD + (number % 3);
+				faceTimer = ST_FACETIME;
 			}
 
 			if (faceTimer == 0)
@@ -2027,6 +2170,7 @@ private:
 	FString lastPrefix;
 	bool weaponGrin;
 	int faceTimer;
+	int rampageTimer;
 	int faceIndex;
 	int oldHealth;
 	int mugshotHealth;

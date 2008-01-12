@@ -340,7 +340,7 @@ static void SetKeyTypes()
 		{
 			AKey * key = (AKey*)GetDefaultByType(ti);
 
-			if (key->Icon!=NULL && key->KeyNumber>0)
+			if (key->Icon!=0 && key->KeyNumber>0)
 			{
 				KeyTypes.Push(ti);
 			}
@@ -431,7 +431,7 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 		// First all keys that are assigned to locks (in reverse order of definition)
 		for(i=KeyTypes.Size()-1;i>=0;i--)
 		{
-			if (inv=CPlayer->mo->FindInventory(KeyTypes[i]))
+			if ((inv=CPlayer->mo->FindInventory(KeyTypes[i])))
 			{
 				DrawOneKey(xo, x, y, c, inv);
 			}
@@ -439,7 +439,7 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 		// And now the rest
 		for(i=UnassignedKeyTypes.Size()-1;i>=0;i--)
 		{
-			if (inv=CPlayer->mo->FindInventory(UnassignedKeyTypes[i]))
+			if ((inv=CPlayer->mo->FindInventory(UnassignedKeyTypes[i])))
 			{
 				DrawOneKey(xo, x, y, c, inv);
 			}

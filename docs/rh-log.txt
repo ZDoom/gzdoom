@@ -1,3 +1,6 @@
+January 12, 2008
+- Applied Blzut3's SBARINFO update #7.
+
 January 12, 2008 (Changes by Graf Zahl)
 - Moved renderer dependent part of savegame pic creation into DFrameBuffer
   as a virtual function so that it can be overridden.

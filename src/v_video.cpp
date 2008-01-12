@@ -61,6 +61,7 @@
 #include "hardware.h"
 #include "r_translate.h"
 #include "f_wipe.h"
+#include "m_png.h"
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
@@ -1310,12 +1311,33 @@ void DFrameBuffer::CopyPixelData(BYTE * buffer, int texpitch, int texheight, int
 // Render the view 
 //
 //===========================================================================
+
 void DFrameBuffer::RenderView(player_t *player)
 {
 	R_RenderActorView (player->mo);
 	R_DetailDouble ();		// [RH] Apply detail mode expansion
 	// [RH] Let cameras draw onto textures that were visible this frame.
 	FCanvasTextureInfo::UpdateAll ();
+}
+
+//===========================================================================
+//
+// Render the view to a savegame picture
+//
+//===========================================================================
+
+void DFrameBuffer::WriteSavePic (player_t *player, FILE *file, int width, int height)
+{
+	DCanvas *pic = new DSimpleCanvas (width, height);
+	PalEntry palette[256];
+
+	// Take a snapshot of the player's view
+	pic->Lock ();
+	R_RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
+	GetFlashedPalette (palette);
+	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
+	pic->Unlock ();
+	delete pic;
 }
 
 

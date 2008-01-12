@@ -1,4 +1,6 @@
 January 12, 2008 (Changes by Graf Zahl)
+- Moved renderer dependent part of savegame pic creation into DFrameBuffer
+  as a virtual function so that it can be overridden.
 - Fixed: M_SaveBitmap::prior was too small. It must be 3 bytes per pixel,
   not 1.
 - Replaced INVGEM** graphics with PNG versions so that they have the

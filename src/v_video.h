@@ -346,6 +346,9 @@ public:
 	// render 3D view
 	virtual void RenderView(player_t *player);
 
+	// renders view to a savegame picture
+	virtual void WriteSavePic (player_t *player, FILE *file, int width, int height);
+
 	bool Accel2D;	// If true, 2D drawing can be accelerated.
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end

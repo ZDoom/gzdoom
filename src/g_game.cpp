@@ -1969,17 +1969,8 @@ static void PutSavePic (FILE *file, int width, int height)
 	}
 	else
 	{
-		DCanvas *pic = new DSimpleCanvas (width, height);
-		PalEntry palette[256];
-
-		// Take a snapshot of the player's view
-		pic->Lock ();
 		P_CheckPlayerSprites();
-		R_RenderViewToCanvas (players[consoleplayer].mo, pic, 0, 0, width, height);
-		screen->GetFlashedPalette (palette);
-		M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
-		pic->Unlock ();
-		delete pic;
+		screen->WriteSavePic(&players[consoleplayer], file, width, height);
 	}
 }
 

@@ -2160,8 +2160,8 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	float v0 = tex->Box->Top;
 	float u1 = tex->Box->Right;
 	float v1 = tex->Box->Bottom;
-	float uscale = 1.f / (parms.texwidth / u1);
-	float vscale = 1.f / (parms.texheight / v1) / yscale;
+	float uscale = 1.f / tex->Box->Owner->Width;
+	float vscale = 1.f / tex->Box->Owner->Height / yscale;
 
 	if (y0 < parms.uclip)
 	{
@@ -2210,10 +2210,14 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, int x, int y, uint32 tags_fi
 	}
 
 	float yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
-	x0 -= 0.5f;
-	y0 -= yoffs;
-	x1 -= 0.5f;
-	y1 -= yoffs;
+
+	// Coordinates are truncated to integers, because that's effectively
+	// what the software renderer does. The hardware will instead round
+	// to nearest, it seems.
+	x0 = floorf(x0) - 0.5f;
+	y0 = floorf(y0) - yoffs;
+	x1 = floorf(x1) - 0.5f;
+	y1 = floorf(y1) - yoffs;
 
 	FBVERTEX *vert = &VertexData[VertexPos];
 

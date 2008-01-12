@@ -213,9 +213,6 @@ void FBaseStatusBar::SetScaled (bool scale)
 			::ST_Y = Scale(ST_Y - 100, SCREENHEIGHT*3, BaseRatioSizes[4][1]) + SCREENHEIGHT/2
 				+ (SCREENHEIGHT - SCREENHEIGHT * BaseRatioSizes[4][3] / 48) / 2;
 		}
-		// If this is odd, add one to make it even and close the gap between the
-		// status bar and the rest of the screen
-		::ST_Y += (::ST_Y & 1);
 		Displacement = 0;
 	}
 	::ST_X = ST_X;

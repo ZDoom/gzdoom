@@ -1,3 +1,9 @@
+January 12, 2008 (Changes by Graf Zahl)
+- Fixed: M_SaveBitmap::prior was too small. It must be 3 bytes per pixel,
+  not 1.
+- Replaced INVGEM** graphics with PNG versions so that they have the
+  correct colors when used on the AltHUD in Strife.
+
 January 11, 2008
 - Added support for 24-bit screenshots, so now accelerated 2D screenshots
   can work.

@@ -759,7 +759,7 @@ DWORD CalcSum(Byte *row, int len)
 //
 //==========================================================================
 
-static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH], int width)
+static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH*3], int width)
 {
 #if 1
 	// As it turns out, it seems no filtering is the best for Doom screenshots,
@@ -894,7 +894,7 @@ static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH], int w
 
 bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, int pitch, FILE *file)
 {
-	Byte prior[MAXWIDTH];
+	Byte prior[MAXWIDTH*3];
 	Byte buffer[PNG_WRITE_SIZE];
 	Byte temprow[5][1 + MAXWIDTH*3];
 	z_stream stream;

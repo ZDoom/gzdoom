@@ -55,6 +55,12 @@
 // size of the compression buffer it allocates on the stack.
 #define PNG_WRITE_SIZE	32768
 
+// Set this to 1 to use a simple heuristic to select the filter to apply
+// for each row of RGB image saves. As it turns out, it seems no filtering
+// is the best for Doom screenshots, no matter what the heuristic might
+// determine, so that's why this is 0 here.
+#define USE_FILTER_HEURISTIC 0
+
 // TYPES -------------------------------------------------------------------
 
 struct IHDR
@@ -759,13 +765,12 @@ DWORD CalcSum(Byte *row, int len)
 //
 //==========================================================================
 
+#if USE_FILTER_HEURISTIC
 static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH*3], int width)
 {
-#if 1
 	// As it turns out, it seems no filtering is the best for Doom screenshots,
 	// no matter what the heuristic might determine.
 	return 0;
-#else
 	DWORD sum;
 	DWORD bestsum;
 	int bestfilter;
@@ -880,8 +885,10 @@ static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH*3], int
 	}
 
 	return bestfilter;
-#endif
 }
+#else
+#define SelectFilter(x,y,z)		0
+#endif
 
 //==========================================================================
 //
@@ -894,9 +901,13 @@ static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH*3], int
 
 bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, int pitch, FILE *file)
 {
+#if USE_FILTER_HEURISTIC
 	Byte prior[MAXWIDTH*3];
-	Byte buffer[PNG_WRITE_SIZE];
 	Byte temprow[5][1 + MAXWIDTH*3];
+#else
+	Byte temprow[1][1 + MAXWIDTH*3];
+#endif
+	Byte buffer[PNG_WRITE_SIZE];
 	z_stream stream;
 	int err;
 	int y;
@@ -917,17 +928,19 @@ bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, i
 	stream.avail_out = sizeof(buffer);
 
 	temprow[0][0] = 0;
+#if USE_FILTER_HEURISTIC
 	temprow[1][0] = 1;
 	temprow[2][0] = 2;
 	temprow[3][0] = 3;
 	temprow[4][0] = 4;
 
-	// Fill the prior row to 0 for RGB images. Paletted is always filter 0,
+	// Fill the prior row with 0 for RGB images. Paletted is always filter 0,
 	// so it doesn't need this.
 	if (color_type != SS_PAL)
 	{
 		memset(prior, 0, width * 3);
 	}
+#endif
 
 	while (y-- > 0 && err == Z_OK)
 	{
@@ -957,11 +970,13 @@ bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, i
 			stream.avail_in = width * 3 + 1;
 			break;
 		}
+#if USE_FILTER_HEURISTIC
 		if (color_type != SS_PAL)
 		{
 			// Save this row for filter calculations on the next row.
 			memcpy (prior, &temprow[0][1], stream.avail_in - 1);
 		}
+#endif
 
 		from += pitch;
 

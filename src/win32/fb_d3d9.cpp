@@ -296,17 +296,12 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	HRESULT hr;
 
 	if (FAILED(hr = D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-		D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+		D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
 	{
-		D3DDevice = NULL;
-		if (fullscreen)
+		if (FAILED(D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
 		{
-			d3dpp.BackBufferFormat = D3DFMT_R5G6B5;
-			if (FAILED(D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
-				D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
-			{
-				D3DDevice = NULL;
-			}
+			D3DDevice = NULL;
 		}
 	}
 	if (D3DDevice != NULL)
@@ -3062,12 +3057,13 @@ void D3DFB::SetTexture(int tnum, IDirect3DTexture9 *texture)
 	}
 }
 
+CVAR(Float, pal, 0.5f, 0)
 void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count)
 {
 	if (count == 256 || SM14)
 	{
 		// Shader Model 1.4 only uses 256-color palettes.
-		SetConstant(2, 255 / 256.f, 0.5f / 256.f, 0, 0);
+		SetConstant(2, 255 / 256.f, pal / 256.f, 0, 0);
 	}
 	else
 	{
@@ -3083,7 +3079,7 @@ void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count)
 		// The constant register c2 is used to hold the multiplier in the
 		// x part and the adder in the y part.
 		float fcount = 1 / float(count);
-		SetConstant(2, 255 * fcount, 0.5f * fcount, 0, 0);
+		SetConstant(2, 255 * fcount, pal * fcount, 0, 0);
 	}
 	SetTexture(1, texture);
 }

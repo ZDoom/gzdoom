@@ -4,10 +4,10 @@
 
 vga-rom-font.16				vga-rom.f16
 
-graphics/invgemr2.lmp    	invgemr2.lmp
-graphics/invgemr1.lmp    	invgemr1.lmp
-graphics/invgeml2.lmp    	invgeml2.lmp
-graphics/invgeml1.lmp    	invgeml1.lmp
+graphics/invgeml1.png		invgeml1.png
+graphics/invgeml2.png		invgeml2.png
+graphics/invgemr1.png		invgemr1.png
+graphics/invgemr2.png		invgemr2.png
 graphics/artibox.png    	artibox.png
 graphics/selectbo.png    	selectbo.png
 graphics/fiteface.lmp       fiteface.lmp
@@ -128,10 +128,6 @@ graphics/xhairb4.imgz	    xhairb4.imgz
 graphics/xhairb5.imgz	    xhairb5.imgz
 graphics/xhairb6.imgz	    xhairb6.imgz
 graphics/xhairb7.imgz	    xhairb7.imgz
-graphics/invgeml1.png		invgeml1.png
-graphics/invgeml2.png		invgeml2.png
-graphics/invgemr1.png		invgemr1.png
-graphics/invgemr2.png		invgemr2.png
 
 # Now some sprites
 sprites/tnt1a0.png		    tnt1a0.png

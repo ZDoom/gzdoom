@@ -1,3 +1,6 @@
+January 11, 2008
+- Moved thingdef_codeptr.cpp into thingdef/ with the other thingdef files.
+
 January 11, 2008 (Changes by Graf Zahl)
 - Added Skulltag's pickup sprite and related information to the pistol. This
   will also double as the pistol's icon in the AltHUD.
@@ -6,6 +9,8 @@ January 11, 2008 (Changes by Graf Zahl)
 - Added GZDoom's alt HUD.
 
 January 10, 2008
+- Fixed: After loading a savegame, G_UnSnapshotLevel() destroyed the
+  unmorphed versions of players because it thought they were extras.
 - Fixed: Weapon positions were only adjusted in 1280x1024 if the status
   bar was hidden.
 - Fixed: If you died in co-op and somebody else ended the map before you

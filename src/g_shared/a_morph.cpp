@@ -9,7 +9,7 @@
 #include "m_random.h"
 #include "a_sharedglobal.h"
 
-#define MORPHTICS (4*TICRATE)
+#define MORPHTICS (40*TICRATE)
 
 static FRandom pr_morphmonst ("MorphMonster");
 

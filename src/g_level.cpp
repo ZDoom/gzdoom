@@ -2813,7 +2813,20 @@ void G_UnSnapshotLevel (bool hubLoad)
 			next = it.Next();
 			if (pawn->player == NULL || pawn->player->mo == NULL || !playeringame[pawn->player - players])
 			{
-				pawn->Destroy ();
+				int i;
+
+				// If this isn't the unmorphed original copy of a player, destroy it, because it's extra.
+				for (i = 0; i < MAXPLAYERS; ++i)
+				{
+					if (playeringame[i] && players[i].morphTics && players[i].mo->tracer == pawn)
+					{
+						break;
+					}
+				}
+				if (i == MAXPLAYERS)
+				{
+					pawn->Destroy ();
+				}
 			}
 		}
 	}

@@ -808,9 +808,6 @@ void DrawHUD()
 		hudheight=SCREENHEIGHT;
 	}
 
-	float blend[4] = {0,0,0,0};
-	StatusBar->BlendView (blend);
-
 	if (!automapactive)
 	{
 		int i;

@@ -94,7 +94,6 @@ PNGHandle::~PNGHandle ()
 
 static inline void MakeChunk (void *where, DWORD type, size_t len);
 static inline void StuffPalette (const PalEntry *from, BYTE *to);
-static bool StuffBitmap (const DCanvas *canvas, FILE *file);
 static bool WriteIDAT (FILE *file, const BYTE *data, int len);
 static void UnfilterRow (int width, BYTE *dest, BYTE *stream, BYTE *prev, int bpp);
 static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const BYTE *rowin, BYTE *rowout);
@@ -125,7 +124,8 @@ CVAR(Float, png_gamma, 0.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-bool M_CreatePNG (FILE *file, const DCanvas *canvas, const PalEntry *palette)
+bool M_CreatePNG (FILE *file, const BYTE *buffer, const PalEntry *palette,
+				  ESSType color_type, int width, int height, int pitch)
 {
 	BYTE work[8 +				// signature
 			  12+2*4+5 +		// IHDR
@@ -135,14 +135,15 @@ bool M_CreatePNG (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 	IHDR *const ihdr = (IHDR *)&work[8 + 8];
 	DWORD *const gama = (DWORD *)((BYTE *)ihdr + 2*4+5 + 12);
 	BYTE *const plte = (BYTE *)gama + 4 + 12;
+	size_t work_len;
 
 	sig[0] = MAKE_ID(137,'P','N','G');
 	sig[1] = MAKE_ID(13,10,26,10);
 
-	ihdr->Width = BigLong (canvas->GetWidth ());
-	ihdr->Height = BigLong (canvas->GetHeight ());
+	ihdr->Width = BigLong(width);
+	ihdr->Height = BigLong(height);
 	ihdr->BitDepth = 8;
-	ihdr->ColorType = 3;
+	ihdr->ColorType = color_type == SS_PAL ? 3 : 2;
 	ihdr->Compression = 0;
 	ihdr->Filter = 0;
 	ihdr->Interlace = 0;
@@ -152,13 +153,21 @@ bool M_CreatePNG (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 	*gama = BigLong (int (45454.5f * (png_gamma == 0.f ? Gamma : png_gamma)));
 	MakeChunk (gama, MAKE_ID('g','A','M','A'), 4);
 
-	StuffPalette (palette, plte);
-	MakeChunk (plte, MAKE_ID('P','L','T','E'), 256*3);
+	if (color_type == SS_PAL)
+	{
+		StuffPalette (palette, plte);
+		MakeChunk (plte, MAKE_ID('P','L','T','E'), 256*3);
+		work_len = sizeof(work);
+	}
+	else
+	{
+		work_len = sizeof(work) - (12+256*3);
+	}
 
-	if (fwrite (work, 1, sizeof(work), file) != sizeof(work))
+	if (fwrite (work, 1, work_len, file) != work_len)
 		return false;
 
-	return StuffBitmap (canvas, file);
+	return M_SaveBitmap (buffer, color_type, width, height, pitch, file);
 }
 
 //==========================================================================
@@ -707,7 +716,7 @@ static inline void MakeChunk (void *where, DWORD type, size_t len)
 //
 //==========================================================================
 
-static inline void StuffPalette (const PalEntry *from, BYTE *to)
+static void StuffPalette (const PalEntry *from, BYTE *to)
 {
 	for (int i = 256; i > 0; --i)
 	{
@@ -721,27 +730,173 @@ static inline void StuffPalette (const PalEntry *from, BYTE *to)
 
 //==========================================================================
 //
-// StuffBitmap
+// CalcSum
+//
+//
+//==========================================================================
+
+DWORD CalcSum(Byte *row, int len)
+{
+	DWORD sum = 0;
+
+	while (len-- != 0)
+	{
+		sum += (char)*row++;
+	}
+	return sum;
+}
+
+//==========================================================================
+//
+// SelectFilter
+//
+// Performs the heuristic recommended by the PNG spec to decide the
+// (hopefully) best filter to use for this row. To quate:
+//
+//    Select the filter that gives the smallest sum of absolute values of
+//    outputs. (Consider the output bytes as signed differences for this
+//    test.)
+//
+//==========================================================================
+
+static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH], int width)
+{
+#if 1
+	// As it turns out, it seems no filtering is the best for Doom screenshots,
+	// no matter what the heuristic might determine.
+	return 0;
+#else
+	DWORD sum;
+	DWORD bestsum;
+	int bestfilter;
+	int x;
+
+	width *= 3;
+
+	// The first byte of each row holds the filter type, filled in by the caller.
+	// However, the prior row does not contain a filter type, since it's always 0.
+
+	bestsum = 0;
+	bestfilter = 0;
+
+	// None
+	for (x = 1; x <= width; ++x)
+	{
+		bestsum += abs((char)row[0][x]);
+	}
+
+	// Sub
+	row[1][1] = row[0][1];
+	row[1][2] = row[0][2];
+	row[1][3] = row[0][3];
+	sum = abs((char)row[0][1]) + abs((char)row[0][2]) + abs((char)row[0][3]);
+	for (x = 4; x <= width; ++x)
+	{
+		row[1][x] = row[0][x] - row[0][x - 3];
+		sum += abs((char)row[1][x]);
+		if (sum >= bestsum)
+		{ // This isn't going to be any better.
+			break;
+		}
+	}
+	if (sum < bestsum)
+	{
+		bestsum = sum;
+		bestfilter = 1;
+	}
+
+	// Up
+	sum = 0;
+	for (x = 1; x <= width; ++x)
+	{
+		row[2][x] = row[0][x] - prior[x - 1];
+		sum += abs((char)row[2][x]);
+		if (sum >= bestsum)
+		{ // This isn't going to be any better.
+			break;
+		}
+	}
+	if (sum < bestsum)
+	{
+		bestsum = sum;
+		bestfilter = 2;
+	}
+
+	// Average
+	row[3][1] = row[0][1] - prior[0] / 2;
+	row[3][2] = row[0][2] - prior[1] / 2;
+	row[3][3] = row[0][3] - prior[2] / 2;
+	sum = abs((char)row[3][1]) + abs((char)row[3][2]) + abs((char)row[3][3]);
+	for (x = 4; x <= width; ++x)
+	{
+		row[3][x] = row[0][x] - (row[0][x - 3] + prior[x - 1]) / 2;
+		sum += (char)row[3][x];
+		if (sum >= bestsum)
+		{ // This isn't going to be any better.
+			break;
+		}
+	}
+	if (sum < bestsum)
+	{
+		bestsum = sum;
+		bestfilter = 3;
+	}
+
+	// Paeth
+	row[4][1] = row[0][1] - prior[0];
+	row[4][2] = row[0][2] - prior[1];
+	row[4][3] = row[0][3] - prior[2];
+	sum = abs((char)row[4][1]) + abs((char)row[4][2]) + abs((char)row[4][3]);
+	for (x = 4; x <= width; ++x)
+	{
+		Byte a = row[0][x - 3];
+		Byte b = prior[x - 1];
+		Byte c = prior[x - 4];
+		int p = a + b - c;
+		int pa = abs(p - a);
+		int pb = abs(p - b);
+		int pc = abs(p - c);
+		if (pa <= pb && pa <= pc)
+		{
+			row[4][x] = row[0][x] - a;
+		}
+		else if (pb <= pc)
+		{
+			row[4][x] = row[0][x] - b;
+		}
+		else
+		{
+			row[4][x] = row[0][x] - c;
+		}
+		sum += (char)row[4][x];
+		if (sum >= bestsum)
+		{ // This isn't going to be any better.
+			break;
+		}
+	}
+	if (sum < bestsum)
+	{
+		bestfilter = 4;
+	}
+
+	return bestfilter;
+#endif
+}
+
+//==========================================================================
+//
+// M_SaveBitmap
 //
 // Given a bitmap, creates one or more IDAT chunks in the given file.
 // Returns true on success.
 //
 //==========================================================================
 
-static bool StuffBitmap (const DCanvas *canvas, FILE *file)
+bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, int pitch, FILE *file)
 {
-	const int pitch = canvas->GetPitch();
-	const int width = canvas->GetWidth();
-	const int height = canvas->GetHeight();
-	BYTE *from = canvas->GetBuffer();
-
-	return M_SaveBitmap(from, width, height, pitch, file);
-}
-
-bool M_SaveBitmap(BYTE * from, int width, int height, int pitch, FILE *file)
-{
+	Byte prior[MAXWIDTH];
 	Byte buffer[PNG_WRITE_SIZE];
-	Byte zero = 0;
+	Byte temprow[5][1 + MAXWIDTH*3];
 	z_stream stream;
 	int err;
 	int y;
@@ -761,43 +916,74 @@ bool M_SaveBitmap(BYTE * from, int width, int height, int pitch, FILE *file)
 	stream.next_out = buffer;
 	stream.avail_out = sizeof(buffer);
 
-	while (y > 0 && err == Z_OK)
+	temprow[0][0] = 0;
+	temprow[1][0] = 1;
+	temprow[2][0] = 2;
+	temprow[3][0] = 3;
+	temprow[4][0] = 4;
+
+	// Fill the prior row to 0 for RGB images. Paletted is always filter 0,
+	// so it doesn't need this.
+	if (color_type != SS_PAL)
 	{
-		y--;
-		for (int i = 2; i && err == Z_OK; --i)
+		memset(prior, 0, width * 3);
+	}
+
+	while (y-- > 0 && err == Z_OK)
+	{
+		switch (color_type)
 		{
-			const int flushiness = (y == 0 && i == 1) ? Z_FINISH : 0;
-			if (i == 2)
-			{ // always use filter type 0
-				stream.next_in = &zero;
-				stream.avail_in = 1;
-			}
-			else
+		case SS_PAL:
+			memcpy(&temprow[0][1], from, width);
+			// always use filter type 0 for paletted images
+			stream.next_in = temprow[0];
+			stream.avail_in = width + 1;
+			break;
+
+		case SS_RGB:
+			memcpy(&temprow[0][1], from, width*3);
+			stream.next_in = temprow[SelectFilter(temprow, prior, width)];
+			stream.avail_in = width * 3 + 1;
+			break;
+
+		case SS_BGRA:
+			for (int x = 0; x < width; ++x)
 			{
-				stream.next_in = from;
-				stream.avail_in = width;
-				from += pitch;
+				temprow[0][x*3 + 1] = from[x*4 + 2];
+				temprow[0][x*3 + 2] = from[x*4 + 1];
+				temprow[0][x*3 + 3] = from[x*4];
 			}
-			err = deflate (&stream, flushiness);
-			if (err != Z_OK)
+			stream.next_in = temprow[SelectFilter(temprow, prior, width)];
+			stream.avail_in = width * 3 + 1;
+			break;
+		}
+		if (color_type != SS_PAL)
+		{
+			// Save this row for filter calculations on the next row.
+			memcpy (prior, &temprow[0][1], stream.avail_in - 1);
+		}
+
+		from += pitch;
+
+		err = deflate (&stream, (y == 0) ? Z_FINISH : 0);
+		if (err != Z_OK)
+		{
+			break;
+		}
+		while (stream.avail_out == 0)
+		{
+			if (!WriteIDAT (file, buffer, sizeof(buffer)))
 			{
-				break;
+				return false;
 			}
-			while (stream.avail_out == 0)
+			stream.next_out = buffer;
+			stream.avail_out = sizeof(buffer);
+			if (stream.avail_in != 0)
 			{
-				if (!WriteIDAT (file, buffer, sizeof(buffer)))
+				err = deflate (&stream, (y == 0) ? Z_FINISH : 0);
+				if (err != Z_OK)
 				{
-					return false;
-				}
-				stream.next_out = buffer;
-				stream.avail_out = sizeof(buffer);
-				if (stream.avail_in != 0)
-				{
-					err = deflate (&stream, flushiness);
-					if (err != Z_OK)
-					{
-						break;
-					}
+					break;
 				}
 			}
 		}

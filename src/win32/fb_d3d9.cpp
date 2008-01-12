@@ -227,6 +227,8 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	FBTexture = NULL;
 	TempRenderTexture = NULL;
 	InitialWipeScreen = NULL;
+	ScreenshotTexture = NULL;
+	ScreenshotSurface = NULL;
 	FinalWipeScreen = NULL;
 	PaletteTexture = NULL;
 	StencilPaletteTexture = NULL;
@@ -439,6 +441,8 @@ void D3DFB::ReleaseResources ()
 	KillNativeTexs();
 	KillNativePals();
 	ReleaseDefaultPoolItems();
+	SAFE_RELEASE( ScreenshotSurface );
+	SAFE_RELEASE( ScreenshotTexture );
 	SAFE_RELEASE( PaletteTexture );
 	SAFE_RELEASE( StencilPaletteTexture );
 	SAFE_RELEASE( ShadedPaletteTexture );
@@ -1087,6 +1091,161 @@ void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)
 	BlendingRect.bottom = y2;
 }
 
+//==========================================================================
+//
+// D3DFB :: GetScreenshotBuffer
+//
+// Returns a pointer into a surface holding the current screen data.
+//
+//==========================================================================
+
+void D3DFB::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
+{
+	D3DLOCKED_RECT lrect;
+
+	if (!test2d)
+	{
+		Super::GetScreenshotBuffer(buffer, pitch, color_type);
+		return;
+	}
+	buffer = NULL;
+	if ((ScreenshotTexture = GetCurrentScreen()) != NULL)
+	{
+		if (FAILED(ScreenshotTexture->GetSurfaceLevel(0, &ScreenshotSurface)))
+		{
+			ScreenshotTexture->Release();
+			ScreenshotTexture = NULL;
+		}
+		else if (FAILED(ScreenshotSurface->LockRect(&lrect, NULL, D3DLOCK_READONLY | D3DLOCK_NOSYSLOCK)))
+		{
+			ScreenshotSurface->Release();
+			ScreenshotSurface = NULL;
+			ScreenshotTexture->Release();
+			ScreenshotTexture = NULL;
+		}
+		else
+		{
+			buffer = (const BYTE *)lrect.pBits + lrect.Pitch * LBOffsetI;
+			pitch = lrect.Pitch;
+			color_type = SS_BGRA;
+		}
+	}
+}
+
+//==========================================================================
+//
+// D3DFB :: ReleaseScreenshotBuffer
+//
+//==========================================================================
+
+void D3DFB::ReleaseScreenshotBuffer()
+{
+	if (LockCount > 0)
+	{
+		Super::ReleaseScreenshotBuffer();
+	}
+	if (ScreenshotSurface != NULL)
+	{
+		ScreenshotSurface->UnlockRect();
+		ScreenshotSurface->Release();
+		ScreenshotSurface = NULL;
+	}
+	SAFE_RELEASE( ScreenshotTexture );
+}
+
+//==========================================================================
+//
+// D3DFB :: GetCurrentScreen
+//
+// Returns a texture containing the pixels currently visible on-screen.
+//
+//==========================================================================
+
+IDirect3DTexture9 *D3DFB::GetCurrentScreen()
+{
+	IDirect3DTexture9 *tex;
+	IDirect3DSurface9 *tsurf, *surf;
+	D3DSURFACE_DESC desc;
+
+	if (Windowed)
+	{
+		// The texture we read into must have the same pixel format as
+		// the TempRenderTexture.
+		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)))
+		{
+			if (FAILED(tsurf->GetDesc(&desc)))
+			{
+				tsurf->Release();
+				return NULL;
+			}
+			tsurf->Release();
+		}
+		else
+		{
+			return NULL;
+		}
+	}
+	else
+	{
+		if (SUCCEEDED(D3DDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &tsurf)))
+		{
+			if (FAILED(tsurf->GetDesc(&desc)))
+			{
+				tsurf->Release();
+				return NULL;
+			}
+			tsurf->Release();
+		}
+		else
+		{
+			return NULL;
+		}
+		// GetFrontBufferData works only with this format
+		desc.Format = D3DFMT_A8R8G8B8;
+	}
+
+	if (FAILED(D3DDevice->CreateTexture(desc.Width, desc.Height, 1, 0,
+		desc.Format, D3DPOOL_SYSTEMMEM, &tex, NULL)))
+	{
+		return NULL;
+	}
+	if (FAILED(tex->GetSurfaceLevel(0, &surf)))
+	{
+		tex->Release();
+		return NULL;
+	}
+
+	if (!Windowed)
+	{
+		if (FAILED(D3DDevice->GetFrontBufferData(0, surf)))
+		{
+			surf->Release();
+			tex->Release();
+			return NULL;
+		}
+	}
+	else
+	{
+		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &tsurf)))
+		{
+			if (FAILED(D3DDevice->GetRenderTargetData(tsurf, surf)))
+			{
+				tsurf->Release();
+				tex->Release();
+				return NULL;
+			}
+			tsurf->Release();
+		}
+		else
+		{
+			tex->Release();
+			return NULL;
+		}
+	}
+	surf->Release();
+	return tex;
+}
+
 /**************************************************************************/
 /*                                  2D Stuff                              */
 /**************************************************************************/
@@ -1435,40 +1594,43 @@ void D3DFB::PackingTexture::AllocateImage(D3DFB::PackedTexture *box, int w, int 
 	box->Prev = &UsedList;
 
 	// If we didn't use the whole box, split the remainder into the empty list.
-#if 1
-	// Split like this:
-	//   +---+------+
-	//   |###|      |
-	//   +---+------+
-	//   |          |
-	//   |          |
-	//   +----------+
-	// Empirical evidence indicates that this gives the best utilization.
-	if (box->Area.bottom < start.bottom)
+
+	if (box->Area.bottom + 7 < start.bottom && box->Area.right + 7 < start.right)
 	{
-		AddEmptyBox(start.left, box->Area.bottom, start.right, start.bottom);
+		// Split like this:
+		//   +---+------+
+		//   |###|      |
+		//   +---+------+
+		//   |          |
+		//   |          |
+		//   +----------+
+		if (box->Area.bottom < start.bottom)
+		{
+			AddEmptyBox(start.left, box->Area.bottom, start.right, start.bottom);
+		}
+		if (box->Area.right < start.right)
+		{
+			AddEmptyBox(box->Area.right, start.top, start.right, box->Area.bottom);
+		}
 	}
-	if (box->Area.right < start.right)
+	else
 	{
-		AddEmptyBox(box->Area.right, start.top, start.right, box->Area.bottom);
+		// Split like this:
+		//   +---+------+
+		//   |###|      |
+		//   +---+      |
+		//   |   |      |
+		//   |   |      |
+		//   +---+------+
+		if (box->Area.bottom < start.bottom)
+		{
+			AddEmptyBox(start.left, box->Area.bottom, box->Area.right, start.bottom);
+		}
+		if (box->Area.right < start.right)
+		{
+			AddEmptyBox(box->Area.right, start.top, start.right, start.bottom);
+		}
 	}
-#else
-	// Split like this:
-	//   +---+------+
-	//   |###|      |
-	//   +---+      |
-	//   |   |      |
-	//   |   |      |
-	//   +---+------+
-	if (box->Area.bottom < start.bottom)
-	{
-		AddEmptyBox(start.left, box->Area.bottom, box->Area.right, start.bottom);
-	}
-	if (box->Area.right < start.right)
-	{
-		AddEmptyBox(box->Area.right, start.top, start.right, start.bottom);
-	}
-#endif
 }
 
 //==========================================================================

@@ -184,6 +184,12 @@ void V_MarkRect (int x, int y, int width, int height)
 
 DCanvas *DCanvas::CanvasChain = NULL;
 
+//==========================================================================
+//
+// DCanvas Constructor
+//
+//==========================================================================
+
 DCanvas::DCanvas (int _width, int _height)
 {
 	// Init member vars
@@ -197,6 +203,12 @@ DCanvas::DCanvas (int _width, int _height)
 	Next = CanvasChain;
 	CanvasChain = this;
 }
+
+//==========================================================================
+//
+// DCanvas Destructor
+//
+//==========================================================================
 
 DCanvas::~DCanvas ()
 {
@@ -217,6 +229,12 @@ DCanvas::~DCanvas ()
 		probe = probe->Next;
 	}
 }
+
+//==========================================================================
+//
+// DCanvas :: IsValid
+//
+//==========================================================================
 
 bool DCanvas::IsValid ()
 {
@@ -255,8 +273,14 @@ void DCanvas::FlatFill (int left, int top, int right, int bottom, FTexture *src,
 	}
 }
 
+//==========================================================================
+//
+// DCanvas :: Clear
+//
+// Set an area to a specified color.
+//
+//==========================================================================
 
-// [RH] Set an area to a specified color
 void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
 {
 	int x, y;
@@ -298,6 +322,15 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 	}
 }
 
+//==========================================================================
+//
+// DCanvas :: Dim
+//
+// Applies a colored overlay to the entire screen, with the opacity
+// determined by the dimamount cvar.
+//
+//==========================================================================
+
 void DCanvas::Dim (PalEntry color)
 {
 	PalEntry dimmer;
@@ -319,6 +352,14 @@ void DCanvas::Dim (PalEntry color)
 	}
 	Dim (dimmer, amount, 0, 0, Width, Height);
 }
+
+//==========================================================================
+//
+// DCanvas :: Dim
+//
+// Applies a colored overlay to an area of the screen.
+//
+//==========================================================================
 
 void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 {
@@ -359,10 +400,58 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	}
 }
 
+//==========================================================================
+//
+// DCanvas :: UsesColormap
+//
+//==========================================================================
+
 bool DCanvas::UsesColormap() const
 {
 	return true;
 }
+
+//==========================================================================
+//
+// DCanvas :: GetScreenshotBuffer
+//
+// Returns a buffer containing the most recently displayed frame. The
+// width and height of this buffer are the same as the canvas.
+//
+//==========================================================================
+
+void DCanvas::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
+{
+	Lock(true);
+	buffer = GetBuffer();
+	pitch = GetPitch();
+	color_type = SS_PAL;
+}
+
+//==========================================================================
+//
+// DCanvas :: ReleaseScreenshotBuffer
+//
+// Releases the buffer obtained through GetScreenshotBuffer. These calls
+// must not be nested.
+//
+//==========================================================================
+
+void DCanvas::ReleaseScreenshotBuffer()
+{
+	Unlock();
+}
+
+//==========================================================================
+//
+// V_GetColorFromString
+//
+// Passed a string of the form "#RGB", "#RRGGBB", "R G B", or "RR GG BB",
+// returns a number representing that color. If palette is non-NULL, the
+// index of the best match in the palette is returned, otherwise the
+// RRGGBB value is returned directly.
+//
+//==========================================================================
 
 int V_GetColorFromString (const DWORD *palette, const char *cstr)
 {
@@ -434,10 +523,19 @@ int V_GetColorFromString (const DWORD *palette, const char *cstr)
 		}
 	}
 	if (palette)
-		return ColorMatcher.Pick (c[0]>>8, c[1]>>8, c[2]>>8);
+		return ColorMatcher.Pick (c[0], c[1], c[2]);
 	else
 		return MAKERGB(c[0], c[1], c[2]);
 }
+
+//==========================================================================
+//
+// V_GetColorStringByName
+//
+// Searches for the given color name in x11r6rgb.txt and returns an
+// HTML-ish "#RRGGBB" string for it if found or the empty string if not.
+//
+//==========================================================================
 
 FString V_GetColorStringByName (const char *name)
 {
@@ -520,6 +618,14 @@ FString V_GetColorStringByName (const char *name)
 	return FString();
 }
 
+//==========================================================================
+//
+// V_GetColor
+//
+// Works like V_GetColorFromString(), but also understands X11 color names.
+//
+//==========================================================================
+
 int V_GetColor (const DWORD *palette, const char *str)
 {
 	FString string = V_GetColorStringByName (str);
@@ -536,7 +642,14 @@ int V_GetColor (const DWORD *palette, const char *str)
 	return res;
 }
 
+//==========================================================================
+//
+// BuildTransTable
+//
 // Build the tables necessary for blending
+//
+//==========================================================================
+
 static void BuildTransTable (const PalEntry *palette)
 {
 	int r, g, b;
@@ -570,6 +683,12 @@ static void BuildTransTable (const PalEntry *palette)
 	Col2RGB8_LessPrecision[64] = Col2RGB8[64];
 }
 
+//==========================================================================
+//
+// DCanvas :: CalcGamma
+//
+//==========================================================================
+
 void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 {
 	// I found this formula on the web at
@@ -584,6 +703,14 @@ void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 		gammalookup[i] = (BYTE)(255.0 * pow (i / 255.0, invgamma));
 	}
 }
+
+//==========================================================================
+//
+// DSimpleCanvas Constructor
+//
+// A simple canvas just holds a buffer in main memory.
+//
+//==========================================================================
 
 DSimpleCanvas::DSimpleCanvas (int width, int height)
 	: DCanvas (width, height)
@@ -627,6 +754,12 @@ DSimpleCanvas::DSimpleCanvas (int width, int height)
 	memset (MemBuffer, 0, Pitch * height);
 }
 
+//==========================================================================
+//
+// DSimpleCanvas Destructor
+//
+//==========================================================================
+
 DSimpleCanvas::~DSimpleCanvas ()
 {
 	if (MemBuffer != NULL)
@@ -636,10 +769,22 @@ DSimpleCanvas::~DSimpleCanvas ()
 	}
 }
 
+//==========================================================================
+//
+// DSimpleCanvas :: IsValid
+//
+//==========================================================================
+
 bool DSimpleCanvas::IsValid ()
 {
 	return (MemBuffer != NULL);
 }
+
+//==========================================================================
+//
+// DSimpleCanvas :: Lock
+//
+//==========================================================================
 
 bool DSimpleCanvas::Lock ()
 {
@@ -651,6 +796,12 @@ bool DSimpleCanvas::Lock ()
 	return false;		// System surfaces are never lost
 }
 
+//==========================================================================
+//
+// DSimpleCanvas :: Unlock
+//
+//==========================================================================
+
 void DSimpleCanvas::Unlock ()
 {
 	if (--LockCount <= 0)
@@ -660,12 +811,29 @@ void DSimpleCanvas::Unlock ()
 	}
 }
 
+//==========================================================================
+//
+// DFrameBuffer Constructor
+//
+// A frame buffer canvas is the most common and represents the image that
+// gets drawn to the screen.
+//
+//==========================================================================
+
 DFrameBuffer::DFrameBuffer (int width, int height)
 	: DSimpleCanvas (width, height)
 {
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
 	Accel2D = false;
 }
+
+//==========================================================================
+//
+// DFrameBuffer :: DrawRateStuff
+//
+// Draws the fps counter, dot ticker, and palette debug.
+//
+//==========================================================================
 
 void DFrameBuffer::DrawRateStuff ()
 {
@@ -742,6 +910,14 @@ void DFrameBuffer::DrawRateStuff ()
 	}
 }
 
+//==========================================================================
+//
+// FPaleteTester Constructor
+//
+// This is just a 16x16 image with every possible color value.
+//
+//==========================================================================
+
 FPaletteTester::FPaletteTester()
 {
 	Width = 16;
@@ -754,10 +930,22 @@ FPaletteTester::FPaletteTester()
 	MakeTexture();
 }
 
+//==========================================================================
+//
+// FPaletteTester :: CheckModified
+//
+//==========================================================================
+
 bool FPaletteTester::CheckModified()
 {
 	return CurTranslation != WantTranslation;
 }
+
+//==========================================================================
+//
+// FPaletteTester :: SetTranslation
+//
+//==========================================================================
 
 void FPaletteTester::SetTranslation(int num)
 {
@@ -767,9 +955,21 @@ void FPaletteTester::SetTranslation(int num)
 	}
 }
 
+//==========================================================================
+//
+// FPaletteTester :: Unload
+//
+//==========================================================================
+
 void FPaletteTester::Unload()
 {
 }
+
+//==========================================================================
+//
+// FPaletteTester :: GetColumn
+//
+//==========================================================================
 
 const BYTE *FPaletteTester::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -785,6 +985,12 @@ const BYTE *FPaletteTester::GetColumn (unsigned int column, const Span **spans_o
 	return Pixels + column*16;
 }
 
+//==========================================================================
+//
+// FPaletteTester :: GetPixels
+//
+//==========================================================================
+
 const BYTE *FPaletteTester::GetPixels ()
 {
 	if (CurTranslation != WantTranslation)
@@ -793,6 +999,12 @@ const BYTE *FPaletteTester::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+// FPaletteTester :: MakeTexture
+//
+//==========================================================================
 
 void FPaletteTester::MakeTexture()
 {
@@ -814,6 +1026,15 @@ void FPaletteTester::MakeTexture()
 	CurTranslation = t;
 }
 
+//==========================================================================
+//
+// DFrameBuffer :: CopyFromBuff
+//
+// Copies pixels from main memory to video memory. This is only used by
+// DDrawFB.
+//
+//==========================================================================
+
 void DFrameBuffer::CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest)
 {
 	if (Pitch == width && Pitch == Width && srcPitch == width)
@@ -831,33 +1052,93 @@ void DFrameBuffer::CopyFromBuff (BYTE *src, int srcPitch, int width, int height,
 	}
 }
 
+//==========================================================================
+//
+// DFrameBuffer :: SetVSync
+//
+// Turns vertical sync on and off, if supported.
+//
+//==========================================================================
+
 void DFrameBuffer::SetVSync (bool vsync)
 {
 }
 
+//==========================================================================
+//
+// DFrameBuffer :: SetBlendingRect
+//
+// Defines the area of the screen containing the 3D view.
+//
+//==========================================================================
+
 void DFrameBuffer::SetBlendingRect (int x1, int y1, int x2, int y2)
 {
 }
+
+//==========================================================================
+//
+// DFrameBuffer :: Begin2D
+//
+// Signal that 3D rendering is complete, and the rest of the operations on
+// the canvas until Unlock() will be 2D ones.
+//
+//==========================================================================
 
 bool DFrameBuffer::Begin2D (bool copy3d)
 {
 	return false;
 }
 
+//==========================================================================
+//
+// DFrameBuffer :: CreateTexture
+//
+// Creates a native texture for a game texture, if supported.
+//
+//==========================================================================
+
 FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex, bool wrapping)
 {
 	return NULL;
 }
+
+//==========================================================================
+//
+// DFrameBuffer :: CreatePalette
+//
+// Creates a native palette from a remap table, if supported.
+//
+//==========================================================================
 
 FNativePalette *DFrameBuffer::CreatePalette(FRemapTable *remap)
 {
 	return NULL;
 }
 
+//==========================================================================
+//
+// DFrameBuffer :: WipeStartScreen
+//
+// Grabs a copy of the screen currently displayed to serve as the initial
+// frame of a screen wipe. Also determines which screenwipe will be
+// performed.
+//
+//==========================================================================
+
 bool DFrameBuffer::WipeStartScreen(int type)
 {
 	return wipe_StartScreen(type);
 }
+
+//==========================================================================
+//
+// DFrameBuffer :: WipeEndScreen
+//
+// Grabs a copy of the most-recently drawn, but not yet displayed, screen
+// to serve as the final frame of a screen wipe.
+//
+//==========================================================================
 
 void DFrameBuffer::WipeEndScreen()
 {
@@ -865,11 +1146,27 @@ void DFrameBuffer::WipeEndScreen()
 	Unlock();
 }
 
+//==========================================================================
+//
+// DFrameBuffer :: WipeDo
+//
+// Draws one frame of a screenwipe. Should be called no more than 35
+// times per second. If called less than that, ticks indicates how many
+// ticks have passed since the last call.
+//
+//==========================================================================
+
 bool DFrameBuffer::WipeDo(int ticks)
 {
 	Lock(true);
 	return wipe_ScreenWipe(ticks);
 }
+
+//==========================================================================
+//
+// DFrameBuffer :: WipeCleanup
+//
+//==========================================================================
 
 void DFrameBuffer::WipeCleanup()
 {

@@ -1,11 +1,15 @@
 January 11, 2008
+- Added support for 24-bit screenshots, so now accelerated 2D screenshots
+  can work.
+- Tweaked the box splitting algorithm for packed textures to hopefully
+  produce less wasted space.
 - For compatibility with the software renderer, D3DFB::DrawTextureV needs to
   truncate the coordinates to integers before sending them to the hardware.
   Otherwise, there can be one pixel gaps compared to the software renderer,
   because the hardware is rounding to nearest but the software renderer is
   simply truncating the fractional part of the coordinate. This is the real
-  cause of the gap at the top of the status bar at 1152x864 (and another gap
-  to the left of the status bar at 800x500).
+  cause of the gap above the status bar at 1152x864 (and another gap to the
+  left of the status bar at 800x500).
 - Fixed: When D3DFB::DrawTextureV had to clip a tile, it adjusted the 
   texture coordinates erroneously, still using the old calculations from
   before texture packing was implemented.

@@ -432,24 +432,21 @@ typedef struct
 //
 // WritePCXfile
 //
-void WritePCXfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
+void WritePCXfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
+				   ESSType color_type, int width, int height, int pitch)
 {
+	BYTE temprow[MAXWIDTH * 3];
+	const BYTE *data;
 	int x, y;
 	int runlen;
+	int bytes_per_row_minus_one;
 	BYTE color;
 	pcx_t pcx;
-	BYTE *data;
-	int width, height, pitch;
-
-	data = canvas->GetBuffer ();
-	width = canvas->GetWidth ();
-	height = canvas->GetHeight ();
-	pitch = canvas->GetPitch ();
 
 	pcx.manufacturer = 10;				// PCX id
-	pcx.version = 5;					// 256 color
+	pcx.version = 5;					// 256 (or more) colors
 	pcx.encoding = 1;
-	pcx.bits_per_pixel = 8;				// 256 color
+	pcx.bits_per_pixel = 8;				// 256 (or more) colors
 	pcx.xmin = 0;
 	pcx.ymin = 0;
 	pcx.xmax = LittleShort(width-1);
@@ -458,20 +455,52 @@ void WritePCXfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 	pcx.vdpi = LittleShort(75);
 	memset (pcx.palette, 0, sizeof(pcx.palette));
 	pcx.reserved = 0;
-	pcx.color_planes = 1;				// chunky image
+	pcx.color_planes = (color_type == SS_PAL) ? 1 : 3;	// chunky image
 	pcx.bytes_per_line = width + (width & 1);
 	pcx.palette_type = 1;				// not a grey scale
 	memset (pcx.filler, 0, sizeof(pcx.filler));
 
 	fwrite (&pcx, 128, 1, file);
 
+	bytes_per_row_minus_one = ((color_type == SS_PAL) ? width : width * 3) - 1;
+
 	// pack the image
 	for (y = height; y > 0; y--)
 	{
+		switch (color_type)
+		{
+		case SS_PAL:
+			data = buffer;
+			break;
+
+		case SS_RGB:
+			// Unpack RGB into separate planes.
+			for (int i = 0; i < width; ++i)
+			{
+				temprow[i            ] = buffer[i*3];
+				temprow[i + width    ] = buffer[i*3 + 1];
+				temprow[i + width * 2] = buffer[i*3 + 2];
+			}
+			data = temprow;
+			break;
+
+		case SS_BGRA:
+			// Unpack RGB into separate planes, discarding A.
+			for (int i = 0; i < width; ++i)
+			{
+				temprow[i            ] = buffer[i*4 + 2];
+				temprow[i + width    ] = buffer[i*4 + 1];
+				temprow[i + width * 2] = buffer[i*4];
+			}
+			data = temprow;
+			break;
+		}
+		buffer += pitch;
+
 		color = *data++;
 		runlen = 1;
 
-		for (x = width - 1; x > 0; x--)
+		for (x = bytes_per_row_minus_one; x > 0; x--)
 		{
 			if (*data == color)
 			{
@@ -522,26 +551,28 @@ void WritePCXfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 
 		if (width & 1)
 			putc (0, file);
-
-		data += pitch - width;
 	}
 
 	// write the palette
-	putc (12, file);		// palette ID byte
-	for (x = 0; x < 256; x++, palette++)
+	if (color_type == SS_PAL)
 	{
-		putc (palette->r, file);
-		putc (palette->g, file);
-		putc (palette->b, file);
+		putc (12, file);		// palette ID byte
+		for (x = 0; x < 256; x++, palette++)
+		{
+			putc (palette->r, file);
+			putc (palette->g, file);
+			putc (palette->b, file);
+		}
 	}
 }
 
 //
 // WritePNGfile
 //
-void WritePNGfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
+void WritePNGfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
+				   ESSType color_type, int width, int height, int pitch)
 {
-	if (!M_CreatePNG (file, canvas, palette) ||
+	if (!M_CreatePNG (file, buffer, palette, color_type, width, height, pitch) ||
 		!M_AppendPNGText (file, "Software", GAMENAME DOTVERSIONSTR) ||
 		!M_FinishPNG (file))
 	{
@@ -572,8 +603,9 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 void M_ScreenShot (const char *filename)
 {
+	FILE *file;
 	FString autoname;
-	bool writepcx = screen->CanWritePCX() && (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
+	bool writepcx = (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
 
 	// find a file name to save it to
 	if (filename == NULL || filename[0] == '\0')
@@ -614,46 +646,51 @@ void M_ScreenShot (const char *filename)
 	CreatePath(screenshot_dir);
 
 	// save the screenshot
-	screen->Save(autoname, writepcx);
+	const BYTE *buffer;
+	int pitch;
+	ESSType color_type;
 
-	if (!screenshot_quiet)
+	screen->GetScreenshotBuffer(buffer, pitch, color_type);
+	if (buffer != NULL)
 	{
-		Printf ("Captured %s\n", autoname.GetChars());
-	}
-}
+		PalEntry palette[256];
 
-bool DCanvas::CanWritePCX()
-{
-	return true;
-}
+		if (color_type == SS_PAL)
+		{
+			screen->GetFlashedPalette(palette);
+		}
+		file = fopen (autoname, "wb");
+		if (file == NULL)
+		{
+			Printf ("Could not open %s\n", autoname.GetChars());
+			screen->ReleaseScreenshotBuffer();
+			return;
+		}
+		if (writepcx)
+		{
+			WritePCXfile(file, buffer, palette, color_type,
+				screen->GetWidth(), screen->GetHeight(), pitch);
+		}
+		else
+		{
+			WritePNGfile(file, buffer, palette, color_type,
+				screen->GetWidth(), screen->GetHeight(), pitch);
+		}
+		fclose(file);
+		screen->ReleaseScreenshotBuffer();
 
-void DCanvas::Save(const char *filename, bool writepcx)
-{
-	FILE *file;
-
-	Lock (true);
-
-	PalEntry palette[256];
-	screen->GetFlashedPalette (palette);
-
-	file = fopen (filename, "wb");
-	if (file == NULL)
-	{
-		Printf ("Could not open %s\n", filename);
-		Unlock ();
-		return;
-	}
-
-	if (writepcx)
-	{
-		WritePCXfile (file, this, palette);
+		if (!screenshot_quiet)
+		{
+			Printf ("Captured %s\n", autoname.GetChars());
+		}
 	}
 	else
 	{
-		WritePNGfile (file, this, palette);
+		if (!screenshot_quiet)
+		{
+			Printf ("Could not create screenshot.\n");
+		}
 	}
-	fclose (file);
-	Unlock ();
 }
 
 CCMD (screenshot)

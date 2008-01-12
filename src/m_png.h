@@ -39,7 +39,8 @@
 // The passed file should be a newly created file.
 // This function writes the PNG signature and the IHDR, gAMA, PLTE, and IDAT
 // chunks.
-bool M_CreatePNG (FILE *file, const DCanvas *canvas, const PalEntry *pal);
+bool M_CreatePNG (FILE *file, const BYTE *buffer, const PalEntry *pal,
+				  ESSType color_type, int width, int height, int pitch);
 
 // Creates a grayscale 1x1 PNG file. Used for savegames without savepics.
 bool M_CreateDummyPNG (FILE *file);
@@ -53,7 +54,7 @@ bool M_AppendPNGText (FILE *file, const char *keyword, const char *text);
 // Appends the IEND chunk to a PNG file.
 bool M_FinishPNG (FILE *file);
 
-bool M_SaveBitmap(BYTE * from, int width, int height, int pitch, FILE *file);
+bool M_SaveBitmap(const BYTE *from, ESSType color_type, int width, int height, int pitch, FILE *file);
 
 // PNG Reading --------------------------------------------------------------
 

@@ -237,6 +237,8 @@ public:
 	void Blank ();
 	bool PaintToWindow ();
 	void SetVSync (bool vsync);
+	void GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type);
+	void ReleaseScreenshotBuffer();
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	bool Begin2D (bool copy3d);
 	FNativeTexture *CreateTexture (FTexture *gametex, bool wrapping);
@@ -297,6 +299,7 @@ private:
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
 	void CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, D3DCOLOR color0, D3DCOLOR color1) const;
 	bool Reset();
+	IDirect3DTexture9 *GetCurrentScreen();
 	void ReleaseDefaultPoolItems();
 	void KillNativePals();
 	void KillNativeTexs();
@@ -360,6 +363,8 @@ private:
 	IDirect3DTexture9 *PaletteTexture;
 	IDirect3DTexture9 *StencilPaletteTexture;
 	IDirect3DTexture9 *ShadedPaletteTexture;
+	IDirect3DTexture9 *ScreenshotTexture;
+	IDirect3DSurface9 *ScreenshotSurface;
 
 	IDirect3DVertexBuffer9 *VertexBuffer;
 	FBVERTEX *VertexData;

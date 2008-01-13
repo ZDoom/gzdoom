@@ -1505,9 +1505,6 @@ void FBaseStatusBar::DrawConsistancy () const
 					players[1-consoleplayer].inconsistant,
 					players[1-consoleplayer].inconsistant/ticdup);
 			}
-#ifdef _DEBUG
-			AddCommandString ("showrngs");
-#endif
 		}
 		screen->DrawText (CR_GREEN, 
 			(screen->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,

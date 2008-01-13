@@ -1067,6 +1067,8 @@ public:
 		{
 			width = (int) (((double) width/100)*value);
 		}
+		if(Pixels != NULL)
+			delete Pixels;
 		Pixels = new BYTE[Width*Height];
 		memset(Pixels, 0, Width*Height); //Prevent garbage when using transparent images
 		bar->CopyToBlock(Pixels, Width, Height, 0, 0); //draw the bar
@@ -1820,6 +1822,7 @@ private:
 					else
 						bar->PrepareTexture(Images[cmd.sprite], NULL, value, horizontal, reverse);
 					DrawImage(bar, cmd.x, cmd.y);
+					delete bar;
 					break;
 				}
 				case SBARINFO_DRAWGEM:

@@ -1,5 +1,16 @@
 January 12, 2008
-- Applied Blzut3's SBARINFO update #7.
+- Applied Blzut3's SBARINFO update #8:
+  * Fixed: Drawbar had a few memory leaks.
+- Applied Blzut3's SBARINFO update #7:
+  * Added drawstring to SBARINFO.
+  * Added animatedgodmode flag to drawmugshot, also changed the flags to use the
+    standard named arguments instead of numbers.  The old way is considered
+    deprecated.
+  * Added kills, monsters, items, totalitems, secrets, and totalsecrets to
+    drawnumber.  Drawbar can also use kills, items, and secrets.
+  * Added weaponicon to drawimage which will display the inventory.icon of the
+    currently selected weapon.
+  * Fixed: I apparently forgot to add the "rampage" face to drawmugshot.
 
 January 12, 2008 (Changes by Graf Zahl)
 - Moved renderer dependent part of savegame pic creation into DFrameBuffer

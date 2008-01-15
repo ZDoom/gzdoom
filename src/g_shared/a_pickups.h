@@ -190,6 +190,7 @@ public:
 	AInventory *CreateCopy (AActor *other);
 	bool HandlePickup (AInventory *item);
 	const PClass *GetParentAmmo () const;
+	AInventory *CreateTossable ();
 
 	int BackpackAmount, BackpackMaxAmount;
 };

@@ -2744,15 +2744,11 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	{
 		while (arc << w, w != 0xffff)
 		{
-			if (w >= MAX_ACS_TRANSLATIONS)
-			{ // hack hack to avoid crashing
-				w = 0;
-			}
 			trans = translationtables[TRANSLATION_LevelScripted].GetVal(w);
 			if (trans == NULL)
 			{
 				trans = new FRemapTable;
-				translationtables[TRANSLATION_LevelScripted].SetVal(t, trans);
+				translationtables[TRANSLATION_LevelScripted].SetVal(w, trans);
 			}
 			trans->Serialize(arc);
 		}

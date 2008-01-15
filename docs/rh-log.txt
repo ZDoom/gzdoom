@@ -1,3 +1,9 @@
+January 14, 2008
+- Fixed: ACS translations were loaded into the wrong slot after restoring a
+  savegame.
+- Fixed exploit: Dropping ammo at baby and nightmare skill levels would give
+  you back more than you dropped.
+
 January 13, 2008 (Changes by Graf Zahl)
 - Moved A_Punch from Inventory to Actor. Apparently there are WADs that use it
   for monsters. The function works fine for monsters as it is.

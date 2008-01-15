@@ -160,6 +160,23 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 	return copy;
 }
 
+//===========================================================================
+//
+// AAmmo :: CreateTossable
+//
+//===========================================================================
+
+AInventory *AAmmo::CreateTossable()
+{
+	AInventory *copy = Super::CreateTossable();
+	if (copy != NULL)
+	{ // Do not increase ammo by dropping it and picking it back up at
+	  // certain skill levels.
+		copy->ItemFlags |= IF_IGNORESKILL;
+	}
+	return copy;
+}
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_GiveBody

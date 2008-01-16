@@ -186,10 +186,19 @@ enum
 	SBARINFO_PLAYERCLASS,
 };
 
-//Laz Bar Script Reader
-int SBarInfo::ParseSBarInfo(int lump)
+void FreeSBarInfoScript()
 {
-	int stbar = GAME_Any;
+	if (SBarInfoScript != NULL)
+	{
+		delete SBarInfoScript;
+		SBarInfoScript = NULL;
+	}
+}
+
+//Laz Bar Script Reader
+void SBarInfo::ParseSBarInfo(int lump)
+{
+	gameType = GAME_Any;
 	SC_OpenLumpNum(lump, Wads.GetLumpFullName(lump));
 	SC_SetCMode(true);
 	while(SC_CheckToken(TK_Identifier) || SC_CheckToken(TK_Include))
@@ -213,15 +222,15 @@ int SBarInfo::ParseSBarInfo(int lump)
 			case SBARINFO_BASE:
 				SC_MustGetToken(TK_Identifier);
 				if(SC_Compare("Doom"))
-					stbar = GAME_Doom;
+					gameType = GAME_Doom;
 				else if(SC_Compare("Heretic"))
-					stbar = GAME_Heretic;
+					gameType = GAME_Heretic;
 				else if(SC_Compare("Hexen"))
-					stbar = GAME_Hexen;
+					gameType = GAME_Hexen;
 				else if(SC_Compare("Strife"))
-					stbar = GAME_Strife;
+					gameType = GAME_Strife;
 				else if(SC_Compare("None"))
-					stbar = GAME_Any;
+					gameType = GAME_Any;
 				else
 					SC_ScriptError("Bad game name: %s", sc_String);
 				SC_MustGetToken(';');
@@ -276,14 +285,14 @@ int SBarInfo::ParseSBarInfo(int lump)
 	}
 	SC_SetCMode(false);
 	SC_Close();
-	return stbar;
 }
 
 void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 {
 	while(SC_CheckToken(TK_Identifier))
 	{
-		SBarInfoCommand cmd = *new SBarInfoCommand();
+		SBarInfoCommand cmd;
+
 		switch(cmd.type = SC_MustMatchString(SBarInfoRoutineLevel))
 		{
 			case SBARINFO_DRAWSWITCHABLEIMAGE:
@@ -377,7 +386,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript->height); //the position should be absolute on the screen.
+				cmd.y = sc_Number - (200 - this->height); //the position should be absolute on the screen.
 				if(SC_CheckToken(','))
 				{
 					SC_MustGetToken(TK_Identifier);
@@ -471,7 +480,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				cmd.y = sc_Number - (200 - this->height);
 				if(SC_CheckToken(','))
 				{
 					bool needsComma = false;
@@ -522,13 +531,13 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				cmd.y = sc_Number - (200 - this->height);
 				if(SC_CheckToken(',')) //hmm I guess we had a numberic flag in there.
 				{
 					cmd.flags = cmd.x;
-					cmd.x = cmd.y + (200 - SBarInfoScript->height);
+					cmd.x = cmd.y + (200 - this->height);
 					SC_MustGetToken(TK_IntConst);
-					cmd.y = sc_Number - (200 - SBarInfoScript->height);
+					cmd.y = sc_Number - (200 - this->height);
 				}
 				SC_MustGetToken(';');
 				break;
@@ -565,7 +574,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				cmd.y = sc_Number - (200 - this->height);
 				cmd.special2 = cmd.x + 30;
 				cmd.special3 = cmd.y + 24;
 				cmd.translation = CR_GOLD;
@@ -575,7 +584,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					cmd.special2 = sc_Number;
 					SC_MustGetToken(',');
 					SC_MustGetToken(TK_IntConst);
-					cmd.special3 = sc_Number - (200 - SBarInfoScript->height);
+					cmd.special3 = sc_Number - (200 - this->height);
 					if(SC_CheckToken(','))
 					{
 						SC_MustGetToken(TK_Identifier);
@@ -648,7 +657,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetNumber();
-				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				cmd.y = sc_Number - (200 - this->height);
 				cmd.special2 = cmd.x + 26;
 				cmd.special3 = cmd.y + 22;
 				cmd.translation = CR_GOLD;
@@ -658,7 +667,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					cmd.special2 = sc_Number;
 					SC_MustGetToken(',');
 					SC_MustGetToken(TK_IntConst);
-					cmd.special3 = sc_Number - (200 - SBarInfoScript->height);
+					cmd.special3 = sc_Number - (200 - this->height);
 					if(SC_CheckToken(','))
 					{
 						SC_MustGetToken(TK_Identifier);
@@ -763,7 +772,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				cmd.y = sc_Number - (200 - this->height);
 				SC_MustGetToken(';');
 				break;
 			case SBARINFO_DRAWGEM:
@@ -802,7 +811,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				cmd.y = sc_Number - (200 - this->height);
 				SC_MustGetToken(';');
 				break;
 			case SBARINFO_DRAWSHADER:
@@ -835,7 +844,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				cmd.y = sc_Number - (200 - this->height);
 				SC_MustGetToken(';');
 				break;
 			case SBARINFO_DRAWSTRING:
@@ -854,7 +863,7 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 				cmd.x = sc_Number;
 				SC_MustGetToken(',');
 				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - SBarInfoScript->height);
+				cmd.y = sc_Number - (200 - this->height);
 				SC_MustGetToken(';');
 				break;
 			case SBARINFO_GAMEMODE:
@@ -947,10 +956,29 @@ EColorRange SBarInfo::GetTranslation(char* translation)
 
 SBarInfo::SBarInfo() //make results more predicable
 {
+	Init();
+}
+
+SBarInfo::SBarInfo(int lumpnum)
+{
+	Init();
+	ParseSBarInfo(lumpnum);
+}
+
+void SBarInfo::Init()
+{
 	automapbar = false;
 	interpolateHealth = false;
 	interpolationSpeed = 8;
 	height = 0;
+}
+
+SBarInfo::~SBarInfo()
+{
+	for (size_t i = 0; i < countof(huds); ++i)
+	{
+		huds[i].commands.Clear();
+	}
 }
 
 void SBarInfoCommand::setString(const char* source, int strnum, int maxlength, bool exact)
@@ -972,31 +1000,6 @@ void SBarInfoCommand::setString(const char* source, int strnum, int maxlength, b
 		}
 	}
 	string[strnum] = source;
-}
-
-SBarInfoCommand::SBarInfoCommand() //sets the default values for more predicable behavior
-{
-	type = 0;
-	special = 0;
-	special2 = 0;
-	special3 = 0;
-	special4 = 0;
-	flags = 0;
-	x = 0;
-	y = 0;
-	value = 0;
-	sprite = 0;
-	string[0] = "";
-	string[1] = "";
-	translation = CR_UNTRANSLATED;
-	translation2 = CR_UNTRANSLATED;
-	translation3 = CR_UNTRANSLATED;
-	font = V_GetFont("CONFONT");
-}
-
-SBarInfoBlock::SBarInfoBlock()
-{
-	forceScaled = false;
 }
 
 enum
@@ -1030,6 +1033,11 @@ enum
 class FBarTexture : public FTexture
 {
 public:
+	~FBarTexture()
+	{
+		delete Pixels;
+	}
+
 	void Unload()
 	{
 		if(image != NULL)
@@ -1053,12 +1061,9 @@ public:
 		return Pixels;
 	}
 
-	void PrepareTexture(FTexture* bar, FTexture* bg, int value, bool horizontal, bool reverse)
+	FBarTexture(FTexture* bar, FTexture* bg, int value, bool horizontal, bool reverse)
 	{
-		if(value < 0)
-			value = 0;
-		else if(value > 100)
-			value = 100;
+		value = clamp(value, 0, 100);
 		image = bar;
 		//width and height are supposed to be the end result, Width and Height are the input image.  If that makes sense.
 		int width = Width = bar->GetWidth();
@@ -1067,8 +1072,6 @@ public:
 		{
 			width = (int) (((double) width/100)*value);
 		}
-		if(Pixels != NULL)
-			delete Pixels;
 		Pixels = new BYTE[Width*Height];
 		memset(Pixels, 0, Width*Height); //Prevent garbage when using transparent images
 		bar->CopyToBlock(Pixels, Width, Height, 0, 0); //draw the bar
@@ -1207,6 +1210,39 @@ private:
 	BYTE Pixels[512];
 	Span DummySpan[2];
 };
+
+SBarInfoCommand::SBarInfoCommand() //sets the default values for more predicable behavior
+{
+	type = 0;
+	special = 0;
+	special2 = 0;
+	special3 = 0;
+	special4 = 0;
+	flags = 0;
+	x = 0;
+	y = 0;
+	value = 0;
+	sprite = 0;
+	translation = CR_UNTRANSLATED;
+	translation2 = CR_UNTRANSLATED;
+	translation3 = CR_UNTRANSLATED;
+	font = V_GetFont("CONFONT");
+	bar = NULL;
+}
+
+SBarInfoCommand::~SBarInfoCommand()
+{
+	if (bar != NULL)
+	{
+		delete bar;
+	}
+	subBlock.commands.Clear();
+}
+
+SBarInfoBlock::SBarInfoBlock()
+{
+	forceScaled = false;
+}
 
 //SBarInfo Display
 class FSBarInfo : public FBaseStatusBar
@@ -1435,7 +1471,7 @@ private:
 		}
 		for(unsigned int i = 0;i < block.commands.Size();i++)
 		{
-			SBarInfoCommand cmd = block.commands[i];
+			SBarInfoCommand& cmd = block.commands[i];
 			switch(cmd.type) //read and execute all the commands
 			{
 				case SBARINFO_DRAWSWITCHABLEIMAGE: //draw the alt image if we don't have the item else this is like a normal drawimage
@@ -1816,13 +1852,14 @@ private:
 					{
 						value = 0;
 					}
-					FBarTexture* bar = new FBarTexture();
+					if(cmd.bar != NULL)
+						delete cmd.bar;
 					if(cmd.special != -1)
-						bar->PrepareTexture(Images[cmd.sprite], Images[cmd.special], value, horizontal, reverse);
+						cmd.bar = new FBarTexture(Images[cmd.sprite], Images[cmd.special], value, horizontal, reverse);
 					else
-						bar->PrepareTexture(Images[cmd.sprite], NULL, value, horizontal, reverse);
-					DrawImage(bar, cmd.x, cmd.y);
-					delete bar;
+						cmd.bar = new FBarTexture(Images[cmd.sprite], NULL, value, horizontal, reverse);
+					DrawImage(cmd.bar, cmd.x, cmd.y);
+					//delete cmd.bar;
 					break;
 				}
 				case SBARINFO_DRAWGEM:

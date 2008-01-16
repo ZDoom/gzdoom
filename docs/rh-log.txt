@@ -1,3 +1,8 @@
+January 15, 2008
+- Plugged more leaks in SBARINFO.
+- Spawned actors that have MF2_DORMANT set in their default instance now have
+  Deactivate() called on them immediately after spawning.
+
 January 14, 2008
 - Fixed: ACS translations were loaded into the wrong slot after restoring a
   savegame.

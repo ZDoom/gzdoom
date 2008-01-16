@@ -4,6 +4,8 @@
 #include "tarray.h"
 #include "v_collection.h"
 
+class FBarTexture;
+
 struct SBarInfoCommand; //we need to be able to use this before it is defined.
 
 struct SBarInfoBlock
@@ -15,6 +17,10 @@ struct SBarInfoBlock
 
 struct SBarInfoCommand
 {
+	SBarInfoCommand();
+	~SBarInfoCommand();
+	void setString(const char* source, int strnum, int maxlength=-1, bool exact=false);
+
 	int type;
 	int special;
 	int special2;
@@ -30,9 +36,8 @@ struct SBarInfoCommand
 	EColorRange translation;
 	EColorRange translation2;
 	EColorRange translation3;
+	FBarTexture *bar;
 	SBarInfoBlock subBlock; //for type SBarInfo_CMD_GAMEMODE
-	void setString(const char* source, int strnum, int maxlength=-1, bool exact=false);
-	SBarInfoCommand();
 };
 
 struct SBarInfo
@@ -43,13 +48,21 @@ struct SBarInfo
 	bool interpolateHealth;
 	int interpolationSpeed;
 	int height;
-	int ParseSBarInfo(int lump);
+	int gameType;
+
+	int GetGameType() { return gameType; }
+	void ParseSBarInfo(int lump);
 	void ParseSBarInfoBlock(SBarInfoBlock &block);
 	int newImage(const char* patchname);
+	void Init();
 	EColorRange GetTranslation(char* translation);
 	SBarInfo();
+	SBarInfo(int lumpnum);
+	~SBarInfo();
 };
 
 extern SBarInfo *SBarInfoScript;
+
+void FreeSBarInfoScript();
 
 #endif //__SBarInfo_SBAR_H__

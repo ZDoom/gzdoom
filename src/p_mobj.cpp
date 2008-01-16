@@ -3316,6 +3316,13 @@ void AActor::HandleSpawnFlags ()
 
 void AActor::BeginPlay ()
 {
+	// If the actor is spawned with the dormant flag set, clear it, and use
+	// the normal deactivation logic to make it properly dormant.
+	if (flags2 & MF2_DORMANT)
+	{
+		flags2 &= ~MF2_DORMANT;
+		Deactivate (NULL);
+	}
 }
 
 bool AActor::isFast()

@@ -74,6 +74,7 @@
 #include "vectors.h"
 #include "sbarinfo.h"
 #include "r_translate.h"
+#include "sbarinfo.h"
 
 #include "gi.h"
 
@@ -1537,18 +1538,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		S_ResumeSound ();
 	}
 
-	//SBarInfo support.
-	int stbar = gameinfo.gametype;
-	if(Wads.CheckNumForName("SBARINFO") != -1)
-	{
-		if(SBarInfoScript != NULL)
-		{
-			delete SBarInfoScript;
-		}
-		SBarInfoScript = new SBarInfo();
-		stbar = SBarInfoScript->ParseSBarInfo(Wads.GetNumForName("SBARINFO")); //load last SBARINFO lump to avoid clashes
-	}
-	//end most of the SBarInfo stuff
 	if (StatusBar != NULL)
 	{
 		delete StatusBar;
@@ -1557,29 +1546,37 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	{
 		StatusBar = new FBaseStatusBar (0);
 	}
-	else if (stbar == GAME_Doom)
+	else if (SBarInfoScript != NULL)
 	{
-		StatusBar = CreateDoomStatusBar ();
+		int cstype = SBarInfoScript->GetGameType();
+
+		if (cstype == GAME_Any || cstype == gameinfo.gametype)
+		{
+			StatusBar = CreateCustomStatusBar();
+		}
 	}
-	else if (stbar == GAME_Heretic)
+	if (StatusBar == NULL)
 	{
-		StatusBar = CreateHereticStatusBar ();
-	}
-	else if (stbar == GAME_Hexen)
-	{
-		StatusBar = CreateHexenStatusBar ();
-	}
-	else if (stbar == GAME_Strife)
-	{
-		StatusBar = CreateStrifeStatusBar ();
-	}
-	else if (stbar == GAME_Any)
-	{
-		StatusBar = CreateCustomStatusBar (); //SBARINFO is empty unless scripted.
-	}
-	else
-	{
-		StatusBar = new FBaseStatusBar (0);
+		if (gameinfo.gametype == GAME_Doom)
+		{
+			StatusBar = CreateDoomStatusBar ();
+		}
+		else if (gameinfo.gametype == GAME_Heretic)
+		{
+			StatusBar = CreateHereticStatusBar ();
+		}
+		else if (gameinfo.gametype == GAME_Hexen)
+		{
+			StatusBar = CreateHexenStatusBar ();
+		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			StatusBar = CreateStrifeStatusBar ();
+		}
+		else
+		{
+			StatusBar = new FBaseStatusBar (0);
+		}
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	StatusBar->NewGame ();

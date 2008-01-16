@@ -90,6 +90,7 @@
 #include "templates.h"
 #include "teaminfo.h"
 #include "hardware.h"
+#include "sbarinfo.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -2428,6 +2429,15 @@ void D_DoomMain (void)
 	Printf ("P_Init: Init Playloop state.\n");
 	StartScreen->LoadingStatus ("Init game engine", 0x3f);
 	P_Init ();
+
+	//SBarInfo support.
+	if(Wads.CheckNumForName("SBARINFO") != -1)
+	{
+		Printf ("ParseSBarInfo: Loading custom status bar definition.\n");
+		SBarInfoScript = new SBarInfo(Wads.GetNumForName("SBARINFO")); //load last SBARINFO lump to avoid clashes
+		atterm(FreeSBarInfoScript);
+	}
+	//end most of the SBarInfo stuff
 
 	Printf ("D_CheckNetGame: Checking network game status.\n");
 	StartScreen->LoadingStatus ("Checking network game status.", 0x3f);

@@ -1,3 +1,7 @@
+January 16, 2008 (Changes by Graf Zahl)
+- Fixed: The StatusBar pointer was not NULLed after being deleted.
+
+
 January 15, 2008
 - Plugged more leaks in SBARINFO.
 - Spawned actors that have MF2_DORMANT set in their default instance now have

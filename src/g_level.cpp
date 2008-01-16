@@ -1541,6 +1541,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	if (StatusBar != NULL)
 	{
 		delete StatusBar;
+		StatusBar = NULL;
 	}
 	if (bTitleLevel)
 	{

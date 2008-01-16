@@ -732,6 +732,7 @@ static void ActorSkipSuper (AActor *defaults, Baggage &bag)
 		FreeDropItemChain (bag.DropItemList);
 	}
 	ResetBaggage (&bag);
+	MakeStateDefines(NULL);
 }
 
 //==========================================================================

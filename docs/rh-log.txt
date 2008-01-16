@@ -3,6 +3,9 @@ January 15, 2008
 - Spawned actors that have MF2_DORMANT set in their default instance now have
   Deactivate() called on them immediately after spawning.
 
+January 15, 2008 (Changes by Graf Zahl)
+- Fixed: Skip_Super didn't clear the current state label list.
+
 January 14, 2008
 - Fixed: ACS translations were loaded into the wrong slot after restoring a
   savegame.

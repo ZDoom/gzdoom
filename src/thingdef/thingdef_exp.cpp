@@ -378,21 +378,21 @@ TArray<ExpData *> StateExpressions;
 // [GRB] Parses an expression and stores it into Expression array
 //
 
-static ExpData *ParseExpressionM (const PClass *cls);
-static ExpData *ParseExpressionL (const PClass *cls);
-static ExpData *ParseExpressionK (const PClass *cls);
-static ExpData *ParseExpressionJ (const PClass *cls);
-static ExpData *ParseExpressionI (const PClass *cls);
-static ExpData *ParseExpressionH (const PClass *cls);
-static ExpData *ParseExpressionG (const PClass *cls);
-static ExpData *ParseExpressionF (const PClass *cls);
-static ExpData *ParseExpressionE (const PClass *cls);
-static ExpData *ParseExpressionD (const PClass *cls);
-static ExpData *ParseExpressionC (const PClass *cls);
-static ExpData *ParseExpressionB (const PClass *cls);
-static ExpData *ParseExpressionA (const PClass *cls);
+static ExpData *ParseExpressionM (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionL (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionK (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionJ (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionI (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionH (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionG (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionF (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionE (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionD (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionC (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionB (FScanner &sc, const PClass *cls);
+static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls);
 
-int ParseExpression (bool _not, PClass *cls)
+int ParseExpression (FScanner &sc, bool _not, PClass *cls)
 {
 	static bool inited=false;
 	
@@ -403,7 +403,7 @@ int ParseExpression (bool _not, PClass *cls)
 		inited=true;
 	}
 
-	ExpData *data = ParseExpressionM (cls);
+	ExpData *data = ParseExpressionM (sc, cls);
 
 	if (_not)
 	{
@@ -426,11 +426,11 @@ int ParseExpression (bool _not, PClass *cls)
 	return StateExpressions.Push (data);
 }
 
-static ExpData *ParseExpressionM (const PClass *cls)
+static ExpData *ParseExpressionM (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionL (cls);
+	ExpData *tmp = ParseExpressionL (sc, cls);
 
-	if (SC_CheckToken('?'))
+	if (sc.CheckToken('?'))
 	{
 		ExpData *data = new ExpData;
 		data->Type = EX_Cond;
@@ -438,9 +438,9 @@ static ExpData *ParseExpressionM (const PClass *cls)
 		ExpData *choices = new ExpData;
 		data->Children[1] = choices;
 		choices->Type = EX_Right;
-		choices->Children[0] = ParseExpressionM (cls);
-		SC_MustGetToken(':');
-		choices->Children[1] = ParseExpressionM (cls);
+		choices->Children[0] = ParseExpressionM (sc, cls);
+		sc.MustGetToken(':');
+		choices->Children[1] = ParseExpressionM (sc, cls);
 		data->EvalConst (cls);
 		return data;
 	}
@@ -450,13 +450,13 @@ static ExpData *ParseExpressionM (const PClass *cls)
 	}
 }
 
-static ExpData *ParseExpressionL (const PClass *cls)
+static ExpData *ParseExpressionL (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionK (cls);
+	ExpData *tmp = ParseExpressionK (sc, cls);
 
-	while (SC_CheckToken(TK_OrOr))
+	while (sc.CheckToken(TK_OrOr))
 	{
-		ExpData *right = ParseExpressionK (cls);
+		ExpData *right = ParseExpressionK (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = EX_LogOr;
 		data->Children[0] = tmp;
@@ -467,13 +467,13 @@ static ExpData *ParseExpressionL (const PClass *cls)
 	return tmp;
 }
 
-static ExpData *ParseExpressionK (const PClass *cls)
+static ExpData *ParseExpressionK (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionJ (cls);
+	ExpData *tmp = ParseExpressionJ (sc, cls);
 
-	while (SC_CheckToken(TK_AndAnd))
+	while (sc.CheckToken(TK_AndAnd))
 	{
-		ExpData *right = ParseExpressionJ (cls);
+		ExpData *right = ParseExpressionJ (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = EX_LogAnd;
 		data->Children[0] = tmp;
@@ -484,13 +484,13 @@ static ExpData *ParseExpressionK (const PClass *cls)
 	return tmp;
 }
 
-static ExpData *ParseExpressionJ (const PClass *cls)
+static ExpData *ParseExpressionJ (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionI (cls);
+	ExpData *tmp = ParseExpressionI (sc, cls);
 
-	while (SC_CheckToken('|'))
+	while (sc.CheckToken('|'))
 	{
-		ExpData *right = ParseExpressionI (cls);
+		ExpData *right = ParseExpressionI (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = EX_Or;
 		data->Children[0] = tmp;
@@ -501,13 +501,13 @@ static ExpData *ParseExpressionJ (const PClass *cls)
 	return tmp;
 }
 
-static ExpData *ParseExpressionI (const PClass *cls)
+static ExpData *ParseExpressionI (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionH (cls);
+	ExpData *tmp = ParseExpressionH (sc, cls);
 
-	while (SC_CheckToken('^'))
+	while (sc.CheckToken('^'))
 	{
-		ExpData *right = ParseExpressionH (cls);
+		ExpData *right = ParseExpressionH (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = EX_Xor;
 		data->Children[0] = tmp;
@@ -518,13 +518,13 @@ static ExpData *ParseExpressionI (const PClass *cls)
 	return tmp;
 }
 
-static ExpData *ParseExpressionH (const PClass *cls)
+static ExpData *ParseExpressionH (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionG (cls);
+	ExpData *tmp = ParseExpressionG (sc, cls);
 
-	while (SC_CheckToken('&'))
+	while (sc.CheckToken('&'))
 	{
-		ExpData *right = ParseExpressionG (cls);
+		ExpData *right = ParseExpressionG (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = EX_And;
 		data->Children[0] = tmp;
@@ -535,14 +535,14 @@ static ExpData *ParseExpressionH (const PClass *cls)
 	return tmp;
 }
 
-static ExpData *ParseExpressionG (const PClass *cls)
+static ExpData *ParseExpressionG (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionF (cls);
+	ExpData *tmp = ParseExpressionF (sc, cls);
 
-	while (SC_GetToken() && (sc_TokenType == TK_Eq || sc_TokenType == TK_Neq))
+	while (sc.GetToken() && (sc.TokenType == TK_Eq || sc.TokenType == TK_Neq))
 	{
-		int token = sc_TokenType;
-		ExpData *right = ParseExpressionF (cls);
+		int token = sc.TokenType;
+		ExpData *right = ParseExpressionF (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = token == TK_Eq? EX_Eq : EX_NE;
 		data->Children[0] = tmp;
@@ -550,18 +550,18 @@ static ExpData *ParseExpressionG (const PClass *cls)
 		data->EvalConst (cls);
 		tmp = data;
 	}
-	if (!sc_End) SC_UnGet();
+	if (!sc.End) sc.UnGet();
 	return tmp;
 }
 
-static ExpData *ParseExpressionF (const PClass *cls)
+static ExpData *ParseExpressionF (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionE (cls);
+	ExpData *tmp = ParseExpressionE (sc, cls);
 
-	while (SC_GetToken() && (sc_TokenType == '<' || sc_TokenType == '>' || sc_TokenType == TK_Leq || sc_TokenType == TK_Geq))
+	while (sc.GetToken() && (sc.TokenType == '<' || sc.TokenType == '>' || sc.TokenType == TK_Leq || sc.TokenType == TK_Geq))
 	{
-		int token = sc_TokenType;
-		ExpData *right = ParseExpressionE (cls);
+		int token = sc.TokenType;
+		ExpData *right = ParseExpressionE (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = token == '<' ? EX_LT : token == '>' ? EX_GT : token == TK_Leq? EX_LE : EX_GE;
 		data->Children[0] = tmp;
@@ -569,18 +569,18 @@ static ExpData *ParseExpressionF (const PClass *cls)
 		data->EvalConst (cls);
 		tmp = data;
 	}
-	if (!sc_End) SC_UnGet();
+	if (!sc.End) sc.UnGet();
 	return tmp;
 }
 
-static ExpData *ParseExpressionE (const PClass *cls)
+static ExpData *ParseExpressionE (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionD (cls);
+	ExpData *tmp = ParseExpressionD (sc, cls);
 
-	while (SC_GetToken() && (sc_TokenType == TK_LShift || sc_TokenType == TK_RShift))
+	while (sc.GetToken() && (sc.TokenType == TK_LShift || sc.TokenType == TK_RShift))
 	{
-		int token = sc_TokenType;
-		ExpData *right = ParseExpressionD (cls);
+		int token = sc.TokenType;
+		ExpData *right = ParseExpressionD (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = token == TK_LShift? EX_LShift : EX_RShift;
 		data->Children[0] = tmp;
@@ -588,18 +588,18 @@ static ExpData *ParseExpressionE (const PClass *cls)
 		data->EvalConst (cls);
 		tmp = data;
 	}
-	if (!sc_End) SC_UnGet();
+	if (!sc.End) sc.UnGet();
 	return tmp;
 }
 
-static ExpData *ParseExpressionD (const PClass *cls)
+static ExpData *ParseExpressionD (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionC (cls);
+	ExpData *tmp = ParseExpressionC (sc, cls);
 
-	while (SC_GetToken() && (sc_TokenType == '+' || sc_TokenType == '-'))
+	while (sc.GetToken() && (sc.TokenType == '+' || sc.TokenType == '-'))
 	{
-		int token = sc_TokenType;
-		ExpData *right = ParseExpressionC (cls);
+		int token = sc.TokenType;
+		ExpData *right = ParseExpressionC (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = token == '+'? EX_Add : EX_Sub;
 		data->Children[0] = tmp;
@@ -607,18 +607,18 @@ static ExpData *ParseExpressionD (const PClass *cls)
 		data->EvalConst (cls);
 		tmp = data;
 	}
-	if (!sc_End) SC_UnGet();
+	if (!sc.End) sc.UnGet();
 	return tmp;
 }
 
-static ExpData *ParseExpressionC (const PClass *cls)
+static ExpData *ParseExpressionC (FScanner &sc, const PClass *cls)
 {
-	ExpData *tmp = ParseExpressionB (cls);
+	ExpData *tmp = ParseExpressionB (sc, cls);
 
-	while (SC_GetToken() && (sc_TokenType == '*' || sc_TokenType == '/' || sc_TokenType == '%'))
+	while (sc.GetToken() && (sc.TokenType == '*' || sc.TokenType == '/' || sc.TokenType == '%'))
 	{
-		int token = sc_TokenType;
-		ExpData *right = ParseExpressionB (cls);
+		int token = sc.TokenType;
+		ExpData *right = ParseExpressionB (sc, cls);
 		ExpData *data =  new ExpData;
 		data->Type = token == '*'? EX_Mul : token == '/'? EX_Div : EX_Mod;
 		data->Children[0] = tmp;
@@ -626,77 +626,77 @@ static ExpData *ParseExpressionC (const PClass *cls)
 		data->EvalConst (cls);
 		tmp = data;
 	}
-	if (!sc_End) SC_UnGet();
+	if (!sc.End) sc.UnGet();
 	return tmp;
 }
 
-static ExpData *ParseExpressionB (const PClass *cls)
+static ExpData *ParseExpressionB (FScanner &sc, const PClass *cls)
 {
 	ExpData *data = new ExpData;
 
-	if (SC_CheckToken('~'))
+	if (sc.CheckToken('~'))
 	{
 		data->Type = EX_Compl;
 	}
-	else if (SC_CheckToken('!'))
+	else if (sc.CheckToken('!'))
 	{
 		data->Type = EX_Not;
 	}
-	else if (SC_CheckToken('-'))
+	else if (sc.CheckToken('-'))
 	{
 		data->Type = EX_Minus;
 	}
 	else
 	{
-		SC_CheckToken('+');
+		sc.CheckToken('+');
 		delete data;
-		return ParseExpressionA (cls);
+		return ParseExpressionA (sc, cls);
 	}
 
-	data->Children[0] = ParseExpressionA (cls);
+	data->Children[0] = ParseExpressionA (sc, cls);
 	data->EvalConst (cls);
 
 	return data;
 }
 
-static ExpData *ParseExpressionA (const PClass *cls)
+static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 {
-	if (SC_CheckToken('('))
+	if (sc.CheckToken('('))
 	{
-		ExpData *data = ParseExpressionM (cls);
-		SC_MustGetToken(')');
+		ExpData *data = ParseExpressionM (sc, cls);
+		sc.MustGetToken(')');
 		return data;
 	}
-	else if (SC_CheckToken(TK_IntConst))
+	else if (sc.CheckToken(TK_IntConst))
 	{
 		ExpData *data = new ExpData;
 		data->Type = EX_Const;
 		data->Value.Type = VAL_Int;
-		data->Value.Int = sc_Number;
+		data->Value.Int = sc.Number;
 
 		return data;
 	}
-	else if (SC_CheckToken(TK_FloatConst))
+	else if (sc.CheckToken(TK_FloatConst))
 	{
 		ExpData *data = new ExpData;
 		data->Type = EX_Const;
 		data->Value.Type = VAL_Float;
-		data->Value.Float = sc_Float;
+		data->Value.Float = sc.Float;
 
 		return data;
 	}
-	else if (SC_CheckToken(TK_Class))
+	else if (sc.CheckToken(TK_Class))
 	{
 		// Accept class'SomeClassName'.SomeConstant
-		SC_MustGetToken(TK_NameConst);
-		cls = PClass::FindClass (sc_Name);
+		sc.MustGetToken(TK_NameConst);
+		cls = PClass::FindClass (sc.Name);
 		if (cls == NULL)
 		{
-			SC_ScriptError ("Unknown class '%s'", sc_String);
+			sc.ScriptError ("Unknown class '%s'", sc.String);
 		}
-		SC_MustGetToken('.');
-		SC_MustGetToken(TK_Identifier);
-		PSymbol *sym = cls->Symbols.FindSymbol (sc_String, true);
+		sc.MustGetToken('.');
+		sc.MustGetToken(TK_Identifier);
+		PSymbol *sym = cls->Symbols.FindSymbol (sc.String, true);
 		if (sym != NULL && sym->SymbolType == SYM_Const)
 		{
 			ExpData *data = new ExpData;
@@ -707,38 +707,38 @@ static ExpData *ParseExpressionA (const PClass *cls)
 		}
 		else
 		{
-			SC_ScriptError ("'%s' is not a constant value in class '%s'", sc_String, cls->TypeName.GetChars());
+			sc.ScriptError ("'%s' is not a constant value in class '%s'", sc.String, cls->TypeName.GetChars());
 			return NULL;
 		}
 	}
-	else if (SC_CheckToken(TK_Identifier))
+	else if (sc.CheckToken(TK_Identifier))
 	{
-		switch (FName(sc_String))
+		switch (FName(sc.String))
 		{
 		case NAME_Random:
 		{
 			FRandom *rng;
 
-			if (SC_CheckToken('['))
+			if (sc.CheckToken('['))
 			{
-				SC_MustGetToken(TK_Identifier);
-				rng = FRandom::StaticFindRNG(sc_String);
-				SC_MustGetToken(']');
+				sc.MustGetToken(TK_Identifier);
+				rng = FRandom::StaticFindRNG(sc.String);
+				sc.MustGetToken(']');
 			}
 			else
 			{
 				rng = &pr_exrandom;
 			}
-			SC_MustGetToken('(');
+			sc.MustGetToken('(');
 
 			ExpData *data = new ExpData;
 			data->Type = EX_Random;
 			data->RNG = rng;
 
-			data->Children[0] = ParseExpressionM (cls);
-			SC_MustGetToken(',');
-			data->Children[1] = ParseExpressionM (cls);
-			SC_MustGetToken(')');
+			data->Children[0] = ParseExpressionM (sc, cls);
+			sc.MustGetToken(',');
+			data->Children[1] = ParseExpressionM (sc, cls);
+			sc.MustGetToken(')');
 			return data;
 		}
 		break;
@@ -747,27 +747,27 @@ static ExpData *ParseExpressionA (const PClass *cls)
 		{
 			FRandom *rng;
 
-			if (SC_CheckToken('['))
+			if (sc.CheckToken('['))
 			{
-				SC_MustGetToken(TK_Identifier);
-				rng = FRandom::StaticFindRNG(sc_String);
-				SC_MustGetToken(']');
+				sc.MustGetToken(TK_Identifier);
+				rng = FRandom::StaticFindRNG(sc.String);
+				sc.MustGetToken(']');
 			}
 			else
 			{
 				rng = &pr_exrandom;
 			}
 
-			SC_MustGetToken('(');
+			sc.MustGetToken('(');
 
 			ExpData *data = new ExpData;
 			data->Type = EX_Random2;
 			data->RNG = rng;
 
-			if (!SC_CheckToken(')'))
+			if (!sc.CheckToken(')'))
 			{
-				data->Children[0] = ParseExpressionM(cls);
-				SC_MustGetToken(')');
+				data->Children[0] = ParseExpressionM(sc, cls);
+				sc.MustGetToken(')');
 			}
 			return data;
 		}
@@ -775,28 +775,28 @@ static ExpData *ParseExpressionA (const PClass *cls)
 
 		case NAME_Sin:
 		{
-			SC_MustGetToken('(');
+			sc.MustGetToken('(');
 
 			ExpData *data = new ExpData;
 			data->Type = EX_Sin;
 
-			data->Children[0] = ParseExpressionM (cls);
+			data->Children[0] = ParseExpressionM (sc, cls);
 
-			SC_MustGetToken(')');
+			sc.MustGetToken(')');
 			return data;
 		}
 		break;
 
 		case NAME_Cos:
 		{
-			SC_MustGetToken('(');
+			sc.MustGetToken('(');
 
 			ExpData *data = new ExpData;
 			data->Type = EX_Cos;
 
-			data->Children[0] = ParseExpressionM (cls);
+			data->Children[0] = ParseExpressionM (sc, cls);
 
-			SC_MustGetToken(')');
+			sc.MustGetToken(')');
 			return data;
 		}
 		break;
@@ -806,35 +806,35 @@ static ExpData *ParseExpressionA (const PClass *cls)
 			int specnum, min_args, max_args;
 
 			// Check if this is an action special
-			strlwr (sc_String);
-			specnum = FindLineSpecialEx (sc_String, &min_args, &max_args);
+			strlwr (sc.String);
+			specnum = FindLineSpecialEx (sc.String, &min_args, &max_args);
 			if (specnum != 0)
 			{
 				int i;
 
-				SC_MustGetToken('(');
+				sc.MustGetToken('(');
 
 				ExpData *data = new ExpData, **left;
 				data->Type = EX_ActionSpecial;
 				data->Value.Int = specnum;
 
-				data->Children[0] = ParseExpressionM (cls);
+				data->Children[0] = ParseExpressionM (sc, cls);
 				left = &data->Children[1];
 
-				for (i = 1; i < 5 && SC_CheckToken(','); ++i)
+				for (i = 1; i < 5 && sc.CheckToken(','); ++i)
 				{
 					ExpData *right = new ExpData;
 					right->Type = EX_Right;
-					right->Children[0] = ParseExpressionM (cls);
+					right->Children[0] = ParseExpressionM (sc, cls);
 					*left = right;
 					left = &right->Children[1];
 				}
 				*left = NULL;
-				SC_MustGetToken(')');
+				sc.MustGetToken(')');
 				if (i < min_args)
-					SC_ScriptError ("Not enough arguments to action special");
+					sc.ScriptError ("Not enough arguments to action special");
 				if (i > max_args)
-					SC_ScriptError ("Too many arguments to action special");
+					sc.ScriptError ("Too many arguments to action special");
 
 				return data;
 			}
@@ -842,7 +842,7 @@ static ExpData *ParseExpressionA (const PClass *cls)
 			// Check if this is a constant
 			if (cls != NULL)
 			{
-				PSymbol *sym = cls->Symbols.FindSymbol (sc_String, true);
+				PSymbol *sym = cls->Symbols.FindSymbol (sc.String, true);
 				if (sym != NULL && sym->SymbolType == SYM_Const)
 				{
 					ExpData *data = new ExpData;
@@ -855,7 +855,7 @@ static ExpData *ParseExpressionA (const PClass *cls)
 
 			// Check if it's a variable we understand
 			int varid = -1;
-			FName vname = sc_String;
+			FName vname = sc.String;
 			for (size_t i = 0; i < countof(ExpVars); i++)
 			{
 				if (vname == ExpVars[i].name)
@@ -866,7 +866,7 @@ static ExpData *ParseExpressionA (const PClass *cls)
 			}
 
 			if (varid == -1)
-				SC_ScriptError ("Unknown value '%s'", sc_String);
+				sc.ScriptError ("Unknown value '%s'", sc.String);
 
 			ExpData *data = new ExpData;
 			data->Type = EX_Var;
@@ -875,9 +875,9 @@ static ExpData *ParseExpressionA (const PClass *cls)
 
 			if (ExpVars[varid].array)
 			{
-				SC_MustGetToken('[');
-				data->Children[0] = ParseExpressionM (cls);
-				SC_MustGetToken(']');
+				sc.MustGetToken('[');
+				data->Children[0] = ParseExpressionM (sc, cls);
+				sc.MustGetToken(']');
 			}
 			return data;
 		}
@@ -886,8 +886,8 @@ static ExpData *ParseExpressionA (const PClass *cls)
 	}
 	else
 	{
-		FString tokname = SC_TokenName(sc_TokenType, sc_String);
-		SC_ScriptError ("Unexpected token %s", tokname.GetChars());
+		FString tokname = sc.TokenName(sc.TokenType, sc.String);
+		sc.ScriptError ("Unexpected token %s", tokname.GetChars());
 		return NULL;
 	}
 }

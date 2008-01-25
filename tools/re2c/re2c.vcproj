@@ -488,6 +488,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\code_names.h"
+				>
+			</File>
+			<File
 				RelativePath=".\config_w32.h"
 				>
 			</File>

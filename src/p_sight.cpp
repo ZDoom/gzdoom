@@ -493,10 +493,7 @@ sightcounts[0]++;
 //
 	// [RH] Andy Baker's stealth monsters:
 	// Cannot see an invisible object
-	if ((flags & 1) == 0 &&
-		(t2->RenderStyle == STYLE_None ||
-		 (t2->RenderStyle >= STYLE_Translucent && t2->alpha == 0) ||
-		 (t2->renderflags & RF_INVISIBLE)))
+	if ((flags & 1) == 0 && ((t2->renderflags & RF_INVISIBLE) || !t2->RenderStyle.IsVisible(t2->alpha)))
 	{ // small chance of an attack being made anyway
 		if ((bglobal.m_Thinking ? pr_botchecksight() : pr_checksight()) > 50)
 		{

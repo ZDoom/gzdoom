@@ -465,8 +465,9 @@ FArchive &operator<< (FArchive &arc, ReverbContainer *&env)
 	return arc;
 }
 
-static void ReadEAX ()
+static void ReadEAX (int lump, const char *lumpname)
 {
+	FScanner sc;
 	const ReverbContainer *def;
 	ReverbContainer *newenv;
 	REVERB_PROPERTIES props;
@@ -475,45 +476,46 @@ static void ReadEAX ()
 	bool inited[NUM_EAX_FIELDS];
 	BYTE bools[32];
 
-	while (SC_GetString ())
+	sc.OpenLumpNum(lump, lumpname);
+	while (sc.GetString ())
 	{
-		name = copystring (sc_String);
-		SC_MustGetNumber ();
-		id1 = sc_Number;
-		SC_MustGetNumber ();
-		id2 = sc_Number;
-		SC_MustGetStringName ("{");
+		name = copystring (sc.String);
+		sc.MustGetNumber ();
+		id1 = sc.Number;
+		sc.MustGetNumber ();
+		id2 = sc.Number;
+		sc.MustGetStringName ("{");
 		memset (inited, 0, sizeof(inited));
 		props.Flags = 0;
-		while (SC_MustGetString (), NUM_EAX_FIELDS > (i = SC_MustMatchString (EAXFieldNames)))
+		while (sc.MustGetString (), NUM_EAX_FIELDS > (i = sc.MustMatchString (EAXFieldNames)))
 		{
 			if (EAXFields[i].Float)
 			{
-				SC_MustGetFloat ();
-				props.*EAXFields[i].Float = clamp (sc_Float,
+				sc.MustGetFloat ();
+				props.*EAXFields[i].Float = clamp (sc.Float,
 					double(EAXFields[i].Min)/1000,
 					double(EAXFields[i].Max)/1000);
 			}
 			else if (EAXFields[i].Int)
 			{
-				SC_MustGetNumber ();
-				props.*EAXFields[i].Int = (j = clamp (sc_Number,
+				sc.MustGetNumber ();
+				props.*EAXFields[i].Int = (j = clamp (sc.Number,
 					EAXFields[i].Min, EAXFields[i].Max));
-				if (i == 0 && j != sc_Number)
+				if (i == 0 && j != sc.Number)
 				{
-					SC_ScriptError ("The Environment field is out of range.");
+					sc.ScriptError ("The Environment field is out of range.");
 				}
 			}
 			else
 			{
-				SC_MustGetString ();
-				bools[EAXFields[i].Flag] = SC_MustMatchString (BoolNames);
+				sc.MustGetString ();
+				bools[EAXFields[i].Flag] = sc.MustMatchString (BoolNames);
 			}
 			inited[i] = true;
 		}
 		if (!inited[0])
 		{
-			SC_ScriptError ("Sound %s is missing an Environment field.", name);
+			sc.ScriptError ("Sound %s is missing an Environment field.", name);
 		}
 
 		// Add the new environment to the list, filling in uninitialized fields
@@ -573,9 +575,7 @@ void S_ParseSndEax ()
 
 	while ((lump = Wads.FindLump ("SNDEAX", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (lump, "SNDEAX");
-		ReadEAX ();
-		SC_Close ();
+		ReadEAX (lump, "SNDEAX");
 	}
 }
 

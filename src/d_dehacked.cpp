@@ -811,7 +811,7 @@ static int PatchThing (int thingy)
 			int style = FindStyle (Line2);
 			if (style >= 0)
 			{
-				info->RenderStyle = style;
+				info->RenderStyle = ERenderStyle(style);
 				hadStyle = true;
 			}
 		}

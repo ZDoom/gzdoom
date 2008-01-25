@@ -8979,6 +8979,10 @@
 				Name="Render Headers"
 				>
 				<File
+					RelativePath=".\src\r_blend.h"
+					>
+				</File>
+				<File
 					RelativePath=".\src\r_bsp.h"
 					>
 				</File>

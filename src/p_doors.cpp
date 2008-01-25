@@ -802,7 +802,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 	return rtn;
 }
 
-void P_ParseAnimatedDoor()
+void P_ParseAnimatedDoor(FScanner &sc)
 {
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	FDoorAnimation anim;
@@ -810,8 +810,8 @@ void P_ParseAnimatedDoor()
 	bool error = false;
 	int v;
 
-	SC_MustGetString();
-	anim.BaseTexture = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall, texflags);
+	sc.MustGetString();
+	anim.BaseTexture = TexMan.CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
 	anim.OpenSound = NULL;
 	anim.CloseSound = NULL;
 
@@ -820,38 +820,38 @@ void P_ParseAnimatedDoor()
 		error = true;
 	}
 
-	while (SC_GetString ())
+	while (sc.GetString ())
 	{
-		if (SC_Compare ("opensound"))
+		if (sc.Compare ("opensound"))
 		{
-			SC_MustGetString ();
-			anim.OpenSound = copystring (sc_String);
+			sc.MustGetString ();
+			anim.OpenSound = copystring (sc.String);
 		}
-		else if (SC_Compare ("closesound"))
+		else if (sc.Compare ("closesound"))
 		{
-			SC_MustGetString ();
-			anim.CloseSound = copystring (sc_String);
+			sc.MustGetString ();
+			anim.CloseSound = copystring (sc.String);
 		}
-		else if (SC_Compare ("pic"))
+		else if (sc.Compare ("pic"))
 		{
-			SC_MustGetString ();
-			if (IsNum (sc_String))
+			sc.MustGetString ();
+			if (IsNum (sc.String))
 			{
-				v = atoi(sc_String) + anim.BaseTexture -1;
+				v = atoi(sc.String) + anim.BaseTexture -1;
 			}
 			else
 			{
-				v = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall, texflags);
+				v = TexMan.CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
 				if (v == -1 && anim.BaseTexture >= 0 && !error)
 				{
-					SC_ScriptError ("Unknown texture %s", sc_String);
+					sc.ScriptError ("Unknown texture %s", sc.String);
 				}
 				frames.Push (v);
 			}
 		}
 		else
 		{
-			SC_UnGet ();
+			sc.UnGet ();
 			break;
 		}
 	}

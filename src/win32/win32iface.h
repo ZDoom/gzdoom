@@ -277,7 +277,8 @@ private:
 			struct
 			{
 				BYTE Flags;
-				BYTE ShaderNum;
+				BYTE ShaderNum:4;
+				BYTE BlendOp:4;
 				BYTE SrcBlend, DestBlend;
 			};
 			DWORD Group1;
@@ -292,8 +293,6 @@ private:
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
 	bool CreateGrayPaletteTexture();
-	bool CreateStencilPaletteTexture();
-	bool CreateShadedPaletteTexture();
 	bool CreateVertexes();
 	void UploadPalette();
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
@@ -308,6 +307,7 @@ private:
 	void DrawLetterbox();
 	void Draw3DPart(bool copy3d);
 	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedQuad &quad);
+	static D3DBLEND GetStyleAlpha(int type);
 	static void SetColorOverlay(DWORD color, float alpha, D3DCOLOR &color0, D3DCOLOR &color1);
 	void DoWindowedGamma();
 	void AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR color);
@@ -319,21 +319,26 @@ private:
 	void EndBatch();
 
 	// State
-	void SetAlphaBlend(BOOL enabled, D3DBLEND srcblend=D3DBLEND(0), D3DBLEND destblend=D3DBLEND(0));
+	void EnableAlphaTest(BOOL enabled);
+	void SetAlphaBlend(D3DBLENDOP op, D3DBLEND srcblend=D3DBLEND(0), D3DBLEND destblend=D3DBLEND(0));
 	void SetConstant(int cnum, float r, float g, float b, float a);
 	void SetPixelShader(IDirect3DPixelShader9 *shader);
 	void SetTexture(int tnum, IDirect3DTexture9 *texture);
-	void SetPaletteTexture(IDirect3DTexture9 *texture, int count);
+	void SetPaletteTexture(IDirect3DTexture9 *texture, int count, D3DCOLOR border_color);
 	void SetPalTexBilinearConstants(PackingTexture *texture);
 
+	BOOL AlphaTestEnabled;
 	BOOL AlphaBlendEnabled;
+	D3DBLENDOP AlphaBlendOp;
 	D3DBLEND AlphaSrcBlend;
 	D3DBLEND AlphaDestBlend;
 	float Constant[3][4];
+	D3DCOLOR CurBorderColor;
 	IDirect3DPixelShader9 *CurPixelShader;
 	IDirect3DTexture9 *Texture[2];
 
 	PalEntry SourcePalette[256];
+	D3DCOLOR BorderColor;
 	D3DCOLOR FlashColor0, FlashColor1;
 	PalEntry FlashColor;
 	int FlashAmount;
@@ -361,8 +366,6 @@ private:
 	IDirect3DTexture9 *FBTexture;
 	IDirect3DTexture9 *TempRenderTexture;
 	IDirect3DTexture9 *PaletteTexture;
-	IDirect3DTexture9 *StencilPaletteTexture;
-	IDirect3DTexture9 *ShadedPaletteTexture;
 	IDirect3DTexture9 *ScreenshotTexture;
 	IDirect3DSurface9 *ScreenshotSurface;
 
@@ -376,9 +379,9 @@ private:
 	int QuadBatchPos;
 	enum { BATCH_None, BATCH_Quads, BATCH_Lines } BatchType;
 
-	IDirect3DPixelShader9 *PalTexShader, *PalTexBilinearShader;
-	IDirect3DPixelShader9 *PlainShader;
-	IDirect3DPixelShader9 *PlainStencilShader;
+	IDirect3DPixelShader9 *PalTexShader, *PalTexBilinearShader, *InvPalTexShader;
+	IDirect3DPixelShader9 *PlainShader, *InvPlainShader;
+	IDirect3DPixelShader9 *RedToAlphaShader;
 	IDirect3DPixelShader9 *ColorOnlyShader;
 	IDirect3DPixelShader9 *GammaFixerShader;
 	IDirect3DPixelShader9 *BurnShader;
@@ -412,6 +415,15 @@ private:
 #define LOG4(x,y,z,a,b)	do { if (dbg) { fprintf (dbg, x, y, z, a, b); fflush (dbg); } } while(0)
 #define LOG5(x,y,z,a,b,c) do { if (dbg) { fprintf (dbg, x, y, z, a, b, c); fflush (dbg); } } while(0)
 FILE *dbg;
+#elif _DEBUG
+#define STARTLOG
+#define STOPLOG
+#define LOG(x)			{ OutputDebugString(x); }
+#define LOG1(x,y)		{ char poo[1024]; sprintf(poo, x, y); OutputDebugString(poo); }
+#define LOG2(x,y,z)		{ char poo[1024]; sprintf(poo, x, y, z); OutputDebugString(poo); }
+#define LOG3(x,y,z,zz)	{ char poo[1024]; sprintf(poo, x, y, z, zz); OutputDebugString(poo); }
+#define LOG4(x,y,z,a,b)	{ char poo[1024]; sprintf(poo, x, y, z, a, b); OutputDebugString(poo); }
+#define LOG5(x,y,z,a,b,c) { char poo[1024]; sprintf(poo, x, y, z, a, b, c); OutputDebugString(poo); }
 #else
 #define STARTLOG
 #define STOPLOG

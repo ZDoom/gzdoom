@@ -61,28 +61,31 @@ IMPLEMENT_CLASS (DImpactDecal)
 DBaseDecal::DBaseDecal ()
 : DThinker(STAT_DECAL),
   WallNext(0), WallPrev(0), LeftDistance(0), Z(0), ScaleX(FRACUNIT), ScaleY(FRACUNIT), Alpha(FRACUNIT),
-  AlphaColor(0), Translation(0), PicNum(0xFFFF), RenderFlags(0), RenderStyle(0)
+  AlphaColor(0), Translation(0), PicNum(0xFFFF), RenderFlags(0)
 {
+	RenderStyle = STYLE_None;
 }
 
 DBaseDecal::DBaseDecal (fixed_t z)
 : DThinker(STAT_DECAL),
   WallNext(0), WallPrev(0), LeftDistance(0), Z(z), ScaleX(FRACUNIT), ScaleY(FRACUNIT), Alpha(FRACUNIT),
-  AlphaColor(0), Translation(0), PicNum(0xFFFF), RenderFlags(0), RenderStyle(0)
+  AlphaColor(0), Translation(0), PicNum(0xFFFF), RenderFlags(0)
 {
+	RenderStyle = STYLE_None;
 }
 
 DBaseDecal::DBaseDecal (int statnum, fixed_t z)
 : DThinker(statnum),
   WallNext(0), WallPrev(0), LeftDistance(0), Z(z), ScaleX(FRACUNIT), ScaleY(FRACUNIT), Alpha(FRACUNIT),
-  AlphaColor(0), Translation(0), PicNum(0xFFFF), RenderFlags(0), RenderStyle(0)
+  AlphaColor(0), Translation(0), PicNum(0xFFFF), RenderFlags(0)
 {
+	RenderStyle = STYLE_None;
 }
 
 DBaseDecal::DBaseDecal (const AActor *basis)
 : DThinker(STAT_DECAL),
   WallNext(0), WallPrev(0), LeftDistance(0), Z(basis->z), ScaleX(basis->scaleX), ScaleY(basis->scaleY),
-  Alpha(basis->alpha), AlphaColor(basis->alphacolor), Translation(basis->Translation), PicNum(basis->picnum),
+  Alpha(basis->alpha), AlphaColor(basis->fillcolor), Translation(basis->Translation), PicNum(basis->picnum),
   RenderFlags(basis->renderflags), RenderStyle(basis->RenderStyle)
 {
 }

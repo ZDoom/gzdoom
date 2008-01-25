@@ -67,7 +67,6 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 {
 	FTexture::Span unmaskedSpan[2];
 	const FTexture::Span **spanptr, *spans;
-	static BYTE identitymap[256];
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 
 	DrawParms parms;
@@ -86,32 +85,38 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 		spanptr = NULL;
 	}
 
-	fixedcolormap = identitymap;
-	ESPSResult mode = R_SetPatchStyle (parms.style, parms.alpha, 0, parms.fillcolor);
-
 	if (APART(parms.colorOverlay) != 0)
 	{
-		// In software, DTA_ColorOverlay only does black overlays.
-		// Maybe I will change this later, but right now white is the only
-		// color that is actually used for this parameter.
-		// Note that this is also overriding DTA_Translation in software.
-		if ((parms.colorOverlay & MAKEARGB(0,255,255,255)) == 0)
+		// The software renderer cannot invert the source without inverting the overlay
+		// too. That means if the source is inverted, we need to do the reverse of what
+		// the invert overlay flag says to do.
+		INTBOOL invertoverlay = (parms.style.Flags & STYLEF_InvertOverlay);
+
+		if (parms.style.Flags & STYLEF_InvertSource)
 		{
-			parms.translation = &NormalLight.Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS/255)*256];
+			invertoverlay = !invertoverlay;
 		}
+		if (invertoverlay)
+		{
+			parms.colorOverlay = PalEntry(parms.colorOverlay).InverseColor();
+		}
+		// Note that this overrides DTA_Translation in software, but not in hardware.
+		FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255,255,255),
+			parms.colorOverlay & MAKEARGB(0,255,255,255), 0);
+		parms.translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS/255)*256];
 	}
 
-	if (parms.style != STYLE_Shaded)
+	if (parms.translation != NULL)
 	{
-		if (parms.translation != NULL)
-		{
-			dc_colormap = (lighttable_t *)parms.translation;
-		}
-		else
-		{
-			dc_colormap = identitymap;
-		}
+		dc_colormap = (lighttable_t *)parms.translation;
 	}
+	else
+	{
+		dc_colormap = identitymap;
+	}
+
+	fixedcolormap = dc_colormap;
+	ESPSResult mode = R_SetPatchStyle (parms.style, parms.alpha, 0, parms.fillcolor);
 
 	BYTE *destorgsave = dc_destorg;
 	dc_destorg = screen->GetBuffer();
@@ -155,13 +160,6 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, int x, int y, uint32 tag, v
 		if (bottomclipper[0] != parms.dclip)
 		{
 			clearbufshort (bottomclipper, screen->GetWidth(), (short)parms.dclip);
-			if (identitymap[1] != 1)
-			{
-				for (int i = 0; i < 256; ++i)
-				{
-					identitymap[i] = i;
-				}
-			}
 		}
 		if (parms.uclip != 0)
 		{
@@ -299,7 +297,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 	parms->virtWidth = this->GetWidth();
 	parms->virtHeight = this->GetHeight();
 	parms->keepratio = false;
-	parms->style = STYLE_Count;
+	parms->style.BlendOp = 255;		// Dummy "not set" value
 	parms->masked = true;
 	parms->bilinear = false;
 
@@ -601,7 +599,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 		parms->translation = parms->remap->Remap;
 	}
 
-	if (parms->style == STYLE_Count)
+	if (parms->style.BlendOp == 255)
 	{
 		if (parms->fillcolor != -1)
 		{

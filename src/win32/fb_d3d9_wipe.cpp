@@ -303,6 +303,7 @@ bool D3DFB::WipeDo(int ticks)
 	}
 	In2D = 3;
 
+	EnableAlphaTest(FALSE);
 	bool done = ScreenWipe->Run(ticks, this);
 	DrawLetterbox();
 	return done;
@@ -392,7 +393,7 @@ bool D3DFB::Wiper_Crossfade::Run(int ticks, D3DFB *fb)
 	fb->CalcFullscreenCoords(verts, false, D3DCOLOR_COLORVALUE(0,0,0,Clock / 32.f), D3DCOLOR_RGBA(255,255,255,0));
 	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 	fb->SetTexture(0, fb->FinalWipeScreen);
-	fb->SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
+	fb->SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 	fb->SetPixelShader(fb->PlainShader);
 	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 
@@ -450,7 +451,7 @@ bool D3DFB::Wiper_Melt::Run(int ticks, D3DFB *fb)
 	fb->CalcFullscreenCoords(verts, false, 0, 0xFFFFFFFF);
 	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 	fb->SetTexture(0, fb->FinalWipeScreen);
-	fb->SetAlphaBlend(FALSE);
+	fb->SetAlphaBlend(D3DBLENDOP(0));
 	fb->SetPixelShader(fb->PlainShader);
 	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 
@@ -599,11 +600,21 @@ bool D3DFB::Wiper_Burn::Run(int ticks, D3DFB *fb)
 	fb->D3DDevice->SetFVF(D3DFVF_BURNVERTEX);
 	fb->SetTexture(0, fb->FinalWipeScreen);
 	fb->SetTexture(1, BurnTexture);
-	fb->SetAlphaBlend(TRUE, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
+	fb->SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 	fb->SetPixelShader(fb->BurnShader);
 	fb->D3DDevice->SetSamplerState(1, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+	if (fb->SM14)
+	{
+		fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+		fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+	}
 	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(BURNVERTEX));
 	fb->D3DDevice->SetSamplerState(1, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+	if (fb->SM14)
+	{
+		fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
+		fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
+	}
 	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 
 	// The fire may not always stabilize, so the wipe is forced to end

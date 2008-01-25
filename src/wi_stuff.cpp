@@ -386,7 +386,7 @@ void WI_LoadBackground(bool isenterpic)
 	lnodes.Clear();
 	anims.Clear();
 	yah.Clear();
-	splat=NULL;
+	splat = NULL;
 
 	// a name with a starting '$' indicates an intermission script
 	if (*lumpname!='$')
@@ -400,154 +400,154 @@ void WI_LoadBackground(bool isenterpic)
 		int lumpnum=Wads.GetNumForName(lumpname+1);
 		if (lumpnum>=0)
 		{
-			SC_OpenLumpNum(lumpnum,lumpname+1);
-			while (SC_GetString())
+			FScanner sc(lumpnum,lumpname+1);
+			while (sc.GetString())
 			{
 				memset(&an,0,sizeof(an));
-				int caseval=SC_MustMatchString(WI_Cmd);
+				int caseval = sc.MustMatchString(WI_Cmd);
 				switch(caseval)
 				{
 				case 0:		// Background
-					SC_MustGetString();
-					texture=TexMan.CheckForTexture(sc_String, FTexture::TEX_MiscPatch,FTextureManager::TEXMAN_TryAny);
-					if (texture == -1) texture = TexMan.AddPatch(sc_String);
+					sc.MustGetString();
+					texture=TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch,FTextureManager::TEXMAN_TryAny);
+					if (texture == -1) texture = TexMan.AddPatch(sc.String);
 					break;
 
 				case 1:		// Splat
-					SC_MustGetString();
-					splat=TexMan[TexMan.AddPatch(sc_String)];
+					sc.MustGetString();
+					splat=TexMan[TexMan.AddPatch(sc.String)];
 					break;
 
 				case 2:		// Pointers
-					while (SC_GetString() && !sc_Crossed)
+					while (sc.GetString() && !sc.Crossed)
 					{
-						int v=TexMan.AddPatch(sc_String);
+						int v = TexMan.AddPatch(sc.String);
 						yah.Push(TexMan[v]);
 					}
-					if (sc_Crossed) SC_UnGet();
+					if (sc.Crossed) sc.UnGet();
 					break;
 
 				case 3:		// Spots
-					SC_MustGetStringName("{");
-					while (!SC_CheckString("}"))
+					sc.MustGetStringName("{");
+					while (!sc.CheckString("}"))
 					{
-						SC_MustGetString();
-						strncpy(pt.level, sc_String,8);
-						pt.level[8]=0;
-						SC_MustGetNumber();
-						pt.x=sc_Number;
-						SC_MustGetNumber();
-						pt.y=sc_Number;
+						sc.MustGetString();
+						strncpy(pt.level, sc.String,8);
+						pt.level[8] = 0;
+						sc.MustGetNumber();
+						pt.x = sc.Number;
+						sc.MustGetNumber();
+						pt.y = sc.Number;
 						lnodes.Push(pt);
 					}
 					break;
 
 				case 4:		// IfEntering
-					an.type=ANIM_IFENTERING;
+					an.type = ANIM_IFENTERING;
 					goto readanimation;
 
 				case 5:		// IfEntering
-					an.type=ANIM_IFNOTENTERING;
+					an.type = ANIM_IFNOTENTERING;
 					goto readanimation;
 
 				case 6:		// IfVisited
-					an.type=ANIM_IFVISITED;
+					an.type = ANIM_IFVISITED;
 					goto readanimation;
 
 				case 7:		// IfNotVisited
-					an.type=ANIM_IFNOTVISITED;
+					an.type = ANIM_IFNOTVISITED;
 					goto readanimation;
 
 				case 8:		// IfLeaving
-					an.type=ANIM_IFLEAVING;
+					an.type = ANIM_IFLEAVING;
 					goto readanimation;
 				
 				case 9:		// IfNotLeaving
-					an.type=ANIM_IFNOTLEAVING;
+					an.type = ANIM_IFNOTLEAVING;
 					goto readanimation;
 
 				case 10:	// IfTravelling
-					an.type=ANIM_IFTRAVELLING;
-					SC_MustGetString();
-					strncpy(an.levelname2,sc_String,8);
-					an.levelname2[8]=0;
+					an.type = ANIM_IFTRAVELLING;
+					sc.MustGetString();
+					strncpy(an.levelname2, sc.String, 8);
+					an.levelname2[8] = 0;
 					goto readanimation;
 
 				case 11:	// IfNotTravelling
-					an.type=ANIM_IFTRAVELLING;
-					SC_MustGetString();
-					strncpy(an.levelname2,sc_String,8);
-					an.levelname2[8]=0;
+					an.type = ANIM_IFTRAVELLING;
+					sc.MustGetString();
+					strncpy(an.levelname2, sc.String, 8);
+					an.levelname2[8] = 0;
 					goto readanimation;
 
 				case 14:	// NoAutostartMap
-					noautostartmap=true;
+					noautostartmap = true;
 					break;
 
 				readanimation:
-					SC_MustGetString();
-					strncpy(an.levelname,sc_String,8);
-					an.levelname[8]=0;
-					SC_MustGetString();
-					caseval=SC_MustMatchString(WI_Cmd);
+					sc.MustGetString();
+					strncpy(an.levelname, sc.String, 8);
+					an.levelname[8] = 0;
+					sc.MustGetString();
+					caseval=sc.MustMatchString(WI_Cmd);
 
 				default:
 					switch (caseval)
 					{
 					case 12:	// Animation
 						an.type |= ANIM_ALWAYS;
-						SC_MustGetNumber();
-						an.loc.x=sc_Number;
-						SC_MustGetNumber();
-						an.loc.y=sc_Number;
-						SC_MustGetNumber();
-						an.period=sc_Number;
-						an.nexttic = 1 + (M_Random()%an.period);
-						if (SC_GetString())
+						sc.MustGetNumber();
+						an.loc.x = sc.Number;
+						sc.MustGetNumber();
+						an.loc.y = sc.Number;
+						sc.MustGetNumber();
+						an.period = sc.Number;
+						an.nexttic = 1 + (M_Random() % an.period);
+						if (sc.GetString())
 						{
-							if (SC_Compare("ONCE"))
+							if (sc.Compare("ONCE"))
 							{
-								an.data=1;
+								an.data = 1;
 							}
 							else
 							{
-								SC_UnGet();
+								sc.UnGet();
 							}
 						}
-						if (!SC_CheckString("{"))
+						if (!sc.CheckString("{"))
 						{
-							SC_MustGetString();
-							an.p[an.nanims++]=TexMan[TexMan.AddPatch(sc_String)];
+							sc.MustGetString();
+							an.p[an.nanims++] = TexMan[TexMan.AddPatch(sc.String)];
 						}
 						else
 						{
-							while (!SC_CheckString("}"))
+							while (!sc.CheckString("}"))
 							{
-								SC_MustGetString();
-								if (an.nanims<MAX_ANIMATION_FRAMES) an.p[an.nanims++]=TexMan[TexMan.AddPatch(sc_String)];
+								sc.MustGetString();
+								if (an.nanims<MAX_ANIMATION_FRAMES)
+									an.p[an.nanims++] = TexMan[TexMan.AddPatch(sc.String)];
 							}
 						}
-						an.ctr=-1;
+						an.ctr = -1;
 						anims.Push(an);
 						break;
 
 					case 13:		// Pic
 						an.type |= ANIM_PIC;
-						SC_MustGetNumber();
-						an.loc.x=sc_Number;
-						SC_MustGetNumber();
-						an.loc.y=sc_Number;
-						SC_MustGetString();
-						an.p[0]=TexMan[TexMan.AddPatch(sc_String)];
+						sc.MustGetNumber();
+						an.loc.x = sc.Number;
+						sc.MustGetNumber();
+						an.loc.y = sc.Number;
+						sc.MustGetString();
+						an.p[0] = TexMan[TexMan.AddPatch(sc.String)];
 						anims.Push(an);
 						break;
 
 					default:
-						SC_ScriptError("Unknown token %s in intermission script", sc_String);
+						sc.ScriptError("Unknown token %s in intermission script", sc.String);
 					}
 				}
 			}
-			SC_Close();
 		}
 		else 
 		{

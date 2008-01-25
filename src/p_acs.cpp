@@ -555,20 +555,19 @@ void FBehavior::StaticLoadDefaultModules ()
 
 	while ((lump = Wads.FindLump ("LOADACS", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (lump, "LOADACS");
-		while (SC_GetString())
+		FScanner sc(lump, "LOADACS");
+		while (sc.GetString())
 		{
-			int acslump = Wads.CheckNumForName (sc_String, ns_acslibrary);
+			int acslump = Wads.CheckNumForName (sc.String, ns_acslibrary);
 			if (acslump >= 0)
 			{
 				StaticLoadModule (acslump);
 			}
 			else
 			{
-				Printf ("Could not find autoloaded ACS library %s\n", sc_String);
+				Printf ("Could not find autoloaded ACS library %s\n", sc.String);
 			}
 		}
-		SC_Close ();
 	}
 }
 
@@ -2200,7 +2199,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_RenderStyle:
-		actor->RenderStyle = value;	
+		actor->RenderStyle = ERenderStyle(value);
 		break;
 
 	case APROP_Ambush:
@@ -2290,7 +2289,16 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Speed:		return actor->Speed;
 	case APROP_Damage:		return actor->Damage;	// Should this call GetMissileDamage() instead?
 	case APROP_Alpha:		return actor->alpha;
-	case APROP_RenderStyle:	return actor->RenderStyle;
+	case APROP_RenderStyle:	for (int style = STYLE_None; style < STYLE_Count; ++style)
+							{ // Check for a legacy render style that matches.
+								if (LegacyRenderStyles[style] == actor->RenderStyle)
+								{
+									return style;
+								}
+							}
+							// The current render style isn't expressable as a legacy style,
+							// so pretends it's normal.
+							return STYLE_Normal;
 	case APROP_Gravity:		return actor->gravity;
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
 	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);

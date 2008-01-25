@@ -436,12 +436,12 @@ int FindLineSpecialEx (const char *string, int *min_args, int *max_args)
 // handles action specials as code pointers
 //
 //==========================================================================
-bool DoActionSpecials(FState & state, bool multistate, int * statecount, Baggage &bag)
+bool DoActionSpecials(FScanner &sc, FState & state, bool multistate, int * statecount, Baggage &bag)
 {
 	int i;
 	const ACSspecials *spec;
 
-	if ((spec = is_special (sc_String, sc_StringLen)) != NULL)
+	if ((spec = is_special (sc.String, sc.StringLen)) != NULL)
 	{
 
 		int paramindex=PrepareStateParameters(&state, 6);
@@ -449,25 +449,25 @@ bool DoActionSpecials(FState & state, bool multistate, int * statecount, Baggage
 		StateParameters[paramindex]=spec->Special;
 
 		// Make this consistent with all other parameter parsing
-		if (SC_CheckToken('('))
+		if (sc.CheckToken('('))
 		{
 			for (i = 0; i < 5;)
 			{
-				StateParameters[paramindex+i+1]=ParseExpression (false, bag.Info->Class);
+				StateParameters[paramindex+i+1] = ParseExpression (sc, false, bag.Info->Class);
 				i++;
-				if (!SC_CheckToken (',')) break;
+				if (!sc.CheckToken (',')) break;
 			}
-			SC_MustGetToken (')');
+			sc.MustGetToken (')');
 		}
 		else i=0;
 
 		if (i < spec->MinArgs)
 		{
-			SC_ScriptError ("Too few arguments to %s", spec->name);
+			sc.ScriptError ("Too few arguments to %s", spec->name);
 		}
 		if (i > MAX (spec->MinArgs, spec->MaxArgs))
 		{
-			SC_ScriptError ("Too many arguments to %s", spec->name);
+			sc.ScriptError ("Too many arguments to %s", spec->name);
 		}
 		state.Action = A_CallSpecial;
 		return true;
@@ -514,21 +514,21 @@ static void RetargetStates (intptr_t count, const char *target)
 // processes a state block
 //
 //==========================================================================
-static FString ParseStateString()
+static FString ParseStateString(FScanner &sc)
 {
 	FString statestring;
 
-	SC_MustGetString();
-	statestring = sc_String;
-	if (SC_CheckString("::"))
+	sc.MustGetString();
+	statestring = sc.String;
+	if (sc.CheckString("::"))
 	{
-		SC_MustGetString ();
-		statestring << "::" << sc_String;
+		sc.MustGetString ();
+		statestring << "::" << sc.String;
 	}
-	while (SC_CheckString ("."))
+	while (sc.CheckString ("."))
 	{
-		SC_MustGetString ();
-		statestring << "." << sc_String;
+		sc.MustGetString ();
+		statestring << "." << sc.String;
 	}
 	return statestring;
 }
@@ -539,7 +539,7 @@ static FString ParseStateString()
 // parses a state block
 //
 //==========================================================================
-int ParseStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
+int ParseStates(FScanner &sc, FActorInfo * actor, AActor * defaults, Baggage &bag)
 {
 	FString statestring;
 	intptr_t count = 0;
@@ -548,21 +548,21 @@ int ParseStates(FActorInfo * actor, AActor * defaults, Baggage &bag)
 	intptr_t lastlabel = -1;
 	int minrequiredstate = -1;
 
-	SC_MustGetStringName ("{");
-	SC_SetEscape(false);	// disable escape sequences in the state parser
-	while (!SC_CheckString ("}") && !sc_End)
+	sc.MustGetStringName ("{");
+	sc.SetEscape(false);	// disable escape sequences in the state parser
+	while (!sc.CheckString ("}") && !sc.End)
 	{
 		memset(&state,0,sizeof(state));
-		statestring = ParseStateString();
+		statestring = ParseStateString(sc);
 		if (!statestring.CompareNoCase("GOTO"))
 		{
 do_goto:	
-			statestring = ParseStateString();
-			if (SC_CheckString ("+"))
+			statestring = ParseStateString(sc);
+			if (sc.CheckString ("+"))
 			{
-				SC_MustGetNumber ();
+				sc.MustGetNumber ();
 				statestring += '+';
-				statestring += sc_String;
+				statestring += sc.String;
 			}
 			// copy the text - this must be resolved later!
 			if (laststate != NULL)
@@ -575,7 +575,7 @@ do_goto:
 			}
 			else
 			{
-				SC_ScriptError("GOTO before first state");
+				sc.ScriptError("GOTO before first state");
 			}
 		}
 		else if (!statestring.CompareNoCase("STOP"))
@@ -591,7 +591,7 @@ do_stop:
 			}
 			else
 			{
-				SC_ScriptError("STOP before first state");
+				sc.ScriptError("STOP before first state");
 				continue;
 			}
 		}
@@ -599,7 +599,7 @@ do_stop:
 		{
 			if (!laststate) 
 			{
-				SC_ScriptError("%s before first state", sc_String);
+				sc.ScriptError("%s before first state", sc.String);
 				continue;
 			}
 			laststate->NextState=(FState*)-2;
@@ -608,7 +608,7 @@ do_stop:
 		{
 			if (!laststate) 
 			{
-				SC_ScriptError("LOOP before first state");
+				sc.ScriptError("LOOP before first state");
 				continue;
 			}
 			laststate->NextState=(FState*)(lastlabel+1);
@@ -617,15 +617,15 @@ do_stop:
 		{
 			const char * statestrp;
 
-			SC_MustGetString();
-			if (SC_Compare (":"))
+			sc.MustGetString();
+			if (sc.Compare (":"))
 			{
 				laststate = NULL;
 				do
 				{
 					lastlabel = count;
 					AddState(statestring, (FState *) (count+1));
-					statestring = ParseStateString();
+					statestring = ParseStateString(sc);
 					if (!statestring.CompareNoCase("GOTO"))
 					{
 						goto do_goto;
@@ -634,72 +634,75 @@ do_stop:
 					{
 						goto do_stop;
 					}
-					SC_MustGetString ();
-				} while (SC_Compare (":"));
+					sc.MustGetString ();
+				} while (sc.Compare (":"));
 //				continue;
 			}
 
-			SC_UnGet ();
+			sc.UnGet ();
 
 			if (statestring.Len() != 4)
 			{
-				SC_ScriptError ("Sprite names must be exactly 4 characters\n");
+				sc.ScriptError ("Sprite names must be exactly 4 characters\n");
 			}
 
 			memcpy(state.sprite.name, statestring, 4);
-			state.Misc1=state.Misc2=0;
-			state.ParameterIndex=0;
-			SC_MustGetString();
-			statestring = (sc_String+1);
+			state.Misc1 = state.Misc2 = 0;
+			state.ParameterIndex = 0;
+			sc.MustGetString();
+			statestring = (sc.String+1);
 			statestrp = statestring;
-			state.Frame=(*sc_String&223)-'A';
-			if ((*sc_String&223)<'A' || (*sc_String&223)>']')
+			state.Frame = (*sc.String & 223)-'A';
+			if ((*sc.String & 223)<'A' || (*sc.String & 223)>']')
 			{
-				SC_ScriptError ("Frames must be A-Z, [, \\, or ]");
+				sc.ScriptError ("Frames must be A-Z, [, \\, or ]");
 				state.Frame=0;
 			}
 
-			SC_MustGetNumber();
-			sc_Number++;
-			state.Tics=sc_Number&255;
-			state.Misc1=(sc_Number>>8)&255;
-			if (state.Misc1) state.Frame|=SF_BIGTIC;
-
-			while (SC_GetString() && !sc_Crossed)
+			sc.MustGetNumber();
+			sc.Number++;
+			state.Tics = sc.Number & 255;
+			state.Misc1 = (sc.Number >> 8) & 255;
+			if (state.Misc1)
 			{
-				if (SC_Compare("BRIGHT")) 
+				state.Frame |= SF_BIGTIC;
+			}
+
+			while (sc.GetString() && !sc.Crossed)
+			{
+				if (sc.Compare("BRIGHT")) 
 				{
-					state.Frame|=SF_FULLBRIGHT;
+					state.Frame |= SF_FULLBRIGHT;
 					continue;
 				}
-				if (SC_Compare("OFFSET"))
+				if (sc.Compare("OFFSET"))
 				{
-					if (state.Frame&SF_BIGTIC)
+					if (state.Frame & SF_BIGTIC)
 					{
-						SC_ScriptError("You cannot use OFFSET with a state duration larger than 254!");
+						sc.ScriptError("You cannot use OFFSET with a state duration larger than 254!");
 					}
 					// specify a weapon offset
-					SC_MustGetStringName("(");
-					SC_MustGetNumber();
-					state.Misc1=sc_Number;
-					SC_MustGetStringName (",");
-					SC_MustGetNumber();
-					state.Misc2=sc_Number;
-					SC_MustGetStringName(")");
+					sc.MustGetStringName("(");
+					sc.MustGetNumber();
+					state.Misc1 = sc.Number;
+					sc.MustGetStringName (",");
+					sc.MustGetNumber();
+					state.Misc2 = sc.Number;
+					sc.MustGetStringName(")");
 					continue;
 				}
 
 				// Make the action name lowercase to satisfy the gperf hashers
-				strlwr (sc_String);
+				strlwr (sc.String);
 
-				int minreq=count;
-				if (DoActionSpecials(state, !statestring.IsEmpty(), &minreq, bag))
+				int minreq = count;
+				if (DoActionSpecials(sc, state, !statestring.IsEmpty(), &minreq, bag))
 				{
 					if (minreq>minrequiredstate) minrequiredstate=minreq;
 					goto endofstate;
 				}
 
-				PSymbol *sym = bag.Info->Class->Symbols.FindSymbol (FName(sc_String, true), true);
+				PSymbol *sym = bag.Info->Class->Symbols.FindSymbol (FName(sc.String, true), true);
 				if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
 				{
 					PSymbolActionFunction *afd = static_cast<PSymbolActionFunction *>(sym);
@@ -713,11 +716,11 @@ do_stop:
 
 						if (!islower(*params))
 						{
-							SC_MustGetStringName("(");
+							sc.MustGetStringName("(");
 						}
 						else
 						{
-							if (!SC_CheckString("(")) goto endofstate;
+							if (!sc.CheckString("(")) goto endofstate;
 						}
 						
 						int paramindex = PrepareStateParameters(&state, numparams);
@@ -735,47 +738,47 @@ do_stop:
 							{
 							case 'I':
 							case 'i':		// Integer
-								SC_MustGetNumber();
-								v=sc_Number;
+								sc.MustGetNumber();
+								v = sc.Number;
 								break;
 
 							case 'F':
 							case 'f':		// Fixed point
-								SC_MustGetFloat();
-								v=fixed_t(sc_Float*FRACUNIT);
+								sc.MustGetFloat();
+								v = fixed_t(sc.Float*FRACUNIT);
 								break;
 
 
 							case 'S':
 							case 's':		// Sound name
-								SC_MustGetString();
-								v=S_FindSound(sc_String);
+								sc.MustGetString();
+								v = S_FindSound(sc.String);
 								break;
 
 							case 'M':
 							case 'm':		// Actor name
 							case 'T':
 							case 't':		// String
-								SC_SetEscape(true);
-								SC_MustGetString();
-								SC_SetEscape(false);
-								v = (int)(sc_String[0] ? FName(sc_String) : NAME_None);
+								sc.SetEscape(true);
+								sc.MustGetString();
+								sc.SetEscape(false);
+								v = (int)(sc.String[0] ? FName(sc.String) : NAME_None);
 								break;
 
 							case 'L':
 							case 'l':		// Jump label
 
-								if (SC_CheckNumber())
+								if (sc.CheckNumber())
 								{
-									if (sc_Number > 0 && strlen(statestring)>0)
+									if (sc.Number > 0 && strlen(statestring)>0)
 									{
-										SC_ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
+										sc.ScriptError("You cannot use state jumps commands with a jump offset on multistate definitions\n");
 									}
 
-									v=sc_Number;
+									v=sc.Number;
 									if (v<0)
 									{
-										SC_ScriptError("Negative jump offsets are not allowed");
+										sc.ScriptError("Negative jump offsets are not allowed");
 									}
 
 									{
@@ -789,13 +792,13 @@ do_stop:
 
 									v = -(int)JumpParameters.Size();
 									// This forces quotation marks around the state name.
-									SC_MustGetToken(TK_StringConst);
-									if (sc_String[0] == 0 || SC_Compare("None"))
+									sc.MustGetToken(TK_StringConst);
+									if (sc.String[0] == 0 || sc.Compare("None"))
 									{
 										v = 0;	// an empty string means 'no state'.
 										break;
 									}
-									FString statestring = sc_String; // ParseStateString();
+									FString statestring = sc.String; // ParseStateString(sc);
 									const PClass *stype=NULL;
 									int scope = statestring.IndexOf("::");
 									if (scope >= 0)
@@ -812,15 +815,15 @@ do_stop:
 										stype = PClass::FindClass (scopename);
 										if (stype == NULL)
 										{
-											SC_ScriptError ("%s is an unknown class.", scopename.GetChars());
+											sc.ScriptError ("%s is an unknown class.", scopename.GetChars());
 										}
 										if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
 										{
-											SC_ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
+											sc.ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
 										}
 										if (!stype->IsAncestorOf (actor->Class))
 										{
-											SC_ScriptError ("%s is not derived from %s so cannot access its states.",
+											sc.ScriptError ("%s is not derived from %s so cannot access its states.",
 												actor->Class->TypeName.GetChars(), stype->TypeName.GetChars());
 										}
 									}
@@ -839,7 +842,7 @@ do_stop:
 									{
 										if (!stype->ActorInfo->FindState(names.Size(), &names[0]))
 										{
-											SC_ScriptError("Jump to unknown state '%s' in class '%s'",
+											sc.ScriptError("Jump to unknown state '%s' in class '%s'",
 												statestring.GetChars(), stype->TypeName.GetChars());
 										}
 									}
@@ -855,14 +858,14 @@ do_stop:
 
 							case 'C':
 							case 'c':		// Color
-								SC_MustGetString ();
-								if (SC_Compare("none"))
+								sc.MustGetString ();
+								if (sc.Compare("none"))
 								{
 									v = -1;
 								}
 								else
 								{
-									int c = V_GetColor (NULL, sc_String);
+									int c = V_GetColor (NULL, sc.String);
 									// 0 needs to be the default so we have to mark the color.
 									v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
 								}
@@ -870,12 +873,12 @@ do_stop:
 
 							case 'X':
 							case 'x':
-								v = ParseExpression (false, bag.Info->Class);
+								v = ParseExpression (sc, false, bag.Info->Class);
 								break;
 
 							case 'Y':
 							case 'y':
-								v = ParseExpression (true, bag.Info->Class);
+								v = ParseExpression (sc, true, bag.Info->Class);
 								break;
 
 							default:
@@ -893,7 +896,7 @@ do_stop:
 							{
 								if (*params == '+')
 								{
-									if (SC_CheckString(")"))
+									if (sc.CheckString(")"))
 									{
 										goto endofstate;
 									}
@@ -901,29 +904,29 @@ do_stop:
 									v = 0;
 									StateParameters.Push(v);
 								}
-								else if ((islower(*params) || *params=='!') && SC_CheckString(")"))
+								else if ((islower(*params) || *params=='!') && sc.CheckString(")"))
 								{
 									goto endofstate;
 								}
-								SC_MustGetStringName (",");
+								sc.MustGetStringName (",");
 							}
 						}
-						SC_MustGetStringName(")");
+						sc.MustGetStringName(")");
 					}
 					else 
 					{
-						SC_MustGetString();
-						if (SC_Compare("("))
+						sc.MustGetString();
+						if (sc.Compare("("))
 						{
-							SC_ScriptError("You cannot pass parameters to '%s'\n",sc_String);
+							sc.ScriptError("You cannot pass parameters to '%s'\n",sc.String);
 						}
-						SC_UnGet();
+						sc.UnGet();
 					}
 					goto endofstate;
 				}
-				SC_ScriptError("Invalid state parameter %s\n", sc_String);
+				sc.ScriptError("Invalid state parameter %s\n", sc.String);
 			}
-			SC_UnGet();
+			sc.UnGet();
 endofstate:
 			StateArray.Push(state);
 			while (*statestrp)
@@ -932,7 +935,7 @@ endofstate:
 
 				if (frame<0 || frame>28)
 				{
-					SC_ScriptError ("Frames must be A-Z, [, \\, or ]");
+					sc.ScriptError ("Frames must be A-Z, [, \\, or ]");
 					frame=0;
 				}
 
@@ -946,9 +949,9 @@ endofstate:
 	}
 	if (count<=minrequiredstate)
 	{
-		SC_ScriptError("A_Jump offset out of range in %s", actor->Class->TypeName.GetChars());
+		sc.ScriptError("A_Jump offset out of range in %s", actor->Class->TypeName.GetChars());
 	}
-	SC_SetEscape(true);	// re-enable escape sequences
+	sc.SetEscape(true);	// re-enable escape sequences
 	return count;
 }
 
@@ -958,7 +961,7 @@ endofstate:
 //
 //==========================================================================
 
-static FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name)
+static FState *ResolveGotoLabel (FScanner &sc, AActor *actor, const PClass *mytype, char *name)
 {
 	const PClass *type=mytype;
 	FState *state;
@@ -986,15 +989,15 @@ static FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name
 			const PClass *stype = PClass::FindClass (classname);
 			if (stype == NULL)
 			{
-				SC_ScriptError ("%s is an unknown class.", classname);
+				sc.ScriptError ("%s is an unknown class.", classname);
 			}
 			if (!stype->IsDescendantOf (RUNTIME_CLASS(AActor)))
 			{
-				SC_ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
+				sc.ScriptError ("%s is not an actor class, so it has no states.", stype->TypeName.GetChars());
 			}
 			if (!stype->IsAncestorOf (type))
 			{
-				SC_ScriptError ("%s is not derived from %s so cannot access its states.",
+				sc.ScriptError ("%s is not derived from %s so cannot access its states.",
 					type->TypeName.GetChars(), stype->TypeName.GetChars());
 			}
 			if (type != stype)
@@ -1024,7 +1027,7 @@ static FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name
 	}
 	else if (v != 0)
 	{
-		SC_ScriptError ("Attempt to get invalid state %s from actor %s.", label, type->TypeName.GetChars());
+		sc.ScriptError ("Attempt to get invalid state %s from actor %s.", label, type->TypeName.GetChars());
 	}
 	delete[] namestart;		// free the allocated string buffer
 	return state;
@@ -1059,15 +1062,15 @@ static void FixStatePointers (FActorInfo *actor, TArray<FStateDefine> & list)
 //
 //==========================================================================
 
-static void FixStatePointersAgain (FActorInfo *actor, AActor *defaults, TArray<FStateDefine> & list)
+static void FixStatePointersAgain (FScanner &sc, FActorInfo *actor, AActor *defaults, TArray<FStateDefine> & list)
 {
 	for(unsigned i=0;i<list.Size(); i++)
 	{
 		if (list[i].State != NULL && FState::StaticFindStateOwner (list[i].State, actor) == NULL)
 		{ // It's not a valid state, so it must be a label string. Resolve it.
-			list[i].State = ResolveGotoLabel (defaults, actor->Class, (char *)list[i].State);
+			list[i].State = ResolveGotoLabel (sc, defaults, actor->Class, (char *)list[i].State);
 		}
-		if (list[i].Children.Size() > 0) FixStatePointersAgain(actor, defaults, list[i].Children);
+		if (list[i].Children.Size() > 0) FixStatePointersAgain(sc, actor, defaults, list[i].Children);
 	}
 }
 
@@ -1079,7 +1082,7 @@ static void FixStatePointersAgain (FActorInfo *actor, AActor *defaults, TArray<F
 //
 //==========================================================================
 
-int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
+int FinishStates (FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag)
 {
 	static int c=0;
 	int count = StateArray.Size();
@@ -1122,7 +1125,7 @@ int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 				}
 				else	// goto
 				{
-					realstates[i].NextState = ResolveGotoLabel (defaults, bag.Info->Class, (char *)realstates[i].NextState);
+					realstates[i].NextState = ResolveGotoLabel (sc, defaults, bag.Info->Class, (char *)realstates[i].NextState);
 				}
 			}
 		}
@@ -1130,7 +1133,7 @@ int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 	StateArray.Clear ();
 
 	// Fix state pointers that are gotos
-	FixStatePointersAgain (actor, defaults, StateLabels);
+	FixStatePointersAgain (sc, actor, defaults, StateLabels);
 
 	return count;
 }
@@ -1142,35 +1145,35 @@ int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 // This is strictly for keeping compatibility with old WADs!
 //
 //==========================================================================
-FState *CheckState(PClass *type)
+FState *CheckState(FScanner &sc, PClass *type)
 {
 	int v=0;
 
-	if (SC_GetString() && !sc_Crossed)
+	if (sc.GetString() && !sc.Crossed)
 	{
-		if (SC_Compare("0")) return NULL;
-		else if (SC_Compare("PARENT"))
+		if (sc.Compare("0")) return NULL;
+		else if (sc.Compare("PARENT"))
 		{
 			FState * state = NULL;
-			SC_MustGetString();
+			sc.MustGetString();
 
 			FActorInfo * info = type->ParentClass->ActorInfo;
 
 			if (info != NULL)
 			{
-				state = info->FindState(FName(sc_String));
+				state = info->FindState(FName(sc.String));
 			}
 
-			if (SC_GetString ())
+			if (sc.GetString ())
 			{
-				if (SC_Compare ("+"))
+				if (sc.Compare ("+"))
 				{
-					SC_MustGetNumber ();
-					v = sc_Number;
+					sc.MustGetNumber ();
+					v = sc.Number;
 				}
 				else
 				{
-					SC_UnGet ();
+					sc.UnGet ();
 				}
 			}
 
@@ -1178,13 +1181,13 @@ FState *CheckState(PClass *type)
 
 			if (v!=0 && state==NULL)
 			{
-				SC_ScriptError("Attempt to get invalid state from actor %s\n", type->ParentClass->TypeName.GetChars());
+				sc.ScriptError("Attempt to get invalid state from actor %s\n", type->ParentClass->TypeName.GetChars());
 				return NULL;
 			}
 			state+=v;
 			return state;
 		}
-		else SC_ScriptError("Invalid state assignment");
+		else sc.ScriptError("Invalid state assignment");
 	}
 	return NULL;
 }

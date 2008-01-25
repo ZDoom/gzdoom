@@ -425,38 +425,38 @@ void FTextureManager::LoadHiresTex()
 
 	while ((remapLump = Wads.FindLump("HIRESTEX", &lastLump)) != -1)
 	{
-		SC_OpenLumpNum(remapLump, "HIRESTEX");
-		while (SC_GetString())
+		FScanner sc(remapLump, "HIRESTEX");
+		while (sc.GetString())
 		{
-			if (SC_Compare("remap")) // remap an existing texture
+			if (sc.Compare("remap")) // remap an existing texture
 			{
-				SC_MustGetString();
+				sc.MustGetString();
 				
 				// allow selection by type
-				if (SC_Compare("wall")) type=FTexture::TEX_Wall, mode=FTextureManager::TEXMAN_Overridable;
-				else if (SC_Compare("flat")) type=FTexture::TEX_Flat, mode=FTextureManager::TEXMAN_Overridable;
-				else if (SC_Compare("sprite")) type=FTexture::TEX_Sprite, mode=0;
+				if (sc.Compare("wall")) type=FTexture::TEX_Wall, mode=FTextureManager::TEXMAN_Overridable;
+				else if (sc.Compare("flat")) type=FTexture::TEX_Flat, mode=FTextureManager::TEXMAN_Overridable;
+				else if (sc.Compare("sprite")) type=FTexture::TEX_Sprite, mode=0;
 				else type = FTexture::TEX_Any, mode = 0;
 				
-				sc_String[8]=0;
+				sc.String[8]=0;
 
 				tlist.Clear();
-				int amount = ListTextures(sc_String, tlist);
+				int amount = ListTextures(sc.String, tlist);
 				if (amount == 0)
 				{
-					int oldtex = AddPatch(sc_String);
+					int oldtex = AddPatch(sc.String);
 					if (oldtex >= 0) tlist.Push(oldtex);
 				}
-				FName texname = sc_String;
+				FName texname = sc.String;
 
-				SC_MustGetString();
-				int lumpnum = Wads.CheckNumForFullName(sc_String);
-				if (lumpnum < 0) lumpnum = Wads.CheckNumForName(sc_String, ns_graphics);
+				sc.MustGetString();
+				int lumpnum = Wads.CheckNumForFullName(sc.String);
+				if (lumpnum < 0) lumpnum = Wads.CheckNumForName(sc.String, ns_graphics);
 
 				if (tlist.Size() == 0)
 				{
 					Printf("Attempting to remap non-existent texture %s to %s\n",
-						texname.GetChars(), sc_String);
+						texname.GetChars(), sc.String);
 				}
 				else
 				{
@@ -487,22 +487,22 @@ void FTextureManager::LoadHiresTex()
 					}
 				}
 			}
-			else if (SC_Compare("define")) // define a new "fake" texture
+			else if (sc.Compare("define")) // define a new "fake" texture
 			{
-				SC_GetString();
-				memcpy(src, sc_String, 8);
+				sc.GetString();
+				memcpy(src, sc.String, 8);
 
-				int lumpnum = Wads.CheckNumForFullName(sc_String);
-				if (lumpnum < 0) lumpnum = Wads.CheckNumForName(sc_String, ns_graphics);
+				int lumpnum = Wads.CheckNumForFullName(sc.String);
+				if (lumpnum < 0) lumpnum = Wads.CheckNumForName(sc.String, ns_graphics);
 
-				SC_GetString();
-				is32bit = !!SC_Compare("force32bit");
-				if (!is32bit) SC_UnGet();
+				sc.GetString();
+				is32bit = !!sc.Compare("force32bit");
+				if (!is32bit) sc.UnGet();
 
-				SC_GetNumber();
-				width = sc_Number;
-				SC_GetNumber();
-				height = sc_Number;
+				sc.GetNumber();
+				width = sc.Number;
+				sc.GetNumber();
+				height = sc.Number;
 
 				if (lumpnum>=0)
 				{
@@ -523,7 +523,6 @@ void FTextureManager::LoadHiresTex()
 				//else Printf("Unable to define hires texture '%s'\n", tex->Name);
 			}
 		}
-		SC_Close();
 	}
 }
 

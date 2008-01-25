@@ -1,4 +1,4 @@
-/* $Id: scanner.re,v 1.42 2006/04/17 00:18:45 helly Exp $ */
+/* $Id:$ */
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
@@ -17,7 +17,7 @@ extern YYSTYPE yylval;
 
 #define	BSIZE	8192
 
-#define	YYCTYPE		char
+#define	YYCTYPE		unsigned char
 #define	YYCURSOR	cursor
 #define	YYLIMIT		lim
 #define	YYMARKER	ptr
@@ -86,8 +86,8 @@ sstring = "'"     ((esc \ ['] ) | "\\" dot)* "'" ;
 letter  = [a-zA-Z];
 digit   = [0-9];
 number  = "0" | ("-"? [1-9] digit*);
-name    = letter (letter|digit)*;
-cname   = ":" letter (letter|digit|"_")*;
+name    = (letter|"_") (letter|digit|"_")*;
+cname   = ":" name;
 space   = [ \t];
 eol     = ("\r\n" | "\n");
 config  = "re2c" cname+;
@@ -299,8 +299,14 @@ code:
 				  goto code; }
 	"{"			{ ++depth;
 				  goto code; }
-	"\n"			{ if(cursor == eof) fatal("missing '}'");
+	"\n"		{ if(cursor == eof) fatal("missing '}'");
 				  pos = cursor; cline++;
+				  goto code;
+				}
+	zero		{ if(cursor == eof) {
+					if (depth) fatal("missing '}'");
+					RETURN(0);
+				  }
 				  goto code;
 				}
 	dstring | sstring | any	{ goto code; }
@@ -361,6 +367,14 @@ void Scanner::fatal(uint ofs, const char *msg) const
 		<< msg << std::endl;
 #endif
    	exit(1);
+}
+
+Scanner::~Scanner()
+{
+	if (bot)
+	{
+		delete [] bot;
+	}
 }
 
 } // end namespace re2c

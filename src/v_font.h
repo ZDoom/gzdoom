@@ -85,8 +85,8 @@ public:
 	FFont (const char *fontname, const char *nametemplate, int first, int count, int base);
 	~FFont ();
 
-	FTexture *GetChar (int code, int *const width) const;
-	int GetCharWidth (int code) const;
+	virtual FTexture *GetChar (int code, int *const width) const;
+	virtual int GetCharWidth (int code) const;
 	FRemapTable *GetColorTranslation (EColorRange range) const;
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
@@ -101,9 +101,11 @@ public:
 protected:
 	FFont ();
 
-	void BuildTranslations (const double *luminosity, const BYTE *identity, const void *ranges, int total_colors);
+	void BuildTranslations (const double *luminosity, const BYTE *identity,
+		const void *ranges, int total_colors, const PalEntry *palette);
 
-	static int SimpleTranslation (BYTE *colorsused, BYTE *translation, BYTE *identity, double **luminosity);
+	static int SimpleTranslation (BYTE *colorsused, BYTE *translation,
+		BYTE *identity, double **luminosity);
 
 	int FirstChar, LastChar;
 	int SpaceWidth;
@@ -141,10 +143,24 @@ public:
 protected:
 	void CheckFON1Chars (int lump, const BYTE *data, double *luminosity);
 	void BuildTranslations2 ();
-	void FixupPalette (BYTE *identity, double *luminosity, const BYTE *palette, bool rescale);
+	void FixupPalette (BYTE *identity, double *luminosity, const BYTE *palette,
+		bool rescale, PalEntry *out_palette);
 	void LoadFON1 (int lump, const BYTE *data);
 	void LoadFON2 (int lump, const BYTE *data);
 	void CreateFontFromPic (int picnum);
+};
+
+class FSinglePicFont : public FFont
+{
+public:
+	FSinglePicFont(const char *picname);
+
+	// FFont interface
+	FTexture *GetChar (int code, int *const width) const;
+	int GetCharWidth (int code) const;
+
+protected:
+	int PicNum;
 };
 
 void RecordTextureColors (FTexture *pic, BYTE *colorsused);

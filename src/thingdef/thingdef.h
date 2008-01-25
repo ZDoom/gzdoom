@@ -1,6 +1,8 @@
 #ifndef __THINGDEF_H
 #define __THINGDEF_H
 
+class FScanner;
+
 //==========================================================================
 //
 // This class is for storing a name inside a const PClass* field without
@@ -97,9 +99,9 @@ FState * FindState(AActor * actor, const PClass * type, const char * name);
 void InstallStates(FActorInfo *info, AActor *defaults);
 void MakeStateDefines(const FStateLabels *list);
 FState *P_GetState(AActor *self, FState *CallingState, int offset);
-int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag);
-int ParseStates(FActorInfo * actor, AActor * defaults, Baggage &bag);
-FState *CheckState(PClass *type);
+int FinishStates (FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
+int ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
+FState *CheckState(FScanner &sc, PClass *type);
 
 
 //==========================================================================
@@ -108,15 +110,15 @@ FState *CheckState(PClass *type);
 //
 //==========================================================================
 
-void ParseActorProperty(Baggage &bag);
-void ParseActorFlag (Baggage &bag, int mod);
-void FinishActor(FActorInfo *info, Baggage &bag);
+void ParseActorProperty(FScanner &sc, Baggage &bag);
+void ParseActorFlag (FScanner &sc, Baggage &bag, int mod);
+void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag);
 
-void ParseConstant (PSymbolTable * symt, PClass *cls);
-void ParseEnum (PSymbolTable * symt, PClass *cls);
+void ParseConstant (FScanner &sc, PSymbolTable *symt, PClass *cls);
+void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls);
 
 
-int ParseExpression (bool _not, PClass *cls);
+int ParseExpression (FScanner &sc, bool _not, PClass *cls);
 
 int EvalExpressionI (int id, AActor *self, const PClass *cls=NULL);
 float EvalExpressionF (int id, AActor *self, const PClass *cls=NULL);

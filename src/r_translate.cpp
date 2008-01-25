@@ -471,6 +471,11 @@ void R_InitTranslationTables ()
 	// Full alpha
 	for (i = 0; i < 16; ++i)
 	{
+		ShadeFakeColormap[i].Color = -1;
+		ShadeFakeColormap[i].Desaturate = -1;
+		ShadeFakeColormap[i].Next = NULL;
+		ShadeFakeColormap[i].Maps = table;
+
 		for (j = 0; j < NUMCOLORMAPS; ++j)
 		{
 			int a = (NUMCOLORMAPS - j) * 256 / NUMCOLORMAPS * (16-i);
@@ -481,6 +486,16 @@ void R_InitTranslationTables ()
 			}
 			table += 256;
 		}
+	}
+	for (i = 0; i < NUMCOLORMAPS*16*256; ++i)
+	{
+		assert(shadetables[i] <= 64);
+	}
+
+	// Set up a guaranteed identity map
+	for (i = 0; i < 256; ++i)
+	{
+		identitymap[i] = i;
 	}
 }
 

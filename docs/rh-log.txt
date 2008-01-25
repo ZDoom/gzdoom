@@ -1,6 +1,95 @@
+January 25, 2008
+- Lemon is now producing parsers that don't accept anything, so I'm going
+  back to v1.43 and trying each intermediate version to see where things
+  went wrong.
+
+January 24, 2008
+- Updated Lemon to its latest versions as of today.
+  (lemon.c: v1.53, lempar.c: v1.31)
+- Added .txt files to the list of types (wad, zip, and pk3) that can be
+  loaded without listing them after -file.
+- Fonts that are created by the ACS setfont command to wrap a texture now
+  support animated textures.
+- FON2 fonts can now use their full palette for CR_UNTRANSLATED when drawn
+  with the hardware 2D path instead of being restricted to the game palette.
+
+January 23, 2008
+- Fixed: Toggling vid_vsync would reset the displayed fullscreen gamma to 1
+  on a Radeon 9000.
+- Added back the off-by-one palette handling, but in a much more limited
+  scope than before. The skipped entry is assumed to always be at 248, and
+  it is assumed that all Shader Model 1.4 cards suffer from this. That's
+  because all SM1.4 cards are based on variants of the ATI R200 core, and the
+  RV250 in a Radeon 9000 craps up like this. I see no reason to assume that
+  other flavors of the R200 are any different. (Interesting note: With the
+  Radeon 9000, D3DTADDRESS_CLAMP is an invalid address mode when using the
+  debug Direct3D 9 runtime, but it works perfectly fine with the retail
+  Direct3D 9 runtime.) (Insight: The R200 probably uses bytes for all its
+  math inside pixel shaders. That would explain perfectly why I can't use
+  constants greater than 1 with PS1.4 and why it can't do an exact mapping to
+  every entry in the color palette.
+- Fixed: The software shaded drawer did not work for 2D, because its selected
+  "color"map was replaced with the identitymap before being used.
+- Fixed: I cannot use Printf to output messages before the framebuffer was
+  completely setup, meaning that Shader Model 1.4 cards could not change
+  resolution.
+- I have decided to let remap palettes specify variable alpha values for
+  their colors. D3DFB no longer forces them to 255.
+
+January 22, 2008
+- Updated re2c to version 0.12.3.
+- Fixed: A_Wander used threshold as a timer, when it should have used
+  reactiontime.
+- Fixed: A_CustomRailgun would not fire at all for actors without a target
+  when the aim parameter was disabled.
+- Made the warp command work in multiplayer, again courtesy of Karate Chris.
+- Fixed: Trying to spawn a bot while not in a game made for a crashing time.
+  (Patch courtesy of Karate Chris.)
+
+January 21, 2008
+- Removed some floating point math from hu_scores.cpp that somebody's GCC
+  gave warnings for (not mine, though).
+- Fixed: The SBarInfo drawbar command crashed if the sprite image was
+  unavailable.
+- Fixed: FString::operator=(const char *) did not release its old buffer when
+  being assigned to the null string.
+- The scanner no longer has an upper limit on the length of strings it
+  accepts, though short strings will be faster than long ones.
+- Moved all the text scanning functions into a class. Mainly, this means that
+  multiple script scanner states can be stored without being forced to do so
+  recursively. I think I might be taking advantage of that in the near
+  future. Possibly. Maybe.
+- Removed some potential buffer overflows from the decal parser.
+
+January 18, 2008
+- Applied Blzut3's SBARINFO update #9:
+  * Fixed: When using even length values in drawnumber it would cap to a 98
+    value instead of a 99 as intended.
+  * The SBarInfo parser can now accept negatives for coordinates. This
+    doesn't allow much right now, but later I plan to add better fullscreen
+    hud support in which the negatives will be more useful. This also cleans
+    up the source a bit since all calls for (x, y) coordinates are with the
+    function getCoordinates().
+- Added support for stencilling actors.
+- Added support for non-black colors specified with DTA_ColorOverlay to the
+  software renderer.
+- Fixed: The inverse, gold, red, and green fixed colormaps each allocated
+  space for 32 different colormaps, even though each only used the first one.
+- Added two new blending flags to make reverse subtract blending more useful:
+  STYLEF_InvertSource and STYLEF_InvertOverlay. These invert the color that
+  gets blended with the background, since that seems like a good idea for
+  reverse subtraction. They also work with the other two blending operations.
+
+January 17, 2008
+- Added subtract and reverse subtract blending operations to the renderer.
+  Since the ERenderStyle enumeration was getting rather unwieldy, I converted
+  it into a new FRenderStyle structure that lets each parameter of the
+  blending equation be set separately. This simplified the set up for the
+  blend quite a bit, and it means a number of new combinations are available
+  by setting the parameters properly.
+
 January 16, 2008 (Changes by Graf Zahl)
 - Fixed: The StatusBar pointer was not NULLed after being deleted.
-
 
 January 15, 2008
 - Plugged more leaks in SBARINFO.

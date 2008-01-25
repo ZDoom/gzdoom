@@ -161,7 +161,7 @@ struct FSoundSequencePtrArray : public TArray<FSoundSequence *>
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void AssignTranslations (int seq, seqtype_t type);
+static void AssignTranslations (FScanner &sc, int seq, seqtype_t type);
 static void AssignHexenTranslations (void);
 static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<DWORD> &ScriptTemp);
 static int FindSequence (const char *searchname);
@@ -388,19 +388,19 @@ void DSeqSectorNode::Serialize (FArchive &arc)
 //
 //==========================================================================
 
-static void AssignTranslations (int seq, seqtype_t type)
+static void AssignTranslations (FScanner &sc, int seq, seqtype_t type)
 {
-	sc_Crossed = false;
+	sc.Crossed = false;
 
-	while (SC_GetString () && !sc_Crossed)
+	while (sc.GetString () && !sc.Crossed)
 	{
-		if (IsNum (sc_String))
+		if (IsNum (sc.String))
 		{
-			SeqTrans[(atoi(sc_String) & 63) + type * 64] = seq;
+			SeqTrans[(atoi(sc.String) & 63) + type * 64] = seq;
 		}
 	}
 
-	SC_UnGet ();
+	sc.UnGet ();
 }
 
 //==========================================================================
@@ -481,17 +481,17 @@ void S_ParseSndSeq (int levellump)
 			lump = levellump;
 			levellump = -2;
 		}
-		SC_OpenLumpNum (lump, "SNDSEQ");
-		while (SC_GetString ())
+		FScanner sc(lump, "SNDSEQ");
+		while (sc.GetString ())
 		{
-			if (*sc_String == ':' || *sc_String == '[')
+			if (*sc.String == ':' || *sc.String == '[')
 			{
 				if (curseq != -1)
 				{
-					SC_ScriptError ("S_ParseSndSeq: Nested Script Error");
+					sc.ScriptError ("S_ParseSndSeq: Nested Script Error");
 				}
-				seqname = sc_String + 1;
-				seqtype = sc_String[0];
+				seqname = sc.String + 1;
+				seqtype = sc.String[0];
 				for (curseq = 0; curseq < (int)Sequences.Size(); curseq++)
 				{
 					if (Sequences[curseq]->SeqName == seqname)
@@ -510,7 +510,7 @@ void S_ParseSndSeq (int levellump)
 				slot = NAME_None;
 				if (seqtype == '[')
 				{
-					SC_SetCMode (true);
+					sc.SetCMode (true);
 					ScriptTemp.Push (0);	// to be filled when definition is complete
 				}
 				continue;
@@ -521,101 +521,101 @@ void S_ParseSndSeq (int levellump)
 			}
 			if (seqtype == '[')
 			{
-				if (sc_String[0] == ']')
+				if (sc.String[0] == ']')
 				{ // End of this definition
 					ScriptTemp[0] = MakeCommand(SS_CMD_SELECT, (ScriptTemp.Size()-1)/2);
 					AddSequence (curseq, seqname, slot, stopsound, ScriptTemp);
 					curseq = -1;
-					SC_SetCMode (false);
+					sc.SetCMode (false);
 				}
 				else
 				{ // Add a selection
-					SC_UnGet();
-					if (SC_CheckNumber())
+					sc.UnGet();
+					if (sc.CheckNumber())
 					{
-						ScriptTemp.Push (sc_Number);
-						SC_MustGetString();
-						ScriptTemp.Push (FName(sc_String));
+						ScriptTemp.Push (sc.Number);
+						sc.MustGetString();
+						ScriptTemp.Push (FName(sc.String));
 					}
 					else
 					{
-						AssignTranslations (curseq, seqtype_t(SC_MustMatchString (SSStrings + SS_STRING_PLATFORM)));
+						AssignTranslations (sc, curseq, seqtype_t(sc.MustMatchString (SSStrings + SS_STRING_PLATFORM)));
 					}
 				}
 				continue;
 			}
-			switch (SC_MustMatchString (SSStrings))
+			switch (sc.MustMatchString (SSStrings))
 			{
 				case SS_STRING_PLAYUNTILDONE:
-					SC_MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc_String)));
+					sc.MustGetString ();
+					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String)));
 					ScriptTemp.Push(MakeCommand(SS_CMD_WAITUNTILDONE, 0));
 					break;
 
 				case SS_STRING_PLAY:
-					SC_MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc_String)));
+					sc.MustGetString ();
+					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String)));
 					break;
 
 				case SS_STRING_PLAYTIME:
-					SC_MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc_String)));
-					SC_MustGetNumber ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_DELAY, sc_Number));
+					sc.MustGetString ();
+					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String)));
+					sc.MustGetNumber ();
+					ScriptTemp.Push(MakeCommand(SS_CMD_DELAY, sc.Number));
 					break;
 
 				case SS_STRING_PLAYREPEAT:
-					SC_MustGetString ();
-					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYREPEAT, S_FindSound (sc_String)));
+					sc.MustGetString ();
+					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYREPEAT, S_FindSound (sc.String)));
 					break;
 
 				case SS_STRING_PLAYLOOP:
-					SC_MustGetString ();
-					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYLOOP, S_FindSound (sc_String)));
-					SC_MustGetNumber ();
-					ScriptTemp.Push(sc_Number);
+					sc.MustGetString ();
+					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYLOOP, S_FindSound (sc.String)));
+					sc.MustGetNumber ();
+					ScriptTemp.Push(sc.Number);
 					break;
 
 				case SS_STRING_DELAY:
-					SC_MustGetNumber ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_DELAY, sc_Number));
+					sc.MustGetNumber ();
+					ScriptTemp.Push(MakeCommand(SS_CMD_DELAY, sc.Number));
 					break;
 
 				case SS_STRING_DELAYONCE:
-					SC_MustGetNumber ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_DELAY, sc_Number));
+					sc.MustGetNumber ();
+					ScriptTemp.Push(MakeCommand(SS_CMD_DELAY, sc.Number));
 					ScriptTemp.Push(MakeCommand(SS_CMD_LAST2NOP, 0));
 					break;
 
 				case SS_STRING_DELAYRAND:
-					SC_MustGetNumber ();
-					delaybase = sc_Number;
-					ScriptTemp.Push(MakeCommand(SS_CMD_DELAYRAND, sc_Number));
-					SC_MustGetNumber ();
-					ScriptTemp.Push(MAX(1, sc_Number - delaybase + 1));
+					sc.MustGetNumber ();
+					delaybase = sc.Number;
+					ScriptTemp.Push(MakeCommand(SS_CMD_DELAYRAND, sc.Number));
+					sc.MustGetNumber ();
+					ScriptTemp.Push(MAX(1, sc.Number - delaybase + 1));
 					break;
 
 				case SS_STRING_VOLUME:		// volume is in range 0..100
-					SC_MustGetFloat ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUME, int(sc_Float * (FRACUNIT/100.f))));
+					sc.MustGetFloat ();
+					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUME, int(sc.Float * (FRACUNIT/100.f))));
 					break;
 
 				case SS_STRING_VOLUMEREL:
-					SC_MustGetFloat ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMEREL, int(sc_Float * (FRACUNIT/100.f))));
+					sc.MustGetFloat ();
+					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMEREL, int(sc.Float * (FRACUNIT/100.f))));
 					break;
 
 				case SS_STRING_VOLUMERAND:
-					SC_MustGetFloat ();
-					volumebase = sc_Float;
-					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMERAND, int(sc_Float * (FRACUNIT/100.f))));
-					SC_MustGetFloat ();
-					ScriptTemp.Push(int((sc_Float - volumebase) * (256/100.f)));
+					sc.MustGetFloat ();
+					volumebase = sc.Float;
+					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMERAND, int(sc.Float * (FRACUNIT/100.f))));
+					sc.MustGetFloat ();
+					ScriptTemp.Push(int((sc.Float - volumebase) * (256/100.f)));
 					break;
 
 				case SS_STRING_STOPSOUND:
-					SC_MustGetString ();
-					stopsound = S_FindSound (sc_String);
+					sc.MustGetString ();
+					stopsound = S_FindSound (sc.String);
 					ScriptTemp.Push(MakeCommand(SS_CMD_STOPSOUND, 0));
 					break;
 
@@ -625,8 +625,8 @@ void S_ParseSndSeq (int levellump)
 					break;
 
 				case SS_STRING_ATTENUATION:
-					SC_MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_ATTENUATION, SC_MustMatchString(Attenuations)));
+					sc.MustGetString ();
+					ScriptTemp.Push(MakeCommand(SS_CMD_ATTENUATION, sc.MustMatchString(Attenuations)));
 					break;
 
 				case SS_STRING_RANDOMSEQUENCE:
@@ -643,24 +643,23 @@ void S_ParseSndSeq (int levellump)
 					break;
 
 				case SS_STRING_PLATFORM:
-					AssignTranslations (curseq, SEQ_PLATFORM);
+					AssignTranslations (sc, curseq, SEQ_PLATFORM);
 					break;
 
 				case SS_STRING_DOOR:
-					AssignTranslations (curseq, SEQ_DOOR);
+					AssignTranslations (sc, curseq, SEQ_DOOR);
 					break;
 
 				case SS_STRING_ENVIRONMENT:
-					AssignTranslations (curseq, SEQ_ENVIRONMENT);
+					AssignTranslations (sc, curseq, SEQ_ENVIRONMENT);
 					break;
 
 				case SS_STRING_SLOT:
-					SC_MustGetString();
-					slot = sc_String;
+					sc.MustGetString();
+					slot = sc.String;
 					break;
 			}
 		}
-		SC_Close ();
 	}
 
 	if (gameinfo.gametype == GAME_Hexen)

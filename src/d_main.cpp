@@ -2130,7 +2130,8 @@ void D_DoomMain (void)
 	DArgs *files = Args.GatherFiles ("-file", ".wad", true);
 	DArgs *files1 = Args.GatherFiles (NULL, ".zip", false);
 	DArgs *files2 = Args.GatherFiles (NULL, ".pk3", false);
-	if (files->NumArgs() > 0 || files1->NumArgs() > 0 || files2->NumArgs() > 0)
+	DArgs *files3 = Args.GatherFiles (NULL, ".txt", false);
+	if (files->NumArgs() > 0 || files1->NumArgs() > 0 || files2->NumArgs() > 0 || files3->NumArgs() > 0)
 	{
 		// Check for -file in shareware
 		if (gameinfo.flags & GI_SHAREWARE)
@@ -2151,10 +2152,15 @@ void D_DoomMain (void)
 		{
 			D_AddWildFile (files2->GetArg (i));
 		}
+		for (int i = 0; i < files3->NumArgs(); i++)
+		{
+			D_AddWildFile (files3->GetArg (i));
+		}
 	}
 	delete files;
 	delete files1;
 	delete files2;
+	delete files3;
 
 	Printf ("W_Init: Init WADfiles.\n");
 	Wads.InitMultipleFiles (&wadfiles);

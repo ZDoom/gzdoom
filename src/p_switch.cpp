@@ -107,7 +107,7 @@ struct FSwitchDef
 };
 
 static int STACK_ARGS SortSwitchDefs (const void *a, const void *b);
-static FSwitchDef *ParseSwitchDef (bool ignoreBad);
+static FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad);
 static WORD AddSwitchDef (FSwitchDef *def);
 
 //
@@ -211,84 +211,83 @@ static int STACK_ARGS SortSwitchDefs (const void *a, const void *b)
 }
 
 // Parse a switch block in ANIMDEFS and add the definitions to SwitchList
-void P_ProcessSwitchDef ()
+void P_ProcessSwitchDef (FScanner &sc)
 {
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
-	char *picname;
+	FString picname;
 	FSwitchDef *def1, *def2;
 	SWORD picnum;
 	BYTE max;
 	bool quest = false;
 
 	def1 = def2 = NULL;
-	SC_MustGetString ();
-	if (SC_Compare ("doom"))
+	sc.MustGetString ();
+	if (sc.Compare ("doom"))
 	{
 		max = 0;
 	}
-	else if (SC_Compare ("heretic"))
+	else if (sc.Compare ("heretic"))
 	{
 		max = 17;
 	}
-	else if (SC_Compare ("hexen"))
+	else if (sc.Compare ("hexen"))
 	{
 		max = 33;
 	}
-	else if (SC_Compare ("strife"))
+	else if (sc.Compare ("strife"))
 	{
 		max = 49;
 	}
-	else if (SC_Compare ("any"))
+	else if (sc.Compare ("any"))
 	{
 		max = 240;
 	}
 	else
 	{
-		//SC_ScriptError ("Unknown game");
 		// There is no game specified; just treat as any
 		max = 240;
-		SC_UnGet ();
+		sc.UnGet ();
 	}
 	if (max == 0)
 	{
-		SC_MustGetNumber ();
-		max |= sc_Number & 15;
+		sc.MustGetNumber ();
+		max |= sc.Number & 15;
 	}
-	SC_MustGetString ();
-	picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall, texflags);
-	picname = copystring (sc_String);
-	while (SC_GetString ())
+	sc.MustGetString ();
+	picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+	picname = sc.String;
+	while (sc.GetString ())
 	{
-		if (SC_Compare ("quest"))
+		if (sc.Compare ("quest"))
 		{
 			quest = true;
 		}
-		else if (SC_Compare ("on"))
+		else if (sc.Compare ("on"))
 		{
 			if (def1 != NULL)
 			{
-				SC_ScriptError ("Switch already has an on state");
+				sc.ScriptError ("Switch already has an on state");
 			}
-			def1 = ParseSwitchDef (picnum == -1);
+			def1 = ParseSwitchDef (sc, picnum == -1);
 		}
-		else if (SC_Compare ("off"))
+		else if (sc.Compare ("off"))
 		{
 			if (def2 != NULL)
 			{
-				SC_ScriptError ("Switch already has an off state");
+				sc.ScriptError ("Switch already has an off state");
 			}
-			def2 = ParseSwitchDef (picnum == -1);
+			def2 = ParseSwitchDef (sc, picnum == -1);
 		}
 		else
 		{
-			SC_UnGet ();
+			sc.UnGet ();
 			break;
 		}
 	}
 /*
 	if (def1 == NULL)
 	{
-		SC_ScriptError ("Switch must have an on state");
+		sc.ScriptError ("Switch must have an on state");
 	}
 */
 	if (def1 == NULL || picnum == -1 ||
@@ -304,7 +303,6 @@ void P_ProcessSwitchDef ()
 		{
 			free (def1);
 		}
-		delete [] picname;
 		return;
 	}
 
@@ -323,15 +321,14 @@ void P_ProcessSwitchDef ()
 	def2->PreTexture = def1->u.Textures[def1->NumFrames*2+def1->NumFrames-1];
 	if (def1->PreTexture == def2->PreTexture)
 	{
-		SC_ScriptError ("The on state for switch %s must end with a texture other than %s", picname, picname);
+		sc.ScriptError ("The on state for switch %s must end with a texture other than %s", picname.GetChars(), picname.GetChars());
 	}
 	def2->PairIndex = AddSwitchDef (def1);
 	def1->PairIndex = AddSwitchDef (def2);
 	def1->QuestPanel = def2->QuestPanel = quest;
-	delete [] picname;
 }
 
-FSwitchDef *ParseSwitchDef (bool ignoreBad)
+FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 {
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	FSwitchDef *def;
@@ -346,45 +343,45 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 	sound = 0;
 	bad = false;
 
-	while (SC_GetString ())
+	while (sc.GetString ())
 	{
-		if (SC_Compare ("sound"))
+		if (sc.Compare ("sound"))
 		{
 			if (sound != 0)
 			{
-				SC_ScriptError ("Switch state already has a sound");
+				sc.ScriptError ("Switch state already has a sound");
 			}
-			SC_MustGetString ();
-			sound = S_FindSound (sc_String);
+			sc.MustGetString ();
+			sound = S_FindSound (sc.String);
 		}
-		else if (SC_Compare ("pic"))
+		else if (sc.Compare ("pic"))
 		{
 			if (numframes == MAX_FRAMES)
 			{
-				SC_ScriptError ("Switch has too many frames");
+				sc.ScriptError ("Switch has too many frames");
 			}
-			SC_MustGetString ();
-			picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall, texflags);
+			sc.MustGetString ();
+			picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
 			if (picnum < 0 && !ignoreBad)
 			{
-				//Printf ("Unknown switch texture %s\n", sc_String);
+				//Printf ("Unknown switch texture %s\n", sc.String);
 				bad = true;
 			}
 			pics[numframes] = picnum;
-			SC_MustGetString ();
-			if (SC_Compare ("tics"))
+			sc.MustGetString ();
+			if (sc.Compare ("tics"))
 			{
-				SC_MustGetNumber ();
-				times[numframes] = sc_Number & 65535;
+				sc.MustGetNumber ();
+				times[numframes] = sc.Number & 65535;
 			}
-			else if (SC_Compare ("rand"))
+			else if (sc.Compare ("rand"))
 			{
 				int min, max;
 
-				SC_MustGetNumber ();
-				min = sc_Number & 65535;
-				SC_MustGetNumber ();
-				max = sc_Number & 65535;
+				sc.MustGetNumber ();
+				min = sc.Number & 65535;
+				sc.MustGetNumber ();
+				max = sc.Number & 65535;
 				if (min > max)
 				{
 					swap (min, max);
@@ -393,19 +390,19 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 			}
 			else
 			{
-				SC_ScriptError ("Must specify a duration for switch frame");
+				sc.ScriptError ("Must specify a duration for switch frame");
 			}
 			numframes++;
 		}
 		else
 		{
-			SC_UnGet ();
+			sc.UnGet ();
 			break;
 		}
 	}
 	if (numframes == 0)
 	{
-		SC_ScriptError ("Switch state needs at least one frame");
+		sc.ScriptError ("Switch state needs at least one frame");
 	}
 	if (bad)
 	{

@@ -382,10 +382,11 @@ void CreatePath(const char * fn)
 }
 
 // [RH] Replaces the escape sequences in a string with actual escaped characters.
-// This operation is done in-place.
+// This operation is done in-place. The result is the new length of the string.
 
-void strbin (char *str)
+int strbin (char *str)
 {
+	char *start;
 	char *p = str, c;
 	int i;
 
@@ -468,4 +469,5 @@ void strbin (char *str)
 		}
 	}
 	*str = 0;
+	return str - start;
 }

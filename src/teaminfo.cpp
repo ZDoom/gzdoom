@@ -49,7 +49,7 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void TEAMINFO_Init ();
-void TEAMINFO_ParseTeam ();
+void TEAMINFO_ParseTeam (FScanner &sc);
 
 bool TEAMINFO_IsValidTeam (int team);
 
@@ -84,17 +84,16 @@ void TEAMINFO_Init ()
 
 	while ((lump = Wads.FindLump ("TEAMINFO", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (lump, "TEAMINFO");
-		while (SC_GetString ())
+		FScanner sc(lump, "TEAMINFO");
+		while (sc.GetString ())
 		{
-			if (SC_Compare("CLEARTEAMS"))
+			if (sc.Compare("CLEARTEAMS"))
 				teams.Clear ();
-			else if (SC_Compare("TEAM"))
-				TEAMINFO_ParseTeam ();
+			else if (sc.Compare("TEAM"))
+				TEAMINFO_ParseTeam (sc);
 			else 
-				SC_ScriptError ("Unknown command %s in TEAMINFO", sc_String);
+				sc.ScriptError ("Unknown command %s in TEAMINFO", sc.String);
 		}
-		SC_Close();
 	}
 
 	if (teams.Size () < 2)
@@ -107,36 +106,34 @@ void TEAMINFO_Init ()
 //
 //==========================================================================
 
-void TEAMINFO_ParseTeam ()
+void TEAMINFO_ParseTeam (FScanner &sc)
 {
 	TEAMINFO team;
 	int i;
-	char *color;
 
-	SC_MustGetString ();
-	team.name = sc_String;
+	sc.MustGetString ();
+	team.name = sc.String;
 
-	SC_MustGetStringName("{");
-	while (!SC_CheckString("}"))
+	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
 	{
-		SC_MustGetString();
-		switch(i = SC_MatchString (keywords_teaminfo))
+		sc.MustGetString();
+		switch(i = sc.MatchString (keywords_teaminfo))
 		{
 		case 0:
-			SC_MustGetString ();
-			color = sc_String;
-			team.playercolor = V_GetColor (NULL, color);
+			sc.MustGetString ();
+			team.playercolor = V_GetColor (NULL, sc.String);
 			break;
 
 		case 1:
-			SC_MustGetString();
+			sc.MustGetString();
 			team.textcolor = '[';
-			team.textcolor << sc_String << ']';
+			team.textcolor << sc.String << ']';
 			break;
 
 		case 2:
-			SC_MustGetString ();
-			team.logo = sc_String;
+			sc.MustGetString ();
+			team.logo = sc.String;
 			break;
 
 		default:

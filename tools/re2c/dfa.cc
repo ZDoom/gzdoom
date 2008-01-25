@@ -15,7 +15,7 @@ void prtChOrHex(std::ostream& o, uint c, bool useTalx)
 	if ((oc < 256) && isprint(oc))
 	{
 		o << '\'';
-		prtCh(o, oc);
+		prtCh(o, c);
 		o << '\'';
 	}
 	else
@@ -28,7 +28,19 @@ void prtHex(std::ostream& o, uint c, bool useTalx)
 {
 	int oc = (int)(re2c::wFlag || !useTalx ? c : re2c::talx[c]);
 
-	if (re2c::wFlag)
+	if (re2c::uFlag)
+	{
+		o << "0x"
+		  << hexCh(oc >> 28)
+		  << hexCh(oc >> 24)
+		  << hexCh(oc >> 20)
+		  << hexCh(oc >> 16)
+		  << hexCh(oc >> 12)
+		  << hexCh(oc >>  8)
+		  << hexCh(oc >>  4)
+		  << hexCh(oc);
+	}
+	else if (re2c::wFlag)
 	{
 		o << "0x"
 		  << hexCh(oc >> 12)
@@ -91,6 +103,16 @@ void prtCh(std::ostream& o, uint c, bool useTalx)
 		if ((oc < 256) && isprint(oc))
 		{
 			o << (char) oc;
+		}
+		else if (re2c::uFlag)
+		{
+			o << "0x"
+			  << hexCh(oc >> 20)
+			  << hexCh(oc >> 16)
+			  << hexCh(oc >> 12)
+			  << hexCh(oc >>  8)
+			  << hexCh(oc >>  4)
+			  << hexCh(oc);
 		}
 		else if (re2c::wFlag)
 		{
@@ -189,6 +211,7 @@ State::State()
 
 State::~State()
 {
+	delete action;
 	delete [] kernel;
 	delete [] go.span;
 }

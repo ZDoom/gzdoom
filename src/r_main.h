@@ -70,7 +70,7 @@ extern fixed_t			centeryfrac;
 extern fixed_t			yaspectmul;
 extern float			iyaspectmulfloat;
 
-extern BYTE*			basecolormap;	// [RH] Colormap for sector currently being drawn
+extern FDynamicColormap*basecolormap;	// [RH] Colormap for sector currently being drawn
 
 extern int				validcount;
 

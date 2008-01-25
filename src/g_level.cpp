@@ -98,13 +98,13 @@ EXTERN_CVAR (Int, disableautosave)
 static int FindEndSequence (int type, const char *picname);
 static void SetEndSequence (char *nextmap, int type);
 static void InitPlayerClasses ();
-static void ParseEpisodeInfo ();
+static void ParseEpisodeInfo (FScanner &sc);
 static void G_DoParseMapInfo (int lump);
 static void SetLevelNum (level_info_t *info, int num);
 static void ClearEpisodes ();
 static void ClearLevelInfoStrings (level_info_t *linfo);
 static void ClearClusterInfoStrings (cluster_info_t *cinfo);
-static void ParseSkill ();
+static void ParseSkill (FScanner &sc);
 static void G_VerifySkill();
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
@@ -483,7 +483,8 @@ MapInfoHandler ClusterHandlers[] =
 	{ MITYPE_STRING,	cioffset(clustername), 0 },
 };
 
-static void ParseMapInfoLower (MapInfoHandler *handlers,
+static void ParseMapInfoLower (FScanner &sc,
+							   MapInfoHandler *handlers,
 							   const char *strings[],
 							   level_info_t *levelinfo,
 							   cluster_info_t *clusterinfo,
@@ -605,28 +606,29 @@ static void G_DoParseMapInfo (int lump)
 	int clusterindex;
 	QWORD levelflags;
 
+	FScanner sc(lump, Wads.GetLumpFullName(lump));
+
 	SetLevelDefaults (&defaultinfo);
-	SC_OpenLumpNum (lump, Wads.GetLumpFullName(lump));
 	HexenHack = false;
 
-	while (SC_GetString ())
+	while (sc.GetString ())
 	{
-		switch (SC_MustMatchString (MapInfoTopLevel))
+		switch (sc.MustMatchString (MapInfoTopLevel))
 		{
 		case MITL_DEFAULTMAP:
 			if (defaultinfo.music != NULL) delete [] defaultinfo.music;
 			if (defaultinfo.intermusic != NULL) delete [] defaultinfo.intermusic;
 			SetLevelDefaults (&defaultinfo);
-			ParseMapInfoLower (MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags);
+			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags);
 			break;
 
 		case MITL_MAP:		// map <MAPNAME> <Nice Name>
 			levelflags = defaultinfo.flags;
-			SC_MustGetString ();
-			if (IsNum (sc_String))
+			sc.MustGetString ();
+			if (IsNum (sc.String))
 			{	// MAPNAME is a number; assume a Hexen wad
-				int map = atoi (sc_String);
-				sprintf (sc_String, "MAP%02d", map);
+				int map = atoi (sc.String);
+				sprintf (sc.String, "MAP%02d", map);
 				HexenHack = true;
 				// Hexen levels are automatically nointermission,
 				// no auto sound sequences, falling damage,
@@ -639,7 +641,7 @@ static void G_DoParseMapInfo (int lump)
 							| LEVEL_MISSILESACTIVATEIMPACT
 							| LEVEL_INFINITE_FLIGHT;
 			}
-			levelindex = FindWadLevelInfo (sc_String);
+			levelindex = FindWadLevelInfo (sc.String);
 			if (levelindex == -1)
 			{
 				levelindex = wadlevelinfos.Reserve(1);
@@ -662,17 +664,17 @@ static void G_DoParseMapInfo (int lump)
 			{
 				levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;
 			}
-			uppercopy (levelinfo->mapname, sc_String);
-			SC_MustGetString ();
-			if (SC_Compare ("lookup"))
+			uppercopy (levelinfo->mapname, sc.String);
+			sc.MustGetString ();
+			if (sc.Compare ("lookup"))
 			{
-				SC_MustGetString ();
-				ReplaceString (&levelinfo->level_name, sc_String);
+				sc.MustGetString ();
+				ReplaceString (&levelinfo->level_name, sc.String);
 				levelflags |= LEVEL_LOOKUPLEVELNAME;
 			}
 			else
 			{
-				ReplaceString (&levelinfo->level_name, sc_String);
+				ReplaceString (&levelinfo->level_name, sc.String);
 			}
 			// Set up levelnum now so that you can use Teleport_NewMap specials
 			// to teleport to maps with standard names without needing a levelnum.
@@ -692,7 +694,7 @@ static void G_DoParseMapInfo (int lump)
 				int mapnum = levelinfo->mapname[3] - '0';
 				levelinfo->levelnum = epinum*10 + mapnum;
 			}
-			ParseMapInfoLower (MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
+			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
 			// When the second sky is -NOFLAT-, make it a copy of the first sky
 			if (strcmp (levelinfo->skypic2, "-NOFLAT-") == 0)
 			{
@@ -713,8 +715,8 @@ static void G_DoParseMapInfo (int lump)
 			break;
 
 		case MITL_CLUSTERDEF:	// clusterdef <clusternum>
-			SC_MustGetNumber ();
-			clusterindex = FindWadClusterInfo (sc_Number);
+			sc.MustGetNumber ();
+			clusterindex = FindWadClusterInfo (sc.Number);
 			if (clusterindex == -1)
 			{
 				clusterindex = wadclusterinfos.Reserve(1);
@@ -741,20 +743,20 @@ static void G_DoParseMapInfo (int lump)
 				}
 			}
 			memset (clusterinfo, 0, sizeof(cluster_info_t));
-			clusterinfo->cluster = sc_Number;
-			ParseMapInfoLower (ClusterHandlers, MapInfoClusterLevel, NULL, clusterinfo, 0);
+			clusterinfo->cluster = sc.Number;
+			ParseMapInfoLower (sc, ClusterHandlers, MapInfoClusterLevel, NULL, clusterinfo, 0);
 			break;
 
 		case MITL_EPISODE:
-			ParseEpisodeInfo ();
+			ParseEpisodeInfo(sc);
 			break;
 
 		case MITL_CLEAREPISODES:
-			ClearEpisodes ();
+			ClearEpisodes();
 			break;
 
 		case MITL_SKILL:
-			ParseSkill();
+			ParseSkill(sc);
 			break;
 
 		case MITL_CLEARSKILLS:
@@ -763,7 +765,6 @@ static void G_DoParseMapInfo (int lump)
 
 		}
 	}
-	SC_Close ();
 	if (defaultinfo.music != NULL)
 	{
 		delete [] defaultinfo.music;
@@ -833,7 +834,8 @@ static void ClearEpisodes()
 	EpiDef.numitems = 0;
 }
 
-static void ParseMapInfoLower (MapInfoHandler *handlers,
+static void ParseMapInfoLower (FScanner &sc,
+							   MapInfoHandler *handlers,
 							   const char *strings[],
 							   level_info_t *levelinfo,
 							   cluster_info_t *clusterinfo,
@@ -845,52 +847,52 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 
 	info = levelinfo ? (BYTE *)levelinfo : (BYTE *)clusterinfo;
 
-	while (SC_GetString ())
+	while (sc.GetString ())
 	{
-		if (SC_MatchString (MapInfoTopLevel) != -1)
+		if (sc.MatchString (MapInfoTopLevel) != -1)
 		{
-			SC_UnGet ();
+			sc.UnGet ();
 			break;
 		}
-		entry = SC_MustMatchString (strings);
+		entry = sc.MustMatchString (strings);
 		handler = handlers + entry;
 		switch (handler->type)
 		{
 		case MITYPE_EATNEXT:
-			SC_MustGetString ();
+			sc.MustGetString ();
 			break;
 
 		case MITYPE_IGNORE:
 			break;
 
 		case MITYPE_INT:
-			SC_MustGetNumber ();
-			*((int *)(info + handler->data1)) = sc_Number;
+			sc.MustGetNumber ();
+			*((int *)(info + handler->data1)) = sc.Number;
 			break;
 
 		case MITYPE_FLOAT:
-			SC_MustGetFloat ();
-			*((float *)(info + handler->data1)) = sc_Float;
+			sc.MustGetFloat ();
+			*((float *)(info + handler->data1)) = sc.Float;
 			break;
 
 		case MITYPE_HEX:
-			SC_MustGetString ();
-			*((int *)(info + handler->data1)) = strtoul (sc_String, NULL, 16);
+			sc.MustGetString ();
+			*((int *)(info + handler->data1)) = strtoul (sc.String, NULL, 16);
 			break;
 
 		case MITYPE_COLOR:
-			SC_MustGetString ();
-			*((DWORD *)(info + handler->data1)) = V_GetColor (NULL, sc_String);
+			sc.MustGetString ();
+			*((DWORD *)(info + handler->data1)) = V_GetColor (NULL, sc.String);
 			break;
 
 		case MITYPE_REDIRECT:
-			SC_MustGetString ();
-			levelinfo->RedirectType = sc_String;
+			sc.MustGetString ();
+			levelinfo->RedirectType = sc.String;
 			/*
 			if (levelinfo->RedirectType == NULL ||
 				!(levelinfo->RedirectType->IsDescendantOf (RUNTIME_CLASS(AInventory))))
 			{
-				SC_ScriptError ("%s is not an inventory item", sc_String);
+				SC_ScriptError ("%s is not an inventory item", sc.String);
 			}
 			*/
 			// Intentional fall-through
@@ -899,24 +901,24 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			EndSequence newSeq;
 			bool useseq = false;
 
-			SC_MustGetString ();
-			if (IsNum (sc_String))
+			sc.MustGetString ();
+			if (IsNum (sc.String))
 			{
-				int map = atoi (sc_String);
+				int map = atoi (sc.String);
 
 				if (HexenHack)
 				{
-					sprintf (sc_String, "&wt@%02d", map);
+					sprintf (sc.String, "&wt@%02d", map);
 				}
 				else
 				{
-					sprintf (sc_String, "MAP%02d", map);
+					sprintf (sc.String, "MAP%02d", map);
 				}
 			}
-			if (strnicmp (sc_String, "EndGame", 7) == 0)
+			if (strnicmp (sc.String, "EndGame", 7) == 0)
 			{
 				int type;
-				switch (sc_String[7])
+				switch (sc.String[7])
 				{
 				case '1':	type = END_Pic1;		break;
 				case '2':	type = END_Pic2;		break;
@@ -929,47 +931,47 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 				newSeq.EndType = type;
 				useseq = true;
 			}
-			else if (SC_Compare ("endpic"))
+			else if (sc.Compare ("endpic"))
 			{
-				SC_MustGetString ();
+				sc.MustGetString ();
 				newSeq.EndType = END_Pic;
-				strncpy (newSeq.PicName, sc_String, 8);
+				strncpy (newSeq.PicName, sc.String, 8);
 				newSeq.PicName[8] = 0;
 				useseq = true;
 			}
-			else if (SC_Compare ("endbunny"))
+			else if (sc.Compare ("endbunny"))
 			{
 				newSeq.EndType = END_Bunny;
 				useseq = true;
 			}
-			else if (SC_Compare ("endcast"))
+			else if (sc.Compare ("endcast"))
 			{
 				newSeq.EndType = END_Cast;
 				useseq = true;
 			}
-			else if (SC_Compare ("enddemon"))
+			else if (sc.Compare ("enddemon"))
 			{
 				newSeq.EndType = END_Demon;
 				useseq = true;
 			}
-			else if (SC_Compare ("endchess"))
+			else if (sc.Compare ("endchess"))
 			{
 				newSeq.EndType = END_Chess;
 				useseq = true;
 			}
-			else if (SC_Compare ("endunderwater"))
+			else if (sc.Compare ("endunderwater"))
 			{
 				newSeq.EndType = END_Underwater;
 				useseq = true;
 			}
-			else if (SC_Compare ("endbuystrife"))
+			else if (sc.Compare ("endbuystrife"))
 			{
 				newSeq.EndType = END_BuyStrife;
 				useseq = true;
 			}
 			else
 			{
-				strncpy ((char *)(info + handler->data1), sc_String, 8);
+				strncpy ((char *)(info + handler->data1), sc.String, 8);
 			}
 			if (useseq)
 			{
@@ -985,22 +987,22 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 		  }
 
 		case MITYPE_LUMPNAME:
-			SC_MustGetString ();
-			uppercopy ((char *)(info + handler->data1), sc_String);
+			sc.MustGetString ();
+			uppercopy ((char *)(info + handler->data1), sc.String);
 			flags |= handler->data2;
 			break;
 
 		case MITYPE_SKY:
-			SC_MustGetString ();	// get texture name;
-			uppercopy ((char *)(info + handler->data1), sc_String);
-			SC_MustGetFloat ();		// get scroll speed
+			sc.MustGetString ();	// get texture name;
+			uppercopy ((char *)(info + handler->data1), sc.String);
+			sc.MustGetFloat ();		// get scroll speed
 			if (HexenHack)
 			{
-				sc_Float /= 256;
+				sc.Float /= 256;
 			}
 			// Sky scroll speed is specified as pixels per tic, but we
 			// want pixels per millisecond.
-			*((float *)(info + handler->data2)) = sc_Float * 35 / 1000;
+			*((float *)(info + handler->data2)) = sc.Float * 35 / 1000;
 			break;
 
 		case MITYPE_SETFLAG:
@@ -1018,18 +1020,18 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			break;
 
 		case MITYPE_CLUSTER:
-			SC_MustGetNumber ();
-			*((int *)(info + handler->data1)) = sc_Number;
+			sc.MustGetNumber ();
+			*((int *)(info + handler->data1)) = sc.Number;
 			// If this cluster hasn't been defined yet, add it. This is especially needed
 			// for Hexen, because it doesn't have clusterdefs. If we don't do this, every
 			// level on Hexen will sometimes be considered as being on the same hub,
 			// depending on the check done.
-			if (FindWadClusterInfo (sc_Number) == -1)
+			if (FindWadClusterInfo (sc.Number) == -1)
 			{
 				unsigned int clusterindex = wadclusterinfos.Reserve(1);
 				clusterinfo = &wadclusterinfos[clusterindex];
 				memset (clusterinfo, 0, sizeof(cluster_info_t));
-				clusterinfo->cluster = sc_Number;
+				clusterinfo->cluster = sc.Number;
 				if (gameinfo.gametype == GAME_Hexen)
 				{
 					clusterinfo->flags |= CLUSTER_HUB;
@@ -1038,36 +1040,36 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			break;
 
 		case MITYPE_STRING:
-			SC_MustGetString ();
-			if (SC_Compare ("lookup"))
+			sc.MustGetString ();
+			if (sc.Compare ("lookup"))
 			{
 				flags |= handler->data2;
-				SC_MustGetString ();
+				sc.MustGetString ();
 			}
-			ReplaceString ((char **)(info + handler->data1), sc_String);
+			ReplaceString ((char **)(info + handler->data1), sc.String);
 			break;
 
 		case MITYPE_F1:
-			SC_MustGetString ();
+			sc.MustGetString ();
 			{
-				char *colon = strchr (sc_String, ':');
+				char *colon = strchr (sc.String, ':');
 				if (colon)
 				{
 					*colon = 0;
 				}
-				ReplaceString ((char **)(info + handler->data1), sc_String);
+				ReplaceString ((char **)(info + handler->data1), sc.String);
 			}
 			break;
 
 		case MITYPE_MUSIC:
-			SC_MustGetString ();
+			sc.MustGetString ();
 			{
-				char *colon = strchr (sc_String, ':');
+				char *colon = strchr (sc.String, ':');
 				if (colon)
 				{
 					*colon = 0;
 				}
-				ReplaceString ((char **)(info + handler->data1), sc_String);
+				ReplaceString ((char **)(info + handler->data1), sc.String);
 				*((int *)(info + handler->data2)) = colon ? atoi (colon + 1) : 0;
 				if (levelinfo != NULL)
 				{
@@ -1078,8 +1080,8 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			break;
 
 		case MITYPE_RELLIGHT:
-			SC_MustGetNumber ();
-			*((SBYTE *)(info + handler->data1)) = (SBYTE)clamp (sc_Number / 2, -128, 127);
+			sc.MustGetNumber ();
+			*((SBYTE *)(info + handler->data1)) = (SBYTE)clamp (sc.Number / 2, -128, 127);
 			break;
 
 		case MITYPE_CLRBYTES:
@@ -1095,29 +1097,29 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 				FSpecialAction *sa = new FSpecialAction;
 				sa->Next = *so;
 				*so = sa;
-				SC_SetCMode(true);
-				SC_MustGetString();
-				sa->Type = FName(sc_String);
-				SC_CheckString(",");
-				SC_MustGetString();
-				strlwr(sc_String);
-				sa->Action = FindLineSpecial(sc_String);
+				sc.SetCMode(true);
+				sc.MustGetString();
+				sa->Type = FName(sc.String);
+				sc.CheckString(",");
+				sc.MustGetString();
+				strlwr(sc.String);
+				sa->Action = FindLineSpecial(sc.String);
 				int j = 0;
-				while (j < 5 && SC_CheckString(","))
+				while (j < 5 && sc.CheckString(","))
 				{
-					SC_MustGetNumber();
-					sa->Args[j++] = sc_Number;
+					sc.MustGetNumber();
+					sa->Args[j++] = sc.Number;
 				}
-				SC_SetCMode(false);
+				sc.SetCMode(false);
 			}
 			break;
 
 		case MITYPE_COMPATFLAG:
-			if (!SC_CheckNumber()) sc_Number = 1;
+			if (!sc.CheckNumber()) sc.Number = 1;
 
 			if (levelinfo != NULL)
 			{
-				if (sc_Number) levelinfo->compatflags |= (DWORD)handler->data1;
+				if (sc.Number) levelinfo->compatflags |= (DWORD)handler->data1;
 				else levelinfo->compatflags &= ~ (DWORD)handler->data1;
 				levelinfo->compatmask |= (DWORD)handler->data1;
 			}
@@ -1143,7 +1145,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 // noskillmenu
 // remove
 
-static void ParseEpisodeInfo ()
+static void ParseEpisodeInfo (FScanner &sc)
 {
 	int i;
 	char map[9];
@@ -1155,54 +1157,54 @@ static void ParseEpisodeInfo ()
 	bool noskill = false;
 
 	// Get map name
-	SC_MustGetString ();
-	uppercopy (map, sc_String);
+	sc.MustGetString ();
+	uppercopy (map, sc.String);
 	map[8] = 0;
 
-	SC_MustGetString ();
-	if (SC_Compare ("teaser"))
+	sc.MustGetString ();
+	if (sc.Compare ("teaser"))
 	{
-		SC_MustGetString ();
+		sc.MustGetString ();
 		if (gameinfo.flags & GI_SHAREWARE)
 		{
-			uppercopy (map, sc_String);
+			uppercopy (map, sc.String);
 		}
-		SC_MustGetString ();
+		sc.MustGetString ();
 	}
 	do
 	{
-		if (SC_Compare ("name"))
+		if (sc.Compare ("name"))
 		{
-			SC_MustGetString ();
-			ReplaceString (&pic, sc_String);
+			sc.MustGetString ();
+			ReplaceString (&pic, sc.String);
 			picisgfx = false;
 		}
-		else if (SC_Compare ("picname"))
+		else if (sc.Compare ("picname"))
 		{
-			SC_MustGetString ();
-			ReplaceString (&pic, sc_String);
+			sc.MustGetString ();
+			ReplaceString (&pic, sc.String);
 			picisgfx = true;
 		}
-		else if (SC_Compare ("remove"))
+		else if (sc.Compare ("remove"))
 		{
 			remove = true;
 		}
-		else if (SC_Compare ("key"))
+		else if (sc.Compare ("key"))
 		{
-			SC_MustGetString ();
-			key = sc_String[0];
+			sc.MustGetString ();
+			key = sc.String[0];
 		}
-		else if (SC_Compare("noskillmenu"))
+		else if (sc.Compare("noskillmenu"))
 		{
 			noskill = true;
 		}
 		else
 		{
-			SC_UnGet ();
+			sc.UnGet ();
 			break;
 		}
 	}
-	while (SC_GetString ());
+	while (sc.GetString ());
 
 	for (i = 0; i < EpiDef.numitems; ++i)
 	{
@@ -3122,7 +3124,7 @@ static void InitPlayerClasses ()
 }
 
 
-static void ParseSkill ()
+static void ParseSkill (FScanner &sc)
 {
 	FSkillInfo skill;
 
@@ -3142,106 +3144,106 @@ static void ParseSkill ()
 	skill.Shortcut = 0;
 	skill.TextColor = "";
 
-	SC_MustGetString();
-	skill.Name = sc_String;
+	sc.MustGetString();
+	skill.Name = sc.String;
 
-	while (SC_GetString ())
+	while (sc.GetString ())
 	{
-		if (SC_Compare ("ammofactor"))
+		if (sc.Compare ("ammofactor"))
 		{
-			SC_MustGetFloat ();
-			skill.AmmoFactor = FLOAT2FIXED(sc_Float);
+			sc.MustGetFloat ();
+			skill.AmmoFactor = FLOAT2FIXED(sc.Float);
 		}
-		else if (SC_Compare ("doubleammofactor"))
+		else if (sc.Compare ("doubleammofactor"))
 		{
-			SC_MustGetFloat ();
-			skill.DoubleAmmoFactor = FLOAT2FIXED(sc_Float);
+			sc.MustGetFloat ();
+			skill.DoubleAmmoFactor = FLOAT2FIXED(sc.Float);
 		}
-		else if (SC_Compare ("damagefactor"))
+		else if (sc.Compare ("damagefactor"))
 		{
-			SC_MustGetFloat ();
-			skill.DamageFactor = FLOAT2FIXED(sc_Float);
+			sc.MustGetFloat ();
+			skill.DamageFactor = FLOAT2FIXED(sc.Float);
 		}
-		else if (SC_Compare ("fastmonsters"))
+		else if (sc.Compare ("fastmonsters"))
 		{
 			skill.FastMonsters = true;
 		}
-		else if (SC_Compare ("disablecheats"))
+		else if (sc.Compare ("disablecheats"))
 		{
 			skill.DisableCheats = true;
 		}
-		else if (SC_Compare ("easybossbrain"))
+		else if (sc.Compare ("easybossbrain"))
 		{
 			skill.EasyBossBrain = true;
 		}
-		else if (SC_Compare("autousehealth"))
+		else if (sc.Compare("autousehealth"))
 		{
 			skill.AutoUseHealth = true;
 		}
-		else if (SC_Compare("respawntime"))
+		else if (sc.Compare("respawntime"))
 		{
-			SC_MustGetFloat ();
-			skill.RespawnCounter = int(sc_Float*TICRATE);
+			sc.MustGetFloat ();
+			skill.RespawnCounter = int(sc.Float*TICRATE);
 		}
-		else if (SC_Compare("Aggressiveness"))
+		else if (sc.Compare("Aggressiveness"))
 		{
-			SC_MustGetFloat ();
-			skill.Aggressiveness = FRACUNIT - FLOAT2FIXED(clamp<float>(sc_Float, 0,1));
+			sc.MustGetFloat ();
+			skill.Aggressiveness = FRACUNIT - FLOAT2FIXED(clamp<float>(sc.Float, 0,1));
 		}
-		else if (SC_Compare("SpawnFilter"))
+		else if (sc.Compare("SpawnFilter"))
 		{
-			SC_MustGetString ();
-			strlwr(sc_String);
-			if (strstr(sc_String, "easy")) skill.SpawnFilter|=MTF_EASY;
-			if (strstr(sc_String, "normal")) skill.SpawnFilter|=MTF_NORMAL;
-			if (strstr(sc_String, "hard")) skill.SpawnFilter|=MTF_HARD;
+			sc.MustGetString ();
+			strlwr(sc.String);
+			if (strstr(sc.String, "easy")) skill.SpawnFilter|=MTF_EASY;
+			if (strstr(sc.String, "normal")) skill.SpawnFilter|=MTF_NORMAL;
+			if (strstr(sc.String, "hard")) skill.SpawnFilter|=MTF_HARD;
 		}
-		else if (SC_Compare("ACSReturn"))
+		else if (sc.Compare("ACSReturn"))
 		{
-			SC_MustGetNumber ();
-			skill.ACSReturn = sc_Number;
+			sc.MustGetNumber ();
+			skill.ACSReturn = sc.Number;
 		}
-		else if (SC_Compare("Name"))
+		else if (sc.Compare("Name"))
 		{
-			SC_MustGetString ();
-			skill.MenuName = sc_String;
+			sc.MustGetString ();
+			skill.MenuName = sc.String;
 			skill.MenuNameIsLump = false;
 		}
-		else if (SC_Compare("PlayerClassName"))
+		else if (sc.Compare("PlayerClassName"))
 		{
-			SC_MustGetString ();
-			FName pc = sc_String;
-			SC_MustGetString ();
-			skill.MenuNamesForPlayerClass[pc]=sc_String;
+			sc.MustGetString ();
+			FName pc = sc.String;
+			sc.MustGetString ();
+			skill.MenuNamesForPlayerClass[pc]=sc.String;
 		}
-		else if (SC_Compare("PicName"))
+		else if (sc.Compare("PicName"))
 		{
-			SC_MustGetString ();
-			skill.MenuName = sc_String;
+			sc.MustGetString ();
+			skill.MenuName = sc.String;
 			skill.MenuNameIsLump = true;
 		}
-		else if (SC_Compare("MustConfirm"))
+		else if (sc.Compare("MustConfirm"))
 		{
 			skill.MustConfirm = true;
-			if (SC_CheckToken(TK_StringConst))
+			if (sc.CheckToken(TK_StringConst))
 			{
-				skill.MustConfirmText = sc_String;
+				skill.MustConfirmText = sc.String;
 			}
 		}
-		else if (SC_Compare("Key"))
+		else if (sc.Compare("Key"))
 		{
-			SC_MustGetString();
-			skill.Shortcut = tolower(sc_String[0]);
+			sc.MustGetString();
+			skill.Shortcut = tolower(sc.String[0]);
 		}
-		else if (SC_Compare("TextColor"))
+		else if (sc.Compare("TextColor"))
 		{
-			SC_MustGetString();
+			sc.MustGetString();
 			skill.TextColor = '[';
-			skill.TextColor << sc_String << ']';
+			skill.TextColor << sc.String << ']';
 		}
 		else
 		{
-			SC_UnGet ();
+			sc.UnGet ();
 			break;
 		}
 	}

@@ -1190,21 +1190,22 @@ void A_RailAttack (AActor * self)
 
 void A_CustomRailgun (AActor *actor)
 {
-	if (!actor->target)
+	int index = CheckIndex(7);
+	if (index < 0) return;
+
+	int Damage = EvalExpressionI (StateParameters[index], actor);
+	int Spawnofs_XY = EvalExpressionI (StateParameters[index+1], actor);
+	int Color1 = StateParameters[index+2];
+	int Color2 = StateParameters[index+3];
+	bool Silent = !!EvalExpressionI (StateParameters[index+4], actor);
+	bool aim = !!EvalExpressionI (StateParameters[index+5], actor);
+	float MaxDiff = EvalExpressionF (StateParameters[index+6], actor);
+	ENamedName PuffTypeName = (ENamedName)StateParameters[index+7];
+
+	if (aim && actor->target == NULL)
+	{
 		return;
-
-	int index=CheckIndex(7);
-	if (index<0) return;
-
-	int Damage=EvalExpressionI (StateParameters[index], actor);
-	int Spawnofs_XY=EvalExpressionI (StateParameters[index+1], actor);
-	int Color1=StateParameters[index+2];
-	int Color2=StateParameters[index+3];
-	bool Silent=!!EvalExpressionI (StateParameters[index+4], actor);
-	bool aim=!!EvalExpressionI (StateParameters[index+5], actor);
-	float MaxDiff=EvalExpressionF (StateParameters[index+6], actor);
-	ENamedName PuffTypeName=(ENamedName)StateParameters[index+7];
-
+	}
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
@@ -1212,7 +1213,7 @@ void A_CustomRailgun (AActor *actor)
 	}
 
 	actor->flags &= ~MF_AMBUSH;
-		
+
 	if (aim)
 	{
 		actor->angle = R_PointToAngle2 (actor->x,
@@ -1692,15 +1693,9 @@ void A_SetTranslucent(AActor * self)
 	int mode = EvalExpressionI (StateParameters[index+1], self);
 	mode = mode == 0 ? STYLE_Translucent : mode == 2 ? STYLE_Fuzzy : STYLE_Add;
 
-	self->alpha=clamp<fixed_t>(alpha, 0, FRACUNIT);
-
-	if (mode != STYLE_Fuzzy)
-	{
-		if (self->alpha == 0) mode = STYLE_None;
-		else if (mode == STYLE_Translucent && self->alpha >= FRACUNIT) mode = STYLE_Normal;
-	}
-
-	self->RenderStyle=mode;
+	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
+	self->alpha = clamp<fixed_t>(alpha, 0, FRACUNIT);
+	self->RenderStyle = ERenderStyle(mode);
 }
 
 //===========================================================================
@@ -1722,7 +1717,7 @@ void A_FadeIn(AActor * self)
 	
 	if (reduce == 0) reduce = FRACUNIT/10;
 
-	if (self->RenderStyle==STYLE_Normal) self->RenderStyle=STYLE_Translucent;
+	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 	self->alpha += reduce;
 	//if (self->alpha<=0) self->Destroy();
 }
@@ -1746,7 +1741,7 @@ void A_FadeOut(AActor * self)
 	
 	if (reduce == 0) reduce = FRACUNIT/10;
 
-	if (self->RenderStyle==STYLE_Normal) self->RenderStyle=STYLE_Translucent;
+	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 	self->alpha -= reduce;
 	if (self->alpha<=0) self->Destroy();
 }

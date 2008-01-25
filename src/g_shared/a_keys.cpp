@@ -101,7 +101,7 @@ static const char * keywords_lock[]={
 //
 //===========================================================================
 
-static void AddOneKey(Keygroup * keygroup, const PClass * mi)
+static void AddOneKey(Keygroup *keygroup, const PClass *mi, FScanner &sc)
 {
 	if (mi)
 	{
@@ -123,12 +123,12 @@ static void AddOneKey(Keygroup * keygroup, const PClass * mi)
 		}
 		else
 		{
-			SC_ScriptError("'%s' is not an inventory item", sc_String);
+			sc.ScriptError("'%s' is not an inventory item", sc.String);
 		}
 	}
 	else
 	{
-		SC_ScriptError("Unknown item '%s'", sc_String);
+		sc.ScriptError("Unknown item '%s'", sc.String);
 	}
 }
 
@@ -138,20 +138,20 @@ static void AddOneKey(Keygroup * keygroup, const PClass * mi)
 //
 //===========================================================================
 
-static Keygroup * ParseKeygroup()
+static Keygroup * ParseKeygroup(FScanner &sc)
 {
 	Keygroup * keygroup;
 	const PClass * mi;
 
-	SC_MustGetStringName("{");
-	keygroup=new Keygroup;
-	while (!SC_CheckString("}"))
+	sc.MustGetStringName("{");
+	keygroup = new Keygroup;
+	while (!sc.CheckString("}"))
 	{
-		SC_MustGetString();
-		mi=PClass::FindClass(sc_String);
-		AddOneKey(keygroup, mi);
+		sc.MustGetString();
+		mi = PClass::FindClass(sc.String);
+		AddOneKey(keygroup, mi, sc);
 	}
-	if (keygroup->anykeylist.Size()==0)
+	if (keygroup->anykeylist.Size() == 0)
 	{
 		delete keygroup;
 		return NULL;
@@ -182,7 +182,7 @@ static void PrintMessage (const char *str)
 //
 //===========================================================================
 
-static void ParseLock()
+static void ParseLock(FScanner &sc)
 {
 	int i,r,g,b;
 	int keynum;
@@ -191,84 +191,90 @@ static void ParseLock()
 	Keygroup * keygroup;
 	const PClass * mi;
 
-	SC_MustGetNumber();
-	keynum=sc_Number;
+	sc.MustGetNumber();
+	keynum = sc.Number;
 
-	SC_MustGetString();
-	if (SC_Compare("DOOM"))
+	sc.MustGetString();
+	if (sc.Compare("DOOM"))
 	{
 		if (gameinfo.gametype != GAME_Doom) keynum=-1;
 	}
-	else if (SC_Compare("HERETIC"))
+	else if (sc.Compare("HERETIC"))
 	{
 		if (gameinfo.gametype != GAME_Heretic) keynum=-1;
 	}
-	else if (SC_Compare("HEXEN"))
+	else if (sc.Compare("HEXEN"))
 	{
 		if (gameinfo.gametype != GAME_Hexen) keynum=-1;
 	}
-	else if (SC_Compare("STRIFE"))
+	else if (sc.Compare("STRIFE"))
 	{
 		if (gameinfo.gametype != GAME_Strife) keynum=-1;
 	}
-	else SC_UnGet();
+	else sc.UnGet();
 
-	ignorekey=true;
-	if (keynum>0 && keynum<255) 
+	ignorekey = true;
+	if (keynum > 0 && keynum < 255) 
 	{
-		lock=new Lock;
-		if (locks[keynum]) delete locks[keynum];
-		locks[keynum]=lock;
+		lock = new Lock;
+		if (locks[keynum])
+		{
+			delete locks[keynum];
+		}
+		locks[keynum] = lock;
 		locks[keynum]->locksound = S_FindSound("misc/keytry");
 		ignorekey=false;
 	}
-	else if (keynum!=-1)
+	else if (keynum != -1)
 	{
-		SC_ScriptError("Lock index %d out of range", keynum);
+		sc.ScriptError("Lock index %d out of range", keynum);
 	}
 
-	SC_MustGetStringName("{");
-	while (!SC_CheckString("}"))
+	sc.MustGetStringName("{");
+	while (!sc.CheckString("}"))
 	{
-		SC_MustGetString();
-		switch(i=SC_MatchString(keywords_lock))
+		sc.MustGetString();
+		switch(i = sc.MatchString(keywords_lock))
 		{
 		case 0:	// Any
-			keygroup=ParseKeygroup();
-			if (keygroup) lock->keylist.Push(keygroup);
+			keygroup = ParseKeygroup(sc);
+			if (keygroup)
+			{
+				lock->keylist.Push(keygroup);
+			}
 			break;
 
 		case 1:	// message
-			SC_MustGetString();
-			lock->message=copystring(sc_String);
+			sc.MustGetString();
+			lock->message = copystring(sc.String);
 			break;
 
 		case 2: // remotemsg
-			SC_MustGetString();
-			lock->remotemsg=copystring(sc_String);
+			sc.MustGetString();
+			lock->remotemsg = copystring(sc.String);
 			break;
 
 		case 3:	// mapcolor
-			SC_MustGetNumber();
-			r=sc_Number;
-			SC_MustGetNumber();
-			g=sc_Number;
-			SC_MustGetNumber();
-			b=sc_Number;
-			lock->rgb=MAKERGB(r,g,b);
+			sc.MustGetNumber();
+			r = sc.Number;
+			sc.MustGetNumber();
+			g = sc.Number;
+			sc.MustGetNumber();
+			b = sc.Number;
+			lock->rgb = MAKERGB(r,g,b);
 			break;
 
 		case 4:	// locksound
-			SC_MustGetString();
-			lock->locksound = S_FindSound(sc_String);
+			sc.MustGetString();
+			lock->locksound = S_FindSound(sc.String);
 			break;
 
 		default:
-			mi=PClass::FindClass(sc_String);
+			mi = PClass::FindClass(sc.String);
 			if (mi) 
 			{
-				keygroup=new Keygroup;
-				AddOneKey(keygroup, mi);
+				keygroup = new Keygroup;
+				AddOneKey(keygroup, mi, sc);
 				if (keygroup) 
 				{
 					keygroup->anykeylist.ShrinkToFit();
@@ -279,8 +285,14 @@ static void ParseLock()
 		}
 	}
 	// copy the messages if the other one does not exist
-	if (!lock->remotemsg && lock->message) lock->remotemsg = copystring(lock->message);
-	if (!lock->message && lock->remotemsg) lock->message = copystring(lock->remotemsg);
+	if (!lock->remotemsg && lock->message)
+	{
+		lock->remotemsg = copystring(lock->message);
+	}
+	if (!lock->message && lock->remotemsg)
+	{
+		lock->message = copystring(lock->remotemsg);
+	}
 	lock->keylist.ShrinkToFit();
 }
 
@@ -332,24 +344,26 @@ void P_InitKeyMessages()
 	ClearLocks();
 	while ((lump = Wads.FindLump ("LOCKDEFS", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (lump, "LOCKDEFS");
-		while (SC_GetString ())
+		FScanner sc(lump, "LOCKDEFS");
+		while (sc.GetString ())
 		{
-			if (SC_Compare("LOCK")) 
+			if (sc.Compare("LOCK")) 
 			{
-				ParseLock();
+				ParseLock(sc);
 			}
-			else if (SC_Compare("CLEARLOCKS"))
+			else if (sc.Compare("CLEARLOCKS"))
 			{
-				// clear all existing lock defintions and key numbers
+				// clear all existing lock definitions and key numbers
 				ClearLocks();
 			}
-			else 
-				SC_ScriptError("Unknown command %s in LockDef", sc_String);
+			else
+			{
+				sc.ScriptError("Unknown command %s in LockDef", sc.String);
+			}
 		}
-		SC_Close();
+		sc.Close();
 	}
-	keysdone=true;
+	keysdone = true;
 }
 
 //===========================================================================

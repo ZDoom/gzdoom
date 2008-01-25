@@ -5,6 +5,7 @@
 #include "v_collection.h"
 
 class FBarTexture;
+class FScanner;
 
 struct SBarInfoCommand; //we need to be able to use this before it is defined.
 
@@ -19,7 +20,7 @@ struct SBarInfoCommand
 {
 	SBarInfoCommand();
 	~SBarInfoCommand();
-	void setString(const char* source, int strnum, int maxlength=-1, bool exact=false);
+	void setString(FScanner &sc, const char* source, int strnum, int maxlength=-1, bool exact=false);
 
 	int type;
 	int special;
@@ -52,10 +53,11 @@ struct SBarInfo
 
 	int GetGameType() { return gameType; }
 	void ParseSBarInfo(int lump);
-	void ParseSBarInfoBlock(SBarInfoBlock &block);
+	void ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block);
+	void getCoordinates(FScanner &sc, SBarInfoCommand &cmd); //retrieves the next two arguments as x and y.
 	int newImage(const char* patchname);
 	void Init();
-	EColorRange GetTranslation(char* translation);
+	EColorRange GetTranslation(FScanner &sc, char* translation);
 	SBarInfo();
 	SBarInfo(int lumpnum);
 	~SBarInfo();

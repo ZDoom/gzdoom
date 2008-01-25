@@ -979,7 +979,7 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 
 void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 {
-	BYTE *floodcolormap;
+	FDynamicColormap *floodcolormap;
 	int floodlight;
 	bool flooding;
 	vertex_t **triangle;
@@ -1020,7 +1020,7 @@ void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 			}
 			else
 			{
-				basecolormap = el->Lights[i].Master->ColorMap->Maps;
+				basecolormap = el->Lights[i].Master->ColorMap;
 				*light = el->Lights[i].Master->lightlevel;
 				if (el->Lights[i].bFlooder)
 				{
@@ -1060,13 +1060,13 @@ void R_Subsector (subsector_t *sub)
 	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
 						   &ceilinglightlevel, false);	// killough 4/11/98
 
-	basecolormap = frontsector->ColorMap->Maps;
+	basecolormap = frontsector->ColorMap;
 	R_GetExtraLight (&ceilinglightlevel, frontsector->ceilingplane, frontsector->ExtraLights);
 
 	// [RH] set foggy flag
 	foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
 	r_actualextralight = foggy ? 0 : extralight << 4;
-	basecolormap = frontsector->ColorMap->Maps;
+	basecolormap = frontsector->ColorMap;
 	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
 		frontsector->ceilingpic == skyflatnum ||
 		(frontsector->CeilingSkyBox != NULL && frontsector->CeilingSkyBox->bAlways) ||
@@ -1086,7 +1086,7 @@ void R_Subsector (subsector_t *sub)
 					frontsector->CeilingSkyBox
 					) : NULL;
 
-	basecolormap = frontsector->ColorMap->Maps;
+	basecolormap = frontsector->ColorMap;
 	R_GetExtraLight (&floorlightlevel, frontsector->floorplane, frontsector->ExtraLights);
 
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check

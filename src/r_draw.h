@@ -25,7 +25,6 @@
 
 #include "r_data.h"
 
-
 extern "C" int			ylookup[MAXHEIGHT];
 
 extern "C" int			dc_pitch;		// [RH] Distance between rows
@@ -38,6 +37,7 @@ extern "C" fixed_t		dc_iscale;
 extern "C" fixed_t		dc_texturemid;
 extern "C" fixed_t		dc_texturefrac;
 extern "C" int			dc_color;		// [RH] For flat colors (no texturing)
+extern "C" DWORD		dc_srccolor;
 extern "C" DWORD		*dc_srcblend;
 extern "C" DWORD		*dc_destblend;
 
@@ -122,6 +122,14 @@ void rt_addclamp1col (int hx, int sx, int yl, int yh);
 void rt_addclamp4cols (int sx, int yl, int yh);
 void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh);
 void rt_tlateaddclamp4cols (int sx, int yl, int yh);
+void rt_subclamp1col (int hx, int sx, int yl, int yh);
+void rt_subclamp4cols (int sx, int yl, int yh);
+void rt_tlatesubclamp1col (int hx, int sx, int yl, int yh);
+void rt_tlatesubclamp4cols (int sx, int yl, int yh);
+void rt_revsubclamp1col (int hx, int sx, int yl, int yh);
+void rt_revsubclamp4cols (int sx, int yl, int yh);
+void rt_tlaterevsubclamp1col (int hx, int sx, int yl, int yh);
+void rt_tlaterevsubclamp4cols (int sx, int yl, int yh);
 
 extern "C" void rt_copy1col_asm (int hx, int sx, int yl, int yh);
 extern "C" void rt_copy4cols_asm (int sx, int yl, int yh);
@@ -202,6 +210,8 @@ extern "C" const BYTE*		ds_source;
 extern "C" int				ds_color;		// [RH] For flat color (no texturing)
 
 extern BYTE shadetables[NUMCOLORMAPS*16*256];
+extern FDynamicColormap ShadeFakeColormap[16];
+extern BYTE identitymap[256];
 extern BYTE *dc_translation;
 
 // [RH] Double view pixels by detail mode
@@ -224,7 +234,7 @@ enum ESPSResult
 	DoDraw0,	// draw this as if r_columnmethod is 0
 	DoDraw1,	// draw this as if r_columnmethod is 1
 };
-ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD color);
+ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, DWORD color);
 
 // Call this after finished drawing the current thing, in case its
 // style was STYLE_Shade

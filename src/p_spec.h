@@ -27,6 +27,8 @@
 
 #include "dsectoreffect.h"
 
+class FScanner;
+
 //jff 2/23/98 identify the special classes that can share sectors
 
 typedef enum
@@ -385,7 +387,7 @@ void	EV_StartLightFading (int tag, int value, int tics);
 bool	P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest=NULL);
 
 void	P_InitSwitchList ();
-void	P_ProcessSwitchDef ();
+void	P_ProcessSwitchDef (FScanner &sc);
 
 //
 // P_PLATS
@@ -589,7 +591,7 @@ struct FDoorAnimation
 	char *CloseSound;
 };
 
-void P_ParseAnimatedDoor ();
+void P_ParseAnimatedDoor (FScanner &sc);
 
 class DAnimatedDoor : public DMovingCeiling
 {

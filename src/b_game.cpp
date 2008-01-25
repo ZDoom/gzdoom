@@ -504,6 +504,7 @@ void DCajunMaster::ForgetBots ()
 
 bool DCajunMaster::LoadBots ()
 {
+	FScanner sc;
 	FString tmp;
 	bool gotteam = false;
 
@@ -526,19 +527,19 @@ bool DCajunMaster::LoadBots ()
 			return false;
 		}
 		else
-			SC_OpenFile (SHARE_DIR BOTFILENAME);
+			sc.OpenFile (SHARE_DIR BOTFILENAME);
 	}
 #endif
 	else
 	{
-		SC_OpenFile (tmp);
+		sc.OpenFile (tmp);
 	}
 
-	while (SC_GetString ())
+	while (sc.GetString ())
 	{
-		if (!SC_Compare ("{"))
+		if (!sc.Compare ("{"))
 		{
-			SC_ScriptError ("Unexpected token '%s'\n", sc_String);
+			sc.ScriptError ("Unexpected token '%s'\n", sc.String);
 		}
 
 		botinfo_t *newinfo = new botinfo_t;
@@ -550,37 +551,37 @@ bool DCajunMaster::LoadBots ()
 
 		for (;;)
 		{
-			SC_MustGetString ();
-			if (SC_Compare ("}"))
+			sc.MustGetString ();
+			if (sc.Compare ("}"))
 				break;
 
-			switch (SC_MatchString (BotConfigStrings))
+			switch (sc.MatchString (BotConfigStrings))
 			{
 			case BOTCFG_NAME:
-				SC_MustGetString ();
+				sc.MustGetString ();
 				appendinfo (newinfo->info, "name");
-				appendinfo (newinfo->info, sc_String);
-				newinfo->name = copystring (sc_String);
+				appendinfo (newinfo->info, sc.String);
+				newinfo->name = copystring (sc.String);
 				break;
 
 			case BOTCFG_AIMING:
-				SC_MustGetNumber ();
-				newinfo->skill.aiming = sc_Number;
+				sc.MustGetNumber ();
+				newinfo->skill.aiming = sc.Number;
 				break;
 
 			case BOTCFG_PERFECTION:
-				SC_MustGetNumber ();
-				newinfo->skill.perfection = sc_Number;
+				sc.MustGetNumber ();
+				newinfo->skill.perfection = sc.Number;
 				break;
 
 			case BOTCFG_REACTION:
-				SC_MustGetNumber ();
-				newinfo->skill.reaction = sc_Number;
+				sc.MustGetNumber ();
+				newinfo->skill.reaction = sc.Number;
 				break;
 
 			case BOTCFG_ISP:
-				SC_MustGetNumber ();
-				newinfo->skill.isp = sc_Number;
+				sc.MustGetNumber ();
+				newinfo->skill.isp = sc.Number;
 				break;
 
 			case BOTCFG_TEAM:
@@ -588,10 +589,10 @@ bool DCajunMaster::LoadBots ()
 					char teamstr[16];
 					BYTE teamnum;
 
-					SC_MustGetString ();
-					if (IsNum (sc_String))
+					sc.MustGetString ();
+					if (IsNum (sc.String))
 					{
-						teamnum = atoi (sc_String);
+						teamnum = atoi (sc.String);
 						if (!TEAMINFO_IsValidTeam (teamnum))
 						{
 							teamnum = TEAM_None;
@@ -602,7 +603,7 @@ bool DCajunMaster::LoadBots ()
 						teamnum = TEAM_None;
 						for (int i = 0; i < int(teams.Size()); ++i)
 						{
-							if (stricmp (teams[i].name, sc_String) == 0)
+							if (stricmp (teams[i].name, sc.String) == 0)
 							{
 								teamnum = i;
 								break;
@@ -617,13 +618,13 @@ bool DCajunMaster::LoadBots ()
 				}
 
 			default:
-				if (stricmp (sc_String, "playerclass") == 0)
+				if (stricmp (sc.String, "playerclass") == 0)
 				{
 					gotclass = true;
 				}
-				appendinfo (newinfo->info, sc_String);
-				SC_MustGetString ();
-				appendinfo (newinfo->info, sc_String);
+				appendinfo (newinfo->info, sc.String);
+				sc.MustGetString ();
+				appendinfo (newinfo->info, sc.String);
 				break;
 			}
 		}
@@ -642,10 +643,7 @@ bool DCajunMaster::LoadBots ()
 		bglobal.botinfo = newinfo;
 		bglobal.loaded_bots++;
 	}
-	SC_Close ();
-
 	Printf ("%d bots read from %s\n", bglobal.loaded_bots, BOTFILENAME);
-
 	return true;
 }
 

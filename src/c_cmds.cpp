@@ -636,14 +636,13 @@ CCMD (r_visibility)
 
 CCMD (warp)
 {
+	if (CheckCheatmode ())
+	{
+		return;
+	}
 	if (gamestate != GS_LEVEL)
 	{
 		Printf ("You can only warp inside a level.\n");
-		return;
-	}
-	if (netgame)
-	{
-		Printf ("You cannot warp in a net game!\n");
 		return;
 	}
 	if (argv.argc() != 3)

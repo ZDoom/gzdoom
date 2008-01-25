@@ -43,6 +43,7 @@
 #include "sc_man.h"
 #include "zstring.h"
 #include "c_dispatch.h"
+#include "v_text.h"
 
 // PassNum identifies which language pass this string is from.
 // PassNum 0 is for DeHacked.
@@ -148,44 +149,44 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 
 	code |= orMask;
 
-	SC_OpenLumpNum (lumpnum, "LANGUAGE");
-	SC_SetCMode (true);
-	while (SC_GetString ())
+	FScanner sc(lumpnum, "LANGUAGE");
+	sc.SetCMode (true);
+	while (sc.GetString ())
 	{
-		if (SC_Compare ("["))
+		if (sc.Compare ("["))
 		{ // Process language identifiers
 			bool donot = false;
 			bool forceskip = false;
 			skip = true;
-			SC_MustGetString ();
+			sc.MustGetString ();
 			do
 			{
-				size_t len = strlen (sc_String);
+				size_t len = sc.StringLen;
 				if (len != 2 && len != 3)
 				{
-					if (len == 1 && sc_String[0] == '~')
+					if (len == 1 && sc.String[0] == '~')
 					{
 						donot = true;
-						SC_MustGetString ();
+						sc.MustGetString ();
 						continue;
 					}
-					if (len == 1 && sc_String[0] == '*')
+					if (len == 1 && sc.String[0] == '*')
 					{
 						inCode = MAKE_ID('*',0,0,0);
 					}
-					else if (len == 7 && stricmp (sc_String, "default") == 0)
+					else if (len == 7 && stricmp (sc.String, "default") == 0)
 					{
 						inCode = MAKE_ID('*','*',0,0);
 					}
 					else
 					{
-						SC_ScriptError ("The language code must be 2 or 3 characters long.\n'%s' is %lu characters long.",
-							sc_String, len);
+						sc.ScriptError ("The language code must be 2 or 3 characters long.\n'%s' is %lu characters long.",
+							sc.String, len);
 					}
 				}
 				else
 				{
-					inCode = MAKE_ID(tolower(sc_String[0]), tolower(sc_String[1]), tolower(sc_String[2]), 0);
+					inCode = MAKE_ID(tolower(sc.String[0]), tolower(sc.String[1]), tolower(sc.String[2]), 0);
 				}
 				if ((inCode | orMask) == code)
 				{
@@ -199,11 +200,11 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 						skip = false;
 					}
 				}
-				SC_MustGetString ();
-			} while (!SC_Compare ("]"));
+				sc.MustGetString ();
+			} while (!sc.Compare ("]"));
 			if (donot)
 			{
-				SC_ScriptError ("You must specify a language after ~");
+				sc.ScriptError ("You must specify a language after ~");
 			}
 			skip |= forceskip;
 		}
@@ -211,30 +212,30 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 		{ // Process string definitions.
 			if (inCode == 0)
 			{
-				SC_ScriptError ("Found a string without a language specified.");
+				sc.ScriptError ("Found a string without a language specified.");
 			}
 
 			if (skip)
 			{ // We're not interested in this language, so skip the string.
-				SC_MustGetStringName ("=");
-				SC_MustGetString ();
+				sc.MustGetStringName ("=");
+				sc.MustGetString ();
 				do
 				{
-					SC_MustGetString ();
-				} while (!SC_Compare (";"));
+					sc.MustGetString ();
+				} while (!sc.Compare (";"));
 				continue;
 			}
 
-			FString strName (sc_String);
-			SC_MustGetStringName ("=");
-			SC_MustGetString ();
-			FString strText (sc_String, ProcessEscapes (sc_String));
-			SC_MustGetString ();
-			while (!SC_Compare (";"))
+			FString strName (sc.String);
+			sc.MustGetStringName ("=");
+			sc.MustGetString ();
+			FString strText (sc.String, ProcessEscapes (sc.String));
+			sc.MustGetString ();
+			while (!sc.Compare (";"))
 			{
-				ProcessEscapes (sc_String);
-				strText += sc_String;
-				SC_MustGetString ();
+				ProcessEscapes (sc.String);
+				strText += sc.String;
+				sc.MustGetString ();
 			}
 
 			// Does this string exist? If so, should we overwrite it?
@@ -267,7 +268,6 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 			}
 		}
 	}
-	SC_Close ();
 }
 
 // Replace \ escape sequences in a string with the escaped characters.
@@ -283,7 +283,7 @@ size_t FStringTable::ProcessEscapes (char *iptr)
 			if (c == 'n')
 				c = '\n';
 			else if (c == 'c')
-				c = -127 /*0x81*/;
+				c = TEXTCOLOR_ESCAPE;
 			else if (c == 'r')
 				c = '\r';
 			else if (c == 't')

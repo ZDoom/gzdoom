@@ -134,6 +134,7 @@ public:
 	~FMemLump ();
 	void *GetMem () { return Block.Len() == 0 ? NULL : (void *)Block.GetChars(); }
 	size_t GetSize () { return Block.Len(); }
+	FString GetString () { return Block; }
 
 private:
 	FMemLump (const FString &source);

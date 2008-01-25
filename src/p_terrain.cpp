@@ -103,7 +103,7 @@ struct FGenericParse
 	EGenericType Type;
 	union {
 		size_t Offset;
-		void (*Handler) (int type, void *fields);
+		void (*Handler) (FScanner &sc, int type, void *fields);
 	} u;
 };
 
@@ -114,16 +114,16 @@ struct FGenericParse
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void MakeDefaultTerrain ();
-static void ParseOuter ();
-static void ParseSplash ();
-static void ParseTerrain ();
-static void ParseFloor ();
+static void ParseOuter (FScanner &sc);
+static void ParseSplash (FScanner &sc);
+static void ParseTerrain (FScanner &sc);
+static void ParseFloor (FScanner &sc);
 static int FindSplash (FName name);
 static int FindTerrain (FName name);
-static void GenericParse (FGenericParse *parser, const char **keywords,
+static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keywords,
 	void *fields, const char *type, FName name);
-static void ParseDamage (int keyword, void *fields);
-static void ParseFriction (int keyword, void *fields);
+static void ParseDamage (FScanner &sc, int keyword, void *fields);
+static void ParseFriction (FScanner &sc, int keyword, void *fields);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -264,9 +264,8 @@ void P_InitTerrainTypes ()
 	lastlump = 0;
 	while (-1 != (lump = Wads.FindLump ("TERRAIN", &lastlump)) )
 	{
-		SC_OpenLumpNum (lump, "TERRAIN");
-		ParseOuter ();
-		SC_Close ();
+		FScanner sc(lump, "TERRAIN");
+		ParseOuter (sc);
 	}
 	Splashes.ShrinkToFit ();
 	Terrains.ShrinkToFit ();
@@ -294,51 +293,51 @@ static void MakeDefaultTerrain ()
 //
 //==========================================================================
 
-static void ParseOuter ()
+static void ParseOuter (FScanner &sc)
 {
 	int bracedepth = 0;
 	bool ifskip = false;
 
-	while (SC_GetString ())
+	while (sc.GetString ())
 	{
 		if (ifskip)
 		{
 			if (bracedepth > 0)
 			{
-				if (SC_Compare ("}"))
+				if (sc.Compare ("}"))
 				{
 					bracedepth--;
 					continue;
 				}
 			}
-			else if (SC_Compare ("endif"))
+			else if (sc.Compare ("endif"))
 			{
 				ifskip = false;
 				continue;
 			}
-			if (SC_Compare ("{"))
+			if (sc.Compare ("{"))
 			{
 				bracedepth++;
 			}
-			else if (SC_Compare ("}"))
+			else if (sc.Compare ("}"))
 			{
-				SC_ScriptError ("Too many left braces ('}')");
+				sc.ScriptError ("Too many left braces ('}')");
 			}
 		}
 		else
 		{
-			switch (SC_MustMatchString (OuterKeywords))
+			switch (sc.MustMatchString (OuterKeywords))
 			{
 			case OUT_SPLASH:
-				ParseSplash ();
+				ParseSplash (sc);
 				break;
 
 			case OUT_TERRAIN:
-				ParseTerrain ();
+				ParseTerrain (sc);
 				break;
 
 			case OUT_FLOOR:
-				ParseFloor ();
+				ParseFloor (sc);
 				break;
 
 			case OUT_IFDOOM:
@@ -403,15 +402,15 @@ static void SetSplashDefaults (FSplashDef *splashdef)
 //
 //==========================================================================
 
-void ParseSplash ()
+void ParseSplash (FScanner &sc)
 {
 	int splashnum;
 	FSplashDef *splashdef;
 	bool isnew = false;
 	FName name;
 
-	SC_MustGetString ();
-	name = sc_String;
+	sc.MustGetString ();
+	name = sc.String;
 	splashnum = (int)FindSplash (name);
 	if (splashnum < 0)
 	{
@@ -423,8 +422,8 @@ void ParseSplash ()
 	}
 	splashdef = &Splashes[splashnum];
 
-	SC_MustGetString ();
-	if (!SC_Compare ("modify"))
+	sc.MustGetString ();
+	if (!sc.Compare ("modify"))
 	{ // Set defaults
 		if (!isnew)
 		{ // New ones already have their defaults set before they're pushed.
@@ -433,15 +432,15 @@ void ParseSplash ()
 	}
 	else
 	{
-		SC_MustGetString();
+		sc.MustGetString();
 	}
-	if (!SC_Compare ("{"))
+	if (!sc.Compare ("{"))
 	{
-		SC_ScriptError ("Expected {");
+		sc.ScriptError ("Expected {");
 	}
 	else
 	{
-		GenericParse (SplashParser, SplashKeywords, splashdef, "splash",
+		GenericParse (sc, SplashParser, SplashKeywords, splashdef, "splash",
 			splashdef->Name);
 	}
 }
@@ -452,13 +451,13 @@ void ParseSplash ()
 //
 //==========================================================================
 
-void ParseTerrain ()
+void ParseTerrain (FScanner &sc)
 {
 	int terrainnum;
 	FName name;
 
-	SC_MustGetString ();
-	name = sc_String;
+	sc.MustGetString ();
+	name = sc.String;
 	terrainnum = (int)FindTerrain (name);
 	if (terrainnum < 0)
 	{
@@ -470,8 +469,8 @@ void ParseTerrain ()
 	}
 
 	// Set defaults
-	SC_MustGetString ();
-	if (!SC_Compare ("modify"))
+	sc.MustGetString ();
+	if (!sc.Compare ("modify"))
 	{
 		name = Terrains[terrainnum].Name;
 		memset (&Terrains[terrainnum], 0, sizeof(FTerrainDef));
@@ -480,17 +479,17 @@ void ParseTerrain ()
 	}
 	else
 	{
-		SC_MustGetString ();
+		sc.MustGetString ();
 	}
 
-	if (SC_Compare ("{"))
+	if (sc.Compare ("{"))
 	{
-		GenericParse (TerrainParser, TerrainKeywords, &Terrains[terrainnum],
+		GenericParse (sc, TerrainParser, TerrainKeywords, &Terrains[terrainnum],
 			"terrain", Terrains[terrainnum].Name);
 	}
 	else
 	{
-		SC_ScriptError ("Expected {");
+		sc.ScriptError ("Expected {");
 	}
 }
 
@@ -500,14 +499,14 @@ void ParseTerrain ()
 //
 //==========================================================================
 
-static void ParseDamage (int keyword, void *fields)
+static void ParseDamage (FScanner &sc, int keyword, void *fields)
 {
 	FTerrainDef *def = (FTerrainDef *)fields;
 
-	SC_MustGetString ();
+	sc.MustGetString ();
 	// Lava is synonymous with Fire here!
-	if (SC_Compare("Lava")) def->DamageMOD=NAME_Fire;
-	else def->DamageMOD=sc_String;
+	if (sc.Compare("Lava")) def->DamageMOD=NAME_Fire;
+	else def->DamageMOD=sc.String;
 }
 
 //==========================================================================
@@ -516,17 +515,17 @@ static void ParseDamage (int keyword, void *fields)
 //
 //==========================================================================
 
-static void ParseFriction (int keyword, void *fields)
+static void ParseFriction (FScanner &sc, int keyword, void *fields)
 {
 	FTerrainDef *def = (FTerrainDef *)fields;
 	fixed_t friction, movefactor;
 
-	SC_MustGetFloat ();
+	sc.MustGetFloat ();
 
 	// These calculations should match those in P_SetSectorFriction().
 	// A friction of 1.0 is equivalent to ORIG_FRICTION.
 
-	friction = (fixed_t)(0x1EB8*(sc_Float*100))/0x80 + 0xD001;
+	friction = (fixed_t)(0x1EB8*(sc.Float*100))/0x80 + 0xD001;
 	friction = clamp<fixed_t> (friction, 0, FRACUNIT);
 
 	if (friction > ORIG_FRICTION)	// ice
@@ -547,7 +546,7 @@ static void ParseFriction (int keyword, void *fields)
 //
 //==========================================================================
 
-static void GenericParse (FGenericParse *parser, const char **keywords,
+static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keywords,
 	void *fields, const char *type, FName name)
 {
 	bool notdone = true;
@@ -557,8 +556,8 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 
 	do
 	{
-		SC_MustGetString ();
-		keyword = SC_MustMatchString (keywords);
+		sc.MustGetString ();
+		keyword = sc.MustMatchString (keywords);
 		switch (parser[keyword].Type)
 		{
 		case GEN_End:
@@ -566,69 +565,69 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 			break;
 
 		case GEN_Fixed:
-			SC_MustGetFloat ();
-			SET_FIELD (fixed_t, (fixed_t)(FRACUNIT * sc_Float));
+			sc.MustGetFloat ();
+			SET_FIELD (fixed_t, (fixed_t)(FRACUNIT * sc.Float));
 			break;
 
 		case GEN_Sound:
-			SC_MustGetString ();
-			val = S_FindSound (sc_String);
+			sc.MustGetString ();
+			val = S_FindSound (sc.String);
 			SET_FIELD (int, val);
 			if (val == 0)
 			{
 				Printf ("Unknown sound %s in %s %s\n",
-					sc_String, type, name.GetChars());
+					sc.String, type, name.GetChars());
 			}
 			break;
 
 		case GEN_Byte:
-			SC_MustGetNumber ();
-			SET_FIELD (BYTE, sc_Number);
+			sc.MustGetNumber ();
+			SET_FIELD (BYTE, sc.Number);
 			break;
 
 		case GEN_Class:
-			SC_MustGetString ();
-			if (SC_Compare ("None"))
+			sc.MustGetString ();
+			if (sc.Compare ("None"))
 			{
 				info = NULL;
 			}
 			else
 			{
-				info = PClass::FindClass (sc_String);
+				info = PClass::FindClass (sc.String);
 				if (!info->IsDescendantOf (RUNTIME_CLASS(AActor)))
 				{
 					Printf ("%s is not an Actor (in %s %s)\n",
-						sc_String, type, name.GetChars());
+						sc.String, type, name.GetChars());
 					info = NULL;
 				}
 				else if (info == NULL)
 				{
 					Printf ("Unknown actor %s in %s %s\n",
-						sc_String, type, name.GetChars());
+						sc.String, type, name.GetChars());
 				}
 			}
 			SET_FIELD (const PClass *, info);
 			break;
 
 		case GEN_Splash:
-			SC_MustGetString ();
-			val = FindSplash (sc_String);
+			sc.MustGetString ();
+			val = FindSplash (sc.String);
 			SET_FIELD (int, val);
 			if (val == -1)
 			{
 				Printf ("Splash %s is not defined yet (in %s %s)\n",
-					sc_String, type, name.GetChars());
+					sc.String, type, name.GetChars());
 			}
 			break;
 
 		case GEN_Float:
-			SC_MustGetFloat ();
-			SET_FIELD (float, sc_Float);
+			sc.MustGetFloat ();
+			SET_FIELD (float, sc.Float);
 			break;
 
 		case GEN_Time:
-			SC_MustGetFloat ();
-			SET_FIELD (int, (int)(sc_Float * TICRATE));
+			sc.MustGetFloat ();
+			SET_FIELD (int, (int)(sc.Float * TICRATE));
 			break;
 
 		case GEN_Bool:
@@ -636,12 +635,12 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 			break;
 
 		case GEN_Int:
-			SC_MustGetNumber ();
-			SET_FIELD (int, sc_Number);
+			sc.MustGetNumber ();
+			SET_FIELD (int, sc.Number);
 			break;
 
 		case GEN_Custom:
-			parser[keyword].u.Handler (keyword, fields);
+			parser[keyword].u.Handler (sc, keyword, fields);
 			break;
 		}
 	} while (notdone);
@@ -653,24 +652,24 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 //
 //==========================================================================
 
-static void ParseFloor ()
+static void ParseFloor (FScanner &sc)
 {
 	int picnum;
 	int terrain;
 
-	SC_MustGetString ();
-	picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Flat);
+	sc.MustGetString ();
+	picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Flat);
 	if (picnum == -1)
 	{
-		Printf ("Unknown flat %s\n", sc_String);
-		SC_MustGetString ();
+		Printf ("Unknown flat %s\n", sc.String);
+		sc.MustGetString ();
 		return;
 	}
-	SC_MustGetString ();
-	terrain = FindTerrain (sc_String);
+	sc.MustGetString ();
+	terrain = FindTerrain (sc.String);
 	if (terrain == -1)
 	{
-		Printf ("Unknown terrain %s\n", sc_String);
+		Printf ("Unknown terrain %s\n", sc.String);
 		terrain = 0;
 	}
 	TerrainTypes[picnum] = terrain;

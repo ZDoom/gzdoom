@@ -239,7 +239,7 @@ protected:
 		INTBOOL keepratio;
 		INTBOOL masked;
 		INTBOOL bilinear;
-		ERenderStyle style;
+		FRenderStyle style;
 	};
 
 	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
@@ -411,9 +411,34 @@ extern DFrameBuffer *screen;
 EXTERN_CVAR (Float, Gamma)
 
 // Translucency tables
-extern "C" DWORD Col2RGB8[65][256];
+
+// RGB32k is a normal R5G5B5 -> palette lookup table.
 extern "C" BYTE RGB32k[32][32][32];
+
+// Col2RGB8 is a pre-multiplied palette for color lookup. It is stored in a
+// special R10B10G10 format for efficient blending computation.
+//		--RRRRRrrr--BBBBBbbb--GGGGGggg--   at level 64
+//		--------rrrr------bbbb------gggg   at level 1
+extern "C" DWORD Col2RGB8[65][256];
+
+// Col2RGB8_LessPrecision is the same as Col2RGB8, but the LSB for red
+// and blue are forced to zero, so if the blend overflows, it won't spill
+// over into the next component's value.
+//		--RRRRRrrr-#BBBBBbbb-#GGGGGggg--  at level 64
+//      --------rrr#------bbb#------gggg  at level 1
 extern "C" DWORD *Col2RGB8_LessPrecision[65];
+
+// Col2RGB8_Inverse is the same as Col2RGB8_LessPrecision, except the source
+// palette has been inverted.
+extern "C" DWORD Col2RGB8_Inverse[65][256];
+
+// "Magic" numbers used during the blending:
+//		--000001111100000111110000011111	= 0x01f07c1f
+//		-0111111111011111111101111111111	= 0x3FEFFBFF
+//		-1000000000100000000010000000000	= 0x40100400
+//		------10000000001000000000100000	= 0x40100400 >> 5
+//		--11111-----11111-----11111-----	= 0x40100400 - (0x40100400 >> 5) aka "white"
+//		--111111111111111111111111111111	= 0x3FFFFFFF
 
 // Allocates buffer screens, call before R_Init.
 void V_Init ();

@@ -14,6 +14,11 @@ namespace re2c
 
 void Symbol::ClearTable()
 {
+	for (SymbolTable::iterator it = symbol_table.begin(); it != symbol_table.end(); ++it)
+	{
+		delete it->second;
+	}
+	
 	symbol_table.clear();
 }
 
@@ -519,7 +524,7 @@ uint Scanner::unescape(SubStr &s) const
 	static const char * oct = "01234567";
 
 	s.len--;
-	uint c;
+	uint c, ucb = 0;
 
 	if ((c = *s.str++) != '\\' || s.len == 0)
 	{
@@ -582,10 +587,20 @@ uint Scanner::unescape(SubStr &s) const
 				if (s.str[1] == '0')
 				{
 					l++;
-					if (s.str[2] == '0')
+					if (s.str[2] == '0' || (s.str[2] == '1' && uFlag))
 					{
 						l++;
-						if (s.str[3] == '0')
+						if (uFlag) {
+							const char *u3 = strchr(hex, tolower(s.str[2]));
+							const char *u4 = strchr(hex, tolower(s.str[3]));
+							if (u3 && u4)
+							{
+								ucb = (uint)((u3 - hex) << 20)
+									+ (uint)((u4 - hex) << 16);
+								l++;
+							}
+						}
+						else if (s.str[3] == '0')
 						{
 							l++;
 						}
@@ -636,7 +651,8 @@ uint Scanner::unescape(SubStr &s) const
 				uint v = (uint)((p1 - hex) << 12) 
 				       + (uint)((p2 - hex) <<  8)
 				       + (uint)((p3 - hex) <<  4)
-				       + (uint)((p4 - hex));
+				       + (uint)((p4 - hex))
+					   + ucb;
 	
 				if (v >= nRealChars)
 				{

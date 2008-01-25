@@ -452,18 +452,18 @@ void A_ChangeFlag(AActor * self)
 //==========================================================================
 //
 //==========================================================================
-void ParseActorFlag (Baggage &bag, int mod)
+void ParseActorFlag (FScanner &sc, Baggage &bag, int mod)
 {
 	flagdef *fd;
 
-	SC_MustGetString ();
+	sc.MustGetString ();
 
-	FString part1 = sc_String;
+	FString part1 = sc.String;
 	const char *part2 = NULL;
-	if (SC_CheckString ("."))
+	if (sc.CheckString ("."))
 	{
-		SC_MustGetString ();
-		part2 = sc_String;
+		sc.MustGetString ();
+		part2 = sc.String;
 	}
 	if ( (fd = FindFlag (bag.Info->Class, part1.GetChars(), part2)) )
 	{
@@ -489,11 +489,11 @@ void ParseActorFlag (Baggage &bag, int mod)
 	{
 		if (part2 == NULL)
 		{
-			SC_ScriptError("\"%s\" is an unknown flag\n", part1.GetChars());
+			sc.ScriptError("\"%s\" is an unknown flag\n", part1.GetChars());
 		}
 		else
 		{
-			SC_ScriptError("\"%s.%s\" is an unknown flag\n", part1.GetChars(), part2);
+			sc.ScriptError("\"%s.%s\" is an unknown flag\n", part1.GetChars(), part2);
 		}
 	}
 }
@@ -522,7 +522,7 @@ static bool Check(char *& range,  char c, bool error=true)
 	}
 	if (error)
 	{
-		//SC_ScriptError("Invalid syntax in translation specification: '%c' expected", c);
+		//sc.ScriptError("Invalid syntax in translation specification: '%c' expected", c);
 	}
 	return false;
 }
@@ -570,7 +570,7 @@ static void AddToTranslation(char * range)
 	}
 }
 
-static int StoreTranslation()
+static int StoreTranslation(FScanner &sc)
 {
 	unsigned int i;
 
@@ -584,7 +584,7 @@ static int StoreTranslation()
 	}
 	if (translationtables[TRANSLATION_Decorate].Size() >= MAX_DECORATE_TRANSLATIONS)
 	{
-		SC_ScriptError("Too many translations in DECORATE");
+		sc.ScriptError("Too many translations in DECORATE");
 	}
 	FRemapTable *newtrans = new FRemapTable;
 	*newtrans = CurrentTranslation;
@@ -592,7 +592,7 @@ static int StoreTranslation()
 	return TRANSLATION(TRANSLATION_Decorate, i);
 }
 
-static int CreateBloodTranslation(PalEntry color)
+static int CreateBloodTranslation(FScanner &sc, PalEntry color)
 {
 	unsigned int i;
 
@@ -608,7 +608,7 @@ static int CreateBloodTranslation(PalEntry color)
 	}
 	if (BloodTranslationColors.Size() >= MAX_DECORATE_TRANSLATIONS)
 	{
-		SC_ScriptError("Too many blood colors in DECORATE");
+		sc.ScriptError("Too many blood colors in DECORATE");
 	}
 	FRemapTable *trans = new FRemapTable;
 	for (i = 0; i < 256; i++)
@@ -670,7 +670,7 @@ FDropItem *GetDropItems(const PClass *cls)
 //
 //==========================================================================
 
-typedef void (*ActorPropFunction) (AActor *defaults, Baggage &bag);
+typedef void (*ActorPropFunction) (FScanner &sc, AActor *defaults, Baggage &bag);
 
 struct ActorProps 
 { 
@@ -679,7 +679,7 @@ struct ActorProps
 	const PClass * type; 
 };
 
-typedef ActorProps (*ActorPropHandler) (register const char *str, register unsigned int len);
+typedef ActorProps (*ActorPropHandler) (const char *str, unsigned int len);
 
 static const ActorProps *is_actorprop (const char *str);
 
@@ -689,29 +689,29 @@ static const ActorProps *is_actorprop (const char *str);
 // Checks for a numeric parameter which may or may not be preceded by a comma
 //
 //==========================================================================
-static bool CheckNumParm()
+static bool CheckNumParm(FScanner &sc)
 {
-	if (SC_CheckString(","))
+	if (sc.CheckString(","))
 	{
-		SC_MustGetNumber();
+		sc.MustGetNumber();
 		return true;
 	}
 	else
 	{
-		return !!SC_CheckNumber();
+		return !!sc.CheckNumber();
 	}
 }
 
-static bool CheckFloatParm()
+static bool CheckFloatParm(FScanner &sc)
 {
-	if (SC_CheckString(","))
+	if (sc.CheckString(","))
 	{
-		SC_MustGetFloat();
+		sc.MustGetFloat();
 		return true;
 	}
 	else
 	{
-		return !!SC_CheckFloat();
+		return sc.CheckFloat();
 	}
 }
 
@@ -724,7 +724,7 @@ static bool CheckFloatParm()
 //==========================================================================
 //
 //==========================================================================
-static void ActorSkipSuper (AActor *defaults, Baggage &bag)
+static void ActorSkipSuper (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	memcpy (defaults, GetDefault<AActor>(), sizeof(AActor));
 	if (bag.DropItemList != NULL)
@@ -738,80 +738,80 @@ static void ActorSkipSuper (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorGame (AActor *defaults, Baggage &bag)
+static void ActorGame (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	if (SC_Compare ("Doom"))
+	sc.MustGetString ();
+	if (sc.Compare ("Doom"))
 	{
 		bag.Info->GameFilter |= GAME_Doom;
 	}
-	else if (SC_Compare ("Heretic"))
+	else if (sc.Compare ("Heretic"))
 	{
 		bag.Info->GameFilter |= GAME_Heretic;
 	}
-	else if (SC_Compare ("Hexen"))
+	else if (sc.Compare ("Hexen"))
 	{
 		bag.Info->GameFilter |= GAME_Hexen;
 	}
-	else if (SC_Compare ("Raven"))
+	else if (sc.Compare ("Raven"))
 	{
 		bag.Info->GameFilter |= GAME_Raven;
 	}
-	else if (SC_Compare ("Strife"))
+	else if (sc.Compare ("Strife"))
 	{
 		bag.Info->GameFilter |= GAME_Strife;
 	}
-	else if (SC_Compare ("Any"))
+	else if (sc.Compare ("Any"))
 	{
 		bag.Info->GameFilter = GAME_Any;
 	}
 	else
 	{
-		SC_ScriptError ("Unknown game type %s", sc_String);
+		sc.ScriptError ("Unknown game type %s", sc.String);
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorSpawnID (AActor *defaults, Baggage &bag)
+static void ActorSpawnID (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	if (sc_Number<0 || sc_Number>255)
+	sc.MustGetNumber();
+	if (sc.Number<0 || sc.Number>255)
 	{
-		SC_ScriptError ("SpawnID must be in the range [0,255]");
+		sc.ScriptError ("SpawnID must be in the range [0,255]");
 	}
-	else bag.Info->SpawnID=(BYTE)sc_Number;
+	else bag.Info->SpawnID=(BYTE)sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorConversationID (AActor *defaults, Baggage &bag)
+static void ActorConversationID (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	int convid;
 
-	SC_MustGetNumber();
-	convid = sc_Number;
+	sc.MustGetNumber();
+	convid = sc.Number;
 
 	// Handling for Strife teaser IDs - only of meaning for the standard items
 	// as PWADs cannot be loaded with the teasers.
-	if (SC_CheckString(","))
+	if (sc.CheckString(","))
 	{
-		SC_MustGetNumber();
+		sc.MustGetNumber();
 		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE))
-			convid=sc_Number;
+			convid=sc.Number;
 
-		SC_MustGetStringName(",");
-		SC_MustGetNumber();
+		sc.MustGetStringName(",");
+		sc.MustGetNumber();
 		if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE|GI_TEASER2))
-			convid=sc_Number;
+			convid=sc.Number;
 
 		if (convid==-1) return;
 	}
 	if (convid<0 || convid>1000)
 	{
-		SC_ScriptError ("ConversationID must be in the range [0,1000]");
+		sc.ScriptError ("ConversationID must be in the range [0,1000]");
 	}
 	else StrifeTypes[convid] = bag.Info->Class;
 }
@@ -819,73 +819,73 @@ static void ActorConversationID (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorTag (AActor *defaults, Baggage &bag)
+static void ActorTag (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	bag.Info->Class->Meta.SetMetaString(AMETA_StrifeName, sc_String);
+	sc.MustGetString();
+	bag.Info->Class->Meta.SetMetaString(AMETA_StrifeName, sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorHealth (AActor *defaults, Baggage &bag)
+static void ActorHealth (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->health=sc_Number;
+	sc.MustGetNumber();
+	defaults->health=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorGibHealth (AActor *defaults, Baggage &bag)
+static void ActorGibHealth (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (AMETA_GibHealth, sc_Number);
+	sc.MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt (AMETA_GibHealth, sc.Number);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorWoundHealth (AActor *defaults, Baggage &bag)
+static void ActorWoundHealth (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (AMETA_WoundHealth, sc_Number);
+	sc.MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt (AMETA_WoundHealth, sc.Number);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorReactionTime (AActor *defaults, Baggage &bag)
+static void ActorReactionTime (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->reactiontime=sc_Number;
+	sc.MustGetNumber();
+	defaults->reactiontime=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorPainChance (AActor *defaults, Baggage &bag)
+static void ActorPainChance (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	if (!SC_CheckNumber())
+	if (!sc.CheckNumber())
 	{
 		FName painType;
-		SC_MustGetString();
-		if (SC_Compare("Normal")) painType = NAME_None;
-		else painType=sc_String;
-		SC_MustGetToken(',');
-		SC_MustGetNumber();
+		sc.MustGetString();
+		if (sc.Compare("Normal")) painType = NAME_None;
+		else painType=sc.String;
+		sc.MustGetToken(',');
+		sc.MustGetNumber();
 	
 		if (bag.Info->PainChances == NULL) bag.Info->PainChances=new PainChanceList;
-		(*bag.Info->PainChances)[painType] = (BYTE)sc_Number;
+		(*bag.Info->PainChances)[painType] = (BYTE)sc.Number;
 		return;
 	}
-	defaults->PainChance=sc_Number;
+	defaults->PainChance=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDamage (AActor *defaults, Baggage &bag)
+static void ActorDamage (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	// Damage can either be a single number, in which case it is subject
 	// to the original damage calculation rules. Or, it can be an expression
@@ -893,100 +893,100 @@ static void ActorDamage (AActor *defaults, Baggage &bag)
 	// compatibility reasons, expressions must be enclosed within
 	// parentheses.
 
-	if (SC_CheckString ("("))
+	if (sc.CheckString ("("))
 	{
-		defaults->Damage = 0x40000000 | ParseExpression (false, bag.Info->Class);
-		SC_MustGetStringName(")");
+		defaults->Damage = 0x40000000 | ParseExpression (sc, false, bag.Info->Class);
+		sc.MustGetStringName(")");
 	}
 	else
 	{
-		SC_MustGetNumber ();
-		defaults->Damage = sc_Number;
+		sc.MustGetNumber ();
+		defaults->Damage = sc.Number;
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorSpeed (AActor *defaults, Baggage &bag)
+static void ActorSpeed (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->Speed=fixed_t(sc_Float*FRACUNIT);
+	sc.MustGetFloat();
+	defaults->Speed=fixed_t(sc.Float*FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorFloatSpeed (AActor *defaults, Baggage &bag)
+static void ActorFloatSpeed (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->FloatSpeed=fixed_t(sc_Float*FRACUNIT);
+	sc.MustGetFloat();
+	defaults->FloatSpeed=fixed_t(sc.Float*FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorRadius (AActor *defaults, Baggage &bag)
+static void ActorRadius (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->radius=fixed_t(sc_Float*FRACUNIT);
+	sc.MustGetFloat();
+	defaults->radius=fixed_t(sc.Float*FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorHeight (AActor *defaults, Baggage &bag)
+static void ActorHeight (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->height=fixed_t(sc_Float*FRACUNIT);
+	sc.MustGetFloat();
+	defaults->height=fixed_t(sc.Float*FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMass (AActor *defaults, Baggage &bag)
+static void ActorMass (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->Mass=sc_Number;
+	sc.MustGetNumber();
+	defaults->Mass=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorXScale (AActor *defaults, Baggage &bag)
+static void ActorXScale (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->scaleX = FLOAT2FIXED(sc_Float);
+	sc.MustGetFloat();
+	defaults->scaleX = FLOAT2FIXED(sc.Float);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorYScale (AActor *defaults, Baggage &bag)
+static void ActorYScale (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->scaleY = FLOAT2FIXED(sc_Float);
+	sc.MustGetFloat();
+	defaults->scaleY = FLOAT2FIXED(sc.Float);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorScale (AActor *defaults, Baggage &bag)
+static void ActorScale (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->scaleX= defaults->scaleY = FLOAT2FIXED(sc_Float);
+	sc.MustGetFloat();
+	defaults->scaleX= defaults->scaleY = FLOAT2FIXED(sc.Float);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorArgs (AActor *defaults, Baggage &bag)
+static void ActorArgs (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	for (int i=0;i<5;i++)
+	for (int i = 0; i < 5; i++)
 	{
-		SC_MustGetNumber();
-		defaults->args[i] = sc_Number;
-		if (i < 4 && !SC_CheckToken(',')) break;
+		sc.MustGetNumber();
+		defaults->args[i] = sc.Number;
+		if (i < 4 && !sc.CheckToken(',')) break;
 	}
 	defaults->flags2|=MF2_ARGSDEFINED;
 }
@@ -994,61 +994,61 @@ static void ActorArgs (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorSeeSound (AActor *defaults, Baggage &bag)
+static void ActorSeeSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->SeeSound=S_FindSound(sc_String);
+	sc.MustGetString();
+	defaults->SeeSound=S_FindSound(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorAttackSound (AActor *defaults, Baggage &bag)
+static void ActorAttackSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->AttackSound=S_FindSound(sc_String);
+	sc.MustGetString();
+	defaults->AttackSound=S_FindSound(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorPainSound (AActor *defaults, Baggage &bag)
+static void ActorPainSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->PainSound=S_FindSound(sc_String);
+	sc.MustGetString();
+	defaults->PainSound=S_FindSound(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDeathSound (AActor *defaults, Baggage &bag)
+static void ActorDeathSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->DeathSound=S_FindSound(sc_String);
+	sc.MustGetString();
+	defaults->DeathSound=S_FindSound(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorActiveSound (AActor *defaults, Baggage &bag)
+static void ActorActiveSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->ActiveSound=S_FindSound(sc_String);
+	sc.MustGetString();
+	defaults->ActiveSound=S_FindSound(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorHowlSound (AActor *defaults, Baggage &bag)
+static void ActorHowlSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	bag.Info->Class->Meta.SetMetaInt (AMETA_HowlSound, S_FindSound(sc_String));
+	sc.MustGetString();
+	bag.Info->Class->Meta.SetMetaInt (AMETA_HowlSound, S_FindSound(sc.String));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDropItem (AActor *defaults, Baggage &bag)
+static void ActorDropItem (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	// create a linked list of dropitems
 	if (!bag.DropItemSet)
@@ -1057,19 +1057,19 @@ static void ActorDropItem (AActor *defaults, Baggage &bag)
 		bag.DropItemList = NULL;
 	}
 
-	FDropItem * di=new FDropItem;
+	FDropItem *di = new FDropItem;
 
-	SC_MustGetString();
-	di->Name=sc_String;
+	sc.MustGetString();
+	di->Name=sc.String;
 	di->probability=255;
 	di->amount=-1;
 
-	if (CheckNumParm())
+	if (CheckNumParm(sc))
 	{
-		di->probability=sc_Number;
-		if (CheckNumParm())
+		di->probability = sc.Number;
+		if (CheckNumParm(sc))
 		{
-			di->amount=sc_Number;
+			di->amount = sc.Number;
 		}
 	}
 	di->Next = bag.DropItemList;
@@ -1079,137 +1079,137 @@ static void ActorDropItem (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorSpawnState (AActor *defaults, Baggage &bag)
+static void ActorSpawnState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Spawn", CheckState ( bag.Info->Class));
+	AddState("Spawn", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorSeeState (AActor *defaults, Baggage &bag)
+static void ActorSeeState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("See", CheckState ( bag.Info->Class));
+	AddState("See", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMeleeState (AActor *defaults, Baggage &bag)
+static void ActorMeleeState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Melee", CheckState ( bag.Info->Class));
+	AddState("Melee", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMissileState (AActor *defaults, Baggage &bag)
+static void ActorMissileState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Missile", CheckState ( bag.Info->Class));
+	AddState("Missile", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorPainState (AActor *defaults, Baggage &bag)
+static void ActorPainState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Pain", CheckState ( bag.Info->Class));
+	AddState("Pain", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDeathState (AActor *defaults, Baggage &bag)
+static void ActorDeathState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Death", CheckState ( bag.Info->Class));
+	AddState("Death", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorXDeathState (AActor *defaults, Baggage &bag)
+static void ActorXDeathState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("XDeath", CheckState ( bag.Info->Class));
+	AddState("XDeath", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorBurnState (AActor *defaults, Baggage &bag)
+static void ActorBurnState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Burn", CheckState ( bag.Info->Class));
+	AddState("Burn", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorIceState (AActor *defaults, Baggage &bag)
+static void ActorIceState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Ice", CheckState ( bag.Info->Class));
+	AddState("Ice", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorRaiseState (AActor *defaults, Baggage &bag)
+static void ActorRaiseState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Raise", CheckState ( bag.Info->Class));
+	AddState("Raise", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorCrashState (AActor *defaults, Baggage &bag)
+static void ActorCrashState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Crash", CheckState ( bag.Info->Class));
+	AddState("Crash", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorCrushState (AActor *defaults, Baggage &bag)
+static void ActorCrushState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Crush", CheckState ( bag.Info->Class));
+	AddState("Crush", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorWoundState (AActor *defaults, Baggage &bag)
+static void ActorWoundState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Wound", CheckState ( bag.Info->Class));
+	AddState("Wound", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDisintegrateState (AActor *defaults, Baggage &bag)
+static void ActorDisintegrateState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Disintegrate", CheckState ( bag.Info->Class));
+	AddState("Disintegrate", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorHealState (AActor *defaults, Baggage &bag)
+static void ActorHealState (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	AddState("Heal", CheckState ( bag.Info->Class));
+	AddState("Heal", CheckState (sc, bag.Info->Class));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorStates (AActor *defaults, Baggage &bag)
+static void ActorStates (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	if (!bag.StateSet) ParseStates(bag.Info, defaults, bag);
-	else SC_ScriptError("Multiple state declarations not allowed");
+	if (!bag.StateSet) ParseStates(sc, bag.Info, defaults, bag);
+	else sc.ScriptError("Multiple state declarations not allowed");
 	bag.StateSet=true;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorRenderStyle (AActor *defaults, Baggage &bag)
+static void ActorRenderStyle (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	static const char * renderstyles[]={
 		"NONE","NORMAL","FUZZY","SOULTRANS","OPTFUZZY","STENCIL","TRANSLUCENT", "ADD",NULL};
@@ -1218,48 +1218,48 @@ static void ActorRenderStyle (AActor *defaults, Baggage &bag)
 		STYLE_None, STYLE_Normal, STYLE_Fuzzy, STYLE_SoulTrans, STYLE_OptFuzzy,
 			STYLE_Stencil, STYLE_Translucent, STYLE_Add};
 
-	SC_MustGetString();
-	defaults->RenderStyle=renderstyle_values[SC_MustMatchString(renderstyles)];
+	sc.MustGetString();
+	defaults->RenderStyle = LegacyRenderStyles[renderstyle_values[sc.MustMatchString(renderstyles)]];
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorAlpha (AActor *defaults, Baggage &bag)
+static void ActorAlpha (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	if (SC_CheckString("DEFAULT"))
+	if (sc.CheckString("DEFAULT"))
 	{
-		defaults->alpha = gameinfo.gametype==GAME_Heretic? HR_SHADOW : HX_SHADOW;
+		defaults->alpha = gameinfo.gametype == GAME_Heretic ? HR_SHADOW : HX_SHADOW;
 	}
 	else
 	{
-		SC_MustGetFloat();
-		defaults->alpha=fixed_t(sc_Float*FRACUNIT);
+		sc.MustGetFloat();
+		defaults->alpha=fixed_t(sc.Float*FRACUNIT);
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorObituary (AActor *defaults, Baggage &bag)
+static void ActorObituary (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	bag.Info->Class->Meta.SetMetaString (AMETA_Obituary, sc_String);
+	sc.MustGetString();
+	bag.Info->Class->Meta.SetMetaString (AMETA_Obituary, sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorHitObituary (AActor *defaults, Baggage &bag)
+static void ActorHitObituary (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	bag.Info->Class->Meta.SetMetaString (AMETA_HitObituary, sc_String);
+	sc.MustGetString();
+	bag.Info->Class->Meta.SetMetaString (AMETA_HitObituary, sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDontHurtShooter (AActor *defaults, Baggage &bag)
+static void ActorDontHurtShooter (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	bag.Info->Class->Meta.SetMetaInt (ACMETA_DontHurtShooter, true);
 }
@@ -1267,28 +1267,28 @@ static void ActorDontHurtShooter (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorExplosionRadius (AActor *defaults, Baggage &bag)
+static void ActorExplosionRadius (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionRadius, sc_Number);
+	sc.MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionRadius, sc.Number);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorExplosionDamage (AActor *defaults, Baggage &bag)
+static void ActorExplosionDamage (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionDamage, sc_Number);
+	sc.MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_ExplosionDamage, sc.Number);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDeathHeight (AActor *defaults, Baggage &bag)
+static void ActorDeathHeight (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	fixed_t h = fixed_t(sc_Float * FRACUNIT);
+	sc.MustGetFloat();
+	fixed_t h = fixed_t(sc.Float * FRACUNIT);
 	// AActor::Die() uses a height of 0 to mean "cut the height to 1/4",
 	// so if a height of 0 is desired, store it as -1.
 	bag.Info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, h <= 0 ? -1 : h);
@@ -1297,10 +1297,10 @@ static void ActorDeathHeight (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorBurnHeight (AActor *defaults, Baggage &bag)
+static void ActorBurnHeight (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	fixed_t h = fixed_t(sc_Float * FRACUNIT);
+	sc.MustGetFloat();
+	fixed_t h = fixed_t(sc.Float * FRACUNIT);
 	// The note above for AMETA_DeathHeight also applies here.
 	bag.Info->Class->Meta.SetMetaFixed (AMETA_BurnHeight, h <= 0 ? -1 : h);
 }
@@ -1308,121 +1308,121 @@ static void ActorBurnHeight (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorMaxTargetRange (AActor *defaults, Baggage &bag)
+static void ActorMaxTargetRange (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->maxtargetrange = fixed_t(sc_Float*FRACUNIT);
+	sc.MustGetFloat();
+	defaults->maxtargetrange = fixed_t(sc.Float*FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMeleeThreshold (AActor *defaults, Baggage &bag)
+static void ActorMeleeThreshold (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->meleethreshold = fixed_t(sc_Float*FRACUNIT);
+	sc.MustGetFloat();
+	defaults->meleethreshold = fixed_t(sc.Float*FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMeleeDamage (AActor *defaults, Baggage &bag)
+static void ActorMeleeDamage (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeDamage, sc_Number);
+	sc.MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeDamage, sc.Number);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMeleeRange (AActor *defaults, Baggage &bag)
+static void ActorMeleeRange (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->meleerange = fixed_t(sc_Float*FRACUNIT);
+	sc.MustGetFloat();
+	defaults->meleerange = fixed_t(sc.Float*FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMeleeSound (AActor *defaults, Baggage &bag)
+static void ActorMeleeSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeSound, S_FindSound(sc_String));
+	sc.MustGetString();
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_MeleeSound, S_FindSound(sc.String));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMissileType (AActor *defaults, Baggage &bag)
+static void ActorMissileType (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	bag.Info->Class->Meta.SetMetaInt (ACMETA_MissileName, FName(sc_String));
+	sc.MustGetString();
+	bag.Info->Class->Meta.SetMetaInt (ACMETA_MissileName, FName(sc.String));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMissileHeight (AActor *defaults, Baggage &bag)
+static void ActorMissileHeight (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	bag.Info->Class->Meta.SetMetaFixed (ACMETA_MissileHeight, fixed_t(sc_Float*FRACUNIT));
+	sc.MustGetFloat();
+	bag.Info->Class->Meta.SetMetaFixed (ACMETA_MissileHeight, fixed_t(sc.Float*FRACUNIT));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorTranslation (AActor *defaults, Baggage &bag)
+static void ActorTranslation (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	if (SC_CheckNumber())
+	if (sc.CheckNumber())
 	{
 		int max = (gameinfo.gametype==GAME_Strife || (bag.Info->GameFilter&GAME_Strife)) ? 6:2;
-		if (sc_Number < 0 || sc_Number > max)
+		if (sc.Number < 0 || sc.Number > max)
 		{
-			SC_ScriptError ("Translation must be in the range [0,%d]", max);
+			sc.ScriptError ("Translation must be in the range [0,%d]", max);
 		}
-		defaults->Translation = TRANSLATION(TRANSLATION_Standard, sc_Number);
+		defaults->Translation = TRANSLATION(TRANSLATION_Standard, sc.Number);
 	}
 	else
 	{
 		CurrentTranslation.MakeIdentity();
 		do
 		{
-			SC_GetString();
-			AddToTranslation(sc_String);
+			sc.GetString();
+			AddToTranslation(sc.String);
 		}
-		while (SC_CheckString(","));
-		defaults->Translation = StoreTranslation ();
+		while (sc.CheckString(","));
+		defaults->Translation = StoreTranslation (sc);
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorBloodColor (AActor *defaults, Baggage &bag)
+static void ActorBloodColor (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	int r,g,b;
 
-	if (SC_CheckNumber())
+	if (sc.CheckNumber())
 	{
-		SC_MustGetNumber();
-		r=clamp<int>(sc_Number, 0, 255);
-		SC_CheckString(",");
-		SC_MustGetNumber();
-		g=clamp<int>(sc_Number, 0, 255);
-		SC_CheckString(",");
-		SC_MustGetNumber();
-		b=clamp<int>(sc_Number, 0, 255);
+		sc.MustGetNumber();
+		r = clamp<int>(sc.Number, 0, 255);
+		sc.CheckString(",");
+		sc.MustGetNumber();
+		g = clamp<int>(sc.Number, 0, 255);
+		sc.CheckString(",");
+		sc.MustGetNumber();
+		b = clamp<int>(sc.Number, 0, 255);
 	}
 	else
 	{
-		SC_MustGetString();
-		int c = V_GetColor(NULL, sc_String);
-		r=RPART(c);
-		g=GPART(c);
-		b=BPART(c);
+		sc.MustGetString();
+		int c = V_GetColor(NULL, sc.String);
+		r = RPART(c);
+		g = GPART(c);
+		b = BPART(c);
 	}
 	PalEntry pe = MAKERGB(r,g,b);
-	pe.a = CreateBloodTranslation(pe);
+	pe.a = CreateBloodTranslation(sc, pe);
 	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodColor, pe);
 }
 
@@ -1430,25 +1430,25 @@ static void ActorBloodColor (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorBloodType (AActor *defaults, Baggage &bag)
+static void ActorBloodType (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	FName blood = sc_String;
+	sc.MustGetString();
+	FName blood = sc.String;
 	// normal blood
 	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType, blood);
 
-	if (SC_CheckString(",")) 
+	if (sc.CheckString(",")) 
 	{
-		SC_MustGetString();
-		blood = sc_String;
+		sc.MustGetString();
+		blood = sc.String;
 	}
 	// blood splatter
 	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType2, blood);
 
-	if (SC_CheckString(",")) 
+	if (sc.CheckString(",")) 
 	{
-		SC_MustGetString();
-		blood = sc_String;
+		sc.MustGetString();
+		blood = sc.String;
 	}
 	// axe blood
 	bag.Info->Class->Meta.SetMetaInt (AMETA_BloodType3, blood);
@@ -1457,149 +1457,149 @@ static void ActorBloodType (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorBounceFactor (AActor *defaults, Baggage &bag)
+static void ActorBounceFactor (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat ();
-	defaults->bouncefactor = clamp<fixed_t>(fixed_t(sc_Float * FRACUNIT), 0, FRACUNIT);
+	sc.MustGetFloat ();
+	defaults->bouncefactor = clamp<fixed_t>(fixed_t(sc.Float * FRACUNIT), 0, FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorBounceCount (AActor *defaults, Baggage &bag)
+static void ActorBounceCount (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber ();
-	defaults->bouncecount = sc_Number;
+	sc.MustGetNumber ();
+	defaults->bouncecount = sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMinMissileChance (AActor *defaults, Baggage &bag)
+static void ActorMinMissileChance (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber ();
-	defaults->MinMissileChance=sc_Number;
+	sc.MustGetNumber ();
+	defaults->MinMissileChance=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDamageType (AActor *defaults, Baggage &bag)
+static void ActorDamageType (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString ();   
-	if (SC_Compare("Normal")) defaults->DamageType = NAME_None;
-	else defaults->DamageType=sc_String;
+	sc.MustGetString ();   
+	if (sc.Compare("Normal")) defaults->DamageType = NAME_None;
+	else defaults->DamageType=sc.String;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDamageFactor (AActor *defaults, Baggage &bag)
+static void ActorDamageFactor (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString ();   
+	sc.MustGetString ();   
 	if (bag.Info->DamageFactors == NULL) bag.Info->DamageFactors=new DmgFactors;
 
 	FName dmgType;
-	if (SC_Compare("Normal")) dmgType = NAME_None;
-	else dmgType=sc_String;
+	if (sc.Compare("Normal")) dmgType = NAME_None;
+	else dmgType=sc.String;
 
-	SC_MustGetToken(',');
-	SC_MustGetFloat();
-	(*bag.Info->DamageFactors)[dmgType]=(fixed_t)(sc_Float*FRACUNIT);
+	sc.MustGetToken(',');
+	sc.MustGetFloat();
+	(*bag.Info->DamageFactors)[dmgType]=(fixed_t)(sc.Float*FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorDecal (AActor *defaults, Baggage &bag)
+static void ActorDecal (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->DecalGenerator = (FDecalBase *)intptr_t(int(FName(sc_String)));
+	sc.MustGetString();
+	defaults->DecalGenerator = (FDecalBase *)intptr_t(int(FName(sc.String)));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMaxStepHeight (AActor *defaults, Baggage &bag)
+static void ActorMaxStepHeight (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber ();
-	defaults->MaxStepHeight=sc_Number * FRACUNIT;
+	sc.MustGetNumber ();
+	defaults->MaxStepHeight=sc.Number * FRACUNIT;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorMaxDropoffHeight (AActor *defaults, Baggage &bag)
+static void ActorMaxDropoffHeight (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber ();
-	defaults->MaxDropOffHeight=sc_Number * FRACUNIT;
+	sc.MustGetNumber ();
+	defaults->MaxDropOffHeight=sc.Number * FRACUNIT;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorPoisonDamage (AActor *defaults, Baggage &bag)
+static void ActorPoisonDamage (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (AMETA_PoisonDamage, sc_Number);
+	sc.MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt (AMETA_PoisonDamage, sc.Number);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorFastSpeed (AActor *defaults, Baggage &bag)
+static void ActorFastSpeed (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_FastSpeed, fixed_t(sc_Float*FRACUNIT));
+	sc.MustGetFloat();
+	bag.Info->Class->Meta.SetMetaFixed (AMETA_FastSpeed, fixed_t(sc.Float*FRACUNIT));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorRadiusDamageFactor (AActor *defaults, Baggage &bag)
+static void ActorRadiusDamageFactor (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_RDFactor, fixed_t(sc_Float*FRACUNIT));
+	sc.MustGetFloat();
+	bag.Info->Class->Meta.SetMetaFixed (AMETA_RDFactor, fixed_t(sc.Float*FRACUNIT));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorCameraheight (AActor *defaults, Baggage &bag)
+static void ActorCameraheight (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	bag.Info->Class->Meta.SetMetaFixed (AMETA_CameraHeight, fixed_t(sc_Float*FRACUNIT));
+	sc.MustGetFloat();
+	bag.Info->Class->Meta.SetMetaFixed (AMETA_CameraHeight, fixed_t(sc.Float*FRACUNIT));
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorVSpeed (AActor *defaults, Baggage &bag)
+static void ActorVSpeed (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->momz = fixed_t(sc_Float*FRACUNIT);
+	sc.MustGetFloat();
+	defaults->momz = fixed_t(sc.Float*FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorGravity (AActor *defaults, Baggage &bag)
+static void ActorGravity (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat ();
+	sc.MustGetFloat ();
 
-	if (sc_Float < 0.f)
-		SC_ScriptError ("Gravity must not be negative.");
+	if (sc.Float < 0.f)
+		sc.ScriptError ("Gravity must not be negative.");
 
-	defaults->gravity = FLOAT2FIXED (sc_Float);
+	defaults->gravity = FLOAT2FIXED (sc.Float);
 
-	if (sc_Float == 0.f)
+	if (sc.Float == 0.f)
 		defaults->flags |= MF_NOGRAVITY;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ActorClearFlags (AActor *defaults, Baggage &bag)
+static void ActorClearFlags (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	defaults->flags=defaults->flags3=defaults->flags4=defaults->flags5=0;
 	defaults->flags2&=MF2_ARGSDEFINED;	// this flag must not be cleared
@@ -1608,7 +1608,7 @@ static void ActorClearFlags (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorMonster (AActor *defaults, Baggage &bag)
+static void ActorMonster (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	// sets the standard flag for a monster
 	defaults->flags|=MF_SHOOTABLE|MF_COUNTKILL|MF_SOLID; 
@@ -1620,7 +1620,7 @@ static void ActorMonster (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorProjectile (AActor *defaults, Baggage &bag)
+static void ActorProjectile (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	// sets the standard flags for a projectile
 	defaults->flags|=MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE; 
@@ -1637,120 +1637,120 @@ static void ActorProjectile (AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void AmmoBackpackAmount (AAmmo *defaults, Baggage &bag)
+static void AmmoBackpackAmount (FScanner &sc, AAmmo *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->BackpackAmount=sc_Number;
+	sc.MustGetNumber();
+	defaults->BackpackAmount=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void AmmoBackpackMaxAmount (AAmmo *defaults, Baggage &bag)
+static void AmmoBackpackMaxAmount (FScanner &sc, AAmmo *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->BackpackMaxAmount=sc_Number;
+	sc.MustGetNumber();
+	defaults->BackpackMaxAmount=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void AmmoDropAmount (AAmmo *defaults, Baggage &bag)
+static void AmmoDropAmount (FScanner &sc, AAmmo *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt (AIMETA_DropAmount, sc_Number);
+	sc.MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt (AIMETA_DropAmount, sc.Number);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorMaxSaveAmount (ABasicArmorBonus *defaults, Baggage &bag)
+static void ArmorMaxSaveAmount (FScanner &sc, ABasicArmorBonus *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->MaxSaveAmount = sc_Number;
+	sc.MustGetNumber();
+	defaults->MaxSaveAmount = sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorMaxBonus (ABasicArmorBonus *defaults, Baggage &bag)
+static void ArmorMaxBonus (FScanner &sc, ABasicArmorBonus *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->BonusCount = sc_Number;
+	sc.MustGetNumber();
+	defaults->BonusCount = sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorMaxBonusMax (ABasicArmorBonus *defaults, Baggage &bag)
+static void ArmorMaxBonusMax (FScanner &sc, ABasicArmorBonus *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->BonusMax = sc_Number;
+	sc.MustGetNumber();
+	defaults->BonusMax = sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorSaveAmount (AActor *defaults, Baggage &bag)
+static void ArmorSaveAmount (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
+	sc.MustGetNumber();
 	// Special case here because this property has to work for 2 unrelated classes
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		((ABasicArmorPickup*)defaults)->SaveAmount=sc_Number;
+		((ABasicArmorPickup*)defaults)->SaveAmount=sc.Number;
 	}
 	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
-		((ABasicArmorBonus*)defaults)->SaveAmount=sc_Number;
+		((ABasicArmorBonus*)defaults)->SaveAmount=sc.Number;
 	}
 	else
 	{
-		SC_ScriptError("\"%s\" requires an actor of type \"Armor\"\n", sc_String);
+		sc.ScriptError("\"%s\" requires an actor of type \"Armor\"\n", sc.String);
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void ArmorSavePercent (AActor *defaults, Baggage &bag)
+static void ArmorSavePercent (FScanner &sc, AActor *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	if (sc_Float<0.0f) sc_Float=0.0f;
-	if (sc_Float>100.0f) sc_Float=100.0f;
+	sc.MustGetFloat();
+	if (sc.Float<0.0f) sc.Float=0.0f;
+	if (sc.Float>100.0f) sc.Float=100.0f;
 	// Special case here because this property has to work for 2 unrelated classes
 	if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		((ABasicArmorPickup*)defaults)->SavePercent=fixed_t(sc_Float*FRACUNIT/100.0f);
+		((ABasicArmorPickup*)defaults)->SavePercent=fixed_t(sc.Float*FRACUNIT/100.0f);
 	}
 	else if (bag.Info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
-		((ABasicArmorBonus*)defaults)->SavePercent=fixed_t(sc_Float*FRACUNIT/100.0f);
+		((ABasicArmorBonus*)defaults)->SavePercent=fixed_t(sc.Float*FRACUNIT/100.0f);
 	}
 	else
 	{
-		SC_ScriptError("\"%s\" requires an actor of type \"Armor\"\n", sc_String);
+		sc.ScriptError("\"%s\" requires an actor of type \"Armor\"\n", sc.String);
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryAmount (AInventory *defaults, Baggage &bag)
+static void InventoryAmount (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->Amount=sc_Number;
+	sc.MustGetNumber();
+	defaults->Amount=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryIcon (AInventory *defaults, Baggage &bag)
+static void InventoryIcon (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->Icon = TexMan.AddPatch (sc_String);
+	sc.MustGetString();
+	defaults->Icon = TexMan.AddPatch (sc.String);
 	if (defaults->Icon <= 0)
 	{
-		defaults->Icon = TexMan.AddPatch (sc_String, ns_sprites);
+		defaults->Icon = TexMan.AddPatch (sc.String, ns_sprites);
 		if (defaults->Icon<=0)
 		{
 			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
@@ -1758,7 +1758,7 @@ static void InventoryIcon (AInventory *defaults, Baggage &bag)
 			if ((bag.Info->GameFilter == GAME_Any || bag.Info->GameFilter & gameinfo.gametype) &&
 				!(gameinfo.flags&GI_SHAREWARE))
 			{
-				Printf("Icon '%s' for '%s' not found\n", sc_String, bag.Info->Class->TypeName.GetChars());
+				Printf("Icon '%s' for '%s' not found\n", sc.String, bag.Info->Class->TypeName.GetChars());
 			}
 		}
 	}
@@ -1767,16 +1767,16 @@ static void InventoryIcon (AInventory *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void InventoryMaxAmount (AInventory *defaults, Baggage &bag)
+static void InventoryMaxAmount (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->MaxAmount=sc_Number;
+	sc.MustGetNumber();
+	defaults->MaxAmount=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryDefMaxAmount (AInventory *defaults, Baggage &bag)
+static void InventoryDefMaxAmount (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
 	defaults->MaxAmount = gameinfo.gametype == GAME_Heretic ? 16 : 25;
 }
@@ -1785,105 +1785,105 @@ static void InventoryDefMaxAmount (AInventory *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void InventoryPickupmsg (AInventory *defaults, Baggage &bag)
+static void InventoryPickupmsg (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
 	// allow game specific pickup messages
 	const char * games[] = {"Doom", "Heretic", "Hexen", "Raven", "Strife", NULL};
 	int gamemode[]={GAME_Doom, GAME_Heretic, GAME_Hexen, GAME_Raven, GAME_Strife};
 
-	SC_MustGetString();
-	int game = SC_MatchString(games);
+	sc.MustGetString();
+	int game = sc.MatchString(games);
 
-	if (game!=-1 && SC_CheckString(","))
+	if (game!=-1 && sc.CheckString(","))
 	{
-		SC_MustGetString();
+		sc.MustGetString();
 		if (!(gameinfo.gametype&gamemode[game])) return;
 	}
-	bag.Info->Class->Meta.SetMetaString(AIMETA_PickupMessage, sc_String);
+	bag.Info->Class->Meta.SetMetaString(AIMETA_PickupMessage, sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryPickupsound (AInventory *defaults, Baggage &bag)
+static void InventoryPickupsound (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->PickupSound=S_FindSound(sc_String);
+	sc.MustGetString();
+	defaults->PickupSound=S_FindSound(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryRespawntics (AInventory *defaults, Baggage &bag)
+static void InventoryRespawntics (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->RespawnTics=sc_Number;
+	sc.MustGetNumber();
+	defaults->RespawnTics=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryUsesound (AInventory *defaults, Baggage &bag)
+static void InventoryUsesound (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->UseSound=S_FindSound(sc_String);
+	sc.MustGetString();
+	defaults->UseSound=S_FindSound(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void InventoryGiveQuest (AInventory *defaults, Baggage &bag)
+static void InventoryGiveQuest (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt(AIMETA_GiveQuest, sc_Number);
+	sc.MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt(AIMETA_GiveQuest, sc.Number);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void HealthLowMessage (AHealth *defaults, Baggage &bag)
+static void HealthLowMessage (FScanner &sc, AHealth *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	bag.Info->Class->Meta.SetMetaInt(AIMETA_LowHealth, sc_Number);
-	SC_MustGetStringName(",");
-	SC_MustGetString();
-	bag.Info->Class->Meta.SetMetaString(AIMETA_LowHealthMessage, sc_String);
+	sc.MustGetNumber();
+	bag.Info->Class->Meta.SetMetaInt(AIMETA_LowHealth, sc.Number);
+	sc.MustGetStringName(",");
+	sc.MustGetString();
+	bag.Info->Class->Meta.SetMetaString(AIMETA_LowHealthMessage, sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PuzzleitemNumber (APuzzleItem *defaults, Baggage &bag)
+static void PuzzleitemNumber (FScanner &sc, APuzzleItem *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->PuzzleItemNumber=sc_Number;
+	sc.MustGetNumber();
+	defaults->PuzzleItemNumber=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PuzzleitemFailMsg (APuzzleItem *defaults, Baggage &bag)
+static void PuzzleitemFailMsg (FScanner &sc, APuzzleItem *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	bag.Info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, sc_String);
+	sc.MustGetString();
+	bag.Info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoGive1 (AWeapon *defaults, Baggage &bag)
+static void WeaponAmmoGive1 (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->AmmoGive1=sc_Number;
+	sc.MustGetNumber();
+	defaults->AmmoGive1=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoGive2 (AWeapon *defaults, Baggage &bag)
+static void WeaponAmmoGive2 (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->AmmoGive2=sc_Number;
+	sc.MustGetNumber();
+	defaults->AmmoGive2=sc.Number;
 }
 
 //==========================================================================
@@ -1894,165 +1894,165 @@ static void WeaponAmmoGive2 (AWeapon *defaults, Baggage &bag)
 //
 //==========================================================================
 
-static void WeaponAmmoType1 (AWeapon *defaults, Baggage &bag)
+static void WeaponAmmoType1 (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->AmmoType1 = fuglyname(sc_String);
+	sc.MustGetString();
+	defaults->AmmoType1 = fuglyname(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoType2 (AWeapon *defaults, Baggage &bag)
+static void WeaponAmmoType2 (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->AmmoType2 = fuglyname(sc_String);
+	sc.MustGetString();
+	defaults->AmmoType2 = fuglyname(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoUse1 (AWeapon *defaults, Baggage &bag)
+static void WeaponAmmoUse1 (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->AmmoUse1=sc_Number;
+	sc.MustGetNumber();
+	defaults->AmmoUse1=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponAmmoUse2 (AWeapon *defaults, Baggage &bag)
+static void WeaponAmmoUse2 (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->AmmoUse2=sc_Number;
+	sc.MustGetNumber();
+	defaults->AmmoUse2=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponKickback (AWeapon *defaults, Baggage &bag)
+static void WeaponKickback (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->Kickback=sc_Number;
+	sc.MustGetNumber();
+	defaults->Kickback=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponReadySound (AWeapon *defaults, Baggage &bag)
+static void WeaponReadySound (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->ReadySound=S_FindSound(sc_String);
+	sc.MustGetString();
+	defaults->ReadySound=S_FindSound(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponSelectionOrder (AWeapon *defaults, Baggage &bag)
+static void WeaponSelectionOrder (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->SelectionOrder=sc_Number;
+	sc.MustGetNumber();
+	defaults->SelectionOrder=sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponSisterWeapon (AWeapon *defaults, Baggage &bag)
+static void WeaponSisterWeapon (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->SisterWeaponType=fuglyname(sc_String);
+	sc.MustGetString();
+	defaults->SisterWeaponType=fuglyname(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponUpSound (AWeapon *defaults, Baggage &bag)
+static void WeaponUpSound (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->UpSound=S_FindSound(sc_String);
+	sc.MustGetString();
+	defaults->UpSound=S_FindSound(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WeaponYAdjust (AWeapon *defaults, Baggage &bag)
+static void WeaponYAdjust (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
-	SC_MustGetFloat();
-	defaults->YAdjust=fixed_t(sc_Float * FRACUNIT);
+	sc.MustGetFloat();
+	defaults->YAdjust=fixed_t(sc.Float * FRACUNIT);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WPieceValue (AWeaponPiece *defaults, Baggage &bag)
+static void WPieceValue (FScanner &sc, AWeaponPiece *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->PieceValue = 1 << (sc_Number-1);
+	sc.MustGetNumber();
+	defaults->PieceValue = 1 << (sc.Number-1);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void WPieceWeapon (AWeaponPiece *defaults, Baggage &bag)
+static void WPieceWeapon (FScanner &sc, AWeaponPiece *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->WeaponClass = fuglyname(sc_String);
+	sc.MustGetString();
+	defaults->WeaponClass = fuglyname(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerupColor (APowerupGiver *defaults, Baggage &bag)
+static void PowerupColor (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 {
 	int r;
 	int g;
 	int b;
 	int alpha;
 
-	if (SC_CheckNumber())
+	if (sc.CheckNumber())
 	{
-		r=clamp<int>(sc_Number, 0, 255);
-		SC_CheckString(",");
-		SC_MustGetNumber();
-		g=clamp<int>(sc_Number, 0, 255);
-		SC_CheckString(",");
-		SC_MustGetNumber();
-		b=clamp<int>(sc_Number, 0, 255);
+		r=clamp<int>(sc.Number, 0, 255);
+		sc.CheckString(",");
+		sc.MustGetNumber();
+		g=clamp<int>(sc.Number, 0, 255);
+		sc.CheckString(",");
+		sc.MustGetNumber();
+		b=clamp<int>(sc.Number, 0, 255);
 	}
 	else
 	{
-		SC_MustGetString();
+		sc.MustGetString();
 
-		if (SC_Compare("INVERSEMAP"))
+		if (sc.Compare("INVERSEMAP"))
 		{
 			defaults->BlendColor = INVERSECOLOR;
 			return;
 		}
-		else if (SC_Compare("GOLDMAP"))
+		else if (sc.Compare("GOLDMAP"))
 		{
 			defaults->BlendColor = GOLDCOLOR;
 			return;
 		}
 		// [BC] Yay, more hacks.
-		else if ( SC_Compare( "REDMAP" ))
+		else if ( sc.Compare( "REDMAP" ))
 		{
 			defaults->BlendColor = REDCOLOR;
 			return;
 		}
-		else if ( SC_Compare( "GREENMAP" ))
+		else if ( sc.Compare( "GREENMAP" ))
 		{
 			defaults->BlendColor = GREENCOLOR;
 			return;
 		}
 
-		int c = V_GetColor(NULL, sc_String);
+		int c = V_GetColor(NULL, sc.String);
 		r=RPART(c);
 		g=GPART(c);
 		b=BPART(c);
 	}
-	SC_CheckString(",");
-	SC_MustGetFloat();
-	alpha=int(sc_Float*255);
+	sc.CheckString(",");
+	sc.MustGetFloat();
+	alpha=int(sc.Float*255);
 	alpha=clamp<int>(alpha, 0, 255);
 	if (alpha!=0) defaults->BlendColor = MAKEARGB(alpha, r, g, b);
 	else defaults->BlendColor = 0;
@@ -2061,38 +2061,38 @@ static void PowerupColor (APowerupGiver *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PowerupDuration (APowerupGiver *defaults, Baggage &bag)
+static void PowerupDuration (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 {
-	SC_MustGetNumber();
-	defaults->EffectTics = sc_Number;
+	sc.MustGetNumber();
+	defaults->EffectTics = sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerupMode (APowerupGiver *defaults, Baggage &bag)
+static void PowerupMode (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 {
-	SC_MustGetString();
-	defaults->mode = (FName)sc_String;
+	sc.MustGetString();
+	defaults->mode = (FName)sc.String;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PowerupType (APowerupGiver *defaults, Baggage &bag)
+static void PowerupType (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 {
 	FString typestr;
 
-	SC_MustGetString();
-	typestr.Format ("Power%s", sc_String);
+	sc.MustGetString();
+	typestr.Format ("Power%s", sc.String);
 	const PClass * powertype=PClass::FindClass(typestr);
 	if (!powertype)
 	{
-		SC_ScriptError("Unknown powerup type '%s' in '%s'\n", sc_String, bag.Info->Class->TypeName.GetChars());
+		sc.ScriptError("Unknown powerup type '%s' in '%s'\n", sc.String, bag.Info->Class->TypeName.GetChars());
 	}
 	else if (!powertype->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
-		SC_ScriptError("Invalid powerup type '%s' in '%s'\n", sc_String, bag.Info->Class->TypeName.GetChars());
+		sc.ScriptError("Invalid powerup type '%s' in '%s'\n", sc.String, bag.Info->Class->TypeName.GetChars());
 	}
 	else
 	{
@@ -2109,21 +2109,21 @@ static void PowerupType (APowerupGiver *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerDisplayName (APlayerPawn *defaults, Baggage &bag)
+static void PlayerDisplayName (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	bag.Info->Class->Meta.SetMetaString (APMETA_DisplayName, sc_String);
+	sc.MustGetString ();
+	bag.Info->Class->Meta.SetMetaString (APMETA_DisplayName, sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerSoundClass (APlayerPawn *defaults, Baggage &bag)
+static void PlayerSoundClass (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
 	FString tmp;
 
-	SC_MustGetString ();
-	tmp = sc_String;
+	sc.MustGetString ();
+	tmp = sc.String;
 	tmp.ReplaceChars (' ', '_');
 	bag.Info->Class->Meta.SetMetaString (APMETA_SoundClass, tmp);
 }
@@ -2131,15 +2131,15 @@ static void PlayerSoundClass (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerColorRange (APlayerPawn *defaults, Baggage &bag)
+static void PlayerColorRange (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
 	int start, end;
 
-	SC_MustGetNumber ();
-	start = sc_Number;
-	SC_CheckString(",");
-	SC_MustGetNumber ();
-	end = sc_Number;
+	sc.MustGetNumber ();
+	start = sc.Number;
+	sc.CheckString(",");
+	sc.MustGetNumber ();
+	end = sc.Number;
 
 	if (start > end)
 		swap (start, end);
@@ -2150,38 +2150,38 @@ static void PlayerColorRange (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerAttackZOffset (APlayerPawn *defaults, Baggage &bag)
+static void PlayerAttackZOffset (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetFloat ();
-	defaults->AttackZOffset = FLOAT2FIXED (sc_Float);
+	sc.MustGetFloat ();
+	defaults->AttackZOffset = FLOAT2FIXED (sc.Float);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerJumpZ (APlayerPawn *defaults, Baggage &bag)
+static void PlayerJumpZ (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetFloat ();
-	defaults->JumpZ = FLOAT2FIXED (sc_Float);
+	sc.MustGetFloat ();
+	defaults->JumpZ = FLOAT2FIXED (sc.Float);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerSpawnClass (APlayerPawn *defaults, Baggage &bag)
+static void PlayerSpawnClass (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	if (SC_Compare ("Any"))
+	sc.MustGetString ();
+	if (sc.Compare ("Any"))
 		defaults->SpawnMask = 0;
-	else if (SC_Compare ("Fighter"))
+	else if (sc.Compare ("Fighter"))
 		defaults->SpawnMask |= MTF_FIGHTER;
-	else if (SC_Compare ("Cleric"))
+	else if (sc.Compare ("Cleric"))
 		defaults->SpawnMask |= MTF_CLERIC;
-	else if (SC_Compare ("Mage"))
+	else if (sc.Compare ("Mage"))
 		defaults->SpawnMask |= MTF_MAGE;
-	else if (IsNum(sc_String))
+	else if (IsNum(sc.String))
 	{
-		int val = strtol(sc_String, NULL, 0);
+		int val = strtol(sc.String, NULL, 0);
 		defaults->SpawnMask = (val*MTF_FIGHTER) & (MTF_FIGHTER|MTF_CLERIC|MTF_MAGE);
 	}
 }
@@ -2189,74 +2189,74 @@ static void PlayerSpawnClass (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerViewHeight (APlayerPawn *defaults, Baggage &bag)
+static void PlayerViewHeight (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetFloat ();
-	defaults->ViewHeight = FLOAT2FIXED (sc_Float);
+	sc.MustGetFloat ();
+	defaults->ViewHeight = FLOAT2FIXED (sc.Float);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerForwardMove (APlayerPawn *defaults, Baggage &bag)
+static void PlayerForwardMove (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetFloat ();
-	defaults->ForwardMove1 = defaults->ForwardMove2 = FLOAT2FIXED (sc_Float);
-	if (CheckFloatParm ())
-		defaults->ForwardMove2 = FLOAT2FIXED (sc_Float);
+	sc.MustGetFloat ();
+	defaults->ForwardMove1 = defaults->ForwardMove2 = FLOAT2FIXED (sc.Float);
+	if (CheckFloatParm (sc))
+		defaults->ForwardMove2 = FLOAT2FIXED (sc.Float);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerSideMove (APlayerPawn *defaults, Baggage &bag)
+static void PlayerSideMove (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetFloat ();
-	defaults->SideMove1 = defaults->SideMove2 = FLOAT2FIXED (sc_Float);
-	if (CheckFloatParm ())
-		defaults->SideMove2 = FLOAT2FIXED (sc_Float);
+	sc.MustGetFloat ();
+	defaults->SideMove1 = defaults->SideMove2 = FLOAT2FIXED (sc.Float);
+	if (CheckFloatParm (sc))
+		defaults->SideMove2 = FLOAT2FIXED (sc.Float);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerMaxHealth (APlayerPawn *defaults, Baggage &bag)
+static void PlayerMaxHealth (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetNumber ();
-	defaults->MaxHealth = sc_Number;
+	sc.MustGetNumber ();
+	defaults->MaxHealth = sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerRunHealth (APlayerPawn *defaults, Baggage &bag)
+static void PlayerRunHealth (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetNumber ();
-	defaults->RunHealth = sc_Number;
+	sc.MustGetNumber ();
+	defaults->RunHealth = sc.Number;
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerMorphWeapon (APlayerPawn *defaults, Baggage &bag)
+static void PlayerMorphWeapon (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	defaults->MorphWeapon = FName(sc_String);
+	sc.MustGetString ();
+	defaults->MorphWeapon = FName(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerScoreIcon (APlayerPawn *defaults, Baggage &bag)
+static void PlayerScoreIcon (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	defaults->ScoreIcon = TexMan.AddPatch (sc_String);
+	sc.MustGetString ();
+	defaults->ScoreIcon = TexMan.AddPatch (sc.String);
 	if (defaults->ScoreIcon <= 0)
 	{
-		defaults->ScoreIcon = TexMan.AddPatch (sc_String, ns_sprites);
+		defaults->ScoreIcon = TexMan.AddPatch (sc.String, ns_sprites);
 		if (defaults->ScoreIcon <= 0)
 		{
-			Printf("Icon '%s' for '%s' not found\n", sc_String, bag.Info->Class->TypeName.GetChars ());
+			Printf("Icon '%s' for '%s' not found\n", sc.String, bag.Info->Class->TypeName.GetChars ());
 		}
 	}
 }
@@ -2264,11 +2264,14 @@ static void PlayerScoreIcon (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerCrouchSprite (APlayerPawn *defaults, Baggage &bag)
+static void PlayerCrouchSprite (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	for (unsigned int i = 0; i < sc_StringLen; i++) sc_String[i] = toupper (sc_String[i]);
-	defaults->crouchsprite = GetSpriteIndex (sc_String);
+	sc.MustGetString ();
+	for (int i = 0; i < sc.StringLen; i++)
+	{
+		sc.String[i] = toupper (sc.String[i]);
+	}
+	defaults->crouchsprite = GetSpriteIndex (sc.String);
 }
 
 //==========================================================================
@@ -2276,7 +2279,7 @@ static void PlayerCrouchSprite (APlayerPawn *defaults, Baggage &bag)
 // [GRB] Store start items in drop item list
 //
 //==========================================================================
-static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
+static void PlayerStartItem (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
 	// create a linked list of dropitems
 	if (!bag.DropItemSet)
@@ -2287,13 +2290,13 @@ static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
 
 	FDropItem * di=new FDropItem;
 
-	SC_MustGetString();
-	di->Name = sc_String;
+	sc.MustGetString();
+	di->Name = sc.String;
 	di->probability = 255;
 	di->amount = 1;
-	if (CheckNumParm())
+	if (CheckNumParm(sc))
 	{
-		di->amount = sc_Number;
+		di->amount = sc.Number;
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
@@ -2302,50 +2305,50 @@ static void PlayerStartItem (APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void PlayerInvulMode (APlayerPawn *defaults, Baggage &bag)
+static void PlayerInvulMode (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	bag.Info->Class->Meta.SetMetaInt (APMETA_InvulMode, (FName)sc_String);
+	sc.MustGetString ();
+	bag.Info->Class->Meta.SetMetaInt (APMETA_InvulMode, (FName)sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerHealRadius (APlayerPawn *defaults, Baggage &bag)
+static void PlayerHealRadius (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	bag.Info->Class->Meta.SetMetaInt (APMETA_HealingRadius, (FName)sc_String);
+	sc.MustGetString ();
+	bag.Info->Class->Meta.SetMetaInt (APMETA_HealingRadius, (FName)sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void PlayerHexenArmor (APlayerPawn *defaults, Baggage &bag)
+static void PlayerHexenArmor (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
 	for (int i=0;i<5;i++)
 	{
-		SC_MustGetFloat ();
-		bag.Info->Class->Meta.SetMetaFixed (APMETA_Hexenarmor0+i, FLOAT2FIXED (sc_Float));
-		if (i!=4) SC_MustGetStringName(",");
+		sc.MustGetFloat ();
+		bag.Info->Class->Meta.SetMetaFixed (APMETA_Hexenarmor0+i, FLOAT2FIXED (sc.Float));
+		if (i!=4) sc.MustGetStringName(",");
 	}
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void EggFXMonsterClass (AMorphProjectile *defaults, Baggage &bag)
+static void EggFXMonsterClass (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	defaults->MonsterClass = FName(sc_String);
+	sc.MustGetString ();
+	defaults->MonsterClass = FName(sc.String);
 }
 
 //==========================================================================
 //
 //==========================================================================
-static void EggFXPlayerClass (AMorphProjectile *defaults, Baggage &bag)
+static void EggFXPlayerClass (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
 {
-	SC_MustGetString ();
-	defaults->PlayerClass = FName(sc_String);
+	sc.MustGetString ();
+	defaults->PlayerClass = FName(sc.String);
 }
 
 //==========================================================================
@@ -2537,22 +2540,22 @@ static const ActorProps *is_actorprop (const char *str)
 //
 //==========================================================================
 
-void ParseActorProperty(Baggage &bag)
+void ParseActorProperty(FScanner &sc, Baggage &bag)
 {
-	strlwr (sc_String);
+	strlwr (sc.String);
 
-	FString propname = sc_String;
+	FString propname = sc.String;
 
-	if (SC_CheckString ("."))
+	if (sc.CheckString ("."))
 	{
-		SC_MustGetString ();
+		sc.MustGetString ();
 		propname += '.';
-		strlwr (sc_String);
-		propname += sc_String;
+		strlwr (sc.String);
+		propname += sc.String;
 	}
 	else
 	{
-		SC_UnGet ();
+		sc.UnGet ();
 	}
 
 	const ActorProps *prop = is_actorprop (propname.GetChars());
@@ -2561,16 +2564,16 @@ void ParseActorProperty(Baggage &bag)
 	{
 		if (!bag.Info->Class->IsDescendantOf(prop->type))
 		{
-			SC_ScriptError("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), prop->type->TypeName.GetChars());
+			sc.ScriptError("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), prop->type->TypeName.GetChars());
 		}
 		else
 		{
-			prop->Handler ((AActor *)bag.Info->Class->Defaults, bag);
+			prop->Handler (sc, (AActor *)bag.Info->Class->Defaults, bag);
 		}
 	}
 	else
 	{
-		SC_ScriptError("\"%s\" is an unknown actor property\n", propname.GetChars());
+		sc.ScriptError("\"%s\" is an unknown actor property\n", propname.GetChars());
 	}
 }
 
@@ -2581,11 +2584,11 @@ void ParseActorProperty(Baggage &bag)
 //
 //==========================================================================
 
-void FinishActor(FActorInfo *info, Baggage &bag)
+void FinishActor(FScanner &sc, FActorInfo *info, Baggage &bag)
 {
 	AActor *defaults = (AActor*)info->Class->Defaults;
 
-	FinishStates (info, defaults, bag);
+	FinishStates (sc, info, defaults, bag);
 	InstallStates (info, defaults);
 	ProcessStates (info->OwnedStates, info->NumOwnedStates);
 	if (bag.DropItemSet)

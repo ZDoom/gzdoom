@@ -245,7 +245,7 @@ void AActor::Serialize (FArchive &arc)
 	}
 	arc << effects
 		<< alpha
-		<< alphacolor
+		<< fillcolor
 		<< pitch
 		<< roll
 		<< Sector
@@ -387,7 +387,7 @@ void AActor::Serialize (FArchive &arc)
 		touching_sectorlist = NULL;
 		LinkToWorld (Sector);
 		AddToHash ();
-		SetShade (alphacolor);
+		SetShade (fillcolor);
 		if (player)
 		{
 			if (playeringame[player - players] && 
@@ -1125,7 +1125,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 			}
 			else
 			{
-				mo->RenderStyle = deh.ExplosionStyle;
+				mo->RenderStyle = ERenderStyle(deh.ExplosionStyle);
 				mo->alpha = deh.ExplosionAlpha;
 			}
 		}
@@ -2488,12 +2488,12 @@ bool AActor::IsOkayToAttack (AActor *link)
 void AActor::SetShade (DWORD rgb)
 {
 	PalEntry *entry = (PalEntry *)&rgb;
-	alphacolor = rgb | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);
+	fillcolor = rgb | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);
 }
 
 void AActor::SetShade (int r, int g, int b)
 {
-	alphacolor = MAKEARGB(ColorMatcher.Pick (r, g, b), r, g, b);
+	fillcolor = MAKEARGB(ColorMatcher.Pick (r, g, b), r, g, b);
 }
 
 //
@@ -2607,6 +2607,7 @@ void AActor::Tick ()
 	else if (flags & MF_STEALTH)
 	{
 		// [RH] Fade a stealth monster in and out of visibility
+		RenderStyle.Flags &= ~STYLEF_Alpha1;
 		if (visdir > 0)
 		{
 			alpha += 2*FRACUNIT/TICRATE;

@@ -40,6 +40,7 @@
 #include "info.h"
 
 #include "doomdef.h"
+#include "r_blend.h"
 
 //
 // NOTES: AActor
@@ -330,24 +331,6 @@ enum
 	MF_STRIFEx8000000 = 0,		// seems related to MF_SHADOW
 };
 
-enum ERenderStyle
-{
-	STYLE_None,				// Do not draw
-	STYLE_Normal,			// Normal; just copy the image to the screen
-	STYLE_Fuzzy,			// Draw silhouette using "fuzz" effect
-	STYLE_SoulTrans,		// Draw translucent with amount in r_transsouls
-	STYLE_OptFuzzy,			// Draw as fuzzy or translucent, based on user preference
-	STYLE_Stencil,			// Fill image interior with alphacolor
-
-	// The following styles can affect visibility in P_CheckSight()
-	STYLE_Translucent=64,	// Draw translucent
-	STYLE_Add,				// Draw additive
-	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
-	STYLE_TranslucentStencil,
-
-	STYLE_Count
-};
-
 #define TRANSLUC25			(FRACUNIT/4)
 #define TRANSLUC33			(FRACUNIT/3)
 #define TRANSLUC50			(FRACUNIT/2)
@@ -623,13 +606,13 @@ public:
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
 	fixed_t			scaleX, scaleY;		// Scaling values; FRACUNIT is normal size
-	BYTE			RenderStyle;		// Style to draw this actor with
+	FRenderStyle	RenderStyle;		// Style to draw this actor with
 	DWORD			renderflags;		// Different rendering flags
 	int				picnum;				// Draw this instead of sprite if != 0xffff
 	SWORD			TIDtoHate;			// TID of things to hate (0 if none)
 	DWORD			effects;			// [RH] see p_effect.h
 	fixed_t			alpha;
-	DWORD			alphacolor;			// Color to draw when STYLE_Shaded
+	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
 
 // interaction info
 	fixed_t			pitch, roll;

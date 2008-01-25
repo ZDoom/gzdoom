@@ -82,16 +82,16 @@ const PClass *QuestItemClasses[31];
 //
 //==========================================================================
 
-void ParseConstant (PSymbolTable * symt, PClass *cls)
+void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 {
 	// Read the type and make sure it's int.
 	// (Maybe there will be other types later.)
-	SC_MustGetToken(TK_Int);
-	SC_MustGetToken(TK_Identifier);
-	FName symname = sc_String;
-	SC_MustGetToken('=');
-	int expr = ParseExpression (false, cls);
-	SC_MustGetToken(';');
+	sc.MustGetToken(TK_Int);
+	sc.MustGetToken(TK_Identifier);
+	FName symname = sc.String;
+	sc.MustGetToken('=');
+	int expr = ParseExpression (sc, false, cls);
+	sc.MustGetToken(';');
 
 	int val = EvalExpressionI (expr, NULL, cls);
 	PSymbolConst *sym = new PSymbolConst;
@@ -101,7 +101,7 @@ void ParseConstant (PSymbolTable * symt, PClass *cls)
 	if (symt->AddSymbol (sym) == NULL)
 	{
 		delete sym;
-		SC_ScriptError ("'%s' is already defined in class '%s'.",
+		sc.ScriptError ("'%s' is already defined in class '%s'.",
 			symname.GetChars(), cls->TypeName.GetChars());
 	}
 }
@@ -114,19 +114,19 @@ void ParseConstant (PSymbolTable * symt, PClass *cls)
 //
 //==========================================================================
 
-void ParseEnum (PSymbolTable * symt, PClass *cls)
+void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 {
 	int currvalue = 0;
 
-	SC_MustGetToken('{');
-	while (!SC_CheckToken('}'))
+	sc.MustGetToken('{');
+	while (!sc.CheckToken('}'))
 	{
-		SC_MustGetToken(TK_Identifier);
-		FName symname = sc_String;
-		if (SC_CheckToken('='))
+		sc.MustGetToken(TK_Identifier);
+		FName symname = sc.String;
+		if (sc.CheckToken('='))
 		{
-			int expr = ParseExpression(false, cls);
-			currvalue = EvalExpressionI (expr, NULL, cls);
+			int expr = ParseExpression(sc, false, cls);
+			currvalue = EvalExpressionI(expr, NULL, cls);
 		}
 		PSymbolConst *sym = new PSymbolConst;
 		sym->SymbolName = symname;
@@ -135,15 +135,15 @@ void ParseEnum (PSymbolTable * symt, PClass *cls)
 		if (symt->AddSymbol (sym) == NULL)
 		{
 			delete sym;
-			SC_ScriptError ("'%s' is already defined in class '%s'.",
+			sc.ScriptError ("'%s' is already defined in class '%s'.",
 				symname.GetChars(), cls->TypeName.GetChars());
 		}
 		// This allows a comma after the last value but doesn't enforce it.
-		if (SC_CheckToken('}')) break;
-		SC_MustGetToken(',');
+		if (sc.CheckToken('}')) break;
+		sc.MustGetToken(',');
 		currvalue++;
 	}
-	SC_MustGetToken(';');
+	sc.MustGetToken(';');
 }
 
 //==========================================================================
@@ -156,7 +156,7 @@ void ParseEnum (PSymbolTable * symt, PClass *cls)
 //
 //==========================================================================
 
-static void ParseActionDef (PClass *cls)
+static void ParseActionDef (FScanner &sc, PClass *cls)
 {
 #define OPTIONAL		1
 #define EVAL			2
@@ -166,18 +166,18 @@ static void ParseActionDef (PClass *cls)
 	FName funcname;
 	FString args;
 
-	SC_MustGetToken(TK_Native);
-	SC_MustGetToken(TK_Identifier);
-	funcname = sc_String;
-	afd = FindFunction(sc_String);
+	sc.MustGetToken(TK_Native);
+	sc.MustGetToken(TK_Identifier);
+	funcname = sc.String;
+	afd = FindFunction(sc.String);
 	if (afd == NULL)
 	{
-		SC_ScriptError ("The function '%s' has not been exported from the executable.", sc_String);
+		sc.ScriptError ("The function '%s' has not been exported from the executable.", sc.String);
 	}
-	SC_MustGetToken('(');
-	if (!SC_CheckToken(')'))
+	sc.MustGetToken('(');
+	if (!sc.CheckToken(')'))
 	{
-		while (sc_TokenType != ')')
+		while (sc.TokenType != ')')
 		{
 			int flags = 0;
 			char type = '@';
@@ -185,19 +185,19 @@ static void ParseActionDef (PClass *cls)
 			// Retrieve flags before type name
 			for (;;)
 			{
-				if (SC_CheckToken(TK_Optional))
+				if (sc.CheckToken(TK_Optional))
 				{
 					flags |= OPTIONAL;
 				}
-				else if (SC_CheckToken(TK_Eval))
+				else if (sc.CheckToken(TK_Eval))
 				{
 					flags |= EVAL;
 				}
-				else if (SC_CheckToken(TK_EvalNot))
+				else if (sc.CheckToken(TK_EvalNot))
 				{
 					flags |= EVALNOT;
 				}
-				else if (SC_CheckToken(TK_Coerce) || SC_CheckToken(TK_Native))
+				else if (sc.CheckToken(TK_Coerce) || sc.CheckToken(TK_Native))
 				{
 				}
 				else
@@ -206,8 +206,8 @@ static void ParseActionDef (PClass *cls)
 				}
 			}
 			// Read the variable type
-			SC_MustGetAnyToken();
-			switch (sc_TokenType)
+			sc.MustGetAnyToken();
+			switch (sc.TokenType)
 			{
 			case TK_Bool:		type = 'i';		break;
 			case TK_Int:		type = 'i';		break;
@@ -218,28 +218,28 @@ static void ParseActionDef (PClass *cls)
 			case TK_State:		type = 'l';		break;
 			case TK_Color:		type = 'c';		break;
 			case TK_Class:
-				SC_MustGetToken('<');
-				SC_MustGetToken(TK_Identifier);	// Skip class name, since the parser doesn't care
-				SC_MustGetToken('>');
+				sc.MustGetToken('<');
+				sc.MustGetToken(TK_Identifier);	// Skip class name, since the parser doesn't care
+				sc.MustGetToken('>');
 				type = 'm';
 				break;
 			case TK_Ellipsis:
 				type = '+';
-				SC_MustGetToken(')');
-				SC_UnGet();
+				sc.MustGetToken(')');
+				sc.UnGet();
 				break;
 			default:
-				SC_ScriptError ("Unknown variable type %s", SC_TokenName(sc_TokenType, sc_String).GetChars());
+				sc.ScriptError ("Unknown variable type %s", sc.TokenName(sc.TokenType, sc.String).GetChars());
 				break;
 			}
 			// Read the optional variable name
-			if (!SC_CheckToken(',') && !SC_CheckToken(')'))
+			if (!sc.CheckToken(',') && !sc.CheckToken(')'))
 			{
-				SC_MustGetToken(TK_Identifier);
+				sc.MustGetToken(TK_Identifier);
 			}
 			else
 			{
-				SC_UnGet();
+				sc.UnGet();
 			}
 			// If eval or evalnot were a flag, hey the decorate parser doesn't actually care about the type.
 			if (flags & EVALNOT)
@@ -258,14 +258,14 @@ static void ParseActionDef (PClass *cls)
 	#undef EVAL
 	#undef EVALNOT
 			args += type;
-			SC_MustGetAnyToken();
-			if (sc_TokenType != ',' && sc_TokenType != ')')
+			sc.MustGetAnyToken();
+			if (sc.TokenType != ',' && sc.TokenType != ')')
 			{
-				SC_ScriptError ("Expected ',' or ')' but got %s instead", SC_TokenName(sc_TokenType, sc_String).GetChars());
+				sc.ScriptError ("Expected ',' or ')' but got %s instead", sc.TokenName(sc.TokenType, sc.String).GetChars());
 			}
 		}
 	}
-	SC_MustGetToken(';');
+	sc.MustGetToken(';');
 	PSymbolActionFunction *sym = new PSymbolActionFunction;
 	sym->SymbolName = funcname;
 	sym->SymbolType = SYM_ActionFunction;
@@ -274,7 +274,7 @@ static void ParseActionDef (PClass *cls)
 	if (cls->Symbols.AddSymbol (sym) == NULL)
 	{
 		delete sym;
-		SC_ScriptError ("'%s' is already defined in class '%s'.",
+		sc.ScriptError ("'%s' is already defined in class '%s'.",
 			funcname.GetChars(), cls->TypeName.GetChars());
 	}
 }
@@ -284,27 +284,27 @@ static void ParseActionDef (PClass *cls)
 // Starts a new actor definition
 //
 //==========================================================================
-static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
+static FActorInfo *CreateNewActor(FScanner &sc, FActorInfo **parentc, Baggage *bag)
 {
 	FName typeName;
 
 	// Get actor name
-	SC_MustGetString();
+	sc.MustGetString();
 	
-	char * colon = strchr(sc_String, ':');
+	char *colon = strchr(sc.String, ':');
 	if (colon != NULL)
 	{
 		*colon++ = 0;
 	}
 
-	if (PClass::FindClass (sc_String) != NULL)
+	if (PClass::FindClass (sc.String) != NULL)
 	{
-		SC_ScriptError ("Actor %s is already defined.", sc_String);
+		sc.ScriptError ("Actor %s is already defined.", sc.String);
 	}
 
-	typeName = sc_String;
+	typeName = sc.String;
 
-	PClass * parent = RUNTIME_CLASS(AActor);
+	PClass *parent = RUNTIME_CLASS(AActor);
 	if (parentc)
 	{
 		*parentc = NULL;
@@ -313,10 +313,10 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 		// without having resort to C-mode (which disallows periods in actor names.)
 		if (colon == NULL)
 		{
-			SC_MustGetString ();
-			if (sc_String[0]==':')
+			sc.MustGetString ();
+			if (sc.String[0]==':')
 			{
-				colon = sc_String + 1;
+				colon = sc.String + 1;
 			}
 		}
 		
@@ -324,8 +324,8 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 		{
 			if (colon[0] == 0)
 			{
-				SC_MustGetString ();
-				colon = sc_String;
+				sc.MustGetString ();
+				colon = sc.String;
 			}
 		}
 			
@@ -335,22 +335,22 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 
 			if (parent == NULL)
 			{
-				SC_ScriptError ("Parent type '%s' not found", colon);
+				sc.ScriptError ("Parent type '%s' not found", colon);
 			}
 			else if (parent->ActorInfo == NULL)
 			{
-				SC_ScriptError ("Parent type '%s' is not an actor", colon);
+				sc.ScriptError ("Parent type '%s' is not an actor", colon);
 			}
 			else
 			{
 				*parentc = parent->ActorInfo;
 			}
 		}
-		else SC_UnGet();
+		else sc.UnGet();
 	}
 
-	PClass * ti = parent->CreateDerivedClass (typeName, parent->Size);
-	FActorInfo * info = ti->ActorInfo;
+	PClass *ti = parent->CreateDerivedClass (typeName, parent->Size);
+	FActorInfo *info = ti->ActorInfo;
 
 	MakeStateDefines(parent->ActorInfo->StateList);
 
@@ -372,38 +372,38 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 	}
 
 	// Check for "replaces"
-	SC_MustGetString ();
-	if (SC_Compare ("replaces"))
+	sc.MustGetString ();
+	if (sc.Compare ("replaces"))
 	{
 		const PClass *replacee;
 
 		// Get actor name
-		SC_MustGetString ();
-		replacee = PClass::FindClass (sc_String);
+		sc.MustGetString ();
+		replacee = PClass::FindClass (sc.String);
 
 		if (replacee == NULL)
 		{
-			SC_ScriptError ("Replaced type '%s' not found", sc_String);
+			sc.ScriptError ("Replaced type '%s' not found", sc.String);
 		}
 		else if (replacee->ActorInfo == NULL)
 		{
-			SC_ScriptError ("Replaced type '%s' is not an actor", sc_String);
+			sc.ScriptError ("Replaced type '%s' is not an actor", sc.String);
 		}
 		replacee->ActorInfo->Replacement = ti->ActorInfo;
 		ti->ActorInfo->Replacee = replacee->ActorInfo;
 	}
 	else
 	{
-		SC_UnGet();
+		sc.UnGet();
 	}
 
 	// Now, after the actor names have been parsed, it is time to switch to C-mode 
 	// for the rest of the actor definition.
-	SC_SetCMode (true);
-	if (SC_CheckNumber()) 
+	sc.SetCMode (true);
+	if (sc.CheckNumber()) 
 	{
-		if (sc_Number>=-1 && sc_Number<32768) info->DoomEdNum = sc_Number;
-		else SC_ScriptError ("DoomEdNum must be in the range [-1,32767]");
+		if (sc.Number>=-1 && sc.Number<32768) info->DoomEdNum = sc.Number;
+		else sc.ScriptError ("DoomEdNum must be in the range [-1,32767]");
 	}
 	if (parent == RUNTIME_CLASS(AWeapon))
 	{
@@ -419,7 +419,7 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc, Baggage *bag)
 // Reads an actor definition
 //
 //==========================================================================
-void ParseActor()
+void ParseActor(FScanner &sc)
 {
 	FActorInfo * info=NULL;
 	Baggage bag;
@@ -428,43 +428,43 @@ void ParseActor()
 	{
 		FActorInfo * parent;
 
-		info=CreateNewActor(&parent, &bag);
-		SC_MustGetToken('{');
-		while (SC_MustGetAnyToken(), sc_TokenType != '}')
+		info = CreateNewActor(sc, &parent, &bag);
+		sc.MustGetToken('{');
+		while (sc.MustGetAnyToken(), sc.TokenType != '}')
 		{
-			switch (sc_TokenType)
+			switch (sc.TokenType)
 			{
 			case TK_Action:
-				ParseActionDef (info->Class);
+				ParseActionDef (sc, info->Class);
 				break;
 
 			case TK_Const:
-				ParseConstant (&info->Class->Symbols, info->Class);
+				ParseConstant (sc, &info->Class->Symbols, info->Class);
 				break;
 
 			case TK_Enum:
-				ParseEnum (&info->Class->Symbols, info->Class);
+				ParseEnum (sc, &info->Class->Symbols, info->Class);
 				break;
 
 			case TK_Identifier:
 				// other identifier related checks here
 			case TK_Projectile:	// special case: both keyword and property name
-				ParseActorProperty(bag);
+				ParseActorProperty(sc, bag);
 				break;
 
 			case '+':
 			case '-':
-				ParseActorFlag(bag, sc_TokenType);
+				ParseActorFlag(sc, bag, sc.TokenType);
 				break;
 
 			default:
-				SC_ScriptError("Unexpected '%s' in definition of '%s'", sc_String, bag.Info->Class->TypeName.GetChars());
+				sc.ScriptError("Unexpected '%s' in definition of '%s'", sc.String, bag.Info->Class->TypeName.GetChars());
 				break;
 			}
 
 		}
 
-		FinishActor(info, bag);
+		FinishActor(sc, info, bag);
 	}
 
 	catch(CRecoverableError & e)
@@ -476,13 +476,13 @@ void ParseActor()
 	catch (...)
 	{
 		if (info)
-			SC_ScriptError("Unexpected error during parsing of actor %s", info->Class->TypeName.GetChars());
+			sc.ScriptError("Unexpected error during parsing of actor %s", info->Class->TypeName.GetChars());
 		else
-			SC_ScriptError("Unexpected error during parsing of actor definitions");
+			sc.ScriptError("Unexpected error during parsing of actor definitions");
 	}
 #endif
 
-	SC_SetCMode (false);
+	sc.SetCMode (false);
 }
 
 //==========================================================================
@@ -635,52 +635,52 @@ void FinishThingdef()
 //
 //==========================================================================
 
-void ParseClass()
+void ParseClass(FScanner &sc)
 {
 	Baggage bag;
 	PClass *cls;
 	FName classname;
 	FName supername;
 
-	SC_MustGetToken(TK_Identifier);	// class name
-	classname = sc_String;
-	SC_MustGetToken(TK_Extends);	// because I'm not supporting Object
-	SC_MustGetToken(TK_Identifier);	// superclass name
-	supername = sc_String;
-	SC_MustGetToken(TK_Native);		// use actor definitions for your own stuff
-	SC_MustGetToken('{');
+	sc.MustGetToken(TK_Identifier);	// class name
+	classname = sc.String;
+	sc.MustGetToken(TK_Extends);	// because I'm not supporting Object
+	sc.MustGetToken(TK_Identifier);	// superclass name
+	supername = sc.String;
+	sc.MustGetToken(TK_Native);		// use actor definitions for your own stuff
+	sc.MustGetToken('{');
 
 	cls = const_cast<PClass*>(PClass::FindClass (classname));
 	if (cls == NULL)
 	{
-		SC_ScriptError ("'%s' is not a native class", classname.GetChars());
+		sc.ScriptError ("'%s' is not a native class", classname.GetChars());
 	}
 	if (cls->ParentClass == NULL || cls->ParentClass->TypeName != supername)
 	{
-		SC_ScriptError ("'%s' does not extend '%s'", classname.GetChars(), supername.GetChars());
+		sc.ScriptError ("'%s' does not extend '%s'", classname.GetChars(), supername.GetChars());
 	}
 	bag.Info = cls->ActorInfo;
 
-	SC_MustGetAnyToken();
-	while (sc_TokenType != '}')
+	sc.MustGetAnyToken();
+	while (sc.TokenType != '}')
 	{
-		if (sc_TokenType == TK_Action)
+		if (sc.TokenType == TK_Action)
 		{
-			ParseActionDef(cls);
+			ParseActionDef(sc, cls);
 		}
-		else if (sc_TokenType == TK_Const)
+		else if (sc.TokenType == TK_Const)
 		{
-			ParseConstant(&cls->Symbols, cls);
+			ParseConstant(sc, &cls->Symbols, cls);
 		}
-		else if (sc_TokenType == TK_Enum)
+		else if (sc.TokenType == TK_Enum)
 		{
-			ParseEnum(&cls->Symbols, cls);
+			ParseEnum(sc, &cls->Symbols, cls);
 		}
 		else
 		{
-			FString tokname = SC_TokenName(sc_TokenType, sc_String);
-			SC_ScriptError ("Expected 'action', 'const' or 'enum' but got %s", tokname.GetChars());
+			FString tokname = sc.TokenName(sc.TokenType, sc.String);
+			sc.ScriptError ("Expected 'action', 'const' or 'enum' but got %s", tokname.GetChars());
 		}
-		SC_MustGetAnyToken();
+		sc.MustGetAnyToken();
 	}
 }

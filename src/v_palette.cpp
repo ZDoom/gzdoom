@@ -59,11 +59,11 @@ extern "C" {
 FDynamicColormap NormalLight;
 }
 FPalette GPalette;
-BYTE InverseColormap[NUMCOLORMAPS*256];
-BYTE GoldColormap[NUMCOLORMAPS*256];
+BYTE InverseColormap[256];
+BYTE GoldColormap[256];
 // [BC] New Skulltag colormaps.
-BYTE RedColormap[NUMCOLORMAPS*256];
-BYTE GreenColormap[NUMCOLORMAPS*256];
+BYTE RedColormap[256];
+BYTE GreenColormap[256];
 int Near255;
 
 static void FreeSpecialLights();;
@@ -386,7 +386,7 @@ void InitPalette ()
 	// build special maps (e.g. invulnerability)
 	int intensity;
 
-	// Doom invulnerability is an inverted grayscale
+	// Doom invulnerability is an inverted grayscale.
 	// Strife uses it when firing the Sigil
 	shade = InverseColormap;
 
@@ -396,10 +396,10 @@ void InitPalette ()
 			(GPalette.BaseColors[c].r * 77 +
 			 GPalette.BaseColors[c].g * 143 +
 			 GPalette.BaseColors[c].b * 37)) >> 8;
-		*shade++ = ColorMatcher.Pick (intensity, intensity, intensity);
+		shade[c] = ColorMatcher.Pick (intensity, intensity, intensity);
 	}
 
-	// Heretic invulnerability is a golden shade
+	// Heretic invulnerability is a golden shade.
 	shade = GoldColormap;
 
 	for (c = 0; c < 256; c++)
@@ -407,7 +407,7 @@ void InitPalette ()
 		intensity = GPalette.BaseColors[c].r * 77 +
 					GPalette.BaseColors[c].g * 143 +
 					GPalette.BaseColors[c].b * 37;
-		*shade++ = ColorMatcher.Pick (
+		shade[c] = ColorMatcher.Pick (
 			MIN (255, (intensity+intensity/2)>>8), intensity>>8, 0);
 	}
 
@@ -418,7 +418,7 @@ void InitPalette ()
 		intensity = ((GPalette.BaseColors[c].r * 77 +
 			 GPalette.BaseColors[c].g * 143 +
 			 GPalette.BaseColors[c].b * 37));
-		*shade++ = ColorMatcher.Pick (
+		shade[c] = ColorMatcher.Pick (
 			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), 0, 0 );
 	}
 
@@ -429,8 +429,10 @@ void InitPalette ()
 		intensity = GPalette.BaseColors[c].r * 77 +
 					GPalette.BaseColors[c].g * 143 +
 					GPalette.BaseColors[c].b * 37;
-		*shade++ = ColorMatcher.Pick (
-			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), intensity>>8 );
+		shade[c] = ColorMatcher.Pick (
+			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ),
+			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), 
+			intensity>>8 );
 	}
 }
 
@@ -743,7 +745,7 @@ void FDynamicColormap::BuildLights ()
 			}
 		}
 		else
-		{ // Colored light, so do the slower thing
+		{ // Colored light, so do the (slightly) slower thing
 			for (c = 0; c < 256; c++)
 			{
 				*shade++ = ColorMatcher.Pick (

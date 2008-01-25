@@ -47,12 +47,12 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void ParseActor();
-void ParseClass();
-void ParseGlobalConst();
-void ParseGlobalEnum();
+void ParseActor(FScanner &sc);
+void ParseClass(FScanner &sc);
+void ParseGlobalConst(FScanner &sc);
+void ParseGlobalEnum(FScanner &sc);
 void FinishThingdef();
-void ParseOldDecoration(EDefinitionType def);
+void ParseOldDecoration(FScanner &sc, EDefinitionType def);
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
 
@@ -64,65 +64,64 @@ void ParseOldDecoration(EDefinitionType def);
 //
 //==========================================================================
 
-static void ParseDecorate ()
+static void ParseDecorate (FScanner &sc)
 {
-	int recursion=0;
 	int lump;
 
 	// Get actor class name.
-	while (true)
+	for(;;)
 	{
-		SC_SavePos();
-		if (!SC_GetToken ())
+		FScanner::SavedPos pos = sc.SavePos();
+		if (!sc.GetToken ())
 		{
-			if (recursion==0) return;
-			SC_Close();
-			SC_RestoreScriptState();
-			recursion--;
-			continue;
+			return;
 		}
-		switch (sc_TokenType)
+		switch (sc.TokenType)
 		{
 		case TK_Include:
-			SC_MustGetString();
+			sc.MustGetString();
 			// This is not using SC_Open because it can print a more useful error message when done here
-			lump = Wads.CheckNumForFullName(sc_String);
+			lump = Wads.CheckNumForFullName(sc.String);
 
 			// Try a normal WAD name lookup only if it's a proper name without path separator and
 			// not longer than 8 characters.
-			if (lump==-1 && strlen(sc_String) <= 8 && !strchr(sc_String, '/')) 
-				lump = Wads.CheckNumForName(sc_String);
-
-			if (lump==-1) 
-				SC_ScriptError("Lump '%s' not found", sc_String);
-
-			SC_SaveScriptState();
-			SC_OpenLumpNum(lump, sc_String);
-			recursion++;
+			if (lump == -1 && sc.StringLen <= 8 && !strchr(sc.String, '/'))
+			{
+				lump = Wads.CheckNumForName(sc.String);
+			}
+			if (lump == -1) 
+			{
+				sc.ScriptError("Lump '%s' not found", sc.String);
+			}
+			else
+			{
+				FScanner newscanner(lump, sc.String);
+				ParseDecorate(newscanner);
+			}
 			break;
 
 		case TK_Class:
-			ParseClass ();
+			ParseClass (sc);
 			break;
 
 		case TK_Const:
-			ParseConstant (&RUNTIME_CLASS(AActor)->Symbols, RUNTIME_CLASS(AActor));
+			ParseConstant (sc, &RUNTIME_CLASS(AActor)->Symbols, RUNTIME_CLASS(AActor));
 			break;
 
 		case TK_Enum:
-			ParseEnum (&RUNTIME_CLASS(AActor)->Symbols, RUNTIME_CLASS(AActor));
+			ParseEnum (sc, &RUNTIME_CLASS(AActor)->Symbols, RUNTIME_CLASS(AActor));
 			break;
 
 		case TK_Pickup:
-			ParseOldDecoration (DEF_Pickup);
+			ParseOldDecoration (sc, DEF_Pickup);
 			break;
 
 		case TK_Breakable:
-			ParseOldDecoration (DEF_BreakableDecoration);
+			ParseOldDecoration (sc, DEF_BreakableDecoration);
 			break;
 
 		case TK_Projectile:
-			ParseOldDecoration (DEF_Projectile);
+			ParseOldDecoration (sc, DEF_Projectile);
 			break;
 
 		case ';':
@@ -130,22 +129,22 @@ static void ParseDecorate ()
 			// is used to parse parts of the DECORATE lump. If we don't add 
 			// a check here the user will only get weird non-informative
 			// error messages if a semicolon is found.
-			SC_ScriptError("Unexpected ';'");
+			sc.ScriptError("Unexpected ';'");
 			break;
 
 		case TK_Identifier:
 			// 'ACTOR' cannot be a keyword because it is also needed as a class identifier
 			// so let's do a special case for this.
-			if (SC_Compare("ACTOR"))
+			if (sc.Compare("ACTOR"))
 			{
-				ParseActor ();
+				ParseActor (sc);
 				break;
 			}
 
 		default:
 			// Yuck! Too bad that there's no better way to check this properly
-			SC_RestorePos();
-			ParseOldDecoration(DEF_Decoration);
+			sc.RestorePos(pos);
+			ParseOldDecoration(sc, DEF_Decoration);
 			break;
 		}
 	}
@@ -166,9 +165,8 @@ void LoadDecorations ()
 	lastlump = 0;
 	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (lump, Wads.GetLumpFullName(lump));
-		ParseDecorate ();
-		SC_Close ();
+		FScanner sc(lump, Wads.GetLumpFullName(lump));
+		ParseDecorate (sc);
 	}
 	FinishThingdef();
 }

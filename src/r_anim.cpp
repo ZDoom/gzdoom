@@ -92,11 +92,11 @@ public:
 
 static void R_InitAnimDefs ();
 static void R_AddComplexAnim (int picnum, const TArray<FAnimDef::FAnimFrame> &frames);
-static void ParseAnim (bool istex);
-static void ParseRangeAnim (int picnum, int usetype, bool missing);
-static void ParsePicAnim (int picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
-static int  ParseFramenum (int basepicnum, int usetype, bool allowMissing);
-static void ParseTime (DWORD &min, DWORD &max);
+static void ParseAnim (FScanner &sc, bool istex);
+static void ParseRangeAnim (FScanner &sc, int picnum, int usetype, bool missing);
+static void ParsePicAnim (FScanner &sc, int picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
+static int  ParseFramenum (FScanner &sc, int basepicnum, int usetype, bool allowMissing);
+static void ParseTime (FScanner &sc, DWORD &min, DWORD &max);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -255,43 +255,43 @@ static void R_InitAnimDefs ()
 	
 	while ((lump = Wads.FindLump ("ANIMDEFS", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (lump, "ANIMDEFS");
+		FScanner sc(lump, "ANIMDEFS");
 
-		while (SC_GetString ())
+		while (sc.GetString ())
 		{
-			if (SC_Compare ("flat"))
+			if (sc.Compare ("flat"))
 			{
-				ParseAnim (false);
+				ParseAnim (sc, false);
 			}
-			else if (SC_Compare ("texture"))
+			else if (sc.Compare ("texture"))
 			{
-				ParseAnim (true);
+				ParseAnim (sc, true);
 			}
-			else if (SC_Compare ("switch"))
+			else if (sc.Compare ("switch"))
 			{
-				P_ProcessSwitchDef ();
+				P_ProcessSwitchDef (sc);
 			}
 			// [GRB] Added warping type 2
-			else if (SC_Compare ("warp") || SC_Compare ("warp2"))
+			else if (sc.Compare ("warp") || sc.Compare ("warp2"))
 			{
 				bool isflat = false;
-				bool type2 = SC_Compare ("warp2");	// [GRB]
-				SC_MustGetString ();
-				if (SC_Compare ("flat"))
+				bool type2 = sc.Compare ("warp2");	// [GRB]
+				sc.MustGetString ();
+				if (sc.Compare ("flat"))
 				{
 					isflat = true;
-					SC_MustGetString ();
+					sc.MustGetString ();
 				}
-				else if (SC_Compare ("texture"))
+				else if (sc.Compare ("texture"))
 				{
 					isflat = false;
-					SC_MustGetString ();
+					sc.MustGetString ();
 				}
 				else
 				{
-					SC_ScriptError (NULL);
+					sc.ScriptError (NULL);
 				}
-				int picnum = TexMan.CheckForTexture (sc_String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
+				int picnum = TexMan.CheckForTexture (sc.String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
 				if (picnum != -1)
 				{
 					FTexture * warper = TexMan[picnum];
@@ -310,31 +310,31 @@ static void R_InitAnimDefs ()
 					// Warping information is taken from the last warp 
 					// definition for this texture.
 					warper->bNoDecals = true;
-					if (SC_GetString ())
+					if (sc.GetString ())
 					{
-						if (SC_Compare ("allowdecals"))
+						if (sc.Compare ("allowdecals"))
 						{
 							warper->bNoDecals = false;
 						}
 						else
 						{
-							SC_UnGet ();
+							sc.UnGet ();
 						}
 					}
 				}
 			}
-			else if (SC_Compare ("cameratexture"))
+			else if (sc.Compare ("cameratexture"))
 			{
 				int width, height;
 				int fitwidth, fitheight;
 				FString picname;
 
-				SC_MustGetString ();
-				picname = sc_String;
-				SC_MustGetNumber ();
-				width = sc_Number;
-				SC_MustGetNumber ();
-				height = sc_Number;
+				sc.MustGetString ();
+				picname = sc.String;
+				sc.MustGetNumber ();
+				width = sc.Number;
+				sc.MustGetNumber ();
+				height = sc.Number;
 				int picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Flat, texflags);
 				FTexture *viewer = new FCanvasTexture (picname, width, height);
 				if (picnum != -1)
@@ -353,32 +353,31 @@ static void R_InitAnimDefs ()
 					viewer->UseType = FTexture::TEX_Wall;
 					TexMan.AddTexture (viewer);
 				}
-				if (SC_GetString())
+				if (sc.GetString())
 				{
-					if (SC_Compare ("fit"))
+					if (sc.Compare ("fit"))
 					{
-						SC_MustGetNumber ();
-						fitwidth = sc_Number;
-						SC_MustGetNumber ();
-						fitheight = sc_Number;
+						sc.MustGetNumber ();
+						fitwidth = sc.Number;
+						sc.MustGetNumber ();
+						fitheight = sc.Number;
 					}
 					else
 					{
-						SC_UnGet ();
+						sc.UnGet ();
 					}
 				}
 				viewer->SetScaledSize(fitwidth, fitheight);
 			}
-			else if (SC_Compare ("animatedDoor"))
+			else if (sc.Compare ("animatedDoor"))
 			{
-				P_ParseAnimatedDoor ();
+				P_ParseAnimatedDoor (sc);
 			}
 			else
 			{
-				SC_ScriptError (NULL);
+				sc.ScriptError (NULL);
 			}
 		}
-		SC_Close ();
 	}
 }
 
@@ -391,7 +390,7 @@ static void R_InitAnimDefs ()
 //
 //==========================================================================
 
-static void ParseAnim (bool istex)
+static void ParseAnim (FScanner &sc, bool istex)
 {
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	TArray<FAnimDef::FAnimFrame> frames (32);
@@ -402,13 +401,13 @@ static void ParseAnim (bool istex)
 
 	usetype = istex ? FTexture::TEX_Wall : FTexture::TEX_Flat;
 
-	SC_MustGetString ();
-	if (SC_Compare ("optional"))
+	sc.MustGetString ();
+	if (sc.Compare ("optional"))
 	{
 		optional = true;
-		SC_MustGetString ();
+		sc.MustGetString ();
 	}
-	picnum = TexMan.CheckForTexture (sc_String, usetype, texflags);
+	picnum = TexMan.CheckForTexture (sc.String, usetype, texflags);
 
 	if (picnum < 0)
 	{
@@ -418,7 +417,7 @@ static void ParseAnim (bool istex)
 		}
 		else
 		{
-			Printf (PRINT_BOLD, "ANIMDEFS: Can't find %s\n", sc_String);
+			Printf (PRINT_BOLD, "ANIMDEFS: Can't find %s\n", sc.String);
 		}
 	}
 
@@ -428,9 +427,9 @@ static void ParseAnim (bool istex)
 		TexMan[picnum]->bNoDecals = true;
 	}
 
-	while (SC_GetString ())
+	while (sc.GetString ())
 	{
-		if (SC_Compare ("allowdecals"))
+		if (sc.Compare ("allowdecals"))
 		{
 			if (picnum >= 0)
 			{
@@ -438,31 +437,31 @@ static void ParseAnim (bool istex)
 			}
 			continue;
 		}
-		else if (SC_Compare ("range"))
+		else if (sc.Compare ("range"))
 		{
 			if (defined == 2)
 			{
-				SC_ScriptError ("You cannot use \"pic\" and \"range\" together in a single animation.");
+				sc.ScriptError ("You cannot use \"pic\" and \"range\" together in a single animation.");
 			}
 			if (defined == 1)
 			{
-				SC_ScriptError ("You can only use one \"range\" per animation.");
+				sc.ScriptError ("You can only use one \"range\" per animation.");
 			}
 			defined = 1;
-			ParseRangeAnim (picnum, usetype, missing);
+			ParseRangeAnim (sc, picnum, usetype, missing);
 		}
-		else if (SC_Compare ("pic"))
+		else if (sc.Compare ("pic"))
 		{
 			if (defined == 1)
 			{
-				SC_ScriptError ("You cannot use \"pic\" and \"range\" together in a single animation.");
+				sc.ScriptError ("You cannot use \"pic\" and \"range\" together in a single animation.");
 			}
 			defined = 2;
-			ParsePicAnim (picnum, usetype, missing, frames);
+			ParsePicAnim (sc, picnum, usetype, missing, frames);
 		}
 		else
 		{
-			SC_UnGet ();
+			sc.UnGet ();
 			break;
 		}
 	}
@@ -473,7 +472,7 @@ static void ParseAnim (bool istex)
 	{
 		if (frames.Size() < 2)
 		{
-			SC_ScriptError ("Animation needs at least 2 frames");
+			sc.ScriptError ("Animation needs at least 2 frames");
 		}
 		R_AddComplexAnim (picnum, frames);
 	}
@@ -488,14 +487,14 @@ static void ParseAnim (bool istex)
 //
 //==========================================================================
 
-static void ParseRangeAnim (int picnum, int usetype, bool missing)
+static void ParseRangeAnim (FScanner &sc, int picnum, int usetype, bool missing)
 {
 	int type, framenum;
 	DWORD min, max;
 
 	type = FAnimDef::ANIM_Forward;
-	framenum = ParseFramenum (picnum, usetype, missing);
-	ParseTime (min, max);
+	framenum = ParseFramenum (sc, picnum, usetype, missing);
+	ParseTime (sc, min, max);
 
 	if (framenum == picnum || picnum < 0)
 	{
@@ -507,15 +506,15 @@ static void ParseRangeAnim (int picnum, int usetype, bool missing)
 		TexMan[framenum]->bNoDecals = TexMan[picnum]->bNoDecals;
 		swap (framenum, picnum);
 	}
-	if (SC_GetString())
+	if (sc.GetString())
 	{
-		if (SC_Compare ("Oscillate"))
+		if (sc.Compare ("Oscillate"))
 		{
 			type = type == FAnimDef::ANIM_Forward ? FAnimDef::ANIM_OscillateUp : FAnimDef::ANIM_OscillateDown;
 		}
 		else
 		{
-			SC_UnGet ();
+			sc.UnGet ();
 		}
 	}
 	R_AddSimpleAnim (picnum, framenum - picnum + 1, type, min, max - min);
@@ -529,13 +528,13 @@ static void ParseRangeAnim (int picnum, int usetype, bool missing)
 //
 //==========================================================================
 
-static void ParsePicAnim (int picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
+static void ParsePicAnim (FScanner &sc, int picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
 {
 	int framenum;
 	DWORD min, max;
 
-	framenum = ParseFramenum (picnum, usetype, missing);
-	ParseTime (min, max);
+	framenum = ParseFramenum (sc, picnum, usetype, missing);
+	ParseTime (sc, min, max);
 
 	if (picnum >= 0)
 	{
@@ -557,22 +556,22 @@ static void ParsePicAnim (int picnum, int usetype, bool missing, TArray<FAnimDef
 //
 //==========================================================================
 
-static int ParseFramenum (int basepicnum, int usetype, bool allowMissing)
+static int ParseFramenum (FScanner &sc, int basepicnum, int usetype, bool allowMissing)
 {
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	int framenum;
 
-	SC_MustGetString ();
-	if (IsNum (sc_String))
+	sc.MustGetString ();
+	if (IsNum (sc.String))
 	{
-		framenum = basepicnum + atoi(sc_String) - 1;
+		framenum = basepicnum + atoi(sc.String) - 1;
 	}
 	else
 	{
-		framenum = TexMan.CheckForTexture (sc_String, usetype, texflags);
+		framenum = TexMan.CheckForTexture (sc.String, usetype, texflags);
 		if (framenum < 0 && !allowMissing)
 		{
-			SC_ScriptError ("Unknown texture %s", sc_String);
+			sc.ScriptError ("Unknown texture %s", sc.String);
 		}
 	}
 	return framenum;
@@ -586,24 +585,24 @@ static int ParseFramenum (int basepicnum, int usetype, bool allowMissing)
 //
 //==========================================================================
 
-static void ParseTime (DWORD &min, DWORD &max)
+static void ParseTime (FScanner &sc, DWORD &min, DWORD &max)
 {
-	SC_MustGetString ();
-	if (SC_Compare ("tics"))
+	sc.MustGetString ();
+	if (sc.Compare ("tics"))
 	{
-		SC_MustGetFloat ();
-		min = max = DWORD(sc_Float * 1000 / 35);
+		sc.MustGetFloat ();
+		min = max = DWORD(sc.Float * 1000 / 35);
 	}
-	else if (SC_Compare ("rand"))
+	else if (sc.Compare ("rand"))
 	{
-		SC_MustGetFloat ();
-		min = DWORD(sc_Float * 1000 / 35);
-		SC_MustGetFloat ();
-		max = DWORD(sc_Float * 1000 / 35);
+		sc.MustGetFloat ();
+		min = DWORD(sc.Float * 1000 / 35);
+		sc.MustGetFloat ();
+		max = DWORD(sc.Float * 1000 / 35);
 	}
 	else
 	{
-		SC_ScriptError ("Must specify a duration for animation frame");
+		sc.ScriptError ("Must specify a duration for animation frame");
 	}
 }
 

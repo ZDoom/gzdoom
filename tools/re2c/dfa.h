@@ -291,6 +291,7 @@ public:
 
 inline Action::Action(State *s) : state(s)
 {
+	delete s->action;
 	s->action = this;
 }
 

@@ -1653,7 +1653,7 @@ void AM_drawThings ()
 }
 
 static void DrawMarker (FTexture *tex, fixed_t x, fixed_t y, int yadjust,
-	INTBOOL flip, fixed_t xscale, fixed_t yscale, int translation, fixed_t alpha, DWORD alphacolor, int renderstyle)
+	INTBOOL flip, fixed_t xscale, fixed_t yscale, int translation, fixed_t alpha, DWORD fillcolor, FRenderStyle renderstyle)
 {
 	if (tex == NULL || tex->UseType == FTexture::TEX_Null)
 	{
@@ -1673,8 +1673,8 @@ static void DrawMarker (FTexture *tex, fixed_t x, fixed_t y, int yadjust,
 		DTA_FlipX, flip,
 		DTA_Translation, TranslationToTable(translation),
 		DTA_Alpha, alpha,
-		DTA_FillColor, alphacolor,
-		DTA_RenderStyle, renderstyle,
+		DTA_FillColor, fillcolor,
+		DTA_RenderStyle, DWORD(renderstyle),
 		TAG_DONE);
 }
 
@@ -1684,7 +1684,8 @@ void AM_drawMarks ()
 	{
 		if (markpoints[i].x != -1)
 		{
-			DrawMarker (TexMan(marknums[i]), markpoints[i].x, markpoints[i].y, -3, 0, FRACUNIT, FRACUNIT, 0, FRACUNIT, 0, STYLE_Normal);
+			DrawMarker (TexMan(marknums[i]), markpoints[i].x, markpoints[i].y, -3, 0,
+				FRACUNIT, FRACUNIT, 0, FRACUNIT, 0, LegacyRenderStyles[STYLE_Normal]);
 		}
 	}
 }
@@ -1743,7 +1744,7 @@ void AM_drawAuthorMarkers ()
 			{
 				DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
 					flip, mark->scaleX, mark->scaleY, mark->Translation,
-					mark->alpha, mark->alphacolor, mark->RenderStyle);
+					mark->alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;
 		}

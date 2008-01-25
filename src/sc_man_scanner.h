@@ -23,8 +23,8 @@
 //#define YYDEBUG(s,c) { Printf ("%d: %02x\n", s, c); }
 #define YYDEBUG(s,c)
 
-	char *cursor = ScriptPtr;
-	char *limit = ScriptEndPtr;
+	const char *cursor = ScriptPtr;
+	const char *limit = ScriptEndPtr;
 
 std1:
 	tok = YYCURSOR;
@@ -33,7 +33,7 @@ std2:
 
 	if (tokens)	// A well-defined scanner, based on the c.re example.
 	{
-#define RET(x)	sc_TokenType = x; goto normal_token;
+#define RET(x)	TokenType = x; goto normal_token;
 	
 #line 39 "src/sc_man_scanner.h"
 {
@@ -482,7 +482,7 @@ yy24:
 yy25:
 #line 216 "src/sc_man_scanner.re"
 	{
-			SC_ScriptError ("Unexpected character: %c (ASCII %d)\n", *tok, *tok);
+			ScriptError ("Unexpected character: %c (ASCII %d)\n", *tok, *tok);
 			goto std1;
 		}
 #line 489 "src/sc_man_scanner.h"
@@ -4396,7 +4396,7 @@ yy683:
 negative_check:
 	// re2c doesn't have enough state to handle '-' as the start of a negative number
 	// and as its own token, so help it out a little.
-	sc_TokenType = '-';
+	TokenType = '-';
 	if (YYCURSOR >= YYLIMIT)
 	{
 		goto normal_token;
@@ -4440,8 +4440,8 @@ yy689:
 				return_val = false;
 				goto end;
 			}
-			sc_Line++;
-			sc_Crossed = true;
+			Line++;
+			Crossed = true;
 			goto comment;
 		}
 #line 4448 "src/sc_man_scanner.h"
@@ -4472,23 +4472,45 @@ newline:
 		return_val = false;
 		goto end;
 	}
-	sc_Line++;
-	sc_Crossed = true;
+	Line++;
+	Crossed = true;
 	goto std1;
 
 normal_token:
 	ScriptPtr = (YYCURSOR >= YYLIMIT) ? ScriptEndPtr : cursor;
-	sc_StringLen = (unsigned int)MIN<size_t> (ScriptPtr - tok, MAX_STRING_SIZE-1);
-	if (tokens && (sc_TokenType == TK_StringConst || sc_TokenType == TK_NameConst))
+	StringLen = int(ScriptPtr - tok);
+	if (tokens && (TokenType == TK_StringConst || TokenType == TK_NameConst))
 	{
-		sc_StringLen -= 2;
-		memcpy (sc_String, tok+1, sc_StringLen);
+		StringLen -= 2;
+		if (StringLen >= MAX_STRING_SIZE)
+		{
+			BigStringBuffer = FString(tok+1, StringLen);
+		}
+		else
+		{
+			memcpy (StringBuffer, tok+1, StringLen);
+		}
 	}
 	else
 	{
-		memcpy (sc_String, tok, sc_StringLen);
+		if (StringLen >= MAX_STRING_SIZE)
+		{
+			BigStringBuffer = FString(tok, StringLen);
+		}
+		else
+		{
+			memcpy (StringBuffer, tok, StringLen);
+		}
 	}
-	sc_String[sc_StringLen] = '\0';
+	if (StringLen < MAX_STRING_SIZE)
+	{
+		String = StringBuffer;
+		StringBuffer[StringLen] = '\0';
+	}
+	else
+	{
+		String = BigStringBuffer.LockBuffer();
+	}
 	return_val = true;
 	goto end;
 
@@ -4500,7 +4522,8 @@ string:
 		goto end;
 	}
 	ScriptPtr = cursor;
-	for (sc_StringLen = 0; cursor < YYLIMIT; ++cursor)
+	BigStringBuffer = "";
+	for (StringLen = 0; cursor < YYLIMIT; ++cursor)
 	{
 		if (Escape && *cursor == '\\' && *(cursor + 1) == '"')
 		{
@@ -4518,24 +4541,36 @@ string:
 		{
 			if (CMode)
 			{
-				if (!Escape || sc_StringLen == 0 || sc_String[sc_StringLen - 1] != '\\')
+				if (!Escape || StringLen == 0 || String[StringLen - 1] != '\\')
 				{
-					SC_ScriptError ("Unterminated string constant");
+					ScriptError ("Unterminated string constant");
 				}
 				else
 				{
-					sc_StringLen--;		// overwrite the \ character with \n
+					StringLen--;		// overwrite the \ character with \n
 				}
 			}
-			sc_Line++;
-			sc_Crossed = true;
+			Line++;
+			Crossed = true;
 		}
-		if (sc_StringLen < MAX_STRING_SIZE-1)
+		if (StringLen == MAX_STRING_SIZE)
 		{
-			sc_String[sc_StringLen++] = *cursor;
+			BigStringBuffer.AppendCStrPart(StringBuffer, StringLen);
+			StringLen = 0;
 		}
+		StringBuffer[StringLen++] = *cursor;
+	}
+	if (BigStringBuffer.IsNotEmpty() || StringLen == MAX_STRING_SIZE)
+	{
+		BigStringBuffer.AppendCStrPart(StringBuffer, StringLen);
+		String = BigStringBuffer.LockBuffer();
+		StringLen = int(BigStringBuffer.Len());
+	}
+	else
+	{
+		String = StringBuffer;
+		StringBuffer[StringLen] = '\0';
 	}
 	ScriptPtr = cursor + 1;
-	sc_String[sc_StringLen] = '\0';
 	return_val = true;
 end:

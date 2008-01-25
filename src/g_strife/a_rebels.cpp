@@ -290,7 +290,7 @@ void A_Beacon (AActor *self)
 	self->flags &= ~MF_SPECIAL;
 	static_cast<AInventory *>(self)->DropTime = 0;
 	// Set up the new rebel.
-	rebel->threshold = 100;
+	rebel->threshold = BASETHRESHOLD;
 	rebel->target = NULL;
 	rebel->flags4 |= MF4_INCOMBAT;
 	rebel->LastHeard = owner;	// Make sure the rebels look for targets

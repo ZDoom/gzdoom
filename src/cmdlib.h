@@ -52,7 +52,7 @@ void FormatGUID (char *text, const GUID &guid);
 
 const char *myasctime ();
 
-void strbin (char *str);
+int strbin (char *str);
 
 void CreatePath(const char * fn);
 

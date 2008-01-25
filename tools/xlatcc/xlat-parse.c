@@ -5,6 +5,7 @@
 ** in the input file. */
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #line 1 "xlat-parse.y"
 
 #include "xlat.h"
@@ -323,7 +324,7 @@ int yyerror (char *s)
 	return 0;
 }
 
-#line 327 "xlat-parse.c"
+#line 328 "xlat-parse.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -362,7 +363,8 @@ int yyerror (char *s)
 **                       This is typically a union of many types, one of
 **                       which is ParseTOKENTYPE.  The entry in the union
 **                       for base tokens is called "yy0".
-**    YYSTACKDEPTH       is the maximum depth of the parser's stack.
+**    YYSTACKDEPTH       is the maximum depth of the parser's stack.  If
+**                       zero the stack is dynamically sized using realloc()
 **    ParseARG_SDECL     A static variable declaration for the %extra_argument
 **    ParseARG_PDECL     A parameter declaration for the %extra_argument
 **    ParseARG_STORE     Code to store %extra_argument into yypParser
@@ -642,7 +644,12 @@ struct yyParser {
   int yyidx;                    /* Index of top element in stack */
   int yyerrcnt;                 /* Shifts left before out of the error */
   ParseARG_SDECL                /* A place to hold %extra_argument */
+#if YYSTACKDEPTH<=0
+  int yystksz;                  /* Current side of the stack */
+  yyStackEntry *yystack;        /* The parser's stack */
+#else
   yyStackEntry yystack[YYSTACKDEPTH];  /* The parser's stack */
+#endif
 };
 typedef struct yyParser yyParser;
 
@@ -802,21 +809,28 @@ static const char *const yyRuleName[] = {
 };
 #endif /* NDEBUG */
 
+#if YYSTACKDEPTH<=0
 /*
-** This function returns the symbolic name associated with a token
-** value.
+** Try to increase the size of the parser stack.
 */
-const char *ParseTokenName(int tokenType){
+static void yyGrowStack(yyParser *p){
+  int newSize;
+  yyStackEntry *pNew;
+
+  newSize = p->yystksz*2 + 100;
+  pNew = realloc(p->yystack, newSize*sizeof(pNew[0]));
+  if( pNew ){
+    p->yystack = pNew;
+    p->yystksz = newSize;
 #ifndef NDEBUG
-  if( tokenType>0 && tokenType<(sizeof(yyTokenName)/sizeof(yyTokenName[0])) ){
-    return yyTokenName[tokenType];
-  }else{
-    return "Unknown";
-  }
-#else
-  return "";
+    if( yyTraceFILE ){
+      fprintf(yyTraceFILE,"%sStack grows to %d entries!\n",
+              yyTracePrompt, p->yystksz);
+    }
 #endif
+  }
 }
+#endif
 
 /* 
 ** This function allocates a new parser.
@@ -835,6 +849,9 @@ void *ParseAlloc(void *(*mallocProc)(size_t)){
   pParser = (yyParser*)(*mallocProc)( (size_t)sizeof(yyParser) );
   if( pParser ){
     pParser->yyidx = -1;
+#if YYSTACKDEPTH<=0
+    yyGrowStack(pParser);
+#endif
   }
   return pParser;
 }
@@ -905,6 +922,9 @@ void ParseFree(
   yyParser *pParser = (yyParser*)p;
   if( pParser==0 ) return;
   while( pParser->yyidx>=0 ) yy_pop_parser_stack(pParser);
+#if YYSTACKDEPTH<=0
+  free(pParser->yystack);
+#endif
   (*freeProc)((void*)pParser);
 }
 
@@ -927,7 +947,7 @@ static int yy_find_shift_action(
     return yy_default[stateno];
   }
   if( iLookAhead==YYNOCODE ){
-    return YY_NO_ACTION;
+	return YY_NO_ACTION;
   }
   i += iLookAhead;
   if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
@@ -979,21 +999,31 @@ static int yy_find_reduce_action(
   YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
   int i;
-  /* int stateno = pParser->yystack[pParser->yyidx].stateno; */
- 
-  if( stateno>YY_REDUCE_MAX ||
-      (i = yy_reduce_ofst[stateno])==YY_REDUCE_USE_DFLT ){
-    return yy_default[stateno];
-  }
-  if( iLookAhead==YYNOCODE ){
-    return YY_NO_ACTION;
-  }
+  assert( stateno<=YY_REDUCE_MAX );
+  i = yy_reduce_ofst[stateno];
+  assert( i!=YY_REDUCE_USE_DFLT );
+  assert( iLookAhead!=YYNOCODE );
   i += iLookAhead;
-  if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
-    return yy_default[stateno];
-  }else{
-    return yy_action[i];
-  }
+  assert( i>=0 && i<YY_SZ_ACTTAB );
+  assert( yy_lookahead[i]==iLookAhead );
+  return yy_action[i];
+}
+
+/*
+** The following routine is called if the stack overflows.
+*/
+static void yyStackOverflow(yyParser *yypParser, YYMINORTYPE *yypMinor){
+   ParseARG_FETCH;
+   yypParser->yyidx--;
+#ifndef NDEBUG
+   if( yyTraceFILE ){
+     fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
+   }
+#endif
+   while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
+   /* Here code is inserted which will execute if the parser
+   ** stack every overflows */
+   ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
 
 /*
@@ -1007,20 +1037,20 @@ static void yy_shift(
 ){
   yyStackEntry *yytos;
   yypParser->yyidx++;
+#if YYSTACKDEPTH>0
   if( yypParser->yyidx>=YYSTACKDEPTH ){
-     ParseARG_FETCH;
-     yypParser->yyidx--;
-#ifndef NDEBUG
-     if( yyTraceFILE ){
-       fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
-     }
-#endif
-     while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
-     /* Here code is inserted which will execute if the parser
-     ** stack ever overflows */
-     ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
-     return;
+    yyStackOverflow(yypParser, yypMinor);
+    return;
   }
+#else
+  if( yypParser->yyidx>=yypParser->yystksz ){
+    yyGrowStack(yypParser);
+    if( yypParser->yyidx>=yypParser->yystksz ){
+      yyStackOverflow(yypParser, yypMinor);
+      return;
+    }
+  }
+#endif
   yytos = &yypParser->yystack[yypParser->yyidx];
   yytos->stateno = yyNewState;
   yytos->major = yyMajor;
@@ -1193,128 +1223,128 @@ static void yy_reduce(
       case 1:
 #line 344 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[0].minor.yy0.val; }
-#line 1197 "xlat-parse.c"
+#line 1227 "xlat-parse.c"
         break;
       case 2:
 #line 345 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[0].minor.yy0.symval->Value; }
-#line 1202 "xlat-parse.c"
+#line 1232 "xlat-parse.c"
         break;
       case 3:
 #line 346 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[-2].minor.yy72 + yymsp[0].minor.yy72; }
-#line 1207 "xlat-parse.c"
+#line 1237 "xlat-parse.c"
         break;
       case 4:
 #line 347 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[-2].minor.yy72 - yymsp[0].minor.yy72; }
-#line 1212 "xlat-parse.c"
+#line 1242 "xlat-parse.c"
         break;
       case 5:
 #line 348 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[-2].minor.yy72 * yymsp[0].minor.yy72; }
-#line 1217 "xlat-parse.c"
+#line 1247 "xlat-parse.c"
         break;
       case 6:
 #line 349 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[-2].minor.yy72 / yymsp[0].minor.yy72; }
-#line 1222 "xlat-parse.c"
+#line 1252 "xlat-parse.c"
         break;
       case 7:
 #line 350 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[-2].minor.yy72 | yymsp[0].minor.yy72; }
-#line 1227 "xlat-parse.c"
+#line 1257 "xlat-parse.c"
         break;
       case 8:
 #line 351 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[-2].minor.yy72 & yymsp[0].minor.yy72; }
-#line 1232 "xlat-parse.c"
+#line 1262 "xlat-parse.c"
         break;
       case 9:
 #line 352 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[-2].minor.yy72 ^ yymsp[0].minor.yy72; }
-#line 1237 "xlat-parse.c"
+#line 1267 "xlat-parse.c"
         break;
       case 10:
 #line 353 "xlat-parse.y"
 { yygotominor.yy72 = -yymsp[0].minor.yy72; }
-#line 1242 "xlat-parse.c"
+#line 1272 "xlat-parse.c"
         break;
       case 11:
 #line 354 "xlat-parse.y"
 { yygotominor.yy72 = yymsp[-1].minor.yy72; }
-#line 1247 "xlat-parse.c"
+#line 1277 "xlat-parse.c"
         break;
       case 21:
 #line 368 "xlat-parse.y"
 {
   printf ("\n");
 }
-#line 1254 "xlat-parse.c"
+#line 1284 "xlat-parse.c"
         break;
       case 25:
 #line 376 "xlat-parse.y"
 { printf ("%s", yymsp[0].minor.yy0.string); }
-#line 1259 "xlat-parse.c"
+#line 1289 "xlat-parse.c"
         break;
       case 26:
 #line 377 "xlat-parse.y"
 { printf ("%d", yymsp[0].minor.yy72); }
-#line 1264 "xlat-parse.c"
+#line 1294 "xlat-parse.c"
         break;
       case 27:
 #line 378 "xlat-parse.y"
 { printf ("\n"); }
-#line 1269 "xlat-parse.c"
+#line 1299 "xlat-parse.c"
         break;
       case 28:
 #line 381 "xlat-parse.y"
 {
 	AddSym (yymsp[-3].minor.yy0.sym, yymsp[-1].minor.yy72);
 }
-#line 1276 "xlat-parse.c"
+#line 1306 "xlat-parse.c"
         break;
       case 29:
 #line 386 "xlat-parse.y"
 {
 	IncludeFile (yymsp[0].minor.yy0.string);
 }
-#line 1283 "xlat-parse.c"
+#line 1313 "xlat-parse.c"
         break;
       case 31:
 #line 393 "xlat-parse.y"
 {
 	EnumVal = 0;
 }
-#line 1290 "xlat-parse.c"
+#line 1320 "xlat-parse.c"
         break;
       case 35:
 #line 402 "xlat-parse.y"
 {
 	AddSym (yymsp[0].minor.yy0.sym, EnumVal++);
 }
-#line 1297 "xlat-parse.c"
+#line 1327 "xlat-parse.c"
         break;
       case 36:
 #line 407 "xlat-parse.y"
 {
 	AddSym (yymsp[-2].minor.yy0.sym, EnumVal = yymsp[0].minor.yy72);
 }
-#line 1304 "xlat-parse.c"
+#line 1334 "xlat-parse.c"
         break;
       case 40:
 #line 420 "xlat-parse.y"
 {
 	AddSym (yymsp[-3].minor.yy0.sym, yymsp[-5].minor.yy72);
 }
-#line 1311 "xlat-parse.c"
+#line 1341 "xlat-parse.c"
         break;
       case 41:
 #line 424 "xlat-parse.y"
 {
 	printf ("%s, line %d: %s is already defined\n", SourceName, SourceLine, yymsp[-3].minor.yy0.symval->Sym);
 }
-#line 1318 "xlat-parse.c"
+#line 1348 "xlat-parse.c"
         break;
       case 45:
 #line 433 "xlat-parse.y"
@@ -1327,14 +1357,14 @@ static void yy_reduce(
 	Simple[yymsp[-7].minor.yy72].Args[3] = yymsp[-1].minor.yy57.args[3];
 	Simple[yymsp[-7].minor.yy72].Args[4] = yymsp[-1].minor.yy57.args[4];
 }
-#line 1331 "xlat-parse.c"
+#line 1361 "xlat-parse.c"
         break;
       case 46:
 #line 443 "xlat-parse.y"
 {
 	printf ("%s, line %d: %s is undefined\n", SourceName, SourceLine, yymsp[-3].minor.yy0.sym);
 }
-#line 1338 "xlat-parse.c"
+#line 1368 "xlat-parse.c"
         break;
       case 47:
 #line 448 "xlat-parse.y"
@@ -1381,14 +1411,14 @@ static void yy_reduce(
 		NumBoomish++;
 	}
 }
-#line 1385 "xlat-parse.c"
+#line 1415 "xlat-parse.c"
         break;
       case 48:
 #line 493 "xlat-parse.y"
 {
 	yygotominor.yy49 = NULL;
 }
-#line 1392 "xlat-parse.c"
+#line 1422 "xlat-parse.c"
         break;
       case 49:
 #line 497 "xlat-parse.y"
@@ -1397,7 +1427,7 @@ static void yy_reduce(
 	yygotominor.yy49->next = yymsp[0].minor.yy49;
 	yygotominor.yy49->arg = yymsp[-1].minor.yy58;
 }
-#line 1401 "xlat-parse.c"
+#line 1431 "xlat-parse.c"
         break;
       case 50:
 #line 504 "xlat-parse.y"
@@ -1432,42 +1462,42 @@ static void yy_reduce(
 		yygotominor.yy58.ListSize = i > 15 ? 15 : i;
 	}
 }
-#line 1436 "xlat-parse.c"
+#line 1466 "xlat-parse.c"
         break;
       case 51:
 #line 536 "xlat-parse.y"
 { yygotominor.yy72 = 4; }
-#line 1441 "xlat-parse.c"
+#line 1471 "xlat-parse.c"
         break;
       case 52:
 #line 537 "xlat-parse.y"
 { yygotominor.yy72 = 0; }
-#line 1446 "xlat-parse.c"
+#line 1476 "xlat-parse.c"
         break;
       case 53:
 #line 538 "xlat-parse.y"
 { yygotominor.yy72 = 1; }
-#line 1451 "xlat-parse.c"
+#line 1481 "xlat-parse.c"
         break;
       case 54:
 #line 539 "xlat-parse.y"
 { yygotominor.yy72 = 2; }
-#line 1456 "xlat-parse.c"
+#line 1486 "xlat-parse.c"
         break;
       case 55:
 #line 540 "xlat-parse.y"
 { yygotominor.yy72 = 3; }
-#line 1461 "xlat-parse.c"
+#line 1491 "xlat-parse.c"
         break;
       case 56:
 #line 542 "xlat-parse.y"
 { yygotominor.yy72 = '='; }
-#line 1466 "xlat-parse.c"
+#line 1496 "xlat-parse.c"
         break;
       case 57:
 #line 543 "xlat-parse.y"
 { yygotominor.yy72 = OR_EQUAL; }
-#line 1471 "xlat-parse.c"
+#line 1501 "xlat-parse.c"
         break;
       case 58:
 #line 546 "xlat-parse.y"
@@ -1475,7 +1505,7 @@ static void yy_reduce(
 	yygotominor.yy83.constant = yymsp[0].minor.yy72;
 	yygotominor.yy83.filters = NULL;
 }
-#line 1479 "xlat-parse.c"
+#line 1509 "xlat-parse.c"
         break;
       case 59:
 #line 551 "xlat-parse.y"
@@ -1483,7 +1513,7 @@ static void yy_reduce(
 	yygotominor.yy83.mask = yymsp[-3].minor.yy72;
 	yygotominor.yy83.filters = yymsp[-1].minor.yy87;
 }
-#line 1487 "xlat-parse.c"
+#line 1517 "xlat-parse.c"
         break;
       case 60:
 #line 557 "xlat-parse.y"
@@ -1492,7 +1522,7 @@ static void yy_reduce(
 	yygotominor.yy87->next = NULL;
 	yygotominor.yy87->filter = yymsp[0].minor.yy124;
 }
-#line 1496 "xlat-parse.c"
+#line 1526 "xlat-parse.c"
         break;
       case 61:
 #line 563 "xlat-parse.y"
@@ -1501,7 +1531,7 @@ static void yy_reduce(
 	yygotominor.yy87->next = yymsp[0].minor.yy87;
 	yygotominor.yy87->filter = yymsp[-2].minor.yy124;
 }
-#line 1505 "xlat-parse.c"
+#line 1535 "xlat-parse.c"
         break;
       case 62:
 #line 570 "xlat-parse.y"
@@ -1509,7 +1539,7 @@ static void yy_reduce(
 	yygotominor.yy124.filter = yymsp[-2].minor.yy72;
 	yygotominor.yy124.value = yymsp[0].minor.yy72;
 }
-#line 1513 "xlat-parse.c"
+#line 1543 "xlat-parse.c"
         break;
       case 63:
 #line 576 "xlat-parse.y"
@@ -1517,7 +1547,7 @@ static void yy_reduce(
 	yygotominor.yy57.addflags = 0;
 	memset (yygotominor.yy57.args, 0, 5);
 }
-#line 1521 "xlat-parse.c"
+#line 1551 "xlat-parse.c"
         break;
       case 64:
 #line 581 "xlat-parse.y"
@@ -1525,7 +1555,7 @@ static void yy_reduce(
 	yygotominor.yy57.addflags = SIMPLE_HASTAGAT1;
 	memset (yygotominor.yy57.args, 0, 5);
 }
-#line 1529 "xlat-parse.c"
+#line 1559 "xlat-parse.c"
         break;
       case 65:
 #line 586 "xlat-parse.y"
@@ -1537,7 +1567,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1541 "xlat-parse.c"
+#line 1571 "xlat-parse.c"
         break;
       case 66:
 #line 595 "xlat-parse.y"
@@ -1549,7 +1579,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1553 "xlat-parse.c"
+#line 1583 "xlat-parse.c"
         break;
       case 67:
 #line 604 "xlat-parse.y"
@@ -1561,7 +1591,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1565 "xlat-parse.c"
+#line 1595 "xlat-parse.c"
         break;
       case 68:
 #line 613 "xlat-parse.y"
@@ -1573,7 +1603,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
 	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
 }
-#line 1577 "xlat-parse.c"
+#line 1607 "xlat-parse.c"
         break;
       case 69:
 #line 622 "xlat-parse.y"
@@ -1584,7 +1614,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1588 "xlat-parse.c"
+#line 1618 "xlat-parse.c"
         break;
       case 70:
 #line 630 "xlat-parse.y"
@@ -1595,7 +1625,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1599 "xlat-parse.c"
+#line 1629 "xlat-parse.c"
         break;
       case 71:
 #line 638 "xlat-parse.y"
@@ -1606,7 +1636,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1610 "xlat-parse.c"
+#line 1640 "xlat-parse.c"
         break;
       case 72:
 #line 646 "xlat-parse.y"
@@ -1617,7 +1647,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
 	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
 }
-#line 1621 "xlat-parse.c"
+#line 1651 "xlat-parse.c"
         break;
       case 73:
 #line 654 "xlat-parse.y"
@@ -1625,7 +1655,7 @@ static void yy_reduce(
 	yygotominor.yy57.addflags = SIMPLE_HASLINEID;
 	memset (yygotominor.yy57.args, 0, 5);
 }
-#line 1629 "xlat-parse.c"
+#line 1659 "xlat-parse.c"
         break;
       case 74:
 #line 659 "xlat-parse.y"
@@ -1637,7 +1667,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1641 "xlat-parse.c"
+#line 1671 "xlat-parse.c"
         break;
       case 75:
 #line 668 "xlat-parse.y"
@@ -1649,7 +1679,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1653 "xlat-parse.c"
+#line 1683 "xlat-parse.c"
         break;
       case 76:
 #line 677 "xlat-parse.y"
@@ -1661,7 +1691,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1665 "xlat-parse.c"
+#line 1695 "xlat-parse.c"
         break;
       case 77:
 #line 686 "xlat-parse.y"
@@ -1673,7 +1703,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
 	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
 }
-#line 1677 "xlat-parse.c"
+#line 1707 "xlat-parse.c"
         break;
       case 78:
 #line 695 "xlat-parse.y"
@@ -1685,7 +1715,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1689 "xlat-parse.c"
+#line 1719 "xlat-parse.c"
         break;
       case 79:
 #line 704 "xlat-parse.y"
@@ -1697,7 +1727,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1701 "xlat-parse.c"
+#line 1731 "xlat-parse.c"
         break;
       case 80:
 #line 713 "xlat-parse.y"
@@ -1709,7 +1739,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1713 "xlat-parse.c"
+#line 1743 "xlat-parse.c"
         break;
       case 81:
 #line 722 "xlat-parse.y"
@@ -1721,7 +1751,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1725 "xlat-parse.c"
+#line 1755 "xlat-parse.c"
         break;
       case 82:
 #line 731 "xlat-parse.y"
@@ -1733,7 +1763,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
 	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
 }
-#line 1737 "xlat-parse.c"
+#line 1767 "xlat-parse.c"
         break;
       case 83:
 #line 740 "xlat-parse.y"
@@ -1745,7 +1775,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1749 "xlat-parse.c"
+#line 1779 "xlat-parse.c"
         break;
       case 84:
 #line 749 "xlat-parse.y"
@@ -1757,7 +1787,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1761 "xlat-parse.c"
+#line 1791 "xlat-parse.c"
         break;
       case 85:
 #line 758 "xlat-parse.y"
@@ -1769,7 +1799,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1773 "xlat-parse.c"
+#line 1803 "xlat-parse.c"
         break;
       case 86:
 #line 767 "xlat-parse.y"
@@ -1781,7 +1811,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
 	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
 }
-#line 1785 "xlat-parse.c"
+#line 1815 "xlat-parse.c"
         break;
       case 87:
 #line 776 "xlat-parse.y"
@@ -1793,7 +1823,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1797 "xlat-parse.c"
+#line 1827 "xlat-parse.c"
         break;
       case 88:
 #line 785 "xlat-parse.y"
@@ -1805,7 +1835,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1809 "xlat-parse.c"
+#line 1839 "xlat-parse.c"
         break;
       case 89:
 #line 794 "xlat-parse.y"
@@ -1817,7 +1847,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
 	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
 }
-#line 1821 "xlat-parse.c"
+#line 1851 "xlat-parse.c"
         break;
       case 90:
 #line 803 "xlat-parse.y"
@@ -1829,7 +1859,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1833 "xlat-parse.c"
+#line 1863 "xlat-parse.c"
         break;
       case 91:
 #line 812 "xlat-parse.y"
@@ -1841,7 +1871,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = 0;
 	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
 }
-#line 1845 "xlat-parse.c"
+#line 1875 "xlat-parse.c"
         break;
       case 92:
 #line 821 "xlat-parse.y"
@@ -1853,7 +1883,7 @@ static void yy_reduce(
 	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
 	yygotominor.yy57.args[4] = 0;
 }
-#line 1857 "xlat-parse.c"
+#line 1887 "xlat-parse.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -1877,7 +1907,8 @@ static void yy_reduce(
     {
       yy_shift(yypParser,yyact,yygoto,&yygotominor);
     }
-  }else if( yyact == YYNSTATE + YYNRULE + 1 ){
+  }else{
+    assert( yyact == YYNSTATE + YYNRULE + 1 );
     yy_accept(yypParser);
   }
 }
@@ -1912,7 +1943,7 @@ static void yy_syntax_error(
 #define TOKEN (yyminor.yy0)
 #line 322 "xlat-parse.y"
 yyerror("syntax error");
-#line 1916 "xlat-parse.c"
+#line 1947 "xlat-parse.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -1962,13 +1993,21 @@ void Parse(
   YYMINORTYPE yyminorunion;
   int yyact;            /* The parser action. */
   int yyendofinput;     /* True if we are at the end of input */
+#ifdef YYERRORSYMBOL
   int yyerrorhit = 0;   /* True if yymajor has invoked an error */
+#endif
   yyParser *yypParser;  /* The parser */
 
   /* (re)initialize the parser, if necessary */
   yypParser = (yyParser*)yyp;
   if( yypParser->yyidx<0 ){
-    /* if( yymajor==0 ) return; // not sure why this was here... */
+#if YYSTACKDEPTH<=0
+    if( yypParser->yystksz <=0 ){
+      memset(&yyminorunion, 0, sizeof(yyminorunion));
+      yyStackOverflow(yypParser, &yyminorunion);
+      return;
+    }
+#endif
     yypParser->yyidx = 0;
     yypParser->yyerrcnt = -1;
     yypParser->yystack[0].stateno = 0;
@@ -1987,20 +2026,25 @@ void Parse(
   do{
     yyact = yy_find_shift_action(yypParser,yymajor);
     if( yyact<YYNSTATE ){
+      assert( !yyendofinput );  /* Impossible to shift the $ token */
       yy_shift(yypParser,yyact,yymajor,&yyminorunion);
       yypParser->yyerrcnt--;
-      if( yyendofinput && yypParser->yyidx>=0 ){
-        yymajor = 0;
-      }else{
-        yymajor = YYNOCODE;
-        while( yypParser->yyidx>= 0 && (yyact = yy_find_shift_action(yypParser,YYNOCODE)) < YYNSTATE + YYNRULE ){
-          yy_reduce(yypParser,yyact-YYNSTATE);
-        }
+      yymajor = YYNOCODE;
+	  /* [RH] If we can reduce the stack now, do it. Otherwise, constructs */
+	  /* like "include <somefile>" won't work because the next token after */
+	  /* the include will be shifted before the include is reduced. Then the */
+	  /* parser will act as if that token had been the first one in the */
+	  /* included file. */
+      while( yypParser->yyidx>= 0 && (yyact = yy_find_shift_action(yypParser,YYNOCODE)) < YYNSTATE + YYNRULE ){
+        yy_reduce(yypParser,yyact-YYNSTATE);
       }
     }else if( yyact < YYNSTATE + YYNRULE ){
       yy_reduce(yypParser,yyact-YYNSTATE);
-    }else if( yyact == YY_ERROR_ACTION ){
+    }else{
+#ifdef YYERRORSYMBOL
       int yymx;
+#endif
+      assert( yyact == YY_ERROR_ACTION );
 #ifndef NDEBUG
       if( yyTraceFILE ){
         fprintf(yyTraceFILE,"%sSyntax Error!\n",yyTracePrompt);
@@ -2081,9 +2125,6 @@ void Parse(
       }
       yymajor = YYNOCODE;
 #endif
-    }else{
-      yy_accept(yypParser);
-      yymajor = YYNOCODE;
     }
   }while( yymajor!=YYNOCODE && yypParser->yyidx>=0 );
   return;

@@ -1401,13 +1401,13 @@ void RP_Subsector (subsector_t *sub)
 	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
 						   &ceilinglightlevel, false);	// killough 4/11/98
 
-	basecolormap = frontsector->ColorMap->Maps;
+	basecolormap = frontsector->ColorMap;
 	R_GetExtraLight (&ceilinglightlevel, frontsector->ceilingplane, frontsector->ExtraLights);
 
 	// [RH] set foggy flag
 	foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
 	r_actualextralight = foggy ? 0 : extralight << 4;
-	basecolormap = frontsector->ColorMap->Maps;
+	basecolormap = frontsector->ColorMap;
 /*	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
 		frontsector->ceilingpic == skyflatnum ||
 		(frontsector->CeilingSkyBox != NULL && frontsector->CeilingSkyBox->bAlways) ||
@@ -1427,7 +1427,7 @@ void RP_Subsector (subsector_t *sub)
 					frontsector->CeilingSkyBox
 					) : NULL;*/
 
-	basecolormap = frontsector->ColorMap->Maps;
+	basecolormap = frontsector->ColorMap;
 	R_GetExtraLight (&floorlightlevel, frontsector->floorplane, frontsector->ExtraLights);
 
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check

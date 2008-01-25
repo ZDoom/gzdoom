@@ -215,7 +215,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_Flags4Clear:		actor->flags4 &= ~dataint;			break;
 	case ADEF_Flags5Clear:		actor->flags5 &= ~dataint;			break;
 	case ADEF_Alpha:			actor->alpha = dataint;				break;
-	case ADEF_RenderStyle:		actor->RenderStyle = dataint;		break;
+	case ADEF_RenderStyle:		actor->RenderStyle = ERenderStyle(dataint);		break;
 	case ADEF_RenderFlags:		actor->renderflags = dataint;		break;
 	case ADEF_Translation:		actor->Translation = dataint;		break;
 	case ADEF_MinMissileChance:	actor->MinMissileChance = dataint;	break;

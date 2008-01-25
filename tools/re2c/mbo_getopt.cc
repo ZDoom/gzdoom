@@ -81,6 +81,10 @@ int mbo_getopt(int argc, char* const *argv, const mbo_opt_struct *opts, char **o
 	if ((argv[*optind][0] == '-') && (argv[*optind][1] == '-'))
 	{
 		/* '--' indicates end of args if not followed by a known long option name */
+		if (argv[*optind][2] == '\0') {
+			(*optind)++;
+			return(EOF);
+		}
 
 		while (1)
 		{
@@ -89,7 +93,7 @@ int mbo_getopt(int argc, char* const *argv, const mbo_opt_struct *opts, char **o
 			if (opts[opts_idx].opt_char == '-')
 			{
 				(*optind)++;
-				return (EOF);
+				return (mbo_opt_error(argc, argv, *optind - 1, optchr, OPTERRARG, show_err));
 			}
 			else if (opts[opts_idx].opt_name && !strcmp(&argv[*optind][2], opts[opts_idx].opt_name))
 			{
@@ -98,22 +102,26 @@ int mbo_getopt(int argc, char* const *argv, const mbo_opt_struct *opts, char **o
 		}
 
 		optchr = 0;
-		dash = 1;
+		dash = 0;
 		arg_start = 2 + strlen(opts[opts_idx].opt_name);
 	}
 
-	if (!dash)
+	else
 	{
-		dash = 1;
-		optchr = 1;
-	}
+		if (!dash)
+		{
+			dash = 1;
+			optchr = 1;
+		}
 
-	/* Check if the guy tries to do a -: kind of flag */
-	if (argv[*optind][optchr] == ':')
-	{
-		dash = 0;
-		(*optind)++;
-		return (mbo_opt_error(argc, argv, *optind - 1, optchr, OPTERRCOLON, show_err));
+		/* Check if the guy tries to do a -: kind of flag */
+		if (argv[*optind][optchr] == ':')
+		{
+			dash = 0;
+			(*optind)++;
+			return (mbo_opt_error(argc, argv, *optind - 1, optchr, OPTERRCOLON, show_err));
+		}
+		arg_start = 1 + optchr;
 	}
 
 	if (opts_idx < 0)
@@ -135,6 +143,7 @@ int mbo_getopt(int argc, char* const *argv, const mbo_opt_struct *opts, char **o
 				else
 				{
 					optchr++;
+					arg_start++;
 				}
 
 				return (mbo_opt_error(argc, argv, errind, errchr, OPTERRNF, show_err));
@@ -173,7 +182,7 @@ int mbo_getopt(int argc, char* const *argv, const mbo_opt_struct *opts, char **o
 	}
 	else
 	{
-		if (arg_start == 2)
+		if (arg_start >= 2 && !((argv[*optind][0] == '-') && (argv[*optind][1] == '-')))
 		{
 			if (!argv[*optind][optchr + 1])
 			{

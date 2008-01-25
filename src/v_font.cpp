@@ -32,6 +32,45 @@
 **
 */
 
+/* Special file formats handled here:
+
+FON1 "console" fonts have the following header:
+	char  Magic[4];			-- The characters "FON1"
+	uword CharWidth;		-- Character cell width
+	uword CharHeight;		-- Character cell height
+
+The FON1 header is followed by RLE character data for all 256
+8-bit ASCII characters.
+
+
+FON2 "standard" fonts have the following header:
+	char  Magic[4];			-- The characters "FON2"
+	uword FontHeight;		-- Every character in a font has the same height
+	ubyte FirstChar;		-- First character defined by this font.
+	ubyte LastChar;			-- Last character definde by this font.
+	ubyte bConstantWidth;
+	ubyte ShadingType;
+	ubyte PaletteSize;		-- size of palette in entries (not bytes!)
+	ubyte Flags;
+
+There is presently only one flag for FON2:
+	FOF_WHOLEFONTKERNING 1	-- The Kerning field is present in the file
+
+The FON2 header is followed by variable length data:
+	word  Kerning;
+		-- only present if FOF_WHOLEFONTKERNING is set
+
+	ubyte Palette[PaletteSize+1][3];
+		-- The last entry is the delimiter color. The delimiter is not used
+		-- by the font but is used my imagetool when converting the font
+		-- back to an image. Color 0 is the transparent color and is also
+		-- used only for converting the font back to an image. The other
+		-- entries are all presorted in increasing order of brightness.
+
+	ubyte CharacterData[...];
+		-- RLE character data, in order
+*/
+
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
@@ -171,7 +210,7 @@ static TArray<PalEntry> TranslationColors;
 
 // CODE --------------------------------------------------------------------
 
-FFont * V_GetFont(const char *name)
+FFont *V_GetFont(const char *name)
 {
 	FFont *font = FFont::FindFont (name);
 	if (font == NULL)
@@ -210,7 +249,7 @@ FFont * V_GetFont(const char *name)
 			}
 			if (picnum > 0)
 			{
-				font = new FSingleLumpFont (name, -1);
+				font = new FSinglePicFont (name);
 			}
 		}
 	}
@@ -334,7 +373,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	{
 		SpaceWidth = 4;
 	}
-	BuildTranslations (luminosity, identity, &TranslationParms[0][0], ActiveColors);
+	BuildTranslations (luminosity, identity, &TranslationParms[0][0], ActiveColors, NULL);
 
 	delete[] luminosity;
 	delete[] charlumps;
@@ -538,12 +577,13 @@ int FFont::SimpleTranslation (BYTE *colorsused, BYTE *translation, BYTE *reverse
 // large this array is. Identity is an array that remaps the colors to
 // their original values; it is only used for CR_UNTRANSLATED. Ranges
 // is an array of TranslationParm structs defining the ranges for every
-// possible color, in order.
+// possible color, in order. Palette is the colors to use for the
+// untranslated version of the font.
 //
 //==========================================================================
 
 void FFont::BuildTranslations (const double *luminosity, const BYTE *identity,
-							   const void *ranges, int total_colors)
+							   const void *ranges, int total_colors, const PalEntry *palette)
 {
 	int i, j;
 	const TranslationParm *parmstart = (const TranslationParm *)ranges;
@@ -559,9 +599,17 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity,
 			if (identity != NULL)
 			{
 				memcpy (remap.Remap, identity, ActiveColors);
-				for (j = 0; j < ActiveColors; ++j)
+				if (palette != NULL)
 				{
-					remap.Palette[j] = GPalette.BaseColors[identity[j]];
+					memcpy (remap.Palette, palette, ActiveColors*sizeof(PalEntry));
+				}
+				else
+				{
+					remap.Palette[0] = GPalette.BaseColors[identity[0]] & MAKEARGB(0,255,255,255);
+					for (j = 1; j < ActiveColors; ++j)
+					{
+						remap.Palette[j] = GPalette.BaseColors[identity[j]] | MAKEARGB(255,0,0,0);
+					}
 				}
 			}
 			else
@@ -712,52 +760,35 @@ FFont::FFont ()
 //
 // FSingleLumpFont :: FSingleLumpFont
 //
-// Loads a FON1 or FON2 font resource or a single texture.
+// Loads a FON1 or FON2 font resource.
 //
 //==========================================================================
 
 FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 {
+	assert(lump >= 0);
+
 	Name = copystring (name);
 
-	// If lump is -1, then the font name is really a texture name, so
-	// the font should be a redirect to the texture.
-	// If lump is >= 0, then the font is really a font.
-	if (lump < 0)
-	{
-		int picnum = TexMan.CheckForTexture (name, FTexture::TEX_Any);
+	FMemLump data1 = Wads.ReadLump (lump);
+	const BYTE *data = (const BYTE *)data1.GetMem();
 
-		if (picnum > 0)
-		{
-			CreateFontFromPic (picnum);
-		}
-		else
-		{
-			I_FatalError ("%s is not a font or texture", name);
-		}
+	if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
+		(data[3] != '1' && data[3] != '2'))
+	{
+		I_FatalError ("%s is not a recognizable font", name);
 	}
 	else
 	{
-		FMemLump data1 = Wads.ReadLump (lump);
-		const BYTE *data = (const BYTE *)data1.GetMem();
-
-		if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
-			(data[3] != '1' && data[3] != '2'))
+		switch (data[3])
 		{
-			I_FatalError ("%s is not a recognizable font", name);
-		}
-		else
-		{
-			switch (data[3])
-			{
-			case '1':
-				LoadFON1 (lump, data);
-				break;
+		case '1':
+			LoadFON1 (lump, data);
+			break;
 
-			case '2':
-				LoadFON2 (lump, data);
-				break;
-			}
+		case '2':
+			LoadFON2 (lump, data);
+			break;
 		}
 	}
 
@@ -813,7 +844,7 @@ void FSingleLumpFont::LoadFON1 (int lump, const BYTE *data)
 	PatchRemap = new BYTE[256];
 
 	CheckFON1Chars (lump, data, luminosity);
-	BuildTranslations (luminosity, NULL, &TranslationParms[1][0], ActiveColors);
+	BuildTranslations (luminosity, NULL, &TranslationParms[1][0], ActiveColors, NULL);
 }
 
 //==========================================================================
@@ -831,6 +862,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 	int *widths2;
 	BYTE identity[256];
 	double luminosity[256];
+	PalEntry local_palette[256];
 	WORD *widths;
 	const BYTE *palette;
 	const BYTE *data_p;
@@ -844,19 +876,19 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 	Chars = new CharData[count];
 	widths2 = new int[count];
 	if (data[11] & 1)
-	{
+	{ // Font specifies a kerning value.
 		GlobalKerning = LittleShort(*(SWORD *)&data[12]);
 		widths = (WORD *)(data + 14);
 	}
 	else
-	{
+	{ // Font does not specify a kerning value.
 		GlobalKerning = 0;
 		widths = (WORD *)(data + 12);
 	}
 	totalwidth = 0;
 
 	if (data[8])
-	{
+	{ // Font is mono-spaced.
 		totalwidth = LittleShort(widths[0]);
 		for (i = 0; i < count; ++i)
 		{
@@ -866,7 +898,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		palette = (BYTE *)&widths[1];
 	}
 	else
-	{
+	{ // Font has varying character widths.
 		for (i = 0; i < count; ++i)
 		{
 			widths2[i] = LittleShort(widths[i]);
@@ -888,7 +920,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		SpaceWidth = totalwidth * 2 / (3 * count);
 	}
 
-	FixupPalette (identity, luminosity, palette, data[9] == 0);
+	FixupPalette (identity, luminosity, palette, data[9] == 0, local_palette);
 
 	data_p = palette + (ActiveColors+1)*3;
 
@@ -924,7 +956,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 		}
 	}
 
-	BuildTranslations (luminosity, identity, &TranslationParms[0][0], ActiveColors);
+	BuildTranslations (luminosity, identity, &TranslationParms[0][0], ActiveColors, local_palette);
 	delete[] widths2;
 }
 
@@ -999,7 +1031,7 @@ void FSingleLumpFont::CheckFON1Chars (int lump, const BYTE *data, double *lumino
 //
 //==========================================================================
 
-void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BYTE *palette, bool rescale)
+void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BYTE *palette, bool rescale, PalEntry *out_palette)
 {
 	int i;
 	double maxlum = 0.0;
@@ -1009,20 +1041,24 @@ void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BY
 	identity[0] = 0;
 	palette += 3;	// Skip the transparent color
 
-	for (i = 1; i <= ActiveColors; ++i)
+	for (i = 1; i <= ActiveColors; ++i, palette += 3)
 	{
 		int r = palette[0];
 		int g = palette[1];
 		int b = palette[2];
 		double lum = r*0.299 + g*0.587 + b*0.114;
-		palette += 3;
 		identity[i] = ColorMatcher.Pick (r, g, b);
 		luminosity[i] = lum;
+		out_palette[i].r = r;
+		out_palette[i].g = g;
+		out_palette[i].b = b;
+		out_palette[i].a = 255;
 		if (lum > maxlum)
 			maxlum = lum;
 		if (lum < minlum)
 			minlum = lum;
 	}
+	out_palette[0] = 0;
 
 	if (rescale)
 	{
@@ -1036,6 +1072,74 @@ void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BY
 	{
 		luminosity[i] = (luminosity[i] - minlum) * diver;
 	}
+}
+
+//==========================================================================
+//
+// FSinglePicFont :: FSinglePicFont
+//
+// Creates a font to wrap a texture so that you can use hudmessage as if it
+// were a hudpic command. It does not support translation, but animation
+// is supported, unlike all the real fonts.
+//
+//==========================================================================
+
+FSinglePicFont::FSinglePicFont(const char *picname)
+{
+	int picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Any);
+
+	if (picnum <= 0)
+	{
+		I_FatalError ("%s is not a font or texture", picname);
+	}
+
+	FTexture *pic = TexMan[picnum];
+
+	Name = copystring(picname);
+	FontHeight = pic->GetHeight();
+	SpaceWidth = pic->GetWidth();
+	GlobalKerning = 0;
+	FirstChar = LastChar = 'A';
+	ActiveColors = 0;
+	PicNum = picnum;
+
+	Next = FirstFont;
+	FirstFont = this;
+}
+
+//==========================================================================
+//
+// FSinglePicFont :: GetChar
+//
+// Returns the texture if code is 'a' or 'A', otherwise NULL.
+//
+//==========================================================================
+
+FTexture *FSinglePicFont::GetChar (int code, int *const width) const
+{
+	*width = SpaceWidth;
+	if (code == 'a' || code == 'A')
+	{
+		return TexMan(PicNum);
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+//==========================================================================
+//
+// FSinglePicFont :: GetCharWidth
+//
+// Don't expect the text functions to work properly if I actually allowed
+// the character width to vary depending on the animation frame.
+//
+//==========================================================================
+
+int FSinglePicFont::GetCharWidth (int code) const
+{
+	return SpaceWidth;
 }
 
 //==========================================================================
@@ -1438,7 +1542,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 		SpaceWidth = 4;
 	}
 
-	BuildTranslations (luminosity, identity, &TranslationParms[0][0], TotalColors);
+	BuildTranslations (luminosity, identity, &TranslationParms[0][0], TotalColors, NULL);
 
 	// add the untranslated colors to the Ranges tables
 	if (ActiveColors < TotalColors)
@@ -1470,6 +1574,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 
 void V_InitCustomFonts()
 {
+	FScanner sc;
 	int lumplist[256];
 	bool notranslate[256];
 	char namebuffer[16], templatebuf[16];
@@ -1482,75 +1587,75 @@ void V_InitCustomFonts()
 
 	while ((llump = Wads.FindLump ("FONTDEFS", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (llump, "FONTDEFS");
-		while (SC_GetString())
+		sc.OpenLumpNum(llump, "FONTDEFS");
+		while (sc.GetString())
 		{
 			memset (lumplist, -1, sizeof(lumplist));
 			memset (notranslate, 0, sizeof(notranslate));
-			strncpy (namebuffer, sc_String, 15);
+			strncpy (namebuffer, sc.String, 15);
 			namebuffer[15] = 0;
 			format = 0;
 			start = 33;
 			first = 33;
 			count = 223;
 
-			SC_MustGetStringName ("{");
-			while (!SC_CheckString ("}"))
+			sc.MustGetStringName ("{");
+			while (!sc.CheckString ("}"))
 			{
-				SC_MustGetString();
-				if (SC_Compare ("TEMPLATE"))
+				sc.MustGetString();
+				if (sc.Compare ("TEMPLATE"))
 				{
 					if (format == 2) goto wrong;
-					SC_MustGetString();
-					strncpy (templatebuf, sc_String, 16);
+					sc.MustGetString();
+					strncpy (templatebuf, sc.String, 16);
 					templatebuf[15] = 0;
 					format = 1;
 				}
-				else if (SC_Compare ("BASE"))
+				else if (sc.Compare ("BASE"))
 				{
 					if (format == 2) goto wrong;
-					SC_MustGetNumber();
-					start = sc_Number;
+					sc.MustGetNumber();
+					start = sc.Number;
 					format = 1;
 				}
-				else if (SC_Compare ("FIRST"))
+				else if (sc.Compare ("FIRST"))
 				{
 					if (format == 2) goto wrong;
-					SC_MustGetNumber();
-					first = sc_Number;
+					sc.MustGetNumber();
+					first = sc.Number;
 					format = 1;
 				}
-				else if (SC_Compare ("COUNT"))
+				else if (sc.Compare ("COUNT"))
 				{
 					if (format == 2) goto wrong;
-					SC_MustGetNumber();
-					count = sc_Number;
+					sc.MustGetNumber();
+					count = sc.Number;
 					format = 1;
 				}
-				else if (SC_Compare ("NOTRANSLATION"))
+				else if (sc.Compare ("NOTRANSLATION"))
 				{
 					if (format == 1) goto wrong;
-					while (SC_CheckNumber() && !sc_Crossed)
+					while (sc.CheckNumber() && !sc.Crossed)
 					{
-						if (sc_Number >= 0 && sc_Number < 256)
-							notranslate[sc_Number] = true;
+						if (sc.Number >= 0 && sc.Number < 256)
+							notranslate[sc.Number] = true;
 					}
 					format=2;
 				}
 				else
 				{
 					if (format == 1) goto wrong;
-					int *p = &lumplist[*(unsigned char*)sc_String];
-					SC_MustGetString();
-					*p = Wads.CheckNumForName (sc_String);
+					int *p = &lumplist[*(unsigned char*)sc.String];
+					sc.MustGetString();
+					*p = Wads.CheckNumForName (sc.String);
 					format=2;
 				}
 			}
-			if (format==1)
+			if (format == 1)
 			{
 				new FFont (namebuffer, templatebuf, first, count, start);
 			}
-			else if (format==2)
+			else if (format == 2)
 			{
 				for (i = 0; i < 256; i++)
 				{
@@ -1575,12 +1680,12 @@ void V_InitCustomFonts()
 			}
 			else goto wrong;
 		}
-		SC_Close ();
+		sc.Close();
 	}
 	return;
 
 wrong:
-	SC_ScriptError ("Invalid combination of properties in font '%s'", namebuffer);
+	sc.ScriptError ("Invalid combination of properties in font '%s'", namebuffer);
 }
 
 //==========================================================================
@@ -1610,8 +1715,8 @@ void V_InitFontColors ()
 
 	while ((lump = Wads.FindLump ("TEXTCOLO", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (lump, "textcolors.txt");
-		while (SC_GetString())
+		FScanner sc(lump, "textcolors.txt");
+		while (sc.GetString())
 		{
 			names.Clear();
 
@@ -1619,14 +1724,14 @@ void V_InitFontColors ()
 
 			// Everything until the '{' is considered a valid name for the
 			// color range.
-			names.Push (sc_String);
-			while (SC_MustGetString(), !SC_Compare ("{"))
+			names.Push (sc.String);
+			while (sc.MustGetString(), !sc.Compare ("{"))
 			{
 				if (names[0] == NAME_Untranslated)
 				{
-					SC_ScriptError ("The \"untranslated\" color may not have any other names");
+					sc.ScriptError ("The \"untranslated\" color may not have any other names");
 				}
-				names.Push (sc_String);
+				names.Push (sc.String);
 			}
 
 			parmchoice = 0;
@@ -1635,66 +1740,66 @@ void V_InitFontColors ()
 			info.ParmLen[1] = info.ParmLen[0] = 0;
 			tparm.RangeEnd = tparm.RangeStart = -1;
 
-			while (SC_MustGetString(), !SC_Compare ("}"))
+			while (sc.MustGetString(), !sc.Compare ("}"))
 			{
-				if (SC_Compare ("Console:"))
+				if (sc.Compare ("Console:"))
 				{
 					if (parmchoice == 1)
 					{
-						SC_ScriptError ("Each color may only have one set of console ranges");
+						sc.ScriptError ("Each color may only have one set of console ranges");
 					}
 					parmchoice = 1;
 					info.StartParm[1] = parms.Size();
 					info.ParmLen[0] = info.StartParm[1] - info.StartParm[0];
 					tparm.RangeEnd = tparm.RangeStart = -1;
 				}
-				else if (SC_Compare ("Flat:"))
+				else if (sc.Compare ("Flat:"))
 				{
-					SC_MustGetString();
-					logcolor = V_GetColor (NULL, sc_String);
+					sc.MustGetString();
+					logcolor = V_GetColor (NULL, sc.String);
 				}
 				else
 				{
 					// Get first color
-					c = V_GetColor (NULL, sc_String);
+					c = V_GetColor (NULL, sc.String);
 					tparm.Start[0] = RPART(c);
 					tparm.Start[1] = GPART(c);
 					tparm.Start[2] = BPART(c);
 
 					// Get second color
-					SC_MustGetString();
-					c = V_GetColor (NULL, sc_String);
+					sc.MustGetString();
+					c = V_GetColor (NULL, sc.String);
 					tparm.End[0] = RPART(c);
 					tparm.End[1] = GPART(c);
 					tparm.End[2] = BPART(c);
 
 					// Check for range specifier
-					if (SC_CheckNumber())
+					if (sc.CheckNumber())
 					{
-						if (tparm.RangeStart == -1 && sc_Number != 0)
+						if (tparm.RangeStart == -1 && sc.Number != 0)
 						{
-							SC_ScriptError ("The first color range must start at position 0");
+							sc.ScriptError ("The first color range must start at position 0");
 						}
-						if (sc_Number < 0 || sc_Number > 256)
+						if (sc.Number < 0 || sc.Number > 256)
 						{
-							SC_ScriptError ("The color range must be within positions [0,256]");
+							sc.ScriptError ("The color range must be within positions [0,256]");
 						}
-						if (sc_Number <= tparm.RangeEnd)
+						if (sc.Number <= tparm.RangeEnd)
 						{
-							SC_ScriptError ("The color range must not start before the previous one ends");
+							sc.ScriptError ("The color range must not start before the previous one ends");
 						}
-						tparm.RangeStart = sc_Number;
+						tparm.RangeStart = sc.Number;
 
-						SC_MustGetNumber();
-						if (sc_Number < 0 || sc_Number > 256)
+						sc.MustGetNumber();
+						if (sc.Number < 0 || sc.Number > 256)
 						{
-							SC_ScriptError ("The color range must be within positions [0,256]");
+							sc.ScriptError ("The color range must be within positions [0,256]");
 						}
-						if (sc_Number <= tparm.RangeStart)
+						if (sc.Number <= tparm.RangeStart)
 						{
-							SC_ScriptError ("The color range end position must be larger than the start position");
+							sc.ScriptError ("The color range end position must be larger than the start position");
 						}
-						tparm.RangeEnd = sc_Number;
+						tparm.RangeEnd = sc.Number;
 					}
 					else
 					{
@@ -1702,7 +1807,7 @@ void V_InitFontColors ()
 						tparm.RangeEnd = 256;
 						if (tparm.RangeStart >= tparm.RangeEnd)
 						{
-							SC_ScriptError ("The color has too many ranges");
+							sc.ScriptError ("The color has too many ranges");
 						}
 					}
 					parms.Push (tparm);
@@ -1713,14 +1818,14 @@ void V_InitFontColors ()
 			{
 				if (names[0] != NAME_Untranslated)
 				{
-					SC_ScriptError ("There must be at least one normal range for a color");
+					sc.ScriptError ("There must be at least one normal range for a color");
 				}
 			}
 			else
 			{
 				if (names[0] == NAME_Untranslated)
 				{
-					SC_ScriptError ("The \"untranslated\" color must be left undefined");
+					sc.ScriptError ("The \"untranslated\" color must be left undefined");
 				}
 			}
 			if (info.ParmLen[1] == 0 && names[0] != NAME_Untranslated)
@@ -1755,7 +1860,6 @@ void V_InitFontColors ()
 				}
 			}
 		}
-		SC_Close ();
 	}
 	// Make permananent copies of all the color information we found.
 	for (i = 0, index = 0; i < colorinfo.Size(); ++i)

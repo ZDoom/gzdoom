@@ -19,11 +19,6 @@ public:
 	static Symbol *find(const SubStr&);
 	static void ClearTable();
 
-	~Symbol()
-	{
-		/** \todo should we delete 're'? */
-	}
-
 	typedef std::map<std::string, Symbol*> SymbolTable;
 
 protected:

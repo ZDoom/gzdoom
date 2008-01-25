@@ -1,40 +1,98 @@
 #ifndef __SC_MAN_H__
 #define __SC_MAN_H__
 
-void SC_Open (const char *name);
-void SC_OpenFile (const char *name);
-void SC_OpenMem (const char *name, char *buffer, int size);
-void SC_OpenLumpNum (int lump, const char *name);
-void SC_Close (void);
-void SC_SetCMode (bool cmode);
-void SC_SetEscape (bool esc);
-void SC_SavePos (void);
-void SC_RestorePos (void);
-FString SC_TokenName (int token, const char *string=NULL);
-bool SC_GetString (void);
-void SC_MustGetString (void);
-void SC_MustGetStringName (const char *name);
-bool SC_CheckString (const char *name);
-bool SC_GetToken (void);
-void SC_MustGetAnyToken (void);
-void SC_TokenMustBe (int token);
-void SC_MustGetToken (int token);
-bool SC_CheckToken (int token);
-bool SC_CheckTokenId (ENamedName id);
-bool SC_GetNumber (void);
-void SC_MustGetNumber (void);
-bool SC_CheckNumber (void);
-bool SC_CheckFloat (void);
-bool SC_GetFloat (void);
-void SC_MustGetFloat (void);
-void SC_UnGet (void);
-//boolean SC_Check(void);
-bool SC_Compare (const char *text);
-int SC_MatchString (const char **strings);
-int SC_MustMatchString (const char **strings);
-void STACK_ARGS SC_ScriptError (const char *message, ...);
-void SC_SaveScriptState();
-void SC_RestoreScriptState();	
+class FScanner
+{
+public:
+	struct SavedPos
+	{
+		const char *SavedScriptPtr;
+		int SavedScriptLine;
+	};
+
+	// Methods ------------------------------------------------------
+	FScanner();
+	FScanner(const FScanner &other);
+	FScanner(int lumpnum, const char *name);
+	~FScanner();
+
+	FScanner &operator=(const FScanner &other);
+
+	void Open(const char *lumpname);
+	void OpenFile(const char *filename);
+	void OpenMem(const char *name, char *buffer, int size);
+	void OpenLumpNum(int lump, const char *name);
+	void Close();
+
+	void SetCMode(bool cmode);
+	void SetEscape(bool esc);
+	const SavedPos SavePos();
+	void RestorePos(const SavedPos &pos);
+
+	FString TokenName(int token, const char *string=NULL);
+
+	bool GetString();
+	void MustGetString();
+	void MustGetStringName(const char *name);
+	bool CheckString(const char *name);
+
+	bool GetToken();
+	void MustGetAnyToken();
+	void TokenMustBe(int token);
+	void MustGetToken(int token);
+	bool CheckToken(int token);
+	bool CheckTokenId(ENamedName id);
+
+	bool GetNumber();
+	void MustGetNumber();
+	bool CheckNumber();
+
+	bool GetFloat();
+	void MustGetFloat();
+	bool CheckFloat();
+
+	void UnGet();
+
+	bool Compare(const char *text);
+	int MatchString(const char **strings);
+	int MustMatchString(const char **strings);
+
+	void ScriptError(const char *message, ...);
+
+	// Members ------------------------------------------------------
+	char *String;
+	int StringLen;
+	int TokenType;
+	int Number;
+	double Float;
+	FName Name;
+	int Line;
+	bool End;
+	bool Crossed;
+
+protected:
+	void PrepareScript();
+	void CheckOpen();
+	bool ScanString(bool tokens);
+
+	// Strings longer than this minus one will be dynamically allocated.
+	static const int MAX_STRING_SIZE = 128;
+
+	bool ScriptOpen;
+	FString ScriptName;
+	FString ScriptBuffer;
+	const char *ScriptPtr;
+	const char *ScriptEndPtr;
+	char StringBuffer[MAX_STRING_SIZE];
+	FString BigStringBuffer;
+	bool AlreadyGot;
+	int AlreadyGotLine;
+	bool LastGotToken;
+	const char *LastGotPtr;
+	int LastGotLine;
+	bool CMode;
+	bool Escape;
+};
 
 enum
 {
@@ -151,16 +209,5 @@ enum
 
 	TK_LastToken
 };
-
-extern int sc_TokenType;
-extern char *sc_String;
-extern unsigned int sc_StringLen;
-extern int sc_Number;
-extern double sc_Float;
-extern FName sc_Name;
-extern int sc_Line;
-extern bool sc_End;
-extern bool sc_Crossed;
-extern bool sc_FileScripts;
 
 #endif //__SC_MAN_H__

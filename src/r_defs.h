@@ -860,7 +860,7 @@ struct vissprite_t
 	fixed_t			xiscale;		// negative if flipped
 	fixed_t			idepth;			// 1/z
 	fixed_t			texturemid;
-	DWORD			AlphaColor;
+	DWORD			FillColor;
 	lighttable_t	*colormap;
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	sector_t		*sector;		// [RH] sector this sprite is in
@@ -869,7 +869,7 @@ struct vissprite_t
 	FTexture		*pic;
 	short 			renderflags;
 	DWORD			Translation;	// [RH] for color translation
-	BYTE			RenderStyle;
+	FRenderStyle	RenderStyle;
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
 	BYTE			bSplitSprite;	// [RH] Sprite was split by a drawseg
 };

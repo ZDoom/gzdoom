@@ -198,169 +198,165 @@ void FreeSBarInfoScript()
 //Laz Bar Script Reader
 void SBarInfo::ParseSBarInfo(int lump)
 {
+	FScanner sc(lump, Wads.GetLumpFullName(lump));
 	gameType = GAME_Any;
-	SC_OpenLumpNum(lump, Wads.GetLumpFullName(lump));
-	SC_SetCMode(true);
-	while(SC_CheckToken(TK_Identifier) || SC_CheckToken(TK_Include))
+	sc.SetCMode(true);
+	while(sc.CheckToken(TK_Identifier) || sc.CheckToken(TK_Include))
 	{
-		if(sc_TokenType == TK_Include)
+		if(sc.TokenType == TK_Include)
 		{
-			SC_MustGetToken(TK_StringConst);
-			int lump = Wads.CheckNumForFullName(sc_String); //zip/pk3
+			sc.MustGetToken(TK_StringConst);
+			int lump = Wads.CheckNumForFullName(sc.String); //zip/pk3
 			//Do a normal wad lookup.
-			if (lump==-1 && strlen(sc_String) <= 8 && !strchr(sc_String, '/')) 
-				lump = Wads.CheckNumForName(sc_String);
-			if (lump==-1) 
-				SC_ScriptError("Lump '%s' not found", sc_String);
-			SC_SaveScriptState();
+			if (lump == -1 && sc.StringLen <= 8 && !strchr(sc.String, '/')) 
+				lump = Wads.CheckNumForName(sc.String);
+			if (lump == -1) 
+				sc.ScriptError("Lump '%s' not found", sc.String);
 			ParseSBarInfo(lump);
-			SC_RestoreScriptState();
 			continue;
 		}
-		switch(SC_MustMatchString(SBarInfoTopLevel))
+		switch(sc.MustMatchString(SBarInfoTopLevel))
 		{
 			case SBARINFO_BASE:
-				SC_MustGetToken(TK_Identifier);
-				if(SC_Compare("Doom"))
+				sc.MustGetToken(TK_Identifier);
+				if(sc.Compare("Doom"))
 					gameType = GAME_Doom;
-				else if(SC_Compare("Heretic"))
+				else if(sc.Compare("Heretic"))
 					gameType = GAME_Heretic;
-				else if(SC_Compare("Hexen"))
+				else if(sc.Compare("Hexen"))
 					gameType = GAME_Hexen;
-				else if(SC_Compare("Strife"))
+				else if(sc.Compare("Strife"))
 					gameType = GAME_Strife;
-				else if(SC_Compare("None"))
+				else if(sc.Compare("None"))
 					gameType = GAME_Any;
 				else
-					SC_ScriptError("Bad game name: %s", sc_String);
-				SC_MustGetToken(';');
+					sc.ScriptError("Bad game name: %s", sc.String);
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_HEIGHT:
-				SC_MustGetToken(TK_IntConst);
-				this->height = sc_Number;
-				SC_MustGetToken(';');
+				sc.MustGetToken(TK_IntConst);
+				this->height = sc.Number;
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_INTERPOLATEHEALTH: //mimics heretics interpolated health values.
-				if(SC_CheckToken(TK_True))
+				if(sc.CheckToken(TK_True))
 				{
 					interpolateHealth = true;
 				}
 				else
 				{
-					SC_TokenMustBe(TK_False);
+					sc.TokenMustBe(TK_False);
 					interpolateHealth = false;
 				}
-				if(SC_CheckToken(',')) //speed param
+				if(sc.CheckToken(',')) //speed param
 				{
-					SC_MustGetToken(TK_IntConst);
-					this->interpolationSpeed = sc_Number;
+					sc.MustGetToken(TK_IntConst);
+					this->interpolationSpeed = sc.Number;
 				}
-				SC_MustGetToken(';');
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_STATUSBAR:
 			{
-				SC_MustGetToken(TK_Identifier);
-				int barNum = SC_MustMatchString(StatusBars);
-				while(SC_CheckToken(','))
+				sc.MustGetToken(TK_Identifier);
+				int barNum = sc.MustMatchString(StatusBars);
+				while(sc.CheckToken(','))
 				{
-					SC_MustGetToken(TK_Identifier);
-					if(SC_Compare("forcescaled"))
+					sc.MustGetToken(TK_Identifier);
+					if(sc.Compare("forcescaled"))
 					{
 						this->huds[barNum].forceScaled = true;
 					}
 					else
 					{
-						SC_ScriptError("Unkown flag '%s'.", sc_String);
+						sc.ScriptError("Unkown flag '%s'.", sc.String);
 					}
 				}
-				SC_MustGetToken('{');
+				sc.MustGetToken('{');
 				if(barNum == STBAR_AUTOMAP)
 				{
 					automapbar = true;
 				}
-				ParseSBarInfoBlock(this->huds[barNum]);
+				ParseSBarInfoBlock(sc, this->huds[barNum]);
 				break;
 			}
 		}
 	}
-	SC_SetCMode(false);
-	SC_Close();
 }
 
-void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
+void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 {
-	while(SC_CheckToken(TK_Identifier))
+	while(sc.CheckToken(TK_Identifier))
 	{
 		SBarInfoCommand cmd;
 
-		switch(cmd.type = SC_MustMatchString(SBarInfoRoutineLevel))
+		switch(cmd.type = sc.MustMatchString(SBarInfoRoutineLevel))
 		{
 			case SBARINFO_DRAWSWITCHABLEIMAGE:
-				SC_MustGetToken(TK_Identifier);
-				if(SC_Compare("weaponslot"))
+				sc.MustGetToken(TK_Identifier);
+				if(sc.Compare("weaponslot"))
 				{
 					cmd.flags = DRAWIMAGE_WEAPONSLOT;
-					SC_MustGetToken(TK_IntConst);
-					cmd.value = sc_Number;
+					sc.MustGetToken(TK_IntConst);
+					cmd.value = sc.Number;
 				}
-				else if(SC_Compare("invulnerable"))
+				else if(sc.Compare("invulnerable"))
 				{
 					cmd.flags = DRAWIMAGE_INVULNERABILITY;
 				}
 				else
 				{
-					cmd.setString(sc_String, 0);
-					const PClass* item = PClass::FindClass(sc_String);
+					cmd.setString(sc, sc.String, 0);
+					const PClass* item = PClass::FindClass(sc.String);
 					if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of Inventory
 					{
-						SC_ScriptError("'%s' is not a type of inventory item.", sc_String);
+						sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
 					}
 				}
-				if(SC_CheckToken(TK_AndAnd))
+				if(sc.CheckToken(TK_AndAnd))
 				{
 					cmd.flags += DRAWIMAGE_SWITCHABLE_AND;
-					SC_MustGetToken(TK_Identifier);
-					cmd.setString(sc_String, 1);
-					const PClass* item = PClass::FindClass(sc_String);
+					sc.MustGetToken(TK_Identifier);
+					cmd.setString(sc, sc.String, 1);
+					const PClass* item = PClass::FindClass(sc.String);
 					if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of Inventory
 					{
-						SC_ScriptError("'%s' is not a type of inventory item.", sc_String);
+						sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
 					}
-					SC_MustGetToken(',');
-					SC_MustGetToken(TK_StringConst);
-					cmd.special = newImage(sc_String);
-					SC_MustGetToken(',');
-					SC_MustGetToken(TK_StringConst);
-					cmd.special2 = newImage(sc_String);
-					SC_MustGetToken(',');
-					SC_MustGetToken(TK_StringConst);
-					cmd.special3 = newImage(sc_String);
-					SC_MustGetToken(',');
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_StringConst);
+					cmd.special = newImage(sc.String);
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_StringConst);
+					cmd.special2 = newImage(sc.String);
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_StringConst);
+					cmd.special3 = newImage(sc.String);
+					sc.MustGetToken(',');
 				}
 				else
 				{
-					SC_MustGetToken(',');
-					SC_MustGetToken(TK_StringConst);
-					cmd.special = newImage(sc_String);
-					SC_MustGetToken(',');
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_StringConst);
+					cmd.special = newImage(sc.String);
+					sc.MustGetToken(',');
 				}
 			case SBARINFO_DRAWIMAGE:
 			{
 				bool getImage = true;
-				if(SC_CheckToken(TK_Identifier))
+				if(sc.CheckToken(TK_Identifier))
 				{
 					getImage = false;
-					if(SC_Compare("playericon"))
+					if(sc.Compare("playericon"))
 						cmd.flags += DRAWIMAGE_PLAYERICON;
-					else if(SC_Compare("ammoicon1"))
+					else if(sc.Compare("ammoicon1"))
 						cmd.flags += DRAWIMAGE_AMMO1;
-					else if(SC_Compare("ammoicon2"))
+					else if(sc.Compare("ammoicon2"))
 						cmd.flags += DRAWIMAGE_AMMO2;
-					else if(SC_Compare("armoricon"))
+					else if(sc.Compare("armoricon"))
 						cmd.flags += DRAWIMAGE_ARMOR;
-					else if(SC_Compare("weaponicon"))
+					else if(sc.Compare("weaponicon"))
 						cmd.flags += DRAWIMAGE_WEAPONICON;
-					else if(SC_Compare("translatable"))
+					else if(sc.Compare("translatable"))
 					{
 						cmd.flags += DRAWIMAGE_TRANSLATABLE;
 						getImage = true;
@@ -368,531 +364,499 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 					else
 					{
 						cmd.flags += DRAWIMAGE_INVENTORYICON;
-						const PClass* item = PClass::FindClass(sc_String);
+						const PClass* item = PClass::FindClass(sc.String);
 						if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of Inventory
 						{
-							SC_ScriptError("'%s' is not a type of inventory item.", sc_String);
+							sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
 						}
 						cmd.sprite = ((AInventory *)GetDefaultByType(item))->Icon;
 					}
 				}
 				if(getImage)
 				{
-					SC_MustGetToken(TK_StringConst);
-					cmd.sprite = newImage(sc_String);
+					sc.MustGetToken(TK_StringConst);
+					cmd.sprite = newImage(sc.String);
 				}
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.x = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - this->height); //the position should be absolute on the screen.
-				if(SC_CheckToken(','))
+				sc.MustGetToken(',');
+				this->getCoordinates(sc, cmd);
+				if(sc.CheckToken(','))
 				{
-					SC_MustGetToken(TK_Identifier);
-					if(SC_Compare("center"))
+					sc.MustGetToken(TK_Identifier);
+					if(sc.Compare("center"))
 						cmd.flags += DRAWIMAGE_OFFSET_CENTER;
 					else
-						SC_ScriptError("Expected 'center' got '%s' instead.", sc_String);
+						sc.ScriptError("Expected 'center' got '%s' instead.", sc.String);
 				}
-				SC_MustGetToken(';');
+				sc.MustGetToken(';');
 				break;
 			}
 			case SBARINFO_DRAWNUMBER:
 				cmd.special4 = cmd.special3 = -1;
-				SC_MustGetToken(TK_IntConst);
-				cmd.special = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_Identifier);
-				cmd.font = V_GetFont(sc_String);
+				sc.MustGetToken(TK_IntConst);
+				cmd.special = sc.Number;
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_Identifier);
+				cmd.font = V_GetFont(sc.String);
 				if(cmd.font == NULL)
-					SC_ScriptError("Unknown font '%s'.", sc_String);
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_Identifier);
-				cmd.translation = this->GetTranslation(sc_String);
-				SC_MustGetToken(',');
-				if(SC_CheckToken(TK_IntConst))
+					sc.ScriptError("Unknown font '%s'.", sc.String);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_Identifier);
+				cmd.translation = this->GetTranslation(sc, sc.String);
+				sc.MustGetToken(',');
+				if(sc.CheckToken(TK_IntConst))
 				{
-					cmd.value = sc_Number;
-					SC_MustGetToken(',');
+					cmd.value = sc.Number;
+					sc.MustGetToken(',');
 				}
 				else
 				{
-					SC_MustGetToken(TK_Identifier);
-					if(SC_Compare("health"))
+					sc.MustGetToken(TK_Identifier);
+					if(sc.Compare("health"))
 						cmd.flags = DRAWNUMBER_HEALTH;
-					else if(SC_Compare("armor"))
+					else if(sc.Compare("armor"))
 						cmd.flags = DRAWNUMBER_ARMOR;
-					else if(SC_Compare("ammo1"))
+					else if(sc.Compare("ammo1"))
 						cmd.flags = DRAWNUMBER_AMMO1;
-					else if(SC_Compare("ammo2"))
+					else if(sc.Compare("ammo2"))
 						cmd.flags = DRAWNUMBER_AMMO2;
-					else if(SC_Compare("ammo")) //request the next string to be an ammo type
+					else if(sc.Compare("ammo")) //request the next string to be an ammo type
 					{
-						SC_MustGetToken(TK_Identifier);
-						cmd.setString(sc_String, 0);
+						sc.MustGetToken(TK_Identifier);
+						cmd.setString(sc, sc.String, 0);
 						cmd.flags = DRAWNUMBER_AMMO;
-						const PClass* ammo = PClass::FindClass(sc_String);
+						const PClass* ammo = PClass::FindClass(sc.String);
 						if(ammo == NULL || !PClass::FindClass("Ammo")->IsAncestorOf(ammo)) //must be a kind of ammo
 						{
-							SC_ScriptError("'%s' is not a type of ammo.", sc_String);
+							sc.ScriptError("'%s' is not a type of ammo.", sc.String);
 						}
 					}
-					else if(SC_Compare("ammocapacity"))
+					else if(sc.Compare("ammocapacity"))
 					{
-						SC_MustGetToken(TK_Identifier);
-						cmd.setString(sc_String, 0);
+						sc.MustGetToken(TK_Identifier);
+						cmd.setString(sc, sc.String, 0);
 						cmd.flags = DRAWNUMBER_AMMOCAPACITY;
-						const PClass* ammo = PClass::FindClass(sc_String);
+						const PClass* ammo = PClass::FindClass(sc.String);
 						if(ammo == NULL || !PClass::FindClass("Ammo")->IsAncestorOf(ammo)) //must be a kind of ammo
 						{
-							SC_ScriptError("'%s' is not a type of ammo.", sc_String);
+							sc.ScriptError("'%s' is not a type of ammo.", sc.String);
 						}
 					}
-					else if(SC_Compare("frags"))
+					else if(sc.Compare("frags"))
 						cmd.flags = DRAWNUMBER_FRAGS;
-					else if(SC_Compare("kills"))
+					else if(sc.Compare("kills"))
 						cmd.flags += DRAWNUMBER_KILLS;
-					else if(SC_Compare("monsters"))
+					else if(sc.Compare("monsters"))
 						cmd.flags += DRAWNUMBER_MONSTERS;
-					else if(SC_Compare("items"))
+					else if(sc.Compare("items"))
 						cmd.flags += DRAWNUMBER_ITEMS;
-					else if(SC_Compare("totalitems"))
+					else if(sc.Compare("totalitems"))
 						cmd.flags += DRAWNUMBER_TOTALITEMS;
-					else if(SC_Compare("secrets"))
+					else if(sc.Compare("secrets"))
 						cmd.flags += DRAWNUMBER_SECRETS;
-					else if(SC_Compare("totalsecrets"))
+					else if(sc.Compare("totalsecrets"))
 						cmd.flags += DRAWNUMBER_TOTALSECRETS;
 					else
 					{
 						cmd.flags = DRAWNUMBER_INVENTORY;
-						SC_MustGetToken(TK_Identifier);
-						cmd.setString(sc_String, 0);
-						const PClass* item = PClass::FindClass(sc_String);
+						sc.MustGetToken(TK_Identifier);
+						cmd.setString(sc, sc.String, 0);
+						const PClass* item = PClass::FindClass(sc.String);
 						if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of ammo
 						{
-							SC_ScriptError("'%s' is not a type of inventory item.", sc_String);
+							sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
 						}
 					}
-					SC_MustGetToken(',');
+					sc.MustGetToken(',');
 				}
-				SC_MustGetToken(TK_IntConst);
-				cmd.x = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - this->height);
-				if(SC_CheckToken(','))
+				this->getCoordinates(sc, cmd);
+				if(sc.CheckToken(','))
 				{
 					bool needsComma = false;
-					if(SC_CheckToken(TK_IntConst)) //font spacing
+					if(sc.CheckToken(TK_IntConst)) //font spacing
 					{
-						cmd.special2 = sc_Number;
+						cmd.special2 = sc.Number;
 						needsComma = true;
 					}
-					if(!needsComma || SC_CheckToken(',')) //2nd coloring for "low-on" value
+					if(!needsComma || sc.CheckToken(',')) //2nd coloring for "low-on" value
 					{
-						SC_MustGetToken(TK_Identifier);
-						cmd.translation2 = this->GetTranslation(sc_String);
-						SC_MustGetToken(',');
-						SC_MustGetToken(TK_IntConst);
-						cmd.special3 = sc_Number;
-						if(SC_CheckToken(',')) //3rd coloring for "high-on" value
+						sc.MustGetToken(TK_Identifier);
+						cmd.translation2 = this->GetTranslation(sc, sc.String);
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_IntConst);
+						cmd.special3 = sc.Number;
+						if(sc.CheckToken(',')) //3rd coloring for "high-on" value
 						{
-							SC_MustGetToken(TK_Identifier);
-							cmd.translation3 = this->GetTranslation(sc_String);
-							SC_MustGetToken(',');
-							SC_MustGetToken(TK_IntConst);
-							cmd.special4 = sc_Number;
+							sc.MustGetToken(TK_Identifier);
+							cmd.translation3 = this->GetTranslation(sc, sc.String);
+							sc.MustGetToken(',');
+							sc.MustGetToken(TK_IntConst);
+							cmd.special4 = sc.Number;
 						}
 					}
 				}
-				SC_MustGetToken(';');
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_DRAWMUGSHOT:
-				SC_MustGetToken(TK_StringConst);
-				cmd.setString(sc_String, 0, 3, true);
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst); //accuracy
-				if(sc_Number < 1 || sc_Number > 9)
-					SC_ScriptError("Exspected a number between 1 and 9, got %d instead.", sc_Number);
-				cmd.special = sc_Number;
-				SC_MustGetToken(',');
-				while(SC_CheckToken(TK_Identifier))
+				sc.MustGetToken(TK_StringConst);
+				cmd.setString(sc, sc.String, 0, 3, true);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst); //accuracy
+				if(sc.Number < 1 || sc.Number > 9)
+					sc.ScriptError("Exspected a number between 1 and 9, got %d instead.", sc.Number);
+				cmd.special = sc.Number;
+				sc.MustGetToken(',');
+				while(sc.CheckToken(TK_Identifier))
 				{
-					if(SC_Compare("xdeathface"))
+					if(sc.Compare("xdeathface"))
 						cmd.flags += DRAWMUGSHOT_XDEATHFACE;
-					else if(SC_Compare("animatedgodmode"))
+					else if(sc.Compare("animatedgodmode"))
 						cmd.flags += DRAWMUGSHOT_ANIMATEDGODMODE;
 					else
-						SC_ScriptError("Unknown flag '%s'.", sc_String);
-					SC_MustGetToken(',');
+						sc.ScriptError("Unknown flag '%s'.", sc.String);
+					sc.MustGetToken(',');
 				}
-				SC_MustGetToken(TK_IntConst);
-				cmd.x = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - this->height);
-				if(SC_CheckToken(',')) //hmm I guess we had a numberic flag in there.
+				this->getCoordinates(sc, cmd);
+				if(sc.CheckToken(',')) //hmm I guess we had a numberic flag in there.
 				{
 					cmd.flags = cmd.x;
 					cmd.x = cmd.y + (200 - this->height);
-					SC_MustGetToken(TK_IntConst);
-					cmd.y = sc_Number - (200 - this->height);
+					sc.MustGetToken(TK_IntConst);
+					cmd.y = sc.Number - (200 - this->height);
 				}
-				SC_MustGetToken(';');
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_DRAWSELECTEDINVENTORY:
 			{
 				bool alternateonempty = false;
 				while(true) //go until we get a font (non-flag)
 				{
-					SC_MustGetToken(TK_Identifier);
-					if(SC_Compare("alternateonempty"))
+					sc.MustGetToken(TK_Identifier);
+					if(sc.Compare("alternateonempty"))
 					{
 						alternateonempty = true;
 						cmd.flags += DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY;
 					}
-					else if(SC_Compare("artiflash"))
+					else if(sc.Compare("artiflash"))
 					{
 						cmd.flags += DRAWSELECTEDINVENTORY_ARTIFLASH;
 					}
-					else if(SC_Compare("alwaysshowcounter"))
+					else if(sc.Compare("alwaysshowcounter"))
 					{
 						cmd.flags += DRAWSELECTEDINVENTORY_ALWAYSSHOWCOUNTER;
 					}
 					else
 					{
-						cmd.font = V_GetFont(sc_String);
+						cmd.font = V_GetFont(sc.String);
 						if(cmd.font == NULL)
-							SC_ScriptError("Unknown font '%s'.", sc_String);
-						SC_MustGetToken(',');
+							sc.ScriptError("Unknown font '%s'.", sc.String);
+						sc.MustGetToken(',');
 						break;
 					}
-					SC_MustGetToken(',');
+					sc.MustGetToken(',');
 				}
-				SC_MustGetToken(TK_IntConst);
-				cmd.x = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - this->height);
+				sc.MustGetToken(TK_IntConst);
+				cmd.x = sc.Number;
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				cmd.y = sc.Number - (200 - this->height);
 				cmd.special2 = cmd.x + 30;
 				cmd.special3 = cmd.y + 24;
 				cmd.translation = CR_GOLD;
-				if(SC_CheckToken(',')) //more font information
+				if(sc.CheckToken(',')) //more font information
 				{
-					SC_MustGetToken(TK_IntConst);
-					cmd.special2 = sc_Number;
-					SC_MustGetToken(',');
-					SC_MustGetToken(TK_IntConst);
-					cmd.special3 = sc_Number - (200 - this->height);
-					if(SC_CheckToken(','))
+					sc.MustGetToken(TK_IntConst);
+					cmd.special2 = sc.Number;
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_IntConst);
+					cmd.special3 = sc.Number - (200 - this->height);
+					if(sc.CheckToken(','))
 					{
-						SC_MustGetToken(TK_Identifier);
-						cmd.translation = this->GetTranslation(sc_String);
-						if(SC_CheckToken(','))
+						sc.MustGetToken(TK_Identifier);
+						cmd.translation = this->GetTranslation(sc, sc.String);
+						if(sc.CheckToken(','))
 						{
-							SC_MustGetToken(TK_IntConst);
-							cmd.special4 = sc_Number;
+							sc.MustGetToken(TK_IntConst);
+							cmd.special4 = sc.Number;
 						}
 					}
 				}
 				if(alternateonempty)
 				{
-					SC_MustGetToken('{');
-					this->ParseSBarInfoBlock(cmd.subBlock);
+					sc.MustGetToken('{');
+					this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				}
 				else
 				{
-					SC_MustGetToken(';');
+					sc.MustGetToken(';');
 				}
 				break;
 			}
 			case SBARINFO_DRAWINVENTORYBAR:
-				SC_MustGetToken(TK_Identifier);
-				if(SC_Compare("Heretic"))
+				sc.MustGetToken(TK_Identifier);
+				if(sc.Compare("Heretic"))
 				{
 					cmd.special = GAME_Heretic;
 				}
-				if(SC_Compare("Doom") || SC_Compare("Heretic"))
+				if(sc.Compare("Doom") || sc.Compare("Heretic"))
 				{
-					SC_MustGetToken(',');
-					while(SC_CheckToken(TK_Identifier))
+					sc.MustGetToken(',');
+					while(sc.CheckToken(TK_Identifier))
 					{
-						if(SC_Compare("alwaysshow"))
+						if(sc.Compare("alwaysshow"))
 						{
 							cmd.flags += DRAWINVENTORYBAR_ALWAYSSHOW;
 						}
-						else if(SC_Compare("noartibox"))
+						else if(sc.Compare("noartibox"))
 						{
 							cmd.flags += DRAWINVENTORYBAR_NOARTIBOX;
 						}
-						else if(SC_Compare("noarrows"))
+						else if(sc.Compare("noarrows"))
 						{
 							cmd.flags += DRAWINVENTORYBAR_NOARROWS;
 						}
-						else if(SC_Compare("alwaysshowcounter"))
+						else if(sc.Compare("alwaysshowcounter"))
 						{
 							cmd.flags += DRAWINVENTORYBAR_ALWAYSSHOWCOUNTER;
 						}
 						else
 						{
-							SC_ScriptError("Unknown flag '%s'.", sc_String);
+							sc.ScriptError("Unknown flag '%s'.", sc.String);
 						}
-						SC_MustGetToken(',');
+						sc.MustGetToken(',');
 					}
-					SC_MustGetToken(TK_IntConst);
-					cmd.value = sc_Number;
-					SC_MustGetToken(',');
-					SC_MustGetToken(TK_Identifier);
-					cmd.font = V_GetFont(sc_String);
+					sc.MustGetToken(TK_IntConst);
+					cmd.value = sc.Number;
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_Identifier);
+					cmd.font = V_GetFont(sc.String);
 					if(cmd.font == NULL)
-						SC_ScriptError("Unknown font '%s'.", sc_String);
+						sc.ScriptError("Unknown font '%s'.", sc.String);
 				}
 				else
 				{
-					SC_ScriptError("Unkown style '%s'.", sc_String);
+					sc.ScriptError("Unkown style '%s'.", sc.String);
 				}
-				SC_MustGetToken(',');
-				SC_MustGetNumber();
-				cmd.x = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetNumber();
-				cmd.y = sc_Number - (200 - this->height);
+				sc.MustGetToken(',');
+				this->getCoordinates(sc, cmd);
 				cmd.special2 = cmd.x + 26;
 				cmd.special3 = cmd.y + 22;
 				cmd.translation = CR_GOLD;
-				if(SC_CheckToken(',')) //more font information
+				if(sc.CheckToken(',')) //more font information
 				{
-					SC_MustGetToken(TK_IntConst);
-					cmd.special2 = sc_Number;
-					SC_MustGetToken(',');
-					SC_MustGetToken(TK_IntConst);
-					cmd.special3 = sc_Number - (200 - this->height);
-					if(SC_CheckToken(','))
+					sc.MustGetToken(TK_IntConst);
+					cmd.special2 = sc.Number;
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_IntConst);
+					cmd.special3 = sc.Number - (200 - this->height);
+					if(sc.CheckToken(','))
 					{
-						SC_MustGetToken(TK_Identifier);
-						cmd.translation = this->GetTranslation(sc_String);
-						if(SC_CheckToken(','))
+						sc.MustGetToken(TK_Identifier);
+						cmd.translation = this->GetTranslation(sc, sc.String);
+						if(sc.CheckToken(','))
 						{
-							SC_MustGetToken(TK_IntConst);
-							cmd.special4 = sc_Number;
+							sc.MustGetToken(TK_IntConst);
+							cmd.special4 = sc.Number;
 						}
 					}
 				}
-				SC_MustGetToken(';');
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_DRAWBAR:
-				SC_MustGetToken(TK_StringConst);
-				cmd.sprite = newImage(sc_String);
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_StringConst);
-				cmd.special = newImage(sc_String);
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_Identifier); //yeah, this is the same as drawnumber, there might be a better way to copy it...
-				if(SC_Compare("health"))
+				sc.MustGetToken(TK_StringConst);
+				cmd.sprite = newImage(sc.String);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_StringConst);
+				cmd.special = newImage(sc.String);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_Identifier); //yeah, this is the same as drawnumber, there might be a better way to copy it...
+				if(sc.Compare("health"))
 				{
 					cmd.flags = DRAWNUMBER_HEALTH;
-					if(SC_CheckToken(TK_Identifier)) //comparing reference
+					if(sc.CheckToken(TK_Identifier)) //comparing reference
 					{
-						cmd.setString(sc_String, 0);
-						const PClass* item = PClass::FindClass(sc_String);
+						cmd.setString(sc, sc.String, 0);
+						const PClass* item = PClass::FindClass(sc.String);
 						if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of inventory
 						{
-							SC_ScriptError("'%s' is not a type of inventory item.", sc_String);
+							sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
 						}
 					}
 					else
 						cmd.special2 = DRAWBAR_COMPAREDEFAULTS;
 				}
-				else if(SC_Compare("armor"))
+				else if(sc.Compare("armor"))
 				{
 					cmd.flags = DRAWNUMBER_ARMOR;
-					if(SC_CheckToken(TK_Identifier))
+					if(sc.CheckToken(TK_Identifier))
 					{
-						cmd.setString(sc_String, 0);
-						const PClass* item = PClass::FindClass(sc_String);
+						cmd.setString(sc, sc.String, 0);
+						const PClass* item = PClass::FindClass(sc.String);
 						if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of inventory
 						{
-							SC_ScriptError("'%s' is not a type of inventory item.", sc_String);
+							sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
 						}
 					}
 					else
 						cmd.special2 = DRAWBAR_COMPAREDEFAULTS;
 				}
-				else if(SC_Compare("ammo1"))
+				else if(sc.Compare("ammo1"))
 					cmd.flags = DRAWNUMBER_AMMO1;
-				else if(SC_Compare("ammo2"))
+				else if(sc.Compare("ammo2"))
 					cmd.flags = DRAWNUMBER_AMMO2;
-				else if(SC_Compare("ammo")) //request the next string to be an ammo type
+				else if(sc.Compare("ammo")) //request the next string to be an ammo type
 				{
-					SC_MustGetToken(TK_Identifier);
-					cmd.setString(sc_String, 0);
+					sc.MustGetToken(TK_Identifier);
+					cmd.setString(sc, sc.String, 0);
 					cmd.flags = DRAWNUMBER_AMMO;
-					const PClass* ammo = PClass::FindClass(sc_String);
+					const PClass* ammo = PClass::FindClass(sc.String);
 					if(ammo == NULL || !PClass::FindClass("Ammo")->IsAncestorOf(ammo)) //must be a kind of ammo
 					{
-						SC_ScriptError("'%s' is not a type of ammo.", sc_String);
+						sc.ScriptError("'%s' is not a type of ammo.", sc.String);
 					}
 				}
-				else if(SC_Compare("frags"))
+				else if(sc.Compare("frags"))
 					cmd.flags = DRAWNUMBER_FRAGS;
-				else if(SC_Compare("kills"))
+				else if(sc.Compare("kills"))
 					cmd.flags = DRAWNUMBER_KILLS;
-				else if(SC_Compare("items"))
+				else if(sc.Compare("items"))
 					cmd.flags = DRAWNUMBER_ITEMS;
-				else if(SC_Compare("secrets"))
+				else if(sc.Compare("secrets"))
 					cmd.flags = DRAWNUMBER_SECRETS;
 				else
 				{
 					cmd.flags = DRAWNUMBER_INVENTORY;
-					cmd.setString(sc_String, 0);
-					const PClass* item = PClass::FindClass(sc_String);
+					cmd.setString(sc, sc.String, 0);
+					const PClass* item = PClass::FindClass(sc.String);
 					if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of ammo
 					{
-						SC_ScriptError("'%s' is not a type of inventory item.", sc_String);
+						sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
 					}
 				}
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_Identifier);
-				if(SC_Compare("horizontal"))
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_Identifier);
+				if(sc.Compare("horizontal"))
 					cmd.special2 += DRAWBAR_HORIZONTAL;
-				else if(!SC_Compare("vertical"))
-					SC_ScriptError("Unknown direction '%s'.", sc_String);
-				SC_MustGetToken(',');
-				if(SC_CheckToken(TK_Identifier))
+				else if(!sc.Compare("vertical"))
+					sc.ScriptError("Unknown direction '%s'.", sc.String);
+				sc.MustGetToken(',');
+				if(sc.CheckToken(TK_Identifier))
 				{
-					if(!SC_Compare("reverse"))
+					if(!sc.Compare("reverse"))
 					{
-						SC_ScriptError("Exspected 'reverse', got '%s' instead.", sc_String);
+						sc.ScriptError("Exspected 'reverse', got '%s' instead.", sc.String);
 					}
 					cmd.special2 += DRAWBAR_REVERSE;
-					SC_MustGetToken(',');
+					sc.MustGetToken(',');
 				}
-				SC_MustGetToken(TK_IntConst);
-				cmd.x = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - this->height);
-				SC_MustGetToken(';');
+				this->getCoordinates(sc, cmd);
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_DRAWGEM:
-				while(SC_CheckToken(TK_Identifier))
+				while(sc.CheckToken(TK_Identifier))
 				{
-					if(SC_Compare("wiggle"))
+					if(sc.Compare("wiggle"))
 						cmd.flags += DRAWGEM_WIGGLE;
-					else if(SC_Compare("translatable"))
+					else if(sc.Compare("translatable"))
 						cmd.flags += DRAWGEM_TRANSLATABLE;
 					else
-						SC_ScriptError("Unkown drawgem flag '%s'.", sc_String);
-					SC_MustGetToken(',');
+						sc.ScriptError("Unkown drawgem flag '%s'.", sc.String);
+					sc.MustGetToken(',');
 				}
-				SC_MustGetToken(TK_StringConst); //chain
-				cmd.special = newImage(sc_String);
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_StringConst); //gem
-				cmd.sprite = newImage(sc_String);
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				if(sc_Number < 0)
-					SC_ScriptError("Left padding must be a positive number.");
-				cmd.special2 = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				if(sc_Number < 0)
-					SC_ScriptError("Right padding must be a positive number.");
-				cmd.special3 = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				if(sc_Number < 0)
-					SC_ScriptError("Chain size must be a positive number.");
-				cmd.special4 = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.x = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - this->height);
-				SC_MustGetToken(';');
+				sc.MustGetToken(TK_StringConst); //chain
+				cmd.special = newImage(sc.String);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_StringConst); //gem
+				cmd.sprite = newImage(sc.String);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				if(sc.Number < 0)
+					sc.ScriptError("Left padding must be a positive number.");
+				cmd.special2 = sc.Number;
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				if(sc.Number < 0)
+					sc.ScriptError("Right padding must be a positive number.");
+				cmd.special3 = sc.Number;
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				if(sc.Number < 0)
+					sc.ScriptError("Chain size must be a positive number.");
+				cmd.special4 = sc.Number;
+				sc.MustGetToken(',');
+				this->getCoordinates(sc, cmd);
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_DRAWSHADER:
-				SC_MustGetToken(TK_IntConst);
-				cmd.special = sc_Number;
-				if(sc_Number < 1)
-					SC_ScriptError("Width must be greater than 1.");
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.special2 = sc_Number;
-				if(sc_Number < 1)
-					SC_ScriptError("Height must be greater than 1.");
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_Identifier);
-				if(SC_Compare("vertical"))
+				sc.MustGetToken(TK_IntConst);
+				cmd.special = sc.Number;
+				if(sc.Number < 1)
+					sc.ScriptError("Width must be greater than 1.");
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				cmd.special2 = sc.Number;
+				if(sc.Number < 1)
+					sc.ScriptError("Height must be greater than 1.");
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_Identifier);
+				if(sc.Compare("vertical"))
 					cmd.flags += DRAWSHADER_VERTICAL;
-				else if(!SC_Compare("horizontal"))
-					SC_ScriptError("Unknown direction '%s'.", sc_String);
-				SC_MustGetToken(',');
-				if(SC_CheckToken(TK_Identifier))
+				else if(!sc.Compare("horizontal"))
+					sc.ScriptError("Unknown direction '%s'.", sc.String);
+				sc.MustGetToken(',');
+				if(sc.CheckToken(TK_Identifier))
 				{
-					if(!SC_Compare("reverse"))
+					if(!sc.Compare("reverse"))
 					{
-						SC_ScriptError("Exspected 'reverse', got '%s' instead.", sc_String);
+						sc.ScriptError("Exspected 'reverse', got '%s' instead.", sc.String);
 					}
 					cmd.flags += DRAWSHADER_REVERSE;
-					SC_MustGetToken(',');
+					sc.MustGetToken(',');
 				}
-				SC_MustGetToken(TK_IntConst);
-				cmd.x = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - this->height);
-				SC_MustGetToken(';');
+				this->getCoordinates(sc, cmd);
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_DRAWSTRING:
-				SC_MustGetToken(TK_Identifier);
-				cmd.font = V_GetFont(sc_String);
+				sc.MustGetToken(TK_Identifier);
+				cmd.font = V_GetFont(sc.String);
 				if(cmd.font == NULL)
-					SC_ScriptError("Unknown font '%s'.", sc_String);
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_Identifier);
-				cmd.translation = this->GetTranslation(sc_String);
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_StringConst);
-				cmd.setString(sc_String, 0, -1, false);
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.x = sc_Number;
-				SC_MustGetToken(',');
-				SC_MustGetToken(TK_IntConst);
-				cmd.y = sc_Number - (200 - this->height);
-				SC_MustGetToken(';');
+					sc.ScriptError("Unknown font '%s'.", sc.String);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_Identifier);
+				cmd.translation = this->GetTranslation(sc, sc.String);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_StringConst);
+				cmd.setString(sc, sc.String, 0, -1, false);
+				sc.MustGetToken(',');
+				this->getCoordinates(sc, cmd);
+				sc.MustGetToken(';');
 				break;
 			case SBARINFO_GAMEMODE:
-				while(SC_CheckToken(TK_Identifier))
+				while(sc.CheckToken(TK_Identifier))
 				{
-					if(SC_Compare("singleplayer"))
+					if(sc.Compare("singleplayer"))
 						cmd.flags += GAMETYPE_SINGLEPLAYER;
-					else if(SC_Compare("cooperative"))
+					else if(sc.Compare("cooperative"))
 						cmd.flags += GAMETYPE_COOPERATIVE;
-					else if(SC_Compare("deathmatch"))
+					else if(sc.Compare("deathmatch"))
 						cmd.flags += GAMETYPE_DEATHMATCH;
-					else if(SC_Compare("teamgame"))
+					else if(sc.Compare("teamgame"))
 						cmd.flags += GAMETYPE_TEAMGAME;
 					else
-						SC_ScriptError("Unknown gamemode: %s", sc_String);
-					if(SC_CheckToken('{'))
+						sc.ScriptError("Unknown gamemode: %s", sc.String);
+					if(sc.CheckToken('{'))
 						break;
-					SC_MustGetToken(',');
+					sc.MustGetToken(',');
 				}
-				this->ParseSBarInfoBlock(cmd.subBlock);
+				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
 			case SBARINFO_PLAYERCLASS:
 				cmd.special = cmd.special2 = cmd.special3 = -1;
-				for(int i = 0;i < 3 && SC_CheckToken(TK_Identifier);i++) //up to 3 classes
+				for(int i = 0;i < 3 && sc.CheckToken(TK_Identifier);i++) //up to 3 classes
 				{
 					bool foundClass = false;
 					for(unsigned int c = 0;c < PlayerClasses.Size();c++)
 					{
-						if(stricmp(sc_String, PlayerClasses[c].Type->Meta.GetMetaString(APMETA_DisplayName)) == 0)
+						if(stricmp(sc.String, PlayerClasses[c].Type->Meta.GetMetaString(APMETA_DisplayName)) == 0)
 						{
 							foundClass = true;
 							if(i == 0)
@@ -905,18 +869,30 @@ void SBarInfo::ParseSBarInfoBlock(SBarInfoBlock &block)
 						}
 					}
 					if(!foundClass)
-						SC_ScriptError("Unkown PlayerClass '%s'.", sc_String);
-					if(SC_CheckToken('{') || i == 2)
+						sc.ScriptError("Unkown PlayerClass '%s'.", sc.String);
+					if(sc.CheckToken('{') || i == 2)
 						goto FinishPlayerClass;
-					SC_MustGetToken(',');
+					sc.MustGetToken(',');
 				}
 			FinishPlayerClass:
-				this->ParseSBarInfoBlock(cmd.subBlock);
+				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
 		}
 		block.commands.Push(cmd);
 	}
-	SC_MustGetToken('}');
+	sc.MustGetToken('}');
+}
+
+void SBarInfo::getCoordinates(FScanner &sc, SBarInfoCommand &cmd)
+{
+	bool negative = false;
+	negative = sc.CheckToken('-');
+	sc.MustGetToken(TK_IntConst);
+	cmd.x = negative ? -sc.Number : sc.Number;
+	sc.MustGetToken(',');
+	negative = sc.CheckToken('-');
+	sc.MustGetToken(TK_IntConst);
+	cmd.y = (negative ? -sc.Number : sc.Number) - (200 - this->height);
 }
 
 int SBarInfo::newImage(const char* patchname)
@@ -927,7 +903,7 @@ int SBarInfo::newImage(const char* patchname)
 	}
 //	if(strlen(patchname) > 8)
 //	{
-//		SC_ScriptError("Graphic names can not be greater then 8 characters long.");
+//		sc.ScriptError("Graphic names can not be greater then 8 characters long.");
 //	}
 	for(unsigned int i = 0;i < this->Images.Size();i++) //did we already load it?
 	{
@@ -940,7 +916,7 @@ int SBarInfo::newImage(const char* patchname)
 }
 
 //converts a string into a tranlation.
-EColorRange SBarInfo::GetTranslation(char* translation)
+EColorRange SBarInfo::GetTranslation(FScanner &sc, char* translation)
 {
 	EColorRange returnVal = CR_UNTRANSLATED;
 	FString namedTranslation; //we must send in "[translation]"
@@ -949,7 +925,7 @@ EColorRange SBarInfo::GetTranslation(char* translation)
 	trans_ptr = (const BYTE *)(&namedTranslation[0]);
 	if((returnVal = V_ParseFontColor(trans_ptr, CR_UNTRANSLATED, CR_UNTRANSLATED)) == CR_UNDEFINED)
 	{
-		SC_ScriptError("Missing definition for color %s.", translation);
+		sc.ScriptError("Missing definition for color %s.", translation);
 	}
 	return returnVal;
 }
@@ -981,13 +957,13 @@ SBarInfo::~SBarInfo()
 	}
 }
 
-void SBarInfoCommand::setString(const char* source, int strnum, int maxlength, bool exact)
+void SBarInfoCommand::setString(FScanner &sc, const char* source, int strnum, int maxlength, bool exact)
 {
 	if(!exact)
 	{
 		if(maxlength != -1 && strlen(source) > (unsigned int) maxlength)
 		{
-			SC_ScriptError("%s is greater than %d characters.", source, maxlength);
+			sc.ScriptError("%s is greater than %d characters.", source, maxlength);
 			return;
 		}
 	}
@@ -995,7 +971,7 @@ void SBarInfoCommand::setString(const char* source, int strnum, int maxlength, b
 	{
 		if(maxlength != -1 && strlen(source) != (unsigned int) maxlength)
 		{
-			SC_ScriptError("%s must be %d characters.", source, maxlength);
+			sc.ScriptError("%s must be %d characters.", source, maxlength);
 			return;
 		}
 	}
@@ -1854,12 +1830,14 @@ private:
 					}
 					if(cmd.bar != NULL)
 						delete cmd.bar;
-					if(cmd.special != -1)
-						cmd.bar = new FBarTexture(Images[cmd.sprite], Images[cmd.special], value, horizontal, reverse);
-					else
-						cmd.bar = new FBarTexture(Images[cmd.sprite], NULL, value, horizontal, reverse);
-					DrawImage(cmd.bar, cmd.x, cmd.y);
-					//delete cmd.bar;
+					if (Images[cmd.sprite] != NULL)
+					{
+						if(cmd.special != -1)
+							cmd.bar = new FBarTexture(Images[cmd.sprite], Images[cmd.special], value, horizontal, reverse);
+						else
+							cmd.bar = new FBarTexture(Images[cmd.sprite], NULL, value, horizontal, reverse);
+						DrawImage(cmd.bar, cmd.x, cmd.y);
+					}
 					break;
 				}
 				case SBARINFO_DRAWGEM:
@@ -1973,8 +1951,8 @@ private:
 	void DrawNumber(int num, int len, int x, int y, EColorRange translation, int spacing=0)
 	{
 		FString value;
-		int maxval = (int) pow(10., len);
-		num = clamp(num, -maxval+1, maxval-1);
+		int maxval = (int) ceil(pow(10., len))-1;
+		num = clamp(num, -maxval, maxval);
 		value.Format("%d", num);
 		x -= int(drawingFont->StringWidth(value)+(spacing * value.Len()));
 		DrawString(value, x, y, translation, spacing);

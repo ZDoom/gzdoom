@@ -423,7 +423,7 @@ void A_AcolyteBits (AActor *self)
 		}
 		else
 		{
-			self->RenderStyle = STYLE_None;
+			self->RenderStyle.BlendOp = STYLEOP_None;
 		}
 	}
 }

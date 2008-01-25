@@ -25,6 +25,12 @@ END_POINTERS
 
 CCMD (addbot)
 {
+	if (gamestate != GS_LEVEL && gamestate != GS_INTERMISSION)
+	{
+		Printf ("Bots cannot be added when not in a game!\n");
+		return;
+	}
+
 	if (consoleplayer != Net_Arbitrator)
 	{
 		Printf ("Only player %d can add bots\n", Net_Arbitrator + 1);
@@ -36,14 +42,7 @@ CCMD (addbot)
 		Printf ("addbot [botname] : add a bot to the game\n");
 		return;
 	}
-/*
-	if (argc == 3) //Used force colornum
-	{
-		color = atoi (argv[2]);
-		if (color<0) color=0;
-		if (color>10) color=10;
-	}
-*/
+
 	if (argv.argc() > 1)
 		bglobal.SpawnBot (argv[1]);
 	else

@@ -166,7 +166,7 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 		// calculate lighting
 		if (!fixedcolormap)
 		{
-			dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+			dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 		}
 
 		dc_iscale = MulScale18 (MaskedSWall[dc_x], MaskedScaleY);
@@ -205,7 +205,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// [RH] modified because we don't use user-definable translucency maps
 	ESPSResult drawmode;
 
-	drawmode = R_SetPatchStyle (curline->sidedef->Flags & WALLF_ADDTRANS ? STYLE_Add : STYLE_Translucent,
+	drawmode = R_SetPatchStyle (LegacyRenderStyles[curline->sidedef->Flags & WALLF_ADDTRANS ? STYLE_Add : STYLE_Translucent],
 		curline->linedef->alpha < 255 ? curline->linedef->alpha<<8 : FRACUNIT,
 		0, 0);
 
@@ -224,7 +224,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// killough 4/13/98: get correct lightlevel for 2s normal textures
 	const sector_t *sec = R_FakeFlat (frontsector, &tempsec, NULL, NULL, false);
 
-	basecolormap = sec->ColorMap->Maps;	// [RH] Set basecolormap
+	basecolormap = sec->ColorMap;	// [RH] Set basecolormap
 
 	wallshade = ds->shade;
 	rw_lightstep = ds->lightstep;
@@ -276,7 +276,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	}
 
 	if (fixedlightlev)
-		dc_colormap = basecolormap + fixedlightlev;
+		dc_colormap = basecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap)
 		dc_colormap = fixedcolormap;
 
@@ -403,6 +403,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	char bad;
 	fixed_t light = rw_light - rw_lightstep;
 	SDWORD yrepeat, texturemid, xoffset;
+	BYTE *basecolormapdata;
 
 	// This function also gets used to draw skies. Unlike BUILD, skies are
 	// drawn by visplane instead of by bunch, so these checks are invalid.
@@ -423,6 +424,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	yrepeat = rw_pic->yScale >> (2 + shiftval);
 	texturemid = dc_texturemid << (16 - shiftval);
 	xoffset = rw_offset;
+	basecolormapdata = basecolormap->Maps;
 
 	x = x1;
 	//while ((umost[x] > dmost[x]) && (x <= x2)) x++;
@@ -446,7 +448,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 
 		if (!fixedcolormap)
 		{ // calculate lighting
-			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -484,7 +486,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			for (z = 0; z < 4; ++z)
 			{
 				light += rw_lightstep;
-				palookupoffse[z] = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+				palookupoffse[z] = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 			}
 		}
 
@@ -539,7 +541,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 
 		if (!fixedcolormap)
 		{ // calculate lighting
-			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -559,11 +561,11 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal)
 {
 	bool flooding = false;
-	BYTE *startcolormap = basecolormap;
+	FDynamicColormap *startcolormap = basecolormap;
 	int startshade = wallshade;
 	bool fogginess = foggy;
 
-	BYTE *floodcolormap = startcolormap;
+	FDynamicColormap *floodcolormap = startcolormap;
 	int floodshade = startshade;
 	bool floodfoggy = foggy;
 
@@ -612,8 +614,8 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 		}
 		else
 		{
-			basecolormap = el->Lights[i].Master->ColorMap->Maps;
-			fogginess = level.fadeto || el->Lights[i].Master->ColorMap->Fade;
+			basecolormap = el->Lights[i].Master->ColorMap;
+			fogginess = level.fadeto || basecolormap->Fade;
 			wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(fogginess,
 				el->Lights[i].Master->lightlevel) + r_actualextralight);
 			if (el->Lights[i].bFlooder)
@@ -649,6 +651,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 	char bad;
 	fixed_t light = rw_light - rw_lightstep;
 	SDWORD yrepeat, texturemid, xoffset;
+	BYTE *basecolormapdata;
 
 	if (rw_pic->UseType == FTexture::TEX_Null)
 	{
@@ -670,6 +673,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 	yrepeat = rw_pic->yScale >> (2 + shiftval);
 	texturemid = dc_texturemid << (16 - shiftval);
 	xoffset = rw_offset;
+	basecolormapdata = basecolormap->Maps;
 
 	x = startx = x1;
 	p = x + dc_destorg;
@@ -691,7 +695,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 
 		if (!fixedcolormap)
 		{ // calculate lighting
-			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -727,7 +731,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 			for (z = 0; z < 4; ++z)
 			{
 				light += rw_lightstep;
-				palookupoffse[z] = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+				palookupoffse[z] = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 			}
 		}
 
@@ -780,7 +784,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 
 		if (!fixedcolormap)
 		{ // calculate lighting
-			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -818,6 +822,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 	char bad;
 	fixed_t light = rw_light - rw_lightstep;
 	SDWORD yrepeat, texturemid, xoffset;
+	BYTE *basecolormapdata;
 
 	if (rw_pic->UseType == FTexture::TEX_Null)
 	{
@@ -840,6 +845,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 	yrepeat = rw_pic->yScale >> (2 + shiftval);
 	texturemid = dc_texturemid << (16 - shiftval);
 	xoffset = rw_offset;
+	basecolormapdata = basecolormap->Maps;
 
 	x = startx = x1;
 	p = x + dc_destorg;
@@ -861,7 +867,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 
 		if (!fixedcolormap)
 		{ // calculate lighting
-			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -897,7 +903,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 			for (z = 0; z < 4; ++z)
 			{
 				light += rw_lightstep;
-				palookupoffse[z] = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+				palookupoffse[z] = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 			}
 		}
 
@@ -953,7 +959,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 
 		if (!fixedcolormap)
 		{ // calculate lighting
-			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -989,7 +995,7 @@ void R_RenderSegLoop ()
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev)
-		dc_colormap = basecolormap + fixedlightlev;
+		dc_colormap = basecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap)
 		dc_colormap = fixedcolormap;
 
@@ -2347,11 +2353,11 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	rw_light = rw_lightleft + (x1 - WallSX1) * rw_lightstep;
 	if (fixedlightlev)
-		dc_colormap = basecolormap + fixedlightlev;
+		dc_colormap = basecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap)
 		dc_colormap = fixedcolormap;
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		dc_colormap = basecolormap;
+		dc_colormap = basecolormap->Maps;
 	else
 		calclighting = true;
 
@@ -2398,7 +2404,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 
 				WallSpriteColumn (R_DrawMaskedColumn);
@@ -2409,7 +2415,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
@@ -2424,7 +2430,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 
 				WallSpriteColumn (R_DrawMaskedColumn);

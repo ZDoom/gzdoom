@@ -219,6 +219,7 @@ FString &FString::operator = (const char *copyStr)
 	{
 		if (copyStr == NULL || *copyStr == '\0')
 		{
+			Data()->Release();
 			NullString.RefCount++;
 			Chars = &NullString.Nothing[0];
 		}

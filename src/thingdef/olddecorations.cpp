@@ -110,8 +110,8 @@ void A_ActiveSound (AActor *);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
-	TArray<FState> &states, FExtraInfo &extra, EDefinitionType def);
-static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states);
+	TArray<FState> &states, FExtraInfo &extra, EDefinitionType def, FScanner &sc);
+static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanner &sc);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -229,7 +229,7 @@ static const char *FlagNames3[] =
 //
 //==========================================================================
 
-void ParseOldDecoration(EDefinitionType def)
+void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 {
 	TArray<FState> states;
 	FExtraInfo extra;
@@ -241,37 +241,37 @@ void ParseOldDecoration(EDefinitionType def)
 	if (def == DEF_Pickup) parent = RUNTIME_CLASS(AFakeInventory);
 	else parent = RUNTIME_CLASS(AActor);
 
-	SC_MustGetString();
-	typeName = FName(sc_String);
+	sc.MustGetString();
+	typeName = FName(sc.String);
 	type = parent->CreateDerivedClass (typeName, parent->Size);
 	info = type->ActorInfo;
 	info->GameFilter = 0x80;
 	MakeStateDefines(parent->ActorInfo->StateList);
 
-	SC_MustGetString ();
-	while (!SC_Compare ("{"))
+	sc.MustGetString ();
+	while (!sc.Compare ("{"))
 	{
-		if (SC_Compare ("Doom"))
+		if (sc.Compare ("Doom"))
 		{
 			info->GameFilter |= GAME_Doom;
 		}
-		else if (SC_Compare ("Heretic"))
+		else if (sc.Compare ("Heretic"))
 		{
 			info->GameFilter |= GAME_Heretic;
 		}
-		else if (SC_Compare ("Hexen"))
+		else if (sc.Compare ("Hexen"))
 		{
 			info->GameFilter |= GAME_Hexen;
 		}
-		else if (SC_Compare ("Raven"))
+		else if (sc.Compare ("Raven"))
 		{
 			info->GameFilter |= GAME_Raven;
 		}
-		else if (SC_Compare ("Strife"))
+		else if (sc.Compare ("Strife"))
 		{
 			info->GameFilter |= GAME_Strife;
 		}
-		else if (SC_Compare ("Any"))
+		else if (sc.Compare ("Any"))
 		{
 			info->GameFilter = GAME_Any;
 		}
@@ -279,17 +279,17 @@ void ParseOldDecoration(EDefinitionType def)
 		{
 			if (def != DEF_Decoration || info->GameFilter != 0x80) 
 			{
-				SC_ScriptError ("Unknown game type %s in %s", sc_String, typeName.GetChars());
+				sc.ScriptError ("Unknown game type %s in %s", sc.String, typeName.GetChars());
 			}
 			else 
 			{
 				// If this is a regular decoration (without preceding keyword) and no game 
 				// filters defined this is more likely a general syntax error so output a 
 				// more meaningful message.
-				SC_ScriptError ("Syntax error: Unknown identifier '%s'", typeName.GetChars());
+				sc.ScriptError ("Syntax error: Unknown identifier '%s'", typeName.GetChars());
 			}
 		}
-		SC_MustGetString ();
+		sc.MustGetString ();
 	}
 	if (info->GameFilter == 0x80)
 	{
@@ -302,24 +302,24 @@ void ParseOldDecoration(EDefinitionType def)
 
 	states.Clear ();
 	memset (&extra, 0, sizeof(extra));
-	ParseInsideDecoration (info, (AActor *)(type->Defaults), states, extra, def);
+	ParseInsideDecoration (info, (AActor *)(type->Defaults), states, extra, def, sc);
 
 	info->NumOwnedStates = states.Size();
 	if (info->NumOwnedStates == 0)
 	{
-		SC_ScriptError ("%s does not define any animation frames", typeName.GetChars() );
+		sc.ScriptError ("%s does not define any animation frames", typeName.GetChars() );
 	}
 	else if (extra.SpawnEnd == 0)
 	{
-		SC_ScriptError ("%s does not have a Frames definition", typeName.GetChars() );
+		sc.ScriptError ("%s does not have a Frames definition", typeName.GetChars() );
 	}
 	else if (def == DEF_BreakableDecoration && extra.DeathEnd == 0)
 	{
-		SC_ScriptError ("%s does not have a DeathFrames definition", typeName.GetChars() );
+		sc.ScriptError ("%s does not have a DeathFrames definition", typeName.GetChars() );
 	}
 	else if (extra.IceDeathEnd != 0 && extra.bGenericIceDeath)
 	{
-		SC_ScriptError ("You cannot use IceDeathFrames and GenericIceDeath together");
+		sc.ScriptError ("You cannot use IceDeathFrames and GenericIceDeath together");
 	}
 
 	if (extra.IceDeathEnd != 0)
@@ -483,275 +483,271 @@ void ParseOldDecoration(EDefinitionType def)
 //==========================================================================
 
 static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
-	TArray<FState> &states, FExtraInfo &extra, EDefinitionType def)
+	TArray<FState> &states, FExtraInfo &extra, EDefinitionType def, FScanner &sc)
 {
 	AFakeInventory *const inv = static_cast<AFakeInventory *>(defaults);
 	char sprite[5] = "TNT1";
 
-	SC_MustGetString ();
-	while (!SC_Compare ("}"))
+	sc.MustGetString ();
+	while (!sc.Compare ("}"))
 	{
-		if (SC_Compare ("DoomEdNum"))
+		if (sc.Compare ("DoomEdNum"))
 		{
-			SC_MustGetNumber ();
-			if (sc_Number < -1 || sc_Number > 32767)
+			sc.MustGetNumber ();
+			if (sc.Number < -1 || sc.Number > 32767)
 			{
-				SC_ScriptError ("DoomEdNum must be in the range [-1,32767]");
+				sc.ScriptError ("DoomEdNum must be in the range [-1,32767]");
 			}
-			info->DoomEdNum = (SWORD)sc_Number;
+			info->DoomEdNum = (SWORD)sc.Number;
 		}
-		else if (SC_Compare ("SpawnNum"))
+		else if (sc.Compare ("SpawnNum"))
 		{
-			SC_MustGetNumber ();
-			if (sc_Number < 0 || sc_Number > 255)
+			sc.MustGetNumber ();
+			if (sc.Number < 0 || sc.Number > 255)
 			{
-				SC_ScriptError ("SpawnNum must be in the range [0,255]");
+				sc.ScriptError ("SpawnNum must be in the range [0,255]");
 			}
-			info->SpawnID = (BYTE)sc_Number;
+			info->SpawnID = (BYTE)sc.Number;
 		}
-		else if (SC_Compare ("Sprite") || (
+		else if (sc.Compare ("Sprite") || (
 			(def == DEF_BreakableDecoration || def == DEF_Projectile) &&
-			SC_Compare ("DeathSprite") &&
+			sc.Compare ("DeathSprite") &&
 			(extra.DeathSprite[0] = 1))	// This is intentionally = and not ==
 			)
 		{
-			SC_MustGetString ();
-			if (strlen (sc_String) != 4)
+			sc.MustGetString ();
+			if (sc.StringLen != 4)
 			{
-				SC_ScriptError ("Sprite name must be exactly four characters long");
+				sc.ScriptError ("Sprite name must be exactly four characters long");
 			}
 			if (extra.DeathSprite[0] == 1)
 			{
-				memcpy (extra.DeathSprite, sc_String, 4);
+				memcpy (extra.DeathSprite, sc.String, 4);
 			}
 			else
 			{
-				memcpy (sprite, sc_String, 4);
+				memcpy (sprite, sc.String, 4);
 			}
 		}
-		else if (SC_Compare ("Frames"))
+		else if (sc.Compare ("Frames"))
 		{
-			SC_MustGetString ();
+			sc.MustGetString ();
 			extra.SpawnStart = states.Size();
-			ParseSpriteFrames (info, states);
+			ParseSpriteFrames (info, states, sc);
 			extra.SpawnEnd = states.Size();
 		}
 		else if ((def == DEF_BreakableDecoration || def == DEF_Projectile) &&
-			SC_Compare ("DeathFrames"))
+			sc.Compare ("DeathFrames"))
 		{
-			SC_MustGetString ();
+			sc.MustGetString ();
 			extra.DeathStart = states.Size();
-			ParseSpriteFrames (info, states);
+			ParseSpriteFrames (info, states, sc);
 			extra.DeathEnd = states.Size();
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("IceDeathFrames"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("IceDeathFrames"))
 		{
-			SC_MustGetString ();
+			sc.MustGetString ();
 			extra.IceDeathStart = states.Size();
-			ParseSpriteFrames (info, states);
+			ParseSpriteFrames (info, states, sc);
 			extra.IceDeathEnd = states.Size();
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("BurnDeathFrames"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("BurnDeathFrames"))
 		{
-			SC_MustGetString ();
+			sc.MustGetString ();
 			extra.FireDeathStart = states.Size();
-			ParseSpriteFrames (info, states);
+			ParseSpriteFrames (info, states, sc);
 			extra.FireDeathEnd = states.Size();
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("GenericIceDeath"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("GenericIceDeath"))
 		{
 			extra.bGenericIceDeath = true;
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("BurnsAway"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("BurnsAway"))
 		{
 			extra.bBurnAway = true;
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("DiesAway"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("DiesAway"))
 		{
 			extra.bDiesAway = true;
 		}
-		else if (SC_Compare ("Alpha"))
+		else if (sc.Compare ("Alpha"))
 		{
-			SC_MustGetFloat ();
-			defaults->alpha = int(clamp (sc_Float, 0.0, 1.0) * OPAQUE);
+			sc.MustGetFloat ();
+			defaults->alpha = int(clamp (sc.Float, 0.0, 1.0) * OPAQUE);
 		}
-		else if (SC_Compare ("Scale"))
+		else if (sc.Compare ("Scale"))
 		{
-			SC_MustGetFloat ();
-			defaults->scaleX = defaults->scaleY = FLOAT2FIXED(sc_Float);
+			sc.MustGetFloat ();
+			defaults->scaleX = defaults->scaleY = FLOAT2FIXED(sc.Float);
 		}
-		else if (SC_Compare ("RenderStyle"))
+		else if (sc.Compare ("RenderStyle"))
 		{
-			SC_MustGetString ();
-			defaults->RenderStyle = SC_MustMatchString (RenderStyles);
-			if (defaults->RenderStyle > STYLE_OptFuzzy)
-			{
-				defaults->RenderStyle += STYLE_Translucent - STYLE_OptFuzzy - 1;
-			}
+			sc.MustGetString ();
+			defaults->RenderStyle = LegacyRenderStyles[sc.MustMatchString (RenderStyles)];
 		}
-		else if (SC_Compare ("Radius"))
+		else if (sc.Compare ("Radius"))
 		{
-			SC_MustGetFloat ();
-			defaults->radius = int(sc_Float * FRACUNIT);
+			sc.MustGetFloat ();
+			defaults->radius = int(sc.Float * FRACUNIT);
 		}
-		else if (SC_Compare ("Height"))
+		else if (sc.Compare ("Height"))
 		{
-			SC_MustGetFloat ();
-			defaults->height = int(sc_Float * FRACUNIT);
+			sc.MustGetFloat ();
+			defaults->height = int(sc.Float * FRACUNIT);
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("DeathHeight"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("DeathHeight"))
 		{
-			SC_MustGetFloat ();
-			extra.DeathHeight = int(sc_Float * FRACUNIT);
+			sc.MustGetFloat ();
+			extra.DeathHeight = int(sc.Float * FRACUNIT);
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("BurnHeight"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("BurnHeight"))
 		{
-			SC_MustGetFloat ();
-			extra.BurnHeight = int(sc_Float * FRACUNIT);
+			sc.MustGetFloat ();
+			extra.BurnHeight = int(sc.Float * FRACUNIT);
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("Health"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("Health"))
 		{
-			SC_MustGetNumber ();
-			defaults->health = sc_Number;
+			sc.MustGetNumber ();
+			defaults->health = sc.Number;
 		}
-		else if (def == DEF_Projectile && SC_Compare ("ExplosionRadius"))
+		else if (def == DEF_Projectile && sc.Compare ("ExplosionRadius"))
 		{
-			SC_MustGetNumber ();
-			info->Class->Meta.SetMetaInt(ACMETA_ExplosionRadius, sc_Number);
+			sc.MustGetNumber ();
+			info->Class->Meta.SetMetaInt(ACMETA_ExplosionRadius, sc.Number);
 			extra.bExplosive = true;
 		}
-		else if (def == DEF_Projectile && SC_Compare ("ExplosionDamage"))
+		else if (def == DEF_Projectile && sc.Compare ("ExplosionDamage"))
 		{
-			SC_MustGetNumber ();
-			info->Class->Meta.SetMetaInt(ACMETA_ExplosionDamage, sc_Number);
+			sc.MustGetNumber ();
+			info->Class->Meta.SetMetaInt(ACMETA_ExplosionDamage, sc.Number);
 			extra.bExplosive = true;
 		}
-		else if (def == DEF_Projectile && SC_Compare ("DoNotHurtShooter"))
+		else if (def == DEF_Projectile && sc.Compare ("DoNotHurtShooter"))
 		{
 			info->Class->Meta.SetMetaInt(ACMETA_DontHurtShooter, true);
 		}
-		else if (def == DEF_Projectile && SC_Compare ("Damage"))
+		else if (def == DEF_Projectile && sc.Compare ("Damage"))
 		{
-			SC_MustGetNumber ();
-			defaults->Damage = sc_Number;
+			sc.MustGetNumber ();
+			defaults->Damage = sc.Number;
 		}
-		else if (def == DEF_Projectile && SC_Compare ("DamageType"))
+		else if (def == DEF_Projectile && sc.Compare ("DamageType"))
 		{
-			SC_MustGetString ();
-			if (SC_Compare ("Normal"))
+			sc.MustGetString ();
+			if (sc.Compare ("Normal"))
 			{
 				defaults->DamageType = NAME_None;
 			}
 			else
 			{
-				defaults->DamageType = sc_String;
+				defaults->DamageType = sc.String;
 			}
 		}
-		else if (def == DEF_Projectile && SC_Compare ("Speed"))
+		else if (def == DEF_Projectile && sc.Compare ("Speed"))
 		{
-			SC_MustGetFloat ();
-			defaults->Speed = fixed_t(sc_Float * 65536.f);
+			sc.MustGetFloat ();
+			defaults->Speed = fixed_t(sc.Float * 65536.f);
 		}
-		else if (SC_Compare ("Mass"))
+		else if (sc.Compare ("Mass"))
 		{
-			SC_MustGetFloat ();
-			defaults->Mass = SDWORD(sc_Float);
+			sc.MustGetFloat ();
+			defaults->Mass = SDWORD(sc.Float);
 		}
-		else if (SC_Compare ("Translation1"))
+		else if (sc.Compare ("Translation1"))
 		{
-			SC_MustGetNumber ();
-			if (sc_Number < 0 || sc_Number > 2)
+			sc.MustGetNumber ();
+			if (sc.Number < 0 || sc.Number > 2)
 			{
-				SC_ScriptError ("Translation1 must be in the range [0,2]");
+				sc.ScriptError ("Translation1 must be in the range [0,2]");
 			}
-			defaults->Translation = TRANSLATION(TRANSLATION_Standard, sc_Number);
+			defaults->Translation = TRANSLATION(TRANSLATION_Standard, sc.Number);
 		}
-		else if (SC_Compare ("Translation2"))
+		else if (sc.Compare ("Translation2"))
 		{
-			SC_MustGetNumber ();
-			if (sc_Number < 0 || sc_Number >= MAX_ACS_TRANSLATIONS)
+			sc.MustGetNumber ();
+			if (sc.Number < 0 || sc.Number >= MAX_ACS_TRANSLATIONS)
 			{
 #define ERROR(foo) "Translation2 must be in the range [0," #foo "]"
-				SC_ScriptError (ERROR(MAX_ACS_TRANSLATIONS));
+				sc.ScriptError (ERROR(MAX_ACS_TRANSLATIONS));
 #undef ERROR
 			}
-			defaults->Translation = TRANSLATION(TRANSLATION_LevelScripted, sc_Number);
+			defaults->Translation = TRANSLATION(TRANSLATION_LevelScripted, sc.Number);
 		}
 		else if ((def == DEF_BreakableDecoration || def == DEF_Projectile) &&
-			SC_Compare ("DeathSound"))
+			sc.Compare ("DeathSound"))
 		{
-			SC_MustGetString ();
-			defaults->DeathSound = S_FindSound (sc_String);
+			sc.MustGetString ();
+			defaults->DeathSound = S_FindSound (sc.String);
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("BurnDeathSound"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("BurnDeathSound"))
 		{
-			SC_MustGetString ();
-			defaults->ActiveSound = S_FindSound (sc_String);
+			sc.MustGetString ();
+			defaults->ActiveSound = S_FindSound (sc.String);
 		}
-		else if (def == DEF_Projectile && SC_Compare ("SpawnSound"))
+		else if (def == DEF_Projectile && sc.Compare ("SpawnSound"))
 		{
-			SC_MustGetString ();
-			defaults->SeeSound = S_FindSound (sc_String);
+			sc.MustGetString ();
+			defaults->SeeSound = S_FindSound (sc.String);
 		}
-		else if (def == DEF_Projectile && SC_Compare ("DoomBounce"))
+		else if (def == DEF_Projectile && sc.Compare ("DoomBounce"))
 		{
 			defaults->flags2 = (defaults->flags2 & ~MF2_BOUNCETYPE) | MF2_DOOMBOUNCE;
 		}
-		else if (def == DEF_Projectile && SC_Compare ("HereticBounce"))
+		else if (def == DEF_Projectile && sc.Compare ("HereticBounce"))
 		{
 			defaults->flags2 = (defaults->flags2 & ~MF2_BOUNCETYPE) | MF2_HERETICBOUNCE;
 		}
-		else if (def == DEF_Projectile && SC_Compare ("HexenBounce"))
+		else if (def == DEF_Projectile && sc.Compare ("HexenBounce"))
 		{
 			defaults->flags2 = (defaults->flags2 & ~MF2_BOUNCETYPE) | MF2_HEXENBOUNCE;
 		}
-		else if (def == DEF_Pickup && SC_Compare ("PickupSound"))
+		else if (def == DEF_Pickup && sc.Compare ("PickupSound"))
 		{
-			SC_MustGetString ();
-			inv->PickupSound = S_FindSound (sc_String);
+			sc.MustGetString ();
+			inv->PickupSound = S_FindSound (sc.String);
 		}
-		else if (def == DEF_Pickup && SC_Compare ("PickupMessage"))
+		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{
-			SC_MustGetString ();
-			info->Class->Meta.SetMetaString(AIMETA_PickupMessage, sc_String);
+			sc.MustGetString ();
+			info->Class->Meta.SetMetaString(AIMETA_PickupMessage, sc.String);
 		}
-		else if (def == DEF_Pickup && SC_Compare ("Respawns"))
+		else if (def == DEF_Pickup && sc.Compare ("Respawns"))
 		{
 			inv->Respawnable = true;
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("SolidOnDeath"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("SolidOnDeath"))
 		{
 			extra.bSolidOnDeath = true;
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("SolidOnBurn"))
+		else if (def == DEF_BreakableDecoration && sc.Compare ("SolidOnBurn"))
 		{
 			extra.bSolidOnBurn = true;
 		}
-		else if (sc_String[0] != '*')
+		else if (sc.String[0] != '*')
 		{
-			int bit = SC_MatchString (FlagNames1);
+			int bit = sc.MatchString (FlagNames1);
 			if (bit != -1)
 			{
 				defaults->flags |= 1 << bit;
 			}
-			else if ((bit = SC_MatchString (FlagNames2)) != -1)
+			else if ((bit = sc.MatchString (FlagNames2)) != -1)
 			{
 				defaults->flags2 |= 1 << bit;
 			}
-			else if ((bit = SC_MatchString (FlagNames3)) != -1)
+			else if ((bit = sc.MatchString (FlagNames3)) != -1)
 			{
 				defaults->flags3 |= 1 << bit;
 			}
 			else
 			{
-				SC_ScriptError (NULL);
+				sc.ScriptError (NULL);
 			}
 		}
 		else
 		{
-			SC_ScriptError (NULL);
+			sc.ScriptError (NULL);
 		}
-		SC_MustGetString ();
+		sc.MustGetString ();
 	}
 
 	unsigned int i;
@@ -798,10 +794,10 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 //			"10:A, 15:B, 8:C, 6:B"
 //==========================================================================
 
-static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states)
+static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanner &sc)
 {
 	FState state;
-	char *token = strtok (sc_String, ",\t\n\r");
+	char *token = strtok (sc.String, ",\t\n\r");
 
 	memset (&state, 0, sizeof(state));
 
@@ -823,7 +819,7 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states)
 			rate = strtol (token, &stop, 10);
 			if (stop == token || rate < 1 || rate > 65534)
 			{
-				SC_ScriptError ("Rates must be in the range [0,65534]");
+				sc.ScriptError ("Rates must be in the range [0,65534]");
 			}
 			token = colon + 1;
 			rate += 1;
@@ -841,13 +837,13 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states)
 			{
 				if (firstState)
 				{
-					SC_ScriptError ("* must come after a frame");
+					sc.ScriptError ("* must come after a frame");
 				}
 				state.Frame |= SF_FULLBRIGHT;
 			}
 			else if (*token < 'A' || *token > ']')
 			{
-				SC_ScriptError ("Frames must be A-Z, [, \\, or ]");
+				sc.ScriptError ("Frames must be A-Z, [, \\, or ]");
 			}
 			else
 			{

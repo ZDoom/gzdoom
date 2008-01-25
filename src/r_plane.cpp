@@ -207,7 +207,7 @@ void R_MapPlane (int y, int x1)
 	if (plane_shade)
 	{
 		// Determine lighting based on the span's distance from the viewer.
-		ds_colormap = basecolormap + (GETPALOOKUP (
+		ds_colormap = basecolormap->Maps + (GETPALOOKUP (
 			FixedMul (GlobVis, abs (centeryfrac - (y << FRACBITS))), planeshade) << COLORMAPSHIFT);
 	}
 
@@ -237,6 +237,7 @@ void STACK_ARGS R_CalcTiltedLighting (fixed_t lval, fixed_t lend, int width)
 {
 	fixed_t lstep;
 	BYTE *lightfiller;
+	BYTE *basecolormapdata = basecolormap->Maps;
 	int i = 0;
 
 	lval = planeshade - lval;
@@ -244,19 +245,19 @@ void STACK_ARGS R_CalcTiltedLighting (fixed_t lval, fixed_t lend, int width)
 
 	if (width == 0 || lval == lend)
 	{ // Constant lighting
-		lightfiller = basecolormap + (GETPALOOKUP (-lval, 0) << COLORMAPSHIFT);
+		lightfiller = basecolormapdata + (GETPALOOKUP (-lval, 0) << COLORMAPSHIFT);
 	}
 	else if ((lstep = (lend - lval) / width) < 0)
 	{ // Going from dark to light
 		if (lval < FRACUNIT)
 		{ // All bright
-			lightfiller = basecolormap;
+			lightfiller = basecolormapdata;
 		}
 		else
 		{
 			if (lval >= NUMCOLORMAPS*FRACUNIT)
 			{ // Starts beyond the dark end
-				BYTE *clight = basecolormap + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
+				BYTE *clight = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
 				while (lval >= NUMCOLORMAPS*FRACUNIT && i <= width)
 				{
 					tiltlighting[i++] = clight;
@@ -267,33 +268,33 @@ void STACK_ARGS R_CalcTiltedLighting (fixed_t lval, fixed_t lend, int width)
 			}
 			while (i <= width && lval >= 0)
 			{
-				tiltlighting[i++] = basecolormap + ((lval >> FRACBITS) << COLORMAPSHIFT);
+				tiltlighting[i++] = basecolormapdata + ((lval >> FRACBITS) << COLORMAPSHIFT);
 				lval += lstep;
 			}
-			lightfiller = basecolormap;
+			lightfiller = basecolormapdata;
 		}
 	}
 	else
 	{ // Going from light to dark
 		if (lval >= (NUMCOLORMAPS-1)*FRACUNIT)
 		{ // All dark
-			lightfiller = basecolormap + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
+			lightfiller = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
 		}
 		else
 		{
 			while (lval < 0 && i <= width)
 			{
-				tiltlighting[i++] = basecolormap;
+				tiltlighting[i++] = basecolormapdata;
 				lval += lstep;
 			}
 			if (i > width)
 				return;
 			while (i <= width && lval < (NUMCOLORMAPS-1)*FRACUNIT)
 			{
-				tiltlighting[i++] = basecolormap + ((lval >> FRACBITS) << COLORMAPSHIFT);
+				tiltlighting[i++] = basecolormapdata + ((lval >> FRACBITS) << COLORMAPSHIFT);
 				lval += lstep;
 			}
-			lightfiller = basecolormap + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
+			lightfiller = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
 		}
 	}
 
@@ -1313,7 +1314,7 @@ sky1:
 	{
 		dc_colormap = fixedcolormap;
 	}
-	else if (!fixedcolormap)
+	else
 	{
 		fakefixed = true;
 		fixedcolormap = dc_colormap = NormalLight.Maps;
@@ -1387,7 +1388,7 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked)
 
 	GlobVis = FixedDiv (r_FloorVisibility, planeheight);
 	if (fixedlightlev)
-		ds_colormap = basecolormap + fixedlightlev, plane_shade = false;
+		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
 	else if (fixedcolormap)
 		ds_colormap = fixedcolormap, plane_shade = false;
 	else
@@ -1532,11 +1533,11 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked)
 		planelightfloat = -planelightfloat;
 
 	if (fixedlightlev)
-		ds_colormap = basecolormap + fixedlightlev, plane_shade = false;
+		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
 	else if (fixedcolormap)
 		ds_colormap = fixedcolormap, plane_shade = false;
 	else
-		ds_colormap = basecolormap, plane_shade = true;
+		ds_colormap = basecolormap->Maps, plane_shade = true;
 
 	if (!plane_shade)
 	{

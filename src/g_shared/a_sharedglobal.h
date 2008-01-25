@@ -51,7 +51,7 @@ public:
 	WORD Translation;
 	WORD PicNum;
 	DWORD RenderFlags;
-	BYTE RenderStyle;
+	FRenderStyle RenderStyle;
 
 protected:
 	virtual DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_s *wall) const;

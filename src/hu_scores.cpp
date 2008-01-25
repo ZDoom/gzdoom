@@ -180,7 +180,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	}
 
 	if (teamplay && deathmatch)
-		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 16;
+		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT * 7 / 2 : y = SCREENHEIGHT / 16;
 	else
 		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 4 : y = SCREENHEIGHT / 16;
 
@@ -216,7 +216,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 				sprintf (score, "%d", teams[i].score);
 
 				screen->SetFont (BigFont);
-				screen->DrawText (teams[i].GetTextColor (), scorexwidth, gamestate == GS_INTERMISSION ? y / 1.25 : y / 2, score,
+				screen->DrawText (teams[i].GetTextColor (), scorexwidth, gamestate == GS_INTERMISSION ? y * 4 / 5 : y / 2, score,
 					DTA_CleanNoMove, true, TAG_DONE);
 
 				scorexwidth += SCREENWIDTH / 8;
@@ -337,7 +337,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 
 	if (player->mo->ScoreIcon > 0)
 	{
-		screen->DrawTexture (TexMan[player->mo->ScoreIcon], SCREENWIDTH / 2.25, y,
+		screen->DrawTexture (TexMan[player->mo->ScoreIcon], SCREENWIDTH * 4 / 9, y,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
 }

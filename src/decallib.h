@@ -39,8 +39,9 @@
 #include "doomtype.h"
 #include "tarray.h"
 #include "name.h"
+#include "actor.h"
 
-class AActor;
+class FScanner;
 class FDecalTemplate;
 struct FDecalAnimator;
 struct PClass;
@@ -77,7 +78,7 @@ public:
 	fixed_t ScaleX, ScaleY;
 	DWORD ShadeColor;
 	DWORD Translation;
-	BYTE RenderStyle;
+	FRenderStyle RenderStyle;
 	WORD PicNum;
 	WORD RenderFlags;
 	WORD Alpha;				// same as (actor->alpha >> 1)
@@ -94,7 +95,7 @@ public:
 	~FDecalLib ();
 
 	void Clear ();
-	void ReadDecals ();		// SC_Open() should have just been called
+	void ReadDecals (FScanner &sc);
 	void ReadAllDecals ();
 
 	const FDecalTemplate *GetDecalByNum (BYTE num) const;
@@ -112,15 +113,15 @@ private:
 	void AddDecal (FDecalBase *decal);
 	FDecalAnimator *FindAnimator (const char *name);
 
-	BYTE GetDecalID ();
-	void ParseDecal ();
-	void ParseDecalGroup ();
-	void ParseGenerator ();
-	void ParseFader ();
-	void ParseStretcher ();
-	void ParseSlider ();
-	void ParseCombiner ();
-	void ParseColorchanger ();
+	BYTE GetDecalID (FScanner &sc);
+	void ParseDecal (FScanner &sc);
+	void ParseDecalGroup (FScanner &sc);
+	void ParseGenerator (FScanner &sc);
+	void ParseFader (FScanner &sc);
+	void ParseStretcher (FScanner &sc);
+	void ParseSlider (FScanner &sc);
+	void ParseCombiner (FScanner &sc);
+	void ParseColorchanger (FScanner &sc);
 
 	FDecalBase *Root;
 	FTranslation *Translations;

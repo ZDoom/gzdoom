@@ -134,7 +134,7 @@ fixed_t			FocalLengthY;
 float			FocalLengthXfloat;
 int 			viewangleoffset;
 int 			validcount = 1; 	// increment every time a check is made
-lighttable_t	*basecolormap;		// [RH] colormap currently drawing with
+FDynamicColormap*basecolormap;		// [RH] colormap currently drawing with
 int				fixedlightlev;
 lighttable_t	*fixedcolormap;
 float			WallTMapScale;
@@ -1077,7 +1077,7 @@ void R_SetupFrame (AActor *actor)
 
 	if (player != NULL && gamestate != GS_TITLELEVEL &&
 		((player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) &&
-		(camera->RenderStyle != STYLE_None) &&
+		(camera->RenderStyle.BlendOp != STYLEOP_None) &&
 		!(camera->renderflags & RF_INVISIBLE) &&
 		camera->sprite != 0)	// Sprite 0 is always TNT1
 	{

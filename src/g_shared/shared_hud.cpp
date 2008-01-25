@@ -928,42 +928,41 @@ void HUD_InitHud()
 
 	while ((lump = Wads.FindLump ("ALTHUDCF", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum(lump, "ALTHUDCF");
-		while (SC_GetString())
+		FScanner sc(lump, "ALTHUDCF");
+		while (sc.GetString())
 		{
-			if (SC_Compare("Health"))
+			if (sc.Compare("Health"))
 			{
-				SC_MustGetString();
-				int tex = TexMan.AddPatch(sc_String);
-				if (tex<=0) tex = TexMan.AddPatch(sc_String, ns_sprites);
+				sc.MustGetString();
+				int tex = TexMan.AddPatch(sc.String);
+				if (tex<=0) tex = TexMan.AddPatch(sc.String, ns_sprites);
 				if (tex>0) healthpic = TexMan[tex];
 			}
 			else
 			{
-				const PClass * ti = PClass::FindClass(sc_String);
+				const PClass * ti = PClass::FindClass(sc.String);
 				if (!ti)
 				{
-					Printf("Unknown item class '%s' in ALTHUDCF\n", sc_String);
+					Printf("Unknown item class '%s' in ALTHUDCF\n", sc.String);
 				}
 				else if (!ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 				{
-					Printf("Invalid item class '%s' in ALTHUDCF\n", sc_String);
+					Printf("Invalid item class '%s' in ALTHUDCF\n", sc.String);
 					ti=NULL;
 				}
-				SC_MustGetString();
+				sc.MustGetString();
 				int tex=0;
 
-				if (!SC_Compare("0") && !SC_Compare("NULL") && !SC_Compare(""))
+				if (!sc.Compare("0") && !sc.Compare("NULL") && !sc.Compare(""))
 				{
-					tex = TexMan.AddPatch(sc_String);
-					if (tex<=0) tex = TexMan.AddPatch(sc_String, ns_sprites);
+					tex = TexMan.AddPatch(sc.String);
+					if (tex<=0) tex = TexMan.AddPatch(sc.String, ns_sprites);
 				}
 				else tex=-1;
 
 				if (ti) const_cast<PClass*>(ti)->Meta.SetMetaInt(HUMETA_AltIcon, tex);
 			}
 		}
-		SC_Close();
 	}
 }
 

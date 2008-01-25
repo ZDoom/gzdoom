@@ -435,100 +435,99 @@ void P_ReadSectorSpecials()
 	lastlump = 0;
 	while ((lump = Wads.FindLump ("SECTORX", &lastlump)) != -1)
 	{
-		SC_OpenLumpNum (lump, "SECTORX");
-		SC_SetCMode(true);
-		while (SC_GetString())
+		FScanner sc(lump, "SECTORX");
+		sc.SetCMode(true);
+		while (sc.GetString())
 		{
-			if (SC_Compare("IFDOOM"))
+			if (sc.Compare("IFDOOM"))
 			{
-				SC_MustGetStringName("{");
+				sc.MustGetStringName("{");
 				if (gameinfo.gametype != GAME_Doom)
 				{
 					do
 					{
-						if (!SC_GetString())
+						if (!sc.GetString())
 						{
-							SC_ScriptError("Unexpected end of file");
+							sc.ScriptError("Unexpected end of file");
 						}
 					}
-					while (!SC_Compare("}"));
+					while (!sc.Compare("}"));
 				}
 			}
-			else if (SC_Compare("IFHERETIC"))
+			else if (sc.Compare("IFHERETIC"))
 			{
-				SC_MustGetStringName("{");
+				sc.MustGetStringName("{");
 				if (gameinfo.gametype != GAME_Heretic)
 				{
 					do
 					{
-						if (!SC_GetString())
+						if (!sc.GetString())
 						{
-							SC_ScriptError("Unexpected end of file");
+							sc.ScriptError("Unexpected end of file");
 						}
 					}
-					while (!SC_Compare("}"));
+					while (!sc.Compare("}"));
 				}
 			}
-			else if (SC_Compare("IFSTRIFE"))
+			else if (sc.Compare("IFSTRIFE"))
 			{
-				SC_MustGetStringName("{");
+				sc.MustGetStringName("{");
 				if (gameinfo.gametype != GAME_Strife)
 				{
 					do
 					{
-						if (!SC_GetString())
+						if (!sc.GetString())
 						{
-							SC_ScriptError("Unexpected end of file");
+							sc.ScriptError("Unexpected end of file");
 						}
 					}
-					while (!SC_Compare("}"));
+					while (!sc.Compare("}"));
 				}
 			}
-			else if (SC_Compare("}"))
+			else if (sc.Compare("}"))
 			{
 				// ignore
 			}
-			else if (SC_Compare("BOOMMASK"))
+			else if (sc.Compare("BOOMMASK"))
 			{
-				SC_MustGetNumber();
-				boommask = sc_Number;
-				SC_MustGetStringName(",");
-				SC_MustGetNumber();
-				boomshift = sc_Number;
+				sc.MustGetNumber();
+				boommask = sc.Number;
+				sc.MustGetStringName(",");
+				sc.MustGetNumber();
+				boomshift = sc.Number;
 			}
-			else if (SC_Compare("["))
+			else if (sc.Compare("["))
 			{
 				int start;
 				int end;
 				
-				SC_MustGetNumber();
-				start = sc_Number;
-				SC_MustGetStringName(",");
-				SC_MustGetNumber();
-				end = sc_Number;
-				SC_MustGetStringName("]");
-				SC_MustGetStringName(":");
-				SC_MustGetNumber();
-				for(int j=start;j<=end;j++)
+				sc.MustGetNumber();
+				start = sc.Number;
+				sc.MustGetStringName(",");
+				sc.MustGetNumber();
+				end = sc.Number;
+				sc.MustGetStringName("]");
+				sc.MustGetStringName(":");
+				sc.MustGetNumber();
+				for(int j = start; j <= end; j++)
 				{
-					sectortables[!!boommask][j]=sc_Number + j - start;
+					sectortables[!!boommask][j]=sc.Number + j - start;
 				}
 			}
-			else if (IsNum(sc_String))
+			else if (IsNum(sc.String))
 			{
 				int start;
 				
-				start = atoi(sc_String);
-				SC_MustGetStringName(":");
-				SC_MustGetNumber();
-				sectortables[!!boommask][start]=sc_Number;
+				start = atoi(sc.String);
+				sc.MustGetStringName(":");
+				sc.MustGetNumber();
+				sectortables[!!boommask][start] = sc.Number;
 			}
 			else
 			{
-				SC_ScriptError(NULL);
+				sc.ScriptError(NULL);
 			}
 		}
-		SC_Close ();
 	}
 }
 

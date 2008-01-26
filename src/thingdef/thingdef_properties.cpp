@@ -1382,6 +1382,10 @@ static void ActorTranslation (FScanner &sc, AActor *defaults, Baggage &bag)
 		}
 		defaults->Translation = TRANSLATION(TRANSLATION_Standard, sc.Number);
 	}
+	else if (sc.CheckString("Ice"))
+	{
+		defaults->Translation = TRANSLATION(TRANSLATION_Standard, 7);
+	}
 	else
 	{
 		CurrentTranslation.MakeIdentity();

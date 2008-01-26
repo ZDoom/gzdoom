@@ -94,15 +94,6 @@ struct FWadCollection::LumpRecord
 	int			compressedsize;
 };
 
-enum
-{
-	LUMPF_BLOODCRYPT	= 1,	// Lump uses Blood-style encryption
-	LUMPF_COMPRESSED	= 2,	// Zip-compressed
-	LUMPF_ZIPFILE		= 4,	// Inside a Zip file - used to enforce use of special directories insize Zips
-	LUMPF_NEEDFILESTART	= 8,	// Still need to process local file header to find file start inside a zip
-	LUMPF_EXTERNAL		= 16,	// Lump is from an external file that won't be kept open permanently
-};
-
 class FWadCollection::WadFileRecord : public FileReader
 {
 public:
@@ -808,6 +799,17 @@ int FWadCollection::GetNumLumps () const
 
 //==========================================================================
 //
+// GetNumFiles
+//
+//==========================================================================
+
+int FWadCollection::GetNumWads () const
+{
+	return Wads.Size();
+}
+
+//==========================================================================
+//
 // W_CheckNumForName
 //
 // Returns -1 if name not found. The version with a third parameter will
@@ -857,7 +859,7 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 	return i != NULL_INDEX ? i : -1;
 }
 
-int FWadCollection::CheckNumForName (const char *name, int space, int wadnum)
+int FWadCollection::CheckNumForName (const char *name, int space, int wadnum, bool exact)
 {
 	char uname[8];
 	WORD i;
@@ -870,10 +872,12 @@ int FWadCollection::CheckNumForName (const char *name, int space, int wadnum)
 	uppercopy (uname, name);
 	i = FirstLumpIndex[LumpNameHash (uname) % NumLumps];
 
+	// If exact is true if will only find lumps in the same WAD, otherwise
+	// also those in earlier WADs.
 	while (i != NULL_INDEX &&
 		(*(QWORD *)&LumpInfo[i].name != *(QWORD *)&uname ||
 		 LumpInfo[i].namespc != space ||
-		 LumpInfo[i].wadnum != wadnum))
+		 (exact? (LumpInfo[i].wadnum != wadnum) : (LumpInfo[i].wadnum > wadnum)) ))
 	{
 		i = NextLumpIndex[i];
 	}
@@ -1010,6 +1014,22 @@ int FWadCollection::GetLumpOffset (int lump)
 	}
 
 	return LumpInfo[lump].position;
+}
+
+//==========================================================================
+//
+// GetLumpOffset
+//
+//==========================================================================
+
+int FWadCollection::GetLumpFlags (int lump)
+{
+	if ((size_t)lump >= NumLumps)
+	{
+		return 0;
+	}
+
+	return LumpInfo[lump].flags;
 }
 
 //==========================================================================

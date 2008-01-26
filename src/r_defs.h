@@ -764,6 +764,11 @@ public:
 		int texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
 		return Textures[texnum].Texture;
 	}
+	FTexture *FindTexture(const char *texname, int usetype = FTexture::TEX_MiscPatch, BITFIELD flags = TEXMAN_TryAny)
+	{
+		int texnum = GetTexture (texname, usetype, flags);
+		return Textures[texnum].Texture;
+	}
 
 	// Get texture with translation
 	FTexture *operator() (int texnum)
@@ -804,15 +809,19 @@ public:
 
 	void AddTexturesLump (const void *lumpdata, int lumpsize, int patcheslump, int firstdup=0, bool texture1=false);
 	void AddTexturesLumps (int lump1, int lump2, int patcheslump);
-	void AddGroup(const char * startlump, const char * endlump, int ns, int usetype);
+	void AddGroup(int wadnum, const char * startlump, const char * endlump, int ns, int usetype);
 	void AddPatches (int lumpnum);
 	void AddTiles (void *tileFile);
-	void AddHiresTextures ();
-	void LoadHiresTex();
+	void AddHiresTextures (int wadnum);
+	void LoadHiresTex(int wadnum);
 
 	int CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	int AddTexture (FTexture *texture);
 	int AddPatch (const char *patchname, int namespc=0, bool tryany = false);
+
+	void LoadTextureX(int wadnum);
+	void AddTexturesForWad(int wadnum);
+	void Init();
 
 	// Replaces one texture with another. The new texture will be assigned
 	// the same name, slot, and use type as the texture it is replacing.

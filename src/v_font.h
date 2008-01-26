@@ -83,7 +83,7 @@ class FFont
 {
 public:
 	FFont (const char *fontname, const char *nametemplate, int first, int count, int base);
-	~FFont ();
+	virtual ~FFont ();
 
 	virtual FTexture *GetChar (int code, int *const width) const;
 	virtual int GetCharWidth (int code) const;

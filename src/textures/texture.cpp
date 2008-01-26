@@ -61,6 +61,7 @@ void FTexture::InitGrayMap()
 	}
 }
 
+
 // Examines the lump contents to decide what type of texture to create,
 // and creates the texture.
 FTexture * FTexture::CreateTexture (int lumpnum, int usetype)

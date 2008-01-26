@@ -243,10 +243,6 @@ FFont *V_GetFont(const char *name)
 		if (font == NULL)
 		{
 			int picnum = TexMan.CheckForTexture (name, FTexture::TEX_Any);
-			if (picnum <= 0)
-			{
-				picnum = TexMan.AddPatch (name);
-			}
 			if (picnum > 0)
 			{
 				font = new FSinglePicFont (name);
@@ -334,7 +330,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		charlumps[i] = lump;
 		if (lump >= 0)
 		{
-			FTexture *pic = TexMan[TexMan.AddPatch (buffer)];
+			FTexture *pic = TexMan[buffer];
 			if (pic != NULL)
 			{
 				int height = pic->GetScaledHeight();
@@ -1482,7 +1478,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 		{
 			Wads.GetLumpName(buffer, lump);
 			buffer[8]=0;
-			FTexture *pic = TexMan[TexMan.AddPatch (buffer)];
+			FTexture *pic = TexMan[buffer];
 			if (pic != NULL)
 			{
 				int height = pic->GetScaledHeight();

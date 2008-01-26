@@ -1234,7 +1234,6 @@ void F_Drawer (void)
 			break;
 		case END_Pic:
 			picname = EndSequences[FinaleSequence].PicName;
-			TexMan.AddPatch (picname);		// make sure it exists!
 			break;
 		case END_Bunny:
 		case END_BuyStrife:

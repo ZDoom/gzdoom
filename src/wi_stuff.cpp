@@ -391,9 +391,7 @@ void WI_LoadBackground(bool isenterpic)
 	// a name with a starting '$' indicates an intermission script
 	if (*lumpname!='$')
 	{
-		// The background picture can also be a flat so just using AddPatch doesn't work
 		texture = TexMan.CheckForTexture(lumpname, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny);
-		if (texture == -1) texture = TexMan.AddPatch(lumpname);
 	}
 	else
 	{
@@ -410,19 +408,17 @@ void WI_LoadBackground(bool isenterpic)
 				case 0:		// Background
 					sc.MustGetString();
 					texture=TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch,FTextureManager::TEXMAN_TryAny);
-					if (texture == -1) texture = TexMan.AddPatch(sc.String);
 					break;
 
 				case 1:		// Splat
 					sc.MustGetString();
-					splat=TexMan[TexMan.AddPatch(sc.String)];
+					splat=TexMan[sc.String];
 					break;
 
 				case 2:		// Pointers
 					while (sc.GetString() && !sc.Crossed)
 					{
-						int v = TexMan.AddPatch(sc.String);
-						yah.Push(TexMan[v]);
+						yah.Push(TexMan[sc.String]);
 					}
 					if (sc.Crossed) sc.UnGet();
 					break;
@@ -517,7 +513,7 @@ void WI_LoadBackground(bool isenterpic)
 						if (!sc.CheckString("{"))
 						{
 							sc.MustGetString();
-							an.p[an.nanims++] = TexMan[TexMan.AddPatch(sc.String)];
+							an.p[an.nanims++] = TexMan[sc.String];
 						}
 						else
 						{
@@ -525,7 +521,7 @@ void WI_LoadBackground(bool isenterpic)
 							{
 								sc.MustGetString();
 								if (an.nanims<MAX_ANIMATION_FRAMES)
-									an.p[an.nanims++] = TexMan[TexMan.AddPatch(sc.String)];
+									an.p[an.nanims++] = TexMan[sc.String];
 							}
 						}
 						an.ctr = -1;
@@ -539,7 +535,7 @@ void WI_LoadBackground(bool isenterpic)
 						sc.MustGetNumber();
 						an.loc.y = sc.Number;
 						sc.MustGetString();
-						an.p[0] = TexMan[TexMan.AddPatch(sc.String)];
+						an.p[0] = TexMan[sc.String];
 						anims.Push(an);
 						break;
 
@@ -765,7 +761,7 @@ void WI_drawLF ()
 {
 	int y = WI_TITLEY;
 
-	FTexture * tex = wbs->lname0[0]? TexMan[TexMan.AddPatch(wbs->lname0)] : NULL;
+	FTexture * tex = wbs->lname0[0]? TexMan[wbs->lname0] : NULL;
 	
 	// draw <LevelName> 
 	if (tex)
@@ -827,7 +823,7 @@ void WI_drawEL ()
 	}
 
 	// draw <LevelName>
-	FTexture * tex = wbs->lname1[0]? TexMan[TexMan.AddPatch(wbs->lname1)] : NULL;
+	FTexture * tex = wbs->lname1[0]? TexMan[wbs->lname1] : NULL;
 	if (tex)
 	{
 		screen->DrawTexture(tex, (SCREENWIDTH - tex->GetWidth() * CleanXfac) / 2, y * CleanYfac, DTA_CleanNoMove, true, TAG_DONE);

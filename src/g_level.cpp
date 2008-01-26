@@ -1157,7 +1157,6 @@ static void ParseEpisodeInfo (FScanner &sc)
 	bool picisgfx = false;	// Shut up, GCC!!!!
 	bool remove = false;
 	char key = 0;
-	bool addedgfx = false;
 	bool noskill = false;
 
 	// Get map name
@@ -1264,15 +1263,6 @@ static void ParseEpisodeInfo (FScanner &sc)
 		EpisodeMenu[i].fulltext = !picisgfx;
 		EpisodeNoSkill[i] = noskill;
 		strncpy (EpisodeMaps[i], map, 8);
-
-		if (picisgfx)
-		{
-			if (TexMan.CheckForTexture (pic, FTexture::TEX_MiscPatch, 0) == -1)
-			{
-				TexMan.AddPatch (pic);
-				addedgfx = true;
-			}
-		}
 	}
 }
 

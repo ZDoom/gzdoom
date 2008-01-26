@@ -62,6 +62,16 @@ struct wadlump_t
 	char		Name[8];
 };
 
+enum
+{
+	LUMPF_BLOODCRYPT	= 1,	// Lump uses Blood-style encryption
+	LUMPF_COMPRESSED	= 2,	// Zip-compressed
+	LUMPF_ZIPFILE		= 4,	// Inside a Zip file - used to enforce use of special directories insize Zips
+	LUMPF_NEEDFILESTART	= 8,	// Still need to process local file header to find file start inside a zip
+	LUMPF_EXTERNAL		= 16,	// Lump is from an external file that won't be kept open permanently
+};
+
+
 // [RH] Namespaces from BOOM.
 typedef enum {
 	ns_global = 0,
@@ -161,7 +171,7 @@ public:
 	const char *GetWadFullName (int wadnum) const;
 
 	int CheckNumForName (const char *name, int namespc);
-	int CheckNumForName (const char *name, int namespc, int wadfile);
+	int CheckNumForName (const char *name, int namespc, int wadfile, bool exact = true);
 	int GetNumForName (const char *name, int namespc);
 
 	inline int CheckNumForName (const BYTE *name) { return CheckNumForName ((const char *)name, ns_global); }
@@ -193,6 +203,7 @@ public:
 
 	int LumpLength (int lump) const;
 	int GetLumpOffset (int lump);					// [RH] Returns offset of lump in the wadfile
+	int GetLumpFlags (int lump);					// Return the flags for this lump
 	void GetLumpName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
 	const char *GetLumpFullName (int lump) const;	// [RH] Returns the lump's full name
 	int GetLumpFile (int lump) const;				// [RH] Returns wadnum for a specified lump
@@ -203,6 +214,7 @@ public:
 	bool IsEncryptedFile(int lump) const;
 
 	int GetNumLumps () const;
+	int GetNumWads () const;
 
 	int AddExternalFile(const char *filename);
 

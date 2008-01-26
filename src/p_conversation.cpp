@@ -275,7 +275,7 @@ static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, DWORD &prevSpeakerTy
 
 	// The speaker's portrait, if any.
 	speech.Backdrop[8] = 0;
-	node->Backdrop = TexMan.AddPatch (speech.Backdrop);
+	node->Backdrop = TexMan.CheckForTexture (speech.Backdrop, FTexture::TEX_MiscPatch);
 
 	// The speaker's voice for this node, if any.
 	speech.Sound[8] = 0;

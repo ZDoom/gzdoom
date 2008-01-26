@@ -893,17 +893,17 @@ void HUD_InitHud()
 	{
 	case GAME_Heretic:
 	case GAME_Hexen:
-		healthpic=TexMan[TexMan.AddPatch("ARTIPTN2", ns_sprites)];
+		healthpic = TexMan.FindTexture("ARTIPTN2");
 		HudFont=FFont::FindFont("HUDFONT_RAVEN");
 		break;
 
 	case GAME_Strife:
-		healthpic=TexMan[TexMan.AddPatch("I_MDKT")];
+		healthpic = TexMan.FindTexture("I_MDKT");
 		HudFont=BigFont;	// Strife doesn't have anything nice so use the standard font
 		break;
 
 	default:
-		healthpic=TexMan[TexMan.AddPatch("MEDIA0", ns_sprites)];
+		healthpic = TexMan.FindTexture("MEDIA0");
 		HudFont=FFont::FindFont("HUDFONT_DOOM");
 		break;
 	}
@@ -913,12 +913,12 @@ void HUD_InitHud()
 	if (HudFont == NULL) HudFont = BigFont;
 	if (IndexFont == NULL) IndexFont = ConFont;	// Emergency fallback
 
-	invgems[0] = TexMan[TexMan.AddPatch("INVGEML1")];
-	invgems[1] = TexMan[TexMan.AddPatch("INVGEML2")];
-	invgems[2] = TexMan[TexMan.AddPatch("INVGEMR1")];
-	invgems[3] = TexMan[TexMan.AddPatch("INVGEMR2")];
+	invgems[0] = TexMan.FindTexture("INVGEML1");
+	invgems[1] = TexMan.FindTexture("INVGEML2");
+	invgems[2] = TexMan.FindTexture("INVGEMR1");
+	invgems[3] = TexMan.FindTexture("INVGEMR2");
 
-	fragpic = TexMan[TexMan.AddPatch("HU_FRAGS")];	// Sadly, I don't have anything usable for this. :(
+	fragpic = TexMan.FindTexture("HU_FRAGS");	// Sadly, I don't have anything usable for this. :(
 
 	KeyTypes.Clear();
 	UnassignedKeyTypes.Clear();
@@ -934,9 +934,8 @@ void HUD_InitHud()
 			if (sc.Compare("Health"))
 			{
 				sc.MustGetString();
-				int tex = TexMan.AddPatch(sc.String);
-				if (tex<=0) tex = TexMan.AddPatch(sc.String, ns_sprites);
-				if (tex>0) healthpic = TexMan[tex];
+				int tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+				if (tex > 0) healthpic = TexMan[tex];
 			}
 			else
 			{
@@ -955,8 +954,7 @@ void HUD_InitHud()
 
 				if (!sc.Compare("0") && !sc.Compare("NULL") && !sc.Compare(""))
 				{
-					tex = TexMan.AddPatch(sc.String);
-					if (tex<=0) tex = TexMan.AddPatch(sc.String, ns_sprites);
+					tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
 				}
 				else tex=-1;
 

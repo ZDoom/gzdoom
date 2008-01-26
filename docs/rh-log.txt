@@ -1,4 +1,17 @@
 January 26, 2008 (Changes by Graf Zahl)
+- Got rid of most TexMan.AddPatch calls because they are no longer needed.
+- Got rid of R_InitPatches because the new texture init code needs to preload
+  everything to work correctly.
+- Rewrote texture manager initialization to order textures primarily by WAD 
+  rather than by type. This way later textures will always override earlier 
+  ones. The only exception is that TEX_MiscPatch are only used as a fallback
+  if nothing else can be found.
+- Optimized the tryany case of FTextureManager::CheckForTexture. It is not
+  necessary to scan the hash chain twice. The required information can be
+  retrieved during the first pass as easily and even offers a little more
+  control.
+- Made FFont destructor virtual.
+- Added 'Ice' translation to DECORATE.
 - Added Karate Chris's patch for teamplay MAPINFO option.
 - Added Karate Chris's patch for custom damage color per player class.
 - Added Karate Chris's patch for respawnlimit skill property.

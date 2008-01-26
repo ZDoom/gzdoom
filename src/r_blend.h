@@ -1,3 +1,6 @@
+#ifndef __R_BLEND_H
+#define __R_BLEND_H
+
 /*
 ** r_blend.h
 ** Constants and types for specifying texture blending.
@@ -116,7 +119,7 @@ union FRenderStyle
 	inline FRenderStyle &operator= (ERenderStyle legacy);
 	operator DWORD() const { return AsDWORD; }
 	bool operator==(const FRenderStyle &o) const { return AsDWORD == o.AsDWORD; }
-
+	void CheckFuzz();
 	bool IsVisible(fixed_t alpha) const throw();
 private:
 	// Code that compares an actor's render style with a legacy render
@@ -142,3 +145,5 @@ inline FArchive &operator<< (FArchive &arc, FRenderStyle &style)
 	arc << style.BlendOp << style.SrcAlpha << style.DestAlpha << style.Flags;
 	return arc;
 }
+
+#endif

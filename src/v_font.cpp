@@ -335,19 +335,22 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		if (lump >= 0)
 		{
 			FTexture *pic = TexMan[TexMan.AddPatch (buffer)];
-			int height = pic->GetScaledHeight();
-			int yoffs = pic->GetScaledTopOffset();
+			if (pic != NULL)
+			{
+				int height = pic->GetScaledHeight();
+				int yoffs = pic->GetScaledTopOffset();
 
-			if (yoffs > maxyoffs)
-			{
-				maxyoffs = yoffs;
+				if (yoffs > maxyoffs)
+				{
+					maxyoffs = yoffs;
+				}
+				height += abs (yoffs);
+				if (height > FontHeight)
+				{
+					FontHeight = height;
+				}
+				RecordTextureColors (pic, usedcolors);
 			}
-			height += abs (yoffs);
-			if (height > FontHeight)
-			{
-				FontHeight = height;
-			}
-			RecordTextureColors (pic, usedcolors);
 		}
 	}
 
@@ -1478,21 +1481,25 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, int *lumplis
 		if (lump >= 0)
 		{
 			Wads.GetLumpName(buffer, lump);
+			buffer[8]=0;
 			FTexture *pic = TexMan[TexMan.AddPatch (buffer)];
-			int height = pic->GetScaledHeight();
-			int yoffs = pic->GetScaledTopOffset();
-
-			if (yoffs > maxyoffs)
+			if (pic != NULL)
 			{
-				maxyoffs = yoffs;
-			}
-			height += abs (yoffs);
-			if (height > FontHeight)
-			{
-				FontHeight = height;
-			}
+				int height = pic->GetScaledHeight();
+				int yoffs = pic->GetScaledTopOffset();
 
-			RecordTextureColors (pic, usedcolors);
+				if (yoffs > maxyoffs)
+				{
+					maxyoffs = yoffs;
+				}
+				height += abs (yoffs);
+				if (height > FontHeight)
+				{
+					FontHeight = height;
+				}
+
+				RecordTextureColors (pic, usedcolors);
+			}
 		}
 	}
 

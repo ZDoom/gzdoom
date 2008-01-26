@@ -1,3 +1,10 @@
+January 26, 2008 (Changes by Graf Zahl)
+- Fixed: ACS used incompatible values for APROP_RenderStyle. It needs to use
+  the exact same values as previous ZDoom versions
+- Added a DECORATE 'stencilcolor' property so that the stencil render style
+  can be used.
+- Added some NULL pointer checks to the font loading code.
+
 January 25, 2008
 - Undid some of the changes from lempar.c v1.30->v1.31, because it broke
   error handling.

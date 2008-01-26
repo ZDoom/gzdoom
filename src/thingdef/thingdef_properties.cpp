@@ -1216,7 +1216,7 @@ static void ActorRenderStyle (FScanner &sc, AActor *defaults, Baggage &bag)
 
 	static const int renderstyle_values[]={
 		STYLE_None, STYLE_Normal, STYLE_Fuzzy, STYLE_SoulTrans, STYLE_OptFuzzy,
-			STYLE_Stencil, STYLE_Translucent, STYLE_Add};
+			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add};
 
 	sc.MustGetString();
 	defaults->RenderStyle = LegacyRenderStyles[renderstyle_values[sc.MustMatchString(renderstyles)]];
@@ -1394,6 +1394,36 @@ static void ActorTranslation (FScanner &sc, AActor *defaults, Baggage &bag)
 		defaults->Translation = StoreTranslation (sc);
 	}
 }
+
+//==========================================================================
+//
+//==========================================================================
+static void ActorStencilColor (FScanner &sc,AActor *defaults, Baggage &bag)
+{
+	int r,g,b;
+
+	if (sc.CheckNumber())
+	{
+		sc.MustGetNumber();
+		r=clamp<int>(sc.Number, 0, 255);
+		sc.CheckString(",");
+		sc.MustGetNumber();
+		g=clamp<int>(sc.Number, 0, 255);
+		sc.CheckString(",");
+		sc.MustGetNumber();
+		b=clamp<int>(sc.Number, 0, 255);
+	}
+	else
+	{
+		sc.MustGetString();
+		int c = V_GetColor(NULL, sc.String);
+		r=RPART(c);
+		g=GPART(c);
+		b=BPART(c);
+	}
+	defaults->fillcolor = MAKERGB(r,g,b);
+}
+
 
 //==========================================================================
 //
@@ -2501,6 +2531,7 @@ static const ActorProps props[] =
 	{ "spawnid",					ActorSpawnID,				RUNTIME_CLASS(AActor) },
 	{ "speed",						ActorSpeed,					RUNTIME_CLASS(AActor) },
 	{ "states",						ActorStates,				RUNTIME_CLASS(AActor) },
+	{ "stencilcolor",				ActorStencilColor,			RUNTIME_CLASS(AActor) },
 	{ "tag",						ActorTag,					RUNTIME_CLASS(AActor) },
 	{ "translation",				ActorTranslation,			RUNTIME_CLASS(AActor) },
 	{ "vspeed",						ActorVSpeed,				RUNTIME_CLASS(AActor) },

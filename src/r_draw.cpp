@@ -2223,18 +2223,7 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 {
 	fixed_t fglevel, bglevel;
 
-	if (style.BlendOp == STYLEOP_FuzzOrAdd)
-	{
-		style.BlendOp = (r_drawfuzz || !r_drawtrans) ? STYLEOP_Fuzz : STYLEOP_Add;
-	}
-	else if (style.BlendOp == STYLEOP_FuzzOrSub)
-	{
-		style.BlendOp = (r_drawfuzz || !r_drawtrans) ? STYLEOP_Fuzz : STYLEOP_Sub;
-	}
-	else if (style.BlendOp == STYLEOP_FuzzOrRevSub)
-	{
-		style.BlendOp = (r_drawfuzz || !r_drawtrans) ? STYLEOP_Fuzz : STYLEOP_RevSub;
-	}
+	style.CheckFuzz();
 
 	if (style.Flags & STYLEF_TransSoulsAlpha)
 	{
@@ -2375,4 +2364,29 @@ bool FRenderStyle::IsVisible(fixed_t alpha) const throw()
 	}
 	// Treat anything else as visible.
 	return true;
+}
+
+
+//==========================================================================
+//
+// FRenderStyle :: CheckFuzz
+//
+// Adjusts settings based on r_drawfuzz CVAR
+//
+//==========================================================================
+
+void FRenderStyle::CheckFuzz()
+{
+	if (BlendOp == STYLEOP_FuzzOrAdd)
+	{
+		BlendOp = (r_drawfuzz || !r_drawtrans) ? STYLEOP_Fuzz : STYLEOP_Add;
+	}
+	else if (BlendOp == STYLEOP_FuzzOrSub)
+	{
+		BlendOp = (r_drawfuzz || !r_drawtrans) ? STYLEOP_Fuzz : STYLEOP_Sub;
+	}
+	else if (BlendOp == STYLEOP_FuzzOrRevSub)
+	{
+		BlendOp = (r_drawfuzz || !r_drawtrans) ? STYLEOP_Fuzz : STYLEOP_RevSub;
+	}
 }

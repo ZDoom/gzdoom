@@ -2152,6 +2152,22 @@ void DLevelScript::DoSetFont (int fontnum)
 #define APROP_DeathSound	8
 #define APROP_ActiveSound	9
 
+// These are needed for ACS's APROP_RenderStyle
+static const int LegacyRenderStyleIndices[] =
+{
+	0,	// STYLE_None,
+	1,  // STYLE_Normal,
+	2,  // STYLE_Fuzzy,
+	3,	// STYLE_SoulTrans,
+	4,	// STYLE_OptFuzzy,
+	5,	// STYLE_Stencil,
+	64,	// STYLE_Translucent
+	65,	// STYLE_Add,
+	66,	// STYLE_Shaded,
+	67,	// STYLE_TranslucentStencil,
+	-1
+};
+
 void DLevelScript::SetActorProperty (int tid, int property, int value)
 {
 	if (tid == 0)
@@ -2199,7 +2215,14 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_RenderStyle:
-		actor->RenderStyle = ERenderStyle(value);
+		for(int i=0; LegacyRenderStyleIndices[i] >= 0; i++)
+		{
+			if (LegacyRenderStyleIndices[i] == value) 
+			{
+				actor->RenderStyle = ERenderStyle(i);
+				break;
+			}
+		}
 		break;
 
 	case APROP_Ambush:
@@ -2293,7 +2316,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							{ // Check for a legacy render style that matches.
 								if (LegacyRenderStyles[style] == actor->RenderStyle)
 								{
-									return style;
+									return LegacyRenderStyleIndices[style];
 								}
 							}
 							// The current render style isn't expressable as a legacy style,

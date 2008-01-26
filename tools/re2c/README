@@ -1,4 +1,4 @@
-re2c Version 0.10.5
+re2c Version 0.12.3
 ------------------
 
 Originally written by Peter Bumbulis (peter@csg.uwaterloo.ca)
@@ -17,7 +17,7 @@ platforms in 32 bit and 64 bit mode:
 - GCC 3.3 ... 4.1
 - Microsoft VC 7, 7.1, 8
 - Intel 9.0
-- Sun C++ 5.8 (CXXFLAGS='-compat5 -library=stlport4')
+- Sun C++ 5.8 (CXXFLAGS='-library=stlport4')
 - MIPSpro Compilers: Version 7.4.4m
 
 GCC 2.x and Microsoft VC 6 are not capable of compiling re2c.
@@ -41,7 +41,7 @@ re2c) you need the following steps:
 Or you can create a rpm package and install it by the following commands:
     ./configure
     make rpm
-    rpm -Uhv <packagedir>/re2c-0.10.5-1.rpm
+    rpm -Uhv <packagedir>/re2c-0.12.3-1.rpm
 
 If you want to build from CVS then the first thing you should do is 
 regenerating all build files using the following command:
@@ -51,7 +51,7 @@ need to generate RPM packages for cvs builds use these commands:
     ./autogen.sh
     ./configure
     ./makerpm <release>
-    rpm -Uhv <packagedir>/re2c-0.10.5-<release>.rpm
+    rpm -Uhv <packagedir>/re2c-0.12.3-<release>.rpm
 
 Here <realease> should be a number like 1. And <packagedir> must equal 
 the directory where the makerpm step has written the generated rpm to.

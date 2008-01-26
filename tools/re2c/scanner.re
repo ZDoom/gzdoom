@@ -1,4 +1,4 @@
-/* $Id:$ */
+/* $Id: scanner.re 663 2007-04-01 11:22:15Z helly $ */
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>

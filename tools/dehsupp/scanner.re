@@ -106,7 +106,7 @@ ESC	= [\\] ([abfnrtv?'"\\] | "x" H+ | O+);
 	"*"				{ RET(MULTIPLY); }
 	"/"				{ RET(DIVIDE); }
 	"("				{ RET(LPAREN); }
-	"}"				{ RET(RPAREN); }
+	")"				{ RET(RPAREN); }
 	","				{ RET(COMMA); }
 	"{"				{ RET(LBRACE); }
 	"}"				{ RET(RBRACE); }

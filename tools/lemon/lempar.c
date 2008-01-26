@@ -350,9 +350,7 @@ static int yy_find_shift_action(
   if( stateno>YY_SHIFT_MAX || (i = yy_shift_ofst[stateno])==YY_SHIFT_USE_DFLT ){
     return yy_default[stateno];
   }
-  if( iLookAhead==YYNOCODE ){
-	return YY_NO_ACTION;
-  }
+  assert( iLookAhead!=YYNOCODE );
   i += iLookAhead;
   if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
     if( iLookAhead>0 ){
@@ -403,13 +401,18 @@ static int yy_find_reduce_action(
   YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
   int i;
-  assert( stateno<=YY_REDUCE_MAX );
-  i = yy_reduce_ofst[stateno];
+  if( stateno>YY_REDUCE_MAX ||
+	  (i = yy_reduce_ofst[stateno])==YY_REDUCE_USE_DFLT ){
+	return yy_default[stateno];
+  }
   assert( i!=YY_REDUCE_USE_DFLT );
   assert( iLookAhead!=YYNOCODE );
   i += iLookAhead;
-  assert( i>=0 && i<YY_SZ_ACTTAB );
-  assert( yy_lookahead[i]==iLookAhead );
+  if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
+    return yy_default[stateno];
+  }else{
+	return yy_action[i];
+  }
   return yy_action[i];
 }
 
@@ -466,7 +469,7 @@ static void yy_shift(
     fprintf(yyTraceFILE,"%sShift %d\n",yyTracePrompt,yyNewState);
     fprintf(yyTraceFILE,"%sStack:",yyTracePrompt);
     for(i=1; i<=yypParser->yyidx; i++)
-      fprintf(yyTraceFILE," %s",yyTokenName[yypParser->yystack[i].major]);
+      fprintf(yyTraceFILE," (%d)%s",yypParser->yystack[i].stateno,yyTokenName[yypParser->yystack[i].major]);
     fprintf(yyTraceFILE,"\n");
   }
 #endif
@@ -679,14 +682,6 @@ void Parse(
       yy_shift(yypParser,yyact,yymajor,&yyminorunion);
       yypParser->yyerrcnt--;
       yymajor = YYNOCODE;
-	  /* [RH] If we can reduce the stack now, do it. Otherwise, constructs */
-	  /* like "include <somefile>" won't work because the next token after */
-	  /* the include will be shifted before the include is reduced. Then the */
-	  /* parser will act as if that token had been the first one in the */
-	  /* included file. */
-      while( yypParser->yyidx>= 0 && (yyact = yy_find_shift_action(yypParser,YYNOCODE)) < YYNSTATE + YYNRULE ){
-        yy_reduce(yypParser,yyact-YYNSTATE);
-      }
     }else if( yyact < YYNSTATE + YYNRULE ){
       yy_reduce(yypParser,yyact-YYNSTATE);
     }else{

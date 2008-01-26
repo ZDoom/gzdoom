@@ -1,4 +1,4 @@
-/* $Id: substr.cc,v 1.11 2006/02/26 20:30:54 helly Exp $ */
+/* $Id: substr.cc 546 2006-05-25 13:40:14Z helly $ */
 #include <string.h>
 #include <stdlib.h>
 #include "substr.h"

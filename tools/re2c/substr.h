@@ -1,4 +1,4 @@
-/* $Id: substr.h,v 1.10 2006/01/01 13:42:10 helly Exp $ */
+/* $Id: substr.h 530 2006-05-25 13:34:33Z helly $ */
 #ifndef _substr_h
 #define _substr_h
 

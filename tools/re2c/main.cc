@@ -1,4 +1,4 @@
-/* $Id: main.cc,v 1.53 2006/05/14 13:38:26 helly Exp $ */
+/* $Id: main.cc 691 2007-04-22 15:07:39Z helly $ */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #elif defined(_WIN32)
@@ -139,7 +139,7 @@ static void usage()
 	"                        with -f and disables YYMAXFILL generation prior to last\n"
 	"                        re2c block.\n"
 	"\n"
-	"--no-generation-date    Suppress the date output in the generated output so that it\n"
+	"--no-generation-date    Suppress date output in the generated output so that it\n"
 	"                        only shows the re2c version.\n"
 	;
 }

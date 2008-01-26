@@ -2,7 +2,7 @@
  Author: Marcus Boerger <helly@users.sourceforge.net>
 */
 
-/* $Id: mbo_getopt.h,v 1.5 2006/04/17 19:28:47 helly Exp $ */
+/* $Id: mbo_getopt.h 539 2006-05-25 13:37:38Z helly $ */
 
 /* Define structure for one recognized option (both single char and long name).
  * If short_open is '-' this is the last option.

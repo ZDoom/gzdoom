@@ -5,11 +5,12 @@
 ** in the input file. */
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #line 1 "parse.y"
 
 #include <malloc.h>
 #include "dehsupp.h"
-#line 13 "parse.c"
+#line 14 "parse.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -48,7 +49,8 @@
 **                       This is typically a union of many types, one of
 **                       which is ParseTOKENTYPE.  The entry in the union
 **                       for base tokens is called "yy0".
-**    YYSTACKDEPTH       is the maximum depth of the parser's stack.
+**    YYSTACKDEPTH       is the maximum depth of the parser's stack.  If
+**                       zero the stack is dynamically sized using realloc()
 **    ParseARG_SDECL     A static variable declaration for the %extra_argument
 **    ParseARG_PDECL     A parameter declaration for the %extra_argument
 **    ParseARG_STORE     Code to store %extra_argument into yypParser
@@ -59,23 +61,25 @@
 **                       defined, then do no error processing.
 */
 #define YYCODETYPE unsigned char
-#define YYNOCODE 68
-#define YYACTIONTYPE unsigned char
+#define YYNOCODE 67
+#define YYACTIONTYPE unsigned short int
 #define ParseTOKENTYPE struct Token
 typedef union {
   ParseTOKENTYPE yy0;
-  int yy62;
-  int yy135;
+  int yy64;
+  int yy133;
 } YYMINORTYPE;
+#ifndef YYSTACKDEPTH
 #define YYSTACKDEPTH 100
+#endif
 #define ParseARG_SDECL
 #define ParseARG_PDECL
 #define ParseARG_FETCH
 #define ParseARG_STORE
-#define YYNSTATE 140
-#define YYNRULE 77
-#define YYERRORSYMBOL 35
-#define YYERRSYMDT yy135
+#define YYNSTATE 170
+#define YYNRULE 87
+#define YYERRORSYMBOL 34
+#define YYERRSYMDT yy133
 #define YY_NO_ACTION      (YYNSTATE+YYNRULE+2)
 #define YY_ACCEPT_ACTION  (YYNSTATE+YYNRULE+1)
 #define YY_ERROR_ACTION   (YYNSTATE+YYNRULE)
@@ -128,85 +132,96 @@ typedef union {
 **  yy_default[]       Default action for each state.
 */
 static const YYACTIONTYPE yy_action[] = {
- /*     0 */   137,  131,  130,  126,  120,  119,  118,  117,  109,  101,
- /*    10 */    95,   94,   80,   14,   17,   20,   23,   18,   15,   71,
- /*    20 */    20,   23,   18,   15,   86,   60,   45,   68,   76,   84,
- /*    30 */    93,   77,   36,   74,   66,   57,   73,   16,   14,   17,
- /*    40 */    20,   23,   18,   15,   17,   20,   23,   18,   15,   11,
- /*    50 */    33,   16,   14,   17,   20,   23,   18,   15,   21,   32,
- /*    60 */    82,   50,  128,   61,   72,   16,   14,   17,   20,   23,
- /*    70 */    18,   15,   54,  139,   18,   15,  132,   32,   16,   14,
- /*    80 */    17,   20,   23,   18,   15,   96,   97,   98,   55,   99,
- /*    90 */    78,  138,   16,   14,   17,   20,   23,   18,   15,   19,
- /*   100 */    19,   83,   77,   36,   40,   90,   24,   24,   44,  100,
- /*   110 */   129,  103,  103,   67,   62,   81,   58,    8,   65,   70,
- /*   120 */    69,   79,   59,   64,   22,   33,   38,    9,   52,   63,
- /*   130 */    56,  107,   30,   85,  218,    1,    7,  127,   87,   47,
- /*   140 */   136,   10,   89,   49,   88,   48,   13,  115,   91,    3,
- /*   150 */    46,  121,  133,    2,   92,   28,   12,   29,   34,   53,
- /*   160 */    37,   39,   51,    4,  134,  135,  102,  111,   43,   25,
- /*   170 */   124,    6,   75,  106,   41,   26,  113,   42,    5,  108,
- /*   180 */    35,   31,  125,  219,  105,  110,  104,  219,  123,  116,
- /*   190 */    27,  122,  114,  112,
+ /*     0 */   170,   32,   25,   22,   24,   26,   23,   28,   27,   21,
+ /*    10 */    56,  147,  101,   35,   83,  165,   17,   87,  108,  145,
+ /*    20 */   137,  144,   57,   66,   77,   88,   99,   58,  101,   35,
+ /*    30 */    92,   65,   98,   67,  167,  166,  164,  162,  161,  159,
+ /*    40 */   158,  157,  156,  153,  152,  150,   25,   22,   24,   26,
+ /*    50 */    23,   28,   27,   24,   26,   23,   28,   27,   29,   16,
+ /*    60 */    25,   22,   24,   26,   23,   28,   27,   26,   23,   28,
+ /*    70 */    27,  140,   31,   25,   22,   24,   26,   23,   28,   27,
+ /*    80 */    33,   97,   80,  100,  151,  104,   72,   25,   22,   24,
+ /*    90 */    26,   23,   28,   27,   22,   24,   26,   23,   28,   27,
+ /*   100 */    32,   60,   63,   21,   53,  117,  111,  112,  113,   51,
+ /*   110 */    17,   85,   46,   48,  169,  144,    9,   79,   31,   39,
+ /*   120 */    75,   54,   84,   82,   73,   18,   76,   10,   38,   44,
+ /*   130 */   155,   81,   47,   89,   93,   95,   28,   27,  106,   78,
+ /*   140 */    91,   71,   30,   69,   52,   62,   19,  107,  102,  143,
+ /*   150 */   258,    1,   59,  146,  168,  109,  142,   49,    4,   55,
+ /*   160 */   103,   45,   41,   94,    8,    2,    5,   43,  114,   50,
+ /*   170 */    42,  141,   96,  115,  116,   40,   37,   12,   34,  131,
+ /*   180 */   118,  105,   36,  138,  163,  128,  121,   13,   15,  110,
+ /*   190 */    20,  259,  119,   86,  139,  149,  126,    7,  148,  160,
+ /*   200 */   136,  120,   90,  134,  130,    6,  135,   61,  124,  154,
+ /*   210 */   122,  133,   64,  259,  259,  123,  129,   74,   11,  127,
+ /*   220 */    70,   14,    3,  125,  259,  132,   68,
 };
 static const YYCODETYPE yy_lookahead[] = {
- /*     0 */    38,   39,   40,   41,   42,   43,   44,   45,   46,   47,
- /*    10 */    48,   49,   10,    2,    3,    4,    5,    6,    7,   17,
- /*    20 */     4,    5,    6,    7,   22,   23,   61,   25,   26,   27,
- /*    30 */    50,   51,   52,   31,   32,   33,   34,    1,    2,    3,
- /*    40 */     4,    5,    6,    7,    3,    4,    5,    6,    7,   13,
- /*    50 */    52,    1,    2,    3,    4,    5,    6,    7,   13,   52,
- /*    60 */    21,   63,   64,   13,   19,    1,    2,    3,    4,    5,
- /*    70 */     6,    7,   65,   66,    6,    7,   12,   52,    1,    2,
- /*    80 */     3,    4,    5,    6,    7,   28,   29,   30,   58,   59,
- /*    90 */    13,   66,    1,    2,    3,    4,    5,    6,    7,    4,
- /*   100 */     4,   50,   51,   52,   52,   59,   11,   11,   56,   14,
- /*   110 */    15,   16,   16,   13,   13,   13,   13,   13,   13,   19,
- /*   120 */    19,   19,   19,   19,   13,   52,   52,   13,   54,   24,
- /*   130 */    19,   14,   13,   19,   36,   37,   18,   64,   19,   57,
- /*   140 */    20,   18,   21,   55,   12,   62,   13,   21,   21,   11,
- /*   150 */    53,   21,   21,   13,   20,   18,   13,   18,   52,   52,
- /*   160 */    52,   52,   52,   18,   20,   52,   20,   52,   52,   18,
- /*   170 */    20,   18,   60,   14,   52,   18,   52,   52,   18,   21,
- /*   180 */    52,   52,   20,   67,   21,   20,   20,   67,   21,   20,
- /*   190 */    18,   21,   21,   20,
+ /*     0 */     0,   51,    1,    2,    3,    4,    5,    6,    7,    4,
+ /*    10 */    10,   49,   50,   51,   13,   65,   11,   17,   58,   14,
+ /*    20 */    15,   16,   22,   23,   24,   25,   26,   49,   50,   51,
+ /*    30 */    30,   31,   32,   33,   37,   38,   39,   40,   41,   42,
+ /*    40 */    43,   44,   45,   46,   47,   48,    1,    2,    3,    4,
+ /*    50 */     5,    6,    7,    3,    4,    5,    6,    7,   13,   13,
+ /*    60 */     1,    2,    3,    4,    5,    6,    7,    4,    5,    6,
+ /*    70 */     7,   12,   51,    1,    2,    3,    4,    5,    6,    7,
+ /*    80 */    51,   34,   34,   34,   63,   13,   34,    1,    2,    3,
+ /*    90 */     4,    5,    6,    7,    2,    3,    4,    5,    6,    7,
+ /*   100 */    51,   34,   34,    4,   57,   58,   27,   28,   29,   61,
+ /*   110 */    11,   34,   60,   64,   65,   16,   13,   13,   51,   51,
+ /*   120 */    13,   53,   19,   19,   34,   13,   19,   13,   51,   62,
+ /*   130 */    63,   19,   55,   19,   13,   34,    6,    7,   21,   13,
+ /*   140 */    19,   13,   13,   34,   54,   19,   13,   19,   19,   51,
+ /*   150 */    35,   36,   19,   21,   20,   20,   51,   56,   13,   51,
+ /*   160 */    19,   52,   51,   19,   18,   18,   11,   51,   20,   51,
+ /*   170 */    51,   51,   19,   21,   20,   51,   51,   18,   51,   21,
+ /*   180 */    20,   59,   51,   20,   20,   14,   21,   18,   18,   21,
+ /*   190 */    13,   66,   20,   19,   21,   20,   20,   18,   12,   21,
+ /*   200 */    20,   20,   19,   21,   20,   18,   21,   19,   14,   20,
+ /*   210 */    20,   20,   19,   66,   66,   20,   20,   19,   18,   20,
+ /*   220 */    19,   18,   18,   21,   66,   20,   19,
 };
 #define YY_SHIFT_USE_DFLT (-1)
-#define YY_SHIFT_MAX 87
+#define YY_SHIFT_MAX 107
 static const short yy_shift_ofst[] = {
- /*     0 */    -1,    2,   95,   95,   96,   96,   96,   96,   96,   96,
- /*    10 */    39,   96,   96,   57,   96,   96,   96,   96,   96,   96,
- /*    20 */    96,   96,   96,   96,   96,  130,  126,  163,  121,  117,
- /*    30 */    39,   50,   77,   36,   64,   91,   91,   91,   91,   91,
- /*    40 */    91,   11,   41,   16,   45,  100,  101,  102,  103,  105,
- /*    50 */   104,   68,  111,   68,  114,  119,  169,  160,  171,  173,
- /*    60 */   172,  170,  167,  165,  162,  158,  157,  159,  153,  150,
- /*    70 */   166,  151,  146,  145,  139,  143,  137,  140,  131,  134,
- /*    80 */   138,  127,  133,  132,  123,  120,  118,  144,
+ /*     0 */    -1,    0,   99,   99,    5,    5,   99,   99,  117,   99,
+ /*    10 */    99,  173,  171,  168,  165,  158,   99,   99,   99,   99,
+ /*    20 */    79,   99,   99,   99,   99,   99,   99,   99,   99,   99,
+ /*    30 */   117,   45,    1,   72,   59,   86,   86,   86,   86,   86,
+ /*    40 */    86,   92,   50,   63,  103,  104,  107,  112,  114,  121,
+ /*    50 */   130,  126,  128,  129,  133,  130,  155,  179,  186,  184,
+ /*    60 */   188,  189,  191,  193,  196,  200,  203,  204,  205,  207,
+ /*    70 */   199,  202,  201,  198,  195,  194,  190,  187,  185,  182,
+ /*    80 */   183,  181,  180,  178,  175,  174,  172,  170,  169,  164,
+ /*    90 */   163,  160,  159,  152,  154,  153,  148,  144,  147,  146,
+ /*   100 */   141,  145,  135,  134,  132,   46,  177,  176,
 };
-#define YY_REDUCE_USE_DFLT (-39)
+#define YY_REDUCE_USE_DFLT (-51)
 #define YY_REDUCE_MAX 30
 static const short yy_reduce_ofst[] = {
- /*     0 */    98,  -38,  -20,   51,    7,   -2,   52,   74,   73,   25,
- /*    10 */    30,  129,  128,  112,  125,  124,  122,  116,  115,  113,
- /*    20 */   110,  109,  108,  107,  106,   97,   83,   88,   82,  -35,
- /*    30 */    46,
+ /*     0 */   115,   -3,   67,   49,  -38,  -22,   77,   68,   47,   21,
+ /*    10 */   -50,   48,   52,  101,   90,  109,  131,  127,  125,  124,
+ /*    20 */   122,  120,  119,  118,  116,  111,  108,  105,   98,   29,
+ /*    30 */   -40,
 };
 static const YYACTIONTYPE yy_default[] = {
- /*     0 */   141,  140,  155,  155,  213,  208,  184,  176,  217,  217,
- /*    10 */   192,  217,  217,  217,  217,  217,  217,  217,  217,  217,
- /*    20 */   217,  217,  217,  217,  217,  172,  204,  180,  188,  200,
- /*    30 */   217,  217,  217,  217,  217,  195,  159,  178,  177,  186,
- /*    40 */   185,  166,  168,  167,  217,  217,  217,  217,  217,  217,
- /*    50 */   217,  163,  217,  162,  217,  217,  217,  217,  217,  217,
- /*    60 */   217,  217,  217,  217,  217,  217,  217,  217,  217,  217,
- /*    70 */   217,  217,  217,  217,  217,  217,  217,  156,  217,  217,
- /*    80 */   217,  217,  217,  217,  217,  217,  217,  217,  154,  189,
- /*    90 */   194,  190,  187,  157,  153,  152,  196,  197,  198,  193,
- /*   100 */   158,  151,  183,  161,  199,  181,  202,  201,  182,  150,
- /*   110 */   179,  164,  203,  165,  206,  205,  175,  149,  148,  147,
- /*   120 */   146,  173,  211,  174,  171,  207,  145,  210,  209,  160,
- /*   130 */   144,  143,  170,  216,  191,  169,  212,  142,  215,  214,
+ /*     0 */   171,  257,  247,  253,  185,  185,  218,  208,  228,  257,
+ /*    10 */   257,  242,  237,  223,  213,  203,  257,  257,  257,  257,
+ /*    20 */   257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+ /*    30 */   257,  257,  257,  257,  257,  189,  231,  220,  219,  209,
+ /*    40 */   210,  196,  198,  197,  257,  257,  257,  257,  257,  257,
+ /*    50 */   192,  257,  257,  257,  257,  193,  257,  257,  257,  257,
+ /*    60 */   257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+ /*    70 */   257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+ /*    80 */   257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+ /*    90 */   257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+ /*   100 */   257,  186,  257,  257,  257,  257,  257,  257,  230,  226,
+ /*   110 */   224,  232,  233,  234,  222,  225,  227,  229,  221,  217,
+ /*   120 */   216,  214,  235,  212,  239,  215,  211,  236,  238,  207,
+ /*   130 */   206,  204,  202,  240,  205,  244,  201,  190,  241,  243,
+ /*   140 */   200,  199,  195,  194,  191,  188,  250,  187,  184,  245,
+ /*   150 */   183,  249,  182,  181,  246,  248,  180,  179,  178,  177,
+ /*   160 */   256,  176,  175,  251,  174,  255,  173,  172,  252,  254,
 };
 #define YY_SZ_ACTTAB (int)(sizeof(yy_action)/sizeof(yy_action[0]))
 
@@ -252,7 +267,12 @@ struct yyParser {
   int yyidx;                    /* Index of top element in stack */
   int yyerrcnt;                 /* Shifts left before out of the error */
   ParseARG_SDECL                /* A place to hold %extra_argument */
+#if YYSTACKDEPTH<=0
+  int yystksz;                  /* Current side of the stack */
+  yyStackEntry *yystack;        /* The parser's stack */
+#else
   yyStackEntry yystack[YYSTACKDEPTH];  /* The parser's stack */
+#endif
 };
 typedef struct yyParser yyParser;
 
@@ -298,17 +318,17 @@ static const char *const yyTokenName[] = {
   "RPAREN",        "COMMA",         "STRING",        "ENDL",        
   "NUM",           "Actions",       "LBRACE",        "RBRACE",      
   "SEMICOLON",     "SYM",           "OrgHeights",    "ActionList",  
-  "RBARCE",        "CodePConv",     "OrgSprNames",   "StateMap",    
-  "FirstState",    "SpawnState",    "DeathState",    "SoundMap",    
-  "InfoNames",     "ThingBits",     "RenderStyles",  "error",       
-  "main",          "translation_unit",  "external_declaration",  "print_statement",
-  "actions_def",   "org_heights_def",  "action_list_def",  "codep_conv_def",
-  "org_spr_names_def",  "state_map_def",  "sound_map_def",  "info_names_def",
-  "thing_bits_def",  "render_styles_def",  "print_list",    "print_item",  
-  "exp",           "actions_list",  "org_heights_list",  "action_list_list",
-  "codep_conv_list",  "org_spr_names_list",  "state_map_list",  "state_map_entry",
-  "state_type",    "sound_map_list",  "info_names_list",  "thing_bits_list",
-  "thing_bits_entry",  "render_styles_list",  "render_styles_entry",
+  "CodePConv",     "OrgSprNames",   "StateMap",      "FirstState",  
+  "SpawnState",    "DeathState",    "SoundMap",      "InfoNames",   
+  "ThingBits",     "RenderStyles",  "error",         "main",        
+  "translation_unit",  "external_declaration",  "print_statement",  "actions_def", 
+  "org_heights_def",  "action_list_def",  "codep_conv_def",  "org_spr_names_def",
+  "state_map_def",  "sound_map_def",  "info_names_def",  "thing_bits_def",
+  "render_styles_def",  "print_list",    "print_item",    "exp",         
+  "actions_list",  "org_heights_list",  "action_list_list",  "codep_conv_list",
+  "org_spr_names_list",  "state_map_list",  "state_map_entry",  "state_type",  
+  "sound_map_list",  "info_names_list",  "thing_bits_list",  "thing_bits_entry",
+  "render_styles_list",  "render_styles_entry",
 };
 #endif /* NDEBUG */
 
@@ -348,69 +368,86 @@ static const char *const yyRuleName[] = {
  /*  29 */ "exp ::= MINUS exp",
  /*  30 */ "exp ::= LPAREN exp RPAREN",
  /*  31 */ "actions_def ::= Actions LBRACE actions_list RBRACE SEMICOLON",
- /*  32 */ "actions_list ::=",
- /*  33 */ "actions_list ::= SYM",
- /*  34 */ "actions_list ::= actions_list COMMA SYM",
- /*  35 */ "org_heights_def ::= OrgHeights LBRACE org_heights_list RBRACE SEMICOLON",
- /*  36 */ "org_heights_list ::=",
- /*  37 */ "org_heights_list ::= exp",
- /*  38 */ "org_heights_list ::= org_heights_list COMMA exp",
- /*  39 */ "action_list_def ::= ActionList LBRACE action_list_list RBARCE SEMICOLON",
- /*  40 */ "action_list_list ::=",
- /*  41 */ "action_list_list ::= SYM",
- /*  42 */ "action_list_list ::= action_list_list COMMA SYM",
- /*  43 */ "codep_conv_def ::= CodePConv LBRACE codep_conv_list RBRACE SEMICOLON",
- /*  44 */ "codep_conv_list ::=",
- /*  45 */ "codep_conv_list ::= exp",
- /*  46 */ "codep_conv_list ::= codep_conv_list COMMA exp",
- /*  47 */ "org_spr_names_def ::= OrgSprNames LBRACE org_spr_names_list RBRACE SEMICOLON",
- /*  48 */ "org_spr_names_list ::=",
- /*  49 */ "org_spr_names_list ::= SYM",
- /*  50 */ "org_spr_names_list ::= org_spr_names_list COMMA SYM",
- /*  51 */ "state_map_def ::= StateMap LBRACE state_map_list RBRACE SEMICOLON",
- /*  52 */ "state_map_list ::=",
- /*  53 */ "state_map_list ::= state_map_entry",
- /*  54 */ "state_map_list ::= state_map_list COMMA state_map_entry",
- /*  55 */ "state_map_entry ::= SYM COMMA state_type COMMA exp",
- /*  56 */ "state_type ::= FirstState",
- /*  57 */ "state_type ::= SpawnState",
- /*  58 */ "state_type ::= DeathState",
- /*  59 */ "sound_map_def ::= SoundMap LBRACE sound_map_list RBRACE SEMICOLON",
- /*  60 */ "sound_map_list ::=",
- /*  61 */ "sound_map_list ::= STRING",
- /*  62 */ "sound_map_list ::= sound_map_list COMMA STRING",
- /*  63 */ "info_names_def ::= InfoNames LBRACE info_names_list RBRACE SEMICOLON",
- /*  64 */ "info_names_list ::=",
- /*  65 */ "info_names_list ::= SYM",
- /*  66 */ "info_names_list ::= info_names_list COMMA SYM",
- /*  67 */ "thing_bits_def ::= ThingBits LBRACE thing_bits_list RBRACE SEMICOLON",
- /*  68 */ "thing_bits_list ::=",
- /*  69 */ "thing_bits_list ::= thing_bits_entry",
- /*  70 */ "thing_bits_list ::= thing_bits_list COMMA thing_bits_entry",
- /*  71 */ "thing_bits_entry ::= exp COMMA exp COMMA SYM",
- /*  72 */ "render_styles_def ::= RenderStyles LBRACE render_styles_list RBRACE SEMICOLON",
- /*  73 */ "render_styles_list ::=",
- /*  74 */ "render_styles_list ::= render_styles_entry",
- /*  75 */ "render_styles_list ::= render_styles_list COMMA render_styles_entry",
- /*  76 */ "render_styles_entry ::= exp COMMA SYM",
+ /*  32 */ "actions_def ::= Actions LBRACE error RBRACE SEMICOLON",
+ /*  33 */ "actions_list ::=",
+ /*  34 */ "actions_list ::= SYM",
+ /*  35 */ "actions_list ::= actions_list COMMA SYM",
+ /*  36 */ "org_heights_def ::= OrgHeights LBRACE org_heights_list RBRACE SEMICOLON",
+ /*  37 */ "org_heights_def ::= OrgHeights LBRACE error RBRACE SEMICOLON",
+ /*  38 */ "org_heights_list ::=",
+ /*  39 */ "org_heights_list ::= exp",
+ /*  40 */ "org_heights_list ::= org_heights_list COMMA exp",
+ /*  41 */ "action_list_def ::= ActionList LBRACE action_list_list RBRACE SEMICOLON",
+ /*  42 */ "action_list_def ::= ActionList LBRACE error RBRACE SEMICOLON",
+ /*  43 */ "action_list_list ::=",
+ /*  44 */ "action_list_list ::= SYM",
+ /*  45 */ "action_list_list ::= action_list_list COMMA SYM",
+ /*  46 */ "codep_conv_def ::= CodePConv LBRACE codep_conv_list RBRACE SEMICOLON",
+ /*  47 */ "codep_conv_def ::= CodePConv LBRACE error RBRACE SEMICOLON",
+ /*  48 */ "codep_conv_list ::=",
+ /*  49 */ "codep_conv_list ::= exp",
+ /*  50 */ "codep_conv_list ::= codep_conv_list COMMA exp",
+ /*  51 */ "org_spr_names_def ::= OrgSprNames LBRACE org_spr_names_list RBRACE SEMICOLON",
+ /*  52 */ "org_spr_names_def ::= OrgSprNames LBRACE error RBRACE SEMICOLON",
+ /*  53 */ "org_spr_names_list ::=",
+ /*  54 */ "org_spr_names_list ::= SYM",
+ /*  55 */ "org_spr_names_list ::= org_spr_names_list COMMA SYM",
+ /*  56 */ "state_map_def ::= StateMap LBRACE state_map_list RBRACE SEMICOLON",
+ /*  57 */ "state_map_def ::= StateMap LBRACE error RBRACE SEMICOLON",
+ /*  58 */ "state_map_list ::=",
+ /*  59 */ "state_map_list ::= state_map_entry",
+ /*  60 */ "state_map_list ::= state_map_list COMMA state_map_entry",
+ /*  61 */ "state_map_entry ::= SYM COMMA state_type COMMA exp",
+ /*  62 */ "state_type ::= FirstState",
+ /*  63 */ "state_type ::= SpawnState",
+ /*  64 */ "state_type ::= DeathState",
+ /*  65 */ "sound_map_def ::= SoundMap LBRACE sound_map_list RBRACE SEMICOLON",
+ /*  66 */ "sound_map_def ::= SoundMap LBRACE error RBRACE SEMICOLON",
+ /*  67 */ "sound_map_list ::=",
+ /*  68 */ "sound_map_list ::= STRING",
+ /*  69 */ "sound_map_list ::= sound_map_list COMMA STRING",
+ /*  70 */ "info_names_def ::= InfoNames LBRACE info_names_list RBRACE SEMICOLON",
+ /*  71 */ "info_names_def ::= InfoNames LBRACE error RBRACE SEMICOLON",
+ /*  72 */ "info_names_list ::=",
+ /*  73 */ "info_names_list ::= SYM",
+ /*  74 */ "info_names_list ::= info_names_list COMMA SYM",
+ /*  75 */ "thing_bits_def ::= ThingBits LBRACE thing_bits_list RBRACE SEMICOLON",
+ /*  76 */ "thing_bits_def ::= ThingBits LBRACE error RBRACE SEMICOLON",
+ /*  77 */ "thing_bits_list ::=",
+ /*  78 */ "thing_bits_list ::= thing_bits_entry",
+ /*  79 */ "thing_bits_list ::= thing_bits_list COMMA thing_bits_entry",
+ /*  80 */ "thing_bits_entry ::= exp COMMA exp COMMA SYM",
+ /*  81 */ "render_styles_def ::= RenderStyles LBRACE render_styles_list RBRACE SEMICOLON",
+ /*  82 */ "render_styles_def ::= RenderStyles LBRACE error RBRACE SEMICOLON",
+ /*  83 */ "render_styles_list ::=",
+ /*  84 */ "render_styles_list ::= render_styles_entry",
+ /*  85 */ "render_styles_list ::= render_styles_list COMMA render_styles_entry",
+ /*  86 */ "render_styles_entry ::= exp COMMA SYM",
 };
 #endif /* NDEBUG */
 
+#if YYSTACKDEPTH<=0
 /*
-** This function returns the symbolic name associated with a token
-** value.
+** Try to increase the size of the parser stack.
 */
-const char *ParseTokenName(int tokenType){
+static void yyGrowStack(yyParser *p){
+  int newSize;
+  yyStackEntry *pNew;
+
+  newSize = p->yystksz*2 + 100;
+  pNew = realloc(p->yystack, newSize*sizeof(pNew[0]));
+  if( pNew ){
+    p->yystack = pNew;
+    p->yystksz = newSize;
 #ifndef NDEBUG
-  if( tokenType>0 && tokenType<(sizeof(yyTokenName)/sizeof(yyTokenName[0])) ){
-    return yyTokenName[tokenType];
-  }else{
-    return "Unknown";
-  }
-#else
-  return "";
+    if( yyTraceFILE ){
+      fprintf(yyTraceFILE,"%sStack grows to %d entries!\n",
+              yyTracePrompt, p->yystksz);
+    }
 #endif
+  }
 }
+#endif
 
 /* 
 ** This function allocates a new parser.
@@ -429,6 +466,9 @@ void *ParseAlloc(void *(*mallocProc)(size_t)){
   pParser = (yyParser*)(*mallocProc)( (size_t)sizeof(yyParser) );
   if( pParser ){
     pParser->yyidx = -1;
+#if YYSTACKDEPTH<=0
+    yyGrowStack(pParser);
+#endif
   }
   return pParser;
 }
@@ -450,43 +490,42 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     ** which appear on the RHS of the rule, but which are not used
     ** inside the C code.
     */
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-    case 16:
-    case 17:
-    case 18:
-    case 19:
-    case 20:
-    case 21:
-    case 22:
-    case 23:
-    case 24:
-    case 25:
-    case 26:
-    case 27:
-    case 28:
-    case 29:
-    case 30:
-    case 31:
-    case 32:
-    case 33:
-    case 34:
-#line 8 "parse.y"
+    case 1: /* OR */
+    case 2: /* XOR */
+    case 3: /* AND */
+    case 4: /* MINUS */
+    case 5: /* PLUS */
+    case 6: /* MULTIPLY */
+    case 7: /* DIVIDE */
+    case 8: /* NEG */
+    case 9: /* EOI */
+    case 10: /* PRINT */
+    case 11: /* LPAREN */
+    case 12: /* RPAREN */
+    case 13: /* COMMA */
+    case 14: /* STRING */
+    case 15: /* ENDL */
+    case 16: /* NUM */
+    case 17: /* Actions */
+    case 18: /* LBRACE */
+    case 19: /* RBRACE */
+    case 20: /* SEMICOLON */
+    case 21: /* SYM */
+    case 22: /* OrgHeights */
+    case 23: /* ActionList */
+    case 24: /* CodePConv */
+    case 25: /* OrgSprNames */
+    case 26: /* StateMap */
+    case 27: /* FirstState */
+    case 28: /* SpawnState */
+    case 29: /* DeathState */
+    case 30: /* SoundMap */
+    case 31: /* InfoNames */
+    case 32: /* ThingBits */
+    case 33: /* RenderStyles */
+#line 10 "parse.y"
 { if ((yypminor->yy0).string) free((yypminor->yy0).string); }
-#line 490 "parse.c"
+#line 529 "parse.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -537,6 +576,9 @@ void ParseFree(
   yyParser *pParser = (yyParser*)p;
   if( pParser==0 ) return;
   while( pParser->yyidx>=0 ) yy_pop_parser_stack(pParser);
+#if YYSTACKDEPTH<=0
+  free(pParser->yystack);
+#endif
   (*freeProc)((void*)pParser);
 }
 
@@ -558,9 +600,7 @@ static int yy_find_shift_action(
   if( stateno>YY_SHIFT_MAX || (i = yy_shift_ofst[stateno])==YY_SHIFT_USE_DFLT ){
     return yy_default[stateno];
   }
-  if( iLookAhead==YYNOCODE ){
-    return YY_NO_ACTION;
-  }
+  assert( iLookAhead!=YYNOCODE );
   i += iLookAhead;
   if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
     if( iLookAhead>0 ){
@@ -611,21 +651,36 @@ static int yy_find_reduce_action(
   YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
   int i;
-  /* int stateno = pParser->yystack[pParser->yyidx].stateno; */
- 
   if( stateno>YY_REDUCE_MAX ||
-      (i = yy_reduce_ofst[stateno])==YY_REDUCE_USE_DFLT ){
-    return yy_default[stateno];
+	  (i = yy_reduce_ofst[stateno])==YY_REDUCE_USE_DFLT ){
+	return yy_default[stateno];
   }
-  if( iLookAhead==YYNOCODE ){
-    return YY_NO_ACTION;
-  }
+  assert( i!=YY_REDUCE_USE_DFLT );
+  assert( iLookAhead!=YYNOCODE );
   i += iLookAhead;
   if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
     return yy_default[stateno];
   }else{
-    return yy_action[i];
+	return yy_action[i];
   }
+  return yy_action[i];
+}
+
+/*
+** The following routine is called if the stack overflows.
+*/
+static void yyStackOverflow(yyParser *yypParser, YYMINORTYPE *yypMinor){
+   ParseARG_FETCH;
+   yypParser->yyidx--;
+#ifndef NDEBUG
+   if( yyTraceFILE ){
+     fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
+   }
+#endif
+   while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
+   /* Here code is inserted which will execute if the parser
+   ** stack every overflows */
+   ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
 
 /*
@@ -639,20 +694,20 @@ static void yy_shift(
 ){
   yyStackEntry *yytos;
   yypParser->yyidx++;
+#if YYSTACKDEPTH>0
   if( yypParser->yyidx>=YYSTACKDEPTH ){
-     ParseARG_FETCH;
-     yypParser->yyidx--;
-#ifndef NDEBUG
-     if( yyTraceFILE ){
-       fprintf(yyTraceFILE,"%sStack Overflow!\n",yyTracePrompt);
-     }
-#endif
-     while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
-     /* Here code is inserted which will execute if the parser
-     ** stack ever overflows */
-     ParseARG_STORE; /* Suppress warning about unused %extra_argument var */
-     return;
+    yyStackOverflow(yypParser, yypMinor);
+    return;
   }
+#else
+  if( yypParser->yyidx>=yypParser->yystksz ){
+    yyGrowStack(yypParser);
+    if( yypParser->yyidx>=yypParser->yystksz ){
+      yyStackOverflow(yypParser, yypMinor);
+      return;
+    }
+  }
+#endif
   yytos = &yypParser->yystack[yypParser->yyidx];
   yytos->stateno = yyNewState;
   yytos->major = yyMajor;
@@ -663,7 +718,7 @@ static void yy_shift(
     fprintf(yyTraceFILE,"%sShift %d\n",yyTracePrompt,yyNewState);
     fprintf(yyTraceFILE,"%sStack:",yyTracePrompt);
     for(i=1; i<=yypParser->yyidx; i++)
-      fprintf(yyTraceFILE," %s",yyTokenName[yypParser->yystack[i].major]);
+      fprintf(yyTraceFILE," (%d)%s",yypParser->yystack[i].stateno,yyTokenName[yypParser->yystack[i].major]);
     fprintf(yyTraceFILE,"\n");
   }
 #endif
@@ -676,83 +731,93 @@ static const struct {
   YYCODETYPE lhs;         /* Symbol on the left-hand side of the rule */
   unsigned char nrhs;     /* Number of right-hand side symbols in the rule */
 } yyRuleInfo[] = {
-  { 36, 1 },
-  { 37, 0 },
-  { 37, 2 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 39, 4 },
-  { 50, 0 },
+  { 35, 1 },
+  { 36, 0 },
+  { 36, 2 },
+  { 37, 1 },
+  { 37, 1 },
+  { 37, 1 },
+  { 37, 1 },
+  { 37, 1 },
+  { 37, 1 },
+  { 37, 1 },
+  { 37, 1 },
+  { 37, 1 },
+  { 37, 1 },
+  { 37, 1 },
+  { 38, 4 },
+  { 49, 0 },
+  { 49, 1 },
+  { 49, 3 },
   { 50, 1 },
-  { 50, 3 },
+  { 50, 1 },
+  { 50, 1 },
   { 51, 1 },
-  { 51, 1 },
-  { 51, 1 },
+  { 51, 3 },
+  { 51, 3 },
+  { 51, 3 },
+  { 51, 3 },
+  { 51, 3 },
+  { 51, 3 },
+  { 51, 3 },
+  { 51, 2 },
+  { 51, 3 },
+  { 39, 5 },
+  { 39, 5 },
+  { 52, 0 },
   { 52, 1 },
   { 52, 3 },
-  { 52, 3 },
-  { 52, 3 },
-  { 52, 3 },
-  { 52, 3 },
-  { 52, 3 },
-  { 52, 3 },
-  { 52, 2 },
-  { 52, 3 },
+  { 40, 5 },
   { 40, 5 },
   { 53, 0 },
   { 53, 1 },
   { 53, 3 },
   { 41, 5 },
+  { 41, 5 },
   { 54, 0 },
   { 54, 1 },
   { 54, 3 },
+  { 42, 5 },
   { 42, 5 },
   { 55, 0 },
   { 55, 1 },
   { 55, 3 },
   { 43, 5 },
+  { 43, 5 },
   { 56, 0 },
   { 56, 1 },
   { 56, 3 },
   { 44, 5 },
+  { 44, 5 },
   { 57, 0 },
   { 57, 1 },
   { 57, 3 },
+  { 58, 5 },
+  { 59, 1 },
+  { 59, 1 },
+  { 59, 1 },
   { 45, 5 },
-  { 58, 0 },
-  { 58, 1 },
-  { 58, 3 },
-  { 59, 5 },
+  { 45, 5 },
+  { 60, 0 },
   { 60, 1 },
-  { 60, 1 },
-  { 60, 1 },
+  { 60, 3 },
+  { 46, 5 },
   { 46, 5 },
   { 61, 0 },
   { 61, 1 },
   { 61, 3 },
   { 47, 5 },
+  { 47, 5 },
   { 62, 0 },
   { 62, 1 },
   { 62, 3 },
+  { 63, 5 },
   { 48, 5 },
-  { 63, 0 },
-  { 63, 1 },
-  { 63, 3 },
-  { 64, 5 },
-  { 49, 5 },
-  { 65, 0 },
-  { 65, 1 },
+  { 48, 5 },
+  { 64, 0 },
+  { 64, 1 },
+  { 64, 3 },
   { 65, 3 },
-  { 66, 3 },
 };
 
 static void yy_accept(yyParser*);  /* Forward Declaration */
@@ -806,206 +871,360 @@ static void yy_reduce(
   **  #line <lineno> <thisfile>
   **     break;
   */
-      case 14:
-#line 37 "parse.y"
+      case 0: /* main ::= translation_unit */
+      case 1: /*translation_unit ::= */
+      case 2: /*translation_unit ::= translation_unit external_declaration */
+      case 3: /*external_declaration ::= print_statement */
+      case 4: /*external_declaration ::= actions_def */
+      case 5: /*external_declaration ::= org_heights_def */
+      case 6: /*external_declaration ::= action_list_def */
+      case 7: /*external_declaration ::= codep_conv_def */
+      case 8: /*external_declaration ::= org_spr_names_def */
+      case 9: /*external_declaration ::= state_map_def */
+      case 10: /*external_declaration ::= sound_map_def */
+      case 11: /*external_declaration ::= info_names_def */
+      case 12: /*external_declaration ::= thing_bits_def */
+      case 13: /*external_declaration ::= render_styles_def */
+      case 15: /*print_list ::= */
+      case 16: /*print_list ::= print_item */
+      case 33: /*actions_list ::= */
+      case 38: /*org_heights_list ::= */
+      case 43: /*action_list_list ::= */
+      case 48: /*codep_conv_list ::= */
+      case 53: /*org_spr_names_list ::= */
+      case 58: /*state_map_list ::= */
+      case 59: /*state_map_list ::= state_map_entry */
+      case 67: /*sound_map_list ::= */
+      case 72: /*info_names_list ::= */
+      case 77: /*thing_bits_list ::= */
+      case 78: /*thing_bits_list ::= thing_bits_entry */
+      case 83: /*render_styles_list ::= */
+      case 84: /*render_styles_list ::= render_styles_entry */
+#line 21 "parse.y"
+{
+}
+#line 907 "parse.c"
+        break;
+      case 14: /* print_statement ::= PRINT LPAREN print_list RPAREN */
+#line 39 "parse.y"
 {
 	printf ("\n");
   yy_destructor(10,&yymsp[-3].minor);
   yy_destructor(11,&yymsp[-2].minor);
   yy_destructor(12,&yymsp[0].minor);
 }
-#line 818 "parse.c"
+#line 917 "parse.c"
         break;
-      case 18:
+      case 17: /* print_list ::= print_item COMMA print_list */
+      case 60: /*state_map_list ::= state_map_list COMMA state_map_entry */
+      case 79: /*thing_bits_list ::= thing_bits_list COMMA thing_bits_entry */
+      case 85: /*render_styles_list ::= render_styles_list COMMA render_styles_entry */
 #line 45 "parse.y"
-{ printf ("%s", yymsp[0].minor.yy0.string); }
-#line 823 "parse.c"
-        break;
-      case 19:
-#line 46 "parse.y"
-{ printf ("%d", yymsp[0].minor.yy62); }
-#line 828 "parse.c"
-        break;
-      case 20:
-#line 47 "parse.y"
-{ printf ("\n");   yy_destructor(15,&yymsp[0].minor);
-}
-#line 834 "parse.c"
-        break;
-      case 21:
-#line 50 "parse.y"
-{ yygotominor.yy62 = yymsp[0].minor.yy0.val; }
-#line 839 "parse.c"
-        break;
-      case 22:
-#line 51 "parse.y"
-{ yygotominor.yy62 = yymsp[-2].minor.yy62 + yymsp[0].minor.yy62;   yy_destructor(5,&yymsp[-1].minor);
-}
-#line 845 "parse.c"
-        break;
-      case 23:
-#line 52 "parse.y"
-{ yygotominor.yy62 = yymsp[-2].minor.yy62 - yymsp[0].minor.yy62;   yy_destructor(4,&yymsp[-1].minor);
-}
-#line 851 "parse.c"
-        break;
-      case 24:
-#line 53 "parse.y"
-{ yygotominor.yy62 = yymsp[-2].minor.yy62 * yymsp[0].minor.yy62;   yy_destructor(6,&yymsp[-1].minor);
-}
-#line 857 "parse.c"
-        break;
-      case 25:
-#line 54 "parse.y"
-{ yygotominor.yy62 = yymsp[-2].minor.yy62 / yymsp[0].minor.yy62;   yy_destructor(7,&yymsp[-1].minor);
-}
-#line 863 "parse.c"
-        break;
-      case 26:
-#line 55 "parse.y"
-{ yygotominor.yy62 = yymsp[-2].minor.yy62 | yymsp[0].minor.yy62;   yy_destructor(1,&yymsp[-1].minor);
-}
-#line 869 "parse.c"
-        break;
-      case 27:
-#line 56 "parse.y"
-{ yygotominor.yy62 = yymsp[-2].minor.yy62 & yymsp[0].minor.yy62;   yy_destructor(3,&yymsp[-1].minor);
-}
-#line 875 "parse.c"
-        break;
-      case 28:
-#line 57 "parse.y"
-{ yygotominor.yy62 = yymsp[-2].minor.yy62 ^ yymsp[0].minor.yy62;   yy_destructor(2,&yymsp[-1].minor);
-}
-#line 881 "parse.c"
-        break;
-      case 29:
-#line 58 "parse.y"
-{ yygotominor.yy62 = -yymsp[0].minor.yy62;   yy_destructor(4,&yymsp[-1].minor);
-}
-#line 887 "parse.c"
-        break;
-      case 30:
-#line 59 "parse.y"
-{ yygotominor.yy62 = yymsp[-1].minor.yy62;   yy_destructor(11,&yymsp[-2].minor);
-  yy_destructor(12,&yymsp[0].minor);
-}
-#line 894 "parse.c"
-        break;
-      case 33:
-#line 65 "parse.y"
-{ AddAction (yymsp[0].minor.yy0.string); }
-#line 899 "parse.c"
-        break;
-      case 34:
-#line 66 "parse.y"
-{ AddAction (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
-}
-#line 905 "parse.c"
-        break;
-      case 37:
-#line 72 "parse.y"
-{ AddHeight (yymsp[0].minor.yy62); }
-#line 910 "parse.c"
-        break;
-      case 38:
-#line 73 "parse.y"
-{ AddHeight (yymsp[0].minor.yy62);   yy_destructor(13,&yymsp[-1].minor);
-}
-#line 916 "parse.c"
-        break;
-      case 41:
-#line 79 "parse.y"
-{ AddActionMap (yymsp[0].minor.yy0.string); }
-#line 921 "parse.c"
-        break;
-      case 42:
-#line 80 "parse.y"
-{ AddActionMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
+{
+  yy_destructor(13,&yymsp[-1].minor);
 }
 #line 927 "parse.c"
         break;
-      case 45:
-#line 86 "parse.y"
-{ AddCodeP (yymsp[0].minor.yy62); }
+      case 18: /* print_item ::= STRING */
+#line 47 "parse.y"
+{ printf ("%s", yymsp[0].minor.yy0.string); }
 #line 932 "parse.c"
         break;
-      case 46:
-#line 87 "parse.y"
-{ AddCodeP (yymsp[0].minor.yy62);   yy_destructor(13,&yymsp[-1].minor);
-}
-#line 938 "parse.c"
+      case 19: /* print_item ::= exp */
+#line 48 "parse.y"
+{ printf ("%d", yymsp[0].minor.yy64); }
+#line 937 "parse.c"
         break;
-      case 49:
-#line 93 "parse.y"
-{ AddSpriteName (yymsp[0].minor.yy0.string); }
+      case 20: /* print_item ::= ENDL */
+#line 49 "parse.y"
+{ printf ("\n");   yy_destructor(15,&yymsp[0].minor);
+}
 #line 943 "parse.c"
         break;
-      case 50:
-#line 94 "parse.y"
-{ AddSpriteName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
+      case 21: /* exp ::= NUM */
+#line 52 "parse.y"
+{ yygotominor.yy64 = yymsp[0].minor.yy0.val; }
+#line 948 "parse.c"
+        break;
+      case 22: /* exp ::= exp PLUS exp */
+#line 53 "parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 + yymsp[0].minor.yy64;   yy_destructor(5,&yymsp[-1].minor);
 }
-#line 949 "parse.c"
+#line 954 "parse.c"
         break;
-      case 55:
-#line 103 "parse.y"
-{ AddStateMap (yymsp[-4].minor.yy0.string, yymsp[-2].minor.yy62, yymsp[0].minor.yy62);   yy_destructor(13,&yymsp[-3].minor);
-  yy_destructor(13,&yymsp[-1].minor);
+      case 23: /* exp ::= exp MINUS exp */
+#line 54 "parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 - yymsp[0].minor.yy64;   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 956 "parse.c"
+#line 960 "parse.c"
         break;
-      case 56:
-#line 106 "parse.y"
-{ yygotominor.yy62 = 0;   yy_destructor(28,&yymsp[0].minor);
+      case 24: /* exp ::= exp MULTIPLY exp */
+#line 55 "parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 * yymsp[0].minor.yy64;   yy_destructor(6,&yymsp[-1].minor);
 }
-#line 962 "parse.c"
+#line 966 "parse.c"
         break;
-      case 57:
-#line 107 "parse.y"
-{ yygotominor.yy62 = 1;   yy_destructor(29,&yymsp[0].minor);
+      case 25: /* exp ::= exp DIVIDE exp */
+#line 56 "parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 / yymsp[0].minor.yy64;   yy_destructor(7,&yymsp[-1].minor);
 }
-#line 968 "parse.c"
+#line 972 "parse.c"
         break;
-      case 58:
-#line 108 "parse.y"
-{ yygotominor.yy62 = 2;   yy_destructor(30,&yymsp[0].minor);
+      case 26: /* exp ::= exp OR exp */
+#line 57 "parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 | yymsp[0].minor.yy64;   yy_destructor(1,&yymsp[-1].minor);
 }
-#line 974 "parse.c"
+#line 978 "parse.c"
         break;
-      case 61:
-#line 114 "parse.y"
-{ AddSoundMap (yymsp[0].minor.yy0.string); }
-#line 979 "parse.c"
-        break;
-      case 62:
-#line 115 "parse.y"
-{ AddSoundMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
+      case 27: /* exp ::= exp AND exp */
+#line 58 "parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 & yymsp[0].minor.yy64;   yy_destructor(3,&yymsp[-1].minor);
 }
-#line 985 "parse.c"
+#line 984 "parse.c"
         break;
-      case 65:
-#line 121 "parse.y"
-{ AddInfoName (yymsp[0].minor.yy0.string); }
+      case 28: /* exp ::= exp XOR exp */
+#line 59 "parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 ^ yymsp[0].minor.yy64;   yy_destructor(2,&yymsp[-1].minor);
+}
 #line 990 "parse.c"
         break;
-      case 66:
-#line 122 "parse.y"
-{ AddInfoName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
+      case 29: /* exp ::= MINUS exp */
+#line 60 "parse.y"
+{ yygotominor.yy64 = -yymsp[0].minor.yy64;   yy_destructor(4,&yymsp[-1].minor);
 }
 #line 996 "parse.c"
         break;
-      case 71:
-#line 131 "parse.y"
-{ AddThingBits (yymsp[0].minor.yy0.string, yymsp[-4].minor.yy62, yymsp[-2].minor.yy62);   yy_destructor(13,&yymsp[-3].minor);
-  yy_destructor(13,&yymsp[-1].minor);
+      case 30: /* exp ::= LPAREN exp RPAREN */
+#line 61 "parse.y"
+{ yygotominor.yy64 = yymsp[-1].minor.yy64;   yy_destructor(11,&yymsp[-2].minor);
+  yy_destructor(12,&yymsp[0].minor);
 }
 #line 1003 "parse.c"
         break;
-      case 76:
-#line 140 "parse.y"
-{ AddRenderStyle (yymsp[0].minor.yy0.string, yymsp[-2].minor.yy62);   yy_destructor(13,&yymsp[-1].minor);
+      case 31: /* actions_def ::= Actions LBRACE actions_list RBRACE SEMICOLON */
+      case 32: /*actions_def ::= Actions LBRACE error RBRACE SEMICOLON */
+#line 64 "parse.y"
+{
+  yy_destructor(17,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
 }
-#line 1009 "parse.c"
+#line 1014 "parse.c"
+        break;
+      case 34: /* actions_list ::= SYM */
+#line 68 "parse.y"
+{ AddAction (yymsp[0].minor.yy0.string); }
+#line 1019 "parse.c"
+        break;
+      case 35: /* actions_list ::= actions_list COMMA SYM */
+#line 69 "parse.y"
+{ AddAction (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1025 "parse.c"
+        break;
+      case 36: /* org_heights_def ::= OrgHeights LBRACE org_heights_list RBRACE SEMICOLON */
+      case 37: /*org_heights_def ::= OrgHeights LBRACE error RBRACE SEMICOLON */
+#line 72 "parse.y"
+{
+  yy_destructor(22,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
+}
+#line 1036 "parse.c"
+        break;
+      case 39: /* org_heights_list ::= exp */
+#line 76 "parse.y"
+{ AddHeight (yymsp[0].minor.yy64); }
+#line 1041 "parse.c"
+        break;
+      case 40: /* org_heights_list ::= org_heights_list COMMA exp */
+#line 77 "parse.y"
+{ AddHeight (yymsp[0].minor.yy64);   yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1047 "parse.c"
+        break;
+      case 41: /* action_list_def ::= ActionList LBRACE action_list_list RBRACE SEMICOLON */
+      case 42: /*action_list_def ::= ActionList LBRACE error RBRACE SEMICOLON */
+#line 80 "parse.y"
+{
+  yy_destructor(23,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
+}
+#line 1058 "parse.c"
+        break;
+      case 44: /* action_list_list ::= SYM */
+#line 84 "parse.y"
+{ AddActionMap (yymsp[0].minor.yy0.string); }
+#line 1063 "parse.c"
+        break;
+      case 45: /* action_list_list ::= action_list_list COMMA SYM */
+#line 85 "parse.y"
+{ AddActionMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1069 "parse.c"
+        break;
+      case 46: /* codep_conv_def ::= CodePConv LBRACE codep_conv_list RBRACE SEMICOLON */
+      case 47: /*codep_conv_def ::= CodePConv LBRACE error RBRACE SEMICOLON */
+#line 88 "parse.y"
+{
+  yy_destructor(24,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
+}
+#line 1080 "parse.c"
+        break;
+      case 49: /* codep_conv_list ::= exp */
+#line 92 "parse.y"
+{ AddCodeP (yymsp[0].minor.yy64); }
+#line 1085 "parse.c"
+        break;
+      case 50: /* codep_conv_list ::= codep_conv_list COMMA exp */
+#line 93 "parse.y"
+{ AddCodeP (yymsp[0].minor.yy64);   yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1091 "parse.c"
+        break;
+      case 51: /* org_spr_names_def ::= OrgSprNames LBRACE org_spr_names_list RBRACE SEMICOLON */
+      case 52: /*org_spr_names_def ::= OrgSprNames LBRACE error RBRACE SEMICOLON */
+#line 96 "parse.y"
+{
+  yy_destructor(25,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
+}
+#line 1102 "parse.c"
+        break;
+      case 54: /* org_spr_names_list ::= SYM */
+#line 100 "parse.y"
+{ AddSpriteName (yymsp[0].minor.yy0.string); }
+#line 1107 "parse.c"
+        break;
+      case 55: /* org_spr_names_list ::= org_spr_names_list COMMA SYM */
+#line 101 "parse.y"
+{ AddSpriteName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1113 "parse.c"
+        break;
+      case 56: /* state_map_def ::= StateMap LBRACE state_map_list RBRACE SEMICOLON */
+      case 57: /*state_map_def ::= StateMap LBRACE error RBRACE SEMICOLON */
+#line 104 "parse.y"
+{
+  yy_destructor(26,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
+}
+#line 1124 "parse.c"
+        break;
+      case 61: /* state_map_entry ::= SYM COMMA state_type COMMA exp */
+#line 111 "parse.y"
+{ AddStateMap (yymsp[-4].minor.yy0.string, yymsp[-2].minor.yy64, yymsp[0].minor.yy64);   yy_destructor(13,&yymsp[-3].minor);
+  yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1131 "parse.c"
+        break;
+      case 62: /* state_type ::= FirstState */
+#line 114 "parse.y"
+{ yygotominor.yy64 = 0;   yy_destructor(27,&yymsp[0].minor);
+}
+#line 1137 "parse.c"
+        break;
+      case 63: /* state_type ::= SpawnState */
+#line 115 "parse.y"
+{ yygotominor.yy64 = 1;   yy_destructor(28,&yymsp[0].minor);
+}
+#line 1143 "parse.c"
+        break;
+      case 64: /* state_type ::= DeathState */
+#line 116 "parse.y"
+{ yygotominor.yy64 = 2;   yy_destructor(29,&yymsp[0].minor);
+}
+#line 1149 "parse.c"
+        break;
+      case 65: /* sound_map_def ::= SoundMap LBRACE sound_map_list RBRACE SEMICOLON */
+      case 66: /*sound_map_def ::= SoundMap LBRACE error RBRACE SEMICOLON */
+#line 119 "parse.y"
+{
+  yy_destructor(30,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
+}
+#line 1160 "parse.c"
+        break;
+      case 68: /* sound_map_list ::= STRING */
+#line 123 "parse.y"
+{ AddSoundMap (yymsp[0].minor.yy0.string); }
+#line 1165 "parse.c"
+        break;
+      case 69: /* sound_map_list ::= sound_map_list COMMA STRING */
+#line 124 "parse.y"
+{ AddSoundMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1171 "parse.c"
+        break;
+      case 70: /* info_names_def ::= InfoNames LBRACE info_names_list RBRACE SEMICOLON */
+      case 71: /*info_names_def ::= InfoNames LBRACE error RBRACE SEMICOLON */
+#line 127 "parse.y"
+{
+  yy_destructor(31,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
+}
+#line 1182 "parse.c"
+        break;
+      case 73: /* info_names_list ::= SYM */
+#line 131 "parse.y"
+{ AddInfoName (yymsp[0].minor.yy0.string); }
+#line 1187 "parse.c"
+        break;
+      case 74: /* info_names_list ::= info_names_list COMMA SYM */
+#line 132 "parse.y"
+{ AddInfoName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1193 "parse.c"
+        break;
+      case 75: /* thing_bits_def ::= ThingBits LBRACE thing_bits_list RBRACE SEMICOLON */
+      case 76: /*thing_bits_def ::= ThingBits LBRACE error RBRACE SEMICOLON */
+#line 135 "parse.y"
+{
+  yy_destructor(32,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
+}
+#line 1204 "parse.c"
+        break;
+      case 80: /* thing_bits_entry ::= exp COMMA exp COMMA SYM */
+#line 142 "parse.y"
+{ AddThingBits (yymsp[0].minor.yy0.string, yymsp[-4].minor.yy64, yymsp[-2].minor.yy64);   yy_destructor(13,&yymsp[-3].minor);
+  yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1211 "parse.c"
+        break;
+      case 81: /* render_styles_def ::= RenderStyles LBRACE render_styles_list RBRACE SEMICOLON */
+      case 82: /*render_styles_def ::= RenderStyles LBRACE error RBRACE SEMICOLON */
+#line 145 "parse.y"
+{
+  yy_destructor(33,&yymsp[-4].minor);
+  yy_destructor(18,&yymsp[-3].minor);
+  yy_destructor(19,&yymsp[-1].minor);
+  yy_destructor(20,&yymsp[0].minor);
+}
+#line 1222 "parse.c"
+        break;
+      case 86: /* render_styles_entry ::= exp COMMA SYM */
+#line 152 "parse.y"
+{ AddRenderStyle (yymsp[0].minor.yy0.string, yymsp[-2].minor.yy64);   yy_destructor(13,&yymsp[-1].minor);
+}
+#line 1228 "parse.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -1029,7 +1248,8 @@ static void yy_reduce(
     {
       yy_shift(yypParser,yyact,yygoto,&yygotominor);
     }
-  }else if( yyact == YYNSTATE + YYNRULE + 1 ){
+  }else{
+    assert( yyact == YYNSTATE + YYNRULE + 1 );
     yy_accept(yypParser);
   }
 }
@@ -1062,6 +1282,9 @@ static void yy_syntax_error(
 ){
   ParseARG_FETCH;
 #define TOKEN (yyminor.yy0)
+#line 8 "parse.y"
+ yyerror("Syntax error"); 
+#line 1288 "parse.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -1111,13 +1334,21 @@ void Parse(
   YYMINORTYPE yyminorunion;
   int yyact;            /* The parser action. */
   int yyendofinput;     /* True if we are at the end of input */
+#ifdef YYERRORSYMBOL
   int yyerrorhit = 0;   /* True if yymajor has invoked an error */
+#endif
   yyParser *yypParser;  /* The parser */
 
   /* (re)initialize the parser, if necessary */
   yypParser = (yyParser*)yyp;
   if( yypParser->yyidx<0 ){
-    /* if( yymajor==0 ) return; // not sure why this was here... */
+#if YYSTACKDEPTH<=0
+    if( yypParser->yystksz <=0 ){
+      memset(&yyminorunion, 0, sizeof(yyminorunion));
+      yyStackOverflow(yypParser, &yyminorunion);
+      return;
+    }
+#endif
     yypParser->yyidx = 0;
     yypParser->yyerrcnt = -1;
     yypParser->yystack[0].stateno = 0;
@@ -1136,20 +1367,17 @@ void Parse(
   do{
     yyact = yy_find_shift_action(yypParser,yymajor);
     if( yyact<YYNSTATE ){
+      assert( !yyendofinput );  /* Impossible to shift the $ token */
       yy_shift(yypParser,yyact,yymajor,&yyminorunion);
       yypParser->yyerrcnt--;
-      if( yyendofinput && yypParser->yyidx>=0 ){
-        yymajor = 0;
-      }else{
-        yymajor = YYNOCODE;
-        while( yypParser->yyidx>= 0 && (yyact = yy_find_shift_action(yypParser,YYNOCODE)) < YYNSTATE + YYNRULE ){
-          yy_reduce(yypParser,yyact-YYNSTATE);
-        }
-      }
+      yymajor = YYNOCODE;
     }else if( yyact < YYNSTATE + YYNRULE ){
       yy_reduce(yypParser,yyact-YYNSTATE);
-    }else if( yyact == YY_ERROR_ACTION ){
+    }else{
+#ifdef YYERRORSYMBOL
       int yymx;
+#endif
+      assert( yyact == YY_ERROR_ACTION );
 #ifndef NDEBUG
       if( yyTraceFILE ){
         fprintf(yyTraceFILE,"%sSyntax Error!\n",yyTracePrompt);
@@ -1230,9 +1458,6 @@ void Parse(
       }
       yymajor = YYNOCODE;
 #endif
-    }else{
-      yy_accept(yypParser);
-      yymajor = YYNOCODE;
     }
   }while( yymajor!=YYNOCODE && yypParser->yyidx>=0 );
   return;

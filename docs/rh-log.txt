@@ -1,4 +1,22 @@
 January 25, 2008
+- Undid some of the changes from lempar.c v1.30->v1.31, because it broke
+  error handling.
+- Fixed: dehsupp/scanner.re defined "}" as the token RPAREN. dehsupp/parse.y
+  also defined action_list_def as needing a RBARCE. I'm surprised it worked
+  at all before. I guess Lemon really was too accepting. I have verified that
+  the lump it outputs is unchanged from before.
+- Changed the way that xlatcc handles include statements so that I don't need
+  to modify the logic of lempar.c. I also discovered that the grammar was
+  improperly defined and only accepted the first statement. It worked before
+  because Lemon used to accept multiple times before reaching the EOF token.
+  I have also verified that it is still generating the proper lumps.
+- Removed some unused wadsrc files from the repository.
+- Fixed my re2c upgrade.
+- Back to lemon.c v1.53 now. The bad change was v1.51: "Changes lemon so
+  that the generated parser does not accept prior to seeing the EOF token."
+  This seems like a valid change, which means I need to rethink my strategy
+  for handling include statements, since this change breaks what I was
+  doing before.
 - Lemon is now producing parsers that don't accept anything, so I'm going
   back to v1.43 and trying each intermediate version to see where things
   went wrong.

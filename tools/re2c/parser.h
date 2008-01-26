@@ -1,4 +1,4 @@
-/* $Id: parser.h,v 1.10 2006/01/21 15:51:02 helly Exp $ */
+/* $Id: parser.h 565 2006-06-05 22:07:13Z helly $ */
 #ifndef _parser_h
 #define _parser_h
 

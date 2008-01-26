@@ -1,4 +1,4 @@
-/* $Id: re.h,v 1.17 2006/04/09 00:06:33 helly Exp $ */
+/* $Id: re.h 775 2007-07-10 19:33:17Z helly $ */
 #ifndef _re_h
 #define _re_h
 
@@ -105,6 +105,11 @@ public:
 		vFreeList.insert(this);
 	}
 
+	~Range()
+	{
+		vFreeList.erase(this);
+	}
+
 	friend std::ostream& operator<<(std::ostream&, const Range&);
 	friend std::ostream& operator<<(std::ostream&, const Range*);
 };
@@ -125,6 +130,7 @@ public:
 public:
 	RegExp() : size(0)
 	{
+		vFreeList.insert(this);
 	}
 
 	virtual ~RegExp()

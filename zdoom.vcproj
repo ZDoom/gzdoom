@@ -3696,7 +3696,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Creating $(InputName).h from src/$(InputFileName)"
-						CommandLine="tools\re2c\re2c -s -o &quot;src/$(InputName).h&quot; &quot;src/$(InputFileName)&quot;&#x0D;&#x0A;"
+						CommandLine="tools\re2c\re2c --no-generation-date -s -o &quot;src/$(InputName).h&quot; &quot;src/$(InputFileName)&quot;&#x0D;&#x0A;"
 						Outputs="&quot;src/$(InputName).h&quot;"
 					/>
 				</FileConfiguration>
@@ -3716,7 +3716,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Creating $(InputName).h from src/$(InputFileName)"
-						CommandLine="tools\re2c\re2c -s -o &quot;src/$(InputName).h&quot; &quot;src/$(InputFileName)&quot;&#x0D;&#x0A;"
+						CommandLine="tools\re2c\re2c --no-generation-date -s -o &quot;src/$(InputName).h&quot; &quot;src/$(InputFileName)&quot;&#x0D;&#x0A;"
 						Outputs="&quot;src/$(InputName).h&quot;"
 					/>
 				</FileConfiguration>

@@ -1,4 +1,4 @@
-/* $Id: code.h,v 1.7 2006/01/21 15:51:02 helly Exp $ */
+/* $Id: code.h 525 2006-05-25 13:32:49Z helly $ */
 #ifndef _code_h
 #define _code_h
 

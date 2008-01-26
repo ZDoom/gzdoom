@@ -2,7 +2,7 @@
  Author: Marcus Boerger <helly@users.sourceforge.net>
 */
 
-/* $Id: mbo_getopt.cc,v 1.5 2006/04/17 19:28:47 helly Exp $ */
+/* $Id: mbo_getopt.cc 698 2007-04-23 21:06:56Z helly $ */
 
 #include <stdio.h>
 #include <string.h>

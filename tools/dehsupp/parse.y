@@ -5,6 +5,8 @@
 
 %token_type {struct Token}
 
+%syntax_error { yyerror("Syntax error"); }
+
 %token_destructor { if ($$.string) free($$.string); }
 
 %left OR.
@@ -60,6 +62,7 @@ exp(A) ::= LPAREN exp(B) RPAREN.	{ A = B; }
 
 
 actions_def ::= Actions LBRACE actions_list RBRACE SEMICOLON.
+actions_def ::= Actions LBRACE error RBRACE SEMICOLON.
 
 actions_list ::= .		/* empty */
 actions_list ::= SYM(A).							{ AddAction (A.string); }
@@ -67,13 +70,15 @@ actions_list ::= actions_list COMMA SYM(A).			{ AddAction (A.string); }
 
 
 org_heights_def ::= OrgHeights LBRACE org_heights_list RBRACE SEMICOLON.
+org_heights_def ::= OrgHeights LBRACE error RBRACE SEMICOLON.
 
 org_heights_list ::= .	/* empty */
 org_heights_list ::= exp(A).						{ AddHeight (A); }
 org_heights_list ::= org_heights_list COMMA exp(A).	{ AddHeight (A); }
 
 
-action_list_def ::= ActionList LBRACE action_list_list RBARCE SEMICOLON.
+action_list_def ::= ActionList LBRACE action_list_list RBRACE SEMICOLON.
+action_list_def ::= ActionList LBRACE error RBRACE SEMICOLON.
 
 action_list_list ::= .	/* empty */
 action_list_list ::= SYM(A).						{ AddActionMap (A.string); }
@@ -81,6 +86,7 @@ action_list_list ::= action_list_list COMMA SYM(A).	{ AddActionMap (A.string); }
 
 
 codep_conv_def ::= CodePConv LBRACE codep_conv_list RBRACE SEMICOLON.
+codep_conv_def ::= CodePConv LBRACE error RBRACE SEMICOLON.
 
 codep_conv_list ::= .		/* empty */
 codep_conv_list ::= exp(A).							{ AddCodeP (A); }
@@ -88,6 +94,7 @@ codep_conv_list ::= codep_conv_list COMMA exp(A).	{ AddCodeP (A); }
 
 
 org_spr_names_def ::= OrgSprNames LBRACE org_spr_names_list RBRACE SEMICOLON.
+org_spr_names_def ::= OrgSprNames LBRACE error RBRACE SEMICOLON.
 
 org_spr_names_list ::= .	/* empty */
 org_spr_names_list ::= SYM(A).							{ AddSpriteName (A.string); }
@@ -95,6 +102,7 @@ org_spr_names_list ::= org_spr_names_list COMMA SYM(A).	{ AddSpriteName (A.strin
 
 
 state_map_def ::= StateMap LBRACE state_map_list RBRACE SEMICOLON.
+state_map_def ::= StateMap LBRACE error RBRACE SEMICOLON.
 
 state_map_list ::= .		/* empty */
 state_map_list ::= state_map_entry.
@@ -109,6 +117,7 @@ state_type(A) ::= DeathState.		{ A = 2; }
 
 
 sound_map_def ::= SoundMap LBRACE sound_map_list RBRACE SEMICOLON.
+sound_map_def ::= SoundMap LBRACE error RBRACE SEMICOLON.
 
 sound_map_list ::= .		/* empty */
 sound_map_list ::= STRING(A).						{ AddSoundMap (A.string); }
@@ -116,6 +125,7 @@ sound_map_list ::= sound_map_list COMMA STRING(A).	{ AddSoundMap (A.string); }
 
 
 info_names_def ::= InfoNames LBRACE info_names_list RBRACE SEMICOLON.
+info_names_def ::= InfoNames LBRACE error RBRACE SEMICOLON.
 
 info_names_list ::= .		/* empty */
 info_names_list ::= SYM(A).							{ AddInfoName (A.string); }
@@ -123,6 +133,7 @@ info_names_list ::= info_names_list COMMA SYM(A).	{ AddInfoName (A.string); }
 
 
 thing_bits_def ::= ThingBits LBRACE thing_bits_list RBRACE SEMICOLON.
+thing_bits_def ::= ThingBits LBRACE error RBRACE SEMICOLON.
 
 thing_bits_list ::= .		/* empty */
 thing_bits_list ::= thing_bits_entry.
@@ -132,6 +143,7 @@ thing_bits_entry ::= exp(A) COMMA exp(B) COMMA SYM(C).	{ AddThingBits (C.string,
 
 
 render_styles_def ::= RenderStyles LBRACE render_styles_list RBRACE SEMICOLON.
+render_styles_def ::= RenderStyles LBRACE error RBRACE SEMICOLON.
 
 render_styles_list ::= .	/* empty */
 render_styles_list ::= render_styles_entry.

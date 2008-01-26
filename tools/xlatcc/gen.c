@@ -250,7 +250,7 @@ int main (int argc, char **argv)
 		printf ("Usage: %s <source file> <output file>\n", argv[0]);
 		return -1;
 	}
-#if !defined(NDEBUG) && 1
+#if !defined(NDEBUG) && 0
 	ParseTrace(fopen("trace.txt", "w"), ":");
 #endif
 	IncludeFile (argv[1]);

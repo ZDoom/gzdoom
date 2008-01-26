@@ -1,4 +1,4 @@
-/* $Id: ins.h,v 1.7 2006/01/03 11:40:38 helly Exp $ */
+/* $Id: ins.h 535 2006-05-25 13:36:14Z helly $ */
 #ifndef _ins_h
 #define _ins_h
 

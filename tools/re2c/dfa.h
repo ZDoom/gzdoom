@@ -1,4 +1,4 @@
-/* $Id: dfa.h,v 1.23 2006/05/14 13:38:26 helly Exp $ */
+/* $Id: dfa.h 569 2006-06-05 22:14:00Z helly $ */
 #ifndef _dfa_h
 #define _dfa_h
 

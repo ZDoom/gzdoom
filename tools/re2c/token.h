@@ -1,4 +1,4 @@
-/* $Id: token.h,v 1.4 2004/11/01 04:35:57 nuffer Exp $ */
+/* $Id: token.h 547 2006-05-25 13:40:35Z helly $ */
 #ifndef _token_h
 #define	_token_h
 

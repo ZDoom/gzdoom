@@ -2,7 +2,7 @@
  Author: Marcus Boerger <helly@users.sourceforge.net>
 */
 
-/* $Id: stream_lc.h,v 1.10 2006/02/26 20:36:09 helly Exp $ */
+/* $Id: stream_lc.h 767 2007-06-26 15:21:10Z helly $ */
 
 #ifndef _stream_lc_h
 #define _stream_lc_h

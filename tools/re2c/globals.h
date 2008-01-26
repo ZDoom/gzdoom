@@ -1,4 +1,4 @@
-/* $Id: globals.h,v 1.31 2006/05/14 13:38:26 helly Exp $ */
+/* $Id: globals.h 713 2007-04-29 15:33:47Z helly $ */
 #ifndef	_globals_h
 #define	_globals_h
 

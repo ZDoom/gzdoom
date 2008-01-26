@@ -1,4 +1,4 @@
-/* $Id: code.cc,v 1.74 2006/05/14 13:38:26 helly Exp $ */
+/* $Id: code.cc 717 2007-04-29 22:29:59Z helly $ */
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -331,7 +331,7 @@ static void need(std::ostream &o, uint ind, uint n, bool & readCh, bool bSetMark
 		}
 		else
 		{
-			o << indent(ind) << "if((YYLIMIT - YYCURSOR) < " << n << ") YYFILL(" << n << ");\n";
+			o << indent(ind) << "if((" << mapCodeName["YYLIMIT"] << " - " << mapCodeName["YYCURSOR"] << ") < " << n << ") " << mapCodeName["YYFILL"];
 		}
 		if (bUseYYFillParam)
 		{
@@ -1763,7 +1763,7 @@ void Scanner::config(const Str& cfg, const Str& val)
 	}
 	else if (cfg.to_string() == "startlabel")
 	{
-		startLabelName = val.to_string();
+		startLabelName = strVal;
 		bUseStartLabel = !startLabelName.empty();
 	}
 	else if (cfg.to_string() == "labelprefix")

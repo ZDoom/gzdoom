@@ -243,10 +243,33 @@ void yyparse (void)
 	void *pParser = ParseAlloc (malloc);
 	YYSTYPE token;
 	int tokentype;
+	int include_state = 0;
 
 	while ((tokentype = yylex(&token)) != 0)
 	{
+		/* Whenever the sequence INCLUDE STRING is encountered in the token
+		 * stream, feed a dummy NOP token to the parser so that it will
+		 * reduce the include_statement before grabbing any more tokens
+		 * from the current file.
+		 */
+		if (tokentype == INCLUDE && include_state == 0)
+		{
+			include_state = 1;
+		}
+		else if (tokentype == STRING && include_state == 1)
+		{
+			include_state = 2;
+		}
+		else
+		{
+			include_state = 0;
+		}
 		Parse (pParser, tokentype, token);
+		if (include_state == 2)
+		{
+			include_state = 0;
+			Parse (pParser, NOP, token);
+		}
 	}
 	memset (&token, 0, sizeof(token));
 	Parse (pParser, 0, token);
@@ -354,7 +377,7 @@ exp(A) ::= MINUS exp(B). [NEG]		{ A = -B; }
 exp(A) ::= LPAREN exp(B) RPAREN.	{ A = B; }
 
 translation_unit ::= . /* empty */
-translation_unit ::= external_declaration.
+translation_unit ::= translation_unit external_declaration.
 
 external_declaration ::= define_statement.
 external_declaration ::= include_statement.
@@ -363,6 +386,7 @@ external_declaration ::= enum_statement.
 external_declaration ::= linetype_declaration.
 external_declaration ::= boom_declaration.
 external_declaration ::= special_declaration.
+external_declaration ::= NOP.
 
 print_statement ::= PRINT LPAREN print_list RPAREN.
 {

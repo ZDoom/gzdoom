@@ -48,6 +48,9 @@ int main (int argc, char **argv)
 		printf ("Could not open %s\n", argv[1]);
 		return -2;
 	}
+#if !defined(NDEBUG) && 0
+	ParseTrace(fopen("trace.txt", "w"), "");
+#endif
 	SourceLine = 1;
 	yyparse ();
 	fclose (Source);

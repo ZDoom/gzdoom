@@ -1,6 +1,6 @@
 %{
 
-/* $Id: parser.y,v 1.20 2006/04/16 15:15:46 helly Exp $ */
+/* $Id: parser.y 674 2007-04-16 21:39:11Z helly $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

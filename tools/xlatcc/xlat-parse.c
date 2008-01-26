@@ -252,10 +252,33 @@ void yyparse (void)
 	void *pParser = ParseAlloc (malloc);
 	YYSTYPE token;
 	int tokentype;
+	int include_state = 0;
 
 	while ((tokentype = yylex(&token)) != 0)
 	{
+		/* Whenever the sequence INCLUDE STRING is encountered in the token
+		 * stream, feed a dummy NOP token to the parser so that it will
+		 * reduce the include_statement before grabbing any more tokens
+		 * from the current file.
+		 */
+		if (tokentype == INCLUDE && include_state == 0)
+		{
+			include_state = 1;
+		}
+		else if (tokentype == STRING && include_state == 1)
+		{
+			include_state = 2;
+		}
+		else
+		{
+			include_state = 0;
+		}
 		Parse (pParser, tokentype, token);
+		if (include_state == 2)
+		{
+			include_state = 0;
+			Parse (pParser, NOP, token);
+		}
 	}
 	memset (&token, 0, sizeof(token));
 	Parse (pParser, 0, token);
@@ -324,7 +347,7 @@ int yyerror (char *s)
 	return 0;
 }
 
-#line 328 "xlat-parse.c"
+#line 351 "xlat-parse.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -375,29 +398,28 @@ int yyerror (char *s)
 **                       defined, then do no error processing.
 */
 #define YYCODETYPE unsigned char
-#define YYNOCODE 66
+#define YYNOCODE 67
 #define YYACTIONTYPE unsigned short int
 #define ParseTOKENTYPE YYSTYPE
 typedef union {
   ParseTOKENTYPE yy0;
-  MoreLines * yy49;
-  SpecialArgs yy57;
-  BoomArg yy58;
-  int yy72;
-  ParseBoomArg yy83;
-  MoreFilters * yy87;
-  struct ListFilter yy124;
-  int yy131;
+  struct ListFilter yy20;
+  MoreFilters * yy39;
+  MoreLines * yy57;
+  int yy64;
+  BoomArg yy65;
+  ParseBoomArg yy87;
+  SpecialArgs yy123;
 } YYMINORTYPE;
+#ifndef YYSTACKDEPTH
 #define YYSTACKDEPTH 100
+#endif
 #define ParseARG_SDECL
 #define ParseARG_PDECL
 #define ParseARG_FETCH
 #define ParseARG_STORE
-#define YYNSTATE 173
-#define YYNRULE 93
-#define YYERRORSYMBOL 37
-#define YYERRSYMDT yy131
+#define YYNSTATE 174
+#define YYNRULE 94
 #define YY_NO_ACTION      (YYNSTATE+YYNRULE+2)
 #define YY_ACCEPT_ACTION  (YYNSTATE+YYNRULE+1)
 #define YY_ERROR_ACTION   (YYNSTATE+YYNRULE)
@@ -450,155 +472,143 @@ typedef union {
 **  yy_default[]       Default action for each state.
 */
 static const YYACTIONTYPE yy_action[] = {
- /*     0 */    65,   41,   32,   35,   52,   42,   28,   51,   77,  117,
- /*    10 */   267,  163,  160,  149,  148,  147,  146,  145,  144,  143,
- /*    20 */    30,   80,   14,  128,  164,  156,  151,   23,  123,  127,
- /*    30 */    55,    4,  152,  102,   33,  108,   80,  119,  128,  107,
- /*    40 */     5,  111,  113,   22,    2,   41,   32,   35,   52,   42,
- /*    50 */    28,   51,   32,   35,   52,   42,   28,   51,   19,    3,
- /*    60 */    41,   32,   35,   52,   42,   28,   51,   52,   42,   28,
- /*    70 */    51,  135,  116,   41,   32,   35,   52,   42,   28,   51,
- /*    80 */    41,   32,   35,   52,   42,   28,   51,   28,   51,   11,
- /*    90 */     9,  168,  169,  170,  171,  172,   77,  106,   26,   66,
- /*   100 */    41,   32,   35,   52,   42,   28,   51,   35,   52,   42,
- /*   110 */    28,   51,   10,   27,   61,   41,   32,   35,   52,   42,
- /*   120 */    28,   51,   68,  120,  100,  139,  165,   49,   18,  166,
- /*   130 */    41,   32,   35,   52,   42,   28,   51,   55,    4,  101,
- /*   140 */   167,   12,   40,   29,   43,   41,   32,   35,   52,   42,
- /*   150 */    28,   51,  136,  131,  113,   91,   66,   98,   16,  115,
- /*   160 */    41,   32,   35,   52,   42,   28,   51,  124,  130,  159,
- /*   170 */    56,   59,  129,   37,   61,   41,   32,   35,   52,   42,
- /*   180 */    28,   51,  138,  109,   48,   57,   60,  154,   20,   54,
- /*   190 */    41,   32,   35,   52,   42,   28,   51,   13,   62,   90,
- /*   200 */    89,   17,   15,   21,    7,   41,   32,   35,   52,   42,
- /*   210 */    28,   51,   39,  132,   63,   99,   94,   87,   31,  142,
- /*   220 */    41,   32,   35,   52,   42,   28,   51,  134,  133,   67,
- /*   230 */    88,  157,   74,   41,   32,   35,   52,   42,   28,   51,
- /*   240 */    41,   32,   35,   52,   42,   28,   51,   84,  161,   30,
- /*   250 */   141,  104,   86,   38,  156,  151,   23,    1,  153,    6,
- /*   260 */    96,   41,   32,   35,   52,   42,   28,   51,   41,   32,
- /*   270 */    35,   52,   42,   28,   51,    8,   41,   32,   35,   52,
- /*   280 */    42,   28,   51,   25,  103,   64,   97,  125,   71,   95,
- /*   290 */    24,   76,   41,   32,   35,   52,   42,   28,   51,  150,
- /*   300 */   158,   78,  268,  162,  268,   45,   83,   41,   32,   35,
- /*   310 */    52,   42,   28,   51,   92,   81,   82,  268,   70,   69,
- /*   320 */    44,   85,   41,   32,   35,   52,   42,   28,   51,  268,
- /*   330 */    72,   79,   75,   58,   73,   36,   93,   41,   32,   35,
- /*   340 */    52,   42,   28,   51,  268,  268,  268,  268,  268,  268,
- /*   350 */    46,  268,   41,   32,   35,   52,   42,   28,   51,  268,
- /*   360 */   268,  268,  268,  268,  268,   34,  268,   41,   32,   35,
- /*   370 */    52,   42,   28,   51,  268,  268,  268,  268,  268,  268,
- /*   380 */    47,  268,   41,   32,   35,   52,   42,   28,   51,  268,
- /*   390 */   268,  268,  268,  268,  268,   50,  268,   41,   32,   35,
- /*   400 */    52,   42,   28,   51,  268,  268,  268,  268,  268,  268,
- /*   410 */    53,   88,   41,   32,   35,   52,   42,   28,   51,   30,
- /*   420 */   268,  268,   30,  268,  156,  151,   23,  156,  151,   23,
- /*   430 */    30,  110,  104,  140,  137,  156,  151,   23,  268,  268,
- /*   440 */    30,  268,  268,  268,  105,  156,  151,   23,  268,   30,
- /*   450 */   114,  126,   30,  268,  156,  151,   23,  156,  151,   23,
- /*   460 */    30,  268,  268,   30,  268,  156,  151,   23,  156,  151,
- /*   470 */    23,  155,  268,  268,  268,  268,  268,  268,  268,  268,
- /*   480 */   122,  268,  268,  118,  268,  268,  268,  268,  268,  268,
- /*   490 */   268,  121,  268,  268,  112,
+ /*     0 */   174,   30,   71,  123,   30,   70,  157,  152,   26,  157,
+ /*    10 */   152,   26,   79,  144,  115,   83,  126,   80,  104,  166,
+ /*    20 */   109,   64,  120,  128,  127,    6,   71,  102,   53,  154,
+ /*    30 */   150,  164,  149,  148,  147,  146,  145,  100,  140,   16,
+ /*    40 */   162,   39,   34,   37,   54,   32,   55,   41,   39,   34,
+ /*    50 */    37,   54,   32,   55,   41,   49,   34,   37,   54,   32,
+ /*    60 */    55,   41,   51,   11,   39,   34,   37,   54,   32,   55,
+ /*    70 */    41,   39,   34,   37,   54,   32,   55,   41,   50,   37,
+ /*    80 */    54,   32,   55,   41,    9,   44,   14,   39,   34,   37,
+ /*    90 */    54,   32,   55,   41,   39,   34,   37,   54,   32,   55,
+ /*   100 */    41,   45,  169,  170,  171,  172,  173,   81,   42,  151,
+ /*   110 */    39,   34,   37,   54,   32,   55,   41,   54,   32,   55,
+ /*   120 */    41,  136,   79,   39,   34,   37,   54,   32,   55,   41,
+ /*   130 */    39,   34,   37,   54,   32,   55,   41,   39,   34,   37,
+ /*   140 */    54,   32,   55,   41,   29,   56,    5,  124,  139,   23,
+ /*   150 */   163,   20,  155,   39,   34,   37,   54,   32,   55,   41,
+ /*   160 */    39,   34,   37,   54,   32,   55,   41,   39,   34,   37,
+ /*   170 */    54,   32,   55,   41,   47,   56,    5,  153,  132,  114,
+ /*   180 */     7,   19,   39,   34,   37,   54,   32,   55,   41,   39,
+ /*   190 */    34,   37,   54,   32,   55,   41,   39,   34,   37,   54,
+ /*   200 */    32,   55,   41,  167,   86,   24,   30,   82,  112,  114,
+ /*   210 */    36,  157,  152,   26,  168,  101,  110,   39,   34,   37,
+ /*   220 */    54,   32,   55,   41,  142,  106,   55,   41,  159,   86,
+ /*   230 */    39,   34,   37,   54,   32,   55,   41,   39,   34,   37,
+ /*   240 */    54,   32,   55,   41,   52,   64,   98,  128,  165,  108,
+ /*   250 */   106,   21,  117,   39,   34,   37,   54,   32,   55,   41,
+ /*   260 */    39,   34,   37,   54,   32,   55,   41,   25,  269,    1,
+ /*   270 */    10,   82,   39,   34,   37,   54,   32,   55,   41,    4,
+ /*   280 */   121,   68,   43,  122,  131,   39,   34,   37,   54,   32,
+ /*   290 */    55,   41,   39,   34,   37,   54,   32,   55,   41,   18,
+ /*   300 */    94,  130,   78,   27,   57,   35,   17,   60,   39,   34,
+ /*   310 */    37,   54,   32,   55,   41,   39,   34,   37,   54,   32,
+ /*   320 */    55,   41,   31,   39,   34,   37,   54,   32,   55,   41,
+ /*   330 */    39,   34,   37,   54,   32,   55,   41,   33,   59,   30,
+ /*   340 */    28,   13,   30,  107,  157,  152,   26,  157,  152,   26,
+ /*   350 */    30,  141,  138,   30,  116,  157,  152,   26,  157,  152,
+ /*   360 */    26,   30,   12,  125,   30,   84,  157,  152,   26,  157,
+ /*   370 */   152,   26,   30,  137,  111,  119,    3,  157,  152,   26,
+ /*   380 */    66,   15,  129,  133,   85,  103,   40,   62,   22,   61,
+ /*   390 */    93,  135,  161,  158,  134,   87,  118,  143,   95,   38,
+ /*   400 */    65,    2,   97,   46,  113,   48,   88,  156,  105,   67,
+ /*   410 */   270,   96,    8,   69,   99,   91,  160,  270,  270,   72,
+ /*   420 */    90,   74,   77,   76,  270,  270,   75,  270,  270,  270,
+ /*   430 */    92,  270,   58,   73,  270,   89,  270,   63,
 };
 static const YYCODETYPE yy_lookahead[] = {
- /*     0 */    38,    1,    2,    3,    4,    5,    6,    7,   38,   39,
- /*    10 */    48,   49,   50,   51,   52,   53,   54,   55,   56,   57,
- /*    20 */     4,   38,   60,   40,   41,    9,   10,   11,   28,   13,
- /*    30 */    44,   45,   46,   17,   14,   19,   38,   21,   40,   41,
- /*    40 */    24,   61,   62,   27,   11,    1,    2,    3,    4,    5,
- /*    50 */     6,    7,    2,    3,    4,    5,    6,    7,   14,   22,
- /*    60 */     1,    2,    3,    4,    5,    6,    7,    4,    5,    6,
- /*    70 */     7,   12,   18,    1,    2,    3,    4,    5,    6,    7,
- /*    80 */     1,    2,    3,    4,    5,    6,    7,    6,    7,   11,
- /*    90 */    11,   29,   30,   31,   32,   33,   38,   39,   26,   38,
- /*   100 */     1,    2,    3,    4,    5,    6,    7,    3,    4,    5,
- /*   110 */     6,    7,   43,   14,   38,    1,    2,    3,    4,    5,
- /*   120 */     6,    7,   38,   47,   63,   64,   42,   11,   14,   23,
- /*   130 */     1,    2,    3,    4,    5,    6,    7,   44,   45,   46,
- /*   140 */    34,   14,   14,   14,   14,    1,    2,    3,    4,    5,
- /*   150 */     6,    7,   25,   61,   62,   38,   38,   38,   14,   10,
- /*   160 */     1,    2,    3,    4,    5,    6,    7,   18,   12,   38,
- /*   170 */    38,   38,   22,   14,   38,    1,    2,    3,    4,    5,
- /*   180 */     6,    7,   64,   47,   14,   38,   38,   12,   14,   23,
- /*   190 */     1,    2,    3,    4,    5,    6,    7,   11,   38,   38,
- /*   200 */    38,   14,   14,   14,   14,    1,    2,    3,    4,    5,
- /*   210 */     6,    7,   14,   20,   38,   38,   38,   38,   14,   12,
- /*   220 */     1,    2,    3,    4,    5,    6,    7,   12,   15,   38,
- /*   230 */    38,   12,   38,    1,    2,    3,    4,    5,    6,    7,
- /*   240 */     1,    2,    3,    4,    5,    6,    7,   38,   28,    4,
- /*   250 */    58,   59,   38,   14,    9,   10,   11,   14,   12,   27,
- /*   260 */    38,    1,    2,    3,    4,    5,    6,    7,    1,    2,
- /*   270 */     3,    4,    5,    6,    7,   11,    1,    2,    3,    4,
- /*   280 */     5,    6,    7,   11,   18,   38,   26,   12,   38,   38,
- /*   290 */    23,   38,    1,    2,    3,    4,    5,    6,    7,   20,
- /*   300 */    38,   38,   65,   38,   65,   14,   38,    1,    2,    3,
- /*   310 */     4,    5,    6,    7,   38,   38,   38,   65,   38,   38,
- /*   320 */    14,   38,    1,    2,    3,    4,    5,    6,    7,   65,
- /*   330 */    38,   38,   38,   38,   38,   14,   38,    1,    2,    3,
- /*   340 */     4,    5,    6,    7,   65,   65,   65,   65,   65,   65,
- /*   350 */    14,   65,    1,    2,    3,    4,    5,    6,    7,   65,
- /*   360 */    65,   65,   65,   65,   65,   14,   65,    1,    2,    3,
- /*   370 */     4,    5,    6,    7,   65,   65,   65,   65,   65,   65,
- /*   380 */    14,   65,    1,    2,    3,    4,    5,    6,    7,   65,
- /*   390 */    65,   65,   65,   65,   65,   14,   65,    1,    2,    3,
- /*   400 */     4,    5,    6,    7,   65,   65,   65,   65,   65,   65,
- /*   410 */    14,   38,    1,    2,    3,    4,    5,    6,    7,    4,
- /*   420 */    65,   65,    4,   65,    9,   10,   11,    9,   10,   11,
- /*   430 */     4,   58,   59,   15,   16,    9,   10,   11,   65,   65,
- /*   440 */     4,   65,   65,   65,   18,    9,   10,   11,   65,    4,
- /*   450 */    35,   36,    4,   65,    9,   10,   11,    9,   10,   11,
- /*   460 */     4,   65,   65,    4,   65,    9,   10,   11,    9,   10,
- /*   470 */    11,   35,   65,   65,   65,   65,   65,   65,   65,   65,
- /*   480 */    35,   65,   65,   35,   65,   65,   65,   65,   65,   65,
- /*   490 */    65,   35,   65,   65,   35,
+ /*     0 */     0,    4,   39,   40,    4,   39,    9,   10,   11,    9,
+ /*    10 */    10,   11,   39,   13,   14,   39,   19,   39,   18,   43,
+ /*    20 */    20,   39,   22,   41,   42,   25,   39,   40,   28,   51,
+ /*    30 */    52,   53,   54,   55,   56,   57,   58,   64,   65,   61,
+ /*    40 */    29,    1,    2,    3,    4,    5,    6,    7,    1,    2,
+ /*    50 */     3,    4,    5,    6,    7,   15,    2,    3,    4,    5,
+ /*    60 */     6,    7,   15,   44,    1,    2,    3,    4,    5,    6,
+ /*    70 */     7,    1,    2,    3,    4,    5,    6,    7,   15,    3,
+ /*    80 */     4,    5,    6,    7,   11,   15,   11,    1,    2,    3,
+ /*    90 */     4,    5,    6,    7,    1,    2,    3,    4,    5,    6,
+ /*   100 */     7,   15,   30,   31,   32,   33,   34,   39,   15,   21,
+ /*   110 */     1,    2,    3,    4,    5,    6,    7,    4,    5,    6,
+ /*   120 */     7,   12,   39,    1,    2,    3,    4,    5,    6,    7,
+ /*   130 */     1,    2,    3,    4,    5,    6,    7,    1,    2,    3,
+ /*   140 */     4,    5,    6,    7,   15,   45,   46,   47,   65,   27,
+ /*   150 */    39,   15,   12,    1,    2,    3,    4,    5,    6,    7,
+ /*   160 */     1,    2,    3,    4,    5,    6,    7,    1,    2,    3,
+ /*   170 */     4,    5,    6,    7,   15,   45,   46,   47,   62,   63,
+ /*   180 */    28,   15,    1,    2,    3,    4,    5,    6,    7,    1,
+ /*   190 */     2,    3,    4,    5,    6,    7,    1,    2,    3,    4,
+ /*   200 */     5,    6,    7,   24,   39,   24,    4,   39,   62,   63,
+ /*   210 */    15,    9,   10,   11,   35,   27,   48,    1,    2,    3,
+ /*   220 */     4,    5,    6,    7,   59,   60,    6,    7,   12,   39,
+ /*   230 */     1,    2,    3,    4,    5,    6,    7,    1,    2,    3,
+ /*   240 */     4,    5,    6,    7,   15,   39,   39,   41,   42,   59,
+ /*   250 */    60,   15,   19,    1,    2,    3,    4,    5,    6,    7,
+ /*   260 */     1,    2,    3,    4,    5,    6,    7,   15,   49,   50,
+ /*   270 */    11,   39,    1,    2,    3,    4,    5,    6,    7,   23,
+ /*   280 */    48,   39,   15,   12,   12,    1,    2,    3,    4,    5,
+ /*   290 */     6,    7,    1,    2,    3,    4,    5,    6,    7,   15,
+ /*   300 */    39,   23,   39,   15,   39,   15,   15,   39,    1,    2,
+ /*   310 */     3,    4,    5,    6,    7,    1,    2,    3,    4,    5,
+ /*   320 */     6,    7,   15,    1,    2,    3,    4,    5,    6,    7,
+ /*   330 */     1,    2,    3,    4,    5,    6,    7,   15,   39,    4,
+ /*   340 */    24,   11,    4,   29,    9,   10,   11,    9,   10,   11,
+ /*   350 */     4,   16,   17,    4,   10,    9,   10,   11,    9,   10,
+ /*   360 */    11,    4,   15,   19,    4,   39,    9,   10,   11,    9,
+ /*   370 */    10,   11,    4,   26,   36,   37,   11,    9,   10,   11,
+ /*   380 */    39,   15,   36,   21,   39,   36,   15,   39,   15,   39,
+ /*   390 */    39,   12,   39,   36,   16,   39,   36,   12,   39,   11,
+ /*   400 */    39,   15,   39,   11,   36,   15,   39,   12,   19,   39,
+ /*   410 */    66,   39,   15,   39,   39,   39,   39,   66,   66,   39,
+ /*   420 */    39,   39,   39,   39,   66,   66,   39,   66,   66,   66,
+ /*   430 */    39,   66,   39,   39,   66,   39,   66,   39,
 };
-#define YY_SHIFT_USE_DFLT (-1)
-#define YY_SHIFT_MAX 128
+#define YY_SHIFT_USE_DFLT (-4)
+#define YY_SHIFT_MAX 129
 static const short yy_shift_ofst[] = {
- /*     0 */    16,  418,  418,   62,   62,  245,  245,  245,  415,  415,
- /*    10 */   245,  245,  245,  245,   54,   54,  456,  459,  448,  426,
- /*    20 */   445,  436,  245,  245,  245,  245,  245,  245,  245,  245,
- /*    30 */   245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
- /*    40 */   245,  245,  245,  245,  245,  245,  245,  245,  245,  245,
- /*    50 */   245,  245,  245,  245,  245,  106,  396,  381,  366,  351,
- /*    60 */   336,  321,  306,  291,  275,  267,  260,  239,  232,    0,
- /*    70 */   219,  204,  189,  174,  159,  144,  129,  114,   99,   79,
- /*    80 */    72,   59,   44,  411,  411,  411,  411,  411,  411,  411,
- /*    90 */   411,  411,  411,  411,   50,  104,   63,  149,   81,   81,
- /*   100 */   127,  279,  266,  272,  243,  264,  246,  220,  213,  215,
- /*   110 */   207,  193,  198,  188,  187,  186,  166,  175,  170,  150,
- /*   120 */   156,  130,  128,  116,   78,   37,   20,   33,  190,
+ /*     0 */    -4,    0,  335,  335,   72,   72,  202,  202,  202,  338,
+ /*    10 */   338,  202,  202,  202,  202,  233,  233,  346,  349,  368,
+ /*    20 */   357,   -3,  360,  202,  202,  202,  202,  202,  202,  202,
+ /*    30 */   202,  202,  202,  202,  202,  202,  202,  202,  202,  202,
+ /*    40 */   202,  202,  202,  202,  202,  202,  202,  202,  202,  202,
+ /*    50 */   202,  202,  202,  202,  202,  202,  179,  229,   40,   63,
+ /*    60 */    70,   86,   93,  109,  122,  129,  136,  322,  314,  307,
+ /*    70 */   291,  284,  271,  259,  252,  236,   47,  216,  195,  188,
+ /*    80 */   181,  166,  159,  152,  329,  329,  329,  329,  329,  329,
+ /*    90 */   329,  329,  329,  329,  329,   54,   76,  113,  220,  220,
+ /*   100 */   347,  344,  395,  390,  389,  392,  386,  388,  385,  378,
+ /*   110 */   379,  373,  362,  371,  366,  365,  330,  316,  290,  288,
+ /*   120 */   278,  272,  256,  140,   88,   75,   73,   11,  397,  267,
 };
-#define YY_REDUCE_USE_DFLT (-39)
-#define YY_REDUCE_MAX 55
+#define YY_REDUCE_USE_DFLT (-38)
+#define YY_REDUCE_MAX 56
 static const short yy_reduce_ofst[] = {
- /*     0 */   -38,  192,  373,   93,  -14,   61,   -2,  -17,   58,  -30,
- /*    10 */    84,   76,  118,  136,  -20,   92,  296,  295,  294,  293,
- /*    20 */   292,  283,  281,  280,  278,  277,  276,  268,  265,  263,
- /*    30 */   262,  253,  251,  250,  247,  222,  214,  209,  194,  191,
- /*    40 */   179,  178,  177,  176,  162,  161,  160,  148,  147,  133,
- /*    50 */   132,  131,  119,  298,  117,   69,
+ /*     0 */   219,  -22,  165,  190,  100,  130,  -27,  -18,  206,  -37,
+ /*    10 */   -13,  -24,   83,  168,  232,  116,  146,   68,  -34,  341,
+ /*    20 */   396,  394,  393,  391,  387,  384,  383,  382,  381,  380,
+ /*    30 */   377,  376,  375,  374,  372,  370,  367,  363,  361,  359,
+ /*    40 */   356,  353,  351,  350,  348,  345,  398,  326,  299,  268,
+ /*    50 */   265,  263,  261,  242,  207,  111,   19,
 };
 static const YYACTIONTYPE yy_default[] = {
- /*     0 */   185,  195,  195,  221,  221,  266,  266,  266,  236,  236,
- /*    10 */   266,  215,  266,  215,  205,  205,  266,  266,  266,  266,
- /*    20 */   266,  266,  266,  266,  266,  266,  266,  266,  266,  266,
- /*    30 */   266,  266,  266,  266,  266,  266,  266,  266,  266,  266,
- /*    40 */   266,  266,  266,  266,  266,  266,  266,  266,  266,  266,
- /*    50 */   266,  266,  266,  266,  266,  266,  258,  257,  238,  266,
- /*    60 */   239,  216,  240,  261,  266,  266,  266,  243,  231,  266,
- /*    70 */   266,  247,  254,  253,  244,  252,  248,  251,  249,  266,
- /*    80 */   266,  266,  266,  250,  245,  255,  217,  264,  199,  241,
- /*    90 */   262,  209,  235,  259,  180,  182,  181,  266,  177,  176,
- /*   100 */   266,  266,  266,  266,  196,  266,  266,  266,  266,  266,
- /*   110 */   266,  266,  242,  206,  237,  266,  208,  266,  256,  266,
- /*   120 */   266,  260,  263,  266,  266,  266,  246,  266,  233,  204,
- /*   130 */   213,  207,  203,  202,  214,  201,  210,  200,  212,  211,
- /*   140 */   198,  197,  194,  193,  192,  191,  190,  189,  188,  187,
- /*   150 */   220,  175,  222,  219,  218,  265,  174,  184,  183,  179,
- /*   160 */   186,  232,  178,  173,  234,  223,  229,  230,  224,  225,
- /*   170 */   226,  227,  228,
+ /*     0 */   186,  268,  197,  197,  223,  223,  268,  268,  268,  238,
+ /*    10 */   238,  268,  268,  217,  217,  207,  207,  268,  268,  268,
+ /*    20 */   268,  268,  268,  268,  268,  268,  268,  268,  268,  268,
+ /*    30 */   268,  268,  268,  268,  268,  268,  268,  268,  268,  268,
+ /*    40 */   268,  268,  268,  268,  268,  268,  268,  268,  268,  268,
+ /*    50 */   268,  268,  268,  268,  268,  268,  268,  260,  240,  259,
+ /*    60 */   241,  263,  242,  268,  268,  268,  256,  245,  268,  246,
+ /*    70 */   254,  253,  268,  268,  249,  268,  250,  268,  251,  268,
+ /*    80 */   268,  255,  218,  233,  219,  264,  201,  266,  252,  257,
+ /*    90 */   211,  247,  237,  243,  261,  181,  183,  182,  178,  177,
+ /*   100 */   268,  268,  268,  258,  268,  268,  198,  268,  268,  268,
+ /*   110 */   268,  239,  268,  265,  208,  268,  268,  210,  244,  248,
+ /*   120 */   268,  268,  268,  268,  268,  268,  268,  268,  235,  262,
+ /*   130 */   206,  215,  209,  205,  204,  216,  203,  212,  202,  214,
+ /*   140 */   213,  200,  199,  196,  195,  194,  193,  192,  191,  190,
+ /*   150 */   188,  222,  176,  224,  187,  221,  220,  175,  267,  185,
+ /*   160 */   184,  180,  234,  179,  189,  236,  225,  231,  232,  226,
+ /*   170 */   227,  228,  229,  230,
 };
 #define YY_SZ_ACTTAB (int)(sizeof(yy_action)/sizeof(yy_action[0]))
 
@@ -692,20 +702,20 @@ static const char *const yyTokenName[] = {
   "$",             "OR",            "XOR",           "AND",         
   "MINUS",         "PLUS",          "MULTIPLY",      "DIVIDE",      
   "NEG",           "NUM",           "SYMNUM",        "LPAREN",      
-  "RPAREN",        "PRINT",         "COMMA",         "STRING",      
-  "ENDL",          "DEFINE",        "SYM",           "INCLUDE",     
-  "RBRACE",        "ENUM",          "LBRACE",        "EQUALS",      
-  "SPECIAL",       "SEMICOLON",     "COLON",         "LBRACKET",    
-  "RBRACKET",      "FLAGS",         "ARG2",          "ARG3",        
-  "ARG4",          "ARG5",          "OR_EQUAL",      "TAG",         
-  "LINEID",        "error",         "exp",           "special_args",
-  "list_val",      "arg_list",      "boom_args",     "boom_op",     
-  "boom_selector",  "boom_line",     "boom_body",     "maybe_argcount",
-  "main",          "translation_unit",  "external_declaration",  "define_statement",
-  "include_statement",  "print_statement",  "enum_statement",  "linetype_declaration",
-  "boom_declaration",  "special_declaration",  "print_list",    "print_item",  
-  "enum_open",     "enum_list",     "single_enum",   "special_list",
-  "special_def", 
+  "RPAREN",        "NOP",           "PRINT",         "COMMA",       
+  "STRING",        "ENDL",          "DEFINE",        "SYM",         
+  "INCLUDE",       "RBRACE",        "ENUM",          "LBRACE",      
+  "EQUALS",        "SPECIAL",       "SEMICOLON",     "COLON",       
+  "LBRACKET",      "RBRACKET",      "FLAGS",         "ARG2",        
+  "ARG3",          "ARG4",          "ARG5",          "OR_EQUAL",    
+  "TAG",           "LINEID",        "error",         "exp",         
+  "special_args",  "list_val",      "arg_list",      "boom_args",   
+  "boom_op",       "boom_selector",  "boom_line",     "boom_body",   
+  "maybe_argcount",  "main",          "translation_unit",  "external_declaration",
+  "define_statement",  "include_statement",  "print_statement",  "enum_statement",
+  "linetype_declaration",  "boom_declaration",  "special_declaration",  "print_list",  
+  "print_item",    "enum_open",     "enum_list",     "single_enum", 
+  "special_list",  "special_def", 
 };
 #endif /* NDEBUG */
 
@@ -726,7 +736,7 @@ static const char *const yyRuleName[] = {
  /*  10 */ "exp ::= MINUS exp",
  /*  11 */ "exp ::= LPAREN exp RPAREN",
  /*  12 */ "translation_unit ::=",
- /*  13 */ "translation_unit ::= external_declaration",
+ /*  13 */ "translation_unit ::= translation_unit external_declaration",
  /*  14 */ "external_declaration ::= define_statement",
  /*  15 */ "external_declaration ::= include_statement",
  /*  16 */ "external_declaration ::= print_statement",
@@ -734,78 +744,79 @@ static const char *const yyRuleName[] = {
  /*  18 */ "external_declaration ::= linetype_declaration",
  /*  19 */ "external_declaration ::= boom_declaration",
  /*  20 */ "external_declaration ::= special_declaration",
- /*  21 */ "print_statement ::= PRINT LPAREN print_list RPAREN",
- /*  22 */ "print_list ::=",
- /*  23 */ "print_list ::= print_item",
- /*  24 */ "print_list ::= print_item COMMA print_list",
- /*  25 */ "print_item ::= STRING",
- /*  26 */ "print_item ::= exp",
- /*  27 */ "print_item ::= ENDL",
- /*  28 */ "define_statement ::= DEFINE SYM LPAREN exp RPAREN",
- /*  29 */ "include_statement ::= INCLUDE STRING",
- /*  30 */ "enum_statement ::= enum_open enum_list RBRACE",
- /*  31 */ "enum_open ::= ENUM LBRACE",
- /*  32 */ "enum_list ::=",
- /*  33 */ "enum_list ::= single_enum",
- /*  34 */ "enum_list ::= single_enum COMMA enum_list",
- /*  35 */ "single_enum ::= SYM",
- /*  36 */ "single_enum ::= SYM EQUALS exp",
- /*  37 */ "special_declaration ::= SPECIAL special_list SEMICOLON",
- /*  38 */ "special_list ::= special_def",
- /*  39 */ "special_list ::= special_list COMMA special_def",
- /*  40 */ "special_def ::= exp COLON SYM LPAREN maybe_argcount RPAREN",
- /*  41 */ "special_def ::= exp COLON SYMNUM LPAREN maybe_argcount RPAREN",
- /*  42 */ "maybe_argcount ::=",
- /*  43 */ "maybe_argcount ::= exp",
- /*  44 */ "maybe_argcount ::= exp COMMA exp",
- /*  45 */ "linetype_declaration ::= exp EQUALS exp COMMA exp LPAREN special_args RPAREN",
- /*  46 */ "linetype_declaration ::= exp EQUALS exp COMMA SYM LPAREN special_args RPAREN",
- /*  47 */ "boom_declaration ::= LBRACKET exp RBRACKET LPAREN exp COMMA exp RPAREN LBRACE boom_body RBRACE",
- /*  48 */ "boom_body ::=",
- /*  49 */ "boom_body ::= boom_line boom_body",
- /*  50 */ "boom_line ::= boom_selector boom_op boom_args",
- /*  51 */ "boom_selector ::= FLAGS",
- /*  52 */ "boom_selector ::= ARG2",
- /*  53 */ "boom_selector ::= ARG3",
- /*  54 */ "boom_selector ::= ARG4",
- /*  55 */ "boom_selector ::= ARG5",
- /*  56 */ "boom_op ::= EQUALS",
- /*  57 */ "boom_op ::= OR_EQUAL",
- /*  58 */ "boom_args ::= exp",
- /*  59 */ "boom_args ::= exp LBRACKET arg_list RBRACKET",
- /*  60 */ "arg_list ::= list_val",
- /*  61 */ "arg_list ::= list_val COMMA arg_list",
- /*  62 */ "list_val ::= exp COLON exp",
- /*  63 */ "special_args ::=",
- /*  64 */ "special_args ::= TAG",
- /*  65 */ "special_args ::= TAG COMMA exp",
- /*  66 */ "special_args ::= TAG COMMA exp COMMA exp",
- /*  67 */ "special_args ::= TAG COMMA exp COMMA exp COMMA exp",
- /*  68 */ "special_args ::= TAG COMMA exp COMMA exp COMMA exp COMMA exp",
- /*  69 */ "special_args ::= TAG COMMA TAG",
- /*  70 */ "special_args ::= TAG COMMA TAG COMMA exp",
- /*  71 */ "special_args ::= TAG COMMA TAG COMMA exp COMMA exp",
- /*  72 */ "special_args ::= TAG COMMA TAG COMMA exp COMMA exp COMMA exp",
- /*  73 */ "special_args ::= LINEID",
- /*  74 */ "special_args ::= LINEID COMMA exp",
- /*  75 */ "special_args ::= LINEID COMMA exp COMMA exp",
- /*  76 */ "special_args ::= LINEID COMMA exp COMMA exp COMMA exp",
- /*  77 */ "special_args ::= LINEID COMMA exp COMMA exp COMMA exp COMMA exp",
- /*  78 */ "special_args ::= exp",
- /*  79 */ "special_args ::= exp COMMA exp",
- /*  80 */ "special_args ::= exp COMMA exp COMMA exp",
- /*  81 */ "special_args ::= exp COMMA exp COMMA exp COMMA exp",
- /*  82 */ "special_args ::= exp COMMA exp COMMA exp COMMA exp COMMA exp",
- /*  83 */ "special_args ::= exp COMMA TAG",
- /*  84 */ "special_args ::= exp COMMA TAG COMMA exp",
- /*  85 */ "special_args ::= exp COMMA TAG COMMA exp COMMA exp",
- /*  86 */ "special_args ::= exp COMMA TAG COMMA exp COMMA exp COMMA exp",
- /*  87 */ "special_args ::= exp COMMA exp COMMA TAG",
- /*  88 */ "special_args ::= exp COMMA exp COMMA TAG COMMA exp",
- /*  89 */ "special_args ::= exp COMMA exp COMMA TAG COMMA exp COMMA exp",
- /*  90 */ "special_args ::= exp COMMA exp COMMA exp COMMA TAG",
- /*  91 */ "special_args ::= exp COMMA exp COMMA exp COMMA TAG COMMA exp",
- /*  92 */ "special_args ::= exp COMMA exp COMMA exp COMMA exp COMMA TAG",
+ /*  21 */ "external_declaration ::= NOP",
+ /*  22 */ "print_statement ::= PRINT LPAREN print_list RPAREN",
+ /*  23 */ "print_list ::=",
+ /*  24 */ "print_list ::= print_item",
+ /*  25 */ "print_list ::= print_item COMMA print_list",
+ /*  26 */ "print_item ::= STRING",
+ /*  27 */ "print_item ::= exp",
+ /*  28 */ "print_item ::= ENDL",
+ /*  29 */ "define_statement ::= DEFINE SYM LPAREN exp RPAREN",
+ /*  30 */ "include_statement ::= INCLUDE STRING",
+ /*  31 */ "enum_statement ::= enum_open enum_list RBRACE",
+ /*  32 */ "enum_open ::= ENUM LBRACE",
+ /*  33 */ "enum_list ::=",
+ /*  34 */ "enum_list ::= single_enum",
+ /*  35 */ "enum_list ::= single_enum COMMA enum_list",
+ /*  36 */ "single_enum ::= SYM",
+ /*  37 */ "single_enum ::= SYM EQUALS exp",
+ /*  38 */ "special_declaration ::= SPECIAL special_list SEMICOLON",
+ /*  39 */ "special_list ::= special_def",
+ /*  40 */ "special_list ::= special_list COMMA special_def",
+ /*  41 */ "special_def ::= exp COLON SYM LPAREN maybe_argcount RPAREN",
+ /*  42 */ "special_def ::= exp COLON SYMNUM LPAREN maybe_argcount RPAREN",
+ /*  43 */ "maybe_argcount ::=",
+ /*  44 */ "maybe_argcount ::= exp",
+ /*  45 */ "maybe_argcount ::= exp COMMA exp",
+ /*  46 */ "linetype_declaration ::= exp EQUALS exp COMMA exp LPAREN special_args RPAREN",
+ /*  47 */ "linetype_declaration ::= exp EQUALS exp COMMA SYM LPAREN special_args RPAREN",
+ /*  48 */ "boom_declaration ::= LBRACKET exp RBRACKET LPAREN exp COMMA exp RPAREN LBRACE boom_body RBRACE",
+ /*  49 */ "boom_body ::=",
+ /*  50 */ "boom_body ::= boom_line boom_body",
+ /*  51 */ "boom_line ::= boom_selector boom_op boom_args",
+ /*  52 */ "boom_selector ::= FLAGS",
+ /*  53 */ "boom_selector ::= ARG2",
+ /*  54 */ "boom_selector ::= ARG3",
+ /*  55 */ "boom_selector ::= ARG4",
+ /*  56 */ "boom_selector ::= ARG5",
+ /*  57 */ "boom_op ::= EQUALS",
+ /*  58 */ "boom_op ::= OR_EQUAL",
+ /*  59 */ "boom_args ::= exp",
+ /*  60 */ "boom_args ::= exp LBRACKET arg_list RBRACKET",
+ /*  61 */ "arg_list ::= list_val",
+ /*  62 */ "arg_list ::= list_val COMMA arg_list",
+ /*  63 */ "list_val ::= exp COLON exp",
+ /*  64 */ "special_args ::=",
+ /*  65 */ "special_args ::= TAG",
+ /*  66 */ "special_args ::= TAG COMMA exp",
+ /*  67 */ "special_args ::= TAG COMMA exp COMMA exp",
+ /*  68 */ "special_args ::= TAG COMMA exp COMMA exp COMMA exp",
+ /*  69 */ "special_args ::= TAG COMMA exp COMMA exp COMMA exp COMMA exp",
+ /*  70 */ "special_args ::= TAG COMMA TAG",
+ /*  71 */ "special_args ::= TAG COMMA TAG COMMA exp",
+ /*  72 */ "special_args ::= TAG COMMA TAG COMMA exp COMMA exp",
+ /*  73 */ "special_args ::= TAG COMMA TAG COMMA exp COMMA exp COMMA exp",
+ /*  74 */ "special_args ::= LINEID",
+ /*  75 */ "special_args ::= LINEID COMMA exp",
+ /*  76 */ "special_args ::= LINEID COMMA exp COMMA exp",
+ /*  77 */ "special_args ::= LINEID COMMA exp COMMA exp COMMA exp",
+ /*  78 */ "special_args ::= LINEID COMMA exp COMMA exp COMMA exp COMMA exp",
+ /*  79 */ "special_args ::= exp",
+ /*  80 */ "special_args ::= exp COMMA exp",
+ /*  81 */ "special_args ::= exp COMMA exp COMMA exp",
+ /*  82 */ "special_args ::= exp COMMA exp COMMA exp COMMA exp",
+ /*  83 */ "special_args ::= exp COMMA exp COMMA exp COMMA exp COMMA exp",
+ /*  84 */ "special_args ::= exp COMMA TAG",
+ /*  85 */ "special_args ::= exp COMMA TAG COMMA exp",
+ /*  86 */ "special_args ::= exp COMMA TAG COMMA exp COMMA exp",
+ /*  87 */ "special_args ::= exp COMMA TAG COMMA exp COMMA exp COMMA exp",
+ /*  88 */ "special_args ::= exp COMMA exp COMMA TAG",
+ /*  89 */ "special_args ::= exp COMMA exp COMMA TAG COMMA exp",
+ /*  90 */ "special_args ::= exp COMMA exp COMMA TAG COMMA exp COMMA exp",
+ /*  91 */ "special_args ::= exp COMMA exp COMMA exp COMMA TAG",
+ /*  92 */ "special_args ::= exp COMMA exp COMMA exp COMMA TAG COMMA exp",
+ /*  93 */ "special_args ::= exp COMMA exp COMMA exp COMMA exp COMMA TAG",
 };
 #endif /* NDEBUG */
 
@@ -946,9 +957,7 @@ static int yy_find_shift_action(
   if( stateno>YY_SHIFT_MAX || (i = yy_shift_ofst[stateno])==YY_SHIFT_USE_DFLT ){
     return yy_default[stateno];
   }
-  if( iLookAhead==YYNOCODE ){
-	return YY_NO_ACTION;
-  }
+  assert( iLookAhead!=YYNOCODE );
   i += iLookAhead;
   if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
     if( iLookAhead>0 ){
@@ -999,13 +1008,18 @@ static int yy_find_reduce_action(
   YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
   int i;
-  assert( stateno<=YY_REDUCE_MAX );
-  i = yy_reduce_ofst[stateno];
+  if( stateno>YY_REDUCE_MAX ||
+	  (i = yy_reduce_ofst[stateno])==YY_REDUCE_USE_DFLT ){
+	return yy_default[stateno];
+  }
   assert( i!=YY_REDUCE_USE_DFLT );
   assert( iLookAhead!=YYNOCODE );
   i += iLookAhead;
-  assert( i>=0 && i<YY_SZ_ACTTAB );
-  assert( yy_lookahead[i]==iLookAhead );
+  if( i<0 || i>=YY_SZ_ACTTAB || yy_lookahead[i]!=iLookAhead ){
+    return yy_default[stateno];
+  }else{
+	return yy_action[i];
+  }
   return yy_action[i];
 }
 
@@ -1061,7 +1075,7 @@ static void yy_shift(
     fprintf(yyTraceFILE,"%sShift %d\n",yyTracePrompt,yyNewState);
     fprintf(yyTraceFILE,"%sStack:",yyTracePrompt);
     for(i=1; i<=yypParser->yyidx; i++)
-      fprintf(yyTraceFILE," %s",yyTokenName[yypParser->yystack[i].major]);
+      fprintf(yyTraceFILE," (%d)%s",yypParser->yystack[i].stateno,yyTokenName[yypParser->yystack[i].major]);
     fprintf(yyTraceFILE,"\n");
   }
 #endif
@@ -1074,99 +1088,100 @@ static const struct {
   YYCODETYPE lhs;         /* Symbol on the left-hand side of the rule */
   unsigned char nrhs;     /* Number of right-hand side symbols in the rule */
 } yyRuleInfo[] = {
-  { 48, 1 },
-  { 38, 1 },
-  { 38, 1 },
-  { 38, 3 },
-  { 38, 3 },
-  { 38, 3 },
-  { 38, 3 },
-  { 38, 3 },
-  { 38, 3 },
-  { 38, 3 },
-  { 38, 2 },
-  { 38, 3 },
-  { 49, 0 },
   { 49, 1 },
-  { 50, 1 },
-  { 50, 1 },
-  { 50, 1 },
-  { 50, 1 },
-  { 50, 1 },
-  { 50, 1 },
-  { 50, 1 },
-  { 53, 4 },
-  { 58, 0 },
-  { 58, 1 },
-  { 58, 3 },
+  { 39, 1 },
+  { 39, 1 },
+  { 39, 3 },
+  { 39, 3 },
+  { 39, 3 },
+  { 39, 3 },
+  { 39, 3 },
+  { 39, 3 },
+  { 39, 3 },
+  { 39, 2 },
+  { 39, 3 },
+  { 50, 0 },
+  { 50, 2 },
+  { 51, 1 },
+  { 51, 1 },
+  { 51, 1 },
+  { 51, 1 },
+  { 51, 1 },
+  { 51, 1 },
+  { 51, 1 },
+  { 51, 1 },
+  { 54, 4 },
+  { 59, 0 },
   { 59, 1 },
-  { 59, 1 },
-  { 59, 1 },
-  { 51, 5 },
-  { 52, 2 },
-  { 54, 3 },
-  { 60, 2 },
-  { 61, 0 },
-  { 61, 1 },
-  { 61, 3 },
+  { 59, 3 },
+  { 60, 1 },
+  { 60, 1 },
+  { 60, 1 },
+  { 52, 5 },
+  { 53, 2 },
+  { 55, 3 },
+  { 61, 2 },
+  { 62, 0 },
   { 62, 1 },
   { 62, 3 },
-  { 57, 3 },
   { 63, 1 },
   { 63, 3 },
-  { 64, 6 },
-  { 64, 6 },
+  { 58, 3 },
+  { 64, 1 },
+  { 64, 3 },
+  { 65, 6 },
+  { 65, 6 },
+  { 48, 0 },
+  { 48, 1 },
+  { 48, 3 },
+  { 56, 8 },
+  { 56, 8 },
+  { 57, 11 },
   { 47, 0 },
-  { 47, 1 },
-  { 47, 3 },
-  { 55, 8 },
-  { 55, 8 },
-  { 56, 11 },
-  { 46, 0 },
-  { 46, 2 },
-  { 45, 3 },
-  { 44, 1 },
-  { 44, 1 },
-  { 44, 1 },
+  { 47, 2 },
+  { 46, 3 },
+  { 45, 1 },
+  { 45, 1 },
+  { 45, 1 },
+  { 45, 1 },
+  { 45, 1 },
   { 44, 1 },
   { 44, 1 },
   { 43, 1 },
-  { 43, 1 },
+  { 43, 4 },
   { 42, 1 },
-  { 42, 4 },
-  { 41, 1 },
+  { 42, 3 },
   { 41, 3 },
+  { 40, 0 },
+  { 40, 1 },
   { 40, 3 },
-  { 39, 0 },
-  { 39, 1 },
-  { 39, 3 },
-  { 39, 5 },
-  { 39, 7 },
-  { 39, 9 },
-  { 39, 3 },
-  { 39, 5 },
-  { 39, 7 },
-  { 39, 9 },
-  { 39, 1 },
-  { 39, 3 },
-  { 39, 5 },
-  { 39, 7 },
-  { 39, 9 },
-  { 39, 1 },
-  { 39, 3 },
-  { 39, 5 },
-  { 39, 7 },
-  { 39, 9 },
-  { 39, 3 },
-  { 39, 5 },
-  { 39, 7 },
-  { 39, 9 },
-  { 39, 5 },
-  { 39, 7 },
-  { 39, 9 },
-  { 39, 7 },
-  { 39, 9 },
-  { 39, 9 },
+  { 40, 5 },
+  { 40, 7 },
+  { 40, 9 },
+  { 40, 3 },
+  { 40, 5 },
+  { 40, 7 },
+  { 40, 9 },
+  { 40, 1 },
+  { 40, 3 },
+  { 40, 5 },
+  { 40, 7 },
+  { 40, 9 },
+  { 40, 1 },
+  { 40, 3 },
+  { 40, 5 },
+  { 40, 7 },
+  { 40, 9 },
+  { 40, 3 },
+  { 40, 5 },
+  { 40, 7 },
+  { 40, 9 },
+  { 40, 5 },
+  { 40, 7 },
+  { 40, 9 },
+  { 40, 7 },
+  { 40, 9 },
+  { 40, 9 },
 };
 
 static void yy_accept(yyParser*);  /* Forward Declaration */
@@ -1220,158 +1235,187 @@ static void yy_reduce(
   **  #line <lineno> <thisfile>
   **     break;
   */
-      case 1:
-#line 344 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[0].minor.yy0.val; }
-#line 1227 "xlat-parse.c"
+      case 0: /* main ::= translation_unit */
+      case 12: /*translation_unit ::= */
+      case 13: /*translation_unit ::= translation_unit external_declaration */
+      case 14: /*external_declaration ::= define_statement */
+      case 15: /*external_declaration ::= include_statement */
+      case 16: /*external_declaration ::= print_statement */
+      case 17: /*external_declaration ::= enum_statement */
+      case 18: /*external_declaration ::= linetype_declaration */
+      case 19: /*external_declaration ::= boom_declaration */
+      case 20: /*external_declaration ::= special_declaration */
+      case 21: /*external_declaration ::= NOP */
+      case 23: /*print_list ::= */
+      case 24: /*print_list ::= print_item */
+      case 25: /*print_list ::= print_item COMMA print_list */
+      case 31: /*enum_statement ::= enum_open enum_list RBRACE */
+      case 33: /*enum_list ::= */
+      case 34: /*enum_list ::= single_enum */
+      case 35: /*enum_list ::= single_enum COMMA enum_list */
+      case 38: /*special_declaration ::= SPECIAL special_list SEMICOLON */
+      case 39: /*special_list ::= special_def */
+      case 40: /*special_list ::= special_list COMMA special_def */
+      case 43: /*maybe_argcount ::= */
+      case 44: /*maybe_argcount ::= exp */
+      case 45: /*maybe_argcount ::= exp COMMA exp */
+#line 365 "xlat-parse.y"
+{
+}
+#line 1266 "xlat-parse.c"
         break;
-      case 2:
-#line 345 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[0].minor.yy0.symval->Value; }
-#line 1232 "xlat-parse.c"
+      case 1: /* exp ::= NUM */
+#line 367 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[0].minor.yy0.val; }
+#line 1271 "xlat-parse.c"
         break;
-      case 3:
-#line 346 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[-2].minor.yy72 + yymsp[0].minor.yy72; }
-#line 1237 "xlat-parse.c"
-        break;
-      case 4:
-#line 347 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[-2].minor.yy72 - yymsp[0].minor.yy72; }
-#line 1242 "xlat-parse.c"
-        break;
-      case 5:
-#line 348 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[-2].minor.yy72 * yymsp[0].minor.yy72; }
-#line 1247 "xlat-parse.c"
-        break;
-      case 6:
-#line 349 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[-2].minor.yy72 / yymsp[0].minor.yy72; }
-#line 1252 "xlat-parse.c"
-        break;
-      case 7:
-#line 350 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[-2].minor.yy72 | yymsp[0].minor.yy72; }
-#line 1257 "xlat-parse.c"
-        break;
-      case 8:
-#line 351 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[-2].minor.yy72 & yymsp[0].minor.yy72; }
-#line 1262 "xlat-parse.c"
-        break;
-      case 9:
-#line 352 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[-2].minor.yy72 ^ yymsp[0].minor.yy72; }
-#line 1267 "xlat-parse.c"
-        break;
-      case 10:
-#line 353 "xlat-parse.y"
-{ yygotominor.yy72 = -yymsp[0].minor.yy72; }
-#line 1272 "xlat-parse.c"
-        break;
-      case 11:
-#line 354 "xlat-parse.y"
-{ yygotominor.yy72 = yymsp[-1].minor.yy72; }
-#line 1277 "xlat-parse.c"
-        break;
-      case 21:
+      case 2: /* exp ::= SYMNUM */
 #line 368 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[0].minor.yy0.symval->Value; }
+#line 1276 "xlat-parse.c"
+        break;
+      case 3: /* exp ::= exp PLUS exp */
+#line 369 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 + yymsp[0].minor.yy64; }
+#line 1281 "xlat-parse.c"
+        break;
+      case 4: /* exp ::= exp MINUS exp */
+#line 370 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 - yymsp[0].minor.yy64; }
+#line 1286 "xlat-parse.c"
+        break;
+      case 5: /* exp ::= exp MULTIPLY exp */
+#line 371 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 * yymsp[0].minor.yy64; }
+#line 1291 "xlat-parse.c"
+        break;
+      case 6: /* exp ::= exp DIVIDE exp */
+#line 372 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 / yymsp[0].minor.yy64; }
+#line 1296 "xlat-parse.c"
+        break;
+      case 7: /* exp ::= exp OR exp */
+#line 373 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 | yymsp[0].minor.yy64; }
+#line 1301 "xlat-parse.c"
+        break;
+      case 8: /* exp ::= exp AND exp */
+#line 374 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 & yymsp[0].minor.yy64; }
+#line 1306 "xlat-parse.c"
+        break;
+      case 9: /* exp ::= exp XOR exp */
+#line 375 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[-2].minor.yy64 ^ yymsp[0].minor.yy64; }
+#line 1311 "xlat-parse.c"
+        break;
+      case 10: /* exp ::= MINUS exp */
+#line 376 "xlat-parse.y"
+{ yygotominor.yy64 = -yymsp[0].minor.yy64; }
+#line 1316 "xlat-parse.c"
+        break;
+      case 11: /* exp ::= LPAREN exp RPAREN */
+#line 377 "xlat-parse.y"
+{ yygotominor.yy64 = yymsp[-1].minor.yy64; }
+#line 1321 "xlat-parse.c"
+        break;
+      case 22: /* print_statement ::= PRINT LPAREN print_list RPAREN */
+#line 392 "xlat-parse.y"
 {
   printf ("\n");
 }
-#line 1284 "xlat-parse.c"
+#line 1328 "xlat-parse.c"
         break;
-      case 25:
-#line 376 "xlat-parse.y"
+      case 26: /* print_item ::= STRING */
+#line 400 "xlat-parse.y"
 { printf ("%s", yymsp[0].minor.yy0.string); }
-#line 1289 "xlat-parse.c"
+#line 1333 "xlat-parse.c"
         break;
-      case 26:
-#line 377 "xlat-parse.y"
-{ printf ("%d", yymsp[0].minor.yy72); }
-#line 1294 "xlat-parse.c"
+      case 27: /* print_item ::= exp */
+#line 401 "xlat-parse.y"
+{ printf ("%d", yymsp[0].minor.yy64); }
+#line 1338 "xlat-parse.c"
         break;
-      case 27:
-#line 378 "xlat-parse.y"
+      case 28: /* print_item ::= ENDL */
+#line 402 "xlat-parse.y"
 { printf ("\n"); }
-#line 1299 "xlat-parse.c"
+#line 1343 "xlat-parse.c"
         break;
-      case 28:
-#line 381 "xlat-parse.y"
+      case 29: /* define_statement ::= DEFINE SYM LPAREN exp RPAREN */
+#line 405 "xlat-parse.y"
 {
-	AddSym (yymsp[-3].minor.yy0.sym, yymsp[-1].minor.yy72);
+	AddSym (yymsp[-3].minor.yy0.sym, yymsp[-1].minor.yy64);
 }
-#line 1306 "xlat-parse.c"
+#line 1350 "xlat-parse.c"
         break;
-      case 29:
-#line 386 "xlat-parse.y"
+      case 30: /* include_statement ::= INCLUDE STRING */
+#line 410 "xlat-parse.y"
 {
 	IncludeFile (yymsp[0].minor.yy0.string);
 }
-#line 1313 "xlat-parse.c"
+#line 1357 "xlat-parse.c"
         break;
-      case 31:
-#line 393 "xlat-parse.y"
+      case 32: /* enum_open ::= ENUM LBRACE */
+#line 417 "xlat-parse.y"
 {
 	EnumVal = 0;
 }
-#line 1320 "xlat-parse.c"
+#line 1364 "xlat-parse.c"
         break;
-      case 35:
-#line 402 "xlat-parse.y"
+      case 36: /* single_enum ::= SYM */
+#line 426 "xlat-parse.y"
 {
 	AddSym (yymsp[0].minor.yy0.sym, EnumVal++);
 }
-#line 1327 "xlat-parse.c"
+#line 1371 "xlat-parse.c"
         break;
-      case 36:
-#line 407 "xlat-parse.y"
+      case 37: /* single_enum ::= SYM EQUALS exp */
+#line 431 "xlat-parse.y"
 {
-	AddSym (yymsp[-2].minor.yy0.sym, EnumVal = yymsp[0].minor.yy72);
+	AddSym (yymsp[-2].minor.yy0.sym, EnumVal = yymsp[0].minor.yy64);
 }
-#line 1334 "xlat-parse.c"
+#line 1378 "xlat-parse.c"
         break;
-      case 40:
-#line 420 "xlat-parse.y"
+      case 41: /* special_def ::= exp COLON SYM LPAREN maybe_argcount RPAREN */
+#line 444 "xlat-parse.y"
 {
-	AddSym (yymsp[-3].minor.yy0.sym, yymsp[-5].minor.yy72);
+	AddSym (yymsp[-3].minor.yy0.sym, yymsp[-5].minor.yy64);
 }
-#line 1341 "xlat-parse.c"
+#line 1385 "xlat-parse.c"
         break;
-      case 41:
-#line 424 "xlat-parse.y"
+      case 42: /* special_def ::= exp COLON SYMNUM LPAREN maybe_argcount RPAREN */
+#line 448 "xlat-parse.y"
 {
 	printf ("%s, line %d: %s is already defined\n", SourceName, SourceLine, yymsp[-3].minor.yy0.symval->Sym);
 }
-#line 1348 "xlat-parse.c"
+#line 1392 "xlat-parse.c"
         break;
-      case 45:
-#line 433 "xlat-parse.y"
+      case 46: /* linetype_declaration ::= exp EQUALS exp COMMA exp LPAREN special_args RPAREN */
+#line 457 "xlat-parse.y"
 {
-	Simple[yymsp[-7].minor.yy72].NewSpecial = yymsp[-3].minor.yy72;
-	Simple[yymsp[-7].minor.yy72].Flags = yymsp[-5].minor.yy72 | yymsp[-1].minor.yy57.addflags;
-	Simple[yymsp[-7].minor.yy72].Args[0] = yymsp[-1].minor.yy57.args[0];
-	Simple[yymsp[-7].minor.yy72].Args[1] = yymsp[-1].minor.yy57.args[1];
-	Simple[yymsp[-7].minor.yy72].Args[2] = yymsp[-1].minor.yy57.args[2];
-	Simple[yymsp[-7].minor.yy72].Args[3] = yymsp[-1].minor.yy57.args[3];
-	Simple[yymsp[-7].minor.yy72].Args[4] = yymsp[-1].minor.yy57.args[4];
+	Simple[yymsp[-7].minor.yy64].NewSpecial = yymsp[-3].minor.yy64;
+	Simple[yymsp[-7].minor.yy64].Flags = yymsp[-5].minor.yy64 | yymsp[-1].minor.yy123.addflags;
+	Simple[yymsp[-7].minor.yy64].Args[0] = yymsp[-1].minor.yy123.args[0];
+	Simple[yymsp[-7].minor.yy64].Args[1] = yymsp[-1].minor.yy123.args[1];
+	Simple[yymsp[-7].minor.yy64].Args[2] = yymsp[-1].minor.yy123.args[2];
+	Simple[yymsp[-7].minor.yy64].Args[3] = yymsp[-1].minor.yy123.args[3];
+	Simple[yymsp[-7].minor.yy64].Args[4] = yymsp[-1].minor.yy123.args[4];
 }
-#line 1361 "xlat-parse.c"
+#line 1405 "xlat-parse.c"
         break;
-      case 46:
-#line 443 "xlat-parse.y"
+      case 47: /* linetype_declaration ::= exp EQUALS exp COMMA SYM LPAREN special_args RPAREN */
+#line 467 "xlat-parse.y"
 {
 	printf ("%s, line %d: %s is undefined\n", SourceName, SourceLine, yymsp[-3].minor.yy0.sym);
 }
-#line 1368 "xlat-parse.c"
+#line 1412 "xlat-parse.c"
         break;
-      case 47:
-#line 448 "xlat-parse.y"
+      case 48: /* boom_declaration ::= LBRACKET exp RBRACKET LPAREN exp COMMA exp RPAREN LBRACE boom_body RBRACE */
+#line 472 "xlat-parse.y"
 {
 	if (NumBoomish == MAX_BOOMISH)
 	{
-		MoreLines *probe = yymsp[-1].minor.yy49;
+		MoreLines *probe = yymsp[-1].minor.yy57;
 
 		while (probe != NULL)
 		{
@@ -1386,11 +1430,11 @@ static void yy_reduce(
 		int i;
 		MoreLines *probe;
 
-		Boomish[NumBoomish].FirstLinetype = yymsp[-6].minor.yy72;
-		Boomish[NumBoomish].LastLinetype = yymsp[-4].minor.yy72;
-		Boomish[NumBoomish].NewSpecial = yymsp[-9].minor.yy72;
+		Boomish[NumBoomish].FirstLinetype = yymsp[-6].minor.yy64;
+		Boomish[NumBoomish].LastLinetype = yymsp[-4].minor.yy64;
+		Boomish[NumBoomish].NewSpecial = yymsp[-9].minor.yy64;
 		
-		for (i = 0, probe = yymsp[-1].minor.yy49; probe != NULL; i++)
+		for (i = 0, probe = yymsp[-1].minor.yy57; probe != NULL; i++)
 		{
 			MoreLines *next = probe->next;;
 			if (i < MAX_BOOMISH_EXEC)
@@ -1411,46 +1455,46 @@ static void yy_reduce(
 		NumBoomish++;
 	}
 }
-#line 1415 "xlat-parse.c"
+#line 1459 "xlat-parse.c"
         break;
-      case 48:
-#line 493 "xlat-parse.y"
+      case 49: /* boom_body ::= */
+#line 517 "xlat-parse.y"
 {
-	yygotominor.yy49 = NULL;
+	yygotominor.yy57 = NULL;
 }
-#line 1422 "xlat-parse.c"
+#line 1466 "xlat-parse.c"
         break;
-      case 49:
-#line 497 "xlat-parse.y"
+      case 50: /* boom_body ::= boom_line boom_body */
+#line 521 "xlat-parse.y"
 {
-	yygotominor.yy49 = malloc (sizeof(MoreLines));
-	yygotominor.yy49->next = yymsp[0].minor.yy49;
-	yygotominor.yy49->arg = yymsp[-1].minor.yy58;
+	yygotominor.yy57 = malloc (sizeof(MoreLines));
+	yygotominor.yy57->next = yymsp[0].minor.yy57;
+	yygotominor.yy57->arg = yymsp[-1].minor.yy65;
 }
-#line 1431 "xlat-parse.c"
+#line 1475 "xlat-parse.c"
         break;
-      case 50:
-#line 504 "xlat-parse.y"
+      case 51: /* boom_line ::= boom_selector boom_op boom_args */
+#line 528 "xlat-parse.y"
 {
-	yygotominor.yy58.bDefined = 1;
-	yygotominor.yy58.bOrExisting = (yymsp[-1].minor.yy72 == OR_EQUAL);
-	yygotominor.yy58.bUseConstant = (yymsp[0].minor.yy83.filters == NULL);
-	yygotominor.yy58.ArgNum = yymsp[-2].minor.yy72;
-	yygotominor.yy58.ConstantValue = yymsp[0].minor.yy83.constant;
-	yygotominor.yy58.AndValue = yymsp[0].minor.yy83.mask;
+	yygotominor.yy65.bDefined = 1;
+	yygotominor.yy65.bOrExisting = (yymsp[-1].minor.yy64 == OR_EQUAL);
+	yygotominor.yy65.bUseConstant = (yymsp[0].minor.yy87.filters == NULL);
+	yygotominor.yy65.ArgNum = yymsp[-2].minor.yy64;
+	yygotominor.yy65.ConstantValue = yymsp[0].minor.yy87.constant;
+	yygotominor.yy65.AndValue = yymsp[0].minor.yy87.mask;
 
-	if (yymsp[0].minor.yy83.filters != NULL)
+	if (yymsp[0].minor.yy87.filters != NULL)
 	{
 		int i;
 		MoreFilters *probe;
 
-		for (i = 0, probe = yymsp[0].minor.yy83.filters; probe != NULL; i++)
+		for (i = 0, probe = yymsp[0].minor.yy87.filters; probe != NULL; i++)
 		{
 			MoreFilters *next = probe->next;
 			if (i < 15)
 			{
-				yygotominor.yy58.ResultFilter[i] = probe->filter.filter;
-				yygotominor.yy58.ResultValue[i] = probe->filter.value;
+				yygotominor.yy65.ResultFilter[i] = probe->filter.filter;
+				yygotominor.yy65.ResultValue[i] = probe->filter.value;
 			}
 			else if (i == 15)
 			{
@@ -1459,431 +1503,431 @@ static void yy_reduce(
 			free (probe);
 			probe = next;
 		}
-		yygotominor.yy58.ListSize = i > 15 ? 15 : i;
+		yygotominor.yy65.ListSize = i > 15 ? 15 : i;
 	}
 }
-#line 1466 "xlat-parse.c"
+#line 1510 "xlat-parse.c"
         break;
-      case 51:
-#line 536 "xlat-parse.y"
-{ yygotominor.yy72 = 4; }
-#line 1471 "xlat-parse.c"
+      case 52: /* boom_selector ::= FLAGS */
+#line 560 "xlat-parse.y"
+{ yygotominor.yy64 = 4; }
+#line 1515 "xlat-parse.c"
         break;
-      case 52:
-#line 537 "xlat-parse.y"
-{ yygotominor.yy72 = 0; }
-#line 1476 "xlat-parse.c"
+      case 53: /* boom_selector ::= ARG2 */
+#line 561 "xlat-parse.y"
+{ yygotominor.yy64 = 0; }
+#line 1520 "xlat-parse.c"
         break;
-      case 53:
-#line 538 "xlat-parse.y"
-{ yygotominor.yy72 = 1; }
-#line 1481 "xlat-parse.c"
+      case 54: /* boom_selector ::= ARG3 */
+#line 562 "xlat-parse.y"
+{ yygotominor.yy64 = 1; }
+#line 1525 "xlat-parse.c"
         break;
-      case 54:
-#line 539 "xlat-parse.y"
-{ yygotominor.yy72 = 2; }
-#line 1486 "xlat-parse.c"
-        break;
-      case 55:
-#line 540 "xlat-parse.y"
-{ yygotominor.yy72 = 3; }
-#line 1491 "xlat-parse.c"
-        break;
-      case 56:
-#line 542 "xlat-parse.y"
-{ yygotominor.yy72 = '='; }
-#line 1496 "xlat-parse.c"
-        break;
-      case 57:
-#line 543 "xlat-parse.y"
-{ yygotominor.yy72 = OR_EQUAL; }
-#line 1501 "xlat-parse.c"
-        break;
-      case 58:
-#line 546 "xlat-parse.y"
-{
-	yygotominor.yy83.constant = yymsp[0].minor.yy72;
-	yygotominor.yy83.filters = NULL;
-}
-#line 1509 "xlat-parse.c"
-        break;
-      case 59:
-#line 551 "xlat-parse.y"
-{
-	yygotominor.yy83.mask = yymsp[-3].minor.yy72;
-	yygotominor.yy83.filters = yymsp[-1].minor.yy87;
-}
-#line 1517 "xlat-parse.c"
-        break;
-      case 60:
-#line 557 "xlat-parse.y"
-{
-	yygotominor.yy87 = malloc (sizeof(MoreFilters));
-	yygotominor.yy87->next = NULL;
-	yygotominor.yy87->filter = yymsp[0].minor.yy124;
-}
-#line 1526 "xlat-parse.c"
-        break;
-      case 61:
+      case 55: /* boom_selector ::= ARG4 */
 #line 563 "xlat-parse.y"
-{
-	yygotominor.yy87 = malloc (sizeof(MoreFilters));
-	yygotominor.yy87->next = yymsp[0].minor.yy87;
-	yygotominor.yy87->filter = yymsp[-2].minor.yy124;
-}
+{ yygotominor.yy64 = 2; }
+#line 1530 "xlat-parse.c"
+        break;
+      case 56: /* boom_selector ::= ARG5 */
+#line 564 "xlat-parse.y"
+{ yygotominor.yy64 = 3; }
 #line 1535 "xlat-parse.c"
         break;
-      case 62:
+      case 57: /* boom_op ::= EQUALS */
+#line 566 "xlat-parse.y"
+{ yygotominor.yy64 = '='; }
+#line 1540 "xlat-parse.c"
+        break;
+      case 58: /* boom_op ::= OR_EQUAL */
+#line 567 "xlat-parse.y"
+{ yygotominor.yy64 = OR_EQUAL; }
+#line 1545 "xlat-parse.c"
+        break;
+      case 59: /* boom_args ::= exp */
 #line 570 "xlat-parse.y"
 {
-	yygotominor.yy124.filter = yymsp[-2].minor.yy72;
-	yygotominor.yy124.value = yymsp[0].minor.yy72;
+	yygotominor.yy87.constant = yymsp[0].minor.yy64;
+	yygotominor.yy87.filters = NULL;
 }
-#line 1543 "xlat-parse.c"
+#line 1553 "xlat-parse.c"
         break;
-      case 63:
-#line 576 "xlat-parse.y"
+      case 60: /* boom_args ::= exp LBRACKET arg_list RBRACKET */
+#line 575 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = 0;
-	memset (yygotominor.yy57.args, 0, 5);
+	yygotominor.yy87.mask = yymsp[-3].minor.yy64;
+	yygotominor.yy87.filters = yymsp[-1].minor.yy39;
 }
-#line 1551 "xlat-parse.c"
+#line 1561 "xlat-parse.c"
         break;
-      case 64:
+      case 61: /* arg_list ::= list_val */
 #line 581 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT1;
-	memset (yygotominor.yy57.args, 0, 5);
+	yygotominor.yy39 = malloc (sizeof(MoreFilters));
+	yygotominor.yy39->next = NULL;
+	yygotominor.yy39->filter = yymsp[0].minor.yy20;
 }
-#line 1559 "xlat-parse.c"
+#line 1570 "xlat-parse.c"
         break;
-      case 65:
-#line 586 "xlat-parse.y"
+      case 62: /* arg_list ::= list_val COMMA arg_list */
+#line 587 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT1;
-	yygotominor.yy57.args[0] = 0;
-	yygotominor.yy57.args[1] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[2] = 0;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy39 = malloc (sizeof(MoreFilters));
+	yygotominor.yy39->next = yymsp[0].minor.yy39;
+	yygotominor.yy39->filter = yymsp[-2].minor.yy20;
 }
-#line 1571 "xlat-parse.c"
+#line 1579 "xlat-parse.c"
         break;
-      case 66:
-#line 595 "xlat-parse.y"
+      case 63: /* list_val ::= exp COLON exp */
+#line 594 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT1;
-	yygotominor.yy57.args[0] = 0;
-	yygotominor.yy57.args[1] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy20.filter = yymsp[-2].minor.yy64;
+	yygotominor.yy20.value = yymsp[0].minor.yy64;
 }
-#line 1583 "xlat-parse.c"
+#line 1587 "xlat-parse.c"
         break;
-      case 67:
-#line 604 "xlat-parse.y"
+      case 64: /* special_args ::= */
+#line 600 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT1;
-	yygotominor.yy57.args[0] = 0;
-	yygotominor.yy57.args[1] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = 0;
+	memset (yygotominor.yy123.args, 0, 5);
 }
 #line 1595 "xlat-parse.c"
         break;
-      case 68:
-#line 613 "xlat-parse.y"
+      case 65: /* special_args ::= TAG */
+#line 605 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT1;
-	yygotominor.yy57.args[0] = 0;
-	yygotominor.yy57.args[1] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT1;
+	memset (yygotominor.yy123.args, 0, 5);
 }
-#line 1607 "xlat-parse.c"
+#line 1603 "xlat-parse.c"
         break;
-      case 69:
-#line 622 "xlat-parse.y"
+      case 66: /* special_args ::= TAG COMMA exp */
+#line 610 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HAS2TAGS;
-	yygotominor.yy57.args[0] = yygotominor.yy57.args[1] = 0;
-	yygotominor.yy57.args[2] = 0;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT1;
+	yygotominor.yy123.args[0] = 0;
+	yygotominor.yy123.args[1] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[2] = 0;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1618 "xlat-parse.c"
+#line 1615 "xlat-parse.c"
         break;
-      case 70:
-#line 630 "xlat-parse.y"
+      case 67: /* special_args ::= TAG COMMA exp COMMA exp */
+#line 619 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HAS2TAGS;
-	yygotominor.yy57.args[0] = yygotominor.yy57.args[1] = 0;
-	yygotominor.yy57.args[2] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT1;
+	yygotominor.yy123.args[0] = 0;
+	yygotominor.yy123.args[1] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1629 "xlat-parse.c"
+#line 1627 "xlat-parse.c"
         break;
-      case 71:
-#line 638 "xlat-parse.y"
+      case 68: /* special_args ::= TAG COMMA exp COMMA exp COMMA exp */
+#line 628 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HAS2TAGS;
-	yygotominor.yy57.args[0] = yygotominor.yy57.args[1] = 0;
-	yygotominor.yy57.args[2] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT1;
+	yygotominor.yy123.args[0] = 0;
+	yygotominor.yy123.args[1] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1640 "xlat-parse.c"
+#line 1639 "xlat-parse.c"
         break;
-      case 72:
-#line 646 "xlat-parse.y"
+      case 69: /* special_args ::= TAG COMMA exp COMMA exp COMMA exp COMMA exp */
+#line 637 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HAS2TAGS;
-	yygotominor.yy57.args[0] = yygotominor.yy57.args[1] = 0;
-	yygotominor.yy57.args[2] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT1;
+	yygotominor.yy123.args[0] = 0;
+	yygotominor.yy123.args[1] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[4] = yymsp[0].minor.yy64;
 }
 #line 1651 "xlat-parse.c"
         break;
-      case 73:
+      case 70: /* special_args ::= TAG COMMA TAG */
+#line 646 "xlat-parse.y"
+{
+	yygotominor.yy123.addflags = SIMPLE_HAS2TAGS;
+	yygotominor.yy123.args[0] = yygotominor.yy123.args[1] = 0;
+	yygotominor.yy123.args[2] = 0;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
+}
+#line 1662 "xlat-parse.c"
+        break;
+      case 71: /* special_args ::= TAG COMMA TAG COMMA exp */
 #line 654 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASLINEID;
-	memset (yygotominor.yy57.args, 0, 5);
+	yygotominor.yy123.addflags = SIMPLE_HAS2TAGS;
+	yygotominor.yy123.args[0] = yygotominor.yy123.args[1] = 0;
+	yygotominor.yy123.args[2] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1659 "xlat-parse.c"
+#line 1673 "xlat-parse.c"
         break;
-      case 74:
-#line 659 "xlat-parse.y"
+      case 72: /* special_args ::= TAG COMMA TAG COMMA exp COMMA exp */
+#line 662 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASLINEID;
-	yygotominor.yy57.args[0] = 0;
-	yygotominor.yy57.args[1] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[2] = 0;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HAS2TAGS;
+	yygotominor.yy123.args[0] = yygotominor.yy123.args[1] = 0;
+	yygotominor.yy123.args[2] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1671 "xlat-parse.c"
+#line 1684 "xlat-parse.c"
         break;
-      case 75:
-#line 668 "xlat-parse.y"
+      case 73: /* special_args ::= TAG COMMA TAG COMMA exp COMMA exp COMMA exp */
+#line 670 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASLINEID;
-	yygotominor.yy57.args[0] = 0;
-	yygotominor.yy57.args[1] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
-}
-#line 1683 "xlat-parse.c"
-        break;
-      case 76:
-#line 677 "xlat-parse.y"
-{
-	yygotominor.yy57.addflags = SIMPLE_HASLINEID;
-	yygotominor.yy57.args[0] = 0;
-	yygotominor.yy57.args[1] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HAS2TAGS;
+	yygotominor.yy123.args[0] = yygotominor.yy123.args[1] = 0;
+	yygotominor.yy123.args[2] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[4] = yymsp[0].minor.yy64;
 }
 #line 1695 "xlat-parse.c"
         break;
-      case 77:
-#line 686 "xlat-parse.y"
+      case 74: /* special_args ::= LINEID */
+#line 678 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASLINEID;
-	yygotominor.yy57.args[0] = 0;
-	yygotominor.yy57.args[1] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
+	yygotominor.yy123.addflags = SIMPLE_HASLINEID;
+	memset (yygotominor.yy123.args, 0, 5);
 }
-#line 1707 "xlat-parse.c"
+#line 1703 "xlat-parse.c"
         break;
-      case 78:
-#line 695 "xlat-parse.y"
+      case 75: /* special_args ::= LINEID COMMA exp */
+#line 683 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = 0;
-	yygotominor.yy57.args[0] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[1] = 0;
-	yygotominor.yy57.args[2] = 0;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASLINEID;
+	yygotominor.yy123.args[0] = 0;
+	yygotominor.yy123.args[1] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[2] = 0;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1719 "xlat-parse.c"
+#line 1715 "xlat-parse.c"
         break;
-      case 79:
-#line 704 "xlat-parse.y"
+      case 76: /* special_args ::= LINEID COMMA exp COMMA exp */
+#line 692 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = 0;
-	yygotominor.yy57.args[0] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[2] = 0;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASLINEID;
+	yygotominor.yy123.args[0] = 0;
+	yygotominor.yy123.args[1] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1731 "xlat-parse.c"
+#line 1727 "xlat-parse.c"
         break;
-      case 80:
-#line 713 "xlat-parse.y"
+      case 77: /* special_args ::= LINEID COMMA exp COMMA exp COMMA exp */
+#line 701 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = 0;
-	yygotominor.yy57.args[0] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASLINEID;
+	yygotominor.yy123.args[0] = 0;
+	yygotominor.yy123.args[1] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1743 "xlat-parse.c"
+#line 1739 "xlat-parse.c"
         break;
-      case 81:
-#line 722 "xlat-parse.y"
+      case 78: /* special_args ::= LINEID COMMA exp COMMA exp COMMA exp COMMA exp */
+#line 710 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = 0;
-	yygotominor.yy57.args[0] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASLINEID;
+	yygotominor.yy123.args[0] = 0;
+	yygotominor.yy123.args[1] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[4] = yymsp[0].minor.yy64;
 }
-#line 1755 "xlat-parse.c"
+#line 1751 "xlat-parse.c"
         break;
-      case 82:
-#line 731 "xlat-parse.y"
+      case 79: /* special_args ::= exp */
+#line 719 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = 0;
-	yygotominor.yy57.args[0] = yymsp[-8].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
+	yygotominor.yy123.addflags = 0;
+	yygotominor.yy123.args[0] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[1] = 0;
+	yygotominor.yy123.args[2] = 0;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1767 "xlat-parse.c"
+#line 1763 "xlat-parse.c"
         break;
-      case 83:
-#line 740 "xlat-parse.y"
+      case 80: /* special_args ::= exp COMMA exp */
+#line 728 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT2;
-	yygotominor.yy57.args[0] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[1] = 0;
-	yygotominor.yy57.args[2] = 0;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = 0;
+	yygotominor.yy123.args[0] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[2] = 0;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1779 "xlat-parse.c"
+#line 1775 "xlat-parse.c"
         break;
-      case 84:
-#line 749 "xlat-parse.y"
+      case 81: /* special_args ::= exp COMMA exp COMMA exp */
+#line 737 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT2;
-	yygotominor.yy57.args[0] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[1] = 0;
-	yygotominor.yy57.args[2] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = 0;
+	yygotominor.yy123.args[0] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1791 "xlat-parse.c"
+#line 1787 "xlat-parse.c"
         break;
-      case 85:
-#line 758 "xlat-parse.y"
+      case 82: /* special_args ::= exp COMMA exp COMMA exp COMMA exp */
+#line 746 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT2;
-	yygotominor.yy57.args[0] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[1] = 0;
-	yygotominor.yy57.args[2] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = 0;
+	yygotominor.yy123.args[0] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1803 "xlat-parse.c"
+#line 1799 "xlat-parse.c"
         break;
-      case 86:
-#line 767 "xlat-parse.y"
+      case 83: /* special_args ::= exp COMMA exp COMMA exp COMMA exp COMMA exp */
+#line 755 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT2;
-	yygotominor.yy57.args[0] = yymsp[-8].minor.yy72;
-	yygotominor.yy57.args[1] = 0;
-	yygotominor.yy57.args[2] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
+	yygotominor.yy123.addflags = 0;
+	yygotominor.yy123.args[0] = yymsp[-8].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[4] = yymsp[0].minor.yy64;
 }
-#line 1815 "xlat-parse.c"
+#line 1811 "xlat-parse.c"
         break;
-      case 87:
-#line 776 "xlat-parse.y"
+      case 84: /* special_args ::= exp COMMA TAG */
+#line 764 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT3;
-	yygotominor.yy57.args[0] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[2] = 0;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT2;
+	yygotominor.yy123.args[0] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[1] = 0;
+	yygotominor.yy123.args[2] = 0;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1827 "xlat-parse.c"
+#line 1823 "xlat-parse.c"
         break;
-      case 88:
-#line 785 "xlat-parse.y"
+      case 85: /* special_args ::= exp COMMA TAG COMMA exp */
+#line 773 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT3;
-	yygotominor.yy57.args[0] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[2] = 0;
-	yygotominor.yy57.args[3] = yymsp[0].minor.yy72;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT2;
+	yygotominor.yy123.args[0] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[1] = 0;
+	yygotominor.yy123.args[2] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1839 "xlat-parse.c"
+#line 1835 "xlat-parse.c"
         break;
-      case 89:
-#line 794 "xlat-parse.y"
+      case 86: /* special_args ::= exp COMMA TAG COMMA exp COMMA exp */
+#line 782 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT3;
-	yygotominor.yy57.args[0] = yymsp[-8].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[2] = 0;
-	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT2;
+	yygotominor.yy123.args[0] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[1] = 0;
+	yygotominor.yy123.args[2] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1851 "xlat-parse.c"
+#line 1847 "xlat-parse.c"
         break;
-      case 90:
-#line 803 "xlat-parse.y"
+      case 87: /* special_args ::= exp COMMA TAG COMMA exp COMMA exp COMMA exp */
+#line 791 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT4;
-	yygotominor.yy57.args[0] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT2;
+	yygotominor.yy123.args[0] = yymsp[-8].minor.yy64;
+	yygotominor.yy123.args[1] = 0;
+	yygotominor.yy123.args[2] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[4] = yymsp[0].minor.yy64;
 }
-#line 1863 "xlat-parse.c"
+#line 1859 "xlat-parse.c"
         break;
-      case 91:
-#line 812 "xlat-parse.y"
+      case 88: /* special_args ::= exp COMMA exp COMMA TAG */
+#line 800 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT4;
-	yygotominor.yy57.args[0] = yymsp[-8].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[3] = 0;
-	yygotominor.yy57.args[4] = yymsp[0].minor.yy72;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT3;
+	yygotominor.yy123.args[0] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[2] = 0;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1875 "xlat-parse.c"
+#line 1871 "xlat-parse.c"
         break;
-      case 92:
-#line 821 "xlat-parse.y"
+      case 89: /* special_args ::= exp COMMA exp COMMA TAG COMMA exp */
+#line 809 "xlat-parse.y"
 {
-	yygotominor.yy57.addflags = SIMPLE_HASTAGAT5;
-	yygotominor.yy57.args[0] = yymsp[-8].minor.yy72;
-	yygotominor.yy57.args[1] = yymsp[-6].minor.yy72;
-	yygotominor.yy57.args[2] = yymsp[-4].minor.yy72;
-	yygotominor.yy57.args[3] = yymsp[-2].minor.yy72;
-	yygotominor.yy57.args[4] = 0;
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT3;
+	yygotominor.yy123.args[0] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[2] = 0;
+	yygotominor.yy123.args[3] = yymsp[0].minor.yy64;
+	yygotominor.yy123.args[4] = 0;
 }
-#line 1887 "xlat-parse.c"
+#line 1883 "xlat-parse.c"
+        break;
+      case 90: /* special_args ::= exp COMMA exp COMMA TAG COMMA exp COMMA exp */
+#line 818 "xlat-parse.y"
+{
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT3;
+	yygotominor.yy123.args[0] = yymsp[-8].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[2] = 0;
+	yygotominor.yy123.args[3] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[4] = yymsp[0].minor.yy64;
+}
+#line 1895 "xlat-parse.c"
+        break;
+      case 91: /* special_args ::= exp COMMA exp COMMA exp COMMA TAG */
+#line 827 "xlat-parse.y"
+{
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT4;
+	yygotominor.yy123.args[0] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = 0;
+}
+#line 1907 "xlat-parse.c"
+        break;
+      case 92: /* special_args ::= exp COMMA exp COMMA exp COMMA TAG COMMA exp */
+#line 836 "xlat-parse.y"
+{
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT4;
+	yygotominor.yy123.args[0] = yymsp[-8].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[3] = 0;
+	yygotominor.yy123.args[4] = yymsp[0].minor.yy64;
+}
+#line 1919 "xlat-parse.c"
+        break;
+      case 93: /* special_args ::= exp COMMA exp COMMA exp COMMA exp COMMA TAG */
+#line 845 "xlat-parse.y"
+{
+	yygotominor.yy123.addflags = SIMPLE_HASTAGAT5;
+	yygotominor.yy123.args[0] = yymsp[-8].minor.yy64;
+	yygotominor.yy123.args[1] = yymsp[-6].minor.yy64;
+	yygotominor.yy123.args[2] = yymsp[-4].minor.yy64;
+	yygotominor.yy123.args[3] = yymsp[-2].minor.yy64;
+	yygotominor.yy123.args[4] = 0;
+}
+#line 1931 "xlat-parse.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -1941,9 +1985,9 @@ static void yy_syntax_error(
 ){
   ParseARG_FETCH;
 #define TOKEN (yyminor.yy0)
-#line 322 "xlat-parse.y"
+#line 345 "xlat-parse.y"
 yyerror("syntax error");
-#line 1947 "xlat-parse.c"
+#line 1991 "xlat-parse.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -2030,14 +2074,6 @@ void Parse(
       yy_shift(yypParser,yyact,yymajor,&yyminorunion);
       yypParser->yyerrcnt--;
       yymajor = YYNOCODE;
-	  /* [RH] If we can reduce the stack now, do it. Otherwise, constructs */
-	  /* like "include <somefile>" won't work because the next token after */
-	  /* the include will be shifted before the include is reduced. Then the */
-	  /* parser will act as if that token had been the first one in the */
-	  /* included file. */
-      while( yypParser->yyidx>= 0 && (yyact = yy_find_shift_action(yypParser,YYNOCODE)) < YYNSTATE + YYNRULE ){
-        yy_reduce(yypParser,yyact-YYNSTATE);
-      }
     }else if( yyact < YYNSTATE + YYNRULE ){
       yy_reduce(yypParser,yyact-YYNSTATE);
     }else{

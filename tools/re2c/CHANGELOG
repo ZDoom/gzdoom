@@ -1,3 +1,57 @@
+Version 0.12.3 (2007-08-24)
+---------------------------
+- Fixed issue with some compilers.
+- Fixed #1776177 Build on AIX.
+- Fixed #1743180 fwrite with 0 length crashes on OS X.
+
+Version 0.12.2 (2007-06-26)
+---------------------------
+- Fixed #1743180 fwrite with 0 length crashes on OS X.
+
+Version 0.12.1 (2007-05-23)
+---------------------------
+- Fixed #1711240 problem with '"' and 7F on EBCDIC plattforms.
+
+Version 0.12.0 (2007-05-01)
+---------------------------
+- Re-release of 0.11.3 as new stable branch.
+- Fixed issue with short form of switches and parameter if not first switch.
+- Fixed #1708378 segfault in actions.cc.
+
+Version 0.11.3 (2007-04-01)
+---------------------------
+- Added support for underscores in named definitions.
+- Added new option --no-generation-date.
+- Fixed issue with long form of switches.
+
+Version 0.11.2 (2007-03-01)
+---------------------------
+- Added inplace configuration 're2c:yyfill:parameter'.
+- Added inplace configuration 're2c:yych:conversion'.
+- Fixed -u switch code generation.
+- Added ability to avoid defines and overwrite variable and label names.
+
+Version 0.11.1 (2007-02-20)
+---------------------------
+- Applied #1647875 add const to yybm vector.
+
+Version 0.11.0 (2007-01-01)
+---------------------------
+- Added -u switch to support unicode.
+
+Version 0.10.8 (2007-04-01)
+---------------------------
+- Fixed issue with long form of switches.
+
+Version 0.10.7 (2007-02-20)
+---------------------------
+- Applied #1647875 add const to yybm vector.
+
+Version 0.10.6 (2006-08-05)
+---------------------------
+- Fixed #1529351 Segv bug on unterminated code blocks.
+- Fixed #1528269 Invalid code generation.
+
 Version 0.10.5 (2006-06-11)
 ---------------------------
 - Fixed long form of -1 switch to --single-pass as noted in man page and help.
@@ -20,7 +74,7 @@ Version 0.10.2 (2006-05-01)
 - Fixed -i switch.
 - Added configuration 'yyfill:enable' to allow suppression of YYFILL() blocks.
 - Added tutorial like lessons to re2c.
-- Added /*!ignore!re2c */ to support documenting of re2c source.
+- Added /*!ignore:re2c */ to support documenting of re2c source.
 - Fixed issue with multiline re2c comments (/*!max:re2c ... */ and alike).
 - Fixed generation of YYDEBUG() when using -d switch.
 - Added /*!getstate:re2c */ which triggers generation of the YYGETSTATE() block.

@@ -386,7 +386,7 @@ void CreatePath(const char * fn)
 
 int strbin (char *str)
 {
-	char *start;
+	char *start = str;
 	char *p = str, c;
 	int i;
 

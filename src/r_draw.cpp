@@ -2355,7 +2355,7 @@ bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)())
 //
 //==========================================================================
 
-bool FRenderStyle::IsVisible(fixed_t alpha) const
+bool FRenderStyle::IsVisible(fixed_t alpha) const throw()
 {
 	if (BlendOp == STYLEOP_None)
 	{

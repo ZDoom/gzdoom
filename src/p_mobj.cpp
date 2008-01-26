@@ -281,6 +281,7 @@ void AActor::Serialize (FArchive &arc)
 		<< player
 		<< SpawnPoint[0] << SpawnPoint[1] << SpawnPoint[2]
 		<< SpawnAngle
+		<< skillrespawncount
 		<< tracer
 		<< floorclip
 		<< tid
@@ -2182,6 +2183,8 @@ void P_NightmareRespawn (AActor *mobj)
 	AActor *mo;
 	AActor *info = mobj->GetDefault();
 
+	mobj->skillrespawncount++;
+
 	// spawn the new monster (assume the spawn will be good)
 	if (info->flags & MF_SPAWNCEILING)
 		z = ONCEILINGZ;
@@ -2225,6 +2228,8 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->reactiontime = 18;
 	mo->CopyFriendliness (mobj, false);
 	mo->Translation = mobj->Translation;
+
+	mo->skillrespawncount = mobj->skillrespawncount;
 
 	// spawn a teleport fog at old spot because of removal of the body?
 	mo = Spawn ("TeleportFog", mobj->x, mobj->y, mobj->z, ALLOW_REPLACE);
@@ -2968,6 +2973,9 @@ void AActor::Tick ()
 			return;
 
 		if (pr_nightmarerespawn() > 4)
+			return;
+
+		if (G_SkillProperty (SKILLP_RespawnLimit) && (this)->skillrespawncount >= G_SkillProperty (SKILLP_RespawnLimit))
 			return;
 
 		P_NightmareRespawn (this);

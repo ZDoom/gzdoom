@@ -9,7 +9,7 @@ PRESSYN = "press y or n.";
 
 QUITMSG = "are you sure you want to\nquit this great game?";
 
-// QuitDoom1 messages
+// Quit Doom 1 messages
 QUITMSG1 = "please don't leave, there's more\ndemons to toast!";
 QUITMSG2 = "let's beat it -- this is turning\ninto a bloodbath!";
 QUITMSG3 = "i wouldn't leave if i were you.\ndos is much worse.";
@@ -18,7 +18,7 @@ QUITMSG5 = "don't leave yet -- there's a\ndemon around that corner!";
 QUITMSG6 = "ya know, next time you come in here\ni'm gonna toast ya.";
 QUITMSG7 = "go ahead and leave. see if i care.";
 
-// QuitDOOM II messages
+// Quit Doom II messages
 QUITMSG8 = "you want to quit?\nthen, thou hast lost an eighth!";
 QUITMSG9 = "don't go now, there's a \ndimensional shambler waiting\nat the dos prompt!";
 QUITMSG10 = "get outta here and go back\nto your boring programs.";
@@ -26,6 +26,16 @@ QUITMSG11 = "if i were your boss, i'd \n deathmatch ya in a minute!";
 QUITMSG12 = "look, bud. you leave now\nand you forfeit your body count!";
 QUITMSG13 = "just leave. when you come\nback, i'll be waiting with a bat.";
 QUITMSG14 = "you're lucky i don't smack\nyou for thinking about leaving.";
+
+// Quit Strife messages
+QUITMSG15 = "where are you going?! what about the rebellion?";
+QUITMSG16 = "carnage interrupted... what a tease!";
+QUITMSG17 = "but you're the hope -- my only chance!!";
+QUITMSG18 = "nobody walks out on blackbird.";
+QUITMSG19 = "i thought you were different...";
+QUITMSG20 = "fine! just kill and run!";
+QUITMSG21 = "you can quit...but you can't hide...";
+QUITMSG22 = "whaaa, what's the matter? mommy says dinnertime?";
 
 LOADNET = "you can't do load while in a net game!\n\npress a key.";
 QLOADNET = "you can't quickload during a netgame!\n\npress a key.";

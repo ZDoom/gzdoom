@@ -75,7 +75,7 @@
 // SAVESIG should match SAVEVER.
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 667
+#define MINSAVEVER 714
 
 #if SVN_REVISION_NUMBER == 0
 // This can happen if svnrevision is not updated properly (e.g. compiling while offline)

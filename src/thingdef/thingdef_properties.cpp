@@ -2306,6 +2306,34 @@ static void PlayerCrouchSprite (FScanner &sc, APlayerPawn *defaults, Baggage &ba
 
 //==========================================================================
 //
+//==========================================================================
+static void PlayerDmgScreenColor (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+{
+	defaults->HasDamageFade = true;
+
+	if (sc.CheckNumber ())
+	{
+		sc.MustGetNumber ();
+		defaults->RedDamageFade = clamp <float> (sc.Number, 0, 255);
+		sc.CheckString (",");
+		sc.MustGetNumber ();
+		defaults->GreenDamageFade = clamp <float> (sc.Number, 0, 255);
+		sc.CheckString (",");
+		sc.MustGetNumber ();
+		defaults->BlueDamageFade = clamp <float> (sc.Number, 0, 255);
+	}
+	else
+	{
+		sc.MustGetString ();
+		int c = V_GetColor (NULL, sc.String);
+		defaults->RedDamageFade = RPART (c);
+		defaults->GreenDamageFade = GPART (c);
+		defaults->BlueDamageFade = BPART (c);
+	}
+}
+
+//==========================================================================
+//
 // [GRB] Store start items in drop item list
 //
 //==========================================================================
@@ -2495,6 +2523,7 @@ static const ActorProps props[] =
 	{ "player.attackzoffset",		(apf)PlayerAttackZOffset,	RUNTIME_CLASS(APlayerPawn) },
 	{ "player.colorrange",			(apf)PlayerColorRange,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.crouchsprite",		(apf)PlayerCrouchSprite,	RUNTIME_CLASS(APlayerPawn) },
+	{ "player.damagescreencolor",	(apf)PlayerDmgScreenColor,	RUNTIME_CLASS(APlayerPawn) },
 	{ "player.displayname",			(apf)PlayerDisplayName,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.forwardmove",			(apf)PlayerForwardMove,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.healradiustype",		(apf)PlayerHealRadius,		RUNTIME_CLASS(APlayerPawn) },

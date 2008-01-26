@@ -1437,7 +1437,18 @@ void FBaseStatusBar::BlendView (float blend[4])
 		if (cnt > 228)
 			cnt = 228;
 
-		AddBlend (1.f, 0.f, 0.f, cnt / 255.f, blend);
+		APlayerPawn *mo = players[consoleplayer].mo;
+
+		// [CW] If no damage fade is specified, assume defaults.
+		if (!mo->HasDamageFade)
+		{
+			mo->HasDamageFade = true;
+			mo->RedDamageFade = 255;
+			mo->GreenDamageFade = 0;
+			mo->BlueDamageFade = 0;
+		}
+
+		AddBlend (mo->RedDamageFade / 255, mo->GreenDamageFade / 255, mo->BlueDamageFade / 255, cnt / 255.f, blend);
 	}
 
 	// Unlike Doom, I did not have any utility source to look at to find the

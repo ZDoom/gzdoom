@@ -118,6 +118,12 @@ public:
 	FNameNoInit	MorphWeapon;
 	fixed_t		AttackZOffset;			// attack height, relative to player center
 
+	// [CW] Fades for when you are being damaged.
+	bool		HasDamageFade;
+	float		RedDamageFade;
+	float		GreenDamageFade;
+	float		BlueDamageFade;
+
 	bool UpdateWaterLevel (fixed_t oldz, bool splash);
 	bool ResetAirSupply ();
 

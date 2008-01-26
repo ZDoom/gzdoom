@@ -115,6 +115,9 @@
 
 #define LEVEL_ALLOWRESPAWN			UCONST64(0x4000000000000)
 
+#define LEVEL_FORCETEAMPLAYON		UCONST64(0x8000000000000)
+#define LEVEL_FORCETEAMPLAYOFF		UCONST64(0x10000000000000)
+
 struct acsdefered_s;
 
 struct FSpecialAction
@@ -376,6 +379,7 @@ enum ESkillProperty
 	SKILLP_DamageFactor,
 	SKILLP_FastMonsters,
 	SKILLP_Respawn,
+	SKILLP_RespawnLimit,
 	SKILLP_Aggressiveness,
 	SKILLP_DisableCheats,
 	SKILLP_AutoUseHealth,
@@ -397,6 +401,7 @@ struct FSkillInfo
 	bool AutoUseHealth;
 	bool EasyBossBrain;
 	int RespawnCounter;
+	int RespawnLimit;
 	fixed_t Aggressiveness;
 	int SpawnFilter;
 	int ACSReturn;

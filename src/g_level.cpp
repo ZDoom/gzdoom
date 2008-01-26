@@ -305,6 +305,8 @@ static const char *MapInfoMapLevel[] =
 	"fogdensity",
 	"outsidefogdensity",
 	"skyfog",
+	"teamplayon",
+	"teamplayoff",
 	NULL
 };
 
@@ -450,6 +452,8 @@ MapHandlers[] =
 	{ MITYPE_INT,		lioffset(fogdensity), 0 },
 	{ MITYPE_INT,		lioffset(outsidefogdensity), 0 },
 	{ MITYPE_INT,		lioffset(skyfog), 0 },
+	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYON, ~LEVEL_FORCETEAMPLAYOFF },
+	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYOFF, ~LEVEL_FORCETEAMPLAYON },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -1978,6 +1982,14 @@ void G_DoLoadLevel (int position, bool autosave)
 	G_InitLevelLocals ();
 	StatusBar->DetachAllMessages ();
 
+	// Force 'teamplay' to 'true' if need be.
+	if (level.flags & LEVEL_FORCETEAMPLAYON)
+		teamplay = true;
+
+	// Force 'teamplay' to 'false' if need be.
+	if (level.flags & LEVEL_FORCETEAMPLAYOFF)
+		teamplay = false;
+
 	Printf (
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
@@ -3136,6 +3148,7 @@ static void ParseSkill (FScanner &sc)
 	skill.EasyBossBrain = false;
 	skill.AutoUseHealth = false;
 	skill.RespawnCounter = 0;
+	skill.RespawnLimit = 0;
 	skill.Aggressiveness = FRACUNIT;
 	skill.SpawnFilter = 0;
 	skill.ACSReturn = AllSkills.Size();
@@ -3184,6 +3197,11 @@ static void ParseSkill (FScanner &sc)
 		{
 			sc.MustGetFloat ();
 			skill.RespawnCounter = int(sc.Float*TICRATE);
+		}
+		else if (sc.Compare("respawnlimit"))
+		{
+			sc.MustGetNumber ();
+			skill.RespawnLimit = sc.Number;
 		}
 		else if (sc.Compare("Aggressiveness"))
 		{
@@ -3282,6 +3300,9 @@ int G_SkillProperty(ESkillProperty prop)
 				return TICRATE * (gameinfo.gametype != GAME_Strife ? 12 : 16);
 			return AllSkills[gameskill].RespawnCounter;
 
+		case SKILLP_RespawnLimit:
+			return AllSkills[gameskill].RespawnLimit;
+
 		case SKILLP_Aggressiveness:
 			return AllSkills[gameskill].Aggressiveness;
 
@@ -3324,6 +3345,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	AutoUseHealth = other.AutoUseHealth;
 	EasyBossBrain = other.EasyBossBrain;
 	RespawnCounter= other.RespawnCounter;
+	RespawnLimit= other.RespawnLimit;
 	Aggressiveness= other.Aggressiveness;
 	SpawnFilter = other.SpawnFilter;
 	ACSReturn = other.ACSReturn;

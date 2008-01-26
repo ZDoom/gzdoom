@@ -1,4 +1,9 @@
 January 26, 2008 (Changes by Graf Zahl)
+- Added Karate Chris's patch for teamplay MAPINFO option.
+- Added Karate Chris's patch for custom damage color per player class.
+- Added Karate Chris's patch for respawnlimit skill property.
+- Added Karate Chris's patch for Strife quit messages.
+- Fixed: P_RailAttack ignored the puff's damage type.
 - Fixed: ACS used incompatible values for APROP_RenderStyle. It needs to use
   the exact same values as previous ZDoom versions
 - Added a DECORATE 'stencilcolor' property so that the stencil render style

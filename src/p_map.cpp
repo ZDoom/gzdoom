@@ -3202,6 +3202,9 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	// Now hurt anything the trace hit
 	unsigned int i;
+	const PClass *puffclass = PClass::FindClass(puff);
+	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
+	FName damagetype = puffDefaults != NULL && puffDefaults->DamageType == NAME_None? FName(NAME_Railgun) : puffDefaults->DamageType;
 
 	for (i = 0; i < RailHits.Size (); i++)
 	{
@@ -3214,14 +3217,13 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
 			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
 		{
-			const PClass *puffclass = PClass::FindClass(puff);
 			if (puffclass != NULL) P_SpawnPuff (puffclass, x, y, z, source->angle - ANG180, 1, true);
 		}
 		else
 		{
 			P_SpawnBlood (x, y, z, source->angle - ANG180, damage, RailHits[i].HitActor);
 		}
-		P_DamageMobj (RailHits[i].HitActor, source, source, damage, NAME_Railgun);
+		P_DamageMobj (RailHits[i].HitActor, source, source, damage, damagetype);
 		P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, angle, pitch);
 	}
 

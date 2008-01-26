@@ -657,6 +657,7 @@ public:
 	} LastLook;
 	WORD			SpawnPoint[3]; 	// For nightmare respawn
 	WORD			SpawnAngle;
+	int				skillrespawncount;
 	AActor			*tracer;		// Thing being chased/attacked for tracers
 	AActor			*master;		// Thing which spawned this one (prevents mutual attacks)
 	fixed_t			floorclip;		// value to use for floor clipping

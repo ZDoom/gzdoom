@@ -1386,6 +1386,10 @@ bool V_DoModeSetup (int width, int height, int bits)
 	screen->SetFont (SmallFont);
 	screen->SetGamma (Gamma);
 
+	// Load fonts now so they can be packed into textures straight away,
+	// if D3DFB is being used for the display.
+	FFont::StaticPreloadFonts();
+
 	{
 		int ratio;
 		int cwidth;

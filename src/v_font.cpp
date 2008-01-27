@@ -741,6 +741,50 @@ int FFont::GetCharWidth (int code) const
 	return Chars[code - FirstChar].Pic->GetScaledWidth();
 }
 
+//==========================================================================
+//
+// FFont :: Preload
+//
+// Loads most of the 7-bit ASCII characters. In the case of D3DFB, this
+// means all the characters of a font have a better chance of being packed
+// into the same hardware texture.
+//
+//==========================================================================
+
+void FFont::Preload() const
+{
+	// First and last char are the same? Wait until it's actually needed
+	// since nothing is gained by preloading now.
+	if (FirstChar == LastChar)
+	{
+		return;
+	}
+	for (int i = MAX(FirstChar, 0x21); i < MIN(LastChar, 0x7e); ++i)
+	{
+		int foo;
+		FTexture *pic = GetChar(i, &foo);
+		if (pic != NULL)
+		{
+			pic->GetNative(false);
+		}
+	}
+}
+
+//==========================================================================
+//
+// FFont :: StaticPreloadFonts
+//
+// Preloads all the defined fonts.
+//
+//==========================================================================
+
+void FFont::StaticPreloadFonts()
+{
+	for (FFont *font = FirstFont; font != NULL; font = font->Next)
+	{
+		font->Preload();
+	}
+}
 
 //==========================================================================
 //

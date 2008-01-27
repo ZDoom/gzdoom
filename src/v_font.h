@@ -91,8 +91,10 @@ public:
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
 	int GetDefaultKerning () const { return GlobalKerning; }
+	void Preload() const;
 
 	static FFont *FindFont (const char *fontname);
+	static void StaticPreloadFonts();
 
 	// Return width of string in pixels (unscaled)
 	int StringWidth (const BYTE *str) const;

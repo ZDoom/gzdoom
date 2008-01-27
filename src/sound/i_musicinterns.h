@@ -248,6 +248,7 @@ public:
 	void Stop ();
 	bool IsPlaying ();
 	bool IsValid () const { return CommandLine.Len() > 0; }
+	void SetVolume (float volume);
 
 protected:
 	void PrepTimidity ();

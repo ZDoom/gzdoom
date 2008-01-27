@@ -222,6 +222,18 @@ int FTextureManager::GetTexture (const char *name, int usetype, BITFIELD flags)
 
 //==========================================================================
 //
+// FTextureManager :: FindTexture
+//
+//==========================================================================
+
+FTexture *FTextureManager::FindTexture(const char *texname, int usetype, BITFIELD flags)
+{
+	int texnum = CheckForTexture (texname, usetype, flags);
+	return texnum <= 0? NULL : Textures[texnum].Texture;
+}
+
+//==========================================================================
+//
 // FTextureManager :: WriteTexture
 //
 //==========================================================================
@@ -627,7 +639,8 @@ void FTextureManager::AddPatches (int lumpnum)
 
 //==========================================================================
 //
-// R_InitTextures
+// FTextureManager :: LoadTexturesX
+//
 // Initializes the texture list with the textures from the world map.
 //
 //==========================================================================
@@ -650,7 +663,7 @@ void FTextureManager::LoadTextureX(int wadnum)
 
 	int texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, wadnum);
 	int texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, wadnum);
-	TexMan.AddTexturesLumps (texlump1, texlump2, pnames);
+	AddTexturesLumps (texlump1, texlump2, pnames);
 }
 
 //==========================================================================

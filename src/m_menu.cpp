@@ -1964,10 +1964,10 @@ void M_QuitGame (int choice)
 	//  or one at random, between 1 and maximum number.
 	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
-		int quitmsg = gametic % (gameinfo.gametype == GAME_Doom ? NUM_QUITDOOMMESSAGES : NUM_QUITSTRIFEMESSAGES);
-		if (quitmsg != 0)
+		int quitmsg = gametic % (gameinfo.gametype == GAME_Doom ? NUM_QUITDOOMMESSAGES : NUM_QUITSTRIFEMESSAGES - 1);
+		if (quitmsg != 0 || gameinfo.gametype == GAME_Strife)
 		{
-			EndString.Format("QUITMSG%d", quitmsg + (gameinfo.gametype == GAME_Doom ? 0 : NUM_QUITDOOMMESSAGES));
+			EndString.Format("QUITMSG%d", quitmsg + (gameinfo.gametype == GAME_Doom ? 0 : NUM_QUITDOOMMESSAGES + 1));
 			EndString.Format("%s\n\n%s", GStrings(EndString), GStrings("DOSY"));
 		}
 		else

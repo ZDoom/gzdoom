@@ -53,6 +53,12 @@
 
 
 
+//==========================================================================
+//
+// FMultiPatchTexture :: FMultiPatchTexture
+//
+//==========================================================================
+
 FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife)
 : Pixels (0), Spans(0), Parts(0), bRedirect(false)
 {
@@ -155,6 +161,12 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	}
 }
 
+//==========================================================================
+//
+// FMultiPatchTexture :: ~FMultiPatchTexture
+//
+//==========================================================================
+
 FMultiPatchTexture::~FMultiPatchTexture ()
 {
 	Unload ();
@@ -170,6 +182,12 @@ FMultiPatchTexture::~FMultiPatchTexture ()
 	}
 }
 
+//==========================================================================
+//
+// FMultiPatchTexture :: SetFrontSkyLayer
+//
+//==========================================================================
+
 void FMultiPatchTexture::SetFrontSkyLayer ()
 {
 	for (int i = 0; i < NumParts; ++i)
@@ -179,6 +197,12 @@ void FMultiPatchTexture::SetFrontSkyLayer ()
 	bNoRemap0 = true;
 }
 
+//==========================================================================
+//
+// FMultiPatchTexture :: Unload
+//
+//==========================================================================
+
 void FMultiPatchTexture::Unload ()
 {
 	if (Pixels != NULL)
@@ -187,6 +211,12 @@ void FMultiPatchTexture::Unload ()
 		Pixels = NULL;
 	}
 }
+
+//==========================================================================
+//
+// FMultiPatchTexture :: GetPixels
+//
+//==========================================================================
 
 const BYTE *FMultiPatchTexture::GetPixels ()
 {
@@ -200,6 +230,12 @@ const BYTE *FMultiPatchTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+// FMultiPatchTexture :: GetColumn
+//
+//==========================================================================
 
 const BYTE *FMultiPatchTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -229,6 +265,12 @@ const BYTE *FMultiPatchTexture::GetColumn (unsigned int column, const Span **spa
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+// FMultiPatchTexture :: MakeTexture
+//
+//==========================================================================
+
 void FMultiPatchTexture::MakeTexture ()
 {
 	// Add a little extra space at the end if the texture's height is not
@@ -249,6 +291,12 @@ void FMultiPatchTexture::MakeTexture ()
 		Spans = CreateSpans (Pixels);
 	}
 }
+
+//==========================================================================
+//
+// FMultiPatchTexture :: CheckForHacks
+//
+//==========================================================================
 
 void FMultiPatchTexture::CheckForHacks ()
 {
@@ -393,6 +441,14 @@ int FMultiPatchTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf
 	return retv;
 }
 
+//==========================================================================
+//
+// FMultiPatchTexture :: GetFormat
+//
+// only returns 'paletted' if all patches use the base palette.
+//
+//==========================================================================
+
 FTextureFormat FMultiPatchTexture::GetFormat() 
 { 
 	if (NumParts == 1) return Parts[0].Texture->GetFormat();
@@ -404,6 +460,12 @@ FTextureFormat FMultiPatchTexture::GetFormat()
 	return TEX_Pal;
 }
 
+
+//==========================================================================
+//
+// FTextureManager :: AddTexturesLump
+//
+//==========================================================================
 
 void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int patcheslump, int firstdup, bool texture1)
 {
@@ -545,6 +607,12 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int p
 	}
 }
 
+
+//==========================================================================
+//
+// FTextureManager :: AddTexturesLumps
+//
+//==========================================================================
 
 void FTextureManager::AddTexturesLumps (int lump1, int lump2, int patcheslump)
 {

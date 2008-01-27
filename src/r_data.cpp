@@ -1,61 +1,50 @@
-// Emacs style mode select	 -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log:$
-//
-// Revision 1.3  1997/01/29 20:10
-// DESCRIPTION:
-//		Preparation of data for rendering,
-//		generation of lookups, caching, retrieval by name.
-//
-//-----------------------------------------------------------------------------
-
-#include <stddef.h>
-#include <malloc.h>
-#include <stdio.h>
+/*
+** r_data.cpp
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2008 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+**
+*/
 
 #include "i_system.h"
 #include "m_alloc.h"
-
-#include "m_swap.h"
-#include "m_png.h"
-
 #include "w_wad.h"
-
 #include "doomdef.h"
 #include "r_local.h"
-#include "p_local.h"
-
-#include "doomstat.h"
 #include "r_sky.h"
-
 #include "c_dispatch.h"
-#include "c_console.h"
 #include "r_data.h"
 #include "sc_man.h"
-
-#include "v_palette.h"
-#include "v_video.h"
 #include "v_text.h"
-#include "gi.h"
-#include "cmdlib.h"
-#include "templates.h"
 #include "st_start.h"
 
-static void R_InitPatches ();
+
 static int R_CountGroup (const char *start, const char *end);
 static int R_CountTexturesX ();
 static int R_CountLumpTextures (int lumpnum);
@@ -63,30 +52,21 @@ static int R_CountLumpTextures (int lumpnum);
 extern void R_DeinitBuildTiles();
 extern int R_CountBuildTiles();
 
-
-
-//
-// Graphics.
-// DOOM graphics for walls and sprites
-// is stored in vertical runs of opaque pixels (posts).
-// A column is composed of zero or more posts,
-// a patch or sprite is composed of zero or more columns.
-// 
-
-// for global animation
-bool*			flatwarp;
-BYTE**			warpedflats;
-int*			flatwarpedwhen;
-
-
-static struct FakeCmap {
+static struct FakeCmap 
+{
 	char name[8];
 	PalEntry blend;
 } *fakecmaps;
+
 size_t numfakecmaps;
 int firstfakecmap;
 BYTE *realcolormaps;
-int lastusedcolormap;
+
+//==========================================================================
+//
+// R_SetDefaultColormap
+//
+//==========================================================================
 
 void R_SetDefaultColormap (const char *name)
 {
@@ -144,9 +124,12 @@ void R_SetDefaultColormap (const char *name)
 	}
 }
 
+//==========================================================================
 //
 // R_InitColormaps
 //
+//==========================================================================
+
 void R_InitColormaps ()
 {
 	// [RH] Try and convert BOOM colormaps into blending values.
@@ -213,6 +196,12 @@ void R_InitColormaps ()
 	NormalLight.Maps = realcolormaps;
 }
 
+//==========================================================================
+//
+// R_DeinitColormaps
+//
+//==========================================================================
+
 void R_DeinitColormaps ()
 {
 	if (fakecmaps != NULL)
@@ -227,9 +216,14 @@ void R_DeinitColormaps ()
 	}
 }
 
+//==========================================================================
+//
 // [RH] Returns an index into realcolormaps. Multiply it by
 //		256*NUMCOLORMAPS to find the start of the colormap to use.
 //		WATERMAP is an exception and returns a blending value instead.
+//
+//==========================================================================
+
 DWORD R_ColormapNumForName (const char *name)
 {
 	int lump;
@@ -246,17 +240,26 @@ DWORD R_ColormapNumForName (const char *name)
 	return blend;
 }
 
+//==========================================================================
+//
+// R_BlendForColormap
+//
+//==========================================================================
+
 DWORD R_BlendForColormap (DWORD map)
 {
 	return APART(map) ? map : 
 		   map < numfakecmaps ? DWORD(fakecmaps[map].blend) : 0;
 }
 
+//==========================================================================
 //
 // R_InitData
 // Locates all the lumps that will be used by all views
 // Must be called after W_Init.
 //
+//==========================================================================
+
 void R_InitData ()
 {
 	FTexture::InitGrayMap();
@@ -322,33 +325,30 @@ static int R_CountGroup (const char *start, const char *end)
 
 static int R_CountTexturesX ()
 {
-	int lastlump = 0, lump;
-	int texlump1 = -1, texlump2 = -1, texlump1a, texlump2a;
 	int count = 0;
-	int pfile = -1;
-
-	while ((lump = Wads.FindLump ("PNAMES", &lastlump)) != -1)
+	int wadcount = Wads.GetNumWads();
+	for (int wadnum = 0; wadnum < wadcount; wadnum++)
 	{
-		pfile = Wads.GetLumpFile (lump);
-		count += R_CountLumpTextures (lump);
-		texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, pfile);
-		texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, pfile);
+		// Use the most recent PNAMES for this WAD.
+		// Multiple PNAMES in a WAD will be ignored.
+		int pnames = Wads.CheckNumForName("PNAMES", ns_global, wadnum, false);
+
+		// should never happen except for zdoom.pk3
+		if (pnames < 0) continue;
+
+		// Only count the patches if the PNAMES come from the current file
+		// Otherwise they have already been counted.
+		if (Wads.GetLumpFile(pnames) == wadnum) 
+		{
+			count += R_CountLumpTextures (pnames);
+		}
+
+		int texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, wadnum);
+		int texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, wadnum);
+
 		count += R_CountLumpTextures (texlump1) - 1;
 		count += R_CountLumpTextures (texlump2) - 1;
 	}
-	texlump1a = Wads.CheckNumForName ("TEXTURE1");
-	texlump2a = Wads.CheckNumForName ("TEXTURE2");
-	if (texlump1a != -1 && (texlump1a == texlump1 || Wads.GetLumpFile (texlump1a) <= pfile))
-	{
-		texlump1a = -1;
-	}
-	if (texlump2a != -1 && (texlump2a == texlump2 || Wads.GetLumpFile (texlump2a) <= pfile))
-	{
-		texlump2a = -1;
-	}
-	count += R_CountLumpTextures (texlump1a) - 1;
-	count += R_CountLumpTextures (texlump2a) - 1;
-
 	return count;
 }
 
@@ -502,11 +502,23 @@ void R_PrecacheLevel (void)
 	delete[] hitlist;
 }
 
+//==========================================================================
+//
+// R_GetColumn
+//
+//==========================================================================
+
 const BYTE *R_GetColumn (FTexture *tex, int col)
 {
 	return tex->GetColumn (col, NULL);
 }
 
+
+//==========================================================================
+//
+// Debug stuff
+//
+//==========================================================================
 
 #ifdef _DEBUG
 // Prints the spans generated for a texture. Only needed for debugging.

@@ -238,7 +238,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		DTA_CleanNoMove, true, TAG_DONE);
 
 	x = (SCREENWIDTH >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
-	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 3.5 : y = SCREENHEIGHT / 10;
+	gamestate == GS_INTERMISSION ? y = SCREENHEIGHT * 2 / 7 : y = SCREENHEIGHT / 10;
 
 	if (teamplay && deathmatch)
 		y += SCREENWIDTH / 32;

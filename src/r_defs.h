@@ -764,11 +764,7 @@ public:
 		int texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
 		return Textures[texnum].Texture;
 	}
-	FTexture *FindTexture(const char *texname, int usetype = FTexture::TEX_MiscPatch, BITFIELD flags = TEXMAN_TryAny)
-	{
-		int texnum = GetTexture (texname, usetype, flags);
-		return Textures[texnum].Texture;
-	}
+	FTexture *FindTexture(const char *texname, int usetype = FTexture::TEX_MiscPatch, BITFIELD flags = TEXMAN_TryAny);
 
 	// Get texture with translation
 	FTexture *operator() (int texnum)

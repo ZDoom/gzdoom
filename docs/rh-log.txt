@@ -1,3 +1,11 @@
+January 27, 2008 (Changes by Graf Zahl)
+- Changed license for r_data.cpp because there isn't anything of id's original
+  code left in that file.
+- Cleaned up r_data.cpp.
+- Fixed: FTextureManager::FindTexture should not print error messages if it
+  doesn't find the texture.
+- Added Karate Chris's patch for fixing Strife quit messages.
+
 January 26, 2008
 - Added preloading of fonts to reduce the chance that characters from a single
   font will require more than one hardware texture to display.

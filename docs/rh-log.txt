@@ -1,3 +1,8 @@
+January 26, 2008
+- Fixed: P_RailAttack() crashed if you didn't specify a puff for a rail.
+- Decided that allowing arbitrary alpha values for color remaps isn't so hot.
+  Changed it back the way it was.
+
 January 26, 2008 (Changes by Graf Zahl)
 - Got rid of most TexMan.AddPatch calls because they are no longer needed.
 - Got rid of R_InitPatches because the new texture init code needs to preload

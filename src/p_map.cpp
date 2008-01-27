@@ -3204,7 +3204,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 	unsigned int i;
 	const PClass *puffclass = PClass::FindClass(puff);
 	AActor *puffDefaults = puffclass == NULL? NULL : GetDefaultByType (puffclass);
-	FName damagetype = puffDefaults != NULL && puffDefaults->DamageType == NAME_None? FName(NAME_Railgun) : puffDefaults->DamageType;
+	FName damagetype = (puffDefaults == NULL || puffDefaults->DamageType == NAME_None) ? FName(NAME_Railgun) : puffDefaults->DamageType;
 
 	for (i = 0; i < RailHits.Size (); i++)
 	{

@@ -170,7 +170,6 @@ static void M_StartMessage (const char *string, void(*routine)(int), bool input)
 	   void M_PlayerSetup ();
 static void M_PlayerSetupTicker ();
 static void M_PlayerSetupDrawer ();
-static void M_RenderPlayerBackdrop ();
 static void M_EditPlayerName (int choice);
 static void M_ChangePlayerTeam (int choice);
 static void M_PlayerNameChanged (FSaveGameNode *dummy);
@@ -2118,7 +2117,7 @@ static void M_PlayerSetupDrawer ()
 				DTA_DestWidth, 72 * CleanXfac,
 				DTA_DestHeight, 80 * CleanYfac,
 				DTA_Translation, &FireRemap,
-				DTA_Masked, true,
+				DTA_Masked, false,
 				TAG_DONE);
 		}
 

@@ -114,7 +114,7 @@ CUSTOM_CVAR (Int, crosshair, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 			strcpy (name, "XHAIRS1");
 		}
 	}
-	CrosshairImage = TexMan[name];
+	CrosshairImage = TexMan[TexMan.AddPatch (name)];
 }
 
 CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);

@@ -1,4 +1,10 @@
 January 27, 2008 (Changes by Graf Zahl)
+- added a mastervolume CVAR for Timidity because for me its output is considerably 
+  louder than everything else.
+- reverted removal of AddPatch call in crosshair initialization.
+- Modified makewad.c so that it doesn't write file names with '[]^' to the 
+  dependency file. Apparenly make can't handle these names and an incomplete
+  list is still better than something that doesn't work at all.
 - Changed license for r_data.cpp because there isn't anything of id's original
   code left in that file.
 - Cleaned up r_data.cpp.

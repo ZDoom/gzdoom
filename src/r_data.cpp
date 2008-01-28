@@ -485,18 +485,7 @@ void R_PrecacheLevel (void)
 
 	for (i = TexMan.NumTextures() - 1; i >= 0; i--)
 	{
-		FTexture *tex = TexMan[i];
-		if (tex != NULL)
-		{
-			if (hitlist[i])
-			{
-				tex->GetPixels ();
-			}
-			else
-			{
-				tex->Unload ();
-			}
-		}
+		screen->PrecacheTexture(TexMan[i], !!hitlist[i]);
 	}
 
 	delete[] hitlist;

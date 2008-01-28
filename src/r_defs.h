@@ -844,8 +844,6 @@ private:
 	TArray<WORD> Translation;
 	WORD HashFirst[HASH_SIZE];
 	int DefaultTexture;
-
-	friend void R_InitData ();
 };
 
 extern FTextureManager TexMan;

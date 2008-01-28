@@ -1,4 +1,6 @@
 January 27, 2008 (Changes by Graf Zahl)
+- Added a PrecacheTexture virtual function to DFrameBuffer because it's the
+  renderer which should decide how to precache a texture.
 - Added SnowKate709's APROP_MaxHealth submission.
 - Fixed: FTexture::GetScaledWidth/Height always rounded down which could result in
   imprecisions (e.g. when scaling from 128 to 96.)

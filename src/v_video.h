@@ -49,6 +49,8 @@
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 extern int DisplayWidth, DisplayHeight, DisplayBits;
 
+bool V_DoModeSetup (int width, int height, int bits);
+
 class FTexture;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
@@ -374,6 +376,9 @@ public:
 	virtual void CopyPixelData(BYTE *buffer, int texpitch, int texheight, int originx, int originy,
 					  const BYTE *patch, int pix_width, int pix_height, 
 					  int step_x, int step_y, PalEntry * palette);
+
+	// Precaches or unloads a texture
+	virtual void PrecacheTexture(FTexture *tex, bool cache);
 
 	// Screen wiping
 	virtual bool WipeStartScreen(int type);

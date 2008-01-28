@@ -1318,6 +1318,27 @@ void DFrameBuffer::CopyPixelData(BYTE * buffer, int texpitch, int texheight, int
 
 //===========================================================================
 //
+// Texture precaching
+//
+//===========================================================================
+
+void DFrameBuffer::PrecacheTexture(FTexture *tex, bool cache)
+{
+	if (tex != NULL)
+	{
+		if (cache)
+		{
+			tex->GetPixels ();
+		}
+		else
+		{
+			tex->Unload ();
+		}
+	}
+}
+
+//===========================================================================
+//
 // Render the view 
 //
 //===========================================================================

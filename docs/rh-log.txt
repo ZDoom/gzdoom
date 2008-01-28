@@ -1,4 +1,7 @@
 January 27, 2008 (Changes by Graf Zahl)
+- Added SnowKate709's APROP_MaxHealth submission.
+- Fixed: FTexture::GetScaledWidth/Height always rounded down which could result in
+  imprecisions (e.g. when scaling from 128 to 96.)
 - added a mastervolume CVAR for Timidity because for me its output is considerably 
   louder than everything else.
 - reverted removal of AddPatch call in crosshair initialization.

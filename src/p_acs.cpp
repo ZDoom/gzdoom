@@ -2146,6 +2146,7 @@ void DLevelScript::DoSetFont (int fontnum)
 #define APROP_Frightened	14
 #define APROP_Gravity		15
 #define APROP_Friendly		16
+#define APROP_SpawnHealth   17
 #define APROP_SeeSound		5	// Sounds can only be set, not gotten
 #define APROP_AttackSound	6
 #define APROP_PainSound		7
@@ -2259,6 +2260,14 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 			actor->flags &= ~MF_FRIENDLY;
 		break;
 		
+
+	case APROP_SpawnHealth:
+		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+		{
+			static_cast<APlayerPawn *>(actor)->MaxHealth = value;
+		}
+		break;
+		
 	case APROP_Gravity:
 		actor->gravity = value;
 		break;
@@ -2327,6 +2336,15 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_ChaseGoal:	return !!(actor->flags5 & MF5_CHASEGOAL);
 	case APROP_Frightened:	return !!(actor->flags4 & MF4_FRIGHTENED);
 	case APROP_Friendly:	return !!(actor->flags & MF_FRIENDLY);
+	case APROP_SpawnHealth: if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+							{
+								return static_cast<APlayerPawn *>(actor)->MaxHealth;
+							}
+							else
+							{
+								return actor->GetDefault()->health;
+							}
+	
 	case APROP_JumpZ:		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
 								return static_cast<APlayerPawn *>(actor)->JumpZ;	// [GRB]

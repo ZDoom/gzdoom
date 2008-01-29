@@ -79,17 +79,19 @@ class Win32Video : public IVideo
  private:
 	struct ModeInfo
 	{
-		ModeInfo (int inX, int inY, int inBits, int inRealY)
+		ModeInfo (int inX, int inY, int inBits, int inRealY, int inDoubling)
 			: next (NULL),
 			  width (inX),
 			  height (inY),
 			  bits (inBits),
-			  realheight (inRealY)
+			  realheight (inRealY),
+			  doubling (inDoubling)
 		{}
 
 		ModeInfo *next;
 		int width, height, bits;
 		int realheight;
+		int doubling;
 	} *m_Modes;
 
 	ModeInfo *m_IteratorMode;
@@ -99,11 +101,12 @@ class Win32Video : public IVideo
 
 	bool m_CalledCoInitialize;
 
-	void AddMode (int x, int y, int bits, int baseHeight);
+	void AddMode (int x, int y, int bits, int baseHeight, int doubling);
 	void FreeModes ();
 
 	static HRESULT WINAPI EnumDDModesCB (LPDDSURFACEDESC desc, void *modes);
 	void AddD3DModes (D3DFORMAT format);
+	void AddLowResModes ();
 	void AddLetterboxModes ();
 
 	friend class DDrawFB;
@@ -296,7 +299,7 @@ private:
 	bool CreateVertexes();
 	void UploadPalette();
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
-	void CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, D3DCOLOR color0, D3DCOLOR color1) const;
+	void CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, bool can_double, D3DCOLOR color0, D3DCOLOR color1) const;
 	bool Reset();
 	IDirect3DTexture9 *GetCurrentScreen();
 	void ReleaseDefaultPoolItems();
@@ -343,6 +346,7 @@ private:
 	PalEntry FlashColor;
 	int FlashAmount;
 	int TrueHeight;
+	int PixelDoubling;
 	int LBOffsetI;
 	float LBOffset;
 	float Gamma;

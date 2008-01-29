@@ -257,6 +257,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 	InScene = false;
 	QuadExtra = new BufferedQuad[MAX_QUAD_BATCH];
 	Packs = NULL;
+	PixelDoubling = 0;
 
 	Gamma = 1.0;
 	FlashColor0 = 0;
@@ -284,6 +285,7 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 			if (mode->width == Width && mode->height == Height)
 			{
 				TrueHeight = mode->realheight;
+				PixelDoubling = mode->doubling;
 				break;
 			}
 		}
@@ -379,8 +381,8 @@ void D3DFB::FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, b
 	memset (pp, 0, sizeof(*pp));
 	pp->Windowed = !fullscreen;
 	pp->SwapEffect = D3DSWAPEFFECT_DISCARD;
-	pp->BackBufferWidth = Width;
-	pp->BackBufferHeight = TrueHeight;
+	pp->BackBufferWidth = Width << PixelDoubling;
+	pp->BackBufferHeight = TrueHeight << PixelDoubling;
 	pp->BackBufferFormat = fullscreen ? D3DFMT_A8R8G8B8 : D3DFMT_UNKNOWN;
 	pp->hDeviceWindow = Window;
 	pp->PresentationInterval = vsync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
@@ -632,7 +634,7 @@ bool D3DFB::CreateVertexes ()
 	return true;
 }
 
-void D3DFB::CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, D3DCOLOR color0, D3DCOLOR color1) const
+void D3DFB::CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, bool can_double, D3DCOLOR color0, D3DCOLOR color1) const
 {
 	float offset = OldRenderTarget != NULL ? 0 : LBOffset;
 	float top = offset - 0.5f;
@@ -654,9 +656,9 @@ void D3DFB::CalcFullscreenCoords (FBVERTEX verts[4], bool viewarea_only, D3DCOLO
 	else
 	{ // Calculate vertices for the whole screen
 		mxl = -0.5f;
-		mxr = float(Width) - 0.5f;
+		mxr = float(Width << (can_double ? PixelDoubling : 0)) - 0.5f;
 		myt = top;
-		myb = float(Height) + top;
+		myb = float(Height << (can_double ? PixelDoubling : 0)) + top;
 		tmxl = 0;
 		tmxr = texright;
 		tmyt = 0;
@@ -884,11 +886,11 @@ bool D3DFB::PaintToWindow ()
 
 void D3DFB::Draw3DPart(bool copy3d)
 {
-	RECT texrect = { 0, 0, Width, Height };
-	D3DLOCKED_RECT lockrect;
-
 	if (copy3d)
 	{
+		RECT texrect = { 0, 0, Width, Height };
+		D3DLOCKED_RECT lockrect;
+
 		if ((FBWidth == Width && FBHeight == Height &&
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, NULL, D3DLOCK_DISCARD))) ||
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, &texrect, 0)))
@@ -916,7 +918,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 	D3DDevice->BeginScene();
 	assert(OldRenderTarget == NULL);
 	if (TempRenderTexture != NULL &&
-		((Windowed && GammaFixerShader && TempRenderTexture != FinalWipeScreen) || GatheringWipeScreen))
+		((Windowed && GammaFixerShader && TempRenderTexture != FinalWipeScreen) || GatheringWipeScreen || PixelDoubling))
 	{
 		IDirect3DSurface9 *targetsurf;
 		if (SUCCEEDED(TempRenderTexture->GetSurfaceLevel(0, &targetsurf)))
@@ -942,7 +944,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 	if (copy3d)
 	{
 		FBVERTEX verts[4];
-		CalcFullscreenCoords(verts, test2d, FlashColor0, FlashColor1);
+		CalcFullscreenCoords(verts, test2d, false, FlashColor0, FlashColor1);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
 }
@@ -980,7 +982,7 @@ void D3DFB::DoWindowedGamma()
 	{
 		FBVERTEX verts[4];
 
-		CalcFullscreenCoords(verts, false, 0, 0xFFFFFFFF);
+		CalcFullscreenCoords(verts, false, true, 0, 0xFFFFFFFF);
 		D3DDevice->SetRenderTarget(0, OldRenderTarget);
 		D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 		SetTexture(0, TempRenderTexture);
@@ -1176,7 +1178,7 @@ IDirect3DTexture9 *D3DFB::GetCurrentScreen()
 	IDirect3DSurface9 *tsurf, *surf;
 	D3DSURFACE_DESC desc;
 
-	if (Windowed)
+	if (Windowed || PixelDoubling)
 	{
 		// The texture we read into must have the same pixel format as
 		// the TempRenderTexture.
@@ -1224,7 +1226,7 @@ IDirect3DTexture9 *D3DFB::GetCurrentScreen()
 		return NULL;
 	}
 
-	if (!Windowed)
+	if (!Windowed && !PixelDoubling)
 	{
 		if (FAILED(D3DDevice->GetFrontBufferData(0, surf)))
 		{

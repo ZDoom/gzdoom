@@ -185,6 +185,7 @@ bool Win32Video::InitD3D9 ()
 	FreeModes ();
 	AddD3DModes (D3DFMT_X8R8G8B8);
 	AddD3DModes (D3DFMT_R5G6B5);
+	AddLowResModes ();
 	AddLetterboxModes ();
 	if (m_Modes == NULL)
 	{ // Too bad. We didn't find any modes for D3D9. We probably won't find any
@@ -259,8 +260,8 @@ void Win32Video::InitDDraw ()
 	{
 		// Windows 95 will let us use Mode X. If we didn't find any linear
 		// modes in the loop above, add the Mode X modes here.
-		AddMode (320, 200, 8, 200);
-		AddMode (320, 240, 8, 240);
+		AddMode (320, 200, 8, 200, 0);
+		AddMode (320, 240, 8, 240, 0);
 	}
 	AddLetterboxModes ();
 }
@@ -318,7 +319,7 @@ void Win32Video::BlankForGDI ()
 
 HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
 {
-	((Win32Video *)data)->AddMode (desc->dwWidth, desc->dwHeight, 8, desc->dwHeight);
+	((Win32Video *)data)->AddMode (desc->dwWidth, desc->dwHeight, 8, desc->dwHeight, 0);
 	return DDENUMRET_OK;
 }
 
@@ -332,7 +333,51 @@ void Win32Video::AddD3DModes (D3DFORMAT format)
 	{
 		if (D3D_OK == D3D->EnumAdapterModes (D3DADAPTER_DEFAULT, format, i, &mode))
 		{
-			AddMode (mode.Width, mode.Height, 8, mode.Height);
+			AddMode (mode.Width, mode.Height, 8, mode.Height, 0);
+		}
+	}
+}
+
+//==========================================================================
+//
+// Win32Video :: AddLowResModes
+//
+// Recent NVidia drivers no longer support resolutions below 640x480, even
+// if you try to add them as a custom resolution. With D3DFB, pixel doubling
+// is quite easy to do and hardware-accelerated. If you have 1280x800, then
+// you can have 320x200, but don't be surprised if it shows up as widescreen
+// on a widescreen monitor, since that's what it is.
+//
+//==========================================================================
+
+void Win32Video::AddLowResModes()
+{
+	ModeInfo *mode, *nextmode;
+
+	for (mode = m_Modes; mode != NULL; mode = nextmode)
+	{
+		nextmode = mode->next;
+		if (mode->realheight == mode->height &&
+			mode->doubling == 0&&
+			mode->height >= 200*2 &&
+			mode->height <= 480*2 &&
+			mode->width >= 320*2 &&
+			mode->width <= 640*2)
+		{
+			AddMode (mode->width / 2, mode->height / 2, mode->bits, mode->height / 2, 1);
+		}
+	}
+	for (mode = m_Modes; mode != NULL; mode = nextmode)
+	{
+		nextmode = mode->next;
+		if (mode->realheight == mode->height &&
+			mode->doubling == 0&&
+			mode->height >= 200*4 &&
+			mode->height <= 480*4 &&
+			mode->width >= 320*4 &&
+			mode->width <= 640*4)
+		{
+			AddMode (mode->width / 4, mode->height / 4, mode->bits, mode->height / 4, 2);
 		}
 	}
 }
@@ -349,17 +394,17 @@ void Win32Video::AddLetterboxModes ()
 		{
 			if (mode->width >= 360)
 			{
-				AddMode (mode->width, mode->width * 9/16, mode->bits, mode->height);
+				AddMode (mode->width, mode->width * 9/16, mode->bits, mode->height, mode->doubling);
 			}
 			if (mode->width > 640)
 			{
-				AddMode (mode->width, mode->width * 10/16, mode->bits, mode->height);
+				AddMode (mode->width, mode->width * 10/16, mode->bits, mode->height, mode->doubling);
 			}
 		}
 	}
 }
 
-void Win32Video::AddMode (int x, int y, int bits, int y2)
+void Win32Video::AddMode (int x, int y, int bits, int y2, int doubling)
 {
 	// Reject modes that do not meet certain criteria.
 	if ((x & 7) != 0 ||
@@ -393,7 +438,7 @@ void Win32Video::AddMode (int x, int y, int bits, int y2)
 		return;
 	}
 
-	*probep = new ModeInfo (x, y, bits, y2);
+	*probep = new ModeInfo (x, y, bits, y2, doubling);
 	(*probep)->next = probe;
 }
 

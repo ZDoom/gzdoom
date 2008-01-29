@@ -688,11 +688,11 @@ public:
 	int GetWidth () { return Width; }
 	int GetHeight () { return Height; }
 
-	int GetScaledWidth () { return ((Width<<16) + (xScale>>1)) / xScale; }
-	int GetScaledHeight () { return ((Height<<16) + (yScale>>1)) / yScale; }
+	int GetScaledWidth () { int foo = (Width << 17) / xScale; return (foo >> 1) + (foo & 1); }
+	int GetScaledHeight () { int foo = (Height << 17) / yScale; return (foo >> 1) + (foo & 1); }
 
-	int GetScaledLeftOffset () { return ((LeftOffset<<16) + (xScale>>1)) / xScale; }
-	int GetScaledTopOffset () { return ((TopOffset<<16) + (yScale>>1)) / yScale; }
+	int GetScaledLeftOffset () { int foo = (LeftOffset << 17) / xScale; return (foo >> 1) + (foo & 1); }
+	int GetScaledTopOffset () { int foo = (TopOffset << 17) / yScale; return (foo >> 1) + (foo & 1); }
 
 	virtual void SetFrontSkyLayer();
 

@@ -535,7 +535,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_RenderStyle:
-			parms->style = ERenderStyle(va_arg (tags, int));
+			parms->style = va_arg (tags, FRenderStyle);
 			break;
 		}
 		tag = va_arg (tags, DWORD);

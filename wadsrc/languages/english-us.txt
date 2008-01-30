@@ -29,7 +29,7 @@ QUITMSG14 = "you're lucky i don't smack\nyou for thinking about leaving.";
 
 // Quit Strife messages
 QUITMSG15 = "where are you going?!\nwhat about the rebellion?";
-QUITMSG16 = "carnage interrupted...\nwhat a tease!";
+QUITMSG16 = "carnage interruptus...\nwhat a tease!";
 QUITMSG17 = "but you're the hope\n-- my only chance!!";
 QUITMSG18 = "nobody walks out on blackbird.";
 QUITMSG19 = "i thought you were different...";

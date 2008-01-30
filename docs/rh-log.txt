@@ -1,3 +1,7 @@
+January 30, 2008 (Changes by Graf Zahl)
+- Added support for AttackZOffset to P_RailAttack.
+- Fixed: ParseDrawTextureTags read DTA_RenderStyle as ERenderStyle, not FRenderStyle.
+
 January 29, 2008
 - Added pixel-doubled and -quadrupled screen modes to D3DFB so that users with
   recent NVidia drivers can still use resolutions below 640x480, since NVidia

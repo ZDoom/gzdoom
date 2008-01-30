@@ -3137,7 +3137,17 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 
 	x1 = source->x;
 	y1 = source->y;
-	shootz = source->z - source->floorclip + (source->height >> 1) + 8*FRACUNIT;
+
+	shootz = source->z - source->floorclip + (source->height >> 1);
+
+	if (source->player != NULL)
+	{
+		shootz += FixedMul (source->player->mo->AttackZOffset, source->player->crouchfactor);
+	}
+	else
+	{
+		shootz += 8*FRACUNIT;
+	}
 
 	angle = (source->angle - ANG90) >> ANGLETOFINESHIFT;
 	x1 += offset*finecosine[angle];

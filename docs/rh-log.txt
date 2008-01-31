@@ -1,4 +1,5 @@
 January 31, 2008 (Changes by Graf Zahl)
+- Fixed: The STYLEF_Alpha1 flag intended for STYLE_Normal was set for STYLE_Fuzzy.
 - Fixed: The render style table for old decorations was missing STYLE_Stencil so
   STYLE_Translucent was mapped incorrectly.
 

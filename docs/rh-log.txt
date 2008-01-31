@@ -1,3 +1,7 @@
+January 31, 2008 (Changes by Graf Zahl)
+- Fixed: The render style table for old decorations was missing STYLE_Stencil so
+  STYLE_Translucent was mapped incorrectly.
+
 January 30, 2008 (Changes by Graf Zahl)
 - Added support for AttackZOffset to P_RailAttack.
 - Fixed: ParseDrawTextureTags read DTA_RenderStyle as ERenderStyle, not FRenderStyle.

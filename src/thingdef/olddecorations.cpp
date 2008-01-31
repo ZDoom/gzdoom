@@ -122,6 +122,7 @@ static const char *RenderStyles[] =
 	"STYLE_Fuzzy",
 	"STYLE_SoulTrans",
 	"STYLE_OptFuzzy",
+	"STYLE_Stencil",
 	"STYLE_Translucent",
 	"STYLE_Add",
 	//"STYLE_Shaded",

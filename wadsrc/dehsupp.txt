@@ -803,7 +803,7 @@ RenderStyles
 	2, STYLE_Fuzzy,
 	3, STYLE_SoulTrans,
 	4, STYLE_OptFuzzy,
-	5, STYLE_Shaded,
-	64, STYLE_Translucent,
-	65, STYLE_Add
+	8, STYLE_Shaded,
+	6, STYLE_Translucent,
+	7, STYLE_Add
 };

@@ -1,3 +1,15 @@
+February 2, 2008
+- Removed support for numeric flags from sbarinfo's drawmugshot command since
+  it was declared unrecommended and deprecated.
+- Added Blzut3's sbarinfo update #10:
+  * Fixed: drawmugshot now adjust to the player's max health like it should.
+  * drawgem can now accept negative paddings.
+  * Added: You can now specify a border on drawbar which will reserve x
+    amount of pixels on each side of the fg image.
+  * Added: weaponammo command which allows for determining what kind of ammo
+    the current weapon uses.
+  * Added: Drawkeybar to SBarInfo
+
 January 31, 2008 (Changes by Graf Zahl)
 - Fixed: The STYLEF_Alpha1 flag intended for STYLE_Normal was set for STYLE_Fuzzy.
 - Fixed: The render style table for old decorations was missing STYLE_Stencil so

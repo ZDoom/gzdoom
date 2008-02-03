@@ -55,6 +55,7 @@ struct SBarInfo
 	void ParseSBarInfo(int lump);
 	void ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block);
 	void getCoordinates(FScanner &sc, SBarInfoCommand &cmd); //retrieves the next two arguments as x and y.
+	int getSignedInteger(FScanner &sc); //returns a signed integer.
 	int newImage(const char* patchname);
 	void Init();
 	EColorRange GetTranslation(FScanner &sc, char* translation);

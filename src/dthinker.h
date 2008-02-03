@@ -49,7 +49,7 @@ class FThinkerIterator;
 enum { MAX_STATNUM = 127 };
 
 // Doubly linked list of thinkers
-class DThinker : public DObject, protected Node
+class DThinker : public DObject, public Node
 {
 	DECLARE_CLASS (DThinker, DObject)
 

@@ -118,6 +118,18 @@ enum //drawmugshot flags
 	DRAWMUGSHOT_ANIMATEDGODMODE = 2,
 };
 
+enum //drawkeybar flags
+{
+	DRAWKEYBAR_VERTICAL = 1,
+};
+
+enum //event flags
+{
+	SBARINFOEVENT_NOT = 1,
+	SBARINFOEVENT_OR = 2,
+	SBARINFOEVENT_AND = 4,
+};
+
 static const char *SBarInfoTopLevel[] =
 {
 	"base",
@@ -166,8 +178,10 @@ static const char *SBarInfoRoutineLevel[] =
 	"drawgem",
 	"drawshader",
 	"drawstring",
+	"drawkeybar",
 	"gamemode",
 	"playerclass",
+	"weaponammo", //event
 	NULL
 };
 enum
@@ -182,8 +196,10 @@ enum
 	SBARINFO_DRAWGEM,
 	SBARINFO_DRAWSHADER,
 	SBARINFO_DRAWSTRING,
+	SBARINFO_DRAWKEYBAR,
 	SBARINFO_GAMEMODE,
 	SBARINFO_PLAYERCLASS,
+	SBARINFO_WEAPONAMMO,
 };
 
 void FreeSBarInfoScript()
@@ -425,7 +441,7 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.setString(sc, sc.String, 0);
 						cmd.flags = DRAWNUMBER_AMMO;
 						const PClass* ammo = PClass::FindClass(sc.String);
-						if(ammo == NULL || !PClass::FindClass("Ammo")->IsAncestorOf(ammo)) //must be a kind of ammo
+						if(ammo == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(ammo)) //must be a kind of ammo
 						{
 							sc.ScriptError("'%s' is not a type of ammo.", sc.String);
 						}
@@ -436,7 +452,7 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.setString(sc, sc.String, 0);
 						cmd.flags = DRAWNUMBER_AMMOCAPACITY;
 						const PClass* ammo = PClass::FindClass(sc.String);
-						if(ammo == NULL || !PClass::FindClass("Ammo")->IsAncestorOf(ammo)) //must be a kind of ammo
+						if(ammo == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(ammo)) //must be a kind of ammo
 						{
 							sc.ScriptError("'%s' is not a type of ammo.", sc.String);
 						}
@@ -502,7 +518,7 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				sc.MustGetToken(',');
 				sc.MustGetToken(TK_IntConst); //accuracy
 				if(sc.Number < 1 || sc.Number > 9)
-					sc.ScriptError("Exspected a number between 1 and 9, got %d instead.", sc.Number);
+					sc.ScriptError("Expected a number between 1 and 9, got %d instead.", sc.Number);
 				cmd.special = sc.Number;
 				sc.MustGetToken(',');
 				while(sc.CheckToken(TK_Identifier))
@@ -516,13 +532,6 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					sc.MustGetToken(',');
 				}
 				this->getCoordinates(sc, cmd);
-				if(sc.CheckToken(',')) //hmm I guess we had a numberic flag in there.
-				{
-					cmd.flags = cmd.x;
-					cmd.x = cmd.y + (200 - this->height);
-					sc.MustGetToken(TK_IntConst);
-					cmd.y = sc.Number - (200 - this->height);
-				}
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_DRAWSELECTEDINVENTORY:
@@ -709,7 +718,7 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					cmd.setString(sc, sc.String, 0);
 					cmd.flags = DRAWNUMBER_AMMO;
 					const PClass* ammo = PClass::FindClass(sc.String);
-					if(ammo == NULL || !PClass::FindClass("Ammo")->IsAncestorOf(ammo)) //must be a kind of ammo
+					if(ammo == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(ammo)) //must be a kind of ammo
 					{
 						sc.ScriptError("'%s' is not a type of ammo.", sc.String);
 					}
@@ -727,7 +736,7 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					cmd.flags = DRAWNUMBER_INVENTORY;
 					cmd.setString(sc, sc.String, 0);
 					const PClass* item = PClass::FindClass(sc.String);
-					if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of ammo
+					if(item == NULL || !RUNTIME_CLASS(AInventory)->IsAncestorOf(item)) //must be a kind of ammo
 					{
 						sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
 					}
@@ -749,6 +758,11 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					sc.MustGetToken(',');
 				}
 				this->getCoordinates(sc, cmd);
+				if(sc.CheckToken(',')) //border
+				{
+					sc.MustGetToken(TK_IntConst);
+					cmd.special3 = sc.Number;
+				}
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_DRAWGEM:
@@ -759,7 +773,7 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					else if(sc.Compare("translatable"))
 						cmd.flags += DRAWGEM_TRANSLATABLE;
 					else
-						sc.ScriptError("Unkown drawgem flag '%s'.", sc.String);
+						sc.ScriptError("Unknown drawgem flag '%s'.", sc.String);
 					sc.MustGetToken(',');
 				}
 				sc.MustGetToken(TK_StringConst); //chain
@@ -768,15 +782,9 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				sc.MustGetToken(TK_StringConst); //gem
 				cmd.sprite = newImage(sc.String);
 				sc.MustGetToken(',');
-				sc.MustGetToken(TK_IntConst);
-				if(sc.Number < 0)
-					sc.ScriptError("Left padding must be a positive number.");
-				cmd.special2 = sc.Number;
+				cmd.special2 = this->getSignedInteger(sc);
 				sc.MustGetToken(',');
-				sc.MustGetToken(TK_IntConst);
-				if(sc.Number < 0)
-					sc.ScriptError("Right padding must be a positive number.");
-				cmd.special3 = sc.Number;
+				cmd.special3 = this->getSignedInteger(sc);
 				sc.MustGetToken(',');
 				sc.MustGetToken(TK_IntConst);
 				if(sc.Number < 0)
@@ -830,6 +838,22 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				this->getCoordinates(sc, cmd);
 				sc.MustGetToken(';');
 				break;
+			case SBARINFO_DRAWKEYBAR:
+				sc.MustGetToken(TK_IntConst);
+				cmd.value = sc.Number;
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_Identifier);
+				if(sc.Compare("vertical"))
+					cmd.flags += DRAWKEYBAR_VERTICAL;
+				else if(!sc.Compare("horizontal"))
+					sc.ScriptError("Unknown direction '%s'.", sc.String);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				cmd.special = sc.Number;
+				sc.MustGetToken(',');
+				this->getCoordinates(sc, cmd);
+				sc.MustGetToken(';');
+				break;
 			case SBARINFO_GAMEMODE:
 				while(sc.CheckToken(TK_Identifier))
 				{
@@ -877,6 +901,37 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 			FinishPlayerClass:
 				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
+			case SBARINFO_WEAPONAMMO:
+				sc.MustGetToken(TK_Identifier);
+				if(sc.Compare("not"))
+				{
+					cmd.flags += SBARINFOEVENT_NOT;
+					sc.MustGetToken(TK_Identifier);
+				}
+				for(int i = 0;i < 2;i++)
+				{
+					cmd.setString(sc, sc.String, i);
+					const PClass* ammo = PClass::FindClass(sc.String);
+					if(ammo == NULL || !RUNTIME_CLASS(AAmmo)->IsAncestorOf(ammo)) //must be a kind of ammo
+					{
+						sc.ScriptError("'%s' is not a type of ammo.", sc.String);
+					}
+					if(sc.CheckToken(TK_OrOr))
+					{
+						cmd.flags += SBARINFOEVENT_OR;
+						sc.MustGetToken(TK_Identifier);
+					}
+					else if(sc.CheckToken(TK_AndAnd))
+					{
+						cmd.flags += SBARINFOEVENT_AND;
+						sc.MustGetToken(TK_Identifier);
+					}
+					else
+						break;
+				}
+				sc.MustGetToken('{');
+				this->ParseSBarInfoBlock(sc, cmd.subBlock);
+				break;
 		}
 		block.commands.Push(cmd);
 	}
@@ -893,6 +948,20 @@ void SBarInfo::getCoordinates(FScanner &sc, SBarInfoCommand &cmd)
 	negative = sc.CheckToken('-');
 	sc.MustGetToken(TK_IntConst);
 	cmd.y = (negative ? -sc.Number : sc.Number) - (200 - this->height);
+}
+
+int SBarInfo::getSignedInteger(FScanner &sc)
+{
+	if(sc.CheckToken('-'))
+	{
+		sc.MustGetToken(TK_IntConst);
+		return -sc.Number;
+	}
+	else
+	{
+		sc.MustGetToken(TK_IntConst);
+		return sc.Number;
+	}
 }
 
 int SBarInfo::newImage(const char* patchname)
@@ -1037,7 +1106,7 @@ public:
 		return Pixels;
 	}
 
-	FBarTexture(FTexture* bar, FTexture* bg, int value, bool horizontal, bool reverse)
+	FBarTexture(FTexture* bar, FTexture* bg, int value, bool horizontal, bool reverse, int border=0)
 	{
 		value = clamp(value, 0, 100);
 		image = bar;
@@ -1046,12 +1115,12 @@ public:
 		int height = Height = bar->GetHeight();
 		if(horizontal)
 		{
-			width = (int) (((double) width/100)*value);
+			width = (int) (((double) (width-border*2)/100)*value);
 		}
 		Pixels = new BYTE[Width*Height];
 		memset(Pixels, 0, Width*Height); //Prevent garbage when using transparent images
 		bar->CopyToBlock(Pixels, Width, Height, 0, 0); //draw the bar
-		int run = bar->GetHeight() - (int) (((double) height/100)*value);
+		int run = bar->GetHeight() - (int) (((double) (height-border*2)/100)*value);
 		int visible = bar->GetHeight() - run;
 		if(bg == NULL || bg->GetWidth() != bar->GetWidth() || bg->GetHeight() != bar->GetHeight())
 		{
@@ -1062,38 +1131,39 @@ public:
 				{
 					visible = 0;
 				}
-				for(int i = 0;i < Width;i++)
+				for(int i = border;i < Width-border;i++)
 				{
-					memset(Pixels + i*Height + visible, color0, run);
+					memset(Pixels + i*Height + visible + border, color0, run-border*2);
 				}
 			}
 			else
 			{
-				for(int i = reverse ? 0 : width;(reverse && i < Width - width) || (!reverse && i < Width);i++)
+				for(int i = reverse ? border : width+border;(reverse && i < Width - width - border) || (!reverse && i < Width-border);i++)
 				{
-					memset(Pixels + i*Height, color0, Height);
+					memset(Pixels + i*Height + border, color0, Height-border*2);
 				}
 			}
 		}
 		else
 		{
 			BYTE* PixelData = (BYTE*) bg->GetPixels();
+			PixelData += border;
 			if(!horizontal)
 			{
 				if(!reverse)
 				{
 					visible = 0;
 				}
-				for(int i = 0;i < width;i++)
+				for(int i = border;i < Width-border;i++)
 				{
-					memcpy(Pixels + i*Height + visible, PixelData + i*Height, run);
+					memcpy(Pixels + i*Height + visible + border, PixelData + i*Height, run-border*2);
 				}
 			}
 			else
 			{
-				for(int i = reverse ? 0 : width;(reverse && i < Width - width) || (!reverse && i < Width);i++)
+				for(int i = reverse ? border : width+border;(reverse && i < Width - width - border) || (!reverse && i < Width-border);i++)
 				{
-					memcpy(Pixels + i*Height, PixelData + i*Height, Height);
+					memcpy(Pixels + i*Height + border, PixelData + i*Height, Height-border*2);
 				}
 			}
 		}
@@ -1833,9 +1903,9 @@ private:
 					if (Images[cmd.sprite] != NULL)
 					{
 						if(cmd.special != -1)
-							cmd.bar = new FBarTexture(Images[cmd.sprite], Images[cmd.special], value, horizontal, reverse);
+							cmd.bar = new FBarTexture(Images[cmd.sprite], Images[cmd.special], value, horizontal, reverse, cmd.special3);
 						else
-							cmd.bar = new FBarTexture(Images[cmd.sprite], NULL, value, horizontal, reverse);
+							cmd.bar = new FBarTexture(Images[cmd.sprite], NULL, value, horizontal, reverse, cmd.special3);
 						DrawImage(cmd.bar, cmd.x, cmd.y);
 					}
 					break;
@@ -1888,6 +1958,31 @@ private:
 					}
 					DrawString(cmd.string[0], cmd.x - drawingFont->StringWidth(cmd.string[0]), cmd.y, cmd.translation);
 					break;
+				case SBARINFO_DRAWKEYBAR:
+				{
+					bool vertical = !!(cmd.flags & DRAWKEYBAR_VERTICAL);
+					AInventory *item = CPlayer->mo->Inventory;
+					if(item == NULL)
+						break;
+					for(int i = 0;i < cmd.value;i++)
+					{
+						while(item->Icon <= 0 || item->GetClass() == RUNTIME_CLASS(AKey) || !item->IsKindOf(RUNTIME_CLASS(AKey)))
+						{
+							item = item->Inventory;
+							if(item == NULL)
+								goto FinishDrawKeyBar;
+						}
+						if(!vertical)
+							DrawImage(TexMan[item->Icon], cmd.x+(cmd.special*i), cmd.y);
+						else
+							DrawImage(TexMan[item->Icon], cmd.x, cmd.y+(cmd.special*i));
+						item = item->Inventory;
+						if(item == NULL)
+							break;
+					}
+				FinishDrawKeyBar:
+					break;
+				}
 				case SBARINFO_GAMEMODE:
 					if(((cmd.flags & GAMETYPE_SINGLEPLAYER) && !multiplayer) ||
 						((cmd.flags & GAMETYPE_DEATHMATCH) && deathmatch) ||
@@ -1898,10 +1993,56 @@ private:
 					}
 					break;
 				case SBARINFO_PLAYERCLASS:
+				{
 					int spawnClass = CPlayer->cls->ClassIndex;
 					if(cmd.special == spawnClass || cmd.special2 == spawnClass || cmd.special3 == spawnClass)
 					{
 						doCommands(cmd.subBlock);
+					}
+					break;
+				}
+				case SBARINFO_WEAPONAMMO:
+					if(CPlayer->ReadyWeapon != NULL)
+					{
+						const PClass *AmmoType1 = CPlayer->ReadyWeapon->AmmoType1;
+						const PClass *AmmoType2 = CPlayer->ReadyWeapon->AmmoType2;
+						const PClass *IfAmmo1 = PClass::FindClass(cmd.string[0]);
+						const PClass *IfAmmo2 = (cmd.flags & SBARINFOEVENT_OR) || (cmd.flags & SBARINFOEVENT_AND) ?
+												PClass::FindClass(cmd.string[1]) : NULL;
+						bool usesammo1 = (AmmoType1 != NULL);
+						bool usesammo2 = (AmmoType2 != NULL);
+						if(!(cmd.flags & SBARINFOEVENT_NOT) && !usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
+						{
+							doCommands(cmd.subBlock);
+							break;
+						}
+						//Or means only 1 ammo type needs to match and means both need to match.
+						if((cmd.flags & SBARINFOEVENT_OR) || (cmd.flags & SBARINFOEVENT_AND))
+						{
+							bool match1 = ((usesammo1 && (AmmoType1 == IfAmmo1 || AmmoType1 == IfAmmo2)) || !usesammo1);
+							bool match2 = ((usesammo2 && (AmmoType2 == IfAmmo1 || AmmoType2 == IfAmmo2)) || !usesammo2);
+							if(((cmd.flags & SBARINFOEVENT_OR) && (match1 || match2)) || ((cmd.flags & SBARINFOEVENT_AND) && (match1 && match2)))
+							{
+								if(!(cmd.flags & SBARINFOEVENT_NOT))
+									doCommands(cmd.subBlock);
+							}
+							else if(cmd.flags & SBARINFOEVENT_NOT)
+							{
+								doCommands(cmd.subBlock);
+							}
+						}
+						else //Every thing here could probably be one long if statement but then it would be more confusing.
+						{
+							if((usesammo1 && (AmmoType1 == IfAmmo1)) || (usesammo2 && (AmmoType2 == IfAmmo1)))
+							{
+								if(!(cmd.flags & SBARINFOEVENT_NOT))
+									doCommands(cmd.subBlock);
+							}
+							else if(cmd.flags & SBARINFOEVENT_NOT)
+							{
+								doCommands(cmd.subBlock);
+							}
+						}
 					}
 					break;
 			}
@@ -1973,7 +2114,7 @@ private:
 			else
 			{
 				int level = 0;
-				for(level = 0;CPlayer->health < (accuracy-level-1)*(100/accuracy);level++);
+				for(level = 0;CPlayer->health < (accuracy-level-1)*(CPlayer->mo->GetMaxHealth()/accuracy);level++);
 				int face = faceIndex + level*8;
 				DrawImage(Faces[face], x, y);
 			}

@@ -101,19 +101,7 @@ struct FDecalAnimator
 	FName Name;
 };
 
-class FDecalAnimatorArray : public TArray<FDecalAnimator *>
-{
-public:
-	~FDecalAnimatorArray()
-	{
-		for (unsigned int i = 0; i < Size(); ++i)
-		{
-			delete (*this)[i];
-		}
-	}
-};
-
-FDecalAnimatorArray Animators;
+TDeletingArray<FDecalAnimator *> Animators;
 
 struct DDecalThinker : public DThinker
 {

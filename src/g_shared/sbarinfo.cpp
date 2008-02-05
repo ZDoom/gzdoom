@@ -1074,105 +1074,6 @@ enum
 	imgINVRTGEM2,
 };
 
-//The next class allows us to draw bars
-class FBarTexture : public FTexture
-{
-public:
-	~FBarTexture()
-	{
-		delete Pixels;
-	}
-
-	void Unload()
-	{
-		if(image != NULL)
-		{
-			image->Unload ();
-		}
-	}
-
-	const BYTE *GetColumn(unsigned int column, const Span **spans_out)
-	{
-		if (column > (unsigned int) Width)
-		{
-			column = Width;
-		}
-		image->GetColumn(column, spans_out);
-		return Pixels + column*Height;
-	}
-
-	const BYTE *GetPixels()
-	{
-		return Pixels;
-	}
-
-	FBarTexture(FTexture* bar, FTexture* bg, int value, bool horizontal, bool reverse, int border=0)
-	{
-		value = clamp(value, 0, 100);
-		image = bar;
-		//width and height are supposed to be the end result, Width and Height are the input image.  If that makes sense.
-		int width = Width = bar->GetWidth();
-		int height = Height = bar->GetHeight();
-		if(horizontal)
-		{
-			width = (int) (((double) (width-border*2)/100)*value);
-		}
-		Pixels = new BYTE[Width*Height];
-		memset(Pixels, 0, Width*Height); //Prevent garbage when using transparent images
-		bar->CopyToBlock(Pixels, Width, Height, 0, 0); //draw the bar
-		int run = bar->GetHeight() - (int) (((double) (height-border*2)/100)*value);
-		int visible = bar->GetHeight() - run;
-		if(bg == NULL || bg->GetWidth() != bar->GetWidth() || bg->GetHeight() != bar->GetHeight())
-		{
-			BYTE color0 = GPalette.Remap[0];
-			if(!horizontal)
-			{
-				if(!reverse) //remove offset if we are not reversing the direction.
-				{
-					visible = 0;
-				}
-				for(int i = border;i < Width-border;i++)
-				{
-					memset(Pixels + i*Height + visible + border, color0, run-border*2);
-				}
-			}
-			else
-			{
-				for(int i = reverse ? border : width+border;(reverse && i < Width - width - border) || (!reverse && i < Width-border);i++)
-				{
-					memset(Pixels + i*Height + border, color0, Height-border*2);
-				}
-			}
-		}
-		else
-		{
-			BYTE* PixelData = (BYTE*) bg->GetPixels();
-			PixelData += border;
-			if(!horizontal)
-			{
-				if(!reverse)
-				{
-					visible = 0;
-				}
-				for(int i = border;i < Width-border;i++)
-				{
-					memcpy(Pixels + i*Height + visible + border, PixelData + i*Height, run-border*2);
-				}
-			}
-			else
-			{
-				for(int i = reverse ? border : width+border;(reverse && i < Width - width - border) || (!reverse && i < Width-border);i++)
-				{
-					memcpy(Pixels + i*Height + border, PixelData + i*Height, Height-border*2);
-				}
-			}
-		}
-	}
-protected:
-	BYTE* Pixels;
-	FTexture* image;
-};
-
 //Used for shading
 class FBarShader : public FTexture
 {
@@ -1273,16 +1174,10 @@ SBarInfoCommand::SBarInfoCommand() //sets the default values for more predicable
 	translation2 = CR_UNTRANSLATED;
 	translation3 = CR_UNTRANSLATED;
 	font = V_GetFont("CONFONT");
-	bar = NULL;
 }
 
 SBarInfoCommand::~SBarInfoCommand()
 {
-	if (bar != NULL)
-	{
-		delete bar;
-	}
-	subBlock.commands.Clear();
 }
 
 SBarInfoBlock::SBarInfoBlock()
@@ -1769,15 +1664,16 @@ private:
 				}
 				case SBARINFO_DRAWBAR:
 				{
-					if(cmd.sprite == -1) break; //don't draw anything.
+					if(cmd.sprite == -1 || Images[cmd.sprite] == NULL)
+						break; //don't draw anything.
 					bool horizontal = !!((cmd.special2 & DRAWBAR_HORIZONTAL));
 					bool reverse = !!((cmd.special2 & DRAWBAR_REVERSE));
-					int value = 0;
+					fixed_t value = 0;
 					int max = 0;
 					if(cmd.flags == DRAWNUMBER_HEALTH)
 					{
 						value = health;
-						if(cmd.value < 0) //health shouldn't display negatives
+						if(value < 0) //health shouldn't display negatives
 						{
 							value = 0;
 						}
@@ -1793,7 +1689,7 @@ private:
 								max = 0;
 							}
 						}
-						else //default to the classes health
+						else //default to the class's health
 						{
 							max = CPlayer->mo->GetDefault()->health;
 						}
@@ -1888,26 +1784,91 @@ private:
 							value = 0;
 						}
 					}
-					if(max != 0 || value < 0)
+					if(max != 0 && value > 0)
 					{
-						value = (value*100)/max;
-						if(value > 100)
-							value = 100;
+						value = (value << FRACBITS) / max;
+						if(value > FRACUNIT)
+							value = FRACUNIT;
 					}
 					else
 					{
 						value = 0;
 					}
-					if(cmd.bar != NULL)
-						delete cmd.bar;
-					if (Images[cmd.sprite] != NULL)
+					assert(Images[cmd.sprite] != NULL);
+
+					FTexture *fg = Images[cmd.sprite];
+					FTexture *bg = (cmd.special != -1) ? Images[cmd.special] : NULL;
+					int x, y, w, h;
+					int cx, cy, cw, ch, cr, cb;
+
+					// Calc real screen coordinates for bar
+					x = cmd.x + ST_X;
+					y = cmd.y + ST_Y;
+					w = fg->GetWidth();
+					h = fg->GetHeight();
+					if (Scaled)
 					{
-						if(cmd.special != -1)
-							cmd.bar = new FBarTexture(Images[cmd.sprite], Images[cmd.special], value, horizontal, reverse, cmd.special3);
-						else
-							cmd.bar = new FBarTexture(Images[cmd.sprite], NULL, value, horizontal, reverse, cmd.special3);
-						DrawImage(cmd.bar, cmd.x, cmd.y);
+						screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
 					}
+
+					// Draw background
+					if (bg != NULL && bg->GetWidth() == fg->GetWidth() && bg->GetHeight() == fg->GetHeight())
+					{
+						screen->DrawTexture(bg, x, y,
+							DTA_DestWidth, w,
+							DTA_DestHeight, h,
+							TAG_DONE);
+					}
+					else
+					{
+						screen->Clear(x, y, x + w, y + h, GPalette.BlackIndex, 0);
+					}
+
+					// Calc clipping rect for foreground
+					cx = cmd.x + ST_X + cmd.special3;
+					cy = cmd.y + ST_Y + cmd.special3;
+					cw = fg->GetWidth() - cmd.special3 * 2;
+					ch = fg->GetHeight() - cmd.special3 * 2;
+					if (Scaled)
+					{
+						screen->VirtualToRealCoordsInt(cx, cy, cw, ch, 320, 200, true);
+					}
+					if (horizontal)
+					{
+						if (!reverse)
+						{ // left to right
+							cr = cx + FixedMul(cw, value);
+						}
+						else
+						{ // right to left
+							cr = cx + cw;
+							cx += FixedMul(cw, FRACUNIT - value);
+						}
+						cb = cy + ch;
+					}
+					else
+					{
+						if (!reverse)
+						{ // bottom to top
+							cb = cy + ch;
+							cy += FixedMul(ch, FRACUNIT - value);
+						}
+						else
+						{ // top to bottom
+							cb = cy + FixedMul(ch, value);
+						}
+						cr = cx + cw;
+					}
+
+					// Draw foreground
+					screen->DrawTexture(fg, x, y,
+						DTA_DestWidth, w,
+						DTA_DestHeight, h,
+						DTA_ClipLeft, cx,
+						DTA_ClipTop, cy,
+						DTA_ClipRight, cr,
+						DTA_ClipBottom, cb,
+						TAG_DONE);
 					break;
 				}
 				case SBARINFO_DRAWGEM:

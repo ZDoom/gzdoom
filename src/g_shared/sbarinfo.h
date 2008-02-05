@@ -37,7 +37,6 @@ struct SBarInfoCommand
 	EColorRange translation;
 	EColorRange translation2;
 	EColorRange translation3;
-	FBarTexture *bar;
 	SBarInfoBlock subBlock; //for type SBarInfo_CMD_GAMEMODE
 };
 

@@ -531,6 +531,8 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 			break;
 
 		case DTA_KeepRatio:
+			// I think this is a terribly misleading name, since it actually turns
+			// *off* aspect ratio correction.
 			parms->keepratio = va_arg (tags, INTBOOL);
 			break;
 
@@ -542,51 +544,15 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 	}
 	va_end (tags);
 
+	if (parms->uclip >= parms->dclip || parms->lclip >= parms->rclip)
+	{
+		return false;
+	}
+
 	if (parms->virtWidth != Width || parms->virtHeight != Height)
 	{
-		int myratio = CheckRatio (Width, Height);
-		int right = parms->x + parms->destwidth;
-		int bottom = parms->y + parms->destheight;
-
-		if (myratio != 0 && myratio != 4 && !parms->keepratio)
-		{ // The target surface is either 16:9 or 16:10, so expand the
-		  // specified virtual size to avoid undesired stretching of the
-		  // image. Does not handle non-4:3 virtual sizes. I'll worry about
-		  // those if somebody expresses a desire to use them.
-			parms->x = Scale(parms->x - parms->virtWidth*FRACUNIT/2,
-							 Width*960,
-							 parms->virtWidth*BaseRatioSizes[myratio][0])
-						+ Width*FRACUNIT/2;
-			parms->destwidth = Scale(right - parms->virtWidth*FRACUNIT/2,
-							 Width*960,
-							 parms->virtWidth*BaseRatioSizes[myratio][0])
-						+ Width*FRACUNIT/2 - parms->x;
-		}
-		else
-		{
-			parms->x = Scale (parms->x, Width, parms->virtWidth);
-			parms->destwidth = Scale (right, Width, parms->virtWidth) - parms->x;
-		}
-		if (myratio != 0 && myratio == 4 && !parms->keepratio)
-		{ // The target surface is 5:4
-			parms->y = Scale(parms->y - parms->virtHeight*FRACUNIT/2,
-							 Height*600,
-							 parms->virtHeight*BaseRatioSizes[myratio][1])
-						 + Height*FRACUNIT/2;
-			parms->destheight = Scale(bottom - parms->virtHeight*FRACUNIT/2,
-							 Height*600,
-							 parms->virtHeight*BaseRatioSizes[myratio][1])
-						 + Height*FRACUNIT/2 - parms->y;
-			if (virtBottom)
-			{
-				parms->y += (Height - Height * BaseRatioSizes[myratio][3] / 48) << (FRACBITS - 1);
-			}
-		}
-		else
-		{
-			parms->y = Scale (parms->y, Height, parms->virtHeight);
-			parms->destheight = Scale (bottom, Height, parms->virtHeight) - parms->y;
-		}
+		VirtualToRealCoords(parms->x, parms->y, parms->destwidth, parms->destheight,
+			parms->virtWidth, parms->virtHeight, virtBottom, !parms->keepratio);
 	}
 
 	if (parms->destwidth <= 0 || parms->destheight <= 0)
@@ -626,6 +592,68 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 		}
 	}
 	return true;
+}
+
+void DCanvas::VirtualToRealCoords(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h,
+	int vwidth, int vheight, bool vbottom, bool handleaspect) const
+{
+	int myratio = handleaspect ? CheckRatio (Width, Height) : 0;
+	int right = x + w;
+	int bottom = y + h;
+
+	if (myratio != 0 && myratio != 4)
+	{ // The target surface is either 16:9 or 16:10, so expand the
+	  // specified virtual size to avoid undesired stretching of the
+	  // image. Does not handle non-4:3 virtual sizes. I'll worry about
+	  // those if somebody expresses a desire to use them.
+		x = Scale(x - vwidth*FRACUNIT/2,
+				  Width*960,
+				  vwidth*BaseRatioSizes[myratio][0])
+			+ Width*FRACUNIT/2;
+		w = Scale(right - vwidth*FRACUNIT/2,
+				  Width*960,
+				  vwidth*BaseRatioSizes[myratio][0])
+			+ Width*FRACUNIT/2 - x;
+	}
+	else
+	{
+		x = Scale (x, Width, vwidth);
+		w = Scale (right, Width, vwidth) - x;
+	}
+	if (myratio == 4)
+	{ // The target surface is 5:4
+		y = Scale(y - vheight*FRACUNIT/2,
+				  Height*600,
+				  vheight*BaseRatioSizes[myratio][1])
+			+ Height*FRACUNIT/2;
+		h = Scale(bottom - vheight*FRACUNIT/2,
+				  Height*600,
+				  vheight*BaseRatioSizes[myratio][1])
+			+ Height*FRACUNIT/2 - y;
+		if (vbottom)
+		{
+			y += (Height - Height * BaseRatioSizes[myratio][3] / 48) << (FRACBITS - 1);
+		}
+	}
+	else
+	{
+		y = Scale (y, Height, vheight);
+		h = Scale (bottom, Height, vheight) - y;
+	}
+}
+
+void DCanvas::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
+	int vwidth, int vheight, bool vbottom, bool handleaspect) const
+{
+	x <<= FRACBITS;
+	y <<= FRACBITS;
+	w <<= FRACBITS;
+	h <<= FRACBITS;
+	VirtualToRealCoords(x, y, w, h, vwidth, vheight, vbottom, handleaspect);
+	x >>= FRACBITS;
+	y >>= FRACBITS;
+	w >>= FRACBITS;
+	h >>= FRACBITS;
 }
 
 void DCanvas::FillBorder (FTexture *img)

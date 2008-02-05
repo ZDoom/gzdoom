@@ -256,19 +256,7 @@ void FRandom::StaticReadRNGState (PNGHandle *png)
 // This is for use by DECORATE.
 extern FRandom pr_exrandom;
 
-class NewRNGList : public TArray<FRandom*>
-{
-public:
-	~NewRNGList()
-	{
-		for(unsigned i=0;i<Size();i++)
-		{
-			delete (*this)[i];
-		}
-	}
-};
-
-static NewRNGList NewRNGs;
+static TDeletingArray<FRandom *> NewRNGs;
 
 FRandom *FRandom::StaticFindRNG (const char *name)
 {

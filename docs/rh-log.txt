@@ -1,6 +1,14 @@
+February 4, 2008
+- Applied a modified version of Karate Chris's screenshot naming patch.
+- Sbarinfo optimization: Creating and destroying bar textures every frame is
+  a relatively expensive operation. We can skip the custom texture entirely
+  and just draw the bars directly to the screen, using the clipping parameters
+  for DrawTexture(). This also means bars are no longer limited to the game
+  palette, and the bar itself has the same resolution as the screen.
+
 February 2, 2008
 - Removed support for numeric flags from sbarinfo's drawmugshot command since
-  it was declared unrecommended and deprecated.
+  it was previously declared unrecommended and deprecated.
 - Added Blzut3's sbarinfo update #10:
   * Fixed: drawmugshot now adjust to the player's max health like it should.
   * drawgem can now accept negative paddings.

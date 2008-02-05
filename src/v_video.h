@@ -200,6 +200,8 @@ public:
 	// 2D Texture drawing
 	void STACK_ARGS DrawTexture (FTexture *img, int x, int y, int tags, ...);
 	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
+	void VirtualToRealCoords(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
+	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 
 	// 2D Text drawing
 	void STACK_ARGS DrawText (int normalcolor, int x, int y, const char *string, ...);

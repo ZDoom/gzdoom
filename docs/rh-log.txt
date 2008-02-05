@@ -1,3 +1,27 @@
+February 5, 2008
+- Fixed: Morphed pig and chicken players made normal human *usefail sounds.
+- G_DoSaveGame() now receives the filename and description from its arguments
+  rather than global variables, so autosaves and manual saves can be done
+  in close proximity to each other without overwriting the parameters for
+  one of them.
+- Fixed potential buffer overrun in G_SaveGame() and added a check so that
+  you can't interfere with saves that are still pending.
+- Fixed: P_LineAttack() creates temporary puffs to get damage types, but this
+  had the side effect of creating particles for the puff.
+- Fixed: The Heretic status bar tried to use the graphic "SELECTBOX" for the
+  inventory selector. The correct name is "SELECTBO".
+- Fixed: Using allowrespawn for a single-player map would fire off enter
+  scripts instead of respawn script because the player wasn't assigned the
+  state PST_REBORN.
+- Fixed: P_CheckMissileSpawn() now passes the BlockingMobj to
+  P_ExplodeMissile() so that it can select the appropriate death state.
+- Added the manifest to MinGW-compiled builds of updaterevision so you can
+  build under Vista with MinGW without needing administrative privileges.
+  (But I still want to know why Vista thinks it needs elevated privileges
+  without a manifest telling it otherwise.)
+- Using four 0xFF bytes for the final note of an IMF song should signal the
+  end of the song.
+
 February 4, 2008
 - Applied a modified version of Karate Chris's screenshot naming patch.
 - Sbarinfo optimization: Creating and destroying bar textures every frame is

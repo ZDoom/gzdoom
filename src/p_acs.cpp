@@ -1512,6 +1512,7 @@ const char *FBehavior::LookupString (DWORD index) const
 
 void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow)
 {
+	DPrintf("Starting all scripts of type %d\n", type);
 	for (unsigned int i = 0; i < StaticModules.Size(); ++i)
 	{
 		StaticModules[i]->StartTypedScripts (type, activator, always, arg1, runNow);

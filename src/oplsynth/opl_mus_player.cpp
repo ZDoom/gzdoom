@@ -411,6 +411,10 @@ int OPLmusicBlock::PlayTick ()
 
 		while (delay == 0 && score + 4 - scoredata <= ScoreLen)
 		{
+			if (*(DWORD *)score == 0xFFFFFFFF)
+			{ // This is a special value that means to end the song.
+				return 0;
+			}
 			reg = score[0];
 			data = score[1];
 			delay = LittleShort(((WORD *)score)[1]);

@@ -156,6 +156,11 @@ IMPLEMENT_ACTOR (APigPlayer, Hexen, -1, 0)
 	PROP_DeathSound ("PigDeath")
 END_DEFAULTS
 
+AT_GAME_SET(PigPlayer)
+{
+	RUNTIME_CLASS(APigPlayer)->Meta.SetMetaString(APMETA_SoundClass, "pig");
+}
+
 void APigPlayer::MorphPlayerThink ()
 {
 	if (player->morphTics&15)

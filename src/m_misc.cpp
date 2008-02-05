@@ -600,11 +600,11 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 		switch (gameinfo.gametype)
 		{
-		case GAME_Doom:		gamename = "Doom";		break;
-		case GAME_Heretic:	gamename = "Heretic";	break;
-		case GAME_Hexen:	gamename = "Hexen";		break;
-		case GAME_Strife:	gamename = "Strife";	break;
-		default: break;
+		case GAME_Doom:		gamename = "Doom_";		break;
+		case GAME_Heretic:	gamename = "Heretic_";	break;
+		case GAME_Hexen:	gamename = "Hexen_";	break;
+		case GAME_Strife:	gamename = "Strife_";	break;
+		default:			gamename = "";			break;
 		}
 
 		time_t now;
@@ -615,18 +615,18 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 		if (tm == NULL)
 		{
-			lbmname.Format ("%sScreenshot_%s_%04d.%s", fullname.GetChars(), gamename, i, extension);
+			lbmname.Format ("%sScreenshot_%s%04d.%s", fullname.GetChars(), gamename, i, extension);
 		}
 		else if (i == 0)
 		{
-			lbmname.Format ("%sScreenshot_%s_%04d%02d%02d_%02d%02d%02d.%s", fullname.GetChars(), gamename,
+			lbmname.Format ("%sScreenshot_%s%04d%02d%02d_%02d%02d%02d.%s", fullname.GetChars(), gamename,
 				tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec,
 				extension);
 		}
 		else
 		{
-			lbmname.Format ("%sScreenshot_%s_%04d%02d%02d_%02d%02d%02d_%02d.%s", fullname.GetChars(), gamename,
+			lbmname.Format ("%sScreenshot_%s%04d%02d%02d_%02d%02d%02d_%02d.%s", fullname.GetChars(), gamename,
 				tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec,
 				i, extension);

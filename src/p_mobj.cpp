@@ -3506,22 +3506,22 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 		p->cls = PlayerClasses[p->CurrentPlayerClass].Type;
 	}
 
-    if (( dmflags2 & DF2_SAME_SPAWN_SPOT ) &&
-            ( p->playerstate == PST_REBORN ) &&
-            ( deathmatch == false ) &&
-            ( gameaction != ga_worlddone ) &&
-			( p->mo != NULL ))
-    {
-            spawn_x = p->mo->x;
-            spawn_y = p->mo->y;
-			spawn_angle = p->mo->angle;
-    }
-    else
-    {
-            spawn_x = mthing->x << FRACBITS;
-            spawn_y = mthing->y << FRACBITS;
-            spawn_angle = ANG45 * (mthing->angle/45);
-    }
+	if (( dmflags2 & DF2_SAME_SPAWN_SPOT ) &&
+		( p->playerstate == PST_REBORN ) &&
+		( deathmatch == false ) &&
+		( gameaction != ga_worlddone ) &&
+		( p->mo != NULL ))
+	{
+		spawn_x = p->mo->x;
+		spawn_y = p->mo->y;
+		spawn_angle = p->mo->angle;
+	}
+	else
+	{
+		spawn_x = mthing->x << FRACBITS;
+		spawn_y = mthing->y << FRACBITS;
+		spawn_angle = ANG45 * (mthing->angle/45);
+	}
 
 	mobj = static_cast<APlayerPawn *>
 		(Spawn (p->cls, spawn_x, spawn_y, ONFLOORZ, NO_REPLACE));
@@ -3985,7 +3985,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hitthing)
+AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hitthing, bool temporary)
 {
 	AActor *puff;
 
@@ -4008,7 +4008,7 @@ AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, an
 		puff->SetState (puff->MeleeState);
 	}
 
-	if (cl_pufftype && updown != 3 && (puff->flags4 & MF4_ALLOWPARTICLES))
+	if (cl_pufftype && updown != 3 && !temporary && (puff->flags4 & MF4_ALLOWPARTICLES))
 	{
 		P_DrawSplash2 (32, x, y, z, dir, updown, 1);
 		puff->renderflags |= RF_INVISIBLE;
@@ -4399,7 +4399,7 @@ bool P_CheckMissileSpawn (AActor* th)
 			}
 			else
 			{
-				P_ExplodeMissile (th, NULL, NULL);
+				P_ExplodeMissile (th, NULL, BlockingMobj);
 			}
 			return false;
 		}

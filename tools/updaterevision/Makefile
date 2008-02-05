@@ -11,20 +11,24 @@ CC = gcc
 CFLAGS = -Os -Wall -fomit-frame-pointer
 LDFLAGS = -s
 
+OBJS = updaterevision.o
+
 ifeq (1,$(WIN))
   EXE = updaterevision.exe
+  OBJS += trustinfo.o
 else
   EXE = updaterevision
 endif
 
 CCDV = @../../ccdv
 
-OBJS = updaterevision.o
-
 all: $(EXE)
 
 $(EXE): $(OBJS)
 	$(CCDV) $(CC) -o $(EXE) $(OBJS) $(CFLAGS) $(LDFLAGS)
+
+%.o : %.rc
+	$(CCDV) windres -o $@ -i $<
 
 .PHONY: clean
 

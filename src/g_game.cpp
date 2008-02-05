@@ -95,7 +95,7 @@ void	G_DoPlayDemo (void);
 void	G_DoCompleted (void);
 void	G_DoVictory (void);
 void	G_DoWorldDone (void);
-void	G_DoSaveGame (bool okForQuicksave);
+void	G_DoSaveGame (bool okForQuicksave, FString filename, const char *description);
 void	G_DoAutoSave ();
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
@@ -891,10 +891,14 @@ void G_Ticker ()
 			G_DoLoadGame ();
 			break;
 		case ga_savegame:
-			G_DoSaveGame (true);
+			G_DoSaveGame (true, savegamefile, savedescription);
+			gameaction = ga_nothing;
+			savegamefile = "";
+			savedescription[0] = '\0';
 			break;
 		case ga_autosave:
 			G_DoAutoSave ();
+			gameaction = ga_nothing;
 			break;
 		case ga_playdemo:
 			G_DoPlayDemo ();
@@ -1828,8 +1832,14 @@ void G_DoLoadGame ()
 //
 void G_SaveGame (const char *filename, const char *description)
 {
+	if (sendsave || gameaction == ga_savegame)
+	{
+		Printf ("A game save is still pending.\n");
+		return;
+	}
 	savegamefile = filename;
-	strcpy (savedescription, description);
+	strncpy (savedescription, description, sizeof(savedescription)-1);
+	savedescription[sizeof(savedescription)-1] = '\0';
 	sendsave = true;
 }
 
@@ -1893,6 +1903,8 @@ extern void P_CalcHeight (player_t *);
 
 void G_DoAutoSave ()
 {
+	char description[SAVESTRINGSIZE];
+	FString file;
 	// Keep up to four autosaves at a time
 	UCVarValue num;
 	const char *readableTime;
@@ -1901,14 +1913,14 @@ void G_DoAutoSave ()
 	num.Int = (autosavenum + 1) % count;
 	autosavenum.ForceSet (num, CVAR_Int);
 
-	savegamefile = G_BuildSaveName ("auto", num.Int);
+	file = G_BuildSaveName ("auto", num.Int);
 
 	readableTime = myasctime ();
-	strcpy (savedescription, "Autosave ");
-	strncpy (savedescription+9, readableTime+4, 12);
-	savedescription[9+12] = 0;
+	strcpy (description, "Autosave ");
+	strncpy (description+9, readableTime+4, 12);
+	description[9+12] = 0;
 
-	G_DoSaveGame (false);
+	G_DoSaveGame (false, file, description);
 }
 
 
@@ -1974,23 +1986,21 @@ static void PutSavePic (FILE *file, int width, int height)
 	}
 }
 
-void G_DoSaveGame (bool okForQuicksave)
+void G_DoSaveGame (bool okForQuicksave, FString filename, const char *description)
 {
 	if (demoplayback)
 	{
-		savegamefile = G_BuildSaveName ("demosave.zds", -1);
+		filename = G_BuildSaveName ("demosave.zds", -1);
 	}
 
 	insave = true;
 	G_SnapshotLevel ();
 
-	FILE *stdfile = fopen (savegamefile.GetChars(), "wb");
+	FILE *stdfile = fopen (filename.GetChars(), "wb");
 
 	if (stdfile == NULL)
 	{
-		Printf ("Could not create savegame '%s'\n", savegamefile.GetChars());
-		savegamefile = "";
-		gameaction = ga_nothing;
+		Printf ("Could not create savegame '%s'\n", filename.GetChars());
 		insave = false;
 		return;
 	}
@@ -2000,7 +2010,7 @@ void G_DoSaveGame (bool okForQuicksave)
 	M_AppendPNGText (stdfile, "Software", "ZDoom " DOTVERSIONSTR);
 	M_AppendPNGText (stdfile, "Engine", GAMESIG);
 	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
-	M_AppendPNGText (stdfile, "Title", savedescription);
+	M_AppendPNGText (stdfile, "Title", description);
 	M_AppendPNGText (stdfile, "Current Map", level.mapname);
 	PutSaveWads (stdfile);
 	PutSaveComment (stdfile);
@@ -2037,31 +2047,28 @@ void G_DoSaveGame (bool okForQuicksave)
 		M_AppendPNGChunk (stdfile, MAKE_ID('s','n','X','t'), &next, 1);
 	}
 
-	M_NotifyNewSave (savegamefile.GetChars(), savedescription, okForQuicksave);
-	gameaction = ga_nothing;
-	savedescription[0] = 0;
+	M_NotifyNewSave (filename.GetChars(), description, okForQuicksave);
 
 	M_FinishPNG (stdfile);
 	fclose (stdfile);
 
 	// Check whether the file is ok.
 	bool success = false;
-	stdfile = fopen (savegamefile.GetChars(), "rb");
+	stdfile = fopen (filename.GetChars(), "rb");
 	if (stdfile != NULL)
 	{
-		PNGHandle * pngh = M_VerifyPNG(stdfile);
+		PNGHandle *pngh = M_VerifyPNG(stdfile);
 		if (pngh != NULL)
 		{
-			success=true;
+			success = true;
 			delete pngh;
 		}
 		fclose(stdfile);
 	}
-	if (success) Printf ("%s\n", GStrings("GGSAVED"));
+	if (success) Printf ("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
 	else Printf(PRINT_HIGH, "Save failed\n");
 
-	BackupSaveName = savegamefile;
-	savegamefile = "";
+	BackupSaveName = filename;
 
 	// We don't need the snapshot any longer.
 	if (level.info->snapshot != NULL)

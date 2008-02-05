@@ -168,6 +168,11 @@ IMPLEMENT_ACTOR (AChickenPlayer, Heretic, -1, 0)
 	PROP_DeathSound ("chicken/death")
 END_DEFAULTS
 
+AT_GAME_SET(ChickenPlayer)
+{
+	RUNTIME_CLASS(AChickenPlayer)->Meta.SetMetaString(APMETA_SoundClass, "chicken");
+}
+
 void AChickenPlayer::MorphPlayerThink ()
 {
 	if (health > 0)

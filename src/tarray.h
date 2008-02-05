@@ -294,7 +294,7 @@ class TDeletingArray : public TArray<T, TT>
 public:
 	~TDeletingArray<T, TT> ()
 	{
-		for (unsigned int i = 0; i < Size(); ++i)
+		for (unsigned int i = 0; i < TArray<T,TT>::Size(); ++i)
 		{
 			delete (*this)[i];
 		}

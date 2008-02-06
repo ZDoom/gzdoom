@@ -83,6 +83,10 @@ all: $(TARGET)
 $(OBJDIR)/nodebuild_classify_sse2.o: src/nodebuild_classify_sse2.cpp
 	$(CCDV) $(CXX) $(CXXFLAGS) -msse2 -mfpmath=sse -c -o $@ $<
 
+# This file needs special handling because GCC misoptimizes it otherwise.
+$(OBJDIR)/fmopl.o: src/oplsynth/fmopl.cpp
+	$(CCDV) $(CXX) $(CXXFLAGS) -fno-tree-dominator-opts -fno-tree-fre -c -o $@ $<
+
 src/sc_man_scanner.h: src/sc_man_scanner.re
 	$(CCDV) $(RE2C) -s -o $@ $<
 

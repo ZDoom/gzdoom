@@ -1,4 +1,6 @@
 February 5, 2008
+- Updated the GCC-targeted makefiles to turn off two optimizations that cause
+  fmopl.cpp to compile incorrectly: tree-dominator-opts and tree-fre
 - Fixed: Morphed pig and chicken players made normal human *usefail sounds.
 - G_DoSaveGame() now receives the filename and description from its arguments
   rather than global variables, so autosaves and manual saves can be done

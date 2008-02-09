@@ -1547,7 +1547,23 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	{
 		int cstype = SBarInfoScript->GetGameType();
 
-		if (cstype == GAME_Any || cstype == gameinfo.gametype)
+		if(cstype == GAME_Doom) //Did the user specify a "base"
+		{
+			StatusBar = CreateDoomStatusBar ();
+		}
+		else if(cstype == GAME_Heretic)
+		{
+			StatusBar = CreateHereticStatusBar();
+		}
+		else if(cstype == GAME_Hexen)
+		{
+			StatusBar = CreateHexenStatusBar();
+		}
+		else if(cstype == GAME_Strife)
+		{
+			StatusBar = CreateStrifeStatusBar();
+		}
+		else //Use the default, empty or custom.
 		{
 			StatusBar = CreateCustomStatusBar();
 		}
@@ -1579,7 +1595,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	StatusBar->NewGame ();
 	setsizeneeded = true;
 
-	if (gameinfo.gametype == GAME_Strife)
+	if (gameinfo.gametype == GAME_Strife || (SBarInfoScript != NULL && SBarInfoScript->GetGameType() == GAME_Strife))
 	{
 		// Set the initial quest log text for Strife.
 		for (i = 0; i < MAXPLAYERS; ++i)

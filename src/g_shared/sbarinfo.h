@@ -46,6 +46,7 @@ struct SBarInfo
 	SBarInfoBlock huds[6];
 	bool automapbar;
 	bool interpolateHealth;
+	bool completeBorder;
 	int interpolationSpeed;
 	int height;
 	int gameType;

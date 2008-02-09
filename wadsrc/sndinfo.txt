@@ -932,6 +932,9 @@ $alias menu/dismiss		PlatformStop
 $alias menu/choose		DoorCloseLight
 $alias menu/clear		PlatformStop
 
+// Hexen does not have ripslop sound like Heretic
+misc/ripslop			dsempty
+
 $limit DoorCloseLight 4
 
 $limit PuppyBeat 0

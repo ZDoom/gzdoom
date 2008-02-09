@@ -1,4 +1,13 @@
 February 8, 2008
+- Applied Blzut3's sbarinfo update #11:
+  * SBarInfo will also accept a '|' between flags for those who are really
+    bothered by the indefinite "arguments" in the middle of the statement.
+  * Added: completeBorder.  When set to true SBarInfo will draw the border where
+    the status bar normally goes.
+  * Fixed: I forgot to accept TK_None on "base" and "statusbar".
+  * Fixed: "base" was apparently broken when the SBarInfo init code was moved to
+    d_main.cpp.  Also, if "base Strife" was used then it would not use the
+    default log message of "find help".
 - Fixed: D_ReadUserInfoString() parsed the final element of a compact string
   as the empty string. Since that was the player class, this meant that any
   games with more than one class would pick a random class in multiplayer.

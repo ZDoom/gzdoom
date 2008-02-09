@@ -17,6 +17,7 @@
 #include "sc_man.h"
 #include "gi.h"
 #include "r_translate.h"
+#include "r_main.h"
 
 static FRandom pr_chainwiggle; //use the same method of chain wiggling as heretic.
 
@@ -29,6 +30,7 @@ static FRandom pr_chainwiggle; //use the same method of chain wiggling as hereti
 #define ARTIFLASH_OFFSET (invBarOffset+6)
 
 EXTERN_CVAR(Int, fraglimit)
+EXTERN_CVAR(Int, screenblocks)
 
 SBarInfo *SBarInfoScript;
 
@@ -135,6 +137,7 @@ static const char *SBarInfoTopLevel[] =
 	"base",
 	"height",
 	"interpolatehealth",
+	"completeborder",
 	"statusbar",
 	NULL
 };
@@ -143,6 +146,7 @@ enum
 	SBARINFO_BASE,
 	SBARINFO_HEIGHT,
 	SBARINFO_INTERPOLATEHEALTH,
+	SBARINFO_COMPLETEBORDER,
 	SBARINFO_STATUSBAR,
 };
 
@@ -234,7 +238,8 @@ void SBarInfo::ParseSBarInfo(int lump)
 		switch(sc.MustMatchString(SBarInfoTopLevel))
 		{
 			case SBARINFO_BASE:
-				sc.MustGetToken(TK_Identifier);
+				if(!sc.CheckToken(TK_None))
+					sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("Doom"))
 					gameType = GAME_Doom;
 				else if(sc.Compare("Heretic"))
@@ -261,7 +266,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 				}
 				else
 				{
-					sc.TokenMustBe(TK_False);
+					sc.MustGetToken(TK_False);
 					interpolateHealth = false;
 				}
 				if(sc.CheckToken(',')) //speed param
@@ -271,10 +276,26 @@ void SBarInfo::ParseSBarInfo(int lump)
 				}
 				sc.MustGetToken(';');
 				break;
+			case SBARINFO_COMPLETEBORDER: //draws the border instead of an HOM
+				if(sc.CheckToken(TK_True))
+				{
+					completeBorder = true;
+				}
+				else
+				{
+					sc.MustGetToken(TK_False);
+					completeBorder = false;
+				}
+				sc.MustGetToken(';');
+				break;
 			case SBARINFO_STATUSBAR:
 			{
-				sc.MustGetToken(TK_Identifier);
-				int barNum = sc.MustMatchString(StatusBars);
+				int barNum = 0;
+				if(!sc.CheckToken(TK_None))
+				{
+					sc.MustGetToken(TK_Identifier);
+					barNum = sc.MustMatchString(StatusBars);
+				}
 				while(sc.CheckToken(','))
 				{
 					sc.MustGetToken(TK_Identifier);
@@ -529,7 +550,8 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.flags += DRAWMUGSHOT_ANIMATEDGODMODE;
 					else
 						sc.ScriptError("Unknown flag '%s'.", sc.String);
-					sc.MustGetToken(',');
+					if(!sc.CheckToken('|'))
+						sc.MustGetToken(',');
 				}
 				this->getCoordinates(sc, cmd);
 				sc.MustGetToken(';');
@@ -561,7 +583,8 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						sc.MustGetToken(',');
 						break;
 					}
-					sc.MustGetToken(',');
+					if(!sc.CheckToken('|'))
+						sc.MustGetToken(',');
 				}
 				sc.MustGetToken(TK_IntConst);
 				cmd.x = sc.Number;
@@ -631,7 +654,8 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						{
 							sc.ScriptError("Unknown flag '%s'.", sc.String);
 						}
-						sc.MustGetToken(',');
+						if(!sc.CheckToken('|'))
+							sc.MustGetToken(',');
 					}
 					sc.MustGetToken(TK_IntConst);
 					cmd.value = sc.Number;
@@ -1014,6 +1038,7 @@ void SBarInfo::Init()
 {
 	automapbar = false;
 	interpolateHealth = false;
+	completeBorder = false;
 	interpolationSpeed = 8;
 	height = 0;
 }
@@ -1241,6 +1266,13 @@ public:
 		int hud = 2;
 		if(state == HUD_StatusBar)
 		{
+			if(SBarInfoScript->completeBorder) //Fill the statusbar with the border before we draw.
+			{
+				FTexture *b = TexMan[gameinfo.border->b];
+				R_DrawBorder(viewwindowx, viewwindowy + realviewheight + b->GetHeight(), viewwindowx + realviewwidth, SCREENHEIGHT);
+				if(screenblocks == 10)
+					screen->FlatFill(viewwindowx, viewwindowy + realviewheight, viewwindowx + realviewwidth, viewwindowy + realviewheight + b->GetHeight(), b, true);
+			}
 			if(SBarInfoScript->automapbar && automapactive)
 			{
 				hud = 3;

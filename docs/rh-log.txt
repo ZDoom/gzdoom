@@ -1,3 +1,9 @@
+February 8, 2008
+- Fixed: D_ReadUserInfoString() parsed the final element of a compact string
+  as the empty string. Since that was the player class, this meant that any
+  games with more than one class would pick a random class in multiplayer.
+- Fixed: FCanvasTexture::RenderView() should not have color 0 in its output.
+
 February 5, 2008
 - Updated the GCC-targeted makefiles to turn off two optimizations that cause
   fmopl.cpp to compile incorrectly: tree-dominator-opts and tree-fre

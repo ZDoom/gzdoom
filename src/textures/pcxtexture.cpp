@@ -387,7 +387,7 @@ void FPCXTexture::MakeTexture()
 		else
 		{
 			BYTE *newpix = new BYTE[Width*Height];
-			FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, PaletteMap);
+			FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, Width, PaletteMap);
 			BYTE *oldpix = Pixels;
 			Pixels = newpix;
 			delete[] oldpix;

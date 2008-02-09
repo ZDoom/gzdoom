@@ -391,7 +391,7 @@ void FPNGTexture::MakeTexture ()
 				BYTE *newpix = new BYTE[Width*Height];
 				if (PaletteMap != NULL)
 				{
-					FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, PaletteMap);
+					FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, Width, PaletteMap);
 				}
 				else
 				{

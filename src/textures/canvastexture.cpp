@@ -154,11 +154,11 @@ void FCanvasTexture::RenderView (AActor *viewpoint, int fov)
 	R_SetFOV (savedfov);
 	if (Pixels == Canvas->GetBuffer())
 	{
-		FlipSquareBlock (Pixels, Width, Height);
+		FlipSquareBlockRemap (Pixels, Width, Height, GPalette.Remap);
 	}
 	else
 	{
-		FlipNonSquareBlock (Pixels, Canvas->GetBuffer(), Width, Height, Canvas->GetPitch());
+		FlipNonSquareBlockRemap (Pixels, Canvas->GetBuffer(), Width, Height, Canvas->GetPitch(), GPalette.Remap);
 	}
 	bNeedsUpdate = false;
 	bDidUpdate = true;

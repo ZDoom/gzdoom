@@ -393,7 +393,7 @@ void FTexture::FlipNonSquareBlock (BYTE *dst, const BYTE *src, int x, int y, int
 	}
 }
 
-void FTexture::FlipNonSquareBlockRemap (BYTE *dst, const BYTE *src, int x, int y, const BYTE *remap)
+void FTexture::FlipNonSquareBlockRemap (BYTE *dst, const BYTE *src, int x, int y, int srcpitch, const BYTE *remap)
 {
 	int i, j;
 
@@ -401,7 +401,7 @@ void FTexture::FlipNonSquareBlockRemap (BYTE *dst, const BYTE *src, int x, int y
 	{
 		for (j = 0; j < y; ++j)
 		{
-			dst[i*y+j] = remap[src[i+j*x]];
+			dst[i*y+j] = remap[src[i+j*srcpitch]];
 		}
 	}
 }

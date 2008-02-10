@@ -1,7 +1,7 @@
 ifeq (Windows_NT,$(OS))
   WIN=1
 endif
-ifeq (msys,$(OSTYPE))
+ifeq ($(findstring msys,$(shell sh --version 2>nul)),msys)
   WIN=1
 endif
 

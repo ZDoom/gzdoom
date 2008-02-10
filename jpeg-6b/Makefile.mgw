@@ -33,7 +33,7 @@ $(STATICLIB): $(OBJS)
 .PHONY: clean
 
 clean:
-ifeq (msys,$(OSTYPE))
+ifeq ($(findstring msys,$(shell sh --version 2>nul)),msys)
 	rm -f $(STATICLIB)
 	rm -f *.o
 else

@@ -1,0 +1,6 @@
+// This resource script is for compiling with MinGW only. Visual C++
+// compilations use the manifest tool to insert the manifest instead.
+
+#include <WinUser.h>
+
+1 RT_MANIFEST "trustinfo.txt"

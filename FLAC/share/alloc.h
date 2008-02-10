@@ -33,14 +33,16 @@
 #endif
 #include <stdlib.h> /* for size_t, malloc(), etc */
 
-#ifndef SIZE_MAX
-# ifndef SIZE_T_MAX
-#  ifdef _MSC_VER
-#   define SIZE_T_MAX UINT_MAX
-#  else
-#   error
-#  endif
+#ifndef SIZE_T_MAX
+# ifdef _WIN64
+#  define SIZE_T_MAX ULLONG_MAX
+# elif defined(_WIN32)
+#  define SIZE_T_MAX UINT_MAX /* Why doesn't the standard MinGW distribution define this? */
+# else
+#  error
 # endif
+#endif
+#ifndef SIZE_MAX
 # define SIZE_MAX SIZE_T_MAX
 #endif
 

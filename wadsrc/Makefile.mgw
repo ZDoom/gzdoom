@@ -5,12 +5,15 @@ DEHSUPP=../tools/dehsupp/dehsupp
 ifneq ($(MAKECMDGOALS),clean)
 include Makefile2
 endif
+ifeq ($(findstring msys,$(shell sh --version 2>nul)),msys)
+export OSTYPE=msys
+endif
 
 wadmake: zdoom.lst $(MAKEWAD).exe $(XLATCC).exe $(DEHSUPP).exe
 	$(MAKEWAD) -make wadmake zdoom.lst
 
 clean:
-ifeq (msys,$(OSTYPE))
+ifeq ($(OSTYPE),msys)
 	rm -f wadmake zdoom.pk3 xlat/*.x dehsupp.lmp
 else
 	del /q /f wadmake zdoom.pk3 xlat\*.x dehsupp.lmp 2>nul

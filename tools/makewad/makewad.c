@@ -323,7 +323,7 @@ int buildwad (FILE *listfile, char *listfilename, const char *makecmd, char *mak
 				{
 					fprintf (wadfile, " \\\n\t\"%s\"", filename);
 				}
-				// ARGH! Stupid make. Too bad but then these files can't be checked. 
+				// ARGH! Stupid make. Too bad, but then these files can't be checked. 
 				// Still better than something that doesn't work at all though!
 				else if (!strpbrk(filename, "[]^"))	
 				{

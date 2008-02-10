@@ -1,12 +1,23 @@
+February 9, 2008
+- Modified FLAC/share/alloc.h to define SIZE_T_MAX if it isn't defined
+  already. For some reason, a stock install of MinGW doesn't define it, but
+  if you compile your own GCC, it installs headers that do.
+- After thoroughly messing up my MinGW/MSYS installation, I deleted the whole
+  thing and reinstalled everything using the latest zips. Much to my surprise,
+  the MSYS-detection in the makefiles no longer worked because OSTYPE wasn't
+  being exported to process launched by the MSYS shell. I've now switched to a
+  different method I found through the power of Google that asks the shell
+  what version it is to see if the version string contains "msys".
+
 February 8, 2008
 - Applied Blzut3's sbarinfo update #11:
   * SBarInfo will also accept a '|' between flags for those who are really
     bothered by the indefinite "arguments" in the middle of the statement.
-  * Added: completeBorder.  When set to true SBarInfo will draw the border where
+  * Added: completeBorder. When set to true SBarInfo will draw the border where
     the status bar normally goes.
   * Fixed: I forgot to accept TK_None on "base" and "statusbar".
   * Fixed: "base" was apparently broken when the SBarInfo init code was moved to
-    d_main.cpp.  Also, if "base Strife" was used then it would not use the
+    d_main.cpp. Also, if "base Strife" was used then it would not use the
     default log message of "find help".
 - Fixed: D_ReadUserInfoString() parsed the final element of a compact string
   as the empty string. Since that was the player class, this meant that any

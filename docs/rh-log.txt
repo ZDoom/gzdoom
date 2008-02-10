@@ -1,4 +1,5 @@
 February 9, 2008
+- Fixed: G_StartTravel() inadvertantly removed players' TIDs.
 - Modified FLAC/share/alloc.h to define SIZE_T_MAX if it isn't defined
   already. For some reason, a stock install of MinGW doesn't define it, but
   if you compile your own GCC, it installs headers that do.

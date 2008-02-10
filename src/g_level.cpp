@@ -2211,7 +2211,9 @@ void G_StartTravel ()
 			{
 				pawn->UnlinkFromWorld ();
 				P_DelSector_List ();
+				int tid = pawn->tid;	// Save TID
 				pawn->RemoveFromHash ();
+				pawn->tid = tid;		// Restore TID (but no longer linked into the hash chain)
 				pawn->ChangeStatNum (STAT_TRAVELLING);
 
 				for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)

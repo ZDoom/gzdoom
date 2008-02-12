@@ -362,7 +362,7 @@ static BYTE antialias[NUMALIASES][NUMWEIGHTS];
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
 void AM_rotate (fixed_t *x, fixed_t *y, angle_t an);
 void AM_doFollowPlayer ();
-void AM_ToggleFollowPlayer();
+static void AM_ToggleFollowPlayer();
 
 // Calculates the slope and slope according to the x-axis of a line
 // segment in map coordinates (with the upright y-axis n' all) so

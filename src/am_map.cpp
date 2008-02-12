@@ -307,6 +307,8 @@ static fixed_t	ftom_zoommul;	// how far the window zooms in each tic (fb coords)
 static fixed_t	m_x, m_y;		// LL x,y where the window is on the map (map coords)
 static fixed_t	m_x2, m_y2;		// UR x,y where the window is on the map (map coords)
 
+static fixed_t	m_rotateoffsx, m_rotateoffsy;	// Offset for rotated map.
+
 //
 // width/height of window on map (map coords)
 //
@@ -359,6 +361,8 @@ static BYTE antialias[NUMALIASES][NUMWEIGHTS];
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
 void AM_rotate (fixed_t *x, fixed_t *y, angle_t an);
+void AM_doFollowPlayer ();
+void AM_ToggleFollowPlayer();
 
 // Calculates the slope and slope according to the x-axis of a line
 // segment in map coordinates (with the upright y-axis n' all) so
@@ -564,19 +568,28 @@ static void AM_ScrollParchment (fixed_t dmapx, fixed_t dmapy)
 //
 void AM_changeWindowLoc ()
 {
-	if (0 != (m_paninc.x | m_paninc.y))
+	if (am_rotate)
 	{
-		followplayer = 0;
-		f_oldloc.x = FIXED_MAX;
+		m_rotateoffsx -= Scale(m_paninc.x, SCREENWIDTH, 320);
+		m_rotateoffsy -= Scale(m_paninc.y, SCREENHEIGHT, 200);
+		AM_doFollowPlayer();
 	}
+	else
+	{
+		if (0 != (m_paninc.x | m_paninc.y))
+		{
+			followplayer = 0;
+			f_oldloc.x = FIXED_MAX;
+		}
 
-	int oldmx = m_x, oldmy = m_y;
+		int oldmx = m_x, oldmy = m_y;
 
-	m_x += Scale (m_paninc.x, SCREENWIDTH, 320);
-	m_y += Scale (m_paninc.y, SCREENHEIGHT, 200);
+		m_x += Scale (m_paninc.x, SCREENWIDTH, 320);
+		m_y += Scale (m_paninc.y, SCREENHEIGHT, 200);
 
-	AM_ClipRotatedExtents ();
-	AM_ScrollParchment (m_x-oldmx, oldmy-m_y);
+		AM_ClipRotatedExtents ();
+		AM_ScrollParchment (m_x-oldmx, oldmy-m_y);
+	}
 }
 
 
@@ -971,9 +984,7 @@ bool AM_Responder (event_t *ev)
 			switch (ev->data2)
 			{
 			case AM_FOLLOWKEY:
-				followplayer = !followplayer;
-				f_oldloc.x = FIXED_MAX;
-				Printf ("%s\n", GStrings(followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
+				AM_ToggleFollowPlayer();
 				break;
 			case AM_GRIDKEY:
 				grid = !grid;
@@ -1063,8 +1074,8 @@ void AM_doFollowPlayer ()
 		(f_oldloc.x != players[consoleplayer].camera->x ||
 		 f_oldloc.y != players[consoleplayer].camera->y))
 	{
-		m_x = (players[consoleplayer].camera->x >> FRACTOMAPBITS) - m_w/2;
-		m_y = (players[consoleplayer].camera->y >> FRACTOMAPBITS) - m_h/2;
+		m_x = ((players[consoleplayer].camera->x >> FRACTOMAPBITS) + m_rotateoffsx) - m_w/2;
+		m_y = ((players[consoleplayer].camera->y >> FRACTOMAPBITS) + m_rotateoffsy) - m_h/2;
 		m_x2 = m_x + m_w;
 		m_y2 = m_y + m_h;
 
@@ -1080,6 +1091,15 @@ void AM_doFollowPlayer ()
 		f_oldloc.x = players[consoleplayer].camera->x;
 		f_oldloc.y = players[consoleplayer].camera->y;
 	}
+}
+
+static void AM_ToggleFollowPlayer()
+{
+	followplayer = !followplayer;
+	f_oldloc.x = FIXED_MAX;
+	m_rotateoffsx = 0;
+	m_rotateoffsy = 0;
+	Printf ("%s\n", GStrings(followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
 }
 
 //
@@ -1474,8 +1494,8 @@ void AM_rotatePoint (fixed_t *x, fixed_t *y)
 	*x -= players[consoleplayer].camera->x >> FRACTOMAPBITS;
 	*y -= players[consoleplayer].camera->y >> FRACTOMAPBITS;
 	AM_rotate (x, y, ANG90 - players[consoleplayer].camera->angle);
-	*x += players[consoleplayer].camera->x >> FRACTOMAPBITS;
-	*y += players[consoleplayer].camera->y >> FRACTOMAPBITS;
+	*x += (players[consoleplayer].camera->x >> FRACTOMAPBITS) + m_rotateoffsx;
+	*y += (players[consoleplayer].camera->y >> FRACTOMAPBITS) + m_rotateoffsy;
 }
 
 void
@@ -1539,11 +1559,13 @@ void AM_drawPlayers ()
 		if (am_cheat != 0)
 			AM_drawLineCharacter
 			(cheat_player_arrow, NUMCHEATPLYRLINES, 0,
-			 angle, YourColor, players[consoleplayer].camera->x >> FRACTOMAPBITS, players[consoleplayer].camera->y >> FRACTOMAPBITS);
+			 angle, YourColor, (players[consoleplayer].camera->x >> FRACTOMAPBITS) + m_rotateoffsx,
+			 (players[consoleplayer].camera->y >> FRACTOMAPBITS) + m_rotateoffsy);
 		else
 			AM_drawLineCharacter
 			(player_arrow, NUMPLYRLINES, 0, angle,
-			 YourColor, players[consoleplayer].camera->x >> FRACTOMAPBITS, players[consoleplayer].camera->y >> FRACTOMAPBITS);
+			 YourColor, (players[consoleplayer].camera->x >> FRACTOMAPBITS) + m_rotateoffsx,
+			 (players[consoleplayer].camera->y >> FRACTOMAPBITS) + m_rotateoffsy);
 		return;
 	}
 

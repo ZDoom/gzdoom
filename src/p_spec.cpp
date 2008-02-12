@@ -119,15 +119,28 @@ static void P_SpawnPushers ();		// phares 3/20/98
 
 
 // [RH] Check dmflags for noexit and respond accordingly
-bool CheckIfExitIsGood (AActor *self)
+bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 {
+	cluster_info_t *cluster;
+
 	// The world can always exit itself.
 	if (self == NULL)
 		return true;
 
+	// Is this a deathmatch game and we're not allowed to exit?
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 	{
 		P_DamageMobj (self, self, self, 1000000, NAME_Exit);
+		return false;
+	}
+	// Is this a singleplayer game and the next map is part of the same hub and we're dead?
+	if (self->health <= 0 &&
+		!multiplayer &&
+		info != NULL &&
+		info->cluster == level.cluster &&
+		(cluster = FindClusterInfo(level.cluster)) != NULL &&
+		cluster->flags & CLUSTER_HUB)
+	{
 		return false;
 	}
 	if (deathmatch)

@@ -1178,14 +1178,17 @@ void D_AddWildFile (const char *value)
 		{
 			do
 			{
-				if (sep == NULL)
+				if (!(I_FindAttr(&findstate) & FA_DIREC))
 				{
-					D_AddFile (I_FindName (&findstate));
-				}
-				else
-				{
-					strcpy (sep+1, I_FindName (&findstate));
-					D_AddFile (path);
+					if (sep == NULL)
+					{
+						D_AddFile (I_FindName (&findstate));
+					}
+					else
+					{
+						strcpy (sep+1, I_FindName (&findstate));
+						D_AddFile (path);
+					}
 				}
 			} while (I_FindNext (handle, &findstate) == 0);
 		}

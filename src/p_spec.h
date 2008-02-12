@@ -157,7 +157,7 @@ inline FArchive &operator<< (FArchive &arc, DPusher::EPusher &type)
 // [RH] If a deathmatch game, checks to see if noexit is enabled.
 //		If so, it kills the player and returns false. Otherwise,
 //		it returns true, and the player is allowed to live.
-bool	CheckIfExitIsGood (AActor *self);
+bool	CheckIfExitIsGood (AActor *self, level_info_t *info);
 
 // at map load
 void	P_SpawnSpecials (void);

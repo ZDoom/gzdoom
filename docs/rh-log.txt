@@ -1,3 +1,14 @@
+February 11, 2008
+- Fixed: Turning off follow mode with automap rotating enabled did not
+  function in an easy-to-understand manner.
+- Fixed: D_AddWildFile() blindly assumed that all matches were files.
+- Added back the dead player check to CheckIfExitIsGood(), but now it
+  applies only if the next map is part of the same hub. Otherwise, you can
+  still exit the map while dead.
+- Removed the SpawnedPuff global variable and made it a return value from 
+  P_LineAttack().
+- Fixed: P_SpawnPuff() played sounds for temporary puffs.
+
 February 9, 2008
 - Fixed: G_StartTravel() inadvertantly removed players' TIDs.
 - Modified FLAC/share/alloc.h to define SIZE_T_MAX if it isn't defined

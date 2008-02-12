@@ -338,6 +338,8 @@ void G_DeferedInitNew (const char *mapname, int skill = -1);
 
 void G_ExitLevel (int position, bool keepFacing);
 void G_SecretExitLevel (int position);
+const char *G_GetExitMap();
+const char *G_GetSecretExitMap();
 
 void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int nextSkill=-1, 
 				   bool nointermission=false, bool resetinventory=false, bool nomonsters=false);
@@ -357,7 +359,7 @@ void G_MakeEpisodes (void);
 const char *G_MaybeLookupLevelName (level_info_t *level);
 
 cluster_info_t *FindClusterInfo (int cluster);
-level_info_t *FindLevelInfo (char *mapname);
+level_info_t *FindLevelInfo (const char *mapname);
 level_info_t *FindLevelByNum (int num);
 level_info_t *CheckLevelRedirect (level_info_t *info);
 

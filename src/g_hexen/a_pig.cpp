@@ -259,6 +259,7 @@ void A_SnoutAttack (AActor *actor)
 	int damage;
 	int slope;
 	player_t *player;
+	AActor *puff;
 
 	if (NULL == (player = actor->player))
 	{
@@ -268,13 +269,12 @@ void A_SnoutAttack (AActor *actor)
 	damage = 3+(pr_snoutattack()&3);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
-	PuffSpawned = NULL;
-	P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(ASnoutPuff));
+	puff = P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(ASnoutPuff));
 	S_Sound(player->mo, CHAN_VOICE, "PigActive", 1, ATTN_NORM);
 	if(linetarget)
 	{
 		AdjustPlayerAngle(player->mo);
-		if(PuffSpawned)
+		if(puff != NULL)
 		{ // Bit something
 			S_Sound(player->mo, CHAN_VOICE, "PigAttack", 1, ATTN_NORM);
 		}

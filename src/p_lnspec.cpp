@@ -733,7 +733,7 @@ FUNC(LS_Generic_Lift)
 FUNC(LS_Exit_Normal)
 // Exit_Normal (position)
 {
-	if (CheckIfExitIsGood (it))
+	if (CheckIfExitIsGood (it, FindLevelInfo(G_GetExitMap())))
 	{
 		G_ExitLevel (arg0, false);
 		return true;
@@ -744,7 +744,7 @@ FUNC(LS_Exit_Normal)
 FUNC(LS_Exit_Secret)
 // Exit_Secret (position)
 {
-	if (CheckIfExitIsGood (it))
+	if (CheckIfExitIsGood (it, FindLevelInfo(G_GetSecretExitMap())))
 	{
 		G_SecretExitLevel (arg0);
 		return true;
@@ -759,7 +759,7 @@ FUNC(LS_Teleport_NewMap)
 	{
 		level_info_t *info = FindLevelByNum (arg0);
 
-		if (info && CheckIfExitIsGood (it))
+		if (info && CheckIfExitIsGood (it, info))
 		{
 			G_ChangeLevel(info->mapname, arg1, !!arg2);
 			return true;
@@ -814,7 +814,7 @@ FUNC(LS_TeleportInSector)
 FUNC(LS_Teleport_EndGame)
 // Teleport_EndGame ()
 {
-	if (!backSide && CheckIfExitIsGood (it))
+	if (!backSide && CheckIfExitIsGood (it, NULL))
 	{
 		G_SetForEndGame (level.nextmap);
 		G_ExitLevel (0, false);

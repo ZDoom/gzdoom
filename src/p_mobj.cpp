@@ -159,7 +159,6 @@ CVAR (Int, cl_pufftype, 0, CVAR_ARCHIVE);
 CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
 AActor *MissileActor;
-AActor *PuffSpawned;
 
 // CODE --------------------------------------------------------------------
 
@@ -4014,16 +4013,18 @@ AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, an
 		puff->renderflags |= RF_INVISIBLE;
 	}
 
-	if (hitthing && puff->SeeSound)
-	{ // Hit thing sound
-		S_SoundID (puff, CHAN_BODY, puff->SeeSound, 1, ATTN_NORM);
-	}
-	else if (puff->AttackSound)
+	if (!temporary)
 	{
-		S_SoundID (puff, CHAN_BODY, puff->AttackSound, 1, ATTN_NORM);
+		if (hitthing && puff->SeeSound)
+		{ // Hit thing sound
+			S_SoundID (puff, CHAN_BODY, puff->SeeSound, 1, ATTN_NORM);
+		}
+		else if (puff->AttackSound)
+		{
+			S_SoundID (puff, CHAN_BODY, puff->AttackSound, 1, ATTN_NORM);
+		}
 	}
 
-	PuffSpawned = puff;
 	return puff;
 }
 

@@ -494,7 +494,7 @@ static void ParseMapInfoLower (FScanner &sc,
 							   cluster_info_t *clusterinfo,
 							   QWORD levelflags);
 
-static int FindWadLevelInfo (char *name)
+static int FindWadLevelInfo (const char *name)
 {
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 		if (!strnicmp (name, wadlevelinfos[i].mapname, 8))
@@ -1771,26 +1771,35 @@ void G_ChangeLevel(const char * levelname, int position, bool keepFacing, int ne
 	}
 }
 
-void G_ExitLevel (int position, bool keepFacing)
+const char *G_GetExitMap()
 {
-	G_ChangeLevel(level.nextmap, position, keepFacing);
+	return level.nextmap;
 }
 
-void G_SecretExitLevel (int position) 
+const char *G_GetSecretExitMap()
 {
 	const char *nextmap = level.nextmap;
 
 	if (level.secretmap[0] != 0)
 	{
-		MapData * map = P_OpenMapData(level.secretmap);
+		MapData *map = P_OpenMapData(level.secretmap);
 		if (map != NULL)
 		{
 			delete map;
 			nextmap = level.secretmap;
 		}
 	}
+	return nextmap;
+}
 
-	G_ChangeLevel(nextmap, position, false);
+void G_ExitLevel (int position, bool keepFacing)
+{
+	G_ChangeLevel(G_GetExitMap(), position, keepFacing);
+}
+
+void G_SecretExitLevel (int position) 
+{
+	G_ChangeLevel(G_GetSecretExitMap(), position, false);
 }
 
 void G_DoCompleted (void)
@@ -2455,7 +2464,7 @@ char *CalcMapName (int episode, int level)
 	return lumpname;
 }
 
-level_info_t *FindLevelInfo (char *mapname)
+level_info_t *FindLevelInfo (const char *mapname)
 {
 	int i;
 

@@ -249,6 +249,8 @@ struct level_locals_s
 	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls
 	SBYTE		WallHorizLight;
 
+	bool		FromSnapshot;			// The current map was restored from a snapshot
+
 	const char	*f1;
 
 	float		teamdamage;

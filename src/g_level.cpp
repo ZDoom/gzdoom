@@ -2311,6 +2311,10 @@ void G_FinishTravel ()
 				inv->LinkToWorld ();
 				inv->Travelled ();
 			}
+			if (level.FromSnapshot)
+			{
+				FBehavior::StaticStartTypedScripts (SCRIPT_Return, pawn, true);
+			}
 		}
 	}
 }
@@ -2340,6 +2344,7 @@ void G_InitLevelLocals ()
 	level.fadeto = info->fadeto;
 	level.cdtrack = info->cdtrack;
 	level.cdid = info->cdid;
+	level.FromSnapshot = false;
 	if (level.fadeto == 0)
 	{
 		R_SetDefaultColormap (info->fadetable);
@@ -2828,6 +2833,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 			arc.SetHubTravel ();
 		G_SerializeLevel (arc, hubLoad);
 		arc.Close ();
+		level.FromSnapshot = true;
 
 		TThinkerIterator<APlayerPawn> it;
 		APlayerPawn *pawn, *next;

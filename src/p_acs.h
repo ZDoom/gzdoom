@@ -110,7 +110,8 @@ enum
 	SCRIPT_WhiteReturn	= 8,
 	SCRIPT_Lightning	= 12,
 	SCRIPT_Unloading	= 13,
-	SCRIPT_Disconnect	= 14
+	SCRIPT_Disconnect	= 14,
+	SCRIPT_Return		= 15,
 };
 
 // Script flags

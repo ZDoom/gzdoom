@@ -208,7 +208,7 @@ extern cycle_t BlitCycles;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CUSTOM_CVAR(Bool, test2d, true, CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
 {
 	BorderNeedRefresh = SB_state = screen->GetPageCount();
 }
@@ -747,7 +747,8 @@ bool D3DFB::Lock (bool buffered)
 	{
 		return false;
 	}
-
+	assert (!In2D);
+	Accel2D = vid_hw2d;
 	Buffer = MemBuffer;
 	return false;
 }
@@ -944,7 +945,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 	if (copy3d)
 	{
 		FBVERTEX verts[4];
-		CalcFullscreenCoords(verts, test2d, false, FlashColor0, FlashColor1);
+		CalcFullscreenCoords(verts, Accel2D, false, FlashColor0, FlashColor1);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
 }
@@ -1114,7 +1115,7 @@ void D3DFB::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_
 {
 	D3DLOCKED_RECT lrect;
 
-	if (!test2d)
+	if (!Accel2D)
 	{
 		Super::GetScreenshotBuffer(buffer, pitch, color_type);
 		return;
@@ -2071,7 +2072,7 @@ bool D3DPal::Update()
 
 bool D3DFB::Begin2D(bool copy3d)
 {
-	if (!test2d)
+	if (!Accel2D)
 	{
 		return false;
 	}

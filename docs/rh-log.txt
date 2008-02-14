@@ -1,3 +1,9 @@
+February 13, 2008
+- Removed most checks on vid_hw2d/test2d. This now gets checked only once per
+  frame to avoid the remote possibility that it could change during the middle
+  of drawing the frame and cause strange things to happen.
+- Renamed test2d to vid_hw2d.
+
 February 12, 2008
 - Added the ACS script type "return". These are executed by players who return
   to a map they've previously been to. This is analagous to enter scripts, but

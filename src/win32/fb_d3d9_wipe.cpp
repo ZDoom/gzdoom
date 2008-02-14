@@ -108,8 +108,6 @@ private:
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-EXTERN_CVAR(Bool, test2d)
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -138,7 +136,7 @@ bool D3DFB::WipeStartScreen(int type)
 	IDirect3DSurface9 *tsurf;
 	D3DSURFACE_DESC desc;
 
-	if (!test2d)
+	if (!Accel2D)
 	{
 		return Super::WipeStartScreen(type);
 	}
@@ -202,7 +200,7 @@ bool D3DFB::WipeStartScreen(int type)
 
 void D3DFB::WipeEndScreen()
 {
-	if (!test2d)
+	if (!Accel2D)
 	{
 		Super::WipeEndScreen();
 		return;
@@ -252,7 +250,7 @@ void D3DFB::WipeEndScreen()
 
 bool D3DFB::WipeDo(int ticks)
 {
-	if (!test2d)
+	if (!Accel2D)
 	{
 		return Super::WipeDo(ticks);
 	}
@@ -323,7 +321,7 @@ void D3DFB::WipeCleanup()
 	}
 	FinalWipeScreen = NULL;
 	GatheringWipeScreen = false;
-	if (!test2d)
+	if (!Accel2D)
 	{
 		Super::WipeCleanup();
 		return;

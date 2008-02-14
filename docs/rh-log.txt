@@ -1,3 +1,8 @@
+February 14, 2008 (Changes by Graf Zahl)
+- Added Karate Chris's patch for 0-tid == activator in action specials
+  Thing_SetSpecial and Thing_SetTranslation.
+- -moved BUG_FORUM_URL to version.h
+
 February 13, 2008
 - Removed most checks on vid_hw2d/test2d. This now gets checked only once per
   frame to avoid the remote possibility that it could change during the middle

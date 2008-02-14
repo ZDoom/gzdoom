@@ -901,7 +901,14 @@ FUNC(LS_Thing_SetSpecial)	// [BC]
 // [RH] Use the SetThingSpecial ACS command instead.
 // It can set all args and not just the first three.
 {
-	if (arg0 != 0)
+	if (arg0 == 0)
+	{
+		it->special = arg1;
+		it->args[0] = arg2;
+		it->args[1] = arg3;
+		it->args[2] = arg4;
+	}
+	else
 	{
 		AActor *actor;
 		FActorIterator iterator (arg0);
@@ -1513,10 +1520,18 @@ FUNC(LS_Thing_SetTranslation)
 		range = 0;
 	}
 
-	while ( (target = iterator.Next ()) )
+	if (arg0 == 0)
 	{
 		ok = true;
-		target->Translation = range==0? target->GetDefault()->Translation : range;
+		it->Translation = range==0? it->GetDefault()->Translation : range;
+	}
+	else
+	{
+		while ( (target = iterator.Next ()) )
+		{
+			ok = true;
+			target->Translation = range==0? target->GetDefault()->Translation : range;
+		}
 	}
 
 	return ok;

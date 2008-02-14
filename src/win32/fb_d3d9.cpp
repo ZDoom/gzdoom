@@ -30,8 +30,8 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** This file does _not_ implement hardware-acclerated rendering. It is just
-** a means of getting the pixel data to the screen in a more reliable
+** This file does _not_ implement hardware-acclerated 3D rendering. It is
+** just a means of getting the pixel data to the screen in a more reliable
 ** method on modern hardware by copying the entire frame to a texture,
 ** drawing that to the screen, and presenting.
 */

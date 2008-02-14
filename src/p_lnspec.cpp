@@ -903,10 +903,13 @@ FUNC(LS_Thing_SetSpecial)	// [BC]
 {
 	if (arg0 == 0)
 	{
-		it->special = arg1;
-		it->args[0] = arg2;
-		it->args[1] = arg3;
-		it->args[2] = arg4;
+		if (it != NULL)
+		{
+			it->special = arg1;
+			it->args[0] = arg2;
+			it->args[1] = arg3;
+			it->args[2] = arg4;
+		}
 	}
 	else
 	{
@@ -1522,8 +1525,11 @@ FUNC(LS_Thing_SetTranslation)
 
 	if (arg0 == 0)
 	{
-		ok = true;
-		it->Translation = range==0? it->GetDefault()->Translation : range;
+		if (it != NULL)
+		{
+			ok = true;
+			it->Translation = range==0? it->GetDefault()->Translation : range;
+		}
 	}
 	else
 	{

@@ -81,6 +81,7 @@ FGameConfigFile *GameConfig;
 CVAR(Bool, screenshot_quiet, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(String, screenshot_type, "png", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(String, screenshot_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+EXTERN_CVAR(Bool, longsavemessages);
 
 extern void FreeKeySections();
 
@@ -721,7 +722,9 @@ void M_ScreenShot (const char *filename)
 
 		if (!screenshot_quiet)
 		{
-			Printf ("Captured %s\n", autoname.GetChars());
+			int slash = -1;
+			if (!longsavemessages) slash = autoname.LastIndexOfAny(":/\\");
+			Printf ("Captured %s\n", autoname.GetChars()+slash+1);
 		}
 	}
 	else

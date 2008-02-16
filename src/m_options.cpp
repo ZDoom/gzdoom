@@ -92,6 +92,8 @@ CVAR (Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 // Show messages has default, 0 = off, 1 = on
 CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
+EXTERN_CVAR (Bool, longsavemessages)
+EXTERN_CVAR (Bool, screenshot_quiet)
 
 extern int	skullAnimCounter;
 
@@ -132,6 +134,11 @@ value_t NoYes[2] = {
 value_t OnOff[2] = {
 	{ 0.0, "Off" },
 	{ 1.0, "On" }
+};
+
+value_t OffOn[2] = {
+	{ 0.0, "On" },
+	{ 1.0, "Off" }
 };
 
 menu_t  *CurrentMenu;
@@ -794,7 +801,10 @@ static menuitem_t MessagesItems[] = {
 	{ cdiscrete, "Critical Messages",	{&msg2color},		   	{21.0}, {0.0},	{0.0}, {TextColors} },
 	{ cdiscrete, "Chat Messages",		{&msg3color},		   	{21.0}, {0.0},	{0.0}, {TextColors} },
 	{ cdiscrete, "Team Messages",		{&msg4color},		   	{21.0}, {0.0},	{0.0}, {TextColors} },
-	{ cdiscrete, "Centered Messages",	{&msgmidcolor},			{21.0}, {0.0},	{0.0}, {TextColors} }
+	{ cdiscrete, "Centered Messages",	{&msgmidcolor},			{21.0}, {0.0},	{0.0}, {TextColors} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ discrete, "Screenshot messages",	{&screenshot_quiet},	{2.0}, {0.0},	{0.0}, {OffOn} },
+	{ discrete, "Detailed save messages",{&longsavemessages},	{2.0}, {0.0},	{0.0}, {OnOff} },
 };
 
 menu_t MessagesMenu =

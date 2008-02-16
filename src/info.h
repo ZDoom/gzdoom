@@ -317,6 +317,7 @@ enum
 	ADEF_Inventory_RespawnTics,
 	ADEF_Inventory_FlagsSet,
 	ADEF_Inventory_FlagsClear,
+	ADEF_Inventory_PickupFlash,
 
 	ADEF_PuzzleItem_Number,	// Identifies the puzzle item for UsePuzzleItem
 

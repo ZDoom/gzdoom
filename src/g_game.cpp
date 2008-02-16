@@ -102,6 +102,7 @@ FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Bool, chasedemo, false, 0);
 CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, longsavemessages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
@@ -2065,7 +2066,11 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		}
 		fclose(stdfile);
 	}
-	if (success) Printf ("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
+	if (success) 
+	{
+		if (longsavemessages) Printf ("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
+		else Printf ("%s\n", GStrings("GGSAVED"));
+	}
 	else Printf(PRINT_HIGH, "Save failed\n");
 
 	BackupSaveName = filename;

@@ -297,6 +297,7 @@ public:
 #define PROP_Inventory_RespawnTics(x)	ADD_WORD_PROP(ADEF_Inventory_RespawnTics,x)
 #define PROP_Inventory_FlagsSet(x)		ADD_LONG_PROP(ADEF_Inventory_FlagsSet,x)
 #define PROP_Inventory_FlagsClear(x)	ADD_LONG_PROP(ADEF_Inventory_FlagsClear,x)
+#define PROP_Inventory_PickupFlash(x)	ADD_BYTE_PROP(ADEF_Inventory_PickupFlash, x)
 
 #define PROP_PuzzleItem_Number(x)		ADD_BYTE_PROP(ADEF_PuzzleItem_Number,x)
 

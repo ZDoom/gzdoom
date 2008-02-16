@@ -90,7 +90,7 @@ enum
 	IF_INVBAR			= 1<<6,		// Item appears in the inventory bar
 	IF_HUBPOWER			= 1<<7,		// Powerup is kept when moving in a hub
 	IF_INTERHUBSTRIP	= 1<<8,		// Item is removed when travelling between hubs
-	IF_PICKUPFLASH		= 1<<9,		// Item "flashes" when picked up
+	//IF_PICKUPFLASH		= 1<<9,	// superseded by 'PickupFlash' property.
 	IF_ALWAYSPICKUP		= 1<<10,	// For IF_AUTOACTIVATE, MaxAmount=0 items: Always "pick up", even if it doesn't do anything
 	IF_FANCYPICKUPSOUND	= 1<<11,	// Play pickup sound in "surround" mode
 	IF_BIGPOWERUP		= 1<<12,	// Affected by RESPAWN_SUPER dmflag
@@ -136,6 +136,7 @@ public:
 	int DropTime;				// Countdown after dropping
 
 	DWORD ItemFlags;
+	const PClass *PickupFlash;	// actor to spawn as pickup flash
 
 	WORD PickupSound;
 

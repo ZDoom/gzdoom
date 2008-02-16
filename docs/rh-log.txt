@@ -1,4 +1,9 @@
-February 12, 2008
+February 16, 2008 (Changes by Graf Zahl)
+- Added customizable pickup flash.
+- Added option to show shorter messages for save game and screenshot confirmation.
+  Also added this to the 'Messages' menu.
+
+February 15, 2008
 - Version bump to 2.2.0.
 - Disabled console alpha when the console is fullscreen.
 - Re-enabled maybedrawnow for the software renderer. This should be replaced

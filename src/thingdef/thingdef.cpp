@@ -492,10 +492,12 @@ void ParseActor(FScanner &sc)
 // fields in the weapons
 //
 //==========================================================================
+
 void FinishThingdef()
 {
 	unsigned int i;
 	bool isRuntimeActor=false;
+	int errorcount=0;
 
 	for (i = 0;i < PClass::m_Types.Size(); i++)
 	{
@@ -517,6 +519,26 @@ void FinishThingdef()
 			GetDefaultByType(ti)->flags &=~MF_COUNTKILL;
 		}
 
+		if (ti->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		{
+			AInventory * defaults=(AInventory *)ti->Defaults;
+			fuglyname v;
+
+			v = defaults->PickupFlash;
+			if (v != NAME_None && v.IsValidName())
+			{
+				defaults->PickupFlash = PClass::FindClass(v);
+				if (isRuntimeActor)
+				{
+					if (!defaults->PickupFlash)
+					{
+						Printf("Unknown pickup flash '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						errorcount++;
+					}
+				}
+			}
+		}
+
 		// the typeinfo properties of weapons have to be fixed here after all actors have been declared
 		if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{
@@ -531,11 +553,13 @@ void FinishThingdef()
 				{
 					if (!defaults->AmmoType1)
 					{
-						I_Error("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						Printf("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						errorcount++;
 					}
 					else if (defaults->AmmoType1->ParentClass != RUNTIME_CLASS(AAmmo))
 					{
-						I_Error("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						Printf("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						errorcount++;
 					}
 				}
 			}
@@ -548,11 +572,13 @@ void FinishThingdef()
 				{
 					if (!defaults->AmmoType2)
 					{
-						I_Error("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						Printf("Unknown ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						errorcount++;
 					}
 					else if (defaults->AmmoType2->ParentClass != RUNTIME_CLASS(AAmmo))
 					{
-						I_Error("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						Printf("Invalid ammo type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						errorcount++;
 					}
 				}
 			}
@@ -565,11 +591,13 @@ void FinishThingdef()
 				{
 					if (!defaults->SisterWeaponType)
 					{
-						I_Error("Unknown sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						Printf("Unknown sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						errorcount++;
 					}
 					else if (!defaults->SisterWeaponType->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 					{
-						I_Error("Invalid sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						Printf("Invalid sister weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+						errorcount++;
 					}
 				}
 			}
@@ -586,10 +614,26 @@ void FinishThingdef()
 				if (ready || select || deselect || fire)
 				{
 					// Do some consistency checks. If these states are undefined the weapon cannot work!
-					if (!ready) I_Error("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
-					if (!select) I_Error("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
-					if (!deselect) I_Error("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
-					if (!fire) I_Error("Weapon %s doesn't define a fire state.\n", ti->TypeName.GetChars());
+					if (!ready)
+					{
+						Printf("Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
+						errorcount++;
+					}
+					if (!select) 
+					{
+						Printf("Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
+						errorcount++;
+					}
+					if (!deselect) 
+					{
+						Printf("Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
+						errorcount++;
+					}
+					if (!fire) 
+					{
+						Printf("Weapon %s doesn't define a fire state.\n", ti->TypeName.GetChars());
+						errorcount++;
+					}
 				}
 			}
 
@@ -606,14 +650,20 @@ void FinishThingdef()
 				defaults->WeaponClass = PClass::FindClass(v);
 				if (!defaults->WeaponClass)
 				{
-					I_Error("Unknown weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					Printf("Unknown weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					errorcount++;
 				}
 				else if (!defaults->WeaponClass->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 				{
-					I_Error("Invalid weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					Printf("Invalid weapon type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					errorcount++;
 				}
 			}
 		}
+	}
+	if (errorcount > 0)
+	{
+		I_Error("%d errors during actor postprocessing", errorcount);
 	}
 
 	// Since these are defined in DECORATE now the table has to be initialized here.

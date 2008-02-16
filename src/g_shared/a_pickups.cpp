@@ -587,18 +587,18 @@ bool AInventory::GoAway ()
 	// Dropped items never stick around
 	if (flags & MF_DROPPED)
 	{
-		if (ItemFlags & IF_PICKUPFLASH)
+		if (PickupFlash != NULL)
 		{
-			Spawn<APickupFlash> (x, y, z, ALLOW_REPLACE);
+			Spawn(PickupFlash, x, y, z, ALLOW_REPLACE);
 		}
 		return false;
 	}
 
 	if (!ShouldStay ())
 	{
-		if (ItemFlags & IF_PICKUPFLASH)
+		if (PickupFlash != NULL)
 		{
-			Spawn<APickupFlash> (x, y, z, ALLOW_REPLACE);
+			Spawn(PickupFlash, x, y, z, ALLOW_REPLACE);
 		}
 		Hide ();
 		if (ShouldRespawn ())
@@ -857,7 +857,7 @@ void AInventory::Hide ()
 	{
 		SetState (&States[S_HIDESPECIAL]);
 		tics = 1400;
-		if (ItemFlags & IF_PICKUPFLASH) tics += 30;
+		if (PickupFlash != NULL) tics += 30;
 	}
 	else
 	{

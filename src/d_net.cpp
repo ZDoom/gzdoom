@@ -649,6 +649,7 @@ void PlayerIsGone (int netnode, int netconsole)
 			if (playeringame[i] && !players[i].isbot)
 			{
 				Net_Arbitrator = i;
+				players[i].settings_controller = true;
 				Printf ("%s is the new arbitrator\n", players[i].userinfo.netname);
 				break;
 			}
@@ -1580,6 +1581,8 @@ void D_CheckNetGame (void)
 	I_InitNetwork ();
 	if (doomcom.id != DOOMCOM_ID)
 		I_FatalError ("Doomcom buffer invalid!");
+
+	players[0].settings_controller = true;
 	
 	consoleplayer = doomcom.consoleplayer;
 
@@ -2313,6 +2316,26 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		playerswiping &= ~(1 << player);
 		break;
 
+	case DEM_ADDCONTROLLER:
+		{
+			BYTE playernum = ReadByte (stream);
+			players[playernum].settings_controller = true;
+
+			if (consoleplayer == playernum || consoleplayer == Net_Arbitrator)
+				Printf ("%s has been added to the controller list.\n", players[playernum].userinfo.netname);
+		}
+		break;
+
+	case DEM_DELCONTROLLER:
+		{
+			BYTE playernum = ReadByte (stream);
+			players[playernum].settings_controller = false;
+
+			if (consoleplayer == playernum || consoleplayer == Net_Arbitrator)
+				Printf ("%s has been removed from the controller list.\n", players[playernum].userinfo.netname);
+		}
+		break;
+
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;
@@ -2362,6 +2385,8 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_DROPPLAYER:
 		case DEM_FOV:
 		case DEM_MYFOV:
+		case DEM_ADDCONTROLLER:
+		case DEM_DELCONTROLLER:
 			skip = 1;
 			break;
 
@@ -2416,4 +2441,133 @@ CCMD (pings)
 		if (playeringame[i])
 			Printf ("% 4d %s\n", currrecvtime[i] - lastrecvtime[i],
 					players[i].userinfo.netname);
+}
+
+//==========================================================================
+//
+// Network_Controller
+//
+// Implement players who have the ability to change settings in a network
+// game.
+//
+//==========================================================================
+
+static void Network_Controller (int playernum, bool add)
+{
+	if (consoleplayer != Net_Arbitrator)
+	{
+		Printf ("This command is only accessible to the net arbitrator.\n");
+		return;
+	}
+
+	if (players[playernum].settings_controller && add)
+	{
+		Printf ("%s is already on the setting controller list.\n", players[playernum].userinfo.netname);
+		return;
+	}
+
+	if (!players[playernum].settings_controller && !add)
+	{
+		Printf ("%s is not on the setting controller list.\n", players[playernum].userinfo.netname);
+		return;
+	}
+
+	if (!playeringame[playernum])
+	{
+		Printf ("Player (%d) not found!\n");
+		return;
+	}
+
+	if (players[playernum].isbot)
+	{
+		Printf ("Bots cannot be added to the controller list.\n");
+		return;
+	}
+
+	if (playernum == Net_Arbitrator)
+	{
+		Printf ("The net arbitrator cannot have their status changed on this list.\n");
+		return;
+	}
+
+	if (add)
+		Net_WriteByte (DEM_ADDCONTROLLER);
+	else
+		Net_WriteByte (DEM_DELCONTROLLER);
+
+	Net_WriteByte (playernum);
+}
+
+//==========================================================================
+//
+// CCMD net_addcontroller
+//
+//==========================================================================
+
+CCMD (net_addcontroller)
+{
+	if (!netgame)
+	{
+		Printf ("This command can only be used when playing a net game.\n");
+		return;
+	}
+
+	if (argv.argc () < 2)
+	{
+		Printf ("Usage: net_addcontroller <player>\n");
+		return;
+	}
+
+	Network_Controller (atoi (argv[1]), true);
+}
+
+//==========================================================================
+//
+// CCMD net_removecontroller
+//
+//==========================================================================
+
+CCMD (net_removecontroller)
+{
+	if (!netgame)
+	{
+		Printf ("This command can only be used when playing a net game.\n");
+		return;
+	}
+
+	if (argv.argc () < 2)
+	{
+		Printf ("Usage: net_removecontroller <player>\n");
+		return;
+	}
+
+	Network_Controller (atoi (argv[1]), false);
+}
+
+//==========================================================================
+//
+// CCMD net_listcontrollers
+//
+//==========================================================================
+
+CCMD (net_listcontrollers)
+{
+	if (!netgame)
+	{
+		Printf ("This command can only be used when playing a net game.\n");
+		return;
+	}
+
+	Printf ("The following players can change the game settings:\n");
+
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		if (!playeringame[i])
+			continue;
+
+		if (players[i].settings_controller)
+		{
+			Printf ("- %s\n", players[i].userinfo.netname);
+		}
+	}
 }

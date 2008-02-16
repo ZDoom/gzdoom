@@ -162,9 +162,9 @@ void FBaseCVar::SetGenericRep (UCVarValue value, ECVarType type)
 	}
 	else if ((Flags & CVAR_SERVERINFO) && gamestate != GS_STARTUP && !demoplayback)
 	{
-		if (netgame && consoleplayer != Net_Arbitrator)
+		if (netgame && !players[consoleplayer].settings_controller)
 		{
-			Printf ("Only player %d can change %s\n", Net_Arbitrator+1, Name);
+			Printf ("Only setting controllers can change %s\n", Name);
 			return;
 		}
 		D_SendServerInfoChange (this, value, type);
@@ -1120,9 +1120,9 @@ void FFlagCVar::DoSet (UCVarValue value, ECVarType type)
 	// another flag might have made to the same cvar earlier in the script.
 	if ((ValueVar.Flags & CVAR_SERVERINFO) && gamestate != GS_STARTUP && !demoplayback)
 	{
-		if (netgame && consoleplayer != Net_Arbitrator)
+		if (netgame && !players[consoleplayer].settings_controller)
 		{
-			Printf ("Only player %d can change %s\n", Net_Arbitrator+1, Name);
+			Printf ("Only setting controllers can change %s\n", Name);
 			return;
 		}
 		D_SendServerFlagChange (&ValueVar, BitNum, newval);

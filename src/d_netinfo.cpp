@@ -823,15 +823,18 @@ CCMD (playerinfo)
 	else
 	{
 		int i = atoi (argv[1]);
-		Printf ("Name:        %s\n", players[i].userinfo.netname);
-		Printf ("Team:        %d\n", players[i].userinfo.team);
-		Printf ("Aimdist:     %d\n", players[i].userinfo.aimdist);
-		Printf ("Color:       %06x\n", players[i].userinfo.color);
-		Printf ("Skin:        %d\n", players[i].userinfo.skin);
-		Printf ("Gender:      %d\n", players[i].userinfo.gender);
-		Printf ("NeverSwitch: %d\n", players[i].userinfo.neverswitch);
-		Printf ("MoveBob:     %g\n", players[i].userinfo.MoveBob/65536.f);
-		Printf ("StillBob:    %g\n", players[i].userinfo.StillBob/65536.f);
-		Printf ("PlayerClass: %d\n", players[i].userinfo.PlayerClass);
+		userinfo_t *ui = &players[i].userinfo;
+		Printf ("Name:        %s\n",		ui->netname);
+		Printf ("Team:        %s (%d)\n",	ui->team == TEAM_None ? "None" : teams[ui->team].name, ui->team);
+		Printf ("Aimdist:     %d\n",		ui->aimdist);
+		Printf ("Color:       %06x\n",		ui->color);
+		Printf ("Skin:        %s (%d)\n",	skins[ui->skin].name, ui->skin);
+		Printf ("Gender:      %s (%d)\n",	GenderNames[ui->gender], ui->gender);
+		Printf ("NeverSwitch: %d\n",		ui->neverswitch);
+		Printf ("MoveBob:     %g\n",		ui->MoveBob/65536.f);
+		Printf ("StillBob:    %g\n",		ui->StillBob/65536.f);
+		Printf ("PlayerClass: %s (%d)\n",
+			ui->PlayerClass == -1 ? "Random" : PlayerClasses[ui->PlayerClass].Type->Meta.GetMetaString (APMETA_DisplayName),
+			ui->PlayerClass);
 	}
 }

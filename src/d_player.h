@@ -280,6 +280,8 @@ public:
 							// pointed to by this. Allows bot to roam to it if
 							// necessary.
 
+	bool		settings_controller;	// Player can control game settings.
+
 	//Skills
 	struct botskill_t	skill;
 

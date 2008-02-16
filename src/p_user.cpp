@@ -143,15 +143,15 @@ CCMD (addplayerclass)
 
 		if (!ti)
 		{
-			Printf ("Unknown player class '%s'", argv[1]);
+			Printf ("Unknown player class '%s'\n", argv[1]);
 		}
 		else if (!ti->IsDescendantOf (RUNTIME_CLASS (APlayerPawn)))
 		{
-			Printf ("Invalid player class '%s'", argv[1]);
+			Printf ("Invalid player class '%s'\n", argv[1]);
 		}
 		else if (ti->Meta.GetMetaString (APMETA_DisplayName) == NULL)
 		{
-			Printf ("Missing displayname for player class '%s'", argv[1]);
+			Printf ("Missing displayname for player class '%s'\n", argv[1]);
 		}
 		else
 		{
@@ -169,7 +169,7 @@ CCMD (addplayerclass)
 				}
 				else
 				{
-					Printf ("Unknown flag '%s' for player class '%s'", argv[arg], argv[1]);
+					Printf ("Unknown flag '%s' for player class '%s'\n", argv[arg], argv[1]);
 				}
 
 				arg++;

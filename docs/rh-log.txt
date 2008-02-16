@@ -1,4 +1,13 @@
 February 16, 2008 (Changes by Graf Zahl)
+- Added patch by Karate Chris:
+  - The net arbitrator can add or remove players to an access list so they 
+    can or cannot control game settings:
+  * net_addcontroller <player number> - Adds a player to the control list. Only net arbitrators have access to this command.
+  * net_removecontroller <player number> - Removes a player from the control list. Only net arbitrators have access to this command.
+  * net_listcontrollers - Lists the players who are able to control the game settings.
+  - Fixed: The 'Printf'' occurrences in the 'addplayerclass' console command were all missing a '\n' at the end.
+  - Enhanced the 'playerinfo' console command so more information about each setting is shown.
+
 - Added customizable pickup flash.
 - Added option to show shorter messages for save game and screenshot confirmation.
   Also added this to the 'Messages' menu.

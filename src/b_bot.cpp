@@ -31,9 +31,9 @@ CCMD (addbot)
 		return;
 	}
 
-	if (consoleplayer != Net_Arbitrator)
+	if (!players[consoleplayer].settings_controller)
 	{
-		Printf ("Only player %d can add bots\n", Net_Arbitrator + 1);
+		Printf ("Only setting controllers can add bots\n");
 		return;
 	}
 
@@ -78,17 +78,17 @@ extern bool CheckCheatmode ();
 
 CCMD (freeze)
 {
-   if (CheckCheatmode ())
-      return;
+	if (CheckCheatmode ())
+		return;
 
-   if (netgame && consoleplayer != Net_Arbitrator)
-   {
-      Printf ("Only player %d can use freeze mode\n", Net_Arbitrator + 1);
-      return;
-   }
+	if (netgame && !players[consoleplayer].settings_controller)
+	{
+		Printf ("Only setting controllers can use freeze mode\n");
+		return;
+	}
 
-   Net_WriteByte (DEM_GENERICCHEAT);
-   Net_WriteByte (CHT_FREEZE);
+	Net_WriteByte (DEM_GENERICCHEAT);
+	Net_WriteByte (CHT_FREEZE);
 }
 
 CCMD (listbots)

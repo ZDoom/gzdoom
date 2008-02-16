@@ -315,9 +315,9 @@ CCMD (changemap)
 		return;
 	}
 
-	if (who->player - players != Net_Arbitrator && multiplayer)
+	if (!players[who->player - players].settings_controller && netgame)
 	{
-		Printf ("Only player %d can change the map.\n", Net_Arbitrator+1);
+		Printf ("Only setting controllers can change the map.\n");
 		return;
 	}
 
@@ -589,7 +589,7 @@ CCMD (fov)
 		}
 		else
 		{
-			Printf ("The arbitrator has disabled FOV changes.\n");
+			Printf ("A setting controller has disabled FOV changes.\n");
 			return;
 		}
 	}

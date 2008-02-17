@@ -255,7 +255,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 
 	case ADEF_Inventory_FlagsSet:	item->ItemFlags |= dataint; break;
 	case ADEF_Inventory_FlagsClear:	item->ItemFlags &= ~dataint; break;
-	case ADEF_Inventory_PickupFlash:item->PickupFlash = dataint? fuglyname("PickupFlash") : NULL;
+	case ADEF_Inventory_PickupFlash:if(dataint) { item->PickupFlash = fuglyname("PickupFlash"); } else { item->PickupFlash = NULL; } break;
 	case ADEF_Inventory_Amount:		item->Amount = dataint;	break;
 	case ADEF_Inventory_RespawnTics:item->RespawnTics = dataint; break;
 	case ADEF_Inventory_MaxAmount:	item->MaxAmount = dataint; break;

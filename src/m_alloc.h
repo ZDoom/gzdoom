@@ -2,7 +2,7 @@
 ** m_alloc.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,26 +34,26 @@
 #ifndef __M_ALLOC_H__
 #define __M_ALLOC_H__
 
-#if !defined(_DEBUG) || !defined(_MSC_VER)
 #include <stdlib.h>
 
 // These are the same as the same stdlib functions,
-// except they bomb out with an error requester
+// except they bomb out with a fatal error
 // when they can't get the memory.
 
-void *M_Malloc (size_t size);
-void *M_Calloc (size_t num, size_t size);
-void *M_Realloc (void *memblock, size_t size);
+#if defined(_DEBUG)
+#define M_Malloc(s)		M_Malloc_Dbg(s, __FILE__, __LINE__)
+#define M_Realloc(p,s)	M_Realloc_Dbg(p, s, __FILE__, __LINE__)
 
+void *M_Malloc_Dbg (size_t size, const char *file, int lineno);
+void *M_Realloc_Dbg (void *memblock, size_t size, const char *file, int lineno);
 #else
-
-#include <stdlib.h>
-#include <crtdbg.h>
-
-#define M_Malloc(size) malloc(size)
-#define M_Calloc(num, size) calloc(num, size)
-#define M_Realloc(memblock, size) realloc(memblock, size)
-
+void *M_Malloc (size_t size);
+void *M_Realloc (void *memblock, size_t size);
 #endif
+
+void M_Free (void *memblock);
+
+// Number of bytes currently allocated through M_Malloc/M_Realloc
+extern size_t AllocBytes;
 
 #endif //__M_ALLOC_H__

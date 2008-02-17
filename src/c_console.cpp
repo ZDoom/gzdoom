@@ -449,7 +449,7 @@ void C_DeinitConsole ()
 	{
 		GameAtExit *next = cmd->Next;
 		AddCommandString (cmd->Command);
-		free (cmd);
+		M_Free (cmd);
 		cmd = next;
 	}
 
@@ -1675,7 +1675,7 @@ static bool C_HandleKey (event_t *ev, BYTE *buffer, int len)
 				if (HistSize == MAXHISTSIZE)
 				{
 					HistTail = HistTail->Newer;
-					free (HistTail->Older);
+					M_Free (HistTail->Older);
 					HistTail->Older = NULL;
 				}
 				else

@@ -331,7 +331,7 @@ void InstallStates(FActorInfo *info, AActor *defaults)
 	if (info->StateList != NULL) 
 	{
 		info->StateList->Destroy();
-		free(info->StateList);
+		M_Free(info->StateList);
 	}
 	info->StateList = CreateStateLabelList(StateLabels);
 

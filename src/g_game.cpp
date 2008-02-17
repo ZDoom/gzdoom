@@ -2436,7 +2436,7 @@ bool G_ProcessIFFDemo (char *mapname)
 			delete[] uncompressed;
 			return true;
 		}
-		delete[] demobuffer;
+		M_Free (demobuffer);
 		zdembodyend = uncompressed + uncompSize;
 		demobuffer = demo_p = uncompressed;
 	}
@@ -2456,7 +2456,7 @@ void G_DoPlayDemo (void)
 	if (demolump >= 0)
 	{
 		int demolen = Wads.LumpLength (demolump);
-		demobuffer = new BYTE[demolen];
+		demobuffer = (BYTE *)M_Malloc(demolen);
 		Wads.ReadLump (demolump, demobuffer);
 	}
 	else
@@ -2547,7 +2547,7 @@ bool G_CheckDemoStatus (void)
 
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 
-		delete[] demobuffer;
+		M_Free (demobuffer);
 		demoplayback = false;
 		netdemo = false;
 		netgame = false;
@@ -2620,7 +2620,7 @@ bool G_CheckDemoStatus (void)
 		WriteLong (demo_p - demobuffer - 8, &formlen);
 
 		M_WriteFile (demoname, demobuffer, demo_p - demobuffer); 
-		free (demobuffer); 
+		M_Free (demobuffer); 
 		demorecording = false;
 		stoprecording = false;
 		Printf ("Demo %s recorded\n", demoname); 

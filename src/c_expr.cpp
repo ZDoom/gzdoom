@@ -233,8 +233,8 @@ missing:
 	Printf ("Missing argument to %s\n", token);
 
 done:
-	if (prod2 != NULL) free (prod2);
-	if (prod1 != NULL) free (prod1);
+	if (prod2 != NULL) M_Free (prod2);
+	if (prod1 != NULL) M_Free (prod1);
 	return prod3;
 }
 
@@ -353,7 +353,7 @@ static FStringProd *DoubleToString (FProduction *prod)
 
 	sprintf (buf, "%g", static_cast<FDoubleProd *>(prod)->Value);
 	newprod = NewStringProd (buf);
-	free (prod);
+	M_Free (prod);
 	return newprod;
 }
 
@@ -368,7 +368,7 @@ static FDoubleProd *StringToDouble (FProduction *prod)
 	FDoubleProd *newprod;
 	
 	newprod = NewDoubleProd (atof (static_cast<FStringProd *>(prod)->Value));
-	free (prod);
+	M_Free (prod);
 	return newprod;
 }
 
@@ -746,7 +746,7 @@ CCMD (test)
 	}
 	if (prod != NULL)
 	{
-		free (prod);
+		M_Free (prod);
 	}
 }
 
@@ -802,7 +802,7 @@ CCMD (eval)
 					Printf ("%s\n", static_cast<FStringProd *>(prod)->Value);
 				}
 			}
-			free (prod);
+			M_Free (prod);
 			return;
 		}
 	}

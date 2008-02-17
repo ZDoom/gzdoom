@@ -229,7 +229,10 @@ void FCompressedFile::Close ()
 		m_File = NULL;
 	}
 	if (m_Buffer)
-		free (m_Buffer);
+	{
+		M_Free (m_Buffer);
+		m_Buffer = NULL;
+	}
 	BeEmpty ();
 }
 
@@ -372,7 +375,7 @@ void FCompressedFile::Implode ()
 		memcpy (m_Buffer + 8, compressed, outlen);
 	if (compressed)
 		delete[] compressed;
-	free (oldbuf);
+	M_Free (oldbuf);
 }
 
 void FCompressedFile::Explode ()
@@ -396,7 +399,7 @@ void FCompressedFile::Explode ()
 			r = uncompress (expand, &newlen, m_Buffer + 8, cprlen);
 			if (r != Z_OK || newlen != expandsize)
 			{
-				free (expand);
+				M_Free (expand);
 				I_Error ("Could not decompress cfile");
 			}
 		}
@@ -405,7 +408,7 @@ void FCompressedFile::Explode ()
 			memcpy (expand, m_Buffer + 8, expandsize);
 		}
 		if (FreeOnExplode ())
-			free (m_Buffer);
+			M_Free (m_Buffer);
 		m_Buffer = expand;
 		m_BufferSize = expandsize;
 	}
@@ -430,7 +433,7 @@ FCompressedMemFile::~FCompressedMemFile ()
 {
 	if (m_ImplodedBuffer != NULL)
 	{
-		free (m_ImplodedBuffer);
+		M_Free (m_ImplodedBuffer);
 	}
 }
 
@@ -672,7 +675,7 @@ FArchive::~FArchive ()
 	if (m_TypeMap)
 		delete[] m_TypeMap;
 	if (m_ObjectMap)
-		free (m_ObjectMap);
+		M_Free (m_ObjectMap);
 	if (m_SpriteMap)
 		delete[] m_SpriteMap;
 }

@@ -388,14 +388,14 @@ void R_DeinitData ()
 	// Free openings
 	if (openings != NULL)
 	{
-		free (openings);
+		M_Free (openings);
 		openings = NULL;
 	}
 
 	// Free drawsegs
 	if (drawsegs != NULL)
 	{
-		free (drawsegs);
+		M_Free (drawsegs);
 		drawsegs = NULL;
 	}
 }

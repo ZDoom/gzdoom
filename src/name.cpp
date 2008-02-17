@@ -270,13 +270,13 @@ FName::NameManager::~NameManager()
 	for (block = Blocks; block != NULL; block = next)
 	{
 		next = block->NextBlock;
-		free (block);
+		M_Free (block);
 	}
 	Blocks = NULL;
 
 	if (NameArray != NULL)
 	{
-		free (NameArray);
+		M_Free (NameArray);
 		NameArray = NULL;
 	}
 	NumNames = MaxNames = 0;

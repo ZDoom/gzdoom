@@ -620,7 +620,7 @@ AnimArray::~AnimArray()
 	{
 		if ((*this)[i] != NULL)
 		{
-			free ((*this)[i]);
+			M_Free ((*this)[i]);
 			(*this)[i] = NULL;
 		}
 	}

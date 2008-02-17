@@ -491,7 +491,8 @@ static visplane_t *new_visplane (unsigned hash)
 
 	if (check == NULL)
 	{
-		check = (visplane_t *)M_Calloc (1, sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
+		check = (visplane_t *)M_Malloc (sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
+		memset(check, 0, sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
 		check->bottom = &check->top[MAXWIDTH+2];
 	}
 	else if (NULL == (freetail = freetail->next))
@@ -1637,7 +1638,7 @@ bool R_PlaneInitData ()
 	while (pl)
 	{
 		visplane_t *next = pl->next;
-		free (pl);
+		M_Free (pl);
 		pl = next;
 	}
 	freetail = NULL;
@@ -1650,7 +1651,7 @@ bool R_PlaneInitData ()
 		while (pl)
 		{
 			visplane_t *next = pl->next;
-			free (pl);
+			M_Free (pl);
 			pl = next;
 		}
 	}

@@ -80,7 +80,7 @@ void FStringTable::FreeData ()
 		while (entry != NULL)
 		{
 			next = entry->Next;
-			free (entry);
+			M_Free (entry);
 			entry = next;
 		}
 	}
@@ -98,7 +98,7 @@ void FStringTable::FreeNonDehackedStrings ()
 			if (entry->PassNum != 0)
 			{
 				*pentry = next;
-				free (entry);
+				M_Free (entry);
 			}
 			else
 			{
@@ -254,7 +254,7 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 			if (cmpval == 0 && entry->PassNum >= passnum)
 			{
 				*pentry = entry->Next;
-				free (entry);
+				M_Free (entry);
 				entry = NULL;
 			}
 			if (entry == NULL || cmpval > 0)
@@ -396,6 +396,6 @@ void FStringTable::SetString (const char *name, const char *newString)
 	{
 		*pentry = entry;
 		entry->Next = oentry->Next;
-		free (oentry);
+		M_Free (oentry);
 	}
 }

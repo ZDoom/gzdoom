@@ -154,7 +154,7 @@ struct FSoundSequencePtrArray : public TArray<FSoundSequence *>
 	{
 		for (unsigned int i = 0; i < Size(); ++i)
 		{
-			free ((*this)[i]);
+			M_Free ((*this)[i]);
 		}
 	}
 };
@@ -463,7 +463,7 @@ void S_ParseSndSeq (int levellump)
 	{
 		if (Sequences[i])
 		{
-			free(Sequences[i]);
+			M_Free(Sequences[i]);
 		}
 	}
 	Sequences.Clear();
@@ -496,7 +496,7 @@ void S_ParseSndSeq (int levellump)
 				{
 					if (Sequences[curseq]->SeqName == seqname)
 					{
-						free (Sequences[curseq]);
+						M_Free (Sequences[curseq]);
 						Sequences[curseq] = NULL;
 						break;
 					}

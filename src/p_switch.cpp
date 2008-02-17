@@ -121,8 +121,11 @@ public:
 	{
 		for(unsigned i=0;i<Size();i++)
 		{
-			if ((*this)[i] != NULL) free((*this)[i]);
-			(*this)[i]=NULL;
+			if ((*this)[i] != NULL)
+			{
+				M_Free((*this)[i]);
+				(*this)[i] = NULL;
+			}
 		}
 	}
 };

@@ -197,7 +197,7 @@ static struct TicSpecial
 		{
 			if (streams[i])
 			{
-				free (streams[i]);
+				M_Free (streams[i]);
 				streams[i] = NULL;
 				used[i] = 0;
 			}

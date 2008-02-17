@@ -78,7 +78,7 @@ void FRemapTable::Free()
 	KillNative();
 	if (Remap != NULL)
 	{
-		free(Remap);
+		M_Free(Remap);
 		Remap = NULL;
 		Palette = NULL;
 		NumEntries = 0;

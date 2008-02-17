@@ -1,9 +1,9 @@
 /*
 ** m_alloc.cpp
-** Wrappers for the malloc family of functions
+** Wrappers for the malloc family of functions that count used bytes.
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,39 +32,93 @@
 **
 */
 
-#if !defined(_DEBUG) || !defined(_MSC_VER)
-
 #include "i_system.h"
-#include "m_alloc.h"
 
-void *M_Malloc (size_t size)
+#include "stats.h"
+
+ADD_STAT(mem)
 {
-	void *zone = malloc (size);
-
-	if (!zone)
-		I_FatalError ("Could not malloc %u bytes", size);
-
-	return zone;
+	FString out;
+	out.Format("Alloc: %uKB", (AllocBytes + 1023) >> 10);
+	return out;
 }
 
-void *M_Calloc (size_t num, size_t size)
-{
-	void *zone = calloc (num, size);
+size_t AllocBytes;
 
-	if (!zone)
-		I_FatalError ("Could not calloc %u bytes", num * size);
-
-	return zone;
-}
-
-void *M_Realloc (void *memblock, size_t size)
-{
-	void *zone = realloc (memblock, size);
-
-	if (!zone)
-		I_FatalError ("Could not realloc %u bytes", size);
-
-	return zone;
-}
-
+#ifndef _MSC_VER
+#define _NORMAL_BLOCK			0
+#define _malloc_dbg(s,b,f,l)	malloc(s)
+#define _realloc_dbg(p,s,b,f,l)	realloc(p,s)
 #endif
+#ifndef _WIN32
+#define _msize(p)				malloc_usable_size(p)	// from glibc/FreeBSD
+#else
+#include <malloc.h>
+#endif
+
+#ifndef _DEBUG
+void *M_Malloc(size_t size)
+{
+	void *block = malloc(size);
+
+	if (block == NULL)
+		I_FatalError("Could not malloc %u bytes", size);
+
+	AllocBytes += _msize(block);
+	return block;
+}
+
+void *M_Realloc(void *memblock, size_t size)
+{
+	if (memblock != NULL)
+	{
+		AllocBytes -= _msize(memblock);
+	}
+	void *block = realloc(memblock, size);
+	if (block == NULL)
+	{
+		I_FatalError("Could not realloc %u bytes", size);
+	}
+	AllocBytes += _msize(block);
+	return block;
+}
+#else
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#endif
+
+void *M_Malloc_Dbg(size_t size, const char *file, int lineno)
+{
+	void *block = _malloc_dbg(size, _NORMAL_BLOCK, file, lineno);
+
+	if (block == NULL)
+		I_FatalError("Could not malloc %u bytes", size);
+
+	AllocBytes += _msize(block);
+	return block;
+}
+
+void *M_Realloc_Dbg(void *memblock, size_t size, const char *file, int lineno)
+{
+	if (memblock != NULL)
+	{
+		AllocBytes -= _msize(memblock);
+	}
+	void *block = _realloc_dbg(memblock, size, _NORMAL_BLOCK, file, lineno);
+	if (block == NULL)
+	{
+		I_FatalError("Could not realloc %u bytes", size);
+	}
+	AllocBytes += _msize(block);
+	return block;
+}
+#endif
+
+void M_Free (void *block)
+{
+	if (block != NULL)
+	{
+		AllocBytes -= _msize(block);
+		free(block);
+	}
+}

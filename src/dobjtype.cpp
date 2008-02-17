@@ -305,7 +305,7 @@ void PClass::FreeStateList ()
 	if (ActorInfo != NULL && ActorInfo->StateList != NULL)
 	{
 		ActorInfo->StateList->Destroy();
-		free (ActorInfo->StateList);
+		M_Free (ActorInfo->StateList);
 		ActorInfo->StateList = NULL;
 	}
 }

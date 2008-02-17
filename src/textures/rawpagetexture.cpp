@@ -99,15 +99,15 @@ bool FRawPageTexture::Check(FileReader & data)
 		}
 		if (gapAtStart || (x != width))
 		{
-			free (foo);
+			M_Free (foo);
 			return true;
 		}
-		free(foo);
+		M_Free(foo);
 		return false;
 	}
 	else
 	{
-		free (foo);
+		M_Free (foo);
 		return true;
 	}
 }

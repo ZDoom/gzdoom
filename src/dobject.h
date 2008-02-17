@@ -283,7 +283,7 @@ public:
 
 	void operator delete (void *mem)
 	{
-		free (mem);
+		M_Free(mem);
 	}
 
 protected:

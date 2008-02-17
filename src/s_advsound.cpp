@@ -778,7 +778,7 @@ static void S_ClearSoundData()
 	{
 		FMusicVolume *me = MusicVolumes;
 		MusicVolumes = me->Next;
-		delete me;
+		M_Free(me);
 	}
 	S_rnd.Clear();
 

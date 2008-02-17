@@ -1,18 +1,34 @@
+February 16, 2008
+- Fixed AInventory::PickupFlash setting with GCC.
+- Fixed: The MusicVolumes list was allocated with M_Malloc but freed with
+  delete.
+- Fixed: demobuffer was inconsistantly handled with new[]/delete[] and
+  malloc/free.
+- Added used memory tracking to M_Malloc() and M_Realloc(). This
+  necessitated the addition of an M_Free() call to track frees.
+- Removed M_Calloc since it was only used in one place, and can just as well
+  be done with an M_Malloc/memset pair.
+- Bumped DEMOGAMEVERSION for the new net controller codes.
+
 February 16, 2008 (Changes by Graf Zahl)
 - Added patch by Karate Chris:
   - The net arbitrator can add or remove players to an access list so they 
     can or cannot control game settings:
-  * net_addcontroller <player number> - Adds a player to the control list. Only net arbitrators have access to this command.
-  * net_removecontroller <player number> - Removes a player from the control list. Only net arbitrators have access to this command.
-  * net_listcontrollers - Lists the players who are able to control the game settings.
-  - Fixed: The 'Printf'' occurrences in the 'addplayerclass' console command were all missing a '\n' at the end.
-  - Enhanced the 'playerinfo' console command so more information about each setting is shown.
-
+  * net_addcontroller <player number> - Adds a player to the control list.
+    Only net arbitrators have access to this command.
+  * net_removecontroller <player number> - Removes a player from the control
+    list. Only net arbitrators have access to this command.
+  * net_listcontrollers - Lists the players who are able to control the game
+   settings.
+  - Fixed: The 'Printf' occurrences in the 'addplayerclass' console command
+    were all missing a '\n' at the end.
+  - Enhanced the 'playerinfo' console command so more information about each
+    setting is shown.
 - Added customizable pickup flash.
 - Added option to show shorter messages for save game and screenshot confirmation.
   Also added this to the 'Messages' menu.
 
-February 15, 2008
+February 14, 2008
 - Version bump to 2.2.0.
 - Disabled console alpha when the console is fullscreen.
 - Re-enabled maybedrawnow for the software renderer. This should be replaced

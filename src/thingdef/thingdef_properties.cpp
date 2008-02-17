@@ -401,7 +401,14 @@ static void HandleDeprecatedFlags(AActor *defaults, bool set, int index)
 		defaults->meleethreshold = set? 196*FRACUNIT : 0;
 		break;
 	case 5:	// INVENTORY.PICKUPFLASH
-		static_cast<AInventory*>(defaults)->PickupFlash = set? fuglyname("PickupFlash") : NULL;
+		if (set)
+		{
+			static_cast<AInventory*>(defaults)->PickupFlash = fuglyname("PickupFlash");
+		}
+		else
+		{
+			static_cast<AInventory*>(defaults)->PickupFlash = NULL;
+		}
 		break;
 	default:
 		break;	// silence GCC

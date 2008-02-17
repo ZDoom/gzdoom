@@ -1437,7 +1437,7 @@ BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info)
 
 void ST_Util_FreeBitmap (BITMAPINFO *bitmap_info)
 {
-	free (bitmap_info);
+	M_Free (bitmap_info);
 }
 
 //==========================================================================

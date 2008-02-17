@@ -266,7 +266,7 @@ FTexture::Span **FTexture::CreateSpans (const BYTE *pixels) const
 
 void FTexture::FreeSpans (Span **spans) const
 {
-	free (spans);
+	M_Free (spans);
 }
 
 void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int ypos, const BYTE *translation)

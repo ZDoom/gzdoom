@@ -291,11 +291,11 @@ static oldmenu_t MainDef =
 //
 static oldmenuitem_t HereticMainMenu[] =
 {
-	{1,1,'n',"MNU_NEWGAME",M_NewGame, CR_UNTRANSLATED},
-	{1,1,'o',"MNU_OPTIONS",M_Options, CR_UNTRANSLATED},
-	{1,1,'f',"MNU_GAMEFILES",M_GameFiles, CR_UNTRANSLATED},
-	{1,1,'i',"MNU_INFO",M_ReadThis, CR_UNTRANSLATED},
-	{1,1,'q',"MNU_QUITGAME",M_QuitGame, CR_UNTRANSLATED}
+	{1,1,'n',"$MNU_NEWGAME",M_NewGame, CR_UNTRANSLATED},
+	{1,1,'o',"$MNU_OPTIONS",M_Options, CR_UNTRANSLATED},
+	{1,1,'f',"$MNU_GAMEFILES",M_GameFiles, CR_UNTRANSLATED},
+	{1,1,'i',"$MNU_INFO",M_ReadThis, CR_UNTRANSLATED},
+	{1,1,'q',"$MNU_QUITGAME",M_QuitGame, CR_UNTRANSLATED}
 };
 
 static oldmenu_t HereticMainDef =
@@ -312,10 +312,10 @@ static oldmenu_t HereticMainDef =
 //
 static oldmenuitem_t ClassItems[] =
 {
-	{ 1,1, 'f', "MNU_FIGHTER", SCClass, CR_UNTRANSLATED },
-	{ 1,1, 'c', "MNU_CLERIC", SCClass, CR_UNTRANSLATED },
-	{ 1,1, 'm', "MNU_MAGE", SCClass, CR_UNTRANSLATED },
-	{ 1,1, 'r', "MNU_RANDOM", SCClass, CR_UNTRANSLATED }	// [RH]
+	{ 1,1, 'f', "$MNU_FIGHTER", SCClass, CR_UNTRANSLATED },
+	{ 1,1, 'c', "$MNU_CLERIC", SCClass, CR_UNTRANSLATED },
+	{ 1,1, 'm', "$MNU_MAGE", SCClass, CR_UNTRANSLATED },
+	{ 1,1, 'r', "$MNU_RANDOM", SCClass, CR_UNTRANSLATED }	// [RH]
 };
 
 static oldmenu_t ClassMenu =
@@ -382,8 +382,8 @@ oldmenu_t EpiDef =
 //
 static oldmenuitem_t FilesItems[] =
 {
-	{1,1,'l',"MNU_LOADGAME",M_LoadGame, CR_UNTRANSLATED},
-	{1,1,'s',"MNU_SAVEGAME",M_SaveGame, CR_UNTRANSLATED}
+	{1,1,'l',"$MNU_LOADGAME",M_LoadGame, CR_UNTRANSLATED},
+	{1,1,'s',"$MNU_SAVEGAME",M_SaveGame, CR_UNTRANSLATED}
 };
 
 static oldmenu_t FilesMenu =
@@ -3208,8 +3208,9 @@ void M_Drawer ()
 								color = CR_RED;
 							}
 						}
-						screen->DrawText (color, x, y,
-							GStrings(currentMenu->menuitems[i].name),
+						const char *text = currentMenu->menuitems[i].name;
+						if (*text == '$') text = GStrings(text+1);
+						screen->DrawText (color, x, y, text,
 							DTA_Clean, true, TAG_DONE);
 					}
 					else

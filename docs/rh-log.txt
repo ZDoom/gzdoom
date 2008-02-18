@@ -1,3 +1,18 @@
+February 18, 2008 (Changes by Graf Zahl)
+- Applied Blzut3's sbarinfo update #12:
+* When the drawbar code was optimized border was accidently used as how many
+  pixels to reserve from the background instead of the foreground.  I've
+  reversed how the code works (bg over fg instead of fg over bg).
+* Added armorclass to drawnumber.
+* Added an interpolateArmor variable which acts just like interpolateHealth
+  except the effect is applied to armor.
+* Added armor flag to drawgem since we can interpolate armor now.
+* Added a reverse flag to drawgem.
+* Fixed drawgem didn't allow for '|' to separate the flags.
+
+- Fixed: Menu texts for skill definitions unconditionally interpreted
+  the given text as an index into the string table.
+
 February 16, 2008
 - Fixed AInventory::PickupFlash setting with GCC.
 - Fixed: The MusicVolumes list was allocated with M_Malloc but freed with

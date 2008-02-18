@@ -8,34 +8,34 @@ skill baby
 	EasyBossBrain
 	SpawnFilter "Easy"
 	Name "MNU_WETNURSE"
-	PlayerClassName "fighter" "MNU_SQUIRE"
-	PlayerClassName "cleric" "MNU_ALTARBOY"
-	PlayerClassName "mage" "MNU_APPRENTICE"
+	PlayerClassName "fighter" "$MNU_SQUIRE"
+	PlayerClassName "cleric" "$MNU_ALTARBOY"
+	PlayerClassName "mage" "$MNU_APPRENTICE"
 
 
 skill easy
 	DoubleAmmoFactor 1.5
 	SpawnFilter "Easy"
 	Name "MNU_YELLOWBELLIES"
-	PlayerClassName "fighter" "MNU_KNIGHT"
-	PlayerClassName "cleric" "MNU_ACOLYTE"
-	PlayerClassName "mage" "MNU_ENCHANTER"
+	PlayerClassName "fighter" "$MNU_KNIGHT"
+	PlayerClassName "cleric" "$MNU_ACOLYTE"
+	PlayerClassName "mage" "$MNU_ENCHANTER"
 
 skill normal
 	DoubleAmmoFactor 1.5
 	SpawnFilter "Normal"
 	Name "MNU_BRINGEST"
-	PlayerClassName "fighter" "MNU_WARRIOR"
-	PlayerClassName "cleric" "MNU_PRIEST"
-	PlayerClassName "mage" "MNU_SORCERER"
+	PlayerClassName "fighter" "$MNU_WARRIOR"
+	PlayerClassName "cleric" "$MNU_PRIEST"
+	PlayerClassName "mage" "$MNU_SORCERER"
 
 skill hard
 	DoubleAmmoFactor 1.5
 	SpawnFilter "Hard"
 	Name "MNU_SMITE"
-	PlayerClassName "fighter" "MNU_BERSERKER"
-	PlayerClassName "cleric" "MNU_CARDINAL"
-	PlayerClassName "mage" "MNU_WARLOCK"
+	PlayerClassName "fighter" "$MNU_BERSERKER"
+	PlayerClassName "cleric" "$MNU_CARDINAL"
+	PlayerClassName "mage" "$MNU_WARLOCK"
 
 skill nightmare
 	AmmoFactor 1.5
@@ -44,9 +44,9 @@ skill nightmare
 	DisableCheats
 	SpawnFilter "Hard"
 	Name "MNU_BLACKPLAGUE"
-	PlayerClassName "fighter" "MNU_TITAN"
-	PlayerClassName "cleric" "MNU_POPE"
-	PlayerClassName "mage" "MNU_ARCHMAGE"
+	PlayerClassName "fighter" "$MNU_TITAN"
+	PlayerClassName "cleric" "$MNU_POPE"
+	PlayerClassName "mage" "$MNU_ARCHMAGE"
 
 
 clusterdef 1

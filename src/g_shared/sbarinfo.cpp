@@ -78,6 +78,7 @@ enum //drawnumber flags
 	DRAWNUMBER_TOTALITEMS = 2048,
 	DRAWNUMBER_SECRETS = 4096,
 	DRAWNUMBER_TOTALSECRETS = 8192,
+	DRAWNUMBER_ARMORCLASS = 16384,
 };
 
 enum //drawbar flags (will go into special2)
@@ -106,6 +107,8 @@ enum //drawgem flags
 {
 	DRAWGEM_WIGGLE = 1,
 	DRAWGEM_TRANSLATABLE = 2,
+	DRAWGEM_ARMOR = 4,
+	DRAWGEM_REVERSE = 8,
 };
 
 enum //drawshader flags
@@ -137,6 +140,7 @@ static const char *SBarInfoTopLevel[] =
 	"base",
 	"height",
 	"interpolatehealth",
+	"interpolatearmor",
 	"completeborder",
 	"statusbar",
 	NULL
@@ -146,6 +150,7 @@ enum
 	SBARINFO_BASE,
 	SBARINFO_HEIGHT,
 	SBARINFO_INTERPOLATEHEALTH,
+	SBARINFO_INTERPOLATEARMOR,
 	SBARINFO_COMPLETEBORDER,
 	SBARINFO_STATUSBAR,
 };
@@ -215,7 +220,7 @@ void FreeSBarInfoScript()
 	}
 }
 
-//Laz Bar Script Reader
+//SBarInfo Script Reader
 void SBarInfo::ParseSBarInfo(int lump)
 {
 	FScanner sc(lump, Wads.GetLumpFullName(lump));
@@ -273,6 +278,23 @@ void SBarInfo::ParseSBarInfo(int lump)
 				{
 					sc.MustGetToken(TK_IntConst);
 					this->interpolationSpeed = sc.Number;
+				}
+				sc.MustGetToken(';');
+				break;
+			case SBARINFO_INTERPOLATEARMOR: //Since interpolatehealth is such a popular command
+				if(sc.CheckToken(TK_True))
+				{
+					interpolateArmor = true;
+				}
+				else
+				{
+					sc.MustGetToken(TK_False);
+					interpolateArmor = false;
+				}
+				if(sc.CheckToken(',')) //speed
+				{
+					sc.MustGetToken(TK_IntConst);
+					this->armorInterpolationSpeed = sc.Number;
 				}
 				sc.MustGetToken(';');
 				break;
@@ -492,6 +514,8 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.flags += DRAWNUMBER_SECRETS;
 					else if(sc.Compare("totalsecrets"))
 						cmd.flags += DRAWNUMBER_TOTALSECRETS;
+					else if(sc.Compare("armorclass"))
+						cmd.flags += DRAWNUMBER_ARMORCLASS;
 					else
 					{
 						cmd.flags = DRAWNUMBER_INVENTORY;
@@ -796,9 +820,14 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.flags += DRAWGEM_WIGGLE;
 					else if(sc.Compare("translatable"))
 						cmd.flags += DRAWGEM_TRANSLATABLE;
+					else if(sc.Compare("armor"))
+						cmd.flags += DRAWGEM_ARMOR;
+					else if(sc.Compare("reverse"))
+						cmd.flags += DRAWGEM_REVERSE;
 					else
 						sc.ScriptError("Unknown drawgem flag '%s'.", sc.String);
-					sc.MustGetToken(',');
+					if(!sc.CheckToken('|'))
+							sc.MustGetToken(',');
 				}
 				sc.MustGetToken(TK_StringConst); //chain
 				cmd.special = newImage(sc.String);
@@ -994,10 +1023,6 @@ int SBarInfo::newImage(const char* patchname)
 	{
 		return -1;
 	}
-//	if(strlen(patchname) > 8)
-//	{
-//		sc.ScriptError("Graphic names can not be greater then 8 characters long.");
-//	}
 	for(unsigned int i = 0;i < this->Images.Size();i++) //did we already load it?
 	{
 		if(stricmp(this->Images[i], patchname) == 0)
@@ -1038,8 +1063,10 @@ void SBarInfo::Init()
 {
 	automapbar = false;
 	interpolateHealth = false;
+	interpolateArmor = false;
 	completeBorder = false;
 	interpolationSpeed = 8;
+	armorInterpolationSpeed = 8;
 	height = 0;
 }
 
@@ -1243,10 +1270,8 @@ public:
 		faceTimer = ST_FACETIME;
 		rampageTimer = 0;
 		faceIndex = 0;
-		if(SBarInfoScript->interpolateHealth)
-		{
-			oldHealth = 0;
-		}
+		oldHealth = 0;
+		oldArmor = 0;
 		mugshotHealth = -1;
 		lastPrefix = "";
 		weaponGrin = false;
@@ -1337,11 +1362,34 @@ public:
 		{
 			if(oldHealth > CPlayer->health)
 			{
-				oldHealth -= clamp((oldHealth - CPlayer->health) >> 2, 1, 8);
+				oldHealth -= clamp((oldHealth - CPlayer->health) >> 2, 1, SBarInfoScript->interpolationSpeed);
 			}
 			else if(oldHealth < CPlayer->health)
 			{
-				oldHealth += clamp((CPlayer->health - oldHealth) >> 2, 1, 8);
+				oldHealth += clamp((CPlayer->health - oldHealth) >> 2, 1, SBarInfoScript->interpolationSpeed);
+			}
+		}
+		AInventory *armor = CPlayer->mo->FindInventory<ABasicArmor>();
+		if(armor == NULL)
+		{
+			oldArmor = 0;
+		}
+		else
+		{
+			if(!SBarInfoScript->interpolateArmor)
+			{
+				oldArmor = armor->Amount;
+			}
+			else
+			{
+				if(oldArmor > armor->Amount)
+				{
+					oldArmor -= clamp((oldArmor - armor->Amount) >> 2, 1, SBarInfoScript->armorInterpolationSpeed);
+				}
+				else if(oldArmor < armor->Amount)
+				{
+					oldArmor += clamp((armor->Amount - oldArmor) >> 2, 1, SBarInfoScript->armorInterpolationSpeed);
+				}
 			}
 		}
 		if(artiflash)
@@ -1437,10 +1485,16 @@ private:
 		AAmmo *ammo1, *ammo2;
 		int ammocount1, ammocount2;
 		GetCurrentAmmo(ammo1, ammo2, ammocount1, ammocount2);
+		ABasicArmor *armor = CPlayer->mo->FindInventory<ABasicArmor>();
 		int health = CPlayer->mo->health;
+		int armorAmount = armor != NULL ? armor->Amount : 0;
 		if(SBarInfoScript->interpolateHealth)
 		{
 			health = oldHealth;
+		}
+		if(SBarInfoScript->interpolateArmor)
+		{
+			armorAmount = oldArmor;
 		}
 		for(unsigned int i = 0;i < block.commands.Size();i++)
 		{
@@ -1522,7 +1576,6 @@ private:
 					}
 					else if((cmd.flags & DRAWIMAGE_ARMOR))
 					{
-						ABasicArmor *armor = CPlayer->mo->FindInventory<ABasicArmor>();
 						if(armor != NULL && armor->Amount != 0)
 							DrawGraphic(TexMan(armor->Icon), cmd.x, cmd.y, cmd.flags);
 					}
@@ -1558,8 +1611,7 @@ private:
 					}
 					else if(cmd.flags == DRAWNUMBER_ARMOR)
 					{
-						AInventory *armor = CPlayer->mo->FindInventory<ABasicArmor>();
-						cmd.value = armor != NULL ? armor->Amount : 0;
+						cmd.value = armorAmount;
 					}
 					else if(cmd.flags == DRAWNUMBER_AMMO1)
 					{
@@ -1617,6 +1669,21 @@ private:
 						cmd.value = level.found_secrets;
 					else if(cmd.flags == DRAWNUMBER_TOTALSECRETS)
 						cmd.value = level.total_secrets;
+					else if(cmd.flags == DRAWNUMBER_ARMORCLASS)
+					{
+						AHexenArmor *harmor = CPlayer->mo->FindInventory<AHexenArmor>();
+						if(harmor != NULL)
+						{
+							cmd.value = harmor->Slots[0] + harmor->Slots[1] + 
+								harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
+						}
+						//Hexen counts basic armor also so we should too.
+						if(armor != NULL)
+						{
+							cmd.value += armor->SavePercent;
+						}
+						cmd.value /= (5*FRACUNIT);
+					}
 					else if(cmd.flags == DRAWNUMBER_INVENTORY)
 					{
 						AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
@@ -1728,8 +1795,7 @@ private:
 					}
 					else if(cmd.flags == DRAWNUMBER_ARMOR)
 					{
-						AInventory *armor = CPlayer->mo->FindInventory<ABasicArmor>();
-						value = armor != NULL ? armor->Amount : 0;
+						value = armorAmount;
 						if(!((cmd.special2 & DRAWBAR_COMPAREDEFAULTS) == DRAWBAR_COMPAREDEFAULTS))
 						{
 							AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0])); //max comparer
@@ -1816,11 +1882,16 @@ private:
 							value = 0;
 						}
 					}
+					value = max - value; //invert since the new drawing method requires drawing the bg on the fg.
 					if(max != 0 && value > 0)
 					{
 						value = (value << FRACBITS) / max;
 						if(value > FRACUNIT)
 							value = FRACUNIT;
+					}
+					else if(max == 0 && value <= 0)
+					{
+						value = FRACUNIT;
 					}
 					else
 					{
@@ -1843,20 +1914,13 @@ private:
 						screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
 					}
 
-					// Draw background
-					if (bg != NULL && bg->GetWidth() == fg->GetWidth() && bg->GetHeight() == fg->GetHeight())
-					{
-						screen->DrawTexture(bg, x, y,
-							DTA_DestWidth, w,
-							DTA_DestHeight, h,
-							TAG_DONE);
-					}
-					else
-					{
-						screen->Clear(x, y, x + w, y + h, GPalette.BlackIndex, 0);
-					}
+					//Draw the whole foreground
+					screen->DrawTexture(fg, x, y,
+						DTA_DestWidth, w,
+						DTA_DestHeight, h,
+						TAG_DONE);
 
-					// Calc clipping rect for foreground
+					// Calc clipping rect for background
 					cx = cmd.x + ST_X + cmd.special3;
 					cy = cmd.y + ST_Y + cmd.special3;
 					cw = fg->GetWidth() - cmd.special3 * 2;
@@ -1867,7 +1931,7 @@ private:
 					}
 					if (horizontal)
 					{
-						if (!reverse)
+						if (reverse)
 						{ // left to right
 							cr = cx + FixedMul(cw, value);
 						}
@@ -1880,7 +1944,7 @@ private:
 					}
 					else
 					{
-						if (!reverse)
+						if (reverse)
 						{ // bottom to top
 							cb = cy + ch;
 							cy += FixedMul(ch, FRACUNIT - value);
@@ -1892,20 +1956,27 @@ private:
 						cr = cx + cw;
 					}
 
-					// Draw foreground
-					screen->DrawTexture(fg, x, y,
-						DTA_DestWidth, w,
-						DTA_DestHeight, h,
-						DTA_ClipLeft, cx,
-						DTA_ClipTop, cy,
-						DTA_ClipRight, cr,
-						DTA_ClipBottom, cb,
-						TAG_DONE);
+					// Draw background
+					if (bg != NULL && bg->GetWidth() == fg->GetWidth() && bg->GetHeight() == fg->GetHeight())
+					{
+						screen->DrawTexture(bg, x, y,
+							DTA_DestWidth, w,
+							DTA_DestHeight, h,
+							DTA_ClipLeft, cx,
+							DTA_ClipTop, cy,
+							DTA_ClipRight, cr,
+							DTA_ClipBottom, cb,
+							TAG_DONE);
+					}
+					else
+					{
+						screen->Clear(cx, cy, cr, cb, GPalette.BlackIndex, 0);
+					}
 					break;
 				}
 				case SBARINFO_DRAWGEM:
 				{
-					int value = health;
+					int value = (cmd.flags & DRAWGEM_ARMOR) ? armorAmount : health;
 					int max = 100;
 					bool wiggle = false;
 					bool translate = !!(cmd.flags & DRAWGEM_TRANSLATABLE);
@@ -1919,6 +1990,7 @@ private:
 					{
 						value = 0;
 					}
+					value = (cmd.flags & DRAWGEM_REVERSE) ? 100 - value : value;
 					if(health != CPlayer->health)
 					{
 						wiggle = !!(cmd.flags & DRAWGEM_WIGGLE);
@@ -2325,6 +2397,7 @@ private:
 	int rampageTimer;
 	int faceIndex;
 	int oldHealth;
+	int oldArmor;
 	int mugshotHealth;
 	int chainWiggle;
 	int artiflash;

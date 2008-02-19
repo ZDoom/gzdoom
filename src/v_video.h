@@ -344,6 +344,9 @@ public:
 	// Changes the vsync setting, if supported by the device.
 	virtual void SetVSync (bool vsync);
 
+	// Tells the device to recreate itself with the new setting from vid_refreshrate.
+	virtual void NewRefreshRate ();
+
 	// Set the rect defining the area effected by blending.
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 

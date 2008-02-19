@@ -197,6 +197,7 @@ EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR (Float, transsouls)
+EXTERN_CVAR (Int, vid_refreshrate)
 
 extern IDirect3D9 *D3D;
 
@@ -304,7 +305,19 @@ D3DFB::D3DFB (int width, int height, bool fullscreen)
 		if (FAILED(D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
 			D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
 		{
-			D3DDevice = NULL;
+			if (d3dpp.FullScreen_RefreshRateInHz != 0)
+			{
+				d3dpp.FullScreen_RefreshRateInHz = 0;
+				if (FAILED(hr = D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+					D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+				{
+					if (FAILED(D3D->CreateDevice (D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window,
+						D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3dpp, &D3DDevice)))
+					{
+						D3DDevice = NULL;
+					}
+				}
+			}
 		}
 	}
 	if (D3DDevice != NULL)
@@ -386,6 +399,10 @@ void D3DFB::FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, b
 	pp->BackBufferFormat = fullscreen ? D3DFMT_A8R8G8B8 : D3DFMT_UNKNOWN;
 	pp->hDeviceWindow = Window;
 	pp->PresentationInterval = vsync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+	if (fullscreen)
+	{
+		pp->FullScreen_RefreshRateInHz = vid_refreshrate;
+	}
 }
 
 bool D3DFB::CreateResources ()
@@ -531,7 +548,18 @@ bool D3DFB::Reset ()
 	FillPresentParameters (&d3dpp, !Windowed, VSync);
 	if (!SUCCEEDED(D3DDevice->Reset (&d3dpp)))
 	{
-		return false;
+		if (d3dpp.FullScreen_RefreshRateInHz != 0)
+		{
+			d3dpp.FullScreen_RefreshRateInHz = 0;
+			if (!SUCCEEDED(D3DDevice->Reset (&d3dpp)))
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
 	}
 	LOG("Device was reset\n");
 	if (!CreateFBTexture() || !CreateVertexes())
@@ -1086,6 +1114,14 @@ void D3DFB::SetVSync (bool vsync)
 	if (VSync != vsync)
 	{
 		VSync = vsync;
+		Reset();
+	}
+}
+
+void D3DFB::NewRefreshRate ()
+{
+	if (!Windowed)
+	{
 		Reset();
 	}
 }

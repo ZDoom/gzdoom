@@ -80,6 +80,7 @@ extern bool VidResizing;
 
 EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Float, Gamma)
+EXTERN_CVAR (Int, vid_refreshrate)
 
 extern IDirectDraw2 *DDraw;
 
@@ -224,6 +225,7 @@ bool DDrawFB::CreateResources ()
 	DDSURFACEDESC ddsd = { sizeof(ddsd), };
 	HRESULT hr;
 	int bits;
+	int refresh;
 
 	BufferCount = 1;
 
@@ -241,13 +243,18 @@ bool DDrawFB::CreateResources ()
 				break;
 			}
 		}
-		hr = DDraw->SetDisplayMode (Width, TrueHeight, bits = vid_displaybits, 0, 0);
+		hr = DDraw->SetDisplayMode (Width, TrueHeight, bits = vid_displaybits, vid_refreshrate, 0);
 		if (FAILED(hr))
 		{
+			hr = DDraw->SetDisplayMode (Width, TrueHeight, bits = vid_displaybits, 0, 0);
 			bits = 32;
 			while (FAILED(hr) && bits >= 8)
 			{
-				hr = DDraw->SetDisplayMode (Width, Height, bits, 0, 0);
+				hr = DDraw->SetDisplayMode (Width, Height, bits, vid_refreshrate, 0);
+				if (FAILED(hr))
+				{
+					hr = DDraw->SetDisplayMode (Width, Height, bits, 0, 0);
+				}
 				bits -= 8;
 			}
 			if (FAILED(hr))
@@ -1270,6 +1277,13 @@ void DDrawFB::SetVSync (bool vsync)
 	FlipFlags = vsync ? DDFLIP_WAIT : DDFLIP_WAIT|DDFLIP_NOVSYNC;
 }
 
+void DDrawFB::NewRefreshRate()
+{
+	if (!Windowed)
+	{
+		NeedResRecreate = true;
+	}
+}
 
 void DDrawFB::Blank ()
 {

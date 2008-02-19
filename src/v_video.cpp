@@ -150,11 +150,20 @@ CVAR (Int, vid_defbits, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, vid_fps, false, 0)
 CVAR (Bool, ticker, false, 0)
 CVAR (Int, vid_showpalette, 0, 0)
+
 CUSTOM_CVAR (Bool, vid_vsync, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (screen != NULL)
 	{
 		screen->SetVSync (*self);
+	}
+}
+
+CUSTOM_CVAR (Int, vid_refreshrate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->NewRefreshRate();
 	}
 }
 
@@ -1072,6 +1081,19 @@ void DFrameBuffer::CopyFromBuff (BYTE *src, int srcPitch, int width, int height,
 //==========================================================================
 
 void DFrameBuffer::SetVSync (bool vsync)
+{
+}
+
+//==========================================================================
+//
+// DFrameBuffer :: NewRefreshRate
+//
+// Sets the fullscreen display to the new refresh rate in vid_refreshrate,
+// if possible.
+//
+//==========================================================================
+
+void DFrameBuffer::NewRefreshRate ()
 {
 }
 

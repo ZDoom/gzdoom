@@ -1,4 +1,6 @@
 February 18, 2008
+- Added vid_refreshrate cvar to override Windows' automatic refresh rate
+  selection.
 - Singleplayers maps using allowrespawn now filter respawn inventory like
   coop games, since that's essentially what they are.
 - Fixed m_alloc.cpp compilation on Linux.

@@ -33,8 +33,8 @@
 */
 
 #include "i_system.h"
-
 #include "stats.h"
+#include <malloc.h>
 
 ADD_STAT(mem)
 {
@@ -52,8 +52,6 @@ size_t AllocBytes;
 #endif
 #ifndef _WIN32
 #define _msize(p)				malloc_usable_size(p)	// from glibc/FreeBSD
-#else
-#include <malloc.h>
 #endif
 
 #ifndef _DEBUG

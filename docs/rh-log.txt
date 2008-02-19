@@ -1,3 +1,8 @@
+February 18, 2008
+- Singleplayers maps using allowrespawn now filter respawn inventory like
+  coop games, since that's essentially what they are.
+- Fixed m_alloc.cpp compilation on Linux.
+
 February 18, 2008 (Changes by Graf Zahl)
 - Applied Blzut3's sbarinfo update #12:
 * When the drawbar code was optimized border was accidently used as how many

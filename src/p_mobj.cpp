@@ -3604,7 +3604,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 	{ // Give all cards in death match mode.
 		p->mo->GiveDeathmatchInventory ();
 	}
-	else if (multiplayer && state == PST_REBORN && oldactor != NULL)
+	else if ((multiplayer || (level.flags & LEVEL_ALLOWRESPAWN)) && state == PST_REBORN && oldactor != NULL)
 	{ // Special inventory handling for respawning in coop
 		p->mo->FilterCoopRespawnInventory (oldactor);
 	}

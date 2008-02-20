@@ -1,3 +1,7 @@
+February 20, 2008 (Changes by Graf Zahl)
+- Added a modified version of Karate Chris's submission for killing specific
+  monsters with the 'Kill' ccmd.
+
 February 18, 2008
 - Added vid_refreshrate cvar to override Windows' automatic refresh rate
   selection.

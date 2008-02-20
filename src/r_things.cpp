@@ -2226,7 +2226,7 @@ void R_InitParticles ()
 {
 	char *i;
 
-	if ((i = Args.CheckValue ("-numparticles")))
+	if ((i = Args->CheckValue ("-numparticles")))
 		NumParticles = atoi (i);
 	// [BC] Use r_maxparticles now.
 	else

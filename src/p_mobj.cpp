@@ -560,7 +560,8 @@ bool AActor::SetState (FState *newstate)
 			newstate->GetAction() (this);
 
 			// Check whether the called action function resulted in destroying the actor
-			if (ObjectFlags & OF_MassDestruction) return false;
+			if (ObjectFlags & OF_EuthanizeMe)
+				return false;
 		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
@@ -1049,7 +1050,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 	if (nextstate == NULL) nextstate = mo->FindState(NAME_Death);
 	mo->SetState (nextstate);
 	
-	if (mo->ObjectFlags & OF_MassDestruction)
+	if (mo->ObjectFlags & OF_EuthanizeMe)
 	{
 		return;
 	}
@@ -2862,7 +2863,7 @@ void AActor::Tick ()
 	// Handle X and Y momemtums
 	BlockingMobj = NULL;
 	P_XYMovement (this, cummx, cummy);
-	if (ObjectFlags & OF_MassDestruction)
+	if (ObjectFlags & OF_EuthanizeMe)
 	{ // actor was destroyed
 		return;
 	}
@@ -2920,7 +2921,7 @@ void AActor::Tick ()
 			P_ZMovement (this);
 		}
 
-		if (ObjectFlags & OF_MassDestruction)
+		if (ObjectFlags & OF_EuthanizeMe)
 			return;		// actor was destroyed
 	}
 	else if (z <= floorz)
@@ -3244,7 +3245,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	if (!SpawningMapThing)
 	{
 		actor->BeginPlay ();
-		if (actor->ObjectFlags & OF_MassDestruction)
+		if (actor->ObjectFlags & OF_EuthanizeMe)
 		{
 			return NULL;
 		}
@@ -3966,7 +3967,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 
 	mobj->angle = (DWORD)((mthing->angle * UCONST64(0x100000000)) / 360);
 	mobj->BeginPlay ();
-	if (mobj->ObjectFlags & OF_MassDestruction)
+	if (mobj->ObjectFlags & OF_EuthanizeMe)
 	{
 		return;
 	}

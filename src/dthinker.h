@@ -56,6 +56,7 @@ class DThinker : public DObject, public Node
 public:
 	DThinker (int statnum = MAX_STATNUM) throw();
 	void Destroy ();
+	size_t PropagateMark();
 	virtual ~DThinker ();
 	virtual void Tick ();
 	virtual void PostBeginPlay ();	// Called just before the first tick
@@ -67,6 +68,7 @@ public:
 	static void DestroyAllThinkers ();
 	static void DestroyMostThinkers ();
 	static void SerializeAll (FArchive &arc, bool keepPlayers);
+	static void MarkRoots();
 
 	static DThinker *FirstThinker (int statnum);
 

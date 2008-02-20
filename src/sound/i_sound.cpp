@@ -154,7 +154,7 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOI
 void I_InitSound ()
 {
 	/* Get command line options: */
-	bool nosound = !!Args.CheckParm ("-nosfx") || !!Args.CheckParm ("-nosound");
+	bool nosound = !!Args->CheckParm ("-nosfx") || !!Args->CheckParm ("-nosound");
 
 	if (nosound)
 	{

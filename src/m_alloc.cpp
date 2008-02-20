@@ -33,17 +33,7 @@
 */
 
 #include "i_system.h"
-#include "stats.h"
 #include <malloc.h>
-
-ADD_STAT(mem)
-{
-	FString out;
-	out.Format("Alloc: %uKB", (AllocBytes + 1023) >> 10);
-	return out;
-}
-
-size_t AllocBytes;
 
 #ifndef _MSC_VER
 #define _NORMAL_BLOCK			0
@@ -62,7 +52,7 @@ void *M_Malloc(size_t size)
 	if (block == NULL)
 		I_FatalError("Could not malloc %u bytes", size);
 
-	AllocBytes += _msize(block);
+	GC::AllocBytes += _msize(block);
 	return block;
 }
 
@@ -70,14 +60,14 @@ void *M_Realloc(void *memblock, size_t size)
 {
 	if (memblock != NULL)
 	{
-		AllocBytes -= _msize(memblock);
+		GC::AllocBytes -= _msize(memblock);
 	}
 	void *block = realloc(memblock, size);
 	if (block == NULL)
 	{
 		I_FatalError("Could not realloc %u bytes", size);
 	}
-	AllocBytes += _msize(block);
+	GC::AllocBytes += _msize(block);
 	return block;
 }
 #else
@@ -92,7 +82,7 @@ void *M_Malloc_Dbg(size_t size, const char *file, int lineno)
 	if (block == NULL)
 		I_FatalError("Could not malloc %u bytes", size);
 
-	AllocBytes += _msize(block);
+	GC::AllocBytes += _msize(block);
 	return block;
 }
 
@@ -100,14 +90,14 @@ void *M_Realloc_Dbg(void *memblock, size_t size, const char *file, int lineno)
 {
 	if (memblock != NULL)
 	{
-		AllocBytes -= _msize(memblock);
+		GC::AllocBytes -= _msize(memblock);
 	}
 	void *block = _realloc_dbg(memblock, size, _NORMAL_BLOCK, file, lineno);
 	if (block == NULL)
 	{
 		I_FatalError("Could not realloc %u bytes", size);
 	}
-	AllocBytes += _msize(block);
+	GC::AllocBytes += _msize(block);
 	return block;
 }
 #endif
@@ -116,7 +106,7 @@ void M_Free (void *block)
 {
 	if (block != NULL)
 	{
-		AllocBytes -= _msize(block);
+		GC::AllocBytes -= _msize(block);
 		free(block);
 	}
 }

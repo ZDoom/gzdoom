@@ -191,6 +191,7 @@ public:
 
 	void Serialize (FArchive &arc);
 	void FixPointers (const DObject *obj, DObject *replacement);
+	size_t PropagateMark();
 
 	void SetLogNumber (int num);
 	void SetLogText (const char *text);

@@ -1,3 +1,18 @@
+February 19, 2008
+- Added a rough initial garbage collector, based largely on Lua's. There are
+  no write or read barriers in place yet, so it's not a very close
+  approximation of the pointer cleaning code that was in place before, but it
+  does collect stuff. But guess what! Nuts.wad ran at 1-2 FPS before. Now
+  it's way, way more and easily stays above 35 FPS. The performance hit when
+  the GC is running is pretty minimal compared to the old way, which was in
+  many ways like a full garbage collection every tic.
+- Changed the status bars into DObjects.
+- Fixed: FBaseStatusBar::Tick() deleted hud messages instead of destroying
+  them.
+- Changed the global Args object to a pointer to one.
+- Changed several DArgs deletions into destroys.
+- Removed DBoundingBox from the DObject hierarchy.
+
 February 18, 2008
 - Added vid_refreshrate cvar to override Windows' automatic refresh rate
   selection.
@@ -592,7 +607,7 @@ January 1, 2008
 - Fixed a D3D memory leak on every frame in windowed mode and the same thing
   for the screen wipes. Note to self: If it's an interface, be sure to
   Release it, because it will be AddRef'ed before being returned to you.
-- Moved the BlendView() call out of FBaseStatusBar::Draw() so that it can be
+- Moved the BlendView() call out of DBaseStatusBar::Draw() so that it can be
   applied before copying the 3D scene to the screen underneath the 2D parts.
 - Restored the console's darkening level to its old table-based amount.
 - Fixed D3DFB::SetColorOverlay()'s incorrect calculations.
@@ -4290,7 +4305,7 @@ April 18, 2006 (Changes by Graf Zahl)
   fighting the programmer.
 
 April 18, 2006
-- Fixed: FBaseStatusBar::DrBNumber() should behave like Doom's
+- Fixed: DBaseStatusBar::DrBNumber() should behave like Doom's
   STlib_drawNum(), and FDoomStatusBarTexture::DrawToBar() should add
   the textures left offset to the x coordinate before drawing.
   These fix Twice Risen's status bar.
@@ -5103,7 +5118,7 @@ February 11, 2005
 
 February 10, 2005
 - Fixed: The screen fading ACS commands did not work when viewing through a camera
-  because FBaseStatusBar::BlendView() did not think there was a player to get those
+  because DBaseStatusBar::BlendView() did not think there was a player to get those
   values from. Now, the blend comes from either the player viewing from or the
   console player if the current view is not from a player.
 - Fixed: Returning to a previously visited level in a hub with fewer players than you
@@ -5278,7 +5293,7 @@ January 26, 2005
   Unfortunately, I didn't bump the demo version between 2.0.63a and 2.0.90, so
   anything pre-2.0.97 won't play with 2.0.97, even though there's probably
   no changes that would cause desynching between 96 and 97. Oh well.
-- Fixed FBaseStatusBar::DrBNumber(Outer) to work when some of the big number
+- Fixed DBaseStatusBar::DrBNumber(Outer) to work when some of the big number
   graphics are missing.
 
 January 15, 2005
@@ -5454,7 +5469,7 @@ December 18, 2004
   on top of the next digit.
 - Fixed: The Doom HUD drew the selected inventory item on top of the secondary
   ammo if both were present.
-- Moved the DrawPowerups() call out of FBaseStatusBar::Draw() and into
+- Moved the DrawPowerups() call out of DBaseStatusBar::Draw() and into
   DrawTopStuff(), so the Doom HUD key display won't cover them up
 - Fixed: If you started flying and then pressed the land key, you wouldn't be
   able to fly again until the Wings of Wrath wore off. This was done by changing
@@ -6310,7 +6325,7 @@ July 15, 2004
 - Updated to FMOD 3.73.
 
 July 14, 2004
-- Moved the full-screen HUD coordinate logic out of FBaseStatusBar and into
+- Moved the full-screen HUD coordinate logic out of DBaseStatusBar and into
   DCanvas::DrawTexture. This is so that powerups can draw their status icons
   themselves without needing to hook into the status bar.
 - Reimplemented the Tome of Power.
@@ -6879,7 +6894,7 @@ December 12, 2003
   up okay in Doom.)
 - Added a fix to the blockmap tracers where all the blocks along the trace are
   crossed on their corners.
-- Fixed a potential crash in FBaseStatusBar::DrawMessages() when a HUD message
+- Fixed a potential crash in DBaseStatusBar::DrawMessages() when a HUD message
   removes itself as part of its drawing process.
 - Fixed: A few of the Strife weapons were erroneously defined with WIF_NOALERT.
 - Fixed: Sky textures defaulted to 0 if a map had a MAPINFO that did not
@@ -7027,7 +7042,7 @@ November 23, 2003
   things spawned afterward.
 - Added calls to SetWindowLongPtr to take away the window's border in
   fullscreen mode and put it back in windowed mode.
-- Fixed FBaseStatusBar::RepositionCoords() so that LilWhiteMouse's Chosen
+- Fixed DBaseStatusBar::RepositionCoords() so that LilWhiteMouse's Chosen
   ammo icons appear on the fullscreen HUD again.
 
 November 21, 2003
@@ -7759,7 +7774,7 @@ July 30, 2003
 - Added nonexistant texture check to the warping texture setup.
 
 July 28, 2003
-- Removed the ScaleCopy canvas from FBaseStatusBar, because everything is now
+- Removed the ScaleCopy canvas from DBaseStatusBar, because everything is now
   drawn to the screen directly even when the status bar is scaled.
 - Changed the pitch calculations in the DSimpleCanvas constructor to provide
   better wall drawing performance at all resolutions.
@@ -10901,7 +10916,7 @@ October 23, 2001
   torch lighting up the entire sky, so skies should ignore the setting of
   fixedlightlev.
 - Fixed the scaled status bar. I was simply forgetting to add the image
-  offsets in FBaseStatusBar::DrawImage() before calling CopyToScreen().
+  offsets in DBaseStatusBar::DrawImage() before calling CopyToScreen().
 - Added code to let decals move with sliding and rotating polyobjects.
 - Fixed: The wait console command waited one tic too few.
 - Fixed a resizing problem with playing movies windowed.
@@ -11721,7 +11736,7 @@ April 7, 2001
   big ammo count when switching to a weapon that does not use ammo.
 - Fixed: At certain screen heights, scaled status bars would not touch the
   bottom of the screen because of inaccuracy in the calculation of ::ST_Y
-  in FBaseStatusBar::SetScaled().
+  in DBaseStatusBar::SetScaled().
 - Added separate pickup sounds for health, armor, and ammo items.
 - Improved sound link resolution in S_StartSound() so that regular sounds
   can alias player sounds.

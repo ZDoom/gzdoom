@@ -473,7 +473,7 @@ bool CD_Init ()
 
 bool CD_Init (int device)
 {
-	if (!cd_enabled || Args.CheckParm ("-nocdaudio"))
+	if (!cd_enabled || Args->CheckParm ("-nocdaudio"))
 		return false;
 
 	if (CDThread == NULL)

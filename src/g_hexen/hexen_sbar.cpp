@@ -119,10 +119,11 @@ void FManaBar::MakeTexture ()
 	memset (Pixels + 25+24+24, color0, run);
 }
 
-class FHexenStatusBar : public FBaseStatusBar
+class DHexenStatusBar : public DBaseStatusBar
 {
+	DECLARE_CLASS(DHexenStatusBar, DBaseStatusBar)
 public:
-	FHexenStatusBar () : FBaseStatusBar (38)
+	DHexenStatusBar () : DBaseStatusBar (38)
 	{
 		static const char *hexenLumpNames[NUM_HEXENSB_IMAGES] =
 		{
@@ -166,7 +167,7 @@ public:
 			"INRED5",	"INRED6",	"INRED7",	"INRED8",	"INRED9"
 		};
 
-		FBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES + 10);
+		DBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES + 10);
 		Images.Init (hexenLumpNames, NUM_HEXENSB_IMAGES);
 		ClassImages[0].Init (classLumpNames[0], NUM_HEXENCLASSSB_IMAGES);
 		ClassImages[1].Init (classLumpNames[1], NUM_HEXENCLASSSB_IMAGES);
@@ -201,7 +202,7 @@ public:
 		AmmoRefresh = 0;
 	}
 
-	~FHexenStatusBar ()
+	~DHexenStatusBar ()
 	{
 	}
 
@@ -209,7 +210,7 @@ public:
 	{
 		int curHealth;
 
-		FBaseStatusBar::Tick ();
+		DBaseStatusBar::Tick ();
 		if (CPlayer->mo == NULL)
 		{
 			curHealth = 0;
@@ -242,7 +243,7 @@ public:
 
 	void Draw (EHudState state)
 	{
-		FBaseStatusBar::Draw (state);
+		DBaseStatusBar::Draw (state);
 
 		if (state == HUD_Fullscreen)
 		{
@@ -309,7 +310,7 @@ public:
 
 	void AttachToPlayer (player_s *player)
 	{
-		FBaseStatusBar::AttachToPlayer (player);
+		DBaseStatusBar::AttachToPlayer (player);
 		if (player->mo != NULL)
 		{
 			if (player->mo->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
@@ -1155,7 +1156,9 @@ private:
 	FManaBar ManaVial2Pic;
 };
 
-FBaseStatusBar *CreateHexenStatusBar ()
+IMPLEMENT_CLASS(DHexenStatusBar);
+
+DBaseStatusBar *CreateHexenStatusBar ()
 {
-	return new FHexenStatusBar;
+	return new DHexenStatusBar;
 }

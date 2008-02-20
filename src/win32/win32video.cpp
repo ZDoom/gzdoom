@@ -504,6 +504,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 			return old;
 		}
 		old->GetFlash (flashColor, flashAmount);
+		old->ObjectFlags |= OF_YesReallyDelete;
 		delete old;
 	}
 	else

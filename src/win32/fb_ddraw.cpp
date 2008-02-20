@@ -225,7 +225,6 @@ bool DDrawFB::CreateResources ()
 	DDSURFACEDESC ddsd = { sizeof(ddsd), };
 	HRESULT hr;
 	int bits;
-	int refresh;
 
 	BufferCount = 1;
 

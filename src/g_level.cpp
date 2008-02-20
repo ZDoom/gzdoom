@@ -1536,12 +1536,12 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 	if (StatusBar != NULL)
 	{
-		delete StatusBar;
+		StatusBar->Destroy();
 		StatusBar = NULL;
 	}
 	if (bTitleLevel)
 	{
-		StatusBar = new FBaseStatusBar (0);
+		StatusBar = new DBaseStatusBar (0);
 	}
 	else if (SBarInfoScript != NULL)
 	{
@@ -1588,7 +1588,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		}
 		else
 		{
-			StatusBar = new FBaseStatusBar (0);
+			StatusBar = new DBaseStatusBar (0);
 		}
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);

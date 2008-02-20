@@ -1148,7 +1148,7 @@ bool FWadCollection::IsMarker (const FWadCollection::LumpRecord *lump, const cha
 
 void FWadCollection::ScanForFlatHack (int startlump)
 {
-	if (Args.CheckParm ("-noflathack"))
+	if (Args->CheckParm ("-noflathack"))
 	{
 		return;
 	}
@@ -1348,7 +1348,7 @@ void FWadCollection::RenameSprites (int startlump)
 		break;
 	}
 
-	renameAll = !!Args.CheckParm ("-oldsprites");
+	renameAll = !!Args->CheckParm ("-oldsprites");
 
 	for (DWORD i = startlump + 1;
 		i < NumLumps && 

@@ -921,6 +921,8 @@ void NetUpdate (void)
 	BYTE	*cmddata;
 	bool	resendOnly;
 
+	GC::CheckGC();
+
 	if (ticdup == 0)
 	{
 		return;
@@ -1586,7 +1588,7 @@ void D_CheckNetGame (void)
 	
 	consoleplayer = doomcom.consoleplayer;
 
-	v = Args.CheckValue ("-netmode");
+	v = Args->CheckValue ("-netmode");
 	if (v != NULL)
 	{
 		NetMode = atoi (v) != 0 ? NET_PacketServer : NET_PeerToPeer;
@@ -1595,7 +1597,7 @@ void D_CheckNetGame (void)
 	// [RH] Setup user info
 	D_SetupUserInfo ();
 
-	if (Args.CheckParm ("-debugfile"))
+	if (Args->CheckParm ("-debugfile"))
 	{
 		char	filename[20];
 		sprintf (filename,"debug%i.txt",consoleplayer);
@@ -1834,12 +1836,11 @@ void TryRunTics (void)
 			D_DoAdvanceDemo ();
 		}
 		if (debugfile) fprintf (debugfile, "run tic %d\n", gametic);
-		DObject::BeginFrame ();
 		C_Ticker ();
 		M_Ticker ();
 		I_GetTime (true);
 		G_Ticker ();
-		DObject::EndFrame ();
+		GC::CheckGC ();
 		gametic++;
 
 		NetUpdate ();	// check for new console commands

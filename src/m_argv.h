@@ -71,6 +71,6 @@ private:
 	void CopyArgs (int argc, char **argv);
 };
 
-extern DArgs Args;
+extern DArgs *Args;
 
 #endif //__M_ARGV_H__

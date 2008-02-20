@@ -180,10 +180,11 @@ void FHealthBar::FillBar (int min, int max, BYTE light, BYTE dark)
 	}
 }
 
-class FStrifeStatusBar : public FBaseStatusBar
+class DStrifeStatusBar : public DBaseStatusBar
 {
+	DECLARE_CLASS(DStrifeStatusBar, DBaseStatusBar)
 public:
-	FStrifeStatusBar () : FBaseStatusBar (32)
+	DStrifeStatusBar () : DBaseStatusBar (32)
 	{
 		static const char *sharedLumpNames[] =
 		{
@@ -196,11 +197,11 @@ public:
 			"INVFONG7",	"INVFONG8",	"INVFONG9"
 		};
 
-		FBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
+		DBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
 		DoCommonInit ();
 	}
 
-	~FStrifeStatusBar ()
+	~DStrifeStatusBar ()
 	{
 	}
 
@@ -216,7 +217,7 @@ public:
 
 	void Draw (EHudState state)
 	{
-		FBaseStatusBar::Draw (state);
+		DBaseStatusBar::Draw (state);
 
 		if (state == HUD_Fullscreen)
 		{
@@ -235,7 +236,7 @@ public:
 
 	void ShowPop (int popnum)
 	{
-		FBaseStatusBar::ShowPop(popnum);
+		DBaseStatusBar::ShowPop(popnum);
 		if (popnum == CurrentPop)
 		{
 			if (popnum == POP_Keys)
@@ -310,7 +311,7 @@ private:
 
 	void Tick ()
 	{
-		FBaseStatusBar::Tick ();
+		DBaseStatusBar::Tick ();
 
 		if (ItemFlash > 0)
 		{
@@ -845,7 +846,9 @@ private:
 	fixed_t ItemFlash;
 };
 
-FBaseStatusBar *CreateStrifeStatusBar ()
+IMPLEMENT_CLASS(DStrifeStatusBar);
+
+DBaseStatusBar *CreateStrifeStatusBar ()
 {
-	return new FStrifeStatusBar;
+	return new DStrifeStatusBar;
 }

@@ -61,7 +61,11 @@ IVideo *Video;
 void I_ShutdownGraphics ()
 {
 	if (screen)
-		delete screen, screen = NULL;
+	{
+		screen->ObjectFlags |= OF_YesReallyDelete;
+		delete screen;
+		screen = NULL;
+	}
 	if (Video)
 		delete Video, Video = NULL;
 }
@@ -86,7 +90,7 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-	val.Bool = !!Args.CheckParm ("-devparm");
+	val.Bool = !!Args->CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 	Video = new Win32Video (0);
 	if (Video == NULL)
@@ -227,7 +231,7 @@ static void KeepWindowOnScreen (int &winx, int &winy, int winw, int winh, int sc
 void I_SaveWindowedPos ()
 {
 	// Don't save if we were run with the -0 option.
-	if (Args.CheckParm ("-0"))
+	if (Args->CheckParm ("-0"))
 	{
 		return;
 	}
@@ -268,7 +272,7 @@ void I_RestoreWindowedPos ()
 	GetCenteredPos (winx, winy, winw, winh, scrwidth, scrheight);
 
 	// Just move to (0,0) if we were run with the -0 option.
-	if (Args.CheckParm ("-0"))
+	if (Args->CheckParm ("-0"))
 	{
 		winx = winy = 0;
 	}

@@ -84,10 +84,11 @@ const BYTE *FHereticShader::GetPixels ()
 }
 
 
-class FHereticStatusBar : public FBaseStatusBar
+class DHereticStatusBar : public DBaseStatusBar
 {
+	DECLARE_CLASS(DHereticStatusBar, DBaseStatusBar)
 public:
-	FHereticStatusBar () : FBaseStatusBar (42)
+	DHereticStatusBar () : DBaseStatusBar (42)
 	{
 		static const char *hereticLumpNames[NUM_HERETICSB_IMAGES] =
 		{
@@ -118,7 +119,7 @@ public:
 			hereticLumpNames[5] = "LIFEBAR";
 		}
 
-		FBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
+		DBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
 		Images.Init (hereticLumpNames, NUM_HERETICSB_IMAGES);
 
 		oldarti = NULL;
@@ -136,7 +137,7 @@ public:
 		ArtifactFlash = 0;
 	}
 
-	~FHereticStatusBar ()
+	~DHereticStatusBar ()
 	{
 	}
 
@@ -144,7 +145,7 @@ public:
 	{
 		int curHealth;
 
-		FBaseStatusBar::Tick ();
+		DBaseStatusBar::Tick ();
 		if (level.time & 1)
 		{
 			ChainWiggle = pr_chainwiggle() & 1;
@@ -174,7 +175,7 @@ public:
 
 	void Draw (EHudState state)
 	{
-		FBaseStatusBar::Draw (state);
+		DBaseStatusBar::Draw (state);
 
 		if (state == HUD_Fullscreen)
 		{
@@ -773,7 +774,9 @@ private:
 	char ArmorRefresh;
 };
 
-FBaseStatusBar *CreateHereticStatusBar ()
+IMPLEMENT_CLASS(DHereticStatusBar);
+
+DBaseStatusBar *CreateHereticStatusBar ()
 {
-	return new FHereticStatusBar;
+	return new DHereticStatusBar;
 }

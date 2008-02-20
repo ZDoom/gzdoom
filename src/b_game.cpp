@@ -97,6 +97,8 @@ DCajunMaster::~DCajunMaster()
 		delete getspawned;
 		getspawned = NULL;
 	}
+	// FIXME: Make this object proper
+	ObjectFlags |= OF_Cleanup | OF_YesReallyDelete;
 }
 
 //This function is called every tick (from g_game.c),

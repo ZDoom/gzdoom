@@ -53,7 +53,4 @@ void *M_Realloc (void *memblock, size_t size);
 
 void M_Free (void *memblock);
 
-// Number of bytes currently allocated through M_Malloc/M_Realloc
-extern size_t AllocBytes;
-
 #endif //__M_ALLOC_H__

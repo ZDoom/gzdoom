@@ -515,7 +515,7 @@ FString FGameConfigFile::GetConfigPath (bool tryProg)
 	char *pathval;
 	FString path;
 
-	pathval = Args.CheckValue ("-config");
+	pathval = Args->CheckValue ("-config");
 	if (pathval != NULL)
 		return FString(pathval);
 
@@ -568,7 +568,7 @@ FString FGameConfigFile::GetConfigPath (bool tryProg)
 
 	if (path.IsEmpty())
 	{
-		if (Args.CheckParm ("-cdrom"))
+		if (Args->CheckParm ("-cdrom"))
 			return CDROM_DIR "\\zdoom.ini";
 
 		path = progdir;
@@ -615,7 +615,7 @@ void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
 			FString path;
 			
 #ifndef unix
-			if (Args.CheckParm ("-cdrom"))
+			if (Args->CheckParm ("-cdrom"))
 			{
 				path = CDROM_DIR "\\autoexec.cfg";
 			}

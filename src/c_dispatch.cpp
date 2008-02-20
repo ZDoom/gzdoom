@@ -1250,23 +1250,23 @@ CCMD (key)
 // These all begin with '+' as opposed to '-'.
 void C_ExecCmdLineParams ()
 {
-	for (int currArg = 1; currArg < Args.NumArgs(); )
+	for (int currArg = 1; currArg < Args->NumArgs(); )
 	{
-		if (*Args.GetArg (currArg++) == '+')
+		if (*Args->GetArg (currArg++) == '+')
 		{
 			FString cmdString;
 			int cmdlen = 1;
 			int argstart = currArg - 1;
 
-			while (currArg < Args.NumArgs())
+			while (currArg < Args->NumArgs())
 			{
-				if (*Args.GetArg (currArg) == '-' || *Args.GetArg (currArg) == '+')
+				if (*Args->GetArg (currArg) == '-' || *Args->GetArg (currArg) == '+')
 					break;
 				currArg++;
 				cmdlen++;
 			}
 
-			cmdString = BuildString (cmdlen, Args.GetArgList (argstart));
+			cmdString = BuildString (cmdlen, Args->GetArgList (argstart));
 			if (!cmdString.IsEmpty())
 			{
 				C_DoCommand (&cmdString[1]);

@@ -207,12 +207,34 @@ void DThinker::ChangeStatNum (int statnum)
 	}
 }
 
+// Mark the first thinker of each list
+void DThinker::MarkRoots()
+{
+	for (int i = 0; i <= MAX_STATNUM; ++i)
+	{
+		DThinker *t = static_cast<DThinker *>(Thinkers[i].Head);
+		GC::Mark(t);
+		t = static_cast<DThinker *>(FreshThinkers[i].Head);
+		GC::Mark(t);
+	}
+}
+
+size_t DThinker::PropagateMark()
+{
+	// Mark the next thinker in my list
+	if (Succ != NULL && Succ->Succ != NULL)
+	{
+		DThinker *t = static_cast<DThinker *>(Succ);
+		GC::Mark(t);
+	}
+	return Super::PropagateMark();
+}
+
 // Destroy every thinker
 void DThinker::DestroyAllThinkers ()
 {
 	int i;
 
-	DObject::BeginFrame ();
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
 		if (i != STAT_TRAVELLING)
@@ -221,7 +243,7 @@ void DThinker::DestroyAllThinkers ()
 			DestroyThinkersInList (FreshThinkers[i].Head);
 		}
 	}
-	DObject::EndFrame ();
+	GC::FullGC ();
 }
 
 // Destroy all thinkers except for player-controlled actors
@@ -231,7 +253,6 @@ void DThinker::DestroyMostThinkers ()
 {
 	int i;
 
-	DObject::BeginFrame ();
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
 		if (i != STAT_TRAVELLING)
@@ -240,7 +261,7 @@ void DThinker::DestroyMostThinkers ()
 			DestroyMostThinkersInList (FreshThinkers[i], i);
 		}
 	}
-	DObject::EndFrame ();
+	GC::FullGC ();
 }
 
 void DThinker::DestroyThinkersInList (Node *node)
@@ -323,7 +344,7 @@ int DThinker::TickThinkers (List *list, List *dest)
 			I_Error ("There is a thinker in the fresh list that has already ticked.\n");
 		}
 
-		if (!(thinker->ObjectFlags & OF_MassDestruction))
+		if (!(thinker->ObjectFlags & OF_EuthanizeMe))
 		{ // Only tick thinkers not scheduled for destruction
 			thinker->Tick ();
 		}

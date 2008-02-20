@@ -315,7 +315,7 @@ void A_SpawnFly (AActor *self)
 		if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true))
 			newmobj->SetState (newmobj->SeeState);
 
-		if (!(newmobj->ObjectFlags & OF_MassDestruction))
+		if (!(newmobj->ObjectFlags & OF_EuthanizeMe))
 		{
 			// telefrag anything in this spot
 			P_TeleportMove (newmobj, newmobj->x, newmobj->y, newmobj->z, true);

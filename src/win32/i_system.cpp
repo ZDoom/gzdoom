@@ -404,7 +404,7 @@ void I_Init (void)
 		UINT delay;
 		char *cmdDelay;
 
-		cmdDelay = Args.CheckValue ("-timerdelay");
+		cmdDelay = Args->CheckValue ("-timerdelay");
 		delay = 0;
 		if (cmdDelay != 0)
 		{

@@ -229,7 +229,7 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 static void maybedrawnow (bool tick, bool force)
 {
 	// FIXME: Does not work right with hw2d
-	if (ConsoleDrawing || !gotconback || screen->IsLocked () || screen->Accel2D)
+	if (ConsoleDrawing || !gotconback || screen == NULL || screen->IsLocked () || screen->Accel2D)
 	{
 		return;
 	}

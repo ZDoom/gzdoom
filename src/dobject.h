@@ -2,7 +2,7 @@
 ** dobject.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,6 @@ class FArchive;
 
 class   DObject;
 class           DArgs;
-class           DBoundingBox;
 class           DCanvas;
 class           DConsoleCommand;
 class                   DConsoleAlias;
@@ -211,11 +210,91 @@ private: \
 
 enum EObjectFlags
 {
-	OF_MassDestruction	= 0x00000001,   // Object is queued for deletion
-	OF_Cleanup			= 0x00000002,   // Object is being deconstructed as a result of a queued deletion
-	OF_JustSpawned		= 0x00000004,   // Thinker was spawned this tic
-	OF_SerialSuccess	= 0x10000000    // For debugging Serialize() calls
+	// GC flags
+	OF_White0			= 1 << 0,		// Object is white (type 0)
+	OF_White1			= 1 << 1,		// Object is white (type 1)
+	OF_Black			= 1 << 2,		// Object is black
+	OF_Fixed			= 1 << 3,		// Object is fixed (should not be collected)
+	OF_EuthanizeMe		= 1 << 4,		// Object wants to die
+	OF_Cleanup			= 1 << 5,		// Object is now being deleted by the collector
+	OF_YesReallyDelete	= 1 << 6,		// Object is being deleted outside the collector, and this is okay, so don't print a warning
+
+	OF_WhiteBits		= OF_White0 | OF_White1,
+	OF_MarkBits			= OF_WhiteBits | OF_Black,
+
+	// Other flags
+	OF_JustSpawned		= 1 << 8,		// Thinker was spawned this tic
+	OF_SerialSuccess	= 1 << 9,		// For debugging Serialize() calls
 };
+
+namespace GC
+{
+	enum EGCState
+	{
+		GCS_Pause,
+		GCS_Propagate,
+		GCS_Sweep,
+		GCS_Finalize
+	};
+
+	// Number of bytes currently allocated through M_Malloc/M_Realloc.
+	extern size_t AllocBytes;
+
+	// Amount of memory to allocate before triggering a collection.
+	extern size_t Threshold;
+
+	// List of gray objects.
+	extern DObject *Gray;
+
+	// List of every object.
+	extern DObject *Root;
+
+	// Current white value for potentially-live objects.
+	extern DWORD CurrentWhite;
+
+	// Current collector state.
+	extern EGCState State;
+
+	// Position of GC sweep in the list of objects.
+	extern DObject **SweepPos;
+
+	// Size of GC pause.
+	extern int Pause;
+
+	// Size of GC steps.
+	extern int StepMul;
+
+	// Current white value for known-dead objects.
+	static inline DWORD OtherWhite()
+	{
+		return CurrentWhite ^ OF_WhiteBits;
+	}
+
+	// Frees all objects, whether they're dead or not.
+	void FreeAll();
+
+	// Does one collection step.
+	void Step();
+
+	// Does a complete collection.
+	void FullGC();
+
+	// Handles a write barrier.
+	void Barrier(DObject *pointing, DObject *pointed);
+
+	// Check if it's time to collect, and do a collection step if it is.
+	static inline void CheckGC()
+	{
+		if (AllocBytes >= Threshold)
+			Step();
+	}
+
+	// Marks a white object gray. If the object wants to die, the pointer
+	// is NULLed instead.
+	void Mark(DObject **obj);
+
+	template<class T> void Mark(T *&obj) { Mark((DObject **)&obj); }
+}
 
 class DObject
 {
@@ -227,12 +306,13 @@ public:
 private:
 	typedef DObject ThisClass;
 
-	// Per-instance variables. There are three.
-public:
-	DWORD ObjectFlags;			// Flags for this object
+	// Per-instance variables. There are four.
 private:
 	PClass *Class;				// This object's type
-	unsigned int Index;			// This object's index in the global object table
+public:
+	DObject *ObjNext;			// Keep track of all allocated objects
+	DObject *GCNext;			// Next object in this collection list
+	DWORD ObjectFlags;			// Flags for this object
 
 public:
 	DObject ();
@@ -250,15 +330,10 @@ public:
 
 	virtual void Destroy ();
 
-	static void BeginFrame ();
-	static void EndFrame ();
-
 	// If you need to replace one object with another and want to
 	// change any pointers from the old object to the new object,
 	// use this method.
 	static void PointerSubstitution (DObject *old, DObject *notOld);
-
-	static void StaticShutdown ();
 
 	PClass *GetClass() const
 	{
@@ -286,6 +361,60 @@ public:
 		M_Free(mem);
 	}
 
+	// GC fiddling
+
+	// An object is white if either white bit is set.
+	bool IsWhite() const
+	{
+		return !!(ObjectFlags & OF_WhiteBits);
+	}
+
+	bool IsBlack() const
+	{
+		return !!(ObjectFlags & OF_Black);
+	}
+
+	// An object is gray if it isn't white or black.
+	bool IsGray() const
+	{
+		return !(ObjectFlags & OF_MarkBits);
+	}
+
+	// An object is dead if it's the other white.
+	bool IsDead() const
+	{
+		return !!(ObjectFlags & GC::OtherWhite());
+	}
+
+	void ChangeWhite()
+	{
+		ObjectFlags ^= OF_WhiteBits;
+	}
+
+	void MakeWhite()
+	{
+		ObjectFlags = (ObjectFlags & ~OF_MarkBits) | GC::CurrentWhite;
+	}
+
+	void White2Gray()
+	{
+		ObjectFlags &= ~OF_WhiteBits;
+	}
+
+	void Black2Gray()
+	{
+		ObjectFlags &= ~OF_Black;
+	}
+
+	void Gray2Black()
+	{
+		ObjectFlags |= OF_Black;
+	}
+
+	// Marks all objects pointed to by this one. Returns the (approximate)
+	// amount of memory used by this object.
+	virtual size_t PropagateMark();
+
 protected:
 	// This form of placement new and delete is for use *only* by PClass's
 	// CreateNew() method. Do not use them for some other purpose.
@@ -296,20 +425,8 @@ protected:
 
 	void operator delete (void *mem, EInPlace *)
 	{
-		free (mem);
+		M_Free (mem);
 	}
-
-private:
-	static TArray<DObject *> Objects;
-	static TArray<unsigned int> FreeIndices;
-	static TArray<DObject *> ToDestroy;
-
-	static void DestroyScan (DObject *obj);
-	static void DestroyScan ();
-
-	void RemoveFromArray ();
-
-	static bool Inactive;
 };
 
 #include "dobjtype.h"
@@ -323,5 +440,13 @@ inline bool DObject::IsA (const PClass *type) const
 {
 	return (type == GetClass());
 }
+
+
+// If the object pointed to wants to die, make the pointer NULL.
+#define ReadBarrier(ptr) if (ptr != NULL && (ptr->ObjectFlags & OF_EuthanizeMe)) { ptr = NULL; }
+
+// If the object holding the pointer is black, and the pointed object is
+// white, make it gray.
+#define WriteBarrier(p,o) if (p->IsBlack() && o->IsWhite()) { GC::Barrier(p,o); }
 
 #endif //__DOBJECT_H__

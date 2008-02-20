@@ -150,9 +150,9 @@ void M_FindResponseFile (void)
 {
 	int i;
 
-	for (i = 1; i < Args.NumArgs(); i++)
+	for (i = 1; i < Args->NumArgs(); i++)
 	{
-		if (Args.GetArg(i)[0] == '@')
+		if (Args->GetArg(i)[0] == '@')
 		{
 			char	**argv;
 			char	*file;
@@ -165,14 +165,14 @@ void M_FindResponseFile (void)
 			int 	index;
 
 			// READ THE RESPONSE FILE INTO MEMORY
-			handle = fopen (Args.GetArg(i) + 1,"rb");
+			handle = fopen (Args->GetArg(i) + 1,"rb");
 			if (!handle)
 			{ // [RH] Make this a warning, not an error.
-				Printf ("No such response file (%s)!", Args.GetArg(i) + 1);
+				Printf ("No such response file (%s)!", Args->GetArg(i) + 1);
 				continue;
 			}
 
-			Printf ("Found response file %s!\n", Args.GetArg(i) + 1);
+			Printf ("Found response file %s!\n", Args->GetArg(i) + 1);
 			fseek (handle, 0, SEEK_END);
 			size = ftell (handle);
 			fseek (handle, 0, SEEK_SET);
@@ -182,7 +182,7 @@ void M_FindResponseFile (void)
 			fclose (handle);
 
 			argsize = ParseCommandLine (file, &argcinresp, NULL);
-			argc = argcinresp + Args.NumArgs() - 1;
+			argc = argcinresp + Args->NumArgs() - 1;
 
 			if (argc != 0)
 			{
@@ -191,21 +191,21 @@ void M_FindResponseFile (void)
 				ParseCommandLine (file, NULL, argv+i);
 
 				for (index = 0; index < i; ++index)
-					argv[index] = Args.GetArg (index);
+					argv[index] = Args->GetArg (index);
 
-				for (index = i + 1, i += argcinresp; index < Args.NumArgs (); ++index)
-					argv[i++] = Args.GetArg (index);
+				for (index = i + 1, i += argcinresp; index < Args->NumArgs (); ++index)
+					argv[i++] = Args->GetArg (index);
 
-				DArgs newargs (i, argv);
-				Args = newargs;
+				Args->Destroy();
+				Args = new DArgs(i, argv);
 			}
 
 			delete[] file;
 		
 			// DISPLAY ARGS
-			Printf ("%d command-line args:\n", Args.NumArgs ());
-			for (k = 1; k < Args.NumArgs (); k++)
-				Printf ("%s\n", Args.GetArg (k));
+			Printf ("%d command-line args:\n", Args->NumArgs ());
+			for (k = 1; k < Args->NumArgs (); k++)
+				Printf ("%s\n", Args->GetArg (k));
 
 			break;
 		}
@@ -652,7 +652,7 @@ void M_ScreenShot (const char *filename)
 	if (filename == NULL || filename[0] == '\0')
 	{
 #ifndef unix
-		if (Args.CheckParm ("-cdrom"))
+		if (Args->CheckParm ("-cdrom"))
 		{
 			autoname = CDROM_DIR "\\";
 		}

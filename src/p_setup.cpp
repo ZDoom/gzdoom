@@ -2689,7 +2689,7 @@ void P_LoadBlockMap (MapData * map)
 
 	if (ForceNodeBuild || genblockmap ||
 		count/2 >= 0x10000 || count == 0 ||
-		Args.CheckParm("-blockmap")
+		Args->CheckParm("-blockmap")
 		)
 	{
 		DPrintf ("Generating BLOCKMAP\n");
@@ -2757,7 +2757,7 @@ static void P_GroupLines (bool buildmap)
 	int					totallights;
 	line_t* 			li;
 	sector_t*			sector;
-	DBoundingBox		bbox;
+	FBoundingBox		bbox;
 	bool				flaggedNoFronts = false;
 	unsigned int		ii, jj;
 		
@@ -3765,7 +3765,7 @@ static void P_Shutdown ()
 	P_FreeExtraLevelData ();
 	if (StatusBar != NULL)
 	{
-		delete StatusBar;
+		StatusBar->Destroy();
 		StatusBar = NULL;
 	}
 }

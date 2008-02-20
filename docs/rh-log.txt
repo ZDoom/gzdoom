@@ -1,3 +1,7 @@
+February 20, 2008 (Changes by Graf Zahl)
+- Added a modified version of Karate Chris's submission for killing specific
+  monsters with the 'Kill' ccmd.
+
 February 19, 2008
 - Added a rough initial garbage collector, based largely on Lua's. There are
   no write or read barriers in place yet, so it's not a very close

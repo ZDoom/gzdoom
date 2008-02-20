@@ -2337,6 +2337,27 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		}
 		break;
 
+	case DEM_KILLCLASSCHEAT:
+		{
+			AActor *actor;
+			TThinkerIterator<AActor> iterator;
+
+			char *classname = ReadString (stream);
+			int killcount = 0;
+
+			while ( (actor = iterator.Next ()) )
+			{
+				if (!stricmp (actor->GetClass ()->TypeName.GetChars (), classname))
+				{
+					if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER))
+							killcount += actor->Massacre ();
+				}
+			}
+
+			Printf ("Killed %d monsters of type %s.\n",killcount, classname);
+		}
+		break;
+
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;
@@ -2373,6 +2394,7 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_SUMMONFOE:
 		case DEM_SPRAY:
 		case DEM_MORPHEX:
+		case DEM_KILLCLASSCHEAT:
 			skip = strlen ((char *)(*stream)) + 1;
 			break;
 

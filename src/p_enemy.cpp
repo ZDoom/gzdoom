@@ -1133,22 +1133,22 @@ bool P_LookForTID (AActor *actor, INTBOOL allaround)
 			actor->reactiontime = 0;
 
 		actor->target = other;
-		actor->LastLook.Actor = other;
+		actor->LastLookActor = other;
 		return true;
 	}
 
 	// The actor's TID could change because of death or because of
 	// Thing_ChangeTID. If it's not what we expect, then don't use
 	// it as a base for the iterator.
-	if (actor->LastLook.Actor != NULL &&
-		actor->LastLook.Actor->tid != actor->TIDtoHate)
+	if (actor->LastLookActor != NULL &&
+		actor->LastLookActor->tid != actor->TIDtoHate)
 	{
-		actor->LastLook.Actor = NULL;
+		actor->LastLookActor = NULL;
 	}
 
-	FActorIterator iterator (actor->TIDtoHate, actor->LastLook.Actor);
+	FActorIterator iterator (actor->TIDtoHate, actor->LastLookActor);
 	int c = (pr_look3() & 31) + 7;	// Look for between 7 and 38 hatees at a time
-	while ((other = iterator.Next()) != actor->LastLook.Actor)
+	while ((other = iterator.Next()) != actor->LastLookActor)
 	{
 		if (other == NULL)
 		{
@@ -1206,10 +1206,10 @@ bool P_LookForTID (AActor *actor, INTBOOL allaround)
 			actor->reactiontime = 0;
 
 		actor->target = other;
-		actor->LastLook.Actor = other;
+		actor->LastLookActor = other;
 		return true;
 	}
-	actor->LastLook.Actor = other;
+	actor->LastLookActor = other;
 	if (actor->target == NULL)
 	{
 		// [RH] use goal as target
@@ -1436,7 +1436,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround)
 	}
 	else
 	{
-		pnum = actor->LastLook.PlayerNumber;
+		pnum = actor->LastLookPlayerNumber;
 	}
 	stop = (pnum - 1) & (MAXPLAYERS-1);
 		
@@ -1448,7 +1448,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround)
 
 		if (actor->TIDtoHate == 0)
 		{
-			actor->LastLook.PlayerNumber = pnum;
+			actor->LastLookPlayerNumber = pnum;
 		}
 
 		if (++c == MAXPLAYERS-1 || pnum == stop)

@@ -476,7 +476,7 @@ private:
 
 	void DrawInventoryBar ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		int i;
 
 		DrawImage (Images[imgINVBAR], 34, 2);
@@ -518,7 +518,7 @@ private:
 
 	void DrawFullScreenStuff ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		FTexture *pic;
 		int i;
 

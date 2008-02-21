@@ -279,8 +279,24 @@ namespace GC
 	// Does a complete collection.
 	void FullGC();
 
-	// Handles a write barrier.
+	// Handles the grunt work for a write barrier.
 	void Barrier(DObject *pointing, DObject *pointed);
+
+	// Handles a write barrier.
+	static inline void WriteBarrier(DObject *pointing, DObject *pointed);
+
+	// Handles a write barrier for a pointer that isn't inside an object.
+	static inline void WriteBarrier(DObject *pointed);
+
+	// Handles a read barrier.
+	template<class T> inline T *ReadBarrier(T *&obj)
+	{
+		if (obj == NULL || !(obj->ObjectFlags & OF_EuthanizeMe))
+		{
+			return obj;
+		}
+		return obj = NULL;
+	}
 
 	// Check if it's time to collect, and do a collection step if it is.
 	static inline void CheckGC()
@@ -294,6 +310,91 @@ namespace GC
 	void Mark(DObject **obj);
 
 	template<class T> void Mark(T *&obj) { Mark((DObject **)&obj); }
+}
+
+// A template class to help with handling read barriers. It does not
+// handle write barriers, because those can be handled more efficiently
+// with knowledge of the object that holds the pointer.
+template<class T>
+class TObjPtr
+{
+	T *p;
+public:
+	TObjPtr() throw()
+	{
+	}
+	TObjPtr(T *q) throw()
+		: p(q)
+	{
+	}
+	TObjPtr(const TObjPtr<T> &q) throw()
+		: p(q.p)
+	{
+	}
+	T *operator=(T *q) throw()
+	{
+		return p = q;
+		// The caller must now perform a write barrier.
+	}
+	operator T*() throw()
+	{
+		return GC::ReadBarrier(p);
+	}
+	T &operator*()
+	{
+		T *q = GC::ReadBarrier(p);
+		assert(q != NULL);
+		return *q;
+	}
+	T **operator&() throw()
+	{
+		// Does not perform a read barrier. The only real use for this is with
+		// the DECLARE_POINTER macro, where a read barrier would be a very bad
+		// thing.
+		return &p;
+	}
+	T *operator->() throw()
+	{
+		return GC::ReadBarrier(p);
+	}
+	bool operator<(T *u) throw()
+	{
+		return GC::ReadBarrier(p) < u;
+	}
+	bool operator<=(T *u) throw()
+	{
+		return GC::ReadBarrier(p) <= u;
+	}
+	bool operator>(T *u) throw()
+	{
+		return GC::ReadBarrier(p) > u;
+	}
+	bool operator>=(T *u) throw()
+	{
+		return GC::ReadBarrier(p) >= u;
+	}
+	bool operator!=(T *u) throw()
+	{
+		return GC::ReadBarrier(p) != u;
+	}
+	bool operator==(T *u) throw()
+	{
+		return GC::ReadBarrier(p) == u;
+	}
+
+	template<class U> friend inline FArchive &operator<<(FArchive &arc, TObjPtr<U> &o);
+};
+
+template<class T> inline FArchive &operator<<(FArchive &arc, TObjPtr<T> &o)
+{
+	return arc << o.p;
+}
+
+// Use barrier_cast instead of static_cast when you need to cast
+// the contents of a TObjPtr to a related type.
+template<class T,class U> inline T barrier_cast(TObjPtr<U> &o)
+{
+	return static_cast<T>(static_cast<U *>(o));
 }
 
 class DObject
@@ -428,6 +529,22 @@ protected:
 		M_Free (mem);
 	}
 };
+
+static inline void GC::WriteBarrier(DObject *pointing, DObject *pointed)
+{
+	if (pointed->IsWhite() && pointing->IsBlack())
+	{
+		Barrier(pointing, pointed);
+	}
+}
+
+static inline void GC::WriteBarrier(DObject *pointed)
+{
+	if (State == GCS_Propagate && pointed->IsWhite())
+	{
+		Barrier(NULL, pointed);
+	}
+}
 
 #include "dobjtype.h"
 

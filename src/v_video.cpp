@@ -1390,6 +1390,7 @@ void DFrameBuffer::WriteSavePic (player_t *player, FILE *file, int width, int he
 	GetFlashedPalette (palette);
 	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
 	pic->Unlock ();
+	pic->ObjectFlags |= OF_YesReallyDelete;
 	delete pic;
 }
 

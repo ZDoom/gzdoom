@@ -706,7 +706,7 @@ void A_SorcBallOrbit(AActor *ball)
 	int x,y;
 	angle_t angle, baseangle;
 	int mode = ball->target->args[3];
-	AHeresiarch *parent = static_cast<AHeresiarch *> (ball->target);
+	AHeresiarch *parent = barrier_cast<AHeresiarch *>(ball->target);
 	int dist = parent->radius - (ball->radius<<1);
 	angle_t prevangle = ball->special1;
 

@@ -706,7 +706,7 @@ private:
 
 	void DrawInventoryBar ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		int i;
 
 		DrawImage (Images[imgINVBAR], 38, 0);
@@ -881,7 +881,7 @@ private:
 
 	void DrawFullScreenStuff ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		int i;
 
 		// Health

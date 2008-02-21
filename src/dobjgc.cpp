@@ -118,7 +118,7 @@ EGCState State = GCS_Pause;
 int Pause = DEFAULT_GCPAUSE;
 int StepMul = DEFAULT_GCMUL;
 int StepCount;
-ptrdiff_t Dept;
+size_t Dept;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -225,8 +225,7 @@ static DObject **SweepList(DObject **p, size_t count)
 void Mark(DObject **obj)
 {
 	DObject *lobj = *obj;
-	// AActor::LastLook does double-duty as a pointer and a player index! Eww.
-	if (lobj != NULL && (size_t)lobj >= MAXPLAYERS)
+	if (lobj != NULL)
 	{
 		if (lobj->ObjectFlags & OF_EuthanizeMe)
 		{
@@ -448,7 +447,7 @@ ADD_STAT(mem)
 		GC::StepCount);
 	if (GC::State != GC::GCS_Pause)
 	{
-		out.AppendFormat("  %+d", GC::Dept);
+		out.AppendFormat("  %uK", (GC::Dept + 1023) >> 10);
 	}
 	return out;
 }

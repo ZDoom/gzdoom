@@ -250,12 +250,12 @@ public:
 private:
 	DBaseStatusBar() {}
 	bool RepositionCoords (int &x, int &y, int xo, int yo, const int w, const int h) const;
-	void DrawMessages (int bottom) const;
+	void DrawMessages (int bottom);
 	void DrawConsistancy () const;
 
 	static BYTE DamageToAlpha[114];
 
-	DHUDMessage *Messages;
+	TObjPtr<DHUDMessage> Messages;
 	bool ShowLog;
 };
 

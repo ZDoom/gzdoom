@@ -94,7 +94,7 @@ DCajunMaster::~DCajunMaster()
 	ForgetBots();
 	if (getspawned != NULL)
 	{
-		delete getspawned;
+		getspawned->Destroy();
 		getspawned = NULL;
 	}
 	// FIXME: Make this object proper

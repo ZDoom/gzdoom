@@ -556,7 +556,7 @@ private:
 
 	void DrawInventoryBar ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		int i;
 
 		// If the player has no artifacts, don't draw the bar
@@ -603,7 +603,7 @@ private:
 
 	void DrawFullScreenStuff ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		int i;
 		int ammotop;
 

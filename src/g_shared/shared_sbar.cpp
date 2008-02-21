@@ -310,7 +310,7 @@ void DBaseStatusBar::AttachMessage (DHUDMessage *msg, DWORD id)
 	old = (id == 0 || id == 0xFFFFFFFF) ? NULL : DetachMessage (id);
 	if (old != NULL)
 	{
-		delete old;
+		old->Destroy();
 	}
 
 	prev = &Messages;
@@ -388,7 +388,7 @@ void DBaseStatusBar::DetachAllMessages ()
 	while (probe != NULL)
 	{
 		DHUDMessage *next = probe->Next;
-		delete probe;
+		probe->Destroy();
 		probe = next;
 	}
 }
@@ -1088,7 +1088,7 @@ void DBaseStatusBar::FlashCrosshair ()
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::DrawMessages (int bottom) const
+void DBaseStatusBar::DrawMessages (int bottom)
 {
 	DHUDMessage *msg = Messages;
 	while (msg)

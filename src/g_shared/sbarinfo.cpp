@@ -2311,7 +2311,7 @@ private:
 	void DrawInventoryBar(int type, int num, int x, int y, bool alwaysshow, 
 		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter)
 	{ //yes, there is some Copy & Paste here too
-		const AInventory *item;
+		AInventory *item;
 		int i;
 
 		// If the player has no artifacts, don't draw the bar

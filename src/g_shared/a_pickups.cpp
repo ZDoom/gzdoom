@@ -1052,7 +1052,7 @@ PalEntry AInventory::GetBlend ()
 //
 //===========================================================================
 
-AInventory *AInventory::PrevItem () const
+AInventory *AInventory::PrevItem ()
 {
 	AInventory *item = Owner->Inventory;
 
@@ -1071,7 +1071,7 @@ AInventory *AInventory::PrevItem () const
 //
 //===========================================================================
 
-AInventory *AInventory::PrevInv () const
+AInventory *AInventory::PrevInv ()
 {
 	AInventory *lastgood = NULL;
 	AInventory *item = Owner->Inventory;
@@ -1094,7 +1094,7 @@ AInventory *AInventory::PrevInv () const
 //
 //===========================================================================
 
-AInventory *AInventory::NextInv () const
+AInventory *AInventory::NextInv ()
 {
 	AInventory *item = Inventory;
 

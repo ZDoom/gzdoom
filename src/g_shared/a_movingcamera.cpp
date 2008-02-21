@@ -289,8 +289,8 @@ void APathFollower::Activate (AActor *activator)
 {
 	if (!bActive)
 	{
-		CurrNode = static_cast<AInterpolationPoint *>(target);
-		PrevNode = static_cast<AInterpolationPoint *>(lastenemy);
+		CurrNode = barrier_cast<AInterpolationPoint *>(target);
+		PrevNode = barrier_cast<AInterpolationPoint *>(lastenemy);
 
 		if (CurrNode != NULL)
 		{

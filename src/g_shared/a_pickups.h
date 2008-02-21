@@ -124,9 +124,9 @@ public:
 	virtual const char *PickupMessage ();
 	virtual void PlayPickupSound (AActor *toucher);
 
-	AInventory *PrevItem () const;	// Returns the item preceding this one in the list.
-	AInventory *PrevInv () const;	// Returns the previous item with IF_INVBAR set.
-	AInventory *NextInv () const;	// Returns the next item with IF_INVBAR set.
+	AInventory *PrevItem ();	// Returns the item preceding this one in the list.
+	AInventory *PrevInv ();	// Returns the previous item with IF_INVBAR set.
+	AInventory *NextInv ();	// Returns the next item with IF_INVBAR set.
 
 	AActor *Owner;				// Who owns this item? NULL if it's still a pickup.
 	int Amount;					// Amount of item this instance has

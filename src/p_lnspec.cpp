@@ -1227,7 +1227,7 @@ FUNC(LS_Thing_Hate)
 			if (arg2 != 0)
 			{
 				hater->TIDtoHate = arg1;
-				hater->LastLook.Actor = NULL;
+				hater->LastLookActor = NULL;
 
 				// If the TID to hate is 0, then don't forget the target and
 				// lastenemy fields.

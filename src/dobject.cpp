@@ -349,7 +349,7 @@ void DObject::InPlaceConstructor (void *mem)
 }
 
 DObject::DObject ()
-: ObjectFlags(0), Class(0)
+: Class(0), ObjectFlags(0)
 {
 	ObjectFlags = GC::CurrentWhite;
 	ObjNext = GC::Root;
@@ -357,7 +357,7 @@ DObject::DObject ()
 }
 
 DObject::DObject (PClass *inClass)
-: ObjectFlags(0), Class(inClass)
+: Class(inClass), ObjectFlags(0)
 {
 	ObjectFlags = GC::CurrentWhite;
 	ObjNext = GC::Root;

@@ -539,9 +539,9 @@ public:
 	bool CheckLocalView (int playernum) const;
 
 	// Finds the first item of a particular type.
-	AInventory *FindInventory (const PClass *type) const;
-	AInventory *FindInventory (FName type) const;
-	template<class T> T *FindInventory () const
+	AInventory *FindInventory (const PClass *type);
+	AInventory *FindInventory (FName type);
+	template<class T> T *FindInventory ()
 	{
 		return static_cast<T *> (FindInventory (RUNTIME_CLASS(T)));
 	}
@@ -550,7 +550,7 @@ public:
 	AInventory *GiveInventoryType (const PClass *type);
 
 	// Returns the first item held with IF_INVBAR set.
-	AInventory *FirstInv () const;
+	AInventory *FirstInv ();
 
 	// Tries to give the actor some ammo.
 	bool GiveAmmo (const PClass *type, int amount);
@@ -566,7 +566,7 @@ public:
 	void ConversationAnimation (int animnum);
 
 	// Make this actor hate the same things as another actor
-	void CopyFriendliness (const AActor *other, bool changeTarget);
+	void CopyFriendliness (AActor *other, bool changeTarget);
 
 	// Moves the other actor's inventory to this one
 	void ObtainInventory (AActor *other);
@@ -641,35 +641,32 @@ public:
 	BYTE			movedir;		// 0-7
 	SBYTE			visdir;
 	SWORD			movecount;		// when 0, select a new dir
-	AActor			*target;		// thing being chased/attacked (or NULL)
+	TObjPtr<AActor> target;		// thing being chased/attacked (or NULL)
 									// also the originator for missiles
-	AActor			*lastenemy;		// Last known enemy -- killogh 2/15/98
-	AActor			*LastHeard;		// [RH] Last actor this one heard
+	TObjPtr<AActor>	lastenemy;		// Last known enemy -- killogh 2/15/98
+	TObjPtr<AActor> LastHeard;		// [RH] Last actor this one heard
 	SDWORD			reactiontime;	// if non 0, don't attack yet; used by
 									// player to freeze a bit after teleporting
 	SDWORD			threshold;		// if > 0, the target will be chased
 									// no matter what (even if shot)
 	player_s		*player;		// only valid if type of APlayerPawn
-	union
-	{
-		AActor		*Actor;			// Actor last looked for (if TIDtoHate != 0)
-		SDWORD		PlayerNumber;	// Player number last looked for
-	} LastLook;
+	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
 	WORD			SpawnPoint[3]; 	// For nightmare respawn
 	WORD			SpawnAngle;
 	int				skillrespawncount;
-	AActor			*tracer;		// Thing being chased/attacked for tracers
-	AActor			*master;		// Thing which spawned this one (prevents mutual attacks)
+	TObjPtr<AActor>	tracer;		// Thing being chased/attacked for tracers
+	TObjPtr<AActor>	master;		// Thing which spawned this one (prevents mutual attacks)
 	fixed_t			floorclip;		// value to use for floor clipping
 	SWORD			tid;			// thing identifier
 	BYTE			special;		// special
 	int				args[5];		// special arguments
 
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
-	AActor			*goal;			// Monster's goal if not chasing anything
+	TObjPtr<AActor> goal;			// Monster's goal if not chasing anything
 	BYTE			waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
 	BYTE			boomwaterlevel;	// splash information for non-swimmable water sectors
 	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
+	SBYTE			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
 	WORD			SpawnFlags;
 	fixed_t			meleerange;		// specifies how far a melee attack reaches.
 	fixed_t			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
@@ -690,7 +687,7 @@ public:
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98
 
-	AInventory		*Inventory;		// [RH] This actor's inventory
+	TObjPtr<AInventory>	Inventory;		// [RH] This actor's inventory
 	DWORD			InventoryID;	// A unique ID to keep track of inventory items
 
 	//Added by MC:

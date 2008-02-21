@@ -1,3 +1,8 @@
+February 20, 2008
+- Changed the DHUDMessage deletions into destroys.
+- Added read barriers to the pointers inside AActor.
+- Split the AActor::LastLook union into its constituent parts.
+
 February 20, 2008 (Changes by Graf Zahl)
 - Added a modified version of Karate Chris's submission for killing specific
   monsters with the 'Kill' ccmd.

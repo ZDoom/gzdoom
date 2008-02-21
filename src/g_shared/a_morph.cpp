@@ -137,7 +137,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	{
 		return false;
 	}
-	mo = static_cast<APlayerPawn *>(pmo->tracer);
+	mo = barrier_cast<APlayerPawn *>(pmo->tracer);
 	mo->SetOrigin (pmo->x, pmo->y, pmo->z);
 	mo->flags |= MF_SOLID;
 	pmo->flags &= ~MF_SOLID;

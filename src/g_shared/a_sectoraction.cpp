@@ -88,7 +88,7 @@ void ASectorAction::Deactivate (AActor *source)
 bool ASectorAction::TriggerAction (AActor *triggerer, int activationType)
 {
 	if (tracer != NULL)
-		return static_cast<ASectorAction *>(tracer)->TriggerAction (triggerer, activationType);
+		return barrier_cast<ASectorAction *>(tracer)->TriggerAction (triggerer, activationType);
 	else
 		return false;
 }

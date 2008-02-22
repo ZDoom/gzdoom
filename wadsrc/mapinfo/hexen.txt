@@ -7,7 +7,7 @@ skill baby
 	DamageFactor 0.5
 	EasyBossBrain
 	SpawnFilter "Easy"
-	Name "MNU_WETNURSE"
+	Name "$MNU_WETNURSE"
 	PlayerClassName "fighter" "$MNU_SQUIRE"
 	PlayerClassName "cleric" "$MNU_ALTARBOY"
 	PlayerClassName "mage" "$MNU_APPRENTICE"
@@ -16,7 +16,7 @@ skill baby
 skill easy
 	DoubleAmmoFactor 1.5
 	SpawnFilter "Easy"
-	Name "MNU_YELLOWBELLIES"
+	Name "$MNU_YELLOWBELLIES"
 	PlayerClassName "fighter" "$MNU_KNIGHT"
 	PlayerClassName "cleric" "$MNU_ACOLYTE"
 	PlayerClassName "mage" "$MNU_ENCHANTER"
@@ -24,7 +24,7 @@ skill easy
 skill normal
 	DoubleAmmoFactor 1.5
 	SpawnFilter "Normal"
-	Name "MNU_BRINGEST"
+	Name "$MNU_BRINGEST"
 	PlayerClassName "fighter" "$MNU_WARRIOR"
 	PlayerClassName "cleric" "$MNU_PRIEST"
 	PlayerClassName "mage" "$MNU_SORCERER"
@@ -32,7 +32,7 @@ skill normal
 skill hard
 	DoubleAmmoFactor 1.5
 	SpawnFilter "Hard"
-	Name "MNU_SMITE"
+	Name "$MNU_SMITE"
 	PlayerClassName "fighter" "$MNU_BERSERKER"
 	PlayerClassName "cleric" "$MNU_CARDINAL"
 	PlayerClassName "mage" "$MNU_WARLOCK"
@@ -43,7 +43,7 @@ skill nightmare
 	FastMonsters
 	DisableCheats
 	SpawnFilter "Hard"
-	Name "MNU_BLACKPLAGUE"
+	Name "$MNU_BLACKPLAGUE"
 	PlayerClassName "fighter" "$MNU_TITAN"
 	PlayerClassName "cleric" "$MNU_POPE"
 	PlayerClassName "mage" "$MNU_ARCHMAGE"

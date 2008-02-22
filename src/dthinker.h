@@ -74,7 +74,7 @@ private:
 	static void DestroyThinkersInList (Node *first);
 	static void DestroyMostThinkersInList (List &list, int stat);
 	static int TickThinkers (List *list, List *dest);	// Returns: # of thinkers ticked
-
+	static void SaveList(FArchive &arc, Node *node);
 
 	static List Thinkers[MAX_STATNUM+1];		// Current thinkers
 	static List FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers

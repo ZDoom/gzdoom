@@ -52,9 +52,21 @@ List DThinker::Thinkers[MAX_STATNUM+1];
 List DThinker::FreshThinkers[MAX_STATNUM+1];
 bool DThinker::bSerialOverride = false;
 
-void DThinker::SerializeAll (FArchive &arc, bool hubLoad)
+void DThinker::SaveList(FArchive &arc, Node *node)
 {
-	Node *node;
+	if (node->Succ != NULL)
+	{
+		do
+		{
+			DThinker *thinker = static_cast<DThinker *>(node);
+			arc << thinker;
+			node = node->Succ;
+		} while (node->Succ != NULL);
+	}
+}
+
+void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
+{
 	DThinker *thinker;
 	BYTE stat;
 	int statcount;
@@ -67,29 +79,21 @@ void DThinker::SerializeAll (FArchive &arc, bool hubLoad)
 	// the thinker lists here instead of relying on the archiver to do it
 	// for us.
 
-	if (arc.IsStoring ())
+	if (arc.IsStoring())
 	{
 		for (statcount = i = 0; i <= MAX_STATNUM; i++)
 		{
-			if (!Thinkers[i].IsEmpty ())
-			{
-				statcount++;
-			}
+			statcount += (!Thinkers[i].IsEmpty() || !FreshThinkers[i].IsEmpty());
 		}
 		arc << statcount;
 		for (i = 0; i <= MAX_STATNUM; i++)
 		{
-			node = Thinkers[i].Head;
-			if (node->Succ != NULL)
+			if (!Thinkers[i].IsEmpty() || !FreshThinkers[i].IsEmpty())
 			{
 				stat = i;
 				arc << stat;
-				do
-				{
-					thinker = static_cast<DThinker *> (node);
-					arc << thinker;
-					node = node->Succ;
-				} while (node->Succ != NULL);
+				SaveList(arc, Thinkers[i].Head);
+				SaveList(arc, FreshThinkers[i].Head);
 				thinker = NULL;
 				arc << thinker;		// Save a final NULL for this list
 			}
@@ -98,9 +102,9 @@ void DThinker::SerializeAll (FArchive &arc, bool hubLoad)
 	else
 	{
 		if (hubLoad)
-			DestroyMostThinkers ();
+			DestroyMostThinkers();
 		else
-			DestroyAllThinkers ();
+			DestroyAllThinkers();
 
 		// Prevent the constructor from inserting thinkers into a list.
 		bSerialOverride = true;
@@ -113,7 +117,16 @@ void DThinker::SerializeAll (FArchive &arc, bool hubLoad)
 				arc << stat << thinker;
 				while (thinker != NULL)
 				{
-					Thinkers[stat].AddTail (thinker);
+					// Thinkers with the OF_JustSpawned flag set go in the FreshThinkers
+					// list. Anything else goes in the regular Thinkers list.
+					if (thinker->ObjectFlags & OF_JustSpawned)
+					{
+						FreshThinkers[stat].AddTail(thinker);
+					}
+					else
+					{
+						Thinkers[stat].AddTail(thinker);
+					}
 					arc << thinker;
 				}
 				statcount--;
@@ -122,7 +135,7 @@ void DThinker::SerializeAll (FArchive &arc, bool hubLoad)
 		catch (class CDoomError &)
 		{
 			bSerialOverride = false;
-			DestroyAllThinkers ();
+			DestroyAllThinkers();
 			throw;
 		}
 		bSerialOverride = false;

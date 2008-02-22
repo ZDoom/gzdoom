@@ -1,4 +1,13 @@
 February 21, 2008
+- Fixed: DThinker::SerializeAll() did not serialize any thinkers in the
+  FreshThinkers lists. These thinkers would still be saved in the savegame if
+  there were other references to them, but they would not go in any thinker
+  lists when loading the savegame. An easy way to exercise this bug is to
+  give yourself something new with the console and then save the game right
+  away without closing the console by using the "save" command. The item
+  would be stored in the savegame thanks to its presence in the Inventory
+  list, but it wouldn't be in a thinker list when the game was reloaded
+  because it was still in the FreshThinkers list when the game was saved.
 - Fixed: PO_Busy() did not check for a NULL return from GetPolyobj().
 - Fixed two problems with printfs from the net controller stuff: one of them
   is totally valid, and the other is GCC not being as nice as VC++.

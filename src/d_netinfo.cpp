@@ -825,7 +825,7 @@ CCMD (playerinfo)
 		int i = atoi (argv[1]);
 		userinfo_t *ui = &players[i].userinfo;
 		Printf ("Name:        %s\n",		ui->netname);
-		Printf ("Team:        %s (%d)\n",	ui->team == TEAM_None ? "None" : teams[ui->team].name, ui->team);
+		Printf ("Team:        %s (%d)\n",	ui->team == TEAM_None ? "None" : teams[ui->team].name.GetChars(), ui->team);
 		Printf ("Aimdist:     %d\n",		ui->aimdist);
 		Printf ("Color:       %06x\n",		ui->color);
 		Printf ("Skin:        %s (%d)\n",	skins[ui->skin].name, ui->skin);

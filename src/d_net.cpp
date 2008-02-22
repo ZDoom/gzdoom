@@ -2496,7 +2496,7 @@ static void Network_Controller (int playernum, bool add)
 
 	if (!playeringame[playernum])
 	{
-		Printf ("Player (%d) not found!\n");
+		Printf ("Player (%d) not found!\n", playernum);
 		return;
 	}
 

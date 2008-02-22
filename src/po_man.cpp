@@ -1545,7 +1545,7 @@ bool PO_Busy (int polyobj)
 	polyobj_t *poly;
 
 	poly = GetPolyobj (polyobj);
-	if (!poly->specialdata)
+	if (poly == NULL || poly->specialdata == NULL)
 	{
 		return false;
 	}

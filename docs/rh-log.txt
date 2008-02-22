@@ -1,3 +1,11 @@
+February 21, 2008
+- Fixed: PO_Busy() did not check for a NULL return from GetPolyobj().
+- Fixed two problems with printfs from the net controller stuff: one of them
+  is totally valid, and the other is GCC not being as nice as VC++.
+- Fixed: The case for defining SAVESIG when SVN_REVISION_NUMBER == 0 did not
+  work for GCC (and presumably VC++, though I never ran into that case with
+  it) because it tried to stringify something that wasn't a macro argument.
+
 February 20, 2008 (Changes by Graf Zahl)
 - Added a modified version of Karate Chris's submission for killing specific
   monsters with the 'Kill' ccmd.

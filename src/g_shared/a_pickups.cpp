@@ -101,7 +101,7 @@ bool AAmmo::HandlePickup (AInventory *item)
 				(Owner->player->ReadyWeapon == NULL ||
 				 (Owner->player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)))
 			{
-				AWeapon *best = static_cast<APlayerPawn *>(Owner)->BestWeapon (GetClass());
+				AWeapon *best = barrier_cast<APlayerPawn *>(Owner)->BestWeapon (GetClass());
 				if (best != NULL && (Owner->player->ReadyWeapon == NULL ||
 					best->SelectionOrder < Owner->player->ReadyWeapon->SelectionOrder))
 				{

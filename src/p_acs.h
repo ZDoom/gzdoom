@@ -652,7 +652,7 @@ protected:
 	int				*pc;
 	EScriptState	state;
 	int				statedata;
-	AActor			*activator;
+	TObjPtr<AActor>	activator;
 	line_t			*activationline;
 	bool			backSide;
 	FFont			*activefont;
@@ -698,6 +698,7 @@ inline FArchive &operator<< (FArchive &arc, DLevelScript::EScriptState &state)
 class DACSThinker : public DThinker
 {
 	DECLARE_CLASS (DACSThinker, DThinker)
+	HAS_OBJECT_POINTERS
 public:
 	DACSThinker ();
 	~DACSThinker ();

@@ -456,7 +456,7 @@ private:
 	sector_t *Sector;
 	fixed_t WatchD, LastD;
 	int Special, Arg0, Arg1, Arg2, Arg3, Arg4;
-	AActor *Activator;
+	TObjPtr<AActor> Activator;
 	line_t *Line;
 	bool LineSide;
 	bool bCeiling;
@@ -1557,7 +1557,10 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 
 //---- The ACS Interpreter ----//
 
-IMPLEMENT_CLASS (DACSThinker)
+IMPLEMENT_POINTY_CLASS (DACSThinker)
+ DECLARE_POINTER(LastScript)
+ DECLARE_POINTER(Scripts)
+END_POINTERS
 
 DACSThinker *DACSThinker::ActiveThinker = NULL;
 
@@ -1579,13 +1582,6 @@ DACSThinker::DACSThinker ()
 
 DACSThinker::~DACSThinker ()
 {
-	DLevelScript *script = Scripts;
-	while (script)
-	{
-		DLevelScript *next = script->next;
-		script->Destroy ();
-		script = next;
-	}
 	Scripts = NULL;
 	ActiveThinker = NULL;
 }
@@ -1647,7 +1643,9 @@ void DACSThinker::StopScriptsFor (AActor *actor)
 }
 
 IMPLEMENT_POINTY_CLASS (DLevelScript)
- DECLARE_POINTER (activator)
+ DECLARE_POINTER(next)
+ DECLARE_POINTER(prev)
+ DECLARE_POINTER(activator)
 END_POINTERS
 
 void DLevelScript::Serialize (FArchive &arc)
@@ -4852,9 +4850,9 @@ int DLevelScript::RunScript ()
 			}
 			else
 			{
-				if (activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
+				if (activator != NULL && activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
 				{
-					static_cast<AScriptedMarine *>(activator)->SetWeapon (
+					barrier_cast<AScriptedMarine *>(activator)->SetWeapon (
 						(AScriptedMarine::EMarineWeapon)STACK(1));
 				}
 			}
@@ -4879,9 +4877,9 @@ int DLevelScript::RunScript ()
 					}
 					else
 					{
-						if (activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
+						if (activator != NULL && activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
 						{
-							static_cast<AScriptedMarine *>(activator)->SetSprite (type);
+							barrier_cast<AScriptedMarine *>(activator)->SetSprite (type);
 						}
 					}
 				}
@@ -5274,7 +5272,6 @@ int DLevelScript::RunScript ()
 		Unlink ();
 		if (controller->RunningScripts[script] == this)
 			controller->RunningScripts[script] = NULL;
-		this->Destroy ();
 	}
 	else
 	{

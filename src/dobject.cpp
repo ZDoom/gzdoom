@@ -47,6 +47,7 @@
 #include "r_state.h"
 #include "stats.h"
 #include "a_sharedglobal.h"
+#include "dsectoreffect.h"
 
 #include "autosegs.h"
 
@@ -464,18 +465,16 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 	{
 		for (i = 0; i < numsectors; ++i)
 		{
-			if (sectors[i].SoundTarget == old)
-			{
-				sectors[i].SoundTarget = static_cast<AActor *>(notOld);
-			}
-			if (sectors[i].CeilingSkyBox == old)
-			{
-				sectors[i].CeilingSkyBox = static_cast<ASkyViewpoint *>(notOld);
-			}
-			if (sectors[i].FloorSkyBox == old)
-			{
-				sectors[i].FloorSkyBox = static_cast<ASkyViewpoint *>(notOld);
-			}
+#define SECTOR_CHECK(f,t) \
+	if (sectors[i].f == static_cast<t *>(old)) { sectors[i].f = static_cast<t *>(notOld); }
+			SECTOR_CHECK( SoundTarget, AActor );
+			SECTOR_CHECK( CeilingSkyBox, ASkyViewpoint );
+			SECTOR_CHECK( FloorSkyBox, ASkyViewpoint );
+			SECTOR_CHECK( SecActTarget, ASectorAction );
+			SECTOR_CHECK( floordata, DSectorEffect );
+			SECTOR_CHECK( ceilingdata, DSectorEffect );
+			SECTOR_CHECK( lightingdata, DSectorEffect );
+#undef SECTOR_CHECK
 		}
 	}
 }

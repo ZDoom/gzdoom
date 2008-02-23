@@ -105,8 +105,8 @@ public:
 	int			crouchsprite;
 	int			MaxHealth;
 	int			RunHealth;
-	AInventory *InvFirst;				// first inventory item displayed on inventory bar
-	AInventory *InvSel;					// selected inventory item
+	TObjPtr<AInventory> InvFirst;		// first inventory item displayed on inventory bar
+	TObjPtr<AInventory> InvSel;			// selected inventory item
 
 	// [GRB] Player class properties
 	fixed_t		JumpZ;

@@ -1,3 +1,15 @@
+February 22, 2008
+- Moved DSeqNode's and its children's destructor code into their Destroy()
+  methods.
+- Moved DSectorEffect's destructor code into a Destroy() method.
+- Changed the myoffsetof definition to match DECLARE_POINTER's because GCC
+  started complaining about its use in p_setup.cpp, though I'm not sure why.
+- Added a pointer list to DACSThinker so that the collector can find scripts
+  instead of thinking they're all dead.
+- Added read barriers to sector_t's pointers.
+- Used the HAS_OBJECT_POINTERS macros to locate places to place TObjPtrs to
+  form read barriers.
+
 February 20, 2008
 - Changed the DHUDMessage deletions into destroys.
 - Added read barriers to the pointers inside AActor.

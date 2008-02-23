@@ -21,7 +21,6 @@ class DSeqNode : public DObject
 {
 	DECLARE_CLASS (DSeqNode, DObject)
 public:
-	virtual ~DSeqNode ();
 	void Serialize (FArchive &arc);
 	void StopAndDestroy ();
 	void Destroy ();

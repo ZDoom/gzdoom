@@ -128,7 +128,7 @@ public:
 
 protected:
 	EPusher m_Type;
-	AActor *m_Source;		// Point source if point pusher
+	TObjPtr<AActor> m_Source;// Point source if point pusher
 	int m_Xmag;				// X Strength
 	int m_Ymag;				// Y Strength
 	int m_Magnitude;		// Vector strength for point pusher

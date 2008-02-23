@@ -641,7 +641,7 @@ public:
 	BYTE			movedir;		// 0-7
 	SBYTE			visdir;
 	SWORD			movecount;		// when 0, select a new dir
-	TObjPtr<AActor> target;		// thing being chased/attacked (or NULL)
+	TObjPtr<AActor> target;			// thing being chased/attacked (or NULL)
 									// also the originator for missiles
 	TObjPtr<AActor>	lastenemy;		// Last known enemy -- killogh 2/15/98
 	TObjPtr<AActor> LastHeard;		// [RH] Last actor this one heard
@@ -654,8 +654,8 @@ public:
 	WORD			SpawnPoint[3]; 	// For nightmare respawn
 	WORD			SpawnAngle;
 	int				skillrespawncount;
-	TObjPtr<AActor>	tracer;		// Thing being chased/attacked for tracers
-	TObjPtr<AActor>	master;		// Thing which spawned this one (prevents mutual attacks)
+	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
+	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
 	fixed_t			floorclip;		// value to use for floor clipping
 	SWORD			tid;			// thing identifier
 	BYTE			special;		// special
@@ -677,9 +677,10 @@ public:
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	fixed_t			gravity;		// [GRB] Gravity factor
 	int 			FastChaseStrafeCount;
-	// [KS] These temporary-use properties are needed to allow A_LookEx to pass it's parameters to LookFor*InBlock in
-	// P_BlockmapSearch so that friendly enemies and monsters that look for other monsters can find their targets properly.
-	// If there's a cleaner way of doing this, feel free to remove these and use that method instead.
+	// [KS] These temporary-use properties are needed to allow A_LookEx to pass its parameters to
+	// LookFor*InBlock in P_BlockmapSearch so that friendly enemies and monsters that look for
+	// other monsters can find their targets properly. If there's a cleaner way of doing this,
+	// feel free to remove these and use that method instead.
 	fixed_t			LookExMinDist;	// Minimum sight distance
 	fixed_t			LookExMaxDist;	// Maximum sight distance
 	angle_t			LookExFOV;		// Field of Vision

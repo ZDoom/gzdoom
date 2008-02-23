@@ -23,7 +23,7 @@
 #include <stdarg.h>
 
 // the dec offsetof macro doesnt work very well...
-#define myoffsetof(type,identifier) ((size_t)&((type *)0)->identifier)
+#define myoffsetof(type,identifier) ((size_t)&((type *)1)->identifier - 1)
 
 int		Q_filelength (FILE *f);
 bool FileExists (const char *filename);

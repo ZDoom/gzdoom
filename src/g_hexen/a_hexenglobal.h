@@ -66,7 +66,7 @@ protected:
 	virtual bool MatchPlayerClass (AActor *toucher);
 	const PClass *FourthWeaponClass;
 	int PieceValue;
-	AInventory *TempFourthWeapon;
+	TObjPtr<AInventory> TempFourthWeapon;
 	bool PrivateShouldStay ();
 };
 

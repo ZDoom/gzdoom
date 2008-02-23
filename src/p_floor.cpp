@@ -600,7 +600,7 @@ bool EV_FloorCrushStop (int tag)
 		sector_t *sec = sectors + secnum;
 
 		if (sec->floordata && sec->floordata->IsKindOf (RUNTIME_CLASS(DFloor)) &&
-			static_cast<DFloor *>(sec->floordata)->m_Type == DFloor::floorRaiseAndCrush)
+			barrier_cast<DFloor *>(sec->floordata)->m_Type == DFloor::floorRaiseAndCrush)
 		{
 			SN_StopSequence (sec);
 			sec->floordata->Destroy ();

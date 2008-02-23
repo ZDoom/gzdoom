@@ -227,6 +227,8 @@ enum EObjectFlags
 	OF_SerialSuccess	= 1 << 9,		// For debugging Serialize() calls
 };
 
+template<class T> class TObjPtr;
+
 namespace GC
 {
 	enum EGCState
@@ -310,6 +312,7 @@ namespace GC
 	void Mark(DObject **obj);
 
 	template<class T> void Mark(T *&obj) { Mark((DObject **)&obj); }
+	template<class T> void Mark(TObjPtr<T> &obj);
 }
 
 // A template class to help with handling read barriers. It does not
@@ -396,6 +399,8 @@ template<class T,class U> inline T barrier_cast(TObjPtr<U> &o)
 {
 	return static_cast<T>(static_cast<U *>(o));
 }
+
+template<class T> void GC::Mark(TObjPtr<T> &obj) { GC::Mark((DObject **)&obj); }
 
 class DObject
 {

@@ -409,6 +409,7 @@ void DCorpsePointer::Destroy ()
 
 void DCorpsePointer::Serialize (FArchive &arc)
 {
+	Super::Serialize(arc);
 	arc << Corpse << Count;
 }
 

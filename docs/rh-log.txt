@@ -1,3 +1,9 @@
+February 23, 2008 (Changes by Graf Zahl)
+- Fixed: AWeaponPiece didn't declare its FullWeapon pointer as such.
+- Fixed: Hexen's random player class skill menu was missing the '$' indicating 
+  a string table identifier.
+- Fixed: DCorpsePointer::Serialize didn't call the super method.
+
 February 22, 2008
 - Moved DSeqNode's and its children's destructor code into their Destroy()
   methods.

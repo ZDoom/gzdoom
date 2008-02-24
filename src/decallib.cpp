@@ -1143,6 +1143,7 @@ void DDecalFader::Tick ()
 		{
 			TheDecal->Destroy ();		// remove the decal
 			Destroy ();					// remove myself
+			return;
 		}
 		if (StartTrans == -1)
 		{

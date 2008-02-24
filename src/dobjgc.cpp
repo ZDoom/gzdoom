@@ -429,6 +429,35 @@ void FullGC()
 	SetThreshold();
 }
 
+//==========================================================================
+//
+// Barrier
+//
+// Implements a write barrier to maintain the invariant that a black node
+// never points to a white node by making the node pointed at gray.
+//
+//==========================================================================
+
+void Barrier(DObject *pointing, DObject *pointed)
+{
+	assert(pointing == NULL || (pointing->IsBlack() && !pointing->IsDead()));
+	assert(pointed->IsWhite() && !pointed->IsDead());
+	assert(State != GCS_Finalize && State != GCS_Pause);
+	// The invariant only needs to be maintained in the propagate state.
+	if (State == GCS_Propagate)
+	{
+		pointed->White2Gray();
+		pointed->GCNext = Gray;
+		Gray = pointed;
+	}
+	// In other states, we can mark the pointing object white so this
+	// barrier won't be triggered again, saving a few cycles in the future.
+	else if (pointing != NULL)
+	{
+		pointing->MakeWhite();
+	}
+}
+
 }
 
 ADD_STAT(mem)

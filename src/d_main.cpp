@@ -2478,7 +2478,6 @@ void D_DoomMain (void)
 	{
 		singledemo = true;				// quit after one demo
 		G_DeferedPlayDemo (files->GetArg (0));
-		delete files;
 		D_DoomLoop ();	// never returns
 	}
 	files->Destroy();

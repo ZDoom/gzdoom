@@ -1,3 +1,8 @@
+February 24, 2008
+- Fixed: DDecalFader::Tick() still referenced TheDecal even after destroying
+  it.
+- Added write barriers around the thinker list insertions in dthinker.cpp.
+
 February 23, 2008 (Changes by Graf Zahl)
 - Fixed: AWeaponPiece didn't declare its FullWeapon pointer as such.
 - Fixed: Hexen's random player class skill menu was missing the '$' indicating 

@@ -563,12 +563,4 @@ inline bool DObject::IsA (const PClass *type) const
 	return (type == GetClass());
 }
 
-
-// If the object pointed to wants to die, make the pointer NULL.
-#define ReadBarrier(ptr) if (ptr != NULL && (ptr->ObjectFlags & OF_EuthanizeMe)) { ptr = NULL; }
-
-// If the object holding the pointer is black, and the pointed object is
-// white, make it gray.
-#define WriteBarrier(p,o) if (p->IsBlack() && o->IsWhite()) { GC::Barrier(p,o); }
-
 #endif //__DOBJECT_H__

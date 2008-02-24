@@ -142,6 +142,14 @@ DThinker::DThinker (int statnum) throw()
 	{
 		statnum = MAX_STATNUM;
 	}
+	if (FreshThinkers[statnum].TailPred->Pred != NULL)
+	{
+		GC::WriteBarrier(static_cast<DThinker*>(FreshThinkers[statnum].Tail, this));
+	}
+	else
+	{
+		GC::WriteBarrier(this);
+	}
 	FreshThinkers[statnum].AddTail (this);
 }
 
@@ -192,6 +200,8 @@ DThinker *DThinker::FirstThinker (int statnum)
 
 void DThinker::ChangeStatNum (int statnum)
 {
+	List *list;
+
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		statnum = MAX_STATNUM;
@@ -199,12 +209,21 @@ void DThinker::ChangeStatNum (int statnum)
 	Remove ();
 	if ((ObjectFlags & OF_JustSpawned) && statnum >= STAT_FIRST_THINKING)
 	{
-		FreshThinkers[statnum].AddTail (this);
+		list = &FreshThinkers[statnum];
 	}
 	else
 	{
-		Thinkers[statnum].AddTail (this);
+		list = &Thinkers[statnum];
 	}
+	if (list->TailPred->Pred != NULL)
+	{
+		GC::WriteBarrier(static_cast<DThinker*>(list->Tail, this));
+	}
+	else
+	{
+		GC::WriteBarrier(this);
+	}
+	list->AddTail(this);
 }
 
 // Mark the first thinker of each list
@@ -335,6 +354,14 @@ int DThinker::TickThinkers (List *list, List *dest)
 			if (dest != NULL)
 			{ // Move thinker from this list to the destination list
 				node->Remove ();
+				if (dest->TailPred->Pred != NULL)
+				{
+					GC::WriteBarrier(static_cast<DThinker*>(dest->Tail, thinker));
+				}
+				else
+				{
+					GC::WriteBarrier(thinker);
+				}
 				dest->AddTail (node);
 			}
 			thinker->PostBeginPlay ();

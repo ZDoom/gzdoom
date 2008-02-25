@@ -1,3 +1,8 @@
+February 25, 2008 (Changes by Graf Zahl)
+- Fixed: The DECORATE expression evaluator's random function could produce
+  incorrect results for ranges > 255. Changed so that FRandom's default
+  implementation is used instead.
+
 February 21, 2008
 - Fixed: DThinker::SerializeAll() did not serialize any thinkers in the
   FreshThinkers lists. These thinkers would still be saved in the savegame if

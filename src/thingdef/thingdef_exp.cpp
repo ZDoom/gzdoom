@@ -1477,23 +1477,7 @@ static ExpVal EvalExpression (ExpData *data, AActor *self, const PClass *cls)
 				swap (max, min);
 			}
 
-			if (max - min > 255)
-			{
-				int num1,num2,num3,num4;
-
-				num1 = (*data->RNG)();
-				num2 = (*data->RNG)();
-				num3 = (*data->RNG)();
-				num4 = (*data->RNG)();
-
-				val.Int = ((num1 << 24) | (num2 << 16) | (num3 << 8) | num4);
-			}
-			else
-			{
-				val.Int = (*data->RNG)();
-			}
-			val.Int %= (max - min + 1);
-			val.Int += min;
+			val.Int = (*data->RNG)(max - min + 1) + min;
 		}
 		break;
 

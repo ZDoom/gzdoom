@@ -1,3 +1,8 @@
+February 25, 2008 (Changes by Graf Zahl)
+- Fixed: The DECORATE expression evaluator's random function could produce
+  incorrect results for ranges > 255. Changed so that FRandom's default
+  implementation is used instead.
+
 February 24, 2008
 - Fixed: DDecalFader::Tick() still referenced TheDecal even after destroying
   it.

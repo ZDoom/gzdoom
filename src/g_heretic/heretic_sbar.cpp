@@ -87,6 +87,7 @@ const BYTE *FHereticShader::GetPixels ()
 class DHereticStatusBar : public DBaseStatusBar
 {
 	DECLARE_CLASS(DHereticStatusBar, DBaseStatusBar)
+	HAS_OBJECT_POINTERS
 public:
 	DHereticStatusBar () : DBaseStatusBar (42)
 	{
@@ -317,6 +318,7 @@ private:
 			|| (oldarti != NULL && oldartiCount != oldarti->Amount))
 		{
 			oldarti = CPlayer->mo->InvSel;
+			GC::WriteBarrier(this, oldarti);
 			oldartiCount = oldarti != NULL ? oldarti->Amount : 0;
 			ArtiRefresh = screen->GetPageCount ();
 		}
@@ -423,6 +425,8 @@ private:
 			oldammo2 = ammo2;
 			oldammocount1 = ammocount1;
 			oldammocount2 = ammocount2;
+			GC::WriteBarrier(this, ammo1);
+			GC::WriteBarrier(this, ammo2);
 			AmmoRefresh = screen->GetPageCount ();
 		}
 		if (AmmoRefresh)
@@ -714,8 +718,8 @@ private:
 	static const char patcharti[][10];
 	static const char ammopic[][10];
 
-	AInventory *oldarti;
-	AAmmo *oldammo1, *oldammo2;
+	TObjPtr<AInventory> oldarti;
+	TObjPtr<AAmmo> oldammo1, oldammo2;
 	int oldammocount1, oldammocount2;
 	int oldartiCount;
 	int oldfrags;
@@ -774,7 +778,11 @@ private:
 	char ArmorRefresh;
 };
 
-IMPLEMENT_CLASS(DHereticStatusBar);
+IMPLEMENT_POINTY_CLASS(DHereticStatusBar)
+ DECLARE_POINTER(oldarti)
+ DECLARE_POINTER(oldammo1)
+ DECLARE_POINTER(oldammo2)
+END_POINTERS
 
 DBaseStatusBar *CreateHereticStatusBar ()
 {

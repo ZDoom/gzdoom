@@ -57,6 +57,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "dobject.h"
+#include "templates.h"
 #include "b_bot.h"
 #include "p_local.h"
 #include "g_game.h"
@@ -65,6 +66,7 @@
 #include "sbar.h"
 #include "stats.h"
 #include "c_dispatch.h"
+#include "p_acs.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -257,6 +259,7 @@ static void MarkRoot()
 	Mark(screen);
 	Mark(StatusBar);
 	DThinker::MarkRoots();
+	Mark(DACSThinker::ActiveThinker);
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{
 		Mark(bodyque[i]);
@@ -460,7 +463,7 @@ void Barrier(DObject *pointing, DObject *pointed)
 
 }
 
-ADD_STAT(mem)
+ADD_STAT(gc)
 {
 	static const char *StateStrings[] = {
 		"  Pause  ",
@@ -483,14 +486,51 @@ ADD_STAT(mem)
 
 //==========================================================================
 //
-// CCMD gcnow
+// CCMD gc
 //
-// Initiates a collection. The collection is still done incrementally,
-// rather than all at once.
+// Controls various aspects of the collector.
 //
 //==========================================================================
 
-CCMD(gcnow)
+CCMD(gc)
 {
-	GC::Threshold = GC::AllocBytes;
+	if (argv.argc() == 1)
+	{
+		Printf ("Usage: gc stop|now|full|pause [size]|stepmul [size]\n");
+		return;
+	}
+	if (stricmp(argv[1], "stop") == 0)
+	{
+		GC::Threshold = ~(size_t)0 - 2;
+	}
+	else if (stricmp(argv[1], "now") == 0)
+	{
+		GC::Threshold = GC::AllocBytes;
+	}
+	else if (stricmp(argv[1], "full") == 0)
+	{
+		GC::FullGC();
+	}
+	else if (stricmp(argv[1], "pause") == 0)
+	{
+		if (argv.argc() == 2)
+		{
+			Printf ("Current GC pause is %d\n", GC::Pause);
+		}
+		else
+		{
+			GC::Pause = MAX(1,atoi(argv[2]));
+		}
+	}
+	else if (stricmp(argv[1], "stepmul") == 0)
+	{
+		if (argv.argc() == 2)
+		{
+			Printf ("Current GC stepmul is %d\n", GC::StepMul);
+		}
+		else
+		{
+			GC::StepMul = MAX(100, atoi(argv[2]));
+		}
+	}
 }

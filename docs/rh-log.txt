@@ -1,3 +1,25 @@
+February 26, 2008
+- Fixed: Using +stat from the command line caused a crash.
+- More write barriers and pointer declarations. Here are rules I've come up
+  with so far for when write barriers can be ommitted:
+  * Initializing pointers for a newly created object: A new object can never
+    black, so none of its pointers that get set by the constructor (or code
+    just following its creation) need to be  behind write barriers.
+  * Creating a new thinker and storing it in a pointer: The thinker
+    constructor already puts it behind a write barrier when it links it into
+    the thinker list, so you don't need to do it again.
+  * As a corollary of the above: No pointers to thinkers should need to be
+    behind write barriers, because it is incorrect to have a thinker that is
+    live but not in a thinker list. I realized this while I was going through
+    the long list of actor target references, so there are some write barriers
+    for those in place already, since they don't hurt to have them around.
+  As a consequence of the last point, I think I'm done placing write barriers
+  in all their necessary places without even touching most of the code. I'm
+  going to let it sit like this for a few days to see if I can think of a
+  counter-example where a live thinker wouldn't be in a thinker list, but it
+  feels correct to me right now.
+- Removed the delay parameter from the DLevelScript constructor.
+
 February 25, 2008 (Changes by Graf Zahl)
 - Fixed: The DECORATE expression evaluator's random function could produce
   incorrect results for ranges > 255. Changed so that FRandom's default

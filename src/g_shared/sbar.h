@@ -55,6 +55,7 @@ class AWeapon;
 class DHUDMessage : public DObject
 {
 	DECLARE_CLASS (DHUDMessage, DObject)
+	HAS_OBJECT_POINTERS
 public:
 	DHUDMessage (const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime);
@@ -84,7 +85,7 @@ protected:
 	DHUDMessage () : SourceText(NULL) {}
 
 private:
-	DHUDMessage *Next;
+	TObjPtr<DHUDMessage> Next;
 	DWORD SBarID;
 	char *SourceText;
 

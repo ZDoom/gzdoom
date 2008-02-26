@@ -242,7 +242,12 @@ void DSeqNode::SerializeSequences (FArchive &arc)
 	arc << SequenceListHead;
 }
 
-IMPLEMENT_CLASS (DSeqNode)
+IMPLEMENT_POINTY_CLASS (DSeqNode)
+ DECLARE_POINTER(m_ChildSeqNode)
+ DECLARE_POINTER(m_ParentSeqNode)
+ DECLARE_POINTER(m_Next)
+ DECLARE_POINTER(m_Prev)
+END_POINTERS
 
 DSeqNode::DSeqNode ()
 : m_SequenceChoices(0)
@@ -334,9 +339,15 @@ void DSeqNode::Destroy()
 	if (SequenceListHead == this)
 		SequenceListHead = m_Next;
 	if (m_Prev)
+	{
 		m_Prev->m_Next = m_Next;
+		GC::WriteBarrier(m_Prev, m_Next);
+	}
 	if (m_Next)
+	{
 		m_Next->m_Prev = m_Prev;
+		GC::WriteBarrier(m_Next, m_Prev);
+	}
 	ActiveSequences--;
 	Super::Destroy();
 }
@@ -1025,6 +1036,7 @@ void DSeqNode::Tick ()
 			{
 				int choice = pr_sndseq() % m_SequenceChoices.Size();
 				m_ChildSeqNode = SpawnChild (m_SequenceChoices[choice]);
+				GC::WriteBarrier(this, m_ChildSeqNode);
 				if (m_ChildSeqNode == NULL)
 				{ // Failed, so skip to next instruction.
 					m_SequencePtr++;

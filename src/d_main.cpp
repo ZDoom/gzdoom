@@ -2037,7 +2037,7 @@ void D_DoomMain (void)
 	const IWADInfo *iwad_info;
 
 	srand(I_MSTime());
-	
+
 	PClass::StaticInit ();
 	atterm (C_DeinitConsole);
 

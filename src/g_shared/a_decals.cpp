@@ -52,10 +52,10 @@ static int ImpactCount;
 
 CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
 
-// They also overload floorclip to be the fractional distance from the
-// left edge of the side. This distance is stored as a 2.30 fixed pt number.
+IMPLEMENT_POINTY_CLASS (DBaseDecal)
+ DECLARE_POINTER(WallNext)
+END_POINTERS
 
-IMPLEMENT_CLASS (DBaseDecal)
 IMPLEMENT_CLASS (DImpactDecal)
 
 DBaseDecal::DBaseDecal ()

@@ -453,16 +453,26 @@ void DCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 	if (hostnum == 1)
 	{
 		if (body1)
+		{
 			body1->SetOrigin (x, y, z);
+		}
 		else
+		{
 			body1 = Spawn ("CajunBodyNode", x, y, z, NO_REPLACE);
+			GC::WriteBarrier(this, body1);
+		}
 	}
 	else if (hostnum == 2)
 	{
 		if (body2)
+		{
 			body2->SetOrigin (x, y, z);
+		}
 		else
+		{
 			body2 = Spawn ("CajunBodyNode", x, y, z, NO_REPLACE);
+			GC::WriteBarrier(this, body2);
+		}
 	}
 }
 

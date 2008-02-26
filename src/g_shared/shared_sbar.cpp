@@ -306,6 +306,7 @@ void DBaseStatusBar::AttachMessage (DHUDMessage *msg, DWORD id)
 {
 	DHUDMessage *old = NULL;
 	DHUDMessage **prev;
+	DObject *container = this;
 
 	old = (id == 0 || id == 0xFFFFFFFF) ? NULL : DetachMessage (id);
 	if (old != NULL)
@@ -320,12 +321,14 @@ void DBaseStatusBar::AttachMessage (DHUDMessage *msg, DWORD id)
 	// it gets drawn back to front.)
 	while (*prev != NULL && (*prev)->SBarID > id)
 	{
+		container = *prev;
 		prev = &(*prev)->Next;
 	}
 
 	msg->Next = *prev;
 	msg->SBarID = id;
 	*prev = msg;
+	GC::WriteBarrier(container, msg);
 }
 
 //---------------------------------------------------------------------------

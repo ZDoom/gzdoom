@@ -122,6 +122,7 @@ void FManaBar::MakeTexture ()
 class DHexenStatusBar : public DBaseStatusBar
 {
 	DECLARE_CLASS(DHexenStatusBar, DBaseStatusBar)
+	HAS_OBJECT_POINTERS
 public:
 	DHexenStatusBar () : DBaseStatusBar (38)
 	{
@@ -396,6 +397,7 @@ private:
 			|| (oldarti != NULL && oldartiCount != oldarti->Amount))
 		{
 			oldarti = CPlayer->mo->InvSel;
+			GC::WriteBarrier(this, oldarti);
 			oldartiCount = oldarti != NULL ? oldarti->Amount : 0;
 			ArtiRefresh = screen->GetPageCount ();
 		}
@@ -522,12 +524,14 @@ private:
 			AmmoRefresh = screen->GetPageCount ();
 			oldammo1 = ammo1;
 			oldammocount1 = ammocount1;
+			GC::WriteBarrier(this, ammo1);
 		}
 		if (ammo2 != oldammo2 || ammocount2 != oldammocount2)
 		{
 			AmmoRefresh = screen->GetPageCount ();
 			oldammo2 = ammo2;
 			oldammocount2 = ammocount2;
+			GC::WriteBarrier(this, ammo2);
 		}
 
 		if (AmmoRefresh)
@@ -773,6 +777,7 @@ private:
 			if (keys[i] != oldkeys[i])
 			{
 				oldkeys[i] = keys[i];
+				GC::WriteBarrier(this, keys[i]);
 				different = true;
 			}
 		}
@@ -1052,9 +1057,9 @@ private:
 	static const char patcharti[][10];
 	static const char ammopic[][10];
 
-	AInventory *oldarti;
-	AAmmo *oldammo1, *oldammo2;
-	AKey *oldkeys[5];
+	TObjPtr<AInventory> oldarti;
+	TObjPtr<AAmmo> oldammo1, oldammo2;
+	TObjPtr<AKey> oldkeys[5];
 	int oldammocount1, oldammocount2;
 	int oldartiCount;
 	int oldfrags;
@@ -1156,7 +1161,16 @@ private:
 	FManaBar ManaVial2Pic;
 };
 
-IMPLEMENT_CLASS(DHexenStatusBar);
+IMPLEMENT_POINTY_CLASS(DHexenStatusBar)
+ DECLARE_POINTER(oldarti)
+ DECLARE_POINTER(oldammo1)
+ DECLARE_POINTER(oldammo2)
+ DECLARE_POINTER(oldkeys[0])
+ DECLARE_POINTER(oldkeys[1])
+ DECLARE_POINTER(oldkeys[2])
+ DECLARE_POINTER(oldkeys[3])
+ DECLARE_POINTER(oldkeys[4])
+END_POINTERS
 
 DBaseStatusBar *CreateHexenStatusBar ()
 {

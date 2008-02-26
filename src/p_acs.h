@@ -635,7 +635,7 @@ public:
 
 
 	DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-		bool backSide, int arg0, int arg1, int arg2, int always, bool delay);
+		bool backSide, int arg0, int arg1, int arg2, int always);
 	~DLevelScript ();
 
 	void Serialize (FArchive &arc);

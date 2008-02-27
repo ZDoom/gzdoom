@@ -102,7 +102,7 @@ void rt_copy1col_c (int hx, int sx, int yl, int yh)
 }
 
 // Copies all four spans to the screen starting at sx.
-void rt_copy4cols_c (int sx, int yl, int yh)
+void STACK_ARGS rt_copy4cols_c (int sx, int yl, int yh)
 {
 	int *source;
 	int *dest;
@@ -170,7 +170,7 @@ void rt_map1col_c (int hx, int sx, int yl, int yh)
 }
 
 // Maps all four spans to the screen starting at sx.
-void rt_map4cols_c (int sx, int yl, int yh)
+void STACK_ARGS rt_map4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -214,63 +214,106 @@ void rt_map4cols_c (int sx, int yl, int yh)
 }
 #endif	/* !USEASM */
 
+void rt_Translate1col(const BYTE *translation, int hx, int yl, int yh)
+{
+	int count = yh - yl + 1;
+	BYTE *source = &dc_temp[yl*4 + hx];
+
+	// Things we do to hit the compiler's optimizer with a clue bat:
+	// 1. Parallelism is explicitly spelled out by using a separate
+	//    C instruction for each assembly instruction. GCC lets me
+	//    have four temporaries, but VC++ spills to the stack with
+	//    more than two. Two is probably optimal, anyway.
+	// 2. The results of the translation lookups are explicitly
+	//    stored in byte-sized variables. This causes the VC++ code
+	//    to use byte mov instructions in most cases; for apparently
+	//    random reasons, it will use movzx for some places. GCC
+	//    ignores this and uses movzx always.
+
+	// Do 8 rows at a time.
+	for (int count8 = count >> 3; count8; --count8)
+	{
+		int c0, c1;
+		BYTE b0, b1;
+
+		c0 = source[0];			c1 = source[4];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[0] = b0;			source[4] = b1;
+
+		c0 = source[8];			c1 = source[12];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[8] = b0;			source[12] = b1;
+
+		c0 = source[16];		c1 = source[20];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[16] = b0;		source[20] = b1;
+
+		c0 = source[24];		c1 = source[28];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[28] = b0;		source[28] = b1;
+
+		source += 32;
+	}
+	// Finish by doing 1 row at a time.
+	for (count &= 7; count; --count, source++)
+	{
+		source[0] = translation[source[0]];
+	}
+}
+
+void rt_Translate4cols(const BYTE *translation, int yl, int yh)
+{
+	int count = yh - yl + 1;
+	BYTE *source = &dc_temp[yl*4];
+	int c0, c1;
+	BYTE b0, b1;
+
+	// Do 2 rows at a time.
+	for (int count8 = count >> 1; count8; --count8)
+	{
+		c0 = source[0];			c1 = source[1];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[0] = b0;			source[1] = b1;
+
+		c0 = source[2];			c1 = source[3];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[2] = b0;			source[3] = b1;
+
+		c0 = source[4];			c1 = source[5];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[4] = b0;			source[5] = b1;
+
+		c0 = source[6];			c1 = source[7];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[6] = b0;			source[7] = b1;
+
+		source += 8;
+	}
+	// Do the final row if count was odd.
+	if (count & 1)
+	{
+		c0 = source[0];			c1 = source[1];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[0] = b0;			source[1] = b1;
+
+		c0 = source[2];			c1 = source[3];
+		b0 = translation[c0];	b1 = translation[c1];
+		source[2] = b0;			source[3] = b1;
+	}
+}
+
 // Translates one span at hx to the screen at sx.
 void rt_tlate1col (int hx, int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	translation = dc_translation;
-	colormap = dc_colormap;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-
-	do {
-		*dest = colormap[translation[*source]];
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate1col(dc_translation, hx, yl, yh);
+	rt_map1col(hx, sx, yl, yh);
 }
 
 // Translates all four spans to the screen starting at sx.
-void rt_tlate4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_tlate4cols (int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	translation = dc_translation;
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	colormap = dc_colormap;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4];
-	pitch = dc_pitch;
-	
-	do {
-		dest[0] = colormap[translation[source[0]]];
-		dest[1] = colormap[translation[source[1]]];
-		dest[2] = colormap[translation[source[2]]];
-		dest[3] = colormap[translation[source[3]]];
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate4cols(dc_translation, yl, yh);
+	rt_map4cols(sx, yl, yh);
 }
 
 // Adds one span at hx to the screen at sx without clamping.
@@ -308,7 +351,7 @@ void rt_add1col (int hx, int sx, int yl, int yh)
 }
 
 // Adds all four spans to the screen starting at sx without clamping.
-void rt_add4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_add4cols (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -366,95 +409,15 @@ void rt_add4cols (int sx, int yl, int yh)
 // Translates and adds one span at hx to the screen at sx without clamping.
 void rt_tlateadd1col (int hx, int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	translation = dc_translation;
-	colormap = dc_colormap;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-
-	do {
-		DWORD fg = colormap[translation[*source]];
-		DWORD bg = *dest;
-
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		*dest = RGB32k[0][0][fg & (fg>>15)];
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate1col(dc_translation, hx, yl, yh);
+	rt_add1col(hx, sx, yl, yh);
 }
 
 // Translates and adds all four spans to the screen starting at sx without clamping.
-void rt_tlateadd4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_tlateadd4cols (int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	translation = dc_translation;
-	colormap = dc_colormap;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4];
-	pitch = dc_pitch;
-	
-	do {
-		DWORD fg = colormap[translation[source[0]]];
-		DWORD bg = dest[0];
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		dest[0] = RGB32k[0][0][fg & (fg>>15)];
-
-		fg = colormap[translation[source[1]]];
-		bg = dest[1];
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		dest[1] = RGB32k[0][0][fg & (fg>>15)];
-
-
-		fg = colormap[translation[source[2]]];
-		bg = dest[2];
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		dest[2] = RGB32k[0][0][fg & (fg>>15)];
-
-		fg = colormap[translation[source[3]]];
-		bg = dest[3];
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		dest[3] = RGB32k[0][0][fg & (fg>>15)];
-
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate4cols(dc_translation, yl, yh);
+	rt_add4cols(sx, yl, yh);
 }
 
 // Shades one span at hx to the screen at sx.
@@ -489,9 +452,8 @@ void rt_shaded1col (int hx, int sx, int yl, int yh)
 }
 
 // Shades all four spans to the screen starting at sx.
-void rt_shaded4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_shaded4cols_c (int sx, int yl, int yh)
 {
-	BYTE fill;
 	DWORD *fgstart;
 	BYTE *colormap;
 	BYTE *source;
@@ -509,65 +471,72 @@ void rt_shaded4cols (int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
-	{
-		DWORD val = fgstart[64<<8] | 0x1f07c1f;
-		fill = RGB32k[0][0][val & (val>>15)];
-	}
-	
+
+	// 107.1, 108.4, 118.2/117.7, 119.4
 	do {
-		DWORD val = colormap[source[0]];
-		DWORD fg;
-		if (val < 64)
-		{
-			fg = fgstart[val<<8];
-			val = (Col2RGB8[64-val][dest[0]] + fg) | 0x1f07c1f;
-			dest[0] = RGB32k[0][0][val & (val>>15)];
-		}
-		else
-		{
-			dest[0] = fill;
-		}
+		DWORD val;
+		
+		val = colormap[source[0]];
+		val = (Col2RGB8[64-val][dest[0]] + fgstart[val<<8]) | 0x1f07c1f;
+		dest[0] = RGB32k[0][0][val & (val>>15)];
 
 		val = colormap[source[1]];
-		if (val < 64)
-		{
-			fg = fgstart[val<<8];
-			val = (Col2RGB8[64-val][dest[1]] + fg) | 0x1f07c1f;
-			dest[1] = RGB32k[0][0][val & (val>>15)];
-		}
-		else
-		{
-			dest[1] = fill;
-		}
+		val = (Col2RGB8[64-val][dest[1]] + fgstart[val<<8]) | 0x1f07c1f;
+		dest[1] = RGB32k[0][0][val & (val>>15)];
 
 		val = colormap[source[2]];
-		if (val < 64)
-		{
-			fg = fgstart[val<<8];
-			val = (Col2RGB8[64-val][dest[2]] + fg) | 0x1f07c1f;
-			dest[2] = RGB32k[0][0][val & (val>>15)];
-		}
-		else
-		{
-			dest[2] = fill;
-		}
+		val = (Col2RGB8[64-val][dest[2]] + fgstart[val<<8]) | 0x1f07c1f;
+		dest[2] = RGB32k[0][0][val & (val>>15)];
 
 		val = colormap[source[3]];
-		if (val < 64)
-		{
-			fg = fgstart[val<<8];
-			val = (Col2RGB8[64-val][dest[3]] + fg) | 0x1f07c1f;
-			dest[3] = RGB32k[0][0][val & (val>>15)];
-		}
-		else
-		{
-			dest[3] = fill;
-		}
+		val = (Col2RGB8[64-val][dest[3]] + fgstart[val<<8]) | 0x1f07c1f;
+		dest[3] = RGB32k[0][0][val & (val>>15)];
 
 		source += 4;
 		dest += pitch;
 	} while (--count);
 }
+
+#if 0
+static DWORD t_fgstart[1];
+static BYTE t_colormap[1];
+
+void STACK_ARGS rt_shaded4cols_t (int sx, int yl, int yh)
+{
+	BYTE *source;
+	BYTE *dest;
+	int count;
+
+	count = yh-yl;
+	if (count < 0)
+		return;
+	count++;
+
+	dest = ylookup[yl] + sx + dc_destorg;
+	source = &dc_temp[yl*4];
+
+	do {
+		DWORD val, val2;
+		
+		val = t_colormap[source[0]];
+		val2 = t_colormap[source[1]];
+		val = (Col2RGB8[64-val][dest[0]] + t_fgstart[val<<8]) | 0x1f07c1f;
+		val2 = (Col2RGB8[64-val2][dest[1]] + t_fgstart[val2<<8]) | 0x1f07c1f;
+		dest[0] = RGB32k[0][0][val & (val>>15)];
+		dest[1] = RGB32k[0][0][val2 & (val2>>15)];
+
+		val = t_colormap[source[2]];
+		val2 = t_colormap[source[3]];
+		val = (Col2RGB8[64-val][dest[2]] + t_fgstart[val<<8]) | 0x1f07c1f;
+		val2 = (Col2RGB8[64-val2][dest[3]] + t_fgstart[val2<<8]) | 0x1f07c1f;
+		dest[2] = RGB32k[0][0][val & (val>>15)];
+		dest[3] = RGB32k[0][0][val2 & (val2>>15)];
+
+		source += 4;
+		dest += 320;
+	} while (--count);
+}
+#endif
 
 // Adds one span at hx to the screen at sx with clamping.
 void rt_addclamp1col (int hx, int sx, int yl, int yh)
@@ -606,7 +575,7 @@ void rt_addclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Adds all four spans to the screen starting at sx with clamping.
-void rt_addclamp4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_addclamp4cols (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -672,105 +641,15 @@ void rt_addclamp4cols (int sx, int yl, int yh)
 // Translates and adds one span at hx to the screen at sx with clamping.
 void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-	colormap = dc_colormap;
-	translation = dc_translation;
-
-	do {
-		DWORD a = fg2rgb[colormap[translation[*source]]] + bg2rgb[*dest];
-		DWORD b = a;
-
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		*dest = RGB32k[0][0][(a>>15) & a];
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate1col(dc_translation, hx, yl, yh);
+	rt_addclamp1col(hx, sx, yl, yh);
 }
 
 // Translates and adds all four spans to the screen starting at sx with clamping.
-void rt_tlateaddclamp4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_tlateaddclamp4cols (int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4];
-	pitch = dc_pitch;
-	colormap = dc_colormap;
-	translation = dc_translation;
-
-	do {
-		DWORD a = fg2rgb[colormap[translation[source[0]]]] + bg2rgb[dest[0]];
-		DWORD b = a;
-
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		dest[0] = RGB32k[0][0][(a>>15) & a];
-
-		a = fg2rgb[colormap[translation[source[1]]]] + bg2rgb[dest[1]];
-		b = a;
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		dest[1] = RGB32k[0][0][(a>>15) & a];
-
-		a = fg2rgb[colormap[translation[source[2]]]] + bg2rgb[dest[2]];
-		b = a;
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		dest[2] = RGB32k[0][0][(a>>15) & a];
-
-		a = fg2rgb[colormap[translation[source[3]]]] + bg2rgb[dest[3]];
-		b = a;
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		dest[3] = RGB32k[0][0][(a>>15) & a];
-
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate4cols(dc_translation, yl, yh);
+	rt_addclamp4cols(sx, yl, yh);
 }
 
 // Subtracts one span at hx to the screen at sx with clamping.
@@ -809,7 +688,7 @@ void rt_subclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Subtracts all four spans to the screen starting at sx with clamping.
-void rt_subclamp4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_subclamp4cols (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -871,100 +750,15 @@ void rt_subclamp4cols (int sx, int yl, int yh)
 // Translates and subtracts one span at hx to the screen at sx with clamping.
 void rt_tlatesubclamp1col (int hx, int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-	colormap = dc_colormap;
-	translation = dc_translation;
-
-	do {
-		DWORD a = (fg2rgb[colormap[translation[*source]]] | 0x40100400) - bg2rgb[*dest];
-		DWORD b = a;
-
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		*dest = RGB32k[0][0][(a>>15) & a];
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate1col(dc_translation, hx, yl, yh);
+	rt_subclamp1col(hx, sx, yl, yh);
 }
 
 // Translates and subtracts all four spans to the screen starting at sx with clamping.
-void rt_tlatesubclamp4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_tlatesubclamp4cols (int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4];
-	pitch = dc_pitch;
-	colormap = dc_colormap;
-	translation = dc_translation;
-
-	do {
-		DWORD a = (fg2rgb[colormap[translation[source[0]]]] | 0x40100400) - bg2rgb[dest[0]];
-		DWORD b = a;
-
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		dest[0] = RGB32k[0][0][(a>>15) & a];
-
-		a = (fg2rgb[colormap[translation[source[1]]]] | 0x40100400) - bg2rgb[dest[1]];
-		b = a;
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		dest[1] = RGB32k[0][0][(a>>15) & a];
-
-		a = (fg2rgb[colormap[translation[source[2]]]] | 0x40100400) - bg2rgb[dest[2]];
-		b = a;
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		dest[2] = RGB32k[0][0][(a>>15) & a];
-
-		a = (fg2rgb[colormap[translation[source[3]]]] | 0x40100400) - bg2rgb[dest[3]];
-		b = a;
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		dest[3] = RGB32k[0][0][(a>>15) & a];
-
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate4cols(dc_translation, yl, yh);
+	rt_subclamp4cols(sx, yl, yh);
 }
 
 // Subtracts one span at hx from the screen at sx with clamping.
@@ -1003,7 +797,7 @@ void rt_revsubclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Subtracts all four spans from the screen starting at sx with clamping.
-void rt_revsubclamp4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_revsubclamp4cols (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -1065,104 +859,19 @@ void rt_revsubclamp4cols (int sx, int yl, int yh)
 // Translates and subtracts one span at hx from the screen at sx with clamping.
 void rt_tlaterevsubclamp1col (int hx, int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-	colormap = dc_colormap;
-	translation = dc_translation;
-
-	do {
-		DWORD a = (bg2rgb[dest[0]] | 0x40100400) - fg2rgb[colormap[translation[source[0]]]];
-		DWORD b = a;
-
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		*dest = RGB32k[0][0][(a>>15) & a];
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate1col(dc_translation, hx, yl, yh);
+	rt_revsubclamp1col(hx, sx, yl, yh);
 }
 
 // Translates and subtracts all four spans from the screen starting at sx with clamping.
-void rt_tlaterevsubclamp4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_tlaterevsubclamp4cols (int sx, int yl, int yh)
 {
-	BYTE *translation;
-	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4];
-	pitch = dc_pitch;
-	colormap = dc_colormap;
-	translation = dc_translation;
-
-	do {
-		DWORD a = (bg2rgb[dest[0]] | 0x40100400) - fg2rgb[colormap[translation[source[0]]]];
-		DWORD b = a;
-
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		dest[0] = RGB32k[0][0][(a>>15) & a];
-
-		a = (bg2rgb[dest[1]] | 0x40100400) - fg2rgb[colormap[translation[source[1]]]];
-		b = a;
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		dest[1] = RGB32k[0][0][(a>>15) & a];
-
-		a = (bg2rgb[dest[2]] | 0x40100400) - fg2rgb[colormap[translation[source[2]]]];
-		b = a;
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		dest[2] = RGB32k[0][0][(a>>15) & a];
-
-		a = (bg2rgb[dest[3]] | 0x40100400) - fg2rgb[colormap[translation[source[3]]]];
-		b = a;
-		b &= 0x40100400;
-		b = b - (b >> 5);
-		a &= b;
-		a |= 0x01f07c1f;
-		dest[3] = RGB32k[0][0][(a>>15) & a];
-
-		source += 4;
-		dest += pitch;
-	} while (--count);
+	rt_Translate4cols(dc_translation, yl, yh);
+	rt_revsubclamp4cols(sx, yl, yh);
 }
 
 // Copies all spans in all four columns to the screen starting at sx.
-// sx should be longword-aligned.
+// sx should be dword-aligned.
 void rt_draw4cols (int sx)
 {
 	int x, bad;

@@ -55,6 +55,7 @@ EXTERN CPU
 
 EXTERN dc_pitch
 EXTERN dc_colormap
+EXTERN dc_color
 EXTERN dc_iscale
 EXTERN dc_texturefrac
 EXTERN dc_source
@@ -67,6 +68,9 @@ EXTERN dc_destorg
 
 EXTERN dc_ctspan
 EXTERN dc_temp
+
+EXTERN Col2RGB8
+EXTERN RGB32k
 
 EXTERN ds_xstep
 EXTERN ds_ystep
@@ -94,6 +98,7 @@ EXTERN _CPU
 
 EXTERN _dc_pitch
 EXTERN _dc_colormap
+EXTERN _dc_color
 EXTERN _dc_iscale
 EXTERN _dc_texturefrac
 EXTERN _dc_source
@@ -106,6 +111,9 @@ EXTERN _dc_destorg
 
 EXTERN _dc_ctspan
 EXTERN _dc_temp
+
+EXTERN _Col2RGB8
+EXTERN _RGB32k
 
 EXTERN _ds_xstep
 EXTERN _ds_ystep
@@ -131,6 +139,7 @@ GLOBAL _ds_curcolormap
 
 %define dc_pitch	_dc_pitch
 %define dc_colormap	_dc_colormap
+%define dc_color	_dc_color
 %define dc_iscale	_dc_iscale
 %define dc_texturefrac	_dc_texturefrac
 %define dc_source	_dc_source
@@ -140,6 +149,9 @@ GLOBAL _ds_curcolormap
 %define dc_count	_dc_count
 %define dc_dest		_dc_dest
 %define dc_destorg	_dc_destorg
+
+%define Col2RGB8	_Col2RGB8
+%define RGB32k		_RGB32k
 
 %define dc_ctspan	_dc_ctspan
 %define dc_temp		_dc_temp
@@ -1476,9 +1488,120 @@ _rt_map4cols_asm2:
 	pop	ebx
 	ret	4
 
+	align 16
+
+GLOBAL rt_shaded4cols_asm
+GLOBAL _rt_shaded4cols_asm
+
+rt_shaded4cols_asm:
+_rt_shaded4cols_asm:
+		mov		ecx,[esp+8]
+		push	ebp
+		mov		ebp,[esp+16]
+		sub		ebp,ecx
+		js		near s4nil
+		mov		eax,[ylookup+ecx*4]
+		add		eax,[dc_destorg]				; eax = destination
+		push	ebx
+		push	esi
+		inc		ebp								; ebp = count
+		add		eax,[esp+16]
+		push	edi
+		lea		esi,[dc_temp+ecx*4]				; esi = source
+
+		align	16
+
+s4loop:	movzx	edx,byte [esi]
+		movzx	ecx,byte [esi+1]
+s4cm1:	movzx	edx,byte [SPACEFILLER4+edx]		; colormap
+s4cm2:	movzx	edi,byte [SPACEFILLER4+ecx]		; colormap
+		shl		edx,8
+		movzx	ebx,byte [eax]
+		shl		edi,8
+		movzx	ecx,byte [eax+1]
+		sub		ebx,edx
+		sub		ecx,edi
+		mov		ebx,[Col2RGB8+0x10000+ebx*4]
+		mov		ecx,[Col2RGB8+0x10000+ecx*4]
+s4fg1:	add		ebx,[SPACEFILLER4+edx*4]
+s4fg2:	add		ecx,[SPACEFILLER4+edi*4]
+		or		ebx,0x1f07c1f
+		or		ecx,0x1f07c1f
+		mov		edx,ebx
+		shr		ebx,15
+		mov		edi,ecx
+		shr		ecx,15
+		and		edx,ebx
+		and		ecx,edi
+		mov		bl,[RGB32k+edx]
+		movzx	edx,byte [esi+2]
+		mov		bh,[RGB32k+ecx]
+		movzx	ecx,byte [esi+3]
+		mov		[eax],bl
+		mov		[eax+1],bh
+
+s4cm3:	movzx	edx,byte [SPACEFILLER4+edx]		; colormap
+s4cm4:	movzx	edi,byte [SPACEFILLER4+ecx]		; colormap
+		shl		edx,8
+		movzx	ebx,byte [eax+2]
+		shl		edi,8
+		movzx	ecx,byte [eax+3]
+		sub		ebx,edx
+		sub		ecx,edi
+		mov		ebx,[Col2RGB8+0x10000+ebx*4]
+		mov		ecx,[Col2RGB8+0x10000+ecx*4]
+s4fg3:	add		ebx,[SPACEFILLER4+edx*4]
+s4fg4:	add		ecx,[SPACEFILLER4+edi*4]
+		or		ebx,0x1f07c1f
+		or		ecx,0x1f07c1f
+		mov		edx,ebx
+		shr		ebx,15
+		mov		edi,ecx
+		shr		ecx,15
+		and		edx,ebx
+		and		ecx,edi
+s4p:	add		eax,320							; pitch
+		add		esi,4
+		mov		bl,[RGB32k+edx]
+		mov		bh,[RGB32k+ecx]
+s4p2:	mov		[eax-320+2],bl
+s4p3:	mov		[eax-320+3],bh
+		dec		ebp
+		jne		s4loop
+
+		pop		edi
+		pop		esi
+		pop		ebx
+s4nil:	pop		ebp
+		ret
+
+		align 16
+
 ;************************
 
 	SECTION .text
+
+GLOBAL	R_SetupShadedCol
+GLOBAL	_R_SetupShadedCol
+GLOBAL	@R_SetupShadedCol@0
+
+# Patch the values of dc_colormap and dc_color into the shaded column drawer.
+
+R_SetupShadedCol:
+_R_SetupShadedCol:
+@R_SetupShadedCol@0:
+		mov		eax,[dc_colormap]
+		mov		[s4cm1+3],eax
+		mov		[s4cm2+3],eax
+		mov		[s4cm3+3],eax
+		mov		[s4cm4+3],eax
+		mov		eax,[dc_color]
+		lea		eax,[Col2RGB8+eax*4]
+		mov		[s4fg1+3],eax
+		mov		[s4fg2+3],eax
+		mov		[s4fg3+3],eax
+		mov		[s4fg4+3],eax
+		ret
 
 EXTERN setvlinebpl_
 EXTERN setpitch3
@@ -1490,11 +1613,19 @@ GLOBAL	ASM_PatchPitch
 ASM_PatchPitch:
 _ASM_PatchPitch:
 @ASM_PatchPitch@0:
-	mov	eax,[dc_pitch]
-	mov	[rdcp1+2],eax
-	mov	[rdcp2+2],eax
-	mov	[rdcp3+2],eax
-	call	setpitch3
-	jmp	setvlinebpl_
+		mov		eax,[dc_pitch]
+		mov		[rdcp1+2],eax
+		mov		[rdcp2+2],eax
+		mov		[rdcp3+2],eax
+		mov		[s4p+1],eax
+		mov		ecx,eax
+		neg		ecx
+		inc		ecx
+		inc		ecx
+		mov		[s4p2+2],ecx
+		inc		ecx
+		mov		[s4p3+2],ecx
+		call	setpitch3
+		jmp		setvlinebpl_
 
 

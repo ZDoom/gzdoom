@@ -1,3 +1,17 @@
+February 26, 2008
+- Added an assembly version of rt_shaded4cols, since that's the main decal
+  drawing function. The most improvement came from being able to turn some
+  constant variables into immediate values with self-modifying code, but I
+  also managed to reorder it to make it a little faster. It's about 9% faster
+  than VC++'s code and 19% faster than GCC's code. That's not a huge
+  improvement (for VC++), but at least it's measurable.
+- Removed the solid fill "optimization" from rt_shaded4cols(), because in my
+  testing, it didn't help any and in fact, hurt just a little bit.
+- In the name of simplification, all the rt_tlate* drawers were changed to do
+  the translation in one step and the drawing in another. This lets me call
+  the untranslated drawer to do the real drawing instead of mostly duplicating
+  them. Performance wise, there is practically no difference from before.
+
 February 25, 2008 (Changes by Graf Zahl)
 - Fixed: The DECORATE expression evaluator's random function could produce
   incorrect results for ranges > 255. Changed so that FRandom's default

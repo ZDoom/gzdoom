@@ -1,4 +1,6 @@
 February 28, 2008
+- Fixed: The colormap changes by column, so the assembly rt_* routines need
+  to be setup for every column group, not once per image.
 - Fixed: rt_Translate1col() had a couple of bugs.
 
 February 27, 2008

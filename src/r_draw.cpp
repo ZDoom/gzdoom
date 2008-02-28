@@ -80,9 +80,6 @@ int				detailyshift;		// [RH] Y shift for vertical detail level
 extern "C" void STACK_ARGS DoubleHoriz_MMX (int height, int width, BYTE *dest, int pitch);
 extern "C" void STACK_ARGS DoubleHorizVert_MMX (int height, int width, BYTE *dest, int pitch);
 extern "C" void STACK_ARGS DoubleVert_ASM (int height, int width, BYTE *dest, int pitch);
-extern "C" void R_SetupShadedCol();
-extern "C" void R_SetupAddCol();
-extern "C" void R_SetupAddClampCol();
 #endif
 
 // [RH] Pointers to the different column drawers.
@@ -2273,9 +2270,6 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		{
 			dc_colormap += fixedlightlev;
 		}
-#ifdef USEASM
-		R_SetupShadedCol();
-#endif
 		return r_columnmethod ? DoDraw1 : DoDraw0;
 	}
 
@@ -2307,16 +2301,6 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 	{
 		return DontDraw;
 	}
-#ifdef USEASM
-	if (hcolfunc_post4 == rt_addclamp4cols || hcolfunc_post4 == rt_tlateaddclamp4cols)
-	{
-		R_SetupAddClampCol();
-	}
-	else if (hcolfunc_post4 == rt_add4cols || hcolfunc_post4 == rt_tlateadd4cols)
-	{
-		R_SetupAddCol();
-	}
-#endif
 	return r_columnmethod ? DoDraw1 : DoDraw0;
 }
 

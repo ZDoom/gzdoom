@@ -1745,17 +1745,21 @@ GLOBAL	@R_SetupShadedCol@0
 R_SetupShadedCol:
 @R_SetupShadedCol@0:
 		mov		eax,[dc_colormap]
+		cmp		[s4cm1+3],eax
+		je		.cmdone
 		mov		[s4cm1+3],eax
 		mov		[s4cm2+3],eax
 		mov		[s4cm3+3],eax
 		mov		[s4cm4+3],eax
-		mov		eax,[dc_color]
+.cmdone	mov		eax,[dc_color]
 		lea		eax,[Col2RGB8+eax*4]
+		cmp		[s4fg1+3],eax
+		je		.cdone
 		mov		[s4fg1+3],eax
 		mov		[s4fg2+3],eax
 		mov		[s4fg3+3],eax
 		mov		[s4fg4+3],eax
-		ret
+.cdone	ret
 
 GLOBAL	R_SetupAddCol
 GLOBAL	@R_SetupAddCol@0
@@ -1766,21 +1770,27 @@ GLOBAL	@R_SetupAddCol@0
 R_SetupAddCol:
 @R_SetupAddCol@0:
 		mov		eax,[dc_colormap]
+		cmp		[a4cm1+3],eax
+		je		.cmdone
 		mov		[a4cm1+3],eax
 		mov		[a4cm2+3],eax
 		mov		[a4cm3+3],eax
 		mov		[a4cm4+3],eax
-		mov		eax,[dc_srcblend]
+.cmdone	mov		eax,[dc_srcblend]
+		cmp		[a4fg1+3],eax
+		je		.sbdone
 		mov		[a4fg1+3],eax
 		mov		[a4fg2+3],eax
 		mov		[a4fg3+3],eax
 		mov		[a4fg4+3],eax
-		mov		eax,[dc_destblend]
+.sbdone	mov		eax,[dc_destblend]
+		cmp		[a4bg1+3],eax
+		je		.dbdone
 		mov		[a4bg1+3],eax
 		mov		[a4bg2+3],eax
 		mov		[a4bg3+3],eax
 		mov		[a4bg4+3],eax
-		ret
+.dbdone	ret
 
 GLOBAL	R_SetupAddClampCol
 GLOBAL	@R_SetupAddClampCol@0
@@ -1791,21 +1801,27 @@ GLOBAL	@R_SetupAddClampCol@0
 R_SetupAddClampCol:
 @R_SetupAddClampCol@0:
 		mov		eax,[dc_colormap]
+		cmp		[a4cm1+3],eax
+		je		.cmdone
 		mov		[ac4cm1+3],eax
 		mov		[ac4cm2+3],eax
 		mov		[ac4cm3+3],eax
 		mov		[ac4cm4+3],eax
-		mov		eax,[dc_srcblend]
+.cmdone	mov		eax,[dc_srcblend]
+		cmp		[ac4fg1+3],eax
+		je		.sbdone
 		mov		[ac4fg1+3],eax
 		mov		[ac4fg2+3],eax
 		mov		[ac4fg3+3],eax
 		mov		[ac4fg4+3],eax
-		mov		eax,[dc_destblend]
+.sbdone	mov		eax,[dc_destblend]
+		cmp		[ac4bg1+3],eax
+		je		.dbdone
 		mov		[ac4bg1+3],eax
 		mov		[ac4bg2+3],eax
 		mov		[ac4bg3+3],eax
 		mov		[ac4bg4+3],eax
-		ret
+.dbdone	ret
 
 EXTERN setvlinebpl_
 EXTERN setpitch3
@@ -1827,14 +1843,9 @@ _ASM_PatchPitch:
 		mov		ecx,eax
 		neg		ecx
 		inc		ecx
-;		mov		[a4p1+2],ecx
 		inc		ecx
-;		mov		[a4p2a+3],ecx
-;		mov		[a4p2b+2],ecx
 		mov		[s4p2+2],ecx
 		inc		ecx
-;		mov		[a4p3a+3],ecx
-;		mov		[a4p3b+2],ecx
 		mov		[s4p3+2],ecx
 		call	setpitch3
 		jmp		setvlinebpl_

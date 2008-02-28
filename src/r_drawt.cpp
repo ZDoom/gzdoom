@@ -250,12 +250,12 @@ void rt_Translate1col(const BYTE *translation, int hx, int yl, int yh)
 
 		c0 = source[24];		c1 = source[28];
 		b0 = translation[c0];	b1 = translation[c1];
-		source[28] = b0;		source[28] = b1;
+		source[24] = b0;		source[28] = b1;
 
 		source += 32;
 	}
 	// Finish by doing 1 row at a time.
-	for (count &= 7; count; --count, source++)
+	for (count &= 7; count; --count, source += 4)
 	{
 		source[0] = translation[source[0]];
 	}

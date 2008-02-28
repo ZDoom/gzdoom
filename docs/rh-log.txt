@@ -1,3 +1,6 @@
+February 28, 2008
+- Fixed: rt_Translate1col() had a couple of bugs.
+
 February 27, 2008
 - Added assembly versions of rt_add4cols and rt_addclamp4cols.
 

@@ -42,7 +42,59 @@ BITS 32
 ; If you change this in r_draw.c, be sure to change it here, too!
 FUZZTABLE	equ	50
 
-%ifdef M_TARGET_LINUX
+%ifndef M_TARGET_LINUX
+
+%define ylookup			_ylookup
+%define centery			_centery
+%define fuzzpos			_fuzzpos
+%define fuzzoffset		_fuzzoffset
+%define NormalLight		_NormalLight
+%define realviewheight	_realviewheight
+%define fuzzviewheight	_fuzzviewheight
+%define CPU				_CPU
+
+%define dc_pitch		_dc_pitch
+%define dc_colormap		_dc_colormap
+%define dc_color		_dc_color
+%define dc_iscale		_dc_iscale
+%define dc_texturefrac	_dc_texturefrac
+%define dc_srcblend		_dc_srcblend
+%define dc_destblend	_dc_destblend
+%define dc_source		_dc_source
+%define dc_yl			_dc_yl
+%define dc_yh			_dc_yh
+%define dc_x			_dc_x
+%define dc_count		_dc_count
+%define dc_dest			_dc_dest
+%define dc_destorg		_dc_destorg
+
+%define Col2RGB8		_Col2RGB8
+%define RGB32k			_RGB32k
+
+%define dc_ctspan		_dc_ctspan
+%define dc_temp			_dc_temp
+
+%define ds_xstep		_ds_xstep
+%define ds_ystep		_ds_ystep
+%define ds_colormap		_ds_colormap
+%define ds_source		_ds_source
+%define ds_x1			_ds_x1
+%define ds_x2			_ds_x2
+%define ds_xfrac		_ds_xfrac
+%define ds_yfrac		_ds_yfrac
+%define ds_y			_ds_y
+
+%define ds_cursource	_ds_cursource
+%define ds_curcolormap	_ds_curcolormap
+
+%define R_SetSpanSource_ASM		_R_SetSpanSource_ASM
+%define R_SetSpanSize_ASM		_R_SetSpanSize_ASM
+%define R_SetSpanColormap_ASM	_R_SetSpanColormap_ASM
+%define R_SetupShadedCol		_R_SetupShadedCol
+%define R_SetupAddCol			_R_SetupAddCol
+%define R_SetupAddClampCol		_R_SetupAddClampCol
+
+%endif
 
 EXTERN ylookup
 EXTERN centery
@@ -58,6 +110,8 @@ EXTERN dc_colormap
 EXTERN dc_color
 EXTERN dc_iscale
 EXTERN dc_texturefrac
+EXTERN dc_srcblend
+EXTERN dc_destblend
 EXTERN dc_source
 EXTERN dc_yl
 EXTERN dc_yh
@@ -85,98 +139,10 @@ EXTERN ds_y
 GLOBAL ds_cursource
 GLOBAL ds_curcolormap
 
-%else
 
-EXTERN _ylookup
-EXTERN _centery
-EXTERN _fuzzpos
-EXTERN _fuzzoffset
-EXTERN _NormalLight
-EXTERN _realviewheight
-EXTERN _fuzzviewheight
-EXTERN _CPU
-
-EXTERN _dc_pitch
-EXTERN _dc_colormap
-EXTERN _dc_color
-EXTERN _dc_iscale
-EXTERN _dc_texturefrac
-EXTERN _dc_source
-EXTERN _dc_yl
-EXTERN _dc_yh
-EXTERN _dc_x
-EXTERN _dc_count
-EXTERN _dc_dest
-EXTERN _dc_destorg
-
-EXTERN _dc_ctspan
-EXTERN _dc_temp
-
-EXTERN _Col2RGB8
-EXTERN _RGB32k
-
-EXTERN _ds_xstep
-EXTERN _ds_ystep
-EXTERN _ds_colormap
-EXTERN _ds_source
-EXTERN _ds_x1
-EXTERN _ds_x2
-EXTERN _ds_xfrac
-EXTERN _ds_yfrac
-EXTERN _ds_y
-
-GLOBAL _ds_cursource
-GLOBAL _ds_curcolormap
-
-%define ylookup		_ylookup
-%define centery		_centery
-%define fuzzpos		_fuzzpos
-%define fuzzoffset	_fuzzoffset
-%define NormalLight	_NormalLight
-%define realviewheight	_realviewheight
-%define fuzzviewheight	_fuzzviewheight
-%define CPU		_CPU
-
-%define dc_pitch	_dc_pitch
-%define dc_colormap	_dc_colormap
-%define dc_color	_dc_color
-%define dc_iscale	_dc_iscale
-%define dc_texturefrac	_dc_texturefrac
-%define dc_source	_dc_source
-%define dc_yl		_dc_yl
-%define dc_yh		_dc_yh
-%define dc_x		_dc_x
-%define dc_count	_dc_count
-%define dc_dest		_dc_dest
-%define dc_destorg	_dc_destorg
-
-%define Col2RGB8	_Col2RGB8
-%define RGB32k		_RGB32k
-
-%define dc_ctspan	_dc_ctspan
-%define dc_temp		_dc_temp
-
-%define ds_xstep	_ds_xstep
-%define ds_ystep	_ds_ystep
-%define ds_colormap	_ds_colormap
-%define ds_source	_ds_source
-%define ds_x1		_ds_x1
-%define ds_x2		_ds_x2
-%define ds_xfrac	_ds_xfrac
-%define ds_yfrac	_ds_yfrac
-%define ds_y		_ds_y
-
-%define R_SetSpanSource_ASM	_R_SetSpanSource_ASM
-%define R_SetSpanSize_ASM	_R_SetSpanSize_ASM
-%define R_SetSpanColormap_ASM	_R_SetSpanColormap_ASM
-
-%endif
-
-_ds_cursource:
 ds_cursource:
 	DD 0
 
-_ds_curcolormap:
 ds_curcolormap:
 	DD 0
 
@@ -1577,18 +1543,206 @@ s4nil:	pop		ebp
 
 		align 16
 
+GLOBAL	rt_add4cols_asm
+GLOBAL	_rt_add4cols_asm
+
+rt_add4cols_asm:
+_rt_add4cols_asm:
+		mov		ecx,[esp+8]
+		push	edi
+		mov		edi,[esp+16]
+		sub		edi,ecx
+		js		near a4nil
+		mov		eax,[ylookup+ecx*4]
+		add		eax,[dc_destorg]
+		push	ebx
+		push	esi
+		push	ebp
+		inc		edi
+		add		eax,[esp+20]
+		lea		esi,[dc_temp+ecx*4]
+		
+		align 16
+a4loop:
+		movzx	ebx,byte [esi]
+		movzx	edx,byte [esi+1]
+		movzx	ecx,byte [eax]
+		movzx	ebp,byte [eax+1]
+a4cm1:	movzx	ebx,byte [SPACEFILLER4+ebx]		; colormap
+a4cm2:	movzx	edx,byte [SPACEFILLER4+edx]		; colormap
+a4bg1:	mov		ecx,[SPACEFILLER4+ecx*4]		; bg2rgb
+a4bg2:	mov		ebp,[SPACEFILLER4+ebp*4]		; bg2rgb
+a4fg1:	add		ecx,[SPACEFILLER4+ebx*4]		; fg2rgb
+a4fg2:	add		ebp,[SPACEFILLER4+edx*4]		; fg2rgb
+		or		ecx,0x01f07c1f
+		or		ebp,0x01f07c1f
+		mov		ebx,ecx
+		shr		ecx,15
+		mov		edx,ebp
+		shr		ebp,15
+		and		ecx,ebx
+		and		ebp,edx
+		movzx	ebx,byte [esi+2]
+		movzx	edx,byte [esi+3]
+		mov		cl,[RGB32k+ecx]
+		mov		ch,[RGB32k+ebp]
+		mov		[eax],cl
+		mov		[eax+1],ch
+
+		movzx	ecx,byte [eax+2]
+		movzx	ebp,byte [eax+3]
+a4cm3:	movzx	ebx,byte [SPACEFILLER4+ebx]		; colormap
+a4cm4:	movzx	edx,byte [SPACEFILLER4+edx]		; colormap
+a4bg3:	mov		ecx,[SPACEFILLER4+ecx*4]		; bg2rgb
+a4bg4:	mov		ebp,[SPACEFILLER4+ebp*4]		; bg2rgb
+a4fg3:	add		ecx,[SPACEFILLER4+ebx*4]		; fg2rgb
+a4fg4:	add		ebp,[SPACEFILLER4+edx*4]		; fg2rgb
+		or		ecx,0x01f07c1f
+		or		ebp,0x01f07c1f
+		mov		ebx,ecx
+		shr		ecx,15
+		mov		edx,ebp
+		shr		ebp,15
+		and		ebx,ecx
+		and		edx,ebp
+		mov		cl,[RGB32k+ebx]
+		mov		ch,[RGB32k+edx]
+		mov		[eax+2],cl
+		mov		[eax+3],ch
+
+		add		esi,4
+a4p:	add		eax,320							; pitch
+		sub		edi,1
+		jne		a4loop
+		pop		ebp
+		pop		esi
+		pop		ebx
+a4nil:	pop		edi
+		ret
+
+		align 16
+
+GLOBAL	rt_addclamp4cols_asm
+GLOBAL	_rt_addclamp4cols_asm
+
+rt_addclamp4cols_asm:
+_rt_addclamp4cols_asm:
+		mov		ecx,[esp+8]
+		push	edi
+		mov		edi,[esp+16]
+		sub		edi,ecx
+		js		near ac4nil
+		mov		eax,[ylookup+ecx*4]
+		add		eax,[dc_destorg]
+		push	ebx
+		push	esi
+		push	ebp
+		inc		edi
+		add		eax,[esp+20]
+		lea		esi,[dc_temp+ecx*4]
+		push	edi
+		
+		align	16
+ac4loop:
+		movzx	ebx,byte [esi]
+		movzx	edx,byte [esi+1]
+		mov		[esp],edi
+ac4cm1:	movzx	ebx,byte [SPACEFILLER4+ebx]		; colormap
+ac4cm2:	movzx	edx,byte [SPACEFILLER4+edx]		; colormap
+ac4fg1:	mov		ebx,[SPACEFILLER4+ebx*4]		; fg2rgb
+ac4fg2:	mov		edx,[SPACEFILLER4+edx*4]		; fg2rgb
+		movzx	ecx,byte [eax]
+		movzx	ebp,byte [eax+1]
+ac4bg1:	add		ebx,[SPACEFILLER4+ecx*4]		; bg2rgb
+ac4bg2:	add		edx,[SPACEFILLER4+ebp*4]		; bg2rgb
+		mov		ecx,ebx
+		or		ebx,0x01f07c1f
+		and		ecx,0x40100400
+		and		ebx,0x3fffffff
+		mov		edi,ecx
+		shr		ecx,5
+		mov		ebp,edx
+		sub		edi,ecx
+		or		edx,0x01f07c1f
+		or		ebx,edi
+		mov		ecx,ebx
+		shr		ebx,15
+		and		ebp,0x40100400
+		and		ebx,ecx
+		and		edx,0x3fffffff
+		mov		edi,ebp
+		shr		ebp,5
+		mov		cl,[RGB32k+ebx]
+		sub		edi,ebp
+		mov		[eax],cl
+		or		edx,edi
+		mov		ebp,edx
+		shr		edx,15
+		movzx	ebx,byte [esi+2]
+		and		ebp,edx
+		movzx	edx,byte [esi+3]
+ac4cm3:	movzx	ebx,byte [SPACEFILLER4+ebx]		; colormap
+		mov		cl,[RGB32k+ebp]
+ac4cm4:	movzx	edx,byte [SPACEFILLER4+edx]		; colormap
+		mov		[eax+1],cl
+ac4fg3:	mov		ebx,[SPACEFILLER4+ebx*4]		; fg2rgb
+ac4fg4:	mov		edx,[SPACEFILLER4+edx*4]		; fg2rgb
+		movzx	ecx,byte [eax+2]
+		movzx	ebp,byte [eax+3]
+ac4bg3:	add		ebx,[SPACEFILLER4+ecx*4]		; bg2rgb
+ac4bg4:	add		edx,[SPACEFILLER4+ebp*4]		; bg2rgb
+		mov		ecx,ebx
+		or		ebx,0x01f07c1f
+		and		ecx,0x40100400
+		and		ebx,0x3fffffff
+		mov		edi,ecx
+		shr		ecx,5
+		mov		ebp,edx
+		sub		edi,ecx
+		or		edx,0x01f07c1f
+		or		ebx,edi
+		mov		ecx,ebx
+		shr		ebx,15
+		and		ebp,0x40100400
+		and		ebx,ecx
+		and		edx,0x3fffffff
+		mov		edi,ebp
+		shr		ebp,5
+		mov		cl,[RGB32k+ebx]
+		sub		edi,ebp
+		mov		[eax+2],cl
+		or		edx,edi
+		mov		edi,[esp]
+		mov		ebp,edx
+		shr		edx,15
+		add		esi,4
+		and		edx,ebp
+		mov		cl,[RGB32k+edx]
+		mov		[eax+3],cl
+
+ac4p:	add		eax,320							; pitch
+		sub		edi,1
+		jne		ac4loop
+		pop		edi
+
+		pop		ebp
+		pop		esi
+		pop		ebx
+ac4nil:	pop		edi
+		ret
+
+		align	16
+
 ;************************
 
 	SECTION .text
 
 GLOBAL	R_SetupShadedCol
-GLOBAL	_R_SetupShadedCol
 GLOBAL	@R_SetupShadedCol@0
 
 # Patch the values of dc_colormap and dc_color into the shaded column drawer.
 
 R_SetupShadedCol:
-_R_SetupShadedCol:
 @R_SetupShadedCol@0:
 		mov		eax,[dc_colormap]
 		mov		[s4cm1+3],eax
@@ -1601,6 +1755,56 @@ _R_SetupShadedCol:
 		mov		[s4fg2+3],eax
 		mov		[s4fg3+3],eax
 		mov		[s4fg4+3],eax
+		ret
+
+GLOBAL	R_SetupAddCol
+GLOBAL	@R_SetupAddCol@0
+
+# Patch the values of dc_colormap, dc_srcblend, and dc_destblend into the
+# unclamped adding column drawer.
+
+R_SetupAddCol:
+@R_SetupAddCol@0:
+		mov		eax,[dc_colormap]
+		mov		[a4cm1+3],eax
+		mov		[a4cm2+3],eax
+		mov		[a4cm3+3],eax
+		mov		[a4cm4+3],eax
+		mov		eax,[dc_srcblend]
+		mov		[a4fg1+3],eax
+		mov		[a4fg2+3],eax
+		mov		[a4fg3+3],eax
+		mov		[a4fg4+3],eax
+		mov		eax,[dc_destblend]
+		mov		[a4bg1+3],eax
+		mov		[a4bg2+3],eax
+		mov		[a4bg3+3],eax
+		mov		[a4bg4+3],eax
+		ret
+
+GLOBAL	R_SetupAddClampCol
+GLOBAL	@R_SetupAddClampCol@0
+
+# Patch the values of dc_colormap, dc_srcblend, and dc_destblend into the
+# add with clamping column drawer.
+
+R_SetupAddClampCol:
+@R_SetupAddClampCol@0:
+		mov		eax,[dc_colormap]
+		mov		[ac4cm1+3],eax
+		mov		[ac4cm2+3],eax
+		mov		[ac4cm3+3],eax
+		mov		[ac4cm4+3],eax
+		mov		eax,[dc_srcblend]
+		mov		[ac4fg1+3],eax
+		mov		[ac4fg2+3],eax
+		mov		[ac4fg3+3],eax
+		mov		[ac4fg4+3],eax
+		mov		eax,[dc_destblend]
+		mov		[ac4bg1+3],eax
+		mov		[ac4bg2+3],eax
+		mov		[ac4bg3+3],eax
+		mov		[ac4bg4+3],eax
 		ret
 
 EXTERN setvlinebpl_
@@ -1618,14 +1822,19 @@ _ASM_PatchPitch:
 		mov		[rdcp2+2],eax
 		mov		[rdcp3+2],eax
 		mov		[s4p+1],eax
+		mov		[a4p+1],eax
+		mov		[ac4p+1],eax
 		mov		ecx,eax
 		neg		ecx
 		inc		ecx
+;		mov		[a4p1+2],ecx
 		inc		ecx
+;		mov		[a4p2a+3],ecx
+;		mov		[a4p2b+2],ecx
 		mov		[s4p2+2],ecx
 		inc		ecx
+;		mov		[a4p3a+3],ecx
+;		mov		[a4p3b+2],ecx
 		mov		[s4p3+2],ecx
 		call	setpitch3
 		jmp		setvlinebpl_
-
-

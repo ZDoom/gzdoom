@@ -1,3 +1,6 @@
+February 27, 2008
+- Added assembly versions of rt_add4cols and rt_addclamp4cols.
+
 February 26, 2008
 - Added an assembly version of rt_shaded4cols, since that's the main decal
   drawing function. The most improvement came from being able to turn some

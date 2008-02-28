@@ -351,7 +351,7 @@ void rt_add1col (int hx, int sx, int yl, int yh)
 }
 
 // Adds all four spans to the screen starting at sx without clamping.
-void STACK_ARGS rt_add4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_add4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -472,7 +472,6 @@ void STACK_ARGS rt_shaded4cols_c (int sx, int yl, int yh)
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
 
-	// 107.1, 108.4, 118.2/117.7, 119.4
 	do {
 		DWORD val;
 		
@@ -496,47 +495,6 @@ void STACK_ARGS rt_shaded4cols_c (int sx, int yl, int yh)
 		dest += pitch;
 	} while (--count);
 }
-
-#if 0
-static DWORD t_fgstart[1];
-static BYTE t_colormap[1];
-
-void STACK_ARGS rt_shaded4cols_t (int sx, int yl, int yh)
-{
-	BYTE *source;
-	BYTE *dest;
-	int count;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	dest = ylookup[yl] + sx + dc_destorg;
-	source = &dc_temp[yl*4];
-
-	do {
-		DWORD val, val2;
-		
-		val = t_colormap[source[0]];
-		val2 = t_colormap[source[1]];
-		val = (Col2RGB8[64-val][dest[0]] + t_fgstart[val<<8]) | 0x1f07c1f;
-		val2 = (Col2RGB8[64-val2][dest[1]] + t_fgstart[val2<<8]) | 0x1f07c1f;
-		dest[0] = RGB32k[0][0][val & (val>>15)];
-		dest[1] = RGB32k[0][0][val2 & (val2>>15)];
-
-		val = t_colormap[source[2]];
-		val2 = t_colormap[source[3]];
-		val = (Col2RGB8[64-val][dest[2]] + t_fgstart[val<<8]) | 0x1f07c1f;
-		val2 = (Col2RGB8[64-val2][dest[3]] + t_fgstart[val2<<8]) | 0x1f07c1f;
-		dest[2] = RGB32k[0][0][val & (val>>15)];
-		dest[3] = RGB32k[0][0][val2 & (val2>>15)];
-
-		source += 4;
-		dest += 320;
-	} while (--count);
-}
-#endif
 
 // Adds one span at hx to the screen at sx with clamping.
 void rt_addclamp1col (int hx, int sx, int yl, int yh)
@@ -575,7 +533,7 @@ void rt_addclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Adds all four spans to the screen starting at sx with clamping.
-void STACK_ARGS rt_addclamp4cols (int sx, int yl, int yh)
+void STACK_ARGS rt_addclamp4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;

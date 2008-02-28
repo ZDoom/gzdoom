@@ -1,3 +1,7 @@
+February 27, 2008
+- Added a read barrier to FArchive::SerializeObject() to make sure that
+  objects that are being euthanized are not stored in the archive.
+
 February 26, 2008
 - Fixed: Using +stat from the command line caused a crash.
 - More write barriers and pointer declarations. Here are rules I've come up

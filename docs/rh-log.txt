@@ -1,3 +1,7 @@
+February 29, 2008
+- Fixed: R_SetupAddClampCol() checked add4cols' memory instead of
+  adclamp4cols' memory when deciding if it should skip modification.
+
 February 28, 2008
 - Fixed: The colormap changes by column, so the assembly rt_* routines need
   to be setup for every column group, not once per image.

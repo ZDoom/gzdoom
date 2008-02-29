@@ -1649,10 +1649,10 @@ ac4loop:
 		mov		[esp],edi
 ac4cm1:	movzx	ebx,byte [SPACEFILLER4+ebx]		; colormap
 ac4cm2:	movzx	edx,byte [SPACEFILLER4+edx]		; colormap
-ac4fg1:	mov		ebx,[SPACEFILLER4+ebx*4]		; fg2rgb
-ac4fg2:	mov		edx,[SPACEFILLER4+edx*4]		; fg2rgb
 		movzx	ecx,byte [eax]
 		movzx	ebp,byte [eax+1]
+ac4fg1:	mov		ebx,[SPACEFILLER4+ebx*4]		; fg2rgb
+ac4fg2:	mov		edx,[SPACEFILLER4+edx*4]		; fg2rgb
 ac4bg1:	add		ebx,[SPACEFILLER4+ecx*4]		; bg2rgb
 ac4bg2:	add		edx,[SPACEFILLER4+ebp*4]		; bg2rgb
 		mov		ecx,ebx
@@ -1685,10 +1685,10 @@ ac4cm3:	movzx	ebx,byte [SPACEFILLER4+ebx]		; colormap
 		mov		cl,[RGB32k+ebp]
 ac4cm4:	movzx	edx,byte [SPACEFILLER4+edx]		; colormap
 		mov		[eax+1],cl
-ac4fg3:	mov		ebx,[SPACEFILLER4+ebx*4]		; fg2rgb
-ac4fg4:	mov		edx,[SPACEFILLER4+edx*4]		; fg2rgb
 		movzx	ecx,byte [eax+2]
 		movzx	ebp,byte [eax+3]
+ac4fg3:	mov		ebx,[SPACEFILLER4+ebx*4]		; fg2rgb
+ac4fg4:	mov		edx,[SPACEFILLER4+edx*4]		; fg2rgb
 ac4bg3:	add		ebx,[SPACEFILLER4+ecx*4]		; bg2rgb
 ac4bg4:	add		edx,[SPACEFILLER4+ebp*4]		; bg2rgb
 		mov		ecx,ebx
@@ -1801,7 +1801,7 @@ GLOBAL	@R_SetupAddClampCol@0
 R_SetupAddClampCol:
 @R_SetupAddClampCol@0:
 		mov		eax,[dc_colormap]
-		cmp		[a4cm1+3],eax
+		cmp		[ac4cm1+3],eax
 		je		.cmdone
 		mov		[ac4cm1+3],eax
 		mov		[ac4cm2+3],eax

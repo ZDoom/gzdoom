@@ -1915,9 +1915,9 @@ void A_CountdownArg(AActor * self)
 {
 	int index=CheckIndex(1);
 	if (index<0) return;
-	index = EvalExpressionI (StateParameters[index], self);
+	index = EvalExpressionI (StateParameters[index], self) - 1;
 
-	if (index<=0 || index>5) return;
+	if (index<0 || index>=5) return;
 	if (!self->args[index]--)
 	{
 		if (self->flags&MF_MISSILE)

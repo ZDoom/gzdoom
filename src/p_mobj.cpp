@@ -2963,8 +2963,15 @@ void AActor::Tick ()
 	{
 		int respawn_monsters = G_SkillProperty(SKILLP_Respawn);
 		// check for nightmare respawn
-		if (!respawn_monsters || !(flags3 & MF3_ISMONSTER) || (flags2 & MF2_DORMANT))
-			return;
+		if (!(flags5 & MF5_ALWAYSRESPAWN))
+		{
+			if (!respawn_monsters || !(flags3 & MF3_ISMONSTER) || (flags2 & MF2_DORMANT) || (flags5 & MF5_NEVERRESPAWN))
+				return;
+
+			int limit = G_SkillProperty (SKILLP_RespawnLimit);
+			if (limit > 0 && skillrespawncount >= limit)
+				return;
+		}
 
 		movecount++;
 
@@ -2975,9 +2982,6 @@ void AActor::Tick ()
 			return;
 
 		if (pr_nightmarerespawn() > 4)
-			return;
-
-		if (G_SkillProperty (SKILLP_RespawnLimit) && (this)->skillrespawncount >= G_SkillProperty (SKILLP_RespawnLimit))
 			return;
 
 		P_NightmareRespawn (this);
@@ -4405,7 +4409,7 @@ bool P_CheckMissileSpawn (AActor* th)
 	if (!P_TryMove (th, th->x, th->y, false))
 	{
 		// [RH] Don't explode ripping missiles that spawn inside something
-		if (BlockingMobj == NULL || !(th->flags2 & MF2_RIP))
+		if (BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (BlockingMobj->flags5 & MF5_DONTRIP))
 		{
 			// If this is a monster spawned by A_CustomMissile subtract it from the counter.
 			if (th->CountsAsKill())

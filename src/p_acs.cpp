@@ -5256,6 +5256,41 @@ int DLevelScript::RunScript ()
 			STACK(3) = P_Thing_Damage (STACK(3), activator, STACK(2), FName(FBehavior::StaticLookupString(STACK(1))));
 			sp -= 2;
 			break;
+
+		case PCD_CHECKACTORCEILINGTEXTURE:
+		{
+			AActor *actor = SingleActorFromTID(STACK(2), activator);
+			if (actor != NULL)
+			{
+				FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(STACK(1)));
+				STACK(2) = (tex == TexMan[actor->Sector->ceilingpic]);
+			}
+			else STACK(2)=0;
+			sp--;
+			break;
+		}
+
+		case PCD_CHECKACTORFLOORTEXTURE:
+		{
+			AActor *actor = SingleActorFromTID(STACK(2), activator);
+			if (actor != NULL)
+			{
+				FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(STACK(1)));
+				STACK(2) = (tex == TexMan[actor->Sector->floorpic]);
+			}
+			else STACK(2)=0;
+			sp--;
+			break;
+		}
+
+		case PCD_GETACTORLIGHTLEVEL:
+			AActor *actor = SingleActorFromTID(STACK(1), activator);
+			if (actor != NULL)
+			{
+				STACK(1) = actor->Sector->lightlevel;
+			}
+			else STACK(1)=0;
+			break;
 		}
 	}
 

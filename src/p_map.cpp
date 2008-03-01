@@ -1019,7 +1019,7 @@ bool PIT_CheckThing (AActor *thing)
 		{
 			return true;
 		}
-		if (DoRipping)
+		if (DoRipping && !(thing->flags5 & MF5_DONTRIP))
 		{
 			if (LastRipped != thing)
 			{
@@ -2472,6 +2472,13 @@ bool P_BounceWall (AActor *mo)
 	{
 		mo->SeeSound = 0;	// it might make a sound otherwise
 		mo->Destroy();
+		return true;
+	}
+
+	// The amount of bounces is limited
+	if (mo->bouncecount>0 && --mo->bouncecount==0)
+	{
+		P_ExplodeMissile(mo, NULL, NULL);
 		return true;
 	}
 

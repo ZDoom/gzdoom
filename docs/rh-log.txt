@@ -1,4 +1,15 @@
 March 1, 2008 (Changes by Graf Zahl)
+- fixed: A_CountdownArg used 0 based indices although all uses of it assumed
+  1-based.
+- added MF5_DONTRIP flag.
+- added CheckActorFloorTexture, CheckActorCeilingTexture and
+  GetActorLightLevel ACS functions.
+- added IF_ADDITIVETIME flag to create powerups that add their duration
+  to the one of the currently active item of the same type.
+- fixed: bouncecount wasn't decreased when bouncing on walls.
+- Added MF5_ALWAYSRESPAWN and MF5_NEVERRESPAWN flags that selectively
+  enable or disable monster respawning regardless of skill setting.
+- Prettified deprecated flag handling.
 - Fixed: When starting a level while the music has been paused S_Start has 
   to stop the old music so the new one always starts at the beginning.
 - Fixed:: AActor::master was not serialized.

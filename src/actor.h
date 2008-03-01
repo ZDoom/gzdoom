@@ -294,6 +294,10 @@ enum
 	MF5_NOPAIN			= 0x00004000,	// If set the pain state won't be entered
 	MF5_ALWAYSFAST		= 0x00008000,	// always uses 'fast' attacking logic
 	MF5_NEVERFAST		= 0x00010000,	// never uses 'fast' attacking logic
+	MF5_ALWAYSRESPAWN	= 0x00020000,	// always respawns, regardless of skill setting
+	MF5_NEVERRESPAWN	= 0x00040000,	// never respawns, regardless of skill setting
+	MF5_DONTRIP			= 0x00080000,	// Ripping projectiles explode when hittin this actor
+
 
 // --- mobj.renderflags ---
 

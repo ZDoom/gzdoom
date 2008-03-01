@@ -58,7 +58,7 @@ bool APowerupGiver::Use (bool pickup)
 		power->mode = mode;
 	}
 
-	power->ItemFlags |= ItemFlags & IF_ALWAYSPICKUP;
+	power->ItemFlags |= ItemFlags & (IF_ALWAYSPICKUP|IF_ADDITIVETIME);
 	if (power->TryPickup (Owner))
 	{
 		return true;
@@ -259,7 +259,12 @@ bool APowerup::HandlePickup (AInventory *item)
 		}
 		// Only increase the EffectTics, not decrease it.
 		// Color also gets transferred only when the new item has an effect.
-		if (power->EffectTics > EffectTics)
+		if (power->ItemFlags & IF_ADDITIVETIME) 
+		{
+			EffectTics += power->EffectTics;
+			BlendColor = power->BlendColor;
+		}
+		else if (power->EffectTics > EffectTics)
 		{
 			EffectTics = power->EffectTics;
 			BlendColor = power->BlendColor;

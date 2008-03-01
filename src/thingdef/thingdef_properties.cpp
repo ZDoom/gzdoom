@@ -79,7 +79,7 @@
 // [RH] Keep GCC quiet by not using offsetof on Actor types.
 #define DEFINE_FLAG(prefix, name, type, variable) { prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1 }
 #define DEFINE_FLAG2(symbol, name, type, variable) { symbol, #name, (int)(size_t)&((type*)1)->variable - 1 }
-#define DEFINE_DEPRECATED_FLAG(name, type, index) { index, #name, -1 }
+#define DEFINE_DEPRECATED_FLAG(name, type) { DEPF_##name, #name, -1 }
 
 struct flagdef
 {
@@ -88,6 +88,15 @@ struct flagdef
 	int structoffset;
 };
 
+enum 
+{
+	DEPF_FIREDAMAGE,
+	DEPF_ICEDAMAGE,
+	DEPF_LOWGRAVITY,
+	DEPF_LONGMELEERANGE,
+	DEPF_SHORTMISSILERANGE,
+	DEPF_PICKUPFLASH
+};
 
 static flagdef ActorFlags[]=
 {
@@ -221,6 +230,9 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, NOPAIN, AActor, flags5),
 	DEFINE_FLAG(MF5, ALWAYSFAST, AActor, flags5),
 	DEFINE_FLAG(MF5, NEVERFAST, AActor, flags5),
+	DEFINE_FLAG(MF5, ALWAYSRESPAWN, AActor, flags5),
+	DEFINE_FLAG(MF5, NEVERRESPAWN, AActor, flags5),
+	DEFINE_FLAG(MF5, DONTRIP, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -231,11 +243,11 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(RF, FORCEXYBILLBOARD, AActor, renderflags),
 
 	// Deprecated flags. Handling must be performed in HandleDeprecatedFlags
-	DEFINE_DEPRECATED_FLAG(FIREDAMAGE, AActor, 0),
-	DEFINE_DEPRECATED_FLAG(ICEDAMAGE, AActor, 1),
-	DEFINE_DEPRECATED_FLAG(LOWGRAVITY, AActor, 2),
-	DEFINE_DEPRECATED_FLAG(SHORTMISSILERANGE, AActor, 3),
-	DEFINE_DEPRECATED_FLAG(LONGMELEERANGE, AActor, 4),
+	DEFINE_DEPRECATED_FLAG(FIREDAMAGE, AActor),
+	DEFINE_DEPRECATED_FLAG(ICEDAMAGE, AActor),
+	DEFINE_DEPRECATED_FLAG(LOWGRAVITY, AActor),
+	DEFINE_DEPRECATED_FLAG(SHORTMISSILERANGE, AActor),
+	DEFINE_DEPRECATED_FLAG(LONGMELEERANGE, AActor),
 };
 
 static flagdef InventoryFlags[] =
@@ -252,8 +264,9 @@ static flagdef InventoryFlags[] =
 	DEFINE_FLAG(IF, BIGPOWERUP, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, KEEPDEPLETED, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, IGNORESKILL, AInventory, ItemFlags),
+	DEFINE_FLAG(IF, ADDITIVETIME, AInventory, ItemFlags),
 
-	DEFINE_DEPRECATED_FLAG(PICKUPFLASH, AInventory, 5),
+	DEFINE_DEPRECATED_FLAG(PICKUPFLASH, AInventory),
 
 };
 
@@ -385,22 +398,22 @@ static void HandleDeprecatedFlags(AActor *defaults, bool set, int index)
 {
 	switch (index)
 	{
-	case 0:	// FIREDAMAGE
+	case DEPF_FIREDAMAGE:
 		defaults->DamageType = set? NAME_Fire : NAME_None;
 		break;
-	case 1:	// ICEDAMAGE
+	case DEPF_ICEDAMAGE:
 		defaults->DamageType = set? NAME_Ice : NAME_None;
 		break;
-	case 2:	// LOWGRAVITY
+	case DEPF_LOWGRAVITY:
 		defaults->gravity = set? FRACUNIT/8 : FRACUNIT;
 		break;
-	case 3:	// SHORTMISSILERANGE
+	case DEPF_SHORTMISSILERANGE:
 		defaults->maxtargetrange = set? 896*FRACUNIT : 0;
 		break;
-	case 4:	// LONGMELEERANGE
+	case DEPF_LONGMELEERANGE:
 		defaults->meleethreshold = set? 196*FRACUNIT : 0;
 		break;
-	case 5:	// INVENTORY.PICKUPFLASH
+	case DEPF_PICKUPFLASH:
 		if (set)
 		{
 			static_cast<AInventory*>(defaults)->PickupFlash = fuglyname("PickupFlash");

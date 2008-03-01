@@ -322,6 +322,9 @@ void AActor::Serialize (FArchive &arc)
 		<< gravity
 		<< FastChaseStrafeCount;
 
+	if (SaveVersion >=778)
+		arc << master;
+
 	if (arc.IsStoring ())
 	{
 		int convnum = 0;
@@ -3649,6 +3652,23 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 		else if (state == PST_REBORN)
 		{
 			assert (oldactor != NULL);
+
+			// before relocating all pointers to the player all sound targets
+			// pointing to the old actor have to be NULLed. Otherwise all
+			// monsters who last targeted this player will wake up immediately
+			// after the player has respawned.
+			AActor *th;
+			TThinkerIterator<AActor> it;
+			while ((th = it.Next()))
+			{
+				if (th->LastHeard == oldactor) th->LastHeard = NULL;
+			}
+			for(int i = 0; i < numsectors; i++)
+			{
+				if (sectors[i].SoundTarget == oldactor) sectors[i].SoundTarget = NULL;
+			}
+
+
 			DObject::PointerSubstitution (oldactor, p->mo);
 			// PointerSubstitution() will also affect the bodyque, so undo that now.
 			for (int ii=0; ii < BODYQUESIZE; ++ii)

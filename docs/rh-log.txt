@@ -1,3 +1,14 @@
+March 1, 2008 (Changes by Graf Zahl)
+- Fixed: When starting a level while the music has been paused S_Start has 
+  to stop the old music so the new one always starts at the beginning.
+- Fixed:: AActor::master was not serialized.
+- Fixed: Sound targets pointing to dead players should be cleared before 
+  respawning the player.
+- Fixed: When the DONTMOVE flag is set A_Chase must not call P_NewChaseDir.
+- Changed PowerupGiver initialization so that the actual powerup class is looked
+  up during postprocessing.
+- Gave Strife's instant death sector type its own damage type.
+
 February 29, 2008
 - Changed the default GC parameters to make it run more aggressively.
 - Added NULL checks to the GC::WriteBarrier() wrappers.
@@ -13,12 +24,32 @@ February 29, 2008
   the object in the propagate stage if it is unreachable, so any objects
   that are only reachable through it will still be freed unless they are
   also fixed.
+- Fixed: R_SetupAddClampCol() checked add4cols' memory instead of
+  adclamp4cols' memory when deciding if it should skip modification.
+
+February 28, 2008
+- Fixed: The colormap changes by column, so the assembly rt_* routines need
+  to be setup for every column group, not once per image.
+- Fixed: rt_Translate1col() had a couple of bugs.
 
 February 27, 2008
+- Added assembly versions of rt_add4cols and rt_addclamp4cols.
 - Added a read barrier to FArchive::SerializeObject() to make sure that
   objects that are being euthanized are not stored in the archive.
 
 February 26, 2008
+- Added an assembly version of rt_shaded4cols, since that's the main decal
+  drawing function. The most improvement came from being able to turn some
+  constant variables into immediate values with self-modifying code, but I
+  also managed to reorder it to make it a little faster. It's about 9% faster
+  than VC++'s code and 19% faster than GCC's code. That's not a huge
+  improvement (for VC++), but at least it's measurable.
+- Removed the solid fill "optimization" from rt_shaded4cols(), because in my
+  testing, it didn't help any and in fact, hurt just a little bit.
+- In the name of simplification, all the rt_tlate* drawers were changed to do
+  the translation in one step and the drawing in another. This lets me call
+  the untranslated drawer to do the real drawing instead of mostly duplicating
+  them. Performance wise, there is practically no difference from before.
 - Fixed: Using +stat from the command line caused a crash.
 - More write barriers and pointer declarations. Here are rules I've come up
   with so far for when write barriers can be ommitted:

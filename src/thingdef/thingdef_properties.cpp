@@ -2136,23 +2136,8 @@ static void PowerupMode (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 //==========================================================================
 static void PowerupType (FScanner &sc, APowerupGiver *defaults, Baggage &bag)
 {
-	FString typestr;
-
 	sc.MustGetString();
-	typestr.Format ("Power%s", sc.String);
-	const PClass * powertype=PClass::FindClass(typestr);
-	if (!powertype)
-	{
-		sc.ScriptError("Unknown powerup type '%s' in '%s'\n", sc.String, bag.Info->Class->TypeName.GetChars());
-	}
-	else if (!powertype->IsDescendantOf(RUNTIME_CLASS(APowerup)))
-	{
-		sc.ScriptError("Invalid powerup type '%s' in '%s'\n", sc.String, bag.Info->Class->TypeName.GetChars());
-	}
-	else
-	{
-		defaults->PowerupType=powertype;
-	}
+	defaults->PowerupType = fuglyname(sc.String);
 }
 
 //==========================================================================

@@ -94,7 +94,7 @@ void (*R_DrawSpan)(void);
 void (*R_DrawSpanMasked)(void);
 void (*R_DrawSpanTranslucent)(void);
 void (*R_DrawSpanMaskedTranslucent)(void);
-void (*rt_map4cols)(int,int,int);
+void (STACK_ARGS *rt_map4cols)(int,int,int);
 
 //
 // R_DrawColumn
@@ -2297,8 +2297,11 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		dc_colormap = identitymap;
 	}
 
-	return R_SetBlendFunc (style.BlendOp, fglevel, bglevel, style.Flags) ?
-		(r_columnmethod ? DoDraw1 : DoDraw0) : DontDraw;
+	if (!R_SetBlendFunc (style.BlendOp, fglevel, bglevel, style.Flags))
+	{
+		return DontDraw;
+	}
+	return r_columnmethod ? DoDraw1 : DoDraw0;
 }
 
 void R_FinishSetPatchStyle ()

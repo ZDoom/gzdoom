@@ -205,7 +205,7 @@ void (*spanfunc) (void);
 void (*hcolfunc_pre) (void);
 void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
 void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
-void (*hcolfunc_post4) (int sx, int yl, int yh);
+void (STACK_ARGS *hcolfunc_post4) (int sx, int yl, int yh);
 
 cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 

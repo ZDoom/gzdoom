@@ -185,6 +185,7 @@ xx(BFGSplash)
 xx(DrainLife)	// A weapon like the Sigil that drains your life away.
 xx(Massacre)	// For death by a cheater!
 //(Melee)		already defined above, so don't define it again
+xx(InstantDeath)	// Strife "instant death"
 
 // Special death name for getting killed excessively. Could be used as
 // a damage type if you wanted to force an extreme death.

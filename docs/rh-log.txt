@@ -1,3 +1,14 @@
+March 1, 2008 (Changes by Graf Zahl)
+- Fixed: When starting a level while the music has been paused S_Start has 
+  to stop the old music so the new one always starts at the beginning.
+- Fixed:: AActor::master was not serialized.
+- Fixed: Sound targets pointing to dead players should be cleared before 
+  respawning the player.
+- Fixed: When the DONTMOVE flag is set A_Chase must not call P_NewChaseDir.
+- Changed PowerupGiver initialization so that the actual powerup class is looked
+  up during postprocessing.
+- Gave Strife's instant death sector type its own damage type.
+
 February 29, 2008
 - Fixed: R_SetupAddClampCol() checked add4cols' memory instead of
   adclamp4cols' memory when deciding if it should skip modification.

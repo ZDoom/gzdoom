@@ -539,6 +539,41 @@ void FinishThingdef()
 			}
 		}
 
+		if (ti->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)) && ti != RUNTIME_CLASS(APowerupGiver))
+		{
+			FString typestr;
+			APowerupGiver * defaults=(APowerupGiver *)ti->Defaults;
+			fuglyname v;
+
+			v = defaults->PowerupType;
+			if (v != NAME_None && v.IsValidName())
+			{
+				typestr.Format ("Power%s", v.GetChars());
+				const PClass * powertype=PClass::FindClass(typestr);
+				if (!powertype) powertype=PClass::FindClass(v.GetChars());
+
+				if (!powertype)
+				{
+					Printf("Unknown powerup type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					errorcount++;
+				}
+				else if (!powertype->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+				{
+					Printf("Invalid powerup type '%s' in '%s'\n", v.GetChars(), ti->TypeName.GetChars());
+					errorcount++;
+				}
+				else
+				{
+					defaults->PowerupType=powertype;
+				}
+			}
+			else if (v == NAME_None)
+			{
+				Printf("No powerup type specified in '%s'\n", ti->TypeName.GetChars());
+				errorcount++;
+			}
+		}
+
 		// the typeinfo properties of weapons have to be fixed here after all actors have been declared
 		if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 		{

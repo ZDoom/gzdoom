@@ -352,7 +352,7 @@ void DObject::InPlaceConstructor (void *mem)
 DObject::DObject ()
 : Class(0), ObjectFlags(0)
 {
-	ObjectFlags = GC::CurrentWhite;
+	ObjectFlags = GC::CurrentWhite & OF_WhiteBits;
 	ObjNext = GC::Root;
 	GC::Root = this;
 }
@@ -360,7 +360,7 @@ DObject::DObject ()
 DObject::DObject (PClass *inClass)
 : Class(inClass), ObjectFlags(0)
 {
-	ObjectFlags = GC::CurrentWhite;
+	ObjectFlags = GC::CurrentWhite & OF_WhiteBits;
 	ObjNext = GC::Root;
 	GC::Root = this;
 }
@@ -387,9 +387,9 @@ DObject::~DObject ()
 			if (*probe == this)
 			{
 				*probe = ObjNext;
-				if (probe == GC::SweepPos)
+				if (&ObjNext == GC::SweepPos)
 				{
-					GC::SweepPos = &ObjNext;
+					GC::SweepPos = probe;
 				}
 				break;
 			}

@@ -77,7 +77,7 @@
 ** mean larger pauses which mean slower collection.) You can also change
 ** this value dynamically.
 */
-#define DEFAULT_GCPAUSE		200	// 200% (wait for memory to double before next GC)
+#define DEFAULT_GCPAUSE		150	// 200% (wait for memory to increase by half before next GC)
 
 /*
 @@ DEFAULT_GCMUL defines the default speed of garbage collection relative to
@@ -87,7 +87,7 @@
 ** infinity, where each step performs a full collection.) You can also
 ** change this value dynamically.
 */
-#define DEFAULT_GCMUL		200 // GC runs 'twice the speed' of memory allocation
+#define DEFAULT_GCMUL		400 // GC runs 'quadruple the speed' of memory allocation
 
 
 #define GCSTEPSIZE		1024u
@@ -114,8 +114,9 @@ size_t Threshold;
 size_t Estimate;
 DObject *Gray;
 DObject *Root;
+DObject *SoftRoots;
 DObject **SweepPos;
-DWORD CurrentWhite = OF_White0;
+DWORD CurrentWhite = OF_White0 | OF_Fixed;
 EGCState State = GCS_Pause;
 int Pause = DEFAULT_GCPAUSE;
 int StepMul = DEFAULT_GCMUL;
@@ -186,6 +187,7 @@ static size_t PropagateAll()
 
 static DObject **SweepList(DObject **p, size_t count)
 {
+	static int scount;
 	DObject *curr;
 	int deadmask = OtherWhite();
 
@@ -201,10 +203,6 @@ static DObject **SweepList(DObject **p, size_t count)
 		{
 			assert(curr->IsDead());
 			*p = curr->ObjNext;
-			if (curr == Root)
-			{
-				Root = curr->ObjNext;
-			}
 			if (!(curr->ObjectFlags & OF_EuthanizeMe))
 			{ // The object must be destroyed before it can be finalized.
 				curr->Destroy();
@@ -285,6 +283,20 @@ static void MarkRoot()
 	{ // Silly bots
 		DObject *foo = &bglobal;
 		Mark(foo);
+	}
+	// Add soft roots
+	if (SoftRoots != NULL)
+	{
+		DObject **probe = &SoftRoots->ObjNext;
+		while (*probe != NULL)
+		{
+			DObject *soft = *probe;
+			probe = &soft->ObjNext;
+			if ((soft->ObjectFlags & (OF_Rooted | OF_EuthanizeMe)) == OF_Rooted)
+			{
+				Mark(soft);
+			}
+		}
 	}
 	State = GCS_Propagate;
 	StepCount = 0;
@@ -458,6 +470,79 @@ void Barrier(DObject *pointing, DObject *pointed)
 	else if (pointing != NULL)
 	{
 		pointing->MakeWhite();
+	}
+}
+
+//==========================================================================
+//
+// AddSoftRoot
+//
+// Marks an object as a soft root. A soft root behaves exactly like a root
+// in MarkRoot, except it can be added at run-time.
+//
+//==========================================================================
+
+void AddSoftRoot(DObject *obj)
+{
+	DObject **probe;
+
+	// Are there any soft roots yet?
+	if (SoftRoots == NULL)
+	{
+		// Create a new object to root the soft roots off of, and stick
+		// it at the end of the object list, so we know that anything
+		// before it is not a soft root.
+		SoftRoots = new DObject;
+		SoftRoots->ObjectFlags |= OF_Fixed;
+		probe = &Root;
+		while (*probe != NULL)
+		{
+			probe = &(*probe)->ObjNext;
+		}
+		Root = SoftRoots->ObjNext;
+		SoftRoots->ObjNext = NULL;
+		*probe = SoftRoots;
+	}
+	// Mark this object as rooted and move it after the SoftRoots marker.
+	probe = &Root;
+	while (*probe != NULL && *probe != obj)
+	{
+		probe = &(*probe)->ObjNext;
+	}
+	*probe = (*probe)->ObjNext;
+	obj->ObjNext = SoftRoots->ObjNext;
+	SoftRoots->ObjNext = obj;
+	obj->ObjectFlags |= OF_Rooted;
+}
+
+//==========================================================================
+//
+// DelSoftRoot
+//
+// Unroots an object so that it must be reachable or it will get collected.
+//
+//==========================================================================
+
+void DelSoftRoot(DObject *obj)
+{
+	DObject **probe;
+
+	if (!(obj->ObjectFlags & OF_Rooted))
+	{ // Not rooted, so nothing to do.
+		return;
+	}
+	obj->ObjectFlags &= ~OF_Rooted;
+	// Move object out of the soft roots part of the list.
+	probe = &SoftRoots;
+	while (*probe != NULL && *probe != obj)
+	{
+		probe = &(*probe)->ObjNext;
+	}
+	if (*probe == obj)
+	{
+		*probe = obj->ObjNext;
+		obj->ObjNext = Root;
+		Root = obj;
 	}
 }
 

@@ -215,9 +215,10 @@ enum EObjectFlags
 	OF_White1			= 1 << 1,		// Object is white (type 1)
 	OF_Black			= 1 << 2,		// Object is black
 	OF_Fixed			= 1 << 3,		// Object is fixed (should not be collected)
-	OF_EuthanizeMe		= 1 << 4,		// Object wants to die
-	OF_Cleanup			= 1 << 5,		// Object is now being deleted by the collector
-	OF_YesReallyDelete	= 1 << 6,		// Object is being deleted outside the collector, and this is okay, so don't print a warning
+	OF_Rooted			= 1 << 4,		// Object is soft-rooted
+	OF_EuthanizeMe		= 1 << 5,		// Object wants to die
+	OF_Cleanup			= 1 << 6,		// Object is now being deleted by the collector
+	OF_YesReallyDelete	= 1 << 7,		// Object is being deleted outside the collector, and this is okay, so don't print a warning
 
 	OF_WhiteBits		= OF_White0 | OF_White1,
 	OF_MarkBits			= OF_WhiteBits | OF_Black,
@@ -310,6 +311,12 @@ namespace GC
 	// Marks a white object gray. If the object wants to die, the pointer
 	// is NULLed instead.
 	void Mark(DObject **obj);
+
+	// Soft-roots an object.
+	void AddSoftRoot(DObject *obj);
+
+	// Unroots an object.
+	void DelSoftRoot(DObject *obj);
 
 	template<class T> void Mark(T *&obj) { Mark((DObject **)&obj); }
 	template<class T> void Mark(TObjPtr<T> &obj);
@@ -489,7 +496,7 @@ public:
 	// An object is dead if it's the other white.
 	bool IsDead() const
 	{
-		return !!(ObjectFlags & GC::OtherWhite());
+		return !!(ObjectFlags & GC::OtherWhite() & OF_WhiteBits);
 	}
 
 	void ChangeWhite()
@@ -499,7 +506,7 @@ public:
 
 	void MakeWhite()
 	{
-		ObjectFlags = (ObjectFlags & ~OF_MarkBits) | GC::CurrentWhite;
+		ObjectFlags = (ObjectFlags & ~OF_MarkBits) | (GC::CurrentWhite & OF_WhiteBits);
 	}
 
 	void White2Gray()
@@ -537,7 +544,7 @@ protected:
 
 static inline void GC::WriteBarrier(DObject *pointing, DObject *pointed)
 {
-	if (pointed->IsWhite() && pointing->IsBlack())
+	if (pointed != NULL && pointed->IsWhite() && pointing->IsBlack())
 	{
 		Barrier(pointing, pointed);
 	}
@@ -545,7 +552,7 @@ static inline void GC::WriteBarrier(DObject *pointing, DObject *pointed)
 
 static inline void GC::WriteBarrier(DObject *pointed)
 {
-	if (State == GCS_Propagate && pointed->IsWhite())
+	if (pointed != NULL && State == GCS_Propagate && pointed->IsWhite())
 	{
 		Barrier(NULL, pointed);
 	}

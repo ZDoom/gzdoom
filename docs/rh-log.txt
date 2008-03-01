@@ -1,3 +1,19 @@
+February 29, 2008
+- Changed the default GC parameters to make it run more aggressively.
+- Added NULL checks to the GC::WriteBarrier() wrappers.
+- Fixed: The DObject destructor set GC::SweepPos incorrectly if it pointed
+  at that object being deleted.
+- Added "soft roots" to the garbage collector. These are similar in
+  purpose to setting the OF_Fixed bit, but they behave as full-fledged roots
+  as far as the collector is concerned, so any objects reachable through
+  them will not be collected.
+- Added support for the OF_Fixed bit. This is ONLY for simple objects which
+  do not contain pointers to other objects, because all it does is prevent
+  an object that is otherwise dead from being freed. It does not include
+  the object in the propagate stage if it is unreachable, so any objects
+  that are only reachable through it will still be freed unless they are
+  also fixed.
+
 February 27, 2008
 - Added a read barrier to FArchive::SerializeObject() to make sure that
   objects that are being euthanized are not stored in the archive.

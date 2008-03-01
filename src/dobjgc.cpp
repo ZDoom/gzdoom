@@ -77,7 +77,7 @@
 ** mean larger pauses which mean slower collection.) You can also change
 ** this value dynamically.
 */
-#define DEFAULT_GCPAUSE		150	// 200% (wait for memory to increase by half before next GC)
+#define DEFAULT_GCPAUSE		150	// 150% (wait for memory to increase by half before next GC)
 
 /*
 @@ DEFAULT_GCMUL defines the default speed of garbage collection relative to
@@ -513,6 +513,7 @@ void AddSoftRoot(DObject *obj)
 	obj->ObjNext = SoftRoots->ObjNext;
 	SoftRoots->ObjNext = obj;
 	obj->ObjectFlags |= OF_Rooted;
+	WriteBarrier(obj);
 }
 
 //==========================================================================

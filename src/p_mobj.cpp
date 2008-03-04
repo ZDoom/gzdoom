@@ -4893,7 +4893,7 @@ void AActor::Crash()
 		!(flags3 & MF3_CRASHED) &&
 		!(flags & MF_ICECORPSE))
 	{
-		FState * crashstate=NULL;
+		FState *crashstate = NULL;
 		
 		if (DamageType != NAME_None)
 		{
@@ -4904,7 +4904,7 @@ void AActor::Crash()
 			int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
 				gameinfo.gametype == GAME_Doom ? -GetDefault()->health : -GetDefault()->health/2));
 
-			if (health<gibhealth)
+			if (health < gibhealth)
 			{ // Extreme death
 				crashstate = FindState (NAME_Crash, NAME_Extreme);
 			}

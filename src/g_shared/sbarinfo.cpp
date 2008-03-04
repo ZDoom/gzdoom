@@ -2186,7 +2186,7 @@ private:
 		}
 		else //dead
 		{
-			if(!xdth || CPlayer->mo->health > -CPlayer->mo->GetDefault()->health)
+			if(!xdth || !(CPlayer->cheats & CF_EXTREMELYDEAD))
 			{
 				DrawImage(Faces[ST_FACEDEAD], x, y);
 			}

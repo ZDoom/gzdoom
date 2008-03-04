@@ -1,3 +1,9 @@
+March 3, 2008
+- Fixed: PTR_BounceTraverse only checked for projectiles that were too
+  high to pass through two-sided lines, but not ones that were too low.
+- Fixed: SBARINFO couldn't detect the extreme death damage type for the
+  player face animation.
+
 March 1, 2008 (Changes by Graf Zahl)
 - fixed: A_CountdownArg used 0 based indices although all uses of it assumed
   1-based.

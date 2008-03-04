@@ -2390,6 +2390,10 @@ bool PTR_BounceTraverse (intercept_t *in)
 
 	if (opentop - slidemo->z < slidemo->height)
 		goto bounceblocking;				// mobj is too high
+
+	if (openbottom > slidemo->z)
+		goto bounceblocking;				// mobj is too low
+
 	return true;			// this line doesn't block movement
 
 // the line does block movement, see if it is closer than best so far

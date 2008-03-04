@@ -129,6 +129,7 @@ protected:
 	HANDLE PlayerThread;
 	HANDLE PauseEvent;
 	HANDLE ExitEvent;
+	HANDLE TicEvent;
 	HANDLE VolumeChangeEvent;
 	DWORD SavedVolume;
 	bool VolumeWorks;

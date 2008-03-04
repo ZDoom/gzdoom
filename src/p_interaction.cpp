@@ -613,7 +613,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 
 
-	FState *diestate=NULL;
+	FState *diestate = NULL;
 
 	if (DamageType != NAME_None)
 	{
@@ -637,16 +637,27 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
 			gameinfo.gametype == GAME_Doom ? -GetDefault()->health : -GetDefault()->health/2));
 		
-		// Don't pass on a damage type this actor cannot handle
-		// (most importantly prevent barrels from passing on ice damage)
+		// Don't pass on a damage type this actor cannot handle.
+		// (most importantly, prevent barrels from passing on ice damage.)
 		// Massacre must be preserved though.
-		if (DamageType != NAME_Massacre) DamageType =NAME_None;	
+		if (DamageType != NAME_Massacre)
+		{
+			DamageType = NAME_None;	
+		}
 
-		if ((health<gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
+		if ((health < gibhealth || flags4 & MF4_EXTREMEDEATH) && !(flags4 & MF4_NOEXTREMEDEATH))
 		{ // Extreme death
 			diestate = FindState (NAME_Death, NAME_Extreme, true);
-			// if a non-player mark as extremely dead for the crash state.
-			if (diestate != NULL && player == NULL && health >= gibhealth) health = gibhealth-1;	
+			// If a non-player, mark as extremely dead for the crash state.
+			if (diestate != NULL && player == NULL && health >= gibhealth)
+			{
+				health = gibhealth - 1;
+			}
+			// For players, mark the appropriate flag.
+			else if (player != NULL)
+			{
+				player->cheats |= CF_EXTREMELYDEAD;
+			}
 		}
 		if (diestate == NULL)
 		{ // Normal death

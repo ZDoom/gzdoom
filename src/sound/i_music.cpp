@@ -112,6 +112,10 @@ bool MusInfo::SetPosition (int order)
 	return false;
 }
 
+void MusInfo::ServiceEvent ()
+{
+}
+
 void I_InitMusic (void)
 {
 	static bool setatterm = false;

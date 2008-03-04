@@ -6,6 +6,9 @@
 
 extern DWORD midivolume;
 extern UINT mididevice;
+extern HANDLE MusicEvent;
+
+#define MAX_TIME		(10)
 
 EXTERN_CVAR (Float, snd_midivolume)
 
@@ -28,17 +31,17 @@ static const BYTE CtrlTranslate[15] =
 	121, // reset all controllers
 };
 
-MUSSong2::MUSSong2 (FILE *file, char * musiccache, int len)
-: MidiOut (0), PlayerThread (0),
-  PauseEvent (0), ExitEvent (0), VolumeChangeEvent (0),
-  MusBuffer (0), MusHeader (0)
+MUSSong2::MUSSong2 (FILE *file, char *musiccache, int len)
+: MidiOut(0), MusHeader(0), MusBuffer(0)
 {
 	MusHeader = (MUSHeader *)new BYTE[len];
 
 	if (file != NULL)
 	{
-		if (fread (MusHeader, 1, len, file) != (size_t)len)
+		if (fread(MusHeader, 1, len, file) != (size_t)len)
+		{
 			return;
+		}
 	}
 	else
 	{
@@ -47,28 +50,26 @@ MUSSong2::MUSSong2 (FILE *file, char * musiccache, int len)
 
 	// Do some validation of the MUS file
 	if (MusHeader->Magic != MAKE_ID('M','U','S','\x1a'))
+	{
 		return;
+	}
 	
 	if (LittleShort(MusHeader->NumChans) > 15)
+	{
 		return;
+	}
 
-	ExitEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
-	if (ExitEvent == NULL)
-	{
-		Printf (PRINT_BOLD, "Could not create exit event for MIDI playback\n");
-		return;
-	}
-	VolumeChangeEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
-	if (VolumeChangeEvent == NULL)
-	{
-		Printf (PRINT_BOLD, "Could not create volume event for MIDI playback\n");
-		return;
-	}
-	PauseEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
-	if (PauseEvent == NULL)
-	{
-		Printf (PRINT_BOLD, "Could not create pause event for MIDI playback\n");
-	}
+	FullVolEvent.dwDeltaTime = 0;
+	FullVolEvent.dwStreamID = 0;
+	FullVolEvent.dwEvent = MEVT_LONGMSG | 8;
+	FullVolEvent.SysEx[0] = 0xf0;
+	FullVolEvent.SysEx[1] = 0x7f;
+	FullVolEvent.SysEx[2] = 0x7f;
+	FullVolEvent.SysEx[3] = 0x04;
+	FullVolEvent.SysEx[4] = 0x01;
+	FullVolEvent.SysEx[5] = 0x7f;
+	FullVolEvent.SysEx[6] = 0x7f;
+	FullVolEvent.SysEx[7] = 0xf7;
 
 	MusBuffer = (BYTE *)MusHeader + LittleShort(MusHeader->SongStart);
 	MaxMusP = MIN<int> (LittleShort(MusHeader->SongLen), len - LittleShort(MusHeader->SongStart));
@@ -78,23 +79,6 @@ MUSSong2::MUSSong2 (FILE *file, char * musiccache, int len)
 MUSSong2::~MUSSong2 ()
 {
 	Stop ();
-
-	if (PauseEvent != NULL)
-	{
-		CloseHandle (PauseEvent);
-	}
-	if (ExitEvent != NULL)
-	{
-		CloseHandle (ExitEvent);
-	}
-	if (VolumeChangeEvent != NULL)
-	{
-		CloseHandle (VolumeChangeEvent);
-	}
-	if (MusHeader != 0)
-	{
-		delete[] ((BYTE *)MusHeader);
-	}
 }
 
 bool MUSSong2::IsMIDI () const
@@ -109,14 +93,31 @@ bool MUSSong2::IsValid () const
 
 void MUSSong2::Play (bool looping)
 {
-	DWORD tid;
+	UINT dev_id;
 
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
+	EndQueued = false;
+	VolumeChanged = false;
+	Restarting = false;
 
-	if (MMSYSERR_NOERROR != midiOutOpen (&MidiOut, mididevice<0? MIDI_MAPPER:mididevice, 0, 0, CALLBACK_NULL))
+	dev_id = MAX(mididevice, 0u);
+	if (MMSYSERR_NOERROR != midiStreamOpen(&MidiOut, &dev_id, 1, (DWORD_PTR)Callback, (DWORD_PTR)this, CALLBACK_FUNCTION))
 	{
-		Printf (PRINT_BOLD, "Could not open MIDI out device\n");
+		Printf(PRINT_BOLD, "Could not open MIDI out device\n");
+		return;
+	}
+
+	// Set time division and tempo.
+	MIDIPROPTIMEDIV timediv = { sizeof(MIDIPROPTIMEDIV), 140 };
+	MIDIPROPTEMPO tempo = { sizeof(MIDIPROPTEMPO), 1000000 };
+
+	if (MMSYSERR_NOERROR != midiStreamProperty(MidiOut, (LPBYTE)&timediv, MIDIPROP_SET | MIDIPROP_TIMEDIV) ||
+		MMSYSERR_NOERROR != midiStreamProperty(MidiOut, (LPBYTE)&tempo, MIDIPROP_SET | MIDIPROP_TEMPO))
+	{
+		Printf(PRINT_BOLD, "Setting MIDI stream speed failed\n");
+		midiStreamClose(MidiOut);
+		MidiOut = NULL;
 		return;
 	}
 
@@ -126,48 +127,98 @@ void MUSSong2::Play (bool looping)
 	// each channel. Because every General MIDI-compliant device must support
 	// this controller, it is the most reliable means of setting the volume.
 
-	VolumeWorks = (MMSYSERR_NOERROR == midiOutGetVolume (MidiOut, &SavedVolume));
+	VolumeWorks = (MMSYSERR_NOERROR == midiOutGetVolume((HMIDIOUT)MidiOut, &SavedVolume));
 	if (VolumeWorks)
 	{
-		VolumeWorks &= (MMSYSERR_NOERROR == midiOutSetVolume (MidiOut, 0xffffffff));
+		VolumeWorks &= (MMSYSERR_NOERROR == midiOutSetVolume((HMIDIOUT)MidiOut, 0xffffffff));
+	}
+	if (!VolumeWorks)
+	{ // Send the standard SysEx message for full master volume
+		memset(&Buffer[0], 0, sizeof(Buffer[0]));
+		Buffer[0].lpData = (LPSTR)&FullVolEvent;
+		Buffer[0].dwBufferLength = sizeof(FullVolEvent);
+		Buffer[0].dwBytesRecorded = sizeof(FullVolEvent);
+
+		if (MMSYSERR_NOERROR == midiOutPrepareHeader((HMIDIOUT)MidiOut, &Buffer[0], sizeof(Buffer[0])))
+		{
+			midiStreamOut(MidiOut, &Buffer[0], sizeof(Buffer[0]));
+		}
+		BufferNum = 1;
 	}
 	else
 	{
-		// Send the standard SysEx message for full master volume
-		BYTE volmess[] = { 0xf0, 0x7f, 0x7f, 0x04, 0x01, 0x7f, 0x7f, 0xf7 };
-		MIDIHDR hdr = { (LPSTR)volmess, sizeof(volmess), };
-
-		if (MMSYSERR_NOERROR == midiOutPrepareHeader (MidiOut, &hdr, sizeof(hdr)))
-		{
-			midiOutLongMsg (MidiOut, &hdr, sizeof(hdr));
-			while (MIDIERR_STILLPLAYING == midiOutUnprepareHeader (MidiOut, &hdr, sizeof(hdr)))
-			{
-				Sleep (10);
-			}
-		}
+		BufferNum = 0;
 	}
 
 	snd_midivolume.Callback();	// set volume to current music's properties
-	PlayerThread = CreateThread (NULL, 0, PlayerProc, this, 0, &tid);
-	if (PlayerThread == NULL)
+	for (int i = 0; i < 16; ++i)
 	{
-		if (VolumeWorks)
-		{
-			midiOutSetVolume (MidiOut, SavedVolume);
-		}
-		midiOutClose (MidiOut);
-		MidiOut = NULL;
+		LastVelocity[i] = 64;
+		ChannelVolumes[i] = 127;
 	}
 
-	m_Status = STATE_Playing;
+	// Fill the initial buffers for the song.
+	do
+	{
+		int res = FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME);
+		if (res == SONG_MORE)
+		{
+			if (MMSYSERR_NOERROR != midiStreamOut(MidiOut, &Buffer[BufferNum], sizeof(Buffer[0])))
+			{
+				Stop();
+				return;
+			}
+			BufferNum ^= 1;
+		}
+		else if (res == SONG_DONE)
+		{
+			if (looping)
+			{
+				MusP = 0;
+				if (SONG_MORE == FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME))
+				{
+					if (MMSYSERR_NOERROR != midiStreamOut(MidiOut, &Buffer[BufferNum], sizeof(MIDIHDR)))
+					{
+						Stop();
+						return;
+					}
+					BufferNum ^= 1;
+				}
+				else
+				{
+					Stop();
+					return;
+				}
+			}
+			else
+			{
+				EndQueued = true;
+			}
+		}
+		else
+		{
+			Stop();
+			return;
+		}
+	}
+	while (BufferNum != 0);
+
+	if (MMSYSERR_NOERROR != midiStreamRestart(MidiOut))
+	{
+		Stop();
+	}
+	else
+	{
+		m_Status = STATE_Playing;
+	}
 }
 
 void MUSSong2::Pause ()
 {
 	if (m_Status == STATE_Playing)
 	{
-		SetEvent (PauseEvent);
 		m_Status = STATE_Paused;
+		OutputVolume(0);
 	}
 }
 
@@ -175,30 +226,28 @@ void MUSSong2::Resume ()
 {
 	if (m_Status == STATE_Paused)
 	{
-		SetEvent (PauseEvent);
+		OutputVolume(midivolume & 0xffff);
 		m_Status = STATE_Playing;
 	}
 }
 
 void MUSSong2::Stop ()
 {
-	if (PlayerThread)
-	{
-		SetEvent (ExitEvent);
-		WaitForSingleObject (PlayerThread, INFINITE);
-		CloseHandle (PlayerThread);
-		PlayerThread = NULL;
-	}
+	EndQueued = 2;
 	if (MidiOut)
 	{
-		midiOutReset (MidiOut);
+		midiStreamStop(MidiOut);
+		midiOutReset((HMIDIOUT)MidiOut);
 		if (VolumeWorks)
 		{
-			midiOutSetVolume (MidiOut, SavedVolume);
+			midiOutSetVolume((HMIDIOUT)MidiOut, SavedVolume);
 		}
-		midiOutClose (MidiOut);
+		midiOutUnprepareHeader((HMIDIOUT)MidiOut, &Buffer[0], sizeof(MIDIHDR));
+		midiOutUnprepareHeader((HMIDIOUT)MidiOut, &Buffer[1], sizeof(MIDIHDR));
+		midiStreamClose(MidiOut);
 		MidiOut = NULL;
 	}
+	m_Status = STATE_Stopped;
 }
 
 bool MUSSong2::IsPlaying ()
@@ -208,99 +257,129 @@ bool MUSSong2::IsPlaying ()
 
 void MUSSong2::SetVolume (float volume)
 {
-	SetEvent (VolumeChangeEvent);
-}
-
-DWORD WINAPI MUSSong2::PlayerProc (LPVOID lpParameter)
-{
-	MUSSong2 *song = (MUSSong2 *)lpParameter;
-	HANDLE events[2] = { song->ExitEvent, song->PauseEvent };
-	bool waited;
-	int i;
-
-	SetThreadPriority (GetCurrentThread (), THREAD_PRIORITY_TIME_CRITICAL);
-
-	for (i = 0; i < 16; ++i)
-	{
-		song->LastVelocity[i] = 64;
-		song->ChannelVolumes[i] = 127;
-	}
-
-	song->OutputVolume (midivolume & 0xffff);
-
-	do
-	{
-		waited = false;
-		song->MusP = 0;
-
-		while (song->SendCommand () == SEND_WAIT)
-		{
-			DWORD time = 0;
-			BYTE t;
-			do
-			{
-				t = song->MusBuffer[song->MusP++];
-				time = (time << 7) | (t & 127);
-			}
-			while (t & 128);
-
-			waited = true;
-
-			// Wait for the exit or pause event or the next note
-			switch (WaitForMultipleObjects (2, events, FALSE, time * 1000 / 140))
-			{
-			case WAIT_OBJECT_0:
-				song->m_Status = STATE_Stopped;
-				return 0;
-
-			case WAIT_OBJECT_0+1:
-				// Go paused
-				song->OutputVolume (0);
-				// Wait for the exit or pause event
-				if (WAIT_OBJECT_0 == WaitForMultipleObjects (2, events, FALSE, INFINITE))
-				{
-					song->m_Status = STATE_Stopped;
-					return 0;
-				}
-				song->OutputVolume (midivolume & 0xffff);
-			}
-
-			// Check if the volume needs changing
-			if (WAIT_OBJECT_0 == WaitForSingleObject (song->VolumeChangeEvent, 0))
-			{
-				song->OutputVolume (midivolume & 0xffff);
-			}
-		}
-	}
-	while (waited && song->m_Looping);
-
-	song->m_Status = STATE_Stopped;
-	return 0;
+	OutputVolume(midivolume & 0xffff);
 }
 
 void MUSSong2::OutputVolume (DWORD volume)
 {
-	for (int i = 0; i < 16; ++i)
+	NewVolume = volume;
+	VolumeChanged = true;
+}
+
+void CALLBACK MUSSong2::Callback(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dwInstance, DWORD dwParam1, DWORD dwParam2)
+{
+	MUSSong2 *self = (MUSSong2 *)dwInstance;
+
+	if (self->EndQueued > 1)
 	{
-		BYTE courseVol = (BYTE)(((ChannelVolumes[i]+1) * volume) >> 16);
-		midiOutShortMsg (MidiOut, i | MIDI_CTRLCHANGE | (7<<8) | (courseVol<<16));
+		return;
+	}
+	if (uMsg == MOM_DONE)
+	{
+		SetEvent(MusicEvent);
 	}
 }
 
-int MUSSong2::SendCommand ()
+void MUSSong2::ServiceEvent()
 {
-	BYTE event = 0;
+	if (EndQueued == 1)
+	{
+		Stop();
+		return;
+	}
+	if (MMSYSERR_NOERROR != midiOutUnprepareHeader((HMIDIOUT)MidiOut, &Buffer[BufferNum], sizeof(MIDIHDR)))
+	{
+		Printf ("Failed unpreparing MIDI header.\n");
+		Stop();
+		return;
+	}
+fill:
+	switch (FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME))
+	{
+	case SONG_MORE:
+		if (MMSYSERR_NOERROR != midiStreamOut(MidiOut, &Buffer[BufferNum], sizeof(MIDIHDR)))
+		{
+			Printf ("Failed streaming MIDI buffer.\n");
+			Stop();
+		}
+		else
+		{
+			BufferNum ^= 1;
+		}
+		break;
 
+	case SONG_DONE:
+		if (m_Looping)
+		{
+			MusP = 0;
+			Restarting = true;
+			goto fill;
+		}
+		EndQueued = 1;
+		break;
+
+	default:
+		Stop();
+		break;
+	}
+}
+
+// Returns SONG_MORE if the buffer was prepared with data.
+// Returns SONG_DONE if the song's end was reached. The buffer will never have data in this case.
+// Returns SONG_ERROR if there was a problem preparing the buffer.
+int MUSSong2::FillBuffer(int buffer_num, int max_events, DWORD max_time)
+{
 	if (MusP >= MaxMusP)
-		return SEND_DONE;
+	{
+		return SONG_DONE;
+	}
 
-	while (MusP < MaxMusP && (event & 0x70) != MUS_SCOREEND)
+	int i = 0;
+	SHORTMIDIEVENT *events = Events[buffer_num];
+	DWORD tot_time = 0;
+	DWORD time = 0;
+
+	// If the volume has changed, stick those events at the start of this buffer.
+	if (VolumeChanged)
+	{
+		VolumeChanged = false;
+		for (; i < 16; ++i)
+		{
+			BYTE courseVol = (BYTE)(((ChannelVolumes[i]+1) * NewVolume) >> 16);
+			events[i].dwDeltaTime = 0;
+			events[i].dwStreamID = 0;
+			events[i].dwEvent = MEVT_SHORTMSG | MIDI_CTRLCHANGE | i | (7<<8) | (courseVol<<16);
+		}
+	}
+
+	// If the song is starting over, stop all notes in case any were left hanging.
+	if (Restarting)
+	{
+		Restarting = false;
+		for (int j = 0; j < 16; ++i, ++j)
+		{
+			events[i].dwDeltaTime = 0;
+			events[i].dwStreamID = 0;
+			events[i].dwEvent = MEVT_SHORTMSG | MIDI_NOTEOFF | i | (60 << 8) | (64<<16);
+		}
+	}
+
+	// Play nothing while paused.
+	if (m_Status == STATE_Paused)
+	{
+		time = max_time;
+		goto end;
+	}
+
+	// The final event is for a NOP to hold the delay from the last event.
+	max_events--;
+
+	for (; i < max_events && tot_time <= max_time; ++i)
 	{
 		BYTE mid1, mid2;
 		BYTE channel;
 		BYTE t = 0, status;
-		
-		event = MusBuffer[MusP++];
+		BYTE event = MusBuffer[MusP++];
 		
 		if ((event & 0x70) != MUS_SCOREEND)
 		{
@@ -333,7 +412,7 @@ int MUSSong2::SendCommand ()
 			mid1 = t & 127;
 			if (t & 128)
 			{
-				LastVelocity[channel] = MusBuffer[MusP++];;
+				LastVelocity[channel] = MusBuffer[MusP++];
 			}
 			mid2 = LastVelocity[channel];
 			break;
@@ -376,20 +455,43 @@ int MUSSong2::SendCommand ()
 			
 		case MUS_SCOREEND:
 		default:
-			return SEND_DONE;
-			break;
+			MusP = MaxMusP;
+			goto end;
 		}
 
-		if (MMSYSERR_NOERROR != midiOutShortMsg (MidiOut, status | (mid1 << 8) | (mid2 << 16)))
-		{
-			return SEND_DONE;
-		}
+		events[i].dwDeltaTime = time;
+		events[i].dwStreamID = 0;
+		events[i].dwEvent = MEVT_SHORTMSG | status | (mid1 << 8) | (mid2 << 16);
+
+		time = 0;
 		if (event & 128)
 		{
-			return SEND_WAIT;
+			do
+			{
+				t = MusBuffer[MusP++];
+				time = (time << 7) | (t & 127);
+			}
+			while (t & 128);
 		}
+		tot_time += time;
 	}
-
-	return SEND_DONE;
+end:
+	if (time != 0)
+	{
+		events[i].dwDeltaTime = time;
+		events[i].dwStreamID = 0;
+		events[i].dwEvent = MEVT_NOP;
+		i++;
+	}
+	memset(&Buffer[buffer_num], 0, sizeof(MIDIHDR));
+	Buffer[buffer_num].lpData = (LPSTR)events;
+	Buffer[buffer_num].dwBufferLength = sizeof(events[0]) * i;
+	Buffer[buffer_num].dwBytesRecorded = sizeof(events[0]) * i;
+	if (MMSYSERR_NOERROR != midiOutPrepareHeader((HMIDIOUT)MidiOut, &Buffer[buffer_num], sizeof(MIDIHDR)))
+	{
+		Printf ("Preparing MIDI header failed.\n");
+		return SONG_ERROR;
+	}
+	return SONG_MORE;
 }
 #endif

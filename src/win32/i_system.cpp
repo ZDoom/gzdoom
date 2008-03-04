@@ -62,6 +62,7 @@
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "v_font.h"
+#include "i_musicinterns.h"
 
 #include "stats.h"
 
@@ -85,6 +86,7 @@ UINT TimerPeriod;
 UINT TimerEventID;
 UINT MillisecondsPerTic;
 HANDLE NewTicArrived;
+HANDLE MusicEvent;
 uint32 LanguageIDs[4];
 void CalculateCPUSpeed ();
 
@@ -173,7 +175,15 @@ int I_WaitForTicEvent (int prevtic)
 {
 	while (prevtic >= tics)
 	{
-		WaitForSingleObject (NewTicArrived, 1000/TICRATE);
+		HANDLE handles[2] = { NewTicArrived, MusicEvent };
+		switch(WaitForMultipleObjects(1 + (MusicEvent != NULL), handles, FALSE, 1000/TICRATE))
+		{
+		case WAIT_OBJECT_0 + 1:
+			if (currSong != NULL)
+			{
+				currSong->ServiceEvent();
+			}
+		}
 	}
 
 	return tics;
@@ -435,6 +445,11 @@ void I_Init (void)
 		I_WaitForTic = I_WaitForTicPolled;
 	}
 
+	if ((MusicEvent = CreateEvent(NULL, FALSE, FALSE, NULL)) == NULL)
+	{
+		Printf ("Creation of music event failed.");
+	}
+
 	atterm (I_ShutdownSound);
 	I_InitSound ();
 }
@@ -500,6 +515,8 @@ void I_Quit (void)
 		timeKillEvent (TimerEventID);
 	if (NewTicArrived)
 		CloseHandle (NewTicArrived);
+	if (MusicEvent)
+		CloseHandle (MusicEvent);
 
 	timeEndPeriod (TimerPeriod);
 

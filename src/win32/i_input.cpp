@@ -95,6 +95,7 @@
 #include "gameconfigfile.h"
 #include "win32iface.h"
 #include "templates.h"
+#include "i_musicinterns.h"
 
 #define DINPUT_BUFFERSIZE	32
 
@@ -109,6 +110,7 @@ BOOL DI_InitJoy (void);
 
 extern HINSTANCE g_hInst;
 extern DWORD SessionID;
+extern HANDLE MusicEvent;
 
 extern void ShowEAXEditor ();
 extern bool SpawnEAXWindow;
@@ -1929,22 +1931,34 @@ void I_GetEvent ()
 
 	// Briefly enter an alertable state so that if a secondary thread
 	// crashed, we will execute the APC it sent now.
-	SleepEx (0, TRUE);
-
-//	for (;;) {
-		while (PeekMessage (&mess, NULL, 0, 0, PM_REMOVE))
+	if (MusicEvent != NULL)
+	{
+		DWORD res;
+		do
 		{
-			if (mess.message == WM_QUIT)
-				exit (mess.wParam);
-			if (EAXEditWindow == 0 || !IsDialogMessage (EAXEditWindow, &mess))
-			{
-				TranslateMessage (&mess);
-				DispatchMessage (&mess);
-			}
+			res = WaitForSingleObjectEx(MusicEvent, 0, TRUE);
 		}
-//		if (havefocus || netgame || gamestate != GS_LEVEL)
-//			break;
-//	}
+		while (res == WAIT_IO_COMPLETION);
+		if (res == WAIT_OBJECT_0 && currSong != NULL)
+		{
+			currSong->ServiceEvent();
+		}
+	}
+	else
+	{
+		SleepEx (0, TRUE);
+	}
+
+	while (PeekMessage (&mess, NULL, 0, 0, PM_REMOVE))
+	{
+		if (mess.message == WM_QUIT)
+			exit (mess.wParam);
+		if (EAXEditWindow == 0 || !IsDialogMessage (EAXEditWindow, &mess))
+		{
+			TranslateMessage (&mess);
+			DispatchMessage (&mess);
+		}
+	}
 
 	KeyRead ();
 

@@ -42,6 +42,7 @@ public:
 	virtual bool IsMIDI () const = 0;
 	virtual bool IsValid () const = 0;
 	virtual bool SetPosition (int order);
+	virtual void ServiceEvent ();
 
 	enum EState
 	{
@@ -55,6 +56,18 @@ public:
 // MUS file played with MIDI output messages --------------------------------
 
 #ifdef _WIN32
+struct SHORTMIDIEVENT
+{
+	DWORD dwDeltaTime;
+	DWORD dwStreamID;
+	DWORD dwEvent;
+};
+
+struct VOLSYSEXEVENT : SHORTMIDIEVENT
+{
+	BYTE SysEx[8];
+};
+
 class MUSSong2 : public MusInfo
 {
 public:
@@ -74,26 +87,41 @@ protected:
 	static DWORD WINAPI PlayerProc (LPVOID lpParameter);
 	void OutputVolume (DWORD volume);
 	int SendCommand ();
+	bool TranslateSong(const BYTE *buffer, size_t len);
+	int CountEvents(const BYTE *buffer, size_t len);
+	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
+	void ServiceEvent();
+	static void CALLBACK Callback(HMIDIOUT handle, UINT uMsg, DWORD_PTR dwInstance, DWORD dwParam1, DWORD dwParam2);
 
 	enum
 	{
-		SEND_DONE,
-		SEND_WAIT
+		MAX_EVENTS = 128
 	};
 
-	HMIDIOUT MidiOut;
-	HANDLE PlayerThread;
-	HANDLE PauseEvent;
-	HANDLE ExitEvent;
-	HANDLE VolumeChangeEvent;
+	enum
+	{
+		SONG_MORE,
+		SONG_DONE,
+		SONG_ERROR
+	};
+
+	HMIDISTRM MidiOut;
 	DWORD SavedVolume;
 	bool VolumeWorks;
 
-	BYTE *MusBuffer;
 	MUSHeader *MusHeader;
+	BYTE *MusBuffer;
 	BYTE LastVelocity[16];
 	BYTE ChannelVolumes[16];
 	size_t MusP, MaxMusP;
+	VOLSYSEXEVENT FullVolEvent;
+	SHORTMIDIEVENT Events[2][MAX_EVENTS];
+	MIDIHDR Buffer[2];
+	int BufferNum;
+	int EndQueued;
+	bool VolumeChanged;
+	bool Restarting;
+	DWORD NewVolume;
 };
 #endif
 

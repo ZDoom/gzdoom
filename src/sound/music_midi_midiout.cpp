@@ -1,10 +1,62 @@
+/*
+** music_midi_midiout.cpp
+** Code to let ZDoom play SMF MIDI music through the MIDI streaming API.
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2008 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** This file also supports the Apogee Sound System's EMIDI files. That
+** basically means you can play the Duke3D songs without any editing and
+** have them sound right.
+*/
+
 #ifdef _WIN32
+
+// HEADER FILES ------------------------------------------------------------
+
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
 
-EXTERN_CVAR (Float, snd_midivolume)
+// MACROS ------------------------------------------------------------------
+
+#define MAX_TIME	(1000000/20)	// Send out 1/20 of a sec of events at a time.
+
+// Used by SendCommand to check for unexpected end-of-track conditions.
+#define CHECK_FINISHED \
+	if (track->TrackP >= track->MaxTrackP) \
+	{ \
+		track->Finished = true; \
+		return events; \
+	}
+
+// TYPES -------------------------------------------------------------------
 
 struct MIDISong2::TrackInfo
 {
@@ -27,24 +79,50 @@ struct MIDISong2::TrackInfo
 	DWORD ReadVarLen ();
 };
 
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+EXTERN_CVAR (Float, snd_midivolume)
+
 extern DWORD midivolume;
 extern UINT mididevice;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static BYTE EventLengths[7] = { 2, 2, 2, 2, 1, 1, 2 };
 static BYTE CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
 
-MIDISong2::MIDISong2 (FILE *file, char * musiccache, int len)
-: MidiOut (0), PlayerThread (0),
-  PauseEvent (0), ExitEvent (0), VolumeChangeEvent (0),
-  MusHeader (0)
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+// CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// MIDISong2 Constructor
+//
+// Buffers the file and does some validation of the SMF header.
+//
+//==========================================================================
+
+MIDISong2::MIDISong2 (FILE *file, char *musiccache, int len)
+: MusHeader(0), Tracks(0)
 {
 	int p;
 	int i;
 
+	if (ExitEvent == NULL)
+	{
+		return;
+	}
 	MusHeader = new BYTE[len];
 	if (file != NULL)
 	{
-		if (fread (MusHeader, 1, len, file) != (size_t)len)
+		if (fread(MusHeader, 1, len, file) != (size_t)len)
 			return;
 	}
 	else
@@ -70,8 +148,12 @@ MIDISong2::MIDISong2 (FILE *file, char * musiccache, int len)
 		NumTracks = MusHeader[10] * 256 + MusHeader[11];
 	}
 
-	// The timers only have millisecond accuracy, not microsecond.
-	Division = (MusHeader[12] * 256 + MusHeader[13]) * 1000;
+	// The division is the number of pulses per quarter note (PPQN).
+	Division = MusHeader[12] * 256 + MusHeader[13];
+	if (Division == 0)
+	{ // PPQN is zero? Then the song cannot play because it never pulses.
+		return;
+	}
 
 	Tracks = new TrackInfo[NumTracks];
 
@@ -110,42 +192,16 @@ MIDISong2::MIDISong2 (FILE *file, char * musiccache, int len)
 	{ // No tracks, so nothing to play
 		return;
 	}
-
-	ExitEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
-	if (ExitEvent == NULL)
-	{
-		Printf (PRINT_BOLD, "Could not create exit event for MIDI playback\n");
-		return;
-	}
-	VolumeChangeEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
-	if (VolumeChangeEvent == NULL)
-	{
-		Printf (PRINT_BOLD, "Could not create volume event for MIDI playback\n");
-		return;
-	}
-	PauseEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
-	if (PauseEvent == NULL)
-	{
-		Printf (PRINT_BOLD, "Could not create pause event for MIDI playback\n");
-	}
 }
+
+//==========================================================================
+//
+// MIDISong2 Destructor
+//
+//==========================================================================
 
 MIDISong2::~MIDISong2 ()
 {
-	Stop ();
-
-	if (PauseEvent != NULL)
-	{
-		CloseHandle (PauseEvent);
-	}
-	if (ExitEvent != NULL)
-	{
-		CloseHandle (ExitEvent);
-	}
-	if (VolumeChangeEvent != NULL)
-	{
-		CloseHandle (VolumeChangeEvent);
-	}
 	if (Tracks != NULL)
 	{
 		delete[] Tracks;
@@ -156,27 +212,20 @@ MIDISong2::~MIDISong2 ()
 	}
 }
 
-bool MIDISong2::IsMIDI () const
-{
-	return true;
-}
+//==========================================================================
+//
+// MIDISong2 :: CheckCaps
+//
+// Find out if this is an FM synth or not for EMIDI's benefit.
+//
+//==========================================================================
 
-bool MIDISong2::IsValid () const
-{
-	return PauseEvent != 0;
-}
-
-void MIDISong2::Play (bool looping)
+void MIDISong2::CheckCaps(DWORD dev_id)
 {
 	MIDIOUTCAPS caps;
-	DWORD tid;
 
-	m_Status = STATE_Stopped;
-	m_Looping = looping;
-
-	// Find out if this an FM synth or not for EMIDI
 	DesignationMask = 0xFF0F;
-	if (MMSYSERR_NOERROR == midiOutGetDevCaps (mididevice<0? MIDI_MAPPER:mididevice, &caps, sizeof(caps)))
+	if (MMSYSERR_NOERROR == midiOutGetDevCaps (dev_id, &caps, sizeof(caps)))
 	{
 		if (caps.wTechnology == MOD_FMSYNTH)
 		{
@@ -187,222 +236,123 @@ void MIDISong2::Play (bool looping)
 			DesignationMask = 0x0001;
 		}
 	}
-
-	if (MMSYSERR_NOERROR != midiOutOpen (&MidiOut, mididevice<0? MIDI_MAPPER:mididevice, 0, 0, CALLBACK_NULL))
-	{
-		Printf (PRINT_BOLD, "Could not open MIDI out device\n");
-		return;
-	}
-
-	// Try two different methods for setting the stream to full volume.
-	// Unfortunately, this isn't as reliable as it once was, which is a pity.
-	// The real volume selection is done by setting the volume controller for
-	// each channel. Because every General MIDI-compliant device must support
-	// this controller, it is the most reliable means of setting the volume.
-
-	VolumeWorks = (MMSYSERR_NOERROR == midiOutGetVolume (MidiOut, &SavedVolume));
-	if (VolumeWorks)
-	{
-		VolumeWorks &= (MMSYSERR_NOERROR == midiOutSetVolume (MidiOut, 0xffffffff));
-	}
-	else
-	{
-		// Send the standard SysEx message for full master volume
-		BYTE volmess[] = { 0xf0, 0x7f, 0x7f, 0x04, 0x01, 0x7f, 0x7f, 0xf7 };
-		MIDIHDR hdr = { (LPSTR)volmess, sizeof(volmess), };
-
-		if (MMSYSERR_NOERROR == midiOutPrepareHeader (MidiOut, &hdr, sizeof(hdr)))
-		{
-			midiOutLongMsg (MidiOut, &hdr, sizeof(hdr));
-			while (MIDIERR_STILLPLAYING == midiOutUnprepareHeader (MidiOut, &hdr, sizeof(hdr)))
-			{
-				Sleep (10);
-			}
-		}
-	}
-
-	snd_midivolume.Callback();	// set volume to current music's properties
-	PlayerThread = CreateThread (NULL, 0, PlayerProc, this, 0, &tid);
-	if (PlayerThread == NULL)
-	{
-		if (VolumeWorks)
-		{
-			midiOutSetVolume (MidiOut, SavedVolume);
-		}
-		midiOutClose (MidiOut);
-		MidiOut = NULL;
-	}
-
-	m_Status = STATE_Playing;
 }
 
-void MIDISong2::Pause ()
+
+//==========================================================================
+//
+// MIDISong2 :: DoInitialSetup
+//
+// Sets the starting channel volumes.
+//
+//==========================================================================
+
+void MIDISong2 :: DoInitialSetup()
 {
-	if (m_Status == STATE_Playing)
-	{
-		SetEvent (PauseEvent);
-		m_Status = STATE_Paused;
-	}
-}
-
-void MIDISong2::Resume ()
-{
-	if (m_Status == STATE_Paused)
-	{
-		SetEvent (PauseEvent);
-		m_Status = STATE_Playing;
-	}
-}
-
-void MIDISong2::Stop ()
-{
-	if (PlayerThread)
-	{
-		SetEvent (ExitEvent);
-		WaitForSingleObject (PlayerThread, INFINITE);
-		CloseHandle (PlayerThread);
-		PlayerThread = NULL;
-	}
-	if (MidiOut)
-	{
-		midiOutReset (MidiOut);
-		if (VolumeWorks)
-		{
-			midiOutSetVolume (MidiOut, SavedVolume);
-		}
-		midiOutClose (MidiOut);
-		MidiOut = NULL;
-	}
-}
-
-bool MIDISong2::IsPlaying ()
-{
-	return m_Status != STATE_Stopped;
-}
-
-void MIDISong2::SetVolume (float volume)
-{
-	SetEvent (VolumeChangeEvent);
-}
-
-DWORD WINAPI MIDISong2::PlayerProc (LPVOID lpParameter)
-{
-	MIDISong2 *song = (MIDISong2 *)lpParameter;
-	HANDLE events[2] = { song->ExitEvent, song->PauseEvent };
-	bool waited = false;
-	int i;
-	DWORD wait;
-
-	SetThreadPriority (GetCurrentThread (), THREAD_PRIORITY_TIME_CRITICAL);
-
-	for (i = 0; i < 16; ++i)
+	for (int i = 0; i < 16; ++i)
 	{
 		// The ASS uses a default volume of 90, but all the other
 		// sources I can find say it's 100. Ideally, any song that
 		// cares about its volume is going to initialize it to
 		// whatever it wants and override this default.
-		song->ChannelVolumes[i] = 100;
+		ChannelVolumes[i] = 100;
 	}
-
-	song->OutputVolume (midivolume & 0xffff);
-	song->Tempo = 500000;
-
-	do
-	{
-		for (i = 0; i < song->NumTracks; ++i)
-		{
-			song->Tracks[i].TrackP = 0;
-			song->Tracks[i].Finished = false;
-			song->Tracks[i].RunningStatus = 0;
-			song->Tracks[i].Designated = false;
-			song->Tracks[i].Designation = 0;
-			song->Tracks[i].LoopCount = -1;
-			song->Tracks[i].EProgramChange = false;
-			song->Tracks[i].EVolume = false;
-		}
-
-		song->ProcessInitialMetaEvents ();
-
-		for (i = 0; i < song->NumTracks; ++i)
-		{
-			song->Tracks[i].Delay = song->Tracks[i].ReadVarLen ();
-		}
-
-		song->TrackDue = song->Tracks;
-		song->TrackDue = song->FindNextDue ();
-
-		while (0 != (wait = song->SendCommands ()))
-		{
-			waited = true;
-
-			// Wait for the exit or pause event or the next note
-			switch (WaitForMultipleObjects (2, events, FALSE, wait * song->Tempo / song->Division))
-			{
-			case WAIT_OBJECT_0:
-				song->m_Status = STATE_Stopped;
-				return 0;
-
-			case WAIT_OBJECT_0+1:
-				// Go paused
-				song->OutputVolume (0);
-				// Wait for the exit or pause event
-				if (WAIT_OBJECT_0 == WaitForMultipleObjects (2, events, FALSE, INFINITE))
-				{
-					song->m_Status = STATE_Stopped;
-					return 0;
-				}
-				song->OutputVolume (midivolume & 0xffff);
-			}
-
-			for (i = 0; i < song->NumTracks; ++i)
-			{
-				if (!song->Tracks[i].Finished)
-				{
-					song->Tracks[i].Delay -= wait;
-				}
-			}
-			song->TrackDue = song->FindNextDue ();
-
-			// Check if the volume needs changing
-			if (WAIT_OBJECT_0 == WaitForSingleObject (song->VolumeChangeEvent, 0))
-			{
-				song->OutputVolume (midivolume & 0xffff);
-			}
-		}
-	}
-	while (waited && song->m_Looping);
-
-	song->m_Status = STATE_Stopped;
-	return 0;
 }
 
-void MIDISong2::OutputVolume (DWORD volume)
+//==========================================================================
+//
+// MIDISong2 :: DoRestart
+//
+// Rewinds every track.
+//
+//==========================================================================
+
+void MIDISong2 :: DoRestart()
 {
-	for (int i = 0; i < 16; ++i)
+	int i;
+
+	// Set initial state.
+	for (i = 0; i < NumTracks; ++i)
 	{
-		BYTE courseVol = (BYTE)(((ChannelVolumes[i]+1) * volume) >> 16);
-		midiOutShortMsg (MidiOut, i | MIDI_CTRLCHANGE | (7<<8) | (courseVol<<16));
+		Tracks[i].TrackP = 0;
+		Tracks[i].Finished = false;
+		Tracks[i].RunningStatus = 0;
+		Tracks[i].Designated = false;
+		Tracks[i].Designation = 0;
+		Tracks[i].LoopCount = -1;
+		Tracks[i].EProgramChange = false;
+		Tracks[i].EVolume = false;
 	}
+	ProcessInitialMetaEvents ();
+	for (i = 0; i < NumTracks; ++i)
+	{
+		Tracks[i].Delay = Tracks[i].ReadVarLen();
+	}
+	TrackDue = Tracks;
+	TrackDue = FindNextDue();
 }
 
-DWORD MIDISong2::SendCommands ()
+//==========================================================================
+//
+// MIDISong2 :: CheckDone
+//
+//==========================================================================
+
+bool MIDISong2::CheckDone()
 {
-	while (TrackDue && TrackDue->Delay == 0)
-	{
-		SendCommand (TrackDue);
-		TrackDue = FindNextDue ();
-	}
-	return TrackDue ? TrackDue->Delay : 0;
+	return TrackDue == NULL;
 }
 
-#define CHECK_FINISHED \
-	if (track->TrackP >= track->MaxTrackP) \
-	{ \
-		track->Finished = true; \
-		return; \
-	}
+//==========================================================================
+//
+// MIDISong2 :: MakeEvents
+//
+// Copies MIDI events from the SMF and puts them into a MIDI stream
+// buffer. Returns the new position in the buffer.
+//
+//==========================================================================
 
-void MIDISong2::SendCommand (TrackInfo *track)
+DWORD *MIDISong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
+{
+	DWORD tot_time = 0;
+	DWORD time = 0;
+
+	while (TrackDue && events < max_event_p && tot_time <= max_time)
+	{
+		time = TrackDue->Delay;
+		// Advance time for all tracks by the amount needed for the one up next.
+		if (time != 0)
+		{
+			tot_time += time * Tempo / Division;
+			for (int i = 0; i < NumTracks; ++i)
+			{
+				if (!Tracks[i].Finished)
+				{
+					Tracks[i].Delay -= time;
+				}
+			}
+		}
+		// Play all events for this tic.
+		do
+		{
+			events = SendCommand(events, TrackDue, time);
+			TrackDue = FindNextDue();
+			time = 0;
+		}
+		while (TrackDue && TrackDue->Delay == 0 && events < max_event_p);
+	}
+	return events;
+}
+
+//==========================================================================
+//
+// MIDISong2 :: SendCommand
+//
+// Places a single MIDIEVENT in the event buffer.
+//
+//==========================================================================
+
+DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 {
 	DWORD len;
 	BYTE event, data1 = 0, data2 = 0;
@@ -412,7 +362,7 @@ void MIDISong2::SendCommand (TrackInfo *track)
 	event = track->TrackBegin[track->TrackP++];
 	CHECK_FINISHED
 
-	if (event != 0xF0 && event != 0xFF && event != 0xF7)
+	if (event != MIDI_SYSEX && event != MIDI_META && event != MIDI_SYSEXEND)
 	{
 		// Normal short message
 		if ((event & 0xF0) == 0xF0)
@@ -446,39 +396,35 @@ void MIDISong2::SendCommand (TrackInfo *track)
 
 		switch (event & 0x70)
 		{
-		case 0x40:
+		case MIDI_PRGMCHANGE & 0x70:
 			if (track->EProgramChange)
 			{
-				event = 0xFF;
+				event = MIDI_META;
 			}
 			break;
 
-		case 0x30:
+		case MIDI_CTRLCHANGE & 0x70:
 			switch (data1)
 			{
-			case 7:
+			case 7:		// Channel volume
 				if (track->EVolume)
-				{
-					event = 0xFF;
+				{ // Tracks that use EMIDI volume ignore normal volume changes.
+					event = MIDI_META;
 				}
 				else
 				{
-					// Some devices don't support master volume
-					// (e.g. the Audigy's software MIDI synth--but not its two hardware ones),
-					// so assume none of them do and scale channel volumes manually.
-					ChannelVolumes[event & 15] = data2;
-					data2 = (BYTE)(((data2 + 1) * (midivolume & 0xffff)) >> 16);
+					data2 = VolumeControllerChange(event & 15, data2);
 				}
 				break;
 
-			case 39:
+			case 39:	// Fine channel volume
 				// Skip fine volume adjustment because I am lazy.
 				// (And it doesn't seem to be used much anyway.)
-				event = 0xFF;
+				event = MIDI_META;
 				break;
 
 			case 110:	// EMIDI Track Designation
-				// Instruments 4, 5, 6, and 7 are all FM syth.
+				// Instruments 4, 5, 6, and 7 are all FM synth.
 				// The rest are all wavetable.
 				if (data2 == 127)
 				{
@@ -513,8 +459,7 @@ void MIDISong2::SendCommand (TrackInfo *track)
 			case 113:	// EMIDI Volume
 				track->EVolume = true;
 				data1 = 7;
-				ChannelVolumes[event & 15] = data2;
-				data2 = (BYTE)(((data2 + 1) * (midivolume & 0xffff)) >> 16);
+				data2 = VolumeControllerChange(event & 15, data2);
 				break;
 
 			case 116:	// EMIDI Loop Begin
@@ -581,31 +526,29 @@ void MIDISong2::SendCommand (TrackInfo *track)
 						}
 					}
 				}
-				event = 0xFF;
+				event = MIDI_META;
 				break;
 			}
 		}
-		if (event != 0xFF && (!track->Designated || (track->Designation & DesignationMask)))
+		if (event != MIDI_META && (!track->Designated || (track->Designation & DesignationMask)))
 		{
-			if (MMSYSERR_NOERROR != midiOutShortMsg (MidiOut, event | (data1<<8) | (data2<<16)))
-			{
-				track->Finished = true;
-				return;
-			}
+			events[0] = delay;
+			events[1] = 0;
+			events[2] = event | (data1<<8) | (data2<<16);
+			events += 3;
 		}
 	}
 	else
 	{
-		// Skip SysEx events just because I don't want to bother with
-		// preparing headers and sending them out. The old MIDI player
-		// ignores them too, so this won't break anything that played
-		// before.
-		if (event == 0xF0 || event == 0xF7)
+		// Skip SysEx events just because I don't want to bother with them.
+		// The old MIDI player ignored them too, so this won't break
+		// anything that played before.
+		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen ();
 			track->TrackP += len;
 		}
-		else if (event == 0xFF)
+		else if (event == MIDI_META)
 		{
 			// It's a meta-event
 			event = track->TrackBegin[track->TrackP++];
@@ -617,15 +560,19 @@ void MIDISong2::SendCommand (TrackInfo *track)
 			{
 				switch (event)
 				{
-				case 0x2F:
+				case MIDI_META_EOT:
 					track->Finished = true;
 					break;
 
-				case 0x51:
+				case MIDI_META_TEMPO:
 					Tempo =
 						(track->TrackBegin[track->TrackP+0]<<16) |
 						(track->TrackBegin[track->TrackP+1]<<8)  |
 						(track->TrackBegin[track->TrackP+2]);
+					events[0] = delay;
+					events[1] = 0;
+					events[2] = (MEVT_TEMPO << 24) | Tempo;
+					events += 3;
 					break;
 				}
 				track->TrackP += len;
@@ -642,11 +589,18 @@ void MIDISong2::SendCommand (TrackInfo *track)
 	}
 	if (!track->Finished)
 	{
-		track->Delay = track->ReadVarLen ();
+		track->Delay = track->ReadVarLen();
 	}
+	return events;
 }
 
-#undef CHECK_FINISHED
+//==========================================================================
+//
+// MIDISong2 :: ProcessInitialMetaEvents
+//
+// Handle all the meta events at the start of each track.
+//
+//==========================================================================
 
 void MIDISong2::ProcessInitialMetaEvents ()
 {
@@ -670,15 +624,16 @@ void MIDISong2::ProcessInitialMetaEvents ()
 			{
 				switch (event)
 				{
-				case 0x2F:
+				case MIDI_META_EOT:
 					track->Finished = true;
 					break;
 
-				case 0x51:
-					Tempo =
+				case MIDI_META_TEMPO:
+					SetTempo(
 						(track->TrackBegin[track->TrackP+0]<<16) |
 						(track->TrackBegin[track->TrackP+1]<<8)  |
-						(track->TrackBegin[track->TrackP+2]);
+						(track->TrackBegin[track->TrackP+2])
+					);
 					break;
 				}
 			}
@@ -691,6 +646,14 @@ void MIDISong2::ProcessInitialMetaEvents ()
 	}
 }
 
+//==========================================================================
+//
+// MIDISong2 :: TrackInfo :: ReadVarLen
+//
+// Reads a variable-length SMF number.
+//
+//==========================================================================
+
 DWORD MIDISong2::TrackInfo::ReadVarLen ()
 {
 	DWORD time = 0, t = 0x80;
@@ -702,6 +665,15 @@ DWORD MIDISong2::TrackInfo::ReadVarLen ()
 	}
 	return time;
 }
+
+//==========================================================================
+//
+// MIDISong2 :: TrackInfo :: FindNextDue
+//
+// Scans every track for the next event to play. Returns NULL if all events
+// have been consumed.
+//
+//==========================================================================
 
 MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 {
@@ -744,5 +716,24 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 		return track < &Tracks[NumTracks] ? track : NULL;
 	}
 	return NULL;
+}
+
+
+//==========================================================================
+//
+// MIDISong2 :: SetTempo
+//
+// Sets the tempo from a track's initial meta events.
+//
+//==========================================================================
+
+void MIDISong2::SetTempo(int new_tempo)
+{
+	MIDIPROPTEMPO tempo = { sizeof(MIDIPROPTEMPO), new_tempo };
+
+	if (MMSYSERR_NOERROR == midiStreamProperty(MidiOut, (LPBYTE)&tempo, MIDIPROP_SET | MIDIPROP_TEMPO))
+	{
+		Tempo = new_tempo;
+	}
 }
 #endif

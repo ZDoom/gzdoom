@@ -1,9 +1,23 @@
+March 4, 2008
+- Moved the identical code between the MUS and MIDI streamers into a new base
+  class so they all the low-level details of MIDI streaming are kept in
+  one place.
+- Converted the SMF MIDI playback to use the same MIDI streams as MUS
+  playback.
+- Moved MUS playback back into its own thread so that it can continue
+  uninterrupted if the main thread is too busy to service it in a timely
+  manner.
+- Fixed: The MEVT_* values are not defined shifted into their spot for a
+  MIDIEVENT, so I need to do it myself.
+- Fixed: Pausing a MUS and the changing snd_midivolume caused the paused
+  notes to become audible.
+
 March 3, 2008
 - Changed MUS playback to use MIDI streams, like it did during the early days
   of ZDoom, except now the entire song isn't prebuffered in large chunks, so
   I can insert MIDI events into the playback with fairly low latency. This
   should offer more precise timing than the combination of low-level MIDI and
-  WaitForSingleObject timeouts.
+  WaitForMultipleObjects timeouts that it replaces.
 - Fixed: PTR_BounceTraverse only checked for projectiles that were too
   high to pass through two-sided lines, but not ones that were too low.
 - Fixed: SBARINFO couldn't detect the extreme death damage type for the

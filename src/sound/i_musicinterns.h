@@ -42,7 +42,7 @@ public:
 	virtual bool IsMIDI () const = 0;
 	virtual bool IsValid () const = 0;
 	virtual bool SetPosition (int order);
-	virtual void ServiceEvent ();
+	virtual void Update();
 
 	enum EState
 	{
@@ -53,45 +53,41 @@ public:
 	bool m_Looping;
 };
 
-// MUS file played with MIDI output messages --------------------------------
-
 #ifdef _WIN32
-struct SHORTMIDIEVENT
-{
-	DWORD dwDeltaTime;
-	DWORD dwStreamID;
-	DWORD dwEvent;
-};
 
-struct VOLSYSEXEVENT : SHORTMIDIEVENT
-{
-	BYTE SysEx[8];
-};
+// Base class for streaming MUS and MIDI files ------------------------------
 
-class MUSSong2 : public MusInfo
+class MIDIStreamer : public MusInfo
 {
 public:
-	MUSSong2 (FILE *file, char * musiccache, int length);
-	~MUSSong2 ();
+	MIDIStreamer();
+	~MIDIStreamer();
 
-	void SetVolume (float volume);
-	void Play (bool looping);
-	void Pause ();
-	void Resume ();
-	void Stop ();
-	bool IsPlaying ();
-	bool IsMIDI () const;
-	bool IsValid () const;
+	void SetVolume(float volume);
+	void Play(bool looping);
+	void Pause();
+	void Resume();
+	void Stop();
+	bool IsPlaying();
+	bool IsMIDI() const;
+	bool IsValid() const;
+	void Update();
 
 protected:
 	static DWORD WINAPI PlayerProc (LPVOID lpParameter);
-	void OutputVolume (DWORD volume);
-	int SendCommand ();
-	bool TranslateSong(const BYTE *buffer, size_t len);
-	int CountEvents(const BYTE *buffer, size_t len);
-	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
-	void ServiceEvent();
 	static void CALLBACK Callback(HMIDIOUT handle, UINT uMsg, DWORD_PTR dwInstance, DWORD dwParam1, DWORD dwParam2);
+	DWORD PlayerLoop();
+	void OutputVolume (DWORD volume);
+	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
+	bool ServiceEvent();
+	int VolumeControllerChange(int channel, int volume);
+
+	// Virtuals for subclasses to override
+	virtual void CheckCaps(DWORD dev_id);
+	virtual void DoInitialSetup() = 0;
+	virtual void DoRestart() = 0;
+	virtual bool CheckDone() = 0;
+	virtual DWORD *MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time) = 0;
 
 	enum
 	{
@@ -106,73 +102,76 @@ protected:
 	};
 
 	HMIDISTRM MidiOut;
+	HANDLE PlayerThread;
+	HANDLE ExitEvent;
+	HANDLE BufferDoneEvent;
 	DWORD SavedVolume;
 	bool VolumeWorks;
-
-	MUSHeader *MusHeader;
-	BYTE *MusBuffer;
-	BYTE LastVelocity[16];
-	BYTE ChannelVolumes[16];
-	size_t MusP, MaxMusP;
-	VOLSYSEXEVENT FullVolEvent;
-	SHORTMIDIEVENT Events[2][MAX_EVENTS];
+	DWORD Events[2][MAX_EVENTS*3];
 	MIDIHDR Buffer[2];
 	int BufferNum;
 	int EndQueued;
 	bool VolumeChanged;
 	bool Restarting;
+	bool InitialPlayback;
 	DWORD NewVolume;
+	int Division;
+	int Tempo;
+	int InitialTempo;
+	BYTE ChannelVolumes[16];
 };
-#endif
 
-// MIDI file played with MIDI output messages -------------------------------
+// MUS file played with a MIDI stream ---------------------------------------
 
-#ifdef _WIN32
-class MIDISong2 : public MusInfo
+class MUSSong2 : public MIDIStreamer
 {
 public:
-	MIDISong2 (FILE *file, char * musiccache, int length);
-	~MIDISong2 ();
-
-	void SetVolume (float volume);
-	void Play (bool looping);
-	void Pause ();
-	void Resume ();
-	void Stop ();
-	bool IsPlaying ();
-	bool IsMIDI () const;
-	bool IsValid () const;
+	MUSSong2 (FILE *file, char *musiccache, int length);
+	~MUSSong2 ();
 
 protected:
+	void DoInitialSetup();
+	void DoRestart();
+	bool CheckDone();
+	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+
+	MUSHeader *MusHeader;
+	BYTE *MusBuffer;
+	BYTE LastVelocity[16];
+	size_t MusP, MaxMusP;
+};
+
+// MIDI file played with a MIDI stream --------------------------------------
+
+class MIDISong2 : public MIDIStreamer
+{
+public:
+	MIDISong2 (FILE *file, char *musiccache, int length);
+	~MIDISong2 ();
+
+protected:
+	void CheckCaps(DWORD dev_id);
+	void DoInitialSetup();
+	void DoRestart();
+	bool CheckDone();
+	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+
 	struct TrackInfo;
 
-	static DWORD WINAPI PlayerProc (LPVOID lpParameter);
-	void OutputVolume (DWORD volume);
 	void ProcessInitialMetaEvents ();
-	DWORD SendCommands ();
-	void SendCommand (TrackInfo *track);
+	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay);
 	TrackInfo *FindNextDue ();
-
-	HMIDIOUT MidiOut;
-	HANDLE PlayerThread;
-	HANDLE PauseEvent;
-	HANDLE ExitEvent;
-	HANDLE TicEvent;
-	HANDLE VolumeChangeEvent;
-	DWORD SavedVolume;
-	bool VolumeWorks;
+	void SetTempo(int new_tempo);
 
 	BYTE *MusHeader;
-	BYTE ChannelVolumes[16];
 	TrackInfo *Tracks;
 	TrackInfo *TrackDue;
 	int NumTracks;
 	int Format;
-	int Division;
-	int Tempo;
 	WORD DesignationMask;
 };
-#endif
+
+#endif	/* _WIN32 */
 
 // MOD file played with FMOD ------------------------------------------------
 

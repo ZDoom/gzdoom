@@ -112,7 +112,7 @@ bool MusInfo::SetPosition (int order)
 	return false;
 }
 
-void MusInfo::ServiceEvent ()
+void MusInfo::Update ()
 {
 }
 
@@ -457,6 +457,14 @@ void *I_RegisterCDSong (int track, int id)
 	}
 
 	return info;
+}
+
+void I_UpdateMusic()
+{
+	if (currSong != NULL)
+	{
+		currSong->Update();
+	}
 }
 
 // Is the song playing?

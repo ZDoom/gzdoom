@@ -1312,6 +1312,8 @@ void S_UpdateSounds (void *listener_p)
 	angle_t angle;
 	int sep;
 
+	I_UpdateMusic();
+
 	if (GSnd == NULL)
 		return;
 

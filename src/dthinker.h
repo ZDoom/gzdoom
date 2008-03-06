@@ -49,7 +49,7 @@ class FThinkerIterator;
 enum { MAX_STATNUM = 127 };
 
 // Doubly linked list of thinkers
-class DThinker : public DObject, public Node
+class DThinker : public DObject, private Node
 {
 	DECLARE_CLASS (DThinker, DObject)
 
@@ -76,7 +76,7 @@ private:
 	static void DestroyThinkersInList (Node *first);
 	static void DestroyMostThinkersInList (List &list, int stat);
 	static int TickThinkers (List *list, List *dest);	// Returns: # of thinkers ticked
-
+	void Remove();
 
 	static List Thinkers[MAX_STATNUM+1];		// Current thinkers
 	static List FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers

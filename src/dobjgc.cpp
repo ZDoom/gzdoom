@@ -205,6 +205,7 @@ static DObject **SweepList(DObject **p, size_t count)
 			*p = curr->ObjNext;
 			if (!(curr->ObjectFlags & OF_EuthanizeMe))
 			{ // The object must be destroyed before it can be finalized.
+				assert(!curr->IsKindOf(RUNTIME_CLASS(DThinker)));
 				curr->Destroy();
 			}
 			curr->ObjectFlags |= OF_Cleanup;

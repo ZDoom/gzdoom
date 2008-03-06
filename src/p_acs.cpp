@@ -1711,13 +1711,25 @@ void DLevelScript::Unlink ()
 	DACSThinker *controller = DACSThinker::ActiveThinker;
 
 	if (controller->LastScript == this)
+	{
 		controller->LastScript = prev;
+		GC::WriteBarrier(controller, prev);
+	}
 	if (controller->Scripts == this)
+	{
 		controller->Scripts = next;
+		GC::WriteBarrier(controller, next);
+	}
 	if (prev)
+	{
 		prev->next = next;
+		GC::WriteBarrier(prev, next);
+	}
 	if (next)
+	{
 		next->prev = prev;
+		GC::WriteBarrier(next, prev);
+	}
 }
 
 void DLevelScript::Link ()
@@ -1725,12 +1737,19 @@ void DLevelScript::Link ()
 	DACSThinker *controller = DACSThinker::ActiveThinker;
 
 	next = controller->Scripts;
+	GC::WriteBarrier(this, next);
 	if (controller->Scripts)
+	{
 		controller->Scripts->prev = this;
+		GC::WriteBarrier(controller->Scripts, this);
+	}
 	prev = NULL;
 	controller->Scripts = this;
+	GC::WriteBarrier(controller, this);
 	if (controller->LastScript == NULL)
+	{
 		controller->LastScript = this;
+	}
 }
 
 void DLevelScript::PutLast ()

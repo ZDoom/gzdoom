@@ -174,6 +174,16 @@ void DThinker::Destroy ()
 	Super::Destroy ();
 }
 
+void DThinker::Remove()
+{
+	if (Pred->Pred != NULL && Succ->Succ != NULL)
+	{
+		GC::WriteBarrier(static_cast<DThinker *>(Pred), static_cast<DThinker *>(Succ));
+		GC::WriteBarrier(static_cast<DThinker *>(Succ), static_cast<DThinker *>(Pred));
+	}
+	Node::Remove();
+}
+
 void DThinker::PostBeginPlay ()
 {
 }

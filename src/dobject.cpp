@@ -394,6 +394,19 @@ DObject::~DObject ()
 				break;
 			}
 		}
+
+		// If it's gray, also unlink it from the gray list.
+		if (this->IsGray())
+		{
+			for (probe = &GC::Gray; *probe != NULL; probe = &((*probe)->GCNext))
+			{
+				if (*probe == this)
+				{
+					*probe = GCNext;
+					break;
+				}
+			}
+		}
 	}
 }
 

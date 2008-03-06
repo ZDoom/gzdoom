@@ -1591,6 +1591,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 			StatusBar = new DBaseStatusBar (0);
 		}
 	}
+	GC::WriteBarrier(StatusBar);
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	StatusBar->NewGame ();
 	setsizeneeded = true;

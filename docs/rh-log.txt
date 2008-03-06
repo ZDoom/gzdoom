@@ -1,7 +1,13 @@
+March 6, 2008
+- Fixed: StatusBar and screen need to be barriered, because they are roots
+  but can also change at runtime.
+- Fixed: Objects that are forcibly deleted outside the GC need to be removed
+  from the gray list too.
+
 March 5, 2008
 - Fixed: Thinkers needed write barriers when they were removed from their
   lists.
-- Fixed: DLevelScript::Link() and Unlink() were needed write barriers.
+- Fixed: DLevelScript::Link() and Unlink() needed write barriers.
 
 March 1, 2008 (Changes by Graf Zahl)
 - Fixed: When starting a level while the music has been paused S_Start has 

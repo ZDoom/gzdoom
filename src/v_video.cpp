@@ -1427,6 +1427,7 @@ bool V_DoModeSetup (int width, int height, int bits)
 	}
 
 	screen = buff;
+	GC::WriteBarrier(screen);
 	screen->SetFont (SmallFont);
 	screen->SetGamma (Gamma);
 

@@ -1,6 +1,12 @@
+March 6, 2008
+- The full master volume SysEx is now always sent to the MIDI device, even if
+  it seems to have a working volume control.
+- Renamed music_midi_stream.cpp to music_midi_base.cpp.
+- Moved the WinMM MIDI code into a new container class.
+
 March 4, 2008
 - Moved the identical code between the MUS and MIDI streamers into a new base
-  class so they all the low-level details of MIDI streaming are kept in
+  class so that all the low-level details of MIDI streaming are kept in
   one place.
 - Converted the SMF MIDI playback to use the same MIDI streams as MUS
   playback.
@@ -9,7 +15,7 @@ March 4, 2008
   manner.
 - Fixed: The MEVT_* values are not defined shifted into their spot for a
   MIDIEVENT, so I need to do it myself.
-- Fixed: Pausing a MUS and the changing snd_midivolume caused the paused
+- Fixed: Pausing a MUS and then changing snd_midivolume caused the paused
   notes to become audible.
 
 March 3, 2008

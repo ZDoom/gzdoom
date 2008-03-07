@@ -217,24 +217,22 @@ MIDISong2::~MIDISong2 ()
 // MIDISong2 :: CheckCaps
 //
 // Find out if this is an FM synth or not for EMIDI's benefit.
+// (Do any released EMIDIs use track designations?)
 //
 //==========================================================================
 
-void MIDISong2::CheckCaps(DWORD dev_id)
+void MIDISong2::CheckCaps()
 {
-	MIDIOUTCAPS caps;
+	int tech = MIDI->GetTechnology();
 
 	DesignationMask = 0xFF0F;
-	if (MMSYSERR_NOERROR == midiOutGetDevCaps (dev_id, &caps, sizeof(caps)))
+	if (tech == MOD_FMSYNTH)
 	{
-		if (caps.wTechnology == MOD_FMSYNTH)
-		{
-			DesignationMask = 0x00F0;
-		}
-		else if (caps.wTechnology == MOD_MIDIPORT)
-		{
-			DesignationMask = 0x0001;
-		}
+		DesignationMask = 0x00F0;
+	}
+	else if (tech == MOD_MIDIPORT)
+	{
+		DesignationMask = 0x0001;
 	}
 }
 
@@ -438,7 +436,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 					}
 				}
 				track->Designated = true;
-				event = 0xFF;
+				event = MIDI_META;
 				break;
 
 			case 111:	// EMIDI Track Exclusion
@@ -446,7 +444,7 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 				{
 					track->Designation &= ~(1 << data2);
 				}
-				event = 0xFF;
+				event = MIDI_META;
 				break;
 
 			case 112:	// EMIDI Program Change
@@ -729,9 +727,7 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 
 void MIDISong2::SetTempo(int new_tempo)
 {
-	MIDIPROPTEMPO tempo = { sizeof(MIDIPROPTEMPO), new_tempo };
-
-	if (MMSYSERR_NOERROR == midiStreamProperty(MidiOut, (LPBYTE)&tempo, MIDIPROP_SET | MIDIPROP_TEMPO))
+	if (MMSYSERR_NOERROR == MIDI->SetTempo(new_tempo))
 	{
 		Tempo = new_tempo;
 	}

@@ -71,7 +71,7 @@ extern UINT mididevice;
 //==========================================================================
 
 MIDIStreamer::MIDIStreamer()
-: MidiOut(0), PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
+: MIDI(0), PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
   Division(0), InitialTempo(500000)
 {
 	BufferDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -103,6 +103,10 @@ MIDIStreamer::~MIDIStreamer()
 	if (BufferDoneEvent != NULL)
 	{
 		CloseHandle(BufferDoneEvent);
+	}
+	if (MIDI != NULL)
+	{
+		delete MIDI;
 	}
 }
 
@@ -139,7 +143,7 @@ bool MIDIStreamer::IsValid() const
 //
 //==========================================================================
 
-void MIDIStreamer::CheckCaps(DWORD dev_id)
+void MIDIStreamer::CheckCaps()
 {
 }
 
@@ -152,7 +156,6 @@ void MIDIStreamer::CheckCaps(DWORD dev_id)
 void MIDIStreamer::Play (bool looping)
 {
 	DWORD tid;
-	UINT dev_id;
 
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
@@ -160,39 +163,25 @@ void MIDIStreamer::Play (bool looping)
 	VolumeChanged = false;
 	Restarting = true;
 	InitialPlayback = true;
-	dev_id = MAX(mididevice, 0u);
 
-	if (MMSYSERR_NOERROR != midiStreamOpen(&MidiOut, &dev_id, 1, (DWORD_PTR)Callback, (DWORD_PTR)this, CALLBACK_FUNCTION))
+	assert(MIDI == NULL);
+	MIDI = new WinMIDIDevice(mididevice);
+
+	if (0 != MIDI->Open(Callback, this))
 	{
 		Printf(PRINT_BOLD, "Could not open MIDI out device\n");
 		return;
 	}
 
-	CheckCaps(dev_id);
+	CheckCaps();
 
 	// Set time division and tempo.
-	MIDIPROPTIMEDIV timediv = { sizeof(MIDIPROPTIMEDIV), Division };
-	MIDIPROPTEMPO tempo = { sizeof(MIDIPROPTEMPO), Tempo = InitialTempo };
-
-	if (MMSYSERR_NOERROR != midiStreamProperty(MidiOut, (LPBYTE)&timediv, MIDIPROP_SET | MIDIPROP_TIMEDIV) ||
-		MMSYSERR_NOERROR != midiStreamProperty(MidiOut, (LPBYTE)&tempo, MIDIPROP_SET | MIDIPROP_TEMPO))
+	if (0 != MIDI->SetTimeDiv(Division) ||
+		0 != MIDI->SetTempo(Tempo = InitialTempo))
 	{
 		Printf(PRINT_BOLD, "Setting MIDI stream speed failed\n");
-		midiStreamClose(MidiOut);
-		MidiOut = NULL;
+		MIDI->Close();
 		return;
-	}
-
-	// Try two different methods for setting the stream to full volume.
-	// Unfortunately, this isn't as reliable as it once was, which is a pity.
-	// The real volume selection is done by setting the volume controller for
-	// each channel. Because every General MIDI-compliant device must support
-	// this controller, it is the most reliable means of setting the volume.
-
-	VolumeWorks = (MMSYSERR_NOERROR == midiOutGetVolume((HMIDIOUT)MidiOut, &SavedVolume));
-	if (VolumeWorks)
-	{
-		VolumeWorks &= (MMSYSERR_NOERROR == midiOutSetVolume((HMIDIOUT)MidiOut, 0xffffffff));
 	}
 
 	snd_midivolume.Callback();	// set volume to current music's properties
@@ -208,7 +197,7 @@ void MIDIStreamer::Play (bool looping)
 		int res = FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME);
 		if (res == SONG_MORE)
 		{
-			if (MMSYSERR_NOERROR != midiStreamOut(MidiOut, &Buffer[BufferNum], sizeof(MIDIHDR)))
+			if (0 != MIDI->StreamOut(&Buffer[BufferNum]))
 			{
 				Printf ("Initial midiStreamOut failed\n");
 				Stop();
@@ -223,7 +212,7 @@ void MIDIStreamer::Play (bool looping)
 				Restarting = true;
 				if (SONG_MORE == FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME))
 				{
-					if (MMSYSERR_NOERROR != midiStreamOut(MidiOut, &Buffer[BufferNum], sizeof(MIDIHDR)))
+					if (0 != MIDI->StreamOut(&Buffer[BufferNum]))
 					{
 						Printf ("Initial midiStreamOut failed\n");
 						Stop();
@@ -250,9 +239,9 @@ void MIDIStreamer::Play (bool looping)
 	}
 	while (BufferNum != 0);
 
-	if (MMSYSERR_NOERROR != midiStreamRestart(MidiOut))
+	if (0 != MIDI->Resume())
 	{
-		Printf ("midiStreamRestart failed\n");
+		Printf ("Starting MIDI playback failed\n");
 		Stop();
 	}
 	else
@@ -260,7 +249,7 @@ void MIDIStreamer::Play (bool looping)
 		PlayerThread = CreateThread(NULL, 0, PlayerProc, this, 0, &tid);
 		if (PlayerThread == NULL)
 		{
-			Printf ("MUS CreateThread failed\n");
+			Printf ("Creating MIDI thread failed\n");
 			Stop();
 		}
 		else
@@ -324,18 +313,17 @@ void MIDIStreamer::Stop ()
 		CloseHandle(PlayerThread);
 		PlayerThread = NULL;
 	}
-	if (MidiOut)
+	if (MIDI != NULL && MIDI->IsOpen())
 	{
-		midiStreamStop(MidiOut);
-		midiOutReset((HMIDIOUT)MidiOut);
-		if (VolumeWorks)
-		{
-			midiOutSetVolume((HMIDIOUT)MidiOut, SavedVolume);
-		}
-		midiOutUnprepareHeader((HMIDIOUT)MidiOut, &Buffer[0], sizeof(MIDIHDR));
-		midiOutUnprepareHeader((HMIDIOUT)MidiOut, &Buffer[1], sizeof(MIDIHDR));
-		midiStreamClose(MidiOut);
-		MidiOut = NULL;
+		MIDI->Stop();
+		MIDI->UnprepareHeader(&Buffer[0]);
+		MIDI->UnprepareHeader(&Buffer[1]);
+		MIDI->Close();
+	}
+	if (MIDI != NULL)
+	{
+		delete MIDI;
+		MIDI = NULL;
 	}
 	m_Status = STATE_Stopped;
 }
@@ -402,9 +390,9 @@ int MIDIStreamer::VolumeControllerChange(int channel, int volume)
 //
 //==========================================================================
 
-void CALLBACK MIDIStreamer::Callback(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dwInstance, DWORD dwParam1, DWORD dwParam2)
+void MIDIStreamer::Callback(UINT uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2)
 {
-	MIDIStreamer *self = (MIDIStreamer *)dwInstance;
+	MIDIStreamer *self = (MIDIStreamer *)userdata;
 
 	if (self->EndQueued > 1)
 	{
@@ -502,7 +490,7 @@ bool MIDIStreamer::ServiceEvent()
 	{
 		return false;
 	}
-	if (MMSYSERR_NOERROR != midiOutUnprepareHeader((HMIDIOUT)MidiOut, &Buffer[BufferNum], sizeof(MIDIHDR)))
+	if (0 != MIDI->UnprepareHeader(&Buffer[BufferNum]))
 	{
 		return true;
 	}
@@ -510,7 +498,7 @@ fill:
 	switch (FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME))
 	{
 	case SONG_MORE:
-		if (MMSYSERR_NOERROR != midiStreamOut(MidiOut, &Buffer[BufferNum], sizeof(MIDIHDR)))
+		if (0 != MIDI->StreamOut(&Buffer[BufferNum]))
 		{
 			return true;
 		}
@@ -569,16 +557,13 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 	if (InitialPlayback)
 	{
 		InitialPlayback = false;
-		if (!VolumeWorks)
-		{
-			// Send the full master volume SysEx message.
-			events[0] = 0;							// dwDeltaTime
-			events[1] = 0;							// dwStreamID
-			events[2] = (MEVT_LONGMSG << 24) | 8;	// dwEvent
-			events[3] = 0x047f7ff0;					// dwParms[0]
-			events[4] = 0xf77f7f01;					// dwParms[1]
-			events += 5;
-		}
+		// Send the full master volume SysEx message.
+		events[0] = 0;							// dwDeltaTime
+		events[1] = 0;							// dwStreamID
+		events[2] = (MEVT_LONGMSG << 24) | 8;	// dwEvent
+		events[3] = 0x047f7ff0;					// dwParms[0]
+		events[4] = 0xf77f7f01;					// dwParms[1]
+		events += 5;
 		DoInitialSetup();
 	}
 
@@ -627,10 +612,25 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 	Buffer[buffer_num].lpData = (LPSTR)Events[buffer_num];
 	Buffer[buffer_num].dwBufferLength = DWORD((LPSTR)events - Buffer[buffer_num].lpData);
 	Buffer[buffer_num].dwBytesRecorded = Buffer[buffer_num].dwBufferLength;
-	if (MMSYSERR_NOERROR != midiOutPrepareHeader((HMIDIOUT)MidiOut, &Buffer[buffer_num], sizeof(MIDIHDR)))
+	if (0 != MIDI->PrepareHeader(&Buffer[buffer_num]))
 	{
 		return SONG_ERROR;
 	}
 	return SONG_MORE;
 }
+
+//==========================================================================
+//
+// MIDIDevice constructor and desctructor stubs.
+//
+//==========================================================================
+
+MIDIDevice::MIDIDevice()
+{
+}
+
+MIDIDevice::~MIDIDevice()
+{
+}
+
 #endif

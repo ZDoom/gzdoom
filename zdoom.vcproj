@@ -9255,11 +9255,11 @@
 				>
 			</File>
 			<File
-				RelativePath="src\sound\music_midi_midiout.cpp"
+				RelativePath=".\src\sound\music_midi_base.cpp"
 				>
 			</File>
 			<File
-				RelativePath="src\sound\music_midi_stream.cpp"
+				RelativePath="src\sound\music_midi_midiout.cpp"
 				>
 			</File>
 			<File
@@ -9288,6 +9288,10 @@
 			</File>
 			<File
 				RelativePath="src\sound\music_stream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sound\music_win_mididevice.cpp"
 				>
 			</File>
 			<File

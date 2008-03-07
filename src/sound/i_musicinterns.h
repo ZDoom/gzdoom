@@ -55,7 +55,60 @@ public:
 
 #ifdef _WIN32
 
+// A device that provides a WinMM-like MIDI streaming interface -------------
+
+class MIDIDevice
+{
+public:
+	MIDIDevice();
+	virtual ~MIDIDevice();
+
+	virtual int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata) = 0;
+	virtual void Close() = 0;
+	virtual bool IsOpen() const = 0;
+	virtual int GetTechnology() const = 0;
+	virtual int SetTempo(int tempo) = 0;
+	virtual int SetTimeDiv(int timediv) = 0;
+	virtual int StreamOut(MIDIHDR *data) = 0;
+	virtual int Resume() = 0;
+	virtual void Stop() = 0;
+	virtual int PrepareHeader(MIDIHDR *data) = 0;
+	virtual int UnprepareHeader(MIDIHDR *data) = 0;
+};
+
+// WinMM implementation of a MIDI output device -----------------------------
+
+class WinMIDIDevice : public MIDIDevice
+{
+public:
+	WinMIDIDevice(int dev_id);
+	~WinMIDIDevice();
+	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	void Close();
+	bool IsOpen() const;
+	int GetTechnology() const;
+	int SetTempo(int tempo);
+	int SetTimeDiv(int timediv);
+	int StreamOut(MIDIHDR *data);
+	int Resume();
+	void Stop();
+	int PrepareHeader(MIDIHDR *data);
+	int UnprepareHeader(MIDIHDR *data);
+
+protected:
+	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
+
+	HMIDISTRM MidiOut;
+	UINT DeviceID;
+	DWORD SavedVolume;
+	bool VolumeWorks;
+
+	void (*Callback)(unsigned int, void *, DWORD, DWORD);
+	void *CallbackData;
+};
+
 // Base class for streaming MUS and MIDI files ------------------------------
+
 
 class MIDIStreamer : public MusInfo
 {
@@ -75,7 +128,7 @@ public:
 
 protected:
 	static DWORD WINAPI PlayerProc (LPVOID lpParameter);
-	static void CALLBACK Callback(HMIDIOUT handle, UINT uMsg, DWORD_PTR dwInstance, DWORD dwParam1, DWORD dwParam2);
+	static void Callback(UINT uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
 	DWORD PlayerLoop();
 	void OutputVolume (DWORD volume);
 	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
@@ -83,7 +136,7 @@ protected:
 	int VolumeControllerChange(int channel, int volume);
 
 	// Virtuals for subclasses to override
-	virtual void CheckCaps(DWORD dev_id);
+	virtual void CheckCaps();
 	virtual void DoInitialSetup() = 0;
 	virtual void DoRestart() = 0;
 	virtual bool CheckDone() = 0;
@@ -101,12 +154,11 @@ protected:
 		SONG_ERROR
 	};
 
-	HMIDISTRM MidiOut;
+	MIDIDevice *MIDI;
 	HANDLE PlayerThread;
 	HANDLE ExitEvent;
 	HANDLE BufferDoneEvent;
-	DWORD SavedVolume;
-	bool VolumeWorks;
+
 	DWORD Events[2][MAX_EVENTS*3];
 	MIDIHDR Buffer[2];
 	int BufferNum;
@@ -150,7 +202,7 @@ public:
 	~MIDISong2 ();
 
 protected:
-	void CheckCaps(DWORD dev_id);
+	void CheckCaps();
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();

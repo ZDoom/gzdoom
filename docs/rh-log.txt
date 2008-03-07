@@ -1,4 +1,7 @@
 March 6, 2008
+- Fixed: If P_BounceWall() can't find a wall when it does its trace, but it
+  was entered because a line blocked the projectile, then it should still use
+  that blocking line for the bounce.
 - The full master volume SysEx is now always sent to the MIDI device, even if
   it seems to have a working volume control.
 - Renamed music_midi_stream.cpp to music_midi_base.cpp.

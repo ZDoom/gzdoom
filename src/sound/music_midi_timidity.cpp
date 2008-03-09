@@ -64,7 +64,7 @@ CUSTOM_CVAR (Float, timidity_mastervolume, 1.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 0.f;
 	else if (self > 4.f)
 		self = 4.f;
-	else if (currSong != NULL)
+	if (currSong != NULL)
 		currSong->TimidityVolumeChanged();
 }
 

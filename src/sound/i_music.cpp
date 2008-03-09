@@ -503,4 +503,6 @@ CCMD(testmusicvol)
 		relative_volume = (float)strtod(argv[1], NULL);
 		snd_musicvolume.Callback();
 	}
+	else
+		Printf("Current relative volume is %1.2f\n", relative_volume);
 }

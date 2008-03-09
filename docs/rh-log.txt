@@ -1,3 +1,34 @@
+March 8, 2008
+- Fixed: If you wanted to make cleandep with MinGW, you had to specifically
+  specify Makefile.mingw as the makefile to use.
+- Added a normalizer to the OPL synth. It helped bring up the volume a little,
+  but not nearly as much as I would have liked.
+- Removed MIDI Mapper references. It doesn't work with the stream API, and
+  it doesn't really exist on NT kernels, either.
+- Reworked music volume: Except for MIDI, all music volume is controlled
+  through GSnd and not at the individual song level.
+- Removed the mididevice global variable.
+- Added back support for custom streams.
+
+March 7, 2008
+- I think the new FMOD Ex code should support everything the old FMOD 3 code
+  did, sans custom streaming sounds.
+- Removed snd_midivolume. Now that all music uses a linear volume scale,
+  there's no need for two separate music volume controls.
+- Increased snd_samplerate default up to 48000.
+- Added snd_format, defaulting to "PCM-16".
+- Added snd_speakermode, defaulting to "Auto".
+- Replaced snd_fpu with snd_resampler, defaulting to "Linear".
+- Bumped the snd_channels default up from a pitiful 12 to 32.
+- Changed snd_3d default to true. The new cvar snd_hw3d determines if
+  hardware 3D support is used and default to false.
+- Removed the libFLAC source, since FMOD Ex has native FLAC support.
+- Removed the altsound code, since it was terribly gimped in comparison to
+  the FMOD code. It's original purpose was to have been as a springboard for
+  writing a non-FMOD sound system for Unix-y systems, but that never
+  happened.
+- Finished preliminary FMOD Ex support.
+
 March 6, 2008
 - Fixed: If P_BounceWall() can't find a wall when it does its trace, but it
   was entered because a line blocked the projectile, then it should still use

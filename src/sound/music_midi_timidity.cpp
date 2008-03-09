@@ -64,8 +64,8 @@ CUSTOM_CVAR (Float, timidity_mastervolume, 1.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 0.f;
 	else if (self > 4.f)
 		self = 4.f;
-	else if (currSong != NULL && !currSong->IsMIDI ())
-		currSong->SetVolume (clamp<float> (snd_musicvolume, 0.f, 1.f));
+	else if (currSong != NULL)
+		currSong->TimidityVolumeChanged();
 }
 
 
@@ -94,7 +94,7 @@ void TimiditySong::Play (bool looping)
 	{
 		if (m_Stream != NULL)
 		{
-			if (m_Stream->Play (true, timidity_mastervolume * snd_musicvolume))
+			if (m_Stream->Play (true, timidity_mastervolume, false))
 			{
 				m_Status = STATE_Playing;
 			}
@@ -594,9 +594,12 @@ bool TimiditySong::FillStream (SoundStream *stream, void *buff, int len, void *u
 	return true;
 }
 
-void TimiditySong::SetVolume (float volume)
+void TimiditySong::TimidityVolumeChanged()
 {
-	if (m_Stream!=NULL) m_Stream->SetVolume (volume*timidity_mastervolume);
+	if (m_Stream != NULL)
+	{
+		m_Stream->SetVolume(timidity_mastervolume);
+	}
 }
 
 bool TimiditySong::IsPlaying ()

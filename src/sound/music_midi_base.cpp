@@ -9,33 +9,7 @@
 
 static DWORD	nummididevices;
 static bool		nummididevicesset;
-	   DWORD	midivolume;
 	   UINT		mididevice;
-
-//==========================================================================
-//
-// CVAR snd_midivolume
-//
-// Maximum volume of MIDI/MUS music through the MM subsystem.
-//==========================================================================
-
-CUSTOM_CVAR (Float, snd_midivolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0.f)
-		self = 0.f;
-	else if (self > 1.f)
-		self = 1.f;
-	else
-	{
-		float realvolume = clamp<float>(self * relative_volume, 0.f, 1.f);
-		DWORD onechanvol = clamp<DWORD>((DWORD)(realvolume * 65535.f), 0, 65535);
-		midivolume = (onechanvol << 16) | onechanvol;
-		if (currSong && currSong->IsMIDI ())
-		{
-			currSong->SetVolume (realvolume);
-		}
-	}
-}
 
 CVAR (Bool, snd_midiprecache, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
@@ -48,13 +22,13 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 	if ((self >= (signed)nummididevices) || (self < -2))
 	{
-		Printf ("ID out of range. Using MIDI mapper.\n");
-		self = -1;
+		Printf ("ID out of range. Using default device.\n");
+		self = 0;
 		return;
 	}
 	else if (self < 0)
 	{
-		mididevice = MIDI_MAPPER;
+		mididevice = 0;
 	}
 	else
 	{
@@ -62,7 +36,7 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 
 	// If a song is playing, move it to the new device.
-	if (oldmididev != mididevice && currSong)
+	if (oldmididev != mididevice && currSong != NULL && currSong->IsMIDI())
 	{
 		MusInfo *song = currSong;
 		if (song->m_Status == MusInfo::STATE_Playing)

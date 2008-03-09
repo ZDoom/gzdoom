@@ -54,9 +54,6 @@ extern HINSTANCE g_hInst;
 #include <math.h>
 
 #include "fmodsound.h"
-#ifdef _WIN32
-#include "altsound.h"
-#endif
 
 #include "m_swap.h"
 #include "stats.h"
@@ -76,7 +73,7 @@ extern HINSTANCE g_hInst;
 #include "doomdef.h"
 
 EXTERN_CVAR (Float, snd_sfxvolume)
-CVAR (Int, snd_samplerate, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Int, snd_samplerate, 48000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_buffersize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output, "default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -172,23 +169,7 @@ void I_InitSound ()
 		snd_samplerate = 65535;
 	}
 
-#ifdef _WIN32
-	if (stricmp (snd_output, "alternate") == 0)
-	{
-		GSnd = new AltSoundRenderer;
-	}
-	else
-	{
-		GSnd = new FMODSoundRenderer;
-		if (!GSnd->IsValid ())
-		{
-			delete GSnd;
-			GSnd = new AltSoundRenderer;
-		}
-	}
-#else
 	GSnd = new FMODSoundRenderer;
-#endif
 
 	if (!GSnd->IsValid ())
 	{
@@ -269,11 +250,6 @@ SoundRenderer::~SoundRenderer ()
 {
 }
 
-SoundTrackerModule *SoundRenderer::OpenModule (const char *file, int offset, int length)
-{
-	return NULL;
-}
-
 long SoundRenderer::StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3], bool pauseable)
 {
 	return 0;
@@ -304,7 +280,7 @@ SoundStream::~SoundStream ()
 {
 }
 
-SoundTrackerModule::~SoundTrackerModule ()
+bool SoundStream::SetPosition(int pos)
 {
+	return false;
 }
-

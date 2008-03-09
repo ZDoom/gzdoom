@@ -5,7 +5,7 @@
 # And then tweaked by hand
 
 # Where did you install the FMOD API to? Change this line so that the build process can find it.
-FMODDIR = "c:/program files/fmodapi375win"
+FMODDIR = "e:/program files (x86)/FMOD SoundSystem/FMOD Programmers API Win32"
 
 ifeq ($(findstring msys,$(shell sh --version 2>nul)),msys)
   WINCMD=0
@@ -29,7 +29,7 @@ CCDV ?= @ccdv
 RE2C = tools/re2c/re2c
 
 CPPFLAGS = -DWIN32 -D_WIN32 -D_WINDOWS -DHAVE_STRUPR -DHAVE_FILELENGTH -DI_DO_NOT_LIKE_BIG_DOWNLOADS -D__forceinline=inline -MMD -Izlib -IFLAC -Ijpeg-6b -Isrc -Isrc/win32 -Isrc/g_doom -Isrc/g_heretic -Isrc/g_hexen -Isrc/g_raven -Isrc/g_strife -Isrc/g_shared -Isrc/oplsynth -Isrc/sound -Isrc/textures -Isrc/thingdef
-LDFLAGS += flac/libflac.a zlib/libz.a jpeg-6b/libjpeg.a -lfmod -lwsock32 -lwinmm -lddraw -ldsound -ldxguid -ldinput8 -lole32 -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lsetupapi -lws2_32 -Wl,--subsystem,windows
+LDFLAGS += zlib/libz.a jpeg-6b/libjpeg.a -lfmodex -lwsock32 -lwinmm -lddraw -ldsound -ldxguid -ldinput8 -lole32 -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lsetupapi -lws2_32 -Wl,--subsystem,windows
 
 ifdef FMODDIR
   CPPFLAGS += -I$(FMODDIR)/api/inc
@@ -125,8 +125,8 @@ clean:
 	rm -fr $(RELEASEOBJDIR)
 
 cleandep:
-	rm -f $(DEBUGOBJDIR)\*.d
-	rm -f $(RELEASEOBJDIR)\*.d
+	rm -f $(DEBUGOBJDIR)/*.d
+	rm -f $(RELEASEOBJDIR)/*.d
 endif
 	
 testobjdir:

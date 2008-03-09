@@ -26,6 +26,7 @@ OPLmusicBlock::OPLmusicBlock (FILE *file, char * musiccache, int len, int rate, 
 {
 	scoredata = NULL;
 	SampleBuff = NULL;
+	SampleBuffSize = 0;
 	TwoChips = !opl_onechip;
 	io = new OPLio;
 
@@ -116,7 +117,6 @@ OPLmusicBlock::OPLmusicBlock (FILE *file, char * musiccache, int len, int rate, 
 		}
 	}
 
-	SampleBuff = new int[maxSamples];
 	Restart ();
 }
 
@@ -209,12 +209,22 @@ void OPLmusicBlock::Restart ()
 bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 {
 	short *samples = (short *)buff;
-	int *samples1 = SampleBuff;
+	int *samples1;
 	int numsamples = numbytes / 2;
 	bool prevEnded = false;
 	bool res = true;
 
-	memset (SampleBuff, 0, numsamples * 4);
+	// SampleBuff is allocated here, since FMOD might not give us exactly
+	// the buffer size we requested. (Actually, it's giving us twice what
+	// was asked for. Am I doing something wrong?)
+	numbytes = numsamples * sizeof(int);
+	if (SampleBuff == NULL || numbytes > SampleBuffSize)
+	{
+		SampleBuff = (int *)M_Realloc(SampleBuff, numbytes);
+		SampleBuffSize = numbytes;
+	}
+	memset(SampleBuff, 0, numbytes);
+	samples1 = SampleBuff;
 
 #ifdef _WIN32
 	EnterCriticalSection (&ChipAccess);
@@ -278,7 +288,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 #else
 	SDL_mutexV (ChipAccess);
 #endif
-	numsamples = numbytes / 2;
+	numsamples = numbytes / sizeof(int);
 	samples1 = SampleBuff;
 
 #if defined(_MSC_VER) && defined(USEASM)

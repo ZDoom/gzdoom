@@ -317,7 +317,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib fmodvc.lib setupapi.lib ws2_32.lib"
+				AdditionalDependencies="gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib fmodex_vc.lib setupapi.lib ws2_32.lib"
 				OutputFile="../zdoomd.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -9207,18 +9207,6 @@
 			Name="Audio Files"
 			>
 			<File
-				RelativePath=".\src\sound\altsound.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\sound\altsound.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\sound\altsoundmixer.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\sound\fmodsound.cpp"
 				>
 			</File>
@@ -9251,10 +9239,6 @@
 				>
 			</File>
 			<File
-				RelativePath="src\sound\music_flac.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\sound\music_midi_base.cpp"
 				>
 			</File>
@@ -9268,10 +9252,6 @@
 			</File>
 			<File
 				RelativePath=".\src\sound\music_midistream.cpp"
-				>
-			</File>
-			<File
-				RelativePath="src\sound\music_mod.cpp"
 				>
 			</File>
 			<File
@@ -9292,14 +9272,6 @@
 			</File>
 			<File
 				RelativePath=".\src\sound\music_win_mididevice.cpp"
-				>
-			</File>
-			<File
-				RelativePath="src\sound\sample_flac.cpp"
-				>
-			</File>
-			<File
-				RelativePath="src\sound\sample_flac.h"
 				>
 			</File>
 			<Filter

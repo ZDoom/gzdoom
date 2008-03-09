@@ -53,9 +53,8 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-EXTERN_CVAR (Float, snd_midivolume)
+EXTERN_CVAR(Float, snd_musicvolume)
 
-extern DWORD midivolume;
 extern UINT mididevice;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -184,8 +183,7 @@ void MIDIStreamer::Play (bool looping)
 		return;
 	}
 
-	snd_midivolume.Callback();	// set volume to current music's properties
-	OutputVolume (midivolume & 0xffff);
+	MusicVolumeChanged();	// set volume to current music's properties
 
 	ResetEvent(ExitEvent);
 	ResetEvent(BufferDoneEvent);
@@ -290,7 +288,7 @@ void MIDIStreamer::Resume ()
 {
 	if (m_Status == STATE_Paused)
 	{
-		OutputVolume(midivolume & 0xffff);
+		OutputVolume(Volume);
 		m_Status = STATE_Playing;
 	}
 }
@@ -341,13 +339,22 @@ bool MIDIStreamer::IsPlaying ()
 
 //==========================================================================
 //
-// MIDIStreamer :: SetVolume
+// MIDIStreamer :: MusicVolumeChanged
+//
+// WinMM MIDI doesn't go through the sound system, so the normal volume
+// changing procedure doesn't work for it.
 //
 //==========================================================================
 
-void MIDIStreamer::SetVolume (float volume)
+void MIDIStreamer::MusicVolumeChanged ()
 {
-	OutputVolume(midivolume & 0xffff);
+	float realvolume = clamp<float>(snd_musicvolume * relative_volume, 0.f, 1.f);
+	DWORD onechanvol = clamp<DWORD>((DWORD)(realvolume * 65535.f), 0, 65535);
+	Volume = onechanvol;
+	if (m_Status == STATE_Playing)
+	{
+		OutputVolume(onechanvol);
+	}
 }
 
 //==========================================================================
@@ -377,7 +384,7 @@ void MIDIStreamer::OutputVolume (DWORD volume)
 int MIDIStreamer::VolumeControllerChange(int channel, int volume)
 {
 	ChannelVolumes[channel] = volume;
-	return ((volume + 1) * (midivolume & 0xffff)) >> 16;
+	return ((volume + 1) * Volume) >> 16;
 }
 
 //==========================================================================

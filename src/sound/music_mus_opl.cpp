@@ -72,7 +72,7 @@ void OPLMUSSong::Play (bool looping)
 	Music->SetLooping (looping);
 	Music->Restart ();
 
-	if (m_Stream->Play (true, snd_musicvolume))
+	if (m_Stream->Play (true, snd_musicvolume, true))
 	{
 		m_Status = STATE_Playing;
 	}

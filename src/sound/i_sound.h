@@ -51,25 +51,12 @@ public:
 		Loop = 4
 	};
 
-	virtual bool Play (bool looping, float volume) = 0;
+	virtual bool Play (bool looping, float volume, bool normalize) = 0;
 	virtual void Stop () = 0;
 	virtual void SetVolume (float volume) = 0;
 	virtual bool SetPaused (bool paused) = 0;
 	virtual unsigned int GetPosition () = 0;
-};
-
-class SoundTrackerModule
-{
-public:
-	virtual ~SoundTrackerModule ();
-
-	virtual bool Play () = 0;
-	virtual void Stop () = 0;
-	virtual void SetVolume (float volume) = 0;
-	virtual bool SetPaused (bool paused) = 0;
-	virtual bool IsPlaying () = 0;
-	virtual bool IsFinished () = 0;
-	virtual bool SetOrder (int order) = 0;
+	virtual bool SetPosition (int pos);
 };
 
 typedef bool (*SoundStreamCallback)(SoundStream *stream, void *buff, int len, void *userdata);
@@ -81,7 +68,8 @@ public:
 	virtual ~SoundRenderer ();
 
 	virtual void SetSfxVolume (float volume) = 0;
-	virtual int  SetChannels (int numchans) = 0;	// Initialize channels
+	virtual void SetMusicVolume (float volume) = 0;
+	virtual int  GetNumChannels () = 0;	// Initialize channels
 	virtual void LoadSound (sfxinfo_t *sfx) = 0;	// load a sound from disk
 	virtual void UnloadSound (sfxinfo_t *sfx) = 0;	// unloads a sound from memory
 
@@ -89,11 +77,8 @@ public:
 	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
 	virtual SoundStream *OpenStream (const char *filename, int flags, int offset, int length) = 0;
 
-	// Tracker modules.
-	virtual SoundTrackerModule *OpenModule (const char *file, int offset, int length);
-
 	// Starts a sound in a particular sound channel.
-	virtual long StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping, bool pauseable) = 0;
+	virtual long StartSound (sfxinfo_t *sfx, float vol, float sep, int pitch, int channel, bool looping, bool pauseable) = 0;
 	virtual long StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3], bool pauseable);
 
 	// Stops a sound channel.
@@ -109,7 +94,7 @@ public:
 	virtual bool IsPlayingSound (long handle) = 0;
 
 	// Updates the volume, separation, and pitch of a sound channel.
-	virtual void UpdateSoundParams (long handle, int vol, int sep, int pitch) = 0;
+	virtual void UpdateSoundParams (long handle, float vol, float sep, int pitch) = 0;
 	virtual void UpdateSoundParams3D (long handle, float pos[3], float vel[3]);
 
 	// For use by I_PlayMovie

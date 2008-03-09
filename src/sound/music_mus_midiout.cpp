@@ -54,10 +54,7 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern DWORD midivolume;
 extern UINT mididevice;
-
-EXTERN_CVAR (Float, snd_midivolume)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

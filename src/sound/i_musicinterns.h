@@ -33,7 +33,8 @@ class MusInfo
 public:
 	MusInfo () : m_Status(STATE_Stopped) {}
 	virtual ~MusInfo ();
-	virtual void SetVolume (float volume) = 0;
+	virtual void MusicVolumeChanged();		// snd_musicvolume changed
+	virtual void TimidityVolumeChanged();	// timidity_mastervolume changed
 	virtual void Play (bool looping) = 0;
 	virtual void Pause () = 0;
 	virtual void Resume () = 0;
@@ -116,7 +117,7 @@ public:
 	MIDIStreamer();
 	~MIDIStreamer();
 
-	void SetVolume(float volume);
+	void MusicVolumeChanged();
 	void Play(bool looping);
 	void Pause();
 	void Resume();
@@ -171,6 +172,7 @@ protected:
 	int Tempo;
 	int InitialTempo;
 	BYTE ChannelVolumes[16];
+	DWORD Volume;
 };
 
 // MUS file played with a MIDI stream ---------------------------------------
@@ -225,37 +227,13 @@ protected:
 
 #endif	/* _WIN32 */
 
-// MOD file played with FMOD ------------------------------------------------
-
-class MODSong : public MusInfo
-{
-public:
-	MODSong (const char *file, int offset, int length);
-	~MODSong ();
-	void SetVolume (float volume);
-	void Play (bool looping);
-	void Pause ();
-	void Resume ();
-	void Stop ();
-	bool IsPlaying ();
-	bool IsMIDI () const { return false; }
-	bool IsValid () const { return m_Module != NULL; }
-	bool SetPosition (int order);
-
-protected:
-	MODSong () {}
-
-	SoundTrackerModule *m_Module;
-};
-
-// OGG/MP3/WAV/other format streamed through FMOD ---------------------------
+// Anything supported by FMOD out of the box --------------------------------
 
 class StreamSong : public MusInfo
 {
 public:
 	StreamSong (const char *file, int offset, int length);
 	~StreamSong ();
-	void SetVolume (float volume);
 	void Play (bool looping);
 	void Pause ();
 	void Resume ();
@@ -263,6 +241,7 @@ public:
 	bool IsPlaying ();
 	bool IsMIDI () const { return false; }
 	bool IsValid () const { return m_Stream != NULL; }
+	bool SetPosition (int order);
 
 protected:
 	StreamSong () : m_Stream(NULL), m_LastPos(0) {}
@@ -328,7 +307,7 @@ public:
 	void Stop ();
 	bool IsPlaying ();
 	bool IsValid () const { return CommandLine.Len() > 0; }
-	void SetVolume (float volume);
+	void TimidityVolumeChanged();
 
 protected:
 	void PrepTimidity ();
@@ -373,25 +352,6 @@ protected:
 	OPLmusicBlock *Music;
 };
 
-// FLAC file streamed through FMOD (You should probably use Vorbis instead) -
-
-class FLACSong : public StreamSong
-{
-public:
-	FLACSong (FILE *file, char * musiccache, int length);
-	~FLACSong ();
-	void Play (bool looping);
-	bool IsPlaying ();
-	bool IsValid () const;
-
-protected:
-	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
-
-	class FLACStreamer;
-
-	FLACStreamer *State;
-};
-
 // CD track/disk played through the multimedia system -----------------------
 
 class CDSong : public MusInfo
@@ -399,7 +359,6 @@ class CDSong : public MusInfo
 public:
 	CDSong (int track, int id);
 	~CDSong ();
-	void SetVolume (float volume) {}
 	void Play (bool looping);
 	void Pause ();
 	void Resume ();

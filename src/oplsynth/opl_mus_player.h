@@ -32,6 +32,7 @@ protected:
 	int ScoreLen;
 
 	int *SampleBuff;
+	int SampleBuffSize;
 
 #ifdef _WIN32
 	CRITICAL_SECTION ChipAccess;

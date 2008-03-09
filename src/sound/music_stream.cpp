@@ -1,16 +1,11 @@
 #include "i_musicinterns.h"
 
-void StreamSong::SetVolume (float volume)
-{
-	if (m_Stream!=NULL) m_Stream->SetVolume (volume);
-}
-
 void StreamSong::Play (bool looping)
 {
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	if (m_Stream->Play (m_Looping, snd_musicvolume))
+	if (m_Stream->Play (m_Looping, 1, false))
 	{
 		m_Status = STATE_Playing;
 		m_LastPos = 0;
@@ -80,3 +75,13 @@ bool StreamSong::IsPlaying ()
 	return false;
 }
 
+//
+// StreamSong :: SetPosition
+//
+// Sets the current order number for a MOD-type song, or the position in ms
+// for anything else.
+
+bool StreamSong::SetPosition(int order)
+{
+	return m_Stream->SetPosition(order);
+}

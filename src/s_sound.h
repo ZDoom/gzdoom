@@ -208,12 +208,13 @@ void S_ShrinkPlayerSoundLists ();
 //		Modelled after Hexen's noise cheat.
 void S_NoiseDebug ();
 
-// For convenience, this structure matches FSOUND_REVERB_PROPERTIES.
+// For convenience, this structure matches FMOD_REVERB_PROPERTIES.
 // Since I can't very well #include system-specific stuff in the
 // main game files, I duplicate it here.
 struct REVERB_PROPERTIES
-{                                   
-    /*unsigned*/int Environment;
+{                
+	int			 Instance;
+    int			 Environment;
     float        EnvSize;
     float        EnvDiffusion;
     int          Room;

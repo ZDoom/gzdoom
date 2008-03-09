@@ -87,9 +87,6 @@ struct MIDISong2::TrackInfo
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-EXTERN_CVAR (Float, snd_midivolume)
-
-extern DWORD midivolume;
 extern UINT mididevice;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

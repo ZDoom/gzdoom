@@ -2,7 +2,7 @@
 #define FMODSOUND_H
 
 #include "i_sound.h"
-#include <fmod.h>
+#include "fmod_wrap.h"
 
 class FMODSoundRenderer : public SoundRenderer
 {
@@ -12,7 +12,8 @@ public:
 	bool IsValid ();
 
 	void SetSfxVolume (float volume);
-	int  SetChannels (int numchans);
+	void SetMusicVolume (float volume);
+	int  GetNumChannels ();
 	void LoadSound (sfxinfo_t *sfx);
 	void UnloadSound (sfxinfo_t *sfx);
 
@@ -22,11 +23,8 @@ public:
 	long PlayStream (SoundStream *stream, int volume);
 	void StopStream (SoundStream *stream);
 
-	// Tracker modules.
-	SoundTrackerModule *OpenModule (const char *file, int offset, int length);
-
 	// Starts a sound in a particular sound channel.
-	long StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping, bool pauseable);
+	long StartSound (sfxinfo_t *sfx, float vol, float sep, int pitch, int channel, bool looping, bool pauseable);
 	long StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3], bool pauseable);
 
 	// Stops a sound channel.
@@ -42,7 +40,7 @@ public:
 	bool IsPlayingSound (long handle);
 
 	// Updates the volume, separation, and pitch of a sound channel.
-	void UpdateSoundParams (long handle, int vol, int sep, int pitch);
+	void UpdateSoundParams (long handle, float vol, float sep, int pitch);
 	void UpdateSoundParams3D (long handle, float pos[3], float vel[3]);
 
 	// For use by I_PlayMovie
@@ -61,26 +59,36 @@ private:
 	struct ChanMap
 	{
 		int soundID;		// sfx playing on this channel
-		long channelID;
+		FMOD::Channel *channelID;
 		bool bIsLooping;
-		bool bIs3D;
-		bool bIsPauseable;
-		unsigned int lastPos;
 	} *ChannelMap;
 
 	int NumChannels;
 	unsigned int DriverCaps;
 	int OutputType;
-	bool DidInit;
+	bool Hardware3D;
+	bool SFXPaused;
 
-	int PutSampleData (FSOUND_SAMPLE *sample, const BYTE *data, int len, unsigned int mode);
+//	int PutSampleData (FSOUND_SAMPLE *sample, const BYTE *data, int len, unsigned int mode);
 	void DoLoad (void **slot, sfxinfo_t *sfx);
 	void getsfx (sfxinfo_t *sfx);
-	FSOUND_SAMPLE *CheckLooping (sfxinfo_t *sfx, bool looped);
+	FMOD::Sound *CheckLooping (sfxinfo_t *sfx, bool looped);
 	void UncheckSound (sfxinfo_t *sfx, bool looped);
 
 	bool Init ();
 	void Shutdown ();
+	void DumpDriverCaps(FMOD_CAPS caps, int minfrequency, int maxfrequency);
+
+	FMOD::System *Sys;
+	FMOD::ChannelGroup *SfxGroup, *PausableSfx;
+	FMOD::ChannelGroup *MusicGroup;
+
+	// Just for snd_status display
+	int Driver_MinFrequency;
+	int Driver_MaxFrequency;
+	FMOD_CAPS Driver_Caps;
+
+	friend class FMODStreamCapsule;
 };
 
 #endif

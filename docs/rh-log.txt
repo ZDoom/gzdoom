@@ -1,3 +1,7 @@
+March 9, 2008 (Changes by Graf Zahl)
+- fixed: The release build still linked to the old FMOD version.
+- fixed: SPCSong only works for Win32 so its definition must be excluded for Linux.
+
 March 8, 2008
 - Fixed: If you wanted to make cleandep with MinGW, you had to specifically
   specify Makefile.mingw as the makefile to use.
@@ -65,7 +69,7 @@ March 3, 2008
 
 March 1, 2008 (Changes by Graf Zahl)
 - fixed: A_CountdownArg used 0 based indices although all uses of it assumed
-  1-based.
+  it is 1-based.
 - added MF5_DONTRIP flag.
 - added CheckActorFloorTexture, CheckActorCeilingTexture and
   GetActorLightLevel ACS functions.

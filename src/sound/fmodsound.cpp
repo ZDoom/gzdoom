@@ -952,7 +952,7 @@ void FMODSoundRenderer::StopSound(long handle)
 	{
 		ChannelMap[handle].channelID->stop();
 		UncheckSound(&S_sfx[ChannelMap[handle].soundID], ChannelMap[handle].bIsLooping);
-		ChannelMap[handle].soundID = NULL;
+		ChannelMap[handle].soundID = 0;
 	}
 }
 

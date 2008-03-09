@@ -250,6 +250,7 @@ protected:
 	int m_LastPos;
 };
 
+#ifdef _WIN32
 // SPC file, rendered with SNESAPU.DLL and streamed through FMOD ------------
 
 typedef void (__stdcall *SNESAPUInfo_TYPE) (DWORD*, DWORD*, DWORD*);
@@ -295,6 +296,8 @@ protected:
 	SetAPUOpt_TYPE SetAPUOpt;
 	EmuAPU_TYPE EmuAPU;
 };
+
+#endif
 
 // MIDI file played with Timidity and possibly streamed through FMOD --------
 

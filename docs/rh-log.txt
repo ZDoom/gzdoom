@@ -1,4 +1,5 @@
 March 9, 2008 (Changes by Graf Zahl)
+- fixed: StreamSong::SetPosition required a NULL pointer check.
 - fixed: The release build still linked to the old FMOD version.
 - fixed: SPCSong only works for Win32 so its definition must be excluded for Linux.
 

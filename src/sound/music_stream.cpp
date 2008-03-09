@@ -83,5 +83,12 @@ bool StreamSong::IsPlaying ()
 
 bool StreamSong::SetPosition(int order)
 {
-	return m_Stream->SetPosition(order);
+	if (m_Stream != NULL)
+	{
+		return m_Stream->SetPosition(order);
+	}
+	else
+	{
+		return false;
+	}
 }

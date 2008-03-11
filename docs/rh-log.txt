@@ -1,3 +1,15 @@
+March 11, 2008
+- Removed lots of spc_* cvars that are no longer meaningful and changed
+  spc_amp from a x.4 fixed point number to a normal float.
+- Switched SPC playback from the external SNESAPU.DLL to Blargg's LGPL
+  snes_spc library. I've compiled it with the fast DSP rather than the
+  highly accurate one, since I didn't notice a meaningful difference between
+  the two in my limited testing. In short: SPC playback is now built in to
+  ZDoom. You don't need to download anything extra to make it work, and it
+  also works on Linux as well as Windows (though building with Linux is
+  currently untested).
+- Fixed: Stereo separation was calculated very wrongly when in 2D sound mode.
+
 March 10, 2008
 - EAX is a pain in the butt to get it to work reliably. Why? I can get the
   reverb to work just fine with software, but with hardware, I hear nothing

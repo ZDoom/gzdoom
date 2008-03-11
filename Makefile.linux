@@ -16,12 +16,13 @@ ifdef GC
 endif
 CFLAGS += -MMD -DHAVE_FILELENGTH -D__forceinline=inline `sdl-config --cflags` `pkg-config gtk+-2.0 --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
-LDFLAGS += -lz -ljpeg -lfmodex `sdl-config --libs` `pkg-config gtk+-2.0 --libs`
+LDFLAGS += snes_spc/libsnes_spc.a -lz -ljpeg -lfmodex `sdl-config --libs` `pkg-config gtk+-2.0 --libs`
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
 SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ thingdef/)
 VPATH = $(SRCDIRS)
 INCLUDES = $(addprefix -I,$(SRCDIRS))
+INCLUDES += snes_spc/snes_spc/ /usr/local/include/fmodex/
 CFLAGS += $(INCLUDES)
 
 RELEASEOBJ ?= releaseobj
@@ -63,7 +64,7 @@ COBJS = $(addprefix $(OBJDIR)/,$(CPPOBJFILES) $(COBJFILES))
 DEPS = $(patsubst %.o,%.d,$(COBJS))
 OBJS = $(addprefix $(OBJDIR)/,$(AOBJFILES)) $(COBJS)
 
-all: $(ZDOOMBIN) toolsandpk3 zdoom.pk3
+all: $(ZDOOMBIN) snes_spc/libsnes_spc.a toolsandpk3 zdoom.pk3
 
 $(ZDOOMBIN): ccdv updaterev $(OBJDIR) $(OBJS)
 	$(CCDV) $(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
@@ -95,6 +96,9 @@ toolsandpk3: ccdv tools/makewad/makewad tools/dehsupp/dehsupp tools/xlatcc/xlatc
 
 zdoom.pk3: toolsandpk3
 	ln -sf wadsrc/zdoom.pk3 ./
+
+snes_spc/libsnes_spc.a:
+	$(MAKE) -C snes_spc/
 
 tools/makewad/makewad:
 	$(MAKE) -C tools/makewad/

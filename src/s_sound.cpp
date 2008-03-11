@@ -74,10 +74,9 @@
 #define NORM_PITCH				128
 #define NORM_PRIORITY			64
 #define NORM_SEP				0
-#define NONE_SEP				-2
 
 #define S_PITCH_PERTURB 		1
-#define S_STEREO_SWING			0.25f
+#define S_STEREO_SWING			0.75
 
 /* Sound curve parameters for Doom */
 
@@ -606,7 +605,6 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	float sep;
 	int org_id;
 	fixed_t x, y, z;
-	angle_t angle;
 
 	static int sndcount = 0;
 	int chan;
@@ -653,14 +651,9 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	if (volume > 1)
 		volume = 1;
 
-	if (attenuation == 0)
+	if (attenuation <= 0)
 	{
-		sep = NONE_SEP;
-		dist = 0;
-	}
-	else if (attenuation < 0)
-	{
-		sep = NONE_SEP;
+		sep = NORM_SEP;
 		dist = 0;
 	}
 	else
@@ -836,22 +829,21 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	if (sep == -3)
 	{
 		AActor *listener = players[consoleplayer].camera;
-		if (listener == NULL)
-		{
-			sep = NONE_SEP;
-		}
-		else if (dist == 0)
+		if (listener == NULL || dist == 0)
 		{
 			sep = NORM_SEP;
 		}
 		else
 		{
-			angle = R_PointToAngle2 (listener->x, listener->y, x, y);
-			if (angle > listener->angle)
-				angle = angle - listener->angle;
-			else
-				angle = angle + (ANGLE_MAX - listener->angle);
-			sep = NORM_SEP - S_STEREO_SWING * sin((angle >> 1) * M_PI / 2147483648.0);
+			double angle = atan2(double(y - listener->y), double(x - listener->x));
+			double listener_angle = (listener->angle >> 1) * (M_PI / 1073741824.0);
+
+			if (angle <= listener_angle)
+			{
+				angle += 2*M_PI;
+			}
+			angle -= listener_angle;
+			sep = -S_STEREO_SWING * sin(angle);
 			if (snd_flipstereo)
 			{
 				sep = -sep;
@@ -1303,7 +1295,6 @@ void S_UpdateSounds (void *listener_p)
 	fixed_t *listener;
 	fixed_t x, y;
 	int i, dist;
-	angle_t angle;
 	float vol, sep;
 
 	I_UpdateMusic();
@@ -1363,12 +1354,15 @@ void S_UpdateSounds (void *listener_p)
 			vol = SoundCurve[dist] * Channel[i].volume;
 			if (dist > 0)
 			{
-				angle = R_PointToAngle2(listener[0], listener[1], x, y);
-				if (angle > players[consoleplayer].camera->angle)
-					angle = angle - players[consoleplayer].camera->angle;
-				else
-					angle = angle + (ANGLE_MAX - players[consoleplayer].camera->angle);
-				sep = NORM_SEP - S_STEREO_SWING * sin((angle >> 1) * M_PI / 2147483648.0);
+				double angle = atan2(double(y - listener[1]), double(x - listener[0]));
+				double listener_angle = (players[consoleplayer].camera->angle >> 1) * (M_PI / 1073741824.0);
+
+				if (angle <= listener_angle)
+				{
+					angle += 2*M_PI;
+				}
+				angle -= listener_angle;
+				sep = -S_STEREO_SWING * sin(angle);
 				if (snd_flipstereo)
 				{
 					sep = -sep;

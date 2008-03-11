@@ -250,17 +250,10 @@ protected:
 	int m_LastPos;
 };
 
-#ifdef _WIN32
 // SPC file, rendered with SNESAPU.DLL and streamed through FMOD ------------
 
-typedef void (__stdcall *SNESAPUInfo_TYPE) (DWORD*, DWORD*, DWORD*);
-typedef void (__stdcall *GetAPUData_TYPE) (void**, BYTE**, BYTE**, DWORD**, void**, void**, DWORD**, DWORD**);
-typedef void (__stdcall *LoadSPCFile_TYPE) (void*);
-typedef void (__stdcall *ResetAPU_TYPE) (DWORD);
-typedef void (__stdcall *SetDSPAmp_TYPE) (DWORD);
-typedef void (__stdcall *FixAPU_TYPE) (WORD, BYTE, BYTE, BYTE, BYTE, BYTE);
-typedef void (__stdcall *SetAPUOpt_TYPE) (DWORD, DWORD, DWORD, DWORD, DWORD, DWORD);
-typedef void *(__stdcall *EmuAPU_TYPE) (void *, DWORD, BYTE);
+struct SNES_SPC;
+struct SPC_Filter;
 
 class SPCSong : public StreamSong
 {
@@ -272,32 +265,11 @@ public:
 	bool IsValid () const;
 
 protected:
-	bool LoadEmu ();
-	void CloseEmu ();
-
 	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 
-#ifdef _WIN32
-	HINSTANCE HandleAPU;
-#else
-	void *HandleAPU;
-#endif
-	int APUVersion;
-
-	bool Stereo;
-	bool Is8Bit;
-
-	SNESAPUInfo_TYPE SNESAPUInfo;
-	GetAPUData_TYPE GetAPUData;
-	LoadSPCFile_TYPE LoadSPCFile;
-	ResetAPU_TYPE ResetAPU;
-	SetDSPAmp_TYPE SetDSPAmp;
-	FixAPU_TYPE FixAPU;
-	SetAPUOpt_TYPE SetAPUOpt;
-	EmuAPU_TYPE EmuAPU;
+	SNES_SPC *SPC;
+	SPC_Filter *Filter;
 };
-
-#endif
 
 // MIDI file played with Timidity and possibly streamed through FMOD --------
 

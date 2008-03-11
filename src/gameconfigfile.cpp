@@ -295,6 +295,16 @@ void FGameConfigFile::DoGlobalSetup ()
 					vsync->ResetToDefault ();
 				}
 			}
+			if (last < 206)
+			{ // spc_amp is now a float, not an int.
+				FBaseCVar *amp = FindCVar ("spc_amp", NULL);
+				if (amp != NULL)
+				{
+					UCVarValue val = amp->GetGenericRep(CVAR_Float);
+					val.Float /= 16.f;
+					amp->SetGenericRep(val, CVAR_Float);
+				}
+			}
 		}
 	}
 }

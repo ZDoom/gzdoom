@@ -1,0 +1,318 @@
+snes_spc 0.9.0: SNES SPC-700 APU Emulator
+-----------------------------------------
+Author : Shay Green <gblargg@gmail.com>
+Website: http://www.slack.net/~ant/
+Forum  : http://groups.google.com/group/blargg-sound-libs
+License: GNU Lesser General Public License (LGPL)
+
+
+Contents
+--------
+* C and C++ Interfaces
+* Overview
+* Full SPC Emulation
+* DSP Emulation
+* SPC Music Playback
+* State Copying
+* Library Compilation
+* Error handling
+* Solving Problems
+* Accurate S-DSP Limitations
+* Fast S-DSP Limitations
+* S-SMP Limitations
+* To Do
+* Thanks
+
+
+C and C++ Interfaces
+--------------------
+The library includes a C interface in spc.h and dsp.h, which can be used
+from C and C++. This C interface is referred to in the following
+documentation. If you're building this as a shared library (rather than
+linking statically), you should use the C interface since it will change
+less in future versions.
+
+The native C++ interface is in the header files SNES_SPC.h, SPC_DSP.h,
+and SPC_Filter.h, and the two interfaces can be freely mixed in C++
+code. Conversion between the two interfaces generally follows a pattern:
+
+	C interface                     C++ interface
+	- - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	SNES_SPC* spc;                  SNES_SPC* spc;
+	
+	spc = spc_new();                spc = new SNES_SPC;
+	
+	spc_play( spc, count, buf );    spc->play( count, buf );
+	
+	spc_sample_rate                 SNES_SPC::sample_rate
+	
+	spc_delete( spc );              delete spc;
+
+
+Overview
+--------
+There are three main roles for this library:
+* Full SPC emulation in a SNES emulator
+* DSP emulation in a SNES emulator (where you emulate the SMP CPU)
+* SPC playback in an SPC music file player
+
+Each of these uses are described separately below.
+
+
+Full SPC Emulation
+------------------
+See spc.h for full function reference (SNES_SPC.h if using C++).
+
+* Create SPC emulator with spc_new() and check for NULL.
+
+* Call spc_init_rom() with a pointer to the 64-byte IPL ROM dump (not
+included with library).
+
+* When your emulated SNES is powered on, call spc_reset(). When the
+reset switch is pressed, call spc_soft_reset().
+
+* Call spc_set_output() with your output buffer, then do emulation.
+
+* When the SNES CPU accesses APU ports, call spc_read_port() and
+spc_write_port().
+
+* When your emulator's timebase is going back to 0, call
+spc_end_frame(), usually at the end of a video frame or scanline.
+
+* Periodically play samples from your buffer. Use spc_sample_count() to
+find out how many samples have been written, then spc_set_output() after
+you've made more space in your buffer.
+
+* Save/load full emulator state with spc_copy_state().
+
+* You can save as an SPC music file with spc_save_spc().
+
+* When done, use spc_delete() to free memory.
+
+
+DSP Emulation
+-------------
+See dsp.h for full function reference (SPC_DSP.h if using C++).
+
+* Create DSP emulator with spc_dsp_new() and check for NULL.
+
+* Let the DSP know where your 64K RAM is with spc_dsp_init().
+
+* When your emulated SNES is powered on, call spc_dsp_reset(). When the
+reset switch is pressed, call spc_dsp_soft_reset().
+
+* Call spc_dsp_set_output() with your output buffer, then do emulation.
+
+* Use spc_dsp_run() to run DSP for specified number of clocks (1024000
+per second). Every 32 clocks a pair of samples is added to your output
+buffer.
+
+* Use spc_dsp_read() and spc_dsp_write() to handle DSP reads/writes from
+the S-SMP. Before calling these always catch the DSP up to present time
+with spc_dsp_run().
+
+* Periodically play samples from your buffer. Use spc_dsp_sample_count()
+to find out how many samples have been written, then
+spc_dsp_set_output() after you've made more space in your buffer.
+
+* Use spc_dsp_copy_state() to save/load full DSP state.
+
+* When done, use spc_delete() to free memory.
+
+
+SPC Music Playback
+------------------
+See spc.h for full function reference (SNES_SPC.h if using C++).
+
+* Create SPC emulator with spc_new() and check for NULL.
+
+* Load SPC with spc_load_spc() and check for error.
+
+* Optionally cear echo buffer with spc_clear_echo(). Many SPCs have
+garbage in echo buffer, which causes noise at the beginning.
+
+* Generate samples as needed with spc_play().
+
+* When done, use spc_delete() to free memory.
+
+* For a more complete game music playback library, use Game_Music_Emu
+
+
+State Copying
+-------------
+The SPC and DSP modules include state save/load functions. They take a
+pointer to a pointer to a buffer to store state, and a copy function.
+This copy function can either copy data to the buffer or from it,
+allowing state save and restore with the same library function. The
+internal save state format allows for future expansion without making
+previous save states unusable.
+
+The SPC save state format puts the most important parts first to make it
+easier to manually examine. It's organized as follows:
+
+Offset  Size    Data
+- - - - - - - - - - - - - - - - - -
+     0 $10000   SPC RAM
+$10000    $10   SMP $F0-$FF registers
+$10010      4   SMP $F4-$F8 output registers
+$10014      2   PC
+$10016      1   A
+$10017      1   X
+$10018      1   Y
+$10019      1   PSW
+$1001A      1   SP
+$1001B      5   internal
+$10020    $80   DSP registers
+$100A0    ...   internal
+
+
+Library Compilation
+-------------------
+While this library is in C++, it has been written to easily link in a C
+program *without* needing the standard C++ library. It doesn't use
+exception handling or run-time type information (RTTI), so you can
+disable these in your C++ compiler to increase efficiency.
+
+If you're building a shared library (DLL), I recommend only exporting
+the C interfaces in spc.h and dsp.h, as the C++ interfaces expose
+implementation details that will break link compatibility across
+versions.
+
+If you're using C and compiling with GCC, I recommend the following
+command-line options when compiling the library source, otherwise GCC
+will insert calls to the standard C++ library and require that it be
+linked in:
+
+	-fno-rtti -fno-exceptions
+
+For maximum optimization, see the NDEBUG and BLARGG_NONPORTABLE options
+in blargg_config. If using GCC, you can enable these by adding the
+following command-line options when you invoke gcc. If you encounter
+problems, try without -DBLARGG_NONPORTABLE; if that works, contact me so
+I can figure out why BLARGG_NONPORTABLE was causing it to fail.
+
+	-O3 -DNDEBUG -DBLARGG_NONPORTABLE -fno-rtti -fno-exceptions
+
+
+
+Error handling
+--------------
+Functions which can fail have a return type of spc_err_t (blargg_err_t
+in the C++ interfaces), which is a pointer to an error string (const
+char*). If a function is successful it returns NULL. Errors that you can
+easily avoid are checked with debug assertions; spc_err_t return values
+are only used for genuine run-time errors that can't be easily predicted
+in advance (out of memory, I/O errors, incompatible file data). Your
+code should check all error values.
+
+To improve usability for C programmers, C++ programmers unfamiliar with
+exceptions, and compatibility with older C++ compilers, the library does
+*not* throw any C++ exceptions and uses malloc() instead of the standard
+operator new. This means that you *must* check for NULL when creating a
+library object with the new operator.
+
+
+Solving Problems
+----------------
+If you're having problems, try the following:
+
+* If you're getting garbled sound, try this simple siren generator in
+place of your call to play(). This will quickly tell whether the problem
+is in the library or in your code.
+
+	static void play_siren( long count, short* out )
+	{
+		static double a, a2;
+		while ( count-- )
+			*out++ = 0x2000 * sin( a += .1 + .05*sin( a2+=.00005 ) );
+	}
+
+* Enable debugging support in your environment. This enables assertions
+and other run-time checks.
+
+* Turn the compiler's optimizer is off. Sometimes an optimizer generates
+bad code.
+
+* If multiple threads are being used, ensure that only one at a time is
+accessing a given set of objects from the library. This library is not
+in general thread-safe, though independent objects can be used in
+separate threads.
+
+* If all else fails, see if the demos work.
+
+
+Accurate S-DSP Limitations
+--------------------------
+* Power-up and soft reset behavior might have slight inaccuracies.
+
+* Muting (FLG bit 6) behavior when toggling bit very rapidly is not
+emulated properly.
+
+* No other known inaccuracies. Has passed 100+ strenuous tests.
+
+
+Fast S-DSP Limitations
+----------------------
+* Uses faster sample calculations except in cases where exact value is
+actually important (BRR decoding, and gaussian interpolation combined
+with pitch modulation).
+
+* Stops decoding BRR data when a voice's envelope has released to
+silence.
+
+* Emulates 32 clocks at a time, so DSP register and memory accesses are
+all done in a bunch rather than spread out. Even though, some clever
+code makes register accesses separated by 40 or so clocks occur with
+cycle-accurate timing.
+
+
+S-SMP Limitations
+-----------------
+* Opcode fetches and indirect pointers are always read directly from
+memory, even for the $F0-$FF region, and the DSP is not caught up for
+these fetches.
+
+* Attempts to perversely execute data in registers or an area being
+modified by echo will not be emulated properly.
+
+* Has not been thoroughly tested.
+
+* Test register ($F0) is not implemented.
+
+* Echo buffer can overwrite IPL ROM area, and does not correctly update
+extra RAM there.
+
+
+To Do
+-----
+* I'd like feedback on the interface and any ways to improve it. In
+particular, the differing features between the accurate and fast DSP
+emulators might make it harder to cleanly switch between them without
+modifying source code.
+
+* Finish thorough tests on SMP memory access times.
+
+* Finish thorough tests on SMP instruction behavior (flags, registers).
+
+* Finish thorough tests on SMP timers.
+
+* Finish power-up and reset behavior testing.
+
+* Come up with best starting conditions to play an SPC and implement in
+hardware SNES SPC player for verification.
+
+
+Thanks
+------
+Thanks to Anti-Resonance's SPC2ROM and help getting SPCs playing on my
+SNES in the first place, then Brad Martin's openspc and Chris Moeller's
+openspc++ C++ adaptation, giving me a good SPC emulator to start with
+several years ago. Thanks to Richard Bannister, Mahendra Tallur, Shazz,
+nenolod, theHobbit, Johan Samuelsson, nes6502, and Micket for helping
+test my Game_Music_Emu library. Thanks to hcs for help in converting to
+C for the Rockbox port. Thanks to byuu (bsnes author) and pagefault and
+Nach (zsnes team) for testing and using my new rewritten DSP in their
+emulators. Thanks to anomie for his good SNES documentation and
+discussions with me to keep it up to date with my latest findings.
+-- 
+Shay Green <gblargg@gmail.com>

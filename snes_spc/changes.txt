@@ -1,0 +1,107 @@
+snes_spc Change Log
+-------------------
+
+snes_spc 0.9.0
+--------------
+- Improved documentation
+
+- SPC: Added spc_skip() function for quickly seeking in an SPC music
+file. Runs 3-4x faster than normal playback using the fast DSP (or about
+43-60X real-time on my 400 MHz Mac).
+
+- SPC: Added spc_set_tempo() to change tempo of SPC music playback.
+
+- SPC: Sample generation is now corrected to generate exactly one pair
+of samples every 32 clocks without exception. Before it could generate a
+few samples more or less depending on how far ahead or behind DSP was at
+the moment.
+
+- SPC: Changed spc_reset() and spc_soft_reset() to also reset output
+buffer (see spc.h).
+
+- SPC: Fixed minor timer counting bug.
+
+- SPC: Stack pointer wrap-around is now emulated (and without any
+noticeable performance hit).
+
+- SPC: Runs about 5% faster due to various optimizations.
+
+- SPC: Found way to make fast DSP register accesses cycle-accurate in
+most cases, without reducing performance. Allows fast DSP to pass most
+of my validation tests.
+
+- DSP: Added surround disable support to fast DSP again.
+
+- DSP: Improved voice un-muting to take effect immediately on fast DSP.
+
+- DSP: Noise shift register now starts at 0x4000 instead of 0x4001 as it
+incorrectly did before.
+
+- Converted library to C++ code internally. A C interface is still
+included in spc.h and dsp.h. Note that these are different than the
+previous interface, so your code will require minor changes:
+
+	Old SPC code                            New SPC code
+	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	#include "spc/spc.h"                    #include "snes_spc/spc.h"
+
+	snes_spc_t* spc;                        SNES_SPC* spc;
+	spc = malloc( sizeof (snes_spc_t) );    spc = spc_new();
+	spc_init( spc );
+	
+	spc_end_frame( time );                  spc_end_frame( spc, time );
+	/* etc. */
+	
+	/* done using SPC */                    spc_delete( spc );
+	
+	
+	Old DSP code                            New DSP code
+	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	#include "spc/spc_dsp.h"                #include "snes_spc/dsp.h"
+	
+	spc_dsp_init( ram );                    SPC_DSP* dsp;
+											dsp = spc_dsp_new();
+											spc_dsp_init( dsp, ram );
+	
+	spc_dsp_run( count );                   spc_dsp_run( dsp, count );
+	/* etc. */
+	
+	/* done using DSP */                    spc_dsp_delete( dsp );
+	
+
+snes_spc 0.8.0
+--------------
+- Added several demos
+
+- Added high-pass/low-pass filter to better match SNES sound
+
+- Added save state functionality for SPC and accurate DSP (but not fast
+DSP)
+
+- Added emulation of reset switch on NES (soft reset)
+
+- Made source more compatible with pre-C99 compilers by eliminating
+mid-block declarations
+
+- SPC: Many S-SMP accuracy improvements, mostly in memory access times
+
+- SPC: S-SMP speed improvements
+
+- SPC: Added SPC load/save functions and KON checking to help trim
+silence from beginning
+
+- SPC: Changed spc_init() to have you allocate most of the memory used
+by the library so you have more control over it
+
+- DSP: New highly accurate DSP and faster version derived from same code
+
+- DSP: Changed prefix from dsp_ to spc_dsp_. Your DSP code will require
+changes.
+
+- DSP: Removed surround disable and gain. Gain can now be done with the
+dsp_filter module, and surround disable will probably only be
+implemented in the fast DSP at some point.
+
+- DSP: Changed interface to work in clocks rather than samples,
+necessary for the new accurate DSP. Sample output is now done with
+separate functions. Your DSP code will require changes.

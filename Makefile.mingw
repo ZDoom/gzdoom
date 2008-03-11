@@ -28,8 +28,8 @@ RELEASEOBJDIR ?= releaseobj
 CCDV ?= @ccdv
 RE2C = tools/re2c/re2c
 
-CPPFLAGS = -DWIN32 -D_WIN32 -D_WINDOWS -DHAVE_STRUPR -DHAVE_FILELENGTH -DI_DO_NOT_LIKE_BIG_DOWNLOADS -D__forceinline=inline -MMD -Izlib -IFLAC -Ijpeg-6b -Isrc -Isrc/win32 -Isrc/g_doom -Isrc/g_heretic -Isrc/g_hexen -Isrc/g_raven -Isrc/g_strife -Isrc/g_shared -Isrc/oplsynth -Isrc/sound -Isrc/textures -Isrc/thingdef
-LDFLAGS += zlib/libz.a jpeg-6b/libjpeg.a -lfmodex -lwsock32 -lwinmm -lddraw -ldsound -ldxguid -ldinput8 -lole32 -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lsetupapi -lws2_32 -Wl,--subsystem,windows
+CPPFLAGS = -DWIN32 -D_WIN32 -D_WINDOWS -DHAVE_STRUPR -DHAVE_FILELENGTH -DI_DO_NOT_LIKE_BIG_DOWNLOADS -D__forceinline=inline -MMD -Izlib -IFLAC -Ijpeg-6b -Isrc -Isrc/win32 -Isrc/g_doom -Isrc/g_heretic -Isrc/g_hexen -Isrc/g_raven -Isrc/g_strife -Isrc/g_shared -Isrc/oplsynth -Isrc/sound -Isrc/textures -Isrc/thingdef -Isnes_spc/snes_spc
+LDFLAGS += zlib/libz.a jpeg-6b/libjpeg.a snes_spc/libsnes_spc.a -lfmodex -lwsock32 -lwinmm -lddraw -ldsound -ldxguid -ldinput8 -lole32 -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lsetupapi -lws2_32 -Wl,--subsystem,windows
 
 ifdef FMODDIR
   CPPFLAGS += -I$(FMODDIR)/api/inc

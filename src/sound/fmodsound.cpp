@@ -277,8 +277,15 @@ public:
 		}
 		Channel->setChannelGroup(Owner->MusicGroup);
 		Channel->setVolume(volume);
-		Channel->setPaused(false);
-
+		if (Owner->Sound3D)
+		{ // Ensure reverb is disabled when using 3D sound.
+			FMOD_REVERB_CHANNELPROPERTIES reverb;
+			if (FMOD_OK == Channel->getReverbProperties(&reverb))
+			{
+				reverb.Room = -10000;
+				Channel->setReverbProperties(&reverb);
+			}
+		}
 		if (normalize)
 		{ // Attach a normalizer DSP unit to the channel.
 			result = Owner->Sys->createDSPByType(FMOD_DSP_TYPE_NORMALIZE, &DSP);
@@ -287,6 +294,7 @@ public:
 				Channel->addDSP(DSP);
 			}
 		}
+		Channel->setPaused(false);
 		return true;
 	}
 
@@ -891,16 +899,19 @@ long FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, float sep, int pit
 		chan->setFrequency(freq);
 		chan->setVolume(vol);
 		chan->setPan(sep);
-		chan->setPaused(false);
 		if (Sound3D)
-		{
+		{ // Make 2D sounds head relative.
 			FMOD_MODE mode;
 
 			if (FMOD_OK == chan->getMode(&mode))
 			{
 				mode = (mode & ~FMOD_3D_WORLDRELATIVE) | (FMOD_3D_HEADRELATIVE);
+				chan->setMode(mode);
 			}
+			FMOD_VECTOR zero = { 0, 0, 0 };
+			chan->set3DAttributes(&zero, &zero);
 		}
+		chan->setPaused(false);
 		ChannelMap[channel].channelID = chan;
 		ChannelMap[channel].soundID = id;
 		ChannelMap[channel].bIsLooping = looping;
@@ -952,7 +963,7 @@ void FMODSoundRenderer::StopSound(long handle)
 	{
 		ChannelMap[handle].channelID->stop();
 		UncheckSound(&S_sfx[ChannelMap[handle].soundID], ChannelMap[handle].bIsLooping);
-		ChannelMap[handle].soundID = 0;
+		ChannelMap[handle].soundID = -1;
 	}
 }
 

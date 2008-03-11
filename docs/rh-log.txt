@@ -1,3 +1,15 @@
+March 10, 2008
+- EAX is a pain in the butt to get it to work reliably. Why? I can get the
+  reverb to work just fine with software, but with hardware, I hear nothing
+  special at all.
+- Fixed: Sounds apparently don't default to location 0,0,0 so I need to set
+  that explicitly for 2D sounds in 3D mode.
+- Fixed: I had forgotten to actually set the head relative flag for 2D sounds
+  played in 3D.
+- Fixed: Reverb was applied to digital music in software 3D mode. I tried
+  turning off reverb for 2D sounds too, but that turned it off for _all_
+  subsequent sounds and not that specific channel.
+
 March 9, 2008 (Changes by Graf Zahl)
 - fixed: StreamSong::SetPosition required a NULL pointer check.
 - fixed: The release build still linked to the old FMOD version.

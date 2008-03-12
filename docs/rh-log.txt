@@ -1,4 +1,6 @@
 March 12, 2008 (Changes by Graf Zahl)
+- Fixed: The SimpleCanvas in FCanvasTexture must be declared as a soft
+  root to the garbage collector.
 - Changed DObject's pointer substitution so that the pointers inside an
   object are handled by a virtual function. This allows subclasses to
   implement their own handling if they need it.

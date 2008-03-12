@@ -1,3 +1,7 @@
+March 12, 2008 (Changes by Graf Zahl)
+- Bumped the minimum savegame version because the current version crashes
+  each time an old savegame is loaded.
+
 March 11, 2008
 - Removed lots of spc_* cvars that are no longer meaningful and changed
   spc_amp from a x.4 fixed point number to a normal float.
@@ -252,10 +256,6 @@ February 19, 2008
 - Changed the global Args object to a pointer to one.
 - Changed several DArgs deletions into destroys.
 - Removed DBoundingBox from the DObject hierarchy.
-
-February 20, 2008 (Changes by Graf Zahl)
-- Added a modified version of Karate Chris's submission for killing specific
-  monsters with the 'Kill' ccmd.
 
 February 18, 2008
 - Added vid_refreshrate cvar to override Windows' automatic refresh rate

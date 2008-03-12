@@ -320,10 +320,8 @@ void AActor::Serialize (FArchive &arc)
 		<< meleerange
 		<< DamageType
 		<< gravity
-		<< FastChaseStrafeCount;
-
-	if (SaveVersion >=778)
-		arc << master;
+		<< FastChaseStrafeCount
+		<< master;
 
 	if (arc.IsStoring ())
 	{

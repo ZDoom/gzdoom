@@ -53,7 +53,7 @@ March 7, 2008
   hardware 3D support is used and default to false.
 - Removed the libFLAC source, since FMOD Ex has native FLAC support.
 - Removed the altsound code, since it was terribly gimped in comparison to
-  the FMOD code. It's original purpose was to have been as a springboard for
+  the FMOD code. Its original purpose was to have been as a springboard for
   writing a non-FMOD sound system for Unix-y systems, but that never
   happened.
 - Finished preliminary FMOD Ex support.
@@ -66,6 +66,15 @@ March 6, 2008
   it seems to have a working volume control.
 - Renamed music_midi_stream.cpp to music_midi_base.cpp.
 - Moved the WinMM MIDI code into a new container class.
+- Fixed: StatusBar and screen need to be barriered, because they are roots
+  but can also change at runtime.
+- Fixed: Objects that are forcibly deleted outside the GC need to be removed
+  from the gray list too.
+
+March 5, 2008
+- Fixed: Thinkers needed write barriers when they were removed from their
+  lists.
+- Fixed: DLevelScript::Link() and Unlink() needed write barriers.
 
 March 4, 2008
 - Moved the identical code between the MUS and MIDI streamers into a new base
@@ -115,6 +124,20 @@ March 1, 2008 (Changes by Graf Zahl)
 - Gave Strife's instant death sector type its own damage type.
 
 February 29, 2008
+- Changed the default GC parameters to make it run more aggressively.
+- Added NULL checks to the GC::WriteBarrier() wrappers.
+- Fixed: The DObject destructor set GC::SweepPos incorrectly if it pointed
+  at that object being deleted.
+- Added "soft roots" to the garbage collector. These are similar in
+  purpose to setting the OF_Fixed bit, but they behave as full-fledged roots
+  as far as the collector is concerned, so any objects reachable through
+  them will not be collected.
+- Added support for the OF_Fixed bit. This is ONLY for simple objects which
+  do not contain pointers to other objects, because all it does is prevent
+  an object that is otherwise dead from being freed. It does not include
+  the object in the propagate stage if it is unreachable, so any objects
+  that are only reachable through it will still be freed unless they are
+  also fixed.
 - Fixed: R_SetupAddClampCol() checked add4cols' memory instead of
   adclamp4cols' memory when deciding if it should skip modification.
 
@@ -125,6 +148,8 @@ February 28, 2008
 
 February 27, 2008
 - Added assembly versions of rt_add4cols and rt_addclamp4cols.
+- Added a read barrier to FArchive::SerializeObject() to make sure that
+  objects that are being euthanized are not stored in the archive.
 
 February 26, 2008
 - Added an assembly version of rt_shaded4cols, since that's the main decal
@@ -139,11 +164,53 @@ February 26, 2008
   the translation in one step and the drawing in another. This lets me call
   the untranslated drawer to do the real drawing instead of mostly duplicating
   them. Performance wise, there is practically no difference from before.
+- Fixed: Using +stat from the command line caused a crash.
+- More write barriers and pointer declarations. Here are rules I've come up
+  with so far for when write barriers can be ommitted:
+  * Initializing pointers for a newly created object: A new object can never
+    black, so none of its pointers that get set by the constructor (or code
+    just following its creation) need to be  behind write barriers.
+  * Creating a new thinker and storing it in a pointer: The thinker
+    constructor already puts it behind a write barrier when it links it into
+    the thinker list, so you don't need to do it again.
+  * As a corollary of the above: No pointers to thinkers should need to be
+    behind write barriers, because it is incorrect to have a thinker that is
+    live but not in a thinker list. I realized this while I was going through
+    the long list of actor target references, so there are some write barriers
+    for those in place already, since they don't hurt to have them around.
+  As a consequence of the last point, I think I'm done placing write barriers
+  in all their necessary places without even touching most of the code. I'm
+  going to let it sit like this for a few days to see if I can think of a
+  counter-example where a live thinker wouldn't be in a thinker list, but it
+  feels correct to me right now.
 
 February 25, 2008 (Changes by Graf Zahl)
 - Fixed: The DECORATE expression evaluator's random function could produce
   incorrect results for ranges > 255. Changed so that FRandom's default
   implementation is used instead.
+
+February 24, 2008
+- Fixed: DDecalFader::Tick() still referenced TheDecal even after destroying
+  it.
+- Added write barriers around the thinker list insertions in dthinker.cpp.
+
+February 23, 2008 (Changes by Graf Zahl)
+- Fixed: AWeaponPiece didn't declare its FullWeapon pointer as such.
+- Fixed: Hexen's random player class skill menu was missing the '$' indicating 
+  a string table identifier.
+- Fixed: DCorpsePointer::Serialize didn't call the super method.
+
+February 22, 2008
+- Moved DSeqNode's and its children's destructor code into their Destroy()
+  methods.
+- Moved DSectorEffect's destructor code into a Destroy() method.
+- Changed the myoffsetof definition to match DECLARE_POINTER's because GCC
+  started complaining about its use in p_setup.cpp, though I'm not sure why.
+- Added a pointer list to DACSThinker so that the collector can find scripts
+  instead of thinking they're all dead.
+- Added read barriers to sector_t's pointers.
+- Used the HAS_OBJECT_POINTERS macros to locate places to place TObjPtrs to
+  form read barriers.
 
 February 21, 2008
 - Fixed: DThinker::SerializeAll() did not serialize any thinkers in the
@@ -161,6 +228,30 @@ February 21, 2008
 - Fixed: The case for defining SAVESIG when SVN_REVISION_NUMBER == 0 did not
   work for GCC (and presumably VC++, though I never ran into that case with
   it) because it tried to stringify something that wasn't a macro argument.
+
+February 20, 2008
+- Changed the DHUDMessage deletions into destroys.
+- Added read barriers to the pointers inside AActor.
+- Split the AActor::LastLook union into its constituent parts.
+
+February 20, 2008 (Changes by Graf Zahl)
+- Added a modified version of Karate Chris's submission for killing specific
+  monsters with the 'Kill' ccmd.
+
+February 19, 2008
+- Added a rough initial garbage collector, based largely on Lua's. There are
+  no write or read barriers in place yet, so it's not a very close
+  approximation of the pointer cleaning code that was in place before, but it
+  does collect stuff. But guess what! Nuts.wad ran at 1-2 FPS before. Now
+  it's way, way more and easily stays above 35 FPS. The performance hit when
+  the GC is running is pretty minimal compared to the old way, which was in
+  many ways like a full garbage collection every tic.
+- Changed the status bars into DObjects.
+- Fixed: FBaseStatusBar::Tick() deleted hud messages instead of destroying
+  them.
+- Changed the global Args object to a pointer to one.
+- Changed several DArgs deletions into destroys.
+- Removed DBoundingBox from the DObject hierarchy.
 
 February 20, 2008 (Changes by Graf Zahl)
 - Added a modified version of Karate Chris's submission for killing specific
@@ -760,7 +851,7 @@ January 1, 2008
 - Fixed a D3D memory leak on every frame in windowed mode and the same thing
   for the screen wipes. Note to self: If it's an interface, be sure to
   Release it, because it will be AddRef'ed before being returned to you.
-- Moved the BlendView() call out of FBaseStatusBar::Draw() so that it can be
+- Moved the BlendView() call out of DBaseStatusBar::Draw() so that it can be
   applied before copying the 3D scene to the screen underneath the 2D parts.
 - Restored the console's darkening level to its old table-based amount.
 - Fixed D3DFB::SetColorOverlay()'s incorrect calculations.
@@ -4458,7 +4549,7 @@ April 18, 2006 (Changes by Graf Zahl)
   fighting the programmer.
 
 April 18, 2006
-- Fixed: FBaseStatusBar::DrBNumber() should behave like Doom's
+- Fixed: DBaseStatusBar::DrBNumber() should behave like Doom's
   STlib_drawNum(), and FDoomStatusBarTexture::DrawToBar() should add
   the textures left offset to the x coordinate before drawing.
   These fix Twice Risen's status bar.
@@ -5271,7 +5362,7 @@ February 11, 2005
 
 February 10, 2005
 - Fixed: The screen fading ACS commands did not work when viewing through a camera
-  because FBaseStatusBar::BlendView() did not think there was a player to get those
+  because DBaseStatusBar::BlendView() did not think there was a player to get those
   values from. Now, the blend comes from either the player viewing from or the
   console player if the current view is not from a player.
 - Fixed: Returning to a previously visited level in a hub with fewer players than you
@@ -5446,7 +5537,7 @@ January 26, 2005
   Unfortunately, I didn't bump the demo version between 2.0.63a and 2.0.90, so
   anything pre-2.0.97 won't play with 2.0.97, even though there's probably
   no changes that would cause desynching between 96 and 97. Oh well.
-- Fixed FBaseStatusBar::DrBNumber(Outer) to work when some of the big number
+- Fixed DBaseStatusBar::DrBNumber(Outer) to work when some of the big number
   graphics are missing.
 
 January 15, 2005
@@ -5622,7 +5713,7 @@ December 18, 2004
   on top of the next digit.
 - Fixed: The Doom HUD drew the selected inventory item on top of the secondary
   ammo if both were present.
-- Moved the DrawPowerups() call out of FBaseStatusBar::Draw() and into
+- Moved the DrawPowerups() call out of DBaseStatusBar::Draw() and into
   DrawTopStuff(), so the Doom HUD key display won't cover them up
 - Fixed: If you started flying and then pressed the land key, you wouldn't be
   able to fly again until the Wings of Wrath wore off. This was done by changing
@@ -6478,7 +6569,7 @@ July 15, 2004
 - Updated to FMOD 3.73.
 
 July 14, 2004
-- Moved the full-screen HUD coordinate logic out of FBaseStatusBar and into
+- Moved the full-screen HUD coordinate logic out of DBaseStatusBar and into
   DCanvas::DrawTexture. This is so that powerups can draw their status icons
   themselves without needing to hook into the status bar.
 - Reimplemented the Tome of Power.
@@ -7047,7 +7138,7 @@ December 12, 2003
   up okay in Doom.)
 - Added a fix to the blockmap tracers where all the blocks along the trace are
   crossed on their corners.
-- Fixed a potential crash in FBaseStatusBar::DrawMessages() when a HUD message
+- Fixed a potential crash in DBaseStatusBar::DrawMessages() when a HUD message
   removes itself as part of its drawing process.
 - Fixed: A few of the Strife weapons were erroneously defined with WIF_NOALERT.
 - Fixed: Sky textures defaulted to 0 if a map had a MAPINFO that did not
@@ -7195,7 +7286,7 @@ November 23, 2003
   things spawned afterward.
 - Added calls to SetWindowLongPtr to take away the window's border in
   fullscreen mode and put it back in windowed mode.
-- Fixed FBaseStatusBar::RepositionCoords() so that LilWhiteMouse's Chosen
+- Fixed DBaseStatusBar::RepositionCoords() so that LilWhiteMouse's Chosen
   ammo icons appear on the fullscreen HUD again.
 
 November 21, 2003
@@ -7927,7 +8018,7 @@ July 30, 2003
 - Added nonexistant texture check to the warping texture setup.
 
 July 28, 2003
-- Removed the ScaleCopy canvas from FBaseStatusBar, because everything is now
+- Removed the ScaleCopy canvas from DBaseStatusBar, because everything is now
   drawn to the screen directly even when the status bar is scaled.
 - Changed the pitch calculations in the DSimpleCanvas constructor to provide
   better wall drawing performance at all resolutions.
@@ -11069,7 +11160,7 @@ October 23, 2001
   torch lighting up the entire sky, so skies should ignore the setting of
   fixedlightlev.
 - Fixed the scaled status bar. I was simply forgetting to add the image
-  offsets in FBaseStatusBar::DrawImage() before calling CopyToScreen().
+  offsets in DBaseStatusBar::DrawImage() before calling CopyToScreen().
 - Added code to let decals move with sliding and rotating polyobjects.
 - Fixed: The wait console command waited one tic too few.
 - Fixed a resizing problem with playing movies windowed.
@@ -11889,7 +11980,7 @@ April 7, 2001
   big ammo count when switching to a weapon that does not use ammo.
 - Fixed: At certain screen heights, scaled status bars would not touch the
   bottom of the screen because of inaccuracy in the calculation of ::ST_Y
-  in FBaseStatusBar::SetScaled().
+  in DBaseStatusBar::SetScaled().
 - Added separate pickup sounds for health, armor, and ammo items.
 - Improved sound link resolution in S_StartSound() so that regular sounds
   can alias player sounds.

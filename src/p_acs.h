@@ -638,7 +638,7 @@ public:
 
 
 	DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-		bool backSide, int arg0, int arg1, int arg2, int always, bool delay);
+		bool backSide, int arg0, int arg1, int arg2, int always);
 	~DLevelScript ();
 
 	void Serialize (FArchive &arc);
@@ -655,7 +655,7 @@ protected:
 	int				*pc;
 	EScriptState	state;
 	int				statedata;
-	AActor			*activator;
+	TObjPtr<AActor>	activator;
 	line_t			*activationline;
 	bool			backSide;
 	FFont			*activefont;
@@ -701,6 +701,7 @@ inline FArchive &operator<< (FArchive &arc, DLevelScript::EScriptState &state)
 class DACSThinker : public DThinker
 {
 	DECLARE_CLASS (DACSThinker, DThinker)
+	HAS_OBJECT_POINTERS
 public:
 	DACSThinker ();
 	~DACSThinker ();

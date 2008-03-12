@@ -52,7 +52,11 @@ IVideo *Video;
 void I_ShutdownGraphics ()
 {
 	if (screen)
-		delete screen, screen = NULL;
+	{
+		screen->ObjectFlags |= OF_YesReallyDelete;
+		delete screen;
+		screen = NULL;
+	}
 	if (Video)
 		delete Video, Video = NULL;
 }
@@ -61,7 +65,7 @@ void I_InitGraphics ()
 {
 	UCVarValue val;
 
-	val.Bool = !!Args.CheckParm ("-devparm");
+	val.Bool = !!Args->CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
 	Video = new SDLVideo (0);

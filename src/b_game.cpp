@@ -94,9 +94,11 @@ DCajunMaster::~DCajunMaster()
 	ForgetBots();
 	if (getspawned != NULL)
 	{
-		delete getspawned;
+		getspawned->Destroy();
 		getspawned = NULL;
 	}
+	// FIXME: Make this object proper
+	ObjectFlags |= OF_Cleanup | OF_YesReallyDelete;
 }
 
 //This function is called every tick (from g_game.c),

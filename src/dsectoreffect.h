@@ -10,9 +10,9 @@ class DSectorEffect : public DThinker
 	DECLARE_CLASS (DSectorEffect, DThinker)
 public:
 	DSectorEffect (sector_t *sector);
-	~DSectorEffect ();
 
 	void Serialize (FArchive &arc);
+	void Destroy();
 
 	sector_t *GetSector() const { return m_Sector; }
 

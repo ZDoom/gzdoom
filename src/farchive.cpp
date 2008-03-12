@@ -1004,9 +1004,17 @@ FArchive &FArchive::SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize)
 FArchive &FArchive::SerializeObject (DObject *&object, PClass *type)
 {
 	if (IsStoring ())
+	{
+		if (object != (DObject*)~0)
+		{
+			GC::ReadBarrier(object);
+		}
 		return WriteObject (object);
+	}
 	else
+	{
 		return ReadObject (object, type);
+	}
 }
 
 FArchive &FArchive::WriteObject (DObject *obj)

@@ -47,6 +47,7 @@
 #include "r_state.h"
 #include "stats.h"
 #include "a_sharedglobal.h"
+#include "dsectoreffect.h"
 
 #include "autosegs.h"
 
@@ -343,148 +344,120 @@ CCMD (dumpclasses)
 	Printf ("%d classes shown, %d omitted\n", shown, omitted);
 }
 
-TArray<DObject *> DObject::Objects (TArray<DObject *>::NoInit);
-TArray<unsigned int> DObject::FreeIndices (TArray<unsigned int>::NoInit);
-TArray<DObject *> DObject::ToDestroy (TArray<DObject *>::NoInit);
-bool DObject::Inactive;
-
 void DObject::InPlaceConstructor (void *mem)
 {
 	new ((EInPlace *)mem) DObject;
 }
 
 DObject::DObject ()
-: ObjectFlags(0), Class(0)
+: Class(0), ObjectFlags(0)
 {
-	if (FreeIndices.Pop (Index))
-		Objects[Index] = this;
-	else
-		Index = Objects.Push (this);
+	ObjectFlags = GC::CurrentWhite & OF_WhiteBits;
+	ObjNext = GC::Root;
+	GC::Root = this;
 }
 
 DObject::DObject (PClass *inClass)
-: ObjectFlags(0), Class(inClass)
+: Class(inClass), ObjectFlags(0)
 {
-	if (FreeIndices.Pop (Index))
-		Objects[Index] = this;
-	else
-		Index = Objects.Push (this);
+	ObjectFlags = GC::CurrentWhite & OF_WhiteBits;
+	ObjNext = GC::Root;
+	GC::Root = this;
 }
 
 DObject::~DObject ()
 {
-	if (!Inactive)
+	if (!(ObjectFlags & OF_Cleanup))
 	{
-		if (!(ObjectFlags & OF_MassDestruction))
-		{
-			RemoveFromArray ();
-			DestroyScan (this);
-		}
-		else if (!(ObjectFlags & OF_Cleanup))
-		{
-			// object is queued for deletion, but is not being deleted
-			// by the destruction process, so remove it from the
-			// ToDestroy array and do other necessary stuff.
-			unsigned int i;
+		DObject **probe;
+		PClass *type = GetClass();
 
-			for (i = ToDestroy.Size() - 1; i-- > 0; )
+		if (!(ObjectFlags & OF_YesReallyDelete))
+		{
+			Printf ("Warning: '%s' is freed outside the GC process.\n",
+				type != NULL ? type->TypeName.GetChars() : "==some object==");
+		}
+
+		// Find all pointers that reference this object and NULL them.
+		PointerSubstitution(this, NULL);
+
+		// Now unlink this object from the GC list.
+		for (probe = &GC::Root; *probe != NULL; probe = &((*probe)->ObjNext))
+		{
+			if (*probe == this)
 			{
-				if (ToDestroy[i] == this)
+				*probe = ObjNext;
+				if (&ObjNext == GC::SweepPos)
 				{
-					ToDestroy[i] = NULL;
+					GC::SweepPos = probe;
+				}
+				break;
+			}
+		}
+
+		// If it's gray, also unlink it from the gray list.
+		if (this->IsGray())
+		{
+			for (probe = &GC::Gray; *probe != NULL; probe = &((*probe)->GCNext))
+			{
+				if (*probe == this)
+				{
+					*probe = GCNext;
 					break;
 				}
 			}
-			DestroyScan (this);
 		}
 	}
 }
 
 void DObject::Destroy ()
 {
-	if (!Inactive)
-	{
-		if (!(ObjectFlags & OF_MassDestruction))
-		{
-			RemoveFromArray ();
-			ObjectFlags |= OF_MassDestruction;
-			ToDestroy.Push (this);
-		}
-	}
-	else
-		delete this;
+	ObjectFlags |= OF_EuthanizeMe;
 }
 
-void DObject::BeginFrame ()
+size_t DObject::PropagateMark()
 {
-	StaleCycles = 0;
-	StaleCount = 0;
-}
-
-void DObject::EndFrame ()
-{
-	clock (StaleCycles);
-	if (ToDestroy.Size ())
+	const PClass *info = GetClass();
+	const size_t *offsets = info->FlatPointers;
+	if (offsets == NULL)
 	{
-		StaleCount += (int)ToDestroy.Size ();
-		DestroyScan ();
-		//Printf ("Destroyed %d objects\n", ToDestroy.Size());
-
-		DObject *obj;
-		while (ToDestroy.Pop (obj))
-		{
-			if (obj)
-			{
-				obj->ObjectFlags |= OF_Cleanup;
-				delete obj;
-			}
-		}
+		const_cast<PClass *>(info)->BuildFlatPointers();
+		offsets = info->FlatPointers;
 	}
-	unclock (StaleCycles);
-}
-
-void DObject::RemoveFromArray ()
-{
-	if (Objects.Size() == Index + 1)
+	while (*offsets != ~(size_t)0)
 	{
-		DObject *dummy;
-		Objects.Pop (dummy);
+		GC::Mark((DObject **)((BYTE *)this + *offsets));
+		offsets++;
 	}
-	else if (Objects.Size() > Index)
-	{
-		Objects[Index] = NULL;
-		FreeIndices.Push (Index);
-	}
+	return info->Size;
 }
 
 void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 {
-	unsigned int i, highest;
-	highest = Objects.Size ();
+	DObject *probe;
+	int i;
 
-	for (i = 0; i <= highest; i++)
+	// Go through all objects.
+	for (probe = GC::Root; probe != NULL; probe = probe->ObjNext)
 	{
-		DObject *current = i < highest ? Objects[i] : &bglobal;
-		if (current)
+		const PClass *info = probe->GetClass();
+		const size_t *offsets = info->FlatPointers;
+		if (offsets == NULL)
 		{
-			const PClass *info = current->GetClass();
-			const size_t *offsets = info->FlatPointers;
-			if (offsets == NULL)
+			const_cast<PClass *>(info)->BuildFlatPointers();
+			offsets = info->FlatPointers;
+		}
+		while (*offsets != ~(size_t)0)
+		{
+			if (*(DObject **)((BYTE *)probe + *offsets) == old)
 			{
-				const_cast<PClass *>(info)->BuildFlatPointers();
-				offsets = info->FlatPointers;
+				*(DObject **)((BYTE *)probe + *offsets) = notOld;
 			}
-			while (*offsets != ~(size_t)0)
-			{
-				if (*(DObject **)((BYTE *)current + *offsets) == old)
-				{
-					*(DObject **)((BYTE *)current + *offsets) = notOld;
-				}
-				offsets++;
-			}
+			offsets++;
 		}
 	}
 
+	// Go through the bodyque.
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{
 		if (bodyque[i] == old)
@@ -493,123 +466,30 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 		}
 	}
 
-	// This is an ugly hack, but it's the best I can do for now.
+	// Go through players.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
 			players[i].FixPointers (old, notOld);
 	}
 
+	// Go through sectors.
 	if (sectors != NULL)
 	{
-		for (i = 0; i < (unsigned int)numsectors; ++i)
+		for (i = 0; i < numsectors; ++i)
 		{
-			if (sectors[i].SoundTarget == old)
-			{
-				sectors[i].SoundTarget = static_cast<AActor *>(notOld);
-			}
-			if (sectors[i].CeilingSkyBox == old)
-			{
-				sectors[i].CeilingSkyBox = static_cast<ASkyViewpoint *>(notOld);
-			}
-			if (sectors[i].FloorSkyBox == old)
-			{
-				sectors[i].FloorSkyBox = static_cast<ASkyViewpoint *>(notOld);
-			}
+#define SECTOR_CHECK(f,t) \
+	if (sectors[i].f == static_cast<t *>(old)) { sectors[i].f = static_cast<t *>(notOld); }
+			SECTOR_CHECK( SoundTarget, AActor );
+			SECTOR_CHECK( CeilingSkyBox, ASkyViewpoint );
+			SECTOR_CHECK( FloorSkyBox, ASkyViewpoint );
+			SECTOR_CHECK( SecActTarget, ASectorAction );
+			SECTOR_CHECK( floordata, DSectorEffect );
+			SECTOR_CHECK( ceilingdata, DSectorEffect );
+			SECTOR_CHECK( lightingdata, DSectorEffect );
+#undef SECTOR_CHECK
 		}
 	}
-}
-
-// Search for references to a single object and NULL them.
-// It should not be listed in ToDestroy.
-void DObject::DestroyScan (DObject *obj)
-{
-	PointerSubstitution (obj, NULL);
-}
-
-// Search for references to all objects scheduled for
-// destruction and NULL them.
-void DObject::DestroyScan ()
-{
-	unsigned int i, highest;
-	int j, destroycount;
-	DObject **destroybase;
-	destroycount = (int)ToDestroy.Size ();
-	if (destroycount == 0)
-		return;
-	destroybase = &ToDestroy[0] + destroycount;
-	destroycount = -destroycount;
-	highest = Objects.Size ();
-
-	for (i = 0; i <= highest; i++)
-	{
-		DObject *current = i < highest ? Objects[i] : &bglobal;
-		if (current)
-		{
-			const PClass *info = current->GetClass();
-			const size_t *offsets = info->FlatPointers;
-			if (offsets == NULL)
-			{
-				const_cast<PClass *>(info)->BuildFlatPointers();
-				offsets = info->FlatPointers;
-			}
-			while (*offsets != ~(size_t)0)
-			{
-				j = destroycount;
-				do
-				{
-					if (*(DObject **)((BYTE *)current + *offsets) == *(destroybase + j))
-					{
-						*(DObject **)((BYTE *)current + *offsets) = NULL;
-					}
-				} while (++j);
-				offsets++;
-			}
-		}
-	}
-
-	j = destroycount;
-	do
-	{
-		for (i = 0; i < BODYQUESIZE; ++i)
-		{
-			if (bodyque[i] == *(destroybase + j))
-			{
-				bodyque[i] = NULL;
-			}
-		}
-
-	} while (++j);
-
-	// This is an ugly hack, but it's the best I can do for now.
-	for (i = 0; i < MAXPLAYERS; i++)
-	{
-		if (playeringame[i])
-		{
-			j = destroycount;
-			do
-			{
-				players[i].FixPointers (*(destroybase + j), NULL);
-			} while (++j);
-		}
-	}
-
-	for (i = 0; i < (unsigned int)numsectors; ++i)
-	{
-		j = destroycount;
-		do
-		{
-			if (sectors[i].SoundTarget == *(destroybase + j))
-			{
-				sectors[i].SoundTarget = NULL;
-			}
-		} while (++j);
-	}
-}
-
-void DObject::StaticShutdown ()
-{
-	Inactive = true;
 }
 
 void DObject::Serialize (FArchive &arc)

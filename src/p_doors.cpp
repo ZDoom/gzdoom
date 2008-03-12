@@ -69,7 +69,7 @@ void DDoor::Tick ()
 	if (m_Sector->floorplane.d != m_OldFloorDist)
 	{
 		if (!m_Sector->floordata || !m_Sector->floordata->IsKindOf(RUNTIME_CLASS(DPlat)) ||
-			!((DPlat*)m_Sector->floordata)->IsLift())
+			!(barrier_cast<DPlat*>(m_Sector->floordata))->IsLift())
 		{
 			m_OldFloorDist = m_Sector->floorplane.d;
 			m_BotDist = m_Sector->ceilingplane.PointToDist (m_BotSpot,
@@ -340,7 +340,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTa
 	}
 
 	if (!m_Sector->floordata || !m_Sector->floordata->IsKindOf(RUNTIME_CLASS(DPlat)) ||
-		!((DPlat*)m_Sector->floordata)->IsLift())
+		!(barrier_cast<DPlat*>(m_Sector->floordata))->IsLift())
 	{
 		height = sec->FindHighestFloorPoint (&m_BotSpot);
 		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
@@ -384,7 +384,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		{
 			if (sec->ceilingdata->IsKindOf (RUNTIME_CLASS(DDoor)))
 			{
-				DDoor *door = static_cast<DDoor *>(sec->ceilingdata);
+				DDoor *door = barrier_cast<DDoor *>(sec->ceilingdata);
 
 				// ONLY FOR "RAISE" DOORS, NOT "OPEN"s
 				if (door->m_Type == DDoor::doorRaise && type == DDoor::doorRaise)
@@ -761,7 +761,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 
 			if (sec->ceilingdata->IsA (RUNTIME_CLASS(DAnimatedDoor)))
 			{
-				DAnimatedDoor *door = static_cast<DAnimatedDoor *> (sec->ceilingdata);
+				DAnimatedDoor *door = barrier_cast<DAnimatedDoor *>(sec->ceilingdata);
 				if (door->m_Status == DAnimatedDoor::Waiting)
 				{
 					return door->StartClosing();

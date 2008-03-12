@@ -117,7 +117,7 @@ public:
 	botinfo_t *botinfo;
 	int spawn_tries;
 	int wanted_botnum;
-	AActor *firstthing;
+	TObjPtr<AActor> firstthing;
 
 	bool	 m_Thinking;
 
@@ -141,8 +141,8 @@ protected:
 	bool	 ctf;
 	int		 loaded_bots;
 	int		 t_join;
-	AActor	*body1;
-	AActor	*body2;
+	TObjPtr<AActor>	body1;
+	TObjPtr<AActor> body2;
 	bool	 observer; //Consoleplayer is observer.
 };
 

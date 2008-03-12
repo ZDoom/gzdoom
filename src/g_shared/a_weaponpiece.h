@@ -2,6 +2,7 @@
 class AWeaponPiece : public AInventory
 {
 	DECLARE_CLASS (AWeaponPiece, AInventory)
+	HAS_OBJECT_POINTERS
 protected:
 	bool PrivateShouldStay ();
 public:
@@ -13,5 +14,5 @@ public:
 
 	int PieceValue;
 	const PClass * WeaponClass;
-	AWeapon * FullWeapon;
+	TObjPtr<AWeapon> FullWeapon;
 };

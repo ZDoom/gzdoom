@@ -119,10 +119,12 @@ void FManaBar::MakeTexture ()
 	memset (Pixels + 25+24+24, color0, run);
 }
 
-class FHexenStatusBar : public FBaseStatusBar
+class DHexenStatusBar : public DBaseStatusBar
 {
+	DECLARE_CLASS(DHexenStatusBar, DBaseStatusBar)
+	HAS_OBJECT_POINTERS
 public:
-	FHexenStatusBar () : FBaseStatusBar (38)
+	DHexenStatusBar () : DBaseStatusBar (38)
 	{
 		static const char *hexenLumpNames[NUM_HEXENSB_IMAGES] =
 		{
@@ -166,7 +168,7 @@ public:
 			"INRED5",	"INRED6",	"INRED7",	"INRED8",	"INRED9"
 		};
 
-		FBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES + 10);
+		DBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES + 10);
 		Images.Init (hexenLumpNames, NUM_HEXENSB_IMAGES);
 		ClassImages[0].Init (classLumpNames[0], NUM_HEXENCLASSSB_IMAGES);
 		ClassImages[1].Init (classLumpNames[1], NUM_HEXENCLASSSB_IMAGES);
@@ -201,7 +203,7 @@ public:
 		AmmoRefresh = 0;
 	}
 
-	~FHexenStatusBar ()
+	~DHexenStatusBar ()
 	{
 	}
 
@@ -209,7 +211,7 @@ public:
 	{
 		int curHealth;
 
-		FBaseStatusBar::Tick ();
+		DBaseStatusBar::Tick ();
 		if (CPlayer->mo == NULL)
 		{
 			curHealth = 0;
@@ -242,7 +244,7 @@ public:
 
 	void Draw (EHudState state)
 	{
-		FBaseStatusBar::Draw (state);
+		DBaseStatusBar::Draw (state);
 
 		if (state == HUD_Fullscreen)
 		{
@@ -309,7 +311,7 @@ public:
 
 	void AttachToPlayer (player_s *player)
 	{
-		FBaseStatusBar::AttachToPlayer (player);
+		DBaseStatusBar::AttachToPlayer (player);
 		if (player->mo != NULL)
 		{
 			if (player->mo->IsKindOf (PClass::FindClass(NAME_MagePlayer)))
@@ -395,6 +397,7 @@ private:
 			|| (oldarti != NULL && oldartiCount != oldarti->Amount))
 		{
 			oldarti = CPlayer->mo->InvSel;
+			GC::WriteBarrier(this, oldarti);
 			oldartiCount = oldarti != NULL ? oldarti->Amount : 0;
 			ArtiRefresh = screen->GetPageCount ();
 		}
@@ -521,12 +524,14 @@ private:
 			AmmoRefresh = screen->GetPageCount ();
 			oldammo1 = ammo1;
 			oldammocount1 = ammocount1;
+			GC::WriteBarrier(this, ammo1);
 		}
 		if (ammo2 != oldammo2 || ammocount2 != oldammocount2)
 		{
 			AmmoRefresh = screen->GetPageCount ();
 			oldammo2 = ammo2;
 			oldammocount2 = ammocount2;
+			GC::WriteBarrier(this, ammo2);
 		}
 
 		if (AmmoRefresh)
@@ -705,7 +710,7 @@ private:
 
 	void DrawInventoryBar ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		int i;
 
 		DrawImage (Images[imgINVBAR], 38, 0);
@@ -772,6 +777,7 @@ private:
 			if (keys[i] != oldkeys[i])
 			{
 				oldkeys[i] = keys[i];
+				GC::WriteBarrier(this, keys[i]);
 				different = true;
 			}
 		}
@@ -880,7 +886,7 @@ private:
 
 	void DrawFullScreenStuff ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		int i;
 
 		// Health
@@ -1051,9 +1057,9 @@ private:
 	static const char patcharti[][10];
 	static const char ammopic[][10];
 
-	AInventory *oldarti;
-	AAmmo *oldammo1, *oldammo2;
-	AKey *oldkeys[5];
+	TObjPtr<AInventory> oldarti;
+	TObjPtr<AAmmo> oldammo1, oldammo2;
+	TObjPtr<AKey> oldkeys[5];
 	int oldammocount1, oldammocount2;
 	int oldartiCount;
 	int oldfrags;
@@ -1155,7 +1161,18 @@ private:
 	FManaBar ManaVial2Pic;
 };
 
-FBaseStatusBar *CreateHexenStatusBar ()
+IMPLEMENT_POINTY_CLASS(DHexenStatusBar)
+ DECLARE_POINTER(oldarti)
+ DECLARE_POINTER(oldammo1)
+ DECLARE_POINTER(oldammo2)
+ DECLARE_POINTER(oldkeys[0])
+ DECLARE_POINTER(oldkeys[1])
+ DECLARE_POINTER(oldkeys[2])
+ DECLARE_POINTER(oldkeys[3])
+ DECLARE_POINTER(oldkeys[4])
+END_POINTERS
+
+DBaseStatusBar *CreateHexenStatusBar ()
 {
-	return new FHexenStatusBar;
+	return new DHexenStatusBar;
 }

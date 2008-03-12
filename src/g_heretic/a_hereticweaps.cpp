@@ -803,7 +803,7 @@ public:
 protected:
 	bool DoRespawn ();
 	int NumMaceSpots;
-	AActor *FirstSpot;
+	TObjPtr<AActor> FirstSpot;
 private:
 
 	friend void A_SpawnMace (AActor *self);

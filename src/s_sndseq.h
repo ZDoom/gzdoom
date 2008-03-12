@@ -20,8 +20,8 @@ struct sector_t;
 class DSeqNode : public DObject
 {
 	DECLARE_CLASS (DSeqNode, DObject)
+	HAS_OBJECT_POINTERS
 public:
-	virtual ~DSeqNode ();
 	void Serialize (FArchive &arc);
 	void StopAndDestroy ();
 	void Destroy ();
@@ -56,8 +56,8 @@ protected:
 	int m_ModeNum;
 
 	TArray<int> m_SequenceChoices;
-	DSeqNode *m_ChildSeqNode;
-	DSeqNode *m_ParentSeqNode;
+	TObjPtr<DSeqNode> m_ChildSeqNode;
+	TObjPtr<DSeqNode> m_ParentSeqNode;
 
 private:
 	static DSeqNode *SequenceListHead;

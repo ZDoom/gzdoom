@@ -316,6 +316,26 @@ void player_s::FixPointers (const DObject *old, DObject *rep)
 	if (PendingWeapon == old)	PendingWeapon = static_cast<AWeapon *>(rep);
 }
 
+size_t player_s::PropagateMark()
+{
+	GC::Mark(mo);
+	GC::Mark(poisoner);
+	GC::Mark(attacker);
+	GC::Mark(camera);
+	GC::Mark(dest);
+	GC::Mark(prev);
+	GC::Mark(enemy);
+	GC::Mark(missile);
+	GC::Mark(mate);
+	GC::Mark(last_mate);
+	GC::Mark(ReadyWeapon);
+	if (PendingWeapon != WP_NOCHANGE)
+	{
+		GC::Mark(PendingWeapon);
+	}
+	return sizeof(*this);
+}
+
 void player_s::SetLogNumber (int num)
 {
 	char lumpname[16];

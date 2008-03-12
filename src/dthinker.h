@@ -49,13 +49,14 @@ class FThinkerIterator;
 enum { MAX_STATNUM = 127 };
 
 // Doubly linked list of thinkers
-class DThinker : public DObject, public Node
+class DThinker : public DObject, private Node
 {
 	DECLARE_CLASS (DThinker, DObject)
 
 public:
 	DThinker (int statnum = MAX_STATNUM) throw();
 	void Destroy ();
+	size_t PropagateMark();
 	virtual ~DThinker ();
 	virtual void Tick ();
 	virtual void PostBeginPlay ();	// Called just before the first tick
@@ -67,6 +68,7 @@ public:
 	static void DestroyAllThinkers ();
 	static void DestroyMostThinkers ();
 	static void SerializeAll (FArchive &arc, bool keepPlayers);
+	static void MarkRoots();
 
 	static DThinker *FirstThinker (int statnum);
 
@@ -75,6 +77,7 @@ private:
 	static void DestroyMostThinkersInList (List &list, int stat);
 	static int TickThinkers (List *list, List *dest);	// Returns: # of thinkers ticked
 	static void SaveList(FArchive &arc, Node *node);
+	void Remove();
 
 	static List Thinkers[MAX_STATNUM+1];		// Current thinkers
 	static List FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers

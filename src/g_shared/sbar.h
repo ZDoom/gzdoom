@@ -55,6 +55,7 @@ class AWeapon;
 class DHUDMessage : public DObject
 {
 	DECLARE_CLASS (DHUDMessage, DObject)
+	HAS_OBJECT_POINTERS
 public:
 	DHUDMessage (const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime);
@@ -84,11 +85,11 @@ protected:
 	DHUDMessage () : SourceText(NULL) {}
 
 private:
-	DHUDMessage *Next;
+	TObjPtr<DHUDMessage> Next;
 	DWORD SBarID;
 	char *SourceText;
 
-	friend class FBaseStatusBar;
+	friend class DBaseStatusBar;
 };
 
 class DHUDMessageFadeOut : public DHUDMessage
@@ -149,8 +150,10 @@ protected:
 class FTexture;
 class AAmmo;
 
-class FBaseStatusBar
+class DBaseStatusBar : public DObject
 {
+	DECLARE_CLASS (DBaseStatusBar, DObject)
+	HAS_OBJECT_POINTERS
 public:
 	// Popup screens for Strife's status bar
 	enum
@@ -162,8 +165,8 @@ public:
 		POP_Status
 	};
 
-	FBaseStatusBar (int reltop);
-	virtual ~FBaseStatusBar ();
+	DBaseStatusBar (int reltop);
+	void Destroy ();
 
 	void SetScaled (bool scale);
 
@@ -246,20 +249,21 @@ public:
 	player_s *CPlayer;
 
 private:
+	DBaseStatusBar() {}
 	bool RepositionCoords (int &x, int &y, int xo, int yo, const int w, const int h) const;
-	void DrawMessages (int bottom) const;
+	void DrawMessages (int bottom);
 	void DrawConsistancy () const;
 
 	static BYTE DamageToAlpha[114];
 
-	DHUDMessage *Messages;
+	TObjPtr<DHUDMessage> Messages;
 	bool ShowLog;
 };
 
-extern FBaseStatusBar *StatusBar;
+extern DBaseStatusBar *StatusBar;
 
-FBaseStatusBar *CreateDoomStatusBar ();
-FBaseStatusBar *CreateHereticStatusBar ();
-FBaseStatusBar *CreateHexenStatusBar ();
-FBaseStatusBar *CreateStrifeStatusBar ();
-FBaseStatusBar *CreateCustomStatusBar ();
+DBaseStatusBar *CreateDoomStatusBar ();
+DBaseStatusBar *CreateHereticStatusBar ();
+DBaseStatusBar *CreateHexenStatusBar ();
+DBaseStatusBar *CreateStrifeStatusBar ();
+DBaseStatusBar *CreateCustomStatusBar ();

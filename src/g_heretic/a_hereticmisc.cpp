@@ -32,7 +32,7 @@ class APod : public AActor
 	HAS_OBJECT_POINTERS
 public:
 	void BeginPlay ();
-	AActor *Generator;
+	TObjPtr<AActor> Generator;
 
 	void Serialize (FArchive &arc);
 };

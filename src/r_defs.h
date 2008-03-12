@@ -306,7 +306,7 @@ struct sector_t
 	int			floorpic, ceilingpic;
 	BYTE		lightlevel;
 
-	AActor *	SoundTarget;
+	TObjPtr<AActor> SoundTarget;
 	BYTE 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 
 	short		special;
@@ -326,9 +326,9 @@ struct sector_t
 	fixed_t		friction, movefactor;
 
 	// thinker_t for reversable actions
-	DSectorEffect *floordata;			// jff 2/22/98 make thinkers on
-	DSectorEffect *ceilingdata;			// floors, ceilings, lighting,
-	DSectorEffect *lightingdata;		// independent of one another
+	TObjPtr<DSectorEffect> floordata;			// jff 2/22/98 make thinkers on
+	TObjPtr<DSectorEffect> ceilingdata;			// floors, ceilings, lighting,
+	TObjPtr<DSectorEffect> lightingdata;		// independent of one another
 
 	// jff 2/26/98 lockout machinery for stairbuilding
 	SBYTE stairlock;	// -2 on first locked -1 after thinker done 0 normally
@@ -360,11 +360,11 @@ struct sector_t
 	// flexible in a Bloody way. SecActTarget forms a list of actors
 	// joined by their tracer fields. When a potential sector action
 	// occurs, SecActTarget's TriggerAction method is called.
-	ASectorAction *SecActTarget;
+	TObjPtr<ASectorAction> SecActTarget;
 
 	// [RH] The sky box to render for this sector. NULL means use a
 	// regular sky.
-	ASkyViewpoint *FloorSkyBox, *CeilingSkyBox;
+	TObjPtr<ASkyViewpoint> FloorSkyBox, CeilingSkyBox;
 
 	// Planes that partition this sector into different light zones.
 	FExtraLight *ExtraLights;

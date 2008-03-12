@@ -111,7 +111,7 @@ extern HCURSOR TheArrowCursor, TheInvisibleCursor;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The command line arguments.
-DArgs Args;
+DArgs *Args;
 
 HINSTANCE		g_hInst;
 DWORD			SessionID;
@@ -776,7 +776,7 @@ void DoMain (HINSTANCE hInstance)
 		_set_new_handler (NewFailure);
 #endif
 
-		Args.SetArgs (__argc, __argv);
+		Args = new DArgs(__argc, __argv);
 
 		// Under XP, get our session ID so we can know when the user changes/locks sessions.
 		// Since we need to remain binary compatible with older versions of Windows, we
@@ -827,7 +827,7 @@ void DoMain (HINSTANCE hInstance)
 		x = (displaysettings.dmPelsWidth - width) / 2;
 		y = (displaysettings.dmPelsHeight - height) / 2;
 
-		if (Args.CheckParm ("-0"))
+		if (Args->CheckParm ("-0"))
 		{
 			x = y = 0;
 		}

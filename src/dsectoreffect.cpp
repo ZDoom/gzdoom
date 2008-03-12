@@ -33,7 +33,7 @@ DSectorEffect::DSectorEffect ()
 	m_Sector = NULL;
 }
 
-DSectorEffect::~DSectorEffect ()
+void DSectorEffect::Destroy()
 {
 	if (m_Sector)
 	{
@@ -52,6 +52,7 @@ DSectorEffect::~DSectorEffect ()
 			m_Sector->lightingdata = NULL;
 		}
 	}
+	Super::Destroy();
 }
 
 DSectorEffect::DSectorEffect (sector_t *sector)

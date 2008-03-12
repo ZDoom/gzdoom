@@ -1105,7 +1105,7 @@ void DI_EnumJoy ()
 	JoyActive = 0;
 	JoystickNames.Clear ();
 
-	if (g_pdi != NULL && !Args.CheckParm ("-nojoy"))
+	if (g_pdi != NULL && !Args->CheckParm ("-nojoy"))
 	{
 		g_pdi->EnumDevices (DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES);
 	}
@@ -1403,7 +1403,7 @@ bool I_InitInput (void *hwnd)
 	NativeMouse = -1;
 	GetCursorPos (&UngrabbedPointerPos);
 
-	noidle = !!Args.CheckParm ("-noidle");
+	noidle = !!Args->CheckParm ("-noidle");
 	g_pdi = NULL;
 	g_pdi3 = NULL;
 

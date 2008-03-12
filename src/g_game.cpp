@@ -1850,7 +1850,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 	const char *leader;
 	const char *slash = "";
 
-	if (NULL != (leader = Args.CheckValue ("-savedir")))
+	if (NULL != (leader = Args->CheckValue ("-savedir")))
 	{
 		size_t len = strlen (leader);
 		if (leader[len-1] != '\\' && leader[len-1] != '/')
@@ -1859,7 +1859,7 @@ FString G_BuildSaveName (const char *prefix, int slot)
 		}
 	}
 #ifndef unix
-	else if (Args.CheckParm ("-cdrom"))
+	else if (Args->CheckParm ("-cdrom"))
 	{
 		leader = CDROM_DIR "/";
 	}
@@ -2205,7 +2205,7 @@ void G_RecordDemo (char* name)
 	strcpy (demoname, name);
 	FixPathSeperator (demoname);
 	DefaultExtension (demoname, ".lmp");
-	v = Args.CheckValue ("-maxdemo");
+	v = Args->CheckValue ("-maxdemo");
 	maxdemosize = 0x20000;
 	demobuffer = (BYTE *)M_Malloc (maxdemosize);
 
@@ -2510,8 +2510,8 @@ void G_DoPlayDemo (void)
 //
 void G_TimeDemo (char* name)
 {
-	nodrawers = !!Args.CheckParm ("-nodraw");
-	noblit = !!Args.CheckParm ("-noblit");
+	nodrawers = !!Args->CheckParm ("-nodraw");
+	noblit = !!Args->CheckParm ("-noblit");
 	timingdemo = true;
 	singletics = true;
 

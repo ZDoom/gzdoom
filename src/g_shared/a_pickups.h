@@ -124,11 +124,11 @@ public:
 	virtual const char *PickupMessage ();
 	virtual void PlayPickupSound (AActor *toucher);
 
-	AInventory *PrevItem () const;	// Returns the item preceding this one in the list.
-	AInventory *PrevInv () const;	// Returns the previous item with IF_INVBAR set.
-	AInventory *NextInv () const;	// Returns the next item with IF_INVBAR set.
+	AInventory *PrevItem();		// Returns the item preceding this one in the list.
+	AInventory *PrevInv();		// Returns the previous item with IF_INVBAR set.
+	AInventory *NextInv();		// Returns the next item with IF_INVBAR set.
 
-	AActor *Owner;				// Who owns this item? NULL if it's still a pickup.
+	TObjPtr<AActor> Owner;		// Who owns this item? NULL if it's still a pickup.
 	int Amount;					// Amount of item this instance has
 	int MaxAmount;				// Max amount of item this instance can have
 	int RespawnTics;			// Tics from pickup time to respawn time
@@ -217,8 +217,8 @@ public:
 	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
 
 	// In-inventory instance variables
-	AAmmo *Ammo1, *Ammo2;
-	AWeapon *SisterWeapon;
+	TObjPtr<AAmmo> Ammo1, Ammo2;
+	TObjPtr<AWeapon> SisterWeapon;
 
 	bool bAltFire;	// Set when this weapon's alternate fire is used.
 

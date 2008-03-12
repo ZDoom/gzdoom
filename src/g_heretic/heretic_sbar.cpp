@@ -84,10 +84,12 @@ const BYTE *FHereticShader::GetPixels ()
 }
 
 
-class FHereticStatusBar : public FBaseStatusBar
+class DHereticStatusBar : public DBaseStatusBar
 {
+	DECLARE_CLASS(DHereticStatusBar, DBaseStatusBar)
+	HAS_OBJECT_POINTERS
 public:
-	FHereticStatusBar () : FBaseStatusBar (42)
+	DHereticStatusBar () : DBaseStatusBar (42)
 	{
 		static const char *hereticLumpNames[NUM_HERETICSB_IMAGES] =
 		{
@@ -118,7 +120,7 @@ public:
 			hereticLumpNames[5] = "LIFEBAR";
 		}
 
-		FBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
+		DBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
 		Images.Init (hereticLumpNames, NUM_HERETICSB_IMAGES);
 
 		oldarti = NULL;
@@ -136,7 +138,7 @@ public:
 		ArtifactFlash = 0;
 	}
 
-	~FHereticStatusBar ()
+	~DHereticStatusBar ()
 	{
 	}
 
@@ -144,7 +146,7 @@ public:
 	{
 		int curHealth;
 
-		FBaseStatusBar::Tick ();
+		DBaseStatusBar::Tick ();
 		if (level.time & 1)
 		{
 			ChainWiggle = pr_chainwiggle() & 1;
@@ -174,7 +176,7 @@ public:
 
 	void Draw (EHudState state)
 	{
-		FBaseStatusBar::Draw (state);
+		DBaseStatusBar::Draw (state);
 
 		if (state == HUD_Fullscreen)
 		{
@@ -316,6 +318,7 @@ private:
 			|| (oldarti != NULL && oldartiCount != oldarti->Amount))
 		{
 			oldarti = CPlayer->mo->InvSel;
+			GC::WriteBarrier(this, oldarti);
 			oldartiCount = oldarti != NULL ? oldarti->Amount : 0;
 			ArtiRefresh = screen->GetPageCount ();
 		}
@@ -422,6 +425,8 @@ private:
 			oldammo2 = ammo2;
 			oldammocount1 = ammocount1;
 			oldammocount2 = ammocount2;
+			GC::WriteBarrier(this, ammo1);
+			GC::WriteBarrier(this, ammo2);
 			AmmoRefresh = screen->GetPageCount ();
 		}
 		if (AmmoRefresh)
@@ -475,7 +480,7 @@ private:
 
 	void DrawInventoryBar ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		int i;
 
 		DrawImage (Images[imgINVBAR], 34, 2);
@@ -517,7 +522,7 @@ private:
 
 	void DrawFullScreenStuff ()
 	{
-		const AInventory *item;
+		AInventory *item;
 		FTexture *pic;
 		int i;
 
@@ -713,8 +718,8 @@ private:
 	static const char patcharti[][10];
 	static const char ammopic[][10];
 
-	AInventory *oldarti;
-	AAmmo *oldammo1, *oldammo2;
+	TObjPtr<AInventory> oldarti;
+	TObjPtr<AAmmo> oldammo1, oldammo2;
 	int oldammocount1, oldammocount2;
 	int oldartiCount;
 	int oldfrags;
@@ -773,7 +778,13 @@ private:
 	char ArmorRefresh;
 };
 
-FBaseStatusBar *CreateHereticStatusBar ()
+IMPLEMENT_POINTY_CLASS(DHereticStatusBar)
+ DECLARE_POINTER(oldarti)
+ DECLARE_POINTER(oldammo1)
+ DECLARE_POINTER(oldammo2)
+END_POINTERS
+
+DBaseStatusBar *CreateHereticStatusBar ()
 {
-	return new FHereticStatusBar;
+	return new DHereticStatusBar;
 }

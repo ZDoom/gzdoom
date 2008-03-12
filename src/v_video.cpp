@@ -357,7 +357,7 @@ void DCanvas::Dim (PalEntry color)
 	if (color.a != 0)
 	{
 		float dim[4] = { color.r/255.f, color.g/255.f, color.b/255.f, color.a/255.f };
-		FBaseStatusBar::AddBlend (dimmer.r/255.f, dimmer.g/255.f, dimmer.b/255.f, amount, dim);
+		DBaseStatusBar::AddBlend (dimmer.r/255.f, dimmer.g/255.f, dimmer.b/255.f, amount, dim);
 		dimmer = PalEntry (BYTE(dim[0]*255), BYTE(dim[1]*255), BYTE(dim[2]*255));
 		amount = dim[3];
 	}
@@ -1390,6 +1390,7 @@ void DFrameBuffer::WriteSavePic (player_t *player, FILE *file, int width, int he
 	GetFlashedPalette (palette);
 	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
 	pic->Unlock ();
+	pic->ObjectFlags |= OF_YesReallyDelete;
 	delete pic;
 }
 
@@ -1426,6 +1427,7 @@ bool V_DoModeSetup (int width, int height, int bits)
 	}
 
 	screen = buff;
+	GC::WriteBarrier(screen);
 	screen->SetFont (SmallFont);
 	screen->SetGamma (Gamma);
 
@@ -1594,13 +1596,13 @@ void V_Init (void)
 
 	width = height = bits = 0;
 
-	if ( (i = Args.CheckValue ("-width")) )
+	if ( (i = Args->CheckValue ("-width")) )
 		width = atoi (i);
 
-	if ( (i = Args.CheckValue ("-height")) )
+	if ( (i = Args->CheckValue ("-height")) )
 		height = atoi (i);
 
-	if ( (i = Args.CheckValue ("-bits")) )
+	if ( (i = Args->CheckValue ("-bits")) )
 		bits = atoi (i);
 
 	if (width == 0)
@@ -1638,6 +1640,7 @@ void V_Init2()
 	float gamma = static_cast<DDummyFrameBuffer *>(screen)->Gamma;
 	FFont *font = screen->Font;
 
+	screen->ObjectFlags |= OF_YesReallyDelete;
 	delete screen;
 	screen = NULL;
 

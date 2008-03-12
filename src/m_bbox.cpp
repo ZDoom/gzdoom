@@ -26,20 +26,18 @@
 
 #include "m_bbox.h"
 
-IMPLEMENT_CLASS (DBoundingBox)
-
-DBoundingBox::DBoundingBox ()
+FBoundingBox::FBoundingBox ()
 {
 	ClearBox ();
 }
 
-void DBoundingBox::ClearBox ()
+void FBoundingBox::ClearBox ()
 {
 	m_Box[BOXTOP] = m_Box[BOXRIGHT] = FIXED_MIN;
 	m_Box[BOXBOTTOM] = m_Box[BOXLEFT] = FIXED_MAX;
 }
 
-void DBoundingBox::AddToBox (fixed_t x, fixed_t y)
+void FBoundingBox::AddToBox (fixed_t x, fixed_t y)
 {
 	if (x < m_Box[BOXLEFT])
 		m_Box[BOXLEFT] = x;

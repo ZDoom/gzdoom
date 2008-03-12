@@ -23,7 +23,6 @@
 #define __M_BBOX_H__
 
 #include "doomtype.h"
-#include "dobject.h"
 #include "m_fixed.h"
 
 
@@ -37,11 +36,10 @@ enum
 };		// bbox coordinates
 
 
-class DBoundingBox : public DObject
+class FBoundingBox
 {
-	DECLARE_CLASS (DBoundingBox, DObject)
 public:
-	DBoundingBox();
+	FBoundingBox();
 
 	void ClearBox ();
 	void AddToBox (fixed_t x, fixed_t y);

@@ -386,6 +386,7 @@ bool AHolySpirit::SpecialBlastHandling (AActor *source, fixed_t strength)
 	{
 		tracer = target;
 		target = source;
+		GC::WriteBarrier(this, source);
 	}
 	return true;
 }

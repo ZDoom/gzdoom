@@ -61,7 +61,7 @@ public:
 
 	void Serialize (FArchive &arc);
 
-	AInterpolationPoint *Next;
+	TObjPtr<AInterpolationPoint> Next;
 };
 
 IMPLEMENT_POINTY_CLASS (AInterpolationPoint)
@@ -181,7 +181,7 @@ protected:
 	void Serialize (FArchive &arc);
 
 	bool bActive, bJustStepped;
-	AInterpolationPoint *PrevNode, *CurrNode;
+	TObjPtr<AInterpolationPoint> PrevNode, CurrNode;
 	float Time;		// Runs from 0.0 to 1.0 between CurrNode and CurrNode->Next
 	int HoldTime;
 };
@@ -289,8 +289,8 @@ void APathFollower::Activate (AActor *activator)
 {
 	if (!bActive)
 	{
-		CurrNode = static_cast<AInterpolationPoint *>(target);
-		PrevNode = static_cast<AInterpolationPoint *>(lastenemy);
+		CurrNode = barrier_cast<AInterpolationPoint *>(target);
+		PrevNode = barrier_cast<AInterpolationPoint *>(lastenemy);
 
 		if (CurrNode != NULL)
 		{
@@ -638,7 +638,7 @@ public:
 protected:
 	bool Interpolate ();
 
-	AActor *Activator;
+	TObjPtr<AActor> Activator;
 };
 
 IMPLEMENT_POINTY_CLASS (AMovingCamera)

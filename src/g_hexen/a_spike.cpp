@@ -103,7 +103,7 @@ public:
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
 
-	ADirtClump *DirtClump;
+	TObjPtr<ADirtClump> DirtClump;
 };
 
 IMPLEMENT_POINTY_CLASS (AThrustFloor)

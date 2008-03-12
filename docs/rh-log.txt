@@ -1,4 +1,7 @@
 March 12, 2008 (Changes by Graf Zahl)
+- Changed DObject's pointer substitution so that the pointers inside an
+  object are handled by a virtual function. This allows subclasses to
+  implement their own handling if they need it.
 - Bumped the minimum savegame version because the current version crashes
   each time an old savegame is loaded.
 

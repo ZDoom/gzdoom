@@ -379,7 +379,7 @@ DObject::~DObject ()
 		}
 
 		// Find all pointers that reference this object and NULL them.
-		PointerSubstitution(this, NULL);
+		StaticPointerSubstitution(this, NULL);
 
 		// Now unlink this object from the GC list.
 		for (probe = &GC::Root; *probe != NULL; probe = &((*probe)->ObjNext))
@@ -434,27 +434,32 @@ size_t DObject::PropagateMark()
 
 void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 {
+	const PClass *info = GetClass();
+	const size_t *offsets = info->FlatPointers;
+	if (offsets == NULL)
+	{
+		const_cast<PClass *>(info)->BuildFlatPointers();
+		offsets = info->FlatPointers;
+	}
+	while (*offsets != ~(size_t)0)
+	{
+		if (*(DObject **)((BYTE *)this + *offsets) == old)
+		{
+			*(DObject **)((BYTE *)this + *offsets) = notOld;
+		}
+		offsets++;
+	}
+}
+
+void DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
+{
 	DObject *probe;
 	int i;
 
 	// Go through all objects.
 	for (probe = GC::Root; probe != NULL; probe = probe->ObjNext)
 	{
-		const PClass *info = probe->GetClass();
-		const size_t *offsets = info->FlatPointers;
-		if (offsets == NULL)
-		{
-			const_cast<PClass *>(info)->BuildFlatPointers();
-			offsets = info->FlatPointers;
-		}
-		while (*offsets != ~(size_t)0)
-		{
-			if (*(DObject **)((BYTE *)probe + *offsets) == old)
-			{
-				*(DObject **)((BYTE *)probe + *offsets) = notOld;
-			}
-			offsets++;
-		}
+		probe->PointerSubstitution(old, notOld);
 	}
 
 	// Go through the bodyque.

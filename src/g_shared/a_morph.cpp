@@ -58,7 +58,7 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 	}
 
 	morphed = static_cast<APlayerPawn *>(Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE));
-	DObject::PointerSubstitution (actor, morphed);
+	DObject::StaticPointerSubstitution (actor, morphed);
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
 	morphed->tracer = actor;
@@ -151,7 +151,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	pmo->player = NULL;
 
 	mo->ObtainInventory (pmo);
-	DObject::PointerSubstitution (pmo, mo);
+	DObject::StaticPointerSubstitution (pmo, mo);
 	mo->angle = pmo->angle;
 	mo->player = player;
 	mo->reactiontime = 18;
@@ -234,7 +234,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype)
 	}
 
 	morphed = static_cast<AMorphedMonster *>(Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE));
-	DObject::PointerSubstitution (actor, morphed);
+	DObject::StaticPointerSubstitution (actor, morphed);
 	morphed->tid = actor->tid;
 	morphed->angle = actor->angle;
 	morphed->UnmorphedMe = actor;
@@ -311,7 +311,7 @@ bool P_UpdateMorphedMonster (AMorphedMonster *beast)
 	memcpy (actor->args, beast->args, sizeof(actor->args));
 	actor->AddToHash ();
 	beast->UnmorphedMe = NULL;
-	DObject::PointerSubstitution (beast, actor);
+	DObject::StaticPointerSubstitution (beast, actor);
 	beast->Destroy ();
 	Spawn<ATeleportFog> (beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	return true;

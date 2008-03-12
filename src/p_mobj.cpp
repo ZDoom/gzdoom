@@ -3671,7 +3671,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 			}
 
 
-			DObject::PointerSubstitution (oldactor, p->mo);
+			DObject::StaticPointerSubstitution (oldactor, p->mo);
 			// PointerSubstitution() will also affect the bodyque, so undo that now.
 			for (int ii=0; ii < BODYQUESIZE; ++ii)
 				if (bodyque[ii] == p->mo)

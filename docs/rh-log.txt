@@ -1,3 +1,7 @@
+March 13, 2008 (Changes by Graf Zahl)
+- Fixed: Pointer substitution changed the pointers for the thinker ring list
+  resulting in a freeze.
+
 March 12, 2008
 - Fixed: DACSThinker::ActiveThinker was missing a read barrier.
 - Loading a save game now initiates a collection.

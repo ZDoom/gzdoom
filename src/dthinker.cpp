@@ -435,6 +435,17 @@ void DThinker::Tick ()
 {
 }
 
+void DThinker::PointerSubstitution(DObject *old, DObject *notOld)
+{
+	// Pointer substitution must not, under any circumstances, change 
+	// the linked thinker list or the game will freeze badly.
+	DThinker *next = NextThinker;
+	DThinker *prev = PrevThinker;
+	Super::PointerSubstitution(old, notOld);
+	NextThinker = next;
+	PrevThinker = prev;
+}
+
 FThinkerIterator::FThinkerIterator (const PClass *type, int statnum)
 {
 	if ((unsigned)statnum > MAX_STATNUM)

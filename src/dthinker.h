@@ -69,7 +69,8 @@ public:
 	virtual ~DThinker ();
 	virtual void Tick ();
 	virtual void PostBeginPlay ();	// Called just before the first tick
-
+	void PointerSubstitution(DObject *old, DObject *notOld);
+	
 	void ChangeStatNum (int statnum);
 
 	static void RunThinkers ();

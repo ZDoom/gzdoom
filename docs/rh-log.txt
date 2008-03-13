@@ -1,4 +1,5 @@
 March 12, 2008
+- Fixed: D_dehacked.cpp/PatchThing() allocated an actor on the stack.
 - Changed the sentinels in the thinker lists into a proper thinker. The old
   way wasn't playing well with the write barriers.
 - Fixed: DFrameBuffer::WriteSavePic needs to fix the canvas in place while

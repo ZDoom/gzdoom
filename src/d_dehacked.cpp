@@ -699,7 +699,8 @@ static int PatchThing (int thingy)
 	};
 
 	int result;
-	AActor *info, dummy;
+	AActor *info;
+	BYTE dummy[sizeof(AActor)];
 	bool hadHeight = false;
 	bool hadTranslucency = false;
 	bool hadStyle = false;
@@ -709,7 +710,7 @@ static int PatchThing (int thingy)
 	SWORD *ednum, dummyed;
 
 	type = NULL;
-	info = &dummy;
+	info = (AActor *)&dummy;
 	ednum = &dummyed;
 	if (thingy > NumInfos || thingy <= 0)
 	{
@@ -723,7 +724,7 @@ static int PatchThing (int thingy)
 			type = PClass::FindClass (GetName (InfoNames[thingy - 1]));
 			if (type == NULL)
 			{
-				info = &dummy;
+				info = (AActor *)&dummy;
 				ednum = &dummyed;
 				Printf ("Could not find thing %s (index %d)\n",
 					GetName (InfoNames[thingy - 1]), thingy);
@@ -1024,7 +1025,7 @@ static int PatchThing (int thingy)
 		else Printf (unknown_str, Line1, "Thing", thingy);
 	}
 
-	if (info != &dummy)
+	if (info != (AActor *)&dummy)
 	{
 		// Reset heights for things hanging from the ceiling that
 		// don't specify a new height.

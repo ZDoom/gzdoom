@@ -36,7 +36,6 @@
 
 #include <stdlib.h>
 #include "dobject.h"
-#include "lists.h"
 
 class AActor;
 class player_s;
@@ -48,15 +47,25 @@ class FThinkerIterator;
 
 enum { MAX_STATNUM = 127 };
 
-// Doubly linked list of thinkers
-class DThinker : public DObject, private Node
+// Doubly linked ring list of thinkers
+struct FThinkerList
+{
+	FThinkerList() : Sentinel(0) {}
+	void AddTail(DThinker *thinker);
+	DThinker *GetHead() const;
+	DThinker *GetTail() const;
+	bool IsEmpty() const;
+
+	DThinker *Sentinel;
+};
+
+class DThinker : public DObject
 {
 	DECLARE_CLASS (DThinker, DObject)
-
+	HAS_OBJECT_POINTERS
 public:
 	DThinker (int statnum = MAX_STATNUM) throw();
 	void Destroy ();
-	size_t PropagateMark();
 	virtual ~DThinker ();
 	virtual void Tick ();
 	virtual void PostBeginPlay ();	// Called just before the first tick
@@ -73,18 +82,23 @@ public:
 	static DThinker *FirstThinker (int statnum);
 
 private:
-	static void DestroyThinkersInList (Node *first);
-	static void DestroyMostThinkersInList (List &list, int stat);
-	static int TickThinkers (List *list, List *dest);	// Returns: # of thinkers ticked
-	static void SaveList(FArchive &arc, Node *node);
+	enum no_link_type { NO_LINK };
+	DThinker(no_link_type) throw();
+	static void DestroyThinkersInList (FThinkerList &list);
+	static void DestroyMostThinkersInList (FThinkerList &list, int stat);
+	static int TickThinkers (FThinkerList *list, FThinkerList *dest);	// Returns: # of thinkers ticked
+	static void SaveList(FArchive &arc, DThinker *node);
 	void Remove();
 
-	static List Thinkers[MAX_STATNUM+1];		// Current thinkers
-	static List FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers
+	static FThinkerList Thinkers[MAX_STATNUM+1];		// Current thinkers
+	static FThinkerList FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers
 	static bool bSerialOverride;
 
+	friend struct FThinkerList;
 	friend class FThinkerIterator;
 	friend class DObject;
+
+	DThinker *NextThinker, *PrevThinker;
 };
 
 class FThinkerIterator
@@ -92,7 +106,7 @@ class FThinkerIterator
 protected:
 	const PClass *m_ParentType;
 private:
-	Node *m_CurrThinker;
+	DThinker *m_CurrThinker;
 	BYTE m_Stat;
 	bool m_SearchStats;
 	bool m_SearchingFresh;

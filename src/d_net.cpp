@@ -1825,25 +1825,29 @@ void TryRunTics (void)
 	}
 
 	// run the count tics
-	while (counts--)
+	if (counts > 0)
 	{
-		if (gametic > lowtic)
+		while (counts--)
 		{
-			I_Error ("gametic>lowtic");
-		}
-		if (advancedemo)
-		{
-			D_DoAdvanceDemo ();
-		}
-		if (debugfile) fprintf (debugfile, "run tic %d\n", gametic);
-		C_Ticker ();
-		M_Ticker ();
-		I_GetTime (true);
-		G_Ticker ();
-		GC::CheckGC ();
-		gametic++;
+			if (gametic > lowtic)
+			{
+				I_Error ("gametic>lowtic");
+			}
+			if (advancedemo)
+			{
+				D_DoAdvanceDemo ();
+			}
+			if (debugfile) fprintf (debugfile, "run tic %d\n", gametic);
+			C_Ticker ();
+			M_Ticker ();
+			I_GetTime (true);
+			G_Ticker ();
+			GC::CheckGC ();
+			gametic++;
 
-		NetUpdate ();	// check for new console commands
+			NetUpdate ();	// check for new console commands
+		}
+		S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
 	}
 }
 

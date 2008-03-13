@@ -771,6 +771,8 @@ void D_DoomLoop ()
 				C_Ticker ();
 				M_Ticker ();
 				G_Ticker ();
+				// [RH] Use the consoleplayer's camera to update sounds
+				S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
 				gametic++;
 				maketic++;
 				GC::CheckGC ();
@@ -780,8 +782,6 @@ void D_DoomLoop ()
 			{
 				TryRunTics (); // will run at least one tic
 			}
-			// [RH] Use the consoleplayer's camera to update sounds
-			S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
 			// Update display, next frame, with current state.
 			I_StartTic ();
 			D_Display ();

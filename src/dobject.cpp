@@ -412,7 +412,7 @@ DObject::~DObject ()
 
 void DObject::Destroy ()
 {
-	ObjectFlags |= OF_EuthanizeMe;
+	ObjectFlags = (ObjectFlags & ~OF_Fixed) | OF_EuthanizeMe;
 }
 
 size_t DObject::PropagateMark()

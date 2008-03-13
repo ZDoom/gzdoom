@@ -1,3 +1,12 @@
+March 12, 2008
+- Changed the sentinels in the thinker lists into a proper thinker. The old
+  way wasn't playing well with the write barriers.
+- Fixed: DFrameBuffer::WriteSavePic needs to fix the canvas in place while
+  using it.
+- Fixed: The sound system was updated every frame, which is a complete waste
+  of time. Doing it only once each tic is quite sufficient, since nothing
+  really moves between tics, even if the display makes it look otherwise.
+
 March 12, 2008 (Changes by Graf Zahl)
 - Fixed: The SimpleCanvas in FCanvasTexture must be declared as a soft
   root to the garbage collector.

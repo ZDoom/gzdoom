@@ -1385,11 +1385,13 @@ void DFrameBuffer::WriteSavePic (player_t *player, FILE *file, int width, int he
 	PalEntry palette[256];
 
 	// Take a snapshot of the player's view
+	pic->ObjectFlags |= OF_Fixed;
 	pic->Lock ();
 	R_RenderViewToCanvas (player->mo, pic, 0, 0, width, height);
 	GetFlashedPalette (palette);
 	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
 	pic->Unlock ();
+	pic->Destroy();
 	pic->ObjectFlags |= OF_YesReallyDelete;
 	delete pic;
 }

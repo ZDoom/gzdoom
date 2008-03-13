@@ -44,24 +44,71 @@ static cycle_t ThinkCycles;
 extern cycle_t BotSupportCycles;
 extern cycle_t BotWTG;
 
-IMPLEMENT_CLASS (DThinker)
+IMPLEMENT_POINTY_CLASS (DThinker)
+ DECLARE_POINTER(NextThinker)
+ DECLARE_POINTER(PrevThinker)
+END_POINTERS
 
-static Node *NextToThink;
+static DThinker *NextToThink;
 
-List DThinker::Thinkers[MAX_STATNUM+1];
-List DThinker::FreshThinkers[MAX_STATNUM+1];
+FThinkerList DThinker::Thinkers[MAX_STATNUM+1];
+FThinkerList DThinker::FreshThinkers[MAX_STATNUM+1];
 bool DThinker::bSerialOverride = false;
 
-void DThinker::SaveList(FArchive &arc, Node *node)
+void FThinkerList::AddTail(DThinker *thinker)
 {
-	if (node->Succ != NULL)
+	if (Sentinel == NULL)
 	{
-		do
+		Sentinel = new DThinker(DThinker::NO_LINK);
+		Sentinel->ObjectFlags |= OF_Sentinel;
+		Sentinel->NextThinker = Sentinel;
+		Sentinel->PrevThinker = Sentinel;
+		GC::WriteBarrier(Sentinel);
+	}
+	DThinker *tail = Sentinel->PrevThinker;
+	assert(tail->NextThinker == Sentinel);
+	thinker->PrevThinker = tail;
+	thinker->NextThinker = Sentinel;
+	tail->NextThinker = thinker;
+	Sentinel->PrevThinker = thinker;
+	GC::WriteBarrier(thinker, tail);
+	GC::WriteBarrier(thinker, Sentinel);
+	GC::WriteBarrier(tail, thinker);
+	GC::WriteBarrier(Sentinel, thinker);
+}
+
+DThinker *FThinkerList::GetHead() const
+{
+	if (Sentinel == NULL || Sentinel->NextThinker == Sentinel)
+	{
+		return NULL;
+	}
+	return Sentinel->NextThinker;
+}
+
+DThinker *FThinkerList::GetTail() const
+{
+	if (Sentinel == NULL || Sentinel->PrevThinker == Sentinel)
+	{
+		return NULL;
+	}
+	return Sentinel->PrevThinker;
+}
+
+bool FThinkerList::IsEmpty() const
+{
+	return Sentinel == NULL || Sentinel->NextThinker == NULL;
+}
+
+void DThinker::SaveList(FArchive &arc, DThinker *node)
+{
+	if (node != NULL)
+	{
+		while (!(node->ObjectFlags & OF_Sentinel))
 		{
-			DThinker *thinker = static_cast<DThinker *>(node);
-			arc << thinker;
-			node = node->Succ;
-		} while (node->Succ != NULL);
+			arc << node;
+			node = node->NextThinker;
+		}
 	}
 }
 
@@ -92,8 +139,8 @@ void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 			{
 				stat = i;
 				arc << stat;
-				SaveList(arc, Thinkers[i].Head);
-				SaveList(arc, FreshThinkers[i].Head);
+				SaveList(arc, Thinkers[i].GetHead());
+				SaveList(arc, FreshThinkers[i].GetHead());
 				thinker = NULL;
 				arc << thinker;		// Save a final NULL for this list
 			}
@@ -146,7 +193,8 @@ DThinker::DThinker (int statnum) throw()
 {
 	if (bSerialOverride)
 	{ // The serializer will insert us into the right list
-		Succ = NULL;
+		NextThinker = NULL;
+		PrevThinker = NULL;
 		return;
 	}
 
@@ -155,46 +203,43 @@ DThinker::DThinker (int statnum) throw()
 	{
 		statnum = MAX_STATNUM;
 	}
-	if (FreshThinkers[statnum].TailPred->Pred != NULL)
-	{
-		GC::WriteBarrier(static_cast<DThinker*>(FreshThinkers[statnum].Tail, this));
-	}
-	else
-	{
-		GC::WriteBarrier(this);
-	}
 	FreshThinkers[statnum].AddTail (this);
+}
+
+DThinker::DThinker(no_link_type foo) throw()
+{
+	foo;	// Avoid unused argument warnings.
 }
 
 DThinker::~DThinker ()
 {
-	if (Succ != NULL)
-	{
-		Remove ();
-	}
+	assert(NextThinker == NULL && PrevThinker == NULL);
 }
 
 void DThinker::Destroy ()
 {
-	if (this == NextToThink)
-		NextToThink = Succ;
-
-	if (Succ != NULL)
+	if (NextThinker != NULL)
 	{
-		Remove ();
-		Succ = NULL;
+		Remove();
 	}
-	Super::Destroy ();
+	Super::Destroy();
 }
 
 void DThinker::Remove()
 {
-	if (Pred->Pred != NULL && Succ->Succ != NULL)
+	if (this == NextToThink)
 	{
-		GC::WriteBarrier(static_cast<DThinker *>(Pred), static_cast<DThinker *>(Succ));
-		GC::WriteBarrier(static_cast<DThinker *>(Succ), static_cast<DThinker *>(Pred));
+		NextToThink = NextThinker;
 	}
-	Node::Remove();
+	DThinker *prev = PrevThinker;
+	DThinker *next = NextThinker;
+	assert(prev != NULL && next != NULL);
+	prev->NextThinker = next;
+	next->PrevThinker = prev;
+	GC::WriteBarrier(prev, next);
+	GC::WriteBarrier(next, prev);
+	NextThinker = NULL;
+	PrevThinker = NULL;
 }
 
 void DThinker::PostBeginPlay ()
@@ -203,33 +248,33 @@ void DThinker::PostBeginPlay ()
 
 DThinker *DThinker::FirstThinker (int statnum)
 {
-	Node *node;
+	DThinker *node;
 
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		statnum = MAX_STATNUM;
 	}
-	node = Thinkers[statnum].Head;
-	if (node->Succ == NULL)
+	node = Thinkers[statnum].GetHead();
+	if (node == NULL)
 	{
-		node = FreshThinkers[statnum].Head;
-		if (node->Succ == NULL)
+		node = FreshThinkers[statnum].GetHead();
+		if (node == NULL)
 		{
 			return NULL;
 		}
 	}
-	return static_cast<DThinker *>(node);
+	return node;
 }
 
 void DThinker::ChangeStatNum (int statnum)
 {
-	List *list;
+	FThinkerList *list;
 
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		statnum = MAX_STATNUM;
 	}
-	Remove ();
+	Remove();
 	if ((ObjectFlags & OF_JustSpawned) && statnum >= STAT_FIRST_THINKING)
 	{
 		list = &FreshThinkers[statnum];
@@ -237,14 +282,6 @@ void DThinker::ChangeStatNum (int statnum)
 	else
 	{
 		list = &Thinkers[statnum];
-	}
-	if (list->TailPred->Pred != NULL)
-	{
-		GC::WriteBarrier(static_cast<DThinker*>(list->Tail, this));
-	}
-	else
-	{
-		GC::WriteBarrier(this);
 	}
 	list->AddTail(this);
 }
@@ -254,22 +291,9 @@ void DThinker::MarkRoots()
 {
 	for (int i = 0; i <= MAX_STATNUM; ++i)
 	{
-		DThinker *t = static_cast<DThinker *>(Thinkers[i].Head);
-		GC::Mark(t);
-		t = static_cast<DThinker *>(FreshThinkers[i].Head);
-		GC::Mark(t);
+		GC::Mark(Thinkers[i].Sentinel);
+		GC::Mark(FreshThinkers[i].Sentinel);
 	}
-}
-
-size_t DThinker::PropagateMark()
-{
-	// Mark the next thinker in my list
-	if (Succ != NULL && Succ->Succ != NULL)
-	{
-		DThinker *t = static_cast<DThinker *>(Succ);
-		GC::Mark(t);
-	}
-	return Super::PropagateMark();
 }
 
 // Destroy every thinker
@@ -281,11 +305,11 @@ void DThinker::DestroyAllThinkers ()
 	{
 		if (i != STAT_TRAVELLING)
 		{
-			DestroyThinkersInList (Thinkers[i].Head);
-			DestroyThinkersInList (FreshThinkers[i].Head);
+			DestroyThinkersInList (Thinkers[i]);
+			DestroyThinkersInList (FreshThinkers[i]);
 		}
 	}
-	GC::FullGC ();
+	GC::FullGC();
 }
 
 // Destroy all thinkers except for player-controlled actors
@@ -303,34 +327,42 @@ void DThinker::DestroyMostThinkers ()
 			DestroyMostThinkersInList (FreshThinkers[i], i);
 		}
 	}
-	GC::FullGC ();
+	GC::FullGC();
 }
 
-void DThinker::DestroyThinkersInList (Node *node)
+void DThinker::DestroyThinkersInList (FThinkerList &list)
 {
-	while (node->Succ != NULL)
+	if (list.Sentinel != NULL)
 	{
-		Node *next = node->Succ;
-		static_cast<DThinker *> (node)->Destroy ();
-		node = next;
+		DThinker *node = list.Sentinel->NextThinker;
+		while (node != list.Sentinel)
+		{
+			DThinker *next = node->NextThinker;
+			node->Destroy();
+			node = next;
+		}
+		list.Sentinel->Destroy();
+		list.Sentinel = NULL;
 	}
 }
 
-void DThinker::DestroyMostThinkersInList (List &list, int stat)
+void DThinker::DestroyMostThinkersInList (FThinkerList &list, int stat)
 {
 	if (stat != STAT_PLAYER)
 	{
-		DestroyThinkersInList (list.Head);
+		DestroyThinkersInList (list);
 	}
-	else
+	else if (list.Sentinel != NULL)
 	{
-		Node *node = list.Head;
-		while (node->Succ != NULL)
+		DThinker *node = list.Sentinel->NextThinker;
+		while (node != list.Sentinel)
 		{
-			Node *next = node->Succ;
-			node->Remove ();
+			DThinker *next = node->NextThinker;
+			node->Remove();
 			node = next;
 		}
+		list.Sentinel->Destroy();
+		list.Sentinel = NULL;
 	}
 }
 
@@ -361,42 +393,38 @@ void DThinker::RunThinkers ()
 	unclock (ThinkCycles);
 }
 
-int DThinker::TickThinkers (List *list, List *dest)
+int DThinker::TickThinkers (FThinkerList *list, FThinkerList *dest)
 {
 	int count = 0;
-	Node *node = list->Head;
+	DThinker *node = list->GetHead();
 
-	while (node->Succ != NULL)
+	if (node == NULL)
+	{
+		return 0;
+	}
+
+	while (node != list->Sentinel)
 	{
 		++count;
-		NextToThink = node->Succ;
-		DThinker *thinker = static_cast<DThinker *> (node);
-		if (thinker->ObjectFlags & OF_JustSpawned)
+		NextToThink = node->NextThinker;
+		if (node->ObjectFlags & OF_JustSpawned)
 		{
-			thinker->ObjectFlags &= ~OF_JustSpawned;
+			node->ObjectFlags &= ~OF_JustSpawned;
 			if (dest != NULL)
 			{ // Move thinker from this list to the destination list
-				node->Remove ();
-				if (dest->TailPred->Pred != NULL)
-				{
-					GC::WriteBarrier(static_cast<DThinker*>(dest->Tail, thinker));
-				}
-				else
-				{
-					GC::WriteBarrier(thinker);
-				}
-				dest->AddTail (node);
+				node->Remove();
+				dest->AddTail(node);
 			}
-			thinker->PostBeginPlay ();
+			node->PostBeginPlay();
 		}
 		else if (dest != NULL)
 		{ // Move thinker from this list to the destination list
-			I_Error ("There is a thinker in the fresh list that has already ticked.\n");
+			I_Error("There is a thinker in the fresh list that has already ticked.\n");
 		}
 
-		if (!(thinker->ObjectFlags & OF_EuthanizeMe))
+		if (!(node->ObjectFlags & OF_EuthanizeMe))
 		{ // Only tick thinkers not scheduled for destruction
-			thinker->Tick ();
+			node->Tick ();
 		}
 		node = NextToThink;
 	}
@@ -420,7 +448,7 @@ FThinkerIterator::FThinkerIterator (const PClass *type, int statnum)
 		m_SearchStats = false;
 	}
 	m_ParentType = type;
-	m_CurrThinker = DThinker::Thinkers[m_Stat].Head;
+	m_CurrThinker = DThinker::Thinkers[m_Stat].GetHead();
 	m_SearchingFresh = false;
 }
 
@@ -437,43 +465,48 @@ FThinkerIterator::FThinkerIterator (const PClass *type, int statnum, DThinker *p
 		m_SearchStats = false;
 	}
 	m_ParentType = type;
-	if (prev == NULL || prev->Succ == NULL)
+	if (prev == NULL || (prev->NextThinker->ObjectFlags & OF_Sentinel))
 	{
-		Reinit ();
+		Reinit();
 	}
 	else
 	{
-		m_CurrThinker = prev->Succ;
+		m_CurrThinker = prev->NextThinker;
 		m_SearchingFresh = false;
 	}
 }
 
 void FThinkerIterator::Reinit ()
 {
-	m_CurrThinker = DThinker::Thinkers[m_Stat].Head;
+	m_CurrThinker = DThinker::Thinkers[m_Stat].GetHead();
 	m_SearchingFresh = false;
 }
 
 DThinker *FThinkerIterator::Next ()
 {
-	if (m_ParentType == NULL) return NULL;
+	if (m_ParentType == NULL)
+	{
+		return NULL;
+	}
 	do
 	{
 		do
 		{
-			while (m_CurrThinker->Succ)
+			if (m_CurrThinker != NULL)
 			{
-				DThinker *thinker = static_cast<DThinker *> (m_CurrThinker);
-				if (thinker->IsKindOf (m_ParentType))
+				while (!(m_CurrThinker->ObjectFlags & OF_Sentinel))
 				{
-					m_CurrThinker = m_CurrThinker->Succ;
-					return thinker;
+					DThinker *thinker = m_CurrThinker;
+					m_CurrThinker = thinker->NextThinker;
+					if (thinker->IsKindOf(m_ParentType))
+					{
+						return thinker;
+					}
 				}
-				m_CurrThinker = m_CurrThinker->Succ;
 			}
 			if ((m_SearchingFresh = !m_SearchingFresh))
 			{
-				m_CurrThinker = DThinker::FreshThinkers[m_Stat].Head;
+				m_CurrThinker = DThinker::FreshThinkers[m_Stat].GetHead();
 			}
 		} while (m_SearchingFresh);
 		if (m_SearchStats)
@@ -484,7 +517,7 @@ DThinker *FThinkerIterator::Next ()
 				m_Stat = STAT_FIRST_THINKING;
 			}
 		}
-		m_CurrThinker = DThinker::Thinkers[m_Stat].Head;
+		m_CurrThinker = DThinker::Thinkers[m_Stat].GetHead();
 		m_SearchingFresh = false;
 	} while (m_SearchStats && m_Stat != STAT_FIRST_THINKING);
 	return NULL;

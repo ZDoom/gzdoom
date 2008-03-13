@@ -432,10 +432,11 @@ size_t DObject::PropagateMark()
 	return info->Size;
 }
 
-void DObject::PointerSubstitution (DObject *old, DObject *notOld)
+size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 {
 	const PClass *info = GetClass();
 	const size_t *offsets = info->FlatPointers;
+	size_t changed = 0;
 	if (offsets == NULL)
 	{
 		const_cast<PClass *>(info)->BuildFlatPointers();
@@ -446,20 +447,23 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 		if (*(DObject **)((BYTE *)this + *offsets) == old)
 		{
 			*(DObject **)((BYTE *)this + *offsets) = notOld;
+			changed++;
 		}
 		offsets++;
 	}
+	return changed;
 }
 
-void DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
+size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 {
 	DObject *probe;
+	size_t changed = 0;
 	int i;
 
 	// Go through all objects.
 	for (probe = GC::Root; probe != NULL; probe = probe->ObjNext)
 	{
-		probe->PointerSubstitution(old, notOld);
+		changed += probe->PointerSubstitution(old, notOld);
 	}
 
 	// Go through the bodyque.
@@ -468,6 +472,7 @@ void DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 		if (bodyque[i] == old)
 		{
 			bodyque[i] = static_cast<AActor *>(notOld);
+			changed++;
 		}
 	}
 
@@ -475,7 +480,7 @@ void DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
-			players[i].FixPointers (old, notOld);
+			changed += players[i].FixPointers (old, notOld);
 	}
 
 	// Go through sectors.
@@ -484,7 +489,7 @@ void DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 		for (i = 0; i < numsectors; ++i)
 		{
 #define SECTOR_CHECK(f,t) \
-	if (sectors[i].f == static_cast<t *>(old)) { sectors[i].f = static_cast<t *>(notOld); }
+	if (sectors[i].f == static_cast<t *>(old)) { sectors[i].f = static_cast<t *>(notOld); changed++; }
 			SECTOR_CHECK( SoundTarget, AActor );
 			SECTOR_CHECK( CeilingSkyBox, ASkyViewpoint );
 			SECTOR_CHECK( FloorSkyBox, ASkyViewpoint );
@@ -495,6 +500,7 @@ void DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 #undef SECTOR_CHECK
 		}
 	}
+	return changed;
 }
 
 void DObject::Serialize (FArchive &arc)

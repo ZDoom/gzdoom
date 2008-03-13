@@ -299,21 +299,23 @@ player_s::player_s()
 // that match the pointer passed in. If you add any pointers that point to
 // DObject (or a subclass), add them here too.
 
-void player_s::FixPointers (const DObject *old, DObject *rep)
+size_t player_s::FixPointers (const DObject *old, DObject *rep)
 {
 	APlayerPawn *replacement = static_cast<APlayerPawn *>(rep);
-	if (mo == old)				mo = replacement;
-	if (poisoner == old)		poisoner = replacement;
-	if (attacker == old)		attacker = replacement;
-	if (camera == old)			camera = replacement;
-	if (dest == old)			dest = replacement;
-	if (prev == old)			prev = replacement;
-	if (enemy == old)			enemy = replacement;
-	if (missile == old)			missile = replacement;
-	if (mate == old)			mate = replacement;
-	if (last_mate == old)		last_mate = replacement;
-	if (ReadyWeapon == old)		ReadyWeapon = static_cast<AWeapon *>(rep);
-	if (PendingWeapon == old)	PendingWeapon = static_cast<AWeapon *>(rep);
+	size_t changed = 0;
+	if (mo == old)				mo = replacement, changed++;
+	if (poisoner == old)		poisoner = replacement, changed++;
+	if (attacker == old)		attacker = replacement, changed++;
+	if (camera == old)			camera = replacement, changed++;
+	if (dest == old)			dest = replacement, changed++;
+	if (prev == old)			prev = replacement, changed++;
+	if (enemy == old)			enemy = replacement, changed++;
+	if (missile == old)			missile = replacement, changed++;
+	if (mate == old)			mate = replacement, changed++;
+	if (last_mate == old)		last_mate = replacement, changed++;
+	if (ReadyWeapon == old)		ReadyWeapon = static_cast<AWeapon *>(rep), changed++;
+	if (PendingWeapon == old)	PendingWeapon = static_cast<AWeapon *>(rep), changed++;
+	return changed;
 }
 
 size_t player_s::PropagateMark()

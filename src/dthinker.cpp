@@ -44,14 +44,11 @@ static cycle_t ThinkCycles;
 extern cycle_t BotSupportCycles;
 extern cycle_t BotWTG;
 
-IMPLEMENT_POINTY_CLASS (DThinker)
- DECLARE_POINTER(NextThinker)
- DECLARE_POINTER(PrevThinker)
-END_POINTERS
+IMPLEMENT_CLASS (DThinker)
 
 static DThinker *NextToThink;
 
-FThinkerList DThinker::Thinkers[MAX_STATNUM+1];
+FThinkerList DThinker::Thinkers[MAX_STATNUM+2];
 FThinkerList DThinker::FreshThinkers[MAX_STATNUM+1];
 bool DThinker::bSerialOverride = false;
 
@@ -65,6 +62,7 @@ void FThinkerList::AddTail(DThinker *thinker)
 		Sentinel->PrevThinker = Sentinel;
 		GC::WriteBarrier(Sentinel);
 	}
+	assert(thinker->PrevThinker == NULL && thinker->NextThinker == NULL);
 	DThinker *tail = Sentinel->PrevThinker;
 	assert(tail->NextThinker == Sentinel);
 	thinker->PrevThinker = tail;
@@ -83,6 +81,7 @@ DThinker *FThinkerList::GetHead() const
 	{
 		return NULL;
 	}
+	assert(Sentinel->NextThinker->PrevThinker == Sentinel);
 	return Sentinel->NextThinker;
 }
 
@@ -106,6 +105,7 @@ void DThinker::SaveList(FArchive &arc, DThinker *node)
 	{
 		while (!(node->ObjectFlags & OF_Sentinel))
 		{
+			assert(node->NextThinker != NULL && !(node->NextThinker->ObjectFlags & OF_EuthanizeMe));
 			arc << node;
 			node = node->NextThinker;
 		}
@@ -164,6 +164,12 @@ void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 				arc << stat << thinker;
 				while (thinker != NULL)
 				{
+					// This may be a player stored in their ancillary list. Remove
+					// them first before inserting them into the new list.
+					if (thinker->NextThinker != NULL)
+					{
+						thinker->Remove();
+					}
 					// Thinkers with the OF_JustSpawned flag set go in the FreshThinkers
 					// list. Anything else goes in the regular Thinkers list.
 					if (thinker->ObjectFlags & OF_JustSpawned)
@@ -191,10 +197,10 @@ void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 
 DThinker::DThinker (int statnum) throw()
 {
+	NextThinker = NULL;
+	PrevThinker = NULL;
 	if (bSerialOverride)
 	{ // The serializer will insert us into the right list
-		NextThinker = NULL;
-		PrevThinker = NULL;
 		return;
 	}
 
@@ -218,6 +224,8 @@ DThinker::~DThinker ()
 
 void DThinker::Destroy ()
 {
+	assert((NextThinker != NULL && PrevThinker != NULL) ||
+		   (NextThinker == NULL && PrevThinker == NULL));
 	if (NextThinker != NULL)
 	{
 		Remove();
@@ -234,6 +242,9 @@ void DThinker::Remove()
 	DThinker *prev = PrevThinker;
 	DThinker *next = NextThinker;
 	assert(prev != NULL && next != NULL);
+	assert((ObjectFlags & OF_Sentinel) || (prev != this && next != this));
+	assert(prev->NextThinker == this);
+	assert(next->PrevThinker == this);
 	prev->NextThinker = next;
 	next->PrevThinker = prev;
 	GC::WriteBarrier(prev, next);
@@ -270,6 +281,9 @@ void DThinker::ChangeStatNum (int statnum)
 {
 	FThinkerList *list;
 
+	// This thinker should already be in a list; verify that.
+	assert(NextThinker != NULL && PrevThinker != NULL);
+
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		statnum = MAX_STATNUM;
@@ -289,7 +303,7 @@ void DThinker::ChangeStatNum (int statnum)
 // Mark the first thinker of each list
 void DThinker::MarkRoots()
 {
-	for (int i = 0; i <= MAX_STATNUM; ++i)
+	for (int i = 0; i <= MAX_STATNUM+1; ++i)
 	{
 		GC::Mark(Thinkers[i].Sentinel);
 		GC::Mark(FreshThinkers[i].Sentinel);
@@ -301,7 +315,7 @@ void DThinker::DestroyAllThinkers ()
 {
 	int i;
 
-	for (i = 0; i <= MAX_STATNUM; i++)
+	for (i = 0; i <= MAX_STATNUM+1; i++)
 	{
 		if (i != STAT_TRAVELLING)
 		{
@@ -353,13 +367,13 @@ void DThinker::DestroyMostThinkersInList (FThinkerList &list, int stat)
 		DestroyThinkersInList (list);
 	}
 	else if (list.Sentinel != NULL)
-	{
-		DThinker *node = list.Sentinel->NextThinker;
-		while (node != list.Sentinel)
+	{ // Move all players to an ancillary list to ensure
+	  // that the collector won't consider them dead.
+		while (list.Sentinel->NextThinker != list.Sentinel)
 		{
-			DThinker *next = node->NextThinker;
-			node->Remove();
-			node = next;
+			DThinker *thinker = list.Sentinel->NextThinker;
+			thinker->Remove();
+			Thinkers[MAX_STATNUM+1].AddTail(thinker);
 		}
 		list.Sentinel->Destroy();
 		list.Sentinel = NULL;
@@ -435,15 +449,13 @@ void DThinker::Tick ()
 {
 }
 
-void DThinker::PointerSubstitution(DObject *old, DObject *notOld)
+size_t DThinker::PropagateMark()
 {
-	// Pointer substitution must not, under any circumstances, change 
-	// the linked thinker list or the game will freeze badly.
-	DThinker *next = NextThinker;
-	DThinker *prev = PrevThinker;
-	Super::PointerSubstitution(old, notOld);
-	NextThinker = next;
-	PrevThinker = prev;
+	assert(NextThinker != NULL && !(NextThinker->ObjectFlags & OF_EuthanizeMe));
+	assert(PrevThinker != NULL && !(PrevThinker->ObjectFlags & OF_EuthanizeMe));
+	GC::Mark(NextThinker);
+	GC::Mark(PrevThinker);
+	return Super::PropagateMark();
 }
 
 FThinkerIterator::FThinkerIterator (const PClass *type, int statnum)

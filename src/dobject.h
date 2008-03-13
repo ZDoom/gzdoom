@@ -453,8 +453,8 @@ public:
 	// If you need to replace one object with another and want to
 	// change any pointers from the old object to the new object,
 	// use this method.
-	virtual void PointerSubstitution (DObject *old, DObject *notOld);
-	static void StaticPointerSubstitution (DObject *old, DObject *notOld);
+	virtual size_t PointerSubstitution (DObject *old, DObject *notOld);
+	static size_t StaticPointerSubstitution (DObject *old, DObject *notOld);
 
 	PClass *GetClass() const
 	{

@@ -1005,10 +1005,6 @@ FArchive &FArchive::SerializeObject (DObject *&object, PClass *type)
 {
 	if (IsStoring ())
 	{
-		if (object != (DObject*)~0)
-		{
-			GC::ReadBarrier(object);
-		}
 		return WriteObject (object);
 	}
 	else
@@ -1030,6 +1026,13 @@ FArchive &FArchive::WriteObject (DObject *obj)
 	else if (obj == (DObject*)~0)
 	{
 		id[0] = M1_OBJ;
+		Write (id, 1);
+	}
+	else if (obj->ObjectFlags & OF_EuthanizeMe)
+	{
+		// Objects that want to die are not saved to the archive, but
+		// we leave the pointers to them alone.
+		id[0] = NULL_OBJ;
 		Write (id, 1);
 	}
 	else
@@ -1159,11 +1162,20 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 			{
 				// When the temporary player's inventory items were loaded,
 				// they became owned by the real player. Undo that now.
-				for (AInventory *item = tempobj->Inventory;
-					item != NULL; item = item->Inventory)
+				AInventory *item;
+
+				for (item = tempobj->Inventory; item != NULL; item = item->Inventory)
 				{
 					item->Owner = tempobj;
 				}
+				item = tempobj->Inventory;
+				tempobj->Inventory = NULL;
+#ifdef _DEBUG
+				// The only references to this inventory list should be from the
+				// temporary player, so they will be freed when a collection occurs.
+				size_t a = 0;
+				assert(item == NULL || (a = DObject::StaticPointerSubstitution(item, NULL)) == 0);
+#endif
 				tempobj->Destroy ();
 			}
 			else

@@ -62,14 +62,13 @@ struct FThinkerList
 class DThinker : public DObject
 {
 	DECLARE_CLASS (DThinker, DObject)
-	HAS_OBJECT_POINTERS
 public:
 	DThinker (int statnum = MAX_STATNUM) throw();
 	void Destroy ();
 	virtual ~DThinker ();
 	virtual void Tick ();
 	virtual void PostBeginPlay ();	// Called just before the first tick
-	void PointerSubstitution(DObject *old, DObject *notOld);
+	size_t PropagateMark();
 	
 	void ChangeStatNum (int statnum);
 
@@ -91,7 +90,7 @@ private:
 	static void SaveList(FArchive &arc, DThinker *node);
 	void Remove();
 
-	static FThinkerList Thinkers[MAX_STATNUM+1];		// Current thinkers
+	static FThinkerList Thinkers[MAX_STATNUM+2];		// Current thinkers
 	static FThinkerList FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers
 	static bool bSerialOverride;
 

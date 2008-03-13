@@ -1842,7 +1842,6 @@ void TryRunTics (void)
 			M_Ticker ();
 			I_GetTime (true);
 			G_Ticker ();
-			GC::CheckGC ();
 			gametic++;
 
 			NetUpdate ();	// check for new console commands

@@ -185,11 +185,11 @@ static size_t PropagateAll()
 //
 //==========================================================================
 
-static DObject **SweepList(DObject **p, size_t count)
+static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 {
-	static int scount;
 	DObject *curr;
 	int deadmask = OtherWhite();
+	size_t finalized = 0;
 
 	while ((curr = *p) != NULL && count-- > 0)
 	{
@@ -210,7 +210,12 @@ static DObject **SweepList(DObject **p, size_t count)
 			}
 			curr->ObjectFlags |= OF_Cleanup;
 			delete curr;
+			finalized++;
 		}
+	}
+	if (finalize_count != NULL)
+	{
+		*finalize_count = finalized;
 	}
 	return p;
 }
@@ -350,14 +355,15 @@ static size_t SingleStep()
 
 	case GCS_Sweep: {
 		size_t old = AllocBytes;
-		SweepPos = SweepList(SweepPos, GCSWEEPMAX);
+		size_t finalize_count;
+		SweepPos = SweepList(SweepPos, GCSWEEPMAX, &finalize_count);
 		if (*SweepPos == NULL)
 		{ // Nothing more to sweep?
 			State = GCS_Finalize;
 		}
 		assert(old >= AllocBytes);
 		Estimate -= old - AllocBytes;
-		return GCSWEEPMAX * GCSWEEPCOST;
+		return (GCSWEEPMAX - finalize_count) * GCSWEEPCOST + finalize_count * GCFINALIZECOST;
 	  }
 
 	case GCS_Finalize:

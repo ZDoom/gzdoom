@@ -309,6 +309,12 @@ namespace GC
 			Step();
 	}
 
+	// Forces a collection to start now.
+	static inline void StartCollection()
+	{
+		Threshold = AllocBytes;
+	}
+
 	// Marks a white object gray. If the object wants to die, the pointer
 	// is NULLed instead.
 	void Mark(DObject **obj);

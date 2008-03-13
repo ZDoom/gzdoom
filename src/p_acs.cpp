@@ -1562,7 +1562,7 @@ IMPLEMENT_POINTY_CLASS (DACSThinker)
  DECLARE_POINTER(Scripts)
 END_POINTERS
 
-DACSThinker *DACSThinker::ActiveThinker = NULL;
+TObjPtr<DACSThinker> DACSThinker::ActiveThinker;
 
 DACSThinker::DACSThinker ()
 {

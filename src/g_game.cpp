@@ -1823,6 +1823,11 @@ void G_DoLoadGame ()
 
 	delete png;
 	fclose (stdfile);
+
+	// At this point, the GC threshold is likely a lot higher than the
+	// amount of memory in use, so bring it down now by starting a
+	// collection.
+	GC::StartCollection();
 }
 
 

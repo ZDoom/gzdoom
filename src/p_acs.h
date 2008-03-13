@@ -710,7 +710,7 @@ public:
 	void Tick ();
 
 	DLevelScript *RunningScripts[1000];	// Array of all synchronous scripts
-	static DACSThinker *ActiveThinker;
+	static TObjPtr<DACSThinker> ActiveThinker;
 
 	void DumpScriptStatus();
 	void StopScriptsFor (AActor *actor);

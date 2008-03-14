@@ -35,6 +35,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
 	angle_t an;
 	int prestep;
 
+	if (spawntype == NULL) return;
 	if (self->DamageType==NAME_Massacre) return;
 
 	// [RH] check to make sure it's not too close to the ceiling

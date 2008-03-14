@@ -1,3 +1,9 @@
+March 14, 2008 (Changes by Graf Zahl)
+- fixed: A_PainShootSkull was missing a NULL pointer check for the spawn type.
+- implemented Vavoom's vertex height things (1504, 1505) that can explicitly
+  define slopes for triangular sectors. The height is specified as the thing's
+  z-coordinate.
+
 March 13, 2008
 - Fixed: When returning to a hub map, inventory belonging to the temporary
   copies of the players stored in the archive would be destroyed and break

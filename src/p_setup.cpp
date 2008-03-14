@@ -1483,7 +1483,121 @@ enum
 	THING_CopyCeilingPlane = 9511,
 	THING_VavoomFloor=1500,
 	THING_VavoomCeiling=1501,
+	THING_VertexFloorZ=1504,
+	THING_VertexCeilingZ=1505,
 };
+
+//==========================================================================
+//
+//	P_SetSlopesFromVertexHeights
+//
+//==========================================================================
+
+static void P_SetSlopesFromVertexHeights(mapthing2_t *firstmt, mapthing2_t *lastmt)
+{
+	TMap<int, fixed_t> vt_heights[2];
+	mapthing2_t *mt;
+	bool vt_found = false;
+
+	for (mt = firstmt; mt < lastmt; ++mt)
+	{
+		if (mt->type == THING_VertexFloorZ || mt->type == THING_VertexCeilingZ)
+		{
+			for(int i=0; i<numvertexes; i++)
+			{
+				if (vertexes[i].x == mt->x << FRACBITS && vertexes[i].y == mt->y << FRACBITS)
+				{
+					if (mt->type == THING_VertexFloorZ) 
+					{
+						vt_heights[0][i] = mt->z << FRACBITS;
+					}
+					else 
+					{
+						vt_heights[1][i] = mt->z << FRACBITS;
+					}
+					vt_found = true;
+				}
+			}
+			mt->type = 0;
+		}
+	}
+	if (vt_found)
+	{
+		for (int i = 0; i < numsectors; i++)
+		{
+			sector_t *sec = &sectors[i];
+			if (sec->linecount != 3) continue;	// only works with triangular sectors
+
+			FVector3 vt1, vt2, vt3, cross;
+			FVector3 vec1, vec2;
+			int vi1, vi2, vi3;
+
+			vi1 = sec->lines[0]->v1 - vertexes;
+			vi2 = sec->lines[0]->v2 - vertexes;
+			vi3 = (sec->lines[1]->v1 == sec->lines[0]->v1 || sec->lines[1]->v1 == sec->lines[0]->v2)?
+				sec->lines[1]->v2 - vertexes : sec->lines[1]->v1 - vertexes;
+
+			vt1.X = FIXED2FLOAT(vertexes[vi1].x);
+			vt1.Y = FIXED2FLOAT(vertexes[vi1].y);
+			vt2.X = FIXED2FLOAT(vertexes[vi2].x);
+			vt2.Y = FIXED2FLOAT(vertexes[vi2].y);
+			vt3.X = FIXED2FLOAT(vertexes[vi3].x);
+			vt3.Y = FIXED2FLOAT(vertexes[vi3].y);
+
+			for(int j=0; j<2; j++)
+			{
+				fixed_t *h1 = vt_heights[j].CheckKey(vi1);
+				fixed_t *h2 = vt_heights[j].CheckKey(vi2);
+				fixed_t *h3 = vt_heights[j].CheckKey(vi3);
+				fixed_t z3;
+				if (h1==NULL && h2==NULL && h3==NULL) continue;
+
+				vt1.Z = FIXED2FLOAT(h1? *h1 : j==0? sec->floortexz : sec->ceilingtexz);
+				vt2.Z = FIXED2FLOAT(h2? *h2 : j==0? sec->floortexz : sec->ceilingtexz);
+				z3 = h3? *h3 : j==0? sec->floortexz : sec->ceilingtexz;
+				vt3.Z = FIXED2FLOAT(z3);
+
+				if (P_PointOnLineSide(vertexes[vi3].x, vertexes[vi3].y, sec->lines[0]) == 0)
+				{
+					vec1 = vt2 - vt3;
+					vec2 = vt1 - vt3;
+				}
+				else
+				{
+					vec1 = vt1 - vt3;
+					vec2 = vt2 - vt3;
+				}
+
+				FVector3 cross = vec1 ^ vec2;
+
+				double len = cross.Length();
+				if (len == 0)
+				{
+					// Only happens when all vertices in this sector are on the same line.
+					// Let's just ignore this case.
+					continue;
+				}
+				cross /= len;
+
+				// Fix backward normals
+				if ((cross.Z < 0 && j == 0) || (cross.Z > 0 && j == 1))
+				{
+					cross = -cross;
+				}
+
+				secplane_t *srcplane = j==0? &sec->floorplane : &sec->ceilingplane;
+
+				srcplane->a = FLOAT2FIXED (cross[0]);
+				srcplane->b = FLOAT2FIXED (cross[1]);
+				srcplane->c = FLOAT2FIXED (cross[2]);
+				srcplane->ic = DivScale32 (1, srcplane->c);
+				srcplane->d = -TMulScale16 (srcplane->a, vertexes[vi3].x,
+											srcplane->b, vertexes[vi3].y,
+											srcplane->c, z3);
+			}
+		}
+	}
+}
 
 //===========================================================================
 //
@@ -1542,6 +1656,8 @@ static void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 			mt->type = 0;
 		}
 	}
+
+	P_SetSlopesFromVertexHeights(firstmt, lastmt);
 }
 
 //===========================================================================

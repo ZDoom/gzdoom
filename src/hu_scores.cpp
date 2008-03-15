@@ -180,7 +180,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	}
 
 	if (teamplay && deathmatch)
-		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT * 7 / 2 : y = SCREENHEIGHT / 16;
+		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT * 2 / 7 : y = SCREENHEIGHT / 16;
 	else
 		gamestate == GS_INTERMISSION ? y = SCREENHEIGHT / 4 : y = SCREENHEIGHT / 16;
 

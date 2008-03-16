@@ -2449,7 +2449,7 @@ bool P_BounceWall (AActor *mo)
 		leady = mo->y-mo->radius;
 	}
 	bestslidefrac = FRACUNIT+1;
-	bestslideline = NULL;
+	bestslideline = BlockingLine;
 	if (P_PathTraverse(leadx, leady, leadx+mo->momx, leady+mo->momy,
 		PT_ADDLINES, PTR_BounceTraverse) && BlockingLine == NULL)
 	{ // Could not find a wall, so bounce off the floor/ceiling instead.
@@ -2466,7 +2466,7 @@ bool P_BounceWall (AActor *mo)
 			return true;
 		}
 	}
-	line = bestslideline ? bestslideline : BlockingLine;
+	line = bestslideline;
 
 	if (line->special == Line_Horizon)
 	{

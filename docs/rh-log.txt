@@ -1,4 +1,6 @@
 March 15, 2008
+- Fixed: The only time bestslideline is ever NULL is before it ever gets set.
+  That means my P_BounceWall() from March 6 wasn't really correct.
 - Fixed: If an object is flagged for euthanization while it's in the gray
   list, it should just be ignored during the propagation stage.
 - After sleeping on it and realizing what was really going in, I generalized

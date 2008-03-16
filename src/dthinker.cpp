@@ -54,6 +54,8 @@ bool DThinker::bSerialOverride = false;
 
 void FThinkerList::AddTail(DThinker *thinker)
 {
+	assert(thinker->PrevThinker == NULL && thinker->NextThinker == NULL);
+	assert(!(thinker->ObjectFlags & OF_EuthanizeMe));
 	if (Sentinel == NULL)
 	{
 		Sentinel = new DThinker(DThinker::NO_LINK);
@@ -62,7 +64,6 @@ void FThinkerList::AddTail(DThinker *thinker)
 		Sentinel->PrevThinker = Sentinel;
 		GC::WriteBarrier(Sentinel);
 	}
-	assert(thinker->PrevThinker == NULL && thinker->NextThinker == NULL);
 	DThinker *tail = Sentinel->PrevThinker;
 	assert(tail->NextThinker == Sentinel);
 	thinker->PrevThinker = tail;
@@ -172,7 +173,12 @@ void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 					}
 					// Thinkers with the OF_JustSpawned flag set go in the FreshThinkers
 					// list. Anything else goes in the regular Thinkers list.
-					if (thinker->ObjectFlags & OF_JustSpawned)
+					if (thinker->ObjectFlags & OF_EuthanizeMe)
+					{
+						// This thinker was destroyed during the loading process. Do
+						// not link it in to any list.
+					}
+					else if (thinker->ObjectFlags & OF_JustSpawned)
 					{
 						FreshThinkers[stat].AddTail(thinker);
 					}
@@ -367,16 +373,30 @@ void DThinker::DestroyMostThinkersInList (FThinkerList &list, int stat)
 		DestroyThinkersInList (list);
 	}
 	else if (list.Sentinel != NULL)
-	{ // Move all players to an ancillary list to ensure
-	  // that the collector won't consider them dead.
-		while (list.Sentinel->NextThinker != list.Sentinel)
+	{ // If it's a voodoo doll, destroy it. Otherwise, simply remove
+	  // it from the list. G_FinishTravel() will find it later from
+	  // a players[].mo link and destroy it then, after copying various
+	  // information to a new player.
+		for (DThinker *probe = list.Sentinel->NextThinker, *next; probe != list.Sentinel; probe = next)
 		{
-			DThinker *thinker = list.Sentinel->NextThinker;
-			thinker->Remove();
-			Thinkers[MAX_STATNUM+1].AddTail(thinker);
+			next = probe->NextThinker;
+			if (!probe->IsKindOf(RUNTIME_CLASS(APlayerPawn)) ||		// <- should not happen
+				static_cast<AActor *>(probe)->player == NULL ||
+				static_cast<AActor *>(probe)->player->mo != probe)
+			{
+				probe->Destroy();
+			}
+			else
+			{
+				probe->Remove();
+				// Technically, this doesn't need to be in any list now, since
+				// it's only going to be found later and destroyed before ever
+				// needing to tick again, but by moving it to a separate list,
+				// I can keep my debug assertions that all thinkers are either
+				// euthanizing or in a list.
+				Thinkers[MAX_STATNUM+1].AddTail(probe);
+			}
 		}
-		list.Sentinel->Destroy();
-		list.Sentinel = NULL;
 	}
 }
 

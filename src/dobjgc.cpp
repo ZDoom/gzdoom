@@ -155,7 +155,8 @@ size_t PropagateMark()
 	assert(obj->IsGray());
 	obj->Gray2Black();
 	Gray = obj->GCNext;
-	return obj->PropagateMark();
+	return !(obj->ObjectFlags & OF_EuthanizeMe) ? obj->PropagateMark() :
+		obj->GetClass()->Size;
 }
 
 //==========================================================================
@@ -181,7 +182,7 @@ static size_t PropagateAll()
 // SweepList
 //
 // Runs a limited sweep on a list, returning the location where to resume
-// the sweep at next time.
+// the sweep at next time. (FIXME: Horrible Engrish in this description.)
 //
 //==========================================================================
 
@@ -204,8 +205,14 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 			assert(curr->IsDead());
 			*p = curr->ObjNext;
 			if (!(curr->ObjectFlags & OF_EuthanizeMe))
-			{ // The object must be destroyed before it can be finalized.
-				assert(!curr->IsKindOf(RUNTIME_CLASS(DThinker)));
+			{	// The object must be destroyed before it can be finalized.
+				// Note that thinkers must already have been destroyed. If they get here without
+				// having been destroyed first, it means they somehow became unattached from the
+				// thinker lists. If I don't maintain the invariant that all live thinkers must
+				// be in a thinker list, then I need to add write barriers for every time a
+				// thinker pointer is changed. This seems easier and perfectly reasonable, since
+				// a live thinker that isn't on a thinker list isn't much of a thinker.
+				assert(!curr->IsKindOf(RUNTIME_CLASS(DThinker)) || (curr->ObjectFlags & OF_Sentinel));
 				curr->Destroy();
 			}
 			curr->ObjectFlags |= OF_Cleanup;
@@ -263,6 +270,7 @@ static void MarkRoot()
 	Mark(screen);
 	Mark(StatusBar);
 	DThinker::MarkRoots();
+	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{

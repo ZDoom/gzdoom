@@ -2372,6 +2372,7 @@ bool PTR_BounceTraverse (intercept_t *in)
 		I_Error ("PTR_BounceTraverse: not a line?");
 
 	li = in->d.line;
+	assert(((size_t)li - (size_t)lines) % sizeof(line_t) == 0);
 	if (li->flags & ML_BLOCKEVERYTHING)
 	{
 		goto bounceblocking;
@@ -2448,6 +2449,7 @@ bool P_BounceWall (AActor *mo)
 		leady = mo->y-mo->radius;
 	}
 	bestslidefrac = FRACUNIT+1;
+	bestslideline = NULL;
 	if (P_PathTraverse(leadx, leady, leadx+mo->momx, leady+mo->momy,
 		PT_ADDLINES, PTR_BounceTraverse) && BlockingLine == NULL)
 	{ // Could not find a wall, so bounce off the floor/ceiling instead.
@@ -2463,12 +2465,6 @@ bool P_BounceWall (AActor *mo)
 			mo->FloorBounceMissile (mo->Sector->ceilingplane);
 			return true;
 		}
-		/*
-		else
-		{
-			return (mo->flags2 & MF2_BOUNCE2) != 0;
-		}
-		*/
 	}
 	line = bestslideline ? bestslideline : BlockingLine;
 

@@ -323,32 +323,6 @@ void *I_RegisterSong (const char *filename, char * musiccache, int offset, int l
 			info = new TimiditySong (file, musiccache, len);
 		}
 	}
-	// Check for SPC format
-#ifdef _WIN32
-	else if (id == MAKE_ID('S','N','E','S') && len >= 66048)
-	{
-		char header[0x23];
-
-		if (file != NULL)
-		{
-			if (fread (header, 1, 0x23, file) != 0x23)
-			{
-				fclose (file);
-				return 0;
-			}
-			fseek (file, -0x23, SEEK_CUR);
-		}
-		else
-		{
-			memcpy(header, musiccache, 0x23);
-		}
-
-		if (strncmp (header+4, "-SPC700 Sound File Data", 23) == 0)
-		{
-			info = new SPCSong (file, musiccache, len);
-		}
-	}
-#endif
 	// Check for RDosPlay raw OPL format
 	else if (id == MAKE_ID('R','A','W','A') && len >= 12)
 	{
@@ -428,7 +402,7 @@ void *I_RegisterSong (const char *filename, char * musiccache, int offset, int l
 		// been identified already, so don't even bother trying to load it.
 		if (info == NULL && GSnd != NULL && len >= 1024)
 		{
-			// First try loading it as MOD, then as a stream
+			// Let FMOD figure out what it is.
 			if (file != NULL)
 			{
 				fclose (file);

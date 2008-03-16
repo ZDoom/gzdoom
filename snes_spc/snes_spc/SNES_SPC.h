@@ -128,7 +128,8 @@ public:
 	enum { extra_size = SPC_DSP::extra_size };
 	
 	enum { signature_size = 35 };
-	
+	static char const signature [signature_size + 1];
+
 private:
 	SPC_DSP dsp;
 	
@@ -247,8 +248,6 @@ private:
 		uint8_t ipl_rom [0x40];
 	};
 
-	static char const signature [signature_size + 1];
-	
 	void save_regs( uint8_t out [reg_count] );
 };
 

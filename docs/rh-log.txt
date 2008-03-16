@@ -1,8 +1,24 @@
+March 15, 2008
+- Fixed: If an object is flagged for euthanization while it's in the gray
+  list, it should just be ignored during the propagation stage.
+- After sleeping on it and realizing what was really going in, I generalized
+  the inventory fix from the 13th: The actor is flagged by Destroy(), then it
+  is later inserted into the thinker list by DThinker::SerializeAll(). So
+  rather than unlinking the skipped player from their inventory, just make
+  sure any flagged thinkers aren't inserted into a list.
+- Fixed: FCanvasTextureInfo::Viewpoint needed a read barrier, and the whole
+  list should serve as a root.
+
 March 14, 2008 (Changes by Graf Zahl)
 - fixed: A_PainShootSkull was missing a NULL pointer check for the spawn type.
 - implemented Vavoom's vertex height things (1504, 1505) that can explicitly
   define slopes for triangular sectors. The height is specified as the thing's
   z-coordinate.
+
+March 14, 2008
+- Reimplemented SPC playback as a custom codec for FMOD.
+- Removed spc_frequency, because snes_spc only supports the SPC's native
+  frequency of 32000 Hz.
 
 March 13, 2008
 - Fixed: When returning to a hub map, inventory belonging to the temporary

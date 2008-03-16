@@ -1162,20 +1162,10 @@ FArchive &FArchive::ReadObject (DObject* &obj, PClass *wanttype)
 			{
 				// When the temporary player's inventory items were loaded,
 				// they became owned by the real player. Undo that now.
-				AInventory *item;
-
-				for (item = tempobj->Inventory; item != NULL; item = item->Inventory)
+				for (AInventory *item = tempobj->Inventory; item != NULL; item = item->Inventory)
 				{
 					item->Owner = tempobj;
 				}
-				item = tempobj->Inventory;
-				tempobj->Inventory = NULL;
-#ifdef _DEBUG
-				// The only references to this inventory list should be from the
-				// temporary player, so they will be freed when a collection occurs.
-				size_t a = 0;
-				assert(item == NULL || (a = DObject::StaticPointerSubstitution(item, NULL)) == 0);
-#endif
 				tempobj->Destroy ();
 			}
 			else

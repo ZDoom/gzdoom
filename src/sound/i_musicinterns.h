@@ -250,27 +250,6 @@ protected:
 	int m_LastPos;
 };
 
-// SPC file, rendered with SNESAPU.DLL and streamed through FMOD ------------
-
-struct SNES_SPC;
-struct SPC_Filter;
-
-class SPCSong : public StreamSong
-{
-public:
-	SPCSong (FILE *file, char * musiccache, int length);
-	~SPCSong ();
-	void Play (bool looping);
-	bool IsPlaying ();
-	bool IsValid () const;
-
-protected:
-	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
-
-	SNES_SPC *SPC;
-	SPC_Filter *Filter;
-};
-
 // MIDI file played with Timidity and possibly streamed through FMOD --------
 
 class TimiditySong : public StreamSong

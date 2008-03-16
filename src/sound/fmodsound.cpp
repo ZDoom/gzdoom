@@ -79,6 +79,8 @@ struct FEnumList
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+FMOD_RESULT SPC_CreateCodec(FMOD::System *sys);
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -559,6 +561,8 @@ bool FMODSoundRenderer::Init()
 
 	result = SfxGroup->addGroup(PausableSfx);
 	ERRCHECK(result);
+
+	result = SPC_CreateCodec(Sys);
 
 	if (snd_3d)
 	{

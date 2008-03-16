@@ -1,3 +1,7 @@
+March 16, 2008 (Changes by Graf Zahl)
+- Fixed: FreshThinkers's max. index is MAX_STATNUM so the code shouldn't
+  to access FreshThinkers[MAX_STATNUM+1].
+
 March 15, 2008
 - Fixed: The only time bestslideline is ever NULL is before it ever gets set.
   That means my P_BounceWall() from March 6 wasn't really correct.

@@ -309,11 +309,12 @@ void DThinker::ChangeStatNum (int statnum)
 // Mark the first thinker of each list
 void DThinker::MarkRoots()
 {
-	for (int i = 0; i <= MAX_STATNUM+1; ++i)
+	for (int i = 0; i <= MAX_STATNUM; ++i)
 	{
 		GC::Mark(Thinkers[i].Sentinel);
 		GC::Mark(FreshThinkers[i].Sentinel);
 	}
+	GC::Mark(Thinkers[MAX_STATNUM+1].Sentinel);
 }
 
 // Destroy every thinker
@@ -321,7 +322,7 @@ void DThinker::DestroyAllThinkers ()
 {
 	int i;
 
-	for (i = 0; i <= MAX_STATNUM+1; i++)
+	for (i = 0; i <= MAX_STATNUM; i++)
 	{
 		if (i != STAT_TRAVELLING)
 		{
@@ -329,6 +330,7 @@ void DThinker::DestroyAllThinkers ()
 			DestroyThinkersInList (FreshThinkers[i]);
 		}
 	}
+	DestroyThinkersInList (Thinkers[MAX_STATNUM+1]);
 	GC::FullGC();
 }
 

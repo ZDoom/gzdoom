@@ -17,7 +17,6 @@ CVAR (Bool, bot_observer, false, 0)
 
 IMPLEMENT_POINTY_CLASS (DCajunMaster)
  DECLARE_POINTER (getspawned)
- DECLARE_POINTER (botinfo)
  DECLARE_POINTER (firstthing)
  DECLARE_POINTER (body1)
  DECLARE_POINTER (body2)

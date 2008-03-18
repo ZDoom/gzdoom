@@ -1,10 +1,14 @@
+March 17, 2008
+- Fixed: The botinfo field of DCajunMaster was improperly listed as an object
+  pointer.
+
 March 16, 2008 (Changes by Graf Zahl)
 - Fixed: FreshThinkers's max. index is MAX_STATNUM so the code shouldn't
   to access FreshThinkers[MAX_STATNUM+1].
 
 March 15, 2008
 - Fixed: The only time bestslideline is ever NULL is before it ever gets set.
-  That means my P_BounceWall() from March 6 wasn't really correct.
+  That means my P_BounceWall() "fix" from March 6 wasn't really a working fix.
 - Fixed: If an object is flagged for euthanization while it's in the gray
   list, it should just be ignored during the propagation stage.
 - After sleeping on it and realizing what was really going in, I generalized

@@ -132,7 +132,7 @@ typedef struct _MINIDUMP_CALLBACK_INFORMATION {
 typedef BOOL (WINAPI *THREADWALK) (HANDLE, LPTHREADENTRY32);
 typedef BOOL (WINAPI *MODULEWALK) (HANDLE, LPMODULEENTRY32);
 typedef HANDLE (WINAPI *CREATESNAPSHOT) (DWORD, DWORD);
-typedef BOOL (WINAPI *WRITEDUMP) (HANDLE, DWORD, HANDLE, MINIDUMP_TYPE,
+typedef BOOL (WINAPI *WRITEDUMP) (HANDLE, DWORD, HANDLE, int,
 								  PMINIDUMP_EXCEPTION_INFORMATION,
 								  PMINIDUMP_USER_STREAM_INFORMATION,
 								  PMINIDUMP_CALLBACK_INFORMATION);
@@ -427,7 +427,12 @@ static HANDLE WriteMyMiniDump (void)
 			if (CrashPointers.ExceptionRecord->ExceptionCode != EXCEPTION_STACK_OVERFLOW)
 			{
 				good = pMiniDumpWriteDump (DbgProcess, DbgProcessID, file,
-					MiniDumpNormal, &exceptor, NULL, NULL);
+#if 1
+					MiniDumpNormal
+#else
+					MiniDumpWithDataSegs|MiniDumpWithIndirectlyReferencedMemory|MiniDumpWithPrivateReadWriteMemory
+#endif
+					, &exceptor, NULL, NULL);
 			}
 			else
 			{

@@ -212,12 +212,20 @@ inline void P_MakeDivline (const line_t *li, divline_t *dl)
 fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1);
 int 	P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld);
 
-extern fixed_t			opentop;
-extern fixed_t			openbottom;
-extern fixed_t			openrange;
-extern fixed_t			lowfloor;
+struct FLineOpening
+{
+	fixed_t			top;
+	fixed_t			bottom;
+	fixed_t			range;
+	fixed_t			lowfloor;
+	sector_t		*bottomsec;
+	sector_t		*topsec;
+	int				ceilingpic;
+	int				floorpic;
+	bool			touchmidtex;
+};
 
-void	P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0);
+void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0);
 
 bool P_BlockLinesIterator (int x, int y, bool(*func)(line_t*));
 bool P_BlockThingsIterator (int x, int y, bool(*func)(AActor*), TArray<AActor *> &checkarray, AActor *start=NULL);

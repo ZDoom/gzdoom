@@ -1,3 +1,34 @@
+March 18, 2008 (Changes by Graf Zahl)
+- VC++ doesn't seem to like the TArray serializer so I added a workaround
+  to be able to save the 3dMidtex attachment info.
+- Fixed: The TArray serializer needs to be declared as a friend of TArray
+  in order to be able to access its fields.
+- Since there are no backwards compatibility issues due to savegame version
+  bumping I closed all gaps in the level flag set.
+- Bumped min. Savegame version and Netgame version for 3dMidtex related
+  changes.
+- Changed Jump and Crouch DMFlags into 3-way switches:
+  0: map default, 1: off, 2: on. Since I needed new bits the rest of
+  the DMFlag bit values had to be changed as a result.
+- fixed: PTR_SlideTraverse didn't check ML_BLOCKMONSTERS for sliding
+  actors without MF3_NOBLOCKMONST.
+- Added MAPINFO commands 'checkswitchrange' and 'nocheckswitchrange'
+  that can enable or disable switch range checking globally per map.
+- Changed ML_3DMIDTEX to force ML_CHECKSWITCHRANGE.
+- Added a ML_CHECKSWITCHRANGE flag which allows checking whether the 
+  player can actually reach the switch he wants to use.
+- Made DActiveButton::EWhere global so that I can use it outside thr
+  DActiveButton class.
+
+March 17, 2008 (Changes by Graf Zahl)
+- Changed P_LineOpening to pass its result in a struct instead of global
+  variables.
+- Added Eternity's 3DMIDTEX feature (no Eternity code used though.)
+  It should be feature complete with the exception of the ML_BLOCKMONSTERS
+  flag handling. That particular part of Eternity's implementation is
+  sub-optimal because it hijacks an existing flag and doesn't seem to make
+  much sense to me. Maybe I'll implement it as a separate flag later.
+
 March 17, 2008
 - Fixed: The botinfo field of DCajunMaster was improperly listed as an object
   pointer.

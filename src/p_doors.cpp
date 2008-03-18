@@ -198,6 +198,20 @@ void DDoor::Tick ()
 				break;
 			}
 		}
+		else if (res == crushed)
+		{
+			switch (m_Type)
+			{
+			case doorRaise:
+			case doorRaiseIn5Mins:
+				m_Direction = -1;
+				DoorSound(false);
+				break;
+
+			default:
+				break;
+			}
+		}
 		break;
 	}
 }

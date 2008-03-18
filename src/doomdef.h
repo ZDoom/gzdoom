@@ -218,18 +218,20 @@ enum
 	DF_ITEMS_RESPAWN		= 1 << 14,	// Items other than invuln. and invis. respawn
 	DF_FAST_MONSTERS		= 1 << 15,	// Monsters are fast (replaces -fast parm)
 	DF_NO_JUMP				= 1 << 16,	// Don't allow jumping
-	DF_NO_FREELOOK			= 1 << 17,	// Don't allow freelook
-	DF_RESPAWN_SUPER		= 1 << 18,	// Respawn invulnerability and invisibility
-	DF_NO_FOV				= 1 << 19,	// Only let the arbitrator set FOV (for all players)
-	DF_NO_COOP_WEAPON_SPAWN	= 1 << 20,	// Don't spawn multiplayer weapons in coop games
-	DF_NO_CROUCH			= 1 << 21,	// Don't allow crouching
-	DF_COOP_LOSE_INVENTORY	= 1 << 22,	// Lose all your old inventory when respawning in coop
-	DF_COOP_LOSE_KEYS		= 1 << 23,	// Lose keys when respawning in coop
-	DF_COOP_LOSE_WEAPONS	= 1 << 24,	// Lose weapons when respawning in coop
-	DF_COOP_LOSE_ARMOR		= 1 << 25,	// Lose armor when respawning in coop
-	DF_COOP_LOSE_POWERUPS	= 1 << 26,	// Lose powerups when respawning in coop
-	DF_COOP_LOSE_AMMO		= 1 << 27,	// Lose ammo when respawning in coop
-	DF_COOP_HALVE_AMMO		= 1 << 28,	// Lose half your ammo when respawning in coop (but not less than the normal starting amount)
+	DF_YES_JUMP				= 2 << 16,
+	DF_NO_FREELOOK			= 1 << 18,	// Don't allow freelook
+	DF_RESPAWN_SUPER		= 1 << 19,	// Respawn invulnerability and invisibility
+	DF_NO_FOV				= 1 << 20,	// Only let the arbitrator set FOV (for all players)
+	DF_NO_COOP_WEAPON_SPAWN	= 1 << 21,	// Don't spawn multiplayer weapons in coop games
+	DF_NO_CROUCH			= 1 << 22,	// Don't allow crouching
+	DF_YES_CROUCH			= 2 << 22,	//
+	DF_COOP_LOSE_INVENTORY	= 1 << 24,	// Lose all your old inventory when respawning in coop
+	DF_COOP_LOSE_KEYS		= 1 << 25,	// Lose keys when respawning in coop
+	DF_COOP_LOSE_WEAPONS	= 1 << 26,	// Lose weapons when respawning in coop
+	DF_COOP_LOSE_ARMOR		= 1 << 27,	// Lose armor when respawning in coop
+	DF_COOP_LOSE_POWERUPS	= 1 << 28,	// Lose powerups when respawning in coop
+	DF_COOP_LOSE_AMMO		= 1 << 29,	// Lose ammo when respawning in coop
+	DF_COOP_HALVE_AMMO		= 1 << 30,	// Lose half your ammo when respawning in coop (but not less than the normal starting amount)
 };
 
 // [BC] More dmflags. w00p!

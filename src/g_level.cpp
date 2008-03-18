@@ -307,6 +307,8 @@ static const char *MapInfoMapLevel[] =
 	"skyfog",
 	"teamplayon",
 	"teamplayoff",
+	"checkswitchrange",
+	"nocheckswitchrange",
 	NULL
 };
 
@@ -377,8 +379,8 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_FORCENOSKYSTRETCH, 0 },
 	{ MITYPE_SCFLAGS,	LEVEL_FREELOOK_YES, ~LEVEL_FREELOOK_NO },
 	{ MITYPE_SCFLAGS,	LEVEL_FREELOOK_NO, ~LEVEL_FREELOOK_YES },
-	{ MITYPE_SCFLAGS,	LEVEL_JUMP_YES, ~LEVEL_JUMP_NO },
-	{ MITYPE_SCFLAGS,	LEVEL_JUMP_NO, ~LEVEL_JUMP_YES },
+	{ MITYPE_CLRFLAG,	LEVEL_JUMP_NO, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_JUMP_NO, 0 },
 	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_HX, ~LEVEL_FALLDMG_ZD },
 	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_ZD, ~LEVEL_FALLDMG_HX },
 	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_ZD, ~LEVEL_FALLDMG_HX },
@@ -423,8 +425,8 @@ MapHandlers[] =
 	{ MITYPE_LUMPNAME,	lioffset(soundinfo), 0 },
 	{ MITYPE_SETFLAG,	LEVEL_CLIPMIDTEX, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_WRAPMIDTEX, 0 },
-	{ MITYPE_SCFLAGS,	LEVEL_CROUCH_YES, ~LEVEL_CROUCH_NO },
-	{ MITYPE_SCFLAGS,	LEVEL_CROUCH_NO, ~LEVEL_CROUCH_YES },
+	{ MITYPE_CLRFLAG,	LEVEL_CROUCH_NO, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_CROUCH_NO, 0 },
 	{ MITYPE_SCFLAGS,	LEVEL_PAUSE_MUSIC_IN_MENUS, 0 },
 	{ MITYPE_COMPATFLAG, COMPATF_SHORTTEX},
 	{ MITYPE_COMPATFLAG, COMPATF_STAIRINDEX},
@@ -454,6 +456,8 @@ MapHandlers[] =
 	{ MITYPE_INT,		lioffset(skyfog), 0 },
 	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYON, ~LEVEL_FORCETEAMPLAYOFF },
 	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYOFF, ~LEVEL_FORCETEAMPLAYON },
+	{ MITYPE_SETFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
+	{ MITYPE_CLRFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -2426,20 +2430,20 @@ void G_InitLevelLocals ()
 
 bool level_locals_s::IsJumpingAllowed() const
 {
-	if (level.flags & LEVEL_JUMP_NO)
+	if (dmflags & DF_NO_JUMP)
 		return false;
-	if (level.flags & LEVEL_JUMP_YES)
+	if (dmflags & DF_YES_JUMP)
 		return true;
-	return !(dmflags & DF_NO_JUMP);
+	return !(level.flags & LEVEL_JUMP_NO);
 }
 
 bool level_locals_s::IsCrouchingAllowed() const
 {
-	if (level.flags & LEVEL_CROUCH_NO)
+	if (dmflags & DF_NO_CROUCH)
 		return false;
-	if (level.flags & LEVEL_CROUCH_YES)
+	if (dmflags & DF_YES_CROUCH)
 		return true;
-	return !(dmflags & DF_NO_CROUCH);
+	return !(level.flags & LEVEL_CROUCH_NO);
 }
 
 bool level_locals_s::IsFreelookAllowed() const

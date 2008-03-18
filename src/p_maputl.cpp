@@ -34,6 +34,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "p_local.h"
+#include "p_3dmidtex.h"
 
 // State.
 #include "r_state.h"
@@ -184,15 +185,8 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 //
 //==========================================================================
 
-fixed_t opentop;
-fixed_t openbottom;
-fixed_t openrange;
-fixed_t lowfloor;
-extern int tmfloorpic;
-sector_t *openbottomsec;
-sector_t *opentopsec;
-
-void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, fixed_t refy)
+void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, 
+					fixed_t x, fixed_t y, fixed_t refx, fixed_t refy)
 {
 	sector_t *front, *back;
 	fixed_t fc, ff, bc, bf;
@@ -200,7 +194,7 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 	if (linedef->sidenum[1] == NO_SIDE)
 	{
 		// single sided line
-		openrange = 0;
+		open.range = 0;
 		return;
 	}
 
@@ -214,8 +208,9 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 
 	/*Printf ("]]]]]] %d %d\n", ff, bf);*/
 
-	opentopsec = fc < bc? front : back;
-	opentop = fc < bc ? fc : bc;
+	open.topsec = fc < bc? front : back;
+	open.ceilingpic = open.topsec->ceilingpic;
+	open.top = fc < bc ? fc : bc;
 
 	bool usefront;
 
@@ -241,20 +236,27 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 
 	if (usefront)
 	{
-		openbottom = ff;
-		openbottomsec = front;
-		lowfloor = bf;
-		//tmfloorpic = front->floorpic;
+		open.bottom = ff;
+		open.bottomsec = front;
+		open.floorpic = front->floorpic;
+		open.lowfloor = bf;
 	}
 	else
 	{
-		openbottom = bf;
-		openbottomsec = back;
-		lowfloor = ff;
-		//tmfloorpic = back->floorpic;
+		open.bottom = bf;
+		open.bottomsec = back;
+		open.floorpic = back->floorpic;
+		open.lowfloor = ff;
 	}
 
-	openrange = opentop - openbottom;
+	if (actor != NULL && linedef->frontsector != NULL && linedef->backsector != NULL && 
+		linedef->flags & ML_3DMIDTEX)
+	{
+		open.touchmidtex = P_LineOpening_3dMidtex(actor, linedef, open.top, open.bottom);
+	}
+	else open.touchmidtex = false;
+
+	open.range = open.top - open.bottom;
 }
 
 

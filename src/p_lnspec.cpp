@@ -2831,7 +2831,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_Ceiling_CrushRaiseAndStay,
 	LS_Floor_CrushStop,
 	LS_Ceiling_MoveToValue,
-	LS_NOP,		// 48
+	LS_NOP,		// Sector_Attach3dMidtex
 	LS_GlassBreak,
 	LS_NOP,		// 50: ExtraFloor_LightOnly
 	LS_NOP,		// 51

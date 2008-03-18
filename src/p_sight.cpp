@@ -59,25 +59,26 @@ static bool PTR_SightTraverse (intercept_t *in)
 {
 	line_t  *li;
 	fixed_t slope;
+	FLineOpening open;
 
 	li = in->d.line;
 
 //
 // crosses a two sided line
 //
-	P_LineOpening (li, trace.x + FixedMul (trace.dx, in->frac),
+	P_LineOpening (open, NULL, li, trace.x + FixedMul (trace.dx, in->frac),
 		trace.y + FixedMul (trace.dy, in->frac));
 
-	if (openrange <= 0)		// quick test for totally closed doors
+	if (open.range <= 0)		// quick test for totally closed doors
 		return false;		// stop
 
 	// check bottom
-	slope = FixedDiv (openbottom - sightzstart, in->frac);
+	slope = FixedDiv (open.bottom - sightzstart, in->frac);
 	if (slope > bottomslope)
 		bottomslope = slope;
 
 	// check top
-	slope = FixedDiv (opentop - sightzstart, in->frac);
+	slope = FixedDiv (open.top - sightzstart, in->frac);
 	if (slope < topslope)
 		topslope = slope;
 

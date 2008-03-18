@@ -40,6 +40,7 @@
 #include <new>
 #include "m_alloc.h"
 
+class FArchive;
 
 // TArray -------------------------------------------------------------------
 
@@ -48,6 +49,8 @@
 template <class T, class TT=T>
 class TArray
 {
+	friend FArchive &operator<< (FArchive &arc, TArray<T> &self);
+
 public:
 	////////
 	// This is a dummy constructor that does nothing. The purpose of this

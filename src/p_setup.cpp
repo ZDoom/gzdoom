@@ -1043,8 +1043,13 @@ void P_LoadSectors (MapData * map)
 	map->Read(ML_SECTORS, msp);
 	ms = (mapsector_t*)msp;
 	ss = sectors;
+	
+	// Extended properties
+	sectors[0].e = new extsector_t[numsectors];
+
 	for (i = 0; i < numsectors; i++, ss++, ms++)
 	{
+		ss->e = &sectors[0].e[i];
 		ss->floortexz = LittleShort(ms->floorheight)<<FRACBITS;
 		ss->floorplane.d = -ss->floortexz;
 		ss->floorplane.c = FRACUNIT;
@@ -1971,6 +1976,7 @@ void P_LoadLineDefs (MapData * map)
 		P_SaveLineSpecial (ld);
 		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
+		if (level.flags & LEVEL_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 	}
 	delete[] mldf;
 }
@@ -2047,6 +2053,7 @@ void P_LoadLineDefs2 (MapData * map)
 		P_SaveLineSpecial (ld);
 		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
+		if (level.flags & LEVEL_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 	}
 	delete[] mldf;
 }
@@ -3347,6 +3354,7 @@ void P_FreeLevelData ()
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
+		
 	FBehavior::StaticUnloadModules ();
 	if (vertexes != NULL)
 	{
@@ -3360,6 +3368,7 @@ void P_FreeLevelData ()
 	}
 	if (sectors != NULL)
 	{
+		delete[] sectors[0].e;
 		delete[] sectors;
 		sectors = NULL;
 		numsectors = 0;	// needed for the pointer cleanup code
@@ -3723,7 +3732,7 @@ void P_SetupLevel (char *lumpname, int position)
 			subsectors, numsubsectors,
 			vertexes, numvertexes);
 		endTime = I_MSTime ();
-		Printf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
+		DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 	}
 
 	clock (times[10]);
@@ -3780,6 +3789,9 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 	delete map;
 
+	// set up world state
+	P_SpawnSpecials ();
+
 	clock (times[16]);
 	PO_Init ();	// Initialize the polyobjs
 	unclock (times[16]);
@@ -3797,8 +3809,6 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 	}
 
-	// set up world state
-	P_SpawnSpecials ();
 
 	// build subsector connect matrix
 	//	UNUSED P_ConnectSubsectors ();

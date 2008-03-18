@@ -29,6 +29,7 @@ public:
 protected:
 	enum EResult { ok, crushed, pastdest };
 private:
+	bool MoveAttached(int crush, fixed_t move, int floorOrCeiling, bool resetfailed);
 	EResult MovePlane (fixed_t speed, fixed_t dest, int crush, int floorOrCeiling, int direction);
 protected:
 	DMover ();

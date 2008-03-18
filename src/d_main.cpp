@@ -376,11 +376,13 @@ CVAR (Flag, sv_monsterrespawn,	dmflags, DF_MONSTERS_RESPAWN);
 CVAR (Flag, sv_itemrespawn,		dmflags, DF_ITEMS_RESPAWN);
 CVAR (Flag, sv_fastmonsters,	dmflags, DF_FAST_MONSTERS);
 CVAR (Flag, sv_nojump,			dmflags, DF_NO_JUMP);
+CVAR (Flag, sv_allowjump,		dmflags, DF_YES_JUMP);
 CVAR (Flag, sv_nofreelook,		dmflags, DF_NO_FREELOOK);
 CVAR (Flag, sv_respawnsuper,	dmflags, DF_RESPAWN_SUPER);
 CVAR (Flag, sv_nofov,			dmflags, DF_NO_FOV);
 CVAR (Flag, sv_noweaponspawn,	dmflags, DF_NO_COOP_WEAPON_SPAWN);
 CVAR (Flag, sv_nocrouch,		dmflags, DF_NO_CROUCH);
+CVAR (Flag, sv_allowcrouch,		dmflags, DF_YES_CROUCH);
 
 //==========================================================================
 //

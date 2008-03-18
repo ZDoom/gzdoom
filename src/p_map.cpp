@@ -32,6 +32,7 @@
 #include "m_bbox.h"
 #include "m_random.h"
 #include "i_system.h"
+#include "c_dispatch.h"
 
 #include "doomdef.h"
 #include "p_local.h"
@@ -97,6 +98,7 @@ int				tmfloorpic;
 sector_t		*tmfloorsector;
 int				tmceilingpic;
 sector_t		*tmceilingsector;
+bool			tmtouchmidtex;
 
 static fixed_t	tmfbbox[4];
 static AActor	*tmfthing;
@@ -107,6 +109,7 @@ fixed_t			tmffloorpic;
 sector_t		*tmffloorsector;
 fixed_t			tmfceilingpic;
 sector_t		*tmfceilingsector;
+bool			tmftouchmidtex;
 
 //Added by MC: So bot will know what kind of sector it's entering.
 sector_t*		tmsector;
@@ -158,6 +161,7 @@ static bool PIT_FindFloorCeiling (line_t *ld)
 	}
 
 	fixed_t sx, sy;
+	FLineOpening open;
 
 	// set openrange, opentop, openbottom
 	if (((ld->frontsector->floorplane.a | ld->frontsector->floorplane.b) |
@@ -165,7 +169,7 @@ static bool PIT_FindFloorCeiling (line_t *ld)
 		 (ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
 		 (ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
 	{
-		P_LineOpening (ld, sx=tmx, sy=tmy, tmx, tmy);
+		P_LineOpening (open, tmfthing, ld, sx=tmx, sy=tmy, tmx, tmy);
 	}
 	else
 	{ // Find the point on the line closest to the actor's center, and use
@@ -177,35 +181,36 @@ static bool PIT_FindFloorCeiling (line_t *ld)
 							  (dx*dx + dy*dy) * 16777216.f);
 		if (r <= 0)
 		{
-			P_LineOpening (ld, sx=ld->v1->x, sy=ld->v1->y, tmx, tmy);
+			P_LineOpening (open, tmfthing, ld, sx=ld->v1->x, sy=ld->v1->y, tmx, tmy);
 		}
 		else if (r >= (1<<24))
 		{
-			P_LineOpening (ld, sx=ld->v2->x, sy=ld->v2->y, tmfthing->x, tmfthing->y);
+			P_LineOpening (open, tmfthing, ld, sx=ld->v2->x, sy=ld->v2->y, tmfthing->x, tmfthing->y);
 		}
 		else
 		{
-			P_LineOpening (ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
+			P_LineOpening (open, tmfthing, ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
 				sy=ld->v1->y + MulScale24 (r, ld->dy), tmx, tmy);
 		}
 	}
 
 	// adjust floor / ceiling heights
-	if (opentop < tmfceilingz)
+	if (open.top < tmfceilingz)
 	{
-		tmfceilingz = opentop;
+		tmfceilingz = open.top;
 		BlockingLine = ld;
 	}
 
-	if (openbottom > tmffloorz)
+	if (open.bottom > tmffloorz)
 	{
-		tmffloorz = openbottom;
-		tmffloorsector = openbottomsec;
+		tmffloorz = open.bottom;
+		tmffloorsector = open.bottomsec;
+		tmftouchmidtex = open.touchmidtex;
 		BlockingLine = ld;
 	}
 
-	if (lowfloor < tmfdropoffz)
-		tmfdropoffz = lowfloor;
+	if (open.lowfloor < tmfdropoffz)
+		tmfdropoffz = open.lowfloor;
 	
 	return true;
 }
@@ -249,6 +254,8 @@ void P_FindFloorCeiling (AActor *actor)
 		for (by = yl; by <= yh; by++)
 			if (!P_BlockLinesIterator (bx, by, PIT_FindFloorCeiling))
 				return;
+
+	if (tmftouchmidtex) tmfdropoffz = tmffloorz;
 }
 
 //
@@ -373,6 +380,8 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 			}
 		}
 	}
+
+	if (tmftouchmidtex) tmfdropoffz = tmffloorz;
 
 	fixed_t savefloorz = tmffloorz;
 	fixed_t saveceilingz = tmfceilingz;
@@ -719,7 +728,8 @@ bool PIT_CheckLine (line_t *ld)
 		}
 	}
 
-	fixed_t sx, sy;
+	fixed_t sx=0, sy=0;
+	FLineOpening open;
 
 	// set openrange, opentop, openbottom
 	if (((ld->frontsector->floorplane.a | ld->frontsector->floorplane.b) |
@@ -727,7 +737,7 @@ bool PIT_CheckLine (line_t *ld)
 		 (ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
 		 (ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
 	{
-		P_LineOpening (ld, sx=tmx, sy=tmy, tmx, tmy);
+		P_LineOpening (open, tmthing, ld, sx=tmx, sy=tmy, tmx, tmy);
 	}
 	else
 	{ // Find the point on the line closest to the actor's center, and use
@@ -748,15 +758,15 @@ bool PIT_CheckLine (line_t *ld)
 			ld->backsector->floorplane.ic);*/
 		if (r <= 0)
 		{
-			P_LineOpening (ld, sx=ld->v1->x, sy=ld->v1->y, tmx, tmy);
+			P_LineOpening (open, tmthing, ld, sx=ld->v1->x, sy=ld->v1->y, tmx, tmy);
 		}
 		else if (r >= (1<<24))
 		{
-			P_LineOpening (ld, sx=ld->v2->x, sy=ld->v2->y, tmthing->x, tmthing->y);
+			P_LineOpening (open, tmthing, ld, sx=ld->v2->x, sy=ld->v2->y, tmthing->x, tmthing->y);
 		}
 		else
 		{
-			P_LineOpening (ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
+			P_LineOpening (open, tmthing, ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
 				sy=ld->v1->y + MulScale24 (r, ld->dy), tmx, tmy);
 		}
 	/*	Printf ("    %d %d %d\n", sx, sy, openbottom);*/
@@ -772,31 +782,32 @@ bool PIT_CheckLine (line_t *ld)
 		// forced to say, "It's not a bug. It's a feature?" Ugh.
 		(gameinfo.gametype != GAME_Strife ||
 		 level.flags & LEVEL_HEXENFORMAT ||
-		 openbottom == tmthing->Sector->floorplane.ZatPoint (sx, sy)))
+		 open.bottom == tmthing->Sector->floorplane.ZatPoint (sx, sy)))
 	{
-		openbottom += 32*FRACUNIT;
+		open.bottom += 32*FRACUNIT;
 	}
 
 	// adjust floor / ceiling heights
-	if (opentop < tmceilingz)
+	if (open.top < tmceilingz)
 	{
-		tmceilingz = opentop;
-		tmceilingsector = opentopsec;
-		tmceilingpic = opentopsec->ceilingpic;
+		tmceilingz = open.top;
+		tmceilingsector = open.topsec;
+		tmceilingpic = open.ceilingpic;
 		ceilingline = ld;
 		BlockingLine = ld;
 	}
 
-	if (openbottom > tmfloorz)
+	if (open.bottom > tmfloorz)
 	{
-		tmfloorz = openbottom;
-		tmfloorsector = openbottomsec;
-		tmfloorpic = openbottomsec->floorpic;
+		tmfloorz = open.bottom;
+		tmfloorsector = open.bottomsec;
+		tmfloorpic = open.floorpic;
+		tmtouchmidtex = open.touchmidtex;
 		BlockingLine = ld;
 	}
 
-	if (lowfloor < tmdropoffz)
-		tmdropoffz = lowfloor;
+	if (open.lowfloor < tmdropoffz)
+		tmdropoffz = open.lowfloor;
 	
 	// if contacted a special line, add it to the list
 	if (ld->special)
@@ -1413,7 +1424,7 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	if (tmceilingz - tmfloorz < thing->height)
 		return false;
 
-	if (stepthing != NULL)
+	if (stepthing != NULL || tmtouchmidtex)
 	{
 		tmdropoffz = thingdropoffz;
 	}
@@ -2096,25 +2107,30 @@ bool PTR_SlideTraverse (intercept_t* in)
 	{
 		goto isblocking;
 	}
+	if (li->flags & ML_BLOCKMONSTERS && !(slidemo->flags3 & MF3_NOBLOCKMONST))
+	{
+		goto isblocking;
+	}
 
+	FLineOpening open;
 	// set openrange, opentop, openbottom
-	P_LineOpening (li, trace.x + FixedMul (trace.dx, in->frac),
+	P_LineOpening (open, slidemo, li, trace.x + FixedMul (trace.dx, in->frac),
 		trace.y + FixedMul (trace.dy, in->frac));
 	
-	if (openrange < slidemo->height)
+	if (open.range < slidemo->height)
 		goto isblocking;				// doesn't fit
 				
-	if (opentop - slidemo->z < slidemo->height)
+	if (open.top - slidemo->z < slidemo->height)
 		goto isblocking;				// mobj is too high
 
-	if (openbottom - slidemo->z > slidemo->MaxStepHeight)
+	if (open.bottom - slidemo->z > slidemo->MaxStepHeight)
 	{
 		goto isblocking;				// too big a step up
 	}
-	else if (slidemo->z < openbottom)
+	else if (slidemo->z < open.bottom)
 	{ // [RH] Check to make sure there's nothing in the way for the step up
 		fixed_t savedz = slidemo->z;
-		slidemo->z = openbottom;
+		slidemo->z = open.bottom;
 		bool good = P_TestMobjZ (slidemo);
 		slidemo->z = savedz;
 		if (!good)
@@ -2261,6 +2277,7 @@ void P_SlideMove (AActor *mo, fixed_t tryx, fixed_t tryy, int numsteps)
 	}
 }
 
+
 //============================================================================
 //
 // P_CheckSlopeWalk
@@ -2384,15 +2401,17 @@ bool PTR_BounceTraverse (intercept_t *in)
 		goto bounceblocking;
 	}
 
-	P_LineOpening (li, trace.x + FixedMul (trace.dx, in->frac),
+	FLineOpening open;
+
+	P_LineOpening (open, slidemo, li, trace.x + FixedMul (trace.dx, in->frac),
 		trace.y + FixedMul (trace.dy, in->frac));	// set openrange, opentop, openbottom
-	if (openrange < slidemo->height)
+	if (open.range < slidemo->height)
 		goto bounceblocking;				// doesn't fit
 
-	if (opentop - slidemo->z < slidemo->height)
+	if (open.top - slidemo->z < slidemo->height)
 		goto bounceblocking;				// mobj is too high
 
-	if (openbottom > slidemo->z)
+	if (open.bottom > slidemo->z)
 		goto bounceblocking;				// mobj is too low
 
 	return true;			// this line doesn't block movement
@@ -2573,19 +2592,20 @@ bool PTR_AimTraverse (intercept_t* in)
 
 		// Crosses a two sided line.
 		// A two sided line will restrict the possible target ranges.
-		P_LineOpening (li, trace.x + FixedMul (trace.dx, in->frac),
+		FLineOpening open;
+		P_LineOpening (open, NULL, li, trace.x + FixedMul (trace.dx, in->frac),
 			trace.y + FixedMul (trace.dy, in->frac));
 
-		if (openbottom >= opentop)
+		if (open.bottom >= open.top)
 			return false;				// stop
 
 		dist = FixedMul (attackrange, in->frac);
 
-		pitch = -(int)R_PointToAngle2 (0, shootz, dist, openbottom);
+		pitch = -(int)R_PointToAngle2 (0, shootz, dist, open.bottom);
 		if (pitch < bottompitch)
 			bottompitch = pitch;
 
-		pitch = -(int)R_PointToAngle2 (0, shootz, dist, opentop);
+		pitch = -(int)R_PointToAngle2 (0, shootz, dist, open.top);
 		if (pitch > toppitch)
 			toppitch = pitch;
 
@@ -3337,14 +3357,16 @@ bool PTR_UseTraverse (intercept_t *in)
 		return true;
 	}
 
+	FLineOpening open;
 	// [RH] The range passed to P_PathTraverse was doubled so that it could
 	// find things up to 128 units away (for Strife), but it should still reject
 	// lines further than 64 units away.
 	if (in->frac > FRACUNIT/2)
 	{
-		P_LineOpening (in->d.line, trace.x + FixedMul (trace.dx, in->frac),
+		// don't pass usething here. It will not do what might be expected!
+		P_LineOpening (open, NULL, in->d.line, trace.x + FixedMul (trace.dx, in->frac),
 			trace.y + FixedMul (trace.dy, in->frac));
-		return openrange>0;
+		return open.range>0;
 	}
 
 	if (in->d.line->special == 0 || (GET_SPAC(in->d.line->flags) != SPAC_USETHROUGH &&
@@ -3353,14 +3375,14 @@ bool PTR_UseTraverse (intercept_t *in)
 blocked:
 		if (in->d.line->flags & ML_BLOCKEVERYTHING)
 		{
-			openrange = 0;
+			open.range = 0;
 		}
 		else
 		{
-			P_LineOpening (in->d.line, trace.x + FixedMul (trace.dx, in->frac),
+			P_LineOpening (open, NULL, in->d.line, trace.x + FixedMul (trace.dx, in->frac),
 				trace.y + FixedMul (trace.dy, in->frac));
 		}
-		if (openrange <= 0 ||
+		if (open.range <= 0 ||
 			(in->d.line->special != 0 && (i_compatflags & COMPATF_USEBLOCKING)))
 		{
 			// [RH] Give sector a chance to intercept the use
@@ -3428,15 +3450,16 @@ blocked:
 bool PTR_NoWayTraverse (intercept_t *in)
 {
 	line_t *ld = in->d.line;
+	FLineOpening open;
 
 	// [GrafZahl] de-obfuscated. Was I the only one who was unable to makes sense out of
 	// this convoluted mess?
 	if (ld->special) return true;
 	if (ld->flags&(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS)) return false;
-	P_LineOpening(ld, trace.x+FixedMul(trace.dx, in->frac),trace.y+FixedMul(trace.dy, in->frac));
-	return  openrange >0 && 
-			openbottom <= usething->z + usething->MaxStepHeight &&
-			opentop >= usething->z + usething->height;
+	P_LineOpening(open, NULL, ld, trace.x+FixedMul(trace.dx, in->frac),trace.y+FixedMul(trace.dy, in->frac));
+	return  open.range >0 && 
+			open.bottom <= usething->z + usething->MaxStepHeight &&
+			open.top >= usething->z + usething->height;
 }
 
 /*
@@ -3496,14 +3519,15 @@ static bool PuzzleActivated;
 bool PTR_PuzzleItemTraverse (intercept_t *in)
 {
 	AActor *mobj;
+	FLineOpening open;
 
 	if (in->isaline)
 	{ // Check line
 		if (in->d.line->special != USE_PUZZLE_ITEM_SPECIAL)
 		{
-			P_LineOpening (in->d.line, trace.x + FixedMul (trace.dx, in->frac),
+			P_LineOpening (open, NULL, in->d.line, trace.x + FixedMul (trace.dx, in->frac),
 				trace.y + FixedMul (trace.dy, in->frac));
-			if (openrange <= 0)
+			if (open.range <= 0)
 			{
 				return false; // can't use through a wall
 			}
@@ -3811,10 +3835,15 @@ void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, FNa
 //		DOOM crushing behavior set crushchange to 10 or -1
 //		if no crushing is desired.
 //
-static int moveamt;
-int		crushchange;
-static sector_t *movesec;
-bool 	nofit;
+
+struct FChangePosition
+{
+	int moveamt;
+	int crushchange;
+	bool nofit;
+	bool movemidtex;
+};
+
 TArray<AActor *> intersectors;
 
 EXTERN_CVAR (Int, cl_bloodtype)
@@ -3825,8 +3854,18 @@ EXTERN_CVAR (Int, cl_bloodtype)
 //
 //=============================================================================
 
-bool P_AdjustFloorCeil (AActor *thing)
+bool P_AdjustFloorCeil (AActor *thing, FChangePosition *cpos)
 {
+	int flags2 = thing->flags2 & MF2_PASSMOBJ;
+
+	if (cpos->movemidtex)
+	{
+		// From Eternity:
+		// ALL things must be treated as PASSMOBJ when moving
+		// 3DMidTex lines, otherwise you get stuck in them.
+		thing->flags2 |= MF2_PASSMOBJ;
+	}
+
 	bool isgood = P_CheckPosition (thing, thing->x, thing->y);
 	thing->floorz = tmfloorz;
 	thing->ceilingz = tmceilingz;
@@ -3835,6 +3874,10 @@ bool P_AdjustFloorCeil (AActor *thing)
 	thing->floorsector = tmfloorsector;
 	thing->ceilingpic = tmceilingpic;
 	thing->ceilingsector = tmceilingsector;
+
+	// restore the PASSMOBJ flag but leave the other flags alone.
+	thing->flags2 = (thing->flags2 & ~MF2_PASSMOBJ) | flags2;
+
 	return isgood;
 }
 
@@ -4004,7 +4047,7 @@ void P_FindBelowIntersectors (AActor *actor)
 //
 //=============================================================================
 
-void P_DoCrunch (AActor *thing)
+void P_DoCrunch (AActor *thing, FChangePosition *cpos)
 {
 	// crunch bodies to giblets
 	if ((thing->flags & MF_CORPSE) &&
@@ -4067,11 +4110,11 @@ void P_DoCrunch (AActor *thing)
 		return;		// assume it is bloody gibs or something
 	}
 
-	nofit = true;
+	cpos->nofit = true;
 
-	if ((crushchange > 0) && !(level.maptime & 3))
+	if ((cpos->crushchange > 0) && !(level.maptime & 3))
 	{
-		P_DamageMobj (thing, NULL, NULL, crushchange, NAME_Crush);
+		P_DamageMobj (thing, NULL, NULL, cpos->crushchange, NAME_Crush);
 
 		// spray blood in a random direction
 		if ((!(thing->flags&MF_NOBLOOD)) &&
@@ -4080,7 +4123,7 @@ void P_DoCrunch (AActor *thing)
 			PalEntry bloodcolor = (PalEntry)thing->GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
 			const PClass *bloodcls = PClass::FindClass((ENamedName)thing->GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
 
-			P_TraceBleed (crushchange, thing);
+			P_TraceBleed (cpos->crushchange, thing);
 			if (cl_bloodtype <= 1 && bloodcls != NULL)
 			{
 				AActor *mo;
@@ -4118,7 +4161,7 @@ void P_DoCrunch (AActor *thing)
 // above it didn't fit.
 //=============================================================================
 
-int P_PushUp (AActor *thing)
+int P_PushUp (AActor *thing, FChangePosition *cpos)
 {
 	unsigned int firstintersect = intersectors.Size ();
 	unsigned int lastintersect;
@@ -4140,11 +4183,11 @@ int P_PushUp (AActor *thing)
 			return 2;
 		}
 		fixed_t oldz = intersect->z;
-		P_AdjustFloorCeil (intersect);
+		P_AdjustFloorCeil (intersect, cpos);
 		intersect->z = thing->z + thing->height + 1;
-		if (P_PushUp (intersect))
+		if (P_PushUp (intersect, cpos))
 		{ // Move blocked
-			P_DoCrunch (intersect);
+			P_DoCrunch (intersect, cpos);
 			intersect->z = oldz;
 			return 2;
 		}
@@ -4160,7 +4203,7 @@ int P_PushUp (AActor *thing)
 // below it didn't fit.
 //=============================================================================
 
-int P_PushDown (AActor *thing)
+int P_PushDown (AActor *thing, FChangePosition *cpos)
 {
 	unsigned int firstintersect = intersectors.Size ();
 	unsigned int lastintersect;
@@ -4182,13 +4225,13 @@ int P_PushDown (AActor *thing)
 			return 2;
 		}
 		fixed_t oldz = intersect->z;
-		P_AdjustFloorCeil (intersect);
+		P_AdjustFloorCeil (intersect, cpos);
 		if (oldz > thing->z - intersect->height)
 		{ // Only push things down, not up.
 			intersect->z = thing->z - intersect->height;
-			if (P_PushDown (intersect))
+			if (P_PushDown (intersect, cpos))
 			{ // Move blocked
-				P_DoCrunch (intersect);
+				P_DoCrunch (intersect, cpos);
 				intersect->z = oldz;
 				return 2;
 			}
@@ -4203,11 +4246,11 @@ int P_PushDown (AActor *thing)
 //
 //=============================================================================
 
-void PIT_FloorDrop (AActor *thing)
+void PIT_FloorDrop (AActor *thing, FChangePosition *cpos)
 {
 	fixed_t oldfloorz = thing->floorz;
 
-	P_AdjustFloorCeil (thing);
+	P_AdjustFloorCeil (thing, cpos);
 
 	if (thing->momz == 0 &&
 		(!(thing->flags & MF_NOGRAVITY) ||
@@ -4224,8 +4267,8 @@ void PIT_FloorDrop (AActor *thing)
 			P_CheckFakeFloorTriggers (thing, oldz);
 		}
 		else if ((thing->flags & MF_NOGRAVITY) ||
-			((!(level.flags & LEVEL_HEXENFORMAT) || moveamt < 9*FRACUNIT)
-			 && thing->z - thing->floorz <= moveamt))
+			((!(level.flags & LEVEL_HEXENFORMAT) || cpos->moveamt < 9*FRACUNIT)
+			 && thing->z - thing->floorz <= cpos->moveamt))
 		{
 			thing->z = thing->floorz;
 			P_CheckFakeFloorTriggers (thing, oldz);
@@ -4239,11 +4282,11 @@ void PIT_FloorDrop (AActor *thing)
 //
 //=============================================================================
 
-void PIT_FloorRaise (AActor *thing)
+void PIT_FloorRaise (AActor *thing, FChangePosition *cpos)
 {
 	fixed_t oldfloorz = thing->floorz;
 
-	P_AdjustFloorCeil (thing);
+	P_AdjustFloorCeil (thing, cpos);
 
 	// Move things intersecting the floor up
 	if (thing->z <= thing->floorz ||
@@ -4259,17 +4302,17 @@ void PIT_FloorRaise (AActor *thing)
 		{
 			thing->z = thing->z - oldfloorz + thing->floorz;
 		}
-		switch (P_PushUp (thing))
+		switch (P_PushUp (thing, cpos))
 		{
 		default:
 			P_CheckFakeFloorTriggers (thing, oldz);
 			break;
 		case 1:
-			P_DoCrunch (thing);
+			P_DoCrunch (thing, cpos);
 			P_CheckFakeFloorTriggers (thing, oldz);
 			break;
 		case 2:
-			P_DoCrunch (thing);
+			P_DoCrunch (thing, cpos);
 			thing->z = oldz;
 			break;
 		}
@@ -4282,12 +4325,12 @@ void PIT_FloorRaise (AActor *thing)
 //
 //=============================================================================
 
-void PIT_CeilingLower (AActor *thing)
+void PIT_CeilingLower (AActor *thing, FChangePosition *cpos)
 {
 	bool onfloor;
 
 	onfloor = thing->z <= thing->floorz;
-	P_AdjustFloorCeil (thing);
+	P_AdjustFloorCeil (thing, cpos);
 
 	if (thing->z + thing->height > thing->ceilingz)
 	{
@@ -4301,14 +4344,14 @@ void PIT_CeilingLower (AActor *thing)
 		{
 			thing->z = thing->floorz;
 		}
-		switch (P_PushDown (thing))
+		switch (P_PushDown (thing, cpos))
 		{
 		case 2:
 			// intentional fall-through
 		case 1:
 			if (onfloor)
 				thing->z = thing->floorz;
-			P_DoCrunch (thing);
+			P_DoCrunch (thing, cpos);
 			P_CheckFakeFloorTriggers (thing, oldz);
 			break;
 		default:
@@ -4324,15 +4367,15 @@ void PIT_CeilingLower (AActor *thing)
 //
 //=============================================================================
 
-void PIT_CeilingRaise (AActor *thing)
+void PIT_CeilingRaise (AActor *thing, FChangePosition *cpos)
 {
-	bool isgood = P_AdjustFloorCeil (thing);
+	bool isgood = P_AdjustFloorCeil (thing, cpos);
 
 	// For DOOM compatibility, only move things that are inside the floor.
 	// (or something else?) Things marked as hanging from the ceiling will
 	// stay where they are.
 	if (thing->z < thing->floorz &&
-		thing->z + thing->height >= thing->ceilingz - moveamt &&
+		thing->z + thing->height >= thing->ceilingz - cpos->moveamt &&
 		!(thing->flags & MF_NOLIFTDROP))
 	{
 		fixed_t oldz = thing->z;
@@ -4365,25 +4408,44 @@ void PIT_CeilingRaise (AActor *thing)
 
 bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil)
 {
-	void (*iterator)(AActor *);
+	FChangePosition cpos;
+	void (*iterator)(AActor *, FChangePosition *);
+	void (*iterator2)(AActor *, FChangePosition *) = NULL;
 	msecnode_t *n;
 
-	nofit = false;
-	crushchange = crunch;
-	moveamt = abs (amt);
-	movesec = sector;
+	cpos.nofit = false;
+	cpos.crushchange = crunch;
+	cpos.moveamt = abs (amt);
+	cpos.movemidtex = false;
 
 	// [RH] Use different functions for the four different types of sector
 	// movement. Also update the soundorg's z-coordinate for 3D sound.
-	if (floorOrCeil == 0)
-	{ // floor
+	switch (floorOrCeil)
+	{
+	case 0:
+		// floor
 		iterator = (amt < 0) ? PIT_FloorDrop : PIT_FloorRaise;
 		sector->soundorg[2] = sector->floorplane.ZatPoint (sector->soundorg[0], sector->soundorg[1]);
-	}
-	else
-	{ // ceiling
+		break;
+
+	case 1:
+		// ceiling
 		iterator = (amt < 0) ? PIT_CeilingLower : PIT_CeilingRaise;
 		sector->soundorg[2] = sector->ceilingplane.ZatPoint (sector->soundorg[0], sector->soundorg[1]);
+		break;
+
+	case 2:
+		// 3dmidtex
+		// This must check both floor and ceiling 
+		iterator = (amt < 0) ? PIT_FloorDrop : PIT_FloorRaise;
+		iterator2 = (amt < 0) ? PIT_CeilingLower : PIT_CeilingRaise;
+		cpos.movemidtex = true;
+		break;
+
+	default:
+		// invalid
+		assert(floorOrCeil > 0 && floorOrCeil < 2);
+		return false;
 	}
 
 	// killough 4/4/98: scan list front-to-back until empty or exhausted,
@@ -4407,13 +4469,16 @@ bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil)
 			{
 				n->visited = true; 							// mark thing as processed
 				if (!(n->m_thing->flags & MF_NOBLOCKMAP))	//jff 4/7/98 don't do these
-					iterator (n->m_thing);		 			// process it
+				{
+					iterator (n->m_thing, &cpos);		 			// process it
+					if (iterator2 != NULL) iterator2 (n->m_thing, &cpos);
+				}
 				break;										// exit and start over
 			}
 		}
 	} while (n);	// repeat from scratch until all things left are marked valid
 
-	return nofit;
+	return cpos.nofit;
 }
 
 //=============================================================================

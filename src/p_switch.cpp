@@ -37,6 +37,7 @@
 #include "doomdef.h"
 #include "p_local.h"
 #include "p_lnspec.h"
+#include "p_3dmidtex.h"
 #include "m_random.h"
 #include "g_game.h"
 #include "s_sound.h"
@@ -489,29 +490,87 @@ static int TryFindSwitch (SWORD texture)
 }
 
 //
+// Checks whether a switch is reachable
+// This is optional because old maps can rely on being able to 
+// use non-reachable switches.
+//
+bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
+{
+	fixed_t checktop;
+	fixed_t checkbot;
+	side_t *side = &sides[line->sidenum[sideno]];
+	sector_t *front = sides[line->sidenum[sideno]].sector;
+	sector_t *back = sides[line->sidenum[1-sideno]].sector;
+	FLineOpening open;
+
+	// 3DMIDTEX forces CHECKSWITCHRANGE because otherwise it might cause problems.
+	if (!(line->flags & (ML_3DMIDTEX|ML_CHECKSWITCHRANGE))) return true;
+
+	// calculate the point where the user would touch the wall.
+	divline_t dll, dlu;
+	fixed_t inter, checkx, checky;
+
+	P_MakeDivline (line, &dll);
+
+	dlu.x = user->x;
+	dlu.y = user->y;
+	dlu.dx = finecosine[user->angle >> ANGLETOFINESHIFT];
+	dlu.dy = finesine[user->angle >> ANGLETOFINESHIFT];
+	inter = P_InterceptVector(&dll, &dlu);
+
+	checkx = dll.x + FixedMul(dll.dx, inter);
+	checky = dll.y + FixedMul(dll.dy, inter);
+
+	// Now get the information from the line.
+	P_LineOpening(open, NULL, line, checkx, checky, user->x, user->y);
+	if (open.range <= 0) return true;
+
+	if ((TryFindSwitch (side->toptexture)) != -1)
+	{
+		return (user->z + user->height >= open.top);
+	}
+	else if ((TryFindSwitch (side->bottomtexture)) != -1)
+	{
+		return (user->z <= open.bottom);
+	}
+	else if ((line->flags & (ML_3DMIDTEX)) || (TryFindSwitch (side->midtexture)) != -1)
+	{
+		// 3DMIDTEX lines will force a mid texture check if no switch is found on this line
+		// to keep compatibility with Eternity's implementation.
+		if (!P_GetMidTexturePosition(line, sideno, &checktop, &checkbot)) return false;
+		return user->z < checktop || user->z + user->height > checkbot;
+	}
+	else
+	{
+		// no switch found. Check whether the player can touch either top or bottom texture
+		return (user->z + user->height >= open.top) || (user->z <= open.bottom);
+	}
+}
+
+//
 // Function that changes wall texture.
 // Tell it if switch is ok to use again (1=yes, it's a button).
 //
 bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest)
 {
-	DActiveButton::EWhere where;
+	DActiveButton::EWhere Where;
 	int *texture;
 	int i, sound;
 
 	if ((i = TryFindSwitch (side->toptexture)) != -1)
 	{
 		texture = &side->toptexture;
-		where = DActiveButton::BUTTON_Top;
+		Where = DActiveButton::BUTTON_Top;
 	}
 	else if ((i = TryFindSwitch (side->bottomtexture)) != -1)
 	{
 		texture = &side->bottomtexture;
-		where = DActiveButton::BUTTON_Bottom;
+		Where = DActiveButton::BUTTON_Bottom;
 	}
 	else if ((i = TryFindSwitch (side->midtexture)) != -1)
 	{
 		texture = &side->midtexture;
-		where = DActiveButton::BUTTON_Middle;
+		Where = DActiveButton::BUTTON_Middle;
 	}
 	else
 	{
@@ -549,7 +608,7 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *ques
 	pt[1] = line->v1->y + (line->dy >> 1);
 	*texture = SwitchList[i]->u.Textures[SwitchList[i]->NumFrames*2];
 	if (useAgain || SwitchList[i]->NumFrames > 1)
-		playsound = P_StartButton (side, where, i, pt[0], pt[1], !!useAgain);
+		playsound = P_StartButton (side, Where, i, pt[0], pt[1], !!useAgain);
 	else 
 		playsound = true;
 	if (playsound) S_SoundID (pt, CHAN_VOICE|CHAN_LISTENERZ|CHAN_IMMOBILE, sound, 1, ATTN_STATIC);

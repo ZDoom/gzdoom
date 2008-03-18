@@ -184,10 +184,22 @@ struct secplane_t
 		d = d - FixedMul (hdiff, c);
 	}
 
+	// Moves a plane up/down by hdiff units
+	fixed_t GetChangedHeight (fixed_t hdiff)
+	{
+		return d - FixedMul (hdiff, c);
+	}
+
 	// Returns how much this plane's height would change if d were set to oldd
 	fixed_t HeightDiff (fixed_t oldd) const
 	{
 		return FixedMul (oldd - d, ic);
+	}
+
+	// Returns how much this plane's height would change if d were set to oldd
+	fixed_t HeightDiff (fixed_t oldd, fixed_t newd) const
+	{
+		return FixedMul (oldd - newd, ic);
 	}
 
 	fixed_t PointToDist (fixed_t x, fixed_t y, fixed_t z) const
@@ -252,6 +264,27 @@ struct FExtraLight
 
 	void InsertLight (const secplane_t &plane, line_s *line, int type);
 };
+
+// this substructure contains a few sector properties that are stored in dynamic arrays
+// These must not be copied by R_FakeFlat etc. or bad things will happen.
+struct line_s;
+struct sector_t;
+
+struct extsector_t
+{
+	struct midtex
+	{
+		struct plane
+		{
+			TArray<sector_t *> AttachedSectors;		// all sectors containing 3dMidtex lines attached to this sector
+			TArray<line_s *> AttachedLines;			// all 3dMidtex lines attached to this sector
+		} Floor, Ceiling;
+	} Midtex;
+	
+	
+	void Serialize(FArchive &arc);
+};
+
 
 struct sector_t
 {
@@ -371,6 +404,8 @@ struct sector_t
 
 	vertex_t *Triangle[3];	// Three points that can define a plane
 	short						oldspecial;			//jff 2/16/98 remembers if sector WAS secret (automap)
+
+	extsector_t	*				e;		// This stores data that requires construction/destruction. Such data must not be copied by R_FakeFlat.
 };
 
 struct ReverbContainer;

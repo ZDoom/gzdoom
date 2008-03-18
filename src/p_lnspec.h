@@ -98,6 +98,7 @@ typedef enum {
 
 	Floor_CrushStop = 46,
 	Ceiling_MoveToValue = 47,
+	Sector_Attach3dMidtex = 48,
 
 	GlassBreak = 49,
 	ExtraFloor_LightOnly = 50,

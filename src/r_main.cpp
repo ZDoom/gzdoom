@@ -47,6 +47,7 @@
 #include "vectors.h"
 #include "a_sharedglobal.h"
 #include "r_translate.h"
+#include "p_3dmidtex.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2008,6 +2009,9 @@ void setinterpolation(EInterpType type, void *posptr)
 	interp->Next = *interp_p;
 	*interp_p = interp;
 	interp->CopyInterpToOld ();
+
+	if (type == INTERP_SectorFloor) P_Start3dMidtexInterpolations((sector_t*)posptr, false);
+	else if (type == INTERP_SectorCeiling) P_Start3dMidtexInterpolations((sector_t*)posptr, true);
 }
 
 void stopinterpolation(EInterpType type, void *posptr)
@@ -2016,6 +2020,9 @@ void stopinterpolation(EInterpType type, void *posptr)
 	FActiveInterpolation *interp = FActiveInterpolation::FindInterpolation (type, posptr, interp_p);
 	if (interp != NULL)
 	{
+		if (type == INTERP_SectorFloor) P_Start3dMidtexInterpolations((sector_t*)posptr, false);
+		else if (type == INTERP_SectorCeiling) P_Start3dMidtexInterpolations((sector_t*)posptr, true);
+
 		*interp_p = interp->Next;
 		delete interp;
 	}

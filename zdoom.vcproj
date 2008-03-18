@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="zdoom"
 	ProjectGUID="{8049475B-5C87-46F9-9358-635218A4EF18}"
 	RootNamespace=" zdoom"
@@ -136,6 +136,112 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory=".\Debug"
+			IntermediateDirectory=".\Debug"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+				Description="Checking svnrevision.h..."
+				CommandLine="$(OutDir)\updaterevision.exe src src/svnrevision.h"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Debug/zdoom.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;snes_spc\snes_spc"
+				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,USEASM,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH"
+				MinimalRebuild="true"
+				RuntimeLibrary="1"
+				EnableFunctionLevelLinking="true"
+				ForceConformanceInForLoopScope="true"
+				PrecompiledHeaderFile=""
+				AssemblerOutput="4"
+				AssemblerListingLocation=".\Debug/"
+				ObjectFile=".\Debug/"
+				ProgramDataBaseFileName=".\Debug/"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
+				CompileAs="0"
+				DisableSpecificWarnings="4996"
+				ForcedIncludeFiles=""
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib fmodex_vc.lib setupapi.lib ws2_32.lib"
+				OutputFile="../zdoomd.exe"
+				LinkIncremental="2"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories=""
+				IgnoreDefaultLibraryNames="libcmt;msvcrtd;msvcrt"
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile=".\Debug/zdoomd.pdb"
+				SubSystem="2"
+				StackReserveSize="0"
+				TerminalServerAware="2"
+				SetChecksum="false"
+				TargetMachine="0"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
 			Name="Release|x64"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -223,112 +329,6 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
-			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-				Description="Checking svnrevision.h..."
-				CommandLine="$(OutDir)\updaterevision.exe src src/svnrevision.h"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/zdoom.tlb"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;snes_spc\snes_spc"
-				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,USEASM,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH"
-				MinimalRebuild="true"
-				RuntimeLibrary="1"
-				EnableFunctionLevelLinking="true"
-				ForceConformanceInForLoopScope="true"
-				PrecompiledHeaderFile=""
-				AssemblerOutput="4"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
-				CompileAs="0"
-				DisableSpecificWarnings="4996"
-				ForcedIncludeFiles=""
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="gdi32.lib user32.lib comctl32.lib shell32.lib advapi32.lib comdlg32.lib ole32.lib dxguid.lib dsound.lib dinput8.lib strmiids.lib wsock32.lib winmm.lib fmodex_vc.lib setupapi.lib ws2_32.lib"
-				OutputFile="../zdoomd.exe"
-				LinkIncremental="2"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
-				IgnoreDefaultLibraryNames="libcmt;msvcrtd;msvcrt"
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/zdoomd.pdb"
-				SubSystem="2"
-				StackReserveSize="0"
-				TerminalServerAware="2"
-				SetChecksum="false"
-				TargetMachine="0"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -471,21 +471,7 @@
 				RelativePath=".\src\am_map.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -503,26 +489,10 @@
 				RelativePath=".\src\autostart.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -530,7 +500,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -538,27 +507,10 @@
 				RelativePath=".\src\autozend.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -566,7 +518,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -574,27 +525,10 @@
 				RelativePath=".\src\b_bot.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -602,7 +536,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -610,27 +543,10 @@
 				RelativePath=".\src\B_func.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -638,7 +554,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -646,27 +561,10 @@
 				RelativePath=".\src\B_game.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -674,7 +572,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -682,27 +579,10 @@
 				RelativePath=".\src\b_move.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -710,7 +590,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -718,27 +597,10 @@
 				RelativePath=".\src\B_think.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -746,7 +608,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -754,27 +615,10 @@
 				RelativePath=".\src\bbannouncer.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -782,7 +626,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -790,27 +633,10 @@
 				RelativePath=".\src\c_bind.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -818,7 +644,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -826,27 +651,10 @@
 				RelativePath=".\src\c_cmds.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -854,7 +662,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -862,27 +669,10 @@
 				RelativePath=".\src\c_console.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -890,7 +680,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -898,27 +687,10 @@
 				RelativePath=".\src\c_cvars.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -926,7 +698,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -934,27 +705,10 @@
 				RelativePath=".\src\c_dispatch.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -962,7 +716,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -970,27 +723,10 @@
 				RelativePath=".\src\c_expr.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -998,7 +734,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1006,27 +741,10 @@
 				RelativePath=".\src\cmdlib.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1034,7 +752,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1042,27 +759,10 @@
 				RelativePath=".\src\colormatcher.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1070,7 +770,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1078,27 +777,10 @@
 				RelativePath=".\src\configfile.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1106,7 +788,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1114,27 +795,10 @@
 				RelativePath=".\src\ct_chat.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1142,7 +806,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1150,27 +813,10 @@
 				RelativePath=".\src\d_dehacked.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1178,7 +824,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1186,27 +831,10 @@
 				RelativePath=".\src\D_main.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1214,7 +842,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1222,27 +849,10 @@
 				RelativePath=".\src\d_net.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1250,7 +860,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1258,27 +867,10 @@
 				RelativePath=".\src\d_netinfo.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1286,7 +878,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1294,27 +885,10 @@
 				RelativePath=".\src\d_protocol.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1322,7 +896,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1330,27 +903,10 @@
 				RelativePath=".\src\decallib.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1358,7 +914,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1366,27 +921,10 @@
 				RelativePath=".\src\dobject.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1394,7 +932,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1410,27 +947,10 @@
 				RelativePath=".\src\doomdef.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1438,7 +958,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1446,27 +965,10 @@
 				RelativePath=".\src\doomstat.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1474,7 +976,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1482,27 +983,10 @@
 				RelativePath=".\src\dsectoreffect.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1510,7 +994,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1518,27 +1001,10 @@
 				RelativePath=".\src\dthinker.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1546,7 +1012,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1554,27 +1019,10 @@
 				RelativePath=".\src\f_finale.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1582,7 +1030,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1590,27 +1037,10 @@
 				RelativePath=".\src\f_wipe.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1618,7 +1048,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1626,27 +1055,10 @@
 				RelativePath=".\src\farchive.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1654,7 +1066,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1666,27 +1077,10 @@
 				RelativePath=".\src\g_game.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1694,7 +1088,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1706,27 +1099,10 @@
 				RelativePath=".\src\g_level.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1734,7 +1110,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1742,27 +1117,10 @@
 				RelativePath=".\src\gameconfigfile.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1770,7 +1128,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1778,27 +1135,10 @@
 				RelativePath=".\src\gi.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1806,7 +1146,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1814,27 +1153,10 @@
 				RelativePath=".\src\hu_scores.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1842,7 +1164,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1854,27 +1175,10 @@
 				RelativePath=".\src\info.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1882,7 +1186,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1890,27 +1193,10 @@
 				RelativePath=".\src\infodefaults.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1918,7 +1204,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1926,27 +1211,10 @@
 				RelativePath=".\src\lumpconfigfile.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1954,7 +1222,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1962,27 +1229,10 @@
 				RelativePath=".\src\m_alloc.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1990,7 +1240,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -1998,27 +1247,10 @@
 				RelativePath=".\src\m_argv.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2026,7 +1258,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2034,27 +1265,10 @@
 				RelativePath=".\src\m_bbox.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2062,7 +1276,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2070,27 +1283,10 @@
 				RelativePath=".\src\m_cheat.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2098,7 +1294,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2106,27 +1301,10 @@
 				RelativePath=".\src\m_menu.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2134,7 +1312,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2142,27 +1319,10 @@
 				RelativePath=".\src\m_misc.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2170,7 +1330,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2178,27 +1337,10 @@
 				RelativePath=".\src\m_options.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2206,7 +1348,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2214,27 +1355,10 @@
 				RelativePath=".\src\m_png.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2242,7 +1366,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2250,27 +1373,10 @@
 				RelativePath=".\src\m_random.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2278,7 +1384,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2286,27 +1391,10 @@
 				RelativePath=".\src\mus2midi.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2314,7 +1402,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2367,30 +1454,17 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\p_3dmidtex.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\p_acs.cpp"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2398,7 +1472,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2406,27 +1479,10 @@
 				RelativePath=".\src\p_buildmap.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2434,7 +1490,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2442,27 +1497,10 @@
 				RelativePath=".\src\p_ceiling.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2470,7 +1508,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2482,27 +1519,10 @@
 				RelativePath=".\src\p_doors.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2510,7 +1530,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2518,27 +1537,10 @@
 				RelativePath=".\src\p_effect.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2546,7 +1548,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2554,27 +1555,10 @@
 				RelativePath=".\src\p_enemy.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2582,7 +1566,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2594,27 +1577,10 @@
 				RelativePath=".\src\p_floor.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2622,7 +1588,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2630,27 +1595,10 @@
 				RelativePath=".\src\p_interaction.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2658,7 +1606,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2666,27 +1613,10 @@
 				RelativePath=".\src\p_lights.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2694,7 +1624,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2702,11 +1631,11 @@
 				RelativePath=".\src\p_lnspec.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
+						GeneratePreprocessedFile="0"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2714,16 +1643,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-						GeneratePreprocessedFile="0"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2731,7 +1650,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 						GeneratePreprocessedFile="0"
 					/>
 				</FileConfiguration>
@@ -2740,27 +1658,10 @@
 				RelativePath=".\src\p_map.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2768,7 +1669,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2776,27 +1676,10 @@
 				RelativePath=".\src\p_maputl.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2804,7 +1687,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2816,16 +1698,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-						AssemblerOutput="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 						AssemblerOutput="0"
 					/>
 				</FileConfiguration>
@@ -2834,7 +1706,14 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
+						AssemblerOutput="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 						AssemblerOutput="0"
 					/>
 				</FileConfiguration>
@@ -2843,7 +1722,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 						AssemblerOutput="0"
 					/>
 				</FileConfiguration>
@@ -2852,27 +1730,10 @@
 				RelativePath=".\src\p_pillar.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2880,7 +1741,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2888,27 +1748,10 @@
 				RelativePath=".\src\p_plats.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2916,7 +1759,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2924,27 +1766,10 @@
 				RelativePath=".\src\p_pspr.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2952,7 +1777,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2960,27 +1784,10 @@
 				RelativePath=".\src\p_saveg.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -2988,7 +1795,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -2996,27 +1802,10 @@
 				RelativePath=".\src\p_sectors.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3024,7 +1813,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3032,27 +1820,10 @@
 				RelativePath=".\src\p_setup.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3060,7 +1831,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3068,27 +1838,10 @@
 				RelativePath=".\src\p_sight.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3096,7 +1849,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3104,27 +1856,10 @@
 				RelativePath=".\src\p_spec.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3132,7 +1867,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3140,27 +1874,10 @@
 				RelativePath=".\src\p_switch.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3168,7 +1885,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3176,27 +1892,10 @@
 				RelativePath=".\src\p_teleport.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3204,7 +1903,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3212,27 +1910,10 @@
 				RelativePath=".\src\p_terrain.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3240,7 +1921,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3248,27 +1928,10 @@
 				RelativePath=".\src\p_things.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3276,7 +1939,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3284,27 +1946,10 @@
 				RelativePath=".\src\p_tick.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3312,7 +1957,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3320,27 +1964,10 @@
 				RelativePath=".\src\p_trace.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3348,7 +1975,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3356,27 +1982,10 @@
 				RelativePath=".\src\p_user.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3384,7 +1993,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3392,27 +2000,10 @@
 				RelativePath=".\src\p_writemap.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3420,7 +2011,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3428,27 +2018,10 @@
 				RelativePath=".\src\p_xlat.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3456,7 +2029,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3464,27 +2036,10 @@
 				RelativePath=".\src\po_man.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3492,7 +2047,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3500,27 +2054,10 @@
 				RelativePath=".\src\s_advsound.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3528,7 +2065,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3540,27 +2076,10 @@
 				RelativePath=".\src\s_playlist.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3568,7 +2087,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3576,27 +2094,10 @@
 				RelativePath=".\src\s_sndseq.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3604,7 +2105,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3612,27 +2112,10 @@
 				RelativePath=".\src\s_sound.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3640,7 +2123,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3648,27 +2130,10 @@
 				RelativePath=".\src\sc_man.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3676,7 +2141,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3698,22 +2162,22 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Creating $(InputName).h from src/$(InputFileName)"
-						CommandLine="tools\re2c\re2c -s -o &quot;src/$(InputName).h&quot; &quot;src/$(InputFileName)&quot;&#x0D;&#x0A;"
-						Outputs="&quot;src/$(InputName).h&quot;"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Creating $(InputName).h from src/$(InputFileName)"
 						CommandLine="tools\re2c\re2c --no-generation-date -s -o &quot;src/$(InputName).h&quot; &quot;src/$(InputFileName)&quot;&#x0D;&#x0A;"
+						Outputs="&quot;src/$(InputName).h&quot;"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Creating $(InputName).h from src/$(InputFileName)"
+						CommandLine="tools\re2c\re2c -s -o &quot;src/$(InputName).h&quot; &quot;src/$(InputFileName)&quot;&#x0D;&#x0A;"
 						Outputs="&quot;src/$(InputName).h&quot;"
 					/>
 				</FileConfiguration>
@@ -3732,27 +2196,10 @@
 				RelativePath=".\src\skins.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3760,7 +2207,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3768,27 +2214,10 @@
 				RelativePath=".\src\st_stuff.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3796,7 +2225,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3804,27 +2232,10 @@
 				RelativePath=".\src\stats.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3832,7 +2243,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3840,27 +2250,10 @@
 				RelativePath=".\src\stringtable.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3868,7 +2261,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3876,27 +2268,10 @@
 				RelativePath=".\src\tables.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3904,7 +2279,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3916,27 +2290,10 @@
 				RelativePath=".\src\tempfiles.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3944,7 +2301,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3952,27 +2308,10 @@
 				RelativePath=".\src\v_collection.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -3980,7 +2319,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -3988,27 +2326,10 @@
 				RelativePath=".\src\v_draw.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4016,7 +2337,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -4024,27 +2344,10 @@
 				RelativePath=".\src\v_font.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4052,7 +2355,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -4060,27 +2362,10 @@
 				RelativePath=".\src\v_palette.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4088,7 +2373,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -4096,27 +2380,10 @@
 				RelativePath=".\src\v_pfx.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4124,7 +2391,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -4132,27 +2398,10 @@
 				RelativePath=".\src\v_text.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4160,7 +2409,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -4168,27 +2416,10 @@
 				RelativePath=".\src\v_video.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4196,7 +2427,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -4204,27 +2434,10 @@
 				RelativePath=".\src\w_wad.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4232,7 +2445,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -4240,27 +2452,10 @@
 				RelativePath=".\src\wi_stuff.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4268,7 +2463,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -4606,6 +2800,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\p_3dmidtex.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\p_acs.h"
 				>
 			</File>
@@ -4784,16 +2982,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Assembling $(InputPath)..."
-						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
-						Outputs="$(IntDir)/$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
@@ -4801,6 +2989,16 @@
 						Description="Assembling $(InputPath)..."
 						CommandLine="nasm -g -o &quot;$(IntDir)\$(InputName).obj&quot; -f win32 &quot;$(InputPath)&quot;&#x0D;&#x0A;$(OutDir)\fixrtext &quot;$(IntDir)\$(InputName).obj&quot;&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
+						Outputs="$(IntDir)/$(InputName).obj"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4828,16 +3026,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Assembling $(InputPath)..."
-						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
-						Outputs="$(IntDir)/$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
@@ -4845,6 +3033,16 @@
 						Description="Assembling $(InputPath)..."
 						CommandLine="nasm -g -o &quot;$(IntDir)\$(InputName).obj&quot; -f win32 &quot;$(InputPath)&quot;&#x0D;&#x0A;$(OutDir)\fixrtext &quot;$(IntDir)\$(InputName).obj&quot;&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
+						Outputs="$(IntDir)/$(InputName).obj"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -4872,22 +3070,22 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Assembling $(InputPath)..."
-						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
-						Outputs="$(IntDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Assembling $(InputPath)..."
 						CommandLine="nasm -g -o &quot;$(IntDir)\$(InputName).obj&quot; -f win32 &quot;$(InputPath)&quot;&#x0D;&#x0A;$(OutDir)\fixrtext &quot;$(IntDir)\$(InputName).obj&quot;&#x0D;&#x0A;"
+						Outputs="$(IntDir)\$(InputName).obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
@@ -4916,22 +3114,22 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Assembling $(InputPath)..."
-						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
-						Outputs="$(IntDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Assembling $(InputPath)..."
 						CommandLine="nasm -g -o &quot;$(IntDir)\$(InputName).obj&quot; -f win32 &quot;$(InputPath)&quot;&#x0D;&#x0A;$(OutDir)\fixrtext &quot;$(IntDir)\$(InputName).obj&quot;&#x0D;&#x0A;"
+						Outputs="$(IntDir)\$(InputName).obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
@@ -4960,22 +3158,22 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Assembling $(InputPath)..."
-						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
-						Outputs="$(IntDir)\$(InputName).obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Assembling $(InputPath)..."
 						CommandLine="nasm -g -o &quot;$(IntDir)\$(InputName).obj&quot; -f win32 &quot;$(InputPath)&quot;&#x0D;&#x0A;$(OutDir)\fixrtext &quot;$(IntDir)\$(InputName).obj&quot;&#x0D;&#x0A;"
+						Outputs="$(IntDir)\$(InputName).obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
@@ -5058,27 +3256,10 @@
 				RelativePath=".\src\win32\hardware.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5086,7 +3267,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5098,27 +3278,10 @@
 				RelativePath=".\src\win32\helperthread.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5126,7 +3289,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5138,27 +3300,10 @@
 				RelativePath=".\src\win32\i_cd.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5166,7 +3311,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5178,27 +3322,10 @@
 				RelativePath=".\src\win32\i_input.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5206,7 +3333,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5218,27 +3344,10 @@
 				RelativePath=".\src\win32\i_main.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5246,7 +3355,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5254,27 +3362,10 @@
 				RelativePath=".\src\win32\i_movie.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5282,7 +3373,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5290,27 +3380,10 @@
 				RelativePath=".\src\win32\I_system.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5318,7 +3391,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5350,27 +3422,10 @@
 				RelativePath=".\src\win32\win32video.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5378,7 +3433,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5396,14 +3450,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
@@ -5411,6 +3457,14 @@
 						Description="Assembling $(InputPath)..."
 						CommandLine="nasm -g -o &quot;$(IntDir)\$(InputName).obj&quot; -d OBJ_FORMAT_win32 -f win32 &quot;$(InputPath)&quot;&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5430,27 +3484,10 @@
 				RelativePath=".\src\g_shared\a_action.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5458,7 +3495,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5474,27 +3510,10 @@
 				RelativePath=".\src\g_shared\a_artifacts.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5502,7 +3521,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5514,27 +3532,10 @@
 				RelativePath=".\src\g_shared\a_bridge.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5542,7 +3543,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5550,27 +3550,10 @@
 				RelativePath=".\src\g_shared\a_camera.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5578,7 +3561,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5586,27 +3568,10 @@
 				RelativePath=".\src\g_shared\a_debris.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5614,7 +3579,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5626,7 +3590,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 						GeneratePreprocessedFile="0"
 					/>
 				</FileConfiguration>
@@ -5635,16 +3598,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 						GeneratePreprocessedFile="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5652,7 +3606,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5660,27 +3613,10 @@
 				RelativePath=".\src\g_shared\a_flashfader.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5688,7 +3624,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5696,27 +3631,10 @@
 				RelativePath=".\src\g_shared\a_fountain.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5724,7 +3642,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5744,27 +3661,10 @@
 				RelativePath=".\src\g_shared\a_lightning.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5772,7 +3672,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5792,27 +3691,10 @@
 				RelativePath=".\src\g_shared\a_movingcamera.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5820,7 +3702,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5828,27 +3709,10 @@
 				RelativePath=".\src\g_shared\a_pickups.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5856,7 +3720,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5872,27 +3735,10 @@
 				RelativePath=".\src\g_shared\a_quake.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5900,7 +3746,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5908,27 +3753,10 @@
 				RelativePath=".\src\g_shared\a_secrettrigger.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5936,7 +3764,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5944,27 +3771,10 @@
 				RelativePath=".\src\g_shared\a_sectoraction.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -5972,7 +3782,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -5988,27 +3797,10 @@
 				RelativePath=".\src\g_shared\a_skies.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6016,7 +3808,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6032,27 +3823,10 @@
 				RelativePath=".\src\g_shared\a_spark.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6060,7 +3834,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6068,27 +3841,10 @@
 				RelativePath=".\src\g_shared\a_waterzone.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6096,7 +3852,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6112,27 +3867,10 @@
 				RelativePath=".\src\g_shared\a_weapons.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6140,7 +3878,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6148,27 +3885,10 @@
 				RelativePath=".\src\g_shared\hudmessages.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6176,7 +3896,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6200,27 +3919,10 @@
 				RelativePath=".\src\g_shared\shared_sbar.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6228,7 +3930,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6240,27 +3941,10 @@
 				RelativePath=".\src\g_doom\a_arachnotron.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6268,7 +3952,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6276,27 +3959,10 @@
 				RelativePath=".\src\g_doom\a_archvile.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6304,7 +3970,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6312,27 +3977,10 @@
 				RelativePath=".\src\g_doom\a_bossbrain.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6340,7 +3988,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6348,27 +3995,10 @@
 				RelativePath=".\src\g_doom\a_bruiser.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6376,7 +4006,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6384,27 +4013,10 @@
 				RelativePath=".\src\g_doom\a_cacodemon.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6412,7 +4024,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6420,27 +4031,10 @@
 				RelativePath=".\src\g_doom\a_cyberdemon.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6448,7 +4042,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6456,27 +4049,10 @@
 				RelativePath=".\src\g_doom\a_demon.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6484,7 +4060,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6496,27 +4071,10 @@
 				RelativePath=".\src\g_doom\a_doomimp.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6524,7 +4082,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6532,27 +4089,10 @@
 				RelativePath=".\src\g_doom\a_doommisc.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6560,7 +4100,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6568,27 +4107,10 @@
 				RelativePath=".\src\g_doom\a_doomweaps.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6596,7 +4118,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6604,27 +4125,10 @@
 				RelativePath=".\src\g_doom\a_fatso.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6632,7 +4136,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6640,27 +4143,10 @@
 				RelativePath=".\src\g_doom\a_keen.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6668,7 +4154,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6676,27 +4161,10 @@
 				RelativePath=".\src\g_doom\a_lostsoul.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6704,7 +4172,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6712,27 +4179,10 @@
 				RelativePath=".\src\g_doom\a_painelemental.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6740,7 +4190,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6748,27 +4197,10 @@
 				RelativePath=".\src\g_doom\a_possessed.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6776,7 +4208,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6784,27 +4215,10 @@
 				RelativePath=".\src\g_doom\a_revenant.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6812,7 +4226,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6820,27 +4233,10 @@
 				RelativePath=".\src\g_doom\a_scriptedmarine.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6848,7 +4244,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6856,27 +4251,10 @@
 				RelativePath=".\src\g_doom\a_spidermaster.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6884,7 +4262,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6892,27 +4269,10 @@
 				RelativePath=".\src\g_doom\doom_sbar.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6920,7 +4280,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6932,27 +4291,10 @@
 				RelativePath=".\src\g_raven\a_artitele.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6960,7 +4302,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -6968,27 +4309,10 @@
 				RelativePath=".\src\g_raven\a_minotaur.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -6996,7 +4320,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7012,27 +4335,10 @@
 				RelativePath=".\src\g_heretic\a_chicken.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7040,7 +4346,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7048,27 +4353,10 @@
 				RelativePath=".\src\g_heretic\a_dsparil.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7076,7 +4364,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7084,27 +4371,10 @@
 				RelativePath=".\src\g_heretic\a_hereticartifacts.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7112,7 +4382,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7124,27 +4393,10 @@
 				RelativePath=".\src\g_heretic\a_hereticimp.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7152,7 +4404,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7160,27 +4411,10 @@
 				RelativePath=".\src\g_heretic\a_hereticmisc.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7188,7 +4422,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7196,27 +4429,10 @@
 				RelativePath=".\src\g_heretic\a_hereticweaps.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7224,7 +4440,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7232,27 +4447,10 @@
 				RelativePath=".\src\g_heretic\a_ironlich.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7260,7 +4458,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7268,27 +4465,10 @@
 				RelativePath=".\src\g_heretic\a_knight.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7296,7 +4476,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7304,27 +4483,10 @@
 				RelativePath=".\src\g_heretic\a_wizard.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7332,7 +4494,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7340,27 +4501,10 @@
 				RelativePath=".\src\g_heretic\heretic_sbar.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7368,7 +4512,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7380,27 +4523,10 @@
 				RelativePath=".\src\g_hexen\a_bats.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7408,7 +4534,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7416,27 +4541,10 @@
 				RelativePath=".\src\g_hexen\a_bishop.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7444,7 +4552,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7452,27 +4559,10 @@
 				RelativePath=".\src\g_hexen\a_blastradius.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7480,7 +4570,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7488,27 +4577,10 @@
 				RelativePath=".\src\g_hexen\a_boostarmor.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7516,7 +4588,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7524,27 +4595,10 @@
 				RelativePath=".\src\g_hexen\a_centaur.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7552,7 +4606,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7560,27 +4613,10 @@
 				RelativePath=".\src\g_hexen\a_clericboss.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7588,7 +4624,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7596,27 +4631,10 @@
 				RelativePath=".\src\g_hexen\a_clericflame.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7624,7 +4642,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7632,27 +4649,10 @@
 				RelativePath=".\src\g_hexen\a_clericholy.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7660,7 +4660,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7668,27 +4667,10 @@
 				RelativePath=".\src\g_hexen\a_clericmace.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7696,7 +4678,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7704,27 +4685,10 @@
 				RelativePath=".\src\g_hexen\a_clericstaff.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7732,7 +4696,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7740,27 +4703,10 @@
 				RelativePath=".\src\g_hexen\a_dragon.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7768,7 +4714,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7776,27 +4721,10 @@
 				RelativePath=".\src\g_hexen\a_fighteraxe.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7804,7 +4732,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7812,27 +4739,10 @@
 				RelativePath=".\src\g_hexen\a_fighterboss.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7840,7 +4750,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7848,27 +4757,10 @@
 				RelativePath=".\src\g_hexen\a_fighterhammer.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7876,7 +4768,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7892,27 +4783,10 @@
 				RelativePath=".\src\g_hexen\a_firedemon.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7920,7 +4794,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7928,27 +4801,10 @@
 				RelativePath=".\src\g_hexen\a_flechette.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7956,7 +4812,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -7964,27 +4819,10 @@
 				RelativePath=".\src\g_hexen\a_fog.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -7992,7 +4830,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8004,27 +4841,10 @@
 				RelativePath=".\src\g_hexen\a_heresiarch.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8032,7 +4852,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8044,27 +4863,10 @@
 				RelativePath=".\src\g_hexen\a_hexenspecialdecs.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8072,7 +4874,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8080,27 +4881,10 @@
 				RelativePath=".\src\g_hexen\a_iceguy.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8108,7 +4892,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8116,27 +4899,10 @@
 				RelativePath=".\src\g_hexen\a_korax.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8144,7 +4910,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8152,27 +4917,10 @@
 				RelativePath=".\src\g_hexen\a_mageboss.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8180,7 +4928,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8188,27 +4935,10 @@
 				RelativePath=".\src\g_hexen\a_magecone.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8216,7 +4946,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8224,27 +4953,10 @@
 				RelativePath=".\src\g_hexen\a_magelightning.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8252,7 +4964,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8260,27 +4971,10 @@
 				RelativePath=".\src\g_hexen\a_magestaff.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8288,7 +4982,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8296,27 +4989,10 @@
 				RelativePath=".\src\g_hexen\a_magewand.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8324,7 +5000,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8336,27 +5011,10 @@
 				RelativePath=".\src\g_hexen\a_serpent.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8364,7 +5022,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8372,27 +5029,10 @@
 				RelativePath=".\src\g_hexen\a_spike.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8400,7 +5040,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8408,27 +5047,10 @@
 				RelativePath=".\src\g_hexen\a_summon.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8436,7 +5058,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8444,27 +5065,10 @@
 				RelativePath=".\src\g_hexen\a_teleportother.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8472,7 +5076,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8484,27 +5087,10 @@
 				RelativePath=".\src\g_hexen\a_wraith.cpp"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -8512,7 +5098,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-
 					/>
 				</FileConfiguration>
 			</File>
@@ -8643,27 +5228,10 @@
 					RelativePath=".\src\r_bsp.cpp"
 					>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -8671,7 +5239,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 				</File>
@@ -8679,27 +5246,10 @@
 					RelativePath=".\src\r_data.cpp"
 					>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -8707,7 +5257,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 				</File>
@@ -8715,27 +5264,10 @@
 					RelativePath=".\src\r_draw.cpp"
 					>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -8743,7 +5275,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 				</File>
@@ -8751,27 +5282,10 @@
 					RelativePath=".\src\r_drawt.cpp"
 					>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -8779,7 +5293,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 				</File>
@@ -8787,27 +5300,10 @@
 					RelativePath=".\src\r_main.cpp"
 					>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -8815,7 +5311,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 				</File>
@@ -8823,27 +5318,10 @@
 					RelativePath=".\src\r_plane.cpp"
 					>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -8851,7 +5329,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 				</File>
@@ -8863,27 +5340,10 @@
 					RelativePath=".\src\r_segs.cpp"
 					>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -8891,7 +5351,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 				</File>
@@ -8899,27 +5358,10 @@
 					RelativePath=".\src\r_sky.cpp"
 					>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -8927,7 +5369,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 				</File>
@@ -8935,27 +5376,10 @@
 					RelativePath=".\src\r_things.cpp"
 					>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -8963,7 +5387,6 @@
 						>
 						<Tool
 							Name="VCCLCompilerTool"
-	
 						/>
 					</FileConfiguration>
 				</File>
@@ -9173,19 +5596,19 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="src\win32;$(NoInherit)"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCResourceCompilerTool"
 						PreprocessorDefinitions="_DEBUG;NO_MANIFEST"
+						AdditionalIncludeDirectories="src\win32;$(NoInherit)"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
 						AdditionalIncludeDirectories="src\win32;$(NoInherit)"
 					/>
 				</FileConfiguration>
@@ -9343,7 +5766,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9351,7 +5774,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9379,7 +5802,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9387,7 +5810,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9416,7 +5839,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9425,7 +5848,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9455,7 +5878,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9463,7 +5886,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9492,7 +5915,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9501,7 +5924,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9532,7 +5955,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9541,7 +5964,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9571,7 +5994,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9579,7 +6002,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9608,7 +6031,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9617,7 +6040,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9648,7 +6071,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9657,7 +6080,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9688,7 +6111,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9697,7 +6120,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9727,7 +6150,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9735,7 +6158,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9763,7 +6186,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9771,7 +6194,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9799,7 +6222,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9807,7 +6230,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9835,7 +6258,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9843,7 +6266,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9873,7 +6296,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -9883,7 +6306,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool

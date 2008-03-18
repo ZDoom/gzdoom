@@ -143,6 +143,12 @@ void DPlat::Tick ()
 				m_Status = in_stasis;		//for reactivation of toggle
 			}
 		}
+		else if (res == crushed && m_Crush < 0 && m_Type != platToggle)
+		{
+			m_Status = up;
+			m_Count = m_Wait;
+			PlayPlatSound ("Platform");
+		}
 
 		//jff 1/26/98 remove the plat if it bounced so it can be tried again
 		//only affects plats that raise and bounce

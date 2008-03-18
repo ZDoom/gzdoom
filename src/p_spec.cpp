@@ -51,6 +51,7 @@
 #include "p_lnspec.h"
 #include "p_terrain.h"
 #include "p_acs.h"
+#include "p_3dmidtex.h"
 
 #include "g_game.h"
 
@@ -300,6 +301,12 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{ 
 		return false;
 	}
+
+	if (activationType == SPAC_USE)
+	{
+		if (!P_CheckSwitchRange(mo, line, side)) return false;
+	}
+
 	if (mo && !mo->player &&
 		!(mo->flags & MF_MISSILE) &&
 		!(line->flags & ML_MONSTERSCANACTIVATE) &&
@@ -991,6 +998,10 @@ void P_SpawnSpecials (void)
 		// per wall independently
 		case Transfer_WallLight:
 			new DWallLightTransfer (sides[*lines[i].sidenum].sector, lines[i].args[0], lines[i].args[1]);
+			break;
+
+		case Sector_Attach3dMidtex:
+			P_Attach3dMidtexLinesToSector(lines[i].frontsector, lines[i].args[0], lines[i].args[1], !!lines[i].args[2]);
 			break;
 
 		// [RH] ZDoom Static_Init settings

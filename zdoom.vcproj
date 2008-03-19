@@ -6343,6 +6343,30 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\xlat\xlat_parser.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\xlat\xlat_parser.h"
+				>
+			</File>
+			<File
 				RelativePath=".\src\xlat\xlat_parser.y"
 				>
 				<FileConfiguration

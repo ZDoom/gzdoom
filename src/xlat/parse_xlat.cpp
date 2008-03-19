@@ -352,7 +352,7 @@ struct XlatParseContext
 		}
 	}
 
-	int PrintError (char *s)
+	int PrintError (const char *s)
 	{
 		if (SourceFile != NULL)
 			Printf ("%s, line %d: %s\n", SourceFile, SourceLine, s);
@@ -397,7 +397,7 @@ void ParseXlatLump(const char *lumpname, void *pParser, XlatParseContext *contex
 	context->SourceFile = lumpname;
 
 	char *sourcep = lumpdata;
-	while (tokentype = context->GetToken(sourcep, &token))
+	while ( (tokentype = context->GetToken(sourcep, &token)) )
 	{
 		// It is much easier to handle include statements outside the main parser.
 		if (tokentype == INCLUDE)

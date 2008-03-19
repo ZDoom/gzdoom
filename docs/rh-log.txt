@@ -1,3 +1,6 @@
+March 19, 2008
+- Fixed: The source no longer built with GCC.
+
 March 19, 2008 (Changes by Graf Zahl)
 - Added a new parameter to all crushing action specials that selects
   which crushing mode is used: 0 uses the game's default for compatibility,
@@ -19,21 +22,26 @@ March 19, 2008 (Changes by Graf Zahl)
   errors for some very old version of dobject.cpp.
 - Fixed: A_JumpIfCloser was missing a z-check.
 - Added Blzut3's SBARINFO update #13:
-- Split sbarinfo.cpp into two files sbarinfo_display.cpp and sbarinfo_parser.cpp
-- Rewrote the mug shot system for SBarInfo to allow for scripting and custom
-  states for different means of death.
-- SBarInfo now loads all SBarInfo lumps instead of just the last one.  Clashing
-  status bar definitions will now be cleared before the bar is read.
-- Fixed: When using transparency with bars the new drawing method (bg over fg)
-  didn't work.  In the case that the border value is set to 0 it will revert to
-  the old method (fg over bg).
-- Fixed: drawbar lost any high res information it was given.
-- Added: ACS command SetMugShotState(str state) which sets the mug shot state
-  for the activating player.
-- Added: keepoffsets flag to drawbar.  When set the offsets in the fg image will
-  also be applied when displaying the bar.
+  - Split sbarinfo.cpp into two files sbarinfo_display.cpp and sbarinfo_parser.cpp
+  - Rewrote the mug shot system for SBarInfo to allow for scripting and custom
+    states for different means of death.
+  - SBarInfo now loads all SBarInfo lumps instead of just the last one.  Clashing
+    status bar definitions will now be cleared before the bar is read.
+  - Fixed: When using transparency with bars the new drawing method (bg over fg)
+    didn't work.  In the case that the border value is set to 0 it will revert to
+    the old method (fg over bg).
+  - Fixed: drawbar lost any high res information it was given.
+  - Added: ACS command SetMugShotState(str state) which sets the mug shot state
+    for the activating player.
+  - Added: keepoffsets flag to drawbar.  When set the offsets in the fg image will
+    also be applied when displaying the bar.
 
 March 18, 2008
+- Added a cheap pitch shifting for underwater environments that should be fairly
+  close to Duke's. It sounds okay for some sounds, but others like the BFG, where
+  the timing of the sound actually matters, don't sound good. I shall have to
+  replace it with a real pitch shifter DSP unit.
+- Removed hardware 3D sound support, since software is cooler.
 - Fixed the TArray serializer declaration.
   (Thank you for your warnings, GCC! ;-)
 - Changed root sector marking so that it can happen incrementally.

@@ -28,7 +28,7 @@ CFLAGS += $(INCLUDES)
 RELEASEOBJ ?= releaseobj
 DEBUGOBJ ?= debugobj
 
-CPPSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS)))
+CPPSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS))) src/xlat/parse_xlat.cpp
 CSRCS = $(wildcard $(addsuffix *.c,$(SRCDIRS)))
 ifdef NOASM
   CFLAGS += -DNOASM
@@ -87,6 +87,13 @@ $(OBJDIR)/nodebuild_classify_sse2.o: nodebuild_classify_sse2.cpp
 # This file needs special handling because GCC misoptimizes it otherwise.
 $(OBJDIR)/fmopl.o: src/oplsynth/fmopl.cpp
 	$(CCDV) $(CXX) $(CXXFLAGS) -fno-tree-dominator-opts -fno-tree-fre -c -o $@ $<
+
+src/xlat/xlat_parser.c: src/xlat/xlat_parser.y
+	$(CCDV) $(LEMON) -s src/xlat/xlat_parser.y
+
+# Dunno why make isn't picking this stuff up automatically for this file.
+$(OBJDIR)/parse_xlat.o: src/xlat/parse_xlat.cpp src/xlat/xlat.h src/xlat/xlat_parser.c src/xlat/xlat_parser.h
+	$(CCDV) $(CXX) $(CXXFLAGS) -o $@ -c $<
 
 $(OBJDIR):
 	mkdir $(OBJDIR)

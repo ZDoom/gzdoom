@@ -71,8 +71,6 @@ struct SBarInfo
 
 extern SBarInfo *SBarInfoScript;
 
-void FreeSBarInfoScript();
-
 //Mug Shot scripting structs.  All functions are defined in sbarinfo_parser.cpp
 struct MugShotState;
 

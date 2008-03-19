@@ -38,14 +38,9 @@ struct sfxinfo_t
 	BYTE		PitchMask;
 	BYTE		MaxChannels;
 
-	// Next five fields are for use by i_sound.cpp. A non-null data means the
-	// sound has been loaded. The other fields are dependant on whether MIDAS
-	// or FMOD is used for sound.
+	// Next field is for use by the system sound interface.
+	// A non-null data means the sound has been loaded.
 	void*		data;
-	void*		altdata;
-	long		normal;
-	long		looping;
-	WORD		bHaveLoop:1;
 
 	WORD		bRandomHeader:1;
 	WORD		bPlayerReserve:1;

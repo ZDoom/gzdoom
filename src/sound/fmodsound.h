@@ -66,14 +66,10 @@ private:
 	int NumChannels;
 	unsigned int DriverCaps;
 	int OutputType;
-	bool Hardware3D;
 	bool SFXPaused;
 
-//	int PutSampleData (FSOUND_SAMPLE *sample, const BYTE *data, int len, unsigned int mode);
 	void DoLoad (void **slot, sfxinfo_t *sfx);
 	void getsfx (sfxinfo_t *sfx);
-	FMOD::Sound *CheckLooping (sfxinfo_t *sfx, bool looped);
-	void UncheckSound (sfxinfo_t *sfx, bool looped);
 
 	bool Init ();
 	void Shutdown ();

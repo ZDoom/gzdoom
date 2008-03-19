@@ -3904,11 +3904,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\g_shared\sbarinfo.cpp"
+				RelativePath=".\src\g_shared\sbarinfo.h"
 				>
 			</File>
 			<File
-				RelativePath=".\src\g_shared\sbarinfo.h"
+				RelativePath=".\src\g_shared\sbarinfo_display.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\g_shared\sbarinfo_parser.cpp"
 				>
 			</File>
 			<File

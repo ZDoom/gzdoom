@@ -67,6 +67,7 @@
 #include "c_bind.h"
 #include "info.h"
 #include "r_translate.h"
+#include "sbarinfo.h"
 
 extern FILE *Logfile;
 
@@ -5301,6 +5302,7 @@ int DLevelScript::RunScript ()
 		}
 
 		case PCD_GETACTORLIGHTLEVEL:
+		{
 			AActor *actor = SingleActorFromTID(STACK(1), activator);
 			if (actor != NULL)
 			{
@@ -5308,6 +5310,15 @@ int DLevelScript::RunScript ()
 			}
 			else STACK(1)=0;
 			break;
+		}
+
+		case PCD_SETMUGSHOTSTATE:
+			if(StatusBar != NULL && StatusBar->IsKindOf(RUNTIME_CLASS(DSBarInfo)))
+			{
+				static_cast<DSBarInfo*>(StatusBar)->SetMugShotState(FBehavior::StaticLookupString(STACK(1)));
+			}
+			break;
+		
 		}
 	}
 

@@ -74,7 +74,6 @@
 #include "vectors.h"
 #include "sbarinfo.h"
 #include "r_translate.h"
-#include "sbarinfo.h"
 
 #include "gi.h"
 

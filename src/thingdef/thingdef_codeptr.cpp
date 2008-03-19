@@ -550,7 +550,11 @@ void A_JumpIfCloser(AActor * self)
 	if (target==NULL) return;
 
 	fixed_t dist = fixed_t(EvalExpressionF (StateParameters[index], self) * FRACUNIT);
-	if (index > 0 && P_AproxDistance(self->x-target->x, self->y-target->y) < dist)
+	if (index > 0 && P_AproxDistance(self->x-target->x, self->y-target->y) < dist &&
+		( (self->z > target->z && self->z - (target->z + target->height) < dist) || 
+		  (self->z <=target->z && target->z - (self->z + self->height) < dist) 
+		)
+	   )
 		DoJump(self, CallingState, StateParameters[index+1]);
 }
 

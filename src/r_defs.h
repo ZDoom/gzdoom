@@ -272,6 +272,7 @@ struct sector_t;
 
 struct extsector_t
 {
+	// 3DMIDTEX information
 	struct midtex
 	{
 		struct plane
@@ -280,6 +281,14 @@ struct extsector_t
 			TArray<line_s *> AttachedLines;			// all 3dMidtex lines attached to this sector
 		} Floor, Ceiling;
 	} Midtex;
+
+	// linked sectors
+	/*
+	struct linked
+	{
+		TArray<FLinkedSector> Sectors;
+	} Linked;
+	*/
 	
 	void Serialize(FArchive &arc);
 };

@@ -1,3 +1,26 @@
+March 19, 2008 (Changes by Graf Zahl)
+- Added copyright/license headers to a few files.
+- Fixed: ACS SetMugShotState needs to check the StatusBar pointer for the
+  proper object type.
+- Move SBarInfo loading code in d_main.cpp into a static method of DSBarInfo.
+- Removed dobject.err from the repository. It only contained a list of compiler
+  errors for some very old version of dobject.cpp.
+- Fixed: A_JumpIfCloser was missing a z-check.
+- Added Blzut3's SBARINFO update #13:
+- Split sbarinfo.cpp into two files sbarinfo_display.cpp and sbarinfo_parser.cpp
+- Rewrote the mug shot system for SBarInfo to allow for scripting and custom
+  states for different means of death.
+- SBarInfo now loads all SBarInfo lumps instead of just the last one.  Clashing
+  status bar definitions will now be cleared before the bar is read.
+- Fixed: When using transparency with bars the new drawing method (bg over fg)
+  didn't work.  In the case that the border value is set to 0 it will revert to
+  the old method (fg over bg).
+- Fixed: drawbar lost any high res information it was given.
+- Added: ACS command SetMugShotState(str state) which sets the mug shot state
+  for the activating player.
+- Added: keepoffsets flag to drawbar.  When set the offsets in the fg image will
+  also be applied when displaying the bar.
+
 March 18, 2008
 - Fixed the TArray serializer declaration.
   (Thank you for your warnings, GCC! ;-)

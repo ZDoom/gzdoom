@@ -6,6 +6,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+
+#ifdef _MSC_VER
+#define CDECL __cdecl
+#else
+#define CDECL
+#endif
+
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -461,7 +468,7 @@ static void yyGrowStack(yyParser *p){
 ** A pointer to a parser.  This pointer is used in subsequent calls
 ** to XlatParse and XlatParseFree.
 */
-void *XlatParseAlloc(void *(*mallocProc)(size_t)){
+void *XlatParseAlloc(void *(CDECL *mallocProc)(size_t)){
   yyParser *pParser;
   pParser = (yyParser*)(*mallocProc)( (size_t)sizeof(yyParser) );
   if( pParser ){
@@ -520,9 +527,9 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     case 28: /* ARG5 */
     case 29: /* OR_EQUAL */
     case 30: /* COLON */
-#line 3 "src/xlat/xlat_parser.y"
+#line 3 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {}
-#line 526 "src/xlat/xlat_parser.c"
+#line 533 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -568,7 +575,7 @@ static int yy_pop_parser_stack(yyParser *pParser){
 */
 void XlatParseFree(
   void *p,                    /* The parser to be deleted */
-  void (*freeProc)(void*)     /* Function used to reclaim memory */
+  void (CDECL *freeProc)(void*)     /* Function used to reclaim memory */
 ){
   yyParser *pParser = (yyParser*)p;
   if( pParser==0 ) return;
@@ -860,133 +867,133 @@ static void yy_reduce(
       case 6: /*external_declaration ::= boom_declaration */
       case 22: /*enum_list ::= */
       case 23: /*enum_list ::= single_enum */
-#line 9 "src/xlat/xlat_parser.y"
+#line 9 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 }
-#line 867 "src/xlat/xlat_parser.c"
+#line 874 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 7: /* external_declaration ::= NOP */
-#line 18 "src/xlat/xlat_parser.y"
+#line 18 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
   yy_destructor(1,&yymsp[0].minor);
 }
-#line 874 "src/xlat/xlat_parser.c"
+#line 881 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 8: /* exp ::= NUM */
-#line 29 "src/xlat/xlat_parser.y"
+#line 29 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[0].minor.yy0.val; }
-#line 879 "src/xlat/xlat_parser.c"
+#line 886 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 9: /* exp ::= SYMNUM */
-#line 30 "src/xlat/xlat_parser.y"
+#line 30 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[0].minor.yy0.symval->Value; }
-#line 884 "src/xlat/xlat_parser.c"
+#line 891 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 10: /* exp ::= exp PLUS exp */
-#line 31 "src/xlat/xlat_parser.y"
+#line 31 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[-2].minor.yy94 + yymsp[0].minor.yy94;   yy_destructor(6,&yymsp[-1].minor);
 }
-#line 890 "src/xlat/xlat_parser.c"
+#line 897 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 11: /* exp ::= exp MINUS exp */
-#line 32 "src/xlat/xlat_parser.y"
+#line 32 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[-2].minor.yy94 - yymsp[0].minor.yy94;   yy_destructor(5,&yymsp[-1].minor);
 }
-#line 896 "src/xlat/xlat_parser.c"
+#line 903 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 12: /* exp ::= exp MULTIPLY exp */
-#line 33 "src/xlat/xlat_parser.y"
+#line 33 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[-2].minor.yy94 * yymsp[0].minor.yy94;   yy_destructor(7,&yymsp[-1].minor);
 }
-#line 902 "src/xlat/xlat_parser.c"
+#line 909 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 13: /* exp ::= exp DIVIDE exp */
-#line 34 "src/xlat/xlat_parser.y"
+#line 34 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[-2].minor.yy94 / yymsp[0].minor.yy94;   yy_destructor(8,&yymsp[-1].minor);
 }
-#line 908 "src/xlat/xlat_parser.c"
+#line 915 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 14: /* exp ::= exp OR exp */
-#line 35 "src/xlat/xlat_parser.y"
+#line 35 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[-2].minor.yy94 | yymsp[0].minor.yy94;   yy_destructor(2,&yymsp[-1].minor);
 }
-#line 914 "src/xlat/xlat_parser.c"
+#line 921 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 15: /* exp ::= exp AND exp */
-#line 36 "src/xlat/xlat_parser.y"
+#line 36 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[-2].minor.yy94 & yymsp[0].minor.yy94;   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 920 "src/xlat/xlat_parser.c"
+#line 927 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 16: /* exp ::= exp XOR exp */
-#line 37 "src/xlat/xlat_parser.y"
+#line 37 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[-2].minor.yy94 ^ yymsp[0].minor.yy94;   yy_destructor(3,&yymsp[-1].minor);
 }
-#line 926 "src/xlat/xlat_parser.c"
+#line 933 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 17: /* exp ::= MINUS exp */
-#line 38 "src/xlat/xlat_parser.y"
+#line 38 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = -yymsp[0].minor.yy94;   yy_destructor(5,&yymsp[-1].minor);
 }
-#line 932 "src/xlat/xlat_parser.c"
+#line 939 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 18: /* exp ::= LPAREN exp RPAREN */
-#line 39 "src/xlat/xlat_parser.y"
+#line 39 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = yymsp[-1].minor.yy94;   yy_destructor(12,&yymsp[-2].minor);
   yy_destructor(13,&yymsp[0].minor);
 }
-#line 939 "src/xlat/xlat_parser.c"
+#line 946 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 19: /* define_statement ::= DEFINE SYM LPAREN exp RPAREN */
-#line 49 "src/xlat/xlat_parser.y"
+#line 49 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	context->AddSym (yymsp[-3].minor.yy0.sym, yymsp[-1].minor.yy94);
   yy_destructor(14,&yymsp[-4].minor);
   yy_destructor(12,&yymsp[-2].minor);
   yy_destructor(13,&yymsp[0].minor);
 }
-#line 949 "src/xlat/xlat_parser.c"
+#line 956 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 20: /* enum_statement ::= enum_open enum_list RBRACE */
-#line 59 "src/xlat/xlat_parser.y"
+#line 59 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
   yy_destructor(16,&yymsp[0].minor);
 }
-#line 956 "src/xlat/xlat_parser.c"
+#line 963 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 21: /* enum_open ::= ENUM LBRACE */
-#line 62 "src/xlat/xlat_parser.y"
+#line 62 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	context->EnumVal = 0;
   yy_destructor(17,&yymsp[-1].minor);
   yy_destructor(18,&yymsp[0].minor);
 }
-#line 965 "src/xlat/xlat_parser.c"
+#line 972 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 24: /* enum_list ::= single_enum COMMA enum_list */
-#line 68 "src/xlat/xlat_parser.y"
+#line 68 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 972 "src/xlat/xlat_parser.c"
+#line 979 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 25: /* single_enum ::= SYM */
-#line 71 "src/xlat/xlat_parser.y"
+#line 71 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	context->AddSym (yymsp[0].minor.yy0.sym, context->EnumVal++);
 }
-#line 979 "src/xlat/xlat_parser.c"
+#line 986 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 26: /* single_enum ::= SYM EQUALS exp */
-#line 76 "src/xlat/xlat_parser.y"
+#line 76 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	context->AddSym (yymsp[-2].minor.yy0.sym, context->EnumVal = yymsp[0].minor.yy94);
   yy_destructor(20,&yymsp[-1].minor);
 }
-#line 987 "src/xlat/xlat_parser.c"
+#line 994 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 27: /* linetype_declaration ::= exp EQUALS exp COMMA exp LPAREN special_args RPAREN */
-#line 87 "src/xlat/xlat_parser.y"
+#line 87 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	SimpleLineTranslations.SetVal(yymsp[-7].minor.yy94, 
 		FLineTrans(yymsp[-3].minor.yy94&0xffff, yymsp[-5].minor.yy94+yymsp[-1].minor.yy15.addflags, yymsp[-1].minor.yy15.args[0], yymsp[-1].minor.yy15.args[1], yymsp[-1].minor.yy15.args[2], yymsp[-1].minor.yy15.args[3], yymsp[-1].minor.yy15.args[4]));
@@ -995,10 +1002,10 @@ static void yy_reduce(
   yy_destructor(12,&yymsp[-2].minor);
   yy_destructor(13,&yymsp[0].minor);
 }
-#line 999 "src/xlat/xlat_parser.c"
+#line 1006 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 28: /* linetype_declaration ::= exp EQUALS exp COMMA SYM LPAREN special_args RPAREN */
-#line 93 "src/xlat/xlat_parser.y"
+#line 93 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	Printf ("%s, line %d: %s is undefined\n", context->SourceFile, context->SourceLine, yymsp[-3].minor.yy0.sym);
   yy_destructor(20,&yymsp[-6].minor);
@@ -1006,10 +1013,10 @@ static void yy_reduce(
   yy_destructor(12,&yymsp[-2].minor);
   yy_destructor(13,&yymsp[0].minor);
 }
-#line 1010 "src/xlat/xlat_parser.c"
+#line 1017 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 29: /* special_args ::= */
-#line 100 "src/xlat/xlat_parser.y"
+#line 100 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = 0;
 	yygotominor.yy15.args[0] = 0;
@@ -1018,10 +1025,10 @@ static void yy_reduce(
 	yygotominor.yy15.args[3] = 0;
 	yygotominor.yy15.args[4] = 0;
 }
-#line 1022 "src/xlat/xlat_parser.c"
+#line 1029 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 30: /* special_args ::= TAG */
-#line 109 "src/xlat/xlat_parser.y"
+#line 109 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT1;
 	yygotominor.yy15.args[0] = 0;
@@ -1031,10 +1038,10 @@ static void yy_reduce(
 	yygotominor.yy15.args[4] = 0;
   yy_destructor(21,&yymsp[0].minor);
 }
-#line 1035 "src/xlat/xlat_parser.c"
+#line 1042 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 31: /* special_args ::= TAG COMMA exp */
-#line 118 "src/xlat/xlat_parser.y"
+#line 118 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT1;
 	yygotominor.yy15.args[0] = 0;
@@ -1045,10 +1052,10 @@ static void yy_reduce(
   yy_destructor(21,&yymsp[-2].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1049 "src/xlat/xlat_parser.c"
+#line 1056 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 32: /* special_args ::= TAG COMMA exp COMMA exp */
-#line 127 "src/xlat/xlat_parser.y"
+#line 127 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT1;
 	yygotominor.yy15.args[0] = 0;
@@ -1060,10 +1067,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1064 "src/xlat/xlat_parser.c"
+#line 1071 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 33: /* special_args ::= TAG COMMA exp COMMA exp COMMA exp */
-#line 136 "src/xlat/xlat_parser.y"
+#line 136 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT1;
 	yygotominor.yy15.args[0] = 0;
@@ -1076,10 +1083,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1080 "src/xlat/xlat_parser.c"
+#line 1087 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 34: /* special_args ::= TAG COMMA exp COMMA exp COMMA exp COMMA exp */
-#line 145 "src/xlat/xlat_parser.y"
+#line 145 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT1;
 	yygotominor.yy15.args[0] = 0;
@@ -1093,10 +1100,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1097 "src/xlat/xlat_parser.c"
+#line 1104 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 35: /* special_args ::= TAG COMMA TAG */
-#line 154 "src/xlat/xlat_parser.y"
+#line 154 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HAS2TAGS;
 	yygotominor.yy15.args[0] = yygotominor.yy15.args[1] = 0;
@@ -1107,10 +1114,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(21,&yymsp[0].minor);
 }
-#line 1111 "src/xlat/xlat_parser.c"
+#line 1118 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 36: /* special_args ::= TAG COMMA TAG COMMA exp */
-#line 162 "src/xlat/xlat_parser.y"
+#line 162 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HAS2TAGS;
 	yygotominor.yy15.args[0] = yygotominor.yy15.args[1] = 0;
@@ -1122,10 +1129,10 @@ static void yy_reduce(
   yy_destructor(21,&yymsp[-2].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1126 "src/xlat/xlat_parser.c"
+#line 1133 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 37: /* special_args ::= TAG COMMA TAG COMMA exp COMMA exp */
-#line 170 "src/xlat/xlat_parser.y"
+#line 170 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HAS2TAGS;
 	yygotominor.yy15.args[0] = yygotominor.yy15.args[1] = 0;
@@ -1138,10 +1145,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1142 "src/xlat/xlat_parser.c"
+#line 1149 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 38: /* special_args ::= TAG COMMA TAG COMMA exp COMMA exp COMMA exp */
-#line 178 "src/xlat/xlat_parser.y"
+#line 178 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HAS2TAGS;
 	yygotominor.yy15.args[0] = yygotominor.yy15.args[1] = 0;
@@ -1155,10 +1162,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1159 "src/xlat/xlat_parser.c"
+#line 1166 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 39: /* special_args ::= exp */
-#line 186 "src/xlat/xlat_parser.y"
+#line 186 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = 0;
 	yygotominor.yy15.args[0] = yymsp[0].minor.yy94;
@@ -1167,10 +1174,10 @@ static void yy_reduce(
 	yygotominor.yy15.args[3] = 0;
 	yygotominor.yy15.args[4] = 0;
 }
-#line 1171 "src/xlat/xlat_parser.c"
+#line 1178 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 40: /* special_args ::= exp COMMA exp */
-#line 195 "src/xlat/xlat_parser.y"
+#line 195 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = 0;
 	yygotominor.yy15.args[0] = yymsp[-2].minor.yy94;
@@ -1180,10 +1187,10 @@ static void yy_reduce(
 	yygotominor.yy15.args[4] = 0;
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1184 "src/xlat/xlat_parser.c"
+#line 1191 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 41: /* special_args ::= exp COMMA exp COMMA exp */
-#line 204 "src/xlat/xlat_parser.y"
+#line 204 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = 0;
 	yygotominor.yy15.args[0] = yymsp[-4].minor.yy94;
@@ -1194,10 +1201,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1198 "src/xlat/xlat_parser.c"
+#line 1205 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 42: /* special_args ::= exp COMMA exp COMMA exp COMMA exp */
-#line 213 "src/xlat/xlat_parser.y"
+#line 213 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = 0;
 	yygotominor.yy15.args[0] = yymsp[-6].minor.yy94;
@@ -1209,10 +1216,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1213 "src/xlat/xlat_parser.c"
+#line 1220 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 43: /* special_args ::= exp COMMA exp COMMA exp COMMA exp COMMA exp */
-#line 222 "src/xlat/xlat_parser.y"
+#line 222 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = 0;
 	yygotominor.yy15.args[0] = yymsp[-8].minor.yy94;
@@ -1225,10 +1232,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1229 "src/xlat/xlat_parser.c"
+#line 1236 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 44: /* special_args ::= exp COMMA TAG */
-#line 231 "src/xlat/xlat_parser.y"
+#line 231 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT2;
 	yygotominor.yy15.args[0] = yymsp[-2].minor.yy94;
@@ -1239,10 +1246,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(21,&yymsp[0].minor);
 }
-#line 1243 "src/xlat/xlat_parser.c"
+#line 1250 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 45: /* special_args ::= exp COMMA TAG COMMA exp */
-#line 240 "src/xlat/xlat_parser.y"
+#line 240 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT2;
 	yygotominor.yy15.args[0] = yymsp[-4].minor.yy94;
@@ -1254,10 +1261,10 @@ static void yy_reduce(
   yy_destructor(21,&yymsp[-2].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1258 "src/xlat/xlat_parser.c"
+#line 1265 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 46: /* special_args ::= exp COMMA TAG COMMA exp COMMA exp */
-#line 249 "src/xlat/xlat_parser.y"
+#line 249 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT2;
 	yygotominor.yy15.args[0] = yymsp[-6].minor.yy94;
@@ -1270,10 +1277,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1274 "src/xlat/xlat_parser.c"
+#line 1281 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 47: /* special_args ::= exp COMMA TAG COMMA exp COMMA exp COMMA exp */
-#line 258 "src/xlat/xlat_parser.y"
+#line 258 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT2;
 	yygotominor.yy15.args[0] = yymsp[-8].minor.yy94;
@@ -1287,10 +1294,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1291 "src/xlat/xlat_parser.c"
+#line 1298 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 48: /* special_args ::= exp COMMA exp COMMA TAG */
-#line 267 "src/xlat/xlat_parser.y"
+#line 267 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT3;
 	yygotominor.yy15.args[0] = yymsp[-4].minor.yy94;
@@ -1302,10 +1309,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(21,&yymsp[0].minor);
 }
-#line 1306 "src/xlat/xlat_parser.c"
+#line 1313 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 49: /* special_args ::= exp COMMA exp COMMA TAG COMMA exp */
-#line 276 "src/xlat/xlat_parser.y"
+#line 276 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT3;
 	yygotominor.yy15.args[0] = yymsp[-6].minor.yy94;
@@ -1318,10 +1325,10 @@ static void yy_reduce(
   yy_destructor(21,&yymsp[-2].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1322 "src/xlat/xlat_parser.c"
+#line 1329 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 50: /* special_args ::= exp COMMA exp COMMA TAG COMMA exp COMMA exp */
-#line 285 "src/xlat/xlat_parser.y"
+#line 285 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT3;
 	yygotominor.yy15.args[0] = yymsp[-8].minor.yy94;
@@ -1335,10 +1342,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-3].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1339 "src/xlat/xlat_parser.c"
+#line 1346 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 51: /* special_args ::= exp COMMA exp COMMA exp COMMA TAG */
-#line 294 "src/xlat/xlat_parser.y"
+#line 294 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT4;
 	yygotominor.yy15.args[0] = yymsp[-6].minor.yy94;
@@ -1351,10 +1358,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(21,&yymsp[0].minor);
 }
-#line 1355 "src/xlat/xlat_parser.c"
+#line 1362 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 52: /* special_args ::= exp COMMA exp COMMA exp COMMA TAG COMMA exp */
-#line 303 "src/xlat/xlat_parser.y"
+#line 303 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT4;
 	yygotominor.yy15.args[0] = yymsp[-8].minor.yy94;
@@ -1368,10 +1375,10 @@ static void yy_reduce(
   yy_destructor(21,&yymsp[-2].minor);
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1372 "src/xlat/xlat_parser.c"
+#line 1379 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 53: /* special_args ::= exp COMMA exp COMMA exp COMMA exp COMMA TAG */
-#line 312 "src/xlat/xlat_parser.y"
+#line 312 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy15.addflags = LINETRANS_HASTAGAT5;
 	yygotominor.yy15.args[0] = yymsp[-8].minor.yy94;
@@ -1385,10 +1392,10 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(21,&yymsp[0].minor);
 }
-#line 1389 "src/xlat/xlat_parser.c"
+#line 1396 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 54: /* boom_declaration ::= LBRACKET exp RBRACKET LPAREN exp COMMA exp RPAREN LBRACE boom_body RBRACE */
-#line 337 "src/xlat/xlat_parser.y"
+#line 337 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	int i;
 	MoreLines *probe;
@@ -1428,26 +1435,26 @@ static void yy_reduce(
   yy_destructor(18,&yymsp[-2].minor);
   yy_destructor(16,&yymsp[0].minor);
 }
-#line 1432 "src/xlat/xlat_parser.c"
+#line 1439 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 55: /* boom_body ::= */
-#line 371 "src/xlat/xlat_parser.y"
+#line 371 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy81 = NULL;
 }
-#line 1439 "src/xlat/xlat_parser.c"
+#line 1446 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 56: /* boom_body ::= boom_line boom_body */
-#line 375 "src/xlat/xlat_parser.y"
+#line 375 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy81 = new MoreLines;
 	yygotominor.yy81->next = yymsp[0].minor.yy81;
 	yygotominor.yy81->arg = yymsp[-1].minor.yy20;
 }
-#line 1448 "src/xlat/xlat_parser.c"
+#line 1455 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 57: /* boom_line ::= boom_selector boom_op boom_args */
-#line 382 "src/xlat/xlat_parser.y"
+#line 382 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy20.bOrExisting = (yymsp[-1].minor.yy94 == OR_EQUAL);
 	yygotominor.yy20.bUseConstant = (yymsp[0].minor.yy40.filters == NULL);
@@ -1478,95 +1485,95 @@ static void yy_reduce(
 		yygotominor.yy20.ListSize = i > 15 ? 15 : i;
 	}
 }
-#line 1482 "src/xlat/xlat_parser.c"
+#line 1489 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 58: /* boom_selector ::= FLAGS */
-#line 413 "src/xlat/xlat_parser.y"
+#line 413 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = 4;   yy_destructor(24,&yymsp[0].minor);
 }
-#line 1488 "src/xlat/xlat_parser.c"
+#line 1495 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 59: /* boom_selector ::= ARG2 */
-#line 414 "src/xlat/xlat_parser.y"
+#line 414 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = 0;   yy_destructor(25,&yymsp[0].minor);
 }
-#line 1494 "src/xlat/xlat_parser.c"
+#line 1501 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 60: /* boom_selector ::= ARG3 */
-#line 415 "src/xlat/xlat_parser.y"
+#line 415 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = 1;   yy_destructor(26,&yymsp[0].minor);
 }
-#line 1500 "src/xlat/xlat_parser.c"
+#line 1507 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 61: /* boom_selector ::= ARG4 */
-#line 416 "src/xlat/xlat_parser.y"
+#line 416 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = 2;   yy_destructor(27,&yymsp[0].minor);
 }
-#line 1506 "src/xlat/xlat_parser.c"
+#line 1513 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 62: /* boom_selector ::= ARG5 */
-#line 417 "src/xlat/xlat_parser.y"
+#line 417 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = 3;   yy_destructor(28,&yymsp[0].minor);
 }
-#line 1512 "src/xlat/xlat_parser.c"
+#line 1519 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 63: /* boom_op ::= EQUALS */
-#line 419 "src/xlat/xlat_parser.y"
+#line 419 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = '=';   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1518 "src/xlat/xlat_parser.c"
+#line 1525 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 64: /* boom_op ::= OR_EQUAL */
-#line 420 "src/xlat/xlat_parser.y"
+#line 420 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 { yygotominor.yy94 = OR_EQUAL;   yy_destructor(29,&yymsp[0].minor);
 }
-#line 1524 "src/xlat/xlat_parser.c"
+#line 1531 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 65: /* boom_args ::= exp */
-#line 423 "src/xlat/xlat_parser.y"
+#line 423 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy40.constant = yymsp[0].minor.yy94;
 	yygotominor.yy40.filters = NULL;
 }
-#line 1532 "src/xlat/xlat_parser.c"
+#line 1539 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 66: /* boom_args ::= exp LBRACKET arg_list RBRACKET */
-#line 428 "src/xlat/xlat_parser.y"
+#line 428 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy40.mask = yymsp[-3].minor.yy94;
 	yygotominor.yy40.filters = yymsp[-1].minor.yy39;
   yy_destructor(22,&yymsp[-2].minor);
   yy_destructor(23,&yymsp[0].minor);
 }
-#line 1542 "src/xlat/xlat_parser.c"
+#line 1549 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 67: /* arg_list ::= list_val */
-#line 434 "src/xlat/xlat_parser.y"
+#line 434 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy39 = new MoreFilters;
 	yygotominor.yy39->next = NULL;
 	yygotominor.yy39->filter = yymsp[0].minor.yy11;
 }
-#line 1551 "src/xlat/xlat_parser.c"
+#line 1558 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 68: /* arg_list ::= list_val COMMA arg_list */
-#line 440 "src/xlat/xlat_parser.y"
+#line 440 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy39 = new MoreFilters;
 	yygotominor.yy39->next = yymsp[0].minor.yy39;
 	yygotominor.yy39->filter = yymsp[-2].minor.yy11;
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1561 "src/xlat/xlat_parser.c"
+#line 1568 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
       case 69: /* list_val ::= exp COLON exp */
-#line 447 "src/xlat/xlat_parser.y"
+#line 447 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
 {
 	yygotominor.yy11.filter = yymsp[-2].minor.yy94;
 	yygotominor.yy11.value = yymsp[0].minor.yy94;
   yy_destructor(30,&yymsp[-1].minor);
 }
-#line 1570 "src/xlat/xlat_parser.c"
+#line 1577 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -1624,9 +1631,9 @@ static void yy_syntax_error(
 ){
   XlatParseARG_FETCH;
 #define TOKEN (yyminor.yy0)
-#line 6 "src/xlat/xlat_parser.y"
+#line 6 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.y"
  context->PrintError("syntax error");
-#line 1630 "src/xlat/xlat_parser.c"
+#line 1637 "c:\\zdoom\\trunk\\src\\xlat\\xlat_parser.c"
   XlatParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

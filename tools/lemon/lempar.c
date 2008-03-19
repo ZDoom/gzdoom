@@ -6,6 +6,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+
+#ifdef _MSC_VER
+#define CDECL __cdecl
+#else
+#define CDECL
+#endif
+
 %%
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
@@ -247,7 +254,7 @@ static void yyGrowStack(yyParser *p){
 ** A pointer to a parser.  This pointer is used in subsequent calls
 ** to Parse and ParseFree.
 */
-void *ParseAlloc(void *(*mallocProc)(size_t)){
+void *ParseAlloc(void *(CDECL *mallocProc)(size_t)){
   yyParser *pParser;
   pParser = (yyParser*)(*mallocProc)( (size_t)sizeof(yyParser) );
   if( pParser ){
@@ -321,7 +328,7 @@ static int yy_pop_parser_stack(yyParser *pParser){
 */
 void ParseFree(
   void *p,                    /* The parser to be deleted */
-  void (*freeProc)(void*)     /* Function used to reclaim memory */
+  void (CDECL *freeProc)(void*)     /* Function used to reclaim memory */
 ){
   yyParser *pParser = (yyParser*)p;
   if( pParser==0 ) return;

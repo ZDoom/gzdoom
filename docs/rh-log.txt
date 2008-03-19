@@ -1,4 +1,6 @@
 March 19, 2008
+- Fixed: lempar.c needs to specify the __cdecl calling convention for malloc
+  and free under VC++.
 - Fixed: The source no longer built with GCC.
 
 March 19, 2008 (Changes by Graf Zahl)

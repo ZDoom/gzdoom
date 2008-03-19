@@ -436,7 +436,7 @@ void ParseXlat(const char *lumpname)
 	XlatToken tok;
 	tok.val=0;
 	XlatParse(pParser, 0, tok, &context);
-	XlatParseFree(pParser, free );
+	XlatParseFree(pParser, free);
 }
 
 //==========================================================================

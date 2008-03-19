@@ -121,7 +121,7 @@ void DDoor::Tick ()
 		
 	case -1:
 		// DOWN
-		res = MoveCeiling (m_Speed, m_BotDist, -1, m_Direction);
+		res = MoveCeiling (m_Speed, m_BotDist, -1, m_Direction, false);
 
 		// killough 10/98: implement gradual lighting effects
 		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.d)
@@ -168,7 +168,7 @@ void DDoor::Tick ()
 		
 	case 1:
 		// UP
-		res = MoveCeiling (m_Speed, m_TopDist, -1, m_Direction);
+		res = MoveCeiling (m_Speed, m_TopDist, -1, m_Direction, false);
 		
 		// killough 10/98: implement gradual lighting effects
 		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.d)
@@ -552,7 +552,7 @@ bool DAnimatedDoor::StartClosing ()
 	}
 
 	fixed_t topdist = m_Sector->ceilingplane.d;
-	if (MoveCeiling (2048*FRACUNIT, m_BotDist, 0, -1) == crushed)
+	if (MoveCeiling (2048*FRACUNIT, m_BotDist, 0, -1, false) == crushed)
 	{
 		return false;
 	}

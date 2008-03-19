@@ -1,4 +1,11 @@
 March 19, 2008 (Changes by Graf Zahl)
+- Added a new parameter to all crushing action specials that selects
+  which crushing mode is used: 0 uses the game's default for compatibility,
+  1 uses Doom's mode (crushers continue to move while damaging any actors ) and
+  2 uses Hexen's mode (crushers stay at blocking actor's top until they die).
+  Since Generic_Crusher already used all 5 args I created a second version for
+  Hexen crushing mode.
+- Added PICKUP flag to DECORATE.
 - Integrated xlatcc into ZDoom.exe so that the linedef translation files
   don't need to be compiled and can be stored as text in zdoom.pk3.
 - Removed thingdef_specials.h and thingdef_specials.gperf and replaced

@@ -223,7 +223,7 @@ void A_CrusaderDeath (AActor *self)
 {
 	if (CheckBossDeath (self))
 	{
-		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 667, FRACUNIT, 0, 0, 0);
+		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 667, FRACUNIT, 0, 0, 0, false);
 	}
 }
 

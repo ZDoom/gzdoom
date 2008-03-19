@@ -55,7 +55,8 @@ void DFloor::Serialize (FArchive &arc)
 		<< m_Delay
 		<< m_PauseTime
 		<< m_StepTime
-		<< m_PerStepTime;
+		<< m_PerStepTime
+		<< m_Hexencrush;
 }
 
 IMPLEMENT_CLASS (DElevator)
@@ -133,7 +134,7 @@ void DFloor::Tick ()
 	if (m_Type == waitStair)
 		return;
 
-	res = MoveFloor (m_Speed, m_FloorDestDist, m_Crush, m_Direction);
+	res = MoveFloor (m_Speed, m_FloorDestDist, m_Crush, m_Direction, m_Hexencrush);
 	
 	if (res == pastdest)
 	{
@@ -325,7 +326,7 @@ DFloor::DFloor (sector_t *sec)
 // [RH] Added tag, speed, height, crush, change params.
 //
 bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
-				 fixed_t speed, fixed_t height, int crush, int change)
+				 fixed_t speed, fixed_t height, int crush, int change, bool hexencrush)
 {
 	int 		secnum;
 	bool 		rtn;
@@ -368,6 +369,7 @@ manual_floor:
 		floor = new DFloor (sec);
 		floor->m_Type = floortype;
 		floor->m_Crush = -1;
+		floor->m_Hexencrush = hexencrush;
 		floor->m_Speed = speed;
 		floor->m_ResetCount = 0;				// [RH]
 		floor->m_OrgDist = sec->floorplane.d;	// [RH]
@@ -761,6 +763,7 @@ manual_stair:
 		floor->m_StepTime = floor->m_PerStepTime = persteptime;
 
 		floor->m_Crush = (!usespecials && speed == 4*FRACUNIT) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
+		floor->m_Hexencrush = false;
 
 		floor->m_Speed = speed;
 		height = sec->floorplane.ZatPoint (0, 0) + stairstep;
@@ -929,6 +932,7 @@ bool EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 			floor = new DFloor (s2);
 			floor->m_Type = DFloor::donutRaise;
 			floor->m_Crush = -1;
+			floor->m_Hexencrush = false;
 			floor->m_Direction = 1;
 			floor->m_Sector = s2;
 			floor->m_Speed = slimespeed;
@@ -942,6 +946,7 @@ bool EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 			floor = new DFloor (s1);
 			floor->m_Type = DFloor::floorLowerToNearest;
 			floor->m_Crush = -1;
+			floor->m_Hexencrush = false;
 			floor->m_Direction = -1;
 			floor->m_Sector = s1;
 			floor->m_Speed = pillarspeed;

@@ -73,7 +73,7 @@ void DPlat::Tick ()
 	switch (m_Status)
 	{
 	case up:
-		res = MoveFloor (m_Speed, m_High, m_Crush, 1);
+		res = MoveFloor (m_Speed, m_High, m_Crush, 1, false);
 										
 		if (res == crushed && (m_Crush == -1))
 		{
@@ -115,7 +115,7 @@ void DPlat::Tick ()
 		break;
 		
 	case down:
-		res = MoveFloor (m_Speed, m_Low, -1, -1);
+		res = MoveFloor (m_Speed, m_Low, -1, -1, false);
 
 		if (res == pastdest)
 		{

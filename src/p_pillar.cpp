@@ -52,7 +52,8 @@ void DPillar::Serialize (FArchive &arc)
 		<< m_CeilingSpeed
 		<< m_FloorTarget
 		<< m_CeilingTarget
-		<< m_Crush;
+		<< m_Crush
+		<< m_Hexencrush;
 }
 
 void DPillar::Tick ()
@@ -65,13 +66,13 @@ void DPillar::Tick ()
 
 	if (m_Type == pillarBuild)
 	{
-		r = MoveFloor (m_FloorSpeed, m_FloorTarget, m_Crush, 1);
-		s = MoveCeiling (m_CeilingSpeed, m_CeilingTarget, m_Crush, -1);
+		r = MoveFloor (m_FloorSpeed, m_FloorTarget, m_Crush, 1, m_Hexencrush);
+		s = MoveCeiling (m_CeilingSpeed, m_CeilingTarget, m_Crush, -1, m_Hexencrush);
 	}
 	else
 	{
-		r = MoveFloor (m_FloorSpeed, m_FloorTarget, m_Crush, -1);
-		s = MoveCeiling (m_CeilingSpeed, m_CeilingTarget, m_Crush, 1);
+		r = MoveFloor (m_FloorSpeed, m_FloorTarget, m_Crush, -1, m_Hexencrush);
+		s = MoveCeiling (m_CeilingSpeed, m_CeilingTarget, m_Crush, 1, m_Hexencrush);
 	}
 
 	if (r == pastdest && s == pastdest)
@@ -83,17 +84,17 @@ void DPillar::Tick ()
 	{
 		if (r == crushed)
 		{
-			MoveFloor (m_FloorSpeed, oldfloor, -1, -1);
+			MoveFloor (m_FloorSpeed, oldfloor, -1, -1, m_Hexencrush);
 		}
 		if (s == crushed)
 		{
-			MoveCeiling (m_CeilingSpeed, oldceiling, -1, 1);
+			MoveCeiling (m_CeilingSpeed, oldceiling, -1, 1, m_Hexencrush);
 		}
 	}
 }
 
 DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
-				  fixed_t floordist, fixed_t ceilingdist, int crush)
+				  fixed_t floordist, fixed_t ceilingdist, int crush, bool hexencrush)
 	: DMover (sector)
 {
 	fixed_t newheight;
@@ -105,6 +106,7 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 
 	m_Type = type;
 	m_Crush = crush;
+	m_Hexencrush = hexencrush;
 
 	if (type == pillarBuild)
 	{
@@ -173,7 +175,7 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 }
 
 bool EV_DoPillar (DPillar::EPillar type, int tag, fixed_t speed, fixed_t height,
-				  fixed_t height2, int crush)
+				  fixed_t height2, int crush, bool hexencrush)
 {
 	bool rtn = false;
 	int secnum = -1;
@@ -197,7 +199,7 @@ bool EV_DoPillar (DPillar::EPillar type, int tag, fixed_t speed, fixed_t height,
 			continue;
 
 		rtn = true;
-		new DPillar (sec, type, speed, height, height2, crush);
+		new DPillar (sec, type, speed, height, height2, crush, hexencrush);
 	}
 	return rtn;
 }

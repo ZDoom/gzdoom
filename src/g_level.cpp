@@ -74,6 +74,7 @@
 #include "vectors.h"
 #include "sbarinfo.h"
 #include "r_translate.h"
+#include "p_lnspec.h"
 
 #include "gi.h"
 
@@ -1098,10 +1099,9 @@ static void ParseMapInfoLower (FScanner &sc,
 
 		case MITYPE_SPECIALACTION:
 			{
-				int FindLineSpecial(const char *str);
-
 				FSpecialAction **so = (FSpecialAction**)(info + handler->data1);
 				FSpecialAction *sa = new FSpecialAction;
+				int min_arg, max_arg;
 				sa->Next = *so;
 				*so = sa;
 				sc.SetCMode(true);
@@ -1109,14 +1109,23 @@ static void ParseMapInfoLower (FScanner &sc,
 				sa->Type = FName(sc.String);
 				sc.CheckString(",");
 				sc.MustGetString();
-				strlwr(sc.String);
-				sa->Action = FindLineSpecial(sc.String);
+				sa->Action = P_FindLineSpecial(sc.String, &min_arg, &max_arg);
+				if (sa->Action == 0 || min_arg < 0)
+				{
+					sc.ScriptError("Unknown specialaction '%s'");
+				}
 				int j = 0;
 				while (j < 5 && sc.CheckString(","))
 				{
 					sc.MustGetNumber();
 					sa->Args[j++] = sc.Number;
 				}
+				/*
+				if (j<min || j>max)
+				{
+					// Should be an error but can't for compatibility.
+				}
+				*/
 				sc.SetCMode(false);
 			}
 			break;

@@ -1,4 +1,7 @@
 March 19, 2008 (Changes by Graf Zahl)
+- Removed thingdef_specials.h and thingdef_specials.gperf and replaced
+  line special definition with something that automatically gets updated
+  if new specials are added.
 - Added copyright/license headers to a few files.
 - Fixed: ACS SetMugShotState needs to check the StatusBar pointer for the
   proper object type.

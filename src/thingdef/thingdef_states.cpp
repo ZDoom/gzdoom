@@ -66,9 +66,6 @@ TArray<FName> JumpParameters;
 
 
 
-#include "thingdef_specials.h"
-
-
 #define FROM_THINGDEF
 // Prototype the code pointers
 #define WEAPON(x)	void A_##x(AActor*);	
@@ -395,43 +392,6 @@ int PrepareStateParameters(FState * state, int numparams)
 
 //==========================================================================
 //
-// Returns the index of the given line special
-//
-//==========================================================================
-int FindLineSpecial(const char * string)
-{
-	const ACSspecials *spec;
-
-	spec = is_special(string, (unsigned int)strlen(string));
-	if (spec) return spec->Special;
-	return 0;
-}
-
-//==========================================================================
-//
-// FindLineSpecialEx
-//
-// Like FindLineSpecial, but also returns the min and max argument count.
-//
-//==========================================================================
-
-int FindLineSpecialEx (const char *string, int *min_args, int *max_args)
-{
-	const ACSspecials *spec;
-
-	spec = is_special(string, (unsigned int)strlen(string));
-	if (spec != NULL)
-	{
-		*min_args = spec->MinArgs;
-		*max_args = MAX(spec->MinArgs, spec->MaxArgs);
-		return spec->Special;
-	}
-	*min_args = *max_args = 0;
-	return 0;
-}
-
-//==========================================================================
-//
 // DoActionSpecials
 // handles action specials as code pointers
 //
@@ -439,14 +399,17 @@ int FindLineSpecialEx (const char *string, int *min_args, int *max_args)
 bool DoActionSpecials(FScanner &sc, FState & state, bool multistate, int * statecount, Baggage &bag)
 {
 	int i;
-	const ACSspecials *spec;
+	int min_args, max_args;
+	FString specname = sc.String;
 
-	if ((spec = is_special (sc.String, sc.StringLen)) != NULL)
+	int special = P_FindLineSpecial(sc.String, &min_args, &max_args);
+
+	if (special > 0 && min_args >= 0)
 	{
 
 		int paramindex=PrepareStateParameters(&state, 6);
 
-		StateParameters[paramindex]=spec->Special;
+		StateParameters[paramindex]=special;
 
 		// Make this consistent with all other parameter parsing
 		if (sc.CheckToken('('))
@@ -461,13 +424,13 @@ bool DoActionSpecials(FScanner &sc, FState & state, bool multistate, int * state
 		}
 		else i=0;
 
-		if (i < spec->MinArgs)
+		if (i < min_args)
 		{
-			sc.ScriptError ("Too few arguments to %s", spec->name);
+			sc.ScriptError ("Too few arguments to %s", specname.GetChars());
 		}
-		if (i > MAX (spec->MinArgs, spec->MaxArgs))
+		if (i > max_args)
 		{
-			sc.ScriptError ("Too many arguments to %s", spec->name);
+			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
 		state.Action = A_CallSpecial;
 		return true;

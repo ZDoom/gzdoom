@@ -146,10 +146,6 @@ enum
 };
 
 
-// The contents of string must be lowercase (for now, anyway)
-int FindLineSpecialEx (const char *string, int *minargs, int *maxargs);
-
-
 // Types of old style decorations
 enum EDefinitionType
 {

@@ -3040,3 +3040,64 @@ lnSpecFunc LineSpecials[256] =
 	LS_Ceiling_LowerToFloor,
 	LS_Ceiling_CrushRaiseAndStaySilA
 };
+
+struct FLineSpecial
+{
+	const char *name;
+	BYTE number;
+	BYTE min_args;
+	SBYTE max_args;
+};
+
+#define DEFINE_SPECIAL(name, num, min, max) {#name, num, min, max},
+static FLineSpecial LineSpecialNames[]={
+#include "actionspecials.h"
+};
+
+//==========================================================================
+//
+// P_FindLineSpecial
+//
+// Finds a line special and also returns the min and max argument count.
+//
+//==========================================================================
+static int STACK_ARGS lscmp (const void * a, const void * b)
+{
+	return stricmp( ((FLineSpecial*)a)->name, ((FLineSpecial*)b)->name);
+}
+
+
+int P_FindLineSpecial (const char *string, int *min_args, int *max_args)
+{
+	static bool sorted=false;
+
+	if (!sorted)
+	{
+		qsort(LineSpecialNames, countof(LineSpecialNames), sizeof(FLineSpecial), lscmp);
+		sorted = true;
+	}
+
+	int min = 0, max = countof(LineSpecialNames) - 1;
+
+	while (min <= max)
+	{
+		int mid = (min + max) / 2;
+		int lexval = stricmp (string, LineSpecialNames[mid].name);
+		if (lexval == 0)
+		{
+			if (min_args != NULL) *min_args = LineSpecialNames[mid].min_args;
+			if (max_args != NULL) *max_args = LineSpecialNames[mid].max_args;
+			return LineSpecialNames[mid].number;
+		}
+		else if (lexval > 0)
+		{
+			min = mid + 1;
+		}
+		else
+		{
+			max = mid - 1;
+		}
+	}
+	return 0;
+}
+

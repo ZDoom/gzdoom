@@ -806,9 +806,8 @@ static ExpData *ParseExpressionA (FScanner &sc, const PClass *cls)
 			int specnum, min_args, max_args;
 
 			// Check if this is an action special
-			strlwr (sc.String);
-			specnum = FindLineSpecialEx (sc.String, &min_args, &max_args);
-			if (specnum != 0)
+			specnum = P_FindLineSpecial (sc.String, &min_args, &max_args);
+			if (specnum != 0 && min_args >= 0)
 			{
 				int i;
 

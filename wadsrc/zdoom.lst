@@ -64,13 +64,19 @@ althudcf.txt				althudcf.txt
 sbarinfo.txt				sbarinfo.txt
 
 ========
+# Doom map format translators
+
+xlat/doom.txt				xlat/doom.txt
+xlat/heretic.txt			xlat/heretic.txt
+xlat/strife.txt				xlat/strife.txt
+xlat/defines.i				xlat/defines.i
+
+
+========
 # Support lumps
 
 dehsupp.lmp	                dehsupp.lmp
 
-doomx.lmp	                xlat/doom.x
-hereticx.lmp                xlat/heretic.x
-strifex.lmp	                xlat/strife.x
 sectorx.txt					sectorx.txt
 
 animated.lmp                animated.lmp

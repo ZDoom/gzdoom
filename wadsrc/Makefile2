@@ -1,14 +1,5 @@
 include wadmake
 
-xlat/doom.x: xlat/doomxlat.txt xlat/defines.i
-	$(XLATCC) xlat/doomxlat.txt xlat/doom.x
-
-xlat/heretic.x: xlat/hereticxlat.txt xlat/doomxlat.txt xlat/defines.i
-	$(XLATCC) xlat/hereticxlat.txt xlat/heretic.x
-
-xlat/strife.x: xlat/strifexlat.txt xlat/defines.i
-	$(XLATCC) xlat/strifexlat.txt xlat/strife.x
-
 dehsupp.lmp: dehsupp.txt
 	$(DEHSUPP) dehsupp.txt dehsupp.lmp
 	

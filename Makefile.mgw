@@ -24,7 +24,6 @@ basetools: ccdv.exe
 	$(MAKE) -C zlib -f Makefile.mgw
 	$(MAKE) -C tools/makewad
 	$(MAKE) -C tools/dehsupp
-	$(MAKE) -C tools/xlatcc
 	$(MAKE) -C tools/fixrtext
 	$(MAKE) -C wadsrc -f Makefile.mgw
 	$(MAKE) -C jpeg-6b -f Makefile.mgw
@@ -38,7 +37,6 @@ clean:
 	@$(MAKE) -C tools/re2c clean
 	@$(MAKE) -C tools/dehsupp clean
 	@$(MAKE) -C tools/makewad clean
-	@$(MAKE) -C tools/xlatcc clean
 	@$(MAKE) -C tools/fixrtext clean
 	@$(MAKE) -C wadsrc -f Makefile.mgw clean
 	@$(MAKE) -C . -f Makefile.mingw clean

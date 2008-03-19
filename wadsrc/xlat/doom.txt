@@ -395,6 +395,7 @@ include "xlat/defines.i"
  *    <destination>.
  */
 
+
 // Generalized crusher (tag, dnspeed, upspeed, silent, damage)
 [Generic_Crusher] (0x2f80, 0x2fff)
 {

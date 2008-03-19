@@ -1,4 +1,6 @@
 March 19, 2008 (Changes by Graf Zahl)
+- Integrated xlatcc into ZDoom.exe so that the linedef translation files
+  don't need to be compiled and can be stored as text in zdoom.pk3.
 - Removed thingdef_specials.h and thingdef_specials.gperf and replaced
   line special definition with something that automatically gets updated
   if new specials are added.

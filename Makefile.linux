@@ -91,7 +91,7 @@ $(OBJDIR)/fmopl.o: src/oplsynth/fmopl.cpp
 $(OBJDIR):
 	mkdir $(OBJDIR)
 
-toolsandpk3: ccdv tools/makewad/makewad tools/dehsupp/dehsupp tools/xlatcc/xlatcc
+toolsandpk3: ccdv tools/makewad/makewad tools/dehsupp/dehsupp
 	$(MAKE) -C wadsrc/
 
 zdoom.pk3: toolsandpk3
@@ -105,9 +105,6 @@ tools/makewad/makewad:
 
 tools/dehsupp/dehsupp:
 	$(MAKE) -C tools/dehsupp/
-
-tools/xlatcc/xlatcc:
-	$(MAKE) -C tools/xlatcc/
 
 
 updaterev: tools/updaterevision/updaterevision

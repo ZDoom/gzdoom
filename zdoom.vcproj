@@ -6331,6 +6331,42 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<Filter
+			Name="Xlat"
+			>
+			<File
+				RelativePath=".\src\xlat\parse_xlat.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\xlat\xlat.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\xlat\xlat_parser.y"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Processing grammar file"
+						CommandLine="tools\lemon\lemon.exe -s &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)xlat_parser.c;$(InputDir)xlat_parser.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Processing grammar file"
+						CommandLine="tools\lemon\lemon.exe -s &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)xlat_parser.c;$(InputDir)xlat_parser.h"
+					/>
+				</FileConfiguration>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

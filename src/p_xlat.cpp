@@ -30,9 +30,6 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** The linedef translations are read from a WAD lump (DOOMX or HERETICX),
-** so most of this file's behavior can be easily customized without
-** recompiling.
 */
 
 #include "doomtype.h"
@@ -48,6 +45,7 @@
 #include "w_wad.h"
 #include "sc_man.h"
 #include "cmdlib.h"
+#include "xlat/xlat.h"
 
 // define names for the TriggerType field of the general linedefs
 
@@ -66,12 +64,10 @@ typedef enum
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 {
 	static FMemLump tlatebase;
-	const BYTE *tlate;
-	short special = LittleShort(mld->special);
+	unsigned short special = (unsigned short) LittleShort(mld->special);
 	short tag = LittleShort(mld->tag);
 	DWORD flags = LittleShort(mld->flags);
 	INTBOOL passthrough;
-	int i;
 
 	if (flags & ML_TRANSLUCENT_STRIFE)
 	{
@@ -79,9 +75,6 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	}
 	if (gameinfo.gametype == GAME_Strife)
 	{
-		// It might be useful to make these usable by all games.
-		// Unfortunately, there aren't enough flag bits left to do that,
-		// so they're Strife-only.
 		if (flags & ML_RAILING_STRIFE)
 		{
 			flags |= ML_RAILING;
@@ -125,127 +118,63 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		return;
 	}
 
-	// The translation lump is cached across calls to P_TranslateLineDef.
-	if (tlatebase.GetMem() == NULL)
+	FLineTrans *linetrans = NULL;
+	if (special < SimpleLineTranslations.Size()) linetrans = &SimpleLineTranslations[special];
+	if (linetrans != NULL && linetrans->special != 0)
 	{
-		if (gameinfo.gametype == GAME_Doom)
+		ld->special = linetrans->special;
+		ld->args[0] = linetrans->args[0];
+		ld->args[1] = linetrans->args[1];
+		ld->args[2] = linetrans->args[2];
+		ld->args[3] = linetrans->args[3];
+		ld->args[4] = linetrans->args[4];
+
+		ld->flags = flags | ((linetrans->flags & 0x1f) << 9);
+
+		if (passthrough && (GET_SPAC(ld->flags) == SPAC_USE))
 		{
-			tlatebase = Wads.ReadLump ("DOOMX");
+			ld->flags &= ~ML_SPAC_MASK;
+			ld->flags |= SPAC_USETHROUGH << ML_SPAC_SHIFT;
 		}
-		else if (gameinfo.gametype == GAME_Strife)
+		switch (linetrans->flags & 0xe0)
 		{
-			tlatebase = Wads.ReadLump ("STRIFEX");
+		case LINETRANS_HAS2TAGS:	// First two arguments are tags
+			ld->args[1] = tag;
+		case LINETRANS_HASTAGAT1:	// First argument is a tag
+			ld->args[0] = tag;
+			break;
+
+		case LINETRANS_HASTAGAT2:	// Second argument is a tag
+			ld->args[1] = tag;
+			break;
+
+		case LINETRANS_HASTAGAT3:	// Third argument is a tag
+			ld->args[2] = tag;
+			break;
+
+		case LINETRANS_HASTAGAT4:	// Fourth argument is a tag
+			ld->args[3] = tag;
+			break;
+
+		case LINETRANS_HASTAGAT5:	// Fifth argument is a tag
+			ld->args[4] = tag;
+			break;
 		}
-		else
+		if ((ld->flags & ML_SECRET) && (GET_SPAC(ld->flags) == SPAC_USE || GET_SPAC(ld->flags) == SPAC_USETHROUGH))
 		{
-			tlatebase = Wads.ReadLump ("HERETICX");
+			ld->flags &= ~ML_MONSTERSCANACTIVATE;
 		}
-	}
-	tlate = (const BYTE *)tlatebase.GetMem();
-
-	// Check if this is a regular linetype
-	if (tlate[0] == 'N' && tlate[1] == 'O' && tlate[2] == 'R' && tlate[3] == 'M')
-	{
-		int count = (tlate[4] << 8) | tlate[5];
-		tlate += 6;
-		while (count)
-		{
-			int low = (tlate[0] << 8) | tlate[1];
-			int high = (tlate[2] << 8) | tlate[3];
-			tlate += 4;
-			if (special >= low && special <= high)
-			{ // found it, so use the LUT
-				const BYTE *specialmap = tlate + (special - low) * 7;
-
-				ld->flags = flags | ((specialmap[0] & 0x1f) << 9);
-
-				if (passthrough && (GET_SPAC(ld->flags) == SPAC_USE))
-				{
-					ld->flags &= ~ML_SPAC_MASK;
-					ld->flags |= SPAC_USETHROUGH << ML_SPAC_SHIFT;
-				}
-				ld->special = specialmap[1];
-				ld->args[0] = specialmap[2];
-				ld->args[1] = specialmap[3];
-				ld->args[2] = specialmap[4];
-				ld->args[3] = specialmap[5];
-				ld->args[4] = specialmap[6];
-				switch (specialmap[0] & 0xe0)
-				{
-				case 7<<5:					// First two arguments are tags
-					ld->args[1] = tag;
-				case 1<<5: case 6<<5:		// First argument is a tag
-					ld->args[0] = tag;
-					break;
-
-				case 2<<5:					// Second argument is a tag
-					ld->args[1] = tag;
-					break;
-
-				case 3<<5:					// Third argument is a tag
-					ld->args[2] = tag;
-					break;
-
-				case 4<<5:					// Fourth argument is a tag
-					ld->args[3] = tag;
-					break;
-
-				case 5<<5:					// Fifth argument is a tag
-					ld->args[4] = tag;
-					break;
-				}
-				if ((ld->flags & ML_SECRET) && (GET_SPAC(ld->flags) == SPAC_USE || GET_SPAC(ld->flags) == SPAC_USETHROUGH))
-				{
-					ld->flags &= ~ML_MONSTERSCANACTIVATE;
-				}
-				return;
-			}
-			tlate += (high - low + 1) * 7;
-			count--;
-		}
+		return;
 	}
 
-	// Check if this is a BOOM generalized linetype
-	if (tlate[0] == 'B' && tlate[1] == 'O' && tlate[2] == 'O' && tlate[3] == 'M')
+	for(int i=0;i<NumBoomish;i++)
 	{
-		int count = (tlate[4] << 8) | tlate[5];
-		tlate += 6;
+		FBoomTranslator *b = &Boomish[i];
 
-		// BOOM translators are stored on disk as:
-		//
-		// WORD <first linetype in range>
-		// WORD <last linetype in range>
-		// BYTE <new special>
-		// repeat [BYTE op BYTES parms]
-		//
-		// op consists of some bits:
-		//
-		// 76543210
-		// ||||||++-- Dest is arg[(op&3)+1] (arg[0] is always tag)
-		// |||||+---- 0 = store, 1 = or with existing value
-		// ||||+----- 0 = this is normal, 1 = x-op in next byte
-		// ++++------ # of elements in list, or 0 to always use a constant value
-		//
-		// If a constant value is used, parms is a single byte containing that value.
-		// Otherwise, parms has the format:
-		//
-		// WORD <value to AND with linetype>
-		// repeat [WORD <if result is this> BYTE <use this>]
-		//
-		// These x-ops are defined:
-		//
-		// 0 = end of this BOOM translator
-		// 1 = dest is flags
-
-		while (count)
+		if (special >= b->FirstLinetype && special <= b->LastLinetype)
 		{
-			int low = (tlate[0] << 8) | tlate[1];
-			int high = (tlate[2] << 8) | tlate[3];
-			tlate += 4;
+			ld->special = b->NewSpecial;
 
-			DWORD oflags = flags;
-
-			// Assume we found it and translate
 			switch (special & 0x0007)
 			{
 			case WalkMany:
@@ -275,60 +204,43 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			ld->args[0] = tag;
 			ld->args[1] = ld->args[2] = ld->args[3] = ld->args[4] = 0;
 
-			ld->special = *tlate++;
-			for (;;)
+			for(unsigned j=0; j < b->Args.Size(); j++)
 			{
+				FBoomArg *arg = &b->Args[j];
 				int *destp;
 				int flagtemp;
-				BYTE op = *tlate++;
-				BYTE dest;
 				BYTE val = 0;	// quiet, GCC
 				bool found;
-				int lsize;
 
-				dest = op & 3;
-				if (op & 8)
+				if (arg->ArgNum < 4)
 				{
-					BYTE xop = *tlate++;
-					if (xop == 0)
-						break;
-					else if (xop == 1)
-						dest = 4;
-				}
-				if (dest < 4)
-				{
-					destp = &ld->args[dest+1];
+					destp = &ld->args[arg->ArgNum+1];
 				}
 				else
 				{
 					flagtemp = ((flags >> 9) & 0x3f);
 					destp = &flagtemp;
 				}
-				lsize = op >> 4;
-				if (lsize == 0)
+				if (arg->ListSize == 0)
 				{
-					val = *tlate++;
+					val = arg->ConstantValue;
 					found = true;
 				}
 				else
 				{
-					WORD mask = (tlate[0] << 8) | tlate[1];
-					tlate += 2;
 					found = false;
-					for (i = 0; i < lsize; i++)
+					for (int k = 0; k < arg->ListSize; k++)
 					{
-						WORD filter = (tlate[0] << 8) | tlate[1];
-						if ((special & mask) == filter)
+						if ((special & arg->AndValue) == arg->ResultFilter[k])
 						{
-							val = tlate[2];
+							val = arg->ResultValue[k];
 							found = true;
 						}
-						tlate += 3;
 					}
 				}
 				if (found)
 				{
-					if (op & 4)
+					if (arg->bOrExisting)
 					{
 						*destp |= val;
 					}
@@ -336,35 +248,28 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 					{
 						*destp = val;
 					}
-					if (dest == 4)
+					if (arg->ArgNum == 4)
 					{
 						flags = (flags & ~0x7e00) | (flagtemp << 9);
 					}
 				}
 			}
-			if (special >= low && special <= high)
-			{ // Really found it, so we're done
-				// We treat push triggers like switch triggers with zero tags.
-				if ((special & 7) == PushMany || (special & 7) == PushOnce)
+			// We treat push triggers like switch triggers with zero tags.
+			if ((special & 7) == PushMany || (special & 7) == PushOnce)
+			{
+				if (ld->special == Generic_Door)
 				{
-					if (ld->special == Generic_Door)
-					{
-						ld->args[2] |= 128;
-					}
-					else
-					{
-						ld->args[0] = 0;
-					}
+					ld->args[2] |= 128;
 				}
-				ld->flags = flags;
-				return;
+				else
+				{
+					ld->args[0] = 0;
+				}
 			}
-
-			flags = oflags;
-			count--;
+			ld->flags = flags;
+			return;
 		}
 	}
-
 	// Don't know what to do, so 0 it
 	ld->special = 0;
 	ld->flags = flags;
@@ -557,3 +462,4 @@ int P_TranslateSectorSpecial (int special)
 	
 	return sectortables[1][special] | high;
 }
+

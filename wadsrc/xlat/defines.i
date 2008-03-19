@@ -1,23 +1,3 @@
-include "xlat/specials.i"
-
-// Not all specials are accessible from ACS, so define those here
-special
-	 50:ExtraFloor_LightOnly(),
-	100:Scroll_Texture_Left(),
-	101:Scroll_Texture_Right(),
-	102:Scroll_Texture_Up(),
-	103:Scroll_Texture_Down(),
-	121:Line_SetIdentification(),
-	181:Plane_Align(),
-	190:Static_Init(),
-	209:Transfer_Heights(),
-	210:Transfer_FloorLight(),
-	211:Transfer_CeilingLight(),
-	219:Sector_SetFriction(),
-	222:Scroll_Texture_Model(),
-	225:Scroll_Texture_Offsets(),
-	227:PointPush_SetForce()
-;
 
 // Static_Init types
 enum

@@ -916,7 +916,7 @@ int FWadCollection::GetNumForName (const char *name, int space)
 //
 //==========================================================================
 
-int FWadCollection::CheckNumForFullName (const char *name)
+int FWadCollection::CheckNumForFullName (const char *name, bool trynormal)
 {
 	WORD i;
 
@@ -932,7 +932,13 @@ int FWadCollection::CheckNumForFullName (const char *name)
 		i = NextLumpIndex_FullName[i];
 	}
 
-	return i != NULL_INDEX ? i : -1;
+	if (i != NULL_INDEX) return i;
+
+	if (trynormal && strlen(name) <= 8 && !strpbrk(name, "./"))
+	{
+		return CheckNumForName(name, ns_global);
+	}
+	return -1;
 }
 
 int FWadCollection::CheckNumForFullName (const char *name, int wadnum)

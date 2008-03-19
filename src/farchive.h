@@ -287,11 +287,9 @@ inline FArchive &operator<< (FArchive &arc, T* &object)
 
 FArchive &operator<< (FArchive &arc, const PClass * &info);
 
-template<class T>
-inline FArchive &operator<< (FArchive &arc, TArray<T> &self)
+template<class T,class TT>
+inline FArchive &operator<< (FArchive &arc, TArray<T,TT> &self)
 {
-	unsigned int i;
-
 	if (arc.IsStoring())
 	{
 		arc.WriteCount(self.Count);
@@ -301,7 +299,7 @@ inline FArchive &operator<< (FArchive &arc, TArray<T> &self)
 		DWORD numStored = arc.ReadCount();
 		self.Resize(numStored);
 	}
-	for (i = 0; i < self.Count; ++i)
+	for (unsigned int i = 0; i < self.Count; ++i)
 	{
 		arc << self.Array[i];
 	}

@@ -89,6 +89,8 @@
 */
 #define DEFAULT_GCMUL		400 // GC runs 'quadruple the speed' of memory allocation
 
+// Number of sectors to mark for each step.
+#define SECTORSTEPSIZE	32
 
 #define GCSTEPSIZE		1024u
 #define GCSWEEPMAX		40
@@ -96,6 +98,19 @@
 #define GCFINALIZECOST	100
 
 // TYPES -------------------------------------------------------------------
+
+// This object is responsible for marking sectors during the propagate
+// stage. In case there are many, many sectors, it lets us break them
+// up instead of marking them all at once.
+class DSectorMarker : public DObject
+{
+	DECLARE_CLASS(DSectorMarker, DObject)
+public:
+	DSectorMarker() : SecNum(0) {}
+	size_t PropagateMark();
+	int SecNum;
+};
+IMPLEMENT_CLASS(DSectorMarker)
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -124,6 +139,8 @@ int StepCount;
 size_t Dept;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static DSectorMarker *SectorMarker;
 
 // CODE --------------------------------------------------------------------
 
@@ -281,19 +298,15 @@ static void MarkRoot()
 		if (playeringame[i])
 			players[i].PropagateMark();
 	}
-	if (sectors != NULL)
+	if (SectorMarker == NULL)
 	{
-		for (i = 0; i < numsectors; ++i)
-		{
-			Mark(sectors[i].SoundTarget);
-			Mark(sectors[i].CeilingSkyBox);
-			Mark(sectors[i].FloorSkyBox);
-			Mark(sectors[i].SecActTarget);
-			Mark(sectors[i].floordata);
-			Mark(sectors[i].ceilingdata);
-			Mark(sectors[i].lightingdata);
-		}
+		SectorMarker = new DSectorMarker;
 	}
+	else
+	{
+		SectorMarker->SecNum = 0;
+	}
+	Mark(SectorMarker);
 	{ // Silly bots
 		DObject *foo = &bglobal;
 		Mark(foo);
@@ -563,6 +576,54 @@ void DelSoftRoot(DObject *obj)
 }
 
 }
+
+//==========================================================================
+//
+// DSectorMarker :: PropagateMark
+//
+// Propagates marks across a few sectors and reinserts itself into the
+// gray list if it didn't do them all.
+//
+//==========================================================================
+
+size_t DSectorMarker::PropagateMark()
+{
+	int i;
+
+	if (sectors == NULL)
+	{
+		return 0;
+	}
+	for (i = 0; i < SECTORSTEPSIZE && SecNum + i < numsectors; ++i)
+	{
+		sector_t *sec = &sectors[SecNum + i];
+		GC::Mark(sec->SoundTarget);
+		GC::Mark(sec->CeilingSkyBox);
+		GC::Mark(sec->FloorSkyBox);
+		GC::Mark(sec->SecActTarget);
+		GC::Mark(sec->floordata);
+		GC::Mark(sec->ceilingdata);
+		GC::Mark(sec->lightingdata);
+	}
+	// If there are more sectors to mark, put ourself back into the gray
+	// list.
+	if (SecNum + i < numsectors)
+	{
+		SecNum += i;
+		Black2Gray();
+		GCNext = GC::Gray;
+		GC::Gray = this;
+	}
+	return i * sizeof(sector_t);
+}
+
+//==========================================================================
+//
+// STAT gc
+//
+// Provides information about the current garbage collector state.
+//
+//==========================================================================
 
 ADD_STAT(gc)
 {

@@ -1,3 +1,8 @@
+March 18, 2008
+- Fixed the TArray serializer declaration.
+  (Thank you for your warnings, GCC! ;-)
+- Changed root sector marking so that it can happen incrementally.
+
 March 18, 2008 (Changes by Graf Zahl)
 - VC++ doesn't seem to like the TArray serializer so I added a workaround
   to be able to save the 3dMidtex attachment info.

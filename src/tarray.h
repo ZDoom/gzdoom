@@ -49,7 +49,7 @@ class FArchive;
 template <class T, class TT=T>
 class TArray
 {
-	friend FArchive &operator<< (FArchive &arc, TArray<T> &self);
+	template<class U, class UU> friend FArchive &operator<< (FArchive &arc, TArray<U,UU> &self);
 
 public:
 	////////

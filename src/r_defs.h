@@ -281,7 +281,6 @@ struct extsector_t
 		} Floor, Ceiling;
 	} Midtex;
 	
-	
 	void Serialize(FArchive &arc);
 };
 

@@ -408,8 +408,6 @@ void P_SerializeWorld (FArchive &arc)
 	}
 }
 
-#if 0
-// VC++ produces a linker error when using the templated << operator
 void extsector_t::Serialize(FArchive &arc)
 {
 	arc << Midtex.Floor.AttachedLines 
@@ -417,39 +415,6 @@ void extsector_t::Serialize(FArchive &arc)
 		<< Midtex.Ceiling.AttachedLines
 		<< Midtex.Ceiling.AttachedSectors;
 }
-
-#else
-
-// Remove this when the problem above has been sorted out.
-template<class T>
-void SaveArray (FArchive &arc, TArray<T> &self)
-{
-	unsigned int i;
-
-	if (arc.IsStoring())
-	{
-		arc.WriteCount(self.Size());
-	}
-	else
-	{
-		DWORD numStored = arc.ReadCount();
-		self.Resize(numStored);
-	}
-	for (i = 0; i < self.Size(); ++i)
-	{
-		arc << self[i];
-	}
-}
-
-void extsector_t::Serialize(FArchive &arc)
-{
-	SaveArray(arc, Midtex.Floor.AttachedLines);
-	SaveArray(arc, Midtex.Floor.AttachedSectors);
-	SaveArray(arc, Midtex.Ceiling.AttachedLines);
-	SaveArray(arc, Midtex.Ceiling.AttachedSectors);
-}
-
-#endif
 
 //
 // Thinkers

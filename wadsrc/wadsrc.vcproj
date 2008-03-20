@@ -48,8 +48,8 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo andcopy"
-				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
+				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo andcopy"
+				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
 				CleanCommandLine="del wadmake zdoom.pk3"
 				Output="zdoom.pk3"
 				PreprocessorDefinitions=""
@@ -90,8 +90,8 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo"
-				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo XLATCC=..\tools\xlatcc\xlatcc DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
+				BuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad DEHSUPP=..\tools\dehsupp\dehsupp NOLOGO=/nologo"
+				ReBuildCommandLine="nmake /nologo MAKEWAD=..\tools\makewad\makewad NOLOGO=/nologo DEHSUPP=..\tools\dehsupp\dehsupp nrebuild"
 				CleanCommandLine="del wadmake zdoom.pk3"
 				Output="zdoom.pk3"
 				PreprocessorDefinitions=""

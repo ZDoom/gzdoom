@@ -790,22 +790,6 @@
 			<File
 				RelativePath=".\src\p_lnspec.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						GeneratePreprocessedFile="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						GeneratePreprocessedFile="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\src\p_map.cpp"
@@ -818,38 +802,6 @@
 			<File
 				RelativePath=".\src\p_mobj.cpp"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AssemblerOutput="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AssemblerOutput="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AssemblerOutput="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AssemblerOutput="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\src\p_pillar.cpp"
@@ -1996,22 +1948,6 @@
 			<File
 				RelativePath=".\src\g_shared\a_decals.cpp"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						GeneratePreprocessedFile="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						GeneratePreprocessedFile="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\src\g_shared\a_flashfader.cpp"

@@ -22,8 +22,5 @@ endif
 ../tools/makewad/makewad.exe:
 	$(MAKE) -C ../tools/makewad -f Makefile
 	
-../tools/xlatcc/xlatcc.exe:
-	$(MAKE) -C ../tools/xlatcc -f Makefile
-	
 ../tools/dehsupp/dehsupp.exe:
 	$(MAKE) -C ../tools/dehsupp -f Makefile

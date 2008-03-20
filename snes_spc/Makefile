@@ -1,5 +1,6 @@
 # Makefile for snes_spc, derived from zlib/Makefile.mgw.
 
+CMD=0
 ifeq (Windows_NT,$(OS))
   CMD=1
 endif

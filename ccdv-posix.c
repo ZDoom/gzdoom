@@ -304,11 +304,7 @@ int main(int argc, char **argv)
 	snprintf(gAction, sizeof(gAction), "Running %s", Basename(argv[1]));
 	memset(gArgsStr, 0, sizeof(gArgsStr));
 
-	if(strcmp(gAction+8, "ar") == 0)
-	  {
-	    snprintf(gTarget, sizeof(gTarget), "%s", Basename(argv[i + 1]));
-	  }
-	else if(strcmp(gAction+8, "cc") == 0 ||
+	if(strcmp(gAction+8, "cc") == 0 ||
 		strcmp(gAction+8, "ld") == 0 ||
 		strcmp(gAction+8, "gcc") == 0 ||
 		strcmp(gAction+8, "g++") == 0 ||

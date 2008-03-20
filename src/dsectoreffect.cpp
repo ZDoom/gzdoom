@@ -111,6 +111,12 @@ bool DMover::MoveAttached(int crush, fixed_t move, int floorOrCeiling, bool rese
 		P_Scroll3dMidtex(m_Sector, crush, -move, !!floorOrCeiling);
 		return false;
 	}
+	if (!P_MoveLinkedSectors(m_Sector, crush, move, !!floorOrCeiling) && resetfailed)
+	{
+		P_MoveLinkedSectors(m_Sector, crush, -move, !!floorOrCeiling);
+		P_Scroll3dMidtex(m_Sector, crush, -move, !!floorOrCeiling);
+		return false;
+	}
 	return true;
 }
 

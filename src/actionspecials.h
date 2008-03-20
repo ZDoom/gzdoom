@@ -48,6 +48,7 @@ DEFINE_SPECIAL(Ceiling_MoveToValue, 47, 3, 4)
 DEFINE_SPECIAL(Sector_Attach3dMidtex, 48, -1, -1)
 DEFINE_SPECIAL(GlassBreak, 49, 0, 1)
 DEFINE_SPECIAL(ExtraFloor_LightOnly, 50, -1, -1)
+DEFINE_SPECIAL(Sector_SetLink, 51, 4, 4)
 
 DEFINE_SPECIAL(Plat_PerpetualRaise, 60, 3, 3)
 DEFINE_SPECIAL(Plat_Stop, 61, 1, 1)

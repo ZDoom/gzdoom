@@ -1998,7 +1998,7 @@ void updateinterpolations()  //Stick at beginning of domovethings
 	}
 }
 
-void setinterpolation(EInterpType type, void *posptr)
+void setinterpolation(EInterpType type, void *posptr, bool dolinks)
 {
 	FActiveInterpolation **interp_p;
 	FActiveInterpolation *interp = FActiveInterpolation::FindInterpolation (type, posptr, interp_p);
@@ -2010,21 +2010,43 @@ void setinterpolation(EInterpType type, void *posptr)
 	*interp_p = interp;
 	interp->CopyInterpToOld ();
 
-	if (type == INTERP_SectorFloor) P_Start3dMidtexInterpolations((sector_t*)posptr, false);
-	else if (type == INTERP_SectorCeiling) P_Start3dMidtexInterpolations((sector_t*)posptr, true);
+	if (dolinks)
+	{
+		if (type == INTERP_SectorFloor) 
+		{
+			P_Start3dMidtexInterpolations((sector_t*)posptr, false);
+			P_StartLinkedSectorInterpolations((sector_t*)posptr, false);
+		}
+		else if (type == INTERP_SectorCeiling) 
+		{
+			P_Start3dMidtexInterpolations((sector_t*)posptr, true);
+			P_StartLinkedSectorInterpolations((sector_t*)posptr, true);
+		}
+	}
 }
 
-void stopinterpolation(EInterpType type, void *posptr)
+void stopinterpolation(EInterpType type, void *posptr, bool dolinks)
 {
 	FActiveInterpolation **interp_p;
 	FActiveInterpolation *interp = FActiveInterpolation::FindInterpolation (type, posptr, interp_p);
 	if (interp != NULL)
 	{
-		if (type == INTERP_SectorFloor) P_Start3dMidtexInterpolations((sector_t*)posptr, false);
-		else if (type == INTERP_SectorCeiling) P_Start3dMidtexInterpolations((sector_t*)posptr, true);
-
 		*interp_p = interp->Next;
 		delete interp;
+
+		if (dolinks)
+		{
+			if (type == INTERP_SectorFloor) 
+			{
+				P_Stop3dMidtexInterpolations((sector_t*)posptr, false);
+				P_StopLinkedSectorInterpolations((sector_t*)posptr, false);
+			}
+			else if (type == INTERP_SectorCeiling) 
+			{
+				P_Stop3dMidtexInterpolations((sector_t*)posptr, true);
+				P_StopLinkedSectorInterpolations((sector_t*)posptr, true);
+			}
+		}
 	}
 }
 

@@ -53,6 +53,7 @@
 #include "p_conversation.h"
 #include "a_strifeglobal.h"
 #include "r_translate.h"
+#include "p_3dmidtex.h"
 
 #define FUNC(a) static int a (line_t *ln, AActor *it, bool backSide, \
 	int arg0, int arg1, int arg2, int arg3, int arg4)
@@ -1873,6 +1874,21 @@ FUNC(LS_Sector_SetFriction)
 	return true;
 }
 
+FUNC(LS_Sector_SetLink)
+// Sector_SetLink (controltag, linktag, floor/ceiling, movetype)
+{
+	if (arg0 != 0)	// control tag == 0 is for static initialization and must not be handled here
+	{
+		int control = P_FindSectorFromTag(arg0, -1);
+		if (control != 0)
+		{
+			return P_AddSectorLinks(&sectors[control], arg1, arg2, arg3);
+		}
+	}
+	return false;
+}
+
+
 static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy)
 {
 	if ((dx | dy) == 0)
@@ -2843,7 +2859,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// Sector_Attach3dMidtex
 	LS_GlassBreak,
 	LS_NOP,		// 50: ExtraFloor_LightOnly
-	LS_NOP,		// 51
+	LS_Sector_SetLink,
 	LS_NOP,		// 52
 	LS_NOP,		// 53
 	LS_NOP,		// 54

@@ -75,10 +75,10 @@
 // SAVESIG should match SAVEVER.
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 817
+#define MINSAVEVER 825
 
-#if SVN_REVISION_NUMBER == 0
-// This can happen if svnrevision is not updated properly (e.g. compiling while offline)
+#if SVN_REVISION_NUMBER < MINSAVEVER
+// Never write a savegame with a version lower than what we need
 #define SAVEVER			MINSAVEVER
 #define MAKESAVESIG(x)	"ZDOOMSAVE" #x
 #define SAVESIG			MAKESAVESIG(SAVEVER)

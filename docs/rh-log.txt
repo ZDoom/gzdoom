@@ -1,3 +1,17 @@
+March 20, 2008 (Changes by Graf Zahl)
+- Fixed: A_CustomMissile with aimmode 2 ignored spawnofs_xy.
+- Changed savegame versioning so that the written version is never lower
+  than the minmum one reported as compatible. 
+- Added mirrored movement modes for linked sectors.
+- Added Eternity-style initialization for linked sectors as a new subtype
+  of Static_Init.
+- Added linked sectors. The control sector determines how they move but if
+  any one of the linked sectors is blocked, movement for all linked sectors
+  will be affected. This will allow lifts consisting out of more than one
+  sector without the risk of breaking them if only one of the sectors is
+  blocked.
+- Fixed: A_Mushroom created an actor on the stack.
+
 March 19, 2008
 - Fixed: lempar.c needs to specify the __cdecl calling convention for malloc
   and free under VC++.

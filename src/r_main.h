@@ -242,8 +242,8 @@ private:
 	static FActiveInterpolation *FindInterpolation(EInterpType, void *interptr, FActiveInterpolation **&interp_p);
 
 	friend void updateinterpolations();
-	friend void setinterpolation(EInterpType, void *interptr);
-	friend void stopinterpolation(EInterpType, void *interptr);
+	friend void setinterpolation(EInterpType, void *interptr, bool dolinks);
+	friend void stopinterpolation(EInterpType, void *interptr, bool dolinks);
 	friend void dointerpolations(fixed_t smoothratio);
 	friend void restoreinterpolations();
 	friend void clearinterpolations();
@@ -253,8 +253,8 @@ private:
 };
 
 void updateinterpolations();
-void setinterpolation(EInterpType, void *interptr);
-void stopinterpolation(EInterpType, void *interptr);
+void setinterpolation(EInterpType, void *interptr, bool dolinks = true);
+void stopinterpolation(EInterpType, void *interptr, bool dolinks = true);
 void dointerpolations(fixed_t smoothratio);
 void restoreinterpolations();
 void clearinterpolations();

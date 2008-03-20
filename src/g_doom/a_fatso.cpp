@@ -134,15 +134,17 @@ void A_Mushroom (AActor *actor)
 	A_Explode (actor);	// First make normal explosion
 
 	// Now launch mushroom cloud
+	AActor *target = Spawn("Mapspot", 0, 0, 0, NO_REPLACE);	// We need something to aim at.
+	target->height = actor->height;
 	for (i = -n; i <= n; i += 8)
 	{
 		for (j = -n; j <= n; j += 8)
 		{
-			AActor target = *actor, *mo;
-			target.x += i << FRACBITS; // Aim in many directions from source
-			target.y += j << FRACBITS;
-			target.z += P_AproxDistance(i,j) << (FRACBITS+2); // Aim up fairly high
-			mo = P_SpawnMissile (actor, &target, spawntype); // Launch fireball
+			AActor *mo;
+			target->x = actor->x + (i << FRACBITS); // Aim in many directions from source
+			target->y = actor->y + (j << FRACBITS);
+			target->z = actor->z + (P_AproxDistance(i,j) << (FRACBITS+2)); // Aim up fairly high
+			mo = P_SpawnMissile (actor, target, spawntype); // Launch fireball
 			if (mo != NULL)
 			{
 				mo->momx >>= 1;
@@ -152,4 +154,5 @@ void A_Mushroom (AActor *actor)
 			}
 		}
 	}
+	target->Destroy();
 }

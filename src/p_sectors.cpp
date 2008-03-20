@@ -25,6 +25,7 @@
 #include "p_spec.h"
 #include "c_cvars.h"
 
+
 // [RH]
 // P_NextSpecialSector()
 //
@@ -170,7 +171,7 @@ fixed_t sector_t::FindNextHighestFloor (vertex_t **v) const
 		{
 			ofloor = other->floorplane.ZatPoint (check->v1);
 			floor = floorplane.ZatPoint (check->v1);
-			if (ofloor > floor && ofloor - floor < heightdiff)
+			if (ofloor > floor && ofloor - floor < heightdiff && !IsLinked(other, false))
 			{
 				heightdiff = ofloor - floor;
 				height = ofloor;
@@ -178,7 +179,7 @@ fixed_t sector_t::FindNextHighestFloor (vertex_t **v) const
 			}
 			ofloor = other->floorplane.ZatPoint (check->v2);
 			floor = floorplane.ZatPoint (check->v2);
-			if (ofloor > floor && ofloor - floor < heightdiff)
+			if (ofloor > floor && ofloor - floor < heightdiff && !IsLinked(other, false))
 			{
 				heightdiff = ofloor - floor;
 				height = ofloor;
@@ -227,7 +228,7 @@ fixed_t sector_t::FindNextLowestFloor (vertex_t **v) const
 				other = other;
 			ofloor = other->floorplane.ZatPoint (check->v1);
 			floor = floorplane.ZatPoint (check->v1);
-			if (ofloor < floor && floor - ofloor < heightdiff)
+			if (ofloor < floor && floor - ofloor < heightdiff && !IsLinked(other, false))
 			{
 				heightdiff = floor - ofloor;
 				height = ofloor;
@@ -235,7 +236,7 @@ fixed_t sector_t::FindNextLowestFloor (vertex_t **v) const
 			}
 			ofloor = other->floorplane.ZatPoint (check->v2);
 			floor = floorplane.ZatPoint (check->v2);
-			if (ofloor < floor && floor - ofloor < heightdiff)
+			if (ofloor < floor && floor - ofloor < heightdiff && !IsLinked(other, false))
 			{
 				heightdiff = floor - ofloor;
 				height = ofloor;
@@ -282,7 +283,7 @@ fixed_t sector_t::FindNextLowestCeiling (vertex_t **v) const
 		{
 			oceil = other->ceilingplane.ZatPoint (check->v1);
 			ceil = ceilingplane.ZatPoint (check->v1);
-			if (oceil < ceil && ceil - oceil < heightdiff)
+			if (oceil < ceil && ceil - oceil < heightdiff && !IsLinked(other, true))
 			{
 				heightdiff = ceil - oceil;
 				height = oceil;
@@ -290,7 +291,7 @@ fixed_t sector_t::FindNextLowestCeiling (vertex_t **v) const
 			}
 			oceil = other->ceilingplane.ZatPoint (check->v2);
 			ceil = ceilingplane.ZatPoint (check->v2);
-			if (oceil < ceil && ceil - oceil < heightdiff)
+			if (oceil < ceil && ceil - oceil < heightdiff && !IsLinked(other, true))
 			{
 				heightdiff = ceil - oceil;
 				height = oceil;
@@ -336,7 +337,7 @@ fixed_t sector_t::FindNextHighestCeiling (vertex_t **v) const
 		{
 			oceil = other->ceilingplane.ZatPoint (check->v1);
 			ceil = ceilingplane.ZatPoint (check->v1);
-			if (oceil > ceil && oceil - ceil < heightdiff)
+			if (oceil > ceil && oceil - ceil < heightdiff && !IsLinked(other, true))
 			{
 				heightdiff = oceil - ceil;
 				height = oceil;
@@ -344,7 +345,7 @@ fixed_t sector_t::FindNextHighestCeiling (vertex_t **v) const
 			}
 			oceil = other->ceilingplane.ZatPoint (check->v2);
 			ceil = ceilingplane.ZatPoint (check->v2);
-			if (oceil > ceil && oceil - ceil < heightdiff)
+			if (oceil > ceil && oceil - ceil < heightdiff && !IsLinked(other, true))
 			{
 				heightdiff = oceil - ceil;
 				height = oceil;

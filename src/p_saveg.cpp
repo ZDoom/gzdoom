@@ -413,7 +413,9 @@ void extsector_t::Serialize(FArchive &arc)
 	arc << Midtex.Floor.AttachedLines 
 		<< Midtex.Floor.AttachedSectors
 		<< Midtex.Ceiling.AttachedLines
-		<< Midtex.Ceiling.AttachedSectors;
+		<< Midtex.Ceiling.AttachedSectors
+		<< Linked.Floor.Sectors
+		<< Linked.Ceiling.Sectors;
 }
 
 //

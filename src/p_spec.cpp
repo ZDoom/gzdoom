@@ -1004,6 +1004,13 @@ void P_SpawnSpecials (void)
 			P_Attach3dMidtexLinesToSector(lines[i].frontsector, lines[i].args[0], lines[i].args[1], !!lines[i].args[2]);
 			break;
 
+		case Sector_SetLink:
+			if (lines[i].args[0] == 0)
+			{
+				P_AddSectorLinks(lines[i].frontsector, lines[i].args[1], lines[i].args[2], lines[i].args[3]);
+			}
+			break;
+
 		// [RH] ZDoom Static_Init settings
 		case Static_Init:
 			switch (lines[i].args[1])
@@ -1028,6 +1035,11 @@ void P_SpawnSpecials (void)
 						sectors[s].mod = 0;//MOD_UNKNOWN;
 					}
 				}
+				break;
+
+			case Init_SectorLink:
+				if (lines[i].args[3] == 0)
+					P_AddSectorLinksByID(lines[i].frontsector, lines[i].args[0], lines[i].args[2]);
 				break;
 
 			// killough 10/98:

@@ -752,7 +752,11 @@ void A_CustomMissile(AActor * self)
 				break;
 
 			case 2:
+				self->x+=x;
+				self->y+=y;
 				missile = P_SpawnMissileAngleZ(self, self->z+SpawnHeight, ti, self->angle, 0);
+				self->x-=x;
+				self->y-=y;
 
 				// It is not necessary to use the correct angle here.
 				// The only important thing is that the horizontal momentum is correct.

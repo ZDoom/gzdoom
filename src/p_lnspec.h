@@ -47,6 +47,7 @@ typedef enum {
 	Init_Gravity = 0,
 	Init_Color = 1,
 	Init_Damage = 2,
+	Init_SectorLink = 3,
 	NUM_STATIC_INITS,
 	Init_TransferSky = 255
 } staticinit_t;

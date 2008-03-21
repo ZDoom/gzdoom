@@ -18,7 +18,6 @@ bool P_MorphMonster (AActor *actor, const PClass *morphClass);
 bool P_UpdateMorphedMonster (AActor *actor);
 
 
-struct side_t;
 
 class DBaseDecal : public DThinker
 {

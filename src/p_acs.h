@@ -548,6 +548,8 @@ public:
 		PCD_CHECKACTORFLOORTEXTURE,
 /*340*/	PCD_GETACTORLIGHTLEVEL,
 		PCD_SETMUGSHOTSTATE,
+		PCD_THINGCOUNTSECTOR,
+		PCD_THINGCOUNTNAMESECTOR,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -668,7 +670,7 @@ protected:
 	void PutLast ();
 	void PutFirst ();
 	static int Random (int min, int max);
-	static int ThingCount (int type, int stringid, int tid);
+	static int ThingCount (int type, int stringid, int tid, int tag);
 	static void ChangeFlat (int tag, int name, bool floorOrCeiling);
 	static int CountPlayers ();
 	static void SetLineTexture (int lineid, int side, int position, int name);

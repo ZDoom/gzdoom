@@ -1796,7 +1796,7 @@ int DLevelScript::Random (int min, int max)
 	return min + pr_acs(max - min + 1);
 }
 
-int DLevelScript::ThingCount (int type, int stringid, int tid)
+int DLevelScript::ThingCount (int type, int stringid, int tid, int tag)
 {
 	AActor *actor;
 	const PClass *kind;
@@ -1838,11 +1838,14 @@ do_count:
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				// Don't count items in somebody's inventory
-				if (!actor->IsKindOf (RUNTIME_CLASS(AInventory)) ||
-					static_cast<AInventory *>(actor)->Owner == NULL)
+				if (actor->Sector->tag == tag || tag == -1)
 				{
-					count++;
+					// Don't count items in somebody's inventory
+					if (!actor->IsKindOf (RUNTIME_CLASS(AInventory)) ||
+						static_cast<AInventory *>(actor)->Owner == NULL)
+					{
+						count++;
+					}
 				}
 			}
 		}
@@ -1855,11 +1858,14 @@ do_count:
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				// Don't count items in somebody's inventory
-				if (!actor->IsKindOf (RUNTIME_CLASS(AInventory)) ||
-					static_cast<AInventory *>(actor)->Owner == NULL)
+				if (actor->Sector->tag == tag || tag == -1)
 				{
-					count++;
+					// Don't count items in somebody's inventory
+					if (!actor->IsKindOf (RUNTIME_CLASS(AInventory)) ||
+						static_cast<AInventory *>(actor)->Owner == NULL)
+					{
+						count++;
+					}
 				}
 			}
 		}
@@ -3572,17 +3578,27 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_THINGCOUNT:
-			STACK(2) = ThingCount (STACK(2), -1, STACK(1));
+			STACK(2) = ThingCount (STACK(2), -1, STACK(1), -1);
 			sp--;
 			break;
 
 		case PCD_THINGCOUNTDIRECT:
-			PushToStack (ThingCount (pc[0], -1, pc[1]));
+			PushToStack (ThingCount (pc[0], -1, pc[1], -1));
 			pc += 2;
 			break;
 
 		case PCD_THINGCOUNTNAME:
-			STACK(2) = ThingCount (-1, STACK(2), STACK(1));
+			STACK(2) = ThingCount (-1, STACK(2), STACK(1), -1);
+			sp--;
+			break;
+
+		case PCD_THINGCOUNTNAMESECTOR:
+			STACK(2) = ThingCount (-1, STACK(3), STACK(2), STACK(1));
+			sp--;
+			break;
+
+		case PCD_THINGCOUNTSECTOR:
+			STACK(2) = ThingCount (STACK(3), -1, STACK(2), STACK(1));
 			sp--;
 			break;
 

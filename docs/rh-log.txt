@@ -1,4 +1,5 @@
 March 21, 2008 (Changes by Graf Zahl)
+- Added Karate Chris's ThingCountSector submission.
 - Made texture indices in FSwitchDef full integers. Since that required
   some data restructuring I also eliminated the MAX_FRAMES limit of 128
   per switch.

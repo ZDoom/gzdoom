@@ -58,22 +58,14 @@ class DActiveButton : public DThinker
 {
 	DECLARE_CLASS (DActiveButton, DThinker)
 public:
-	enum EWhere
-	{
-		BUTTON_Top,
-		BUTTON_Middle,
-		BUTTON_Bottom,
-		BUTTON_Nowhere
-	};
-
 	DActiveButton ();
-	DActiveButton (side_t *, EWhere, WORD switchnum, fixed_t x, fixed_t y, bool flippable);
+	DActiveButton (side_t *, int, WORD switchnum, fixed_t x, fixed_t y, bool flippable);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
 
 	side_t	*m_Side;
-	EWhere	m_Where;
+	SBYTE	m_Part;
 	WORD	m_SwitchDef;
 	WORD	m_Frame;
 	WORD	m_Timer;
@@ -82,15 +74,6 @@ public:
 
 protected:
 	bool AdvanceFrame ();
-	void StoreTexture (short tex) const;
-
-	friend FArchive &operator<< (FArchive &arc, EWhere &where)
-	{
-		BYTE val = (BYTE)where;
-		arc << val;
-		where = (EWhere)val;
-		return arc;
-	}
 };
 
 struct FSwitchDef
@@ -435,7 +418,7 @@ static WORD AddSwitchDef (FSwitchDef *def)
 // Start a button counting down till it turns off.
 // [RH] Rewritten to remove MAXBUTTONS limit.
 //
-static bool P_StartButton (side_t *side, DActiveButton::EWhere w, int switchnum,
+static bool P_StartButton (side_t *side, int Where, int switchnum,
 						   fixed_t x, fixed_t y, bool useagain)
 {
 	DActiveButton *button;
@@ -451,14 +434,15 @@ static bool P_StartButton (side_t *side, DActiveButton::EWhere w, int switchnum,
 		}
 	}
 
-	new DActiveButton (side, w, switchnum, x, y, useagain);
+	new DActiveButton (side, Where, switchnum, x, y, useagain);
 	return true;
 }
 
-static int TryFindSwitch (SWORD texture)
+static int TryFindSwitch (side_t *side, int Where)
 {
 	int mid, low, high;
 
+	int texture = side->GetTexture(Where);
 	high = (int)(SwitchList.Size () - 1);
 	if (high >= 0)
 	{
@@ -519,15 +503,15 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 	P_LineOpening(open, NULL, line, checkx, checky, user->x, user->y);
 	if (open.range <= 0) return true;
 
-	if ((TryFindSwitch (side->toptexture)) != -1)
+	if ((TryFindSwitch (side, side_t::top)) != -1)
 	{
 		return (user->z + user->height >= open.top);
 	}
-	else if ((TryFindSwitch (side->bottomtexture)) != -1)
+	else if ((TryFindSwitch (side, side_t::bottom)) != -1)
 	{
 		return (user->z <= open.bottom);
 	}
-	else if ((line->flags & (ML_3DMIDTEX)) || (TryFindSwitch (side->midtexture)) != -1)
+	else if ((line->flags & (ML_3DMIDTEX)) || (TryFindSwitch (side, side_t::mid)) != -1)
 	{
 		// 3DMIDTEX lines will force a mid texture check if no switch is found on this line
 		// to keep compatibility with Eternity's implementation.
@@ -547,24 +531,20 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 //
 bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest)
 {
-	DActiveButton::EWhere Where;
-	int *texture;
+	int texture;
 	int i, sound;
 
-	if ((i = TryFindSwitch (side->toptexture)) != -1)
+	if ((i = TryFindSwitch (side, side_t::top)) != -1)
 	{
-		texture = &side->toptexture;
-		Where = DActiveButton::BUTTON_Top;
+		texture = side_t::top;
 	}
-	else if ((i = TryFindSwitch (side->bottomtexture)) != -1)
+	else if ((i = TryFindSwitch (side, side_t::bottom)) != -1)
 	{
-		texture = &side->bottomtexture;
-		Where = DActiveButton::BUTTON_Bottom;
+		texture = side_t::bottom;
 	}
-	else if ((i = TryFindSwitch (side->midtexture)) != -1)
+	else if ((i = TryFindSwitch (side, side_t::mid)) != -1)
 	{
-		texture = &side->midtexture;
-		Where = DActiveButton::BUTTON_Middle;
+		texture = side_t::mid;
 	}
 	else
 	{
@@ -600,9 +580,9 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *ques
 
 	pt[0] = line->v1->x + (line->dx >> 1);
 	pt[1] = line->v1->y + (line->dy >> 1);
-	*texture = SwitchList[i]->u[0].Texture;
+	side->SetTexture(texture, SwitchList[i]->u[0].Texture);
 	if (useAgain || SwitchList[i]->NumFrames > 1)
-		playsound = P_StartButton (side, Where, i, pt[0], pt[1], !!useAgain);
+		playsound = P_StartButton (side, texture, i, pt[0], pt[1], !!useAgain);
 	else 
 		playsound = true;
 	if (playsound) S_SoundID (pt, CHAN_VOICE|CHAN_LISTENERZ|CHAN_IMMOBILE, sound, 1, ATTN_STATIC);
@@ -618,7 +598,7 @@ IMPLEMENT_CLASS (DActiveButton)
 DActiveButton::DActiveButton ()
 {
 	m_Side = NULL;
-	m_Where = BUTTON_Nowhere;
+	m_Part = -1;
 	m_SwitchDef = 0;
 	m_Timer = 0;
 	m_X = 0;
@@ -626,11 +606,11 @@ DActiveButton::DActiveButton ()
 	bFlippable = false;
 }
 
-DActiveButton::DActiveButton (side_t *side, EWhere where, WORD switchnum,
+DActiveButton::DActiveButton (side_t *side, int Where, WORD switchnum,
 							  fixed_t x, fixed_t y, bool useagain)
 {
 	m_Side = side;
-	m_Where = where;
+	m_Part = SBYTE(Where);
 	m_X = x;
 	m_Y = y;
 	bFlippable = useagain;
@@ -649,7 +629,7 @@ void DActiveButton::Serialize (FArchive &arc)
 	{
 		sidenum = m_Side ? m_Side - sides : -1;
 	}
-	arc << sidenum << m_Where << m_SwitchDef << m_Frame << m_Timer << bFlippable << m_X << m_Y;
+	arc << sidenum << m_Part << m_SwitchDef << m_Frame << m_Timer << bFlippable << m_X << m_Y;
 	if (arc.IsLoading ())
 	{
 		m_Side = sidenum >= 0 ? sides + sidenum : NULL;
@@ -685,7 +665,7 @@ void DActiveButton::Tick ()
 		}
 		bool killme = AdvanceFrame ();
 
-		StoreTexture (def->u[m_Frame].Texture);
+		m_Side->SetTexture(m_Part, def->u[m_Frame].Texture);
 
 		if (killme)
 		{
@@ -728,23 +708,3 @@ bool DActiveButton::AdvanceFrame ()
 	return ret;
 }
 
-void DActiveButton::StoreTexture (short tex) const
-{
-	switch (m_Where)
-	{
-	case BUTTON_Middle:
-		m_Side->midtexture = tex;
-		break;
-
-	case BUTTON_Bottom:
-		m_Side->bottomtexture = tex;
-		break;
-
-	case BUTTON_Top:
-		m_Side->toptexture = tex;
-		break;
-
-	default:
-		return;
-	}
-}

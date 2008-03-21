@@ -49,6 +49,7 @@ DEFINE_SPECIAL(Sector_Attach3dMidtex, 48, -1, -1)
 DEFINE_SPECIAL(GlassBreak, 49, 0, 1)
 DEFINE_SPECIAL(ExtraFloor_LightOnly, 50, -1, -1)
 DEFINE_SPECIAL(Sector_SetLink, 51, 4, 4)
+DEFINE_SPECIAL(Scroll_Wall, 52, 5, 5)
 
 DEFINE_SPECIAL(Plat_PerpetualRaise, 60, 3, 3)
 DEFINE_SPECIAL(Plat_Stop, 61, 1, 1)
@@ -128,7 +129,11 @@ DEFINE_SPECIAL(Floor_Waggle, 138, 5, 5)
 DEFINE_SPECIAL(Thing_SpawnFacing, 139, 2, 4)
 DEFINE_SPECIAL(Sector_ChangeSound, 140, 2, 2)
 
-// GZDoom/Vavoom specials (put here so that they don't get accidentally redefined)
+// GZDoom/Vavoom specials 
+// Although ZDoom doesn't support them it's better to have them defined so that
+// WADs using them somewhere can at least be started without aborting due
+// to an error message.
+DEFINE_SPECIAL(FS_Execute, 158, 1, 4)
 DEFINE_SPECIAL(Sector_SetPlaneReflection, 159, 3, 3)
 DEFINE_SPECIAL(Sector_Set3DFloor, 160, -1, -1)
 DEFINE_SPECIAL(Sector_SetContents, 161, -1, -1)

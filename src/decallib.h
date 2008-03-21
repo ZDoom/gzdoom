@@ -46,7 +46,7 @@ class FDecalTemplate;
 struct FDecalAnimator;
 struct PClass;
 class DBaseDecal;
-struct side_s;
+struct side_t;
 
 class FDecalBase
 {
@@ -71,7 +71,7 @@ class FDecalTemplate : public FDecalBase
 public:
 	FDecalTemplate () : Translation (0) {}
 
-	void ApplyToDecal (DBaseDecal *actor, side_s *wall) const;
+	void ApplyToDecal (DBaseDecal *actor, side_t *wall) const;
 	const FDecalTemplate *GetDecal () const;
 	void ReplaceDecalRef (FDecalBase *from, FDecalBase *to);
 

@@ -1945,13 +1945,13 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 		switch (position)
 		{
 		case TEXTURE_TOP:
-			sidedef->toptexture = texture;
+			sidedef->SetTexture(side_t::top, texture);
 			break;
 		case TEXTURE_MIDDLE:
-			sidedef->midtexture = texture;
+			sidedef->SetTexture(side_t::mid, texture);
 			break;
 		case TEXTURE_BOTTOM:
-			sidedef->bottomtexture = texture;
+			sidedef->SetTexture(side_t::bottom, texture);
 			break;
 		default:
 			break;
@@ -1978,9 +1978,14 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 		{
 			side_t *wal = &sides[i];
 
-			if (!(flags & NOT_BOTTOM) && wal->bottomtexture == picnum1)	wal->bottomtexture = picnum2;
-			if (!(flags & NOT_MIDDLE) && wal->midtexture == picnum1)	wal->midtexture = picnum2;
-			if (!(flags & NOT_TOP) && wal->toptexture == picnum1)		wal->toptexture = picnum2;
+			for(int j=0;j<3;j++)
+			{
+				static BYTE bits[]={NOT_TOP, NOT_MIDDLE, NOT_BOTTOM};
+				if (!(flags & bits[j]) && wal->GetTexture(j) == picnum1)
+				{
+					wal->SetTexture(j, picnum2);
+				}
+			}
 		}
 	}
 	if ((flags ^ (NOT_FLOOR | NOT_CEILING)) != 0)
@@ -4694,7 +4699,7 @@ int DLevelScript::RunScript ()
 		case PCD_GETLINEROWOFFSET:
 			if (activationline)
 			{
-				PushToStack (sides[activationline->sidenum[0]].rowoffset >> FRACBITS);
+				PushToStack (sides[activationline->sidenum[0]].GetTextureYOffset(side_t::mid) >> FRACBITS);
 			}
 			else
 			{

@@ -756,8 +756,8 @@ void R_AddLine (seg_t *line)
 		&& rw_backcz1 <= rw_backfz1 && rw_backcz2 <= rw_backfz2
 
 		// preserve a kind of transparent door/lift special effect:
-		&& ((rw_backcz1 >= rw_frontcz1 && rw_backcz2 >= rw_frontcz2) || line->sidedef->toptexture != 0)
-		&& ((rw_backfz1 <= rw_frontfz1 && rw_backfz2 <= rw_frontfz2) || line->sidedef->bottomtexture != 0))
+		&& ((rw_backcz1 >= rw_frontcz1 && rw_backcz2 >= rw_frontcz2) || line->sidedef->GetTexture(side_t::top) != 0)
+		&& ((rw_backfz1 <= rw_frontfz1 && rw_backfz2 <= rw_frontfz2) || line->sidedef->GetTexture(side_t::bottom) != 0))
 		{
 		// killough 1/18/98 -- This function is used to fix the automap bug which
 		// showed lines behind closed doors simply because the door had a dropoff.
@@ -779,7 +779,7 @@ void R_AddLine (seg_t *line)
 		else if (backsector->lightlevel != frontsector->lightlevel
 			|| backsector->floorpic != frontsector->floorpic
 			|| backsector->ceilingpic != frontsector->ceilingpic
-			|| curline->sidedef->midtexture != 0
+			|| curline->sidedef->GetTexture(side_t::mid) != 0
 
 			// killough 3/7/98: Take flats offsets into account:
 			|| backsector->floor_xoffs != frontsector->floor_xoffs
@@ -834,12 +834,12 @@ void R_AddLine (seg_t *line)
 #if 0	// Maybe later...
 		if (!solid)
 		{
-			if (rw_ceilstat == 12 && line->sidedef->toptexture != 0)
+			if (rw_ceilstat == 12 && line->sidedef->GetTexture(side_t::top) != 0)
 			{
 				rw_mustmarkceiling = true;
 				solid = true;
 			}
-			if (rw_floorstat == 3 && line->sidedef->bottomtexture != 0)
+			if (rw_floorstat == 3 && line->sidedef->GetTexture(side_t::bottom) != 0)
 			{
 				rw_mustmarkfloor = true;
 				solid = true;

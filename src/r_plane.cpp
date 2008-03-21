@@ -1276,17 +1276,20 @@ sky1:
 
 		// Sky transferred from first sidedef
 		const side_t *s = *l->sidenum + sides;
+		int pos;
 
 		// Texture comes from upper texture of reference sidedef
 		// [RH] If swapping skies, then use the lower sidedef
-		if (level.flags & LEVEL_SWAPSKIES && s->bottomtexture != 0)
+		if (level.flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom) != 0)
 		{
-			frontskytex = TexMan(s->bottomtexture);
+			pos = side_t::bottom;
 		}
 		else
 		{
-			frontskytex = TexMan(s->toptexture);
+			pos = side_t::top;
 		}
+
+		frontskytex = TexMan(s->GetTexture(pos));
 		if (frontskytex->UseType == FTexture::TEX_Null)
 		{ // [RH] The blank texture: Use normal sky instead.
 			goto sky1;
@@ -1297,10 +1300,10 @@ sky1:
 		// to allow sky rotation as well as careful positioning.
 		// However, the offset is scaled very small, so that it
 		// allows a long-period of sky rotation.
-		frontpos = (-s->textureoffset) >> 6;
+		frontpos = (-s->GetTextureXOffset(pos)) >> 6;
 
 		// Vertical offset allows careful sky positioning.
-		dc_texturemid = s->rowoffset - 28*FRACUNIT;
+		dc_texturemid = s->GetTextureYOffset(pos) - 28*FRACUNIT;
 
 		// We sometimes flip the picture horizontally.
 		//

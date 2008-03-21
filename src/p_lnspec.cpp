@@ -1889,8 +1889,11 @@ FUNC(LS_Sector_SetLink)
 }
 
 
-static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy)
+static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, int Where)
 {
+	Where &=7;
+	if (Where == 0) return;
+
 	if ((dx | dy) == 0)
 	{
 		// Special case: Remove the scroller, because the deltas are both 0.
@@ -1902,7 +1905,8 @@ static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy)
 			int wallnum = scroller->GetWallNum ();
 
 			if (wallnum >= 0 && lines[sides[wallnum].linenum].id == id &&
-				lines[sides[wallnum].linenum].sidenum[sidechoice] == (DWORD)wallnum)
+				lines[sides[wallnum].linenum].sidenum[sidechoice] == (DWORD)wallnum &&
+				Where == scroller->GetScrollParts())
 			{
 				scroller->Destroy ();
 			}
@@ -1920,7 +1924,8 @@ static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy)
 			{
 				if ((collect.RefNum = ((DScroller *)collect.Obj)->GetWallNum ()) != -1 &&
 					lines[sides[collect.RefNum].linenum].id == id &&
-					lines[sides[collect.RefNum].linenum].sidenum[sidechoice] == (DWORD)collect.RefNum)
+					lines[sides[collect.RefNum].linenum].sidenum[sidechoice] == (DWORD)collect.RefNum &&
+					Where == ((DScroller *)collect.Obj)->GetScrollParts())
 				{
 					((DScroller *)collect.Obj)->SetRate (dx, dy);
 					Collection.Push (collect);
@@ -1944,7 +1949,7 @@ static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy)
 			{
 				if (lines[linenum].sidenum[sidechoice] != NO_SIDE)
 				{
-					new DScroller (DScroller::sc_side, dx, dy, -1, lines[linenum].sidenum[sidechoice], 0);
+					new DScroller (DScroller::sc_side, dx, dy, -1, lines[linenum].sidenum[sidechoice], 0, Where);
 				}
 			}
 		}
@@ -1972,8 +1977,18 @@ FUNC(LS_Scroll_Texture_Both)
 		sidechoice = 0;
 	}
 
-	SetWallScroller (arg0, sidechoice, dx, dy);
+	SetWallScroller (arg0, sidechoice, dx, dy, 7);
 
+	return true;
+}
+
+FUNC(LS_Scroll_Wall)
+// Scroll_Wall (id, x, y, side, flags)
+{
+	if (arg0 == 0)
+		return false;
+
+	SetWallScroller (arg0, !!arg3, arg1, arg2, arg4);
 	return true;
 }
 
@@ -2685,8 +2700,8 @@ FUNC(LS_ClearForceField)
 			{
 				line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
 				line->special = 0;
-				sides[line->sidenum[0]].midtexture = 0;
-				sides[line->sidenum[1]].midtexture = 0;
+				sides[line->sidenum[0]].SetTexture(side_t::mid, 0);
+				sides[line->sidenum[1]].SetTexture(side_t::mid, 0);
 			}
 		}
 	}
@@ -2860,7 +2875,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_GlassBreak,
 	LS_NOP,		// 50: ExtraFloor_LightOnly
 	LS_Sector_SetLink,
-	LS_NOP,		// 52
+	LS_Scroll_Wall,
 	LS_NOP,		// 53
 	LS_NOP,		// 54
 	LS_NOP,		// 55

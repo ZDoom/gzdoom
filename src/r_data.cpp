@@ -462,9 +462,9 @@ void R_PrecacheLevel (void)
 
 	for (i = numsides - 1; i >= 0; i--)
 	{
-		hitlist[sides[i].toptexture] =
-			hitlist[sides[i].midtexture] =
-			hitlist[sides[i].bottomtexture] = 1;
+		hitlist[sides[i].GetTexture(side_t::top)] =
+			hitlist[sides[i].GetTexture(side_t::mid)] =
+			hitlist[sides[i].GetTexture(side_t::bottom)] = 1;
 	}
 
 	// Sky texture is always present.

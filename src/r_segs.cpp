@@ -71,6 +71,9 @@ bool		markceiling;
 FTexture *toptexture;
 FTexture *bottomtexture;
 FTexture *midtexture;
+fixed_t rw_offset_top;
+fixed_t rw_offset_mid;
+fixed_t rw_offset_bottom;
 
 int OWallMost (short *mostbuf, fixed_t z);
 int WallMost (short *mostbuf, const secplane_t &plane);
@@ -219,7 +222,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	frontsector = curline->frontsector;
 	backsector = curline->backsector;
 
-	tex = TexMan(curline->sidedef->midtexture);
+	tex = TexMan(curline->sidedef->GetTexture(side_t::mid));
 
 	// killough 4/13/98: get correct lightlevel for 2s normal textures
 	const sector_t *sec = R_FakeFlat (frontsector, &tempsec, NULL, NULL, false);
@@ -259,11 +262,13 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	{
 		dc_texturemid = MIN (frontsector->ceilingtexz, backsector->ceilingtexz);
 	}
+
+	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 	if (tex->bWorldPanning)
 	{
 		// rowoffset is added before the MulScale3 so that the masked texture will
 		// still be positioned in world units rather than texels.
-		dc_texturemid += curline->sidedef->rowoffset - viewz;
+		dc_texturemid += rowoffset - viewz;
 		textop = dc_texturemid;
 		dc_texturemid = MulScale16 (dc_texturemid, tex->yScale);
 	}
@@ -271,8 +276,8 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	{
 		// rowoffset is added outside the multiply so that it positions the texture
 		// by texels instead of world units.
-		textop = dc_texturemid - viewz + SafeDivScale16 (curline->sidedef->rowoffset, tex->yScale);
-		dc_texturemid = MulScale16 (dc_texturemid - viewz, tex->yScale) + curline->sidedef->rowoffset;
+		textop = dc_texturemid - viewz + SafeDivScale16 (rowoffset, tex->yScale);
+		dc_texturemid = MulScale16 (dc_texturemid - viewz, tex->yScale) + rowoffset;
 	}
 
 	if (fixedlightlev)
@@ -1058,7 +1063,11 @@ void R_RenderSegLoop ()
 			}
 			if (midtexture->bWorldPanning)
 			{
-				rw_offset = MulScale16 (xoffset, midtexture->xScale);
+				rw_offset = MulScale16 (rw_offset_mid, midtexture->xScale);
+			}
+			else
+			{
+				rw_offset = rw_offset_mid;
 			}
 			if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
 			{
@@ -1092,7 +1101,11 @@ void R_RenderSegLoop ()
 				}
 				if (toptexture->bWorldPanning)
 				{
-					rw_offset = MulScale16 (xoffset, toptexture->xScale);
+					rw_offset = MulScale16 (rw_offset_top, toptexture->xScale);
+				}
+				else
+				{
+					rw_offset = rw_offset_top;
 				}
 				if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
 				{
@@ -1129,11 +1142,11 @@ void R_RenderSegLoop ()
 				}
 				if (bottomtexture->bWorldPanning)
 				{
-					rw_offset = MulScale16 (xoffset, bottomtexture->xScale);
+					rw_offset = MulScale16 (rw_offset_bottom, bottomtexture->xScale);
 				}
 				else
 				{
-					rw_offset = xoffset;
+					rw_offset = rw_offset_bottom;
 				}
 				if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
 				{
@@ -1179,8 +1192,9 @@ void R_NewWall (bool needlights)
 			// [RH] Horizon lines do not need to be textured
 			if (linedef->special != Line_Horizon)
 			{
-				midtexture = TexMan(sidedef->midtexture);
-				rowoffset = sidedef->rowoffset;
+				midtexture = TexMan(sidedef->GetTexture(side_t::mid));
+				rw_offset_mid = sidedef->GetTextureXOffset(side_t::mid);
+				rowoffset = sidedef->GetTextureYOffset(side_t::mid);
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
 					rw_midtexturemid = frontsector->floortexz + (midtexture->GetHeight() << FRACBITS);
@@ -1271,7 +1285,7 @@ void R_NewWall (bool needlights)
 
 				|| (backsector->floor_angle + backsector->base_floor_angle) != (frontsector->floor_angle + frontsector->base_floor_angle)
 
-				|| (sidedef->midtexture && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
+				|| (sidedef->GetTexture(side_t::mid) && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
 				;
 
 			markceiling = (frontsector->ceilingpic != skyflatnum ||
@@ -1300,16 +1314,17 @@ void R_NewWall (bool needlights)
 
 				|| (backsector->ceiling_angle + backsector->base_ceiling_angle) != (frontsector->ceiling_angle + frontsector->base_ceiling_angle)
 
-				|| (sidedef->midtexture && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
+				|| (sidedef->GetTexture(side_t::mid) && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
 				);
 		}
 
 		if (rw_havehigh)
 		{ // top texture
-			toptexture = TexMan(sidedef->toptexture);
+			toptexture = TexMan(sidedef->GetTexture(side_t::top));
 			const fixed_t scale = toptexture->yScale;
 
-			rowoffset = sidedef->rowoffset;
+			rw_offset_top = sidedef->GetTextureXOffset(side_t::top);
+			rowoffset = sidedef->GetTextureYOffset(side_t::top);
 			if (linedef->flags & ML_DONTPEGTOP)
 			{ // top of texture at top
 				rw_toptexturemid = MulScale16 (frontsector->ceilingtexz - viewz, scale);
@@ -1333,9 +1348,10 @@ void R_NewWall (bool needlights)
 		}
 		if (rw_havelow)
 		{ // bottom texture
-			bottomtexture = TexMan(sidedef->bottomtexture);
+			bottomtexture = TexMan(sidedef->GetTexture(side_t::bottom));
 
-			rowoffset = sidedef->rowoffset;
+			rw_offset_bottom = sidedef->GetTextureXOffset(side_t::bottom);
+			rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // bottom of texture at bottom
 				rw_bottomtexturemid = rw_frontlowertop;
@@ -1375,12 +1391,14 @@ void R_NewWall (bool needlights)
 			markceiling = false;
 	}
 
-	segtextured = TexMan(sidedef->midtexture) != NULL || toptexture != NULL || bottomtexture != NULL;
+	FTexture *midtex = TexMan(sidedef->GetTexture(side_t::mid));
+
+	segtextured = midtex != NULL || toptexture != NULL || bottomtexture != NULL;
 
 	// calculate light table
 	if (needlights && (segtextured || (backsector && IsFogBoundary (frontsector, backsector))))
 	{
-		lwallscale = TexMan(sidedef->midtexture) ? TexMan(sidedef->midtexture)->xScale :
+		lwallscale = midtex ? midtex->xScale :
 							toptexture ? toptexture->xScale :
 							bottomtexture ? bottomtexture->xScale : FRACUNIT;
 
@@ -1402,7 +1420,7 @@ void R_NewWall (bool needlights)
 	}
 }
 
-int side_s::GetLightLevel (bool foggy, int baselight) const
+int side_t::GetLightLevel (bool foggy, int baselight) const
 {
 	// [RH] Get wall light level
 	if (this->Flags & WALLF_ABSLIGHTING && (!(this->Flags & WALLF_AUTOCONTRAST) || foggy))
@@ -1430,6 +1448,24 @@ int side_s::GetLightLevel (bool foggy, int baselight) const
 		return baselight;
 	}
 }
+
+FArchive &operator<< (FArchive &arc, side_t::part &p)
+{
+	arc << p.xoffset << p.yoffset;// << p.Light;
+	if (arc.IsStoring())
+	{
+		if (arc.IsStoring ())
+		{
+			TexMan.WriteTexture (arc, p.texture);
+		}
+		else
+		{
+			p.texture = TexMan.ReadTexture (arc);
+		}
+	}
+	return arc;
+}
+
 
 
 //
@@ -1491,7 +1527,7 @@ void R_StoreWallRange (int start, int stop)
 		R_NewWall (true);
 	}
 
-	rw_offset = sidedef->textureoffset;
+	rw_offset = sidedef->GetTextureXOffset(side_t::mid);
 	rw_light = rw_lightleft + rw_lightstep * (start - WallSX1);
 
 	ds_p->sx1 = WallSX1;
@@ -1568,9 +1604,9 @@ void R_StoreWallRange (int start, int stop)
 
 		// allocate space for masked texture tables, if needed
 		// [RH] Don't just allocate the space; fill it in too.
-		if ((TexMan(sidedef->midtexture)->UseType != FTexture::TEX_Null || IsFogBoundary (frontsector, backsector)) &&
-			(rw_ceilstat != 12 || sidedef->toptexture == 0) &&
-			(rw_floorstat != 3 || sidedef->bottomtexture == 0) &&
+		if ((TexMan(sidedef->GetTexture(side_t::mid))->UseType != FTexture::TEX_Null || IsFogBoundary (frontsector, backsector)) &&
+			(rw_ceilstat != 12 || sidedef->GetTexture(side_t::top) == 0) &&
+			(rw_floorstat != 3 || sidedef->GetTexture(side_t::bottom) == 0) &&
 			(WallSZ1 >= TOO_CLOSE_Z && WallSZ2 >= TOO_CLOSE_Z))
 		{
 			fixed_t *swal;
@@ -1580,15 +1616,15 @@ void R_StoreWallRange (int start, int stop)
 			maskedtexture = true;
 
 			ds_p->bFogBoundary = IsFogBoundary (frontsector, backsector);
-			if (sidedef->midtexture != 0)
+			if (sidedef->GetTexture(side_t::mid) != 0)
 			{
 				ds_p->maskedtexturecol = R_NewOpening ((stop - start) * 2);
 				ds_p->swall = R_NewOpening ((stop - start) * 2);
 
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
 				swal = (fixed_t *)(openings + ds_p->swall);
-				int scaley = TexMan(sidedef->midtexture)->yScale;
-				int xoffset = rw_offset;
+				int scaley = TexMan(sidedef->GetTexture(side_t::mid))->yScale;
+				int xoffset = sidedef->GetTextureXOffset(side_t::mid);
 				for (i = start; i < stop; i++)
 				{
 					*lwal++ = lwall[i] + xoffset;
@@ -1667,7 +1703,7 @@ void R_StoreWallRange (int start, int stop)
 		memcpy (openings + ds_p->sprbottomclip, &floorclip[start], sizeof(short)*(stop-start));
 	}
 
-	if (maskedtexture && curline->sidedef->midtexture != 0)
+	if (maskedtexture && curline->sidedef->GetTexture(side_t::mid) != 0)
 	{
 		ds_p->silhouette |= SIL_TOP | SIL_BOTTOM;
 	}

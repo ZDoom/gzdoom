@@ -52,9 +52,16 @@ public:
 		sc_carry,
 		sc_carry_ceiling,	// killough 4/11/98: carry objects hanging on ceilings
 	};
+	enum EScrollPos
+	{
+		scw_top=1,
+		scw_mid=2,
+		scw_bottom=4,
+		scw_all=7,
+	};
 	
-	DScroller (EScrollType type, fixed_t dx, fixed_t dy, int control, int affectee, int accel);
-	DScroller (fixed_t dx, fixed_t dy, const line_t *l, int control, int accel);
+	DScroller (EScrollType type, fixed_t dx, fixed_t dy, int control, int affectee, int accel, int scrollpos = scw_all);
+	DScroller (fixed_t dx, fixed_t dy, const line_t *l, int control, int accel, int scrollpos = scw_all);
 	~DScroller ();
 
 	void Serialize (FArchive &arc);
@@ -65,6 +72,7 @@ public:
 	void SetRate (fixed_t dx, fixed_t dy) { m_dx = dx; m_dy = dy; }
 	bool IsType (EScrollType type) const { return type == m_Type; }
 	int GetAffectee () const { return m_Affectee; }
+	int GetScrollParts() const { return m_Parts; }
 
 protected:
 	EScrollType m_Type;		// Type of scroll effect
@@ -74,6 +82,7 @@ protected:
 	fixed_t m_LastHeight;	// Last known height of control sector
 	fixed_t m_vdx, m_vdy;	// Accumulated velocity if accelerative
 	int m_Accel;			// Whether it's accelerative
+	int m_Parts;			// Which parts of a sidedef are being scrolled?
 
 private:
 	DScroller ();

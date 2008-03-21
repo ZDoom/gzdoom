@@ -385,14 +385,15 @@ MapData *P_OpenMapData(const char * mapname)
 //
 //===========================================================================
 
-static void SetTexture (int *texture, DWORD *blend, char *name8)
+static void SetTexture (side_t *side, int position, DWORD *blend, char *name8)
 {
 	char name[9];
 	strncpy (name, name8, 8);
 	name[8] = 0;
+	int texture;
 	if ((*blend = R_ColormapNumForName (name)) == 0)
 	{
-		if ((*texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
+		if ((texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny)
 			) == -1)
 		{
@@ -401,7 +402,7 @@ static void SetTexture (int *texture, DWORD *blend, char *name8)
 			strncpy (name2, name, 8);
 			name2[8] = 0;
 			*blend = strtoul (name2, &stop, 16);
-			*texture = 0;
+			texture = 0;
 		}
 		else
 		{
@@ -410,16 +411,18 @@ static void SetTexture (int *texture, DWORD *blend, char *name8)
 	}
 	else
 	{
-		*texture = 0;
+		texture = 0;
 	}
+	side->SetTexture(position, texture);
 }
 
-static void SetTextureNoErr (int *texture, DWORD *color, char *name8, bool *validcolor)
+static void SetTextureNoErr (side_t *side, int position, DWORD *color, char *name8, bool *validcolor)
 {
 	char name[9];
+	int texture;
 	strncpy (name, name8, 8);
 	name[8] = 0;
-	if ((*texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
+	if ((texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
 		FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny)
 		) == -1)
 	{
@@ -428,13 +431,14 @@ static void SetTextureNoErr (int *texture, DWORD *color, char *name8, bool *vali
 		strncpy (name2, name, 8);
 		name2[8] = 0;
 		*color = strtoul (name2, &stop, 16);
-		*texture = 0;
+		texture = 0;
 		*validcolor = (*stop == 0) && (stop >= name2 + 2) && (stop <= name2 + 6);
 	}
 	else
 	{
 		*validcolor = false;
 	}
+	side->SetTexture(position, texture);
 }
 
 //===========================================================================
@@ -2278,8 +2282,8 @@ void P_LoadSideDefs2 (MapData * map)
 			msd->rowoffset += 102;
 		}
 
-		sd->textureoffset = LittleShort(msd->textureoffset)<<FRACBITS;
-		sd->rowoffset = LittleShort(msd->rowoffset)<<FRACBITS;
+		sd->SetTextureXOffset(LittleShort(msd->textureoffset)<<FRACBITS);
+		sd->SetTextureYOffset(LittleShort(msd->rowoffset)<<FRACBITS);
 		sd->linenum = NO_INDEX;
 
 		// killough 4/4/98: allow sidedef texture names to be overloaded
@@ -2304,9 +2308,9 @@ void P_LoadSideDefs2 (MapData * map)
 			  //	  instead of figuring something out from the colormap.
 			if (sec != NULL)
 			{
-				SetTexture (&sd->bottomtexture, &sec->bottommap, msd->bottomtexture);
-				SetTexture (&sd->midtexture, &sec->midmap, msd->midtexture);
-				SetTexture (&sd->toptexture, &sec->topmap, msd->toptexture);
+				SetTexture (sd, side_t::bottom, &sec->bottommap, msd->bottomtexture);
+				SetTexture (sd, side_t::mid, &sec->midmap, msd->midtexture);
+				SetTexture (sd, side_t::top, &sec->topmap, msd->toptexture);
 			}
 			break;
 
@@ -2318,10 +2322,11 @@ void P_LoadSideDefs2 (MapData * map)
 				DWORD color, fog;
 				bool colorgood, foggood;
 
-				SetTextureNoErr (&sd->bottomtexture, &fog, msd->bottomtexture, &foggood);
-				SetTextureNoErr (&sd->toptexture, &color, msd->toptexture, &colorgood);
+				SetTextureNoErr (sd, side_t::bottom, &fog, msd->bottomtexture, &foggood);
+				SetTextureNoErr (sd, side_t::top, &color, msd->toptexture, &colorgood);
 				strncpy (name, msd->midtexture, 8);
-				sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+				sd->SetTexture(side_t::mid, 
+					TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
 
 				if (colorgood | foggood)
 				{
@@ -2355,47 +2360,42 @@ void P_LoadSideDefs2 (MapData * map)
 				if (strnicmp ("TRANMAP", msd->midtexture, 8) == 0)
 				{
 					// The translator set the alpha argument already; no reason to do it again.
-					sd->midtexture = 0;
+					sd->SetTexture(side_t::mid, 0);
 				}
 				else if ((lumpnum = Wads.CheckNumForName (msd->midtexture)) > 0 &&
 					Wads.LumpLength (lumpnum) == 65536)
 				{
 					sidetemp[i].a.alpha = P_DetermineTranslucency (lumpnum);
-					sd->midtexture = 0;
+					sd->SetTexture(side_t::mid, 0);
 				}
 				else
 				{
 					strncpy (name, msd->midtexture, 8);
-					sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+					sd->SetTexture(side_t::mid, 
+						TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
 				}
 
 				strncpy (name, msd->toptexture, 8);
-				sd->toptexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+				sd->SetTexture(side_t::top, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
 
 				strncpy (name, msd->bottomtexture, 8);
-				sd->bottomtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+				sd->SetTexture(side_t::bottom, TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
 				break;
 			}
 			// Fallthrough for Hexen maps is intentional
-#if 0
-			sd->midtexture = strncasecmp("TRANMAP", msd->midtexture, 8) ?
-				(sd->special = W_CheckNumForName(msd->midtexture)) < 0 ||
-				W_LumpLength(sd->special) != 65536 ?
-				sd->special=0, R_TextureNumForName(msd->midtexture) :
-					(sd->special++, 0) : (sd->special=0);
-			sd->toptexture = R_TextureNumForName(msd->toptexture);
-			sd->bottomtexture = R_TextureNumForName(msd->bottomtexture);
-#endif
 
 		default:			// normal cases
 			strncpy (name, msd->midtexture, 8);
-			sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+			sd->SetTexture(side_t::mid, 
+				TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
 
 			strncpy (name, msd->toptexture, 8);
-			sd->toptexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+			sd->SetTexture(side_t::top, 
+				TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
 
 			strncpy (name, msd->bottomtexture, 8);
-			sd->bottomtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+			sd->SetTexture(side_t::bottom, 
+				TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable));
 			break;
 		}
 	}

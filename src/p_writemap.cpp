@@ -147,12 +147,12 @@ static int WriteSIDEDEFS (FILE *file)
 
 	for (int i = 0; i < numsides; ++i)
 	{
-		msd.textureoffset = LittleShort(short(sides[i].textureoffset >> FRACBITS));
-		msd.rowoffset = LittleShort(short(sides[i].rowoffset >> FRACBITS));
+		msd.textureoffset = LittleShort(short(sides[i].GetTextureXOffset(side_t::mid) >> FRACBITS));
+		msd.rowoffset = LittleShort(short(sides[i].GetTextureYOffset(side_t::mid) >> FRACBITS));
 		msd.sector = LittleShort(short(sides[i].sector - sectors));
-		uppercopy (msd.toptexture, GetTextureName (sides[i].toptexture));
-		uppercopy (msd.bottomtexture, GetTextureName (sides[i].bottomtexture));
-		uppercopy (msd.midtexture, GetTextureName (sides[i].midtexture));
+		uppercopy (msd.toptexture, GetTextureName (sides[i].GetTexture(side_t::top)));
+		uppercopy (msd.bottomtexture, GetTextureName (sides[i].GetTexture(side_t::bottom)));
+		uppercopy (msd.midtexture, GetTextureName (sides[i].GetTexture(side_t::mid)));
 		fwrite (&msd, sizeof(msd), 1, file);
 	}
 	return numsides * sizeof(msd);

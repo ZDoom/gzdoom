@@ -265,8 +265,9 @@ void DDoor::DoorSound (bool raise) const
 				if (line->backsector == NULL)
 					continue;
 
-				texname = TexMan[sides[line->sidenum[0]].toptexture]->Name;
-				if (texname[0] == 'D' && texname[1] == 'O' && texname[2] == 'R')
+				FTexture *tex = TexMan[sides[line->sidenum[0]].GetTexture(side_t::top)];
+				texname = tex? tex->Name : NULL;
+				if (texname != NULL && texname[0] == 'D' && texname[1] == 'O' && texname[2] == 'R')
 				{
 					switch (texname[3])
 					{
@@ -606,11 +607,10 @@ void DAnimatedDoor::Tick ()
 				// IF DOOR NEEDS TO ANIMATE TO NEXT FRAME...
 				m_Timer = m_Speed;
 
-				sides[m_Line1->sidenum[0]].midtexture =
-				sides[m_Line1->sidenum[1]].midtexture =
-				sides[m_Line2->sidenum[0]].midtexture =
-				sides[m_Line2->sidenum[1]].midtexture =
-					ani.TextureFrames[m_Frame];
+				sides[m_Line1->sidenum[0]].SetTexture(side_t::mid, ani.TextureFrames[m_Frame]);
+				sides[m_Line1->sidenum[1]].SetTexture(side_t::mid, ani.TextureFrames[m_Frame]);
+				sides[m_Line2->sidenum[0]].SetTexture(side_t::mid, ani.TextureFrames[m_Frame]);
+				sides[m_Line2->sidenum[1]].SetTexture(side_t::mid, ani.TextureFrames[m_Frame]);
 			}
 		}
 		break;
@@ -642,11 +642,10 @@ void DAnimatedDoor::Tick ()
 				// IF DOOR NEEDS TO ANIMATE TO NEXT FRAME...
 				m_Timer = m_Speed;
 
-				sides[m_Line1->sidenum[0]].midtexture =
-				sides[m_Line1->sidenum[1]].midtexture =
-				sides[m_Line2->sidenum[0]].midtexture =
-				sides[m_Line2->sidenum[1]].midtexture =
-					ani.TextureFrames[m_Frame];
+				sides[m_Line1->sidenum[0]].SetTexture(side_t::mid, ani.TextureFrames[m_Frame]);
+				sides[m_Line1->sidenum[1]].SetTexture(side_t::mid, ani.TextureFrames[m_Frame]);
+				sides[m_Line2->sidenum[0]].SetTexture(side_t::mid, ani.TextureFrames[m_Frame]);
+				sides[m_Line2->sidenum[1]].SetTexture(side_t::mid, ani.TextureFrames[m_Frame]);
 			}
 		}
 		break;
@@ -699,7 +698,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay)
 	// The DMovingCeiling constructor automatically sets up an interpolation for us.
 	// Stop it, since the ceiling is moving instantly here.
 	stopinterpolation (INTERP_SectorCeiling, sec);
-	m_WhichDoorIndex = P_FindSlidingDoorType (sides[line->sidenum[0]].toptexture);
+	m_WhichDoorIndex = P_FindSlidingDoorType (sides[line->sidenum[0]].GetTexture(side_t::top));
 	if (m_WhichDoorIndex < 0)
 	{
 		Printf ("EV_SlidingDoor: Textures are not defined for sliding door!");
@@ -715,16 +714,16 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay)
 		if (sec->lines[i] == line)
 			continue;
 
-		if (sides[sec->lines[i]->sidenum[0]].toptexture == sides[line->sidenum[0]].toptexture)
+		if (sides[sec->lines[i]->sidenum[0]].GetTexture(side_t::top) == sides[line->sidenum[0]].GetTexture(side_t::top))
 		{
 			m_Line2 = sec->lines[i];
 			break;
 		}
 	}
 
-	picnum = sides[m_Line1->sidenum[0]].toptexture;
-	sides[m_Line1->sidenum[0]].midtexture = picnum;
-	sides[m_Line2->sidenum[0]].midtexture = picnum;
+	picnum = sides[m_Line1->sidenum[0]].GetTexture(side_t::top);
+	sides[m_Line1->sidenum[0]].SetTexture(side_t::mid, picnum);
+	sides[m_Line2->sidenum[0]].SetTexture(side_t::mid, picnum);
 
 	// don't forget texture scaling here!
 	FTexture *tex = TexMan[picnum];
@@ -783,7 +782,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 			}
 			return false;
 		}
-		if (P_FindSlidingDoorType (sides[line->sidenum[0]].toptexture) >= 0)
+		if (P_FindSlidingDoorType (sides[line->sidenum[0]].GetTexture(side_t::top)) >= 0)
 		{
 			new DAnimatedDoor (sec, line, speed, delay);
 			return true;
@@ -806,7 +805,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 			{
 				continue;
 			}
-			if (P_FindSlidingDoorType (sides[line->sidenum[0]].toptexture) >= 0)
+			if (P_FindSlidingDoorType (sides[line->sidenum[0]].GetTexture(side_t::top)) >= 0)
 			{
 				rtn = true;
 				new DAnimatedDoor (sec, line, speed, delay);

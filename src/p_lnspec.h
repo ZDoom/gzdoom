@@ -155,12 +155,12 @@ typedef enum {
 #define FRICTION_MASK	0x0800
 #define PUSH_MASK		0x1000
 
-struct line_s;
+struct line_t;
 class AActor;
 
 FName MODtoDamageType (int mod);
 
-typedef int (*lnSpecFunc)(struct line_s	*line,
+typedef int (*lnSpecFunc)(struct line_t	*line,
 						  class AActor	*activator,
 						  bool			backSide,
 						  int			arg1,

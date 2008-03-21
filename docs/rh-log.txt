@@ -1,4 +1,16 @@
 March 21, 2008 (Changes by Graf Zahl)
+- Disabled scrolling of 3DMIDTEX textures. Due to the special needs this 
+  cannot work properly.
+- Added new Scroll_Wall special to allow more control over wall scrolling.
+  Since it uses fixed point parameters it can only be used in scripts though.
+- Added flags parameters to all wall scroller specials that didn't use
+  all 5 args.
+- Separated scrolling of the 3 different texture parts of a sidedef.
+  While doing this I did some more restructuring of the sidedef structure
+  and changed it so that all state changes to sidedefs that affect rendering 
+  have to be made with access functions. This is not of much use to the
+  software renderer but it allows far easier caching of rendering data
+  for OpenGL because the only place I need to check is in the access functions.
 - Added Karate Chris's ThingCountSector submission.
 - Made texture indices in FSwitchDef full integers. Since that required
   some data restructuring I also eliminated the MAX_FRAMES limit of 128

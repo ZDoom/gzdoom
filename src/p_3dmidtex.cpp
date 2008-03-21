@@ -57,8 +57,8 @@ bool P_Scroll3dMidtex(sector_t *sector, int crush, fixed_t move, bool ceiling)
 	{
 		line_t *l = scrollplane.AttachedLines[i];
 
-		sides[l->sidenum[0]].rowoffset += move;
-		sides[l->sidenum[1]].rowoffset += move;
+		sides[l->sidenum[0]].AddTextureYOffset(side_t::mid, move);
+		sides[l->sidenum[1]].AddTextureYOffset(side_t::mid, move);
 	}
 
 	// Second step: Check all sectors whether the move is ok.
@@ -88,8 +88,8 @@ void P_Start3dMidtexInterpolations(sector_t *sector, bool ceiling)
 	{
 		line_t *l = scrollplane.AttachedLines[i];
 
-		setinterpolation(INTERP_WallPanning, &sides[l->sidenum[0]]);
-		setinterpolation(INTERP_WallPanning, &sides[l->sidenum[1]]);
+		sides[l->sidenum[0]].SetInterpolation(side_t::mid);
+		sides[l->sidenum[1]].SetInterpolation(side_t::mid);
 	}
 }
 
@@ -110,8 +110,8 @@ void P_Stop3dMidtexInterpolations(sector_t *sector, bool ceiling)
 	{
 		line_t *l = scrollplane.AttachedLines[i];
 
-		stopinterpolation(INTERP_WallPanning, &sides[l->sidenum[0]]);
-		stopinterpolation(INTERP_WallPanning, &sides[l->sidenum[1]]);
+		sides[l->sidenum[0]].StopInterpolation(side_t::mid);
+		sides[l->sidenum[1]].StopInterpolation(side_t::mid);
 	}
 }
 
@@ -237,28 +237,28 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, f
 {
 	side_t *side = &sides[line->sidenum[sideno]];
 
-	if (line->sidenum[0]==NO_SIDE || line->sidenum[1]==NO_SIDE || !side->midtexture) return false;
+	if (line->sidenum[0]==NO_SIDE || line->sidenum[1]==NO_SIDE || !side->GetTexture(side_t::mid)) return false;
 	
-	FTexture * tex= TexMan(side->midtexture);
+	FTexture * tex= TexMan(side->GetTexture(side_t::mid));
 	if (!tex) return false;
 
-	fixed_t rowoffset = side->rowoffset;
+	fixed_t y_offset = side->GetTextureYOffset(side_t::mid);
 	fixed_t textureheight = tex->GetScaledHeight() << FRACBITS;
 	if (tex->yScale != FRACUNIT && !tex->bWorldPanning)
 	{ 
-		rowoffset = FixedDiv(rowoffset, tex->yScale);
+		y_offset = FixedDiv(y_offset, tex->yScale);
 	}
 
 	if(line->flags & ML_DONTPEGBOTTOM)
 	{
-		*ptexbot = rowoffset +
+		*ptexbot = y_offset +
 				   MAX<fixed_t>(line->frontsector->floortexz, line->backsector->floortexz);
 
 		*ptextop = *ptexbot + textureheight;
 	}
 	else
 	{
-		*ptextop = rowoffset +
+		*ptextop = y_offset +
 				   MIN<fixed_t>(line->frontsector->ceilingtexz, line->backsector->ceilingtexz);
 		
 		*ptexbot = *ptextop - textureheight;

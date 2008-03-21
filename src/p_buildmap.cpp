@@ -459,21 +459,22 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		walls[i].nextwall = LittleShort(walls[i].nextwall);
 		walls[i].nextsector = LittleShort(walls[i].nextsector);
 
-		sides[i].textureoffset = walls[i].xpanning << FRACBITS;
-		sides[i].rowoffset = walls[i].ypanning << FRACBITS;
+		sides[i].SetTextureXOffset(walls[i].xpanning << FRACBITS);
+		sides[i].SetTextureYOffset(walls[i].ypanning << FRACBITS);
 
-		sides[i].toptexture = sides[i].bottomtexture = pic;
+		sides[i].SetTexture(side_t::top, pic);
+		sides[i].SetTexture(side_t::bottom, pic);
 		if (walls[i].nextsector < 0 || (walls[i].cstat & 32))
 		{
-			sides[i].midtexture = pic;
+			sides[i].SetTexture(side_t::mid, pic);
 		}
 		else if (walls[i].cstat & 16)
 		{
-			sides[i].midtexture = overpic;
+			sides[i].SetTexture(side_t::mid, overpic);
 		}
 		else
 		{
-			sides[i].midtexture = 0;
+			sides[i].SetTexture(side_t::mid, 0);
 		}
 
 		sides[i].TexelLength = walls[i].xrepeat * 8;

@@ -1275,7 +1275,7 @@ void RP_AddLine (seg_t *line)
 		// preserve a kind of transparent door/lift special effect:
 		&& bcz0 >= fcz0 && bcz1 >= fcz1
 
-		&& ((bfz0 <= ffz0 && bfz1 <= ffz1) || line->sidedef->bottomtexture != 0))
+		&& ((bfz0 <= ffz0 && bfz1 <= ffz1) || line->sidedef->GetTexture(side_t::bottom) != 0))
 		{
 		// killough 1/18/98 -- This function is used to fix the automap bug which
 		// showed lines behind closed doors simply because the door had a dropoff.
@@ -1297,7 +1297,7 @@ void RP_AddLine (seg_t *line)
 		else if (backsector->lightlevel != frontsector->lightlevel
 			|| backsector->floorpic != frontsector->floorpic
 			|| backsector->ceilingpic != frontsector->ceilingpic
-			|| curline->sidedef->midtexture != 0
+			|| curline->sidedef->GetTexture(side_t::mid) != 0
 
 			// killough 3/7/98: Take flats offsets into account:
 			|| backsector->floor_xoffs != frontsector->floor_xoffs
@@ -1342,7 +1342,8 @@ void RP_AddLine (seg_t *line)
 		markceiling = markfloor = true;
 	}
 
-	rw_offset = line->sidedef->textureoffset;
+	// must be fixed in case the polymost renderer ever gets developed further!
+	rw_offset = line->sidedef->GetTextureXOffset(side_t::mid);
 
 	R_NewWall (false);
 	if (rw_markmirror)

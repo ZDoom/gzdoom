@@ -245,7 +245,7 @@ int DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y)
 			Z -= front->floortexz;
 		else
 			Z -= front->ceilingtexz;
-		tex = wall->midtexture;
+		tex = wall->GetTexture(side_t::mid);
 	}
 	else if (back->floorplane.ZatPoint (x, y) >= Z)
 	{
@@ -254,7 +254,7 @@ int DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y)
 			Z -= front->ceilingtexz;
 		else
 			Z -= back->floortexz;
-		tex = wall->bottomtexture;
+		tex = wall->GetTexture(side_t::bottom);
 	}
 	else
 	{
@@ -263,7 +263,7 @@ int DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y)
 			Z -= front->ceilingtexz;
 		else
 			Z -= back->ceilingtexz;
-		tex = wall->toptexture;
+		tex = wall->GetTexture(side_t::top);
 	}
 
 	CalcFracPos (wall, x, y);

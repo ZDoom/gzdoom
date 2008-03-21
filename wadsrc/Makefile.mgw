@@ -1,5 +1,4 @@
 MAKEWAD=../tools/makewad/makewad
-XLATCC=../tools/xlatcc/xlatcc
 DEHSUPP=../tools/dehsupp/dehsupp
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -9,14 +8,14 @@ ifeq ($(findstring msys,$(shell sh --version 2>nul)),msys)
 export OSTYPE=msys
 endif
 
-wadmake: zdoom.lst $(MAKEWAD).exe $(XLATCC).exe $(DEHSUPP).exe
+wadmake: zdoom.lst $(MAKEWAD).exe $(DEHSUPP).exe
 	$(MAKEWAD) -make wadmake zdoom.lst
 
 clean:
 ifeq ($(OSTYPE),msys)
-	rm -f wadmake zdoom.pk3 xlat/*.x dehsupp.lmp
+	rm -f wadmake zdoom.pk3 dehsupp.lmp
 else
-	del /q /f wadmake zdoom.pk3 xlat\*.x dehsupp.lmp 2>nul
+	del /q /f wadmake zdoom.pk3 dehsupp.lmp 2>nul
 endif
 
 ../tools/makewad/makewad.exe:

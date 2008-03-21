@@ -1024,7 +1024,7 @@ void S_StopSound (fixed_t *pt, int channel)
 void S_StopSound (AActor *ent, int channel)
 {
 	// No need to search every channel if we know it's not playing anything.
-	if (ent->SoundChans & (1 << channel))
+	if (ent != NULL && ent->SoundChans & (1 << channel))
 	{
 		S_StopSound (&ent->x, channel);
 	}

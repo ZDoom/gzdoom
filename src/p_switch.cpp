@@ -95,16 +95,16 @@ protected:
 
 struct FSwitchDef
 {
-	SWORD PreTexture;	// texture to switch from
+	int PreTexture;		// texture to switch from
 	WORD PairIndex;		// switch def to use to return to PreTexture
 	SWORD Sound;		// sound to play at start of animation
 	WORD NumFrames;		// # of animation frames
 	bool QuestPanel;	// Special texture for Strife mission
-	union				// Array of times followed by array of textures
+	struct frame		// Array of times followed by array of textures
 	{					//   actual length of each array is <NumFrames>
-		DWORD Times[1];
-		SWORD Textures[3];
-	} u;
+		DWORD Time;
+		int Texture;
+	} u[1];
 };
 
 static int STACK_ARGS SortSwitchDefs (const void *a, const void *b);
@@ -167,11 +167,11 @@ void P_InitSwitchList ()
 			{
 				def1 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 				def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
-				def1->PreTexture = def2->u.Textures[2] = TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags);
-				def2->PreTexture = def1->u.Textures[2] = TexMan.CheckForTexture (list_p + 9, FTexture::TEX_Wall, texflags);
+				def1->PreTexture = def2->u[0].Texture = TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags);
+				def2->PreTexture = def1->u[0].Texture = TexMan.CheckForTexture (list_p + 9, FTexture::TEX_Wall, texflags);
 				def1->Sound = def2->Sound = 0;
 				def1->NumFrames = def2->NumFrames = 1;
-				def1->u.Times[0] = def2->u.Times[0] = 0;
+				def1->u[0].Time = def2->u[0].Time = 0;
 				def2->PairIndex = AddSwitchDef (def1);
 				def1->PairIndex = AddSwitchDef (def2);
 			}
@@ -317,12 +317,12 @@ void P_ProcessSwitchDef (FScanner &sc)
 		def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 		def2->Sound = def1->Sound;
 		def2->NumFrames = 1;
-		def2->u.Times[0] = 0;
-		def2->u.Textures[2] = picnum;
+		def2->u[0].Time = 0;
+		def2->u[0].Texture = picnum;
 	}
 
 	def1->PreTexture = picnum;
-	def2->PreTexture = def1->u.Textures[def1->NumFrames*2+def1->NumFrames-1];
+	def2->PreTexture = def1->u[def1->NumFrames-1].Texture;
 	if (def1->PreTexture == def2->PreTexture)
 	{
 		sc.ScriptError ("The on state for switch %s must end with a texture other than %s", picname.GetChars(), picname.GetChars());
@@ -336,14 +336,12 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 {
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	FSwitchDef *def;
-	SWORD pics[MAX_FRAMES];
-	DWORD times[MAX_FRAMES];
-	int numframes;
+	TArray<FSwitchDef::frame> frames;
+	FSwitchDef::frame thisframe;
 	int picnum;
 	bool bad;
 	SWORD sound;
 
-	numframes = 0;
 	sound = 0;
 	bad = false;
 
@@ -360,10 +358,6 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 		}
 		else if (sc.Compare ("pic"))
 		{
-			if (numframes == MAX_FRAMES)
-			{
-				sc.ScriptError ("Switch has too many frames");
-			}
 			sc.MustGetString ();
 			picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
 			if (picnum < 0 && !ignoreBad)
@@ -371,12 +365,12 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 				//Printf ("Unknown switch texture %s\n", sc.String);
 				bad = true;
 			}
-			pics[numframes] = picnum;
+			thisframe.Texture = picnum;
 			sc.MustGetString ();
 			if (sc.Compare ("tics"))
 			{
 				sc.MustGetNumber ();
-				times[numframes] = sc.Number & 65535;
+				thisframe.Time = sc.Number & 65535;
 			}
 			else if (sc.Compare ("rand"))
 			{
@@ -390,13 +384,13 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 				{
 					swap (min, max);
 				}
-				times[numframes] = ((max - min + 1) << 16) | min;
+				thisframe.Time = ((max - min + 1) << 16) | min;
 			}
 			else
 			{
 				sc.ScriptError ("Must specify a duration for switch frame");
 			}
-			numframes++;
+			frames.Push(thisframe);
 		}
 		else
 		{
@@ -404,7 +398,7 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 			break;
 		}
 	}
-	if (numframes == 0)
+	if (frames.Size() == 0)
 	{
 		sc.ScriptError ("Switch state needs at least one frame");
 	}
@@ -412,11 +406,11 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 	{
 		return NULL;
 	}
-	def = (FSwitchDef *)M_Malloc (myoffsetof (FSwitchDef, u.Times[0]) + numframes * 6);
+
+	def = (FSwitchDef *)M_Malloc (myoffsetof (FSwitchDef, u[0]) + frames.Size()*sizeof(frames[0]));
 	def->Sound = sound;
-	def->NumFrames = numframes;
-	memcpy (&def->u.Times[0], times, numframes * 4);
-	memcpy (&def->u.Textures[numframes*2], pics, numframes * 2);
+	def->NumFrames = frames.Size();
+	memcpy (&def->u[0], &frames[0], frames.Size() * sizeof(frames[0]));
 	def->PairIndex = 65535;
 	return def;
 }
@@ -606,7 +600,7 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *ques
 
 	pt[0] = line->v1->x + (line->dx >> 1);
 	pt[1] = line->v1->y + (line->dy >> 1);
-	*texture = SwitchList[i]->u.Textures[SwitchList[i]->NumFrames*2];
+	*texture = SwitchList[i]->u[0].Texture;
 	if (useAgain || SwitchList[i]->NumFrames > 1)
 		playsound = P_StartButton (side, Where, i, pt[0], pt[1], !!useAgain);
 	else 
@@ -691,7 +685,7 @@ void DActiveButton::Tick ()
 		}
 		bool killme = AdvanceFrame ();
 
-		StoreTexture (def->u.Textures[def->NumFrames*2+m_Frame]);
+		StoreTexture (def->u[m_Frame].Texture);
 
 		if (killme)
 		{
@@ -718,17 +712,17 @@ bool DActiveButton::AdvanceFrame ()
 	}
 	else
 	{
-		if (def->u.Times[m_Frame] & 0xffff0000)
+		if (def->u[m_Frame].Time & 0xffff0000)
 		{
 			int t = pr_switchanim();
 
 			m_Timer = (WORD)((((t | (pr_switchanim() << 8))
-				% def->u.Times[m_Frame]) >> 16)
-				+ (def->u.Times[m_Frame] & 0xffff));
+				% def->u[m_Frame].Time) >> 16)
+				+ (def->u[m_Frame].Time & 0xffff));
 		}
 		else
 		{
-			m_Timer = (WORD)def->u.Times[m_Frame];
+			m_Timer = (WORD)def->u[m_Frame].Time;
 		}
 	}
 	return ret;

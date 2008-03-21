@@ -1,3 +1,18 @@
+March 20, 2008
+- Removed some debug output from SBarInfo::ParseSBarInfo().
+- Fixed: Heretic linetype translations included the wrong file.
+- Removed all 2D sound positioning code from s_sound.cpp. Everything uses
+  FMOD's 3D engine now.
+- Removed all the channel selection code from s_sound.cpp. FMOD has code to
+  handle this sort of thing, so let's use it.
+- Replaced S_StopSoundID() with S_CheckSingular(). There is no longer a limit
+  on the number of copies of a particular sound that can be playing at once,
+  aside from Strife's special singular sounds. (Sorry, Heretic and Hexen.)
+  Consequently, the SNDINFO $limit command is now ignored.
+- Removed ATTN_SURROUND, since FMOD Ex doesn't exactly support it, and it
+  only worked as intended on stereo speakers anyway.
+- Cleaned out ancient crud from i_sound.cpp.
+
 March 20, 2008 (Changes by Graf Zahl)
 - Fixed: A_CustomMissile with aimmode 2 ignored spawnofs_xy.
 - Changed savegame versioning so that the written version is never lower

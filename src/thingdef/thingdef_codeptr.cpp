@@ -319,11 +319,11 @@ void A_PlaySoundEx (AActor *self)
 	int attenuation;
 	switch (attenuation_raw)
 	{
-		case -1: attenuation=ATTN_STATIC;	break; // drop off rapidly
+		case -1: attenuation = ATTN_STATIC;	break; // drop off rapidly
 		default:
-		case  0: attenuation=ATTN_NORM;		break; // normal
-		case  1: attenuation=ATTN_NONE;		break; // full volume
-		case  2: attenuation=ATTN_SURROUND;	break; // full volume surround
+		case  0: attenuation = ATTN_NORM;	break; // normal
+		case  1:
+		case  2: attenuation = ATTN_NONE;	break; // full volume
 	}
 
 	if (channel < NAME_Auto || channel > NAME_SoundSlot7)

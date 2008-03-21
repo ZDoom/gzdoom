@@ -49,7 +49,7 @@ void AFourthWeaponPiece::PlayPickupSound (AActor *toucher)
 	if (TempFourthWeapon != NULL)
 	{
 		// Play the build-sound full volume for all players
-		S_Sound (toucher, CHAN_ITEM, "WeaponBuild", 1, ATTN_SURROUND);
+		S_Sound (toucher, CHAN_ITEM, "WeaponBuild", 1, ATTN_NONE);
 	}
 	else
 	{

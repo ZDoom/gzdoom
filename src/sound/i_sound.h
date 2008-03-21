@@ -69,48 +69,39 @@ public:
 
 	virtual void SetSfxVolume (float volume) = 0;
 	virtual void SetMusicVolume (float volume) = 0;
-	virtual int  GetNumChannels () = 0;	// Initialize channels
 	virtual void LoadSound (sfxinfo_t *sfx) = 0;	// load a sound from disk
 	virtual void UnloadSound (sfxinfo_t *sfx) = 0;	// unloads a sound from memory
+	virtual unsigned int GetMSLength(sfxinfo_t *sfx) = 0;	// Gets the length of a sound at its default frequency
 
-	// Streaming sounds. PlayStream returns a channel handle that can be used with StopSound.
+	// Streaming sounds.
 	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
 	virtual SoundStream *OpenStream (const char *filename, int flags, int offset, int length) = 0;
 
-	// Starts a sound in a particular sound channel.
-	virtual long StartSound (sfxinfo_t *sfx, float vol, float sep, int pitch, int channel, bool looping, bool pauseable) = 0;
-	virtual long StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3], bool pauseable);
+	// Starts a sound.
+	virtual FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, bool looping, bool pauseable) = 0;
+	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, int pitch, bool looping, float pos[3], float vel[3], bool pauseable) = 0;
 
 	// Stops a sound channel.
-	virtual void StopSound (long handle) = 0;
-
-	// Stops all sounds.
-	virtual void StopAllChannels () = 0;
+	virtual void StopSound (FSoundChan *chan) = 0;
 
 	// Pauses or resumes all sound effect channels.
 	virtual void SetSfxPaused (bool paused) = 0;
 
-	// Returns true if the channel is still playing a sound.
-	virtual bool IsPlayingSound (long handle) = 0;
-
 	// Updates the volume, separation, and pitch of a sound channel.
-	virtual void UpdateSoundParams (long handle, float vol, float sep, int pitch) = 0;
-	virtual void UpdateSoundParams3D (long handle, float pos[3], float vel[3]);
+	virtual void UpdateSoundParams3D (FSoundChan *chan, float pos[3], float vel[3]) = 0;
 
 	// For use by I_PlayMovie
 	virtual void MovieDisableSound () = 0;
 	virtual void MovieResumeSound () = 0;
 
-	virtual void UpdateListener (AActor *listener);
-	virtual void UpdateSounds ();
+	virtual void UpdateListener () = 0;
+	virtual void UpdateSounds () = 0;
 
 	virtual bool IsValid () = 0;
 	virtual void PrintStatus () = 0;
 	virtual void PrintDriversList () = 0;
 	virtual FString GatherStats ();
 	virtual void ResetEnvironment ();
-
-	bool Sound3D;
 };
 
 extern SoundRenderer *GSnd;

@@ -6,11 +6,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+
+#ifdef _MSC_VER
+#define CDECL __cdecl
+#else
+#define CDECL
+#endif
+
 #line 1 "parse.y"
 
 #include <malloc.h>
 #include "dehsupp.h"
-#line 14 "parse.c"
+#line 21 "parse.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -461,7 +468,7 @@ static void yyGrowStack(yyParser *p){
 ** A pointer to a parser.  This pointer is used in subsequent calls
 ** to Parse and ParseFree.
 */
-void *ParseAlloc(void *(*mallocProc)(size_t)){
+void *ParseAlloc(void *(CDECL *mallocProc)(size_t)){
   yyParser *pParser;
   pParser = (yyParser*)(*mallocProc)( (size_t)sizeof(yyParser) );
   if( pParser ){
@@ -525,7 +532,7 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     case 33: /* RenderStyles */
 #line 10 "parse.y"
 { if ((yypminor->yy0).string) free((yypminor->yy0).string); }
-#line 529 "parse.c"
+#line 536 "parse.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -571,7 +578,7 @@ static int yy_pop_parser_stack(yyParser *pParser){
 */
 void ParseFree(
   void *p,                    /* The parser to be deleted */
-  void (*freeProc)(void*)     /* Function used to reclaim memory */
+  void (CDECL *freeProc)(void*)     /* Function used to reclaim memory */
 ){
   yyParser *pParser = (yyParser*)p;
   if( pParser==0 ) return;
@@ -903,7 +910,7 @@ static void yy_reduce(
 #line 21 "parse.y"
 {
 }
-#line 907 "parse.c"
+#line 914 "parse.c"
         break;
       case 14: /* print_statement ::= PRINT LPAREN print_list RPAREN */
 #line 39 "parse.y"
@@ -913,7 +920,7 @@ static void yy_reduce(
   yy_destructor(11,&yymsp[-2].minor);
   yy_destructor(12,&yymsp[0].minor);
 }
-#line 917 "parse.c"
+#line 924 "parse.c"
         break;
       case 17: /* print_list ::= print_item COMMA print_list */
       case 60: /*state_map_list ::= state_map_list COMMA state_map_entry */
@@ -923,83 +930,83 @@ static void yy_reduce(
 {
   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 927 "parse.c"
+#line 934 "parse.c"
         break;
       case 18: /* print_item ::= STRING */
 #line 47 "parse.y"
 { printf ("%s", yymsp[0].minor.yy0.string); }
-#line 932 "parse.c"
+#line 939 "parse.c"
         break;
       case 19: /* print_item ::= exp */
 #line 48 "parse.y"
 { printf ("%d", yymsp[0].minor.yy64); }
-#line 937 "parse.c"
+#line 944 "parse.c"
         break;
       case 20: /* print_item ::= ENDL */
 #line 49 "parse.y"
 { printf ("\n");   yy_destructor(15,&yymsp[0].minor);
 }
-#line 943 "parse.c"
+#line 950 "parse.c"
         break;
       case 21: /* exp ::= NUM */
 #line 52 "parse.y"
 { yygotominor.yy64 = yymsp[0].minor.yy0.val; }
-#line 948 "parse.c"
+#line 955 "parse.c"
         break;
       case 22: /* exp ::= exp PLUS exp */
 #line 53 "parse.y"
 { yygotominor.yy64 = yymsp[-2].minor.yy64 + yymsp[0].minor.yy64;   yy_destructor(5,&yymsp[-1].minor);
 }
-#line 954 "parse.c"
+#line 961 "parse.c"
         break;
       case 23: /* exp ::= exp MINUS exp */
 #line 54 "parse.y"
 { yygotominor.yy64 = yymsp[-2].minor.yy64 - yymsp[0].minor.yy64;   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 960 "parse.c"
+#line 967 "parse.c"
         break;
       case 24: /* exp ::= exp MULTIPLY exp */
 #line 55 "parse.y"
 { yygotominor.yy64 = yymsp[-2].minor.yy64 * yymsp[0].minor.yy64;   yy_destructor(6,&yymsp[-1].minor);
 }
-#line 966 "parse.c"
+#line 973 "parse.c"
         break;
       case 25: /* exp ::= exp DIVIDE exp */
 #line 56 "parse.y"
 { yygotominor.yy64 = yymsp[-2].minor.yy64 / yymsp[0].minor.yy64;   yy_destructor(7,&yymsp[-1].minor);
 }
-#line 972 "parse.c"
+#line 979 "parse.c"
         break;
       case 26: /* exp ::= exp OR exp */
 #line 57 "parse.y"
 { yygotominor.yy64 = yymsp[-2].minor.yy64 | yymsp[0].minor.yy64;   yy_destructor(1,&yymsp[-1].minor);
 }
-#line 978 "parse.c"
+#line 985 "parse.c"
         break;
       case 27: /* exp ::= exp AND exp */
 #line 58 "parse.y"
 { yygotominor.yy64 = yymsp[-2].minor.yy64 & yymsp[0].minor.yy64;   yy_destructor(3,&yymsp[-1].minor);
 }
-#line 984 "parse.c"
+#line 991 "parse.c"
         break;
       case 28: /* exp ::= exp XOR exp */
 #line 59 "parse.y"
 { yygotominor.yy64 = yymsp[-2].minor.yy64 ^ yymsp[0].minor.yy64;   yy_destructor(2,&yymsp[-1].minor);
 }
-#line 990 "parse.c"
+#line 997 "parse.c"
         break;
       case 29: /* exp ::= MINUS exp */
 #line 60 "parse.y"
 { yygotominor.yy64 = -yymsp[0].minor.yy64;   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 996 "parse.c"
+#line 1003 "parse.c"
         break;
       case 30: /* exp ::= LPAREN exp RPAREN */
 #line 61 "parse.y"
 { yygotominor.yy64 = yymsp[-1].minor.yy64;   yy_destructor(11,&yymsp[-2].minor);
   yy_destructor(12,&yymsp[0].minor);
 }
-#line 1003 "parse.c"
+#line 1010 "parse.c"
         break;
       case 31: /* actions_def ::= Actions LBRACE actions_list RBRACE SEMICOLON */
       case 32: /*actions_def ::= Actions LBRACE error RBRACE SEMICOLON */
@@ -1010,18 +1017,18 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1014 "parse.c"
+#line 1021 "parse.c"
         break;
       case 34: /* actions_list ::= SYM */
 #line 68 "parse.y"
 { AddAction (yymsp[0].minor.yy0.string); }
-#line 1019 "parse.c"
+#line 1026 "parse.c"
         break;
       case 35: /* actions_list ::= actions_list COMMA SYM */
 #line 69 "parse.y"
 { AddAction (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1025 "parse.c"
+#line 1032 "parse.c"
         break;
       case 36: /* org_heights_def ::= OrgHeights LBRACE org_heights_list RBRACE SEMICOLON */
       case 37: /*org_heights_def ::= OrgHeights LBRACE error RBRACE SEMICOLON */
@@ -1032,18 +1039,18 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1036 "parse.c"
+#line 1043 "parse.c"
         break;
       case 39: /* org_heights_list ::= exp */
 #line 76 "parse.y"
 { AddHeight (yymsp[0].minor.yy64); }
-#line 1041 "parse.c"
+#line 1048 "parse.c"
         break;
       case 40: /* org_heights_list ::= org_heights_list COMMA exp */
 #line 77 "parse.y"
 { AddHeight (yymsp[0].minor.yy64);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1047 "parse.c"
+#line 1054 "parse.c"
         break;
       case 41: /* action_list_def ::= ActionList LBRACE action_list_list RBRACE SEMICOLON */
       case 42: /*action_list_def ::= ActionList LBRACE error RBRACE SEMICOLON */
@@ -1054,18 +1061,18 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1058 "parse.c"
+#line 1065 "parse.c"
         break;
       case 44: /* action_list_list ::= SYM */
 #line 84 "parse.y"
 { AddActionMap (yymsp[0].minor.yy0.string); }
-#line 1063 "parse.c"
+#line 1070 "parse.c"
         break;
       case 45: /* action_list_list ::= action_list_list COMMA SYM */
 #line 85 "parse.y"
 { AddActionMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1069 "parse.c"
+#line 1076 "parse.c"
         break;
       case 46: /* codep_conv_def ::= CodePConv LBRACE codep_conv_list RBRACE SEMICOLON */
       case 47: /*codep_conv_def ::= CodePConv LBRACE error RBRACE SEMICOLON */
@@ -1076,18 +1083,18 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1080 "parse.c"
+#line 1087 "parse.c"
         break;
       case 49: /* codep_conv_list ::= exp */
 #line 92 "parse.y"
 { AddCodeP (yymsp[0].minor.yy64); }
-#line 1085 "parse.c"
+#line 1092 "parse.c"
         break;
       case 50: /* codep_conv_list ::= codep_conv_list COMMA exp */
 #line 93 "parse.y"
 { AddCodeP (yymsp[0].minor.yy64);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1091 "parse.c"
+#line 1098 "parse.c"
         break;
       case 51: /* org_spr_names_def ::= OrgSprNames LBRACE org_spr_names_list RBRACE SEMICOLON */
       case 52: /*org_spr_names_def ::= OrgSprNames LBRACE error RBRACE SEMICOLON */
@@ -1098,18 +1105,18 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1102 "parse.c"
+#line 1109 "parse.c"
         break;
       case 54: /* org_spr_names_list ::= SYM */
 #line 100 "parse.y"
 { AddSpriteName (yymsp[0].minor.yy0.string); }
-#line 1107 "parse.c"
+#line 1114 "parse.c"
         break;
       case 55: /* org_spr_names_list ::= org_spr_names_list COMMA SYM */
 #line 101 "parse.y"
 { AddSpriteName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1113 "parse.c"
+#line 1120 "parse.c"
         break;
       case 56: /* state_map_def ::= StateMap LBRACE state_map_list RBRACE SEMICOLON */
       case 57: /*state_map_def ::= StateMap LBRACE error RBRACE SEMICOLON */
@@ -1120,32 +1127,32 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1124 "parse.c"
+#line 1131 "parse.c"
         break;
       case 61: /* state_map_entry ::= SYM COMMA state_type COMMA exp */
 #line 111 "parse.y"
 { AddStateMap (yymsp[-4].minor.yy0.string, yymsp[-2].minor.yy64, yymsp[0].minor.yy64);   yy_destructor(13,&yymsp[-3].minor);
   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1131 "parse.c"
+#line 1138 "parse.c"
         break;
       case 62: /* state_type ::= FirstState */
 #line 114 "parse.y"
 { yygotominor.yy64 = 0;   yy_destructor(27,&yymsp[0].minor);
 }
-#line 1137 "parse.c"
+#line 1144 "parse.c"
         break;
       case 63: /* state_type ::= SpawnState */
 #line 115 "parse.y"
 { yygotominor.yy64 = 1;   yy_destructor(28,&yymsp[0].minor);
 }
-#line 1143 "parse.c"
+#line 1150 "parse.c"
         break;
       case 64: /* state_type ::= DeathState */
 #line 116 "parse.y"
 { yygotominor.yy64 = 2;   yy_destructor(29,&yymsp[0].minor);
 }
-#line 1149 "parse.c"
+#line 1156 "parse.c"
         break;
       case 65: /* sound_map_def ::= SoundMap LBRACE sound_map_list RBRACE SEMICOLON */
       case 66: /*sound_map_def ::= SoundMap LBRACE error RBRACE SEMICOLON */
@@ -1156,18 +1163,18 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1160 "parse.c"
+#line 1167 "parse.c"
         break;
       case 68: /* sound_map_list ::= STRING */
 #line 123 "parse.y"
 { AddSoundMap (yymsp[0].minor.yy0.string); }
-#line 1165 "parse.c"
+#line 1172 "parse.c"
         break;
       case 69: /* sound_map_list ::= sound_map_list COMMA STRING */
 #line 124 "parse.y"
 { AddSoundMap (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1171 "parse.c"
+#line 1178 "parse.c"
         break;
       case 70: /* info_names_def ::= InfoNames LBRACE info_names_list RBRACE SEMICOLON */
       case 71: /*info_names_def ::= InfoNames LBRACE error RBRACE SEMICOLON */
@@ -1178,18 +1185,18 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1182 "parse.c"
+#line 1189 "parse.c"
         break;
       case 73: /* info_names_list ::= SYM */
 #line 131 "parse.y"
 { AddInfoName (yymsp[0].minor.yy0.string); }
-#line 1187 "parse.c"
+#line 1194 "parse.c"
         break;
       case 74: /* info_names_list ::= info_names_list COMMA SYM */
 #line 132 "parse.y"
 { AddInfoName (yymsp[0].minor.yy0.string);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1193 "parse.c"
+#line 1200 "parse.c"
         break;
       case 75: /* thing_bits_def ::= ThingBits LBRACE thing_bits_list RBRACE SEMICOLON */
       case 76: /*thing_bits_def ::= ThingBits LBRACE error RBRACE SEMICOLON */
@@ -1200,14 +1207,14 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1204 "parse.c"
+#line 1211 "parse.c"
         break;
       case 80: /* thing_bits_entry ::= exp COMMA exp COMMA SYM */
 #line 142 "parse.y"
 { AddThingBits (yymsp[0].minor.yy0.string, yymsp[-4].minor.yy64, yymsp[-2].minor.yy64);   yy_destructor(13,&yymsp[-3].minor);
   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1211 "parse.c"
+#line 1218 "parse.c"
         break;
       case 81: /* render_styles_def ::= RenderStyles LBRACE render_styles_list RBRACE SEMICOLON */
       case 82: /*render_styles_def ::= RenderStyles LBRACE error RBRACE SEMICOLON */
@@ -1218,13 +1225,13 @@ static void yy_reduce(
   yy_destructor(19,&yymsp[-1].minor);
   yy_destructor(20,&yymsp[0].minor);
 }
-#line 1222 "parse.c"
+#line 1229 "parse.c"
         break;
       case 86: /* render_styles_entry ::= exp COMMA SYM */
 #line 152 "parse.y"
 { AddRenderStyle (yymsp[0].minor.yy0.string, yymsp[-2].minor.yy64);   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 1228 "parse.c"
+#line 1235 "parse.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -1284,7 +1291,7 @@ static void yy_syntax_error(
 #define TOKEN (yyminor.yy0)
 #line 8 "parse.y"
  yyerror("Syntax error"); 
-#line 1288 "parse.c"
+#line 1295 "parse.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

@@ -87,7 +87,6 @@ void SBarInfo::Load()
 void SBarInfo::ParseSBarInfo(int lump)
 {
 	gameType = gameinfo.gametype;
-	Printf("%d=%d", gameinfo.gametype, GAME_Any);
 	bool baseSet = false;
 	FScanner sc(lump, Wads.GetLumpFullName(lump));
 	sc.SetCMode(true);

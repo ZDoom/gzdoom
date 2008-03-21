@@ -174,12 +174,12 @@ END_DEFAULTS
 void A_BrainAwake (AActor *self)
 {
 	// killough 3/26/98: only generates sound now
-	S_Sound (self, CHAN_VOICE, "brain/sight", 1, ATTN_SURROUND);
+	S_Sound (self, CHAN_VOICE, "brain/sight", 1, ATTN_NONE);
 }
 
 void A_BrainPain (AActor *self)
 {
-	S_Sound (self, CHAN_VOICE, "brain/pain", 1, ATTN_SURROUND);
+	S_Sound (self, CHAN_VOICE, "brain/pain", 1, ATTN_NONE);
 }
 
 static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
@@ -206,7 +206,7 @@ void A_BrainScream (AActor *self)
 		BrainishExplosion (x, self->y - 320*FRACUNIT,
 			128 + (pr_brainscream() << (FRACBITS + 1)));
 	}
-	S_Sound (self, CHAN_VOICE, "brain/death", 1, ATTN_SURROUND);
+	S_Sound (self, CHAN_VOICE, "brain/death", 1, ATTN_NONE);
 }
 
 void A_BrainExplode (AActor *self)
@@ -264,7 +264,7 @@ void A_BrainSpit (AActor *self)
 			spit->reactiontime /= spit->state->GetTics();
 		}
 
-		S_Sound (self, CHAN_WEAPON, "brain/spit", 1, ATTN_SURROUND);
+		S_Sound (self, CHAN_WEAPON, "brain/spit", 1, ATTN_NONE);
 	}
 }
 

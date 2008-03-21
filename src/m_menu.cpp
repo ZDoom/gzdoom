@@ -1951,7 +1951,7 @@ void M_QuitResponse(int ch)
 	{
 		if (gameinfo.quitSound)
 		{
-			S_Sound (CHAN_VOICE, gameinfo.quitSound, 1, ATTN_SURROUND);
+			S_Sound (CHAN_VOICE, gameinfo.quitSound, 1, ATTN_NONE);
 			I_WaitVBL (105);
 		}
 	}

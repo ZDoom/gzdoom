@@ -1642,7 +1642,7 @@ void A_Look (AActor *actor)
 	{
 		if (actor->flags2 & MF2_BOSS)
 		{ // full volume
-			S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_SURROUND);
+			S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NONE);
 		}
 		else
 		{
@@ -2396,7 +2396,7 @@ void A_Scream (AActor *actor)
 		if (actor->flags2 & MF2_BOSS)
 		{
 			// full volume
-			S_SoundID (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_SURROUND);
+			S_SoundID (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_NONE);
 		}
 		else
 		{

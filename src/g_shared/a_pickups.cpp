@@ -998,7 +998,7 @@ void AInventory::PlayPickupSound (AActor *toucher)
 	S_SoundID (toucher, CHAN_PICKUP, PickupSound, 1,
 		(ItemFlags & IF_FANCYPICKUPSOUND) &&
 		(toucher == NULL || toucher->CheckLocalView (consoleplayer))
-		? ATTN_SURROUND : ATTN_NORM);
+		? ATTN_NONE : ATTN_NORM);
 }
 
 //===========================================================================

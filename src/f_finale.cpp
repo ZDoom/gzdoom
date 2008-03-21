@@ -599,8 +599,6 @@ void F_StartCast (void)
 //
 void F_CastTicker (void)
 {
-	int atten;
-
 	if (--casttics > 0 && caststate != NULL)
 		return; 				// not time to change state yet
 				
@@ -615,11 +613,7 @@ void F_CastTicker (void)
 				castnum = 0;
 			if (castorder[castnum].info->SeeSound)
 			{
-				if (castorder[castnum].info->flags2 & MF2_BOSS)
-					atten = ATTN_SURROUND;
-				else
-					atten = ATTN_NONE;
-				S_SoundID (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, atten);
+				S_SoundID (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, ATTN_NONE);
 			}
 			caststate = castorder[castnum].info->SeeState;
 			// [RH] Skip monsters that have been hacked to no longer have attack states
@@ -736,8 +730,7 @@ bool F_CastResponder (event_t* ev)
 		}
 		else if (castorder[castnum].info->DeathSound)
 		{
-			S_SoundID (CHAN_VOICE, castorder[castnum].info->DeathSound, 1,
-				castnum == 15 || castnum == 14 ? ATTN_SURROUND : ATTN_NONE);
+			S_SoundID (CHAN_VOICE, castorder[castnum].info->DeathSound, 1, ATTN_NONE);
 		}
 	}
 		

@@ -662,6 +662,7 @@ public:
 	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
 	fixed_t			floorclip;		// value to use for floor clipping
 	SWORD			tid;			// thing identifier
+	BYTE			SoundChans;		// Bitfield indicating which sound channels are playing.
 	BYTE			special;		// special
 	int				args[5];		// special arguments
 

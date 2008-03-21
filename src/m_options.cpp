@@ -102,7 +102,6 @@ EXTERN_CVAR (Int, crosshair)
 EXTERN_CVAR (Bool, freelook)
 EXTERN_CVAR (Int, snd_buffersize)
 EXTERN_CVAR (Int, snd_samplerate)
-EXTERN_CVAR (Bool, snd_3d)
 EXTERN_CVAR (Bool, snd_waterreverb)
 EXTERN_CVAR (Int, sv_smartaim)
 
@@ -1143,7 +1142,7 @@ static value_t SampleRates[] =
 	{ 32000.f, "32000 Hz" },
 	{ 44100.f, "44100 Hz" },
 	{ 48000.f, "48000 Hz" },
-	{ 65535.f, "65535 Hz" }
+	{ 96000.f, "96000 Hz" }
 };
 
 static value_t BufferSizes[] =
@@ -1175,11 +1174,10 @@ static menuitem_t SoundItems[] =
 	{ discrete, "Flip Stereo Channels",	{&snd_flipstereo},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Random Pitch Variations", {&snd_pitched},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ more,		"Activate below settings", {NULL},			{0.0}, {0.0},	{0.0}, {(value_t *)MakeSoundChanges} },
+	{ more,		"Activate below settings", {NULL},				{0.0}, {0.0},	{0.0}, {(value_t *)MakeSoundChanges} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Sample Rate",			{&snd_samplerate},		{8.0}, {0.0},	{0.0}, {SampleRates} },
 	{ discrete, "Buffer Size",			{&snd_buffersize},		{11.0}, {0.0},	{0.0}, {BufferSizes} },
-	{ discrete, "3D Sound",				{&snd_3d},				{2.0}, {0.0},	{0.0}, {OnOff} },
 
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ more,		"Advanced Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)AdvSoundOptions} },

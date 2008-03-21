@@ -1,4 +1,4 @@
-include "xlat/doomxlat.txt"
+include "xlat/doom.txt"
 
   7 = USE,				Stairs_BuildUpDoom (tag, F_SLOW, 8)
   8 = WALK,				Stairs_BuildUpDoom (tag, F_SLOW, 8)

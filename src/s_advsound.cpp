@@ -433,12 +433,25 @@ int S_AddSoundLump (const char *logicalname, int lump)
 {
 	sfxinfo_t newsfx;
 
-	memset (&newsfx.lumpnum, 0, sizeof(newsfx)-sizeof(newsfx.name));
+	newsfx.data = NULL;
 	newsfx.name = logicalname;
 	newsfx.lumpnum = lump;
-	newsfx.link = sfxinfo_t::NO_LINK;
+	newsfx.next = 0;
+	newsfx.index = 0;
+	newsfx.frequency = 0;
 	newsfx.PitchMask = CurrentPitchMask;
-	newsfx.MaxChannels = 2;
+	newsfx.bRandomHeader = false;
+	newsfx.bPlayerReserve = false;
+	newsfx.bForce11025 = false;
+	newsfx.bForce22050 = false;
+	newsfx.bLoadRAW = false;
+	newsfx.bPlayerCompat = false;
+	newsfx.b16bit = false;
+	newsfx.bUsed = false;
+	newsfx.bSingular = false;
+	newsfx.bTentative = false;
+	newsfx.link = sfxinfo_t::NO_LINK;
+
 	return (int)S_sfx.Push (newsfx);
 }
 
@@ -758,10 +771,10 @@ static void S_ClearSoundData()
 
 	if (GSnd != NULL)
 	{
-		GSnd->StopAllChannels();
+		S_StopAllChannels();
 		for (i = 0; i < S_sfx.Size(); ++i)
 		{
-			GSnd->UnloadSound (&S_sfx[i]);
+			GSnd->UnloadSound(&S_sfx[i]);
 		}
 	}
 	S_sfx.Clear();
@@ -1087,15 +1100,12 @@ static void S_AddSNDINFO (int lump)
 				break;
 
 			case SI_Limit: {
-				// $limit <logical name> <max channels>
+				// $limit <logical name> <max channels>	-- deprecated and ignored
 				int sfx;
 
 				sc.MustGetString ();
 				sfx = S_FindSoundTentative (sc.String);
 				sc.MustGetNumber ();
-				//S_sfx[sfx].MaxChannels = clamp<BYTE> (sc.Number, 0, 255);
-				//Can't use clamp because of GCC bugs
-				S_sfx[sfx].MaxChannels = MIN (MAX (sc.Number, 0), 255);
 				}
 				break;
 
@@ -1858,20 +1868,15 @@ void AAmbientSound::Activate (AActor *activator)
 
 	if (!bActive)
 	{
-		if (!(amb->type & 3) && !amb->periodmin)
+		if ((amb->type & 3) == 0 && amb->periodmin == 0)
 		{
-			int sndnum = S_FindSound (amb->sound);
+			int sndnum = S_FindSound(amb->sound);
 			if (sndnum == 0)
 			{
 				Destroy ();
 				return;
 			}
-			sfxinfo_t *sfx = &S_sfx[sndnum];
-
-			// Make sure the sound has been loaded so we know how long it is
-			if (!sfx->data && GSnd != NULL)
-				GSnd->LoadSound (sfx);
-			amb->periodmin = (sfx->ms * TICRATE) / 1000;
+			amb->periodmin = Scale(GSnd->GetMSLength(&S_sfx[sndnum]), TICRATE, 1000);
 		}
 
 		NextCheck = gametic;

@@ -13,41 +13,35 @@ public:
 
 	void SetSfxVolume (float volume);
 	void SetMusicVolume (float volume);
-	int  GetNumChannels ();
 	void LoadSound (sfxinfo_t *sfx);
 	void UnloadSound (sfxinfo_t *sfx);
+	unsigned int GetMSLength(sfxinfo_t *sfx);
 
-	// Streaming sounds. PlayStream returns a channel handle that can be used with StopSound.
+	// Streaming sounds.
 	SoundStream *CreateStream (SoundStreamCallback callback, int buffsamples, int flags, int samplerate, void *userdata);
 	SoundStream *OpenStream (const char *filename, int flags, int offset, int length);
 	long PlayStream (SoundStream *stream, int volume);
 	void StopStream (SoundStream *stream);
 
-	// Starts a sound in a particular sound channel.
-	long StartSound (sfxinfo_t *sfx, float vol, float sep, int pitch, int channel, bool looping, bool pauseable);
-	long StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3], bool pauseable);
+	// Starts a sound.
+	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, bool looping, bool pauseable);
+	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, int pitch, bool looping, float pos[3], float vel[3], bool pauseable);
 
 	// Stops a sound channel.
-	void StopSound (long handle);
-
-	// Stops all sounds.
-	void StopAllChannels ();
+	void StopSound (FSoundChan *chan);
 
 	// Pauses or resumes all sound effect channels.
 	void SetSfxPaused (bool paused);
 
-	// Returns true if the channel is still playing a sound.
-	bool IsPlayingSound (long handle);
-
-	// Updates the volume, separation, and pitch of a sound channel.
-	void UpdateSoundParams (long handle, float vol, float sep, int pitch);
-	void UpdateSoundParams3D (long handle, float pos[3], float vel[3]);
+	// Updates the position of a sound channel.
+	void UpdateSoundParams3D (FSoundChan *chan, float pos[3], float vel[3]);
 
 	// For use by I_PlayMovie
 	void MovieDisableSound ();
 	void MovieResumeSound ();
 
-	void UpdateListener (AActor *listener);
+	void UpdateListener ();
+	void UpdateSounds ();
 
 	void PrintStatus ();
 	void PrintDriversList ();
@@ -55,19 +49,15 @@ public:
 	void ResetEnvironment ();
 
 private:
-	// Maps sfx channels onto FMOD channels
-	struct ChanMap
-	{
-		int soundID;		// sfx playing on this channel
-		FMOD::Channel *channelID;
-		bool bIsLooping;
-	} *ChannelMap;
-
-	int NumChannels;
 	unsigned int DriverCaps;
 	int OutputType;
 	bool SFXPaused;
+	bool InitSuccess;
 
+	static FMOD_RESULT F_CALLBACK ChannelEndCallback
+		(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, int cmd, unsigned int data1, unsigned int data2);
+
+	FSoundChan *CommonChannelSetup(FMOD::Channel *chan, bool is3d);
 	void DoLoad (void **slot, sfxinfo_t *sfx);
 	void getsfx (sfxinfo_t *sfx);
 

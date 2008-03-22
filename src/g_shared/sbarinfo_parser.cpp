@@ -1,3 +1,38 @@
+/*
+** sbarinfo_parser.cpp
+**
+** Reads custom status bar definitions.
+**
+**---------------------------------------------------------------------------
+** Copyright 2008 Braden Obrzut
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "doomtype.h"
 #include "doomstat.h"
 #include "sc_man.h"
@@ -21,6 +56,7 @@ static const char *SBarInfoTopLevel[] =
 	"interpolatehealth",
 	"interpolatearmor",
 	"completeborder",
+	"monospacefonts",
 	"statusbar",
 	"mugshot",
 	NULL
@@ -34,6 +70,9 @@ static const char *StatusBars[] =
 	"automap",
 	"inventory",
 	"inventoryfullscreen",
+	"popuplog",
+	"popupkeys",
+	"popupstatus",
 	NULL
 };
 
@@ -173,6 +212,22 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(TK_False);
 					completeBorder = false;
 				}
+				sc.MustGetToken(';');
+				break;
+			case SBARINFO_MONOSPACEFONTS:
+				if(sc.CheckToken(TK_True))
+				{
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_StringConst);
+					spacingCharacter = sc.String[0];
+				}
+				else
+				{
+					sc.MustGetToken(TK_False);
+					spacingCharacter = '\0';
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_StringConst); //Don't tell anyone we're just ignoring this ;)
+				}				
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_STATUSBAR:
@@ -699,8 +754,6 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				{
 					if(sc.Compare("reverse"))
 						cmd.special2 += DRAWBAR_REVERSE;
-					else if(sc.Compare("keepoffsets"))
-						cmd.special2 += DRAWBAR_KEEPOFFSETS;
 					else
 						sc.ScriptError("Unkown flag '%s'.", sc.String);
 					if(!sc.CheckToken('|'))
@@ -994,11 +1047,12 @@ void SBarInfo::Init()
 	interpolationSpeed = 8;
 	armorInterpolationSpeed = 8;
 	height = 0;
+	spacingCharacter = '\0';
 }
 
 SBarInfo::~SBarInfo()
 {
-	for (size_t i = 0; i < countof(huds); ++i)
+	for (size_t i = 0; i < NUMHUDS; ++i)
 	{
 		huds[i].commands.Clear();
 	}

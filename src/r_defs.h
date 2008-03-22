@@ -526,7 +526,7 @@ struct side_t
 	}
 	void StopInterpolation(int position)
 	{
-		setinterpolation(EInterpType(INTERP_WallPanning_Top+position), this);
+		stopinterpolation(EInterpType(INTERP_WallPanning_Top+position), this);
 	}
 
 };

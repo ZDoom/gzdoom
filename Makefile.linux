@@ -10,26 +10,26 @@ else
   CFLAGS ?= -pipe -Wall -Wno-unused -fno-strict-aliasing -O2 -fomit-frame-pointer
   CXXFLAGS ?= -fno-rtti
 endif
-ifdef GC
-  CFLAGS += -ffunction-sections
-  LDFLAGS += -Wl,--gc-sections
-endif
+#ifdef GC
+#  CFLAGS += -ffunction-sections
+#  LDFLAGS += -Wl,--gc-sections
+#endif
 CFLAGS += -MMD -DHAVE_FILELENGTH -D__forceinline=inline `sdl-config --cflags` `pkg-config gtk+-2.0 --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
 LDFLAGS += snes_spc/libsnes_spc.a -lz -ljpeg -lfmodex `sdl-config --libs` `pkg-config gtk+-2.0 --libs`
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
-SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ thingdef/)
+SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ thingdef/ xlat/)
 VPATH = $(SRCDIRS)
 INCLUDES = $(addprefix -I,$(SRCDIRS))
-INCLUDES += snes_spc/snes_spc/ /usr/local/include/fmodex/
+INCLUDES += -Isnes_spc/snes_spc/ -I/usr/include/fmodex/
 CFLAGS += $(INCLUDES)
 
 RELEASEOBJ ?= releaseobj
 DEBUGOBJ ?= debugobj
 
-CPPSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS))) src/xlat/parse_xlat.cpp
-CSRCS = $(wildcard $(addsuffix *.c,$(SRCDIRS)))
+CPPSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS)))
+CSRCS = $(filter-out src/xlat/xlat_parser.c, $(wildcard $(addsuffix *.c,$(SRCDIRS))))
 ifdef NOASM
   CFLAGS += -DNOASM
 else
@@ -64,9 +64,9 @@ COBJS = $(addprefix $(OBJDIR)/,$(CPPOBJFILES) $(COBJFILES))
 DEPS = $(patsubst %.o,%.d,$(COBJS))
 OBJS = $(addprefix $(OBJDIR)/,$(AOBJFILES)) $(COBJS)
 
-all: $(ZDOOMBIN) snes_spc/libsnes_spc.a toolsandpk3 zdoom.pk3
+all: $(ZDOOMBIN) toolsandpk3 zdoom.pk3
 
-$(ZDOOMBIN): ccdv updaterev $(OBJDIR) $(OBJS)
+$(ZDOOMBIN): ccdv updaterev $(OBJDIR) $(OBJS) snes_spc/libsnes_spc.a
 	$(CCDV) $(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
 	$(filter-out %/autostart.o %/autozend.o,$(OBJS)) \
 	$(OBJDIR)/autozend.o -o $(ZDOOMBIN)
@@ -88,17 +88,13 @@ $(OBJDIR)/nodebuild_classify_sse2.o: nodebuild_classify_sse2.cpp
 $(OBJDIR)/fmopl.o: src/oplsynth/fmopl.cpp
 	$(CCDV) $(CXX) $(CXXFLAGS) -fno-tree-dominator-opts -fno-tree-fre -c -o $@ $<
 
-src/xlat/xlat_parser.c: src/xlat/xlat_parser.y
-	$(CCDV) $(LEMON) -s src/xlat/xlat_parser.y
-
-# Dunno why make isn't picking this stuff up automatically for this file.
-$(OBJDIR)/parse_xlat.o: src/xlat/parse_xlat.cpp src/xlat/xlat.h src/xlat/xlat_parser.c src/xlat/xlat_parser.h
-	$(CCDV) $(CXX) $(CXXFLAGS) -o $@ -c $<
+src/xlat/xlat_parser.c: tools/lemon/lemon src/xlat/xlat_parser.y
+	$(CCDV) tools/lemon/lemon -s src/xlat/xlat_parser.y
 
 $(OBJDIR):
 	mkdir $(OBJDIR)
 
-toolsandpk3: ccdv tools/makewad/makewad tools/dehsupp/dehsupp
+toolsandpk3: ccdv tools/makewad/makewad tools/dehsupp/dehsupp tools/lemon/lemon
 	$(MAKE) -C wadsrc/
 
 zdoom.pk3: toolsandpk3
@@ -113,6 +109,8 @@ tools/makewad/makewad:
 tools/dehsupp/dehsupp:
 	$(MAKE) -C tools/dehsupp/
 
+tools/lemon/lemon:
+	$(MAKE) -C tools/lemon/
 
 updaterev: tools/updaterevision/updaterevision
 	@tools/updaterevision/updaterevision . src/svnrevision.h

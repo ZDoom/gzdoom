@@ -1,8 +1,45 @@
+/*
+** sbarinfo.h
+**
+** Header for custom status bar definitions.
+**
+**---------------------------------------------------------------------------
+** Copyright 2008 Braden Obrzut
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #ifndef __SBarInfo_SBAR_H__
 #define __SBarInfo_SBAR_H__
 
 #include "tarray.h"
 #include "v_collection.h"
+
+#define NUMHUDS 9
 
 class FBarTexture;
 class FScanner;
@@ -44,11 +81,12 @@ struct SBarInfoCommand
 struct SBarInfo
 {
 	TArray<FString> Images;
-	SBarInfoBlock huds[6];
+	SBarInfoBlock huds[NUMHUDS];
 	bool automapbar;
 	bool interpolateHealth;
 	bool interpolateArmor;
 	bool completeBorder;
+	char spacingCharacter;
 	int interpolationSpeed;
 	int armorInterpolationSpeed;
 	int height;
@@ -71,7 +109,7 @@ struct SBarInfo
 
 extern SBarInfo *SBarInfoScript;
 
-//Mug Shot scripting structs.  All functions are defined in sbarinfo_parser.cpp
+//Mug Shot scripting structs.
 struct MugShotState;
 
 struct MugShotFrame
@@ -166,7 +204,6 @@ enum //drawbar flags (will go into special2)
 	DRAWBAR_HORIZONTAL = 1,
 	DRAWBAR_REVERSE = 2,
 	DRAWBAR_COMPAREDEFAULTS = 4,
-	DRAWBAR_KEEPOFFSETS = 8,
 };
 
 enum //drawselectedinventory flags
@@ -223,6 +260,7 @@ enum //Key words
 	SBARINFO_INTERPOLATEHEALTH,
 	SBARINFO_INTERPOLATEARMOR,
 	SBARINFO_COMPLETEBORDER,
+	SBARINFO_MONOSPACEFONTS,
 	SBARINFO_STATUSBAR,
 	SBARINFO_MUGSHOT,
 };
@@ -235,6 +273,9 @@ enum //Bar types
 	STBAR_AUTOMAP,
 	STBAR_INVENTORY,
 	STBAR_INVENTORYFULLSCREEN,
+	STBAR_POPUPLOG,
+	STBAR_POPUPKEYS,
+	STBAR_POPUPSTATUS,
 };
 
 enum //Bar key words

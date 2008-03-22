@@ -1,3 +1,38 @@
+/*
+** sbarinfo_display.cpp
+**
+** Contains all functions required for the display of custom statusbars.
+**
+**---------------------------------------------------------------------------
+** Copyright 2008 Braden Obrzut
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "doomtype.h"
 #include "doomstat.h"
 #include "v_font.h"
@@ -238,7 +273,7 @@ DSBarInfo::~DSBarInfo ()
 void DSBarInfo::Draw (EHudState state)
 {
 	DBaseStatusBar::Draw(state);
-	int hud = 2;
+	int hud = STBAR_NORMAL;
 	if(state == HUD_StatusBar)
 	{
 		if(SBarInfoScript->completeBorder) //Fill the statusbar with the border before we draw.
@@ -250,20 +285,20 @@ void DSBarInfo::Draw (EHudState state)
 		}
 		if(SBarInfoScript->automapbar && automapactive)
 		{
-			hud = 3;
+			hud = STBAR_AUTOMAP;
 		}
 		else
 		{
-			hud = 2;
+			hud = STBAR_NORMAL;
 		}
 	}
 	else if(state == HUD_Fullscreen)
 	{
-		hud = 1;
+		hud = STBAR_FULLSCREEN;
 	}
 	else
 	{
-		hud = 0;
+		hud = STBAR_NONE;
 	}
 	if(SBarInfoScript->huds[hud].forceScaled) //scale the statusbar
 	{
@@ -274,9 +309,9 @@ void DSBarInfo::Draw (EHudState state)
 	if(CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR))
 	{
 		if(state == HUD_StatusBar)
-			doCommands(SBarInfoScript->huds[4]);
+			doCommands(SBarInfoScript->huds[STBAR_INVENTORY]);
 		else if(state == HUD_Fullscreen)
-			doCommands(SBarInfoScript->huds[5]);
+			doCommands(SBarInfoScript->huds[STBAR_INVENTORYFULLSCREEN]);
 	}
 }
 
@@ -291,6 +326,7 @@ void DSBarInfo::NewGame ()
 void DSBarInfo::AttachToPlayer (player_t *player)
 {
 	player_t *oldplayer = CPlayer;
+	currentState = NULL;
 	DBaseStatusBar::AttachToPlayer(player);
 }
 
@@ -823,11 +859,6 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 				{
 					screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
 				}
-				if(cmd.special2 & DRAWBAR_KEEPOFFSETS)
-				{
-					x += fg->LeftOffset;
-					y += fg->TopOffset;
-				}
 
 				if(cmd.special3 != 0)
 				{
@@ -856,17 +887,13 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 				// Calc clipping rect for background
 				cx = cmd.x + ST_X + cmd.special3;
 				cy = cmd.y + ST_Y + cmd.special3;
-				cw = fg->GetScaledWidth() - cmd.special3 * 2;
-				ch = fg->GetScaledHeight() - cmd.special3 * 2;
+				cw = fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2;
+				ch = fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2;
 				if (Scaled)
 				{
 					screen->VirtualToRealCoordsInt(cx, cy, cw, ch, 320, 200, true);
 				}
-				if(cmd.special2 & DRAWBAR_KEEPOFFSETS)
-				{
-					cx += fg->LeftOffset;
-					cy += fg->TopOffset;
-				}
+
 				if (horizontal)
 				{
 					if ((cmd.special3 != 0 && reverse) || (cmd.special3 == 0 && !reverse))
@@ -1011,6 +1038,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 				break;
 			case SBARINFO_PLAYERCLASS:
 			{
+				if(CPlayer->cls == NULL) break; //No class so we can not continue
 				int spawnClass = CPlayer->cls->ClassIndex;
 				if(cmd.special == spawnClass || cmd.special2 == spawnClass || cmd.special3 == spawnClass)
 				{
@@ -1077,7 +1105,17 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int flags)
 	if((flags & DRAWIMAGE_TRANSLATABLE))
 		DrawImage(texture, x, y, getTranslation());
 	else
-		DrawImage(texture, x, y);
+	{
+		x += ST_X;
+		y += ST_Y;
+		int w = texture->GetScaledWidth();
+		int h = texture->GetScaledHeight();
+		screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+		screen->DrawTexture(texture, x, y,
+			DTA_DestWidth, w,
+			DTA_DestHeight, h,
+			TAG_DONE);
+	}
 }
 
 void DSBarInfo::DrawString(const char* str, int x, int y, EColorRange translation, int spacing)
@@ -1091,16 +1129,23 @@ void DSBarInfo::DrawString(const char* str, int x, int y, EColorRange translatio
 			str++;
 			continue;
 		}
-		int width = drawingFont->GetCharWidth((int) *str);
+		int width;
+		if(SBarInfoScript->spacingCharacter == '\0') //No monospace?
+			width = drawingFont->GetCharWidth((int) *str);
+		else
+			width = drawingFont->GetCharWidth((int) SBarInfoScript->spacingCharacter);
 		FTexture* character = drawingFont->GetChar((int) *str, &width);
 		if(character == NULL) //missing character.
 		{
 			str++;
 			continue;
 		}
-		x += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
+		if(SBarInfoScript->spacingCharacter == '\0') //If we are monospaced lets use the offset
+			x += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
 		DrawImage(character, x, y, drawingFont->GetColorTranslation(translation));
-		x += width + spacing - (character->LeftOffset+1);
+		x += width + spacing;
+		if(SBarInfoScript->spacingCharacter == '\0')
+			x -= (character->LeftOffset+1);
 		str++;
 	}
 }
@@ -1112,7 +1157,10 @@ void DSBarInfo::DrawNumber(int num, int len, int x, int y, EColorRange translati
 	int maxval = (int) ceil(pow(10., len))-1;
 	num = clamp(num, -maxval, maxval);
 	value.Format("%d", num);
-	x -= int(drawingFont->StringWidth(value)+(spacing * value.Len()));
+	if(SBarInfoScript->spacingCharacter == '\0')
+		x -= int(drawingFont->StringWidth(value)+(spacing * value.Len()));
+	else //monospaced so just multiplay the character size
+		x -= int((drawingFont->GetCharWidth((int) SBarInfoScript->spacingCharacter) + spacing) * value.Len());
 	DrawString(value, x, y, translation, spacing);
 }
 

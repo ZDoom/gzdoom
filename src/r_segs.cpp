@@ -263,21 +263,23 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		dc_texturemid = MIN (frontsector->ceilingtexz, backsector->ceilingtexz);
 	}
 
-	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
-	if (tex->bWorldPanning)
-	{
-		// rowoffset is added before the MulScale3 so that the masked texture will
-		// still be positioned in world units rather than texels.
-		dc_texturemid += rowoffset - viewz;
-		textop = dc_texturemid;
-		dc_texturemid = MulScale16 (dc_texturemid, tex->yScale);
-	}
-	else
-	{
-		// rowoffset is added outside the multiply so that it positions the texture
-		// by texels instead of world units.
-		textop = dc_texturemid - viewz + SafeDivScale16 (rowoffset, tex->yScale);
-		dc_texturemid = MulScale16 (dc_texturemid - viewz, tex->yScale) + rowoffset;
+	{ // encapsilate the lifetime of rowoffset
+		fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+		if (tex->bWorldPanning)
+		{
+			// rowoffset is added before the MulScale3 so that the masked texture will
+			// still be positioned in world units rather than texels.
+			dc_texturemid += rowoffset - viewz;
+			textop = dc_texturemid;
+			dc_texturemid = MulScale16 (dc_texturemid, tex->yScale);
+		}
+		else
+		{
+			// rowoffset is added outside the multiply so that it positions the texture
+			// by texels instead of world units.
+			textop = dc_texturemid - viewz + SafeDivScale16 (rowoffset, tex->yScale);
+			dc_texturemid = MulScale16 (dc_texturemid - viewz, tex->yScale) + rowoffset;
+		}
 	}
 
 	if (fixedlightlev)
@@ -1452,16 +1454,13 @@ int side_t::GetLightLevel (bool foggy, int baselight) const
 FArchive &operator<< (FArchive &arc, side_t::part &p)
 {
 	arc << p.xoffset << p.yoffset;// << p.Light;
-	if (arc.IsStoring())
+	if (arc.IsStoring ())
 	{
-		if (arc.IsStoring ())
-		{
-			TexMan.WriteTexture (arc, p.texture);
-		}
-		else
-		{
-			p.texture = TexMan.ReadTexture (arc);
-		}
+		TexMan.WriteTexture (arc, p.texture);
+	}
+	else
+	{
+		p.texture = TexMan.ReadTexture (arc);
 	}
 	return arc;
 }

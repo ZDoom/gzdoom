@@ -1,3 +1,28 @@
+March 22, 2008 (Changes by Graf Zahl)
+- Fixed: The serializer for side_t::part never read the texture information
+  from a savegame.
+- Fixed: side_t::StopInterpolation called setinterpolation instead of
+  stopinterpolation. Also moved the clearinterpolation call in 
+  P_SetupLevel after the P_FreeLevelData to make absolutely sure that
+  nothing in there can leave an interpolator behind by accident.
+- Applied Linux fixes by Jim.
+SBARINFO update by Blzut3:
+- Fixed: the playerclass command needed a null pointer check to prevent
+  crashing on respawn.
+- Fixed: Mug Shot states were not reset on respawn.
+- Removed keepoffsets flag since apparently it was keeping the offsets by
+  default.  The means that the only thing not affected by the offsets was using
+  nullimage as a background.  Since I wasn't able to get a result I liked I'm
+  going to say that if you want a black background with high res positioning
+  you will have to create your own bar image.  Maybe I'll fix it some other
+  time.
+- Added: monospacefonts variable which allows for all of the fonts to be
+  monospaced by a specified character (from their fontset of corse).
+- Made SBarInfo recognize the bar names for the Strife popups but they don't
+  do anything beyond that.  The names are: popuplog, popupkeys, and popupstatus.
+- Started converting the drawing routine to be more flexable towards high
+  resolution status bars.  (Only did one call so far.)
+  
 March 21, 2008
 - Fixed: Actor-less sounds that aren't played on CHAN_AUTO should still be
   subject to channel overriding.

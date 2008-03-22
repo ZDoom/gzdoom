@@ -80,7 +80,8 @@ enum ETerrainKeywords
 	TR_LEFTSTEPSOUNDS,
 	TR_RIGHTSTEPSOUNDS,
 	TR_LIQUID,
-	TR_FRICTION
+	TR_FRICTION,
+	TR_ALLOWPROTECTION
 };
 
 enum EGenericType
@@ -180,6 +181,7 @@ static const char *TerrainKeywords[] =
 	"rightstepsounds",
 	"liquid",
 	"friction",
+	"allowprotection",
 	NULL
 };
 
@@ -216,7 +218,8 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Sound,  {theoffsetof(FTerrainDef, LeftStepSound)} },
 	{ GEN_Sound,  {theoffsetof(FTerrainDef, RightStepSound)} },
 	{ GEN_Bool,   {theoffsetof(FTerrainDef, IsLiquid)} },
-	{ GEN_Custom, {(size_t)ParseFriction} }
+	{ GEN_Custom, {(size_t)ParseFriction} },
+	{ GEN_Bool,   {theoffsetof(FTerrainDef, AllowProtection)} },
 };
 
 /*

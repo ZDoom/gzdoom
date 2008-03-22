@@ -2289,6 +2289,59 @@ FUNC(LS_Line_AlignFloor)
 	return ret;
 }
 
+FUNC(LS_Line_SetTextureOffset)
+// Line_SetTextureOffset (id, x, y, side, flags)
+{
+	const fixed_t NO_CHANGE = 32767<<FRACBITS;
+
+	if (arg0 == 0 || arg3 < 0 || arg3 > 1)
+		return false;
+
+	for(int line = -1; (line = P_FindLineFromID (arg0, line)) >= 0; )
+	{
+		if (lines[line].sidenum[arg3] != NO_SIDE)
+		{
+			side_t *side = &sides[lines[line].sidenum[arg3]];
+
+			if ((arg4&8)==0)
+			{
+				// set
+				if (arg1 != NO_CHANGE)
+				{
+					if (arg4&1) side->SetTextureXOffset(side_t::top, arg1);
+					if (arg4&2) side->SetTextureXOffset(side_t::mid, arg1);
+					if (arg4&4) side->SetTextureXOffset(side_t::bottom, arg1);
+				}
+				if (arg2 != NO_CHANGE)
+				{
+					if (arg4&1) side->SetTextureYOffset(side_t::top, arg2);
+					if (arg4&2) side->SetTextureYOffset(side_t::mid, arg2);
+					if (arg4&4) side->SetTextureYOffset(side_t::bottom, arg2);
+				}
+			}
+			else
+			{
+				// add
+				if (arg1 != NO_CHANGE)
+				{
+					if (arg4&1) side->AddTextureXOffset(side_t::top, arg1);
+					if (arg4&2) side->AddTextureXOffset(side_t::mid, arg1);
+					if (arg4&4) side->AddTextureXOffset(side_t::bottom, arg1);
+				}
+				if (arg2 != NO_CHANGE)
+				{
+					if (arg4&1) side->AddTextureYOffset(side_t::top, arg2);
+					if (arg4&2) side->AddTextureYOffset(side_t::mid, arg2);
+					if (arg4&4) side->AddTextureYOffset(side_t::bottom, arg2);
+				}
+			}
+		}
+	}
+	return true;
+}
+
+
+
 FUNC(LS_ChangeCamera)
 // ChangeCamera (tid, who, revert?)
 {
@@ -2876,7 +2929,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 50: ExtraFloor_LightOnly
 	LS_Sector_SetLink,
 	LS_Scroll_Wall,
-	LS_NOP,		// 53
+	LS_Line_SetTextureOffset,
 	LS_NOP,		// 54
 	LS_NOP,		// 55
 	LS_NOP,		// 56

@@ -879,6 +879,8 @@ $endif	// ifhexen
 
 $ifstrife
 
+$rolloff * 200 1200
+
 $playersound	player	male	*death		dspldeth
 $playersound	player	male	*xdeath		dspdiehi
 $playersound	player	male	*gibbed		dsslop

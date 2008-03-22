@@ -1350,7 +1350,6 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				length = Wads.LumpLength (lumpnum);
 				if (length == 0)
 				{
-					offset = 0;
 					return false;
 				}
 				musiccache.Resize(length);
@@ -1360,6 +1359,10 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			{
 				offset = Wads.GetLumpOffset (lumpnum);
 				length = Wads.LumpLength (lumpnum);
+				if (length == 0)
+				{
+					return false;
+				}
 			}
 		}
 		else

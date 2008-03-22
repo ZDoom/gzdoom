@@ -1,4 +1,8 @@
 March 22, 2008 (Changes by Graf Zahl)
+- Added Line_SetTextureOffset special.
+- Added 'allowprotection' keyword to terrain definitions to allow damaging
+  flats that don't damage players with a radiation suit.
+- Fixed: SNDINFO rolloff setting for Strife was missing.
 - Added more options to Light_ForceLightning: Setting the first arg to 0
   will behave as before, setting it to 1 will create exactly one lighting
   and setting it to 2 will terminate lightning for the current level

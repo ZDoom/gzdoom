@@ -568,8 +568,22 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 	if (Terrains[floorType].DamageAmount &&
 		!(level.time & Terrains[floorType].DamageTimeMask))
 	{
-		P_DamageMobj (player->mo, NULL, NULL, Terrains[floorType].DamageAmount,
-			Terrains[floorType].DamageMOD);
+		AInventory *ironfeet = NULL;
+
+		if (Terrains[floorType].AllowProtection)
+		{
+			for (ironfeet = player->mo->Inventory; ironfeet != NULL; ironfeet = ironfeet->Inventory)
+			{
+				if (ironfeet->IsKindOf (RUNTIME_CLASS(APowerIronFeet)))
+					break;
+			}
+		}
+
+		if (ironfeet == NULL)
+		{
+			P_DamageMobj (player->mo, NULL, NULL, Terrains[floorType].DamageAmount,
+				Terrains[floorType].DamageMOD);
+		}
 		if (Terrains[floorType].Splash != -1)
 		{
 			S_SoundID (player->mo, CHAN_AUTO,

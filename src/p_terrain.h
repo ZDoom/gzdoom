@@ -74,6 +74,7 @@ struct FTerrainDef
 	int LeftStepSound;
 	int RightStepSound;
 	bool IsLiquid;
+	bool AllowProtection;
 	fixed_t Friction;
 	fixed_t MoveFactor;
 };

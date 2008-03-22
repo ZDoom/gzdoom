@@ -54,13 +54,33 @@ struct sfxinfo_t
 	WORD		bUsed:1;
 	WORD		bSingular:1;
 	WORD		bTentative:1;
+	WORD		RolloffType:2;
 
 	WORD		link;
 	enum { NO_LINK = 0xffff };
+
+	float		MinDistance;
+	union		{ float MaxDistance, RolloffFactor; };
+};
+
+// Rolloff types
+enum
+{
+	ROLLOFF_Doom,		// Linear rolloff with a logarithmic volume scale
+	ROLLOFF_Linear,		// Linear rolloff with a linear volume scale
+	ROLLOFF_Log,		// Logarithmic rolloff (standard hardware type)
+	ROLLOFF_Custom		// Lookup volume from SNDCURVE
 };
 
 // the complete set of sound effects
 extern TArray<sfxinfo_t> S_sfx;
+
+// Default rolloff information.
+extern int S_RolloffType;
+extern float S_MinDistance;
+extern float S_MaxDistanceOrRolloffFactor;
+extern BYTE *S_SoundCurve;
+extern int S_SoundCurveSize;
 
 // Information about one playing sound.
 struct FSoundChan
@@ -75,6 +95,7 @@ struct FSoundChan
 	int			SoundID;	// Sound ID of playing sound
 	int			OrgID;		// Sound ID of sound used to start this channel
 	float		Volume;
+	float		DistanceScale;
 	BYTE		EntChannel;	// Actor's sound channel.
 	bool		Loop;
 	bool		Is3D;

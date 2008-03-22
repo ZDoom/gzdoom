@@ -3,7 +3,7 @@
 ** Routines for managing SNDINFO lumps and ambient sounds
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2007 Randy Heit
+** Copyright 1998-2008 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -145,7 +145,8 @@ enum SICommands
 	SI_IfDoom,
 	SI_IfHeretic,
 	SI_IfHexen,
-	SI_IfStrife
+	SI_IfStrife,
+	SI_Rolloff,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -240,6 +241,7 @@ static const char *SICommandStrings[] =
 	"$ifheretic",
 	"$ifhexen",
 	"$ifstrife",
+	"$rolloff",
 	NULL
 };
 
@@ -450,7 +452,10 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	newsfx.bUsed = false;
 	newsfx.bSingular = false;
 	newsfx.bTentative = false;
+	newsfx.RolloffType = ROLLOFF_Doom;
 	newsfx.link = sfxinfo_t::NO_LINK;
+	newsfx.MinDistance = 0;
+	newsfx.MaxDistance = 0;
 
 	return (int)S_sfx.Push (newsfx);
 }
@@ -1135,6 +1140,62 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetNumber ();
 				CurrentPitchMask = (1 << clamp (sc.Number, 0, 7)) - 1;
 				break;
+
+			case SI_Rolloff: {
+				// $rolloff *|<logical name> [linear|log|custom] <min dist> <max dist/rolloff factor>
+				// Using * for the name makes it the default for sounds that don't specify otherwise.
+				float *min, *max;
+				int type;
+				int sfx;
+
+				sc.MustGetString();
+				if (sc.Compare("*"))
+				{
+					sfx = -1;
+					min = &S_MinDistance;
+					max = &S_MaxDistanceOrRolloffFactor;
+				}
+				else
+				{
+					sfx = S_FindSoundTentative(sc.String);
+					min = &S_sfx[sfx].MinDistance;
+					max = &S_sfx[sfx].MaxDistance;
+				}
+				type = ROLLOFF_Doom;
+				if (!sc.CheckFloat())
+				{
+					sc.MustGetString();
+					if (sc.Compare("linear"))
+					{
+						type = ROLLOFF_Linear;
+					}
+					else if (sc.Compare("log"))
+					{
+						type = ROLLOFF_Log;
+					}
+					else if (sc.Compare("custom"))
+					{
+						type = ROLLOFF_Custom;
+					}
+					else
+					{
+						sc.ScriptError("Unknown rolloff type '%s'", sc.String);
+					}
+					sc.MustGetFloat();
+				}
+				if (sfx < 0)
+				{
+					S_RolloffType = type;
+				}
+				else
+				{
+					S_sfx[sfx].RolloffType = type;
+				}
+				*min = sc.Float;
+				sc.MustGetFloat();
+				*max = sc.Float;
+				break;
+			  }
 
 			case SI_Random: {
 				// $random <logical name> { <logical name> ... }

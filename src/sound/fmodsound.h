@@ -25,7 +25,7 @@ public:
 
 	// Starts a sound.
 	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, bool looping, bool pauseable);
-	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, int pitch, bool looping, float pos[3], float vel[3], bool pauseable);
+	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, bool looping, float pos[3], float vel[3], bool pauseable);
 
 	// Stops a sound channel.
 	void StopSound (FSoundChan *chan);
@@ -56,6 +56,7 @@ private:
 
 	static FMOD_RESULT F_CALLBACK ChannelEndCallback
 		(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, int cmd, unsigned int data1, unsigned int data2);
+	static float F_CALLBACK RolloffCallback(FMOD_CHANNEL *channel, float distance);
 
 	FSoundChan *CommonChannelSetup(FMOD::Channel *chan, bool is3d);
 	void DoLoad (void **slot, sfxinfo_t *sfx);

@@ -74,17 +74,6 @@
 #define S_PITCH_PERTURB 		1
 #define S_STEREO_SWING			0.75
 
-/* Sound curve parameters for Doom */
-
-// Maximum sound distance
-const int S_CLIPPING_DIST = 1200;
-
-// Sounds closer than this to the listener are maxed out.
-// Originally: 200.
-const int S_CLOSE_DIST =	160;
-
-const float S_ATTENUATOR =	S_CLIPPING_DIST - S_CLOSE_DIST;
-
 // TYPES -------------------------------------------------------------------
 
 struct MusPlayingInfo
@@ -112,12 +101,10 @@ static void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3],
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-int MAX_SND_DIST;
 static bool		SoundPaused;		// whether sound effects are paused
 static bool		MusicPaused;		// whether music is paused
 static MusPlayingInfo mus_playing;	// music currently being played
 static FString	 LastSong;			// last music that was played
-static float	*SoundCurve;
 static FPlayList *PlayList;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -126,6 +113,12 @@ int sfx_empty;
 
 FSoundChan *Channels;
 FSoundChan *FreeChannels;
+
+int S_RolloffType;
+float S_MinDistance;
+float S_MaxDistanceOrRolloffFactor;
+BYTE *S_SoundCurve;
+int S_SoundCurveSize;
 
 CVAR (Bool, snd_surround, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// [RH] Use surround sounds?
 FBoolCVar noisedebug ("noise", false, 0);	// [RH] Print sound debugging info?
@@ -251,43 +244,23 @@ void S_AddLocalSndInfo(int lump);
 
 void S_Init ()
 {
-	int i;
 	int curvelump;
 
 	atterm (S_Shutdown);
 
 	// remove old data (S_Init can be called multiple times!)
-	if (SoundCurve)
+	if (S_SoundCurve != NULL)
 	{
-		delete[] SoundCurve;
+		delete[] S_SoundCurve;
 	}
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
 	curvelump = Wads.CheckNumForName ("SNDCURVE");
 	if (curvelump >= 0)
 	{
-		MAX_SND_DIST = Wads.LumpLength (curvelump);
-		SoundCurve = new float[MAX_SND_DIST];
-		FMemLump lump = Wads.ReadLump(curvelump);
-		BYTE *lumpmem = (BYTE *)lump.GetMem();
-
-		// The maximum value in a SNDCURVE lump is 127, so scale it to
-		// fit our sound system's volume levels. Also, FMOD's volumes
-		// are linear, whereas we want the "dumb" logarithmic volumes
-		// for our "2D" sounds.
-		for (i = 0; i < S_CLIPPING_DIST; ++i)
-		{
-			SoundCurve[i] = (powf(10.f, (lumpmem[i] / 127.f)) - 1.f) / 9.f;
-		}
-	}
-	else
-	{
-		MAX_SND_DIST = S_CLIPPING_DIST;
-		SoundCurve = new float[S_CLIPPING_DIST];
-		for (i = 0; i < S_CLIPPING_DIST; ++i)
-		{
-			SoundCurve[i] = (powf(10.f, MIN(1.f, (S_CLIPPING_DIST - i) / S_ATTENUATOR)) - 1.f) / 9.f;
-		}
+		S_SoundCurveSize = Wads.LumpLength (curvelump);
+		S_SoundCurve = new BYTE[S_SoundCurveSize];
+		Wads.ReadLump(curvelump, S_SoundCurve);
 	}
 
 	// Free all channels for use.
@@ -348,10 +321,10 @@ void S_Shutdown ()
 	}
 	FreeChannels = NULL;
 
-	if (SoundCurve != NULL)
+	if (S_SoundCurve != NULL)
 	{
-		delete[] SoundCurve;
-		SoundCurve = NULL;
+		delete[] S_SoundCurve;
+		S_SoundCurve = NULL;
 	}
 	if (PlayList != NULL)
 	{
@@ -734,71 +707,67 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	{
 		return;
 	}
+
 	// Select priority.
-	if (attenuation <= 0)
+	if (attenuation <= 0 || mover == players[consoleplayer].camera)
 	{
-		basepriority = 200;
+		basepriority = 40;
 	}
 	else
 	{
 		switch (channel)
 		{
 		case CHAN_WEAPON:
-			basepriority = 100;
+			basepriority = 20;
 			break;
 		case CHAN_VOICE:
-			basepriority = 75;
+			basepriority = 10;
 			break;
 		default:
 		case CHAN_BODY:
-			basepriority = 50;
+			basepriority = 0;
 			break;
 		case CHAN_ITEM:
-			basepriority = 25;
+			basepriority = -10;
 			break;
 		}
-		if (attenuation == 1)
-			basepriority += 50;
+		basepriority = int(basepriority * attenuation);
 	}
 
-	if (mover != NULL)
-	{
-		if (channel == CHAN_AUTO)
-		{ // Select a channel that isn't already playing something.
-			BYTE mask = mover->SoundChans;
+	if (mover != NULL && channel == CHAN_AUTO)
+	{ // Select a channel that isn't already playing something.
+		BYTE mask = mover->SoundChans;
 
-			// Try channel 0 first, then travel from channel 7 down.
-			if ((mask & 1) == 0)
-			{
-				channel = 0;
-			}
-			else
-			{
-				for (channel = 7; channel > 0; --channel, mask <<= 1)
-				{
-					if ((mask & 0x80) == 0)
-					{
-						break;
-					}
-				}
-				if (channel == 0)
-				{ // Crap. No free channels.
-					return;
-				}
-			}
-		}
-
-
-		// If this actor is already playing something on the selected channel, stop it.
-		if (mover->SoundChans & (1 << channel))
+		// Try channel 0 first, then travel from channel 7 down.
+		if ((mask & 1) == 0)
 		{
-			for (chan = Channels; chan != NULL; chan = chan->NextChan)
+			channel = 0;
+		}
+		else
+		{
+			for (channel = 7; channel > 0; --channel, mask <<= 1)
 			{
-				if (chan->Mover == mover && chan->EntChannel == channel)
+				if ((mask & 0x80) == 0)
 				{
-					GSnd->StopSound(chan);
 					break;
 				}
+			}
+			if (channel == 0)
+			{ // Crap. No free channels.
+				return;
+			}
+		}
+	}
+
+	// If this actor is already playing something on the selected channel, stop it.
+	if ((mover == NULL && channel != CHAN_AUTO) || (mover != NULL && mover->SoundChans & (1 << channel)))
+	{
+		for (chan = Channels; chan != NULL; chan = chan->NextChan)
+		{
+			if (chan->Mover == mover && chan->EntChannel == channel)
+			{
+				GSnd->StopSound(chan);
+				break;
 			}
 		}
 	}
@@ -830,7 +799,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 			pt2[2] = z;
 			CalcPosVel (pt2, mover, chanflags & CHAN_LISTENERZ,  pos, vel);
 		}
-		chan = GSnd->StartSound3D (sfx, volume, pitch, looping, pos, vel, !(chanflags & CHAN_NOPAUSE));
+		chan = GSnd->StartSound3D (sfx, volume, attenuation, pitch, basepriority, looping, pos, vel, !(chanflags & CHAN_NOPAUSE));
 		if (chan != NULL)
 		{
 			chan->ConstZ = !!(chanflags & CHAN_LISTENERZ);
@@ -1047,6 +1016,7 @@ void S_StopAllChannels ()
 	{
 		GSnd->StopSound(Channels);
 	}
+	GSnd->UpdateSounds();
 }
 
 //==========================================================================

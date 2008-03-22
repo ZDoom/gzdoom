@@ -1,3 +1,20 @@
+March 21, 2008
+- Fixed: Actor-less sounds that aren't played on CHAN_AUTO should still be
+  subject to channel overriding.
+- Re-added priority selection based on sound usage.
+- Reduced the number of virtual channels to match the number of real
+  channels.
+- Added customizable rolloff, including Doom's standard linear gain rolloff.
+  SNDINFO commands are:
+    $rolloff <sound> <min distance> <max distance>          -- linear gain (like Doom)
+    $rolloff <sound> linear <min distance> <max distance>   -- linear volume
+    $rolloff <sound> log <min distance> <rolloff factor>    -- logarithmic
+    $rolloff <sound> custom <min distance> <max distance>   -- use SNDCURVE lump
+  Anything closer than min distance is full volume and anything further than
+  max distance is inaudible. Logarithmic rolloff does not have a maximum
+  distance; it has a scalar that controls how quickly the volume drops off
+  instead.
+
 March 21, 2008 (Changes by Graf Zahl)
 - Disabled scrolling of 3DMIDTEX textures. Due to the special needs this 
   cannot work properly.

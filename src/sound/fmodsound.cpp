@@ -94,8 +94,6 @@ static const char *Enum_NameForNum(const FEnumList *list, int num);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int MAX_SND_DIST;
-
 EXTERN_CVAR (String, snd_output)
 EXTERN_CVAR (Float, snd_musicvolume)
 EXTERN_CVAR (Int, snd_buffersize)
@@ -116,9 +114,13 @@ CVAR (Bool, snd_dspnet, false, 0)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const int S_CLIPPING_DIST = 1200;
-static const int S_CLOSE_DIST = 160;
 static const ReverbContainer *PrevEnvironment;
+
+// The rolloff callback is called during FMOD::Sound::play, so we need this
+// global variable to contain the sound info during that time for the
+// callback.
+static sfxinfo_t *GSfxInfo;
+static float GDistScale;
 
 // In the below lists, duplicate entries are for user selection. When
 // queried, only the first one for the particular value is shown.
@@ -551,13 +553,13 @@ bool FMODSoundRenderer::Init()
 	{
 		initflags |= FMOD_INIT_ENABLE_DSPNET;
 	}
-	result = Sys->init(MAX_CHANNELS, initflags, 0);
+	result = Sys->init(snd_channels + NUM_EXTRA_SOFTWARE_CHANNELS, initflags, 0);
 	if (result == FMOD_ERR_OUTPUT_CREATEBUFFER)
 	{ // The speaker mode selected isn't supported by this soundcard. Switch it back to stereo.
 		result = Sys->setSpeakerMode(FMOD_SPEAKERMODE_STEREO);
 		ERRCHECK(result);
 
-		result = Sys->init(MAX_CHANNELS, initflags, 0);
+		result = Sys->init(snd_channels + NUM_EXTRA_SOFTWARE_CHANNELS, initflags, 0);
 		ERRCHECK(result);
 	}
 	if (result != FMOD_OK)
@@ -580,21 +582,8 @@ bool FMODSoundRenderer::Init()
 
 	result = SPC_CreateCodec(Sys);
 
-	float rolloff_factor;
-
-	if (gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Strife)
-	{ 
-		rolloff_factor = 1.7f;
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		rolloff_factor = 1.24f;
-	}
-	else
-	{
-		rolloff_factor = 0.96f;
-	}
-	Sys->set3DSettings(1.f, 100.f, rolloff_factor);
+	Sys->set3DSettings(0.5f, 96.f, 1.f);
+	Sys->set3DRolloffCallback(RolloffCallback);
 	snd_sfxvolume.Callback ();
 	return true;
 }
@@ -933,6 +922,7 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 
 	freq = PITCH(sfx->frequency, pitch);
 
+	GSfxInfo = sfx;
 	result = Sys->playSound(FMOD_CHANNEL_FREE, (FMOD::Sound *)sfx->data, true, &chan);
 	if (FMOD_OK == result)
 	{
@@ -967,18 +957,40 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 //
 //==========================================================================
 
-FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, int pitch,
-	bool looping, float pos[3], float vel[3], bool pausable)
+FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float distscale,
+	int pitch, int priority, bool looping, float pos[3], float vel[3], bool pausable)
 {
 	int id = int(sfx - &S_sfx[0]);
 	FMOD_RESULT result;
 	FMOD_MODE mode;
 	FMOD::Channel *chan;
 	float freq;
+	float def_freq, def_vol, def_pan;
+	int def_priority;
 
 	freq = PITCH(sfx->frequency, pitch);
 
+	// Change the sound's default priority before playing it.
+	if (FMOD_OK == ((FMOD::Sound *)sfx->data)->getDefaults(&def_freq, &def_vol, &def_pan, &def_priority))
+	{
+		((FMOD::Sound *)sfx->data)->setDefaults(def_freq, def_vol, def_pan, clamp(def_priority - priority, 1, 256));
+	}
+	else
+	{
+		def_priority = -1;
+	}
+
+	// Play it.
+	GSfxInfo = sfx;
+	GDistScale = distscale;
 	result = Sys->playSound(FMOD_CHANNEL_FREE, (FMOD::Sound *)sfx->data, true, &chan);
+
+	// Then set the priority back.
+	if (def_priority >= 0)
+	{
+		((FMOD::Sound *)sfx->data)->setDefaults(def_freq, def_vol, def_pan, def_priority);
+	}
+
 	if (FMOD_OK == result)
 	{
 		result = chan->getMode(&mode);
@@ -1013,7 +1025,9 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, int pitch
 		chan->setVolume(vol);
 		chan->set3DAttributes((FMOD_VECTOR *)pos, (FMOD_VECTOR *)vel);
 		chan->setPaused(false);
-		return CommonChannelSetup(chan, true);
+		FSoundChan *schan = CommonChannelSetup(chan, true);
+		schan->DistanceScale = distscale;
+		return schan;
 	}
 
 	DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
@@ -1035,6 +1049,7 @@ FSoundChan *FMODSoundRenderer::CommonChannelSetup(FMOD::Channel *chan, bool is3d
 	chan->setUserData(schan);
 	chan->setCallback(FMOD_CHANNEL_CALLBACKTYPE_END, ChannelEndCallback, 0);
 	schan->Is3D = is3d;
+	GSfxInfo = NULL;
 	return schan;
 }
 
@@ -1051,33 +1066,8 @@ void FMODSoundRenderer::StopSound(FSoundChan *chan)
 
 	if (chan->SysChannel != NULL)
 	{
-		((FMOD::Channel *)chan->SysChannel)->setCallback(FMOD_CHANNEL_CALLBACKTYPE_END, 0, 0);
 		((FMOD::Channel *)chan->SysChannel)->stop();
 	}
-	S_ReturnChannel(chan);
-}
-
-//==========================================================================
-//
-// FMODSoundRenderer :: ChannelEndCallback							static
-//
-// Called when the channel finishes playing.
-//
-//==========================================================================
-
-FMOD_RESULT F_CALLBACK FMODSoundRenderer::ChannelEndCallback
-	(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type,
-	 int cmd, unsigned int data1, unsigned int data2)
-{
-	assert(type == FMOD_CHANNEL_CALLBACKTYPE_END);
-	FMOD::Channel *chan = (FMOD::Channel *)channel;
-	FSoundChan *schan;
-
-	if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
-	{
-		S_ReturnChannel(schan);
-	}
-	return FMOD_OK;
 }
 
 //==========================================================================
@@ -1305,8 +1295,24 @@ void FMODSoundRenderer::DoLoad(void **slot, sfxinfo_t *sfx)
 	FMOD_MODE samplemode;
 	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
 	FMOD::Sound *sample;
+	int rolloff;
+	float mindist, maxdist;
 
 	samplemode = FMOD_3D | FMOD_OPENMEMORY | FMOD_SOFTWARE;
+
+	if (sfx->MaxDistance == 0)
+	{
+		mindist = S_MinDistance;
+		maxdist = S_MaxDistanceOrRolloffFactor;
+		rolloff = S_RolloffType;
+	}
+	else
+	{
+		mindist = sfx->MinDistance;
+		maxdist = sfx->MaxDistance;
+		rolloff = sfx->RolloffType;
+	}
+
 	sfxdata = NULL;
 
 	errcount = 0;
@@ -1401,11 +1407,14 @@ void FMODSoundRenderer::DoLoad(void **slot, sfxinfo_t *sfx)
 		break;
 	}
 
-	if (sfx->data)
+	if (sample != NULL)
 	{
-		// Match s_sound.cpp min distance.
-		// Max distance is irrelevant.
-		sample->set3DMinMaxDistance(float(S_CLOSE_DIST), 10000.f);
+		if (rolloff == ROLLOFF_Log)
+		{
+			maxdist = 10000.f;
+		}
+		sample->set3DMinMaxDistance(mindist, maxdist);
+		sample->setUserData(sfx);
 	}
 
 	if (sfxdata != NULL)
@@ -1444,4 +1453,106 @@ void FMODSoundRenderer::getsfx(sfxinfo_t *sfx)
 		}
 	}
 	DoLoad(&sfx->data, sfx);
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: ChannelEndCallback							static
+//
+// Called when the channel finishes playing.
+//
+//==========================================================================
+
+FMOD_RESULT F_CALLBACK FMODSoundRenderer::ChannelEndCallback
+	(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type,
+	 int cmd, unsigned int data1, unsigned int data2)
+{
+	assert(type == FMOD_CHANNEL_CALLBACKTYPE_END);
+	FMOD::Channel *chan = (FMOD::Channel *)channel;
+	FSoundChan *schan;
+
+	if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
+	{
+		S_ReturnChannel(schan);
+	}
+	return FMOD_OK;
+}
+
+
+//==========================================================================
+//
+// FMODSoundRenderer :: RolloffCallback								static
+//
+// Calculates a volume for the sound based on distance.
+//
+//==========================================================================
+
+float F_CALLBACK FMODSoundRenderer::RolloffCallback(FMOD_CHANNEL *channel, float distance)
+{
+	FMOD::Channel *chan = (FMOD::Channel *)channel;
+	FSoundChan *schan;
+	// Defaults for Doom.
+	int type = ROLLOFF_Doom;
+	sfxinfo_t *sfx;
+	float min;
+	float max;
+	float factor;
+	float volume;
+
+	type = S_RolloffType;
+	factor = S_MaxDistanceOrRolloffFactor;
+	min = S_MinDistance;
+	max = S_MaxDistanceOrRolloffFactor;
+
+	if (GSfxInfo != NULL)
+	{
+		sfx = GSfxInfo;
+		distance *= GDistScale;
+	}
+	else if (chan->getUserData((void **)&schan) == FMOD_OK && schan != NULL)
+	{
+		sfx = schan->SfxInfo;
+		distance *= schan->DistanceScale;
+	}
+	else
+	{
+		return 0;
+	}
+	if (sfx == NULL)
+	{
+		return 0;
+	}
+
+	if (sfx->MaxDistance == 0)
+	{
+		type = sfx->RolloffType;
+		factor = sfx->RolloffFactor;
+	}
+	chan->get3DMinMaxDistance(&min, &max);
+
+	if (distance <= min)
+	{
+		return 1;
+	}
+	if (type == ROLLOFF_Log)
+	{ // Logarithmic rolloff has no max distance where it goes silent.
+		return min / (min + factor * (distance - min));
+	}
+	if (distance >= max)
+	{
+		return 0;
+	}
+	volume = (max - distance) / (max - min);
+	if (type == ROLLOFF_Custom && S_SoundCurve != NULL)
+	{
+		volume = S_SoundCurve[int(S_SoundCurveSize * (1 - volume))] / 127.f;
+	}
+	if (type == ROLLOFF_Linear)
+	{
+		return volume;
+	}
+	else
+	{
+		return (powf(10.f, volume) - 1.f) / 9.f;
+	}
 }

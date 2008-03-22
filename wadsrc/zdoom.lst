@@ -75,7 +75,7 @@ xlat/defines.i				xlat/defines.i
 ========
 # Support lumps
 
-dehsupp.lmp	                dehsupp.lmp
+dehsupp.txt	                dehsupp.txt
 
 sectorx.txt					sectorx.txt
 

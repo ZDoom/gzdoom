@@ -1,5 +1,2 @@
 include wadmake
 
-dehsupp.lmp: dehsupp.txt
-	$(DEHSUPP) dehsupp.txt dehsupp.lmp
-	

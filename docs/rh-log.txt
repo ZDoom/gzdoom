@@ -1,4 +1,7 @@
 March 22, 2008 (Changes by Graf Zahl)
+- Changed DEHSUPP loader so that it reads the text file directly. As a result
+  the DEHSUPP compiler is gone now. Unlike XLATCC I'm using FScanner though.
+  A fully featured parser seems like overkill for this simple text file.
 - Added Line_SetTextureOffset special.
 - Added 'allowprotection' keyword to terrain definitions to allow damaging
   flats that don't damage players with a radiation suit.

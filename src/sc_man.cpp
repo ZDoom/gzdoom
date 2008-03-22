@@ -984,6 +984,32 @@ void STACK_ARGS FScanner::ScriptError (const char *message, ...)
 
 //==========================================================================
 //
+// FScanner::ScriptError
+//
+//==========================================================================
+
+void STACK_ARGS FScanner::ScriptMessage (const char *message, ...)
+{
+	FString composed;
+
+	if (message == NULL)
+	{
+		composed = "Bad syntax.";
+	}
+	else
+	{
+		va_list arglist;
+		va_start (arglist, message);
+		composed.VFormat (message, arglist);
+		va_end (arglist);
+	}
+
+	Printf ("Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
+		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
+}
+
+//==========================================================================
+//
 // FScanner :: CheckOpen
 //
 //==========================================================================

@@ -1,4 +1,9 @@
 March 22, 2008 (Changes by Graf Zahl)
+- Added more options to Light_ForceLightning: Setting the first arg to 0
+  will behave as before, setting it to 1 will create exactly one lighting
+  and setting it to 2 will terminate lightning for the current level
+  completely. And it will also work on maps that don't have lightning set
+  in MAPINFO now.
 - Added: Sector movement that causes deep water to change its height now
   will trigger associated sector actions and adjust the actor's water level.
 - Fixed: The serializer for side_t::part never read the texture information

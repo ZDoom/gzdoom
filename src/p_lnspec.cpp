@@ -1666,9 +1666,9 @@ FUNC(LS_Elevator_LowerToNearest)
 }
 
 FUNC(LS_Light_ForceLightning)
-// Light_ForceLightning (tag)
+// Light_ForceLightning (mode)
 {
-	P_ForceLightning ();
+	P_ForceLightning (arg0);
 	return true;
 }
 

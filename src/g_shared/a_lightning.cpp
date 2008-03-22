@@ -14,6 +14,7 @@ IMPLEMENT_CLASS (DLightningThinker)
 DLightningThinker::DLightningThinker ()
 	: DThinker (STAT_LIGHTNING)
 {
+	Stopped = false;
 	LightningLightLevels = NULL;
 	LightningFlashCount = 0;
 	NextLightningFlash = ((pr_lightning()&15)+5)*35; // don't flash at level start
@@ -37,7 +38,7 @@ void DLightningThinker::Serialize (FArchive &arc)
 
 	Super::Serialize (arc);
 
-	arc << NextLightningFlash << LightningFlashCount;
+	arc << Stopped << NextLightningFlash << LightningFlashCount;
 
 	if (arc.IsLoading ())
 	{
@@ -63,6 +64,7 @@ void DLightningThinker::Tick ()
 	else
 	{
 		--NextLightningFlash;
+		if (Stopped) Destroy();
 	}
 }
 
@@ -166,9 +168,21 @@ void DLightningThinker::LightningFlash ()
 	}
 }
 
-void DLightningThinker::ForceLightning ()
+void DLightningThinker::ForceLightning (int mode)
 {
-	NextLightningFlash = 0;
+	switch (mode)
+	{
+	default:
+		NextLightningFlash = 0;
+		break;
+
+	case 1:
+		NextLightningFlash = 0;
+		// Fall through
+	case 2:
+		Stopped = true;
+		break;
+	}
 }
 
 static DLightningThinker *LocateLightning ()
@@ -186,20 +200,15 @@ void P_StartLightning ()
 	}
 }
 
-void P_StopLightning ()
+void P_ForceLightning (int mode)
 {
 	DLightningThinker *lightning = LocateLightning ();
-	if (lightning != NULL)
+	if (lightning == NULL)
 	{
-		lightning->Destroy ();
+		lightning = new DLightningThinker ();
 	}
-}
-
-void P_ForceLightning ()
-{
-	DLightningThinker *lightning = LocateLightning ();
 	if (lightning != NULL)
 	{
-		lightning->ForceLightning ();
+		lightning->ForceLightning (mode);
 	}
 }

@@ -15,18 +15,19 @@ public:
 	~DLightningThinker ();
 	void Serialize (FArchive &arc);
 	void Tick ();
-	void ForceLightning ();
+	void ForceLightning (int mode);
+	void TerminateLightning();
 
 protected:
 	void LightningFlash ();
 
 	int NextLightningFlash;
 	int LightningFlashCount;
+	bool Stopped;
 	BYTE *LightningLightLevels;
 };
 
 void P_StartLightning ();
-void P_StopLightning ();
-void P_ForceLightning ();
+void P_ForceLightning (int mode);
 
 #endif //__A_LIGHTNING_H__

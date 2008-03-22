@@ -66,7 +66,7 @@ bool P_Scroll3dMidtex(sector_t *sector, int crush, fixed_t move, bool ceiling)
 
 	for(unsigned i = 0; i < scrollplane.AttachedSectors.Size(); i++)
 	{
-		res |= P_ChangeSector(scrollplane.AttachedSectors[i], crush, move, 2);
+		res |= P_ChangeSector(scrollplane.AttachedSectors[i], crush, move, 2, true);
 	}
 	return !res;
 }

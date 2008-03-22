@@ -980,6 +980,7 @@ void P_SpawnSpecials (void)
 			for (s = -1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;)
 			{
 				sectors[s].heightsec = sec;
+				sec->e->FakeFloor.Sectors.Push(&sectors[s]);
 			}
 			break;
 

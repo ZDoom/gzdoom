@@ -302,7 +302,7 @@ bool	P_UsePuzzleItem (AActor *actor, int itemType);
 void	PIT_ThrustSpike (AActor *actor);
 void	P_FindFloorCeiling (AActor *actor);
 
-bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil);
+bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil, bool isreset);
 
 extern	AActor*	linetarget; 	// who got hit (or NULL)
 

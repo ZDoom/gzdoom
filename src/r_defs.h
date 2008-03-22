@@ -279,6 +279,12 @@ struct FLinkedSector
 
 struct extsector_t
 {
+	// Boom sector transfer information
+	struct fakefloor
+	{
+		TArray<sector_t *> Sectors;
+	} FakeFloor;
+
 	// 3DMIDTEX information
 	struct midtex
 	{

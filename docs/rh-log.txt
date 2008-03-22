@@ -1,4 +1,6 @@
 March 22, 2008 (Changes by Graf Zahl)
+- Added: Sector movement that causes deep water to change its height now
+  will trigger associated sector actions and adjust the actor's water level.
 - Fixed: The serializer for side_t::part never read the texture information
   from a savegame.
 - Fixed: side_t::StopInterpolation called setinterpolation instead of

@@ -1112,7 +1112,7 @@ void DWaggleBase::DoWaggle (bool ceiling)
 			dist = FixedMul (m_OriginalDist - plane->d, plane->ic);
 			*texz -= plane->HeightDiff (m_OriginalDist);
 			plane->d = m_OriginalDist;
-			P_ChangeSector (m_Sector, true, dist, ceiling);
+			P_ChangeSector (m_Sector, true, dist, ceiling, false);
 			if (ceiling)
 			{
 				m_Sector->ceilingdata = NULL;
@@ -1144,7 +1144,7 @@ void DWaggleBase::DoWaggle (bool ceiling)
 		FixedMul (FloatBobOffsets[(m_Accumulator>>FRACBITS)&63], m_Scale));
 	*texz += plane->HeightDiff (dist);
 	dist = plane->HeightDiff (dist);
-	P_ChangeSector (m_Sector, true, dist, ceiling);
+	P_ChangeSector (m_Sector, true, dist, ceiling, false);
 }
 
 //==========================================================================

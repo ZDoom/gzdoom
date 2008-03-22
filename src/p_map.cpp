@@ -4406,7 +4406,7 @@ void PIT_CeilingRaise (AActor *thing, FChangePosition *cpos)
 //
 //=============================================================================
 
-bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil)
+bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil, bool isreset)
 {
 	FChangePosition cpos;
 	void (*iterator)(AActor *, FChangePosition *);
@@ -4477,6 +4477,37 @@ bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil)
 			}
 		}
 	} while (n);	// repeat from scratch until all things left are marked valid
+
+	if (!cpos.nofit && !isreset /* && sector->MoreFlags & (SECF_UNDERWATERMASK)*/)
+	{
+		// If this is a control sector for a deep water transfer, all actors in affected
+		// sectors need to have their waterlevel information updated and if applicable,
+		// execute appropriate sector actions.
+		// Only check if the sector move was successful.
+		TArray<sector_t *> & secs = sector->e->FakeFloor.Sectors;
+		for(unsigned i = 0; i < secs.Size(); i++)
+		{
+			sector_t * s = secs[i];
+
+			for (n = s->touching_thinglist; n; n = n->m_snext)
+				n->visited = false;
+
+			do
+			{
+				for (n = s->touching_thinglist; n; n = n->m_snext)	// go through list
+				{
+					if (!n->visited && n->m_thing->Sector == s)		// unprocessed thing found
+					{
+						n->visited = true; 							// mark thing as processed
+
+						n->m_thing->UpdateWaterLevel(n->m_thing->z, false);
+						P_CheckFakeFloorTriggers(n->m_thing, n->m_thing->z - amt);
+					}
+				}
+			} while (n);	// repeat from scratch until all things left are marked valid
+		}
+
+	}
 
 	return cpos.nofit;
 }

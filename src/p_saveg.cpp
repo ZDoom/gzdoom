@@ -398,7 +398,8 @@ void P_SerializeWorld (FArchive &arc)
 
 void extsector_t::Serialize(FArchive &arc)
 {
-	arc << Midtex.Floor.AttachedLines 
+	arc << FakeFloor.Sectors
+		<< Midtex.Floor.AttachedLines 
 		<< Midtex.Floor.AttachedSectors
 		<< Midtex.Ceiling.AttachedLines
 		<< Midtex.Ceiling.AttachedSectors

@@ -205,29 +205,9 @@ void MIDIStreamer::Play (bool looping)
 		}
 		else if (res == SONG_DONE)
 		{
-			if (looping)
-			{
-				Restarting = true;
-				if (SONG_MORE == FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME))
-				{
-					if (0 != MIDI->StreamOut(&Buffer[BufferNum]))
-					{
-						Printf ("Initial midiStreamOut failed\n");
-						Stop();
-						return;
-					}
-					BufferNum ^= 1;
-				}
-				else
-				{
-					Stop();
-					return;
-				}
-			}
-			else
-			{
-				EndQueued = true;
-			}
+			// Do not play super short songs that can't fill the initial two buffers.
+			Stop();
+			return;
 		}
 		else
 		{

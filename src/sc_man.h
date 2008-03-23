@@ -58,7 +58,6 @@ public:
 	int MustMatchString(const char **strings);
 
 	void ScriptError(const char *message, ...);
-	void ScriptMessage(const char *message, ...);
 
 	// Members ------------------------------------------------------
 	char *String;

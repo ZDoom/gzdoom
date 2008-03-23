@@ -1,4 +1,5 @@
 MAKEWAD=../tools/makewad/makewad
+DEHSUPP=../tools/dehsupp/dehsupp
 
 ifneq ($(MAKECMDGOALS),clean)
 include Makefile2
@@ -7,15 +8,18 @@ ifeq ($(findstring msys,$(shell sh --version 2>nul)),msys)
 export OSTYPE=msys
 endif
 
-wadmake: zdoom.lst $(MAKEWAD).exe
+wadmake: zdoom.lst $(MAKEWAD).exe $(DEHSUPP).exe
 	$(MAKEWAD) -make wadmake zdoom.lst
 
 clean:
 ifeq ($(OSTYPE),msys)
-	rm -f wadmake zdoom.pk3
+	rm -f wadmake zdoom.pk3 dehsupp.lmp
 else
-	del /q /f wadmake zdoom.pk3 2>nul
+	del /q /f wadmake zdoom.pk3 dehsupp.lmp 2>nul
 endif
 
 ../tools/makewad/makewad.exe:
 	$(MAKE) -C ../tools/makewad -f Makefile
+	
+../tools/dehsupp/dehsupp.exe:
+	$(MAKE) -C ../tools/dehsupp -f Makefile

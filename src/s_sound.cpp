@@ -163,7 +163,7 @@ static fixed_t P_AproxDistance2 (AActor *listener, fixed_t x, fixed_t y)
 void S_NoiseDebug (void)
 {
 	FSoundChan *chan;
-	fixed_t ox, oy;
+	fixed_t ox, oy, oz;
 	int y, color;
 
 	y = 32 * CleanYfac;
@@ -173,9 +173,10 @@ void S_NoiseDebug (void)
 	screen->DrawText (CR_GOLD, 0, y, "name", TAG_DONE);
 	screen->DrawText (CR_GOLD, 70, y, "x", TAG_DONE);
 	screen->DrawText (CR_GOLD, 120, y, "y", TAG_DONE);
-	screen->DrawText (CR_GOLD, 170, y, "vol", TAG_DONE);
-	screen->DrawText (CR_GOLD, 200, y, "dist", TAG_DONE);
-	screen->DrawText (CR_GOLD, 240, y, "chan", TAG_DONE);
+	screen->DrawText (CR_GOLD, 170, y, "z", TAG_DONE);
+	screen->DrawText (CR_GOLD, 220, y, "vol", TAG_DONE);
+	screen->DrawText (CR_GOLD, 250, y, "dist", TAG_DONE);
+	screen->DrawText (CR_GOLD, 290, y, "chan", TAG_DONE);
 	y += 8;
 
 	if (Channels == NULL)
@@ -195,16 +196,19 @@ void S_NoiseDebug (void)
 		{
 			ox = players[consoleplayer].camera->x;
 			oy = players[consoleplayer].camera->y;
+			oz = players[consoleplayer].camera->z;
 		}
 		else if (origin)
 		{
 			ox = origin[0];
 			oy = origin[1];
+			oz = origin[2];
 		}
 		else
 		{
 			ox = chan->X;
 			oy = chan->Y;
+			oz = chan->Z;
 		}
 		color = chan->Loop ? CR_BROWN : CR_GREY;
 		Wads.GetLumpName (temp, chan->SfxInfo->lumpnum);
@@ -214,12 +218,14 @@ void S_NoiseDebug (void)
 		screen->DrawText (color, 70, y, temp, TAG_DONE);
 		sprintf (temp, "%d", oy >> FRACBITS);
 		screen->DrawText (color, 120, y, temp, TAG_DONE);
-		sprintf (temp, "%g", chan->Volume);
+		sprintf (temp, "%d", oz >> FRACBITS);
 		screen->DrawText (color, 170, y, temp, TAG_DONE);
+		sprintf (temp, "%g", chan->Volume);
+		screen->DrawText (color, 220, y, temp, TAG_DONE);
 		sprintf (temp, "%d", P_AproxDistance2 (players[consoleplayer].camera, ox, oy) / FRACUNIT);
-		screen->DrawText (color, 200, y, temp, TAG_DONE);
+		screen->DrawText (color, 250, y, temp, TAG_DONE);
 		sprintf (temp, "%d", chan->EntChannel);
-		screen->DrawText (color, 240, y, temp, TAG_DONE);
+		screen->DrawText (color, 290, y, temp, TAG_DONE);
 		y += 8;
 		if (chan->PrevChan == &Channels)
 		{
@@ -671,7 +677,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	sfx = &S_sfx[sound_id];
 
 	// If this is a singular sound, don't play it if it's already playing.
-	if (pt != NULL && sfx->bSingular && S_CheckSingular(sound_id))
+	if (sfx->bSingular && S_CheckSingular(sound_id))
 		return;
 
 	// Resolve player sounds, random sounds, and aliases
@@ -715,6 +721,8 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	}
 	else
 	{
+		basepriority = 0;
+#if 0
 		switch (channel)
 		{
 		case CHAN_WEAPON:
@@ -731,7 +739,8 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 			basepriority = -10;
 			break;
 		}
-		basepriority = int(basepriority * attenuation);
+		basepriority = int(basepriority / attenuation);
+#endif
 	}
 
 	if (mover != NULL && channel == CHAN_AUTO)
@@ -764,7 +773,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	{
 		for (chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
-			if (chan->Mover == mover && chan->EntChannel == channel)
+			if (((mover != NULL && chan->Mover == mover) || (chan->Pt == pt)) && chan->EntChannel == channel)
 			{
 				GSnd->StopSound(chan);
 				break;

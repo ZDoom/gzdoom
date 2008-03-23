@@ -1,9 +1,24 @@
+March 22, 2008
+- Changed MIDI playback to not bother playing super short songs that don't
+  contain enough music to fill the initial output buffers.
+- Removed the read barrier around ADehackedPickup::RealPickup. If the real
+  pickup is picked up, it may very well destroy itself before the dehacked
+  wrapper's stubs that use it are called.
+- Reverted revision 840. For a file we don't want end users to be touching,
+  making DEHSUPP plain text sends out mixed messages: "Don't mess with this.
+  Oh, by the way, it's plain text now to make it easier for you to edit."
+  Is there some reason other than a desire to do away with binary lumps to
+  make the distributed lump text?
+- Added a new speakermode for Stereo + HRTF: "Headphones". This is the only
+  way to get the HRTF low pass filter effect now.
+- Fixed: No more than one sector could make noise at once.
+- Trying out sound without varying priorities again. 
+- Fixed: Need to use setSpeakerMix to let 2D sounds (aka streamed music) use
+  their full volume range.
+
 March 22, 2008 (Changes by Graf Zahl)
 - Added sector type translation to xlat_parser and removed the old sectorx
   lump.
-- Changed DEHSUPP loader so that it reads the text file directly. As a result
-  the DEHSUPP compiler is gone now. Unlike XLATCC I'm using FScanner though.
-  A fully featured parser seems like overkill for this simple text file.
 - Added Line_SetTextureOffset special.
 - Added 'allowprotection' keyword to terrain definitions to allow damaging
   flats that don't damage players with a radiation suit.

@@ -10,15 +10,16 @@
 RM=rm -f
 SLASH=/
 MAKEWAD=..$(SLASH)tools$(SLASH)makewad$(SLASH)makewad
+DEHSUPP=..$(SLASH)tools$(SLASH)dehsupp$(SLASH)dehsupp
 
 makethewad: wadmake Makefile2
-	$(MAKE) $(NOLOGO) -f Makefile2
+	$(MAKE) $(NOLOGO) DEHSUPP=$(DEHSUPP) -f Makefile2
 
 wadmake: zdoom.lst
 	$(MAKEWAD) -make wadmake zdoom.lst
 
 clean:
-	$(RM) wadmake zdoom.pk3
+	$(RM) wadmake zdoom.pk3 dehsupp.lmp
 
 # This target is for Visual C++'s Rebuild All command
 nrebuild: clean

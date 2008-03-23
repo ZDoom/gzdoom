@@ -164,6 +164,8 @@ static const FEnumList SpeakerModeNames[] =
 	{ "1",						FMOD_SPEAKERMODE_MONO },
 	{ "2",						FMOD_SPEAKERMODE_STEREO },
 	{ "4",						FMOD_SPEAKERMODE_QUAD },
+	{ "Headphones",				9001 },
+	{ "HRTF",					9001 },
 	{ NULL, 0 }
 };
 
@@ -292,6 +294,7 @@ public:
 			return false;
 		}
 		Channel->setChannelGroup(Owner->MusicGroup);
+		Channel->setSpeakerMix(1, 1, 1, 1, 1, 1, 1, 1);
 		Channel->setVolume(volume);
 		// Ensure reverb is disabled.
 		FMOD_REVERB_CHANNELPROPERTIES reverb;
@@ -478,7 +481,7 @@ bool FMODSoundRenderer::Init()
 	{
 		speakermode = FMOD_SPEAKERMODE(eval);
 	}
-	result = Sys->setSpeakerMode(speakermode);
+	result = Sys->setSpeakerMode(speakermode < 9000 ? speakermode : FMOD_SPEAKERMODE_STEREO);
 	ERRCHECK(result);
 
 	// Set software format
@@ -548,7 +551,11 @@ bool FMODSoundRenderer::Init()
 	}
 
 	// Try to init
-	initflags = FMOD_INIT_NORMAL | FMOD_INIT_SOFTWARE_HRTF;
+	initflags = FMOD_INIT_NORMAL;
+	if (speakermode > 9000)
+	{
+		initflags |= FMOD_INIT_SOFTWARE_HRTF;
+	}
 	if (snd_dspnet)
 	{
 		initflags |= FMOD_INIT_ENABLE_DSPNET;

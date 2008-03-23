@@ -94,7 +94,7 @@ src/xlat/xlat_parser.c: tools/lemon/lemon src/xlat/xlat_parser.y
 $(OBJDIR):
 	mkdir $(OBJDIR)
 
-toolsandpk3: ccdv tools/makewad/makewad tools/lemon/lemon
+toolsandpk3: ccdv tools/makewad/makewad tools/dehsupp/dehsupp tools/lemon/lemon
 	$(MAKE) -C wadsrc/
 
 zdoom.pk3: toolsandpk3
@@ -105,6 +105,9 @@ snes_spc/libsnes_spc.a:
 
 tools/makewad/makewad:
 	$(MAKE) -C tools/makewad/
+
+tools/dehsupp/dehsupp:
+	$(MAKE) -C tools/dehsupp/
 
 tools/lemon/lemon:
 	$(MAKE) -C tools/lemon/
@@ -123,6 +126,8 @@ clean: cleanobjs
 
 cleantools:
 	@$(MAKE) -C tools/makewad clean
+	@$(MAKE) -C tools/dehsupp clean
+	@$(MAKE) -C tools/xlatcc clean
 
 cleandebug:
 	rm -f $(ZDOOMDEBUG) $(DEBUGOBJ)/*.o $(DEBUGOBJ)/*.d

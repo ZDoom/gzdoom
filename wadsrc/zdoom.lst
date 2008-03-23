@@ -76,7 +76,7 @@ xlat/defines.i				xlat/defines.i
 ========
 # Support lumps
 
-dehsupp.txt	                dehsupp.txt
+dehsupp.lmp	                dehsupp.lmp
 
 animated.lmp                animated.lmp
 spaldoom.lmp                spaldoom.lmp

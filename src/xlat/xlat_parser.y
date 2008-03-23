@@ -15,6 +15,8 @@ external_declaration ::= define_statement.
 external_declaration ::= enum_statement.
 external_declaration ::= linetype_declaration.
 external_declaration ::= boom_declaration.
+external_declaration ::= sector_declaration.
+external_declaration ::= sector_bitmask.
 external_declaration ::= NOP.
 
 
@@ -448,4 +450,44 @@ list_val(A) ::= exp(B) COLON exp(C).
 	A.filter = B;
 	A.value = C;
 }
+
+//==========================================================================
+//
+// sector types
+//
+//==========================================================================
+
+%type sector_op {int}
+
+sector_declaration ::= SECTOR exp(from) EQUALS exp(to) SEMICOLON.
+{
+	FSectorTrans tr(to, true);
+	SectorTranslations.SetVal(from, tr);
+}
+
+sector_declaration ::= SECTOR exp EQUALS SYM(sy) SEMICOLON.
+{
+	Printf("Unknown constant '%s'\n", sy.sym);
+}
+
+sector_declaration ::= SECTOR exp(from) EQUALS exp(to) NOBITMASK SEMICOLON.
+{
+	FSectorTrans tr(to, false);
+	SectorTranslations.SetVal(from, tr);
+}
+
+sector_bitmask ::= SECTOR BITMASK exp(mask) sector_op(op) exp(shift) SEMICOLON.
+{
+	FSectorMask sm = { mask, op, shift};
+	SectorMasks.Push(sm);
+}
+
+sector_bitmask ::= SECTOR BITMASK exp(mask) SEMICOLON.
+{
+	FSectorMask sm = { mask, 0, 0};
+	SectorMasks.Push(sm);
+}
+
+sector_op(A) ::= LSHASSIGN.		{ A = 1; }
+sector_op(A) ::= RSHASSIGN.		{ A = -1; }
 

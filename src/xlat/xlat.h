@@ -60,8 +60,29 @@ struct FBoomTranslator
 	TArray<FBoomArg> Args;
 } ;
 
+struct FSectorTrans
+{
+	int newtype;
+	bool bitmask_allowed;
+
+	FSectorTrans(int t=0, bool bitmask = false)
+	{
+		newtype = t;
+		bitmask_allowed = bitmask;
+	}
+};
+
+struct FSectorMask
+{
+	int mask;
+	int op;
+	int shift;
+};
+
 extern TAutoGrowArray<FLineTrans> SimpleLineTranslations;
 extern FBoomTranslator Boomish[MAX_BOOMISH];
 extern int NumBoomish;
+extern TAutoGrowArray<FSectorTrans> SectorTranslations;
+extern TArray<FSectorMask> SectorMasks;
 
 #endif

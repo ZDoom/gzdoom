@@ -90,3 +90,124 @@ enum
 	AllKeys = 101,
 	CardIsSkull = 128
 }
+
+
+enum 
+{
+	Light_Phased = 1,
+	LightSequenceStart = 2,
+	LightSequenceSpecial1 = 3,
+	LightSequenceSpecial2 = 4,
+
+	Stairs_Special1 = 26,
+	Stairs_Special2 = 27,
+	
+	Wind_East_Weak=40,
+	Wind_East_Medium,
+	Wind_East_Strong,
+	Wind_North_Weak,
+	Wind_North_Medium,
+	Wind_North_Strong,
+	Wind_South_Weak,
+	Wind_South_Medium,
+	Wind_South_Strong,
+	Wind_West_Weak,
+	Wind_West_Medium,
+	Wind_West_Strong,
+
+	// [RH] Equivalents for DOOM's sector specials
+	dLight_Flicker = 65,
+	dLight_StrobeFast = 66,
+	dLight_StrobeSlow = 67,
+	dLight_Strobe_Hurt = 68,
+	dDamage_Hellslime = 69,
+	dDamage_Nukage = 71,
+	dLight_Glow = 72,
+	dSector_DoorCloseIn30 = 74,
+	dDamage_End = 75,
+	dLight_StrobeSlowSync = 76,
+	dLight_StrobeFastSync = 77,
+	dSector_DoorRaiseIn5Mins = 78,
+	dFriction_Low = 79,
+	dDamage_SuperHellslime = 80,
+	dLight_FireFlicker = 81,
+	dDamage_LavaWimpy = 82,
+	dDamage_LavaHefty = 83,
+	dScroll_EastLavaDamage = 84,
+	Sector_Outside = 87,
+
+	// And here are some for Strife
+	sLight_Strobe_Hurt = 104,
+	sDamage_Hellslime = 105,
+	Damage_InstantDeath = 115,
+	sDamage_SuperHellslime = 116,
+	Scroll_StrifeCurrent = 118
+}
+
+enum
+{
+	// Caverns of Darkness healing sector
+	Sector_Heal = 196,
+
+	Light_OutdoorLightning = 197,
+	Light_IndoorLightning1 = 198,
+	Light_IndoorLightning2 = 199,
+
+	Sky2 = 200,
+
+	// Hexen-type scrollers
+	Scroll_North_Slow = 201,
+	Scroll_North_Medium,
+	Scroll_North_Fast,
+	Scroll_East_Slow,
+	Scroll_East_Medium,
+	Scroll_East_Fast,
+	Scroll_South_Slow,
+	Scroll_South_Medium,
+	Scroll_South_Fast,
+	Scroll_West_Slow,
+	Scroll_West_Medium,
+	Scroll_West_Fast,
+	Scroll_NorthWest_Slow,
+	Scroll_NorthWest_Medium,
+	Scroll_NorthWest_Fast,
+	Scroll_NorthEast_Slow,
+	Scroll_NorthEast_Medium,
+	Scroll_NorthEast_Fast,
+	Scroll_SouthEast_Slow,
+	Scroll_SouthEast_Medium,
+	Scroll_SouthEast_Fast,
+	Scroll_SouthWest_Slow,
+	Scroll_SouthWest_Medium,
+	Scroll_SouthWest_Fast,
+
+	// Heretic-type scrollers
+	Carry_East5 = 225,
+	Carry_East10,
+	Carry_East25,
+	Carry_East30,
+	Carry_East35,
+	Carry_North5,
+	Carry_North10,
+	Carry_North25,
+	Carry_North30,
+	Carry_North35,
+	Carry_South5,
+	Carry_South10,
+	Carry_South25,
+	Carry_South30,
+	Carry_South35,
+	Carry_West5,
+	Carry_West10,
+	Carry_West25,
+	Carry_West30,
+	Carry_West35
+}
+
+// [RH] Equivalents for BOOM's generalized sector types
+define DAMAGE_MASK (0x0300)
+define SECRET_MASK (0x0400)
+define FRICTION_MASK (0x0800)
+define PUSH_MASK (0x1000)
+
+

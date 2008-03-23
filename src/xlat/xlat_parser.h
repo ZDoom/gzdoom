@@ -28,3 +28,9 @@
 #define ARG5                           28
 #define OR_EQUAL                       29
 #define COLON                          30
+#define SECTOR                         31
+#define SEMICOLON                      32
+#define NOBITMASK                      33
+#define BITMASK                        34
+#define LSHASSIGN                      35
+#define RSHASSIGN                      36

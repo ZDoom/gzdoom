@@ -69,6 +69,7 @@ sbarinfo.txt				sbarinfo.txt
 xlat/doom.txt				xlat/doom.txt
 xlat/heretic.txt			xlat/heretic.txt
 xlat/strife.txt				xlat/strife.txt
+xlat/base.txt				xlat/base.txt
 xlat/defines.i				xlat/defines.i
 
 
@@ -76,8 +77,6 @@ xlat/defines.i				xlat/defines.i
 # Support lumps
 
 dehsupp.txt	                dehsupp.txt
-
-sectorx.txt					sectorx.txt
 
 animated.lmp                animated.lmp
 spaldoom.lmp                spaldoom.lmp

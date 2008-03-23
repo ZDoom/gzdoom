@@ -1,4 +1,6 @@
 March 22, 2008 (Changes by Graf Zahl)
+- Added sector type translation to xlat_parser and removed the old sectorx
+  lump.
 - Changed DEHSUPP loader so that it reads the text file directly. As a result
   the DEHSUPP compiler is gone now. Unlike XLATCC I'm using FScanner though.
   A fully featured parser seems like overkill for this simple text file.

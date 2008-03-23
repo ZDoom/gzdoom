@@ -60,6 +60,19 @@ typedef enum {
 
 	Stairs_Special1 = 26,
 	Stairs_Special2 = 27,
+	
+	Wind_East_Weak=40,
+	Wind_East_Medium,
+	Wind_East_Strong,
+	Wind_North_Weak,
+	Wind_North_Medium,
+	Wind_North_Strong,
+	Wind_South_Weak,
+	Wind_South_Medium,
+	Wind_South_Strong,
+	Wind_West_Weak,
+	Wind_West_Medium,
+	Wind_West_Strong,
 
 	// [RH] Equivalents for DOOM's sector specials
 	dLight_Flicker = 65,

@@ -323,3 +323,31 @@ RetailOnly		= 121
 229 = USE|REP,		ACS_ExecuteWithResult (0, 229, tag)
 233 = USE|REP,		ACS_ExecuteWithResult (0, 233, tag)
 234 = USE|REP,		ACS_ExecuteWithResult (0, 234, tag)
+
+sector bitmask 0xfe0 <<= 3;
+
+sector 1 = dLight_Flicker;
+sector 2 = dLight_StrobeFast;
+sector 3 = dLight_StrobeSlow;
+sector 4 = sLight_Strobe_Hurt;
+sector 5 = sDamage_Hellslime;
+sector 7 = dDamage_Nukage;
+sector 8 = dLight_Glow;
+sector 9 = SECRET_MASK nobitmask;
+sector 10 = dSector_DoorCloseIn30;
+sector 11 = dDamage_End;
+sector 12 = dLight_StrobeSlowSync;
+sector 13 = dLight_StrobeFastSync;
+sector 14 = dSector_DoorRaiseIn5Mins;
+sector 15 = Damage_InstantDeath;
+sector 16 = sDamage_SuperHellslime;
+sector 17 = dLight_FireFlicker;
+sector 18 = Scroll_StrifeCurrent;
+sector 19 = dDamage_LavaHefty;
+sector 20 = dScroll_EastLavaDamage;
+sector 21 = Light_Phased;
+sector 22 = LightSequenceStart;
+sector 23 = LightSequenceSpecial1;
+sector 24 =	LightSequenceSpecial2;
+
+

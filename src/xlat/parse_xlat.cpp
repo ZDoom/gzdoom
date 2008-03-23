@@ -47,6 +47,8 @@
 TAutoGrowArray<FLineTrans> SimpleLineTranslations;
 FBoomTranslator Boomish[MAX_BOOMISH];
 int NumBoomish;
+TAutoGrowArray<FSectorTrans> SectorTranslations;
+TArray<FSectorMask> SectorMasks;
 
 // Token types not used in the grammar
 enum
@@ -154,16 +156,18 @@ struct XlatParseContext
 	//==========================================================================
 	bool FindToken (char *tok, int *type)
 	{
-		static const char tokens[][8] =
+		static const char tokens[][10] =
 		{
 			"include", "define", "enum",
-			"arg5", "arg4", "arg3", "arg2", "flags", "lineid", "tag"
+			"arg5", "arg4", "arg3", "arg2", "flags", "lineid", "tag",
+			"sector", "bitmask", "nobitmask"
 			
 		};
 		static const short types[] =
 		{
 			INCLUDE, DEFINE, ENUM,
-			ARG5, ARG4, ARG3, ARG2, FLAGS, TAG, TAG
+			ARG5, ARG4, ARG3, ARG2, FLAGS, TAG, TAG,
+			SECTOR, BITMASK, NOBITMASK
 		};
 		int i;
 
@@ -316,7 +320,7 @@ struct XlatParseContext
 		if (c == '"')
 		{
 			int tokensize = 0;
-			while ((c = *sourcep++) != '"' && c != EOF)
+			while ((c = *sourcep++) != '"' && c != 0)
 			{
 				yylval->string[tokensize++] = c;
 			}
@@ -331,6 +335,38 @@ struct XlatParseContext
 			sourcep--;
 			return OR;
 		}
+		if (c == '<')
+		{
+			c = *sourcep++;
+			if (c == '<')
+			{
+				c = *sourcep++;
+				if (c == '=')
+				{
+					return LSHASSIGN;
+				}
+				sourcep--;
+				return 0;
+			}
+			c--;
+			return 0;
+		}
+		if (c == '>')
+		{
+			c = *sourcep++;
+			if (c == '>')
+			{
+				c = *sourcep++;
+				if (c == '=')
+				{
+					return RSHASSIGN;
+				}
+				sourcep--;
+				return 0;
+			}
+			c--;
+			return 0;
+		}
 		switch (c)
 		{
 		case '^': return XOR;
@@ -344,7 +380,7 @@ struct XlatParseContext
 		case '{': return LBRACE;
 		case '}': return RBRACE;
 		case '=': return EQUALS;
-		//case ';': return SEMICOLON;
+		case ';': return SEMICOLON;
 		case ':': return COLON;
 		case '[': return LBRACKET;
 		case ']': return RBRACKET;

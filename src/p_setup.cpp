@@ -63,6 +63,7 @@
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t **things, int *numthings);
 
+extern void P_LoadTranslator(const char *lump);
 extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
 extern void P_TranslateTeleportThings (void);
 extern int	P_TranslateSectorSpecial (int);
@@ -3605,6 +3606,10 @@ void P_SetupLevel (char *lumpname, int position)
 			{
 				level.flags &= ~LEVEL_LAXMONSTERACTIVATION;
 			}
+
+			// We need translators only for Doom format maps.
+			// If none has been defined in a map use the game's default.
+			P_LoadTranslator(level.info->translator != NULL? (const char *)level.info->translator : gameinfo.translator);
 		}
 		FBehavior::StaticLoadDefaultModules ();
 

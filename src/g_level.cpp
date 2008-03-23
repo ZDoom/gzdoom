@@ -309,6 +309,7 @@ static const char *MapInfoMapLevel[] =
 	"teamplayoff",
 	"checkswitchrange",
 	"nocheckswitchrange",
+	"translator",
 	NULL
 };
 
@@ -458,6 +459,7 @@ MapHandlers[] =
 	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYOFF, ~LEVEL_FORCETEAMPLAYON },
 	{ MITYPE_SETFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
+	{ MITYPE_STRING,	lioffset(translator), 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -605,6 +607,20 @@ void G_ParseMapInfo ()
 	}
 }
 
+static FSpecialAction *CopySpecialActions(FSpecialAction *spec)
+{
+	FSpecialAction **pSpec = &spec;
+
+	while (*pSpec)
+	{
+		FSpecialAction *newspec = new FSpecialAction;
+		*newspec = **pSpec;
+		*pSpec = newspec;
+		pSpec = &newspec->Next;
+	}
+	return spec;
+}
+
 static void G_DoParseMapInfo (int lump)
 {
 	level_info_t defaultinfo;
@@ -624,8 +640,7 @@ static void G_DoParseMapInfo (int lump)
 		switch (sc.MustMatchString (MapInfoTopLevel))
 		{
 		case MITL_DEFAULTMAP:
-			if (defaultinfo.music != NULL) delete [] defaultinfo.music;
-			if (defaultinfo.intermusic != NULL) delete [] defaultinfo.intermusic;
+			ClearLevelInfoStrings(&defaultinfo);
 			SetLevelDefaults (&defaultinfo);
 			ParseMapInfoLower (sc, MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, defaultinfo.flags);
 			break;
@@ -668,6 +683,11 @@ static void G_DoParseMapInfo (int lump)
 			{
 				levelinfo->intermusic = copystring (levelinfo->intermusic);
 			}
+			if (levelinfo->translator != NULL)
+			{
+				levelinfo->translator = copystring (levelinfo->translator);
+			}
+			levelinfo->specialactions = CopySpecialActions(levelinfo->specialactions);
 			if (HexenHack)
 			{
 				levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;
@@ -773,14 +793,7 @@ static void G_DoParseMapInfo (int lump)
 
 		}
 	}
-	if (defaultinfo.music != NULL)
-	{
-		delete [] defaultinfo.music;
-	}
-	if (defaultinfo.intermusic != NULL)
-	{
-		delete [] defaultinfo.intermusic;
-	}
+	ClearLevelInfoStrings(&defaultinfo);
 }
 
 static void ClearLevelInfoStrings(level_info_t *linfo)
@@ -799,6 +812,11 @@ static void ClearLevelInfoStrings(level_info_t *linfo)
 	{
 		delete[] linfo->level_name;
 		linfo->level_name = NULL;
+	}
+	if (linfo->translator != NULL)
+	{
+		delete[] linfo->translator;
+		linfo->translator = NULL;
 	}
 	for (FSpecialAction *spac = linfo->specialactions; spac != NULL; )
 	{

@@ -1,3 +1,13 @@
+March 23, 2008 (Changes by Graf Zahl)
+- Expanded the args for MAPINFO special actions to 32 bit integers as in
+  the rest of the game.
+- Fixed: The specialaction list was not copied properly when transferred
+  from the defaultinfo.
+- Fixed: The defaultinfo for MAPINFO wasn't cleared fully after MAPINFO
+  parsing was completed.
+- Made Doom-format linedef translators a map property so that it's easier
+  to define replacements or extensions.
+
 March 22, 2008
 - Changed MIDI playback to not bother playing super short songs that don't
   contain enough music to fill the initial output buffers.

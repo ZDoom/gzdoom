@@ -113,6 +113,7 @@ typedef struct
 	int defKickback;
 	char SkyFlatName[9];
 	fixed_t StepHeight;
+	const char *translator;
 } gameinfo_t;
 
 extern gameinfo_t gameinfo;

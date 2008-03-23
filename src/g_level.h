@@ -124,7 +124,7 @@ struct FSpecialAction
 {
 	FName Type;					// this is initialized before the actors...
 	BYTE Action;
-	WORD Args[5];				// must allow 16 bit tags for 666 & 667!
+	int Args[5];				// must allow 16 bit tags for 666 & 667!
 	FSpecialAction *Next;
 };
 
@@ -163,6 +163,7 @@ struct level_info_s
 	int			airsupply;
 	DWORD		compatflags;
 	DWORD		compatmask;
+	char		*translator;	// for converting Doom-format linedef and sector types.
 
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.

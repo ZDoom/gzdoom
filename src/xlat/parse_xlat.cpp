@@ -44,6 +44,7 @@
 #include "xlat_parser.h"
 #include "xlat.h"
 
+static FString LastTranslator;
 TAutoGrowArray<FLineTrans> SimpleLineTranslations;
 FBoomTranslator Boomish[MAX_BOOMISH];
 int NumBoomish;
@@ -462,39 +463,26 @@ void ParseXlatLump(const char *lumpname, void *pParser, XlatParseContext *contex
 //
 //==========================================================================
 
-void ParseXlat(const char *lumpname)
+void P_LoadTranslator(const char *lumpname)
 {
-	void *pParser = XlatParseAlloc(malloc);
-
-	XlatParseContext context;
-
-	ParseXlatLump(lumpname, pParser, &context);
-	XlatToken tok;
-	tok.val=0;
-	XlatParse(pParser, 0, tok, &context);
-	XlatParseFree(pParser, free);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-AT_GAME_SET(Translators)
-{
-	if (gameinfo.gametype == GAME_Doom)
+	// Only read the lump if it differs from the previous one.
+	if (LastTranslator.CompareNoCase(lumpname))
 	{
-		ParseXlat("xlat/doom.txt");
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		ParseXlat("xlat/strife.txt");
-	}
-	else
-	{
-		ParseXlat("xlat/heretic.txt");
+		// Clear the old data before parsing the lump.
+		SimpleLineTranslations.Clear();
+		NumBoomish = 0;
+		SectorTranslations.Clear();
+		SectorMasks.Clear();
+
+		void *pParser = XlatParseAlloc(malloc);
+
+		XlatParseContext context;
+
+		ParseXlatLump(lumpname, pParser, &context);
+		XlatToken tok;
+		tok.val=0;
+		XlatParse(pParser, 0, tok, &context);
+		XlatParseFree(pParser, free);
+		LastTranslator = lumpname;
 	}
 }
-
-

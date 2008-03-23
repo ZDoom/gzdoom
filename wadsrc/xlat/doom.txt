@@ -1,6 +1,7 @@
 include "xlat/base.txt"
 
 
+sector bitmask 0xf000 clear;
 sector bitmask 0xfe0 <<= 3;
 
 sector 1 = dLight_Flicker;

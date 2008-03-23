@@ -324,6 +324,7 @@ RetailOnly		= 121
 233 = USE|REP,		ACS_ExecuteWithResult (0, 233, tag)
 234 = USE|REP,		ACS_ExecuteWithResult (0, 234, tag)
 
+sector bitmask 0xf000 clear;
 sector bitmask 0xfe0 <<= 3;
 
 sector 1 = dLight_Flicker;

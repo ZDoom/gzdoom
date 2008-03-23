@@ -161,14 +161,14 @@ struct XlatParseContext
 		{
 			"include", "define", "enum",
 			"arg5", "arg4", "arg3", "arg2", "flags", "lineid", "tag",
-			"sector", "bitmask", "nobitmask"
+			"sector", "bitmask", "nobitmask", "clear"
 			
 		};
 		static const short types[] =
 		{
 			INCLUDE, DEFINE, ENUM,
 			ARG5, ARG4, ARG3, ARG2, FLAGS, TAG, TAG,
-			SECTOR, BITMASK, NOBITMASK
+			SECTOR, BITMASK, NOBITMASK, CLEAR
 		};
 		int i;
 

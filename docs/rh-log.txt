@@ -1,4 +1,6 @@
 March 23, 2008 (Changes by Graf Zahl)
+- Fixed: The sector translators must clear unused bits because they might
+  render a sector's special inoperable.
 - Expanded the args for MAPINFO special actions to 32 bit integers as in
   the rest of the game.
 - Fixed: The specialaction list was not copied properly when transferred

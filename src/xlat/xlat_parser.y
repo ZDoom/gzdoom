@@ -488,6 +488,12 @@ sector_bitmask ::= SECTOR BITMASK exp(mask) SEMICOLON.
 	SectorMasks.Push(sm);
 }
 
+sector_bitmask ::= SECTOR BITMASK exp(mask) CLEAR SEMICOLON.
+{
+	FSectorMask sm = { mask, 0, 1};
+	SectorMasks.Push(sm);
+}
+
 sector_op(A) ::= LSHASSIGN.		{ A = 1; }
 sector_op(A) ::= RSHASSIGN.		{ A = -1; }
 

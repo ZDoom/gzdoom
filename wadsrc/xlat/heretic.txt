@@ -10,6 +10,7 @@ include "xlat/base.txt"
 106 = WALK,				Stairs_BuildUpDoom (tag, F_SLOW, 16)
 107 = USE,				Stairs_BuildUpDoom (tag, F_SLOW, 16)
 
+sector bitmask 0xf000 clear;
 sector bitmask 0xfc0 <<= 3;
 
 sector 1 = dLight_Flicker;

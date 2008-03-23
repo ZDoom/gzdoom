@@ -32,5 +32,6 @@
 #define SEMICOLON                      32
 #define NOBITMASK                      33
 #define BITMASK                        34
-#define LSHASSIGN                      35
-#define RSHASSIGN                      36
+#define CLEAR                          35
+#define LSHASSIGN                      36
+#define RSHASSIGN                      37

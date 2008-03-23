@@ -330,13 +330,6 @@ int P_TranslateSectorSpecial (int special)
 {
 	int mask = 0;
 
-	// Allow any supported sector special by or-ing 0x8000 to it in Doom format maps
-	// That's for those who like to mess around with existing maps. ;)
-	if (special & 0x8000)
-	{
-		return special & 0x7fff;
-	}
-
 	for(unsigned i = 0; i < SectorMasks.Size(); i++)
 	{
 		int newmask = special & SectorMasks[i].mask;
@@ -345,6 +338,7 @@ int P_TranslateSectorSpecial (int special)
 			special &= ~newmask;
 			if (SectorMasks[i].op == 1) newmask <<= SectorMasks[i].shift;
 			else if (SectorMasks[i].op == -1) newmask >>= SectorMasks[i].shift;
+			else if (SectorMasks[i].op == 0 && SectorMasks[i].shift ==1) newmask = 0;
 			mask |= newmask;
 		}
 	}

@@ -71,13 +71,18 @@
 class ASoundSequenceSlot : public AActor
 {
 	DECLARE_STATELESS_ACTOR (ASoundSequenceSlot, AActor)
+	HAS_OBJECT_POINTERS
 public:
 	void Serialize (FArchive &arc);
 
-	DSeqNode *Sequence;
+	TObjPtr<DSeqNode> Sequence;
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASoundSequenceSlot, Any, -1, 0)
+IMPLEMENT_POINTY_CLASS(ASoundSequenceSlot)
+	DECLARE_POINTER(Sequence)
+END_POINTERS
+
+BEGIN_STATELESS_DEFAULTS (ASoundSequenceSlot, Any, -1, 0)
 	PROP_Flags (MF_NOSECTOR|MF_NOBLOCKMAP)
 	PROP_Flags3 (MF3_DONTSPLASH)
 END_DEFAULTS
@@ -149,6 +154,7 @@ void ASoundSequence::PostBeginPlay ()
 		{
 			master = Spawn<ASoundSequenceSlot> (0, 0, 0, NO_REPLACE);
 			master->Sequence = SN_StartSequence (master, slot, 0);
+			GC::WriteBarrier(master, master->Sequence);
 		}
 		master->Sequence->AddChoice (args[0], SEQ_ENVIRONMENT);
 		Destroy ();

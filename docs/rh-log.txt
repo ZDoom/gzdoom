@@ -1,4 +1,6 @@
 March 23, 2008 (Changes by Graf Zahl)
+- Fixed: The Sequence pointer in ASoundSequenceSlot was not declared as
+  a pointer and it was missing both read and write barriers.
 - Fixed: The sector translators must clear unused bits because they might
   render a sector's special inoperable.
 - Expanded the args for MAPINFO special actions to 32 bit integers as in

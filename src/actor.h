@@ -297,6 +297,7 @@ enum
 	MF5_ALWAYSRESPAWN	= 0x00020000,	// always respawns, regardless of skill setting
 	MF5_NEVERRESPAWN	= 0x00040000,	// never respawns, regardless of skill setting
 	MF5_DONTRIP			= 0x00080000,	// Ripping projectiles explode when hittin this actor
+	MF5_NOINFIGHTING	= 0x00100000,	// This actor doesn't switch target when it's hurt 
 
 
 // --- mobj.renderflags ---

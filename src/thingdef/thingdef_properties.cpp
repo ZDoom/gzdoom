@@ -234,6 +234,7 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(MF5, ALWAYSRESPAWN, AActor, flags5),
 	DEFINE_FLAG(MF5, NEVERRESPAWN, AActor, flags5),
 	DEFINE_FLAG(MF5, DONTRIP, AActor, flags5),
+	DEFINE_FLAG(MF5, NOINFIGHTING, AActor, flags5),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

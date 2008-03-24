@@ -1,4 +1,5 @@
 March 24, 2008 (Changes by Graf Zahl)
+- Added Thomas's submissions for decal assignment to puffs and NOINFIGHTING flag.
 - Reverted changes of r715 in v_collection.cpp because they broke loading
   of status bar face graphics belonging to skins.
 SBARINFO update #15

@@ -1270,8 +1270,9 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	}
 	
 	int infight;
-	if (level.flags & LEVEL_TOTALINFIGHTING) infight=1;
-	else if (level.flags & LEVEL_NOINFIGHTING) infight=-1;
+	if (flags5 & MF5_NOINFIGHTING) infight=-1;	
+	else if (level.flags & LEVEL_TOTALINFIGHTING) infight=1;
+	else if (level.flags & LEVEL_NOINFIGHTING) infight=-1;	
 	else infight = infighting;
 	
 	if (infight < 0 &&	other->player == NULL && !IsHostile (other))

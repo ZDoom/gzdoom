@@ -86,6 +86,7 @@ struct SBarInfo
 	bool interpolateHealth;
 	bool interpolateArmor;
 	bool completeBorder;
+	bool lowerHealthCap;
 	char spacingCharacter;
 	int interpolationSpeed;
 	int armorInterpolationSpeed;
@@ -119,7 +120,7 @@ struct MugShotFrame
 
 	MugShotFrame();
 	~MugShotFrame();
-	FTexture *getTexture(FPlayerSkin *skn, int random, int level=0, int direction=0, bool usesLevels=false, bool health2=false, bool healthspecial=false, bool directional=false);
+	FTexture *getTexture(FString &defaultFace, FPlayerSkin *skn, int random, int level=0, int direction=0, bool usesLevels=false, bool health2=false, bool healthspecial=false, bool directional=false);
 };
 
 
@@ -143,7 +144,7 @@ struct MugShotState
 	void tick();
 	void reset();
 	MugShotFrame getCurrentFrame() { return frames[position]; }
-	FTexture *getCurrentFrameTexture(FPlayerSkin *skn, int level=0, int direction=0) { return getCurrentFrame().getTexture(skn, random, level, direction, usesLevels, health2, healthspecial, directional); }
+	FTexture *getCurrentFrameTexture(FString &defaultFace, FPlayerSkin *skn, int level=0, int direction=0) { return getCurrentFrame().getTexture(defaultFace, skn, random, level, direction, usesLevels, health2, healthspecial, directional); }
 };
 
 extern TArray<MugShotState> MugShotStates;
@@ -197,6 +198,7 @@ enum //drawnumber flags
 	DRAWNUMBER_SECRETS = 4096,
 	DRAWNUMBER_TOTALSECRETS = 8192,
 	DRAWNUMBER_ARMORCLASS = 16384,
+	DRAWNUMBER_GLOBALVAR = 32768,
 };
 
 enum //drawbar flags (will go into special2)
@@ -253,6 +255,14 @@ enum //event flags
 	SBARINFOEVENT_AND = 4,
 };
 
+enum //aspect ratios
+{
+	ASPECTRATIO_4_3 = 0,
+	ASPECTRATIO_16_9 = 1,
+	ASPECTRATIO_16_10 = 2,
+	ASPECTRATIO_5_4 = 3,
+};
+
 enum //Key words
 {
 	SBARINFO_BASE,
@@ -261,6 +271,7 @@ enum //Key words
 	SBARINFO_INTERPOLATEARMOR,
 	SBARINFO_COMPLETEBORDER,
 	SBARINFO_MONOSPACEFONTS,
+	SBARINFO_LOWERHEALTHCAP,
 	SBARINFO_STATUSBAR,
 	SBARINFO_MUGSHOT,
 };
@@ -293,7 +304,9 @@ enum //Bar key words
 	SBARINFO_DRAWKEYBAR,
 	SBARINFO_GAMEMODE,
 	SBARINFO_PLAYERCLASS,
+	SBARINFO_ASPECTRATIO,
 	SBARINFO_WEAPONAMMO,
+	SBARINFO_ININVENTORY,
 };
 
 //All this so I can change the mugshot state in ACS...
@@ -321,13 +334,14 @@ public:
 	void Tick();
 	void ReceivedWeapon (AWeapon *weapon);
 	void FlashItem(const PClass *itemtype);
+	void ShowPop(int popnum);
 	void SetMugShotState(const char* stateName, bool waitTillDone=false);
 private:
 	void doCommands(SBarInfoBlock &block);
 	void DrawGraphic(FTexture* texture, int x, int y, int flags);
 	void DrawString(const char* str, int x, int y, EColorRange translation, int spacing=0);
 	void DrawNumber(int num, int len, int x, int y, EColorRange translation, int spacing=0);
-	void DrawFace(int accuracy, bool xdth, bool animatedgodmode, int x, int y);
+	void DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y);
 	int updateState(bool xdth, bool animatedgodmode);
 	void DrawInventoryBar(int type, int num, int x, int y, bool alwaysshow, 
 		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter);
@@ -349,6 +363,7 @@ private:
 	int mugshotHealth;
 	int chainWiggle;
 	int artiflash;
+	int currentPopup;
 	unsigned int invBarOffset;
 	FBarShader shader_horz_normal;
 	FBarShader shader_horz_reverse;

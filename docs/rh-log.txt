@@ -1,3 +1,22 @@
+March 24, 2008 (Changes by Graf Zahl)
+- Reverted changes of r715 in v_collection.cpp because they broke loading
+  of status bar face graphics belonging to skins.
+SBARINFO update #15
+- Fixed: Monospacing fonts wasn't quite correct.
+- Fixed: The new mug shot code forgot to use the first arg of drawmugshot (the
+  one that picks the default sprite prefix).
+- Added: lowerHealthCap variable to SBarInfo, which is set to true by default.
+- Added: ininventory event to SBarInfo to detect if one or two items are in (or
+  not in) the player's inventory.
+- Added: The ability to print global vars using drawnumber.  I need someone to
+  test it though.
+- Added: aspectratio command to detect what the user's aspect ratio is.
+- Added: missing spacing argument to drawstring.
+- Changed the sbarinfo display routine for drawnumber to not use cmd.value to
+  store what it is about to display.  Now it uses a new variable.
+- More conversions from DrawImage to screen->DrawTexture.  I think only the
+  inventory bar drawing functions have to be changed now.
+
 March 23, 2008 (Changes by Graf Zahl)
 - Fixed: The Sequence pointer in ASoundSequenceSlot was not declared as
   a pointer and it was missing both read and write barriers.

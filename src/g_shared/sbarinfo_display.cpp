@@ -83,13 +83,13 @@ MugShotFrame::~MugShotFrame()
 }
 
 //Assemble a graphic name with the specified prefix and return the FTexture.
-FTexture *MugShotFrame::getTexture(FPlayerSkin *skin, int random, int level, int direction, bool usesLevels, bool health2, bool healthspecial, bool directional)
+FTexture *MugShotFrame::getTexture(FString &defaultFace, FPlayerSkin *skin, int random, int level, int direction, bool usesLevels, bool health2, bool healthspecial, bool directional)
 {
 	int index = !directional ? random % graphic.Size() : direction;
 	if(index > (signed int) (graphic.Size()-1))
 		index = graphic.Size()-1;
 	char* sprite = new char[9];
-	memcpy(sprite, skin->face[0] != 0 ? skin->face : "STF", 3);
+	memcpy(sprite, skin->face[0] != 0 ? skin->face : defaultFace, 3);
 	memcpy(sprite+3, graphic[index], strlen(graphic[index]));
 	sprite[3+strlen(graphic[index])] = '\0';
 	if(usesLevels) //change the last character to the level
@@ -313,6 +313,15 @@ void DSBarInfo::Draw (EHudState state)
 		else if(state == HUD_Fullscreen)
 			doCommands(SBarInfoScript->huds[STBAR_INVENTORYFULLSCREEN]);
 	}
+	if(currentPopup != POP_None)
+	{
+		if(currentPopup == POP_Log)
+			doCommands(SBarInfoScript->huds[STBAR_POPUPLOG]);
+		else if(currentPopup == POP_Keys)
+			doCommands(SBarInfoScript->huds[STBAR_POPUPKEYS]);
+		else if(currentPopup == POP_Status)
+			doCommands(SBarInfoScript->huds[STBAR_POPUPSTATUS]);
+	}
 }
 
 void DSBarInfo::NewGame ()
@@ -407,6 +416,15 @@ void DSBarInfo::ReceivedWeapon (AWeapon *weapon)
 void DSBarInfo::FlashItem(const PClass *itemtype)
 {
 	artiflash = 4;
+}
+
+void DSBarInfo::ShowPop(int popnum)
+{
+	DBaseStatusBar::ShowPop(popnum);
+	if(popnum != currentPopup)
+		currentPopup = popnum;
+	else
+		currentPopup = POP_None;
 }
 
 //Public so it can be called by ACS
@@ -543,25 +561,27 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 				}
 				break;
 			case SBARINFO_DRAWNUMBER:
+			{
+				int value = cmd.value;
 				if(drawingFont != cmd.font)
 				{
 					drawingFont = cmd.font;
 				}
 				if(cmd.flags == DRAWNUMBER_HEALTH)
 				{
-					cmd.value = health;
-					if(cmd.value < 0) //health shouldn't display negatives
+					value = health;
+					if(SBarInfoScript->lowerHealthCap && cmd.value < 0) //health shouldn't display negatives
 					{
-						cmd.value = 0;
+						value = 0;
 					}
 				}
 				else if(cmd.flags == DRAWNUMBER_ARMOR)
 				{
-					cmd.value = armorAmount;
+					value = armorAmount;
 				}
 				else if(cmd.flags == DRAWNUMBER_AMMO1)
 				{
-					cmd.value = ammocount1;
+					value = ammocount1;
 					if(ammo1 == NULL) //no ammo, do not draw
 					{
 						continue;
@@ -569,7 +589,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 				}
 				else if(cmd.flags == DRAWNUMBER_AMMO2)
 				{
-					cmd.value = ammocount2;
+					value = ammocount2;
 					if(ammo2 == NULL) //no ammo, do not draw
 					{
 						continue;
@@ -581,11 +601,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 					AInventory* item = CPlayer->mo->FindInventory(ammo);
 					if(item != NULL)
 					{
-						cmd.value = item->Amount;
+						value = item->Amount;
 					}
 					else
 					{
-						cmd.value = 0;
+						value = 0;
 					}
 				}
 				else if(cmd.flags == DRAWNUMBER_AMMOCAPACITY)
@@ -594,61 +614,64 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 					AInventory* item = CPlayer->mo->FindInventory(ammo);
 					if(item != NULL)
 					{
-						cmd.value = item->MaxAmount;
+						value = item->MaxAmount;
 					}
 					else
 					{
-						cmd.value = ((AInventory *)GetDefaultByType(ammo))->MaxAmount;
+						value = ((AInventory *)GetDefaultByType(ammo))->MaxAmount;
 					}
 				}
 				else if(cmd.flags == DRAWNUMBER_FRAGS)
-					cmd.value = CPlayer->fragcount;
+					value = CPlayer->fragcount;
 				else if(cmd.flags == DRAWNUMBER_KILLS)
-					cmd.value = level.killed_monsters;
+					value = level.killed_monsters;
 				else if(cmd.flags == DRAWNUMBER_MONSTERS)
-					cmd.value = level.total_monsters;
+					value = level.total_monsters;
 				else if(cmd.flags == DRAWNUMBER_ITEMS)
-					cmd.value = level.found_items;
+					value = level.found_items;
 				else if(cmd.flags == DRAWNUMBER_TOTALITEMS)
-					cmd.value = level.total_items;
+					value = level.total_items;
 				else if(cmd.flags == DRAWNUMBER_SECRETS)
-					cmd.value = level.found_secrets;
+					value = level.found_secrets;
 				else if(cmd.flags == DRAWNUMBER_TOTALSECRETS)
-					cmd.value = level.total_secrets;
+					value = level.total_secrets;
 				else if(cmd.flags == DRAWNUMBER_ARMORCLASS)
 				{
 					AHexenArmor *harmor = CPlayer->mo->FindInventory<AHexenArmor>();
 					if(harmor != NULL)
 					{
-						cmd.value = harmor->Slots[0] + harmor->Slots[1] + 
+						value = harmor->Slots[0] + harmor->Slots[1] + 
 							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
 					if(armor != NULL)
 					{
-						cmd.value += armor->SavePercent;
+						value += armor->SavePercent;
 					}
-					cmd.value /= (5*FRACUNIT);
+					value /= (5*FRACUNIT);
 				}
+				else if(cmd.flags == DRAWNUMBER_GLOBALVAR)
+					value = ACS_GlobalVars[cmd.value];
 				else if(cmd.flags == DRAWNUMBER_INVENTORY)
 				{
 					AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
 					if(item != NULL)
 					{
-						cmd.value = item->Amount;
+						value = item->Amount;
 					}
 					else
 					{
-						cmd.value = 0;
+						value = 0;
 					}
 				}
 				if(cmd.special3 != -1 && cmd.value <= cmd.special3) //low
-					DrawNumber(cmd.value, cmd.special, cmd.x, cmd.y, cmd.translation2, cmd.special2);
+					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation2, cmd.special2);
 				else if(cmd.special4 != -1 && cmd.value >= cmd.special4) //high
-					DrawNumber(cmd.value, cmd.special, cmd.x, cmd.y, cmd.translation3, cmd.special2);
+					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation3, cmd.special2);
 				else
-					DrawNumber(cmd.value, cmd.special, cmd.x, cmd.y, cmd.translation, cmd.special2);
+					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation, cmd.special2);
 				break;
+			}
 			case SBARINFO_DRAWMUGSHOT:
 			{
 				bool xdth = false;
@@ -657,7 +680,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 					xdth = true;
 				if(cmd.flags & DRAWMUGSHOT_ANIMATEDGODMODE)
 					animatedgodmode = true;
-				DrawFace(cmd.special, xdth, animatedgodmode, cmd.x, cmd.y);
+				DrawFace(cmd.string[0], cmd.special, xdth, animatedgodmode, cmd.x, cmd.y);
 				break;
 			}
 			case SBARINFO_DRAWSELECTEDINVENTORY:
@@ -1000,7 +1023,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 				{
 					drawingFont = cmd.font;
 				}
-				DrawString(cmd.string[0], cmd.x - drawingFont->StringWidth(cmd.string[0]), cmd.y, cmd.translation);
+				DrawString(cmd.string[0], cmd.x - drawingFont->StringWidth(cmd.string[0]), cmd.y, cmd.translation, cmd.special);
 				break;
 			case SBARINFO_DRAWKEYBAR:
 			{
@@ -1046,6 +1069,12 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 				}
 				break;
 			}
+			case SBARINFO_ASPECTRATIO:
+				if(CheckRatio(screen->GetWidth(), screen->GetHeight()) == cmd.value)
+				{
+					doCommands(cmd.subBlock);
+				}
+				break;
 			case SBARINFO_WEAPONAMMO:
 				if(CPlayer->ReadyWeapon != NULL)
 				{
@@ -1090,6 +1119,30 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 					}
 				}
 				break;
+			case SBARINFO_ININVENTORY:
+			{
+				AInventory *item1 = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
+				AInventory *item2 = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[1]));
+				if(cmd.flags & SBARINFOEVENT_AND)
+				{
+					if((item1 != NULL && item2 != NULL) && !(cmd.flags & SBARINFOEVENT_NOT))
+						doCommands(cmd.subBlock);
+					else if((item1 == NULL || item2 == NULL) && (cmd.flags & SBARINFOEVENT_NOT))
+						doCommands(cmd.subBlock);
+				}
+				else if(cmd.flags & SBARINFOEVENT_OR)
+				{
+					if((item1 != NULL || item2 != NULL) && !(cmd.flags & SBARINFOEVENT_NOT))
+						doCommands(cmd.subBlock);
+					else if((item1 == NULL && item2 == NULL) && (cmd.flags & SBARINFOEVENT_NOT))
+						doCommands(cmd.subBlock);
+				}
+				else if((item1 != NULL) && !(cmd.flags & SBARINFOEVENT_NOT))
+					doCommands(cmd.subBlock);
+				else if((item1 == NULL) && (cmd.flags & SBARINFOEVENT_NOT))
+					doCommands(cmd.subBlock);
+				break;
+			}
 		}
 	}
 }
@@ -1102,15 +1155,21 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int flags)
 		x -= (texture->GetWidth()/2)-texture->LeftOffset;
 		y -= (texture->GetHeight()/2)-texture->TopOffset;
 	}
+	x += ST_X;
+	y += ST_Y;
+	int w = texture->GetScaledWidth();
+	int h = texture->GetScaledHeight();
+	screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
 	if((flags & DRAWIMAGE_TRANSLATABLE))
-		DrawImage(texture, x, y, getTranslation());
+	{
+		screen->DrawTexture(texture, x, y,
+			DTA_DestWidth, w,
+			DTA_DestHeight, h,
+			DTA_Translation, getTranslation(),
+			TAG_DONE);
+	}
 	else
 	{
-		x += ST_X;
-		y += ST_Y;
-		int w = texture->GetScaledWidth();
-		int h = texture->GetScaledHeight();
-		screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
 		screen->DrawTexture(texture, x, y,
 			DTA_DestWidth, w,
 			DTA_DestHeight, h,
@@ -1142,10 +1201,20 @@ void DSBarInfo::DrawString(const char* str, int x, int y, EColorRange translatio
 		}
 		if(SBarInfoScript->spacingCharacter == '\0') //If we are monospaced lets use the offset
 			x += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
-		DrawImage(character, x, y, drawingFont->GetColorTranslation(translation));
-		x += width + spacing;
+		int rx = x + ST_X;
+		int ry = y + ST_Y;
+		int rw = character->GetScaledWidth();
+		int rh = character->GetScaledHeight();
+		screen->VirtualToRealCoordsInt(rx, ry, rw, rh, 320, 200, true);
+		screen->DrawTexture(character, rx, ry,
+			DTA_DestWidth, rw,
+			DTA_DestHeight, rh,
+			DTA_Translation, drawingFont->GetColorTranslation(translation),
+			TAG_DONE);
 		if(SBarInfoScript->spacingCharacter == '\0')
-			x -= (character->LeftOffset+1);
+			x += width + spacing - (character->LeftOffset+1);
+		else //width gets changed at the call to GetChar()
+			x += drawingFont->GetCharWidth((int) SBarInfoScript->spacingCharacter) + spacing;
 		str++;
 	}
 }
@@ -1165,14 +1234,23 @@ void DSBarInfo::DrawNumber(int num, int len, int x, int y, EColorRange translati
 }
 
 //draws the mug shot
-void DSBarInfo::DrawFace(int accuracy, bool xdth, bool animatedgodmode, int x, int y)
+void DSBarInfo::DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y)
 {
 	int angle = updateState(xdth, animatedgodmode);
 	int level = 0;
 	for(level = 0;CPlayer->health < (accuracy-level-1)*(CPlayer->mo->GetMaxHealth()/accuracy);level++);
 	if(currentState != NULL)
 	{
-		DrawImage(currentState->getCurrentFrameTexture(&skins[CPlayer->userinfo.skin], level, angle), x, y);
+		FTexture *face = currentState->getCurrentFrameTexture(defaultFace, &skins[CPlayer->userinfo.skin], level, angle);
+		x += ST_X;
+		y += ST_Y;
+		int w = face->GetScaledWidth();
+		int h = face->GetScaledHeight();
+		screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+		screen->DrawTexture(face, x, y,
+			DTA_DestWidth, w,
+			DTA_DestHeight, h,
+			TAG_DONE);
 	}
 }
 

@@ -60,7 +60,13 @@ void FImageCollection::Init (const char **patchNames, int numPatches, int namesp
 
 	for (int i = 0; i < numPatches; ++i)
 	{
-		ImageMap[i] = TexMan.CheckForTexture(patchNames[i], namespc, true);
+		int picnum = TexMan.AddPatch (patchNames[i], namespc, true);
+
+		if (picnum == -1 && namespc != ns_sprites)
+		{
+			picnum = TexMan.AddPatch (patchNames[i], ns_sprites);
+		}
+		ImageMap[i] = picnum;
 	}
 }
 

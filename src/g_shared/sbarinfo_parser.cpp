@@ -57,6 +57,7 @@ static const char *SBarInfoTopLevel[] =
 	"interpolatearmor",
 	"completeborder",
 	"monospacefonts",
+	"lowerhealthcap",
 	"statusbar",
 	"mugshot",
 	NULL
@@ -91,7 +92,9 @@ static const char *SBarInfoRoutineLevel[] =
 	"drawkeybar",
 	"gamemode",
 	"playerclass",
+	"aspectratio",
 	"weaponammo", //event
+	"ininventory",
 	NULL
 };
 
@@ -228,6 +231,18 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(',');
 					sc.MustGetToken(TK_StringConst); //Don't tell anyone we're just ignoring this ;)
 				}				
+				sc.MustGetToken(';');
+				break;
+			case SBARINFO_LOWERHEALTHCAP:
+				if(sc.CheckToken(TK_False))
+				{
+					lowerHealthCap = false;
+				}
+				else
+				{
+					sc.MustGetToken(TK_True);
+					lowerHealthCap = true;
+				}
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_STATUSBAR:
@@ -470,6 +485,14 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.flags += DRAWNUMBER_TOTALSECRETS;
 					else if(sc.Compare("armorclass"))
 						cmd.flags += DRAWNUMBER_ARMORCLASS;
+					else if(sc.Compare("globalvar"))
+					{
+						cmd.flags += DRAWNUMBER_GLOBALVAR;
+						sc.MustGetToken(TK_IntConst);
+						if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
+							sc.ScriptError("Global variable number out of range: %d", sc.Number);
+						cmd.value = sc.Number;
+					}
 					else
 					{
 						cmd.flags = DRAWNUMBER_INVENTORY;
@@ -738,7 +761,7 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					cmd.flags = DRAWNUMBER_INVENTORY;
 					cmd.setString(sc, sc.String, 0);
 					const PClass* item = PClass::FindClass(sc.String);
-					if(item == NULL || !RUNTIME_CLASS(AInventory)->IsAncestorOf(item)) //must be a kind of ammo
+					if(item == NULL || !RUNTIME_CLASS(AInventory)->IsAncestorOf(item))
 					{
 						sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
 					}
@@ -843,6 +866,11 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				cmd.setString(sc, sc.String, 0, -1, false);
 				sc.MustGetToken(',');
 				this->getCoordinates(sc, cmd);
+				if(sc.CheckToken(',')) //spacing
+				{
+					sc.MustGetToken(TK_IntConst);
+					cmd.special = sc.Number;
+				}
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_DRAWKEYBAR:
@@ -908,6 +936,21 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 			FinishPlayerClass:
 				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
+			case SBARINFO_ASPECTRATIO:
+				sc.MustGetToken(TK_StringConst);
+				if(sc.Compare("4:3"))
+					cmd.value = ASPECTRATIO_4_3;
+				else if(sc.Compare("16:9"))
+					cmd.value = ASPECTRATIO_16_9;
+				else if(sc.Compare("16:10"))
+					cmd.value = ASPECTRATIO_16_10;
+				else if(sc.Compare("5:4"))
+					cmd.value = ASPECTRATIO_5_4;
+				else
+					sc.ScriptError("Unkown aspect ratio: %s", sc.String);
+				sc.MustGetToken('{');
+				this->ParseSBarInfoBlock(sc, cmd.subBlock);
+				break;
 			case SBARINFO_WEAPONAMMO:
 				sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("not"))
@@ -939,6 +982,39 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				sc.MustGetToken('{');
 				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
+			case SBARINFO_ININVENTORY:
+			{
+				sc.MustGetToken(TK_Identifier);
+				if(sc.Compare("not"))
+				{
+					cmd.flags += SBARINFOEVENT_NOT;
+					sc.MustGetToken(TK_Identifier);
+				}
+				for(int i = 0;i < 2;i++)
+				{
+					cmd.setString(sc, sc.String, i);
+					const PClass* item = PClass::FindClass(sc.String);
+					if(item == NULL || !RUNTIME_CLASS(AInventory)->IsAncestorOf(item))
+					{
+						sc.ScriptError("'%s' is not a type of inventory item.", sc.String);
+					}
+					if(sc.CheckToken(TK_OrOr))
+					{
+						cmd.flags += SBARINFOEVENT_OR;
+						sc.MustGetToken(TK_Identifier);
+					}
+					else if(sc.CheckToken(TK_AndAnd))
+					{
+						cmd.flags += SBARINFOEVENT_AND;
+						sc.MustGetToken(TK_Identifier);
+					}
+					else
+						break;
+				}
+				sc.MustGetToken('{');
+				this->ParseSBarInfoBlock(sc, cmd.subBlock);
+				break;
+			}
 		}
 		block.commands.Push(cmd);
 	}
@@ -1044,6 +1120,7 @@ void SBarInfo::Init()
 	interpolateHealth = false;
 	interpolateArmor = false;
 	completeBorder = false;
+	lowerHealthCap = true;
 	interpolationSpeed = 8;
 	armorInterpolationSpeed = 8;
 	height = 0;

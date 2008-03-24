@@ -897,6 +897,9 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		return DefWindowProc (hWnd, message, wParam, lParam);
 
+	case WM_ERASEBKGND:
+		return true;
+
 	default:
 		return DefWindowProc (hWnd, message, wParam, lParam);
 	}

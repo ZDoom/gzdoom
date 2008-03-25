@@ -135,9 +135,14 @@ static FRandom pr_animatepictures ("AnimatePics");
 //
 //==========================================================================
 
+CVAR(Bool, debuganimated, false, 0)
+
 void R_InitPicAnims (void)
 {
-	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable;
+		// I think better not! This is only for old ANIMATED definition that
+		// don't know about ZDoom's more flexible texture system.
+		// | FTextureManager::TEXMAN_TryAny;
 
 	if (Wads.CheckNumForName ("ANIMATED") != -1)
 	{
@@ -175,6 +180,35 @@ void R_InitPicAnims (void)
 				Printf ("Animation %s in ANIMATED has only one frame", anim_p + 10);
 				continue;
 			}
+
+			FTexture *tex1 = TexMan[pic1];
+			FTexture *tex2 = TexMan[pic1];
+
+			if (tex1->UseType != tex2->UseType)
+			{
+				// not the same type - 
+				continue;
+			}
+
+			if (debuganimated)
+			{
+				Printf("Defining animation '%s' (texture %d, lump %d, file %d) to '%s' (texture %d, lump %d, file %d)\n",
+					tex1->Name, tex1->GetSourceLump(), Wads.GetLumpFile(tex1->GetSourceLump()),
+					tex2->Name, tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
+			}
+
+			/* FIXME: doesn't work with hires texture replacements.
+			int l1 = tex1->GetSourceLump();
+			int l2 = tex2->GetSourceLump();
+
+			if (tex1->UseType == FTexture::TEX_Wall && l1 != l2)
+			{
+				// Animated walls must be in the same definition lumo
+				continue;
+			}
+			*/
+
+
 			// [RH] Allow for backward animations as well as forward.
 			if (pic1 > pic2)
 			{

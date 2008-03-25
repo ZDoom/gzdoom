@@ -141,11 +141,8 @@ enum
 	sDamage_Hellslime = 105,
 	Damage_InstantDeath = 115,
 	sDamage_SuperHellslime = 116,
-	Scroll_StrifeCurrent = 118
-}
+	Scroll_StrifeCurrent = 118,
 
-enum
-{
 	// Caverns of Darkness healing sector
 	Sector_Heal = 196,
 

@@ -3540,7 +3540,7 @@
 						Name="VCCustomBuildTool"
 						Description="Generating xlat_parser.c and xlat_parser.h..."
 						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
-						Outputs="$(InputDir)xlat_parser.c:$(InputDir)xlat_parser.h"
+						Outputs="$(InputDir)xlat_parser.c;$(InputDir)xlat_parser.h"
 					/>
 				</FileConfiguration>
 			</File>

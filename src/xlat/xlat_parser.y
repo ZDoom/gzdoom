@@ -67,7 +67,7 @@ enum_open ::= ENUM LBRACE.
 
 enum_list ::= . /* empty */
 enum_list ::= single_enum.
-enum_list ::= single_enum COMMA enum_list.
+enum_list ::= enum_list COMMA single_enum.
 
 single_enum ::= SYM(A).
 {
@@ -76,7 +76,8 @@ single_enum ::= SYM(A).
 
 single_enum ::= SYM(A) EQUALS exp(B).
 {
-	context->AddSym (A.sym, context->EnumVal = B);
+	context->AddSym (A.sym, B);
+	context->EnumVal = B+1;
 }
 
 //==========================================================================

@@ -929,7 +929,7 @@ public:
 	void WriteTexture (FArchive &arc, int picnum);
 	int ReadTexture (FArchive &arc);
 
-	void AddTexturesLump (const void *lumpdata, int lumpsize, int patcheslump, int firstdup=0, bool texture1=false);
+	void AddTexturesLump (const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup=0, bool texture1=false);
 	void AddTexturesLumps (int lump1, int lump2, int patcheslump);
 	void AddGroup(int wadnum, const char * startlump, const char * endlump, int ns, int usetype);
 	void AddPatches (int lumpnum);

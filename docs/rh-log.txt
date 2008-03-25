@@ -1,3 +1,8 @@
+March 25, 2008 (Changes by Graf Zahl)
+- Fixed: ANIMATED allowed animations between different texture types.
+- Added a debuganimated CCMD that can be used to output some information
+  if a WAD shows broken animations.
+
 March 24, 2008
 - Removed xlat_parser.h from the repository. Lemon was always being run on
   xlat_parser.y because both files had the same time stamp after an update,
@@ -10,6 +15,11 @@ March 24, 2008
 - Restored the sound limiting.
 
 March 24, 2008 (Changes by Graf Zahl)
+- Fixed: THe handling for enum values in Xlat was incorrect. The rule with 
+  value assignment must set the counter one higher than the current value.
+- Fixed: The definition of enums in the Xlat grammar was right-recursive
+  which could create stack overflows in the parser. Made it left-recursive as
+  recommended in Lemon's docs. 
 - Added Thomas's submissions for decal assignment to puffs and NOINFIGHTING flag.
 - Reverted changes of r715 in v_collection.cpp because they broke loading
   of status bar face graphics belonging to skins.

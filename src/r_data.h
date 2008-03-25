@@ -82,7 +82,7 @@ struct FPatchLookup
 class FMultiPatchTexture : public FTexture
 {
 public:
-	FMultiPatchTexture (const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife);
+	FMultiPatchTexture (const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife, int deflump);
 	~FMultiPatchTexture ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
@@ -92,10 +92,12 @@ public:
 	virtual void SetFrontSkyLayer ();
 
 	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+	int GetSourceLump() { return DefinitionLump; }
 
 protected:
 	BYTE *Pixels;
 	Span **Spans;
+	int DefinitionLump;
 
 	struct TexPart
 	{

@@ -161,7 +161,7 @@ struct FSoundSequencePtrArray : public TArray<FSoundSequence *>
 
 static void AssignTranslations (FScanner &sc, int seq, seqtype_t type);
 static void AssignHexenTranslations (void);
-static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<DWORD> &ScriptTemp);
+static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<DWORD> &ScriptTemp, bool bDoorSound);
 static int FindSequence (const char *searchname);
 static int FindSequence (FName seqname);
 static bool TwiddleSeqNum (int &sequence, seqtype_t type);
@@ -413,10 +413,6 @@ static void AssignTranslations (FScanner &sc, int seq, seqtype_t type)
 		if (IsNum(sc.String))
 		{
 			SeqTrans[(atoi(sc.String) & 63) + type * 64] = seq;
-			if (type == SEQ_DOOR)
-			{
-				Sequences[seq]->bDoorSound |= true;
-			}
 		}
 	}
 	sc.UnGet();
@@ -506,6 +502,8 @@ void S_ParseSndSeq (int levellump)
 		FScanner sc(lump, "SNDSEQ");
 		while (sc.GetString ())
 		{
+			bool bDoorSound;
+
 			if (*sc.String == ':' || *sc.String == '[')
 			{
 				if (curseq != -1)
@@ -530,6 +528,7 @@ void S_ParseSndSeq (int levellump)
 				ScriptTemp.Clear();
 				stopsound = 0;
 				slot = NAME_None;
+				bDoorSound = false;
 				if (seqtype == '[')
 				{
 					sc.SetCMode (true);
@@ -546,7 +545,7 @@ void S_ParseSndSeq (int levellump)
 				if (sc.String[0] == ']')
 				{ // End of this definition
 					ScriptTemp[0] = MakeCommand(SS_CMD_SELECT, (ScriptTemp.Size()-1)/2);
-					AddSequence (curseq, seqname, slot, stopsound, ScriptTemp);
+					AddSequence (curseq, seqname, slot, stopsound, ScriptTemp, bDoorSound);
 					curseq = -1;
 					sc.SetCMode (false);
 				}
@@ -561,7 +560,9 @@ void S_ParseSndSeq (int levellump)
 					}
 					else
 					{
-						AssignTranslations (sc, curseq, seqtype_t(sc.MustMatchString (SSStrings + SS_STRING_PLATFORM)));
+						seqtype_t seqtype = seqtype_t(sc.MustMatchString (SSStrings + SS_STRING_PLATFORM));
+						AssignTranslations (sc, curseq, seqtype);
+						if (seqtype == SEQ_DOOR) bDoorSound = true;
 					}
 				}
 				continue;
@@ -660,7 +661,7 @@ void S_ParseSndSeq (int levellump)
 					break;
 
 				case SS_STRING_END:
-					AddSequence (curseq, seqname, slot, stopsound, ScriptTemp);
+					AddSequence (curseq, seqname, slot, stopsound, ScriptTemp, bDoorSound);
 					curseq = -1;
 					break;
 
@@ -670,6 +671,7 @@ void S_ParseSndSeq (int levellump)
 
 				case SS_STRING_DOOR:
 					AssignTranslations (sc, curseq, SEQ_DOOR);
+					bDoorSound = true;
 					break;
 
 				case SS_STRING_ENVIRONMENT:
@@ -688,13 +690,13 @@ void S_ParseSndSeq (int levellump)
 		AssignHexenTranslations ();
 }
 
-static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<DWORD> &ScriptTemp)
+static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<DWORD> &ScriptTemp, bool bDoorSound)
 {
 	Sequences[curseq] = (FSoundSequence *)M_Malloc (sizeof(FSoundSequence) + sizeof(DWORD)*ScriptTemp.Size());
 	Sequences[curseq]->SeqName = seqname;
 	Sequences[curseq]->Slot = slot;
 	Sequences[curseq]->StopSound = stopsound;
-	Sequences[curseq]->bDoorSound = false;
+	Sequences[curseq]->bDoorSound = bDoorSound;
 	memcpy (Sequences[curseq]->Script, &ScriptTemp[0], sizeof(DWORD)*ScriptTemp.Size());
 	Sequences[curseq]->Script[ScriptTemp.Size()] = MakeCommand(SS_CMD_END, 0);
 }

@@ -304,6 +304,7 @@ imp/death1			dsbgdth1
 imp/death2			dsbgdth2
 imp/attack			dsfirsht
 imp/shotx			dsfirxpl
+$limit imp/active 6
 
 // Demon
 

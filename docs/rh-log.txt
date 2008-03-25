@@ -1,4 +1,9 @@
 March 25, 2008 (Changes by Graf Zahl)
+- Increased the limit for 'imp/active' to 6. This sound definitely benefits  
+  from a higher limit.
+- Fixed: $limit should not apply to sounds played from the menu.
+- Fixed: The SNDSEQ parser tried to set bDoorSound before actually creating
+  the sound sequence data.
 - Changed Lemon so that it always writes the header. It still kept recompiling
   the grammar over and over again once it had been changed locally.
 - Fixed: ANIMATED allowed animations between different texture types.

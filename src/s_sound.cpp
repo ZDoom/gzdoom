@@ -708,7 +708,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 
 	// If this sound doesn't like playing near itself, don't play it if
 	// that's what would happen.
-	if (sfx->NearLimit && S_CheckSoundLimit(sfx, pos))
+	if (sfx->NearLimit && pt != NULL && S_CheckSoundLimit(sfx, pos))
 		return;
 
 	// Make sure the sound is loaded.

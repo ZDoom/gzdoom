@@ -3968,7 +3968,8 @@ struct lemon *lemp;
     fclose(in);
     if( i==lemp->nterminal ){
       /* No change in the file.  Don't rewrite it. */
-      return;
+      /* (not the best idea if you use make tools that check the date! */
+      /*return;*/
     }
   }
   out = file_open(lemp,".h","wb");

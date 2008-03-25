@@ -1,4 +1,6 @@
 March 25, 2008 (Changes by Graf Zahl)
+- Changed Lemon so that it always writes the header. It still kept recompiling
+  the grammar over and over again once it had been changed locally.
 - Fixed: ANIMATED allowed animations between different texture types.
 - Added a debuganimated CCMD that can be used to output some information
   if a WAD shows broken animations.

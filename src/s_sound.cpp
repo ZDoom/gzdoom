@@ -92,11 +92,12 @@ extern float S_GetMusicVolume (const char *music);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static fixed_t P_AproxDistance2 (fixed_t *listener, fixed_t x, fixed_t y);
-static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
-	int sound_id, float volume, float attenuation, bool looping);
-static void S_ActivatePlayList (bool goBack);
-static void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3],
+static fixed_t P_AproxDistance2(fixed_t *listener, fixed_t x, fixed_t y);
+static void S_StartSound(fixed_t *pt, AActor *mover, int channel,
+	int sound_id, float volume, float attenuation);
+static bool S_CheckSoundLimit(sfxinfo_t *sfx, float pos[3]);
+static void S_ActivatePlayList(bool goBack);
+static void CalcPosVel(fixed_t *pt, AActor *mover, int constz, float pos[3],
 	float vel[3]);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -192,7 +193,7 @@ void S_NoiseDebug (void)
 		char temp[16];
 		fixed_t *origin = chan->Pt;
 
-		if (!chan->Is3D)
+		if (!(chan->ChanFlags & CHAN_IS3D))
 		{
 			ox = players[consoleplayer].camera->x;
 			oy = players[consoleplayer].camera->y;
@@ -210,7 +211,7 @@ void S_NoiseDebug (void)
 			oy = chan->Y;
 			oz = chan->Z;
 		}
-		color = chan->Loop ? CR_BROWN : CR_GREY;
+		color = (chan->ChanFlags & CHAN_LOOP) ? CR_BROWN : CR_GREY;
 		Wads.GetLumpName (temp, chan->SfxInfo->lumpnum);
 		temp[8] = 0;
 		screen->DrawText (color, 0, y, temp, TAG_DONE);
@@ -310,6 +311,7 @@ void S_Shutdown ()
 		{
 			GSnd->StopSound(Channels);
 		}
+		GSnd->UpdateSounds();
 	}
 	else
 	{
@@ -382,11 +384,11 @@ void S_Start ()
 			}
 
 			// Also reload the SNDSEQ if the SNDINFO was replaced!
-			parse_ss=true;
+			parse_ss = true;
 		}
 		else if (LastLocalSndSeq.CompareNoCase(LocalSndSeq) != 0)
 		{
-			parse_ss=true;
+			parse_ss = true;
 		}
 		if (parse_ss)
 		{
@@ -587,7 +589,7 @@ void S_LinkChannel(FSoundChan *chan, FSoundChan **head)
 void CalcPosVel (fixed_t *pt, AActor *mover, int constz,
 				 float pos[3], float vel[3])
 {
-	if (mover != NULL && 0)
+	if (mover != NULL)
 	{
 		vel[0] = FIXED2FLOAT(mover->momx) * TICRATE;
 		vel[1] = FIXED2FLOAT(mover->momz) * TICRATE;
@@ -621,7 +623,7 @@ void CalcPosVel (fixed_t *pt, AActor *mover, int constz,
 //==========================================================================
 
 static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
-	int sound_id, float volume, float attenuation, bool looping)
+	int sound_id, float volume, float attenuation)
 {
 	sfxinfo_t *sfx;
 	int chanflags;
@@ -630,28 +632,31 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	int pitch;
 	fixed_t x, y, z;
 	FSoundChan *chan;
-
-	static int sndcount = 0;
+	float pos[3];
+	float vel[3];
 
 	if (sound_id <= 0 || volume <= 0 || GSnd == NULL)
 		return;
 
 	org_id = sound_id;
+	chanflags = channel & ~7;
 
 	if (pt == NULL)
 	{
 		attenuation = 0;
 		// Give these variables values, although they don't really matter
 		x = y = z = 0;
+		fixed_t pt2[3] = { 0, 0, 0 };
+		CalcPosVel (pt2, mover, chanflags & CHAN_LISTENERZ, pos, vel);
 	}
 	else
 	{
 		x = pt[0];
 		y = pt[1];
 		z = pt[2];
+		CalcPosVel (pt, mover, chanflags & CHAN_LISTENERZ, pos, vel);
 	}
 
-	chanflags = channel & ~7;
 	if (chanflags & CHAN_IMMOBILE)
 	{
 		pt = NULL;
@@ -672,12 +677,11 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 		channel &= 7;
 	}
 
-	volume = clamp(volume, 0.f, 1.f);
-
 	sfx = &S_sfx[sound_id];
 
-	// If this is a singular sound, don't play it if it's already playing.
-	if (sfx->bSingular && S_CheckSingular(sound_id))
+	// Scale volume according to SNDINFO data.
+	volume = MIN(volume * sfx->Volume, 1.f);
+	if (volume <= 0)
 		return;
 
 	// Resolve player sounds, random sounds, and aliases
@@ -697,6 +701,15 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 		}
 		sfx = &S_sfx[sound_id];
 	}
+
+	// If this is a singular sound, don't play it if it's already playing.
+	if (sfx->bSingular && S_CheckSingular(sound_id))
+		return;
+
+	// If this sound doesn't like playing near itself, don't play it if
+	// that's what would happen.
+	if (sfx->NearLimit && S_CheckSoundLimit(sfx, pos))
+		return;
 
 	// Make sure the sound is loaded.
 	if (sfx->data == NULL)
@@ -722,25 +735,6 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	else
 	{
 		basepriority = 0;
-#if 0
-		switch (channel)
-		{
-		case CHAN_WEAPON:
-			basepriority = 20;
-			break;
-		case CHAN_VOICE:
-			basepriority = 10;
-			break;
-		default:
-		case CHAN_BODY:
-			basepriority = 0;
-			break;
-		case CHAN_ITEM:
-			basepriority = -10;
-			break;
-		}
-		basepriority = int(basepriority / attenuation);
-#endif
 	}
 
 	if (mover != NULL && channel == CHAN_AUTO)
@@ -793,34 +787,13 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 
 	if (attenuation > 0)
 	{
-		float pos[3];
-		float vel[3];
-
-		if (pt)
-		{
-			CalcPosVel (pt, mover, chanflags & CHAN_LISTENERZ,  pos, vel);
-		}
-		else
-		{
-			fixed_t pt2[3];
-			pt2[0] = x;
-			pt2[1] = y;
-			pt2[2] = z;
-			CalcPosVel (pt2, mover, chanflags & CHAN_LISTENERZ,  pos, vel);
-		}
-		chan = GSnd->StartSound3D (sfx, volume, attenuation, pitch, basepriority, looping, pos, vel, !(chanflags & CHAN_NOPAUSE));
-		if (chan != NULL)
-		{
-			chan->ConstZ = !!(chanflags & CHAN_LISTENERZ);
-		}
+		chan = GSnd->StartSound3D (sfx, volume, attenuation, pitch, basepriority, pos, vel, chanflags);
+		chanflags |= CHAN_IS3D;
 	}
 	else
 	{
-		chan = GSnd->StartSound (sfx, volume, pitch, looping, !(chanflags & CHAN_NOPAUSE));
-		if (chan != NULL)
-		{
-			chan->ConstZ = true;
-		}
+		chan = GSnd->StartSound (sfx, volume, pitch, chanflags);
+		chanflags |= CHAN_LISTENERZ;
 	}
 	if (chan != NULL)
 	{
@@ -834,7 +807,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 		chan->X = x;
 		chan->Y = y;
 		chan->Z = z;
-		chan->Loop = looping;
+		chan->ChanFlags = chanflags;
 		if (mover != NULL)
 		{
 			mover->SoundChans |= 1 << channel;
@@ -850,19 +823,19 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 
 void S_SoundID (int channel, int sound_id, float volume, int attenuation)
 {
-	S_StartSound ((fixed_t *)NULL, NULL, channel, sound_id, volume, SELECT_ATTEN(attenuation), false);
+	S_StartSound ((fixed_t *)NULL, NULL, channel, sound_id, volume, SELECT_ATTEN(attenuation));
 }
 
 void S_SoundID (AActor *ent, int channel, int sound_id, float volume, int attenuation)
 {
 	if (ent->Sector->MoreFlags & SECF_SILENT)
 		return;
-	S_StartSound (&ent->x, ent, channel, sound_id, volume, SELECT_ATTEN(attenuation), false);
+	S_StartSound (&ent->x, ent, channel, sound_id, volume, SELECT_ATTEN(attenuation));
 }
 
 void S_SoundID (fixed_t *pt, int channel, int sound_id, float volume, int attenuation)
 {
-	S_StartSound (pt, NULL, channel, sound_id, volume, SELECT_ATTEN(attenuation), false);
+	S_StartSound (pt, NULL, channel, sound_id, volume, SELECT_ATTEN(attenuation));
 }
 
 void S_SoundID (fixed_t x, fixed_t y, fixed_t z, int channel, int sound_id, float volume, int attenuation)
@@ -871,25 +844,7 @@ void S_SoundID (fixed_t x, fixed_t y, fixed_t z, int channel, int sound_id, floa
 	pt[0] = x;
 	pt[1] = y;
 	pt[2] = z;
-	S_StartSound (pt, NULL, channel|CHAN_IMMOBILE, sound_id, volume, SELECT_ATTEN(attenuation), false);
-}
-
-//==========================================================================
-//
-// S_LoopedSoundID
-//
-//==========================================================================
-
-void S_LoopedSoundID (AActor *ent, int channel, int sound_id, float volume, int attenuation)
-{
-	if (ent->Sector->MoreFlags & SECF_SILENT)
-		return;
-	S_StartSound (&ent->x, ent, channel, sound_id, volume, SELECT_ATTEN(attenuation), true);
-}
-
-void S_LoopedSoundID (fixed_t *pt, int channel, int sound_id, float volume, int attenuation)
-{
-	S_StartSound (pt, NULL, channel, sound_id, volume, SELECT_ATTEN(attenuation), true);
+	S_StartSound (pt, NULL, channel|CHAN_IMMOBILE, sound_id, volume, SELECT_ATTEN(attenuation));
 }
 
 //==========================================================================
@@ -899,7 +854,7 @@ void S_LoopedSoundID (fixed_t *pt, int channel, int sound_id, float volume, int 
 //==========================================================================
 
 void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel, 
-	const char *name, float volume, float attenuation, bool looping)
+	const char *name, float volume, float attenuation)
 {
 	int sfx_id;
 	
@@ -914,9 +869,9 @@ void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel,
 		DPrintf ("Unknown sound %s\n", name);
 
 	if (ent)
-		S_StartSound (&ent->x, ent, channel, sfx_id, volume, attenuation, looping);
+		S_StartSound (&ent->x, ent, channel, sfx_id, volume, attenuation);
 	else
-		S_StartSound (pt, NULL, channel, sfx_id, volume, attenuation, looping);
+		S_StartSound (pt, NULL, channel, sfx_id, volume, attenuation);
 }
 
 //==========================================================================
@@ -927,17 +882,17 @@ void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel,
 
 void S_Sound (int channel, const char *name, float volume, int attenuation)
 {
-	S_StartNamedSound ((AActor *)NULL, NULL, channel, name, volume, SELECT_ATTEN(attenuation), false);
+	S_StartNamedSound ((AActor *)NULL, NULL, channel, name, volume, SELECT_ATTEN(attenuation));
 }
 
 void S_Sound (AActor *ent, int channel, const char *name, float volume, int attenuation)
 {
-	S_StartNamedSound (ent, NULL, channel, name, volume, SELECT_ATTEN(attenuation), false);
+	S_StartNamedSound (ent, NULL, channel, name, volume, SELECT_ATTEN(attenuation));
 }
 
 void S_Sound (fixed_t *pt, int channel, const char *name, float volume, int attenuation)
 {
-	S_StartNamedSound (NULL, pt, channel, name, volume, SELECT_ATTEN(attenuation), false);
+	S_StartNamedSound (NULL, pt, channel, name, volume, SELECT_ATTEN(attenuation));
 }
 
 void S_Sound (fixed_t x, fixed_t y, int channel, const char *name, float volume, int attenuation)
@@ -946,18 +901,7 @@ void S_Sound (fixed_t x, fixed_t y, int channel, const char *name, float volume,
 	pt[0] = x;
 	pt[1] = y;
 	S_StartNamedSound (NULL, pt, channel|CHAN_LISTENERZ|CHAN_IMMOBILE,
-		name, volume, SELECT_ATTEN(attenuation), false);
-}
-
-//==========================================================================
-//
-// S_LoopedSound
-//
-//==========================================================================
-
-void S_LoopedSound (AActor *ent, int channel, const char *name, float volume, int attenuation)
-{
-	S_StartNamedSound (ent, NULL, channel, name, volume, SELECT_ATTEN(attenuation), true);
+		name, volume, SELECT_ATTEN(attenuation));
 }
 
 //==========================================================================
@@ -978,6 +922,38 @@ bool S_CheckSingular(int sound_id)
 		}
 	}
 	return false;
+}
+
+//==========================================================================
+//
+// S_CheckSoundLimit
+//
+// Limits the number of nearby copies of a sound that can play near
+// each other. If there are NearLimit instances of this sound already
+// playing within 256 units of the new sound, the new sound will not
+// start.
+//
+//==========================================================================
+
+bool S_CheckSoundLimit(sfxinfo_t *sfx, float pos[3])
+{
+	FSoundChan *chan;
+	int count;
+	
+	for (chan = Channels, count = 0; chan != NULL && count < sfx->NearLimit; chan = chan->NextChan)
+	{
+		if (chan->SfxInfo == sfx)
+		{
+			double dx = FIXED2FLOAT(chan->Pt[0]) - pos[0];
+			double dy = FIXED2FLOAT(chan->Pt[1]) - pos[2];
+			double dz = FIXED2FLOAT(chan->Pt[2]) - pos[1];
+			if (dx*dx + dy*dy + dz*dz <= 256.0*256.0)
+			{
+				count++;
+			}
+		}
+	}
+	return count >= sfx->NearLimit;
 }
 
 //==========================================================================
@@ -1048,7 +1024,7 @@ void S_RelinkSound (AActor *from, AActor *to)
 	{
 		if (chan->Pt == frompt)
 		{
-			if (to != NULL || !chan->Loop)
+			if (to != NULL || !(chan->ChanFlags & CHAN_LOOP))
 			{
 				chan->Pt = topt ? topt : &chan->X;
 				chan->X = frompt[0];
@@ -1189,9 +1165,9 @@ void S_UpdateSounds (void *listener_p)
 
 	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
-		if (chan->Is3D)
+		if (chan->ChanFlags & CHAN_IS3D)
 		{
-			CalcPosVel(chan->Pt, chan->Mover, chan->ConstZ, pos, vel);
+			CalcPosVel(chan->Pt, chan->Mover, chan->ChanFlags & CHAN_LISTENERZ, pos, vel);
 			GSnd->UpdateSoundParams3D(chan, pos, vel);
 		}
 	}

@@ -236,7 +236,7 @@ void DDoor::DoorSound (bool raise) const
 
 	if (m_Sector->seqType >= 0)
 	{
-		SN_StartSequence (m_Sector, m_Sector->seqType, SEQ_DOOR, choice);
+		SN_StartSequence (m_Sector, m_Sector->seqType, SEQ_DOOR, choice, true);
 	}
 	else
 	{
@@ -297,7 +297,7 @@ void DDoor::DoorSound (bool raise) const
 			}
 			break;
 		}
-		SN_StartSequence (m_Sector, snd, choice);
+		SN_StartSequence (m_Sector, snd, choice, true);
 	}
 }
 
@@ -564,7 +564,7 @@ bool DAnimatedDoor::StartClosing ()
 	m_Line2->flags |= ML_BLOCKING;
 	if (ani.CloseSound != NULL)
 	{
-		SN_StartSequence (m_Sector, ani.CloseSound, 1);
+		SN_StartSequence (m_Sector, ani.CloseSound, 1, true);
 	}
 
 	m_Status = Closing;
@@ -742,7 +742,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay)
 	MoveCeiling (2048*FRACUNIT, topdist, 1);
 	if (DoorAnimations[m_WhichDoorIndex].OpenSound != NULL)
 	{
-		SN_StartSequence (m_Sector, DoorAnimations[m_WhichDoorIndex].OpenSound, 1);
+		SN_StartSequence (m_Sector, DoorAnimations[m_WhichDoorIndex].OpenSound, 1, true);
 	}
 }
 

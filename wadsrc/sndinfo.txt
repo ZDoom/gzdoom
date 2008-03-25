@@ -202,6 +202,11 @@ weapons/bfgf			dsbfg
 weapons/bfgx			dsrxplod
 weapons/railgf			railgf1
 
+$limit weapons/plasmaf 0
+$limit weapons/chngun 0
+$limit weapons/rocklf 0		// because normal running is almost as fast as a rocket
+$limit weapons/rocklx 0		// and the cyberdemon shoots 3 at once
+
 //===========================================================================
 //
 // MONSTER SOUNDS
@@ -284,6 +289,7 @@ chainguy/death1			dspodth1
 chainguy/death2			dspodth2
 chainguy/death3			dspodth3
 chainguy/attack			dsshotgn
+$limit chainguy/attack 0
 
 // Imp
 
@@ -366,6 +372,8 @@ baby/death			dsbspdth
 baby/walk			dsbspwlk
 baby/attack			dsplasma
 baby/shotx			dsfirxpl
+
+$limit baby/attack 0
 
 // Cyber Demon
 
@@ -452,6 +460,10 @@ misc/spawn			dsitmbk		// Item respawn
 misc/chat			dsradio		// Doom 2 chat sound
 misc/chat2			dstink		// Chat sound for everything else
 
+$limit misc/i_pkup		1
+$limit misc/k_pkup		1
+$limit misc/w_pkup		1
+$limit misc/p_pkup		1
 $pitchshift misc/i_pkup		0
 $pitchshift misc/k_pkup		0
 $pitchshift misc/chat2		0
@@ -543,6 +555,21 @@ weapons/phoenixshoot		phosht
 weapons/phoenixhit		phohit
 weapons/phoenixpowshoot		phopow
 
+$limit	weapons/gauntletson		0
+$limit	weapons/gauntletshit		0
+$limit	weapons/gauntletspowhit		0
+$limit	weapons/gauntletsactivate	0
+$limit	weapons/gauntletsuse		0
+$limit	weapons/maceexplode		0
+$limit	weapons/phoenixhit		0
+$limit	weapons/phoenixpowshoot		1
+
+// [RH] Heretic didn't have these limitless, but they can sound bad if they're not
+$limit weapons/bowhit 0
+$limit weapons/hornrodshoot 0
+$limit weapons/hornrodhit 0
+$limit weapons/maceshoot 0
+
 himp/sight			impsit
 himp/attack			impat1
 himp/pain			imppai
@@ -552,10 +579,16 @@ himp/leaderattack		impat2
 
 misc/invuse			artiuse
 
+$limit	misc/invuse		1
+
 world/podexplode		podexp
 world/podgrow			newpod
 world/wind			wind
 world/waterfall			waterfl
+
+$limit world/podexplode		0
+$limit world/podgrow		0
+$limit world/wind		1
 
 misc/i_pkup			itemup
 misc/k_pkup			keyup
@@ -564,6 +597,8 @@ $alias misc/w_pkup		*weaponlaugh
 
 misc/rain			ramrain
 misc/spawn			respawn
+
+$limit misc/spawn		1
 
 //
 // Minotaur sounds
@@ -633,9 +668,23 @@ world/amb10			amb10
 world/amb11			amb11
 world/amb12			bstsit
 
+$limit world/amb1		1
+$limit world/amb2		1
+$limit world/amb3		1
+$limit world/amb4		1
+$limit world/amb5		1
+$limit world/amb6		1
+$limit world/amb7		1
+$limit world/amb8		1
+$limit world/amb9		1
+$limit world/amb10		1
+$limit world/amb11		0
+
 misc/chat			chat
 misc/teleport			telept
 misc/ripslop			ripslop
+
+$limit misc/chat		1
 
 world/drip			gloop
 world/watersplash		gloop
@@ -841,6 +890,31 @@ $alias minotaur/attack2		MaulatorHamSwing
 $random BishopActiveSounds	{ BishopActive BishopSight }
 $random PigActive		{ PigActive1 PigActive2 }
 
+$limit PlayerFighterFailedUse	1
+$limit PlayerClericFailedUse	1
+$limit PlayerMageFailedUse	1
+$limit SorcererBallWoosh	4
+$limit SorcererBallBounce	3
+$limit SorcererBallExplode	3
+$limit SorcererBallPop		3
+$limit SorcererBigBallExplode	3
+$limit Ambient1			1
+$limit Ambient2			1
+$limit Ambient3			1
+$limit Ambient4			1
+$limit Ambient5			1
+$limit Ambient6			1
+$limit Ambient7			1
+$limit Ambient8			1
+$limit Ambient9			1
+$limit Ambient10		1
+$limit Ambient11		1
+$limit Ambient12		1
+$limit Ambient13		1
+$limit Ambient14		1
+$limit Ambient15		1
+$limit MysticIncant		4
+
 $pitchshift PlayerMageNormalDeath	0
 $pitchshift PlayerMageCrazyDeath	0
 $pitchshift PlayerMageExtreme1Death	0
@@ -868,6 +942,20 @@ $alias menu/clear		PlatformStop
 
 // Hexen does not have ripslop sound like Heretic
 misc/ripslop			dsempty
+
+$limit DoorCloseLight 4
+
+$limit PuppyBeat 0
+$limit CeantaurPain 0
+$limit BishopPain 0
+$limit SerpentPain 0
+$limit DemonPain 0
+$limit WraithPain 0
+$limit MaulatorPain 0
+$limit EttinPain 0
+$limit FireDemonPain 0
+$limit SorcererPain 0
+$limit DragonPain 0
 
 $endif	// ifhexen
 
@@ -961,6 +1049,10 @@ world/river		dswriver
 world/waterfall		dswfall
 world/waterdrip		dswdrip
 world/watersplash	dswsplsh
+
+$limit world/river	1
+$limit world/waterfall	1
+$limit world/waterdrip	1
 
 world/drip		dsempty		// These four satisfy the Heretic/Hexen terrain definitions
 world/sludgegloop	dsempty

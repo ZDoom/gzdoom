@@ -147,6 +147,7 @@ enum SICommands
 	SI_IfHexen,
 	SI_IfStrife,
 	SI_Rolloff,
+	SI_Volume,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -186,7 +187,7 @@ MidiDeviceMap MidiDevices;
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel, 
-	const char *name, float volume, float attenuation, bool looping);
+	const char *name, float volume, float attenuation);
 extern bool IsFloat (const char *str);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -242,6 +243,7 @@ static const char *SICommandStrings[] =
 	"$ifhexen",
 	"$ifstrife",
 	"$rolloff",
+	"$volume",
 	NULL
 };
 
@@ -440,8 +442,9 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	newsfx.lumpnum = lump;
 	newsfx.next = 0;
 	newsfx.index = 0;
-	newsfx.frequency = 0;
+	newsfx.Volume = 1;
 	newsfx.PitchMask = CurrentPitchMask;
+	newsfx.NearLimit = 2;
 	newsfx.bRandomHeader = false;
 	newsfx.bPlayerReserve = false;
 	newsfx.bForce11025 = false;
@@ -1105,12 +1108,13 @@ static void S_AddSNDINFO (int lump)
 				break;
 
 			case SI_Limit: {
-				// $limit <logical name> <max channels>	-- deprecated and ignored
+				// $limit <logical name> <max channels>
 				int sfx;
 
 				sc.MustGetString ();
 				sfx = S_FindSoundTentative (sc.String);
 				sc.MustGetNumber ();
+				S_sfx[sfx].NearLimit = MIN(MAX(sc.Number, 0), 255);
 				}
 				break;
 
@@ -1139,6 +1143,17 @@ static void S_AddSNDINFO (int lump)
 				// $pitchshiftrange <pitch shift amount>
 				sc.MustGetNumber ();
 				CurrentPitchMask = (1 << clamp (sc.Number, 0, 7)) - 1;
+				break;
+
+			case SI_Volume: {
+				// $volume <logical name> <volume>
+				int sfx;
+
+				sc.MustGetString();
+				sfx = S_FindSoundTentative(sc.String);
+				sc.MustGetFloat();
+				S_sfx[sfx].Volume = sc.Float;
+				}
 				break;
 
 			case SI_Rolloff: {
@@ -1867,8 +1882,8 @@ void AAmbientSound::Tick ()
 
 		if (ambient->sound[0])
 		{
-			S_StartNamedSound (this, NULL, CHAN_BODY, ambient->sound,
-				ambient->volume, ambient->attenuation, true);
+			S_StartNamedSound (this, NULL, CHAN_BODY|CHAN_LOOP, ambient->sound,
+				ambient->volume, ambient->attenuation);
 			SetTicker (ambient);
 		}
 		else
@@ -1881,7 +1896,7 @@ void AAmbientSound::Tick ()
 		if (ambient->sound[0])
 		{
 			S_StartNamedSound (this, NULL, CHAN_BODY, ambient->sound,
-				ambient->volume, ambient->attenuation, false);
+				ambient->volume, ambient->attenuation);
 			SetTicker (ambient);
 		}
 		else

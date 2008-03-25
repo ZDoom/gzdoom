@@ -246,7 +246,7 @@ void A_InquisitorJump (AActor *self)
 	if (self->target == NULL)
 		return;
 
-	S_LoopedSound (self, CHAN_ITEM, "inquisitor/jump", 1, ATTN_NORM);
+	S_Sound (self, CHAN_ITEM|CHAN_LOOP, "inquisitor/jump", 1, ATTN_NORM);
 	self->z += 64*FRACUNIT;
 	A_FaceTarget (self);
 	an = self->angle >> ANGLETOFINESHIFT;
@@ -280,7 +280,7 @@ void A_InquisitorCheckLand (AActor *self)
 	}
 	if (!S_IsActorPlayingSomething (self, CHAN_ITEM, -1))
 	{
-		S_LoopedSound (self, CHAN_ITEM, "inquisitor/jump", 1, ATTN_NORM);
+		S_Sound (self, CHAN_ITEM|CHAN_LOOP, "inquisitor/jump", 1, ATTN_NORM);
 	}
 
 }

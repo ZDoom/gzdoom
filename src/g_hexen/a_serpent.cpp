@@ -708,7 +708,7 @@ void A_SerpentFXSound (AActor *actor)
 {
 	if (!S_IsActorPlayingSomething (actor, CHAN_BODY, -1))
 	{
-		S_LoopedSound (actor, CHAN_BODY, "SerpentFXContinuous", 1, ATTN_NORM);
+		S_Sound (actor, CHAN_BODY|CHAN_LOOP, "SerpentFXContinuous", 1, ATTN_NORM);
 	}
 }
 

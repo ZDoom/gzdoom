@@ -24,8 +24,8 @@ public:
 	void StopStream (SoundStream *stream);
 
 	// Starts a sound.
-	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, bool looping, bool pauseable);
-	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, bool looping, float pos[3], float vel[3], bool pauseable);
+	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags);
+	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], int chanflags);
 
 	// Stops a sound channel.
 	void StopSound (FSoundChan *chan);
@@ -58,7 +58,8 @@ private:
 		(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, int cmd, unsigned int data1, unsigned int data2);
 	static float F_CALLBACK RolloffCallback(FMOD_CHANNEL *channel, float distance);
 
-	FSoundChan *CommonChannelSetup(FMOD::Channel *chan, bool is3d);
+	FSoundChan *CommonChannelSetup(FMOD::Channel *chan) const;
+	FMOD_MODE SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t *sfx, float pos[3], int chanflags, FMOD_MODE oldmode) const;
 	void DoLoad (void **slot, sfxinfo_t *sfx);
 	void getsfx (sfxinfo_t *sfx);
 

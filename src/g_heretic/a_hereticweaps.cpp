@@ -2538,7 +2538,7 @@ void A_SkullRodStorm (AActor *actor)
 	P_CheckMissileSpawn (mo);
 	if (actor->special1 != -1 && !S_IsActorPlayingSomething (actor, CHAN_BODY, -1))
 	{
-		S_LoopedSoundID (actor, CHAN_BODY, actor->special1, 1, ATTN_NORM);
+		S_SoundID (actor, CHAN_BODY|CHAN_LOOP, actor->special1, 1, ATTN_NORM);
 	}
 }
 
@@ -2912,7 +2912,7 @@ void A_FirePhoenixPL2 (AActor *actor)
 	mo->momz = FixedMul (mo->Speed, slope);
 	if (!player->refire || !S_IsActorPlayingSomething (pmo, CHAN_WEAPON, -1))
 	{
-		S_LoopedSoundID (pmo, CHAN_WEAPON, soundid, 1, ATTN_NORM);
+		S_SoundID (pmo, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
 	}	
 	P_CheckMissileSpawn (mo);
 }

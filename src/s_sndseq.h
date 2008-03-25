@@ -30,8 +30,7 @@ public:
 	void AddChoice (int seqnum, seqtype_t type);
 	FName GetSequenceName() const;
 
-	virtual void MakeSound () {}
-	virtual void MakeLoopedSound () {}
+	virtual void MakeSound (int loop) {}
 	virtual void *Source () { return NULL; }
 	virtual bool IsPlaying () { return false; }
 	virtual DSeqNode *SpawnChild (int seqnum) { return NULL; }
@@ -75,6 +74,7 @@ struct FSoundSequence
 	FName	SeqName;
 	FName	Slot;
 	int		StopSound;
+	bool	bDoorSound;
 	SDWORD	Script[1];	// + more until end of sequence script
 };
 
@@ -82,8 +82,8 @@ void S_ParseSndSeq (int levellump);
 DSeqNode *SN_StartSequence (AActor *mobj, int sequence, seqtype_t type, int modenum, bool nostop=false);
 DSeqNode *SN_StartSequence (AActor *mobj, const char *name, int modenum);
 DSeqNode *SN_StartSequence (AActor *mobj, FName seqname, int modenum);
-DSeqNode *SN_StartSequence (sector_t *sector, int sequence, seqtype_t type, int modenum, bool nostop=false);
-DSeqNode *SN_StartSequence (sector_t *sector, const char *name, int modenum);
+DSeqNode *SN_StartSequence (sector_t *sector, int sequence, seqtype_t type, int modenum, bool full3d, bool nostop=false);
+DSeqNode *SN_StartSequence (sector_t *sector, const char *name, int modenum, bool full3d);
 DSeqNode *SN_StartSequence (polyobj_t *poly, int sequence, seqtype_t type, int modenum, bool nostop=false);
 DSeqNode *SN_StartSequence (polyobj_t *poly, const char *name, int modenum);
 void SN_StopSequence (AActor *mobj);

@@ -4182,7 +4182,7 @@ int DLevelScript::RunScript ()
 			{
 				if (activationline)
 				{
-					SN_StartSequence (activationline->frontsector, lookup, 0);
+					SN_StartSequence (activationline->frontsector, lookup, 0, true);
 				}
 			}
 			sp--;

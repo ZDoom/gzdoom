@@ -298,11 +298,11 @@ static void StartFloorSound (sector_t *sec)
 {
 	if (sec->seqType >= 0)
 	{
-		SN_StartSequence (sec, sec->seqType, SEQ_PLATFORM, 0);
+		SN_StartSequence (sec, sec->seqType, SEQ_PLATFORM, 0, false);
 	}
 	else
 	{
-		SN_StartSequence (sec, "Floor", 0);
+		SN_StartSequence (sec, "Floor", 0, false);
 	}
 }
 

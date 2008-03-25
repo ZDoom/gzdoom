@@ -40,9 +40,11 @@ struct sfxinfo_t
 	int 		lumpnum;				// lump number of sfx
 
 	unsigned int next, index;			// [RH] For hashing
-	unsigned int frequency;				// [RH] Preferred playback rate
+//	unsigned int frequency;				// [RH] Preferred playback rate
+	float		Volume;
 
 	BYTE		PitchMask;
+	BYTE		NearLimit;				// 0 means unlimited
 
 	WORD		bRandomHeader:1;
 	WORD		bPlayerReserve:1;
@@ -97,9 +99,7 @@ struct FSoundChan
 	float		Volume;
 	float		DistanceScale;
 	BYTE		EntChannel;	// Actor's sound channel.
-	bool		Loop;
-	bool		Is3D;
-	bool		ConstZ;
+	int			ChanFlags;
 };
 
 FSoundChan *S_GetChannel(void *syschan);
@@ -132,14 +132,10 @@ void S_Sound (int channel, const char *name, float volume, int attenuation);
 void S_Sound (AActor *ent, int channel, const char *name, float volume, int attenuation);
 void S_Sound (fixed_t *pt, int channel, const char *name, float volume, int attenuation);
 void S_Sound (fixed_t x, fixed_t y, int channel, const char *name, float volume, int attenuation);
-void S_LoopedSound (AActor *ent, int channel, const char *name, float volume, int attenuation);
-void S_LoopedSound (fixed_t *pt, int channel, const char *name, float volume, int attenuation);
 void S_SoundID (int channel, int sfxid, float volume, int attenuation);
 void S_SoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
 void S_SoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
 void S_SoundID (fixed_t x, fixed_t y, fixed_t z, int channel, int sfxid, float volume, int attenuation);
-void S_LoopedSoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
-void S_LoopedSoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
 
 // sound channels
 // channel 0 never willingly overrides
@@ -162,6 +158,10 @@ void S_LoopedSoundID (fixed_t *pt, int channel, int sfxid, float volume, int att
 #define CHAN_IMMOBILE			16
 #define CHAN_MAYBE_LOCAL		32
 #define CHAN_NOPAUSE			64	// do not pause this sound in menus
+#define CHAN_AREA				128	// Sound plays from all around within MinDistance
+#define CHAN_LOOP				256
+#define CHAN_IS3D				1	// internal flag
+
 #define CHAN_PICKUP				(CHAN_ITEM|CHAN_MAYBE_LOCAL)
 
 // sound attenuation values

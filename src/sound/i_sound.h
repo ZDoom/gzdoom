@@ -78,8 +78,8 @@ public:
 	virtual SoundStream *OpenStream (const char *filename, int flags, int offset, int length) = 0;
 
 	// Starts a sound.
-	virtual FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, bool looping, bool pauseable) = 0;
-	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, bool looping, float pos[3], float vel[3], bool pauseable) = 0;
+	virtual FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags) = 0;
+	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], int chanflags) = 0;
 
 	// Stops a sound channel.
 	virtual void StopSound (FSoundChan *chan) = 0;

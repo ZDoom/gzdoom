@@ -339,7 +339,7 @@ void A_PlaySoundEx (AActor *self)
 	{
 		if (!S_IsActorPlayingSomething (self, channel - NAME_Auto, soundid))
 		{
-			S_LoopedSoundID (self, channel - NAME_Auto, soundid, 1, attenuation);
+			S_SoundID (self, (channel - NAME_Auto) | CHAN_LOOP, soundid, 1, attenuation);
 		}
 	}
 }

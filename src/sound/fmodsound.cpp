@@ -919,7 +919,7 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *filename_or_data, int fla
 //
 //==========================================================================
 
-FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, bool looping, bool pausable)
+FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, int chanflags)
 {
 	int id = int(sfx - &S_sfx[0]);
 	FMOD_RESULT result;
@@ -927,7 +927,14 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 	FMOD::Channel *chan;
 	float freq;
 
-	freq = PITCH(sfx->frequency, pitch);
+	if (FMOD_OK == ((FMOD::Sound *)sfx->data)->getDefaults(&freq, NULL, NULL, NULL))
+	{
+		freq = PITCH(freq, pitch);
+	}
+	else
+	{
+		freq = 0;
+	}
 
 	GSfxInfo = sfx;
 	result = Sys->playSound(FMOD_CHANNEL_FREE, (FMOD::Sound *)sfx->data, true, &chan);
@@ -941,17 +948,19 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 			mode = FMOD_SOFTWARE;
 		}
 		mode = (mode & ~FMOD_3D) | FMOD_2D;
-		if (looping)
+		if (chanflags & CHAN_LOOP)
 		{
 			mode = (mode & ~FMOD_LOOP_OFF) | FMOD_LOOP_NORMAL;
 		}
 		chan->setMode(mode);
-		
-		chan->setChannelGroup((pausable && !SFXPaused) ? PausableSfx : SfxGroup);
-		chan->setFrequency(freq);
+		chan->setChannelGroup((!(chanflags & CHAN_NOPAUSE) && !SFXPaused) ? PausableSfx : SfxGroup);
+		if (freq != 0)
+		{
+			chan->setFrequency(freq);
+		}
 		chan->setVolume(vol);
 		chan->setPaused(false);
-		return CommonChannelSetup(chan, false);
+		return CommonChannelSetup(chan);
 	}
 
 	DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
@@ -965,7 +974,7 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 //==========================================================================
 
 FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float distscale,
-	int pitch, int priority, bool looping, float pos[3], float vel[3], bool pausable)
+	int pitch, int priority, float pos[3], float vel[3], int chanflags)
 {
 	int id = int(sfx - &S_sfx[0]);
 	FMOD_RESULT result;
@@ -975,15 +984,15 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 	float def_freq, def_vol, def_pan;
 	int def_priority;
 
-	freq = PITCH(sfx->frequency, pitch);
-
-	// Change the sound's default priority before playing it.
 	if (FMOD_OK == ((FMOD::Sound *)sfx->data)->getDefaults(&def_freq, &def_vol, &def_pan, &def_priority))
 	{
+		freq = PITCH(def_freq, pitch);
+		// Change the sound's default priority before playing it.
 		((FMOD::Sound *)sfx->data)->setDefaults(def_freq, def_vol, def_pan, clamp(def_priority - priority, 1, 256));
 	}
 	else
 	{
+		freq = 0;
 		def_priority = -1;
 	}
 
@@ -1005,40 +1014,81 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 		{
 			mode = FMOD_3D | FMOD_SOFTWARE;
 		}
-		if (looping)
+		if (chanflags & CHAN_LOOP)
 		{
 			mode = (mode & ~FMOD_LOOP_OFF) | FMOD_LOOP_NORMAL;
 		}
-		// If this sound is played at the same coordinates as the listener,
-		// make it head relative.
-		if (players[consoleplayer].camera != NULL)
-		{
-			float cpos[3];
-
-			cpos[0] = FIXED2FLOAT(players[consoleplayer].camera->x);
-			cpos[2] = FIXED2FLOAT(players[consoleplayer].camera->y);
-			cpos[1] = FIXED2FLOAT(players[consoleplayer].camera->z);
-			if (cpos[0] == pos[0] && cpos[1] == pos[1] && cpos[2] == pos[2])
-			{
-				mode = (mode & ~FMOD_3D_WORLDRELATIVE) | FMOD_3D_HEADRELATIVE;
-				pos[0] = 0;
-				pos[1] = 0;
-				pos[2] = 0;
-			}
-		}
+		mode = SetChanHeadSettings(chan, sfx, pos, chanflags, mode);
 		chan->setMode(mode);
-		chan->setChannelGroup((pausable && !SFXPaused) ? PausableSfx : SfxGroup);
-		chan->setFrequency(freq);
+		chan->setChannelGroup((!(chanflags & CHAN_NOPAUSE) && !SFXPaused) ? PausableSfx : SfxGroup);
+		if (freq != 0)
+		{
+			chan->setFrequency(freq);
+		}
 		chan->setVolume(vol);
 		chan->set3DAttributes((FMOD_VECTOR *)pos, (FMOD_VECTOR *)vel);
 		chan->setPaused(false);
-		FSoundChan *schan = CommonChannelSetup(chan, true);
+		FSoundChan *schan = CommonChannelSetup(chan);
 		schan->DistanceScale = distscale;
 		return schan;
 	}
 
 	DPrintf ("Sound %s failed to play: %d\n", sfx->name.GetChars(), result);
 	return 0;
+}
+
+//==========================================================================
+//
+// FMODSound :: SetChanHeadSettings
+//
+// If this sound is played at the same coordinates as the listener, make
+// it head relative. Also, area sounds should use no 3D panning if close
+// enough to the listener.
+//
+//==========================================================================
+
+FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t *sfx, float pos[3], int chanflags, FMOD_MODE oldmode) const
+{
+	if (players[consoleplayer].camera == NULL)
+	{
+		return oldmode;
+	}
+	double cpos[3];
+	cpos[0] = FIXED2FLOAT(players[consoleplayer].camera->x);
+	cpos[2] = FIXED2FLOAT(players[consoleplayer].camera->y);
+	cpos[1] = FIXED2FLOAT(players[consoleplayer].camera->z);
+	if (chanflags & CHAN_AREA)
+	{
+		const double interp_range = 512.0;
+		double dx = cpos[0] - pos[0], dy = cpos[1] - pos[1], dz = cpos[2] - pos[2];
+		double min_dist = sfx->MinDistance == 0 ? (S_MinDistance == 0 ? 200 : S_MinDistance) : sfx->MinDistance;
+		double dist_sqr = dx*dx + dy*dy + dz*dz;
+		float level, old_level;
+
+		if (dist_sqr <= min_dist*min_dist)
+		{ // Within min distance: No 3D panning.
+			level = 0;
+		}
+		else if (dist_sqr <= (min_dist + interp_range) * (min_dist + interp_range))
+		{ // Within interp_range units of min distance: Interpolate between none and full 3D panning.
+			level = float(1 - (min_dist + interp_range - sqrt(dist_sqr)) / interp_range);
+		}
+		else
+		{ // Beyond 256 units of min distance: Normal 3D panning.
+			level = 1;
+		}
+		if (chan->get3DPanLevel(&old_level) == FMOD_OK && old_level != level)
+		{ // Only set it if it's different.
+			chan->set3DPanLevel(level);
+		}
+		return oldmode;
+	}
+	else if (cpos[0] == pos[0] && cpos[1] == pos[1] && cpos[2] == pos[2])
+	{
+		pos[2] = pos[1] = pos[0] = 0;
+		return (oldmode & ~FMOD_3D_WORLDRELATIVE) | FMOD_3D_HEADRELATIVE;
+	}
+	return (oldmode & ~FMOD_3D_HEADRELATIVE) | FMOD_3D_WORLDRELATIVE;
 }
 
 //==========================================================================
@@ -1050,12 +1100,11 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 //
 //==========================================================================
 
-FSoundChan *FMODSoundRenderer::CommonChannelSetup(FMOD::Channel *chan, bool is3d)
+FSoundChan *FMODSoundRenderer::CommonChannelSetup(FMOD::Channel *chan) const
 {
 	FSoundChan *schan = S_GetChannel(chan);
 	chan->setUserData(schan);
 	chan->setCallback(FMOD_CHANNEL_CALLBACKTYPE_END, ChannelEndCallback, 0);
-	schan->Is3D = is3d;
 	GSfxInfo = NULL;
 	return schan;
 }
@@ -1104,39 +1153,17 @@ void FMODSoundRenderer::UpdateSoundParams3D(FSoundChan *chan, float pos[3], floa
 		return;
 
 	FMOD::Channel *fchan = (FMOD::Channel *)chan->SysChannel;
+	FMOD_MODE oldmode, mode;
 
-	// Sounds at the same location as the listener should be head relative, others
-	// should be world relative.
-	if (players[consoleplayer].camera != NULL)
+	if (fchan->getMode(&oldmode) != FMOD_OK)
 	{
-		FMOD_MODE oldmode, mode;
-		float cpos[3];
-
-		cpos[0] = FIXED2FLOAT(players[consoleplayer].camera->x);
-		cpos[2] = FIXED2FLOAT(players[consoleplayer].camera->y);
-		cpos[1] = FIXED2FLOAT(players[consoleplayer].camera->z);
-		if (FMOD_OK != fchan->getMode(&oldmode))
-		{
-			oldmode = FMOD_3D | FMOD_SOFTWARE;
-		}
-		if (cpos[0] == pos[0] && cpos[1] == pos[1] && cpos[2] == pos[2])
-		{
-			mode = (oldmode & ~FMOD_3D_WORLDRELATIVE) | FMOD_3D_HEADRELATIVE;
-			pos[0] = 0;
-			pos[1] = 0;
-			pos[2] = 0;
-		}
-		else
-		{
-			mode = (oldmode & ~FMOD_3D_HEADRELATIVE) | FMOD_3D_WORLDRELATIVE;
-		}
-		// Only set the mode if it changed.
-		if (((mode ^ oldmode) & (FMOD_3D_WORLDRELATIVE | FMOD_3D_HEADRELATIVE)) == 0)
-		{
-			fchan->setMode(mode);
-		}
+		oldmode = FMOD_3D | FMOD_SOFTWARE;
 	}
-
+	mode = SetChanHeadSettings(fchan, chan->SfxInfo, pos, chan->ChanFlags, oldmode);
+	if (mode != oldmode)
+	{ // Only set the mode if it changed.
+		fchan->setMode(mode);
+	}
 	fchan->set3DAttributes((FMOD_VECTOR *)pos, (FMOD_VECTOR *)vel);
 }
 
@@ -1352,24 +1379,26 @@ void FMODSoundRenderer::DoLoad(void **slot, sfxinfo_t *sfx)
 		if (sfx->bLoadRAW ||
 			(((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8))
 		{
+			int frequency;
+
 			if (sfx->bLoadRAW)
 			{
 				len = Wads.LumpLength (sfx->lumpnum);
-				sfx->frequency = (sfx->bForce22050 ? 22050 : 11025);
+				frequency = (sfx->bForce22050 ? 22050 : 11025);
 			}
 			else
 			{
-				sfx->frequency = ((WORD *)sfxdata)[1];
-				if (sfx->frequency == 0)
+				frequency = ((WORD *)sfxdata)[1];
+				if (frequency == 0)
 				{
-					sfx->frequency = 11025;
+					frequency = 11025;
 				}
 				sfxstart = sfxdata + 8;
 			}
 
 			exinfo.length = len;
 			exinfo.numchannels = 1;
-			exinfo.defaultfrequency = sfx->frequency;
+			exinfo.defaultfrequency = frequency;
 			exinfo.format = FMOD_SOUND_FORMAT_PCM8;
 
 			samplemode |= FMOD_OPENRAW;
@@ -1398,19 +1427,6 @@ void FMODSoundRenderer::DoLoad(void **slot, sfxinfo_t *sfx)
 			continue;
 		}
 		*slot = sample;
-		// Get frequency and length for sounds FMOD handled for us.
-		if (!(samplemode & FMOD_OPENRAW))
-		{
-			float freq;
-
-			result = sample->getDefaults(&freq, NULL, NULL, NULL);
-			if (result != FMOD_OK)
-			{
-				DPrintf("Failed getting default sound frequency, assuming 11025Hz\n");
-				freq = 11025;
-			}
-			sfx->frequency = (unsigned int)freq;
-		}
 		break;
 	}
 

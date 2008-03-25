@@ -809,7 +809,7 @@ void A_LoopActiveSound (AActor *self)
 {
 	if (self->ActiveSound != 0 && !S_IsActorPlayingSomething (self, CHAN_VOICE, -1))
 	{
-		S_LoopedSoundID (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
+		S_SoundID (self, CHAN_VOICE|CHAN_LOOP, self->ActiveSound, 1, ATTN_NORM);
 	}
 }
 

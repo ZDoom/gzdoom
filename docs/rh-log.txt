@@ -1,3 +1,14 @@
+March 24, 2008
+- Removed xlat_parser.h from the repository. Lemon was always being run on
+  xlat_parser.y because both files had the same time stamp after an update,
+  and Lemon only rewrites the header file if it's changed.
+- Added $volume SNDINFO command. This is multiplied with the volume the sound
+  is played at to arrive at the final volume (before distance attenuation).
+- Added the CHAN_AREA flag to disable 3D panning within the min distance of a
+  sound. Sector sound sequences (except doors) use this flag.
+- Added the CHAN_LOOP flag to replace the S_Looped* sound functions.
+- Restored the sound limiting.
+
 March 24, 2008 (Changes by Graf Zahl)
 - Added Thomas's submissions for decal assignment to puffs and NOINFIGHTING flag.
 - Reverted changes of r715 in v_collection.cpp because they broke loading
@@ -469,7 +480,7 @@ February 26, 2008
 - More write barriers and pointer declarations. Here are rules I've come up
   with so far for when write barriers can be ommitted:
   * Initializing pointers for a newly created object: A new object can never
-    black, so none of its pointers that get set by the constructor (or code
+    be black, so none of its pointers that get set by the constructor (or code
     just following its creation) need to be  behind write barriers.
   * Creating a new thinker and storing it in a pointer: The thinker
     constructor already puts it behind a write barrier when it links it into

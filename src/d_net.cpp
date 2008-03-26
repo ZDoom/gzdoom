@@ -53,6 +53,7 @@
 #include "a_sharedglobal.h"
 #include "st_start.h"
 #include "teaminfo.h"
+#include "p_conversation.h"
 
 int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
 					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net);
@@ -2361,6 +2362,10 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		}
 		break;
 
+	case DEM_CONVERSATION:
+		P_ConversationCommand (player, stream);
+		break;
+
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;
@@ -2449,6 +2454,31 @@ void Net_SkipCommand (int type, BYTE **stream)
 		case DEM_RUNSCRIPT:
 		case DEM_RUNSCRIPT2:
 			skip = 3 + *(*stream + 2) * 4;
+			break;
+
+		case DEM_CONVERSATION:
+			{
+				t = **stream;
+				skip = 1;
+
+				switch (t)
+				{
+				case CONV_ANIMATE:
+					skip += 1;
+					break;
+
+				case CONV_GIVEINVENTORY:
+					skip += strlen ((char *)(*stream + skip)) + 1;
+					break;
+
+				case CONV_TAKEINVENTORY:
+					skip += strlen ((char *)(*stream + skip)) + 3;
+					break;
+
+				default:
+					break;
+				}
+			}
 			break;
 
 		default:

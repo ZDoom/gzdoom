@@ -150,6 +150,7 @@ enum EDemoCommand
 	DEM_ADDCONTROLLER,	// 48 Player to add to the controller list.
 	DEM_DELCONTROLLER,	// 49 Player to remove from the controller list.
 	DEM_KILLCLASSCHEAT,	// 50 String: Class to kill.
+	DEM_CONVERSATION,	// 51 Make conversations work.
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

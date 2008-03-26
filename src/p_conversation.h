@@ -5,8 +5,7 @@
 // users can edit as simple text files. Particularly useful would be
 // the ability to call ACS functions to implement AppearsWhen properties
 // and ACS scripts to implement ActionTaken properties.
-// TODO: Make this work in multiplayer and in demos. Multiplayer probably
-// isn't possible for Strife conversations, but demo playback should be.
+// TODO: Make this work in demos.
 
 struct FStrifeDialogueReply;
 class FTexture;
@@ -48,6 +47,16 @@ struct FStrifeDialogueReply
 	FBrokenLines *ReplyLines;
 };
 
+// [CW] These are used to make conversations work.
+enum
+{
+	CONV_NPCANGLE,
+	CONV_ANIMATE,
+	CONV_GIVEINVENTORY,
+	CONV_TAKEINVENTORY,
+	CONV_SETNULL,
+};
+
 extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 
 // There were 344 types in Strife, and Strife conversations refer
@@ -61,5 +70,7 @@ void P_FreeStrifeConversations ();
 
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle);
 void P_ResumeConversation ();
+
+void P_ConversationCommand (int player, BYTE **stream);
 
 #endif

@@ -281,7 +281,11 @@ player_s::player_s()
   crouchdir(0),
   crouchfactor(0),
   crouchoffset(0),
-  crouchviewdelta(0)
+  crouchviewdelta(0),
+  ConversationNPC(0),
+  ConversationPC(0),
+  ConversationNPCAngle(0),
+  ConversationFaceTalker(0)
 {
 	memset (&cmd, 0, sizeof(cmd));
 	memset (&userinfo, 0, sizeof(userinfo));
@@ -315,6 +319,8 @@ size_t player_s::FixPointers (const DObject *old, DObject *rep)
 	if (last_mate == old)		last_mate = replacement, changed++;
 	if (ReadyWeapon == old)		ReadyWeapon = static_cast<AWeapon *>(rep), changed++;
 	if (PendingWeapon == old)	PendingWeapon = static_cast<AWeapon *>(rep), changed++;
+	if (ConversationNPC == old)	ConversationNPC = replacement, changed++;
+	if (ConversationPC == old)	ConversationPC = replacement, changed++;
 	return changed;
 }
 
@@ -331,6 +337,8 @@ size_t player_s::PropagateMark()
 	GC::Mark(mate);
 	GC::Mark(last_mate);
 	GC::Mark(ReadyWeapon);
+	GC::Mark(ConversationNPC);
+	GC::Mark(ConversationPC);
 	if (PendingWeapon != WP_NOCHANGE)
 	{
 		GC::Mark(PendingWeapon);
@@ -2419,7 +2427,11 @@ void player_s::Serialize (FArchive &arc)
 		<< BlendB
 		<< BlendA
 		<< accuracy << stamina
-		<< LogText;
+		<< LogText
+		<< ConversationNPC
+		<< ConversationPC
+		<< ConversationNPCAngle
+		<< ConversationFaceTalker;
 		
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];

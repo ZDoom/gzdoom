@@ -320,6 +320,11 @@ public:
 	fixed_t crouchoffset;
 	fixed_t crouchviewdelta;
 
+	// [CW] I moved these here for multiplayer conversation support.
+	AActor *ConversationNPC, *ConversationPC;
+	angle_t ConversationNPCAngle;
+	bool ConversationFaceTalker;
+
 	fixed_t GetDeltaViewHeight() const
 	{
 		return (mo->ViewHeight + crouchviewdelta - viewheight) >> 3;

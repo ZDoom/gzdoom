@@ -81,6 +81,13 @@ public:
 	bool TryPickup (AActor *toucher);
 };
 
+class ASlideshowStarter : public ADummyStrifeItem
+{
+	DECLARE_STATELESS_ACTOR (ASlideshowStarter, ADummyStrifeItem)
+public:
+	bool TryPickup (AActor *toucher);
+};
+
 class AStrifeWeapon : public AWeapon
 {
 	DECLARE_STATELESS_ACTOR (AStrifeWeapon, AWeapon)

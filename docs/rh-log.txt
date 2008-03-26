@@ -33,6 +33,7 @@ March 25, 2008
   the 2D panning area.
 
 March 25, 2008 (Changes by Graf Zahl)
+- Added Karate Chris's submission for multiplayer Strife conversations.
 - Increased the limit for 'imp/active' to 6. This sound definitely benefits  
   from a higher limit.
 - Fixed: $limit should not apply to sounds played from the menu.

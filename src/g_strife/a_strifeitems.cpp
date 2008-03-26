@@ -514,13 +514,6 @@ bool AUpgradeAccuracy::TryPickup (AActor *toucher)
 
 // Start a slideshow --------------------------------------------------------
 
-class ASlideshowStarter : public ADummyStrifeItem
-{
-	DECLARE_STATELESS_ACTOR (ASlideshowStarter, ADummyStrifeItem)
-public:
-	bool TryPickup (AActor *toucher);
-};
-
 IMPLEMENT_STATELESS_ACTOR (ASlideshowStarter, Strife, -1, 0)
 	PROP_StrifeType (343)
 END_DEFAULTS

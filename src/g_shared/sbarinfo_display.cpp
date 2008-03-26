@@ -249,6 +249,10 @@ DSBarInfo::DSBarInfo () : DBaseStatusBar (SBarInfoScript->height),
 	{
 		patchnames[i+SBarInfoScript->Images.Size()] = InventoryBarLumps[i];
 	}
+	for (i = 0;i < numskins;i++)
+	{
+		AddFaceToImageCollection (&skins[i], &Images);
+	}
 	invBarOffset = SBarInfoScript->Images.Size();
 	Images.Init(&patchnames[0], patchnames.Size());
 	drawingFont = V_GetFont("ConFont");

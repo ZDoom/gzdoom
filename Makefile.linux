@@ -16,7 +16,7 @@ endif
 #endif
 CFLAGS += -MMD -DHAVE_FILELENGTH -D__forceinline=inline `sdl-config --cflags` `pkg-config gtk+-2.0 --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
-LDFLAGS += snes_spc/libsnes_spc.a -lz -ljpeg -lfmodex `sdl-config --libs` `pkg-config gtk+-2.0 --libs`
+LDFLAGS += -lz -ljpeg -lfmodex `sdl-config --libs` `pkg-config gtk+-2.0 --libs`
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
 SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ thingdef/ xlat/)
@@ -69,7 +69,7 @@ all: $(ZDOOMBIN) toolsandpk3 zdoom.pk3
 $(ZDOOMBIN): ccdv updaterev $(OBJDIR) $(OBJS) snes_spc/libsnes_spc.a
 	$(CCDV) $(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
 	$(filter-out %/autostart.o %/autozend.o,$(OBJS)) \
-	$(OBJDIR)/autozend.o -o $(ZDOOMBIN)
+	snes_spc/libsnes_spc.a $(OBJDIR)/autozend.o -o $(ZDOOMBIN)
 
 $(OBJDIR)/%.o: %.cpp
 	$(CCDV) $(CXX) $(CXXFLAGS) -o $@ -c $<
@@ -88,7 +88,7 @@ $(OBJDIR)/nodebuild_classify_sse2.o: nodebuild_classify_sse2.cpp
 $(OBJDIR)/fmopl.o: src/oplsynth/fmopl.cpp
 	$(CCDV) $(CXX) $(CXXFLAGS) -fno-tree-dominator-opts -fno-tree-fre -c -o $@ $<
 
-src/xlat/xlat_parser.c: tools/lemon/lemon src/xlat/xlat_parser.y
+src/xlat/xlat_parser.h src/xlat/xlat_parser.c: tools/lemon/lemon src/xlat/xlat_parser.y
 	$(CCDV) tools/lemon/lemon -s src/xlat/xlat_parser.y
 
 $(OBJDIR):

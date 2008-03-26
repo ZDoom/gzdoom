@@ -45,6 +45,7 @@ public:
 	~FImageCollection ();
 
 	void Init (const char **patchnames, int numPatches, int namespc=0);
+	void Add (const char **patchnames, int numPatches, int namespc=0);	
 	void Uninit ();
 
 	FTexture *operator[] (int index) const;

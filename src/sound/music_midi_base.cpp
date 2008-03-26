@@ -1,4 +1,3 @@
-#ifdef _WIN32
 #include "i_musicinterns.h"
 #include "c_dispatch.h"
 #include "i_music.h"
@@ -10,6 +9,7 @@
 
 static DWORD	nummididevices;
 static bool		nummididevicesset;
+#ifdef _WIN32
 	   UINT		mididevice;
 
 CVAR (Bool, snd_midiprecache, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);

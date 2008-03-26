@@ -125,6 +125,11 @@ public:
 		OldFaceIndex = -1;
 	}
 
+	void AddFaceToImageCollection (void *skn, FImageCollection *images)
+	{
+		AddFaceToImageCollectionActual (skn, images, true);
+	}
+
 	void MultiplayerChanged ()
 	{
 		DBaseStatusBar::MultiplayerChanged ();
@@ -987,24 +992,6 @@ private:
 		imgINVRTGEM2,
 
 		NUM_DOOMSB_IMAGES
-	};
-
-	enum
-	{
-		ST_NUMPAINFACES		= 5,
-		ST_NUMSTRAIGHTFACES	= 3,
-		ST_NUMTURNFACES		= 2,
-		ST_NUMSPECIALFACES	= 3,
-		ST_NUMEXTRAFACES	= 2,
-		ST_FACESTRIDE		= ST_NUMSTRAIGHTFACES+ST_NUMTURNFACES+ST_NUMSPECIALFACES,
-		ST_NUMFACES			= ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES,
-
-		ST_TURNOFFSET		= ST_NUMSTRAIGHTFACES,
-		ST_OUCHOFFSET		= ST_TURNOFFSET + ST_NUMTURNFACES,
-		ST_EVILGRINOFFSET	= ST_OUCHOFFSET + 1,
-		ST_RAMPAGEOFFSET	= ST_EVILGRINOFFSET + 1,
-		ST_GODFACE			= ST_NUMPAINFACES*ST_FACESTRIDE,
-		ST_DEADFACE			= ST_GODFACE + 1
 	};
 
 	FImageCollection Images;

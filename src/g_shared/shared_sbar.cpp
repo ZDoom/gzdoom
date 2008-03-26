@@ -1536,8 +1536,13 @@ void DBaseStatusBar::FlashItem (const PClass *itemtype)
 {
 }
 
-void DBaseStatusBar::SetFace (void *)
+void DBaseStatusBar::SetFace (void *skn)
 {
+}
+ 
+void DBaseStatusBar::AddFaceToImageCollection (void *skn, FImageCollection *images)
+{
+	AddFaceToImageCollectionActual (skn, images, false);
 }
 
 void DBaseStatusBar::NewGame ()
@@ -1573,6 +1578,72 @@ void DBaseStatusBar::ScreenSizeChanged ()
 		message->ScreenSizeChanged ();
 		message = message->Next;
 	}
+}
+
+//---------------------------------------------------------------------------
+//
+// AddFaceToImageCollectionActual
+//
+// Adds face graphics for specified skin to the specified image collection.
+// If not in DOOM statusbar and no face in current skin, do NOT default STF*
+//
+//---------------------------------------------------------------------------
+
+void DBaseStatusBar::AddFaceToImageCollectionActual (void *skn, FImageCollection *images, bool isDoom)
+{
+	const char *nameptrs[ST_NUMFACES];
+	char names[ST_NUMFACES][9];
+	char prefix[4];
+	int i, j;
+	int namespc;
+	int facenum;
+	FPlayerSkin *skin = (FPlayerSkin *)skn;
+
+	if ((skin->face[0] == 0) && !isDoom)
+	{
+		return;
+	}
+
+	for (i = 0; i < ST_NUMFACES; i++)
+	{
+		nameptrs[i] = names[i];
+	}
+
+	if (skin->face[0] != 0)
+	{
+		prefix[0] = skin->face[0];
+		prefix[1] = skin->face[1];
+		prefix[2] = skin->face[2];
+		prefix[3] = 0;
+		namespc = skin->namespc;
+	}
+	else
+	{
+		prefix[0] = 'S';
+		prefix[1] = 'T';
+		prefix[2] = 'F';
+		prefix[3] = 0;
+		namespc = ns_global;
+	}
+
+	facenum = 0;
+
+	for (i = 0; i < ST_NUMPAINFACES; i++)
+	{
+		for (j = 0; j < ST_NUMSTRAIGHTFACES; j++)
+		{
+			sprintf (names[facenum++], "%sST%d%d", prefix, i, j);
+		}
+		sprintf (names[facenum++], "%sTR%d0", prefix, i);  // turn right
+		sprintf (names[facenum++], "%sTL%d0", prefix, i);  // turn left
+		sprintf (names[facenum++], "%sOUCH%d", prefix, i); // ouch!
+		sprintf (names[facenum++], "%sEVL%d", prefix, i);  // evil grin ;)
+		sprintf (names[facenum++], "%sKILL%d", prefix, i); // pissed off
+	}
+	sprintf (names[facenum++], "%sGOD0", prefix);
+	sprintf (names[facenum++], "%sDEAD0", prefix);
+
+	images->Add (nameptrs, ST_NUMFACES, namespc);
 }
 
 //---------------------------------------------------------------------------

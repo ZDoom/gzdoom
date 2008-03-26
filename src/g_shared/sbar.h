@@ -165,6 +165,25 @@ public:
 		POP_Status
 	};
 
+	// Status face stuff
+	enum
+	{
+		ST_NUMPAINFACES		= 5,
+		ST_NUMSTRAIGHTFACES	= 3,
+		ST_NUMTURNFACES		= 2,
+		ST_NUMSPECIALFACES	= 3,
+		ST_NUMEXTRAFACES	= 2,
+		ST_FACESTRIDE		= ST_NUMSTRAIGHTFACES+ST_NUMTURNFACES+ST_NUMSPECIALFACES,
+		ST_NUMFACES			= ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES,
+
+		ST_TURNOFFSET		= ST_NUMSTRAIGHTFACES,
+		ST_OUCHOFFSET		= ST_TURNOFFSET + ST_NUMTURNFACES,
+		ST_EVILGRINOFFSET	= ST_OUCHOFFSET + 1,
+		ST_RAMPAGEOFFSET	= ST_EVILGRINOFFSET + 1,
+		ST_GODFACE			= ST_NUMPAINFACES*ST_FACESTRIDE,
+		ST_DEADFACE			= ST_GODFACE + 1
+	};
+
 	DBaseStatusBar (int reltop);
 	void Destroy ();
 
@@ -190,7 +209,8 @@ public:
 	virtual void AttachToPlayer (player_s *player);
 	virtual void FlashCrosshair ();
 	virtual void BlendView (float blend[4]);
-	virtual void SetFace (void *);		// Takes a FPlayerSkin as input
+	virtual void SetFace (void *skn);												// Takes a FPlayerSkin as input
+	virtual void AddFaceToImageCollection (void *skn, FImageCollection *images);	// Takes a FPlayerSkin as input
 	virtual void NewGame ();
 	virtual void ScreenSizeChanged ();
 	virtual void MultiplayerChanged ();
@@ -221,6 +241,8 @@ protected:
 	void RefreshBackground () const;
 
 	void GetCurrentAmmo (AAmmo *&ammo1, AAmmo *&ammo2, int &ammocount1, int &ammocount2) const;
+
+	void AddFaceToImageCollectionActual (void *skn, FImageCollection *images, bool isDoom);
 
 public:
 	AInventory *ValidateInvFirst (int numVisible) const;

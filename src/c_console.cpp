@@ -865,7 +865,7 @@ int VPrintf (int printlevel, const char *format, va_list parms)
 
 	FString outline;
 	outline.VFormat (format, parms);
-	return PrintString (printlevel, outline);
+	return PrintString (printlevel, outline.GetChars());
 }
 
 int STACK_ARGS Printf (int printlevel, const char *format, ...)

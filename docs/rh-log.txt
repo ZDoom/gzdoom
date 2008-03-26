@@ -1,3 +1,7 @@
+March 26, 2008 (Changes by Graf Zahl)
+- Added Jim' Linux fix.
+- Added MartinHowe's fix for mugshot display in status bars.
+
 March 25, 2008
 - The garbage collector is now run one last time just before exiting the game.
 - Removed movie volume from the sound menu and renamed some of the other

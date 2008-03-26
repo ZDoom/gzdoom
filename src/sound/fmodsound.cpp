@@ -92,6 +92,11 @@ FMOD_RESULT SPC_CreateCodec(FMOD::System *sys);
 static int Enum_NumForName(const FEnumList *list, const char *name);
 static const char *Enum_NameForNum(const FEnumList *list, int num);
 
+static FMOD_RESULT F_CALLBACK Memory_Open(const char *name, int unicode, unsigned int *filesize, void **handle, void **userdata);
+static FMOD_RESULT F_CALLBACK Memory_Close(void *handle, void *userdata);
+static FMOD_RESULT F_CALLBACK Memory_Read(void *handle, void *buffer, unsigned int sizebytes, unsigned int *bytesread, void *userdata);
+static FMOD_RESULT F_CALLBACK Memory_Seek(void *handle, unsigned int pos, void *userdata);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 EXTERN_CVAR (String, snd_output)
@@ -106,15 +111,19 @@ EXTERN_CVAR (Int, snd_channels)
 ReverbContainer *ForcedEnvironment;
 
 CVAR (Int, snd_driver, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Int, snd_buffercount, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, snd_hrtf, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_waterreverb, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_resampler, "Linear", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_speakermode, "Auto", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output_format, "PCM-16", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (String, snd_midipatchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_dspnet, false, 0)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static const ReverbContainer *PrevEnvironment;
+static bool ShowedBanner;
 
 // The rolloff callback is called during FMOD::Sound::play, so we need this
 // global variable to contain the sound info during that time for the
@@ -164,8 +173,6 @@ static const FEnumList SpeakerModeNames[] =
 	{ "1",						FMOD_SPEAKERMODE_MONO },
 	{ "2",						FMOD_SPEAKERMODE_STEREO },
 	{ "4",						FMOD_SPEAKERMODE_QUAD },
-	{ "Headphones",				9001 },
-	{ "HRTF",					9001 },
 	{ NULL, 0 }
 };
 
@@ -193,6 +200,16 @@ static const FEnumList SoundFormatNames[] =
 	{ "XMA",					FMOD_SOUND_FORMAT_XMA },
 	{ "MPEG",					FMOD_SOUND_FORMAT_MPEG },
 	{ NULL, 0 }
+};
+
+static const char *OpenStateNames[] =
+{
+	"Ready",
+	"Loading",
+	"Error",
+	"Connecting",
+	"Buffering",
+	"Seeking"
 };
 
 // CODE --------------------------------------------------------------------
@@ -374,6 +391,26 @@ public:
 		return FMOD_OK == Channel->setPosition(pos, FMOD_TIMEUNIT_MS);
 	}
 
+	FString GetStats()
+	{
+		FString stats;
+		FMOD_OPENSTATE openstate;
+		unsigned int percentbuffered;
+		unsigned int position;
+		bool starving;
+
+		if (FMOD_OK == Stream->getOpenState(&openstate, &percentbuffered, &starving))
+		{
+			stats = (openstate <= FMOD_OPENSTATE_SEEKING ? OpenStateNames[openstate] : "Unknown state");
+			stats.AppendFormat(",%3d%% buffered, %s", percentbuffered, starving ? "Starving" : "Well-fed");
+		}
+		if (Channel != NULL && FMOD_OK == Channel->getPosition(&position, FMOD_TIMEUNIT_MS))
+		{
+			stats.AppendFormat(", %d ms", position);
+		}
+		return stats;
+	}
+
 	static FMOD_RESULT F_CALLBACK PCMReadCallback(FMOD_SOUND *sound, void *data, unsigned int datalen)
 	{
 		FMOD_RESULT result;
@@ -445,6 +482,8 @@ bool FMODSoundRenderer::Init()
 	FMOD_SOUND_FORMAT format;
 	FMOD_DSP_RESAMPLER resampler;
 	FMOD_INITFLAGS initflags;
+	int samplerate;
+	int driver;
 
 	int eval;
 
@@ -454,7 +493,12 @@ bool FMODSoundRenderer::Init()
 	PausableSfx = NULL;
 	PrevEnvironment = DefaultEnvironments[0];
 
-	Printf ("I_InitSound: Initializing FMOD\n");
+	Printf("I_InitSound: Initializing FMOD\n");
+	if (!ShowedBanner)
+	{
+		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2007.\n");
+		ShowedBanner = true;
+	}
 
 	// Create a System object and initialize.
 	result = FMOD::System_Create(&Sys);
@@ -471,30 +515,6 @@ bool FMODSoundRenderer::Init()
 				FMOD_VERSION >> 16, (FMOD_VERSION >> 8) & 255, FMOD_VERSION & 255);
 		return false;
 	}
-
-	result = Sys->getDriverCaps(0, &Driver_Caps, &Driver_MinFrequency, &Driver_MaxFrequency, &speakermode);
-	ERRCHECK(result);
-
-	// Set the user selected speaker mode.
-	eval = Enum_NumForName(SpeakerModeNames, snd_speakermode);
-	if (eval >= 0)
-	{
-		speakermode = FMOD_SPEAKERMODE(eval);
-	}
-	result = Sys->setSpeakerMode(speakermode < 9000 ? speakermode : FMOD_SPEAKERMODE_STEREO);
-	ERRCHECK(result);
-
-	// Set software format
-	eval = Enum_NumForName(SoundFormatNames, snd_output_format);
-	format = eval >= 0 ? FMOD_SOUND_FORMAT(eval) : FMOD_SOUND_FORMAT_PCM16;
-	eval = Enum_NumForName(ResamplerNames, snd_resampler);
-	resampler = eval >= 0 ? FMOD_DSP_RESAMPLER(eval) : FMOD_DSP_RESAMPLER_LINEAR;
-	result = Sys->setSoftwareFormat(snd_samplerate, format, 0, 0, resampler);
-	ERRCHECK(result);
-
-	// Set software channels according to snd_channels
-	result = Sys->setSoftwareChannels(snd_channels + NUM_EXTRA_SOFTWARE_CHANNELS);
-	ERRCHECK(result);
 
 #ifdef _WIN32
 	if (OSPlatform == os_WinNT4)
@@ -541,18 +561,74 @@ bool FMODSoundRenderer::Init()
 		ERRCHECK(result);
 	}
 
+	result = Sys->getNumDrivers(&driver);
+	if (result == FMOD_OK)
+	{
+		if (snd_driver >= driver)
+		{
+			Printf (TEXTCOLOR_BLUE"Driver %d does not exist. Using 0.\n", *snd_driver);
+			driver = 0;
+		}
+		else
+		{
+			driver = snd_driver;
+		}
+		result = Sys->setDriver(driver);
+	}
+	result = Sys->getDriver(&driver);
+	result = Sys->getDriverCaps(driver, &Driver_Caps, &Driver_MinFrequency, &Driver_MaxFrequency, &speakermode);
+	ERRCHECK(result);
+
+	// Set the user selected speaker mode.
+	eval = Enum_NumForName(SpeakerModeNames, snd_speakermode);
+	if (eval >= 0)
+	{
+		speakermode = FMOD_SPEAKERMODE(eval);
+	}
+	result = Sys->setSpeakerMode(speakermode < 9000 ? speakermode : FMOD_SPEAKERMODE_STEREO);
+	ERRCHECK(result);
+
+	// Set software format
+	eval = Enum_NumForName(SoundFormatNames, snd_output_format);
+	format = eval >= 0 ? FMOD_SOUND_FORMAT(eval) : FMOD_SOUND_FORMAT_PCM16;
+	eval = Enum_NumForName(ResamplerNames, snd_resampler);
+	resampler = eval >= 0 ? FMOD_DSP_RESAMPLER(eval) : FMOD_DSP_RESAMPLER_LINEAR;
+	samplerate = clamp<int>(snd_samplerate, Driver_MinFrequency, Driver_MaxFrequency);
+	if (samplerate == 0 || snd_samplerate == 0)
+	{ // Creative's ASIO drivers report the only supported frequency as 0!
+		if (FMOD_OK != Sys->getSoftwareFormat(&samplerate, NULL, NULL, NULL, NULL, NULL))
+		{
+			samplerate = 48000;
+		}
+	}
+	if (samplerate != snd_samplerate && snd_samplerate != 0)
+	{
+		Printf(TEXTCOLOR_BLUE"Sample rate %d is unsupported. Trying %d\n", *snd_samplerate, samplerate);
+	}
+	result = Sys->setSoftwareFormat(samplerate, format, 0, 0, resampler);
+
+	// Set software channels according to snd_channels
+	result = Sys->setSoftwareChannels(snd_channels + NUM_EXTRA_SOFTWARE_CHANNELS);
+	ERRCHECK(result);
+
 	if (Driver_Caps & FMOD_CAPS_HARDWARE_EMULATED)
 	{ // The user has the 'Acceleration' slider set to off!
 	  // This is really bad for latency!
-		Printf ("Warning: The sound acceleration slider has been set to off.\n");
-		Printf ("Please turn it back on if you want decent sound.\n");
+		Printf (TEXTCOLOR_BLUE"Warning: The sound acceleration slider has been set to off.\n");
+		Printf (TEXTCOLOR_BLUE"Please turn it back on if you want decent sound.\n");
 		result = Sys->setDSPBufferSize(1024, 10);	// At 48khz, the latency between issuing an fmod command and hearing it will now be about 213ms.
 		ERRCHECK(result);
+	}
+	else if (snd_buffersize != 0 || snd_buffercount != 0)
+	{
+		int buffersize = snd_buffersize ? snd_buffersize : 1024;
+		int buffercount = snd_buffercount ? snd_buffercount : 4;
+		result = Sys->setDSPBufferSize(buffersize, buffercount);
 	}
 
 	// Try to init
 	initflags = FMOD_INIT_NORMAL;
-	if (speakermode > 9000)
+	if (snd_hrtf)
 	{
 		initflags |= FMOD_INIT_SOFTWARE_HRTF;
 	}
@@ -560,17 +636,38 @@ bool FMODSoundRenderer::Init()
 	{
 		initflags |= FMOD_INIT_ENABLE_DSPNET;
 	}
-	result = Sys->init(snd_channels + NUM_EXTRA_SOFTWARE_CHANNELS, initflags, 0);
-	if (result == FMOD_ERR_OUTPUT_CREATEBUFFER)
-	{ // The speaker mode selected isn't supported by this soundcard. Switch it back to stereo.
-		result = Sys->setSpeakerMode(FMOD_SPEAKERMODE_STEREO);
-		ERRCHECK(result);
-
+	for (;;)
+	{
 		result = Sys->init(snd_channels + NUM_EXTRA_SOFTWARE_CHANNELS, initflags, 0);
-		ERRCHECK(result);
+		if (result == FMOD_ERR_OUTPUT_CREATEBUFFER)
+		{ // The speaker mode selected isn't supported by this soundcard. Switch it back to stereo.
+			result = Sys->getSpeakerMode(&speakermode);
+			if (result == FMOD_OK && FMOD_OK == Sys->setSpeakerMode(FMOD_SPEAKERMODE_STEREO))
+			{
+				continue;
+			}
+		}
+#ifdef _WIN32
+		else if (result == FMOD_ERR_OUTPUT_INIT)
+		{
+			FMOD_OUTPUTTYPE output;
+			result = Sys->getOutput(&output);
+			if (result == FMOD_OK && output != FMOD_OUTPUTTYPE_DSOUND)
+			{
+				Printf(TEXTCOLOR_BLUE"  Init failed for output type %s. Retrying with DirectSound.\n",
+					Enum_NameForNum(OutputNames, output));
+				if (FMOD_OK == Sys->setOutput(FMOD_OUTPUTTYPE_DSOUND))
+				{
+					continue;
+				}
+			}
+		}
+#endif
+		break;
 	}
 	if (result != FMOD_OK)
 	{ // Initializing FMOD failed. Cry cry.
+		Printf ("  System::init returned error code %d\n", result);
 		return false;
 	}
 
@@ -656,6 +753,8 @@ void FMODSoundRenderer::PrintStatus()
 	int samplerate;
 	int numoutputchannels;
 	int num2d, num3d, total;
+	unsigned int bufferlength;
+	int numbuffers;
 
 	if (FMOD_OK == Sys->getOutput(&output))
 	{
@@ -687,6 +786,10 @@ void FMODSoundRenderer::PrintStatus()
 		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer format: "TEXTCOLOR_GREEN"%s\n", Enum_NameForNum(SoundFormatNames, format));
 		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer channels: "TEXTCOLOR_GREEN"%d\n", numoutputchannels);
 		Printf (TEXTCOLOR_LIGHTBLUE "Software mixer resampler: "TEXTCOLOR_GREEN"%s\n", Enum_NameForNum(ResamplerNames, resampler));
+	}
+	if (FMOD_OK == Sys->getDSPBufferSize(&bufferlength, &numbuffers))
+	{
+		Printf (TEXTCOLOR_LIGHTBLUE "DSP buffers: "TEXTCOLOR_GREEN"%u samples x %d\n", bufferlength, numbuffers);
 	}
 }
 
@@ -892,6 +995,7 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *filename_or_data, int fla
 	FMOD_MODE mode;
 	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
 	FMOD::Sound *stream;
+	FMOD_RESULT result;
 
 	mode = FMOD_SOFTWARE | FMOD_2D | FMOD_CREATESTREAM;
 	if (flags & SoundStream::Loop)
@@ -905,8 +1009,25 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *filename_or_data, int fla
 	}
 	exinfo.length = length;
 	exinfo.fileoffset = offset;
+	if ((*snd_midipatchset)[0] != '\0')
+	{
+		exinfo.dlsname = snd_midipatchset;
+	}
 
-	if (FMOD_OK == Sys->createSound(filename_or_data, mode, &exinfo, &stream))
+	result = Sys->createSound(filename_or_data, mode, &exinfo, &stream);
+	if (result == FMOD_ERR_FORMAT && exinfo.dlsname != NULL)
+	{
+		// FMOD_ERR_FORMAT could refer to either the main sound file or
+		// to the DLS instrument set. Try again without special DLS
+		// instruments to see if that lets it succeed.
+		exinfo.dlsname = NULL;
+		result = Sys->createSound(filename_or_data, mode, &exinfo, &stream);
+		if (result == FMOD_OK)
+		{
+			Printf("%s is an unsupported format.\n", *snd_midipatchset);
+		}
+	}
+	if (result == FMOD_OK)
 	{
 		return new FMODStreamCapsule(stream, this);
 	}
@@ -1080,6 +1201,10 @@ FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t 
 		if (chan->get3DPanLevel(&old_level) == FMOD_OK && old_level != level)
 		{ // Only set it if it's different.
 			chan->set3DPanLevel(level);
+			if (level < 1)
+			{ // Let the noise come from all speakers, not just the front ones.
+				chan->setSpeakerMix(1,1,1,1,1,1,1,1);
+			}
 		}
 		return oldmode;
 	}

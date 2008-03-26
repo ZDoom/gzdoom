@@ -44,6 +44,7 @@ public:
 	virtual bool IsValid () const = 0;
 	virtual bool SetPosition (int order);
 	virtual void Update();
+	virtual FString GetStats();
 
 	enum EState
 	{
@@ -242,6 +243,7 @@ public:
 	bool IsMIDI () const { return false; }
 	bool IsValid () const { return m_Stream != NULL; }
 	bool SetPosition (int order);
+	FString GetStats();
 
 protected:
 	StreamSong () : m_Stream(NULL), m_LastPos(0) {}

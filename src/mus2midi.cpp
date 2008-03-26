@@ -93,7 +93,7 @@ static size_t ReadVarLen (const BYTE *buf, int *time_out)
 	return ofs;
 }
 
-static size_t WriteVarLen (FILE *file, int time)
+static size_t WriteVarLen (TArray<BYTE> &file, int time)
 {
 	long buffer;
 	size_t ofs;
@@ -105,7 +105,7 @@ static size_t WriteVarLen (FILE *file, int time)
 	}
 	for (ofs = 0;;)
 	{
-		fputc (buffer & 0xff, file);
+		file.Push(BYTE(buffer & 0xff));
 		if (buffer & 0x80)
 			buffer >>= 8;
 		else
@@ -114,7 +114,7 @@ static size_t WriteVarLen (FILE *file, int time)
 	return ofs;
 }
 
-bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
+bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 {
 	BYTE midStatus, midArgs, mid1, mid2;
 	size_t mus_p, maxmus_p;
@@ -125,7 +125,6 @@ bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
 	BYTE lastVel[16];
 	SBYTE chanMap[16];
 	int chanCount;
-	int dupCount = 0;
 	long trackLen;
 	
 	// Do some validation of the MUS file
@@ -136,7 +135,9 @@ bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
 		return false;
 	
 	// Prep for conversion
-	fwrite (StaticMIDIhead, 1, sizeof(StaticMIDIhead), outFile);
+	outFile.Clear();
+	outFile.Reserve(sizeof(StaticMIDIhead));
+	memcpy(&outFile[0], StaticMIDIhead, sizeof(StaticMIDIhead));
 
 	musBuf += LittleShort(musHead->SongStart);
 	maxmus_p = LittleShort(musHead->SongLen);
@@ -167,10 +168,10 @@ bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
 		{
 			// This is the first time this channel has been used,
 			// so sets its volume to 127.
-			fputc (0, outFile);
-			fputc (0xB0 | chanCount, outFile);
-			fputc (7, outFile);
-			fputc (127, outFile);
+			outFile.Push(0);
+			outFile.Push(0xB0 | chanCount);
+			outFile.Push(7);
+			outFile.Push(127);
 			chanMap[channel] = chanCount++;
 			if (chanCount == 9)
 				++chanCount;
@@ -237,20 +238,15 @@ bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
 
 		WriteVarLen (outFile, deltaTime);
 
-		if (midStatus == status)
-		{
-			++dupCount;
-			fputc (mid1, outFile);
-			if (!midArgs)
-				fputc (mid2, outFile);
-		}
-		else
+		if (midStatus != status)
 		{
 			status = midStatus;
-			fputc (status, outFile);
-			fputc (mid1, outFile);
-			if (!midArgs)
-				fputc (mid2, outFile);
+			outFile.Push(status);
+		}
+		outFile.Push(mid1);
+		if (midArgs == 0)
+		{
+			outFile.Push(mid2);
 		}
 		if (event & 128)
 		{
@@ -263,12 +259,20 @@ bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
 	}
 	
 	// fill in track length
-	trackLen = ftell (outFile) - 22;
-	fseek (outFile, 18, SEEK_SET);
-	fputc ((trackLen >> 24) & 255, outFile);
-	fputc ((trackLen >> 16) & 255, outFile);
-	fputc ((trackLen >> 8) & 255, outFile);
-	fputc (trackLen & 255, outFile);
-	
+	trackLen = outFile.Size() - 22;
+	outFile[18] = BYTE((trackLen >> 24) & 255);
+	outFile[19] = BYTE((trackLen >> 16) & 255);
+	outFile[20] = BYTE((trackLen >> 8) & 255);
+	outFile[21] = BYTE(trackLen & 255);
 	return true;
+}
+
+bool ProduceMIDI(const BYTE *musBuf, FILE *outFile)
+{
+	TArray<BYTE> work;
+	if (ProduceMIDI(musBuf, work))
+	{
+		return fwrite(&work[0], 1, work.Size(), outFile) == work.Size();
+	}
+	return false;
 }

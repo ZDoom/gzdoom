@@ -298,9 +298,13 @@ static void MarkRoot()
 		if (playeringame[i])
 			players[i].PropagateMark();
 	}
-	if (SectorMarker == NULL)
+	if (SectorMarker == NULL && sectors != NULL)
 	{
 		SectorMarker = new DSectorMarker;
+	}
+	else if (sectors == NULL)
+	{
+		SectorMarker = NULL;
 	}
 	else
 	{

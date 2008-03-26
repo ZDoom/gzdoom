@@ -88,7 +88,6 @@ enum
 
 static bool waitingforspawn[MAXPLAYERS];
 
-
 DCajunMaster::~DCajunMaster()
 {
 	ForgetBots();

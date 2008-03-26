@@ -92,3 +92,12 @@ bool StreamSong::SetPosition(int order)
 		return false;
 	}
 }
+
+FString StreamSong::GetStats()
+{
+	if (m_Stream != NULL)
+	{
+		return m_Stream->GetStats();
+	}
+	return "No song loaded\n";
+}

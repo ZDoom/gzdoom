@@ -43,7 +43,7 @@
 //
 void I_InitMusic ();
 void I_ShutdownMusic ();
-void I_BuildMIDIMenuList (struct value_s **values, float *numValues);
+void I_BuildMIDIMenuList (struct value_t **values, float *numValues);
 void I_UpdateMusic ();
 
 // Volume.

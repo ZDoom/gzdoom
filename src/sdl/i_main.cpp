@@ -121,6 +121,20 @@ void STACK_ARGS call_terms ()
 	}
 }
 
+//==========================================================================
+//
+// FinalGC
+//
+// Collect garbage one last time before exiting.
+//
+//==========================================================================
+
+static void FinalGC()
+{
+	Args = NULL;
+	GC::FullGC();
+}
+
 static void STACK_ARGS NewFailure ()
 {
     I_FatalError ("Failed to allocate memory from system heap");
@@ -209,6 +223,7 @@ int main (int argc, char **argv)
     try
     {
 		Args = new DArgs(argc, argv);
+		atterm(FinalGC);
 
 		/*
 		  killough 1/98:

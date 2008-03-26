@@ -1,3 +1,37 @@
+March 25, 2008
+- The garbage collector is now run one last time just before exiting the game.
+- Removed movie volume from the sound menu and renamed some of the other
+  options to give the MIDI device name more room to display itself.
+- Moved the midi device selection into the main sound menu.
+- Added FMOD as MIDI device -1, to replace the MIDI mapper. This is still the
+  default device. By default, it uses exactly the same DLS instruments as the
+  Microsoft GS Wavetable Synth. If you have another set DLS level 1 patch set
+  you want to use, set the snd_midipatchfile cvar to specify where it should
+  load the instruments from.
+- Changed the ProduceMIDI function to store its output into a TArray<BYTE>.
+  An overloaded version wraps around it to continue to supply file-writing
+  support for external Timidity++ usage.
+- Added an FMOD credits banner to comply with their non-commercial license.
+- Reimplemented the snd_buffersize cvar for the FMOD Ex sound system. Rather
+  than a time in ms, this is now the length in samples of the DSP buffer.
+  Also added the snd_buffercount cvar to offer complete control over the
+  call to FMOD::System::setDSPBufferSize(). Note that with any snd_samplerate
+  below about 44kHz, you will need to set snd_buffersize to avoid long
+  latencies.
+- Reimplemented the snd_output cvar for the FMOD Ex sound system.
+- Changed snd_samplerate default to 0. This now means to use the default
+  sample rate.
+- Made snd_output, snd_output_format, snd_speakermode, snd_resampler, and
+  snd_hrtf available through the menu.
+- Split the HRTF effect selection into its own cvar: snd_hrtf.
+- Removed 96000 Hz option from the menu. It's still available through the
+  cvar, if desired.
+- Fixed: If Windows sound init failed, retry with DirectSound. (Apparently,
+  WASAPI doesn't work with more than two speakers and PCM-Float output at the
+  same time.)
+- Fixed: Area sounds only played from the front speakers once you got within
+  the 2D panning area.
+
 March 25, 2008 (Changes by Graf Zahl)
 - Increased the limit for 'imp/active' to 6. This sound definitely benefits  
   from a higher limit.

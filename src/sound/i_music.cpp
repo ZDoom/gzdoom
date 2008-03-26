@@ -69,6 +69,7 @@ extern void ChildSigHandler (int signum);
 #include "i_cd.h"
 #include "tempfiles.h"
 #include "templates.h"
+#include "stats.h"
 
 #include <fmod.h>
 
@@ -128,6 +129,11 @@ void MusInfo::MusicVolumeChanged()
 
 void MusInfo::TimidityVolumeChanged()
 {
+}
+
+FString MusInfo::GetStats()
+{
+	return "No stats available for this song";
 }
 
 void I_InitMusic (void)
@@ -226,7 +232,7 @@ void I_UnRegisterSong (void *handle)
 	}
 }
 
-void *I_RegisterSong (const char *filename, char * musiccache, int offset, int len, int device)
+void *I_RegisterSong (const char *filename, char *musiccache, int offset, int len, int device)
 {
 	FILE *file;
 	MusInfo *info = NULL;
@@ -237,7 +243,7 @@ void *I_RegisterSong (const char *filename, char * musiccache, int offset, int l
 		return 0;
 	}
 
-	if (offset!=-1)
+	if (offset != -1)
 	{
 		file = fopen (filename, "rb");
 		if (file == NULL)
@@ -288,14 +294,50 @@ void *I_RegisterSong (const char *filename, char * musiccache, int offset, int l
 					info = NULL;
 				}
 			}
-			if (info == NULL && (snd_mididevice != -2 || device == 0))
+			if (info == NULL && (snd_mididevice >= 0 || device == 0))
 			{
 				info = new MUSSong2 (file, musiccache, len);
 			}
 			else if (info == NULL && GSnd != NULL)
 #endif // _WIN32
 			{
-				info = new TimiditySong (file, musiccache, len);
+				if (snd_mididevice == -1)
+				{
+					TArray<BYTE> midi;
+					bool midi_made = false;
+
+					if (file == NULL)
+					{
+						midi_made = ProduceMIDI((BYTE *)musiccache, midi);
+					}
+					else
+					{
+						BYTE *mus = new BYTE[len];
+						size_t did_read = fread(mus, 1, len, file);
+						if (did_read == len)
+						{
+							midi_made = ProduceMIDI(mus, midi);
+						}
+						fseek(file, -(long)did_read, SEEK_CUR);
+						delete[] mus;
+					}
+					if (midi_made)
+					{
+						FILE *f = fopen("latest.mid", "wb");
+						fwrite(&midi[0], 1, midi.Size(), f);
+						fclose(f);
+						info = new StreamSong((char *)&midi[0], -1, midi.Size());
+						if (!info->IsValid())
+						{
+							delete info;
+							info = NULL;
+						}
+					}
+				}
+				if (info == NULL)
+				{
+					info = new TimiditySong (file, musiccache, len);
+				}
 			}
 		}
 	}
@@ -313,14 +355,17 @@ void *I_RegisterSong (const char *filename, char * musiccache, int offset, int l
 				info = NULL;
 			}
 		}
-		if (info == NULL && (snd_mididevice != -2 || device == 0))
+		else if (info == NULL && (snd_mididevice >= 0 || device == 0))
 		{
 			info = new MIDISong2 (file, musiccache, len);
 		}
 		else if (info == NULL && GSnd != NULL)
 #endif // _WIN32
 		{
-			info = new TimiditySong (file, musiccache, len);
+			if (snd_mididevice != -1)
+			{
+				info = new TimiditySong (file, musiccache, len);
+			}
 		}
 	}
 	// Check for RDosPlay raw OPL format
@@ -479,4 +524,19 @@ CCMD(testmusicvol)
 	}
 	else
 		Printf("Current relative volume is %1.2f\n", relative_volume);
+}
+
+//==========================================================================
+//
+// STAT music
+//
+//==========================================================================
+
+ADD_STAT(music)
+{
+	if (currSong != NULL)
+	{
+		return currSong->GetStats();
+	}
+	return "No song playing";
 }

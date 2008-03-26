@@ -2,6 +2,7 @@
 #include "i_musicinterns.h"
 #include "c_dispatch.h"
 #include "i_music.h"
+#include "i_system.h"
 
 #include "templates.h"
 #include "v_text.h"
@@ -56,19 +57,22 @@ void I_InitMusicWin32 ()
 
 void I_ShutdownMusicWin32 ()
 {
-	// I don't know if this is an NT 4.0 bug or an FMOD bug, but if waveout
-	// is used for sound, and a MIDI is also played, then when I quit, the OS
+	// Ancient bug a saw on NT 4.0 and an old version of FMOD 3: If waveout
+	// is used for sound and a MIDI is also played, then when I quit, the OS
 	// tells me a free block was modified after being freed. This is
 	// apparently a synchronization issue between two threads, because if I
 	// put this Sleep here after stopping the music but before shutting down
-	// the entire sound system, the error does not happen. I don't think it's
-	// a driver problem, because it happens with both a Vortex 2 and an Audigy.
-	// Though if their drivers are both based off some common Microsoft sample
-	// code, I suppose it could be a driver issue.
-	Sleep (50);
+	// the entire sound system, the error does not happen. Observed with a
+	// Vortex 2 (may Aureal rest in peace) and an Audigy (damn you, Creative!).
+	// I no longer have a system with NT4 drivers, so I don't know if this
+	// workaround is still needed or not.
+	if (OSPlatform == os_WinNT4)
+	{
+		Sleep(50);
+	}
 }
 
-void I_BuildMIDIMenuList (struct value_s **outValues, float *numValues)
+void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 {
 	if (*outValues == NULL)
 	{
@@ -79,13 +83,13 @@ void I_BuildMIDIMenuList (struct value_s **outValues, float *numValues)
 
 		values[0].name = "TiMidity++";
 		values[0].value = -2.0;
+		values[1].name = "FMOD";
+		values[1].value = -1.0;
 		if (nummididevices > 0)
 		{
 			UINT id;
 			int p;
 
-			values[1].name = "MIDI Mapper";
-			values[1].value = -1.0;
 			for (id = 0, p = 2; id < nummididevices; ++id)
 			{
 				MIDIOUTCAPS caps;
@@ -107,7 +111,7 @@ void I_BuildMIDIMenuList (struct value_s **outValues, float *numValues)
 		}
 		else
 		{
-			*numValues = 1.f;
+			*numValues = 2.f;
 		}
 	}
 }
@@ -157,9 +161,9 @@ CCMD (snd_listmididevices)
 	MMRESULT res;
 
 	PrintMidiDevice (-2, "TiMidity++", 0, 0);
+	PrintMidiDevice (-1, "FMOD", 0, 0);
 	if (nummididevices != 0)
 	{
-		PrintMidiDevice (-1, "MIDI Mapper", MOD_MAPPER, 0);
 		for (id = 0; id < nummididevices; ++id)
 		{
 			res = midiOutGetDevCaps (id, &caps, sizeof(caps));
@@ -173,5 +177,40 @@ CCMD (snd_listmididevices)
 			PrintMidiDevice (id, caps.szPname, caps.wTechnology, caps.dwSupport);
 		}
 	}
+}
+
+#else
+
+// Everything but Windows uses this code.
+
+CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < -2)
+		self = -2;
+	else if (self > -1)
+		self = -1;
+}
+
+void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
+{
+	if (*outValues == NULL)
+	{
+		int count = 1 + nummididevices + (nummididevices > 0);
+		value_t *values;
+
+		*outValues = values = new value_t[count];
+
+		values[0].name = "TiMidity++";
+		values[0].value = -2.0;
+		values[1].name = "FMOD";
+		values[1].value = -1.0;
+		*numValues = 2.f;
+	}
+}
+
+CCMD (snd_listmididevices)
+{
+	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-1. FMOD\n", -1 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 }
 #endif

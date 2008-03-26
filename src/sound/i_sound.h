@@ -57,6 +57,7 @@ public:
 	virtual bool SetPaused (bool paused) = 0;
 	virtual unsigned int GetPosition () = 0;
 	virtual bool SetPosition (int pos);
+	virtual FString GetStats();
 };
 
 typedef bool (*SoundStreamCallback)(SoundStream *stream, void *buff, int len, void *userdata);

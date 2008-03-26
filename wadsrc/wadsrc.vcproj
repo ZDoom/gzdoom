@@ -177,15 +177,19 @@
 				Name="Map Translators"
 				>
 				<File
-					RelativePath=".\xlat\doomxlat.txt"
+					RelativePath=".\xlat\base.txt"
 					>
 				</File>
 				<File
-					RelativePath=".\xlat\hereticxlat.txt"
+					RelativePath=".\xlat\doom.txt"
 					>
 				</File>
 				<File
-					RelativePath=".\xlat\strifexlat.txt"
+					RelativePath=".\xlat\heretic.txt"
+					>
+				</File>
+				<File
+					RelativePath=".\xlat\strife.txt"
 					>
 				</File>
 				<Filter

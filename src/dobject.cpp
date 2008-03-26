@@ -418,16 +418,19 @@ void DObject::Destroy ()
 size_t DObject::PropagateMark()
 {
 	const PClass *info = GetClass();
-	const size_t *offsets = info->FlatPointers;
-	if (offsets == NULL)
+	if (!PClass::bShutdown)
 	{
-		const_cast<PClass *>(info)->BuildFlatPointers();
-		offsets = info->FlatPointers;
-	}
-	while (*offsets != ~(size_t)0)
-	{
-		GC::Mark((DObject **)((BYTE *)this + *offsets));
-		offsets++;
+		const size_t *offsets = info->FlatPointers;
+		if (offsets == NULL)
+		{
+			const_cast<PClass *>(info)->BuildFlatPointers();
+			offsets = info->FlatPointers;
+		}
+		while (*offsets != ~(size_t)0)
+		{
+			GC::Mark((DObject **)((BYTE *)this + *offsets));
+			offsets++;
+		}
 	}
 	return info->Size;
 }

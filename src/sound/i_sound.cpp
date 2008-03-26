@@ -68,12 +68,13 @@ extern HINSTANCE g_hInst;
 #include "w_wad.h"
 #include "i_video.h"
 #include "s_sound.h"
+#include "v_text.h"
 #include "gi.h"
 
 #include "doomdef.h"
 
 EXTERN_CVAR (Float, snd_sfxvolume)
-CVAR (Int, snd_samplerate, 48000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Int, snd_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_buffersize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output, "default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -124,7 +125,7 @@ void I_InitSound ()
 	{
 		delete GSnd;
 		GSnd = NULL;
-		Printf ("Sound init failed. Using nosound.\n");
+		Printf (TEXTCOLOR_RED"Sound init failed. Using nosound.\n");
 	}
 	I_InitMusic ();
 	snd_sfxvolume.Callback ();
@@ -214,4 +215,9 @@ SoundStream::~SoundStream ()
 bool SoundStream::SetPosition(int pos)
 {
 	return false;
+}
+
+FString SoundStream::GetStats()
+{
+	return "No stream stats available.";
 }

@@ -138,6 +138,8 @@ struct PClass
 
 	enum { HASH_SIZE = 256 };
 	static PClass *TypeHash[HASH_SIZE];
+
+	static bool bShutdown;
 };
 
 #endif

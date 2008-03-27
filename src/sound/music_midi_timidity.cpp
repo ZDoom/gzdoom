@@ -244,6 +244,7 @@ TimiditySong::TimiditySong (FILE *file, char * musiccache, int len)
 void TimiditySong::PrepTimidity ()
 {
 	int pipeSize;
+
 #ifdef _WIN32
 	static SECURITY_ATTRIBUTES inheritable = { sizeof(inheritable), NULL, TRUE };
 	
@@ -267,6 +268,11 @@ void TimiditySong::PrepTimidity ()
 
 	pipeSize = (timidity_pipe * timidity_frequency / 1000)
 		<< (timidity_stereo + !timidity_8bit);
+
+    if (GSnd == NULL)
+    { // Can't pipe if using no sound.
+        pipeSize = 0;
+    }
 
 	if (pipeSize != 0)
 	{
@@ -520,11 +526,11 @@ bool TimiditySong::LaunchTimidity ()
 		close (WavePipe[0]);
 		dup2 (WavePipe[1], STDOUT_FILENO);
 		freopen ("/dev/null", "r", stdin);
-		freopen ("/dev/null", "w", stderr);
+//		freopen ("/dev/null", "w", stderr);
 		close (WavePipe[1]);
 
-		printf ("exec %s\n", words.we_wordv[0]);
 		execvp (words.we_wordv[0], words.we_wordv);
+		fprintf(stderr,"execvp failed\n");
 		exit (0);	// if execvp succeeds, we never get here
 	}
 	else if (forkres < 0)
@@ -537,6 +543,11 @@ bool TimiditySong::LaunchTimidity ()
 		ChildProcess = forkres;
 		close (WavePipe[1]);
 		WavePipe[1] = -1;
+/*		usleep(1000000);
+		if (waitpid(ChildProcess, NULL, WNOHANG) == ChildProcess)
+		{
+		    fprintf(stderr,"Launching timidity failed\n");
+		}*/
 	}
 	
 	wordfree (&words);
@@ -576,19 +587,34 @@ bool TimiditySong::FillStream (SoundStream *stream, void *buff, int len, void *u
 	}
 #else
 	ssize_t got;
+	fd_set rfds;
+	struct timeval tv;
+
+	if (ChildQuit == song->ChildProcess)
+	{
+		ChildQuit = 0;
+		fprintf (stderr, "child gone\n");
+		song->ChildProcess = -1;
+		return false;
+	}
+
+	FD_ZERO(&rfds);
+	FD_SET(song->WavePipe[0], &rfds);
+	tv.tv_sec = 0;
+	tv.tv_usec = 50;
+//	fprintf(stderr,"select\n");
+	if (select(1, &rfds, NULL, NULL, &tv) <= 0 && 0)
+	{ // Nothing available, so play silence.
+//	fprintf(stderr,"nothing\n");
+	 //   memset(buff, 0, len);
+	    return true;
+	}
+//	fprintf(stderr,"something\n");
 
 	got = read (song->WavePipe[0], (BYTE *)buff, len);
 	if (got < len)
 	{
 		memset ((BYTE *)buff+got, 0, len-got);
-	}
-
-	if (ChildQuit == song->ChildProcess)
-	{
-		ChildQuit = 0;
-//		printf ("child gone\n");
-		song->ChildProcess = -1;
-		return false;
 	}
 #endif
 	return true;

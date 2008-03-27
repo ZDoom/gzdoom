@@ -193,8 +193,8 @@ void R_InitPicAnims (void)
 			if (debuganimated)
 			{
 				Printf("Defining animation '%s' (texture %d, lump %d, file %d) to '%s' (texture %d, lump %d, file %d)\n",
-					tex1->Name, tex1->GetSourceLump(), Wads.GetLumpFile(tex1->GetSourceLump()),
-					tex2->Name, tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
+					tex1->Name, pic1, tex1->GetSourceLump(), Wads.GetLumpFile(tex1->GetSourceLump()),
+					tex2->Name, pic2, tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
 			}
 
 			/* FIXME: doesn't work with hires texture replacements.

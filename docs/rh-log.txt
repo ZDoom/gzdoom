@@ -1,3 +1,19 @@
+March 26, 2008
+- Added FMOD_OPENONLY to the callback version of CreateStream() to prevent it
+  from doing prebuffering of the song. This was causing the Linux version to
+  hang while waiting for input from the pipe, since Timidity hadn't been
+  started yet. I tried using a select call in the FillStream() method, but it
+  always seems to return the pipe as having nothing available. Unfortunately,
+  the game still falls all over itself if Timidity isn't available. Instead
+  of execvp failing nicely, X errors kill the game. I don't know why it's
+  doing that. My advice for Linux music: Skip Timidity++ and get a DLS patch
+  set (/WINDOWS/system32/drivers/gm.dls is probably the most common by far)
+  and set the snd_midipatchset cvar to point to it. It's faster and also
+  sounds a whole lot better than the crappy freepats Ubuntu wants to install
+  with Timidity++ (thank goodness I have the official patches from a real
+  GUS so I don't need to use them).
+- GCC fixes.
+
 March 26, 2008 (Changes by Graf Zahl)
 - Fixed: After starting new music the music volume has to be reset so that
   the song's relative volume takes effect.
@@ -16,7 +32,7 @@ March 25, 2008
 - Added FMOD as MIDI device -1, to replace the MIDI mapper. This is still the
   default device. By default, it uses exactly the same DLS instruments as the
   Microsoft GS Wavetable Synth. If you have another set DLS level 1 patch set
-  you want to use, set the snd_midipatchfile cvar to specify where it should
+  you want to use, set the snd_midipatchset cvar to specify where it should
   load the instruments from.
 - Changed the ProduceMIDI function to store its output into a TArray<BYTE>.
   An overloaded version wraps around it to continue to supply file-writing

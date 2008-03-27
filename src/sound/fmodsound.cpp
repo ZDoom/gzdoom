@@ -942,7 +942,7 @@ SoundStream *FMODSoundRenderer::CreateStream (SoundStreamCallback callback, int 
 	
 	capsule = new FMODStreamCapsule (userdata, callback, this);
 
-	mode = FMOD_2D | FMOD_OPENUSER | FMOD_LOOP_NORMAL | FMOD_SOFTWARE | FMOD_CREATESTREAM;
+	mode = FMOD_2D | FMOD_OPENUSER | FMOD_LOOP_NORMAL | FMOD_SOFTWARE | FMOD_CREATESTREAM | FMOD_OPENONLY;
 	sample_shift = (flags & SoundStream::Bits8) ? 0 : 1;
 	channel_shift = (flags & SoundStream::Mono) ? 0 : 1;
 

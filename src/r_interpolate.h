@@ -62,3 +62,4 @@ void clearinterpolations();
 void SerializeInterpolations(FArchive &arc);
 
 #endif
+

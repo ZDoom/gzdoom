@@ -243,6 +243,19 @@ static const char *IWADNames[] =
 	"hexdd.wad",
 	"strife1.wad",
 	"strife0.wad",
+#ifdef unix
+	"DOOM2.WAD",    // Also look for all-uppercase names
+	"PLUTONIA.WAD",
+	"TNT.WAD",
+	"DOOM.WAD",
+	"DOOM1.WAD",
+	"HERETIC.WAD",
+	"HERETIC1.WAD",
+	"HEXEN.WAD",
+	"HEXDD.WAD",
+	"STRIFE1.WAD",
+	"STRIFE0.WAD",
+#endif
 	NULL
 };
 

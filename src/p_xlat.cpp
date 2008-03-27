@@ -343,7 +343,7 @@ int P_TranslateSectorSpecial (int special)
 		}
 	}
 	
-	if (special>=0 && special<SectorTranslations.Size())
+	if ((unsigned)special < SectorTranslations.Size())
 	{
 		if (SectorTranslations[special].bitmask_allowed && mask) special = 0;
 		else special = SectorTranslations[special].newtype;

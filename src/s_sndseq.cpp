@@ -502,7 +502,7 @@ void S_ParseSndSeq (int levellump)
 		FScanner sc(lump, "SNDSEQ");
 		while (sc.GetString ())
 		{
-			bool bDoorSound;
+			bool bDoorSound = false;
 
 			if (*sc.String == ':' || *sc.String == '[')
 			{

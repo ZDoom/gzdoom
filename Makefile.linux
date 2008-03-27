@@ -1,5 +1,6 @@
 # created on 4/12/2006 by James Bentler
 
+FMOD_PREFIX = /usr/local
 CXX ?= g++
 CC ?= gcc
 NASM ?= nasm
@@ -16,13 +17,13 @@ endif
 #endif
 CFLAGS += -MMD -DHAVE_FILELENGTH -D__forceinline=inline `sdl-config --cflags` `pkg-config gtk+-2.0 --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
-LDFLAGS += -lz -ljpeg -lfmodex `sdl-config --libs` `pkg-config gtk+-2.0 --libs`
+LDFLAGS += -lz -ljpeg -`sdl-config --libs` `pkg-config gtk+-2.0 --libs` $(FMOD_PREFIX)/lib/libfmodex.so
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
 SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ thingdef/ xlat/)
 VPATH = $(SRCDIRS)
 INCLUDES = $(addprefix -I,$(SRCDIRS))
-INCLUDES += -Isnes_spc/snes_spc/ -I/usr/include/fmodex/
+INCLUDES += -Isnes_spc/snes_spc/ -I$(FMOD_PREFIX)/include/fmodex/
 CFLAGS += $(INCLUDES)
 
 RELEASEOBJ ?= releaseobj

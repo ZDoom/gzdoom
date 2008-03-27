@@ -335,7 +335,7 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 				{
 					BYTE *mus = new BYTE[len];
 					size_t did_read = fread(mus, 1, len, file);
-					if (did_read == len)
+					if (did_read == (size_t)len)
 					{
 						midi_made = ProduceMIDI(mus, midi);
 					}
@@ -344,11 +344,6 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 				}
 				if (midi_made)
 				{
-					/*
-					FILE *f = fopen("latest.mid", "wb");
-					fwrite(&midi[0], 1, midi.Size(), f);
-					fclose(f);
-					*/
 					info = new StreamSong((char *)&midi[0], -1, midi.Size());
 					if (!info->IsValid())
 					{

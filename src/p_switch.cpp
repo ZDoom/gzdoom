@@ -371,6 +371,7 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 			}
 			else
 			{
+			    thisframe.Time = 0;     // Shush, GCC.
 				sc.ScriptError ("Must specify a duration for switch frame");
 			}
 			frames.Push(thisframe);

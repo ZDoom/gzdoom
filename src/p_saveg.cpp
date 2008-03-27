@@ -230,7 +230,7 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 
 	if (dst->isbot)
 	{
-		botinfo_t *thebot = bglobal.botinfo;
+		botinfo_t *thebot = bglobal->botinfo;
 		while (thebot && stricmp (name, thebot->name))
 		{
 			thebot = thebot->next;
@@ -239,8 +239,8 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 		{
 			thebot->inuse = true;
 		}
-		bglobal.botnum++;
-		bglobal.botingame[dst - players] = true;
+		bglobal->botnum++;
+		bglobal->botingame[dst - players] = true;
 	}
 	else
 	{

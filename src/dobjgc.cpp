@@ -312,8 +312,7 @@ static void MarkRoot()
 	}
 	Mark(SectorMarker);
 	{ // Silly bots
-		DObject *foo = &bglobal;
-		Mark(foo);
+		Mark(bglobal);
 	}
 	// Add soft roots
 	if (SoftRoots != NULL)

@@ -718,7 +718,7 @@ void D_Display ()
 void D_ErrorCleanup ()
 {
 	screen->Unlock ();
-	bglobal.RemoveAllBots (true);
+	bglobal->RemoveAllBots (true);
 	D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
@@ -772,7 +772,7 @@ void D_DoomLoop ()
 						players[i].savedpitch = players[i].mo->pitch;
 					}
 				}
-				bglobal.Main (maketic%BACKUPTICS);
+				bglobal->Main (maketic%BACKUPTICS);
 				for (i = 0; i < MAXPLAYERS; i++)
 				{
 					if (playeringame[i] && players[i].isbot && players[i].mo)
@@ -2433,16 +2433,17 @@ void D_DoomMain (void)
 	}
 
 	//Added by MC:
-	bglobal.getspawned = Args->GatherFiles ("-bots", "", false);
-	if (bglobal.getspawned->NumArgs() == 0)
+	bglobal->getspawned = Args->GatherFiles ("-bots", "", false);
+	if (bglobal->getspawned->NumArgs() == 0)
 	{
-		bglobal.getspawned->Destroy();
-		bglobal.getspawned = NULL;
+		bglobal->getspawned->Destroy();
+		bglobal->getspawned = NULL;
 	}
 	else
 	{
-		bglobal.spawn_tries = 0;
-		bglobal.wanted_botnum = bglobal.getspawned->NumArgs();
+		GC::WriteBarrier(bglobal, bglobal->getspawned);
+		bglobal->spawn_tries = 0;
+		bglobal->wanted_botnum = bglobal->getspawned->NumArgs();
 	}
 
 	Printf ("M_Init: Init miscellaneous info.\n");

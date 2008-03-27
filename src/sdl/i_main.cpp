@@ -132,6 +132,7 @@ void STACK_ARGS call_terms ()
 static void FinalGC()
 {
 	Args = NULL;
+	bglobal = NULL;
 	GC::FullGC();
 }
 

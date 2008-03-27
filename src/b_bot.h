@@ -78,6 +78,7 @@ class DCajunMaster : public DObject
 	DECLARE_CLASS (DCajunMaster, DObject)
 	HAS_OBJECT_POINTERS
 public:
+	DCajunMaster();
 	~DCajunMaster();
 
 	void ClearPlayer (int playernum, bool keepTeam);
@@ -148,7 +149,7 @@ protected:
 
 
 //Externs
-extern DCajunMaster bglobal;
+extern DCajunMaster *bglobal;
 
 EXTERN_CVAR (Float, bot_flag_return_time)
 EXTERN_CVAR (Int, bot_next_color)

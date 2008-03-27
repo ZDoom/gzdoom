@@ -329,7 +329,7 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	}
 	int weapgiveammo = (alwaysapplydmflags || deathmatch) && !(dmflags & DF_WEAPONS_STAY);
 
-	//if(pos && !bglobal.thingvis[pos->id][item->id]) continue;
+	//if(pos && !bglobal->thingvis[pos->id][item->id]) continue;
 //	if (item->IsKindOf (RUNTIME_CLASS(AArtifact)))
 //		return;	// don't know how to use artifacts
 	if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))

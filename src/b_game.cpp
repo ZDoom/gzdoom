@@ -61,7 +61,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 static FRandom pr_botspawn ("BotSpawn");
 
 //Externs
-DCajunMaster bglobal;
+DCajunMaster *bglobal;
 
 cycle_t BotThinkCycles, BotSupportCycles, BotWTG;
 
@@ -87,6 +87,26 @@ enum
 };
 
 static bool waitingforspawn[MAXPLAYERS];
+
+DCajunMaster::DCajunMaster()
+{
+	firstthing = NULL;
+	body1 = NULL;
+	body2 = NULL;
+	getspawned = NULL;
+	memset(botingame, 0, sizeof(botingame));
+	freeze = false;
+	changefreeze = false;
+	botnum = 0;
+	botinfo = NULL;
+	spawn_tries = 0;
+	wanted_botnum = NULL;
+	m_Thinking = false;
+	ctf = false;
+	loaded_bots = 0;
+	t_join = 0;
+	observer = false;
+}
 
 DCajunMaster::~DCajunMaster()
 {
@@ -218,7 +238,10 @@ void DCajunMaster::End ()
 	if (getspawned)
 		getspawned->FlushArgs ();
 	else
+	{
 		getspawned = new DArgs;
+		GC::WriteBarrier(this, getspawned);
+	}
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i] && players[i].isbot)
@@ -509,7 +532,7 @@ bool DCajunMaster::LoadBots ()
 	FString tmp;
 	bool gotteam = false;
 
-	bglobal.ForgetBots ();
+	bglobal->ForgetBots ();
 #ifndef unix
 	tmp = progdir;
 	tmp += "zcajun/" BOTFILENAME;
@@ -639,12 +662,12 @@ bool DCajunMaster::LoadBots ()
 			appendinfo (newinfo->info, "team");
 			appendinfo (newinfo->info, "255");
 		}
-		newinfo->next = bglobal.botinfo;
+		newinfo->next = bglobal->botinfo;
 		newinfo->lastteam = TEAM_None;
-		bglobal.botinfo = newinfo;
-		bglobal.loaded_bots++;
+		bglobal->botinfo = newinfo;
+		bglobal->loaded_bots++;
 	}
-	Printf ("%d bots read from %s\n", bglobal.loaded_bots, BOTFILENAME);
+	Printf ("%d bots read from %s\n", bglobal->loaded_bots, BOTFILENAME);
 	return true;
 }
 

@@ -561,10 +561,10 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		player->respawn_time = level.time + TICRATE;
 
 		//Added by MC: Respawn bots
-		if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback)
+		if (bglobal->botnum && consoleplayer == Net_Arbitrator && !demoplayback)
 		{
 			if (player->isbot)
-				player->t_respawn = (pr_botrespawn()%15)+((bglobal.botnum-1)*2)+TICRATE+1;
+				player->t_respawn = (pr_botrespawn()%15)+((bglobal->botnum-1)*2)+TICRATE+1;
 
 			//Added by MC: Discard enemies.
 			for (int i = 0; i < MAXPLAYERS; i++)

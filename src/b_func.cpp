@@ -63,7 +63,7 @@ static bool PTR_Reachable (intercept_t *in)
 			fixed_t ceilingheight = s->ceilingplane.ZatPoint (hitx, hity);
 			fixed_t floorheight = s->floorplane.ZatPoint (hitx, hity);
 
-			if (!bglobal.IsDangerous (s) &&		//Any nukage/lava?
+			if (!bglobal->IsDangerous (s) &&		//Any nukage/lava?
 				(floorheight <= (last_z+MAXMOVEHEIGHT)
 				&& ((ceilingheight == floorheight && line->special)
 					|| (ceilingheight - floorheight) >= looker->height))) //Does it fit?
@@ -369,7 +369,7 @@ AActor *DCajunMaster::Choose_Mate (AActor *bot)
 	//Make a introducing to mate.
 	if(target && target!=bot->player->last_mate)
 	{
-		if((P_Random()%(200*bglobal.botnum))<3)
+		if((P_Random()%(200*bglobal->botnum))<3)
 		{
 			bot->player->chat = c_teamup;
 			if(target->bot)
@@ -527,7 +527,7 @@ angle_t DCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 			   bot->y + FixedMul(bot->momy, 5*FRACUNIT),
 			   bot->z + (bot->height / 2), 2);
 
-	actor = bglobal.body2;
+	actor = bglobal->body2;
 
 	dist = P_AproxDistance (actor->x-enemy->x, actor->y-enemy->y);
 	if (dist < SAFE_SELF_MISDIST)
@@ -537,15 +537,15 @@ angle_t DCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 
 	SetBodyAt (enemy->x + FixedMul (enemy->momx, (m+2*FRACUNIT)),
 			   enemy->y + FixedMul(enemy->momy, (m+2*FRACUNIT)), ONFLOORZ, 1);
-	dist = P_AproxDistance(actor->x-bglobal.body1->x, actor->y-bglobal.body1->y);
+	dist = P_AproxDistance(actor->x-bglobal->body1->x, actor->y-bglobal->body1->y);
 	//try the predicted location
-	if (P_CheckSight (actor, bglobal.body1, 1)) //See the predicted location, so give a test missile
+	if (P_CheckSight (actor, bglobal->body1, 1)) //See the predicted location, so give a test missile
 	{
 		if (SafeCheckPosition (bot, actor->x, actor->y))
 		{
-			if (FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
+			if (FakeFire (actor, bglobal->body1, cmd) >= SAFE_SELF_MISDIST)
 			{
-				ang = R_PointToAngle2 (actor->x, actor->y, bglobal.body1->x, bglobal.body1->y);
+				ang = R_PointToAngle2 (actor->x, actor->y, bglobal->body1->x, bglobal->body1->y);
 				return ang;
 			}
 		}

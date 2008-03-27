@@ -1218,8 +1218,8 @@ void G_PlayerReborn (int player)
 	}
 
     //Added by MC: Init bot structure.
-    if (bglobal.botingame[player])
-        bglobal.CleanBotstuff (p);
+    if (bglobal->botingame[player])
+        bglobal->CleanBotstuff (p);
     else
 		p->isbot = false;
 
@@ -1764,7 +1764,7 @@ void G_DoLoadGame ()
 	// Read intermission data for hubs
 	G_ReadHubInfo(png);
 
-	bglobal.RemoveAllBots (true);
+	bglobal->RemoveAllBots (true);
 
 	text = M_GetPNGText (png, "Important CVARs");
 	if (text != NULL)

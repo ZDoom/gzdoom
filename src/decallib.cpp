@@ -1135,7 +1135,7 @@ void DDecalFader::Tick ()
 	}
 	else
 	{
-		if (level.maptime < TimeToStartDecay || bglobal.freeze)
+		if (level.maptime < TimeToStartDecay || bglobal->freeze)
 		{
 			return;
 		}
@@ -1218,7 +1218,7 @@ void DDecalStretcher::Tick ()
 		Destroy ();
 		return;
 	}
-	if (level.maptime < TimeToStart || bglobal.freeze)
+	if (level.maptime < TimeToStart || bglobal->freeze)
 	{
 		return;
 	}
@@ -1287,7 +1287,7 @@ void DDecalSlider::Tick ()
 		Destroy ();
 		return;
 	}
-	if (level.maptime < TimeToStart || bglobal.freeze)
+	if (level.maptime < TimeToStart || bglobal->freeze)
 	{
 		return;
 	}
@@ -1353,7 +1353,7 @@ void DDecalColorer::Tick ()
 	}
 	else
 	{
-		if (level.maptime < TimeToStartDecay || bglobal.freeze)
+		if (level.maptime < TimeToStartDecay || bglobal->freeze)
 		{
 			return;
 		}

@@ -641,7 +641,7 @@ void PlayerIsGone (int netnode, int netconsole)
 	FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, NULL, true, netconsole);
 	if (netconsole == Net_Arbitrator)
 	{
-		bglobal.RemoveAllBots (true);
+		bglobal->RemoveAllBots (true);
 		Printf ("Removed all bots\n");
 
 		// Pick a new network arbitrator
@@ -966,7 +966,7 @@ void NetUpdate (void)
 		if (maketic % ticdup == 0)
 		{
 			//Added by MC: For some of that bot stuff. The main bot function.
-			bglobal.Main ((maketic / ticdup) % BACKUPTICS);
+			bglobal->Main ((maketic / ticdup) % BACKUPTICS);
 		}
 		maketic++;
 
@@ -2048,12 +2048,12 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 	case DEM_ADDBOT:
 		{
 			BYTE num = ReadByte (stream);
-			bglobal.DoAddBot (num, s = ReadString (stream));
+			bglobal->DoAddBot (num, s = ReadString (stream));
 		}
 		break;
 
 	case DEM_KILLBOTS:
-		bglobal.RemoveAllBots (true);
+		bglobal->RemoveAllBots (true);
 		Printf ("Removed all bots\n");
 		break;
 

@@ -311,6 +311,15 @@ ReverbContainer *S_FindEnvironment (const char *name);
 ReverbContainer *S_FindEnvironment (int id);
 void S_AddEnvironment (ReverbContainer *settings);
 
+enum EMidiDevice
+{
+	MDEV_DEFAULT = -1,
+	MDEV_MMAPI = 0,
+	MDEV_TIMIDITY = 1,
+	MDEV_OPL = 2,
+	MDEV_FMOD = 3,
+};
+
 typedef TMap<FName, int> MidiDeviceMap;
 
 extern MidiDeviceMap MidiDevices;

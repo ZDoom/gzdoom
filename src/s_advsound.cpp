@@ -1261,10 +1261,11 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString();
 				FName nm = sc.String;
 				sc.MustGetString();
-				if (sc.Compare("timidity")) MidiDevices[nm] = 1;
-				else if (sc.Compare("standard")) MidiDevices[nm] = 0;
-				else if (sc.Compare("opl")) MidiDevices[nm] = 2;
-				else if (sc.Compare("default")) MidiDevices[nm] = -1;
+				if (sc.Compare("timidity")) MidiDevices[nm] = MDEV_TIMIDITY;
+				else if (sc.Compare("fmod")) MidiDevices[nm] = MDEV_FMOD;
+				else if (sc.Compare("standard")) MidiDevices[nm] = MDEV_MMAPI;
+				else if (sc.Compare("opl")) MidiDevices[nm] = MDEV_OPL;
+				else if (sc.Compare("default")) MidiDevices[nm] = MDEV_DEFAULT;
 				else sc.ScriptError("Unknown MIDI device %s\n", sc.String);
 				}
 				break;

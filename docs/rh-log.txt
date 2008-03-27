@@ -1,4 +1,10 @@
 March 26, 2008 (Changes by Graf Zahl)
+- Fixed: After starting new music the music volume has to be reset so that
+  the song's relative volume takes effect.
+- Removed the arbitrary 1024 bytes limit when the file being played is a MIDI
+  file. I had a D_DM2TTL that's only 990 bytes.
+- Restructured I_RegisterSong so that $mididevice works again and also supports
+  selecting FMOD.
 - Added Jim' Linux fix.
 - Added MartinHowe's fix for mugshot display in status bars.
 

@@ -1307,10 +1307,10 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	{
 		int lumpnum = -1;
 		int offset, length;
-		int device = -1;
+		int device = MDEV_DEFAULT;
 	
 
-		int * devp = MidiDevices.CheckKey(FName(musicname));
+		int *devp = MidiDevices.CheckKey(FName(musicname));
 		if (devp != NULL) device = *devp;
 
 		if (!FileExists (musicname))

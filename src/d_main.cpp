@@ -718,7 +718,7 @@ void D_Display ()
 void D_ErrorCleanup ()
 {
 	screen->Unlock ();
-	bglobal->RemoveAllBots (true);
+	bglobal.RemoveAllBots (true);
 	D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
@@ -772,7 +772,7 @@ void D_DoomLoop ()
 						players[i].savedpitch = players[i].mo->pitch;
 					}
 				}
-				bglobal->Main (maketic%BACKUPTICS);
+				bglobal.Main (maketic%BACKUPTICS);
 				for (i = 0; i < MAXPLAYERS; i++)
 				{
 					if (playeringame[i] && players[i].isbot && players[i].mo)
@@ -1526,6 +1526,7 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 			
 			iwad.Format ("%s%s%s", doomwaddir, slash, IWADNames[i]);
 			FixPathSeperator (iwad.LockBuffer());
+			iwad.UnlockBuffer();
 			if (FileExists (iwad))
 			{
 				wads[i].Type = ScanIWAD (iwad);
@@ -1656,7 +1657,7 @@ static int CheckIWADinEnvDir (const char *str, WadStuff *wads)
 
 static EIWADType IdentifyVersion (const char *zdoom_wad)
 {
-	WadStuff wads[sizeof(IWADNames)/sizeof(char *)];
+	WadStuff wads[countof(IWADNames)];
 	size_t foundwads[NUM_IWAD_TYPES] = { 0 };
 	const char *iwadparm = Args->CheckValue ("-iwad");
 	size_t numwads;
@@ -1746,7 +1747,7 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 			{
 				wads[numwads] = wads[i];
 			}
-			foundwads[wads[numwads].Type] = numwads+1;
+			foundwads[wads[numwads].Type] = numwads + 1;
 			numwads++;
 		}
 	}
@@ -1754,11 +1755,19 @@ static EIWADType IdentifyVersion (const char *zdoom_wad)
 	if (foundwads[IWAD_HexenDK] && !foundwads[IWAD_Hexen])
 	{ // Cannot play Hexen DK without Hexen
 		size_t kill = foundwads[IWAD_HexenDK];
-		if (kill != numwads)
+		for (i = kill; i < numwads; ++i)
 		{
-			memmove (&wads[kill-1], &wads[kill], numwads - kill);
+			wads[i - 1] = wads[i];
 		}
 		numwads--;
+		foundwads[IWAD_HexenDK] = 0;
+		for (i = 0; i < NUM_IWAD_TYPES; ++i)
+		{
+			if (foundwads[i] > kill)
+			{
+				foundwads[i]--;
+			}
+		}
 	}
 
 	if (numwads == 0)
@@ -2433,18 +2442,13 @@ void D_DoomMain (void)
 	}
 
 	//Added by MC:
-	bglobal->getspawned = Args->GatherFiles ("-bots", "", false);
-	if (bglobal->getspawned->NumArgs() == 0)
+	DArgs *bots = Args->GatherFiles("-bots", "", false);
+	for (p = 0; p < bots->NumArgs(); ++p)
 	{
-		bglobal->getspawned->Destroy();
-		bglobal->getspawned = NULL;
+		bglobal.getspawned.Push(bots->GetArg(p));
 	}
-	else
-	{
-		GC::WriteBarrier(bglobal, bglobal->getspawned);
-		bglobal->spawn_tries = 0;
-		bglobal->wanted_botnum = bglobal->getspawned->NumArgs();
-	}
+	bglobal.spawn_tries = 0;
+	bglobal.wanted_botnum = bglobal.getspawned.Size();
 
 	Printf ("M_Init: Init miscellaneous info.\n");
 	M_Init ();

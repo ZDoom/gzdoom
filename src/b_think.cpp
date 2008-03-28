@@ -23,7 +23,7 @@ static FRandom pr_botmove ("BotMove");
 
 //This function is called each tic for each bot,
 //so this is what the bot does.
-void DCajunMaster::Think (AActor *actor, ticcmd_t *cmd)
+void FCajunMaster::Think (AActor *actor, ticcmd_t *cmd)
 {
 	memset (cmd, 0, sizeof(*cmd));
 
@@ -71,7 +71,7 @@ void DCajunMaster::Think (AActor *actor, ticcmd_t *cmd)
 
 //how the bot moves.
 //MAIN movement function.
-void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
+void FCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 {
 	player_t *b;
 	fixed_t dist;
@@ -312,7 +312,7 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 //BOT_WhatToGet
 //
 //Determines if the bot will roam after an item or not.
-void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
+void FCajunMaster::WhatToGet (AActor *actor, AActor *item)
 {
 	player_t *b = actor->player;
 
@@ -329,7 +329,7 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	}
 	int weapgiveammo = (alwaysapplydmflags || deathmatch) && !(dmflags & DF_WEAPONS_STAY);
 
-	//if(pos && !bglobal->thingvis[pos->id][item->id]) continue;
+	//if(pos && !bglobal.thingvis[pos->id][item->id]) continue;
 //	if (item->IsKindOf (RUNTIME_CLASS(AArtifact)))
 //		return;	// don't know how to use artifacts
 	if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
@@ -376,7 +376,7 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	}
 }
 
-void DCajunMaster::Set_enemy (AActor *actor)
+void FCajunMaster::Set_enemy (AActor *actor)
 {
 	AActor *oldenemy;
 	AActor **enemy = &actor->player->enemy;

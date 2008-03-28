@@ -403,8 +403,8 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_FREEZE:
-		bglobal->changefreeze ^= 1;
-		if (bglobal->freeze ^ bglobal->changefreeze)
+		bglobal.changefreeze ^= 1;
+		if (bglobal.freeze ^ bglobal.changefreeze)
 		{
 			msg = "Freeze mode on";
 		}

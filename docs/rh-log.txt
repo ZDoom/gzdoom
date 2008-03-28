@@ -1,3 +1,19 @@
+March 27, 2008
+- Changed D3DFB to explicitly request double buffering instead of assuming
+  that the drivers will treat a BackBufferCount of 0 as a request for
+  double buffering.
+- Fixed: Unsetting a cvar did not remove it from the list of tab
+  completions.
+- Added "" as a synonym for "nullimage" in SBARINFO.
+- Fixed: MAKESAVESIG's stringifier in version.h did not work as expected.
+  It stringified the passed macro name, not the value of the macro.
+- Moved DCajunMaster off the DObject hierarchy.
+- Changed DCajunMaster::getspawned into a TArray of FStrings. It was
+  mysteriously being left pointing to uninitialized memory during the
+  final GC at exit and crashing.
+- Fixed: The code that removed hexdd.wad from the list of IWADs when
+  hexen.wad was not present did not work.
+
 March 27, 2008 (Changes by Graf Zahl)
 - Fixed: DCajunMaster::End was missing a write barrier for getspawned. The
   same problem in D_DoomMain.
@@ -5,6 +21,7 @@ March 27, 2008 (Changes by Graf Zahl)
   collector.
 
 March 26, 2008
+- Added uppercase copies of the IWAD names to the IWAD search for Unix land.
 - Added FMOD_OPENONLY to the callback version of CreateStream() to prevent it
   from doing prebuffering of the song. This was causing the Linux version to
   hang while waiting for input from the pipe, since Timidity hadn't been
@@ -14394,7 +14411,7 @@ July 21, 1999
   damage.
 - Changed bot observer mode to use noclip instead of noblockmap. Otherwise,
   the player is unable to ride lifts while observing.
-- The bot code spawns bglobal->body1 and bglobal->body2 actors to help with
+- The bot code spawns bglobal.body1 and bglobal.body2 actors to help with
   aiming. The original code would carry pointers to these over between
   levels, even though all actors disappear when travelling between levels.
   Not a good thing. Fixed.
@@ -14444,7 +14461,7 @@ July 14, 1999
   the for loop.
 
 July 12, 1999
-- Enclosed the bot thinking code inside if (bglobal->botnum) {} blocks so that
+- Enclosed the bot thinking code inside if (bglobal.botnum) {} blocks so that
   no bot thinking occurs when there are no bots. Also defaulted bot_calcnodes
   to 0. If a bot is spawned, and there are no nodes loaded, bot_calcnodes
   will automatically be set to 1. Now the bots don't eat up any time if none

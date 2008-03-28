@@ -1739,7 +1739,7 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		if (thing->player && thing->player->isbot && thing->flags & MF_SHOOTABLE)
 		{
 			if (tmsector != thing->Sector
-				&& bglobal->IsDangerous (tmsector))
+				&& bglobal.IsDangerous (tmsector))
 			{
 				thing->player->prev = thing->player->dest;
 				thing->player->dest = NULL;

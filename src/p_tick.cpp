@@ -78,10 +78,10 @@ void P_Ticker (void)
 	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
 	if ((level.time & 3) == 0)
 	{
-		if (bglobal->changefreeze)
+		if (bglobal.changefreeze)
 		{
-			bglobal->freeze ^= 1;
-			bglobal->changefreeze = 0;
+			bglobal.freeze ^= 1;
+			bglobal.changefreeze = 0;
 		}
 	}
 
@@ -102,7 +102,7 @@ void P_Ticker (void)
 	// Since things will be moving, it's okay to interpolate them in the renderer.
 	r_NoInterpolate = false;
 
-	if (!bglobal->freeze && !(level.flags & LEVEL_FROZEN))
+	if (!bglobal.freeze && !(level.flags & LEVEL_FROZEN))
 	{
 		P_ThinkParticles ();	// [RH] make the particles think
 	}
@@ -110,14 +110,14 @@ void P_Ticker (void)
 
 	for (i = 0; i<MAXPLAYERS; i++)
 		if (playeringame[i] &&
-			/*Added by MC: Freeze mode.*/!(bglobal->freeze && players[i].isbot))
+			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].isbot))
 			P_PlayerThink (&players[i]);
 
 	level.Tick ();			// [RH] let the level tick
 	DThinker::RunThinkers ();
 
 	//if added by MC: Freeze mode.
-	if (!bglobal->freeze && !(level.flags & LEVEL_FROZEN))
+	if (!bglobal.freeze && !(level.flags & LEVEL_FROZEN))
 	{
 		P_UpdateSpecials ();
 		P_RunEffects ();	// [RH] Run particle effects

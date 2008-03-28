@@ -73,13 +73,10 @@ struct botinfo_t
 };
 
 //Used to keep all the globally needed variables in nice order.
-class DCajunMaster : public DObject
+class FCajunMaster
 {
-	DECLARE_CLASS (DCajunMaster, DObject)
-	HAS_OBJECT_POINTERS
 public:
-	DCajunMaster();
-	~DCajunMaster();
+	~FCajunMaster();
 
 	void ClearPlayer (int playernum, bool keepTeam);
 
@@ -110,7 +107,7 @@ public:
 	void Pitch (AActor *actor, AActor *target);
 	bool IsDangerous (sector_t *sec);
 
-	DArgs *getspawned; //Array of bots (their names) which should be spawned when starting a game.
+	TArray<FString> getspawned; //Array of bots (their names) which should be spawned when starting a game.
 	bool botingame[MAXPLAYERS];
 	BYTE freeze:1;			//Game in freeze mode.
 	BYTE changefreeze:1;	//Game wants to change freeze mode.
@@ -119,6 +116,8 @@ public:
 	int spawn_tries;
 	int wanted_botnum;
 	TObjPtr<AActor> firstthing;
+	TObjPtr<AActor>	body1;
+	TObjPtr<AActor> body2;
 
 	bool	 m_Thinking;
 
@@ -142,14 +141,12 @@ protected:
 	bool	 ctf;
 	int		 loaded_bots;
 	int		 t_join;
-	TObjPtr<AActor>	body1;
-	TObjPtr<AActor> body2;
 	bool	 observer; //Consoleplayer is observer.
 };
 
 
 //Externs
-extern DCajunMaster *bglobal;
+extern FCajunMaster bglobal;
 
 EXTERN_CVAR (Float, bot_flag_return_time)
 EXTERN_CVAR (Int, bot_next_color)

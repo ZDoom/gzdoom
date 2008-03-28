@@ -46,7 +46,7 @@ extern TArray<line_t *> spechit;
 
 //Called while the bot moves after its player->dest mobj
 //which can be a weapon/enemy/item whatever.
-void DCajunMaster::Roam (AActor *actor, ticcmd_t *cmd)
+void FCajunMaster::Roam (AActor *actor, ticcmd_t *cmd)
 {
 	int delta;
 
@@ -72,7 +72,7 @@ void DCajunMaster::Roam (AActor *actor, ticcmd_t *cmd)
 	}
 }
 
-bool DCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
+bool FCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 {
 	fixed_t tryx, tryy;
 	bool try_ok;
@@ -130,7 +130,7 @@ bool DCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 	return true;
 }
 
-bool DCajunMaster::TryWalk (AActor *actor, ticcmd_t *cmd)
+bool FCajunMaster::TryWalk (AActor *actor, ticcmd_t *cmd)
 {
     if (!Move (actor, cmd))
         return false;
@@ -139,7 +139,7 @@ bool DCajunMaster::TryWalk (AActor *actor, ticcmd_t *cmd)
     return true;
 }
 
-void DCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
+void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
 {
     fixed_t     deltax;
     fixed_t     deltay;
@@ -275,7 +275,7 @@ void DCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
 // This is also a traverse function for
 // bots pre-rocket fire (preventing suicide)
 //
-bool DCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cmd)
+bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cmd)
 {
     if (!SafeCheckPosition (thing, x, y))
         return false;           // solid wall or thing
@@ -322,7 +322,7 @@ bool DCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 #define MAXTURN (15*ANGLE_1) //Max degrees turned in one tic. Lower is smother but may cause the bot not getting where it should = crash
 #define TURNSENS 3 //Higher is smoother but slower turn.
 
-void DCajunMaster::TurnToAng (AActor *actor)
+void FCajunMaster::TurnToAng (AActor *actor)
 {
     int maxturn = MAXTURN;
 
@@ -356,7 +356,7 @@ void DCajunMaster::TurnToAng (AActor *actor)
 	actor->angle += distance;
 }
 
-void DCajunMaster::Pitch (AActor *actor, AActor *target)
+void FCajunMaster::Pitch (AActor *actor, AActor *target)
 {
 	double aim;
 	double diff;
@@ -367,7 +367,7 @@ void DCajunMaster::Pitch (AActor *actor, AActor *target)
 }
 
 //Checks if a sector is dangerous.
-bool DCajunMaster::IsDangerous (sector_t *sec)
+bool FCajunMaster::IsDangerous (sector_t *sec)
 {
 	int special;
 

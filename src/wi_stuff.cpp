@@ -1039,7 +1039,7 @@ void WI_End ()
 	//Added by mc
 	if (deathmatch)
 	{
-		bglobal->RemoveAllBots (consoleplayer != Net_Arbitrator);
+		bglobal.RemoveAllBots (consoleplayer != Net_Arbitrator);
 	}
 }
 

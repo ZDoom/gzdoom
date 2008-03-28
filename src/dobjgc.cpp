@@ -289,15 +289,18 @@ static void MarkRoot()
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
+	// Mark dead bodies.
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{
 		Mark(bodyque[i]);
 	}
+	// Mark players.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
 			players[i].PropagateMark();
 	}
+	// Mark sectors.
 	if (SectorMarker == NULL && sectors != NULL)
 	{
 		SectorMarker = new DSectorMarker;
@@ -311,10 +314,11 @@ static void MarkRoot()
 		SectorMarker->SecNum = 0;
 	}
 	Mark(SectorMarker);
-	{ // Silly bots
-		Mark(bglobal);
-	}
-	// Add soft roots
+	// Mark bot stuff.
+	Mark(bglobal.firstthing);
+	Mark(bglobal.body1);
+	Mark(bglobal.body2);
+	// Mark soft roots.
 	if (SoftRoots != NULL)
 	{
 		DObject **probe = &SoftRoots->ObjNext;
@@ -328,6 +332,7 @@ static void MarkRoot()
 			}
 		}
 	}
+	// Time to propagate the marks.
 	State = GCS_Propagate;
 	StepCount = 0;
 }

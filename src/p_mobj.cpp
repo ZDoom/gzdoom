@@ -2558,7 +2558,7 @@ void AActor::Tick ()
 	}
 
 	//Added by MC: Freeze mode.
-	if (bglobal->freeze && !(player && !player->isbot))
+	if (bglobal.freeze && !(player && !player->isbot))
 	{
 		return;
 	}
@@ -2637,11 +2637,11 @@ void AActor::Tick ()
 		}
 	}
 
-	if (bglobal->botnum && consoleplayer == Net_Arbitrator && !demoplayback &&
+	if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback &&
 		(flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER))
 	{
 		clock (BotSupportCycles);
-		bglobal->m_Thinking = true;
+		bglobal.m_Thinking = true;
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
 			if (!playeringame[i] || !players[i].isbot)
@@ -2661,7 +2661,7 @@ void AActor::Tick ()
 			else if (flags & MF_SPECIAL)
 			{ //Item pickup time
 				//clock (BotWTG);
-				bglobal->WhatToGet (players[i].mo, this);
+				bglobal.WhatToGet (players[i].mo, this);
 				//unclock (BotWTG);
 				BotWTG++;
 			}
@@ -2669,12 +2669,12 @@ void AActor::Tick ()
 			{
 				if (!players[i].missile && (flags3 & MF3_WARNBOT))
 				{ //warn for incoming missiles.
-					if (target != players[i].mo && bglobal->Check_LOS (players[i].mo, this, ANGLE_90))
+					if (target != players[i].mo && bglobal.Check_LOS (players[i].mo, this, ANGLE_90))
 						players[i].missile = this;
 				}
 			}
 		}
-		bglobal->m_Thinking = false;
+		bglobal.m_Thinking = false;
 		unclock (BotSupportCycles);
 	}
 
@@ -3158,7 +3158,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	actor->z = actor->PrevZ = iz;
 	actor->picnum = 0xffff;
 
-	FRandom &rng = bglobal->m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
+	FRandom &rng = bglobal.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
 
 	if (actor->isFast() && actor->flags3 & MF3_ISMONSTER)
 		actor->reactiontime = 0;

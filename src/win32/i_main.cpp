@@ -249,7 +249,6 @@ static void UnWTS (void)
 static void FinalGC()
 {
 	Args = NULL;
-	bglobal = NULL;
 	GC::FullGC();
 }
 

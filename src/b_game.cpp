@@ -61,7 +61,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 static FRandom pr_botspawn ("BotSpawn");
 
 //Externs
-DCajunMaster *bglobal;
+FCajunMaster bglobal;
 
 cycle_t BotThinkCycles, BotSupportCycles, BotWTG;
 
@@ -88,41 +88,14 @@ enum
 
 static bool waitingforspawn[MAXPLAYERS];
 
-DCajunMaster::DCajunMaster()
-{
-	firstthing = NULL;
-	body1 = NULL;
-	body2 = NULL;
-	getspawned = NULL;
-	memset(botingame, 0, sizeof(botingame));
-	freeze = false;
-	changefreeze = false;
-	botnum = 0;
-	botinfo = NULL;
-	spawn_tries = 0;
-	wanted_botnum = NULL;
-	m_Thinking = false;
-	ctf = false;
-	loaded_bots = 0;
-	t_join = 0;
-	observer = false;
-}
-
-DCajunMaster::~DCajunMaster()
+FCajunMaster::~FCajunMaster()
 {
 	ForgetBots();
-	if (getspawned != NULL)
-	{
-		getspawned->Destroy();
-		getspawned = NULL;
-	}
-	// FIXME: Make this object proper
-	ObjectFlags |= OF_Cleanup | OF_YesReallyDelete;
 }
 
 //This function is called every tick (from g_game.c),
 //send bots into thinking (+more).
-void DCajunMaster::Main (int buf)
+void FCajunMaster::Main (int buf)
 {
 	int i;
 
@@ -153,7 +126,7 @@ void DCajunMaster::Main (int buf)
 	{
 		if (t_join == ((wanted_botnum - botnum) * SPAWN_DELAY))
 		{
-            if (!SpawnBot (getspawned->GetArg (spawn_tries)))
+            if (!SpawnBot (getspawned[spawn_tries]))
 				wanted_botnum--;
             spawn_tries++;
 		}
@@ -184,7 +157,7 @@ void DCajunMaster::Main (int buf)
 	m_Thinking = false;
 }
 
-void DCajunMaster::Init ()
+void FCajunMaster::Init ()
 {
 	int i;
 
@@ -230,25 +203,19 @@ void DCajunMaster::Init ()
 }
 
 //Called on each level exit (from g_game.c).
-void DCajunMaster::End ()
+void FCajunMaster::End ()
 {
 	int i;
 
 	//Arrange wanted botnum and their names, so they can be spawned next level.
-	if (getspawned)
-		getspawned->FlushArgs ();
-	else
-	{
-		getspawned = new DArgs;
-		GC::WriteBarrier(this, getspawned);
-	}
+	getspawned.Clear();
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i] && players[i].isbot)
 		{
 			if (deathmatch)
 			{
-				getspawned->AppendArg (players[i].userinfo.netname);
+				getspawned.Push(players[i].userinfo.netname);
 			}
 			CleanBotstuff (&players[i]);
 		}
@@ -272,7 +239,7 @@ void DCajunMaster::End ()
 //The color parameter overides bots
 //induvidual colors if not = NOCOLOR.
 
-bool DCajunMaster::SpawnBot (const char *name, int color)
+bool FCajunMaster::SpawnBot (const char *name, int color)
 {
 	int playernumber;
 
@@ -375,7 +342,7 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 	return true;
 }
 
-void DCajunMaster::DoAddBot (int bnum, char *info)
+void FCajunMaster::DoAddBot (int bnum, char *info)
 {
 	BYTE *infob = (BYTE *)info;
 	D_ReadUserInfoStrings (bnum, &infob, false);
@@ -412,7 +379,7 @@ void DCajunMaster::DoAddBot (int bnum, char *info)
 	waitingforspawn[bnum] = false;
 }
 
-void DCajunMaster::RemoveAllBots (bool fromlist)
+void FCajunMaster::RemoveAllBots (bool fromlist)
 {
 	int i, j;
 
@@ -452,7 +419,7 @@ void DCajunMaster::RemoveAllBots (bool fromlist)
 
 //Clean the bot part of the player_t
 //Used when bots are respawned or at level starts.
-void DCajunMaster::CleanBotstuff (player_t *p)
+void FCajunMaster::CleanBotstuff (player_t *p)
 {
 	p->angle = ANG45;
 	p->dest = NULL;
@@ -509,7 +476,7 @@ static void appendinfo (char *&front, const char *back)
 	front = newstr;
 }
 
-void DCajunMaster::ForgetBots ()
+void FCajunMaster::ForgetBots ()
 {
 	botinfo_t *thebot = botinfo;
 
@@ -526,13 +493,13 @@ void DCajunMaster::ForgetBots ()
 	loaded_bots = 0;
 }
 
-bool DCajunMaster::LoadBots ()
+bool FCajunMaster::LoadBots ()
 {
 	FScanner sc;
 	FString tmp;
 	bool gotteam = false;
 
-	bglobal->ForgetBots ();
+	bglobal.ForgetBots ();
 #ifndef unix
 	tmp = progdir;
 	tmp += "zcajun/" BOTFILENAME;
@@ -662,12 +629,12 @@ bool DCajunMaster::LoadBots ()
 			appendinfo (newinfo->info, "team");
 			appendinfo (newinfo->info, "255");
 		}
-		newinfo->next = bglobal->botinfo;
+		newinfo->next = bglobal.botinfo;
 		newinfo->lastteam = TEAM_None;
-		bglobal->botinfo = newinfo;
-		bglobal->loaded_bots++;
+		bglobal.botinfo = newinfo;
+		bglobal.loaded_bots++;
 	}
-	Printf ("%d bots read from %s\n", bglobal->loaded_bots, BOTFILENAME);
+	Printf ("%d bots read from %s\n", bglobal.loaded_bots, BOTFILENAME);
 	return true;
 }
 

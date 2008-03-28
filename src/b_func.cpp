@@ -63,7 +63,7 @@ static bool PTR_Reachable (intercept_t *in)
 			fixed_t ceilingheight = s->ceilingplane.ZatPoint (hitx, hity);
 			fixed_t floorheight = s->floorplane.ZatPoint (hitx, hity);
 
-			if (!bglobal->IsDangerous (s) &&		//Any nukage/lava?
+			if (!bglobal.IsDangerous (s) &&		//Any nukage/lava?
 				(floorheight <= (last_z+MAXMOVEHEIGHT)
 				&& ((ceilingheight == floorheight && line->special)
 					|| (ceilingheight - floorheight) >= looker->height))) //Does it fit?
@@ -100,7 +100,7 @@ static bool PTR_Reachable (intercept_t *in)
 
 //Checks TRUE reachability from
 //one actor to another. First mobj (actor) is looker.
-bool DCajunMaster::Reachable (AActor *actor, AActor *target)
+bool FCajunMaster::Reachable (AActor *actor, AActor *target)
 {
 	if (actor == target)
 		return false;
@@ -128,7 +128,7 @@ bool DCajunMaster::Reachable (AActor *actor, AActor *target)
 //if these conditions are true, the function returns true.
 //GOOD TO KNOW is that the player's view angle
 //in doom is 90 degrees infront.
-bool DCajunMaster::Check_LOS (AActor *from, AActor *to, angle_t vangle)
+bool FCajunMaster::Check_LOS (AActor *from, AActor *to, angle_t vangle)
 {
 	if (!P_CheckSight (from, to, 2))
 		return false; // out of sight
@@ -145,7 +145,7 @@ bool DCajunMaster::Check_LOS (AActor *from, AActor *to, angle_t vangle)
 //-------------------------------------
 //The bot will check if it's time to fire
 //and do so if that is the case.
-void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
+void FCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 {
 	bool no_fire; //used to prevent bot from pumping rockets into nearby walls.
 	int aiming_penalty=0; //For shooting at shading target, if screen is red, MAKEME: When screen red.
@@ -288,7 +288,7 @@ shootmissile:
 //This function is called every
 //tick (for each bot) to set
 //the mate (teammate coop mate).
-AActor *DCajunMaster::Choose_Mate (AActor *bot)
+AActor *FCajunMaster::Choose_Mate (AActor *bot)
 {
 	int count;
 	int count2;
@@ -369,7 +369,7 @@ AActor *DCajunMaster::Choose_Mate (AActor *bot)
 	//Make a introducing to mate.
 	if(target && target!=bot->player->last_mate)
 	{
-		if((P_Random()%(200*bglobal->botnum))<3)
+		if((P_Random()%(200*bglobal.botnum))<3)
 		{
 			bot->player->chat = c_teamup;
 			if(target->bot)
@@ -385,7 +385,7 @@ AActor *DCajunMaster::Choose_Mate (AActor *bot)
 }
 
 //MAKEME: Make this a smart decision
-AActor *DCajunMaster::Find_enemy (AActor *bot)
+AActor *FCajunMaster::Find_enemy (AActor *bot)
 {
 	int count;
 	fixed_t closest_dist, temp; //To target.
@@ -448,7 +448,7 @@ AActor *DCajunMaster::Find_enemy (AActor *bot)
 
 
 //Creates a temporary mobj (invisible) at the given location.
-void DCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
+void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 {
 	if (hostnum == 1)
 	{
@@ -459,7 +459,6 @@ void DCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 		else
 		{
 			body1 = Spawn ("CajunBodyNode", x, y, z, NO_REPLACE);
-			GC::WriteBarrier(this, body1);
 		}
 	}
 	else if (hostnum == 2)
@@ -471,7 +470,6 @@ void DCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 		else
 		{
 			body2 = Spawn ("CajunBodyNode", x, y, z, NO_REPLACE);
-			GC::WriteBarrier(this, body2);
 		}
 	}
 }
@@ -486,7 +484,7 @@ void DCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 
 
 //Emulates missile travel. Returns distance travelled.
-fixed_t DCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
+fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
 	AActor *th = Spawn ("CajunTrace", source->x, source->y, source->z + 4*8*FRACUNIT, NO_REPLACE);
 	
@@ -516,7 +514,7 @@ fixed_t DCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 	return dist;
 }
 
-angle_t DCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
+angle_t FCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 {
 	fixed_t dist;
 	angle_t ang;
@@ -527,7 +525,7 @@ angle_t DCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 			   bot->y + FixedMul(bot->momy, 5*FRACUNIT),
 			   bot->z + (bot->height / 2), 2);
 
-	actor = bglobal->body2;
+	actor = bglobal.body2;
 
 	dist = P_AproxDistance (actor->x-enemy->x, actor->y-enemy->y);
 	if (dist < SAFE_SELF_MISDIST)
@@ -537,15 +535,15 @@ angle_t DCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 
 	SetBodyAt (enemy->x + FixedMul (enemy->momx, (m+2*FRACUNIT)),
 			   enemy->y + FixedMul(enemy->momy, (m+2*FRACUNIT)), ONFLOORZ, 1);
-	dist = P_AproxDistance(actor->x-bglobal->body1->x, actor->y-bglobal->body1->y);
+	dist = P_AproxDistance(actor->x-bglobal.body1->x, actor->y-bglobal.body1->y);
 	//try the predicted location
-	if (P_CheckSight (actor, bglobal->body1, 1)) //See the predicted location, so give a test missile
+	if (P_CheckSight (actor, bglobal.body1, 1)) //See the predicted location, so give a test missile
 	{
 		if (SafeCheckPosition (bot, actor->x, actor->y))
 		{
-			if (FakeFire (actor, bglobal->body1, cmd) >= SAFE_SELF_MISDIST)
+			if (FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
 			{
-				ang = R_PointToAngle2 (actor->x, actor->y, bglobal->body1->x, bglobal->body1->y);
+				ang = R_PointToAngle2 (actor->x, actor->y, bglobal.body1->x, bglobal.body1->y);
 				return ang;
 			}
 		}
@@ -565,7 +563,7 @@ angle_t DCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 // [RH] We absolutely do not want to pick things up here. The bot code is
 // executed apart from all the other simulation code, so we don't want it
 // creating side-effects during gameplay.
-bool DCajunMaster::SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y)
+bool FCajunMaster::SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y)
 {
 	int savedFlags = actor->flags;
 	actor->flags &= ~MF_PICKUP;

@@ -400,6 +400,7 @@ public:
 	}
 
 	template<class U> friend inline FArchive &operator<<(FArchive &arc, TObjPtr<U> &o);
+	friend class DObject;
 };
 
 template<class T> inline FArchive &operator<<(FArchive &arc, TObjPtr<T> &o)

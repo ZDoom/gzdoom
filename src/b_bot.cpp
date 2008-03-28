@@ -15,13 +15,6 @@
 CVAR (Int, bot_next_color, 11, 0)
 CVAR (Bool, bot_observer, false, 0)
 
-IMPLEMENT_POINTY_CLASS (DCajunMaster)
- DECLARE_POINTER (getspawned)
- DECLARE_POINTER (firstthing)
- DECLARE_POINTER (body1)
- DECLARE_POINTER (body2)
-END_POINTERS
-
 CCMD (addbot)
 {
 	if (gamestate != GS_LEVEL && gamestate != GS_INTERMISSION)
@@ -43,12 +36,12 @@ CCMD (addbot)
 	}
 
 	if (argv.argc() > 1)
-		bglobal->SpawnBot (argv[1]);
+		bglobal.SpawnBot (argv[1]);
 	else
-		bglobal->SpawnBot (NULL);
+		bglobal.SpawnBot (NULL);
 }
 
-void DCajunMaster::ClearPlayer (int i, bool keepTeam)
+void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 {
 	if (players[i].mo)
 	{
@@ -92,7 +85,7 @@ CCMD (freeze)
 
 CCMD (listbots)
 {
-	botinfo_t *thebot = bglobal->botinfo;
+	botinfo_t *thebot = bglobal.botinfo;
 	int count = 0;
 
 	while (thebot)
@@ -116,9 +109,6 @@ AT_GAME_SET(BotStuff)
 	AWeapon * w;
 	AActor * a;
 
-	bglobal = new DCajunMaster;
-	GC::WriteBarrier(bglobal);
-	
 	w = (AWeapon*)GetDefaultByName ("Pistol");
 	if (w != NULL)
 	{

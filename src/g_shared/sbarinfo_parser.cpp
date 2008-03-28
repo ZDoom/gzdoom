@@ -1072,9 +1072,9 @@ int SBarInfo::getSignedInteger(FScanner &sc)
 	}
 }
 
-int SBarInfo::newImage(const char* patchname)
+int SBarInfo::newImage(const char *patchname)
 {
-	if(stricmp(patchname, "nullimage") == 0)
+	if(patchname[0] == '\0' || stricmp(patchname, "nullimage") == 0)
 	{
 		return -1;
 	}

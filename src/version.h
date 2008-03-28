@@ -80,8 +80,23 @@
 #if SVN_REVISION_NUMBER < MINSAVEVER
 // Never write a savegame with a version lower than what we need
 #define SAVEVER			MINSAVEVER
-#define MAKESAVESIG(x)	"ZDOOMSAVE" #x
-#define SAVESIG			MAKESAVESIG(SAVEVER)
+#define SAVESIG			MakeSaveSig()
+static inline const char *MakeSaveSig()
+{
+	static char foo[] = { 'Z','D','O','O','M','S','A','V','E',
+#if SAVEVER > 9999
+		'0' + (SAVEVER / 10000),
+#endif
+#if SAVEVER > 999
+		'0' + ((SAVEVER / 1000) % 10),
+#endif
+		'0' + ((SAVEVER / 100) % 10),
+		'0' + ((SAVEVER / 10) % 10),
+		'0' + (SAVEVER % 10),
+		'\0'
+	};
+	return foo;
+}
 #else
 #define SAVEVER			SVN_REVISION_NUMBER
 #define SAVESIG			"ZDOOMSAVE"SVN_REVISION_STRING

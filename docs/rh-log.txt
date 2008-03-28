@@ -1,4 +1,11 @@
 March 27, 2008
+- Did some restructuring of the OPL code in preparation for turning it
+  into a general MIDI player.
+- Fixed: Passing false for a stream callback did not stop the stream.
+- Removed opl_frequency, since the only time the emulation sounds good is
+  when it plays at the exact frequency of a real chip.
+- Music no longer plays at all when snd_musicvolume is 0.
+- Bumped up snd_sfxvolume and snd_musicvolume default values.
 - Changed D3DFB to explicitly request double buffering instead of assuming
   that the drivers will treat a BackBufferCount of 0 as a request for
   double buffering.

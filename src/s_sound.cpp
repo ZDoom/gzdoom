@@ -1359,8 +1359,18 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		// shutdown old music
 		S_StopMusic (true);
 
+		// Just record it if volume is 0
+		if (snd_musicvolume <= 0)
+		{
+			mus_playing.loop = looping;
+			mus_playing.name = "";
+			mus_playing.baseorder = 0;
+			LastSong = musicname;
+			return true;
+		}
+
 		// load & register it
-		if (offset!=-1)
+		if (offset != -1)
 		{
 			mus_playing.handle = I_RegisterSong (lumpnum != -1 ?
 				Wads.GetWadFullName (Wads.GetLumpFile (lumpnum)) :
@@ -1373,10 +1383,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	}
 
 	mus_playing.loop = looping;
+	mus_playing.name = musicname;
+	LastSong = "";
 
 	if (mus_playing.handle != 0)
 	{ // play it
-		mus_playing.name = musicname;
 		I_PlaySong (mus_playing.handle, looping, S_GetMusicVolume (musicname));
 		mus_playing.baseorder =
 			(I_SetSongPosition (mus_playing.handle, order) ? order : 0);
@@ -1396,8 +1407,9 @@ void S_RestartMusic ()
 {
 	if (!LastSong.IsEmpty())
 	{
-		S_ChangeMusic (LastSong, mus_playing.baseorder, mus_playing.loop, true);
+		FString song = LastSong;
 		LastSong = "";
+		S_ChangeMusic (song, mus_playing.baseorder, mus_playing.loop, true);
 	}
 }
 

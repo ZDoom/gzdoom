@@ -9,27 +9,26 @@
 #include "muslib.h"
 #include "files.h"
 
+#define OPL_SAMPLE_RATE			49716.0
+
 class OPLmusicBlock : public musicBlock
 {
 public:
-	OPLmusicBlock (FILE *file, char * musiccache, int len, int rate, int maxSamples);
-	~OPLmusicBlock ();
-	bool IsValid () const;
+	OPLmusicBlock();
+	~OPLmusicBlock();
 
-	bool ServiceStream (void *buff, int numbytes);
-	void Restart ();
-	void SetLooping (bool loop);
-	void ResetChips ();
-	int PlayTick ();
+	bool ServiceStream(void *buff, int numbytes);
+	void ResetChips();
+
+	virtual void Restart();
 
 protected:
-	int SampleRate;
-	int NextTickIn;
-	int SamplesPerTick;
+	virtual int PlayTick() = 0;
+
+	double NextTickIn;
+	double SamplesPerTick;
 	bool TwoChips;
 	bool Looping;
-	enum { NotRaw, RDosPlay, IMF } RawPlayer;
-	int ScoreLen;
 
 	int *SampleBuff;
 	int SampleBuffSize;
@@ -39,4 +38,21 @@ protected:
 #else
 	SDL_mutex *ChipAccess;
 #endif
+};
+
+class OPLmusicFile : public OPLmusicBlock
+{
+public:
+	OPLmusicFile(FILE *file, char *musiccache, int len, int maxSamples);
+	~OPLmusicFile();
+
+	bool IsValid() const;
+	void SetLooping(bool loop);
+	void Restart();
+
+protected:
+	int PlayTick();
+
+	enum { NotRaw, RDosPlay, IMF } RawPlayer;
+	int ScoreLen;
 };

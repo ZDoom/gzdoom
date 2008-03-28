@@ -1270,26 +1270,13 @@ static menu_t SoundMenu =
  *=======================================*/
 
 EXTERN_CVAR (Bool, opl_enable)
-EXTERN_CVAR (Int, opl_frequency)
 EXTERN_CVAR (Bool, opl_onechip)
-
-static value_t OPLSampleRates[] =
-{
-	{ 4000.f, "4000 Hz" },
-	{ 6215.f, "6215 Hz" },
-	{ 12429.f, "12429 Hz" },
-	{ 24858.f, "24858 Hz" },
-	{ 49716.f, "49716 Hz" },
-};
 
 static menuitem_t AdvSoundItems[] =
 {
 	{ whitetext,"OPL Synthesis",			{NULL},				{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Use FM Synth for MUS music",{&opl_enable},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Only emulate one OPL chip", {&opl_onechip},	{2.0}, {0.0},	{0.0}, {OnOff} },
-	{ discrete, "OPL synth sample rate",	 {&opl_frequency},	{5.0}, {0.0},	{0.0}, {OPLSampleRates} },
-
-
 };
 
 static menu_t AdvSoundMenu =

@@ -31,7 +31,7 @@ extern float relative_volume;
 class MusInfo
 {
 public:
-	MusInfo () : m_Status(STATE_Stopped) {}
+	MusInfo ();
 	virtual ~MusInfo ();
 	virtual void MusicVolumeChanged();		// snd_musicvolume changed
 	virtual void TimidityVolumeChanged();	// timidity_mastervolume changed
@@ -53,11 +53,22 @@ public:
 		STATE_Paused
 	} m_Status;
 	bool m_Looping;
+	bool m_NotStartedYet;	// Song has been created but not yet played
 };
 
 #ifdef _WIN32
 
 // A device that provides a WinMM-like MIDI streaming interface -------------
+
+#ifndef _WIN32
+struct MIDIHDR
+{
+	BYTE *lpData;
+	DWORD dwBufferLength;
+	DWORD dwBytesRecorded;
+	MIDIHDR *Next;
+};
+#endif
 
 class MIDIDevice
 {
@@ -109,8 +120,31 @@ protected:
 	void *CallbackData;
 };
 
-// Base class for streaming MUS and MIDI files ------------------------------
+// OPL implementation of a MIDI output device -------------------------------
 
+class OPLMIDIDevice : public MIDIDevice, OPLmusicBlock
+{
+public:
+	OPLMIDIDevice();
+	~OPLMIDIDevice();
+	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	void Close();
+	bool IsOpen() const;
+	int GetTechnology() const;
+	int SetTempo(int tempo);
+	int SetTimeDiv(int timediv);
+	int StreamOut(MIDIHDR *data);
+	int Resume();
+	void Stop();
+	int PrepareHeader(MIDIHDR *data);
+	int UnprepareHeader(MIDIHDR *data);
+
+protected:
+	void (*Callback)(unsigned int, void *, DWORD, DWORD);
+	void *CallbackData;
+};
+
+// Base class for streaming MUS and MIDI files ------------------------------
 
 class MIDIStreamer : public MusInfo
 {
@@ -305,7 +339,7 @@ public:
 protected:
 	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 
-	OPLmusicBlock *Music;
+	OPLmusicFile *Music;
 };
 
 // CD track/disk played through the multimedia system -----------------------

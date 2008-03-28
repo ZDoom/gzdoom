@@ -43,7 +43,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_TIME	(1000000/20)	// Send out 1/20 of a sec of events at a time.
+#define MAX_TIME	(1000000/10)	// Send out 1/10 of a sec of events at a time.
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

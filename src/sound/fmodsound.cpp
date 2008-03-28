@@ -427,7 +427,9 @@ public:
 		}
 		else
 		{
-			return FMOD_ERR_FILE_EOF;
+			self->Channel->stop();
+			// Contrary to the docs, this return value is completely ignored.
+			return FMOD_ERR_INVALID_PARAM;
 		}
 	}
 

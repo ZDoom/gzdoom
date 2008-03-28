@@ -95,7 +95,7 @@ SoundRenderer *GSnd;
 // Maximum volume of a sound effect.
 //==========================================================================
 
-CUSTOM_CVAR (Float, snd_sfxvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+CUSTOM_CVAR (Float, snd_sfxvolume, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
 	if (self < 0.f)
 		self = 0.f;

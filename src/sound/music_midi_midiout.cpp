@@ -87,8 +87,6 @@ struct MIDISong2::TrackInfo
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern UINT mididevice;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static BYTE EventLengths[7] = { 2, 2, 2, 2, 1, 1, 2 };
@@ -106,8 +104,8 @@ static BYTE CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 }
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (FILE *file, char *musiccache, int len)
-: MusHeader(0), Tracks(0)
+MIDISong2::MIDISong2 (FILE *file, char *musiccache, int len, bool opl)
+: MIDIStreamer(opl), MusHeader(0), Tracks(0)
 {
 	int p;
 	int i;

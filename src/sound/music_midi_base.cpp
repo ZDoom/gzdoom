@@ -21,7 +21,7 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (!nummididevicesset)
 		return;
 
-	if ((self >= (signed)nummididevices) || (self < -2))
+	if ((self >= (signed)nummididevices) || (self < -3))
 	{
 		Printf ("ID out of range. Using default device.\n");
 		self = 0;
@@ -76,43 +76,38 @@ void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 {
 	if (*outValues == NULL)
 	{
-		int count = 1 + nummididevices + (nummididevices > 0);
+		int count = 3 + nummididevices;
 		value_t *values;
+		UINT id;
+		int p;
 
 		*outValues = values = new value_t[count];
 
-		values[0].name = "TiMidity++";
-		values[0].value = -2.0;
-		values[1].name = "FMOD";
-		values[1].value = -1.0;
-		if (nummididevices > 0)
+		values[0].name = "OPL Synth Emulation";
+		values[0].value = -3.0;
+		values[1].name = "TiMidity++";
+		values[1].value = -2.0;
+		values[2].name = "FMOD";
+		values[2].value = -1.0;
+		for (id = 0, p = 3; id < nummididevices; ++id)
 		{
-			UINT id;
-			int p;
+			MIDIOUTCAPS caps;
+			MMRESULT res;
 
-			for (id = 0, p = 2; id < nummididevices; ++id)
+			res = midiOutGetDevCaps (id, &caps, sizeof(caps));
+			if (res == MMSYSERR_NOERROR)
 			{
-				MIDIOUTCAPS caps;
-				MMRESULT res;
+				size_t len = strlen (caps.szPname) + 1;
+				char *name = new char[len];
 
-				res = midiOutGetDevCaps (id, &caps, sizeof(caps));
-				if (res == MMSYSERR_NOERROR)
-				{
-					size_t len = strlen (caps.szPname) + 1;
-					char *name = new char[len];
-
-					memcpy (name, caps.szPname, len);
-					values[p].name = name;
-					values[p].value = (float)id;
-					++p;
-				}
+				memcpy (name, caps.szPname, len);
+				values[p].name = name;
+				values[p].value = (float)id;
+				++p;
 			}
-			*numValues = (float)p;
 		}
-		else
-		{
-			*numValues = 2.f;
-		}
+		assert(p == count);
+		*numValues = float(count);
 	}
 }
 
@@ -185,8 +180,8 @@ CCMD (snd_listmididevices)
 
 CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < -2)
-		self = -2;
+	if (self < -3)
+		self = -3;
 	else if (self > -1)
 		self = -1;
 }
@@ -195,16 +190,17 @@ void I_BuildMIDIMenuList (struct value_t **outValues, float *numValues)
 {
 	if (*outValues == NULL)
 	{
-		int count = 1 + nummididevices + (nummididevices > 0);
 		value_t *values;
 
-		*outValues = values = new value_t[count];
+		*outValues = values = new value_t[3];
 
-		values[0].name = "TiMidity++";
-		values[0].value = -2.0;
-		values[1].name = "FMOD";
-		values[1].value = -1.0;
-		*numValues = 2.f;
+		values[0].name = "OPL Synth Emulation";
+		values[0].value = -3.0;
+		values[1].name = "TiMidity++";
+		values[1].value = -2.0;
+		values[2].name = "FMOD";
+		values[2].value = -1.0;
+		*numValues = 3.f;
 	}
 }
 

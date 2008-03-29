@@ -205,6 +205,20 @@ void WinMIDIDevice::Stop()
 
 //==========================================================================
 //
+// WinMIDIDevice :: Pause
+//
+// Some docs claim pause is unreliable and can cause the stream to stop
+// functioning entirely. Truth or fiction?
+//
+//==========================================================================
+
+bool WinMIDIDevice::Pause(bool paused)
+{
+	return false;
+}
+
+//==========================================================================
+//
 // WinMIDIDevice :: StreamOut
 //
 //==========================================================================
@@ -234,6 +248,20 @@ int WinMIDIDevice::PrepareHeader(MIDIHDR *header)
 int WinMIDIDevice::UnprepareHeader(MIDIHDR *header)
 {
 	return midiOutUnprepareHeader((HMIDIOUT)MidiOut, header, sizeof(MIDIHDR));
+}
+
+//==========================================================================
+//
+// WinMIDIDevice :: FakeVolume
+//
+// Because there are too many MIDI devices out there that don't support
+// global volume changes, fake the volume for all of them.
+//
+//==========================================================================
+
+bool WinMIDIDevice::FakeVolume()
+{
+	return true;
 }
 
 //==========================================================================

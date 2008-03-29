@@ -1244,9 +1244,6 @@ static menuitem_t SoundItems[] =
 	{ ediscrete,"Speaker mode",			{&snd_speakermode},		{8.0}, {0.0},	{0.0}, {(value_t *)SpeakerModes} },
 	{ ediscrete,"Resampler",			{&snd_resampler},		{4.0}, {0.0},	{0.0}, {(value_t *)Resamplers} },
 	{ discrete, "HRTF filter",			{&snd_hrtf},			{2.0}, {0.0},	{0.0}, {(value_t *)OnOff} },
-	{ discrete, "Sample rate",			{&snd_samplerate},		{8.0}, {0.0},	{0.0}, {SampleRates} },
-	{ discrete, "Buffer size",			{&snd_buffersize},		{8.0}, {0.0},	{0.0}, {BufferSizes} },
-	{ discrete, "Buffer count",			{&snd_buffercount},		{12.0}, {0.0},	{0.0}, {BufferCounts} },
 
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ more,		"Advanced options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)AdvSoundOptions} },
@@ -1274,15 +1271,18 @@ EXTERN_CVAR (Bool, opl_onechip)
 
 static menuitem_t AdvSoundItems[] =
 {
-	{ whitetext,"OPL Synthesis",			{NULL},				{0.0}, {0.0},	{0.0}, {NULL} },
-	{ discrete, "Use FM Synth for MUS music",{&opl_enable},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Sample rate",			{&snd_samplerate},		{8.0}, {0.0},	{0.0}, {SampleRates} },
+	{ discrete, "Buffer size",			{&snd_buffersize},		{8.0}, {0.0},	{0.0}, {BufferSizes} },
+	{ discrete, "Buffer count",			{&snd_buffercount},		{12.0}, {0.0},	{0.0}, {BufferCounts} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ whitetext,"OPL Synthesis",		{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Only emulate one OPL chip", {&opl_onechip},	{2.0}, {0.0},	{0.0}, {OnOff} },
 };
 
 static menu_t AdvSoundMenu =
 {
 	"ADVANCED SOUND OPTIONS",
-	1,
+	0,
 	countof(AdvSoundItems),
 	0,
 	AdvSoundItems,

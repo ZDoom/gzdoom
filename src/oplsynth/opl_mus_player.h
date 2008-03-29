@@ -25,6 +25,9 @@ public:
 protected:
 	virtual int PlayTick() = 0;
 
+	void Serialize();
+	void Unserialize();
+
 	double NextTickIn;
 	double SamplesPerTick;
 	bool TwoChips;

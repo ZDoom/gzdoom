@@ -305,6 +305,7 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 			- OPL: 
 				- if explicitly selected by $mididevice 
 				- when opl_enable is true and no midi device is set for the song
+				- when snd_mididevice  is -3 and no midi device is set for the song
 
 			  Timidity: 
 				- if explicitly selected by $mididevice 
@@ -320,7 +321,7 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 				- when snd_mididevice  is >= 0 and no midi device is set for the song
 				- as fallback when both OPL and Timidity failed and snd_mididevice is >= 0
 			*/
-			if ((opl_enable && device == MDEV_DEFAULT) || device == MDEV_OPL)
+			if (((opl_enable || snd_mididevice == -3) && device == MDEV_DEFAULT) || device == MDEV_OPL)
 			{
 				info = new OPLMUSSong (file, musiccache, len);
 			}
@@ -379,10 +380,13 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 		if (id == MAKE_ID('M','T','h','d'))
 		{
 			// This is a midi file
-			// MIDI can't be played with OPL so use default.
-			if (device == MDEV_OPL) device = MDEV_DEFAULT;
 
 			/*	MIDI are played as:
+			  OPL: 
+				- if explicitly selected by $mididevice 
+				- when opl_enable is true and no midi device is set for the song
+				- when snd_mididevice  is -3 and no midi device is set for the song
+
 			  Timidity: 
 				- if explicitly selected by $mididevice 
 				- when snd_mididevice  is -2 and no midi device is set for the song
@@ -397,21 +401,24 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 				- when snd_mididevice  is >= 0 and no midi device is set for the song
 				- as fallback when Timidity failed and snd_mididevice is >= 0
 			*/
-
-			if ((device == MDEV_TIMIDITY || (snd_mididevice == -2 && device == MDEV_DEFAULT)) && GSnd != NULL)
+			if ((device == MDEV_OPL || (snd_mididevice == -3 && device == MDEV_DEFAULT)) && GSnd != NULL)
+			{
+				info = new MIDISong2 (file, musiccache, len, true);
+			}
+			else if ((device == MDEV_TIMIDITY || (snd_mididevice == -2 && device == MDEV_DEFAULT)) && GSnd != NULL)
 			{
 				info = new TimiditySong (file, musiccache, len);
-				if (!info->IsValid())
-				{
-					delete info;
-					info = NULL;
-					device = MDEV_DEFAULT;
-				}
+			}
+			if (info != NULL && !info->IsValid())
+			{
+				delete info;
+				info = NULL;
+				device = MDEV_DEFAULT;
 			}
 #ifdef _WIN32
 			if (info == NULL && device != MDEV_FMOD && (snd_mididevice >= 0 || device == MDEV_MMAPI))
 			{
-				info = new MIDISong2 (file, musiccache, len);
+				info = new MIDISong2 (file, musiccache, len, false);
 			}
 #endif // _WIN32
 		}

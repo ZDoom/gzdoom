@@ -42,8 +42,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_TIME		(140/20)	// Each stream buffer lasts only 1/20 of a second
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -91,7 +89,7 @@ static const BYTE CtrlTranslate[15] =
 //==========================================================================
 
 MUSSong2::MUSSong2 (FILE *file, char *musiccache, int len)
-: MusHeader(0), MusBuffer(0)
+: MIDIStreamer(false), MusHeader(0), MusBuffer(0)
 {
 	if (ExitEvent == NULL)
 	{

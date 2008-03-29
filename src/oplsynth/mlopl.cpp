@@ -208,7 +208,8 @@ struct OP2instrEntry *musicBlock::getInstrument(uint channel, uchar note)
 		if (note < 35 || note > 81)
 			return NULL;		/* wrong percussion number */
 		instrnumber = note + (128-35);
-	} else
+	}
+	else
 	{
 		instrnumber = driverdata.channelInstr[channel];
 	}
@@ -295,15 +296,14 @@ void musicBlock::OPLchangeControl(uint channel, uchar controller, int value)
 {
 	uint i;
 	uint id = channel;
-	struct OPLdata *data = &driverdata;
 
 	switch (controller)
 	{
 	case ctrlPatch:			/* change instrument */
-		data->channelInstr[channel] = value;
+		OPLprogramChange(channel, value);
 		break;
 	case ctrlModulation:
-		data->channelModulation[channel] = value;
+		driverdata.channelModulation[channel] = value;
 		for(i = 0; i < io->OPLchannels; i++)
 		{
 			struct channelEntry *ch = &channels[i];
@@ -325,7 +325,7 @@ void musicBlock::OPLchangeControl(uint channel, uchar controller, int value)
 		}
 		break;
 	case ctrlVolume:		/* change volume */
-		data->channelVolume[channel] = value;
+		driverdata.channelVolume[channel] = value;
 		for(i = 0; i < io->OPLchannels; i++)
 		{
 			struct channelEntry *ch = &channels[i];
@@ -338,7 +338,7 @@ void musicBlock::OPLchangeControl(uint channel, uchar controller, int value)
 		}
 		break;
 	case ctrlPan:			/* change pan (balance) */
-		data->channelPan[channel] = value -= 64;
+		driverdata.channelPan[channel] = value -= 64;
 		for(i = 0; i < io->OPLchannels; i++)
 		{
 			struct channelEntry *ch = &channels[i];
@@ -350,22 +350,26 @@ void musicBlock::OPLchangeControl(uint channel, uchar controller, int value)
 		}
 		break;
 	case ctrlSustainPedal:		/* change sustain pedal (hold) */
-		data->channelSustain[channel] = value;
+		driverdata.channelSustain[channel] = value;
 		if (value < 0x40)
 			releaseSustain(channel);
 		break;
 	}
 }
 
+void musicBlock::OPLprogramChange(uint channel, int value)
+{
+	driverdata.channelInstr[channel] = value;
+}
 
-void musicBlock::OPLplayMusic()
+void musicBlock::OPLplayMusic(int vol)
 {
 	uint i;
 	struct OPLdata *data = &driverdata;
 
 	for (i = 0; i < CHANNELS; i++)
 	{
-		data->channelVolume[i] = 127;	/* default volume 127 (full volume) */
+		data->channelVolume[i] = vol;	/* default volume 127 for MUS (full volume) */
 		data->channelSustain[i] = 0;
 		data->channelLastVolume[i] = 64;
 		data->channelPitch[i] = 64;

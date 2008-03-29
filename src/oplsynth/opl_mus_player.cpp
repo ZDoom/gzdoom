@@ -19,7 +19,7 @@
 
 EXTERN_CVAR (Bool, opl_onechip)
 
-static OPLmusicBlock *BlockForStats;
+OPLmusicBlock *BlockForStats;
 
 OPLmusicBlock::OPLmusicBlock()
 {
@@ -55,17 +55,18 @@ OPLmusicBlock::~OPLmusicBlock()
 	delete io;
 }
 
-void OPLmusicBlock::ResetChips ()
+void OPLmusicBlock::Serialize()
 {
-	TwoChips = !opl_onechip;
 #ifdef _WIN32
 	EnterCriticalSection (&ChipAccess);
 #else
 	if (SDL_mutexP (ChipAccess) != 0)
 		return;
 #endif
-	io->OPLdeinit ();
-	io->OPLinit (TwoChips + 1, uint(OPL_SAMPLE_RATE));
+}
+
+void OPLmusicBlock::Unserialize()
+{
 #ifdef _WIN32
 	LeaveCriticalSection (&ChipAccess);
 #else
@@ -73,10 +74,19 @@ void OPLmusicBlock::ResetChips ()
 #endif
 }
 
+void OPLmusicBlock::ResetChips ()
+{
+	TwoChips = !opl_onechip;
+	Serialize();
+	io->OPLdeinit ();
+	io->OPLinit (TwoChips + 1, uint(OPL_SAMPLE_RATE));
+	Unserialize();
+}
+
 void OPLmusicBlock::Restart()
 {
 	OPLstopMusic ();
-	OPLplayMusic ();
+	OPLplayMusic (127);
 	MLtime = 0;
 	playingcount = 0;
 }
@@ -229,15 +239,12 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 	samples1 = samples;
 	memset(buff, 0, numbytes);
 
-#ifdef _WIN32
-	EnterCriticalSection (&ChipAccess);
-#else
-	if (SDL_mutexP (ChipAccess) != 0)
-		return true;
-#endif
+	Serialize();
 	while (numsamples > 0)
 	{
-		int samplesleft = MIN (numsamples, int(NextTickIn));
+		double ticky = NextTickIn;
+		int tick_in = int(NextTickIn);
+		int samplesleft = MIN(numsamples, tick_in);
 
 		if (samplesleft > 0)
 		{
@@ -246,6 +253,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 			{
 				YM3812UpdateOne (1, samples1, samplesleft);
 			}
+			assert(NextTickIn == ticky);
 			NextTickIn -= samplesleft;
 			assert (NextTickIn >= 0);
 			numsamples -= samplesleft;
@@ -254,7 +262,8 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 		
 		if (NextTickIn < 1)
 		{
-			int next = PlayTick ();
+			int next = PlayTick();
+			assert(next >= 0);
 			if (next == 0)
 			{ // end of song
 				if (!Looping || prevEnded)
@@ -286,11 +295,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 			}
 		}
 	}
-#ifdef _WIN32
-	LeaveCriticalSection (&ChipAccess);
-#else
-	SDL_mutexV (ChipAccess);
-#endif
+	Unserialize();
 	return res;
 }
 
@@ -447,7 +452,7 @@ OPLmusicWriter::OPLmusicWriter (const char *songname, const char *filename)
 	io = new DiskWriterIO ();
 	if (((DiskWriterIO *)io)->OPLinit (filename) == 0)
 	{
-		OPLplayMusic ();
+		OPLplayMusic (127);
 		score = scoredata + ((MUSheader *)scoredata)->scoreStart;
 		Go ();
 	}

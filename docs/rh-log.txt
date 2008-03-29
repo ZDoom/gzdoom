@@ -1,3 +1,17 @@
+March 28, 2008
+- Moved sound sample rate, buffer size, and buffer count to the
+  advanced sound options menu. Removed opl_enable from the menu.
+- Added OPL synth as MIDI device -3. Since this is based on the MUS player
+  code, it only supports those events and controllers supported by MUS.
+  Some of Duke's MIDIs sound awful, but I think that may be more because
+  it's using different instruments... There's a thread in the MIDI streamer
+  class that could be taken out for Linux, since it doesn't need to deal
+  with the Windows Multimedia API, but for now, this is still Windows-only.
+- Changed the output of the OPL emulator from 32-bit integers to 32-bit
+  floats, so I can write its output directly to the stream buffer. In
+  addition, this lets me bring the OPL volume level much closer to the
+  standard MIDI volume.
+
 March 27, 2008
 - Did some restructuring of the OPL code in preparation for turning it
   into a general MIDI player.

@@ -2841,6 +2841,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\oplsynth\music_opl_mididevice.cpp"
+				>
+			</File>
+			<File
 				RelativePath="src\sound\music_spc.cpp"
 				>
 			</File>

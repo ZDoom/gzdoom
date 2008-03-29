@@ -66,8 +66,28 @@ struct MIDIHDR
 	BYTE *lpData;
 	DWORD dwBufferLength;
 	DWORD dwBytesRecorded;
-	MIDIHDR *Next;
+	MIDIHDR *lpNext;
 };
+
+enum
+{
+	MOD_MIDIPORT = 1,
+	MOD_SYNTH,
+	MOD_SQSYNTH,
+	MOD_FMSYNTH,
+	MOD_MAPPER,
+	MOD_WAVETABLE,
+	MOD_SWSYNTH
+};
+
+#define MEVT_TEMPO			((BYTE)1)
+#define MEVT_NOP			((BYTE)2)
+#define MEVT_LONGMSG		((BYTE)128)
+
+#define MEVT_EVENTTYPE(x)	((BYTE)((x) >> 24))
+#define MEVT_EVENTPARM(x)   ((x) & 0xffffff)
+
+#define MOM_DONE			969
 #endif
 
 class MIDIDevice
@@ -87,6 +107,8 @@ public:
 	virtual void Stop() = 0;
 	virtual int PrepareHeader(MIDIHDR *data) = 0;
 	virtual int UnprepareHeader(MIDIHDR *data) = 0;
+	virtual bool FakeVolume() = 0;
+	virtual bool Pause(bool paused) = 0;
 };
 
 // WinMM implementation of a MIDI output device -----------------------------
@@ -107,6 +129,8 @@ public:
 	void Stop();
 	int PrepareHeader(MIDIHDR *data);
 	int UnprepareHeader(MIDIHDR *data);
+	bool FakeVolume();
+	bool Pause(bool paused);
 
 protected:
 	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
@@ -138,10 +162,25 @@ public:
 	void Stop();
 	int PrepareHeader(MIDIHDR *data);
 	int UnprepareHeader(MIDIHDR *data);
+	bool FakeVolume();
+	bool Pause(bool paused);
 
 protected:
+	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
+
 	void (*Callback)(unsigned int, void *, DWORD, DWORD);
 	void *CallbackData;
+
+	void CalcTickRate();
+	void HandleEvent(int status, int parm1, int parm2);
+	int PlayTick();
+
+	SoundStream *Stream;
+	double Tempo;
+	double Division;
+	MIDIHDR *Events;
+	bool Started;
+	DWORD Position;
 };
 
 // Base class for streaming MUS and MIDI files ------------------------------
@@ -149,7 +188,7 @@ protected:
 class MIDIStreamer : public MusInfo
 {
 public:
-	MIDIStreamer();
+	MIDIStreamer(bool opl);
 	~MIDIStreamer();
 
 	void MusicVolumeChanged();
@@ -208,6 +247,7 @@ protected:
 	int InitialTempo;
 	BYTE ChannelVolumes[16];
 	DWORD Volume;
+	bool UseOPLDevice;
 };
 
 // MUS file played with a MIDI stream ---------------------------------------
@@ -235,7 +275,7 @@ protected:
 class MIDISong2 : public MIDIStreamer
 {
 public:
-	MIDISong2 (FILE *file, char *musiccache, int length);
+	MIDISong2 (FILE *file, char *musiccache, int length, bool opl);
 	~MIDISong2 ();
 
 protected:

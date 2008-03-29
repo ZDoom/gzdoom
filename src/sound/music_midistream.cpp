@@ -69,9 +69,9 @@ extern UINT mididevice;
 //
 //==========================================================================
 
-MIDIStreamer::MIDIStreamer()
+MIDIStreamer::MIDIStreamer(bool opl)
 : MIDI(0), PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
-  Division(0), InitialTempo(500000)
+  Division(0), InitialTempo(500000), UseOPLDevice(opl)
 {
 	BufferDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (BufferDoneEvent == NULL)
@@ -164,7 +164,14 @@ void MIDIStreamer::Play (bool looping)
 	InitialPlayback = true;
 
 	assert(MIDI == NULL);
-	MIDI = new WinMIDIDevice(mididevice);
+	if (UseOPLDevice)
+	{
+		MIDI = new OPLMIDIDevice;
+	}
+	else
+	{
+		MIDI = new WinMIDIDevice(mididevice);
+	}
 
 	if (0 != MIDI->Open(Callback, this))
 	{
@@ -251,7 +258,10 @@ void MIDIStreamer::Pause ()
 	if (m_Status == STATE_Playing)
 	{
 		m_Status = STATE_Paused;
-		OutputVolume(0);
+		if (!MIDI->Pause(true))
+		{
+			OutputVolume(0);
+		}
 	}
 }
 
@@ -268,7 +278,10 @@ void MIDIStreamer::Resume ()
 {
 	if (m_Status == STATE_Paused)
 	{
-		OutputVolume(Volume);
+		if (!MIDI->Pause(false))
+		{
+			OutputVolume(Volume);
+		}
 		m_Status = STATE_Playing;
 	}
 }
@@ -328,12 +341,18 @@ bool MIDIStreamer::IsPlaying ()
 
 void MIDIStreamer::MusicVolumeChanged ()
 {
-	float realvolume = clamp<float>(snd_musicvolume * relative_volume, 0.f, 1.f);
-	DWORD onechanvol = clamp<DWORD>((DWORD)(realvolume * 65535.f), 0, 65535);
-	Volume = onechanvol;
+	if (MIDI->FakeVolume())
+	{
+		float realvolume = clamp<float>(snd_musicvolume * relative_volume, 0.f, 1.f);
+		Volume = clamp<DWORD>((DWORD)(realvolume * 65535.f), 0, 65535);
+	}
+	else
+	{
+		Volume = 0xFFFF;
+	}
 	if (m_Status == STATE_Playing)
 	{
-		OutputVolume(onechanvol);
+		OutputVolume(Volume);
 	}
 }
 
@@ -347,8 +366,11 @@ void MIDIStreamer::MusicVolumeChanged ()
 
 void MIDIStreamer::OutputVolume (DWORD volume)
 {
-	NewVolume = volume;
-	VolumeChanged = true;
+	if (MIDI->FakeVolume())
+	{
+		NewVolume = volume;
+		VolumeChanged = true;
+	}
 }
 
 //==========================================================================

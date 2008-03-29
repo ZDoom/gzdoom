@@ -199,7 +199,8 @@ struct musicBlock {
 	void OPLreleaseNote(uint channel, uchar note);
 	void OPLpitchWheel(uint channel, int pitch);
 	void OPLchangeControl(uint channel, uchar controller, int value);
-	void OPLplayMusic();
+	void OPLprogramChange(uint channel, int value);
+	void OPLplayMusic(int vol);
 	void OPLstopMusic();
 	void OPLchangeVolume(uint volume);
 

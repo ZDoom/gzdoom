@@ -639,7 +639,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	int i, j;
 
 	// [CW] If an NPC is talking to a PC already, then don't let
-	// anyone else talk to NPC.
+	// anyone else talk to the NPC.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i] || pc->player == &players[i])
@@ -826,8 +826,8 @@ static void DrawConversationMenu ()
 		return;
 	}
 
-	// [CW] Pausing the game in a multiplayer game is a bad idea.
-	if (ConversationPauseTic < gametic && !multiplayer)
+	// [CW] Freeze the game depending on MAPINFO options.
+	if (ConversationPauseTic < gametic && !multiplayer && !(level.flags & LEVEL_CONV_SINGLE_UNFREEZE))
 	{
 		menuactive = MENU_On;
 	}
@@ -1037,9 +1037,9 @@ static void PickConversationReply ()
 	Net_WriteByte (DEM_CONVERSATION);
 	Net_WriteByte (CONV_NPCANGLE);
 
-	// [CW] Set these to NULL because we're not talking to them
-	// anymore. However, this can interfere with slideshows so
-	// we don't set them to NULL in that case.
+	// [CW] Set these to NULL because we're not using to them
+	// anymore. However, this can interfere with slideshows
+	// so we don't set them to NULL in that case.
 	if (gameaction != ga_slideshow)
 	{
 		Net_WriteByte (DEM_CONVERSATION);

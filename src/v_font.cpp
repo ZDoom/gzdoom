@@ -216,16 +216,13 @@ FFont *V_GetFont(const char *name)
 	if (font == NULL)
 	{
 		int lump = -1;
-		FString fullname;
-		
-		if (strlen(name) > 8)
+
+		lump = Wads.CheckNumForFullName(name, true);
+		if (lump < 0 && strlen(name) > 8)
 		{
+			FString fullname;
 			fullname.Format("%s.fon", name);
 			lump = Wads.CheckNumForFullName(fullname);
-		}
-		else
-		{
-			lump = Wads.CheckNumForName (name);
 		}
 		
 		if (lump != -1)

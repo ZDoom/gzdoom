@@ -530,8 +530,7 @@ void FTextureManager::LoadHiresTex(int wadnum)
 					FName texname = sc.String;
 
 					sc.MustGetString();
-					int lumpnum = Wads.CheckNumForFullName(sc.String);
-					if (lumpnum < 0) lumpnum = Wads.CheckNumForName(sc.String, ns_graphics);
+					int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
 
 					if (tlist.Size() == 0)
 					{
@@ -572,7 +571,7 @@ void FTextureManager::LoadHiresTex(int wadnum)
 					sc.GetString();
 					memcpy(src, sc.String, 8);
 
-					int lumpnum = Wads.CheckNumForFullName(sc.String);
+					int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
 					if (lumpnum < 0) lumpnum = Wads.CheckNumForName(sc.String, ns_graphics);
 
 					sc.GetString();

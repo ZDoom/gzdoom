@@ -310,6 +310,7 @@ static const char *MapInfoMapLevel[] =
 	"checkswitchrange",
 	"nocheckswitchrange",
 	"translator",
+	"unfreezesingleplayerconversations",
 	NULL
 };
 
@@ -460,6 +461,7 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
 	{ MITYPE_STRING,	lioffset(translator), 0 },
+	{ MITYPE_SETFLAG,	LEVEL_CONV_SINGLE_UNFREEZE, 0 },
 };
 
 static const char *MapInfoClusterLevel[] =

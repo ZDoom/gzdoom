@@ -66,8 +66,6 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def);
 
 static void ParseDecorate (FScanner &sc)
 {
-	int lump;
-
 	// Get actor class name.
 	for(;;)
 	{
@@ -79,26 +77,13 @@ static void ParseDecorate (FScanner &sc)
 		switch (sc.TokenType)
 		{
 		case TK_Include:
+		{
 			sc.MustGetString();
-			// This is not using SC_Open because it can print a more useful error message when done here
-			lump = Wads.CheckNumForFullName(sc.String);
-
-			// Try a normal WAD name lookup only if it's a proper name without path separator and
-			// not longer than 8 characters.
-			if (lump == -1 && sc.StringLen <= 8 && !strchr(sc.String, '/'))
-			{
-				lump = Wads.CheckNumForName(sc.String);
-			}
-			if (lump == -1) 
-			{
-				sc.ScriptError("Lump '%s' not found", sc.String);
-			}
-			else
-			{
-				FScanner newscanner(lump, sc.String);
-				ParseDecorate(newscanner);
-			}
+			FScanner newscanner;
+			newscanner.Open(sc.String);
+			ParseDecorate(newscanner);
 			break;
+		}
 
 		case TK_Class:
 			ParseClass (sc);

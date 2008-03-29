@@ -137,10 +137,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 		if(sc.TokenType == TK_Include)
 		{
 			sc.MustGetToken(TK_StringConst);
-			int lump = Wads.CheckNumForFullName(sc.String); //zip/pk3
-			//Do a normal wad lookup.
-			if (lump == -1 && sc.StringLen <= 8 && !strchr(sc.String, '/')) 
-				lump = Wads.CheckNumForName(sc.String);
+			int lump = Wads.CheckNumForFullName(sc.String, true);
 			if (lump == -1) 
 				sc.ScriptError("Lump '%s' not found", sc.String);
 			ParseSBarInfo(lump);

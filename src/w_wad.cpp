@@ -916,7 +916,7 @@ int FWadCollection::GetNumForName (const char *name, int space)
 //
 //==========================================================================
 
-int FWadCollection::CheckNumForFullName (const char *name, bool trynormal)
+int FWadCollection::CheckNumForFullName (const char *name, bool trynormal, int namespc)
 {
 	WORD i;
 
@@ -936,7 +936,7 @@ int FWadCollection::CheckNumForFullName (const char *name, bool trynormal)
 
 	if (trynormal && strlen(name) <= 8 && !strpbrk(name, "./"))
 	{
-		return CheckNumForName(name, ns_global);
+		return CheckNumForName(name, namespc);
 	}
 	return -1;
 }

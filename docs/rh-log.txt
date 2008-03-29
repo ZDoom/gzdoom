@@ -1,3 +1,20 @@
+March 29, 2008 (Changes by Graf Zahl)
+- Added SnowKate709's A_DamageMaster/A_DamageChildren patch.
+- Added a SFX_TRANSFERAMBUSHFLAG for A_SpawnItemEx.
+- Added "Shaded" as a valid parameter for DECORATE's RenderStyle.
+- Added Karate Chris's patch for a MAPINFO option making Strife conversations
+  not halt the game.
+- Extended the $limit fix that $alias and $random definitions can have their
+  own $limit now.
+- Fixed: When resolving a linked sound the limit of the current sound was
+  ignored and the one of the referenced sound being used. This was particularly
+  noticable when using the chaingun in a group of Zombiemen.
+- Added a namespc parameter to FWadCollection::CheckNumForFullName which is
+  used when a normal lump name has to be looked up and changed all
+  CheckNumForFullName/CheckNumForName combinations in the source to use
+  the extended version of CheckNumForFullName only to have consistent
+  behavior for lump name lookup.
+
 March 28, 2008
 - Moved sound sample rate, buffer size, and buffer count to the
   advanced sound options menu. Removed opl_enable from the menu.

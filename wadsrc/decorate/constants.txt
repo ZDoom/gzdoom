@@ -13,6 +13,7 @@ const int SXF_ABSOLUTEMOMENTUM=8;
 const int SXF_SETMASTER=16;
 const int SXF_NOCHECKPOSITION = 32;
 const int SXF_TELEFRAG=64;
+const int SXF_TRANSFERAMBUSHFLAG=128;
 
 // Flags for A_Chase
 const int CHF_FASTCHASE = 1;

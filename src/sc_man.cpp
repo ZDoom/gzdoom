@@ -164,10 +164,10 @@ FScanner &FScanner::operator=(const FScanner &other)
 
 void FScanner::Open (const char *name)
 {
-	int lump = Wads.CheckNumForFullName(name);
+	int lump = Wads.CheckNumForFullName(name, true);
 	if (lump == -1)
 	{
-		lump = Wads.GetNumForName(name);
+		I_Error("Could not find script lump '%s'\n", name);
 	}
 	OpenLumpNum(lump, name);
 }

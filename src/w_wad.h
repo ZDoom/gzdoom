@@ -181,7 +181,7 @@ public:
 	inline int GetNumForName (const BYTE *name) { return GetNumForName ((const char *)name); }
 	inline int GetNumForName (const BYTE *name, int ns) { return GetNumForName ((const char *)name, ns); }
 
-	int CheckNumForFullName (const char *name, bool trynormal = false);
+	int CheckNumForFullName (const char *name, bool trynormal = false, int namespc = ns_global);
 	int CheckNumForFullName (const char *name, int wadfile);
 	int GetNumForFullName (const char *name);
 

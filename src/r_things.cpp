@@ -573,8 +573,7 @@ void R_InitSkins (void)
 				int lump = Wads.CheckNumForName (sc.String, skins[i].namespc);
 				if (lump == -1)
 				{
-					lump = Wads.CheckNumForFullName (sc.String);
-					if (lump == -1) lump = Wads.CheckNumForName (sc.String, ns_sounds);
+					lump = Wads.CheckNumForFullName (sc.String, true, ns_sounds);
 				}
 				if (lump != -1)
 				{
@@ -607,8 +606,7 @@ void R_InitSkins (void)
 						sndlumps[j] = Wads.CheckNumForName (sc.String, skins[i].namespc);
 						if (sndlumps[j] == -1)
 						{ // Replacement not found, try finding it in the global namespace
-							sndlumps[j] = Wads.CheckNumForFullName (sc.String);
-							if (sndlumps[j] == -1) sndlumps[j] = Wads.CheckNumForName (sc.String, ns_sounds);
+							sndlumps[j] = Wads.CheckNumForFullName (sc.String, true, ns_sounds);
 						}
 					}
 				}

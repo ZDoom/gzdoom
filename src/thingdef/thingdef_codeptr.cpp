@@ -1477,7 +1477,9 @@ enum SIX_Flags
 	SIXF_ABSOLUTEMOMENTUM=8,
 	SIXF_SETMASTER=16,
 	SIXF_NOCHECKPOSITION=32,
-	SIXF_TELEFRAG=64
+	SIXF_TELEFRAG=64,
+	// 128 is used by Skulltag!
+	SIXF_TRANSFERAMBUSHFLAG=256,
 };
 
 void A_SpawnItemEx(AActor * self)
@@ -1547,6 +1549,7 @@ void A_SpawnItemEx(AActor * self)
 		mo->momz=zmom;
 		mo->angle=Angle;
 		if (flags & SIXF_TELEFRAG) P_TeleportMove(mo, mo->x, mo->y, mo->z, true);
+		if (flags & SIXF_TRANSFERAMBUSHFLAG) mo->flags = (mo->flags&~MF_AMBUSH) | (self->flags & MF_AMBUSH);
 	}
 }
 
@@ -2169,6 +2172,68 @@ void A_JumpIfTargetInLOS(AActor * self)
 	if (target==NULL) return;
 
 	DoJump(self, CallingState, StateParameters[index]);
+}
+
+//===========================================================================
+//
+// A_DamageMaster (int amount)
+// Damages the master of this child by the specified amount. Negative values heal.
+//
+//===========================================================================
+void A_DamageMaster(AActor * self)
+{
+	int index = CheckIndex(2);
+	if (index<0) return;
+
+	int amount = EvalExpressionI (StateParameters[index], self);
+	ENamedName DamageType = (ENamedName)StateParameters[index+1];
+
+	if (self->master != NULL)
+	{
+		if (amount > 0)
+		{
+			P_DamageMobj(self->master, self, self, amount, DamageType, DMG_NO_ARMOR);
+		}
+		else if (amount < 0)
+		{
+			amount = -amount;
+			P_GiveBody(self->master, amount);
+		}
+	}
+}
+
+//===========================================================================
+//
+// A_DamageChildren (amount)
+// Damages the children of this master by the specified amount. Negative values heal.
+//
+//===========================================================================
+void A_DamageChildren(AActor * self)
+{
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	int index = CheckIndex(2);
+	if (index<0) return;
+
+	int amount = EvalExpressionI (StateParameters[index], self);
+	ENamedName DamageType = (ENamedName)StateParameters[index+3];
+
+	while ( (mo = it.Next()) )
+	{
+		if (mo->master == self)
+		{
+			if (amount > 0)
+			{
+				P_DamageMobj(mo, self, self, amount, DamageType, DMG_NO_ARMOR);
+			}
+			else if (amount < 0)
+			{
+				amount = -amount;
+				P_GiveBody(mo, amount);
+			}
+		}
+	}
 }
 
 // [KS] *** End of my modifications ***

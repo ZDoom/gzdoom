@@ -945,7 +945,7 @@ SoundStream *FMODSoundRenderer::CreateStream (SoundStreamCallback callback, int 
 	capsule = new FMODStreamCapsule (userdata, callback, this);
 
 	mode = FMOD_2D | FMOD_OPENUSER | FMOD_LOOP_NORMAL | FMOD_SOFTWARE | FMOD_CREATESTREAM | FMOD_OPENONLY;
-	sample_shift = (flags & SoundStream::Bits8) ? 0 : 1;
+	sample_shift = (flags & (SoundStream::Bits32 | SoundStream::Float)) ? 2 : (flags & SoundStream::Bits8) ? 0 : 1;
 	channel_shift = (flags & SoundStream::Mono) ? 0 : 1;
 
 	// Chunk size of stream update in samples. This will be the amount of data
@@ -963,7 +963,22 @@ SoundStream *FMODSoundRenderer::CreateStream (SoundStreamCallback callback, int 
 	exinfo.defaultfrequency	 = samplerate;
 
 	// Data format of sound.
-	exinfo.format			 = (flags & SoundStream::Bits8) ? FMOD_SOUND_FORMAT_PCM8 : FMOD_SOUND_FORMAT_PCM16;
+	if (flags & SoundStream::Float)
+	{
+		exinfo.format = FMOD_SOUND_FORMAT_PCMFLOAT;
+	}
+	else if (flags & SoundStream::Bits32)
+	{
+		exinfo.format = FMOD_SOUND_FORMAT_PCM32;
+	}
+	else if (flags & SoundStream::Bits8)
+	{
+		exinfo.format = FMOD_SOUND_FORMAT_PCM8;
+	}
+	else
+	{
+		exinfo.format = FMOD_SOUND_FORMAT_PCM16;
+	}
 
 	// User callback for reading.
 	exinfo.pcmreadcallback	 = FMODStreamCapsule::PCMReadCallback;

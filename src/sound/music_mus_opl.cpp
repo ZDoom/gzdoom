@@ -19,8 +19,8 @@ OPLMUSSong::OPLMUSSong (FILE *file, char *musiccache, int len)
 
 	Music = new OPLmusicFile (file, musiccache, len, samples);
 
-	m_Stream = GSnd->CreateStream (FillStream, samples*2,
-		SoundStream::Mono, int(OPL_SAMPLE_RATE), this);
+	m_Stream = GSnd->CreateStream (FillStream, samples*4,
+		SoundStream::Mono | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
 	if (m_Stream == NULL)
 	{
 		Printf (PRINT_BOLD, "Could not create music stream.\n");
@@ -63,7 +63,7 @@ void OPLMUSSong::Play (bool looping)
 	Music->SetLooping (looping);
 	Music->Restart ();
 
-	if (m_Stream->Play (true, snd_musicvolume, true))
+	if (m_Stream->Play (true, snd_musicvolume, false))
 	{
 		m_Status = STATE_Playing;
 	}

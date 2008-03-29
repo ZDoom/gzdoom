@@ -1,6 +1,6 @@
 /*
-** music_mididevice.cpp
-** Provides a WinMM implementation of a generic MIDI output device.
+** music_win_mididevice.cpp
+** Provides a WinMM implementation of a MIDI output device.
 **
 **---------------------------------------------------------------------------
 ** Copyright 2008 Randy Heit

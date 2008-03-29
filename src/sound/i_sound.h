@@ -46,9 +46,11 @@ public:
 	{	// For CreateStream
 		Mono = 1,
 		Bits8 = 2,
+		Bits32 = 4,
+		Float = 8,
 
 		// For OpenStream
-		Loop = 4
+		Loop = 16
 	};
 
 	virtual bool Play (bool looping, float volume, bool normalize) = 0;

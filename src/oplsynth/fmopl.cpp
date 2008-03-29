@@ -583,7 +583,7 @@ static signed int output[1];
 static UINT32	LFO_AM;
 static INT32	LFO_PM;
 
-static bool CalcVoice (FM_OPL *OPL, int voice, INT32 *buffer, int length);
+static bool CalcVoice (FM_OPL *OPL, int voice, float *buffer, int length);
 
 
 
@@ -782,69 +782,7 @@ INLINE void advance(FM_OPL *OPL)
 }
 
 
-INLINE signed int op_calc(UINT32 phase, unsigned int env, signed int pm, unsigned int wave_tab)
-{
-	UINT32 p;
-
-	p = (env<<4) + sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + (pm<<16))) >> FREQ_SH ) & SIN_MASK) ];
-
-	if (p >= TL_TAB_LEN)
-		return 0;
-	return tl_tab[p];
-}
-
-INLINE signed int op_calc1(UINT32 phase, unsigned int env, signed int pm, unsigned int wave_tab)
-{
-	UINT32 p;
-	INT32  i;
-
-	i = (phase & ~FREQ_MASK) + pm;
-
-/*logerror("i=%08x (i>>16)&511=%8i phase=%i [pm=%08x] ",i, (i>>16)&511, phase>>FREQ_SH, pm);*/
-
-	p = (env<<4) + sin_tab[ wave_tab + ((i>>FREQ_SH) & SIN_MASK)];
-
-/*logerror("(p&255=%i p>>8=%i) out= %i\n", p&255,p>>8, tl_tab[p&255]>>(p>>8) );*/
-
-	if (p >= TL_TAB_LEN)
-		return 0;
-	return tl_tab[p];
-}
-
-
 #define volume_calc(OP) ((OP)->TLL + ((UINT32)(OP)->volume) + (LFO_AM & (OP)->AMmask))
-
-/* calculate output */
-INLINE void OPL_CALC_CH( OPL_CH *CH )
-{
-	OPL_SLOT *SLOT;
-	unsigned int env;
-	signed int out;
-
-	phase_modulation = 0;
-
-	/* SLOT 1 */
-	SLOT = &CH->SLOT[SLOT1];
-	env  = volume_calc(SLOT);
-	out  = SLOT->op1_out[0] + SLOT->op1_out[1];
-	SLOT->op1_out[0] = SLOT->op1_out[1];
-	*SLOT->connect1 += SLOT->op1_out[0];
-	SLOT->op1_out[1] = 0;
-	if( env < ENV_QUIET )
-	{
-		if (!SLOT->FB)
-			out = 0;
-		SLOT->op1_out[1] = op_calc1(SLOT->Cnt, env, (out<<SLOT->FB), SLOT->wavetable );
-	}
-
-	/* SLOT 2 */
-	SLOT++;
-	env = volume_calc(SLOT);
-	if( env < ENV_QUIET )
-	{
-		output[0] += op_calc(SLOT->Cnt, env, phase_modulation, SLOT->wavetable);
-	}
-}
 
 /* generic table initialize */
 static int init_tables(void)
@@ -1608,33 +1546,15 @@ void YM3812SetUpdateHandler(int which,OPL_UPDATEHANDLER UpdateHandler,int param)
 ** '*buffer' is the output buffer pointer
 ** 'length' is the number of samples that should be generated
 */
-void YM3812UpdateOne(int which, INT32 *buffer, int length)
+void YM3812UpdateOne(int which, float *buffer, int length)
 {
 	FM_OPL		*OPL = OPL_YM3812[which];
-	INT32		*buf = buffer;
 	int i;
 
 	if( (void *)OPL != cur_chip )
 	{
 		cur_chip = (void *)OPL;
 	}
-#if 0
-	for( i=0; i < length ; i++ )
-	{
-		output[0] = 0;
-
-		advance_lfo(OPL);
-
-		/* FM part */
-		for (int j = 0; j <= 8; ++j)
-		{
-			OPL_CALC_CH(&OPL->P_CH[j]);
-		}
-		// [RH] Just add to the output. Clamping will happen later.
-		buf[i] += output[0];
-		advance(OPL);
-	}
-#else
 	UINT32 lfo_am_cnt_bak = OPL->lfo_am_cnt;
 	UINT32 eg_timer_bak = OPL->eg_timer;
 	UINT32 eg_cnt_bak = OPL->eg_cnt;
@@ -1648,7 +1568,7 @@ void YM3812UpdateOne(int which, INT32 *buffer, int length)
 		OPL->lfo_am_cnt = lfo_am_cnt_bak;
 		OPL->eg_timer = eg_timer_bak;
 		OPL->eg_cnt = eg_cnt_bak;
-		if (CalcVoice (OPL, i, buf, length))
+		if (CalcVoice (OPL, i, buffer, length))
 		{
 			lfo_am_cnt_out = OPL->lfo_am_cnt;
 			eg_timer_out = OPL->eg_timer;
@@ -1659,13 +1579,12 @@ void YM3812UpdateOne(int which, INT32 *buffer, int length)
 	OPL->lfo_am_cnt = lfo_am_cnt_out;
 	OPL->eg_timer = eg_timer_out;
 	OPL->eg_cnt = eg_cnt_out;
-#endif
 }
 
 // [RH] Render a whole voice at once. If nothing else, it lets us avoid
 // wasting a lot of time on voices that aren't playing anything.
 
-static bool CalcVoice (FM_OPL *OPL, int voice, INT32 *buffer, int length)
+static bool CalcVoice (FM_OPL *OPL, int voice, float *buffer, int length)
 {
 	OPL_CH *const CH = &OPL->P_CH[voice];
 	int i, j;
@@ -1729,8 +1648,8 @@ static bool CalcVoice (FM_OPL *OPL, int voice, INT32 *buffer, int length)
 			{
 				output[0] += tl_tab[p];
 			}
-			// [RH] make the output louder.
-			buffer[i] += (output[0] + (output[0]>>1));
+			// [RH] Convert to floating point.
+			buffer[i] += float(output[0]) / 7168.f;
 		}
 
 		// advance

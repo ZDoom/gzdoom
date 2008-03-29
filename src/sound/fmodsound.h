@@ -49,8 +49,6 @@ public:
 	void ResetEnvironment ();
 
 private:
-	unsigned int DriverCaps;
-	int OutputType;
 	bool SFXPaused;
 	bool InitSuccess;
 

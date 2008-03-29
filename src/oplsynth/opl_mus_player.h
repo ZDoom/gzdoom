@@ -30,9 +30,6 @@ protected:
 	bool TwoChips;
 	bool Looping;
 
-	int *SampleBuff;
-	int SampleBuffSize;
-
 #ifdef _WIN32
 	CRITICAL_SECTION ChipAccess;
 #else

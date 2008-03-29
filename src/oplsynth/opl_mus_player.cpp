@@ -24,8 +24,6 @@ static OPLmusicBlock *BlockForStats;
 OPLmusicBlock::OPLmusicBlock()
 {
 	scoredata = NULL;
-	SampleBuff = NULL;
-	SampleBuffSize = 0;
 	NextTickIn = 0;
 	TwoChips = !opl_onechip;
 	Looping = false;
@@ -45,11 +43,6 @@ OPLmusicBlock::OPLmusicBlock()
 OPLmusicBlock::~OPLmusicBlock()
 {
 	BlockForStats = NULL;
-	if (SampleBuff != NULL)
-	{
-		delete[] SampleBuff;
-		SampleBuff = NULL;
-	}
 #ifdef _WIN32
 	DeleteCriticalSection (&ChipAccess);
 #else
@@ -227,23 +220,14 @@ void OPLmusicFile::Restart ()
 
 bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 {
-	short *samples = (short *)buff;
-	int *samples1;
-	int numsamples = numbytes / 2;
+	float *samples = (float *)buff;
+	float *samples1;
+	int numsamples = numbytes / sizeof(float);
 	bool prevEnded = false;
 	bool res = true;
 
-	// SampleBuff is allocated here, since FMOD might not give us exactly
-	// the buffer size we requested. (Actually, it's giving us twice what
-	// was asked for. Am I doing something wrong?)
-	numbytes = numsamples * sizeof(int);
-	if (SampleBuff == NULL || numbytes > SampleBuffSize)
-	{
-		SampleBuff = (int *)M_Realloc(SampleBuff, numbytes);
-		SampleBuffSize = numbytes;
-	}
-	memset(SampleBuff, 0, numbytes);
-	samples1 = SampleBuff;
+	samples1 = samples;
+	memset(buff, 0, numbytes);
 
 #ifdef _WIN32
 	EnterCriticalSection (&ChipAccess);
@@ -307,86 +291,6 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 #else
 	SDL_mutexV (ChipAccess);
 #endif
-	numsamples = numbytes / sizeof(int);
-	samples1 = SampleBuff;
-
-#if defined(_MSC_VER) && defined(USEASM)
-	if (CPU.bCMOV && numsamples > 1)
-	{
-		__asm
-		{
-			mov ecx, numsamples
-			mov esi, samples1
-			mov edi, samples
-			shr ecx, 1
-			lea esi, [esi+ecx*8]
-			lea edi, [edi+ecx*4]
-			neg ecx
-			mov edx, 0x00007fff
-looper:		mov eax, [esi+ecx*8]
-			mov ebx, [esi+ecx*8+4]
-
-			// Shift the samples down to reduce the chance of clipping at the high end.
-			// Since most of the waveforms we produce only use the upper half of the
-			// sine wave, this is a good thing. Although it does leave less room at
-			// the bottom of the sine before clipping, almost none of the songs I tested
-			// went below -9000.
-			sub eax, 18000
-			sub ebx, 18000
-
-			// Clamp high
-			cmp eax, edx
-			cmovg eax, edx
-			cmp ebx, edx
-			cmovg ebx, edx
-
-			// Clamp low
-			not edx
-			cmp eax, edx
-			cmovl eax, edx
-			cmp ebx, edx
-			cmovl ebx, edx
-
-			not edx
-			mov [edi+ecx*4], ax
-			mov [edi+ecx*4+2], bx
-
-			inc ecx
-			jnz looper
-
-			test numsamples, 1
-			jz done
-
-			mov eax, [esi+ecx*8]
-			sub eax, 18000
-			cmp eax, edx
-			cmovg eax, edx
-			not edx
-			cmp eax, edx
-			cmovl eax, edx
-			mov [edi+ecx*2], ax
-done:
-		}
-	}
-	else
-#endif
-	{
-		for (int i = 1; i < numsamples; i+=2)
-		{
-			int u = samples1[i-1] - 18000;
-			int v = samples1[i  ] - 18000;
-			if (u < -32768) u = -32768; else if (u > 32767) u = 32767;
-			if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
-			samples[i-1] = u;
-			samples[i  ] = v;
-		}
-		if (numsamples & 1)
-		{
- 			int v = samples1[numsamples-1] - 18000;
-			if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
-			samples[numsamples-1] = v;
-		}
-	}
 	return res;
 }
 

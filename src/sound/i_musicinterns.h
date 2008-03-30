@@ -297,6 +297,7 @@ protected:
 	void DoRestart();
 	bool CheckDone();
 	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+	void AdvanceTracks(DWORD time);
 
 	struct TrackInfo;
 

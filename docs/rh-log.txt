@@ -1,4 +1,8 @@
 March 29, 2008
+- Fixed: OPLMIDIDevice sent the wrong pitch wheel value to the player code.
+  Missimp.mid sounds a lot better now, though still a little off.
+- Fixed: MIDI files that had ticks with nothing but meta-events did not play
+  properly. (fixes sonic3_finalboss.mid)
 - Applied Const's Makefile.linux changes.
 - Made the OPL MIDI synth available from Linux.
 

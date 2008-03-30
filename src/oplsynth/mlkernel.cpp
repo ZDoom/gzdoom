@@ -92,7 +92,8 @@ int musicBlock::playTick()
 				OPLplayNote(channel, note, -1);
 				} break;
 		case 2:	// pitch wheel
-			OPLpitchWheel(channel, *score++);
+			// MUS pitch wheel is 8 bits, but MIDI is 14
+			OPLpitchWheel(channel, *score++ << (14 - 8));
 			break;
 		case 3:	// system event (valueless controller)
 			OPLchangeControl(channel, *score++, 0);

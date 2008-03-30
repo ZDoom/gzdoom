@@ -44,10 +44,10 @@
 // MACROS ------------------------------------------------------------------
 
 #if defined(_DEBUG) && defined(_WIN32)
-#define UNIMPL(m,c,s,t) \
+#define DEBUGOUT(m,c,s,t) \
 	{ char foo[128]; sprintf(foo, m, c, s, t); OutputDebugString(foo); }
 #else
-#define UNIMPL(m,c,s,t)
+#define DEBUGOUT(m,c,s,t)
 #endif
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -125,6 +125,7 @@ int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), vo
 
 	OPLstopMusic();
 	OPLplayMusic(100);
+	DEBUGOUT("========= New song started ==========\n", 0, 0, 0);
 
 	return 0;
 }
@@ -178,6 +179,7 @@ int OPLMIDIDevice::SetTempo(int tempo)
 {
 	Tempo = tempo;
 	CalcTickRate();
+	DEBUGOUT("Tempo changed to %.0f, %.2f samples/tick\n", Tempo, SamplesPerTick, 0);
 	return 0;
 }
 
@@ -191,6 +193,7 @@ int OPLMIDIDevice::SetTimeDiv(int timediv)
 {
 	Division = timediv;
 	CalcTickRate();
+	DEBUGOUT("Division changed to %.0f, %.2f samples/tick\n", Division, SamplesPerTick, 0);
 	return 0;
 }
 
@@ -375,8 +378,7 @@ int OPLMIDIDevice::PlayTick()
 		DWORD *event = (DWORD *)(Events->lpData + Position);
 		if (MEVT_EVENTTYPE(event[2]) == MEVT_TEMPO)
 		{
-			Tempo = MEVT_EVENTPARM(event[2]);
-			CalcTickRate();
+			SetTempo(MEVT_EVENTPARM(event[2]));
 		}
 		else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
 		{ // Should I handle master volume changes?
@@ -459,7 +461,7 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		break;
 
 	case MIDI_POLYPRESS:
-		UNIMPL("Unhandled note aftertouch: Channel %d, note %d, value %d\n", channel, parm1, parm2);
+		DEBUGOUT("Unhandled note aftertouch: Channel %d, note %d, value %d\n", channel, parm1, parm2);
 		break;
 
 	case MIDI_CTRLCHANGE:
@@ -480,7 +482,7 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		case 126:	OPLchangeControl(channel, ctrlMono, parm2);			break;
 		case 127:	OPLchangeControl(channel, ctrlPoly, parm2);			break;
 		default:
-			UNIMPL("Unhandled controller: Channel %d, controller %d, value %d\n", channel, parm1, parm2);
+			DEBUGOUT("Unhandled controller: Channel %d, controller %d, value %d\n", channel, parm1, parm2);
 			break;
 		}
 		break;
@@ -490,12 +492,11 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		break;
 
 	case MIDI_CHANPRESS:
-		UNIMPL("Unhandled channel aftertouch: Channel %d, value %d\n", channel, parm1, 0);
+		DEBUGOUT("Unhandled channel aftertouch: Channel %d, value %d\n", channel, parm1, 0);
 		break;
 
 	case MIDI_PITCHBEND:
-		// MUS pitch is 8 bit, but MIDI pitch is 14-bit
-		OPLpitchWheel(channel, (parm1 | (parm2 >> 1)) >> (14 - 8));
+		OPLpitchWheel(channel, parm1 | (parm2 << 7));
 		break;
 	}
 }

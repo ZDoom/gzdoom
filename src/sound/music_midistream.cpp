@@ -445,11 +445,10 @@ void MIDIStreamer::Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, D
 			SetEvent(self->BufferDoneEvent);
 		}
 		else
-#else
+#endif
 		{
 			self->ServiceEvent();
 		}
-#endif
 	}
 }
 

@@ -535,7 +535,7 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 		sfx->bRandomHeader = false;
 		sfx->link = sfxinfo_t::NO_LINK;
 		sfx->bTentative = false;
-		if (sfx->NearLimit == (BYTE)-1) sfx->NearLimit = 2;
+		if (sfx->NearLimit == -1) sfx->NearLimit = 2;
 		//sfx->PitchMask = CurrentPitchMask;
 	}
 	else
@@ -1579,7 +1579,7 @@ static int S_LookupPlayerSound (int classidx, int gender, int refid)
 	// If we're not done parsing SNDINFO yet, assume that the target sound is valid
 	if (PlayerClassesIsSorted &&
 		(sndnum == 0 ||
-		((S_sfx[sndnum].lumpnum == -1 || S_sfx[sndnum].lumpnum == sfx_empty) && S_sfx[sndnum].link == 0xffff)))
+		((S_sfx[sndnum].lumpnum == -1 || S_sfx[sndnum].lumpnum == sfx_empty) && S_sfx[sndnum].link == sfxinfo_t::NO_LINK)))
 	{ // This sound is unavailable.
 		if (ingender != 0)
 		{ // Try "male"

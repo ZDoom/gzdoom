@@ -44,7 +44,7 @@ struct sfxinfo_t
 	float		Volume;
 
 	BYTE		PitchMask;
-	BYTE		NearLimit;				// 0 means unlimited
+	SWORD		NearLimit;				// 0 means unlimited
 
 	WORD		bRandomHeader:1;
 	WORD		bPlayerReserve:1;
@@ -58,8 +58,8 @@ struct sfxinfo_t
 	WORD		bTentative:1;
 	WORD		RolloffType:2;
 
-	WORD		link;
-	enum { NO_LINK = 0xffff };
+	unsigned int link;
+	enum { NO_LINK = 0xffffffff };
 
 	float		MinDistance;
 	union		{ float MaxDistance, RolloffFactor; };

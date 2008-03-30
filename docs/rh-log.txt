@@ -1,3 +1,12 @@
+March 30, 2008 (Changes by Graf Zahl)
+- Fixed: The HIRESTEX parser didn't check if a graphic specified in a remap
+  command actually existed.
+- Fixed: My $Limit fix from yesterday didn't work because NearLimit was
+  an unsigned byte and the comparisons with -1 didn't work. Made it a
+  signed word instead.
+- Made sfxinfo_t::Link an unsigned int because it limited the amount of 
+  usable sounds to 65535.
+
 March 29, 2008
 - Fixed: OPLMIDIDevice sent the wrong pitch wheel value to the player code.
   Missimp.mid sounds a lot better now, though still a little off.

@@ -79,6 +79,7 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 		{ FAutomapTexture::Check,	FAutomapTexture::Create,	TEX_Autopage },
 	};
 
+	if (lumpnum == -1) return NULL;
 
 	FWadLump data = Wads.OpenLumpNum (lumpnum);
 

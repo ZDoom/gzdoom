@@ -35,8 +35,6 @@
 ** have them sound right.
 */
 
-#ifdef _WIN32
-
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
@@ -110,10 +108,12 @@ MIDISong2::MIDISong2 (FILE *file, char *musiccache, int len, bool opl)
 	int p;
 	int i;
 
+#ifdef _WIN32
 	if (ExitEvent == NULL)
 	{
 		return;
 	}
+#endif
 	MusHeader = new BYTE[len];
 	if (file != NULL)
 	{
@@ -722,9 +722,8 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 
 void MIDISong2::SetTempo(int new_tempo)
 {
-	if (MMSYSERR_NOERROR == MIDI->SetTempo(new_tempo))
+	if (0 == MIDI->SetTempo(new_tempo))
 	{
 		Tempo = new_tempo;
 	}
 }
-#endif

@@ -67,7 +67,7 @@ OBJS = $(addprefix $(OBJDIR)/,$(AOBJFILES)) $(COBJS)
 
 all: $(ZDOOMBIN) toolsandpk3 zdoom.pk3
 
-$(ZDOOMBIN): ccdv updaterev $(OBJDIR) $(OBJS) snes_spc/libsnes_spc.a
+$(ZDOOMBIN): ccdv updaterev src/xlat/xlat_parser.h src/xlat/xlat_parser.c $(OBJDIR) $(OBJS) snes_spc/libsnes_spc.a
 	$(CCDV) $(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
 	$(filter-out %/autostart.o %/autozend.o,$(OBJS)) \
 	snes_spc/libsnes_spc.a $(OBJDIR)/autozend.o -o $(ZDOOMBIN)
@@ -101,22 +101,22 @@ toolsandpk3: ccdv tools/makewad/makewad tools/dehsupp/dehsupp tools/lemon/lemon
 zdoom.pk3: toolsandpk3
 	ln -sf wadsrc/zdoom.pk3 ./
 
-snes_spc/libsnes_spc.a:
+snes_spc/libsnes_spc.a: ccdv
 	$(MAKE) -C snes_spc/
 
-tools/makewad/makewad:
+tools/makewad/makewad: ccdv
 	$(MAKE) -C tools/makewad/
 
-tools/dehsupp/dehsupp:
+tools/dehsupp/dehsupp: ccdv
 	$(MAKE) -C tools/dehsupp/
 
-tools/lemon/lemon:
+tools/lemon/lemon: ccdv
 	$(MAKE) -C tools/lemon/
 
 updaterev: tools/updaterevision/updaterevision
 	@tools/updaterevision/updaterevision . src/svnrevision.h
 
-tools/updaterevision/updaterevision:
+tools/updaterevision/updaterevision: ccdv
 	$(MAKE) -C tools/updaterevision
 
 .PHONY : clean cleandeps cleanobjs distclean toolsandpk3 cleantools updaterev
@@ -124,11 +124,14 @@ tools/updaterevision/updaterevision:
 clean: cleanobjs
 	rm -f $(ZDOOMDEBUG) $(ZDOOM) $(ZDOOM).map
 	rm -f ccdv
+	@$(MAKE) -C snes_spc clean
 
 cleantools:
+	@$(MAKE) -C wadsrc clean
 	@$(MAKE) -C tools/makewad clean
 	@$(MAKE) -C tools/dehsupp clean
-	@$(MAKE) -C tools/xlatcc clean
+	@$(MAKE) -C tools/updaterevision clean
+	@$(MAKE) -C tools/lemon clean
 
 cleandebug:
 	rm -f $(ZDOOMDEBUG) $(DEBUGOBJ)/*.o $(DEBUGOBJ)/*.d
@@ -141,6 +144,7 @@ cleanrelease:
 # I could use a recursive delete instead, but that could be dangerous...
 distclean: clean cleandeps
 	-rmdir $(RELEASEOBJ) $(DEBUGOBJ)
+	rm -f zdoom.pk3
 
 cleandeps:
 	rm -f $(RELEASEOBJ)/*.d $(DEBUGOBJ)/*.d

@@ -230,6 +230,17 @@ int WinMIDIDevice::StreamOut(MIDIHDR *header)
 
 //==========================================================================
 //
+// WinMIDIDevice :: StreamOutSync
+//
+//==========================================================================
+
+int WinMIDIDevice::StreamOutSync(MIDIHDR *header)
+{
+	return midiStreamOut(MidiOut, header, sizeof(MIDIHDR));
+}
+
+//==========================================================================
+//
 // WinMIDIDevice :: PrepareHeader
 //
 //==========================================================================
@@ -260,6 +271,20 @@ int WinMIDIDevice::UnprepareHeader(MIDIHDR *header)
 //==========================================================================
 
 bool WinMIDIDevice::FakeVolume()
+{
+	return true;
+}
+
+//==========================================================================
+//
+// WinMIDIDevice :: NeedThreadedCallback
+//
+// When using the MM system, the callback can't yet touch the buffer, so
+// the real processing needs to happen in a different thread.
+//
+//==========================================================================
+
+bool WinMIDIDevice::NeedThreadedCallback()
 {
 	return true;
 }

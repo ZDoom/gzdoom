@@ -103,7 +103,7 @@ OPLMIDIDevice::~OPLMIDIDevice()
 //
 //==========================================================================
 
-int OPLMIDIDevice::Open(void (*callback)(UINT, void *, DWORD, DWORD), void *userdata)
+int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
 	if (io == NULL || io->OPLinit(TwoChips + 1, uint(OPL_SAMPLE_RATE)))
 	{
@@ -247,13 +247,32 @@ void OPLMIDIDevice::Stop()
 
 //==========================================================================
 //
+// OPLMIDIDevice :: StreamOutSync
+//
+// This version is called from the main game thread and needs to
+// synchronize with the player thread.
+//
+//==========================================================================
+
+int OPLMIDIDevice::StreamOutSync(MIDIHDR *header)
+{
+	Serialize();
+	StreamOut(header);
+	Unserialize();
+	return 0;
+}
+
+//==========================================================================
+//
 // OPLMIDIDevice :: StreamOut
+//
+// This version is called from the player thread so does not need to
+// arbitrate for access to the Events pointer.
 //
 //==========================================================================
 
 int OPLMIDIDevice::StreamOut(MIDIHDR *header)
 {
-	Serialize();
 	header->lpNext = NULL;
 	if (Events == NULL)
 	{
@@ -269,7 +288,6 @@ int OPLMIDIDevice::StreamOut(MIDIHDR *header)
 		{ }
 		*p = header;
 	}
-	Unserialize();
 	return 0;
 }
 
@@ -305,6 +323,20 @@ int OPLMIDIDevice::UnprepareHeader(MIDIHDR *header)
 //==========================================================================
 
 bool OPLMIDIDevice::FakeVolume()
+{
+	return false;
+}
+
+//==========================================================================
+//
+// OPLMIDIDevice :: NeedThreadedCallabck
+//
+// OPL can service the callback directly rather than using a separate
+// thread.
+//
+//==========================================================================
+
+bool OPLMIDIDevice::NeedThreadedCallback()
 {
 	return false;
 }

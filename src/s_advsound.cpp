@@ -535,7 +535,7 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 		sfx->bRandomHeader = false;
 		sfx->link = sfxinfo_t::NO_LINK;
 		sfx->bTentative = false;
-		if (sfx->NearLimit < 0) sfx->NearLimit = 2;
+		if (sfx->NearLimit == (BYTE)-1) sfx->NearLimit = 2;
 		//sfx->PitchMask = CurrentPitchMask;
 	}
 	else

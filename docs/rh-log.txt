@@ -1,3 +1,7 @@
+March 29, 2008
+- Applied Const's Makefile.linux changes.
+- Made the OPL MIDI synth available from Linux.
+
 March 29, 2008 (Changes by Graf Zahl)
 - Added SnowKate709's A_DamageMaster/A_DamageChildren patch.
 - Added a SFX_TRANSFERAMBUSHFLAG for A_SpawnItemEx.

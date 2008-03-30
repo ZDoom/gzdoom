@@ -1,4 +1,9 @@
 March 30, 2008 (Changes by Graf Zahl)
+- Changed: When the screen is being deleted the 'screen' variable should be
+  set to NULL before performing the delete. Otherwise, in some abnormal
+  situations, it could happen that the destroyed screen object is still
+  being accessed.
+- Fixed: V_Shutdown didn't set OF_YesReallyDelete before deleting screen.
 - Fixed: The HIRESTEX parser didn't check if a graphic specified in a remap
   command actually existed.
 - Fixed: My $Limit fix from yesterday didn't work because NearLimit was

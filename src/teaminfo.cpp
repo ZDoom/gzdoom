@@ -84,7 +84,7 @@ void TEAMINFO_Init ()
 
 	while ((lump = Wads.FindLump ("TEAMINFO", &lastlump)) != -1)
 	{
-		FScanner sc(lump, "TEAMINFO");
+		FScanner sc(lump);
 		while (sc.GetString ())
 		{
 			if (sc.Compare("CLEARTEAMS"))

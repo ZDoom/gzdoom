@@ -1619,6 +1619,25 @@ const char *FWadCollection::GetLumpFullName (int lump) const
 
 //==========================================================================
 //
+// FWadCollection :: GetLumpFullPath
+//
+// Returns the name of the lump's wad prefixed to the lump's full name.
+//
+//==========================================================================
+
+FString FWadCollection::GetLumpFullPath(int lump) const
+{
+	FString foo;
+
+	if ((size_t) lump <  NumLumps)
+	{
+		foo << GetWadName(LumpInfo[lump].wadnum) << ':' << GetLumpFullName(lump);
+	}
+	return foo;
+}
+
+//==========================================================================
+//
 // GetLumpNamespace
 //
 //==========================================================================

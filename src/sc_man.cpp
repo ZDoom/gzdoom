@@ -91,10 +91,10 @@ FScanner::FScanner(const FScanner &other)
 //
 //==========================================================================
 
-FScanner::FScanner(int lumpnum, const char *name)
+FScanner::FScanner(int lumpnum)
 {
 	ScriptOpen = false;
-	OpenLumpNum(lumpnum, name);
+	OpenLumpNum(lumpnum);
 }
 
 //==========================================================================
@@ -169,7 +169,7 @@ void FScanner::Open (const char *name)
 	{
 		I_Error("Could not find script lump '%s'\n", name);
 	}
-	OpenLumpNum(lump, name);
+	OpenLumpNum(lump);
 }
 
 //==========================================================================
@@ -219,14 +219,14 @@ void FScanner::OpenMem (const char *name, char *buffer, int size)
 //
 //==========================================================================
 
-void FScanner :: OpenLumpNum (int lump, const char *name)
+void FScanner :: OpenLumpNum (int lump)
 {
 	Close ();
 	{
 		FMemLump mem = Wads.ReadLump(lump);
 		ScriptBuffer = mem.GetString();
 	}
-	ScriptName = name;
+	ScriptName = Wads.GetLumpFullPath(lump);
 	PrepareScript ();
 }
 

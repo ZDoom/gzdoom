@@ -928,7 +928,7 @@ void HUD_InitHud()
 
 	while ((lump = Wads.FindLump ("ALTHUDCF", &lastlump)) != -1)
 	{
-		FScanner sc(lump, "ALTHUDCF");
+		FScanner sc(lump);
 		while (sc.GetString())
 		{
 			if (sc.Compare("Health"))

@@ -432,7 +432,7 @@ static void AssignHexenTranslations (void)
 	{
 		for (seq = 0; seq < Sequences.Size(); seq++)
 		{
-			if (HexenSequences[i].Name == Sequences[seq]->SeqName)
+			if (Sequences[seq] != NULL && HexenSequences[i].Name == Sequences[seq]->SeqName)
 				break;
 		}
 		if (seq == Sequences.Size())
@@ -499,7 +499,7 @@ void S_ParseSndSeq (int levellump)
 			lump = levellump;
 			levellump = -2;
 		}
-		FScanner sc(lump, "SNDSEQ");
+		FScanner sc(lump);
 		while (sc.GetString ())
 		{
 			bool bDoorSound = false;
@@ -514,7 +514,7 @@ void S_ParseSndSeq (int levellump)
 				seqtype = sc.String[0];
 				for (curseq = 0; curseq < (int)Sequences.Size(); curseq++)
 				{
-					if (Sequences[curseq]->SeqName == seqname)
+					if (Sequences[curseq] != NULL && Sequences[curseq]->SeqName == seqname)
 					{
 						M_Free (Sequences[curseq]);
 						Sequences[curseq] = NULL;
@@ -683,6 +683,10 @@ void S_ParseSndSeq (int levellump)
 					slot = sc.String;
 					break;
 			}
+		}
+		if (curseq > 0)
+		{
+			sc.ScriptError("End of file encountered before the final sequence ended.");
 		}
 	}
 
@@ -883,7 +887,7 @@ static int FindSequence (FName seqname)
 
 	for (i = Sequences.Size(); i-- > 0; )
 	{
-		if (seqname == Sequences[i]->SeqName)
+		if (Sequences[i] != NULL && seqname == Sequences[i]->SeqName)
 		{
 			return i;
 		}

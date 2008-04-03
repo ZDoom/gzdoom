@@ -1,4 +1,13 @@
 April 2, 2008
+- Changed FScanner so that opening a lump gives the complete wad+lump name
+  rather than a generic one, so identifying errors among files that all have
+  the same lump name no longer involves any degree of guesswork in
+  determining exactly which file the error occurred in.
+- Added a check to S_ParseSndSeq() for SNDSEQ lumps with unterminated final
+  sequences.
+- Fixed: Parts of s_sndseq.cpp that scan the Sequences array need NULL
+  pointer checks, in case an improper sequence was encountered during
+  parsing but not early enough to avoid creating a slot for it in the array.
 - Added support for dumping from RAW/DRO/IMF files, so now anything that
   can be played as OPL can also be dumped.
 - Removed the opl_enable cvar, since OPL playback is now selectable as just

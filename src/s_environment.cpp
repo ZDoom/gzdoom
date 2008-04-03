@@ -465,7 +465,7 @@ FArchive &operator<< (FArchive &arc, ReverbContainer *&env)
 	return arc;
 }
 
-static void ReadEAX (int lump, const char *lumpname)
+static void ReadEAX (int lump)
 {
 	FScanner sc;
 	const ReverbContainer *def;
@@ -476,7 +476,7 @@ static void ReadEAX (int lump, const char *lumpname)
 	bool inited[NUM_EAX_FIELDS];
 	BYTE bools[32];
 
-	sc.OpenLumpNum(lump, lumpname);
+	sc.OpenLumpNum(lump);
 	while (sc.GetString ())
 	{
 		name = copystring (sc.String);
@@ -576,7 +576,7 @@ void S_ParseSndEax ()
 
 	while ((lump = Wads.FindLump ("SNDEAX", &lastlump)) != -1)
 	{
-		ReadEAX (lump, "SNDEAX");
+		ReadEAX (lump);
 	}
 }
 

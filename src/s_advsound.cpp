@@ -895,7 +895,7 @@ static void S_AddSNDINFO (int lump)
 	bool skipToEndIf;
 	TArray<WORD> list;
 
-	FScanner sc(lump, "SNDINFO");
+	FScanner sc(lump);
 	skipToEndIf = false;
 
 	while (sc.GetString ())

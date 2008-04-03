@@ -13,7 +13,7 @@ public:
 	// Methods ------------------------------------------------------
 	FScanner();
 	FScanner(const FScanner &other);
-	FScanner(int lumpnum, const char *name);
+	FScanner(int lumpnum);
 	~FScanner();
 
 	FScanner &operator=(const FScanner &other);
@@ -21,7 +21,7 @@ public:
 	void Open(const char *lumpname);
 	void OpenFile(const char *filename);
 	void OpenMem(const char *name, char *buffer, int size);
-	void OpenLumpNum(int lump, const char *name);
+	void OpenLumpNum(int lump);
 	void Close();
 
 	void SetCMode(bool cmode);

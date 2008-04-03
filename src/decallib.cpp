@@ -346,7 +346,7 @@ void FDecalLib::ReadAllDecals ()
 
 	while ((lump = Wads.FindLump ("DECALDEF", &lastlump)) != -1)
 	{
-		FScanner sc(lump, "DECALDEF");
+		FScanner sc(lump);
 		ReadDecals (sc);
 	}
 	// Supporting code to allow specifying decals directly in the DECORATE lump

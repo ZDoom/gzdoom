@@ -289,7 +289,7 @@ static void R_InitAnimDefs ()
 	
 	while ((lump = Wads.FindLump ("ANIMDEFS", &lastlump)) != -1)
 	{
-		FScanner sc(lump, "ANIMDEFS");
+		FScanner sc(lump);
 
 		while (sc.GetString ())
 		{

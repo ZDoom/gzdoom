@@ -632,7 +632,7 @@ static void G_DoParseMapInfo (int lump)
 	int clusterindex;
 	QWORD levelflags;
 
-	FScanner sc(lump, Wads.GetLumpFullName(lump));
+	FScanner sc(lump);
 
 	SetLevelDefaults (&defaultinfo);
 	HexenHack = false;

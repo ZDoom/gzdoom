@@ -267,7 +267,7 @@ void P_InitTerrainTypes ()
 	lastlump = 0;
 	while (-1 != (lump = Wads.FindLump ("TERRAIN", &lastlump)) )
 	{
-		FScanner sc(lump, "TERRAIN");
+		FScanner sc(lump);
 		ParseOuter (sc);
 	}
 	Splashes.ShrinkToFit ();

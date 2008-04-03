@@ -1631,7 +1631,7 @@ void V_InitCustomFonts()
 
 	while ((llump = Wads.FindLump ("FONTDEFS", &lastlump)) != -1)
 	{
-		sc.OpenLumpNum(llump, "FONTDEFS");
+		sc.OpenLumpNum(llump);
 		while (sc.GetString())
 		{
 			memset (lumplist, -1, sizeof(lumplist));
@@ -1759,7 +1759,7 @@ void V_InitFontColors ()
 
 	while ((lump = Wads.FindLump ("TEXTCOLO", &lastlump)) != -1)
 	{
-		FScanner sc(lump, "textcolors.txt");
+		FScanner sc(lump);
 		while (sc.GetString())
 		{
 			names.Clear();

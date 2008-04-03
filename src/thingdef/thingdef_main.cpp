@@ -150,7 +150,7 @@ void LoadDecorations ()
 	lastlump = 0;
 	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
 	{
-		FScanner sc(lump, Wads.GetLumpFullName(lump));
+		FScanner sc(lump);
 		ParseDecorate (sc);
 	}
 	FinishThingdef();

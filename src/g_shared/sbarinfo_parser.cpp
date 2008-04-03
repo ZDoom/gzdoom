@@ -130,7 +130,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 {
 	gameType = gameinfo.gametype;
 	bool baseSet = false;
-	FScanner sc(lump, Wads.GetLumpFullName(lump));
+	FScanner sc(lump);
 	sc.SetCMode(true);
 	while(sc.CheckToken(TK_Identifier) || sc.CheckToken(TK_Include))
 	{

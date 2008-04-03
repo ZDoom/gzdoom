@@ -344,7 +344,7 @@ void P_InitKeyMessages()
 	ClearLocks();
 	while ((lump = Wads.FindLump ("LOCKDEFS", &lastlump)) != -1)
 	{
-		FScanner sc(lump, "LOCKDEFS");
+		FScanner sc(lump);
 		while (sc.GetString ())
 		{
 			if (sc.Compare("LOCK")) 

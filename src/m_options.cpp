@@ -3438,7 +3438,7 @@ void InitCrosshairsList()
 
 	while ((lump = Wads.FindLump("XHAIRS", &lastlump)) != -1)
 	{
-		FScanner sc(lump, "XHAIRS");
+		FScanner sc(lump);
 		while (sc.GetNumber())
 		{
 			value.value = float(sc.Number);

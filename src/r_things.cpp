@@ -453,7 +453,7 @@ void R_InitSkins (void)
 			sndlumps[j] = -1;
 		skins[i].namespc = Wads.GetLumpNamespace (base);
 
-		FScanner sc(base, "S_SKIN");
+		FScanner sc(base);
 		intname = 0;
 		crouchname = 0;
 

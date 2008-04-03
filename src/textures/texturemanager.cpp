@@ -508,7 +508,7 @@ void FTextureManager::LoadHiresTex(int wadnum)
 	{
 		if (Wads.GetLumpFile(remapLump) == wadnum)
 		{
-			FScanner sc(remapLump, "HIRESTEX");
+			FScanner sc(remapLump);
 			while (sc.GetString())
 			{
 				if (sc.Compare("remap")) // remap an existing texture

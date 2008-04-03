@@ -149,7 +149,7 @@ void FStringTable::LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int p
 
 	code |= orMask;
 
-	FScanner sc(lumpnum, "LANGUAGE");
+	FScanner sc(lumpnum);
 	sc.SetCMode (true);
 	while (sc.GetString ())
 	{

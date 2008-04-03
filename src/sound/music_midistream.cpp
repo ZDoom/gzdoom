@@ -70,11 +70,11 @@ extern UINT mididevice;
 //==========================================================================
 
 MIDIStreamer::MIDIStreamer(bool opl)
-: MIDI(0),
+:
 #ifdef _WIN32
   PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
 #endif
-  Division(0), InitialTempo(500000), UseOPLDevice(opl)
+  MIDI(0), Division(0), InitialTempo(500000), UseOPLDevice(opl)
 {
 #ifdef _WIN32
 	BufferDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -98,11 +98,11 @@ MIDIStreamer::MIDIStreamer(bool opl)
 //==========================================================================
 
 MIDIStreamer::MIDIStreamer(const char *dumpname)
-: MIDI(0), DumpFilename(dumpname),
+:
 #ifdef _WIN32
   PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
 #endif
-  Division(0), InitialTempo(500000), UseOPLDevice(true)
+  MIDI(0), Division(0), InitialTempo(500000), UseOPLDevice(true), DumpFilename(dumpname)
 {
 #ifdef _WIN32
 	BufferDoneEvent = NULL;

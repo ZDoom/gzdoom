@@ -140,6 +140,7 @@ xx(Crush)
 xx(Yes)
 xx(No)
 xx(Greetings)
+xx(Idle)
 
 // Compatible death names for the decorate parser.
 xx(XDeath)

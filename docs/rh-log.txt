@@ -1,3 +1,24 @@
+April 3, 2008 (Changes by Graf Zahl)
+- Fixed: The minimum parameter count for ACS_Execute and ACS_ExecuteAlways for
+  DECORATE was wrong (2 instead of 1.)
+
+April 2, 2008 (Changes by Graf Zahl)
+- Changed: Hexen set every cluster to be a hub if it hadn't been defined before
+  a level using this cluster. Now it will only do that if HexenHack is true, 
+  i.e. when original Hexen format MAPINFOs are parsed. For ZDoom format 
+  MAPINFOs it will now be the same as for the other games which means that 
+  'hub' has to be declared explicitly.
+- Added an Idle state that is entered in place of the spawn state if a monster
+  has to return to its inactive state if it can't find any more targets.
+- Added MF5_NOINTERACTION flag which completely disables all physics related
+  code for any actor with this flag. Mostly useful for particle effects where
+  the actors just move a certain distance and then disappear.
+- Removed the last remains of the antialias precalculation code from
+  am_map.cpp because it was no longer used.
+- Fixed: Two-sided lines bordering a secret sector were not drawn in the
+  proper color
+- Fixed: The automap didn't check ACS_LockedExecuteDoor for its lock color.
+
 April 2, 2008
 - Switched sounds local to the listener from head-relative 3D sounds to 2D
   sounds so stereo sounds have full separation. I tried using set3DSpread,

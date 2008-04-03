@@ -1060,7 +1060,7 @@ static void ParseMapInfoLower (FScanner &sc,
 				clusterinfo = &wadclusterinfos[clusterindex];
 				memset (clusterinfo, 0, sizeof(cluster_info_t));
 				clusterinfo->cluster = sc.Number;
-				if (gameinfo.gametype == GAME_Hexen)
+				if (HexenHack)
 				{
 					clusterinfo->flags |= CLUSTER_HUB;
 				}

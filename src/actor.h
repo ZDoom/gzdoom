@@ -298,6 +298,7 @@ enum
 	MF5_NEVERRESPAWN	= 0x00040000,	// never respawns, regardless of skill setting
 	MF5_DONTRIP			= 0x00080000,	// Ripping projectiles explode when hittin this actor
 	MF5_NOINFIGHTING	= 0x00100000,	// This actor doesn't switch target when it's hurt 
+	MF5_NOINTERACTION	= 0x00200000,	// Thing is completely excluded from any gameplay related checks
 
 
 // --- mobj.renderflags ---
@@ -758,6 +759,7 @@ public:
 	bool SetStateNF (FState *newstate);
 	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
 	bool isFast();
+	void SetIdle();
 
 	FState *FindState (FName label) const;
 	FState *FindState (FName label, FName sublabel, bool exact = false) const;

@@ -115,8 +115,6 @@ inline fixed_t MTOF(fixed_t x)
 	return MulScale24 (x, scale_mtof);
 }
 
-//static int WeightingScale;
-
 CVAR (Int,   am_rotate,				0,			CVAR_ARCHIVE);
 CVAR (Int,   am_overlay,			0,			CVAR_ARCHIVE);
 CVAR (Bool,  am_showsecrets,		true,		CVAR_ARCHIVE);
@@ -345,16 +343,6 @@ static fixed_t mapystart=0; // y-value for the start of the map bitmap...used in
 static fixed_t mapxstart=0; //x-value for the bitmap.
 
 static bool stopped = true;
-
-
-/*
-#define NUMALIASES		3
-#define WALLCOLORS		-1
-#define FDWALLCOLORS	-2
-#define CDWALLCOLORS	-3
-
-static BYTE antialias[NUMALIASES][NUMWEIGHTS];
-*/
 
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
@@ -733,57 +721,6 @@ static void AM_initColors (bool overlayed)
 		NotSeenColor = DoomColors[10];
 	}
 
-#if 0
-	// Due to a bug (marked below) precalculated antialiasing was never working properly.
-	// Also, tests show it provides no measurable performance improvement.
-	// And since it only complicates matters it's disabled for now.
-
-	// initialize the anti-aliased lines
-	static struct
-	{
-		int *color;
-		int prevcolor;
-		int falseColor;
-	} aliasedLines[3] = {
-		{ &WallColor, -1, WALLCOLORS },
-		{ &FDWallColor, -1, FDWALLCOLORS },
-		{ &CDWallColor, -1, CDWALLCOLORS }
-	};
-	float backRed, backGreen, backBlue;
-
-	GetComponents (Background, palette, backRed, backGreen, backBlue);
-
-	for (int alias = 0; alias < NUMALIASES; alias++)
-	{
-		if (aliasedLines[alias].prevcolor != *(aliasedLines[alias].color) ||
-			lastpal != palette || lastback != Background)
-		{
-			float foreRed, foreGreen, foreBlue;
-
-			aliasedLines[alias].prevcolor = *(aliasedLines[alias].color);
-			GetComponents (*(aliasedLines[alias].color), palette, foreRed, foreGreen, foreBlue);
-
-			for (int i = 0; i < NUMWEIGHTS; i++)
-			{
-				float step = (float)i;
-				float fore = (NUMWEIGHTS-1 - step) / (NUMWEIGHTS-1);
-				float back = step / (NUMWEIGHTS-1);
-				int red = (int)(backRed * back + foreRed * fore);
-				int green = (int)(backGreen * back + foreGreen * fore);
-				int blue = (int)(backGreen * back + foreBlue * fore);
-// [RH] What was I thinking here?
-//				if (palette)
-					antialias[alias][i] = ColorMatcher.Pick (red, green, blue);
-//				else
-//					antialias[alias][i] = MAKERGB(red, green, blue);
-			}
-		}
-		// This line was inside the 'if' block rendering the whole
-		// precalculation inoperable.
-		*(aliasedLines[alias].color) = aliasedLines[alias].falseColor;
-	}
-	lastback = Background;
-#endif
 	lastpal = palette;
 }
 
@@ -1357,6 +1294,22 @@ void AM_drawGrid (const AMColor &color)
 	}
 }
 
+static bool AM_CheckSecret(line_t *line)
+{
+	if (line->frontsector != NULL)
+	{
+		if (line->frontsector->oldspecial && 
+			(am_map_secrets==2 || (am_map_secrets==1 && !(line->frontsector->special&SECRET_MASK))))
+			return true;
+	}
+	if (line->backsector != NULL)
+	{
+		if (line->backsector->oldspecial && 
+			(am_map_secrets==2 || (am_map_secrets==1 && !(line->backsector->special&SECRET_MASK))))
+			return true;
+	}
+	return false;
+}
 //
 // Determines visible lines, draws them.
 // This is LineDef based, not LineSeg based.
@@ -1384,18 +1337,14 @@ void AM_drawWalls (bool allmap)
 			if ((lines[i].flags & ML_DONTDRAW) && am_cheat == 0)
 				continue;
 
-			if (!lines[i].backsector)
+			if (AM_CheckSecret(&lines[i]))
 			{
-				if (lines[i].frontsector->oldspecial && 
-					(am_map_secrets==2 || (am_map_secrets==1 && !(lines[i].frontsector->special&SECRET_MASK))))
-				{
-					// map secret sectors like Boom
-					AM_drawMline(&l, SecretSectorColor);
-				}
-				else
-				{
-					AM_drawMline(&l, WallColor);
-				}
+				// map secret sectors like Boom
+				AM_drawMline(&l, SecretSectorColor);
+			}
+			else if (!lines[i].backsector)
+			{
+				AM_drawMline(&l, WallColor);
 			}
 			else
 			{
@@ -1424,6 +1373,7 @@ void AM_drawWalls (bool allmap)
 				}
 				else if (lines[i].special == Door_LockedRaise ||
 						 lines[i].special == ACS_LockedExecute ||
+						 lines[i].special == ACS_LockedExecuteDoor ||
 						 (lines[i].special == Generic_Door && lines[i].args[4]!=0))
 				{
 					if (am_usecustomcolors)
@@ -1805,7 +1755,6 @@ void AM_Drawer ()
 		f_w = screen->GetWidth ();
 		f_h = ST_Y;
 		f_p = screen->GetPitch ();
-		//WeightingScale = 0;
 
 		AM_clearFB(Background);
 	}
@@ -1816,13 +1765,6 @@ void AM_Drawer ()
 		f_w = realviewwidth;
 		f_h = realviewheight;
 		f_p = screen->GetPitch ();
-		/*
-		WeightingScale = (int)(am_ovtrans * 256.f);
-		if (WeightingScale < 0 || WeightingScale >= 256)
-		{
-			WeightingScale = 0;
-		}
-		*/
 	}
 	AM_activateNewScale();
 

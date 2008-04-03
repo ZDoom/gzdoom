@@ -1884,7 +1884,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			}
 			else
 			{
-				actor->SetState (actor->SpawnState);
+				actor->SetIdle();
 				actor->flags &= ~MF_INCHASE;
 				return;
 			}
@@ -1945,7 +1945,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			if (newgoal != NULL && delay != 0)
 			{
 				actor->flags4 |= MF4_INCOMBAT;
-				actor->SetState (actor->SpawnState);
+				actor->SetIdle();
 			}
 			actor->flags &= ~MF_INCHASE;
 			actor->goal = newgoal;

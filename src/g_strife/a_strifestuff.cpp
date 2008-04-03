@@ -543,7 +543,7 @@ void A_KlaxonBlare (AActor *self)
 		A_TurretLook (self);
 		if (self->target == NULL)
 		{
-			self->SetState (self->SpawnState);
+			self->SetIdle();
 		}
 		else
 		{

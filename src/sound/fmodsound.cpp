@@ -1191,7 +1191,7 @@ FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t 
 	{
 		return oldmode;
 	}
-	double cpos[3];
+	float cpos[3];
 	cpos[0] = FIXED2FLOAT(players[consoleplayer].camera->x);
 	cpos[2] = FIXED2FLOAT(players[consoleplayer].camera->y);
 	cpos[1] = FIXED2FLOAT(players[consoleplayer].camera->z);
@@ -1226,11 +1226,11 @@ FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t 
 		return oldmode;
 	}
 	else if (cpos[0] == pos[0] && cpos[1] == pos[1] && cpos[2] == pos[2])
-	{
-		pos[2] = pos[1] = pos[0] = 0;
-		return (oldmode & ~FMOD_3D_WORLDRELATIVE) | FMOD_3D_HEADRELATIVE;
+	{ // Head relative
+		return (oldmode & ~FMOD_3D) | FMOD_2D;
 	}
-	return (oldmode & ~FMOD_3D_HEADRELATIVE) | FMOD_3D_WORLDRELATIVE;
+	// World relative
+	return (oldmode & ~FMOD_2D) | FMOD_3D;
 }
 
 //==========================================================================
@@ -1556,15 +1556,9 @@ void FMODSoundRenderer::DoLoad(void **slot, sfxinfo_t *sfx)
 			exinfo.length = size;
 		}
 		result = Sys->createSound((char *)sfxstart, samplemode, &exinfo, &sample);
-		if (result == FMOD_ERR_OUTPUT_CREATEBUFFER && !(samplemode & FMOD_SOFTWARE))
-		{
-			DPrintf("Trying to fall back to software sample\n");
-			samplemode = (samplemode & ~FMOD_HARDWARE) | FMOD_SOFTWARE;
-			result = Sys->createSound((char *)sfxstart, samplemode, &exinfo, &sample);
-		}
 		if (result != FMOD_OK)
 		{
-			DPrintf("Failed to allocate sample: %d\n", result);
+			DPrintf("Failed to allocate sample: Error %d\n", result);
 			errcount++;
 			continue;
 		}

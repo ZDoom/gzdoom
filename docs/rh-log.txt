@@ -1,4 +1,7 @@
 April 2, 2008
+- Switched sounds local to the listener from head-relative 3D sounds to 2D
+  sounds so stereo sounds have full separation. I tried using set3DSpread,
+  but that still caused some blending of the channels.
 - Changed FScanner so that opening a lump gives the complete wad+lump name
   rather than a generic one, so identifying errors among files that all have
   the same lump name no longer involves any degree of guesswork in

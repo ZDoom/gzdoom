@@ -50,10 +50,6 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-#ifdef _WIN32
-extern UINT mididevice;
-#endif
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static const BYTE CtrlTranslate[15] =

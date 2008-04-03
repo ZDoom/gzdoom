@@ -3,9 +3,9 @@
 CMD=0
 ifeq (Windows_NT,$(OS))
   CMD=1
-endif
-ifeq ($(findstring msys,$(shell sh --version 2>nul)),msys)
-  CMD=0
+  ifeq ($(findstring msys,$(shell sh --version 2>nul)),msys)
+    CMD=0
+  endif
 endif
 
 STATICLIB = libsnes_spc.a

@@ -1,3 +1,8 @@
+April 3, 2008
+- Changed the Makefiles that are used by both Linux and MinGW so that msys
+  detection occurs only if $OS is Windows_NT. Otherwise, spurious nul files
+  are created when compiling on Linux.
+
 April 3, 2008 (Changes by Graf Zahl)
 - Fixed: The minimum parameter count for ACS_Execute and ACS_ExecuteAlways for
   DECORATE was wrong (2 instead of 1.)

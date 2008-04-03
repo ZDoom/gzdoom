@@ -44,8 +44,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_TIME	(1000000/20)	// Send out 1/20 of a sec of events at a time.
-
 // Used by SendCommand to check for unexpected end-of-track conditions.
 #define CHECK_FINISHED \
 	if (track->TrackP >= track->MaxTrackP) \
@@ -115,6 +113,7 @@ MIDISong2::MIDISong2 (FILE *file, char *musiccache, int len, bool opl)
 	}
 #endif
 	MusHeader = new BYTE[len];
+	SongLen = len;
 	if (file != NULL)
 	{
 		if (fread(MusHeader, 1, len, file) != (size_t)len)
@@ -752,5 +751,45 @@ void MIDISong2::SetTempo(int new_tempo)
 	if (0 == MIDI->SetTempo(new_tempo))
 	{
 		Tempo = new_tempo;
+	}
+}
+
+//==========================================================================
+//
+// MIDISong2 :: GetOPLDumper
+//
+//==========================================================================
+
+MusInfo *MIDISong2::GetOPLDumper(const char *filename)
+{
+	return new MIDISong2(this, filename);
+}
+
+//==========================================================================
+//
+// MIDISong2 OPL Dumping Constructor
+//
+//==========================================================================
+
+MIDISong2::MIDISong2(const MIDISong2 *original, const char *filename)
+: MIDIStreamer(filename)
+{
+	SongLen = original->SongLen;
+	MusHeader = new BYTE[original->SongLen];
+	memcpy(MusHeader, original->MusHeader, original->SongLen);
+	Format = original->Format;
+	NumTracks = original->NumTracks;
+	DesignationMask = 0;
+	Division = original->Division;
+	Tempo = InitialTempo = original->InitialTempo;
+	Tracks = new TrackInfo[NumTracks];
+	for (int i = 0; i < NumTracks; ++i)
+	{
+		TrackInfo *newtrack = &Tracks[i];
+		const TrackInfo *oldtrack = &original->Tracks[i];
+
+		newtrack->TrackBegin = MusHeader + (oldtrack->TrackBegin - original->MusHeader);
+		newtrack->TrackP = 0;
+		newtrack->MaxTrackP = oldtrack->MaxTrackP;
 	}
 }

@@ -31,8 +31,6 @@
 **---------------------------------------------------------------------------
 */
 
-#ifdef _WIN32
-
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
@@ -88,8 +86,8 @@ static const BYTE CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (FILE *file, char *musiccache, int len)
-: MIDIStreamer(false), MusHeader(0), MusBuffer(0)
+MUSSong2::MUSSong2 (FILE *file, char *musiccache, int len, bool opl)
+: MIDIStreamer(opl), MusHeader(0), MusBuffer(0)
 {
 	if (ExitEvent == NULL)
 	{
@@ -304,4 +302,32 @@ end:
 	}
 	return events;
 }
-#endif
+
+//==========================================================================
+//
+// MUSSong2 :: GetOPLDumper
+//
+//==========================================================================
+
+MusInfo *MUSSong2::GetOPLDumper(const char *filename)
+{
+	return new MUSSong2(this, filename);
+}
+
+//==========================================================================
+//
+// MUSSong2 OPL Dumping Constructor
+//
+//==========================================================================
+
+MUSSong2::MUSSong2(const MUSSong2 *original, const char *filename)
+: MIDIStreamer(filename)
+{
+	int songstart = LittleShort(original->MusHeader->SongStart);
+	MaxMusP = original->MaxMusP;
+	MusHeader = (MUSHeader *)new BYTE[songstart + MaxMusP];
+	memcpy(MusHeader, original->MusHeader, songstart + MaxMusP);
+	MusBuffer = (BYTE *)MusHeader + songstart;
+	Division = 140;
+	InitialTempo = 1000000;
+}

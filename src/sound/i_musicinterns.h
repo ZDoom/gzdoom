@@ -45,6 +45,7 @@ public:
 	virtual bool SetPosition (int order);
 	virtual void Update();
 	virtual FString GetStats();
+	virtual MusInfo *GetOPLDumper(const char *filename);
 
 	enum EState
 	{
@@ -152,7 +153,7 @@ protected:
 
 // OPL implementation of a MIDI output device -------------------------------
 
-class OPLMIDIDevice : public MIDIDevice, OPLmusicBlock
+class OPLMIDIDevice : public MIDIDevice, protected OPLmusicBlock
 {
 public:
 	OPLMIDIDevice();
@@ -191,6 +192,17 @@ protected:
 	DWORD Position;
 };
 
+// OPL dumper implementation of a MIDI output device ------------------------
+
+class OPLDumperMIDIDevice : public OPLMIDIDevice
+{
+public:
+	OPLDumperMIDIDevice(const char *filename);
+	~OPLDumperMIDIDevice();
+	int Resume();
+	void Stop();
+};
+
 // Base class for streaming MUS and MIDI files ------------------------------
 
 class MIDIStreamer : public MusInfo
@@ -210,13 +222,15 @@ public:
 	void Update();
 
 protected:
-	static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
+	MIDIStreamer(const char *dumpname);
 
 	void OutputVolume (DWORD volume);
 	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
 	bool ServiceEvent();
 	int VolumeControllerChange(int channel, int volume);
 	
+	static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
+
 	// Virtuals for subclasses to override
 	virtual void CheckCaps();
 	virtual void DoInitialSetup() = 0;
@@ -261,6 +275,7 @@ protected:
 	DWORD Volume;
 	bool UseOPLDevice;
 	bool CallbackIsThreaded;
+	FString DumpFilename;
 };
 
 // MUS file played with a MIDI stream ---------------------------------------
@@ -268,10 +283,14 @@ protected:
 class MUSSong2 : public MIDIStreamer
 {
 public:
-	MUSSong2 (FILE *file, char *musiccache, int length);
-	~MUSSong2 ();
+	MUSSong2(FILE *file, char *musiccache, int length, bool opl);
+	~MUSSong2();
+
+	MusInfo *GetOPLDumper(const char *filename);
 
 protected:
+	MUSSong2(const MUSSong2 *original, const char *filename);	//OPL dump constructor
+
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();
@@ -288,10 +307,14 @@ protected:
 class MIDISong2 : public MIDIStreamer
 {
 public:
-	MIDISong2 (FILE *file, char *musiccache, int length, bool opl);
-	~MIDISong2 ();
+	MIDISong2(FILE *file, char *musiccache, int length, bool opl);
+	~MIDISong2();
+
+	MusInfo *GetOPLDumper(const char *filename);
 
 protected:
+	MIDISong2(const MIDISong2 *original, const char *filename);	// OPL dump constructor
+
 	void CheckCaps();
 	void DoInitialSetup();
 	void DoRestart();
@@ -307,6 +330,7 @@ protected:
 	void SetTempo(int new_tempo);
 
 	BYTE *MusHeader;
+	int SongLen;
 	TrackInfo *Tracks;
 	TrackInfo *TrackDue;
 	int NumTracks;
@@ -381,17 +405,27 @@ protected:
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (FILE *file, char * musiccache, int length);
+	OPLMUSSong (FILE *file, char *musiccache, int length);
 	~OPLMUSSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
 	bool IsValid () const;
 	void ResetChips ();
+	MusInfo *GetOPLDumper(const char *filename);
 
 protected:
+	OPLMUSSong(const OPLMUSSong *original, const char *filename);	// OPL dump constructor
+
 	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 
 	OPLmusicFile *Music;
+};
+
+class OPLMUSDumper : public OPLMUSSong
+{
+public:
+	OPLMUSDumper(const OPLMUSSong *original, const char *filename);
+	void Play(bool looping);
 };
 
 // CD track/disk played through the multimedia system -----------------------
@@ -430,4 +464,3 @@ extern MusInfo *currSong;
 extern int		nomusic;
 
 EXTERN_CVAR (Float, snd_musicvolume)
-EXTERN_CVAR (Bool, opl_enable)

@@ -75,17 +75,6 @@ Revision History:
 #endif
 
 
-/* output final shift */
-#if (OPL_SAMPLE_BITS==16)
-	#define FINAL_SH	(0)
-	#define MAXOUT		(+32767)
-	#define MINOUT		(-32768)
-#else
-	#define FINAL_SH	(8)
-	#define MAXOUT		(+127)
-	#define MINOUT		(-128)
-#endif
-
 #define FREQ_SH			16  /* 16.16 fixed point (frequency calculations) */
 #define EG_SH			16  /* 16.16 fixed point (EG timing)              */
 #define LFO_SH			24  /*  8.24 fixed point (LFO calculations)       */

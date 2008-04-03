@@ -40,6 +40,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "w_wad.h"
+#include "fmopl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -105,7 +106,7 @@ OPLMIDIDevice::~OPLMIDIDevice()
 
 int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
-	if (io == NULL || io->OPLinit(TwoChips + 1, uint(OPL_SAMPLE_RATE)))
+	if (io == NULL || io->OPLinit(TwoChips + 1))
 	{
 		return 1;
 	}
@@ -209,6 +210,7 @@ int OPLMIDIDevice::SetTimeDiv(int timediv)
 void OPLMIDIDevice::CalcTickRate()
 {
 	SamplesPerTick = OPL_SAMPLE_RATE / (1000000.0 / Tempo) / Division;
+	io->SetClockRate(SamplesPerTick);
 }
 
 //==========================================================================

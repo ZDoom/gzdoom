@@ -93,6 +93,25 @@ MIDIStreamer::MIDIStreamer(bool opl)
 
 //==========================================================================
 //
+// MIDIStreamer OPL Dumping Constructor
+//
+//==========================================================================
+
+MIDIStreamer::MIDIStreamer(const char *dumpname)
+: MIDI(0), DumpFilename(dumpname),
+#ifdef _WIN32
+  PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
+#endif
+  Division(0), InitialTempo(500000), UseOPLDevice(true)
+{
+#ifdef _WIN32
+	BufferDoneEvent = NULL;
+	ExitEvent = NULL;
+#endif
+}
+
+//==========================================================================
+//
 // MIDIStreamer Destructor
 //
 //==========================================================================
@@ -163,7 +182,7 @@ void MIDIStreamer::CheckCaps()
 //
 //==========================================================================
 
-void MIDIStreamer::Play (bool looping)
+void MIDIStreamer::Play(bool looping)
 {
 	DWORD tid;
 
@@ -175,6 +194,11 @@ void MIDIStreamer::Play (bool looping)
 	InitialPlayback = true;
 
 	assert(MIDI == NULL);
+	if (DumpFilename.IsNotEmpty())
+	{
+		MIDI = new OPLDumperMIDIDevice(DumpFilename);
+	}
+	else
 #ifdef _WIN32
 	if (!UseOPLDevice)
 	{
@@ -188,7 +212,7 @@ void MIDIStreamer::Play (bool looping)
 	
 #ifndef _WIN32
 	assert(MIDI->NeedThreadedCallback() == false);
-#endif	
+#endif
 
 	if (0 != MIDI->Open(Callback, this))
 	{
@@ -281,7 +305,7 @@ void MIDIStreamer::Play (bool looping)
 //
 //==========================================================================
 
-void MIDIStreamer::Pause ()
+void MIDIStreamer::Pause()
 {
 	if (m_Status == STATE_Playing)
 	{
@@ -302,7 +326,7 @@ void MIDIStreamer::Pause ()
 //
 //==========================================================================
 
-void MIDIStreamer::Resume ()
+void MIDIStreamer::Resume()
 {
 	if (m_Status == STATE_Paused)
 	{
@@ -322,7 +346,7 @@ void MIDIStreamer::Resume ()
 //
 //==========================================================================
 
-void MIDIStreamer::Stop ()
+void MIDIStreamer::Stop()
 {
 	EndQueued = 2;
 #ifdef _WIN32
@@ -355,7 +379,7 @@ void MIDIStreamer::Stop ()
 //
 //==========================================================================
 
-bool MIDIStreamer::IsPlaying ()
+bool MIDIStreamer::IsPlaying()
 {
 	return m_Status != STATE_Stopped;
 }
@@ -369,7 +393,7 @@ bool MIDIStreamer::IsPlaying ()
 //
 //==========================================================================
 
-void MIDIStreamer::MusicVolumeChanged ()
+void MIDIStreamer::MusicVolumeChanged()
 {
 	if (MIDI->FakeVolume())
 	{
@@ -676,7 +700,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 
 //==========================================================================
 //
-// MIDIDevice constructor and desctructor stubs.
+// MIDIDevice stubs.
 //
 //==========================================================================
 

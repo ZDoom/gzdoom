@@ -1,3 +1,24 @@
+April 2, 2008
+- Added support for dumping from RAW/DRO/IMF files, so now anything that
+  can be played as OPL can also be dumped.
+- Removed the opl_enable cvar, since OPL playback is now selectable as just
+  another MIDI device.
+
+April 1, 2008
+- Added support for DRO playback and dual-chip RAW playback.
+
+March 30, 2008
+- Removed MUS support from OPLMUSSong, since using the OPLMIDIDevice with
+  MUSSong2 works just as well. There are still lots of leftover bits in
+  the class that should probably be removed at some point, too.
+- Added dual-chip dumping support for the RAW format.
+- Added DosBox Raw OPL (.DRO) dumping support. For whatever reason,
+  in_adlib calculates the song length for this format wrong, even though
+  the exact length is stored right in the header. (But in_adlib seems buggy
+  in general; too bad it's the only Windows version of Adplug that seems to
+  exist.)
+- Rewrote the OPL dumper to work with MIDI as well as MUS.
+
 March 30, 2008 (Changes by Graf Zahl)
 - Changed: When the screen is being deleted the 'screen' variable should be
   set to NULL before performing the delete. Otherwise, in some abnormal
@@ -5904,7 +5925,7 @@ February 9, 2005
   took me a while to figure out the problem, ZDoom can now play raw OPL songs.
 
 February 7, 2005
-- Added the writeopl command to write a song in RDosPlay raw OPL format. It's usage is:
+- Added the writeopl command to write a song in RDosPlay raw OPL format. Its usage is:
     writeopl [songname] <filename>
   If the currently playing song is a MUS song being played through the OPL emulation,
   then you just need to specify the filename. Otherwise, you need to provide the

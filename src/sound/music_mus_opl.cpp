@@ -1,7 +1,5 @@
 #include "i_musicinterns.h"
 
-CVAR (Bool, opl_enable, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
 static bool OPL_Active;
 
 CUSTOM_CVAR (Bool, opl_onechip, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -12,12 +10,11 @@ CUSTOM_CVAR (Bool, opl_onechip, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-
 OPLMUSSong::OPLMUSSong (FILE *file, char *musiccache, int len)
 {
 	int samples = int(OPL_SAMPLE_RATE / 14);
 
-	Music = new OPLmusicFile (file, musiccache, len, samples);
+	Music = new OPLmusicFile (file, musiccache, len);
 
 	m_Stream = GSnd->CreateStream (FillStream, samples*4,
 		SoundStream::Mono | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
@@ -63,7 +60,7 @@ void OPLMUSSong::Play (bool looping)
 	Music->SetLooping (looping);
 	Music->Restart ();
 
-	if (m_Stream->Play (true, snd_musicvolume, false))
+	if (m_Stream == NULL || m_Stream->Play (true, snd_musicvolume, false))
 	{
 		m_Status = STATE_Playing;
 	}
@@ -73,4 +70,25 @@ bool OPLMUSSong::FillStream (SoundStream *stream, void *buff, int len, void *use
 {
 	OPLMUSSong *song = (OPLMUSSong *)userdata;
 	return song->Music->ServiceStream (buff, len);
+}
+
+MusInfo *OPLMUSSong::GetOPLDumper(const char *filename)
+{
+	return new OPLMUSDumper(this, filename);
+}
+
+OPLMUSSong::OPLMUSSong(const OPLMUSSong *original, const char *filename)
+{
+	Music = new OPLmusicFile(original->Music, filename);
+	m_Stream = NULL;
+}
+
+OPLMUSDumper::OPLMUSDumper(const OPLMUSSong *original, const char *filename)
+: OPLMUSSong(original, filename)
+{
+}
+
+void OPLMUSDumper::Play(bool looping)
+{
+	Music->Dump();
 }

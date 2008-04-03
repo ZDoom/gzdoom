@@ -3,8 +3,8 @@
 
 #include "zstring.h"
 
-/* select output bits size of output : 8 or 16 */
-#define OPL_SAMPLE_BITS 16
+// Multiplying OPL_SAMPLE_RATE by ADLIB_CLOCK_MUL gives the number
+// Adlib clocks per second, as used by the RAWADATA file format.
 
 /* compiler dependence */
 #ifndef OSD_CPU_H
@@ -15,13 +15,6 @@ typedef unsigned int	UINT32;  /* unsigned 32bit */
 typedef signed char		INT8;    /* signed  8bit   */
 typedef signed short	INT16;   /* signed 16bit   */
 typedef signed int		INT32;   /* signed 32bit   */
-#endif
-
-#if (OPL_SAMPLE_BITS==16)
-typedef INT16 OPLSAMPLE;
-#endif
-#if (OPL_SAMPLE_BITS==8)
-typedef INT8 OPLSAMPLE;
 #endif
 
 

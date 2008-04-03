@@ -130,7 +130,7 @@ struct OP2instrEntry {
 };
 
 #define FL_FIXED_PITCH	0x0001		// note has fixed pitch (see below)
-#define FL_UNKNOWN	0x0002			// ??? (used in instrument #65 only)
+#define FL_UNKNOWN		0x0002		// ??? (used in instrument #65 only)
 #define FL_DOUBLE_VOICE	0x0004		// use two voices instead of one
 
 
@@ -160,7 +160,7 @@ struct OPLdata {
 };
 
 struct OPLio {
-	virtual ~OPLio() {}
+	virtual ~OPLio();
 
 	void	OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2);
 	void	OPLwriteValue(uint regbase, uint channel, uchar value);
@@ -171,12 +171,41 @@ struct OPLio {
 	void	OPLwritePan(uint channel, struct OPL2instrument *instr, int pan);
 	void	OPLwriteInstrument(uint channel, struct OPL2instrument *instr);
 	void	OPLshutup(void);
+	void	OPLwriteInitState();
 
-	virtual int		OPLinit(uint numchips, uint rate);
+	virtual int		OPLinit(uint numchips);
 	virtual void	OPLdeinit(void);
 	virtual void	OPLwriteReg(int which, uint reg, uchar data);
+	virtual void	SetClockRate(double samples_per_tick);
+	virtual void	WriteDelay(int ticks);
 
 	uint OPLchannels;
+};
+
+struct DiskWriterIO : public OPLio
+{
+	DiskWriterIO(const char *filename);
+	~DiskWriterIO();
+
+	int OPLinit(uint numchips);
+	void OPLdeinit();
+	void OPLwriteReg(int which, uint reg, uchar data);
+	void SetClockRate(double samples_per_tick);
+	void WriteDelay(int ticks);
+
+	void SetChip(int chipnum);
+
+	FILE *File;
+	FString Filename;
+	int Format;
+	bool NeedClockRate;
+	double TimePerTick;		// In milliseconds
+	double CurTime;
+	int CurIntTime;
+	int TickMul;
+	int CurChip;
+
+	enum { FMT_RDOS, FMT_DOSBOX };
 };
 
 struct musicBlock {
@@ -192,8 +221,6 @@ struct musicBlock {
 	struct OP2instrEntry *OPLinstruments;
 
 	ulong MLtime;
-
-	int playTick();
 
 	void OPLplayNote(uint channel, uchar note, int volume);
 	void OPLreleaseNote(uint channel, uchar note);
@@ -253,5 +280,8 @@ enum MUSctrl {
     ctrlPoly,
     ctrlResetCtrls
 };
+
+#define OPL_SAMPLE_RATE			49716.0
+#define ADLIB_CLOCK_MUL			24.0
 
 #endif // __MUSLIB_H_

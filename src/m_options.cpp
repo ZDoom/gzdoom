@@ -1266,7 +1266,6 @@ static menu_t SoundMenu =
  *
  *=======================================*/
 
-EXTERN_CVAR (Bool, opl_enable)
 EXTERN_CVAR (Bool, opl_onechip)
 
 static menuitem_t AdvSoundItems[] =

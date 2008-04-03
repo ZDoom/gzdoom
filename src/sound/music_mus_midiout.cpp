@@ -50,7 +50,9 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+#ifdef _WIN32
 extern UINT mididevice;
+#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -89,10 +91,12 @@ static const BYTE CtrlTranslate[15] =
 MUSSong2::MUSSong2 (FILE *file, char *musiccache, int len, bool opl)
 : MIDIStreamer(opl), MusHeader(0), MusBuffer(0)
 {
+#ifdef _WIN32
 	if (ExitEvent == NULL)
 	{
 		return;
 	}
+#endif
 
 	MusHeader = (MUSHeader *)new BYTE[len];
 	if (file != NULL)

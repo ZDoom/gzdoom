@@ -13,7 +13,7 @@ class OPLmusicBlock : public musicBlock
 {
 public:
 	OPLmusicBlock();
-	~OPLmusicBlock();
+	virtual ~OPLmusicBlock();
 
 	bool ServiceStream(void *buff, int numbytes);
 	void ResetChips();
@@ -43,7 +43,7 @@ class OPLmusicFile : public OPLmusicBlock
 public:
 	OPLmusicFile(FILE *file, char *musiccache, int len);
 	OPLmusicFile(const OPLmusicFile *source, const char *filename);
-	~OPLmusicFile();
+	virtual ~OPLmusicFile();
 
 	bool IsValid() const;
 	void SetLooping(bool loop);

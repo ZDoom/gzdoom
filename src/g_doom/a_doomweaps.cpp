@@ -48,7 +48,7 @@ void A_Punch (AActor *actor)
 
 	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (actor, angle, MELEERANGE);
-	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, NAME_None, NAME_BulletPuff);
+	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true);
 
 	// turn to face target
 	if (linetarget)

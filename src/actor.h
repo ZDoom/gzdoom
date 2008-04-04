@@ -701,6 +701,7 @@ public:
 	//Added by MC:
 	SDWORD id;						// Player ID (for items, # in list.)
 
+	BYTE smokecounter;
 	BYTE FloatBobPhase;
 	BYTE FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
 	DWORD Translation;

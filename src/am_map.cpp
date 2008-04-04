@@ -123,7 +123,6 @@ CVAR (Bool,  am_showitems,			false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtime,			true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtotaltime,		false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_usecustomcolors,	true,		CVAR_ARCHIVE);
-CVAR (Float, am_ovtrans,			1.f,		CVAR_ARCHIVE);
 CVAR (Color, am_backcolor,			0x6c5440,	CVAR_ARCHIVE);
 CVAR (Color, am_yourcolor,			0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_wallcolor,			0x2c1808,	CVAR_ARCHIVE);

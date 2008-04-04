@@ -2304,9 +2304,7 @@ void G_FinishTravel ()
 
 			// The player being spawned here is a short lived dummy and
 			// must not start any ENTER script or big problems will happen.
-			P_SpawnPlayer (&playerstarts[pawn->player - players], true);
-
-			pawndup = pawn->player->mo;
+			pawndup = P_SpawnPlayer (&playerstarts[pawn->player - players], true);
 			if (!startkeepfacing)
 			{
 				pawn->angle = pawndup->angle;

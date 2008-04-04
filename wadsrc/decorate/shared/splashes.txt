@@ -197,3 +197,41 @@ ACTOR SlimeSplash
 	}
 }
 
+// Smoke trail for rocket -----------------------------------
+
+ACTOR RocketSmokeTrail
+{
+	RenderStyle Translucent
+	Alpha 0.4
+	VSpeed 1
+	+NOBLOCKMAP 
+	+NOCLIP 
+	+NOGRAVITY 
+	+DONTSPLASH
+	+NOTELEPORT
+	States
+	{
+	Spawn:
+		RSMK ABCDE 5
+		Stop
+	}
+}
+
+ACTOR GrenadeSmokeTrail
+{
+	RenderStyle Translucent
+	Alpha 0.4
+	+NOBLOCKMAP 
+	+NOCLIP 
+	+DONTSPLASH
+	+NOTELEPORT
+	Gravity 0.1
+	VSpeed 0.5
+	Scale 0.6
+	States
+	{
+	Spawn:
+		RSMK ABCDE 4
+		Stop
+	}
+}

@@ -210,7 +210,7 @@ void A_JabDagger (AActor *actor)
 
 	angle = actor->angle + (pr_jabdagger.Random2() << 18);
 	pitch = P_AimLineAttack (actor, angle, 80*FRACUNIT);
-	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, RUNTIME_CLASS(AStrifeSpark));
+	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, RUNTIME_CLASS(AStrifeSpark), true);
 
 	// turn to face target
 	if (linetarget)
@@ -934,7 +934,7 @@ void A_RocketInFlight (AActor *self)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (RUNTIME_CLASS(AMiniMissilePuff), self->x, self->y, self->z, self->angle - ANGLE_180, 2, true);
+	P_SpawnPuff (RUNTIME_CLASS(AMiniMissilePuff), self->x, self->y, self->z, self->angle - ANGLE_180, 2, PF_HITTHING);
 	trail = Spawn<ARocketTrail> (self->x - self->momx, self->y - self->momy, self->z, ALLOW_REPLACE);
 	if (trail != NULL)
 	{

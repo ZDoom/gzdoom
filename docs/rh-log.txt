@@ -1,3 +1,20 @@
+April 4, 2008 (Changes by Graf Zahl)
+- Fixed: P_CheckSwitchRange accessed invalid memory when testing a one-sided
+  line.
+- Fixed: P_SpawnPuff assumed that all melee attacks have the same range
+  (MELEERANGE) and didn't set the puff to its melee state if the range
+  was different. Even worse, it checked a global variable for this so
+  the behavior was undefined when P_SpawnPuff was called from anywhere
+  else but P_LineAttack. To reduce the amount of parameters I combined
+  this information with the hitthing and temporary parameters into one
+  flags parameter. Also changed P_LineAttack so that it gets passed
+  an additional parameter that specifies whether the attack is a melee
+  attack or not and set this to true in all calls that are to be considered
+  melee attacks. I couldn't use the damage type because A_CustomPunch
+  and A_CustomMeleeAttack allow passing any damage type they want.
+- Added a sprite option as an alternative of particles for FX_ROCKET 
+  and FX_GRENADE.
+
 April 3, 2008
 - Changed the Makefiles that are used by both Linux and MinGW so that msys
   detection occurs only if $OS is Windows_NT. Otherwise, spurious nul files

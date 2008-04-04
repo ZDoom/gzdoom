@@ -2809,7 +2809,7 @@ static bool CheckForSpectral (FTraceResults &res)
 }
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, FName damageType, const PClass *pufftype)
+				   int pitch, int damage, FName damageType, const PClass *pufftype, bool ismeleeattack)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
@@ -2818,6 +2818,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	bool hitGhosts;
 	bool killPuff = false;
 	AActor *puff = NULL;
+	int flags = ismeleeattack? PF_MELEERANGE : 0;
 
 	angle >>= ANGLETOFINESHIFT;
 	pitch = (angle_t)(pitch) >> ANGLETOFINESHIFT;
@@ -2853,7 +2854,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		}
 		if (puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{ // Spawn the puff anyway
-			puff = P_SpawnPuff (pufftype, trace.X, trace.Y, trace.Z, angle - ANG180, 2);
+			puff = P_SpawnPuff (pufftype, trace.X, trace.Y, trace.Z, angle - ANG180, 2, flags);
 		}
 		else
 		{
@@ -2872,7 +2873,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				fixed_t closer = trace.Distance - 4*FRACUNIT;
 				puff = P_SpawnPuff (pufftype, t1->x + FixedMul (vx, closer),
 					t1->y + FixedMul (vy, closer),
-					shootz + FixedMul (vz, closer), angle - ANG90, 0);
+					shootz + FixedMul (vz, closer), angle - ANG90, 0, flags);
 			}
 
 			// [RH] Spawn a decal
@@ -2925,7 +2926,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
-				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, true);
+				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING);
 			}
 			if (!(GetDefaultByType(pufftype)->flags3&MF3_BLOODLESSIMPACT))
 			{
@@ -2972,7 +2973,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				{ 
 					// Since the puff is the damage inflictor we need it here 
 					// regardless of whether it is displayed or not.
-					puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, true, true);
+					puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
 					killPuff = true;
 				}
 				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType, flags);
@@ -2983,7 +2984,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 
 			if (puff == NULL)
 			{ // Spawn puff just to get a mass for the splash
-				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, true, true);
+				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, flags|PF_HITTHING|PF_TEMPORARY);
 				killPuff = true;
 			}
 			SpawnDeepSplash (t1, trace, puff, vx, vy, vz);
@@ -2998,7 +2999,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 }
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, FName damageType, FName pufftype)
+				   int pitch, int damage, FName damageType, FName pufftype, bool ismeleeattack)
 {
 	const PClass * type = PClass::FindClass(pufftype);
 	if (type == NULL)
@@ -3007,7 +3008,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	}
 	else
 	{
-		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type);
+		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, ismeleeattack);
 	}
 	return NULL;
 }
@@ -3273,7 +3274,7 @@ void P_RailAttack (AActor *source, int damage, int offset, int color1, int color
 		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
 			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
 		{
-			if (puffclass != NULL) P_SpawnPuff (puffclass, x, y, z, source->angle - ANG180, 1, true);
+			if (puffclass != NULL) P_SpawnPuff (puffclass, x, y, z, source->angle - ANG180, 1, PF_HITTHING);
 		}
 		else
 		{

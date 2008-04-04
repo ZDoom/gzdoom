@@ -77,9 +77,8 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 extern cycle_t BotSupportCycles;
 extern cycle_t BotWTG;
 extern fixed_t attackrange;
-extern int tmfloorpic;
-extern sector_t *tmfloorsector;
 EXTERN_CVAR (Bool, r_drawfuzz);
+EXTERN_CVAR (Int,  cl_rockettrails)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -102,6 +101,7 @@ static FRandom pr_spawnmissile ("SpawnMissile");
 static FRandom pr_missiledamage ("MissileDamage");
  FRandom pr_slam ("SkullSlam");
 static FRandom pr_multiclasschoice ("MultiClassChoice");
+static FRandom pr_rockettrail("RocketTrail");
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -321,7 +321,8 @@ void AActor::Serialize (FArchive &arc)
 		<< DamageType
 		<< gravity
 		<< FastChaseStrafeCount
-		<< master;
+		<< master
+		<< smokecounter;
 
 	if (arc.IsStoring ())
 	{
@@ -2584,12 +2585,46 @@ void AActor::Tick ()
 			return;
 		}
 
+		if (cl_rockettrails & 2)
+		{
+			if (effects & FX_ROCKET) 
+			{
+				if (++smokecounter==4)
+				{
+					// add some smoke behind the rocket 
+					smokecounter = 0;
+					AActor * th = Spawn("RocketSmokeTrail", x-momx, y-momy, z-momz, ALLOW_REPLACE);
+					if (th)
+					{
+						th->tics -= pr_rockettrail()&3;
+						if (th->tics < 1) th->tics = 1;
+					}
+				}
+			}
+			else if (effects & FX_GRENADE) 
+			{
+				if (++smokecounter==8)
+				{
+					smokecounter = 0;
+					angle_t moveangle = R_PointToAngle2(0,0,momx,momy);
+					AActor * th = Spawn("GrenadeSmokeTrail", 
+						x - FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
+						y - FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
+						z - (height>>3) * (momz>>16) + (2*height)/3, ALLOW_REPLACE);
+					if (th)
+					{
+						th->tics -= pr_rockettrail()&3;
+						if (th->tics < 1) th->tics = 1;
+					}
+				}
+			}
+		}
 
 		fixed_t oldz = z;
 
 		// [RH] Give the pain elemental vertical friction
 		// This used to be in APainElemental::Tick but in order to use
-		// A_PainAttack with other monsters it has to be here!
+		// A_PainAttack with other monsters it has to be here
 		if (flags4 & MF4_VFRICTION)
 		{
 			if (health >0)
@@ -3481,7 +3516,7 @@ EXTERN_CVAR (Bool, chasedemo)
 
 extern bool demonew;
 
-void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
+APlayerPawn *P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 {
 	int		  playernum;
 	player_t *p;
@@ -3508,7 +3543,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 
 	// not playing?
 	if (playernum >= MAXPLAYERS || !playeringame[playernum])
-		return;
+		return NULL;
 
 	p = &players[playernum];
 
@@ -3705,6 +3740,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}
+	return mobj;
 }
 
 
@@ -3714,7 +3750,7 @@ void P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 // already be in host byte order.
 //
 // [RH] position is used to weed out unwanted start spots
-void P_SpawnMapThing (mapthing2_t *mthing, int position)
+AActor *P_SpawnMapThing (mapthing2_t *mthing, int position)
 {
 	const PClass *i;
 	int mask;
@@ -3722,13 +3758,13 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	fixed_t x, y, z;
 
 	if (mthing->type == 0 || mthing->type == -1)
-		return;
+		return NULL;
 
 	// count deathmatch start positions
 	if (mthing->type == 11)
 	{
 		deathmatchstarts.Push (*mthing);
-		return;
+		return NULL;
 	}
 
 	// Convert Strife starts to Hexen-style starts
@@ -3769,7 +3805,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		polyspawns = polyspawn;
 		if (mthing->type != PO_ANCHOR_TYPE)
 			po_NumPolyobjs++;
-		return;
+		return NULL;
 	}
 
 	// check for players specially
@@ -3807,13 +3843,13 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		}
 		if (!(mthing->flags & mask))
 		{
-			return;
+			return NULL;
 		}
 
 		mask = G_SkillProperty(SKILLP_SpawnFilter);
 		if (!(mthing->flags & mask))
 		{
-			return;
+			return NULL;
 		}
 
 		// Check class spawn masks. Now with player classes available
@@ -3823,7 +3859,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 			int spawnmask = players[consoleplayer].GetSpawnClass();
 			if (spawnmask != 0 && (mthing->flags & spawnmask) == 0)
 			{ // Not for current class
-				return;
+				return NULL;
 			}
 		}
 		else if (!deathmatch)
@@ -3842,7 +3878,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 			}
 			if (mask != -1 && (mthing->flags & mask) == 0)
 			{
-				return;
+				return NULL;
 			}
 		}
 	}
@@ -3851,14 +3887,14 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	{
 		// [RH] Only spawn spots that match position.
 		if (mthing->args[0] != position)
-			return;
+			return NULL;
 
 		// save spots for respawning in network games
 		playerstarts[pnum] = *mthing;
 		if (!deathmatch)
-			P_SpawnPlayer (mthing);
+			return P_SpawnPlayer (mthing);
 
-		return;
+		return NULL;
 	}
 
 	// [RH] sound sequence overriders
@@ -3866,7 +3902,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	{
 		P_PointInSector (mthing->x<<FRACBITS,
 			mthing->y<<FRACBITS)->seqType = mthing->type - 1400;
-		return;
+		return NULL;
 	}
 	else if (mthing->type == 1411)
 	{
@@ -3886,7 +3922,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 			P_PointInSector (mthing->x << FRACBITS,
 				mthing->y << FRACBITS)->seqType = type;
 		}
-		return;
+		return NULL;
 	}
 
 	// [RH] Determine if it is an old ambient thing, and if so,
@@ -3933,7 +3969,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 
 	// don't spawn keycards and players in deathmatch
 	if (deathmatch && info->flags & MF_NOTDMATCH)
-		return;
+		return NULL;
 
 	// [RH] don't spawn extra weapons in coop if so desired
 	if (multiplayer && !deathmatch && (dmflags & DF_NO_COOP_WEAPON_SPAWN))
@@ -3941,14 +3977,14 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		if (i->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 		{
 			if ((mthing->flags & (MTF_DEATHMATCH|MTF_SINGLE)) == MTF_DEATHMATCH)
-				return;
+				return NULL;
 		}
 	}
 
 	// don't spawn any monsters if -nomonsters
 	if (((level.flags & LEVEL_NOMONSTERS) || (dmflags & DF_NO_MONSTERS)) && info->flags3 & MF3_ISMONSTER )
 	{
-		return;
+		return NULL;
 	}
 	
 	// [RH] Other things that shouldn't be spawned depending on dmflags
@@ -3957,13 +3993,11 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		if (dmflags & DF_NO_HEALTH)
 		{
 			if (i->IsDescendantOf (RUNTIME_CLASS(AHealth)))
-				return;
+				return NULL;
 			if (i->TypeName == NAME_Berserk)
-				return;
-			if (i->TypeName == NAME_Soulsphere)
-				return;
+				return NULL;
 			if (i->TypeName == NAME_Megasphere)
-				return;
+				return NULL;
 		}
 		if (dmflags & DF_NO_ITEMS)
 		{
@@ -3973,9 +4007,9 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		if (dmflags & DF_NO_ARMOR)
 		{
 			if (i->IsDescendantOf (RUNTIME_CLASS(AArmor)))
-				return;
+				return NULL;
 			if (i->TypeName == NAME_Megasphere)
-				return;
+				return NULL;
 		}
 	}
 
@@ -4020,9 +4054,10 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	mobj->BeginPlay ();
 	if (mobj->ObjectFlags & OF_EuthanizeMe)
 	{
-		return;
+		return NULL;
 	}
 	mobj->LevelSpawned ();
+	return mobj;
 }
 
 
@@ -4036,7 +4071,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hitthing, bool temporary)
+AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags)
 {
 	AActor *puff;
 
@@ -4048,26 +4083,26 @@ AActor *P_SpawnPuff (const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, an
 	// it will enter the crash state. This is used by the StrifeSpark
 	// and BlasterPuff.
 	FState *crashstate;
-	if (hitthing == false && (crashstate = puff->FindState(NAME_Crash)) != NULL)
+	if (!(flags & PF_HITTHING) && (crashstate = puff->FindState(NAME_Crash)) != NULL)
 	{
 		puff->SetState (crashstate);
 	}
-	else if (attackrange == MELEERANGE && puff->MeleeState != NULL)
+	else if ((flags & PF_MELEERANGE) && puff->MeleeState != NULL)
 	{
 		// handle the hard coded state jump of Doom's bullet puff
 		// in a more flexible manner.
 		puff->SetState (puff->MeleeState);
 	}
 
-	if (cl_pufftype && updown != 3 && !temporary && (puff->flags4 & MF4_ALLOWPARTICLES))
+	if (!(flags & PF_TEMPORARY))
 	{
-		P_DrawSplash2 (32, x, y, z, dir, updown, 1);
-		puff->renderflags |= RF_INVISIBLE;
-	}
+		if (cl_pufftype && updown != 3 && (puff->flags4 & MF4_ALLOWPARTICLES))
+		{
+			P_DrawSplash2 (32, x, y, z, dir, updown, 1);
+			puff->renderflags |= RF_INVISIBLE;
+		}
 
-	if (!temporary)
-	{
-		if (hitthing && puff->SeeSound)
+		if ((flags & PF_HITTHING) && puff->SeeSound)
 		{ // Hit thing sound
 			S_SoundID (puff, CHAN_BODY, puff->SeeSound, 1, ATTN_NORM);
 		}

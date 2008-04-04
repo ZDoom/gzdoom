@@ -269,7 +269,7 @@ void A_SnoutAttack (AActor *actor)
 	damage = 3+(pr_snoutattack()&3);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
-	puff = P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(ASnoutPuff));
+	puff = P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(ASnoutPuff), true);
 	S_Sound(player->mo, CHAN_VOICE, "PigActive", 1, ATTN_NORM);
 	if(linetarget)
 	{

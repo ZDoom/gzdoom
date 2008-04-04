@@ -1145,7 +1145,7 @@ void A_CustomPunch (AActor *self)
 	PuffType = PClass::FindClass(PuffTypeName);
 	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
 
-	P_LineAttack (self, angle, Range, pitch, Damage, GetDefaultByType(PuffType)->DamageType, PuffType);
+	P_LineAttack (self, angle, Range, pitch, Damage, GetDefaultByType(PuffType)->DamageType, PuffType, true);
 
 	// turn to face target
 	if (linetarget)

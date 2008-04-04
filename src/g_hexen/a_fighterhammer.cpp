@@ -194,7 +194,7 @@ void A_FHammerAttack (AActor *actor)
 		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff));
+			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff), true);
 			AdjustPlayerAngle(pmo);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
@@ -207,7 +207,7 @@ void A_FHammerAttack (AActor *actor)
 		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE);
 		if(linetarget)
 		{
-			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff));
+			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff), true);
 			AdjustPlayerAngle(pmo);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
@@ -220,7 +220,7 @@ void A_FHammerAttack (AActor *actor)
 	// didn't find any targets in meleerange, so set to throw out a hammer
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE);
-	if (P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff)) != NULL)
+	if (P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff), true) != NULL)
 	{
 		pmo->special1 = false;
 	}

@@ -475,6 +475,9 @@ static int TryFindSwitch (side_t *side, int Where)
 //
 bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 {
+	// if this line is one sided this function must always return success.
+	if (line->sidenum[0] == NO_SIDE || line->sidenum[1] == NO_SIDE) return true;
+
 	fixed_t checktop;
 	fixed_t checkbot;
 	side_t *side = &sides[line->sidenum[sideno]];

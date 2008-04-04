@@ -217,7 +217,7 @@ void A_StaffAttackPL1 (AActor *actor)
 	angle = player->mo->angle;
 	angle += pr_sap.Random2() << 18;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff));
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff), true);
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfhit);
@@ -256,7 +256,7 @@ void A_StaffAttackPL2 (AActor *actor)
 	angle = player->mo->angle;
 	angle += pr_sap2.Random2() << 18;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff2));
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff2), true);
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfpow);

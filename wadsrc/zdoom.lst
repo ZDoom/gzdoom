@@ -149,6 +149,11 @@ sprites/icecc0.png		    icecc0.png
 sprites/icecd0.png		    icecd0.png
 sprites/amrka0.png			amrka0.png
 sprites/pista0.png			pista0.png
+sprites/rsmka0.png			rsmka0.png
+sprites/rsmkb0.png			rsmkb0.png
+sprites/rsmkc0.png			rsmkc0.png
+sprites/rsmkd0.png			rsmkd0.png
+sprites/rsmke0.png			rsmke0.png
 
 # crouching DoomPlayer
 sprites/plyca1.lmp  		crouch/plyca1.lmp

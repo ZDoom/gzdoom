@@ -94,7 +94,7 @@ void A_CMaceAttack (AActor *actor)
 		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff));
+			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff), true);
 			AdjustPlayerAngle (player->mo);
 //			player->mo->angle = R_PointToAngle2(player->mo->x,
 //				player->mo->y, linetarget->x, linetarget->y);
@@ -104,7 +104,7 @@ void A_CMaceAttack (AActor *actor)
 		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff));
+			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff), true);
 			AdjustPlayerAngle (player->mo);
 //			player->mo->angle = R_PointToAngle2(player->mo->x,
 //				player->mo->y, linetarget->x, linetarget->y);

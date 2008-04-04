@@ -313,6 +313,7 @@ demon/active			dsdmact
 demon/pain			dsdmpain
 demon/melee			dssgtatk
 demon/death			dssgtdth
+$limit demon/melee 4
 
 // Spectre
 

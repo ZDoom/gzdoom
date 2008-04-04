@@ -1,4 +1,5 @@
 April 4, 2008 (Changes by Graf Zahl)
+- Increased limit for demon/melee to 4.
 - Fixed: P_CheckSwitchRange accessed invalid memory when testing a one-sided
   line.
 - Fixed: P_SpawnPuff assumed that all melee attacks have the same range

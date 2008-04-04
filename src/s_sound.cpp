@@ -715,7 +715,8 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 
 	// If this sound doesn't like playing near itself, don't play it if
 	// that's what would happen.
-	if (NearLimit > 0 && pt != NULL && S_CheckSoundLimit(sfx, pos, NearLimit))
+	if (NearLimit > 0 && pt != NULL && mover != players[consoleplayer].camera &&
+		S_CheckSoundLimit(sfx, pos, NearLimit))
 		return;
 
 	// Make sure the sound is loaded.

@@ -493,7 +493,7 @@ MapInfoHandler ClusterHandlers[] =
 	{ MITYPE_HEX,		cioffset(cdid), 0 },
 	{ MITYPE_SETFLAG,	CLUSTER_ENTERTEXTINLUMP, 0 },
 	{ MITYPE_SETFLAG,	CLUSTER_EXITTEXTINLUMP, 0 },
-	{ MITYPE_STRING,	cioffset(clustername), 0 },
+	{ MITYPE_STRING,	cioffset(clustername), CLUSTER_LOOKUPNAME },
 };
 
 static void ParseMapInfoLower (FScanner &sc,
@@ -736,12 +736,21 @@ static void G_DoParseMapInfo (int lump)
 			}
 			uppercopy (levelinfo->mapname, sc.String);
 			sc.MustGetString ();
-			if (sc.Compare ("lookup"))
+			if (sc.String[0] == '$')
 			{
-				sc.MustGetString ();
+				// For consistency with other definitions allow $Stringtablename here, too.
 				levelflags |= LEVEL_LOOKUPLEVELNAME;
+				ReplaceString (&levelinfo->level_name, sc.String+1);
 			}
-			ReplaceString (&levelinfo->level_name, sc.String);
+			else
+			{
+				if (sc.Compare ("lookup"))
+				{
+					sc.MustGetString ();
+					levelflags |= LEVEL_LOOKUPLEVELNAME;
+				}
+				ReplaceString (&levelinfo->level_name, sc.String);
+			}
 			// Set up levelnum now so that you can use Teleport_NewMap specials
 			// to teleport to maps with standard names without needing a levelnum.
 			if (!strnicmp (levelinfo->mapname, "MAP", 3) && levelinfo->mapname[5] == 0)
@@ -1025,12 +1034,21 @@ static void ParseMapInfoLower (FScanner &sc,
 
 		case MITYPE_STRING:
 			sc.MustGetString ();
-			if (sc.Compare ("lookup"))
+			if (sc.String[0] == '$')
 			{
+				// For consistency with other definitions allow $Stringtablename here, too.
 				flags |= handler->data2;
-				sc.MustGetString ();
+				ReplaceString ((char **)(info + handler->data1), sc.String+1);
 			}
-			ReplaceString ((char **)(info + handler->data1), sc.String);
+			else
+			{
+				if (sc.Compare ("lookup"))
+				{
+					flags |= handler->data2;
+					sc.MustGetString ();
+				}
+				ReplaceString ((char **)(info + handler->data1), sc.String);
+			}
 			break;
 
 		case MITYPE_MUSIC:

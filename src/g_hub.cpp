@@ -41,6 +41,7 @@
 #include "gi.h"
 #include "files.h"
 #include "m_png.h"
+#include "gstrings.h"
 
 
 //==========================================================================
@@ -102,7 +103,14 @@ void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 			}
 			if (cluster->clustername) 
 			{
-				strncpy(level.level_name, cluster->clustername, 64);
+				if (cluster->flags & CLUSTER_LOOKUPNAME)
+				{
+					strncpy(level.level_name, GStrings(cluster->clustername), 64);
+				}
+				else
+				{
+					strncpy(level.level_name, cluster->clustername, 64);
+				}
 				level.level_name[63]=0;
 			}
 		}

@@ -358,10 +358,21 @@ void S_Start ()
 		
 		// Check for local sound definitions. Only reload if they differ
 		// from the previous ones.
+		char *LocalSndInfo;
+		char *LocalSndSeq;
 		
 		// To be certain better check whether level is valid!
-		char *LocalSndInfo = level.info ? level.info->soundinfo : (char*)"";
-		char *LocalSndSeq  = level.info ? level.info->sndseq : (char*)"";
+		if (level.info && level.info->soundinfo)
+		{
+			LocalSndInfo = level.info->soundinfo;
+			LocalSndSeq  = level.info->sndseq;
+		}
+		else
+		{
+			LocalSndInfo = "";
+			LocalSndSeq  = "";
+		}
+
 		bool parse_ss = false;
 
 		// This level uses a different local SNDINFO

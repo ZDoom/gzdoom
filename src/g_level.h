@@ -306,6 +306,7 @@ typedef struct cluster_info_s cluster_info_t;
 #define CLUSTER_FINALEPIC		0x00000008	// Finale "flat" is actually a full-sized image
 #define CLUSTER_LOOKUPEXITTEXT	0x00000010	// Exit text is the name of a language string
 #define CLUSTER_LOOKUPENTERTEXT	0x00000020	// Enter text is the name of a language string
+#define CLUSTER_LOOKUPNAME		0x00000040	// Name is the name of a language string
 
 extern FLevelLocals level;
 

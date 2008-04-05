@@ -1,4 +1,7 @@
 April 5, 2008 (Changes by Graf Zahl)
+- Added the option to use $ as a prefix to a string table name everywhere in
+  MAPINFO where 'lookup' could be specified so that there is one consistent
+  way to do it.
 - Externalized all default episode definitions. Added an 'optional' keyword
   to handle M4 and 5 in Doom and Heretic.
 - Added P_CheckMapData function and replaced all calls to P_OpenMapData that

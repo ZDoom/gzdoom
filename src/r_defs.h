@@ -1046,7 +1046,7 @@ class FPlayerSkin
 {
 public:
 	char		name[17];	// 16 chars + NULL
-	char		face[3];
+	char		face[4];	// 3 chars ([MH] + NULL so can use as a C string)
 	BYTE		gender;		// This skin's gender (not really used)
 	BYTE		range0start;
 	BYTE		range0end;

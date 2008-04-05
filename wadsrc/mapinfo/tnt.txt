@@ -1,6 +1,11 @@
 // MAPINFO for TNT. Exactly the same as Doom 2, except it
 // has different map names and cluster messages.
 
+clearepisodes
+episode map01
+	name "TNT: Evilution"
+	key t
+
 map MAP01 lookup THUSTR_1
 titlepatch CWILV00
 next MAP02

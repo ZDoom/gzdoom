@@ -416,6 +416,7 @@ BEGIN_STATELESS_DEFAULTS (APlayerPawn, Any, -1, 0)
 	PROP_PlayerPawn_SideMove2 (FRACUNIT)
 	PROP_PlayerPawn_ColorRange (0, 0)
 	PROP_PlayerPawn_SoundClass ("player")
+	PROP_PlayerPawn_Face ("None")
 	PROP_PlayerPawn_MorphWeapon ("None")
 END_DEFAULTS
 

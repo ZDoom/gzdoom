@@ -4052,11 +4052,10 @@ AActor *P_SpawnMapThing (mapthing2_t *mthing, int position)
 
 	mobj->angle = (DWORD)((mthing->angle * UCONST64(0x100000000)) / 360);
 	mobj->BeginPlay ();
-	if (mobj->ObjectFlags & OF_EuthanizeMe)
+	if (!(mobj->ObjectFlags & OF_EuthanizeMe))
 	{
-		return NULL;
+		mobj->LevelSpawned ();
 	}
-	mobj->LevelSpawned ();
 	return mobj;
 }
 

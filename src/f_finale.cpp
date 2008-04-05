@@ -1314,7 +1314,7 @@ static void GetFinaleText (const char *msgLumpName)
 {
 	int msgLump;
 
-	msgLump = Wads.CheckNumForName(msgLumpName);
+	msgLump = Wads.CheckNumForFullName(msgLumpName, true);
 	if (msgLump != -1)
 	{
 		char *textbuf;

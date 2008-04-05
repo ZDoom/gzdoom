@@ -48,6 +48,10 @@ skill nightmare
 	PlayerClassName "cleric" "$MNU_POPE"
 	PlayerClassName "mage" "$MNU_ARCHMAGE"
 
+clearepisodes
+episode "&wt@01"
+	name "Hexen"
+	key h
 
 clusterdef 1
 hub
@@ -84,6 +88,7 @@ defaultmap
 	nointermission
 	noautosequences
 	missilesactivateimpactlines
+	monsterfallingdamage
 	
 // There is also support for showing a clus5msg after cluster 5, but
 // since it isn't used, and it would intefere with the finale if I

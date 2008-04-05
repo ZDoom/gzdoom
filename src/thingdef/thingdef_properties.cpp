@@ -2187,6 +2187,36 @@ static void PlayerSoundClass (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void PlayerFace (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
+{
+	FString tmp;
+
+	sc.MustGetString ();
+	tmp = sc.String;
+	if (tmp.Len() != 3)
+	{
+		Printf("Invalid face '%s' for '%s';\nSTF replacement codes must be 3 characters.\n",
+			sc.String, bag.Info->Class->TypeName.GetChars ());
+	}
+
+	tmp.ToUpper();
+	bool valid = (
+		(((tmp[0] >= 'A') && (tmp[0] <= 'Z')) || ((tmp[0] >= '0') && (tmp[0] <= '9'))) &&
+		(((tmp[1] >= 'A') && (tmp[1] <= 'Z')) || ((tmp[1] >= '0') && (tmp[1] <= '9'))) &&
+		(((tmp[2] >= 'A') && (tmp[2] <= 'Z')) || ((tmp[2] >= '0') && (tmp[2] <= '9')))
+		);
+	if (!valid)
+	{
+		Printf("Invalid face '%s' for '%s';\nSTF replacement codes must be alphanumeric.\n",
+			sc.String, bag.Info->Class->TypeName.GetChars ());
+	}
+	
+	bag.Info->Class->Meta.SetMetaString (APMETA_Face, tmp);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void PlayerColorRange (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 {
 	int start, end;
@@ -2552,6 +2582,7 @@ static const ActorProps props[] =
 	{ "player.crouchsprite",		(apf)PlayerCrouchSprite,	RUNTIME_CLASS(APlayerPawn) },
 	{ "player.damagescreencolor",	(apf)PlayerDmgScreenColor,	RUNTIME_CLASS(APlayerPawn) },
 	{ "player.displayname",			(apf)PlayerDisplayName,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.face",				(apf)PlayerFace,			RUNTIME_CLASS(APlayerPawn) },
 	{ "player.forwardmove",			(apf)PlayerForwardMove,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.healradiustype",		(apf)PlayerHealRadius,		RUNTIME_CLASS(APlayerPawn) },
 	{ "player.hexenarmor",			(apf)PlayerHexenArmor,		RUNTIME_CLASS(APlayerPawn) },

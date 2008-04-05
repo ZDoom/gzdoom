@@ -31,6 +31,29 @@ skill nightmare
 	SpawnFilter "Hard"
 	Name "$MNU_BLACKPLAGUE"
 
+clearepisodes
+episode e1m1 
+	name "$MNU_COTD"
+	key c
+	
+episode e2m1 
+	name "$MNU_HELLSMAW"
+	key h
+	
+episode e3m1 
+	name "$MNU_DOME"
+	key d
+	
+episode e4m1 
+	name "$MNU_OSSUARY"
+	key o
+	optional
+
+episode e5m1 
+	name "$MNU_DEMESNE"
+	key s
+	optional
+
 
 
 // Episode 1

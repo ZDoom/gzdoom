@@ -266,12 +266,10 @@ CCMD (idclev)
 		// Catch invalid maps.
 		mapname = CalcMapName (epsd, map);
 
-		MapData * mapd = P_OpenMapData(mapname);
-		if (mapd == NULL)
+		if (!P_CheckMapData(mapname))
 			return;
 
 		// So be it.
-		delete mapd;
 		Printf ("%s\n", GStrings("STSTR_CLEV"));
       	G_DeferedInitNew (mapname);
 		players[0].health = 0;		// Force reset
@@ -293,11 +291,9 @@ CCMD (hxvisit)
 		{
 			// Just because it's in MAPINFO doesn't mean it's in the wad.
 
-			MapData * map = P_OpenMapData(mapname);
-			if (map != NULL)
+			if (P_CheckMapData(mapname))
 			{
 				// So be it.
-				delete map;
 				Printf ("%s\n", GStrings("STSTR_CLEV"));
       			G_DeferedInitNew (mapname);
 				return;
@@ -323,14 +319,12 @@ CCMD (changemap)
 
 	if (argv.argc() > 1)
 	{
-		MapData * map = P_OpenMapData(argv[1]);
-		if (map == NULL)
+		if (!P_CheckMapData(argv[1]))
 		{
 			Printf ("No map %s\n", argv[1]);
 		}
 		else
 		{
-			delete map;
 			if (argv.argc() > 2)
 			{
 				Net_WriteByte (DEM_CHANGEMAP2);

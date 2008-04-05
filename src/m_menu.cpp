@@ -1446,7 +1446,7 @@ void M_QuickLoad ()
 //
 void M_DrawReadThis ()
 {
-	FTexture *tex, *prevpic = NULL;
+	FTexture *tex = NULL, *prevpic = NULL;
 	fixed_t alpha;
 
 	if (gameinfo.flags & GI_INFOINDEXED)
@@ -1463,11 +1463,15 @@ void M_DrawReadThis ()
 	}
 	else
 	{
-		tex = TexMan[gameinfo.info.infoPage[InfoType-1]];
 		// Did the mapper choose a custom help page via MAPINFO?
-		if((level.f1 != NULL) && (strlen(level.f1) > 0)) 
+		if (level.info->f1[0] != 0)
 		{
-			tex = TexMan.FindTexture(level.f1);
+			tex = TexMan.FindTexture(level.info->f1);
+		}
+
+		if (tex == NULL)
+		{
+			tex = TexMan[gameinfo.info.infoPage[InfoType-1]];
 		}
 
 		if (InfoType > 1)

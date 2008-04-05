@@ -1,5 +1,11 @@
 // MAPINFO for Doom 2
 
+clearepisodes
+episode map01
+	name "Hell On Earth"
+	key h
+
+
 map MAP01 lookup HUSTR_1
 titlepatch CWILV00
 next MAP02

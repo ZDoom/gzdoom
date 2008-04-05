@@ -1,5 +1,24 @@
 // MAPINFO for Doom 1 (Shareware, Registered, and Retail)
 
+clearepisodes
+episode e1m1 
+	picname "M_EPI1"
+	key k
+	
+episode e2m1 
+	picname "M_EPI2"
+	key t
+	
+episode e3m1 
+	picname "M_EPI3"
+	key i
+	
+episode e4m1 
+	picname "M_EPI4"
+	key t
+	optional
+
+
 // Registered/Retail Episode 1
 
 map E1M1 lookup HUSTR_E1M1

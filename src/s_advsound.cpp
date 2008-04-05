@@ -561,7 +561,6 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 	if (lumpname)
 	{
 		lump = Wads.CheckNumForFullName (lumpname, true, ns_sounds);
-		if (lump == -1) lump = Wads.CheckNumForName (lumpname, ns_sounds);
 	}
 
 	return S_AddPlayerSound (pclass, gender, refid, lump);

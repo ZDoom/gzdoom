@@ -2184,8 +2184,15 @@ void DoDehPatch (const char *patchfile, bool autoloading)
 		if (!PatchFile)
 		{
 			// Couldn't find it on disk, try reading it from a lump
-			FString filebase(ExtractFileBase (patchfile));
-			lump = Wads.CheckNumForName (filebase);
+			lump = Wads.CheckNumForFullName(patchfile, true);
+			if (lump == -1)
+			{
+				// Compatibility fallback. It's just here because
+				// some WAD may need it. Should be deleted it it can
+				// be confirmed that nothing uses this case.
+				FString filebase(ExtractFileBase (patchfile));
+				lump = Wads.CheckNumForName (filebase);
+			}
 			if (lump >= 0)
 			{
 				filelen = Wads.LumpLength (lump);

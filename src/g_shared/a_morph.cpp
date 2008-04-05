@@ -8,6 +8,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "a_sharedglobal.h"
+#include "sbar.h"
 
 #define MORPHTICS (40*TICRATE)
 
@@ -56,6 +57,10 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 	{
 		return false;
 	}
+	if (spawntype == p->mo->GetClass())
+	{
+		return false;
+	}
 
 	morphed = static_cast<APlayerPawn *>(Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE));
 	DObject::StaticPointerSubstitution (actor, morphed);
@@ -78,6 +83,18 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 	actor->flags |= MF_UNMORPHED;
 	actor->renderflags |= RF_INVISIBLE;
 	p->morphTics = MORPHTICS;
+
+	// [MH] Used by SBARINFO to speed up face drawing
+	p->MorphedPlayerClass = 0;
+	for (unsigned int i = 1; i < PlayerClasses.Size (); i++)
+	{
+		if (PlayerClasses[i].Type == spawntype)
+		{
+			p->MorphedPlayerClass = i;
+			break;
+		}
+	}
+	
 	p->health = morphed->health;
 	p->mo = morphed;
 	p->momx = p->momy = 0;
@@ -116,6 +133,18 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 		p->camera = morphed;
 	}
 	morphed->ScoreIcon = actor->ScoreIcon;	// [GRB]
+
+	// [MH]
+	// If the player that was morphed is the one
+	// taking events, set up the face, if any;
+	// this is only needed for old-skool skins
+	// and for the original DOOM status bar.
+	if ((p == &players[consoleplayer]) && 
+		(strcmp(spawntype->Meta.GetMetaString (APMETA_Face), "None") != 0))
+	{
+		StatusBar->SetFace(&skins[p->MorphedPlayerClass]);
+	}
+
 	return true;
 }
 
@@ -182,6 +211,39 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	{
 		player->camera = mo;
 	}
+
+	// [MH]
+	// If the player that was morphed is the one
+	// taking events, reset up the face, if any;
+	// this is only needed for old-skool skins
+	// and for the original DOOM status bar.
+	if ((player == &players[consoleplayer]) && 
+		(strcmp(pmo->GetClass()->Meta.GetMetaString (APMETA_Face), "None") != 0))
+	{
+		// Assume root-level base skin to begin with
+		size_t skinindex = 0;
+		// If a custom skin was in use, then reload it
+		// or else the base skin for the player class.
+		if ((unsigned int)player->userinfo.skin >= PlayerClasses.Size () &&
+			(size_t)player->userinfo.skin < numskins)
+		{
+			skinindex = player->userinfo.skin;
+		}
+		else if (PlayerClasses.Size () > 1)
+		{
+			const PClass *whatami = player->mo->GetClass();
+			for (unsigned int i = 0; i < PlayerClasses.Size (); ++i)
+			{
+				if (PlayerClasses[i].Type == whatami)
+				{
+					skinindex = i;
+					break;
+				}
+			}
+		}
+		StatusBar->SetFace(&skins[skinindex]);
+	}
+
 	angle = mo->angle >> ANGLETOFINESHIFT;
 	Spawn<ATeleportFog> (pmo->x + 20*finecosine[angle],
 		pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);

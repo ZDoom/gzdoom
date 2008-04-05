@@ -130,7 +130,7 @@ struct FSpecialAction
 	FSpecialAction *Next;
 };
 
-struct level_info_s
+struct level_info_t
 {
 	char		mapname[9];
 	int			levelnum;
@@ -146,7 +146,7 @@ struct level_info_s
 	char		*level_name;
 	char		fadetable[9];
 	SBYTE		WallVertLight, WallHorizLight;
-	const char	*f1;
+	char		f1[9];
 	// TheDefaultLevelInfo initializes everything above this line.
 	int			musicorder;
 	FCompressedMemFile	*snapshot;
@@ -172,13 +172,13 @@ struct level_info_s
 	FName		RedirectType;
 	char		RedirectMap[9];
 
-	char		enterpic[9];
-	char		exitpic[9];
+	char		*enterpic;
+	char		*exitpic;
 	char 		*intermusic;
 	int			intermusicorder;
 
-	char		soundinfo[9];
-	char		sndseq[9];
+	char		*soundinfo;
+	char		*sndseq;
 	char		bordertexture[9];
 
 	int			fogdensity;
@@ -187,8 +187,8 @@ struct level_info_s
 	FSpecialAction * specialactions;
 
 	float		teamdamage;
+
 };
-typedef struct level_info_s level_info_t;
 
 // [RH] These get zeroed every tic and are updated by thinkers.
 struct FSectorScrollValues
@@ -196,7 +196,7 @@ struct FSectorScrollValues
 	fixed_t ScrollX, ScrollY;
 };
 
-struct level_locals_s
+struct FLevelLocals
 {
 	void Tick ();
 	void AddScroller (DScroller *, int secnum);
@@ -254,15 +254,12 @@ struct level_locals_s
 
 	bool		FromSnapshot;			// The current map was restored from a snapshot
 
-	const char	*f1;
-
 	float		teamdamage;
 
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;
 	bool		IsFreelookAllowed() const;
 };
-typedef struct level_locals_s level_locals_t;
 
 enum EndTypes
 {
@@ -310,7 +307,7 @@ typedef struct cluster_info_s cluster_info_t;
 #define CLUSTER_LOOKUPEXITTEXT	0x00000010	// Exit text is the name of a language string
 #define CLUSTER_LOOKUPENTERTEXT	0x00000020	// Enter text is the name of a language string
 
-extern level_locals_t level;
+extern FLevelLocals level;
 
 extern TArray<level_info_t> wadlevelinfos;
 
@@ -360,7 +357,6 @@ void G_InitLevelLocals (void);
 
 void G_AirControlChanged ();
 
-void G_MakeEpisodes (void);
 const char *G_MaybeLookupLevelName (level_info_t *level);
 
 cluster_info_t *FindClusterInfo (int cluster);

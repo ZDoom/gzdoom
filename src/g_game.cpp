@@ -2291,11 +2291,11 @@ void G_BeginRecording (const char *startmap)
 // G_PlayDemo
 //
 
-char defdemoname[128];
+FString defdemoname;
 
 void G_DeferedPlayDemo (char *name)
 {
-	strncpy (defdemoname, name, 127);
+	defdemoname = name;
 	gameaction = ga_playdemo;
 }
 
@@ -2457,7 +2457,7 @@ void G_DoPlayDemo (void)
 	gameaction = ga_nothing;
 
 	// [RH] Allow for demos not loaded as lumps
-	demolump = Wads.CheckNumForName (defdemoname);
+	demolump = Wads.CheckNumForFullName (defdemoname, true);
 	if (demolump >= 0)
 	{
 		int demolen = Wads.LumpLength (demolump);
@@ -2472,7 +2472,7 @@ void G_DoPlayDemo (void)
 	}
 	demo_p = demobuffer;
 
-	Printf ("Playing demo %s\n", defdemoname);
+	Printf ("Playing demo %s\n", defdemoname.GetChars());
 
 	C_BackupCVars ();		// [RH] Save cvars that might be affected by demo
 
@@ -2520,7 +2520,7 @@ void G_TimeDemo (char* name)
 	timingdemo = true;
 	singletics = true;
 
-	strncpy (defdemoname, name, 128);
+	defdemoname = name;
 	gameaction = ga_playdemo;
 }
 

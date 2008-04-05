@@ -1,3 +1,28 @@
+April 5, 2008 (Changes by Graf Zahl)
+- Externalized all default episode definitions. Added an 'optional' keyword
+  to handle M4 and 5 in Doom and Heretic.
+- Added P_CheckMapData function and replaced all calls to P_OpenMapData that
+  only checked for a map's presence with it.
+- Added Martin Howe's player statusbar face submission.
+- Added an 'adddefaultmap' option for MAPINFO. This is the same as 'defaultmap'
+  but keeps all existing information in the default and just adds to it. This
+  is needed because Hexen and Strife set some information in their base
+  MAPINFO and using 'defaultmap' in a PWAD would override that.
+- Fixed: Using MAPINFO's f1 option could cause memory leaks.
+- Added option to load lumps by full name to several places:
+  * Finale texts loaded from a text lump
+  * Demos
+  * Local SNDINFOs
+  * Local SNDSEQs
+  * Image names in FONTDEFS
+  * intermission script names
+- Changed the STCFN121 handling. The character is not an 'I' but a '|' so
+  instead of discarding it it should be inserted at position 124.
+- Renamed indexfont.fon to indexfont so that I could remove a special case
+  from V_GetFont that was just added for this one font.
+- Added a 'dumpspawnedthings' CVAR that enables a listing of all things in 
+  the map and the actor type they spawned.
+
 April 5, 2008 (SBarInfo Update #16)
 - Added: fillzeros flag for drawnumber.  When set the string will always have
   a length of the specified size and zeros will fill in for the missing places.

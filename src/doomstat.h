@@ -149,9 +149,6 @@ extern	int				viewangleoffset;
 extern	int				consoleplayer;	
 
 
-extern level_locals_t level;
-
-
 // --------------------------------------
 // DEMO playback/recording related stuff.
 // No demo, there is a human player in charge?

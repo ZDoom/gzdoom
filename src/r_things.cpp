@@ -501,6 +501,7 @@ void R_InitSkins (void)
 			{
 				for (j = 2; j >= 0; j--)
 					skins[i].face[j] = toupper (sc.String[j]);
+				skins[i].face[3] = '\0';
 			}
 			else if (0 == stricmp (key, "gender"))
 			{
@@ -886,11 +887,20 @@ void R_InitSprites ()
 	for (i = 0; i < PlayerClasses.Size (); i++)
 	{
 		const PClass *basetype = PlayerClasses[i].Type;
+		const char *pclassface = basetype->Meta.GetMetaString (APMETA_Face);
 
 		strcpy (skins[i].name, "Base");
-		skins[i].face[0] = 'S';
-		skins[i].face[1] = 'T';
-		skins[i].face[2] = 'F';
+		if (strcmp(pclassface, "None") == 0)
+		{
+			skins[i].face[0] = 'S';
+			skins[i].face[1] = 'T';
+			skins[i].face[2] = 'F';
+			skins[i].face[3] = '\0';
+		}
+		else
+		{
+			strcpy(skins[i].face, pclassface);
+		}
 		skins[i].range0start = basetype->Meta.GetMetaInt (APMETA_ColorRange) & 255;
 		skins[i].range0end = basetype->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
 		skins[i].Scale = GetDefaultByType (basetype)->scaleX;

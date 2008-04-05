@@ -328,6 +328,9 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	case ADEF_PlayerPawn_SoundClass:
 		sgClass->Meta.SetMetaString (APMETA_SoundClass, datastr);
 		break;
+	case ADEF_PlayerPawn_Face:
+		sgClass->Meta.SetMetaString (APMETA_Face, datastr);
+		break;
 	case ADEF_PlayerPawn_ScoreIcon:
 		player->ScoreIcon = TexMan.AddPatch (datastr);
 		if (player->ScoreIcon <= 0)

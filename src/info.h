@@ -247,6 +247,7 @@ enum
 	ADEF_PlayerPawn_CrouchSprite,
 	ADEF_PlayerPawn_DisplayName,
 	ADEF_PlayerPawn_SoundClass,
+	ADEF_PlayerPawn_Face,
 	ADEF_PlayerPawn_ScoreIcon,
 	ADEF_PlayerPawn_MorphWeapon,
 	ADEF_LastString = ADEF_PlayerPawn_MorphWeapon,

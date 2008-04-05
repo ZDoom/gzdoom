@@ -51,6 +51,7 @@ enum
 
 	APMETA_DisplayName,		// display name (used in menus etc.)
 	APMETA_SoundClass,		// sound class
+	APMETA_Face,			// doom status bar face (when used)
 	APMETA_ColorRange,		// skin color range
 	APMETA_InvulMode,
 	APMETA_HealingRadius,
@@ -252,6 +253,7 @@ public:
 	int			fixedcolormap;			// can be set to REDCOLORMAP, etc.
 	pspdef_t	psprites[NUMPSPRITES];	// view sprites (gun, etc)
 	int			morphTics;				// player is a chicken/pig if > 0
+	BYTE		MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed
 	AWeapon		*PremorphWeapon;		// ready weapon before morphing
 	int			chickenPeck;			// chicken peck countdown
 	int			jumpTics;				// delay the next jump for a moment

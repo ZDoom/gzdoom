@@ -379,7 +379,7 @@ void S_Start ()
 			if (*LocalSndInfo)
 			{
 				// Now parse the local SNDINFO
-				int j = Wads.CheckNumForName(LocalSndInfo);
+				int j = Wads.CheckNumForFullName(LocalSndInfo, true);
 				if (j>=0) S_AddLocalSndInfo(j);
 			}
 
@@ -392,7 +392,7 @@ void S_Start ()
 		}
 		if (parse_ss)
 		{
-			S_ParseSndSeq(*LocalSndSeq? Wads.CheckNumForName(LocalSndSeq) : -1);
+			S_ParseSndSeq(*LocalSndSeq? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
 		}
 		else
 		

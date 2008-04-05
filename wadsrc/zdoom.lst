@@ -255,7 +255,7 @@ acs/strfhelp.o				strfhelp.o
 # Font color ranges
 textcolors.txt				textcolors.txt
 fontdefs.txt				fontdefs.txt
-indexfont.fon				indexfont.fon
+indexfont					indexfont.fon
 
 ========
 # Decorate stuff

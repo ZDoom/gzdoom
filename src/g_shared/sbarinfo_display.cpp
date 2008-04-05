@@ -1178,6 +1178,10 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 //draws an image with the specified flags
 void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int flags)
 {
+	if (texture == NULL)
+	{
+		return;
+	}
 	if((flags & DRAWIMAGE_OFFSET_CENTER))
 	{
 		x -= (texture->GetWidth()/2)-texture->LeftOffset;
@@ -1285,16 +1289,20 @@ void DSBarInfo::DrawFace(FString &defaultFace, int accuracy, bool xdth, bool ani
 	for(level = 0;CPlayer->health < (accuracy-level-1)*(CPlayer->mo->GetMaxHealth()/accuracy);level++);
 	if(currentState != NULL)
 	{
-		FTexture *face = currentState->getCurrentFrameTexture(defaultFace, &skins[CPlayer->userinfo.skin], level, angle);
-		x += ST_X;
-		y += ST_Y;
-		int w = face->GetScaledWidth();
-		int h = face->GetScaledHeight();
-		screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
-		screen->DrawTexture(face, x, y,
-			DTA_DestWidth, w,
-			DTA_DestHeight, h,
-			TAG_DONE);
+		FPlayerSkin *skin = &skins[CPlayer->morphTics ? CPlayer->MorphedPlayerClass : CPlayer->userinfo.skin];
+		FTexture *face = currentState->getCurrentFrameTexture(defaultFace, skin, level, angle);
+		if (face != NULL)
+		{
+			x += ST_X;
+			y += ST_Y;
+			int w = face->GetScaledWidth();
+			int h = face->GetScaledHeight();
+			screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+			screen->DrawTexture(face, x, y,
+				DTA_DestWidth, w,
+				DTA_DestHeight, h,
+				TAG_DONE);
+		}
 	}
 }
 

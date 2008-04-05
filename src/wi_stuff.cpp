@@ -331,7 +331,7 @@ void WI_LoadBackground(bool isenterpic)
 					// If going from E1-E3 to E4 the default should be used, not the exit pic.
 
 					// Not if the exit pic is user defined!
-					if (level.info->exitpic[0]!=0) return;
+					if (level.info->exitpic != NULL && level.info->exitpic[0]!=0) return;
 
 					// E1-E3 need special treatment when playing Doom 1.
 					if (gamemode!=commercial)

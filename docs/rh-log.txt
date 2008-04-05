@@ -1,4 +1,7 @@
 April 5, 2008 (Changes by Graf Zahl)
+- Changed secret sector drawing in automap so that lines with the ML_SECRET
+  flag are only drawn as part of a secret sector if that secret has already
+  been found, even if the option is set to always show secret sectors.
 - Added the option to use $ as a prefix to a string table name everywhere in
   MAPINFO where 'lookup' could be specified so that there is one consistent
   way to do it.

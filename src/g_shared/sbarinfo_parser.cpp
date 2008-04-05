@@ -93,6 +93,7 @@ static const char *SBarInfoRoutineLevel[] =
 	"gamemode",
 	"playerclass",
 	"aspectratio",
+	"isselected",
 	"weaponammo", //event
 	"ininventory",
 	NULL
@@ -490,6 +491,14 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 							sc.ScriptError("Global variable number out of range: %d", sc.Number);
 						cmd.value = sc.Number;
 					}
+					else if(sc.Compare("globalarray")) //acts like variable[playernumber()]
+					{
+						cmd.flags += DRAWNUMBER_GLOBALARRAY;
+						sc.MustGetToken(TK_IntConst);
+						if(sc.Number < 0 || sc.Number >= NUM_GLOBALVARS)
+							sc.ScriptError("Global variable number out of range: %d", sc.Number);
+						cmd.value = sc.Number;
+					}
 					else
 					{
 						cmd.flags = DRAWNUMBER_INVENTORY;
@@ -502,6 +511,18 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						}
 					}
 					sc.MustGetToken(',');
+				}
+				while(sc.CheckToken(TK_Identifier))
+				{
+					if(sc.Compare("fillzeros"))
+					{
+						cmd.flags += DRAWNUMBER_FILLZEROS;
+						Printf("%d", cmd.flags);
+					}
+					else
+						sc.ScriptError("Unknown flag '%s'.", sc.String);
+					if(!sc.CheckToken('|'))
+						sc.MustGetToken(',');
 				}
 				this->getCoordinates(sc, cmd);
 				if(sc.CheckToken(','))
@@ -948,6 +969,33 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				sc.MustGetToken('{');
 				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
+			case SBARINFO_ISSELECTED:
+				if(sc.CheckToken(TK_Identifier))
+				{
+					if(sc.Compare("not"))
+					{
+						cmd.flags += SBARINFOEVENT_NOT;
+					}
+					else
+						sc.ScriptError("Expected 'not' got '%s' instead.", sc.String);
+				}
+				sc.MustGetToken(TK_StringConst);
+				for(int i = 0;i < 2;i++)
+				{
+					cmd.setString(sc, sc.String, i);
+					const PClass* item = PClass::FindClass(sc.String);
+					if(item == NULL || !RUNTIME_CLASS(AWeapon)->IsAncestorOf(item))
+					{
+						sc.ScriptError("'%s' is not a type of weapon.", sc.String);
+					}
+					if(sc.CheckToken(','))
+						sc.MustGetToken(TK_StringConst);
+					else
+						break;
+				}
+				sc.MustGetToken('{');
+				this->ParseSBarInfoBlock(sc, cmd.subBlock);
+				break;
 			case SBARINFO_WEAPONAMMO:
 				sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("not"))
@@ -980,7 +1028,6 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
 			case SBARINFO_ININVENTORY:
-			{
 				sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("not"))
 				{
@@ -1011,7 +1058,6 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				sc.MustGetToken('{');
 				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
-			}
 		}
 		block.commands.Push(cmd);
 	}

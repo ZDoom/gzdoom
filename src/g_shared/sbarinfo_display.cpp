@@ -559,7 +559,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 				{
 					DrawGraphic(TexMan[cmd.sprite], cmd.x, cmd.y, cmd.flags);
 				}
-				else
+				else if(cmd.sprite != -1)
 				{
 					DrawGraphic(Images[cmd.sprite], cmd.x, cmd.y, cmd.flags);
 				}
@@ -571,7 +571,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 				{
 					drawingFont = cmd.font;
 				}
-				if(cmd.flags == DRAWNUMBER_HEALTH)
+				if(cmd.flags & DRAWNUMBER_HEALTH)
 				{
 					value = health;
 					if(SBarInfoScript->lowerHealthCap && cmd.value < 0) //health shouldn't display negatives
@@ -579,11 +579,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 						value = 0;
 					}
 				}
-				else if(cmd.flags == DRAWNUMBER_ARMOR)
+				else if(cmd.flags & DRAWNUMBER_ARMOR)
 				{
 					value = armorAmount;
 				}
-				else if(cmd.flags == DRAWNUMBER_AMMO1)
+				else if(cmd.flags & DRAWNUMBER_AMMO1)
 				{
 					value = ammocount1;
 					if(ammo1 == NULL) //no ammo, do not draw
@@ -591,7 +591,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 						continue;
 					}
 				}
-				else if(cmd.flags == DRAWNUMBER_AMMO2)
+				else if(cmd.flags & DRAWNUMBER_AMMO2)
 				{
 					value = ammocount2;
 					if(ammo2 == NULL) //no ammo, do not draw
@@ -599,7 +599,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 						continue;
 					}
 				}
-				else if(cmd.flags == DRAWNUMBER_AMMO)
+				else if(cmd.flags & DRAWNUMBER_AMMO)
 				{
 					const PClass* ammo = PClass::FindClass(cmd.string[0]);
 					AInventory* item = CPlayer->mo->FindInventory(ammo);
@@ -612,7 +612,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 						value = 0;
 					}
 				}
-				else if(cmd.flags == DRAWNUMBER_AMMOCAPACITY)
+				else if(cmd.flags & DRAWNUMBER_AMMOCAPACITY)
 				{
 					const PClass* ammo = PClass::FindClass(cmd.string[0]);
 					AInventory* item = CPlayer->mo->FindInventory(ammo);
@@ -625,21 +625,21 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 						value = ((AInventory *)GetDefaultByType(ammo))->MaxAmount;
 					}
 				}
-				else if(cmd.flags == DRAWNUMBER_FRAGS)
+				else if(cmd.flags & DRAWNUMBER_FRAGS)
 					value = CPlayer->fragcount;
-				else if(cmd.flags == DRAWNUMBER_KILLS)
+				else if(cmd.flags & DRAWNUMBER_KILLS)
 					value = level.killed_monsters;
-				else if(cmd.flags == DRAWNUMBER_MONSTERS)
+				else if(cmd.flags & DRAWNUMBER_MONSTERS)
 					value = level.total_monsters;
-				else if(cmd.flags == DRAWNUMBER_ITEMS)
+				else if(cmd.flags & DRAWNUMBER_ITEMS)
 					value = level.found_items;
-				else if(cmd.flags == DRAWNUMBER_TOTALITEMS)
+				else if(cmd.flags & DRAWNUMBER_TOTALITEMS)
 					value = level.total_items;
-				else if(cmd.flags == DRAWNUMBER_SECRETS)
+				else if(cmd.flags & DRAWNUMBER_SECRETS)
 					value = level.found_secrets;
-				else if(cmd.flags == DRAWNUMBER_TOTALSECRETS)
+				else if(cmd.flags & DRAWNUMBER_TOTALSECRETS)
 					value = level.total_secrets;
-				else if(cmd.flags == DRAWNUMBER_ARMORCLASS)
+				else if(cmd.flags & DRAWNUMBER_ARMORCLASS)
 				{
 					AHexenArmor *harmor = CPlayer->mo->FindInventory<AHexenArmor>();
 					if(harmor != NULL)
@@ -654,9 +654,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 					}
 					value /= (5*FRACUNIT);
 				}
-				else if(cmd.flags == DRAWNUMBER_GLOBALVAR)
+				else if(cmd.flags & DRAWNUMBER_GLOBALVAR)
 					value = ACS_GlobalVars[cmd.value];
-				else if(cmd.flags == DRAWNUMBER_INVENTORY)
+				else if(cmd.flags & DRAWNUMBER_GLOBALARRAY)
+					value = ACS_GlobalArrays[cmd.value][consoleplayer];
+				else if(cmd.flags & DRAWNUMBER_INVENTORY)
 				{
 					AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
 					if(item != NULL)
@@ -668,12 +670,13 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 						value = 0;
 					}
 				}
-				if(cmd.special3 != -1 && cmd.value <= cmd.special3) //low
-					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation2, cmd.special2);
-				else if(cmd.special4 != -1 && cmd.value >= cmd.special4) //high
-					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation3, cmd.special2);
+				bool fillzeros = !!(cmd.flags & DRAWNUMBER_FILLZEROS);
+				if(cmd.special3 != -1 && value <= cmd.special3) //low
+					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation2, cmd.special2, fillzeros);
+				else if(cmd.special4 != -1 && value >= cmd.special4) //high
+					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation3, cmd.special2, fillzeros);
 				else
-					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation, cmd.special2);
+					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation, cmd.special2, fillzeros);
 				break;
 			}
 			case SBARINFO_DRAWMUGSHOT:
@@ -1079,6 +1082,27 @@ void DSBarInfo::doCommands(SBarInfoBlock &block)
 					doCommands(cmd.subBlock);
 				}
 				break;
+			case SBARINFO_ISSELECTED:
+				if(CPlayer->ReadyWeapon != NULL)
+				{
+					const PClass *weapon1 = PClass::FindClass(cmd.string[0]);
+					const PClass *weapon2 = PClass::FindClass(cmd.string[1]);
+					if(weapon2 != NULL)
+					{
+						if((cmd.flags & SBARINFOEVENT_NOT) && (weapon1 != CPlayer->ReadyWeapon->GetSpecies() && weapon2 != CPlayer->ReadyWeapon->GetSpecies()))
+							doCommands(cmd.subBlock);
+						else if(!(cmd.flags & SBARINFOEVENT_NOT) && (weapon1 == CPlayer->ReadyWeapon->GetSpecies() || weapon2 == CPlayer->ReadyWeapon->GetSpecies()))
+							doCommands(cmd.subBlock);
+					}
+					else
+					{
+						if(!(cmd.flags & SBARINFOEVENT_NOT) && weapon1 == CPlayer->ReadyWeapon->GetSpecies())
+							doCommands(cmd.subBlock);
+						else if((cmd.flags & SBARINFOEVENT_NOT) && weapon1 != CPlayer->ReadyWeapon->GetSpecies())
+							doCommands(cmd.subBlock);
+					}
+				}
+				break;
 			case SBARINFO_WEAPONAMMO:
 				if(CPlayer->ReadyWeapon != NULL)
 				{
@@ -1162,8 +1186,9 @@ void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int flags)
 	x += ST_X;
 	y += ST_Y;
 	int w = texture->GetScaledWidth();
-	int h = texture->GetScaledHeight();
+	int h = texture->GetScaledHeight() + y;
 	screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
+	h -= y;
 	if((flags & DRAWIMAGE_TRANSLATABLE))
 	{
 		screen->DrawTexture(texture, x, y,
@@ -1224,12 +1249,27 @@ void DSBarInfo::DrawString(const char* str, int x, int y, EColorRange translatio
 }
 
 //draws the specified number up to len digits
-void DSBarInfo::DrawNumber(int num, int len, int x, int y, EColorRange translation, int spacing)
+void DSBarInfo::DrawNumber(int num, int len, int x, int y, EColorRange translation, int spacing, bool fillzeros)
 {
 	FString value;
 	int maxval = (int) ceil(pow(10., len))-1;
-	num = clamp(num, -maxval, maxval);
+	if(!fillzeros || len == 1)
+		num = clamp(num, -maxval, maxval);
+	else //The community wanted negatives to take the last digit, but we can only do this if there is room
+		num = clamp(num, (int) -(ceil(pow(10., len-1))-1), maxval);
 	value.Format("%d", num);
+	if(fillzeros)
+	{
+		if(num < 0) //We don't want the negative just yet
+			value.Format("%d", -num);
+		while(fillzeros && value.Len() < (unsigned int) len)
+		{
+			if(num < 0 && value.Len() == (unsigned int) (len-1))
+				value.Insert(0, "-");
+			else
+				value.Insert(0, "0");
+		}
+	}
 	if(SBarInfoScript->spacingCharacter == '\0')
 		x -= int(drawingFont->StringWidth(value)+(spacing * value.Len()));
 	else //monospaced so just multiplay the character size
@@ -1391,7 +1431,7 @@ void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, bool alwayssho
 		{
 			if(drawArtiboxes)
 			{
-				DrawImage (Images[invBarOffset + imgARTIBOX], x+i*31, y);
+				DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*31, y);
 			}
 			DrawDimImage (TexMan(item->Icon), x+i*31, y, item->Amount <= 0);
 			if(alwaysshowcounter || item->Amount != 1)
@@ -1402,28 +1442,28 @@ void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, bool alwayssho
 			{
 				if(type == GAME_Heretic)
 				{
-					DrawImage(Images[invBarOffset + imgSELECTBOX], x+i*31, y+29);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*31, y+29);
 				}
 				else
 				{
-					DrawImage(Images[invBarOffset + imgSELECTBOX], x+i*31, y);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*31, y);
 				}
 			}
 		}
 		for (; i < num && drawArtiboxes; ++i)
 		{
-			DrawImage (Images[invBarOffset + imgARTIBOX], x+i*31, y);
+			DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*31, y);
 		}
 		// Is there something to the left?
 		if (!noArrows && CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
 		{
-			DrawImage (Images[!(gametic & 4) ?
+			DrawGraphic(Images[!(gametic & 4) ?
 				invBarOffset + imgINVLFGEM1 : invBarOffset + imgINVLFGEM2], x-12, y);
 		}
 		// Is there something to the right?
 		if (!noArrows && item != NULL)
 		{
-			DrawImage (Images[!(gametic & 4) ?
+			DrawGraphic(Images[!(gametic & 4) ?
 				invBarOffset + imgINVRTGEM1 : invBarOffset + imgINVRTGEM2], x+num*31+2, y);
 		}
 	}

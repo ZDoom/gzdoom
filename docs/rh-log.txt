@@ -1,3 +1,18 @@
+April 5, 2008 (SBarInfo Update #16)
+- Added: fillzeros flag for drawnumber.  When set the string will always have
+  a length of the specified size and zeros will fill in for the missing places.
+  If the number is negative the negative sign will take the place of the last
+  digit.
+- Added: globalarray type to drawnumber which will display the value in a
+  global array with the index set to the player's number.  Untested.
+- Added: isselected command to SBarInfo.
+- Fixed: Bi and Tri colored numbers didn't work.
+- Fixed: Crash when using nullimage as the last image in drawswitchableimage.
+- Applied Graf suggestion to include the y coord when calulating heights to fix
+  most of the gaps caused by round off errors.  At least for now anyways and it
+  is only applied for drawimage.
+- SBarInfo inventory bars have been converted to use screen->DrawTexture()
+
 April 4, 2008 (Changes by Graf Zahl)
 - Increased limit for demon/melee to 4.
 - Fixed: P_CheckSwitchRange accessed invalid memory when testing a one-sided

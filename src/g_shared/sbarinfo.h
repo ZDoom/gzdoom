@@ -183,22 +183,24 @@ enum //drawimage flags
 
 enum //drawnumber flags
 {
-	DRAWNUMBER_HEALTH = 1,
-	DRAWNUMBER_ARMOR = 2,
-	DRAWNUMBER_AMMO1 = 4,
-	DRAWNUMBER_AMMO2 = 8,
-	DRAWNUMBER_AMMO = 16,
-	DRAWNUMBER_AMMOCAPACITY = 32,
-	DRAWNUMBER_FRAGS = 64,
-	DRAWNUMBER_INVENTORY = 128,
-	DRAWNUMBER_KILLS = 256,
-	DRAWNUMBER_MONSTERS = 512,
-	DRAWNUMBER_ITEMS = 1024,
-	DRAWNUMBER_TOTALITEMS = 2048,
-	DRAWNUMBER_SECRETS = 4096,
-	DRAWNUMBER_TOTALSECRETS = 8192,
-	DRAWNUMBER_ARMORCLASS = 16384,
-	DRAWNUMBER_GLOBALVAR = 32768,
+	DRAWNUMBER_HEALTH = 0x1,
+	DRAWNUMBER_ARMOR = 0x2,
+	DRAWNUMBER_AMMO1 = 0x4,
+	DRAWNUMBER_AMMO2 = 0x8,
+	DRAWNUMBER_AMMO = 0x10,
+	DRAWNUMBER_AMMOCAPACITY = 0x20,
+	DRAWNUMBER_FRAGS = 0x40,
+	DRAWNUMBER_INVENTORY = 0x80,
+	DRAWNUMBER_KILLS = 0x100,
+	DRAWNUMBER_MONSTERS = 0x200,
+	DRAWNUMBER_ITEMS = 0x400,
+	DRAWNUMBER_TOTALITEMS = 0x800,
+	DRAWNUMBER_SECRETS = 0x1000,
+	DRAWNUMBER_TOTALSECRETS = 0x2000,
+	DRAWNUMBER_ARMORCLASS = 0x4000,
+	DRAWNUMBER_GLOBALVAR = 0x8000,
+	DRAWNUMBER_GLOBALARRAY = 0x10000,
+	DRAWNUMBER_FILLZEROS = 0x20000,
 };
 
 enum //drawbar flags (will go into special2)
@@ -305,6 +307,7 @@ enum //Bar key words
 	SBARINFO_GAMEMODE,
 	SBARINFO_PLAYERCLASS,
 	SBARINFO_ASPECTRATIO,
+	SBARINFO_ISSELECTED,
 	SBARINFO_WEAPONAMMO,
 	SBARINFO_ININVENTORY,
 };
@@ -338,9 +341,9 @@ public:
 	void SetMugShotState(const char* stateName, bool waitTillDone=false);
 private:
 	void doCommands(SBarInfoBlock &block);
-	void DrawGraphic(FTexture* texture, int x, int y, int flags);
+	void DrawGraphic(FTexture* texture, int x, int y, int flags=0);
 	void DrawString(const char* str, int x, int y, EColorRange translation, int spacing=0);
-	void DrawNumber(int num, int len, int x, int y, EColorRange translation, int spacing=0);
+	void DrawNumber(int num, int len, int x, int y, EColorRange translation, int spacing=0, bool fillzeros=false);
 	void DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y);
 	int updateState(bool xdth, bool animatedgodmode);
 	void DrawInventoryBar(int type, int num, int x, int y, bool alwaysshow, 

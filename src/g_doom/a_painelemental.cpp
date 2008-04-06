@@ -4,6 +4,8 @@
 #include "p_local.h"
 #include "a_doomglobal.h"
 #include "a_action.h"
+#include "templates.h"
+#include "m_bbox.h"
 #include "thingdef/thingdef.h"
 
 void A_PainAttack (AActor *);
@@ -22,6 +24,7 @@ static const PClass *GetSpawnType()
 	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
 	return spawntype;
 }
+
 
 //
 // A_PainShootSkull
@@ -80,9 +83,24 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype)
 	// wall or an impassible line, or a "monsters can't cross" line.//   |
 	// If it is, then we don't allow the spawn.						//   V
 
-	if (Check_Sides (self, x, y))
+	FBoundingBox box(MIN(self->x, x), MIN(self->y, y), MAX(self->x, x), MAX(self->y, y));
+	FBlockLinesIterator it(box);
+	line_t *ld;
+
+	while ((ld = it.Next()))
 	{
-		return;
+		if (!(ld->flags & ML_TWOSIDED) ||
+			(ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS|ML_BLOCKEVERYTHING)))
+		{
+			if (!(box.Left()   > ld->bbox[BOXRIGHT]  ||
+				  box.Right()  < ld->bbox[BOXLEFT]   ||
+				  box.Top()    < ld->bbox[BOXBOTTOM] ||
+				  box.Bottom() > ld->bbox[BOXTOP]))
+			{
+				if (P_PointOnLineSide(self->x,self->y,ld) != P_PointOnLineSide(x,y,ld))
+					return;  // line blocks trajectory				//   ^
+			}
+		}
 	}
 
 	other = Spawn (spawntype, x, y, z, ALLOW_REPLACE);

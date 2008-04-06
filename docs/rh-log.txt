@@ -1,4 +1,17 @@
 April 6, 2008 (Changes by Graf Zahl)
+- Fixed: PIT_FindFloorCeiling required tmx and tmy to be set but 
+  P_FindFloorCeiling never did that.
+- Merged Check_Sides and PIT_CrossLine into A_PainShootSkull.
+- Replaced P_BlockLinesIterator with FBlockLinesIterator in all places it was
+  used. This also allowed to remove all the global variable saving in
+  P_CreateSecNodeList.
+- Added a new FBlockLinesIterator class that doesn't need a callback
+  function because debugging the previous bug proved to be a bit annoying
+  because it involved a P_BlockLinesIterator loop.
+- Fixed: The MBF code to move monsters away from dropoffs did not work as 
+  intended due to some random decisions in P_DoNewChaseDir. When in the
+  avoiding dropoff mode these are ignored now. This should cure the problem
+  that monsters hanging over a dropoff tended to drop down.
 - Added a NOTIMEFREEZE flag that excludes actors from being affected by
   the time freezer powerup.
 - Changed: Empty pickup messages are no longer printed.

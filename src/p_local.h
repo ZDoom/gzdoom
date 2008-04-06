@@ -234,7 +234,27 @@ struct FLineOpening
 
 void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0);
 
-bool P_BlockLinesIterator (int x, int y, bool(*func)(line_t*));
+class FBoundingBox;
+
+class FBlockLinesIterator
+{
+	int minx, maxx;
+	int miny, maxy;
+
+	int curx, cury;
+	polyblock_t *polyLink;
+	int polyIndex;
+	int *list;
+
+	void StartBlock(int x, int y);
+
+public:
+	FBlockLinesIterator(int minx, int miny, int maxx, int maxy, bool keepvalidcount = false);
+	FBlockLinesIterator(const FBoundingBox &box);
+	line_t *Next();
+	void Reset() { StartBlock(minx, miny); }
+};
+
 bool P_BlockThingsIterator (int x, int y, bool(*func)(AActor*), TArray<AActor *> &checkarray, AActor *start=NULL);
 
 

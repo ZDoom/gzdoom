@@ -124,6 +124,17 @@ typedef struct _GUID
 } GUID;
 #endif
 
+
+// Bounding box coordinate storage.
+enum
+{
+	BOXTOP,
+	BOXBOTTOM,
+	BOXLEFT,
+	BOXRIGHT
+};		// bbox coordinates
+
+
 //
 // Fixed point, 32bit as 16.16.
 //

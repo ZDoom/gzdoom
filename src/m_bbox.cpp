@@ -25,17 +25,7 @@
 //-----------------------------------------------------------------------------
 
 #include "m_bbox.h"
-
-FBoundingBox::FBoundingBox ()
-{
-	ClearBox ();
-}
-
-void FBoundingBox::ClearBox ()
-{
-	m_Box[BOXTOP] = m_Box[BOXRIGHT] = FIXED_MIN;
-	m_Box[BOXBOTTOM] = m_Box[BOXLEFT] = FIXED_MAX;
-}
+#include "p_local.h"
 
 void FBoundingBox::AddToBox (fixed_t x, fixed_t y)
 {
@@ -48,6 +38,11 @@ void FBoundingBox::AddToBox (fixed_t x, fixed_t y)
 		m_Box[BOXBOTTOM] = y;
 	if (y > m_Box[BOXTOP])
 		m_Box[BOXTOP] = y;
+}
+
+int FBoundingBox::BoxOnLineSide (const line_t *ld) const
+{
+	return P_BoxOnLineSide(m_Box, ld);
 }
 
 

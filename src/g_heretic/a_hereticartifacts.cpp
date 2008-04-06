@@ -41,6 +41,7 @@ bool AArtiTomeOfPower::Use (bool pickup)
 		else
 		{ // Succeeded
 			Owner->player->morphTics = 0;
+			Owner->player->MorphedPlayerClass = 0;
 			S_Sound (Owner, CHAN_VOICE, "*evillaugh", 1, ATTN_IDLE);
 		}
 		return true;

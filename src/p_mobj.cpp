@@ -3642,6 +3642,7 @@ APlayerPawn *P_SpawnPlayer (mapthing2_t *mthing, bool tempplayer)
 	p->damagecount = 0;
 	p->bonuscount = 0;
 	p->morphTics = 0;
+	p->MorphedPlayerClass = 0;
 	p->extralight = 0;
 	p->fixedcolormap = 0;
 	p->viewheight = mobj->ViewHeight;

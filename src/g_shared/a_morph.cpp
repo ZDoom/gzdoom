@@ -199,6 +199,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
 
 	player->morphTics = 0;
+	player->MorphedPlayerClass = 0;
 	player->viewheight = mo->ViewHeight;
 	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
 	if (level2 != NULL)

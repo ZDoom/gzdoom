@@ -32,6 +32,7 @@
 #include "i_system.h"
 #include "doomdef.h"
 #include "p_local.h"
+#include "m_bbox.h"
 #include "p_lnspec.h"
 #include "p_effect.h"
 #include "s_sound.h"
@@ -603,15 +604,18 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 	}
 
 	// try other directions
-	if (pr_newchasedir() > 200 || abs(deltay) > abs(deltax))
+	if (!(actor->flags5 & MF5_AVOIDINGDROPOFF))
 	{
-		swap (d[1], d[2]);
-	}
+		if ((pr_newchasedir() > 200 || abs(deltay) > abs(deltax)))
+		{
+			swap (d[1], d[2]);
+		}
 
-	if (d[1] == turnaround)
-		d[1] = DI_NODIR;
-	if (d[2] == turnaround)
-		d[2] = DI_NODIR;
+		if (d[1] == turnaround)
+			d[1] = DI_NODIR;
+		if (d[2] == turnaround)
+			d[2] = DI_NODIR;
+	}
 		
 	if (d[1] != DI_NODIR)
 	{
@@ -630,12 +634,15 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 			return;
 	}
 
-	// there is no direct path to the player, so pick another direction.
-	if (olddir != DI_NODIR)
+	if (!(actor->flags5 & MF5_AVOIDINGDROPOFF))
 	{
-		actor->movedir = olddir;
-		if (P_TryWalk (actor))
-			return;
+		// there is no direct path to the player, so pick another direction.
+		if (olddir != DI_NODIR)
+		{
+			actor->movedir = olddir;
+			if (P_TryWalk (actor))
+				return;
+		}
 	}
 
 	// randomly determine direction of search
@@ -688,51 +695,6 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 // hang over dropoffs.
 //=============================================================================
 
-struct avoiddropoff_t
-{
-	AActor * thing;
-	fixed_t deltax;
-	fixed_t deltay;
-	fixed_t floorx;
-	fixed_t floory;
-	fixed_t floorz;
-	fixed_t t_bbox[4];
-} a;
-
-static bool PIT_AvoidDropoff(line_t *line)
-{
-	if (line->backsector                          && // Ignore one-sided linedefs
-		a.t_bbox[BOXRIGHT]  > line->bbox[BOXLEFT]   &&
-		a.t_bbox[BOXLEFT]   < line->bbox[BOXRIGHT]  &&
-		a.t_bbox[BOXTOP]    > line->bbox[BOXBOTTOM] && // Linedef must be contacted
-		a.t_bbox[BOXBOTTOM] < line->bbox[BOXTOP]    &&
-		P_BoxOnLineSide(a.t_bbox, line) == -1)
-    {
-		fixed_t front = line->frontsector->floorplane.ZatPoint(a.floorx,a.floory);
-		fixed_t back  = line->backsector->floorplane.ZatPoint(a.floorx,a.floory);
-		angle_t angle;
-		
-		// The monster must contact one of the two floors,
-		// and the other must be a tall dropoff.
-		
-		if (back == a.floorz && front < a.floorz - a.thing->MaxDropOffHeight)
-		{
-			angle = R_PointToAngle2(0,0,line->dx,line->dy);   // front side dropoff
-		}
-		else if (front == a.floorz && back < a.floorz - a.thing->MaxDropOffHeight)
-		{
-			angle = R_PointToAngle2(line->dx,line->dy,0,0); // back side dropoff
-		}
-		else return true;
-		
-		// Move away from dropoff at a standard speed.
-		// Multiple contacted linedefs are cumulative (e.g. hanging over corner)
-		a.deltax -= finesine[angle >> ANGLETOFINESHIFT]*32;
-		a.deltay += finecosine[angle >> ANGLETOFINESHIFT]*32;
-    }
-	return true;
-}
-
 //=============================================================================
 //
 // P_NewChaseDir
@@ -777,26 +739,46 @@ void P_NewChaseDir(AActor * actor)
 		!(actor->flags2 & MF2_ONMOBJ) &&
 		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 	{
-		a.thing = actor;
-		a.deltax = a.deltay = 0;
-		a.floorx = actor->x;
-		a.floory = actor->y;
-		a.floorz = actor->z;
+		FBoundingBox box(actor->x, actor->y, actor->radius);
+		FBlockLinesIterator it(box);
+		line_t *line;
 
-		int yh=((a.t_bbox[BOXTOP]   = actor->y+actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
-		int yl=((a.t_bbox[BOXBOTTOM]= actor->y-actor->radius)-bmaporgy)>>MAPBLOCKSHIFT;
-		int xh=((a.t_bbox[BOXRIGHT] = actor->x+actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
-		int xl=((a.t_bbox[BOXLEFT]  = actor->x-actor->radius)-bmaporgx)>>MAPBLOCKSHIFT;
-		int bx, by;
+		fixed_t deltax = 0;
+		fixed_t deltay = 0;
+		while ((line = it.Next()))
+		{
+			if (line->backsector                     && // Ignore one-sided linedefs
+				box.Right()  > line->bbox[BOXLEFT]   &&
+				box.Left()   < line->bbox[BOXRIGHT]  &&
+				box.Top()    > line->bbox[BOXBOTTOM] && // Linedef must be contacted
+				box.Bottom() < line->bbox[BOXTOP]    &&
+				box.BoxOnLineSide(line) == -1)
+		    {
+				fixed_t front = line->frontsector->floorplane.ZatPoint(actor->x,actor->y);
+				fixed_t back  = line->backsector->floorplane.ZatPoint(actor->x,actor->y);
+				angle_t angle;
 		
-		// check lines
+				// The monster must contact one of the two floors,
+				// and the other must be a tall dropoff.
+				
+				if (back == actor->z && front < actor->z - actor->MaxDropOffHeight)
+				{
+					angle = R_PointToAngle2(0,0,line->dx,line->dy);   // front side dropoff
+				}
+				else if (front == actor->z && back < actor->z - actor->MaxDropOffHeight)
+				{
+					angle = R_PointToAngle2(line->dx,line->dy,0,0); // back side dropoff
+				}
+				else continue;
 		
-		validcount++;
-		for (bx=xl ; bx<=xh ; bx++)
-			for (by=yl ; by<=yh ; by++)
-				P_BlockLinesIterator(bx, by, PIT_AvoidDropoff);  // all contacted lines
+				// Move away from dropoff at a standard speed.
+				// Multiple contacted linedefs are cumulative (e.g. hanging over corner)
+				deltax -= finesine[angle >> ANGLETOFINESHIFT]*32;
+				deltay += finecosine[angle >> ANGLETOFINESHIFT]*32;
+			}
+		}
 
-		if (a.deltax || a.deltay) 
+		if (deltax || deltay) 
 		{
 			// [Graf Zahl] I have changed P_TryMove to only apply this logic when
 			// being called from here. AVOIDINGDROPOFF activates the code that
@@ -806,7 +788,7 @@ void P_NewChaseDir(AActor * actor)
 
 			// use different dropoff movement logic in P_TryMove
 			actor->flags5|=MF5_AVOIDINGDROPOFF;
-			P_DoNewChaseDir(actor, a.deltax, a.deltay);
+			P_DoNewChaseDir(actor, deltax, deltay);
 			actor->flags5&=~MF5_AVOIDINGDROPOFF;
 		
 			// If moving away from dropoff, set movecount to 1 so that 

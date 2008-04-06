@@ -677,75 +677,119 @@ void FBlockNode::Release ()
 
 
 //
-// P_BlockLinesIterator
-// The validcount flags are used to avoid checking lines
-// that are marked in multiple mapblocks,
-// so increment validcount before the first call
-// to P_BlockLinesIterator, then make one or more calls
-// to it.
+// FBlockLinesIterator
 //
 extern polyblock_t **PolyBlockMap;
 
-bool P_BlockLinesIterator (int x, int y, bool(*func)(line_t*))
+FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _maxy, bool keepvalidcount)
 {
-	if (x<0 || y<0 || x>=bmapwidth || y>=bmapheight)
+	if (!keepvalidcount) validcount++;
+	minx = _minx;
+	maxx = _maxx;
+	miny = _miny;
+	maxy = _maxy;
+	Reset();
+}
+
+FBlockLinesIterator::FBlockLinesIterator(const FBoundingBox &box)
+{
+	validcount++;
+	maxy = (box.Top() - bmaporgy) >> MAPBLOCKSHIFT;
+	miny = (box.Bottom() - bmaporgy) >> MAPBLOCKSHIFT;
+	maxx = (box.Right() - bmaporgx) >> MAPBLOCKSHIFT;
+	minx = (box.Left() - bmaporgx) >> MAPBLOCKSHIFT;
+	Reset();
+}
+
+
+void FBlockLinesIterator::StartBlock(int x, int y) 
+{ 
+	if (x >= 0 && y >= 0 && x < bmapwidth && y <bmapheight)
 	{
-		return true;
-	}
-	else
-	{
-		int	offset;
-		int *list;
-
-		/* [RH] Polyobj stuff from Hexen --> */
-		polyblock_t *polyLink;
-
-		offset = y*bmapwidth + x;
-		if (PolyBlockMap)
-		{
-			polyLink = PolyBlockMap[offset];
-			while (polyLink)
-			{
-				if (polyLink->polyobj && polyLink->polyobj->validcount != validcount)
-				{
-					int i;
-					seg_t **tempSeg = polyLink->polyobj->segs;
-					polyLink->polyobj->validcount = validcount;
-
-					for (i = polyLink->polyobj->numsegs; i; i--, tempSeg++)
-					{
-						if ((*tempSeg)->linedef->validcount != validcount)
-						{
-							(*tempSeg)->linedef->validcount = validcount;
-							if (!func ((*tempSeg)->linedef))
-								return false;
-						}
-					}
-				}
-				polyLink = polyLink->next;
-			}
-		}
-		/* <-- Polyobj stuff from Hexen */
-
-		offset = *(blockmap + offset);
+		curx = x; 
+		cury = y; 
+		int offset = y*bmapwidth + x;
+		polyLink = PolyBlockMap? PolyBlockMap[offset] : NULL;
+		polyIndex = 0;
 
 		// There is an extra entry at the beginning of every block.
 		// Apparently, id had originally intended for it to be used
 		// to keep track of things, but the final code does not do that.
-		for (list = blockmaplump + offset + 1; *list != -1; list++)
-		{
-			line_t *ld = &lines[*list];
+		list = blockmaplump + *(blockmap + offset) + 1;
+	}
+	else
+	{
+		// invalid block
+		list = NULL;
+		polyLink = NULL;
+	}
+}
 
-			if (ld->validcount != validcount)
+line_t *FBlockLinesIterator::Next()
+{
+	while (true)
+	{
+		while (polyLink != NULL)
+		{
+			if (polyLink->polyobj)
 			{
-				ld->validcount = validcount;
-					
-				if ( !func(ld) )
-					return false;
+				if (polyIndex == 0)
+				{
+					if (polyLink->polyobj->validcount == validcount)
+					{
+						polyLink = polyLink->next;
+						continue;
+					}
+					polyLink->polyobj->validcount = validcount;
+				}
+
+				seg_t *seg = polyLink->polyobj->segs[polyIndex];
+
+				if (++polyIndex >= polyLink->polyobj->numsegs)
+				{
+					polyLink = polyLink->next;
+					polyIndex = 0;
+				}
+
+				line_t *ld = seg->linedef;
+				if (ld->validcount == validcount)
+				{
+					continue;
+				}
+				else
+				{
+					ld->validcount = validcount;
+					return ld;
+				}
+			}
+			else polyLink = polyLink->next;
+		}
+
+		if (list != NULL)
+		{
+			while (*list != -1)
+			{
+				line_t *ld = &lines[*list];
+
+				if (ld->validcount != validcount)
+				{
+					ld->validcount = validcount;
+					return ld;
+				}
+				else
+				{
+					list++;
+				}
 			}
 		}
+
+		if (++curx > maxx)
+		{
+			curx = minx;
+			if (++cury > maxy) return NULL;
+		}
+		StartBlock(curx, cury);
 	}
-	return true;		// everything was checked
 }
 
 
@@ -829,57 +873,60 @@ int 			ptflags;
 // are on opposite sides of the trace.
 // Returns true if earlyout and a solid line hit.
 //
-bool PIT_AddLineIntercepts (line_t *ld)
+void P_AddLineIntercepts(int bx, int by)
 {
-	int 				s1;
-	int 				s2;
-	fixed_t 			frac;
-	divline_t			dl;
+	FBlockLinesIterator it(bx, by, bx, by, true);
+	line_t *ld;
 
-	// avoid precision problems with two routines
-	if ( trace.dx > FRACUNIT*16
-		 || trace.dy > FRACUNIT*16
-		 || trace.dx < -FRACUNIT*16
-		 || trace.dy < -FRACUNIT*16)
+	while ((ld = it.Next()))
 	{
-		s1 = P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace);
-		s2 = P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace);
-	}
-	else
-	{
-		s1 = P_PointOnLineSide (trace.x, trace.y, ld);
-		s2 = P_PointOnLineSide (trace.x+trace.dx, trace.y+trace.dy, ld);
-	}
-	
-	if (s1 == s2)
-		return true;	// line isn't crossed
-	
-	// hit the line
-	P_MakeDivline (ld, &dl);
-	frac = P_InterceptVector (&trace, &dl);
+		int 				s1;
+		int 				s2;
+		fixed_t 			frac;
+		divline_t			dl;
 
-	if (frac < 0)
-		return true;	// behind source
+		// avoid precision problems with two routines
+		if ( trace.dx > FRACUNIT*16
+			 || trace.dy > FRACUNIT*16
+			 || trace.dx < -FRACUNIT*16
+			 || trace.dy < -FRACUNIT*16)
+		{
+			s1 = P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace);
+			s2 = P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace);
+		}
+		else
+		{
+			s1 = P_PointOnLineSide (trace.x, trace.y, ld);
+			s2 = P_PointOnLineSide (trace.x+trace.dx, trace.y+trace.dy, ld);
+		}
 		
-	// try to early out the check
-	if (earlyout
-		&& frac < FRACUNIT
-		&& !ld->backsector)
-	{
-		return false;	// stop checking
+		if (s1 == s2) continue;	// line isn't crossed
+		
+		// hit the line
+		P_MakeDivline (ld, &dl);
+		frac = P_InterceptVector (&trace, &dl);
+
+		if (frac < 0) continue;	// behind source
+			
+		/* unused code
+		// try to early out the check
+		if (earlyout
+			&& frac < FRACUNIT
+			&& !ld->backsector)
+		{
+			return false;	// stop checking
+		}
+		*/
+		
+
+		intercept_t newintercept;
+
+		newintercept.frac = frac;
+		newintercept.isaline = true;
+		newintercept.d.line = ld;
+		intercepts.Push (newintercept);
 	}
-	
-
-	intercept_t newintercept;
-
-	newintercept.frac = frac;
-	newintercept.isaline = true;
-	newintercept.d.line = ld;
-	intercepts.Push (newintercept);
-
-	return true;		// continue
 }
-
 
 
 //
@@ -1145,8 +1192,7 @@ bool P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 	{
 		if (flags & PT_ADDLINES)
 		{
-			if (!P_BlockLinesIterator (mapx, mapy, PIT_AddLineIntercepts))
-				return false;	// early out
+			P_AddLineIntercepts(mapx, mapy);
 		}
 		
 		if (flags & PT_ADDTHINGS)
@@ -1184,9 +1230,8 @@ bool P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 			// be checked.
 			if (flags & PT_ADDLINES)
 			{
-				if (!P_BlockLinesIterator (mapx + mapxstep, mapy, PIT_AddLineIntercepts) ||
-					!P_BlockLinesIterator (mapx, mapy + mapystep, PIT_AddLineIntercepts))
-					return false;	// early out
+				P_AddLineIntercepts(mapx + mapxstep, mapy);
+				P_AddLineIntercepts(mapx, mapy + mapystep);
 			}
 			
 			if (flags & PT_ADDTHINGS)
@@ -1330,3 +1375,5 @@ static AActor *RoughBlockCheck (AActor *mo, int index)
 	}
 	return NULL;
 }
+
+

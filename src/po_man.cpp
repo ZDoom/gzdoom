@@ -1068,7 +1068,6 @@ static bool CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 	AActor *mobj;
 	int i, j, k;
 	int left, right, top, bottom;
-	fixed_t tmbbox[4];
 	line_t *ld;
 	bool blocked;
 
@@ -1110,19 +1109,16 @@ static bool CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 					checker.Push (mobj);
 					if ((mobj->flags&MF_SOLID) && !(mobj->flags&MF_NOCLIP))
 					{
-						tmbbox[BOXTOP] = mobj->y+mobj->radius;
-						tmbbox[BOXBOTTOM] = mobj->y-mobj->radius;
-						tmbbox[BOXLEFT] = mobj->x-mobj->radius;
-						tmbbox[BOXRIGHT] = mobj->x+mobj->radius;
+						FBoundingBox box(mobj->x, mobj->y, mobj->radius);
 
-						if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-							|| tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-							|| tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-							|| tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+						if (box.Right() <= ld->bbox[BOXLEFT]
+							|| box.Left() >= ld->bbox[BOXRIGHT]
+							|| box.Top() <= ld->bbox[BOXBOTTOM]
+							|| box.Bottom() >= ld->bbox[BOXTOP])
 						{
 							continue;
 						}
-						if (P_BoxOnLineSide(tmbbox, ld) != -1)
+						if (box.BoxOnLineSide(ld) != -1)
 						{
 							continue;
 						}

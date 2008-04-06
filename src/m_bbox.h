@@ -25,29 +25,46 @@
 #include "doomtype.h"
 #include "m_fixed.h"
 
-
-// Bounding box coordinate storage.
-enum
-{
-	BOXTOP,
-	BOXBOTTOM,
-	BOXLEFT,
-	BOXRIGHT
-};		// bbox coordinates
-
+struct line_t;
 
 class FBoundingBox
 {
 public:
-	FBoundingBox();
+	FBoundingBox()
+	{
+		ClearBox();
+	}
 
-	void ClearBox ();
+	FBoundingBox(fixed_t left, fixed_t bottom, fixed_t right, fixed_t top)
+	{
+		m_Box[BOXTOP] = top;
+		m_Box[BOXLEFT] = left;
+		m_Box[BOXRIGHT] = right;
+		m_Box[BOXBOTTOM] = bottom;
+	}
+
+	FBoundingBox(fixed_t x, fixed_t y, fixed_t radius)
+	{
+		m_Box[BOXTOP] = y + radius;
+		m_Box[BOXLEFT] = x - radius;
+		m_Box[BOXRIGHT] = x + radius;
+		m_Box[BOXBOTTOM] = y - radius;
+	}
+
+	void ClearBox ()
+	{
+		m_Box[BOXTOP] = m_Box[BOXRIGHT] = FIXED_MIN;
+		m_Box[BOXBOTTOM] = m_Box[BOXLEFT] = FIXED_MAX;
+	}
+
 	void AddToBox (fixed_t x, fixed_t y);
 
-	inline fixed_t Top () { return m_Box[BOXTOP]; }
-	inline fixed_t Bottom () { return m_Box[BOXBOTTOM]; }
-	inline fixed_t Left () { return m_Box[BOXLEFT]; }
-	inline fixed_t Right () { return m_Box[BOXRIGHT]; }
+	inline fixed_t Top () const { return m_Box[BOXTOP]; }
+	inline fixed_t Bottom () const { return m_Box[BOXBOTTOM]; }
+	inline fixed_t Left () const { return m_Box[BOXLEFT]; }
+	inline fixed_t Right () const { return m_Box[BOXRIGHT]; }
+
+	int BoxOnLineSide (const line_t *ld) const;
 
 protected:
 	fixed_t m_Box[4];

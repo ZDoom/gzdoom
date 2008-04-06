@@ -35,7 +35,6 @@
 #define __V_VIDEO_H__
 
 #include "doomtype.h"
-#include "m_bbox.h"
 
 #include "v_palette.h"
 #include "v_font.h"

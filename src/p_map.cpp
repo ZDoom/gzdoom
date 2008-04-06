@@ -100,8 +100,6 @@ int				tmceilingpic;
 sector_t		*tmceilingsector;
 bool			tmtouchmidtex;
 
-static fixed_t	tmfbbox[4];
-static AActor	*tmfthing;
 fixed_t			tmffloorz;
 fixed_t			tmfceilingz;
 fixed_t			tmfdropoffz;
@@ -142,15 +140,15 @@ AActor *LastRipped;
 //
 //==========================================================================
 
-static bool PIT_FindFloorCeiling (line_t *ld)
+static bool PIT_FindFloorCeiling (line_t *ld, AActor *tmfthing, const FBoundingBox &box, fixed_t tmx, fixed_t tmy)
 {
-	if (tmfbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-		|| tmfbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-		|| tmfbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-		|| tmfbbox[BOXBOTTOM] >= ld->bbox[BOXTOP] )
+	if (box.Right() <= ld->bbox[BOXLEFT]
+		|| box.Left() >= ld->bbox[BOXRIGHT]
+		|| box.Top() <= ld->bbox[BOXBOTTOM]
+		|| box.Bottom() >= ld->bbox[BOXTOP] )
 		return true;
 
-	if (P_BoxOnLineSide (tmfbbox, ld) != -1)
+	if (box.BoxOnLineSide (ld) != -1)
 		return true;
 
 	// A line has been hit
@@ -223,17 +221,13 @@ static bool PIT_FindFloorCeiling (line_t *ld)
 
 void P_FindFloorCeiling (AActor *actor)
 {
-	int	xl,xh,yl,yh,bx,by;
 	fixed_t x, y;
 	sector_t *sec;
 
 	x = actor->x;
 	y = actor->y;
 
-	tmfbbox[BOXTOP] = y + actor->radius;
-	tmfbbox[BOXBOTTOM] = y - actor->radius;
-	tmfbbox[BOXRIGHT] = x + actor->radius;
-	tmfbbox[BOXLEFT] = x - actor->radius;
+	FBoundingBox box(x, y, actor->radius);
 
 	sec = P_PointInSector (x, y);
 	tmffloorz = tmfdropoffz = sec->floorplane.ZatPoint (x, y);
@@ -242,18 +236,15 @@ void P_FindFloorCeiling (AActor *actor)
 	tmffloorsector = sec;
 	tmfceilingpic = sec->ceilingpic;
 	tmfceilingsector = sec;
-	tmfthing = actor;
 	validcount++;
 
-	xl = (tmfbbox[BOXLEFT] - bmaporgx) >> MAPBLOCKSHIFT;
-	xh = (tmfbbox[BOXRIGHT] - bmaporgx) >> MAPBLOCKSHIFT;
-	yl = (tmfbbox[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
-	yh = (tmfbbox[BOXTOP] - bmaporgy) >> MAPBLOCKSHIFT;
+	FBlockLinesIterator it(box);
+	line_t *ld;
 
-	for (bx = xl; bx <= xh; bx++)
-		for (by = yl; by <= yh; by++)
-			if (!P_BlockLinesIterator (bx, by, PIT_FindFloorCeiling))
-				return;
+	while ((ld = it.Next()))
+	{
+		PIT_FindFloorCeiling(ld, actor, box, x, y);
+	}
 
 	if (tmftouchmidtex) tmfdropoffz = tmffloorz;
 }
@@ -340,10 +331,10 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	tmy = y;
 	tmz = z;
 		
-	tmfbbox[BOXTOP] = tmbbox[BOXTOP] = y + tmthing->radius;
-	tmfbbox[BOXBOTTOM] = tmbbox[BOXBOTTOM] = y - tmthing->radius;
-	tmfbbox[BOXRIGHT] = tmbbox[BOXRIGHT] = x + tmthing->radius;
-	tmfbbox[BOXLEFT] = tmbbox[BOXLEFT] = x - tmthing->radius;
+	tmbbox[BOXTOP] = y + tmthing->radius;
+	tmbbox[BOXBOTTOM] = y - tmthing->radius;
+	tmbbox[BOXRIGHT] = x + tmthing->radius;
+	tmbbox[BOXLEFT] = x - tmthing->radius;
 
 	newsec = P_PointInSector (x,y);
 	ceilingline = NULL;
@@ -356,7 +347,6 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	tmffloorsector = newsec;
 	tmfceilingpic = newsec->ceilingpic;
 	tmfceilingsector = newsec;
-	tmfthing = tmthing;
 					
 	validcount++;
 	spechit.Clear ();
@@ -364,21 +354,13 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 
 	StompAlwaysFrags = tmthing->player || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag;
 
-	// stomp on any things contacted
-	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+	FBoundingBox box(x, y, thing->radius);
+	FBlockLinesIterator it(box);
+	line_t *ld;
 
-	for (bx=xl ; bx<=xh ; bx++)
+	while ((ld = it.Next()))
 	{
-		for (by=yl ; by<=yh ; by++)
-		{
-			if (!P_BlockLinesIterator(bx,by,PIT_FindFloorCeiling))
-			{
-				return false;
-			}
-		}
+		PIT_FindFloorCeiling(ld, thing, box, x, y);
 	}
 
 	if (tmftouchmidtex) tmfdropoffz = tmffloorz;
@@ -391,6 +373,13 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	int savecpic = tmffloorpic;
 	fixed_t savedropoff = tmfdropoffz;
 
+	// stomp on any things contacted
+	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
+	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
+	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
+	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+
+	// stomp on any things contacted
 	for (bx=xl ; bx<=xh ; bx++)
 	{
 		for (by=yl ; by<=yh ; by++)
@@ -609,54 +598,23 @@ int P_GetMoveFactor (const AActor *mo, int *frictionp)
 // MOVEMENT ITERATOR FUNCTIONS
 //
 
-//																	// phares
-// PIT_CrossLine													//   |
-// Checks to see if a PE->LS trajectory line crosses a blocking		//   V
-// line. Returns false if it does.
-//
-// tmbbox holds the bounding box of the trajectory. If that box
-// does not touch the bounding box of the line in question,
-// then the trajectory is not blocked. If the PE is on one side
-// of the line and the LS is on the other side, then the
-// trajectory is blocked.
-//
-// Currently this assumes an infinite line, which is not quite
-// correct. A more correct solution would be to check for an
-// intersection of the trajectory and the line, but that takes
-// longer and probably really isn't worth the effort.
-//
-
-static // killough 3/26/98: make static
-bool PIT_CrossLine (line_t* ld)
-{
-	if (!(ld->flags & ML_TWOSIDED) ||
-		(ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS|ML_BLOCKEVERYTHING)))
-		if (!(tmbbox[BOXLEFT]   > ld->bbox[BOXRIGHT]  ||
-			  tmbbox[BOXRIGHT]  < ld->bbox[BOXLEFT]   ||
-			  tmbbox[BOXTOP]    < ld->bbox[BOXBOTTOM] ||
-			  tmbbox[BOXBOTTOM] > ld->bbox[BOXTOP]))
-			if (P_PointOnLineSide(pe_x,pe_y,ld) != P_PointOnLineSide(ls_x,ls_y,ld))
-				return(false);  // line blocks trajectory				//   ^
-	return(true); // line doesn't block trajectory					//   |
-}																	// phares
-
 //
 // PIT_CheckLine
 // Adjusts tmfloorz and tmceilingz as lines are contacted
 //
 
 static // killough 3/26/98: make static
-bool PIT_CheckLine (line_t *ld)
+bool PIT_CheckLine (line_t *ld, const FBoundingBox &box)
 {
 	bool rail = false;
 
-	if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-		|| tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-		|| tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-		|| tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP] )
+	if (box.Right() <= ld->bbox[BOXLEFT]
+		|| box.Left() >= ld->bbox[BOXRIGHT]
+		|| box.Top() <= ld->bbox[BOXBOTTOM]
+		|| box.Bottom() >= ld->bbox[BOXTOP] )
 		return true;
 
-	if (P_BoxOnLineSide (tmbbox, ld) != -1)
+	if (box.BoxOnLineSide (ld) != -1)
 		return true;
 
 	// A line has been hit
@@ -1113,51 +1071,6 @@ bool PIT_CheckThing (AActor *thing)
 	// return !(thing->flags & MF_SOLID);	// old code -- killough
 }
 
-// This routine checks for Lost Souls trying to be spawned		// phares
-// across 1-sided lines, impassible lines, or "monsters can't	//   |
-// cross" lines. Draw an imaginary line between the PE			//   V
-// and the new Lost Soul spawn spot. If that line crosses
-// a 'blocking' line, then disallow the spawn. Only search
-// lines in the blocks of the blockmap where the bounding box
-// of the trajectory line resides. Then check bounding box
-// of the trajectory vs. the bounding box of each blocking
-// line to see if the trajectory and the blocking line cross.
-// Then check the PE and LS to see if they're on different
-// sides of the blocking line. If so, return true, otherwise
-// false.
-
-bool Check_Sides(AActor* actor, int x, int y)
-{
-	int bx,by,xl,xh,yl,yh;
-
-	pe_x = actor->x;
-	pe_y = actor->y;
-	ls_x = x;
-	ls_y = y;
-
-	// Here is the bounding box of the trajectory
-
-	tmbbox[BOXLEFT]   = pe_x < x ? pe_x : x;
-	tmbbox[BOXRIGHT]  = pe_x > x ? pe_x : x;
-	tmbbox[BOXTOP]    = pe_y > y ? pe_y : y;
-	tmbbox[BOXBOTTOM] = pe_y < y ? pe_y : y;
-
-	// Determine which blocks to look in for blocking lines
-
-	xl = (tmbbox[BOXLEFT]   - bmaporgx)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT]  - bmaporgx)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP]    - bmaporgy)>>MAPBLOCKSHIFT;
-
-	// xl->xh, yl->yh determine the mapblock set to search
-
-	validcount++; // prevents checking same line twice
-	for (bx = xl ; bx <= xh ; bx++)
-		for (by = yl ; by <= yh ; by++)
-		if (!P_BlockLinesIterator(bx,by,PIT_CrossLine))
-			return true;										//   ^
-	return(false);												//   |
-}																// phares
 
 //---------------------------------------------------------------------------
 //
@@ -1286,10 +1199,12 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	tmx = x;
 	tmy = y;
 
-	tmbbox[BOXTOP] = y + thing->radius;
-	tmbbox[BOXBOTTOM] = y - thing->radius;
-	tmbbox[BOXRIGHT] = x + thing->radius;
-	tmbbox[BOXLEFT] = x - thing->radius;
+	FBoundingBox box(x, y, thing->radius);
+
+	tmbbox[BOXTOP] = box.Top();
+	tmbbox[BOXBOTTOM] = box.Bottom();
+	tmbbox[BOXRIGHT] = box.Right();
+	tmbbox[BOXLEFT] = box.Left();
 
 	newsec = P_PointInSector (x,y);
 	ceilingline = BlockingLine = NULL;
@@ -1407,19 +1322,18 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	thing->height = realheight;
 	if (tmflags & MF_NOCLIP)
 		return (BlockingMobj = thingblocker) == NULL;
-	xl = (tmbbox[BOXLEFT] - bmaporgx)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy)>>MAPBLOCKSHIFT;
+
+	FBlockLinesIterator it(box);
+	line_t *ld;
 
 	fixed_t thingdropoffz = tmfloorz;
 	//bool onthing = (thingdropoffz != tmdropoffz);
 	tmfloorz = tmdropoffz;
 
-	for (bx=xl ; bx<=xh ; bx++)
-		for (by=yl ; by<=yh ; by++)
-			if (!P_BlockLinesIterator (bx,by,PIT_CheckLine))
-				return false;
+	while ((ld = it.Next()))
+	{
+		if (!PIT_CheckLine(ld, box)) return false;
+	}
 
 	if (tmceilingz - tmfloorz < thing->height)
 		return false;
@@ -4716,50 +4630,6 @@ void P_DelSeclist (msecnode_t *node)
 //=============================================================================
 // phares 3/14/98
 //
-// PIT_GetSectors
-//
-// Locates all the sectors the object is in by looking at the lines that
-// cross through it. You have already decided that the object is allowed
-// at this location, so don't bother with checking impassable or
-// blocking lines.
-//=============================================================================
-
-bool PIT_GetSectors (line_t *ld)
-{
-	if (tmbbox[BOXRIGHT]	  <= ld->bbox[BOXLEFT]	 ||
-			tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT]  ||
-			tmbbox[BOXTOP]	  <= ld->bbox[BOXBOTTOM] ||
-			tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
-		return true;
-
-	if (P_BoxOnLineSide (tmbbox, ld) != -1)
-		return true;
-
-	// This line crosses through the object.
-
-	// Collect the sector(s) from the line and add to the
-	// sector_list you're examining. If the Thing ends up being
-	// allowed to move to this position, then the sector_list
-	// will be attached to the Thing's AActor at touching_sectorlist.
-
-	sector_list = P_AddSecnode (ld->frontsector,tmthing,sector_list);
-
-	// Don't assume all lines are 2-sided, since some Things
-	// like MT_TFOG are allowed regardless of whether their radius takes
-	// them beyond an impassable linedef.
-
-	// killough 3/27/98, 4/4/98:
-	// Use sidedefs instead of 2s flag to determine two-sidedness.
-
-	if (ld->backsector)
-		sector_list = P_AddSecnode(ld->backsector, tmthing, sector_list);
-
-	return true;
-}
-
-//=============================================================================
-// phares 3/14/98
-//
 // P_CreateSecNodeList
 //
 // Alters/creates the sector_list that shows what sectors the object resides in
@@ -4768,17 +4638,7 @@ bool PIT_GetSectors (line_t *ld)
 
 void P_CreateSecNodeList (AActor *thing, fixed_t x, fixed_t y)
 {
-	int xl, xh, yl, yh, bx, by;
 	msecnode_t *node;
-
-	// [RH] Save old tm* values.
-	AActor *thingsave = tmthing;
-	int flagssave = tmflags;
-	fixed_t xsave = tmx;
-	fixed_t ysave = tmy;
-	fixed_t bboxsave[4];
-
-	memcpy (bboxsave, tmbbox, sizeof(bboxsave));
 
 	// First, clear out the existing m_thing fields. As each node is
 	// added or verified as needed, m_thing will be set properly. When
@@ -4792,27 +4652,40 @@ void P_CreateSecNodeList (AActor *thing, fixed_t x, fixed_t y)
 		node = node->m_tnext;
 	}
 
-	tmthing = thing;
-	tmflags = thing->flags;
+	FBoundingBox box(thing->x, thing->y, thing->radius);
+	FBlockLinesIterator it(box);
+	line_t *ld;
 
-	tmx = x;
-	tmy = y;
+	while ((ld = it.Next()))
+	{
+		if (box.Right()  <= ld->bbox[BOXLEFT]	 ||
+			box.Left()   >= ld->bbox[BOXRIGHT]  ||
+			box.Top()    <= ld->bbox[BOXBOTTOM] ||
+			box.Bottom() >= ld->bbox[BOXTOP])
+			continue;
 
-	tmbbox[BOXTOP]	  = y + tmthing->radius;
-	tmbbox[BOXBOTTOM] = y - tmthing->radius;
-	tmbbox[BOXRIGHT]  = x + tmthing->radius;
-	tmbbox[BOXLEFT]   = x - tmthing->radius;
+		if (box.BoxOnLineSide (ld) != -1)
+			continue;
 
-	validcount++; // used to make sure we only process a line once
+		// This line crosses through the object.
 
-	xl = (tmbbox[BOXLEFT] - bmaporgx)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy)>>MAPBLOCKSHIFT;
+		// Collect the sector(s) from the line and add to the
+		// sector_list you're examining. If the Thing ends up being
+		// allowed to move to this position, then the sector_list
+		// will be attached to the Thing's AActor at touching_sectorlist.
 
-	for (bx = xl; bx <= xh; bx++)
-		for (by = yl; by <= yh; by++)
-			P_BlockLinesIterator (bx,by,PIT_GetSectors);
+		sector_list = P_AddSecnode (ld->frontsector,thing,sector_list);
+
+		// Don't assume all lines are 2-sided, since some Things
+		// like MT_TFOG are allowed regardless of whether their radius takes
+		// them beyond an impassable linedef.
+
+		// killough 3/27/98, 4/4/98:
+		// Use sidedefs instead of 2s flag to determine two-sidedness.
+
+		if (ld->backsector)
+			sector_list = P_AddSecnode(ld->backsector, thing, sector_list);
+	}
 
 	// Add the sector of the (x,y) point to sector_list.
 
@@ -4835,13 +4708,6 @@ void P_CreateSecNodeList (AActor *thing, fixed_t x, fixed_t y)
 			node = node->m_tnext;
 		}
 	}
-
-	// [RH] Restore old tm* values.
-	tmthing = thingsave;
-	tmflags = flagssave;
-	tmx = xsave;
-	tmy = ysave;
-	memcpy (tmbbox, bboxsave, sizeof(bboxsave));
 }
 
 void SpawnShootDecal (AActor *t1, const FTraceResults &trace)

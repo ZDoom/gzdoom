@@ -1162,10 +1162,10 @@ void P_ConversationCommand (int player, BYTE **stream)
 		break;
 
 	case CONV_SETNULL:
-		players[player].ConversationFaceTalker = NULL;
+		players[player].ConversationFaceTalker = false;
 		players[player].ConversationNPC = NULL;
 		players[player].ConversationPC = NULL;
-		players[player].ConversationNPCAngle = NULL;
+		players[player].ConversationNPCAngle = 0;
 		break;
 
 	default:

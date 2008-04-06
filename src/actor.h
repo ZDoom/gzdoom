@@ -299,6 +299,7 @@ enum
 	MF5_DONTRIP			= 0x00080000,	// Ripping projectiles explode when hittin this actor
 	MF5_NOINFIGHTING	= 0x00100000,	// This actor doesn't switch target when it's hurt 
 	MF5_NOINTERACTION	= 0x00200000,	// Thing is completely excluded from any gameplay related checks
+	MF5_NOTIMEFREEZE	= 0x00400000,	// Actor is not affected by time freezer
 
 
 // --- mobj.renderflags ---

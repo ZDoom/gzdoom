@@ -884,7 +884,7 @@ static void PrintPickupMessage (const char *str)
 		{
 			str=GStrings(str+1);
 		}
-		Printf (PRINT_LOW, "%s\n", str);
+		if (str[0] != 0) Printf (PRINT_LOW, "%s\n", str);
 	}
 }
 

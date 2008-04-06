@@ -1,3 +1,8 @@
+April 6, 2008 (Changes by Graf Zahl)
+- Added a NOTIMEFREEZE flag that excludes actors from being affected by
+  the time freezer powerup.
+- Changed: Empty pickup messages are no longer printed.
+
 April 5, 2008 (Changes by Graf Zahl)
 - Changed secret sector drawing in automap so that lines with the ML_SECRET
   flag are only drawn as part of a secret sector if that secret has already

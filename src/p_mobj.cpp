@@ -2573,16 +2573,19 @@ void AActor::Tick ()
 			return;
 		}
 
-		//Added by MC: Freeze mode.
-		if (bglobal.freeze && !(player && !player->isbot))
+		if (!(flags5 & MF5_NOTIMEFREEZE))
 		{
-			return;
-		}
+			//Added by MC: Freeze mode.
+			if (bglobal.freeze && !(player && !player->isbot))
+			{
+				return;
+			}
 
-		// Apply freeze mode.
-		if (( level.flags & LEVEL_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
-		{
-			return;
+			// Apply freeze mode.
+			if (( level.flags & LEVEL_FROZEN ) && ( player == NULL || !( player->cheats & CF_TIMEFREEZE )))
+			{
+				return;
+			}
 		}
 
 		if (cl_rockettrails & 2)

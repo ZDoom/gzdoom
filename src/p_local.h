@@ -255,12 +255,48 @@ public:
 	void Reset() { StartBlock(minx, miny); }
 };
 
-bool P_BlockThingsIterator (int x, int y, bool(*func)(AActor*), TArray<AActor *> &checkarray, AActor *start=NULL);
+class FBlockThingsIterator
+{
+	typedef TArray<AActor *> BTChecked;
 
+	static TDeletingArray< BTChecked* > FreeBTChecked;
+
+
+	int minx, maxx;
+	int miny, maxy;
+
+	int curx, cury;
+
+	bool dontfreecheck;
+	BTChecked *checkarray;
+
+	FBlockNode *block;
+
+	static BTChecked *GetCheckArray();
+	void FreeCheckArray();
+	void StartBlock(int x, int y);
+
+public:
+	FBlockThingsIterator(int minx, int miny, int maxx, int maxy, TArray<AActor *> *check = NULL);
+	FBlockThingsIterator(const FBoundingBox &box);
+	~FBlockThingsIterator()
+	{
+		if (!dontfreecheck) FreeCheckArray();
+	}
+	AActor *Next();
+	void Reset() { StartBlock(minx, miny); }
+};
+
+class FRadiusThingsIterator : public FBlockThingsIterator
+{
+	fixed_t X, Y, Radius;
+public:
+	FRadiusThingsIterator(fixed_t x, fixed_t y, fixed_t radius);
+	AActor *Next();
+};
 
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2
-#define PT_EARLYOUT 	4
 
 extern divline_t		trace;
 

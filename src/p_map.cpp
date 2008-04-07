@@ -71,16 +71,11 @@ static void SpawnShootDecal (AActor *t1, const FTraceResults &trace);
 static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
 							 fixed_t vx, fixed_t vy, fixed_t vz);
 
-fixed_t 		tmbbox[4];
 AActor		   *tmthing;
 static int 		tmflags;
 static fixed_t	tmx;
 static fixed_t	tmy;
 static fixed_t	tmz;	// [RH] Needed for third dimension of teleporters
-static fixed_t	pe_x;	// Pain Elemental position for Lost Soul checks	// phares
-static fixed_t	pe_y;	// Pain Elemental position for Lost Soul checks	// phares
-static fixed_t	ls_x;	// Lost Soul position for Lost Soul checks		// phares
-static fixed_t	ls_y;	// Lost Soul position for Lost Soul checks		// phares
 
 static FRandom pr_tracebleed ("TraceBleed");
 static FRandom pr_checkthing ("CheckThing");
@@ -140,7 +135,7 @@ AActor *LastRipped;
 //
 //==========================================================================
 
-static bool PIT_FindFloorCeiling (line_t *ld, AActor *tmfthing, const FBoundingBox &box, fixed_t tmx, fixed_t tmy)
+static bool PIT_FindFloorCeiling (line_t *ld, AActor *tmfthing, const FBoundingBox &box, fixed_t x, fixed_t y)
 {
 	if (box.Right() <= ld->bbox[BOXLEFT]
 		|| box.Left() >= ld->bbox[BOXRIGHT]
@@ -167,19 +162,19 @@ static bool PIT_FindFloorCeiling (line_t *ld, AActor *tmfthing, const FBoundingB
 		 (ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
 		 (ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
 	{
-		P_LineOpening (open, tmfthing, ld, sx=tmx, sy=tmy, tmx, tmy);
+		P_LineOpening (open, tmfthing, ld, sx=x, sy=y, x, y);
 	}
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 	  // that to calculate openings
 		float dx = (float)ld->dx;
 		float dy = (float)ld->dy;
-		fixed_t r = (fixed_t)(((float)(tmx - ld->v1->x) * dx +
-				 			   (float)(tmy - ld->v1->y) * dy) /
+		fixed_t r = (fixed_t)(((float)(x - ld->v1->x) * dx +
+				 			   (float)(y - ld->v1->y) * dy) /
 							  (dx*dx + dy*dy) * 16777216.f);
 		if (r <= 0)
 		{
-			P_LineOpening (open, tmfthing, ld, sx=ld->v1->x, sy=ld->v1->y, tmx, tmy);
+			P_LineOpening (open, tmfthing, ld, sx=ld->v1->x, sy=ld->v1->y, x, y);
 		}
 		else if (r >= (1<<24))
 		{
@@ -188,7 +183,7 @@ static bool PIT_FindFloorCeiling (line_t *ld, AActor *tmfthing, const FBoundingB
 		else
 		{
 			P_LineOpening (open, tmfthing, ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
-				sy=ld->v1->y + MulScale24 (r, ld->dy), tmx, tmy);
+				sy=ld->v1->y + MulScale24 (r, ld->dy), x, y);
 		}
 	}
 
@@ -254,54 +249,6 @@ void P_FindFloorCeiling (AActor *actor)
 // 
 
 //
-// PIT_StompThing
-//
-static bool StompAlwaysFrags;
-
-bool PIT_StompThing (AActor *thing)
-{
-	fixed_t blockdist;
-
-	if (!(thing->flags & MF_SHOOTABLE))
-		return true;
-
-	// don't clip against self
-	if (thing == tmthing)
-		return true;
-
-	blockdist = thing->radius + tmthing->radius;
-	
-	if (abs(thing->x - tmx) >= blockdist || abs(thing->y - tmy) >= blockdist)
-	{
-		// didn't hit it
-		return true;
-	}
-
-	// [RH] Z-Check
-	// But not if not MF2_PASSMOBJ or MF3_DONTOVERLAP are set!
-	// Otherwise those things would get stuck inside each other.
-	if ((tmthing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
-	{
-		if (!(thing->flags3 & tmthing->flags3 & MF3_DONTOVERLAP))
-		{
-			if (tmz > thing->z + thing->height)
-				return true;        // overhead
-			if (tmz+tmthing->height < thing->z)
-				return true;        // underneath
-		}
-	}
-
-	// monsters don't stomp things except on boss level
-	// [RH] Some Heretic/Hexen monsters can telestomp
-	if (StompAlwaysFrags || (tmthing->flags2 & MF2_TELESTOMP))
-	{
-		P_DamageMobj (thing, tmthing, tmthing, 1000000, NAME_Telefrag);
-		return true;
-	}
-	return false;
-}
-
-//
 // P_TeleportMove
 //
 // [RH] Added telefrag parameter: When true, anything in the spawn spot
@@ -312,30 +259,10 @@ bool PIT_StompThing (AActor *thing)
 //		was being teleported between two non-overlapping height ranges.
 bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag)
 {
-	static TArray<AActor *> telebt;
-
-	int 				xl;
-	int 				xh;
-	int 				yl;
-	int 				yh;
-	int 				bx;
-	int 				by;
-	
 	sector_t*		newsec;
 	
 	// kill anything occupying the position
-	tmthing = thing;
-	tmflags = thing->flags;
 		
-	tmx = x;
-	tmy = y;
-	tmz = z;
-		
-	tmbbox[BOXTOP] = y + tmthing->radius;
-	tmbbox[BOXBOTTOM] = y - tmthing->radius;
-	tmbbox[BOXRIGHT] = x + tmthing->radius;
-	tmbbox[BOXLEFT] = x - tmthing->radius;
-
 	newsec = P_PointInSector (x,y);
 	ceilingline = NULL;
 	
@@ -348,11 +275,9 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	tmfceilingpic = newsec->ceilingpic;
 	tmfceilingsector = newsec;
 					
-	validcount++;
 	spechit.Clear ();
-	telebt.Clear();
 
-	StompAlwaysFrags = tmthing->player || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag;
+	bool StompAlwaysFrags = thing->player || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag;
 
 	FBoundingBox box(x, y, thing->radius);
 	FBlockLinesIterator it(box);
@@ -373,22 +298,39 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	int savecpic = tmffloorpic;
 	fixed_t savedropoff = tmfdropoffz;
 
-	// stomp on any things contacted
-	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+	FRadiusThingsIterator it2(x, y, thing->radius);
+	AActor *th;
 
-	// stomp on any things contacted
-	for (bx=xl ; bx<=xh ; bx++)
+	while ((th = it2.Next()))
 	{
-		for (by=yl ; by<=yh ; by++)
+		if (!(th->flags & MF_SHOOTABLE))
+			continue;
+
+		// don't clip against self
+		if (th == thing)
+			continue;
+
+		// [RH] Z-Check
+		// But not if not MF2_PASSMOBJ or MF3_DONTOVERLAP are set!
+		// Otherwise those things would get stuck inside each other.
+		if ((thing->flags2 & MF2_PASSMOBJ || th->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 		{
-			if (!P_BlockThingsIterator(bx,by,PIT_StompThing,telebt))
+			if (!(th->flags3 & thing->flags3 & MF3_DONTOVERLAP))
 			{
-				return false;
+				if (z > th->z + th->height ||	// overhead
+					z+thing->height < th->z)	// underneath
+					continue;
 			}
 		}
+
+		// monsters don't stomp things except on boss level
+		// [RH] Some Heretic/Hexen monsters can telestomp
+		if (StompAlwaysFrags || (thing->flags2 & MF2_TELESTOMP))
+		{
+			P_DamageMobj (th, thing, thing, 1000000, NAME_Telefrag);
+			continue;
+		}
+		return false;
 	}
 	
 	// the move is ok, so link the thing into its new position
@@ -424,72 +366,30 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 // Like P_TeleportMove, but it doesn't move anything, and only monsters and other
 // players get telefragged.
 //
-bool PIT_StompThing2 (AActor *thing)
-{
-	fixed_t blockdist;
-
-	if (!(thing->flags & MF_SHOOTABLE))
-		return true;
-
-	// don't clip against self, and don't kill your own voodoo dolls
-	if (thing == tmthing ||
-		(thing->player == tmthing->player && thing->player != NULL))
-		return true;
-
-	// only kill monsters and other players
-	if (thing->player == NULL && !(thing->flags3 & MF3_ISMONSTER))
-		return true;
-
-	blockdist = thing->radius + tmthing->radius;
-	
-	if (abs(thing->x - tmthing->x) >= blockdist || abs(thing->y - tmthing->y) >= blockdist)
-	{
-		// didn't hit it
-		return true;
-	}
-
-	if (tmthing->z > thing->z + thing->height)
-		return true;        // overhead
-	if (tmthing->z + tmthing->height < thing->z)
-		return true;        // underneath
-
-	P_DamageMobj (thing, tmthing, tmthing, 1000000, NAME_Telefrag);
-	return true;
-}
-
 void P_PlayerStartStomp (AActor *actor)
 {
-	static TArray<AActor *> telebt;
+	AActor *th;
+	FRadiusThingsIterator it(actor->x, actor->y, actor->radius);
 
-	int 				xl;
-	int 				xh;
-	int 				yl;
-	int 				yh;
-	int 				bx;
-	int 				by;
-	
-	tmthing = actor;
-	tmflags = actor->flags;
-		
-	tmbbox[BOXTOP] = actor->y + actor->radius;
-	tmbbox[BOXBOTTOM] = actor->y - actor->radius;
-	tmbbox[BOXRIGHT] = actor->x + actor->radius;
-	tmbbox[BOXLEFT] = actor->x - actor->radius;
-
-	telebt.Clear();
-
-	// stomp on any things contacted
-	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
-
-	for (bx = xl; bx <= xh; bx++)
+	while ((th = it.Next()))
 	{
-		for (by = yl; by <= yh; by++)
-		{
-			P_BlockThingsIterator (bx, by, PIT_StompThing2, telebt);
-		}
+		if (!(th->flags & MF_SHOOTABLE))
+			continue;
+
+		// don't clip against self, and don't kill your own voodoo dolls
+		if (th == actor || (th->player == actor->player && th->player != NULL))
+			continue;
+
+		// only kill monsters and other players
+		if (th->player == NULL && !(th->flags3 & MF3_ISMONSTER))
+			continue;
+
+		if (actor->z > th->z + th->height)
+			continue;        // overhead
+		if (actor->z + actor->height < th->z)
+			continue;        // underneath
+
+		P_DamageMobj (th, actor, actor, 1000000, NAME_Telefrag);
 	}
 }
 
@@ -1072,50 +972,6 @@ bool PIT_CheckThing (AActor *thing)
 }
 
 
-//---------------------------------------------------------------------------
-//
-// PIT_CheckOnmobjZ
-//
-//---------------------------------------------------------------------------
-
-bool PIT_CheckOnmobjZ (AActor *thing)
-{
-	if (!(thing->flags & MF_SOLID))
-	{ // Can't hit thing
-		return true;
-	}
-	if (thing->flags & (MF_SPECIAL|MF_NOCLIP|MF_CORPSE))
-	{ // [RH] Corpses and specials and noclippers don't block moves
-		return true;
-	}
-	if (!(thing->flags4 & MF4_ACTLIKEBRIDGE) && (tmthing->flags & MF_SPECIAL))
-	{ // [RH] Only bridges block pickup items
-		return true;
-	}
-	if (thing == tmthing)
-	{ // Don't clip against self
-		return true;
-	}
-	if (tmthing->z > thing->z+thing->height)
-	{ // over thing
-		return true;
-	}
-	else if (tmthing->z+tmthing->height <= thing->z)
-	{ // under thing
-		return true;
-	}
-	else if (!tmflags && onmobj != NULL && thing->z + thing->height < onmobj->z + onmobj->height)
-	{ // something higher is in the way
-		return true;
-	}
-	fixed_t blockdist = thing->radius+tmthing->radius;
-	if (abs(thing->x-tmx) >= blockdist || abs(thing->y-tmy) >= blockdist)
-	{ // Didn't hit thing
-		return true;
-	}
-	onmobj = thing;
-	return !tmflags;
-}
 
 /*
 ===============================================================================
@@ -1185,9 +1041,6 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 {
 	static TArray<AActor *> checkpbt;
 
-	int xl, xh;
-	int yl, yh;
-	int bx, by;
 	sector_t *newsec;
 	AActor *thingblocker;
 	AActor *fakedblocker;
@@ -1200,11 +1053,6 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	tmy = y;
 
 	FBoundingBox box(x, y, thing->radius);
-
-	tmbbox[BOXTOP] = box.Top();
-	tmbbox[BOXBOTTOM] = box.Bottom();
-	tmbbox[BOXRIGHT] = box.Right();
-	tmbbox[BOXLEFT] = box.Left();
 
 	newsec = P_PointInSector (x,y);
 	ceilingline = BlockingLine = NULL;
@@ -1234,11 +1082,6 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	// because DActors are grouped into mapblocks
 	// based on their origin point, and can overlap
 	// into adjacent blocks by up to MAXRADIUS units.
-	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
-
 	BlockingMobj = NULL;
 	thingblocker = NULL;
 	fakedblocker = NULL;
@@ -1248,60 +1091,50 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	}
 
 	stepthing = NULL;
-	for (bx = xl; bx <= xh; bx++)
+
+	FRadiusThingsIterator it2(x, y, thing->radius);
+	AActor *th;
+	while ((th = it2.Next()))
 	{
-		for (by = yl; by <= yh; by++)
-		{
-			AActor *robin = NULL;
-			do
+		if (!PIT_CheckThing(th))
+		{ // [RH] If a thing can be stepped up on, we need to continue checking
+		  // other things in the blocks and see if we hit something that is
+		  // definitely blocking. Otherwise, we need to check the lines, or we
+		  // could end up stuck inside a wall.
+			if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ))
+			{ // Thing slammed into something; don't let it move now.
+				thing->height = realheight;
+				return false;
+			}
+			else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY)) &&
+				BlockingMobj->z+BlockingMobj->height-thing->z <= thing->MaxStepHeight)
 			{
-				if (!P_BlockThingsIterator (bx, by, PIT_CheckThing, checkpbt, robin))
-				{ // [RH] If a thing can be stepped up on, we need to continue checking
-				  // other things in the blocks and see if we hit something that is
-				  // definitely blocking. Otherwise, we need to check the lines, or we
-				  // could end up stuck inside a wall.
-					if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ))
-					{ // Thing slammed into something; don't let it move now.
-						thing->height = realheight;
-						return false;
-					}
-					else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY)) &&
-						BlockingMobj->z+BlockingMobj->height-thing->z <= thing->MaxStepHeight)
-					{
-						if (thingblocker == NULL ||
-							BlockingMobj->z > thingblocker->z)
-						{
-							thingblocker = BlockingMobj;
-						}
-						robin = BlockingMobj;
-						BlockingMobj = NULL;
-					}
-					else if (thing->player &&
-						thing->z + thing->height - BlockingMobj->z <= thing->MaxStepHeight)
-					{
-						if (thingblocker)
-						{ // There is something to step up on. Return this thing as
-						  // the blocker so that we don't step up.
-							thing->height = realheight;
-							return false;
-						}
-						// Nothing is blocking us, but this actor potentially could
-						// if there is something else to step on.
-						fakedblocker = BlockingMobj;
-						robin = BlockingMobj;
-						BlockingMobj = NULL;
-					}
-					else
-					{ // Definitely blocking
-						thing->height = realheight;
-						return false;
-					}
-				}
-				else
+				if (thingblocker == NULL ||
+					BlockingMobj->z > thingblocker->z)
 				{
-					robin = NULL;
+					thingblocker = BlockingMobj;
 				}
-			} while (robin);
+				BlockingMobj = NULL;
+			}
+			else if (thing->player &&
+				thing->z + thing->height - BlockingMobj->z <= thing->MaxStepHeight)
+			{
+				if (thingblocker)
+				{ // There is something to step up on. Return this thing as
+				  // the blocker so that we don't step up.
+					thing->height = realheight;
+					return false;
+				}
+				// Nothing is blocking us, but this actor potentially could
+				// if there is something else to step on.
+				fakedblocker = BlockingMobj;
+				BlockingMobj = NULL;
+			}
+			else
+			{ // Definitely blocking
+				thing->height = realheight;
+				return false;
+			}
 		}
 	}
 
@@ -1374,40 +1207,47 @@ AActor *P_CheckOnmobj (AActor *thing)
 
 bool P_TestMobjZ (AActor *actor, bool quick)
 {
-	static TArray<AActor *> mobjzbt;
-
-	int	xl,xh,yl,yh,bx,by;
-	fixed_t x, y;
-
 	onmobj = NULL;
 	if (actor->flags & MF_NOCLIP)
 		return true;
 
-	tmx = x = actor->x;
-	tmy = y = actor->y;
-	tmthing = actor;
-	tmflags = quick;
+	FRadiusThingsIterator it(actor->x, actor->y, actor->radius);
+	AActor *thing;
 
-	tmbbox[BOXTOP] = y + actor->radius;
-	tmbbox[BOXBOTTOM] = y - actor->radius;
-	tmbbox[BOXRIGHT] = x + actor->radius;
-	tmbbox[BOXLEFT] = x - actor->radius;
-//
-// the bounding box is extended by MAXRADIUS because actors are grouped
-// into mapblocks based on their origin point, and can overlap into adjacent
-// blocks by up to MAXRADIUS units
-//
-	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+	while ((thing = it.Next()))
+	{
+		if (!(thing->flags & MF_SOLID))
+		{ // Can't hit thing
+			continue;
+		}
+		if (thing->flags & (MF_SPECIAL|MF_NOCLIP|MF_CORPSE))
+		{ // [RH] Corpses and specials and noclippers don't block moves
+			continue;
+		}
+		if (!(thing->flags4 & MF4_ACTLIKEBRIDGE) && (actor->flags & MF_SPECIAL))
+		{ // [RH] Only bridges block pickup items
+			continue;
+		}
+		if (thing == actor)
+		{ // Don't clip against self
+			continue;
+		}
+		if (actor->z > thing->z+thing->height)
+		{ // over thing
+			continue;
+		}
+		else if (actor->z+actor->height <= thing->z)
+		{ // under thing
+			continue;
+		}
+		else if (!quick && onmobj != NULL && thing->z + thing->height < onmobj->z + onmobj->height)
+		{ // something higher is in the way
+			continue;
+		}
+		onmobj = thing;
+		if (quick) break;
+	}
 
-	mobjzbt.Clear();
-
-	for (bx = xl; bx <= xh; bx++)
-		for (by = yl; by <= yh; by++)
-			if (!P_BlockThingsIterator (bx, by, PIT_CheckOnmobjZ, mobjzbt))
-				return false;
 
 	return onmobj == NULL;
 }
@@ -3525,16 +3365,6 @@ bool P_UsePuzzleItem (AActor *actor, int itemType)
 //
 // RADIUS ATTACK
 //
-AActor* bombsource;
-AActor* bombspot;
-int 	bombdamage;
-float	bombdamagefloat;
-int		bombdistance;
-float	bombdistancefloat;
-bool	DamageSource;
-FName	bombmod;
-FVector3 bombvec;
-bool	bombdodamage;
 
 //=============================================================================
 //
@@ -3555,195 +3385,171 @@ CUSTOM_CVAR (Float, splashfactor, 1.f, CVAR_SERVERINFO)
 		selfthrustscale = 1.f / self;
 }
 
-bool PIT_RadiusAttack (AActor *thing)
-{
-	if (!(thing->flags & MF_SHOOTABLE) )
-		return true;
-
-	// Boss spider and cyborg and Heretic's ep >= 2 bosses
-	// take no damage from concussion.
-	if (thing->flags3 & MF3_NORADIUSDMG && !(bombspot->flags4 & MF4_FORCERADIUSDMG))
-		return true;
-
-	if (!DamageSource && thing == bombsource)
-	{ // don't damage the source of the explosion
-		return true;
-	}
-
-	// a much needed option: monsters that fire explosive projectiles cannot 
-	// be hurt by projectiles fired by a monster of the same type.
-	// Controlled by the DONTHURTSPECIES flag.
-	if (bombsource && 
-		thing->GetClass() == bombsource->GetClass() && 
-		!thing->player &&
-		bombsource->flags4 & MF4_DONTHURTSPECIES
-		) return true;
-
-	// Barrels always use the original code, since this makes
-	// them far too "active." BossBrains also use the old code
-	// because some user levels require they have a height of 16,
-	// which can make them near impossible to hit with the new code.
-	if (!bombdodamage || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG))
-	{
-		// [RH] New code. The bounding box only covers the
-		// height of the thing and not the height of the map.
-		float points;
-		float len;
-		fixed_t dx, dy;
-		float boxradius;
-
-		dx = abs (thing->x - bombspot->x);
-		dy = abs (thing->y - bombspot->y);
-		boxradius = float (thing->radius);
-
-		// The damage pattern is square, not circular.
-		len = float (dx > dy ? dx : dy);
-
-		if (bombspot->z < thing->z || bombspot->z >= thing->z + thing->height)
-		{
-			float dz;
-
-			if (bombspot->z > thing->z)
-			{
-				dz = float (bombspot->z - thing->z - thing->height);
-			}
-			else
-			{
-				dz = float (thing->z - bombspot->z);
-			}
-			if (len <= boxradius)
-			{
-				len = dz;
-			}
-			else
-			{
-				len -= boxradius;
-				len = sqrtf (len*len + dz*dz);
-			}
-		}
-		else
-		{
-			len -= boxradius;
-			if (len < 0.f)
-				len = 0.f;
-		}
-		len /= FRACUNIT;
-		points = bombdamagefloat * (1.f - len * bombdistancefloat);
-		if (thing == bombsource)
-		{
-			points = points * splashfactor;
-		}
-		points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(float)FRACUNIT;
-
-		if (points > 0.f && P_CheckSight (thing, bombspot, 1))
-		{ // OK to damage; target is in direct path
-			float momz;
-			float thrust;
-			int damage = (int)points;
-
-			if (bombdodamage) P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
-			else if (thing->player == NULL) thing->flags2 |= MF2_BLASTED;
-
-			if (!(thing->flags & MF_ICECORPSE))
-			{
-				if (bombdodamage && !(bombspot->flags3 & MF3_BLOODLESSIMPACT)) P_TraceBleed (damage, thing, bombspot);
-
-				if (!bombdodamage || !(bombspot->flags2 & MF2_NODMGTHRUST))
-				{
-					thrust = points * 0.5f / (float)thing->Mass;
-					if (bombsource == thing)
-					{
-						thrust *= selfthrustscale;
-					}
-					momz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
-					if (bombsource != thing)
-					{
-						momz *= 0.5f;
-					}
-					else
-					{
-						momz *= 0.8f;
-					}
-					angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
-					thing->momx += fixed_t (finecosine[ang] * thrust);
-					thing->momy += fixed_t (finesine[ang] * thrust);
-					if (bombdodamage) thing->momz += (fixed_t)momz;	// this really doesn't work well
-				}
-			}
-		}
-	}
-	else
-	{
-		// [RH] Old code just for barrels
-		fixed_t dx, dy, dist;
-
-		dx = abs (thing->x - bombspot->x);
-		dy = abs (thing->y - bombspot->y);
-
-		dist = dx>dy ? dx : dy;
-		dist = (dist - thing->radius) >> FRACBITS;
-
-		if (dist < 0)
-			dist = 0;
-
-		if (dist >= bombdistance)
-			return true;  // out of range
-
-		if (P_CheckSight (thing, bombspot, 1))
-		{ // OK to damage; target is in direct path
-			int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
-			damage = (int)((float)damage * splashfactor);
-
-			damage = Scale(damage, thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT), FRACUNIT);
-			if (damage > 0)
-			{
-				P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
-				P_TraceBleed (damage, thing, bombspot);
-			}
-		}
-	}
-	return true;
-}
-
 //
 // P_RadiusAttack
 // Source is the creature that caused the explosion at spot.
 //
-void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, FName damageType,
-	bool hurtSource, bool dodamage)
+void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int bombdistance, FName bombmod,
+	bool DamageSource, bool bombdodamage)
 {
-	static TArray<AActor *> radbt;
-
-	int x, y;
-	int xl, xh, yl, yh;
-	fixed_t dist;
-
-	if (distance <= 0)
+	if (bombdistance <= 0)
 		return;
 
-	dist = (distance + MAXRADIUS)<<FRACBITS;
-	yh = (spot->y + dist - bmaporgy)>>MAPBLOCKSHIFT;
-	yl = (spot->y - dist - bmaporgy)>>MAPBLOCKSHIFT;
-	xh = (spot->x + dist - bmaporgx)>>MAPBLOCKSHIFT;
-	xl = (spot->x - dist - bmaporgx)>>MAPBLOCKSHIFT;
-	bombspot = spot;
-	bombsource = source;
-	bombdamage = damage;
-	bombdistance = distance;
-	bombdistancefloat = 1.f / (float)distance;
-	DamageSource = hurtSource;
-	bombdamagefloat = (float)damage;
-	bombmod = damageType;
-	bombdodamage = dodamage;
-	bombvec.X = FIXED2FLOAT(spot->x);
-	bombvec.Y = FIXED2FLOAT(spot->y);
-	bombvec.Z = FIXED2FLOAT(spot->z);
+	float bombdistancefloat = 1.f / (float)bombdistance;
+	float bombdamagefloat = (float)bombdamage;
+	FVector3 bombvec(FIXED2FLOAT(bombspot->x), FIXED2FLOAT(bombspot->y), FIXED2FLOAT(bombspot->z));
 
-	radbt.Clear();
+	FRadiusThingsIterator it(bombspot->x, bombspot->y, bombdistance<<FRACBITS);
+	AActor *thing;
 
-	for (y = yl; y <= yh; y++)
-		for (x = xl; x <= xh; x++)
-			P_BlockThingsIterator (x, y, PIT_RadiusAttack, radbt);
+	while ((thing = it.Next()))
+	{
+		if (!(thing->flags & MF_SHOOTABLE) )
+			continue;
+
+		// Boss spider and cyborg and Heretic's ep >= 2 bosses
+		// take no damage from concussion.
+		if (thing->flags3 & MF3_NORADIUSDMG && !(bombspot->flags4 & MF4_FORCERADIUSDMG))
+			continue;
+
+		if (!DamageSource && thing == bombsource)
+		{ // don't damage the source of the explosion
+			continue;
+		}
+
+		// a much needed option: monsters that fire explosive projectiles cannot 
+		// be hurt by projectiles fired by a monster of the same type.
+		// Controlled by the DONTHURTSPECIES flag.
+		if (bombsource && 
+			thing->GetClass() == bombsource->GetClass() && 
+			!thing->player &&
+			bombsource->flags4 & MF4_DONTHURTSPECIES
+			) continue;
+
+		// Barrels always use the original code, since this makes
+		// them far too "active." BossBrains also use the old code
+		// because some user levels require they have a height of 16,
+		// which can make them near impossible to hit with the new code.
+		if (!bombdodamage || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG))
+		{
+			// [RH] New code. The bounding box only covers the
+			// height of the thing and not the height of the map.
+			float points;
+			float len;
+			fixed_t dx, dy;
+			float boxradius;
+
+			dx = abs (thing->x - bombspot->x);
+			dy = abs (thing->y - bombspot->y);
+			boxradius = float (thing->radius);
+
+			// The damage pattern is square, not circular.
+			len = float (dx > dy ? dx : dy);
+
+			if (bombspot->z < thing->z || bombspot->z >= thing->z + thing->height)
+			{
+				float dz;
+
+				if (bombspot->z > thing->z)
+				{
+					dz = float (bombspot->z - thing->z - thing->height);
+				}
+				else
+				{
+					dz = float (thing->z - bombspot->z);
+				}
+				if (len <= boxradius)
+				{
+					len = dz;
+				}
+				else
+				{
+					len -= boxradius;
+					len = sqrtf (len*len + dz*dz);
+				}
+			}
+			else
+			{
+				len -= boxradius;
+				if (len < 0.f)
+					len = 0.f;
+			}
+			len /= FRACUNIT;
+			points = bombdamagefloat * (1.f - len * bombdistancefloat);
+			if (thing == bombsource)
+			{
+				points = points * splashfactor;
+			}
+			points *= thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT)/(float)FRACUNIT;
+
+			if (points > 0.f && P_CheckSight (thing, bombspot, 1))
+			{ // OK to damage; target is in direct path
+				float momz;
+				float thrust;
+				int damage = (int)points;
+
+				if (bombdodamage) P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
+				else if (thing->player == NULL) thing->flags2 |= MF2_BLASTED;
+
+				if (!(thing->flags & MF_ICECORPSE))
+				{
+					if (bombdodamage && !(bombspot->flags3 & MF3_BLOODLESSIMPACT)) P_TraceBleed (damage, thing, bombspot);
+
+					if (!bombdodamage || !(bombspot->flags2 & MF2_NODMGTHRUST))
+					{
+						thrust = points * 0.5f / (float)thing->Mass;
+						if (bombsource == thing)
+						{
+							thrust *= selfthrustscale;
+						}
+						momz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
+						if (bombsource != thing)
+						{
+							momz *= 0.5f;
+						}
+						else
+						{
+							momz *= 0.8f;
+						}
+						angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
+						thing->momx += fixed_t (finecosine[ang] * thrust);
+						thing->momy += fixed_t (finesine[ang] * thrust);
+						if (bombdodamage) thing->momz += (fixed_t)momz;	// this really doesn't work well
+					}
+				}
+			}
+		}
+		else
+		{
+			// [RH] Old code just for barrels
+			fixed_t dx, dy, dist;
+
+			dx = abs (thing->x - bombspot->x);
+			dy = abs (thing->y - bombspot->y);
+
+			dist = dx>dy ? dx : dy;
+			dist = (dist - thing->radius) >> FRACBITS;
+
+			if (dist < 0)
+				dist = 0;
+
+			if (dist >= bombdistance)
+				continue;  // out of range
+
+			if (P_CheckSight (thing, bombspot, 1))
+			{ // OK to damage; target is in direct path
+				int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
+				damage = (int)((float)damage * splashfactor);
+
+				damage = Scale(damage, thing->GetClass()->Meta.GetMetaFixed(AMETA_RDFactor, FRACUNIT), FRACUNIT);
+				if (damage > 0)
+				{
+					P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
+					P_TraceBleed (damage, thing, bombspot);
+				}
+			}
+		}
+	}
 }
 
 
@@ -3814,115 +3620,40 @@ bool P_AdjustFloorCeil (AActor *thing, FChangePosition *cpos)
 
 //=============================================================================
 //
-// PIT_FindAboveIntersectors
-//
-//=============================================================================
-
-bool PIT_FindAboveIntersectors (AActor *thing)
-{
-	if (!(thing->flags & MF_SOLID))
-	{ // Can't hit thing
-		return true;
-	}
-	if (thing->flags & (MF_CORPSE|MF_SPECIAL))
-	{ // [RH] Corpses and specials don't block moves
-		return true;
-	}
-	if (thing == tmthing)
-	{ // Don't clip against self
-		return true;
-	}
-	fixed_t blockdist = thing->radius+tmthing->radius;
-	if (abs(thing->x-tmx) >= blockdist || abs(thing->y-tmy) >= blockdist)
-	{ // Didn't hit thing
-		return true;
-	}
-	if (thing->z >= tmthing->z &&
-		thing->z <= tmthing->z + tmthing->height)
-	{ // Thing intersects above the base
-		intersectors.Push (thing);
-	}
-	return true;
-}
-
-//=============================================================================
-//
-// PIT_FindBelowIntersectors
-//
-//=============================================================================
-
-bool PIT_FindBelowIntersectors (AActor *thing)
-{
-	if (!(thing->flags & MF_SOLID))
-	{ // Can't hit thing
-		return true;
-	}
-	if (thing->flags & (MF_CORPSE|MF_SPECIAL))
-	{ // [RH] Corpses and specials don't block moves
-		return true;
-	}
-	if (thing == tmthing)
-	{ // Don't clip against self
-		return true;
-	}
-	fixed_t blockdist = thing->radius+tmthing->radius;
-	if (abs(thing->x-tmx) >= blockdist || abs(thing->y-tmy) >= blockdist)
-	{ // Didn't hit thing
-		return true;
-	}
-	if (thing->z + thing->height <= tmthing->z + tmthing->height &&
-		thing->z + thing->height > tmthing->z)
-	{ // Thing intersects below the base
-		intersectors.Push (thing);
-	}
-	return true;
-}
-
-//=============================================================================
-//
 // P_FindAboveIntersectors
 //
 //=============================================================================
 
 void P_FindAboveIntersectors (AActor *actor)
 {
-	static TArray<AActor *> abovebt;
-
-	int	xl,xh,yl,yh,bx,by;
-	fixed_t x, y;
-
 	if (actor->flags & MF_NOCLIP)
 		return;
 
 	if (!(actor->flags & MF_SOLID))
 		return;
 
-	tmx = x = actor->x;
-	tmy = y = actor->y;
-	tmthing = actor;
-
-	tmbbox[BOXTOP] = y + actor->radius;
-	tmbbox[BOXBOTTOM] = y - actor->radius;
-	tmbbox[BOXRIGHT] = x + actor->radius;
-	tmbbox[BOXLEFT] = x - actor->radius;
-//
-// the bounding box is extended by MAXRADIUS because actors are grouped
-// into mapblocks based on their origin point, and can overlap into adjacent
-// blocks by up to MAXRADIUS units
-//
-	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
-
-	abovebt.Clear();
-
-	for (bx = xl; bx <= xh; bx++)
-		for (by = yl; by <= yh; by++)
-			if (!P_BlockThingsIterator (bx, by, PIT_FindAboveIntersectors, abovebt))
-				return;
-
-	return;
+	AActor *thing;
+	FRadiusThingsIterator it(actor->x, actor->y, actor->radius);
+	while ((thing = it.Next()))
+	{
+		if (!(thing->flags & MF_SOLID))
+		{ // Can't hit thing
+			continue;
+		}
+		if (thing->flags & (MF_CORPSE|MF_SPECIAL))
+		{ // [RH] Corpses and specials don't block moves
+			continue;
+		}
+		if (thing == actor)
+		{ // Don't clip against self
+			continue;
+		}
+		if (thing->z >= actor->z &&
+			thing->z <= actor->z + actor->height)
+		{ // Thing intersects above the base
+			intersectors.Push (thing);
+		}
+	}
 }
 
 //=============================================================================
@@ -3933,43 +3664,34 @@ void P_FindAboveIntersectors (AActor *actor)
 
 void P_FindBelowIntersectors (AActor *actor)
 {
-	static TArray<AActor *> belowbt;
-
-	int	xl,xh,yl,yh,bx,by;
-	fixed_t x, y;
-
 	if (actor->flags & MF_NOCLIP)
 		return;
 
 	if (!(actor->flags & MF_SOLID))
 		return;
 
-	tmx = x = actor->x;
-	tmy = y = actor->y;
-	tmthing = actor;
-
-	tmbbox[BOXTOP] = y + actor->radius;
-	tmbbox[BOXBOTTOM] = y - actor->radius;
-	tmbbox[BOXRIGHT] = x + actor->radius;
-	tmbbox[BOXLEFT] = x - actor->radius;
-//
-// the bounding box is extended by MAXRADIUS because actors are grouped
-// into mapblocks based on their origin point, and can overlap into adjacent
-// blocks by up to MAXRADIUS units
-//
-	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
-
-	belowbt.Clear();
-
-	for (bx = xl; bx <= xh; bx++)
-		for (by = yl; by <= yh; by++)
-			if (!P_BlockThingsIterator (bx, by, PIT_FindBelowIntersectors, belowbt))
-				return;
-
-	return;
+	AActor *thing;
+	FRadiusThingsIterator it(actor->x, actor->y, actor->radius);
+	while ((thing = it.Next()))
+	{
+		if (!(thing->flags & MF_SOLID))
+		{ // Can't hit thing
+			continue;
+		}
+		if (thing->flags & (MF_CORPSE|MF_SPECIAL))
+		{ // [RH] Corpses and specials don't block moves
+			continue;
+		}
+		if (thing == tmthing)
+		{ // Don't clip against self
+			continue;
+		}
+		if (thing->z + thing->height <= actor->z + actor->height &&
+			thing->z + thing->height > actor->z)
+		{ // Thing intersects below the base
+			intersectors.Push (thing);
+		}
+	}
 }
 
 //=============================================================================

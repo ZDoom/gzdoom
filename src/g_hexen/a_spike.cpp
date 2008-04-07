@@ -35,58 +35,6 @@ void A_ThrustLower (AActor *);
 void A_ThrustBlock (AActor *);
 void A_ThrustImpale (AActor *);
 
-AActor *tsthing;
-
-bool PIT_ThrustStompThing (AActor *thing)
-{
-	fixed_t blockdist;
-
-	if (!(thing->flags & MF_SHOOTABLE) )
-		return true;
-
-	blockdist = thing->radius + tsthing->radius;
-	if ( abs(thing->x - tsthing->x) >= blockdist || 
-		  abs(thing->y - tsthing->y) >= blockdist ||
-			(thing->z > tsthing->z+tsthing->height) )
-		return true;	// didn't hit it
-
-	if (thing == tsthing)
-		return true;	// don't clip against self
-
-	P_DamageMobj (thing, tsthing, tsthing, 10001, NAME_Crush);
-	P_TraceBleed (10001, thing);
-	tsthing->args[1] = 1;	// Mark thrust thing as bloody
-
-	return true;
-}
-
-void P_ThrustSpike (AActor *actor)
-{
-	static TArray<AActor *> spikebt;
-
-	int xl,xh,yl,yh,bx,by;
-	int x0,x2,y0,y2;
-
-	tsthing = actor;
-
-	x0 = actor->x - actor->radius;
-	x2 = actor->x + actor->radius;
-	y0 = actor->y - actor->radius;
-	y2 = actor->y + actor->radius;
-
-	xl = (x0 - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-	xh = (x2 - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-	yl = (y0 - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-	yh = (y2 - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
-
-	spikebt.Clear();
-
-	// stomp on any things contacted
-	for (bx = xl; bx <= xh; bx++)
-		for (by = yl; by <= yh; by++)
-			P_BlockThingsIterator (bx, by, PIT_ThrustStompThing, spikebt);
-}
-
 // AThrustFloor is just a container for all the spike states.
 // All the real spikes subclass it.
 
@@ -313,7 +261,19 @@ void A_ThrustBlock (AActor *actor)
 
 void A_ThrustImpale (AActor *actor)
 {
-	// Impale all shootables in radius
-	P_ThrustSpike (actor);
+	AActor *thing;
+	FRadiusThingsIterator it(actor->x, actor->y, actor->radius);
+	while ((thing = it.Next()))
+	{
+		if (!(thing->flags & MF_SHOOTABLE) )
+			continue;
+
+		if (thing == actor)
+			continue;	// don't clip against self
+
+		P_DamageMobj (thing, actor, actor, 10001, NAME_Crush);
+		P_TraceBleed (10001, thing);
+		actor->args[1] = 1;	// Mark thrust thing as bloody
+	}
 }
 

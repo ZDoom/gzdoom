@@ -2078,64 +2078,6 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 
 //==========================================================================
 //
-// PIT_VileCheck
-//
-//==========================================================================
-
-static AActor *corpsehit;
-static AActor *vileobj;
-static fixed_t viletryx;
-static fixed_t viletryy;
-static FState *raisestate;
-
-static bool PIT_VileCheck (AActor *thing)
-{
-	int maxdist;
-	bool check;
-		
-	if (!(thing->flags & MF_CORPSE) )
-		return true;	// not a monster
-	
-	if (thing->tics != -1)
-		return true;	// not lying still yet
-	
-	raisestate = thing->FindState(NAME_Raise);
-	if (raisestate == NULL)
-		return true;	// monster doesn't have a raise state
-	
-  	// This may be a potential problem if this is used by something other
-	// than an Arch Vile.	
-	//maxdist = thing->GetDefault()->radius + GetDefault<AArchvile>()->radius;
-	
-	// use the current actor's radius instead of the Arch Vile's default.
-	maxdist = thing->GetDefault()->radius + vileobj->radius; 
-		
-	if ( abs(thing->x - viletryx) > maxdist
-		 || abs(thing->y - viletryy) > maxdist )
-		return true;			// not actually touching
-				
-	corpsehit = thing;
-	corpsehit->momx = corpsehit->momy = 0;
-	// [RH] Check against real height and radius
-
-	fixed_t oldheight = corpsehit->height;
-	fixed_t oldradius = corpsehit->radius;
-	int oldflags = corpsehit->flags;
-
-	corpsehit->flags |= MF_SOLID;
-	corpsehit->height = corpsehit->GetDefault()->height;
-	check = P_CheckPosition (corpsehit, corpsehit->x, corpsehit->y);
-	corpsehit->flags = oldflags;
-	corpsehit->radius = oldradius;
-	corpsehit->height = oldheight;
-
-	return !check;
-}
-
-
-
-//==========================================================================
-//
 // P_CheckForResurrection (formerly part of A_VileChase)
 // Check for ressurecting a body
 //
@@ -2143,101 +2085,113 @@ static bool PIT_VileCheck (AActor *thing)
 
 static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 {
-	static TArray<AActor *> vilebt;
-	int xl, xh, yl, yh;
-	int bx, by;
-
 	const AActor *info;
 	AActor *temp;
 		
 	if (self->movedir != DI_NODIR)
 	{
 		const fixed_t absSpeed = abs (self->Speed);
+		fixed_t viletryx = self->x + FixedMul (absSpeed, xspeed[self->movedir]);
+		fixed_t viletryy = self->y + FixedMul (absSpeed, yspeed[self->movedir]);
+		AActor *corpsehit;
+		FState *raisestate;
 
-		// check for corpses to raise
-		viletryx = self->x + FixedMul (absSpeed, xspeed[self->movedir]);
-		viletryy = self->y + FixedMul (absSpeed, yspeed[self->movedir]);
-
-		xl = (viletryx - bmaporgx - MAXRADIUS*2)>>MAPBLOCKSHIFT;
-		xh = (viletryx - bmaporgx + MAXRADIUS*2)>>MAPBLOCKSHIFT;
-		yl = (viletryy - bmaporgy - MAXRADIUS*2)>>MAPBLOCKSHIFT;
-		yh = (viletryy - bmaporgy + MAXRADIUS*2)>>MAPBLOCKSHIFT;
-		
-		vileobj = self;
-		validcount++;
-		vilebt.Clear();
-
-		for (bx = xl; bx <= xh; bx++)
+		FBlockThingsIterator it(FBoundingBox(viletryx, viletryy, 32*FRACUNIT));
+		while ((corpsehit = it.Next()))
 		{
-			for (by = yl; by <= yh; by++)
+			if (!(corpsehit->flags & MF_CORPSE) )
+				continue;	// not a monster
+			
+			if (corpsehit->tics != -1)
+				continue;	// not lying still yet
+			
+			raisestate = corpsehit->FindState(NAME_Raise);
+			if (raisestate == NULL)
+				continue;	// monster doesn't have a raise state
+
+			// use the current actor's radius instead of the Arch Vile's default.
+			fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius; 
+
+			maxdist = corpsehit-> GetDefault()->radius + self->radius; 
+				
+			if ( abs(corpsehit-> x - viletryx) > maxdist ||
+				 abs(corpsehit-> y - viletryy) > maxdist )
+				continue;			// not actually touching
+
+			corpsehit->momx = corpsehit->momy = 0;
+			// [RH] Check against real height and radius
+
+			fixed_t oldheight = corpsehit->height;
+			fixed_t oldradius = corpsehit->radius;
+			int oldflags = corpsehit->flags;
+
+			corpsehit->flags |= MF_SOLID;
+			corpsehit->height = corpsehit->GetDefault()->height;
+			bool check = P_CheckPosition (corpsehit, corpsehit->x, corpsehit->y);
+			corpsehit->flags = oldflags;
+			corpsehit->radius = oldradius;
+			corpsehit->height = oldheight;
+			if (!check) continue;
+
+			// got one!
+			temp = self->target;
+			self->target = corpsehit;
+			A_FaceTarget (self);
+			if (self->flags & MF_FRIENDLY)
 			{
-				// Call PIT_VileCheck to check
-				// whether object is a corpse
-				// that can be raised.
-				if (!P_BlockThingsIterator (bx, by, PIT_VileCheck, vilebt))
+				// If this is a friendly Arch-Vile (which is turning the resurrected monster into its friend)
+				// and the Arch-Vile is currently targetting the resurrected monster the target must be cleared.
+				if (self->lastenemy == temp) self->lastenemy = NULL;
+				if (self->lastenemy == corpsehit) self->lastenemy = NULL;
+				if (temp == self->target) temp = NULL;
+			}
+			self->target = temp;
+								
+			// Make the state the monster enters customizable.
+			FState * state = self->FindState(NAME_Heal);
+			if (state != NULL)
+			{
+				self->SetState (state);
+			}
+			else if (usevilestates)
+			{
+				// For Dehacked compatibility this has to use the Arch Vile's
+				// heal state as a default if the actor doesn't define one itself.
+				const PClass *archvile = PClass::FindClass("Archvile");
+				if (archvile != NULL)
 				{
-					// got one!
-					temp = self->target;
-					self->target = corpsehit;
-					A_FaceTarget (self);
-					if (self->flags & MF_FRIENDLY)
-					{
-						// If this is a friendly Arch-Vile (which is turning the resurrected monster into its friend)
-						// and the Arch-Vile is currently targetting the resurrected monster the target must be cleared.
-						if (self->lastenemy == temp) self->lastenemy = NULL;
-						if (temp == self->target) temp = NULL;
-						
-					}
-					self->target = temp;
-										
-					// Make the state the monster enters customizable.
-					FState * state = self->FindState(NAME_Heal);
-					if (state != NULL)
-					{
-						self->SetState (state);
-					}
-					else if (usevilestates)
-					{
-						// For Dehacked compatibility this has to use the Arch Vile's
-						// heal state as a default if the actor doesn't define one itself.
-						const PClass *archvile = PClass::FindClass("Archvile");
-						if (archvile != NULL)
-						{
-							self->SetState (archvile->ActorInfo->FindState(NAME_Heal));
-						}
-					}
-					S_Sound (corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
-					info = corpsehit->GetDefault ();
-					
-					corpsehit->SetState (raisestate);
-					corpsehit->height = info->height;	// [RH] Use real mobj height
-					corpsehit->radius = info->radius;	// [RH] Use real radius
-					/*
-					// Make raised corpses look ghostly
-					if (corpsehit->alpha > TRANSLUC50)
-						corpsehit->alpha /= 2;
-					*/
-					corpsehit->flags = info->flags;
-					corpsehit->flags2 = info->flags2;
-					corpsehit->flags3 = info->flags3;
-					corpsehit->flags4 = info->flags4;
-					corpsehit->health = info->health;
-					corpsehit->target = NULL;
-					corpsehit->lastenemy = NULL;
-
-					// [RH] If it's a monster, it gets to count as another kill
-					if (corpsehit->CountsAsKill())
-					{
-						level.total_monsters++;
-					}
-
-					// You are the Archvile's minion now, so hate what it hates
-					corpsehit->CopyFriendliness (self, false);
-
-
-					return true;
+					self->SetState (archvile->ActorInfo->FindState(NAME_Heal));
 				}
 			}
+			S_Sound (corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
+			info = corpsehit->GetDefault ();
+			
+			corpsehit->SetState (raisestate);
+			corpsehit->height = info->height;	// [RH] Use real mobj height
+			corpsehit->radius = info->radius;	// [RH] Use real radius
+			/*
+			// Make raised corpses look ghostly
+			if (corpsehit->alpha > TRANSLUC50)
+				corpsehit->alpha /= 2;
+			*/
+			corpsehit->flags = info->flags;
+			corpsehit->flags2 = info->flags2;
+			corpsehit->flags3 = info->flags3;
+			corpsehit->flags4 = info->flags4;
+			corpsehit->health = info->health;
+			corpsehit->target = NULL;
+			corpsehit->lastenemy = NULL;
+
+			// [RH] If it's a monster, it gets to count as another kill
+			if (corpsehit->CountsAsKill())
+			{
+				level.total_monsters++;
+			}
+
+			// You are the Archvile's minion now, so hate what it hates
+			corpsehit->CopyFriendliness (self, false);
+
+			return true;
 		}
 	}
 	return false;

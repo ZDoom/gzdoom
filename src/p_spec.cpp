@@ -1686,56 +1686,15 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 
 /////////////////////////////
 //
-// PIT_PushThing determines the angle and magnitude of the effect.
-// The object's x and y momentum values are changed.
-//
-// tmpusher belongs to the point source (MT_PUSH/MT_PULL).
-//
-
-DPusher *tmpusher; // pusher structure for blockmap searches
-
-bool PIT_PushThing (AActor *thing)
-{
-	if ((thing->flags2 & MF2_WINDTHRUST) && !(thing->flags & MF_NOCLIP))
-	{
-		int sx = tmpusher->m_X;
-		int sy = tmpusher->m_Y;
-		int dist = P_AproxDistance (thing->x - sx,thing->y - sy);
-		int speed = (tmpusher->m_Magnitude -
-					((dist>>FRACBITS)>>1))<<(FRACBITS-PUSH_FACTOR-1);
-
-		// If speed <= 0, you're outside the effective radius. You also have
-		// to be able to see the push/pull source point.
-
-		if ((speed > 0) && (P_CheckSight (thing, tmpusher->m_Source, 1)))
-		{
-			angle_t pushangle = R_PointToAngle2 (thing->x, thing->y, sx, sy);
-			if (tmpusher->m_Source->IsA (RUNTIME_CLASS(APointPusher)))
-				pushangle += ANG180;    // away
-			pushangle >>= ANGLETOFINESHIFT;
-			thing->momx += FixedMul (speed, finecosine[pushangle]);
-			thing->momy += FixedMul (speed, finesine[pushangle]);
-		}
-	}
-	return true;
-}
-
-/////////////////////////////
-//
 // T_Pusher looks for all objects that are inside the radius of
 // the effect.
 //
-extern fixed_t tmbbox[4];
-
 void DPusher::Tick ()
 {
-	static TArray<AActor *> pushbt;
 	sector_t *sec;
 	AActor *thing;
 	msecnode_t *node;
 	int xspeed,yspeed;
-	int xl,xh,yl,yh,bx,by;
-	int radius;
 	int ht;
 
 	if (!var_pushers)
@@ -1773,22 +1732,32 @@ void DPusher::Tick ()
 		// Seek out all pushable things within the force radius of this
 		// point pusher. Crosses sectors, so use blockmap.
 
-		tmpusher = this; // MT_PUSH/MT_PULL point source
-		radius = m_Radius; // where force goes to zero
-		tmbbox[BOXTOP]    = m_Y + radius;
-		tmbbox[BOXBOTTOM] = m_Y - radius;
-		tmbbox[BOXRIGHT]  = m_X + radius;
-		tmbbox[BOXLEFT]   = m_X - radius;
+		FBlockThingsIterator it(FBoundingBox(m_X, m_Y, m_Radius));
+		AActor *thing;
 
-		pushbt.Clear();
+		while ((thing = it.Next()))
+		{
+			if ((thing->flags2 & MF2_WINDTHRUST) && !(thing->flags & MF_NOCLIP))
+			{
+				int sx = m_X;
+				int sy = m_Y;
+				int dist = P_AproxDistance (thing->x - sx,thing->y - sy);
+				int speed = (m_Magnitude - ((dist>>FRACBITS)>>1))<<(FRACBITS-PUSH_FACTOR-1);
 
-		xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
-		xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
-		yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
-		yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
-		for (bx=xl ; bx<=xh ; bx++)
-			for (by=yl ; by<=yh ; by++)
-				P_BlockThingsIterator (bx, by, PIT_PushThing, pushbt);
+				// If speed <= 0, you're outside the effective radius. You also have
+				// to be able to see the push/pull source point.
+
+				if ((speed > 0) && (P_CheckSight (thing, m_Source, 1)))
+				{
+					angle_t pushangle = R_PointToAngle2 (thing->x, thing->y, sx, sy);
+					if (m_Source->IsA (RUNTIME_CLASS(APointPusher)))
+						pushangle += ANG180;    // away
+					pushangle >>= ANGLETOFINESHIFT;
+					thing->momx += FixedMul (speed, finecosine[pushangle]);
+					thing->momy += FixedMul (speed, finesine[pushangle]);
+				}
+			}
+		}
 		return;
 	}
 

@@ -1,4 +1,17 @@
 April 8, 2008 (Changes by Graf Zahl)
+- Changed XlatParseContext::FindToken to do a binary search over the
+  valid token names.
+- Fixed: The check arrays for BlockThingsIterators were not properly
+  freed and each iterator allocated a new one as a result.
+- Split the Xlat parser context class into a generic part that can be 
+  used for other Lemon-based parsers in the future and a smaller
+  Xlat-specific part.
+- Changed: P_TeleportMove now always sets BlockingLine to NULL and
+  P_FindFloorCeiling doesn't set it at all. The way it was set in 
+  PIT_FindFloorCeiling didn't look correct. (Note: It's amazing how
+  easy it is to break P_TryMove et.al. with DECORATE if you just know
+  which combinations of code pointers will cause problems. This definitely
+  needs to be addressed.)
 - Changed P_FindFloorCeiling so that it doesn't need global variables 
   anymore. I also moved the code to set the calling actor's information
   into this function because that's all it is used for. This also fixes

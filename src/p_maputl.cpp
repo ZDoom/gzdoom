@@ -816,6 +816,7 @@ TDeletingArray< FBlockThingsIterator::BTChecked* > FBlockThingsIterator::FreeBTC
 
 FBlockThingsIterator::BTChecked *FBlockThingsIterator::GetCheckArray()
 {
+	dontfreecheck = false;
 	if (FreeBTChecked.Size() != 0)
 	{
 		BTChecked *ret;

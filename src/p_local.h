@@ -270,7 +270,7 @@ class FBlockThingsIterator
 
 	FBlockNode *block;
 
-	static BTChecked *GetCheckArray();
+	BTChecked *GetCheckArray();
 	void FreeCheckArray();
 	void StartBlock(int x, int y);
 

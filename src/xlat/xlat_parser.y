@@ -1,8 +1,9 @@
 
-%token_type {XlatToken}
+%token_prefix XLAT_
+%token_type {FParseToken}
 %token_destructor {}	// just to avoid a compiler warning
 %name XlatParse
-%extra_argument { XlatParseContext *context }
+%extra_argument { FParseContext *context }
 %syntax_error { context->PrintError("syntax error");}
 
 

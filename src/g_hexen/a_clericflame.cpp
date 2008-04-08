@@ -424,6 +424,7 @@ void A_CFlameMissile (AActor *actor)
 	
 	A_UnHideThing (actor);
 	S_Sound (actor, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
+	AActor *BlockingMobj = actor->BlockingMobj;
 	if (BlockingMobj && BlockingMobj->flags&MF_SHOOTABLE)
 	{ // Hit something, so spawn the flame circle around the thing
 		dist = BlockingMobj->radius+18*FRACUNIT;

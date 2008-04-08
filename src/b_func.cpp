@@ -539,7 +539,8 @@ angle_t FCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, 1)) //See the predicted location, so give a test missile
 	{
-		if (SafeCheckPosition (bot, actor->x, actor->y))
+		FCheckPosition tm;
+		if (SafeCheckPosition (bot, actor->x, actor->y, tm))
 		{
 			if (FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
 			{
@@ -563,11 +564,11 @@ angle_t FCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 // [RH] We absolutely do not want to pick things up here. The bot code is
 // executed apart from all the other simulation code, so we don't want it
 // creating side-effects during gameplay.
-bool FCajunMaster::SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y)
+bool FCajunMaster::SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y, FCheckPosition &tm)
 {
 	int savedFlags = actor->flags;
 	actor->flags &= ~MF_PICKUP;
-	bool res = P_CheckPosition (actor, x, y) ? true : false;
+	bool res = P_CheckPosition (actor, x, y, tm);
 	actor->flags = savedFlags;
 	return res;
 }

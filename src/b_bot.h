@@ -49,6 +49,8 @@
 #define MSPAWN_DELAY 20//Tics between each spawn.
 #define MMAXSELECT   100 //Maximum number of monsters that can be selected at a time.
 
+struct FCheckPosition;
+
 struct botskill_t
 {
 	int aiming;
@@ -130,7 +132,7 @@ private:
 	void SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum);
 	fixed_t FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd);
 	angle_t FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd);
-	bool SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y);
+	bool SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y, FCheckPosition &tm);
 
 	//(B_Think.c)
 	void Think (AActor *actor, ticcmd_t *cmd);

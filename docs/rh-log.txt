@@ -1,4 +1,8 @@
 April 8, 2008 (Changes by Graf Zahl)
+- Eliminated all use of global variables used as output for P_CheckPosition
+  and P_TryMove. Moved BlockingLine and BlockingMobj into AActor because 
+  the global variables can be easily overwritten with certain DECORATE 
+  constructs.
 - Removed some unnecessary morphing code.
 - Fixed some bugs in the HIRESTEX parser.
 - Added floating point support and #include and #define tokens to 

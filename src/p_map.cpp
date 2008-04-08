@@ -71,46 +71,16 @@ static void SpawnShootDecal (AActor *t1, const FTraceResults &trace);
 static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
 							 fixed_t vx, fixed_t vy, fixed_t vz);
 
-AActor		   *tmthing;
-static int 		tmflags;
-static fixed_t	tmx;
-static fixed_t	tmy;
-static fixed_t	tmz;	// [RH] Needed for third dimension of teleporters
-
 static FRandom pr_tracebleed ("TraceBleed");
 static FRandom pr_checkthing ("CheckThing");
 static FRandom pr_lineattack ("LineAttack");
 static FRandom pr_crunch ("DoCrunch");
-
-// If "floatok" true, move would be ok
-// if within "tmfloorz - tmceilingz".
-bool 			floatok;
-
-fixed_t 		tmfloorz;
-fixed_t 		tmceilingz;
-fixed_t 		tmdropoffz;
-int				tmfloorpic;
-sector_t		*tmfloorsector;
-int				tmceilingpic;
-sector_t		*tmceilingsector;
-bool			tmtouchmidtex;
-
-
-//Added by MC: So bot will know what kind of sector it's entering.
-sector_t*		tmsector;
-
-// keep track of the line that lowers the ceiling,
-// so missiles don't explode against sky hack walls
-line_t* 		ceilingline;
-
-line_t			*BlockingLine;
 
 // keep track of special lines as they are hit,
 // but don't process them until the move is proven valid
 TArray<line_t *> spechit;
 
 AActor *onmobj; // generic global onmobj...used for landing on pods/players
-AActor *BlockingMobj;
 
 // Temporary holder for thing_sectorlist threads
 msecnode_t* sector_list = NULL;		// phares 3/16/98
@@ -219,6 +189,7 @@ void P_FindFloorCeiling (AActor *actor)
 	tmf.floorsector = sec;
 	tmf.ceilingpic = sec->ceilingpic;
 	tmf.ceilingsector = sec;
+	tmf.touchmidtex = false;
 	validcount++;
 
 	FBlockLinesIterator it(box);
@@ -261,7 +232,6 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	// kill anything occupying the position
 		
 	newsec = P_PointInSector (x,y);
-	ceilingline = NULL;
 	
 	// The base floor/ceiling is from the subsector that contains the point.
 	// Any contacted lines the step closer together will adjust them.
@@ -335,7 +305,7 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	thing->ceilingsector = tmf.ceilingsector;
 	thing->ceilingpic = tmf.ceilingpic;
 	thing->dropoffz = tmf.dropoffz;        // killough 11/98
-	BlockingLine = NULL;
+	thing->BlockingLine = NULL;
 
 	if (thing->flags2 & MF2_FLOORCLIP)
 	{
@@ -498,7 +468,7 @@ int P_GetMoveFactor (const AActor *mo, int *frictionp)
 //
 
 static // killough 3/26/98: make static
-bool PIT_CheckLine (line_t *ld, const FBoundingBox &box)
+bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 {
 	bool rail = false;
 
@@ -523,44 +493,44 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box)
 	
 	if (!ld->backsector)
 	{ // One sided line
-		if (tmthing->flags2 & MF2_BLASTED)
+		if (tm.thing->flags2 & MF2_BLASTED)
 		{
-			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, NAME_Melee);
+			P_DamageMobj (tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 		}
-		BlockingLine = ld;
-		CheckForPushSpecial (ld, 0, tmthing);
+		tm.thing->BlockingLine = ld;
+		CheckForPushSpecial (ld, 0, tm.thing);
 		return false;
 	}
 
-	if (!(tmthing->flags & MF_MISSILE) || (ld->flags & ML_BLOCKEVERYTHING))
+	if (!(tm.thing->flags & MF_MISSILE) || (ld->flags & ML_BLOCKEVERYTHING))
 	{
 		if (ld->flags & ML_RAILING)
 		{
 			rail = true;
 		}
 		else if ((ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING)) || 							// explicitly blocking everything
-			(!(tmthing->flags3 & MF3_NOBLOCKMONST) && (ld->flags & ML_BLOCKMONSTERS)) || 	// block monsters only
-			(tmthing->player != NULL && (ld->flags & ML_BLOCK_PLAYERS)) ||					// block players
-			((ld->flags & ML_BLOCK_FLOATERS) && (tmthing->flags & MF_FLOAT)))				// block floaters
+			(!(tm.thing->flags3 & MF3_NOBLOCKMONST) && (ld->flags & ML_BLOCKMONSTERS)) || 	// block monsters only
+			(tm.thing->player != NULL && (ld->flags & ML_BLOCK_PLAYERS)) ||					// block players
+			((ld->flags & ML_BLOCK_FLOATERS) && (tm.thing->flags & MF_FLOAT)))				// block floaters
 		{
-			if (tmthing->flags2 & MF2_BLASTED)
+			if (tm.thing->flags2 & MF2_BLASTED)
 			{
-				P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, NAME_Melee);
+				P_DamageMobj (tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 			}
-			BlockingLine = ld;
-			CheckForPushSpecial (ld, 0, tmthing);
+			tm.thing->BlockingLine = ld;
+			CheckForPushSpecial (ld, 0, tm.thing);
 			return false;
 		}
 	}
 
 	// [RH] Steep sectors count as dropoffs (unless already in one)
-	if (!(tmthing->flags & MF_DROPOFF) &&
-		!(tmthing->flags & (MF_NOGRAVITY|MF_NOCLIP)))
+	if (!(tm.thing->flags & MF_DROPOFF) &&
+		!(tm.thing->flags & (MF_NOGRAVITY|MF_NOCLIP)))
 	{
 		if (ld->frontsector->floorplane.c < STEEPSLOPE ||
 			ld->backsector->floorplane.c < STEEPSLOPE)
 		{
-			const msecnode_t *node = tmthing->touching_sectorlist;
+			const msecnode_t *node = tm.thing->touching_sectorlist;
 			bool allow = false;
 			int count = 0;
 			while (node != NULL)
@@ -589,15 +559,15 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box)
 		 (ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
 		 (ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
 	{
-		P_LineOpening (open, tmthing, ld, sx=tmx, sy=tmy, tmx, tmy);
+		P_LineOpening (open, tm.thing, ld, sx=tm.x, sy=tm.y, tm.x, tm.y);
 	}
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 	  // that to calculate openings
 		float dx = (float)ld->dx;
 		float dy = (float)ld->dy;
-		fixed_t r = (fixed_t)(((float)(tmx - ld->v1->x) * dx +
-				 			   (float)(tmy - ld->v1->y) * dy) /
+		fixed_t r = (fixed_t)(((float)(tm.x - ld->v1->x) * dx +
+				 			   (float)(tm.y - ld->v1->y) * dy) /
 							  (dx*dx + dy*dy) * 16777216.f);
 /*		Printf ("%d:%d: %d  (%d %d %d %d)  (%d %d %d %d)\n", level.time, ld-lines, r,
 			ld->frontsector->floorplane.a,
@@ -610,16 +580,16 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box)
 			ld->backsector->floorplane.ic);*/
 		if (r <= 0)
 		{
-			P_LineOpening (open, tmthing, ld, sx=ld->v1->x, sy=ld->v1->y, tmx, tmy);
+			P_LineOpening (open, tm.thing, ld, sx=ld->v1->x, sy=ld->v1->y, tm.x, tm.y);
 		}
 		else if (r >= (1<<24))
 		{
-			P_LineOpening (open, tmthing, ld, sx=ld->v2->x, sy=ld->v2->y, tmthing->x, tmthing->y);
+			P_LineOpening (open, tm.thing, ld, sx=ld->v2->x, sy=ld->v2->y, tm.thing->x, tm.thing->y);
 		}
 		else
 		{
-			P_LineOpening (open, tmthing, ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
-				sy=ld->v1->y + MulScale24 (r, ld->dy), tmx, tmy);
+			P_LineOpening (open, tm.thing, ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
+				sy=ld->v1->y + MulScale24 (r, ld->dy), tm.x, tm.y);
 		}
 	/*	Printf ("    %d %d %d\n", sx, sy, openbottom);*/
 	}
@@ -634,32 +604,32 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box)
 		// forced to say, "It's not a bug. It's a feature?" Ugh.
 		(gameinfo.gametype != GAME_Strife ||
 		 level.flags & LEVEL_HEXENFORMAT ||
-		 open.bottom == tmthing->Sector->floorplane.ZatPoint (sx, sy)))
+		 open.bottom == tm.thing->Sector->floorplane.ZatPoint (sx, sy)))
 	{
 		open.bottom += 32*FRACUNIT;
 	}
 
 	// adjust floor / ceiling heights
-	if (open.top < tmceilingz)
+	if (open.top < tm.ceilingz)
 	{
-		tmceilingz = open.top;
-		tmceilingsector = open.topsec;
-		tmceilingpic = open.ceilingpic;
-		ceilingline = ld;
-		BlockingLine = ld;
+		tm.ceilingz = open.top;
+		tm.ceilingsector = open.topsec;
+		tm.ceilingpic = open.ceilingpic;
+		tm.ceilingline = ld;
+		tm.thing->BlockingLine = ld;
 	}
 
-	if (open.bottom > tmfloorz)
+	if (open.bottom > tm.floorz)
 	{
-		tmfloorz = open.bottom;
-		tmfloorsector = open.bottomsec;
-		tmfloorpic = open.floorpic;
-		tmtouchmidtex = open.touchmidtex;
-		BlockingLine = ld;
+		tm.floorz = open.bottom;
+		tm.floorsector = open.bottomsec;
+		tm.floorpic = open.floorpic;
+		tm.touchmidtex = open.touchmidtex;
+		tm.thing->BlockingLine = ld;
 	}
 
-	if (open.lowfloor < tmdropoffz)
-		tmdropoffz = open.lowfloor;
+	if (open.lowfloor < tm.dropoffz)
+		tm.dropoffz = open.lowfloor;
 	
 	// if contacted a special line, add it to the list
 	if (ld->special)
@@ -678,34 +648,27 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box)
 
 static AActor *stepthing;
 
-bool PIT_CheckThing (AActor *thing)
+bool PIT_CheckThing (AActor *thing, FCheckPosition &tm)
 {
 	fixed_t topz;
-	fixed_t blockdist;
 	bool 	solid;
 	int 	damage;
 				
 	// don't clip against self
-	if (thing == tmthing)
+	if (thing == tm.thing)
 		return true;
 
 	if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE)) )
 		return true;	// can't hit thing
 
-	blockdist = thing->radius + tmthing->radius;
-	if (abs(thing->x - tmx) >= blockdist || abs(thing->y - tmy) >= blockdist)
-	{
-		// didn't hit thing
-		return true;
-	}
-	BlockingMobj = thing;
+	tm.thing->BlockingMobj = thing;
 	topz = thing->z + thing->height;
-	if (!(i_compatflags & COMPATF_NO_PASSMOBJ) && !(tmthing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY|MF_NOGRAVITY)) &&
+	if (!(i_compatflags & COMPATF_NO_PASSMOBJ) && !(tm.thing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY|MF_NOGRAVITY)) &&
 		(thing->flags & MF_SOLID) && (thing->flags4 & MF4_ACTLIKEBRIDGE))
 	{
 		// [RH] Let monsters walk on actors as well as floors
-		if ((tmthing->flags3 & MF3_ISMONSTER) &&
-			topz >= tmfloorz && topz <= tmthing->z + tmthing->MaxStepHeight)
+		if ((tm.thing->flags3 & MF3_ISMONSTER) &&
+			topz >= tm.floorz && topz <= tm.thing->z + tm.thing->MaxStepHeight)
 		{
 			// The commented-out if is an attempt to prevent monsters from walking off a
 			// thing further than they would walk off a ledge. I can't think of an easy
@@ -716,51 +679,51 @@ bool PIT_CheckThing (AActor *thing)
 //				abs(thing->y - tmy) <= thing->radius)
 			{
 				stepthing = thing;
-				tmfloorz = topz;
+				tm.floorz = topz;
 			}
 		}
 	}
 	// [RH] If the other thing is a bridge, then treat the moving thing as if it had MF2_PASSMOBJ, so
 	// you can use a scrolling floor to move scenery items underneath a bridge.
-	if ((tmthing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
+	if ((tm.thing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
-		if (tmthing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
+		if (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
 		{ // Some things prefer not to overlap each other, if possible
 			return false;
 		}
-		if ((tmthing->z >= topz) || (tmthing->z + tmthing->height <= thing->z))
+		if ((tm.thing->z >= topz) || (tm.thing->z + tm.thing->height <= thing->z))
 		{
 			return true;
 		}
 	}
 	// Check for skulls slamming into things
-	if (tmthing->flags & MF_SKULLFLY)
+	if (tm.thing->flags & MF_SKULLFLY)
 	{
-		bool res = tmthing->Slam (BlockingMobj);
-		BlockingMobj = NULL;
+		bool res = tm.thing->Slam (tm.thing->BlockingMobj);
+		tm.thing->BlockingMobj = NULL;
 		return res;
 	}
 	// Check for blasted thing running into another
-	if ((tmthing->flags2 & MF2_BLASTED) && (thing->flags & MF_SHOOTABLE))
+	if ((tm.thing->flags2 & MF2_BLASTED) && (thing->flags & MF_SHOOTABLE))
 	{
 		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER))
 		{
-			thing->momx += tmthing->momx;
-			thing->momy += tmthing->momy;
+			thing->momx += tm.thing->momx;
+			thing->momy += tm.thing->momy;
 			if ((thing->momx + thing->momy) > 3*FRACUNIT)
 			{
-				damage = (tmthing->Mass / 100) + 1;
-				P_DamageMobj (thing, tmthing, tmthing, damage, tmthing->DamageType);
-				P_TraceBleed (damage, thing, tmthing);
+				damage = (tm.thing->Mass / 100) + 1;
+				P_DamageMobj (thing, tm.thing, tm.thing, damage, tm.thing->DamageType);
+				P_TraceBleed (damage, thing, tm.thing);
 				damage = (thing->Mass / 100) + 1;
-				P_DamageMobj (tmthing, thing, thing, damage >> 2, tmthing->DamageType);
-				P_TraceBleed (damage, tmthing, thing);
+				P_DamageMobj (tm.thing, thing, thing, damage >> 2, tm.thing->DamageType);
+				P_TraceBleed (damage, tm.thing, thing);
 			}
 			return false;
 		}
 	}
 	// Check for missile
-	if (tmthing->flags & MF_MISSILE)
+	if (tm.thing->flags & MF_MISSILE)
 	{
 		// Check for a non-shootable mobj
 		if (thing->flags2 & MF2_NONSHOOTABLE)
@@ -768,29 +731,29 @@ bool PIT_CheckThing (AActor *thing)
 			return true;
 		}
 		// Check for passing through a ghost
-		if ((thing->flags3 & MF3_GHOST) && (tmthing->flags2 & MF2_THRUGHOST))
+		if ((thing->flags3 & MF3_GHOST) && (tm.thing->flags2 & MF2_THRUGHOST))
 		{
 			return true;
 		}
 		// Check if it went over / under
-		if (tmthing->z > thing->z + thing->height)
+		if (tm.thing->z > thing->z + thing->height)
 		{ // Over thing
 			return true;
 		}
-		if (tmthing->z+tmthing->height < thing->z)
+		if (tm.thing->z+tm.thing->height < thing->z)
 		{ // Under thing
 			return true;
 		}
 
-		if (tmthing->flags2 & MF2_BOUNCE2)
+		if (tm.thing->flags2 & MF2_BOUNCE2)
 		{
-			if (tmthing->Damage == 0)
+			if (tm.thing->Damage == 0)
 			{
-				return (tmthing->target == thing || !(thing->flags & MF_SOLID));
+				return (tm.thing->target == thing || !(thing->flags & MF_SOLID));
 			}
 		}
 
-		switch (tmthing->SpecialMissileHit (thing))
+		switch (tm.thing->SpecialMissileHit (thing))
 		{
 		case 0:		return false;
 		case 1:		return true;
@@ -804,16 +767,16 @@ bool PIT_CheckThing (AActor *thing)
 		// that ZDoom supports friendly monsters?
 		
 
-		if (tmthing->target != NULL)
+		if (tm.thing->target != NULL)
 		{
-			if (thing == tmthing->target)
+			if (thing == tm.thing->target)
 			{ // Don't missile self
 				return true;
 			}
 
 			// players are never subject to infighting settings and are always allowed
 			// to harm / be harmed by anything.
-			if (!thing->player && !tmthing->target->player)
+			if (!thing->player && !tm.thing->target->player)
 			{
 				int infight;
 				if (level.flags & LEVEL_TOTALINFIGHTING) infight=1;
@@ -824,7 +787,7 @@ bool PIT_CheckThing (AActor *thing)
 				{
 					// -1: Monsters cannot hurt each other, but make exceptions for
 					//     friendliness and hate status.
-					if (tmthing->target->flags & MF_SHOOTABLE)
+					if (tm.thing->target->flags & MF_SHOOTABLE)
 					{
 						if (!(thing->flags3 & MF3_ISMONSTER))
 						{
@@ -833,10 +796,10 @@ bool PIT_CheckThing (AActor *thing)
 						}
 
 						// Monsters that are clearly hostile can always hurt each other
-						if (!thing->IsHostile (tmthing->target))
+						if (!thing->IsHostile (tm.thing->target))
 						{
 							// The same if the shooter hates the target
-							if (thing->tid == 0 || tmthing->target->TIDtoHate != thing->tid)
+							if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
 							{
 								return false;
 							}
@@ -847,24 +810,24 @@ bool PIT_CheckThing (AActor *thing)
 				{
 					//  0: Monsters cannot hurt same species except 
 					//     cases where they are clearly supposed to do that
-					if (thing->IsFriend (tmthing->target))
+					if (thing->IsFriend (tm.thing->target))
 					{
 						// Friends never harm each other
 						return false;
 					}
-					if (thing->TIDtoHate != 0 && thing->TIDtoHate == tmthing->target->TIDtoHate)
+					if (thing->TIDtoHate != 0 && thing->TIDtoHate == tm.thing->target->TIDtoHate)
 					{
 						// [RH] Don't hurt monsters that hate the same thing as you do
 						return false;
 					}
-					if (thing->GetSpecies() == tmthing->target->GetSpecies())
+					if (thing->GetSpecies() == tm.thing->target->GetSpecies())
 					{
 						// Don't hurt same species or any relative -
 						// but only if the target isn't one's hostile.
-						if (!thing->IsHostile (tmthing->target))
+						if (!thing->IsHostile (tm.thing->target))
 						{
 							// Allow hurting monsters the shooter hates.
-							if (thing->tid == 0 || tmthing->target->TIDtoHate != thing->tid)
+							if (thing->tid == 0 || tm.thing->target->TIDtoHate != thing->tid)
 							{
 								return false;
 							}
@@ -878,7 +841,7 @@ bool PIT_CheckThing (AActor *thing)
 		{ // Didn't do any damage
 			return !(thing->flags & MF_SOLID);
 		}
-		if ((thing->flags4 & MF4_SPECTRAL) && !(tmthing->flags4 & MF4_SPECTRAL))
+		if ((thing->flags4 & MF4_SPECTRAL) && !(tm.thing->flags4 & MF4_SPECTRAL))
 		{
 			return true;
 		}
@@ -889,45 +852,45 @@ bool PIT_CheckThing (AActor *thing)
 				LastRipped = thing;
 				if (!(thing->flags & MF_NOBLOOD) &&
 					!(thing->flags2 & MF2_REFLECTIVE) &&
-					!(tmthing->flags3 & MF3_BLOODLESSIMPACT) &&
+					!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
 					!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 				{ // Ok to spawn blood
-					P_RipperBlood (tmthing, thing);
+					P_RipperBlood (tm.thing, thing);
 				}
-				S_Sound (tmthing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
-				damage = tmthing->GetMissileDamage (3, 2);
-				P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->DamageType);
-				if (!(tmthing->flags3 & MF3_BLOODLESSIMPACT))
+				S_Sound (tm.thing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
+				damage = tm.thing->GetMissileDamage (3, 2);
+				P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
+				if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
 				{
-					P_TraceBleed (damage, thing, tmthing);
+					P_TraceBleed (damage, thing, tm.thing);
 				}
 				if (thing->flags2 & MF2_PUSHABLE
-					&& !(tmthing->flags2 & MF2_CANNOTPUSH))
+					&& !(tm.thing->flags2 & MF2_CANNOTPUSH))
 				{ // Push thing
-					thing->momx += tmthing->momx>>2;
-					thing->momy += tmthing->momy>>2;
+					thing->momx += tm.thing->momx>>2;
+					thing->momy += tm.thing->momy>>2;
 				}
 			}
 			spechit.Clear ();
 			return true;
 		}
 		// Do damage
-		damage = tmthing->GetMissileDamage ((tmthing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
+		damage = tm.thing->GetMissileDamage ((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
 		if (damage > 0)
 		{
-			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->DamageType);
-			if ((tmthing->flags5 & MF5_BLOODSPLATTER) &&
+			P_DamageMobj (thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
+			if ((tm.thing->flags5 & MF5_BLOODSPLATTER) &&
 				!(thing->flags & MF_NOBLOOD) &&
 				!(thing->flags2 & MF2_REFLECTIVE) &&
 				!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)) &&
-				!(tmthing->flags3 & MF3_BLOODLESSIMPACT) &&
+				!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
 				(pr_checkthing() < 192))
 			{
-				P_BloodSplatter (tmthing->x, tmthing->y, tmthing->z, thing);
+				P_BloodSplatter (tm.thing->x, tm.thing->y, tm.thing->z, thing);
 			}
-			if (!(tmthing->flags3 & MF3_BLOODLESSIMPACT))
+			if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
 			{
-				P_TraceBleed (damage, thing, tmthing);
+				P_TraceBleed (damage, thing, tm.thing);
 			}
 		}
 		else if (damage < 0)
@@ -936,23 +899,23 @@ bool PIT_CheckThing (AActor *thing)
 		}
 		return false;		// don't traverse any more
 	}
-	if (thing->flags2 & MF2_PUSHABLE && !(tmthing->flags2 & MF2_CANNOTPUSH) &&
-		(tmthing->player == NULL || !(tmthing->player->cheats & CF_PREDICTING)))
+	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH) &&
+		(tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING)))
 	{ // Push thing
-		thing->momx += tmthing->momx >> 2;
-		thing->momy += tmthing->momy >> 2;
+		thing->momx += tm.thing->momx >> 2;
+		thing->momy += tm.thing->momy >> 2;
 	}
 	solid = (thing->flags & MF_SOLID) &&
 			!(thing->flags & MF_NOCLIP) &&
-			(tmthing->flags & MF_SOLID);
+			(tm.thing->flags & MF_SOLID);
 	// Check for special pickup
-	if ((thing->flags & MF_SPECIAL) && (tmflags & MF_PICKUP)
+	if ((thing->flags & MF_SPECIAL) && (tm.thing->flags & MF_PICKUP)
 		// [RH] The next condition is to compensate for the extra height
 		// that gets added by P_CheckPosition() so that you cannot pick
 		// up things that are above your true height.
-		&& thing->z < tmthing->z + tmthing->height - tmthing->MaxStepHeight)
+		&& thing->z < tm.thing->z + tm.thing->height - tm.thing->MaxStepHeight)
 	{ // Can be picked up by tmthing
-		P_TouchSpecialThing (thing, tmthing);	// can remove thing
+		P_TouchSpecialThing (thing, tm.thing);	// can remove thing
 	}
 
 	// killough 3/16/98: Allow non-solid moving objects to move through solid
@@ -1008,6 +971,7 @@ bool P_TestMobjLocation (AActor *mobj)
 	return false;
 }
 
+
 //
 // P_CheckPosition
 // This is purely informative, nothing is modified
@@ -1031,44 +995,41 @@ bool P_TestMobjLocation (AActor *mobj)
 //	numspeciallines
 //  AActor *BlockingMobj = pointer to thing that blocked position (NULL if not
 //   blocked, or blocked by a line).
-bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
+bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 {
-	static TArray<AActor *> checkpbt;
-
 	sector_t *newsec;
 	AActor *thingblocker;
 	AActor *fakedblocker;
 	fixed_t realheight = thing->height;
 
-	tmthing = thing;
-	tmflags = thing->flags;
+	tm.thing = thing;
 
-	tmx = x;
-	tmy = y;
+	tm.x = x;
+	tm.y = y;
 
 	FBoundingBox box(x, y, thing->radius);
 
 	newsec = P_PointInSector (x,y);
-	ceilingline = BlockingLine = NULL;
+	tm.ceilingline = thing->BlockingLine = NULL;
 	
 // The base floor / ceiling is from the subsector that contains the point.
 // Any contacted lines the step closer together will adjust them.
-	tmfloorz = tmdropoffz = newsec->floorplane.ZatPoint (x, y);
-	tmceilingz = newsec->ceilingplane.ZatPoint (x, y);
-	tmfloorpic = newsec->floorpic;
-	tmfloorsector = newsec;
-	tmceilingpic = newsec->ceilingpic;
-	tmceilingsector = newsec;
+	tm.floorz = tm.dropoffz = newsec->floorplane.ZatPoint (x, y);
+	tm.ceilingz = newsec->ceilingplane.ZatPoint (x, y);
+	tm.floorpic = newsec->floorpic;
+	tm.floorsector = newsec;
+	tm.ceilingpic = newsec->ceilingpic;
+	tm.ceilingsector = newsec;
+	tm.touchmidtex = false;
 
 	//Added by MC: Fill the tmsector.
-	tmsector = newsec;
+	tm.sector = newsec;
 	
 
 	validcount++;
 	spechit.Clear ();
-	checkpbt.Clear ();
 
-	if ((tmflags & MF_NOCLIP) && !(tmflags & MF_SKULLFLY))
+	if ((thing->flags & MF_NOCLIP) && !(thing->flags & MF_SKULLFLY))
 		return true;
 	
 	// Check things first, possibly picking things up.
@@ -1076,7 +1037,7 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	// because DActors are grouped into mapblocks
 	// based on their origin point, and can overlap
 	// into adjacent blocks by up to MAXRADIUS units.
-	BlockingMobj = NULL;
+	thing->BlockingMobj = NULL;
 	thingblocker = NULL;
 	fakedblocker = NULL;
 	if (thing->player)
@@ -1090,11 +1051,13 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	AActor *th;
 	while ((th = it2.Next()))
 	{
-		if (!PIT_CheckThing(th))
+		if (!PIT_CheckThing(th, tm))
 		{ // [RH] If a thing can be stepped up on, we need to continue checking
 		  // other things in the blocks and see if we hit something that is
 		  // definitely blocking. Otherwise, we need to check the lines, or we
 		  // could end up stuck inside a wall.
+			AActor *BlockingMobj = thing->BlockingMobj;
+
 			if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ))
 			{ // Thing slammed into something; don't let it move now.
 				thing->height = realheight;
@@ -1108,7 +1071,7 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 				{
 					thingblocker = BlockingMobj;
 				}
-				BlockingMobj = NULL;
+				thing->BlockingMobj = NULL;
 			}
 			else if (thing->player &&
 				thing->z + thing->height - BlockingMobj->z <= thing->MaxStepHeight)
@@ -1122,7 +1085,7 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 				// Nothing is blocking us, but this actor potentially could
 				// if there is something else to step on.
 				fakedblocker = BlockingMobj;
-				BlockingMobj = NULL;
+				thing->BlockingMobj = NULL;
 			}
 			else
 			{ // Definitely blocking
@@ -1145,32 +1108,38 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	// being considered for collision with the player.
 	validcount++;
 
-	BlockingMobj = NULL;
+	thing->BlockingMobj = NULL;
 	thing->height = realheight;
-	if (tmflags & MF_NOCLIP)
-		return (BlockingMobj = thingblocker) == NULL;
+	if (thing->flags & MF_NOCLIP)
+		return (thing->BlockingMobj = thingblocker) == NULL;
 
 	FBlockLinesIterator it(box);
 	line_t *ld;
 
-	fixed_t thingdropoffz = tmfloorz;
+	fixed_t thingdropoffz = tm.floorz;
 	//bool onthing = (thingdropoffz != tmdropoffz);
-	tmfloorz = tmdropoffz;
+	tm.floorz = tm.dropoffz;
 
 	while ((ld = it.Next()))
 	{
-		if (!PIT_CheckLine(ld, box)) return false;
+		if (!PIT_CheckLine(ld, box, tm)) return false;
 	}
 
-	if (tmceilingz - tmfloorz < thing->height)
+	if (tm.ceilingz - tm.floorz < thing->height)
 		return false;
 
-	if (stepthing != NULL || tmtouchmidtex)
+	if (stepthing != NULL || tm.touchmidtex)
 	{
-		tmdropoffz = thingdropoffz;
+		tm.dropoffz = thingdropoffz;
 	}
 
-	return (BlockingMobj = thingblocker) == NULL;
+	return (thing->BlockingMobj = thingblocker) == NULL;
+}
+
+bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
+{
+	FCheckPosition tm;
+	return P_CheckPosition(thing, x, y, tm);
 }
 
 //=============================================================================
@@ -1327,7 +1296,8 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 //
 bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				bool dropoff, // killough 3/15/98: allow dropoff as option
-				bool onfloor) // [RH] Let P_TryMove keep the thing on the floor
+				bool onfloor, // [RH] Let P_TryMove keep the thing on the floor
+				FCheckPosition &tm)
 {
 	fixed_t 	oldx;
 	fixed_t 	oldy;
@@ -1338,14 +1308,15 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 	sector_t*	oldsec = thing->Sector;	// [RH] for sector actions
 	sector_t*	newsec;
 
-	floatok = false;
+	tm.floatok = false;
 	oldz = thing->z;
 	if (onfloor)
 	{
 		thing->z = thing->floorsector->floorplane.ZatPoint (x, y);
 	}
-	if (!P_CheckPosition (thing, x, y))
+	if (!P_CheckPosition (thing, x, y, tm))
 	{
+		AActor *BlockingMobj = thing->BlockingMobj;
 		// Solid wall or thing
 		if (!BlockingMobj || BlockingMobj->player || !thing->player)
 		{
@@ -1361,13 +1332,13 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				> thing->MaxStepHeight
 				|| (BlockingMobj->Sector->ceilingplane.ZatPoint (x, y)
 				- (BlockingMobj->z+BlockingMobj->height) < thing->height)
-				|| (tmceilingz-(BlockingMobj->z+BlockingMobj->height) 
+				|| (tm.ceilingz-(BlockingMobj->z+BlockingMobj->height) 
 				< thing->height))
 			{
 				goto pushline;
 			}
 		}
-		if (!(tmthing->flags2 & MF2_PASSMOBJ) || (i_compatflags & COMPATF_NO_PASSMOBJ))
+		if (!(tm.thing->flags2 & MF2_PASSMOBJ) || (i_compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			thing->z = oldz;
 			return false;
@@ -1376,28 +1347,28 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 
 	if (thing->flags3 & MF3_FLOORHUGGER)
 	{
-		thing->z = tmfloorz;
+		thing->z = tm.floorz;
 	}
 	else if (thing->flags3 & MF3_CEILINGHUGGER)
 	{
-		thing->z = tmceilingz - thing->height;
+		thing->z = tm.ceilingz - thing->height;
 	}
 
-	if (onfloor && tmfloorsector == thing->floorsector)
+	if (onfloor && tm.floorsector == thing->floorsector)
 	{
-		thing->z = tmfloorz;
+		thing->z = tm.floorz;
 	}
 	if (!(thing->flags & MF_NOCLIP))
 	{
-		if (tmceilingz - tmfloorz < thing->height)
+		if (tm.ceilingz - tm.floorz < thing->height)
 		{
 			goto pushline;		// doesn't fit
 		}
 
-		floatok = true;
+		tm.floatok = true;
 		
 		if (!(thing->flags & MF_TELEPORT)
-			&& tmceilingz - thing->z < thing->height
+			&& tm.ceilingz - thing->z < thing->height
 			&& !(thing->flags3 & MF3_CEILINGHUGGER)
 			&& (!(thing->flags2 & MF2_FLY) || !(thing->flags & MF_NOGRAVITY)))
 		{
@@ -1406,7 +1377,7 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		if (thing->flags2 & MF2_FLY && thing->flags & MF_NOGRAVITY)
 		{
 #if 1
-			if (thing->z+thing->height > tmceilingz)
+			if (thing->z+thing->height > tm.ceilingz)
 				goto pushline;
 #else
 			// When flying, slide up or down blocking lines until the actor
@@ -1425,19 +1396,19 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		}
 		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
 		{
-			if (tmfloorz-thing->z > thing->MaxStepHeight)
+			if (tm.floorz-thing->z > thing->MaxStepHeight)
 			{ // too big a step up
 				goto pushline;
 			}
-			else if ((thing->flags & MF_MISSILE) && tmfloorz > thing->z)
+			else if ((thing->flags & MF_MISSILE) && tm.floorz > thing->z)
 			{ // [RH] Don't let normal missiles climb steps
 				goto pushline;
 			}
-			else if (thing->z < tmfloorz)
+			else if (thing->z < tm.floorz)
 			{ // [RH] Check to make sure there's nothing in the way for the step up
 				fixed_t savedz = thing->z;
 				bool good;
-				thing->z = tmfloorz;
+				thing->z = tm.floorz;
 				good = P_TestMobjZ (thing);
 				thing->z = savedz;
 				if (!good)
@@ -1452,15 +1423,15 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		{
 			if (!(thing->flags5&MF5_AVOIDINGDROPOFF))
 			{
-				fixed_t floorz = tmfloorz;
+				fixed_t floorz = tm.floorz;
 				// [RH] If the thing is standing on something, use its current z as the floorz.
 				// This is so that it does not walk off of things onto a drop off.
 				if (thing->flags2 & MF2_ONMOBJ)
 				{
-					floorz = MAX(thing->z, tmfloorz);
+					floorz = MAX(thing->z, tm.floorz);
 				}
 				
-				if (floorz - tmdropoffz > thing->MaxDropOffHeight &&
+				if (floorz - tm.dropoffz > thing->MaxDropOffHeight &&
 					!(thing->flags2 & MF2_BLASTED))
 				{ // Can't move over a dropoff unless it's been blasted
 					thing->z = oldz;
@@ -1471,13 +1442,13 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			{
 				// special logic to move a monster off a dropoff
 				// this intentionally does not check for standing on things.
-				if (thing->floorz - tmfloorz > thing->MaxDropOffHeight ||
-					thing->dropoffz - tmdropoffz > thing->MaxDropOffHeight) return false;
+				if (thing->floorz - tm.floorz > thing->MaxDropOffHeight ||
+					thing->dropoffz - tm.dropoffz > thing->MaxDropOffHeight) return false;
 			}
 		}
 		if (thing->flags2 & MF2_CANTLEAVEFLOORPIC
-			&& (tmfloorpic != thing->floorpic
-				|| tmfloorz - thing->z != 0))
+			&& (tm.floorpic != thing->floorpic
+				|| tm.floorz - thing->z != 0))
 		{ // must stay within a sector of a certain floor type
 			thing->z = oldz;
 			return false;
@@ -1486,8 +1457,8 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		//Added by MC: To prevent bot from getting into dangerous sectors.
 		if (thing->player && thing->player->isbot && thing->flags & MF_SHOOTABLE)
 		{
-			if (tmsector != thing->Sector
-				&& bglobal.IsDangerous (tmsector))
+			if (tm.sector != thing->Sector
+				&& bglobal.IsDangerous (tm.sector))
 			{
 				thing->player->prev = thing->player->dest;
 				thing->player->dest = NULL;
@@ -1521,13 +1492,13 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 
 	oldx = thing->x;
 	oldy = thing->y;
-	thing->floorz = tmfloorz;
-	thing->ceilingz = tmceilingz;
-	thing->dropoffz = tmdropoffz;		// killough 11/98: keep track of dropoffs
-	thing->floorpic = tmfloorpic;
-	thing->floorsector = tmfloorsector;
-	thing->ceilingpic = tmceilingpic;
-	thing->ceilingsector = tmceilingsector;
+	thing->floorz = tm.floorz;
+	thing->ceilingz = tm.ceilingz;
+	thing->dropoffz = tm.dropoffz;		// killough 11/98: keep track of dropoffs
+	thing->floorpic = tm.floorpic;
+	thing->floorsector = tm.floorsector;
+	thing->ceilingpic = tm.ceilingpic;
+	thing->ceilingsector = tm.ceilingsector;
 	thing->x = x;
 	thing->y = y;
 
@@ -1653,9 +1624,9 @@ pushline:
 	{
 		int numSpecHitTemp;
 
-		if (tmthing->flags2 & MF2_BLASTED)
+		if (tm.thing->flags2 & MF2_BLASTED)
 		{
-			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, NAME_Melee);
+			P_DamageMobj (tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 		}
 		numSpecHitTemp = (int)spechit.Size ();
 		while (numSpecHitTemp > 0)
@@ -1668,6 +1639,16 @@ pushline:
 	}
 	return false;
 }
+
+bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
+				bool dropoff, // killough 3/15/98: allow dropoff as option
+				bool onfloor) // [RH] Let P_TryMove keep the thing on the floor
+{
+	FCheckPosition tm;
+	return P_TryMove(thing, x, y, dropoff, onfloor, tm);
+}
+
+
 
 //
 // SLIDE MOVE
@@ -2216,9 +2197,9 @@ bool P_BounceWall (AActor *mo)
 		leady = mo->y-mo->radius;
 	}
 	bestslidefrac = FRACUNIT+1;
-	bestslideline = BlockingLine;
+	bestslideline = mo->BlockingLine;
 	if (P_PathTraverse(leadx, leady, leadx+mo->momx, leady+mo->momy,
-		PT_ADDLINES, PTR_BounceTraverse) && BlockingLine == NULL)
+		PT_ADDLINES, PTR_BounceTraverse) && mo->BlockingLine == NULL)
 	{ // Could not find a wall, so bounce off the floor/ceiling instead.
 		fixed_t floordist = mo->z - mo->floorz;
 		fixed_t ceildist = mo->ceilingz - mo->z;
@@ -3588,6 +3569,7 @@ EXTERN_CVAR (Int, cl_bloodtype)
 bool P_AdjustFloorCeil (AActor *thing, FChangePosition *cpos)
 {
 	int flags2 = thing->flags2 & MF2_PASSMOBJ;
+	FCheckPosition tm;
 
 	if (cpos->movemidtex)
 	{
@@ -3597,14 +3579,14 @@ bool P_AdjustFloorCeil (AActor *thing, FChangePosition *cpos)
 		thing->flags2 |= MF2_PASSMOBJ;
 	}
 
-	bool isgood = P_CheckPosition (thing, thing->x, thing->y);
-	thing->floorz = tmfloorz;
-	thing->ceilingz = tmceilingz;
-	thing->dropoffz = tmdropoffz;		// killough 11/98: remember dropoffs
-	thing->floorpic = tmfloorpic;
-	thing->floorsector = tmfloorsector;
-	thing->ceilingpic = tmceilingpic;
-	thing->ceilingsector = tmceilingsector;
+	bool isgood = P_CheckPosition (thing, thing->x, thing->y, tm);
+	thing->floorz = tm.floorz;
+	thing->ceilingz = tm.ceilingz;
+	thing->dropoffz = tm.dropoffz;		// killough 11/98: remember dropoffs
+	thing->floorpic = tm.floorpic;
+	thing->floorsector = tm.floorsector;
+	thing->ceilingpic = tm.ceilingpic;
+	thing->ceilingsector = tm.ceilingsector;
 
 	// restore the PASSMOBJ flag but leave the other flags alone.
 	thing->flags2 = (thing->flags2 & ~MF2_PASSMOBJ) | flags2;
@@ -3676,7 +3658,7 @@ void P_FindBelowIntersectors (AActor *actor)
 		{ // [RH] Corpses and specials don't block moves
 			continue;
 		}
-		if (thing == tmthing)
+		if (thing == actor)
 		{ // Don't clip against self
 			continue;
 		}

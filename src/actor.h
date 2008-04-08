@@ -399,6 +399,7 @@ inline T *GetDefault ()
 	return (T *)(RUNTIME_CLASS(T)->Defaults);
 }
 
+struct line_t;
 struct secplane_t;
 struct FStrifeDialogueNode;
 
@@ -685,6 +686,10 @@ public:
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	fixed_t			gravity;		// [GRB] Gravity factor
 	int 			FastChaseStrafeCount;
+
+	AActor			*BlockingMobj;	// Actor that blocked the last move
+	line_t			*BlockingLine;	// Line that blocked the last move
+
 	// [KS] These temporary-use properties are needed to allow A_LookEx to pass its parameters to
 	// LookFor*InBlock in P_BlockmapSearch so that friendly enemies and monsters that look for
 	// other monsters can find their targets properly. If there's a cleaner way of doing this,

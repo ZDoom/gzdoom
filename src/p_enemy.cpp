@@ -445,15 +445,17 @@ bool P_Move (AActor *actor)
 			}
 		}
 	}
+	FCheckPosition tm;
+
 	try_ok = true;
 	for(int i=1; i < steps; i++)
 	{
-		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), false);
+		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), false, false, tm);
 		if (!try_ok) break;
 	}
 
 	// killough 3/15/98: don't jump over dropoffs:
-	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, false);
+	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, false, false, tm);
 
 	// [GrafZahl] Interpolating monster movement as it is done here just looks bad
 	// so make it switchable!
@@ -475,11 +477,11 @@ bool P_Move (AActor *actor)
 
 	if (!try_ok)
 	{
-		if ((actor->flags & MF_FLOAT) && floatok)
+		if ((actor->flags & MF_FLOAT) && tm.floatok)
 		{ // must adjust height
 			fixed_t savedz = actor->z;
 
-			if (actor->z < tmfloorz)
+			if (actor->z < tm.floorz)
 				actor->z += actor->FloatSpeed;
 			else
 				actor->z -= actor->FloatSpeed;
@@ -524,7 +526,7 @@ bool P_Move (AActor *actor)
 			if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (ld, actor, 0, SPAC_USE)) ||
 				((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_PUSH)))
 			{
-				good |= ld == BlockingLine ? 1 : 2;
+				good |= ld == actor->BlockingLine ? 1 : 2;
 			}
 		}
 		return good && ((pr_opendoor() >= 203) ^ (good & 1));

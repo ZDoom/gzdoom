@@ -112,7 +112,7 @@ bool FCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 				(P_TestActivateLine (ld, actor, 0, SPAC_USE) ||
 				 P_TestActivateLine (ld, actor, 0, SPAC_PUSH)))
 			{
-				good |= ld == BlockingLine ? 1 : 2;
+				good |= ld == actor->BlockingLine ? 1 : 2;
 			}
 		}
 		if (good && ((pr_botopendoor() >= 203) ^ (good & 1)))
@@ -277,27 +277,29 @@ void FCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
 //
 bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cmd)
 {
-    if (!SafeCheckPosition (thing, x, y))
+	FCheckPosition tm;
+
+    if (!SafeCheckPosition (thing, x, y, tm))
         return false;           // solid wall or thing
 
     if (!(thing->flags & MF_NOCLIP) )
     {
 		fixed_t maxstep = thing->MaxStepHeight;
-        if (tmceilingz - tmfloorz < thing->height)
+        if (tm.ceilingz - tm.floorz < thing->height)
             return false;       // doesn't fit
 
 		if (!(thing->flags&MF_MISSILE))
 		{
-			if(tmfloorz > (thing->Sector->floorplane.ZatPoint (x, y)+MAXMOVEHEIGHT)) //Too high wall
+			if(tm.floorz > (thing->Sector->floorplane.ZatPoint (x, y)+MAXMOVEHEIGHT)) //Too high wall
 				return false;
 
 			//Jumpable
-			if(tmfloorz>(thing->Sector->floorplane.ZatPoint (x, y)+thing->MaxStepHeight))
+			if(tm.floorz>(thing->Sector->floorplane.ZatPoint (x, y)+thing->MaxStepHeight))
 				cmd->ucmd.buttons |= BT_JUMP;
 
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             tmceilingz - thing->z < thing->height)
+	             tm.ceilingz - thing->z < thing->height)
 	            return false;       // mobj must lower itself to fit
 
 	        // jump out of water
@@ -305,12 +307,12 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 //	            maxstep=37*FRACUNIT;
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             (tmfloorz - thing->z > maxstep ) )
+	             (tm.floorz - thing->z > maxstep ) )
 	            return false;       // too big a step up
 
 
 			if ( !(thing->flags&(MF_DROPOFF|MF_FLOAT))
-			&& tmfloorz - tmdropoffz > thing->MaxDropOffHeight )
+			&& tm.floorz - tm.dropoffz > thing->MaxDropOffHeight )
 				return false;       // don't stand over a dropoff
 
 		}

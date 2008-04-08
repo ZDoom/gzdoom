@@ -48,7 +48,7 @@ enum
 	 MULTIPLY ,
 	 DIVIDE   ,
 	 NUM      ,
-	 SYMNUM   ,
+	 FLOATVAL ,
 	 LPAREN   ,
 	 RPAREN   ,
 	 SYM      ,
@@ -65,6 +65,7 @@ enum
 	 RSHASSIGN,
 	 STRING   ,
 	 INCLUDE  ,
+	 DEFINE   ,
 };
 
 #define DEFINE_TOKEN_TRANS(prefix) \
@@ -78,7 +79,7 @@ enum
 	prefix##MULTIPLY, \
 	prefix##DIVIDE, \
 	prefix##NUM, \
-	prefix##SYMNUM, \
+	prefix##FLOATVAL, \
 	prefix##LPAREN, \
 	prefix##RPAREN, \
 	prefix##SYM, \
@@ -95,6 +96,7 @@ enum
 	prefix##RSHASSIGN, \
 	prefix##STRING, \
 	prefix##INCLUDE, \
+	prefix##DEFINE, \
 	 };
 
 
@@ -107,6 +109,7 @@ struct FParseSymbol
 union FParseToken
 {
 	int val;
+	double fval;
 	char sym[80];
 	char string[80];
 	FParseSymbol *symval;

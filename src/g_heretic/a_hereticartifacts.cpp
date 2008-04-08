@@ -40,10 +40,6 @@ bool AArtiTomeOfPower::Use (bool pickup)
 		}
 		else
 		{ // Succeeded
-			Owner->player->morphTics = 0;
-			Owner->player->MorphedPlayerClass = 0;
-			Owner->player->MorphStyle = 0;
-			Owner->player->MorphExitFlash = NULL;
 			S_Sound (Owner, CHAN_VOICE, "*evillaugh", 1, ATTN_IDLE);
 		}
 		return true;

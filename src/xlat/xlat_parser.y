@@ -30,11 +30,10 @@ external_declaration ::= NOP.
 
 %type exp {int}
 exp(A) ::= NUM(B).					{ A = B.val; }
-exp(A) ::= SYMNUM(B).				{ A = B.symval->Value; }
 exp(A) ::= exp(B) PLUS exp(C).		{ A = B + C; }
 exp(A) ::= exp(B) MINUS exp(C).		{ A = B - C; }
 exp(A) ::= exp(B) MULTIPLY exp(C).	{ A = B * C; }
-exp(A) ::= exp(B) DIVIDE exp(C).	{ A = B / C; }
+exp(A) ::= exp(B) DIVIDE exp(C).	{ if (C != 0) A = B / C; else context->PrintError("Division by Zero"); }
 exp(A) ::= exp(B) OR exp(C).		{ A = B | C; }
 exp(A) ::= exp(B) AND exp(C).		{ A = B & C; }
 exp(A) ::= exp(B) XOR exp(C).		{ A = B ^ C; }

@@ -1,4 +1,10 @@
 April 8, 2008 (Changes by Graf Zahl)
+- Removed some unnecessary morphing code.
+- Fixed some bugs in the HIRESTEX parser.
+- Added floating point support and #include and #define tokens to 
+  FParseContext  Not used yet.
+- replaced the value scanning code in FParseContext::GetToken with
+  calls to strtol.
 - Changed XlatParseContext::FindToken to do a binary search over the
   valid token names.
 - Fixed: The check arrays for BlockThingsIterators were not properly

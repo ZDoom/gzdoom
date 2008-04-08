@@ -61,12 +61,7 @@ bool AArtiTeleport::Use (bool pickup)
 	P_Teleport (Owner, destX, destY, ONFLOORZ, destAngle, true, true, false);
 	if (Owner->player->morphTics && (Owner->player->MorphStyle & MORPH_UNDOBYCHAOSDEVICE))
 	{ // Teleporting away will undo any morph effects (pig)
-		if (P_UndoPlayerMorph (Owner->player))
-		{
-			Owner->player->MorphedPlayerClass = 0;
-			Owner->player->MorphStyle = 0;
-			Owner->player->MorphExitFlash = NULL;
-		}
+		P_UndoPlayerMorph (Owner->player);
 	}
 	// The game check is not necessary because only Heretic defines *evillaugh by default
 	// However if it is there no other game can use it if it wants to.

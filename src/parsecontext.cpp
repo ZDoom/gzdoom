@@ -103,41 +103,29 @@ loop:
 			c = *sourcep++;
 			if (c == 'x' || c == 'X')
 			{
-				for (;;)
-				{
-					c = *sourcep++;
-					if (isdigit (c))
-					{
-						buildup = (buildup<<4) + c - '0';
-					}
-					else if (c >= 'a' && c <= 'f')
-					{
-						buildup = (buildup<<4) + c - 'a' + 10;
-					}
-					else if (c >= 'A' && c <= 'F')
-					{
-						buildup = (buildup<<4) + c - 'A' + 10;
-					}
-					else
-					{
-						sourcep--;
-						yylval->val = buildup;
-						return TokenTrans[NUM];
-					}
-				}
+				yylval->val = (int)strtol(sourcep, &sourcep, 16);
+				return TokenTrans[NUM];
 			}
 			else
 			{
 				sourcep--;
 			}
 		}
-		while (isdigit (c = *sourcep++))
-		{
-			buildup = buildup*10 + c - '0';
-		}
+		char *endp;
+
 		sourcep--;
-		yylval->val = buildup;
-		return TokenTrans[NUM];
+		yylval->val = (int)strtol(sourcep, &endp, 10);
+		if (*endp == '.')
+		{
+			// It's a float
+			yylval->fval = strtod(sourcep, &sourcep);
+			return TokenTrans[FLOATVAL];
+		}
+		else
+		{
+			sourcep = endp;
+			return TokenTrans[NUM];
+		}
 	}
 	if (isalpha (c))
 	{
@@ -162,7 +150,8 @@ loop:
 		}
 		if (FindSym (token, &yylval->symval))
 		{
-			return TokenTrans[SYMNUM];
+			yylval->val = yylval->symval->Value;
+			return TokenTrans[NUM];
 		}
 		if ((yylval->val = P_FindLineSpecial(token)) != 0)
 		{
@@ -173,7 +162,7 @@ loop:
 	}
 	if (c == '/')
 	{
-		c = *sourcep++;;
+		c = *sourcep++;
 		if (c == '*')
 		{
 			for (;;)
@@ -257,6 +246,19 @@ loop:
 		}
 		c--;
 		return 0;
+	}
+	if (c == '#')
+	{
+		if (!strnicmp(sourcep, "include", 7))
+		{
+			sourcep+=7;
+			return TokenTrans[INCLUDE];
+		}
+		if (!strnicmp(sourcep, "define", 6))
+		{
+			sourcep+=6;
+			return TokenTrans[DEFINE];
+		}
 	}
 	switch (c)
 	{

@@ -45,6 +45,7 @@
 #include "sc_man.h"
 #include "gi.h"
 #include "st_start.h"
+#include "cmdlib.h"
 
 extern void R_InitBuildTiles();
 
@@ -521,6 +522,8 @@ void FTextureManager::LoadHiresTex(int wadnum)
 					else if (sc.Compare("sprite")) type=FTexture::TEX_Sprite, mode=0;
 					else type = FTexture::TEX_Any, mode = 0;
 
+					if (type != FTexture::TEX_Any) sc.MustGetString();
+
 					sc.String[8]=0;
 
 					tlist.Clear();
@@ -577,7 +580,7 @@ void FTextureManager::LoadHiresTex(int wadnum)
 				else if (sc.Compare("define")) // define a new "fake" texture
 				{
 					sc.GetString();
-					memcpy(src, sc.String, 8);
+					memcpy(src, ExtractFileBase(sc.String, false), 8);
 
 					int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
 

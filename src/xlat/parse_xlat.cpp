@@ -51,6 +51,7 @@ enum
 {
 	XLAT_INCLUDE=128,
 	XLAT_STRING,
+	XLAT_FLOATVAL,	// floats are not used by the grammar
 };
 
 DEFINE_TOKEN_TRANS(XLAT_)

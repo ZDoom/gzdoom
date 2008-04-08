@@ -10,6 +10,7 @@ ACTOR EggFX : MorphProjectile
 	Speed 18
 	MorphProjectile.PlayerClass "ChickenPlayer"
 	MorphProjectile.MonsterClass "Chicken"
+	MorphProjectile.MorphStyle MRF_UNDOBYTOMEOFPOWER
 	States
 	{
 	Spawn:
@@ -63,7 +64,8 @@ ACTOR PorkFX : MorphProjectile
 	Speed 18
 	MorphProjectile.PlayerClass "PigPlayer"
 	MorphProjectile.MonsterClass "Pig"
-	States
+	MorphProjectile.MorphStyle MRF_UNDOBYTOMEOFPOWER|MRF_UNDOBYCHAOSDEVICE
+		States
 	{
 	Spawn:
 		PRKM ABCDE 4

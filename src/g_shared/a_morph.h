@@ -17,7 +17,7 @@ enum
 	MORPH_UNDOBYCHAOSDEVICE = 8,
 };
 
-class PClass;
+struct PClass;
 class AActor;
 class player_s;
 

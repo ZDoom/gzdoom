@@ -749,10 +749,10 @@ static bool CheckFloatParm(FScanner &sc)
 static int ParseMorphStyle (FScanner &sc)
 {
 	static const char * morphstyles[]={
-		"MRF_ADDSTAMINA", "MRF_FULLHEALTH", NULL};
+		"MRF_ADDSTAMINA", "MRF_FULLHEALTH", "MRF_UNDOBYTOMEOFPOWER", "MRF_UNDOBYCHAOSDEVICE", NULL};
 
 	static const int morphstyle_values[]={
-		MORPH_ADDSTAMINA, MORPH_FULLHEALTH};
+		MORPH_ADDSTAMINA, MORPH_FULLHEALTH, MORPH_UNDOBYTOMEOFPOWER, MORPH_UNDOBYCHAOSDEVICE};
 
 	// May be given flags by number...
 	if (sc.CheckNumber())
@@ -762,6 +762,8 @@ static int ParseMorphStyle (FScanner &sc)
 	}
 
 	// ... else should be flags by name.
+	// NOTE: Later this should be removed and a normal expression used.
+	// The current DECORATE parser can't handle this though.
 	bool gotparen = sc.CheckString("(");
 	int style = 0;
 	do
@@ -2679,7 +2681,7 @@ static const ActorProps props[] =
 	{ "morphprojectile.duration",		(apf)EggFXDuration,				RUNTIME_CLASS(AMorphProjectile) },
  	{ "morphprojectile.monsterclass",	(apf)EggFXMonsterClass,			RUNTIME_CLASS(AMorphProjectile) },
 	{ "morphprojectile.morphflash",		(apf)EggFXMorphFlash,			RUNTIME_CLASS(AMorphProjectile) },
-//	{ "morphprojectile.morphstyle",		(apf)EggFXMorphStyle,			RUNTIME_CLASS(AMorphProjectile) },
+	{ "morphprojectile.morphstyle",		(apf)EggFXMorphStyle,			RUNTIME_CLASS(AMorphProjectile) },
  	{ "morphprojectile.playerclass",	(apf)EggFXPlayerClass,			RUNTIME_CLASS(AMorphProjectile) },
 	{ "morphprojectile.unmorphflash",	(apf)EggFXUnMorphFlash,			RUNTIME_CLASS(AMorphProjectile) },
 	{ "obituary",						ActorObituary,					RUNTIME_CLASS(AActor) },
@@ -2708,7 +2710,7 @@ static const ActorProps props[] =
 	{ "player.viewheight",				(apf)PlayerViewHeight,			RUNTIME_CLASS(APlayerPawn) },
 	{ "poisondamage",					ActorPoisonDamage,				RUNTIME_CLASS(AActor) },
 	{ "powermorph.morphflash",			(apf)PowerMorphMorphFlash,		RUNTIME_CLASS(APowerMorph) },
-	//{ "powermorph.morphstyle",			(apf)PowerMorphMorphStyle,		RUNTIME_CLASS(APowerMorph) },
+	{ "powermorph.morphstyle",			(apf)PowerMorphMorphStyle,		RUNTIME_CLASS(APowerMorph) },
 	{ "powermorph.playerclass",			(apf)PowerMorphPlayerClass,		RUNTIME_CLASS(APowerMorph) },
 	{ "powermorph.unmorphflash",		(apf)PowerMorphUnMorphFlash,	RUNTIME_CLASS(APowerMorph) },
 	{ "powerup.color",					(apf)PowerupColor,				RUNTIME_CLASS(APowerupGiver) },

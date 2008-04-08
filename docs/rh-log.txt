@@ -1,4 +1,10 @@
 April 8, 2008 (Changes by Graf Zahl)
+- Removed the check for Heretic when playing *evillaugh when using the 
+  Chaos Device. This sound is not defined by the other games so it won't
+  play by default.
+- Added MORPH_UNDOMORPHBYTOMEOFPOWER and MORPH_UNDOMORPHBYCHAOSDEVICE flags
+  for the morph style so that the special behavior of these two items
+  can be switched on and off.
 - Added Martin Howe's morph system enhancement.
 
 April 7, 2008 (Changes by Graf Zahl)

@@ -431,18 +431,23 @@ const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickund
 		return "";
 	}
 	PClass *oldclass = player->mo->GetClass();
+
+	// Set the standard morph style for the current game
+	int style = MORPH_UNDOBYTOMEOFPOWER;
+	if (gameinfo.gametype == GAME_Hexen) style |= MORPH_UNDOBYCHAOSDEVICE;
+
 	if (player->morphTics)
 	{
 		if (P_UndoPlayerMorph (player))
 		{
-			if (!quickundo && oldclass != morphclass && P_MorphPlayer (player, morphclass))
+			if (!quickundo && oldclass != morphclass && P_MorphPlayer (player, morphclass, 0, style))
 			{
 				return "You feel even stranger.";
 			}
 			return "You feel like yourself again.";
 		}
 	}
-	else if (P_MorphPlayer (player, morphclass))
+	else if (P_MorphPlayer (player, morphclass, 0, style))
 	{
 		return "You feel strange...";
 	}

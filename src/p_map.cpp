@@ -95,14 +95,6 @@ int				tmceilingpic;
 sector_t		*tmceilingsector;
 bool			tmtouchmidtex;
 
-fixed_t			tmffloorz;
-fixed_t			tmfceilingz;
-fixed_t			tmfdropoffz;
-fixed_t			tmffloorpic;
-sector_t		*tmffloorsector;
-fixed_t			tmfceilingpic;
-sector_t		*tmfceilingsector;
-bool			tmftouchmidtex;
 
 //Added by MC: So bot will know what kind of sector it's entering.
 sector_t*		tmsector;
@@ -123,9 +115,6 @@ AActor *BlockingMobj;
 // Temporary holder for thing_sectorlist threads
 msecnode_t* sector_list = NULL;		// phares 3/16/98
 
-extern sector_t *openbottomsec;
-extern sector_t *opentopsec;
-
 bool DoRipping;
 AActor *LastRipped;
 
@@ -135,7 +124,7 @@ AActor *LastRipped;
 //
 //==========================================================================
 
-static bool PIT_FindFloorCeiling (line_t *ld, AActor *tmfthing, const FBoundingBox &box, fixed_t x, fixed_t y)
+static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPosition &tmf)
 {
 	if (box.Right() <= ld->bbox[BOXLEFT]
 		|| box.Left() >= ld->bbox[BOXRIGHT]
@@ -162,48 +151,46 @@ static bool PIT_FindFloorCeiling (line_t *ld, AActor *tmfthing, const FBoundingB
 		 (ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
 		 (ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
 	{
-		P_LineOpening (open, tmfthing, ld, sx=x, sy=y, x, y);
+		P_LineOpening (open, tmf.thing, ld, sx=tmf.x, sy=tmf.y, tmf.x, tmf.y);
 	}
 	else
 	{ // Find the point on the line closest to the actor's center, and use
 	  // that to calculate openings
 		float dx = (float)ld->dx;
 		float dy = (float)ld->dy;
-		fixed_t r = (fixed_t)(((float)(x - ld->v1->x) * dx +
-				 			   (float)(y - ld->v1->y) * dy) /
+		fixed_t r = (fixed_t)(((float)(tmf.x - ld->v1->x) * dx +
+				 			   (float)(tmf.y - ld->v1->y) * dy) /
 							  (dx*dx + dy*dy) * 16777216.f);
 		if (r <= 0)
 		{
-			P_LineOpening (open, tmfthing, ld, sx=ld->v1->x, sy=ld->v1->y, x, y);
+			P_LineOpening (open, tmf.thing, ld, sx=ld->v1->x, sy=ld->v1->y, tmf.x, tmf.y);
 		}
 		else if (r >= (1<<24))
 		{
-			P_LineOpening (open, tmfthing, ld, sx=ld->v2->x, sy=ld->v2->y, tmfthing->x, tmfthing->y);
+			P_LineOpening (open, tmf.thing, ld, sx=ld->v2->x, sy=ld->v2->y, tmf.thing->x, tmf.thing->y);
 		}
 		else
 		{
-			P_LineOpening (open, tmfthing, ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
-				sy=ld->v1->y + MulScale24 (r, ld->dy), x, y);
+			P_LineOpening (open, tmf.thing, ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
+				sy=ld->v1->y + MulScale24 (r, ld->dy), tmf.x, tmf.y);
 		}
 	}
 
 	// adjust floor / ceiling heights
-	if (open.top < tmfceilingz)
+	if (open.top < tmf.ceilingz)
 	{
-		tmfceilingz = open.top;
-		BlockingLine = ld;
+		tmf.ceilingz = open.top;
 	}
 
-	if (open.bottom > tmffloorz)
+	if (open.bottom > tmf.floorz)
 	{
-		tmffloorz = open.bottom;
-		tmffloorsector = open.bottomsec;
-		tmftouchmidtex = open.touchmidtex;
-		BlockingLine = ld;
+		tmf.floorz = open.bottom;
+		tmf.floorsector = open.bottomsec;
+		tmf.touchmidtex = open.touchmidtex;
 	}
 
-	if (open.lowfloor < tmfdropoffz)
-		tmfdropoffz = open.lowfloor;
+	if (open.lowfloor < tmf.dropoffz)
+		tmf.dropoffz = open.lowfloor;
 	
 	return true;
 }
@@ -216,21 +203,22 @@ static bool PIT_FindFloorCeiling (line_t *ld, AActor *tmfthing, const FBoundingB
 
 void P_FindFloorCeiling (AActor *actor)
 {
-	fixed_t x, y;
 	sector_t *sec;
+	FCheckPosition tmf;
 
-	x = actor->x;
-	y = actor->y;
+	tmf.x = actor->x;
+	tmf.y = actor->y;
 
-	FBoundingBox box(x, y, actor->radius);
+	FBoundingBox box(tmf.x, tmf.y, actor->radius);
 
-	sec = P_PointInSector (x, y);
-	tmffloorz = tmfdropoffz = sec->floorplane.ZatPoint (x, y);
-	tmfceilingz = sec->ceilingplane.ZatPoint (x, y);
-	tmffloorpic = sec->floorpic;
-	tmffloorsector = sec;
-	tmfceilingpic = sec->ceilingpic;
-	tmfceilingsector = sec;
+	sec = P_PointInSector (tmf.x, tmf.y);
+	tmf.thing = actor;
+	tmf.floorz = tmf.dropoffz = sec->floorplane.ZatPoint (tmf.x, tmf.y);
+	tmf.ceilingz = sec->ceilingplane.ZatPoint (tmf.x, tmf.y);
+	tmf.floorpic = sec->floorpic;
+	tmf.floorsector = sec;
+	tmf.ceilingpic = sec->ceilingpic;
+	tmf.ceilingsector = sec;
 	validcount++;
 
 	FBlockLinesIterator it(box);
@@ -238,10 +226,18 @@ void P_FindFloorCeiling (AActor *actor)
 
 	while ((ld = it.Next()))
 	{
-		PIT_FindFloorCeiling(ld, actor, box, x, y);
+		PIT_FindFloorCeiling(ld, box, tmf);
 	}
 
-	if (tmftouchmidtex) tmfdropoffz = tmffloorz;
+	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
+
+	actor->floorz = tmf.floorz;
+	actor->dropoffz = tmf.dropoffz;
+	actor->ceilingz = tmf.ceilingz;
+	actor->floorpic = tmf.floorpic;
+	actor->floorsector = tmf.floorsector;
+	actor->ceilingpic = tmf.ceilingpic;
+	actor->ceilingsector = tmf.ceilingsector;
 }
 
 //
@@ -259,6 +255,7 @@ void P_FindFloorCeiling (AActor *actor)
 //		was being teleported between two non-overlapping height ranges.
 bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag)
 {
+	FCheckPosition tmf;
 	sector_t*		newsec;
 	
 	// kill anything occupying the position
@@ -268,12 +265,16 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	
 	// The base floor/ceiling is from the subsector that contains the point.
 	// Any contacted lines the step closer together will adjust them.
-	tmffloorz = tmfdropoffz = newsec->floorplane.ZatPoint (x, y);
-	tmfceilingz = newsec->ceilingplane.ZatPoint (x, y);
-	tmffloorpic = newsec->floorpic;
-	tmffloorsector = newsec;
-	tmfceilingpic = newsec->ceilingpic;
-	tmfceilingsector = newsec;
+	tmf.thing = thing;
+	tmf.x = x;
+	tmf.y = y;
+	tmf.z = z;
+	tmf.floorz = tmf.dropoffz = newsec->floorplane.ZatPoint (x, y);
+	tmf.ceilingz = newsec->ceilingplane.ZatPoint (x, y);
+	tmf.floorpic = newsec->floorpic;
+	tmf.floorsector = newsec;
+	tmf.ceilingpic = newsec->ceilingpic;
+	tmf.ceilingsector = newsec;
 					
 	spechit.Clear ();
 
@@ -285,18 +286,10 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 
 	while ((ld = it.Next()))
 	{
-		PIT_FindFloorCeiling(ld, thing, box, x, y);
+		PIT_FindFloorCeiling(ld, box, tmf);
 	}
 
-	if (tmftouchmidtex) tmfdropoffz = tmffloorz;
-
-	fixed_t savefloorz = tmffloorz;
-	fixed_t saveceilingz = tmfceilingz;
-	sector_t *savesector = tmffloorsector;
-	int savepic = tmffloorpic;
-	sector_t *savecsector = tmffloorsector;
-	int savecpic = tmffloorpic;
-	fixed_t savedropoff = tmfdropoffz;
+	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
 	FRadiusThingsIterator it2(x, y, thing->radius);
 	AActor *th;
@@ -335,13 +328,14 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 	
 	// the move is ok, so link the thing into its new position
 	thing->SetOrigin (x, y, z);
-	thing->floorz = savefloorz;
-	thing->ceilingz = saveceilingz;
-	thing->floorsector = savesector;
-	thing->floorpic = savepic;
-	thing->ceilingsector = savecsector;
-	thing->ceilingpic = savecpic;
-	thing->dropoffz = savedropoff;        // killough 11/98
+	thing->floorz = tmf.floorz;
+	thing->ceilingz = tmf.ceilingz;
+	thing->floorsector = tmf.floorsector;
+	thing->floorpic = tmf.floorpic;
+	thing->ceilingsector = tmf.ceilingsector;
+	thing->ceilingpic = tmf.ceilingpic;
+	thing->dropoffz = tmf.dropoffz;        // killough 11/98
+	BlockingLine = NULL;
 
 	if (thing->flags2 & MF2_FLOORCLIP)
 	{

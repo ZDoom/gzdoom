@@ -1,4 +1,11 @@
 April 8, 2008 (Changes by Graf Zahl)
+- Changed P_FindFloorCeiling so that it doesn't need global variables 
+  anymore. I also moved the code to set the calling actor's information
+  into this function because that's all it is used for. This also fixes
+  another bug:
+- AInventory::BecomePickup called P_FindFloorCeiling to get
+  proper position values for the item but never set the item's information
+  to the return value of this call.
 - Removed the check for Heretic when playing *evillaugh when using the 
   Chaos Device. This sound is not defined by the other games so it won't
   play by default.

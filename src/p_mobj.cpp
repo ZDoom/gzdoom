@@ -3252,13 +3252,6 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	else if (!(actor->flags5 & MF5_NOINTERACTION))
 	{
 		P_FindFloorCeiling (actor);
-		actor->floorz = tmffloorz;
-		actor->dropoffz = tmfdropoffz;
-		actor->ceilingz = tmfceilingz;
-		actor->floorpic = tmffloorpic;
-		actor->floorsector = tmffloorsector;
-		actor->ceilingpic = tmfceilingpic;
-		actor->ceilingsector = tmfceilingsector;
 	}
 	else
 	{

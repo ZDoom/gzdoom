@@ -34,7 +34,7 @@ bool AArtiTomeOfPower::Use (bool pickup)
 {
 	if (Owner->player->morphTics)
 	{ // Attempt to undo chicken
-		if (P_UndoPlayerMorph (Owner->player) == false)
+		if (!P_UndoPlayerMorph (Owner->player))
 		{ // Failed
 			P_DamageMobj (Owner, NULL, NULL, 1000000, NAME_Telefrag);
 		}
@@ -42,6 +42,8 @@ bool AArtiTomeOfPower::Use (bool pickup)
 		{ // Succeeded
 			Owner->player->morphTics = 0;
 			Owner->player->MorphedPlayerClass = 0;
+			Owner->player->MorphStyle = 0;
+			Owner->player->MorphExitFlash = NULL;
 			S_Sound (Owner, CHAN_VOICE, "*evillaugh", 1, ATTN_IDLE);
 		}
 		return true;

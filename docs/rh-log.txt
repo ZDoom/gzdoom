@@ -1,3 +1,6 @@
+April 8, 2008 (Changes by Graf Zahl)
+- Added Martin Howe's morph system enhancement.
+
 April 7, 2008 (Changes by Graf Zahl)
 - Removed PT_EARLYOUT from P_PathTraverse because it wasn't used anywhere.
 - Rewrote BlockThingsIterator code not to use callbacks anymore.

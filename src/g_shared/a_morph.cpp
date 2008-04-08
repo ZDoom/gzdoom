@@ -9,8 +9,7 @@
 #include "m_random.h"
 #include "a_sharedglobal.h"
 #include "sbar.h"
-
-#define MORPHTICS (40*TICRATE)
+#include "a_morph.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 
@@ -22,7 +21,7 @@ static FRandom pr_morphmonst ("MorphMonster");
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphPlayer (player_t *p, const PClass *spawntype)
+bool P_MorphPlayer (player_t *p, const PClass *spawntype, int duration, int style, const PClass *enter_flash, const PClass *exit_flash)
 {
 	AInventory *item;
 	APlayerPawn *morphed;
@@ -77,12 +76,12 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 	morphed->flags  |= actor->flags & (MF_SHADOW|MF_NOGRAVITY);
 	morphed->flags2 |= actor->flags2 & MF2_FLY;
 	morphed->flags3 |= actor->flags3 & MF3_GHOST;
-	Spawn<ATeleportFog> (actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	actor->player = NULL;
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
 	actor->renderflags |= RF_INVISIBLE;
-	p->morphTics = MORPHTICS;
+	p->morphTics = (duration) ? duration : MORPHTICS;
 
 	// [MH] Used by SBARINFO to speed up face drawing
 	p->MorphedPlayerClass = 0;
@@ -94,7 +93,9 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype)
 			break;
 		}
 	}
-	
+
+	p->MorphStyle = style;
+	p->MorphExitFlash = (exit_flash) ? exit_flash : RUNTIME_CLASS(ATeleportFog);
 	p->health = morphed->health;
 	p->mo = morphed;
 	p->momx = p->momy = 0;
@@ -198,8 +199,12 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	mo->flags2 = (mo->flags2 & ~MF2_FLY) | (pmo->flags2 & MF2_FLY);
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
 
+	const PClass *exit_flash = player->MorphExitFlash;
+
 	player->morphTics = 0;
 	player->MorphedPlayerClass = 0;
+	player->MorphStyle = 0;
+	player->MorphExitFlash = NULL;
 	player->viewheight = mo->ViewHeight;
 	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
 	if (level2 != NULL)
@@ -246,8 +251,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	}
 
 	angle = mo->angle >> ANGLETOFINESHIFT;
-	Spawn<ATeleportFog> (pmo->x + 20*finecosine[angle],
-		pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	Spawn(exit_flash, pmo->x + 20*finecosine[angle], pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	beastweap = player->ReadyWeapon;
 	if (player->PremorphWeapon != NULL)
 	{
@@ -284,7 +288,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphMonster (AActor *actor, const PClass *spawntype)
+bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int style, const PClass *enter_flash, const PClass *exit_flash)
 {
 	AMorphedMonster *morphed;
 
@@ -304,7 +308,9 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype)
 	morphed->alpha = actor->alpha;
 	morphed->RenderStyle = actor->RenderStyle;
 
-	morphed->UnmorphTime = level.time + MORPHTICS + pr_morphmonst();
+	morphed->UnmorphTime = level.time + ((duration) ? duration : MORPHTICS) + pr_morphmonst();
+	morphed->MorphStyle = style;
+	morphed->MorphExitFlash = (exit_flash) ? exit_flash : RUNTIME_CLASS(ATeleportFog);
 	morphed->FlagsSave = actor->flags & ~MF_JUSTHIT;
 	//morphed->special = actor->special;
 	//memcpy (morphed->args, actor->args, sizeof(actor->args));
@@ -321,7 +327,7 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype)
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
 	actor->flags |= MF_UNMORPHED;
 	actor->renderflags |= RF_INVISIBLE;
-	Spawn<ATeleportFog> (actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	Spawn(((enter_flash) ? enter_flash : RUNTIME_CLASS(ATeleportFog)), actor->x, actor->y, actor->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	return true;
 }
 
@@ -375,8 +381,9 @@ bool P_UpdateMorphedMonster (AMorphedMonster *beast)
 	actor->AddToHash ();
 	beast->UnmorphedMe = NULL;
 	DObject::StaticPointerSubstitution (beast, actor);
+	const PClass *exit_flash = beast->MorphExitFlash;
 	beast->Destroy ();
-	Spawn<ATeleportFog> (beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	Spawn(exit_flash, beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	return true;
 }
 
@@ -390,13 +397,17 @@ END_DEFAULTS
 
 int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 {
+	const PClass *morph_flash = PClass::FindClass (MorphFlash);
+	const PClass *unmorph_flash = PClass::FindClass (UnMorphFlash);
 	if (target->player)
 	{
-		P_MorphPlayer (target->player, PClass::FindClass (PlayerClass));
+		const PClass *player_class = PClass::FindClass (PlayerClass);
+		P_MorphPlayer (target->player, player_class, Duration, MorphStyle, morph_flash, unmorph_flash);
 	}
 	else
 	{
-		P_MorphMonster (target, PClass::FindClass (MonsterClass));
+		const PClass *monster_class = PClass::FindClass (MonsterClass);
+		P_MorphMonster (target, monster_class, Duration, MorphStyle, morph_flash, unmorph_flash);
 	}
 	return -1;
 }
@@ -404,7 +415,7 @@ int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 void AMorphProjectile::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << PlayerClass << MonsterClass;
+	arc << PlayerClass << MonsterClass << Duration << MorphStyle << MorphFlash << UnMorphFlash;
 }
 
 
@@ -423,7 +434,7 @@ END_DEFAULTS
 void AMorphedMonster::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << UnmorphedMe << UnmorphTime << FlagsSave;
+	arc << UnmorphedMe << UnmorphTime << MorphStyle << MorphExitFlash << FlagsSave;
 }
 
 void AMorphedMonster::Destroy ()

@@ -27,11 +27,11 @@
 #include "r_local.h"
 #endif
 
+#include "a_morph.h"
+
 #include <stdlib.h>
 
 #define STEEPSLOPE		46341	// [RH] Minimum floorplane.c value for walking
-
-#define MAXMORPHHEALTH	30
 
 #define BONUSADD		6
 
@@ -61,7 +61,6 @@
 #define BASETHRESHOLD	100
 
 
-
 //
 // P_PSPR
 //
@@ -75,7 +74,6 @@ void P_DropWeapon (player_t* player);
 //
 void	P_FallingDamage (AActor *ent);
 void	P_PlayerThink (player_t *player);
-bool	P_UndoPlayerMorph (player_t *player, bool force=false);
 void	P_PredictPlayer (player_t *player);
 void	P_UnPredictPlayer ();
 
@@ -430,11 +428,8 @@ extern FBlockNode**		blocklinks; 	// for thing chains
 // P_INTER
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher);
-
 void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags=0);
-
 bool P_GiveBody (AActor *actor, int num);
-bool P_MorphPlayer (player_t *player, const PClass *morphClass);
 void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison);
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);
 

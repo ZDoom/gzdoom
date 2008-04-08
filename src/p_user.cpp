@@ -243,6 +243,8 @@ player_s::player_s()
   extralight(0),
   morphTics(0),
   MorphedPlayerClass(0),
+  MorphStyle(0),
+  MorphExitFlash(0),
   PremorphWeapon(0),
   chickenPeck(0),
   jumpTics(0),
@@ -2417,6 +2419,8 @@ void player_s::Serialize (FArchive &arc)
 		<< fixedcolormap
 		<< morphTics
 		<< MorphedPlayerClass
+		<< MorphStyle
+		<< MorphExitFlash
 		<< PremorphWeapon
 		<< chickenPeck
 		<< jumpTics

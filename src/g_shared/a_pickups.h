@@ -96,6 +96,7 @@ enum
 	IF_BIGPOWERUP		= 1<<12,	// Affected by RESPAWN_SUPER dmflag
 	IF_KEEPDEPLETED		= 1<<13,	// Items with this flag are retained even when they run out.
 	IF_IGNORESKILL		= 1<<14,	// Ignores any skill related multiplicators when giving this item.
+	IF_CREATECOPYMOVED	= 1<<15		// CreateCopy changed the owner (copy's Owner field holds new owner).
 };
 
 struct vissprite_t;
@@ -210,7 +211,7 @@ public:
 	int Kickback;
 	fixed_t YAdjust;						// For viewing the weapon fullscreen
 	WORD UpSound, ReadySound;				// Sounds when coming up and idle
-	const PClass *SisterWeaponType;		// Another weapon to pick up with this one
+	const PClass *SisterWeaponType;			// Another weapon to pick up with this one
 	const PClass *ProjectileType;			// Projectile used by primary attack
 	const PClass *AltProjectileType;		// Projectile used by alternate attack
 	int SelectionOrder;						// Lower-numbered weapons get picked first

@@ -16,6 +16,7 @@
 #include "m_random.h"
 #include "v_video.h"
 #include "templates.h"
+#include "a_morph.h"
 
 static FRandom pr_torch ("Torch");
 
@@ -287,10 +288,27 @@ bool APowerup::HandlePickup (AInventory *item)
 
 AInventory *APowerup::CreateCopy (AActor *other)
 {
+	// Get the effective effect time.
 	EffectTics = abs (EffectTics);
+	// Abuse the Owner field to tell the
+	// InitEffect method who started it;
+	// this should be cleared afterwards,
+	// as this powerup instance is not
+	// properly attached to anything yet.
 	Owner = other;
+	// Actually activate the powerup.
 	InitEffect ();
-	Owner = NULL;
+	// Clear the Owner field, unless it was
+	// changed by the activation, for example,
+	// if this instance is a morph powerup;
+	// the flag tells the caller that the
+	// ownership has changed so that they
+	// can properly handle the situation.
+	if (!(ItemFlags & IF_CREATECOPYMOVED))
+	{
+		Owner = NULL;
+	}
+	// All done.
 	return this;
 }
 
@@ -1704,3 +1722,73 @@ void APowerHighJump::EndEffect( )
 	}
 }
 
+// Morph powerup ------------------------------------------------------
+
+IMPLEMENT_STATELESS_ACTOR( APowerMorph, Any, -1, 0 )
+	PROP_Powerup_EffectTics( MORPHTICS )
+END_DEFAULTS
+
+//===========================================================================
+//
+// APowerMorph :: Serialize
+//
+//===========================================================================
+
+void APowerMorph::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << PlayerClass << MorphStyle << MorphFlash << UnMorphFlash;
+	arc << player;
+}
+
+//===========================================================================
+//
+// APowerMorph :: InitEffect
+//
+//===========================================================================
+
+void APowerMorph::InitEffect( )
+{
+	if (Owner != NULL && Owner->player != NULL && PlayerClass != NAME_None)
+	{
+		player_t *realplayer = Owner->player;	// Remember the identity of the player
+		const PClass *morph_flash = PClass::FindClass (MorphFlash);
+		const PClass *unmorph_flash = PClass::FindClass (UnMorphFlash);
+		const PClass *player_class = PClass::FindClass (PlayerClass);
+		if (P_MorphPlayer(realplayer, player_class, -1/*INDEFINITELY*/, MorphStyle, morph_flash, unmorph_flash))
+		{
+			Owner = realplayer->mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet
+			ItemFlags |= IF_CREATECOPYMOVED;	// Let the caller know the "real" owner has changed (to the morphed actor)
+			player = realplayer;				// Store the player identity (morphing clears the unmorphed actor's "player" field)
+		}
+	}
+}
+
+//===========================================================================
+//
+// APowerMorph :: EndEffect
+//
+//===========================================================================
+
+void APowerMorph::EndEffect( )
+{
+	if (Owner != NULL && player != NULL)
+	{
+		int savedMorphTics = player->morphTics;
+		P_UndoPlayerMorph (player);
+		if (player->morphTics /*failed*/)
+		{
+			// Transfer retry timeout
+			// to the powerup's timer.
+			EffectTics = player->morphTics;
+			// Reload negative morph tics;
+			// use actual value; it may
+			// be in use for animation.
+			player->morphTics = savedMorphTics;
+		}
+		else // unmorph succeeded
+		{
+			player = NULL;
+		}
+	}
+}

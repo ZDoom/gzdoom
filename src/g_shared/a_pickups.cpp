@@ -13,6 +13,7 @@
 #include "gstrings.h"
 #include "templates.h"
 #include "a_strifeglobal.h"
+#include "a_morph.h"
 
 static FRandom pr_restore ("RestorePos");
 
@@ -193,10 +194,25 @@ bool P_GiveBody (AActor *actor, int num)
 	if (player != NULL)
 	{
 		max = static_cast<APlayerPawn*>(actor)->GetMaxHealth() + player->stamina;
-		if (player->morphTics)
-		{
-			max = MAXMORPHHEALTH;
-		}
+		// [MH] First step in predictable generic morph effects
+ 		if (player->morphTics)
+ 		{
+			if (player->MorphStyle & MORPH_FULLHEALTH)
+			{
+				if (!(player->MorphStyle & MORPH_ADDSTAMINA))
+				{
+					max -= player->stamina;
+				}
+			}
+			else // old health behaviour
+			{
+				max = MAXMORPHHEALTH;
+				if (player->MorphStyle & MORPH_ADDSTAMINA)
+				{
+					max += player->stamina;
+				}
+			}
+ 		}
 		// [RH] For Strife: A negative body sets you up with a percentage
 		// of your full health.
 		if (num < 0)
@@ -1163,6 +1179,8 @@ void AInventory::GiveQuest (AActor *toucher)
 
 bool AInventory::TryPickup (AActor *toucher)
 {
+	AActor *newtoucher = toucher; // in case changed by the powerup
+
 	// If HandlePickup() returns true, it will set the IF_PICKUPGOOD flag
 	// to indicate that this item has been picked up. If the item cannot be
 	// picked up, then it leaves the flag cleared.
@@ -1209,7 +1227,15 @@ bool AInventory::TryPickup (AActor *toucher)
 		{
 			return false;
 		}
-		copy->AttachToOwner (toucher);
+		// Handle owner-changing powerups
+		if (copy->ItemFlags & IF_CREATECOPYMOVED)
+		{
+			newtoucher = copy->Owner;
+			copy->Owner = NULL;
+			copy->ItemFlags &= ~IF_CREATECOPYMOVED;
+		}
+		// Continue onwards with the rest
+		copy->AttachToOwner (newtoucher);
 		if (ItemFlags & IF_AUTOACTIVATE)
 		{
 			if (copy->Use (true))
@@ -1223,7 +1249,7 @@ bool AInventory::TryPickup (AActor *toucher)
 		}
 	}
 
-	GiveQuest(toucher);
+	GiveQuest(newtoucher);
 	return true;
 }
 
@@ -1380,9 +1406,24 @@ bool AHealth::TryPickup (AActor *other)
 		if (max == 0)
 		{
 			max = static_cast<APlayerPawn*>(other)->GetMaxHealth() + player->stamina;
-			if (player->morphTics)
-			{
-				max = MAXMORPHHEALTH;
+			// [MH] First step in predictable generic morph effects
+ 			if (player->morphTics)
+ 			{
+				if (player->MorphStyle & MORPH_FULLHEALTH)
+				{
+					if (!(player->MorphStyle & MORPH_ADDSTAMINA))
+					{
+						max -= player->stamina;
+					}
+				}
+				else // old health behaviour
+				{
+					max = MAXMORPHHEALTH;
+					if (player->MorphStyle & MORPH_ADDSTAMINA)
+					{
+						max += player->stamina;
+					}
+				}
 			}
 		}
 		if (player->health >= max)

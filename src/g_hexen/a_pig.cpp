@@ -163,7 +163,7 @@ AT_GAME_SET(PigPlayer)
 
 void APigPlayer::MorphPlayerThink ()
 {
-	if (player->morphTics&15)
+	if (player->morphTics & 15)
 	{
 		return;
 	}

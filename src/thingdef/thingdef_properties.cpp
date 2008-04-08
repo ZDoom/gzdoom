@@ -69,6 +69,7 @@
 #include "thingdef.h"
 #include "a_sharedglobal.h"
 #include "r_translate.h"
+#include "a_morph.h"
 
 //==========================================================================
 //
@@ -742,6 +743,39 @@ static bool CheckFloatParm(FScanner &sc)
 	{
 		return sc.CheckFloat();
 	}
+}
+
+// [MH]
+static int ParseMorphStyle (FScanner &sc)
+{
+	static const char * morphstyles[]={
+		"MRF_ADDSTAMINA", "MRF_FULLHEALTH", NULL};
+
+	static const int morphstyle_values[]={
+		MORPH_ADDSTAMINA, MORPH_FULLHEALTH};
+
+	// May be given flags by number...
+	if (sc.CheckNumber())
+	{
+		sc.MustGetNumber();
+		return sc.Number;
+	}
+
+	// ... else should be flags by name.
+	bool gotparen = sc.CheckString("(");
+	int style = 0;
+	do
+	{
+		sc.MustGetString();
+		style |= morphstyle_values[sc.MustMatchString(morphstyles)];
+	}
+	while (sc.CheckString("|"));
+	if (gotparen)
+	{
+		sc.MustGetStringName(")");
+	}
+
+	return style;
 }
 
 //==========================================================================
@@ -2451,6 +2485,15 @@ static void PlayerHexenArmor (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void EggFXPlayerClass (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+{
+	sc.MustGetString ();
+	defaults->PlayerClass = FName(sc.String);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void EggFXMonsterClass (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
 {
 	sc.MustGetString ();
@@ -2460,10 +2503,71 @@ static void EggFXMonsterClass (FScanner &sc, AMorphProjectile *defaults, Baggage
 //==========================================================================
 //
 //==========================================================================
-static void EggFXPlayerClass (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+static void EggFXDuration (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+{
+	sc.MustGetNumber ();
+	defaults->Duration = sc.Number;
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void EggFXMorphStyle (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+{
+	defaults->MorphStyle = ParseMorphStyle(sc);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void EggFXMorphFlash (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+{
+	sc.MustGetString ();
+	defaults->MorphFlash = FName(sc.String);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void EggFXUnMorphFlash (FScanner &sc, AMorphProjectile *defaults, Baggage &bag)
+{
+	sc.MustGetString ();
+	defaults->UnMorphFlash = FName(sc.String);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PowerMorphPlayerClass (FScanner &sc, APowerMorph *defaults, Baggage &bag)
 {
 	sc.MustGetString ();
 	defaults->PlayerClass = FName(sc.String);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PowerMorphMorphStyle (FScanner &sc, APowerMorph *defaults, Baggage &bag)
+{
+	defaults->MorphStyle = ParseMorphStyle(sc);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PowerMorphMorphFlash (FScanner &sc, APowerMorph *defaults, Baggage &bag)
+{
+	sc.MustGetString ();
+	defaults->UnMorphFlash = FName(sc.String);
+}
+
+//==========================================================================
+//
+//==========================================================================
+static void PowerMorphUnMorphFlash (FScanner &sc, APowerMorph *defaults, Baggage &bag)
+{
+	sc.MustGetString ();
+	defaults->UnMorphFlash = FName(sc.String);
 }
 
 //==========================================================================
@@ -2501,150 +2605,158 @@ static const ActorProps *APropSearch (const char *str, const ActorProps *props, 
 #define apf ActorPropFunction
 static const ActorProps props[] =
 {
-	{ "activesound",				ActorActiveSound,			RUNTIME_CLASS(AActor) },
-	{ "alpha",						ActorAlpha,					RUNTIME_CLASS(AActor) },
-	{ "ammo.backpackamount",		(apf)AmmoBackpackAmount,	RUNTIME_CLASS(AAmmo) },
-	{ "ammo.backpackmaxamount",		(apf)AmmoBackpackMaxAmount,	RUNTIME_CLASS(AAmmo) },
-	{ "ammo.dropamount",			(apf)AmmoDropAmount,		RUNTIME_CLASS(AAmmo) },
-	{ "args",						ActorArgs,					RUNTIME_CLASS(AActor) },
-	{ "armor.maxbonus",				(apf)ArmorMaxBonus,			RUNTIME_CLASS(ABasicArmorBonus) },
-	{ "armor.maxbonusmax",			(apf)ArmorMaxBonusMax,		RUNTIME_CLASS(ABasicArmorBonus) },
-	{ "armor.maxsaveamount",		(apf)ArmorMaxSaveAmount,	RUNTIME_CLASS(ABasicArmorBonus) },
-	{ "armor.saveamount",			(apf)ArmorSaveAmount,		RUNTIME_CLASS(AActor) },
-	{ "armor.savepercent",			(apf)ArmorSavePercent,		RUNTIME_CLASS(AActor) },
-	{ "attacksound",				ActorAttackSound,			RUNTIME_CLASS(AActor) },
-	{ "bloodcolor",					ActorBloodColor,			RUNTIME_CLASS(AActor) },
-	{ "bloodtype",					ActorBloodType,				RUNTIME_CLASS(AActor) },
-	{ "bouncecount",				ActorBounceCount,			RUNTIME_CLASS(AActor) },
-	{ "bouncefactor",				ActorBounceFactor,			RUNTIME_CLASS(AActor) },
-	{ "burn",						ActorBurnState,				RUNTIME_CLASS(AActor) },
-	{ "burnheight",					ActorBurnHeight,			RUNTIME_CLASS(AActor) },
-	{ "cameraheight",				ActorCameraheight,			RUNTIME_CLASS(AActor) },
-	{ "clearflags",					ActorClearFlags,			RUNTIME_CLASS(AActor) },
-	{ "conversationid",				ActorConversationID,		RUNTIME_CLASS(AActor) },
-	{ "crash",						ActorCrashState,			RUNTIME_CLASS(AActor) },
-	{ "crush",						ActorCrushState,			RUNTIME_CLASS(AActor) },
-	{ "damage",						ActorDamage,				RUNTIME_CLASS(AActor) },
-	{ "damagefactor",				ActorDamageFactor,			RUNTIME_CLASS(AActor) },
-	{ "damagetype",					ActorDamageType,			RUNTIME_CLASS(AActor) },
-	{ "death",						ActorDeathState,			RUNTIME_CLASS(AActor) },
-	{ "deathheight",				ActorDeathHeight,			RUNTIME_CLASS(AActor) },
-	{ "deathsound",					ActorDeathSound,			RUNTIME_CLASS(AActor) },
-	{ "decal",						ActorDecal,					RUNTIME_CLASS(AActor) },
-	{ "disintegrate",				ActorDisintegrateState,		RUNTIME_CLASS(AActor) },
-	{ "donthurtshooter",			ActorDontHurtShooter,		RUNTIME_CLASS(AActor) },
-	{ "dropitem",					ActorDropItem,				RUNTIME_CLASS(AActor) },
-	{ "explosiondamage",			ActorExplosionDamage,		RUNTIME_CLASS(AActor) },
-	{ "explosionradius",			ActorExplosionRadius,		RUNTIME_CLASS(AActor) },
-	{ "fastspeed",					ActorFastSpeed,				RUNTIME_CLASS(AActor) },
-	{ "floatspeed",					ActorFloatSpeed,			RUNTIME_CLASS(AActor) },
-	{ "game",						ActorGame,					RUNTIME_CLASS(AActor) },
-	{ "gibhealth",					ActorGibHealth,				RUNTIME_CLASS(AActor) },
-	{ "gravity",					ActorGravity,				RUNTIME_CLASS(AActor) },
-	{ "heal",						ActorHealState,				RUNTIME_CLASS(AActor) },
-	{ "health",						ActorHealth,				RUNTIME_CLASS(AActor) },
-	{ "health.lowmessage",			(apf)HealthLowMessage,		RUNTIME_CLASS(AHealth) },
-	{ "height",						ActorHeight,				RUNTIME_CLASS(AActor) },
-	{ "hitobituary",				ActorHitObituary,			RUNTIME_CLASS(AActor) },
-	{ "howlsound",					ActorHowlSound,				RUNTIME_CLASS(AActor) },
-	{ "ice",						ActorIceState,				RUNTIME_CLASS(AActor) },
-	{ "inventory.amount",			(apf)InventoryAmount,		RUNTIME_CLASS(AInventory) },
-	{ "inventory.defmaxamount",		(apf)InventoryDefMaxAmount,	RUNTIME_CLASS(AInventory) },
-	{ "inventory.givequest",		(apf)InventoryGiveQuest,	RUNTIME_CLASS(AInventory) },
-	{ "inventory.icon",				(apf)InventoryIcon,			RUNTIME_CLASS(AInventory) },
-	{ "inventory.maxamount",		(apf)InventoryMaxAmount,	RUNTIME_CLASS(AInventory) },
-	{ "inventory.pickupflash",		(apf)InventoryPickupflash,	RUNTIME_CLASS(AInventory) },
-	{ "inventory.pickupmessage",	(apf)InventoryPickupmsg,	RUNTIME_CLASS(AInventory) },
-	{ "inventory.pickupsound",		(apf)InventoryPickupsound,	RUNTIME_CLASS(AInventory) },
-	{ "inventory.respawntics",		(apf)InventoryRespawntics,	RUNTIME_CLASS(AInventory) },
-	{ "inventory.usesound",			(apf)InventoryUsesound,		RUNTIME_CLASS(AInventory) },
-	{ "mass",						ActorMass,					RUNTIME_CLASS(AActor) },
-	{ "maxdropoffheight",			ActorMaxDropoffHeight,		RUNTIME_CLASS(AActor) },
-	{ "maxstepheight",				ActorMaxStepHeight,			RUNTIME_CLASS(AActor) },
-	{ "maxtargetrange",				ActorMaxTargetRange,		RUNTIME_CLASS(AActor) },
-	{ "melee",						ActorMeleeState,			RUNTIME_CLASS(AActor) },
-	{ "meleedamage",				ActorMeleeDamage,			RUNTIME_CLASS(AActor) },
-	{ "meleerange",					ActorMeleeRange,			RUNTIME_CLASS(AActor) },
-	{ "meleesound",					ActorMeleeSound,			RUNTIME_CLASS(AActor) },
-	{ "meleethreshold",				ActorMeleeThreshold,		RUNTIME_CLASS(AActor) },
-	{ "minmissilechance",			ActorMinMissileChance,		RUNTIME_CLASS(AActor) },
-	{ "missile",					ActorMissileState,			RUNTIME_CLASS(AActor) },
-	{ "missileheight",				ActorMissileHeight,			RUNTIME_CLASS(AActor) },
-	{ "missiletype",				ActorMissileType,			RUNTIME_CLASS(AActor) },
-	{ "monster",					ActorMonster,				RUNTIME_CLASS(AActor) },
-	{ "morphprojectile.monsterclass",(apf)EggFXMonsterClass,	RUNTIME_CLASS(AMorphProjectile) },
-	{ "morphprojectile.playerclass",(apf)EggFXPlayerClass,		RUNTIME_CLASS(AMorphProjectile) },
-	{ "obituary",					ActorObituary,				RUNTIME_CLASS(AActor) },
-	{ "pain",						ActorPainState,				RUNTIME_CLASS(AActor) },
-	{ "painchance",					ActorPainChance,			RUNTIME_CLASS(AActor) },
-	{ "painsound",					ActorPainSound,				RUNTIME_CLASS(AActor) },
-	{ "player.attackzoffset",		(apf)PlayerAttackZOffset,	RUNTIME_CLASS(APlayerPawn) },
-	{ "player.colorrange",			(apf)PlayerColorRange,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.crouchsprite",		(apf)PlayerCrouchSprite,	RUNTIME_CLASS(APlayerPawn) },
-	{ "player.damagescreencolor",	(apf)PlayerDmgScreenColor,	RUNTIME_CLASS(APlayerPawn) },
-	{ "player.displayname",			(apf)PlayerDisplayName,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.face",				(apf)PlayerFace,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.forwardmove",			(apf)PlayerForwardMove,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.healradiustype",		(apf)PlayerHealRadius,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.hexenarmor",			(apf)PlayerHexenArmor,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.invulnerabilitymode",	(apf)PlayerInvulMode,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.jumpz",				(apf)PlayerJumpZ,			RUNTIME_CLASS(APlayerPawn) },
-	{ "player.maxhealth",			(apf)PlayerMaxHealth,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.morphweapon",			(apf)PlayerMorphWeapon,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.runhealth",			(apf)PlayerRunHealth,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.scoreicon",			(apf)PlayerScoreIcon,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.sidemove",			(apf)PlayerSideMove,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.soundclass",			(apf)PlayerSoundClass,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.spawnclass",			(apf)PlayerSpawnClass,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.startitem",			(apf)PlayerStartItem,		RUNTIME_CLASS(APlayerPawn) },
-	{ "player.viewheight",			(apf)PlayerViewHeight,		RUNTIME_CLASS(APlayerPawn) },
-	{ "poisondamage",				ActorPoisonDamage,			RUNTIME_CLASS(AActor) },
-	{ "powerup.color",				(apf)PowerupColor,			RUNTIME_CLASS(APowerupGiver) },
-	{ "powerup.duration",			(apf)PowerupDuration,		RUNTIME_CLASS(APowerupGiver) },
-	{ "powerup.mode",				(apf)PowerupMode,			RUNTIME_CLASS(APowerupGiver) },
-	{ "powerup.type",				(apf)PowerupType,			RUNTIME_CLASS(APowerupGiver) },
-	{ "projectile",					ActorProjectile,			RUNTIME_CLASS(AActor) },
-	{ "puzzleitem.failmessage",		(apf)PuzzleitemFailMsg,		RUNTIME_CLASS(APuzzleItem) },
-	{ "puzzleitem.number",			(apf)PuzzleitemNumber,		RUNTIME_CLASS(APuzzleItem) },
-	{ "radius",						ActorRadius,				RUNTIME_CLASS(AActor) },
-	{ "radiusdamagefactor",			ActorRadiusDamageFactor,	RUNTIME_CLASS(AActor) },
-	{ "raise",						ActorRaiseState,			RUNTIME_CLASS(AActor) },
-	{ "reactiontime",				ActorReactionTime,			RUNTIME_CLASS(AActor) },
-	{ "renderstyle",				ActorRenderStyle,			RUNTIME_CLASS(AActor) },
-	{ "scale",						ActorScale,					RUNTIME_CLASS(AActor) },
-	{ "see",						ActorSeeState,				RUNTIME_CLASS(AActor) },
-	{ "seesound",					ActorSeeSound,				RUNTIME_CLASS(AActor) },
-	{ "skip_super",					ActorSkipSuper,				RUNTIME_CLASS(AActor) },
-	{ "spawn",						ActorSpawnState,			RUNTIME_CLASS(AActor) },
-	{ "spawnid",					ActorSpawnID,				RUNTIME_CLASS(AActor) },
-	{ "speed",						ActorSpeed,					RUNTIME_CLASS(AActor) },
-	{ "states",						ActorStates,				RUNTIME_CLASS(AActor) },
-	{ "stencilcolor",				ActorStencilColor,			RUNTIME_CLASS(AActor) },
-	{ "tag",						ActorTag,					RUNTIME_CLASS(AActor) },
-	{ "translation",				ActorTranslation,			RUNTIME_CLASS(AActor) },
-	{ "vspeed",						ActorVSpeed,				RUNTIME_CLASS(AActor) },
-	{ "weapon.ammogive",			(apf)WeaponAmmoGive1,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammogive1",			(apf)WeaponAmmoGive1,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammogive2",			(apf)WeaponAmmoGive2,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammotype",			(apf)WeaponAmmoType1,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammotype1",			(apf)WeaponAmmoType1,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammotype2",			(apf)WeaponAmmoType2,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammouse",				(apf)WeaponAmmoUse1,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammouse1",			(apf)WeaponAmmoUse1,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.ammouse2",			(apf)WeaponAmmoUse2,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.kickback",			(apf)WeaponKickback,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.readysound",			(apf)WeaponReadySound,		RUNTIME_CLASS(AWeapon) },
-	{ "weapon.selectionorder",		(apf)WeaponSelectionOrder,	RUNTIME_CLASS(AWeapon) },
-	{ "weapon.sisterweapon",		(apf)WeaponSisterWeapon,	RUNTIME_CLASS(AWeapon) },
-	{ "weapon.upsound",				(apf)WeaponUpSound,			RUNTIME_CLASS(AWeapon) },
-	{ "weapon.yadjust",				(apf)WeaponYAdjust,			RUNTIME_CLASS(AWeapon) },
-	{ "weaponpiece.number",			(apf)WPieceValue,			RUNTIME_CLASS(AWeaponPiece) },
-	{ "weaponpiece.weapon",			(apf)WPieceWeapon,			RUNTIME_CLASS(AWeaponPiece) },
-	{ "wound",						ActorWoundState,			RUNTIME_CLASS(AActor) },
-	{ "woundhealth",				ActorWoundHealth,			RUNTIME_CLASS(AActor) },
-	{ "xdeath",						ActorXDeathState,			RUNTIME_CLASS(AActor) },
-	{ "xscale",						ActorXScale,				RUNTIME_CLASS(AActor) },
-	{ "yscale",						ActorYScale,				RUNTIME_CLASS(AActor) },
+	{ "activesound",					ActorActiveSound,				RUNTIME_CLASS(AActor) },
+	{ "alpha",							ActorAlpha,						RUNTIME_CLASS(AActor) },
+	{ "ammo.backpackamount",			(apf)AmmoBackpackAmount,		RUNTIME_CLASS(AAmmo) },
+	{ "ammo.backpackmaxamount",			(apf)AmmoBackpackMaxAmount,		RUNTIME_CLASS(AAmmo) },
+	{ "ammo.dropamount",				(apf)AmmoDropAmount,			RUNTIME_CLASS(AAmmo) },
+	{ "args",							ActorArgs,						RUNTIME_CLASS(AActor) },
+	{ "armor.maxbonus",					(apf)ArmorMaxBonus,				RUNTIME_CLASS(ABasicArmorBonus) },
+	{ "armor.maxbonusmax",				(apf)ArmorMaxBonusMax,			RUNTIME_CLASS(ABasicArmorBonus) },
+	{ "armor.maxsaveamount",			(apf)ArmorMaxSaveAmount,		RUNTIME_CLASS(ABasicArmorBonus) },
+	{ "armor.saveamount",				(apf)ArmorSaveAmount,			RUNTIME_CLASS(AActor) },
+	{ "armor.savepercent",				(apf)ArmorSavePercent,			RUNTIME_CLASS(AActor) },
+	{ "attacksound",					ActorAttackSound,				RUNTIME_CLASS(AActor) },
+	{ "bloodcolor",						ActorBloodColor,				RUNTIME_CLASS(AActor) },
+	{ "bloodtype",						ActorBloodType,					RUNTIME_CLASS(AActor) },
+	{ "bouncecount",					ActorBounceCount,				RUNTIME_CLASS(AActor) },
+	{ "bouncefactor",					ActorBounceFactor,				RUNTIME_CLASS(AActor) },
+	{ "burn",							ActorBurnState,					RUNTIME_CLASS(AActor) },
+	{ "burnheight",						ActorBurnHeight,				RUNTIME_CLASS(AActor) },
+	{ "cameraheight",					ActorCameraheight,				RUNTIME_CLASS(AActor) },
+	{ "clearflags",						ActorClearFlags,				RUNTIME_CLASS(AActor) },
+	{ "conversationid",					ActorConversationID,			RUNTIME_CLASS(AActor) },
+	{ "crash",							ActorCrashState,				RUNTIME_CLASS(AActor) },
+	{ "crush",							ActorCrushState,				RUNTIME_CLASS(AActor) },
+	{ "damage",							ActorDamage,					RUNTIME_CLASS(AActor) },
+	{ "damagefactor",					ActorDamageFactor,				RUNTIME_CLASS(AActor) },
+	{ "damagetype",						ActorDamageType,				RUNTIME_CLASS(AActor) },
+	{ "death",							ActorDeathState,				RUNTIME_CLASS(AActor) },
+	{ "deathheight",					ActorDeathHeight,				RUNTIME_CLASS(AActor) },
+	{ "deathsound",						ActorDeathSound,				RUNTIME_CLASS(AActor) },
+	{ "decal",							ActorDecal,						RUNTIME_CLASS(AActor) },
+	{ "disintegrate",					ActorDisintegrateState,			RUNTIME_CLASS(AActor) },
+	{ "donthurtshooter",				ActorDontHurtShooter,			RUNTIME_CLASS(AActor) },
+	{ "dropitem",						ActorDropItem,					RUNTIME_CLASS(AActor) },
+	{ "explosiondamage",				ActorExplosionDamage,			RUNTIME_CLASS(AActor) },
+	{ "explosionradius",				ActorExplosionRadius,			RUNTIME_CLASS(AActor) },
+	{ "fastspeed",						ActorFastSpeed,					RUNTIME_CLASS(AActor) },
+	{ "floatspeed",						ActorFloatSpeed,				RUNTIME_CLASS(AActor) },
+	{ "game",							ActorGame,						RUNTIME_CLASS(AActor) },
+	{ "gibhealth",						ActorGibHealth,					RUNTIME_CLASS(AActor) },
+	{ "gravity",						ActorGravity,					RUNTIME_CLASS(AActor) },
+	{ "heal",							ActorHealState,					RUNTIME_CLASS(AActor) },
+	{ "health",							ActorHealth,					RUNTIME_CLASS(AActor) },
+	{ "health.lowmessage",				(apf)HealthLowMessage,			RUNTIME_CLASS(AHealth) },
+	{ "height",							ActorHeight,					RUNTIME_CLASS(AActor) },
+	{ "hitobituary",					ActorHitObituary,				RUNTIME_CLASS(AActor) },
+	{ "howlsound",						ActorHowlSound,					RUNTIME_CLASS(AActor) },
+	{ "ice",							ActorIceState,					RUNTIME_CLASS(AActor) },
+	{ "inventory.amount",				(apf)InventoryAmount,			RUNTIME_CLASS(AInventory) },
+	{ "inventory.defmaxamount",			(apf)InventoryDefMaxAmount,		RUNTIME_CLASS(AInventory) },
+	{ "inventory.givequest",			(apf)InventoryGiveQuest,		RUNTIME_CLASS(AInventory) },
+	{ "inventory.icon",					(apf)InventoryIcon,				RUNTIME_CLASS(AInventory) },
+	{ "inventory.maxamount",			(apf)InventoryMaxAmount,		RUNTIME_CLASS(AInventory) },
+	{ "inventory.pickupflash",			(apf)InventoryPickupflash,		RUNTIME_CLASS(AInventory) },
+	{ "inventory.pickupmessage",		(apf)InventoryPickupmsg,		RUNTIME_CLASS(AInventory) },
+	{ "inventory.pickupsound",			(apf)InventoryPickupsound,		RUNTIME_CLASS(AInventory) },
+	{ "inventory.respawntics",			(apf)InventoryRespawntics,		RUNTIME_CLASS(AInventory) },
+	{ "inventory.usesound",				(apf)InventoryUsesound,			RUNTIME_CLASS(AInventory) },
+	{ "mass",							ActorMass,						RUNTIME_CLASS(AActor) },
+	{ "maxdropoffheight",				ActorMaxDropoffHeight,			RUNTIME_CLASS(AActor) },
+	{ "maxstepheight",					ActorMaxStepHeight,				RUNTIME_CLASS(AActor) },
+	{ "maxtargetrange",					ActorMaxTargetRange,			RUNTIME_CLASS(AActor) },
+	{ "melee",							ActorMeleeState,				RUNTIME_CLASS(AActor) },
+	{ "meleedamage",					ActorMeleeDamage,				RUNTIME_CLASS(AActor) },
+	{ "meleerange",						ActorMeleeRange,				RUNTIME_CLASS(AActor) },
+	{ "meleesound",						ActorMeleeSound,				RUNTIME_CLASS(AActor) },
+	{ "meleethreshold",					ActorMeleeThreshold,			RUNTIME_CLASS(AActor) },
+	{ "minmissilechance",				ActorMinMissileChance,			RUNTIME_CLASS(AActor) },
+	{ "missile",						ActorMissileState,				RUNTIME_CLASS(AActor) },
+	{ "missileheight",					ActorMissileHeight,				RUNTIME_CLASS(AActor) },
+	{ "missiletype",					ActorMissileType,				RUNTIME_CLASS(AActor) },
+	{ "monster",						ActorMonster,					RUNTIME_CLASS(AActor) },
+	{ "morphprojectile.duration",		(apf)EggFXDuration,				RUNTIME_CLASS(AMorphProjectile) },
+ 	{ "morphprojectile.monsterclass",	(apf)EggFXMonsterClass,			RUNTIME_CLASS(AMorphProjectile) },
+	{ "morphprojectile.morphflash",		(apf)EggFXMorphFlash,			RUNTIME_CLASS(AMorphProjectile) },
+//	{ "morphprojectile.morphstyle",		(apf)EggFXMorphStyle,			RUNTIME_CLASS(AMorphProjectile) },
+ 	{ "morphprojectile.playerclass",	(apf)EggFXPlayerClass,			RUNTIME_CLASS(AMorphProjectile) },
+	{ "morphprojectile.unmorphflash",	(apf)EggFXUnMorphFlash,			RUNTIME_CLASS(AMorphProjectile) },
+	{ "obituary",						ActorObituary,					RUNTIME_CLASS(AActor) },
+	{ "pain",							ActorPainState,					RUNTIME_CLASS(AActor) },
+	{ "painchance",						ActorPainChance,				RUNTIME_CLASS(AActor) },
+	{ "painsound",						ActorPainSound,					RUNTIME_CLASS(AActor) },
+	{ "player.attackzoffset",			(apf)PlayerAttackZOffset,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.colorrange",				(apf)PlayerColorRange,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.crouchsprite",			(apf)PlayerCrouchSprite,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.damagescreencolor",		(apf)PlayerDmgScreenColor,		RUNTIME_CLASS(APlayerPawn) },
+	{ "player.displayname",				(apf)PlayerDisplayName,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.face",					(apf)PlayerFace,				RUNTIME_CLASS(APlayerPawn) },
+	{ "player.forwardmove",				(apf)PlayerForwardMove,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.healradiustype",			(apf)PlayerHealRadius,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.hexenarmor",				(apf)PlayerHexenArmor,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.invulnerabilitymode",		(apf)PlayerInvulMode,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.jumpz",					(apf)PlayerJumpZ,				RUNTIME_CLASS(APlayerPawn) },
+	{ "player.maxhealth",				(apf)PlayerMaxHealth,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.morphweapon",				(apf)PlayerMorphWeapon,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.runhealth",				(apf)PlayerRunHealth,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.scoreicon",				(apf)PlayerScoreIcon,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.sidemove",				(apf)PlayerSideMove,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.soundclass",				(apf)PlayerSoundClass,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.spawnclass",				(apf)PlayerSpawnClass,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.startitem",				(apf)PlayerStartItem,			RUNTIME_CLASS(APlayerPawn) },
+	{ "player.viewheight",				(apf)PlayerViewHeight,			RUNTIME_CLASS(APlayerPawn) },
+	{ "poisondamage",					ActorPoisonDamage,				RUNTIME_CLASS(AActor) },
+	{ "powermorph.morphflash",			(apf)PowerMorphMorphFlash,		RUNTIME_CLASS(APowerMorph) },
+	//{ "powermorph.morphstyle",			(apf)PowerMorphMorphStyle,		RUNTIME_CLASS(APowerMorph) },
+	{ "powermorph.playerclass",			(apf)PowerMorphPlayerClass,		RUNTIME_CLASS(APowerMorph) },
+	{ "powermorph.unmorphflash",		(apf)PowerMorphUnMorphFlash,	RUNTIME_CLASS(APowerMorph) },
+	{ "powerup.color",					(apf)PowerupColor,				RUNTIME_CLASS(APowerupGiver) },
+	{ "powerup.duration",				(apf)PowerupDuration,			RUNTIME_CLASS(APowerupGiver) },
+	{ "powerup.mode",					(apf)PowerupMode,				RUNTIME_CLASS(APowerupGiver) },
+	{ "powerup.type",					(apf)PowerupType,				RUNTIME_CLASS(APowerupGiver) },
+	{ "projectile",						ActorProjectile,				RUNTIME_CLASS(AActor) },
+	{ "puzzleitem.failmessage",			(apf)PuzzleitemFailMsg,			RUNTIME_CLASS(APuzzleItem) },
+	{ "puzzleitem.number",				(apf)PuzzleitemNumber,			RUNTIME_CLASS(APuzzleItem) },
+	{ "radius",							ActorRadius,					RUNTIME_CLASS(AActor) },
+	{ "radiusdamagefactor",				ActorRadiusDamageFactor,		RUNTIME_CLASS(AActor) },
+	{ "raise",							ActorRaiseState,				RUNTIME_CLASS(AActor) },
+	{ "reactiontime",					ActorReactionTime,				RUNTIME_CLASS(AActor) },
+	{ "renderstyle",					ActorRenderStyle,				RUNTIME_CLASS(AActor) },
+	{ "scale",							ActorScale,						RUNTIME_CLASS(AActor) },
+	{ "see",							ActorSeeState,					RUNTIME_CLASS(AActor) },
+	{ "seesound",						ActorSeeSound,					RUNTIME_CLASS(AActor) },
+	{ "skip_super",						ActorSkipSuper,					RUNTIME_CLASS(AActor) },
+	{ "spawn",							ActorSpawnState,				RUNTIME_CLASS(AActor) },
+	{ "spawnid",						ActorSpawnID,					RUNTIME_CLASS(AActor) },
+	{ "speed",							ActorSpeed,						RUNTIME_CLASS(AActor) },
+	{ "states",							ActorStates,					RUNTIME_CLASS(AActor) },
+	{ "stencilcolor",					ActorStencilColor,				RUNTIME_CLASS(AActor) },
+	{ "tag",							ActorTag,						RUNTIME_CLASS(AActor) },
+	{ "translation",					ActorTranslation,				RUNTIME_CLASS(AActor) },
+	{ "vspeed",							ActorVSpeed,					RUNTIME_CLASS(AActor) },
+	{ "weapon.ammogive",				(apf)WeaponAmmoGive1,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.ammogive1",				(apf)WeaponAmmoGive1,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.ammogive2",				(apf)WeaponAmmoGive2,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.ammotype",				(apf)WeaponAmmoType1,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.ammotype1",				(apf)WeaponAmmoType1,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.ammotype2",				(apf)WeaponAmmoType2,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.ammouse",					(apf)WeaponAmmoUse1,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.ammouse1",				(apf)WeaponAmmoUse1,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.ammouse2",				(apf)WeaponAmmoUse2,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.kickback",				(apf)WeaponKickback,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.readysound",				(apf)WeaponReadySound,			RUNTIME_CLASS(AWeapon) },
+	{ "weapon.selectionorder",			(apf)WeaponSelectionOrder,		RUNTIME_CLASS(AWeapon) },
+	{ "weapon.sisterweapon",			(apf)WeaponSisterWeapon,		RUNTIME_CLASS(AWeapon) },
+	{ "weapon.upsound",					(apf)WeaponUpSound,				RUNTIME_CLASS(AWeapon) },
+	{ "weapon.yadjust",					(apf)WeaponYAdjust,				RUNTIME_CLASS(AWeapon) },
+	{ "weaponpiece.number",				(apf)WPieceValue,				RUNTIME_CLASS(AWeaponPiece) },
+	{ "weaponpiece.weapon",				(apf)WPieceWeapon,				RUNTIME_CLASS(AWeaponPiece) },
+	{ "wound",							ActorWoundState,				RUNTIME_CLASS(AActor) },
+	{ "woundhealth",					ActorWoundHealth,				RUNTIME_CLASS(AActor) },
+	{ "xdeath",							ActorXDeathState,				RUNTIME_CLASS(AActor) },
+	{ "xscale",							ActorXScale,					RUNTIME_CLASS(AActor) },
+	{ "yscale",							ActorYScale,					RUNTIME_CLASS(AActor) },
 	// AWeapon:MinAmmo1 and 2 are never used so there is no point in adding them here!
 };
 static const ActorProps *is_actorprop (const char *str)

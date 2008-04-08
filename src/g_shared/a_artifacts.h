@@ -254,9 +254,20 @@ protected:
 	void EndEffect( );
 };
 
+class APowerMorph : public APowerup
+{
+	DECLARE_STATELESS_ACTOR( APowerMorph, APowerup )
+public:
+	void Serialize (FArchive &arc);
 
+	FNameNoInit	PlayerClass, MorphFlash, UnMorphFlash;
+	int MorphStyle;
 
-
-class player_s;
+protected:
+	void InitEffect ();
+	void EndEffect ();
+	// Variables
+	player_s *player;
+};
 
 #endif //__A_ARTIFACTS_H__

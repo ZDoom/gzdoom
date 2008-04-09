@@ -1,3 +1,7 @@
+April 8, 2008
+- Reimplemented snd_midiprecache, now for MIDI as well as MUS, and
+  defaulting to false.
+
 April 8, 2008 (Changes by Graf Zahl)
 - Eliminated all use of global variables used as output for P_CheckPosition
   and P_TryMove. Moved BlockingLine and BlockingMobj into AActor because 

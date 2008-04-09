@@ -70,6 +70,8 @@ EXTERN_CVAR (Bool, snd_pitched)
 EXTERN_CVAR (Color, am_wallcolor)
 EXTERN_CVAR (Color, am_fdwallcolor)
 EXTERN_CVAR (Color, am_cdwallcolor)
+EXTERN_CVAR (Float, spc_amp)
+EXTERN_CVAR (Bool, snd_midiprecache)
 
 FString WeaponSection;
 
@@ -297,13 +299,14 @@ void FGameConfigFile::DoGlobalSetup ()
 			}
 			if (last < 206)
 			{ // spc_amp is now a float, not an int.
-				FBaseCVar *amp = FindCVar ("spc_amp", NULL);
-				if (amp != NULL)
+				if (spc_amp > 16)
 				{
-					UCVarValue val = amp->GetGenericRep(CVAR_Float);
-					val.Float /= 16.f;
-					amp->SetGenericRep(val, CVAR_Float);
+					spc_amp = spc_amp / 16.f;
 				}
+			}
+			if (last < 207)
+			{ // Now that snd_midiprecache works again, you probably don't want it on.
+				snd_midiprecache = false;
 			}
 		}
 	}

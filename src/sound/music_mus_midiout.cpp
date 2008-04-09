@@ -181,6 +181,34 @@ bool MUSSong2::CheckDone()
 
 //==========================================================================
 //
+// MUSSong2 :: Precache
+//
+// MUS songs contain information in their header for exactly this purpose.
+//
+//==========================================================================
+
+void MUSSong2::Precache()
+{
+	BYTE *work = (BYTE *)alloca(MusHeader->NumInstruments);
+	const WORD *used = (WORD *)MusHeader + sizeof(MUSHeader) / 2;
+	int i, j;
+
+	for (i = j = 0; i < MusHeader->NumInstruments; ++i)
+	{
+		if (used[i] < 128)
+		{
+			work[j++] = used[i];
+		}
+		else if (used[i] >= 135 && used[i] <= 181)
+		{ // Percussions are 100-based, not 128-based, eh?
+			work[j++] = (used[i] - 100) | 0x80;
+		}
+	}
+	MIDI->PrecacheInstruments(&work[0], j);
+}
+
+//==========================================================================
+//
 // MUSSong2 :: MakeEvents
 //
 // Translates MUS events into MIDI events and puts them into a MIDI stream

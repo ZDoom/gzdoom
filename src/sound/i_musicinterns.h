@@ -112,6 +112,7 @@ public:
 	virtual bool FakeVolume() = 0;
 	virtual bool Pause(bool paused) = 0;
 	virtual bool NeedThreadedCallback() = 0;
+	virtual void PrecacheInstruments(const BYTE *instruments, int count);
 };
 
 // WinMM implementation of a MIDI output device -----------------------------
@@ -137,6 +138,7 @@ public:
 	bool FakeVolume();
 	bool NeedThreadedCallback();
 	bool Pause(bool paused);
+	void PrecacheInstruments(const BYTE *instruments, int count);
 
 protected:
 	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
@@ -236,6 +238,7 @@ protected:
 	virtual void DoInitialSetup() = 0;
 	virtual void DoRestart() = 0;
 	virtual bool CheckDone() = 0;
+	virtual void Precache() = 0;
 	virtual DWORD *MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time) = 0;
 
 	enum
@@ -294,6 +297,7 @@ protected:
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();
+	void Precache();
 	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
 
 	MUSHeader *MusHeader;
@@ -319,6 +323,7 @@ protected:
 	void DoInitialSetup();
 	void DoRestart();
 	bool CheckDone();
+	void Precache();
 	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
 	void AdvanceTracks(DWORD time);
 

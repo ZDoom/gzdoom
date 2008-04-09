@@ -55,6 +55,8 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+CVAR (Bool, snd_midiprecache, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -200,6 +202,61 @@ void WinMIDIDevice::Stop()
 	if (VolumeWorks)
 	{
 		midiOutSetVolume((HMIDIOUT)MidiOut, SavedVolume);
+	}
+}
+
+//==========================================================================
+//
+// WinMIDIDevice :: PrecacheInstruments
+//
+// For each entry, bit 7 set indicates that the instrument is percussion and
+// the lower 7 bits contain the note number to use on MIDI channel 10,
+// otherwise it is melodic and the lower 7 bits are the program number.
+//
+// My old GUS PnP needed the instruments to be preloaded, or it would miss
+// some notes the first time through the song. I doubt any modern
+// hardware has this problem, but since I'd already written the code for
+// ZDoom 1.22 and below, I'm resurrecting it now for completeness, since I'm
+// using preloading for the internal Timidity.
+//
+//==========================================================================
+
+void WinMIDIDevice::PrecacheInstruments(const BYTE *instruments, int count)
+{
+	// Setting snd_midiprecache to false disables this precaching, since it
+	// does involve sleeping for more than a miniscule amount of time.
+	if (!snd_midiprecache)
+	{
+		return;
+	}
+	for (int i = 0, chan = 0; i < count; ++i)
+	{
+		if (instruments[i] & 0x80)
+		{ // Percussion
+			midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_NOTEON | 9 | ((instruments[i] & 0x7f) << 8) | (1 << 16));
+		}
+		else
+		{ // Melodic
+			midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_PRGMCHANGE | chan | (instruments[i] << 8));
+			midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_NOTEON | chan | (60 << 8) | (1 << 16));
+			if (++chan == 9)
+			{ // Skip the percussion channel
+				chan = 10;
+			}
+		}
+		// Once we've got an instrument playing on each melodic channel, sleep to give
+		// the driver time to load the instruments. Also do this for the final batch
+		// of instruments.
+		if (chan == 16 || i == count - 1)
+		{
+			Sleep(250);
+			for (chan = 15; chan-- != 0; )
+			{
+				// Turn all notes off
+				midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_CTRLCHANGE | chan | (123 << 8));
+			}
+			// And now chan is back at 0, ready to start the cycle over.
+		}
 	}
 }
 

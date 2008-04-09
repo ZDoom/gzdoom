@@ -71,6 +71,7 @@ typedef struct
 	WORD NumSecondaryChans;
 	WORD NumInstruments;
 	WORD Pad;
+	// WORD UsedInstruments[NumInstruments];
 } MUSHeader;
 
 bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile);

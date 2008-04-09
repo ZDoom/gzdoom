@@ -221,6 +221,7 @@ void MIDIStreamer::Play(bool looping)
 	}
 
 	CheckCaps();
+	Precache();
 
 	// Set time division and tempo.
 	if (0 != MIDI->SetTimeDiv(Division) ||
@@ -301,7 +302,8 @@ void MIDIStreamer::Play(bool looping)
 // MIDIStreamer :: Pause
 //
 // "Pauses" the song by setting it to zero volume and filling subsequent
-// buffers with NOPs until the song is unpaused.
+// buffers with NOPs until the song is unpaused. A MIDI device that
+// supports real pauses will return true from its Pause() method.
 //
 //==========================================================================
 
@@ -709,5 +711,24 @@ MIDIDevice::MIDIDevice()
 }
 
 MIDIDevice::~MIDIDevice()
+{
+}
+
+//==========================================================================
+//
+// MIDIDevice :: PrecacheInstruments
+//
+// The MIDIStreamer calls this method between device open and the first
+// buffered stream with a list of instruments known to be used by the song.
+// If the device can benefit from preloading the instruments, it can do so
+// now.
+//
+// For each entry, bit 7 set indicates that the instrument is percussion and
+// the lower 7 bits contain the note number to use on MIDI channel 10,
+// otherwise it is melodic and the lower 7 bits are the program number.
+//
+//==========================================================================
+
+void MIDIDevice::PrecacheInstruments(const BYTE *instruments, int count)
 {
 }

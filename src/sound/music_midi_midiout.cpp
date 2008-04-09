@@ -756,6 +756,96 @@ void MIDISong2::SetTempo(int new_tempo)
 
 //==========================================================================
 //
+// MIDISong2 :: Precache
+//
+// Scans each track for program change events on normal channels and note on
+// events on channel 10. Does not care about bank selects, since they're
+// unlikely to appear in a song aimed at Doom.
+//
+//==========================================================================
+
+void MIDISong2::Precache()
+{
+	int i, j;
+
+	// This array keeps track of instruments that are used. The first 128
+	// entries are for melodic instruments. The second 128 are for
+	// percussion.
+	BYTE found_instruments[256] = { 0, };
+	
+	DoRestart();
+	for (i = 0; i < NumTracks; ++i)
+	{
+		TrackInfo *track = &Tracks[i];
+		BYTE running_status = 0;
+		BYTE ev, data1, data2, command, channel;
+		int len;
+
+		while (track->TrackP < track->MaxTrackP)
+		{
+			ev = track->TrackBegin[track->TrackP++];
+			command = ev & 0xF0;
+
+			if (command == MIDI_SYSEX || command == MIDI_SYSEXEND)
+			{
+				len = track->ReadVarLen();
+				track->TrackP += len;
+			}
+			else if (command == MIDI_META)
+			{
+				track->TrackP++;
+				len = track->ReadVarLen();
+				track->TrackP += len;
+			}
+			else if ((command & 0xF0) == 0xF0)
+			{
+				track->TrackP += CommonLengths[ev & 0xF];
+			}
+			else
+			{
+				if ((ev & 0x80) == 0)
+				{ // Use running status.
+					data1 = ev;
+					ev = running_status;
+				}
+				else
+				{ // Store new running status.
+					running_status = ev;
+					data1 = track->TrackBegin[track->TrackP++];
+				}
+				command = ev & 0x70;
+				channel = ev & 0x0F;
+				if (EventLengths[command >> 4] == 2)
+				{
+					data2 = track->TrackBegin[track->TrackP++];
+				}
+				if (channel != 9 && command == (MIDI_PRGMCHANGE & 0x70))
+				{
+					found_instruments[data1 & 127] = 1;
+				}
+				else if (channel == 9 && command == (MIDI_NOTEON & 0x70) && data2 != 0)
+				{
+					found_instruments[data1 | 128] = 1;
+				}
+				track->ReadVarLen();	// Skip delay.
+			}
+		}
+	}
+	DoRestart();
+
+	// Now pack everything into a contiguous region for the PrecacheInstruments call().
+	for (i = j = 0; i < 256; ++i)
+	{
+		if (found_instruments[i])
+		{
+			found_instruments[j++] = i;
+		}
+	}
+	MIDI->PrecacheInstruments(found_instruments, j);
+}
+
+//==========================================================================
+//
 // MIDISong2 :: GetOPLDumper
 //
 //==========================================================================

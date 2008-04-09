@@ -40,6 +40,7 @@
 #include "v_collection.h"
 
 #define NUMHUDS 9
+#define NUMPOPUPS 3
 
 class FBarTexture;
 class FScanner;
@@ -47,6 +48,35 @@ class FScanner;
 struct SBarInfoCommand; //we need to be able to use this before it is defined.
 struct MugShotState;
 
+//Popups!
+enum PopupTransition
+{
+	TRANSITION_NONE,
+	TRANSITION_SLIDEINBOTTOM,
+};
+
+struct Popup
+{
+	PopupTransition transition;
+	bool opened;
+	bool moving;
+	int height;
+	int width;
+	int speed;
+	int x;
+	int y;
+
+	Popup();
+	void init();
+	void tick();
+	void open();
+	void close();
+	bool isDoneMoving();
+	int getXOffset();
+	int getYOffset();
+};
+
+//SBarInfo
 struct SBarInfoBlock
 {
 	TArray<SBarInfoCommand> commands;
@@ -82,6 +112,7 @@ struct SBarInfo
 {
 	TArray<FString> Images;
 	SBarInfoBlock huds[NUMHUDS];
+	Popup popups[NUMPOPUPS];
 	bool automapbar;
 	bool interpolateHealth;
 	bool interpolateArmor;
@@ -276,6 +307,7 @@ enum //Key words
 	SBARINFO_LOWERHEALTHCAP,
 	SBARINFO_STATUSBAR,
 	SBARINFO_MUGSHOT,
+	SBARINFO_CREATEPOPUP,
 };
 
 enum //Bar types
@@ -340,7 +372,7 @@ public:
 	void ShowPop(int popnum);
 	void SetMugShotState(const char* stateName, bool waitTillDone=false);
 private:
-	void doCommands(SBarInfoBlock &block);
+	void doCommands(SBarInfoBlock &block, int xOffset=0, int yOffset=0);
 	void DrawGraphic(FTexture* texture, int x, int y, int flags=0);
 	void DrawString(const char* str, int x, int y, EColorRange translation, int spacing=0);
 	void DrawNumber(int num, int len, int x, int y, EColorRange translation, int spacing=0, bool fillzeros=false);
@@ -366,6 +398,7 @@ private:
 	int mugshotHealth;
 	int chainWiggle;
 	int artiflash;
+	int pendingPopup;
 	int currentPopup;
 	unsigned int invBarOffset;
 	FBarShader shader_horz_normal;

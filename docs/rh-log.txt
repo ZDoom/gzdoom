@@ -1,3 +1,13 @@
+April 9, 2008 (SBarInfo Update #17)
+- Fixed: SBarInfo tried to calculate scaled offsets on unscaled status bars.
+- Added: createpopup to SBarInfo.  No we don't have custom popups yet.  It only
+  defines the transition effect.  Currently none or slideinbottom.
+- Made the first argument of DrawMugShot optional (think of it as an overloaded
+  function).  The use of the first argument is deprecated due to the event of
+  per player class faces.
+- More changes from DrawImage to screen->DrawTexture().  I guess I didn't get
+  them all just yet.
+  
 April 8, 2008
 - Added the FCriticalSection class in critsec.h to make it easier to
   use critical sections in other places besides the OPL player.

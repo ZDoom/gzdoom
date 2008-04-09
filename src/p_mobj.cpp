@@ -76,7 +76,6 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 
 extern cycle_t BotSupportCycles;
 extern cycle_t BotWTG;
-extern fixed_t attackrange;
 EXTERN_CVAR (Bool, r_drawfuzz);
 EXTERN_CVAR (Int,  cl_rockettrails)
 

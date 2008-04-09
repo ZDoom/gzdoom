@@ -25,98 +25,87 @@
 
 static FRandom pr_botdofire ("BotDoFire");
 
-//Used with Reachable().
-static AActor *looker;
-static AActor *rtarget;
-static bool reachable;
-static fixed_t last_z;
-static sector_t *last_s;
-static fixed_t estimated_dist;
 
-static bool PTR_Reachable (intercept_t *in)
+//Checks TRUE reachability from
+//one looker to another. First mobj (looker) is looker.
+bool FCajunMaster::Reachable (AActor *looker, AActor *rtarget)
 {
-	fixed_t hitx, hity;
-	fixed_t frac;
-	line_t *line;
-	AActor *thing;
-	fixed_t dist;
-	sector_t *s;
+	if (looker == rtarget)
+		return false;
 
-	frac = in->frac - FixedDiv (4*FRACUNIT, MAX_TRAVERSE_DIST);
-	dist = FixedMul (frac, MAX_TRAVERSE_DIST);
+	if ((rtarget->Sector->ceilingplane.ZatPoint (rtarget->x, rtarget->y) -
+		 rtarget->Sector->floorplane.ZatPoint (rtarget->x, rtarget->y))
+		< looker->height) //Where rtarget is, looker can't be.
+		return false;
 
-	hitx = trace.x + FixedMul (looker->momx, frac);
-	hity = trace.y + FixedMul (looker->momy, frac);
+	sector_t *last_s = looker->Sector;
+	fixed_t last_z = last_s->floorplane.ZatPoint (looker->x, looker->y);
+	fixed_t estimated_dist = P_AproxDistance (looker->x - rtarget->x, looker->y - rtarget->y);
+	bool reachable = true;
 
-	if (in->isaline)
+	FPathTraverse it(looker->x+looker->momx, looker->y+looker->momy, rtarget->x, rtarget->y, PT_ADDLINES|PT_ADDTHINGS);
+	intercept_t *in;
+	while ((in = it.Next()))
 	{
-		line = in->d.line;
+		fixed_t hitx, hity;
+		fixed_t frac;
+		line_t *line;
+		AActor *thing;
+		fixed_t dist;
+		sector_t *s;
 
-		if (!(line->flags & ML_TWOSIDED) || (line->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS)))
-		{
-			return (reachable = false); //Cannot continue.
-		}
-		else
-		{
-			//Determine if going to use backsector/frontsector.
-			s = (line->backsector == last_s) ? line->frontsector : line->backsector;
-			fixed_t ceilingheight = s->ceilingplane.ZatPoint (hitx, hity);
-			fixed_t floorheight = s->floorplane.ZatPoint (hitx, hity);
+		frac = in->frac - FixedDiv (4*FRACUNIT, MAX_TRAVERSE_DIST);
+		dist = FixedMul (frac, MAX_TRAVERSE_DIST);
 
-			if (!bglobal.IsDangerous (s) &&		//Any nukage/lava?
-				(floorheight <= (last_z+MAXMOVEHEIGHT)
-				&& ((ceilingheight == floorheight && line->special)
-					|| (ceilingheight - floorheight) >= looker->height))) //Does it fit?
+		hitx = it.Trace().x + FixedMul (looker->momx, frac);
+		hity = it.Trace().y + FixedMul (looker->momy, frac);
+
+		if (in->isaline)
+		{
+			line = in->d.line;
+
+			if (!(line->flags & ML_TWOSIDED) || (line->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING|ML_BLOCK_PLAYERS)))
 			{
-				last_z = floorheight;
-				last_s = s;
-				return true;
+				return false; //Cannot continue.
 			}
 			else
 			{
-				return (reachable = false);
+				//Determine if going to use backsector/frontsector.
+				s = (line->backsector == last_s) ? line->frontsector : line->backsector;
+				fixed_t ceilingheight = s->ceilingplane.ZatPoint (hitx, hity);
+				fixed_t floorheight = s->floorplane.ZatPoint (hitx, hity);
+
+				if (!bglobal.IsDangerous (s) &&		//Any nukage/lava?
+					(floorheight <= (last_z+MAXMOVEHEIGHT)
+					&& ((ceilingheight == floorheight && line->special)
+						|| (ceilingheight - floorheight) >= looker->height))) //Does it fit?
+				{
+					last_z = floorheight;
+					last_s = s;
+					continue;
+				}
+				else
+				{
+					return false;
+				}
 			}
 		}
+
+		if (dist > estimated_dist)
+		{
+			return true;
+		}
+
+		thing = in->d.thing;
+		if (thing == looker) //Can't reach self in this case.
+			continue;
+		if (thing == rtarget && (rtarget->Sector->floorplane.ZatPoint (rtarget->x, rtarget->y) <= (last_z+MAXMOVEHEIGHT)))
+		{
+			return true;
+		}
+
+		reachable = false;
 	}
-
-	if (dist > estimated_dist)
-	{
-		reachable = true;
-		return false; //Don't need to continue.
-	}
-
-	thing = in->d.thing;
-	if (thing == looker) //Can't reach self in this case.
-		return true;
-	if (thing == rtarget && (rtarget->Sector->floorplane.ZatPoint (rtarget->x, rtarget->y) <= (last_z+MAXMOVEHEIGHT)))
-	{
-		reachable = true;
-		return false;
-	}
-
-	reachable = false;
-	return true;
-}
-
-//Checks TRUE reachability from
-//one actor to another. First mobj (actor) is looker.
-bool FCajunMaster::Reachable (AActor *actor, AActor *target)
-{
-	if (actor == target)
-		return false;
-
-	if ((target->Sector->ceilingplane.ZatPoint (target->x, target->y) -
-		 target->Sector->floorplane.ZatPoint (target->x, target->y))
-		< actor->height) //Where target is, looker can't be.
-		return false;
-
-	looker = actor;
-	rtarget = target;
-	last_s = actor->Sector;
-	last_z = last_s->floorplane.ZatPoint (actor->x, actor->y);
-	reachable = true;
-	estimated_dist = P_AproxDistance (actor->x - target->x, actor->y - target->y);
-	P_PathTraverse (actor->x+actor->momx, actor->y+actor->momy, target->x, target->y, PT_ADDLINES|PT_ADDTHINGS, PTR_Reachable);
 	return reachable;
 }
 

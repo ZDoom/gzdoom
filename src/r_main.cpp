@@ -1083,11 +1083,7 @@ void R_SetupFrame (AActor *actor)
 		camera->sprite != 0)	// Sprite 0 is always TNT1
 	{
 		// [RH] Use chasecam view
-		P_AimCamera (camera);
-		iview->nviewx = CameraX;
-		iview->nviewy = CameraY;
-		iview->nviewz = CameraZ;
-		viewsector = CameraSector;
+		P_AimCamera (camera, iview->nviewx, iview->nviewy, iview->nviewz, viewsector);
 		r_showviewer = true;
 	}
 	else

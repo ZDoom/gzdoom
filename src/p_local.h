@@ -160,6 +160,7 @@ typedef struct
 {
 	fixed_t 	frac;			// along trace line
 	bool	 	isaline;
+	bool		done;
 	union {
 		AActor *thing;
 		line_t *line;
@@ -215,7 +216,6 @@ inline void P_MakeDivline (const line_t *li, divline_t *dl)
 }
 
 fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1);
-int 	P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld);
 
 struct FLineOpening
 {
@@ -255,10 +255,7 @@ public:
 
 class FBlockThingsIterator
 {
-	typedef TArray<AActor *> BTChecked;
-
-	static TDeletingArray< BTChecked* > FreeBTChecked;
-
+	static TArray<AActor *> CheckArray;
 
 	int minx, maxx;
 	int miny, maxy;
@@ -266,21 +263,24 @@ class FBlockThingsIterator
 	int curx, cury;
 
 	bool dontfreecheck;
-	BTChecked *checkarray;
+	int checkindex;
 
 	FBlockNode *block;
 
-	BTChecked *GetCheckArray();
-	void FreeCheckArray();
 	void StartBlock(int x, int y);
 
+	// The following 3 functions are only for use in the path traverser 
+	// and therefore declared private.
+	static int GetCheckIndex();
+	static void SetCheckIndex(int newvalue);
+	FBlockThingsIterator(int x, int y, int checkindex);
+
+	friend class FPathTraverse;
+
 public:
-	FBlockThingsIterator(int minx, int miny, int maxx, int maxy, TArray<AActor *> *check = NULL);
+	FBlockThingsIterator(int minx, int miny, int maxx, int maxy);
 	FBlockThingsIterator(const FBoundingBox &box);
-	~FBlockThingsIterator()
-	{
-		if (!dontfreecheck) FreeCheckArray();
-	}
+	~FBlockThingsIterator();
 	AActor *Next();
 	void Reset() { StartBlock(minx, miny); }
 };
@@ -293,19 +293,30 @@ public:
 	AActor *Next();
 };
 
+class FPathTraverse
+{
+	static TArray<intercept_t> intercepts;
+
+	divline_t trace;
+	unsigned int intercept_index;
+	unsigned int intercept_count;
+	fixed_t maxfrac;
+	unsigned int count;
+
+	void AddLineIntercepts(int bx, int by);
+	void AddThingIntercepts(int bx, int by, int checkindex);
+public:
+
+	intercept_t *Next();
+
+	FPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags);
+	~FPathTraverse();
+	const divline_t &Trace() const { return trace; }
+};
+
+
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2
-
-extern divline_t		trace;
-
-bool
-P_PathTraverse
-( fixed_t		x1,
-  fixed_t		y1,
-  fixed_t		x2,
-  fixed_t		y2,
-  int			flags,
-  bool		(*trav) (intercept_t *));
 
 AActor *P_BlockmapSearch (AActor *origin, int distance, AActor *(*func)(AActor *, int));
 AActor *P_RoughMonsterSearch (AActor *mo, int distance);
@@ -385,9 +396,7 @@ bool	P_CheckMissileSpawn (AActor *missile);
 void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 
 // [RH] Position the chasecam
-void	P_AimCamera (AActor *t1);
-extern	fixed_t CameraX, CameraY, CameraZ;
-extern	sector_t *CameraSector;
+void	P_AimCamera (AActor *t1, fixed_t &x, fixed_t &y, fixed_t &z, sector_t *&sec);
 
 // [RH] Means of death
 void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, FName damageType, bool hurtSelf, bool dodamage=true);

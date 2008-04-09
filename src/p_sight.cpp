@@ -36,6 +36,9 @@ This uses specialized forms of the maputils routines for optimized performance
 ==============================================================================
 */
 
+static TArray<intercept_t> intercepts (128);
+static divline_t trace;
+
 static fixed_t sightzstart;				// eye z of looker
 static fixed_t topslope, bottomslope;	// slopes to top and bottom of target
 static int SeePastBlockEverything, SeePastShootableLines;

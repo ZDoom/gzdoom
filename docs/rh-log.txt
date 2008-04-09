@@ -1,3 +1,11 @@
+April 9, 2008 (Changes by Graf Zahl)
+- Replaced P_PathTraverse with an FPathTraverse class, rewrote all code using
+  P_PathTraverse and got rid of a lot of global variables in the process.
+- Simplified the use of the checkarray in FBlockThingsIterator: Since the entire
+  game runs single threaded there is no need for multiple check arrays if 
+  recursive use occurs. Using the same array with a higher start index is 
+  sufficient if the size is reset after finishing using the iterator.
+
 April 9, 2008 (SBarInfo Update #17)
 - Fixed: SBarInfo tried to calculate scaled offsets on unscaled status bars.
 - Added: createpopup to SBarInfo.  No we don't have custom popups yet.  It only

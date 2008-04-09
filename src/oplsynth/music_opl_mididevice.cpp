@@ -261,9 +261,9 @@ void OPLMIDIDevice::Stop()
 
 int OPLMIDIDevice::StreamOutSync(MIDIHDR *header)
 {
-	Serialize();
+	ChipAccess.Enter();
 	StreamOut(header);
-	Unserialize();
+	ChipAccess.Leave();
 	return 0;
 }
 

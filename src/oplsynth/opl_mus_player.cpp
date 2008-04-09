@@ -28,59 +28,22 @@ OPLmusicBlock::OPLmusicBlock()
 	TwoChips = !opl_onechip;
 	Looping = false;
 	io = NULL;
-#ifdef _WIN32
-	InitializeCriticalSection (&ChipAccess);
-#else
-	ChipAccess = SDL_CreateMutex ();
-	if (ChipAccess == NULL)
-	{
-		return;
-	}
-#endif
 	io = new OPLio;
 }
 
 OPLmusicBlock::~OPLmusicBlock()
 {
 	BlockForStats = NULL;
-#ifdef _WIN32
-	DeleteCriticalSection (&ChipAccess);
-#else
-	if (ChipAccess != NULL)
-	{
-		SDL_DestroyMutex (ChipAccess);
-		ChipAccess = NULL;
-	}
-#endif
 	delete io;
-}
-
-void OPLmusicBlock::Serialize()
-{
-#ifdef _WIN32
-	EnterCriticalSection (&ChipAccess);
-#else
-	if (SDL_mutexP (ChipAccess) != 0)
-		return;
-#endif
-}
-
-void OPLmusicBlock::Unserialize()
-{
-#ifdef _WIN32
-	LeaveCriticalSection (&ChipAccess);
-#else
-	SDL_mutexV (ChipAccess);
-#endif
 }
 
 void OPLmusicBlock::ResetChips ()
 {
 	TwoChips = !opl_onechip;
-	Serialize();
+	ChipAccess.Enter();
 	io->OPLdeinit ();
 	io->OPLinit (TwoChips + 1);
-	Unserialize();
+	ChipAccess.Leave();
 }
 
 void OPLmusicBlock::Restart()
@@ -237,7 +200,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 	samples1 = samples;
 	memset(buff, 0, numbytes);
 
-	Serialize();
+	ChipAccess.Enter();
 	while (numsamples > 0)
 	{
 		double ticky = NextTickIn;
@@ -294,7 +257,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 			}
 		}
 	}
-	Unserialize();
+	ChipAccess.Leave();
 	return res;
 }
 

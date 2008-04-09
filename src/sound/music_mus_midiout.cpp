@@ -197,7 +197,7 @@ void MUSSong2::Precache()
 	{
 		if (used[i] < 128)
 		{
-			work[j++] = used[i];
+			work[j++] = (BYTE)used[i];
 		}
 		else if (used[i] >= 135 && used[i] <= 181)
 		{ // Percussions are 100-based, not 128-based, eh?

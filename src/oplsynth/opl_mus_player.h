@@ -1,11 +1,4 @@
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#define USE_WINDOWS_DWORD
-#else
-#include <SDL.h>
-#endif
-
+#include "critsec.h"
 #include "muslib.h"
 #include "files.h"
 
@@ -23,19 +16,12 @@ public:
 protected:
 	virtual int PlayTick() = 0;
 
-	void Serialize();
-	void Unserialize();
-
 	double NextTickIn;
 	double SamplesPerTick;
 	bool TwoChips;
 	bool Looping;
 
-#ifdef _WIN32
-	CRITICAL_SECTION ChipAccess;
-#else
-	SDL_mutex *ChipAccess;
-#endif
+	FCriticalSection ChipAccess;
 };
 
 class OPLmusicFile : public OPLmusicBlock

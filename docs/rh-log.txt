@@ -1,4 +1,6 @@
 April 8, 2008
+- Added the FCriticalSection class in critsec.h to make it easier to
+  use critical sections in other places besides the OPL player.
 - Reimplemented snd_midiprecache, now for MIDI as well as MUS, and
   defaulting to false.
 

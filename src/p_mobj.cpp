@@ -157,8 +157,6 @@ fixed_t FloatBobDiffs[64] =
 CVAR (Int, cl_pufftype, 0, CVAR_ARCHIVE);
 CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
-AActor *MissileActor;
-
 // CODE --------------------------------------------------------------------
 
 IMPLEMENT_POINTY_CLASS (AActor)
@@ -1508,11 +1506,7 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// passes through more than one actor this tic, each one takes damage
 	// and not just the first one.
 
-	if (mo->flags2 & MF2_RIP)
-	{
-		DoRipping = true;
-		LastRipped = NULL;
-	}
+	FCheckPosition tm(!!(mo->flags2 & MF2_RIP));
 
 	do
 	{
@@ -1524,7 +1518,6 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 */
 		// [RH] If walking on a slope, stay on the slope
 		// killough 3/15/98: Allow objects to drop off
-		FCheckPosition tm;
 		if (!P_TryMove (mo, ptryx, ptryy, true, walkplane, tm))
 		{
 			// blocked move
@@ -1631,13 +1624,11 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 							{
 								S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
 							}
-							DoRipping = false;
 							return;
 						}
 						else
 						{ // Struck a player/creature
 							P_ExplodeMissile (mo, NULL, BlockingMobj);
-							DoRipping = false;
 							return;
 						}
 					}
@@ -1651,7 +1642,6 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						{
 							S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
 						}
-						DoRipping = false;
 						return;
 					}
 				}
@@ -1679,7 +1669,6 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						mo->tracer = mo->target;
 					}
 					mo->target = BlockingMobj;
-					DoRipping = false;
 					return;
 				}
 explode:
@@ -1693,18 +1682,15 @@ explode:
 					// Hack to prevent missiles exploding against the sky.
 					// Does not handle sky floors.
 					mo->Destroy ();
-					DoRipping = false;
 					return;
 				}
 				// [RH] Don't explode on horizon lines.
 				if (mo->BlockingLine != NULL && mo->BlockingLine->special == Line_Horizon)
 				{
 					mo->Destroy ();
-					DoRipping = false;
 					return;
 				}
 				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj);
-				DoRipping = false;
 				return;
 			}
 			else
@@ -1733,8 +1719,6 @@ explode:
 			}
 		}
 	} while (++step <= steps);
-
-	DoRipping = false;
 
 	// Friction
 
@@ -4726,19 +4710,20 @@ AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type, angle_t angle)
 }
 
 AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
-							  const PClass *type, angle_t angle)
+							  const PClass *type, angle_t angle, AActor **pLineTarget, AActor **pMissileActor)
 {
 	static const int angdiff[3] = { -1<<26, 1<<26, 0 };
 	int i;
 	angle_t an;
 	angle_t pitch;
+	AActor *linetarget;
 
 	// see which target is to be aimed at
 	i = 2;
 	do
 	{
 		an = angle + angdiff[i];
-		pitch = P_AimLineAttack (source, an, 16*64*FRACUNIT);
+		pitch = P_AimLineAttack (source, an, 16*64*FRACUNIT, &linetarget);
 
 		if (source->player != NULL &&
 			level.IsFreelookAllowed() &&
@@ -4752,6 +4737,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	{
 		an = angle;
 	}
+	if (pLineTarget) *pLineTarget = linetarget;
 
 	i = GetDefaultByType (type)->flags3;
 
@@ -4781,7 +4767,8 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 			z = source->floorz;
 		}
 	}
-	MissileActor = Spawn (type, source->x + x, source->y + y, z, ALLOW_REPLACE);
+	AActor *MissileActor = Spawn (type, source->x + x, source->y + y, z, ALLOW_REPLACE);
+	if (pMissileActor) *pMissileActor = MissileActor;
 	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;
 	MissileActor->angle = an;

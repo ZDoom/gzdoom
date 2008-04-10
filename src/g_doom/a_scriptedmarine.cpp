@@ -397,12 +397,13 @@ void A_M_Saw (AActor *self)
 	{
 		angle_t 	angle;
 		int 		damage;
+		AActor		*linetarget;
 
 		damage = 2 * (pr_m_saw()%10+1);
 		angle = self->angle + (pr_m_saw.Random2() << 18);
 		
 		P_LineAttack (self, angle, MELEERANGE+1,
-					P_AimLineAttack (self, angle, MELEERANGE+1), damage,
+					P_AimLineAttack (self, angle, MELEERANGE+1, &linetarget), damage,
 					NAME_Melee, NAME_BulletPuff);
 
 		if (!linetarget)
@@ -447,6 +448,7 @@ void A_M_Punch (AActor *self)
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
+	AActor		*linetarget;
 
 	if (self->target == NULL)
 		return;
@@ -455,7 +457,7 @@ void A_M_Punch (AActor *self)
 
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
-	pitch = P_AimLineAttack (self, angle, MELEERANGE);
+	pitch = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
 	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true);
 
 	// turn to face target
@@ -477,6 +479,7 @@ void A_M_BerserkPunch (AActor *self)
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
+	AActor		*linetarget;
 
 	if (self->target == NULL)
 		return;
@@ -485,7 +488,7 @@ void A_M_BerserkPunch (AActor *self)
 
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
-	pitch = P_AimLineAttack (self, angle, MELEERANGE);
+	pitch = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
 	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true);
 
 	// turn to face target

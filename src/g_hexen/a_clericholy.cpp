@@ -559,6 +559,7 @@ void SpawnSpiritTail (AActor *spirit)
 void A_CHolyAttack (AActor *actor)
 {
 	player_t *player;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -570,7 +571,7 @@ void A_CHolyAttack (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	AActor * missile = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AHolyMissile));
+	AActor * missile = P_SpawnPlayerMissile (actor, 0,0,0, RUNTIME_CLASS(AHolyMissile), 0, &linetarget);
 	if (missile != NULL) missile->tracer = linetarget;
 
 	weapon->CHolyCount = 3;

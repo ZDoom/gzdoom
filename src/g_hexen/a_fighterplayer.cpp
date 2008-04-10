@@ -109,7 +109,7 @@ static FRandom pr_fpatk ("FPunchAttack");
 
 #define MAX_ANGLE_ADJUST (5*ANGLE_1)
 
-void AdjustPlayerAngle (AActor *pmo)
+void AdjustPlayerAngle (AActor *pmo, AActor *linetarget)
 {
 	angle_t angle;
 	int difference;
@@ -235,6 +235,7 @@ void A_FPunchAttack (AActor *actor)
 	int i;
 	player_t *player;
 	const PClass *pufftype;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -248,7 +249,7 @@ void A_FPunchAttack (AActor *actor)
 	for (i = 0; i < 16; i++)
 	{
 		angle = pmo->angle + i*(ANG45/16);
-		slope = P_AimLineAttack (pmo, angle, 2*MELEERANGE);
+		slope = P_AimLineAttack (pmo, angle, 2*MELEERANGE, &linetarget);
 		if (linetarget)
 		{
 			pmo->special1++;
@@ -263,11 +264,11 @@ void A_FPunchAttack (AActor *actor)
 			{
 				P_ThrustMobj (linetarget, angle, power);
 			}
-			AdjustPlayerAngle (pmo);
+			AdjustPlayerAngle (pmo, linetarget);
 			goto punchdone;
 		}
 		angle = pmo->angle-i * (ANG45/16);
-		slope = P_AimLineAttack (pmo, angle, 2*MELEERANGE);
+		slope = P_AimLineAttack (pmo, angle, 2*MELEERANGE, &linetarget);
 		if (linetarget)
 		{
 			pmo->special1++;
@@ -282,7 +283,7 @@ void A_FPunchAttack (AActor *actor)
 			{
 				P_ThrustMobj (linetarget, angle, power);
 			}
-			AdjustPlayerAngle (pmo);
+			AdjustPlayerAngle (pmo, linetarget);
 			goto punchdone;
 		}
 	}
@@ -290,7 +291,7 @@ void A_FPunchAttack (AActor *actor)
 	pmo->special1 = 0;
 
 	angle = pmo->angle;
-	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
+	slope = P_AimLineAttack (pmo, angle, MELEERANGE, &linetarget);
 	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, NAME_Melee, pufftype, true);
 
 punchdone:

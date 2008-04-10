@@ -1,3 +1,7 @@
+April 10, 2008 (Changes by Graf Zahl)
+- Eliminated some more global variables (onmobj, DoRipping, LastRipped,
+  MissileActor, bulletpitch and linetarget.)
+
 April 9, 2008 (Changes by Graf Zahl)
 - Replaced P_PathTraverse with an FPathTraverse class, rewrote all code using
   P_PathTraverse and got rid of a lot of global variables in the process.

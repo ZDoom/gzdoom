@@ -15,7 +15,7 @@ const fixed_t HAMMER_RANGE = MELEERANGE+MELEERANGE/2;
 
 static FRandom pr_atk ("FHammerAtk");
 
-extern void AdjustPlayerAngle (AActor *pmo);
+extern void AdjustPlayerAngle (AActor *pmo, AActor *linetarget);
 
 void A_FHammerAttack (AActor *actor);
 void A_FHammerThrow (AActor *actor);
@@ -179,6 +179,7 @@ void A_FHammerAttack (AActor *actor)
 	int slope;
 	int i;
 	player_t *player;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -191,11 +192,11 @@ void A_FHammerAttack (AActor *actor)
 	for (i = 0; i < 16; i++)
 	{
 		angle = pmo->angle + i*(ANG45/32);
-		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE);
+		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, &linetarget);
 		if (linetarget)
 		{
 			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff), true);
-			AdjustPlayerAngle(pmo);
+			AdjustPlayerAngle(pmo, linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -204,11 +205,11 @@ void A_FHammerAttack (AActor *actor)
 			goto hammerdone;
 		}
 		angle = pmo->angle-i*(ANG45/32);
-		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE);
+		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE, &linetarget);
 		if(linetarget)
 		{
 			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff), true);
-			AdjustPlayerAngle(pmo);
+			AdjustPlayerAngle(pmo, linetarget);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj(linetarget, angle, power);
@@ -219,7 +220,7 @@ void A_FHammerAttack (AActor *actor)
 	}
 	// didn't find any targets in meleerange, so set to throw out a hammer
 	angle = pmo->angle;
-	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE);
+	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, &linetarget);
 	if (P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AHammerPuff), true) != NULL)
 	{
 		pmo->special1 = false;

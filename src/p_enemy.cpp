@@ -349,11 +349,13 @@ bool AActor::SuggestMissileAttack (fixed_t dist)
 
 bool P_HitFriend(AActor * self)
 {
+	AActor *linetarget;
+
 	if (self->flags&MF_FRIENDLY && self->target != NULL)
 	{
 		angle_t angle = R_PointToAngle2 (self->x, self->y, self->target->x, self->target->y);
 		fixed_t dist = P_AproxDistance (self->x-self->target->x, self->y-self->target->y);
-		P_AimLineAttack (self, angle, dist, 0, true);
+		P_AimLineAttack (self, angle, dist, &linetarget, 0, true);
 		if (linetarget != NULL && linetarget != self->target)
 		{
 			return self->IsFriend (linetarget);

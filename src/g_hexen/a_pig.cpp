@@ -16,7 +16,7 @@ static FRandom pr_snoutattack ("SnoutAttack");
 static FRandom pr_pigattack ("PigAttack");
 static FRandom pr_pigplayerthink ("PigPlayerThink");
 
-extern void AdjustPlayerAngle (AActor *);
+extern void AdjustPlayerAngle (AActor *, AActor *);
 
 void A_SnoutAttack (AActor *actor);
 
@@ -260,6 +260,7 @@ void A_SnoutAttack (AActor *actor)
 	int slope;
 	player_t *player;
 	AActor *puff;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -268,12 +269,12 @@ void A_SnoutAttack (AActor *actor)
 
 	damage = 3+(pr_snoutattack()&3);
 	angle = player->mo->angle;
-	slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
+	slope = P_AimLineAttack(player->mo, angle, MELEERANGE, &linetarget);
 	puff = P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(ASnoutPuff), true);
 	S_Sound(player->mo, CHAN_VOICE, "PigActive", 1, ATTN_NORM);
 	if(linetarget)
 	{
-		AdjustPlayerAngle(player->mo);
+		AdjustPlayerAngle(player->mo, linetarget);
 		if(puff != NULL)
 		{ // Bit something
 			S_Sound(player->mo, CHAN_VOICE, "PigAttack", 1, ATTN_NORM);

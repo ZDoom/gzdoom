@@ -28,6 +28,7 @@ void A_Punch (AActor *actor)
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
+	AActor		*linetarget;
 
 	if (actor->player != NULL)
 	{
@@ -47,7 +48,7 @@ void A_Punch (AActor *actor)
 	angle = actor->angle;
 
 	angle += pr_punch.Random2() << 18;
-	pitch = P_AimLineAttack (actor, angle, MELEERANGE);
+	pitch = P_AimLineAttack (actor, angle, MELEERANGE, &linetarget);
 	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true);
 
 	// turn to face target
@@ -89,8 +90,7 @@ void A_FirePistol (AActor *actor)
 
 	S_Sound (actor, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 
-	P_BulletSlope (actor);
-	P_GunShot (actor, accurate, PClass::FindClass(NAME_BulletPuff));
+	P_GunShot (actor, accurate, PClass::FindClass(NAME_BulletPuff), P_BulletSlope (actor));
 }
 
 //
@@ -101,6 +101,7 @@ void A_Saw (AActor *actor)
 	angle_t 	angle;
 	int 		damage=0;
 	player_t *player;
+	AActor *linetarget;
 	
 	int fullsound;
 	int hitsound;
@@ -140,7 +141,7 @@ void A_Saw (AActor *actor)
 	
 	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
 	P_LineAttack (actor, angle, MELEERANGE+1,
-				  P_AimLineAttack (actor, angle, MELEERANGE+1), damage,
+				  P_AimLineAttack (actor, angle, MELEERANGE+1, &linetarget), damage,
 				  GetDefaultByType(pufftype)->DamageType, pufftype);
 
 	if (!linetarget)
@@ -193,10 +194,10 @@ void A_FireShotgun (AActor *actor)
 	}
 	player->mo->PlayAttacking2 ();
 
-	P_BulletSlope (actor);
+	angle_t pitch = P_BulletSlope (actor);
 
 	for (i=0 ; i<7 ; i++)
-		P_GunShot (actor, false, PClass::FindClass(NAME_BulletPuff));
+		P_GunShot (actor, false, PClass::FindClass(NAME_BulletPuff), pitch);
 }
 
 //
@@ -225,7 +226,7 @@ void A_FireShotgun2 (AActor *actor)
 	player->mo->PlayAttacking2 ();
 
 
-	P_BulletSlope (actor);
+	angle_t pitch = P_BulletSlope (actor);
 		
 	for (i=0 ; i<20 ; i++)
 	{
@@ -242,7 +243,7 @@ void A_FireShotgun2 (AActor *actor)
 		P_LineAttack (actor,
 					  angle,
 					  PLAYERMISSILERANGE,
-					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage,
+					  pitch + (pr_fireshotgun2.Random2() * 332063), damage,
 					  NAME_None, NAME_BulletPuff);
 	}
 }
@@ -347,8 +348,7 @@ void A_FireCGun (AActor *actor)
 	}
 	player->mo->PlayAttacking2 ();
 
-	P_BulletSlope (actor);
-	P_GunShot (actor, !player->refire, PClass::FindClass(NAME_BulletPuff));
+	P_GunShot (actor, !player->refire, PClass::FindClass(NAME_BulletPuff), P_BulletSlope (actor));
 }
 
 //
@@ -496,6 +496,7 @@ void A_BFGSpray (AActor *mo)
 	const PClass		*spraytype = NULL;
 	int					numrays = 40;
 	int					damagecnt = 15;
+	AActor				*linetarget;
 
 	int index = CheckIndex (3, NULL);
 	if (index >= 0) 
@@ -523,7 +524,7 @@ void A_BFGSpray (AActor *mo)
 		an = mo->angle - ANG90/2 + ANG90/numrays*i;
 
 		// mo->target is the originator (player) of the missile
-		P_AimLineAttack (mo->target, an, 16*64*FRACUNIT, ANGLE_1*32);
+		P_AimLineAttack (mo->target, an, 16*64*FRACUNIT, &linetarget, ANGLE_1*32);
 
 		if (!linetarget)
 			continue;

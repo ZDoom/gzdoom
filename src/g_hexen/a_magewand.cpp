@@ -124,7 +124,7 @@ void AMageWandMissile::Tick ()
 	PrevZ = z;
 
 	// [RH] Ripping is a little different than it was in Hexen
-	DoRipping = true;
+	FCheckPosition tm(!!(flags2 & MF2_RIP));
 
 	// Handle movement
 	if (momx || momy || (z != floorz) || momz)
@@ -137,11 +137,10 @@ void AMageWandMissile::Tick ()
 		{
 			if (changexy)
 			{
-				LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
-				if (!P_TryMove (this, x+xfrac,y+yfrac, true))
+				tm.LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
+				if (!P_TryMove (this, x+xfrac,y+yfrac, true, false, tm))
 				{ // Blocked move
 					P_ExplodeMissile (this, BlockingLine, BlockingMobj);
-					DoRipping = false;
 					return;
 				}
 			}
@@ -151,14 +150,12 @@ void AMageWandMissile::Tick ()
 				z = floorz;
 				P_HitFloor (this);
 				P_ExplodeMissile (this, NULL, NULL);
-				DoRipping = false;
 				return;
 			}
 			if (z+height > ceilingz)
 			{ // Hit the ceiling
 				z = ceilingz-height;
 				P_ExplodeMissile (this, NULL, NULL);
-				DoRipping = false;
 				return;
 			}
 			if (changexy)
@@ -175,7 +172,7 @@ void AMageWandMissile::Tick ()
 			}
 		}
 	}
-	DoRipping = false;
+	
 	// Advance the state
 	if (tics != -1)
 	{

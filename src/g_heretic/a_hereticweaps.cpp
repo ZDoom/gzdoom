@@ -201,6 +201,7 @@ void A_StaffAttackPL1 (AActor *actor)
 	int damage;
 	int slope;
 	player_t *player;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -216,7 +217,7 @@ void A_StaffAttackPL1 (AActor *actor)
 	damage = 5+(pr_sap()&15);
 	angle = player->mo->angle;
 	angle += pr_sap.Random2() << 18;
-	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
+	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff), true);
 	if (linetarget)
 	{
@@ -239,6 +240,7 @@ void A_StaffAttackPL2 (AActor *actor)
 	int damage;
 	int slope;
 	player_t *player;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -255,7 +257,7 @@ void A_StaffAttackPL2 (AActor *actor)
 	damage = 18+(pr_sap2()&63);
 	angle = player->mo->angle;
 	angle += pr_sap2.Random2() << 18;
-	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
+	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff2), true);
 	if (linetarget)
 	{
@@ -447,14 +449,14 @@ void A_FireGoldWandPL1 (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_BulletSlope(mo);
+	angle_t pitch = P_BulletSlope(mo);
 	damage = 7+(pr_fgw()&7);
 	angle = mo->angle;
 	if (player->refire)
 	{
 		angle += pr_fgw.Random2() << 18;
 	}
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff1));
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff1));
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 }
 
@@ -485,16 +487,16 @@ void A_FireGoldWandPL2 (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_BulletSlope (mo);
+	angle_t pitch = P_BulletSlope(mo);
 	momz = FixedMul (GetDefault<AGoldWandFX2>()->Speed,
-		finetangent[FINEANGLES/4-((signed)bulletpitch>>ANGLETOFINESHIFT)]);
+		finetangent[FINEANGLES/4-((signed)pitch>>ANGLETOFINESHIFT)]);
 	P_SpawnMissileAngle (mo, RUNTIME_CLASS(AGoldWandFX2), mo->angle-(ANG45/8), momz);
 	P_SpawnMissileAngle (mo, RUNTIME_CLASS(AGoldWandFX2), mo->angle+(ANG45/8), momz);
 	angle = mo->angle-(ANG45/8);
 	for(i = 0; i < 5; i++)
 	{
 		damage = 1+(pr_fgw2()&7);
-		P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff2));
+		P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff2));
 		angle += ((ANG45/8)*2)/4;
 	}
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
@@ -1339,6 +1341,7 @@ void A_FireMacePL2 (AActor *actor)
 {
 	AActor *mo;
 	player_t *player;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -1351,7 +1354,7 @@ void A_FireMacePL2 (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AMaceFX4));
+	mo = P_SpawnPlayerMissile (player->mo, 0,0,0, RUNTIME_CLASS(AMaceFX4), 0, &linetarget);
 	if (mo)
 	{
 		mo->momx += player->mo->momx;
@@ -1378,6 +1381,7 @@ void A_DeathBallImpact (AActor *ball)
 	AActor *target;
 	angle_t angle = 0;
 	bool newAngle;
+	AActor *linetarget;
 
 	if ((ball->z <= ball->floorz) && P_HitFloor (ball))
 	{ // Landed in some sort of liquid
@@ -1424,7 +1428,7 @@ void A_DeathBallImpact (AActor *ball)
 			angle = 0;
 			for (i = 0; i < 16; i++)
 			{
-				P_AimLineAttack (ball, angle, 10*64*FRACUNIT);
+				P_AimLineAttack (ball, angle, 10*64*FRACUNIT, &linetarget);
 				if (linetarget && ball->target != linetarget)
 				{
 					ball->tracer = linetarget;
@@ -1624,6 +1628,7 @@ void A_GauntletAttack (AActor *actor)
 	player_t *player;
 	const PClass *pufftype;
 	AInventory *power;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -1654,7 +1659,7 @@ void A_GauntletAttack (AActor *actor)
 		angle += pr_gatk.Random2() << 18;
 		pufftype = RUNTIME_CLASS(AGauntletPuff1);
 	}
-	slope = P_AimLineAttack (player->mo, angle, dist);
+	slope = P_AimLineAttack (player->mo, angle, dist, &linetarget);
 	P_LineAttack (player->mo, angle, dist, slope, damage, NAME_Melee, pufftype);
 	if (!linetarget)
 	{
@@ -1973,14 +1978,14 @@ void A_FireBlasterPL1 (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_BulletSlope(actor);
+	angle_t pitch = P_BulletSlope(actor);
 	damage = pr_fb1.HitDice (4);
 	angle = actor->angle;
 	if (player->refire)
 	{
 		angle += pr_fb1.Random2() << 18;
 	}
-	P_LineAttack (actor, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, RUNTIME_CLASS(ABlasterPuff));
+	P_LineAttack (actor, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(ABlasterPuff));
 	S_Sound (actor, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
 }
 
@@ -2392,6 +2397,8 @@ void A_FireSkullRodPL1 (AActor *actor)
 void A_FireSkullRodPL2 (AActor *actor)
 {
 	player_t *player;
+	AActor *MissileActor;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -2403,7 +2410,7 @@ void A_FireSkullRodPL2 (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHornRodFX2));
+	P_SpawnPlayerMissile (player->mo, 0,0,0, RUNTIME_CLASS(AHornRodFX2), 0, &linetarget, &MissileActor);
 	// Use MissileActor instead of the return value from
 	// P_SpawnPlayerMissile because we need to give info to the mobj
 	// even if it exploded immediately.

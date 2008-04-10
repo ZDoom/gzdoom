@@ -748,8 +748,10 @@ CCMD (wdir)
 //-----------------------------------------------------------------------------
 CCMD(linetarget)
 {
+	AActor *linetarget;
+
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, 0);
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, &linetarget, 0);
 	if (linetarget)
 	{
 		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",

@@ -45,8 +45,6 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-angle_t bulletpitch;
-
 // [SO] 1=Weapons states are all 1 tick
 //		2=states with a function 1 tick, others 0 ticks.
 CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
@@ -632,18 +630,20 @@ void A_GunFlash (AActor *actor)
 // the height of the intended target
 //
 
-void P_BulletSlope (AActor *mo)
+angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget)
 {
 	static const int angdiff[3] = { -1<<26, 1<<26, 0 };
 	int i;
 	angle_t an;
+	angle_t pitch;
+	AActor *linetarget;
 
 	// see which target is to be aimed at
 	i = 2;
 	do
 	{
 		an = mo->angle + angdiff[i];
-		bulletpitch = P_AimLineAttack (mo, an, 16*64*FRACUNIT);
+		pitch = P_AimLineAttack (mo, an, 16*64*FRACUNIT, &linetarget);
 
 		if (mo->player != NULL &&
 			level.IsFreelookAllowed() &&
@@ -652,13 +652,14 @@ void P_BulletSlope (AActor *mo)
 			break;
 		}
 	} while (linetarget == NULL && --i >= 0);
+	return pitch;
 }
 
 
 //
 // P_GunShot
 //
-void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype)
+void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -671,7 +672,7 @@ void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype)
 		angle += pr_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, pufftype);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, pufftype);
 }
 
 void A_Light0 (AActor *actor)

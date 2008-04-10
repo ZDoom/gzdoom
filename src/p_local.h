@@ -86,7 +86,6 @@ void	P_UnPredictPlayer ();
 #define FLOATRANDZ		(FIXED_MAX-1)
 
 extern fixed_t FloatBobOffsets[64];
-extern AActor *MissileActor;
 
 APlayerPawn *P_SpawnPlayer (mapthing2_t* mthing, bool tempplayer=false);
 
@@ -120,7 +119,8 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PCl
 
 AActor *P_SpawnPlayerMissile (AActor* source, const PClass *type);
 AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type, angle_t angle);
-AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z, const PClass *type, angle_t angle);
+AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z, const PClass *type, angle_t angle, 
+							  AActor **pLineTarget = NULL, AActor **MissileActor = NULL);
 
 void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheight=false);
 
@@ -345,6 +345,17 @@ struct FCheckPosition
 	bool			touchmidtex;
 	bool			floatok;
 	line_t			*ceilingline;
+	AActor			*stepthing;
+	// [RH] These are used by PIT_CheckThing and P_XYMovement to apply
+	// ripping damage once per tic instead of once per move.
+	bool			DoRipping;
+	AActor			*LastRipped;
+
+	FCheckPosition(bool rip=false)
+	{
+		DoRipping = rip;
+		LastRipped = NULL;
+	}
 };
 
 
@@ -355,13 +366,9 @@ extern msecnode_t		*sector_list;		// phares 3/16/98
 
 extern TArray<line_t *> spechit;
 
-// [RH] These are used by PIT_CheckThing and P_XYMovement to apply
-// ripping damage once per tic instead of once per move.
-extern bool				DoRipping;
-extern AActor			*LastRipped;
 
 bool	P_TestMobjLocation (AActor *mobj);
-bool	P_TestMobjZ (AActor *mobj, bool quick=true);
+bool	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
 bool	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm);
 bool	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y);
 AActor	*P_CheckOnmobj (AActor *thing);
@@ -380,9 +387,7 @@ void	P_FindFloorCeiling (AActor *actor);
 
 bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil, bool isreset);
 
-extern	AActor*	linetarget; 	// who got hit (or NULL)
-
-fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vrange=0, bool forcenosmart=false);
+fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget = NULL, fixed_t vrange=0, bool forcenosmart=false);
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, const PClass *pufftype, bool ismelee = false);
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, bool ismelee = false);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);

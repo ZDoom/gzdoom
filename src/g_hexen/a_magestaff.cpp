@@ -387,9 +387,10 @@ void A_MStaffAttack2 (AActor *actor)
 void MStaffSpawn (AActor *pmo, angle_t angle)
 {
 	AActor *mo;
+	AActor *linetarget;
 
 	mo = P_SpawnPlayerMissile (pmo, 0, 0, 8*FRACUNIT,
-		RUNTIME_CLASS(AMageStaffFX2), angle);
+		RUNTIME_CLASS(AMageStaffFX2), angle, &linetarget);
 	if (mo)
 	{
 		mo->target = pmo;
@@ -407,6 +408,7 @@ void A_MStaffAttack (AActor *actor)
 {
 	angle_t angle;
 	player_t *player;
+	AActor *linetarget;
 
 	if (NULL == (player = actor->player))
 	{
@@ -422,7 +424,7 @@ void A_MStaffAttack (AActor *actor)
 	angle = actor->angle;
 	
 	// [RH] Let's try and actually track what the player aimed at
-	P_AimLineAttack (actor, angle, PLAYERMISSILERANGE, ANGLE_1*32);
+	P_AimLineAttack (actor, angle, PLAYERMISSILERANGE, &linetarget, ANGLE_1*32);
 	if (linetarget == NULL)
 	{
 		BlockCheckLine.x = actor->x;

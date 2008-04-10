@@ -199,6 +199,7 @@ void A_JabDagger (AActor *actor)
 	int 		damage;
 	int 		pitch;
 	int			power;
+	AActor *linetarget;
 
 	power = MIN(10, actor->player->stamina / 10);
 	damage = (pr_jabdagger() % (power + 8)) * (power + 2);
@@ -209,7 +210,7 @@ void A_JabDagger (AActor *actor)
 	}
 
 	angle = actor->angle + (pr_jabdagger.Random2() << 18);
-	pitch = P_AimLineAttack (actor, angle, 80*FRACUNIT);
+	pitch = P_AimLineAttack (actor, angle, 80*FRACUNIT, &linetarget);
 	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, RUNTIME_CLASS(AStrifeSpark), true);
 
 	// turn to face target
@@ -675,7 +676,7 @@ bool AAssaultGun::HandlePickup (AInventory *item)
 //
 //============================================================================
 
-void P_StrifeGunShot (AActor *mo, bool accurate)
+void P_StrifeGunShot (AActor *mo, bool accurate, angle_t pitch)
 {
 	angle_t angle;
 	int damage;
@@ -688,7 +689,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate)
 		angle += pr_sgunshot.Random2() << (20 - mo->player->accuracy * 5 / 100);
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, NAME_None, RUNTIME_CLASS(AStrifePuff));
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AStrifePuff));
 }
 
 //============================================================================
@@ -719,8 +720,7 @@ void A_FireAssaultGun (AActor *self)
 		accurate = true;
 	}
 
-	P_BulletSlope (self);
-	P_StrifeGunShot (self, accurate);
+	P_StrifeGunShot (self, accurate, P_BulletSlope (self));
 }
 
 // Standing variant of the assault gun --------------------------------------
@@ -1303,13 +1303,13 @@ void A_FireMauler1 (AActor *self)
 	S_Sound (self, CHAN_WEAPON, "weapons/mauler1", 1, ATTN_NORM);
 
 
-	P_BulletSlope (self);
+	int bpitch = P_BulletSlope (self);
 
 	for (int i = 0; i < 20; ++i)
 	{
 		int damage = 5 * (pr_mauler1() % 3 + 1);
 		angle_t angle = self->angle + (pr_mauler1.Random2() << 19);
-		int pitch = bulletpitch + (pr_mauler1.Random2() * 332063);
+		int pitch = bpitch + (pr_mauler1.Random2() * 332063);
 		
 		// Strife used a range of 2112 units for the mauler to signal that
 		// it should use a different puff. ZDoom's default range is longer
@@ -2185,6 +2185,7 @@ void A_FireSigil1 (AActor *actor)
 {
 	AActor *spot;
 	player_t *player = actor->player;
+	AActor *linetarget;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
@@ -2192,7 +2193,7 @@ void A_FireSigil1 (AActor *actor)
 	P_DamageMobj (actor, actor, NULL, 1*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_BulletSlope (actor);
+	P_BulletSlope (actor, &linetarget);
 	if (linetarget != NULL)
 	{
 		spot = Spawn<ASpectralLightningSpot> (linetarget->x, linetarget->y, ONFLOORZ, ALLOW_REPLACE);
@@ -2283,6 +2284,7 @@ void A_FireSigil4 (AActor *actor)
 {
 	AActor *spot;
 	player_t *player = actor->player;
+	AActor *linetarget;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
@@ -2290,10 +2292,10 @@ void A_FireSigil4 (AActor *actor)
 	P_DamageMobj (actor, actor, NULL, 4*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_BulletSlope (actor);
+	P_BulletSlope (actor, &linetarget);
 	if (linetarget != NULL)
 	{
-		spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningBigV1));
+		spot = P_SpawnPlayerMissile (actor, 0,0,0, RUNTIME_CLASS(ASpectralLightningBigV1), 0, &linetarget);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;

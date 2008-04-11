@@ -132,6 +132,38 @@ long FileReader::Read (void *buffer, long len)
 	return len;
 }
 
+char *FileReader::Gets(char *strbuf, int len)
+{
+	if (FilePos + len > StartPos + Length)
+	{
+		len = Length - FilePos + StartPos;
+	}
+	if (len <= 0) return 0;
+	char *p = fgets(strbuf, len, File);
+	FilePos += len;
+	return p;
+}
+
+char *FileReader::GetsFromBuffer(const char * bufptr, char *strbuf, int len)
+{
+	if (len>Length-FilePos) len=Length-FilePos;
+	if (len <= 0) return NULL;
+
+	char *p = strbuf;
+	while (len > 1 && bufptr[FilePos] != 0)
+	{
+		if (bufptr[FilePos] != '\r')
+		{
+			*p++ = bufptr[FilePos];
+			len--;
+			if (bufptr[FilePos] == '\n') break;
+		}
+		FilePos++;
+	}
+	*p++=0;
+	return strbuf;
+}
+
 long FileReader::CalcFileLen() const
 {
 	long endpos;
@@ -265,3 +297,9 @@ long MemoryReader::Read (void *buffer, long len)
 	FilePos+=len;
 	return len;
 }
+
+char *MemoryReader::Gets(char *strbuf, int len)
+{
+	return GetsFromBuffer(bufptr, strbuf, len);
+}
+

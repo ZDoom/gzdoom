@@ -2274,6 +2274,27 @@ long FWadLump::Read (void *buffer, long len)
 	return numread;
 }
 
+char *FWadLump::Gets(char *strbuf, int len)
+{
+	// Blood, you are so mean to me with your encryption.
+	// ... and since this function will never read from Blood 
+	// files let's just return an error here.
+	if (Encrypted && FilePos - StartPos < 256)
+	{
+		return NULL;
+	}
+
+	if (SourceData != NULL)
+	{
+		return GetsFromBuffer(SourceData, strbuf, len);
+	}
+	else
+	{
+		return FileReader::Gets(strbuf, len);
+	}
+	return strbuf;
+}
+
 // FMemLump -----------------------------------------------------------------
 
 FMemLump::FMemLump ()

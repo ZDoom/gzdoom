@@ -80,7 +80,8 @@
 // [RH] Keep GCC quiet by not using offsetof on Actor types.
 #define DEFINE_FLAG(prefix, name, type, variable) { prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1 }
 #define DEFINE_FLAG2(symbol, name, type, variable) { symbol, #name, (int)(size_t)&((type*)1)->variable - 1 }
-#define DEFINE_DEPRECATED_FLAG(name, type) { DEPF_##name, #name, -1 }
+#define DEFINE_DEPRECATED_FLAG(name) { DEPF_##name, #name, -1 }
+#define DEFINE_DUMMY_FLAG(name) { DEPF_UNUSED, #name, -1 }
 
 struct flagdef
 {
@@ -91,6 +92,7 @@ struct flagdef
 
 enum 
 {
+	DEPF_UNUSED,
 	DEPF_FIREDAMAGE,
 	DEPF_ICEDAMAGE,
 	DEPF_LOWGRAVITY,
@@ -248,11 +250,11 @@ static flagdef ActorFlags[]=
 	DEFINE_FLAG(RF, FORCEXYBILLBOARD, AActor, renderflags),
 
 	// Deprecated flags. Handling must be performed in HandleDeprecatedFlags
-	DEFINE_DEPRECATED_FLAG(FIREDAMAGE, AActor),
-	DEFINE_DEPRECATED_FLAG(ICEDAMAGE, AActor),
-	DEFINE_DEPRECATED_FLAG(LOWGRAVITY, AActor),
-	DEFINE_DEPRECATED_FLAG(SHORTMISSILERANGE, AActor),
-	DEFINE_DEPRECATED_FLAG(LONGMELEERANGE, AActor),
+	DEFINE_DEPRECATED_FLAG(FIREDAMAGE),
+	DEFINE_DEPRECATED_FLAG(ICEDAMAGE),
+	DEFINE_DEPRECATED_FLAG(LOWGRAVITY),
+	DEFINE_DEPRECATED_FLAG(SHORTMISSILERANGE),
+	DEFINE_DEPRECATED_FLAG(LONGMELEERANGE),
 };
 
 static flagdef InventoryFlags[] =
@@ -271,7 +273,7 @@ static flagdef InventoryFlags[] =
 	DEFINE_FLAG(IF, IGNORESKILL, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, ADDITIVETIME, AInventory, ItemFlags),
 
-	DEFINE_DEPRECATED_FLAG(PICKUPFLASH, AInventory),
+	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
 
 };
 
@@ -296,6 +298,8 @@ static flagdef WeaponFlags[] =
 	DEFINE_FLAG(WIF, CHEATNOTWEAPON, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NO_AUTO_SWITCH, AWeapon, WeaponFlags),
 	//WIF_BOT_REACTION_SKILL_THING = 1<<31, // I don't understand this
+	
+	DEFINE_DUMMY_FLAG(NOLMS),
 };
 
 static const struct { const PClass *Type; flagdef *Defs; int NumDefs; } FlagLists[] =

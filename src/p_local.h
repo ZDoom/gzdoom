@@ -167,8 +167,6 @@ typedef struct
 	} d;
 } intercept_t;
 
-extern TArray<intercept_t> intercepts;
-
 typedef bool (*traverser_t) (intercept_t *in);
 
 fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);

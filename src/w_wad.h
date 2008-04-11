@@ -119,6 +119,7 @@ public:
 
 	long Seek (long offset, int origin);
 	long Read (void *buffer, long len);
+	char *Gets(char *strbuf, int len);
 
 private:
 	FWadLump (const FileReader &reader, long length, bool encrypted);

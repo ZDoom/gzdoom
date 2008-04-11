@@ -1861,7 +1861,7 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 
 	if (lookfirstinprogdir)
 	{
-		sprintf (wad, "%s%s%s", progdir, progdir[strlen (progdir) - 1] != '/' ? "/" : "", file);
+		sprintf (wad, "%s%s%s", progdir.GetChars(), progdir[progdir.Len() - 1] != '/' ? "/" : "", file);
 		if (FileExists (wad))
 		{
 			return wad;

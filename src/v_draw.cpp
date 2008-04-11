@@ -56,6 +56,34 @@ int CleanWidth, CleanHeight;
 
 CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
 
+// For routines that take RGB colors, cache the previous lookup in case there
+// are several repetitions with the same color.
+static int LastPal = -1;
+static uint32 LastRGB;
+
+static int PalFromRGB(uint32 rgb)
+{
+	if (LastPal >= 0 && LastRGB == rgb)
+	{
+		return LastPal;
+	}
+	// Quick check for black and white.
+	if (rgb == MAKEARGB(255,0,0,0))
+	{
+		LastPal = GPalette.BlackIndex;
+	}
+	else if (rgb == MAKEARGB(255,255,255,255))
+	{
+		LastPal = GPalette.WhiteIndex;
+	}
+	else
+	{
+		LastPal = ColorMatcher.Pick(RPART(rgb), GPART(rgb), BPART(rgb));
+	}
+	LastRGB = rgb;
+	return LastPal;
+}
+
 void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x, int y, int tags_first, ...)
 {
 	va_list tags;
@@ -757,15 +785,7 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 
 	if (palColor < 0)
 	{
-		// Quick check for black.
-		if (realcolor == MAKEARGB(255,0,0,0))
-		{
-			palColor = 0;
-		}
-		else
-		{
-			palColor = ColorMatcher.Pick(RPART(realcolor), GPART(realcolor), BPART(realcolor));
-		}
+		palColor = PalFromRGB(realcolor);
 	}
 
 	Lock();
@@ -918,22 +938,52 @@ void DCanvas::DrawPixel(int x, int y, int palColor, uint32 realcolor)
 {
 	if (palColor < 0)
 	{
-		// Quick check for black.
-		if (realcolor == MAKEARGB(255,0,0,0))
-		{
-			palColor = 0;
-		}
-		else
-		{
-			palColor = ColorMatcher.Pick(RPART(realcolor), GPART(realcolor), BPART(realcolor));
-		}
+		palColor = PalFromRGB(realcolor);
 	}
 
-	Lock();
-	GetBuffer()[GetPitch() * y + x] = (BYTE)palColor;
-	Unlock();
+	Buffer[Pitch * y + x] = (BYTE)palColor;
 }
 
+//==========================================================================
+//
+// DCanvas :: Clear
+//
+// Set an area to a specified color.
+//
+//==========================================================================
+
+void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
+{
+	int x, y;
+	BYTE *dest;
+
+	if (left == right || top == bottom)
+	{
+		return;
+	}
+
+	assert(left < right);
+	assert(top < bottom);
+
+	if (palcolor < 0)
+	{
+		if (APART(color) != 255)
+		{
+			Dim(color, APART(color)/255.f, left, top, right - left, bottom - top);
+			return;
+		}
+
+		palcolor = PalFromRGB(color);
+	}
+
+	dest = Buffer + top * Pitch + left;
+	x = right - left;
+	for (y = top; y < bottom; y++)
+	{
+		memset(dest, palcolor, x);
+		dest += Pitch;
+	}
+}
 
 /********************************/
 /*								*/

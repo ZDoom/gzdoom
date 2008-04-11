@@ -56,7 +56,7 @@ ifeq ($(CONFIG),Release)
   TARGET = $(RELEASETARGET)
 endif
 
-SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ win32/ textures/ thingdef/)
+SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ win32/ textures/ thingdef/ timidity/)
 VPATH = $(SRCDIRS)
 
 CPPSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS))) src/xlat/parse_xlat.cpp

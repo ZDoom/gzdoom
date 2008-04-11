@@ -1,6 +1,6 @@
 /*
-** music_opl_mididevice.cpp
-** Provides an emulated OPL implementation of a MIDI output device.
+** music_timidity_mididevice.cpp
+** Provides access to TiMidity as a generic MIDI device.
 **
 **---------------------------------------------------------------------------
 ** Copyright 2008 Randy Heit
@@ -30,7 +30,6 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** Uses Vladimir Arnost's MUS player library.
 */
 
 // HEADER FILES ------------------------------------------------------------
@@ -40,16 +39,9 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "w_wad.h"
-#include "fmopl.h"
+#include "timidity/timidity.h"
 
 // MACROS ------------------------------------------------------------------
-
-#if defined(_DEBUG) && defined(_WIN32)
-#define DEBUGOUT(m,c,s,t) \
-	{ char foo[128]; sprintf(foo, m, c, s, t); OutputDebugString(foo); }
-#else
-#define DEBUGOUT(m,c,s,t)
-#endif
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -59,60 +51,58 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern OPLmusicBlock *BlockForStats;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR(Bool, timidity_watch, false, 0)
 
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
-// OPLMIDIDevice Contructor
+// TimidityMIDIDevice Constructor
 //
 //==========================================================================
 
-OPLMIDIDevice::OPLMIDIDevice()
+TimidityMIDIDevice::TimidityMIDIDevice()
 {
 	Stream = NULL;
 	Tempo = 0;
 	Division = 0;
 	Events = NULL;
 	Started = false;
-
-	FWadLump data = Wads.OpenLumpName("GENMIDI");
-	OPLloadBank(data);
+	Renderer = NULL;
+	Renderer = new Timidity::Renderer(GSnd->GetOutputRate());
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice Destructor
+// TimidityMIDIDevice Destructor
 //
 //==========================================================================
 
-OPLMIDIDevice::~OPLMIDIDevice()
+TimidityMIDIDevice::~TimidityMIDIDevice()
 {
 	Close();
+	if (Renderer != NULL)
+	{
+		delete Renderer;
+	}
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: Open
+// TimidityMIDIDevice :: Open
 //
 // Returns 0 on success.
 //
 //==========================================================================
 
-int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
+int TimidityMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata)
 {
-	if (io == NULL || io->OPLinit(TwoChips + 1))
-	{
-		return 1;
-	}
-
-	Stream = GSnd->CreateStream(FillStream, int(OPL_SAMPLE_RATE / 14) * 4,
-		SoundStream::Mono | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
+	Stream = GSnd->CreateStream(FillStream, int(Renderer->rate / 2) * 4,
+		SoundStream::Float, int(Renderer->rate), this);
 	if (Stream == NULL)
 	{
 		return 2;
@@ -123,110 +113,101 @@ int OPLMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWORD), vo
 	Tempo = 500000;
 	Division = 100;
 	CalcTickRate();
-
-	OPLstopMusic();
-	OPLplayMusic(100);
-	DEBUGOUT("========= New song started ==========\n", 0, 0, 0);
-
+	Renderer->Reset();
 	return 0;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: Close
+// TimidityMIDIDevice :: Close
 //
 //==========================================================================
 
-void OPLMIDIDevice::Close()
+void TimidityMIDIDevice::Close()
 {
 	if (Stream != NULL)
 	{
 		delete Stream;
 		Stream = NULL;
 	}
-	io->OPLdeinit();
 	Started = false;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: IsOpen
+// TimidityMIDIDevice :: IsOpen
 //
 //==========================================================================
 
-bool OPLMIDIDevice::IsOpen() const
+bool TimidityMIDIDevice::IsOpen() const
 {
 	return Stream != NULL;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: GetTechnology
+// TimidityMIDIDevice :: GetTechnology
 //
 //==========================================================================
 
-int OPLMIDIDevice::GetTechnology() const
+int TimidityMIDIDevice::GetTechnology() const
 {
-	return MOD_FMSYNTH;
+	return MOD_SWSYNTH;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: SetTempo
+// TimidityMIDIDevice :: SetTempo
 //
 //==========================================================================
 
-int OPLMIDIDevice::SetTempo(int tempo)
+int TimidityMIDIDevice::SetTempo(int tempo)
 {
 	Tempo = tempo;
 	CalcTickRate();
-	DEBUGOUT("Tempo changed to %.0f, %.2f samples/tick\n", Tempo, SamplesPerTick, 0);
 	return 0;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: SetTimeDiv
+// TimidityMIDIDevice :: SetTimeDiv
 //
 //==========================================================================
 
-int OPLMIDIDevice::SetTimeDiv(int timediv)
+int TimidityMIDIDevice::SetTimeDiv(int timediv)
 {
 	Division = timediv;
 	CalcTickRate();
-	DEBUGOUT("Division changed to %.0f, %.2f samples/tick\n", Division, SamplesPerTick, 0);
 	return 0;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: CalcTickRate
+// TimidityMIDIDevice :: CalcTickRate
 //
 // Tempo is the number of microseconds per quarter note.
 // Division is the number of ticks per quarter note.
 //
 //==========================================================================
 
-void OPLMIDIDevice::CalcTickRate()
+void TimidityMIDIDevice::CalcTickRate()
 {
-	SamplesPerTick = OPL_SAMPLE_RATE / (1000000.0 / Tempo) / Division;
-	io->SetClockRate(SamplesPerTick);
+	SamplesPerTick = Renderer->rate / (1000000.0 / Tempo) / Division;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: Resume
+// TimidityMIDIDevice :: Resume
 //
 //==========================================================================
 
-int OPLMIDIDevice::Resume()
+int TimidityMIDIDevice::Resume()
 {
 	if (!Started)
 	{
 		if (Stream->Play(true, 1, false))
 		{
 			Started = true;
-			BlockForStats = this;
 			return 0;
 		}
 		return 1;
@@ -236,47 +217,46 @@ int OPLMIDIDevice::Resume()
 
 //==========================================================================
 //
-// OPLMIDIDevice :: Stop
+// TimidityMIDIDevice :: Stop
 //
 //==========================================================================
 
-void OPLMIDIDevice::Stop()
+void TimidityMIDIDevice::Stop()
 {
 	if (Started)
 	{
 		Stream->Stop();
 		Started = false;
-		BlockForStats = NULL;
 	}
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: StreamOutSync
+// TimidityMIDIDevice :: StreamOutSync
 //
 // This version is called from the main game thread and needs to
 // synchronize with the player thread.
 //
 //==========================================================================
 
-int OPLMIDIDevice::StreamOutSync(MIDIHDR *header)
+int TimidityMIDIDevice::StreamOutSync(MIDIHDR *header)
 {
-	ChipAccess.Enter();
+	CritSec.Enter();
 	StreamOut(header);
-	ChipAccess.Leave();
+	CritSec.Leave();
 	return 0;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: StreamOut
+// TimidityMIDIDevice :: StreamOut
 //
 // This version is called from the player thread so does not need to
 // arbitrate for access to the Events pointer.
 //
 //==========================================================================
 
-int OPLMIDIDevice::StreamOut(MIDIHDR *header)
+int TimidityMIDIDevice::StreamOut(MIDIHDR *header)
 {
 	header->lpNext = NULL;
 	if (Events == NULL)
@@ -298,61 +278,61 @@ int OPLMIDIDevice::StreamOut(MIDIHDR *header)
 
 //==========================================================================
 //
-// OPLMIDIDevice :: PrepareHeader
+// TimidityMIDIDevice :: PrepareHeader
 //
 //==========================================================================
 
-int OPLMIDIDevice::PrepareHeader(MIDIHDR *header)
+int TimidityMIDIDevice::PrepareHeader(MIDIHDR *header)
 {
 	return 0;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: UnprepareHeader
+// TimidityMIDIDevice :: UnprepareHeader
 //
 //==========================================================================
 
-int OPLMIDIDevice::UnprepareHeader(MIDIHDR *header)
+int TimidityMIDIDevice::UnprepareHeader(MIDIHDR *header)
 {
 	return 0;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: FakeVolume
+// TimidityMIDIDevice :: FakeVolume
 //
-// Since the OPL output is rendered as a normal stream, its volume is
+// Since the TiMidity output is rendered as a normal stream, its volume is
 // controlled through the GSnd interface, not here.
 //
 //==========================================================================
 
-bool OPLMIDIDevice::FakeVolume()
+bool TimidityMIDIDevice::FakeVolume()
 {
 	return false;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: NeedThreadedCallabck
+// TimidityMIDIDevice :: NeedThreadedCallabck
 //
 // OPL can service the callback directly rather than using a separate
 // thread.
 //
 //==========================================================================
 
-bool OPLMIDIDevice::NeedThreadedCallback()
+bool TimidityMIDIDevice::NeedThreadedCallback()
 {
 	return false;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: Pause
+// TimidityMIDIDevice :: Pause
 //
 //==========================================================================
 
-bool OPLMIDIDevice::Pause(bool paused)
+bool TimidityMIDIDevice::Pause(bool paused)
 {
 	if (Stream != NULL)
 	{
@@ -363,7 +343,26 @@ bool OPLMIDIDevice::Pause(bool paused)
 
 //==========================================================================
 //
-// OPLMIDIDevice :: PlayTick
+// TimidityMIDIDevice :: PrecacheInstruments
+//
+// For each entry, bit 7 set indicates that the instrument is percussion and
+// the lower 7 bits contain the note number to use on MIDI channel 10,
+// otherwise it is melodic and the lower 7 bits are the program number.
+//
+//==========================================================================
+
+void TimidityMIDIDevice::PrecacheInstruments(const BYTE *instruments, int count)
+{
+	for (int i = 0; i < count; ++i)
+	{
+		Renderer->MarkInstrument(0, instruments[i] >> 7, instruments[i] & 127);
+	}
+	Renderer->load_missing_instruments();
+}
+
+//==========================================================================
+//
+// TimidityMIDIDevice :: PlayTick
 //
 // event[0] = delta time
 // event[1] = unused
@@ -371,7 +370,7 @@ bool OPLMIDIDevice::Pause(bool paused)
 //
 //==========================================================================
 
-int OPLMIDIDevice::PlayTick()
+int TimidityMIDIDevice::PlayTick()
 {
 	DWORD delay = 0;
 
@@ -383,14 +382,37 @@ int OPLMIDIDevice::PlayTick()
 			SetTempo(MEVT_EVENTPARM(event[2]));
 		}
 		else if (MEVT_EVENTTYPE(event[2]) == MEVT_LONGMSG)
-		{ // Should I handle master volume changes?
+		{
+			Renderer->HandleLongMessage((BYTE *)&event[3], MEVT_EVENTPARM(event[2]));
 		}
 		else if (MEVT_EVENTTYPE(event[2]) == 0)
 		{ // Short MIDI event
 			int status = event[2] & 0xff;
 			int parm1 = (event[2] >> 8) & 0x7f;
 			int parm2 = (event[2] >> 16) & 0x7f;
-			HandleEvent(status, parm1, parm2);
+			Renderer->HandleEvent(status, parm1, parm2);
+
+			if (timidity_watch)
+			{
+				static const char *const commands[8] =
+				{
+					"Note off",
+					"Note on",
+					"Poly press",
+					"Ctrl change",
+					"Prgm change",
+					"Chan press",
+					"Pitch bend",
+					"SysEx"
+				};
+#ifdef _WIN32
+				char buffer[128];
+				sprintf(buffer, "C%02d: %11s %3d %3d\n", (status & 15) + 1, commands[(status >> 4) & 7], parm1, parm2);
+				OutputDebugString(buffer);
+#else
+				fprintf(stderr, "C%02d: %11s %3d %3d\n", (status & 15) + 1, commands[(status >> 4) & 7], parm1, parm2);
+#endif
+			}
 		}
 
 		// Advance to next event.
@@ -428,89 +450,70 @@ int OPLMIDIDevice::PlayTick()
 
 //==========================================================================
 //
-// OPLMIDIDevice :: HandleEvent
-//
-// Processes a normal MIDI event.
+// TimidityMIDIDevice :: ServiceStream
 //
 //==========================================================================
 
-void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
+bool TimidityMIDIDevice::ServiceStream (void *buff, int numbytes)
 {
-	int command = status & 0xF0;
-	int channel = status & 0x0F;
+	float *samples = (float *)buff;
+	float *samples1;
+	int numsamples = numbytes / sizeof(float) / 2;
+	bool prev_ended = false;
+	bool res = true;
 
-	// Swap channels 9 and 15, because their roles are reversed
-	// in MUS and MIDI formats.
-	if (channel == 9)
+	samples1 = samples;
+	memset(buff, 0, numbytes);
+
+	CritSec.Enter();
+	while (numsamples > 0)
 	{
-		channel = 15;
-	}
-	else if (channel == 15)
-	{
-		channel = 9;
-	}
+		double ticky = NextTickIn;
+		int tick_in = int(NextTickIn);
+		int samplesleft = MIN(numsamples, tick_in);
 
-	switch (command)
-	{
-	case MIDI_NOTEOFF:
-		playingcount--;
-		OPLreleaseNote(channel, parm1);
-		break;
-
-	case MIDI_NOTEON:
-		playingcount++;
-		OPLplayNote(channel, parm1, parm2);
-		break;
-
-	case MIDI_POLYPRESS:
-		DEBUGOUT("Unhandled note aftertouch: Channel %d, note %d, value %d\n", channel, parm1, parm2);
-		break;
-
-	case MIDI_CTRLCHANGE:
-		switch (parm1)
+		if (samplesleft > 0)
 		{
-		case 0:		OPLchangeControl(channel, ctrlBank, parm2);			break;
-		case 1:		OPLchangeControl(channel, ctrlModulation, parm2);	break;
-		case 7:		OPLchangeControl(channel, ctrlVolume, parm2);		break;
-		case 10:	OPLchangeControl(channel, ctrlPan, parm2);			break;
-		case 11:	OPLchangeControl(channel, ctrlExpression, parm2);	break;
-		case 64:	OPLchangeControl(channel, ctrlSustainPedal, parm2);	break;
-		case 67:	OPLchangeControl(channel, ctrlSoftPedal, parm2);	break;
-		case 91:	OPLchangeControl(channel, ctrlReverb, parm2);		break;
-		case 93:	OPLchangeControl(channel, ctrlChorus, parm2);		break;
-		case 120:	OPLchangeControl(channel, ctrlSoundsOff, parm2);	break;
-		case 121:	OPLchangeControl(channel, ctrlResetCtrls, parm2);	break;
-		case 123:	OPLchangeControl(channel, ctrlNotesOff, parm2);		break;
-		case 126:	OPLchangeControl(channel, ctrlMono, parm2);			break;
-		case 127:	OPLchangeControl(channel, ctrlPoly, parm2);			break;
-		default:
-			DEBUGOUT("Unhandled controller: Channel %d, controller %d, value %d\n", channel, parm1, parm2);
-			break;
+			Renderer->ComputeOutput(samples1, samplesleft);
+			assert(NextTickIn == ticky);
+			NextTickIn -= samplesleft;
+			assert(NextTickIn >= 0);
+			numsamples -= samplesleft;
+			samples1 += samplesleft * 2;
 		}
-		break;
-
-	case MIDI_PRGMCHANGE:
-		OPLprogramChange(channel, parm1);
-		break;
-
-	case MIDI_CHANPRESS:
-		DEBUGOUT("Unhandled channel aftertouch: Channel %d, value %d\n", channel, parm1, 0);
-		break;
-
-	case MIDI_PITCHBEND:
-		OPLpitchWheel(channel, parm1 | (parm2 << 7));
-		break;
+		
+		if (NextTickIn < 1)
+		{
+			int next = PlayTick();
+			assert(next >= 0);
+			if (next == 0)
+			{ // end of song
+				if (numsamples > 0)
+				{
+					Renderer->ComputeOutput(samples1, samplesleft);
+				}
+				res = false;
+				break;
+			}
+			else
+			{
+				NextTickIn += SamplesPerTick * next;
+				assert(NextTickIn >= 0);
+			}
+		}
 	}
+	CritSec.Leave();
+	return res;
 }
 
 //==========================================================================
 //
-// OPLMIDIDevice :: FillStream										static
+// TimidityMIDIDevice :: FillStream									static
 //
 //==========================================================================
 
-bool OPLMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, void *userdata)
+bool TimidityMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, void *userdata)
 {
-	OPLMIDIDevice *device = (OPLMIDIDevice *)userdata;
+	TimidityMIDIDevice *device = (TimidityMIDIDevice *)userdata;
 	return device->ServiceStream(buff, len);
 }

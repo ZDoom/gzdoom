@@ -69,12 +69,12 @@ extern UINT mididevice;
 //
 //==========================================================================
 
-MIDIStreamer::MIDIStreamer(bool opl)
+MIDIStreamer::MIDIStreamer(EMIDIDevice type)
 :
 #ifdef _WIN32
   PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
 #endif
-  MIDI(0), Division(0), InitialTempo(500000), UseOPLDevice(opl)
+  MIDI(0), Division(0), InitialTempo(500000), DeviceType(type)
 {
 #ifdef _WIN32
 	BufferDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -102,7 +102,7 @@ MIDIStreamer::MIDIStreamer(const char *dumpname)
 #ifdef _WIN32
   PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
 #endif
-  MIDI(0), Division(0), InitialTempo(500000), UseOPLDevice(true), DumpFilename(dumpname)
+  MIDI(0), Division(0), InitialTempo(500000), DeviceType(MIDI_OPL), DumpFilename(dumpname)
 {
 #ifdef _WIN32
 	BufferDoneEvent = NULL;
@@ -198,16 +198,23 @@ void MIDIStreamer::Play(bool looping)
 	{
 		MIDI = new OPLDumperMIDIDevice(DumpFilename);
 	}
-	else
+	else switch(DeviceType)
+	{
+	case MIDI_Win:
 #ifdef _WIN32
-	if (!UseOPLDevice)
-	{
 		MIDI = new WinMIDIDevice(mididevice);
-	}
-	else
+		break;
 #endif
-	{
+		assert(0);
+		// Intentional fall-through for non-Windows systems.
+
+	case MIDI_Timidity:
+		MIDI = new TimidityMIDIDevice;
+		break;
+
+	case MIDI_OPL:
 		MIDI = new OPLMIDIDevice;
+		break;
 	}
 	
 #ifndef _WIN32
@@ -682,8 +689,11 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 			{
 				events[0] = 0;				// dwDeltaTime
 				events[1] = 0;				// dwStreamID
-				events[2] = MIDI_NOTEOFF | i | (60 << 8) | (64<<16);
-				events += 3;
+				events[2] = MIDI_CTRLCHANGE | i | (123 << 8);	// All notes off
+				events[3] = 0;
+				events[4] = 0;
+				events[5] = MIDI_CTRLCHANGE | i | (121 << 8);	// Reset controllers
+				events += 6;
 			}
 			DoRestart();
 		}

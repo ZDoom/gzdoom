@@ -286,55 +286,6 @@ void DCanvas::FlatFill (int left, int top, int right, int bottom, FTexture *src,
 
 //==========================================================================
 //
-// DCanvas :: Clear
-//
-// Set an area to a specified color.
-//
-//==========================================================================
-
-void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
-{
-	int x, y;
-	BYTE *dest;
-
-	if (left == right || top == bottom)
-	{
-		return;
-	}
-
-	assert(left < right);
-	assert(top < bottom);
-
-	if (palcolor < 0)
-	{
-		if (APART(color) != 255)
-		{
-			Dim(color, APART(color)/255.f, left, top, right - left, bottom - top);
-			return;
-		}
-
-		// Quick check for black.
-		if (color == MAKEARGB(255,0,0,0))
-		{
-			palcolor = 0;
-		}
-		else
-		{
-			palcolor = ColorMatcher.Pick(RPART(color), GPART(color), BPART(color));
-		}
-	}
-
-	dest = Buffer + top * Pitch + left;
-	x = right - left;
-	for (y = top; y < bottom; y++)
-	{
-		memset(dest, palcolor, x);
-		dest += Pitch;
-	}
-}
-
-//==========================================================================
-//
 // DCanvas :: Dim
 //
 // Applies a colored overlay to the entire screen, with the opacity

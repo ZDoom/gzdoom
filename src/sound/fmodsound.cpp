@@ -72,6 +72,8 @@ extern HWND Window;
 
 #define ERRCHECK(x)
 
+#define SPECTRUM_SIZE				256
+
 
 // TYPES -------------------------------------------------------------------
 
@@ -737,6 +739,23 @@ void FMODSoundRenderer::Shutdown()
 		Sys->close();
 		Sys = NULL;
 	}
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: GetOutputRate
+//
+//==========================================================================
+
+float FMODSoundRenderer::GetOutputRate()
+{
+	int rate;
+
+	if (FMOD_OK == Sys->getSoftwareFormat(&rate, NULL, NULL, NULL, NULL, NULL))
+	{
+		return float(rate);
+	}
+	return 48000.f;		// Guess, but this should never happen.
 }
 
 //==========================================================================
@@ -1713,5 +1732,300 @@ float F_CALLBACK FMODSoundRenderer::RolloffCallback(FMOD_CHANNEL *channel, float
 	else
 	{
 		return (powf(10.f, volume) - 1.f) / 9.f;
+	}
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: DrawWaveDebug
+//
+// Bit 0: ( 1) Show oscilloscope for sfx.
+// Bit 1: ( 2) Show spectrum for sfx.
+// Bit 2: ( 4) Show oscilloscope for music.
+// Bit 3: ( 8) Show spectrum for music.
+// Bit 4: (16) Show oscilloscope for all sounds.
+// Bit 5: (32) Show spectrum for all sounds.
+//
+//==========================================================================
+
+void FMODSoundRenderer::DrawWaveDebug(int mode)
+{
+	const int window_height = 100;
+	float wavearray[MAXWIDTH];
+	int window_size;
+	int numoutchans;
+	int y;
+
+	if (FMOD_OK != Sys->getSoftwareFormat(NULL, NULL, &numoutchans, NULL, NULL, NULL))
+	{
+		return;
+	}
+
+	// Scale all the channel windows so one group fits completely on one row, with
+	// 16 pixels of padding between each window.
+	window_size = (screen->GetWidth() - 16) / numoutchans - 16;
+
+	y = 16;
+	y = DrawChannelGroupOutput(SfxGroup, wavearray, window_size, window_height, y, mode);
+	y = DrawChannelGroupOutput(MusicGroup, wavearray, window_size, window_height, y, mode >> 2);
+	y = DrawSystemOutput(wavearray, window_size, window_height, y, mode >> 4);
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: DrawChannelGroupOutput
+//
+// Draws an oscilloscope and/or a spectrum for a channel group.
+//
+//==========================================================================
+
+int FMODSoundRenderer::DrawChannelGroupOutput(FMOD::ChannelGroup *group, float *wavearray, int width, int height, int y, int mode)
+{
+	int y1, y2;
+
+	switch (mode & 0x03)
+	{
+	case 0x01:		// Oscilloscope only
+		return DrawChannelGroupWaveData(group, wavearray, width, height, y, false);
+
+	case 0x02:		// Spectrum only
+		return DrawChannelGroupSpectrum(group, wavearray, width, height, y, false);
+
+	case 0x03:		// Oscilloscope + Spectrum
+		width = (width + 16) / 2 - 16;
+		y1 = DrawChannelGroupSpectrum(group, wavearray, width, height, y, true);
+		y2 = DrawChannelGroupWaveData(group, wavearray, width, height, y, true);
+		return MAX(y1, y2);
+	}
+	return y;
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: DrawSystemOutput
+//
+// Like DrawChannelGroupOutput(), but uses the system object.
+//
+//==========================================================================
+
+int FMODSoundRenderer::DrawSystemOutput(float *wavearray, int width, int height, int y, int mode)
+{
+	int y1, y2;
+
+	switch (mode & 0x03)
+	{
+	case 0x01:		// Oscilloscope only
+		return DrawSystemWaveData(wavearray, width, height, y, false);
+
+	case 0x02:		// Spectrum only
+		return DrawSystemSpectrum(wavearray, width, height, y, false);
+
+	case 0x03:		// Oscilloscope + Spectrum
+		width = (width + 16) / 2 - 16;
+		y1 = DrawSystemSpectrum(wavearray, width, height, y, true);
+		y2 = DrawSystemWaveData(wavearray, width, height, y, true);
+		return MAX(y1, y2);
+	}
+	return y;
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: DrawChannelGroupWaveData
+//
+// Draws all the output channels for a specified channel group.
+// Setting skip to true causes it to skip every other window.
+//
+//==========================================================================
+
+int FMODSoundRenderer::DrawChannelGroupWaveData(FMOD::ChannelGroup *group, float *wavearray, int width, int height, int y, bool skip)
+{
+	int drawn = 0;
+	int x = 16;
+
+	while (FMOD_OK == group->getWaveData(wavearray, width, drawn))
+	{
+		drawn++;
+		DrawWave(wavearray, x, y, width, height);
+		x += (width + 16) << int(skip);
+	}
+	if (drawn)
+	{
+		y += height + 16;
+	}
+	return y;
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer::DrawSystemWaveData
+//
+// Like DrawChannelGroupWaveData, but it uses the system object to get the
+// complete output.
+//
+//==========================================================================
+
+int FMODSoundRenderer::DrawSystemWaveData(float *wavearray, int width, int height, int y, bool skip)
+{
+	int drawn = 0;
+	int x = 16;
+
+	while (FMOD_OK == Sys->getWaveData(wavearray, width, drawn))
+	{
+		drawn++;
+		DrawWave(wavearray, x, y, width, height);
+		x += (width + 16) << int(skip);
+	}
+	if (drawn)
+	{
+		y += height + 16;
+	}
+	return y;
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: DrawWave
+//
+// Draws an oscilloscope at the specified coordinates on the screen. Each
+// entry in the wavearray buffer has its own column. IOW, there are <width>
+// entries in wavearray.
+//
+//==========================================================================
+
+void FMODSoundRenderer::DrawWave(float *wavearray, int x, int y, int width, int height)
+{
+	float scale = height / 2.f;
+	float mid = y + scale;
+	int i;
+
+	// Draw a box around the oscilloscope.
+	screen->DrawLine(x - 1, y - 1, x + width, y - 1, -1, MAKEARGB(160, 0, 40, 200));
+	screen->DrawLine(x + width + 1, y - 1, x + width, y + height, -1, MAKEARGB(160, 0, 40, 200));
+	screen->DrawLine(x + width, y + height, x - 1, y + height, -1, MAKEARGB(160, 0, 40, 200));
+	screen->DrawLine(x - 1, y + height, x - 1, y - 1, -1, MAKEARGB(160, 0, 40, 200));
+
+	// Draw the actual oscilloscope.
+	if (screen->Accel2D)
+	{ // Drawing this with lines is super-slow without hardware acceleration, at least with
+	  // the debug build.
+		float lasty = wavearray[0] * scale + mid;
+		float newy;
+		for (i = 1; i < width; ++i)
+		{
+			newy = wavearray[i] * scale + mid;
+			screen->DrawLine(x + i - 1, int(lasty), x + i, int(newy), -1, MAKEARGB(255,255,248,248));
+			lasty = newy;
+		}
+	}
+	else
+	{
+		for (i = 0; i < width; ++i)
+		{
+			float y = wavearray[i] * scale + mid;
+			screen->DrawPixel(x + i, int(y), -1, MAKEARGB(255,255,255,255));
+		}
+	}
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: DrawChannelGroupSpectrum
+//
+// Draws all the spectrum for a specified channel group.
+// Setting skip to true causes it to skip every other window, starting at
+// the second one.
+//
+//==========================================================================
+
+int FMODSoundRenderer::DrawChannelGroupSpectrum(FMOD::ChannelGroup *group, float *spectrumarray, int width, int height, int y, bool skip)
+{
+	int drawn = 0;
+	int x = 16;
+
+	if (skip)
+	{
+		x += width + 16;
+	}
+	while (FMOD_OK == group->getSpectrum(spectrumarray, SPECTRUM_SIZE, drawn, FMOD_DSP_FFT_WINDOW_TRIANGLE))
+	{
+		drawn++;
+		DrawSpectrum(spectrumarray, x, y, width, height);
+		x += (width + 16) << int(skip);
+	}
+	if (drawn)
+	{
+		y += height + 16;
+	}
+	return y;
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer::DrawSystemSpectrum
+//
+// Like DrawChannelGroupSpectrum, but it uses the system object to get the
+// complete output.
+//
+//==========================================================================
+
+int FMODSoundRenderer::DrawSystemSpectrum(float *spectrumarray, int width, int height, int y, bool skip)
+{
+	int drawn = 0;
+	int x = 16;
+
+	if (skip)
+	{
+		x += width + 16;
+	}
+	while (FMOD_OK == Sys->getSpectrum(spectrumarray, SPECTRUM_SIZE, drawn, FMOD_DSP_FFT_WINDOW_TRIANGLE))
+	{
+		drawn++;
+		DrawSpectrum(spectrumarray, x, y, width, height);
+		x += (width + 16) << int(skip);
+	}
+	if (drawn)
+	{
+		y += height + 16;
+	}
+	return y;
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: DrawSpectrum
+//
+// Draws a spectrum at the specified coordinates on the screen.
+//
+//==========================================================================
+
+void FMODSoundRenderer::DrawSpectrum(float *spectrumarray, int x, int y, int width, int height)
+{
+	float scale = height / 2.f;
+	float mid = y + scale;
+	float db;
+	int top;
+
+	// Draw a border and dark background for the spectrum.
+	screen->DrawLine(x - 1, y - 1, x + width, y - 1, -1, MAKEARGB(160, 0, 40, 200));
+	screen->DrawLine(x + width + 1, y - 1, x + width, y + height, -1, MAKEARGB(160, 0, 40, 200));
+	screen->DrawLine(x + width, y + height, x - 1, y + height, -1, MAKEARGB(160, 0, 40, 200));
+	screen->DrawLine(x - 1, y + height, x - 1, y - 1, -1, MAKEARGB(160, 0, 40, 200));
+	screen->Dim(MAKERGB(0,0,0), 0.3f, x, y, width, height);
+
+	// Draw the actual spectrum.
+	for (int i = 0; i < width; ++i)
+	{
+		db = spectrumarray[i * (SPECTRUM_SIZE - 2) / width + 1];
+		db = MAX(-150.f, 10 * log10f(db) * 2);		// Convert to decibels and clamp
+		db = 1.f - (db / -150.f);
+		db *= height;
+		top = (int)db;
+		if (top >= height)
+		{
+			top = height - 1;
+		}
+//		screen->Clear(x + i, int(y + height - db), x + i + 1, y + height, -1, MAKEARGB(255, 255, 255, 40));
+		screen->Dim(MAKERGB(255,255,40), 0.65f, x + i, y + height - top, 1, top);
 	}
 }

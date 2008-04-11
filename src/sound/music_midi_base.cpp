@@ -19,7 +19,7 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (!nummididevicesset)
 		return;
 
-	if ((self >= (signed)nummididevices) || (self < -3))
+	if ((self >= (signed)nummididevices) || (self < -4))
 	{
 		Printf ("ID out of range. Using default device.\n");
 		self = 0;

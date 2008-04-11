@@ -28,7 +28,7 @@
 int		Q_filelength (FILE *f);
 bool FileExists (const char *filename);
 
-extern	char	progdir[1024];
+extern	FString progdir;
 
 void	FixPathSeperator (char *path);
 static void	inline FixPathSeperator (FString &path) { path.ReplaceChars('\\', '/'); }

@@ -244,13 +244,20 @@ int main (int argc, char **argv)
 		atexit (call_terms);
 		atterm (I_Quit);
 
-		if (realpath (argv[0], progdir) == NULL)
-			strcpy (progdir, argv[0]);
-		char *slash = strrchr (progdir, '/');
-		if (slash)
+		// Should we even be doing anything with progdir on Unix systems?
+		char program[PATH_MAX];
+		if (realpath (argv[0], program) == NULL)
+			strcpy (program, argv[0]);
+		char *slash = strrchr (program, '/');
+		if (slash != NULL)
+		{
 			*(slash + 1) = '\0';
+			progdir = program;
+		}
 		else
-			progdir[0] = '.', progdir[1] = '/', progdir[2] = '\0';
+		{
+			progdir = "./";
+		}
 
 		C_InitConsole (80*8, 25*8, false);
 		D_DoomMain ();

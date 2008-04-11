@@ -823,9 +823,18 @@ void DoMain (HINSTANCE hInstance)
 		atterm (I_Quit);
 
 		// Figure out what directory the program resides in.
-		GetModuleFileName (NULL, progdir, 1024);
-		*(strrchr (progdir, '\\') + 1) = 0;
-		FixPathSeperator (progdir);
+		char *program;
+
+		if (_get_pgmptr(&program) != 0)
+		{
+			I_FatalError("Could not determine program location.");
+		}
+		progdir = program;
+		program = progdir.LockBuffer();
+		*(strrchr(program, '\\') + 1) = '\0';
+		FixPathSeperator(program);
+		progdir.Truncate((long)strlen(program));
+		progdir.UnlockBuffer();
 /*
 		height = GetSystemMetrics (SM_CYFIXEDFRAME) * 2 +
 				GetSystemMetrics (SM_CYCAPTION) + 12 * 32;

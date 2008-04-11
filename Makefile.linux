@@ -20,7 +20,7 @@ CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
 LDFLAGS += -lz -ljpeg -`sdl-config --libs` `pkg-config gtk+-2.0 --libs` $(FMOD_PREFIX)/lib/libfmodex.so
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
-SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ thingdef/ xlat/)
+SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ thingdef/ xlat/ timidity/)
 VPATH = $(SRCDIRS)
 INCLUDES = $(addprefix -I,$(SRCDIRS))
 INCLUDES += -Isnes_spc/snes_spc/ -I$(FMOD_PREFIX)/include/fmodex/

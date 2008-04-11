@@ -1,6 +1,25 @@
+April 10, 2008
+- Changed the MIDIStreamer to send the all notes off controller to each
+  channel when restarting the song, rather than emitting a single note off
+  event which only has 1 in 127 chance of being for a note that's playing
+  on that channel. Then I decided it would probably be a good idea to reset
+  all the controllers as well.
+- Increasing the size of the internal Timidity stream buffer from 1/14 sec
+  (copied from the OPL player) improved its sound dramatically, so apparently
+  Timidity has issues with short stream buffers. It's now at 1/2 sec in
+  length. However, there seems to be something weird going on with
+  corazonazul_ff6boss.mid near the beginning where it stops and immediately
+  restarts a guitar on the exact same note.
+- Added a new sound debugging cvar: snd_drawoutput, which can show various
+  oscilloscopes and spectrums.
+
 April 10, 2008 (Changes by Graf Zahl)
 - Eliminated some more global variables (onmobj, DoRipping, LastRipped,
   MissileActor, bulletpitch and linetarget.)
+
+April 9, 2008
+- Internal TiMidity now plays music. Unfortunately, it doesn't sound right. :(
+- Changed the progdir global variable into an FString.
 
 April 9, 2008 (Changes by Graf Zahl)
 - Replaced P_PathTraverse with an FPathTraverse class, rewrote all code using

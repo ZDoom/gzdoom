@@ -2869,6 +2869,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\sound\music_timidity_mididevice.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\sound\music_win_mididevice.cpp"
 				>
 			</File>
@@ -2927,6 +2931,122 @@
 			<Filter
 				Name="Timidity"
 				>
+				<File
+					RelativePath=".\src\timidity\common.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\timidity\dls1.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\timidity\dls2.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\timidity\instrum.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\timidity\instrum_dls.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\timidity\mix.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\timidity\playmidi.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							EnableEnhancedInstructionSet="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\src\timidity\resample.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							EnableEnhancedInstructionSet="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\src\timidity\tables.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\src\timidity\timidity.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\src\timidity\timidity.h"
+					>
+				</File>
+				<Filter
+					Name="Docs"
+					>
+					<File
+						RelativePath=".\src\timidity\CHANGES"
+						>
+					</File>
+					<File
+						RelativePath=".\src\timidity\COPYING"
+						>
+					</File>
+					<File
+						RelativePath=".\src\timidity\FAQ"
+						>
+					</File>
+					<File
+						RelativePath=".\src\timidity\README"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter

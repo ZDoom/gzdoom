@@ -179,6 +179,7 @@ CVAR (Float, timelimit, 0.f, CVAR_SERVERINFO);
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
+CVAR (Int, snd_drawoutput, 0, 0);
 
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 wadlist_t *wadfiles;		// [RH] remove limit on # of loaded wads
@@ -664,6 +665,11 @@ void D_Display ()
 				DTA_320x200, true, TAG_DONE);
 		}
 		NoWipe = 10;
+	}
+
+	if (snd_drawoutput && GSnd != NULL)
+	{
+		GSnd->DrawWaveDebug(snd_drawoutput);
 	}
 
 	if (!wipe || NoWipe < 0)

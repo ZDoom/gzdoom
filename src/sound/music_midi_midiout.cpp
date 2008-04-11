@@ -100,8 +100,8 @@ static BYTE CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 }
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (FILE *file, char *musiccache, int len, bool opl)
-: MIDIStreamer(opl), MusHeader(0), Tracks(0)
+MIDISong2::MIDISong2 (FILE *file, char *musiccache, int len, EMIDIDevice type)
+: MIDIStreamer(type), MusHeader(0), Tracks(0)
 {
 	int p;
 	int i;

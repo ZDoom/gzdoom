@@ -70,8 +70,7 @@ extern void ChildSigHandler (int signum);
 #include "tempfiles.h"
 #include "templates.h"
 #include "stats.h"
-
-#include <fmod.h>
+#include "timidity/timidity.h"
 
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Int, snd_mididevice)
@@ -156,6 +155,8 @@ void I_InitMusic (void)
 {
 	static bool setatterm = false;
 
+	Timidity::LoadConfig();
+
 	snd_musicvolume.Callback ();
 
 	nomusic = !!Args->CheckParm("-nomusic") || !!Args->CheckParm("-nosound");
@@ -187,8 +188,9 @@ void I_ShutdownMusic(void)
 		S_StopMusic (true);
 		assert (currSong == NULL);
 	}
+	Timidity::FreeAll();
 #ifdef _WIN32
-	I_ShutdownMusicWin32 ();
+	I_ShutdownMusicWin32();
 #endif // _WIN32
 }
 
@@ -327,11 +329,15 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 			*/
 			if ((snd_mididevice == -3 && device == MDEV_DEFAULT) || device == MDEV_OPL)
 			{
-				info = new MUSSong2 (file, musiccache, len, true);
+				info = new MUSSong2 (file, musiccache, len, MIDI_OPL);
 			}
 			else if (device == MDEV_TIMIDITY || (device == MDEV_DEFAULT && snd_mididevice == -2))
 			{
 				info = new TimiditySong (file, musiccache, len);
+			}
+			else if ((snd_mididevice == -4 && device == MDEV_DEFAULT) && GSnd != NULL)
+			{
+				info = new MUSSong2(file, musiccache, len, MIDI_Timidity);
 			}
 			if (info != NULL && !info->IsValid())
 			{
@@ -373,7 +379,7 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 #ifdef _WIN32
 		if (info == NULL)
 		{
-			info = new MUSSong2 (file, musiccache, len, false);
+			info = new MUSSong2 (file, musiccache, len, MIDI_Win);
 		}
 #endif // _WIN32
 	}
@@ -406,11 +412,15 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 			*/
 			if ((device == MDEV_OPL || (snd_mididevice == -3 && device == MDEV_DEFAULT)) && GSnd != NULL)
 			{
-				info = new MIDISong2 (file, musiccache, len, true);
+				info = new MIDISong2 (file, musiccache, len, MIDI_OPL);
 			}
 			else if ((device == MDEV_TIMIDITY || (snd_mididevice == -2 && device == MDEV_DEFAULT)) && GSnd != NULL)
 			{
 				info = new TimiditySong (file, musiccache, len);
+			}
+			else if ((snd_mididevice == -4 && device == MDEV_DEFAULT) && GSnd != NULL)
+			{
+				info = new MIDISong2(file, musiccache, len, MIDI_Timidity);
 			}
 			if (info != NULL && !info->IsValid())
 			{
@@ -421,7 +431,7 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 #ifdef _WIN32
 			if (info == NULL && device != MDEV_FMOD && (snd_mididevice >= 0 || device == MDEV_MMAPI))
 			{
-				info = new MIDISong2 (file, musiccache, len, false);
+				info = new MIDISong2 (file, musiccache, len, MIDI_Win);
 			}
 #endif // _WIN32
 		}

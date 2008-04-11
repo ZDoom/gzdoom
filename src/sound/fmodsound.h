@@ -16,6 +16,7 @@ public:
 	void LoadSound (sfxinfo_t *sfx);
 	void UnloadSound (sfxinfo_t *sfx);
 	unsigned int GetMSLength(sfxinfo_t *sfx);
+	float GetOutputRate();
 
 	// Streaming sounds.
 	SoundStream *CreateStream (SoundStreamCallback callback, int buffsamples, int flags, int samplerate, void *userdata);
@@ -48,6 +49,8 @@ public:
 	FString GatherStats ();
 	void ResetEnvironment ();
 
+	void DrawWaveDebug(int mode);
+
 private:
 	bool SFXPaused;
 	bool InitSuccess;
@@ -64,6 +67,17 @@ private:
 	bool Init ();
 	void Shutdown ();
 	void DumpDriverCaps(FMOD_CAPS caps, int minfrequency, int maxfrequency);
+
+	int DrawChannelGroupOutput(FMOD::ChannelGroup *group, float *wavearray, int width, int height, int y, int mode);
+	int DrawSystemOutput(float *wavearray, int width, int height, int y, int mode);
+
+	int DrawChannelGroupWaveData(FMOD::ChannelGroup *group, float *wavearray, int width, int height, int y, bool skip);
+	int DrawSystemWaveData(float *wavearray, int width, int height, int y, bool skip);
+	void DrawWave(float *wavearray, int x, int y, int width, int height);
+
+	int DrawChannelGroupSpectrum(FMOD::ChannelGroup *group, float *wavearray, int width, int height, int y, bool skip);
+	int DrawSystemSpectrum(float *wavearray, int width, int height, int y, bool skip);
+	void DrawSpectrum(float *spectrumarray, int x, int y, int width, int height);
 
 	FMOD::System *Sys;
 	FMOD::ChannelGroup *SfxGroup, *PausableSfx;

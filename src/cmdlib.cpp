@@ -22,7 +22,7 @@ gamedir will hold progdir + the game directory (id1, id2, etc)
 
   */
 
-char progdir[1024];
+FString progdir;
 
 static inline bool IsSeperator (int c)
 {

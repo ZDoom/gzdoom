@@ -84,8 +84,8 @@ static const BYTE CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (FILE *file, char *musiccache, int len, bool opl)
-: MIDIStreamer(opl), MusHeader(0), MusBuffer(0)
+MUSSong2::MUSSong2 (FILE *file, char *musiccache, int len, EMIDIDevice type)
+: MIDIStreamer(type), MusHeader(0), MusBuffer(0)
 {
 #ifdef _WIN32
 	if (ExitEvent == NULL)
@@ -201,7 +201,7 @@ void MUSSong2::Precache()
 		}
 		else if (used[i] >= 135 && used[i] <= 181)
 		{ // Percussions are 100-based, not 128-based, eh?
-			work[j++] = (used[i] - 100) | 0x80;
+			work[j++] = used[i] - 100 + 128;
 		}
 	}
 	MIDI->PrecacheInstruments(&work[0], j);

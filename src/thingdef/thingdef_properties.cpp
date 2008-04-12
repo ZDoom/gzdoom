@@ -752,11 +752,13 @@ static bool CheckFloatParm(FScanner &sc)
 // [MH]
 static int ParseMorphStyle (FScanner &sc)
 {
-	static const char * morphstyles[]={
-		"MRF_ADDSTAMINA", "MRF_FULLHEALTH", "MRF_UNDOBYTOMEOFPOWER", "MRF_UNDOBYCHAOSDEVICE", NULL};
-
-	static const int morphstyle_values[]={
-		MORPH_ADDSTAMINA, MORPH_FULLHEALTH, MORPH_UNDOBYTOMEOFPOWER, MORPH_UNDOBYCHAOSDEVICE};
+ 	static const char * morphstyles[]={
+		"MRF_ADDSTAMINA", "MRF_FULLHEALTH", "MRF_UNDOBYTOMEOFPOWER", "MRF_UNDOBYCHAOSDEVICE",
+		"MRF_FAILNOTELEFRAG", "MRF_FAILNOLAUGH", "MRF_WHENINVULNERABLE", NULL};
+ 
+ 	static const int morphstyle_values[]={
+		MORPH_ADDSTAMINA, MORPH_FULLHEALTH, MORPH_UNDOBYTOMEOFPOWER, MORPH_UNDOBYCHAOSDEVICE,
+		MORPH_FAILNOTELEFRAG, MORPH_FAILNOLAUGH, MORPH_WHENINVULNERABLE};
 
 	// May be given flags by number...
 	if (sc.CheckNumber())
@@ -2564,7 +2566,7 @@ static void PowerMorphMorphStyle (FScanner &sc, APowerMorph *defaults, Baggage &
 static void PowerMorphMorphFlash (FScanner &sc, APowerMorph *defaults, Baggage &bag)
 {
 	sc.MustGetString ();
-	defaults->UnMorphFlash = FName(sc.String);
+	defaults->MorphFlash = FName(sc.String);
 }
 
 //==========================================================================

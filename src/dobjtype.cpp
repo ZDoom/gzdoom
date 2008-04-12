@@ -181,7 +181,9 @@ void PClass::InsertIntoHash ()
 		}
 		else if (lexx == 0)
 		{ // This type has already been inserted
-			I_FatalError ("Tried to register class '%s' more than once.", TypeName.GetChars());
+		  // ... but there is no need whatsoever to make it a fatal error!
+			Printf ("Tried to register class '%s' more than once.\n", TypeName.GetChars());
+			break;
 		}
 		else
 		{ // Type comes right here

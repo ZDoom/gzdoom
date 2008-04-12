@@ -611,6 +611,14 @@ void FTextureManager::LoadHiresTex(int wadnum)
 					}				
 					//else Printf("Unable to define hires texture '%s'\n", tex->Name);
 				}
+				else if (sc.Compare("texture"))
+				{
+					ParseXTexture(sc, FTexture::TEX_Override);
+				}
+				else if (sc.Compare("sprite"))
+				{
+					ParseXTexture(sc, FTexture::TEX_Sprite);
+				}
 			}
 		}
 	}

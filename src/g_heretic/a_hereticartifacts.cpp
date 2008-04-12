@@ -36,7 +36,10 @@ bool AArtiTomeOfPower::Use (bool pickup)
 	{ // Attempt to undo chicken
 		if (!P_UndoPlayerMorph (Owner->player))
 		{ // Failed
-			P_DamageMobj (Owner, NULL, NULL, 1000000, NAME_Telefrag);
+			if (!(Owner->player->MorphStyle & MORPH_FAILNOTELEFRAG))
+			{
+				P_DamageMobj (Owner, NULL, NULL, 1000000, NAME_Telefrag);
+			}
 		}
 		else
 		{ // Succeeded

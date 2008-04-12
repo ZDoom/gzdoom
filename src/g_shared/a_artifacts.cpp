@@ -1755,11 +1755,15 @@ void APowerMorph::InitEffect( )
 		const PClass *morph_flash = PClass::FindClass (MorphFlash);
 		const PClass *unmorph_flash = PClass::FindClass (UnMorphFlash);
 		const PClass *player_class = PClass::FindClass (PlayerClass);
-		if (P_MorphPlayer(realplayer, player_class, -1/*INDEFINITELY*/, MorphStyle, morph_flash, unmorph_flash))
+		if (P_MorphPlayer(realplayer, realplayer, player_class, -1/*INDEFINITELY*/, MorphStyle, morph_flash, unmorph_flash))
 		{
 			Owner = realplayer->mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet
 			ItemFlags |= IF_CREATECOPYMOVED;	// Let the caller know the "real" owner has changed (to the morphed actor)
 			player = realplayer;				// Store the player identity (morphing clears the unmorphed actor's "player" field)
+		}
+		else // morph failed - give the caller an opportunity to fail the pickup completely
+		{
+			ItemFlags |= IF_INITEFFECTFAILED;	// Let the caller know that the activation failed (can fail the pickup if appropriate)
 		}
 	}
 }

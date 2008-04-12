@@ -33,6 +33,7 @@
 **
 */
 
+#include <ctype.h>
 #include "doomtype.h"
 #include "files.h"
 #include "r_data.h"
@@ -40,6 +41,9 @@
 #include "i_system.h"
 #include "gi.h"
 #include "st_start.h"
+#include "sc_man.h"
+#include "templates.h"
+#include "vectors.h"
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a
 // 4-byte boundary causes unaligned access warnings. Why it does this at
@@ -464,6 +468,32 @@ FTextureFormat FMultiPatchTexture::GetFormat()
 
 //==========================================================================
 //
+// FMultiPatchTexture :: TexPart :: TexPart
+//
+//==========================================================================
+
+FMultiPatchTexture::TexPart::TexPart()
+{
+	OriginX = OriginY = 0;
+	Mirror = Rotate = 0;
+	textureOwned = false;
+	Texture = NULL;
+}
+
+//==========================================================================
+//
+// FMultiPatchTexture :: TexPart :: TexPart
+//
+//==========================================================================
+
+FMultiPatchTexture::TexPart::~TexPart()
+{
+	if (textureOwned && Texture != NULL) delete Texture;
+	Texture = NULL;
+}
+
+//==========================================================================
+//
 // FTextureManager :: AddTexturesLump
 //
 //==========================================================================
@@ -631,3 +661,141 @@ void FTextureManager::AddTexturesLumps (int lump1, int lump2, int patcheslump)
 	}
 }
 
+
+void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
+{
+	FString patchname;
+	sc.MustGetString();
+
+	int texno = TexMan.CheckForTexture(sc.String, TEX_WallPatch);
+
+	if (texno < 0)
+	{
+		int lumpnum = Wads.CheckNumForFullName(sc.String);
+		if (lumpnum >= 0)
+		{
+			part.Texture = FTexture::CreateTexture(lumpnum, TEX_WallPatch);
+			part.textureOwned = true;
+		}
+	}
+	else
+	{
+		part.Texture = TexMan[texno];
+	}
+	if (part.Texture == NULL)
+	{
+		Printf("Unknown patch '%s' in texture '%s'\n", sc.String, Name);
+	}
+	sc.MustGetStringName(",");
+	sc.MustGetNumber();
+	part.OriginX = sc.Number;
+	sc.MustGetStringName(",");
+	sc.MustGetNumber();
+	part.OriginY = sc.Number;
+
+	/* not yet implemented
+	if (sc.CheckString("{");
+	{
+		while (!sc.CheckString("}"))
+		{
+			sc.MustGetString();
+			if (sc.Compare("flipx"))
+			{
+				part.Mirror = 1;
+			}
+			else if (sc.Compare("flipy"))
+			{
+				part.Mirror = 2;
+			}
+			else if (sc.Compare("rotate"))
+			{
+				sc.MustGetNumber();
+				if (sc.Number != 0 && sc.Number !=90 && sc.Number != 180 && sc.Number != 270)
+				{
+					sc.ScriptError("Rotation must be 0, 90, 180 or 270 degrees");
+				}
+				part.Rotate = sc.Number / 90;
+			}
+		}
+	}
+	*/
+}
+
+
+FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
+{
+	TArray<TexPart> parts;
+
+	sc.MustGetString();
+	uppercopy(Name, sc.String);
+	sc.MustGetStringName(",");
+	sc.MustGetNumber();
+	Width = sc.Number;
+	sc.MustGetStringName(",");
+	sc.MustGetNumber();
+	Height = sc.Number;
+
+	if (sc.CheckString("{"))
+	{
+		while (!sc.CheckString("}"))
+		{
+			sc.MustGetString();
+			if (sc.Compare("XScale"))
+			{
+				sc.MustGetFloat();
+				xScale = FLOAT2FIXED(sc.Float);
+			}
+			else if (sc.Compare("YScale"))
+			{
+				sc.MustGetFloat();
+				yScale = FLOAT2FIXED(sc.Float);
+			}
+			else if (sc.Compare("WorldPanning"))
+			{
+				bWorldPanning = true;
+			}
+			else if (sc.Compare("NoDecals"))
+			{
+				bNoDecals = true;
+			}
+			else if (sc.Compare("Patch"))
+			{
+				TexPart part;
+				ParsePatch(sc, part);
+				parts.Push(part);
+			}
+		}
+
+		NumParts = parts.Size();
+		UseType = FTexture::TEX_Override;
+		Parts = new TexPart[NumParts];
+		memcpy(Parts, &parts[0], NumParts * sizeof(*Parts));
+
+		CalcBitSize ();
+
+		// If this texture is just a wrapper around a single patch, we can simply
+		// forward GetPixels() and GetColumn() calls to that patch.
+		if (NumParts == 1)
+		{
+			if (Parts->OriginX == 0 && Parts->OriginY == 0 &&
+				Parts->Texture->GetWidth() == Width &&
+				Parts->Texture->GetHeight() == Height &&
+				Parts->Mirror == 0 && Parts->Rotate == 0)
+			{
+				bRedirect = true;
+			}
+		}
+		//DefinitionLump = sc.G deflumpnum;
+	}
+
+
+
+}
+
+
+
+void FTextureManager::ParseXTexture(FScanner &sc, int usetype)
+{
+	FTexture *tex = new FMultiPatchTexture(sc, usetype);
+	TexMan.AddTexture (tex);
+}

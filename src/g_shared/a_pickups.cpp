@@ -1227,6 +1227,14 @@ bool AInventory::TryPickup (AActor *toucher)
 		{
 			return false;
 		}
+		// Some powerups cannot activate absolutely, for
+		// example, PowerMorph; fail the pickup if so.
+		if (copy->ItemFlags & IF_INITEFFECTFAILED)
+		{
+			if (copy != this) copy->Destroy();
+			else ItemFlags &= ~IF_INITEFFECTFAILED;
+			return false;
+		}
 		// Handle owner-changing powerups
 		if (copy->ItemFlags & IF_CREATECOPYMOVED)
 		{

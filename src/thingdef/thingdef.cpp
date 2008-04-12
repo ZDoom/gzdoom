@@ -297,10 +297,12 @@ static FActorInfo *CreateNewActor(FScanner &sc, FActorInfo **parentc, Baggage *b
 		*colon++ = 0;
 	}
 
+	/*
 	if (PClass::FindClass (sc.String) != NULL)
 	{
 		sc.ScriptError ("Actor %s is already defined.", sc.String);
 	}
+	*/
 
 	typeName = sc.String;
 

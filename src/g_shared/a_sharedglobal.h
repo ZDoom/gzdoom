@@ -6,7 +6,7 @@
 #include "actor.h"
 
 class FDecalTemplate;
-struct vertex_s;
+struct vertex_t;
 struct side_t;
 
 extern void P_SpawnDirt (AActor *actor, fixed_t radius);
@@ -50,7 +50,7 @@ protected:
 	void CalcFracPos (side_t *wall, fixed_t x, fixed_t y);
 	void Remove ();
 
-	static void SpreadLeft (fixed_t r, vertex_s *v1, side_t *feelwall);
+	static void SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall);
 	static void SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize);
 };
 

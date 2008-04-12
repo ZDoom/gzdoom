@@ -71,21 +71,21 @@ extern size_t MaxDrawSegs;
 // Note: transformed values not buffered locally,
 //	like some DOOM-alikes ("wt", "WebView") did.
 //
-struct vertex_s
+struct vertex_t
 {
 	fixed_t x, y;
 
-	bool operator== (const vertex_s &other)
+	bool operator== (const vertex_t &other)
 	{
 		return x == other.x && y == other.y;
 	}
 };
-typedef struct vertex_s vertex_t;
 
 // Forward of LineDefs, for Sectors.
 struct line_t;
 
 class player_s;
+class FScanner;
 
 //
 // The SECTORS record, at runtime.
@@ -744,7 +744,6 @@ public:
 	SWORD LeftOffset, TopOffset;
 
 	BYTE WidthBits, HeightBits;
-	//BYTE ScaleX, ScaleY;
 
 	fixed_t		xScale;
 	fixed_t		yScale;
@@ -888,6 +887,7 @@ public:
 	FTexture *operator[] (const char *texname)
 	{
 		int texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
+		if (texnum==-1) return NULL;
 		return Textures[texnum].Texture;
 	}
 	FTexture *FindTexture(const char *texname, int usetype = FTexture::TEX_MiscPatch, BITFIELD flags = TEXMAN_TryAny);
@@ -901,6 +901,7 @@ public:
 	FTexture *operator() (const char *texname)
 	{
 		int texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
+		if (texnum==-1) return NULL;
 		return Textures[Translation[texnum]].Texture;
 	}
 
@@ -936,6 +937,7 @@ public:
 	void AddTiles (void *tileFile);
 	void AddHiresTextures (int wadnum);
 	void LoadHiresTex(int wadnum);
+	void ParseXTexture(FScanner &sc, int usetype);
 
 	int CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	int AddTexture (FTexture *texture);

@@ -440,14 +440,14 @@ const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickund
 	{
 		if (P_UndoPlayerMorph (player))
 		{
-			if (!quickundo && oldclass != morphclass && P_MorphPlayer (player, morphclass, 0, style))
+			if (!quickundo && oldclass != morphclass && P_MorphPlayer (player, player, morphclass, 0, style))
 			{
 				return "You feel even stranger.";
 			}
 			return "You feel like yourself again.";
 		}
 	}
-	else if (P_MorphPlayer (player, morphclass, 0, style))
+	else if (P_MorphPlayer (player, player, morphclass, 0, style))
 	{
 		return "You feel strange...";
 	}

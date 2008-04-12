@@ -21,7 +21,7 @@ static FRandom pr_morphmonst ("MorphMonster");
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphPlayer (player_t *p, const PClass *spawntype, int duration, int style, const PClass *enter_flash, const PClass *exit_flash)
+bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, int duration, int style, const PClass *enter_flash, const PClass *exit_flash)
 {
 	AInventory *item;
 	APlayerPawn *morphed;
@@ -36,8 +36,8 @@ bool P_MorphPlayer (player_t *p, const PClass *spawntype, int duration, int styl
 	{
 		return false;
 	}
-	if (p->mo->flags2 & MF2_INVULNERABLE)
-	{ // Immune when invulnerable
+	if ((p->mo->flags2 & MF2_INVULNERABLE) && ((p != activator) || (!(style & MORPH_WHENINVULNERABLE))))
+	{ // Immune when invulnerable unless this is a power we activated
 		return false;
 	}
 	if (p->morphTics)
@@ -402,7 +402,7 @@ int AMorphProjectile::DoSpecialDamage (AActor *target, int damage)
 	if (target->player)
 	{
 		const PClass *player_class = PClass::FindClass (PlayerClass);
-		P_MorphPlayer (target->player, player_class, Duration, MorphStyle, morph_flash, unmorph_flash);
+		P_MorphPlayer (NULL, target->player, player_class, Duration, MorphStyle, morph_flash, unmorph_flash);
 	}
 	else
 	{

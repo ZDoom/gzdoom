@@ -1,3 +1,12 @@
+April 12, 2008 (Changes by Graf Zahl)
+- Added Martin Howe's morph system update.
+- Added support for defining composite textures in HIRESTEX. It is not fully tested
+  and right now can't do much more than the old TEXTUREx method.
+- Added a few NULL pointer checks to the texture code.
+- Made duplicate class names in DECORATE non-fatal. There is really no stability
+  concern here and the worst that can happen is that the wrong actor is spawned.
+  This was a constant hassle when testing with WADs that contain duplicate resources.
+
 April 11, 2008
 - Removed some GCC warnings.
 - Fixed: MinGW doesn't have _get_pgmptr(), so it couldn't compile i_main.cpp.
@@ -19,6 +28,15 @@ April 11, 2008
   rid of timidity/tables.cpp, which conflicts in name with the main Doom
   tables.cpp. (And interestingly, VC++ automatically renamed the object file,
   so I wasn't aware of the problem with GCC.)
+
+April 11, 2008 (Changes by Graf Zahl)
+- Added a Gets function to the FileReader class which I planned to use
+  to enable Timidity to read its config and sound patches from Zips. 
+  I put this on hold though after finding out that the sound quality 
+  isn't even near that of Timidity++.
+- GCC-Fixes (FString::GetChars() for Printf calls)
+- Added a dummy Weapon.NOLMS flag so that Skulltag weapons using this flag
+  can be loaded
 
 April 10, 2008
 - Changed the MIDIStreamer to send the all notes off controller to each

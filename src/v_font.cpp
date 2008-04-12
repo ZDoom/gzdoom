@@ -322,14 +322,16 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 				stcfn121 = true;
 			}
 		}
-		if (lump != -1 || i != 124-start || !stcfn121)
-			charlumps[i] = lump;
 
 		if (lump >= 0)
 		{
 			FTexture *pic = TexMan[buffer];
 			if (pic != NULL)
 			{
+				// set the lump here only if it represents a valid texture
+				if (i != 124-start || !stcfn121)
+					charlumps[i] = lump;
+
 				int height = pic->GetScaledHeight();
 				int yoffs = pic->GetScaledTopOffset();
 
@@ -1200,7 +1202,7 @@ FFontChar1::FFontChar1 (int sourcelump, const BYTE *sourceremap)
 	Name[0] = 0;					// Make this texture unnamed
 
 	// now copy all the properties from the base texture
-	CopySize(BaseTexture);
+	if (BaseTexture != NULL) CopySize(BaseTexture);
 	Pixels = NULL;
 }
 

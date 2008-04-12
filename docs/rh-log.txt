@@ -1,3 +1,9 @@
+April 11, 2008
+- Moved the xmap table from timidity/tables.cpp to playmidi.cpp. Now I can get
+  rid of timidity/tables.cpp, which conflicts in name with the main Doom
+  tables.cpp. (And interestingly, VC++ automatically renamed the object file,
+  so I wasn't aware of the problem with GCC.)
+
 April 10, 2008
 - Changed the MIDIStreamer to send the all notes off controller to each
   channel when restarting the song, rather than emitting a single note off

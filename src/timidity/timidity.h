@@ -509,7 +509,6 @@ tables.h
 #define calc_vol(x)		(pow((double)(x), (double)1.66096404744))
 
 #define XMAPMAX 800
-extern const BYTE xmap[XMAPMAX][5];
 
 /*
 timidity.h

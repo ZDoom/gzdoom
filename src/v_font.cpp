@@ -305,6 +305,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 
 	for (i = 0; i < count; i++)
 	{
+		charlumps[i] = -1;
 		sprintf (buffer, nametemplate, i + start);
 		lump = Wads.CheckNumForName (buffer, ns_graphics);
 		if (doomtemplate && lump >= 0 && i + start == 121)

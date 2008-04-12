@@ -1,4 +1,13 @@
 April 11, 2008
+- Fixed: Timidity::Channel::mono, rpn, and nrpn were not initialized. In
+  particular, this meant that every channel was almost certainly in mono mode,
+  which can sound pretty bad if the song isn't meant to be played that way.
+- Added bank numbers to the MIDI precaching for Timidity, since I guess I do
+  need to care about banks, if even the Duke MIDIs use various banks.
+- Fixed: snd_midiprecache only exists in Win32 builds, so gameconfigfile.cpp
+  shouldn't unconditionally link against it.
+- Fixed: pre_resample() was still disabled, and it left two samples at the end
+  of the new wave data uninitialized.
 - Moved the xmap table from timidity/tables.cpp to playmidi.cpp. Now I can get
   rid of timidity/tables.cpp, which conflicts in name with the main Doom
   tables.cpp. (And interestingly, VC++ automatically renamed the object file,

@@ -247,6 +247,9 @@ void Renderer::reset_controllers(int c)
 	channel[c].sustain = 0;
 	channel[c].pitchbend = 0x2000;
 	channel[c].pitchfactor = 0; /* to be computed */
+	channel[c].mono = 0;
+	channel[c].rpn = RPN_RESET;
+	channel[c].nrpn = RPN_RESET;
 
 	channel[c].reverberation = 0;
 	channel[c].chorusdepth = 0;
@@ -880,7 +883,7 @@ void Renderer::start_note(int ch, int this_note, int this_velocity, int i)
 		ip = lp->instrument;
 		if (ip->type == INST_GUS && ip->samples != 1)
 		{
-			ctl->cmsg(CMSG_WARNING, VERB_VERBOSE, 
+			cmsg(CMSG_WARNING, VERB_VERBOSE, 
 				"Strange: percussion instrument with %d samples!", ip->samples);
 		}
 
@@ -1257,7 +1260,7 @@ void Renderer::note_off(int chan, int note, int vel)
 void Renderer::all_notes_off(int c)
 {
 	int i = voices;
-	ctl->cmsg(CMSG_INFO, VERB_DEBUG, "All notes off on channel %d", c);
+	cmsg(CMSG_INFO, VERB_DEBUG, "All notes off on channel %d", c);
 	while (i--)
 	{
 		if (voice[i].status == VOICE_ON && voice[i].channel == c)

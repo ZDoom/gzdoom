@@ -205,11 +205,7 @@ controls.h
 #define VERB_DEBUG			3
 #define VERB_DEBUG_SILLY	4
 
-struct ControlMode
-{
-	virtual ~ControlMode();
-	void cmsg(int type, int verbosity_level, const char *fmt, ...);
-};
+void cmsg(int type, int verbosity_level, const char *fmt, ...);
 
 
 /*
@@ -522,7 +518,6 @@ extern ToneBank *drumset[MAXBANK];
 
 struct Renderer
 {
-	ControlMode *ctl;
 	float rate;
 	DLS_Data *patches;
 	InstrumentLayer *default_instrument;

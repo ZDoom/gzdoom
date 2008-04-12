@@ -71,7 +71,6 @@ EXTERN_CVAR (Color, am_wallcolor)
 EXTERN_CVAR (Color, am_fdwallcolor)
 EXTERN_CVAR (Color, am_cdwallcolor)
 EXTERN_CVAR (Float, spc_amp)
-EXTERN_CVAR (Bool, snd_midiprecache)
 
 FString WeaponSection;
 
@@ -306,7 +305,11 @@ void FGameConfigFile::DoGlobalSetup ()
 			}
 			if (last < 207)
 			{ // Now that snd_midiprecache works again, you probably don't want it on.
-				snd_midiprecache = false;
+				FBaseCVar *precache = FindCVar ("snd_midiprecache", NULL);
+				if (precache != NULL)
+				{
+					precache->ResetToDefault();
+				}
 			}
 		}
 	}

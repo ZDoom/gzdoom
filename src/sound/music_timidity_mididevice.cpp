@@ -345,17 +345,18 @@ bool TimidityMIDIDevice::Pause(bool paused)
 //
 // TimidityMIDIDevice :: PrecacheInstruments
 //
-// For each entry, bit 7 set indicates that the instrument is percussion and
-// the lower 7 bits contain the note number to use on MIDI channel 10,
-// otherwise it is melodic and the lower 7 bits are the program number.
+// Each entry is packed as follows:
+//   Bits 0- 6: Instrument number
+//   Bits 7-13: Bank number
+//   Bit    14: Select drum set if 1, tone bank if 0
 //
 //==========================================================================
 
-void TimidityMIDIDevice::PrecacheInstruments(const BYTE *instruments, int count)
+void TimidityMIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
 {
 	for (int i = 0; i < count; ++i)
 	{
-		Renderer->MarkInstrument(0, instruments[i] >> 7, instruments[i] & 127);
+		Renderer->MarkInstrument((instruments[i] >> 7) & 127, instruments[i] >> 14, instruments[i] & 127);
 	}
 	Renderer->load_missing_instruments();
 }

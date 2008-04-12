@@ -404,7 +404,6 @@ int LoadConfig()
 
 Renderer::Renderer(float sample_rate)
 {
-	ctl = new ControlMode;
 	rate = sample_rate;
 	patches = NULL;
 	default_instrument = NULL;
@@ -420,7 +419,7 @@ Renderer::Renderer(float sample_rate)
 	if (def_instr_name.IsNotEmpty())
 		set_default_instrument(def_instr_name);
 
-	voices = DEFAULT_VOICES;
+	voices = MAX_VOICES;//DEFAULT_VOICES;
 	memset(voice, 0, sizeof(voice));
 	memset(drumvolume, 0, sizeof(drumvolume));
 	memset(drumpanpot, 0, sizeof(drumpanpot));
@@ -502,12 +501,25 @@ void Renderer::MarkInstrument(int banknum, int percussion, int instr)
 	}
 }
 
-ControlMode::~ControlMode()
-{
-}
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
-void ControlMode::cmsg(int type, int verbosity_level, const char *fmt, ...)
+void cmsg(int type, int verbosity_level, const char *fmt, ...)
 {
+#ifdef _WIN32
+	char buf[1024];
+	va_list args;
+
+	va_start(args, fmt);
+	vsprintf(buf, fmt, args);
+	va_end(args);
+	size_t l = strlen(buf);
+	buf[l] = '\n';
+	buf[l+1] = '\0';
+	OutputDebugString(buf);
+#endif
 }
 
 }

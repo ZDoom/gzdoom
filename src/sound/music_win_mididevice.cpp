@@ -209,9 +209,10 @@ void WinMIDIDevice::Stop()
 //
 // WinMIDIDevice :: PrecacheInstruments
 //
-// For each entry, bit 7 set indicates that the instrument is percussion and
-// the lower 7 bits contain the note number to use on MIDI channel 10,
-// otherwise it is melodic and the lower 7 bits are the program number.
+// Each entry is packed as follows:
+//   Bits 0- 6: Instrument number
+//   Bits 7-13: Bank number
+//   Bit    14: Select drum set if 1, tone bank if 0
 //
 // My old GUS PnP needed the instruments to be preloaded, or it would miss
 // some notes the first time through the song. I doubt any modern
@@ -221,7 +222,7 @@ void WinMIDIDevice::Stop()
 //
 //==========================================================================
 
-void WinMIDIDevice::PrecacheInstruments(const BYTE *instruments, int count)
+void WinMIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
 {
 	// Setting snd_midiprecache to false disables this precaching, since it
 	// does involve sleeping for more than a miniscule amount of time.
@@ -229,14 +230,31 @@ void WinMIDIDevice::PrecacheInstruments(const BYTE *instruments, int count)
 	{
 		return;
 	}
-	for (int i = 0, chan = 0; i < count; ++i)
+	BYTE bank[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	int i, chan;
+
+	for (i = 0, chan = 0; i < count; ++i)
 	{
-		if (instruments[i] & 0x80)
-		{ // Percussion
+		int instr = instruments[i] & 127;
+		int banknum = (instruments[i] >> 7) & 127;
+		int percussion = instruments[i] >> 14;
+
+		if (percussion)
+		{
+			if (bank[9] != banknum)
+			{
+				midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_CTRLCHANGE | 9 | (0 << 8) | (banknum << 16));
+				bank[9] = banknum;
+			}
 			midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_NOTEON | 9 | ((instruments[i] & 0x7f) << 8) | (1 << 16));
 		}
 		else
 		{ // Melodic
+			if (bank[chan] != banknum)
+			{
+				midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_CTRLCHANGE | 9 | (0 << 8) | (banknum << 16));
+				bank[chan] = banknum;
+			}
 			midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_PRGMCHANGE | chan | (instruments[i] << 8));
 			midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_NOTEON | chan | (60 << 8) | (1 << 16));
 			if (++chan == 9)
@@ -256,6 +274,14 @@ void WinMIDIDevice::PrecacheInstruments(const BYTE *instruments, int count)
 				midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_CTRLCHANGE | chan | (123 << 8));
 			}
 			// And now chan is back at 0, ready to start the cycle over.
+		}
+	}
+	// Make sure all channels are set back to bank 0.
+	for (i = 0; i < 16; ++i)
+	{
+		if (bank[i] != 0)
+		{
+			midiOutShortMsg((HMIDIOUT)MidiOut, MIDI_CTRLCHANGE | 9 | (0 << 8) | (0 << 16));
 		}
 	}
 }

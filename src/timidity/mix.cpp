@@ -105,10 +105,8 @@ static int update_envelope(Voice *v)
 {
 	v->envelope_volume += v->envelope_increment;
 	/* Why is there no ^^ operator?? */
-	if (((v->envelope_increment < 0) &&
-		(v->envelope_volume <= v->envelope_target)) ||
-		((v->envelope_increment > 0) &&
-		(v->envelope_volume >= v->envelope_target)))
+	if (((v->envelope_increment < 0) && (v->envelope_volume <= v->envelope_target)) ||
+		((v->envelope_increment > 0) && (v->envelope_volume >= v->envelope_target)))
 	{
 		v->envelope_volume = v->envelope_target;
 		if (recompute_envelope(v))

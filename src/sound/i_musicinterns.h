@@ -112,7 +112,7 @@ public:
 	virtual bool FakeVolume() = 0;
 	virtual bool Pause(bool paused) = 0;
 	virtual bool NeedThreadedCallback() = 0;
-	virtual void PrecacheInstruments(const BYTE *instruments, int count);
+	virtual void PrecacheInstruments(const WORD *instruments, int count);
 };
 
 // WinMM implementation of a MIDI output device -----------------------------
@@ -138,7 +138,7 @@ public:
 	bool FakeVolume();
 	bool NeedThreadedCallback();
 	bool Pause(bool paused);
-	void PrecacheInstruments(const BYTE *instruments, int count);
+	void PrecacheInstruments(const WORD *instruments, int count);
 
 protected:
 	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
@@ -230,7 +230,7 @@ public:
 	bool FakeVolume();
 	bool Pause(bool paused);
 	bool NeedThreadedCallback();
-	void PrecacheInstruments(const BYTE *instruments, int count);
+	void PrecacheInstruments(const WORD *instruments, int count);
 
 protected:
 	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);

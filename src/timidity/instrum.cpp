@@ -106,20 +106,9 @@ static void free_bank(int dr, int b)
 }
 
 
-int convert_envelope_rate_attack(Renderer *song, BYTE rate, BYTE fastness)
-{
-	int r;
-
-	r  = 3 - ((rate>>6) & 0x3);
-	r *= 3;
-	r  = (int)(rate & 0x3f) << r; /* 6.9 fixed point */
-
-	/* 15.15 fixed point. */
-	return int(((r * 44100) / song->rate) * song->control_ratio) << 10;
-}
-
 int convert_envelope_rate(Renderer *song, BYTE rate)
 {
+#if 1
 	int r;
 
 	r  = 3 - ((rate>>6) & 0x3);
@@ -127,8 +116,12 @@ int convert_envelope_rate(Renderer *song, BYTE rate)
 	r  = (int)(rate & 0x3f) << r; /* 6.9 fixed point */
 
 	/* 15.15 fixed point. */
-	return int(((r * 44100) / song->rate) * song->control_ratio) 
-		<< ((song->fast_decay) ? 10 : 9);
+	return int(((r * 44100) / song->rate) * song->control_ratio) << ((song->fast_decay) ? 10 : 9);
+#else
+	double frameadd = (double)(rate & 63) / (double)(1 << (3 * (rate >> 6)));
+	double realadd = (frameadd * 19293 / song->rate) * (1 << 15) * song->control_ratio;
+	return (int)realadd;
+#endif
 }
 
 int convert_envelope_offset(BYTE offset)
@@ -238,11 +231,11 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 
 	if (noluck)
 	{
-		song->ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Instrument `%s' can't be found.", name);
+		cmsg(CMSG_ERROR, VERB_NORMAL, "Instrument `%s' can't be found.", name);
 		return 0;
 	}
 
-	/*song->ctl->cmsg(CMSG_INFO, VERB_NOISY, "Loading instrument %s", current_filename);*/
+	/*cmsg(CMSG_INFO, VERB_NOISY, "Loading instrument %s", current_filename);*/
 
 	/* Read some headers and do cursory sanity checks. There are loads
 	of magic offsets. This could be rewritten... */
@@ -252,7 +245,7 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 		memcmp(tmp, "GF1PATCH100\0ID#000002", 22))) /* don't know what the
 													differences are */
 	{
-		song->ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "%s: not an instrument", name);
+		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: not an instrument", name);
 		return 0;
 	}
 
@@ -293,13 +286,13 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 
 	if (tmp[82] != 1 && tmp[82] != 0) /* instruments. To some patch makers, 0 means 1 */
 	{
-		song->ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle patches with %d instruments", tmp[82]);
+		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle patches with %d instruments", tmp[82]);
 		return 0;
 	}
 
 	if (tmp[151] != 1 && tmp[151] != 0) /* layers. What's a layer? */
 	{
-		song->ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle instruments with %d layers", tmp[151]);
+		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle instruments with %d layers", tmp[151]);
 		return 0;
 	}
 
@@ -364,7 +357,7 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 			ip->right_sample = NULL;
 		}
 
-		song->ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s%s[%d,%d] %s(%d-%d layer %d of %d)",
+		cmsg(CMSG_INFO, VERB_NOISY, "%s%s[%d,%d] %s(%d-%d layer %d of %d)",
 			(percussion)? "   ":"", name,
 			(percussion)? note_to_use : gm_num, bank,
 			(right_samples)? "(2) " : "",
@@ -432,7 +425,7 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 				if (1 != fread(&fractions, 1, 1, fp))
 				{
 fail:
-					song->ctl->cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d", i);
+					cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d", i);
 					if (stereo_layer == 1)
 					{
 						for (j = 0; j < i; j++)
@@ -505,14 +498,14 @@ fail:
 					sp->tremolo_sweep_increment = 0;
 					sp->tremolo_phase_increment = 0;
 					sp->tremolo_depth = 0;
-					song->ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * no tremolo");
+					cmsg(CMSG_INFO, VERB_DEBUG, " * no tremolo");
 				}
 				else
 				{
 					sp->tremolo_sweep_increment = convert_tremolo_sweep(song, tmp[12]);
 					sp->tremolo_phase_increment = convert_tremolo_rate(song, tmp[13]);
 					sp->tremolo_depth = tmp[14];
-					song->ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+					cmsg(CMSG_INFO, VERB_DEBUG,
 						" * tremolo: sweep %d, phase %d, depth %d",
 						sp->tremolo_sweep_increment, sp->tremolo_phase_increment,
 						sp->tremolo_depth);
@@ -523,14 +516,14 @@ fail:
 					sp->vibrato_sweep_increment = 0;
 					sp->vibrato_control_ratio = 0;
 					sp->vibrato_depth = 0;
-					song->ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * no vibrato");
+					cmsg(CMSG_INFO, VERB_DEBUG, " * no vibrato");
 				}
 				else
 				{
 					sp->vibrato_control_ratio = convert_vibrato_rate(song, tmp[16]);
 					sp->vibrato_sweep_increment= convert_vibrato_sweep(song, tmp[15], sp->vibrato_control_ratio);
 					sp->vibrato_depth = tmp[17];
-					song->ctl->cmsg(CMSG_INFO, VERB_DEBUG,
+					cmsg(CMSG_INFO, VERB_DEBUG,
 						" * vibrato: sweep %d, ctl %d, depth %d",
 						sp->vibrato_sweep_increment, sp->vibrato_control_ratio,
 						sp->vibrato_depth);
@@ -571,14 +564,14 @@ fail:
 				if ((strip_loop == 1) && 
 					(sp->modes & (MODES_SUSTAIN | MODES_LOOPING | MODES_PINGPONG | MODES_REVERSE)))
 				{
-					song->ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Removing loop and/or sustain");
+					cmsg(CMSG_INFO, VERB_DEBUG, " - Removing loop and/or sustain");
 					sp->modes &=~(MODES_SUSTAIN | MODES_LOOPING | MODES_PINGPONG | MODES_REVERSE);
 				}
 
 				if (strip_envelope == 1)
 				{
 					if (sp->modes & MODES_ENVELOPE)
-						song->ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Removing envelope");
+						cmsg(CMSG_INFO, VERB_DEBUG, " - Removing envelope");
 					sp->modes &= ~MODES_ENVELOPE;
 				}
 				else if (strip_envelope != 0)
@@ -588,7 +581,7 @@ fail:
 					{
 						/* No loop? Then what's there to sustain? No envelope needed either... */
 						sp->modes &= ~(MODES_SUSTAIN|MODES_ENVELOPE);
-						song->ctl->cmsg(CMSG_INFO, VERB_DEBUG, 
+						cmsg(CMSG_INFO, VERB_DEBUG, 
 							" - No loop, removing sustain and envelope");
 					}
 					else if (!memcmp(tmp, "??????", 6) || tmp[11] >= 100) 
@@ -596,7 +589,7 @@ fail:
 						/* Envelope rates all maxed out? Envelope end at a high "offset"?
 						That's a weird envelope. Take it out. */
 						sp->modes &= ~MODES_ENVELOPE;
-						song->ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Weirdness, removing envelope");
+						cmsg(CMSG_INFO, VERB_DEBUG, " - Weirdness, removing envelope");
 					}
 					else if (!(sp->modes & MODES_SUSTAIN))
 					{
@@ -605,7 +598,7 @@ fail:
 						envelope either... at least the Gravis ones. They're mostly
 						drums.  I think. */
 						sp->modes &= ~MODES_ENVELOPE;
-						song->ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - No sustain, removing envelope");
+						cmsg(CMSG_INFO, VERB_DEBUG, " - No sustain, removing envelope");
 					}
 				}
 
@@ -613,8 +606,7 @@ fail:
 
 				for (j = ATTACK; j < DELAY; j++)
 				{
-					sp->envelope_rate[j] =
-						(j < 3) ? convert_envelope_rate_attack(song, tmp[j], 11) : convert_envelope_rate(song, tmp[j]);
+					sp->envelope_rate[j] = convert_envelope_rate(song, tmp[j]);
 					sp->envelope_offset[j] = convert_envelope_offset(tmp[6+j]);
 				}
 				if (sf2flag)
@@ -663,7 +655,7 @@ fail:
 					/* The GUS apparently plays reverse loops by reversing the
 					whole sample. We do the same because the GUS does not SUCK. */
 
-					song->ctl->cmsg(CMSG_WARNING, VERB_NORMAL, "Reverse loop in %s", name);
+					cmsg(CMSG_WARNING, VERB_NORMAL, "Reverse loop in %s", name);
 					reverse_data((sample_t *)sp->data, 0, sp->data_length);
 					sp->data[sp->data_length] = sp->data[sp->data_length - 1];
 
@@ -699,7 +691,7 @@ fail:
 							maxamp = a;
 					}
 					sp->volume = 1 / maxamp;
-					song->ctl->cmsg(CMSG_INFO, VERB_DEBUG, " * volume comp: %f", sp->volume);
+					cmsg(CMSG_INFO, VERB_DEBUG, " * volume comp: %f", sp->volume);
 #else
 					sp->volume = 1;
 #endif
@@ -722,7 +714,7 @@ fail:
 				if (strip_tail == 1)
 				{
 					/* Let's not really, just say we did. */
-					song->ctl->cmsg(CMSG_INFO, VERB_DEBUG, " - Stripping tail");
+					cmsg(CMSG_INFO, VERB_DEBUG, " - Stripping tail");
 					sp->data_length = sp->loop_end;
 				}
 			} /* end of sample loop */
@@ -839,7 +831,7 @@ static int fill_bank(Renderer *song, int dr, int b)
 	ToneBank *bank = ((dr) ? drumset[b] : tonebank[b]);
 	if (bank == NULL)
 	{
-		song->ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+		cmsg(CMSG_ERROR, VERB_NORMAL, 
 			"Huh. Tried to load instruments in non-existent %s %d",
 			(dr) ? "drumset" : "tone bank", b);
 		return 0;
@@ -855,7 +847,7 @@ static int fill_bank(Renderer *song, int dr, int b)
 			}
 			if (bank->tone[i].name.IsEmpty())
 			{
-				song->ctl->cmsg(CMSG_WARNING, (b!=0) ? VERB_VERBOSE : VERB_NORMAL,
+				cmsg(CMSG_WARNING, (b!=0) ? VERB_VERBOSE : VERB_NORMAL,
 					"No instrument mapped to %s %d, program %d%s",
 					(dr)? "drum set" : "tone bank", b, i, 
 					(b!=0) ? "" : " - this instrument will not be heard");
@@ -901,7 +893,7 @@ static int fill_bank(Renderer *song, int dr, int b)
 				bank->tone[i].sf_ix
 				)))
 			{
-				song->ctl->cmsg(CMSG_ERROR, VERB_NORMAL, 
+				cmsg(CMSG_ERROR, VERB_NORMAL, 
 					"Couldn't load instrument %s (%s %d, program %d)",
 					bank->tone[i].name,
 					(dr)? "drum set" : "tone bank", b, i);

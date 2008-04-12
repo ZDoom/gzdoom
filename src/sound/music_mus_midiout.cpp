@@ -189,19 +189,20 @@ bool MUSSong2::CheckDone()
 
 void MUSSong2::Precache()
 {
-	BYTE *work = (BYTE *)alloca(MusHeader->NumInstruments);
-	const WORD *used = (WORD *)MusHeader + sizeof(MUSHeader) / 2;
+	WORD *work = (WORD *)alloca(MusHeader->NumInstruments * sizeof(WORD));
+	const WORD *used = (WORD *)MusHeader + sizeof(MUSHeader) / sizeof(WORD);
 	int i, j;
 
 	for (i = j = 0; i < MusHeader->NumInstruments; ++i)
 	{
-		if (used[i] < 128)
+		WORD instr = LittleShort(used[i]);
+		if (instr < 128)
 		{
-			work[j++] = (BYTE)used[i];
+			work[j++] = instr;
 		}
 		else if (used[i] >= 135 && used[i] <= 181)
 		{ // Percussions are 100-based, not 128-based, eh?
-			work[j++] = used[i] - 100 + 128;
+			work[j++] = instr - 100 + (1 << 14);
 		}
 	}
 	MIDI->PrecacheInstruments(&work[0], j);

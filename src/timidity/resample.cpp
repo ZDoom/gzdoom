@@ -553,8 +553,8 @@ void pre_resample(Renderer *song, Sample *sp)
 	{
 		"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
 	};
-return;
-	song->ctl->cmsg(CMSG_INFO, VERB_NOISY, " * pre-resampling for note %d (%s%d)",
+
+	cmsg(CMSG_INFO, VERB_NOISY, " * pre-resampling for note %d (%s%d)",
 		sp->note_to_use,
 		note_name[sp->note_to_use % 12], (sp->note_to_use & 0x7F) / 12);
 
@@ -565,9 +565,9 @@ return;
 	if (newlen < 0 || (newlen >> FRACTION_BITS) > MAX_SAMPLE_SIZE)
 		return;
 
-	dest = newdata = (sample_t *)safe_malloc(newlen >> (FRACTION_BITS - 2));
+	count = newlen >> FRACTION_BITS;
+	dest = newdata = (sample_t *)safe_malloc(count * sizeof(float));
 
-	count = (newlen >> FRACTION_BITS) - 1;
 	ofs = incr = (sp->data_length - (1 << FRACTION_BITS)) / count;
 
 	if (--count)

@@ -278,6 +278,8 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 	* THEN, for each sample, see below
 	*/
 
+	vlayer_count = 0;	// Silence, GCC
+
 	if (!memcmp(tmp + 93, "SF2EXT", 6))
 	{
 		sf2flag = true;
@@ -318,7 +320,8 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 		vlayer_count = 1;
 	}
 
-	lastlp = 0;
+	lastlp = NULL;
+	headlp = NULL;	// Silence, GCC
 
 	for (vlayer = 0; vlayer < vlayer_count; vlayer++)
 	{
@@ -374,6 +377,10 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 			else if (stereo_layer == 1)
 			{
 				sample_count = ip->right_samples;
+			}
+			else
+			{
+				sample_count = 0;
 			}
 
 			for (i = 0; i < sample_count; i++)
@@ -452,6 +459,11 @@ fail:
 				else if (stereo_layer == 1)
 				{
 					sp = &(ip->right_sample[i]);
+				}
+				else
+				{
+					assert(0);
+					sp = NULL;
 				}
 
 				READ_LONG(sp->data_length);
@@ -544,6 +556,9 @@ fail:
 				else
 				{
 					skip(fp, 36);
+					sample_volume = 0;
+					sf2delay = 0;
+
 				}
 
 				/* Mark this as a fixed-pitch instrument if such a deed is desired. */
@@ -729,7 +744,7 @@ fail:
 void convert_sample_data(Sample *sp, const void *data)
 {
 	/* convert everything to 32-bit floating point data */
-	sample_t *newdata;
+	sample_t *newdata = NULL;
 
 	switch (sp->modes & (MODES_16BIT | MODES_UNSIGNED))
 	{
@@ -895,7 +910,7 @@ static int fill_bank(Renderer *song, int dr, int b)
 			{
 				cmsg(CMSG_ERROR, VERB_NORMAL, 
 					"Couldn't load instrument %s (%s %d, program %d)",
-					bank->tone[i].name,
+					bank->tone[i].name.GetChars(),
 					(dr)? "drum set" : "tone bank", b, i);
 				errors++;
 			}

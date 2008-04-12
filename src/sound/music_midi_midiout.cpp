@@ -784,6 +784,7 @@ void MIDISong2::Precache()
 		BYTE ev, data1, data2, command, channel;
 		int len;
 
+		data2 = 0;	// Silence, GCC
 		while (track->TrackP < track->MaxTrackP)
 		{
 			ev = track->TrackBegin[track->TrackP++];

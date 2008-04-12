@@ -123,10 +123,8 @@ static void PrintMidiDevice (int id, const char *name, WORD tech, DWORD support)
 	case MOD_SQSYNTH:		Printf ("SQSYNTH");			break;
 	case MOD_FMSYNTH:		Printf ("FMSYNTH");			break;
 	case MOD_MAPPER:		Printf ("MAPPER");			break;
-#ifdef MOD_WAVETABLE
 	case MOD_WAVETABLE:		Printf ("WAVETABLE");		break;
 	case MOD_SWSYNTH:		Printf ("SWSYNTH");			break;
-#endif
 	}
 	if (support & MIDICAPS_CACHE)
 	{
@@ -154,8 +152,8 @@ CCMD (snd_listmididevices)
 	MMRESULT res;
 
 	PrintMidiDevice (-3, "Emulated OPL FM Synth", MOD_FMSYNTH, 0);
-	PrintMidiDevice (-2, "TiMidity++", 0, MOD_WAVETABLE | MOD_SWSYNTH);
-	PrintMidiDevice (-1, "FMOD", 0, MOD_WAVETABLE | MOD_SWSYNTH);
+	PrintMidiDevice (-2, "TiMidity++", 0, MOD_SWSYNTH);
+	PrintMidiDevice (-1, "FMOD", 0, MOD_SWSYNTH);
 	if (nummididevices != 0)
 	{
 		for (id = 0; id < nummididevices; ++id)

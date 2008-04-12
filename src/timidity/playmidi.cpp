@@ -28,8 +28,6 @@
 
 #include "timidity.h"
 
-#pragma intrinsic(pow)
-
 namespace Timidity
 {
 

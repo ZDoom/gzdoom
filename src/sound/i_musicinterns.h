@@ -89,6 +89,12 @@ typedef BYTE *LPSTR;
 #define MEVT_EVENTPARM(x)   ((x) & 0xffffff)
 
 #define MOM_DONE			969
+#else
+// w32api does not define these
+#ifndef MOD_WAVETABLE
+#define MOD_WAVETABLE   6
+#define MOD_SWSYNTH     7
+#endif
 #endif
 
 class MIDIDevice

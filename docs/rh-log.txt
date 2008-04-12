@@ -1,4 +1,11 @@
 April 11, 2008
+- Removed some GCC warnings.
+- Fixed: MinGW doesn't have _get_pgmptr(), so it couldn't compile i_main.cpp.
+- Fixed: MOD_WAVETABLE and MOD_SWSYNTH are not defined by w32api, so MinGW
+  failed compiling the new MIDI code.
+- Fixed: LocalSndInfo and LocalSndSeq in S_Start() need to be const char
+  pointers, since "" is a constant.
+- Fixed: parsecontext.h was missing a newline at the end of the file.
 - Fixed: Timidity::Channel::mono, rpn, and nrpn were not initialized. In
   particular, this meant that every channel was almost certainly in mono mode,
   which can sound pretty bad if the song isn't meant to be played that way.

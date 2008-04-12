@@ -1063,7 +1063,7 @@ void Timidity_FreeDLS(DLS_Data *patches)
 /* convert timecents to sec */
 static double to_msec(int timecent)
 {
-	if (timecent == 0x80000000 || timecent == 0)
+	if (timecent == INT_MIN || timecent == 0)
 		return 0.0;
 	return 1000.0 * pow(2.0, (double)(timecent / 65536) / 1200.0);
 }
@@ -1209,7 +1209,7 @@ InstrumentLayer *load_instrument_dls(Renderer *song, int drum, int bank, int ins
 {
 	InstrumentLayer *layer;
 	DWORD i;
-	DLS_Instrument *dls_ins;
+	DLS_Instrument *dls_ins = NULL;
 
 	if (song->patches == NULL)
 		return NULL;
@@ -1217,16 +1217,16 @@ InstrumentLayer *load_instrument_dls(Renderer *song, int drum, int bank, int ins
 	drum = drum ? 0x80000000 : 0;
 	for (i = 0; i < song->patches->cInstruments; ++i) {
 		dls_ins = &song->patches->instruments[i];
-		if ((dls_ins->header->Locale.ulBank & 0x80000000) == drum &&
-			((dls_ins->header->Locale.ulBank >> 8) & 0xFF) == bank &&
-			dls_ins->header->Locale.ulInstrument == instrument)
+		if ((dls_ins->header->Locale.ulBank & 0x80000000) == (ULONG)drum &&
+			((dls_ins->header->Locale.ulBank >> 8) & 0xFF) == (ULONG)bank &&
+			dls_ins->header->Locale.ulInstrument == (ULONG)instrument)
 			break;
 	}
 	if (i == song->patches->cInstruments && !bank) {
 		for (i = 0; i < song->patches->cInstruments; ++i) {
 			dls_ins = &song->patches->instruments[i];
-			if ((dls_ins->header->Locale.ulBank & 0x80000000) == drum &&
-				dls_ins->header->Locale.ulInstrument == instrument)
+			if ((dls_ins->header->Locale.ulBank & 0x80000000) == (ULONG)drum &&
+				dls_ins->header->Locale.ulInstrument == (ULONG)instrument)
 				break;
 		}
 	}

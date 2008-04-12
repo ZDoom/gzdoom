@@ -29,6 +29,7 @@
 #include "cmdlib.h"
 #include "c_cvars.h"
 #include "i_system.h"
+#include "files.h"
 
 CVAR(String, timidity_config, CONFIG_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -38,17 +39,19 @@ namespace Timidity
 ToneBank *tonebank[MAXBANK], *drumset[MAXBANK];
 
 static FString def_instr_name;
+int openmode = OM_FILEORLUMP;
 
 
 #define MAXWORDS 10
 
-static int read_config_file(const char *name)
+static int read_config_file(const char *name, bool ismain)
 {
-	FILE *fp;
+	FileReader *fp;
 	char tmp[1024], *w[MAXWORDS], *cp;
 	ToneBank *bank = NULL;
 	int i, j, k, line = 0, words;
 	static int rcf_count = 0;
+	int lumpnum;
 
 	if (rcf_count > 50)
 	{
@@ -56,10 +59,25 @@ static int read_config_file(const char *name)
 		return (-1);
 	}
 
-	if (!(fp = open_file(name, 1, OF_VERBOSE)))
+	if (ismain) openmode = OM_FILEORLUMP;
+
+	if (!(fp = open_filereader(name, openmode, &lumpnum)))
 		return -1;
 
-	while (fgets(tmp, sizeof(tmp), fp))
+	if (ismain)
+	{
+		if (lumpnum > 0)
+		{
+			openmode = OM_LUMP;
+			clear_pathlist();	// when reading from a PK3 we won't want to use any external path
+		}
+		else
+		{
+			openmode = OM_FILE;
+		}
+	}
+
+	while (fp->Gets(tmp, sizeof(tmp)))
 	{
 		line++;
 		w[words = 0] = strtok(tmp, " \t\r\n\240");
@@ -177,6 +195,7 @@ static int read_config_file(const char *name)
 			if (words < 2)
 			{
 				Printf("%s: line %d: No directory given\n", name, line);
+				delete fp;
 				return -2;
 			}
 			for (i = 1; i < words; i++)
@@ -192,7 +211,7 @@ static int read_config_file(const char *name)
 			for (i=1; i<words; i++)
 			{
 				rcf_count++;
-				read_config_file(w[i]);
+				read_config_file(w[i], false);
 				rcf_count--;
 			}
 		}
@@ -201,6 +220,7 @@ static int read_config_file(const char *name)
 			if (words != 2)
 			{
 				Printf("%s: line %d: Must specify exactly one patch name\n", name, line);
+				delete fp;
 				return -2;
 			}
 			def_instr_name = w[1];
@@ -210,12 +230,14 @@ static int read_config_file(const char *name)
 			if (words < 2)
 			{
 				Printf("%s: line %d: No drum set number given\n", name, line);
+				delete fp;
 				return -2;
 			}
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
 				Printf("%s: line %d: Drum set must be between 0 and 127\n", name, line);
+				delete fp;
 				return -2;
 			}
 			if (drumset[i] == NULL)
@@ -229,12 +251,14 @@ static int read_config_file(const char *name)
 			if (words < 2)
 			{
 				Printf("%s: line %d: No bank number given\n", name, line);
+				delete fp;
 				return -2;
 			}
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
 				Printf("%s: line %d: Tone bank must be between 0 and 127\n", name, line);
+				delete fp;
 				return -2;
 			}
 			if (tonebank[i] == NULL)
@@ -248,17 +272,20 @@ static int read_config_file(const char *name)
 			if ((words < 2) || (*w[0] < '0' || *w[0] > '9'))
 			{
 				Printf("%s: line %d: syntax error\n", name, line);
+				delete fp;
 				return -2;
 			}
 			i = atoi(w[0]);
 			if (i < 0 || i > 127)
 			{
 				Printf("%s: line %d: Program must be between 0 and 127\n", name, line);
+				delete fp;
 				return -2;
 			}
 			if (bank == NULL)
 			{
 				Printf("%s: line %d: Must specify tone bank or drum set before assignment\n", name, line);
+				delete fp;
 				return -2;
 			}
 			bank->tone[i].name = w[1];
@@ -271,6 +298,7 @@ static int read_config_file(const char *name)
 				if (!(cp=strchr(w[j], '=')))
 				{
 					Printf("%s: line %d: bad patch option %s\n", name, line, w[j]);
+					delete fp;
 					return -2;
 				}
 				*cp++ = 0;
@@ -280,6 +308,7 @@ static int read_config_file(const char *name)
 					if ((k < 0 || k > MAX_AMPLIFICATION) || (*cp < '0' || *cp > '9'))
 					{
 						Printf("%s: line %d: amplification must be between  0 and %d\n", name, line, MAX_AMPLIFICATION);
+						delete fp;
 						return -2;
 					}
 					bank->tone[i].amp = k;
@@ -290,6 +319,7 @@ static int read_config_file(const char *name)
 					if ((k < 0 || k > 127) || (*cp < '0' || *cp > '9'))
 					{
 						Printf("%s: line %d: note must be between 0 and 127\n", name, line);
+						delete fp;
 						return -2;
 					}
 					bank->tone[i].note = k;
@@ -309,6 +339,7 @@ static int read_config_file(const char *name)
 					{
 						Printf("%s: line %d: panning must be left, right, "
 							"center, or between -100 and 100\n", name, line);
+						delete fp;
 						return -2;
 					}
 					bank->tone[i].pan = k;
@@ -322,6 +353,7 @@ static int read_config_file(const char *name)
 					else
 					{
 						Printf("%s: line %d: keep must be env or loop\n", name, line);
+						delete fp;
 						return -2;
 					}
 				}
@@ -336,24 +368,28 @@ static int read_config_file(const char *name)
 					else
 					{
 						Printf("%s: line %d: strip must be env, loop, or tail\n", name, line);
+						delete fp;
 						return -2;
 					}
 				}
 				else
 				{
 					Printf("%s: line %d: bad patch option %s\n", name, line, w[j]);
+					delete fp;
 					return -2;
 				}
 			}
 		}
 	}
+	/*
 	if (ferror(fp))
 	{
 		Printf("Can't read %s: %s\n", name, strerror(errno));
 		close_file(fp);
 		return -2;
 	}
-	close_file(fp);
+	*/
+	delete fp;
 	return 0;
 }
 
@@ -375,22 +411,18 @@ void FreeAll()
 	}
 }
 
-int LoadConfig()
+int LoadConfig(const char *filename)
 {
-	static bool set_initial_path = false;
-
-	if (!set_initial_path)
-	{
+	clear_pathlist();
 #ifdef _WIN32
-		add_to_pathlist("\\TIMIDITY");
-		add_to_pathlist(progdir);
+	add_to_pathlist("C:\\TIMIDITY");
+	add_to_pathlist("\\TIMIDITY");
+	add_to_pathlist(progdir);
 #else
-		add_to_pathlist("/usr/local/lib/timidity");
-		add_to_pathlist("/etc/timidity");
-		add_to_pathlist("/etc");
+	add_to_pathlist("/usr/local/lib/timidity");
+	add_to_pathlist("/etc/timidity");
+	add_to_pathlist("/etc");
 #endif
-		set_initial_path = true;
-	}
 
 	/* Some functions get aggravated if not even the standard banks are available. */
 	if (tonebank[0] == NULL)
@@ -399,7 +431,12 @@ int LoadConfig()
 		drumset[0] = new ToneBank;
 	}
 
-	return read_config_file(timidity_config);
+	return read_config_file(filename, true);
+}
+
+int LoadConfig()
+{
+	return LoadConfig(timidity_config);
 }
 
 Renderer::Renderer(float sample_rate)
@@ -508,10 +545,15 @@ void Renderer::MarkInstrument(int banknum, int percussion, int instr)
 
 void cmsg(int type, int verbosity_level, const char *fmt, ...)
 {
+	/*
+	va_list args;
+	va_start(args, fmt);
+	VPrintf(PRINT_HIGH, fmt, args);
+	msg.VFormat(fmt, args);
+	*/
 #ifdef _WIN32
 	char buf[1024];
 	va_list args;
-
 	va_start(args, fmt);
 	vsprintf(buf, fmt, args);
 	va_end(args);

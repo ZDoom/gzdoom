@@ -1,4 +1,11 @@
 April 12, 2008 (Changes by Graf Zahl)
+- Changed the internal Timidity player so that it uses timidity_mastervolume
+  because it has the same sound volume issues as the external one.
+- Replaced use of stdio in Timidity with FileReader and added the option to read
+  from the lump directory. If the main config file is inside the lump directory
+  it will assume that everything else is as well. If it is a real file it will be
+  assumed that the rest is real files as well.
+- Fixed: None of the error returns in read_config_file closed the file being read.
 - Added Martin Howe's morph system update.
 - Added support for defining composite textures in HIRESTEX. It is not fully tested
   and right now can't do much more than the old TEXTUREx method.

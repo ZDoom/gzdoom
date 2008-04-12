@@ -9,9 +9,11 @@
 class FileReader
 {
 public:
+	FileReader ();
 	FileReader (const char *filename);
 	FileReader (FILE *file);
 	FileReader (FILE *file, long length);
+	bool Open (const char *filename);
 	virtual ~FileReader ();
 
 	virtual long Tell () const;
@@ -62,7 +64,6 @@ public:
 
 protected:
 	FileReader (const FileReader &other, long length);
-	FileReader ();
 
 	char *GetsFromBuffer(const char * bufptr, char *strbuf, int len);
 

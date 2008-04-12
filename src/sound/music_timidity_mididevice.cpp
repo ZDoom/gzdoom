@@ -205,7 +205,7 @@ int TimidityMIDIDevice::Resume()
 {
 	if (!Started)
 	{
-		if (Stream->Play(true, 1, false))
+		if (Stream->Play(true, timidity_mastervolume, false))
 		{
 			Started = true;
 			return 0;
@@ -324,6 +324,21 @@ bool TimidityMIDIDevice::FakeVolume()
 bool TimidityMIDIDevice::NeedThreadedCallback()
 {
 	return false;
+}
+
+
+//==========================================================================
+//
+// TimidityMIDIDevice :: TimidityVolumeChanged
+//
+//==========================================================================
+
+void TimidityMIDIDevice::TimidityVolumeChanged()
+{
+	if (Stream != NULL)
+	{
+		Stream->SetVolume(timidity_mastervolume);
+	}
 }
 
 //==========================================================================

@@ -26,6 +26,9 @@ void I_ShutdownMusicWin32 ();
 
 extern float relative_volume;
 
+EXTERN_CVAR (Float, timidity_mastervolume)
+
+
 // The base music class. Everything is derived from this --------------------
 
 class MusInfo
@@ -119,6 +122,7 @@ public:
 	virtual bool Pause(bool paused) = 0;
 	virtual bool NeedThreadedCallback() = 0;
 	virtual void PrecacheInstruments(const WORD *instruments, int count);
+	virtual void TimidityVolumeChanged() {}
 };
 
 // WinMM implementation of a MIDI output device -----------------------------
@@ -237,6 +241,7 @@ public:
 	bool Pause(bool paused);
 	bool NeedThreadedCallback();
 	void PrecacheInstruments(const WORD *instruments, int count);
+	void TimidityVolumeChanged();
 
 protected:
 	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
@@ -277,6 +282,7 @@ public:
 	~MIDIStreamer();
 
 	void MusicVolumeChanged();
+	void TimidityVolumeChanged();
 	void Play(bool looping);
 	void Pause();
 	void Resume();

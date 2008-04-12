@@ -30,6 +30,7 @@
 
 #include "timidity.h"
 #include "m_swap.h"
+#include "files.h"
 
 namespace Timidity
 {
@@ -42,6 +43,7 @@ ToneBank standard_tonebank, standard_drumset;
 
 /* This is only used for tracks that don't specify a program */
 int default_program = DEFAULT_PROGRAM;
+extern int openmode;
 
 
 static void free_instrument(Instrument *ip)
@@ -200,7 +202,7 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 {
 	InstrumentLayer *lp, *lastlp, *headlp;
 	Instrument *ip;
-	FILE *fp;
+	FileReader *fp;
 	BYTE tmp[239];
 	int i,j;
 	bool noluck = false;
@@ -212,16 +214,16 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 	if (!name) return 0;
 
 	/* Open patch file */
-	if ((fp = open_file(name, 1, OF_NORMAL)) == NULL)
+	if ((fp = open_filereader(name, openmode, NULL)) == NULL)
 	{
 		/* Try with various extensions */
 		FString tmp = name;
 		tmp += ".pat";
-		if ((fp = open_file(tmp, 1, OF_NORMAL)) == NULL)
+		if ((fp = open_filereader(tmp, openmode, NULL)) == NULL)
 		{
 #ifdef unix			// Windows isn't case-sensitive.
 			tmp.ToUpper();
-			if ((fp = open_file(tmp, 1, OF_NORMAL)) == NULL)
+			if ((fp = open_filereader(tmp, openmode, NULL)) == NULL)
 #endif
 			{
 				noluck = true;
@@ -240,12 +242,13 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 	/* Read some headers and do cursory sanity checks. There are loads
 	of magic offsets. This could be rewritten... */
 
-	if ((239 != fread(tmp, 1, 239, fp)) ||
+	if ((239 != fp->Read(tmp, 239)) ||
 		(memcmp(tmp, "GF1PATCH110\0ID#000002", 22) &&
 		memcmp(tmp, "GF1PATCH100\0ID#000002", 22))) /* don't know what the
 													differences are */
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: not an instrument", name);
+		delete fp;
 		return 0;
 	}
 
@@ -289,12 +292,14 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 	if (tmp[82] != 1 && tmp[82] != 0) /* instruments. To some patch makers, 0 means 1 */
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle patches with %d instruments", tmp[82]);
+		delete fp;
 		return 0;
 	}
 
 	if (tmp[151] != 1 && tmp[151] != 0) /* layers. What's a layer? */
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle instruments with %d layers", tmp[151]);
+		delete fp;
 		return 0;
 	}
 
@@ -394,13 +399,13 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 				BYTE sf2delay;
 
 #define READ_CHAR(thing) \
-	if (1 != fread(&tmpchar, 1, 1, fp)) goto fail; \
+	if (1 != fp->Read(&tmpchar,1)) goto fail; \
 	thing = tmpchar;
 #define READ_SHORT(thing) \
-	if (1 != fread(&tmpshort, 2, 1, fp)) goto fail; \
+	if (2 != fp->Read(&tmpshort, 2)) goto fail; \
 	thing = LittleShort(tmpshort);
 #define READ_LONG(thing) \
-	if (1 != fread(&tmplong, 4, 1, fp)) goto fail; \
+	if (4 != fp->Read(&tmplong, 4)) goto fail; \
 	thing = LittleLong(tmplong);
 
 				/*
@@ -427,9 +432,9 @@ static InstrumentLayer *load_instrument(Renderer *song, const char *name, int fo
 				* Now: 1 delay
 				* 33	 reserved
 				*/
-				skip(fp, 7); /* Skip the wave name */
+				fp->Seek(7, SEEK_CUR);
 
-				if (1 != fread(&fractions, 1, 1, fp))
+				if (1 != fp->Read(&fractions, 1))
 				{
 fail:
 					cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d", i);
@@ -449,6 +454,7 @@ fail:
 					free(ip->left_sample);
 					free(ip);
 					free(lp);
+					delete fp;
 					return 0;
 				}
 
@@ -473,7 +479,7 @@ fail:
 				READ_LONG(sp->low_freq);
 				READ_LONG(sp->high_freq);
 				READ_LONG(sp->root_freq);
-				skip(fp, 2); /* Unused by GUS: Why have a "root frequency" and then "tuning"?? */
+				fp->Seek(2, SEEK_CUR); /* Unused by GUS: Why have a "root frequency" and then "tuning"?? */
 				sp->low_vel = 0;
 				sp->high_vel = 127;
 
@@ -503,7 +509,7 @@ fail:
 				}
 
 				/* envelope, tremolo, and vibrato */
-				if (18 != fread(tmp, 1, 18, fp)) goto fail; 
+				if (18 != fp->Read(tmp, 18)) goto fail; 
 
 				if (!tmp[13] || !tmp[14])
 				{
@@ -551,11 +557,11 @@ fail:
 					READ_SHORT(sample_volume);
 					READ_CHAR(sf2delay);
 					READ_CHAR(sp->exclusiveClass);
-					skip(fp, 32);
+					fp->Seek(32, SEEK_CUR);
 				}
 				else
 				{
-					skip(fp, 36);
+					fp->Seek(36, SEEK_CUR);
 					sample_volume = 0;
 					sf2delay = 0;
 
@@ -658,7 +664,7 @@ fail:
 				}
 				sp->data = (sample_t *)safe_malloc(sp->data_length + 1);
 
-				if (1 != fread(sp->data, sp->data_length, 1, fp))
+				if (sp->data_length != fp->Read(sp->data, sp->data_length))
 					goto fail;
 
 				convert_sample_data(sp, sp->data);
@@ -737,7 +743,7 @@ fail:
 	} /* end of vlayer loop */
 
 
-	close_file(fp);
+	delete fp;
 	return headlp;
 }
 

@@ -29,34 +29,32 @@
 #include "zstring.h"
 #include "tarray.h"
 #include "i_system.h"
+#include "w_wad.h"
+#include "files.h"
+#include "cmdlib.h"
 
 namespace Timidity
 {
 
-/* I guess "rb" should be right for any libc */
-#define OPEN_MODE "rb"
-
-FString current_filename;
-
 static TArray<FString> PathList;
 
-/* Try to open a file for reading. */
-static FILE *try_to_open(const char *name, int decompress, int noise_mode)
+FString BuildPath(FString base, const char *name)
 {
-	FILE *fp;
-
-	fp = fopen(name, OPEN_MODE);
-
-	if (!fp)
-		return 0;
-
-	return fp;
+	FString current;
+	if (base.IsNotEmpty())
+	{
+		current = base;
+		if (current[current.Len() - 1] != '/') current += '/';
+	}
+	current += name;
+	return current;
 }
 
 /* This is meant to find and open files for reading. */
-FILE *open_file(const char *name, int decompress, int noise_mode)
+FileReader *open_filereader(const char *name, int open, int *plumpnum)
 {
-	FILE *fp;
+	FileReader *fp;
+	FString current_filename;
 
 	if (!name || !(*name))
 	{
@@ -65,64 +63,56 @@ FILE *open_file(const char *name, int decompress, int noise_mode)
 
 	/* First try the given name */
 	current_filename = name;
+	FixPathSeperator(current_filename);
 
-	if ((fp = try_to_open(current_filename, decompress, noise_mode)))
-		return fp;
+	int lumpnum = Wads.CheckNumForFullName(current_filename);
 
-#ifdef ENOENT
-	if (noise_mode && (errno != ENOENT))
+	if (open != OM_FILE)
 	{
-		return 0;
+		if (lumpnum >= 0)
+		{
+			fp = Wads.ReopenLumpNum(lumpnum);
+			if (plumpnum) *plumpnum = lumpnum;
+			return fp;
+		}
+		if (open == OM_LUMP)	// search the path list when not loading the main config
+		{
+			for (unsigned int plp = PathList.Size(); plp-- != 0; )
+			{ /* Try along the path then */
+				current_filename = BuildPath(PathList[plp], name);
+				lumpnum = Wads.CheckNumForFullName(current_filename);
+				if (lumpnum >= 0)
+				{
+					fp = Wads.ReopenLumpNum(lumpnum);
+					if (plumpnum) *plumpnum = lumpnum;
+					return fp;
+				}
+			}
+			return NULL;
+		}
 	}
-#endif
+	if (plumpnum) *plumpnum = -1;
 
-	if (name[0] != '/'
-#ifdef _WIN32
-		&& name[0] != '\\'
-#endif
-	)
+
+	fp = new FileReader;
+	if (fp->Open(current_filename)) return fp;
+
+	if (name[0] != '/')
 	{
 		for (unsigned int plp = PathList.Size(); plp-- != 0; )
 		{ /* Try along the path then */
-			current_filename = "";
-			if (PathList[plp].IsNotEmpty())
-			{
-				current_filename = PathList[plp];
-				if (current_filename[current_filename.Len() - 1] != '/'
-#ifdef _WIN32
-					&& current_filename[current_filename.Len() - 1] != '\\'
-#endif
-					)
-				{
-					current_filename += '/';
-				}
-			}
-			current_filename += name;
-			if ((fp = try_to_open(current_filename, decompress, noise_mode)))
-				return fp;
-			if (noise_mode && (errno != ENOENT))
-			{
-				return 0;
-			}
+			current_filename = BuildPath(PathList[plp], name);
+			if (fp->Open(current_filename)) return fp;
 		}
 	}
+	delete fp;
 
 	/* Nothing could be opened. */
 	current_filename = "";
-	return 0;
+	return NULL;
 }
 
-/* This closes files opened with open_file */
-void close_file(FILE *fp)
-{
-	fclose(fp);
-}
 
-/* This is meant for skipping a few bytes in a file or fifo. */
-void skip(FILE *fp, size_t len)
-{
-	fseek(fp, (long)len, SEEK_CUR);
-}
 
 /* This'll allocate memory or die. */
 void *safe_malloc(size_t count)
@@ -146,7 +136,14 @@ void *safe_malloc(size_t count)
 /* This adds a directory to the path list */
 void add_to_pathlist(const char *s)
 {
-	PathList.Push(s);
+	FString copy = s;
+	FixPathSeperator(copy);
+	PathList.Push(copy);
+}
+
+void clear_pathlist()
+{
+	PathList.Clear();
 }
 
 }

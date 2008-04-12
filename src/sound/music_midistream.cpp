@@ -419,6 +419,15 @@ void MIDIStreamer::MusicVolumeChanged()
 	}
 }
 
+void MIDIStreamer::TimidityVolumeChanged()
+{
+	if (MIDI != NULL)
+	{
+		MIDI->TimidityVolumeChanged();
+	}
+}
+
+
 //==========================================================================
 //
 // MIDIStreamer :: OutputVolume

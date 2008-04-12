@@ -23,6 +23,8 @@
 #include "doomtype.h"
 #include "zstring.h"
 
+class FileReader;
+
 namespace Timidity
 {
 
@@ -172,18 +174,15 @@ extern __inline__ double pow_x87_inline(double x,double y)
 common.h
 */
 
-extern FString current_filename;
+#define OM_FILEORLUMP 0
+#define OM_LUMP 1
+#define OM_FILE 2
 
-/* Noise modes for open_file */
-#define OF_SILENT	0
-#define OF_NORMAL	1
-#define OF_VERBOSE	2
-
-extern FILE *open_file(const char *name, int decompress, int noise_mode);
 extern void add_to_pathlist(const char *s);
-extern void close_file(FILE *fp);
-extern void skip(FILE *fp, size_t len);
+extern void clear_pathlist();
 extern void *safe_malloc(size_t count);
+
+FileReader *open_filereader(const char *name, int open, int *plumpnum);
 
 /*
 controls.h
@@ -510,6 +509,7 @@ tables.h
 timidity.h
 */
 struct DLS_Data;
+int LoadConfig(const char *filename);
 extern int LoadConfig();
 extern void FreeAll();
 

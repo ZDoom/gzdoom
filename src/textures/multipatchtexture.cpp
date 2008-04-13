@@ -714,11 +714,11 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 			sc.MustGetString();
 			if (sc.Compare("flipx"))
 			{
-				part.Mirror = 1;
+				part.Mirror |= 1;
 			}
 			else if (sc.Compare("flipy"))
 			{
-				part.Mirror = 2;
+				part.Mirror |= 2;
 			}
 			else if (sc.Compare("rotate"))
 			{
@@ -730,6 +730,11 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 				part.Rotate = sc.Number / 90;
 			}
 		}
+	}
+	if (part.Mirror & 2)
+	{
+		part.Rotate = (part.Rotate + 180) % 360;
+		part.Mirror &= 1;
 	}
 	*/
 }

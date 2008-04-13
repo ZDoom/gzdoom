@@ -272,7 +272,7 @@ void Renderer::reset_midi()
 	reset_voices();
 }
 
-void Renderer::select_sample(int v, Instrument *ip)
+void Renderer::select_sample(int v, Instrument *ip, int vel)
 {
 	float f, cdiff, diff, midfreq;
 	int s, i;
@@ -288,6 +288,17 @@ void Renderer::select_sample(int v, Instrument *ip)
 	}
 
 	f = voice[v].orig_frequency;
+	for (i = 0; i < s; i++)
+	{
+		if (sp->low_vel <= vel && sp->high_vel >= vel &&
+			sp->low_freq <= f && sp->high_freq >= f)
+		{
+			voice[v].sample = sp;
+			return;
+		}
+		sp++;
+	}
+
 	/* 
 	No suitable sample found! We'll select the sample whose root
 	frequency is closest to the one we want. (Actually we should
@@ -318,7 +329,7 @@ void Renderer::select_sample(int v, Instrument *ip)
 
 
 
-void Renderer::select_stereo_samples(int v, InstrumentLayer *lp)
+void Renderer::select_stereo_samples(int v, InstrumentLayer *lp, int vel)
 {
 	Instrument *ip;
 	InstrumentLayer *nlp, *bestvel;
@@ -358,7 +369,7 @@ void Renderer::select_stereo_samples(int v, InstrumentLayer *lp)
 	{
 		ip->sample = ip->right_sample;
 		ip->samples = ip->right_samples;
-		select_sample(v, ip);
+		select_sample(v, ip, vel);
 		voice[v].right_sample = voice[v].sample;
 	}
 	else
@@ -367,7 +378,7 @@ void Renderer::select_stereo_samples(int v, InstrumentLayer *lp)
 	}
 	ip->sample = ip->left_sample;
 	ip->samples = ip->left_samples;
-	select_sample(v, ip);
+	select_sample(v, ip, vel);
 }
 
 
@@ -481,7 +492,7 @@ int Renderer::vc_alloc(int j)
 
 	while (i--)
 	{
-		if (i != j && (voice[i].status & VOICE_FREE))
+		if (i != j && (voice[i].status == VOICE_FREE))
 		{
 			return i;
 		}
@@ -497,7 +508,9 @@ void Renderer::kill_others(int i)
 
 	while (j--)
 	{
-		if (voice[j].status & (VOICE_FREE|VOICE_OFF|VOICE_DIE)) continue;
+		if (voice[j].status == VOICE_FREE ||
+			voice[j].status == VOICE_OFF ||
+			voice[j].status == VOICE_DIE) continue;
 		if (i == j) continue;
 		if (voice[i].channel != voice[j].channel) continue;
 		if (voice[j].sample->note_to_use)
@@ -513,6 +526,12 @@ void Renderer::clone_voice(Instrument *ip, int v, int note, int vel, int clone_t
 {
 	int w, played_note, chorus = 0, reverb = 0, milli;
 	int chan = voice[v].channel;
+
+	// [RH] Don't do the other clones.
+	if (clone_type != STEREO_CLONE)
+	{
+		return;
+	}
 
 	if (clone_type == STEREO_CLONE)
 	{
@@ -555,8 +574,6 @@ void Renderer::clone_voice(Instrument *ip, int v, int note, int vel, int clone_t
 	if (clone_type == STEREO_CLONE) voice[v].clone_voice = w;
 	voice[w].clone_voice = v;
 	voice[w].clone_type = clone_type;
-
-	voice[w].sample = voice[v].right_sample;
 	voice[w].velocity = vel;
 
 	milli = int(rate / 1000);
@@ -565,6 +582,7 @@ void Renderer::clone_voice(Instrument *ip, int v, int note, int vel, int clone_t
 	{
 		int left, right, leftpan, rightpan;
 		int panrequest = voice[v].panning;
+		voice[w].sample = voice[v].right_sample;
 		if (variationbank == 3)
 		{
 			voice[v].panning = 0;
@@ -912,7 +930,7 @@ void Renderer::start_note(int ch, int this_note, int this_velocity, int i)
 			voice[i].orig_frequency = note_to_freq(this_note & 0x7F);
 	}
 
-	select_stereo_samples(i, lp);
+	select_stereo_samples(i, lp, this_velocity);
 
 	played_note = voice[i].sample->note_to_use;
 
@@ -1151,7 +1169,9 @@ void Renderer::note_on(int chan, int note, int vel)
 		i = voices;
 		while (i--)
 		{
-			if ( (voice[i].status & ~(VOICE_ON | VOICE_DIE | VOICE_FREE)) &&
+			if ( (voice[i].status != VOICE_ON &&
+				  voice[i].status != VOICE_DIE &&
+				  voice[i].status != VOICE_FREE) &&
 				(!voice[i].clone_type))
 			{
 				v = voice[i].left_mix;

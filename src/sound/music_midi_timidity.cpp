@@ -94,7 +94,7 @@ void TimiditySong::Play (bool looping)
 	{
 		if (m_Stream != NULL)
 		{
-			if (m_Stream->Play (true, timidity_mastervolume, false))
+			if (m_Stream->Play (true, timidity_mastervolume))
 			{
 				m_Status = STATE_Playing;
 			}

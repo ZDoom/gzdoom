@@ -1,3 +1,21 @@
+April 12, 2008
+- Changed FMOD_INIT_ENABLE_DSPNET use to its replacement from 4.14.00,
+  FMOD_INIT_ENABLE_PROFILE. Renamed the corresponding cvar to snd_profile.
+- Removed the normalize parameter from SoundStream::Play().
+- Disabled the chorus and reverb effects added to SDL_mixer's Timidity,
+  because they were probably never tested well, either. Thanks to the bug
+  in vc_alloc(), they were never even activated.
+- Restored the exact frequency range search that was missing from SDL_mixer's
+  verion of select_sample().
+- Fixed: vc_alloc(), kill_others(), and note_on() treated Voice::status as a
+  bit mask, when it's not. These were changes made to SDL_mixer's Timidity.
+- Restored the original Timidity volume equation. The other louder one was
+  put in when I didn't realize all channels were mono and many notes sounded
+  too quiet because they never completed their attack phase.
+- Fixed: FileReader::Gets() acted as if fgets() always read the maximum
+  number of characters.
+- Fixed: FileReader::Open() did not set FilePos and StartPos to 0.
+
 April 12, 2008 (Changes by Graf Zahl)
 - Changed the internal Timidity player so that it uses timidity_mastervolume
   because it has the same sound volume issues as the external one.

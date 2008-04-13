@@ -90,6 +90,8 @@ bool FileReader::Open (const char *filename)
 {
 	File = fopen (filename, "rb");
 	if (File == NULL) return false;
+	FilePos = 0;
+	StartPos = 0;
 	CloseOnDestruct = true;
 	Length = CalcFileLen();
 	return true;
@@ -141,13 +143,12 @@ long FileReader::Read (void *buffer, long len)
 
 char *FileReader::Gets(char *strbuf, int len)
 {
-	if (FilePos + len > StartPos + Length)
-	{
-		len = Length - FilePos + StartPos;
-	}
 	if (len <= 0) return 0;
 	char *p = fgets(strbuf, len, File);
-	FilePos += len;
+	if (p != NULL)
+	{
+		FilePos = ftell(File) - StartPos;
+	}
 	return p;
 }
 

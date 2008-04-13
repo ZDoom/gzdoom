@@ -5,7 +5,7 @@ void StreamSong::Play (bool looping)
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	if (m_Stream->Play (m_Looping, 1, false))
+	if (m_Stream->Play (m_Looping, 1))
 	{
 		m_Status = STATE_Playing;
 		m_LastPos = 0;

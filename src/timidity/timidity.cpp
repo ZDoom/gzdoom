@@ -456,7 +456,7 @@ Renderer::Renderer(float sample_rate)
 	if (def_instr_name.IsNotEmpty())
 		set_default_instrument(def_instr_name);
 
-	voices = MAX_VOICES;//DEFAULT_VOICES;
+	voices = DEFAULT_VOICES;
 	memset(voice, 0, sizeof(voice));
 	memset(drumvolume, 0, sizeof(drumvolume));
 	memset(drumpanpot, 0, sizeof(drumpanpot));

@@ -120,7 +120,7 @@ CVAR (String, snd_resampler, "Linear", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_speakermode, "Auto", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output_format, "PCM-16", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_midipatchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, snd_dspnet, false, 0)
+CVAR (Bool, snd_profile, false, 0)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -302,7 +302,7 @@ public:
 		}
 	}
 
-	bool Play(bool looping, float volume, bool normalize)
+	bool Play(bool looping, float volume)
 	{
 		FMOD_RESULT result;
 
@@ -321,14 +321,6 @@ public:
 		{
 			reverb.Room = -10000;
 			Channel->setReverbProperties(&reverb);
-		}
-		if (normalize)
-		{ // Attach a normalizer DSP unit to the channel.
-			result = Owner->Sys->createDSPByType(FMOD_DSP_TYPE_NORMALIZE, &DSP);
-			if (result == FMOD_OK)
-			{
-				Channel->addDSP(DSP);
-			}
 		}
 		Channel->setPaused(false);
 		return true;
@@ -636,9 +628,9 @@ bool FMODSoundRenderer::Init()
 	{
 		initflags |= FMOD_INIT_SOFTWARE_HRTF;
 	}
-	if (snd_dspnet)
+	if (snd_profile)
 	{
-		initflags |= FMOD_INIT_ENABLE_DSPNET;
+		initflags |= FMOD_INIT_ENABLE_PROFILE;
 	}
 	for (;;)
 	{

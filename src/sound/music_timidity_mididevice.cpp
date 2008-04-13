@@ -205,7 +205,7 @@ int TimidityMIDIDevice::Resume()
 {
 	if (!Started)
 	{
-		if (Stream->Play(true, timidity_mastervolume, false))
+		if (Stream->Play(true, timidity_mastervolume))
 		{
 			Started = true;
 			return 0;

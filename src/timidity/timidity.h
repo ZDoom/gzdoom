@@ -498,10 +498,7 @@ tables.h
 
 #define sine(x)			(sin((2*PI/1024.0) * (x)))
 #define note_to_freq(x)	(float(8175.7989473096690661233836992789 * pow(2.0, (x) / 12.0)))
-
-// Use TiMidity++'s volume equation rather than TiMidity's, since it's louder.
-//#define calc_vol(x)	(pow(2.0,((x)*6.0 - 6.0)))
-#define calc_vol(x)		(pow((double)(x), (double)1.66096404744))
+#define calc_vol(x)	(pow(2.0,((x)*6.0 - 6.0)))
 
 #define XMAPMAX 800
 
@@ -581,8 +578,8 @@ struct Renderer
 	void reset_controllers(int chan);
 	void reset_midi();
 
-	void select_sample(int voice, Instrument *instr);
-	void select_stereo_samples(int voice, InstrumentLayer *layer);
+	void select_sample(int voice, Instrument *instr, int vel);
+	void select_stereo_samples(int voice, InstrumentLayer *layer, int vel);
 	void recompute_freq(int voice);
 
 	void kill_note(int voice);

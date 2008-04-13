@@ -223,7 +223,7 @@ int OPLMIDIDevice::Resume()
 {
 	if (!Started)
 	{
-		if (Stream->Play(true, 1, false))
+		if (Stream->Play(true, 1))
 		{
 			Started = true;
 			BlockForStats = this;

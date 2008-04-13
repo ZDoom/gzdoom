@@ -386,8 +386,21 @@ int FTextureManager::AddPatch (const char *patchname, int namespc, bool tryany)
 
 void FTextureManager::AddGroup(int wadnum, const char * startlump, const char * endlump, int ns, int usetype)
 {
-	int firsttx = Wads.CheckNumForName (startlump);
-	int lasttx = Wads.CheckNumForName (endlump);
+	int firsttx;
+	int lasttx;
+
+	if (startlump && endlump)
+	{
+		firsttx = Wads.CheckNumForName (startlump);
+		lasttx = Wads.CheckNumForName (endlump);
+	}
+	else
+	{
+		// If there are no markers we have to search the entire lump directory... :(
+		firsttx = 0;
+		lasttx = Wads.GetNumLumps() - 1;
+	}
+
 	char name[9];
 
 	if (firsttx == -1 || lasttx == -1)
@@ -404,7 +417,7 @@ void FTextureManager::AddGroup(int wadnum, const char * startlump, const char * 
 
 	for (firsttx += 1; firsttx < lasttx; ++firsttx)
 	{
-		if (Wads.GetLumpFile(firsttx) == wadnum)
+		if (Wads.GetLumpFile(firsttx) == wadnum && Wads.GetLumpNamespace(firsttx) == ns)
 		{
 			Wads.GetLumpName (name, firsttx);
 
@@ -696,6 +709,10 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 	// First step: Load sprites
 	AddGroup(wadnum, "S_START", "S_END", ns_sprites, FTexture::TEX_Sprite);
 
+	// When loading a Zip, all graphics in the patches/ directory should be
+	// added as well.
+	AddGroup(wadnum, NULL, NULL, ns_patches, FTexture::TEX_WallPatch);
+
 	// Second step: TEXTUREx lumps
 	LoadTextureX(wadnum);
 
@@ -721,7 +738,6 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 		if (ns == ns_global)
 		{
 			// In Zips all graphics must be in a separate namespace.
-			if (Wads.GetLumpFlags(i) & LUMPF_ZIPFILE) continue;
 
 			// Ignore lumps with empty names.
 			if (Wads.CheckLumpName(i, "")) continue;

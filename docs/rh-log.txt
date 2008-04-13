@@ -1,3 +1,11 @@
+April 13, 2008 (Changes by Graf Zahl)
+- Fixed a few bufs in the parser for composite textures.
+- Changed: When loading Zips all patches in the patches/ directory should
+  be loaded, not only those used by a texture in TEXTUREx. 
+- Disabled timidity_mastervolume for the internal Timidity again because
+  with the altered volume calculation it is no longer needed and the default
+  volume is on the same level as OPL and FMOD.
+
 April 12, 2008
 - Changed FMOD_INIT_ENABLE_DSPNET use to its replacement from 4.14.00,
   FMOD_INIT_ENABLE_PROFILE. Renamed the corresponding cvar to snd_profile.

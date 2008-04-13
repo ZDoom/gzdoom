@@ -759,6 +759,9 @@ public:
 	BYTE bHasCanvas:1;		// Texture is based off FCanvasTexture
 	BYTE bWarped:2;			// This is a warped texture. Used to avoid multiple warps on one texture
 	BYTE bIsPatch:1;		// 1 if an FPatchTexture. Required to fix FMultipatchTexture::CheckForHacks
+	BYTE bComplex:1;		// Will be used to mark extended MultipatchTextures that have to be
+							// fully composited before subjected to any kinf of postprocessing instead of
+							// doing it per patch.
 
 	WORD Rotations;
 

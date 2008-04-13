@@ -89,6 +89,7 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	FTextureFormat GetFormat();
+	bool UseBasePalette() ;
 	void Unload ();
 	virtual void SetFrontSkyLayer ();
 

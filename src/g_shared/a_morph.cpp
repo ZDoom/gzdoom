@@ -163,7 +163,13 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	angle_t angle;
 
 	pmo = player->mo;
-	if (pmo->tracer == NULL)
+	// [MH]
+	// Checks pmo as well; the PowerMorph destroyer will
+	// try to unmorph the player; if the destroyer runs
+	// because the level or game is ended while morphed,
+	// by the time it gets executed the morphed player
+	// pawn instance may have already been destroyed.
+	if (pmo == NULL || pmo->tracer == NULL)
 	{
 		return false;
 	}

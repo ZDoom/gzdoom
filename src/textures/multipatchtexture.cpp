@@ -292,8 +292,63 @@ void FMultiPatchTexture::MakeTexture ()
 	for (int i = 0; i < NumParts; ++i)
 	{
 		Parts[i].Texture->CopyToBlock (Pixels, Width, Height,
-			Parts[i].OriginX, Parts[i].OriginY);
+			Parts[i].OriginX, Parts[i].OriginY, Parts[i].Rotate);
 	}
+}
+
+//===========================================================================
+//
+// FMultipatchTexture::CopyTrueColorPixels
+//
+// Preserves the palettes of each individual patch
+//
+//===========================================================================
+
+int FMultiPatchTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate)
+{
+	int retv = -1;
+
+	for(int i=0;i<NumParts;i++)
+	{
+		int ret = Parts[i].Texture->CopyTrueColorPixels(buffer, buf_pitch, buf_height, 
+									x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate);
+
+		if (ret > retv) retv = ret;
+	}
+	return retv;
+}
+
+//==========================================================================
+//
+// FMultiPatchTexture :: GetFormat
+//
+// only returns 'paletted' if all patches use the base palette.
+//
+//==========================================================================
+
+FTextureFormat FMultiPatchTexture::GetFormat() 
+{ 
+	if (NumParts == 1) return Parts[0].Texture->GetFormat();
+	return UseBasePalette() ? TEX_Pal : TEX_RGB;
+}
+
+
+//===========================================================================
+//
+// FMultipatchTexture::UseBasePalette
+//
+// returns true if all patches in the texture use the unmodified base
+// palette.
+//
+//===========================================================================
+
+bool FMultiPatchTexture::UseBasePalette() 
+{ 
+	for(int i=0;i<NumParts;i++)
+	{
+		if (!Parts[i].Texture->UseBasePalette()) return false;
+	}
+	return true;
 }
 
 //==========================================================================
@@ -423,61 +478,6 @@ void FMultiPatchTexture::CheckForHacks ()
 	}
 }
 
-//===========================================================================
-//
-// FMultipatchTexture::CopyTrueColorPixels
-//
-// Preserves the palettes of each individual patch
-//
-//===========================================================================
-
-int FMultiPatchTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
-{
-	int retv = -1;
-
-	for(int i=0;i<NumParts;i++)
-	{
-		int ret = Parts[i].Texture->CopyTrueColorPixels(buffer, buf_pitch, buf_height, 
-											  x+Parts[i].OriginX, y+Parts[i].OriginY);
-
-		if (ret > retv) retv = ret;
-	}
-	return retv;
-}
-
-//==========================================================================
-//
-// FMultiPatchTexture :: GetFormat
-//
-// only returns 'paletted' if all patches use the base palette.
-//
-//==========================================================================
-
-FTextureFormat FMultiPatchTexture::GetFormat() 
-{ 
-	if (NumParts == 1) return Parts[0].Texture->GetFormat();
-	return UseBasePalette() ? TEX_Pal : TEX_RGB;
-}
-
-
-//===========================================================================
-//
-// FMultipatchTexture::UseBasePalette
-//
-// returns true if all patches in the texture use the unmodified base
-// palette.
-//
-//===========================================================================
-
-bool FMultiPatchTexture::UseBasePalette() 
-{ 
-	for(int i=0;i<NumParts;i++)
-	{
-		if (!Parts[i].Texture->UseBasePalette()) return false;
-	}
-	return true;
-}
-
 //==========================================================================
 //
 // FMultiPatchTexture :: TexPart :: TexPart
@@ -487,7 +487,7 @@ bool FMultiPatchTexture::UseBasePalette()
 FMultiPatchTexture::TexPart::TexPart()
 {
 	OriginX = OriginY = 0;
-	Mirror = Rotate = 0;
+	Rotate = 0;
 	textureOwned = false;
 	Texture = NULL;
 }
@@ -680,6 +680,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 	sc.MustGetString();
 
 	int texno = TexMan.CheckForTexture(sc.String, TEX_WallPatch);
+	int Mirror = 0;
 
 	if (texno < 0)
 	{
@@ -705,37 +706,39 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 	sc.MustGetNumber();
 	part.OriginY = sc.Number;
 
-	/* not yet implemented
-	if (sc.CheckString("{");
+	if (sc.CheckString("{"))
 	{
 		while (!sc.CheckString("}"))
 		{
 			sc.MustGetString();
 			if (sc.Compare("flipx"))
 			{
-				part.Mirror |= 1;
+				Mirror |= 1;
 			}
 			else if (sc.Compare("flipy"))
 			{
-				part.Mirror |= 2;
+				Mirror |= 2;
 			}
 			else if (sc.Compare("rotate"))
 			{
 				sc.MustGetNumber();
-				if (sc.Number != 0 && sc.Number !=90 && sc.Number != 180 && sc.Number != 270)
+				if (sc.Number != 0 && sc.Number !=90 && sc.Number != 180 && sc.Number != -90)
 				{
-					sc.ScriptError("Rotation must be 0, 90, 180 or 270 degrees");
+					sc.ScriptError("Rotation must be 0, 90, 180 or -90 degrees");
 				}
-				part.Rotate = sc.Number / 90;
+				part.Rotate = (sc.Number / 90) & 3;
 			}
 		}
 	}
-	if (part.Mirror & 2)
+	if (Mirror & 2)
 	{
-		part.Rotate = (part.Rotate + 180) % 360;
-		part.Mirror &= 1;
+		part.Rotate = (part.Rotate + 2) & 3;
+		Mirror ^= 1;
 	}
-	*/
+	if (Mirror & 1)
+	{
+		part.Rotate |= 4;
+	}
 }
 
 
@@ -804,7 +807,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			if (Parts->OriginX == 0 && Parts->OriginY == 0 &&
 				Parts->Texture->GetWidth() == Width &&
 				Parts->Texture->GetHeight() == Height &&
-				Parts->Mirror == 0 && Parts->Rotate == 0)
+				Parts->Rotate == 0)
 			{
 				bRedirect = true;
 			}

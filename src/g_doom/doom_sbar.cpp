@@ -211,7 +211,7 @@ private:
 		void Unload ();
 		~FDoomStatusBarTexture ();
 		void SetPlayerRemap(FRemapTable *remap);
-		int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+		int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate);
 
 		FTextureFormat GetFormat()
 		{
@@ -1093,10 +1093,11 @@ void DDoomStatusBar::FDoomStatusBarTexture::MakeTexture ()
 	if (multiplayer) DrawToBar("STFBANY", 143, 1, STBFremap? STBFremap->Remap : NULL);
 }
 
-int DDoomStatusBar::FDoomStatusBarTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
+int DDoomStatusBar::FDoomStatusBarTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate)
 {
 	FTexture *tex;
 
+	// rotate is never used here
 	BaseTexture->CopyTrueColorPixels(buffer, buf_pitch, buf_height, x, y);
 	if (!deathmatch)
 	{

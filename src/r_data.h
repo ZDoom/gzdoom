@@ -94,7 +94,7 @@ public:
 	void Unload ();
 	virtual void SetFrontSkyLayer ();
 
-	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate);
 	int GetSourceLump() { return DefinitionLump; }
 
 protected:
@@ -105,9 +105,8 @@ protected:
 	struct TexPart
 	{
 		SWORD OriginX, OriginY;
-		BYTE Mirror:2;
-		BYTE Rotate:2;
-		BYTE textureOwned:1;
+		BYTE Rotate;
+		bool textureOwned;
 		FTexture *Texture;
 
 		TexPart();
@@ -262,7 +261,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
-	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate);
 	bool UseBasePalette();
 	int GetSourceLump() { return SourceLump; }
 
@@ -330,7 +329,7 @@ protected:
 	void DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
 	void DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
 
-	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate);
 	bool UseBasePalette();
 
 	friend class FTexture;
@@ -346,7 +345,7 @@ public:
 	const BYTE *GetPixels ();
 	void Unload ();
 	FTextureFormat GetFormat ();
-	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate);
 	bool UseBasePalette();
 	int GetSourceLump() { return SourceLump; }
 
@@ -398,7 +397,7 @@ public:
 	void Unload ();
 	FTextureFormat GetFormat ();
 
-	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate);
 	bool UseBasePalette();
 	int GetSourceLump() { return SourceLump; }
 
@@ -455,7 +454,7 @@ public:
 	void Unload ();
 	FTextureFormat GetFormat ();
 
-	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+	int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate);
 	bool UseBasePalette();
 	int GetSourceLump() { return SourceLump; }
 

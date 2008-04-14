@@ -1191,15 +1191,92 @@ static CopyFunc copyfuncs[]={
 	iCopyColors<cPalEntry>
 };
 
-
 //===========================================================================
 //
 // Clips the copy area for CopyPixelData functions
 //
 //===========================================================================
 bool ClipCopyPixelRect(int texwidth, int texheight, int &originx, int &originy,
-									const BYTE *&patch, int &srcwidth, int &srcheight, int step_x, int step_y)
+									const BYTE *&patch, int &srcwidth, int &srcheight, 
+									int &pstep_x, int &pstep_y, int rotate)
 {
+	int pixxoffset;
+	int pixyoffset;
+
+	int step_x;
+	int step_y;
+
+	// First adjust the settings for the intended rotation
+	switch (rotate)
+	{
+	default:
+	case 0:	// normal
+		pixxoffset = 0;
+		pixyoffset = 0;
+		step_x = pstep_x;
+		step_y = pstep_y;
+		break;
+
+	case 1: // rotate 90° right
+		pixxoffset = 0;
+		pixyoffset = srcheight - 1;
+		step_x = -pstep_y;
+		step_y = pstep_x;
+		break;
+
+	case 2:	// rotate 180°
+		pixxoffset = srcwidth - 1;
+		pixyoffset = srcheight - 1;
+		step_x = -pstep_x;
+		step_y = -pstep_y;
+		break;
+
+	case 3: // rotate 90° left
+		pixxoffset = srcwidth - 1;
+		pixyoffset = 0;
+		step_x = pstep_y;
+		step_y = -pstep_x;
+		break;
+
+	case 4:	// flip horizontally
+		pixxoffset = srcwidth - 1;
+		pixyoffset = 0;
+		step_x = -pstep_x;
+		step_y = pstep_y;
+		break;
+
+	case 5:	// flip horizontally and rotate 90° right
+		pixxoffset = srcwidth - 1;
+		pixyoffset = srcheight - 1;
+		step_x = -pstep_y;
+		step_y = -pstep_x;
+		break;
+
+	case 6:	// flip vertically
+		pixxoffset = 0;
+		pixyoffset = srcheight - 1;
+		step_x = pstep_x;
+		step_y = -pstep_y;
+		break;
+
+	case 7:	// flip horizontally and rotate 90° left
+		pixxoffset = 0;
+		pixyoffset = 0;
+		step_x = pstep_y;
+		step_y = pstep_x;
+		break;
+	}
+	if (rotate&1)
+	{
+		int v = srcwidth;
+		srcwidth = srcheight;
+		srcheight = v;
+	}
+
+	patch += pixxoffset * pstep_x + pixyoffset * pstep_y;
+	pstep_x = step_x;
+	pstep_y = step_y;
+
 	// clip source rectangle to destination
 	if (originx<0)
 	{
@@ -1229,6 +1306,7 @@ bool ClipCopyPixelRect(int texwidth, int texheight, int &originx, int &originy,
 	return true;
 }
 
+
 //===========================================================================
 //
 // True Color texture copy function
@@ -1236,9 +1314,9 @@ bool ClipCopyPixelRect(int texwidth, int texheight, int &originx, int &originy,
 //===========================================================================
 void DFrameBuffer::CopyPixelDataRGB(BYTE *buffer, int texpitch, int texheight, int originx, int originy,
 										const BYTE *patch, int srcwidth, int srcheight, int step_x, int step_y,
-										int ct)
+										int rotate, int ct)
 {
-	if (ClipCopyPixelRect(texpitch/4, texheight, originx, originy, patch, srcwidth, srcheight, step_x, step_y))
+	if (ClipCopyPixelRect(texpitch/4, texheight, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
 		buffer+=4*originx + texpitch*originy;
 		for (int y=0;y<srcheight;y++)
@@ -1255,11 +1333,11 @@ void DFrameBuffer::CopyPixelDataRGB(BYTE *buffer, int texpitch, int texheight, i
 //===========================================================================
 void DFrameBuffer::CopyPixelData(BYTE * buffer, int texpitch, int texheight, int originx, int originy,
 										const BYTE * patch, int srcwidth, int srcheight, 
-										int step_x, int step_y, PalEntry * palette)
+										int step_x, int step_y, int rotate, PalEntry * palette)
 {
 	int x,y,pos;
 	
-	if (ClipCopyPixelRect(texpitch/4, texheight, originx, originy, patch, srcwidth, srcheight, step_x, step_y))
+	if (ClipCopyPixelRect(texpitch/4, texheight, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
 		buffer+=4*originx + texpitch*originy;
 

@@ -794,7 +794,7 @@ public:
 	// Returns the whole texture, stored in column-major order
 	virtual const BYTE *GetPixels () = 0;
 	
-	virtual int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y);
+	virtual int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate=0);
 	int CopyTrueColorTranslated(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, FRemapTable *remap);
 	virtual bool UseBasePalette();
 	virtual int GetSourceLump() { return -1; }
@@ -824,7 +824,12 @@ public:
 
 	virtual void SetFrontSkyLayer();
 
-	void CopyToBlock (BYTE *dest, int dwidth, int dheight, int x, int y, const BYTE *translation=NULL);
+	void CopyToBlock (BYTE *dest, int dwidth, int dheight, int x, int y, const BYTE *translation=NULL)
+	{
+		CopyToBlock(dest, dwidth, dheight, x, y, 0, translation);
+	}
+
+	void CopyToBlock (BYTE *dest, int dwidth, int dheight, int x, int y, int rotate, const BYTE *translation=NULL);
 
 	// Returns true if the next call to GetPixels() will return an image different from the
 	// last call to GetPixels(). This should be considered valid only if a call to CheckModified()

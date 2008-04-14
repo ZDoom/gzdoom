@@ -418,7 +418,7 @@ void FPCXTexture::MakeTexture()
 //
 //===========================================================================
 
-int FPCXTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
+int FPCXTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate)
 {
 	PalEntry pe[256];
 	PCXHeader header;
@@ -472,14 +472,14 @@ int FPCXTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height
 			lump.Seek(sizeof(header), SEEK_SET);
 			ReadPCX8bits (Pixels, lump, &header);
 		}
-		screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y, Pixels, Width, Height, 1, Width, pe);
+		screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y, Pixels, Width, Height, 1, Width, rotate, pe);
 	}
 	else
 	{
 		Pixels = new BYTE[Width*Height * 3];
 		BYTE * row = buffer;
 		ReadPCX24bits (Pixels, lump, &header, 3);
-		screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, Pixels, Width, Height, 3, Width*3, CF_RGB);
+		screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, Pixels, Width, Height, 3, Width*3, rotate, CF_RGB);
 	}
 	delete [] Pixels;
 	return 0;

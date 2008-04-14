@@ -1,4 +1,8 @@
 April 14, 2008 (Changes by Graf Zahl)
+- Added rotation 90° angles only) and mirroring to the Multipatch texture 
+  composition code.
+- Fixed: The game crashed when a level was ended while a player was morphed
+  by a powerup.
 - Fixed: A_VileAttack positioned the fire on the wrong side of the target.
 - Reorganized the HackHack code so that the image creation was moved into
   MakeTexture. This was necessary because Unload deleted the pixel data
@@ -19,7 +23,7 @@ April 14, 2008 (Changes by Graf Zahl)
 - Fixed: A few calls to P_SpawnPlayerMissile passed 0 as angle
 
 April 13, 2008 (Changes by Graf Zahl)
-- Fixed a few bufs in the parser for composite textures.
+- Fixed a few bugs in the parser for composite textures.
 - Changed: When loading Zips all patches in the patches/ directory should
   be loaded, not only those used by a texture in TEXTUREx. 
 - Disabled timidity_mastervolume for the internal Timidity again because

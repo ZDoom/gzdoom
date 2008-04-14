@@ -270,7 +270,7 @@ void FTexture::FreeSpans (Span **spans) const
 	M_Free (spans);
 }
 
-void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int ypos, const BYTE *translation)
+void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const BYTE *translation)
 {
 	const BYTE *pixels = GetPixels();
 	int srcwidth = Width;
@@ -278,7 +278,7 @@ void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int y
 	int step_x = Height;
 	int step_y = 1;
 
-	if (ClipCopyPixelRect(dwidth, dheight, xpos, ypos, pixels, srcwidth, srcheight, step_x, step_y))
+	if (ClipCopyPixelRect(dwidth, dheight, xpos, ypos, pixels, srcwidth, srcheight, step_x, step_y, rotate))
 	{
 		dest += ypos + dheight * xpos;
 		if (translation == NULL)
@@ -288,7 +288,7 @@ void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int y
 				int pos = x * dheight;
 				for (int y = 0; y < srcheight; y++, pos++)
 				{
-					// the optimizer is doing a good enough job here so there's no need to make this harder to read.
+					// the optimizer is doing a good enough job here so there's no need to optimize this by hand
 					BYTE v = pixels[y * step_y + x * step_x]; 
 					if (v != 0) dest[pos] = v;
 				}
@@ -476,13 +476,13 @@ void FTexture::FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt)
 //
 //===========================================================================
 
-int FTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y)
+int FTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate)
 {
 	PalEntry *palette = screen->GetPalette();
 	palette[0].a=255;	// temporarily modify the first color's alpha
 	screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y,
 				  GetPixels(), Width, Height, Height, 1, 
-				  palette);
+				  rotate, palette);
 
 	palette[0].a=0;
 	return 0;
@@ -494,7 +494,7 @@ int FTexture::CopyTrueColorTranslated(BYTE *buffer, int buf_pitch, int buf_heigh
 	palette[0].a=255;	// temporarily modify the first color's alpha
 	screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y,
 				  GetPixels(), Width, Height, Height, 1, 
-				  palette);
+				  0, palette);
 
 	palette[0].a=0;
 	return 0;

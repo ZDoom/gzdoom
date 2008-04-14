@@ -134,6 +134,10 @@ const BYTE *FTGATexture::GetColumn (unsigned int column, const Span **spans_out)
 	}
 	if (spans_out != NULL)
 	{
+		if (Spans == NULL)
+		{
+			Spans = CreateSpans (Pixels);
+		}
 		*spans_out = Spans[column];
 	}
 	return Pixels + column*Height;
@@ -372,10 +376,6 @@ void FTGATexture::MakeTexture ()
 		break;
     }
 	delete [] buffer;
-	if (Spans == NULL)
-	{
-		Spans = CreateSpans (Pixels);
-	}
 }	
 
 //===========================================================================

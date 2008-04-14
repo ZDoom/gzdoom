@@ -2295,7 +2295,7 @@ void A_FireSigil4 (AActor *actor)
 	P_BulletSlope (actor, &linetarget);
 	if (linetarget != NULL)
 	{
-		spot = P_SpawnPlayerMissile (actor, 0,0,0, RUNTIME_CLASS(ASpectralLightningBigV1), 0, &linetarget);
+		spot = P_SpawnPlayerMissile (actor, 0,0,0, RUNTIME_CLASS(ASpectralLightningBigV1), actor->angle, &linetarget);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;

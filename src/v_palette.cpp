@@ -64,7 +64,6 @@ BYTE GoldColormap[256];
 // [BC] New Skulltag colormaps.
 BYTE RedColormap[256];
 BYTE GreenColormap[256];
-int Near255;
 
 static void FreeSpecialLights();;
 

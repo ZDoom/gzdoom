@@ -121,6 +121,10 @@ const BYTE *FIMGZTexture::GetColumn (unsigned int column, const Span **spans_out
 	}
 	if (spans_out != NULL)
 	{
+		if (Spans == NULL)
+		{
+			Spans = CreateSpans (Pixels);
+		}
 		*spans_out = Spans[column];
 	}
 	return Pixels + column*Height;
@@ -213,11 +217,6 @@ void FIMGZTexture::MakeTexture ()
 			}
 			dest_p -= dest_rew;
 		}
-	}
-
-	if (Spans == NULL)
-	{
-		Spans = CreateSpans (Pixels);
 	}
 }
 

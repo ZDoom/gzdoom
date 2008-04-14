@@ -59,6 +59,7 @@ protected:
 	int SourceLump;
 	BYTE *Pixels;
 	Span **Spans;
+	bool hackflag;
 
 	static bool Check(FileReader & file);
 	static FTexture *Create(FileReader & file, int lumpnum);

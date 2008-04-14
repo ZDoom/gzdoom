@@ -1197,7 +1197,7 @@ static CopyFunc copyfuncs[]={
 // Clips the copy area for CopyPixelData functions
 //
 //===========================================================================
-bool DFrameBuffer::ClipCopyPixelRect(int texwidth, int texheight, int &originx, int &originy,
+bool ClipCopyPixelRect(int texwidth, int texheight, int &originx, int &originy,
 									const BYTE *&patch, int &srcwidth, int &srcheight, int step_x, int step_y)
 {
 	// clip source rectangle to destination
@@ -1295,11 +1295,16 @@ void DFrameBuffer::CopyPixelData(BYTE * buffer, int texpitch, int texheight, int
 //
 //===========================================================================
 
-void DFrameBuffer::PrecacheTexture(FTexture *tex, bool cache)
+void DFrameBuffer::PrecacheTexture(FTexture *tex, int cache)
 {
 	if (tex != NULL)
 	{
-		if (cache)
+		if (cache & 1)
+		{
+			const FTexture::Span *spanp;
+			tex->GetColumn(0, &spanp);
+		}
+		else if (cache != 0)
 		{
 			tex->GetPixels ();
 		}

@@ -1,3 +1,23 @@
+April 14, 2008 (Changes by Graf Zahl)
+- Fixed: A_VileAttack positioned the fire on the wrong side of the target.
+- Reorganized the HackHack code so that the image creation was moved into
+  MakeTexture. This was necessary because Unload deleted the pixel data
+  and broke the whole thing.
+- Fixed: FPatchTexture::HackHack and FDoomStatusbarTexture::DrawToBar used the
+  obsolete and uninitialized variable Near255. 
+- Removed the span creation code specific to FPatchTexture. It only has an
+  advantage when the lump has already been loaded in memory but since that
+  is no longer the case now the generic version in FTexture is actually better.
+- Changed: FTexture::CopyToBlock no longer uses the spans but the pixel buffer
+  directly. Since most patches in multipatch textures are non transparent
+  the added overhead from creating the spans far outweighs any savings they
+  might provide. It is also simpler to handle for mirrored or rotated patches now.
+- Changed: Textures only create the spans when really needed. Flats and native
+  textures, for example, do not and it only created needless overhead that they
+  were always created along with the pixel buffer.
+- Made use of player and actor variables consistent in a_hereticweaps.cpp.
+- Fixed: A few calls to P_SpawnPlayerMissile passed 0 as angle
+
 April 13, 2008 (Changes by Graf Zahl)
 - Fixed a few bufs in the parser for composite textures.
 - Changed: When loading Zips all patches in the patches/ directory should

@@ -208,23 +208,23 @@ void A_StaffAttackPL1 (AActor *actor)
 		return;
 	}
 
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
 	damage = 5+(pr_sap()&15);
-	angle = player->mo->angle;
+	angle = actor->angle;
 	angle += pr_sap.Random2() << 18;
-	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff), true);
+	slope = P_AimLineAttack (actor, angle, MELEERANGE, &linetarget);
+	P_LineAttack (actor, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff), true);
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfhit);
 		// turn to face target
-		player->mo->angle = R_PointToAngle2 (player->mo->x,
-			player->mo->y, linetarget->x, linetarget->y);
+		actor->angle = R_PointToAngle2 (actor->x,
+			actor->y, linetarget->x, linetarget->y);
 	}
 }
 
@@ -247,7 +247,7 @@ void A_StaffAttackPL2 (AActor *actor)
 		return;
 	}
 
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
@@ -255,16 +255,16 @@ void A_StaffAttackPL2 (AActor *actor)
 	}
 	// P_inter.c:P_DamageMobj() handles target momentums
 	damage = 18+(pr_sap2()&63);
-	angle = player->mo->angle;
+	angle = actor->angle;
 	angle += pr_sap2.Random2() << 18;
-	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff2), true);
+	slope = P_AimLineAttack (actor, angle, MELEERANGE, &linetarget);
+	P_LineAttack (actor, angle, MELEERANGE, slope, damage, NAME_Melee, RUNTIME_CLASS(AStaffPuff2), true);
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfpow);
 		// turn to face target
-		player->mo->angle = R_PointToAngle2 (player->mo->x,
-			player->mo->y, linetarget->x, linetarget->y);
+		actor->angle = R_PointToAngle2 (actor->x,
+			actor->y, linetarget->x, linetarget->y);
 	}
 }
 
@@ -432,7 +432,6 @@ END_DEFAULTS
 
 void A_FireGoldWandPL1 (AActor *actor)
 {
-	AActor *mo;
 	angle_t angle;
 	int damage;
 	player_t *player;
@@ -442,22 +441,21 @@ void A_FireGoldWandPL1 (AActor *actor)
 		return;
 	}
 
-	mo = player->mo;
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	angle_t pitch = P_BulletSlope(mo);
+	angle_t pitch = P_BulletSlope(actor);
 	damage = 7+(pr_fgw()&7);
-	angle = mo->angle;
+	angle = actor->angle;
 	if (player->refire)
 	{
 		angle += pr_fgw.Random2() << 18;
 	}
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff1));
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
+	P_LineAttack (actor, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff1));
+	S_Sound (actor, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 }
 
 //----------------------------------------------------------------------------
@@ -469,7 +467,6 @@ void A_FireGoldWandPL1 (AActor *actor)
 void A_FireGoldWandPL2 (AActor *actor)
 {
 	int i;
-	AActor *mo;
 	angle_t angle;
 	int damage;
 	fixed_t momz;
@@ -480,26 +477,25 @@ void A_FireGoldWandPL2 (AActor *actor)
 		return;
 	}
 
-	mo = player->mo;
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	angle_t pitch = P_BulletSlope(mo);
+	angle_t pitch = P_BulletSlope(actor);
 	momz = FixedMul (GetDefault<AGoldWandFX2>()->Speed,
 		finetangent[FINEANGLES/4-((signed)pitch>>ANGLETOFINESHIFT)]);
-	P_SpawnMissileAngle (mo, RUNTIME_CLASS(AGoldWandFX2), mo->angle-(ANG45/8), momz);
-	P_SpawnMissileAngle (mo, RUNTIME_CLASS(AGoldWandFX2), mo->angle+(ANG45/8), momz);
-	angle = mo->angle-(ANG45/8);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AGoldWandFX2), actor->angle-(ANG45/8), momz);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AGoldWandFX2), actor->angle+(ANG45/8), momz);
+	angle = actor->angle-(ANG45/8);
 	for(i = 0; i < 5; i++)
 	{
 		damage = 1+(pr_fgw2()&7);
-		P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff2));
+		P_LineAttack (actor, angle, PLAYERMISSILERANGE, pitch, damage, NAME_None, RUNTIME_CLASS(AGoldWandPuff2));
 		angle += ((ANG45/8)*2)/4;
 	}
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
+	S_Sound (actor, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 }
 
 // --- Crossbow -------------------------------------------------------------
@@ -714,7 +710,6 @@ END_DEFAULTS
 
 void A_FireCrossbowPL1 (AActor *actor)
 {
-	AActor *pmo;
 	player_t *player;
 
 	if (NULL == (player = actor->player))
@@ -722,16 +717,15 @@ void A_FireCrossbowPL1 (AActor *actor)
 		return;
 	}
 
-	pmo = player->mo;
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX1));
-	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX3), pmo->angle-(ANG45/10));
-	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX3), pmo->angle+(ANG45/10));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX1));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX3), actor->angle-(ANG45/10));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX3), actor->angle+(ANG45/10));
 }
 
 //----------------------------------------------------------------------------
@@ -742,7 +736,6 @@ void A_FireCrossbowPL1 (AActor *actor)
 
 void A_FireCrossbowPL2(AActor *actor)
 {
-	AActor *pmo;
 	player_t *player;
 
 	if (NULL == (player = actor->player))
@@ -750,18 +743,17 @@ void A_FireCrossbowPL2(AActor *actor)
 		return;
 	}
 
-	pmo = player->mo;
 	AWeapon *weapon = actor->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX2));
-	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX2), pmo->angle-(ANG45/10));
-	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX2), pmo->angle+(ANG45/10));
-	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX3), pmo->angle-(ANG45/5));
-	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX3), pmo->angle+(ANG45/5));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX2));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX2), actor->angle-(ANG45/10));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX2), actor->angle+(ANG45/10));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX3), actor->angle-(ANG45/5));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACrossbowFX3), actor->angle+(ANG45/5));
 }
 
 //----------------------------------------------------------------------------
@@ -1134,7 +1126,6 @@ bool AMace::DoRespawn ()
 
 void A_FireMacePL1B (AActor *actor)
 {
-	AActor *pmo;
 	AActor *ball;
 	angle_t angle;
 	player_t *player;
@@ -1144,24 +1135,23 @@ void A_FireMacePL1B (AActor *actor)
 		return;
 	}
 
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	pmo = player->mo;
-	ball = Spawn<AMaceFX2> (pmo->x, pmo->y, pmo->z + 28*FRACUNIT 
-		- pmo->floorclip, ALLOW_REPLACE);
+	ball = Spawn<AMaceFX2> (actor->x, actor->y, actor->z + 28*FRACUNIT 
+		- actor->floorclip, ALLOW_REPLACE);
 	ball->momz = 2*FRACUNIT+/*((player->lookdir)<<(FRACBITS-5))*/
-		finetangent[FINEANGLES/4-(pmo->pitch>>ANGLETOFINESHIFT)];
-	angle = pmo->angle;
-	ball->target = pmo;
+		finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)];
+	angle = actor->angle;
+	ball->target = actor;
 	ball->angle = angle;
-	ball->z += 2*finetangent[FINEANGLES/4-(pmo->pitch>>ANGLETOFINESHIFT)];
+	ball->z += 2*finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)];
 	angle >>= ANGLETOFINESHIFT;
-	ball->momx = (pmo->momx>>1)+FixedMul(ball->Speed, finecosine[angle]);
-	ball->momy = (pmo->momy>>1)+FixedMul(ball->Speed, finesine[angle]);
+	ball->momx = (actor->momx>>1)+FixedMul(ball->Speed, finecosine[angle]);
+	ball->momy = (actor->momy>>1)+FixedMul(ball->Speed, finesine[angle]);
 	S_Sound (ball, CHAN_BODY, "weapons/maceshoot", 1, ATTN_NORM);
 	P_CheckMissileSpawn (ball);
 }
@@ -1187,7 +1177,7 @@ void A_FireMacePL1 (AActor *actor)
 		A_FireMacePL1B (actor);
 		return;
 	}
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
@@ -1195,8 +1185,8 @@ void A_FireMacePL1 (AActor *actor)
 	}
 	player->psprites[ps_weapon].sx = ((pr_maceatk()&3)-2)*FRACUNIT;
 	player->psprites[ps_weapon].sy = WEAPONTOP+(pr_maceatk()&3)*FRACUNIT;
-	ball = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AMaceFX1),
-		player->mo->angle+(((pr_maceatk()&7)-4)<<24));
+	ball = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AMaceFX1),
+		actor->angle+(((pr_maceatk()&7)-4)<<24));
 	if (ball)
 	{
 		ball->special1 = 16; // tics till dropoff
@@ -1348,25 +1338,25 @@ void A_FireMacePL2 (AActor *actor)
 		return;
 	}
 
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	mo = P_SpawnPlayerMissile (player->mo, 0,0,0, RUNTIME_CLASS(AMaceFX4), 0, &linetarget);
+	mo = P_SpawnPlayerMissile (actor, 0,0,0, RUNTIME_CLASS(AMaceFX4), actor->angle, &linetarget);
 	if (mo)
 	{
-		mo->momx += player->mo->momx;
-		mo->momy += player->mo->momy;
+		mo->momx += actor->momx;
+		mo->momy += actor->momy;
 		mo->momz = 2*FRACUNIT+
-			clamp<fixed_t>(finetangent[FINEANGLES/4-(player->mo->pitch>>ANGLETOFINESHIFT)], -5*FRACUNIT, 5*FRACUNIT);
+			clamp<fixed_t>(finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)], -5*FRACUNIT, 5*FRACUNIT);
 		if (linetarget)
 		{
 			mo->tracer = linetarget;
 		}
 	}
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/maceshoot", 1, ATTN_NORM);
+	S_Sound (actor, CHAN_WEAPON, "weapons/maceshoot", 1, ATTN_NORM);
 }
 
 //----------------------------------------------------------------------------
@@ -1635,7 +1625,7 @@ void A_GauntletAttack (AActor *actor)
 		return;
 	}
 
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
@@ -1643,8 +1633,8 @@ void A_GauntletAttack (AActor *actor)
 	}
 	player->psprites[ps_weapon].sx = ((pr_gatk()&3)-2) * FRACUNIT;
 	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_gatk()&3) * FRACUNIT;
-	angle = player->mo->angle;
-	power = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+	angle = actor->angle;
+	power = actor->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
 	if (power)
 	{
 		damage = pr_gatk.HitDice (2);
@@ -1659,15 +1649,15 @@ void A_GauntletAttack (AActor *actor)
 		angle += pr_gatk.Random2() << 18;
 		pufftype = RUNTIME_CLASS(AGauntletPuff1);
 	}
-	slope = P_AimLineAttack (player->mo, angle, dist, &linetarget);
-	P_LineAttack (player->mo, angle, dist, slope, damage, NAME_Melee, pufftype);
+	slope = P_AimLineAttack (actor, angle, dist, &linetarget);
+	P_LineAttack (actor, angle, dist, slope, damage, NAME_Melee, pufftype);
 	if (!linetarget)
 	{
 		if (pr_gatk() > 64)
 		{
 			player->extralight = !player->extralight;
 		}
-		S_Sound (player->mo, CHAN_AUTO, "weapons/gauntletson", 1, ATTN_NORM);
+		S_Sound (actor, CHAN_AUTO, "weapons/gauntletson", 1, ATTN_NORM);
 		return;
 	}
 	randVal = pr_gatk();
@@ -1685,31 +1675,31 @@ void A_GauntletAttack (AActor *actor)
 	}
 	if (power)
 	{
-		P_GiveBody (player->mo, damage>>1);
-		S_Sound (player->mo, CHAN_AUTO, "weapons/gauntletspowhit", 1, ATTN_NORM);
+		P_GiveBody (actor, damage>>1);
+		S_Sound (actor, CHAN_AUTO, "weapons/gauntletspowhit", 1, ATTN_NORM);
 	}
 	else
 	{
-		S_Sound (player->mo, CHAN_AUTO, "weapons/gauntletshit", 1, ATTN_NORM);
+		S_Sound (actor, CHAN_AUTO, "weapons/gauntletshit", 1, ATTN_NORM);
 	}
 	// turn to face target
-	angle = R_PointToAngle2 (player->mo->x, player->mo->y,
+	angle = R_PointToAngle2 (actor->x, actor->y,
 		linetarget->x, linetarget->y);
-	if (angle-player->mo->angle > ANG180)
+	if (angle-actor->angle > ANG180)
 	{
-		if ((int)(angle-player->mo->angle) < -ANG90/20)
-			player->mo->angle = angle+ANG90/21;
+		if ((int)(angle-actor->angle) < -ANG90/20)
+			actor->angle = angle+ANG90/21;
 		else
-			player->mo->angle -= ANG90/20;
+			actor->angle -= ANG90/20;
 	}
 	else
 	{
-		if (angle-player->mo->angle > ANG90/20)
-			player->mo->angle = angle-ANG90/21;
+		if (angle-actor->angle > ANG90/20)
+			actor->angle = angle-ANG90/21;
 		else
-			player->mo->angle += ANG90/20;
+			actor->angle += ANG90/20;
 	}
-	player->mo->flags |= MF_JUSTATTACKED;
+	actor->flags |= MF_JUSTATTACKED;
 }
 
 // --- Blaster (aka Claw) ---------------------------------------------------
@@ -2371,13 +2361,13 @@ void A_FireSkullRodPL1 (AActor *actor)
 		return;
 	}
 
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHornRodFX1));
+	mo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AHornRodFX1));
 	// Randomize the first frame
 	if (mo && pr_fsr1() > 128)
 	{
@@ -2404,13 +2394,13 @@ void A_FireSkullRodPL2 (AActor *actor)
 	{
 		return;
 	}
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_SpawnPlayerMissile (player->mo, 0,0,0, RUNTIME_CLASS(AHornRodFX2), 0, &linetarget, &MissileActor);
+	P_SpawnPlayerMissile (actor, 0,0,0, RUNTIME_CLASS(AHornRodFX2), actor->angle, &linetarget, &MissileActor);
 	// Use MissileActor instead of the return value from
 	// P_SpawnPlayerMissile because we need to give info to the mobj
 	// even if it exploded immediately.
@@ -2818,7 +2808,7 @@ void A_FirePhoenixPL1 (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(APhoenixFX1));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(APhoenixFX1));
 	angle = actor->angle + ANG180;
 	angle >>= ANGLETOFINESHIFT;
 	actor->momx += FixedMul (4*FRACUNIT, finecosine[angle]);
@@ -2881,7 +2871,6 @@ void A_InitPhoenixPL2 (AActor *actor)
 void A_FirePhoenixPL2 (AActor *actor)
 {
 	AActor *mo;
-	AActor *pmo;
 	angle_t angle;
 	fixed_t x, y, z;
 	fixed_t slope;
@@ -2901,25 +2890,24 @@ void A_FirePhoenixPL2 (AActor *actor)
 	{ // Out of flame
 		P_SetPsprite (player, ps_weapon, &APhoenixRod::States[S_PHOENIXATK2+3]);
 		player->refire = 0;
-		S_StopSound (player->mo, CHAN_WEAPON);
+		S_StopSound (actor, CHAN_WEAPON);
 		return;
 	}
-	pmo = player->mo;
-	angle = pmo->angle;
-	x = pmo->x + (pr_fp2.Random2() << 9);
-	y = pmo->y + (pr_fp2.Random2() << 9);
-	z = pmo->z + 26*FRACUNIT + finetangent[FINEANGLES/4-(pmo->pitch>>ANGLETOFINESHIFT)];
-	z -= pmo->floorclip;
-	slope = finetangent[FINEANGLES/4-(pmo->pitch>>ANGLETOFINESHIFT)] + (FRACUNIT/10);
+	angle = actor->angle;
+	x = actor->x + (pr_fp2.Random2() << 9);
+	y = actor->y + (pr_fp2.Random2() << 9);
+	z = actor->z + 26*FRACUNIT + finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)];
+	z -= actor->floorclip;
+	slope = finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)] + (FRACUNIT/10);
 	mo = Spawn<APhoenixFX2> (x, y, z, ALLOW_REPLACE);
-	mo->target = pmo;
+	mo->target = actor;
 	mo->angle = angle;
-	mo->momx = pmo->momx + FixedMul (mo->Speed, finecosine[angle>>ANGLETOFINESHIFT]);
-	mo->momy = pmo->momy + FixedMul (mo->Speed, finesine[angle>>ANGLETOFINESHIFT]);
+	mo->momx = actor->momx + FixedMul (mo->Speed, finecosine[angle>>ANGLETOFINESHIFT]);
+	mo->momy = actor->momy + FixedMul (mo->Speed, finesine[angle>>ANGLETOFINESHIFT]);
 	mo->momz = FixedMul (mo->Speed, slope);
-	if (!player->refire || !S_IsActorPlayingSomething (pmo, CHAN_WEAPON, -1))
+	if (!player->refire || !S_IsActorPlayingSomething (actor, CHAN_WEAPON, -1))
 	{
-		S_SoundID (pmo, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
+		S_SoundID (actor, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
 	}	
 	P_CheckMissileSpawn (mo);
 }
@@ -2939,7 +2927,7 @@ void A_ShutdownPhoenixPL2 (AActor *actor)
 		return;
 	}
 	S_StopSound (actor, CHAN_WEAPON);
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))

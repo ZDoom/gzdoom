@@ -272,55 +272,39 @@ void FTexture::FreeSpans (Span **spans) const
 
 void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int ypos, const BYTE *translation)
 {
-	int x1 = xpos, x2 = x1 + GetWidth(), xo = -x1;
+	const BYTE *pixels = GetPixels();
+	int srcwidth = Width;
+	int srcheight = Height;
+	int step_x = Height;
+	int step_y = 1;
 
-	if (x1 < 0)
+	if (ClipCopyPixelRect(dwidth, dheight, xpos, ypos, pixels, srcwidth, srcheight, step_x, step_y))
 	{
-		x1 = 0;
-	}
-	if (x2 > dwidth)
-	{
-		x2 = dwidth;
-	}
-	for (; x1 < x2; ++x1)
-	{
-		const BYTE *data;
-		const Span *span;
-		BYTE *outtop = &dest[dheight * x1];
-
-		data = GetColumn (x1 + xo, &span);
-
-		while (span->Length != 0)
+		dest += ypos + dheight * xpos;
+		if (translation == NULL)
 		{
-			int len = span->Length;
-			int y = ypos + span->TopOffset;
-			int adv = span->TopOffset;
-
-			if (y < 0)
+			for (int x = 0; x < srcwidth; x++)
 			{
-				adv -= y;
-				len += y;
-				y = 0;
-			}
-			if (y + len > dheight)
-			{
-				len = dheight - y;
-			}
-			if (len > 0)
-			{
-				if (translation == NULL)
+				int pos = x * dheight;
+				for (int y = 0; y < srcheight; y++, pos++)
 				{
-					memcpy (outtop + y, data + adv, len);
-				}
-				else
-				{
-					for (int j = 0; j < len; ++j)
-					{
-						outtop[y+j] = translation[data[adv+j]];
-					}
+					// the optimizer is doing a good enough job here so there's no need to make this harder to read.
+					BYTE v = pixels[y * step_y + x * step_x]; 
+					if (v != 0) dest[pos] = v;
 				}
 			}
-			span++;
+		}
+		else
+		{
+			for (int x = 0; x < srcwidth; x++)
+			{
+				int pos = x * dheight;
+				for (int y = 0; y < srcheight; y++, pos++)
+				{
+					BYTE v = pixels[y * step_y + x * step_x]; 
+					if (v != 0) dest[pos] = translation[v];
+				}
+			}
 		}
 	}
 }

@@ -571,7 +571,7 @@ void A_CHolyAttack (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	AActor * missile = P_SpawnPlayerMissile (actor, 0,0,0, RUNTIME_CLASS(AHolyMissile), 0, &linetarget);
+	AActor * missile = P_SpawnPlayerMissile (actor, 0,0,0, RUNTIME_CLASS(AHolyMissile), actor->angle, &linetarget);
 	if (missile != NULL) missile->tracer = linetarget;
 
 	weapon->CHolyCount = 3;

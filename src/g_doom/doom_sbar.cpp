@@ -1126,28 +1126,9 @@ int DDoomStatusBar::FDoomStatusBarTexture::CopyTrueColorPixels(BYTE *buffer, int
 
 
 
-void DDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, int y, const BYTE *colormap_in)
+void DDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, int y, const BYTE *colormap)
 {
-	FTexture *pic;
-	BYTE colormap[256];
-
-	if (colormap_in != NULL)
-	{
-		for (int i = 0; i < 256; ++i)
-		{
-			colormap[i] = colormap_in[i] == 255 ? Near255 : colormap_in[i];
-		}
-	}
-	else
-	{
-		for (int i = 0; i < 255; ++i)
-		{
-			colormap[i] = i;
-		}
-		colormap[255] = Near255;
-	}
-
-	pic = TexMan[name];
+	FTexture *pic = TexMan[name];
 	if (pic != NULL)
 	{
 		x -= pic->LeftOffset;

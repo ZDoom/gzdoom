@@ -457,14 +457,14 @@ void R_PrecacheLevel (void)
 
 	for (i = numsectors - 1; i >= 0; i--)
 	{
-		hitlist[sectors[i].floorpic] = hitlist[sectors[i].ceilingpic] = 1;
+		hitlist[sectors[i].floorpic] = hitlist[sectors[i].ceilingpic] |= 2;
 	}
 
 	for (i = numsides - 1; i >= 0; i--)
 	{
 		hitlist[sides[i].GetTexture(side_t::top)] =
 			hitlist[sides[i].GetTexture(side_t::mid)] =
-			hitlist[sides[i].GetTexture(side_t::bottom)] = 1;
+			hitlist[sides[i].GetTexture(side_t::bottom)] |= 1;
 	}
 
 	// Sky texture is always present.
@@ -476,16 +476,16 @@ void R_PrecacheLevel (void)
 
 	if (sky1texture >= 0)
 	{
-		hitlist[sky1texture] = 1;
+		hitlist[sky1texture] |= 1;
 	}
 	if (sky2texture >= 0)
 	{
-		hitlist[sky2texture] = 1;
+		hitlist[sky2texture] |= 1;
 	}
 
 	for (i = TexMan.NumTextures() - 1; i >= 0; i--)
 	{
-		screen->PrecacheTexture(TexMan[i], !!hitlist[i]);
+		screen->PrecacheTexture(TexMan[i], hitlist[i]);
 	}
 
 	delete[] hitlist;

@@ -265,6 +265,10 @@ const BYTE *FMultiPatchTexture::GetColumn (unsigned int column, const Span **spa
 	}
 	if (spans_out != NULL)
 	{
+		if (Spans == NULL)
+		{
+			Spans = CreateSpans (Pixels);
+		}
 		*spans_out = Spans[column];
 	}
 	return Pixels + column*Height;
@@ -289,11 +293,6 @@ void FMultiPatchTexture::MakeTexture ()
 	{
 		Parts[i].Texture->CopyToBlock (Pixels, Width, Height,
 			Parts[i].OriginX, Parts[i].OriginY);
-	}
-
-	if (Spans == NULL)
-	{
-		Spans = CreateSpans (Pixels);
 	}
 }
 

@@ -92,7 +92,7 @@ FTexture *FPatchTexture::Create(FileReader & file, int lumpnum)
 }
 
 FPatchTexture::FPatchTexture (int lumpnum, patch_t * header)
-: SourceLump(lumpnum), Pixels(0), Spans(0)
+: SourceLump(lumpnum), Pixels(0), Spans(0), hackflag(false)
 {
 	Wads.GetLumpName (Name, lumpnum);
 	Name[8] = 0;
@@ -151,6 +151,10 @@ const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_ou
 	}
 	if (spans_out != NULL)
 	{
+		if (Spans == NULL)
+		{
+			Spans = CreateSpans(Pixels);
+		}
 		*spans_out = Spans[column];
 	}
 	return Pixels + column*Height;
@@ -160,10 +164,8 @@ const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_ou
 void FPatchTexture::MakeTexture ()
 {
 	BYTE *remap, remaptable[256];
-	Span *spanstuffer, *spanstarter;
-	const column_t *maxcol;
-	bool warned;
 	int numspans;
+	const column_t *maxcol;
 	int x;
 
 	FMemLump lump = Wads.ReadLump (SourceLump);
@@ -185,15 +187,6 @@ void FPatchTexture::MakeTexture ()
 		Printf (PRINT_BOLD, "Patch %s is too big.\n", Name);
 	}
 
-	// Add a little extra space at the end if the texture's height is not
-	// a power of 2, in case somebody accidentally makes it repeat vertically.
-	int numpix = Width * Height + (1 << HeightBits) - Height;
-
-	numspans = Width;
-
-	Pixels = new BYTE[numpix];
-	memset (Pixels, 0, numpix);
-
 	if (bNoRemap0)
 	{
 		memcpy (remaptable, GPalette.Remap, 256);
@@ -204,6 +197,35 @@ void FPatchTexture::MakeTexture ()
 	{
 		remap = GPalette.Remap;
 	}
+
+
+	if (hackflag)
+	{
+		Pixels = new BYTE[Width * Height];
+		BYTE *out;
+
+		// Draw the image to the buffer
+		for (x = 0, out = Pixels; x < Width; ++x)
+		{
+			const BYTE *in = (const BYTE *)patch + LittleLong(patch->columnofs[x]) + 3;
+
+			for (int y = Height; y > 0; --y)
+			{
+				*out = remap[*in];
+				out++, in++;
+			}
+		}
+		return;
+	}
+
+	// Add a little extra space at the end if the texture's height is not
+	// a power of 2, in case somebody accidentally makes it repeat vertically.
+	int numpix = Width * Height + (1 << HeightBits) - Height;
+
+	numspans = Width;
+
+	Pixels = new BYTE[numpix];
+	memset (Pixels, 0, numpix);
 
 	// Draw the image to the buffer
 	for (x = 0; x < Width; ++x)
@@ -246,146 +268,22 @@ void FPatchTexture::MakeTexture ()
 			column = (const column_t *)((const BYTE *)column + column->length + 4);
 		}
 	}
-
-	// Create the spans
-	if (Spans != NULL)
-	{
-		return;
-	}
-
-	Spans = (Span **)M_Malloc (sizeof(Span*)*Width + sizeof(Span)*numspans);
-	spanstuffer = (Span *)((BYTE *)Spans + sizeof(Span*)*Width);
-	warned = false;
-
-	for (x = 0; x < Width; ++x)
-	{
-		const column_t *column = (const column_t *)((const BYTE *)patch + LittleLong(patch->columnofs[x]));
-		int top = -1;
-
-		Spans[x] = spanstuffer;
-		spanstarter = spanstuffer;
-
-		while (column < maxcol && column->topdelta != 0xFF)
-		{
-			if (column->topdelta <= top)
-			{
-				top += column->topdelta;
-			}
-			else
-			{
-				top = column->topdelta;
-			}
-
-			int len = column->length;
-
-			if (len != 0)
-			{
-				if (top + len > Height)	// Clip posts that extend past the bottom
-				{
-					len = Height - top;
-				}
-				if (len > 0)
-				{
-					// There is something of this post to draw. If it starts at the same
-					// place where the previous span ends, add it to that one. If it starts
-					// before the other one ends, that's bad, but deal with it. If it starts
-					// after the previous one ends, create another span.
-
-					// Assume we need to create another span.
-					spanstuffer->TopOffset = top;
-					spanstuffer->Length = len;
-
-					// Now check if that's really the case.
-					if (spanstuffer > spanstarter)
-					{
-						if ((spanstuffer - 1)->TopOffset + (spanstuffer - 1)->Length == top)
-						{
-							(--spanstuffer)->Length += len;
-						}
-						else
-						{
-							int prevbot;
-
-							while (spanstuffer > spanstarter &&
-								spanstuffer->TopOffset < (prevbot = 
-								(spanstuffer - 1)->TopOffset + (spanstuffer - 1)->Length))
-							{
-								if (spanstuffer->TopOffset < (spanstuffer - 1)->TopOffset)
-								{
-									(spanstuffer - 1)->TopOffset = spanstuffer->TopOffset;
-								}
-								(spanstuffer - 1)->Length = MAX(prevbot,
-									spanstuffer->TopOffset + spanstuffer->Length)
-									- (spanstuffer - 1)->TopOffset;
-								spanstuffer--;
-								if (!warned)
-								{
-									warned = true;
-									Printf (PRINT_BOLD, "Patch %s is malformed.\n", Name);
-								}
-							}
-						}
-					}
-					spanstuffer++;
-				}
-			}
-			column = (const column_t *)((const BYTE *)column + column->length + 4);
-		}
-
-		spanstuffer->Length = spanstuffer->TopOffset = 0;
-		spanstuffer++;
-	}
 }
+
 
 // Fix for certain special patches on single-patch textures.
 void FPatchTexture::HackHack (int newheight)
 {
-	BYTE *out;
-	int x;
-
 	Unload ();
 	if (Spans != NULL)
 	{
 		FreeSpans (Spans);
 	}
 
-	{
-		FMemLump lump = Wads.ReadLump (SourceLump);
-		const patch_t *patch = (const patch_t *)lump.GetMem();
+	Height = newheight;
+	LeftOffset = 0;
+	TopOffset = 0;
 
-		Width = LittleShort(patch->width);
-		Height = newheight;
-		LeftOffset = 0;
-		TopOffset = 0;
-
-		Pixels = new BYTE[Width * Height];
-
-		// Draw the image to the buffer
-		for (x = 0, out = Pixels; x < Width; ++x)
-		{
-			const BYTE *in = (const BYTE *)patch + LittleLong(patch->columnofs[x]) + 3;
-
-			for (int y = newheight; y > 0; --y)
-			{
-				*out = *in != 255 ? *in : Near255;
-				out++, in++;
-			}
-			out += newheight;
-		}
-	}
-
-	// Create the spans
-	Spans = (Span **)M_Malloc (sizeof(Span *)*Width + sizeof(Span)*Width*2);
-
-	Span *span = (Span *)&Spans[Width];
-
-	for (x = 0; x < Width; ++x)
-	{
-		Spans[x] = span;
-		span[0].Length = newheight;
-		span[0].TopOffset = 0;
-		span[1].Length = 0;
-		span[1].TopOffset = 0;
-		span += 2;
-	}
+	hackflag = true;
+	bMasked = false;	// Hacked textures don't have transparent parts.
 }

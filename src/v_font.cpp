@@ -1367,6 +1367,10 @@ const BYTE *FFontChar2::GetColumn (unsigned int column, const Span **spans_out)
 	}
 	if (spans_out != NULL)
 	{
+		if (Spans == NULL)
+		{
+			Spans = CreateSpans (Pixels);
+		}
 		*spans_out = Spans[column];
 	}
 	return Pixels + column*Height;
@@ -1465,11 +1469,6 @@ void FFontChar2::MakeTexture ()
 		Wads.GetLumpName (name, SourceLump);
 		name[8] = 0;
 		I_FatalError ("The font %s is corrupt", name);
-	}
-
-	if (Spans == NULL)
-	{
-		Spans = CreateSpans (Pixels);
 	}
 }
 

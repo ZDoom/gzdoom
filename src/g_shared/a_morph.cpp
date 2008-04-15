@@ -206,7 +206,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
 
 	const PClass *exit_flash = player->MorphExitFlash;
-	bool correctweapon = ((player->MorphStyle & MORPH_LOSEACTUALWEAPON) == 0);
+	bool correctweapon = !!(player->MorphStyle & MORPH_LOSEACTUALWEAPON);
 
 	player->morphTics = 0;
 	player->MorphedPlayerClass = 0;

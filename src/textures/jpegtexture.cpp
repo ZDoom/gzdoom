@@ -39,6 +39,7 @@
 #include "r_jpeg.h"
 #include "w_wad.h"
 #include "v_text.h"
+#include "bitmap.h"
 
 void FLumpSourceMgr::InitSource (j_decompress_ptr cinfo)
 {
@@ -332,7 +333,7 @@ void FJPEGTexture::MakeTexture ()
 //
 //===========================================================================
 
-int FJPEGTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate)
+int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
 {
 	PalEntry pe[256];
 
@@ -375,18 +376,18 @@ int FJPEGTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_heigh
 		switch (cinfo.out_color_space)
 		{
 		case JCS_RGB:
-			screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
+			bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height, 
 				3, cinfo.output_width * cinfo.output_components, rotate, CF_RGB);
 			break;
 
 		case JCS_GRAYSCALE:
 			for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// default to a gray map
-			screen->CopyPixelData(buffer, buf_pitch, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
+			bmp->CopyPixelData(x, y, buff, cinfo.output_width, cinfo.output_height, 
 				1, cinfo.output_width, rotate, pe);
 			break;
 
 		case JCS_CMYK:
-			screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, buff, cinfo.output_width, cinfo.output_height, 
+			bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height, 
 				4, cinfo.output_width * cinfo.output_components, rotate, CF_CMYK);
 			break;
 

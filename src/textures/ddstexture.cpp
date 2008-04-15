@@ -53,6 +53,7 @@
 #include "r_local.h"
 #include "w_wad.h"
 #include "templates.h"
+#include "bitmap.h"
 
 // Since we want this to compile under Linux too, we need to define this
 // stuff ourselves instead of including a DirectX header.
@@ -742,7 +743,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 //
 //===========================================================================
 
-int FDDSTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate)
+int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
 {
 	FWadLump lump = Wads.OpenLumpNum (SourceLump);
 
@@ -768,7 +769,7 @@ int FDDSTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height
 	}
 
 	// All formats decompress to RGBA.
-	screen->CopyPixelDataRGB(buffer, buf_pitch, buf_height, x, y, TexBuffer, Width, Height, 4, Width*4, rotate, CF_RGBA);
+	bmp->CopyPixelDataRGB(x, y, TexBuffer, Width, Height, 4, Width*4, rotate, CF_RGBA);
 	delete [] TexBuffer;
 	return -1;
 }	

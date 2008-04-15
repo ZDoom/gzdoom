@@ -304,14 +304,13 @@ void FMultiPatchTexture::MakeTexture ()
 //
 //===========================================================================
 
-int FMultiPatchTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate)
+int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
 {
 	int retv = -1;
 
 	for(int i=0;i<NumParts;i++)
 	{
-		int ret = Parts[i].Texture->CopyTrueColorPixels(buffer, buf_pitch, buf_height, 
-									x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate);
+		int ret = Parts[i].Texture->CopyTrueColorPixels(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate);
 
 		if (ret > retv) retv = ret;
 	}

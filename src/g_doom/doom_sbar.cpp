@@ -211,7 +211,7 @@ private:
 		void Unload ();
 		~FDoomStatusBarTexture ();
 		void SetPlayerRemap(FRemapTable *remap);
-		int CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate);
+		int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate);
 
 		FTextureFormat GetFormat()
 		{
@@ -1093,33 +1093,33 @@ void DDoomStatusBar::FDoomStatusBarTexture::MakeTexture ()
 	if (multiplayer) DrawToBar("STFBANY", 143, 1, STBFremap? STBFremap->Remap : NULL);
 }
 
-int DDoomStatusBar::FDoomStatusBarTexture::CopyTrueColorPixels(BYTE *buffer, int buf_pitch, int buf_height, int x, int y, int rotate)
+int DDoomStatusBar::FDoomStatusBarTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
 {
 	FTexture *tex;
 
 	// rotate is never used here
-	BaseTexture->CopyTrueColorPixels(buffer, buf_pitch, buf_height, x, y);
+	BaseTexture->CopyTrueColorPixels(bmp, x, y);
 	if (!deathmatch)
 	{
 		tex = TexMan["STARMS"];
 		if (tex != NULL)
 		{
-			tex->CopyTrueColorPixels(buffer, buf_pitch, buf_height, x+104, y);
+			tex->CopyTrueColorPixels(bmp, x+104, y);
 		}
 	}
 
 	tex = TexMan["STTPRCNT"];
 	if (tex != NULL)
 	{
-		tex->CopyTrueColorPixels(buffer, buf_pitch, buf_height, x+90, y+3);
-		tex->CopyTrueColorPixels(buffer, buf_pitch, buf_height, x+221, y+3);
+		tex->CopyTrueColorPixels(bmp, x+90, y+3);
+		tex->CopyTrueColorPixels(bmp, x+221, y+3);
 	}
 	if (multiplayer)
 	{
 		tex = TexMan["STFBANY"];
 		if (tex != NULL)
 		{
-			tex->CopyTrueColorTranslated(buffer, buf_pitch, buf_height, x+143, y+1, STBFremap);
+			tex->CopyTrueColorTranslated(bmp, x+143, y+1, STBFremap);
 		}
 	}
 	return -1;

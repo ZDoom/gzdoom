@@ -1,4 +1,7 @@
 April 15, 2008 (Changes by Graf Zahl)
+- Changed true color texture creation to use a newly defined Bitmap class
+  instead of having the copy functions in the frame buffer class.
+- Fixed: The WolfSS didn't have its obituary defined.
 - Added submission for ACS CheckPlayerCamera ACS function.
 - Removed FRadiusThingsIterator after discovering that VC++ misoptimized
   it in P_CheckPosition. Now FBlockThingsIterator is used with the distance

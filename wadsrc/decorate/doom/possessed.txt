@@ -205,6 +205,7 @@ ACTOR WolfensteinSS 84
 	DeathSound "wolfss/death"
 	ActiveSound "wolfss/active"
 	AttackSound "wolfss/attack"
+	Obituary "$OB_WOLFSS"
 	Dropitem "Clip"
 	States
 	{

@@ -1,3 +1,9 @@
+April 15, 2008 (Changes by Graf Zahl)
+- Added submission for ACS CheckPlayerCamera ACS function.
+- Removed FRadiusThingsIterator after discovering that VC++ misoptimized
+  it in P_CheckPosition. Now FBlockThingsIterator is used with the distance
+  check being done manually.
+
 April 14, 2008 (Changes by Graf Zahl)
 - Added rotation 90° angles only) and mirroring to the Multipatch texture 
   composition code.

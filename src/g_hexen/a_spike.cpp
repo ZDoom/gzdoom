@@ -5,6 +5,7 @@
 #include "p_local.h"
 #include "a_sharedglobal.h"
 #include "s_sound.h"
+#include "m_bbox.h"
 
 static FRandom pr_thrustraise ("ThrustRaise");
 
@@ -262,9 +263,14 @@ void A_ThrustBlock (AActor *actor)
 void A_ThrustImpale (AActor *actor)
 {
 	AActor *thing;
-	FRadiusThingsIterator it(actor->x, actor->y, actor->radius);
+	FBlockThingsIterator it(FBoundingBox(actor->x, actor->y, actor->radius));
 	while ((thing = it.Next()))
 	{
+		if (!thing->intersects(actor))
+		{
+			continue;
+		}
+
 		if (!(thing->flags & MF_SHOOTABLE) )
 			continue;
 

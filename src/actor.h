@@ -603,6 +603,12 @@ public:
 		return (flags & MF_COUNTKILL) && !(flags & MF_FRIENDLY);
 	}
 
+	bool intersects(AActor *other) const
+	{
+		fixed_t blockdist = radius + other->radius;
+		return ( abs(x - other->x) < blockdist && abs(y - other->y) < blockdist);
+	}
+
 	// Calculate amount of missile damage
 	virtual int GetMissileDamage(int mask, int add);
 

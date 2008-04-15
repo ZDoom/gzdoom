@@ -145,9 +145,9 @@ public:
 		player_t *oldplayer = CPlayer;
 
 		DBaseStatusBar::AttachToPlayer (player);
-		if (oldplayer != CPlayer)
+		if (oldplayer != CPlayer || savegamerestore/*added for morphing*/)
 		{
-			SetFace (&skins[CPlayer->userinfo.skin]);
+			SetFace (&skins[CPlayer->morphTics ? CPlayer->MorphedPlayerClass : CPlayer->userinfo.skin]);
 		}
 		if (multiplayer)
 		{

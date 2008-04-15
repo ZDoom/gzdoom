@@ -860,39 +860,6 @@ AActor *FBlockThingsIterator::Next()
 
 //===========================================================================
 //
-// FRadiusThingsIterator :: Next
-//
-//===========================================================================
-
-FRadiusThingsIterator::FRadiusThingsIterator(fixed_t x, fixed_t y, fixed_t radius)
-: FBlockThingsIterator(FBoundingBox(x, y, radius))
-{
-	X = x;
-	Y = y;
-	Radius = radius;
-}
-
-//===========================================================================
-//
-// FRadiusThingsIterator :: Next
-//
-//===========================================================================
-
-AActor *FRadiusThingsIterator::Next()
-{
-	AActor *actor;
-	while ((actor = FBlockThingsIterator::Next()))
-	{
-		fixed_t blockdist = actor->radius + Radius;
-		if ( abs(actor->x - X) < blockdist && abs(actor->y - Y) < blockdist)
-			return actor;
-	}
-	return NULL;
-}
-
-
-//===========================================================================
-//
 // FPathTraverse :: Intercepts
 //
 //===========================================================================

@@ -283,14 +283,6 @@ public:
 	void Reset() { StartBlock(minx, miny); }
 };
 
-class FRadiusThingsIterator : public FBlockThingsIterator
-{
-	fixed_t X, Y, Radius;
-public:
-	FRadiusThingsIterator(fixed_t x, fixed_t y, fixed_t radius);
-	AActor *Next();
-};
-
 class FPathTraverse
 {
 	static TArray<intercept_t> intercepts;

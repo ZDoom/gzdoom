@@ -5339,7 +5339,24 @@ int DLevelScript::RunScript ()
 				static_cast<DSBarInfo*>(StatusBar)->SetMugShotState(FBehavior::StaticLookupString(STACK(1)));
 			}
 			break;
-		
+
+		case PCD_CHECKPLAYERCAMERA:
+			{
+				AActor *actor = SingleActorFromTID(STACK(1), activator);
+
+				if(actor != NULL && actor->player != NULL)
+				{				
+					if(actor->player->camera != actor->player->mo)
+					{
+						STACK(1) = actor->player->camera->tid;
+					}
+					else
+					{
+						STACK(1) = 0;
+					}
+				}
+				else STACK(1) = 0;
+			}			
 		}
 	}
 

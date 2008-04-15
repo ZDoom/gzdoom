@@ -796,7 +796,7 @@ public:
 	virtual const BYTE *GetPixels () = 0;
 	
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0);
-	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, FRemapTable *remap);
+	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap);
 	virtual bool UseBasePalette();
 	virtual int GetSourceLump() { return -1; }
 

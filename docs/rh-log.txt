@@ -1,4 +1,6 @@
 April 15, 2008 (Changes by Graf Zahl)
+- Added translation support to multipatch textures. Not tested yet!
+- Added Martin Howe's morph weapon update.
 - Changed true color texture creation to use a newly defined Bitmap class
   instead of having the copy functions in the frame buffer class.
 - Fixed: The WolfSS didn't have its obituary defined.

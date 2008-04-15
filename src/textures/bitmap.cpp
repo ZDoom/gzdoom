@@ -34,41 +34,217 @@
 
 #include "bitmap.h"
 #include "templates.h"
+#include "r_translate.h"
 
 
 //===========================================================================
 // 
 // multi-format pixel copy with colormap application
-// requires one of the previously defined conversion classes to work
+// requires the previously defined conversion classes to work
 //
 //===========================================================================
-template<class T>
-void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step)
+template<class TSrc, class TDest, class TBlend>
+void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *inf)
 {
-	for(int i=0;i<count;i++)
+	int i;
+	int fac;
+	BYTE r,g,b;
+	int gray;
+	int a;
+
+	switch(inf? inf->blend : BLEND_NONE)
 	{
-		pout[0]=T::B(pin);
-		pout[1]=T::G(pin);
-		pout[2]=T::R(pin);
-		pout[3]=T::A(pin);
-		pout+=4;
-		pin+=step;
+	case BLEND_NONE:
+		for(i=0;i<count;i++)
+		{
+			if ((a = TSrc::A(pin)))
+			{
+				TBlend::OpC(pout[TDest::RED], TSrc::R(pin), a, inf);
+				TBlend::OpC(pout[TDest::GREEN], TSrc::G(pin), a, inf);
+				TBlend::OpC(pout[TDest::BLUE], TSrc::B(pin), a, inf);
+				TBlend::OpA(pout[TDest::ALPHA], a, inf);
+			}
+			pout+=4;
+			pin+=step;
+		}
+		break;
+
+	case BLEND_INVERSEMAP:
+		// Doom's inverted invulnerability map
+		for(i=0;i<count;i++)
+		{
+			if ((a = TSrc::A(pin)))
+			{
+				gray = clamp<int>(255 - TSrc::Gray(pin),0,255);
+
+				TBlend::OpC(pout[TDest::RED], gray, a, inf);
+				TBlend::OpC(pout[TDest::GREEN], gray, a, inf);
+				TBlend::OpC(pout[TDest::BLUE], gray, a, inf);
+				TBlend::OpA(pout[TDest::ALPHA], a, inf);
+			}
+			pout+=4;
+			pin+=step;
+		}
+		break;
+
+	case BLEND_GOLDMAP:
+		// Heretic's golden invulnerability map
+		for(i=0;i<count;i++)
+		{
+			if ((a = TSrc::A(pin)))
+			{
+				gray = TSrc::Gray(pin);
+				r=clamp<int>(gray+(gray>>1),0,255);
+				g=clamp<int>(gray-(gray>>2),0,255);
+
+				TBlend::OpC(pout[TDest::RED], r, a, inf);
+				TBlend::OpC(pout[TDest::GREEN], g, a, inf);
+				TBlend::OpC(pout[TDest::BLUE], 0, a, inf);
+				TBlend::OpA(pout[TDest::ALPHA], a, inf);
+			}
+			pout+=4;
+			pin+=step;
+		}
+		break;
+
+	case BLEND_REDMAP:
+		// Skulltag's red Doomsphere map
+		for(i=0;i<count;i++)
+		{
+			if ((a = TSrc::A(pin)))
+			{
+				gray = TSrc::Gray(pin);
+				r=clamp<int>(gray+(gray>>1),0,255);
+
+				TBlend::OpC(pout[TDest::RED], r, a, inf);
+				TBlend::OpC(pout[TDest::GREEN], 0, a, inf);
+				TBlend::OpC(pout[TDest::BLUE], 0, a, inf);
+				TBlend::OpA(pout[TDest::ALPHA], a, inf);
+			}
+			pout+=4;
+			pin+=step;
+		}
+		break;
+
+	case BLEND_GREENMAP:
+		// Skulltags's Guardsphere map
+		for(i=0;i<count;i++)
+		{
+			if ((a = TSrc::A(pin)))
+			{
+				gray = TSrc::Gray(pin);
+				r=clamp<int>(gray+(gray>>1),0,255);
+
+				TBlend::OpC(pout[TDest::RED], r, a, inf);
+				TBlend::OpC(pout[TDest::GREEN], r, a, inf);
+				TBlend::OpC(pout[TDest::BLUE], gray, a, inf);
+				TBlend::OpA(pout[TDest::ALPHA], a, inf);
+			}
+			pout+=4;
+			pin+=step;
+		}
+		break;
+
+	case BLEND_ICEMAP:
+		// Create the ice translation table, based on Hexen's.
+		// Since this is done in True Color the purplish tint is fully preserved - even in Doom!
+		for(i=0;i<count;i++)
+		{
+			if ((a = TSrc::A(pin)))
+			{
+				int gray = TSrc::Gray(pin)>>4;
+	
+				TBlend::OpC(pout[TDest::RED],   IcePalette[gray][0], a, inf);
+				TBlend::OpC(pout[TDest::GREEN], IcePalette[gray][1], a, inf);
+				TBlend::OpC(pout[TDest::BLUE],  IcePalette[gray][2], a, inf);
+				TBlend::OpA(pout[TDest::ALPHA], a, inf);
+			}
+			pout+=4;
+			pin+=step;
+		}
+		break;
+
+	default:
+		if (inf->blend >= BLEND_DESATURATE1 && inf->blend<=BLEND_DESATURATE31)
+		{
+			// Desaturated light settings.
+			fac=inf->blend-BLEND_DESATURATE1+1;
+			for(i=0;i<count;i++)
+			{
+				if ((a = TSrc::A(pin)))
+				{
+					gray = TSrc::Gray(pin);
+					r = (TSrc::R(pin)*(31-fac) + gray*fac)/31;
+					g = (TSrc::G(pin)*(31-fac) + gray*fac)/31;
+					b = (TSrc::B(pin)*(31-fac) + gray*fac)/31;
+
+					TBlend::OpC(pout[TDest::RED],   r, a, inf);
+					TBlend::OpC(pout[TDest::GREEN], g, a, inf);
+					TBlend::OpC(pout[TDest::BLUE],  b, a, inf);
+					TBlend::OpA(pout[TDest::ALPHA], a, inf);
+				}
+				pout+=4;
+				pin+=step;
+			}
+		}
+		break;
+
+	case BLEND_MODULATE:
+		for(i=0;i<count;i++)
+		{
+			if ((a = TSrc::A(pin)))
+			{
+				r = (TSrc::R(pin)*inf->blendcolor[0])>>FRACBITS;
+				g = (TSrc::G(pin)*inf->blendcolor[1])>>FRACBITS;
+				b = (TSrc::B(pin)*inf->blendcolor[2])>>FRACBITS;
+
+				TBlend::OpC(pout[TDest::RED],   r, a, inf);
+				TBlend::OpC(pout[TDest::GREEN], g, a, inf);
+				TBlend::OpC(pout[TDest::BLUE],  b, a, inf);
+				TBlend::OpA(pout[TDest::ALPHA], a, inf);
+			}
+			pout+=4;
+			pin+=step;
+		}
+		break;
+
+	case BLEND_OVERLAY:
+		for(i=0;i<count;i++)
+		{
+			// color blend
+			if ((a = TSrc::A(pin)))
+			{
+				r = (TSrc::R(pin)*inf->blendcolor[3] + inf->blendcolor[0]) >> FRACBITS;
+				g = (TSrc::G(pin)*inf->blendcolor[3] + inf->blendcolor[1]) >> FRACBITS;
+				b = (TSrc::B(pin)*inf->blendcolor[3] + inf->blendcolor[2]) >> FRACBITS;
+
+				TBlend::OpC(pout[TDest::RED],   r, a, inf);
+				TBlend::OpC(pout[TDest::GREEN], g, a, inf);
+				TBlend::OpC(pout[TDest::BLUE],  b, a, inf);
+				TBlend::OpA(pout[TDest::ALPHA], a, inf);
+			}
+			pout+=4;
+			pin+=step;
+		}
+		break;
+
 	}
 }
 
-typedef void (*CopyFunc)(BYTE *pout, const BYTE *pin, int count, int step);
+typedef void (*CopyFunc)(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *inf);
 
-static CopyFunc copyfuncs[]={
-	iCopyColors<cRGB>,
-	iCopyColors<cRGBA>,
-	iCopyColors<cIA>,
-	iCopyColors<cCMYK>,
-	iCopyColors<cBGR>,
-	iCopyColors<cBGRA>,
-	iCopyColors<cI16>,
-	iCopyColors<cRGB555>,
-	iCopyColors<cPalEntry>
-};
+static CopyFunc copyfuncs[9]=
+	{
+		iCopyColors<cRGB, cBGRA, bCopy>,
+		iCopyColors<cRGBA, cBGRA, bCopy>,
+		iCopyColors<cIA, cBGRA, bCopy>,
+		iCopyColors<cCMYK, cBGRA, bCopy>,
+		iCopyColors<cBGR, cBGRA, bCopy>,
+		iCopyColors<cBGRA, cBGRA, bCopy>,
+		iCopyColors<cI16, cBGRA, bCopy>,
+		iCopyColors<cRGB555, cBGRA, bCopy>,
+		iCopyColors<cPalEntry, cBGRA, bCopy>
+	};
 
 //===========================================================================
 //
@@ -199,7 +375,7 @@ void FBitmap::CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int 
 		BYTE *buffer = data + 4 * originx + Pitch * originy;
 		for (int y=0;y<srcheight;y++)
 		{
-			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x);
+			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x, NULL);
 		}
 	}
 }

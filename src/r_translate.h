@@ -97,6 +97,8 @@ void R_DeinitTranslationTables();
 // [RH] Actually create a player's translation table.
 void R_BuildPlayerTranslation (int player);
 
+extern const BYTE IcePalette[16][3];
+
 
 
 #endif // __R_TRANSLATE_H

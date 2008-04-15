@@ -5342,21 +5342,18 @@ int DLevelScript::RunScript ()
 
 		case PCD_CHECKPLAYERCAMERA:
 			{
-				AActor *actor = SingleActorFromTID(STACK(1), activator);
-
-				if(actor != NULL && actor->player != NULL)
-				{				
-					if(actor->player->camera != actor->player->mo)
-					{
-						STACK(1) = actor->player->camera->tid;
-					}
-					else
-					{
-						STACK(1) = 0;
-					}
+				int playernum = STACK(1);
+				
+				if (playernum < 0 || playernum >= MAXPLAYERS || !playeringame[playernum] || players[playernum].camera == NULL)
+				{
+					STACK(1) = -1;
 				}
-				else STACK(1) = 0;
-			}			
+				else 
+				{
+					STACK(1) = players[playernum].camera->tid;
+				}
+			}	
+			break;
 		}
 	}
 

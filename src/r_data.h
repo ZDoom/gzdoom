@@ -107,6 +107,8 @@ protected:
 		SWORD OriginX, OriginY;
 		BYTE Rotate;
 		bool textureOwned;
+		FRemapTable *Translation;
+		PalEntry Blend;
 		FTexture *Texture;
 
 		TexPart();

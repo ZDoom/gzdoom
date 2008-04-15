@@ -64,6 +64,7 @@ BYTE GoldColormap[256];
 // [BC] New Skulltag colormaps.
 BYTE RedColormap[256];
 BYTE GreenColormap[256];
+BYTE DesaturateColormap[31][256];
 
 static void FreeSpecialLights();;
 
@@ -433,6 +434,24 @@ void InitPalette ()
 			MIN( 255, ( intensity + ( intensity / 2 )) >> 8 ), 
 			intensity>>8 );
 	}
+
+	// desaturated colormaps
+	for(int m = 0; m < 31; m++)
+	{
+		shade = DesaturateColormap[m];
+		for (c = 0; c < 256; c++)
+		{
+			intensity = GPalette.BaseColors[c].r * 77 +
+						GPalette.BaseColors[c].g * 143 +
+						GPalette.BaseColors[c].b * 37;
+
+			int r = (GPalette.BaseColors[c].r * (31-m) + intensity *m) / 31;
+			int g = (GPalette.BaseColors[c].g * (31-m) + intensity *m) / 31;
+			int b = (GPalette.BaseColors[c].b * (31-m) + intensity *m) / 31;
+			shade[c] = ColorMatcher.Pick (r, g, b);
+		}
+	}
+
 }
 
 extern "C"

@@ -52,7 +52,7 @@ void AWeapon::Serialize (FArchive &arc)
 		<< ProjectileType << AltProjectileType
 		<< SelectionOrder
 		<< MoveCombatDist
-		<< Ammo1 << Ammo2 << SisterWeapon
+		<< Ammo1 << Ammo2 << SisterWeapon << GivenAsMorphWeapon
 		<< bAltFire;
 }
 
@@ -230,6 +230,7 @@ void AWeapon::AttachToOwner (AActor *other)
 			StatusBar->ReceivedWeapon (this);
 		}
 	}
+	GivenAsMorphWeapon = false; // will be set explicitly by morphing code
 }
 
 //===========================================================================

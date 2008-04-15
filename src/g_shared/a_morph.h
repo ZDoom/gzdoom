@@ -17,7 +17,8 @@ enum
 	MORPH_UNDOBYCHAOSDEVICE	= 0x00000008,	// Player unmorphs upon activating a Chaos Device
 	MORPH_FAILNOTELEFRAG	= 0x00000010,	// Player stays morphed if unmorph by Tome of Power fails
 	MORPH_FAILNOLAUGH		= 0x00000020,	// Player doesn't laugh if unmorph by Chaos Device fails
-	MORPH_WHENINVULNERABLE	= 0x00000040	// Player can morph when invulnerable but ONLY if doing it to themselves
+	MORPH_WHENINVULNERABLE	= 0x00000040,	// Player can morph when invulnerable but ONLY if doing it to themselves
+	MORPH_LOSEACTUALWEAPON	= 0X00000080	// Player loses specified morph weapon only (not "whichever they have when unmorphing")
 };
 
 struct PClass;

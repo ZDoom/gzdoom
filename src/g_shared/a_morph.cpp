@@ -206,6 +206,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
 
 	const PClass *exit_flash = player->MorphExitFlash;
+	bool correctweapon = ((player->MorphStyle & MORPH_LOSEACTUALWEAPON) == 0);
 
 	player->morphTics = 0;
 	player->MorphedPlayerClass = 0;
@@ -267,13 +268,32 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	{
 		player->ReadyWeapon = player->PendingWeapon = NULL;
 	}
-	if (beastweap != NULL)
-	{ // You don't get to keep your morphed weapon.
-		if (beastweap->SisterWeapon != NULL)
+	if (correctweapon)
+	{ // Better "lose morphed weapon" semantics
+		const PClass *morphweapon = PClass::FindClass (mo->MorphWeapon);
+		if (morphweapon != NULL && morphweapon->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 		{
-			beastweap->SisterWeapon->Destroy ();
+			AWeapon *OriginalMorphWeapon = static_cast<AWeapon *>(mo->FindInventory (morphweapon));
+			if ((OriginalMorphWeapon != NULL) && (OriginalMorphWeapon->GivenAsMorphWeapon))
+			{ // You don't get to keep your morphed weapon.
+				if (OriginalMorphWeapon->SisterWeapon != NULL)
+				{
+					OriginalMorphWeapon->SisterWeapon->Destroy ();
+				}
+				OriginalMorphWeapon->Destroy ();
+			}
 		}
-		beastweap->Destroy ();
+ 	}
+	else // old behaviour (not really useful now)
+	{ // Assumptions made here are no longer valid
+		if (beastweap != NULL)
+		{ // You don't get to keep your morphed weapon.
+			if (beastweap->SisterWeapon != NULL)
+			{
+				beastweap->SisterWeapon->Destroy ();
+			}
+			beastweap->Destroy ();
+		}
 	}
 	pmo->tracer = NULL;
 	pmo->Destroy ();

@@ -46,6 +46,26 @@
 
 TAutoGrowArray<FRemapTablePtr, FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
 
+const BYTE IcePalette[16][3] =
+{
+	{  10,  8, 18 },
+	{  15, 15, 26 },
+	{  20, 16, 36 },
+	{  30, 26, 46 },
+	{  40, 36, 57 },
+	{  50, 46, 67 },
+	{  59, 57, 78 },
+	{  69, 67, 88 },
+	{  79, 77, 99 },
+	{  89, 87,109 },
+	{  99, 97,120 },
+	{ 109,107,130 },
+	{ 118,118,141 },
+	{ 128,128,151 },
+	{ 138,138,162 },
+	{ 148,148,172 }
+};
+
 /****************************************************/
 /****************************************************/
 
@@ -428,25 +448,6 @@ void R_InitTranslationTables ()
 	// Doom palette has no good substitutes for these bluish-tinted grays, so
 	// they will just look gray unless you use a different PLAYPAL with Doom.
 
-	static const BYTE IcePalette[16][3] =
-	{
-		{  10,  8, 18 },
-		{  15, 15, 26 },
-		{  20, 16, 36 },
-		{  30, 26, 46 },
-		{  40, 36, 57 },
-		{  50, 46, 67 },
-		{  59, 57, 78 },
-		{  69, 67, 88 },
-		{  79, 77, 99 },
-		{  89, 87,109 },
-		{  99, 97,120 },
-		{ 109,107,130 },
-		{ 118,118,141 },
-		{ 128,128,151 },
-		{ 138,138,162 },
-		{ 148,148,172 }
-	};
 	BYTE IcePaletteRemap[16];
 	for (i = 0; i < 16; ++i)
 	{

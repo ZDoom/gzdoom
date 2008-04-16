@@ -38,6 +38,8 @@
 
 #include "doomtype.h"
 
+struct FCopyInfo;
+
 class FBitmap
 {
 	BYTE *data;
@@ -87,11 +89,31 @@ public:
 		return data != NULL;
 	}
 
+	int GetHeight() const
+	{
+		return Height;
+	}
+
+	int GetWidth() const
+	{
+		return Width;
+	}
+
+	int GetPitch() const
+	{
+		return Pitch;
+	}
+
+	const BYTE *GetPixels() const
+	{
+		return data;
+	}
+
 
 	virtual void CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int srcwidth, 
-								int srcheight, int step_x, int step_y, int rotate, int ct);
+								int srcheight, int step_x, int step_y, int rotate, int ct, FCopyInfo *inf = NULL);
 	virtual void CopyPixelData(int originx, int originy, const BYTE * patch, int srcwidth, int srcheight, 
-								int step_x, int step_y, int rotate, PalEntry * palette);
+								int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf = NULL);
 
 
 };

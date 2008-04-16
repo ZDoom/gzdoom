@@ -385,7 +385,7 @@ void FTGATexture::MakeTexture ()
 //
 //===========================================================================
 
-int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
+int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	PalEntry pe[256];
 	FWadLump lump = Wads.OpenLumpNum (SourceLump);
@@ -470,7 +470,7 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
     switch (hdr.img_type & 7)
     {
 	case 1:	// paletted
-		bmp->CopyPixelData(x, y, ptr, Width, Height, step_x, Pitch, rotate, pe);
+		bmp->CopyPixelData(x, y, ptr, Width, Height, step_x, Pitch, rotate, pe, inf);
 		break;
 
 	case 2:	// RGB
@@ -478,21 +478,21 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
 		{
 		case 15:
 		case 16:
-			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_RGB555);
+			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_RGB555, inf);
 			break;
 		
 		case 24:
-			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGR);
+			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGR, inf);
 			break;
 		
 		case 32:
 			if ((hdr.img_desc&15)!=8)	// 32 bits without a valid alpha channel
 			{
-				bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGR);
+				bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGR, inf);
 			}
 			else
 			{
-				bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGRA);
+				bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_BGRA, inf);
 				transval = -1;
 			}
 			break;
@@ -507,11 +507,11 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
 		{
 		case 8:
 			for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// gray map
-			bmp->CopyPixelData(x, y, ptr, Width, Height, step_x, Pitch, rotate, pe);
+			bmp->CopyPixelData(x, y, ptr, Width, Height, step_x, Pitch, rotate, pe, inf);
 			break;
 		
 		case 16:
-			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_I16);
+			bmp->CopyPixelDataRGB(x, y, ptr, Width, Height, step_x, Pitch, rotate, CF_I16, inf);
 			break;
 		
 		default:

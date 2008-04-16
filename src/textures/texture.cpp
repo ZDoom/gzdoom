@@ -458,7 +458,7 @@ void FTexture::FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt)
 
 	case TEX_RGB:
 	{
-		FBitmap bmp(buff, pitch, pitch, height);
+		FBitmap bmp(buff, pitch, pitch/4, height);
 		CopyTrueColorPixels(&bmp, 0, 0); 
 		break;
 	}
@@ -480,11 +480,11 @@ void FTexture::FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt)
 //
 //===========================================================================
 
-int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
+int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	PalEntry *palette = screen->GetPalette();
 	palette[0].a=255;	// temporarily modify the first color's alpha
-	bmp->CopyPixelData(x, y, GetPixels(), Width, Height, Height, 1, rotate, palette);
+	bmp->CopyPixelData(x, y, GetPixels(), Width, Height, Height, 1, rotate, palette, inf);
 
 	palette[0].a=0;
 	return 0;

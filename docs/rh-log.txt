@@ -1,3 +1,6 @@
+April 16, 2008 (Changes by Graf Zahl)
+- Made translation support for multipatch textures operational.
+
 April 15, 2008
 - Added support for the GUS patch format's scale_frequency and scale_factor
   parameters. These seem to be used primarily to restrict percussion

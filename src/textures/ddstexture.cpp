@@ -743,7 +743,7 @@ void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 //
 //===========================================================================
 
-int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
+int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	FWadLump lump = Wads.OpenLumpNum (SourceLump);
 
@@ -769,7 +769,7 @@ int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
 	}
 
 	// All formats decompress to RGBA.
-	bmp->CopyPixelDataRGB(x, y, TexBuffer, Width, Height, 4, Width*4, rotate, CF_RGBA);
+	bmp->CopyPixelDataRGB(x, y, TexBuffer, Width, Height, 4, Width*4, rotate, CF_RGBA, inf);
 	delete [] TexBuffer;
 	return -1;
 }	

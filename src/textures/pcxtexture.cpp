@@ -419,7 +419,7 @@ void FPCXTexture::MakeTexture()
 //
 //===========================================================================
 
-int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
+int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	PalEntry pe[256];
 	PCXHeader header;
@@ -473,13 +473,13 @@ int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate)
 			lump.Seek(sizeof(header), SEEK_SET);
 			ReadPCX8bits (Pixels, lump, &header);
 		}
-		bmp->CopyPixelData(x, y, Pixels, Width, Height, 1, Width, rotate, pe);
+		bmp->CopyPixelData(x, y, Pixels, Width, Height, 1, Width, rotate, pe, inf);
 	}
 	else
 	{
 		Pixels = new BYTE[Width*Height * 3];
 		ReadPCX24bits (Pixels, lump, &header, 3);
-		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, Width*3, rotate, CF_RGB);
+		bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, Width*3, rotate, CF_RGB, inf);
 	}
 	delete [] Pixels;
 	return 0;

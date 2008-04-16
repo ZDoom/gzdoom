@@ -368,14 +368,14 @@ bool ClipCopyPixelRect(int texwidth, int texheight, int &originx, int &originy,
 //
 //===========================================================================
 void FBitmap::CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int srcwidth, 
-							   int srcheight, int step_x, int step_y, int rotate, int ct)
+							   int srcheight, int step_x, int step_y, int rotate, int ct, FCopyInfo *inf)
 {
 	if (ClipCopyPixelRect(Width, Height, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
 		BYTE *buffer = data + 4 * originx + Pitch * originy;
 		for (int y=0;y<srcheight;y++)
 		{
-			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x, NULL);
+			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x, inf);
 		}
 	}
 }
@@ -386,13 +386,26 @@ void FBitmap::CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int 
 //
 //===========================================================================
 void FBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int srcwidth, int srcheight, 
-										int step_x, int step_y, int rotate, PalEntry * palette)
+										int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf)
 {
 	int x,y,pos;
 	
 	if (ClipCopyPixelRect(Width, Height, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
 		BYTE *buffer = data + 4*originx + Pitch*originy;
+		PalEntry penew[256];
+
+		if (inf && inf->blend)
+		{
+			// The palette's alpha is inverted so in order to use the
+			// True Color copy functions it has to be inverted temporarily.
+			memcpy(penew, palette, 4*256);
+			for(int i=0;i<256;i++) penew[i].a = 255-penew[i].a;
+			copyfuncs[CF_PalEntry]((BYTE*)penew, (BYTE*)penew, 256, 4, inf);
+			for(int i=0;i<256;i++) penew[i].a = 255-penew[i].a;
+			palette = penew;
+		}
+
 
 		for (y=0;y<srcheight;y++)
 		{

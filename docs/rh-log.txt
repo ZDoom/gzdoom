@@ -1,4 +1,8 @@
 April 16, 2008
+- Fixed: The FMOD::System object was never released, only closed, so
+  snd_reset would eventually run into the hard limit on the total number
+  of FMOD::System objects that can be created concurrently (currently 15).
+- Added proper error checks to the FMOD initialization process.
 - Updated fmod_wrap.h for FMOD 4.14.
 - Set note velocity back to using a linear sounding volume curve, although
   it's now used to scale channel volume and expression, so recompute_amp()

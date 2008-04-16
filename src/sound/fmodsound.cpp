@@ -70,8 +70,6 @@ extern HWND Window;
 
 #define MAX_CHANNELS				256
 
-#define ERRCHECK(x)
-
 #define SPECTRUM_SIZE				256
 
 
@@ -481,18 +479,22 @@ bool FMODSoundRenderer::Init()
 	PrevEnvironment = DefaultEnvironments[0];
 
 	Printf("I_InitSound: Initializing FMOD\n");
-	if (!ShowedBanner)
-	{
-		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2007.\n");
-		ShowedBanner = true;
-	}
 
 	// Create a System object and initialize.
 	result = FMOD::System_Create(&Sys);
-	ERRCHECK(result);
+	if (result != FMOD_OK)
+	{
+		Sys = NULL;
+		Printf(TEXTCOLOR_ORANGE"Failed to create FMOD system object: Error %d\n", result);
+		return false;
+	}
 
 	result = Sys->getVersion(&version);
-	ERRCHECK(result);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_ORANGE"Could not validate FMOD version: Error %d\n", result);
+		return false;
+	}
 
 	if (version < FMOD_VERSION)
 	{
@@ -503,6 +505,11 @@ bool FMODSoundRenderer::Init()
 		return false;
 	}
 
+	if (!ShowedBanner)
+	{
+		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2008.\n");
+		ShowedBanner = true;
+	}
 #ifdef _WIN32
 	if (OSPlatform == os_WinNT4)
 	{
@@ -545,7 +552,11 @@ bool FMODSoundRenderer::Init()
 	if (eval >= 0)
 	{
 		result = Sys->setOutput(FMOD_OUTPUTTYPE(eval));
-		ERRCHECK(result);
+		if (result != FMOD_OK)
+		{
+			Printf(TEXTCOLOR_BLUE"Setting output type '%s' failed. Using default instead. (Error %d)\n", *snd_output, result);
+			Sys->setOutput(FMOD_OUTPUTTYPE_AUTODETECT);
+		}
 	}
 
 	result = Sys->getNumDrivers(&driver);
@@ -553,7 +564,7 @@ bool FMODSoundRenderer::Init()
 	{
 		if (snd_driver >= driver)
 		{
-			Printf (TEXTCOLOR_BLUE"Driver %d does not exist. Using 0.\n", *snd_driver);
+			Printf(TEXTCOLOR_BLUE"Driver %d does not exist. Using 0.\n", *snd_driver);
 			driver = 0;
 		}
 		else
@@ -564,7 +575,16 @@ bool FMODSoundRenderer::Init()
 	}
 	result = Sys->getDriver(&driver);
 	result = Sys->getDriverCaps(driver, &Driver_Caps, &Driver_MinFrequency, &Driver_MaxFrequency, &speakermode);
-	ERRCHECK(result);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_BLUE"Could not ascertain driver capabilities. Some things may be weird. (Error %d)\n", result);
+		// Fill in some default to pretend it worked. (But as long as we specify a valid driver,
+		// can this call actually fail?)
+		Driver_Caps = 0;
+		Driver_MinFrequency = 4000;
+		Driver_MaxFrequency = 48000;
+		speakermode = FMOD_SPEAKERMODE_STEREO;
+	}
 
 	// Set the user selected speaker mode.
 	eval = Enum_NumForName(SpeakerModeNames, snd_speakermode);
@@ -572,8 +592,11 @@ bool FMODSoundRenderer::Init()
 	{
 		speakermode = FMOD_SPEAKERMODE(eval);
 	}
-	result = Sys->setSpeakerMode(speakermode < 9000 ? speakermode : FMOD_SPEAKERMODE_STEREO);
-	ERRCHECK(result);
+	result = Sys->setSpeakerMode(speakermode);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_BLUE"Could not set speaker mode to '%s'. (Error %d)\n", *snd_speakermode, result);
+	}
 
 	// Set software format
 	eval = Enum_NumForName(SoundFormatNames, snd_output_format);
@@ -590,13 +613,20 @@ bool FMODSoundRenderer::Init()
 	}
 	if (samplerate != snd_samplerate && snd_samplerate != 0)
 	{
-		Printf(TEXTCOLOR_BLUE"Sample rate %d is unsupported. Trying %d\n", *snd_samplerate, samplerate);
+		Printf(TEXTCOLOR_BLUE"Sample rate %d is unsupported. Trying %d.\n", *snd_samplerate, samplerate);
 	}
 	result = Sys->setSoftwareFormat(samplerate, format, 0, 0, resampler);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_BLUE"Could not set mixing format. Defaults will be used. (Error %d)\n", result);
+	}
 
 	// Set software channels according to snd_channels
 	result = Sys->setSoftwareChannels(snd_channels + NUM_EXTRA_SOFTWARE_CHANNELS);
-	ERRCHECK(result);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_BLUE"Failed to set the preferred number of channels. (Error %d)\n", result);
+	}
 
 	if (Driver_Caps & FMOD_CAPS_HARDWARE_EMULATED)
 	{ // The user has the 'Acceleration' slider set to off!
@@ -604,13 +634,20 @@ bool FMODSoundRenderer::Init()
 		Printf (TEXTCOLOR_BLUE"Warning: The sound acceleration slider has been set to off.\n");
 		Printf (TEXTCOLOR_BLUE"Please turn it back on if you want decent sound.\n");
 		result = Sys->setDSPBufferSize(1024, 10);	// At 48khz, the latency between issuing an fmod command and hearing it will now be about 213ms.
-		ERRCHECK(result);
 	}
 	else if (snd_buffersize != 0 || snd_buffercount != 0)
 	{
 		int buffersize = snd_buffersize ? snd_buffersize : 1024;
 		int buffercount = snd_buffercount ? snd_buffercount : 4;
 		result = Sys->setDSPBufferSize(buffersize, buffercount);
+	}
+	else
+	{
+		result = FMOD_OK;
+	}
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_BLUE"Setting DSP buffer size failed. (Error %d)\n", result);
 	}
 
 	// Try to init
@@ -654,24 +691,43 @@ bool FMODSoundRenderer::Init()
 	}
 	if (result != FMOD_OK)
 	{ // Initializing FMOD failed. Cry cry.
-		Printf ("  System::init returned error code %d\n", result);
+		Printf(TEXTCOLOR_ORANGE"  System::init returned error code %d\n", result);
 		return false;
 	}
 
 	// Create channel groups
 	result = Sys->createChannelGroup("Music", &MusicGroup);
-	ERRCHECK(result);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_ORANGE"  Could not create music channel group. (Error %d)\n", result);
+		return false;
+	}
 
 	result = Sys->createChannelGroup("SFX", &SfxGroup);
-	ERRCHECK(result);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_ORANGE"  Could not create sfx channel group. (Error %d)\n", result);
+		return false;
+	}
 
 	result = Sys->createChannelGroup("Pausable SFX", &PausableSfx);
-	ERRCHECK(result);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_ORANGE"  Could not create pausable sfx channel group. (Error %d)\n", result);
+		return false;
+	}
 
 	result = SfxGroup->addGroup(PausableSfx);
-	ERRCHECK(result);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_BLUE"  Could not create attach pausable sfx to sfx channel group. (Error %d)\n", result);
+	}
 
 	result = SPC_CreateCodec(Sys);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_BLUE"  Could not register SPC codec. (Error %d)\n", result);
+	}
 
 	Sys->set3DSettings(0.5f, 96.f, 1.f);
 	Sys->set3DRolloffCallback(RolloffCallback);
@@ -720,6 +776,7 @@ void FMODSoundRenderer::Shutdown()
 		}
 
 		Sys->close();
+		Sys->release();
 		Sys = NULL;
 	}
 }

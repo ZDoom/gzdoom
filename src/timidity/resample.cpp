@@ -215,12 +215,12 @@ static sample_t *rs_bidir(sample_t *resample_buffer, Voice *vp, int count)
 /* We only need to compute one half of the vibrato sine cycle */
 static int vib_phase_to_inc_ptr(int phase)
 {
-	if (phase < VIBRATO_SAMPLE_INCREMENTS/2)
-		return VIBRATO_SAMPLE_INCREMENTS/2-1-phase;
-	else if (phase >= 3*VIBRATO_SAMPLE_INCREMENTS/2)
-		return 5*VIBRATO_SAMPLE_INCREMENTS/2-1-phase;
+	if (phase < VIBRATO_SAMPLE_INCREMENTS / 2)
+		return VIBRATO_SAMPLE_INCREMENTS / 2 - 1 - phase;
+	else if (phase >= VIBRATO_SAMPLE_INCREMENTS * 3 / 2)
+		return VIBRATO_SAMPLE_INCREMENTS * 5 / 2 - 1 - phase;
 	else
-		return phase-VIBRATO_SAMPLE_INCREMENTS/2;
+		return phase - VIBRATO_SAMPLE_INCREMENTS / 2;
 }
 
 static int update_vibrato(float output_rate, Voice *vp, int sign)
@@ -229,8 +229,8 @@ static int update_vibrato(float output_rate, Voice *vp, int sign)
 	int phase;
 	double a, pb;
 
-	if (vp->vibrato_phase++ >= 2*VIBRATO_SAMPLE_INCREMENTS-1)
-		vp->vibrato_phase=0;
+	if (vp->vibrato_phase++ >= 2 * VIBRATO_SAMPLE_INCREMENTS - 1)
+		vp->vibrato_phase = 0;
 	phase = vib_phase_to_inc_ptr(vp->vibrato_phase);
 
 	if (vp->vibrato_sample_increment[phase])
@@ -244,7 +244,7 @@ static int update_vibrato(float output_rate, Voice *vp, int sign)
 	/* Need to compute this sample increment. */
 	depth = vp->sample->vibrato_depth << 7;
 
-	if (vp->vibrato_sweep)
+	if (vp->vibrato_sweep != 0)
 	{
 		/* Need to update sweep */
 		vp->vibrato_sweep_position += vp->vibrato_sweep;
@@ -265,7 +265,7 @@ static int update_vibrato(float output_rate, Voice *vp, int sign)
 	pb = (sine(vp->vibrato_phase * (1.0/(2*VIBRATO_SAMPLE_INCREMENTS)))
 		* (double)(depth) * VIBRATO_AMPLITUDE_TUNING);
 
-	a *= pow(2.0, pb / (8191 * 12.f));
+	a *= pow(2.0, pb / (8192 * 12.f));
 
 	/* If the sweep's over, we can store the newly computed sample_increment */
 	if (!vp->vibrato_sweep)
@@ -511,11 +511,11 @@ sample_t *resample_voice(Renderer *song, Voice *vp, int *countptr)
 
 	if (vp->vibrato_control_ratio)
 	{
-		if ((modes & MODES_LOOPING) &&
-			((modes & MODES_ENVELOPE) ||
+		if ((modes & PATCH_LOOPEN) &&
+			((modes & PATCH_NO_SRELEASE) ||
 			 (vp->status == VOICE_ON || vp->status == VOICE_SUSTAINED)))
 		{
-			if (modes & MODES_PINGPONG)
+			if (modes & PATCH_BIDIR)
 				return rs_vib_bidir(song->resample_buffer, song->rate, vp, *countptr);
 			else
 				return rs_vib_loop(song->resample_buffer, song->rate, vp, *countptr);
@@ -527,11 +527,11 @@ sample_t *resample_voice(Renderer *song, Voice *vp, int *countptr)
 	}
 	else
 	{
-		if ((modes & MODES_LOOPING) &&
-			((modes & MODES_ENVELOPE) ||
+		if ((modes & PATCH_LOOPEN) &&
+			((modes & PATCH_NO_SRELEASE) ||
 			(vp->status == VOICE_ON || vp->status == VOICE_SUSTAINED)))
 		{
-			if (modes & MODES_PINGPONG)
+			if (modes & PATCH_BIDIR)
 				return rs_bidir(song->resample_buffer, vp, *countptr);
 			else
 				return rs_loop(song->resample_buffer, vp, *countptr);
@@ -554,11 +554,14 @@ void pre_resample(Renderer *song, Sample *sp)
 		"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
 	};
 
-	cmsg(CMSG_INFO, VERB_NOISY, " * pre-resampling for note %d (%s%d)",
-		sp->note_to_use,
-		note_name[sp->note_to_use % 12], (sp->note_to_use & 0x7F) / 12);
+	if (sp->scale_factor != 0)
+		return;
 
-	a = (sp->sample_rate * note_to_freq(sp->note_to_use)) / (sp->root_freq * song->rate);
+	cmsg(CMSG_INFO, VERB_NOISY, " * pre-resampling for note %d (%s%d)\n",
+		sp->scale_note,
+		note_name[sp->scale_note % 12], (sp->scale_note & 0x7F) / 12);
+
+	a = (sp->sample_rate * note_to_freq(sp->scale_note)) / (sp->root_freq * song->rate);
 	if (a <= 0)
 		return;
 	newlen = (int)(sp->data_length / a);

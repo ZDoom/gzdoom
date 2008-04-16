@@ -37,15 +37,14 @@ int recompute_envelope(Voice *v)
 
 	stage = v->envelope_stage;
 
-	if (stage >= DELAY)
+	if (stage > RELEASEC)
 	{
 		/* Envelope ran out. */
-		int tmp = (v->status == VOICE_DIE); /* Already displayed as dead */
 		v->status = VOICE_FREE;
 		return 1;
 	}
 
-	if (v->sample->modes & MODES_ENVELOPE)
+	if (v->sample->modes & PATCH_NO_SRELEASE)
 	{
 		if (v->status == VOICE_ON || v->status == VOICE_SUSTAINED)
 		{
@@ -60,7 +59,9 @@ int recompute_envelope(Voice *v)
 	v->envelope_stage = stage + 1;
 
 	if (v->envelope_volume == v->sample->envelope_offset[stage])
+	{
 		return recompute_envelope(v);
+	}
 	v->envelope_target = v->sample->envelope_offset[stage];
 	v->envelope_increment = v->sample->envelope_rate[stage];
 	if (v->envelope_target < v->envelope_volume)
@@ -75,28 +76,30 @@ void apply_envelope_to_amp(Voice *v)
 	{
 		ramp = v->right_amp;
 
-		if (v->tremolo_phase_increment)
+		if (v->tremolo_phase_increment != 0)
 		{
 			lamp *= v->tremolo_volume;
 			ramp *= v->tremolo_volume;
 		}
-		if (v->sample->modes & MODES_ENVELOPE)
+		if (v->sample->modes & PATCH_NO_SRELEASE)
 		{
 			double vol = calc_vol(v->envelope_volume / float(1 << 30));
 			lamp *= vol;
 			ramp *= vol;
 		}
-
 		v->left_mix = float(lamp);
 		v->right_mix = float(ramp);
 	}
 	else
 	{
-		if (v->tremolo_phase_increment)
+		if (v->tremolo_phase_increment != 0)
+		{
 			lamp *= v->tremolo_volume;
-		if (v->sample->modes & MODES_ENVELOPE)
+		}
+		if (v->sample->modes & PATCH_NO_SRELEASE)
+		{
 			lamp *= calc_vol(v->envelope_volume / float(1 << 30));
-
+		}
 		v->left_mix = float(lamp);
 	}
 }
@@ -104,13 +107,14 @@ void apply_envelope_to_amp(Voice *v)
 static int update_envelope(Voice *v)
 {
 	v->envelope_volume += v->envelope_increment;
-	/* Why is there no ^^ operator?? */
 	if (((v->envelope_increment < 0) && (v->envelope_volume <= v->envelope_target)) ||
 		((v->envelope_increment > 0) && (v->envelope_volume >= v->envelope_target)))
 	{
 		v->envelope_volume = v->envelope_target;
 		if (recompute_envelope(v))
+		{
 			return 1;
+		}
 	}
 	return 0;
 }
@@ -119,7 +123,7 @@ static void update_tremolo(Voice *v)
 {
 	int depth = v->sample->tremolo_depth << 7;
 
-	if (v->tremolo_sweep)
+	if (v->tremolo_sweep != 0)
 	{
 		/* Update sweep position */
 
@@ -151,12 +155,14 @@ static void update_tremolo(Voice *v)
 /* Returns 1 if the note died */
 static int update_signal(Voice *v)
 {
-	if (v->envelope_increment && update_envelope(v))
+	if (v->envelope_increment != 0 && update_envelope(v))
+	{
 		return 1;
-
-	if (v->tremolo_phase_increment)
+	}
+	if (v->tremolo_phase_increment != 0)
+	{
 		update_tremolo(v);
-
+	}
 	apply_envelope_to_amp(v);
 	return 0;
 }

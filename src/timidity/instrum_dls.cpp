@@ -1121,29 +1121,29 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 	DLS_Region *rgn = &ins->regions[index];
 	DLS_Wave *wave = &song->patches->waveList[rgn->wlnk->ulTableIndex];
 
-	if (!(rgn->header->fusOptions & F_RGN_OPTION_SELFNONEXCLUSIVE))
-	{
-		sample->exclusiveClass = (SBYTE)rgn->header->usKeyGroup;
-	}
+	sample->self_nonexclusive = !!(rgn->header->fusOptions & F_RGN_OPTION_SELFNONEXCLUSIVE);
+	sample->key_group = (SBYTE)rgn->header->usKeyGroup;
 	sample->low_freq = SDWORD(note_to_freq(rgn->header->RangeKey.usLow));
 	sample->high_freq = SDWORD(note_to_freq(rgn->header->RangeKey.usHigh));
 	sample->root_freq = SDWORD(note_to_freq(rgn->wsmp->usUnityNote));
 	sample->low_vel = rgn->header->RangeVelocity.usLow;
 	sample->high_vel = rgn->header->RangeVelocity.usHigh;
 
-	sample->modes = wave->format->wBitsPerSample == 8 ? MODES_UNSIGNED : MODES_16BIT;
+	sample->modes = wave->format->wBitsPerSample == 8 ? PATCH_UNSIGNED : PATCH_16;
 	sample->sample_rate = wave->format->dwSamplesPerSec;
 	sample->data = NULL;
 	sample->data_length = wave->length;
 	convert_sample_data(sample, wave->data);
-	if (rgn->wsmp->cSampleLoops) {
-		sample->modes |= (MODES_LOOPING|MODES_SUSTAIN);
+	if (rgn->wsmp->cSampleLoops)
+	{
+		sample->modes |= (PATCH_LOOPEN | PATCH_SUSTAIN);
 		sample->loop_start = rgn->wsmp_loop->ulStart / 2;
 		sample->loop_end = sample->loop_start + (rgn->wsmp_loop->ulLength / 2);
 	}
 	sample->volume = 1.0f;
 
-	if (sample->modes & MODES_SUSTAIN) {
+	if (sample->modes & PATCH_SUSTAIN)
+	{
 		int value;
 		double attack, hold, decay, release; int sustain;
 		CONNECTIONLIST *art = NULL;
@@ -1192,12 +1192,7 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 		sample->envelope_offset[RELEASEC] = to_offset(0);
 		sample->envelope_rate[RELEASEC] = to_offset(1);
 
-		sample->modes |= MODES_ENVELOPE;
-	}
-	for (int j = ATTACK; j < DELAY; j++)
-	{
-		sample->modulation_rate[j] = float(sample->envelope_rate[j]);
-		sample->modulation_offset[j] = float(sample->envelope_offset[j]);
+		sample->modes |= PATCH_NO_SRELEASE;
 	}
 
 	sample->data_length <<= FRACTION_BITS;
@@ -1205,55 +1200,54 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 	sample->loop_end <<= FRACTION_BITS;
 }
 
-InstrumentLayer *load_instrument_dls(Renderer *song, int drum, int bank, int instrument)
+Instrument *load_instrument_dls(Renderer *song, int drum, int bank, int instrument)
 {
-	InstrumentLayer *layer;
+	Instrument *inst;
 	DWORD i;
 	DLS_Instrument *dls_ins = NULL;
 
 	if (song->patches == NULL)
+	{
 		return NULL;
-
+	}
 	drum = drum ? 0x80000000 : 0;
-	for (i = 0; i < song->patches->cInstruments; ++i) {
+	for (i = 0; i < song->patches->cInstruments; ++i)
+	{
 		dls_ins = &song->patches->instruments[i];
 		if ((dls_ins->header->Locale.ulBank & 0x80000000) == (ULONG)drum &&
 			((dls_ins->header->Locale.ulBank >> 8) & 0xFF) == (ULONG)bank &&
 			dls_ins->header->Locale.ulInstrument == (ULONG)instrument)
 			break;
 	}
-	if (i == song->patches->cInstruments && !bank) {
-		for (i = 0; i < song->patches->cInstruments; ++i) {
+	if (i == song->patches->cInstruments && bank == 0)
+	{
+		for (i = 0; i < song->patches->cInstruments; ++i)
+		{
 			dls_ins = &song->patches->instruments[i];
 			if ((dls_ins->header->Locale.ulBank & 0x80000000) == (ULONG)drum &&
 				dls_ins->header->Locale.ulInstrument == (ULONG)instrument)
 				break;
 		}
 	}
-	if (i == song->patches->cInstruments) {
+	if (i == song->patches->cInstruments)
+	{
 //		SNDDBG(("Couldn't find %s instrument %d in bank %d\n", drum ? "drum" : "melodic", instrument, bank));
 		return NULL;
 	}
 
-	layer = (InstrumentLayer *)safe_malloc(sizeof(InstrumentLayer));
-	layer->lo = 0;
-	layer->hi = 127;
-	layer->instrument = (Instrument *)safe_malloc(sizeof(Instrument));
-	layer->instrument->type = INST_DLS;
-	layer->instrument->samples = dls_ins->header->cRegions;
-	layer->instrument->sample = (Sample *)safe_malloc(layer->instrument->samples * sizeof(Sample));
-	layer->instrument->left_samples = layer->instrument->samples;
-	layer->instrument->left_sample = layer->instrument->sample;
-	layer->instrument->right_samples = 0;
-	layer->instrument->right_sample = NULL;
-	memset(layer->instrument->sample, 0, layer->instrument->samples * sizeof(Sample));
+	inst = (Instrument *)safe_malloc(sizeof(Instrument));
+	inst->type = INST_DLS;
+	inst->samples = dls_ins->header->cRegions;
+	inst->sample = (Sample *)safe_malloc(inst->samples * sizeof(Sample));
+	memset(inst->sample, 0, inst->samples * sizeof(Sample));
 	/*
 	printf("Found %s instrument %d in bank %d named %s with %d regions\n", drum ? "drum" : "melodic", instrument, bank, dls_ins->name, inst->samples);
 	*/
-	for (i = 0; i < dls_ins->header->cRegions; ++i) {
-		load_region_dls(song, &layer->instrument->sample[i], dls_ins, i);
+	for (i = 0; i < dls_ins->header->cRegions; ++i)
+	{
+		load_region_dls(song, &inst->sample[i], dls_ins, i);
 	}
-	return layer;
+	return inst;
 }
 #endif	/* !TEST_MAIN_DLS */
 

@@ -33,33 +33,27 @@ config.h
 */
 
 /* Acoustic Grand Piano seems to be the usual default instrument. */
-#define DEFAULT_PROGRAM 0
+#define DEFAULT_PROGRAM				 0
 
 /* 9 here is MIDI channel 10, which is the standard percussion channel.
    Some files (notably C:\WINDOWS\CANYON.MID) think that 16 is one too. 
    On the other hand, some files know that 16 is not a drum channel and
    try to play music on it. This is now a runtime option, so this isn't
    a critical choice anymore. */
-#define DEFAULT_DRUMCHANNELS (1<<9)
-/*#define DEFAULT_DRUMCHANNELS ((1<<9) | (1<<15))*/
+#define DEFAULT_DRUMCHANNELS		(1<<9)
+/*#define DEFAULT_DRUMCHANNELS		((1<<9) | (1<<15))*/
 
-/* Default sampling rate, default polyphony, and maximum polyphony.
-   All but the last can be overridden from the command line. */
-#define DEFAULT_RATE	32000
-#define DEFAULT_VOICES	32
-#define MAX_VOICES		256
-#define MAXCHAN			16
-#define MAXNOTE			128
+/* Default polyphony, and maximum polyphony. */
+#define DEFAULT_VOICES				32
+#define MAX_VOICES					256
+
+#define MAXCHAN						16
+#define MAXNOTE						128
 
 /* 1000 here will give a control ratio of 22:1 with 22 kHz output.
    Higher CONTROLS_PER_SECOND values allow more accurate rendering
    of envelopes and tremolo. The cost is CPU time. */
-#define CONTROLS_PER_SECOND 1000
-
-/* Make envelopes twice as fast. Saves ~20% CPU time (notes decay
-   faster) and sounds more like a GUS. There is now a command line
-   option to toggle this as well. */
-//#define FAST_DECAY
+#define CONTROLS_PER_SECOND			1000
 
 /* How many bits to use for the fractional part of sample positions.
    This affects tonal accuracy. The entire position counter must fit
@@ -67,7 +61,7 @@ config.h
    a sample is 1048576 samples (2 megabytes in memory). The GUS gets
    by with just 9 bits and a little help from its friends...
    "The GUS does not SUCK!!!" -- a happy user :) */
-#define FRACTION_BITS 12
+#define FRACTION_BITS				12
 
 /* For some reason the sample volume is always set to maximum in all
    patch files. Define this for a crude adjustment that may help
@@ -76,7 +70,7 @@ config.h
 
 /* The number of samples to use for ramping out a dying note. Affects
    click removal. */
-#define MAX_DIE_TIME 20
+#define MAX_DIE_TIME				20
 
 /**************************************************************************/
 /* Anything below this shouldn't need to be changed unless you're porting
@@ -84,37 +78,37 @@ config.h
 /**************************************************************************/
 
 /* change FRACTION_BITS above, not these */
-#define INTEGER_BITS (32 - FRACTION_BITS)
-#define INTEGER_MASK (0xFFFFFFFF << FRACTION_BITS)
-#define FRACTION_MASK (~ INTEGER_MASK)
-#define MAX_SAMPLE_SIZE (1 << INTEGER_BITS)
+#define INTEGER_BITS				(32 - FRACTION_BITS)
+#define INTEGER_MASK				(0xFFFFFFFF << FRACTION_BITS)
+#define FRACTION_MASK				(~ INTEGER_MASK)
+#define MAX_SAMPLE_SIZE				(1 << INTEGER_BITS)
 
 /* This is enforced by some computations that must fit in an int */
-#define MAX_CONTROL_RATIO 255
+#define MAX_CONTROL_RATIO			255
 
-#define MAX_AMPLIFICATION 800
+#define MAX_AMPLIFICATION			800
 
 /* The TiMiditiy configuration file */
 #define CONFIG_FILE	"timidity.cfg"
 
 typedef float sample_t;
 typedef float final_volume_t;
-#define FINAL_VOLUME(v) (v)
+#define FINAL_VOLUME(v)				(v)
 
-#define FSCALE(a,b) ((a) * (float)(1<<(b)))
-#define FSCALENEG(a,b) ((a) * (1.0L / (float)(1<<(b))))
+#define FSCALE(a,b)					((a) * (float)(1<<(b)))
+#define FSCALENEG(a,b)				((a) * (1.0L / (float)(1<<(b))))
 
 /* Vibrato and tremolo Choices of the Day */
-#define SWEEP_TUNING 38
-#define VIBRATO_AMPLITUDE_TUNING 1.0L
-#define VIBRATO_RATE_TUNING 38
-#define TREMOLO_AMPLITUDE_TUNING 1.0L
-#define TREMOLO_RATE_TUNING 38
+#define SWEEP_TUNING				38
+#define VIBRATO_AMPLITUDE_TUNING	1.0
+#define VIBRATO_RATE_TUNING			38
+#define TREMOLO_AMPLITUDE_TUNING	1.0
+#define TREMOLO_RATE_TUNING			38
 
-#define SWEEP_SHIFT 16
-#define RATE_SHIFT 5
+#define SWEEP_SHIFT					16
+#define RATE_SHIFT					5
 
-#define VIBRATO_SAMPLE_INCREMENTS 32
+#define VIBRATO_SAMPLE_INCREMENTS	32
 
 #ifndef PI
   #define PI 3.14159265358979323846
@@ -188,21 +182,20 @@ FileReader *open_filereader(const char *name, int open, int *plumpnum);
 controls.h
 */
 
-#define CMSG_INFO			0
-#define CMSG_WARNING		1
-#define CMSG_ERROR			2
-#define CMSG_FATAL			3
-#define CMSG_TRACE			4
-#define CMSG_TIME			5
-#define CMSG_TOTAL			6
-#define CMSG_FILE			7
-#define CMSG_TEXT			8
+enum
+{
+	CMSG_INFO,
+	CMSG_WARNING,
+	CMSG_ERROR
+};
 
-#define VERB_NORMAL			0
-#define VERB_VERBOSE		1
-#define VERB_NOISY			2
-#define VERB_DEBUG			3
-#define VERB_DEBUG_SILLY	4
+enum
+{
+	VERB_NORMAL,
+	VERB_VERBOSE,
+	VERB_NOISY,
+	VERB_DEBUG
+};
 
 void cmsg(int type, int verbosity_level, const char *fmt, ...);
 
@@ -217,114 +210,174 @@ struct Sample
 		loop_start, loop_end, data_length,
 		sample_rate, low_vel, high_vel, low_freq, high_freq, root_freq;
 	SDWORD
-		envelope_rate[7], envelope_offset[7];
+		envelope_rate[6], envelope_offset[6];
 	float
-		modulation_rate[7], modulation_offset[7];
-	float
-		volume, resonance,
-		modEnvToFilterFc, modEnvToPitch, modLfoToFilterFc;
+		volume;
 	sample_t *data;
 	SDWORD 
 		tremolo_sweep_increment, tremolo_phase_increment,
-		lfo_sweep_increment, lfo_phase_increment,
-		vibrato_sweep_increment, vibrato_control_ratio,
-		cutoff_freq;
+		vibrato_sweep_increment, vibrato_control_ratio;
 	BYTE
-		reverberation, chorusdepth,
 		tremolo_depth, vibrato_depth,
-		modes,
-		attenuation;
+		modes;
 	WORD
-		freq_center, panning;
-	SBYTE
-		note_to_use, exclusiveClass;
+		panning, scale_factor;
 	SWORD
-		keyToModEnvHold, keyToModEnvDecay,
-		keyToVolEnvHold, keyToVolEnvDecay;
-	SDWORD
-		freq_scale;
+		scale_note;
+	bool
+		self_nonexclusive;
+	BYTE
+		key_group;
 };
 
 void convert_sample_data(Sample *sample, const void *data);
 void free_instruments();
 
-/* Bits in modes: */
-#define MODES_16BIT			(1<<0)
-#define MODES_UNSIGNED		(1<<1)
-#define MODES_LOOPING		(1<<2)
-#define MODES_PINGPONG		(1<<3)
-#define MODES_REVERSE		(1<<4)
-#define MODES_SUSTAIN		(1<<5)
-#define MODES_ENVELOPE		(1<<6)
-#define MODES_FAST_RELEASE	(1<<7)
+/* Patch definition: */
+enum
+{
+	HEADER_SIZE					= 12,
+	ID_SIZE						= 10,
+	DESC_SIZE					= 60,
+	RESERVED_SIZE				= 40,
+	PATCH_HEADER_RESERVED_SIZE	= 36,
+	LAYER_RESERVED_SIZE			= 40,
+	PATCH_DATA_RESERVED_SIZE	= 36,
+	INST_NAME_SIZE				= 16,
+	ENVELOPES					= 6,
+	MAX_LAYERS					= 4
+};
+#define GF1_HEADER_TEXT			"GF1PATCH110"
 
-#define INST_GUS			0
-#define INST_SF2			1
-#define INST_DLS			2
+enum
+{
+	PATCH_16				= (1<<0),
+	PATCH_UNSIGNED			= (1<<1),
+	PATCH_LOOPEN			= (1<<2),
+	PATCH_BIDIR				= (1<<3),
+	PATCH_BACKWARD			= (1<<4),
+	PATCH_SUSTAIN			= (1<<5),
+	PATCH_NO_SRELEASE		= (1<<6),
+	PATCH_FAST_REL			= (1<<7)
+};
+
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#define GCC_PACKED
+#else
+#define GCC_PACKED __attribute__((__packed__))
+#endif
+
+struct GF1PatchHeader
+{
+	char Header[HEADER_SIZE];
+	char GravisID[ID_SIZE];		/* Id = "ID#000002" */
+	char Description[DESC_SIZE];
+	BYTE Instruments;
+	BYTE Voices;
+	BYTE Channels;
+	WORD WaveForms;
+	WORD MasterVolume;
+	DWORD DataSize;
+	BYTE Reserved[PATCH_HEADER_RESERVED_SIZE];
+} GCC_PACKED;
+
+struct GF1InstrumentData
+{
+	WORD Instrument;
+	char InstrumentName[INST_NAME_SIZE];
+	int  InstrumentSize;
+	BYTE Layers;
+	BYTE Reserved[RESERVED_SIZE];
+} GCC_PACKED;
+
+struct GF1LayerData
+{
+	BYTE LayerDuplicate;
+	BYTE Layer;
+	int  LayerSize;
+	BYTE Samples;
+	BYTE Reserved[LAYER_RESERVED_SIZE];
+} GCC_PACKED;
+
+struct GF1PatchData
+{
+	char  WaveName[7];
+	BYTE  Fractions;
+	int   WaveSize;
+	int   StartLoop;
+	int   EndLoop;
+	WORD  SampleRate;
+	int   LowFrequency;
+	int   HighFrequency;
+	int   RootFrequency;
+	SWORD Tune;
+	BYTE  Balance;
+	BYTE  EnvelopeRate[6];
+	BYTE  EnvelopeOffset[6];
+	BYTE  TremoloSweep;
+	BYTE  TremoloRate;
+	BYTE  TremoloDepth;
+	BYTE  VibratoSweep;
+	BYTE  VibratoRate;
+	BYTE  VibratoDepth;
+	BYTE  Modes;
+	SWORD ScaleFrequency;
+	WORD  ScaleFactor;		/* From 0 to 2048 or 0 to 2 */
+	BYTE  Reserved[PATCH_DATA_RESERVED_SIZE];
+} GCC_PACKED;
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+#undef GCC_PACKED
+
+enum
+{
+	INST_GUS,
+	INST_DLS
+};
 
 struct Instrument
 {
+	Instrument();
+	~Instrument();
+
 	int type;
 	int samples;
 	Sample *sample;
-	int left_samples;
-	Sample *left_sample;
-	int right_samples;
-	Sample *right_sample;
 };
-
-struct InstrumentLayer
-{
-	BYTE lo, hi;
-	Instrument *instrument;
-	InstrumentLayer *next;
-};
-
-struct cfg_type
-{
-	int font_code;
-	int num;
-	const char *name;
-};
-
-#define FONT_NORMAL		0
-#define FONT_FFF		1
-#define FONT_SBK		2
-#define FONT_TONESET	3
-#define FONT_DRUMSET	4
-#define FONT_PRESET		5
 
 struct ToneBankElement
 {
-	ToneBankElement() : layer(NULL), font_type(0), sf_ix(0), tuning(0),
+	ToneBankElement() :
 		note(0), amp(0), pan(0), strip_loop(0), strip_envelope(0), strip_tail(0)
 	{}
 
 	FString name;
-	InstrumentLayer *layer;
-	int font_type, sf_ix, tuning;
 	int note, amp, pan, strip_loop, strip_envelope, strip_tail;
 };
 
 /* A hack to delay instrument loading until after reading the
 entire MIDI file. */
-#define MAGIC_LOAD_INSTRUMENT ((InstrumentLayer *)(-1))
+#define MAGIC_LOAD_INSTRUMENT ((Instrument *)(-1))
 
-#define MAXPROG			128
-#define MAXBANK			130
-#define SFXBANK			(MAXBANK-1)
-#define SFXDRUM1		(MAXBANK-2)
-#define SFXDRUM2		(MAXBANK-1)
-#define XGDRUM			1
+enum
+{
+	MAXPROG				= 128,
+	MAXBANK				= 128
+};
 
 struct ToneBank
 {
-	FString name;
-	ToneBankElement tone[MAXPROG];
+	ToneBank();
+	~ToneBank();
+
+	ToneBankElement *tone;
+	Instrument *instrument[MAXPROG];
 };
 
 
-#define SPECIAL_PROGRAM -1
+#define SPECIAL_PROGRAM		-1
 
 extern void pcmap(int *b, int *v, int *p, int *drums);
 
@@ -341,60 +394,55 @@ playmidi.h
 */
 
 /* Midi events */
-#define ME_NOTEOFF			0x80
-#define ME_NOTEON			0x90
-#define ME_KEYPRESSURE		0xA0
-#define ME_CONTROLCHANGE	0xB0
-#define ME_PROGRAM			0xC0
-#define ME_CHANNELPRESSURE	0xD0
-#define ME_PITCHWHEEL		0xE0
+enum
+{
+	ME_NOTEOFF				= 0x80,
+	ME_NOTEON				= 0x90,
+	ME_KEYPRESSURE			= 0xA0,
+	ME_CONTROLCHANGE		= 0xB0,
+	ME_PROGRAM				= 0xC0,
+	ME_CHANNELPRESSURE		= 0xD0,
+	ME_PITCHWHEEL			= 0xE0
+};
 
 /* Controllers */
-#define CTRL_BANK_SELECT		0
-#define CTRL_DATA_ENTRY			6
-#define CTRL_VOLUME				7
-#define CTRL_PAN				10
-#define CTRL_EXPRESSION			11
-#define CTRL_SUSTAIN			64
-#define CTRL_HARMONICCONTENT	71
-#define CTRL_RELEASETIME		72
-#define CTRL_ATTACKTIME			73
-#define CTRL_BRIGHTNESS			74
-#define CTRL_REVERBERATION		91
-#define CTRL_CHORUSDEPTH		93
-#define CTRL_NRPN_LSB			98
-#define CTRL_NRPN_MSB			99
-#define CTRL_RPN_LSB			100
-#define CTRL_RPN_MSB			101
-#define CTRL_ALL_SOUNDS_OFF		120
-#define CTRL_RESET_CONTROLLERS	121
-#define CTRL_ALL_NOTES_OFF		123
-
-/* NRPNs */
-#define NRPN_BRIGHTNESS			0x00A0
-#define NRPN_HARMONICCONTENT	0x00A1
-#define NRPN_DRUMVOLUME			(26<<7)		// drum number in low 7 bits
-#define NRPN_DRUMPANPOT			(28<<7)		// "
-#define NRPN_DRUMREVERBERATION	(29<<7)		// "
-#define NRPN_DRUMCHORUSDEPTH	(30<<7)		// "
+enum
+{
+	CTRL_BANK_SELECT		= 0,
+	CTRL_DATA_ENTRY			= 6,
+	CTRL_VOLUME				= 7,
+	CTRL_PAN				= 10,
+	CTRL_EXPRESSION			= 11,
+	CTRL_SUSTAIN			= 64,
+	CTRL_HARMONICCONTENT	= 71,
+	CTRL_RELEASETIME		= 72,
+	CTRL_ATTACKTIME			= 73,
+	CTRL_BRIGHTNESS			= 74,
+	CTRL_REVERBERATION		= 91,
+	CTRL_CHORUSDEPTH		= 93,
+	CTRL_NRPN_LSB			= 98,
+	CTRL_NRPN_MSB			= 99,
+	CTRL_RPN_LSB			= 100,
+	CTRL_RPN_MSB			= 101,
+	CTRL_ALL_SOUNDS_OFF		= 120,
+	CTRL_RESET_CONTROLLERS	= 121,
+	CTRL_ALL_NOTES_OFF		= 123
+};
 
 /* RPNs */
-#define RPN_PITCH_SENS			0x0000
-#define RPN_FINE_TUNING			0x0001
-#define RPN_COARSE_TUNING		0x0002
-#define RPN_RESET				0x3fff
-
-#define SFX_BANKTYPE	64
+enum
+{
+	RPN_PITCH_SENS			= 0x0000,
+	RPN_FINE_TUNING			= 0x0001,
+	RPN_COARSE_TUNING		= 0x0002,
+	RPN_RESET				= 0x3fff
+};
 
 struct Channel
 {
 	int
 		bank, program, sustain, pitchbend, 
 		mono, /* one note only on this channel -- not implemented yet */
-		/* new stuff */
-		variationbank, reverberation, chorusdepth, harmoniccontent,
-		releasetime, attacktime, brightness, kit, sfx,
-		/* end new */
 		pitchsens;
 	WORD
 		volume, expression;
@@ -404,84 +452,71 @@ struct Channel
 		rpn, nrpn;
 	bool
 		nrpn_mode;
-	char
-		transpose;
 	float
 		pitchfactor; /* precomputed pitch bend factor to save some fdiv's */
 };
 
 /* Causes the instrument's default panning to be used. */
-#define NO_PANNING -1
+#define NO_PANNING				-1
 /* envelope points */
-#define MAXPOINT 7
+#define MAXPOINT				6
 
 struct Voice
 {
 	BYTE
-		status, channel, note, velocity, clone_type;
+		status, channel, note, velocity;
 	Sample *sample;
-	Sample *left_sample;
-	Sample *right_sample;
-	int clone_voice;
 	float
 		orig_frequency, frequency;
 	int
-		sample_offset, loop_start, loop_end;
-	int
-		envelope_volume, modulation_volume;
-	int
-		envelope_target, modulation_target;
-	int
-		tremolo_sweep, tremolo_sweep_position, tremolo_phase,
-		lfo_sweep, lfo_sweep_position, lfo_phase,
-		vibrato_sweep, vibrato_sweep_position, vibrato_depth,
-		echo_delay_count;
-	int
-		echo_delay,
-		sample_increment,
-		envelope_increment,
-		modulation_increment,
-		tremolo_phase_increment,
-		lfo_phase_increment;
+		sample_offset, sample_increment,
+		envelope_volume, envelope_target, envelope_increment,
+		tremolo_sweep, tremolo_sweep_position,
+		tremolo_phase, tremolo_phase_increment,
+		vibrato_sweep, vibrato_sweep_position;
 
 	final_volume_t left_mix, right_mix;
 
 	float
-		left_amp, right_amp,
-		volume, tremolo_volume, lfo_volume;
+		left_amp, right_amp, tremolo_volume;
 	int
 		vibrato_sample_increment[VIBRATO_SAMPLE_INCREMENTS];
 	int
-		envelope_rate[MAXPOINT], envelope_offset[MAXPOINT];
-	int
 		vibrato_phase, vibrato_control_ratio, vibrato_control_counter,
-		envelope_stage, modulation_stage, control_counter,
-		modulation_delay, modulation_counter, panning, panned;
+		envelope_stage, control_counter, panning, panned;
 
 };
 
 /* Voice status options: */
-#define VOICE_FREE 0
-#define VOICE_ON 1
-#define VOICE_SUSTAINED 2
-#define VOICE_OFF 3
-#define VOICE_DIE 4
+enum
+{
+	VOICE_FREE,
+	VOICE_ON,
+	VOICE_SUSTAINED,
+	VOICE_OFF,
+	VOICE_DIE
+};
 
 /* Voice panned options: */
-#define PANNED_MYSTERY 0
-#define PANNED_LEFT 1
-#define PANNED_RIGHT 2
-#define PANNED_CENTER 3
+enum
+{
+	PANNED_MYSTERY,
+	PANNED_LEFT,
+	PANNED_RIGHT,
+	PANNED_CENTER
+};
 /* Anything but PANNED_MYSTERY only uses the left volume */
 
 /* Envelope stages: */
-#define ATTACK 0
-#define HOLD 1
-#define DECAY 2
-#define RELEASE 3
-#define RELEASEB 4
-#define RELEASEC 5
-#define DELAY 6
+enum
+{
+	ATTACK,
+	HOLD,
+	DECAY,
+	RELEASE,
+	RELEASEB,
+	RELEASEC
+};
 
 #define ISDRUMCHANNEL(c) ((drumchannels & (1<<(c))))
 
@@ -498,9 +533,7 @@ tables.h
 
 #define sine(x)			(sin((2*PI/1024.0) * (x)))
 #define note_to_freq(x)	(float(8175.7989473096690661233836992789 * pow(2.0, (x) / 12.0)))
-#define calc_vol(x)	(pow(2.0,((x)*6.0 - 6.0)))
-
-#define XMAPMAX 800
+#define calc_vol(x)		(pow(2.0,((x)*6.0 - 6.0)))
 
 /*
 timidity.h
@@ -517,27 +550,16 @@ struct Renderer
 {
 	float rate;
 	DLS_Data *patches;
-	InstrumentLayer *default_instrument;
+	Instrument *default_instrument;
 	int default_program;
-	bool fast_decay;
 	int resample_buffer_size;
 	sample_t *resample_buffer;
 	Channel channel[16];
 	Voice voice[MAX_VOICES];
-	signed char drumvolume[MAXCHAN][MAXNOTE];
-	signed char drumpanpot[MAXCHAN][MAXNOTE];
-	signed char drumreverberation[MAXCHAN][MAXNOTE];
-	signed char drumchorusdepth[MAXCHAN][MAXNOTE];
 	int control_ratio, amp_with_poly;
 	int drumchannels;
 	int adjust_panning_immediately;
 	int voices;
-	int GM_System_On;
-	int XG_System_On;
-	int GS_System_On;
-	int XG_System_reverb_type;
-	int XG_System_chorus_type;
-	int XG_System_variation_type;
 	int lost_notes, cut_notes;
 
 	Renderer(float sample_rate);
@@ -558,10 +580,8 @@ struct Renderer
 	int convert_vibrato_rate(BYTE rate);
 
 	void recompute_amp(Voice *v);
-	int vc_alloc(int not_this_voice);
-	void kill_others(int voice);
-	void clone_voice(Instrument *ip, int v, int note, int vel, int clone_type, int variationbank);
-	void xremap(int *banknumpt, int *this_notept, int this_kit);
+	void kill_key_group(int voice);
+	float calculate_scaled_frequency(Sample *sample, int note);
 	void start_note(int chan, int note, int vel, int voice);
 
 	void note_on(int chan, int note, int vel);
@@ -579,7 +599,6 @@ struct Renderer
 	void reset_midi();
 
 	void select_sample(int voice, Instrument *instr, int vel);
-	void select_stereo_samples(int voice, InstrumentLayer *layer, int vel);
 	void recompute_freq(int voice);
 
 	void kill_note(int voice);

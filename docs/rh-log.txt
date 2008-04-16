@@ -1,3 +1,17 @@
+April 15, 2008
+- Added support for the GUS patch format's scale_frequency and scale_factor
+  parameters. These seem to be used primarily to restrict percussion
+  instruments to specific notes.
+- Changed note velocity to not use the volume curve in recompute_amp(), since
+  this sounds closer to TiMidity++, although I don't believe it's correct
+  MIDI behavior. Also changed expression so that it scales the channel volume
+  before going through the curve.
+- Reworked load_instrument to be less opaque.
+- Went through the TiMidity code and removed pretty much all of the SDL_mixer
+  extensions. The only exception would be kill_others(), which I reworked
+  into a kill_key_group() function, which should be useful for DLS
+  instruments in the future.
+
 April 15, 2008 (Changes by Graf Zahl)
 - Added translation support to multipatch textures. Not tested yet!
 - Added Martin Howe's morph weapon update.

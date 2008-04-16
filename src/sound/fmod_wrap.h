@@ -18,6 +18,7 @@ struct FMOD_CHANNELGROUP {};
 struct FMOD_SOUNDGROUP {};
 struct FMOD_REVERB {};
 struct FMOD_DSP {};
+struct FMOD_DSPCONNECTION {};
 struct FMOD_POLYGON {};
 struct FMOD_GEOMETRY {};
 struct FMOD_SYNCPOINT {};
@@ -39,6 +40,7 @@ namespace FMOD
 	class SoundGroup;
 	class Reverb;
 	class DSP;
+	class DSPConnection;
 	class Geometry;
 
 	/*
@@ -159,7 +161,7 @@ namespace FMOD
 												 
 		// System level DSP access.
 		  FMOD_RESULT getDSPHead             (DSP **dsp) { return FMOD_System_GetDSPHead(this, (FMOD_DSP **)dsp); }
-		  FMOD_RESULT addDSP                 (DSP *dsp) { return FMOD_System_AddDSP(this, (FMOD_DSP *)dsp); }
+		  FMOD_RESULT addDSP                 (DSP *dsp, DSPConnection **connection) { return FMOD_System_AddDSP(this, (FMOD_DSP *)dsp, (FMOD_DSPCONNECTION**)dsp); }
 		  FMOD_RESULT lockDSP                () { return FMOD_System_LockDSP(this); }
 		  FMOD_RESULT unlockDSP              () { return FMOD_System_UnlockDSP(this); }
 											   
@@ -277,8 +279,8 @@ namespace FMOD
 		  FMOD_RESULT getFrequency           (float *frequency) { return FMOD_Channel_GetFrequency(this, frequency); }
 		  FMOD_RESULT setPan                 (float pan) { return FMOD_Channel_SetPan(this, pan); }
 		  FMOD_RESULT getPan                 (float *pan) { return FMOD_Channel_GetPan(this, pan); }
-		  FMOD_RESULT setDelay               (unsigned int startdelay, unsigned int enddelay) { return FMOD_Channel_SetDelay(this, startdelay, enddelay); }
-		  FMOD_RESULT getDelay               (unsigned int *startdelay, unsigned int *enddelay) { return FMOD_Channel_GetDelay(this, startdelay, enddelay); }
+		  FMOD_RESULT setDelay               (FMOD_DELAYTYPE delaytype, unsigned int delayhi, unsigned int delaylo) { return FMOD_Channel_SetDelay(this, delaytype, delaylo, delayhi); }
+		  FMOD_RESULT getDelay               (FMOD_DELAYTYPE delaytype, unsigned int *delayhi, unsigned int *delaylo) { return FMOD_Channel_GetDelay(this, delaytype, delaylo, delayhi); }
 		  FMOD_RESULT setSpeakerMix          (float frontleft, float frontright, float center, float lfe, float backleft, float backright, float sideleft, float sideright) { return FMOD_Channel_SetSpeakerMix(this, frontleft, frontright, center, lfe, backleft, backright, sideleft, sideright); }
 		  FMOD_RESULT getSpeakerMix          (float *frontleft, float *frontright, float *center, float *lfe, float *backleft, float *backright, float *sideleft, float *sideright) { return FMOD_Channel_GetSpeakerMix(this, frontleft, frontright, center, lfe, backleft, backright, sideleft, sideright); }
 		  FMOD_RESULT setSpeakerLevels       (FMOD_SPEAKER speaker, float *levels, int numlevels) { return FMOD_Channel_SetSpeakerLevels(this, speaker, levels, numlevels); }
@@ -320,7 +322,7 @@ namespace FMOD
 
 		// DSP functionality only for channels playing sounds created with FMOD_SOFTWARE.
 		  FMOD_RESULT getDSPHead             (DSP **dsp) { return FMOD_Channel_GetDSPHead(this, (FMOD_DSP **)dsp); }
-		  FMOD_RESULT addDSP                 (DSP *dsp) { return FMOD_Channel_AddDSP(this, (FMOD_DSP *)dsp); }
+		  FMOD_RESULT addDSP                 (DSP *dsp, DSPConnection **connection) { return FMOD_Channel_AddDSP(this, (FMOD_DSP *)dsp, (FMOD_DSPCONNECTION **)connection); }
 
 		// Information only functions.
 		  FMOD_RESULT isPlaying              (bool *isplaying) { FMOD_BOOL b; FMOD_RESULT res = FMOD_Channel_IsPlaying(this, &b); *isplaying = b; return res; }
@@ -387,7 +389,7 @@ namespace FMOD
 
 		// DSP functionality only for channel groups playing sounds created with FMOD_SOFTWARE.
 		  FMOD_RESULT getDSPHead              (DSP **dsp) { return FMOD_ChannelGroup_GetDSPHead(this, (FMOD_DSP **)dsp); }
-		  FMOD_RESULT addDSP                  (DSP *dsp) { return FMOD_ChannelGroup_AddDSP(this, (FMOD_DSP *)dsp); }
+		  FMOD_RESULT addDSP                  (DSP *dsp, DSPConnection **connection) { return FMOD_ChannelGroup_AddDSP(this, (FMOD_DSP *)dsp, (FMOD_DSPCONNECTION **)connection); }
 
 		// Information only functions.
 		  FMOD_RESULT getName                 (char *name, int namelen) { return FMOD_ChannelGroup_GetName(this, name, namelen); }
@@ -452,22 +454,14 @@ namespace FMOD
 		  FMOD_RESULT getSystemObject        (System **system) { return FMOD_DSP_GetSystemObject(this, (FMOD_SYSTEM **)system); }
 
 		// Connection / disconnection / input and output enumeration.
-		  FMOD_RESULT addInput               (DSP *target) { return FMOD_DSP_AddInput(this, target); }
+		  FMOD_RESULT addInput               (DSP *target, DSPConnection **connection) { return FMOD_DSP_AddInput(this, target, (FMOD_DSPCONNECTION **)connection); }
 		  FMOD_RESULT disconnectFrom         (DSP *target) { return FMOD_DSP_DisconnectFrom(this, target); }
 		  FMOD_RESULT disconnectAll          (bool inputs, bool outputs) { return FMOD_DSP_DisconnectAll(this, inputs, outputs); }
 		  FMOD_RESULT remove                 () { return FMOD_DSP_Remove(this); }
 		  FMOD_RESULT getNumInputs           (int *numinputs) { return FMOD_DSP_GetNumInputs(this, numinputs); }
 		  FMOD_RESULT getNumOutputs          (int *numoutputs) { return FMOD_DSP_GetNumOutputs(this, numoutputs); }
-		  FMOD_RESULT getInput               (int index, DSP **input) { return FMOD_DSP_GetInput(this, index, (FMOD_DSP **)input); }
-		  FMOD_RESULT getOutput              (int index, DSP **output) { return FMOD_DSP_GetOutput(this, index, (FMOD_DSP **)output); }
-		  FMOD_RESULT setInputMix            (int index, float volume) { return FMOD_DSP_SetInputMix(this, index, volume); }
-		  FMOD_RESULT getInputMix            (int index, float *volume) { return FMOD_DSP_GetInputMix(this, index, volume); }
-		  FMOD_RESULT setInputLevels         (int index, FMOD_SPEAKER speaker, float *levels, int numlevels) { return FMOD_DSP_SetInputLevels(this, index, speaker, levels, numlevels); }
-		  FMOD_RESULT getInputLevels         (int index, FMOD_SPEAKER speaker, float *levels, int numlevels) { return FMOD_DSP_GetInputLevels(this, index, speaker, levels, numlevels); }
-		  FMOD_RESULT setOutputMix           (int index, float volume) { return FMOD_DSP_SetOutputMix(this, index, volume); }
-		  FMOD_RESULT getOutputMix           (int index, float *volume) { return FMOD_DSP_GetOutputMix(this, index, volume); }
-		  FMOD_RESULT setOutputLevels        (int index, FMOD_SPEAKER speaker, float *levels, int numlevels) { return FMOD_DSP_SetOutputLevels(this, index, speaker, levels, numlevels); }
-		  FMOD_RESULT getOutputLevels        (int index, FMOD_SPEAKER speaker, float *levels, int numlevels) { return FMOD_DSP_GetOutputLevels(this, index, speaker, levels, numlevels); }
+		  FMOD_RESULT getInput               (int index, DSP **input, DSPConnection **inputconnection) { return FMOD_DSP_GetInput(this, index, (FMOD_DSP **)input, (FMOD_DSPCONNECTION **)inputconnection); }
+		  FMOD_RESULT getOutput              (int index, DSP **output, DSPConnection **outputconnection) { return FMOD_DSP_GetOutput(this, index, (FMOD_DSP **)output, (FMOD_DSPCONNECTION **)outputconnection); }
 
 		// DSP unit control.
 		  FMOD_RESULT setActive              (bool active) { return FMOD_DSP_SetActive(this, active); }
@@ -488,11 +482,36 @@ namespace FMOD
 		  FMOD_RESULT getType                (FMOD_DSP_TYPE *type) { return FMOD_DSP_GetType(this, type); }
 		  FMOD_RESULT setDefaults            (float frequency, float volume, float pan, int priority) { return FMOD_DSP_SetDefaults(this, frequency, volume, pan, priority); }
 		  FMOD_RESULT getDefaults            (float *frequency, float *volume, float *pan, int *priority) { return FMOD_DSP_GetDefaults(this, frequency, volume, pan, priority) ;}
-												
+
 		// Userdata set/get.
 		  FMOD_RESULT setUserData            (void *userdata) { return FMOD_DSP_SetUserData(this, userdata); }
 		  FMOD_RESULT getUserData            (void **userdata) { return FMOD_DSP_GetUserData(this, userdata); }
 	};
+
+
+		/*
+			'DSPConnection' API
+		*/
+		class DSPConnection : FMOD_DSPCONNECTION
+		{
+		  private:
+
+			DSPConnection();    /* Constructor made private so user cannot statically instance a DSPConnection class.  
+								   Appropriate DSPConnection creation or retrieval function must be used. */
+
+		  public:
+
+			  FMOD_RESULT F_API getInput              (DSP **input) { return FMOD_DSPConnection_GetInput(this, (FMOD_DSP **)input); }
+			  FMOD_RESULT F_API getOutput             (DSP **output) { return FMOD_DSPConnection_GetOutput(this, (FMOD_DSP **)output); }
+			  FMOD_RESULT F_API setMix                (float volume) { return FMOD_DSPConnection_SetMix(this, volume); }
+			  FMOD_RESULT F_API getMix                (float *volume) { return FMOD_DSPConnection_GetMix(this, volume); }
+			  FMOD_RESULT F_API setLevels             (FMOD_SPEAKER speaker, float *levels, int numlevels) { return FMOD_DSPConnection_SetLevels(this, speaker, levels, numlevels); }
+			  FMOD_RESULT F_API getLevels             (FMOD_SPEAKER speaker, float *levels, int numlevels) { return FMOD_DSPConnection_GetLevels(this, speaker, levels, numlevels); }
+
+			// Userdata set/get.
+			  FMOD_RESULT F_API setUserData           (void *userdata) { return FMOD_DSPConnection_SetUserData(this, userdata); }
+			  FMOD_RESULT F_API getUserData           (void **userdata) { return FMOD_DSPConnection_GetUserData(this, userdata); }
+		};
 
 
 	/*

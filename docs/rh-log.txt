@@ -1,3 +1,10 @@
+April 16, 2008
+- Updated fmod_wrap.h for FMOD 4.14.
+- Set note velocity back to using a linear sounding volume curve, although
+  it's now used to scale channel volume and expression, so recompute_amp()
+  is still only doing one volume curve lookup.
+- Fixed: TimidityMIDIDevice caused a crash at the end of a non-looping song.
+
 April 16, 2008 (Changes by Graf Zahl)
 - Made translation support for multipatch textures operational.
 
@@ -9,7 +16,7 @@ April 15, 2008
   this sounds closer to TiMidity++, although I don't believe it's correct
   MIDI behavior. Also changed expression so that it scales the channel volume
   before going through the curve.
-- Reworked load_instrument to be less opaque.
+- Reworked load_instrument() to be less opaque.
 - Went through the TiMidity code and removed pretty much all of the SDL_mixer
   extensions. The only exception would be kill_others(), which I reworked
   into a kill_key_group() function, which should be useful for DLS

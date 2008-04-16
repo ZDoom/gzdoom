@@ -173,8 +173,8 @@ void Renderer::recompute_amp(Voice *v)
 	int panning = v->panning;
 	double vol = channel[chan].volume / 16383.f;
 	double expr = channel[chan].expression / 16383.f;
-	double vel = /*calc_vol*/(v->velocity / 127.f);
-	double tempamp = vel * calc_vol(vol * expr) * v->sample->volume;
+	double vel = v->velocity / 127.f;
+	double tempamp = calc_vol(vol * expr * vel) * v->sample->volume;
 
 	if (panning >= 0x1DBB && panning < 0x2244)
 	{

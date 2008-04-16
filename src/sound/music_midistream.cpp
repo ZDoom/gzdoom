@@ -655,11 +655,11 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 	{
 		InitialPlayback = false;
 		// Send the full master volume SysEx message.
-		events[0] = 0;							// dwDeltaTime
-		events[1] = 0;							// dwStreamID
-		events[2] = (MEVT_LONGMSG << 24) | 8;	// dwEvent
-		events[3] = 0x047f7ff0;					// dwParms[0]
-		events[4] = 0xf77f7f01;					// dwParms[1]
+		events[0] = 0;								// dwDeltaTime
+		events[1] = 0;								// dwStreamID
+		events[2] = (MEVT_LONGMSG << 24) | 8;		// dwEvent
+		events[3] = MAKE_ID(0xf0,0x7f,0x7f,0x04);	// dwParms[0]
+		events[4] = MAKE_ID(0x01,0x7f,0x7f,0xf7);	// dwParms[1]
 		events += 5;
 		DoInitialSetup();
 	}

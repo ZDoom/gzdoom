@@ -484,7 +484,7 @@ bool TimidityMIDIDevice::ServiceStream (void *buff, int numbytes)
 	memset(buff, 0, numbytes);
 
 	CritSec.Enter();
-	while (numsamples > 0)
+	while (Events != NULL && numsamples > 0)
 	{
 		double ticky = NextTickIn;
 		int tick_in = int(NextTickIn);

@@ -215,7 +215,7 @@ typedef struct fm_opl_f {
 	UINT32	eg_cnt;					/* global envelope generator counter	*/
 	UINT32	eg_timer;				/* global envelope generator counter works at frequency = chipclock/72 */
 	UINT32	eg_timer_add;			/* step of eg_timer						*/
-	UINT32	eg_timer_overflow;		/* envelope generator timer overlfows every 1 sample (on real chip) */
+	UINT32	eg_timer_overflow;		/* envelope generator timer overflows every 1 sample (on real chip) */
 
 	UINT32	fn_tab[1024];			/* fnumber->increment counter	*/
 

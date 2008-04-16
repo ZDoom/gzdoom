@@ -262,7 +262,7 @@ static const char *Enum_NameForNum(const FEnumList *list, int num)
 
 //==========================================================================
 //
-// The container for a FSOUND_STREAM.
+// The container for a streaming FMOD::Sound, for playing music.
 //
 //==========================================================================
 
@@ -270,15 +270,15 @@ class FMODStreamCapsule : public SoundStream
 {
 public:
 	FMODStreamCapsule(FMOD::Sound *stream, FMODSoundRenderer *owner)
-		: Owner(owner), Stream(NULL), Channel(NULL), DSP(NULL),
-		  UserData(NULL), Callback(NULL)
+		: Owner(owner), Stream(NULL), Channel(NULL),
+		  UserData(NULL), Callback(NULL), Ended(false)
 	{
 		SetStream(stream);
 	}
 
 	FMODStreamCapsule(void *udata, SoundStreamCallback callback, FMODSoundRenderer *owner)
-		: Owner(owner), Stream(NULL), Channel(NULL), DSP(NULL),
-		  UserData(udata), Callback(callback)
+		: Owner(owner), Stream(NULL), Channel(NULL),
+		  UserData(udata), Callback(callback), Ended(false)
 	{}
 
 	~FMODStreamCapsule()
@@ -332,11 +332,6 @@ public:
 		{
 			Channel->stop();
 			Channel = NULL;
-		}
-		if (DSP != NULL)
-		{
-			DSP->release();
-			DSP = NULL;
 		}
 	}
 
@@ -411,20 +406,16 @@ public:
 		FMODStreamCapsule *self;
 		
 		result = ((FMOD::Sound *)sound)->getUserData((void **)&self);
-		if (result != FMOD_OK || self == NULL || self->Callback == NULL)
+		if (result != FMOD_OK || self == NULL || self->Callback == NULL || self->Ended)
 		{
-			return FMOD_ERR_INVALID_PARAM;
-		}
-		if (self->Callback(self, data, datalen, self->UserData))
-		{
+			// Contrary to the docs, this return value is completely ignored.
 			return FMOD_OK;
 		}
-		else
+		if (!self->Callback(self, data, datalen, self->UserData))
 		{
-			self->Channel->stop();
-			// Contrary to the docs, this return value is completely ignored.
-			return FMOD_ERR_INVALID_PARAM;
+			self->Ended = true;
 		}
+		return FMOD_OK;
 	}
 
 	static FMOD_RESULT F_CALLBACK PCMSetPosCallback(FMOD_SOUND *sound, int subsound, unsigned int position, FMOD_TIMEUNIT postype)
@@ -438,9 +429,9 @@ private:
 	FMODSoundRenderer *Owner;
 	FMOD::Sound *Stream;
 	FMOD::Channel *Channel;
-	FMOD::DSP *DSP;
 	void *UserData;
 	SoundStreamCallback Callback;
+	bool Ended;
 };
 
 //==========================================================================

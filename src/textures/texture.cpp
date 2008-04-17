@@ -121,7 +121,7 @@ FTexture::FTexture ()
 : LeftOffset(0), TopOffset(0),
   WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
-  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bIsPatch(false),
+  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bIsPatch(false), bComplex(false),
   Rotations(0xFFFF), Width(0), Height(0), WidthMask(0), Native(NULL)
 {
 	*Name = 0;

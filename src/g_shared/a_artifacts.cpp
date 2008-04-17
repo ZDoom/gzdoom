@@ -535,6 +535,7 @@ void APowerStrength::InitEffect ()
 void APowerStrength::Tick ()
 {
 	// Strength counts up to diminish the fade.
+	assert(EffectTics < (INT_MAX - 1)); // I can't see a game lasting nearly two years, but...
 	EffectTics += 2;
 	Super::Tick();
 }
@@ -998,6 +999,7 @@ void APowerFlight::Tick ()
 	// The Wings of Wrath only expire in multiplayer and non-hub games
 	if (!multiplayer && (level.flags & LEVEL_INFINITE_FLIGHT))
 	{
+		assert(EffectTics < INT_MAX); // I can't see a game lasting nearly two years, but...
 		EffectTics++;
 	}
 

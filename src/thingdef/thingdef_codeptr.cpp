@@ -313,7 +313,7 @@ void A_PlaySoundEx (AActor *self)
 
 	int soundid = StateParameters[index];
 	ENamedName channel = ENamedName(StateParameters[index + 1]);
-	INTBOOL looping = StateParameters[index + 2];
+	INTBOOL looping = EvalExpressionI(StateParameters[index + 2], self);
 	int attenuation_raw = EvalExpressionI(StateParameters[index + 3], self);
 
 	int attenuation;

@@ -1,3 +1,7 @@
+April 17, 2008 (Changes by Graf Zahl)
+- Added Martin Howe's fixes for morphing and DECORATE function prototypes.
+- Minor fixes in texture code.
+
 April 16, 2008
 - Fixed: The FMOD::System object was never released, only closed, so
   snd_reset would eventually run into the hard limit on the total number

@@ -42,6 +42,7 @@ struct FCopyInfo;
 
 class FBitmap
 {
+protected:
 	BYTE *data;
 	int Width;
 	int Height;
@@ -105,6 +106,11 @@ public:
 	}
 
 	const BYTE *GetPixels() const
+	{
+		return data;
+	}
+
+	BYTE *GetPixels()
 	{
 		return data;
 	}

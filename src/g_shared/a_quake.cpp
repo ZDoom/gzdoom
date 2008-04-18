@@ -79,8 +79,9 @@ void DEarthquake::Tick ()
 	}
 
 	if (!S_IsActorPlayingSomething (m_Spot, CHAN_BODY, m_QuakeSFX))
-		S_SoundID (m_Spot, CHAN_BODY, m_QuakeSFX, 1, ATTN_NORM);
-
+	{
+		S_SoundID (m_Spot, CHAN_BODY | CHAN_LOOP, m_QuakeSFX, 1, ATTN_NORM);
+	}
 	if (m_DamageRadius > 0)
 	{
 		for (i = 0; i < MAXPLAYERS; i++)
@@ -107,7 +108,11 @@ void DEarthquake::Tick ()
 	}
 	if (--m_Countdown == 0)
 	{
-		Destroy ();
+		if (S_IsActorPlayingSomething(m_Spot, CHAN_BODY, m_QuakeSFX))
+		{
+			S_StopSound(m_Spot, CHAN_BODY);
+		}
+		Destroy();
 	}
 }
 

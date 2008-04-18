@@ -1,3 +1,9 @@
+April 17, 2008
+- Fixed: The music stream needs to zero the FMOD_REVERB_CHANNELPROPERTIES
+  before sending it to Channel::getReverbProperties().
+- Fixed: The earthquake effect did not play its sound as an actual looping
+  sound. I'm a bit surprised this only recently started causing problems.
+
 April 17, 2008 (Changes by Graf Zahl)
 - Added Martin Howe's fixes for morphing and DECORATE function prototypes.
 - Minor fixes in texture code.

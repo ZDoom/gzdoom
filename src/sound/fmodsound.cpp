@@ -314,7 +314,7 @@ public:
 		Channel->setSpeakerMix(1, 1, 1, 1, 1, 1, 1, 1);
 		Channel->setVolume(volume);
 		// Ensure reverb is disabled.
-		FMOD_REVERB_CHANNELPROPERTIES reverb;
+		FMOD_REVERB_CHANNELPROPERTIES reverb = { 0, };
 		if (FMOD_OK == Channel->getReverbProperties(&reverb))
 		{
 			reverb.Room = -10000;

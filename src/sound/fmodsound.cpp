@@ -72,7 +72,6 @@ extern HWND Window;
 
 #define SPECTRUM_SIZE				256
 
-
 // TYPES -------------------------------------------------------------------
 
 struct FEnumList

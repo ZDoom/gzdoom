@@ -82,8 +82,8 @@ void apply_envelope_to_amp(Voice *v)
 		env_vol *= v->envelope_volume / float(1 << 30);
 	}
 	// Note: The pan offsets are negative.
-	v->left_mix = (float)calc_gf1_amp(env_vol + v->left_offset) * final_amp;
-	v->right_mix = (float)calc_gf1_amp(env_vol + v->right_offset) * final_amp;
+	v->left_mix = MAX(0.f, (float)calc_gf1_amp(env_vol + v->left_offset) * final_amp);
+	v->right_mix = MAX(0.f, (float)calc_gf1_amp(env_vol + v->right_offset) * final_amp);
 }
 
 static int update_envelope(Voice *v)
@@ -440,7 +440,7 @@ void mix_voice(Renderer *song, float *buf, Voice *v, int c)
 		{
 			return;
 		}
-		if (v->left_offset == 0)		// All the way to the left
+		if (v->right_mix == 0)			// All the way to the left
 		{
 			if (v->envelope_increment != 0 || v->tremolo_phase_increment != 0)
 			{
@@ -451,7 +451,7 @@ void mix_voice(Renderer *song, float *buf, Voice *v, int c)
 				mix_single_left(sp, buf, v, count);
 			}
 		}
-		else if (v->right_offset == 0)	// All the way to the right
+		else if (v->left_mix == 0)		// All the way to the right
 		{
 			if (v->envelope_increment != 0 || v->tremolo_phase_increment != 0)
 			{

@@ -150,7 +150,7 @@ void MUSSong2::DoInitialSetup()
 {
 	for (int i = 0; i < 16; ++i)
 	{
-		LastVelocity[i] = 64;
+		LastVelocity[i] = 100;
 		ChannelVolumes[i] = 127;
 	}
 }
@@ -340,7 +340,18 @@ end:
 
 MusInfo *MUSSong2::GetOPLDumper(const char *filename)
 {
-	return new MUSSong2(this, filename);
+	return new MUSSong2(this, filename, MIDI_OPL);
+}
+
+//==========================================================================
+//
+// MUSSong2 :: GetWaveDumper
+//
+//==========================================================================
+
+MusInfo *MUSSong2::GetWaveDumper(const char *filename, int rate)
+{
+	return new MUSSong2(this, filename, MIDI_Timidity);
 }
 
 //==========================================================================
@@ -349,8 +360,8 @@ MusInfo *MUSSong2::GetOPLDumper(const char *filename)
 //
 //==========================================================================
 
-MUSSong2::MUSSong2(const MUSSong2 *original, const char *filename)
-: MIDIStreamer(filename)
+MUSSong2::MUSSong2(const MUSSong2 *original, const char *filename, EMIDIDevice type)
+: MIDIStreamer(filename, type)
 {
 	int songstart = LittleShort(original->MusHeader->SongStart);
 	MaxMusP = original->MaxMusP;

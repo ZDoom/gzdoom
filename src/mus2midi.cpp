@@ -33,10 +33,7 @@
 ** MUS files are essentially format 0 MIDI files with some
 ** space-saving modifications. Conversion is quite straight-forward.
 ** If you were to hook a main() into this that calls ProduceMIDI,
-** you could create a self-contained MUS->MIDI converter. However, if
-** you want to do that, you would be better off using qmus2mid, since
-** it creates multitrack files that usually maintain running status
-** better than single track files and are thus smaller.
+** you could create a self-contained MUS->MIDI converter.
 */
 
 
@@ -52,9 +49,7 @@ static const BYTE StaticMIDIhead[] =
 0, 70, // 70 divisions
 'M','T','r','k', 0, 0, 0, 0,
 // The first event sets the tempo to 500,000 microsec/quarter note
-0, 255, 81, 3, 0x07, 0xa1, 0x20,
-// Set the percussion channel to full volume
-0, 0xB9, 7, 127
+0, 255, 81, 3, 0x07, 0xa1, 0x20
 };
 
 static const BYTE MUSMagic[4] = { 'M','U','S',0x1a };
@@ -122,9 +117,8 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 	int deltaTime;
 	const MUSHeader *musHead = (const MUSHeader *)musBuf;
 	BYTE status;
+	BYTE chanUsed[16];
 	BYTE lastVel[16];
-	SBYTE chanMap[16];
-	int chanCount;
 	long trackLen;
 	
 	// Do some validation of the MUS file
@@ -143,10 +137,8 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 	maxmus_p = LittleShort(musHead->SongLen);
 	mus_p = 0;
 	
-	memset (lastVel, 64, 16);
-	memset (chanMap, -1, 15);
-	chanMap[15] = 9;
-	chanCount = 0;
+	memset (lastVel, 100, 16);
+	memset (chanUsed, 0, 16);
 	event = 0;
 	deltaTime = 0;
 	status = 0;
@@ -163,21 +155,27 @@ bool ProduceMIDI (const BYTE *musBuf, TArray<BYTE> &outFile)
 			t = musBuf[mus_p++];
 		}
 		channel = event & 15;
+		if (channel == 15)
+		{
+			channel = 9;
+		}
+		else if (channel >= 9)
+		{
+			channel++;
+		}
 		
-		if (chanMap[channel] < 0)
+		if (!chanUsed[channel])
 		{
 			// This is the first time this channel has been used,
 			// so sets its volume to 127.
+			chanUsed[channel] = 1;
 			outFile.Push(0);
-			outFile.Push(0xB0 | chanCount);
+			outFile.Push(0xB0 | channel);
 			outFile.Push(7);
 			outFile.Push(127);
-			chanMap[channel] = chanCount++;
-			if (chanCount == 9)
-				++chanCount;
 		}
 		
-		midStatus = channel = chanMap[channel];
+		midStatus = channel;
 		midArgs = 0;		// Most events have two args (0 means 2, 1 means 1)
 		
 		switch (event & 0x70)

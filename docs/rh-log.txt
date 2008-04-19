@@ -1,3 +1,12 @@
+April 19, 2008
+- Added the writewave command to write the internal TiMidity's output to a
+  wave file.
+- Changed the default channel velocity for MUS files from 64 to 100 to
+  better match apparent MIDI practice. (Would like to know what this is
+  supposed to be.)
+- Changed the mus2midi channel assignments to match the internal player's.
+- Fixed: apply_envelope_to_amp() should clamp the mix levels to 0.
+
 April 18, 2008
 - Made the maximum number of TiMidity voices configurable through the
   timidity_voices cvar.

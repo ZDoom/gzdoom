@@ -49,6 +49,7 @@ public:
 	virtual void Update();
 	virtual FString GetStats();
 	virtual MusInfo *GetOPLDumper(const char *filename);
+	virtual MusInfo *GetWaveDumper(const char *filename, int rate);
 
 	enum EState
 	{
@@ -225,6 +226,7 @@ class TimidityMIDIDevice : public MIDIDevice
 {
 public:
 	TimidityMIDIDevice();
+	TimidityMIDIDevice(int rate);
 	~TimidityMIDIDevice();
 
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
@@ -268,6 +270,20 @@ protected:
 	DWORD Position;
 };
 
+// Internal TiMidity disk writing version of a MIDI device ------------------
+
+class TimidityWaveWriterMIDIDevice : public TimidityMIDIDevice
+{
+public:
+	TimidityWaveWriterMIDIDevice(const char *filename, int rate);
+	~TimidityWaveWriterMIDIDevice();
+	int Resume();
+	void Stop();
+
+protected:
+	FILE *File;
+};
+
 // Base class for streaming MUS and MIDI files ------------------------------
 
 // MIDI device selection.
@@ -297,7 +313,7 @@ public:
 	FString GetStats();
 
 protected:
-	MIDIStreamer(const char *dumpname);
+	MIDIStreamer(const char *dumpname, EMIDIDevice type);
 
 	void OutputVolume (DWORD volume);
 	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
@@ -363,9 +379,10 @@ public:
 	~MUSSong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
+	MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
-	MUSSong2(const MUSSong2 *original, const char *filename);	//OPL dump constructor
+	MUSSong2(const MUSSong2 *original, const char *filename, EMIDIDevice type);	// file dump constructor
 
 	void DoInitialSetup();
 	void DoRestart();
@@ -388,9 +405,10 @@ public:
 	~MIDISong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
+	MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
-	MIDISong2(const MIDISong2 *original, const char *filename);	// OPL dump constructor
+	MIDISong2(const MIDISong2 *original, const char *filename, EMIDIDevice type);	// file dump constructor
 
 	void CheckCaps();
 	void DoInitialSetup();

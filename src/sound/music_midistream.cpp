@@ -97,12 +97,12 @@ MIDIStreamer::MIDIStreamer(EMIDIDevice type)
 //
 //==========================================================================
 
-MIDIStreamer::MIDIStreamer(const char *dumpname)
+MIDIStreamer::MIDIStreamer(const char *dumpname, EMIDIDevice type)
 :
 #ifdef _WIN32
   PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
 #endif
-  MIDI(0), Division(0), InitialTempo(500000), DeviceType(MIDI_OPL), DumpFilename(dumpname)
+  MIDI(0), Division(0), InitialTempo(500000), DeviceType(type), DumpFilename(dumpname)
 {
 #ifdef _WIN32
 	BufferDoneEvent = NULL;
@@ -196,7 +196,14 @@ void MIDIStreamer::Play(bool looping)
 	assert(MIDI == NULL);
 	if (DumpFilename.IsNotEmpty())
 	{
-		MIDI = new OPLDumperMIDIDevice(DumpFilename);
+		if (DeviceType == MIDI_OPL)
+		{
+			MIDI = new OPLDumperMIDIDevice(DumpFilename);
+		}
+		else if (DeviceType == MIDI_Timidity)
+		{
+			MIDI = new TimidityWaveWriterMIDIDevice(DumpFilename, 0);
+		}
 	}
 	else switch(DeviceType)
 	{

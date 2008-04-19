@@ -891,17 +891,28 @@ void MIDISong2::Precache()
 
 MusInfo *MIDISong2::GetOPLDumper(const char *filename)
 {
-	return new MIDISong2(this, filename);
+	return new MIDISong2(this, filename, MIDI_OPL);
 }
 
 //==========================================================================
 //
-// MIDISong2 OPL Dumping Constructor
+// MIDISong2 :: GetWaveDumper
 //
 //==========================================================================
 
-MIDISong2::MIDISong2(const MIDISong2 *original, const char *filename)
-: MIDIStreamer(filename)
+MusInfo *MIDISong2::GetWaveDumper(const char *filename, int rate)
+{
+	return new MIDISong2(this, filename, MIDI_Timidity);
+}
+
+//==========================================================================
+//
+// MIDISong2 File Dumping Constructor
+//
+//==========================================================================
+
+MIDISong2::MIDISong2(const MIDISong2 *original, const char *filename, EMIDIDevice type)
+: MIDIStreamer(filename, type)
 {
 	SongLen = original->SongLen;
 	MusHeader = new BYTE[original->SongLen];

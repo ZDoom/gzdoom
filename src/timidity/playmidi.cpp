@@ -215,6 +215,17 @@ void Renderer::recompute_amp(Voice *v)
 
 void Renderer::compute_pan(int panning, float &left_offset, float &right_offset)
 {
+	// Round the left- and right-most positions to their extremes, since
+	// most songs only do coarse panning.
+	if (panning < 128)
+	{
+		panning = 0;
+	}
+	else if (panning > 127*128)
+	{
+		panning = 32767;
+	}
+
 	if (panning == 0)
 	{
 		left_offset = 0;
@@ -355,6 +366,12 @@ void Renderer::kill_note(int i)
 /* Only one instance of a note can be playing on a single channel. */
 void Renderer::note_on(int chan, int note, int vel)
 {
+	if (vel == 0)
+	{
+		note_off(chan, note, 0);
+		return;
+	}
+
 	int i = voices, lowest = -1; 
 	float lv = 1e10, v;
 
@@ -574,14 +591,7 @@ void Renderer::HandleEvent(int status, int parm1, int parm2)
 	switch (command)
 	{
 	case ME_NOTEON:
-		if (parm2 == 0)
-		{
-			note_off(chan, parm1, 0);
-		}
-		else
-		{
-			note_on(chan, parm1, parm2);
-		}
+		note_on(chan, parm1, parm2);
 		break;
 
 	case ME_NOTEOFF:

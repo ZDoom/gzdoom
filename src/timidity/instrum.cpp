@@ -348,6 +348,10 @@ fail:
 		{
 			sp->scale_note = LittleShort(patch_data.ScaleFrequency);
 			sp->scale_factor = LittleShort(patch_data.ScaleFactor);
+			if (sp->scale_factor <= 2)
+			{
+				sp->scale_factor *= 1024;
+			}
 			if (sp->scale_factor != 1024)
 			{
 				cmsg(CMSG_INFO, VERB_DEBUG, " * Scale: note %d, factor %d\n",

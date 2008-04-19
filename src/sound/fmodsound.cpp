@@ -476,6 +476,8 @@ bool FMODSoundRenderer::Init()
 	SfxGroup = NULL;
 	PausableSfx = NULL;
 	PrevEnvironment = DefaultEnvironments[0];
+	DSPClockLo = 0;
+	DSPClockHi = 0;
 
 	Printf("I_InitSound: Initializing FMOD\n");
 
@@ -728,6 +730,10 @@ bool FMODSoundRenderer::Init()
 		Printf(TEXTCOLOR_BLUE"  Could not register SPC codec. (Error %d)\n", result);
 	}
 
+	if (FMOD_OK != Sys->getSoftwareFormat(&OutputRate, NULL, NULL, NULL, NULL, NULL))
+	{
+		OutputRate = 48000;		// Guess, but this should never happen.
+	}
 	Sys->set3DSettings(0.5f, 96.f, 1.f);
 	Sys->set3DRolloffCallback(RolloffCallback);
 	snd_sfxvolume.Callback ();
@@ -788,13 +794,7 @@ void FMODSoundRenderer::Shutdown()
 
 float FMODSoundRenderer::GetOutputRate()
 {
-	int rate;
-
-	if (FMOD_OK == Sys->getSoftwareFormat(&rate, NULL, NULL, NULL, NULL, NULL))
-	{
-		return float(rate);
-	}
-	return 48000.f;		// Guess, but this should never happen.
+	return (float)OutputRate;
 }
 
 //==========================================================================
@@ -1223,6 +1223,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 		}
 		chan->setVolume(vol);
 		chan->set3DAttributes((FMOD_VECTOR *)pos, (FMOD_VECTOR *)vel);
+		chan->setDelay(FMOD_DELAYTYPE_DSPCLOCK_START, DSPClockHi, DSPClockLo);
 		chan->setPaused(false);
 		FSoundChan *schan = CommonChannelSetup(chan);
 		schan->DistanceScale = distscale;
@@ -1255,9 +1256,9 @@ FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t 
 	cpos[1] = FIXED2FLOAT(players[consoleplayer].camera->z);
 	if (chanflags & CHAN_AREA)
 	{
-		const double interp_range = 512.0;
+		const double interp_range = 256.0;
 		double dx = cpos[0] - pos[0], dy = cpos[1] - pos[1], dz = cpos[2] - pos[2];
-		double min_dist = sfx->MinDistance == 0 ? (S_MinDistance == 0 ? 200 : S_MinDistance) : sfx->MinDistance;
+		double min_dist = sfx->MinDistance == 0 ? (S_MinDistance == 0 ? 150 : S_MinDistance * 0.75) : sfx->MinDistance;
 		double dist_sqr = dx*dx + dy*dy + dz*dz;
 		float level, old_level;
 
@@ -1397,9 +1398,10 @@ void FMODSoundRenderer::UpdateListener()
 		return;
 	}
 
-	vel.x = listener->momx * (TICRATE/65536.f);
-	vel.y = listener->momz * (TICRATE/65536.f);
-	vel.z = listener->momy * (TICRATE/65536.f);
+	// Set velocity to 0 to prevent crazy doppler shifts just from running.
+	vel.x = 0;//listener->momx * (TICRATE/65536.f);
+	vel.y = 0;//listener->momz * (TICRATE/65536.f);
+	vel.z = 0;//listener->momy * (TICRATE/65536.f);
 	pos.x = listener->x / 65536.f;
 	pos.y = listener->z / 65536.f;
 	pos.z = listener->y / 65536.f;
@@ -1455,6 +1457,11 @@ void FMODSoundRenderer::UpdateListener()
 
 void FMODSoundRenderer::UpdateSounds()
 {
+	// Any sounds played between now and the next call to this function
+	// will start exactly one tic from now.
+	Sys->getDSPClock(&DSPClockHi, &DSPClockLo);
+	FMOD_64BIT_ADD(DSPClockHi, DSPClockLo, 0, OutputRate / TICRATE);
+
 	Sys->update();
 }
 

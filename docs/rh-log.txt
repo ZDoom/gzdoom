@@ -1,4 +1,11 @@
 April 19, 2008
+- Reduced the range that area sounds require to interpolate between 2D and
+  3D panning.
+- The listener's velocity is now set at 0 for the sound engine. The player
+  moves so fast that you can hear the doppler shift just by running around,
+  otherwise.
+- Changed the sound code so that all sounds that start playing on a single
+  tic actually start playing at the exact same sample position.
 - Added the writewave command to write the internal TiMidity's output to a
   wave file.
 - Changed the default channel velocity for MUS files from 64 to 100 to

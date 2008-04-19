@@ -101,6 +101,7 @@ struct FSoundChan
 	BYTE		EntChannel;	// Actor's sound channel.
 	int			ChanFlags;
 };
+extern FSoundChan *Channels;
 
 FSoundChan *S_GetChannel(void *syschan);
 void S_ReturnChannel(FSoundChan *chan);

@@ -54,6 +54,9 @@ public:
 private:
 	bool SFXPaused;
 	bool InitSuccess;
+	unsigned int DSPClockLo;
+	unsigned int DSPClockHi;
+	int OutputRate;
 
 	static FMOD_RESULT F_CALLBACK ChannelEndCallback
 		(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, int cmd, unsigned int data1, unsigned int data2);

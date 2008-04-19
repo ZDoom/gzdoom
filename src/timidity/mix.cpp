@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #include "timidity.h"
+#include "templates.h"
 
 namespace Timidity
 {

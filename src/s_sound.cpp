@@ -827,7 +827,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 		chan->X = x;
 		chan->Y = y;
 		chan->Z = z;
-		chan->ChanFlags = chanflags;
+		chan->ChanFlags |= chanflags;
 		if (mover != NULL)
 		{
 			mover->SoundChans |= 1 << channel;

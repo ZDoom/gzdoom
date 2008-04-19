@@ -1,3 +1,8 @@
+April 18, 2008 (Changes by Graf Zahl)
+- Fixed: FBlockThingsIterator didn't set the current block coordinates if
+  they were outside the blockmap. This could cause extreme delays if an
+  iteration started outside the valid boundaries.
+
 April 17, 2008
 - Fixed: The music stream needs to zero the FMOD_REVERB_CHANNELPROPERTIES
   before sending it to Channel::getReverbProperties().

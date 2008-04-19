@@ -1008,8 +1008,6 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 	tm.x = x;
 	tm.y = y;
 
-	FBoundingBox box(x, y, thing->radius);
-
 	newsec = P_PointInSector (x,y);
 	tm.ceilingline = thing->BlockingLine = NULL;
 	
@@ -1047,51 +1045,54 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 	}
 
 	tm.stepthing = NULL;
+	FBoundingBox box(x, y, thing->radius);
 
-	FBlockThingsIterator it2(FBoundingBox(x, y, thing->radius));
-	AActor *th;
-	while ((th = it2.Next()))
 	{
-		if (!PIT_CheckThing(th, tm))
-		{ // [RH] If a thing can be stepped up on, we need to continue checking
-		  // other things in the blocks and see if we hit something that is
-		  // definitely blocking. Otherwise, we need to check the lines, or we
-		  // could end up stuck inside a wall.
-			AActor *BlockingMobj = thing->BlockingMobj;
+		FBlockThingsIterator it2(box);
+		AActor *th;
+		while ((th = it2.Next()))
+		{
+			if (!PIT_CheckThing(th, tm))
+			{ // [RH] If a thing can be stepped up on, we need to continue checking
+			  // other things in the blocks and see if we hit something that is
+			  // definitely blocking. Otherwise, we need to check the lines, or we
+			  // could end up stuck inside a wall.
+				AActor *BlockingMobj = thing->BlockingMobj;
 
-			if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ))
-			{ // Thing slammed into something; don't let it move now.
-				thing->height = realheight;
-				return false;
-			}
-			else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY)) &&
-				BlockingMobj->z+BlockingMobj->height-thing->z <= thing->MaxStepHeight)
-			{
-				if (thingblocker == NULL ||
-					BlockingMobj->z > thingblocker->z)
-				{
-					thingblocker = BlockingMobj;
-				}
-				thing->BlockingMobj = NULL;
-			}
-			else if (thing->player &&
-				thing->z + thing->height - BlockingMobj->z <= thing->MaxStepHeight)
-			{
-				if (thingblocker)
-				{ // There is something to step up on. Return this thing as
-				  // the blocker so that we don't step up.
+				if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ))
+				{ // Thing slammed into something; don't let it move now.
 					thing->height = realheight;
 					return false;
 				}
-				// Nothing is blocking us, but this actor potentially could
-				// if there is something else to step on.
-				fakedblocker = BlockingMobj;
-				thing->BlockingMobj = NULL;
-			}
-			else
-			{ // Definitely blocking
-				thing->height = realheight;
-				return false;
+				else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY)) &&
+					BlockingMobj->z+BlockingMobj->height-thing->z <= thing->MaxStepHeight)
+				{
+					if (thingblocker == NULL ||
+						BlockingMobj->z > thingblocker->z)
+					{
+						thingblocker = BlockingMobj;
+					}
+					thing->BlockingMobj = NULL;
+				}
+				else if (thing->player &&
+					thing->z + thing->height - BlockingMobj->z <= thing->MaxStepHeight)
+				{
+					if (thingblocker)
+					{ // There is something to step up on. Return this thing as
+					  // the blocker so that we don't step up.
+						thing->height = realheight;
+						return false;
+					}
+					// Nothing is blocking us, but this actor potentially could
+					// if there is something else to step on.
+					fakedblocker = BlockingMobj;
+					thing->BlockingMobj = NULL;
+				}
+				else
+				{ // Definitely blocking
+					thing->height = realheight;
+					return false;
+				}
 			}
 		}
 	}

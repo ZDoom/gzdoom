@@ -841,3 +841,45 @@ CCMD(thaw)
 	Net_WriteByte (DEM_GENERICCHEAT);
 	Net_WriteByte (CHT_CLEARFROZENPROPS);
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(nextmap)
+{
+	char * next=NULL;
+	
+	if (*level.nextmap) next = level.nextmap;
+
+	if (next != NULL && strncmp(next, "enDSeQ", 6))
+	{
+		G_InitNew(next, false);
+	}
+	else
+	{
+		Printf("no next map!\n");
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(nextsecret)
+{
+	char * next=NULL;
+	
+	if (*level.secretmap) next = level.secretmap;
+
+	if (next != NULL && strncmp(next, "enDSeQ", 6))
+	{
+		G_InitNew(next, false);
+	}
+	else
+	{
+		Printf("no next secret map!\n");
+	}
+}

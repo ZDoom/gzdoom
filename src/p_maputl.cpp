@@ -804,10 +804,10 @@ FBlockThingsIterator::~FBlockThingsIterator()
 
 void FBlockThingsIterator::StartBlock(int x, int y) 
 { 
+	curx = x; 
+	cury = y; 
 	if (x >= 0 && y >= 0 && x < bmapwidth && y <bmapheight)
 	{
-		curx = x; 
-		cury = y; 
 		block = blocklinks[y*bmapwidth + x];
 	}
 	else

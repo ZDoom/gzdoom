@@ -721,6 +721,21 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, DWORD max_time)
 
 //==========================================================================
 //
+// MIDIStreamer :: GetStats
+//
+//==========================================================================
+
+FString MIDIStreamer::GetStats()
+{
+	if (MIDI == NULL)
+	{
+		return "No MIDI device in use.";
+	}
+	return MIDI->GetStats();
+}
+
+//==========================================================================
+//
 // MIDIDevice stubs.
 //
 //==========================================================================
@@ -751,4 +766,25 @@ MIDIDevice::~MIDIDevice()
 
 void MIDIDevice::PrecacheInstruments(const WORD *instruments, int count)
 {
+}
+
+//==========================================================================
+//
+// MIDIDevice :: TimidityVolumeChanged
+//
+//==========================================================================
+
+void MIDIDevice::TimidityVolumeChanged()
+{
+}
+
+//==========================================================================
+//
+// MIDIDevice :: GetStats
+//
+//==========================================================================
+
+FString MIDIDevice::GetStats()
+{
+	return "This MIDI device does not have any stats.";
 }

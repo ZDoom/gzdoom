@@ -43,10 +43,6 @@ config.h
 #define DEFAULT_DRUMCHANNELS		(1<<9)
 /*#define DEFAULT_DRUMCHANNELS		((1<<9) | (1<<15))*/
 
-/* Default polyphony, and maximum polyphony. */
-#define DEFAULT_VOICES				32
-#define MAX_VOICES					256
-
 #define MAXCHAN						16
 #define MAXNOTE						128
 
@@ -54,6 +50,10 @@ config.h
    Higher CONTROLS_PER_SECOND values allow more accurate rendering
    of envelopes and tremolo. The cost is CPU time. */
 #define CONTROLS_PER_SECOND			1000
+
+/* A scalar applied to the final mix to try and approximate the
+   volume level of FMOD's built-in MIDI player. */
+#define FINAL_MIX_SCALE				0.5f
 
 /* How many bits to use for the fractional part of sample positions.
    This affects tonal accuracy. The entire position counter must fit
@@ -228,6 +228,8 @@ struct Sample
 		self_nonexclusive;
 	BYTE
 		key_group;
+	float
+		left_offset, right_offset;
 };
 
 void convert_sample_data(Sample *sample, const void *data);
@@ -454,6 +456,8 @@ struct Channel
 		nrpn_mode;
 	float
 		pitchfactor; /* precomputed pitch bend factor to save some fdiv's */
+	float
+		left_offset, right_offset;	/* precomputed panning values */
 };
 
 /* Causes the instrument's default panning to be used. */
@@ -478,12 +482,14 @@ struct Voice
 	final_volume_t left_mix, right_mix;
 
 	float
-		left_amp, right_amp, tremolo_volume;
+		attenuation, left_offset, right_offset;
+	float
+		tremolo_volume;
 	int
 		vibrato_sample_increment[VIBRATO_SAMPLE_INCREMENTS];
 	int
 		vibrato_phase, vibrato_control_ratio, vibrato_control_counter,
-		envelope_stage, control_counter, panning, panned;
+		envelope_stage, control_counter;
 
 };
 
@@ -496,16 +502,6 @@ enum
 	VOICE_OFF,
 	VOICE_DIE
 };
-
-/* Voice panned options: */
-enum
-{
-	PANNED_MYSTERY,
-	PANNED_LEFT,
-	PANNED_RIGHT,
-	PANNED_CENTER
-};
-/* Anything but PANNED_MYSTERY only uses the left volume */
 
 /* Envelope stages: */
 enum
@@ -533,7 +529,8 @@ tables.h
 
 #define sine(x)			(sin((2*PI/1024.0) * (x)))
 #define note_to_freq(x)	(float(8175.7989473096690661233836992789 * pow(2.0, (x) / 12.0)))
-#define calc_vol(x)		(pow(2.0,((x)*6.0 - 6.0)))
+//#define calc_vol(x)	(pow(2.0,((x)*6.0 - 6.0)))				// Physically ideal equation
+#define calc_gf1_amp(x)	(pow(2.0,((x)*16.0 - 16.0)))			// Actual GUS equation
 
 /*
 timidity.h
@@ -555,7 +552,7 @@ struct Renderer
 	int resample_buffer_size;
 	sample_t *resample_buffer;
 	Channel channel[16];
-	Voice voice[MAX_VOICES];
+	Voice *voice;
 	int control_ratio, amp_with_poly;
 	int drumchannels;
 	int adjust_panning_immediately;
@@ -579,7 +576,10 @@ struct Renderer
 	int convert_tremolo_rate(BYTE rate);
 	int convert_vibrato_rate(BYTE rate);
 
+	void recompute_freq(int voice);
 	void recompute_amp(Voice *v);
+	void recompute_pan(Channel *chan);
+
 	void kill_key_group(int voice);
 	float calculate_scaled_frequency(Sample *sample, int note);
 	void start_note(int chan, int note, int vel, int voice);
@@ -599,7 +599,6 @@ struct Renderer
 	void reset_midi();
 
 	void select_sample(int voice, Instrument *instr, int vel);
-	void recompute_freq(int voice);
 
 	void kill_note(int voice);
 	void finish_note(int voice);
@@ -608,6 +607,8 @@ struct Renderer
 	void DataEntryFineRPN(int chan, int rpn, int val);
 	void DataEntryCoarseNRPN(int chan, int nrpn, int val);
 	void DataEntryFineNRPN(int chan, int nrpn, int val);
+
+	static void compute_pan(int panning, float &left_offset, float &right_offset);
 };
 
 }

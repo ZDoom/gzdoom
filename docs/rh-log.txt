@@ -1,3 +1,14 @@
+April 18, 2008
+- Made the maximum number of TiMidity voices configurable through the
+  timidity_voices cvar.
+- Added stats lines for the OPL and Timidity MIDI devices.
+- Completely changed the way TiMidity volume calculations are done. It
+  should now be extremely close to the output a real GUS would produce with
+  its official MIDI player (excepting where TiMidity normalizes sample
+  volumes). The new equations more closely match what is specified by the DLS
+  and SF2 specs (but not quite), so I presume it's also more musically
+  correct than what TiMidity (and TiMidity++) do.
+
 April 18, 2008 (Changes by Graf Zahl)
 - Fixed: FBlockThingsIterator didn't set the current block coordinates if
   they were outside the blockmap. This could cause extreme delays if an

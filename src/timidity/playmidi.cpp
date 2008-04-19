@@ -31,9 +31,11 @@
 namespace Timidity
 {
 
+static const double log_of_2 = 0.69314718055994529;
+
 void Renderer::reset_voices()
 {
-	for (int i = 0; i < MAX_VOICES; i++)
+	for (int i = 0; i < voices; i++)
 	{
 		voice[i].status = VOICE_FREE;
 	}
@@ -167,36 +169,67 @@ void Renderer::recompute_freq(int v)
 	voice[v].sample_increment = (int)(a);
 }
 
+static BYTE vol_table[] = {
+000 /* 000 */,	129 /* 001 */,	145 /* 002 */,	155 /* 003 */,	
+161 /* 004 */,	166 /* 005 */,	171 /* 006 */,	174 /* 007 */,	
+177 /* 008 */,	180 /* 009 */,	182 /* 010 */,	185 /* 011 */,	
+187 /* 012 */,	188 /* 013 */,	190 /* 014 */,	192 /* 015 */,	
+193 /* 016 */,	195 /* 017 */,	196 /* 018 */,	197 /* 019 */,	
+198 /* 020 */,	199 /* 021 */,	201 /* 022 */,	202 /* 023 */,	
+203 /* 024 */,	203 /* 025 */,	204 /* 026 */,	205 /* 027 */,	
+206 /* 028 */,	207 /* 029 */,	208 /* 030 */,	208 /* 031 */,	
+209 /* 032 */,	210 /* 033 */,	211 /* 034 */,	211 /* 035 */,	
+212 /* 036 */,	213 /* 037 */,	213 /* 038 */,	214 /* 039 */,	
+214 /* 040 */,	215 /* 041 */,	215 /* 042 */,	216 /* 043 */,	
+217 /* 044 */,	217 /* 045 */,	218 /* 046 */,	218 /* 047 */,	
+219 /* 048 */,	219 /* 049 */,	219 /* 050 */,	220 /* 051 */,	
+220 /* 052 */,	221 /* 053 */,	221 /* 054 */,	222 /* 055 */,	
+222 /* 056 */,	222 /* 057 */,	223 /* 058 */,	223 /* 059 */,	
+224 /* 060 */,	224 /* 061 */,	224 /* 062 */,	225 /* 063 */,	
+225 /* 064 */,	226 /* 065 */,	227 /* 066 */,	228 /* 067 */,	
+229 /* 068 */,	230 /* 069 */,	231 /* 070 */,	231 /* 071 */,	
+232 /* 072 */,	233 /* 073 */,	234 /* 074 */,	234 /* 075 */,	
+235 /* 076 */,	236 /* 077 */,	236 /* 078 */,	237 /* 079 */,	
+238 /* 080 */,	238 /* 081 */,	239 /* 082 */,	239 /* 083 */,	
+240 /* 084 */,	241 /* 085 */,	241 /* 086 */,	242 /* 087 */,	
+242 /* 088 */,	243 /* 089 */,	243 /* 090 */,	244 /* 091 */,	
+244 /* 092 */,	244 /* 093 */,	245 /* 094 */,	245 /* 095 */,	
+246 /* 096 */,	246 /* 097 */,	247 /* 098 */,	247 /* 099 */,	
+247 /* 100 */,	248 /* 101 */,	248 /* 102 */,	249 /* 103 */,	
+249 /* 104 */,	249 /* 105 */,	250 /* 106 */,	250 /* 107 */,	
+250 /* 108 */,	251 /* 109 */,	251 /* 110 */,	251 /* 111 */,	
+252 /* 112 */,	252 /* 113 */,	252 /* 114 */,	253 /* 115 */,	
+253 /* 116 */,	253 /* 117 */,	254 /* 118 */,	254 /* 119 */,	
+254 /* 120 */,	254 /* 121 */,	255 /* 122 */,	255 /* 123 */,	
+255 /* 124 */,	255 /* 125 */,	255 /* 126 */,	255 /* 127 */,	
+};
+
 void Renderer::recompute_amp(Voice *v)
 {
-	int chan = v->channel;
-	int panning = v->panning;
-	double vol = channel[chan].volume / 16383.f;
-	double expr = channel[chan].expression / 16383.f;
-	double vel = v->velocity / 127.f;
-	double tempamp = calc_vol(vol * expr * vel) * v->sample->volume;
+	Channel *chan = &channel[v->channel];
+	int chanvol = chan->volume;
+	int chanexpr = chan->expression;
 
-	if (panning >= 0x1DBB && panning < 0x2244)
+	v->attenuation = (vol_table[(chanvol * chanexpr) / 2113407] * vol_table[v->velocity]) * ((127 + 64) / 12419775.f);
+}
+
+void Renderer::compute_pan(int panning, float &left_offset, float &right_offset)
+{
+	if (panning == 0)
 	{
-		v->panned = PANNED_CENTER;
-		v->left_amp = (float)(tempamp * 0.70710678118654752440084436210485);	// * sqrt(0.5)
+		left_offset = 0;
+		right_offset = (float)-HUGE_VAL;
 	}
-	else if (panning == 0)
+	else if (panning == 32767)
 	{
-		v->panned = PANNED_LEFT;
-		v->left_amp = (float)tempamp;
-	}
-	else if (panning == 0x3FFF)
-	{
-		v->panned = PANNED_RIGHT;
-		v->left_amp = (float)tempamp; /* left_amp will be used */
+		left_offset = (float)-HUGE_VAL;
+		right_offset = 0;
 	}
 	else
 	{
-		double pan = panning / 16384.0;
-		v->panned = PANNED_MYSTERY;
-		v->left_amp = (float)(tempamp * sqrt(1.0 - pan));
-		v->right_amp = (float)(tempamp * sqrt(pan));
+		double pan = panning * (1 / 32767.0);
+		right_offset = (float)(log(pan) * (1 / (log_of_2 * 32)));
+		left_offset = (float)(log(1 - pan) * (1 / (log_of_2 * 32)));
 	}
 }
 
@@ -288,11 +321,13 @@ void Renderer::start_note(int chan, int note, int vel, int i)
 
 	if (channel[chan].panning != NO_PANNING)
 	{
-		voice[i].panning = channel[chan].panning;
+		voice[i].left_offset = channel[chan].left_offset;
+		voice[i].right_offset = channel[chan].right_offset;
 	}
 	else
 	{
-		voice[i].panning = voice[i].sample->panning;
+		voice[i].left_offset = voice[i].sample->left_offset;
+		voice[i].right_offset = voice[i].sample->right_offset;
 	}
 
 	recompute_freq(i);
@@ -350,11 +385,7 @@ void Renderer::note_on(int chan, int note, int vel)
 		{
 			if (voice[i].status != VOICE_ON && voice[i].status != VOICE_DIE)
 			{
-				v = voice[i].left_mix;
-				if ((voice[i].panned == PANNED_MYSTERY) && (voice[i].right_mix > v))
-				{
-					v = voice[i].right_mix;
-				}
+				v = voice[i].attenuation;
 				if (v < lv)
 				{
 					lv = v;
@@ -482,14 +513,16 @@ void Renderer::adjust_pressure(int chan, int note, int amount)
 
 void Renderer::adjust_panning(int chan)
 {
+	Channel *chanp = &channel[chan];
+	compute_pan(chanp->panning, chanp->left_offset, chanp->right_offset);
 	int i = voices;
 	while (i--)
 	{
 		if ((voice[i].channel == chan) &&
 			(voice[i].status == VOICE_ON || voice[i].status == VOICE_SUSTAINED))
 		{
-			voice[i].panning = channel[chan].panning;
-			recompute_amp(&voice[i]);
+			voice[i].left_offset = chanp->left_offset;
+			voice[i].right_offset = chanp->right_offset;
 			apply_envelope_to_amp(&voice[i]);
 		}
 	}

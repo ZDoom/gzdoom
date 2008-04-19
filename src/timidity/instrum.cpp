@@ -300,6 +300,7 @@ fail:
 			sp->panning = panning & 0x7f;
 		}
 		sp->panning |= sp->panning << 7;
+		song->compute_pan(sp->panning, sp->left_offset, sp->right_offset);
 
 		/* tremolo */
 		if (patch_data.TremoloRate == 0 || patch_data.TremoloDepth == 0)

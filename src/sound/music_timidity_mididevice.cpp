@@ -39,6 +39,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "w_wad.h"
+#include "v_text.h"
 #include "timidity/timidity.h"
 
 // MACROS ------------------------------------------------------------------
@@ -534,4 +535,64 @@ bool TimidityMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, vo
 {
 	TimidityMIDIDevice *device = (TimidityMIDIDevice *)userdata;
 	return device->ServiceStream(buff, len);
+}
+
+//==========================================================================
+//
+// TimidityMIDIDevice :: GetStats
+//
+//==========================================================================
+
+FString TimidityMIDIDevice::GetStats()
+{
+	FString dots;
+	FString out;
+	int i, used;
+
+	CritSec.Enter();
+	for (i = used = 0; i < Renderer->voices; ++i)
+	{
+		switch (Renderer->voice[i].status)
+		{
+		case Timidity::VOICE_FREE:
+			dots << TEXTCOLOR_PURPLE".";
+			break;
+
+		case Timidity::VOICE_ON:
+			dots << TEXTCOLOR_GREEN;
+			break;
+
+		case Timidity::VOICE_SUSTAINED:
+			dots << TEXTCOLOR_BLUE;
+			break;
+
+		case Timidity::VOICE_OFF:
+			dots << TEXTCOLOR_ORANGE;
+			break;
+
+		case Timidity::VOICE_DIE:
+			dots << TEXTCOLOR_RED;
+			break;
+		}
+		if (Renderer->voice[i].status != Timidity::VOICE_FREE)
+		{
+			used++;
+			if (Renderer->voice[i].envelope_increment == 0)
+			{
+				dots << TEXTCOLOR_BLUE"+";
+			}
+			else
+			{
+				dots << ('1' + Renderer->voice[i].envelope_stage);
+			}
+		}
+	}
+	CritSec.Leave();
+	out.Format(TEXTCOLOR_YELLOW"%3d/%3d ", used, Renderer->voices);
+	out += dots;
+	if (Renderer->cut_notes | Renderer->lost_notes)
+	{
+		out.AppendFormat(TEXTCOLOR_RED" %d/%d", Renderer->cut_notes, Renderer->lost_notes);
+	}
+	return out;
 }

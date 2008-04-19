@@ -12,14 +12,10 @@
 #include "c_cvars.h"
 #include "i_system.h"
 #include "stats.h"
-#include "v_text.h"
-#include "c_dispatch.h"
 
 #define IMF_RATE				700.0
 
 EXTERN_CVAR (Bool, opl_onechip)
-
-OPLmusicBlock *BlockForStats;
 
 OPLmusicBlock::OPLmusicBlock()
 {
@@ -33,7 +29,6 @@ OPLmusicBlock::OPLmusicBlock()
 
 OPLmusicBlock::~OPLmusicBlock()
 {
-	BlockForStats = NULL;
 	delete io;
 }
 
@@ -377,36 +372,7 @@ int OPLmusicFile::PlayTick ()
 
 ADD_STAT (opl)
 {
-	if (BlockForStats != NULL)
-	{
-		FString out;
-		char star[3] = { TEXTCOLOR_ESCAPE, 'A', '*' };
-		for (uint i = 0; i < BlockForStats->io->OPLchannels; ++i)
-		{
-			if (BlockForStats->channels[i].flags & CH_FREE)
-			{
-				star[1] = CR_BRICK + 'A';
-			}
-			else if (BlockForStats->channels[i].flags & CH_SUSTAIN)
-			{
-				star[1] = CR_ORANGE + 'A';
-			}
-			else if (BlockForStats->channels[i].flags & CH_SECONDARY)
-			{
-				star[1] = CR_BLUE + 'A';
-			}
-			else
-			{
-				star[1] = CR_GREEN + 'A';
-			}
-			out.AppendCStrPart (star, 3);
-		}
-		return out;
-	}
-	else
-	{
-		return YM3812GetVoiceString ();
-	}
+	return YM3812GetVoiceString ();
 }
 
 OPLmusicFile::OPLmusicFile(const OPLmusicFile *source, const char *filename)

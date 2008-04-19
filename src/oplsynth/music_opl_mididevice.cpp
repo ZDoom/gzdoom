@@ -40,6 +40,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "w_wad.h"
+#include "v_text.h"
 #include "fmopl.h"
 
 // MACROS ------------------------------------------------------------------
@@ -58,8 +59,6 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern OPLmusicBlock *BlockForStats;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -226,7 +225,6 @@ int OPLMIDIDevice::Resume()
 		if (Stream->Play(true, 1))
 		{
 			Started = true;
-			BlockForStats = this;
 			return 0;
 		}
 		return 1;
@@ -246,7 +244,6 @@ void OPLMIDIDevice::Stop()
 	{
 		Stream->Stop();
 		Started = false;
-		BlockForStats = NULL;
 	}
 }
 
@@ -513,4 +510,37 @@ bool OPLMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, void *u
 {
 	OPLMIDIDevice *device = (OPLMIDIDevice *)userdata;
 	return device->ServiceStream(buff, len);
+}
+
+//==========================================================================
+//
+// OPLMIDIDevice :: GetStats
+//
+//==========================================================================
+
+FString OPLMIDIDevice::GetStats()
+{
+	FString out;
+	char star[3] = { TEXTCOLOR_ESCAPE, 'A', '*' };
+	for (uint i = 0; i < io->OPLchannels; ++i)
+	{
+		if (channels[i].flags & CH_FREE)
+		{
+			star[1] = CR_BRICK + 'A';
+		}
+		else if (channels[i].flags & CH_SUSTAIN)
+		{
+			star[1] = CR_ORANGE + 'A';
+		}
+		else if (channels[i].flags & CH_SECONDARY)
+		{
+			star[1] = CR_BLUE + 'A';
+		}
+		else
+		{
+			star[1] = CR_GREEN + 'A';
+		}
+		out.AppendCStrPart (star, 3);
+	}
+	return out;
 }

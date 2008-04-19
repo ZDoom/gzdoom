@@ -233,7 +233,7 @@ struct musicBlock {
 
 	int OPLloadBank (FileReader &data);
 
-private:
+protected:
 	/* OPL channel (voice) data */
 	struct channelEntry {
 		uchar	channel;		/* MUS channel number */

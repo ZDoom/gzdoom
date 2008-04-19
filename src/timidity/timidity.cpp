@@ -32,6 +32,7 @@
 #include "files.h"
 
 CVAR(String, timidity_config, CONFIG_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Int, timidity_voices, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 namespace Timidity
 {
@@ -452,6 +453,7 @@ Renderer::Renderer(float sample_rate)
 	patches = NULL;
 	resample_buffer_size = 0;
 	resample_buffer = NULL;
+	voice = NULL;
 	adjust_panning_immediately = false;
 
 	control_ratio = clamp(int(rate / CONTROLS_PER_SECOND), 1, MAX_CONTROL_RATIO);
@@ -464,7 +466,8 @@ Renderer::Renderer(float sample_rate)
 	if (def_instr_name.IsNotEmpty())
 		set_default_instrument(def_instr_name);
 
-	voices = DEFAULT_VOICES;
+	voices = clamp<int>(timidity_voices, 16, 256);
+	voice = new Voice[voices];
 	drumchannels = DEFAULT_DRUMCHANNELS;
 }
 
@@ -473,6 +476,10 @@ Renderer::~Renderer()
 	if (resample_buffer != NULL)
 	{
 		M_Free(resample_buffer);
+	}
+	if (voice != NULL)
+	{
+		delete[] voice;
 	}
 }
 

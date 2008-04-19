@@ -71,37 +71,19 @@ int recompute_envelope(Voice *v)
 
 void apply_envelope_to_amp(Voice *v)
 {
-	double lamp = v->left_amp, ramp;
-	if (v->panned == PANNED_MYSTERY)
+	float env_vol = v->attenuation;
+	float final_amp = v->sample->volume * FINAL_MIX_SCALE;
+	if (v->tremolo_phase_increment != 0)
 	{
-		ramp = v->right_amp;
-
-		if (v->tremolo_phase_increment != 0)
-		{
-			lamp *= v->tremolo_volume;
-			ramp *= v->tremolo_volume;
-		}
-		if (v->sample->modes & PATCH_NO_SRELEASE)
-		{
-			double vol = calc_vol(v->envelope_volume / float(1 << 30));
-			lamp *= vol;
-			ramp *= vol;
-		}
-		v->left_mix = float(lamp);
-		v->right_mix = float(ramp);
+		env_vol *= v->tremolo_volume;
 	}
-	else
+	if (v->sample->modes & PATCH_NO_SRELEASE)
 	{
-		if (v->tremolo_phase_increment != 0)
-		{
-			lamp *= v->tremolo_volume;
-		}
-		if (v->sample->modes & PATCH_NO_SRELEASE)
-		{
-			lamp *= calc_vol(v->envelope_volume / float(1 << 30));
-		}
-		v->left_mix = float(lamp);
+		env_vol *= v->envelope_volume / float(1 << 30);
 	}
+	// Note: The pan offsets are negative.
+	v->left_mix = (float)calc_gf1_amp(env_vol + v->left_offset) * final_amp;
+	v->right_mix = (float)calc_gf1_amp(env_vol + v->right_offset) * final_amp;
 }
 
 static int update_envelope(Voice *v)
@@ -218,20 +200,18 @@ static void mix_mystery_signal(SDWORD control_ratio, const sample_t *sp, float *
 	}
 }
 
-static void mix_center_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
+static void mix_single_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, float *ampat, int count)
 {
-	final_volume_t 
-		left = v->left_mix;
+	final_volume_t amp;
 	int cc;
-	sample_t s;
 
-	if (!(cc = v->control_counter))
+	if (0 == (cc = v->control_counter))
 	{
 		cc = control_ratio;
 		if (update_signal(v))
-			return;	/* Envelope ran out */
-		left = v->left_mix;
+			return;		/* Envelope ran out */
 	}
+	amp = *ampat;
 
 	while (count)
 	{
@@ -240,24 +220,20 @@ static void mix_center_signal(SDWORD control_ratio, const sample_t *sp, float *l
 			count -= cc;
 			while (cc--)
 			{
-				s = *sp++ * left;
-				lp[0] += s;
-				lp[1] += s;
+				lp[0] += *sp++ * amp;
 				lp += 2;
 			}
 			cc = control_ratio;
 			if (update_signal(v))
 				return;	/* Envelope ran out */
-			left = v->left_mix;
+			amp = *ampat;
 		}
 		else
 		{
 			v->control_counter = cc - count;
 			while (count--)
 			{
-				s = *sp++ * left;
-				lp[0] += s;
-				lp[1] += s;
+				lp[0] += *sp++ * amp;
 				lp += 2;
 			}
 			return;
@@ -267,86 +243,12 @@ static void mix_center_signal(SDWORD control_ratio, const sample_t *sp, float *l
 
 static void mix_single_left_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
 {
-	final_volume_t 
-		left = v->left_mix;
-	int cc;
-
-	if (!(cc = v->control_counter))
-	{
-		cc = control_ratio;
-		if (update_signal(v))
-			return;	/* Envelope ran out */
-		left = v->left_mix;
-	}
-
-	while (count)
-	{
-		if (cc < count)
-		{
-			count -= cc;
-			while (cc--)
-			{
-				lp[0] += *sp++ * left;
-				lp += 2;
-			}
-			cc = control_ratio;
-			if (update_signal(v))
-				return;	/* Envelope ran out */
-			left = v->left_mix;
-		}
-		else
-		{
-			v->control_counter = cc - count;
-			while (count--)
-			{
-				lp[0] += *sp++ * left;
-				lp += 2;
-			}
-			return;
-		}
-	}
+	mix_single_signal(control_ratio, sp, lp, v, &v->left_mix, count);
 }
 
 static void mix_single_right_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
 {
-	final_volume_t 
-		left = v->left_mix;
-	int cc;
-
-	if (!(cc = v->control_counter))
-	{
-		cc = control_ratio;
-		if (update_signal(v))
-			return;	/* Envelope ran out */
-		left = v->left_mix;
-	}
-
-	while (count)
-	{
-		if (cc < count)
-		{
-			count -= cc;
-			while (cc--)
-			{
-				lp[1] += *sp++ * left;
-				lp += 2;
-			}
-			cc = control_ratio;
-			if (update_signal(v))
-				return;	/* Envelope ran out */
-			left = v->left_mix;
-		}
-		else
-		{
-			v->control_counter = cc - count;
-			while (count--)
-			{
-				lp[1] += *sp++ * left;
-				lp += 2;
-			}
-			return;
-		}
-	}
+	mix_single_signal(control_ratio, sp, lp + 1, v, &v->right_mix, count);
 }
 
 static void mix_mono_signal(SDWORD control_ratio, const sample_t *sp, float *lp, Voice *v, int count)
@@ -405,42 +307,22 @@ static void mix_mystery(SDWORD control_ratio, const sample_t *sp, float *lp, Voi
 	}
 }
 
-static void mix_center(const sample_t *sp, float *lp, Voice *v, int count)
+static void mix_single(const sample_t *sp, float *lp, final_volume_t amp, int count)
 {
-	final_volume_t 
-		left = v->left_mix;
-	sample_t s;
-
 	while (count--)
 	{
-		s = *sp++ * left;
-		lp[0] += s;
-		lp[1] += s;
+		lp[0] += *sp++ * amp;
 		lp += 2;
 	}
 }
 
 static void mix_single_left(const sample_t *sp, float *lp, Voice *v, int count)
 {
-	final_volume_t 
-		left = v->left_mix;
-
-	while (count--)
-	{
-		lp[0] += *sp++ * left;
-		lp += 2;
-	}
+	mix_single(sp, lp, v->left_mix, count);
 }
 static void mix_single_right(const sample_t *sp, float *lp, Voice *v, int count)
 {
-	final_volume_t 
-		left = v->left_mix;
-
-	while (count--)
-	{
-		lp[1] += *sp++ * left;
-		lp += 2;
-	}
+	mix_single(sp, lp + 1, v->right_mix, count);
 }
 
 static void mix_mono(const sample_t *sp, float *lp, Voice *v, int count)
@@ -464,41 +346,14 @@ static void ramp_out(const sample_t *sp, float *lp, Voice *v, int c)
 	/* Fix by James Caldwell */
 	if ( c == 0 ) c = 1;
 
-	left = v->left_mix;
-	li = -(left/c);
-	if (li == 0) li = -1;
-
 	/* printf("Ramping out: left=%d, c=%d, li=%d\n", left, c, li); */
 
-	if (v->panned == PANNED_MYSTERY)
+	if (v->left_offset == 0)		// All the way to the left
 	{
-		right = v->right_mix;
-		ri = -(right/c);
-		while (c--)
-		{
-			left += li; if (left < 0) left = 0;
-			right += ri; if (right < 0) right = 0;
-			s = *sp++;
-			lp[0] += s * left;
-			lp[1] += s * right;
-			lp += 2;
-		}
-	}
-	else if (v->panned == PANNED_CENTER)
-	{
-		while (c--)
-		{
-			left += li;
-			if (left < 0)
-				return;
-			s = *sp++ * left;
-			lp[0] += s;
-			lp[1] += s;
-			lp += 2;
-		}
-	}
-	else if (v->panned == PANNED_LEFT)
-	{
+		left = v->left_mix;
+		li = -(left/c);
+		if (li == 0) li = -1;
+
 		while (c--)
 		{
 			left += li;
@@ -508,15 +363,52 @@ static void ramp_out(const sample_t *sp, float *lp, Voice *v, int c)
 			lp += 2;
 		}
 	}
-	else if (v->panned == PANNED_RIGHT)
+	else if (v->right_offset == 0)	// All the way to the right
 	{
+		right = v->right_mix;
+		ri = -(right/c);
+		if (ri == 0) ri = -1;
+
+		while (c--)
+		{
+			right += ri;
+			if (right < 0)
+				return;
+			s = *sp++;
+			lp[1] += *sp++ * right;
+			lp += 2;
+		}
+	}
+	else							// Somewhere in the middle
+	{
+		left = v->left_mix;
+		li = -(left/c);
+		if (li == 0) li = -1;
+		right = v->right_mix;
+		ri = -(right/c);
+		if (ri == 0) ri = -1;
+
+		right = v->right_mix;
+		ri = -(right/c);
 		while (c--)
 		{
 			left += li;
+			right += ri;
 			if (left < 0)
-				return;
+			{
+				if (right < 0)
+				{
+					return;
+				}
+				left = 0;
+			}
+			else if (right < 0)
+			{
+				right = 0;
+			}
 			s = *sp++;
-			lp[1] += *sp++ * left;
+			lp[0] += s * left;
+			lp[1] += s * right;
 			lp += 2;
 		}
 	}
@@ -548,38 +440,37 @@ void mix_voice(Renderer *song, float *buf, Voice *v, int c)
 		{
 			return;
 		}
-		if (v->panned == PANNED_MYSTERY)
+		if (v->left_offset == 0)		// All the way to the left
 		{
-			if (v->envelope_increment || v->tremolo_phase_increment)
-				mix_mystery_signal(song->control_ratio, sp, buf, v, count);
-			else
-				mix_mystery(song->control_ratio, sp, buf, v, count);
-		}
-		else if (v->panned == PANNED_CENTER)
-		{
-			if (v->envelope_increment || v->tremolo_phase_increment)
-				mix_center_signal(song->control_ratio, sp, buf, v, count);
-			else
-				mix_center(sp, buf, v, count);
-		}
-		else
-		{ 
-			/* It's either full left or full right. In either case,
-			every other sample is 0. Just get the offset right: */
-
-			if (v->envelope_increment || v->tremolo_phase_increment)
+			if (v->envelope_increment != 0 || v->tremolo_phase_increment != 0)
 			{
-				if (v->panned == PANNED_RIGHT)
-					mix_single_right_signal(song->control_ratio, sp, buf, v, count);
-				else
-					mix_single_left_signal(song->control_ratio, sp, buf, v, count);
+				mix_single_left_signal(song->control_ratio, sp, buf, v, count);
 			}
-			else 
+			else
 			{
-				if (v->panned == PANNED_RIGHT)
-					mix_single_right(sp, buf, v, count);
-				else
-					mix_single_left(sp, buf, v, count);
+				mix_single_left(sp, buf, v, count);
+			}
+		}
+		else if (v->right_offset == 0)	// All the way to the right
+		{
+			if (v->envelope_increment != 0 || v->tremolo_phase_increment != 0)
+			{
+				mix_single_right_signal(song->control_ratio, sp, buf, v, count);
+			}
+			else
+			{
+				mix_single_right(sp, buf, v, count);
+			}
+		}
+		else							// Somewhere in the middle
+		{
+			if (v->envelope_increment || v->tremolo_phase_increment)
+			{
+				mix_mystery_signal(song->control_ratio, sp, buf, v, count);
+			}
+			else
+			{
+				mix_mystery(song->control_ratio, sp, buf, v, count);
 			}
 		}
 	}

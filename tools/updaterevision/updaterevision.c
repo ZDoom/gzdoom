@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	// Use svnversion to get the revision number. If that fails, pretend it's
 	// revision 0. Note that this requires you have the command-line svn tools installed.
 	sprintf (run, "svnversion -cn %s", argv[1]);
-	if ((name = tmpnam(NULL)) != NULL &&
+	if ((name = tempnam(NULL, "svnout")) != NULL &&
 		(stream = freopen(name, "w+b", stdout)) != NULL &&
 		system(run) == 0 &&
 		errno == 0 &&
@@ -45,9 +45,14 @@ int main(int argc, char **argv)
 		fclose (stream);
 		remove (name);
 	}
+	if (name != NULL)
+	{
+		free (name);
+	}
 
 	if (!gotrev)
 	{
+		fprintf (stderr, "Failed to get current revision: %s\n", strerror(errno));
 		strcpy (currev, "0");
 		rev = currev;
 	}

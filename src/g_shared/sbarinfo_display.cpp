@@ -88,16 +88,15 @@ FTexture *MugShotFrame::getTexture(FString &defaultFace, FPlayerSkin *skin, int 
 	int index = !directional ? random % graphic.Size() : direction;
 	if(index > (signed int) (graphic.Size()-1))
 		index = graphic.Size()-1;
-	char* sprite = new char[9];
-	memcpy(sprite, skin->face[0] != 0 ? skin->face : defaultFace, 3);
-	memcpy(sprite+3, graphic[index], strlen(graphic[index]));
-	sprite[3+strlen(graphic[index])] = '\0';
+	FString sprite(skin->face[0] != 0 ? skin->face : &defaultFace[0], 3);
+	sprite += graphic[index];
 	if(usesLevels) //change the last character to the level
 	{
 		if(!health2 && (!healthspecial || index == 1))
-			sprite[2+strlen(graphic[index])] += level;
+			sprite.LockBuffer()[2 + graphic[index].Len()] += level;
 		else
-			sprite[1+strlen(graphic[index])] += level;
+			sprite.LockBuffer()[1 + graphic[index].Len()] += level;
+		sprite.UnlockBuffer();
 	}
 	return TexMan[TexMan.CheckForTexture(sprite, 0, true)];
 }
@@ -1511,19 +1510,17 @@ void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, bool alwayssho
 void DSBarInfo::DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int padleft, int padright, int chainsize, 
 	bool wiggle, bool translate)
 {
+	if(chain == NULL)
+		return;
 	if(value > 100)
 		value = 100;
 	else if(value < 0)
 		value = 0;
 	if(wiggle)
 		y += chainWiggle;
-	int gemWidth = gem->GetWidth();
 	int chainWidth = chain->GetWidth();
 	int offset = (int) (((double) (chainWidth-padleft-padright)/100)*value);
-	if(chain != NULL)
-	{
-		DrawGraphic(chain, x+(offset%chainsize), y);
-	}
+	DrawGraphic(chain, x+(offset%chainsize), y);
 	if(gem != NULL)
 		DrawGraphic(gem, x+padleft+offset, y, translate ? DRAWIMAGE_TRANSLATABLE : 0);
 }

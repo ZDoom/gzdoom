@@ -1,4 +1,11 @@
 April 19, 2008
+- Fixed: MugShotFrame::getTexture() allocated space for the sprite name that
+  it never freed. I'm not sure it's a good assumption that 9 characters is
+  always long enough, either, since you can have longer file names than that
+  inside a zip.
+- Fixed: DSBarInfo::DrawGem() crashed if chain or gem was NULL.
+- Fixed: Sound sequences are not thinkers, therefore they must be explicitly
+  marked as roots for the GC.
 - Reduced the range that area sounds require to interpolate between 2D and
   3D panning.
 - The listener's velocity is now set at 0 for the sound engine. The player

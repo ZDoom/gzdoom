@@ -29,6 +29,7 @@ public:
 	void ChangeData (int seqOffset, int delayTics, float volume, int currentSoundID);
 	void AddChoice (int seqnum, seqtype_t type);
 	FName GetSequenceName() const;
+	static void StaticMarkHead() { GC::Mark(SequenceListHead); }
 
 	virtual void MakeSound (int loop) {}
 	virtual void *Source () { return NULL; }

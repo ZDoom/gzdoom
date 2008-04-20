@@ -67,6 +67,7 @@
 #include "stats.h"
 #include "c_dispatch.h"
 #include "p_acs.h"
+#include "s_sndseq.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -300,6 +301,8 @@ static void MarkRoot()
 		if (playeringame[i])
 			players[i].PropagateMark();
 	}
+	// Mark sound sequences.
+	DSeqNode::StaticMarkHead();
 	// Mark sectors.
 	if (SectorMarker == NULL && sectors != NULL)
 	{

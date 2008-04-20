@@ -845,13 +845,16 @@ int PrintString (int printlevel, const char *outline)
 //#endif
 	}
 
-	I_PrintStr (outline);
-
-	AddToConsole (printlevel, outline);
-	if (vidactive && screen && screen->Font)
+	if (printlevel != PRINT_LOG)
 	{
-		C_AddNotifyString (printlevel, outline);
-		maybedrawnow (false, false);
+		I_PrintStr (outline);
+
+		AddToConsole (printlevel, outline);
+		if (vidactive && screen && screen->Font)
+		{
+			C_AddNotifyString (printlevel, outline);
+			maybedrawnow (false, false);
+		}
 	}
 	return (int)strlen (outline);
 }

@@ -68,7 +68,7 @@ public:
 		FreeBuffer = false;
 	}
 
-	~FBitmap()
+	virtual ~FBitmap()
 	{
 		Destroy();
 	}

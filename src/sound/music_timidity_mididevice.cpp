@@ -41,6 +41,7 @@
 #include "w_wad.h"
 #include "v_text.h"
 #include "timidity/timidity.h"
+#include <errno.h>
 
 // MACROS ------------------------------------------------------------------
 

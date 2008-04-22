@@ -107,16 +107,19 @@ protected:
 		SWORD OriginX, OriginY;
 		BYTE Rotate;
 		bool textureOwned;
+		BYTE op;
 		FRemapTable *Translation;
 		PalEntry Blend;
 		FTexture *Texture;
+		fixed_t Alpha;
 
 		TexPart();
 	};
 
 	int NumParts;
 	TexPart *Parts;
-	bool bRedirect;
+	bool bRedirect:1;
+	bool bTranslucentPatches:1;
 
 	void MakeTexture ();
 

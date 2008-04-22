@@ -436,7 +436,7 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 				r=g=b=a=0;
 				break;
 			}
-			pe[i] = PalEntry(255-a, r, g, b);
+			pe[i] = PalEntry(a, r, g, b);
 		}
     }
     
@@ -506,7 +506,7 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		switch (hdr.bpp)
 		{
 		case 8:
-			for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// gray map
+			for(int i=0;i<256;i++) pe[i]=PalEntry(255,i,i,i);	// gray map
 			bmp->CopyPixelData(x, y, ptr, Width, Height, step_x, Pitch, rotate, pe, inf);
 			break;
 		

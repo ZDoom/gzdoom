@@ -746,7 +746,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
-		SetSoundPaused (wParam);
+		//SetSoundPaused (wParam);
 		break;
 
 	case WM_WTSSESSION_CHANGE:

@@ -160,9 +160,7 @@ void FRemapTable::Serialize(FArchive &arc)
 	}
 	for (int j = 0; j < NumEntries; ++j)
 	{
-		arc << Palette[j].r
-			<< Palette[j].g
-			<< Palette[j].b;
+		arc << Palette[j];
 	}
 }
 
@@ -178,6 +176,10 @@ void FRemapTable::MakeIdentity()
 	for (i = 0; i < NumEntries; ++i)
 	{
 		Palette[i] = GPalette.BaseColors[i];
+	}
+	for (i = 1; i < NumEntries; ++i)
+	{
+		Palette[i].a = 255;
 	}
 }
 
@@ -232,6 +234,7 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 	{
 		Remap[start] = pal1;
 		Palette[start] = GPalette.BaseColors[pal1];
+		Palette[start].a = start==0? 0:255;
 		return;
 	}
 	palcol = pal1 << FRACBITS;
@@ -240,6 +243,7 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 	{
 		Remap[i] = palcol >> FRACBITS;
 		Palette[i] = GPalette.BaseColors[palcol >> FRACBITS];
+		Palette[i].a = i==0? 0:255;
 	}
 }
 
@@ -278,6 +282,7 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 		Remap[start] = ColorMatcher.Pick
 			(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
 		Palette[start] = PalEntry(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+		Palette[start].a = start==0? 0:255;
 	}
 	else
 	{
@@ -288,7 +293,7 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 		{
 			Remap[i] = ColorMatcher.Pick
 				(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-			Palette[i] = PalEntry(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+			Palette[i] = PalEntry(start==0? 0:255, r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
 			r += rs;
 			g += gs;
 			b += bs;

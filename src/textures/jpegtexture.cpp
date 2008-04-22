@@ -381,7 +381,7 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 			break;
 
 		case JCS_GRAYSCALE:
-			for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// default to a gray map
+			for(int i=0;i<256;i++) pe[i]=PalEntry(255,i,i,i);	// default to a gray map
 			bmp->CopyPixelData(x, y, buff, cinfo.output_width, cinfo.output_height, 
 				1, cinfo.output_width, rotate, pe, inf);
 			break;

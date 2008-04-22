@@ -2086,13 +2086,13 @@ bool D3DPal::Update()
 
 	for (i = 0; i < skipat; ++i)
 	{
-		buff[i] = D3DCOLOR_ARGB(i == 0 ? 0 : 255, pal[i].r, pal[i].g, pal[i].b);
+		buff[i] = D3DCOLOR_ARGB(pal[i].a, pal[i].r, pal[i].g, pal[i].b);
 	}
 	for (++i; i < Remap->NumEntries; ++i)
 	{
-		buff[i] = D3DCOLOR_ARGB(255, pal[i-1].r, pal[i-1].g, pal[i-1].b);
+		buff[i] = D3DCOLOR_ARGB(pal[i].a, pal[i-1].r, pal[i-1].g, pal[i-1].b);
 	}
-	BorderColor = D3DCOLOR_ARGB(255, pal[i-1].r, pal[i-1].g, pal[i-1].b);
+	BorderColor = D3DCOLOR_ARGB(pal[i].a, pal[i-1].r, pal[i-1].g, pal[i-1].b);
 
 	Tex->UnlockRect(0);
 	return true;

@@ -202,6 +202,13 @@ weapons/bfgf			dsbfg
 weapons/bfgx			dsrxplod
 weapons/railgf			railgf1
 
+// Problem: weapons/rocklx needs to be unlimited but
+// is also used for the MAP30 brain explosion.
+// This alias remaps to the original but has its own limit
+// attached so that it doesn't become too loud.
+$alias misc/brainexplode weapons/rocklx
+$limit misc/brainexplode 4
+
 $limit weapons/plasmaf 0
 $limit weapons/chngun 0
 $limit weapons/rocklf 0		// because normal running is almost as fast as a rocket

@@ -233,7 +233,7 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 
 typedef void (*CopyFunc)(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *inf);
 
-static CopyFunc copyfuncs[9]=
+static const CopyFunc copyfuncs[][9]={
 	{
 		iCopyColors<cRGB, cBGRA, bCopy>,
 		iCopyColors<cRGBA, cBGRA, bCopy>,
@@ -244,7 +244,74 @@ static CopyFunc copyfuncs[9]=
 		iCopyColors<cI16, cBGRA, bCopy>,
 		iCopyColors<cRGB555, cBGRA, bCopy>,
 		iCopyColors<cPalEntry, cBGRA, bCopy>
-	};
+	},
+	{
+		iCopyColors<cRGB, cBGRA, bBlend>,
+		iCopyColors<cRGBA, cBGRA, bBlend>,
+		iCopyColors<cIA, cBGRA, bBlend>,
+		iCopyColors<cCMYK, cBGRA, bBlend>,
+		iCopyColors<cBGR, cBGRA, bBlend>,
+		iCopyColors<cBGRA, cBGRA, bBlend>,
+		iCopyColors<cI16, cBGRA, bBlend>,
+		iCopyColors<cRGB555, cBGRA, bBlend>,
+		iCopyColors<cPalEntry, cBGRA, bBlend>
+	},
+	{
+		iCopyColors<cRGB, cBGRA, bAdd>,
+		iCopyColors<cRGBA, cBGRA, bAdd>,
+		iCopyColors<cIA, cBGRA, bAdd>,
+		iCopyColors<cCMYK, cBGRA, bAdd>,
+		iCopyColors<cBGR, cBGRA, bAdd>,
+		iCopyColors<cBGRA, cBGRA, bAdd>,
+		iCopyColors<cI16, cBGRA, bAdd>,
+		iCopyColors<cRGB555, cBGRA, bAdd>,
+		iCopyColors<cPalEntry, cBGRA, bAdd>
+	},
+	{
+		iCopyColors<cRGB, cBGRA, bSubtract>,
+		iCopyColors<cRGBA, cBGRA, bSubtract>,
+		iCopyColors<cIA, cBGRA, bSubtract>,
+		iCopyColors<cCMYK, cBGRA, bSubtract>,
+		iCopyColors<cBGR, cBGRA, bSubtract>,
+		iCopyColors<cBGRA, cBGRA, bSubtract>,
+		iCopyColors<cI16, cBGRA, bSubtract>,
+		iCopyColors<cRGB555, cBGRA, bSubtract>,
+		iCopyColors<cPalEntry, cBGRA, bSubtract>
+	},
+	{
+		iCopyColors<cRGB, cBGRA, bReverseSubtract>,
+		iCopyColors<cRGBA, cBGRA, bReverseSubtract>,
+		iCopyColors<cIA, cBGRA, bReverseSubtract>,
+		iCopyColors<cCMYK, cBGRA, bReverseSubtract>,
+		iCopyColors<cBGR, cBGRA, bReverseSubtract>,
+		iCopyColors<cBGRA, cBGRA, bReverseSubtract>,
+		iCopyColors<cI16, cBGRA, bReverseSubtract>,
+		iCopyColors<cRGB555, cBGRA, bReverseSubtract>,
+		iCopyColors<cPalEntry, cBGRA, bReverseSubtract>
+	},
+	{
+		iCopyColors<cRGB, cBGRA, bModulate>,
+		iCopyColors<cRGBA, cBGRA, bModulate>,
+		iCopyColors<cIA, cBGRA, bModulate>,
+		iCopyColors<cCMYK, cBGRA, bModulate>,
+		iCopyColors<cBGR, cBGRA, bModulate>,
+		iCopyColors<cBGRA, cBGRA, bModulate>,
+		iCopyColors<cI16, cBGRA, bModulate>,
+		iCopyColors<cRGB555, cBGRA, bModulate>,
+		iCopyColors<cPalEntry, cBGRA, bModulate>
+	},
+	{
+		iCopyColors<cRGB, cBGRA, bCopyAlpha>,
+		iCopyColors<cRGBA, cBGRA, bCopyAlpha>,
+		iCopyColors<cIA, cBGRA, bCopyAlpha>,
+		iCopyColors<cCMYK, cBGRA, bCopyAlpha>,
+		iCopyColors<cBGR, cBGRA, bCopyAlpha>,
+		iCopyColors<cBGRA, cBGRA, bCopyAlpha>,
+		iCopyColors<cI16, cBGRA, bCopyAlpha>,
+		iCopyColors<cRGB555, cBGRA, bCopyAlpha>,
+		iCopyColors<cPalEntry, cBGRA, bCopyAlpha>
+	},
+};
 
 //===========================================================================
 //
@@ -373,12 +440,54 @@ void FBitmap::CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int 
 	if (ClipCopyPixelRect(Width, Height, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
 		BYTE *buffer = data + 4 * originx + Pitch * originy;
+		int op = inf==NULL? OP_COPY : inf->op;
 		for (int y=0;y<srcheight;y++)
 		{
-			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x, inf);
+			copyfuncs[op][ct](&buffer[y*Pitch], &patch[y*step_y], srcwidth, step_x, inf);
 		}
 	}
 }
+
+
+template<class TDest, class TBlend> 
+void iCopyPaletted(BYTE *buffer, const BYTE * patch, int srcwidth, int srcheight, int Pitch,
+					int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf)
+{
+	int x,y,pos;
+
+	for (y=0;y<srcheight;y++)
+	{
+		pos = y*Pitch;
+		for (x=0;x<srcwidth;x++,pos+=4)
+		{
+			int v=(unsigned char)patch[y*step_y+x*step_x];
+			int a;
+
+			if ((a = palette[v].a))
+			{
+				TBlend::OpC(buffer[pos + TDest::RED], palette[v].r, a, inf);
+				TBlend::OpC(buffer[pos + TDest::GREEN], palette[v].g, a, inf);
+				TBlend::OpC(buffer[pos + TDest::BLUE], palette[v].b, a, inf);
+				TBlend::OpA(buffer[pos + TDest::ALPHA], a, inf);
+			}
+		}
+	}
+}
+
+typedef void (*CopyPalettedFunc)(BYTE *buffer, const BYTE * patch, int srcwidth, int srcheight, int Pitch,
+					int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf);
+
+
+static const CopyPalettedFunc copypalettedfuncs[]=
+{
+	iCopyPaletted<cBGRA, bCopy>,
+	iCopyPaletted<cBGRA, bBlend>,
+	iCopyPaletted<cBGRA, bAdd>,
+	iCopyPaletted<cBGRA, bSubtract>,
+	iCopyPaletted<cBGRA, bReverseSubtract>,
+	iCopyPaletted<cBGRA, bModulate>,
+	iCopyPaletted<cBGRA, bCopyAlpha>,
+};
 
 //===========================================================================
 //
@@ -388,8 +497,6 @@ void FBitmap::CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int 
 void FBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int srcwidth, int srcheight, 
 										int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf)
 {
-	int x,y,pos;
-	
 	if (ClipCopyPixelRect(Width, Height, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
 		BYTE *buffer = data + 4*originx + Pitch*originy;
@@ -397,39 +504,12 @@ void FBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int sr
 
 		if (inf && inf->blend)
 		{
-			// The palette's alpha is inverted so in order to use the
-			// True Color copy functions it has to be inverted temporarily.
-			memcpy(penew, palette, 4*256);
-			for(int i=0;i<256;i++) penew[i].a = 255-penew[i].a;
-			copyfuncs[CF_PalEntry]((BYTE*)penew, (BYTE*)penew, 256, 4, inf);
-			for(int i=0;i<256;i++) penew[i].a = 255-penew[i].a;
+			iCopyColors<cPalEntry, cBGRA, bCopy>((BYTE*)penew, (const BYTE*)palette, 256, 4, inf);
 			palette = penew;
 		}
 
-
-		for (y=0;y<srcheight;y++)
-		{
-			pos = y*Pitch;
-			for (x=0;x<srcwidth;x++,pos+=4)
-			{
-				int v=(unsigned char)patch[y*step_y+x*step_x];
-				if (palette[v].a==0)
-				{
-					buffer[pos]=palette[v].b;
-					buffer[pos+1]=palette[v].g;
-					buffer[pos+2]=palette[v].r;
-					buffer[pos+3]=255;
-				}
-				else if (palette[v].a!=255)
-				{
-					// [RH] Err... This can't be right, can it?
-					buffer[pos  ] = (buffer[pos  ] * palette[v].a + palette[v].b * (1-palette[v].a)) / 255;
-					buffer[pos+1] = (buffer[pos+1] * palette[v].a + palette[v].g * (1-palette[v].a)) / 255;
-					buffer[pos+2] = (buffer[pos+2] * palette[v].a + palette[v].r * (1-palette[v].a)) / 255;
-					buffer[pos+3] = clamp<int>(buffer[pos+3] + (( 255-buffer[pos+3]) * (255-palette[v].a))/255, 0, 255);
-				}
-			}
-		}
+		copypalettedfuncs[inf==NULL? OP_COPY : inf->op](buffer, patch, srcwidth, srcheight, Pitch, 
+														step_x, step_y, rotate, palette, inf);
 	}
 }
 

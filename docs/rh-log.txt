@@ -1,3 +1,18 @@
+April 22, 2008 (Changes by Graf Zahl)
+- Added translucent blending modes to FMultipatchTexture (not tested yet!)
+- Also changed all true color texture creation functions to use proper alpha
+  values instead of inverted ones.
+- Changed FRemapTable so that all palette entries must contain proper alpha
+  values. 
+  
+April 21, 2008 (Changes by Graf Zahl)
+- Fixed: The F1 screen check in m_menu.cpp was missing a NULL pointer check.
+  
+April 20, 2008 (Changes by Graf Zahl)
+- Changed: The boss brain's explosions play weapons/rocklx which is an 
+  unlimited sound. This can become extremely loud. Replaced with a new
+  sound which is just an alias to weapons/rocklx but has a limit of 4.
+
 April 19, 2008
 - Fixed: MugShotFrame::getTexture() allocated space for the sprite name that
   it never freed. I'm not sure it's a good assumption that 9 characters is

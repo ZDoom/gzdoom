@@ -511,7 +511,7 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	}
 
 	lump->Seek (33, SEEK_SET);
-	for(int i=0;i<256;i++) pe[i]=PalEntry(0,i,i,i);	// default to a gray map
+	for(int i=0;i<256;i++) pe[i]=PalEntry(255,i,i,i);	// default to a gray map
 
 	(*lump) >> len >> id;
 	while (id != MAKE_ID('I','D','A','T') && id != MAKE_ID('I','E','N','D'))
@@ -534,7 +534,6 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 			for(DWORD i=0;i<len;i++)
 			{
 				(*lump) >> pe[i].a;
-				pe[i].a=255-pe[i].a;	// use inverse alpha so the default palette can be used unchanged
 				if (pe[i].a!=0 && pe[i].a!=255) transpal = true;
 			}
 			break;

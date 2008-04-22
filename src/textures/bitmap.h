@@ -37,6 +37,7 @@
 #define __BITMAP_H__
 
 #include "doomtype.h"
+#include "templates.h"
 
 struct FCopyInfo;
 
@@ -272,14 +273,24 @@ enum EBlend
 	BLEND_OVERLAY = -2,
 };
 
+enum ECopyOp
+{
+	OP_COPY,
+	OP_BLEND,
+	OP_ADD,
+	OP_SUBTRACT,
+	OP_REVERSESUBTRACT,
+	OP_MODULATE,
+	OP_COPYALPHA
+};
+
 struct FCopyInfo
 {
-	//ECopyOp op;
+	ECopyOp op;
 	EBlend blend;
 	fixed_t blendcolor[4];
-//	fixed_t alpha;
-//	fixed_t invalpha;
-
+	fixed_t alpha;
+	fixed_t invalpha;
 };
 
 struct bCopy
@@ -288,6 +299,41 @@ struct bCopy
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
 };
 
+struct bBlend
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (d*i->invalpha + s*i->alpha) >> FRACBITS; }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
+};
+
+struct bAdd
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = MIN<int>((d*FRACUNIT + s*i->alpha) >> FRACBITS, 255); }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
+};
+
+struct bSubtract
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = MAX<int>((d*FRACUNIT - s*i->alpha) >> FRACBITS, 0); }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
+};
+
+struct bReverseSubtract
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = MAX<int>((-d*FRACUNIT + s*i->alpha) >> FRACBITS, 0); }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
+};
+
+struct bModulate
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*d)/255; }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
+};
+
+struct bCopyAlpha
+{
+	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*a + d*(255-a))/255; }
+	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
+};
 
 
 

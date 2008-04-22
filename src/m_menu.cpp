@@ -1464,7 +1464,7 @@ void M_DrawReadThis ()
 	else
 	{
 		// Did the mapper choose a custom help page via MAPINFO?
-		if (level.info->f1[0] != 0)
+		if ((level.info != NULL) && level.info->f1[0] != 0)
 		{
 			tex = TexMan.FindTexture(level.info->f1);
 		}
@@ -3513,7 +3513,7 @@ void M_Init (void)
 		for (i = 0; i < 256; i++)
 		{
 			FireRemap.Remap[i] = ColorMatcher.Pick (i/2+32, 0, i/4);
-			FireRemap.Palette[i] = PalEntry(i/2+32, 0, i/4);
+			FireRemap.Palette[i] = PalEntry(255, i/2+32, 0, i/4);
 		}
 	}
 	else
@@ -3522,7 +3522,7 @@ void M_Init (void)
 		for (i = 0; i < 256; ++i)
 		{
 			FireRemap.Remap[i] = ColorMatcher.Pick (i/4, i*13/40+7, i/4);
-			FireRemap.Palette[i] = PalEntry(i/4, i*13/40+7, i/4);
+			FireRemap.Palette[i] = PalEntry(255, i/4, i*13/40+7, i/4);
 		}
 	}
 }

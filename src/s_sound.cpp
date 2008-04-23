@@ -366,11 +366,18 @@ void S_Start ()
 		if (level.info && level.info->soundinfo)
 		{
 			LocalSndInfo = level.info->soundinfo;
-			LocalSndSeq  = level.info->sndseq;
 		}
 		else
 		{
 			LocalSndInfo = "";
+		}
+
+		if (level.info && level.info->sndseq)
+		{
+			LocalSndSeq  = level.info->sndseq;
+		}
+		else
+		{
 			LocalSndSeq  = "";
 		}
 

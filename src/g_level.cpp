@@ -1857,6 +1857,10 @@ void G_DoCompleted (void)
 			strncpy (wminfo.lname1, nextinfo->pname, 8);
 		}
 	}
+	wminfo.next[8]=0;
+	wminfo.lname0[8]=0;
+	wminfo.lname1[8]=0;
+	wminfo.current[8]=0;
 
 	CheckWarpTransMap (wminfo.next, true);
 

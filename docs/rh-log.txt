@@ -1,3 +1,9 @@
+April 23, 2008 (Changes by Graf Zahl)
+- Fixed: wbstartstruct's lump name fields were only 8 characters long
+  and not properly zero-terminated when all 8 characters were used.
+- Fixed: Local sound sequence definitions caused a crash because a proper
+  NULL check was missing.
+
 April 22, 2008 (Changes by Graf Zahl)
 - Added translucent blending modes to FMultipatchTexture (not tested yet!)
 - Also changed all true color texture creation functions to use proper alpha

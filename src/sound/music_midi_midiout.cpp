@@ -549,11 +549,18 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 				break;
 			}
 		}
-		if (event != MIDI_META && (!track->Designated || (track->Designation & DesignationMask)))
+		if (event != MIDI_META)
 		{
 			events[0] = delay;
 			events[1] = 0;
-			events[2] = event | (data1<<8) | (data2<<16);
+			if (!track->Designated || (track->Designation & DesignationMask))
+			{
+				events[2] = event | (data1<<8) | (data2<<16);
+			}
+			else
+			{
+				events[2] = MEVT_NOP;
+			}
 			events += 3;
 		}
 	}

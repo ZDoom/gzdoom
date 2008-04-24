@@ -1,10 +1,17 @@
+April 24, 2008
+- Fixed: When playing a MIDI file with EMIDI track designations to turn a
+  track off, any ticks that had only events on the disabled track would cause
+  the delay for that track to be thrown away, and the following notes on
+  enabled tracks would play too soon. This could be heard quite clearly in
+  xplasma.mid, where track 4 (FMGlass Drone 1) would interfere with the timing
+  of tracks 13 and 14 (EP1 Melody and EP1 Echo).
+
 April 24, 2008 (Changes by Graf Zahl)
 - Fixed: DFlashFader did some operations in its destructor that had to be moved
   to its Destroy method.
 - Fixed: Dropped weapons from dying players should not double ammo.
 
 April 23, 2008
-(Note to self: xplasma.mid sounds really bad. Find out why.)
 - Fixed: When note_on() is called and another copy of the same note is
   already playing on the channel, it should stop it with finish_note(), not
   kill_note(). This can be clearly heard in the final cymbal crashes of

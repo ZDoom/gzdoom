@@ -19,7 +19,7 @@ DFlashFader::DFlashFader (float r1, float g1, float b1, float a1,
 	Blends[1][0]=r2; Blends[1][1]=g2; Blends[1][2]=b2; Blends[1][3]=a2;
 }
 
-DFlashFader::~DFlashFader ()
+void DFlashFader::Destroy ()
 {
 	SetBlend (1.f);
 }

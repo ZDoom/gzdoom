@@ -1,3 +1,8 @@
+April 24, 2008 (Changes by Graf Zahl)
+- Fixed: DFlashFader did some operations in its destructor that had to be moved
+  to its Destroy method.
+- Fixed: Dropped weapons from dying players should not double ammo.
+
 April 23, 2008
 (Note to self: xplasma.mid sounds really bad. Find out why.)
 - Fixed: When note_on() is called and another copy of the same note is

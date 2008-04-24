@@ -175,8 +175,7 @@ AInventory *AWeapon::CreateCopy (AActor *other)
 //
 // A weapon that's tossed out should contain no ammo, so you can't cheat
 // by dropping it and then picking it back up.
-//
-//===========================================================================
+//=======================
 
 AInventory *AWeapon::CreateTossable ()
 {

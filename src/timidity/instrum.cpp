@@ -359,6 +359,7 @@ fail:
 			}
 		}
 
+#if 0
 		/* seashore.pat in the Midia patch set has no Sustain. I don't
 		   understand why, and fixing it by adding the Sustain flag to
 		   all looped patches probably breaks something else. We do it
@@ -411,6 +412,7 @@ fail:
 				cmsg(CMSG_INFO, VERB_DEBUG, " - No sustain, removing envelope\n");
 			}
 		}
+#endif
 
 		for (j = 0; j < 6; j++)
 		{

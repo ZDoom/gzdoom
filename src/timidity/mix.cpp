@@ -38,35 +38,35 @@ int recompute_envelope(Voice *v)
 
 	stage = v->envelope_stage;
 
-	if (stage > RELEASEC)
+	if (stage >= ENVELOPES)
 	{
 		/* Envelope ran out. */
-		v->status = VOICE_FREE;
+		/* play sampled release */
+		v->status &= ~(VOICE_SUSTAINING | VOICE_LPE);
+		v->status |= VOICE_RELEASING | VOICE_STOPPING;
 		return 1;
 	}
 
-	if (v->sample->modes & PATCH_NO_SRELEASE)
+	if (stage == RELEASE && !(v->status & VOICE_RELEASING) && (v->sample->modes & PATCH_SUSTAIN))
 	{
-		if (v->status == VOICE_ON || v->status == VOICE_SUSTAINED)
-		{
-			if (stage > DECAY)
-			{
-				/* Freeze envelope until note turns off. Trumpets want this. */
-				v->envelope_increment = 0;
-				return 0;
-			}
-		}
+		v->status |= VOICE_SUSTAINING;
+		/* Freeze envelope until note turns off. Trumpets want this. */
+		v->envelope_increment = 0;
 	}
-	v->envelope_stage = stage + 1;
+	else
+	{
+		v->envelope_stage = stage + 1;
 
-	if (v->envelope_volume == v->sample->envelope_offset[stage])
-	{
-		return recompute_envelope(v);
+		if (v->envelope_volume == v->sample->envelope_offset[stage])
+		{
+			return recompute_envelope(v);
+		}
+		v->envelope_target = v->sample->envelope_offset[stage];
+		v->envelope_increment = v->sample->envelope_rate[stage];
+		if (v->envelope_target < v->envelope_volume)
+			v->envelope_increment = -v->envelope_increment;
 	}
-	v->envelope_target = v->sample->envelope_offset[stage];
-	v->envelope_increment = v->sample->envelope_rate[stage];
-	if (v->envelope_target < v->envelope_volume)
-		v->envelope_increment = -v->envelope_increment;
+
 	return 0;
 }
 
@@ -78,10 +78,7 @@ void apply_envelope_to_amp(Voice *v)
 	{
 		env_vol *= v->tremolo_volume;
 	}
-	if (v->sample->modes & PATCH_NO_SRELEASE)
-	{
-		env_vol *= v->envelope_volume / float(1 << 30);
-	}
+	env_vol *= v->envelope_volume / float(1 << 30);
 	// Note: The pan offsets are negative.
 	v->left_mix = MAX(0.f, (float)calc_gf1_amp(env_vol + v->left_offset) * final_amp);
 	v->right_mix = MAX(0.f, (float)calc_gf1_amp(env_vol + v->right_offset) * final_amp);
@@ -426,13 +423,13 @@ void mix_voice(Renderer *song, float *buf, Voice *v, int c)
 	{
 		return;
 	}
-	if (v->status == VOICE_DIE)
+	if (v->status & VOICE_STOPPING)
 	{
 		if (count >= MAX_DIE_TIME)
 			count = MAX_DIE_TIME;
 		sp = resample_voice(song, v, &count);
 		ramp_out(sp, buf, v, count);
-		v->status = VOICE_FREE;
+		v->status = 0;
 	}
 	else
 	{

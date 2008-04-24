@@ -500,7 +500,7 @@ void Renderer::ComputeOutput(float *buffer, int count)
 	}
 	for (int i = 0; i < voices; i++, v++)
 	{
-		if (v->status != VOICE_FREE)
+		if (v->status & VOICE_RUNNING)
 		{
 			mix_voice(this, buffer, v, count);
 		}

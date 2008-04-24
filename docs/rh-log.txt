@@ -1,3 +1,20 @@
+April 23, 2008
+(Note to self: xplasma.mid sounds really bad. Find out why.)
+- Fixed: When note_on() is called and another copy of the same note is
+  already playing on the channel, it should stop it with finish_note(), not
+  kill_note(). This can be clearly heard in the final cymbal crashes of
+  D_DM2TTL where TiMidity cuts them off because the final cymbals are played
+  with a velocity of 1 before the preceding cymbals have finished. (I wonder
+  if I should be setting the self_nonexclusive flag for GUS patches to
+  disable even this behavior, though, since gf1note.c doesn't turn off
+  duplicate notes.)
+- Changed envelope handling to hopefully match the GUS player's. The most
+  egregious mistake TiMidity makes is to treat bit 6 as an envelope enable
+  bit. This is not what it does; every sample has an envelope. Rather, this
+  is a "no sampled release" flag. Also, despite fiddling with the
+  PATCH_SUSTAIN flag during instrument loading, TiMidity never actually
+  used it. Nor did it do anything at all with the PATCH_FAST_REL flag.
+
 April 23, 2008 (Changes by Graf Zahl)
 - Fixed: wbstartstruct's lump name fields were only 8 characters long
   and not properly zero-terminated when all 8 characters were used.

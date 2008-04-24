@@ -598,38 +598,38 @@ FString TimidityMIDIDevice::GetStats()
 	CritSec.Enter();
 	for (i = used = 0; i < Renderer->voices; ++i)
 	{
-		switch (Renderer->voice[i].status)
+		int status = Renderer->voice[i].status;
+
+		if (!(status & Timidity::VOICE_RUNNING))
 		{
-		case Timidity::VOICE_FREE:
 			dots << TEXTCOLOR_PURPLE".";
-			break;
-
-		case Timidity::VOICE_ON:
-			dots << TEXTCOLOR_GREEN;
-			break;
-
-		case Timidity::VOICE_SUSTAINED:
-			dots << TEXTCOLOR_BLUE;
-			break;
-
-		case Timidity::VOICE_OFF:
-			dots << TEXTCOLOR_ORANGE;
-			break;
-
-		case Timidity::VOICE_DIE:
-			dots << TEXTCOLOR_RED;
-			break;
 		}
-		if (Renderer->voice[i].status != Timidity::VOICE_FREE)
+		else
 		{
 			used++;
-			if (Renderer->voice[i].envelope_increment == 0)
+			if (status & Timidity::VOICE_SUSTAINING)
 			{
-				dots << TEXTCOLOR_BLUE"+";
+				dots << TEXTCOLOR_BLUE;
+			}
+			else if (status & Timidity::VOICE_RELEASING)
+			{
+				dots << TEXTCOLOR_ORANGE;
+			}
+			else if (status & Timidity::VOICE_STOPPING)
+			{
+				dots << TEXTCOLOR_RED;
 			}
 			else
 			{
-				dots << ('1' + Renderer->voice[i].envelope_stage);
+				dots << TEXTCOLOR_GREEN;
+			}
+			if (Renderer->voice[i].envelope_increment == 0)
+			{
+				dots << "+";
+			}
+			else
+			{
+				dots << ('0' + Renderer->voice[i].envelope_stage);
 			}
 		}
 	}

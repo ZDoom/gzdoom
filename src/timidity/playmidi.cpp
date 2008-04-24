@@ -37,7 +37,7 @@ void Renderer::reset_voices()
 {
 	for (int i = 0; i < voices; i++)
 	{
-		voice[i].status = VOICE_FREE;
+		voice[i].status = 0;
 	}
 }
 
@@ -254,7 +254,7 @@ void Renderer::kill_key_group(int i)
 	}
 	while (j--)
 	{
-		if (voice[j].status != VOICE_ON && voice[j].status != VOICE_SUSTAINED) continue;
+		if ((voice[j].status & VOICE_RUNNING) && !(voice[j].status & (VOICE_RELEASING | VOICE_STOPPING))) continue;
 		if (i == j) continue;
 		if (voice[i].channel != voice[j].channel) continue;
 		if (voice[j].sample->key_group != voice[i].sample->key_group) continue;
@@ -273,6 +273,7 @@ void Renderer::start_note(int chan, int note, int vel, int i)
 	Instrument *ip;
 	int bank = channel[chan].bank;
 	int prog = channel[chan].program;
+	Voice *v = &voice[i];
 
 	if (ISDRUMCHANNEL(chan))
 	{
@@ -301,66 +302,71 @@ void Renderer::start_note(int chan, int note, int vel, int i)
 	}
 	if (ip->sample->scale_factor != 1024)
 	{
-		voice[i].orig_frequency = calculate_scaled_frequency(ip->sample, note & 0x7F);
+		v->orig_frequency = calculate_scaled_frequency(ip->sample, note & 0x7F);
 	}
 	else
 	{
-		voice[i].orig_frequency = note_to_freq(note & 0x7F);
+		v->orig_frequency = note_to_freq(note & 0x7F);
 	}
 	select_sample(i, ip, vel);
 
-	voice[i].status = VOICE_ON;
-	voice[i].channel = chan;
-	voice[i].note = note;
-	voice[i].velocity = vel;
-	voice[i].sample_offset = 0;
-	voice[i].sample_increment = 0; /* make sure it isn't negative */
+	v->status = VOICE_RUNNING;
+	v->channel = chan;
+	v->note = note;
+	v->velocity = vel;
+	v->sample_offset = 0;
+	v->sample_increment = 0; /* make sure it isn't negative */
 
-	voice[i].tremolo_phase = 0;
-	voice[i].tremolo_phase_increment = voice[i].sample->tremolo_phase_increment;
-	voice[i].tremolo_sweep = voice[i].sample->tremolo_sweep_increment;
-	voice[i].tremolo_sweep_position = 0;
+	v->tremolo_phase = 0;
+	v->tremolo_phase_increment = voice[i].sample->tremolo_phase_increment;
+	v->tremolo_sweep = voice[i].sample->tremolo_sweep_increment;
+	v->tremolo_sweep_position = 0;
 
-	voice[i].vibrato_sweep = voice[i].sample->vibrato_sweep_increment;
-	voice[i].vibrato_sweep_position = 0;
-	voice[i].vibrato_control_ratio = voice[i].sample->vibrato_control_ratio;
-	voice[i].vibrato_control_counter = voice[i].vibrato_phase = 0;
+	v->vibrato_sweep = voice[i].sample->vibrato_sweep_increment;
+	v->vibrato_sweep_position = 0;
+	v->vibrato_control_ratio = voice[i].sample->vibrato_control_ratio;
+	v->vibrato_control_counter = voice[i].vibrato_phase = 0;
 
 	kill_key_group(i);
 
-	memset(voice[i].vibrato_sample_increment, 0, sizeof(voice[i].vibrato_sample_increment));
+	memset(v->vibrato_sample_increment, 0, sizeof(v->vibrato_sample_increment));
 
 	if (channel[chan].panning != NO_PANNING)
 	{
-		voice[i].left_offset = channel[chan].left_offset;
-		voice[i].right_offset = channel[chan].right_offset;
+		v->left_offset = channel[chan].left_offset;
+		v->right_offset = channel[chan].right_offset;
 	}
 	else
 	{
-		voice[i].left_offset = voice[i].sample->left_offset;
-		voice[i].right_offset = voice[i].sample->right_offset;
+		v->left_offset = v->sample->left_offset;
+		v->right_offset = v->sample->right_offset;
 	}
 
 	recompute_freq(i);
-	recompute_amp(&voice[i]);
-	if (voice[i].sample->modes & PATCH_NO_SRELEASE)
+	recompute_amp(v);
+
+	/* Ramp up from 0 */
+	v->envelope_stage = ATTACK;
+	v->envelope_volume = 0;
+	v->control_counter = 0;
+	recompute_envelope(v);
+	apply_envelope_to_amp(v);
+
+	if (v->sample->modes & PATCH_LOOPEN)
 	{
-		/* Ramp up from 0 */
-		voice[i].envelope_stage = ATTACK;
-		voice[i].envelope_volume = 0;
-		voice[i].control_counter = 0;
-		recompute_envelope(&voice[i]);
+		v->status |= VOICE_LPE;
 	}
-	else
-	{
-		voice[i].envelope_increment = 0;
-	}
-	apply_envelope_to_amp(&voice[i]);
 }
 
 void Renderer::kill_note(int i)
 {
-	voice[i].status = VOICE_DIE;
+	Voice *v = &voice[i];
+
+	if (v->status & VOICE_RUNNING)
+	{
+		v->status &= ~VOICE_SUSTAINING;
+		v->status |= VOICE_RELEASING | VOICE_STOPPING;
+	}
 }
 
 /* Only one instance of a note can be playing on a single channel. */
@@ -377,13 +383,20 @@ void Renderer::note_on(int chan, int note, int vel)
 
 	while (i--)
 	{
-		if (voice[i].status == VOICE_FREE)
+		if (!(voice[i].status & VOICE_RUNNING))
 		{
 			lowest = i; /* Can't get a lower volume than silence */
 		}
 		else if (voice[i].channel == chan && ((voice[i].note == note && !voice[i].sample->self_nonexclusive) || channel[chan].mono))
 		{
-			kill_note(i);
+			if (channel[chan].mono)
+			{
+				kill_note(i);
+			}
+			else
+			{
+				finish_note(i);
+			}
 		}
 	}
 
@@ -400,7 +413,7 @@ void Renderer::note_on(int chan, int note, int vel)
 		i = voices;
 		while (i--)
 		{
-			if (voice[i].status != VOICE_ON && voice[i].status != VOICE_DIE)
+			if ((voice[i].status & VOICE_RELEASING) && !(voice[i].status & VOICE_STOPPING))
 			{
 				v = voice[i].attenuation;
 				if (v < lv)
@@ -420,7 +433,7 @@ void Renderer::note_on(int chan, int note, int vel)
 		   we could use a reserve of voices to play dying notes only. */
 
 		cut_notes++;
-		voice[lowest].status = VOICE_FREE;
+		voice[lowest].status = 0;
 		start_note(chan, note, vel, lowest);
 	}
 	else
@@ -431,43 +444,53 @@ void Renderer::note_on(int chan, int note, int vel)
 
 void Renderer::finish_note(int i)
 {
-	if (voice[i].sample->modes & PATCH_NO_SRELEASE)
+	Voice *v = &voice[i];
+
+	if ((v->status & (VOICE_RUNNING | VOICE_RELEASING)) == VOICE_RUNNING)
 	{
-		/* We need to get the envelope out of Sustain stage */
-		voice[i].envelope_stage = RELEASE;
-		voice[i].status = VOICE_OFF;
-		recompute_envelope(&voice[i]);
-		apply_envelope_to_amp(&voice[i]);
-	}
-	else
-	{
-		/* Set status to OFF so resample_voice() will let this voice out
-		   of its loop, if any. In any case, this voice dies when it
-		   hits the end of its data (ofs >= data_length). */
-		voice[i].status = VOICE_OFF;
+		v->status &= ~VOICE_SUSTAINING;
+		v->status |= VOICE_RELEASING;
+
+		if (!(v->sample->modes & PATCH_NO_SRELEASE))
+		{
+			v->status &= ~VOICE_LPE;	/* sampled release */
+		}
+		if (!(v->sample->modes & PATCH_NO_SRELEASE) || (v->sample->modes & PATCH_FAST_REL))
+		{
+			/* ramp out to minimum volume with rate from final release stage */
+			v->envelope_stage = RELEASEC;
+			recompute_envelope(v);
+			// Get rate from the final release ramp, but force the target to 0.
+			v->envelope_target = 0;
+			v->envelope_increment = -v->sample->envelope_rate[RELEASEC];
+		}
+		else if (v->sample->modes & PATCH_SUSTAIN)
+		{
+			if (v->envelope_stage < RELEASE)
+			{
+				v->envelope_stage = RELEASE;
+			}
+			recompute_envelope(v);
+		}
 	}
 }
 
 void Renderer::note_off(int chan, int note, int vel)
 {
-	int i = voices;
-	while (i--)
+	int i;
+	
+	for (i = voices; i-- > 0; )
 	{
-		if (voice[i].status == VOICE_ON &&
-			voice[i].channel == chan &&
-			voice[i].note == note)
+		if ((voice[i].status & VOICE_RUNNING) && !(voice[i].status & (VOICE_RELEASING | VOICE_STOPPING))
+			&& voice[i].channel == chan && voice[i].note == note)
 		{
 			if (channel[chan].sustain)
 			{
-				voice[i].status = VOICE_SUSTAINED;
+				voice[i].status |= NOTE_SUSTAIN;
 			}
 			else
 			{
 				finish_note(i);
-			}
-			if (!voice[i].sample->self_nonexclusive)
-			{
-				return;
 			}
 		}
 	}
@@ -479,11 +502,11 @@ void Renderer::all_notes_off(int chan)
 	int i = voices;
 	while (i--)
 	{
-		if (voice[i].status == VOICE_ON && voice[i].channel == chan)
+		if ((voice[i].status & VOICE_RUNNING) && voice[i].channel == chan)
 		{
 			if (channel[chan].sustain) 
 			{
-				voice[i].status = VOICE_SUSTAINED;
+				voice[i].status |= NOTE_SUSTAIN;
 			}
 			else
 			{
@@ -500,8 +523,8 @@ void Renderer::all_sounds_off(int chan)
 	while (i--)
 	{
 		if (voice[i].channel == chan && 
-			voice[i].status != VOICE_FREE &&
-			voice[i].status != VOICE_DIE)
+			(voice[i].status & VOICE_RUNNING) &&
+			!(voice[i].status & VOICE_STOPPING))
 		{
 			kill_note(i);
 		}
@@ -513,7 +536,7 @@ void Renderer::adjust_pressure(int chan, int note, int amount)
 	int i = voices;
 	while (i--)
 	{
-		if (voice[i].status == VOICE_ON &&
+		if ((voice[i].status & VOICE_RUNNING) &&
 			voice[i].channel == chan &&
 			voice[i].note == note)
 		{
@@ -535,8 +558,7 @@ void Renderer::adjust_panning(int chan)
 	int i = voices;
 	while (i--)
 	{
-		if ((voice[i].channel == chan) &&
-			(voice[i].status == VOICE_ON || voice[i].status == VOICE_SUSTAINED))
+		if ((voice[i].channel == chan) && (voice[i].status & VOICE_RUNNING))
 		{
 			voice[i].left_offset = chanp->left_offset;
 			voice[i].right_offset = chanp->right_offset;
@@ -550,7 +572,7 @@ void Renderer::drop_sustain(int chan)
 	int i = voices;
 	while (i--)
 	{
-		if (voice[i].status == VOICE_SUSTAINED && voice[i].channel == chan)
+		if (voice[i].channel == chan && (voice[i].status & NOTE_SUSTAIN))
 		{
 			finish_note(i);
 		}
@@ -562,7 +584,7 @@ void Renderer::adjust_pitchbend(int chan)
 	int i = voices;
 	while (i--)
 	{
-		if (voice[i].status != VOICE_FREE && voice[i].channel == chan)
+		if ((voice[i].status & VOICE_RUNNING) && voice[i].channel == chan)
 		{
 			recompute_freq(i);
 		}
@@ -574,8 +596,7 @@ void Renderer::adjust_volume(int chan)
 	int i = voices;
 	while (i--)
 	{
-		if (voice[i].channel == chan &&
-			(voice[i].status == VOICE_ON || voice[i].status == VOICE_SUSTAINED))
+		if (voice[i].channel == chan && (voice[i].status & VOICE_RUNNING))
 		{
 			recompute_amp(&voice[i]);
 			apply_envelope_to_amp(&voice[i]);

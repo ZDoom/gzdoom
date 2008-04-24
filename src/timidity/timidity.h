@@ -315,8 +315,8 @@ struct GF1PatchData
 	int   RootFrequency;
 	SWORD Tune;
 	BYTE  Balance;
-	BYTE  EnvelopeRate[6];
-	BYTE  EnvelopeOffset[6];
+	BYTE  EnvelopeRate[ENVELOPES];
+	BYTE  EnvelopeOffset[ENVELOPES];
 	BYTE  TremoloSweep;
 	BYTE  TremoloRate;
 	BYTE  TremoloDepth;
@@ -444,7 +444,7 @@ struct Channel
 {
 	int
 		bank, program, sustain, pitchbend, 
-		mono, /* one note only on this channel -- not implemented yet */
+		mono, /* one note only on this channel */
 		pitchsens;
 	WORD
 		volume, expression;
@@ -462,8 +462,6 @@ struct Channel
 
 /* Causes the instrument's default panning to be used. */
 #define NO_PANNING				-1
-/* envelope points */
-#define MAXPOINT				6
 
 struct Voice
 {
@@ -496,11 +494,13 @@ struct Voice
 /* Voice status options: */
 enum
 {
-	VOICE_FREE,
-	VOICE_ON,
-	VOICE_SUSTAINED,
-	VOICE_OFF,
-	VOICE_DIE
+	VOICE_RUNNING			= (1<<0),
+	VOICE_SUSTAINING		= (1<<1),
+	VOICE_RELEASING			= (1<<2),
+	VOICE_STOPPING			= (1<<3),
+
+	VOICE_LPE				= (1<<4),
+	NOTE_SUSTAIN			= (1<<5),
 };
 
 /* Envelope stages: */

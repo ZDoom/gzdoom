@@ -81,7 +81,7 @@ static sample_t *rs_plain(sample_t *resample_buffer, Voice *v, int *countptr)
 	if (ofs >= le) 
 	{
 		FINALINTERP;
-		v->status = VOICE_FREE;
+		v->status = 0;
 		*countptr -= count + 1;
 	}
 
@@ -309,7 +309,7 @@ static sample_t *rs_vib_plain(sample_t *resample_buffer, float rate, Voice *vp, 
 		if (ofs >= le)
 		{
 			FINALINTERP;
-			vp->status = VOICE_FREE;
+			vp->status = 0;
 			*countptr -= count+1;
 			break;
 		}
@@ -494,7 +494,7 @@ sample_t *resample_voice(Renderer *song, Voice *vp, int *countptr)
 		if (*countptr >= (vp->sample->data_length >> FRACTION_BITS) - ofs)
 		{
 			/* Note finished. Free the voice. */
-			vp->status = VOICE_FREE;
+			vp->status = 0;
 
 			/* Let the caller know how much data we had left */
 			*countptr = (vp->sample->data_length >> FRACTION_BITS) - ofs;
@@ -511,9 +511,7 @@ sample_t *resample_voice(Renderer *song, Voice *vp, int *countptr)
 
 	if (vp->vibrato_control_ratio)
 	{
-		if ((modes & PATCH_LOOPEN) &&
-			((modes & PATCH_NO_SRELEASE) ||
-			 (vp->status == VOICE_ON || vp->status == VOICE_SUSTAINED)))
+		if (vp->status & VOICE_LPE)
 		{
 			if (modes & PATCH_BIDIR)
 				return rs_vib_bidir(song->resample_buffer, song->rate, vp, *countptr);
@@ -527,9 +525,7 @@ sample_t *resample_voice(Renderer *song, Voice *vp, int *countptr)
 	}
 	else
 	{
-		if ((modes & PATCH_LOOPEN) &&
-			((modes & PATCH_NO_SRELEASE) ||
-			(vp->status == VOICE_ON || vp->status == VOICE_SUSTAINED)))
+		if (vp->status & VOICE_LPE)
 		{
 			if (modes & PATCH_BIDIR)
 				return rs_bidir(song->resample_buffer, vp, *countptr);

@@ -271,7 +271,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 							goto FinishStatusBar; //No more args so we must skip over anything else and go to the end.
 					}
 					sc.MustGetToken(TK_FloatConst);
-					this->huds[barNum].alpha = FRACUNIT * sc.Float;
+					this->huds[barNum].alpha = fixed_t(FRACUNIT * sc.Float);
 				}
 			FinishStatusBar:
 				sc.MustGetToken('{');
@@ -348,10 +348,10 @@ void SBarInfo::ParseSBarInfo(int lump)
 						popup.transition = TRANSITION_FADE;
 						sc.MustGetToken(',');
 						sc.MustGetToken(TK_FloatConst);
-						popup.speed = FRACUNIT * sc.Float;
+						popup.speed = fixed_t(FRACUNIT * sc.Float);
 						sc.MustGetToken(',');
 						sc.MustGetToken(TK_FloatConst);
-						popup.speed2 = FRACUNIT * sc.Float;
+						popup.speed2 = fixed_t(FRACUNIT * sc.Float);
 					}
 					else
 						sc.ScriptError("Unkown transition type: '%s'", sc.String);

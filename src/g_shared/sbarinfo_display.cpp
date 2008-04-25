@@ -546,11 +546,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				if(drawAlt != 0) //draw 'off' image
 				{
 					if(cmd.special != -1 && drawAlt == 1)
-						DrawGraphic(Images[cmd.special], cmd.x, cmd.y, xOffset, yOffset, alpha, (cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & DRAWIMAGE_OFFSET_CENTER));
+						DrawGraphic(Images[cmd.special], cmd.x, cmd.y, xOffset, yOffset, alpha, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));
 					else if(cmd.special2 != -1 && drawAlt == 2)
-						DrawGraphic(Images[cmd.special2], cmd.x, cmd.y, xOffset, yOffset, alpha, (cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & DRAWIMAGE_OFFSET_CENTER));
+						DrawGraphic(Images[cmd.special2], cmd.x, cmd.y, xOffset, yOffset, alpha, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));
 					else if(cmd.special3 != -1 && drawAlt == 3)
-						DrawGraphic(Images[cmd.special3], cmd.x, cmd.y, xOffset, yOffset, alpha, (cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & DRAWIMAGE_OFFSET_CENTER));
+						DrawGraphic(Images[cmd.special3], cmd.x, cmd.y, xOffset, yOffset, alpha, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));
 					break;
 				}
 			}
@@ -587,7 +587,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				else if(cmd.sprite != -1)
 					texture = Images[cmd.sprite];
 
-				DrawGraphic(texture, cmd.x, cmd.y, xOffset, yOffset, alpha, (cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & DRAWIMAGE_OFFSET_CENTER));
+				DrawGraphic(texture, cmd.x, cmd.y, xOffset, yOffset, alpha, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));
 				break;
 			}
 			case SBARINFO_DRAWNUMBER:
@@ -1508,9 +1508,9 @@ void DSBarInfo::DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y,
 		y += chainWiggle;
 	int chainWidth = chain->GetWidth();
 	int offset = (int) (((double) (chainWidth-padleft-padright)/100)*value);
-	DrawGraphic(chain, x+(offset%chainsize), y);
+	DrawGraphic(chain, x+(offset%chainsize), y, xOffset, yOffset, alpha);
 	if(gem != NULL)
-		DrawGraphic(gem, x+padleft+offset, y, translate ? DRAWIMAGE_TRANSLATABLE : 0);
+		DrawGraphic(gem, x+padleft+offset, y, xOffset, yOffset, alpha, translate);
 }
 
 FRemapTable* DSBarInfo::getTranslation()

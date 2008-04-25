@@ -31,6 +31,7 @@
 #include "timidity.h"
 #include "m_swap.h"
 #include "files.h"
+#include "templates.h"
 
 namespace Timidity
 {
@@ -417,7 +418,8 @@ fail:
 		for (j = 0; j < 6; j++)
 		{
 			sp->envelope_rate[j] = convert_envelope_rate(song, patch_data.EnvelopeRate[j]);
-			sp->envelope_offset[j] = convert_envelope_offset(patch_data.EnvelopeOffset[j]);
+			// GF1NEW clamps the offsets to the range [5,251], so we do too.
+			sp->envelope_offset[j] = convert_envelope_offset(clamp<BYTE>(patch_data.EnvelopeOffset[j], 5, 251));
 		}
 
 		/* Then read the sample data */

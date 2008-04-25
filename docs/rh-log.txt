@@ -1,4 +1,6 @@
 April 24, 2008
+- Fixed: When an instrument's envelope runs out, it does not immediately ramp
+  to zero. Rather, it lets the remainder of the sample finish playing.
 - Fixed: When playing a MIDI file with EMIDI track designations to turn a
   track off, any ticks that had only events on the disabled track would cause
   the delay for that track to be thrown away, and the following notes on

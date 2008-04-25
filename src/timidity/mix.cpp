@@ -43,8 +43,9 @@ int recompute_envelope(Voice *v)
 		/* Envelope ran out. */
 		/* play sampled release */
 		v->status &= ~(VOICE_SUSTAINING | VOICE_LPE);
-		v->status |= VOICE_RELEASING | VOICE_STOPPING;
-		return 1;
+		v->status |= VOICE_RELEASING;
+		v->envelope_increment = 0;
+		return 0;
 	}
 
 	if (stage == RELEASE && !(v->status & VOICE_RELEASING) && (v->sample->modes & PATCH_SUSTAIN))

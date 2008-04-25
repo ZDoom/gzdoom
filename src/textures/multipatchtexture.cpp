@@ -989,15 +989,14 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 				{
 					int r,g,b;
 
-					sc.MustGetNumber();
-					sc.MustGetStringName(",");
 					r = sc.Number;
-					sc.MustGetNumber();
 					sc.MustGetStringName(",");
+					sc.MustGetNumber();
 					g = sc.Number;
-					sc.MustGetNumber();
 					sc.MustGetStringName(",");
+					sc.MustGetNumber();
 					b = sc.Number;
+					sc.MustGetStringName(",");
 					part.Blend = MAKERGB(r, g, b);
 				}
 				if (sc.CheckString(","))

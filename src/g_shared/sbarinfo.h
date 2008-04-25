@@ -53,6 +53,7 @@ enum PopupTransition
 {
 	TRANSITION_NONE,
 	TRANSITION_SLIDEINBOTTOM,
+	TRANSITION_FADE,
 };
 
 struct Popup
@@ -63,6 +64,8 @@ struct Popup
 	int height;
 	int width;
 	int speed;
+	int speed2;
+	int alpha;
 	int x;
 	int y;
 
@@ -74,6 +77,7 @@ struct Popup
 	bool isDoneMoving();
 	int getXOffset();
 	int getYOffset();
+	int getAlpha(int maxAlpha=FRACUNIT);
 };
 
 //SBarInfo
@@ -81,6 +85,8 @@ struct SBarInfoBlock
 {
 	TArray<SBarInfoCommand> commands;
 	bool forceScaled;
+	int alpha;
+
 	SBarInfoBlock();
 };
 
@@ -372,15 +378,15 @@ public:
 	void ShowPop(int popnum);
 	void SetMugShotState(const char* stateName, bool waitTillDone=false);
 private:
-	void doCommands(SBarInfoBlock &block, int xOffset=0, int yOffset=0);
-	void DrawGraphic(FTexture* texture, int x, int y, int flags=0);
-	void DrawString(const char* str, int x, int y, EColorRange translation, int spacing=0);
-	void DrawNumber(int num, int len, int x, int y, EColorRange translation, int spacing=0, bool fillzeros=false);
-	void DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y);
+	void doCommands(SBarInfoBlock &block, int xOffset=0, int yOffset=0, int alpha=FRACUNIT);
+	void DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool translate=false, bool dim=false, bool center=false);
+	void DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, EColorRange translation, int spacing=0);
+	void DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, EColorRange translation, int spacing=0, bool fillzeros=false);
+	void DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha);
 	int updateState(bool xdth, bool animatedgodmode);
-	void DrawInventoryBar(int type, int num, int x, int y, bool alwaysshow, 
+	void DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool alwaysshow, 
 		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter);
-	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int padleft, int padright, int chainsize, 
+	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, int padleft, int padright, int chainsize, 
 		bool wiggle, bool translate);
 	FRemapTable* getTranslation();
 

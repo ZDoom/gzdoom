@@ -1,3 +1,18 @@
+April 25, 2008 (SBarInfo Update #18)
+- Simplified the DrawGraphic function in sbarinfo_display.cpp
+- Added xOffset, yOffset, and alpha to every drawing function in
+  sbarinfo_display.cpp.  So Strife popups can be handeled better and allow for
+  other effects (translucent bars?).  I'm thinking about making a struct for
+  these five (also x and y) arguments so that the argument lists don't become a
+  mess.
+- Changed DRAWIMAGE in sbarinfo_display.cpp to not use so many calls to
+  DrawGraphic.
+- DrawKeyBar wasn't using screen->DrawTexture.
+- Added a Fade transition for popups.  It takes two args fade in rate and fade
+  out rate.  Both are floats (1.0 = 1 tic to complete 0.5 = 2 tics to complete
+  and so on).
+- Added a translucency arg to statusbars.  1.0 = opaque and 0.0 = invisible.
+
 April 24, 2008
 - Fixed: When an instrument's envelope runs out, it does not immediately ramp
   to zero. Rather, it lets the remainder of the sample finish playing.

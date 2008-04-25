@@ -255,18 +255,25 @@ void SBarInfo::ParseSBarInfo(int lump)
 					barNum = sc.MustMatchString(StatusBars);
 				}
 				this->huds[barNum] = SBarInfoBlock();
-				while(sc.CheckToken(','))
+				if(sc.CheckToken(','))
 				{
-					sc.MustGetToken(TK_Identifier);
-					if(sc.Compare("forcescaled"))
+					while(sc.CheckToken(TK_Identifier))
 					{
-						this->huds[barNum].forceScaled = true;
+						if(sc.Compare("forcescaled"))
+						{
+							this->huds[barNum].forceScaled = true;
+						}
+						else
+						{
+							sc.ScriptError("Unkown flag '%s'.", sc.String);
+						}
+						if(!sc.CheckToken('|') || !sc.CheckToken(','))
+							goto FinishStatusBar; //No more args so we must skip over anything else and go to the end.
 					}
-					else
-					{
-						sc.ScriptError("Unkown flag '%s'.", sc.String);
-					}
+					sc.MustGetToken(TK_FloatConst);
+					this->huds[barNum].alpha = FRACUNIT * sc.Float;
 				}
+			FinishStatusBar:
 				sc.MustGetToken('{');
 				if(barNum == STBAR_AUTOMAP)
 				{
@@ -335,6 +342,16 @@ void SBarInfo::ParseSBarInfo(int lump)
 						sc.MustGetToken(',');
 						sc.MustGetToken(TK_IntConst);
 						popup.speed = sc.Number;
+					}
+					else if(sc.Compare("fade"))
+					{
+						popup.transition = TRANSITION_FADE;
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_FloatConst);
+						popup.speed = FRACUNIT * sc.Float;
+						sc.MustGetToken(',');
+						sc.MustGetToken(TK_FloatConst);
+						popup.speed2 = FRACUNIT * sc.Float;
 					}
 					else
 						sc.ScriptError("Unkown transition type: '%s'", sc.String);
@@ -1264,6 +1281,7 @@ SBarInfoCommand::~SBarInfoCommand()
 SBarInfoBlock::SBarInfoBlock()
 {
 	forceScaled = false;
+	alpha = FRACUNIT;
 }
 
 const MugShotState *FindMugShotState(FString state)
@@ -1286,6 +1304,7 @@ Popup::Popup()
 	speed = 0;
 	x = 320;
 	y = 200;
+	alpha = FRACUNIT;
 	opened = false;
 	moving = false;
 }
@@ -1297,6 +1316,12 @@ void Popup::init()
 	if(transition == TRANSITION_SLIDEINBOTTOM)
 	{
 		x = 0;
+	}
+	else if(transition == TRANSITION_FADE)
+	{
+		alpha = 0;
+		x = 0;
+		y = 0;
 	}
 }
 
@@ -1316,9 +1341,22 @@ void Popup::tick()
 		else
 			moving = false;
 	}
+	else if(transition == TRANSITION_FADE)
+	{
+		if(moving)
+		{
+			if(opened)
+				alpha = clamp(alpha + speed, 0, FRACUNIT);
+			else
+				alpha = clamp(alpha - speed2, 0, FRACUNIT);
+		}
+		if(alpha == 0 || alpha == FRACUNIT)
+			moving = false;
+		else
+			moving = true;
+	}
 	else
 	{
-		moving = false;
 		if(opened)
 		{
 			y = 0;
@@ -1329,6 +1367,7 @@ void Popup::tick()
 			y = height;
 			x = width;
 		}
+		moving = false;
 	}
 }
 
@@ -1345,6 +1384,13 @@ int Popup::getXOffset()
 int Popup::getYOffset()
 {
 	return y;
+}
+
+int Popup::getAlpha(int maxAlpha)
+{
+	double a = (double) alpha / (double) FRACUNIT;
+	double b = (double) maxAlpha / (double) FRACUNIT;
+	return fixed_t((a * b) * FRACUNIT);
 }
 
 void Popup::open()

@@ -310,22 +310,25 @@ void DSBarInfo::Draw (EHudState state)
 		SetScaled(true);
 		setsizeneeded = true;
 	}
-	doCommands(SBarInfoScript->huds[hud]);
+	doCommands(SBarInfoScript->huds[hud], 0, 0, SBarInfoScript->huds[hud].alpha);
 	if(CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR))
 	{
 		if(state == HUD_StatusBar)
-			doCommands(SBarInfoScript->huds[STBAR_INVENTORY]);
+			doCommands(SBarInfoScript->huds[STBAR_INVENTORY], 0, 0, SBarInfoScript->huds[STBAR_INVENTORY].alpha);
 		else if(state == HUD_Fullscreen)
-			doCommands(SBarInfoScript->huds[STBAR_INVENTORYFULLSCREEN]);
+			doCommands(SBarInfoScript->huds[STBAR_INVENTORYFULLSCREEN], 0, 0, SBarInfoScript->huds[STBAR_INVENTORYFULLSCREEN].alpha);
 	}
 	if(currentPopup != POP_None)
 	{
+		int popbar = 0;
 		if(currentPopup == POP_Log)
-			doCommands(SBarInfoScript->huds[STBAR_POPUPLOG], SBarInfoScript->popups[currentPopup].getXOffset(), SBarInfoScript->popups[currentPopup].getYOffset());
+			popbar = STBAR_POPUPLOG;
 		else if(currentPopup == POP_Keys)
-			doCommands(SBarInfoScript->huds[STBAR_POPUPKEYS], SBarInfoScript->popups[currentPopup].getXOffset(), SBarInfoScript->popups[currentPopup].getYOffset());
+			popbar = STBAR_POPUPKEYS;
 		else if(currentPopup == POP_Status)
-			doCommands(SBarInfoScript->huds[STBAR_POPUPSTATUS], SBarInfoScript->popups[currentPopup].getXOffset(), SBarInfoScript->popups[currentPopup].getYOffset());
+			popbar = STBAR_POPUPSTATUS;
+		doCommands(SBarInfoScript->huds[popbar], SBarInfoScript->popups[currentPopup].getXOffset(), SBarInfoScript->popups[currentPopup].getYOffset(),
+			SBarInfoScript->popups[currentPopup].getAlpha(SBarInfoScript->huds[popbar].alpha));
 	}
 }
 
@@ -469,7 +472,7 @@ void DSBarInfo::SetMugShotState(const char* stateName, bool waitTillDone)
 	}
 }
 
-void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
+void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int alpha)
 {
 	//prepare ammo counts
 	AAmmo *ammo1, *ammo2;
@@ -489,8 +492,6 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 	for(unsigned int i = 0;i < block.commands.Size();i++)
 	{
 		SBarInfoCommand& cmd = block.commands[i];
-		cmd.x += xOffset;
-		cmd.y += yOffset;
 		switch(cmd.type) //read and execute all the commands
 		{
 			case SBARINFO_DRAWSWITCHABLEIMAGE: //draw the alt image if we don't have the item else this is like a normal drawimage
@@ -545,49 +546,50 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				if(drawAlt != 0) //draw 'off' image
 				{
 					if(cmd.special != -1 && drawAlt == 1)
-						DrawGraphic(Images[cmd.special], cmd.x, cmd.y, cmd.flags);
+						DrawGraphic(Images[cmd.special], cmd.x, cmd.y, xOffset, yOffset, alpha, (cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & DRAWIMAGE_OFFSET_CENTER));
 					else if(cmd.special2 != -1 && drawAlt == 2)
-						DrawGraphic(Images[cmd.special2], cmd.x, cmd.y, cmd.flags);
+						DrawGraphic(Images[cmd.special2], cmd.x, cmd.y, xOffset, yOffset, alpha, (cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & DRAWIMAGE_OFFSET_CENTER));
 					else if(cmd.special3 != -1 && drawAlt == 3)
-						DrawGraphic(Images[cmd.special3], cmd.x, cmd.y, cmd.flags);
+						DrawGraphic(Images[cmd.special3], cmd.x, cmd.y, xOffset, yOffset, alpha, (cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & DRAWIMAGE_OFFSET_CENTER));
 					break;
 				}
 			}
 			case SBARINFO_DRAWIMAGE:
+			{
+				FTexture *texture = NULL;
 				if((cmd.flags & DRAWIMAGE_PLAYERICON))
-					DrawGraphic(TexMan[CPlayer->mo->ScoreIcon], cmd.x, cmd.y, cmd.flags);
+					texture = TexMan[CPlayer->mo->ScoreIcon];
 				else if((cmd.flags & DRAWIMAGE_AMMO1))
 				{
 					if(ammo1 != NULL)
-						DrawGraphic(TexMan[ammo1->Icon], cmd.x, cmd.y, cmd.flags);
+						texture = TexMan[ammo1->Icon];
 				}
 				else if((cmd.flags & DRAWIMAGE_AMMO2))
 				{
 					if(ammo2 != NULL)
-						DrawGraphic(TexMan[ammo2->Icon], cmd.x, cmd.y, cmd.flags);
+						texture = TexMan[ammo2->Icon];
 				}
 				else if((cmd.flags & DRAWIMAGE_ARMOR))
 				{
 					if(armor != NULL && armor->Amount != 0)
-						DrawGraphic(TexMan(armor->Icon), cmd.x, cmd.y, cmd.flags);
+						texture = TexMan(armor->Icon);
 				}
 				else if((cmd.flags & DRAWIMAGE_WEAPONICON))
 				{
 					AWeapon *weapon = CPlayer->ReadyWeapon;
 					if(weapon != NULL && weapon->Icon > 0)
 					{
-						DrawGraphic(TexMan[weapon->Icon], cmd.x, cmd.y, cmd.flags);
+						texture = TexMan[weapon->Icon];
 					}
 				}
 				else if((cmd.flags & DRAWIMAGE_INVENTORYICON))
-				{
-					DrawGraphic(TexMan[cmd.sprite], cmd.x, cmd.y, cmd.flags);
-				}
+					texture = TexMan[cmd.sprite];
 				else if(cmd.sprite != -1)
-				{
-					DrawGraphic(Images[cmd.sprite], cmd.x, cmd.y, cmd.flags);
-				}
+					texture = Images[cmd.sprite];
+
+				DrawGraphic(texture, cmd.x, cmd.y, xOffset, yOffset, alpha, (cmd.flags & DRAWIMAGE_TRANSLATABLE), false, (cmd.flags & DRAWIMAGE_OFFSET_CENTER));
 				break;
+			}
 			case SBARINFO_DRAWNUMBER:
 			{
 				int value = cmd.value;
@@ -695,12 +697,12 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 					}
 				}
 				bool fillzeros = !!(cmd.flags & DRAWNUMBER_FILLZEROS);
+				EColorRange translation = cmd.translation;
 				if(cmd.special3 != -1 && value <= cmd.special3) //low
-					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation2, cmd.special2, fillzeros);
+					translation = cmd.translation2;
 				else if(cmd.special4 != -1 && value >= cmd.special4) //high
-					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation3, cmd.special2, fillzeros);
-				else
-					DrawNumber(value, cmd.special, cmd.x, cmd.y, cmd.translation, cmd.special2, fillzeros);
+					translation = cmd.translation3;
+				DrawNumber(value, cmd.special, cmd.x, cmd.y, xOffset, yOffset, alpha, translation, cmd.special2, fillzeros);
 				break;
 			}
 			case SBARINFO_DRAWMUGSHOT:
@@ -711,7 +713,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 					xdth = true;
 				if(cmd.flags & DRAWMUGSHOT_ANIMATEDGODMODE)
 					animatedgodmode = true;
-				DrawFace(cmd.string[0], cmd.special, xdth, animatedgodmode, cmd.x, cmd.y);
+				DrawFace(cmd.string[0], cmd.special, xdth, animatedgodmode, cmd.x, cmd.y, xOffset, yOffset, alpha);
 				break;
 			}
 			case SBARINFO_DRAWSELECTEDINVENTORY:
@@ -719,11 +721,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				{
 					if((cmd.flags & DRAWSELECTEDINVENTORY_ARTIFLASH) && artiflash)
 					{
-						DrawDimImage(Images[ARTIFLASH_OFFSET+(4-artiflash)], cmd.x, cmd.y, CPlayer->mo->InvSel->Amount <= 0);
+						DrawGraphic(Images[ARTIFLASH_OFFSET+(4-artiflash)], cmd.x, cmd.y, xOffset, yOffset, alpha, false, CPlayer->mo->InvSel->Amount <= 0);
 					}
 					else
 					{
-						DrawDimImage(TexMan(CPlayer->mo->InvSel->Icon), cmd.x, cmd.y, CPlayer->mo->InvSel->Amount <= 0);
+						DrawGraphic(TexMan(CPlayer->mo->InvSel->Icon), cmd.x, cmd.y, xOffset, yOffset, alpha, false, CPlayer->mo->InvSel->Amount <= 0);
 					}
 					if((cmd.flags & DRAWSELECTEDINVENTORY_ALWAYSSHOWCOUNTER) || CPlayer->mo->InvSel->Amount != 1)
 					{
@@ -731,12 +733,12 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 						{
 							drawingFont = cmd.font;
 						}
-						DrawNumber(CPlayer->mo->InvSel->Amount, 3, cmd.special2, cmd.special3, cmd.translation, cmd.special4);
+						DrawNumber(CPlayer->mo->InvSel->Amount, 3, cmd.special2, cmd.special3, xOffset, yOffset, alpha, cmd.translation, cmd.special4);
 					}
 				}
 				else if((cmd.flags & DRAWSELECTEDINVENTORY_ALTERNATEONEMPTY))
 				{
-					doCommands(cmd.subBlock, xOffset, yOffset);
+					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				}
 				break;
 			case SBARINFO_DRAWINVENTORYBAR:
@@ -757,7 +759,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				{
 					drawingFont = cmd.font;
 				}
-				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, alwaysshow, cmd.special2, cmd.special3, cmd.translation, artibox, noarrows, alwaysshowcounter);
+				DrawInventoryBar(cmd.special, cmd.value, cmd.x, cmd.y, xOffset, yOffset, alpha, alwaysshow, cmd.special2, cmd.special3, cmd.translation, artibox, noarrows, alwaysshowcounter);
 				break;
 			}
 			case SBARINFO_DRAWBAR:
@@ -905,8 +907,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				int cx, cy, cw, ch, cr, cb;
 
 				// Calc real screen coordinates for bar
-				x = cmd.x + ST_X;
-				y = cmd.y + ST_Y;
+				x = cmd.x + ST_X + xOffset;
+				y = cmd.y + ST_Y + yOffset;
 				w = fg->GetScaledWidth();
 				h = fg->GetScaledHeight();
 				if (Scaled)
@@ -920,6 +922,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 					screen->DrawTexture(fg, x, y,
 						DTA_DestWidth, w,
 						DTA_DestHeight, h,
+						DTA_Alpha, alpha,
 						TAG_DONE);
 				}
 				else
@@ -930,6 +933,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 						screen->DrawTexture(bg, x, y,
 							DTA_DestWidth, w,
 							DTA_DestHeight, h,
+							DTA_Alpha, alpha,
 							TAG_DONE);
 					}
 					else
@@ -939,8 +943,8 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				}
 
 				// Calc clipping rect for background
-				cx = cmd.x + ST_X + cmd.special3;
-				cy = cmd.y + ST_Y + cmd.special3;
+				cx = cmd.x + ST_X + cmd.special3 + xOffset;
+				cy = cmd.y + ST_Y + cmd.special3 + yOffset;
 				cw = fg->GetScaledWidth() - fg->GetScaledLeftOffset() - cmd.special3 * 2;
 				ch = fg->GetScaledHeight() - fg->GetScaledTopOffset() - cmd.special3 * 2;
 				if (Scaled)
@@ -987,6 +991,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 							DTA_ClipTop, cy,
 							DTA_ClipRight, cr,
 							DTA_ClipBottom, cb,
+							DTA_Alpha, alpha,
 							TAG_DONE);
 					}
 					else
@@ -1003,6 +1008,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 						DTA_ClipTop, cy,
 						DTA_ClipRight, cr,
 						DTA_ClipBottom, cb,
+						DTA_Alpha, alpha,
 						TAG_DONE);
 				}
 				break;
@@ -1028,7 +1034,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				{
 					wiggle = !!(cmd.flags & DRAWGEM_WIGGLE);
 				}
-				DrawGem(Images[cmd.special], Images[cmd.sprite], value, cmd.x, cmd.y, cmd.special2, cmd.special3, cmd.special4+1, wiggle, translate);
+				DrawGem(Images[cmd.special], Images[cmd.sprite], value, cmd.x, cmd.y, xOffset, yOffset, alpha, cmd.special2, cmd.special3, cmd.special4+1, wiggle, translate);
 				break;
 			}
 			case SBARINFO_DRAWSHADER:
@@ -1040,10 +1046,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				};
 				bool vertical = !!(cmd.flags & DRAWSHADER_VERTICAL);
 				bool reverse = !!(cmd.flags & DRAWSHADER_REVERSE);
-				screen->DrawTexture (shaders[(vertical << 1) + reverse], ST_X+cmd.x, ST_Y+cmd.y,
+				screen->DrawTexture (shaders[(vertical << 1) + reverse], ST_X+cmd.x+xOffset, ST_Y+cmd.y+yOffset,
 					DTA_DestWidth, cmd.special,
 					DTA_DestHeight, cmd.special2,
 					DTA_Bottom320x200, Scaled,
+					DTA_Alpha, alpha,
 					DTA_AlphaChannel, true,
 					DTA_FillColor, 0,
 					TAG_DONE);
@@ -1054,7 +1061,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				{
 					drawingFont = cmd.font;
 				}
-				DrawString(cmd.string[0], cmd.x - drawingFont->StringWidth(cmd.string[0]), cmd.y, cmd.translation, cmd.special);
+				DrawString(cmd.string[0], cmd.x - drawingFont->StringWidth(cmd.string[0]), cmd.y, xOffset, yOffset, alpha, cmd.translation, cmd.special);
 				break;
 			case SBARINFO_DRAWKEYBAR:
 			{
@@ -1071,9 +1078,9 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 							goto FinishDrawKeyBar;
 					}
 					if(!vertical)
-						DrawImage(TexMan[item->Icon], cmd.x+(cmd.special*i), cmd.y);
+						DrawGraphic(TexMan[item->Icon], cmd.x+(cmd.special*i), cmd.y, xOffset, yOffset, alpha);
 					else
-						DrawImage(TexMan[item->Icon], cmd.x, cmd.y+(cmd.special*i));
+						DrawGraphic(TexMan[item->Icon], cmd.x, cmd.y+(cmd.special*i), xOffset, yOffset, alpha);
 					item = item->Inventory;
 					if(item == NULL)
 						break;
@@ -1087,7 +1094,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 					((cmd.flags & GAMETYPE_COOPERATIVE) && multiplayer && !deathmatch) ||
 					((cmd.flags & GAMETYPE_TEAMGAME) && teamplay))
 				{
-					doCommands(cmd.subBlock, xOffset, yOffset);
+					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				}
 				break;
 			case SBARINFO_PLAYERCLASS:
@@ -1096,14 +1103,14 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				int spawnClass = CPlayer->cls->ClassIndex;
 				if(cmd.special == spawnClass || cmd.special2 == spawnClass || cmd.special3 == spawnClass)
 				{
-					doCommands(cmd.subBlock, xOffset, yOffset);
+					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				}
 				break;
 			}
 			case SBARINFO_ASPECTRATIO:
 				if(CheckRatio(screen->GetWidth(), screen->GetHeight()) == cmd.value)
 				{
-					doCommands(cmd.subBlock, xOffset, yOffset);
+					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				}
 				break;
 			case SBARINFO_ISSELECTED:
@@ -1114,16 +1121,16 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 					if(weapon2 != NULL)
 					{
 						if((cmd.flags & SBARINFOEVENT_NOT) && (weapon1 != CPlayer->ReadyWeapon->GetSpecies() && weapon2 != CPlayer->ReadyWeapon->GetSpecies()))
-							doCommands(cmd.subBlock, xOffset, yOffset);
+							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 						else if(!(cmd.flags & SBARINFOEVENT_NOT) && (weapon1 == CPlayer->ReadyWeapon->GetSpecies() || weapon2 == CPlayer->ReadyWeapon->GetSpecies()))
-							doCommands(cmd.subBlock, xOffset, yOffset);
+							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 					}
 					else
 					{
 						if(!(cmd.flags & SBARINFOEVENT_NOT) && weapon1 == CPlayer->ReadyWeapon->GetSpecies())
-							doCommands(cmd.subBlock, xOffset, yOffset);
+							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 						else if((cmd.flags & SBARINFOEVENT_NOT) && weapon1 != CPlayer->ReadyWeapon->GetSpecies())
-							doCommands(cmd.subBlock, xOffset, yOffset);
+							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 					}
 				}
 				break;
@@ -1150,11 +1157,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 						if(((cmd.flags & SBARINFOEVENT_OR) && (match1 || match2)) || ((cmd.flags & SBARINFOEVENT_AND) && (match1 && match2)))
 						{
 							if(!(cmd.flags & SBARINFOEVENT_NOT))
-								doCommands(cmd.subBlock, xOffset, yOffset);
+								doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 						}
 						else if(cmd.flags & SBARINFOEVENT_NOT)
 						{
-							doCommands(cmd.subBlock, xOffset, yOffset);
+							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 						}
 					}
 					else //Every thing here could probably be one long if statement but then it would be more confusing.
@@ -1162,11 +1169,11 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 						if((usesammo1 && (AmmoType1 == IfAmmo1)) || (usesammo2 && (AmmoType2 == IfAmmo1)))
 						{
 							if(!(cmd.flags & SBARINFOEVENT_NOT))
-								doCommands(cmd.subBlock, xOffset, yOffset);
+								doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 						}
 						else if(cmd.flags & SBARINFOEVENT_NOT)
 						{
-							doCommands(cmd.subBlock, xOffset, yOffset);
+							doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 						}
 					}
 				}
@@ -1178,66 +1185,57 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset)
 				if(cmd.flags & SBARINFOEVENT_AND)
 				{
 					if((item1 != NULL && item2 != NULL) && !(cmd.flags & SBARINFOEVENT_NOT))
-						doCommands(cmd.subBlock, xOffset, yOffset);
+						doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 					else if((item1 == NULL || item2 == NULL) && (cmd.flags & SBARINFOEVENT_NOT))
-						doCommands(cmd.subBlock, xOffset, yOffset);
+						doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				}
 				else if(cmd.flags & SBARINFOEVENT_OR)
 				{
 					if((item1 != NULL || item2 != NULL) && !(cmd.flags & SBARINFOEVENT_NOT))
-						doCommands(cmd.subBlock, xOffset, yOffset);
+						doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 					else if((item1 == NULL && item2 == NULL) && (cmd.flags & SBARINFOEVENT_NOT))
-						doCommands(cmd.subBlock, xOffset, yOffset);
+						doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				}
 				else if((item1 != NULL) && !(cmd.flags & SBARINFOEVENT_NOT))
-					doCommands(cmd.subBlock, xOffset, yOffset);
+					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				else if((item1 == NULL) && (cmd.flags & SBARINFOEVENT_NOT))
-					doCommands(cmd.subBlock, xOffset, yOffset);
+					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 				break;
 			}
 		}
-		cmd.x -= xOffset;
-		cmd.y -= yOffset;
 	}
 }
 
 //draws an image with the specified flags
-void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int flags)
+void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, 
+	bool translate, bool dim, bool center) //flags
 {
 	if (texture == NULL)
-	{
 		return;
-	}
-	if((flags & DRAWIMAGE_OFFSET_CENTER))
+
+	if(center)
 	{
 		x -= (texture->GetWidth()/2)-texture->LeftOffset;
 		y -= (texture->GetHeight()/2)-texture->TopOffset;
 	}
-	x += ST_X;
-	y += ST_Y;
+
+	x += ST_X + xOffset;
+	y += ST_Y + yOffset;
 	int w = texture->GetScaledWidth();
 	int h = texture->GetScaledHeight() + y;
 	if(Scaled)
 		screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
 	h -= y;
-	if((flags & DRAWIMAGE_TRANSLATABLE))
-	{
-		screen->DrawTexture(texture, x, y,
-			DTA_DestWidth, w,
-			DTA_DestHeight, h,
-			DTA_Translation, getTranslation(),
-			TAG_DONE);
-	}
-	else
-	{
-		screen->DrawTexture(texture, x, y,
-			DTA_DestWidth, w,
-			DTA_DestHeight, h,
-			TAG_DONE);
-	}
+	screen->DrawTexture(texture, x, y,
+		DTA_DestWidth, w,
+		DTA_DestHeight, h,
+		DTA_Translation, translate ? getTranslation() : 0,
+		DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
+		DTA_Alpha, alpha,
+		TAG_DONE);
 }
 
-void DSBarInfo::DrawString(const char* str, int x, int y, EColorRange translation, int spacing)
+void DSBarInfo::DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, EColorRange translation, int spacing)
 {
 	x += spacing;
 	while(*str != '\0')
@@ -1261,8 +1259,8 @@ void DSBarInfo::DrawString(const char* str, int x, int y, EColorRange translatio
 		}
 		if(SBarInfoScript->spacingCharacter == '\0') //If we are monospaced lets use the offset
 			x += (character->LeftOffset+1); //ignore x offsets since we adapt to character size
-		int rx = x + ST_X;
-		int ry = y + ST_Y;
+		int rx = x + ST_X + xOffset;
+		int ry = y + ST_Y + yOffset;
 		int rw = character->GetScaledWidth();
 		int rh = character->GetScaledHeight();
 		if(Scaled)
@@ -1271,6 +1269,7 @@ void DSBarInfo::DrawString(const char* str, int x, int y, EColorRange translatio
 			DTA_DestWidth, rw,
 			DTA_DestHeight, rh,
 			DTA_Translation, drawingFont->GetColorTranslation(translation),
+			DTA_Alpha, alpha,
 			TAG_DONE);
 		if(SBarInfoScript->spacingCharacter == '\0')
 			x += width + spacing - (character->LeftOffset+1);
@@ -1281,7 +1280,7 @@ void DSBarInfo::DrawString(const char* str, int x, int y, EColorRange translatio
 }
 
 //draws the specified number up to len digits
-void DSBarInfo::DrawNumber(int num, int len, int x, int y, EColorRange translation, int spacing, bool fillzeros)
+void DSBarInfo::DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, EColorRange translation, int spacing, bool fillzeros)
 {
 	FString value;
 	int maxval = (int) ceil(pow(10., len))-1;
@@ -1306,11 +1305,11 @@ void DSBarInfo::DrawNumber(int num, int len, int x, int y, EColorRange translati
 		x -= int(drawingFont->StringWidth(value)+(spacing * value.Len()));
 	else //monospaced so just multiplay the character size
 		x -= int((drawingFont->GetCharWidth((int) SBarInfoScript->spacingCharacter) + spacing) * value.Len());
-	DrawString(value, x, y, translation, spacing);
+	DrawString(value, x, y, xOffset, yOffset, alpha, translation, spacing);
 }
 
 //draws the mug shot
-void DSBarInfo::DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y)
+void DSBarInfo::DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha)
 {
 	int angle = updateState(xdth, animatedgodmode);
 	int level = 0;
@@ -1320,18 +1319,7 @@ void DSBarInfo::DrawFace(FString &defaultFace, int accuracy, bool xdth, bool ani
 		FPlayerSkin *skin = &skins[CPlayer->morphTics ? CPlayer->MorphedPlayerClass : CPlayer->userinfo.skin];
 		FTexture *face = currentState->getCurrentFrameTexture(defaultFace, skin, level, angle);
 		if (face != NULL)
-		{
-			x += ST_X;
-			y += ST_Y;
-			int w = face->GetScaledWidth();
-			int h = face->GetScaledHeight();
-			if(Scaled)
-				screen->VirtualToRealCoordsInt(x, y, w, h, 320, 200, true);
-			screen->DrawTexture(face, x, y,
-				DTA_DestWidth, w,
-				DTA_DestHeight, h,
-				TAG_DONE);
-		}
+			DrawGraphic(face, x, y, xOffset, yOffset, alpha);
 	}
 }
 
@@ -1454,7 +1442,7 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 	return 0;
 }
 
-void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, bool alwaysshow, 
+void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool alwaysshow, 
 	int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter)
 { //yes, there is some Copy & Paste here too
 	AInventory *item;
@@ -1468,46 +1456,46 @@ void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, bool alwayssho
 		{
 			if(drawArtiboxes)
 			{
-				DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*31, y);
+				DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*31, y, xOffset, yOffset, alpha);
 			}
-			DrawDimImage (TexMan(item->Icon), x+i*31, y, item->Amount <= 0);
+			DrawGraphic(TexMan(item->Icon), x+i*31, y, xOffset, yOffset, alpha, false, item->Amount <= 0);
 			if(alwaysshowcounter || item->Amount != 1)
 			{
-				DrawNumber(item->Amount, 3, counterx+i*31, countery, translation);
+				DrawNumber(item->Amount, 3, counterx+i*31, countery, xOffset, yOffset, alpha, translation);
 			}
 			if(item == CPlayer->mo->InvSel)
 			{
 				if(type == GAME_Heretic)
 				{
-					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*31, y+29);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*31, y+29, xOffset, yOffset, alpha);
 				}
 				else
 				{
-					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*31, y);
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*31, y, xOffset, yOffset, alpha);
 				}
 			}
 		}
 		for (; i < num && drawArtiboxes; ++i)
 		{
-			DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*31, y);
+			DrawGraphic(Images[invBarOffset + imgARTIBOX], x+i*31, y, xOffset, yOffset, alpha);
 		}
 		// Is there something to the left?
 		if (!noArrows && CPlayer->mo->FirstInv() != CPlayer->mo->InvFirst)
 		{
 			DrawGraphic(Images[!(gametic & 4) ?
-				invBarOffset + imgINVLFGEM1 : invBarOffset + imgINVLFGEM2], x-12, y);
+				invBarOffset + imgINVLFGEM1 : invBarOffset + imgINVLFGEM2], x-12, y, xOffset, yOffset, alpha);
 		}
 		// Is there something to the right?
 		if (!noArrows && item != NULL)
 		{
 			DrawGraphic(Images[!(gametic & 4) ?
-				invBarOffset + imgINVRTGEM1 : invBarOffset + imgINVRTGEM2], x+num*31+2, y);
+				invBarOffset + imgINVRTGEM1 : invBarOffset + imgINVRTGEM2], x+num*31+2, y, xOffset, yOffset, alpha);
 		}
 	}
 }
 
 //draws heretic/hexen style life gems
-void DSBarInfo::DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int padleft, int padright, int chainsize, 
+void DSBarInfo::DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, int padleft, int padright, int chainsize, 
 	bool wiggle, bool translate)
 {
 	if(chain == NULL)

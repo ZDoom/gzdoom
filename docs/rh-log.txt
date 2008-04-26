@@ -1,4 +1,7 @@
 April 26, 2008
+- Fixed: Any MIDI ticks that contain only events that are interpreted by
+  the MIDI parser and not passed on to the MIDI device would mess up timing
+  for future events.
 - Changed EMIDI controller 110-113 handling to more accurately match the
   EMIDI specs: Track designations and exclusions should be ignored past
   the initial beat, and EMIDI program change and volume events should be

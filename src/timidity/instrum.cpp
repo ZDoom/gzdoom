@@ -370,23 +370,50 @@ fail:
 		{
 			sp->modes |= PATCH_SUSTAIN;
 		}
-
-		/* Strip any loops and envelopes we're permitted to */
-		if ((strip_loop == 1) && 
-			(sp->modes & (PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD)))
+#endif
+		/* [RH] Alas, eawpats has percussion instruments with bad envelopes. :(
+		 * (See cymchina.pat for one example of this sadness.)
+		 * Do this logic for instruments without a description, only. Hopefully that
+		 * catches all the patches that need it without including any extra.
+		 */
+		for (j = 0; j < DESC_SIZE; ++j)
 		{
-			cmsg(CMSG_INFO, VERB_DEBUG, " - Removing loop and/or sustain\n");
-			sp->modes &= ~(PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD);
+			if (header.Description[j] != 0)
+				break;
 		}
-
-		if (strip_envelope == 1)
+		if (j == DESC_SIZE)
 		{
-			if (sp->modes & PATCH_NO_SRELEASE)
+			/* Strip any loops and envelopes we're permitted to */
+			/* [RH] (But PATCH_BACKWARD isn't a loop flag at all!) */
+			if ((strip_loop == 1) && 
+				(sp->modes & (PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD)))
+			{
+				cmsg(CMSG_INFO, VERB_DEBUG, " - Removing loop and/or sustain\n");
+				sp->modes &= ~(PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD);
+			}
+
+			if (strip_envelope == 1)
 			{
 				cmsg(CMSG_INFO, VERB_DEBUG, " - Removing envelope\n");
+				/* [RH] The envelope isn't really removed, but this is the way the standard
+				 * Gravis patches get that effect: All rates at maximum, and all offsets at
+				 * a constant level.
+				 */
+				for (j = 1; j < ENVELOPES; ++j)
+				{ /* Find highest offset. */
+					if (patch_data.EnvelopeOffset[j] > patch_data.EnvelopeOffset[0])
+					{
+						patch_data.EnvelopeOffset[0] = patch_data.EnvelopeOffset[j];
+					}
+				}
+				for (j = 0; j < ENVELOPES; ++j)
+				{
+					patch_data.EnvelopeRate[j] = 63;
+					patch_data.EnvelopeOffset[j] = patch_data.EnvelopeOffset[0];
+				}
 			}
-			sp->modes &= ~PATCH_NO_SRELEASE;
 		}
+#if 0
 		else if (strip_envelope != 0)
 		{
 			/* Have to make a guess. */
@@ -418,7 +445,7 @@ fail:
 		for (j = 0; j < 6; j++)
 		{
 			sp->envelope_rate[j] = convert_envelope_rate(song, patch_data.EnvelopeRate[j]);
-			// GF1NEW clamps the offsets to the range [5,251], so we do too.
+			/* [RH] GF1NEW clamps the offsets to the range [5,251], so we do too. */
 			sp->envelope_offset[j] = convert_envelope_offset(clamp<BYTE>(patch_data.EnvelopeOffset[j], 5, 251));
 		}
 

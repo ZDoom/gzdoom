@@ -1,3 +1,7 @@
+April 25, 2008
+- Re-enabled TiMidity's loop and envelope stripping for instruments that look
+  like they weren't really meant to be played by the GUS MIDI library.
+
 April 25, 2008 (SBarInfo Update #18)
 - Simplified the DrawGraphic function in sbarinfo_display.cpp
 - Added xOffset, yOffset, and alpha to every drawing function in

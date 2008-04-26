@@ -1,4 +1,8 @@
 April 26, 2008
+- Changed EMIDI controller 110-113 handling to more accurately match the
+  EMIDI specs: Track designations and exclusions should be ignored past
+  the initial beat, and EMIDI program change and volume events should be
+  ignored unless they were used in the initial beat.
 - Fixed: When FMOD::System::init() returns FMOD_ERR_OUTPUT_CREATEBUFFER, it
   could also be because the user selected PCM-Float output, but the driver
   doesn't support it (even if it claims to *cough*Audigy XP drivers*cough*).

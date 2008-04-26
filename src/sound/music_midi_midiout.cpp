@@ -60,6 +60,7 @@ struct MIDISong2::TrackInfo
 	size_t TrackP;
 	size_t MaxTrackP;
 	DWORD Delay;
+	DWORD PlayedTime;
 	bool Finished;
 	BYTE RunningStatus;
 	SBYTE LoopCount;
@@ -274,6 +275,7 @@ void MIDISong2 :: DoRestart()
 		Tracks[i].LoopCount = -1;
 		Tracks[i].EProgramChange = false;
 		Tracks[i].EVolume = false;
+		Tracks[i].PlayedTime = 0;
 	}
 	ProcessInitialMetaEvents ();
 	for (i = 0; i < NumTracks; ++i)
@@ -314,7 +316,7 @@ DWORD *MIDISong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 	start_events = events;
 	while (TrackDue && events < max_event_p && tot_time <= max_time)
 	{
-		// It's possible that this tick may be nothing meta-events and
+		// It's possible that this tick may be nothing but meta-events and
 		// not generate any real events. Repeat this until we actually
 		// get some output so we don't send an empty buffer to the MIDI
 		// device.
@@ -359,6 +361,7 @@ void MIDISong2::AdvanceTracks(DWORD time)
 		if (!Tracks[i].Finished)
 		{
 			Tracks[i].Delay -= time;
+			Tracks[i].PlayedTime += time;
 		}
 	}
 }
@@ -436,49 +439,63 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 				}
 				break;
 
-			case 39:	// Fine channel volume
-				// Skip fine volume adjustment because I am lazy.
-				// (And it doesn't seem to be used much anyway.)
-				event = MIDI_META;
+			case 7+32:	// Channel volume (LSB)
+				if (track->EVolume)
+				{
+					event = MIDI_META;
+				}
+				// It should be safe to pass this straight through to the
+				// MIDI device, since it's a very fine amount.
 				break;
 
-			case 110:	// EMIDI Track Designation
+			case 110:	// EMIDI Track Designation - InitBeat only
 				// Instruments 4, 5, 6, and 7 are all FM synth.
 				// The rest are all wavetable.
-				if (data2 == 127)
+				if (track->PlayedTime < (DWORD)Division)
 				{
-					track->Designation = ~0;
-				}
-				else
-				{
-					if (data2 <= 9)
+					if (data2 == 127)
+					{
+						track->Designation = ~0;
+					}
+					else if (data2 <= 9)
 					{
 						track->Designation |= 1 << data2;
 					}
+					track->Designated = true;
+					event = MIDI_META;
 				}
-				track->Designated = true;
-				event = MIDI_META;
 				break;
 
-			case 111:	// EMIDI Track Exclusion
-				if (track->Designated)
+			case 111:	// EMIDI Track Exclusion - InitBeat only
+				if (track->PlayedTime < (DWORD)Division)
 				{
-					track->Designation &= ~(1 << data2);
+					if (track->Designated && data2 <= 9)
+					{
+						track->Designation &= ~(1 << data2);
+					}
+					event = MIDI_META;
 				}
-				event = MIDI_META;
 				break;
 
 			case 112:	// EMIDI Program Change
-				track->EProgramChange = true;
-				event = 0xC0 | (event & 0x0F);
-				data1 = data2;
-				data2 = 0;
+				// Ignored unless it also appears in the InitBeat
+				if (track->PlayedTime < (DWORD)Division || track->EProgramChange)
+				{
+					track->EProgramChange = true;
+					event = 0xC0 | (event & 0x0F);
+					data1 = data2;
+					data2 = 0;
+				}
 				break;
 
 			case 113:	// EMIDI Volume
-				track->EVolume = true;
-				data1 = 7;
-				data2 = VolumeControllerChange(event & 15, data2);
+				// Ignored unless it also appears in the InitBeat
+				if (track->PlayedTime < (DWORD)Division || track->EVolume)
+				{
+					track->EVolume = true;
+					data1 = 7;
+					data2 = VolumeControllerChange(event & 15, data2);
+				}
 				break;
 
 			case 116:	// EMIDI Loop Begin

@@ -665,10 +665,25 @@ bool FMODSoundRenderer::Init()
 	{
 		result = Sys->init(snd_channels + NUM_EXTRA_SOFTWARE_CHANNELS, initflags, 0);
 		if (result == FMOD_ERR_OUTPUT_CREATEBUFFER)
-		{ // The speaker mode selected isn't supported by this soundcard. Switch it back to stereo.
+		{ 
+			// Possible causes of a buffer creation failure:
+			// 1. The speaker mode selected isn't supported by this soundcard. Force it to stereo.
+			// 2. The output format is unsupported. Force it to 16-bit PCM.
+			// 3. ???
 			result = Sys->getSpeakerMode(&speakermode);
-			if (result == FMOD_OK && FMOD_OK == Sys->setSpeakerMode(FMOD_SPEAKERMODE_STEREO))
+			if (result == FMOD_OK &&
+				speakermode != FMOD_SPEAKERMODE_STEREO &&
+				FMOD_OK == Sys->setSpeakerMode(FMOD_SPEAKERMODE_STEREO))
 			{
+				Printf(TEXTCOLOR_RED"  Buffer creation failed. Retrying with stereo output.\n");
+				continue;
+			}
+			result = Sys->getSoftwareFormat(&samplerate, &format, NULL, NULL, &resampler, NULL);
+			if (result == FMOD_OK &&
+				format != FMOD_SOUND_FORMAT_PCM16 &&
+				FMOD_OK == Sys->setSoftwareFormat(samplerate, FMOD_SOUND_FORMAT_PCM16, 0, 0, resampler))
+			{
+				Printf(TEXTCOLOR_RED"  Buffer creation failed. Retrying with PCM-16 output.\n");
 				continue;
 			}
 		}

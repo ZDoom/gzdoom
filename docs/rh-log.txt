@@ -1,3 +1,7 @@
+April 26, 2008 (Changes by Graf Zahl)
+- Added speed factors for texture warp commands.
+- Added damage type parameter to A_Die.
+
 April 25, 2008
 - Re-enabled TiMidity's loop and envelope stripping for instruments that look
   like they weren't really meant to be played by the GUS MIDI library.

@@ -340,6 +340,11 @@ static void R_InitAnimDefs ()
 						TexMan.ReplaceTexture (picnum, warper, false);
 					}
 
+					if (sc.CheckFloat())
+					{
+						static_cast<FWarpTexture*>(warper)->SetSpeed(sc.Float);
+					}
+
 					// No decals on warping textures, by default.
 					// Warping information is taken from the last warp 
 					// definition for this texture.

@@ -54,7 +54,7 @@ class Actor extends Thinker
 	action native A_SpawnSound();
 	action native A_SpawnFly();
 	action native A_BrainExplode();
-	action native A_Die();
+	action native A_Die(optional name damagetype);
 	action native A_Detonate();
 	action native A_Mushroom(optional class<Actor> spawntype, optional eval int numspawns);
 

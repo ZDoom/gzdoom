@@ -2502,7 +2502,19 @@ void A_Pain (AActor *actor)
 // killough 11/98: kill an object
 void A_Die (AActor *actor)
 {
-	P_DamageMobj (actor, NULL, NULL, actor->health, NAME_None);
+	ENamedName name;
+	
+	int index=CheckIndex(1, &CallingState);
+	if (index<0)
+	{
+		name = NAME_None;
+	}
+	else
+	{
+		name = ENamedName(StateParameters[index]);
+	}
+
+	P_DamageMobj (actor, NULL, NULL, actor->health, name);
 }
 
 //

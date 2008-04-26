@@ -494,12 +494,14 @@ public:
 	void Unload ();
 	bool CheckModified ();
 	int GetSourceLump() { return SourcePic->GetSourceLump(); }
+	void SetSpeed(float fac) { Speed = fac; }
 
 protected:
 	FTexture *SourcePic;
 	BYTE *Pixels;
 	Span **Spans;
 	DWORD GenTime;
+	float Speed;
 
 	virtual void MakeTexture (DWORD time);
 };

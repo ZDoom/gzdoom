@@ -40,7 +40,7 @@
 
 
 FWarpTexture::FWarpTexture (FTexture *source)
-: SourcePic (source), Pixels (0), Spans (0), GenTime (0)
+: SourcePic (source), Pixels (0), Spans (0), GenTime (0), Speed (0.f)
 {
 	CopySize(source);
 	bNoDecals = source->bNoDecals;
@@ -149,7 +149,7 @@ void FWarpTexture::MakeTexture (DWORD time)
 		ybits--;
 	}
 
-	DWORD timebase = time * 32 / 28;
+	DWORD timebase = DWORD(time * Speed * 32 / 28);
 	for (y = ysize-1; y >= 0; y--)
 	{
 		int xt, xf = (finesine[(timebase+y*128)&FINEMASK]>>13) & xmask;
@@ -158,7 +158,7 @@ void FWarpTexture::MakeTexture (DWORD time)
 		for (xt = xsize; xt; xt--, xf = (xf+1)&xmask, dest += ysize)
 			*dest = source[xf << ybits];
 	}
-	timebase = time * 23 / 28;
+	timebase = DWORD(time * Speed * 23 / 28);
 	for (x = xsize-1; x >= 0; x--)
 	{
 		int yt, yf = (finesine[(time+(x+17)*128)&FINEMASK]>>13) & ymask;
@@ -205,7 +205,7 @@ void FWarp2Texture::MakeTexture (DWORD time)
 		ybits--;
 	}
 
-	DWORD timebase = time * 40 / 28;
+	DWORD timebase = DWORD(time * Speed * 40 / 28);
 	for (x = 0; x < xsize; ++x)
 	{
 		BYTE *dest = Pixels + (x << ybits);

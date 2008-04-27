@@ -2129,19 +2129,21 @@ static void M_PlayerSetupDrawer ()
 	}
 	{
 		spriteframe_t *sprframe;
-		fixed_t Scale;
+		fixed_t ScaleX, ScaleY;
 
 		if (GetDefaultByType (PlayerClass->Type)->flags4 & MF4_NOSKIN ||
 			players[consoleplayer].userinfo.PlayerClass == -1 ||
 			PlayerState->sprite.index != GetDefaultByType (PlayerClass->Type)->SpawnState->sprite.index)
 		{
 			sprframe = &SpriteFrames[sprites[PlayerState->sprite.index].spriteframes + PlayerState->GetFrame()];
-			Scale = GetDefaultByType (PlayerClass->Type)->scaleX;
+			ScaleX = GetDefaultByType(PlayerClass->Type)->scaleX;
+			ScaleY = GetDefaultByType(PlayerClass->Type)->scaleY;
 		}
 		else
 		{
 			sprframe = &SpriteFrames[sprites[skins[PlayerSkin].sprite].spriteframes + PlayerState->GetFrame()];
-			Scale = skins[PlayerSkin].Scale;
+			ScaleX = skins[PlayerSkin].ScaleX;
+			ScaleY = skins[PlayerSkin].ScaleY;
 		}
 
 		if (sprframe != NULL)
@@ -2156,8 +2158,8 @@ static void M_PlayerSetupDrawer ()
 				screen->DrawTexture (tex,
 					(320 - 52 - 32 + xo - 160)*CleanXfac + (SCREENWIDTH)/2,
 					(PSetupDef.y + LINEHEIGHT*3 + 57 - 104)*CleanYfac + (SCREENHEIGHT/2),
-					DTA_DestWidth, MulScale16 (tex->GetWidth() * CleanXfac, Scale),
-					DTA_DestHeight, MulScale16 (tex->GetHeight() * CleanYfac, Scale),
+					DTA_DestWidth, MulScale16 (tex->GetWidth() * CleanXfac, ScaleX),
+					DTA_DestHeight, MulScale16 (tex->GetHeight() * CleanYfac, ScaleY),
 					DTA_Translation, translationtables[TRANSLATION_Players](MAXPLAYERS),
 					TAG_DONE);
 			}

@@ -1,3 +1,8 @@
+April 27, 2008
+- Separated the skin scale values into separate X and Y values so that skins
+  automatically generated for different player classes can use both the
+  scaling values that can be set for the actor.
+
 April 26, 2008
 - Fixed: Any MIDI ticks that contain only events that are interpreted by
   the MIDI parser and not passed on to the MIDI device would mess up timing

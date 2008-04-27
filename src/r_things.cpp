@@ -509,7 +509,8 @@ void R_InitSkins (void)
 			}
 			else if (0 == stricmp (key, "scale"))
 			{
-				skins[i].Scale = clamp<fixed_t> (FLOAT2FIXED(atof (sc.String)), 1, 256*FRACUNIT);
+				skins[i].ScaleX = clamp<fixed_t> (FLOAT2FIXED(atof (sc.String)), 1, 256*FRACUNIT);
+				skins[i].ScaleY = skins[i].ScaleX;
 			}
 			else if (0 == stricmp (key, "game"))
 			{
@@ -875,7 +876,8 @@ void R_InitSprites ()
 		const PClass *type = PlayerClasses[0].Type;
 		skins[i].range0start = type->Meta.GetMetaInt (APMETA_ColorRange) & 255;
 		skins[i].range0end = type->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
-		skins[i].Scale = GetDefaultByType (type)->scaleX;
+		skins[i].ScaleX = GetDefaultByType (type)->scaleX;
+		skins[i].ScaleY = GetDefaultByType (type)->scaleY;
 	}
 
 	R_InitSpriteDefs ();
@@ -903,7 +905,8 @@ void R_InitSprites ()
 		}
 		skins[i].range0start = basetype->Meta.GetMetaInt (APMETA_ColorRange) & 255;
 		skins[i].range0end = basetype->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
-		skins[i].Scale = GetDefaultByType (basetype)->scaleX;
+		skins[i].ScaleX = GetDefaultByType (basetype)->scaleX;
+		skins[i].ScaleY = GetDefaultByType (basetype)->scaleY;
 		skins[i].sprite = GetDefaultByType (basetype)->SpawnState->sprite.index;
 		skins[i].namespc = ns_global;
 

@@ -1638,7 +1638,7 @@ static bool CalcVoice (FM_OPL *OPL, int voice, float *buffer, int length)
 				output[0] += tl_tab[p];
 			}
 			// [RH] Convert to floating point.
-			buffer[i] += float(output[0]) / 7168.f;
+			buffer[i] += float(output[0]) / 10240;
 		}
 
 		// advance

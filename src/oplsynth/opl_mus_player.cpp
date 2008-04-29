@@ -3,6 +3,7 @@
 #endif
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 #include "opl_mus_player.h"
 #include "doomtype.h"
@@ -21,6 +22,7 @@ OPLmusicBlock::OPLmusicBlock()
 {
 	scoredata = NULL;
 	NextTickIn = 0;
+	LastOffset = 0;
 	TwoChips = !opl_onechip;
 	Looping = false;
 	io = NULL;
@@ -47,6 +49,7 @@ void OPLmusicBlock::Restart()
 	OPLplayMusic (127);
 	MLtime = 0;
 	playingcount = 0;
+	LastOffset = 0;
 }
 
 OPLmusicFile::OPLmusicFile (FILE *file, char *musiccache, int len)
@@ -209,6 +212,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 			{
 				YM3812UpdateOne (1, samples1, samplesleft);
 			}
+			OffsetSamples(samples1, samplesleft);
 			assert(NextTickIn == ticky);
 			NextTickIn -= samplesleft;
 			assert (NextTickIn >= 0);
@@ -231,6 +235,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 						{
 							YM3812UpdateOne (1, samples1, numsamples);
 						}
+						OffsetSamples(samples1, numsamples);
 					}
 					res = false;
 					break;
@@ -254,6 +259,72 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 	}
 	ChipAccess.Leave();
 	return res;
+}
+
+void OPLmusicBlock::OffsetSamples(float *buff, int count)
+{
+	// Three out of four of the OPL waveforms are non-negative. Depending on
+	// timbre selection, this can cause the output waveform to tend toward
+	// very large positive values. Heretic's music is particularly bad for
+	// this. This function attempts to compensate by offseting the sample
+	// data back to around the [-1.0, 1.0] range.
+
+	double max = -1e10, min = 1e10, offset, step;
+	int i, ramp;
+
+	// Find max and min values for this segment of the waveform.
+	for (i = 0; i < count; ++i)
+	{
+		if (buff[i] > max)
+		{
+			max = buff[i];
+		}
+		if (buff[i] < min)
+		{
+			min = buff[i];
+		}
+	}
+	// Don't slide if we don't have to, because doing so introduces noise.
+	// However, if the amplitude is low, we do want to slide so that when
+	// the song ends, the wave will be around 0 and not click when the song
+	// starts over.
+	if (min - LastOffset > -0.5 && max - LastOffset < 0.5 && max - min > 0.5)
+	{
+		offset = LastOffset;
+	}
+	else
+	{
+		offset = (max + min) / 2;
+		// If the new offset is close to 0, make it 0 to avoid making another
+		// full loop through the sample data.
+		if (fabs(offset) < 1/256.0)
+		{
+			offset = 0;
+		}
+	}
+	// Ramp the offset change so there aren't any abrupt clicks in the output.
+	// If the ramp is too short, it can sound scratchy. cblood2.mid is
+	// particularly unforgiving of short ramps.
+	ramp = MIN(512, count);
+	step = (offset - LastOffset) / 512;
+	offset = LastOffset;
+	i = 0;
+	if (step != 0)
+	{
+		for (; i < ramp; ++i)
+		{
+			buff[i] = float(buff[i] - offset);
+			offset += step;
+		}
+	}
+	if (offset != 0)
+	{
+		for (; i < count; ++i)
+		{
+			buff[i] = float(buff[i] - offset);
+		}
+	}
+	LastOffset = float(offset);
 }
 
 int OPLmusicFile::PlayTick ()

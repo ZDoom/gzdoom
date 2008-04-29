@@ -1,4 +1,10 @@
 April 28, 2008
+- Added dynamic recentering for the OPL synth. The chip has four basic
+  waveforms, and three of them are non-negative. This can cause a tendency
+  for the resulting output waveform to go into very high ranges depending on
+  the timbres used, and Heretic's exemplify this problem.
+- Reduced the OPL volume level slightly.
+- Fixed: The waveform view from snd_drawoutput was upside-down.
 - Various fixes for compiling working 64-bit binaries with Visual C++. The
   number of changes was pleasantly small, and a cursory check seems to show
   everything working alright.

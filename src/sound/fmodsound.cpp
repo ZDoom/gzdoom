@@ -1970,11 +1970,11 @@ void FMODSoundRenderer::DrawWave(float *wavearray, int x, int y, int width, int 
 	if (screen->Accel2D)
 	{ // Drawing this with lines is super-slow without hardware acceleration, at least with
 	  // the debug build.
-		float lasty = wavearray[0] * scale + mid;
+		float lasty = mid - wavearray[0] * scale;
 		float newy;
 		for (i = 1; i < width; ++i)
 		{
-			newy = wavearray[i] * scale + mid;
+			newy = mid - wavearray[i] * scale;
 			screen->DrawLine(x + i - 1, int(lasty), x + i, int(newy), -1, MAKEARGB(255,255,248,248));
 			lasty = newy;
 		}

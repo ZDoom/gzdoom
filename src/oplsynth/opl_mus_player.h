@@ -15,11 +15,13 @@ public:
 
 protected:
 	virtual int PlayTick() = 0;
+	void OffsetSamples(float *buff, int count);
 
 	double NextTickIn;
 	double SamplesPerTick;
 	bool TwoChips;
 	bool Looping;
+	double LastOffset;
 
 	FCriticalSection ChipAccess;
 };

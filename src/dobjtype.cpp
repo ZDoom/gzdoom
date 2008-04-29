@@ -43,8 +43,8 @@ TArray<PClass *> PClass::m_Types;
 PClass *PClass::TypeHash[PClass::HASH_SIZE];
 bool PClass::bShutdown;
 
-// A harmless non_NULL FlatPointer for classes without pointers.
-static const size_t TheEnd = ~0u;
+// A harmless non-NULL FlatPointer for classes without pointers.
+static const size_t TheEnd = ~(size_t)0;
 
 static int STACK_ARGS cregcmp (const void *a, const void *b)
 {

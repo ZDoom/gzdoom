@@ -1490,7 +1490,7 @@ void FMODSoundRenderer::LoadSound(sfxinfo_t *sfx)
 {
 	if (sfx->data == NULL)
 	{
-		DPrintf("loading sound \"%s\" (%d) ", sfx->name.GetChars(), sfx - &S_sfx[0]);
+		DPrintf("loading sound \"%s\" (%d)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 		getsfx(sfx);
 	}
 }

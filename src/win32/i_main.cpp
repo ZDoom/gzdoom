@@ -83,7 +83,13 @@
 // MACROS ------------------------------------------------------------------
 
 // The main window's title.
-#define WINDOW_TITLE GAMESIG " " DOTVERSIONSTR " (" __DATE__ ")"
+#ifdef _M_X64
+#define X64 " 64-bit"
+#else
+#define X64 ""
+#endif
+
+#define WINDOW_TITLE GAMESIG " " DOTVERSIONSTR X64 " (" __DATE__ ")"
 
 // The maximum number of functions that can be registered with atterm.
 #define MAX_TERMS	32
@@ -1094,11 +1100,19 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	// Otherwise, put the crashing thread to sleep and signal the main thread to clean up.
 	if (GetCurrentThreadId() == MainThreadID)
 	{
+#ifndef _M_X64
 		info->ContextRecord->Eip = (DWORD_PTR)ExitFatally;
+#else
+		info->ContextRecord->Rip = (DWORD_PTR)ExitFatally;
+#endif
 	}
 	else
 	{
+#ifndef _M_X64
 		info->ContextRecord->Eip = (DWORD_PTR)SleepForever;
+#else
+		info->ContextRecord->Rip = (DWORD_PTR)ExitFatally;
+#endif
 		QueueUserAPC (ExitFatally, MainThread, 0);
 	}
 	return EXCEPTION_CONTINUE_EXECUTION;

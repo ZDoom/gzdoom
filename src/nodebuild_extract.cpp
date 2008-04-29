@@ -71,7 +71,9 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	memcpy (outNodes, &Nodes[0], nodeCount*sizeof(node_t));
 	for (i = 0; i < nodeCount; ++i)
 	{
-		for (int j = 0; j < 2; ++j)
+		// Go backwards because on 64-bit systems, both of the intchildren are
+		// inside the first in-game child.
+		for (int j = 1; j >= 0; --j)
 		{
 			if (outNodes[i].intchildren[j] & 0x80000000)
 			{

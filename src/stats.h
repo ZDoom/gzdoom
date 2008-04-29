@@ -41,7 +41,11 @@ extern "C" double CyclesPerSecond;
 
 #if _MSC_VER
 
+#define _interlockedbittestandset64			hackfixfor
+#define _interlockedbittestandreset64		x64compilation
 #include <intrin.h>
+#undef _interlockedbittestandset64
+#undef _interlockedbittestandreset64
 
 typedef QWORD cycle_t;
 

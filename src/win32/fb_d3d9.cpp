@@ -46,6 +46,7 @@
 
 #include <windows.h>
 #include <d3d9.h>
+
 #include <stdio.h>
 
 #define USE_WINDOWS_DWORD
@@ -65,8 +66,6 @@
 #include "f_wipe.h"
 #include "st_stuff.h"
 #include "win32iface.h"
-
-#include <mmsystem.h>
 
 // MACROS ------------------------------------------------------------------
 

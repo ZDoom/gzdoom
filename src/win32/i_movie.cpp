@@ -109,7 +109,8 @@ LRESULT CALLBACK MovieWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 	{
 	case WM_GRAPHNOTIFY:
 		{
-			long code, parm1, parm2;
+			long code;
+			LONG_PTR parm1, parm2;
 
 			while (event->GetEvent (&code, &parm1, &parm2, 0) == S_OK)
 			{

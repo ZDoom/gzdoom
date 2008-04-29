@@ -1603,7 +1603,7 @@ static void CenterMouse_Win32 (LONG curx, LONG cury)
 static void SetCursorState (int visible)
 {
 	HCURSOR usingCursor = visible ? TheArrowCursor : TheInvisibleCursor;
-	SetClassLongPtr (Window, GCL_HCURSOR, (LONG_PTR)usingCursor);
+	SetClassLongPtr (Window, GCLP_HCURSOR, (LONG_PTR)usingCursor);
 	if (HaveFocus)
 	{
 		SetCursor (usingCursor);

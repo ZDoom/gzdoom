@@ -670,14 +670,29 @@ HANDLE WriteTextReport ()
 
 	if (ctxt->ContextFlags & CONTEXT_INTEGER)
 	{
+#ifndef _M_X64
 		Writef (file, "EAX=%08x  EBX=%08x  ECX=%08x  EDX=%08x\r\nESI=%08x  EDI=%08x\r\n",
 			ctxt->Eax, ctxt->Ebx, ctxt->Ecx, ctxt->Edx, ctxt->Esi, ctxt->Edi);
+#else
+		Writef (file, "RAX=%016I64x  RBX=%016I64x  RCX=%016I64x\r\n"
+					  "RDX=%016I64x  RSI=%016I64x  RDI=%016I64x\r\n"
+					  "RBP=%016I64x   R8=%016I64x   R9=%016I64x\r\n"
+					  "R10=%016I64x  R11=%016I64x  R12=%016I64x\r\n"
+					  "R13=%016I64x  R14=%016I64x  R15=%016I64x\r\n",
+			ctxt->Rax, ctxt->Rbx, ctxt->Rcx, ctxt->Rdx, ctxt->Rsi, ctxt->Rdi, ctxt->Rbp,
+			ctxt->R8, ctxt->R9, ctxt->R10, ctxt->R11, ctxt->R12, ctxt->R13, ctxt->R14, ctxt->R15);
+#endif
 	}
 
 	if (ctxt->ContextFlags & CONTEXT_CONTROL)
 	{
+#ifndef _M_X64
 		Writef (file, "EBP=%08x  EIP=%08x  ESP=%08x  CS=%04x  SS=%04x\r\nEFlags=%08x\r\n",
 			ctxt->Ebp, ctxt->Eip, ctxt->Esp, ctxt->SegCs, ctxt->SegSs, ctxt->EFlags);
+#else
+		Writef (file, "RIP=%016I64x  RSP=%016I64x\r\nCS=%04x  SS=%04x  EFlags=%08x\r\n",
+			ctxt->Rip, ctxt->Rsp, ctxt->SegCs, ctxt->SegSs, ctxt->EFlags);
+#endif
 
 		DWORD j;
 
@@ -694,6 +709,7 @@ HANDLE WriteTextReport ()
 
 	if (ctxt->ContextFlags & CONTEXT_FLOATING_POINT)
 	{
+#ifndef _M_X64
 		Writef (file,
 			"\r\nFPU State:\r\n ControlWord=%04x StatusWord=%04x TagWord=%04x\r\n"
 			" ErrorOffset=%08x\r\n ErrorSelector=%08x\r\n DataOffset=%08x\r\n DataSelector=%08x\r\n"
@@ -707,6 +723,16 @@ HANDLE WriteTextReport ()
 			Writef (file, "MM%d=%08x%08x\r\n", i, *(DWORD *)(&ctxt->FloatSave.RegisterArea[20*i+4]),
 				*(DWORD *)(&ctxt->FloatSave.RegisterArea[20*i]));
 		}
+#else
+		for (i = 0; i < 8; ++i)
+		{
+			Writef (file, "MM%d=%016I64x\r\n", i, ctxt->Legacy[i].Low);
+		}
+		for (i = 0; i < 16; ++i)
+		{
+			Writef (file, "XMM%d=%016I64x%016I64x\r\n", i, ctxt->FltSave.XmmRegisters[i].High, ctxt->FltSave.XmmRegisters[i].Low);
+		}
+#endif
 	}
 
 	AddToolHelp (file);
@@ -716,8 +742,13 @@ HANDLE WriteTextReport ()
 
 	if (ctxt->ContextFlags & CONTEXT_CONTROL)
 	{
+#ifndef _M_X64
 		AddStackInfo (file, (void *)(size_t)CrashPointers.ContextRecord->Esp,
 			CrashPointers.ExceptionRecord->ExceptionCode);
+#else
+		AddStackInfo (file, (void *)CrashPointers.ContextRecord->Rsp,
+			CrashPointers.ExceptionRecord->ExceptionCode);
+#endif
 	}
 
 	return file;
@@ -904,15 +935,16 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 	DWORD_PTR codeEnd = codeStart + pHeader->SizeOfCode;
 
 	Writef (file, "\r\nPossible call trace:\r\n %08x  BOOM", CrashAddress);
-	for (DWORD_PTR *scan = addr; scan < topOfStack; ++scan)
+	for (DWORD *scan = addr; scan < topOfStack; ++scan)
 	{
-		DWORD_PTR code;
-
 		if (scan == jump)
 		{
 			scan = topOfStack - 16384/4;
 			Writef (file, "\r\n\r\n  . . . . Snip . . . .\r\n");
 		}
+
+#ifndef _M_X64
+		DWORD_PTR code;
 
 		if (SafeReadMemory (scan, &code, sizeof(code)) &&
 			code >= codeStart && code < codeEnd)
@@ -1070,6 +1102,7 @@ static void StackWalk (HANDLE file, void *dumpaddress, DWORD *topOfStack, DWORD 
 				}
 			}
 		}
+#endif
 	}
 	Writef (file, "\r\n");
 }

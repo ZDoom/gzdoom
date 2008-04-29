@@ -220,7 +220,6 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="0"
-				CallingConvention="0"
 				CompileAs="1"
 				DisableSpecificWarnings="4996"
 			/>

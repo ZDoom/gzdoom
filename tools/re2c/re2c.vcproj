@@ -217,7 +217,6 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="0"
-				CallingConvention="0"
 				DisableSpecificWarnings="4996"
 			/>
 			<Tool

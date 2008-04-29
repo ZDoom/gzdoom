@@ -143,6 +143,7 @@
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -173,21 +174,18 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;snes_spc\snes_spc"
-				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,USEASM,HAVE_STRUPR,HAVE_FILELENGTH,NOASM"
+				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,NOASM,HAVE_STRUPR,HAVE_FILELENGTH,NOASM"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="false"
 				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=""
 				AssemblerOutput="0"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="1"
-				CallingConvention="1"
 				CompileAs="0"
 				DisableSpecificWarnings="4996"
 			/>
@@ -204,10 +202,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="ddraw.lib dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib ws2_32.lib winmm.lib fmodvc.lib setupapi.lib"
+				AdditionalDependencies="ddraw.lib dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib ws2_32.lib winmm.lib fmodex64_vc.lib setupapi.lib"
 				ShowProgress="0"
-				OutputFile="../zdoom.exe"
+				OutputFile="../zdoom64.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				IgnoreDefaultLibraryNames=""
@@ -290,7 +287,7 @@
 				EnableFunctionLevelLinking="true"
 				ForceConformanceInForLoopScope="true"
 				PrecompiledHeaderFile=""
-				AssemblerOutput="4"
+				AssemblerOutput="0"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
 				ProgramDataBaseFileName=".\Debug/"
@@ -363,6 +360,7 @@
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -389,16 +387,17 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;snes_spc\snes_spc"
-				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,USEASM,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH,NOASM"
+				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,NOASM,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH,NOASM"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="false"
 				PrecompiledHeaderFile=""
-				AssemblerOutput="4"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				AssemblerOutput="0"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="true"
@@ -419,13 +418,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dxguid.lib ddraw.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodvc.lib setupapi.lib ws2_32.lib"
-				OutputFile="../zdoomd.exe"
+				AdditionalDependencies="dxguid.lib ddraw.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodex64_vc.lib setupapi.lib ws2_32.lib"
+				OutputFile="../zdoomd64.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=""
-				IgnoreDefaultLibraryNames="libcmt;msvcrtd;msvcrt"
+				IgnoreDefaultLibraryNames="msvcrtd;libcmt"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/zdoomd.pdb"
 				SubSystem="2"
@@ -1540,6 +1538,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1560,6 +1559,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1584,6 +1584,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1604,6 +1605,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1628,6 +1630,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1648,6 +1651,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1672,6 +1676,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1692,6 +1697,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1716,6 +1722,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1736,6 +1743,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -3620,7 +3628,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool

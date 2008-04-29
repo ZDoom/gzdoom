@@ -782,7 +782,7 @@ LRESULT CALLBACK FCDThread::CD_WndProc (HWND hWnd, UINT message,
 	case MM_MCINOTIFY:
 		if (wParam == MCI_NOTIFY_SUCCESSFUL)
 		{
-			FCDThread *self = (FCDThread *)(LONG_PTR)GetWindowLongPtr (hWnd, GWL_USERDATA);
+			FCDThread *self = (FCDThread *)(LONG_PTR)GetWindowLongPtr (hWnd, GWLP_USERDATA);
 			// Using SendMessage could deadlock, so don't do that.
 			self->Dispatch (self->Looping ? CDM_Replay : CDM_Stop);
 		}

@@ -411,7 +411,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 
 	for(int i=0;i<NumParts;i++)
 	{
-		int ret;
+		int ret = -1;
 
 		if (!Parts[i].Texture->bComplex || inf == NULL)
 		{
@@ -1018,7 +1018,8 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 				static const char *styles[] = {"copy", "blend", "add", "subtract", "reversesubtract", "modulate", "copyalpha", NULL };
 				sc.MustGetString();
 				part.op = sc.MustMatchString(styles);
-				bTranslucentPatches = bComplex = (part.op != OP_COPY);
+				bComplex = (part.op != OP_COPY);
+				bTranslucentPatches = bComplex;
 			}
 		}
 	}

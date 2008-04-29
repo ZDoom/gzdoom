@@ -45,7 +45,9 @@
 #if (!defined(_M_IX86) && !defined(__i386__)) || defined(__APPLE__)
 // The assembly code requires an x86 processor.
 // And needs to be tweaked for Mach-O before enabled on Macs.
+#ifndef NOASM
 #define NOASM
+#endif
 #endif
 
 #ifndef NOASM

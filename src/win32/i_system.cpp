@@ -179,7 +179,7 @@ int I_WaitForTicEvent (int prevtic)
 	return tics;
 }
 
-void CALLBACK TimerTicked (UINT id, UINT msg, DWORD user, DWORD dw1, DWORD dw2)
+void CALLBACK TimerTicked (UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2)
 {
 	tics++;
 	ted_start = timeGetTime ();

@@ -1,3 +1,8 @@
+April 28, 2008
+- Various fixes for compiling working 64-bit binaries with Visual C++. The
+  number of changes was pleasantly small, and a cursory check seems to show
+  everything working alright.
+
 April 27, 2008
 - Separated the skin scale values into separate X and Y values so that skins
   automatically generated for different player classes can use both the

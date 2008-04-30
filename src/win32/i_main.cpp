@@ -1111,7 +1111,7 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 #ifndef _M_X64
 		info->ContextRecord->Eip = (DWORD_PTR)SleepForever;
 #else
-		info->ContextRecord->Rip = (DWORD_PTR)ExitFatally;
+		info->ContextRecord->Rip = (DWORD_PTR)SleepForever;
 #endif
 		QueueUserAPC (ExitFatally, MainThread, 0);
 	}

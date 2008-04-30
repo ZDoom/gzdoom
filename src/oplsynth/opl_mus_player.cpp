@@ -270,7 +270,7 @@ void OPLmusicBlock::OffsetSamples(float *buff, int count)
 	// data back to around the [-1.0, 1.0] range.
 
 	double max = -1e10, min = 1e10, offset, step;
-	int i, ramp;
+	int i, ramp, largest_at = 0;
 
 	// Find max and min values for this segment of the waveform.
 	for (i = 0; i < count; ++i)
@@ -278,19 +278,18 @@ void OPLmusicBlock::OffsetSamples(float *buff, int count)
 		if (buff[i] > max)
 		{
 			max = buff[i];
+			largest_at = i;
 		}
 		if (buff[i] < min)
 		{
 			min = buff[i];
+			largest_at = i;
 		}
 	}
-	// Don't slide if we don't have to, because doing so introduces noise.
-	// However, if the amplitude is low, we do want to slide so that when
-	// the song ends, the wave will be around 0 and not click when the song
-	// starts over.
-	if (min - LastOffset > -0.5 && max - LastOffset < 0.5 && max - min > 0.5)
+	// Prefer to keep the offset at 0, even if it means a little clipping.
+	if (LastOffset == 0 && min >= -1.1 && max <= 1.1)
 	{
-		offset = LastOffset;
+		offset = 0;
 	}
 	else
 	{
@@ -305,8 +304,16 @@ void OPLmusicBlock::OffsetSamples(float *buff, int count)
 	// Ramp the offset change so there aren't any abrupt clicks in the output.
 	// If the ramp is too short, it can sound scratchy. cblood2.mid is
 	// particularly unforgiving of short ramps.
-	ramp = MIN(512, count);
-	step = (offset - LastOffset) / 512;
+	if (count >= 512)
+	{
+		ramp = 512;
+		step = (offset - LastOffset) / 512;
+	}
+	else
+	{
+		ramp = MIN(count, MAX(196, largest_at));
+		step = (offset - LastOffset) / ramp;
+	}
 	offset = LastOffset;
 	i = 0;
 	if (step != 0)

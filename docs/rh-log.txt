@@ -1,3 +1,7 @@
+April 29, 2008
+- Fixed a copy-and-paste error in win32/i_main.cpp for 64-bit mode.
+- Tweaked OPL centering a little.
+
 April 28, 2008
 - Added dynamic recentering for the OPL synth. The chip has four basic
   waveforms, and three of them are non-negative. This can cause a tendency

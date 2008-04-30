@@ -1,4 +1,11 @@
 April 29, 2008
+- Fixed: FString::StripRight() stripped the final character of the string if
+  there were no designated characters to strip at the end of it.
+- Added support for Shoutcast/Icecast playlists.
+- Added an error message when a playlist could not be opened.
+- Added support for PLS format playlists, in addition to M3U.
+- Changed FPlayList to use an array of FStrings.
+- Fixed: Playlists required every song to be specified by an absolute path.
 - Fixed a copy-and-paste error in win32/i_main.cpp for 64-bit mode.
 - Tweaked OPL centering a little.
 

@@ -56,6 +56,7 @@ void I_ResumeSong (void *handle);
 // Registers a song handle to song data.
 void *I_RegisterSong (const char *file, char * musiccache, int offset, int length, int device);
 void *I_RegisterCDSong (int track, int cdid = 0);
+void *I_RegisterURLSong (const char *url);
 
 // Called by anything that wishes to start music.
 //	Plays a song, and when the song is done,

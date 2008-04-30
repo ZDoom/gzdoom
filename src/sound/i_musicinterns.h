@@ -452,10 +452,9 @@ public:
 	FString GetStats();
 
 protected:
-	StreamSong () : m_Stream(NULL), m_LastPos(0) {}
+	StreamSong () : m_Stream(NULL) {}
 
 	SoundStream *m_Stream;
-	int m_LastPos;
 };
 
 // MIDI file played with Timidity and possibly streamed through FMOD --------

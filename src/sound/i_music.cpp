@@ -259,6 +259,23 @@ void I_UnRegisterSong (void *handle)
 	}
 }
 
+void *I_RegisterURLSong (const char *url)
+{
+	StreamSong *song;
+
+	if (GSnd == NULL)
+	{
+		return NULL;
+	}
+	song = new StreamSong(url, 0, 0);
+	if (song->IsValid())
+	{
+		return song;
+	}
+	delete song;
+	return NULL;
+}
+
 void *I_RegisterSong (const char *filename, char *musiccache, int offset, int len, int device)
 {
 	FILE *file;

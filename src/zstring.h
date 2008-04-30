@@ -164,7 +164,7 @@ public:
 
 	FString Left (size_t numChars) const;
 	FString Right (size_t numChars) const;
-	FString Mid (size_t pos, size_t numChars) const;
+	FString Mid (size_t pos, size_t numChars = ~(size_t)0) const;
 
 	long IndexOf (const FString &substr, long startIndex=0) const;
 	long IndexOf (const char *substr, long startIndex=0) const;

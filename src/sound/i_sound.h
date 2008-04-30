@@ -53,12 +53,13 @@ public:
 		Loop = 16
 	};
 
-	virtual bool Play (bool looping, float volume) = 0;
-	virtual void Stop () = 0;
-	virtual void SetVolume (float volume) = 0;
-	virtual bool SetPaused (bool paused) = 0;
-	virtual unsigned int GetPosition () = 0;
-	virtual bool SetPosition (int pos);
+	virtual bool Play(bool looping, float volume) = 0;
+	virtual void Stop() = 0;
+	virtual void SetVolume(float volume) = 0;
+	virtual bool SetPaused(bool paused) = 0;
+	virtual unsigned int GetPosition() = 0;
+	virtual bool IsEnded() = 0;
+	virtual bool SetPosition(int pos);
 	virtual FString GetStats();
 };
 

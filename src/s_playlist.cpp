@@ -33,127 +33,143 @@
 */
 
 #include <stdlib.h>
+#include <errno.h>
 
 #include "cmdlib.h"
 #include "s_playlist.h"
 #include "templates.h"
+#include "v_text.h"
 
 FPlayList::FPlayList (const char *path)
 {
-	Songs = NULL;
-	SongList = NULL;
 	ChangeList (path);
 }
 
 FPlayList::~FPlayList ()
 {
-	if (Songs)		delete[] Songs;
-	if (SongList)	delete[] SongList;
 }
 
 bool FPlayList::ChangeList (const char *path)
 {
-	char linebuff[256];
-	size_t songlengths;
-	int songcount;
+	FString playlistdir;
+	FString song;
 	FILE *file;
+	bool first;
+	bool pls;
+	int i;
 
-	if (Songs)
-	{
-		delete[] Songs;
-		Songs = NULL;
-	}
-	if (SongList)
-	{
-		delete[] SongList;
-		SongList = NULL;
-	}
+	Songs.Clear();
 	Position = 0;
-	NumSongs = 0;
 
-	if ( (file = fopen (path, "r")) == NULL)
-		return false;
-
-	songlengths = 0;
-	songcount = 0;
-
-	while (NextLine (file, linebuff, sizeof(linebuff)))
+	if ( (file = fopen (path, "rb")) == NULL)
 	{
-		songcount++;
-		songlengths += strlen (linebuff) + 1;
+		Printf ("Could not open "TEXTCOLOR_BOLD"%s"TEXTCOLOR_NORMAL": %s\n", path, strerror(errno));
+		return false;
 	}
 
-	rewind (file);
-
-	if (songcount > 0)
+	first = true;
+	pls = false;
+	playlistdir = ExtractFilePath(path);
+	while ((song = NextLine(file)).IsNotEmpty())
 	{
-		Songs = new char *[songcount];
-		SongList = new char[songlengths];
-		NumSongs = songcount;
-		songlengths = 0;
-
-		for (songcount = 0; songcount < NumSongs &&
-			NextLine (file, linebuff, sizeof(linebuff)); songcount++)
+		if (first)
 		{
-			size_t len = strlen (linebuff) + 1;
-
-			memcpy (SongList + songlengths, linebuff, len);
-			Songs[songcount] = SongList + songlengths;
-			songlengths += len;
+			first = false;
+			// Check for ID tags.
+			if (song.Compare("[playlist]") == 0)
+			{
+				pls = true;
+				continue;
+			}
 		}
 
-		NumSongs = songcount;
-	}
+		// For a .PLS file, skip anything that doesn't start with File[0-9]+=
+		if (pls)
+		{
+			if (strncmp(song, "File", 4) != 0)
+			{
+				continue;
+			}
+			for (i = 4; song[i] >= '0' && song[i] <= '9'; ++i)
+			{
+			}
+			if (song[i] != '=')
+			{
+				continue;
+			}
+			song = song.Mid(i + 1);
+		}
 
+		// Check for relative paths.
+		long slashpos = song.IndexOf('/');
+
+		if (slashpos == 0)
+		{
+			// First character is a slash, so it's absolute.
+		}
+#ifdef _WIN32
+		else if (slashpos == 2 && song[1] == ':')
+		{
+			// Name is something like X:/, so it's absolute.
+		}
+#endif
+		else if (song.IndexOf("://") == slashpos - 1)
+		{
+			// Name is a URL, so it's absolute.
+		}
+		else
+		{
+			// Path is relative; append it to the playlist directory.
+			song = playlistdir + song;
+		}
+		Songs.Push(song);
+	}
 	fclose (file);
 
-	return NumSongs > 0;
+	return Songs.Size() != 0;
 }
 
-bool FPlayList::NextLine (FILE *file, char *buffer, int n)
+FString FPlayList::NextLine (FILE *file)
 {
+	char buffer[512];
 	char *skipper;
 
 	do
 	{
-		if (NULL == fgets (buffer, n, file))
-			return false;
+		if (NULL == fgets (buffer, countof(buffer), file))
+			return "";
 
 		for (skipper = buffer; *skipper != 0 && *skipper <= ' '; skipper++)
 			;
 	} while (*skipper == '#' || *skipper == 0);
 
-	if (skipper > buffer)
-		memmove (buffer, skipper, strlen (skipper)+1);
-
-	if (buffer[strlen (buffer)-1] == '\n')
-		buffer[strlen (buffer)-1] = 0;
-
-	FixPathSeperator (buffer);
-
-	return true;
+	FString str(skipper);
+	str.StripRight("\r\n");
+	FixPathSeperator(str);
+	return str;
 }
 
 // Shuffles the playlist and resets the position to the start
 void FPlayList::Shuffle ()
 {
+	unsigned int numsongs = Songs.Size();
 	int i;
 
-	for (i = 0; i < NumSongs; ++i)
+	for (i = 0; i < numsongs; ++i)
 	{
-		swap (Songs[i], Songs[(rand() % (NumSongs - i)) + i]);
+		swap (Songs[i], Songs[(rand() % (numsongs - i)) + i]);
 	}
 	Position = 0;
 }
 
 int FPlayList::GetNumSongs () const
 {
-	return NumSongs;
+	return (int)Songs.Size();
 }
 
 int FPlayList::SetPosition (int position)
 {
-	if ((unsigned)position >= (unsigned)NumSongs)
+	if ((unsigned)position >= Songs.Size())
 	{
 		Position = 0;
 	}
@@ -172,7 +188,7 @@ int FPlayList::GetPosition () const
 
 int FPlayList::Advance ()
 {
-	if (++Position >= NumSongs)
+	if (++Position >= Songs.Size())
 	{
 		Position = 0;
 	}
@@ -184,7 +200,7 @@ int FPlayList::Backup ()
 {
 	if (--Position < 0)
 	{
-		Position = NumSongs - 1;
+		Position = Songs.Size() - 1;
 	}
 	DPrintf ("Playlist backed up to song %d\n", Position);
 	return Position;
@@ -192,7 +208,7 @@ int FPlayList::Backup ()
 
 const char *FPlayList::GetSong (int position) const
 {
-	if ((unsigned)position >= (unsigned)NumSongs)
+	if ((unsigned)position >= Songs.Size())
 		return NULL;
 
 	return Songs[position];

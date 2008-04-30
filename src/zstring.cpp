@@ -385,7 +385,7 @@ FString FString::Mid (size_t pos, size_t numChars) const
 	{
 		return FString();
 	}
-	if (pos + numChars > len)
+	if (pos + numChars > len || pos + numChars < pos)
 	{
 		numChars = len - pos;
 	}
@@ -631,7 +631,7 @@ void FString::StripLeft (const char *charset)
 void FString::StripRight ()
 {
 	size_t max = Len(), i;
-	for (i = max - 1; i-- > 0; )
+	for (i = max; i-- > 0; )
 	{
 		if (!isspace(Chars[i]))
 			break;
@@ -658,7 +658,7 @@ void FString::StripRight (const FString &charset)
 void FString::StripRight (const char *charset)
 {
 	size_t max = Len(), i;
-	for (i = max - 1; i-- > 0; )
+	for (i = max; i-- > 0; )
 	{
 		if (!strchr (charset, Chars[i]))
 			break;

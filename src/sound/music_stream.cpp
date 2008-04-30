@@ -8,7 +8,6 @@ void StreamSong::Play (bool looping)
 	if (m_Stream->Play (m_Looping, 1))
 	{
 		m_Status = STATE_Playing;
-		m_LastPos = 0;
 	}
 }
 
@@ -65,18 +64,11 @@ bool StreamSong::IsPlaying ()
 {
 	if (m_Status != STATE_Stopped)
 	{
-		if (m_Looping)
-			return true;
-
-		int pos = m_Stream->GetPosition ();
-
-		if (pos < m_LastPos)
+		if (m_Stream->IsEnded())
 		{
-			Stop ();
+			Stop();
 			return false;
 		}
-
-		m_LastPos = pos;
 		return true;
 	}
 	return false;

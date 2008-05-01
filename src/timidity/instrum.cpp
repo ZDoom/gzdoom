@@ -323,7 +323,7 @@ fail:
 		/* vibrato */
 		if (patch_data.VibratoRate == 0 || patch_data.VibratoDepth == 0)
 		{
-			sp->tremolo_sweep_increment = 0;
+			sp->vibrato_sweep_increment = 0;
 			sp->vibrato_control_ratio = 0;
 			sp->vibrato_depth = 0;
 			cmsg(CMSG_INFO, VERB_DEBUG, " * no vibrato\n");
@@ -331,7 +331,7 @@ fail:
 		else
 		{
 			sp->vibrato_control_ratio = convert_vibrato_rate(song, patch_data.VibratoRate);
-			sp->tremolo_sweep_increment = convert_vibrato_sweep(song, patch_data.VibratoSweep, sp->vibrato_control_ratio);
+			sp->vibrato_sweep_increment = convert_vibrato_sweep(song, patch_data.VibratoSweep, sp->vibrato_control_ratio);
 			sp->vibrato_depth = patch_data.VibratoDepth;
 			cmsg(CMSG_INFO, VERB_DEBUG, " * vibrato: sweep %d, ctl %d, depth %d\n",
 				sp->vibrato_sweep_increment, sp->vibrato_control_ratio, sp->vibrato_depth);

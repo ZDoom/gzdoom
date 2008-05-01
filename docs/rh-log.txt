@@ -1,3 +1,7 @@
+April 30, 2008
+- Fixed: I had instrument vibrato setting the tremolo_sweep_increment value
+  in the instrument loader, effectively disabling vibrato.
+
 April 29, 2008
 - Fixed: FString::StripRight() stripped the final character of the string if
   there were no designated characters to strip at the end of it.

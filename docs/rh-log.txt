@@ -1,3 +1,6 @@
+April 30, 2008 (Changes by Graf Zahl)
+- Fixed: Warped textures didn't work anymore because the default speed was 0.
+
 April 30, 2008
 - Fixed: I had instrument vibrato setting the tremolo_sweep_increment value
   in the instrument loader, effectively disabling vibrato.

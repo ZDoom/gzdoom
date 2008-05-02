@@ -209,8 +209,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	ESPSResult drawmode;
 
 	drawmode = R_SetPatchStyle (LegacyRenderStyles[curline->sidedef->Flags & WALLF_ADDTRANS ? STYLE_Add : STYLE_Translucent],
-		curline->linedef->alpha < 255 ? curline->linedef->alpha<<8 : FRACUNIT,
-		0, 0);
+		MIN(curline->linedef->Alpha, FRACUNIT),	0, 0);
 
 	if ((drawmode == DontDraw && !ds->bFogBoundary))
 	{

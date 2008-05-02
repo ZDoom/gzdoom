@@ -75,6 +75,7 @@ define SHOOT			(6)
 define MONST			(16)
 define MONWALK			(4)
 define REP				(1)
+define FIRSTSIDE		(32)
 
 enum
 {

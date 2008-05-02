@@ -206,11 +206,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{
 		return false;
 	}
-	lineActivation = GET_SPAC(line->flags);
-	if (lineActivation == SPAC_PTOUCH)
-	{
-		lineActivation = activationType;
-	}
+	lineActivation = line->activation;
 	repeat = line->flags & ML_REPEAT_SPECIAL;
 	buttonSuccess = false;
 	buttonSuccess = LineSpecials[line->special]
@@ -223,23 +219,16 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{ // clear the special on non-retriggerable lines
 		line->special = 0;
 	}
-// Graf Zahl says: "If you check out the WolfenDoom WAD Operation Rheingold 2
-// you will find that there are lots of shoot triggers that don't have any
-// attached sector. In Doom2.exe such switches are changed and this WAD uses
-// this to create a lot of shootable stuff on walls (like clocks that get
-// destroyed etc.) None of those work in ZDoom. Interestingly this works in
-// almost no source port."
-// begin of changed code
+
 	if (buttonSuccess)
 	{
-		if (lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT || lineActivation == SPAC_USETHROUGH)
+		if (activationType == SPAC_Use || activationType == SPAC_Impact)
 		{
 			P_ChangeSwitchTexture (&sides[line->sidenum[0]], repeat, special);
 		}
 	}
-
 	// some old WADs use this method to create walls that change the texture when shot.
-	else if (lineActivation == SPAC_IMPACT &&					// only for shootable triggers
+	else if (activationType == SPAC_Impact &&					// only for shootable triggers
 		!(level.flags & LEVEL_HEXENFORMAT) &&					// only in Doom-format maps
 		!repeat &&												// only non-repeatable triggers
 		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
@@ -266,44 +255,38 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 
 bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 {
-	int lineActivation;
+	int lineActivation = line->activation;
 
-	lineActivation = GET_SPAC(line->flags);
-	if (lineActivation == SPAC_PTOUCH &&
-		(activationType == SPAC_PCROSS || activationType == SPAC_IMPACT))
+	if (line->flags & ML_FIRSTSIDEONLY && side == 1)
 	{
-		lineActivation = activationType;
+		return false;
 	}
-	else if (lineActivation == SPAC_USETHROUGH)
+
+	if (lineActivation & SPAC_UseThrough)
 	{
-		lineActivation = SPAC_USE;
+		lineActivation |= SPAC_Use;
 	}
 	else if (line->special == Teleport &&
-		lineActivation == SPAC_CROSS &&
-		activationType == SPAC_PCROSS &&
+		(lineActivation & SPAC_Cross) &&
+		activationType == SPAC_PCross &&
 		mo != NULL &&
 		mo->flags & MF_MISSILE)
 	{ // Let missiles use regular player teleports
-		lineActivation = SPAC_PCROSS;
+		lineActivation |= SPAC_PCross;
 	}
 	// BOOM's generalized line types that allow monster use can actually be
 	// activated by anything!
-	if (activationType == SPAC_OTHERCROSS)
+	if (activationType == SPAC_AnyCross)
 	{
-		if (lineActivation == SPAC_CROSS && line->special >= Generic_Floor &&
-			line->special <= Generic_Crusher && !(mo->flags2&MF2_NOTELEPORT))
-		{
-			return (line->flags & ML_MONSTERSCANACTIVATE) != 0;
-		}
-		return false;
+		if (mo->flags2 & MF2_NOTELEPORT) return false;
 	}
-	if (lineActivation != activationType &&
-		!(activationType == SPAC_MCROSS && lineActivation == SPAC_CROSS))
+	if ((lineActivation & activationType) == 0 &&
+		(activationType != SPAC_MCross || lineActivation != SPAC_Cross))
 	{ 
 		return false;
 	}
 
-	if (activationType == SPAC_USE)
+	if (activationType == SPAC_Use)
 	{
 		if (!P_CheckSwitchRange(mo, line, side)) return false;
 	}
@@ -311,8 +294,9 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	if (mo && !mo->player &&
 		!(mo->flags & MF_MISSILE) &&
 		!(line->flags & ML_MONSTERSCANACTIVATE) &&
-		(activationType != SPAC_MCROSS || lineActivation != SPAC_MCROSS))
-	{ // [RH] monsters' ability to activate this line depends on its type
+		(activationType != SPAC_MCross || (!(lineActivation & SPAC_MCross))))
+	{ 
+		// [RH] monsters' ability to activate this line depends on its type
 		// In Hexen, only MCROSS lines could be activated by monsters. With
 		// lax activation checks, monsters can also activate certain lines
 		// even without them being marked as monster activate-able. This is
@@ -321,40 +305,16 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		{
 			return false;
 		}
-		if ((activationType == SPAC_USE || activationType == SPAC_PUSH)
+		if ((activationType == SPAC_Use || activationType == SPAC_Push)
 			&& (line->flags & ML_SECRET))
 			return false;		// never open secret doors
 
 		bool noway = true;
 
-		switch (lineActivation)
+		switch (activationType)
 		{
-		case SPAC_IMPACT:
-		case SPAC_PCROSS:
-			// shouldn't really be here if not a missile
-		case SPAC_MCROSS:
-			noway = false;
-			break;
-
-		case SPAC_CROSS:
-			switch (line->special)
-			{
-			case Door_Raise:
-				if (line->args[1] >= 64)
-				{
-					break;
-				}
-			case Teleport:
-			case Teleport_NoFog:
-			case Teleport_Line:
-			case Plat_DownWaitUpStayLip:
-			case Plat_DownWaitUpStay:
-				noway = false;
-			}
-			break;
-
-		case SPAC_USE:
-		case SPAC_PUSH:
+		case SPAC_Use:
+		case SPAC_Push:
 			switch (line->special)
 			{
 			case Door_Raise:
@@ -366,11 +326,34 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 				noway = false;
 			}
 			break;
+
+		case SPAC_MCross:
+			if (!(lineActivation & SPAC_MCross))
+			{
+				switch (line->special)
+				{
+				case Door_Raise:
+					if (line->args[1] >= 64)
+					{
+						break;
+					}
+				case Teleport:
+				case Teleport_NoFog:
+				case Teleport_Line:
+				case Plat_DownWaitUpStayLip:
+				case Plat_DownWaitUpStay:
+					noway = false;
+				}
+			}
+			else noway = false;
+			break;
+
+		default:
+			noway = false;
 		}
 		return !noway;
 	}
-	if (activationType == SPAC_MCROSS &&
-		lineActivation != activationType &&
+	if (activationType == SPAC_MCross && !(lineActivation & SPAC_MCross) &&
 		!(line->flags & ML_MONSTERSCANACTIVATE))
 	{
 		return false;

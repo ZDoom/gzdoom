@@ -525,11 +525,11 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		{
 			if (walls[i].cstat & 512)
 			{
-				lines[j].alpha = 255/3;
+				lines[j].Alpha = FRACUNIT/3;
 			}
 			else
 			{
-				lines[j].alpha = 255*2/3;
+				lines[j].Alpha = FRACUNIT*2/3;
 			}
 		}
 		if (walls[i].cstat & 1)

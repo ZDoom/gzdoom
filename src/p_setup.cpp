@@ -1897,11 +1897,11 @@ void P_FinishLoadingLineDefs ()
 			alpha = sidetemp[ld->sidenum[0]].a.alpha;
 			if (alpha < 0)
 			{
-				alpha = ld->args[1];
+				alpha = Scale(ld->args[1], FRACUNIT, 255); 
 			}
 			if (!ld->args[0])
 			{
-				ld->alpha = (BYTE)alpha;
+				ld->Alpha = alpha;
 				if (ld->args[2] == 1)
 				{
 					sides[ld->sidenum[0]].Flags |= WALLF_ADDTRANS;
@@ -1917,7 +1917,7 @@ void P_FinishLoadingLineDefs ()
 				{
 					if (lines[j].id == ld->args[0])
 					{
-						lines[j].alpha = (BYTE)alpha;
+						lines[j].Alpha = alpha;
 						if (lines[j].args[2] == 1)
 						{
 							sides[lines[j].sidenum[0]].Flags |= WALLF_ADDTRANS;
@@ -1993,7 +1993,7 @@ void P_LoadLineDefs (MapData * map)
 	ld = lines;
 	for (i = numlines; i > 0; i--, mld++, ld++)
 	{
-		ld->alpha = 255;	// [RH] Opaque by default
+		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
 
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
@@ -2077,7 +2077,7 @@ void P_LoadLineDefs2 (MapData * map)
 
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
-		ld->alpha = 255;	// [RH] Opaque by default
+		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
 		ld->id = -1;
 
 		P_SetSideNum (&ld->sidenum[0], LittleShort(mld->sidenum[0]));
@@ -2088,6 +2088,11 @@ void P_LoadLineDefs2 (MapData * map)
 		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (level.flags & LEVEL_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
+
+		// convert the activation type
+		ld->activation = 1 << GET_SPAC(ld->flags);
+		if (ld->activation == SPAC_AnyCross) ld->activation = SPAC_Impact|SPAC_PCross;	// this is really PTouch
+		ld->flags &= ~ML_SPAC_MASK;
 	}
 	delete[] mldf;
 }

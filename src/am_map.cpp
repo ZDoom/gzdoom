@@ -1353,8 +1353,9 @@ void AM_drawWalls (bool allmap)
 			{
 				if ((lines[i].special == Teleport ||
 					lines[i].special == Teleport_NoFog ||
+					lines[i].special == Teleport_ZombieChanger ||
 					lines[i].special == Teleport_Line) &&
-					GET_SPAC(lines[i].flags) != SPAC_MCROSS &&
+					(lines[i].activation & SPAC_PlayerActivate) &&
 					am_usecustomcolors)
 				{ // intra-level teleporters
 					AM_drawMline(&l, IntraTeleportColor);

@@ -525,8 +525,8 @@ bool P_Move (AActor *actor)
 		while (spechit.Pop (ld))
 		{
 			// [RH] let monsters push lines, as well as use them
-			if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (ld, actor, 0, SPAC_USE)) ||
-				((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_PUSH)))
+			if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (ld, actor, 0, SPAC_Use)) ||
+				((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_Push)))
 			{
 				good |= ld == actor->BlockingLine ? 1 : 2;
 			}

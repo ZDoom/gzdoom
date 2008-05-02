@@ -1,3 +1,13 @@
+May 2, 2008 (Changes by Graf Zahl)
+- Separated the linedef activation types into a bit mask that allows combination
+  of all types on the same linedef. Also added a 'first side only' flag. This
+  is not usable from Hexen or Doom format maps though but in preparation of
+  the UDMF format discussed here:
+  http://www.doomworld.com/vb/source-ports/43145-udmf-v0-99-specification-draft-aka-textmap/
+- Changed linedef's alpha property from a byte to fixed point after seeing that
+  255 wasn't handled to be fully opaque.
+- fixed a GCC warning in fmodsound.cpp
+
 April 30, 2008 (Changes by Graf Zahl)
 - Fixed: Warped textures didn't work anymore because the default speed was 0.
 

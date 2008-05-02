@@ -109,8 +109,8 @@ bool FCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 				tryit = false;
 
 			if (tryit &&
-				(P_TestActivateLine (ld, actor, 0, SPAC_USE) ||
-				 P_TestActivateLine (ld, actor, 0, SPAC_PUSH)))
+				(P_TestActivateLine (ld, actor, 0, SPAC_Use) ||
+				 P_TestActivateLine (ld, actor, 0, SPAC_Push)))
 			{
 				good |= ld == actor->BlockingLine ? 1 : 2;
 			}

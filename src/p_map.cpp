@@ -1281,7 +1281,7 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 	{
 		if (mobj->flags2 & MF2_PUSHWALL)
 		{
-			P_ActivateLine (line, mobj, side, SPAC_PUSH);
+			P_ActivateLine (line, mobj, side, SPAC_Push);
 		}
 		else if (mobj->flags2 & MF2_IMPACT)
 		{
@@ -1289,11 +1289,11 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 				!(mobj->flags & MF_MISSILE) ||
 				(mobj->target == NULL))
 			{
-				P_ActivateLine (line, mobj, side, SPAC_IMPACT);
+				P_ActivateLine (line, mobj, side, SPAC_Impact);
 			}
 			else
 			{
-				P_ActivateLine (line, mobj->target, side, SPAC_IMPACT);
+				P_ActivateLine (line, mobj->target, side, SPAC_Impact);
 			}
 		}	
 	}
@@ -1537,27 +1537,25 @@ bool P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			{
 				if (thing->player)
 				{
-					P_ActivateLine (ld, thing, oldside, SPAC_CROSS);
+					P_ActivateLine (ld, thing, oldside, SPAC_Cross);
 				}
 				else if (thing->flags2 & MF2_MCROSS)
 				{
-					P_ActivateLine (ld, thing, oldside, SPAC_MCROSS);
+					P_ActivateLine (ld, thing, oldside, SPAC_MCross);
 				}
 				else if (thing->flags2 & MF2_PCROSS)
 				{
-					P_ActivateLine (ld, thing, oldside, SPAC_PCROSS);
+					P_ActivateLine (ld, thing, oldside, SPAC_PCross);
 				}
 				else if ((ld->special == Teleport ||
 						  ld->special == Teleport_NoFog ||
 						  ld->special == Teleport_Line))
 				{	// [RH] Just a little hack for BOOM compatibility
-					P_ActivateLine (ld, thing, oldside, SPAC_MCROSS);
+					P_ActivateLine (ld, thing, oldside, SPAC_MCross);
 				}
 				else
 				{
-					// I don't think allowing non-monsters to activate
-					// monster-allowed lines will hurt Hexen compatibility.
-					P_ActivateLine (ld, thing, oldside, SPAC_OTHERCROSS);
+					P_ActivateLine (ld, thing, oldside, SPAC_AnyCross);
 				}
 			}
 		}
@@ -3164,8 +3162,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 			if (open.range <= 0) return false;
 			else continue;
 		}
-		if (in->d.line->special == 0 || (GET_SPAC(in->d.line->flags) != SPAC_USETHROUGH &&
-			GET_SPAC(in->d.line->flags) != SPAC_USE))
+		if (in->d.line->special == 0 || !(in->d.line->activation & (SPAC_Use|SPAC_UseThrough)))
 		{
 	blocked:
 			if (in->d.line->flags & ML_BLOCKEVERYTHING)
@@ -3215,7 +3212,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 			//return in->d.line->backsector != NULL;		// don't use back side
 			goto blocked;	// do a proper check for back sides of triggers
 			
-		P_ActivateLine (in->d.line, usething, 0, SPAC_USE);
+		P_ActivateLine (in->d.line, usething, 0, SPAC_Use);
 
 		//WAS can't use more than one special line in a row
 		//jff 3/21/98 NOW multiple use allowed with enabling line flag
@@ -3224,12 +3221,12 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 		//	   it through, including SPAC_USETHROUGH.
 		if (i_compatflags & COMPATF_USEBLOCKING)
 		{
-			if (GET_SPAC(in->d.line->flags) == SPAC_USETHROUGH) continue;
+			if (in->d.line->activation & SPAC_UseThrough) continue;
 			else return true;
 		}
 		else
 		{
-			if (GET_SPAC(in->d.line->flags) != SPAC_USE) continue;
+			if (!(in->d.line->activation & SPAC_Use)) continue;
 			else return true;
 		}
 	}

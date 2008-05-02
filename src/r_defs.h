@@ -558,9 +558,10 @@ struct line_t
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
 	fixed_t 	dx, dy;		// precalculated v2 - v1 for side checking
 	DWORD		flags;
-	BYTE		special;	// [RH] specials are only one byte (like Hexen)
-	BYTE		alpha;		// <--- translucency (0-255/255=opaque)
-	short		id;			// <--- same as tag or set with Line_SetIdentification
+	DWORD		activation;	// activation type
+	int			special;
+	fixed_t		Alpha;		// <--- translucency (0-255/255=opaque)
+	int			id;			// <--- same as tag or set with Line_SetIdentification
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	int			firstid, nextid;
 	DWORD		sidenum[2];	// sidenum[1] will be NO_SIDE if one sided

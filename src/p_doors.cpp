@@ -409,7 +409,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 						door->m_Direction = 1;	// go back up
 						door->DoorSound (true);	// [RH] Make noise
 					}
-					else if (GET_SPAC(line->flags) != SPAC_PUSH)
+					else if (!(line->activation & SPAC_Push))
 						// [RH] activate push doors don't go back down when you
 						//		run into them (otherwise opening them would be
 						//		a real pain).

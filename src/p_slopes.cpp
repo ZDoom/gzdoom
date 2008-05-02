@@ -1,0 +1,571 @@
+/*
+** p_slopes.cpp
+** Slope creation
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2008 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+#include "doomtype.h"
+#include "vectors.h"
+#include "p_local.h"
+#include "r_data.h"
+#include "cmdlib.h"
+#include "p_lnspec.h"
+
+//===========================================================================
+//
+// P_SpawnSlopeMakers
+//
+//===========================================================================
+
+static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, bool slopeCeil)
+{
+	int linenum = -1;
+
+	while ((linenum = P_FindLineFromID (lineid, linenum)) != -1)
+	{
+		const line_t *line = &lines[linenum];
+		sector_t *sec;
+		secplane_t *plane;
+		
+		if (P_PointOnLineSide (x, y, line) == 0)
+		{
+			sec = line->frontsector;
+		}
+		else
+		{
+			sec = line->backsector;
+		}
+		if (sec == NULL)
+		{
+			continue;
+		}
+		if (slopeCeil)
+		{
+			plane = &sec->ceilingplane;
+		}
+		else
+		{
+			plane = &sec->floorplane;
+		}
+
+		FVector3 p, v1, v2, cross;
+
+		p[0] = FIXED2FLOAT (line->v1->x);
+		p[1] = FIXED2FLOAT (line->v1->y);
+		p[2] = FIXED2FLOAT (plane->ZatPoint (line->v1->x, line->v1->y));
+		v1[0] = FIXED2FLOAT (line->dx);
+		v1[1] = FIXED2FLOAT (line->dy);
+		v1[2] = FIXED2FLOAT (plane->ZatPoint (line->v2->x, line->v2->y)) - p[2];
+		v2[0] = FIXED2FLOAT (x - line->v1->x);
+		v2[1] = FIXED2FLOAT (y - line->v1->y);
+		v2[2] = FIXED2FLOAT (z) - p[2];
+
+		cross = v1 ^ v2;
+		double len = cross.Length();
+		if (len == 0)
+		{
+			Printf ("Slope thing at (%d,%d) lies directly on its target line.\n", int(x>>16), int(y>>16));
+			return;
+		}
+		cross /= len;
+		// Fix backward normals
+		if ((cross.Z < 0 && !slopeCeil) || (cross.Z > 0 && slopeCeil))
+		{
+			cross = -cross;
+		}
+
+		plane->a = FLOAT2FIXED (cross[0]);
+		plane->b = FLOAT2FIXED (cross[1]);
+		plane->c = FLOAT2FIXED (cross[2]);
+		//plane->ic = FLOAT2FIXED (1.f/cross[2]);
+		plane->ic = DivScale32 (1, plane->c);
+		plane->d = -TMulScale16 (plane->a, x,
+								 plane->b, y,
+								 plane->c, z);
+	}
+}
+
+//===========================================================================
+//
+// P_CopyPlane
+//
+//===========================================================================
+
+static void P_CopyPlane (int tag, fixed_t x, fixed_t y, bool copyCeil)
+{
+	sector_t *dest = P_PointInSector (x, y);
+	sector_t *source;
+	int secnum;
+	size_t planeofs;
+
+	secnum = P_FindSectorFromTag (tag, -1);
+	if (secnum == -1)
+	{
+		return;
+	}
+
+	source = &sectors[secnum];
+
+	if (copyCeil)
+	{
+		planeofs = myoffsetof(sector_t, ceilingplane);
+	}
+	else
+	{
+		planeofs = myoffsetof(sector_t, floorplane);
+	}
+	*(secplane_t *)((BYTE *)dest + planeofs) = *(secplane_t *)((BYTE *)source + planeofs);
+}
+
+//===========================================================================
+//
+// P_SetSlope
+//
+//===========================================================================
+
+void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
+	fixed_t x, fixed_t y, fixed_t z)
+{
+	angle_t xyang;
+	angle_t zang;
+
+	if (zangi >= 180)
+	{
+		zang = ANGLE_180-ANGLE_1;
+	}
+	else if (zangi <= 0)
+	{
+		zang = ANGLE_1;
+	}
+	else
+	{
+		zang = Scale (zangi, ANGLE_90, 90);
+	}
+	if (setCeil)
+	{
+		zang += ANGLE_180;
+	}
+	zang >>= ANGLETOFINESHIFT;
+
+	xyang = (angle_t)Scale (xyangi, ANGLE_90, 90 << ANGLETOFINESHIFT);
+
+	FVector3 norm;
+
+	norm[0] = float(finecosine[zang]) * float(finecosine[xyang]);
+	norm[1] = float(finecosine[zang]) * float(finesine[xyang]);
+	norm[2] = float(finesine[zang]) * 65536.f;
+	norm.MakeUnit();
+	plane->a = (int)(norm[0] * 65536.f);
+	plane->b = (int)(norm[1] * 65536.f);
+	plane->c = (int)(norm[2] * 65536.f);
+	//plane->ic = (int)(65536.f / norm[2]);
+	plane->ic = DivScale32 (1, plane->c);
+	plane->d = -TMulScale16 (plane->a, x,
+							 plane->b, y,
+							 plane->c, z);
+}
+
+
+//===========================================================================
+//
+// P_VavoomSlope
+//
+//===========================================================================
+
+void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int which)
+{
+	for (int i=0;i<sec->linecount;i++)
+	{
+		line_t * l=sec->lines[i];
+
+		if (l->args[0]==id)
+		{
+			FVector3 v1, v2, cross;
+			secplane_t *srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
+			fixed_t srcheight = (which == 0) ? sec->floortexz : sec->ceilingtexz;
+
+			v1[0] = FIXED2FLOAT (x - l->v2->x);
+			v1[1] = FIXED2FLOAT (y - l->v2->y);
+			v1[2] = FIXED2FLOAT (z - srcheight);
+			
+			v2[0] = FIXED2FLOAT (x - l->v1->x);
+			v2[1] = FIXED2FLOAT (y - l->v1->y);
+			v2[2] = FIXED2FLOAT (z - srcheight);
+
+			cross = v1 ^ v2;
+			double len = cross.Length();
+			if (len == 0)
+			{
+				Printf ("Slope thing at (%d,%d) lies directly on its target line.\n", int(x>>16), int(y>>16));
+				return;
+			}
+			cross /= len;
+
+			// Fix backward normals
+			if ((cross.Z < 0 && which == 0) || (cross.Z > 0 && which == 1))
+			{
+				cross = -cross;
+			}
+
+
+			srcplane->a = FLOAT2FIXED (cross[0]);
+			srcplane->b = FLOAT2FIXED (cross[1]);
+			srcplane->c = FLOAT2FIXED (cross[2]);
+			//plane->ic = FLOAT2FIXED (1.f/cross[2]);
+			srcplane->ic = DivScale32 (1, srcplane->c);
+			srcplane->d = -TMulScale16 (srcplane->a, x,
+										srcplane->b, y,
+										srcplane->c, z);
+			return;
+		}
+	}
+}
+				   
+enum
+{
+	THING_SlopeFloorPointLine = 9500,
+	THING_SlopeCeilingPointLine = 9501,
+	THING_SetFloorSlope = 9502,
+	THING_SetCeilingSlope = 9503,
+	THING_CopyFloorPlane = 9510,
+	THING_CopyCeilingPlane = 9511,
+	THING_VavoomFloor=1500,
+	THING_VavoomCeiling=1501,
+	THING_VertexFloorZ=1504,
+	THING_VertexCeilingZ=1505,
+};
+
+//==========================================================================
+//
+//	P_SetSlopesFromVertexHeights
+//
+//==========================================================================
+
+static void P_SetSlopesFromVertexHeights(mapthing2_t *firstmt, mapthing2_t *lastmt)
+{
+	TMap<int, fixed_t> vt_heights[2];
+	mapthing2_t *mt;
+	bool vt_found = false;
+
+	for (mt = firstmt; mt < lastmt; ++mt)
+	{
+		if (mt->type == THING_VertexFloorZ || mt->type == THING_VertexCeilingZ)
+		{
+			for(int i=0; i<numvertexes; i++)
+			{
+				if (vertexes[i].x == mt->x << FRACBITS && vertexes[i].y == mt->y << FRACBITS)
+				{
+					if (mt->type == THING_VertexFloorZ) 
+					{
+						vt_heights[0][i] = mt->z << FRACBITS;
+					}
+					else 
+					{
+						vt_heights[1][i] = mt->z << FRACBITS;
+					}
+					vt_found = true;
+				}
+			}
+			mt->type = 0;
+		}
+	}
+	if (vt_found)
+	{
+		for (int i = 0; i < numsectors; i++)
+		{
+			sector_t *sec = &sectors[i];
+			if (sec->linecount != 3) continue;	// only works with triangular sectors
+
+			FVector3 vt1, vt2, vt3, cross;
+			FVector3 vec1, vec2;
+			int vi1, vi2, vi3;
+
+			vi1 = sec->lines[0]->v1 - vertexes;
+			vi2 = sec->lines[0]->v2 - vertexes;
+			vi3 = (sec->lines[1]->v1 == sec->lines[0]->v1 || sec->lines[1]->v1 == sec->lines[0]->v2)?
+				sec->lines[1]->v2 - vertexes : sec->lines[1]->v1 - vertexes;
+
+			vt1.X = FIXED2FLOAT(vertexes[vi1].x);
+			vt1.Y = FIXED2FLOAT(vertexes[vi1].y);
+			vt2.X = FIXED2FLOAT(vertexes[vi2].x);
+			vt2.Y = FIXED2FLOAT(vertexes[vi2].y);
+			vt3.X = FIXED2FLOAT(vertexes[vi3].x);
+			vt3.Y = FIXED2FLOAT(vertexes[vi3].y);
+
+			for(int j=0; j<2; j++)
+			{
+				fixed_t *h1 = vt_heights[j].CheckKey(vi1);
+				fixed_t *h2 = vt_heights[j].CheckKey(vi2);
+				fixed_t *h3 = vt_heights[j].CheckKey(vi3);
+				fixed_t z3;
+				if (h1==NULL && h2==NULL && h3==NULL) continue;
+
+				vt1.Z = FIXED2FLOAT(h1? *h1 : j==0? sec->floortexz : sec->ceilingtexz);
+				vt2.Z = FIXED2FLOAT(h2? *h2 : j==0? sec->floortexz : sec->ceilingtexz);
+				z3 = h3? *h3 : j==0? sec->floortexz : sec->ceilingtexz;
+				vt3.Z = FIXED2FLOAT(z3);
+
+				if (P_PointOnLineSide(vertexes[vi3].x, vertexes[vi3].y, sec->lines[0]) == 0)
+				{
+					vec1 = vt2 - vt3;
+					vec2 = vt1 - vt3;
+				}
+				else
+				{
+					vec1 = vt1 - vt3;
+					vec2 = vt2 - vt3;
+				}
+
+				FVector3 cross = vec1 ^ vec2;
+
+				double len = cross.Length();
+				if (len == 0)
+				{
+					// Only happens when all vertices in this sector are on the same line.
+					// Let's just ignore this case.
+					continue;
+				}
+				cross /= len;
+
+				// Fix backward normals
+				if ((cross.Z < 0 && j == 0) || (cross.Z > 0 && j == 1))
+				{
+					cross = -cross;
+				}
+
+				secplane_t *srcplane = j==0? &sec->floorplane : &sec->ceilingplane;
+
+				srcplane->a = FLOAT2FIXED (cross[0]);
+				srcplane->b = FLOAT2FIXED (cross[1]);
+				srcplane->c = FLOAT2FIXED (cross[2]);
+				srcplane->ic = DivScale32 (1, srcplane->c);
+				srcplane->d = -TMulScale16 (srcplane->a, vertexes[vi3].x,
+											srcplane->b, vertexes[vi3].y,
+											srcplane->c, z3);
+			}
+		}
+	}
+}
+
+//===========================================================================
+//
+// P_SpawnSlopeMakers
+//
+//===========================================================================
+
+void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
+{
+	mapthing2_t *mt;
+
+	for (mt = firstmt; mt < lastmt; ++mt)
+	{
+		if ((mt->type >= THING_SlopeFloorPointLine &&
+			 mt->type <= THING_SetCeilingSlope) ||
+			mt->type==THING_VavoomFloor || mt->type==THING_VavoomCeiling)
+		{
+			fixed_t x, y, z;
+			secplane_t *refplane;
+			sector_t *sec;
+
+			x = mt->x << FRACBITS;
+			y = mt->y << FRACBITS;
+			sec = P_PointInSector (x, y);
+			if (mt->type & 1)
+			{
+				refplane = &sec->ceilingplane;
+			}
+			else
+			{
+				refplane = &sec->floorplane;
+			}
+			z = refplane->ZatPoint (x, y) + (mt->z << FRACBITS);
+			if (mt->type==THING_VavoomFloor || mt->type==THING_VavoomCeiling)
+			{
+				P_VavoomSlope(sec, mt->thingid, x, y, mt->z<<FRACBITS, mt->type & 1); 
+			}
+			else if (mt->type <= THING_SlopeCeilingPointLine)
+			{
+				P_SlopeLineToPoint (mt->args[0], x, y, z, mt->type & 1);
+			}
+			else
+			{
+				P_SetSlope (refplane, mt->type & 1, mt->angle, mt->args[0], x, y, z);
+			}
+			mt->type = 0;
+		}
+	}
+
+	for (mt = firstmt; mt < lastmt; ++mt)
+	{
+		if (mt->type == THING_CopyFloorPlane ||
+			mt->type == THING_CopyCeilingPlane)
+		{
+			P_CopyPlane (mt->args[0], mt->x << FRACBITS, mt->y << FRACBITS, mt->type & 1);
+			mt->type = 0;
+		}
+	}
+
+	P_SetSlopesFromVertexHeights(firstmt, lastmt);
+}
+
+
+//===========================================================================
+//
+// [RH] Set slopes for sectors, based on line specials
+//
+// P_AlignPlane
+//
+// Aligns the floor or ceiling of a sector to the corresponding plane
+// on the other side of the reference line. (By definition, line must be
+// two-sided.)
+//
+// If (which & 1), sets floor.
+// If (which & 2), sets ceiling.
+//
+//===========================================================================
+
+static void P_AlignPlane (sector_t *sec, line_t *line, int which)
+{
+	sector_t *refsec;
+	int bestdist;
+	vertex_t *refvert = (*sec->lines)->v1;	// Shut up, GCC
+	int i;
+	line_t **probe;
+
+	if (line->backsector == NULL)
+		return;
+
+	// Find furthest vertex from the reference line. It, along with the two ends
+	// of the line will define the plane.
+	bestdist = 0;
+	for (i = sec->linecount*2, probe = sec->lines; i > 0; i--)
+	{
+		int dist;
+		vertex_t *vert;
+
+		// Do calculations with only the upper bits, because the lower ones
+		// are all zero, and we would overflow for a lot of distances if we
+		// kept them around.
+
+		if (i & 1)
+			vert = (*probe++)->v2;
+		else
+			vert = (*probe)->v1;
+		dist = abs (((line->v1->y - vert->y) >> FRACBITS) * (line->dx >> FRACBITS) -
+					((line->v1->x - vert->x) >> FRACBITS) * (line->dy >> FRACBITS));
+
+		if (dist > bestdist)
+		{
+			bestdist = dist;
+			refvert = vert;
+		}
+	}
+
+	refsec = line->frontsector == sec ? line->backsector : line->frontsector;
+
+	FVector3 p, v1, v2, cross;
+
+	const secplane_t *refplane;
+	secplane_t *srcplane;
+	fixed_t srcheight, destheight;
+
+	refplane = (which == 0) ? &refsec->floorplane : &refsec->ceilingplane;
+	srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
+	srcheight = (which == 0) ? sec->floortexz : sec->ceilingtexz;
+	destheight = (which == 0) ? refsec->floortexz : refsec->ceilingtexz;
+
+	p[0] = FIXED2FLOAT (line->v1->x);
+	p[1] = FIXED2FLOAT (line->v1->y);
+	p[2] = FIXED2FLOAT (destheight);
+	v1[0] = FIXED2FLOAT (line->dx);
+	v1[1] = FIXED2FLOAT (line->dy);
+	v1[2] = 0;
+	v2[0] = FIXED2FLOAT (refvert->x - line->v1->x);
+	v2[1] = FIXED2FLOAT (refvert->y - line->v1->y);
+	v2[2] = FIXED2FLOAT (srcheight - destheight);
+
+	cross = (v1 ^ v2).Unit();
+
+	// Fix backward normals
+	if ((cross.Z < 0 && which == 0) || (cross.Z > 0 && which == 1))
+	{
+		cross = -cross;
+	}
+
+	srcplane->a = FLOAT2FIXED (cross[0]);
+	srcplane->b = FLOAT2FIXED (cross[1]);
+	srcplane->c = FLOAT2FIXED (cross[2]);
+	//srcplane->ic = FLOAT2FIXED (1.f/cross[2]);
+	srcplane->ic = DivScale32 (1, srcplane->c);
+	srcplane->d = -TMulScale16 (srcplane->a, line->v1->x,
+								srcplane->b, line->v1->y,
+								srcplane->c, destheight);
+}
+
+//===========================================================================
+//
+// P_SetSlopes
+//
+//===========================================================================
+
+void P_SetSlopes ()
+{
+	int i, s;
+
+	for (i = 0; i < numlines; i++)
+	{
+		if (lines[i].special == Plane_Align)
+		{
+			lines[i].special = 0;
+			lines[i].id = lines[i].args[2];
+			if (lines[i].backsector != NULL)
+			{
+				// args[0] is for floor, args[1] is for ceiling
+				//
+				// As a special case, if args[1] is 0,
+				// then args[0], bits 2-3 are for ceiling.
+				for (s = 0; s < 2; s++)
+				{
+					int bits = lines[i].args[s] & 3;
+
+					if (s == 1 && bits == 0)
+						bits = (lines[i].args[0] >> 2) & 3;
+
+					if (bits == 1)			// align front side to back
+						P_AlignPlane (lines[i].frontsector, lines + i, s);
+					else if (bits == 2)		// align back side to front
+						P_AlignPlane (lines[i].backsector, lines + i, s);
+				}
+			}
+		}
+	}
+}
+

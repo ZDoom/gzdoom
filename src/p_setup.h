@@ -83,6 +83,7 @@ struct MapData
 MapData * P_OpenMapData(const char * mapname);
 bool P_CheckMapData(const char * mapname);
 
+
 // NOT called by W_Ticker. Fixme. [RH] Is that bad?
 //
 // [RH] The only parameter used is mapname, so I removed playermask and skill.

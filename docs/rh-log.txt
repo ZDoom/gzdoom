@@ -1,4 +1,5 @@
 May 2, 2008 (Changes by Graf Zahl)
+- Split off the slope creation code from p_Setup.cpp into its own file.
 - Separated the linedef activation types into a bit mask that allows combination
   of all types on the same linedef. Also added a 'first side only' flag. This
   is not usable from Hexen or Doom format maps though but in preparation of

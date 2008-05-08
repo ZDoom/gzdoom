@@ -29,6 +29,7 @@
 
 // Some global defines, that configure the game.
 #include "doomdef.h"
+#include "m_swap.h"
 
 
 
@@ -55,12 +56,16 @@ enum
 	ML_BLOCKMAP,		// LUT, motion clipping, walls/grid element
 	ML_BEHAVIOR,		// [RH] Hexen-style scripts. If present, THINGS
 						//		and LINEDEFS are also Hexen-style.
+	ML_CONVERSATION,	// Strife dialog (only for TEXTMAP format)
 	ML_MAX,
 
 	// [RH] These are compressed (and extended) nodes. They combine the data from
 	// vertexes, segs, ssectors, and nodes into a single lump.
 	ML_ZNODES = ML_NODES,
-	ML_GLZNODES = ML_SSECTORS
+	ML_GLZNODES = ML_SSECTORS,
+
+	// for text map format
+	ML_TEXTMAP = ML_THINGS,
 };
 
 
@@ -248,7 +253,7 @@ typedef struct
 } mapthing_t;
 
 // [RH] Hexen-compatible MapThing.
-typedef struct MapThing
+typedef struct
 {
 	unsigned short thingid;
 	short		x;
@@ -259,9 +264,37 @@ typedef struct MapThing
 	short		flags;
 	BYTE		special;
 	BYTE		args[5];
+} mapthinghexen_t;
+
+// Internal representation of a mapthing
+struct FMapThing
+{
+	unsigned short thingid;
+	fixed_t		x;
+	fixed_t		y;
+	fixed_t		z;
+	short		angle;
+	short		type;
+	short		flags;
+	short		special;
+	int			args[5];
 
 	void Serialize (FArchive &);
-} mapthing2_t;
+
+	FMapThing &operator =(mapthinghexen_t &mt)
+	{
+		thingid = mt.thingid;
+		x = LittleShort(mt.x)<<FRACBITS;
+		y = LittleShort(mt.y)<<FRACBITS;
+		z = LittleShort(mt.z)<<FRACBITS;
+		angle = LittleShort(mt.angle);
+		type = LittleShort(mt.type);
+		flags = LittleShort(mt.flags);
+		special = mt.special;
+		for(int i=0;i<5;i++) args[i] = mt.args[i];
+		return *this;
+	}
+};
 
 
 // [RH] MapThing flags.

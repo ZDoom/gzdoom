@@ -61,11 +61,11 @@
 #include "p_setup.h"
 #include "r_translate.h"
 
-void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt);
+void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt);
 void P_SetSlopes ();
 
-extern AActor *P_SpawnMapThing (mapthing2_t *mthing, int position);
-extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t **things, int *numthings);
+extern AActor *P_SpawnMapThing (FMapThing *mthing, int position);
+extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, FMapThing **things, int *numthings);
 
 extern void P_LoadTranslator(const char *lump);
 extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
@@ -115,6 +115,8 @@ zone_t*			zones;
 
 FExtraLight*	ExtraLights;
 FLightStack*	LightStacks;
+
+static TArray<FMapThing> MapThingsConverted;
 
 int sidecount;
 struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
@@ -175,8 +177,8 @@ BYTE*			rejectmatrix;
 static bool		ForceNodeBuild;
 
 // Maintain single and multi player starting spots.
-TArray<mapthing2_t> deathmatchstarts (16);
-mapthing2_t		playerstarts[MAXPLAYERS];
+TArray<FMapThing> deathmatchstarts (16);
+FMapThing		playerstarts[MAXPLAYERS];
 
 static void P_AllocateSideDefs (int count);
 static void P_SetSideNum (DWORD *sidenum_p, WORD sidenum);
@@ -303,20 +305,67 @@ MapData *P_OpenMapData(const char * mapname)
 			}
 
 			int index = 0;
-			for(int i = 1;; i++)
+
+			if (stricmp(Wads.GetLumpFullName(lump_name + 1), "TEXTMAP"))
 			{
-				// Since levels must be stored in WADs they can't really have full
-				// names and for any valid level lump this always returns the short name.
-				const char * lumpname = Wads.GetLumpFullName(lump_name + i);
-				index = GetMapIndex(mapname, index, lumpname, i != 1 || map->MapLumps[0].Size == 0);
-				if (index == ML_BEHAVIOR) map->HasBehavior = true;
+				for(int i = 1;; i++)
+				{
+					// Since levels must be stored in WADs they can't really have full
+					// names and for any valid level lump this always returns the short name.
+					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
+					index = GetMapIndex(mapname, index, lumpname, i != 1 || map->MapLumps[0].Size == 0);
+					if (index == ML_BEHAVIOR) map->HasBehavior = true;
 
-				// The next lump is not part of this map anymore
-				if (index < 0) break;
+					// The next lump is not part of this map anymore
+					if (index < 0) break;
 
-				map->MapLumps[index].FilePos = Wads.GetLumpOffset(lump_name + i);
-				map->MapLumps[index].Size = Wads.LumpLength(lump_name + i);
-				strncpy(map->MapLumps[index].Name, lumpname, 8);
+					map->MapLumps[index].FilePos = Wads.GetLumpOffset(lump_name + i);
+					map->MapLumps[index].Size = Wads.LumpLength(lump_name + i);
+					strncpy(map->MapLumps[index].Name, lumpname, 8);
+				}
+			}
+			else
+			{
+				map->MapLumps[1].FilePos = Wads.GetLumpOffset(lump_name + 1);
+				map->MapLumps[1].Size = Wads.LumpLength(lump_name + 1);
+				for(int i = 2;; i++)
+				{
+					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
+
+					if (lumpname == NULL)
+					{
+						I_Error("Invalid map definition for %s", mapname);
+					}
+					else if (!stricmp(lumpname, "ZNODES"))
+					{
+						index = ML_GLZNODES;
+					}
+					else if (!stricmp(lumpname, "BLOCKMAP"))
+					{
+						// there is no real point in creating a blockmap but let's use it anyway
+						index = ML_BLOCKMAP;
+					}
+					else if (!stricmp(lumpname, "REJECT"))
+					{
+						index = ML_REJECT;
+					}
+					else if (!stricmp(lumpname, "DIALOGUE"))
+					{
+						index = ML_CONVERSATION;
+					}
+					else if (!stricmp(lumpname, "BEHAVIOR"))
+					{
+						index = ML_BEHAVIOR;
+					}
+					else if (!stricmp(lumpname, "ENDMAP"))
+					{
+						break;
+					}
+					else continue;
+					map->MapLumps[index].FilePos = Wads.GetLumpOffset(lump_name + i);
+					map->MapLumps[index].Size = Wads.LumpLength(lump_name + i);
+					strncpy(map->MapLumps[index].Name, lumpname, 8);
+				}
 			}
 			return map;
 		}
@@ -355,6 +404,50 @@ MapData *P_OpenMapData(const char * mapname)
 
 			(*map->file) >> offset >> size;
 			map->file->Read(lumpname, 8);
+
+			if (i == 1 && !strnicmp(lumpname, "TEXTMAP", 8))
+			{
+				map->MapLumps[1].FilePos = offset;
+				map->MapLumps[1].Size = size;
+				for(int i = 2;; i++)
+				{
+					(*map->file) >> offset >> size;
+					long v = map->file->Read(lumpname, 8);
+					if (v < 8)
+					{
+						I_Error("Invalid map definition for %s", mapname);
+					}
+					else if (!stricmp(lumpname, "ZNODES"))
+					{
+						index = ML_GLZNODES;
+					}
+					else if (!stricmp(lumpname, "BLOCKMAP"))
+					{
+						// there is no real point in creating a blockmap but let's use it anyway
+						index = ML_BLOCKMAP;
+					}
+					else if (!stricmp(lumpname, "REJECT"))
+					{
+						index = ML_REJECT;
+					}
+					else if (!stricmp(lumpname, "DIALOGUE"))
+					{
+						index = ML_CONVERSATION;
+					}
+					else if (!stricmp(lumpname, "BEHAVIOR"))
+					{
+						index = ML_BEHAVIOR;
+					}
+					else if (!stricmp(lumpname, "ENDMAP"))
+					{
+						return map;
+					}
+					else continue;
+					map->MapLumps[index].FilePos = offset;
+					map->MapLumps[index].Size = size;
+					strncpy(map->MapLumps[index].Name, lumpname, 8);
+				}
+			}
 
 			if (i>0)
 			{
@@ -1225,13 +1318,13 @@ void P_LoadNodes (MapData * map)
 //===========================================================================
 CVAR(Bool, dumpspawnedthings, false, 0)
 
-static void SpawnMapThing(int index, mapthing2_t *mt, int position)
+static void SpawnMapThing(int index, FMapThing *mt, int position)
 {
 	AActor *spawned = P_SpawnMapThing(mt, position);
 	if (dumpspawnedthings)
 	{
 		Printf("%5d: (%5d, %5d, %5d), doomednum = %5d, flags = %04x, type = %s\n",
-			index, mt->x, mt->y, mt->z, mt->type, mt->flags, 
+			index, mt->x>>FRACBITS, mt->y>>FRACBITS, mt->z>>FRACBITS, mt->type, mt->flags, 
 			spawned? spawned->GetClass()->TypeName.GetChars() : "(none)");
 	}
 }
@@ -1244,7 +1337,7 @@ static void SpawnMapThing(int index, mapthing2_t *mt, int position)
 
 void P_LoadThings (MapData * map, int position)
 {
-	mapthing2_t mt2;		// [RH] for translation
+	FMapThing mt2;		// [RH] for translation
 	int	lumplen = map->Size(ML_THINGS);
 	int numthings = lumplen / sizeof(mapthing_t);
 
@@ -1291,8 +1384,8 @@ void P_LoadThings (MapData * map, int position)
 		}
 		if (flags & BTF_NOTSINGLE)			mt2.flags &= ~MTF_SINGLE;
 
-		mt2.x = LittleShort(mt->x);
-		mt2.y = LittleShort(mt->y);
+		mt2.x = LittleShort(mt->x) << FRACBITS;
+		mt2.y = LittleShort(mt->y) << FRACBITS;
 		mt2.angle = LittleShort(mt->angle);
 		mt2.type = LittleShort(mt->type);
 
@@ -1316,36 +1409,31 @@ void P_LoadThings (MapData * map, int position)
 void P_LoadThings2 (MapData * map, int position)
 {
 	int	lumplen = map->MapLumps[ML_THINGS].Size;
-	int numthings = lumplen / sizeof(mapthing2_t);
+	int numthings = lumplen / sizeof(mapthinghexen_t);
 
 	int i;
 	char *mtp;
-	mapthing2_t *mt;
+
+	MapThingsConverted.Resize(numthings);
+	FMapThing *mti = &MapThingsConverted[0];
 
 	mtp = new char[lumplen];
 	map->Read(ML_THINGS, mtp);
+	mapthinghexen_t *mth = (mapthinghexen_t*)mtp;
 
-#ifdef WORDS_BIGENDIAN
-	for (i=0, mt = (mapthing2_t*)mtp; i < numthings; i++,mt++)
+	for(int i = 0; i< numthings; i++)
 	{
-		mt->thingid = LittleShort(mt->thingid);
-		mt->x = LittleShort(mt->x);
-		mt->y = LittleShort(mt->y);
-		mt->z = LittleShort(mt->z);
-		mt->angle = LittleShort(mt->angle);
-		mt->type = LittleShort(mt->type);
-		mt->flags = LittleShort(mt->flags);
-	}
-#endif
-
-	// [RH] Spawn slope creating things first.
-	P_SpawnSlopeMakers ((mapthing2_t*)mtp, ((mapthing2_t*)mtp)+numthings);
-
-	for (i=0, mt = (mapthing2_t*)mtp; i < numthings; i++,mt++)
-	{
-		SpawnMapThing (i, mt, position);
+		mti[i] = mth[i];
 	}
 	delete[] mtp;
+
+	// [RH] Spawn slope creating things first.
+	P_SpawnSlopeMakers (mti, mti + numthings);
+
+	for (i=0; i < numthings; i++)
+	{
+		SpawnMapThing (i, &mti[i], position);
+	}
 }
 
 
@@ -2818,38 +2906,30 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 	{
 		int spot1, spot2, spot3, anchor;
 
-		int	lumplen = map->Size(ML_THINGS);
-		int num = lumplen / sizeof(mapthing2_t);
-
-		mapthing2_t *mt;
-
-		map->Seek(ML_THINGS);
-		mt = new mapthing2_t[num];
-		map->file->Read(mt, num * sizeof(mapthing2_t));
-
 		if (gameinfo.gametype == GAME_Hexen)
 		{
-			spot1 = LittleShort(PO_HEX_SPAWN_TYPE);
-			spot2 = LittleShort(PO_HEX_SPAWNCRUSH_TYPE);
-			anchor = LittleShort(PO_HEX_ANCHOR_TYPE);
+			spot1 = PO_HEX_SPAWN_TYPE;
+			spot2 = PO_HEX_SPAWNCRUSH_TYPE;
+			anchor = PO_HEX_ANCHOR_TYPE;
 		}
 		else
 		{
-			spot1 = LittleShort(PO_SPAWN_TYPE);
-			spot2 = LittleShort(PO_SPAWNCRUSH_TYPE);
-			anchor = LittleShort(PO_ANCHOR_TYPE);
+			spot1 = PO_SPAWN_TYPE;
+			spot2 = PO_SPAWNCRUSH_TYPE;
+			anchor = PO_ANCHOR_TYPE;
 		}
-		spot3 = LittleShort(PO_SPAWNHURT_TYPE);
+		spot3 = PO_SPAWNHURT_TYPE;
 
-		for (int i = 0; i < num; ++i)
+		for (unsigned int i = 0; i < MapThingsConverted.Size(); ++i)
 		{
-			if (mt[i].type == spot1 || mt[i].type == spot2 || mt[i].type == spot3 || mt[i].type == anchor)
+			if (MapThingsConverted[i].type == spot1 || MapThingsConverted[i].type == spot2 || 
+				MapThingsConverted[i].type == spot3 || MapThingsConverted[i].type == anchor)
 			{
 				FNodeBuilder::FPolyStart newvert;
-				newvert.x = LittleShort(mt[i].x) << FRACBITS;
-				newvert.y = LittleShort(mt[i].y) << FRACBITS;
-				newvert.polynum = LittleShort(mt[i].angle);
-				if (mt[i].type == anchor)
+				newvert.x = MapThingsConverted[i].x;
+				newvert.y = MapThingsConverted[i].y;
+				newvert.polynum = MapThingsConverted[i].angle;
+				if (MapThingsConverted[i].type == anchor)
 				{
 					anchors.Push (newvert);
 				}
@@ -2859,7 +2939,6 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 				}
 			}
 		}
-		delete[] mt;
 	}
 }
 
@@ -3027,7 +3106,7 @@ void P_FreeExtraLevelData()
 void P_SetupLevel (char *lumpname, int position)
 {
 	cycle_t times[20] = { 0 };
-	mapthing2_t *buildthings;
+	FMapThing *buildthings;
 	int numbuildthings;
 	int i;
 	bool buildmap;
@@ -3126,7 +3205,7 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 		FBehavior::StaticLoadDefaultModules ();
 
-		P_LoadStrifeConversations (lumpname);
+		P_LoadStrifeConversations (map, lumpname);
 
 		clock (times[0]);
 		P_LoadVertexes (map);
@@ -3386,6 +3465,7 @@ void P_SetupLevel (char *lumpname, int position)
 			Printf ("Time%3d:%10llu cycles (%s)\n", i, times[i], timenames[i]);
 		}
 	}
+	MapThingsConverted.Clear();
 }
 
 

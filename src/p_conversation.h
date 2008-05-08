@@ -65,7 +65,9 @@ extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 // initialized as part of the actor's setup in infodefaults.cpp.
 extern const PClass *StrifeTypes[1001];
 
-void P_LoadStrifeConversations (const char *mapname);
+struct MapData;
+
+void P_LoadStrifeConversations (MapData *map, const char *mapname);
 void P_FreeStrifeConversations ();
 
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle);

@@ -269,10 +269,10 @@ enum
 //
 //==========================================================================
 
-static void P_SetSlopesFromVertexHeights(mapthing2_t *firstmt, mapthing2_t *lastmt)
+static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt)
 {
 	TMap<int, fixed_t> vt_heights[2];
-	mapthing2_t *mt;
+	FMapThing *mt;
 	bool vt_found = false;
 
 	for (mt = firstmt; mt < lastmt; ++mt)
@@ -281,15 +281,15 @@ static void P_SetSlopesFromVertexHeights(mapthing2_t *firstmt, mapthing2_t *last
 		{
 			for(int i=0; i<numvertexes; i++)
 			{
-				if (vertexes[i].x == mt->x << FRACBITS && vertexes[i].y == mt->y << FRACBITS)
+				if (vertexes[i].x == mt->x && vertexes[i].y == mt->y)
 				{
 					if (mt->type == THING_VertexFloorZ) 
 					{
-						vt_heights[0][i] = mt->z << FRACBITS;
+						vt_heights[0][i] = mt->z;
 					}
 					else 
 					{
-						vt_heights[1][i] = mt->z << FRACBITS;
+						vt_heights[1][i] = mt->z;
 					}
 					vt_found = true;
 				}
@@ -381,9 +381,9 @@ static void P_SetSlopesFromVertexHeights(mapthing2_t *firstmt, mapthing2_t *last
 //
 //===========================================================================
 
-void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
+void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt)
 {
-	mapthing2_t *mt;
+	FMapThing *mt;
 
 	for (mt = firstmt; mt < lastmt; ++mt)
 	{
@@ -395,8 +395,8 @@ void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 			secplane_t *refplane;
 			sector_t *sec;
 
-			x = mt->x << FRACBITS;
-			y = mt->y << FRACBITS;
+			x = mt->x;
+			y = mt->y;
 			sec = P_PointInSector (x, y);
 			if (mt->type & 1)
 			{
@@ -406,10 +406,10 @@ void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 			{
 				refplane = &sec->floorplane;
 			}
-			z = refplane->ZatPoint (x, y) + (mt->z << FRACBITS);
+			z = refplane->ZatPoint (x, y) + (mt->z);
 			if (mt->type==THING_VavoomFloor || mt->type==THING_VavoomCeiling)
 			{
-				P_VavoomSlope(sec, mt->thingid, x, y, mt->z<<FRACBITS, mt->type & 1); 
+				P_VavoomSlope(sec, mt->thingid, x, y, mt->z, mt->type & 1); 
 			}
 			else if (mt->type <= THING_SlopeCeilingPointLine)
 			{
@@ -428,7 +428,7 @@ void P_SpawnSlopeMakers (mapthing2_t *firstmt, mapthing2_t *lastmt)
 		if (mt->type == THING_CopyFloorPlane ||
 			mt->type == THING_CopyCeilingPlane)
 		{
-			P_CopyPlane (mt->args[0], mt->x << FRACBITS, mt->y << FRACBITS, mt->type & 1);
+			P_CopyPlane (mt->args[0], mt->x, mt->y, mt->type & 1);
 			mt->type = 0;
 		}
 	}

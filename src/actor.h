@@ -665,7 +665,7 @@ public:
 									// no matter what (even if shot)
 	player_s		*player;		// only valid if type of APlayerPawn
 	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
-	WORD			SpawnPoint[3]; 	// For nightmare respawn
+	fixed_t			SpawnPoint[3]; 	// For nightmare respawn
 	WORD			SpawnAngle;
 	int				skillrespawncount;
 	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers

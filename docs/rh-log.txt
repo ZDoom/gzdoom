@@ -1,3 +1,9 @@
+May 8, 2008 (Changes by Graf Zahl)
+- Changed all thing coordinates that were stored as shorts into fixed_t.
+- Separated mapthing2_t into mapthinghexen_t and the internal FMapThing so
+  that it is easier to add new features in the UDMF map format.
+- Added some initial code to read UDMF maps.
+
 May 2, 2008 (Changes by Graf Zahl)
 - Split off the slope creation code from p_Setup.cpp into its own file.
 - Separated the linedef activation types into a bit mask that allows combination

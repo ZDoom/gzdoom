@@ -124,12 +124,12 @@ void P_AdjustLine (line_t *line);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static bool P_LoadBloodMap (BYTE *data, size_t len, mapthing2_t **sprites, int *numsprites);
+static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **sprites, int *numsprites);
 static void LoadSectors (sectortype *bsectors);
 static void LoadWalls (walltype *walls, int numwalls, sectortype *bsectors);
-static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsectors, mapthing2_t *mapthings);
+static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsectors, FMapThing *mapthings);
 static vertex_t *FindVertex (fixed_t x, fixed_t y);
-static void CreateStartSpot (fixed_t *pos, mapthing2_t *start);
+static void CreateStartSpot (fixed_t *pos, FMapThing *start);
 static void CalcPlane (SlopeWork &slope, secplane_t &plane);
 static void Decrypt (void *to, const void *from, int len, int key);
 
@@ -147,7 +147,7 @@ static void Decrypt (void *to, const void *from, int len, int key);
 //
 //==========================================================================
 
-bool P_LoadBuildMap (BYTE *data, size_t len, mapthing2_t **sprites, int *numspr)
+bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
 {
 	if (len < 26)
 	{
@@ -178,7 +178,7 @@ bool P_LoadBuildMap (BYTE *data, size_t len, mapthing2_t **sprites, int *numspr)
 		(sectortype *)(data + 22));
 
 	numsprites = *(WORD *)(data + 24 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype));
-	*sprites = new mapthing2_t[numsprites + 1];
+	*sprites = new FMapThing[numsprites + 1];
 	CreateStartSpot ((fixed_t *)(data + 4), *sprites);
 	*numspr = 1 + LoadSprites ((spritetype *)(data + 26 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype)),
 		numsprites, (sectortype *)(data + 22), *sprites + 1);
@@ -192,7 +192,7 @@ bool P_LoadBuildMap (BYTE *data, size_t len, mapthing2_t **sprites, int *numspr)
 //
 //==========================================================================
 
-static bool P_LoadBloodMap (BYTE *data, size_t len, mapthing2_t **mapthings, int *numspr)
+static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **mapthings, int *numspr)
 {
 	BYTE infoBlock[37];
 	int mapver = data[5];
@@ -303,7 +303,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, mapthing2_t **mapthings, int
 	// BUILD info from the map we need. (Sprites are ignored.)
 	LoadSectors (bsec);
 	LoadWalls (bwal, numWalls, bsec);
-	*mapthings = new mapthing2_t[numsprites + 1];
+	*mapthings = new FMapThing[numsprites + 1];
 	CreateStartSpot ((fixed_t *)infoBlock, *mapthings);
 	*numspr = 1 + LoadSprites (bspr, numsprites, bsec, *mapthings + 1);
 
@@ -606,7 +606,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 //==========================================================================
 
 static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsectors,
-						 mapthing2_t *mapthings)
+						 FMapThing *mapthings)
 {
 	char name[9];
 	int picnum;
@@ -621,9 +621,9 @@ static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsector
 		picnum = TexMan.GetTexture (name, FTexture::TEX_Build);
 
 		mapthings[count].thingid = 0;
-		mapthings[count].x = (short)(sprites[i].x >> 4);
-		mapthings[count].y = -(short)(sprites[i].y >> 4);
-		mapthings[count].z = (short)((bsectors[sprites[i].sectnum].floorz - sprites[i].z) >> 8);
+		mapthings[count].x = (sprites[i].x << 12);
+		mapthings[count].y = -(sprites[i].y << 12);
+		mapthings[count].z = (bsectors[sprites[i].sectnum].floorz - sprites[i].z) << 8;
 		mapthings[count].angle = (((2048-sprites[i].ang) & 2047) * 360) >> 11;
 		mapthings[count].type = 9988;
 		mapthings[count].flags = MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH|MTF_EASY|MTF_NORMAL|MTF_HARD;
@@ -671,12 +671,12 @@ vertex_t *FindVertex (fixed_t x, fixed_t y)
 //
 //==========================================================================
 
-static void CreateStartSpot (fixed_t *pos, mapthing2_t *start)
+static void CreateStartSpot (fixed_t *pos, FMapThing *start)
 {
 	short angle = LittleShort(*(WORD *)(&pos[3]));
-	mapthing2_t mt =
+	FMapThing mt =
 	{
-		0, short(LittleLong(pos[0])>>4), short((-LittleLong(pos[1]))>>4), 0,// tid, x, y, z
+		0, (LittleLong(pos[0])<<12), ((-LittleLong(pos[1]))<<12), 0,// tid, x, y, z
 		short(Scale ((2048-angle)&2047, 360, 2048)), 1,	// angle, type
 		7|MTF_SINGLE|224,										// flags
 		// special and args are 0

@@ -188,10 +188,10 @@ extern	bool	 		playeringame[MAXPLAYERS];
 
 
 // Player spawn spots for deathmatch.
-extern TArray<mapthing2_t> deathmatchstarts;
+extern TArray<FMapThing> deathmatchstarts;
 
 // Player spawn spots.
-extern	mapthing2_t		playerstarts[MAXPLAYERS];
+extern	FMapThing		playerstarts[MAXPLAYERS];
 
 // Intermission stats.
 // Parameters for world map / intermission.

@@ -51,6 +51,7 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 #include "sound/i_music.h"
+#include "p_setup.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
 struct Response
@@ -107,8 +108,9 @@ static int ConversationPauseTic;
 static bool ShowGold;
 
 static void LoadScriptFile (const char *name);
-static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, DWORD &prevSpeakerType);
-static FStrifeDialogueNode *ReadTeaserNode (FWadLump *lump, DWORD &prevSpeakerType);
+static void LoadScriptFile(FileReader *lump, int numnodes);
+static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeakerType);
+static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
 static void DrawConversationMenu ();
 static void PickConversationReply ();
@@ -148,16 +150,25 @@ static const PClass *GetStrifeType (int typenum)
 //
 //============================================================================
 
-void P_LoadStrifeConversations (const char *mapname)
+void P_LoadStrifeConversations (MapData *map, const char *mapname)
 {
-	if (strnicmp (mapname, "MAP", 3) != 0)
+	if (map->Size(ML_CONVERSATION) > 0)
 	{
-		return;
+		LoadScriptFile ("SCRIPT00");
+		map->Seek(ML_CONVERSATION);
+		LoadScriptFile (map->file, map->Size(ML_CONVERSATION));
 	}
-	char scriptname[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
+	else
+	{
+		if (strnicmp (mapname, "MAP", 3) != 0)
+		{
+			return;
+		}
+		char scriptname[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
 
-	LoadScriptFile ("SCRIPT00");
-	LoadScriptFile (scriptname);
+		LoadScriptFile ("SCRIPT00");
+		LoadScriptFile (scriptname);
+	}
 }
 
 //============================================================================
@@ -216,17 +227,23 @@ static char *ncopystring (const char *string)
 static void LoadScriptFile (const char *name)
 {
 	int lumpnum = Wads.CheckNumForName (name);
-	int numnodes, i;
-	DWORD prevSpeakerType;
-	FStrifeDialogueNode *node;
-	FWadLump *lump;
+	FileReader *lump;
 
 	if (lumpnum < 0)
 	{
 		return;
 	}
+	lump = Wads.ReopenLumpNum (lumpnum);
 
-	numnodes = Wads.LumpLength (lumpnum);
+	LoadScriptFile(lump, Wads.LumpLength(lumpnum));
+}
+
+static void LoadScriptFile(FileReader *lump, int numnodes)
+{
+	int i;
+	DWORD prevSpeakerType;
+	FStrifeDialogueNode *node;
+
 	if (!(gameinfo.flags & GI_SHAREWARE))
 	{
 		// Strife scripts are always a multiple of 1516 bytes because each entry
@@ -247,7 +264,6 @@ static void LoadScriptFile (const char *name)
 		numnodes /= 1488;
 	}
 
-	lump = Wads.ReopenLumpNum (lumpnum);
 	prevSpeakerType = 0;
 
 	for (i = 0; i < numnodes; ++i)
@@ -273,7 +289,7 @@ static void LoadScriptFile (const char *name)
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, DWORD &prevSpeakerType)
+static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	Speech speech;
@@ -343,7 +359,7 @@ static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, DWORD &prevSpeakerTy
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadTeaserNode (FWadLump *lump, DWORD &prevSpeakerType)
+static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	TeaserSpeech speech;

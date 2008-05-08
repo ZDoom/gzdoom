@@ -279,8 +279,8 @@ void P_TeleportToPlayerStarts (AActor *victim)
 		selections++;
 	}
 	i = pr_telestarts() % selections;
-	destX = playerstarts[i].x << FRACBITS;
-	destY = playerstarts[i].y << FRACBITS;
+	destX = playerstarts[i].x;
+	destY = playerstarts[i].y;
 	destAngle = ANG45 * (playerstarts[i].angle/45);
 	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
 }
@@ -301,8 +301,8 @@ void P_TeleportToDeathmatchStarts (AActor *victim)
 	if (selections > 0)
 	{
 		i = pr_teledm() % selections;
-		destX = deathmatchstarts[i].x << FRACBITS;
-		destY = deathmatchstarts[i].y << FRACBITS;
+		destX = deathmatchstarts[i].x;
+		destY = deathmatchstarts[i].y;
 		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
 		P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
 	}

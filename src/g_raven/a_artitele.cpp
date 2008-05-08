@@ -48,14 +48,14 @@ bool AArtiTeleport::Use (bool pickup)
 	{
 		unsigned int selections = deathmatchstarts.Size ();
 		unsigned int i = pr_tele() % selections;
-		destX = deathmatchstarts[i].x << FRACBITS;
-		destY = deathmatchstarts[i].y << FRACBITS;
+		destX = deathmatchstarts[i].x;
+		destY = deathmatchstarts[i].y;
 		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
 	}
 	else
 	{
-		destX = playerstarts[Owner->player - players].x << FRACBITS;
-		destY = playerstarts[Owner->player - players].y << FRACBITS;
+		destX = playerstarts[Owner->player - players].x;
+		destY = playerstarts[Owner->player - players].y;
 		destAngle = ANG45 * (playerstarts[Owner->player - players].angle/45);
 	}
 	P_Teleport (Owner, destX, destY, ONFLOORZ, destAngle, true, true, false);

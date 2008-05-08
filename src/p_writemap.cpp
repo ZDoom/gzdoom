@@ -94,7 +94,7 @@ CCMD (dumpmap)
 
 static int WriteTHINGS (FILE *file)
 {
-	mapthing2_t mt = { 0 };
+	mapthinghexen_t mt = { 0 };
 	AActor *mo = players[consoleplayer].mo;
 
 	mt.x = LittleShort(short(mo->x >> FRACBITS));

@@ -2037,8 +2037,8 @@ void A_Stop (AActor *self)
 //===========================================================================
 void A_Respawn (AActor *actor)
 {
-	fixed_t x = actor->SpawnPoint[0] << FRACBITS;
-	fixed_t y = actor->SpawnPoint[1] << FRACBITS;
+	fixed_t x = actor->SpawnPoint[0];
+	fixed_t y = actor->SpawnPoint[1];
 	sector_t *sec;
 
 	actor->flags |= MF_SOLID;

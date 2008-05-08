@@ -332,8 +332,8 @@ void A_RestoreSpecialPosition (AActor *self)
 	fixed_t _x, _y;
 	sector_t *sec;
 
-	_x = self->SpawnPoint[0] << FRACBITS;
-	_y = self->SpawnPoint[1] << FRACBITS;
+	_x = self->SpawnPoint[0];
+	_y = self->SpawnPoint[1];
 	sec = P_PointInSector (_x, _y);
 
 	self->SetOrigin (_x, _y, sec->floorplane.ZatPoint (_x, _y));
@@ -341,7 +341,7 @@ void A_RestoreSpecialPosition (AActor *self)
 
 	if (self->flags & MF_SPAWNCEILING)
 	{
-		self->z = self->ceilingz - self->height - (self->SpawnPoint[2] << FRACBITS);
+		self->z = self->ceilingz - self->height - self->SpawnPoint[2];
 	}
 	else if (self->flags2 & MF2_SPAWNFLOAT)
 	{
@@ -358,7 +358,7 @@ void A_RestoreSpecialPosition (AActor *self)
 	}
 	else
 	{
-		self->z = (self->SpawnPoint[2] << FRACBITS) + self->floorz;
+		self->z = self->SpawnPoint[2] + self->floorz;
 		if (self->flags2 & MF2_FLOATBOB)
 		{
 			self->z += FloatBobOffsets[(self->FloatBobPhase + level.maptime) & 63];

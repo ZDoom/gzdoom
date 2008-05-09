@@ -64,17 +64,19 @@ FString BuildString (int argc, char **argv);
 class FCommandLine
 {
 public:
-	FCommandLine (const char *commandline);
+	FCommandLine (const char *commandline, bool no_escapes = false);
 	~FCommandLine ();
 	int argc ();
 	char *operator[] (int i);
 	const char *args () { return cmd; }
+	void Shift();
 
 private:
 	const char *cmd;
 	int _argc;
 	char **_argv;
 	long argsize;
+	bool noescapes;
 };
 
 typedef void (*CCmdRun) (FCommandLine &argv, APlayerPawn *instigator, int key);

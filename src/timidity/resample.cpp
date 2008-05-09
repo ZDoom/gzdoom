@@ -509,6 +509,14 @@ sample_t *resample_voice(Renderer *song, Voice *vp, int *countptr)
 	/* Need to resample. Use the proper function. */
 	modes = vp->sample->modes;
 
+	if (vp->status & VOICE_LPE)
+	{
+		if (vp->sample->loop_end - vp->sample->loop_start < 2)
+		{ // Loop is too short; turn it off.
+			vp->status &= ~VOICE_LPE;
+		}
+	}
+
 	if (vp->vibrato_control_ratio)
 	{
 		if (vp->status & VOICE_LPE)

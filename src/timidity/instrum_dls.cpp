@@ -1121,13 +1121,14 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 	DLS_Region *rgn = &ins->regions[index];
 	DLS_Wave *wave = &song->patches->waveList[rgn->wlnk->ulTableIndex];
 
+	sample->type = INST_DLS;
 	sample->self_nonexclusive = !!(rgn->header->fusOptions & F_RGN_OPTION_SELFNONEXCLUSIVE);
 	sample->key_group = (SBYTE)rgn->header->usKeyGroup;
-	sample->low_freq = SDWORD(note_to_freq(rgn->header->RangeKey.usLow));
-	sample->high_freq = SDWORD(note_to_freq(rgn->header->RangeKey.usHigh));
-	sample->root_freq = SDWORD(note_to_freq(rgn->wsmp->usUnityNote));
-	sample->low_vel = rgn->header->RangeVelocity.usLow;
-	sample->high_vel = rgn->header->RangeVelocity.usHigh;
+	sample->low_freq = note_to_freq(rgn->header->RangeKey.usLow);
+	sample->high_freq = note_to_freq(rgn->header->RangeKey.usHigh);
+	sample->root_freq = note_to_freq(rgn->wsmp->usUnityNote);
+	sample->low_vel = (BYTE)rgn->header->RangeVelocity.usLow;
+	sample->high_vel = (BYTE)rgn->header->RangeVelocity.usHigh;
 
 	sample->modes = wave->format->wBitsPerSample == 8 ? PATCH_UNSIGNED : PATCH_16;
 	sample->sample_rate = wave->format->dwSamplesPerSec;
@@ -1174,25 +1175,12 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 		printf("%d, Rate=%d LV=%d HV=%d Low=%d Hi=%d Root=%d Pan=%d Attack=%f Hold=%f Sustain=%d Decay=%f Release=%f\n", index, sample->sample_rate, rgn->header->RangeVelocity.usLow, rgn->header->RangeVelocity.usHigh, sample->low_freq, sample->high_freq, sample->root_freq, sample->panning, attack, hold, sustain, decay, release);
 		*/
 
-		sample->envelope_offset[ATTACK] = to_offset(255);
-		sample->envelope_rate[ATTACK] = calc_rate(song, 255, sample->sample_rate, attack);
-
-		sample->envelope_offset[HOLD] = to_offset(250);
-		sample->envelope_rate[HOLD] = calc_rate(song, 5, sample->sample_rate, hold);
-
-		sample->envelope_offset[DECAY] = to_offset(sustain);
-		sample->envelope_rate[DECAY] = calc_rate(song, 255 - sustain, sample->sample_rate, decay);
-
-		sample->envelope_offset[RELEASE] = to_offset(0);
-		sample->envelope_rate[RELEASE] = calc_rate(song, 5 + sustain, sample->sample_rate, release);
-
-		sample->envelope_offset[RELEASEB] = to_offset(0);
-		sample->envelope_rate[RELEASEB] = to_offset(1);
-
-		sample->envelope_offset[RELEASEC] = to_offset(0);
-		sample->envelope_rate[RELEASEC] = to_offset(1);
-
-		sample->modes |= PATCH_NO_SRELEASE;
+		sample->envelope.sf2.decay_vol = 0;
+		sample->envelope.sf2.attack_vol = (short)attack;
+		sample->envelope.sf2.hold_vol = (short)hold;
+		sample->envelope.sf2.decay_vol = (short)decay;
+		sample->envelope.sf2.release_vol = (short)release;
+		sample->envelope.sf2.sustain_vol = (short)sustain;
 	}
 
 	sample->data_length <<= FRACTION_BITS;
@@ -1236,7 +1224,6 @@ Instrument *load_instrument_dls(Renderer *song, int drum, int bank, int instrume
 	}
 
 	inst = (Instrument *)safe_malloc(sizeof(Instrument));
-	inst->type = INST_DLS;
 	inst->samples = dls_ins->header->cRegions;
 	inst->sample = (Sample *)safe_malloc(inst->samples * sizeof(Sample));
 	memset(inst->sample, 0, inst->samples * sizeof(Sample));

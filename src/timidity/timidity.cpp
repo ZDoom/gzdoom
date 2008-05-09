@@ -28,6 +28,7 @@
 #include "m_alloc.h"
 #include "cmdlib.h"
 #include "c_cvars.h"
+#include "c_dispatch.h"
 #include "i_system.h"
 #include "files.h"
 
@@ -42,13 +43,10 @@ ToneBank *tonebank[MAXBANK], *drumset[MAXBANK];
 static FString def_instr_name;
 int openmode = OM_FILEORLUMP;
 
-
-#define MAXWORDS 10
-
 static int read_config_file(const char *name, bool ismain)
 {
 	FileReader *fp;
-	char tmp[1024], *w[MAXWORDS], *cp;
+	char tmp[1024], *cp;
 	ToneBank *bank = NULL;
 	int i, j, k, line = 0, words;
 	static int rcf_count = 0;
@@ -81,17 +79,29 @@ static int read_config_file(const char *name, bool ismain)
 	while (fp->Gets(tmp, sizeof(tmp)))
 	{
 		line++;
-		w[words = 0] = strtok(tmp, " \t\r\n\240");
-		if (!w[0]) continue;
+		FCommandLine w(tmp, true);
+		words = w.argc();
+		if (words == 0) continue;
 
 		/* Originally the TiMidity++ extensions were prefixed like this */
 		if (strcmp(w[0], "#extension") == 0)
-			words = -1;
+		{
+			w.Shift();
+			words--;
+		}
 		else if (*w[0] == '#')
+		{
 			continue;
+		}
 
-		while (w[words] && *w[words] != '#' && (words < MAXWORDS))
-			w[++words] = strtok(0, " \t\r\n\240");
+		for (i = 0; i < words; ++i)
+		{
+			if (*w[i] == '#')
+			{
+				words = i;
+				break;
+			}
+		}
 
 		/*
 		 * TiMidity++ adds a number of extensions to the config file format.
@@ -155,19 +165,93 @@ static int read_config_file(const char *name, bool ismain)
 			*/
 			Printf("FIXME: Implement \"altassign\" in TiMidity config.\n");
 		}
-		else if (!strcmp(w[0], "soundfont") || !strcmp(w[0], "font"))
+		else if (!strcmp(w[0], "soundfont"))
 		{
 			/*
-			* I can't find any documentation for these, but I guess they're
-			* an alternative way of loading/unloading instruments.
-			* 
 			* "soundfont" sf_file "remove"
 			* "soundfont" sf_file ["order=" order] ["cutoff=" cutoff]
 			*                     ["reso=" reso] ["amp=" amp]
+			*/
+			if (words < 2)
+			{
+				Printf("%s: line %d: No soundfont given\n", name, line);
+				delete fp;
+				return -2;
+			}
+			if (words > 2 && !strcmp(w[2], "remove"))
+			{
+				font_remove(w[1]);
+			}
+			else
+			{
+				int order = 0;
+
+				for (i = 2; i < words; ++i)
+				{
+					if (!(cp = strchr(w[i], '=')))
+					{
+						Printf("%s: line %d: bad soundfont option %s\n", name, line, w[i]);
+						delete fp;
+						return -2;
+					}
+				}
+				font_add(w[1], order);
+			}
+		}
+		else if (!strcmp(w[0], "font"))
+		{
+			/*
 			* "font" "exclude" bank preset keynote
 			* "font" "order" order bank preset keynote
 			*/
-			Printf("FIXME: Implmement \"%s\" in TiMidity config.\n", w[0]);
+			int order, drum = -1, bank = -1, instr = -1;
+
+			if (words < 3)
+			{
+				Printf("%s: line %d: syntax error\n", name, line);
+				delete fp;
+				return -2;
+			}
+
+			if (!strcmp(w[1], "exclude"))
+			{
+				order = 254;
+				i = 2;
+			}
+			else if (!strcmp(w[1], "order"))
+			{
+				order = atoi(w[2]);
+				i = 3;
+			}
+			else
+			{
+				Printf("%s: line %d: font subcommand must be 'order' or 'exclude'\n", name, line);
+				delete fp;
+				return -2;
+			}
+			if (i < words)
+			{
+				drum = atoi(w[i++]);
+			}
+			if (i < words)
+			{
+				bank = atoi(w[i++]);
+			}
+			if (i < words)
+			{
+				instr = atoi(w[i++]);
+			}
+			if (drum != 128)
+			{
+				instr = bank;
+				bank = drum;
+				drum = 0;
+			}
+			else
+			{
+				drum = 1;
+			}
+			font_order(order, drum, bank, instr);
 		}
 		else if (!strcmp(w[0], "progbase"))
 		{
@@ -289,12 +373,34 @@ static int read_config_file(const char *name, bool ismain)
 				delete fp;
 				return -2;
 			}
-			bank->tone[i].name = w[1];
 			bank->tone[i].note = bank->tone[i].amp = bank->tone[i].pan =
-				bank->tone[i].strip_loop = bank->tone[i].strip_envelope =
-				bank->tone[i].strip_tail = -1;
+				bank->tone[i].fontbank = bank->tone[i].fontpreset =
+				bank->tone[i].fontnote = bank->tone[i].strip_loop = 
+				bank->tone[i].strip_envelope = bank->tone[i].strip_tail = -1;
 
-			for (j = 2; j<words; j++)
+			if (!strcmp(w[1], "%font"))
+			{
+				bank->tone[i].name = w[2];
+				bank->tone[i].fontbank = atoi(w[3]);
+				bank->tone[i].fontpreset = atoi(w[4]);
+				if (bank->tone[i].fontbank == 128 || (w[5][0] >= '0' && w[5][0] <= '9'))
+				{
+					bank->tone[i].fontnote = atoi(w[5]);
+					j = 6;
+				}
+				else
+				{
+					j = 5;
+				}
+				font_add(w[2], 254);
+			}
+			else
+			{
+				bank->tone[i].name = w[1];
+				j = 2;
+			}
+
+			for (; j<words; j++)
 			{
 				if (!(cp=strchr(w[j], '=')))
 				{
@@ -397,6 +503,7 @@ static int read_config_file(const char *name, bool ismain)
 void FreeAll()
 {
 	free_instruments();
+	font_freeall();
 	for (int i = 0; i < MAXBANK; ++i)
 	{
 		if (tonebank[i] != NULL)

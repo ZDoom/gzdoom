@@ -31,73 +31,330 @@
 namespace Timidity
 {
 
-/* Returns 1 if envelope runs out */
-int recompute_envelope(Voice *v)
+static int convert_envelope_rate(Renderer *song, BYTE rate)
 {
-	int stage;
+	int r;
 
-	stage = v->envelope_stage;
+	r  = 3 - ((rate>>6) & 0x3);
+	r *= 3;
+	r  = (int)(rate & 0x3f) << r; /* 6.9 fixed point */
 
-	if (stage >= ENVELOPES)
+	/* 15.15 fixed point. */
+	return int(((r * 44100) / song->rate) * song->control_ratio) << 9;
+}
+
+void Envelope::Init(Renderer *song, Voice *v)
+{
+	Type = v->sample->type;
+	env.bUpdating = true;
+	if (Type == INST_GUS)
+	{
+		gf1.Init(song, v);
+		gf1.ApplyToAmp(v);
+	}
+	else
+	{
+		sf2.Init(song, v);
+		sf2.ApplyToAmp(v);
+	}
+}
+
+void GF1Envelope::Init(Renderer *song, Voice *v)
+{
+	/* Ramp up from 0 */
+	stage = 0;
+	volume = 0;
+
+	for (int i = 0; i < 6; ++i)
+	{
+		offset[i] = v->sample->envelope.gf1.offset[i] << (7 + 15);
+		rate[i] = convert_envelope_rate(song, v->sample->envelope.gf1.rate[i]);
+	}
+	Recompute(v);
+}
+
+void GF1Envelope::Release(Voice *v)
+{
+	if (!(v->sample->modes & PATCH_NO_SRELEASE) || (v->sample->modes & PATCH_FAST_REL))
+	{
+		/* ramp out to minimum volume with rate from final release stage */
+		stage = GF1_RELEASEC+1;
+		target = 0;
+		increment = -rate[GF1_RELEASEC];
+	}
+	else if (v->sample->modes & PATCH_SUSTAIN)
+	{
+		if (stage < GF1_RELEASE)
+		{
+			stage = GF1_RELEASE;
+		}
+		Recompute(v);
+	}
+	bUpdating = true;
+}
+
+/* Returns 1 if envelope runs out */
+bool GF1Envelope::Recompute(Voice *v)
+{
+	int oldstage;
+
+	oldstage = stage;
+
+	if (oldstage > GF1_RELEASEC)
 	{
 		/* Envelope ran out. */
 		/* play sampled release */
 		v->status &= ~(VOICE_SUSTAINING | VOICE_LPE);
 		v->status |= VOICE_RELEASING;
-		v->envelope_increment = 0;
+		increment = 0;
+		bUpdating = false;
 		return 0;
 	}
 
-	if (stage == RELEASE && !(v->status & VOICE_RELEASING) && (v->sample->modes & PATCH_SUSTAIN))
+	if (oldstage == GF1_RELEASE && !(v->status & VOICE_RELEASING) && (v->sample->modes & PATCH_SUSTAIN))
 	{
 		v->status |= VOICE_SUSTAINING;
 		/* Freeze envelope until note turns off. Trumpets want this. */
-		v->envelope_increment = 0;
+		increment = 0;
+		bUpdating = false;
 	}
 	else
 	{
-		v->envelope_stage = stage + 1;
+		stage = oldstage + 1;
 
-		if (v->envelope_volume == v->sample->envelope_offset[stage])
+		if (volume == offset[oldstage])
 		{
-			return recompute_envelope(v);
+			return Recompute(v);
 		}
-		v->envelope_target = v->sample->envelope_offset[stage];
-		v->envelope_increment = v->sample->envelope_rate[stage];
-		if (v->envelope_target < v->envelope_volume)
-			v->envelope_increment = -v->envelope_increment;
+		target = offset[oldstage];
+		increment = rate[oldstage];
+		if (target < volume)
+			increment = -increment;
 	}
 
 	return 0;
 }
 
-void apply_envelope_to_amp(Voice *v)
+bool GF1Envelope::Update(Voice *v)
 {
-	float env_vol = v->attenuation;
-	float final_amp = v->sample->volume * FINAL_MIX_SCALE;
-	if (v->tremolo_phase_increment != 0)
+	volume += increment;
+	if (((increment < 0) && (volume <= target)) || ((increment > 0) && (volume >= target)))
 	{
-		env_vol *= v->tremolo_volume;
-	}
-	env_vol *= v->envelope_volume / float(1 << 30);
-	// Note: The pan offsets are negative.
-	v->left_mix = MAX(0.f, (float)calc_gf1_amp(env_vol + v->left_offset) * final_amp);
-	v->right_mix = MAX(0.f, (float)calc_gf1_amp(env_vol + v->right_offset) * final_amp);
-}
-
-static int update_envelope(Voice *v)
-{
-	v->envelope_volume += v->envelope_increment;
-	if (((v->envelope_increment < 0) && (v->envelope_volume <= v->envelope_target)) ||
-		((v->envelope_increment > 0) && (v->envelope_volume >= v->envelope_target)))
-	{
-		v->envelope_volume = v->envelope_target;
-		if (recompute_envelope(v))
+		volume = target;
+		if (Recompute(v))
 		{
 			return 1;
 		}
 	}
 	return 0;
+}
+
+void GF1Envelope::ApplyToAmp(Voice *v)
+{
+	double env_vol = v->attenuation;
+	double final_amp = v->sample->volume * FINAL_MIX_SCALE;
+	if (v->tremolo_phase_increment != 0)
+	{ // [RH] FIXME: This is wrong. Tremolo should offset the
+	  // envelope volume, not scale it.
+		env_vol *= v->tremolo_volume;
+	}
+	env_vol *= volume / float(1 << 30);
+	env_vol = calc_gf1_amp(env_vol) * final_amp;
+	v->left_mix = float(env_vol * v->left_offset);
+	v->right_mix = float(env_vol * v->right_offset);
+}
+
+void SF2Envelope::Init(Renderer *song, Voice *v)
+{
+	stage = 0;
+	volume = 0;
+	DelayTime = v->sample->envelope.sf2.delay_vol;
+	AttackTime = v->sample->envelope.sf2.attack_vol;
+	HoldTime = v->sample->envelope.sf2.hold_vol;
+	DecayTime = v->sample->envelope.sf2.decay_vol;
+	SustainLevel = v->sample->envelope.sf2.sustain_vol;
+	ReleaseTime = v->sample->envelope.sf2.release_vol;
+	SampleRate = song->rate;
+	HoldStart = 0;
+	RateMul = song->control_ratio / song->rate;
+	RateMul_cB = RateMul * 960;
+	bUpdating = true;
+}
+
+void SF2Envelope::Release(Voice *v)
+{
+	if (stage == SF2_ATTACK)
+	{
+		// The attack stage does not use an attenuation in cB like all the rest.
+		volume = log10(volume) * -200;
+	}
+	stage = SF2_RELEASE;
+	bUpdating = true;
+}
+
+static double timecent_to_sec(float timecent)
+{
+	if (timecent == -32768)
+		return 0;
+	return pow(2.0, timecent / 1200.0);
+}
+
+static double calc_rate(double ratemul, double sec)
+{
+	if (sec < 0.006)
+		sec = 0.006;
+	return ratemul / sec;
+}
+
+static void shutoff_voice(Voice *v)
+{
+	v->status &= ~(VOICE_SUSTAINING | VOICE_LPE);
+	v->status |= VOICE_RELEASING | VOICE_STOPPING;
+}
+
+static bool check_release(double RateMul, double sec)
+{
+	double rate = calc_rate(960 * RateMul, sec);
+
+	// Is release rate very fast? If so, don't do the release, but do
+	// the voice off ramp instead.
+	return (rate < 960/20);
+}
+
+/* Returns 1 if envelope runs out */
+bool SF2Envelope::Update(Voice *v)
+{
+	double sec;
+	double newvolume;
+
+	switch (stage)
+	{
+	case SF2_DELAY:
+		if (v->sample_count >= timecent_to_sec(DelayTime) * SampleRate)
+		{
+			stage = SF2_ATTACK;
+			return Update(v);
+		}
+		return 0;
+
+	case SF2_ATTACK:
+		sec = timecent_to_sec(AttackTime);
+		if (sec <= 0)
+		{ // instantaneous attack
+			newvolume = 1;
+		}
+		else
+		{
+			newvolume = volume + calc_rate(RateMul, sec);
+		}
+		if (newvolume >= 1)
+		{
+			volume = 0;
+			HoldStart = v->sample_count;
+			if (HoldTime <= -32768)
+			{ // hold time is 0, so skip right to decay
+				stage = SF2_DECAY;
+			}
+			else
+			{
+				stage = SF2_HOLD;
+			}
+			return Update(v);
+		}
+		break;
+
+	case SF2_HOLD:
+		if (v->sample_count - HoldStart >= timecent_to_sec(HoldTime) * SampleRate)
+		{
+			stage = SF2_DECAY;
+			return Update(v);
+		}
+		return 0;
+
+	case SF2_DECAY:
+		sec = timecent_to_sec(DecayTime);
+		if (sec <= 0)
+		{ // instantaneous decay
+			newvolume = SustainLevel;
+		}
+		else
+		{
+			newvolume = volume + calc_rate(RateMul_cB, sec);
+		}
+		if (newvolume >= SustainLevel)
+		{
+			newvolume = SustainLevel;
+			stage = SF2_SUSTAIN;
+			bUpdating = false;
+			if (!(v->status & VOICE_RELEASING))
+			{
+				v->status |= VOICE_SUSTAINING;
+			}
+		}
+		break;
+
+	case SF2_SUSTAIN:
+		// Stay here until released.
+		return 0;
+
+	case SF2_RELEASE:
+		sec = timecent_to_sec(ReleaseTime);
+		if (sec <= 0)
+		{ // instantaneous release
+			newvolume = 1000;
+		}
+		else
+		{
+			newvolume = volume + calc_rate(RateMul_cB, sec);
+		}
+		if (newvolume >= 960)
+		{
+			stage = SF2_FINISHED;
+			shutoff_voice(v);
+			bUpdating = false;
+			return 1;
+		}
+		break;
+
+	case SF2_FINISHED:
+		return 1;
+	}
+	volume = (float)newvolume;
+	return 0;
+}
+
+/* EMU 8k/10k don't follow spec in regards to volume attenuation.
+ * This factor is used in the equation pow (10.0, cb / FLUID_ATTEN_POWER_FACTOR).
+ * By the standard this should be -200.0. */
+#define FLUID_ATTEN_POWER_FACTOR  (-531.509)
+#define atten2amp(x) pow(10.0, (x) / FLUID_ATTEN_POWER_FACTOR)
+
+void SF2Envelope::ApplyToAmp(Voice *v)
+{
+	double amp;
+
+	if (stage == SF2_DELAY)
+	{
+		v->left_mix = 0;
+		v->right_mix = 0;
+		return;
+	}
+	else if (stage == SF2_ATTACK)
+	{
+		amp = atten2amp(v->attenuation) * volume;
+	}
+	else
+	{
+		amp = atten2amp(v->attenuation) * cb_to_amp(volume);
+	}
+	amp *= FINAL_MIX_SCALE * 0.5;
+	v->left_mix = float(amp * v->left_offset);
+	v->right_mix = float(amp * v->right_offset);
+}
+
+void apply_envelope_to_amp(Voice *v)
+{
+	v->eg1.ApplyToAmp(v);
 }
 
 static void update_tremolo(Voice *v)
@@ -136,7 +393,7 @@ static void update_tremolo(Voice *v)
 /* Returns 1 if the note died */
 static int update_signal(Voice *v)
 {
-	if (v->envelope_increment != 0 && update_envelope(v))
+	if (v->eg1.env.bUpdating && v->eg1.Update(v))
 	{
 		return 1;
 	}
@@ -347,7 +604,7 @@ static void ramp_out(const sample_t *sp, float *lp, Voice *v, int c)
 
 	/* printf("Ramping out: left=%d, c=%d, li=%d\n", left, c, li); */
 
-	if (v->left_offset == 0)		// All the way to the left
+	if (v->right_mix == 0)			// All the way to the left
 	{
 		left = v->left_mix;
 		li = -(left/c);
@@ -362,7 +619,7 @@ static void ramp_out(const sample_t *sp, float *lp, Voice *v, int c)
 			lp += 2;
 		}
 	}
-	else if (v->right_offset == 0)	// All the way to the right
+	else if (v->left_mix == 0)		// All the way to the right
 	{
 		right = v->right_mix;
 		ri = -(right/c);
@@ -441,7 +698,7 @@ void mix_voice(Renderer *song, float *buf, Voice *v, int c)
 		}
 		if (v->right_mix == 0)			// All the way to the left
 		{
-			if (v->envelope_increment != 0 || v->tremolo_phase_increment != 0)
+			if (v->eg1.env.bUpdating || v->tremolo_phase_increment != 0)
 			{
 				mix_single_left_signal(song->control_ratio, sp, buf, v, count);
 			}
@@ -452,7 +709,7 @@ void mix_voice(Renderer *song, float *buf, Voice *v, int c)
 		}
 		else if (v->left_mix == 0)		// All the way to the right
 		{
-			if (v->envelope_increment != 0 || v->tremolo_phase_increment != 0)
+			if (v->eg1.env.bUpdating || v->tremolo_phase_increment != 0)
 			{
 				mix_single_right_signal(song->control_ratio, sp, buf, v, count);
 			}
@@ -463,7 +720,7 @@ void mix_voice(Renderer *song, float *buf, Voice *v, int c)
 		}
 		else							// Somewhere in the middle
 		{
-			if (v->envelope_increment || v->tremolo_phase_increment)
+			if (v->eg1.env.bUpdating || v->tremolo_phase_increment)
 			{
 				mix_mystery_signal(song->control_ratio, sp, buf, v, count);
 			}
@@ -472,6 +729,7 @@ void mix_voice(Renderer *song, float *buf, Voice *v, int c)
 				mix_mystery(song->control_ratio, sp, buf, v, count);
 			}
 		}
+		v->sample_count += count;
 	}
 }
 

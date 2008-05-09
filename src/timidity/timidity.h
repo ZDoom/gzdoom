@@ -177,6 +177,7 @@ extern void clear_pathlist();
 extern void *safe_malloc(size_t count);
 
 FileReader *open_filereader(const char *name, int open, int *plumpnum);
+extern int openmode;
 
 /*
 controls.h
@@ -204,53 +205,6 @@ void cmsg(int type, int verbosity_level, const char *fmt, ...);
 instrum.h
 */
 
-struct Sample
-{
-	SDWORD
-		loop_start, loop_end, data_length,
-		sample_rate, low_vel, high_vel, low_freq, high_freq, root_freq;
-	SDWORD
-		envelope_rate[6], envelope_offset[6];
-	float
-		volume;
-	sample_t *data;
-	SDWORD 
-		tremolo_sweep_increment, tremolo_phase_increment,
-		vibrato_sweep_increment, vibrato_control_ratio;
-	BYTE
-		tremolo_depth, vibrato_depth,
-		modes;
-	WORD
-		panning, scale_factor;
-	SWORD
-		scale_note;
-	bool
-		self_nonexclusive;
-	BYTE
-		key_group;
-	float
-		left_offset, right_offset;
-};
-
-void convert_sample_data(Sample *sample, const void *data);
-void free_instruments();
-
-/* Patch definition: */
-enum
-{
-	HEADER_SIZE					= 12,
-	ID_SIZE						= 10,
-	DESC_SIZE					= 60,
-	RESERVED_SIZE				= 40,
-	PATCH_HEADER_RESERVED_SIZE	= 36,
-	LAYER_RESERVED_SIZE			= 40,
-	PATCH_DATA_RESERVED_SIZE	= 36,
-	INST_NAME_SIZE				= 16,
-	ENVELOPES					= 6,
-	MAX_LAYERS					= 4
-};
-#define GF1_HEADER_TEXT			"GF1PATCH110"
-
 enum
 {
 	PATCH_16				= (1<<0),
@@ -263,80 +217,90 @@ enum
 	PATCH_FAST_REL			= (1<<7)
 };
 
-#ifdef _MSC_VER
-#pragma pack(push, 1)
-#define GCC_PACKED
-#else
-#define GCC_PACKED __attribute__((__packed__))
-#endif
-
-struct GF1PatchHeader
+struct Sample
 {
-	char Header[HEADER_SIZE];
-	char GravisID[ID_SIZE];		/* Id = "ID#000002" */
-	char Description[DESC_SIZE];
-	BYTE Instruments;
-	BYTE Voices;
-	BYTE Channels;
-	WORD WaveForms;
-	WORD MasterVolume;
-	DWORD DataSize;
-	BYTE Reserved[PATCH_HEADER_RESERVED_SIZE];
-} GCC_PACKED;
+	SDWORD
+		loop_start, loop_end, data_length,
+		sample_rate;
+	float
+		low_freq, high_freq, root_freq;
+	union
+	{
+		struct
+		{
+			BYTE rate[6], offset[6];
+		} gf1;
+		struct
+		{
+			short delay_vol;
+			short attack_vol;
+			short hold_vol;
+			short decay_vol;
+			short sustain_vol;
+			short release_vol;
+		} sf2;
+	} envelope;
+	float
+		volume;
+	sample_t *data;
+	SDWORD 
+		tremolo_sweep_increment, tremolo_phase_increment,
+		vibrato_sweep_increment, vibrato_control_ratio;
+	BYTE
+		tremolo_depth, vibrato_depth,
+		low_vel, high_vel,
+		modes, type;
+	SWORD
+		panning;
+	WORD
+		scale_factor, key_group;
+	SWORD
+		scale_note;
+	bool
+		self_nonexclusive;
+	float
+		left_offset, right_offset;
 
-struct GF1InstrumentData
-{
-	WORD Instrument;
-	char InstrumentName[INST_NAME_SIZE];
-	int  InstrumentSize;
-	BYTE Layers;
-	BYTE Reserved[RESERVED_SIZE];
-} GCC_PACKED;
+	// SF2 stuff
+	SWORD tune;
+	SBYTE velocity;
 
-struct GF1LayerData
-{
-	BYTE LayerDuplicate;
-	BYTE Layer;
-	int  LayerSize;
-	BYTE Samples;
-	BYTE Reserved[LAYER_RESERVED_SIZE];
-} GCC_PACKED;
+	float initial_attenuation;
+};
 
-struct GF1PatchData
-{
-	char  WaveName[7];
-	BYTE  Fractions;
-	int   WaveSize;
-	int   StartLoop;
-	int   EndLoop;
-	WORD  SampleRate;
-	int   LowFrequency;
-	int   HighFrequency;
-	int   RootFrequency;
-	SWORD Tune;
-	BYTE  Balance;
-	BYTE  EnvelopeRate[ENVELOPES];
-	BYTE  EnvelopeOffset[ENVELOPES];
-	BYTE  TremoloSweep;
-	BYTE  TremoloRate;
-	BYTE  TremoloDepth;
-	BYTE  VibratoSweep;
-	BYTE  VibratoRate;
-	BYTE  VibratoDepth;
-	BYTE  Modes;
-	SWORD ScaleFrequency;
-	WORD  ScaleFactor;		/* From 0 to 2048 or 0 to 2 */
-	BYTE  Reserved[PATCH_DATA_RESERVED_SIZE];
-} GCC_PACKED;
-#ifdef _MSC_VER
-#pragma pack(pop)
-#endif
-#undef GCC_PACKED
+void convert_sample_data(Sample *sample, const void *data);
+void free_instruments();
+
+/* Magic file words */
+
+#define ID_RIFF		MAKE_ID('R','I','F','F')
+#define ID_LIST		MAKE_ID('L','I','S','T')
+#define ID_INFO		MAKE_ID('I','N','F','O')
+#define ID_sfbk		MAKE_ID('s','f','b','k')
+#define ID_sdta		MAKE_ID('s','d','t','a')
+#define ID_pdta		MAKE_ID('p','d','t','a')
+#define ID_ifil		MAKE_ID('i','f','i','l')
+#define ID_iver		MAKE_ID('i','v','e','r')
+#define ID_irom		MAKE_ID('i','r','o','m')
+#define ID_smpl		MAKE_ID('s','m','p','l')
+#define ID_sm24		MAKE_ID('s','m','2','4')
+#define ID_phdr		MAKE_ID('p','h','d','r')
+#define ID_pbag		MAKE_ID('p','b','a','g')
+#define ID_pmod		MAKE_ID('p','m','o','d')
+#define ID_pgen		MAKE_ID('p','g','e','n')
+#define ID_inst		MAKE_ID('i','n','s','t')
+#define ID_ibag		MAKE_ID('i','b','a','g')
+#define ID_imod		MAKE_ID('i','m','o','d')
+#define ID_igen		MAKE_ID('i','g','e','n')
+#define ID_shdr		MAKE_ID('s','h','d','r')
+
+/* Instrument definitions */
 
 enum
 {
 	INST_GUS,
-	INST_DLS
+	INST_DLS,
+	INST_SF2
 };
 
 struct Instrument
@@ -344,7 +308,6 @@ struct Instrument
 	Instrument();
 	~Instrument();
 
-	int type;
 	int samples;
 	Sample *sample;
 };
@@ -356,11 +319,10 @@ struct ToneBankElement
 	{}
 
 	FString name;
-	int note, amp, pan, strip_loop, strip_envelope, strip_tail;
+	int note, amp, pan, fontbank, fontpreset, fontnote, strip_loop, strip_envelope, strip_tail;
 };
 
-/* A hack to delay instrument loading until after reading the
-entire MIDI file. */
+/* A hack to delay instrument loading until after reading the entire MIDI file. */
 #define MAGIC_LOAD_INSTRUMENT ((Instrument *)(-1))
 
 enum
@@ -381,7 +343,34 @@ struct ToneBank
 
 #define SPECIAL_PROGRAM		-1
 
-extern void pcmap(int *b, int *v, int *p, int *drums);
+/*
+instrum_font.cpp
+*/
+
+class FontFile
+{
+public:
+	FontFile(FString filename);
+	virtual ~FontFile();
+
+	FString Filename;
+	FontFile *Next;
+
+	virtual Instrument *LoadInstrument(struct Renderer *song, int drum, int bank, int program) = 0;
+	virtual Instrument *LoadInstrumentOrder(struct Renderer *song, int order, int drum, int bank, int program) = 0;
+	virtual void SetOrder(int order, int drum, int bank, int program) = 0;
+	virtual void SetAllOrders(int order) = 0;
+};
+
+void font_freeall();
+FontFile *font_find(const char *filename);
+void font_add(const char *filename, int load_order);
+void font_remove(const char *filename);
+void font_order(int order, int bank, int preset, int keynote);
+Instrument *load_instrument_font(struct Renderer *song, const char *font, int drum, int bank, int instrument);
+Instrument *load_instrument_font_order(struct Renderer *song, int order, int drum, int bank, int instrument);
+
+FontFile *ReadDLS(const char *filename, FileReader *f);
 
 /*
 mix.h
@@ -446,9 +435,9 @@ struct Channel
 		bank, program, sustain, pitchbend, 
 		mono, /* one note only on this channel */
 		pitchsens;
-	WORD
+	BYTE
 		volume, expression;
-	SWORD
+	SBYTE
 		panning;
 	WORD
 		rpn, nrpn;
@@ -456,12 +445,80 @@ struct Channel
 		nrpn_mode;
 	float
 		pitchfactor; /* precomputed pitch bend factor to save some fdiv's */
-	float
-		left_offset, right_offset;	/* precomputed panning values */
 };
 
 /* Causes the instrument's default panning to be used. */
 #define NO_PANNING				-1
+
+struct MinEnvelope
+{
+	int stage;
+	BYTE bUpdating;
+};
+
+struct GF1Envelope : public MinEnvelope
+{
+	int volume, target, increment;
+	int rate[6], offset[6];
+
+	void Init(struct Renderer *song, Voice *v);
+	bool Update(struct Voice *v);
+	bool Recompute(struct Voice *v);
+	void ApplyToAmp(struct Voice *v);
+	void Release(struct Voice *v);
+};
+
+struct SF2Envelope : public MinEnvelope
+{
+	float volume;
+	float DelayTime;	// timecents
+	float AttackTime;	// timecents
+	float HoldTime;		// timecents
+	float DecayTime;	// timecents
+	float SustainLevel;	// -0.1%
+	float ReleaseTime;	// timecents
+	float SampleRate;
+	int HoldStart;
+	float RateMul;
+	float RateMul_cB;
+
+	void Init(struct Renderer *song, Voice *v);
+	bool Update(struct Voice *v);
+	void ApplyToAmp(struct Voice *v);
+	void Release(struct Voice *v);
+};
+
+struct Envelope
+{
+	union
+	{
+		MinEnvelope env;
+		GF1Envelope gf1;
+		SF2Envelope sf2;
+	};
+
+	BYTE Type;
+
+	void Init(struct Renderer *song, struct Voice *v);
+	bool Update(struct Voice *v)
+	{
+		if (Type == INST_GUS)
+			return gf1.Update(v);
+		return sf2.Update(v);
+	}
+	void ApplyToAmp(struct Voice *v)
+	{
+		if (Type == INST_GUS)
+			return gf1.ApplyToAmp(v);
+		return sf2.ApplyToAmp(v);
+	}
+	void Release(struct Voice *v)
+	{
+		if (Type == INST_GUS)
+			return gf1.Release(v);
+		return sf2.Release(v);
+	}
+};
 
 struct Voice
 {
@@ -472,10 +529,11 @@ struct Voice
 		orig_frequency, frequency;
 	int
 		sample_offset, sample_increment,
-		envelope_volume, envelope_target, envelope_increment,
 		tremolo_sweep, tremolo_sweep_position,
 		tremolo_phase, tremolo_phase_increment,
 		vibrato_sweep, vibrato_sweep_position;
+
+	Envelope eg1, eg2;
 
 	final_volume_t left_mix, right_mix;
 
@@ -487,8 +545,10 @@ struct Voice
 		vibrato_sample_increment[VIBRATO_SAMPLE_INCREMENTS];
 	int
 		vibrato_phase, vibrato_control_ratio, vibrato_control_counter,
-		envelope_stage, control_counter;
+		control_counter;
 
+	int
+		sample_count;
 };
 
 /* Voice status options: */
@@ -506,12 +566,23 @@ enum
 /* Envelope stages: */
 enum
 {
-	ATTACK,
-	HOLD,
-	DECAY,
-	RELEASE,
-	RELEASEB,
-	RELEASEC
+	GF1_ATTACK,
+	GF1_HOLD,
+	GF1_DECAY,
+	GF1_RELEASE,
+	GF1_RELEASEB,
+	GF1_RELEASEC
+};
+
+enum
+{
+	SF2_DELAY,
+	SF2_ATTACK,
+	SF2_HOLD,
+	SF2_DECAY,
+	SF2_SUSTAIN,
+	SF2_RELEASE,
+	SF2_FINISHED
 };
 
 #define ISDRUMCHANNEL(c) ((drumchannels & (1<<(c))))
@@ -527,10 +598,16 @@ extern void pre_resample(struct Renderer *song, Sample *sp);
 tables.h
 */
 
+const double log_of_2 = 0.69314718055994529;
+
 #define sine(x)			(sin((2*PI/1024.0) * (x)))
+
 #define note_to_freq(x)	(float(8175.7989473096690661233836992789 * pow(2.0, (x) / 12.0)))
-//#define calc_vol(x)	(pow(2.0,((x)*6.0 - 6.0)))				// Physically ideal equation
+#define freq_to_note(x) (log((x) / 8175.7989473096690661233836992789) * (12.0 / log_of_2))
+
 #define calc_gf1_amp(x)	(pow(2.0,((x)*16.0 - 16.0)))			// Actual GUS equation
+#define cb_to_amp(x)	(pow(10.0, (x) * (1 / -200.0)))			// centibels to amp
+#define db_to_amp(x)	(pow(10.0, (x) * (1 / -20.0)))			// decibels to map
 
 /*
 timidity.h
@@ -582,7 +659,8 @@ struct Renderer
 
 	void kill_key_group(int voice);
 	float calculate_scaled_frequency(Sample *sample, int note);
-	void start_note(int chan, int note, int vel, int voice);
+	void start_note(int chan, int note, int vel);
+	bool start_region(int chan, int note, int vel, Sample *sp, float freq);
 
 	void note_on(int chan, int note, int vel);
 	void note_off(int chan, int note, int vel);
@@ -598,7 +676,7 @@ struct Renderer
 	void reset_controllers(int chan);
 	void reset_midi();
 
-	void select_sample(int voice, Instrument *instr, int vel);
+	int allocate_voice();
 
 	void kill_note(int voice);
 	void finish_note(int voice);
@@ -608,7 +686,7 @@ struct Renderer
 	void DataEntryCoarseNRPN(int chan, int nrpn, int val);
 	void DataEntryFineNRPN(int chan, int nrpn, int val);
 
-	static void compute_pan(int panning, float &left_offset, float &right_offset);
+	static void compute_pan(double panning, int type, float &left_offset, float &right_offset);
 };
 
 }

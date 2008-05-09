@@ -1,8 +1,17 @@
+May 8, 2008
+- Reduced volume, expression, and panning controllers back to 7 bits.
+- Added very basic Soundfont support to the internal TiMidity. Things missing:
+  filter, LFOs, modulation envelope, chorus, reverb, and modulators. May or
+  may not be compatible with TiMidity++'s soundfont extensions.
+
 May 8, 2008 (Changes by Graf Zahl)
 - Changed all thing coordinates that were stored as shorts into fixed_t.
 - Separated mapthing2_t into mapthinghexen_t and the internal FMapThing so
   that it is easier to add new features in the UDMF map format.
 - Added some initial code to read UDMF maps.
+
+May 6, 2008
+- Added support for quoted strings to the TiMidity config parser.
 
 May 2, 2008 (Changes by Graf Zahl)
 - Split off the slope creation code from p_Setup.cpp into its own file.

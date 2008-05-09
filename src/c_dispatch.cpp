@@ -101,7 +101,7 @@ struct FActionMap
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static long ParseCommandLine (const char *args, int *argc, char **argv);
+static long ParseCommandLine (const char *args, int *argc, char **argv, bool no_escapes);
 static FConsoleCommand *FindNameInHashTable (FConsoleCommand **table, const char *name, size_t namelen);
 static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *name, size_t namelen, FConsoleCommand **prev);
 
@@ -724,7 +724,7 @@ void AddCommandString (char *cmd, int keynum)
 //							\c becomes just TEXTCOLOR_ESCAPE
 //   $<cvar> is replaced by the contents of <cvar>
 
-static long ParseCommandLine (const char *args, int *argc, char **argv)
+static long ParseCommandLine (const char *args, int *argc, char **argv, bool no_escapes)
 {
 	int count;
 	char *buffplace;
@@ -758,15 +758,15 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 			do
 			{
 				stuff = *args++;
-				if (stuff == '\\' && *args == '\"')
+				if (!no_escapes && stuff == '\\' && *args == '\"')
 				{
 					stuff = '\"', args++;
 				}
-				else if (stuff == '\\' && *args == '\\')
+				else if (!no_escapes && stuff == '\\' && *args == '\\')
 				{
 					args++;
 				}
-				else if (stuff == '\\' && *args == 'c')
+				else if (!no_escapes && stuff == '\\' && *args == 'c')
 				{
 					stuff = TEXTCOLOR_ESCAPE, args++;
 				}
@@ -824,11 +824,12 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 	return (long)(buffplace - (char *)0);
 }
 
-FCommandLine::FCommandLine (const char *commandline)
+FCommandLine::FCommandLine (const char *commandline, bool no_escapes)
 {
 	cmd = commandline;
 	_argc = -1;
 	_argv = NULL;
+	noescapes = no_escapes;
 }
 
 FCommandLine::~FCommandLine ()
@@ -839,11 +840,20 @@ FCommandLine::~FCommandLine ()
 	}
 }
 
+void FCommandLine::Shift()
+{
+	// Only valid after _argv has been filled.
+	for (int i = 1; i < _argc; ++i)
+	{
+		_argv[i - 1] = _argv[i];
+	}
+}
+
 int FCommandLine::argc ()
 {
 	if (_argc == -1)
 	{
-		argsize = ParseCommandLine (cmd, &_argc, NULL);
+		argsize = ParseCommandLine (cmd, &_argc, NULL, noescapes);
 	}
 	return _argc;
 }
@@ -855,7 +865,7 @@ char *FCommandLine::operator[] (int i)
 		int count = argc();
 		_argv = new char *[count + (argsize+sizeof(char*)-1)/sizeof(char*)];
 		_argv[0] = (char *)_argv + count*sizeof(char *);
-		ParseCommandLine (cmd, NULL, _argv);
+		ParseCommandLine (cmd, NULL, _argv, noescapes);
 	}
 	return _argv[i];
 }

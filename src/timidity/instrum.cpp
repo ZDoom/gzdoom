@@ -32,16 +32,15 @@
 #include "m_swap.h"
 #include "files.h"
 #include "templates.h"
+#include "gf1patch.h"
 
 namespace Timidity
 {
 
 extern Instrument *load_instrument_dls(Renderer *song, int drum, int bank, int instrument);
 
-extern int openmode;
-
 Instrument::Instrument()
-: type(INST_GUS), samples(0), sample(NULL)
+: samples(0), sample(NULL)
 {
 }
 
@@ -52,7 +51,7 @@ Instrument::~Instrument()
 
 	for (i = samples, sp = &(sample[0]); i != 0; i--, sp++)
 	{
-		if (sp->data != NULL)
+		if (sp->type == INST_GUS && sp->data != NULL)
 		{
 			free(sp->data);
 		}
@@ -80,28 +79,6 @@ ToneBank::~ToneBank()
 			instrument[i] = NULL;
 		}
 	}
-}
-
-
-int convert_envelope_rate(Renderer *song, BYTE rate)
-{
-	int r;
-
-	r  = 3 - ((rate>>6) & 0x3);
-	r *= 3;
-	r  = (int)(rate & 0x3f) << r; /* 6.9 fixed point */
-
-	/* 15.15 fixed point. */
-	return int(((r * 44100) / song->rate) * song->control_ratio) << 9;
-}
-
-int convert_envelope_offset(BYTE offset)
-{
-	/* This is not too good... Can anyone tell me what these values mean?
-	Are they GUS-style "exponential" volumes? And what does that mean? */
-
-	/* 15.15 fixed point */
-	return offset << (7 + 15);
 }
 
 int convert_tremolo_sweep(Renderer *song, BYTE sweep)
@@ -268,7 +245,6 @@ failread:
 	ip->samples = layer_data.Samples;
 	ip->sample = (Sample *)safe_malloc(sizeof(Sample) * layer_data.Samples);
 	memset(ip->sample, 0, sizeof(Sample) * layer_data.Samples);
-	ip->type = INST_GUS;
 	for (i = 0; i < layer_data.Samples; ++i)
 	{
 		if (sizeof(patch_data) != fp->Read(&patch_data, sizeof(patch_data)))
@@ -286,22 +262,23 @@ fail:
 		sp->loop_start = LittleLong(patch_data.StartLoop);
 		sp->loop_end = LittleLong(patch_data.EndLoop);
 		sp->sample_rate = LittleShort(patch_data.SampleRate);
-		sp->low_freq = LittleLong(patch_data.LowFrequency);
-		sp->high_freq = LittleLong(patch_data.HighFrequency);
-		sp->root_freq = LittleLong(patch_data.RootFrequency);
+		sp->low_freq = float(LittleLong(patch_data.LowFrequency));
+		sp->high_freq = float(LittleLong(patch_data.HighFrequency)) + 0.9999f;
+		sp->root_freq = float(LittleLong(patch_data.RootFrequency));
 		sp->high_vel = 127;
+		sp->velocity = -1;
+		sp->type = INST_GUS;
 
+		// Expand to SF2 range.
 		if (panning == -1)
 		{
-			sp->panning = patch_data.Balance & 0x0F;
-			sp->panning = (sp->panning << 3) | (sp->panning >> 1);
+			sp->panning = (patch_data.Balance & 0x0F) * 1000 / 15 - 500;
 		}
 		else
 		{
-			sp->panning = panning & 0x7f;
+			sp->panning = (panning & 0x7f) * 1000 / 127 - 500;
 		}
-		sp->panning |= sp->panning << 7;
-		song->compute_pan(sp->panning, sp->left_offset, sp->right_offset);
+		song->compute_pan((sp->panning + 500) / 1000.0, INST_GUS, sp->left_offset, sp->right_offset);
 
 		/* tremolo */
 		if (patch_data.TremoloRate == 0 || patch_data.TremoloDepth == 0)
@@ -352,6 +329,10 @@ fail:
 			if (sp->scale_factor <= 2)
 			{
 				sp->scale_factor *= 1024;
+			}
+			else if (sp->scale_factor > 2048)
+			{
+				sp->scale_factor = 1024;
 			}
 			if (sp->scale_factor != 1024)
 			{
@@ -444,9 +425,9 @@ fail:
 
 		for (j = 0; j < 6; j++)
 		{
-			sp->envelope_rate[j] = convert_envelope_rate(song, patch_data.EnvelopeRate[j]);
+			sp->envelope.gf1.rate[j] = patch_data.EnvelopeRate[j];
 			/* [RH] GF1NEW clamps the offsets to the range [5,251], so we do too. */
-			sp->envelope_offset[j] = convert_envelope_offset(clamp<BYTE>(patch_data.EnvelopeOffset[j], 5, 251));
+			sp->envelope.gf1.offset[j] = clamp<BYTE>(patch_data.EnvelopeOffset[j], 5, 251);
 		}
 
 		/* Then read the sample data */
@@ -648,53 +629,62 @@ static int fill_bank(Renderer *song, int dr, int b)
 	{
 		if (bank->instrument[i] == MAGIC_LOAD_INSTRUMENT)
 		{
+			bank->instrument[i] = NULL;
 			bank->instrument[i] = load_instrument_dls(song, dr, b, i);
 			if (bank->instrument[i] != NULL)
 			{
 				continue;
 			}
-			if (bank->tone[i].name.IsEmpty())
+			Instrument *ip;
+			ip = load_instrument_font_order(song, 0, dr, b, i);
+			if (ip == NULL)
 			{
-				cmsg(CMSG_WARNING, (b != 0) ? VERB_VERBOSE : VERB_NORMAL,
-					"No instrument mapped to %s %d, program %d%s\n",
-					(dr) ? "drum set" : "tone bank", b, i, 
-					(b != 0) ? "" : " - this instrument will not be heard");
+				if (bank->tone[i].fontbank >= 0)
+				{
+					ip = load_instrument_font(song, bank->tone[i].name, dr, b, i);
+				}
+				else
+				{
+					ip = load_instrument(song, bank->tone[i].name, 
+						(dr) ? 1 : 0,
+						bank->tone[i].pan,
+						bank->tone[i].amp,
+						(bank->tone[i].note != -1) ? bank->tone[i].note : ((dr) ? i : -1),
+						(bank->tone[i].strip_loop != -1) ? bank->tone[i].strip_loop : ((dr) ? 1 : -1),
+						(bank->tone[i].strip_envelope != -1) ? bank->tone[i].strip_envelope : ((dr) ? 1 : -1),
+						bank->tone[i].strip_tail);
+				}
+				if (ip == NULL)
+				{
+					ip = load_instrument_font_order(song, 1, dr, b, i);
+				}
+			}
+			bank->instrument[i] = ip;
+			if (ip == NULL)
+			{
+				if (bank->tone[i].name.IsEmpty())
+				{
+					cmsg(CMSG_WARNING, (b != 0) ? VERB_VERBOSE : VERB_NORMAL,
+						"No instrument mapped to %s %d, program %d%s\n",
+						(dr) ? "drum set" : "tone bank", b, i, 
+						(b != 0) ? "" : " - this instrument will not be heard");
+				}
+				else
+				{
+					cmsg(CMSG_ERROR, VERB_NORMAL, 
+						"Couldn't load instrument %s (%s %d, program %d)\n",
+						bank->tone[i].name.GetChars(),
+						(dr) ? "drum set" : "tone bank", b, i);
+				}
 				if (b != 0)
 				{
 					/* Mark the corresponding instrument in the default
 					   bank / drumset for loading (if it isn't already) */
-					if (!dr)
+					if (((dr) ? drumset[0] : tonebank[0])->instrument[i] != NULL)
 					{
-						if (tonebank[0]->instrument[i] != NULL)
-						{
-							tonebank[0]->instrument[i] = MAGIC_LOAD_INSTRUMENT;
-						}
-					}
-					else
-					{
-						if (drumset[0]->instrument[i] != NULL)
-						{
-							drumset[0]->instrument[i] = MAGIC_LOAD_INSTRUMENT;
-						}
+						((dr) ? drumset[0] : tonebank[0])->instrument[i] = MAGIC_LOAD_INSTRUMENT;
 					}
 				}
-				bank->instrument[i] = NULL;
-				errors++;
-			}
-			else if (!(bank->instrument[i] =
-				load_instrument(song, bank->tone[i].name, 
-					(dr) ? 1 : 0,
-					bank->tone[i].pan,
-					bank->tone[i].amp,
-					(bank->tone[i].note != -1) ? bank->tone[i].note : ((dr) ? i : -1),
-					(bank->tone[i].strip_loop != -1) ? bank->tone[i].strip_loop : ((dr) ? 1 : -1),
-					(bank->tone[i].strip_envelope != -1) ? bank->tone[i].strip_envelope : ((dr) ? 1 : -1),
-					bank->tone[i].strip_tail)))
-			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, 
-					"Couldn't load instrument %s (%s %d, program %d)\n",
-					bank->tone[i].name.GetChars(),
-					(dr) ? "drum set" : "tone bank", b, i);
 				errors++;
 			}
 		}

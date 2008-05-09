@@ -31,8 +31,6 @@
 namespace Timidity
 {
 
-static const double log_of_2 = 0.69314718055994529;
-
 void Renderer::reset_voices()
 {
 	for (int i = 0; i < voices; i++)
@@ -44,8 +42,8 @@ void Renderer::reset_voices()
 /* Process the Reset All Controllers event */
 void Renderer::reset_controllers(int c)
 {
-	channel[c].volume = (100 << 7) | 100;
-	channel[c].expression = 0x3fff;
+	channel[c].volume = 100;
+	channel[c].expression = 127;
 	channel[c].sustain = 0;
 	channel[c].pitchbend = 0x2000;
 	channel[c].pitchfactor = 0; /* to be computed */
@@ -66,55 +64,6 @@ void Renderer::reset_midi()
 		channel[i].bank = 0; /* tone bank or drum set */
 	}
 	reset_voices();
-}
-
-void Renderer::select_sample(int v, Instrument *ip, int vel)
-{
-	double f, cdiff, diff;
-	int s, i;
-	Sample *sp, *closest;
-
-	s = ip->samples;
-	sp = ip->sample;
-
-	if (s == 1)
-	{
-		voice[v].sample = sp;
-		return;
-	}
-
-	f = voice[v].orig_frequency;
-	for (i = 0; i < s; i++)
-	{
-		if (sp->low_vel <= vel && sp->high_vel >= vel &&
-			sp->low_freq <= f && sp->high_freq >= f)
-		{
-			voice[v].sample = sp;
-			return;
-		}
-		sp++;
-	}
-
-	/* 
-	   No suitable sample found! We'll select the sample whose root
-	   frequency is closest to the one we want. (Actually we should
-	   probably convert the low, high, and root frequencies to MIDI note
-	   values and compare those.) */
-
-	cdiff = 1e10;
-	closest = sp = ip->sample;
-	for (i = 0; i < s; i++)
-	{
-		diff = fabs(sp->root_freq - f);
-		if (diff < cdiff)
-		{
-			cdiff = diff;
-			closest = sp;
-		}
-		sp++;
-	}
-	voice[v].sample = closest;
-	return;
 }
 
 void Renderer::recompute_freq(int v)
@@ -210,37 +159,59 @@ void Renderer::recompute_amp(Voice *v)
 	int chanvol = chan->volume;
 	int chanexpr = chan->expression;
 
-	v->attenuation = (vol_table[(chanvol * chanexpr) / 2113407] * vol_table[v->velocity]) * ((127 + 64) / 12419775.f);
-}
-
-void Renderer::compute_pan(int panning, float &left_offset, float &right_offset)
-{
-	// Round the left- and right-most positions to their extremes, since
-	// most songs only do coarse panning.
-	if (panning < 128)
+	if (v->sample->type == INST_GUS)
 	{
-		panning = 0;
-	}
-	else if (panning > 127*128)
-	{
-		panning = 32767;
-	}
-
-	if (panning == 0)
-	{
-		left_offset = 0;
-		right_offset = (float)-HUGE_VAL;
-	}
-	else if (panning == 32767)
-	{
-		left_offset = (float)-HUGE_VAL;
-		right_offset = 0;
+		v->attenuation = (vol_table[(chanvol * chanexpr) / 127] * vol_table[v->velocity]) * ((127 + 64) / 12419775.f);
 	}
 	else
 	{
-		double pan = panning * (1 / 32767.0);
-		right_offset = (float)(log(pan) * (1 / (log_of_2 * 32)));
-		left_offset = (float)(log(1 - pan) * (1 / (log_of_2 * 32)));
+		// Implicit modulators from SF2 spec
+		double velatten, cc7atten, cc11atten;
+
+		velatten = log10(127.0 / v->velocity);
+		cc7atten = log10(127.0 / chanvol);
+		cc11atten = log10(127.0 / chanexpr);
+		v->attenuation = float(400 * (velatten + cc7atten + cc11atten)) + v->sample->initial_attenuation;
+	}
+}
+
+// Pan must be in the range [0,1]
+void Renderer::compute_pan(double pan, int type, float &left_offset, float &right_offset)
+{
+	if (pan <= 0)
+	{
+		left_offset = 1;
+		right_offset = 0;
+	}
+	else if (pan >= 127/128.0)
+	{
+		left_offset = 0;
+		right_offset = 1;
+	}
+	else
+	{
+		if (type == INST_GUS)
+		{
+			/* Original amp equation looks like this:
+			 *    calc_gf1_amp(atten + offset)
+			 * which expands to:
+			 *    2^(16*(atten + offset) - 16)
+			 * Keeping in mind that 2^(x + y) == 2^x * 2^y, we can
+			 * rewrite this to avoid doing two pows in GF1Envelope::ApplyToAmp():
+			 *    2^(16*atten + 16*offset - 16)
+			 *    2^(16*atten - 16 + 16 * offset + 16 - 16)
+			 *    2^(16*atten - 16) * 2^(16*offset + 16 - 16)
+			 *    2^(16*atten - 16) * 2^(16*(offset + 1) - 16)
+			 *    calc_gf1_amp(atten) * calc_gf1_amp(offset + 1)
+			 */
+			right_offset = (float)calc_gf1_amp((log(pan) * (1 / (log_of_2 * 32))) + 1);
+			left_offset = (float)calc_gf1_amp((log(1 - pan) * (1 / (log_of_2 * 32))) + 1);
+		}
+		else
+		{
+			left_offset = (float)db_to_amp(-20 * log10(sqrt(1 - pan)));
+			right_offset = (float)db_to_amp(-20 * log10(sqrt(pan)));
+		}
 	}
 }
 
@@ -264,17 +235,112 @@ void Renderer::kill_key_group(int i)
 
 float Renderer::calculate_scaled_frequency(Sample *sp, int note)
 {
-	double scalednote = (note - sp->scale_note) * sp->scale_factor / 1024.0 + sp->scale_note;
+	double scalednote = (note - sp->scale_note) * sp->scale_factor / 1024.0 + sp->scale_note + sp->tune * 0.01;
 	return (float)note_to_freq(scalednote);
 }
 
-void Renderer::start_note(int chan, int note, int vel, int i)
+bool Renderer::start_region(int chan, int note, int vel, Sample *sp, float f)
+{
+	int voicenum;
+	Voice *v;
+
+	voicenum = allocate_voice();
+	if (voicenum < 0)
+	{
+		return false;
+	}
+	v = &voice[voicenum];
+	v->sample = sp;
+
+	if (sp->type == INST_GUS)
+	{
+		v->orig_frequency = f;
+	}
+	else
+	{
+		if (sp->scale_factor != 1024)
+		{
+			v->orig_frequency = calculate_scaled_frequency(sp, note);
+		}
+		else if (sp->tune != 0)
+		{
+			v->orig_frequency = note_to_freq(note + sp->tune * 0.01);
+		}
+		else
+		{
+			v->orig_frequency = note_to_freq(note);
+		}
+	}
+
+	v->status = VOICE_RUNNING;
+	v->channel = chan;
+	v->note = note;
+	v->velocity = vel;
+	v->sample_offset = 0;
+	v->sample_increment = 0; /* make sure it isn't negative */
+	v->sample_count = 0;
+
+	v->tremolo_phase = 0;
+	v->tremolo_phase_increment = v->sample->tremolo_phase_increment;
+	v->tremolo_sweep = v->sample->tremolo_sweep_increment;
+	v->tremolo_sweep_position = 0;
+
+	v->vibrato_sweep = v->sample->vibrato_sweep_increment;
+	v->vibrato_sweep_position = 0;
+	v->vibrato_control_ratio = v->sample->vibrato_control_ratio;
+	v->vibrato_control_counter = v->vibrato_phase = 0;
+
+	kill_key_group(voicenum);
+
+	memset(v->vibrato_sample_increment, 0, sizeof(v->vibrato_sample_increment));
+
+	if (sp->type == INST_SF2)
+	{
+		// Channel pan is added to instrument pan.
+		double pan;
+		if (channel[chan].panning == NO_PANNING)
+		{
+			pan = (sp->panning + 500) / 1000.0;
+		}
+		else
+		{
+			pan = channel[chan].panning / 128.0 + sp->panning / 1000.0;
+		}
+		compute_pan(pan, sp->type, v->left_offset, v->right_offset);
+	}
+	else if (channel[chan].panning != NO_PANNING)
+	{
+		compute_pan(channel[chan].panning / 128.0, sp->type, v->left_offset, v->right_offset);
+	}
+	else
+	{
+		v->left_offset = v->sample->left_offset;
+		v->right_offset = v->sample->right_offset;
+	}
+
+	recompute_freq(voicenum);
+	recompute_amp(v);
+	v->control_counter = 0;
+
+	v->eg1.Init(this, v);
+
+	if (v->sample->modes & PATCH_LOOPEN)
+	{
+		v->status |= VOICE_LPE;
+	}
+	return true;
+}
+
+void Renderer::start_note(int chan, int note, int vel)
 {
 	Instrument *ip;
+	Sample *sp;
 	int bank = channel[chan].bank;
 	int prog = channel[chan].program;
-	Voice *v = &voice[i];
+	int i;
+	float f;
 
+	note &= 0x7f;
 	if (ISDRUMCHANNEL(chan))
 	{
 		if (NULL == drumset[bank] || NULL == (ip = drumset[bank]->instrument[note]))
@@ -282,7 +348,12 @@ void Renderer::start_note(int chan, int note, int vel, int i)
 			if (!(ip = drumset[0]->instrument[note]))
 				return; /* No instrument? Then we can't play. */
 		}
-		if (ip->type == INST_GUS && ip->samples != 1)
+		assert(ip != MAGIC_LOAD_INSTRUMENT);
+		if (ip == MAGIC_LOAD_INSTRUMENT)
+		{
+			return;
+		}
+		if (ip->samples != 1 && ip->sample->type == INST_GUS)
 		{
 			cmsg(CMSG_WARNING, VERB_VERBOSE, 
 				"Strange: percussion instrument with %d samples!", ip->samples);
@@ -299,62 +370,85 @@ void Renderer::start_note(int chan, int note, int vel, int i)
 			if (NULL == (ip = tonebank[0]->instrument[prog]))
 				return; /* No instrument? Then we can't play. */
 		}
+		assert(ip != MAGIC_LOAD_INSTRUMENT);
+		if (ip == MAGIC_LOAD_INSTRUMENT)
+		{
+			return;
+		}
 	}
-	if (ip->sample->scale_factor != 1024)
+
+	if (NULL == ip->sample || ip->samples == 0)
+		return;	/* No samples? Then nothing to play. */
+
+	// For GF1 patches, scaling is based solely on the first
+	// waveform in this layer.
+	if (ip->sample->type == INST_GUS && ip->sample->scale_factor != 1024)
 	{
-		v->orig_frequency = calculate_scaled_frequency(ip->sample, note & 0x7F);
-	}
-	else
-	{
-		v->orig_frequency = note_to_freq(note & 0x7F);
-	}
-	select_sample(i, ip, vel);
-
-	v->status = VOICE_RUNNING;
-	v->channel = chan;
-	v->note = note;
-	v->velocity = vel;
-	v->sample_offset = 0;
-	v->sample_increment = 0; /* make sure it isn't negative */
-
-	v->tremolo_phase = 0;
-	v->tremolo_phase_increment = voice[i].sample->tremolo_phase_increment;
-	v->tremolo_sweep = voice[i].sample->tremolo_sweep_increment;
-	v->tremolo_sweep_position = 0;
-
-	v->vibrato_sweep = voice[i].sample->vibrato_sweep_increment;
-	v->vibrato_sweep_position = 0;
-	v->vibrato_control_ratio = voice[i].sample->vibrato_control_ratio;
-	v->vibrato_control_counter = voice[i].vibrato_phase = 0;
-
-	kill_key_group(i);
-
-	memset(v->vibrato_sample_increment, 0, sizeof(v->vibrato_sample_increment));
-
-	if (channel[chan].panning != NO_PANNING)
-	{
-		v->left_offset = channel[chan].left_offset;
-		v->right_offset = channel[chan].right_offset;
+		f = calculate_scaled_frequency(ip->sample, note);
 	}
 	else
 	{
-		v->left_offset = v->sample->left_offset;
-		v->right_offset = v->sample->right_offset;
+		f = note_to_freq(note);
 	}
 
-	recompute_freq(i);
-	recompute_amp(v);
-
-	/* Ramp up from 0 */
-	v->envelope_stage = ATTACK;
-	v->envelope_volume = 0;
-	v->control_counter = 0;
-	recompute_envelope(v);
-	apply_envelope_to_amp(v);
-
-	if (v->sample->modes & PATCH_LOOPEN)
+	if (ip->sample->type == INST_GUS)
 	{
-		v->status |= VOICE_LPE;
+		/* We're more lenient with matching ranges for GUS patches, since the
+		 * official Gravis ones don't cover the full range of possible
+		 * frequencies for every instrument.
+		 */
+		if (ip->samples == 1)
+		{ // If there's only one sample, definitely play it.
+			start_region(chan, note, vel, ip->sample, f);
+		}
+		for (i = ip->samples, sp = ip->sample; i != 0; --i, ++sp)
+		{
+			// GUS patches don't have velocity ranges, so no need to compare against them.
+			if (sp->low_freq <= f && sp->high_freq >= f)
+			{
+				if (i > 1 && (sp + 1)->low_freq <= f && (sp + 1)->high_freq >= f)
+				{ /* If there is a range of contiguous regions that match our
+				   * desired frequency, the last one in that block is used.
+				   */
+					continue;
+				}
+				start_region(chan, note, vel, sp, f);
+				break;
+			}
+		}
+		if (i == 0)
+		{ /* Found nothing. Try again, but look for the one with the closest root frequency.
+		   * As per the suggestion in the original TiMidity function, this search uses
+		   * note values rather than raw frequencies.
+		   */
+			double cdiff = 1e10;
+			double want_note = freq_to_note(f);
+			Sample *closest = sp = ip->sample;
+			for (i = ip->samples; i != 0; --i, ++sp)
+			{
+				double diff = fabs(freq_to_note(sp->root_freq) - want_note);
+				if (diff < cdiff)
+				{
+					cdiff = diff;
+					closest = sp;
+				}
+			}
+			start_region(chan, note, vel, closest, f);
+		}
+	}
+	else
+	{
+		for (i = ip->samples, sp = ip->sample; i != 0; --i, ++sp)
+		{
+			if ((sp->low_vel <= vel && sp->high_vel >= vel &&
+				 sp->low_freq <= f && sp->high_freq >= f))
+			{
+				if (!start_region(chan, note, vel, sp, f))
+				{ // Ran out of voices
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -369,7 +463,53 @@ void Renderer::kill_note(int i)
 	}
 }
 
-/* Only one instance of a note can be playing on a single channel. */
+int Renderer::allocate_voice()
+{
+	int i, lowest;
+	float lv, v;
+
+	for (i = 0; i < voices; ++i)
+	{
+		if (!(voice[i].status & VOICE_RUNNING))
+		{
+			return i; /* Can't get a lower volume than silence */
+		}
+	}
+
+	/* Look for the decaying note with the lowest volume */
+	lowest = -1;
+	lv = 1e10;
+	i = voices;
+	while (i--)
+	{
+		if ((voice[i].status & VOICE_RELEASING) && !(voice[i].status & VOICE_STOPPING))
+		{
+			v = voice[i].attenuation;
+			if (v < lv)
+			{
+				lv = v;
+				lowest = i;
+			}
+		}
+	}
+
+	if (lowest >= 0)
+	{
+		/* This can still cause a click, but if we had a free voice to
+		   spare for ramping down this note, we wouldn't need to kill it
+		   in the first place... Still, this needs to be fixed. Perhaps
+		   we could use a reserve of voices to play dying notes only. */
+
+		cut_notes++;
+		voice[lowest].status = 0;
+	}
+	else
+	{
+		lost_notes++;
+	}
+	return lowest;
+}
+
 void Renderer::note_on(int chan, int note, int vel)
 {
 	if (vel == 0)
@@ -378,16 +518,12 @@ void Renderer::note_on(int chan, int note, int vel)
 		return;
 	}
 
-	int i = voices, lowest = -1; 
-	float lv = 1e10, v;
+	int i = voices;
 
+	/* Only one instance of a note can be playing on a single channel. */
 	while (i--)
 	{
-		if (!(voice[i].status & VOICE_RUNNING))
-		{
-			lowest = i; /* Can't get a lower volume than silence */
-		}
-		else if (voice[i].channel == chan && ((voice[i].note == note && !voice[i].sample->self_nonexclusive) || channel[chan].mono))
+		if (voice[i].channel == chan && ((voice[i].note == note && !voice[i].sample->self_nonexclusive) || channel[chan].mono))
 		{
 			if (channel[chan].mono)
 			{
@@ -400,46 +536,7 @@ void Renderer::note_on(int chan, int note, int vel)
 		}
 	}
 
-	if (lowest != -1)
-	{
-		/* Found a free voice. */
-		start_note(chan, note, vel, lowest);
-		return;
-	}
-
-	/* Look for the decaying note with the lowest volume */
-	if (lowest == -1)
-	{
-		i = voices;
-		while (i--)
-		{
-			if ((voice[i].status & VOICE_RELEASING) && !(voice[i].status & VOICE_STOPPING))
-			{
-				v = voice[i].attenuation;
-				if (v < lv)
-				{
-					lv = v;
-					lowest = i;
-				}
-			}
-		}
-	}
-
-	if (lowest != -1)
-	{
-		/* This can still cause a click, but if we had a free voice to
-		   spare for ramping down this note, we wouldn't need to kill it
-		   in the first place... Still, this needs to be fixed. Perhaps
-		   we could use a reserve of voices to play dying notes only. */
-
-		cut_notes++;
-		voice[lowest].status = 0;
-		start_note(chan, note, vel, lowest);
-	}
-	else
-	{
-		lost_notes++;
-	}
+	start_note(chan, note, vel);
 }
 
 void Renderer::finish_note(int i)
@@ -455,23 +552,8 @@ void Renderer::finish_note(int i)
 		{
 			v->status &= ~VOICE_LPE;	/* sampled release */
 		}
-		if (!(v->sample->modes & PATCH_NO_SRELEASE) || (v->sample->modes & PATCH_FAST_REL))
-		{
-			/* ramp out to minimum volume with rate from final release stage */
-			v->envelope_stage = RELEASEC;
-			recompute_envelope(v);
-			// Get rate from the final release ramp, but force the target to 0.
-			v->envelope_target = 0;
-			v->envelope_increment = -v->sample->envelope_rate[RELEASEC];
-		}
-		else if (v->sample->modes & PATCH_SUSTAIN)
-		{
-			if (v->envelope_stage < RELEASE)
-			{
-				v->envelope_stage = RELEASE;
-			}
-			recompute_envelope(v);
-		}
+		v->eg1.Release(v);
+		v->eg2.Release(v);
 	}
 }
 
@@ -554,15 +636,19 @@ void Renderer::adjust_pressure(int chan, int note, int amount)
 void Renderer::adjust_panning(int chan)
 {
 	Channel *chanp = &channel[chan];
-	compute_pan(chanp->panning, chanp->left_offset, chanp->right_offset);
 	int i = voices;
 	while (i--)
 	{
-		if ((voice[i].channel == chan) && (voice[i].status & VOICE_RUNNING))
+		Voice *v = &voice[i];
+		if ((v->channel == chan) && (v->status & VOICE_RUNNING))
 		{
-			voice[i].left_offset = chanp->left_offset;
-			voice[i].right_offset = chanp->right_offset;
-			apply_envelope_to_amp(&voice[i]);
+			double pan = chanp->panning / 128.0;
+			if (v->sample->type == INST_SF2)
+			{ // Add instrument pan to channel pan.
+				pan += v->sample->panning / 500.0;
+			}
+			compute_pan(pan, v->sample->type, v->left_offset, v->right_offset);
+			apply_envelope_to_amp(v);
 		}
 	}
 }
@@ -674,32 +760,17 @@ void Renderer::HandleController(int chan, int ctrl, int val)
 		break;
 
 	case CTRL_VOLUME:
-		channel[chan].volume = (channel[chan].volume & 0x007F) | (val << 7);
-		adjust_volume(chan);
-		break;
-
-	case CTRL_VOLUME+32:
-		channel[chan].volume = (channel[chan].volume & 0x3F80) | (val);
+		channel[chan].volume = val;
 		adjust_volume(chan);
 		break;
 
 	case CTRL_EXPRESSION:
-		channel[chan].expression = (channel[chan].expression & 0x007F) | (val << 7);
-		adjust_volume(chan);
-		break;
-
-	case CTRL_EXPRESSION+32:
-		channel[chan].expression = (channel[chan].expression & 0x3F80) | (val);
+		channel[chan].expression = val;
 		adjust_volume(chan);
 		break;
 
 	case CTRL_PAN:
-		channel[chan].panning = (channel[chan].panning & 0x007F) | (val << 7);
-		adjust_panning(chan);
-		break;
-
-	case CTRL_PAN+32:
-		channel[chan].panning = (channel[chan].panning & 0x3F80) | (val);
+		channel[chan].panning = val;
 		adjust_panning(chan);
 		break;
 

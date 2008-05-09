@@ -623,13 +623,13 @@ FString TimidityMIDIDevice::GetStats()
 			{
 				dots << TEXTCOLOR_GREEN;
 			}
-			if (Renderer->voice[i].envelope_increment == 0)
+			if (!Renderer->voice[i].eg1.env.bUpdating)
 			{
 				dots << "+";
 			}
 			else
 			{
-				dots << ('0' + Renderer->voice[i].envelope_stage);
+				dots << ('0' + Renderer->voice[i].eg1.gf1.stage);
 			}
 		}
 	}

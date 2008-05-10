@@ -120,8 +120,11 @@ bool GF1Envelope::Recompute(Voice *v)
 		v->status &= ~(VOICE_SUSTAINING | VOICE_LPE);
 		v->status |= VOICE_RELEASING;
 		if (midi_timiditylike)
-		{ /* kill the voice */
-			v->status |= VOICE_STOPPING;
+		{ /* kill the voice ... or not */
+			if (volume <= 0)
+			{
+				v->status |= VOICE_STOPPING;
+			}
 			return 1;
 		}
 		else

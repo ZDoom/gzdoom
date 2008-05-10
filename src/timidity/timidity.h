@@ -53,7 +53,11 @@ config.h
 
 /* A scalar applied to the final mix to try and approximate the
    volume level of FMOD's built-in MIDI player. */
-#define FINAL_MIX_SCALE				0.5f
+#define FINAL_MIX_SCALE				0.5
+
+/* This value is used instead when midi_timiditylike is turned on,
+   because TiMidity++ is louder than a GUS. */
+#define FINAL_MIX_TIMIDITY_SCALE	0.3
 
 /* How many bits to use for the fractional part of sample positions.
    This affects tonal accuracy. The entire position counter must fit
@@ -214,7 +218,10 @@ enum
 	PATCH_BACKWARD			= (1<<4),
 	PATCH_SUSTAIN			= (1<<5),
 	PATCH_NO_SRELEASE		= (1<<6),
-	PATCH_FAST_REL			= (1<<7)
+	PATCH_FAST_REL			= (1<<7),
+
+	PATCH_T_NO_ENVELOPE		= (1<<8),
+	PATCH_T_NO_LOOP			= (1<<9)
 };
 
 struct Sample
@@ -249,7 +256,9 @@ struct Sample
 	BYTE
 		tremolo_depth, vibrato_depth,
 		low_vel, high_vel,
-		modes, type;
+		 type;
+	WORD
+		modes;
 	SWORD
 		panning;
 	WORD
@@ -608,6 +617,7 @@ const double log_of_2 = 0.69314718055994529;
 #define calc_gf1_amp(x)	(pow(2.0,((x)*16.0 - 16.0)))			// Actual GUS equation
 #define cb_to_amp(x)	(pow(10.0, (x) * (1 / -200.0)))			// centibels to amp
 #define db_to_amp(x)	(pow(10.0, (x) * (1 / -20.0)))			// decibels to map
+#define timidityxx_perceived_vol(x)		(pow((x), 1.66096404744))
 
 /*
 timidity.h

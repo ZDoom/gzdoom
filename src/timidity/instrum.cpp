@@ -362,53 +362,58 @@ fail:
 			if (header.Description[j] != 0)
 				break;
 		}
-		if (j == DESC_SIZE)
+		/* Strip any loops and envelopes we're permitted to */
+		/* [RH] (But PATCH_BACKWARD isn't a loop flag at all!) */
+		if ((strip_loop == 1) && 
+			(sp->modes & (PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD)))
 		{
-			/* Strip any loops and envelopes we're permitted to */
-			/* [RH] (But PATCH_BACKWARD isn't a loop flag at all!) */
-			if ((strip_loop == 1) && 
-				(sp->modes & (PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD)))
+			cmsg(CMSG_INFO, VERB_DEBUG, " - Removing loop and/or sustain\n");
+			if (j == DESC_SIZE)
 			{
-				cmsg(CMSG_INFO, VERB_DEBUG, " - Removing loop and/or sustain\n");
 				sp->modes &= ~(PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD);
 			}
+			sp->modes |= PATCH_T_NO_LOOP;
+		}
 
-			if (strip_envelope == 1)
+		if (strip_envelope == 1)
+		{
+			cmsg(CMSG_INFO, VERB_DEBUG, " - Removing envelope\n");
+			/* [RH] The envelope isn't really removed, but this is the way the standard
+			 * Gravis patches get that effect: All rates at maximum, and all offsets at
+			 * a constant level.
+			 */
+			if (j == DESC_SIZE)
 			{
-				cmsg(CMSG_INFO, VERB_DEBUG, " - Removing envelope\n");
-				/* [RH] The envelope isn't really removed, but this is the way the standard
-				 * Gravis patches get that effect: All rates at maximum, and all offsets at
-				 * a constant level.
-				 */
-				for (j = 1; j < ENVELOPES; ++j)
+				int k;
+				for (k = 1; k < ENVELOPES; ++k)
 				{ /* Find highest offset. */
-					if (patch_data.EnvelopeOffset[j] > patch_data.EnvelopeOffset[0])
+					if (patch_data.EnvelopeOffset[k] > patch_data.EnvelopeOffset[0])
 					{
-						patch_data.EnvelopeOffset[0] = patch_data.EnvelopeOffset[j];
+						patch_data.EnvelopeOffset[0] = patch_data.EnvelopeOffset[k];
 					}
 				}
-				for (j = 0; j < ENVELOPES; ++j)
+				for (k = 0; k < ENVELOPES; ++k)
 				{
-					patch_data.EnvelopeRate[j] = 63;
-					patch_data.EnvelopeOffset[j] = patch_data.EnvelopeOffset[0];
+					patch_data.EnvelopeRate[k] = 63;
+					patch_data.EnvelopeOffset[k] = patch_data.EnvelopeOffset[0];
 				}
 			}
+			sp->modes |= PATCH_T_NO_ENVELOPE;
 		}
-#if 0
 		else if (strip_envelope != 0)
 		{
 			/* Have to make a guess. */
 			if (!(sp->modes & (PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD)))
 			{
 				/* No loop? Then what's there to sustain? No envelope needed either... */
-				sp->modes &= ~(PATCH_SUSTAIN | PATCH_NO_SRELEASE);
+				sp->modes |= PATCH_T_NO_ENVELOPE;
 				cmsg(CMSG_INFO, VERB_DEBUG, " - No loop, removing sustain and envelope\n");
 			}
-			else if (memcmp(patch_data.EnvelopeRate, "??????", 6) == 0 || patch_data.EnvelopeOffset[RELEASEC] >= 100) 
+			else if (memcmp(patch_data.EnvelopeRate, "??????", 6) == 0 || patch_data.EnvelopeOffset[GF1_RELEASEC] >= 100) 
 			{
 				/* Envelope rates all maxed out? Envelope end at a high "offset"?
 				   That's a weird envelope. Take it out. */
-				sp->modes &= ~PATCH_NO_SRELEASE;
+				sp->modes |= PATCH_T_NO_ENVELOPE;
 				cmsg(CMSG_INFO, VERB_DEBUG, " - Weirdness, removing envelope\n");
 			}
 			else if (!(sp->modes & PATCH_SUSTAIN))
@@ -417,11 +422,14 @@ fail:
 				   justified, but patches without sustain usually don't need the
 				   envelope either... at least the Gravis ones. They're mostly
 				   drums.  I think. */
-				sp->modes &= ~PATCH_NO_SRELEASE;
+				sp->modes |= PATCH_T_NO_ENVELOPE;
 				cmsg(CMSG_INFO, VERB_DEBUG, " - No sustain, removing envelope\n");
 			}
 		}
-#endif
+		if (!(sp->modes & PATCH_NO_SRELEASE))
+		{ // TiMidity thinks that this is an envelope enable flag.
+			sp->modes |= PATCH_T_NO_ENVELOPE;
+		}
 
 		for (j = 0; j < 6; j++)
 		{
@@ -468,10 +476,10 @@ fail:
 		}
 		else
 		{
-#if defined(ADJUST_SAMPLE_VOLUMES)
 			/* Try to determine a volume scaling factor for the sample.
-			This is a very crude adjustment, but things sound more
-			balanced with it. Still, this should be a runtime option. */
+			   This is a very crude adjustment, but things sound more
+			   balanced with it. Still, this should be a runtime option.
+			   (This is ignored unless midi_timiditylike is turned on.) */
 			int i;
 			sample_t maxamp = 0, a;
 			sample_t *tmp;
@@ -483,9 +491,6 @@ fail:
 			}
 			sp->volume = 1 / maxamp;
 			cmsg(CMSG_INFO, VERB_DEBUG, " * volume comp: %f\n", sp->volume);
-#else
-			sp->volume = 1;
-#endif
 		}
 
 		/* Then fractional samples */

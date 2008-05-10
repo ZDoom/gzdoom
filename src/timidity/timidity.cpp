@@ -32,8 +32,9 @@
 #include "i_system.h"
 #include "files.h"
 
-CVAR(String, timidity_config, CONFIG_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Int, timidity_voices, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(String, midi_config, CONFIG_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Int, midi_voices, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Bool, midi_timiditylike, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 namespace Timidity
 {
@@ -551,7 +552,7 @@ int LoadConfig(const char *filename)
 
 int LoadConfig()
 {
-	return LoadConfig(timidity_config);
+	return LoadConfig(midi_config);
 }
 
 Renderer::Renderer(float sample_rate)
@@ -573,7 +574,7 @@ Renderer::Renderer(float sample_rate)
 	if (def_instr_name.IsNotEmpty())
 		set_default_instrument(def_instr_name);
 
-	voices = clamp<int>(timidity_voices, 16, 256);
+	voices = clamp<int>(midi_voices, 16, 256);
 	voice = new Voice[voices];
 	drumchannels = DEFAULT_DRUMCHANNELS;
 }

@@ -1,3 +1,10 @@
+May 9, 2008
+- Added a new cvar: midi_timiditylike. This re-enables TiMidity handling of
+  GUS patch flags, envelopes, and volume levels, while trying to be closer
+  to TiMidity++ than original TiMidity.
+- Renamed timidity_config and timidity_voices to midi_config and midi_voices
+  respectively.
+
 May 8, 2008
 - Reduced volume, expression, and panning controllers back to 7 bits.
 - Added very basic Soundfont support to the internal TiMidity. Things missing:

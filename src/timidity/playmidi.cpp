@@ -27,6 +27,9 @@
 #include <math.h>
 
 #include "timidity.h"
+#include "c_cvars.h"
+
+EXTERN_CVAR(Bool, midi_timiditylike)
 
 namespace Timidity
 {
@@ -161,7 +164,16 @@ void Renderer::recompute_amp(Voice *v)
 
 	if (v->sample->type == INST_GUS)
 	{
-		v->attenuation = (vol_table[(chanvol * chanexpr) / 127] * vol_table[v->velocity]) * ((127 + 64) / 12419775.f);
+		if (midi_timiditylike)
+		{
+			v->attenuation = float(timidityxx_perceived_vol(v->velocity / 127.0) *
+								   timidityxx_perceived_vol(chanvol / 127.0) *
+								   timidityxx_perceived_vol(chanexpr / 127.0));
+		}
+		else
+		{
+			v->attenuation = (vol_table[(chanvol * chanexpr) / 127] * vol_table[v->velocity]) * ((127 + 64) / 12419775.f);
+		}
 	}
 	else
 	{
@@ -190,7 +202,7 @@ void Renderer::compute_pan(double pan, int type, float &left_offset, float &righ
 	}
 	else
 	{
-		if (type == INST_GUS)
+		if (type == INST_GUS && !midi_timiditylike)
 		{
 			/* Original amp equation looks like this:
 			 *    calc_gf1_amp(atten + offset)
@@ -209,8 +221,12 @@ void Renderer::compute_pan(double pan, int type, float &left_offset, float &righ
 		}
 		else
 		{
-			left_offset = (float)db_to_amp(-20 * log10(sqrt(1 - pan)));
-			right_offset = (float)db_to_amp(-20 * log10(sqrt(pan)));
+			/* I have no idea what equation, if any, will reproduce the sc_pan_table
+			 * that TiMidity++ uses, so midi_timiditylike gets the same Equal Power
+			 * Panning as SF2/DLS.
+			 */
+			left_offset = (float)sqrt(1 - pan);
+			right_offset = (float)sqrt(pan);
 		}
 	}
 }
@@ -548,7 +564,7 @@ void Renderer::finish_note(int i)
 		v->status &= ~VOICE_SUSTAINING;
 		v->status |= VOICE_RELEASING;
 
-		if (!(v->sample->modes & PATCH_NO_SRELEASE))
+		if (!(v->sample->modes & PATCH_NO_SRELEASE) || midi_timiditylike)
 		{
 			v->status &= ~VOICE_LPE;	/* sampled release */
 		}

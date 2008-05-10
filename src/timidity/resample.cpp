@@ -26,6 +26,9 @@
 #include <malloc.h>
 
 #include "timidity.h"
+#include "c_cvars.h"
+
+EXTERN_CVAR(Bool, midi_timiditylike)
 
 namespace Timidity
 {
@@ -484,7 +487,7 @@ static sample_t *rs_vib_bidir(sample_t *resample_buffer, float rate, Voice *vp, 
 sample_t *resample_voice(Renderer *song, Voice *vp, int *countptr)
 {
 	int ofs;
-	BYTE modes;
+	WORD modes;
 
 	if (vp->sample->sample_rate == 0)
 	{
@@ -519,7 +522,7 @@ sample_t *resample_voice(Renderer *song, Voice *vp, int *countptr)
 
 	if (vp->vibrato_control_ratio)
 	{
-		if (vp->status & VOICE_LPE)
+		if (vp->status & VOICE_LPE && !(midi_timiditylike && vp->sample->modes & PATCH_T_NO_LOOP))
 		{
 			if (modes & PATCH_BIDIR)
 				return rs_vib_bidir(song->resample_buffer, song->rate, vp, *countptr);
@@ -533,7 +536,7 @@ sample_t *resample_voice(Renderer *song, Voice *vp, int *countptr)
 	}
 	else
 	{
-		if (vp->status & VOICE_LPE)
+		if (vp->status & VOICE_LPE && !(midi_timiditylike && vp->sample->modes & PATCH_T_NO_LOOP))
 		{
 			if (modes & PATCH_BIDIR)
 				return rs_bidir(song->resample_buffer, vp, *countptr);

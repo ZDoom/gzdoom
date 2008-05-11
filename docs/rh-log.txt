@@ -1,4 +1,6 @@
 May 10, 2008
+- Fixed: FWadCollection::MergeLumps() did not initialize the flags for any
+  marker lumps it inserted.
 - Fixed: Need write barriers when modifying SequenceListHead.
 
 May 9, 2008

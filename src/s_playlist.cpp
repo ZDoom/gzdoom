@@ -153,7 +153,7 @@ FString FPlayList::NextLine (FILE *file)
 void FPlayList::Shuffle ()
 {
 	unsigned int numsongs = Songs.Size();
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < numsongs; ++i)
 	{

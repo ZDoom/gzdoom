@@ -1335,7 +1335,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	else
 	{
 		int lumpnum = -1;
-		int offset, length;
+		int offset = 0, length = 0;
 		int device = MDEV_DEFAULT;
 		void *handle = NULL;
 
@@ -1397,11 +1397,6 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 					}
 				}
 			}
-		}
-		else
-		{
-			offset = 0;
-			length = 0;
 		}
 
 		// shutdown old music

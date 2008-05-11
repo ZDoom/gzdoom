@@ -1824,6 +1824,8 @@ void P_MonsterFallingDamage (AActor *mo)
 
 	if (!(level.flags&LEVEL_MONSTERFALLINGDAMAGE))
 		return;
+	if (mo->floorsector->Flags & SECF_NOFALLINGDAMAGE)
+		return;
 
 	mom = abs(mo->momz);
 	if (mom > 35*FRACUNIT)
@@ -3835,7 +3837,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		}
 
 		mask = G_SkillProperty(SKILLP_SpawnFilter);
-		if (!(mthing->flags & mask))
+		if (!(mthing->SkillFilter & mask))
 		{
 			return NULL;
 		}
@@ -3845,7 +3847,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		if (!multiplayer)
 		{ // Single player
 			int spawnmask = players[consoleplayer].GetSpawnClass();
-			if (spawnmask != 0 && (mthing->flags & spawnmask) == 0)
+			if (spawnmask != 0 && (mthing->ClassFilter & spawnmask) == 0)
 			{ // Not for current class
 				return NULL;
 			}
@@ -4506,7 +4508,7 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 		{
 			// If there is no spawner use the spawn position.
 			// But not in a silenced sector.
-			if (!(missile->Sector->MoreFlags & SECF_SILENT))
+			if (!(missile->Sector->Flags & SECF_SILENT))
 				S_SoundID (&missile->x, CHAN_WEAPON, missile->SeeSound, 1, ATTN_NORM);
 		}
 	}

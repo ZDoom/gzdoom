@@ -34,6 +34,7 @@ struct MapData
 	bool HasBehavior;
 	bool CloseOnDestruct;
 	bool Encrypted;
+	bool isText;
 	int lumpnum;
 	FileReader * file;
 	
@@ -45,6 +46,7 @@ struct MapData
 		HasBehavior = false;
 		CloseOnDestruct = true;
 		Encrypted = false;
+		isText = false;
 	}
 	
 	~MapData()

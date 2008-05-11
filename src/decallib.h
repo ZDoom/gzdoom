@@ -61,7 +61,7 @@ protected:
 
 	FDecalBase *Left, *Right;
 	FName Name;
-	BYTE SpawnID;
+	WORD SpawnID;
 	TArray<const PClass *> Users;	// Which actors generate this decal
 };
 
@@ -98,22 +98,22 @@ public:
 	void ReadDecals (FScanner &sc);
 	void ReadAllDecals ();
 
-	const FDecalTemplate *GetDecalByNum (BYTE num) const;
+	const FDecalTemplate *GetDecalByNum (WORD num) const;
 	const FDecalTemplate *GetDecalByName (const char *name) const;
 
 private:
 	struct FTranslation;
 
 	static void DelTree (FDecalBase *root);
-	static FDecalBase *ScanTreeForNum (const BYTE num, FDecalBase *root);
+	static FDecalBase *ScanTreeForNum (const WORD num, FDecalBase *root);
 	static FDecalBase *ScanTreeForName (const char *name, FDecalBase *root);
 	static void ReplaceDecalRef (FDecalBase *from, FDecalBase *to, FDecalBase *root);
 	FTranslation *GenerateTranslation (DWORD start, DWORD end);
-	void AddDecal (const char *name, BYTE num, const FDecalTemplate &decal);
+	void AddDecal (const char *name, WORD num, const FDecalTemplate &decal);
 	void AddDecal (FDecalBase *decal);
 	FDecalAnimator *FindAnimator (const char *name);
 
-	BYTE GetDecalID (FScanner &sc);
+	WORD GetDecalID (FScanner &sc);
 	void ParseDecal (FScanner &sc);
 	void ParseDecalGroup (FScanner &sc);
 	void ParseGenerator (FScanner &sc);

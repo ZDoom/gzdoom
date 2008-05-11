@@ -855,7 +855,7 @@ void S_SoundID (int channel, int sound_id, float volume, int attenuation)
 
 void S_SoundID (AActor *ent, int channel, int sound_id, float volume, int attenuation)
 {
-	if (ent->Sector->MoreFlags & SECF_SILENT)
+	if (ent->Sector->Flags & SECF_SILENT)
 		return;
 	S_StartSound (&ent->x, ent, channel, sound_id, volume, SELECT_ATTEN(attenuation));
 }

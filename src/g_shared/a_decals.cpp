@@ -722,8 +722,10 @@ void ADecal::BeginPlay ()
 
 	Super::BeginPlay ();
 
+	int decalid = args[0] + (args[1] << 8); // [KS] High byte for decals.
+
 	// If no decal is specified, don't try to create one.
-	if (args[0] != 0 && (tpl = DecalLibrary.GetDecalByNum (args[0])) != 0)
+	if (decalid != 0 && (tpl = DecalLibrary.GetDecalByNum (decalid)) != 0)
 	{
 		if (tpl->PicNum == 65535)
 		{

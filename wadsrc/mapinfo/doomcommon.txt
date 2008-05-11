@@ -2,7 +2,7 @@ skill baby
 	AmmoFactor 2
 	DamageFactor 0.5
 	EasyBossBrain
-	SpawnFilter "Easy"
+	SpawnFilter "Baby"
 	PicName "M_JKILL"
 	Key i
 
@@ -27,7 +27,7 @@ skill nightmare
 	FastMonsters
 	DisableCheats
 	RespawnTime 12
-	SpawnFilter "Hard"
+	SpawnFilter "Nightmare"
 	PicName "M_NMARE"
 	MustConfirm
 	Key n

@@ -2303,15 +2303,15 @@ static void PlayerSpawnClass (FScanner &sc, APlayerPawn *defaults, Baggage &bag)
 	if (sc.Compare ("Any"))
 		defaults->SpawnMask = 0;
 	else if (sc.Compare ("Fighter"))
-		defaults->SpawnMask |= MTF_FIGHTER;
+		defaults->SpawnMask |= 1;
 	else if (sc.Compare ("Cleric"))
-		defaults->SpawnMask |= MTF_CLERIC;
+		defaults->SpawnMask |= 2;
 	else if (sc.Compare ("Mage"))
-		defaults->SpawnMask |= MTF_MAGE;
+		defaults->SpawnMask |= 4;
 	else if (IsNum(sc.String))
 	{
 		int val = strtol(sc.String, NULL, 0);
-		defaults->SpawnMask = (val*MTF_FIGHTER) & (MTF_FIGHTER|MTF_CLERIC|MTF_MAGE);
+		if (val > 0) defaults->SpawnMask |= 1<<(val-1);
 	}
 }
 

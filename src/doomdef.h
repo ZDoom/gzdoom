@@ -95,9 +95,13 @@ typedef enum
 //
 
 // Skill flags.
+/*
 #define MTF_EASY				1
 #define MTF_NORMAL				2
 #define MTF_HARD				4
+*/
+#define MTF_SKILLMASK			7
+#define MTF_SKILLSHIFT			1
 
 // Deaf monsters/do not react to sound.
 #define MTF_AMBUSH				8

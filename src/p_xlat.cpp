@@ -63,7 +63,6 @@ typedef enum
 
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 {
-	static FMemLump tlatebase;
 	unsigned short special = (unsigned short) LittleShort(mld->special);
 	short tag = LittleShort(mld->tag);
 	DWORD flags = LittleShort(mld->flags);

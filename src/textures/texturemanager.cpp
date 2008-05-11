@@ -617,9 +617,13 @@ void FTextureManager::LoadHiresTex(int wadnum)
 							newtex->SetScaledSize(width, height);
 							memcpy(newtex->Name, src, sizeof(newtex->Name));
 
-							int oldtex = TexMan.CheckForTexture(src, FTexture::TEX_Override);
-							if (oldtex>=0) TexMan.ReplaceTexture(oldtex, newtex, true);
-							else TexMan.AddTexture(newtex);
+							int oldtex = TexMan.CheckForTexture(src, FTexture::TEX_MiscPatch);
+							if (oldtex>=0) 
+							{
+								ReplaceTexture(oldtex, newtex, true);
+								newtex->UseType = FTexture::TEX_Override;
+							}
+							else AddTexture(newtex);
 						}
 					}				
 					//else Printf("Unable to define hires texture '%s'\n", tex->Name);

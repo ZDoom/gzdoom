@@ -1,3 +1,11 @@
+May 11, 2008 (Changes by Graf Zahl)
+- Changed: HIRESTEX 'define' textures now replace existing textures
+  of type MiscPatch with the same name.
+- Added UDMF line trigger types MonsterUse and MonsterPush.
+- Separated skill and class filter bits from FMapThing::flags so that
+  UDMF can define up to 16 of each. Also separated easy/baby and
+  hard/nightmare and changed default MAPINFO definitions.
+
 May 10, 2008
 - Fixed: FWadCollection::MergeLumps() did not initialize the flags for any
   marker lumps it inserted.
@@ -9,6 +17,12 @@ May 9, 2008
   to TiMidity++ than original TiMidity.
 - Renamed timidity_config and timidity_voices to midi_config and midi_voices
   respectively.
+
+May 9, 2008 (Changes by Graf Zahl)
+- Changed: Crosshair drawing uses the current player class's default health instead
+  of 100 to calculate the color for the crosshair.
+- Added SECF_NOFALLINGDAMAGE flag plus Sector_ChangeFlags to set it. Also separated
+  all user settable flags from MoreFlags into their own Flags variable.
 
 May 8, 2008
 - Reduced volume, expression, and panning controllers back to 7 bits.

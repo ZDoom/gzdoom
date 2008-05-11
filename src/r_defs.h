@@ -233,10 +233,9 @@ enum
 	SECF_ABSLIGHTING	= 1		// floor/ceiling light is absolute, not relative
 };
 
-// Misc sector flags
+// Internal sector flags
 enum
 {
-	SECF_SILENT			= 1,	// actors in sector make no noise
 	SECF_FAKEFLOORONLY	= 2,	// when used as heightsec in R_FakeFlat, only copies floor
 	SECF_CLIPFAKEPLANES = 4,	// as a heightsec, clip planes to target sector's planes
 	SECF_NOFAKELIGHT	= 8,	// heightsec does not change lighting
@@ -245,6 +244,12 @@ enum
 	SECF_FORCEDUNDERWATER= 64,	// sector is forced to be underwater
 	SECF_UNDERWATERMASK	= 32+64,
 	SECF_DRAWN			= 128,	// sector has been drawn at least once
+};
+
+enum
+{
+	SECF_SILENT			= 1,	// actors in sector make no noise
+	SECF_NOFALLINGDAMAGE= 2,	// No falling damage in this sector
 };
 
 struct FDynamicColormap;
@@ -412,7 +417,8 @@ struct sector_t
 	short mod;			// [RH] Means-of-death for applied damage
 
 	WORD ZoneNumber;	// [RH] Zone this sector belongs to
-	WORD MoreFlags;		// [RH] Misc sector flags
+	WORD MoreFlags;		// [RH] Internal sector flags
+	DWORD Flags;		// Sector flags
 
 	// [RH] Action specials for sectors. Like Skull Tag, but more
 	// flexible in a Bloody way. SecActTarget forms a list of actors

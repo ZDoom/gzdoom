@@ -1681,6 +1681,9 @@ void P_FallingDamage (AActor *actor)
 
 	if (damagestyle == 0)
 		return;
+		
+	if (actor->floorsector->Flags & SECF_NOFALLINGDAMAGE)
+		return;
 
 	mom = abs (actor->momz);
 

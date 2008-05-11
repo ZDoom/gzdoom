@@ -5,7 +5,7 @@ skill baby
 	DoubleAmmoFactor 1.5
 	DamageFactor 0.5
 	EasyBossBrain
-	SpawnFilter "Easy"
+	SpawnFilter "Baby"
 	Name "$MNU_WETNURSE"
 
 skill easy
@@ -28,7 +28,7 @@ skill nightmare
 	DoubleAmmoFactor 1.5
 	FastMonsters
 	DisableCheats
-	SpawnFilter "Hard"
+	SpawnFilter "Nightmare"
 	Name "$MNU_BLACKPLAGUE"
 
 clearepisodes

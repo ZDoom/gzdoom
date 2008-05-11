@@ -170,6 +170,8 @@ enum SPAC
 	SPAC_UseThrough = 1<<6,	// when player uses line (doesn't block)
 	// SPAC_PTOUCH is mapped to SPAC_PCross|SPAC_Impact
 	SPAC_AnyCross = 1<<7,	// when anything without the MF2_TELEPORT flag crosses the line
+	SPAC_MUse = 1<<8,		// monsters can use
+	SPAC_MPush = 1<<9,		// monsters can push
 
 	SPAC_PlayerActivate = (SPAC_Cross|SPAC_Use|SPAC_Impact|SPAC_Push|SPAC_AnyCross|SPAC_UseThrough),
 };
@@ -269,31 +271,19 @@ typedef struct
 // Internal representation of a mapthing
 struct FMapThing
 {
-	unsigned short thingid;
+	int			thingid;
 	fixed_t		x;
 	fixed_t		y;
 	fixed_t		z;
 	short		angle;
 	short		type;
-	short		flags;
-	short		special;
+	WORD		SkillFilter;
+	WORD		ClassFilter;
+	DWORD		flags;
+	int			special;
 	int			args[5];
 
 	void Serialize (FArchive &);
-
-	FMapThing &operator =(mapthinghexen_t &mt)
-	{
-		thingid = mt.thingid;
-		x = LittleShort(mt.x)<<FRACBITS;
-		y = LittleShort(mt.y)<<FRACBITS;
-		z = LittleShort(mt.z)<<FRACBITS;
-		angle = LittleShort(mt.angle);
-		type = LittleShort(mt.type);
-		flags = LittleShort(mt.flags);
-		special = mt.special;
-		for(int i=0;i<5;i++) args[i] = mt.args[i];
-		return *this;
-	}
 };
 
 
@@ -306,9 +296,14 @@ struct FMapThing
 #define MTF_AMBUSH			0x0008	// Thing is deaf
 */
 #define MTF_DORMANT			0x0010	// Thing is dormant (use Thing_Activate)
+/*
 #define MTF_FIGHTER			0x0020
 #define MTF_CLERIC			0x0040
 #define MTF_MAGE			0x0080
+*/
+#define MTF_CLASS_MASK		0x00e0
+#define MTF_CLASS_SHIFT		5
+
 #define MTF_SINGLE			0x0100	// Thing appears in single-player games
 #define MTF_COOPERATIVE		0x0200	// Thing appears in cooperative games
 #define MTF_DEATHMATCH		0x0400	// Thing appears in deathmatch games

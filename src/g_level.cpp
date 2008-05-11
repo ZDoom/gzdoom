@@ -3156,11 +3156,19 @@ static void ParseSkill (FScanner &sc)
 		}
 		else if (sc.Compare("SpawnFilter"))
 		{
-			sc.MustGetString ();
-			strlwr(sc.String);
-			if (strstr(sc.String, "easy")) skill.SpawnFilter|=MTF_EASY;
-			if (strstr(sc.String, "normal")) skill.SpawnFilter|=MTF_NORMAL;
-			if (strstr(sc.String, "hard")) skill.SpawnFilter|=MTF_HARD;
+			if (sc.CheckNumber())
+			{
+				if (sc.Number > 0) skill.SpawnFilter |= (1<<(sc.Number-1));
+			}
+			else
+			{
+				sc.MustGetString ();
+				if (sc.Compare("baby")) skill.SpawnFilter |= 1;
+				else if (sc.Compare("easy")) skill.SpawnFilter |= 2;
+				else if (sc.Compare("normal")) skill.SpawnFilter |= 4;
+				else if (sc.Compare("hard")) skill.SpawnFilter |= 8;
+				else if (sc.Compare("nightmare")) skill.SpawnFilter |= 16;
+			}
 		}
 		else if (sc.Compare("ACSReturn"))
 		{

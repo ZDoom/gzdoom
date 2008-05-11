@@ -330,6 +330,7 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->CeilingFlags
 			<< sec->sky
 			<< sec->MoreFlags
+			<< sec->Flags
 			<< sec->FloorSkyBox << sec->CeilingSkyBox
 			<< sec->ZoneNumber
 			<< sec->oldspecial;

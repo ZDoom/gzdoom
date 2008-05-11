@@ -626,7 +626,9 @@ static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsector
 		mapthings[count].z = (bsectors[sprites[i].sectnum].floorz - sprites[i].z) << 8;
 		mapthings[count].angle = (((2048-sprites[i].ang) & 2047) * 360) >> 11;
 		mapthings[count].type = 9988;
-		mapthings[count].flags = MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH|MTF_EASY|MTF_NORMAL|MTF_HARD;
+		mapthings[count].ClassFilter = 0xffff;
+		mapthings[count].SkillFilter = 0xffff;
+		mapthings[count].flags = MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH;
 		mapthings[count].special = 0;
 
 		mapthings[count].args[0] = picnum & 255;

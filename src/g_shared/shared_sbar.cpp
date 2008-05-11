@@ -1026,7 +1026,7 @@ void DBaseStatusBar::DrawCrosshair ()
 
 	if (crosshairhealth)
 	{
-		int health = CPlayer->health;
+		int health = Scale(CPlayer->health, 100, CPlayer->mo->GetDefault()->health);
 
 		if (health >= 85)
 		{

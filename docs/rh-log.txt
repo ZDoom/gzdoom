@@ -1,3 +1,6 @@
+May 10, 2008
+- Fixed: Need write barriers when modifying SequenceListHead.
+
 May 9, 2008
 - Added a new cvar: midi_timiditylike. This re-enables TiMidity handling of
   GUS patch flags, envelopes, and volume levels, while trying to be closer

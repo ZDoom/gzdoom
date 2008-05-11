@@ -335,7 +335,10 @@ void DSeqNode::Destroy()
 		m_ParentSeqNode = NULL;
 	}
 	if (SequenceListHead == this)
+	{
 		SequenceListHead = m_Next;
+		GC::WriteBarrier(m_Next);
+	}
 	if (m_Prev)
 	{
 		m_Prev->m_Next = m_Next;
@@ -716,11 +719,12 @@ DSeqNode::DSeqNode (int sequence, int modenum)
 	}
 	else
 	{
-		SequenceListHead->m_Prev = this;
-		m_Next = SequenceListHead;
+		SequenceListHead->m_Prev = this;		GC::WriteBarrier(SequenceListHead->m_Prev, this);
+		m_Next = SequenceListHead;				GC::WriteBarrier(this, SequenceListHead);
 		SequenceListHead = this;
 		m_Prev = NULL;
 	}
+	GC::WriteBarrier(this);
 	m_ParentSeqNode = m_ChildSeqNode = NULL;
 }
 

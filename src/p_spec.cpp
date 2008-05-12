@@ -275,10 +275,10 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		lineActivation |= SPAC_PCross;
 	}
 	// BOOM's generalized line types that allow monster use can actually be
-	// activated by anything!
-	if (activationType == SPAC_AnyCross)
+	// activated by anything except projectiles.
+	if (lineActivation & SPAC_AnyCross)
 	{
-		if (mo->flags2 & MF2_NOTELEPORT) return false;
+		lineActivation |= SPAC_Cross|SPAC_MCross;
 	}
 	if (activationType == SPAC_Use)
 	{

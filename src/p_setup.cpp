@@ -1441,7 +1441,7 @@ void P_LoadThings2 (MapData * map, int position)
 
 	for(int i = 0; i< numthings; i++)
 	{
-		mti[i].thingid = mth[i].thingid;
+		mti[i].thingid = LittleShort(mth[i].thingid);
 		mti[i].x = LittleShort(mth[i].x)<<FRACBITS;
 		mti[i].y = LittleShort(mth[i].y)<<FRACBITS;
 		mti[i].z = LittleShort(mth[i].z)<<FRACBITS;

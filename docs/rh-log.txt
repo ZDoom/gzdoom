@@ -1,3 +1,8 @@
+May 12, 2008 (Changes by Graf Zahl)
+- Fixed: SPAC_AnyCross didn't work.
+- Fixed: Pushable doors must also check for SPAC_MPush.
+- Fixed: P_LoadThings2 did not adjust the byte order for the thingid field.
+
 May 11, 2008 (Changes by Graf Zahl)
 - Changed: HIRESTEX 'define' textures now replace existing textures
   of type MiscPatch with the same name.

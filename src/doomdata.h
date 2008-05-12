@@ -88,7 +88,7 @@ typedef struct
 } mapsidedef_t;
 
 // A LineDef, as used for editing, and as input to the BSP builder.
-typedef struct
+struct maplinedef_t
 {
 	WORD	v1;
 	WORD	v2;
@@ -97,10 +97,10 @@ typedef struct
 	short	tag;
 	WORD	sidenum[2];	// sidenum[1] will be -1 if one sided
 
-} maplinedef_t;
+} ;
 
 // [RH] Hexen-compatible LineDef.
-typedef struct
+struct maplinedef2_t
 {
 	WORD	v1;
 	WORD	v2;
@@ -108,7 +108,7 @@ typedef struct
 	BYTE	special;
 	BYTE	args[5];
 	WORD	sidenum[2];
-} maplinedef2_t;
+} ;
 
 
 //

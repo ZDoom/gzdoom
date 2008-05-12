@@ -1,0 +1,14 @@
+include "xlat/strife.txt"
+
+maxlinespecial = 234;
+
+sector bitmask 0xffe0 clear;
+
+sector 19 = 0;
+sector 20 = 0;
+sector 21 = 0;
+sector 22 = 0;
+sector 23 = 0;
+sector 24 =	0;
+
+

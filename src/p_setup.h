@@ -99,4 +99,11 @@ void P_FreeExtraLevelData();
 // Called by startup code.
 void P_Init (void);
 
+struct line_t;
+struct maplinedef_t;
+
+void P_LoadTranslator(const char *lumpname);
+void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
+int P_TranslateSectorSpecial (int);
+
 #endif

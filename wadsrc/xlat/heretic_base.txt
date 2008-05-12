@@ -1,0 +1,8 @@
+include "xlat/heretic.txt"
+
+maxlinespecial = 107;
+
+
+sector bitmask 0xffc0 clear;
+
+sector 17 = 0;

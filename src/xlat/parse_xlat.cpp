@@ -111,20 +111,20 @@ struct XlatParseContext : public FParseContext
 	//==========================================================================
 	bool FindToken (char *tok, int *type)
 	{
-		static const char tokens[][10] =
+		static const char *tokens[] =
 		{
 			"arg2", "arg3", "arg4", "arg5", "bitmask", "clear",
 			"define", "enum", "flags", "include", "lineid", 
-			"nobitmask", "sector", "tag"
+			"nobitmask", "sector", "tag", "maxlinespecial"
 		};
 		static const short types[] =
 		{
 			XLAT_ARG2, XLAT_ARG3, XLAT_ARG4, XLAT_ARG5, XLAT_BITMASK, XLAT_CLEAR,
 			XLAT_DEFINE, XLAT_ENUM, XLAT_FLAGS, XLAT_INCLUDE, XLAT_TAG,
-			XLAT_NOBITMASK, XLAT_SECTOR, XLAT_TAG,
+			XLAT_NOBITMASK, XLAT_SECTOR, XLAT_TAG, XLAT_MAXLINESPECIAL
 		};
 
-		int min = 0, max = sizeof(tokens)/sizeof(tokens[0]) - 1;
+		int min = 0, max = countof(tokens) - 1;
 
 		while (min <= max)
 		{

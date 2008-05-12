@@ -337,7 +337,7 @@ int P_TranslateSectorSpecial (int special)
 {
 	int mask = 0;
 
-	for(unsigned i = 0; i < SectorMasks.Size(); i++)
+	for(int i = SectorMasks.Size()-1; i>=0; i--)
 	{
 		int newmask = special & SectorMasks[i].mask;
 		if (newmask)

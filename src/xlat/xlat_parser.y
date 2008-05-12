@@ -18,6 +18,7 @@ external_declaration ::= linetype_declaration.
 external_declaration ::= boom_declaration.
 external_declaration ::= sector_declaration.
 external_declaration ::= sector_bitmask.
+external_declaration ::= maxlinespecial_def.
 external_declaration ::= NOP.
 
 
@@ -450,6 +451,19 @@ list_val(A) ::= exp(B) COLON exp(C).
 {
 	A.filter = B;
 	A.value = C;
+}
+
+//==========================================================================
+//
+// max line special
+//
+//==========================================================================
+
+maxlinespecial_def ::= MAXLINESPECIAL EQUALS exp(mx) SEMICOLON.
+{
+	// Just kill all specials higher than the max.
+	// If the translator wants to redefine some later, just let it.s
+	SimpleLineTranslations.Resize(mx+1);
 }
 
 //==========================================================================

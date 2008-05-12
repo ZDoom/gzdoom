@@ -67,10 +67,7 @@ void P_SetSlopes ();
 extern AActor *P_SpawnMapThing (FMapThing *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, FMapThing **things, int *numthings);
 
-extern void P_LoadTranslator(const char *lump);
-extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
 extern void P_TranslateTeleportThings (void);
-extern int	P_TranslateSectorSpecial (int);
 
 void P_ParseTextMap(MapData *map);
 void P_SpawnTextThings(int position);

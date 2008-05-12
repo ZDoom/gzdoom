@@ -1,4 +1,10 @@
 May 12, 2008 (Changes by Graf Zahl)
+- Fixed: Parsing sector special bit masks must be done backwards so that later
+  definitions take precedence.
+- Added base translation tables for UDMF compatibility maps which only should
+  handle the native line and sector types of each game.
+- Turned the inactive SILENT_INSTANT_FLOORS define into a compatibility option
+  so that it can be (un)set in a map definition and the menu.
 - Fixed: SPAC_AnyCross didn't work.
 - Fixed: Pushable doors must also check for SPAC_MPush.
 - Fixed: P_LoadThings2 did not adjust the byte order for the thingid field.

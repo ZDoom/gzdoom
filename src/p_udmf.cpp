@@ -41,8 +41,6 @@
 #include "templates.h"
 #include "i_system.h"
 
-extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
-extern int	P_TranslateSectorSpecial (int);
 void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapsidedef_t *msd, int special, int tag, short *alpha);
 void P_AdjustLine (line_t *ld);
 void P_FinishLoadingLineDef(line_t *ld, int alpha);
@@ -193,16 +191,25 @@ struct UDMFParser
 		}
 		if (isTranslated)
 		{
-			// NOTE: Handling of this is undefined in the UDMF spec yet!
-			maplinedef_t mld;
-			line_t ld;
+			if (isExtended)
+			{
+				// NOTE: Handling of this is undefined in the UDMF spec 
+				// so it is only done for namespace ZDoomTranslated
+				maplinedef_t mld;
+				line_t ld;
 
-			mld.flags = 0;
-			mld.special = th->special;
-			mld.tag = th->args[0];
-			P_TranslateLineDef(&ld, &mld);
-			th->special = ld.special;
-			memcpy(th->args, ld.args, sizeof (ld.args));
+				mld.flags = 0;
+				mld.special = th->special;
+				mld.tag = th->args[0];
+				P_TranslateLineDef(&ld, &mld);
+				th->special = ld.special;
+				memcpy(th->args, ld.args, sizeof (ld.args));
+			}
+			else	// NULL the special
+			{
+				th->special = 0;
+				memset(th->args, 0, sizeof (th->args));
+			}
 		}
 	}
 
@@ -226,6 +233,8 @@ struct UDMFParser
 			sc.MustGetString();
 			FString value = sc.String;
 			sc.MustGetStringName(";");
+
+			// This switch contains all keys of the UDMF base spec
 			switch(key)
 			{
 			case NAME_V1:
@@ -273,55 +282,65 @@ struct UDMFParser
 				Flag(ld->flags, ML_MAPPED, value); break;
 			case NAME_Monsteractivate:
 				Flag(ld->flags, ML_MONSTERSCANACTIVATE, value); break;
-			case NAME_Blockplayers:
-				if (isExtended) Flag(ld->flags, ML_BLOCK_PLAYERS, value); break;
-			case NAME_Blockeverything:
-				if (isExtended) Flag(ld->flags, ML_BLOCKEVERYTHING, value); break;
-			case NAME_Zoneboundary:
-				if (isExtended) Flag(ld->flags, ML_ZONEBOUNDARY, value); break;
 			case NAME_Jumpover:
-				if (isExtended || namespc == NAME_Strife) Flag(ld->flags, ML_RAILING, value); break;
+				Flag(ld->flags, ML_RAILING, value); break;
 			case NAME_Blockfloating:
-				if (isExtended || namespc == NAME_Strife) Flag(ld->flags, ML_BLOCK_FLOATERS, value); break;
-			case NAME_Clipmidtex:
-				if (isExtended) Flag(ld->flags, ML_CLIP_MIDTEX, value); break;
-			case NAME_Wrapmidtex:
-				if (isExtended) Flag(ld->flags, ML_WRAP_MIDTEX, value); break;
-			case NAME_Midtex3d:
-				if (isExtended) Flag(ld->flags, ML_3DMIDTEX, value); break;
-			case NAME_Checkswitchrange:
-				if (isExtended) Flag(ld->flags, ML_CHECKSWITCHRANGE, value); break;
-			case NAME_Firstsideonly:
-				if (isExtended) Flag(ld->flags, ML_FIRSTSIDEONLY, value); break;
+				Flag(ld->flags, ML_BLOCK_FLOATERS, value); break;
 			case NAME_Transparent:	
 				ld->Alpha = !value.CompareNoCase("true")? FRACUNIT*3/4 : FRACUNIT; break;
 			case NAME_Passuse:
-				passuse = !value.CompareNoCase("true");
-			case NAME_Playercross:
-				if (isExtended) Flag(ld->activation, SPAC_Cross, value); break;
-			case NAME_Playeruse:
-				if (isExtended) Flag(ld->activation, SPAC_Use, value); break;
-			case NAME_Monstercross:
-				if (isExtended) Flag(ld->activation, SPAC_MCross, value); break;
-			case NAME_Impact:
-				if (isExtended) Flag(ld->activation, SPAC_Impact, value); break;
-			case NAME_Playerpush:
-				if (isExtended) Flag(ld->activation, SPAC_Push, value); break;
-			case NAME_Missilecross:
-				if (isExtended) Flag(ld->activation, SPAC_PCross, value); break;
-			case NAME_Monsteruse:
-				if (isExtended) Flag(ld->activation, SPAC_MUse, value); break;
-			case NAME_Monsterpush:
-				if (isExtended) Flag(ld->activation, SPAC_MPush, value); break;
+				passuse = !value.CompareNoCase("true"); break;
+			default:
+				break;
+			}
 
+			// This switch contains all keys of the UDMF base spec which only apply to Hexen format specials
+			if (!isTranslated) switch (key)
+			{
+			case NAME_Playercross:
+				Flag(ld->activation, SPAC_Cross, value); break;
+			case NAME_Playeruse:
+				Flag(ld->activation, SPAC_Use, value); break;
+			case NAME_Monstercross:
+				Flag(ld->activation, SPAC_MCross, value); break;
+			case NAME_Impact:
+				Flag(ld->activation, SPAC_Impact, value); break;
+			case NAME_Playerpush:
+				Flag(ld->activation, SPAC_Push, value); break;
+			case NAME_Missilecross:
+				Flag(ld->activation, SPAC_PCross, value); break;
+			case NAME_Monsteruse:
+				Flag(ld->activation, SPAC_MUse, value); break;
+			case NAME_Monsterpush:
+				Flag(ld->activation, SPAC_MPush, value); break;
+			default:
+				break;
+			}
+
+			// This switch contains all keys which are ZDoom specific
+			if (isExtended) switch(key)
+			{
+			case NAME_Blockplayers:
+				Flag(ld->flags, ML_BLOCK_PLAYERS, value); break;
+			case NAME_Blockeverything:
+				Flag(ld->flags, ML_BLOCKEVERYTHING, value); break;
+			case NAME_Zoneboundary:
+				Flag(ld->flags, ML_ZONEBOUNDARY, value); break;
+			case NAME_Clipmidtex:
+				Flag(ld->flags, ML_CLIP_MIDTEX, value); break;
+			case NAME_Wrapmidtex:
+				Flag(ld->flags, ML_WRAP_MIDTEX, value); break;
+			case NAME_Midtex3d:
+				Flag(ld->flags, ML_3DMIDTEX, value); break;
+			case NAME_Checkswitchrange:
+				Flag(ld->flags, ML_CHECKSWITCHRANGE, value); break;
+			case NAME_Firstsideonly:
+				Flag(ld->flags, ML_FIRSTSIDEONLY, value); break;
 			default:
 				break;
 			}
 		}
 		if (isTranslated)
-		{
-		}
-		else
 		{
 			int saved = ld->flags;
 
@@ -589,42 +608,50 @@ struct UDMFParser
 		map->Read(ML_TEXTMAP, buffer);
 		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), buffer, map->Size(ML_TEXTMAP));
 		sc.SetCMode(true);
+		if (sc.CheckString("namespace"))
+		{
+			sc.MustGetStringName("=");
+			sc.MustGetString();
+			namespc = sc.String;
+			if (namespc == NAME_ZDoom)
+			{
+				isTranslated = false;
+				isExtended = true;
+			}
+			else if (namespc == NAME_Hexen)
+			{
+				isTranslated = false;
+			}
+			else if (namespc == NAME_ZDoomTranslated)
+			{
+				isExtended = true;
+			}
+			else if (namespc == NAME_Doom)
+			{
+				P_LoadTranslator("xlat/doom_base.txt");
+			}
+			else if (namespc == NAME_Heretic)
+			{
+				P_LoadTranslator("xlat/heretic_base.txt");
+			}
+			else if (namespc == NAME_Strife)
+			{
+				P_LoadTranslator("xlat/strife_base.txt");
+			}
+			else 
+			{
+				Printf("Unknown namespace %s\n", sc.String);
+			}
+			sc.MustGetStringName(";");
+		}
+		else
+		{
+			Printf("Map does not define a namespace.\n");
+		}
+
 		while (sc.GetString())
 		{
-			if (sc.Compare("namespace"))
-			{
-				sc.MustGetStringName("=");
-				sc.MustGetString();
-				namespc = sc.String;
-				if (namespc == NAME_ZDoom)
-				{
-					isTranslated = false;
-					isExtended = true;
-				}
-				else if (namespc == NAME_Hexen)
-				{
-					isTranslated = false;
-				}
-				else if (namespc == NAME_ZDoomTranslated)
-				{
-					isExtended = true;
-				}
-				else if (namespc == NAME_Doom)
-				{
-				}
-				else if (namespc == NAME_Heretic)
-				{
-				}
-				else if (namespc == NAME_Strife)
-				{
-				}
-				else 
-				{
-					sc.ScriptError("Unknown namespace %s", sc.String);
-				}
-				sc.MustGetStringName(";");
-			}
-			else if (sc.Compare("thing"))
+			if (sc.Compare("thing"))
 			{
 				FMapThing th;
 				ParseThing(&th);

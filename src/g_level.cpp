@@ -295,6 +295,7 @@ static const char *MapInfoMapLevel[] =
 	"compat_dropoff",
 	"compat_boomscroll",
 	"compat_invisibility",
+	"compat_silent_instant_floors",
 	"bordertexture",
 	"f1", // [RC] F1 help
 	"noinfighting",
@@ -445,6 +446,7 @@ MapHandlers[] =
 	{ MITYPE_COMPATFLAG, COMPATF_DROPOFF},
 	{ MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL},
 	{ MITYPE_COMPATFLAG, COMPATF_INVISIBILITY},
+	{ MITYPE_COMPATFLAG, COMPATF_SILENT_INSTANT_FLOORS},
 	{ MITYPE_LUMPNAME,	lioffset(bordertexture), 0 },
 	{ MITYPE_LUMPNAME,  lioffset(f1), 0, }, 
 	{ MITYPE_SCFLAGS,	LEVEL_NOINFIGHTING, ~LEVEL_TOTALINFIGHTING },

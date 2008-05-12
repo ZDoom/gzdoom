@@ -71,6 +71,9 @@ xlat/heretic.txt			xlat/heretic.txt
 xlat/strife.txt				xlat/strife.txt
 xlat/base.txt				xlat/base.txt
 xlat/defines.i				xlat/defines.i
+xlat/doom_base.txt			xlat/doom_base.txt
+xlat/heretic_base.txt		xlat/heretic_base.txt
+xlat/strife_base.txt		xlat/strife_base.txt
 
 
 ========

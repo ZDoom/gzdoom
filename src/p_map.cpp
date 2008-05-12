@@ -2769,6 +2769,9 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		puff->Destroy();
 		puff = NULL;
 	}
+	// [BB] If the puff came from a player, set the target of the puff to this player.
+	if ( puff && (puff->flags5 & MF5_PUFFGETSOWNER) && t1 && t1->player )
+		puff->target = t1;
 	return puff;
 }
 

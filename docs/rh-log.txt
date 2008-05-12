@@ -1,4 +1,5 @@
 May 12, 2008 (Changes by Graf Zahl)
+- Added Skulltag's PUFFGETSOWNER flag.
 - Fixed: Parsing sector special bit masks must be done backwards so that later
   definitions take precedence.
 - Added base translation tables for UDMF compatibility maps which only should

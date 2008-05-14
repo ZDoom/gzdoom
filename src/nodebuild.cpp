@@ -751,7 +751,7 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 
 			if (seg->loopnum)
 			{
-				Printf ("   Split seg %u (%d,%d)-(%d,%d) of sector %d in loop %d\n",
+				Printf ("   Split seg %u (%d,%d)-(%d,%d) of sector %td in loop %d\n",
 					set,
 					Vertices[seg->v1].x>>16, Vertices[seg->v1].y>>16,
 					Vertices[seg->v2].x>>16, Vertices[seg->v2].y>>16,
@@ -991,7 +991,7 @@ void FNodeBuilder::PrintSet (int l, DWORD set)
 	Printf ("set %d:\n", l);
 	for (; set != DWORD_MAX; set = Segs[set].next)
 	{
-		Printf ("\t%u(%d):%d(%d,%d)-%d(%d,%d) ", set, Segs[set].frontsector-sectors,
+		Printf ("\t%u(%td):%d(%d,%d)-%d(%d,%d) ", set, Segs[set].frontsector-sectors,
 			Segs[set].v1,
 			Vertices[Segs[set].v1].x>>16, Vertices[Segs[set].v1].y>>16,
 			Segs[set].v2,

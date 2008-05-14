@@ -644,7 +644,7 @@ ADD_STAT(gc)
 		"  Sweep  ",
 		"Finalize " };
 	FString out;
-	out.Format("[%s] Alloc:%6uK  Thresh:%6uK  Est:%6uK  Steps: %d",
+	out.Format("[%s] Alloc:%6zuK  Thresh:%6zuK  Est:%6zuK  Steps: %d",
 		StateStrings[GC::State],
 		(GC::AllocBytes + 1023) >> 10,
 		(GC::Threshold + 1023) >> 10,
@@ -652,7 +652,7 @@ ADD_STAT(gc)
 		GC::StepCount);
 	if (GC::State != GC::GCS_Pause)
 	{
-		out.AppendFormat("  %uK", (GC::Dept + 1023) >> 10);
+		out.AppendFormat("  %zuK", (GC::Dept + 1023) >> 10);
 	}
 	return out;
 }

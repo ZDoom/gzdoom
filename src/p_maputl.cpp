@@ -522,7 +522,7 @@ sector_t *AActor::LinkToWorldForMapThing ()
 
 				if (distance < radius)
 				{
-					DPrintf ("%s at (%d,%d) lies on %s line %d, distance = %f\n",
+					DPrintf ("%s at (%d,%d) lies on %s line %td, distance = %f\n",
 						this->GetClass()->TypeName.GetChars(), x>>FRACBITS, y>>FRACBITS, 
 						ldef->dx == 0? "vertical" :	ldef->dy == 0? "horizontal" : "diagonal",
 						ldef-lines, FIXED2FLOAT(distance));

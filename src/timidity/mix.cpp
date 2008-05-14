@@ -278,7 +278,7 @@ static bool check_release(double RateMul, double sec)
 bool SF2Envelope::Update(Voice *v)
 {
 	double sec;
-	double newvolume;
+	double newvolume = 0;
 
 	switch (stage)
 	{

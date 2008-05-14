@@ -5,6 +5,15 @@ CXX ?= g++
 CC ?= gcc
 NASM ?= nasm
 CCDV = @./ccdv
+
+ifndef X64
+  ifeq (x86_64,$(shell uname -m))
+    X64=64
+  else
+    X64=
+  endif
+endif
+
 ifdef DEBUG
   CFLAGS ?= -pipe -Wall -Wno-unused -fno-strict-aliasing
 else
@@ -17,7 +26,7 @@ endif
 #endif
 CFLAGS += -MMD -DHAVE_FILELENGTH -D__forceinline=inline `sdl-config --cflags` `pkg-config gtk+-2.0 --cflags`
 CFLAGS += -Dstricmp=strcasecmp -Dstrnicmp=strncasecmp -DNEED_STRUPR
-LDFLAGS += -lz -ljpeg `sdl-config --libs` `pkg-config gtk+-2.0 --libs` $(FMOD_PREFIX)/lib/libfmodex.so
+LDFLAGS += -lz -ljpeg `sdl-config --libs` `pkg-config gtk+-2.0 --libs` $(FMOD_PREFIX)/lib/libfmodex${X64}.so
 NASMFLAGS += -f elf -DM_TARGET_LINUX
 
 SRCDIRS = src/ $(addprefix src/,g_doom/ g_heretic/ g_hexen/ g_raven/ g_shared/ g_strife/ oplsynth/ sound/ sdl/ textures/ thingdef/ xlat/ timidity/)
@@ -31,6 +40,9 @@ DEBUGOBJ ?= debugobj
 
 CPPSRCS = $(wildcard $(addsuffix *.cpp,$(SRCDIRS)))
 CSRCS = $(filter-out src/xlat/xlat_parser.c, $(wildcard $(addsuffix *.c,$(SRCDIRS))))
+ifdef X64
+  NOASM=1
+endif
 ifdef NOASM
   CFLAGS += -DNOASM
 else

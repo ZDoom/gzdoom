@@ -1282,7 +1282,7 @@ void P_LoadNodes (MapData * map)
 			}
 			else if (child >= numnodes)
 			{
-				Printf ("BSP node %d references invalid node %d.\n"
+				Printf ("BSP node %d references invalid node %td.\n"
 					"The BSP will be rebuilt.\n", i, (node_t *)no->children[j] - nodes);
 				ForceNodeBuild = true;
 				delete[] nodes;

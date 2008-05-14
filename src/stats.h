@@ -58,9 +58,9 @@ inline cycle_t GetClockCycle ()
 #endif
 }
 
-#elif defined(__GNUG__) && defined(__i386__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__amd64__))
 
-typedef QWORD cycle_t;
+typedef unsigned long long cycle_t;
 
 inline cycle_t GetClockCycle()
 {
@@ -78,7 +78,7 @@ inline cycle_t GetClockCycle()
 
 #else
 
-typedef DWORD cycle_t;
+typedef QWORD cycle_t;
 
 inline cycle_t GetClockCycle ()
 {

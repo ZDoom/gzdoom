@@ -602,7 +602,7 @@ bool FMODSoundRenderer::Init()
 
 	if (!ShowedBanner)
 	{
-		Printf("FMOD Sound System, copyright © Firelight Technologies Pty, Ltd., 1994-2008.\n");
+		Printf("FMOD Sound System, copyright ï¿½ Firelight Technologies Pty, Ltd., 1994-2008.\n");
 		ShowedBanner = true;
 	}
 #ifdef _WIN32
@@ -1597,7 +1597,7 @@ void FMODSoundRenderer::LoadSound(sfxinfo_t *sfx)
 {
 	if (sfx->data == NULL)
 	{
-		DPrintf("loading sound \"%s\" (%d)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
+		DPrintf("Loading sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 		getsfx(sfx);
 	}
 }
@@ -1614,7 +1614,7 @@ void FMODSoundRenderer::UnloadSound(sfxinfo_t *sfx)
 	{
 		((FMOD::Sound *)sfx->data)->release();
 		sfx->data = NULL;
-		DPrintf("Unloaded sound \"%s\" (%d)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
+		DPrintf("Unloaded sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 	}
 }
 

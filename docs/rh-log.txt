@@ -1,3 +1,8 @@
+May 13, 2008
+- Added the C99 printf size specifiers 't' (ptrdiff_t) and 'z' (size_t) to
+  FString::Format() so that I can fix all the problem printf strings that a
+  64-bit GCC compile finds.
+
 May 12, 2008 (Changes by Graf Zahl)
 - Added Skulltag's PUFFGETSOWNER flag.
 - Fixed: Parsing sector special bit masks must be done backwards so that later
@@ -272,7 +277,7 @@ April 15, 2008 (Changes by Graf Zahl)
   check being done manually.
 
 April 14, 2008 (Changes by Graf Zahl)
-- Added rotation 90° angles only) and mirroring to the Multipatch texture 
+- Added rotation 90ï¿½ angles only) and mirroring to the Multipatch texture 
   composition code.
 - Fixed: The game crashed when a level was ended while a player was morphed
   by a powerup.
@@ -5476,7 +5481,7 @@ April 22, 2006 (Changes by Graf Zahl)
 - Fixed the issues with .96x's railgun code and added it to the current
   version.
 - Fixed: Setting of the friendly Minotaur's angle was inconsistent and
-  could cause it to move backwards in a féw situation.
+  could cause it to move backwards in a fï¿½w situation.
 - Fixed: The minotaur did checks for type by checking for the MF_FRIENDLY
   flag, not by checking for the actor class. That made it impossible to
   spawn friendly 'normal' minotaurs.
@@ -16442,7 +16447,7 @@ September 12, 1998
 
 September 4, 1998
 - Added weapnext and weapprev commands courtesy of
-  Papst Johannes Jörg IV. [which were later completely
+  Papst Johannes Jï¿½rg IV. [which were later completely
   rewritten by me]
 - Add support for suspending and resuming scripts (easy when
   you know you can only have one copy running at a time).

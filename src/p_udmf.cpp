@@ -542,7 +542,7 @@ struct UDMFParser
 
 			if (v1i >= numvertexes || v2i >= numvertexes || v1i < 0 || v2i < 0)
 			{
-				I_Error ("Line %d has invalid vertices: %d and/or %d.\nThe map only contains %d vertices.", i+skipped, v1i, v2i, numvertexes);
+				I_Error ("Line %d has invalid vertices: %zd and/or %zd.\nThe map only contains %d vertices.", i+skipped, v1i, v2i, numvertexes);
 			}
 			else if (v1i == v2i ||
 				(vertexes[v1i].x == vertexes[v2i].x && vertexes[v1i].y == vertexes[v2i].y))

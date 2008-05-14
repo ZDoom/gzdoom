@@ -284,7 +284,9 @@ namespace StringFormat
 		F_HALF		= 0x2000,	// h
 		F_LONG		= 0x3000,	// l
 		F_LONGLONG	= 0x4000,	// ll or I64
-		F_BIGI		= 0x5000	// I
+		F_BIGI		= 0x5000,	// I
+		F_PTRDIFF	= 0x6000,	// t
+		F_SIZE		= 0x7000,	// z
 	};
 	typedef int (*OutputFunc)(void *data, const char *str, int len);
 

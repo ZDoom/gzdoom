@@ -851,7 +851,7 @@ CCMD (addslot)
 
 	if (!LocalWeapons.Slots[slot].AddWeapon (argv[2]))
 	{
-		Printf ("Could not add %s to slot %d\n", argv[2], slot);
+		Printf ("Could not add %s to slot %zu\n", argv[2], slot);
 	}
 }
 

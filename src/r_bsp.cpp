@@ -1048,7 +1048,7 @@ void R_Subsector (subsector_t *sub)
 
 #ifdef RANGECHECK
 	if (sub - subsectors >= (ptrdiff_t)numsubsectors)
-		I_Error ("R_Subsector: ss %i with numss = %i", sub - subsectors, numsubsectors);
+		I_Error ("R_Subsector: ss %ti with numss = %i", sub - subsectors, numsubsectors);
 #endif
 
 	frontsector = sub->sector;

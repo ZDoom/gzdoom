@@ -499,7 +499,7 @@ int AActor::GetTics(FState * newstate)
 bool AActor::SetState (FState *newstate)
 {
 	if (debugfile && player && (player->cheats & CF_PREDICTING))
-		fprintf (debugfile, "for pl %d: SetState while predicting!\n", player-players);
+		fprintf (debugfile, "for pl %td: SetState while predicting!\n", player-players);
 	do
 	{
 		if (newstate == NULL)
@@ -3096,7 +3096,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 	}
 
 		
-	// some additional checks to make deep sectors à la Boom splash without setting
+	// some additional checks to make deep sectors ï¿½ la Boom splash without setting
 	// the water flags. 
 	if (boomwaterlevel == 0 && waterlevel != 0 && dosplash) P_HitWater(this, Sector, fh);
 	boomwaterlevel=waterlevel;

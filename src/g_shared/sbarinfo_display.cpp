@@ -201,7 +201,7 @@ FBarShader::FBarShader(bool vertical, bool reverse) //make an alpha map
 		}
 	}
 	DummySpan[0].TopOffset = 0;
-	DummySpan[0].Length = vertical ? 256 : 1;
+	DummySpan[0].Length = vertical ? 256 : 2;
 	DummySpan[1].TopOffset = 0;
 	DummySpan[1].Length = 0;
 }
@@ -212,7 +212,7 @@ const BYTE *FBarShader::GetColumn(unsigned int column, const Span **spans_out)
 	{
 		*spans_out = DummySpan;
 	}
-	return Pixels + (column & WidthMask) * 256;
+	return Pixels + ((column & WidthMask) << HeightBits);
 }
 
 const BYTE *FBarShader::GetPixels()

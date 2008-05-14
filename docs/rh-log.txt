@@ -1,3 +1,7 @@
+May 14, 2008
+- Fixed: FBarShader::GetColumn() passed incorrect information to the software
+  renderer for horizontal bars.
+
 May 13, 2008 (Changes by Graf Zahl)
 - Changed: For actors not being spawned on the floor P_FindFloorCeiling should
   be used to prevent them from dropping through 3DMIDTEX textures.
@@ -13,7 +17,6 @@ May 13, 2008
   FString::Format() so that I can fix all the problem printf strings that a
   64-bit GCC compile finds.
 
->>>>>>> .r969
 May 12, 2008 (Changes by Graf Zahl)
 - Added Skulltag's PUFFGETSOWNER flag.
 - Fixed: Parsing sector special bit masks must be done backwards so that later

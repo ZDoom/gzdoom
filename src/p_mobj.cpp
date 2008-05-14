@@ -3238,6 +3238,9 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 		actor->floorpic = actor->floorsector->floorpic;
 		actor->ceilingsector = actor->Sector;
 		actor->ceilingpic = actor->ceilingsector->ceilingpic;
+		// Check if there's something solid to stand on between the current position and the
+		// current sector's floor.
+		P_FindFloorCeiling(actor, true);
 	}
 	else if (!(actor->flags5 & MF5_NOINTERACTION))
 	{

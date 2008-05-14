@@ -163,7 +163,7 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 //
 //==========================================================================
 
-void P_FindFloorCeiling (AActor *actor)
+void P_FindFloorCeiling (AActor *actor, bool onlymidtex)
 {
 	sector_t *sec;
 	FCheckPosition tmf;
@@ -194,13 +194,16 @@ void P_FindFloorCeiling (AActor *actor)
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	actor->floorz = tmf.floorz;
-	actor->dropoffz = tmf.dropoffz;
-	actor->ceilingz = tmf.ceilingz;
-	actor->floorpic = tmf.floorpic;
-	actor->floorsector = tmf.floorsector;
-	actor->ceilingpic = tmf.ceilingpic;
-	actor->ceilingsector = tmf.ceilingsector;
+	if (!onlymidtex || (tmf.touchmidtex && (tmf.floorz < actor->z)))
+	{
+		actor->floorz = tmf.floorz;
+		actor->dropoffz = tmf.dropoffz;
+		actor->ceilingz = tmf.ceilingz;
+		actor->floorpic = tmf.floorpic;
+		actor->floorsector = tmf.floorsector;
+		actor->ceilingpic = tmf.ceilingpic;
+		actor->ceilingsector = tmf.ceilingsector;
+	}
 }
 
 //

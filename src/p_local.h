@@ -373,7 +373,7 @@ bool	P_CheckSight (const AActor* t1, const AActor* t2, int flags=0);
 void	P_ResetSightCounters (bool full);
 void	P_UseLines (player_t* player);
 bool	P_UsePuzzleItem (AActor *actor, int itemType);
-void	P_FindFloorCeiling (AActor *actor);
+void	P_FindFloorCeiling (AActor *actor, bool onlymidtex = false);
 
 bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil, bool isreset);
 

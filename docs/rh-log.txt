@@ -1,3 +1,8 @@
+May 13, 2008 (Changes by Graf Zahl)
+- Changed: For actors not being spawned on the floor P_FindFloorCeiling should
+  be used to prevent them from dropping through 3DMIDTEX textures.
+- Fixed: AMageStaffFX2::IsOkayToAttack overwrote the projectile's angle variable.
+
 May 13, 2008
 - Changed the types of object hash indices in FArchive from size_t to DWORD.
   This seems to fix crashes on GCC 64-bit builds when saving games. Not sure
@@ -8,6 +13,7 @@ May 13, 2008
   FString::Format() so that I can fix all the problem printf strings that a
   64-bit GCC compile finds.
 
+>>>>>>> .r969
 May 12, 2008 (Changes by Graf Zahl)
 - Added Skulltag's PUFFGETSOWNER flag.
 - Fixed: Parsing sector special bit masks must be done backwards so that later

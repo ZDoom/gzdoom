@@ -321,7 +321,7 @@ bool AMageStaffFX2::IsOkayToAttack (AActor *link)
 		else if (P_CheckSight (this, link))
 		{
 			AActor *master = target;
-			angle = R_PointToAngle2 (master->x, master->y,
+			angle_t angle = R_PointToAngle2 (master->x, master->y,
 							link->x, link->y) - master->angle;
 			angle >>= 24;
 			if (angle>226 || angle<30)

@@ -237,9 +237,9 @@ protected:
 		struct ObjectMap
 		{
 			const DObject *object;
-			size_t hashNext;
+			DWORD hashNext;
 		} *m_ObjectMap;
-		size_t m_ObjectHash[EObjectHashSize];
+		DWORD m_ObjectHash[EObjectHashSize];
 
 		struct NameMap
 		{

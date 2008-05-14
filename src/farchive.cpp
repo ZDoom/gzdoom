@@ -1459,12 +1459,12 @@ DWORD FArchive::HashObject (const DObject *obj) const
 
 DWORD FArchive::FindObjectIndex (const DObject *obj) const
 {
-	size_t index = m_ObjectHash[HashObject (obj)];
+	DWORD index = m_ObjectHash[HashObject (obj)];
 	while (index != TypeMap::NO_INDEX && m_ObjectMap[index].object != obj)
 	{
 		index = m_ObjectMap[index].hashNext;
 	}
-	return (DWORD)index;
+	return index;
 }
 
 void FArchive::UserWriteClass (const PClass *type)

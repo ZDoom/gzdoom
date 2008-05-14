@@ -1,4 +1,9 @@
 May 13, 2008
+- Changed the types of object hash indices in FArchive from size_t to DWORD.
+  This seems to fix crashes on GCC 64-bit builds when saving games. Not sure
+  if it was a GCC bug or my bug, since it worked fine with VC++, but since the
+  code that calculates the index only returns a DWORD, storing it as a size_t
+  was rather pointless.
 - Added the C99 printf size specifiers 't' (ptrdiff_t) and 'z' (size_t) to
   FString::Format() so that I can fix all the problem printf strings that a
   64-bit GCC compile finds.

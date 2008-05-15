@@ -208,10 +208,6 @@ void SoundRenderer::DrawWaveDebug(int mode)
 {
 }
 
-void SoundRenderer::ResetEnvironment ()
-{
-}
-
 SoundStream::~SoundStream ()
 {
 }

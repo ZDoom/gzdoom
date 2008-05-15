@@ -106,7 +106,6 @@ public:
 	virtual void PrintStatus () = 0;
 	virtual void PrintDriversList () = 0;
 	virtual FString GatherStats ();
-	virtual void ResetEnvironment ();
 
 	virtual void DrawWaveDebug(int mode);
 };

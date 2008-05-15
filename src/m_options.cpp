@@ -1142,6 +1142,7 @@ EXTERN_CVAR (Int, snd_buffercount)
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_hrtf)
 EXTERN_CVAR (Bool, snd_waterreverb)
+EXTERN_CVAR (Float, snd_waterlp)
 EXTERN_CVAR (Int, snd_mididevice)
 
 static void MakeSoundChanges ();
@@ -1243,6 +1244,7 @@ static menuitem_t SoundItems[] =
 	{ discrete, "MIDI device",			{&snd_mididevice},		{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Underwater reverb",	{&snd_waterreverb},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ slider,	"Underwater cutoff",	{&snd_waterlp},			{0.0}, {2000.0},{50.0}, {NULL} },
 	{ discrete, "Randomize pitches",	{&snd_pitched},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ more,		"Restart sound",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)MakeSoundChanges} },

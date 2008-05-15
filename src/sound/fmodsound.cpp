@@ -119,6 +119,20 @@ CVAR (String, snd_output_format, "PCM-16", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_midipatchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_profile, false, 0)
 
+// Underwater low-pass filter cutoff frequency. Set to 0 to disable the filter.
+CUSTOM_CVAR (Float, snd_waterlp, 250, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	// Clamp to the DSP unit's limits.
+	if (*self < 10 && *self != 0)
+	{
+		self = 10;
+	}
+	else if (*self > 22000)
+	{
+		self = 22000;
+	}
+}
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static const ReverbContainer *PrevEnvironment;
@@ -569,6 +583,9 @@ bool FMODSoundRenderer::Init()
 	MusicGroup = NULL;
 	SfxGroup = NULL;
 	PausableSfx = NULL;
+	SfxConnection = NULL;
+	WaterLP = NULL;
+	WaterReverb = NULL;
 	PrevEnvironment = DefaultEnvironments[0];
 	DSPClockLo = 0;
 	DSPClockHi = 0;
@@ -830,8 +847,54 @@ bool FMODSoundRenderer::Init()
 	result = SfxGroup->addGroup(PausableSfx);
 	if (result != FMOD_OK)
 	{
-		Printf(TEXTCOLOR_BLUE"  Could not create attach pausable sfx to sfx channel group. (Error %d)\n", result);
+		Printf(TEXTCOLOR_BLUE"  Could not attach pausable sfx to sfx channel group. (Error %d)\n", result);
 	}
+
+	// Create DSP units for underwater effect
+	result = Sys->createDSPByType(FMOD_DSP_TYPE_LOWPASS, &WaterLP);
+	if (result != FMOD_OK)
+	{
+		Printf(TEXTCOLOR_BLUE"  Could not create underwater lowpass unit. (Error %d)\n", result);
+	}
+	else
+	{
+		result = Sys->createDSPByType(FMOD_DSP_TYPE_REVERB, &WaterReverb);
+		if (result != FMOD_OK)
+		{
+			Printf(TEXTCOLOR_BLUE"  Could not create underwater reverb unit. (Error %d)\n", result);
+		}
+	}
+
+	// Connect underwater DSP unit between PausableSFX and SFX groups, while
+	// retaining the connection established by SfxGroup->addGroup().
+	if (WaterLP != NULL)
+	{
+		FMOD::DSP *sfx_head, *pausable_head;
+
+		result = SfxGroup->getDSPHead(&sfx_head);
+		result = sfx_head->getInput(0, &pausable_head, &SfxConnection);
+
+		result = WaterLP->addInput(pausable_head, NULL);
+		WaterLP->setActive(false);
+		WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
+		WaterLP->setParameter(FMOD_DSP_LOWPASS_RESONANCE, 2);
+		if (WaterReverb != NULL)
+		{
+			FMOD::DSPConnection *dry;
+			result = WaterReverb->addInput(pausable_head, &dry);
+			result = dry->setMix(0.1f);
+			result = WaterReverb->addInput(WaterLP, NULL);
+			result = sfx_head->addInput(WaterReverb, NULL);
+			WaterReverb->setParameter(FMOD_DSP_REVERB_ROOMSIZE, 0.001f);
+			WaterReverb->setParameter(FMOD_DSP_REVERB_DAMP, 0.2f);
+			WaterReverb->setActive(false);
+		}
+		else
+		{
+			result = sfx_head->addInput(WaterLP, NULL);
+		}
+	}
+	LastWaterLP = snd_waterlp;
 
 	result = SPC_CreateCodec(Sys);
 	if (result != FMOD_OK)
@@ -877,6 +940,16 @@ void FMODSoundRenderer::Shutdown()
 		{
 			SfxGroup->release();
 			SfxGroup = NULL;
+		}
+		if (WaterLP != NULL)
+		{
+			WaterLP->release();
+			WaterLP = NULL;
+		}
+		if (WaterReverb != NULL)
+		{
+			WaterReverb->release();
+			WaterReverb = NULL;
 		}
 
 		// Free all loaded samples
@@ -1492,17 +1565,6 @@ void FMODSoundRenderer::UpdateSoundParams3D(FSoundChan *chan, float pos[3], floa
 
 //==========================================================================
 //
-// FMODSoundRenderer :: ResetEnvironment
-//
-//==========================================================================
-
-void FMODSoundRenderer::ResetEnvironment()
-{
-	PrevEnvironment = NULL;
-}
-
-//==========================================================================
-//
 // FMODSoundRenderer :: UpdateListener
 //
 //==========================================================================
@@ -1549,25 +1611,71 @@ void FMODSoundRenderer::UpdateListener()
 	}
 	else
 	{
-		underwater = (listener->waterlevel == 3 && snd_waterreverb);
+		underwater = (listener->waterlevel == 3 && snd_waterlp);
 		assert (zones != NULL);
 		env = zones[listener->Sector->ZoneNumber].Environment;
 		if (env == NULL)
 		{
 			env = DefaultEnvironments[0];
 		}
-		if (env == DefaultEnvironments[0] && underwater)
+/*		if (env == DefaultEnvironments[0] && underwater)
 		{
 			env = DefaultEnvironments[22];
 		}
+*/
 	}
 	if (env != PrevEnvironment || env->Modified)
 	{
 		DPrintf ("Reverb Environment %s\n", env->Name);
 		const_cast<ReverbContainer*>(env)->Modified = false;
 		Sys->setReverbProperties((FMOD_REVERB_PROPERTIES *)(&env->Properties));
-		PausableSfx->setPitch(underwater ? 0.64171f : 1);
 		PrevEnvironment = env;
+	}
+
+	if (underwater)
+	{
+		//PausableSfx->setPitch(0.64171f);		// This appears to be what Duke 3D uses
+		PausableSfx->setPitch(0.7937005f);		// Approx. 4 semitones lower; what Nash suggesetd
+		if (WaterLP != NULL)
+		{
+			if (LastWaterLP != snd_waterlp)
+			{
+				LastWaterLP = snd_waterlp;
+				WaterLP->setParameter(FMOD_DSP_LOWPASS_CUTOFF, snd_waterlp);
+			}
+			WaterLP->setActive(true);
+			if (WaterReverb != NULL && snd_waterreverb)
+			{
+				WaterReverb->setActive(true);
+				WaterReverb->setBypass(false);
+				SfxConnection->setMix(0);
+			}
+			else
+			{
+				// Let some of the original mix through so that high frequencies are
+				// not completely lost. The reverb unit has its own connection and
+				// preserves dry sounds itself if used.
+				SfxConnection->setMix(0.1f);
+				if (WaterReverb != NULL)
+				{
+					WaterReverb->setActive(true);
+					WaterReverb->setBypass(true);
+				}
+			}
+		}
+	}
+	else
+	{
+		PausableSfx->setPitch(1);
+		if (WaterLP != NULL)
+		{
+			SfxConnection->setMix(1);
+			WaterLP->setActive(false);
+			if (WaterReverb != NULL)
+			{
+				WaterReverb->setActive(false);
+			}
+		}
 	}
 }
 

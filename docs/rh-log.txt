@@ -1,4 +1,9 @@
 May 14, 2008
+- Revised underwater effect now uses a lowpass filter in combination with an
+  optional freeverb unit.
+- Removed ResetEnvironment hack, since with software reverb, losing the
+  existing reverb when focus is lost isn't a problem.
+- Commented out the TiMidity FIXME messages.
 - Fixed: FBarShader::GetColumn() passed incorrect information to the software
   renderer for horizontal bars.
 

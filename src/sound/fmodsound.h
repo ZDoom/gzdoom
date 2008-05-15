@@ -47,7 +47,6 @@ public:
 	void PrintStatus ();
 	void PrintDriversList ();
 	FString GatherStats ();
-	void ResetEnvironment ();
 
 	void DrawWaveDebug(int mode);
 
@@ -85,6 +84,9 @@ private:
 	FMOD::System *Sys;
 	FMOD::ChannelGroup *SfxGroup, *PausableSfx;
 	FMOD::ChannelGroup *MusicGroup;
+	FMOD::DSP *WaterLP, *WaterReverb;
+	FMOD::DSPConnection *SfxConnection;
+	float LastWaterLP;
 
 	// Just for snd_status display
 	int Driver_MinFrequency;

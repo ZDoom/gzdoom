@@ -138,7 +138,7 @@ static int read_config_file(const char *name, bool ismain)
 			* before TiMidity kills the note. This may be useful to implement
 			* later, but I don't see any urgent need for it.
 			*/
-			Printf("FIXME: Implement \"timeout\" in TiMidity config.\n");
+			//Printf("FIXME: Implement \"timeout\" in TiMidity config.\n");
 		}
 		else if (!strcmp(w[0], "copydrumset")	/* "copydrumset" drumset */
 			|| !strcmp(w[0], "copybank"))		/* "copybank" bank       */
@@ -148,7 +148,7 @@ static int read_config_file(const char *name, bool ismain)
 			* the current drumset or bank. May be useful later, but not a
 			* high priority.
 			*/
-			Printf("FIXME: Implement \"%s\" in TiMidity config.\n", w[0]);
+			//Printf("FIXME: Implement \"%s\" in TiMidity config.\n", w[0]);
 		}
 		else if (!strcmp(w[0], "undef"))		/* "undef" progno */
 		{
@@ -156,7 +156,7 @@ static int read_config_file(const char *name, bool ismain)
 			* Undefines the tone "progno" of the current tone bank (or
 			* drum set?). Not a high priority.
 			*/
-			Printf("FIXME: Implement \"undef\" in TiMidity config.\n");
+			//Printf("FIXME: Implement \"undef\" in TiMidity config.\n");
 		}
 		else if (!strcmp(w[0], "altassign")) /* "altassign" prog1 prog2 ... */
 		{
@@ -164,7 +164,7 @@ static int read_config_file(const char *name, bool ismain)
 			* Sets the alternate assign for drum set. Whatever that's
 			* supposed to mean.
 			*/
-			Printf("FIXME: Implement \"altassign\" in TiMidity config.\n");
+			//Printf("FIXME: Implement \"altassign\" in TiMidity config.\n");
 		}
 		else if (!strcmp(w[0], "soundfont"))
 		{
@@ -261,7 +261,7 @@ static int read_config_file(const char *name, bool ismain)
 			* apparently it sets some sort of base offset for tone numbers.
 			* Why anyone would want to do this is beyond me.
 			*/
-			Printf("FIXME: Implement \"progbase\" in TiMidity config.\n");
+			//Printf("FIXME: Implement \"progbase\" in TiMidity config.\n");
 		}
 		else if (!strcmp(w[0], "map")) /* "map" name set1 elem1 set2 elem2 */
 		{
@@ -271,7 +271,7 @@ static int read_config_file(const char *name, bool ismain)
 			* documentation whatsoever for it, but it looks like it's used
 			* for remapping one instrument to another somehow.
 			*/
-			Printf("FIXME: Implement \"map\" in TiMidity config.\n");
+			//Printf("FIXME: Implement \"map\" in TiMidity config.\n");
 		}
 
 		/* Standard TiMidity config */

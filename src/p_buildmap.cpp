@@ -16,6 +16,7 @@
 #include "r_sky.h"
 #include "r_main.h"
 #include "r_defs.h"
+#include "p_setup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -140,6 +141,39 @@ static void Decrypt (void *to, const void *from, int len, int key);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+bool P_IsBuildMap(MapData *map)
+{
+	DWORD len = map->Size(ML_LABEL);
+	if (len < 4) return false;
+
+	BYTE *data = new BYTE[len];
+
+	map->Seek(ML_LABEL);
+	map->Read(ML_LABEL, data);
+
+	// Check for a Blood map.
+	if (*(DWORD *)data == MAKE_ID('B','L','M','\x1a'))
+	{
+		delete[] data;
+		return true;
+	}
+
+	numsectors = LittleShort(*(WORD *)(data + 20));
+	int numwalls;
+
+	if (len < 26 + numsectors*sizeof(sectortype) ||
+		(numwalls = LittleShort(*(WORD *)(data + 22 + numsectors*sizeof(sectortype))),
+			len < 24 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype)) ||
+		LittleLong(*(DWORD *)data) != 7 ||
+		LittleShort(*(WORD *)(data + 16)) >= 2048)
+	{ // Can't possibly be a version 7 BUILD map
+		delete[] data;
+		return false;
+	}
+	delete[] data;
+	return true;
+}
 
 //==========================================================================
 //

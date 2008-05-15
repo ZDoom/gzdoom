@@ -357,24 +357,35 @@ void FMultiPatchTexture::MakeTexture ()
 	// a power of 2, in case somebody accidentally makes it repeat vertically.
 	int numpix = Width * Height + (1 << HeightBits) - Height;
 	BYTE blendwork[256];
+	static BYTE NullMap[256] = {0};
+	bool hasTranslucent = false;
 
 	Pixels = new BYTE[numpix];
 	memset (Pixels, 0, numpix);
 
-	if (!bTranslucentPatches)
+	// This is not going to be easy for paletted output. Using the
+	// real time mixing tables gives results that just look bad and
+	// downconverting a true color image also has its problems so the only
+	// real choice is to do normal compositing with any translucent patch
+	// just masking the affected pixels, then do a full true color composition
+	// and merge these pixels in.
+	for (int i = 0; i < NumParts; ++i)
 	{
-		for (int i = 0; i < NumParts; ++i)
+		BYTE *trans = Parts[i].Translation? Parts[i].Translation->Remap : NULL;
+		if (Parts[i].op != OP_COPY)
 		{
-			BYTE *trans = Parts[i].Translation? Parts[i].Translation->Remap : NULL;
-			if (Parts[i].Blend != BLEND_NONE)
-			{
-				trans = GetBlendMap(Parts[i].Blend, blendwork);
-			}
-			Parts[i].Texture->CopyToBlock (Pixels, Width, Height,
-				Parts[i].OriginX, Parts[i].OriginY, Parts[i].Rotate, trans);
+			trans = NullMap;
+			hasTranslucent = true;
 		}
+		else if (Parts[i].Blend != BLEND_NONE)
+		{
+			trans = GetBlendMap(Parts[i].Blend, blendwork);
+		}
+		Parts[i].Texture->CopyToBlock (Pixels, Width, Height,
+			Parts[i].OriginX, Parts[i].OriginY, Parts[i].Rotate, trans);
 	}
-	else
+
+	if (hasTranslucent)
 	{
 		// In case there are translucent patches let's do the composition in
 		// True color to keep as much precision as possible before downconverting to the palette.
@@ -384,10 +395,12 @@ void FMultiPatchTexture::MakeTexture ()
 		{
 			BYTE *in = buffer + Width * y * 4;
 			BYTE *out = Pixels + y;
-			for (int x = 0; x < Width; x--)
+			for (int x = 0; x < Width; x++)
 			{
-				// I don't know if this is precise enough...
-				*out = RGB32k[in[2]>>3][in[1]>>3][in[0]>>3];
+				if (*out == 0 && in[3] != 0)
+				{
+					*out = RGB32k[in[2]>>3][in[1]>>3][in[0]>>3];
+				}
 				out += Height;
 				in += 4;
 			}
@@ -1015,7 +1028,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 			}
 			else if (sc.Compare("style"))
 			{
-				static const char *styles[] = {"copy", "blend", "add", "subtract", "reversesubtract", "modulate", "copyalpha", NULL };
+				static const char *styles[] = {"copy", "translucent", "add", "subtract", "reversesubtract", "modulate", "copyalpha", NULL };
 				sc.MustGetString();
 				part.op = sc.MustMatchString(styles);
 				bComplex = (part.op != OP_COPY);

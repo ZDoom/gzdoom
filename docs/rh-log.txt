@@ -1,3 +1,11 @@
+May 15, 2008 (Changes by Graf Zahl)
+- I finally managed to test the translucency options for composite texture
+  definitions in HIRESTEX. The feature should be complete now.
+- Fixed: A_CheckTargetInLOS used BAM angles instead of degrees which is the
+  DECORATE convention.
+- Added Snowkate709's A_CheckTargetInLOS addition.
+- Added listmaps CCMD.
+
 May 14, 2008
 - Revised underwater effect now uses a lowpass filter in combination with an
   optional freeverb unit.

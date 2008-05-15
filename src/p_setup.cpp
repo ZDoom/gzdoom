@@ -83,6 +83,7 @@ CVAR (Bool, showloadtimes, false, 0);
 static void P_InitTagLists ();
 static void P_Shutdown ();
 
+bool P_IsBuildMap(MapData *map);
 
 
 //
@@ -286,6 +287,13 @@ MapData *P_OpenMapData(const char * mapname)
 			{
 				// The following lump is from a different file so whatever this is,
 				// it is not a multi-lump Doom level so let's assume it is a Build map.
+				map->MapLumps[0].FilePos = Wads.GetLumpOffset(lump_name);
+				map->MapLumps[0].Size = Wads.LumpLength(lump_name);
+				if (!P_IsBuildMap(map))
+				{
+					delete map;
+					return NULL;
+				}
 				return map;
 			}
 
@@ -301,6 +309,11 @@ MapData *P_OpenMapData(const char * mapname)
 
 			if (map->Encrypted)
 			{ // If it's encrypted, then it's a Blood file, presumably a map.
+				if (!P_IsBuildMap(map))
+				{
+					delete map;
+					return NULL;
+				}
 				return map;
 			}
 
@@ -474,6 +487,11 @@ MapData *P_OpenMapData(const char * mapname)
 	{
 		// This is a Build map and not subject to WAD consistency checks.
 		map->MapLumps[0].Size = map->file->GetLength();
+		if (!P_IsBuildMap(map))
+		{
+			delete map;
+			return NULL;
+		}
 	}
 	return map;		
 }

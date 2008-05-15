@@ -2124,27 +2124,46 @@ void A_ClearTarget(AActor * self)
 
 //==========================================================================
 //
-// A_JumpIfTargetInLOS (state label, optional fixed fov)
+// A_JumpIfTargetInLOS (state label, optional fixed fov, optional bool
+// projectiletarget)
+//
 // Jumps if the actor can see its target, or if the player has a linetarget.
+// ProjectileTarget affects how projectiles are treated. If set, it will use
+// the target of the projectile for seekers, and ignore the target for
+// normal projectiles. If not set, it will use the missile's owner instead
+// (the default).
 //
 //==========================================================================
 
 void A_JumpIfTargetInLOS(AActor * self)
 {
 	FState * CallingState;
-	int index = CheckIndex(2, &CallingState);
+	int index = CheckIndex(3, &CallingState);
 	angle_t an;
-	angle_t fov = angle_t(EvalExpressionF (StateParameters[index+1], self) * FRACUNIT);
-	AActor * target;
+	angle_t fov = angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);
+	INTBOOL projtarg = EvalExpressionI (StateParameters[index+2], self);
+	AActor *target;
 
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
 
 	if (!self->player)
 	{
-		target=self->target;
+		if (self->flags & MF_MISSILE && projtarg)
+		{
+			if (self->flags2 & MF2_SEEKERMISSILE)
+				target = self->tracer;
+			else
+				target = NULL;
+		}
+		else
+		{
+			target = self->target;
+		}
+
+		if (!target) return; // [KS] Let's not call P_CheckSight unnecessarily in this case.
 
 		if (!P_CheckSight (self, target, 1))
-			return; // [KS] Cannot see target - return
+			return;
 
 		if (fov && (fov < ANGLE_MAX))
 		{
@@ -2167,8 +2186,7 @@ void A_JumpIfTargetInLOS(AActor * self)
 		P_BulletSlope(self, &target);
 	}
 
-	// No target - return
-	if (target==NULL) return;
+	if (!target) return;
 
 	DoJump(self, CallingState, StateParameters[index]);
 }

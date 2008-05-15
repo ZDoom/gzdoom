@@ -3330,3 +3330,16 @@ int FSkillInfo::GetTextColor() const
 	}
 	return color;
 }
+
+CCMD(listmaps)
+{
+	for(unsigned i = 0; i < wadlevelinfos.Size(); i++)
+	{
+		level_info_t *info = &wadlevelinfos[i];
+
+		if (P_CheckMapData(info->mapname))
+		{
+			Printf("%s: '%s'\n", info->mapname, G_MaybeLookupLevelName(info));
+		}
+	}
+}

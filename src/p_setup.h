@@ -63,12 +63,13 @@ struct MapData
 		}
 	}
 
-	void Read(unsigned int lumpindex, void * buffer)
+	void Read(unsigned int lumpindex, void * buffer, int size = -1)
 	{
 		if (lumpindex<countof(MapLumps))
 		{
+			if (size == -1) size = MapLumps[lumpindex].Size;
 			file->Seek(MapLumps[lumpindex].FilePos, SEEK_SET);
-			file->Read(buffer, MapLumps[lumpindex].Size);
+			file->Read(buffer, size);
 		}
 	}
 

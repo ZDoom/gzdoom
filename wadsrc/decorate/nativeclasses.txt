@@ -173,7 +173,7 @@ class Actor extends Thinker
 	action native A_DeQueueCorpse();
 	action native A_LookEx(optional eval int flags, optional eval float minseedist, optional eval float maxseedist, optional eval float maxheardist, optional eval float fov, optional state label);
 	action native A_ClearTarget();
-	action native A_JumpIfTargetInLOS (state label, optional eval float fov);
+	action native A_JumpIfTargetInLOS (state label, optional eval float fov, optional eval bool projectiletarget);
 	action native A_DamageMaster(eval int amount, optional name damagetype);
 	action native A_DamageChildren(eval int amount, optional name damagetype);
 	action native A_SelectWeapon(class<Weapon> whichweapon);

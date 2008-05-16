@@ -1,3 +1,10 @@
+May 16, 2008
+- Fixed: s_sound.cpp had its own idea of whether or not sounds were paused
+  and did not entirely keep it in sync with the sound system's. This meant
+  that when starting a new game from the menu, all sounds were played as
+  menu sounds until you did something to pause the game, because s_sound.cpp
+  thought sounds were unpaused, while the FMOD system thought they were.
+
 May 15, 2008 (Changes by Graf Zahl)
 - I finally managed to test the translucency options for composite texture
   definitions in HIRESTEX. The feature should be complete now.

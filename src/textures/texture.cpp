@@ -458,8 +458,9 @@ void FTexture::FillBuffer(BYTE *buff, int pitch, int height, FTextureFormat fmt)
 
 	case TEX_RGB:
 	{
+		FCopyInfo inf = {OP_OVERWRITE, };
 		FBitmap bmp(buff, pitch, pitch/4, height);
-		CopyTrueColorPixels(&bmp, 0, 0); 
+		CopyTrueColorPixels(&bmp, 0, 0, 0, &inf); 
 		break;
 	}
 

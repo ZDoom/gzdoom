@@ -57,7 +57,8 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 	case BLEND_NONE:
 		for(i=0;i<count;i++)
 		{
-			if ((a = TSrc::A(pin)))
+			a = TSrc::A(pin);
+			if (TBlend::ProcessAlpha0() || a)
 			{
 				TBlend::OpC(pout[TDest::RED], TSrc::R(pin), a, inf);
 				TBlend::OpC(pout[TDest::GREEN], TSrc::G(pin), a, inf);
@@ -73,7 +74,8 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 		// Doom's inverted invulnerability map
 		for(i=0;i<count;i++)
 		{
-			if ((a = TSrc::A(pin)))
+			a = TSrc::A(pin);
+			if (TBlend::ProcessAlpha0() || a)
 			{
 				gray = clamp<int>(255 - TSrc::Gray(pin),0,255);
 
@@ -91,7 +93,8 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 		// Heretic's golden invulnerability map
 		for(i=0;i<count;i++)
 		{
-			if ((a = TSrc::A(pin)))
+			a = TSrc::A(pin);
+			if (TBlend::ProcessAlpha0() || a)
 			{
 				gray = TSrc::Gray(pin);
 				r=clamp<int>(gray+(gray>>1),0,255);
@@ -111,7 +114,8 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 		// Skulltag's red Doomsphere map
 		for(i=0;i<count;i++)
 		{
-			if ((a = TSrc::A(pin)))
+			a = TSrc::A(pin);
+			if (TBlend::ProcessAlpha0() || a)
 			{
 				gray = TSrc::Gray(pin);
 				r=clamp<int>(gray+(gray>>1),0,255);
@@ -130,7 +134,8 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 		// Skulltags's Guardsphere map
 		for(i=0;i<count;i++)
 		{
-			if ((a = TSrc::A(pin)))
+			a = TSrc::A(pin);
+			if (TBlend::ProcessAlpha0() || a)
 			{
 				gray = TSrc::Gray(pin);
 				r=clamp<int>(gray+(gray>>1),0,255);
@@ -150,7 +155,8 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 		// Since this is done in True Color the purplish tint is fully preserved - even in Doom!
 		for(i=0;i<count;i++)
 		{
-			if ((a = TSrc::A(pin)))
+			a = TSrc::A(pin);
+			if (TBlend::ProcessAlpha0() || a)
 			{
 				int gray = TSrc::Gray(pin)>>4;
 	
@@ -171,7 +177,8 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 			fac=inf->blend-BLEND_DESATURATE1+1;
 			for(i=0;i<count;i++)
 			{
-				if ((a = TSrc::A(pin)))
+			a = TSrc::A(pin);
+			if (TBlend::ProcessAlpha0() || a)
 				{
 					gray = TSrc::Gray(pin);
 					r = (TSrc::R(pin)*(31-fac) + gray*fac)/31;
@@ -192,7 +199,8 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 	case BLEND_MODULATE:
 		for(i=0;i<count;i++)
 		{
-			if ((a = TSrc::A(pin)))
+			a = TSrc::A(pin);
+			if (TBlend::ProcessAlpha0() || a)
 			{
 				r = (TSrc::R(pin)*inf->blendcolor[0])>>FRACBITS;
 				g = (TSrc::G(pin)*inf->blendcolor[1])>>FRACBITS;
@@ -212,7 +220,8 @@ void iCopyColors(BYTE *pout, const BYTE *pin, int count, int step, FCopyInfo *in
 		for(i=0;i<count;i++)
 		{
 			// color blend
-			if ((a = TSrc::A(pin)))
+			a = TSrc::A(pin);
+			if (TBlend::ProcessAlpha0() || a)
 			{
 				r = (TSrc::R(pin)*inf->blendcolor[3] + inf->blendcolor[0]) >> FRACBITS;
 				g = (TSrc::G(pin)*inf->blendcolor[3] + inf->blendcolor[1]) >> FRACBITS;
@@ -310,6 +319,17 @@ static const CopyFunc copyfuncs[][9]={
 		iCopyColors<cI16, cBGRA, bCopyAlpha>,
 		iCopyColors<cRGB555, cBGRA, bCopyAlpha>,
 		iCopyColors<cPalEntry, cBGRA, bCopyAlpha>
+	},
+	{
+		iCopyColors<cRGB, cBGRA, bOverwrite>,
+		iCopyColors<cRGBA, cBGRA, bOverwrite>,
+		iCopyColors<cIA, cBGRA, bOverwrite>,
+		iCopyColors<cCMYK, cBGRA, bOverwrite>,
+		iCopyColors<cBGR, cBGRA, bOverwrite>,
+		iCopyColors<cBGRA, cBGRA, bOverwrite>,
+		iCopyColors<cI16, cBGRA, bOverwrite>,
+		iCopyColors<cRGB555, cBGRA, bOverwrite>,
+		iCopyColors<cPalEntry, cBGRA, bOverwrite>
 	},
 };
 
@@ -461,9 +481,9 @@ void iCopyPaletted(BYTE *buffer, const BYTE * patch, int srcwidth, int srcheight
 		for (x=0;x<srcwidth;x++,pos+=4)
 		{
 			int v=(unsigned char)patch[y*step_y+x*step_x];
-			int a;
+			int a = palette[v].a;
 
-			if ((a = palette[v].a))
+			if (TBlend::ProcessAlpha0() || a)
 			{
 				TBlend::OpC(buffer[pos + TDest::RED], palette[v].r, a, inf);
 				TBlend::OpC(buffer[pos + TDest::GREEN], palette[v].g, a, inf);
@@ -487,6 +507,7 @@ static const CopyPalettedFunc copypalettedfuncs[]=
 	iCopyPaletted<cBGRA, bReverseSubtract>,
 	iCopyPaletted<cBGRA, bModulate>,
 	iCopyPaletted<cBGRA, bCopyAlpha>,
+	iCopyPaletted<cBGRA, bOverwrite>
 };
 
 //===========================================================================

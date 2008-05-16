@@ -1,4 +1,6 @@
 May 16, 2008
+- Fixed: 3D hardware texture filling did not copy pixels with 0 alpha,
+  preserving whatever was underneath in the texture box previously.
 - Fixed: s_sound.cpp had its own idea of whether or not sounds were paused
   and did not entirely keep it in sync with the sound system's. This meant
   that when starting a new game from the menu, all sounds were played as

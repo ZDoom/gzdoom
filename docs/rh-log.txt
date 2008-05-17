@@ -1,4 +1,6 @@
 May 17, 2008 (Changes by Graf Zahl)
+- Fixed: When FTextureManager::CheckForTexture finds a matching NULL texture
+  it should always return 0, not the actual texture's index.
 - Fixed coordinate checks for objects on 3DMidtex lines.
 - Fixed: All translucent blending operations for CopyColors must treat an 
   alpha of 0 so that the pixel is not modified or texture composition as 

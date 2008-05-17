@@ -125,6 +125,11 @@ int FTextureManager::CheckForTexture (const char *name, int usetype, BITFIELD fl
 			{
 				return i;
 			}
+			else if (tex->UseType == FTexture::TEX_Null && usetype == FTexture::TEX_Wall)
+			{
+				// We found a NULL texture on a wall -> return 0
+				return 0;
+			}
 			else
 			{
 				if (firsttype == FTexture::TEX_Null ||
@@ -141,6 +146,8 @@ int FTextureManager::CheckForTexture (const char *name, int usetype, BITFIELD fl
 
 	if ((flags & TEXMAN_TryAny) && usetype != FTexture::TEX_Any)
 	{
+		// Never return the index of NULL textures.
+		if (firsttype == FTexture::TEX_Null) return 0;
 		return firstfound;
 	}
 

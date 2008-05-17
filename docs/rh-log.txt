@@ -1,3 +1,8 @@
+May 17, 2008 (Changes by Graf Zahl)
+- Fixed: All translucent blending operations for CopyColors must treat an 
+  alpha of 0 so that the pixel is not modified or texture composition as 
+  intended will not work.
+
 May 16, 2008
 - Fixed: 3D hardware texture filling did not copy pixels with 0 alpha,
   preserving whatever was underneath in the texture box previously.

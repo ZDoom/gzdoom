@@ -312,42 +312,42 @@ struct bBlend
 {
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (d*i->invalpha + s*i->alpha) >> FRACBITS; }
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
-	static __forceinline bool ProcessAlpha0() { return true; }
+	static __forceinline bool ProcessAlpha0() { return false; }
 };
 
 struct bAdd
 {
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = MIN<int>((d*FRACUNIT + s*i->alpha) >> FRACBITS, 255); }
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
-	static __forceinline bool ProcessAlpha0() { return true; }
+	static __forceinline bool ProcessAlpha0() { return false; }
 };
 
 struct bSubtract
 {
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = MAX<int>((d*FRACUNIT - s*i->alpha) >> FRACBITS, 0); }
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
-	static __forceinline bool ProcessAlpha0() { return true; }
+	static __forceinline bool ProcessAlpha0() { return false; }
 };
 
 struct bReverseSubtract
 {
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = MAX<int>((-d*FRACUNIT + s*i->alpha) >> FRACBITS, 0); }
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
-	static __forceinline bool ProcessAlpha0() { return true; }
+	static __forceinline bool ProcessAlpha0() { return false; }
 };
 
 struct bModulate
 {
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*d)/255; }
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
-	static __forceinline bool ProcessAlpha0() { return true; }
+	static __forceinline bool ProcessAlpha0() { return false; }
 };
 
 struct bCopyAlpha
 {
 	static __forceinline void OpC(BYTE &d, BYTE s, BYTE a, FCopyInfo *i) { d = (s*a + d*(255-a))/255; }
 	static __forceinline void OpA(BYTE &d, BYTE s, FCopyInfo *i) { d = s; }
-	static __forceinline bool ProcessAlpha0() { return true; }
+	static __forceinline bool ProcessAlpha0() { return false; }
 };
 
 

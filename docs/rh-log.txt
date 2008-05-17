@@ -1,4 +1,5 @@
 May 17, 2008 (Changes by Graf Zahl)
+- Fixed coordinate checks for objects on 3DMidtex lines.
 - Fixed: All translucent blending operations for CopyColors must treat an 
   alpha of 0 so that the pixel is not modified or texture composition as 
   intended will not work.

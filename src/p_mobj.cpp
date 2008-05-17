@@ -1758,7 +1758,12 @@ explode:
 			|| mo->momy > FRACUNIT/4 || mo->momy < -FRACUNIT/4)
 		{
 			if (mo->floorz > mo->Sector->floorplane.ZatPoint (mo->x, mo->y))
-				return;
+			{
+				if (mo->dropoffz != mo->floorz) // 3DMidtex or other special cases that must be excluded
+				{
+					return;
+				}
+			}
 		}
 	}
 
@@ -4029,6 +4034,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj->SpawnPoint[2] = mthing->z;
 	mobj->SpawnAngle = mthing->angle;
 	mobj->SpawnFlags = mthing->flags;
+	P_FindFloorCeiling(mobj, true);
 
 	if (!(mobj->flags2 & MF2_ARGSDEFINED))
 	{

@@ -150,6 +150,10 @@ static bool PIT_FindFloorCeiling (line_t *ld, const FBoundingBox &box, FCheckPos
 		tmf.floorsector = open.bottomsec;
 		tmf.touchmidtex = open.touchmidtex;
 	}
+	else if (open.bottom == tmf.floorz)
+	{
+		tmf.touchmidtex |= open.touchmidtex;
+	}
 
 	if (open.lowfloor < tmf.dropoffz)
 		tmf.dropoffz = open.lowfloor;
@@ -194,7 +198,7 @@ void P_FindFloorCeiling (AActor *actor, bool onlymidtex)
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	if (!onlymidtex || (tmf.touchmidtex && (tmf.floorz < actor->z)))
+	if (!onlymidtex || (tmf.touchmidtex && (tmf.floorz <= actor->z)))
 	{
 		actor->floorz = tmf.floorz;
 		actor->dropoffz = tmf.dropoffz;
@@ -628,6 +632,10 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		tm.floorpic = open.floorpic;
 		tm.touchmidtex = open.touchmidtex;
 		tm.thing->BlockingLine = ld;
+	}
+	else if (open.bottom == tm.floorz)
+	{
+		tm.touchmidtex |= open.touchmidtex;
 	}
 
 	if (open.lowfloor < tm.dropoffz)
@@ -1133,7 +1141,11 @@ bool P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm)
 	if (tm.ceilingz - tm.floorz < thing->height)
 		return false;
 
-	if (tm.stepthing != NULL || tm.touchmidtex)
+	if (tm.touchmidtex)
+	{
+		tm.dropoffz = tm.floorz;
+	}
+	else if (tm.stepthing != NULL)
 	{
 		tm.dropoffz = thingdropoffz;
 	}

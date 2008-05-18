@@ -16,3 +16,20 @@ public:
 	const PClass * WeaponClass;
 	TObjPtr<AWeapon> FullWeapon;
 };
+
+// an internal class to hold the information for player class independent weapon piece handling
+// [BL] Needs to be available for SBarInfo to check weaponpieces
+class AWeaponHolder : public AInventory
+{
+	DECLARE_ACTOR(AWeaponHolder, AInventory)
+
+public:
+	int PieceMask;
+	const PClass * PieceWeapon;
+
+	void Serialize (FArchive &arc)
+	{
+		Super::Serialize(arc);
+		arc << PieceMask << PieceWeapon;
+	}
+};

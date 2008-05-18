@@ -346,6 +346,8 @@ enum //Bar key words
 	SBARINFO_PLAYERCLASS,
 	SBARINFO_ASPECTRATIO,
 	SBARINFO_ISSELECTED,
+	SBARINFO_USESSECONDARYAMMO,
+	SBARINFO_HASWEAPONPIECE,
 	SBARINFO_WEAPONAMMO,
 	SBARINFO_ININVENTORY,
 };
@@ -384,9 +386,9 @@ private:
 	void DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, EColorRange translation, int spacing=0, bool fillzeros=false);
 	void DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha);
 	int updateState(bool xdth, bool animatedgodmode);
-	void DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool alwaysshow, 
+	void DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool alwaysshow,
 		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter);
-	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, int padleft, int padright, int chainsize, 
+	void DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, int padleft, int padright, int chainsize,
 		bool wiggle, bool translate);
 	FRemapTable* getTranslation();
 

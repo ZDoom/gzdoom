@@ -218,6 +218,7 @@ public:
 	virtual void ShowPop (int popnum);
 	virtual void ReceivedWeapon (AWeapon *weapon);
 	virtual bool MustDrawLog(EHudState state);
+	virtual void SetMugShotState (const char* stateName, bool waitTillDone=false) {}
 	void DrawLog();
 
 protected:

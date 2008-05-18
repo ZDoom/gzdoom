@@ -1,3 +1,13 @@
+May 18, 2008 (SBarInfo Update #20)
+- Added: hasweaponpiece command to check for custom weapon pieces.
+- Added: usessecondaryammo command to check if the current weapon has a second
+  ammo type.
+- Most of SBarInfo's mugshot scripting can be used with the default Doom status
+  bar.
+- Fixed: By default drawmugshot would never come out of normal god mode state.
+  In addition the state change to and from god mode was not quite as responsive
+  as the original code.
+  
 May 17, 2008 (Changes by Graf Zahl)
 - Fixed: When FTextureManager::CheckForTexture finds a matching NULL texture
   it should always return 0, not the actual texture's index.

@@ -52,6 +52,7 @@
 #include "gi.h"
 #include "r_translate.h"
 #include "r_main.h"
+#include "a_weaponpiece.h"
 
 static FRandom pr_chainwiggle; //use the same method of chain wiggling as heretic.
 
@@ -670,7 +671,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					AHexenArmor *harmor = CPlayer->mo->FindInventory<AHexenArmor>();
 					if(harmor != NULL)
 					{
-						value = harmor->Slots[0] + harmor->Slots[1] + 
+						value = harmor->Slots[0] + harmor->Slots[1] +
 							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
@@ -1134,6 +1135,33 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					}
 				}
 				break;
+			case SBARINFO_USESSECONDARYAMMO:
+				if((CPlayer->ReadyWeapon->AmmoType2 != NULL && !(cmd.flags & SBARINFOEVENT_NOT)) ||
+					(CPlayer->ReadyWeapon->AmmoType2 == NULL && cmd.flags & SBARINFOEVENT_NOT))
+				{
+					doCommands(cmd.subBlock, xOffset, yOffset, alpha);
+				}
+				break;
+			case SBARINFO_HASWEAPONPIECE:
+			{
+				AInventory *inv;
+				AWeaponHolder *hold;
+				const PClass *weapon = PClass::FindClass(cmd.string[0]);
+				for(inv = CPlayer->mo->Inventory;inv != NULL;inv=inv->Inventory)
+				{
+					if(inv->IsKindOf(RUNTIME_CLASS(AWeaponHolder)))
+					{
+						hold = static_cast<AWeaponHolder*>(inv);
+						if(hold->PieceWeapon == weapon)
+						{
+							if(hold->PieceMask & (1 << (cmd.value-1)))
+								doCommands(cmd.subBlock, xOffset, yOffset, alpha);
+							break;
+						}
+					}
+				}
+				break;
+			}
 			case SBARINFO_WEAPONAMMO:
 				if(CPlayer->ReadyWeapon != NULL)
 				{
@@ -1146,7 +1174,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					bool usesammo2 = (AmmoType2 != NULL);
 					if(!(cmd.flags & SBARINFOEVENT_NOT) && !usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
 					{
-						doCommands(cmd.subBlock, xOffset, yOffset);
+						doCommands(cmd.subBlock, xOffset, yOffset, alpha);
 						break;
 					}
 					//Or means only 1 ammo type needs to match and means both need to match.
@@ -1207,7 +1235,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 }
 
 //draws an image with the specified flags
-void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, 
+void DSBarInfo::DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha,
 	bool translate, bool dim, bool center) //flags
 {
 	if (texture == NULL)
@@ -1333,7 +1361,8 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 	{
 		if(weaponGrin)
 		{
-			weaponGrin = false;
+			if(currentState == NULL)
+				weaponGrin = false;
 			if(CPlayer->bonuscount)
 			{
 				SetMugShotState("grin", false);
@@ -1354,13 +1383,13 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 					{
 						// whether right or left
 						diffang = badguyangle - CPlayer->mo->angle;
-						i = diffang > ANG180; 
+						i = diffang > ANG180;
 					}
 					else
 					{
 						// whether left or right
 						diffang = CPlayer->mo->angle - badguyangle;
-						i = diffang <= ANG180; 
+						i = diffang <= ANG180;
 					} // confusing, aint it?
 					if(i && diffang >= ANG45)
 					{
@@ -1377,7 +1406,7 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 				stateName = "ouch";
 			else
 				stateName = "pain";
-			char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1]; 
+			char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
 			sprintf(fullStateName, "%s.%s", stateName, (const char*) CPlayer->LastDamageType);
 			if(FindMugShotState(fullStateName) != NULL)
 				SetMugShotState(fullStateName);
@@ -1398,7 +1427,7 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 					stateName = "ouch";
 				else
 					stateName = "pain";
-				char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1]; 
+				char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
 				sprintf(fullStateName, "%s.%s", stateName, (const char*) CPlayer->LastDamageType);
 				if(FindMugShotState(fullStateName) != NULL)
 					SetMugShotState(fullStateName);
@@ -1414,15 +1443,18 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 			return 0;
 		}
 
-		if((CPlayer->cheats & CF_GODMODE) || (CPlayer->mo != NULL && CPlayer->mo->flags2 & MF2_INVULNERABLE))
+		if(!weaponGrin)
 		{
-			if(animatedgodmode)
-				SetMugShotState("godanimated", true);
+			if((CPlayer->cheats & CF_GODMODE) || (CPlayer->mo != NULL && CPlayer->mo->flags2 & MF2_INVULNERABLE))
+			{
+				if(animatedgodmode)
+					SetMugShotState("godanimated");
+				else
+					SetMugShotState("god");
+			}
 			else
-				SetMugShotState("god", true);
+				SetMugShotState("normal");
 		}
-		else
-			SetMugShotState("normal", true);
 	}
 	else
 	{
@@ -1432,7 +1464,7 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 		else
 			stateName = "xdeath";
 		//new string the size of stateName and the damage type put together
-		char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1]; 
+		char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
 		sprintf(fullStateName, "%s.%s", stateName, (const char*) CPlayer->LastDamageType);
 		if(FindMugShotState(fullStateName) != NULL)
 			SetMugShotState(fullStateName);
@@ -1442,7 +1474,7 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 	return 0;
 }
 
-void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool alwaysshow, 
+void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool alwaysshow,
 	int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter)
 { //yes, there is some Copy & Paste here too
 	AInventory *item;
@@ -1468,6 +1500,10 @@ void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, i
 				if(type == GAME_Heretic)
 				{
 					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*31, y+29, xOffset, yOffset, alpha);
+				}
+				else if(type == GAME_Hexen)
+				{
+					DrawGraphic(Images[invBarOffset + imgSELECTBOX], x+i*31, y-1, xOffset, yOffset, alpha);
 				}
 				else
 				{
@@ -1495,7 +1531,7 @@ void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, i
 }
 
 //draws heretic/hexen style life gems
-void DSBarInfo::DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, int padleft, int padright, int chainsize, 
+void DSBarInfo::DrawGem(FTexture* chain, FTexture* gem, int value, int x, int y, int xOffset, int yOffset, int alpha, int padleft, int padright, int chainsize,
 	bool wiggle, bool translate)
 {
 	if(chain == NULL)

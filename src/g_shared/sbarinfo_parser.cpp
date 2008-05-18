@@ -95,6 +95,8 @@ static const char *SBarInfoRoutineLevel[] =
 	"playerclass",
 	"aspectratio",
 	"isselected",
+	"usessecondaryammo",
+	"hasweaponpiece",
 	"weaponammo", //event
 	"ininventory",
 	NULL
@@ -140,7 +142,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 		{
 			sc.MustGetToken(TK_StringConst);
 			int lump = Wads.CheckNumForFullName(sc.String, true);
-			if (lump == -1) 
+			if (lump == -1)
 				sc.ScriptError("Lump '%s' not found", sc.String);
 			ParseSBarInfo(lump);
 			continue;
@@ -229,7 +231,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 					spacingCharacter = '\0';
 					sc.MustGetToken(',');
 					sc.MustGetToken(TK_StringConst); //Don't tell anyone we're just ignoring this ;)
-				}				
+				}
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_LOWERHEALTHCAP:
@@ -705,7 +707,11 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				{
 					cmd.special = GAME_Heretic;
 				}
-				if(sc.Compare("Doom") || sc.Compare("Heretic"))
+				else if(sc.Compare("Hexen"))
+				{
+					cmd.special = GAME_Hexen;
+				}
+				if(sc.Compare("Doom") || sc.Compare("Heretic") || sc.Compare("Hexen"))
 				{
 					sc.MustGetToken(',');
 					while(sc.CheckToken(TK_Identifier))
@@ -1053,6 +1059,33 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 				sc.MustGetToken('{');
 				this->ParseSBarInfoBlock(sc, cmd.subBlock);
 				break;
+			case SBARINFO_USESSECONDARYAMMO:
+				if(sc.CheckToken(TK_Identifier))
+				{
+					if(sc.Compare("not"))
+						cmd.flags += SBARINFOEVENT_NOT;
+					else
+						sc.ScriptError("Exspected 'not' got '%s' instead.", sc.String);
+				}
+				sc.MustGetToken('{');
+				this->ParseSBarInfoBlock(sc, cmd.subBlock);
+				break;
+			case SBARINFO_HASWEAPONPIECE:
+			{
+				sc.MustGetToken(TK_Identifier);
+				const PClass* weapon = PClass::FindClass(sc.String);
+				if(weapon == NULL || !RUNTIME_CLASS(AWeapon)->IsAncestorOf(weapon)) //must be a weapon
+					sc.ScriptError("%s is not a kind of weapon.", sc.String);
+				cmd.setString(sc, sc.String, 0);
+				sc.MustGetToken(',');
+				sc.MustGetToken(TK_IntConst);
+				if(sc.Number < 1)
+					sc.ScriptError("Weapon piece number can not be less than 1.");
+				cmd.value = sc.Number;
+				sc.MustGetToken('{');
+				this->ParseSBarInfoBlock(sc, cmd.subBlock);
+				break;
+			}
 			case SBARINFO_WEAPONAMMO:
 				sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("not"))

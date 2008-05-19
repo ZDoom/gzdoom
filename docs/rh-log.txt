@@ -1,4 +1,6 @@
 May 19, 2008
+- Fixed: M_DrawSave() and M_DrawLoad() need to use GetScaledWidth(), in case
+  the texture is high-res.
 - Replaced all instances of "flags +=" in sbarinfo_parser.cpp with "flags |="
   so that using the same flag multiple times will not have unexpected results.
 

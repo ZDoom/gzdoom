@@ -930,8 +930,8 @@ void M_DrawLoad (void)
 	{
 		FTexture *title = TexMan["M_LOADG"];
 		screen->DrawTexture (title,
-			(SCREENWIDTH-title->GetWidth()*CleanXfac)/2, 20*CleanYfac,
-			DTA_CleanNoMove, true, TAG_DONE);
+			(SCREENWIDTH-title->GetScaledWidth()*CleanXfac)/2, 20*CleanYfac,
+			DTA_CleanNoMove, true, DTA_BilinearFilter, true, TAG_DONE);
 	}
 	else
 	{

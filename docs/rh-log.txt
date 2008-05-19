@@ -1,3 +1,20 @@
+May 19, 2008
+- Replaced all instances of "flags +=" in sbarinfo_parser.cpp with "flags |="
+  so that using the same flag multiple times will not have unexpected results.
+
+May 19, 2008 (sbarinfo update #21)
+- Added: sigil image type to correctly draw the sigil's icon.
+- Added: Strife inventory bar style.  This is the only style that is radically
+  different from the others.  First of all it changes the SELECTBO to be
+  INVCURS and draws it before the icons.  Each box is changed to have a width
+  of 35 pixels instead of 31 pixels.  And the INVCURS graphic is drawn at
+  (x-6, y-2).
+- Added: whennnotzero flag to drawnumber which will cause it to draw nothing if
+  the value is 0.
+- Fixed: New mugshot code would not leave the god state when it was supposed to
+  enter the rampage state.
+- Fixed: The ouch state was mostly broken.
+
 May 18, 2008 (SBarInfo Update #20)
 - Added: hasweaponpiece command to check for custom weapon pieces.
 - Added: usessecondaryammo command to check if the current weapon has a second

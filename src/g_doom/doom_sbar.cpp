@@ -53,7 +53,9 @@ public:
 		DoCommonInit ();
 
 		bEvilGrin = false;
+		bNormal = true;
 		bDamageFaceActive = false;
+		bOuchActive = false;
 		CurrentState = NULL;
 		RampageTimer = 0;
 		LastDamageAngle = 1;
@@ -115,7 +117,11 @@ public:
 		{
 			CurrentState->tick();
 			if(CurrentState->finished)
+			{
+				bNormal = true;
+				bOuchActive = false;
 				CurrentState = NULL;
+			}
 		}
 		if((CPlayer->cmd.ucmd.buttons & (BT_ATTACK|BT_ALTATTACK)) && !(CPlayer->cheats & (CF_FROZEN | CF_TOTALLYFROZEN)))
 		{
@@ -168,6 +174,8 @@ public:
 	//See sbarinfo_display.cpp
 	void SetMugShotState (const char* stateName, bool waitTillDone=false)
 	{
+		bNormal = false; //Assume we are not setting god or normal for now.
+		bOuchActive = false;
 		MugShotState *state = (MugShotState *) FindMugShotState(stateName);
 		if(state != CurrentState)
 		{
@@ -792,9 +800,13 @@ private:
 						}
 					}
 				}
+				bool useOuch = false;
 				const char* stateName = new char[5];
-				if (FaceHealth != -1 && CPlayer->health - FaceHealth > 20)
+				if ((FaceHealth != -1 && CPlayer->health - FaceHealth > 20) || bOuchActive)
+				{
+					useOuch = true;
 					stateName = "ouch";
+				}
 				else
 					stateName = "pain";
 				char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
@@ -805,6 +817,7 @@ private:
 					SetMugShotState(stateName);
 				bDamageFaceActive = !(CurrentState == NULL);
 				LastDamageAngle = damageAngle;
+				bOuchActive = useOuch;
 				return damageAngle;
 			}
 			if(bDamageFaceActive)
@@ -813,9 +826,13 @@ private:
 					bDamageFaceActive = false;
 				else
 				{
+					bool useOuch = false;
 					const char* stateName = new char[5];
-					if (FaceHealth != -1 && CPlayer->health - FaceHealth > 20)
+					if ((FaceHealth != -1 && CPlayer->health - FaceHealth > 20) || bOuchActive)
+					{
+						useOuch = true;
 						stateName = "ouch";
+					}
 					else
 						stateName = "pain";
 					char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
@@ -824,22 +841,24 @@ private:
 						SetMugShotState(fullStateName);
 					else
 						SetMugShotState(stateName);
+					bOuchActive = useOuch;
 					return LastDamageAngle;
 				}
 			}
 
 			if(RampageTimer == ST_RAMPAGEDELAY)
 			{
-				SetMugShotState("rampage", true);
+				SetMugShotState("rampage", !bNormal); //If we have nothing better to show use the rampage face.
 				return 0;
 			}
 
-			if(!bEvilGrin)
+			if(bNormal)
 			{
 				if((CPlayer->cheats & CF_GODMODE) || (CPlayer->mo != NULL && CPlayer->mo->flags2 & MF2_INVULNERABLE))
 					SetMugShotState("god");
 				else
 					SetMugShotState("normal");
+				bNormal = true; //SetMugShotState sets bNormal to false.
 			}
 		}
 		else
@@ -946,6 +965,8 @@ private:
 	int FaceHealth;
 	bool bEvilGrin;
 	bool bDamageFaceActive;
+	bool bNormal;
+	bool bOuchActive;
 };
 
 IMPLEMENT_CLASS(DDoomStatusBar)

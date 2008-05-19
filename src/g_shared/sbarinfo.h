@@ -216,6 +216,7 @@ enum //drawimage flags
 	DRAWIMAGE_OFFSET_CENTER = 256,
 	DRAWIMAGE_ARMOR = 512,
 	DRAWIMAGE_WEAPONICON = 1024,
+	DRAWIMAGE_SIGIL = 2048,
 };
 
 enum //drawnumber flags
@@ -238,6 +239,7 @@ enum //drawnumber flags
 	DRAWNUMBER_GLOBALVAR = 0x8000,
 	DRAWNUMBER_GLOBALARRAY = 0x10000,
 	DRAWNUMBER_FILLZEROS = 0x20000,
+	DRAWNUMBER_WHENNOTZERO = 0x40000,
 };
 
 enum //drawbar flags (will go into special2)
@@ -399,6 +401,8 @@ private:
 	MugShotState *currentState;
 	bool weaponGrin;
 	bool damageFaceActive;
+	bool mugshotNormal;
+	bool ouchActive;
 	int lastDamageAngle;
 	int rampageTimer;
 	int oldHealth;

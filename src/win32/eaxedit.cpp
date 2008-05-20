@@ -1348,7 +1348,7 @@ void ShowEAXEditor ()
 	EAXEditWindow = CreateDialog (g_hInst, MAKEINTRESOURCE(IDD_EAXEDIT), Window, EAXProc);
 }
 
-CCMD (eaxedit)
+CCMD (reverbedit)
 {
 	if (EAXEditWindow != 0)
 	{

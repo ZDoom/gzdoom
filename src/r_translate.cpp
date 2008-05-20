@@ -371,9 +371,9 @@ void R_InitTranslationTables ()
 			translationtables[TRANSLATION_Standard][1]->Remap[i] = 0x40 + (i&0xf);
 			translationtables[TRANSLATION_Standard][2]->Remap[i] = 0x20 + (i&0xf);
 
-			translationtables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[0x60 + (i&0xf)];
-			translationtables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[0x40 + (i&0xf)];
-			translationtables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[0x20 + (i&0xf)];
+			translationtables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[0x60 + (i&0xf)] | MAKEARGB(255,0,0,0);
+			translationtables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[0x40 + (i&0xf)] | MAKEARGB(255,0,0,0);
+			translationtables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[0x20 + (i&0xf)] | MAKEARGB(255,0,0,0);
 		}
 	}
 	else if (gameinfo.gametype == GAME_Heretic)
@@ -384,9 +384,9 @@ void R_InitTranslationTables ()
 			translationtables[TRANSLATION_Standard][1]->Remap[i] = 145+(i-225); // red
 			translationtables[TRANSLATION_Standard][2]->Remap[i] = 190+(i-225); // blue
 			
-			translationtables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[114+(i-225)];
-			translationtables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[145+(i-225)];
-			translationtables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[190+(i-225)];
+			translationtables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[114+(i-225)] | MAKEARGB(255,0,0,0);
+			translationtables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[145+(i-225)] | MAKEARGB(255,0,0,0);
+			translationtables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[190+(i-225)] | MAKEARGB(255,0,0,0);
 		}
 	}
 	else if (gameinfo.gametype == GAME_Strife)
@@ -444,7 +444,7 @@ void R_InitTranslationTables ()
 			for (int j = 0x20; j <= 0xFB; ++j)
 			{
 				translationtables[TRANSLATION_Standard][i]->Palette[j] =
-					GPalette.BaseColors[translationtables[TRANSLATION_Standard][i]->Remap[j]];
+					GPalette.BaseColors[translationtables[TRANSLATION_Standard][i]->Remap[j]] | MAKEARGB(255,0,0,0);
 			}
 		}
 	}
@@ -466,7 +466,7 @@ void R_InitTranslationTables ()
 		int b = GPalette.BaseColors[i].b;
 		int v = (r*77 + g*143 + b*37) >> 12;
 		remap->Remap[i] = IcePaletteRemap[v];
-		remap->Palette[i] = PalEntry(IcePalette[v][0], IcePalette[v][1], IcePalette[v][2]);
+		remap->Palette[i] = PalEntry(255, IcePalette[v][0], IcePalette[v][1], IcePalette[v][2]);
 	}
 
 	// set up shading tables for shaded columns
@@ -528,7 +528,7 @@ static void SetRemap(FRemapTable *table, int i, float r, float g, float b)
 	int ig = clamp (int(g * 255.f), 0, 255);
 	int ib = clamp (int(b * 255.f), 0, 255);
 	table->Remap[i] = ColorMatcher.Pick (ir, ig, ib);
-	table->Palette[i] = PalEntry(ir, ig, ib);
+	table->Palette[i] = PalEntry(255, ir, ig, ib);
 }
 
 static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *skin, FRemapTable *table, FRemapTable *alttable)
@@ -557,6 +557,10 @@ static void R_CreatePlayerTranslation (float h, float s, float v, FPlayerSkin *s
 			table->Remap[i] = i;
 		}
 		memcpy(table->Palette, GPalette.BaseColors, sizeof(table->Palette));
+	}
+	for (i = 1; i < 256; ++i)
+	{
+		table->Palette[i].a = 255;
 	}
 
 	// [GRB] Don't translate skins with color range 0-0 (APlayerPawn default)

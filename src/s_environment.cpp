@@ -8,7 +8,7 @@
 #include "w_wad.h"
 #include "i_system.h"
 
-struct FEAXField
+struct FReverbField
 {
 	int Min, Max;
 	float REVERB_PROPERTIES::*Float;
@@ -16,7 +16,7 @@ struct FEAXField
 	unsigned int Flag;
 };
 
-static const FEAXField EAXFields[] =
+static const FReverbField ReverbFields[] =
 {
 	{        0,       25, 0, &REVERB_PROPERTIES::Environment, 0 },
 	{     1000,   100000, &REVERB_PROPERTIES::EnvSize, 0, 0 },
@@ -56,9 +56,9 @@ static const FEAXField EAXFields[] =
 	{ 0, 0, 0, 0, 6 },
 	{ 0, 0, 0, 0, 7 }
 };
-#define NUM_EAX_FIELDS (int(countof(EAXFields)))
+#define NUM_REVERB_FIELDS (int(countof(ReverbFields)))
 
-static const char *EAXFieldNames[NUM_EAX_FIELDS+2] =
+static const char *ReverbFieldNames[NUM_REVERB_FIELDS+2] =
 {
 	"Environment",
 	"EnvironmentSize",
@@ -465,7 +465,7 @@ FArchive &operator<< (FArchive &arc, ReverbContainer *&env)
 	return arc;
 }
 
-static void ReadEAX (int lump)
+static void ReadReverbDef (int lump)
 {
 	FScanner sc;
 	const ReverbContainer *def;
@@ -473,7 +473,7 @@ static void ReadEAX (int lump)
 	REVERB_PROPERTIES props;
 	char *name;
 	int id1, id2, i, j;
-	bool inited[NUM_EAX_FIELDS];
+	bool inited[NUM_REVERB_FIELDS];
 	BYTE bools[32];
 
 	sc.OpenLumpNum(lump);
@@ -488,20 +488,20 @@ static void ReadEAX (int lump)
 		memset (inited, 0, sizeof(inited));
 		props.Instance = 0;
 		props.Flags = 0;
-		while (sc.MustGetString (), NUM_EAX_FIELDS > (i = sc.MustMatchString (EAXFieldNames)))
+		while (sc.MustGetString (), NUM_REVERB_FIELDS > (i = sc.MustMatchString (ReverbFieldNames)))
 		{
-			if (EAXFields[i].Float)
+			if (ReverbFields[i].Float)
 			{
 				sc.MustGetFloat ();
-				props.*EAXFields[i].Float = clamp (sc.Float,
-					double(EAXFields[i].Min)/1000,
-					double(EAXFields[i].Max)/1000);
+				props.*ReverbFields[i].Float = clamp (sc.Float,
+					double(ReverbFields[i].Min)/1000,
+					double(ReverbFields[i].Max)/1000);
 			}
-			else if (EAXFields[i].Int)
+			else if (ReverbFields[i].Int)
 			{
 				sc.MustGetNumber ();
-				props.*EAXFields[i].Int = (j = clamp (sc.Number,
-					EAXFields[i].Min, EAXFields[i].Max));
+				props.*ReverbFields[i].Int = (j = clamp (sc.Number,
+					ReverbFields[i].Min, ReverbFields[i].Max));
 				if (i == 0 && j != sc.Number)
 				{
 					sc.ScriptError ("The Environment field is out of range.");
@@ -510,7 +510,7 @@ static void ReadEAX (int lump)
 			else
 			{
 				sc.MustGetString ();
-				bools[EAXFields[i].Flag] = sc.MustMatchString (BoolNames);
+				bools[ReverbFields[i].Flag] = sc.MustMatchString (BoolNames);
 			}
 			inited[i] = true;
 		}
@@ -522,27 +522,27 @@ static void ReadEAX (int lump)
 		// Add the new environment to the list, filling in uninitialized fields
 		// with values from the standard environment specified.
 		def = DefaultEnvironments[props.Environment];
-		for (i = 0; i < NUM_EAX_FIELDS; ++i)
+		for (i = 0; i < NUM_REVERB_FIELDS; ++i)
 		{
-			if (EAXFields[i].Float)
+			if (ReverbFields[i].Float)
 			{
 				if (!inited[i])
 				{
-					props.*EAXFields[i].Float = def->Properties.*EAXFields[i].Float;
+					props.*ReverbFields[i].Float = def->Properties.*ReverbFields[i].Float;
 				}
 			}
-			else if (EAXFields[i].Int)
+			else if (ReverbFields[i].Int)
 			{
 				if (!inited[i])
 				{
-					props.*EAXFields[i].Int = def->Properties.*EAXFields[i].Int;
+					props.*ReverbFields[i].Int = def->Properties.*ReverbFields[i].Int;
 				}
 			}
 			else
 			{
 				if (!inited[i])
 				{
-					int mask = 1 << EAXFields[i].Flag;
+					int mask = 1 << ReverbFields[i].Flag;
 					if (def->Properties.Flags & mask)
 					{
 						props.Flags |= mask;
@@ -550,9 +550,9 @@ static void ReadEAX (int lump)
 				}
 				else
 				{
-					if (bools[EAXFields[i].Flag])
+					if (bools[ReverbFields[i].Flag])
 					{
-						props.Flags |= 1 << EAXFields[i].Flag;
+						props.Flags |= 1 << ReverbFields[i].Flag;
 					}
 				}
 			}
@@ -568,19 +568,19 @@ static void ReadEAX (int lump)
 	}
 }
 
-void S_ParseSndEax ()
+void S_ParseReverbDef ()
 {
 	int lump, lastlump = 0;
 
-	atterm (S_UnloadSndEax);
+	atterm (S_UnloadReverbDef);
 
-	while ((lump = Wads.FindLump ("SNDEAX", &lastlump)) != -1)
+	while ((lump = Wads.FindLump ("REVERBS", &lastlump)) != -1)
 	{
-		ReadEAX (lump);
+		ReadReverbDef (lump);
 	}
 }
 
-void S_UnloadSndEax ()
+void S_UnloadReverbDef ()
 {
 	ReverbContainer *probe = Environments;
 

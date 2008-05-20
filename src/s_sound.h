@@ -219,8 +219,8 @@ void S_UpdateSounds (void *listener);
 
 // [RH] S_sfx "maintenance" routines
 void S_ParseSndInfo ();
-void S_ParseSndEax ();
-void S_UnloadSndEax ();
+void S_ParseReverbDef ();
+void S_UnloadReverbDef ();
 
 void S_HashSounds ();
 int S_FindSound (const char *logicalname);

@@ -1,6 +1,6 @@
 /*
 ** a_soundenvironment.cpp
-** Actor that controls the EAX settings in its zone
+** Actor that controls the reverb settings in its zone
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit

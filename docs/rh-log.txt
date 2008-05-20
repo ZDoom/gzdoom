@@ -1,4 +1,14 @@
 May 19, 2008
+- Since KDIZD is the only mapset I know of that used reverb, and it didn't
+  define any new ones of its own, I'm pre-emptively renaming the SNDEAX lump
+  to REVERBS to remove any possible misunderstanding that this is something
+  that requires EAX hardware support. (Ideally, it would have been REVERBDEF,
+  but that's 10 characters long.) The eaxedit console command has also been
+  renamed to reverbedit for the same reason.
+- Fixed: The Palette part of FRemapTable was not initialized with alpha values
+  other than 0. I'm not sure if it would be better to fix this in the game
+  palette that it copies from or not, but right now, they get set
+  unconditionally to 255.
 - Fixed: M_DrawSave() and M_DrawLoad() need to use GetScaledWidth(), in case
   the texture is high-res.
 - Replaced all instances of "flags +=" in sbarinfo_parser.cpp with "flags |="

@@ -22,6 +22,7 @@ DFlashFader::DFlashFader (float r1, float g1, float b1, float a1,
 void DFlashFader::Destroy ()
 {
 	SetBlend (1.f);
+	Super::Destroy();
 }
 
 void DFlashFader::Serialize (FArchive &arc)

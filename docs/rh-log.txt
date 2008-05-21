@@ -1,4 +1,7 @@
 May 20, 2008
+- Fixed: With hardware 2D, the console and menu need not reimplement palette
+  flashes to ensure their visibility.
+- Fixed: DFlashFader::Destroy() did not call its super method.
 - Fixed: If a player was morphed into a class with a taller view height,
   their perceived view height would not change until they walked up a step.
 

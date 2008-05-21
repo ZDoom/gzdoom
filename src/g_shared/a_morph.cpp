@@ -73,6 +73,10 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 	{
 		morphed->special2 |= MF_JUSTHIT;
 	}
+	if (morphed->ViewHeight > p->viewheight && p->deltaviewheight == 0)
+	{ // If the new view height is higher than the old one, start moving toward it.
+		p->deltaviewheight = p->GetDeltaViewHeight();
+	}
 	morphed->flags  |= actor->flags & (MF_SHADOW|MF_NOGRAVITY);
 	morphed->flags2 |= actor->flags2 & MF2_FLY;
 	morphed->flags3 |= actor->flags3 & MF3_GHOST;

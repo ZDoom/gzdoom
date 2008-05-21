@@ -1,3 +1,7 @@
+May 20, 2008
+- Fixed: If a player was morphed into a class with a taller view height,
+  their perceived view height would not change until they walked up a step.
+
 May 19, 2008
 - Since KDIZD is the only mapset I know of that used reverb, and it didn't
   define any new ones of its own, I'm pre-emptively renaming the SNDEAX lump

@@ -315,7 +315,7 @@ void R_MapTiltedPlane (int y, int x1)
 {
 	int x2 = spanend[y];
 	int width = x2 - x1;
-	float iz, uz, vz;
+	double iz, uz, vz;
 	BYTE *fb;
 	DWORD u, v;
 	int i;
@@ -344,10 +344,10 @@ void R_MapTiltedPlane (int y, int x1)
 	i = 0;
 	do
 	{
-		float z = 1.f/iz;
+		double z = 1.f/iz;
 
-		u = toint (uz*z) + pviewx;
-		v = toint (vz*z) + pviewy;
+		u = SQWORD(uz*z) + pviewx;
+		v = SQWORD(vz*z) + pviewy;
 		ds_colormap = tiltlighting[i];
 		fb[i++] = ds_colormap[ds_source[(v >> vshift) | ((u >> ushift) & umask)]];
 		iz += plane_sz[0];
@@ -362,10 +362,10 @@ void R_MapTiltedPlane (int y, int x1)
 #define SPANSIZE 16
 #define INVSPAN	0.0625f
 
-	float startz = 1.f/iz;
-	float startu = uz*startz;
-	float startv = vz*startz;
-	float izstep, uzstep, vzstep;
+	double startz = 1.f/iz;
+	double startu = uz*startz;
+	double startv = vz*startz;
+	double izstep, uzstep, vzstep;
 
 	izstep = plane_sz[0] * SPANSIZE;
 	uzstep = plane_su[0] * SPANSIZE;
@@ -379,13 +379,13 @@ void R_MapTiltedPlane (int y, int x1)
 		uz += uzstep;
 		vz += vzstep;
 
-		float endz = 1.f/iz;
-		float endu = uz*endz;
-		float endv = vz*endz;
-		DWORD stepu = toint ((endu - startu) * INVSPAN);
-		DWORD stepv = toint ((endv - startv) * INVSPAN);
-		u = toint (startu) + pviewx;
-		v = toint (startv) + pviewy;
+		double endz = 1.f/iz;
+		double endu = uz*endz;
+		double endv = vz*endz;
+		DWORD stepu = SQWORD((endu - startu) * INVSPAN);
+		DWORD stepv = SQWORD((endv - startv) * INVSPAN);
+		u = SQWORD(startu) + pviewx;
+		v = SQWORD(startv) + pviewy;
 
 		for (i = SPANSIZE-1; i >= 0; i--)
 		{
@@ -403,25 +403,25 @@ void R_MapTiltedPlane (int y, int x1)
 	{
 		if (width == 1)
 		{
-			u = toint (startu);
-			v = toint (startv);
+			u = SQWORD(startu);
+			v = SQWORD(startv);
 			fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
 		}
 		else
 		{
-			float left = (float)width;
+			double left = width;
 			iz += plane_sz[0] * left;
 			uz += plane_su[0] * left;
 			vz += plane_sv[0] * left;
 
-			float endz = 1.f/iz;
-			float endu = uz*endz;
-			float endv = vz*endz;
+			double endz = 1.f/iz;
+			double endu = uz*endz;
+			double endv = vz*endz;
 			left = 1.f/left;
-			DWORD stepu = toint ((endu - startu) * left);
-			DWORD stepv = toint ((endv - startv) * left);
-			u = toint (startu) + pviewx;
-			v = toint (startv) + pviewy;
+			DWORD stepu = SQWORD((endu - startu) * left);
+			DWORD stepv = SQWORD((endv - startv) * left);
+			u = SQWORD(startu) + pviewx;
+			v = SQWORD(startv) + pviewy;
 
 			for (; width != 0; width--)
 			{
@@ -1447,66 +1447,59 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked)
 		/*, 0.0009765625f, 0.00048828125f, 0.000244140625f,
 		1.220703125e-4f, 6.103515625e-5, 3.0517578125e-5*/
 	};
-	float lxscale, lyscale;
-	float xscale, yscale;
-	fixed_t ixscale, iyscale;
-	angle_t ang;
+	double lxscale, lyscale;
+	double xscale, yscale;
 	FVector3 p, m, n;
-	fixed_t zeroheight;
+	double ang;
+	double zeroheight;
 
 	if (alpha <= 0)
 	{
 		return;
 	}
 
-	// p is the texture origin in view space
-	// Don't add in the offsets at this stage, because doing so can result in
-	// errors if the flat is rotated.
+	double vx = FIXED2FLOAT(viewx);
+	double vy = FIXED2FLOAT(viewy);
+	double vz = FIXED2FLOAT(viewz);
 
 	lxscale = FIXED2FLOAT(pl->xscale) * ifloatpow2[ds_xbits];
 	lyscale = FIXED2FLOAT(pl->yscale) * ifloatpow2[ds_ybits];
 	xscale = 64.f / lxscale;
 	yscale = 64.f / lyscale;
-	ixscale = quickertoint(xscale*65536.f);
-	iyscale = quickertoint(yscale*65536.f);
-	zeroheight = pl->height.ZatPoint (viewx, viewy);
+	zeroheight = pl->height.ZatPoint(vx, vy);
 
 	pviewx = MulScale (pl->xoffs, pl->xscale, ds_xbits);
 	pviewy = MulScale (pl->yoffs, pl->yscale, ds_ybits);
 
-	ang = (ANG270 - viewangle) >> ANGLETOFINESHIFT;
-//	Printf ("%u %d %d\n", ang, finecosine[ang], finesine[ang]);
-	p[0] = FIXED2FLOAT(DMulScale16 (viewx, finecosine[ang], -viewy, finesine[ang]));
-	p[2] = FIXED2FLOAT(DMulScale16 (viewx, finesine[ang], viewy, finecosine[ang]));
-//	double dang = 1.5*M_PI - double(viewangle)*M_PI/2147483648.0;
-//	double vx = viewx/65536.0, vy = viewy/65536.0;
-//	double dcos = cos(dang), dsin = sin(dang);
-//	p[0] = vx * dcos - vy * dsin;
-//	p[2] = vx * dsin + vy * dcos;
-	p[1] = FIXED2FLOAT(pl->height.ZatPoint (0, 0) - viewz);
+	// p is the texture origin in view space
+	// Don't add in the offsets at this stage, because doing so can result in
+	// errors if the flat is rotated.
+	ang = bam2rad(ANG270 - viewangle);
+	p[0] = vx * cos(ang) - vy * sin(ang);
+	p[2] = vx * sin(ang) + vy * cos(ang);
+	p[1] = pl->height.ZatPoint(0.0, 0.0) - vz;
 
 	// m is the v direction vector in view space
-	ang = (ANG180 - viewangle - pl->angle) >> ANGLETOFINESHIFT;
-	m[0] = yscale * FIXED2FLOAT(finecosine[ang]);
-	m[2] = yscale * FIXED2FLOAT(finesine[ang]);
+	ang = bam2rad(ANG180 - viewangle - pl->angle);
+	m[0] = yscale * cos(ang);
+	m[2] = yscale * sin(ang);
 //	m[1] = FIXED2FLOAT(pl->height.ZatPoint (0, iyscale) - pl->height.ZatPoint (0,0));
 //	VectorScale2 (m, 64.f/VectorLength(m));
 
 	// n is the u direction vector in view space
-	ang = (ang + (ANG90>>ANGLETOFINESHIFT)) & FINEMASK;
-	n[0] = -xscale * FIXED2FLOAT(finecosine[ang]);
-	n[2] = -xscale * FIXED2FLOAT(finesine[ang]);
+	ang += PI/2;
+	n[0] = -xscale * cos(ang);
+	n[2] = -xscale * sin(ang);
 //	n[1] = FIXED2FLOAT(pl->height.ZatPoint (ixscale, 0) - pl->height.ZatPoint (0,0));
 //	VectorScale2 (n, 64.f/VectorLength(n));
 
-	ang = pl->angle >> ANGLETOFINESHIFT;
-	m[1] = FIXED2FLOAT(pl->height.ZatPoint (
-		viewx + MulScale16 (iyscale, finesine[ang]),
-		viewy + MulScale16 (iyscale, finecosine[ang])) - zeroheight);
-	ang = (pl->angle + ANGLE_90) >> ANGLETOFINESHIFT;
-	n[1] = FIXED2FLOAT(pl->height.ZatPoint (
-		viewx + MulScale16 (ixscale, finesine[ang]),
-		viewy + MulScale16 (ixscale, finecosine[ang])) - zeroheight);
+	// This code keeps the texture coordinates constant across the x,y plane no matter
+	// how much you slope the surface. Use the commented-out code above instead to keep
+	// the textures a constant size across the surface's plane instead.
+	ang = bam2rad(pl->angle);
+	m[1] = pl->height.ZatPoint(vx + yscale * sin(ang), vy + yscale * cos(ang)) - zeroheight;
+	ang += PI/2;
+	n[1] = pl->height.ZatPoint(vx + xscale * sin(ang), vy + xscale * cos(ang)) - zeroheight;
 
 	plane_su = p ^ m;
 	plane_sv = p ^ n;

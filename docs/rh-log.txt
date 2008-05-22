@@ -1,3 +1,12 @@
+May 21, 2008
+- Fixed: When R_DrawTiltedPlane() calculates the p vector, it can overflow
+  if the view is near the bounds of the fixed point coordinate system. This
+  happens because it rotates the view position around (0,0) according to
+  the current viewangle, so the resultant coordinate may be outside the
+  bounds of fixed point. All important math in this function is now done
+  entirely in floating point.
+- Fixed: Slopes didn't draw right on 64-bit platforms.
+
 May 20, 2008
 - Fixed: With hardware 2D, the console and menu need not reimplement palette
   flashes to ensure their visibility.

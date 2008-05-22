@@ -343,7 +343,7 @@ __forceinline SDWORD ksgn (SDWORD a)
 
 __forceinline int toint (float v)
 {
-	QWORD res;
+	SQWORD res;
 	__asm fld v;
 	__asm fistp res;
 	return (int)res;
@@ -351,7 +351,7 @@ __forceinline int toint (float v)
 
 __forceinline int quickertoint (float v)
 {
-	DWORD res;
+	SDWORD res;
 	__asm fld v;
 	__asm fistp res;
 	return (int)res;

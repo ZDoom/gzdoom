@@ -120,4 +120,9 @@ inline int SlopeDiv (unsigned int num, unsigned den)
 	return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
+inline double bam2rad(angle_t ang)
+{
+	return double(ang >> 1) * (PI / ANGLE_90);
+}
+
 #endif // __TABLES_H__

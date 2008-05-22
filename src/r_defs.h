@@ -140,6 +140,12 @@ struct secplane_t
 		return FixedMul (ic, -d - DMulScale16 (a, x, b, y));
 	}
 
+	// Returns the value of z at (x,y) as a double
+	double ZatPoint (double x, double y) const
+	{
+		return (d + a*x + b*y) * ic / (-65536.0 * 65536.0);
+	}
+
 	// Returns the value of z at vertex v
 	fixed_t ZatPoint (const vertex_t *v) const
 	{

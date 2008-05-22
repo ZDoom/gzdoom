@@ -2552,7 +2552,6 @@ void AActor::Tick ()
 	}
 	else
 	{
-
 		AInventory * item = Inventory;
 
 		// Handle powerup effects here so that the order is controlled

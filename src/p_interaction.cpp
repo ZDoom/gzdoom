@@ -317,8 +317,40 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 //
 EXTERN_CVAR (Int, fraglimit)
 
+static int GibHealth(AActor *actor)
+{
+	return -abs(
+		actor->GetClass()->Meta.GetMetaInt (
+			AMETA_GibHealth,
+			gameinfo.gametype == GAME_Doom ?
+				-actor->GetDefault()->health :
+				-actor->GetDefault()->health/2));
+}
+
 void AActor::Die (AActor *source, AActor *inflictor)
 {
+	// Handle possible unmorph on death
+	bool wasgibbed = (health < GibHealth(this));
+	AActor *realthis = NULL;
+	int realstyle = 0;
+	int realhealth = 0;
+	if (P_MorphedDeath(this, &realthis, &realstyle, &realhealth))
+	{
+		if (!(realstyle & MORPH_UNDOBYDEATHSAVES))
+		{
+			if (wasgibbed)
+			{
+				int realgibhealth = GibHealth(realthis);
+				if (realthis->health >= realgibhealth)
+				{
+					realthis->health = realgibhealth -1; // if morphed was gibbed, so must original be (where allowed)
+				}
+			}
+			realthis->Die(source, inflictor);
+		}
+		return;
+	}
+
 	// [SO] 9/2/02 -- It's rather funny to see an exploded player body with the invuln sparkle active :) 
 	effects &= ~FX_RESPAWNINVUL;
 	//flags &= ~MF_INVINCIBLE;
@@ -634,8 +666,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	{
 		int flags4 = inflictor == NULL ? 0 : inflictor->flags4;
 
-		int gibhealth = -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth,
-			gameinfo.gametype == GAME_Doom ? -GetDefault()->health : -GetDefault()->health/2));
+		int gibhealth = GibHealth(this);
 		
 		// Don't pass on a damage type this actor cannot handle.
 		// (most importantly, prevent barrels from passing on ice damage.)

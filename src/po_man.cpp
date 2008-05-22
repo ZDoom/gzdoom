@@ -23,6 +23,7 @@
 #include "s_sndseq.h"
 #include "a_sharedglobal.h"
 #include "r_main.h"
+#include "p_lnspec.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1172,8 +1173,8 @@ static void InitSegLists ()
 		if (segs[i].linedef != NULL)
 		{
 			SegListHead[segs[i].v1 - vertexes] = i;
-			if ((segs[i].linedef->special == PO_LINE_START ||
-				segs[i].linedef->special == PO_LINE_EXPLICIT))
+			if ((segs[i].linedef->special == Polyobj_StartLine ||
+				segs[i].linedef->special == Polyobj_ExplicitLine))
 			{
 				KnownPolySegs.Push (i);
 			}
@@ -1265,7 +1266,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 			continue;
 		}
 		
-		if (segs[i].linedef->special == PO_LINE_START &&
+		if (segs[i].linedef->special == Polyobj_StartLine &&
 			segs[i].linedef->args[0] == tag)
 		{
 			if (polyobjs[index].segs)
@@ -1306,7 +1307,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 				i = KnownPolySegs[ii];
 
 				if (i >= 0 &&
-					segs[i].linedef->special == PO_LINE_EXPLICIT &&
+					segs[i].linedef->special == Polyobj_ExplicitLine &&
 					segs[i].linedef->args[0] == tag)
 				{
 					if (!segs[i].linedef->args[1])
@@ -1327,7 +1328,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 			{
 				i = KnownPolySegs[ii];
 				if (i >= 0 &&
-					segs[i].linedef->special == PO_LINE_EXPLICIT &&
+					segs[i].linedef->special == Polyobj_ExplicitLine &&
 					segs[i].linedef->args[0] == tag && segs[i].linedef->args[1] == j)
 				{
 					segs[i].linedef->special = 0;
@@ -1344,7 +1345,7 @@ static void SpawnPolyobj (int index, int tag, int type)
 				{
 					i = KnownPolySegs[ii];
 					if (i >= 0 &&
-						segs[i].linedef->special == PO_LINE_EXPLICIT &&
+						segs[i].linedef->special == Polyobj_ExplicitLine &&
 						segs[i].linedef->args[0] == tag)
 					{
 						I_Error ("SpawnPolyobj: Missing explicit line %d for poly %d\n",

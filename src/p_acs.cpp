@@ -5351,8 +5351,129 @@ int DLevelScript::RunScript ()
 				}
 			}
 			break;
-		}
-	}
+
+		case PCD_MORPHACTOR:
+			{
+				int tag = STACK(7);
+				FName playerclass_name = FBehavior::StaticLookupString(STACK(6));
+				const PClass *playerclass = PClass::FindClass (playerclass_name);
+				FName monsterclass_name = FBehavior::StaticLookupString(STACK(5));
+				const PClass *monsterclass = PClass::FindClass (monsterclass_name);
+				int duration = STACK(4);
+				int style = STACK(3);
+				FName morphflash_name = FBehavior::StaticLookupString(STACK(2));
+				const PClass *morphflash = PClass::FindClass (morphflash_name);
+				FName unmorphflash_name = FBehavior::StaticLookupString(STACK(1));
+				const PClass *unmorphflash = PClass::FindClass (unmorphflash_name);
+				int changes = 0;
+
+				if (tag == 0)
+				{
+					if (activator->player)
+					{
+						if (P_MorphPlayer(activator->player, activator->player, playerclass, duration, style, morphflash, unmorphflash))
+						{
+							changes++;
+						}
+					}
+					else
+					{
+						if (P_MorphMonster(activator, monsterclass, duration, style, morphflash, unmorphflash))
+						{
+							changes++;
+						}
+					}
+				}
+				else
+				{
+					FActorIterator iterator (tag);
+					AActor *actor;
+
+					while ( (actor = iterator.Next ()) )
+					{
+						if (actor->player)
+						{
+							if (P_MorphPlayer(activator->player, actor->player, playerclass, duration, style, morphflash, unmorphflash))
+							{
+								changes++;
+							}
+						}
+						else
+						{
+							if (P_MorphMonster(actor, monsterclass, duration, style, morphflash, unmorphflash))
+							{
+								changes++;
+							}
+						}
+					}
+				}
+
+				STACK(7) = changes;
+				sp -= 6;
+			}	
+			break;
+
+		case PCD_UNMORPHACTOR:
+			{
+				int tag = STACK(2);
+				bool force = !!STACK(1);
+				int changes = 0;
+
+				if (tag == 0)
+				{
+					if (activator->player)
+					{
+						if (P_UndoPlayerMorph(activator->player, activator->player, force))
+						{
+							changes++;
+						}
+					}
+					else
+					{
+						if (activator->GetClass()->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
+						{
+							AMorphedMonster *morphed_actor = barrier_cast<AMorphedMonster *>(activator);
+							if (P_UndoMonsterMorph(morphed_actor, force))
+							{
+								changes++;
+							}
+						}
+					}
+				}
+				else
+				{
+					FActorIterator iterator (tag);
+					AActor *actor;
+
+					while ( (actor = iterator.Next ()) )
+					{
+						if (actor->player)
+						{
+							if (P_UndoPlayerMorph(activator->player, actor->player, force))
+							{
+								changes++;
+							}
+						}
+						else
+						{
+							if (actor->GetClass()->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
+							{
+								AMorphedMonster *morphed_actor = static_cast<AMorphedMonster *>(actor);
+								if (P_UndoMonsterMorph(morphed_actor, force))
+								{
+									changes++;
+								}
+							}
+						}
+					}
+				}
+
+				STACK(2) = changes;
+				sp -= 1;
+			}	
+			break;
+ 		}
+ 	}
 
 	if (state == SCRIPT_DivideBy0)
 	{

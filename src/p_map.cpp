@@ -608,8 +608,7 @@ bool PIT_CheckLine (line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		// better than Strife's handling of rails, which lets you jump into rails
 		// from either side. How long until somebody reports this as a bug and I'm
 		// forced to say, "It's not a bug. It's a feature?" Ugh.
-		(gameinfo.gametype != GAME_Strife ||
-		 level.flags & LEVEL_HEXENFORMAT ||
+		(!(level.flags & LEVEL_RAILINGHACK) ||
 		 open.bottom == tm.thing->Sector->floorplane.ZatPoint (sx, sy)))
 	{
 		open.bottom += 32*FRACUNIT;
@@ -3599,6 +3598,7 @@ void P_RadiusAttack (AActor *bombspot, AActor *bombsource, int bombdamage, int b
 
 struct FChangePosition
 {
+	sector_t *sector;
 	int moveamt;
 	int crushchange;
 	bool nofit;
@@ -3953,7 +3953,7 @@ void PIT_FloorDrop (AActor *thing, FChangePosition *cpos)
 			P_CheckFakeFloorTriggers (thing, oldz);
 		}
 		else if ((thing->flags & MF_NOGRAVITY) ||
-			((!(level.flags & LEVEL_HEXENFORMAT) || cpos->moveamt < 9*FRACUNIT)
+			(((cpos->sector->Flags & SECF_FLOORDROP) || cpos->moveamt < 9*FRACUNIT)
 			 && thing->z - thing->floorz <= cpos->moveamt))
 		{
 			thing->z = thing->floorz;
@@ -4104,6 +4104,7 @@ bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil, boo
 	cpos.crushchange = crunch;
 	cpos.moveamt = abs (amt);
 	cpos.movemidtex = false;
+	cpos.sector = sector;
 
 	// [RH] Use different functions for the four different types of sector
 	// movement. Also update the soundorg's z-coordinate for 3D sound.

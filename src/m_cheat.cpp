@@ -291,7 +291,7 @@ void cht_DoCheat (player_t *player, int cheat)
 
 				if (player->morphTics > 0)
 				{
-					P_UndoPlayerMorph(player);
+					P_UndoPlayerMorph(player, player);
 				}
 
 			}
@@ -438,7 +438,7 @@ const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickund
 
 	if (player->morphTics)
 	{
-		if (P_UndoPlayerMorph (player))
+		if (P_UndoPlayerMorph (player, player))
 		{
 			if (!quickundo && oldclass != morphclass && P_MorphPlayer (player, player, morphclass, 0, style))
 			{

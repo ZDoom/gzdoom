@@ -267,7 +267,7 @@ protected:
 	void InitEffect ();
 	void EndEffect ();
 	// Variables
-	player_s *player;
+	player_s *Player;
 };
 
 #endif //__A_ARTIFACTS_H__

@@ -63,6 +63,13 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 
 	morphed = static_cast<APlayerPawn *>(Spawn (spawntype, actor->x, actor->y, actor->z, NO_REPLACE));
 	DObject::StaticPointerSubstitution (actor, morphed);
+	if ((actor->tid != 0) && (style & MORPH_NEWTIDBEHAVIOUR))
+	{
+		morphed->tid = actor->tid;
+		morphed->AddToHash ();
+		actor->RemoveFromHash ();
+		actor->tid = 0;
+	}
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
 	morphed->tracer = actor;
@@ -159,7 +166,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 //
 //----------------------------------------------------------------------------
 
-bool P_UndoPlayerMorph (player_t *player, bool force)
+bool P_UndoPlayerMorph (player_s *activator, player_t *player, bool force)
 {
 	AWeapon *beastweap;
 	APlayerPawn *mo;
@@ -177,11 +184,19 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	{
 		return false;
 	}
+
+	if ((pmo->flags2 & MF2_INVULNERABLE) && ((player != activator) || (!(player->MorphStyle & MORPH_WHENINVULNERABLE))))
+	{ // Immune when invulnerable unless this is something we initiated.
+		// If the WORLD is the initiator, the same player should be given
+		// as the activator; WORLD initiated actions should always succeed.
+		return false;
+	}
+
 	mo = barrier_cast<APlayerPawn *>(pmo->tracer);
 	mo->SetOrigin (pmo->x, pmo->y, pmo->z);
 	mo->flags |= MF_SOLID;
 	pmo->flags &= ~MF_SOLID;
-	if (!force && P_TestMobjLocation (mo) == false)
+	if (!force && !P_TestMobjLocation (mo))
 	{ // Didn't fit
 		mo->flags &= ~MF_SOLID;
 		pmo->flags |= MF_SOLID;
@@ -192,6 +207,11 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 
 	mo->ObtainInventory (pmo);
 	DObject::StaticPointerSubstitution (pmo, mo);
+	if ((pmo->tid != 0) && (player->MorphStyle & MORPH_NEWTIDBEHAVIOUR))
+	{
+		mo->tid = pmo->tid;
+		mo->AddToHash ();
+	}
 	mo->angle = pmo->angle;
 	mo->player = player;
 	mo->reactiontime = 18;
@@ -211,6 +231,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 
 	const PClass *exit_flash = player->MorphExitFlash;
 	bool correctweapon = !!(player->MorphStyle & MORPH_LOSEACTUALWEAPON);
+	bool undobydeathsaves = !!(player->MorphStyle & MORPH_UNDOBYDEATHSAVES);
 
 	player->morphTics = 0;
 	player->MorphedPlayerClass = 0;
@@ -222,7 +243,16 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	{
 		level2->Destroy ();
 	}
-	player->health = mo->health = mo->GetDefault()->health;
+
+	if ((player->health > 0) || undobydeathsaves)
+	{
+		player->health = mo->health = mo->GetDefault()->health;
+	}
+	else // killed when morphed so stay dead
+	{
+		mo->health = player->health;
+	}
+
 	player->mo = mo;
 	if (player->camera == pmo)
 	{
@@ -363,18 +393,17 @@ bool P_MorphMonster (AActor *actor, const PClass *spawntype, int duration, int s
 
 //----------------------------------------------------------------------------
 //
-// FUNC P_UpdateMorphedMonster
+// FUNC P_UndoMonsterMorph
 //
 // Returns true if the monster unmorphs.
 //
 //----------------------------------------------------------------------------
 
-bool P_UpdateMorphedMonster (AMorphedMonster *beast)
+bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 {
 	AActor *actor;
 
-	if (beast->UnmorphTime == 0 ||
-		beast->UnmorphTime > level.time ||
+	if (beast->UnmorphTime == 0 || 
 		beast->UnmorphedMe == NULL ||
 		beast->flags3 & MF3_STAYMORPHED)
 	{
@@ -384,7 +413,7 @@ bool P_UpdateMorphedMonster (AMorphedMonster *beast)
 	actor->SetOrigin (beast->x, beast->y, beast->z);
 	actor->flags |= MF_SOLID;
 	beast->flags &= ~MF_SOLID;
-	if (P_TestMobjLocation (actor) == false)
+	if (!force && !P_TestMobjLocation (actor))
 	{ // Didn't fit
 		actor->flags &= ~MF_SOLID;
 		beast->flags |= MF_SOLID;
@@ -415,6 +444,82 @@ bool P_UpdateMorphedMonster (AMorphedMonster *beast)
 	beast->Destroy ();
 	Spawn(exit_flash, beast->x, beast->y, beast->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	return true;
+}
+
+//----------------------------------------------------------------------------
+//
+// FUNC P_UpdateMorphedMonster
+//
+// Returns true if the monster unmorphs.
+//
+//----------------------------------------------------------------------------
+
+bool P_UpdateMorphedMonster (AMorphedMonster *beast)
+{
+	if (beast->UnmorphTime > level.time)
+	{
+		return false;
+	}
+	return P_UndoMonsterMorph (beast);
+}
+
+//----------------------------------------------------------------------------
+//
+// FUNC P_MorphedDeath
+//
+// Unmorphs the actor if possible.
+// Returns the unmorphed actor, the style with which they were morphed and the
+// health (of the AActor, not the player_s) they last had before unmorphing.
+//
+//----------------------------------------------------------------------------
+
+bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *morphedhealth)
+{
+	// May be a morphed player
+	if ((actor->player) &&
+		(actor->player->morphTics) &&
+		(actor->player->MorphStyle & MORPH_UNDOBYDEATH) &&
+		(actor->player->mo) &&
+		(actor->player->mo->tracer))
+	{
+		AActor *realme = actor->player->mo->tracer;
+		int realstyle = actor->player->MorphStyle;
+		int realhealth = actor->health;
+		if (P_UndoPlayerMorph(actor->player, actor->player, !!(actor->player->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
+		{
+			*morphed = realme;
+			*morphedstyle = realstyle;
+			*morphedhealth = realhealth;
+			return true;
+		}
+		return false;
+	}
+
+	// May be a morphed monster
+	if (actor->GetClass()->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
+	{
+		AMorphedMonster *fakeme = static_cast<AMorphedMonster *>(actor);
+		if ((fakeme->UnmorphTime) &&
+			(fakeme->MorphStyle & MORPH_UNDOBYDEATH) &&
+			(fakeme->UnmorphedMe))
+		{
+			AActor *realme = fakeme->UnmorphedMe;
+			int realstyle = fakeme->MorphStyle;
+			int realhealth = fakeme->health;
+			if (P_UndoMonsterMorph(fakeme, !!(fakeme->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
+			{
+				*morphed = realme;
+				*morphedstyle = realstyle;
+				*morphedhealth = realhealth;
+				return true;
+			}
+		}
+		fakeme->flags3 |= MF3_STAYMORPHED; // moved here from AMorphedMonster::Die()
+		return false;
+	}
+
+	// Not a morphed player or monster
+	return false;
 }
 
 // Base class for morphing projectiles --------------------------------------
@@ -479,7 +584,11 @@ void AMorphedMonster::Destroy ()
 void AMorphedMonster::Die (AActor *source, AActor *inflictor)
 {
 	// Dead things don't unmorph
-	flags3 |= MF3_STAYMORPHED;
+//	flags3 |= MF3_STAYMORPHED;
+	// [MH]
+	// But they can now, so that line above has been
+	// moved into P_MorphedDeath() and is now set by
+	// that function if and only if it is needed.
 	Super::Die (source, inflictor);
 	if (UnmorphedMe != NULL && (UnmorphedMe->flags & MF_UNMORPHED))
 	{

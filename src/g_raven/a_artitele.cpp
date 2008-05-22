@@ -62,7 +62,7 @@ bool AArtiTeleport::Use (bool pickup)
 	bool canlaugh = true;
  	if (Owner->player->morphTics && (Owner->player->MorphStyle & MORPH_UNDOBYCHAOSDEVICE))
  	{ // Teleporting away will undo any morph effects (pig)
-		if (!P_UndoPlayerMorph (Owner->player) && (Owner->player->MorphStyle & MORPH_FAILNOLAUGH))
+		if (!P_UndoPlayerMorph (Owner->player, Owner->player) && (Owner->player->MorphStyle & MORPH_FAILNOLAUGH))
 		{
 			canlaugh = false;
 		}

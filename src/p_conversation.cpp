@@ -236,6 +236,7 @@ static void LoadScriptFile (const char *name)
 	lump = Wads.ReopenLumpNum (lumpnum);
 
 	LoadScriptFile(lump, Wads.LumpLength(lumpnum));
+	delete lump;
 }
 
 static void LoadScriptFile(FileReader *lump, int numnodes)
@@ -278,7 +279,6 @@ static void LoadScriptFile(FileReader *lump, int numnodes)
 		}
 		StrifeDialogues.Push (node);
 	}
-	delete lump;
 }
 
 //============================================================================

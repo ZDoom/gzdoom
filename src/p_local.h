@@ -564,9 +564,6 @@ enum
 	PO_SPAWNHURT_TYPE
 };
 
-#define PO_LINE_START 1 // polyobj line start special
-#define PO_LINE_EXPLICIT 5
-
 extern polyobj_t *polyobjs; // list of all poly-objects on the level
 extern int po_NumPolyobjs;
 extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn

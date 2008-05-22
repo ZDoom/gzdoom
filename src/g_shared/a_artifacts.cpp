@@ -1740,7 +1740,7 @@ void APowerMorph::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << PlayerClass << MorphStyle << MorphFlash << UnMorphFlash;
-	arc << player;
+	arc << Player;
 }
 
 //===========================================================================
@@ -1761,7 +1761,7 @@ void APowerMorph::InitEffect( )
 		{
 			Owner = realplayer->mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet
 			ItemFlags |= IF_CREATECOPYMOVED;	// Let the caller know the "real" owner has changed (to the morphed actor)
-			player = realplayer;				// Store the player identity (morphing clears the unmorphed actor's "player" field)
+			Player = realplayer;				// Store the player identity (morphing clears the unmorphed actor's "player" field)
 		}
 		else // morph failed - give the caller an opportunity to fail the pickup completely
 		{
@@ -1778,23 +1778,45 @@ void APowerMorph::InitEffect( )
 
 void APowerMorph::EndEffect( )
 {
-	if (Owner != NULL && player != NULL)
+	// Abort if owner already destroyed
+	if (Owner == NULL)
 	{
-		int savedMorphTics = player->morphTics;
-		P_UndoPlayerMorph (player);
-		if (player->morphTics /*failed*/)
-		{
-			// Transfer retry timeout
-			// to the powerup's timer.
-			EffectTics = player->morphTics;
-			// Reload negative morph tics;
-			// use actual value; it may
-			// be in use for animation.
-			player->morphTics = savedMorphTics;
-		}
-		else // unmorph succeeded
-		{
-			player = NULL;
-		}
+		assert(Player == NULL);
+		return;
 	}
+	
+	// Abort if owner already unmorphed
+	if (Player == NULL)
+	{
+		return;
+	}
+
+	// Abort if owner is dead; their Die() method will
+	// take care of any required unmorphing on death.
+	if (Player->health <= 0)
+	{
+		return;
+	}
+
+	// Unmorph if possible
+	int savedMorphTics = Player->morphTics;
+	P_UndoPlayerMorph (Player, Player);
+
+	// Abort if unmorph failed; in that case,
+	// set the usual retry timer and return.
+	if (Player->morphTics)
+	{
+		// Transfer retry timeout
+		// to the powerup's timer.
+		EffectTics = Player->morphTics;
+		// Reload negative morph tics;
+		// use actual value; it may
+		// be in use for animation.
+		Player->morphTics = savedMorphTics;
+		// Try again some time later
+		return;
+	}
+
+	// Unmorph suceeded
+	Player = NULL;
 }

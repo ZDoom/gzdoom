@@ -2,7 +2,7 @@
 #define __A_MORPH__
 
 #define MORPHTICS (40*TICRATE)
-#define MAXMORPHHEALTH	30
+#define MAXMORPHHEALTH 30
 
 // Morph style states how morphing affects health and
 // other effects in the game; only valid for players.
@@ -11,25 +11,32 @@
 enum
 {
 	MORPH_OLDEFFECTS		= 0x00000000,	// Default to old Heretic/HeXen behaviour unless flags given
-	MORPH_ADDSTAMINA		= 0x00000001,	// Power instead of curse (add stamina instead of limiting to health)
-	MORPH_FULLHEALTH		= 0x00000002,	// New health semantics (!POWER => MaxHealth of animal, POWER => Normal health behaviour)
+	MORPH_ADDSTAMINA		= 0x00000001,	// Player has a "power" instead of a "curse" (add stamina instead of limiting to health)
+	MORPH_FULLHEALTH		= 0x00000002,	// Player uses new health semantics (!POWER => MaxHealth of animal, POWER => Normal health behaviour)
 	MORPH_UNDOBYTOMEOFPOWER	= 0x00000004,	// Player unmorphs upon activating a Tome of Power
 	MORPH_UNDOBYCHAOSDEVICE	= 0x00000008,	// Player unmorphs upon activating a Chaos Device
 	MORPH_FAILNOTELEFRAG	= 0x00000010,	// Player stays morphed if unmorph by Tome of Power fails
 	MORPH_FAILNOLAUGH		= 0x00000020,	// Player doesn't laugh if unmorph by Chaos Device fails
-	MORPH_WHENINVULNERABLE	= 0x00000040,	// Player can morph when invulnerable but ONLY if doing it to themselves
-	MORPH_LOSEACTUALWEAPON	= 0X00000080	// Player loses specified morph weapon only (not "whichever they have when unmorphing")
+	MORPH_WHENINVULNERABLE	= 0x00000040,	// Player can morph (or scripted unmorph) when invulnerable but ONLY if doing it to themselves
+	MORPH_LOSEACTUALWEAPON	= 0x00000080,	// Player loses specified morph weapon only (not "whichever they have when unmorphing")
+	MORPH_NEWTIDBEHAVIOUR	= 0x00000100,	// Actor TID is by default transferred from the old actor to the new actor
+	MORPH_UNDOBYDEATH		= 0x00000200,	// Actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
+	MORPH_UNDOBYDEATHFORCED	= 0x00000400,	// Actor (if unmorphed when killed) forces unmorph (not very useful with UNDOBYDEATHSAVES)
+	MORPH_UNDOBYDEATHSAVES	= 0x00000800,	// Actor (if unmorphed when killed) regains their health and doesn't die
 };
 
 struct PClass;
 class AActor;
 class player_s;
+class AMorphedMonster;
 
 bool P_MorphPlayer (player_s *activator, player_s *player, const PClass *morphclass, int duration = 0, int style = 0,
 					const PClass *enter_flash = NULL, const PClass *exit_flash = NULL);
-bool P_UndoPlayerMorph (player_s *player, bool force = false);
+bool P_UndoPlayerMorph (player_s *activator, player_s *player, bool force = false);
 bool P_MorphMonster (AActor *actor, const PClass *morphclass, int duration = 0, int style = 0,
 					 const PClass *enter_flash = NULL, const PClass *exit_flash = NULL);
+bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force = false);
 bool P_UpdateMorphedMonster (AActor *actor);
+bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *morphedhealth);
 
 #endif //__A_MORPH__

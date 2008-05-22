@@ -40,6 +40,67 @@
 #include "p_lnspec.h"
 #include "templates.h"
 #include "i_system.h"
+#include "gi.h"
+
+// These tables define whichline an
+static char HexenLineSpecialOk[]={
+	1,1,1,1,1,1,1,1,1,0,	// 0-9
+	1,1,1,1,0,0,0,0,0,0,	// 10-19
+	1,1,1,1,1,1,1,1,1,1,	// 20-29
+	1,1,1,0,0,1,1,0,0,0,	// 30-39
+	1,1,1,1,1,1,1,0,0,0,	// 40-49
+	0,0,0,0,0,0,0,0,0,0,	// 50-59
+	1,1,1,1,1,1,1,1,1,1,	// 60-69
+	1,1,1,1,1,1,0,0,0,0,	// 70-79
+	1,1,1,1,0,0,0,0,0,0,	// 80-89
+	1,1,1,1,1,1,1,0,0,0,	// 90-99
+	1,1,1,1,0,0,0,0,0,1,	// 100-109
+	1,1,1,1,1,1,1,0,0,0,	// 110-119
+	1,0,0,0,0,0,0,0,0,1,	// 120-129
+	1,1,1,1,1,1,1,1,1,0,	// 130-139
+	1
+	// 140 is the highest valid special in Hexen.
+
+};
+
+static char HexenSectorSpecialOk[256]={
+	1,1,1,1,1,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,1,1,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	1,1,1,1,1,1,1,1,1,1,
+	1,1,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,1,1,
+	1,1,1,1,1,1,1,1,1,1,
+	1,1,1,1,1,
+};
+
+
+enum
+{
+	Dm=1,
+	Ht=2,
+	Hx=4,
+	St=8,
+	Zd=16,
+	Zdt=32,
+
+	// will be extended later. Unknown namespaces will always be treated like the base
+	// namespace for each game
+};
+
 
 void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, mapsidedef_t *msd, int special, int tag, short *alpha);
 void P_AdjustLine (line_t *ld);
@@ -49,12 +110,17 @@ extern bool		ForceNodeBuild;
 extern TArray<FMapThing> MapThingsConverted;
 extern TArray<int>		linemap;
 
+
+#define CHECK_N(f) if (!(namespace_bits&(f))) break;
+
 struct UDMFParser
 {
 	FScanner sc;
 	FName namespc;
+	int namespace_bits;
 	bool isTranslated;
 	bool isExtended;
+	bool floordrop;
 
 	TArray<line_t> ParsedLines;
 	TArray<side_t> ParsedSides;
@@ -70,60 +136,126 @@ struct UDMFParser
 		fogMap = normMap = NULL;
 	}
 
-	void Flag(DWORD &value, int mask, const FString &svalue)
+	FName ParseKey()
 	{
-		if (!svalue.CompareNoCase("true"))
+		sc.MustGetString();
+		FName key = sc.String;
+		sc.MustGetToken('=');
+
+		sc.Number = 0;
+		sc.Float = 0;
+		sc.MustGetAnyToken();
+
+		if (sc.TokenType == '+' || sc.TokenType == '-')
 		{
-			value |= mask;
+			bool neg = (sc.TokenType == '-');
+			sc.MustGetAnyToken();
+			if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
+			{
+				sc.ScriptMessage("Numeric constant expected");
+			}
+			if (neg)
+			{
+				sc.Number = -sc.Number;
+				sc.Float = -sc.Float;
+			}
 		}
-		else
+		return key;
+	}
+
+	int CheckInt(const char *key)
+	{
+		if (sc.TokenType != TK_IntConst)
 		{
-			value &= ~mask;
+			sc.ScriptMessage("Integer value expected for key '%s'", key);
 		}
+		return sc.Number;
+	}
+
+	double CheckFloat(const char *key)
+	{
+		if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
+		{
+			sc.ScriptMessage("Floatint point value expected for key '%s'", key);
+		}
+		return sc.Float;
+	}
+
+	fixed_t CheckFixed(const char *key)
+	{
+		return FLOAT2FIXED(CheckFloat(key));
+	}
+
+	bool CheckBool(const char *key)
+	{
+		if (sc.TokenType == TK_True) return true;
+		if (sc.TokenType == TK_False) return false;
+		sc.ScriptMessage("Boolean value expected for key '%s'", key);
+		return false;
+	}
+
+	const char *CheckString(const char *key)
+	{
+		if (sc.TokenType != TK_StringConst)
+		{
+			sc.ScriptMessage("String value expected for key '%s'", key);
+		}
+		return sc.String;
+	}
+
+	void Flag(DWORD &value, int mask, const char *key)
+	{
+		if (CheckBool(key))	value |= mask;
+		else value &= ~mask;
 	}
 
 	void ParseThing(FMapThing *th)
 	{
 		memset(th, 0, sizeof(*th));
-		sc.MustGetStringName("{");
-		while (!sc.CheckString("}"))
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
 		{
-			sc.MustGetString();
-			FName key = sc.String;
-			sc.MustGetStringName("=");
-			sc.MustGetString();
-			FString value = sc.String;
-			sc.MustGetStringName(";");
+			FName key = ParseKey();
 			switch(key)
 			{
-			case NAME_TID:
-				th->thingid = (WORD)strtol(value, NULL, 0);
+			case NAME_Id:
+				th->thingid = CheckInt(key);
 				break;
+
 			case NAME_X:
-				th->x = FLOAT2FIXED(strtod(value, NULL));
+				th->x = CheckFixed(key);
 				break;
+
 			case NAME_Y:
-				th->y = FLOAT2FIXED(strtod(value, NULL));
+				th->y = CheckFixed(key);
 				break;
+
 			case NAME_Height:
-				th->z = FLOAT2FIXED(strtod(value, NULL));
+				th->z = CheckFixed(key);
 				break;
+
 			case NAME_Angle:
-				th->angle = (short)strtol(value, NULL, 0);
+				th->angle = (short)CheckInt(key);
 				break;
+
 			case NAME_Type:
-				th->type = (short)strtol(value, NULL, 0);
+				th->type = (short)CheckInt(key);
 				break;
+
 			case NAME_Special:
-				th->special = (short)strtol(value, NULL, 0);
+				CHECK_N(Hx | Zd | Zdt)
+				th->special = CheckInt(key);
 				break;
+
 			case NAME_Arg0:
 			case NAME_Arg1:
 			case NAME_Arg2:
 			case NAME_Arg3:
 			case NAME_Arg4:
-				th->args[int(key)-int(NAME_Arg0)] = strtol(value, NULL, 0);
+				CHECK_N(Hx | Zd | Zdt)
+				th->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
 				break;
+
 			case NAME_Skill1:
 			case NAME_Skill2:
 			case NAME_Skill3:
@@ -140,11 +272,10 @@ struct UDMFParser
 			case NAME_Skill14:
 			case NAME_Skill15:
 			case NAME_Skill16:
-				if (!value.CompareNoCase("true")) th->SkillFilter |= (1<<(int(key)-NAME_Skill1));
+				if (CheckBool(key)) th->SkillFilter |= (1<<(int(key)-NAME_Skill1));
 				else th->SkillFilter &= ~(1<<(int(key)-NAME_Skill1));
 				break;
 
-			case NAME_Class0:
 			case NAME_Class1:
 			case NAME_Class2:
 			case NAME_Class3:
@@ -161,43 +292,72 @@ struct UDMFParser
 			case NAME_Class14:
 			case NAME_Class15:
 			case NAME_Class16:
-				if (!value.CompareNoCase("true")) th->ClassFilter |= (1<<(int(key)-NAME_Class1));
+				CHECK_N(Hx | Zd | Zdt)
+				if (CheckBool(key)) th->ClassFilter |= (1<<(int(key)-NAME_Class1));
 				else th->SkillFilter &= ~(1<<(int(key)-NAME_Class1));
 				break;
 
 			case NAME_Ambush:
-				Flag(th->flags, MTF_AMBUSH, value); break;
+				Flag(th->flags, MTF_AMBUSH, key); 
+				break;
+
 			case NAME_Dormant:
-				Flag(th->flags, MTF_DORMANT, value); break;
+				CHECK_N(Hx | Zd | Zdt)
+				Flag(th->flags, MTF_DORMANT, key); 
+				break;
+
 			case NAME_Single:
-				Flag(th->flags, MTF_SINGLE, value); break;
+				Flag(th->flags, MTF_SINGLE, key); 
+				break;
+
 			case NAME_Coop:
-				Flag(th->flags, MTF_COOPERATIVE, value); break;
+				Flag(th->flags, MTF_COOPERATIVE, key); 
+				break;
+
 			case NAME_Dm:
-				Flag(th->flags, MTF_DEATHMATCH, value); break;
+				Flag(th->flags, MTF_DEATHMATCH, key); 
+				break;
+
 			case NAME_Translucent:
-				Flag(th->flags, MTF_SHADOW, value); break;
+				CHECK_N(St | Zd | Zdt)
+				Flag(th->flags, MTF_SHADOW, key); 
+				break;
+
 			case NAME_Invisible:
-				Flag(th->flags, MTF_ALTSHADOW, value); break;
-			case NAME_Friend:
+				CHECK_N(St | Zd | Zdt)
+				Flag(th->flags, MTF_ALTSHADOW, key); 
+				break;
+
+			case NAME_Friend:	// This maps to Strife's friendly flag
+				CHECK_N(Dm | Zd | Zdt)
+				Flag(th->flags, MTF_FRIENDLY, key); 
+				break;
+
 			case NAME_Strifeally:
-				Flag(th->flags, MTF_FRIENDLY, value); break;
+				CHECK_N(St | Zd | Zdt)
+				Flag(th->flags, MTF_FRIENDLY, key); 
+				break;
+
 			case NAME_Standing:
-				Flag(th->flags, MTF_STANDSTILL, value); break;
+				CHECK_N(St | Zd | Zdt)
+				Flag(th->flags, MTF_STANDSTILL, key); 
+				break;
 
 			default:
 				break;
 			}
+			sc.MustGetToken(';');
 		}
-		if (isTranslated)
+		// Thing specials are only valid in namespaces with Hexen-type specials
+		// and in ZDoomTranslated - which will use the translator on them.
+		if (namespc == NAME_ZDoomTranslated)
 		{
-			if (isExtended)
-			{
-				// NOTE: Handling of this is undefined in the UDMF spec 
-				// so it is only done for namespace ZDoomTranslated
-				maplinedef_t mld;
-				line_t ld;
+			maplinedef_t mld;
+			line_t ld;
 
+			if (th->special != 0)	// if special is 0, keep the args (e.g. for bridge things)
+			{
+				// The trigger type is ignored here.
 				mld.flags = 0;
 				mld.special = th->special;
 				mld.tag = th->args[0];
@@ -205,17 +365,18 @@ struct UDMFParser
 				th->special = ld.special;
 				memcpy(th->args, ld.args, sizeof (ld.args));
 			}
-			else	// NULL the special
-			{
-				th->special = 0;
-				memset(th->args, 0, sizeof (th->args));
-			}
+		}
+		else if (isTranslated)
+		{
+			th->special = 0;
+			memset(th->args, 0, sizeof (th->args));
 		}
 	}
 
 	void ParseLinedef(line_t *ld)
 	{
 		bool passuse = false;
+		bool strifetrans = false;
 
 		memset(ld, 0, sizeof(*ld));
 		ld->Alpha = FRACUNIT;
@@ -224,72 +385,109 @@ struct UDMFParser
 		if (level.flags & LEVEL_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags & LEVEL_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (level.flags & LEVEL_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
-		sc.MustGetStringName("{");
-		while (!sc.CheckString("}"))
+
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
 		{
-			sc.MustGetString();
-			FName key = sc.String;
-			sc.MustGetStringName("=");
-			sc.MustGetString();
-			FString value = sc.String;
-			sc.MustGetStringName(";");
+			FName key = ParseKey();
 
 			// This switch contains all keys of the UDMF base spec
 			switch(key)
 			{
 			case NAME_V1:
-				ld->v1 = (vertex_t*)(intptr_t)strtol(value, NULL, 0);	// must be relocated later
+				ld->v1 = (vertex_t*)(intptr_t)CheckInt(key);	// must be relocated later
 				break;
+
 			case NAME_V2:
-				ld->v2 = (vertex_t*)(intptr_t)strtol(value, NULL, 0);	// must be relocated later
+				ld->v2 = (vertex_t*)(intptr_t)CheckInt(key);	// must be relocated later
 				break;
+
 			case NAME_Special:
-				ld->special = strtol(value, NULL, 0);
+				ld->special = CheckInt(key);
+				if (namespc == NAME_Hexen)
+				{
+					if (ld->special < 0 || ld->special > 140 || !HexenLineSpecialOk[ld->special])
+						ld->special = 0;	// NULL all specials which don't exist in Hexen
+				}
+
 				break;
+
 			case NAME_Id:
-				ld->id = strtol(value, NULL, 0);
+				ld->id = CheckInt(key);
 				break;
+
 			case NAME_Sidefront:
-				ld->sidenum[0] = strtol(value, NULL, 0);
+				ld->sidenum[0] = CheckInt(key);
 				break;
+
 			case NAME_Sideback:
-				ld->sidenum[1] = strtol(value, NULL, 0);
+				ld->sidenum[1] = CheckInt(key);
 				break;
+
 			case NAME_Arg0:
 			case NAME_Arg1:
 			case NAME_Arg2:
 			case NAME_Arg3:
 			case NAME_Arg4:
-				ld->args[int(key)-int(NAME_Arg0)] = strtol(value, NULL, 0);
+				ld->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
 				break;
+
 			case NAME_Blocking:
-				Flag(ld->flags, ML_BLOCKING, value); break;
+				Flag(ld->flags, ML_BLOCKING, key); 
+				break;
+
 			case NAME_Blockmonsters:
-				Flag(ld->flags, ML_BLOCKMONSTERS, value); break;
+				Flag(ld->flags, ML_BLOCKMONSTERS, key); 
+				break;
+
 			case NAME_Twosided:
-				Flag(ld->flags, ML_TWOSIDED, value); break;
+				Flag(ld->flags, ML_TWOSIDED, key); 
+				break;
+
 			case NAME_Dontpegtop:
-				Flag(ld->flags, ML_DONTPEGTOP, value); break;
+				Flag(ld->flags, ML_DONTPEGTOP, key); 
+				break;
+
 			case NAME_Dontpegbottom:
-				Flag(ld->flags, ML_DONTPEGBOTTOM, value); break;
+				Flag(ld->flags, ML_DONTPEGBOTTOM, key); 
+				break;
+
 			case NAME_Secret:
-				Flag(ld->flags, ML_SECRET, value); break;
-			case NAME_Soundblock:
-				Flag(ld->flags, ML_SOUNDBLOCK, value); break;
+				Flag(ld->flags, ML_SECRET, key); 
+				break;
+
+			case NAME_Blocksound:
+				Flag(ld->flags, ML_SOUNDBLOCK, key); 
+				break;
+
 			case NAME_Dontdraw:
-				Flag(ld->flags, ML_DONTDRAW, value); break;
+				Flag(ld->flags, ML_DONTDRAW, key); 
+				break;
+
 			case NAME_Mapped:
-				Flag(ld->flags, ML_MAPPED, value); break;
-			case NAME_Monsteractivate:
-				Flag(ld->flags, ML_MONSTERSCANACTIVATE, value); break;
+				Flag(ld->flags, ML_MAPPED, key); 
+				break;
+
 			case NAME_Jumpover:
-				Flag(ld->flags, ML_RAILING, value); break;
+				CHECK_N(St | Zd | Zdt)
+				Flag(ld->flags, ML_RAILING, key); 
+				break;
+
 			case NAME_Blockfloating:
-				Flag(ld->flags, ML_BLOCK_FLOATERS, value); break;
+				CHECK_N(St | Zd | Zdt)
+				Flag(ld->flags, ML_BLOCK_FLOATERS, key); 
+				break;
+
 			case NAME_Transparent:	
-				ld->Alpha = !value.CompareNoCase("true")? FRACUNIT*3/4 : FRACUNIT; break;
+				CHECK_N(St | Zd | Zdt)
+				strifetrans = CheckBool(key); 
+				break;
+
 			case NAME_Passuse:
-				passuse = !value.CompareNoCase("true"); break;
+				CHECK_N(Dm | Zd | Zdt)
+				passuse = CheckBool(key); 
+				break;
+
 			default:
 				break;
 			}
@@ -298,48 +496,94 @@ struct UDMFParser
 			if (!isTranslated) switch (key)
 			{
 			case NAME_Playercross:
-				Flag(ld->activation, SPAC_Cross, value); break;
+				Flag(ld->activation, SPAC_Cross, key); 
+				break;
+
 			case NAME_Playeruse:
-				Flag(ld->activation, SPAC_Use, value); break;
+				Flag(ld->activation, SPAC_Use, key); 
+				break;
+
 			case NAME_Monstercross:
-				Flag(ld->activation, SPAC_MCross, value); break;
+				Flag(ld->activation, SPAC_MCross, key); 
+				break;
+
 			case NAME_Impact:
-				Flag(ld->activation, SPAC_Impact, value); break;
+				Flag(ld->activation, SPAC_Impact, key); 
+				break;
+
 			case NAME_Playerpush:
-				Flag(ld->activation, SPAC_Push, value); break;
+				Flag(ld->activation, SPAC_Push, key); 
+				break;
+
 			case NAME_Missilecross:
-				Flag(ld->activation, SPAC_PCross, value); break;
+				Flag(ld->activation, SPAC_PCross, key); 
+				break;
+
 			case NAME_Monsteruse:
-				Flag(ld->activation, SPAC_MUse, value); break;
+				Flag(ld->activation, SPAC_MUse, key); 
+				break;
+
 			case NAME_Monsterpush:
-				Flag(ld->activation, SPAC_MPush, value); break;
+				Flag(ld->activation, SPAC_MPush, key); 
+				break;
+
+			case NAME_Repeatspecial:
+				Flag(ld->flags, ML_REPEAT_SPECIAL, key); 
+				break;
+
 			default:
 				break;
 			}
 
 			// This switch contains all keys which are ZDoom specific
-			if (isExtended) switch(key)
+			if (namespace_bits & (Zd|Zdt)) switch(key)
 			{
+			case NAME_Anycross:
+				Flag(ld->activation, SPAC_AnyCross, key); 
+				break;
+
+			case NAME_Monsteractivate:
+				Flag(ld->flags, ML_MONSTERSCANACTIVATE, key); 
+				break;
+
 			case NAME_Blockplayers:
-				Flag(ld->flags, ML_BLOCK_PLAYERS, value); break;
+				Flag(ld->flags, ML_BLOCK_PLAYERS, key); 
+				break;
+
 			case NAME_Blockeverything:
-				Flag(ld->flags, ML_BLOCKEVERYTHING, value); break;
+				Flag(ld->flags, ML_BLOCKEVERYTHING, key); 
+				break;
+
 			case NAME_Zoneboundary:
-				Flag(ld->flags, ML_ZONEBOUNDARY, value); break;
+				Flag(ld->flags, ML_ZONEBOUNDARY, key); 
+				break;
+
 			case NAME_Clipmidtex:
-				Flag(ld->flags, ML_CLIP_MIDTEX, value); break;
+				Flag(ld->flags, ML_CLIP_MIDTEX, key); 
+				break;
+
 			case NAME_Wrapmidtex:
-				Flag(ld->flags, ML_WRAP_MIDTEX, value); break;
+				Flag(ld->flags, ML_WRAP_MIDTEX, key); 
+				break;
+
 			case NAME_Midtex3d:
-				Flag(ld->flags, ML_3DMIDTEX, value); break;
+				Flag(ld->flags, ML_3DMIDTEX, key); 
+				break;
+
 			case NAME_Checkswitchrange:
-				Flag(ld->flags, ML_CHECKSWITCHRANGE, value); break;
+				Flag(ld->flags, ML_CHECKSWITCHRANGE, key); 
+				break;
+
 			case NAME_Firstsideonly:
-				Flag(ld->flags, ML_FIRSTSIDEONLY, value); break;
+				Flag(ld->flags, ML_FIRSTSIDEONLY, key); 
+				break;
+
 			default:
 				break;
 			}
+			sc.MustGetToken(';');
 		}
+
 		if (isTranslated)
 		{
 			int saved = ld->flags;
@@ -355,6 +599,10 @@ struct UDMFParser
 		{
 			ld->activation = (ld->activation & ~SPAC_Use) | SPAC_UseThrough;
 		}
+		if (strifetrans && ld->Alpha == FRACUNIT)
+		{
+			ld->Alpha = FRACUNIT * 3/4;
+		}
 	}
 
 	void ParseSidedef(side_t *sd, mapsidedef_t *sdt)
@@ -365,44 +613,41 @@ struct UDMFParser
 		strncpy(sdt->bottomtexture, "-", 8);
 		strncpy(sdt->toptexture, "-", 8);
 		strncpy(sdt->midtexture, "-", 8);
-		sc.MustGetStringName("{");
-		while (!sc.CheckString("}"))
+
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
 		{
-			sc.MustGetString();
-			FName key = sc.String;
-			sc.MustGetStringName("=");
-			sc.MustGetString();
-			FString value = sc.String;
-			sc.MustGetStringName(";");
+			FName key = ParseKey();
 			switch(key)
 			{
 			case NAME_Offsetx:
-				texofs[0] = strtol(value, NULL, 0) << FRACBITS;
+				texofs[0] = CheckInt(key) << FRACBITS;
 				break;
 
 			case NAME_Offsety:
-				texofs[1] = strtol(value, NULL, 0) << FRACBITS;
+				texofs[1] = CheckInt(key) << FRACBITS;
 				break;
 
 			case NAME_Texturetop:
-				strncpy(sdt->toptexture, value, 8);
+				strncpy(sdt->toptexture, CheckString(key), 8);
 				break;
 
 			case NAME_Texturebottom:
-				strncpy(sdt->bottomtexture, value, 8);
+				strncpy(sdt->bottomtexture, CheckString(key), 8);
 				break;
 
 			case NAME_Texturemiddle:
-				strncpy(sdt->midtexture, value, 8);
+				strncpy(sdt->midtexture, CheckString(key), 8);
 				break;
 
 			case NAME_Sector:
-				sd->sector = (sector_t*)(intptr_t)strtol(value, NULL, 0);
+				sd->sector = (sector_t*)(intptr_t)CheckInt(key);
 				break;
 
 			default:
 				break;
 			}
+			sc.MustGetToken(';');
 		}
 		// initialization of these is delayed to allow separate offsets and add them with the global ones.
 		sd->AddTextureXOffset(side_t::top, texofs[0]);
@@ -416,7 +661,7 @@ struct UDMFParser
 	void ParseSector(sector_t *sec)
 	{
 		memset(sec, 0, sizeof(*sec));
-		sec->lightlevel = 255;
+		sec->lightlevel = 160;
 		sec->floor_xscale = FRACUNIT;	// [RH] floor and ceiling scaling
 		sec->floor_yscale = FRACUNIT;
 		sec->ceiling_xscale = FRACUNIT;
@@ -428,6 +673,7 @@ struct UDMFParser
 		sec->nextsec = -1;	//jff 2/26/98 add fields to support locking out
 		sec->prevsec = -1;	// stair retriggering until build completes
 		sec->heightsec = NULL;	// sector used to get floor and ceiling height
+		if (floordrop) sec->Flags = SECF_FLOORDROP;
 		// killough 3/7/98: end changes
 
 		sec->gravity = 1.f;	// [RH] Default sector gravity of 1.0
@@ -437,49 +683,50 @@ struct UDMFParser
 		sec->friction = ORIG_FRICTION;
 		sec->movefactor = ORIG_FRICTION_FACTOR;
 
-		sc.MustGetStringName("{");
-		while (!sc.CheckString("}"))
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
 		{
-			sc.MustGetString();
-			FName key = sc.String;
-			sc.MustGetStringName("=");
-			sc.MustGetString();
-			FString value = sc.String;
-			sc.MustGetStringName(";");
+			FName key = ParseKey();
 			switch(key)
 			{
 			case NAME_Heightfloor:
-				sec->floortexz = strtol(value, NULL, 0) << FRACBITS;
+				sec->floortexz = CheckInt(key) << FRACBITS;
 				break;
 
 			case NAME_Heightceiling:
-				sec->ceilingtexz = strtol(value, NULL, 0) << FRACBITS;
+				sec->ceilingtexz = CheckInt(key) << FRACBITS;
 				break;
 
 			case NAME_Texturefloor:
-				sec->floorpic = TexMan.GetTexture (value, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+				sec->floorpic = TexMan.GetTexture (CheckString(key), FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 				break;
 
 			case NAME_Textureceiling:
-				sec->ceilingpic = TexMan.GetTexture (value, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+				sec->ceilingpic = TexMan.GetTexture (CheckString(key), FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 				break;
 
 			case NAME_Lightlevel:
-				sec->lightlevel = (BYTE)clamp<int>(strtol(value, NULL, 0), 0, 255);
+				sec->lightlevel = (BYTE)clamp<int>(CheckInt(key), 0, 255);
 				break;
 
 			case NAME_Special:
-				sec->special = (short)strtol(value, NULL, 0);
+				sec->special = (short)CheckInt(key);
 				if (isTranslated) sec->special = P_TranslateSectorSpecial(sec->special);
+				else if (namespc == NAME_Hexen)
+				{
+					if (sec->special < 0 || sec->special > 255 || !HexenSectorSpecialOk[sec->special])
+						sec->special = 0;	// NULL all unknown specials
+				}
 				break;
 
-			case NAME_Tag:
-				sec->tag = (short)strtol(value, NULL, 0);
+			case NAME_Id:
+				sec->tag = (short)CheckInt(key);
 				break;
 
 			default:
 				break;
 			}
+			sc.MustGetToken(';');
 		}
 
 		sec->floorplane.d = -sec->floortexz;
@@ -603,7 +850,6 @@ struct UDMFParser
 		char *buffer = new char[map->Size(ML_TEXTMAP)];
 
 		isTranslated = true;
-		isExtended = false;
 
 		map->Read(ML_TEXTMAP, buffer);
 		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), buffer, map->Size(ML_TEXTMAP));
@@ -613,34 +859,58 @@ struct UDMFParser
 			sc.MustGetStringName("=");
 			sc.MustGetString();
 			namespc = sc.String;
-			if (namespc == NAME_ZDoom)
+			switch(namespc)
 			{
+			case NAME_ZDoom:
+				namespace_bits = Zd;
 				isTranslated = false;
-				isExtended = true;
-			}
-			else if (namespc == NAME_Hexen)
-			{
+				break;
+			case NAME_ZDoomTranslated:
+				namespace_bits = Zdt;
+				break;
+			case NAME_Hexen:
+				namespace_bits = Hx;
 				isTranslated = false;
-			}
-			else if (namespc == NAME_ZDoomTranslated)
-			{
-				isExtended = true;
-			}
-			else if (namespc == NAME_Doom)
-			{
+				break;
+			case NAME_Doom:
+				namespace_bits = Dm;
 				P_LoadTranslator("xlat/doom_base.txt");
-			}
-			else if (namespc == NAME_Heretic)
-			{
+				level.flags |= LEVEL_DUMMYSWITCHES;
+				floordrop = true;
+				break;
+			case NAME_Heretic:
+				namespace_bits = Ht;
 				P_LoadTranslator("xlat/heretic_base.txt");
-			}
-			else if (namespc == NAME_Strife)
-			{
+				level.flags |= LEVEL_DUMMYSWITCHES;
+				floordrop = true;
+				break;
+			case NAME_Strife:
+				namespace_bits = St;
 				P_LoadTranslator("xlat/strife_base.txt");
-			}
-			else 
-			{
-				Printf("Unknown namespace %s\n", sc.String);
+				level.flags |= LEVEL_DUMMYSWITCHES|LEVEL_RAILINGHACK;
+				floordrop = true;
+				break;
+			default:
+				Printf("Unknown namespace %s. Using defaults for %s\n", sc.String, GameNames[gameinfo.gametype]);
+				switch (gameinfo.gametype)
+				{
+				case GAME_Doom:
+					namespace_bits = Dm;
+					P_LoadTranslator("xlat/doom_base.txt");
+					break;
+				case GAME_Heretic:
+					namespace_bits = Ht;
+					P_LoadTranslator("xlat/heretic_base.txt");
+					break;
+				case GAME_Strife:
+					namespace_bits = St;
+					P_LoadTranslator("xlat/strife_base.txt");
+					break;
+				case GAME_Hexen:
+					namespace_bits = Hx;
+					isTranslated = false;
+					break;
+				}
 			}
 			sc.MustGetStringName(";");
 		}
@@ -693,8 +963,8 @@ struct UDMFParser
 		// Create the real sectors
 		numsectors = ParsedSectors.Size();
 		sectors = new sector_t[numsectors];
-		sectors[0].e = new extsector_t[numsectors];
 		memcpy(sectors, &ParsedSectors[0], numsectors * sizeof(*sectors));
+		sectors[0].e = new extsector_t[numsectors];
 		for(int i = 0; i < numsectors; i++)
 		{
 			sectors[i].e = &sectors[0].e[i];

@@ -147,7 +147,7 @@ int FTextureManager::CheckForTexture (const char *name, int usetype, BITFIELD fl
 	if ((flags & TEXMAN_TryAny) && usetype != FTexture::TEX_Any)
 	{
 		// Never return the index of NULL textures.
-		if (firsttype == FTexture::TEX_Null) return 0;
+		if (firstfound != -1 && firsttype == FTexture::TEX_Null) return 0;
 		return firstfound;
 	}
 

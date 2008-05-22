@@ -115,13 +115,13 @@ struct XlatParseContext : public FParseContext
 		{
 			"arg2", "arg3", "arg4", "arg5", "bitmask", "clear",
 			"define", "enum", "flags", "include", "lineid", 
-			"nobitmask", "sector", "tag", "maxlinespecial"
+			"maxlinespecial", "nobitmask", "sector", "tag"
 		};
 		static const short types[] =
 		{
 			XLAT_ARG2, XLAT_ARG3, XLAT_ARG4, XLAT_ARG5, XLAT_BITMASK, XLAT_CLEAR,
 			XLAT_DEFINE, XLAT_ENUM, XLAT_FLAGS, XLAT_INCLUDE, XLAT_TAG,
-			XLAT_NOBITMASK, XLAT_SECTOR, XLAT_TAG, XLAT_MAXLINESPECIAL
+			XLAT_MAXLINESPECIAL, XLAT_NOBITMASK, XLAT_SECTOR, XLAT_TAG
 		};
 
 		int min = 0, max = countof(tokens) - 1;

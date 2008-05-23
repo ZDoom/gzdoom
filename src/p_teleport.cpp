@@ -349,21 +349,25 @@ static AActor *SelectTeleDest (int tid, int tag)
 
 		// If teleport dests were not found, the sector tag is ignored for the
 		// following compatibility searches.
+		// Do this only when tag is 0 because this is the only case that was defined in Hexen.
 		if (count == 0)
 		{
-			// Try to find a matching map spot (fixes Hexen MAP10)
-			NActorIterator it2 (NAME_MapSpot, tid);
-			searcher = it2.Next ();
-			if (searcher == NULL)
+			if (tag == 0)
 			{
-				// Try to find a matching non-blocking spot of any type (fixes Caldera MAP13)
-				FActorIterator it3 (tid);
-				searcher = it3.Next ();
-				while (searcher != NULL && (searcher->flags & MF_SOLID))
+				// Try to find a matching map spot (fixes Hexen MAP10)
+				NActorIterator it2 (NAME_MapSpot, tid);
+				searcher = it2.Next ();
+				if (searcher == NULL)
 				{
+					// Try to find a matching non-blocking spot of any type (fixes Caldera MAP13)
+					FActorIterator it3 (tid);
 					searcher = it3.Next ();
+					while (searcher != NULL && (searcher->flags & MF_SOLID))
+					{
+						searcher = it3.Next ();
+					}
+					return searcher;
 				}
-				return searcher;
 			}
 		}
 		else

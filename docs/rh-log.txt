@@ -1,4 +1,8 @@
 May 23, 2008 (Changes by Graf Zahl)
+- Fixed: The compatibility searches for teleport destinations did not work
+  properly when the teleporter had both a tid and a tag. Now, if a teleporter
+  has a tag these are skipped because they are only present for Hexen
+  compatibility.
 - Fixed: The first texture in a TEXTURE1 lump, although invalid when used
   elsewhere, must be usable as sky (see Requiem.wad's SKY3.)
 - Fixed: side_t::GetLightLevel relied on the global 'linedef' variable for

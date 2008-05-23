@@ -762,10 +762,16 @@ DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, BYTE flags
 	for (linenum = -1; (linenum = P_FindLineFromID (target, linenum)) >= 0; )
 	{
 		if (flags & WLF_SIDE1 && lines[linenum].sidenum[0]!=NO_SIDE)
+		{
+			sides[lines[linenum].sidenum[0]].Flags &= ~WALLF_AUTOCONTRAST;
 			sides[lines[linenum].sidenum[0]].Flags |= wallflags;
+		}
 
 		if (flags & WLF_SIDE2 && lines[linenum].sidenum[1]!=NO_SIDE)
+		{
+			sides[lines[linenum].sidenum[0]].Flags &= ~WALLF_AUTOCONTRAST;
 			sides[lines[linenum].sidenum[1]].Flags |= wallflags;
+		}
 	}
 	ChangeStatNum(STAT_LIGHTTRANSFER);
 }

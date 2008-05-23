@@ -1,3 +1,9 @@
+May 22, 2008
+- Added volume reduction for stereo sounds played in 3D to obtain levels
+  closer to FMOD 3, which downmixed all stereo sounds to mono before
+  playing them in 3D. Also added experimental 3D spread for stereo sounds
+  so that you can actually hear them in stereo.
+
 May 22, 2008 (Changes by Graf Zahl)
 - Reworked a few options that previously depended on LEVEL_HEXENFORMAT
   (actors being forced to the ground by instantly moving sectors, strife

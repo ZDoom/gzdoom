@@ -1364,6 +1364,8 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 //
 //==========================================================================
 
+CVAR(Float, snd_3dspread, 180, 0)
+
 FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float distscale,
 	int pitch, int priority, float pos[3], float vel[3], int chanflags)
 {
@@ -1373,6 +1375,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 	FMOD::Channel *chan;
 	float freq;
 	float def_freq, def_vol, def_pan;
+	int numchans;
 	int def_priority;
 
 	if (FMOD_OK == ((FMOD::Sound *)sfx->data)->getDefaults(&def_freq, &def_vol, &def_pan, &def_priority))
@@ -1398,6 +1401,17 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 		((FMOD::Sound *)sfx->data)->setDefaults(def_freq, def_vol, def_pan, def_priority);
 	}
 
+	// Reduce volume of stereo sounds, because each channel will be summed together
+	// and is likely to be very similar, resulting in an amplitude twice what it
+	// would have been had it been mixed to mono.
+	if (FMOD_OK == ((FMOD::Sound *)sfx->data)->getFormat(NULL, NULL, &numchans, NULL))
+	{
+		if (numchans > 1)
+		{
+			vol *= 0.5f;
+		}
+	}
+
 	if (FMOD_OK == result)
 	{
 		result = chan->getMode(&mode);
@@ -1418,6 +1432,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 		}
 		chan->setVolume(vol);
 		chan->set3DAttributes((FMOD_VECTOR *)pos, (FMOD_VECTOR *)vel);
+		chan->set3DSpread(snd_3dspread);
 		chan->setDelay(FMOD_DELAYTYPE_DSPCLOCK_START, DSPClockHi, DSPClockLo);
 		chan->setPaused(false);
 		FSoundChan *schan = CommonChannelSetup(chan);

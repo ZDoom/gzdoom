@@ -1423,31 +1423,25 @@ void R_NewWall (bool needlights)
 
 int side_t::GetLightLevel (bool foggy, int baselight) const
 {
-	// [RH] Get wall light level
-	if (this->Flags & WALLF_ABSLIGHTING && (!(this->Flags & WALLF_AUTOCONTRAST) || foggy))
+	if (Flags & WALLF_ABSLIGHTING) 
 	{
-		return (BYTE)this->Light;
+		baselight = (BYTE)Light;
 	}
-	else
+
+
+	if (!foggy) // Don't do relative lighting in foggy sectors
 	{
-		if (!foggy) // Don't do relative lighting in foggy sectors
+		if (Flags & WALLF_AUTOCONTRAST)
 		{
-			int rellight;
-
-			if (this->Flags & WALLF_AUTOCONTRAST)
-			{
-				baselight = (BYTE)this->Light;
-				rellight = linedef->dx==0? level.WallVertLight : linedef->dy==0 ? level.WallHorizLight : 0;
-			}
-			else 
-			{
-				rellight = this->Light;
-			}
-
-			baselight += rellight * 2;
+			baselight += lines[linenum].dx==0? level.WallVertLight : 
+						 lines[linenum].dy==0? level.WallHorizLight : 0;
 		}
-		return baselight;
+		if (!(Flags & WALLF_ABSLIGHTING))
+		{
+			baselight += this->Light;
+		}
 	}
+	return clamp(baselight, 0, 255);
 }
 
 FArchive &operator<< (FArchive &arc, side_t::part &p)

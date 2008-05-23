@@ -1,3 +1,11 @@
+May 23, 2008 (Changes by Graf Zahl)
+- Fixed: side_t::GetLightLevel relied on the global 'linedef' variable for
+  automatic fake contrast.
+- Changed: Fake contrast now uses the WALLF_AUTOCONTRAST globally instead
+  of manipulating the sides' light values individually. This allows changing
+  the fake contrast at run time and also allows adding individual relative
+  lighting on top of it which is a planned UDMF feature.
+
 May 22, 2008
 - Fixed: ActorStencilColor() did not set the palette part of the actor's
   fill color, so it would always produce black for STYLE_Shaded.

@@ -489,7 +489,7 @@ struct side_t
 	WORD		linenum;
 	DWORD		LeftSide, RightSide;	// [RH] Group walls into loops
 	WORD		TexelLength;
-	SBYTE		Light;
+	SWORD		Light;
 	BYTE		Flags;
 
 	int GetLightLevel (bool foggy, int baselight) const;

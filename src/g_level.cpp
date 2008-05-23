@@ -2373,8 +2373,8 @@ void G_InitLevelLocals ()
 	}
 	level.airsupply = info->airsupply*TICRATE;
 	level.outsidefog = info->outsidefog;
-	level.WallVertLight = info->WallVertLight;
-	level.WallHorizLight = info->WallHorizLight;
+	level.WallVertLight = info->WallVertLight*2;
+	level.WallHorizLight = info->WallHorizLight*2;
 	if (info->gravity != 0.f)
 	{
 		level.gravity = info->gravity * 35/TICRATE;

@@ -791,12 +791,12 @@ void DWallLightTransfer::DoTransfer (BYTE lightlevel, int target, BYTE flags)
 
 		if (flags & WLF_SIDE1 && line->sidenum[0]!=NO_SIDE)
 		{
-			sides[line->sidenum[0]].Light = (BYTE)lightlevel;
+			sides[line->sidenum[0]].Light = lightlevel;
 		}
 
 		if (flags & WLF_SIDE2 && line->sidenum[1]!=NO_SIDE)
 		{
-			sides[line->sidenum[1]].Light = (BYTE)lightlevel;
+			sides[line->sidenum[1]].Light = lightlevel;
 		}
 	}
 }

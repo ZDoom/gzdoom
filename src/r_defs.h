@@ -796,6 +796,7 @@ public:
 		TEX_Override,	// For patches between TX_START/TX_END
 		TEX_Autopage,	// Automap background - used to enable the use of FAutomapTexture
 		TEX_Null,
+		TEX_FirstDefined,
 	};
 
 	struct Span
@@ -945,6 +946,7 @@ public:
 	{
 		TEXMAN_TryAny = 1,
 		TEXMAN_Overridable = 2,
+		TEXMAN_ReturnFirst = 4,
 	};
 
 	int CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);

@@ -2043,8 +2043,8 @@ void G_DoLoadLevel (int position, bool autosave)
 	// DOOM determines the sky texture to be used
 	// depending on the current episode and the game version.
 	// [RH] Fetch sky parameters from FLevelLocals.
-	sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
-	sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+	sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+	sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 
 	// [RH] Set up details about sky rendering
 	R_InitSkyMap ();

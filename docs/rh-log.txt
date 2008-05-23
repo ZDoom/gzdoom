@@ -1,4 +1,6 @@
 May 23, 2008 (Changes by Graf Zahl)
+- Fixed: The first texture in a TEXTURE1 lump, although invalid when used
+  elsewhere, must be usable as sky (see Requiem.wad's SKY3.)
 - Fixed: side_t::GetLightLevel relied on the global 'linedef' variable for
   automatic fake contrast.
 - Changed: Fake contrast now uses the WALLF_AUTOCONTRAST globally instead

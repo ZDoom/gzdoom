@@ -807,7 +807,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 			FMultiPatchTexture *tex = new FMultiPatchTexture ((const BYTE *)maptex + offset, patchlookup, numpatches, isStrife, deflumpnum);
 			if (i == 1 && texture1)
 			{
-				tex->UseType = FTexture::TEX_Null;
+				tex->UseType = FTexture::TEX_FirstDefined;
 			}
 			TexMan.AddTexture (tex);
 			StartScreen->Progress();

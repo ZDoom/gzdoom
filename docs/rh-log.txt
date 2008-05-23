@@ -1,4 +1,6 @@
 May 22, 2008
+- Fixed: ActorStencilColor() did not set the palette part of the actor's
+  fill color, so it would always produce black for STYLE_Shaded.
 - Added volume reduction for stereo sounds played in 3D to obtain levels
   closer to FMOD 3, which downmixed all stereo sounds to mono before
   playing them in 3D. Also added experimental 3D spread for stereo sounds

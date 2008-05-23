@@ -1477,7 +1477,7 @@ static void ActorTranslation (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
-static void ActorStencilColor (FScanner &sc,AActor *defaults, Baggage &bag)
+static void ActorStencilColor (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	int r,g,b;
 
@@ -1500,7 +1500,7 @@ static void ActorStencilColor (FScanner &sc,AActor *defaults, Baggage &bag)
 		g=GPART(c);
 		b=BPART(c);
 	}
-	defaults->fillcolor = MAKERGB(r,g,b);
+	defaults->fillcolor = MAKERGB(r,g,b) | (ColorMatcher.Pick (r, g, b) << 24);
 }
 
 

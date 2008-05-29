@@ -1,0 +1,468 @@
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * release.txt - Release notes for DUMB.              / / \  \
+ *                                                   | <  /   \_
+ *                                                   |  \/ /\   /
+ *                                                    \_  /  > /
+ *                                                      | \ / /
+ *                                                      |  ' /
+ *                                                       \__/
+ */
+
+
+******************************************
+*** DUMB v
+******************************************
+
+Pattern loop stuff improved; not quite right for XM files, but better than
+before
+
+say where ModPlug's source can be obtained
+
+Notes now cease to exist if they have faded out, even if they are still in
+the foreground. This means a new note will be started even if a Gxx occurs
+on the same row, as Impulse Tracker does in this scenario.
+
+XM key off fixed more: now the effect value acts as a delay, matching FT2
+
+Added dumb2wav example to convert mod files to WAV files.  (Chad
+Austin)
+
+Major update to VC6 build.  It builds every example as well as both
+dumb.lib and aldumb.lib.  (Chad Austin)
+
+Added first pass of the automake build.  Unix users can compile and
+install dumb with the standard "./configure && make && make install"
+dance.  Caveats: Allegro isn't searched for at configuration time, so
+the examples don't build.  The build also does not attempt to install
+aldumb.h.  (Chad Austin)
+
+For IT files, tone portamento didn't work properly when no note was playing.
+The effect value wasn't stored. Thanks to Maim from #trax on EFnet for
+discovering this bug.
+
+XM key off fixed - doesn't overwrite note any more
+
+tagging system added - title
+sample/instrument names/filenames
+more functions (n_samples n_instruments)
+
+made timing more accurate; this may affect length by a second or two ...
+
+Thanks to networm for valgrinding the new envelope handling code
+
+DUMB used to process the first row when you created the DUMB_IT_SIGRENDERER.
+This happened before you had a chance to install any callbacks. If an F00
+effect occurred on the first row, the music would stop immediately and the
+xm_speed_zero callback would be called if it were present. Unfortunately, it
+wasn't present, and the algorithm for calculating the length subsequently
+went into an endless loop while waiting for it. Worse still, the same
+algorithm accumulated data for fast seeking, and never stopped, so it pretty
+quickly consumed all the resources.
+
+DUMB will now not process the first row until you first request some samples,
+provided you pass zero for pos. Ironically, any MOD or XM file with F00 in
+the very first row won't play anyway! But at least such files won't crash the
+library now.
+
+    * The make/config.bat file, responsible for generating make/config.txt, wrote a crucial line to the wrong place, causing it to be left out of the file. As a result, the makefile would fail to install everything for Allegro users, and enter infinite recursion for other users. If you are trying to compile with DJGPP or MinGW, please download dumb-0.9.2-fixed.zip (linked below, and incidentally including the fix for the bug detailed in the next point).
+    * DUMB's makefile doesn't install the example programs on any platforms. (It is supposed to install them on all platforms except DOS and Windows.) You can fix this by editing Makefile and changing the one occurrence of $COMSPEC to $(COMSPEC). Alternatively you can run the example programs from the examples directory.
+    * There is a subtle bug that affects a few XM files. For instruments with no associated samples, the array mapping notes to samples is uninitialised. This becomes a problem if such instruments are then used, which does happen sometimes. On many systems, memory is initialised to zero when first given to a program (for security reasons), so the problem won't come up most of the time. However, on platforms like DOS where memory isn't initialised, or in programs that reuse memory later on (this includes the XMMS plug-in), a rogue note will occasionally play. If you are worried that this might happen to you, then use DUMB CVS or wait for the next release (which won't be for a while). If you have access to an i386 Linux system, you can use Valgrind on the 'dumbout' example program to determine whether your XM file causes DUMB to use uninitialised values.
+    * For IT files, DUMB breaks out of single-point envelope sustain loops one tick too early. The correct behaviour for multi-point sustain loops is yet to be determined. The worst that can happen is that notes may seem to be ever so slightly shorter than they should be, except in pathological cases. This bug has not yet been fixed in CVS.
+
+
+
+******************************************
+*** DUMB v0.9.2, released 2 April 2003 ***
+******************************************
+
+Yes, there really has been a release. This is not a day-late April fools'
+joke.
+
+DUMB's full name has changed! The old "Dedicated Universal Music
+Bastardisation" was rather silly, and not much more than a forced attempt at
+finding words beginning with D, U, M and B. I spent weeks and weeks browsing
+dictionaries and hopelessly asking others for bright ideas, until the
+brilliant Chris "Kitty Cat" Robinson came up with "Dynamic". I decided to
+keep the U as Universal, since a DUH struct can hold digital music in any
+format. Now all that remained was the B, but it didn't take me long to come
+up with Bibliotheque, which, despite looking French, is indeed considered an
+English word by Oxford English Dictionary Online, to which my university has
+a subscription. So there you have it - the name now makes sense.
+
+The two most significant additions to the project would have to be the new
+thread safety (with an important restriction, detailed in docs/dumb.txt), and
+the new build system. The silly 'makeall' and 'makecore' scripts are gone. If
+you are a GCC user, all you need do now is run 'make' and 'make install', as
+for other projects. You don't even have to run a 'fix' script any more! There
+are some caveats, which are covered in readme.txt. If you use Microsoft
+Visual C++ 6, you no longer need to obtain GCC and GNU Make - there is a
+project file just for you.
+
+Huge thanks go to Steve Terry for testing on Windows XP - about five times -
+and to lillo for testing on BeOS and Mac OS X. Thanks also to X-G for testing
+on a Windows system that has consistently posed problems for DUMB's old
+makefiles.
+
+There was a bug whereby al_poll_duh() would sometimes cause the music to
+resume playing if you called it after al_pause_duh(). Whether this was DUMB's
+fault for misusing Allegro's API, or a bug in Allegro, is unclear, but this
+release makes it work.
+
+In one of my projects, I found that my AL_DUH_PLAYER stopped playing when
+there were lots of other sound effects. In order to fix this, I programmed
+DUMB to set the priority of the stream's voice to 255, the maximum. I also
+added al_duh_set_priority(), so you can set the priority yourself if you need
+to.
+
+The resampling code has undergone a transformation. The bad news is that the
+linear average code is no longer in use. The good news is that where DUMB's
+resamplers used to require three extra samples' worth of memory to be
+allocated and initialised, it now copes with just the sample data. And it
+does a very good job at bouncing off loop points and otherwise hurtling
+around the sample. The resampling code is considerably more complicated, but
+the code that uses the resamplers is considerably simpler - and if you
+noticed a slight click in some bidirectionally looping samples, you'll be
+pleased to know that that click is gone!
+
+I have also devoted some effort to optimisation. It seemed hopeless for a
+while, but then I actually figured out a way of making it faster AND more
+accurate at the same time! DUMB is now quite a bit faster than it was, and it
+mixes not with 16-bit precision, but with 24-bit precision. (It used 32-bit
+integers all along, but the difference is that it now makes use of 256 times
+as much of the integer's range.)
+
+There have been the usual improvements to playback. The last release occurred
+rather too soon after I had fixed the XM effect memories; EAx and EBx, fine
+volume ramps, had been neglected. These are now handled properly.
+
+In previous versions of DUMB, muted channels in IT were actually played with
+surround sound panning (where the right-hand channel is inverted). This has
+been fixed, so muted channels will really be muted now.
+
+There were also some subtle problems with the way DUMB handled New Note
+Actions for IT files. It turned out that, in all releases of DUMB so far,
+pitch, filter and panning envelopes and sample vibrato were not being
+processed for any note that was forced into the background by a new note on
+the same channel! This only affected IT files. Not only has this been fixed,
+but envelope interpolation is much more accurate. Long trailing envelope-
+driven fade-outs sound a lot better now!
+
+Since panning and filter envelopes are more precise, extra fields have been
+added to the DUMB_IT_CHANNEL_STATE struct, used by
+dumb_it_sr_get_channel_state(). These fields hold the 'decimal' parts of the
+pan and filter cut-off. See dumb.txt for details.
+
+Mxx (set channel volume) now correctly only modifies the last note played on
+the channel, not any previous notes that have been forced into the background
+by New Note Actions, and filter effect processing is now closer to what
+Impulse Tracker does.
+
+The XM loader was slightly flawed and could crash on files containing samples
+with out-of-range loop points. One such file was given to me. This has been
+fixed.
+
+Finally, the legal stuff. Julien Cugniere has been added to the list of
+copyright owners. He deserves it, for all the work he did on the XM support!
+And the licence has been changed. You are no longer required to include a
+link to DUMB in a project that uses DUMB; the reasons for this relaxation are
+explained in licence.txt. However, the request is still there ...
+
+As usual, enjoy!
+
+
+**********************************************
+*** DUMB v0.9.1, released 19 December 2002 ***
+**********************************************
+
+Hi again! Lots to say this time, so I shall cut right to the chase.
+
+DUMB now supports Impulse Tracker's low-pass resonant filters! Huge thanks go
+to Jeffrey Lim, author of Impulse Tracker, for giving me what information he
+still had regarding the algorithm; to cut a long story short, modifying
+ModPlug Tracker's source code (which is in the Public Domain) led to an
+algorithm whose output matched Impulse Tracker's perfectly.
+
+Please note that ModPlug Tracker's filters as they stand do not match Impulse
+Tracker's, and I have no interest in supporting ModPlug Tracker's variant
+(especially not the integer rounding problems). Please see docs/modplug.txt,
+new in this release, for details.
+
+Thanks also go to Fatso Huuskonen for motivating me to add filter support,
+and providing me with several great IT files to test it with!
+
+The other important feature added for this release is click removal. Up until
+now, DUMB has generated clicks when cutting notes, starting samples in the
+middle, and so on. This version of DUMB will remove any such clicks. Note
+that DUMB does not use volume ramps to accomplish this; the algorithm will
+not take the bite out of the music!
+
+In other news, DUMB now supports sample vibrato for IT files, and instrument
+vibrato for XM files. A slight bug in New Note Action handling for IT files
+has been fixed; Note Fade will not break the sustain loops of the sample and
+envelope, as it did before. Tremor handling (Ixy) had a strange bug in it,
+which has been fixed.
+
+Support for XM files has been greatly enhanced. The XM envelope handling new
+in the last release contained a huge bug, resulting in notes seeming not to
+stop when they should; this has been fixed. Some XM files crashed DUMB, while
+others failed to load; these problems have been solved. Effect memories now
+work properly for XM and MOD files, to the best of my knowledge. Some other
+differences between IT and XM have been accounted for, most notably the
+Retrigger Note effects, Rxy and E9x.
+
+DUMB's sound quality and accuracy are not the only areas that have been
+enhanced. The API has been expanded, at last. You can now detect when a
+module loops, or make it play through just once. You can ask DUMB to inform
+you every time it generates some samples; this is useful for visualisation.
+For IT files, you can intercept the MIDI messages generated by Zxx macros,
+enabling you to synchronise your game with the music to some extent. (There
+is no such method for XM, S3M or MOD files yet; sorry. Also note that the
+function will be called before you actually hear the sound; I cannot improve
+this until DUMB has its own sound drivers, which won't be for a while.) You
+can query the current order and row. Finally, operations like changing the
+speed and tempo are now possible, and you can query the playback state on
+each channel.
+
+Some parts of DUMB's API have been deprecated. Simple programs that use
+Allegro will be unaffected, but if you get some compiler warnings or errors,
+please review docs/deprec.txt. This file explains why those parts of the API
+were deprecated, and tells you how to adapt your code; the changes you need
+to make are straightforward. Sorry for the inconvenience.
+
+For various reasons, I have made DUMB's makefiles use different compiler
+flags depending on your GCC version (unless you are using MSVC). There is no
+elegant way of getting the makefiles to detect when GCC is upgraded. If you
+upgrade GCC, you should execute 'make clean' in order to make DUMB detect the
+GCC version again. Otherwise you may get some annoying error messages. (It is
+wise to do this in any case, so that all the object files are built with the
+same GCC version.)
+
+DUMB's example players have been unified into a single player called
+'dumbplay'. The player has been enhanced to display messages when the music
+loops, and when XM and MOD files freeze (effect F00; more information on this
+in docs/howto.txt).
+
+Finally, as noted on DUMB's website, the release notes from the last release
+were inaccurate. It has been verified that DUMBOGG v0.5 does still work with
+that release, and still works with this release. The esoteric DUMBOGG v0.6
+has not been created yet, since DUMBOGG v0.5 still works.
+
+Please scroll down and read through the indented paragraphs in the notes for
+the last release; they are relevant for this release too.
+
+That's all folks! Until next time.
+
+
+*******************************************
+*** DUMB v0.9, released 16 October 2002 ***
+*******************************************
+
+MOD support is here! DUMB now supports all four of the common module formats.
+As usual, there have also been some improvements to the way modules are
+played back. Most notably, handling of tone portamento in IT files has been
+improved a lot, and XM envelopes are now processed correctly.
+
+The other major change is that DUMB now does a dummy run through each module
+on loading. It stores the playback state at thirty-second intervals. It stops
+when the module first loops, and then stores the playback time. This results
+in a slightly longer load time and a greater memory overhead, but seeking is
+faster (to any point before the module first loops) and the length is
+calculated! duh_get_length() will return this and is now documented in
+docs/howto.txt and docs/dumb.txt.
+
+DUMB's build process has been changed to use 'mingw' wherever it used
+'mingw32' before; some directories have been renamed, and the 'fix' command
+you had to run for MinGW has been changed from 'fix mingw32' to 'fix mingw'.
+
+Last time, I directed you to scroll down and read the notes from a past
+release, but ignore this point, and that point applies to something else, and
+so on. Did anyone do so? Well, if you're reading this at all, you probably
+did. Nevertheless, this time I shall be much less confusing and restate any
+relevant information. So the least you can do is read it!
+
+- If your program ever aborts with exit code 37 while loading an IT file,
+  PLEASE LET ME KNOW! The IT file in question has a stereo compressed sample
+  in it, and the format is unspecified for this case (Impulse Tracker itself
+  doesn't use stereo samples at all). I will need the IT file in question,
+  and any information you can give me about how the IT file was created (e.g.
+  what program). (If you don't get to see an exit code, let me know anyway.)
+
+- If your program ever outputs a line resembling "Inst 01 Env: 0,64 8,32
+  15,48" to stderr while loading an IT file, PLEASE LET ME KNOW! You have an
+  old IT file (saved by an Impulse Tracker version older than 2.00), and
+  support for such files is STILL untested.
+
+- Not all parts of DUMB's API are documented yet. You will find some
+  functions in dumb.h which are not listed in docs/dumb.txt; the reason is
+  that these functions still need work and will probably change. If you
+  really, really want to use them, talk to me first (IRC EFnet #dumb is a
+  good place for this; see readme.txt for details on using IRC). I intend to
+  finalise and document the whole of DUMB's API for Version 1.0.
+
+There have been some changes to the naming conventions in DUMB's undocumented
+API. DUMBOGG v0.5 will not work with this and subsequent releases of DUMB;
+please upgrade to DUMBOGG v0.6. These changes should not break anything in
+your own code, since you didn't use those parts of the API, did you ;)
+
+There is still a great deal of work to be done before DUMB's API can be
+finalised, and thus it will be a while before DUMB v1.0 comes out. It should
+be worth the wait. In the meantime, there will be 0.9.x releases with
+additional functionality, improved playback, and possibly support for some
+extra file formats.
+
+Finally I should like to offer an apology; there is a strong possibility that
+some of DUMB's official API will change in the near future. There will not be
+any drastic changes, and the corresponding changes to your source code will
+be simple enough. If I didn't make these changes, DUMB's API would start to
+become limited, or messy, or both, so it's for the better. I apologise in
+advance for this.
+
+Now scroll down and read the notes for the first r... oh wait, we already did
+that. I guess that's it then. You can stop reading now.
+
+Right after you've read this.
+
+And this.
+
+Off you go.
+
+Bye.
+
+
+********************************************
+*** DUMB v0.8.1, released 11 August 2002 ***
+********************************************
+
+This is a minor release that fixes a few bugs. One of these bugs, however,
+was pretty serious. dumb_register_dat_xm() was never coded! It was prototyped
+in aldumb.h, so code would compile, but there would be an unresolved symbol
+at the linking stage. This has been fixed.
+
+Platforms other than Unix did not have a working 'make veryclean' target;
+this has been fixed. In addition, the makefiles now use 'xcopy' instead of
+'copy', since on some systems GNU Make seems to have trouble calling commands
+built in to the shell.
+
+Contrary to the errata that was on the DUMB website, the makeall.sh and
+makecore.sh scripts actually DID install in /usr. This has now been
+corrected, and regardless of whether you use these scripts or call make
+directly, the files will now be installed to /usr/local by default.
+
+The XM loader used to treat stereo samples as mono samples with the data for
+the right channel positioned after the data for the left channel. This
+generally resulted in an unwanted echo effect. This has been fixed.
+
+When playing XM files, specifying an invalid instrument would cause an old
+note on that channel to come back (roughly speaking). Fast Tracker 2 does not
+exhibit this behaviour. This has been fixed.
+
+The GCC makefiles used -mpentium, which is deprecated in gcc 3.x. This was
+generating warnings, and has now been fixed.
+
+In XM files, the length of a sample is stored in bytes. DUMB was assuming
+that the length of a 16-bit sample would be even. I had two XM files where
+this was not the case, and DUMB was unable to load them. This has been fixed.
+
+In order to accommodate the extra part of the version number,
+DUMB_REVISION_VERSION has been added. DUMB_VERSION has also been added in
+order to facilitate checking if the version of DUMB installed is sufficient.
+See docs/dumb.txt for details.
+
+As a last-minute fix, the XM "Break to row" effect is now loaded properly. It
+was necessary to convert from binary-coded decimal to hexadecimal (those who
+have experience with Fast Tracker 2 will know what I mean). In short, this
+means the effect will now work properly when breaking to row 10 or greater.
+
+DUMB v0.8 had faulty release date constants; DUMB_MONTH and DUMB_DAY were
+swapped! For this reason, DUMB_DATE should not be compared against any date
+in 2002. This note has been added to docs/dumb.txt and also to dumb.h.
+
+Please scroll to the end and read the release notes for the first version,
+DUMB v0.7. Most of them apply equally to this release. However, the
+non-portable code was rewritten for DUMB v0.8, so that point does not apply.
+The point about length not being calculated also applies to XM files.
+
+Enjoy :)
+
+
+****************************************
+*** DUMB v0.8, released 14 June 2002 ***
+****************************************
+
+Welcome to the second release of DUMB!
+
+In addition to these notes, please read below the release notes for the
+previous version, DUMB v0.7. Most of them apply equally to this release.
+However, the non-portable code has been rewritten; DUMB should now port to
+big-endian platforms.
+
+The main improvement in this release of DUMB is the support for XM files.
+Enormous thanks go to Julien Cugniere for working on this while I had to
+revise for my exams!
+
+There was a mistake in the makefiles in the last release. The debugging
+Allegro interface library was mistakenly named libaldmbd.a instead of
+libaldmd.a, meaning you had to compile with -laldmbd, contrary to what the
+docs said. Apologies to everyone who lost sleep trying to work out what was
+wrong! The reason for using libaldmd.a is to maintain compatibility with
+plain DOS, where filenames are limited to eight characters (plus a three-
+letter extension). The makefiles have now been changed to match the
+information in the docs, so you may have to alter your project files
+accordingly.
+
+The example programs were faulty, and crashed on Windows if they were unable
+to load the file. It was also difficult to work out how to exit them (you had
+to click the taskbar button that didn't have a window, then press a key).
+They have been improved in both these respects.
+
+I have now added a docs/faq.txt file (Frequently Asked Questions), which is
+based on problems and misconceptions people have had with the first release.
+Please refer to it before contacting me with problems.
+
+Thanks to networm for touching up the Unix makefile and writing the
+instructions on using it.
+
+Incidentally, today (Friday 14 June) is the Robinson College May Ball at
+Cambridge Uni. God knows why it's called a May Ball if it's in June. I'm not
+going myself (72 GBP, and I'd have to wear a suit, ugh), but with all the
+noise outside I shall enjoy pumping up the speakers tonight!
+
+
+****************************************
+*** DUMB v0.7, released 2 March 2002 ***
+****************************************
+
+This is the first release of DUMB, and parts of the library are not
+crystallised. Don't let this put you off! Provided you don't try to use any
+features that aren't documented in docs/dumb.txt, the library should be rock
+solid and you should be able to upgrade more or less without problems.
+
+Here are some notes on this release:
+
+- There is some non-portable code in this release of DUMB. It is likely that
+  the library will fail to load IT files with compressed samples on
+  big-endian machines such as the Apple Macintosh.
+
+- If your program ever aborts with exit code 37 while loading an IT file,
+  PLEASE LET ME KNOW! The IT file in question has a stereo compressed sample
+  in it, and the format is unspecified for this case (Impulse Tracker itself
+  doesn't use stereo samples at all). I will need the IT file in question,
+  and any information you can give me about how the IT file was created (e.g.
+  what program). (If you don't get to see an exit code, let me know anyway.)
+
+- If your program ever outputs a line resembling "Inst 01 Env: 0,64 8,32
+  15,48" to stderr while loading an IT file, PLEASE LET ME KNOW! You have an
+  old IT file (saved by an Impulse Tracker version older than 2.00), and
+  support for such files is untested.
+
+- The length of IT and S3M files is not currently calculated. It is just set
+  to ten minutes.

@@ -204,6 +204,11 @@ FString SoundRenderer::GatherStats ()
 	return "No stats for this sound renderer.";
 }
 
+short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type)
+{
+	return NULL;
+}
+
 void SoundRenderer::DrawWaveDebug(int mode)
 {
 }
@@ -221,4 +226,3 @@ FString SoundStream::GetStats()
 {
 	return "No stream stats available.";
 }
-

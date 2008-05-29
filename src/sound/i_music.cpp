@@ -486,6 +486,11 @@ void *I_RegisterSong (const char *filename, char *musiccache, int offset, int le
 				info = new OPLMUSSong (file, musiccache, len);
 			}
 		}
+		// Check for module formats
+		else
+		{
+			info = MOD_OpenSong(file, musiccache, len);
+		}
 	}
 
 	if (info == NULL)

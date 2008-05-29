@@ -894,6 +894,7 @@ struct UDMFParser
 				Printf("Unknown namespace %s. Using defaults for %s\n", sc.String, GameNames[gameinfo.gametype]);
 				switch (gameinfo.gametype)
 				{
+				default:			// Shh, GCC
 				case GAME_Doom:
 					namespace_bits = Dm;
 					P_LoadTranslator("xlat/doom_base.txt");

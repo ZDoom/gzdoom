@@ -1,0 +1,2555 @@
+======================= foo_dumb part =================================
+
+2007-01-26 23:42 UTC - kode54
+- Added CPUID specialization for it_filter() so I can release it.
+
+2007-01-26 22:50 UTC - kode54
+- Moved IT S70-2 effects alongside the rest of S7x so they all trigger after
+  paired notes.
+- Integrated note on/cut ramping with volume transition ramping to reduce
+  setup/cleanup overhead of calling render_playing and the resampler functions
+  for single samples.
+- Note on/cut ramping scaled from 7 sample logarithmic and 256 sample linear to
+  .75ms and 5ms respectively, both linear.
+- Integrated the pattern looping changes from DUMB 0.9.3, since a few files
+  seemed to be broken. The XM-only features still needed to be flagged for XM
+  so they won't break MOD.
+- Implemented SSE replacement for it_filter() which is actually twice as fast.
+
+2007-01-24 09:37 UTC - kode54
+- Version is now 0.9.8.3
+
+2007-01-24 08:34 UTC - kode54
+- Implemented 669 running effects correctly.
+
+2007-01-23 17:42 UTC - kode54
+- Fixed IT reader decompression to support compression+delta on files created
+  with 2.15 or newer.
+
+2007-01-22 18:54 UTC - kode54
+- Implemented 669 running effects, nasty stuff.
+
+2007-01-22 16:40 UTC - kode54
+- Fixed MOD loading step in case any files fall through another loader first.
+  (if asked twice.mod)
+
+2007-01-21 19:47 UTC - kode54
+- Implemented crappy fixed end of sample volume ramping.
+
+2007-01-21 17:43 UTC - kode54
+- XM reader now ignores sample header length, as Sk@le Tracker fills this with
+  nonsense.
+
+2007-01-21 14:21 UTC - kode54
+- Fixed a bug in IT renderer / get_true_pan that caused it to crash on IT files
+  with instruments enabled upon hitting an invalid instrument change.
+
+2006-12-26 06:41 UTC - kode54
+- Fixed sample rate reporting for when extra dynamic info is turned off.
+
+2006-11-01 00:50 UTC - kode54
+- Resamplers now return immediately if the fixed point delta is zero.
+- IT renderer now cuts existing notes when it reaches a note where the instrument
+  references an invalid sample. (jumping under trees.it)
+- Version is now 0.9.8.2
+
+2006-10-14 08:33 UTC - kode54
+- IT renderer pattern loop processor now resets the rows played to clear table
+  per channel regardless of whether order changed since last loop start was
+  initiated. This is correct, since two pattern loop starts in a row means that
+  a loop will never jump to the first loop point.
+
+2006-10-12 06:28 UTC - kode54
+- STM reader checks for more values after the song name, reports the correct
+  order list size, and ignores samples which are shorter than four bytes or
+  have a default volume of zero.
+
+2006-10-08 03:51 UTC - kode54
+- Added CP437 graphics to text conversion functions.
+
+2006-10-07 05:24 UTC - kode54
+- Simplified volume ramping update code, reducing the size of the resampler code
+  considerably.
+- Bumped the volume ramping precision to 24 bits of fraction precision, which is
+  needed by Sweetsin.xm.
+- Moved sample rate reporting to dynamic info as requested by Peter, since it's
+  not a property of the files themselves, but user configurable.
+- Version is now 0.9.8.1
+
+2006-10-07 03:42 UTC - kode54
+- Changed DSMF sample loader to ignore unknown flags instead of blowing an error.
+
+2006-09-25 17:39 UTC - kode54
+- Added hack to MOD loader for when sample start is specified in bytes instead of
+  words.
+
+2006-09-19 15:05 UTC - kode54
+- Shuffled finetune calculation into the correct position, immediately applied
+  as delta is calculated from note.
+- Promoted IT_SAMPLE finetune property to signed short as char is insufficient
+  for full semitone range. (+/- 256)
+- Changed resampler to use full 64-bit comparison for todo variable range checking
+  which should hopefully eliminate any further problems with pitch slides which go
+  out of range.
+- Version is now 0.9.8
+
+2006-06-16 19:10 UTC - kode54
+- Fixed MOD loader FLT8 handler so it halves the order list after it's allocated
+  and loaded.
+- Unified renderer and loop restarting for playback and seeking, and made seeking
+  abortable.
+
+2006-06-16 09:12 UTC - kode54
+- Fixed PSM subsong info reporting.
+
+2006-06-15 21:23 UTC - kode54
+- Added finetune property to IT_SAMPLE, modified ASY, MOD, MTM, old PSM, and XM
+  to use it instead of adjusting the C5 speed, so that finetune effect overrides
+  rather than compounding sample finetune.
+
+2006-06-10 18:10 UTC - kode54
+- Fixed volume ramping.
+
+2006-06-09 16:48 UTC - kode54
+- Ported most of DUMB 0.9.3 over, except for the conflicting pattern loop change
+
+2006-06-03 02:13 UTC - kode54
+- Implemented ASYLUM Music Format support.
+
+2006-06-02 22:06 UTC - kode54
+- Fixed finite looping for speed 0 and global volume 0 triggers.
+- Reset loop count when seeking backwards.
+
+2006-06-02 21:20 UTC - kode54
+- IT renderer now supports pattern jump and break to row on the same row.
+  (coffee-blues 3.mod)
+- Version is now 0.9.7.5
+
+2006-06-02 20:25 UTC - kode54
+- Empty pattern scanner now returns the correct value for completely empty
+  pattern structures, and also checks for lists of empty rows.
+
+2006-06-01 00:47 UTC - kode54
+- STM reader reads effects properly now.
+
+2006-05-31 23:15 UTC - kode54
+- Implemented STM support.
+- Version is now 0.9.7.4
+
+2006-05-31 20:12 UTC - kode54
+- Finished implementing working fading support.
+
+2006-05-31 19:09 UTC - kode54
+- Implemented fading support.
+
+2006-05-31 18:31 UTC - kode54
+- Removed context dialog from resources.
+
+2006-05-30 03:57 UTC - kode54
+- IT reader works around a broken file that has several of the instruments
+  offset by two bytes from their indicated file offsets. Since the hack
+  only checks for offset by two null bytes, it also assumes that the two
+  bytes it can't read from the end are also zero. (bz_ult9.it)
+- IT reader treats null instrument/sample/pattern offsets as empty items.
+  (flight2.it, sherri.it)
+
+2006-05-30 00:04 UTC - kode54
+- XM reader now truncates instrument envelope lengths to 12, and performs
+  some basic envelope loop checking, similar to Open ModPlug Tracker.
+  (revive_nimnone.xm)
+
+2006-05-27 22:40 UTC - kode54
+- S3M reader defaults to maximum (128) global volume when the header value is
+  either zero or greater than 64. (darkness2.s3m)
+
+2006-05-23 00:06 UTC - kode54
+- Changed module format load order priority to check all signatures before
+  attempting MOD now, and then only 15 sample module for MOD/MDZ. This should
+  hopefully cut back on problems with N formats renamed to MOD.
+- Version is now 0.9.7.4
+
+2006-05-22 21:44 UTC - kode54
+- XM reader now supports up to 256 instruments, even though FT2 only
+  supports up to 128. ModPlug Tracker again. (no_utndgs2.xm)
+- g_open_module now supports other files misnamed as .MOD (hilse.mod .it)
+
+2006-05-22 18:43 UTC - kode54
+- XM reader now ignores when instrument header contains a sample header size
+  of 0, when it should be 0x28. (neptune_*.xm)
+- S3M reader was using the incorrect index into component for sample packing
+  when reading sample data. Was using n, should have been m.
+
+2006-05-22 17:26 UTC - kode54
+- IT renderer may have a bug with its time_lost / loop handling. Switchover
+  from sustain loop would compound time_lost onto itself for every note-off.
+  I'm not sure if this crap is even doing the right thing, especially in the
+  case of a sample with a sustain loop, but no main loop. Working around for
+  now by zeroing time_lost after note-off. (hall8.it)
+- S3M reader ignores effects outside of 1-25 range so nothing can hit
+  internal effects which are XM or PTM only. (N4.S3M)
+- IT reader now supports ModPlug Tracker extensions for up to 4000 samples
+  and mapping them with instruments. (hallowe.it.it)
+- XM reader now supports instrument vibrato 4, random. Yet another ModPlug
+  extension. (hcw-st.xm)
+
+2006-05-21 02:11 UTC - kode54
+- S3M reader correctly reads all 24 bits of the sample memory segment
+  offset, fixing at least one file with >1MB of sample data (d-t-x_x.s3m)
+- XM reader stops reading instruments when it has at least one valid
+  instrument and encounters an error, fixing at least one file with
+  too high instrument count in the header (drx-chri.xm)
+- IT reader ignores instrument header signatures, since there seem to
+  be files with bad signatures on unused/filler instruments (dsouls.it)
+- MOD reader can now be restricted to handling 31 sample files with
+  legal/known signatures only, so frontend can fall back on restricted
+  MOD loading for files with incorrect extensions (dreamer_0g.s3m)
+- Version is now 0.9.7.2
+
+2006-05-20 xx:xx UTC - kode54
+- Modified silence skipping to hack around some "S L O W" effects crap
+  and a misused break to row effect
+
+2006-03-27 07:51 UTC - kode54
+- Changed RIFF AMFF loader to ignore one unknown sample flag and
+  be a little more flexible with the INST chunk handler
+- Version is now 0.9.7.1
+
+2005-11-07 05:00 UTC - kode54
+- Added generic RIFF module handler and AM/AMFF format readers
+- Added J2B unpacker
+- Version is now 0.9.7
+
+2005-10-13 09:02 UTC - kode54
+- Implemented XM format v1.02 and v1.03 support
+- Arpeggio fix for FastTracker 2 bug, I think
+
+2005-06-04 00:59 UTC - kode54
+- Implemented ADPCM4 in S3M reader
+- Moved ADPCM4 unpacking code to its own function in itread.c, declared in internal/it.h
+- Version is now 0.9.6.3
+
+2005-06-01 00:23 UTC - kode54
+- Added safety check to MOD ADPCM4 unpacking code, in case of odd lengths
+- Implemented ADPCM4 in XM reader
+- Implemented ADPCM4 in IT reader
+- Version is now 0.9.6.2
+
+2005-05-29 16:49 UTC - kode54
+- Implemented support for modplug packed samples in MOD reader (meh)
+- Version is now 0.9.6.1
+
+2005-05-20 06:08 UTC - kode54
+- UMX handler now ignores file type (SpaceMarines.umx, Starseek.umx report "s3m" but contain IT)
+- UMX stops at the first matching resource (Kran32.umx, contains two Music entries for the same block of data)
+- Version is now 0.9.6
+
+2005-01-27 21:02 UTC - kode54
+- Quick bug fix for Repeat One, seek() should be clearing eof flag
+- Version is now 0.9.5.8
+
+2005-01-17 16:25 UTC - kode54
+- XM pattern loader is now more lenient with truncated pattern data
+- Version is now 0.9.5.7
+
+2005-01-12 20:19 UTC - kode54
+- Added .mod/.mdz check to track indexer in case of MOD with "PSM " in song name :)
+- Version is now 0.9.5.6
+
+2005-01-12 19:11 UTC - kode54
+- Fixed a bug in 669 loader
+- Moved .mod/.mdz loading ahead of header checks, in case of song titles which trick one of the loader conditions
+
+2004-10-29 02:47 UTC - kode54
+- Touched up .mod sample truncation handling again
+- Version is now 0.9.5.5
+
+2004-10-21 06:02 UTC - kode54
+- Fixed a division by zero case in dumb_resample, which resulted from a sample with zero C5 speed
+- Version is now 0.9.5.4
+
+2004-10-18 04:50 UTC - kode54
+- Corrected 669 tempo and speed handling, although the tone portamento still seems to be a bit off
+- Reenabled down ramping, always using 1/512s logarithmic decay
+- Version is now 0.9.5.3
+
+2004-10-17 06:25 UTC - kode54
+- Disabled the down ramping code, as the old click remover seems to behave better in more places
+
+2004-10-17 00:26 UTC - kode54
+- Added file remaining hack to skip remaining but unused patterns in Iguana's demo MODs
+- Modified MOD buffered reader and sample data loader to avoid unnecessary dumbfile calls when size of operation is zero
+- Version is now 0.9.5.2
+
+2004-10-16 23:22 UTC - kode54
+- Changed sample truncation behavior in MOD and 669 to be consistent
+- Added support for a couple of obscure MOD signatures used by some PC demo, just to support their delta samples natively
+- Version is now 0.9.5.1
+
+2004-10-16 19:44 UTC - kode54
+- 669 loader is lenient with truncated sample data
+- MTM reader is lenient with track numbers which are out of range
+- Version is now 0.9.5
+
+2004-10-16 18:50 UTC - kode54
+- Overhauled volume ramping to an acceptable state
+- Tweaked XM amiga vibrato a bit, should be more correct now
+
+2004-10-14 21:58 UTC - kode54
+- Set sample offset has memory even in MOD
+- Version is now 0.9.4
+
+2004-10-12 06:14 UTC - kode54
+- Tweaked around with volume ramping crap some more. Still a mess, still nowhere near perfect. Bleh.
+- Added per-sample resampling quality limits
+- Added auto chip sample detection
+
+2004-10-10 07:23 UTC - kode54
+- Implemented volume change ramping as well... Holy shit, what a fucking mess.
+
+2004-10-09 23:50 UTC - kode54
+- Implemented volume ramping
+- XM channel volume/envelopes/panning should not be reset when instrument change is paired with note-off
+
+2004-10-06 22:08 UTC - kode54
+- Fixed volume swing
+- Fixed logarithmic vibrato so it only activates on XM w/ Amiga frequency table
+- Version is now 0.9.3.6
+
+2004-10-06 06:21 UTC - kode54
+- Added NSMS signature for 4ch 31s module
+- Changed MOD sample change behavior again, in a way that doesn't break Intro-Music.mod
+- Version is now 0.9.3.5
+
+2004-10-06 01:23 UTC - kode54
+- Sample offset is no longer reapplied during pattern breaks
+- Version is now 0.9.3.4
+
+2004-10-05 23:57 UTC - kode54
+- MOD/XM pattern break effect >63 breaks to row 0
+
+2004-10-05 23:34 UTC - kode54
+- Implemented FastTracker 2 logarithmic vibrato
+- Implemented FastTracker 2 ramp up/down and square wave forms... Maybe it would be faster if I calculated that crap
+  instead of using tables.
+
+2004-10-05 19:38 UTC - kode54
+- Implemented instrument random volume and panning variation, but maybe the offset should be a member of IT_CHANNEL
+  instead of IT_PLAYING...
+
+2004-10-05 19:03 UTC - kode54
+- Panbrello position persists for the life of the voice, depth is the same, but is reset to zero
+  if channel panning is changed
+
+2004-10-05 18:49 UTC - kode54
+- Fixed pitch-pan with negative separation level
+- Changed instrument envelope control
+
+2004-10-04 14:25 UTC - kode54
+- Damn, glissando control was broken, couldn't turn it off
+- Wow, hole in the MTM comment reader. It's still ugly, though.
+- Version is now 0.9.3.3
+
+2004-10-04 13:27 UTC - kode54
+- Undid last NNA changes, the real problem was with NNA control effects carrying when they shouldn't
+- Version is now 0.9.3.2
+
+2004-10-04 11:09 UTC - kode54
+- Fixed a possible bug with finetune, which should not be applied twice
+- Implemented glissando
+- Implemented PTM note slides, what a bitch, and just for two files!
+- Version is now 0.9.3.1
+
+2004-10-04 05:36 UTC - kode54
+- Old PSM support
+- MTM support
+- MOD/XM S8x effect support, if it's supposed to be there
+- Changed several readers to use stack buffers for dynamic strings, instead of malloc
+- Fixed reading IT info from UMX archives. Whoops.
+- Initialized counter variable properly in get_tracks() function. Whoops again.
+- Removed length probe from dumb_read_it(). Jeez, what a slowdown even when not mixing and resampling...
+- Version is now 0.9.3
+
+2004-10-02 17:09 UTC - kode54
+- Added dynamic speed, tempo, channels, and channels_max info
+- Version is now 0.9.2.14
+
+2004-10-02 16:49 UTC - kode54
+- Added hack around XM speed zero to set its row played bit, for crap which scans it later outside of renderer...
+
+2004-10-02 16:15 UTC - kode54
+- Increased global volume silence check to 12 seconds
+- Forced restart position to match start order, for a few annoying files, so they stop. Gee.
+
+2004-10-02 15:04 UTC - kode54
+- Meh, extended some NNA behavior so channel volume settings affect NNA voices correctly
+- This appears to be the limit of channel effects on NNA voices, I hope
+
+2004-10-02 14:28 UTC - kode54
+- Added pattern delay/loop checking to pattern silence checker
+- Silent pattern trimmer now trims only patterns which also contain delays/loops
+- Trimmer also produces a single-row empty pattern instead of a 0-row pattern, which would hang
+- Amended XM effect translation to support mod parameter, currently only affects Fxx speed effect
+
+2004-10-01 16:20 UTC - kode54
+- Added dynamic info junk
+- Version is now 0.9.2.13
+
+2004-10-01 15:50 UTC - kode54
+- Fixed played bit setting on completing a pattern loop
+- Removed insane level of loop bit checking because combined with the above breaks Jos-Dr4k.xm
+- Fixed S3M sample length/loop fields for stereo/16-bit samples in files created by IMAGO Orpheus
+
+2004-10-01 12:38 UTC - kode54
+- Extended subsong scanner to check every row in each order
+
+2004-09-30 14:39 UTC - kode54
+- Removed most checkpoint list building for a speedup
+- Added note off to silence allowance list
+- Version is now 0.9.2.12.2
+
+2004-09-29 18:10 UTC - kode54
+- Removed ID3v1 from tag checks
+- Blarg, bug fix in track_indexer for PSMs with APE tags, VC is retarded
+- Version is now 0.9.2.12.1
+
+2004-09-27 11:36 UTC - kode54
+- Added configuration for subsong scanning
+- Added finite looping options, will trigger either on global volume, speed zero, or just plain looping
+- Fixed note portamento in the same row as note off
+- Changed S3M reader to truncate loops that end past the length of the sample instead of disabling the loop
+- Changed S3M reader to eliminate duplicate patterns which reference the same file offset
+- Version is now 0.9.2.12
+
+2004-09-27 08:21 UTC - kode54
+- Extended PSM reader to support multiple subsongs
+- Added a playable orders scanner
+- Changed context menu system to indicate initial pattern or subsong depending on format
+
+2004-09-22 22:13 UTC - kode54
+- CRAP! My quick signature check broke PSM support
+- Added extension check to MOD reader so no unknown types hit it
+- Version is now 0.9.2.11.1
+
+2004-09-22 01:41 UTC - kode54
+- Changed S3M loader to ignore samples with zero length before checking for signature
+- Added top-level signature checks for all formats other than MOD so invalid files don't become 15s MOD
+- Version is now 0.9.2.11
+
+2004-09-21 21:44 UTC - kode54
+- Fixed MOD 8xx effect scale
+
+2004-09-21 18:16 UTC - kode54
+- Holy fucking shit, PSM support!
+- Fixed instrument w/o note so it always resets 
+
+2004-09-21 00:55 UTC - kode54
+- Initialize sample variables to zero for MOD/XM files with retrigger commands before any actual note data
+- Changed global volume cutoff to try the callback every 5 seconds of global silence
+- Changed resampler to assume todo values less than zero are actually integer overflow, which works fine for
+  portamento to really low pitch levels. It should never be negative anyway.
+- Version is now 0.9.2.10.1
+
+2004-09-19 15:31 UTC - kode54
+- S3M reader now disposes of effects unsupported by Scream Tracker 3. Some people are just too l33t to
+  use the effects column only for effects.
+- Swapped PTM portamento effect directions. Whoever wrote PTMFORM.DOC must have been on drugs or something.
+- Corrected MOD/S3M (PTM?) behavior when the sample is changed on a playing channel without a new note
+- Version is now 0.9.2.10
+
+2004-09-18 01:10 UTC - kode54
+- Corrected speed change command so it only calls speed zero callback on XM files and not MOD files
+- Version is now 0.9.2.9
+
+2004-09-17 23:43 UTC - kode54
+- Corrected finetune effect, allowed for future finetune tweaking
+
+2004-09-17 20:57 UTC - kode54
+- Fixed panbrello, now it really is correct
+- Implemented finetune effect
+- Fixed 669 effect 3, I think
+
+2004-09-17 18:29 UTC - kode54
+- Fixed song message handler in ReadDUH
+
+2004-09-17 17:41 UTC - kode54
+- Spoony 669 support
+
+2004-09-17 10:45 UTC - kode54
+- Implemented IT panbrello effect, hopefully
+
+2004-09-17 09:18 UTC - kode54
+- Implemented S3M Xxx panning bug for surround modes
+- Added OKT extension, since it is handled by the MOD reader
+
+2004-09-16 11:54 UTC - kode54
+- Fixed S3M panning command. Others probably need proper translation as well.
+- Version is now 0.9.2.8.2
+
+2004-09-16 11:34 UTC - kode54
+- Lovely, had to fix loop checking behavior when parsing through an empty pattern with no event list
+- Fixed seek() to invoke open2() properly, whoops.
+
+2004-09-16 09:46 UTC - kode54
+- CRIKEY! Broke pattern loops on formats other than XM! Fixed now.
+- Version is now 0.9.2.8.1
+
+2004-09-16 06:26 UTC - kode54
+- Changed pattern trimmer to report when there's nothing left after trimming
+- BLAH! Fixed another reference to the global quality level in resample.inc
+- Version is now 0.9.2.8
+
+2004-09-16 04:52 UTC - kode54
+- Really fixed stupid smart loop checking this time
+
+2004-09-16 02:39 UTC - kode54
+- Fixed some static veriable crap in IT compressed sample loaders
+- Consolidated sigrenderer creation and configuration
+- Previous loop checking could potentially leak memory
+- Now compiled with ICL 8 for a decent speed boost
+
+2004-09-15 20:46 UTC - kode54
+- Added optional silence trimming
+
+2004-09-15 20:41 UTC - kode54
+- The loop checking is now more ludicrous, to fix some annoying modules
+- Added a zero global volume callback for other annoying modules
+
+2004-09-14 04:57 UTC - kode54
+- Added change starting order context menu item
+- Version is now 0.9.2.7
+
+2004-09-14 01:56 UTC - kode54
+- Fixed 16-bit samples clipping when resampling is set to aliasing
+- Version is now 0.9.2.6
+
+2004-09-13 23:17 UTC - kode54
+- Fixed PTM note cut command (which behaves like XM)
+
+2004-09-13 22:14 UTC - kode54
+- Fixed loop end point for PTM files
+
+2004-09-13 19:53 UTC - kode54
+- Fixed sample offset effect for PTM files
+
+2004-09-13 15:30 UTC - kode54
+- Fixed an envelope carry related crash by changing the it_retrigger_note portion to handle it in a safer way
+- Version is now 0.9.2.5
+
+2004-09-13 15:10 UTC - kode54
+- Almost complete PTM support
+
+2004-09-13 09:26 UTC - kode54
+- Fixed retriggering when sample finished playing within the retrigger interval, restricted to XM for now
+- Version is now 0.9.2.4
+
+2004-09-13 07:36 UTC - kode54
+- Quick bugfix to envelope carry, shouldn't be messing with instruments table if not in IT instruments mode
+
+2004-09-13 05:03 UTC - kode54
+- Added support for envelope carry. I hope it's correct.
+- Version is now 0.9.2.3
+
+2004-09-12 02:51 UTC - kode54
+- Added DUH FORMAT tag for all readers except for IT, and TRACKERVERSION for S3M
+
+2004-09-12 02:27 UTC - kode54
+- Fixed MOD channel count, wasn't being set properly in readmod.c
+
+2004-09-12 02:16 UTC - kode54
+- Fixed translation of XM panning slide effect after reversing IT panning slide
+
+2004-09-11 23:35 UTC - kode54
+- Implemented S3M mono/stereo control, but maybe I should also add a flag and disable panning
+- Implemented IT vibrato/tremolo waveform control
+
+2004-09-10 13:37 UTC - kode54
+- Fixed resetting from surround to centered on panning slide/shift
+- Clipped IT panning shift effect
+- Version is now 0.9.2.2
+
+2004-09-10 09:15 UTC - kode54
+- Implemented IT S7x effect for NNA commands and per-note envelope toggles
+- Implemented IT NNA duplicate note checks
+- Corrected direction of panning slide effect
+- Version is now 0.9.2.1
+
+2004-09-10 03:57 UTC - kode54
+- Fixed pattern break replaying with a bit array
+- Fixed F0x-test.xm, sort of
+
+2004-09-09 18:49 UTC - kode54
+- Centralized info gathering for mod/s3m/xm
+
+2004-09-08 00:57 UTC - kode54
+- Fixed sample quality settings, and resetting settings/callbacks on backwards seeking
+
+2004-09-06 16:23 UTC - kode54
+- Changed default rate to 44100Hz, the "standard" default. Hell with AC'97
+
+2004-09-06 13:11 UTC - kode54
+- Transferred foo_mod codebase over and modified to use DUMB
+- Modified DUMB slightly to allow for the as-yet unused start order functionality
+- What a coincidence, the original latest version number was so similar to DUMB's
+- Version is now 0.9.2
+
+========================= dumb part ===================================
+
+2003-11-08 11:20  aegis
+
+	* src/Makefile.am: fix automake build
+
+2003-09-06 22:41  entheh
+
+	* include/dumb.h, include/internal/it.h, make/Makefile.inc,
+	src/helpers/resample.c, src/helpers/resample.inc, src/it/itread.c,
+	src/it/itrender.c, src/it/readmod.c, src/it/reads3m.c,
+	src/it/readxm.c: 8-bit and 16-bit source resamplers created (dest
+	is always 32-bit with 24-bit range). Cubic way faster too - look-up
+	table idea stolen from ModPlugXMMS ;)
+
+2003-09-06 11:11  entheh
+
+	* src/core/rendsig.c: I did this ages ago.
+
+2003-07-19 03:00  entheh
+
+	* Makefile.ready, release.txt, include/dumb.h, make/Makefile.inc,
+	src/core/register.c, src/it/itrender.c, src/sigtypes/sample.c:
+	Stuff.
+
+2003-07-01 10:12  entheh
+
+	* include/dumb.h: Support for another compiler suite.
+
+2003-06-19 21:24  entheh
+
+	* src/helpers/resample.c: Crash bug fixed.
+
+2003-06-19 20:49  entheh
+
+	* src/it/: itrender.c, reads3m.c: Now we honour IT's pan separation
+	control.
+
+2003-06-19 17:31  entheh
+
+	* release.txt, src/it/itread.c, src/it/itrender.c,
+	src/it/readmod.c, src/it/reads3m.c, src/it/readxm.c: Fixed warnings
+	in the file loaders, and made an IT playback fix.
+
+2003-06-15 19:09  aegis
+
+	* vc6/: dumbout/dumbout.dsp, dumbplay/dumbplay.dsp,
+	playduh/playduh.dsp: adding project files I missed
+
+2003-06-15 19:08  aegis
+
+	* release.txt: updating release.txt
+
+2003-06-15 18:40  aegis
+
+	* configure.in, include/Makefile.am, include/internal/Makefile.am,
+	vc6/dumb.dsw, vc6/dumb2wav/dumb2wav.dsp: include the
+	include/internal directory in distributions, and build allegro
+	examples in VC6 build
+
+2003-06-15 18:36  aegis
+
+	* examples/dumb2wav.c: add a -l option to specify number of loops
+
+2003-06-12 17:34  aegis
+
+	* vc6/dumb_static/dumb_static.dsp: build dumbd_static.lib instead
+	of dumb_staticd.lib
+
+2003-06-12 03:19  aegis
+
+	* vc6/: dumb.dsw, aldumb/aldumb.dsp, dumb/dumb.dsp,
+	dumb2wav/dumb2wav.dsp, dumb_static/dumb_static.dsp: adding projects
+	for dumb_static (compiled with /MT) and dumb2wav
+
+2003-06-12 03:16  aegis
+
+	* examples/dumb2wav.c: all .wav files are little-endian so get rid
+	of the bigendian option
+
+2003-06-12 02:30  aegis
+
+	* make/Makefile.am: forgot to add this file...
+
+2003-06-12 02:14  aegis
+
+	* obj/mingw/release/tmpfile.txt, obj/msvc/debug/tmpfile.txt,
+	obj/msvc/release/tmpfile.txt, obj/unix/debug/tmpfile.txt,
+	obj/unix/release/tmpfile.txt, src/Makefile.am,
+	src/core/Makefile.am, src/helpers/Makefile.am, src/it/Makefile.am,
+	src/it/itread.c, src/it/readmod.c, src/it/reads3m.c,
+	src/it/readxm.c: automake build:	 include a bunch of extra
+	files in 'make dist'	     build examples so they actually run   
+	     copy Makefile.ready to Makefile in the default distribution
+	
+	Makefile.ready: 	support for SGI cc	   create output
+	directories in build rather than including them in CVS	       move
+	some compile flags to the beginning of the compile line
+	
+	Add dumb2wav example SGI LONG_LONG support Fix some issues with the
+	const tag arrays in itread.c and such
+	
+	:
+	-------------------------------------------------------------------
+	---
+
+2003-06-12 02:13  aegis
+
+	* Makefile.am, Makefile.ready, configure.in, docs/Makefile.am,
+	examples/Makefile.am, examples/dumb2wav.c, include/dumb.h,
+	lib/djgpp/tmpfile.txt, lib/mingw/tmpfile.txt, lib/msvc/tmpfile.txt,
+	lib/unix/tmpfile.txt, make/Makefile.inc,
+	obj/djgpp/debug/tmpfile.txt, obj/djgpp/release/tmpfile.txt,
+	obj/mingw/debug/tmpfile.txt: automake build:	     include a
+	bunch of extra files in 'make dist'	    build examples so they
+	actually run	     copy Makefile.ready to Makefile in the default
+	distribution
+	
+	Makefile.ready: 	support for SGI cc	   create output
+	directories in build rather than including them in CVS	       move
+	some compile flags to the beginning of the compile line
+	
+	Add dumb2wav example SGI LONG_LONG support Fix some issues with the
+	const tag arrays in itread.c and such
+
+2003-06-11 06:29  entheh
+
+	* include/dumb.h: Should compile with OpenWatcom now. I've yet to
+	look at the project files and decide whether to add them though :)
+
+2003-06-10 14:10  aegis
+
+	* configure.in: oops, forgot configure.in when committing the
+	automake build
+
+2003-06-07 07:14  entheh
+
+	* Makefile.ready: Small fix to compiling flags for icc.
+
+2003-06-06 12:26  entheh
+
+	* include/internal/it.h, src/it/itrender.c: XM Key Off effect now
+	works the way it should (I hope).
+
+2003-06-05 06:19  aegis
+
+	* Makefile.ready: fix Makefile.ready so it refers to itself when
+	recursively invoking make
+
+2003-06-04 02:16  aegis
+
+	* vc6/: dumb.dsp, dumb.dsw, aldumb/aldumb.dsp, dumb/dumb.dsp:
+	finishing VC6 build system
+
+2003-05-29 20:55  aegis
+
+	* release.txt: updating release.txt
+
+2003-05-29 20:55  aegis
+
+	* examples/Makefile.am: install examples
+
+2003-05-29 20:37  aegis
+
+	* Makefile, Makefile.am, Makefile.ready, bootstrap,
+	docs/Makefile.am, examples/Makefile.am, include/Makefile.am,
+	src/Makefile.am, src/core/Makefile.am, src/helpers/Makefile.am,
+	src/it/Makefile.am: initial pass of automake build
+
+2003-05-28 11:56  aegis
+
+	* vc6/: dumb.dsp, dumb.dsw: updating VC6 project:  the sigtypes
+	stuff doesn't compile yet though
+
+2003-05-17 09:33  entheh
+
+	* Makefile, release.txt, include/dumb.h, src/it/itrender.c: Bugfix:
+	Gxx didn't store effect value when no note was (previously)
+	playing. Also added support for the Intel C compiler for Linux.
+
+2003-04-27 11:49  entheh
+
+	* make/config.sh: Small fix. Thanks to Sam Hocevar from Debian for
+	pointing this out.
+
+2003-04-25 09:23  entheh
+
+	* release.txt, include/internal/it.h, src/it/itrender.c,
+	src/it/xmeffect.c: XM Kxx effect should work better now.
+
+2003-04-24 15:26  entheh
+
+	* docs/faq.txt, include/dumb.h, include/internal/it.h,
+	src/it/itmisc.c, src/it/itread.c, src/it/itunload.c,
+	src/it/readmod.c, src/it/reads3m.c, src/it/readxm.c: DUMB now loads
+	song message and other author data, and these can be retrieved.
+
+2003-04-23 00:14  entheh
+
+	* release.txt, docs/deprec.txt: Misc commits
+	
+	-------------------------------------------------------------------
+	---
+
+2003-04-18 03:00  entheh
+
+	* include/dumb.h, include/internal/it.h, src/it/itread.c,
+	src/it/itrender.c, winamp/in_duh.c: New envelope code. I don't
+	trust it fully yet, but it seems to work.
+
+2003-04-17 16:54  entheh
+
+	* Makefile, release.txt, include/dumb.h, include/internal/dumb.h,
+	include/internal/it.h, src/core/duhtag.c, src/core/makeduh.c,
+	src/core/unload.c, src/it/itread.c, src/it/itrender.c,
+	src/it/readmod.c, src/it/reads3m.c, src/it/readxm.c,
+	winamp/in_duh.c: Added a tagging system; using it for the song
+	title. Yay!
+
+2003-04-15 00:13  entheh
+
+	* include/internal/it.h, src/it/itrender.c, src/it/readxm.c,
+	src/it/xmeffect.c: Panning slides! Finally \o/
+
+2003-04-12 01:01  entheh
+
+	* Makefile, include/aldumb.h, src/allegro/alplay.c: Added
+	al_duh_get_volume(). Not documented yet.
+
+2003-04-12 00:12  entheh
+
+	* Makefile, todo.txt, src/it/readxm.c: XM files: map_sample[] was
+	uninitialised for instruments with no samples - led to strange
+	noises occasionally.
+
+2003-04-04 08:04  entheh
+
+	* winamp/in_duh.c: Winamp plug-in improved a bit.
+
+2003-04-03 16:26  entheh
+
+	* make/config.bat: Huge bugfix!
+
+2003-04-03 12:07  entheh
+
+	* Makefile: Bug fixed. Example programs will now be installed.
+
+2003-04-03 07:02  entheh
+
+	* vc6/dumb.dsp: Added the VC6 project file to CVS.
+
+2003-04-03 07:01  entheh
+
+	* readme.txt: Bah.
+
+2003-04-02 04:55  entheh
+
+	* Makefile, readme.txt, release.txt: The makefile now works for the
+	Mac.
+
+2003-04-02 04:00  entheh
+
+	* release.txt: OK, this time it really is ready for release ...
+
+2003-04-02 03:56  entheh
+
+	* Makefile, licence.txt, readme.txt, release.txt, todo.txt,
+	docs/deprec.txt, docs/dumb.txt, docs/faq.txt, docs/howto.txt,
+	docs/modplug.txt, examples/dumb.ini, examples/dumbout.c,
+	include/dumb.h, include/internal/it.h, src/core/rendsig.c,
+	src/helpers/resample.c, src/it/itrender.c: Ready for release!
+
+2003-03-30 12:05  entheh
+
+	* Makefile, release.txt, src/it/itread.c, src/it/itrender.c,
+	src/it/readmod.c, src/it/reads3m.c, src/it/readxm.c: No longer
+	installing the example programs when on Windows.
+
+2003-03-30 09:01  entheh
+
+	* Makefile, make/djgpp.inc, make/mingw.inc, make/unix.inc: Fix for
+	BeOS
+
+2003-03-30 08:22  entheh
+
+	* Makefile, Makefile.dj, Makefile.inc, Makefile.mgw, Makefile.uni,
+	config.bat, config.sh, readme.txt, make/Makefile.inc,
+	make/config.bat, make/config.sh, make/djgpp.inc, make/dumbask.c,
+	make/makefile.dj, make/makefile.lst, make/makefile.mgw,
+	make/makefile.uni, make/makefile.vc, make/mingw.inc, make/unix.inc,
+	src/misc/dumbask.c, src/misc/runner.c: Makefiles restructured a
+	bit. Should now support BeOS and Mac too :)
+
+2003-03-29 19:45  entheh
+
+	* Makefile, Makefile.dj, Makefile.inc, Makefile.mgw, Makefile.uni,
+	config.bat, config.sh, fix.bat, fix.sh, makeall.bat, makeall.sh,
+	makecore.bat, makecore.sh, release.txt, examples/dumbout.c,
+	include/dumb.h, include/internal/it.h, src/it/itrender.c,
+	src/misc/dumbask.c, src/misc/gccver.c: New makefile system! No
+	provision for MSVC yet ...
+
+2003-03-28 06:06  entheh
+
+	* make/makefile.mgw: -funroll-loops removed from makefiles.
+
+2003-03-28 05:29  entheh
+
+	* src/helpers/resample.c: Some optimisation. Still needs work!
+
+2003-03-27 04:13  entheh
+
+	* src/it/itrender.c: Pacified valgrind.
+
+2003-03-19 08:42  entheh
+
+	* examples/dumb.ini, include/dumb.h, src/helpers/clickrem.c,
+	src/helpers/resample.c: Blah, stuff.
+
+2003-03-16 01:13  entheh
+
+	* licence.txt, readme.txt, release.txt, docs/deprec.txt,
+	docs/duhspecs.txt, docs/dumb.txt, docs/dumbfull.txt, docs/faq.txt,
+	docs/fnptr.txt, docs/howto.txt, docs/modplug.txt, docs/ptr.txt,
+	docs/tutorial.txt, examples/dumbout.c, examples/dumbplay.c,
+	examples/playduh.c, include/aldumb.h, include/dumb.h,
+	include/internal/aldumb.h, include/internal/dumb.h,
+	include/internal/it.h, src/allegro/alplay.c, src/allegro/datduh.c,
+	src/allegro/datit.c, src/allegro/datmod.c, src/allegro/dats3m.c,
+	src/allegro/datunld.c, src/allegro/datxm.c, src/allegro/packfile.c,
+	src/core/atexit.c, src/core/duhlen.c, src/core/dumbfile.c,
+	src/core/loadduh.c, src/core/makeduh.c, src/core/rawsig.c,
+	src/core/readduh.c, src/core/register.c, src/core/rendduh.c,
+	src/core/rendsig.c, src/core/unload.c, src/helpers/clickrem.c,
+	src/helpers/memfile.c, src/helpers/resample.c,
+	src/helpers/sampbuf.c, src/helpers/silence.c,
+	src/helpers/stdfile.c, src/it/itload.c, src/it/itmisc.c,
+	src/it/itorder.c, src/it/itread.c, src/it/itrender.c,
+	src/it/itunload.c, src/it/loadmod.c, src/it/loads3m.c,
+	src/it/loadxm.c, src/it/readmod.c, src/it/reads3m.c,
+	src/it/readxm.c, src/it/xmeffect.c, src/sigtypes/combine.c,
+	src/sigtypes/sample.c, src/sigtypes/sequence.c,
+	src/sigtypes/sterpan.c, tools/cit.c, winamp/in2.h, winamp/in_duh.c,
+	winamp/in_duh.h, winamp/out.h: SHAZZAM! DUMB now has a decent name.
+	:D
+
+2003-03-16 00:36  entheh
+
+	* src/helpers/clickrem.c: Added a #warning to an evil piece of code
+
+2003-03-15 21:03  entheh
+
+	* src/helpers/clickrem.c: Click remover now copes with the huge
+	values.
+
+2003-03-15 19:53  entheh
+
+	* src/: core/rendduh.c, it/itread.c, it/readmod.c, it/reads3m.c,
+	it/readxm.c: 24-bit mixing YAAAAAAAY :D Click remover overflows -
+	will fix that later.
+
+2003-03-15 19:16  entheh
+
+	* examples/dumbout.c, src/helpers/resample.c: MULSC macro created
+	and tweaked for speed AND precision! Yaaaaay ^~ Thanks for the help
+	Bob :)
+
+2003-03-11 18:41  entheh
+
+	* src/it/itrender.c: Reinstating the vibrato I disabled while
+	playing with valgrind (oops).
+
+2003-03-11 00:02  entheh
+
+	* src/helpers/resample.c: Resamplers didn't quite Do The Right
+	Thing for click removal. Fixed.
+
+2003-03-10 22:49  entheh
+
+	* readme.txt, docs/deprec.txt, docs/faq.txt, docs/howto.txt,
+	examples/dumbout.c, include/dumb.h, include/internal/it.h,
+	src/core/makeduh.c, src/core/register.c, src/core/rendduh.c,
+	src/core/rendsig.c, src/helpers/clickrem.c, src/helpers/resample.c,
+	src/it/itread.c, src/it/itrender.c, src/it/itrender.old.c,
+	src/it/readmod.c, src/it/reads3m.c, src/it/readxm.c: Resamplers
+	reworked, finally! More to do, but it's bug-free and usable. :)
+
+2003-02-14 01:25  entheh
+
+	* readme.txt, docs/howto.txt, src/helpers/clickrem.c,
+	src/it/itrender.c: Removed an old #warning (and did some other
+	stuff it seems).
+
+2003-01-26 19:16  entheh
+
+	* release.txt, docs/dumb.txt, include/dumb.h, src/it/itrender.c:
+	dumb_it_sr_get_channel_state() now provides a more precise pan
+	value.
+
+2003-01-24 19:13  entheh
+
+	* docs/dumb.txt, include/dumb.h, src/it/itrender.c:
+	dumb_it_get_state() now returns more precise information on
+	filters.
+
+2003-01-21 06:40  entheh
+
+	* release.txt, docs/dumb.txt, examples/dumbplay.c,
+	include/aldumb.h, src/allegro/alplay.c, src/allegro/packfile.c:
+	Stuff... dumbfile_from_packfile() added, if nothing else.
+
+2003-01-15 19:43  entheh
+
+	* src/it/readmod.c: Committing what appears to be an MSVC warning
+	pacifier.
+
+2003-01-03 15:28  entheh
+
+	* include/internal/it.h, make/makefile.mgw, src/core/dumbfile.c,
+	src/it/itrender.c, src/it/readmod.c, src/it/xmeffect.c: Muted
+	channels supported, more accurate envelopes, several bugs fixed
+
+2003-01-03 15:03  entheh
+
+	* release.txt, docs/dumb.txt, examples/dumb.ini: Muted channels,
+	and lots of bugs fixed
+
+2002-12-24 06:41  entheh
+
+	* include/dumb.h, src/core/dumbfile.c, src/it/itrender.c: Fixed
+	some bugs.
+
+2002-12-20 21:51  entheh
+
+	* src/it/readxm.c: Fixed the bug I thought I fixed just now.
+
+2002-12-20 21:45  entheh
+
+	* examples/dumb.ini, make/makefile.mgw, make/makefile.vc,
+	src/allegro/alplay.c, src/it/readxm.c: Fixed a bug.
+
+2002-12-20 21:07  joe_programmer
+
+	* src/it/itrender.c: MSVC6 does'nt support C99 - fixed variable
+	declarations
+
+2002-12-20 01:49  entheh
+
+	* make/makefile.dj, make/makefile.mgw, src/it/itrender.c: Filter
+	instability fixed.
+
+2002-12-19 05:35  entheh
+
+	* readme.txt, release.txt, docs/deprec.txt, docs/dumb.txt,
+	docs/howto.txt, docs/modplug.txt, examples/dumb.ini,
+	include/dumb.h, include/internal/it.h, src/it/itmisc.c,
+	src/it/itread.c, src/it/itrender.c, src/it/xmeffect.c,
+	winamp/in_duh.c: Err... stuff
+
+2002-12-18 17:15  entheh
+
+	* docs/faq.txt: New stuff in FAQ.
+
+2002-12-18 17:06  entheh
+
+	* licence.txt, readme.txt, release.txt, docs/deprec.txt,
+	docs/dumb.txt, docs/faq.txt, docs/fnptr.txt, docs/howto.txt,
+	docs/modplug.txt, docs/ptr.txt, examples/dumbplay.c,
+	include/dumb.h, include/internal/it.h, make/makefile.lst,
+	src/core/rendduh.c, src/helpers/memfile.c, src/helpers/sampbuf.c,
+	src/it/itmisc.c, src/it/itread.c, src/it/itrender.c,
+	src/it/readmod.c, src/it/readxm.c, src/it/xmeffect.c: XM and MOD
+	support improved, and lots of docs written.
+
+2002-12-17 00:23  entheh
+
+	* release.txt, examples/dumbplay.c, examples/playit.c,
+	examples/playmod.c, examples/plays3m.c, examples/playxm.c,
+	include/aldumb.h, include/dumb.h, make/makefile.lst,
+	make/makefile.vc, src/allegro/datmod.c, src/core/loadduh.c,
+	src/it/itrender.c, src/it/readxm.c, src/misc/gccver.c: Lots o'
+	little changes. Notably the examples have been combined.
+
+2002-12-16 22:13  entheh
+
+	* include/dumb.h, make/makefile.dj, make/makefile.mgw,
+	make/makefile.uni, make/makefile.vc, src/misc/gccver.c: Improved
+	the makefiles and... stuff. GCC 2.x should be happy now.
+
+2002-12-13 23:25  entheh
+
+	* src/it/itrender.c: Filtered samples now have click removal
+	applied. Yay \o/
+
+2002-12-12 00:17  entheh
+
+	* examples/dumb.ini, include/dumb.h, include/internal/it.h,
+	make/makefile.lst, src/helpers/clickrem.c, src/helpers/resample.c,
+	src/it/itrender.c: Click removal! Incomplete though; not applied to
+	filtered samples...
+
+2002-12-09 17:25  entheh
+
+	* src/it/readxm.c: #warning removed. MSVC might just be happy now.
+
+2002-12-09 17:23  entheh
+
+	* src/it/itrender.c: Fixed some MSVC warnings, probably.
+
+2002-12-07 18:04  entheh
+
+	* src/core/rendduh.c: Readding file that got removed because I
+	thought I was going to rename it >_<
+
+2002-12-07 17:48  entheh
+
+	* examples/playit.c, include/aldumb.h, include/dumb.h,
+	src/allegro/alplay.c, src/core/rendduh.c, src/core/rendsig.c:
+	Deprecated some stuff, and added some stuff. \o/
+
+2002-12-01 09:08  entheh
+
+	* src/it/itrender.c, winamp/in_duh.c: Bugfix in tremor (Ixx)
+	handling.
+
+2002-11-26 06:39  entheh
+
+	* include/internal/it.h, src/it/itrender.c, src/it/readxm.c: Wow,
+	who'd have thought an XM file could contain that many samples!
+
+2002-11-26 00:20  entheh
+
+	* examples/playduh.c, examples/playit.c, examples/playmod.c,
+	examples/plays3m.c, examples/playxm.c, src/it/itrender.c,
+	src/it/readmod.c, src/it/reads3m.c, src/it/readxm.c,
+	src/it/xmeffect.c: Quite a few bugfixes.
+
+2002-11-22 06:46  entheh
+
+	* examples/playit.c, include/dumb.h, include/internal/it.h,
+	src/it/itmisc.c, src/it/itorder.c, src/it/itread.c,
+	src/it/itrender.c, src/it/itunload.c, src/it/readmod.c,
+	src/it/reads3m.c, src/it/readxm.c, winamp/config.rc,
+	winamp/in_duh.c: Uh... stuff :o
+
+2002-11-18 21:35  entheh
+
+	* docs/: faq.txt, howto.txt: Addition to the docs.
+
+2002-11-18 05:46  entheh
+
+	* src/it/itread.c: Bleh.
+
+2002-11-18 05:42  entheh
+
+	* src/it/itread.c: Added a "duplicate check" to the IT loader...
+	not the kind you're thinking of though :)
+
+2002-11-18 04:32  entheh
+
+	* examples/playit.c, include/aldumb.h, include/dumb.h,
+	src/allegro/alplay.c, src/core/rendduh.c, src/core/rendsig.c,
+	src/it/itrender.c: Extra API functions
+
+2002-11-16 23:17  entheh
+
+	* src/it/itrender.c: mmm, pie...
+
+2002-11-16 23:04  entheh
+
+	* release.txt, examples/dumb.ini, include/internal/it.h,
+	make/makefile.dj, make/makefile.lst, make/makefile.mgw,
+	make/makefile.uni, src/core/rendduh.c, src/core/rendsig.c,
+	src/helpers/memfile.c, src/it/itread.c, src/it/itrender.c,
+	src/it/itunload.c, src/it/readmod.c, src/it/reads3m.c,
+	src/it/readxm.c:
+	FILTERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+2002-11-01 17:02  entheh
+
+	* include/internal/it.h, src/it/itread.c, src/it/itrender.c,
+	src/it/readmod.c, src/it/reads3m.c: DUMB now freezes (correctly I
+	hope) on speed=0 in XM and MOD files.
+
+2002-10-29 09:39  entheh
+
+	* include/internal/it.h, src/core/rawsig.c, src/it/itrender.c,
+	src/it/readxm.c: Sample vibrato :D
+
+2002-10-26 07:43  entheh
+
+	* src/core/rendsig.c: Some more safety; it shouldn't crash on low
+	memory or invalid start order now.
+
+2002-10-26 07:25  entheh
+
+	* examples/playit.c, include/dumb.h, src/it/itrender.c: Fixed
+	another bug :P
+
+2002-10-26 07:12  entheh
+
+	* examples/playit.c, src/it/itrender.c: Fixed bug.
+
+2002-10-26 06:56  entheh
+
+	* todo.txt, include/aldumb.h, include/dumb.h,
+	include/internal/it.h, make/makefile.lst, src/allegro/alplay.c,
+	src/core/rawsig.c, src/core/rendduh.c, src/core/rendsig.c,
+	src/it/itmisc.c, src/it/itrender.c, studio/include/dumbdesk.h,
+	studio/include/guiproc.h, studio/include/guitop.h,
+	studio/src/dumbdesk.c, studio/src/guitop.c, studio/src/main.c:
+	Added some rough & ready start-at-order functionality at short
+	order (no pun intended :)
+
+2002-10-20 05:42  entheh
+
+	* studio/: font0.bmp, font1.bmp, font2.bmp: Added binary files for
+	DUMB Studio
+
+2002-10-16 07:04  entheh
+
+	* examples/: dumb.ini, playit.c: Neatened the examples up a bit.
+
+2002-10-16 06:52  entheh
+
+	* fix.bat, readme.txt, release.txt, docs/dumb.txt,
+	docs/dumbfull.txt, docs/faq.txt, docs/fnptr.txt, docs/howto.txt,
+	include/aldumb.h, include/dumb.h, lib/mingw/tmpfile.txt,
+	lib/mingw32/tmpfile.txt, make/makefile.mgw,
+	obj/mingw/debug/tmpfile.txt, obj/mingw/release/tmpfile.txt,
+	obj/mingw32/debug/tmpfile.txt, obj/mingw32/release/tmpfile.txt,
+	src/allegro/alplay.c, src/it/itrender.c, src/it/readmod.c,
+	src/it/reads3m.c, src/it/readxm.c: Lotsa changes... notably mingw32
+	changed to mingw, and should be ready for release today.
+
+2002-10-05 01:55  jcugniere
+
+	* src/it/: reads3m.c, readxm.c: Prevented that silly test.pcm from
+	taking ALL the space on my c: drive ;)
+
+2002-09-27 04:55  entheh
+
+	* docs/fnptr.txt: Function pointer explanation fleshed out with the
+	whys and wherefores.
+
+2002-09-26 13:03  entheh
+
+	* src/it/: itrender.c, readxm.c: XM envelopes fixed
+
+2002-09-26 06:31  entheh
+
+	* include/internal/it.h, src/it/itrender.c: Improvements to the IT
+	and XM support, tone portamento handling in particular.  WARNING:
+	code restructured slightly; bugs possibly introduced in IT support.
+	If your IT file plays wrong yadda yadda yadda.
+
+2002-09-25 04:29  entheh
+
+	* include/dumb.h, include/internal/dumb.h, include/internal/it.h,
+	src/core/makeduh.c, src/core/readduh.c, src/core/register.c,
+	src/core/rendduh.c, src/core/rendsig.c, src/core/unload.c,
+	src/it/itorder.c, src/it/itread.c, src/it/itrender.c,
+	src/it/itunload.c, src/it/readmod.c, src/it/reads3m.c,
+	src/it/readxm.c: Change in terminology
+
+2002-09-24 14:14  entheh
+
+	* src/it/: itrender.c, readxm.c: :o
+
+2002-09-24 04:50  entheh
+
+	* todo.txt, docs/dumb.txt, include/aldumb.h, src/allegro/alplay.c:
+	Small addition to API; added info and proposal to todo.txt.
+
+2002-09-23 03:31  jcugniere
+
+	* examples/dumb.ini, include/internal/it.h, make/makefile.lst,
+	src/it/itorder.c, src/it/itread.c, src/it/itrender.c,
+	src/it/readmod.c, src/it/reads3m.c, src/it/readxm.c: Made non
+	existant patterns be considered as containing 64 empty rows.
+
+2002-09-22 05:49  entheh
+
+	* src/it/readxm.c: Now we correctly handle the weird case of
+	envelope on but n_nodes = 0 for XM files.
+
+2002-09-20 08:07  entheh
+
+	* src/it/readmod.c: Panning fixed; error checking cleaned up to
+	some extent.
+
+2002-09-20 02:29  entheh
+
+	* src/it/: loadmod.c, loadxm.c, readmod.c: Don't Convert Numbers To
+	BCD On Loading. To Do So Would Be DUMB. :P
+
+2002-09-19 01:08  jcugniere
+
+	* src/core/rendduh.c: fixed compilation problems related to
+	CHAR_BITS and FAST_MID
+
+2002-09-18 09:31  entheh
+
+	* readme.txt, release.txt, todo.txt, docs/dumb.txt,
+	examples/playmod.c, include/aldumb.h, include/dumb.h,
+	include/internal/it.h, make/makefile.lst, src/allegro/datmod.c,
+	src/it/loadmod.c, src/it/readmod.c, src/it/readxm.c,
+	src/it/xmeffect.c: First signs of .mod support :D
+
+2002-09-11 19:42  joe_programmer
+
+	* make/makefile.vc: Fix for MSVC install target
+
+2002-09-08 22:46  entheh
+
+	* src/it/itrender.c, winamp/in_duh.c: Seeking fixed; Winamp plug-in
+	improved in theory, but it crashes sometimes :x
+
+2002-09-08 10:50  entheh
+
+	* src/it/itrender.c: Seeking should now be quick :)
+
+2002-09-08 09:20  entheh
+
+	* src/it/itrender.c: Bug fixed. Odd that it only affected one IT
+	file. That's uninitialised variables for ya :)
+
+2002-09-08 08:26  entheh
+
+	* examples/playit.c, include/internal/it.h, src/it/itread.c,
+	src/it/itrender.c, src/it/itunload.c, src/it/reads3m.c,
+	src/it/readxm.c: Length of songs now being calculated. Shame it
+	gets it wrong ;)
+
+2002-09-08 07:46  joe_programmer
+
+	* src/core/rendduh.c: Optimized the convertors
+
+2002-09-08 04:09  entheh
+
+	* include/internal/it.h, src/it/itrender.c: _dumb_it_dup_sampinfo()
+	coded - first step towards length calculation and fast seeking
+
+2002-09-06 10:31  entheh
+
+	* studio/makedat: Datafile makefile updated.
+
+2002-09-06 09:59  entheh
+
+	* studio/: dumbdesk.c, dumbdesk.h, dumbgui.c, dumbgui.h,
+	dumbmenu.c, guiproc.c, guiproc.h, guitop.c, guitop.h, main.c,
+	main.h, options.c, options.h, subclip.c, subclip.h,
+	include/dumbdesk.h, include/dumbgui.h, include/dumbmenu.h,
+	include/guiproc.h, include/guitop.h, include/main.h,
+	include/options.h, include/subclip.h, src/dumbdesk.c,
+	src/dumbgui.c, src/dumbmenu.c, src/guiproc.c, src/guitop.c,
+	src/main.c, src/options.c, src/subclip.c: Moved studio stuff into
+	subdirs
+
+2002-09-05 14:55  entheh
+
+	* studio/: dumbdesk.c, dumbmenu.c, guiproc.h: Hmm
+
+2002-09-05 13:06  entheh
+
+	* studio/dumbmenu.c: The menu module compiles. It isn't used at all
+	though.
+
+2002-09-05 12:58  entheh
+
+	* studio/dumbmenu.c: Menu module committed; no testing done yet.
+
+2002-09-05 08:03  entheh
+
+	* studio/: datafile.h, makedat: Created a makefile for building the
+	datafile. (Binary files left out of repository.)
+
+2002-09-04 20:53  entheh
+
+	* studio/: datafile.h, dumbdesk.c, dumbdesk.h, dumbgui.c,
+	dumbgui.h, guiproc.c, guiproc.h, guitop.c, guitop.h, main.c,
+	main.h, options.c, options.h, subclip.c, subclip.h: DUMB Studio
+	added. Little more than a freaky GUI test so far...
+
+2002-09-04 16:49  entheh
+
+	* docs/dumb.txt, examples/dumb.ini, examples/playduh.c,
+	examples/playit.c, examples/plays3m.c, examples/playxm.c,
+	include/internal/it.h, make/makefile.uni: Various changes :o
+
+2002-08-26 02:37  entheh
+
+	* makeall.sh, makecore.sh: I thought I already fixed this :)
+
+2002-08-16 04:49  entheh
+
+	* examples/playit.c: Yay 2...
+
+2002-08-16 04:21  entheh
+
+	* examples/playit.c, make/makefile.uni: Yay...
+
+2002-08-12 02:20  entheh
+
+	* readme.txt, release.txt, docs/ptr.txt, examples/dumb.ini,
+	make/makefile.dj, make/makefile.mgw, make/makefile.vc: A few typos
+	corrected. Not much else. Actually I'm not sure.
+
+2002-08-10 17:44  entheh
+
+	* readme.txt, release.txt, docs/faq.txt, docs/fnptr.txt,
+	docs/ptr.txt: Last commit before 0.8.1 release...
+
+2002-08-10 16:03  entheh
+
+	* docs/dumb.txt, examples/dumb.ini, include/dumb.h,
+	make/makefile.dj, make/makefile.mgw, make/makefile.uni,
+	make/makefile.vc, src/it/readxm.c: Another bug fixed; should be
+	ready for a release soon...
+
+2002-08-06 12:57  entheh
+
+	* docs/howto.txt, examples/dumb.ini, make/makefile.lst,
+	src/allegro/datit.c, src/allegro/dats3m.c, src/allegro/datxm.c,
+	src/it/readxm.c: dumb_register_dat_xm() added (!) Also fixed a
+	Freudian slip in the docs, and added dumb_resampling_quality to
+	howto.txt.
+
+2002-07-30 07:02  entheh
+
+	* docs/: dumb.txt, howto.txt: Position about null pointers
+	clarified in the docs
+
+2002-07-29 19:02  entheh
+
+	* src/it/reads3m.c: S3M support made more robust; now handles some
+	buggy files.
+
+2002-07-29 08:28  entheh
+
+	* make/: makefile.dj, makefile.mgw, makefile.uni: Makefiles
+	updated.
+
+2002-07-29 07:57  entheh
+
+	* src/it/itrender.c: XM bug relating to invalid instruments fixed.
+
+2002-07-28 17:40  entheh
+
+	* docs/faq.txt, make/makefile.dj, make/makefile.vc,
+	src/it/readxm.c, winamp/gui.c, winamp/in_duh.c, winamp/in_duh.h:
+	Winamp plug-in up to date, and plays IT/XM/S3M ;D
+
+2002-07-10 09:17  jcugniere
+
+	* include/internal/it.h, src/it/itrender.c, src/it/readxm.c: fixed
+	a bug involving XM's fine volume slide down
+
+2002-06-16 17:59  entheh
+
+	* release.txt, src/it/readxm.c: Can now load XM files with stereo
+	samples
+
+2002-06-16 02:35  entheh
+
+	* release.txt, make/makefile.dj, make/makefile.mgw,
+	make/makefile.vc: 'make veryclean' fixed in DOS/Windows makefiles.
+
+2002-06-15 17:56  entheh
+
+	* readme.txt: Another change...
+
+2002-06-15 17:49  entheh
+
+	* licence.txt, release.txt, docs/faq.txt, docs/howto.txt: More
+	changes to the docs.
+
+2002-06-15 17:12  entheh
+
+	* fix.bat, fix.sh, readme.txt, docs/howto.txt: A few corrections to
+	the docs; fix scripts slightly improved.
+
+2002-06-14 15:13  entheh
+
+	* fix.bat, fix.sh, make/makefile.vc: Fix to the MSVC makefile
+
+2002-06-14 12:33  entheh
+
+	* readme.txt, release.txt, docs/dumb.txt, docs/faq.txt,
+	docs/howto.txt, examples/dumb.ini, examples/playit.c,
+	examples/plays3m.c, examples/playxm.c, include/aldumb.h,
+	make/makefile.dj, make/makefile.mgw, make/makefile.uni,
+	make/makefile.vc: Last commit before release - everything's working
+	:)
+
+2002-06-14 09:02  entheh
+
+	* makeall.sh, makecore.sh: Damn, it failed. Oh well, files added
+	back in.
+
+2002-06-14 08:58  entheh
+
+	* makeall.sh, makecore.sh: Make 'em executable, Phase 1
+
+2002-06-14 08:37  entheh
+
+	* makeall.sh, makecore.sh, readme.txt: Unix stuff should be ready.
+	Might still change to provide BeOS support though...
+
+2002-06-14 08:18  entheh
+
+	* readme.txt, docs/faq.txt: Getting there...
+
+2002-06-14 06:45  entheh
+
+	* release.txt, make/makefile.uni: Updated Unix/BeOS makefile,
+	thanks to networm (he's going in the credits soon :)
+
+2002-06-14 06:10  entheh
+
+	* makeall.bat, makecore.bat, release.txt, docs/faq.txt,
+	include/dumb.h, make/makefile.dj, make/makefile.lst,
+	make/makefile.mgw, make/makefile.uni, make/makefile.vc,
+	src/it/itread.c, src/it/itrender.c, src/it/readxm.c: Endianness
+	fixed, and work on the docs and makefiles preparing for release...
+
+2002-06-14 03:48  jcugniere
+
+	* src/it/itrender.c: Oops! fixed 2 stupid warnings...
+
+2002-06-13 12:34  jcugniere
+
+	* src/it/: itrender.c, readxm.c: more stuff on XM volpan
+
+2002-06-12 13:35  entheh
+
+	* include/internal/it.h, src/core/rendduh.c, src/it/itrender.c:
+	Added xm_volslide field for better handling of XM volume slides.
+
+2002-06-12 12:54  jcugniere
+
+	* src/it/: itrender.c, readxm.c: Trying to handle the XM volume
+	column more accurately.
+
+2002-05-30 13:36  entheh
+
+	* include/internal/dumb.h, src/it/itrender.c: Improvement to the XM
+	support.
+
+2002-05-07 10:49  jcugniere
+
+	* src/it/itrender.c: one liner to get volume properly initialized
+	with XM files
+
+2002-05-06 17:52  entheh
+
+	* src/it/itrender.c: Some uninitialised fields fixed for XM files.
+
+2002-05-06 11:37  jcugniere
+
+	* src/it/: itrender.c, readxm.c: Fixed premature fadeout
+
+2002-05-05 13:10  entheh
+
+	* include/internal/it.h, src/it/itrender.c, src/it/readxm.c: More
+	stuff
+
+2002-05-05 11:47  entheh
+
+	* src/it/: itrender.c, itrender.old.c: Stuff
+
+2002-05-04 13:46  jcugniere
+
+	* src/it/readxm.c: Removed some fixes from readxm.c, made obsolete
+	by ben's changes in itrender.c
+
+2002-04-21 09:54  entheh
+
+	* todo.txt, src/it/itrender.c, src/it/readxm.c,
+	src/sigtypes/sequence.c: Restructuring of the XM playing core. I've
+	done more harm than good... ostensibly ^_^ (look it up :P)
+
+2002-04-07 03:17  jcugniere
+
+	* include/internal/it.h, src/it/itrender.c, src/it/reads3m.c,
+	src/it/readxm.c: Fixed a stupid bug in the XM effects conversion.
+	Minor fixes to get more S3Ms to load.
+
+2002-03-26 10:30  jcugniere
+
+	* include/internal/it.h: Added a new IT_WAS_AN_XM signal flag, and
+	restart_position for XM compat.
+
+2002-03-26 10:27  jcugniere
+
+	* src/it/readxm.c: All effects are now supported (provided
+	itrender.c implements them ;). But volume effects are still
+	incorrect.
+
+2002-03-26 10:26  jcugniere
+
+	* src/it/reads3m.c: Added restart_position for XM compatibility.
+
+2002-03-26 10:25  jcugniere
+
+	* src/it/itrender.c: Modified the behavior of a few things when
+	IT_WAS_AN_XM is set. Hopefully I haven't broken anything for IT
+	files ;)
+
+2002-03-26 10:23  jcugniere
+
+	* src/it/itread.c: Added restart_position for XM compatibility
+
+2002-03-24 08:38  jcugniere
+
+	* src/it/readxm.c: Bug fixes.
+
+2002-03-21 11:44  jcugniere
+
+	* src/it/readxm.c: Some improvments on readxm.c.
+
+2002-03-14 12:50  jcugniere
+
+	* examples/playxm.c, src/it/loadxm.c, src/it/readxm.c: Added an XM
+	loader (still needs work).
+
+2002-03-14 12:46  jcugniere
+
+	* include/dumb.h, make/makefile.lst: Added an XM loader (still
+	needs work).
+
+2002-03-10 12:40  joe_programmer
+
+	* make/makefile.vc: Fixed Allegro incompatibility
+
+2002-03-03 10:21  joe_programmer
+
+	* src/it/itrender.c: Fixed some warnings
+
+2002-03-02 16:17  entheh
+
+	* include/dumb.h: MSVC compile fixed
+
+2002-03-02 13:31  entheh
+
+	* licence.txt, makeall.bat, makecore.bat, readme.txt, release.txt,
+	include/dumb.h, src/core/dumbfile.c: Hmm, possibly the last commit
+	before release?????????
+
+2002-03-02 12:23  entheh
+
+	* makeall.bat, makecore.bat: Fixed batch files.
+
+2002-03-02 12:17  entheh
+
+	* makeall.bat, makecore.bat: Added makeall.bat and makecore.bat, as
+	promised in readme.txt.
+
+2002-03-02 12:10  entheh
+
+	* readme.txt: readme.txt done.
+
+2002-03-02 10:57  entheh
+
+	* make/: makefile.dj, makefile.mgw, makefile.uni, makefile.vc:
+	Makefiles updated to allow for building without Allegro. Not tested
+	except DJGPP.
+
+2002-03-02 10:14  entheh
+
+	* readme.txt, docs/dumb.txt, include/dumb.h: Some constants added
+	and documented. First signs of content in the readme.
+
+2002-03-02 08:42  entheh
+
+	* lib/djgpp/tmpfile.txt, lib/mingw32/tmpfile.txt,
+	lib/msvc/tmpfile.txt, lib/unix/tmpfile.txt,
+	obj/djgpp/debug/tmpfile.txt, obj/djgpp/release/tmpfile.txt,
+	obj/mingw32/debug/tmpfile.txt, obj/mingw32/release/tmpfile.txt,
+	obj/msvc/debug/tmpfile.txt, obj/msvc/release/tmpfile.txt,
+	obj/unix/debug/tmpfile.txt, obj/unix/release/tmpfile.txt:
+	tmpfile.txt message changed, and some more added.
+
+2002-03-01 21:35  entheh
+
+	* include/dumb.h, make/makefile.lst: Detached default sigtype
+	stuff, since that's not to be released.
+
+2002-03-01 21:29  entheh
+
+	* readme.txt, docs/dumb.txt, docs/dumbfull.txt, docs/howto.txt,
+	docs/ptr.txt, include/aldumb.h, include/dumb.h,
+	src/allegro/datduh.c, src/allegro/datit.c, src/allegro/dats3m.c,
+	src/it/itread.c, src/it/itrender.c, src/it/itunload.c: Lots of
+	stuff, mostly work on docs. A few things neatened up.
+
+2002-02-22 21:09  entheh
+
+	* src/helpers/resample.c: High-quality resamplers are now more
+	accurate, thanks to a LONG_LONG trick that gcc optimises quite
+	nicely for us.
+
+2002-02-22 19:55  entheh
+
+	* src/helpers/resample.c: New comments at the top of resample.c,
+	and a compiler error fixed.
+
+2002-02-22 19:25  entheh
+
+	* docs/dumb.txt, docs/tutorial.txt, src/it/itread.c,
+	src/it/itrender.c, src/it/reads3m.c: Dunno what I did, but I'd
+	better commit it :)
+
+2002-02-22 14:42  joe_programmer
+
+	* src/helpers/resample.c: Volume scaling changed from float to int
+	(hope it works...)
+
+2002-02-17 03:41  entheh
+
+	* include/dumb.h, src/helpers/resample.c, src/it/itread.c,
+	src/it/itrender.c, src/it/reads3m.c: A few unresolved issues seen
+	to.
+
+2002-02-16 20:06  tjaden
+
+	* make/makefile.uni: Updated the Unix makefile (from the Mingw32
+	makefile)
+
+2002-02-16 15:10  entheh
+
+	* todo.txt: Stuff added to todo.txt
+
+2002-02-16 13:46  entheh
+
+	* include/dumb.h, make/makefile.lst, src/helpers/resample.c,
+	src/helpers/silence.c, src/it/itread.c, src/it/itrender.c,
+	src/it/reads3m.c, src/sigtypes/sample.c: Lots of work on S3M
+	support. Fundamental change; always mix into buffer, never write. 
+	Standard sigtypes probably aren't all reprogrammed correctly, but
+	they'll be stripped from the first release. Speaking of which...
+	not too long to wait now, I hope :)
+
+2002-02-06 17:28  entheh
+
+	* src/: allegro/datit.c, allegro/datunld.c, core/unload.c,
+	helpers/resample.c, it/itload.c, it/itread.c, it/itrender.c,
+	it/itunload.c, it/reads3m.c: S3M support improved upon, but it's
+	not right yet.
+
+2002-02-06 16:43  entheh
+
+	* make/: makefile.dj, makefile.lst: Makefiles updated slightly.
+
+2002-02-01 23:53  entheh
+
+	* examples/plays3m.c, include/dumb.h, make/makefile.lst,
+	src/it/itload.c, src/it/itread.c, src/it/loads3m.c,
+	src/it/reads3m.c: Hahaha S3M sounds GREAT! Utterly out of tune, but
+	GREAT! LOL, gotta show this to Louis :)
+
+2002-02-01 10:07  entheh
+
+	* include/internal/it.h: D'oh!
+
+2002-01-31 14:49  entheh
+
+	* docs/dumb.txt, include/dumb.h, make/makefile.lst, src/it/it.c,
+	src/it/itload.c, src/it/itread.c, src/it/itrender.c,
+	src/it/itunload.c: IT modularised, and dumb_it_max_to_mix
+	formalised. S3M soon!
+
+2002-01-30 17:51  entheh
+
+	* src/it/it.c: Amiga slides now programmed properly.
+
+2002-01-17 15:48  joe_programmer
+
+	* src/it/it.c: Bug fixes by entheh
+
+2002-01-11 13:21  entheh
+
+	* winamp/: in_duh.c, in_duh.h, winamp.dsp: Paranoima got the Winamp
+	plug-in up and running. Tx :)
+
+2002-01-11 12:01  entheh
+
+	* src/it/it.c, winamp/in_duh.c: Winamp plug-in updated to match new
+	API.
+
+2002-01-11 10:58  entheh
+
+	* examples/playit.c, src/it/it.c: Hmm, how to apply pan and pitch
+	envelopes in instruments that don't exist...  I AM SO DUMB oh and
+	windowes sux bcasu it lets yuo get awawy with nullptrs in dos!@~
+
+2002-01-11 02:09  entheh
+
+	* src/it/it.c: Pattern loop done.
+
+2002-01-08 16:57  entheh
+
+	* examples/playit.c, src/helpers/resample.c, src/it/it.c: IT loader
+	was faulty in more ways than one! Fixed now.  Only seven effects to
+	go!
+
+2002-01-07 17:05  entheh
+
+	* docs/dumb.txt, include/dumb.h, src/it/it.c: Pitch and panning
+	envelopes done, and a bug or two fixed.
+
+2002-01-06 17:17  entheh
+
+	* src/it/it.c: Note delay done. zasx.it should play perfectly now
+	:)
+
+2002-01-06 00:27  entheh
+
+	* src/it/it.c: Optimisations and 'damage limitation' in IT
+	playback; NEEDS TESTING.
+
+2002-01-02 02:39  entheh
+
+	* examples/playit.c, src/it/it.c: Added vibrato :) Also made the IT
+	loading code more robust, as it failed on one of my files. Testers
+	welcome :)
+
+2002-01-01 15:59  entheh
+
+	* docs/dumb.txt, src/allegro/alplay.c: Fixed a stupid bug in
+	alplay.c. Did something to dumb.txt, apparently...
+
+2001-12-31 20:44  entheh
+
+	* docs/dumb.txt: Extra info added to docs.
+
+2001-12-31 20:40  entheh
+
+	* docs/dumb.txt, examples/playduh.c, examples/playit.c,
+	include/aldumb.h, include/dumb.h, src/allegro/alplay.c,
+	src/core/rendduh.c: Additions to the renderer and Allegro player
+	APIs; docs updated.
+
+2001-12-30 17:31  entheh
+
+	* docs/dumb.txt: Modified docs to describe new dumb_[at]exit()
+	system.
+
+2001-12-30 16:25  entheh
+
+	* examples/playduh.c, examples/playit.c, include/dumb.h,
+	include/internal/dumb.h, make/makefile.lst, src/core/atexit.c,
+	src/core/main.c, src/core/readduh.c, src/core/register.c:
+	dumb_init() no longer exists. dumb_exit() just calls functions
+	registered by dumb_atexit().  Now to do the docs...
+
+2001-12-27 16:44  entheh
+
+	* docs/dumb.txt, docs/tutorial.txt, examples/playduh.c,
+	examples/playit.c, include/dumb.h, src/core/main.c,
+	src/core/register.c, src/core/rendduh.c, src/core/rendsig.c,
+	src/helpers/resample.c, src/it/it.c, src/sigtypes/combine.c,
+	src/sigtypes/sample.c, src/sigtypes/sequence.c,
+	src/sigtypes/sterpan.c: *** CHANGES TO THE API *** docs might not
+	be fully updated. Added tutorial.txt.
+
+2001-12-27 11:33  entheh
+
+	* docs/dumb.txt, include/dumb.h, src/it/it.c,
+	src/sigtypes/sequence.c: Fixed DJGPP compilation
+
+2001-12-26 22:16  joe_programmer
+
+	* make/: makefile.dj, makefile.mgw, makefile.vc: More bugs fixed in
+	the makefiles Also fixed up the DJGPP makefile
+
+2001-12-26 22:09  joe_programmer
+
+	* include/dumb.h, make/makefile.mgw, make/makefile.vc,
+	src/helpers/stdfile.c, src/it/it.c, src/sigtypes/sample.c,
+	src/sigtypes/sequence.c: Fixed warnings and errors in MSVC compile.
+	 Finished MSVC makefile.  Fixed Mingw makefile
+
+2001-12-26 21:33  joe_programmer
+
+	* include/dumb.h, make/makefile.lst, make/makefile.mgw,
+	src/it/it.c, src/sigtypes/sequence.c: Fixed Mingw32 makefile Added
+	some temp files so CVS doesn't lose the directory tree
+
+2001-12-26 16:51  joe_programmer
+
+	* lib/djgpp/tmpfile.txt, lib/mingw32/tmpfile.txt,
+	lib/msvc/tmpfile.txt, obj/djgpp/debug/tmpfile.txt,
+	obj/djgpp/release/tmpfile.txt, obj/msvc/debug/tmpfile.txt,
+	obj/msvc/release/tmpfile.txt: Added some temp files so CVS does'nt
+	lose the directory tree
+
+2001-12-26 09:40  entheh
+
+	* docs/fnptr.txt: fnptr.txt added.
+
+2001-12-26 09:26  entheh
+
+	* docs/dumb.txt, include/dumb.h, src/core/makeduh.c,
+	src/core/unload.c: A lot of work on the docs, but not finished.
+	Fixed some bugs in make_duh().
+
+2001-12-22 17:28  entheh
+
+	* docs/dumb.txt, examples/playit.c, include/aldumb.h,
+	include/dumb.h, src/allegro/packfile.c, src/core/dumbfile.c,
+	src/core/file.c, src/helpers/stdfile.c: Provided a stdio file input
+	module, amongst other things.
+
+2001-12-20 05:25  entheh
+
+	* include/aldumb.h, include/internal/aldumb.h,
+	src/allegro/datduh.c, src/allegro/datit.c, src/allegro/datunld.c,
+	src/allegro/packfile.c, src/it/it.c: register_dat_it() fixed.
+
+2001-12-19 12:12  entheh
+
+	* src/sigtypes/: combine.c, sample.c, sequence.c, sterpan.c:
+	Removed dumb_errno references from signal types. Dunno how I missed
+	them :o
+
+2001-12-17 08:57  entheh
+
+	* include/dumb.h, src/helpers/resample.c, src/it/it.c: IT files can
+	now be started from somewhere in the middle, and silent samples'
+	positions are advanced. New do_silent_resample() function for this
+	purpose.
+
+2001-12-16 17:45  entheh
+
+	* include/internal/aldumb.h, src/allegro/datduh.c,
+	src/allegro/packfile.c: Finished what I started ;)
+
+2001-12-16 17:18  entheh
+
+	* todo.txt, examples/playit.c, include/aldumb.h, include/dumb.h,
+	include/dumb/file.h, include/internal/allegro/file.h,
+	src/allegro/file.c, src/allegro/packfile.c, src/core/file.c,
+	src/core/loadduh.c, src/core/main.c, src/core/readduh.c,
+	src/it/it.c: More changes - now the port (e.g. Allegro) must
+	actively register its file handlers.  As for the IT support, note
+	retrig is now done.
+
+2001-12-16 06:11  entheh
+
+	* src/it/it.c: Some more IT effects... makefiles still out of date
+	though
+
+2001-12-14 13:32  entheh
+
+	* include/dumb.h, src/it/it.c: Did Amiga frequency slides =)
+
+2001-12-12 19:24  entheh
+
+	* todo.txt, examples/playduh.c, examples/playit.c,
+	include/aldumb.h, include/dintern.h, include/dumb.h,
+	include/minalleg.h, include/dumb/file.h, include/internal/dumb.h,
+	include/internal/allegro/file.h, src/combine.c, src/datduh.c,
+	src/getsig.c, src/it.c, src/llload.c, src/load.c, src/main.c,
+	src/play.c, src/register.c, src/render.c, src/resample.c,
+	src/sample.c, src/sequence.c, src/sterpan.c, src/unload.c,
+	src/allegro/alplay.c, src/allegro/datduh.c, src/allegro/file.c,
+	src/core/duhlen.c, src/core/loadduh.c, src/core/main.c,
+	src/core/makeduh.c, src/core/readduh.c, src/core/register.c,
+	src/core/rendduh.c, src/core/rendsig.c, src/core/unload.c,
+	src/helpers/resample.c, src/it/it.c, src/sigtypes/combine.c,
+	src/sigtypes/sample.c, src/sigtypes/sequence.c,
+	src/sigtypes/sterpan.c: NEW DIRECTORY STRUCTURE. Please do a new
+	checkout, but WARNING: NO MAKEFILES.  However, DUMB is now (almost)
+	separable from Allegro.
+
+2001-12-08 17:09  entheh
+
+	* src/it.c: Neatened up a bit... possible a bug-fix or two that I
+	don't remember doing...
+
+2001-12-07 21:38  tjaden
+
+	* make/makefile.uni: Use rm for make clean under Unices
+
+2001-12-07 21:37  tjaden
+
+	* fix.sh: New fix.sh script
+
+2001-12-07 21:33  entheh
+
+	* make/: makefile.lnx, makefile.uni: File renamed
+
+2001-12-07 19:54  entheh
+
+	* examples/unload.c, src/unload.c: Damn, that was DUMB. unload.c
+	was in the wrong place :o
+
+2001-12-07 19:39  entheh
+
+	* src/it.c: Fixed a bug affecting IT files that don't use
+	instruments. Most noticeable in that tone portamento didn't work.
+
+2001-12-07 13:56  entheh
+
+	* todo.txt, examples/unload.c, make/makefile.lst, src/combine.c,
+	src/getsig.c, src/it.c, src/llload.c, src/render.c, src/resample.c,
+	src/sample.c, src/sequence.c, src/sterpan.c: unload_duh() in
+	separate file; checked usage of free() and other stuff.
+
+2001-12-07 09:55  entheh
+
+	* todo.txt: Added to todo.txt
+
+2001-12-06 21:00  entheh
+
+	* todo.txt: Amendment to todo.txt.
+
+2001-12-06 20:12  entheh
+
+	* docs/dumb.txt: dumb.txt added.
+
+2001-12-06 19:08  entheh
+
+	* examples/playduh.c, examples/playit.c, make/makefile.lst,
+	src/main.c, winamp/in_duh.c: playit.c added. register_sigtype_*()
+	calls finally moved out of install_dumb().  That means you have to
+	call them yourself! See docs/dumb.txt.
+
+2001-12-06 18:24  entheh
+
+	* todo.txt, make/makefile.lst, src/it.c: More bugs fixed; DUMB more
+	faithful to IT. Added to todo.txt.
+
+2001-12-06 13:54  entheh
+
+	* todo.txt, src/it.c: More IT stuff done/fixed/whatever. We have
+	official permission to use sample decompression algorithms, but see
+	todo.txt.
+
+2001-12-05 12:55  entheh
+
+	* src/: it.c, resample.c: Revamped IT support has caught up with
+	cit.c. It even reproduces a bug in IT itself - the lengthy
+	experimentation payed off :) Also implemented a system to limit the
+	number of samples mixed simultaneously.
+
+2001-12-05 06:33  entheh
+
+	* src/: it.c, resample.c: More work on the IT support. Some IT
+	files actually sound nice now :)
+
+2001-12-04 19:13  entheh
+
+	* src/: sample.c, sequence.c: Unused parameter warnings fixed. I
+	now use -W as well as -Wall ;)
+
+2001-12-04 18:59  entheh
+
+	* include/dumb.h, src/it.c, src/llload.c, src/load.c: IT support
+	revamped. Now you load IT files directly. Not finished though. A
+	few other minor changes.
+
+2001-10-27 08:26  joe_programmer
+
+	* src/render.c, src/resample.c, tools/citbugs.txt: Entheh's new
+	resampling code
+
+2001-10-25 16:50  joe_programmer
+
+	* src/resample.c: entheh started a workaround for incorrect
+	multiplication generation code by C compilers. 36 bits were in fact
+	needed when only 32 were provided.  The low-pass (linear average)
+	filter is not yet completed.
+
+2001-10-21 15:40  joe_programmer
+
+	* todo.txt: Added some stuff
+
+2001-10-20 12:19  joe_programmer
+
+	* tools/citbugs.txt: Updated buglist
+
+2001-09-30 18:11  joe_programmer
+
+	* todo.txt: Updated todo
+
+2001-09-30 18:06  joe_programmer
+
+	* src/sample.c: Fixes to the loader. Samples are now properly
+	loaded, which akes the int code as good as the float code
+
+2001-09-30 17:00  joe_programmer
+
+	* todo.txt: Added todo.txt
+
+2001-09-30 10:43  joe_programmer
+
+	* include/dumb.h, src/combine.c, src/getsig.c, src/render.c,
+	src/resample.c, src/sample.c, src/sequence.c, src/sterpan.c,
+	winamp/config.rc, winamp/winamp.dsp: Converted all the floating
+	point code to integer math. 30% speed boost! Sounds like crap
+	though. I'll fix that later.
+
+2001-09-26 19:37  joe_programmer
+
+	* winamp/: config.rc, gui.c, resource.h: Fixes to the plug-in's UI
+
+2001-09-25 19:23  joe_programmer
+
+	* src/resample.c, winamp/config.rc: Minor changes to the UI
+
+2001-09-25 18:37  joe_programmer
+
+	* src/resample.c: Sped up the low pass filters
+
+2001-09-25 17:25  joe_programmer
+
+	* src/resample.c, winamp/config.rc, winamp/gui.c,
+	winamp/resource.h: Sped up the quadratic and cubic resamplers
+
+2001-09-25 16:54  joe_programmer
+
+	* src/resample.c: Added quadratic resampler
+
+2001-09-23 08:19  joe_programmer
+
+	* src/resample.c, winamp/config.rc, winamp/winamp.dsp: Slight
+	changes ot the plug-in presentation
+
+2001-09-22 11:36  joe_programmer
+
+	* include/minalleg.h, src/resample.c, winamp/config.rc,
+	winamp/gui.c, winamp/gui.h, winamp/in_duh.c, winamp/resource.h,
+	winamp/winamp.dsp: Plug-in supports threading priority, new plug-in
+	setup option, small speed-up in the cubic resampler
+
+2001-09-17 20:02  joe_programmer
+
+	* src/resample.c, winamp/config.rc, winamp/gui.c, winamp/in_duh.c,
+	winamp/resource.h, winamp/winamp.dsp: Minor speed tweaks.
+
+2001-09-16 18:49  joe_programmer
+
+	* tools/cit.c: Fixed yet another null dereferencing bug
+
+2001-09-16 12:13  joe_programmer
+
+	* winamp/: config.rc, gui.c, gui.h, in_duh.c, resource.h: Lots of
+	fixes ot the plugin
+
+2001-09-16 08:52  joe_programmer
+
+	* tools/cit.c: Fixed yet another null dereferencing bug
+
+2001-09-16 08:49  joe_programmer
+
+	* winamp/gui.c: Fixes to the plug-in
+
+2001-09-16 08:36  joe_programmer
+
+	* winamp/in_duh.c: Fixes to the plug-in
+
+2001-09-16 08:32  joe_programmer
+
+	* winamp/: config.rc, gui.c, gui.h, in_duh.c, in_duh.h, resource.h,
+	winamp.dsp: The plug-in works and is almost done now. Config screen
+	added, seeking also added
+
+2001-09-15 18:10  joe_programmer
+
+	* winamp/in_duh.h: Forgot to commit a file
+
+2001-09-15 18:08  joe_programmer
+
+	* winamp/in_duh.c: More fixes to the plug-in
+
+2001-09-15 15:47  joe_programmer
+
+	* tools/cit.c, winamp/in_duh.c, winamp/winamp.dsp: Winamp update:
+	Vis should work
+
+2001-09-15 14:38  joe_programmer
+
+	* include/minalleg.h, make/makefile.vc, src/main.c, tools/cit.c,
+	winamp/in2.h, winamp/in_duh.c, winamp/out.h, winamp/winamp.dsp:
+	Winamp plug-in works! (well, kinda)
+
+2001-09-15 13:29  joe_programmer
+
+	* make/makefile.lst, make/makefile.mgw, make/makefile.vc,
+	tools/cit.c: Updated makefiles, added drag&drop support to cit
+
+2001-09-15 11:48  joe_programmer
+
+	* examples/playduh.c, include/dumb.h, winamp/in_duh.c,
+	winamp/winamp.dsp: More Winamp changes. Plug-in is almost ready
+
+2001-09-15 09:25  joe_programmer
+
+	* include/minalleg.h, src/combine.c, src/getsig.c, src/llload.c,
+	src/load.c, src/main.c, src/play.c, src/register.c, src/render.c,
+	src/resample.c, src/sample.c, src/sequence.c, src/sterpan.c,
+	winamp/in2.h, winamp/in_duh.c, winamp/minalleg.c, winamp/out.h,
+	winamp/winamp.dsp, winamp/winamp.dsw: Winamp plug-in commit - not
+	finished yet
+
+2001-09-10 02:14  entheh
+
+	* docs/duhspecs.txt, tools/cit.c: Note Fade and New Note Actions
+	now supported. Argh! I never want to program that again. :P
+
+2001-09-09 14:25  entheh
+
+	* include/dumb.h, src/render.c: 8-bit bug fixed, but the code
+	hasn't been tested yet.
+
+2001-09-09 13:07  entheh
+
+	* include/dumb.h, src/play.c, src/render.c: Rendering and audio
+	stream playing are now separated into levels.  The rendering level
+	is available in dumb.h.  I've removed Bob's changes, so I hope it
+	won't set him back too much :)
+
+2001-09-08 20:23  joe_programmer
+
+	* src/play.c: Slight change to make winamp plugin easier to write
+	:)
+
+2001-09-07 23:38  entheh
+
+	* include/dintern.h, src/llload.c, tools/cit.c: The length of a DUH
+	file is now stored, in preparation for Winamp and/or looping
+	support.
+
+2001-09-05 19:16  entheh
+
+	* tools/cit.c: Panning bug fixed. Forgot default sample panning!
+	D'oh! :)
+
+2001-09-05 17:37  entheh
+
+	* tools/cit.c: Volume envelopes working properly now, and stereo
+	panning bug fixed.
+
+2001-09-05 11:10  entheh
+
+	* src/play.c, tools/cit.c: Volume envelopes... bleargh, zasx.duh
+	sounds pretty good now :)
+
+2001-09-04 21:12  entheh
+
+	* make/: makefile.dj, makefile.lst: Makefile update (untested)
+
+2001-09-04 19:46  entheh
+
+	* tools/cit.c: Portamento in the volume column is done, and
+	handling of 'Compatible Gxx' is in place.
+
+2001-09-04 12:56  entheh
+
+	* tools/cit.c: Pitch/Pan Separation is done.
+
+2001-09-03 09:24  entheh
+
+	* include/dumb.h, src/combine.c, src/main.c, src/sterpan.c,
+	tools/cit.c: Stereo sound now works, finally! Not all stereo stuff
+	is implemented though, and it'll suffer from the same bug as the
+	volume (see the citbugs.txt file).
+
+2001-09-02 19:34  entheh
+
+	* examples/playduh.c, include/dumb.h, src/combine.c, src/getsig.c,
+	src/main.c, src/play.c, src/sample.c, src/sequence.c: COMB signal
+	implemented. This will allow two mono signals to be combined into a
+	stereo one. SPAN (panning), and modifications to cit.c, still to do
+	before any stereo sound will be heard.
+
+2001-08-24 19:01  entheh
+
+	* include/dumb.h, src/getsig.c, src/play.c, src/resample.c,
+	src/sample.c, src/sequence.c: Support for multiple channels has
+	been added. Adding stereo sound support should be a breeze now, but
+	that'll have to wait for another day.
+
+2001-08-24 14:17  entheh
+
+	* include/dumb.h, tools/cit.c, tools/citbugs.txt: Dunno what this
+	commit is, but it seems it should've been done a long time ago :)
+
+2001-08-17 18:25  entheh
+
+	* docs/duhspecs.txt, src/sequence.c, tools/cit.c: A new compression
+	system is in use for the sequences. WARNING: OLDER DUH FILES WILL
+	CAUSE A CRASH. This is the price you pay for using a version of
+	DUMB prior to the first release :)
+
+2001-08-17 12:25  joe_programmer
+
+	* docs/duhspecs.txt: Proposal for new smaller format
+
+2001-08-17 01:49  entheh
+
+	* docs/duhspecs.txt: The DUH file format specification is now
+	documented :)
+
+2001-08-16 15:13  joe_programmer
+
+	* tools/cit.c: Fixed a NULL dereferencing bug
+
+2001-08-16 14:38  entheh
+
+	* tools/cit.c: Bug fixed (multisample instruments work) and more
+	flow control effects done
+
+2001-08-16 03:33  entheh
+
+	* src/resample.c, tools/cit.c, tools/citbugs.txt: Wahoo, resampling
+	fixed! Also did something to cit.c and added citbugs.txt.
+
+2001-08-15 22:15  joe_programmer
+
+	* src/resample.c: Fixed compilation warning
+
+2001-08-15 18:50  entheh
+
+	* include/dumb.h, src/sample.c, src/sequence.c, tools/cit.c:
+	Various stuff... cit.c improved, the sequence signal can now be
+	started halfway through...
+
+2001-08-14 23:32  entheh
+
+	* tools/cit.c: Yay, volume slides! :-)
+
+2001-08-14 16:06  entheh
+
+	* tools/cit.c: Some of the effects work! Yay! :-)
+
+2001-08-14 04:32  entheh
+
+	* tools/cit.c: cit.c has been revamped somewhat. It's a hell of a
+	lot uglier, and has lost some features. However, it is supposedly
+	more faithful to the IT standard.  Thank goodness the IT converter
+	is not to be the central attraction :-)
+
+2001-08-13 12:36  entheh
+
+	* tools/cit.c: cit.c now loads everything in the IT file. It has
+	been adapted to support everything described in the ittech.txt file
+	that comes with Impulse Tracker 2.14. However, the conversion is
+	still as awful as ever :-)
+
+2001-08-11 22:40  entheh
+
+	* tools/cit.c: Some of the "Damn, I need more information"-style
+	comments in cit.c have been replaced with information on what the
+	stuff really is :D
+
+2001-08-10 21:30  entheh
+
+	* examples/playduh.c: allegro_exit()/allegro_message() bug
+	partially fixed in playduh.c.  Still problems in case of usage(),
+	and failure on allegro_init().
+
+2001-08-10 20:07  entheh
+
+	* include/dumb.h, src/getsig.c, src/sequence.c: Removed the
+	MAX_SAMPLES limitation. STREAM_SIZE can be increased now.
+
+2001-08-10 19:31  entheh
+
+	* examples/playduh.c, include/dumb.h, src/play.c: A few
+	enhancements to the playback interface.
+
+2001-08-10 10:13  joe_programmer
+
+	* make/makefile.lst: Added new files
+
+2001-08-10 08:48  entheh
+
+	* include/dumb.h, src/play.c, src/resample.c, src/sample.c,
+	src/sequence.c, tools/cit.c: Looped samples :-)
+
+2001-08-09 11:15  entheh
+
+	* src/resample.c: Bug fixed! Resampling works
+
+2001-08-09 10:35  entheh
+
+	* include/dumb.h, src/play.c, src/resample.c, src/sample.c,
+	tools/cit.c: RESAMPLE_PICKUP stuff added, but there's a bug. Trying
+	to fix it...  Various other minor changes
+
+2001-08-06 18:06  entheh
+
+	* include/dumb.h, src/resample.c, src/sample.c, tools/cit.c:
+	Resampling code is in a separate file, and extensive comments have
+	been written for it. cit.c has very limited volume support now.
+
+2001-08-05 10:18  entheh
+
+	* tools/cit.c: A check in cit.c has gone from ASSERT to if :-)
+
+2001-08-03 23:23  joe_programmer
+
+	* tools/cit.c: Fix to the it->duh converter
+
+2001-08-03 23:12  entheh
+
+	* tools/cit.c: Bugfix, another bug has surfaced :/
+
+2001-08-03 22:39  entheh
+
+	* examples/playduh.c, include/dintern.h, include/dumb.h,
+	src/datduh.c, src/getsig.c, src/llload.c, src/load.c, src/main.c,
+	src/play.c, src/register.c, src/sample.c, src/sequence.c,
+	tools/cit.c: CIT (IT Compiler) working, just about. Tut tut, such a
+	name, so suggestive of monopolistic intentions... But anyway, the
+	new ASCII art and credits are at the top of every file!
+
+2001-08-03 11:46  entheh
+
+	* tools/cit.c: cit.c added. Currently unchanged from Bob's IT
+	loader, except that the header files have been hard-included, and
+	it now compiles as C rather than C++. Oh, and check out the new
+	ASCII art :-)
+
+2001-08-02 17:49  entheh
+
+	* src/sample.c: Changes to the sample signal so that no special
+	case is required at the end of a sample when resampling.
+
+2001-08-02 14:33  joe_programmer
+
+	* src/tools/it/: load_it.cpp, modulus.h, typedef.hpp: Added code to
+	load ITs from old IT player. needs a rewrite to work with dumb
+
+2001-08-01 19:33  entheh
+
+	* include/dumb.h, src/getsig.c, src/play.c, src/sample.c,
+	src/sequence.c: New sequencing format done.
+
+2001-08-01 15:13  entheh
+
+	* include/dintern.h, include/dumb.h, src/getsig.c, src/play.c,
+	src/register.c, src/sample.c, src/sequence.c: First signs of signal
+	parameters
+
+2001-07-28 14:40  entheh
+
+	* include/dintern.h, include/dumb.h, src/getsig.c, src/main.c,
+	src/play.c, src/sample.c, src/sequence.c: Some restructuring...
+
+2001-07-28 11:27  entheh
+
+	* src/: play.c, sample.c: Resampling fixed
+
+2001-07-28 11:16  joe_programmer
+
+	* src/sample.c: Fixes to the lowpass filter
+
+2001-07-28 10:54  joe_programmer
+
+	* src/sample.c: Attempt at fixing the low-pass filter
+
+2001-07-28 09:53  entheh
+
+	* examples/playduh.c, src/play.c, src/sample.c: Huh? uh, I don't
+	remember what I did.
+
+2001-07-28 09:44  joe_programmer
+
+	* src/sample.c: Fixes to the low-pass filter
+
+2001-07-28 09:33  joe_programmer
+
+	* src/sample.c: Added a dithering filter
+
+2001-07-28 09:08  joe_programmer
+
+	* src/sample.c: Cubic interpolation, and some form of high-pass
+	filter?
+
+2001-07-27 17:38  joe_programmer
+
+	* examples/playduh.c: Made the player work in the background
+
+2001-07-27 13:39  joe_programmer
+
+	* src/sample.c: Fixes to the lowpass filter
+
+2001-07-27 12:40  joe_programmer
+
+	* examples/playduh.c, src/sample.c: Hopefully fixed the crackiling
+	problem in the linear filter.
+
+2001-07-27 12:33  joe_programmer
+
+	* src/sample.c: Fixed the downsampling
+
+2001-07-27 12:21  joe_programmer
+
+	* src/sample.c: Bug fixed int he resampler
+
+2001-07-27 12:21  joe_programmer
+
+	* examples/playduh.c, make/makefile.vc, src/sample.c: Added linear
+	resampler and explerimental lowpass filter. Also fixed teh VC
+	makefile
+
+2001-07-25 08:33  entheh
+
+	* examples/playduh.c, include/dumb.h, src/getsig.c, src/play.c,
+	src/sample.c, src/sequence.c: Yay, for the first time it actually
+	plays MUSIC!!! :D
+
+2001-07-23 12:24  joe_programmer
+
+	* fix.bat, make/makefile.dj, make/makefile.lnx, make/makefile.lst,
+	make/makefile.mgw, make/makefile.vc: Fixes to the build scripts
+
+2001-07-23 11:28  joe_programmer
+
+	* fix.bat, make/makefile.dj, make/makefile.lnx, make/makefile.lst,
+	make/makefile.mgw, make/makefile.vc, src/misc/runner.c: Added
+	makefile system
+
+2001-07-23 10:11  entheh
+
+	* examples/playduh.c, include/dumb.h, src/getsig.c, src/llload.c,
+	src/main.c, src/play.c, src/register.c, src/sample.c,
+	src/sequence.c: [no log message]
+
+2001-07-21 08:04  entheh
+
+	* include/: dintern.h, dumb.h.ex: dumb.h.ex added, containing DUMB
+	struct stuff which will not be used for now.  Don't wanna lose
+	stuff though :-) dintern.h is now updated with the new signal
+	processing functions.  The package compiles.
+
+2001-07-21 06:43  entheh
+
+	* include/dintern.h, include/dumb.h, src/register.c:
+	Signal-handling functions are improved.
+
+2001-07-20 15:03  joe_programmer
+
+	* src/Shortcut to src.lnk: Removed file added by error
+
+2001-07-20 14:57  joe_programmer
+
+	* licence.txt, include/dintern.h, include/dumb.h, src/Shortcut to
+	src.lnk, src/datduh.c, src/llload.c, src/load.c, src/main.c,
+	src/register.c: Initial revision
+
+2001-07-20 14:57  joe_programmer
+
+	* licence.txt, include/dintern.h, include/dumb.h, src/Shortcut to
+	src.lnk, src/datduh.c, src/llload.c, src/load.c, src/main.c,
+	src/register.c: Initial checkin
+

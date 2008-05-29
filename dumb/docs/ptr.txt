@@ -1,0 +1,129 @@
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * ptr.txt - Pointer explanation.                     / / \  \
+ *                                                   | <  /   \_
+ *                                                   |  \/ /\   /
+ *                                                    \_  /  > /
+ *                                                      | \ / /
+ *                                                      |  ' /
+ *                                                       \__/
+ */
+
+
+A pointer is a small variable (often the same size as an int BUT NOT ALWAYS)
+that holds the address of something in memory. You create a pointer by adding
+a * to a variable, as follows:
+
+   int x, *y;
+
+   x = 5;
+   y = &x;
+
+The & means 'address of', so &x gives us a pointer to x. We are storing it in
+y.
+
+   (*y)++;
+
+The * here means 'value at'. It's known as the 'dereferencing' operator. When
+written before a pointer, as it is here, it allows you to treat the value
+like a normal variable. In this case we are incrementing the value. If we
+look at x, we'll find that it now contains 6, not 5.
+
+   y++;
+
+Here we are incrementing the pointer itself. This is useful for traversing
+through an array, but in this particular example it is not much use.
+
+   *y++;
+
+Beware; this will increment the pointer, not the value stored there. It will
+return the value stored at the pointer (before incrementing the pointer), so
+you can use this in a bigger expression. This is why we needed brackets in
+the first example.
+
+Note that you will not need these three examples when working with DUMB; they
+are simply to help illustrate the idea of pointers.
+
+Also be aware that when defining pointers you attach the * to the variable,
+not to the type. The following example will create a pointer and an int, not
+two pointers:
+
+   int *a, b;
+
+That is why I believe it's a good idea to put a space before the * and not
+after it, although programmers are divided on this.
+
+   y = 0;
+   y = NULL;
+
+These two statements are equivalent. 0, or NULL, is a special value that is
+guaranteed to have a different value from any valid pointer. This is most
+often used to indicate that something doesn't point anywhere. DUMB's
+functions may return it on occasion. However, in simple usage of DUMB, you
+will not actually need to check for it.
+
+Some of DUMB's functions return pointers to structs. (A struct is an
+aggregration of other variables, such as ints, pointers, or other structs.
+You can generally treat a struct as a single unit.) Here's an example of such
+a function:
+
+   DUH *dumb_load_it(const char *filename);
+
+You do not know what the DUH struct actually contains; dumb.h and aldumb.h
+only give the compiler enough information to deal with pointers to them. DUMB
+will take charge of everything that happens inside a DUH struct.
+
+The above function will create a DUH struct for you. First it allocates
+the memory it needs, then it fills the struct with data, then it returns a
+pointer. This DUH struct will contain the data necessary to play an IT file.
+You can define a suitable variable and store the pointer in it as follows:
+
+   DUH *duh = dumb_load_it("music.it");
+
+Or this can be split up:
+
+   DUH *duh;
+   duh = dumb_load_it("music.it");
+
+In order to use this DUH struct later, you must pass its pointer to other
+functions. To pass the pointer to a function, simply write 'duh' for the
+appropriate parameter.
+
+When you've finished with a DUH struct (this applies equally to the other
+structs DUMB deals with), you must pass it to an appropriate function for
+freeing up the memory:
+
+   unload_duh(duh);
+
+After you've done this, the memory will no longer be allocated, and the
+pointer will have no meaning. You may wish to set it to NULL at this point
+for safety. Alternatively just be sure not to use the present value of the
+pointer any more. You can of course assign a new value to the pointer, e.g.
+by calling dumb_load_it() again.
+
+Note the following:
+
+   DUH *duh2 = duh;
+
+This only duplicates the pointer, not the DUH itself. You still only have one
+copy of the DUH. There is no way of duplicating a DUH, short of loading it
+twice. This is not a problem, because DUMB can play it 'twice at the same
+time' anyway.
+
+That should be all you need to know about pointers in order to use DUMB. If
+there's anything you feel should be explained better here, or anything else
+that should be added, please don't hesitate to let me know!
+
+
+Ben Davis
+entheh@users.sf.net
+IRC EFnet #dumb
+See readme.txt for details on using IRC.

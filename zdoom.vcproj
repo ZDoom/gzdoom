@@ -2853,6 +2853,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\sound\music_dumb.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\sound\music_midi_base.cpp"
 				>
 			</File>
@@ -3707,7 +3711,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating xlat_parser.c and xlat_parser.h..."
-						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;"
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
 						Outputs="$(InputDir)xlat_parser.c;$(InputDir)xlat_parser.h"
 					/>
 				</FileConfiguration>
@@ -3727,7 +3731,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating xlat_parser.c and xlat_parser.h..."
-						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;"
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
 						Outputs="$(InputDir)xlat_parser.c;$(InputDir)xlat_parser.h"
 					/>
 				</FileConfiguration>

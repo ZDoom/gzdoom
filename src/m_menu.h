@@ -143,6 +143,7 @@ typedef struct menuitem_s {
 	union {
 		float			  step;
 		char			 *res3;
+		FBoolCVar		 *graycheck;	// for drawing discrete items
 	} d;
 	union {
 		struct value_t	 *values;

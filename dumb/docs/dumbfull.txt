@@ -1,0 +1,1717 @@
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * dumb.txt - DUMB library reference.                 / / \  \
+ *                                                   | <  /   \_
+ * See readme.txt for general information on         |  \/ /\   /
+ * DUMB and how to set it up.                         \_  /  > /
+ *                                                      | \ / /
+ * If you are new to DUMB, see howto.txt.               |  ' /
+ *                                                       \__/
+ */
+
+
+***********************************
+*** Include Files and Libraries ***
+***********************************
+
+
+dumb.h
+
+   Include this if you only want the core DUMB library functions. You will
+   be able to load music files and render them into memory buffers at your
+   own pace. The core library is completely portable, and as such does not
+   access hardware; you must relay the sound data to the sound card yourself.
+   A stdio file input module is available, but you must actively register it
+   if you wish to use it (see dumb_register_stdfiles()); if you do not
+   register it, it will not be linked into your executable. You must register
+   it in order to load stand-alone music files.
+
+   Optimised: libdumb.a  (-ldumb)
+   Debugging: libdumbd.a (-ldumbd)
+
+
+aldumb.h
+
+   Include this if you wish to use DUMB with Allegro. This will provide you
+   with functions to play DUHs back through Allegro's audio streams and embed
+   music files in Allegro datafiles. A file input module using Allegro's
+   packfiles is provided; you have a choice between this and the stdio
+   module. You will be able to load datafiles containing music files no
+   matter which file input module you register, or even if you register no
+   file input module. However, you must register a file input module in order
+   to load stand-alone files.
+
+   Optimised: -laldmb -lalleg -ldumb
+   Debugging: -laldmd -lalld -ldumbd
+
+   libaldmb.a or libaldmd.a must be linked in first, so the symbols can be
+   resolved when linking in the other two libraries.
+
+
+***********************************
+*** Library Clean-up Management ***
+***********************************
+
+
+int dumb_atexit(void (*proc)(void));
+
+   Registers a function to be called at the end of your program. You can
+   register multiple functions to be called, and the one you register last
+   will be called first. If you try to register the same function twice, the
+   second attempt will have no effect.
+
+   See fnptr.txt for help with function pointers.
+
+   You must call dumb_exit() before exiting your program for this to work
+   properly. The library itself registers functions with dumb_atexit(), so it
+   is important to call dumb_exit() even if you do not use dumb_atexit()
+   yourself.
+
+   This function will return zero on success. It will return zero when
+   trying to install the same function twice. If it fails through lack of
+   memory, it will return nonzero. Generally you can ignore the return code;
+   in the worst case some memory will not be freed at the end. If it is
+   crucial that your function be called (e.g. to shut down some hardware or
+   save critical data), then you should call your function manually at the
+   end of the program instead of registering it here - or use the stdlib
+   function atexit(), guaranteed under ANSI C to succeed for at least 32
+   functions.
+
+
+void dumb_exit(void);
+
+   You should call this before exiting your program if you have used any part
+   of DUMB in the program. Some parts of DUMB will allocate memory, and this
+   function will free it all up.
+
+   More specifically, this function will call any functions that have been
+   registered with dumb_atexit(). If a part of DUMB needs shutting down, the
+   shutdown procedure will have been registered in this way.
+
+   dumb_exit() will, of course, also call any functions you registered with
+   dumb_atexit() yourself.
+
+   After a call to dumb_exit(), the list of functions is erased. If you are
+   not ready to exit your program, you can start using DUMB anew as if your
+   program had just started. (Note that not everything will be reset in
+   practice - dumb_resampling_quality will retain whatever you set it to, for
+   example, though you should not assume it will.)
+
+   If you only need to call dumb_exit() once at the end of the program, you
+   can use the following to register dumb_exit() with stdlib.h atexit():
+
+      #include <stdlib.h>
+
+      atexit(&dumb_exit);
+
+   Then dumb_exit() will be called for you when your program exits. This is
+   the recommended method, since it will ensure clean-up even if your program
+   aborts. You should only call dumb_exit() manually if you need to shut DUMB
+   down prematurely, or if atexit() is unavailable for one reason or another.
+
+
+*****************************
+*** Sequential File Input ***
+*****************************
+
+
+   DUMB provides a strictly sequential file input system which uses the
+   DUMBFILE struct. "Strictly sequential" means you cannot seek backwards.
+   However, the system will keep track of how many bytes you have read,
+   enabling you to seek forwards. DUMBFILEs provide a convenient error
+   detection system, so you do not have to check the return value from every
+   function call in the way you do with the ANSI C functions.
+
+   Note that DUMBFILEs cannot be used for output, nor can they be used
+   portably for text files.
+
+   If an error occurs when reading data from a DUMBFILE, the DUMBFILE will
+   become inoperative. All subsequent activities on the DUMBFILE will return
+   error codes without attempting to read from the file. The position in the
+   file will also be forgotten. You can find out if this has happened at any
+   stage with the dumbfile_error() function. You are still required to close
+   the DUMBFILE, and the return value from dumbfile_close() will tell you if
+   an error has occurred.
+
+   This system allows you to input large chunks of your file, neither
+   checking every return value nor wasting time accessing a file that has
+   already experienced an error. However, before you allocate an amount of
+   memory or read in a quantity of data depending on previous input from the
+   file, you should always check that such input was valid. In particular you
+   should passing zero or negative numbers to malloc() or dumbfile_getnc().
+
+   DUMBFILEs can be hooked. In other words, you can specify your own
+   functions to do the work of reading from a file. While DUMB contains two
+   modules for this purpose, it does not set them up for you automatically.
+   In most cases you must register one of these modules yourself, or provide
+   your own module. See register_dumbfile_system(), dumb_register_stdfiles()
+   and dumb_register_packfiles().
+
+
+void register_dumbfile_system(DUMBFILE_SYSTEM *dfs);
+
+   Use this function to register a set of functions for use by the DUMBFILEs
+   (a DUMBFILE system). The DUMBFILE_SYSTEM struct contains the following
+   fields:
+
+      void *(*open)(const char *filename);
+      int (*skip)(void *f, long n);
+      int (*getc)(void *f);
+      long (*getnc)(char *ptr, long n, void *f);
+      void (*close)(void *f);
+
+   See fnptr.txt for help with function pointers such as these.
+
+   Your 'open' function should open the file specified and return a pointer
+   to a struct representing the open file. This pointer will be passed to
+   your other functions as 'f'. Your 'close' function should close the file
+   and free all memory pointed to by 'f'. Note that the 'close' operation
+   should never be able to fail; if you are calling a function with a return
+   value, you can generally ignore it.
+
+   Your 'getc' function should read one byte from the file and return its
+   value in the range 0 to 255. If an error occurs, you should return -1. Do
+   not worry about remembering that an error has occurred; DUMB will do that
+   for you.
+
+   'skip' is for skipping parts of the file, and should skip n bytes,
+   returning 0 on success or any other number on failure. 'getnc' should read
+   n bytes from the file, store them at 'ptr', and return the number of bytes
+   read (n on success, fewer on failure). However, these two functions are
+   optional, and you should only provide them if the operations can be done
+   more efficiently than with repeated calls to your 'getc' function. If this
+   is not the case, specify NULL for 'skip', 'getnc' or both, and DUMB will
+   use your 'getc' function to do the work.
+
+   Once you have written all your functions, you need to create a
+   DUMBFILE_SYSTEM struct to hold them, and pass its pointer to
+   register_dumbfile_system().
+
+   The DUMBFILE_SYSTEM struct must be permanent. In other words, it must be
+   either global or static, and you should not modify it later. DUMB will not
+   make its own copy.
+
+   You will most likely create your own struct to represent the open file,
+   but do not be tempted to specify that struct in the function prototypes
+   and pacify the compiler warnings by casting your function pointers. There
+   exist computer systems where a (void *) pointer and a (MY_STRUCT *)
+   pointer are represented differently in memory, and a cast of such a
+   pointer causes a tangible conversion to take place. If you cast the
+   function pointers, the computer cannot know when such a conversion is
+   necessary. Instead, use the following structure:
+
+      int myskip(void *f, long n)
+      {
+         FILE *file = f;
+         /* Do some stuff with 'file' */
+         return something;
+      }
+
+   If you need examples, have a look at the two existing DUMBFILE systems in
+   dumb/src/core/stdfile.c and dumb/src/allegro/packfile.c.
+
+
+DUMBFILE *dumbfile_open(const char *filename);
+
+   Open the specified file for input. You must pass the DUMBFILE pointer
+   whenever you wish to operate on this file. When you have finished with the
+   file, you must pass it to dumbfile_close().
+
+   Before you use this function, make sure you have registered a DUMBFILE
+   system. See register_dumbfile_system(), dumb_register_stdfiles() and
+   dumb_register_packfiles().
+
+
+DUMBFILE *dumbfile_open_ex(void *file, DUMBFILE_SYSTEM *dfs);
+
+   This function is provided for more specialised use. You should create a
+   DUMBFILE_SYSTEM specially for the purpose. Its 'open' field is irrelevant;
+   for neatness, set it to NULL, unless you are using this DUMBFILE_SYSTEM
+   with register_dumbfile_system() as well.
+
+   When you have called this function, the DUMBFILE struct it returned can be
+   used as normal. The specified DUMBFILE_SYSTEM will be used for all input,
+   with 'file' passed to your 'skip', 'getc' and 'getnc' functions as 'f'.
+   This can be used, for example, to read from an already open file.
+
+   Note that the position will always be initialised to 0 for this DUMBFILE.
+   This means for example that offsets in the file do not need adjusting when
+   embedding data in a larger file.
+
+   There are two ways to use this function. If you want 'file' to persist
+   after using a DUMBFILE returned by this function, you should make sure the
+   'close' field in the DUMBFILE is set to NULL. When the DUMBFILE is closed,
+   'file' will be left alone, and you can and should deal with it yourself
+   when the DUMBFILE has been closed.
+
+   Alternatively, you can provide a 'close' function to get rid of 'file' for
+   you when the DUMBFILE is closed. If you do this, you should not otherwise
+   use 'file' after a call to this function.
+
+   If dumbfile_open_ex() has to return NULL, owing to lack of memory, then
+   your 'close' function will be called if provided. In other words, if you
+   have provided a 'close' function, then you no longer need to worry about
+   'file' whether this function succeeds or not.
+
+   See dumb/src/helpers/stdfile.c and dumb/src/allegro/packfile.c for
+   examples of how to use this function. Neither provides a 'close' function,
+   so I hope my explanation here will suffice. If not, please feel free to
+   contact me so I can make the explanation clearer and help you do what you
+   want to do. Contact details are at the end of this file.
+
+
+long dumbfile_pos(DUMBFILE *f);
+
+   Returns the number of bytes read from the DUMBFILE (or skipped) since it
+   was opened, or -1 if an error has occurred while reading.
+
+
+int dumbfile_skip(DUMBFILE *f, long n);
+
+   Skips n bytes of the specified DUMBFILE. Returns zero on success.
+
+
+int dumbfile_getc(DUMBFILE *f);
+
+   Reads one byte from the DUMBFILE and returns it in unsigned format (from 0
+   to 255). If an error occurs, or occurred before, this function returns -1.
+
+
+int dumbfile_igetw(DUMBFILE *f);
+
+   Reads two bytes from the DUMBFILE and combines them into a word ranging
+   from 0 to 65535. The first byte read is the least significant byte, as
+   with Intel processors. This function returns -1 on error.
+
+
+int dumbfile_mgetw(DUMBFILE *f);
+
+   Reads two bytes from the DUMBFILE and combines them into a word ranging
+   from 0 to 65535. The first byte read is the most significant byte, as
+   with the Apple Macintosh. This function returns -1 on error.
+
+
+long dumbfile_igetl(DUMBFILE *f);
+
+   Reads four bytes from the DUMBFILE and combines them into a long integer
+   ranging from -2147483648 to 2147483647. The first byte read is the least
+   significant byte, as with Intel processors. This function returns -1 on
+   error, but -1 is also a valid return value. After a call to this function,
+   you can use dumbfile_error() to find out if an error occurred.
+
+
+long dumbfile_mgetl(DUMBFILE *f);
+
+   Reads four bytes from the DUMBFILE and combines them into a long integer
+   ranging from -2147483648 to 2147483647. The first byte read is the most
+   significant byte, as with the Apple Macintosh. This function returns -1 on
+   error, but -1 is also a valid return value. After a call to this function,
+   you can use dumbfile_error() to find out if an error occurred.
+
+
+unsigned long dumbfile_cgetul(DUMBFILE *f);
+
+   Reads an unsigned (nonnegative) integer from the DUMBFILE. The integer is
+   stored in a condensed format where smaller numbers use less space:
+
+           0 to 127         1 byte
+         128 to 16383       2 bytes
+       16384 to 2097151     3 bytes
+     2097152 to 268435455   4 bytes
+   268435456 to 4294967295  5 bytes
+
+   This format is the same as that used for the times between notes in MIDI
+   files.
+
+   If an error occurs, this function returns (unsigned long)(-1), but that
+   may be a valid return value. After a call to this function, you can use
+   dumbfile_error() to find out if an error occurred.
+
+
+signed long dumbfile_cgetsl(DUMBFILE *f);
+
+   Reads a signed integer from the DUMBFILE. The integer is stored in a
+   condensed format where numbers closer to zero use less space:
+
+           -64 to 63          1 byte
+         -8192 to 8191        2 bytes
+      -1048576 to 1048575     3 bytes
+    -134217728 to 134217727   4 bytes
+   -2147483648 to 2147483647  5 bytes
+
+   If an error occurs, this function returns -1, but -1 is also a valid
+   return value. After a call to this function, you can use dumbfile_error()
+   to find out if an error occurred.
+
+
+long dumbfile_getnc(char *ptr, long n, DUMBFILE *f);
+
+   Reads n bytes from the DUMBFILE and stores them at 'ptr'. Note that the
+   pointer is to a series of chars. You may also use this function to read in
+   a series of signed chars or unsigned chars (which are both officially
+   distinct types from char), but do not use this to read ints, structs or
+   any other data type from the file. Integers must be read one at a time
+   using dumbfile_igetl(), dumbfile_cgetul(), etc. To load a struct in, you
+   must read each field separately using an appropriate function for each
+   one. For complicated datatypes, you can simplify this process by writing a
+   function for each struct.
+
+
+int dumbfile_error(DUMBFILE *f);
+
+   This function returns -1 if an error has occurred with the specified
+   DUMBFILE, or 0 if all is well.
+
+
+int dumbfile_close(DUMBFILE *f);
+
+   This function closes the DUMBFILE, after which the pointer will be
+   invalid. dumbfile_close() returns the value that dumbfile_error() would
+   have returned, which is -1 if an error occurred while reading or 0
+   otherwise. Regardless of the return value, the file will always be closed
+   properly.
+
+
+*******************************
+*** stdio File Input Module ***
+*******************************
+
+
+void dumb_register_stdfiles(void);
+
+   This function registers the stdio file input module for use by DUMBFILEs.
+   FILE structs and their corresponding functions, as defined by the ANSI C
+   header stdio.h, will be used internally for all DUMBFILE input (unless
+   opened with dumbfile_open_ex()).
+
+   This must be called before dumbfile_open() is used, or else an alternative
+   system must be registered (see register_dumbfile_system() and
+   dumb_register_packfiles()).
+
+
+DUMBFILE *dumbfile_open_stdfile(FILE *p);
+
+   If you have a stdio FILE struct representing an open file, you can call
+   this if you wish to read from it using a DUMBFILE. This is useful when you
+   need to pass a DUMBFILE struct to a library function, to read an embedded
+   music file for example. When you close the DUMBFILE, you can continue
+   using the FILE struct to read what follows the embedded data.
+
+
+********************************
+*** Signal Type Registration ***
+********************************
+
+
+
+
+
+
+   NOTE: SINCE THIS IS NOT TO BE THE INTRODUCTION TO DUMB, SHOULD THE
+   FOLLOWING INFORMATION BE MOVED TO ANOTHER FILE?
+
+
+
+
+
+
+   If you are lazy, then don't bother to read this section. Simply follow
+   these steps:
+
+      1. Call all the dumb_register_sigtype_*() functions. You must do this
+         after dumb_init(), but before you try to call load_duh(). If you try
+         to load any DUH files beforehand, the library will fail to load
+         them.
+
+      2. Run your program, and make sure the DUH file was successfully loaded
+         and played.
+
+      3. Comment out the first dumb_register_sigtype_*() function call.
+
+      3.1. If the DUH file is still loaded and played, remove this function
+           call.
+      3.2. If the DUH file was not loaded and played, uncomment and keep this
+           function call.
+
+      4. Repeat Step 3 for the other function calls.
+
+   Alternatively, the musician might have told you which of the functions you
+   need to call.
+
+   If you are the epitome of laziness, stop after Step 1. However, if you do
+   this, your executable may contain unnecessary code.
+
+   If, on the other hand, you are interested in how all this works, then read
+   on.
+
+   A DUH file comprises a number of 'signals'. A signal may be thought of as
+   a 'black box'; commands go in, sound comes out. A signal may in turn call
+   upon other signals to generate sound, and then do something with this
+   sound to generate its own output.
+
+   For example, here are the contents of a simple DUH file:
+      Signal #0 SEQU
+      Signal #1 SAMP
+      Signal #2 SAMP
+      Signal #3 SAMP
+
+   'SEQU' and 'SAMP' are the signal types. 'SAMP' designates a sample, so
+   Signals #1, #2 and #3 are simple recordings. For instance, Signal #1 could
+   be a bass drum, Signal #2 a snare drum and Signal #3 a high hat. When
+   invoked, these signals simply output their respective percussion sounds.
+
+   'SEQU' designates a sequence. Signal #0 will therefore generate its sound
+   by taking the output waveforms from the other signals and mixing them in
+   at appropriate times. For example:
+
+      0.00 Signal #1
+
+      0.50 Signal #2
+
+      1.00 Signal #1
+      1.25           Signal #3
+      1.50 Signal #2 Signal #3
+      1.75           Signal #3
+      2.00 Signal #1
+      2.25           Signal #3
+      2.50 Signal #2 Signal #3
+      2.75           Signal #3
+      3.00 Signal #1
+
+      3.50 Signal #2 Signal #3
+
+   The numbers down the left are times. Those with a good sense of rhythm
+   will be able to see that this represents a rather lame, highly cheesy pop
+   beat. Experienced gurus will also realise how painfully slow the beat is,
+   given that the times are in seconds. But enough of that.
+
+   A DUH is played by taking the output from Signal #0 and sending it through
+   to the sound card via an Allegro audio stream. If you do not know what an
+   audio stream is, suffice it to say that you must call Allegro's
+   install_sound() function, and an audio stream uses one voice (hence one
+   voice per DUH file). If you still don't know what I'm on about, read up on
+   Allegro's digital sound system and then come back here. Alternatively,
+   read porting.txt for details on how to use DUMB without Allegro.
+
+   In reality, DUH files are likely to be much more complicated than the
+   above example. Sequences may call upon other 'sub-sequences' to generate
+   their sound, so the above beat might be used repeatedly by a
+   'super-sequence' to generate a more complex (but still lame) piece of
+   music.
+
+   The DUH player library is split into two main parts - the core and the
+   basic signal types. The core is very simple. It does not know what 'SAMP'
+   or 'SEQU' mean. In fact it is not familiar with any signal type. It only
+   contains generic code for dealing with signals and generating output. By
+   itself, it cannot load or play any DUH file.
+
+   In addition to the core, the player library comprises a few basic signal
+   types, including 'SAMP' and 'SEQU'. In order to use a signal type, you
+   must 'register' this signal type by calling its corresponding
+   dumb_register_sigtype_*() function. These functions are listed below,
+   along with descriptions of the signals.
+
+   If you do not register a signal type, the code for that signal type will
+   not be linked into your executable file. That means DUMB will not become
+   bloated with age; new features will not add to the size of your executable
+   unless you use them. Dynamically linked libraries will still increase in
+   size.
+
+   If you try to load a DUH file that uses a signal type you haven't
+   registered, the library will not crash. It will simply fail to load the
+   DUH file. In fact, an unrecognised or corrupt signal will prevent the
+   library from reading the rest of the file - but remember, DUH files are
+   always (intended to be) generated from other formats, so you will never
+   lose any data this way.
+
+   If you are unsure which signal types a DUH uses, get in contact with the
+   author of the DUH file, or register them all and remove them one by one to
+   find out which are required (as described in the steps for lazy people at
+   the start of this section).
+
+   The great advantage of DUMB over other music systems is that it enables
+   you to create your own signals. Filters, synthesisers and compression
+   algorithms can all be set up this way. Programming and audio experience
+   are useful, but the editor provides a way to create your own signals even
+   if you don't know C. More information is available in the on-line help in
+   the editor.
+
+   If you are interested in the gory details of how a signal works, or if you
+   wish to brave creating your own without the help of the editor, then see
+   the section entitled Signal Design.
+
+
+void dumb_register_sigtype_sample(void);
+
+   Registers the sample signal type ('SAMP'). This signal deals with samples,
+   or recordings, in the DUH file. All samples are monaural; a combining
+   signal can be used to combine two of these into a stereo sample. The DUMB
+   library will cater for more than two channels to a certain extent, but it
+   is currently limited by Allegro's audio streams.
+
+
+void dumb_register_sigtype_combining(void);
+
+   Registers the combining signal type ('COMB'). This signal takes a set of
+   monaural signals and combines them into one signal with multiple channels.
+   Stereo samples can be set up this way.
+
+
+void dumb_register_sigtype_stereopan(void);
+
+   Registers the stereo pan signal type ('SPAN'). This signal takes a
+   monaural sample and sources it at the stereo position you specify,
+   provided the DUH is played in stereo (or, more precisely, provided stereo
+   output is requested of the signal).
+
+
+void dumb_register_sigtype_sequence(void);
+
+   Registers the sequence signal type ('SEQU'). This signal sequences the
+   sound from other signals. It is what turns a random collection of
+   recordings of single notes into a complete piece of music.
+
+
+**********************
+*** DUH Management ***
+**********************
+
+
+DUH *load_duh(const char *filename);
+
+   Loads a .duh file. Before you call this, make sure you have registered all
+   the necessary signal types (see 'Signal Registration'). The DUH is
+   returned to you; you will need to pass it to various functions. When you
+   have finished with it, call unload_duh() to remove it from memory.
+
+   There is no special need to check that this function succeeds. All other
+   functions can safely be called with a null pointer, which means your music
+   will simply not play if it could not be loaded.
+
+
+DUH *read_duh(DUMBFILE *f);
+
+   Reads a DUH from an already open file, and leaves the file open so you can
+   read subsequent data from the file if you wish. Otherwise this function is
+   identical to load_duh().
+
+
+void unload_duh(DUH *duh);
+
+   Removes a DUH from memory. You must call this for all DUHs you load,
+   making sure they're not playing at the time.
+
+
+long duh_get_length(DUH *duh);
+
+   Returns the length of a DUH; 65536 represents one second. This value is
+   simply lifted from the DUH struct, so it may not truly correspond to the
+   time for which the DUH will generate sound. However, if the musician is
+   any good - or if the code that calculated this value is written properly -
+   you can assume it represents the point at which the DUH first loops, or
+   else it allows time for any final flourish to be appreciated. It is used
+   by the Winamp plug-in to decide when to stop.
+
+
+*******************************
+*** Impulse Tracker Support ***
+*******************************
+
+
+int dumb_it_max_to_mix;
+
+   Specifies the maximum number of samples DUMB will mix at any one time.
+   The default number is 64. Regardless of this value, all samples will
+   continue to be processed up to an internal maximum of 128 (slightly
+   simplified), and cut samples will sound again as soon as the congestion
+   clears. Samples are prioritised by final volume, after all factors
+   affecting the volume of a sample have been considered.
+
+   If you play two or more IT files at once, this value represents the
+   maximum number of samples for each one. You will have to reduce it further
+   if your computer cannot keep up.
+
+
+DUH *dumb_load_it(const char *filename);
+
+   Loads the specified Impulse Tracker file, encapsulating it in a DUH
+   struct. No signal types need be registered for this to work. The length
+   will be set to the point at which the music first loops (see
+   duh_get_length()).
+
+   Once the file is loaded, it can be treated exactly the same as any other
+   DUH in memory.
+
+
+DUH *dumb_read_it(DUMBFILE *f);
+
+   Reads an Impulse Tracker file from an already open DUMBFILE. This leaves
+   the DUMBFILE open, but the DUMBFILE may not be positioned at the end of
+   the IT data. If you are embedding an IT in another file, you are advised
+   to store the size of the IT file and make up for it at the end using
+   dumbfile_pos().
+
+   Otherwise, this function is identical to dumb_load_it().
+
+
+*******************************
+*** DUH Rendering Functions ***
+*******************************
+
+
+   Use these functions to generate samples from a DUH. First you call
+   duh_start_renderer() with the DUH, the number of channels you want and the
+   position at which you want to start. Then you use duh_render() to generate
+   the samples. You can call duh_render() as many times as you like, and it
+   will generate as many or as few samples as you require. When you have
+   finished, call duh_end_renderer().
+
+
+DUH_RENDERER *duh_start_renderer(DUH *duh, int n_channels, long pos);
+
+   Starts a DUH_RENDERER off. This is the struct you can use to get samples
+   from a DUH. This function does not generate any samples; you must pass the
+   struct to duh_render() for that. When you have finished with it, you must
+   pass it to duh_end_renderer(). You can use as many DUH_RENDERER structs as
+   you like at the same time.
+
+   Currently, n_channels can only be 1 or 2, for monaural and stereo sound
+   respectively. The debugging library will cause your program to abort if
+   you pass anything else. Future versions will be enhanced to support more
+   channels as soon as someone needs them.
+
+   When specifying the position, 0 represents the start of the DUH, and 65536
+   represents one second. Unlike most other music systems, DUMB will always
+   make sure every note is there right from the start (provided any custom
+   signal types are properly designed). In other words, you can start a DUH
+   at a point halfway through a long note, and you will still hear the long
+   note.
+
+
+long duh_render(
+   DUH_RENDERER *dr,
+   int bits, int unsign,
+   float volume, float delta,
+   long size, void *sptr
+);
+
+   Generates some samples. Pass the DUH_RENDERER as returned by
+   duh_start_renderer(). Pass the number of bits, which should be 8 or 16. If
+   unsign is nonzero, the samples will be unsigned (centred on 0x80 or 0x8000
+   for 8 bits and 16 bits respectively). If unsign is zero, the samples will
+   be signed.
+
+   Allegro's audio streams always take unsigned samples. 8-bit .wav files
+   always take unsigned samples. 16-bit .wav files always take signed
+   samples.
+
+   The volume is a float. 1.0f is the pseudo-maximum. If you pass 1.0f, any
+   properly designed DUH will play nice and loud, but will not clip. You can
+   pass a greater volume if you like, but be prepared for clipping to occur.
+   Of course you can pass smaller values to play the DUH more quietly, and
+   this will also resolve clipping issues in badly designed DUHs.
+
+   Use delta to control the speed of the output signal. If you pass 1.0f, the
+   resultant signal will be suitable for a 65536-Hz sampling rate (which
+   isn't a commonly used rate). The most common sampling rates are 11025 Hz,
+   22050 Hz, 44100 Hz and 48000 Hz. You can work out the required delta value
+   as follows:
+
+      delta = 65536.0f / sampling_rate;
+
+   If you then increase this value, the DUH will speed up and increase in
+   pitch. If you decrease it, the DUH will slow down and decrease in pitch.
+
+   This function will attempt to render 'size' samples. In most cases it will
+   succeed. However, if the end of the DUH is reached, it may render fewer.
+   The number of samples rendered will be returned. Therefore, if the return
+   value is less than the value of 'size' passed, you know the DUH has
+   finished. It is safe to continue calling duh_render() if you wish, and it
+   will continually return 0. However, if you wish to do this, you will
+   probably have to fill the rest of the buffer with silence, which is 0 for
+   signed, 0x80 for 8-bit unsigned or 0x8000 for 16-bit unsigned.
+
+   The samples will be placed at sptr. Use an array of chars for 8 bits or an
+   array of shorts for 16 bits. Stereo samples will be interleaved, left
+   first. Your array should contain at least (size * n_channels) elements of
+   the appropriate bit resolution.
+
+   From an aesthetic standpoint if nothing else, it is wise to use the C
+   qualifiers 'signed' or 'unsigned' depending on whether the samples are
+   signed or unsigned. This is also convenient if you wish to process the
+   samples further yourself.
+
+
+long duh_renderer_get_position(DUH_RENDERER *dr);
+
+   Tells you what position a DUH_RENDERER is up to, or -1 if it is invalid
+   (perhaps owing to lack of memory). As usual, 65536 is one second. Note
+   that this is a whole number, whereas a fractional part is stored
+   internally; the sample will not be continuous if you terminate the
+   DUH_RENDERER and then reinitiate it with the same position.
+
+
+void duh_end_renderer(DUH_RENDERER *dr);
+
+   Terminates a DUH_RENDERER. Be sure to call this when you've finished with
+   one.
+
+
+***********************************
+*** Signal Design Helper Values ***
+***********************************
+
+
+DUMB_SEMITONE_BASE
+
+   When a 'delta' value is required, you can use DUMB_SEMITONE_BASE to
+   control the pitch. Use pow(DUMB_SEMITONE_BASE, n) to transpose up by n
+   semitones. To transpose down, use negative n.
+
+
+DUMB_QUARTERTONE_BASE
+
+   When a 'delta' value is required, you can use DUMB_QUARTERTONE_BASE to
+   control the pitch. Use pow(DUMB_QUARTERTONE_BASE, n) to transpose up by n
+   quartertones. To transpose down, use negative n.
+
+
+DUMB_PITCH_BASE
+
+   When a 'delta' value is required, you can use DUMB_PITCH_BASE to control
+   the pitch accurately. Use pow(DUMB_PITCH_BASE, n) to transpose up by n
+   units, where 256 units represent one semitone. This scale is used for the
+   'pitch' in a sequence (SEQU).
+
+
+************************************
+*** Signal Design Function Types ***
+************************************
+
+
+   In order to design your own signal type, you will have to write six
+   functions to be linked into your program. They are described below.
+
+   See fnptr.txt for help with function pointer types such as these.
+
+
+typedef void *(*DUH_LOAD_SIGNAL)(DUH *duh, DUMBFILE *file);
+
+   Write a function conforming to this type which loads or creates all the
+   data required by your signal. You may use this, for instance, to load a
+   sample. You will be reading directly from the DUH file, so make sure you
+   read exactly the quantity of data stored in the file for this signal. You
+   should allocate memory (multiple blocks if you like), and return a pointer
+   referencing all these data. Your data will be stored, and provided
+   whenever this signal is handled. Be careful about using global data, since
+   your load_signal function will be called more than once for different
+   signals of the same type (e.g. for signals which are both samples but are
+   different samples).
+
+   On failure you should return NULL. Please take the possibility of failed
+   memory allocation seriously, especially when loading large quantities of
+   data. You should make sure all allocated memory is freed before you return
+   with failure. See the standard signal types for examples of how to do this
+   elegantly using your unload_signal function. On failure, you need not
+   worry about reading the right quantity of data from the file.
+
+   Do not close the file under any circumstances.
+
+   Often you will write this function before you have written any code to
+   write a DUH file using this signal. If this is the case, don't worry; you
+   can write this function free-style, and then the function itself will
+   serve as a file format reference when you come to create the file.
+
+   Note that a null return value will always be interpreted as failure. If
+   this type of signal does not need to load any data, you should not provide
+   a load_signal function at all. The absence of this function will convey
+   the intended message to the library.
+
+
+typedef void *(*DUH_START_SAMPLES)(
+   DUH *duh,
+   void *signal,
+   int n_channels,
+   long pos
+);
+
+   Write a function conforming to this type. Every time your signal is
+   required to produce some output, this will be called first. The 'signal'
+   parameter is the same one you returned from your load_signal function. The
+   'n_channels' parameter specifies how many channels you will need to render
+   sound in. In general you should support one or two, although sometimes
+   only one is necessary, depending on how your signal is used. If you can
+   write generic code to support more channels, then do so. Store the number
+   of channels for use later, unless you're only permitting one value.
+
+   If your signal does not support more than two channels, you are
+   responsible for making sure it is never invoked with more than two;
+   likewise if your signal only supports one, then make sure it is never
+   invoked with more than one. In general you only need to make sure the DUH
+   file is never rendered with too many channels (see duh_start_renderer()
+   and al_start_duh()). It may be prudent to use Allegro's ASSERT() macro to
+   catch bugs of this kind.
+
+   The 'pos' parameter specifies where to start, 65536 being one second into
+   the signal. Even if you do not intend to start in the middle of the signal
+   yourself, you should support this as it will be used when a DUH is not
+   played from the beginning.
+
+   This function should make the necessary preparations in order to render a
+   string of samples. All your preparations should be stored in allocated
+   memory, to which you return a pointer; this allows several instances of
+   the same signal to play at the same time. You will not be given the 'duh'
+   and 'signal' parameters again, so you must store them if you need them in
+   the render_samples or free_samples functions.
+
+   Once again, on the rare occasions on which you do not need such data (e.g.
+   a white noise signal), you should not provide a start_samples function. A
+   null return code is interpreted as failure, and your music will be lacking
+   notes (which is better than crashing on undetected memory allocation
+   failure).
+
+
+typedef void (*DUH_SET_PARAMETER)(
+   void *sampinfo,
+   unsigned char id, long value
+);
+
+   Some signals can take parameters. For example, a stereo pan signal allows
+   you to specify the position at which to source the sample, and you might
+   want to choose the cut-off frequency for a low-pass filter. Such
+   parameters are set on an instance-by-instance basis, not globally.
+   Therefore, if you have any parameters, you should place default values for
+   them in the data you initialise in start_samples. Then you should write a
+   function conforming to this type, and have it change the parameters when
+   the correct IDs are passed (see below).
+
+   Each of your parameters should be identified by a single byte, which will
+   be passed in the 'id' parameter. When one of your parameters is correctly
+   identified by id, you should change the parameter's value in the data you
+   returned from your start_samples function. These data are available via
+   the 'sampinfo' parameter. If you do not recognise the ID passed, you may
+   wish to log the situation using Allegro's TRACE() macro (which will
+   compile away to nothing unless you define DEBUGMODE), since it signifies a
+   fault in the DUH file.
+
+   Take some care in deciding what should be a parameter and what should be
+   arranged through the use of separate signals (of the same type). For
+   example, if you are doing a low-pass filter, you will need a source signal
+   on which to apply the filter; this signal's index should be loaded by the
+   load_signal function, so you will create separate filter signals for the
+   separate source signals. However, the cut-off frequency for the filter is
+   more suitably stored in a parameter. Here are some guidelines:
+
+      Continuous values, or discrete quantities, can be stored in parameters.
+      Examples: filter cut-off, echo time, stereo pan position.
+
+      Discrete indices or references should be loaded by load_signal.
+      Examples: references to other signals.
+
+   Another way of looking at it is as follows:
+
+      If a value could be changed halfway through playing the signal, then
+      consider storing it in a parameter.
+
+      If a value needs to be known by the start_samples function and cannot
+      change later, then consider loading it in the load_signal function.
+
+   If your signal has no parameters, do not provide a set_parameters
+   function. Attempts to change parameters for this signal will not cause a
+   crash, but will cause the operation to be logged using Allegro's TRACE()
+   macro if the debugging library is used to play the DUH.
+
+
+typedef long (*DUH_RENDER_SAMPLES)(
+   void *sampinfo,
+   float volume, float delta,
+   long size, sample_t **samples
+);
+
+   Write a function conforming to this type. It should render a series of
+   samples into the array of buffers provided (see below). You are passed
+   'sampinfo' as returned by start_samples. The 'samples' parameter points to
+   an array of buffers, one for each channel. You can get a pointer to the
+   buffer for channel #n with:
+
+      sample_t *buffer = samples[n];
+
+   As you can see, samples are of type sample_t, which is typedeffed as a
+   signed int (32 bits). Your waveform should be centred on 0 and should peak
+   at no more than +/- 32768, or +/- 0x8000, given a volume of 1.0f. If your
+   waveform goes higher, it will be clipped later on (you do not need to test
+   for this yourself). Please do not read any special meaning into the volume
+   parameter; it is simply a factor to be multiplied into each sample. If you
+   wish to adjust the tone, use a parameter (see DUH_SET_PARAMETER).
+
+   In this function, you should render 'size' samples into the buffer for
+   each channel. Return the number of samples actually rendered, which will
+   be fewer than 'size' if you run out of samples (e.g. if you reach the end
+   of a non-looping sample). Never stop short unless the signal ends, and do
+   not overrun under any circumstances. Update the 'sampinfo' data so that
+   the samples generated by the next call to render_samples will continue
+   seamlessly from the samples generated this time.
+
+   The delta parameter governs the speed at which your signal will play back.
+   Higher values of delta should cause the speed and pitch to increase, as
+   with duh_render(). In general, if delta is 1.0f then your waveform should
+   be suitable for playback at a sampling rate of 65536 Hz. If you wish to
+   bend this rule, then be careful - usually it is wiser to adjust your
+   thinking in other parts.
+
+   For example, consider a sample recorded at 44100 Hz, stored in a sample
+   signal. If a delta of 1.0f is passed to this signal's render function, the
+   output will be exactly the same as the original sample - a signal at
+   44100 Hz. So it breaks the rule.
+
+   Ah, but it doesn't. Instead, it is wiser to consider the sample stored in
+   the DUH file as being sampled at 65536 Hz. Once we consider this, it is
+   clear that the output is suitable for playback at 65536 Hz, so we do not
+   break the rule. Now it is a simple matter of adjusting all the pitches in
+   the sequence to compensate for this. See duhtech.txt for details on how to
+   do this when you are writing the DUH file.
+
+   Note that the position that was passed to the start_samples function is
+   65536 for one second into the signal as played with delta 1.0f. So, with a
+   sample signal, this position is interpreted as the index of the sample on
+   which to start. If delta is 2.0, only half a second of the resultant
+   output will have been skipped.
+
+   Once again, please do not read any special meaning into the delta
+   parameter. The effect of doubling delta should be virtually the same as
+   the effect of not doubling delta but resampling the output. If you wish to
+   adjust the tone for different pitches, use a parameter.
+
+   This function is compulsory. Silent signals only increase processor and
+   memory usage, and we are not Microsoft-Intel evangelists.
+
+
+typedef void (*DUH_END_SAMPLES)(void *sampinfo);
+
+   Write a function conforming to this type. It will be called when a signal
+   stops playing. The parameter points to the data you returned from the
+   start_samples function, and here you should simply free the memory up.
+
+   This function should be provided, always if, and only if, start_samples is
+   present. The debugging library will check you get this right.
+
+
+typedef void (*DUH_UNLOAD_SIGNAL)(void *signal);
+
+   Write a function conforming to this type. It will be called when the DUH
+   is removed from memory. It should free all memory allocated by your
+   load_signal function. The parameter is the same pointer that you returned
+   from load_signal.
+
+   If you only ever use this signal type with make_duh(), and not with
+   dumb_register_sigtype(), then the following does not apply.
+
+   If load_signal is present, unload_signal should also be present; if you
+   did not provide a load_signal function, then you should not provide an
+   unload_signal function either. The debugging library will check you get
+   this right.
+
+
+**********************************
+*** Signal Design Registration ***
+**********************************
+
+
+void dumb_register_sigtype(DUH_SIGTYPE_DESC *desc);
+
+   When you have written all the functions that represent your signal, you
+   will need to register them with the library before it will be able to load
+   your DUH file. Use this function. The DUH_SIGTYPE_DESC struct contains the
+   following fields:
+
+      long type;
+      DUH_LOAD_SIGNAL    load_signal;
+      DUH_START_SAMPLES  start_samples;
+      DUH_SET_PARAMETER  set_parameter;
+      DUH_RENDER_SAMPLES render_samples;
+      DUH_END_SAMPLES    end_samples;
+      DUH_UNLOAD_SIGNAL  unload_signal;
+
+   You need to create a DUH_SIGTYPE_DESC struct and pass its pointer to
+   dumb_register_sigtype(). The struct must be in permanent memory. In other
+   words, it must be either global or static, and you should not modify it
+   later. DUMB will not make its own copy.
+
+   'type' should be a four-character string encoded with DUMB_ID(), for
+   example DUMB_ID('M','E','O','W'). By convention it should be upper case,
+   and padded with spaces if you do not use all four characters. However, you
+   do not have to stick to this.
+
+   If you are not providing a function, specify NULL for the corresponding
+   function pointer.
+
+
+**********************************
+*** Signal Rendering Functions ***
+**********************************
+
+
+   When you are designing your own signals, you will often want to retrieve
+   samples from another signal in the DUH. This signal's index ('sig') should
+   be loaded by your load_samples function. You can use the following
+   functions to obtain the samples.
+
+
+DUH_SIGNAL_SAMPINFO *duh_signal_start_samples(
+   DUH *duh, int sig, int n_channels, long pos
+);
+
+   Specifies where you want to start rendering. This function returns a
+   DUH_SIGNAL_SAMPINFO struct, which you need to pass to the other functions.
+   You can use as many DUH_SIGNAL_SAMPINFOs at once as you like.
+
+   Pass the DUH and the index of the signal whose samples you want to obtain
+   ('sig'). Specify how many channels you want, and where you want to start
+   rendering (65536 represents one second).
+
+   There is no special need to check that this function succeeds. The other
+   functions are safe to call with null pointers. However, checking the
+   return value can make your code more efficient.
+
+   Be sure to call duh_signal_end_samples() when you've finished.
+
+
+void duh_signal_set_parameter(
+   DUH_SIGNAL_SAMPINFO *signal_sampinfo,
+   unsigned char id, long value
+);
+
+   Sets a parameter for the signal whose samples are being rendered by
+   signal_sampinfo.
+
+
+
+
+   Calls the set_parameter function for the instance started by
+   duh_signal_start_samples of the signal whose details you passed to that
+   function. Exactly what this does depends on the signal in question.
+
+
+
+
+
+   THIS IS NOT VERY HELPFUL. REFER TO A FILE?
+
+
+
+
+
+
+
+
+long duh_signal_render_samples(
+   DUH_SIGNAL_SAMPINFO *signal_sampinfo,
+   float volume, float delta,
+   long size, sample_t **samples
+);
+
+   Renders 'size' samples of the signal for which signal_sampinfo was set up.
+   See duh_render() and DUH_RENDER_SAMPLES for details on the 'volume' and
+   'delta' parameters. This function will return the number of samples
+   generated, which will be fewer than 'size' if the signal ends.
+
+   Sometimes you can pass the array of sample buffers which was passed to
+   your function, and process the data in place. Other times you will have to
+   set up the array of sample buffer pointers yourself, making sure each
+   buffer can hold 'size' samples. Below is some code to do that. Note that
+   we prefix some variable names with sub-, so they don't clash with the
+   parameters to the function that would typically contain this code.
+
+      sample_t **subsamples;
+      int n;
+      long subsize;
+
+      subsamples = malloc(n_channels * sizeof(*subsamples));
+
+      if (!subsamples)
+         return 0;
+
+      subsamples[0] = malloc(size * n_channels * sizeof(*subsamples[0]));
+
+      if (!subsamples[0]) {
+         free(subsamples);
+         return 0;
+      }
+
+      for (n = 1; n < n_channels; n++)
+         subsamples[n] = subsamples[n-1] + size;
+
+      subsize = signal_render_samples(
+         subsampinfo,
+         volume, delta,
+         size, subsamples
+      );
+
+      /* Process the samples here. */
+
+      free(subsamples[0]);
+      free(subsamples);
+
+      return subsize;
+
+
+void duh_signal_end_samples(DUH_SIGNAL_SAMPINFO *signal_sampinfo);
+
+   Call this when you have finished with a DUH_SIGNAL_SAMPINFO struct. It
+   will free all memory used by the struct.
+
+
+**************************
+*** Resampling Helpers ***
+**************************
+
+
+   The DUH player library provides a versatile resampling system. The sample
+   signal type uses it, and it is available for use in any of your signals.
+
+   Be warned that the resampler may overrun the memory you specify by up to
+   DUMB_EXTRA_SAMPLES samples, so you must allocate these samples and set
+   them to appropriate values when you load your signal. Generally, if you
+   are going to loop, set them to reflect the samples at the loop start
+   point; if you are not going to loop, set them to zero.
+
+   DUMB_EXTRA_SAMPLES is defined as follows:
+
+      #define DUMB_EXTRA_SAMPLES 3
+
+
+extern int resampling_quality;
+
+   Allows you to control the quality of all resampling that takes place. This
+   may be set to any value from 0 to 4. Higher values will sound better, but
+   lower values will use up less processor time.
+
+                   |     --___
+      0 - Aliasing |__---     __
+                   |            ___--
+
+                            |  __
+      1 - Linear resampling | /  \  /\
+                            |/    \/  \__
+
+      2 - Linear resampling / linear average
+
+      3 - Quadratic / linear average
+
+      4 - Cubic / linear average
+
+   Level 0 has very noticeable unwanted overtones. It will occasionally
+   produce satisfactory results for noisy signals, but usually you will
+   want to pay for the extra processor time (which isn't much) and go
+   for Level 1.
+
+   Levels 1 and 2 are already pretty good. When resampling down a few
+   octaves, however, you will begin to notice unwanted high frequencies.
+   These can be eliminated by switching to Levels 3 or 4.
+
+   When Level 2 or higher are selected, a linear average function is used for
+   speeding the wave up. Instead of skipping samples, all samples in the
+   interval will be averaged. The interval is also smoothed at the edges.
+   This will be especially beneficial when increasing the pitch by several
+   octaves.
+
+   Levels 3 and 4 are both smooth curves to the eye. They both give
+   extremely good performance, but you may sometimes notice the difference
+   when reducing the pitch of a sample by several octaves, where Level 3
+   may exhibit unwanted high frequencies.
+
+
+
+
+
+
+
+
+   NOTE: WHAT IS THE DEFAULT? (2 at the moment, but might change. Config?)
+
+
+
+
+
+
+
+
+
+
+
+
+
+long dumb_resample(
+   sample_t *src, long *_src_pos, int *_src_subpos,
+   long src_start, long src_end,
+   sample_t *dst, long dst_size,
+   float delta, int *_dir,
+   DUMB_RESAMPLE_PICKUP pickup, void *pickup_data
+);
+
+   This is the resampling function. It takes an array of source samples and
+   fills as much of the destination array as it can for you. Its operation is
+   quite complicated, so pay attention.
+
+   All the parameters prefixed with an underline (_) are pointers to the
+   fields they describe. This means the function can modify the variables you
+   pass, but you have to prefix the variable with an ampersand (&) when
+   passing it. If you get warnings about ints being converted to pointers
+   without casts, you have most likely forgotten an ampersand somewhere.
+
+   'src' points to the source sample data. It should point to the beginning
+   of the sample, even if you are starting your resampling from somewhere in
+   the middle. Do not break this rule unless you know what you're doing.
+
+   '_src_pos' and '_src_subpos' together represent the current position in
+   the sample. When you first call the function, they represent the starting
+   position. Once the function has done its work, they will represent the
+   point at which the resampling stopped. '_src_pos' is measured in samples.
+   '_src_subpos' represents how far between samples we are, and ranges from
+   0 to 65535 - so if _src_subpos is 65535, we are very nearly on to the next
+   sample.
+
+   Once _src_pos and _src_subpos have been modified by this function, you can
+   pass them to the function again and the resampling will continue
+   seamlessly. This is important, as you will hardly ever get to render all
+   your samples in one go. Typically you will make one call to this function
+   from within your render_samples function.
+
+   This function does not need to know the size of the source buffer as such.
+   Instead, it knows src_start and src_end, which are start and end points.
+   The end point actually points to the first sample not to use, following
+   the usual start-inclusive end-exclusive convention. In general, the
+   resampling will stop when src_pos tries to pass one of these.
+
+   WARNING: dumb_resample() may read up to DUMB_EXTRA_SAMPLES samples beyond
+            src_end. Make sure the memory belongs to you.
+
+   The _dir parameter should be either 1 or -1, and tells this function
+   whether to go forwards or backwards respectively through the source sample
+   buffer. If _dir is 0, nothing will happen - resampling has stopped
+   permanently. Any other values of _dir will have unpredictable results, and
+   the debugging library will abort if you try to use them.
+
+      If _dir is 1, then _src_pos will only be tested against src_end.
+      If _dir is -1, then _src_pos will only be tested against src_start.
+
+   That means you can set src_start and src_end to your loop points, and
+   start playing from the beginning of the sample. The resampling will
+   proceed unimpeded while _src_pos is outside the loop section, provided it
+   is advancing towards the loop section. The sample signal makes extensive
+   use of this capability.
+
+   The output waveform will be rendered into the buffer pointed to by dst.
+   Up to dst_size samples will be generated. Fewer will be generated if the
+   resampling stops permanently. The number generated will be returned. You
+   can find out if resampling ended by testing the value of your direction
+   variable (pointed to by _dir); if it is 0, then resampling stopped
+   permanently.
+
+   If you pass NULL for dst, no samples will be generated. However, _src_pos,
+   _src_subpos and _dir will be updated as normal. The pick-up function will
+   be called as necessary; you should pass the usual 'src' parameter so it
+   can be passed to your pick-up function. (See below for information on
+   pick-up functions.) The function returns the number of samples that would
+   have been generated, had dst pointed somewhere. The operation of
+   do_resample() when dst is NULL is exactly the same as that when dst points
+   somewhere. However, do_resample() is much faster in this case; you should
+   use it when volume is 0, or when you are culling quieter samples to gain
+   execution speed.
+
+   If delta is 1.0f, the destination is the same speed as the source. Greater
+   values cause the sample to speed up, and lesser values cause the sample to
+   slow down. delta should always be positive.
+
+   We have covered most of the parameters. There are only two left - pickup
+   and pickup_data. The simplest usage is to set these both to NULL. Then, if
+   resampling stops, it stops permanently. Use this if your sample will not
+   loop.
+
+   Alternatively, you may wish to write a pick-up function. Your pick-up
+   function will take control whenever _src_pos tries to pass the start or
+   end points. You can use it for looping, or for a multitude of other tasks.
+   The typedef is as follows:
+
+      typedef int (*DUMB_RESAMPLE_PICKUP)(
+         sample_t *src, long *_src_pos, int *_src_subpos,
+         long *_src_start, long *_src_end,
+         int dir,
+         void *data
+      );
+
+   You are passed the source buffer, in case you want to fill it with new
+   samples. You have the _src_pos, _src_subpos, _src_start and _src_end
+   pointers, should you need to change the values to which they point. You
+   also have dir, but note that it is not a pointer. Instead, you should
+   return the new direction, or 0 to stop the resampling permanently.
+
+   The data parameter is a copy of pickup_data as passed to dumb_resample().
+   This is typically used to give you access to your 'sampinfo' parameter,
+   passed to your render_samples function.
+
+   BEWARE: you must refer to and change src_pos, src_subpos, src_start and
+           src_end through the parameters passed. Do not mistakenly use their
+           equivalents in your struct instead. The equivalents in your struct
+           will eventually be updated, but they will not be accurate during
+           the pick-up function.
+
+   On entry to this function, src_pos and src_subpos will have overrun by a
+   small amount. When changing them, you should preserve this overrun. The
+   following examples will do this for you:
+
+      If you are executing a simple loop, subtract (or add) the difference
+      between the loop points from (or to) src_pos. Do not simply set src_pos
+      to the other loop point.
+
+         *_src_pos -= *_src_end - *_src_start;
+
+      If you are executing a ping-pong loop, you need to reflect the pointer
+      off the loop boundary. To reflect off the loop end point:
+
+         *_src_pos = (*_src_end << 1) - 1 - *_src_pos;
+         *_src_subpos ^= 65535;
+         dir = -1;
+
+      To reflect off the loop start point:
+
+         *_src_pos = (*_src_start << 1) - 1 - *_src_pos;
+         *_src_subpos ^= 65535;
+         dir = 1;
+
+      In each case, don't forget to return the new direction correctly!
+
+   An ideal example of a pick-up function can be found in src/sample.c.
+
+   Of course there is more that can be done with a pick-up function. Enjoy
+   experimenting!
+
+
+************************
+*** DUH Construction ***
+************************
+
+
+DUH *make_duh(
+   long length,
+   int n_signals,
+   DUH_SIGTYPE_DESC *desc[],
+   void *signal[]
+);
+
+   Constructs a DUH from its component parts. Use this function if you are
+   writing a function to load a music file format other than .duh. Indeed,
+   this function is used internally to load IT files.
+
+   Before you call this function, you must do some preparation. Your DUH will
+   contain a fixed number of signals; pass this number as n_signals. Each
+   signal will have a DUH_SIGTYPE_DESC struct, and you pass an array of
+   pointers to these. The DUH_SIGTYPE_DESC struct contains the following
+   fields:
+
+      long type;
+      DUH_LOAD_SIGNAL    load_signal;
+      DUH_START_SAMPLES  start_samples;
+      DUH_SET_PARAMETER  set_parameter;
+      DUH_RENDER_SAMPLES render_samples;
+      DUH_END_SAMPLES    end_samples;
+      DUH_UNLOAD_SIGNAL  unload_signal;
+
+   The structs must be in permanent memory, i.e. either global or static, and
+   not modified later; however, the array of pointers can be destroyed as
+   soon as the function returns.
+
+   The values of 'type' and 'load_signal' are irrelevant; set them to 0 and
+   NULL respectively, unless you are using the DUH_SIGTYPE_DESC struct
+   elsewhere.
+
+   Because 'load_signal' is never used, you must provide an array of pointers
+   to the data that 'load_signal' would otherwise have returned. This will
+   be passed to the other functions as 'signal'. Once again, the array of
+   pointers can be destroyed as soon as the function returns. As for the
+   pointers themselves:
+
+   If an 'unload_signal' function is provided, then that will be used to
+   deallocate the pointer when you finally destroy the DUH. If the function
+   is not provided, then you are responsible for deallocating any memory
+   referenced by that pointer yourself. This applies individually to each
+   signal.
+
+   If this function fails and returns NULL, then any 'unload_signal'
+   functions you provided will have been called. You do not have any extra
+   work to do if it fails.
+
+
+********************************
+*** Allegro Packfile Support ***
+********************************
+
+
+void dumb_register_packfiles(void);
+
+   This function registers the Allegro PACKFILE input module for use by
+   DUMBFILEs. PACKFILE structs and their corresponding functions, as defined
+   by Allegro's header file allegro.h, will be used internally for all
+   DUMBFILE input (unless opened with dumbfile_open_ex()).
+
+   This must be called before dumbfile_open() is used, or else an alternative
+   system must be registered (see register_dumbfile_system() and
+   dumb_register_stdfiles()).
+
+
+DUMBFILE *dumbfile_open_packfile(PACKFILE *p);
+
+   If you have an Allegro PACKFILE struct representing an open file, you can
+   call this if you wish to read from it using a DUMBFILE. This is useful
+   when you need to pass a DUMBFILE struct to a library function, to read an
+   embedded music file for example. When you close the DUMBFILE, you can
+   continue using the PACKFILE struct to read what follows the embedded data.
+
+
+***********************************************
+*** Allegro Datafile Registration Functions ***
+***********************************************
+
+
+void register_dat_duh(void);
+
+   If you wish to put a DUH file in an Allegro datafile, you must use "DUH "
+   for the type. The grabber will have a box for the type when you insert a
+   new object. The grabber will treat the DUH file as binary data, which
+   means the datafile will contain an exact copy of the DUH file on disk.
+
+
+
+
+
+   TODO: make it possible to choose the type...
+
+
+
+
+
+   You must then call register_dat_duh() in your program before you load the
+   datafile. Once you've done this, you'll be able to access the DUH using
+   the usual datafile[n].dat notation. You do not need to call unload_duh()
+   on this DUH; unload_datafile() will do that for you.
+
+   If you need to check the type of the object for whatever reason, you can
+   use DAT_DUH, defined as follows:
+
+      #define DAT_DUH DAT_ID('D','U','H',' ')
+
+   The following example iterates through all the DUHs in disan.dat:
+
+      DATAFILE *dat;
+      int n;
+
+      register_dat_duh();
+      dat = load_datafile("disan.dat");
+
+      for (n = 0; dat[n].type != DAT_END; n++) {
+         if (dat[n].type == DAT_DUH) {
+            DUH *duh = dat[n].dat;
+            /* Insert code here to play 'duh' or whatever you want to do. */
+         }
+      }
+
+      unload_datafile(dat);
+
+
+void register_dat_it(void);
+
+   Inserting an IT file in an Allegro datafile is the same as inserting a DUH
+   file, except the type has to be "IT  ", the registration function is
+   register_dat_it(), and the following definition is available for use
+   instead of DAT_DUH:
+
+      #define DAT_IT DAT_ID('I','T',' ',' ')
+
+   Once the datafile is loaded, the 'dat' field indeed points to a DUH
+   struct. There are no differences other than those listed above.
+
+
+*************************************
+*** Allegro DUH Playing Functions ***
+*************************************
+
+
+   The functions in this section allow you to play back a DUH through
+   Allegro's sound system. You must call Allegro's install_sound() function
+   before you use them.
+
+
+AL_DUH_PLAYER *al_start_duh(
+   DUH *duh, int n_channels, long pos, float volume, long bufsize, int freq
+);
+
+   Starts playing the specified DUH.
+
+   An AL_DUH_PLAYER represents one instance of the DUH playing. If you wish,
+   you can have two or more AL_DUH_PLAYERs going at the same time, for the
+   same DUH or for different ones. Each uses one of Allegro's audio streams
+   and hence one voice.
+
+   At present, n_channels can either be 1 or 2 for monaural or stereo
+   respectively. If you use the debugging library, your program will abort if
+   other values are passed; otherwise weird things will happen.
+
+   The DUH will start playing from position 'pos'. 0 represents the start of
+   the DUH, and 65536 represents one second. Unlike other music systems, DUMB
+   will always make sure every note is there right from the start, provided
+   any custom signal types are designed properly. In other words, you can
+   start a DUH at a point halfway through a long note, and you will still
+   hear the long note.
+
+   The volume is a float. 1.0f is the pseudo-maximum. If you pass 1.0f, any
+   properly designed DUH file will play nice and loud, but will not clip. You
+   can pass a greater volume if you like, but be prepared for clipping to
+   occur. Of course you can pass smaller values to play the DUH more quietly,
+   and this will also resolve clipping issues in badly designed DUH files.
+
+   You will need to pass the AL_DUH_PLAYER to other functions when you need
+   to stop or pause the DUH, change its volume, or otherwise modify the way
+   it is playing. You will also need to pass it to al_poll_duh() at regular
+   intervals; if the sound is choppy, try calling al_poll_duh() more often.
+
+   'bufsize' is the number of samples that will be rendered at once. 1024 is
+   a suitable value for most purposes.
+
+
+
+
+
+   NOTE: IS THAT TRUE ON ALL SYSTEMS?
+
+
+
+
+
+   The greater this is, the less often you will have to call al_poll_duh() -
+   but when al_poll_duh() decides to fill the buffer, it will take longer
+   doing so. If your game exhibits regular brief freezes, try reducing the
+   buffer size. If the sound is choppy, however, you may have to increase it.
+
+   'freq' specifies the sampling frequency at which the DUH should be
+   rendered. At present there is no (official and portable) way of knowing
+   the frequency at which Allegro is mixing - but if you do know that
+   frequency, passing it here will give the highest quality sound. If you
+   reduce it, the DUH will sound less crisp but use less processor time.
+
+   When you have finished, you must pass the AL_DUH_PLAYER to al_stop_duh()
+   to free up memory. Do not destroy the DUH beforehand.
+
+   There is no real need to check the return value from this function. The
+   other functions can be called safely with null pointers, so if there is a
+   problem, your music will simply not play.
+
+
+void al_stop_duh(AL_DUH_PLAYER *dp);
+
+   This will stop an AL_DUH_PLAYER. You must call this when you have finished
+   with it, before destroying the DUH. The pointer will no longer be valid on
+   return from this function.
+
+
+void al_pause_duh(AL_DUH_PLAYER *dp);
+
+   This will pause an AL_DUH_PLAYER. Use al_resume_duh() when you want it to
+   continue.
+
+
+void al_resume_duh(AL_DUH_PLAYER *dp);
+
+   Causes a paused AL_DUH_PLAYER to resume playing (see al_pause_duh()).
+
+
+void al_duh_set_volume(AL_DUH_PLAYER *dp, float volume);
+
+   This will set the volume of an AL_DUH_PLAYER. See al_start_duh() for
+   details on the volume parameter.
+
+
+int al_poll_duh(AL_DUH_PLAYER *dp);
+
+   An AL_DUH_PLAYER is not interrupt-driven. That means it will not play by
+   itself. You must keep it alive from your main program. Call this function
+   at regular intervals. If the sound crackles, try calling it more often.
+   (There is nothing you can do if Windows decides to play with the hard
+   disk; that will make your sound crackle no matter what you do.)
+
+   Normally this function will return zero. However, if it returns nonzero,
+   that means the AL_DUH_PLAYER will not generate any more sound. Indeed the
+   underlying audio stream and DUH_RENDERER have been destroyed. When this
+   happens, you can call al_stop_duh() whenever you wish - but you do not
+   have to. Note that this function will wait two buffers' worth of samples
+   before taking this action, allowing Allegro to mix the trailing sound
+   before the audio stream is destroyed. In other words, your music will not
+   be cut off prematurely.
+
+   In case you were wondering, it is definitely not safe to call
+   al_poll_duh() from an interrupt context. Not only is no part of DUMB
+   locked in memory, but many signals and many core library functions
+   allocate and free their memory on a call-by-call basis! Remember that any
+   disk access that occurs in interrupt context is likely to crash the
+   machine. (This limitation only applies to DOS at present, and is due to
+   the fact that the DOS file access functions are not re-entrant.
+   Multitasking systems are generally safe. However, even if you do not think
+   you are targeting DOS, it is worth considering that calling this function
+   regularly from your main loop is likely to be much more efficient than
+   relying on task switching to do it for you.)
+
+
+long al_duh_get_position(AL_DUH_PLAYER *dp);
+
+   Tells you what position an AL_DUH_PLAYER is up to, or -1 if it is invalid
+   (perhaps owing to lack of memory). As usual, 65536 is one second. Note
+   that this is a whole number, whereas a fractional part is stored
+   internally; the sample will not be continuous if you terminate the
+   AL_DUH_PLAYER and then reinitiate it with the same position. Furthermore,
+   note that Allegro will not have mixed in all the sound up to this point;
+   if you wait for this to reach a certain position and then terminate the
+   AL_DUH_PLAYER, the sound will cut off too early.
+
+
+
+
+
+
+
+
+   NOTE: HOW TO GET AROUND THIS?
+
+
+
+
+
+
+
+
+DUH_RENDERER *al_duh_get_renderer(AL_DUH_PLAYER *dp);
+
+   This function returns to you the DUH_RENDERER underlying the specified
+   AL_DUH_PLAYER. It has no practical use in this release, but it
+   TODO: Write this. Also see if it should go in howto.txt.
+
+
+******************
+*** Conclusion ***
+******************
+
+
+I conclude that... DUMB is the bestest music player in the world because...
+Complete this sentence in fifteen words or fewer... D'OH!
+
+
+Ben Davis
+entheh@users.sf.net
+IRC EFnet #dumb
+See readme.txt for details on using IRC.

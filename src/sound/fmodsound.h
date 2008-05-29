@@ -47,6 +47,7 @@ public:
 	void PrintStatus ();
 	void PrintDriversList ();
 	FString GatherStats ();
+	short *DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type);
 
 	void DrawWaveDebug(int mode);
 

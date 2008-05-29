@@ -482,11 +482,19 @@ public:
 		unsigned int percentbuffered;
 		unsigned int position;
 		bool starving;
+		float volume;
+		float frequency;
+		bool paused;
+		bool isplaying;
 
 		if (FMOD_OK == Stream->getOpenState(&openstate, &percentbuffered, &starving))
 		{
 			stats = (openstate <= FMOD_OPENSTATE_STREAMING ? OpenStateNames[openstate] : "Unknown state");
 			stats.AppendFormat(",%3d%% buffered, %s", percentbuffered, starving ? "Starving" : "Well-fed");
+		}
+		if (Channel == NULL)
+		{
+			stats += ", not playing";
 		}
 		if (Channel != NULL && FMOD_OK == Channel->getPosition(&position, FMOD_TIMEUNIT_MS))
 		{
@@ -496,6 +504,30 @@ public:
 				stats.AppendFormat("/%d", position);
 			}
 			stats += " ms";
+		}
+		if (Channel != NULL && FMOD_OK == Channel->getVolume(&volume))
+		{
+			stats.AppendFormat(", %d%%", int(volume * 100));
+		}
+		if (Channel != NULL && FMOD_OK == Channel->getPaused(&paused) && paused)
+		{
+			stats += ", paused";
+		}
+		if (Channel != NULL && FMOD_OK == Channel->isPlaying(&isplaying) && isplaying)
+		{
+			stats += ", playing";
+		}
+		if (Channel != NULL && FMOD_OK == Channel->getFrequency(&frequency))
+		{
+			stats.AppendFormat(", %g Hz", frequency);
+		}
+		if (JustStarted)
+		{
+			stats += " JS";
+		}
+		if (Ended)
+		{
+			stats += " XX";
 		}
 		return stats;
 	}
@@ -1112,7 +1144,7 @@ FString FMODSoundRenderer::GatherStats()
 	Sys->getChannelsPlaying(&channels);
 	Sys->getCPUUsage(&dsp, &stream, &update, &total);
 
-	out.Format ("%d channels,%5.2f%% CPU (%.2f%% DSP  %.2f%% Stream  %.2f%% Update)",
+	out.Format ("%d channels,%5.2f%% CPU (DSP:%2.2f%%  Stream:%2.2f%%  Update:%2.2f%%)",
 		channels, total, dsp, stream, update);
 	return out;
 }
@@ -1196,8 +1228,8 @@ SoundStream *FMODSoundRenderer::CreateStream (SoundStreamCallback callback, int 
 	exinfo.numchannels		 = 1 << channel_shift;
 
 	// Length of PCM data in bytes of whole song (for Sound::getLength).
-	// This pretends it's 5 seconds long.
-	exinfo.length			 = (samplerate * 5) << (sample_shift + channel_shift);
+	// This pretends it's extremely long.
+	exinfo.length			 = ~0u;
 
 	// Default playback rate of sound. */
 	exinfo.defaultfrequency	 = samplerate;
@@ -2319,4 +2351,61 @@ void FMODSoundRenderer::DrawSpectrum(float *spectrumarray, int x, int y, int wid
 //		screen->Clear(x + i, int(y + height - db), x + i + 1, y + height, -1, MAKEARGB(255, 255, 255, 40));
 		screen->Dim(MAKERGB(255,255,40), 0.65f, x + i, y + height - top, 1, top);
 	}
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: DecodeSample
+//
+// Uses FMOD to decode a compressed sample to a 16-bit buffer. This is used
+// by the DUMB XM reader to handle FMOD's OggMods.
+//
+//==========================================================================
+
+short *FMODSoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type)
+{
+	FMOD_CREATESOUNDEXINFO exinfo = { sizeof(exinfo), };
+	FMOD::Sound *sound;
+	FMOD_SOUND_FORMAT format;
+	int channels;
+	unsigned int len, amt_read;
+	FMOD_RESULT result;
+	short *outbuf;
+
+	if (type == CODEC_Vorbis)
+	{
+		exinfo.suggestedsoundtype = FMOD_SOUND_TYPE_OGGVORBIS;
+	}
+	exinfo.length = sizebytes;
+	result = Sys->createSound((const char *)coded,
+		FMOD_2D | FMOD_SOFTWARE | FMOD_CREATESTREAM |
+		FMOD_OPENMEMORY_POINT | FMOD_OPENONLY | FMOD_LOWMEM,
+		&exinfo, &sound);
+	if (result != FMOD_OK)
+	{
+		return NULL;
+	}
+	result = sound->getFormat(NULL, &format, &channels, NULL);
+	// TODO: Handle more formats if it proves necessary.
+	// Does OggMod work with stereo samples?
+	if (result != FMOD_OK || format != FMOD_SOUND_FORMAT_PCM16 || channels != 1)
+	{
+		sound->release();
+		return NULL;
+	}
+	len = outlen;
+	// Must be malloc'ed for DUMB, which is C.
+	outbuf = (short *)malloc(len);
+	result = sound->readData(outbuf, len, &amt_read);
+	sound->release();
+	if (result == FMOD_ERR_FILE_EOF)
+	{
+		memset((BYTE *)outbuf + amt_read, 0, len - amt_read);
+	}
+	else if (result != FMOD_OK || amt_read != len)
+	{
+		free(outbuf);
+		return NULL;
+	}
+	return outbuf;
 }

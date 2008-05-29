@@ -1,0 +1,137 @@
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * modplug.txt - Our official position regarding      / / \  \
+ *               compatibility with ModPlug          | <  /   \_
+ *               Tracker.                            |  \/ /\   /
+ *                                                    \_  /  > /
+ *                                                      | \ / /
+ *                                                      |  ' /
+ *                                                       \__/
+ */
+
+
+********************
+*** Introduction ***
+********************
+
+ModPlug Tracker is a very popular tracker for Windows. Its popularity is due
+to the intuitive interface and its many advanced features. The author has
+done a good job with this piece of software, but sadly in doing so he has
+desecrated the IT file format.
+
+I am not against ModPlug Tracker being used to write music modules. As
+already stated, it has some very advanced and convenient features; I use it
+myself. However, I believe its users should be aware of the entire situation
+before using it for any serious work.
+
+   ModPlug Tracker - http://www.modplug.com/
+
+
+*************************
+*** Incompatibilities ***
+*************************
+
+There are a few situations in which ModPlug Tracker misinterprets the
+original module formats. I shall list the five I am most aware of, from least
+to most annoying:
+
+5. Create a multisample instrument, for example a piano. Play a low note.
+   Then go up the scale, but in the pattern data, make sure the instrument
+   column is blank; put in only the notes. Play this with ModPlug Tracker,
+   and play it with Impulse Tracker. Impulse Tracker changes sample as you go
+   up the scale; ModPlug Tracker does not.
+
+4. Arpeggio and Retrigger Note effects behave badly when combined with
+   Portamento, which can appear in the volume column. While Retrigger Note
+   isn't too bad, Arpeggio sounds completely wrong. Try it and see what
+   happens. Then repeat the experiment in Impulse Tracker.
+
+3. The filter algorithm is incorrect, in more ways than one. When Jeffrey Lim
+   programmed the low-pass resonant filters into Impulse Tracker, he used a
+   standard filter algorithm with a slight modification to achieve greater
+   resonance. ModPlug Tracker does not incorporate this modification.
+   Furthermore, ModPlug Tracker uses integer arithmetic with nowhere near
+   enough precision; the wave output is really poor in some cases. I don't
+   doubt it damages the acoustic properties of the filters in subtle ways.
+
+2. When looping, ModPlug Tracker resets all variables. The original trackers
+   do not do this.
+
+1. Worst of all, ModPlug Tracker has no regard for playback volume, and
+   generally has a much lower output level than the original trackers.
+
+Cases 3, 2 and 1 lead people to write IT files that play badly in the
+original trackers. If some of these problems could be fixed, I'd be all for
+it - but these problems have been reported to the author and he had no
+motivation to fix them. ModPlug Tracker has been around long enough that
+fixing 3, 2 and 1 would be detrimental to too many people's music.
+
+
+******************
+*** Extensions ***
+******************
+
+Worse than the incompatibilities are the extensions ModPlug Tracker makes,
+mostly to the IT format. DUMB currently supports one of these extensions,
+namely stereo samples, but supporting the others is not high on my list of
+priorities.
+
+Other extensions ModPlug Tracker has provided mostly take the form of extra
+effects. For instance, S98 and S99 can be used to enable or disable reverb. I
+believe the latest versions of ModPlug Tracker offer alternative types of
+filter, such as high-pass and band-pass. As soon as an IT file uses any of
+these features, it will play incorrectly with Impulse Tracker.
+
+By far the most evil extension provided by ModPlug Tracker is the effect
+plug-ins. These enable IT files to use VST effects. I recently downloaded an
+IT file that uses some effects from a collection named "DirectX Media Audio
+Effects". When can we expect these effects to be ported to Linux?
+
+
+******************
+*** Conclusion ***
+******************
+
+ModPlug Tracker is trying to be two things at once. It wants to be an editor
+for the existing formats, but at the same time it wants to be proprietary,
+with all its own features and extensions. Unfortunately it is succeeding;
+there are many IT files out there that only play right in ModPlug Tracker. In
+my opinion, ModPlug Tracker should have come out with its own file format, in
+which all these extensions would have found a home.
+
+If you are going to use ModPlug Tracker's extensions, I recommend you
+ultimately convert your music to a streamed format such as Ogg Vorbis. (If
+you were thinking of using MP3, then don't - consider using Ogg Vorbis
+instead.) If you release IT files that use ModPlug Tracker's extensions,
+please state prominently that the files are designed to be played with
+ModPlug Tracker. Finally, don't ask me to support ModPlug Tracker's
+extensions; ModPlug Tracker's playback code is available for use in your
+games, so use that instead.
+
+   Ogg Vorbis - http://www.vorbis.com/
+
+Despite all the above problems, don't forget that ModPlug Tracker does have a
+lot of very useful features for editing files. These include a function for
+removing unused patterns, samples and instruments, drag-and-drop sample and
+instrument ripping, drop-down menus for selecting the effects by name without
+having to memorise the codes or refer to help, and lots of other nice things.
+I do recommend it as an editor, provided you make sure you are aware of the
+situation and do not use ModPlug Tracker's extensions or incompatibilities
+inadvertently.
+
+Oh, and by the way, save your final version with Impulse Tracker. Then the
+samples will be compressed for you!
+
+
+Ben Davis
+entheh@users.sf.net
+IRC EFnet #dumb
+See readme.txt for details on using IRC.

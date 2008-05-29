@@ -816,6 +816,7 @@ SFFile::~SFFile()
 				delete[] Samples[i].InMemoryData;
 			}
 		}
+		delete[] Samples;
 	}
 }
 

@@ -7,6 +7,7 @@
 #include "templates.h"
 #include "timidity.h"
 #include "sf2.h"
+#include "files.h"
 
 namespace Timidity
 {
@@ -61,6 +62,7 @@ void font_add(const char *filename, int load_order)
 			{
 				font->SetAllOrders(load_order);
 			}
+			delete fp;
 		}
 	}
 }

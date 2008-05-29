@@ -28,6 +28,7 @@ basetools: ccdv.exe
 	$(MAKE) -C wadsrc -f Makefile.mgw
 	$(MAKE) -C jpeg-6b -f Makefile.mgw
 	$(MAKE) -C snes_spc
+	$(MAKE) -C dumb
 
 cleanexe:
 	@$(MAKE) -C . -f Makefile.mingw clean
@@ -43,6 +44,7 @@ clean:
 	@$(MAKE) -C zlib -f Makefile.mgw clean
 	@$(MAKE) -C jpeg-6b -f Makefile.mgw clean
 	@$(MAKE) -C snes_spc clean
+	@$(MAKE) -C dumb clean
 ifeq ($(findstring msys,$(shell sh --version 2>nul)),msys)
 	rm -f ccdv.exe
 else

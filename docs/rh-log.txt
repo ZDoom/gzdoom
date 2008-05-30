@@ -1,3 +1,6 @@
+May 29, 2008
+- Fixed: PrtScn/SysRq key did not work on Linux.
+
 May 28, 2008
 - Added an alternate module replay engine that uses foo_dumb's replayer, a
   heavily customized version of DUMB (Dynamic Universal Music Bibliotheque).

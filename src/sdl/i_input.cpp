@@ -192,6 +192,8 @@ static void InitKeySymMap ()
 	KeySymToDIK[SDLK_RSHIFT] = DIK_LSHIFT;
 	KeySymToDIK[SDLK_RCTRL] = DIK_LCONTROL;
 	KeySymToDIK[SDLK_RALT] = DIK_LMENU;
+	// Depending on your Linux flavor, you may get SDLK_PRINT or SDLK_SYSREQ
+	KeySymToDIK[SDLK_PRINT] = DIK_SYSRQ;
 }
 
 static void I_CheckGUICapture ()

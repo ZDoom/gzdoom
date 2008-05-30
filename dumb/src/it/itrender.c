@@ -4309,7 +4309,9 @@ static int32 render_playing_part(DUMB_IT_SIGRENDERER *sigrenderer, IT_PLAYING *p
 				dumb_record_click(sigrenderer->click_remover[1], pos + size_rendered, -click[1]);
 			}
 		}
-	} else {
+	}
+#if 0
+	else {
 		if (playing->sample->flags & IT_SAMPLE_STEREO) {
 			if ((cr_record_which & 1) && sigrenderer->click_remover) {
 				sample_t click;
@@ -4340,6 +4342,7 @@ static int32 render_playing_part(DUMB_IT_SIGRENDERER *sigrenderer, IT_PLAYING *p
 			}
 		}
 	}
+#endif
 	return size_rendered;
 }
 
@@ -4372,9 +4375,9 @@ static int32 render_playing_ramp(DUMB_IT_SIGRENDERER *sigrenderer, IT_PLAYING *p
 	if (volume == 0) {
 		if (playing->declick_stage < 2) {
 			if (playing->sample->flags & IT_SAMPLE_STEREO)
-				size_rendered = dumb_resample_n_2_1(bits, &playing->resampler, NULL, size, 0, 0, delta);
+				size_rendered = dumb_resample_n_2_2(bits, &playing->resampler, NULL, size, 0, 0, delta);
 			else
-				size_rendered = dumb_resample_n_1_1(bits, &playing->resampler, NULL, size, 0, delta);
+				size_rendered = dumb_resample_n_1_2(bits, &playing->resampler, NULL, size, 0, 0, delta);
 		} else {
 			playing->declick_stage = 3;
 		}
@@ -4759,6 +4762,11 @@ static DUMB_IT_SIGRENDERER *init_sigrenderer(DUMB_IT_SIGDATA *sigdata, int n_cha
 {
 	DUMB_IT_SIGRENDERER *sigrenderer;
 	int i;
+
+	/* [RH] Mono destination mixers are disabled. */
+	if (n_channels != 2) {
+		return NULL;
+	}
 
 	if (startorder > sigdata->n_orders) {
 		free(callbacks);

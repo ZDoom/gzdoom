@@ -48,6 +48,10 @@ DUH_SIGRENDERER *DUMBEXPORT duh_start_sigrenderer(DUH *duh, int sig, int n_chann
 	DUH_SIGNAL *signal;
 	DUH_START_SIGRENDERER proc;
 
+	/* [RH] Mono destination mixers are disabled. */
+	if (n_channels != 2)
+		return NULL;
+
 	if (!duh)
 		return NULL;
 

@@ -691,49 +691,49 @@ struct DUMB_VOLUME_RAMP_INFO
 
 void dumb_reset_resampler(DUMB_RESAMPLER *resampler, sample_t *src, int src_channels, int32 pos, int32 start, int32 end, int quality);
 DUMB_RESAMPLER *dumb_start_resampler(sample_t *src, int src_channels, int32 pos, int32 start, int32 end, int quality);
-int32 dumb_resample_1_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume, double delta);
+//int32 dumb_resample_1_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume, double delta);
 int32 dumb_resample_1_2(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
-int32 dumb_resample_2_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
+//int32 dumb_resample_2_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
 int32 dumb_resample_2_2(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
-void dumb_resample_get_current_sample_1_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume, sample_t *dst);
+//void dumb_resample_get_current_sample_1_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume, sample_t *dst);
 void dumb_resample_get_current_sample_1_2(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
-void dumb_resample_get_current_sample_2_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
+//void dumb_resample_get_current_sample_2_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
 void dumb_resample_get_current_sample_2_2(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
 void dumb_end_resampler(DUMB_RESAMPLER *resampler);
 
 void dumb_reset_resampler_16(DUMB_RESAMPLER *resampler, short *src, int src_channels, int32 pos, int32 start, int32 end, int quality);
 DUMB_RESAMPLER *dumb_start_resampler_16(short *src, int src_channels, int32 pos, int32 start, int32 end, int quality);
-int32 dumb_resample_16_1_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume, double delta);
+//int32 dumb_resample_16_1_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume, double delta);
 int32 dumb_resample_16_1_2(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
-int32 dumb_resample_16_2_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
+//int32 dumb_resample_16_2_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
 int32 dumb_resample_16_2_2(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
-void dumb_resample_get_current_sample_16_1_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume, sample_t *dst);
+//void dumb_resample_get_current_sample_16_1_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume, sample_t *dst);
 void dumb_resample_get_current_sample_16_1_2(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
-void dumb_resample_get_current_sample_16_2_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
+//void dumb_resample_get_current_sample_16_2_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
 void dumb_resample_get_current_sample_16_2_2(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
 void dumb_end_resampler_16(DUMB_RESAMPLER *resampler);
 
 void dumb_reset_resampler_8(DUMB_RESAMPLER *resampler, signed char *src, int src_channels, int32 pos, int32 start, int32 end, int quality);
 DUMB_RESAMPLER *dumb_start_resampler_8(signed char *src, int src_channels, int32 pos, int32 start, int32 end, int quality);
-int32 dumb_resample_8_1_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume, double delta);
+//int32 dumb_resample_8_1_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume, double delta);
 int32 dumb_resample_8_1_2(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
-int32 dumb_resample_8_2_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
+//int32 dumb_resample_8_2_1(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
 int32 dumb_resample_8_2_2(DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
-void dumb_resample_get_current_sample_8_1_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume, sample_t *dst);
+//void dumb_resample_get_current_sample_8_1_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume, sample_t *dst);
 void dumb_resample_get_current_sample_8_1_2(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
-void dumb_resample_get_current_sample_8_2_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
+//void dumb_resample_get_current_sample_8_2_1(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
 void dumb_resample_get_current_sample_8_2_2(DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
 void dumb_end_resampler_8(DUMB_RESAMPLER *resampler);
 
 void dumb_reset_resampler_n(int n, DUMB_RESAMPLER *resampler, void *src, int src_channels, int32 pos, int32 start, int32 end, int quality);
 DUMB_RESAMPLER *dumb_start_resampler_n(int n, void *src, int src_channels, int32 pos, int32 start, int32 end, int quality);
-int32 dumb_resample_n_1_1(int n, DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume, double delta);
+//int32 dumb_resample_n_1_1(int n, DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume, double delta);
 int32 dumb_resample_n_1_2(int n, DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
-int32 dumb_resample_n_2_1(int n, DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
+//int32 dumb_resample_n_2_1(int n, DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
 int32 dumb_resample_n_2_2(int n, DUMB_RESAMPLER *resampler, sample_t *dst, int32 dst_size, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, double delta);
-void dumb_resample_get_current_sample_n_1_1(int n, DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume, sample_t *dst);
+//void dumb_resample_get_current_sample_n_1_1(int n, DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume, sample_t *dst);
 void dumb_resample_get_current_sample_n_1_2(int n, DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
-void dumb_resample_get_current_sample_n_2_1(int n, DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
+//void dumb_resample_get_current_sample_n_2_1(int n, DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
 void dumb_resample_get_current_sample_n_2_2(int n, DUMB_RESAMPLER *resampler, DUMB_VOLUME_RAMP_INFO * volume_left, DUMB_VOLUME_RAMP_INFO * volume_right, sample_t *dst);
 void dumb_end_resampler_n(int n, DUMB_RESAMPLER *resampler);
 

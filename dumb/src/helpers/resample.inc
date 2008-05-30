@@ -107,7 +107,7 @@ DUMB_RESAMPLER *dumb_start_resampler(SRCTYPE *src, int src_channels, int32 pos, 
 #define COPYSRC2(dstarray, dstindex, condition, srcarray, srcindex) (dstarray)[dstindex] = condition ? (srcarray)[srcindex] : 0
 #define MONO_DEST_VOLUME_PARAMETERS DUMB_VOLUME_RAMP_INFO * volume
 #define MONO_DEST_VOLUME_VARIABLES vol, volr, vold, volt, volm
-#define MONO_DEST_VOLUME_ZEROS 0
+#define MONO_DEST_VOLUME_ZEROS 0, 0
 #define SET_MONO_DEST_VOLUME_VARIABLES { \
 	if ( volume ) { \
 		volr = (int)(volume->volume * 16777216.0); \

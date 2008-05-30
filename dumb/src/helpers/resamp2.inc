@@ -44,7 +44,7 @@
 
 
 
-#define SUFFIX3 _1
+#define SUFFIX3 _2
 
 /* For convenience, returns nonzero on stop. */
 static int process_pickup(DUMB_RESAMPLER *resampler)
@@ -89,6 +89,7 @@ static int process_pickup(DUMB_RESAMPLER *resampler)
 
 /* Create mono destination resampler. */
 /* SUFFIX3 was set above. */
+#if 0
 #define VOLUME_PARAMETERS MONO_DEST_VOLUME_PARAMETERS
 #define VOLUME_VARIABLES MONO_DEST_VOLUME_VARIABLES
 #define SET_VOLUME_VARIABLES SET_MONO_DEST_VOLUME_VARIABLES
@@ -99,6 +100,9 @@ static int process_pickup(DUMB_RESAMPLER *resampler)
 #define MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3) MONO_DEST_MIX_CUBIC(op, upd, x0, x3, o0, o1, o2, o3)
 #define MIX_ZEROS(op) *dst++ op 0
 #include "resamp3.inc"
+#else
+#undef SUFFIX3
+#endif
 
 /* Create stereo destination resampler. */
 #define SUFFIX3 _2

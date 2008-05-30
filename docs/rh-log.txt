@@ -1,3 +1,8 @@
+May 30, 2008
+- Disabled DUMB's mono destination mixers. It's not like I'm ever going to
+  target an original SoundBlaster, so they're a waste of space to have around.
+  This trims resample.obj down to ~60k now.
+
 May 29, 2008
 - Fixed: PrtScn/SysRq key did not work on Linux.
 
@@ -12,6 +17,21 @@ May 29, 2008 (Changes by Graf Zahl)
   this in the UDMF parser easier because the linedef parsing function does
   not need to access the sidedef data.
 - Added new ZDoom specific UDMF linedef and sidedef properties to map parser.
+
+May 28, 2008
+- Added an alternate module replay engine that uses foo_dumb's replayer, a
+  heavily customized version of DUMB (Dynamic Universal Music Bibliotheque).
+  It has been slightly modified by me:
+  * Added support for Ogg Vorbis-compressed samples in XM files ala FMOD.
+  * Removed excessive mallocs from the replay core.
+  * Rerolled the loops in resample.c. Unrolling them made the object file
+    ~250k large while providing little benefit. Even at ~100k, I think it's
+    still larger than it ought to be, but I'll live with it for now.
+  Other than that, it's essentially the same thing you'd hear in foobar2000,
+  minus some subsong detection features. Release builds of the library look
+  like they might even be slightly faster than FMOD, which is a plus.
+- Fixed: Timidity::font_add() did not release the file reader it created.
+- Fixed: The SF2 loader did not free the sample headers in its destructor.
 
 May 28, 2008 (Changes by Graf Zahl)
 - Added new ZDoom specific UDMF sector properties to map parser.
@@ -34,21 +54,6 @@ May 27, 2008 (Changes by Graf Zahl)
   handling of spawning Dehacked modified pickups was changed to use
   the DECORATE replacement feature instead of hacking the spawn state
   of the original item and calling a spawn function from there.
-
-May 28, 2008
-- Added an alternate module replay engine that uses foo_dumb's replayer, a
-  heavily customized version of DUMB (Dynamic Universal Music Bibliotheque).
-  It has been slightly modified by me:
-  * Added support for Ogg Vorbis-compressed samples in XM files ala FMOD.
-  * Removed excessive mallocs from the replay core.
-  * Rerolled the loops in resample.c. Unrolling them made the object file
-    ~250k large while providing little benefit. Even at ~100k, I think it's
-    still larger than it ought to be, but I'll live with it for now.
-  Other than that, it's essentially the same thing you'd hear in foobar2000,
-  minus some subsong detection features. Release builds of the library look
-  like they might even be slightly faster than FMOD, which is a plus.
-- Fixed: Timidity::font_add() did not release the file reader it created.
-- Fixed: The SF2 loader did not free the sample headers in its destructor.
 
 May 23, 2008 (Changes by Graf Zahl)
 - Fixed: The compatibility searches for teleport destinations did not work

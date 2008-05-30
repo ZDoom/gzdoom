@@ -229,7 +229,7 @@ menu_t OptionMenu =
  *=======================================*/
 
 EXTERN_CVAR (Bool, use_mouse)
-EXTERN_CVAR (Bool, m_filter)
+EXTERN_CVAR (Bool, smooth_mouse)
 EXTERN_CVAR (Float, m_forward)
 EXTERN_CVAR (Float, m_pitch)
 EXTERN_CVAR (Float, m_side)
@@ -245,7 +245,7 @@ static menuitem_t MouseItems[] =
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ slider,	"Overall sensitivity",	{&mouse_sensitivity},	{0.5}, {2.5},	{0.1}, {NULL} },
 	{ discrete,	"Prescale mouse movement",{&m_noprescale},		{2.0}, {0.0},	{0.0}, {NoYes} },
-	{ discrete, "Smooth mouse movement",{&m_filter},			{2.0}, {0.0},	{0.0}, {YesNo} },
+	{ discrete, "Smooth mouse movement",{&smooth_mouse},			{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ slider,	"Turning speed",		{&m_yaw},				{0.5}, {2.5},	{0.1}, {NULL} },
 	{ slider,	"Mouselook speed",		{&m_pitch},				{0.5}, {2.5},	{0.1}, {NULL} },

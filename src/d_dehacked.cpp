@@ -145,39 +145,13 @@ DehInfo deh =
 // from the original actor's defaults. The original actor is then changed to
 // spawn the new class.
 
-void A_SpawnDehackedPickup (AActor *);
-
-class ADehackedPickup : public AInventory
-{
-	DECLARE_ACTOR (ADehackedPickup, AInventory)
-	HAS_OBJECT_POINTERS
-public:
-	void Destroy ();
-	const char *PickupMessage ();
-	bool ShouldRespawn ();
-	bool ShouldStay ();
-	bool TryPickup (AActor *toucher);
-	void PlayPickupSound (AActor *toucher);
-	void DoPickupSpecial (AActor *toucher);
-private:
-	const PClass *DetermineType ();
-	AInventory *RealPickup;
-};
-
 IMPLEMENT_POINTY_CLASS (ADehackedPickup)
  DECLARE_POINTER (RealPickup)
 END_POINTERS
 
-FState ADehackedPickup::States[] =
-{
-	S_NORMAL(TNT1, 0, 0, NULL, &States[1]),
-	S_NORMAL(TNT1, 0, 0, A_SpawnDehackedPickup, NULL)
-};
-
-BEGIN_DEFAULTS (ADehackedPickup, Any, -1, 0)
+BEGIN_STATELESS_DEFAULTS (ADehackedPickup, Any, -1, 0)
 END_DEFAULTS
 
-TArray<PClass *> DehackedPickups;
 TArray<PClass *> TouchedActors;
 
 char *UnchangedSpriteNames;
@@ -2613,22 +2587,15 @@ void FinishDehPatch ()
 			(typeNameBuilder, sizeof(ADehackedPickup));
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy (defaults2, defaults1, sizeof(AActor));
-		subclass->ActorInfo->GameFilter = type->ActorInfo->GameFilter;
-		subclass->ActorInfo->SpawnID = type->ActorInfo->SpawnID;
-		subclass->ActorInfo->DoomEdNum = type->ActorInfo->DoomEdNum;
+
 		// Make a copy the state labels 
 		MakeStateDefines(type->ActorInfo->StateList);
 		InstallStates(subclass->ActorInfo, defaults2);
 
-		// Alter the original class so that it just spawns the new one
-		//memcpy (defaults1, GetDefault<AActor>(), sizeof(AActor));
-		defaults1->SpawnState = &ADehackedPickup::States[0];
-		defaults1->flags = 0;
-		defaults1->flags2 = 0;
-		defaults1->flags3 = 0;
-		defaults1->health = DehackedPickups.Push (subclass);
-		type->ActorInfo->SpawnID = 0;
-		type->ActorInfo->DoomEdNum = -1;
+		// Use the DECORATE replacement feature to redirect all spawns
+		// of the original class to the new one.
+		type->ActorInfo->Replacement = subclass->ActorInfo;
+		subclass->ActorInfo->Replacee = type->ActorInfo;
 
 		DPrintf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
 	}
@@ -2638,29 +2605,6 @@ void FinishDehPatch ()
 	{
 		delete[] StateMap;
 		StateMap = NULL;
-	}
-}
-
-void A_SpawnDehackedPickup (AActor *actor)
-{
-	if ((size_t)actor->health < DehackedPickups.Size())
-	{
-		AActor *real = Spawn (DehackedPickups[actor->health], actor->x, actor->y, actor->z, NO_REPLACE);
-		if (real != NULL)
-		{
-			// Copy properties from the original item to the dehacked pickup it spawns
-			if (actor->flags & MF_DROPPED)
-			{
-				real->flags |= MF_DROPPED;
-			}
-			real->special = actor->special;
-			memcpy (real->args, actor->args, sizeof(real->args));
-			if (actor->tid != 0)
-			{
-				real->tid = actor->tid;
-				real->AddToHash ();
-			}
-		}
 	}
 }
 
@@ -2677,6 +2621,20 @@ bool ADehackedPickup::TryPickup (AActor *toucher)
 		if (!(flags & MF_DROPPED))
 		{
 			RealPickup->flags &= ~MF_DROPPED;
+		}
+		// If this item has been dropped by a monster the
+		// amount of ammo this gives must be halved.
+		if (droppedbymonster)
+		{
+			if (RealPickup->IsKindOf(RUNTIME_CLASS(AWeapon)))
+			{
+				static_cast<AWeapon *>(RealPickup)->AmmoGive1 /= 2;
+				static_cast<AWeapon *>(RealPickup)->AmmoGive2 /= 2;
+			}
+			else if (RealPickup->IsKindOf(RUNTIME_CLASS(AAmmo)))
+			{
+				RealPickup->Amount /= 2;
+			}
 		}
 		if (!RealPickup->TryPickup (toucher))
 		{
@@ -2759,3 +2717,8 @@ const PClass *ADehackedPickup::DetermineType ()
 	return NULL;
 }
 
+void ADehackedPickup::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << droppedbymonster;
+}

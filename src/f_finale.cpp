@@ -252,8 +252,14 @@ void F_Ticker ()
 							wipegamestate = GS_FORCEWIPE;
 							if (EndSequences[FinaleSequence].EndType == END_Bunny)
 							{
-								S_StartMusic ("d_bunny");
+								if (!EndSequences[FinaleSequence].Advanced)
+									S_StartMusic ("d_bunny");
 							}
+						}
+						if (EndSequences[FinaleSequence].Advanced &&
+							!EndSequences[FinaleSequence].Music.IsEmpty())
+						{
+							S_ChangeMusic(EndSequences[FinaleSequence].Music, 0, EndSequences[FinaleSequence].MusicLooping);
 						}
 					}
 				}
@@ -590,7 +596,8 @@ void F_StartCast (void)
 	castframes = 0;
 	castonmelee = 0;
 	castattacking = false;
-	S_ChangeMusic ("d_evil");
+	if (!EndSequences[FinaleSequence].Advanced)
+		S_ChangeMusic ("d_evil");
 }
 
 
@@ -782,8 +789,21 @@ void F_CastDrawer (void)
 
 void F_DemonScroll ()
 {
+	const char *tex1, *tex2;
+	if (EndSequences[FinaleSequence].Advanced)
+	{
+		tex1 = EndSequences[FinaleSequence].PicName;
+		tex2 = EndSequences[FinaleSequence].PicName2;
+	}
+	else
+	{
+		tex1 = "FINAL1";
+		tex2 = "FINAL2";
+	}
+	
 	int yval;
-	FTexture *final1 = TexMan("FINAL1");
+	FTexture *final1 = TexMan(tex1);
+	FTexture *final2 = TexMan(tex2);
 	int fwidth = final1->GetWidth();
 	int fheight = final1->GetHeight();
 
@@ -806,7 +826,7 @@ void F_DemonScroll ()
 			DTA_VirtualHeight, fheight,
 			DTA_Masked, false,
 			TAG_DONE);
-		screen->DrawTexture (TexMan("FINAL2"), 0, yval - fheight,
+		screen->DrawTexture (final2, 0, yval - fheight,
 			DTA_VirtualWidth, fwidth,
 			DTA_VirtualHeight, fheight,
 			DTA_Masked, false,
@@ -814,7 +834,7 @@ void F_DemonScroll ()
 	}
 	else
 	{ //else, we'll just sit here and wait, for now
-		screen->DrawTexture (TexMan("FINAL2"), 0, 0,
+		screen->DrawTexture (final2, 0, 0,
 			DTA_VirtualWidth, fwidth,
 			DTA_VirtualHeight, fheight,
 			DTA_Masked, false,
@@ -902,35 +922,51 @@ void F_DrawUnderwater(void)
 */
 void F_BunnyScroll (void)
 {
-	static const char tex1name[2][8] = { "CREDIT",  "PFUB1" };
-	static const char tex2name[2][8] = { "VELLOGO", "PFUB2" };
-
 	static size_t laststage;
 
-	bool		bunny = EndSequences[FinaleSequence].EndType != END_BuyStrife;
+	bool		bunny = false;
 	int 		scrolled;
 	char		name[10];
 	size_t 		stage;
 	FTexture   *tex;
     int			fwidth;
 	int			fheight; 
+	const char *tex1;
+	const char *tex2;
+
+	if (EndSequences[FinaleSequence].Advanced)
+	{
+		tex1 = EndSequences[FinaleSequence].PicName;
+		tex2 = EndSequences[FinaleSequence].PicName2;
+		bunny = EndSequences[FinaleSequence].PlayTheEnd;
+	}
+	else if (EndSequences[FinaleSequence].EndType == END_BuyStrife)
+	{
+		tex1 = "CREDIT";
+		tex2 = "VELLOGO";
+	}
+	else
+	{
+		tex1 = "PFUB1";
+		tex2 = "PFUB2";
+		bunny = true;
+	}
 
 	V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
 
-	tex = TexMan(tex1name[bunny]);
+	tex = TexMan(tex1);
 	fwidth = tex->GetWidth();
 	fheight = tex->GetHeight();
 
 	scrolled = clamp (((signed)FinaleCount-230)*fwidth/640, 0, fwidth);
 
-	tex = TexMan(tex1name[bunny]);
 	screen->DrawTexture (tex, scrolled, 0,
 		DTA_VirtualWidth, fwidth,
 		DTA_VirtualHeight, fheight,
 		DTA_Masked, false,
 		TAG_DONE);
 
-	tex = TexMan(tex2name[bunny]);
+	tex = TexMan(tex2);
 	screen->DrawTexture (tex, scrolled - fwidth, 0,
 		DTA_VirtualWidth, fwidth,
 		DTA_VirtualHeight, fheight,

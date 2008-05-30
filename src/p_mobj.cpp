@@ -3688,7 +3688,7 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 
 	if (multiplayer)
 	{
-		unsigned an = ( ANG45 * (mthing->angle/45) ) >> ANGLETOFINESHIFT;
+		unsigned an = mobj->angle >> ANGLETOFINESHIFT;
 		Spawn ("TeleportFog", mobj->x+20*finecosine[an], mobj->y+20*finesine[an], mobj->z + TELEFOGHEIGHT, ALLOW_REPLACE);
 	}
 

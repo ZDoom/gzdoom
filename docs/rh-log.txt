@@ -1,6 +1,40 @@
 May 29, 2008
 - Fixed: PrtScn/SysRq key did not work on Linux.
 
+May 29, 2008 (Changes by Graf Zahl)
+- Changed: The texture loader now looks for a TEXTURES lump for text based
+  texture definitions. HIRESTEX is still supported but deprecated.
+- Removed all 16 bit values from texture manager.
+- Changed: The texture manager now sorts all textures for a WAD by type
+  to avoid priority issues with HIRESTEX defined textures.
+- Changed sidedef flag WALLF_ADDTRANS into a linedef flag because it is
+  always the same for both sides of a linedef. This also makes handling
+  this in the UDMF parser easier because the linedef parsing function does
+  not need to access the sidedef data.
+- Added new ZDoom specific UDMF linedef and sidedef properties to map parser.
+
+May 28, 2008 (Changes by Graf Zahl)
+- Added new ZDoom specific UDMF sector properties to map parser.
+- Added class definitions for new interpolators that are better 
+  equipped to interact with the interpolated objects.
+- Separated interpolation code into its own file r_interpolate.cpp.
+- Added some simple customization options to the end game screens.
+
+May 27, 2008 (Changes by Graf Zahl)
+- Fixed: Polyobject detection in the internal node builder did not work 
+  anymore due to some code rearrangement for UDMF map loading. To keep
+  it compatible between all map formats the THINGS lump of binary format
+  maps must be loaded before building the nodes. This also means that
+  the spawning itself can be done in the same function for all map types
+  (except Build) now.
+- Changed 'Smooth mouse movement' menu option from m_filter to smooth_mouse
+  which is more what would be expected from this option.
+- Fixed: Weapons and ammo items that were modified by Dehacked gave full
+  ammo when being dropped by monsters. To properly handle this the
+  handling of spawning Dehacked modified pickups was changed to use
+  the DECORATE replacement feature instead of hacking the spawn state
+  of the original item and calling a spawn function from there.
+
 May 28, 2008
 - Added an alternate module replay engine that uses foo_dumb's replayer, a
   heavily customized version of DUMB (Dynamic Universal Music Bibliotheque).

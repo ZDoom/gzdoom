@@ -70,7 +70,6 @@ extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, FMapThing **things, int *
 extern void P_TranslateTeleportThings (void);
 
 void P_ParseTextMap(MapData *map);
-void P_SpawnTextThings(int position);
 
 extern int numinterpolations;
 extern unsigned int R_OldBlend;
@@ -1369,9 +1368,8 @@ WORD MakeSkill(int flags)
 	return res;
 }
 
-void P_LoadThings (MapData * map, int position)
+void P_LoadThings (MapData * map)
 {
-	FMapThing mt2;		// [RH] for translation
 	int	lumplen = map->Size(ML_THINGS);
 	int numthings = lumplen / sizeof(mapthing_t);
 
@@ -1381,6 +1379,9 @@ void P_LoadThings (MapData * map, int position)
 	mtp = new char[lumplen];
 	map->Read(ML_THINGS, mtp);
 	mt = (mapthing_t*)mtp;
+
+	MapThingsConverted.Resize(numthings);
+	FMapThing *mti = &MapThingsConverted[0];
 
 	// [RH] ZDoom now uses Hexen-style maps as its native format.
 	//		Since this is the only place where Doom-style Things are ever
@@ -1395,20 +1396,20 @@ void P_LoadThings (MapData * map, int position)
 		// [RH] Need to translate the spawn flags to Hexen format.
 		short flags = LittleShort(mt->options);
 
-		memset (&mt2, 0, sizeof(mt2));
+		memset (&mti[i], 0, sizeof(mti[i]));
 
-		mt2.SkillFilter = MakeSkill(flags);
-		mt2.ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
+		mti[i].SkillFilter = MakeSkill(flags);
+		mti[i].ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
 		flags &= ~MTF_SKILLMASK;
-		mt2.flags = (short)((flags & 0xf) | 0x7e0);
+		mti[i].flags = (short)((flags & 0xf) | 0x7e0);
 		if (gameinfo.gametype == GAME_Strife)
 		{
-			mt2.flags &= ~MTF_AMBUSH;
-			if (flags & STF_SHADOW)			mt2.flags |= MTF_SHADOW;
-			if (flags & STF_ALTSHADOW)		mt2.flags |= MTF_ALTSHADOW;
-			if (flags & STF_STANDSTILL)		mt2.flags |= MTF_STANDSTILL;
-			if (flags & STF_AMBUSH)			mt2.flags |= MTF_AMBUSH;
-			if (flags & STF_FRIENDLY)		mt2.flags |= MTF_FRIENDLY;
+			mti[i].flags &= ~MTF_AMBUSH;
+			if (flags & STF_SHADOW)			mti[i].flags |= MTF_SHADOW;
+			if (flags & STF_ALTSHADOW)		mti[i].flags |= MTF_ALTSHADOW;
+			if (flags & STF_STANDSTILL)		mti[i].flags |= MTF_STANDSTILL;
+			if (flags & STF_AMBUSH)			mti[i].flags |= MTF_AMBUSH;
+			if (flags & STF_FRIENDLY)		mti[i].flags |= MTF_FRIENDLY;
 		}
 		else
 		{
@@ -1416,18 +1417,16 @@ void P_LoadThings (MapData * map, int position)
 			{
 				flags &= 0x1F;
 			}
-			if (flags & BTF_NOTDEATHMATCH)	mt2.flags &= ~MTF_DEATHMATCH;
-			if (flags & BTF_NOTCOOPERATIVE)	mt2.flags &= ~MTF_COOPERATIVE;
-			if (flags & BTF_FRIENDLY)		mt2.flags |= MTF_FRIENDLY;
+			if (flags & BTF_NOTDEATHMATCH)	mti[i].flags &= ~MTF_DEATHMATCH;
+			if (flags & BTF_NOTCOOPERATIVE)	mti[i].flags &= ~MTF_COOPERATIVE;
+			if (flags & BTF_FRIENDLY)		mti[i].flags |= MTF_FRIENDLY;
 		}
-		if (flags & BTF_NOTSINGLE)			mt2.flags &= ~MTF_SINGLE;
+		if (flags & BTF_NOTSINGLE)			mti[i].flags &= ~MTF_SINGLE;
 
-		mt2.x = LittleShort(mt->x) << FRACBITS;
-		mt2.y = LittleShort(mt->y) << FRACBITS;
-		mt2.angle = LittleShort(mt->angle);
-		mt2.type = LittleShort(mt->type);
-
-		SpawnMapThing (i, &mt2, position);
+		mti[i].x = LittleShort(mt->x) << FRACBITS;
+		mti[i].y = LittleShort(mt->y) << FRACBITS;
+		mti[i].angle = LittleShort(mt->angle);
+		mti[i].type = LittleShort(mt->type);
 	}
 	delete [] mtp;
 }
@@ -1444,12 +1443,11 @@ void P_LoadThings (MapData * map, int position)
 //
 //===========================================================================
 
-void P_LoadThings2 (MapData * map, int position)
+void P_LoadThings2 (MapData * map)
 {
 	int	lumplen = map->MapLumps[ML_THINGS].Size;
 	int numthings = lumplen / sizeof(mapthinghexen_t);
 
-	int i;
 	char *mtp;
 
 	MapThingsConverted.Resize(numthings);
@@ -1475,13 +1473,19 @@ void P_LoadThings2 (MapData * map, int position)
 		mti[i].flags &= ~(MTF_SKILLMASK|MTF_CLASS_MASK);
 	}
 	delete[] mtp;
+}
+
+
+void P_SpawnThings (int position)
+{
+	int numthings = MapThingsConverted.Size();
 
 	// [RH] Spawn slope creating things first.
-	P_SpawnSlopeMakers (mti, mti + numthings);
+	P_SpawnSlopeMakers (&MapThingsConverted[0], &MapThingsConverted[numthings]);
 
-	for (i=0; i < numthings; i++)
+	for (int i=0; i < numthings; i++)
 	{
-		SpawnMapThing (i, &mti[i], position);
+		SpawnMapThing (i, &MapThingsConverted[i], position);
 	}
 }
 
@@ -1638,11 +1642,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 			ld->Alpha = alpha;
 			if (ld->args[2] == 1)
 			{
-				sides[ld->sidenum[0]].Flags |= WALLF_ADDTRANS;
-				if (ld->sidenum[1] != NO_SIDE)
-				{
-					sides[ld->sidenum[1]].Flags |= WALLF_ADDTRANS;
-				}
+				ld->flags |= ML_ADDTRANS;
 			}
 		}
 		else
@@ -1654,11 +1654,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 					lines[j].Alpha = alpha;
 					if (lines[j].args[2] == 1)
 					{
-						sides[lines[j].sidenum[0]].Flags |= WALLF_ADDTRANS;
-						if (lines[j].sidenum[1] != NO_SIDE)
-						{
-							sides[lines[j].sidenum[1]].Flags |= WALLF_ADDTRANS;
-						}
+						lines[j].flags |= ML_ADDTRANS;
 					}
 				}
 			}
@@ -3311,6 +3307,10 @@ void P_SetupLevel (char *lumpname, int position)
 			P_FinishLoadingLineDefs ();
 			unclock (times[5]);
 
+			if (!map->HasBehavior)
+				P_LoadThings (map);
+			else
+				P_LoadThings2 (map);	// [RH] Load Hexen-style things
 		}
 		else
 		{
@@ -3446,15 +3446,8 @@ void P_SetupLevel (char *lumpname, int position)
 
 	if (!buildmap)
 	{
-		if (!map->isText)
-		{
-			clock (times[14]);
-			if (!map->HasBehavior)
-				P_LoadThings (map, position);
-			else
-				P_LoadThings2 (map, position);	// [RH] Load Hexen-style things
-		}
-		else P_SpawnTextThings(position);
+		clock (times[14]);
+		P_SpawnThings(position);
 
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
@@ -3464,7 +3457,7 @@ void P_SetupLevel (char *lumpname, int position)
 		unclock (times[14]);
 
 		clock (times[15]);
-		if (!map->HasBehavior)
+		if (!map->HasBehavior && !map->isText)
 			P_TranslateTeleportThings ();	// [RH] Assign teleport destination TIDs
 		unclock (times[15]);
 	}

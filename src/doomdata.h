@@ -139,6 +139,8 @@ struct maplinedef2_t
 #define ML_SPAC_SHIFT		10
 #define ML_SPAC_MASK		0x1c00	// Hexen's activator mask. These flags are no longer used.
 
+#define ML_ADDTRANS			0x400	// additive translucency (can only be set internally)
+
 // Extended flags
 #define ML_MONSTERSCANACTIVATE		0x00002000	// [RH] Monsters (as well as players) can active the line
 #define ML_BLOCK_PLAYERS			0x00004000

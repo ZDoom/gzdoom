@@ -910,7 +910,62 @@ static void ParseMapInfoLower (FScanner &sc,
 					sprintf (sc.String, "MAP%02d", map);
 				}
 			}
-			if (strnicmp (sc.String, "EndGame", 7) == 0)
+			if (sc.Compare ("endgame"))
+			{
+				newSeq.Advanced = true;
+				newSeq.EndType = END_Pic1;
+				newSeq.PlayTheEnd = false;
+				newSeq.MusicLooping = true;
+				sc.MustGetStringName("{");
+				while (!sc.CheckString("}"))
+				{
+					sc.MustGetString();
+					if (sc.Compare("pic"))
+					{
+						sc.MustGetString();
+						newSeq.EndType = END_Pic;
+						strncpy (newSeq.PicName, sc.String, 8);
+						newSeq.PicName[8] = 0;
+					}
+					else if (sc.Compare("hscroll"))
+					{
+						newSeq.EndType = END_Bunny;
+						sc.MustGetString();
+						strncpy (newSeq.PicName, sc.String, 8);
+						newSeq.PicName[8] = 0;
+						sc.MustGetString();
+						strncpy (newSeq.PicName2, sc.String, 8);
+						newSeq.PicName2[8] = 0;
+						if (sc.CheckNumber())
+							newSeq.PlayTheEnd = !!sc.Number;
+					}
+					else if (sc.Compare("vscroll"))
+					{
+						newSeq.EndType = END_Demon;
+						sc.MustGetString();
+						strncpy (newSeq.PicName, sc.String, 8);
+						newSeq.PicName[8] = 0;
+						sc.MustGetString();
+						strncpy (newSeq.PicName2, sc.String, 8);
+						newSeq.PicName2[8] = 0;
+					}
+					else if (sc.Compare("cast"))
+					{
+						newSeq.EndType = END_Cast;
+					}
+					else if (sc.Compare("music"))
+					{
+						sc.MustGetString();
+						newSeq.Music = sc.String;
+						if (sc.CheckNumber())
+						{
+							newSeq.MusicLooping = !!sc.Number;
+						}
+					}
+				}
+				useseq = true;
+			}
+			else if (strnicmp (sc.String, "EndGame", 7) == 0)
 			{
 				int type;
 				switch (sc.String[7])
@@ -970,7 +1025,13 @@ static void ParseMapInfoLower (FScanner &sc,
 			}
 			if (useseq)
 			{
-				int seqnum = FindEndSequence (newSeq.EndType, newSeq.PicName);
+				int seqnum = -1;
+				
+				if (!newSeq.Advanced)
+				{
+					seqnum = FindEndSequence (newSeq.EndType, newSeq.PicName);
+				}
+
 				if (seqnum == -1)
 				{
 					seqnum = (int)EndSequences.Push (newSeq);
@@ -1286,7 +1347,7 @@ static int FindEndSequence (int type, const char *picname)
 	num = EndSequences.Size ();
 	for (i = 0; i < num; i++)
 	{
-		if (EndSequences[i].EndType == type &&
+		if (EndSequences[i].EndType == type && !EndSequences[i].Advanced &&
 			(type != END_Pic || stricmp (EndSequences[i].PicName, picname) == 0))
 		{
 			return (int)i;

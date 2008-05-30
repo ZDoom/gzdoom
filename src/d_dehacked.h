@@ -34,6 +34,29 @@
 #ifndef __D_DEHACK_H__
 #define __D_DEHACK_H__
 
+#include "a_pickups.h"
+
+class ADehackedPickup : public AInventory
+{
+	DECLARE_STATELESS_ACTOR (ADehackedPickup, AInventory)
+	HAS_OBJECT_POINTERS
+public:
+	void Destroy ();
+	const char *PickupMessage ();
+	bool ShouldRespawn ();
+	bool ShouldStay ();
+	bool TryPickup (AActor *toucher);
+	void PlayPickupSound (AActor *toucher);
+	void DoPickupSpecial (AActor *toucher);
+	void Serialize(FArchive &arc);
+private:
+	const PClass *DetermineType ();
+	AInventory *RealPickup;
+public:
+	bool droppedbymonster;
+};
+
+
 void DoDehPatch (const char *patchfile, bool autoloading);
 void FinishDehPatch ();
 

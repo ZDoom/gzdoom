@@ -115,6 +115,7 @@ int FTextureManager::CheckForTexture (const char *name, int usetype, BITFIELD fl
 			if (usetype == FTexture::TEX_Any)
 			{
 				// All NULL textures should actually return 0
+				if (tex->UseType == FTexture::TEX_FirstDefined && !(flags & TEXMAN_ReturnFirst)) return 0;
 				return tex->UseType==FTexture::TEX_Null? 0 : i;
 			}
 			else if ((flags & TEXMAN_Overridable) && tex->UseType == FTexture::TEX_Override)
@@ -314,7 +315,7 @@ int FTextureManager::AddTexture (FTexture *texture)
 	// Later textures take precedence over earlier ones
 	size_t bucket = MakeKey (texture->Name) % HASH_SIZE;
 	TextureHash hasher = { texture, HashFirst[bucket] };
-	WORD trans = Textures.Push (hasher);
+	int trans = Textures.Push (hasher);
 	Translation.Push (trans);
 	HashFirst[bucket] = trans;
 	return trans;
@@ -522,7 +523,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 //
 //==========================================================================
 
-void FTextureManager::LoadHiresTex(int wadnum)
+void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 {
 	int remapLump, lastLump;
 	char src[9];
@@ -534,7 +535,7 @@ void FTextureManager::LoadHiresTex(int wadnum)
 	lastLump = 0;
 	src[8] = '\0';
 
-	while ((remapLump = Wads.FindLump("HIRESTEX", &lastLump)) != -1)
+	while ((remapLump = Wads.FindLump(lumpname, &lastLump)) != -1)
 	{
 		if (Wads.GetLumpFile(remapLump) == wadnum)
 		{
@@ -565,7 +566,8 @@ void FTextureManager::LoadHiresTex(int wadnum)
 					FName texname = sc.String;
 
 					sc.MustGetString();
-					int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
+					int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
+					if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
 
 					if (tlist.Size() == 0)
 					{
@@ -611,7 +613,8 @@ void FTextureManager::LoadHiresTex(int wadnum)
 					sc.GetString();
 					memcpy(src, ExtractFileBase(sc.String, false), 8);
 
-					int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
+					int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
+					if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
 
 					sc.GetString();
 					is32bit = !!sc.Compare("force32bit");
@@ -651,6 +654,14 @@ void FTextureManager::LoadHiresTex(int wadnum)
 				else if (sc.Compare("sprite"))
 				{
 					ParseXTexture(sc, FTexture::TEX_Sprite);
+				}
+				else if (sc.Compare("walltexture"))
+				{
+					ParseXTexture(sc, FTexture::TEX_Wall);
+				}
+				else if (sc.Compare("flat"))
+				{
+					ParseXTexture(sc, FTexture::TEX_Flat);
 				}
 			}
 		}
@@ -724,6 +735,7 @@ void FTextureManager::LoadTextureX(int wadnum)
 
 void FTextureManager::AddTexturesForWad(int wadnum)
 {
+	int firsttexture = Textures.Size();
 	int lumpcount = Wads.GetNumLumps();
 
 	// First step: Load sprites
@@ -801,8 +813,65 @@ void FTextureManager::AddTexturesForWad(int wadnum)
 
 	// Seventh step: Check for hires replacements.
 	AddHiresTextures(wadnum);
-	LoadHiresTex(wadnum);
+	LoadTextureDefs(wadnum, "TEXTURES");
+	LoadTextureDefs(wadnum, "HIRESTEX");
+	SortTexturesByType(firsttexture, Textures.Size());
+}
 
+//==========================================================================
+//
+// FTextureManager :: SortTexturesByType
+// sorts newly added textures by UseType so that anything defined
+// in HIRESTEX gets in its proper place.
+//
+//==========================================================================
+
+void FTextureManager::SortTexturesByType(int start, int end)
+{
+	TArray<FTexture *> newtextures;
+
+	// First unlink all newly added textures from the hash chain
+	for (int i = 0; i < HASH_SIZE; i++)
+	{
+		while (HashFirst[i] >= start && HashFirst[i] != HASH_END)
+		{
+			HashFirst[i] = Textures[HashFirst[i]].HashNext;
+		}
+	}
+	newtextures.Resize(end-start);
+	for(int i=start; i<end; i++)
+	{
+		newtextures[i-start] = Textures[i].Texture;
+	}
+	Textures.Resize(start);
+	Translation.Resize(start);
+
+	static int texturetypes[] = {
+		FTexture::TEX_Sprite, FTexture::TEX_Null, FTexture::TEX_FirstDefined, 
+		FTexture::TEX_WallPatch, FTexture::TEX_Wall, FTexture::TEX_Flat, 
+		FTexture::TEX_Override, FTexture::TEX_MiscPatch 
+	};
+
+	for(int i=0;i<countof(texturetypes);i++)
+	{
+		for(unsigned j = 0; j<newtextures.Size(); j++)
+		{
+			if (newtextures[j] != NULL && newtextures[j]->UseType == texturetypes[i])
+			{
+				AddTexture(newtextures[j]);
+				newtextures[j] = NULL;
+			}
+		}
+	}
+	// This should never happen. All other UseTypes are only used outside
+	for(unsigned j = 0; j<newtextures.Size(); j++)
+	{
+		if (newtextures[j] != NULL)
+		{
+			Printf("Texture %s has unknown type!\n", newtextures[j]->Name);
+			AddTexture(newtextures[j]);
+		}
+	}
 }
 
 //==========================================================================

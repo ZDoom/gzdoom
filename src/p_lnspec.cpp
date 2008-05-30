@@ -2630,19 +2630,11 @@ FUNC(LS_TranslucentLine)
 		lines[linenum].Alpha = Scale(clamp(arg1, 0, 255), FRACUNIT, 255);
 		if (arg2 == 0)
 		{
-			sides[lines[linenum].sidenum[0]].Flags &= ~WALLF_ADDTRANS;
-			if (lines[linenum].sidenum[1] != NO_SIDE)
-			{
-				sides[lines[linenum].sidenum[1]].Flags &= ~WALLF_ADDTRANS;
-			}
+			lines[linenum].flags &= ~ML_ADDTRANS;
 		}
 		else if (arg2 == 1)
 		{
-			sides[lines[linenum].sidenum[0]].Flags |= WALLF_ADDTRANS;
-			if (lines[linenum].sidenum[1] != NO_SIDE)
-			{
-				sides[lines[linenum].sidenum[1]].Flags |= WALLF_ADDTRANS;
-			}
+			lines[linenum].flags |= ML_ADDTRANS;
 		}
 		else
 		{

@@ -463,8 +463,7 @@ enum
 {
 	WALLF_ABSLIGHTING	= 1,	// Light is absolute instead of relative
 	WALLF_NOAUTODECALS	= 2,	// Do not attach impact decals to this wall
-	WALLF_ADDTRANS		= 4,	// Use additive instead of normal translucency
-	WALLF_AUTOCONTRAST	= 8,	// Automatically handle fake contrast in side_t::GetLightLevel
+	WALLF_AUTOCONTRAST	= 4,	// Automatically handle fake contrast in side_t::GetLightLevel
 };
 
 struct side_t
@@ -486,7 +485,7 @@ struct side_t
 	sector_t*	sector;			// Sector the SideDef is facing.
 	DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
 	part		textures[3];
-	WORD		linenum;
+	DWORD		linenum;
 	DWORD		LeftSide, RightSide;	// [RH] Group walls into loops
 	WORD		TexelLength;
 	SWORD		Light;
@@ -938,7 +937,7 @@ public:
 			{
 				totexnum = fromtexnum;
 			}
-			Translation[fromtexnum] = WORD(totexnum);
+			Translation[fromtexnum] = totexnum;
 		}
 	}
 
@@ -962,8 +961,9 @@ public:
 	void AddPatches (int lumpnum);
 	void AddTiles (void *tileFile);
 	void AddHiresTextures (int wadnum);
-	void LoadHiresTex(int wadnum);
+	void LoadTextureDefs(int wadnum, const char *lumpname);
 	void ParseXTexture(FScanner &sc, int usetype);
+	void SortTexturesByType(int start, int end);
 
 	int CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	int AddTexture (FTexture *texture);
@@ -991,12 +991,12 @@ private:
 	struct TextureHash
 	{
 		FTexture *Texture;
-		WORD HashNext;
+		int HashNext;
 	};
-	enum { HASH_END = 0xFFFF, HASH_SIZE = 1027 };
+	enum { HASH_END = -1, HASH_SIZE = 1027 };
 	TArray<TextureHash> Textures;
-	TArray<WORD> Translation;
-	WORD HashFirst[HASH_SIZE];
+	TArray<int> Translation;
+	int HashFirst[HASH_SIZE];
 	int DefaultTexture;
 };
 

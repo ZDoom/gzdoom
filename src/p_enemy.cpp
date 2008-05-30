@@ -45,6 +45,7 @@
 #include "a_doomglobal.h"
 #include "a_action.h"
 #include "thingdef/thingdef.h"
+#include "d_dehacked.h"
 
 #include "gi.h"
 
@@ -2415,6 +2416,11 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int special, int cha
 				// The same goes for ammo from a weapon.
 				static_cast<AWeapon *>(mo)->AmmoGive1 /= 2;
 				static_cast<AWeapon *>(mo)->AmmoGive2 /= 2;
+			}			
+			else if (mo->IsKindOf (RUNTIME_CLASS(ADehackedPickup)))
+			{
+				// For weapons and ammo modified by Dehacked we need to flag the item.
+				static_cast<ADehackedPickup *>(mo)->droppedbymonster = true;
 			}
 			if (inv->SpecialDropAction (source))
 			{

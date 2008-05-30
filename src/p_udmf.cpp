@@ -42,7 +42,13 @@
 #include "i_system.h"
 #include "gi.h"
 
-// These tables define whichline an
+//===========================================================================
+//
+// Maps for Hexen namespace need to filter out all extended line and sector
+// specials to comply with the spec.
+//
+//===========================================================================
+
 static char HexenLineSpecialOk[]={
 	1,1,1,1,1,1,1,1,1,0,	// 0-9
 	1,1,1,1,0,0,0,0,0,0,	// 10-19
@@ -136,6 +142,12 @@ struct UDMFParser
 		fogMap = normMap = NULL;
 	}
 
+	//===========================================================================
+	//
+	// Parses a 'key = value' line of the map but doesn't read the semicolon
+	//
+	//===========================================================================
+
 	FName ParseKey()
 	{
 		sc.MustGetString();
@@ -163,6 +175,12 @@ struct UDMFParser
 		return key;
 	}
 
+	//===========================================================================
+	//
+	// Syntax checks
+	//
+	//===========================================================================
+
 	int CheckInt(const char *key)
 	{
 		if (sc.TokenType != TK_IntConst)
@@ -176,7 +194,7 @@ struct UDMFParser
 	{
 		if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
 		{
-			sc.ScriptMessage("Floatint point value expected for key '%s'", key);
+			sc.ScriptMessage("Floating point value expected for key '%s'", key);
 		}
 		return sc.Float;
 	}
@@ -208,6 +226,12 @@ struct UDMFParser
 		if (CheckBool(key))	value |= mask;
 		else value &= ~mask;
 	}
+
+	//===========================================================================
+	//
+	// Parse a thing block
+	//
+	//===========================================================================
 
 	void ParseThing(FMapThing *th)
 	{
@@ -372,6 +396,12 @@ struct UDMFParser
 			memset(th->args, 0, sizeof (th->args));
 		}
 	}
+
+	//===========================================================================
+	//
+	// Parse a linedef block
+	//
+	//===========================================================================
 
 	void ParseLinedef(line_t *ld)
 	{
@@ -538,6 +568,19 @@ struct UDMFParser
 			// This switch contains all keys which are ZDoom specific
 			if (namespace_bits & (Zd|Zdt)) switch(key)
 			{
+			case NAME_Alpha:
+				ld->Alpha = CheckFixed(key);
+				break;
+
+			case NAME_Renderstyle:
+			{
+				const char *str = CheckString(key);
+				if (!stricmp(str, "translucent")) ld->flags &= ~ML_ADDTRANS;
+				else if (!stricmp(str, "add")) ld->flags |= ML_ADDTRANS;
+				else sc.ScriptMessage("Unknown value \"%s\" for 'renderstyle'\n", str);
+				break;
+			}
+
 			case NAME_Anycross:
 				Flag(ld->activation, SPAC_AnyCross, key); 
 				break;
@@ -605,6 +648,12 @@ struct UDMFParser
 		}
 	}
 
+	//===========================================================================
+	//
+	// Parse a sidedef block
+	//
+	//===========================================================================
+
 	void ParseSidedef(side_t *sd, mapsidedef_t *sdt)
 	{
 		fixed_t texofs[2]={0,0};
@@ -647,6 +696,52 @@ struct UDMFParser
 			default:
 				break;
 			}
+
+			if (namespace_bits & (Zd|Zdt)) switch(key)
+			{
+			case NAME_offsetx_top:
+				sd->SetTextureXOffset(side_t::top, CheckFixed(key));
+				break;
+
+			case NAME_offsety_top:
+				sd->SetTextureYOffset(side_t::top, CheckFixed(key));
+				break;
+
+			case NAME_offsetx_mid:
+				sd->SetTextureXOffset(side_t::mid, CheckFixed(key));
+				break;
+
+			case NAME_offsety_mid:
+				sd->SetTextureYOffset(side_t::mid, CheckFixed(key));
+				break;
+
+			case NAME_offsetx_bottom:
+				sd->SetTextureXOffset(side_t::bottom, CheckFixed(key));
+				break;
+
+			case NAME_offsety_bottom:
+				sd->SetTextureYOffset(side_t::bottom, CheckFixed(key));
+				break;
+
+			case NAME_light:
+				sd->Light = CheckInt(key);
+				break;
+
+			case NAME_lightabsolute:
+				if (CheckBool(key)) sd->Flags|=WALLF_ABSLIGHTING;
+				else sd->Flags&=~WALLF_ABSLIGHTING;
+				break;
+
+			case NAME_nofakecontrast:
+				if (CheckBool(key)) sd->Flags&=~WALLF_AUTOCONTRAST;
+				else sd->Flags|=WALLF_AUTOCONTRAST;
+				break;
+
+			default:
+				break;
+
+			}
+
 			sc.MustGetToken(';');
 		}
 		// initialization of these is delayed to allow separate offsets and add them with the global ones.
@@ -658,8 +753,18 @@ struct UDMFParser
 		sd->AddTextureYOffset(side_t::bottom, texofs[1]);
 	}
 
+	//===========================================================================
+	//
+	// parse a sector block
+	//
+	//===========================================================================
+
 	void ParseSector(sector_t *sec)
 	{
+		int lightcolor = -1;
+		int fadecolor = -1;
+		int desaturation = -1;
+
 		memset(sec, 0, sizeof(*sec));
 		sec->lightlevel = 160;
 		sec->floor_xscale = FRACUNIT;	// [RH] floor and ceiling scaling
@@ -726,6 +831,99 @@ struct UDMFParser
 			default:
 				break;
 			}
+
+			if (namespace_bits & (Zd|Zdt)) switch(key)
+			{
+				case NAME_Xpanningfloor:
+					sec->floor_xoffs = CheckFixed(key);
+					break;
+
+				case NAME_Ypanningfloor:
+					sec->floor_yoffs = CheckFixed(key);
+					break;
+
+				case NAME_Xpanningceiling:
+					sec->ceiling_xoffs = CheckFixed(key);
+					break;
+
+				case NAME_Ypanningceiling:
+					sec->ceiling_yoffs = CheckFixed(key);
+					break;
+
+				case NAME_Xscalefloor:
+					sec->floor_xscale = CheckFixed(key);
+					break;
+
+				case NAME_Yscalefloor:
+					sec->floor_yscale = CheckFixed(key);
+					break;
+
+				case NAME_Xscaleceiling:
+					sec->ceiling_xscale = CheckFixed(key);
+					break;
+
+				case NAME_Yscaleceiling:
+					sec->ceiling_yscale = CheckFixed(key);
+					break;
+
+				case NAME_Rotationfloor:
+					sec->floor_angle = CheckFixed(key);
+					break;
+
+				case NAME_Rotationceiling:
+					sec->ceiling_angle = CheckFixed(key);
+					break;
+
+				case NAME_Lightfloor:
+					sec->FloorLight = CheckInt(key);
+					break;
+
+				case NAME_Lightceiling:
+					sec->CeilingLight = CheckInt(key);
+					break;
+
+				case NAME_Lightfloorabsolute:
+					if (CheckBool(key)) sec->FloorFlags |= SECF_ABSLIGHTING;
+					else sec->FloorFlags &= ~SECF_ABSLIGHTING;
+					break;
+
+				case NAME_Lightceilingabsolute:
+					if (CheckBool(key)) sec->CeilingFlags |= SECF_ABSLIGHTING;
+					else sec->CeilingFlags &= ~SECF_ABSLIGHTING;
+					break;
+
+				case NAME_Gravity:
+					sec->gravity = float(CheckFloat(key));
+					break;
+
+				case NAME_Lightcolor:
+					lightcolor = CheckInt(key);
+					break;
+
+				case NAME_Fadecolor:
+					fadecolor = CheckInt(key);
+					break;
+
+				case NAME_Desaturation:
+					desaturation = int(255*CheckFloat(key));
+					break;
+
+				case NAME_Silent:
+					Flag(sec->Flags, SECF_SILENT, key);
+					break;
+
+				case NAME_Nofallingdamage:
+					Flag(sec->Flags, SECF_NOFALLINGDAMAGE, key);
+					break;
+
+				case NAME_Dropactors:
+					Flag(sec->Flags, SECF_FLOORDROP, key);
+					break;
+
+				default:
+					break;
+			}
+				
 			sc.MustGetToken(';');
 		}
 
@@ -752,6 +950,12 @@ struct UDMFParser
 		}
 	}
 
+	//===========================================================================
+	//
+	// parse a vertex block
+	//
+	//===========================================================================
+
 	void ParseVertex(vertex_t *vt)
 	{
 		vt->x = vt->y = 0;
@@ -777,6 +981,12 @@ struct UDMFParser
 			}
 		}
 	}
+
+	//===========================================================================
+	//
+	// Processes the linedefs after the map has been loaded
+	//
+	//===========================================================================
 
 	void ProcessLineDefs()
 	{
@@ -844,6 +1054,12 @@ struct UDMFParser
 			P_FinishLoadingLineDef(&lines[line], tempalpha[0]);
 		}
 	}
+
+	//===========================================================================
+	//
+	// Main parsing function
+	//
+	//===========================================================================
 
 	void ParseTextMap(MapData *map)
 	{
@@ -982,12 +1198,4 @@ void P_ParseTextMap(MapData *map)
 	UDMFParser parse;
 
 	parse.ParseTextMap(map);
-}
-
-void P_SpawnTextThings(int position)
-{
-	for(unsigned i=0; i<MapThingsConverted.Size(); i++)
-	{
-		SpawnMapThing (i, &MapThingsConverted[i], position);
-	}
 }

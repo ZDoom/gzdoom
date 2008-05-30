@@ -281,7 +281,12 @@ enum EndTypes
 struct EndSequence
 {
 	BYTE EndType;
+	bool Advanced;
+	bool MusicLooping;
+	bool PlayTheEnd;
 	char PicName[9];
+	char PicName2[9];
+	FString Music;
 };
 
 extern TArray<EndSequence> EndSequences;

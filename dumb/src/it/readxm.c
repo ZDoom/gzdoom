@@ -903,7 +903,6 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 		for (i = 0; i < sigdata->n_instruments; i++) {
 			XM_INSTRUMENT_EXTRA extra;
 
-			assert(_heapchk()==_HEAPOK);
 			if (it_xm_read_instrument(&sigdata->instrument[i], &extra, f) < 0) {
 				// XXX
 				if ( ! i )
@@ -918,7 +917,6 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 					break;
 				}
 			}
-			assert(_heapchk()==_HEAPOK);
 
 			if (extra.n_samples) {
 				unsigned char roguebytes[XM_MAX_SAMPLES_PER_INSTRUMENT];
@@ -936,11 +934,9 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 					sigdata->sample[j].data = NULL;
 
 				/* read instrument's samples */
-				assert(_heapchk()==_HEAPOK);
 				for (j = 0; j < extra.n_samples; j++) {
 					IT_SAMPLE *sample = &sigdata->sample[total_samples+j];
 					int b = it_xm_read_sample_header(sample, f);
-					assert(_heapchk()==_HEAPOK);
 					if (b < 0) {
 						_dumb_it_unload_sigdata(sigdata);
 						return NULL;
@@ -955,15 +951,12 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 				 */
 					sample->vibrato_waveform = xm_convert_vibrato[extra.vibrato_type];
 					sample->max_resampling_quality = -1;
-					assert(_heapchk()==_HEAPOK);
 				}
 				for (j = 0; j < extra.n_samples; j++) {
-					assert(_heapchk()==_HEAPOK);
 					if (it_xm_read_sample_data(&sigdata->sample[total_samples+j], roguebytes[j], f) != 0) {
 						_dumb_it_unload_sigdata(sigdata);
 						return NULL;
 					}
-					assert(_heapchk()==_HEAPOK);
 				}
 				total_samples += extra.n_samples;
 			}

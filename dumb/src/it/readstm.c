@@ -24,6 +24,10 @@
 #include "dumb.h"
 #include "internal/it.h"
 
+#ifndef _WIN32
+#define strnicmp strncasecmp
+#endif
+
 static int it_stm_read_sample_header( IT_SAMPLE *sample, DUMBFILE *f )
 {
 	dumbfile_getnc( sample->filename, 12, f );

@@ -6,6 +6,9 @@ CC ?= gcc
 NASM ?= nasm
 CCDV = @./ccdv
 
+# Can be libdumbd.a, if you really need to debug DUMB
+DUMBLIB ?= libdumbd.a
+
 ifndef X64
   ifeq (x86_64,$(shell uname -m))
     X64=64
@@ -79,10 +82,10 @@ OBJS = $(addprefix $(OBJDIR)/,$(AOBJFILES)) $(COBJS)
 
 all: $(ZDOOMBIN) toolsandpk3 zdoom.pk3
 
-$(ZDOOMBIN): ccdv updaterev src/xlat/xlat_parser.h src/xlat/xlat_parser.c $(OBJDIR) $(OBJS) snes_spc/libsnes_spc.a
+$(ZDOOMBIN): ccdv updaterev src/xlat/xlat_parser.h src/xlat/xlat_parser.c $(OBJDIR) $(OBJS) snes_spc/libsnes_spc.a dumb/lib/$(DUMBLIB)
 	$(CCDV) $(CXX) $(LDFLAGS) $(OBJDIR)/autostart.o \
 	$(filter-out %/autostart.o %/autozend.o,$(OBJS)) \
-	snes_spc/libsnes_spc.a $(OBJDIR)/autozend.o -o $(ZDOOMBIN)
+	snes_spc/libsnes_spc.a dumb/lib/$(DUMBLIB) $(OBJDIR)/autozend.o -o $(ZDOOMBIN)
 
 $(OBJDIR)/%.o: %.cpp
 	$(CCDV) $(CXX) $(CXXFLAGS) -o $@ -c $<
@@ -115,6 +118,12 @@ zdoom.pk3: toolsandpk3
 
 snes_spc/libsnes_spc.a: ccdv
 	$(MAKE) -C snes_spc/
+
+dumb/lib/libdumb.a: ccdv
+	$(MAKE) -C dumb/
+
+dumb/lib/libdumbd.a: ccdv
+	$(MAKE) CONFIG=Debug -C dumb/
 
 tools/makewad/makewad: ccdv
 	$(MAKE) -C tools/makewad/

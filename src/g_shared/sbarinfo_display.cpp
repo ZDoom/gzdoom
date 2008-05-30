@@ -1070,7 +1070,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					DTA_DestHeight, cmd.special2,
 					DTA_Bottom320x200, Scaled,
 					DTA_Alpha, alpha,
-					DTA_AlphaChannel, true,
+					DTA_AlphaChannel, 0,// true,
 					DTA_FillColor, 0,
 					TAG_DONE);
 				break;

@@ -3555,7 +3555,7 @@ static void process_playing(DUMB_IT_SIGRENDERER *sigrenderer, IT_PLAYING *playin
 	playing->sample_vibrato_time += playing->sample->vibrato_speed;
 }
 
-#ifndef __GNUC__
+#if !defined(_WIN32) || !defined(__GNUC__)
 static double log2(double x) {return log(x)/log(2.0f);}
 #endif
 

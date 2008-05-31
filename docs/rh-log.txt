@@ -1,4 +1,6 @@
 May 30, 2008
+- Fixed: S_StartNamedSound() looked for SECF_SILENT in MoreFlags instead of
+  Flags.
 - Fixed: DSBarInfo::updateState() sprung leaks and didn't allocate enough
   space for the fullStateName string.
 - Disabled DUMB's mono destination mixers. It's not like I'm ever going to

@@ -621,6 +621,7 @@ bool FMODSoundRenderer::Init()
 	PrevEnvironment = DefaultEnvironments[0];
 	DSPClockLo = 0;
 	DSPClockHi = 0;
+	ChannelGroupTargetUnit = NULL;
 
 	Printf("I_InitSound: Initializing FMOD\n");
 
@@ -927,6 +928,29 @@ bool FMODSoundRenderer::Init()
 		}
 	}
 	LastWaterLP = snd_waterlp;
+
+	// Find the FMOD Channel Group Target Unit. To completely eliminate sound
+	// while the program is deactivated, we can deactivate this DSP unit, and
+	// all audio processing will cease. This is not directly exposed by the
+	// API but can be easily located by getting the master channel group and
+	// tracing its single output, since it is known to hook up directly to the
+	// Channel Group Target Unit. (See FMOD Profiler for proof.)
+	FMOD::ChannelGroup *master_group;
+	result = Sys->getMasterChannelGroup(&master_group);
+	if (result == FMOD_OK)
+	{
+		FMOD::DSP *master_head;
+
+		result = master_group->getDSPHead(&master_head);
+		if (result == FMOD_OK)
+		{
+			result = master_head->getOutput(0, &ChannelGroupTargetUnit, NULL);
+			if (result != FMOD_OK)
+			{
+				ChannelGroupTargetUnit = NULL;
+			}
+		}
+	}
 
 	result = SPC_CreateCodec(Sys);
 	if (result != FMOD_OK)
@@ -1581,6 +1605,24 @@ void FMODSoundRenderer::SetSfxPaused(bool paused)
 	{
 		PausableSfx->setPaused(paused);
 		SFXPaused = paused;
+	}
+}
+
+//==========================================================================
+//
+// FMODSoundRenderer :: SetInactive
+//
+// This is similar to SetSfxPaused but will *pause* everything, including
+// the global reverb effect. This is meant to be used only when the
+// game is deactivated, not for general sound pausing.
+//
+//==========================================================================
+
+void FMODSoundRenderer::SetInactive(bool inactive)
+{
+	if (ChannelGroupTargetUnit != NULL)
+	{
+		ChannelGroupTargetUnit->setActive(!inactive);
 	}
 }
 

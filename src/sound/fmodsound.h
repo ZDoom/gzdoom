@@ -34,6 +34,8 @@ public:
 	// Pauses or resumes all sound effect channels.
 	void SetSfxPaused (bool paused);
 
+	void SetInactive (bool inactive);
+
 	// Updates the position of a sound channel.
 	void UpdateSoundParams3D (FSoundChan *chan, float pos[3], float vel[3]);
 
@@ -87,6 +89,7 @@ private:
 	FMOD::ChannelGroup *MusicGroup;
 	FMOD::DSP *WaterLP, *WaterReverb;
 	FMOD::DSPConnection *SfxConnection;
+	FMOD::DSP *ChannelGroupTargetUnit;
 	float LastWaterLP;
 
 	// Just for snd_status display

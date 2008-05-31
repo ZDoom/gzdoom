@@ -1,4 +1,6 @@
 May 30, 2008
+- Fixed: Deactivating the game no longer allows reverb effects to continue
+  playing while the sound is paused.
 - Fixed: S_StartNamedSound() looked for SECF_SILENT in MoreFlags instead of
   Flags.
 - Fixed: DSBarInfo::updateState() sprung leaks and didn't allocate enough

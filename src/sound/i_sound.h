@@ -98,6 +98,9 @@ public:
 	// Pauses or resumes all sound effect channels.
 	virtual void SetSfxPaused (bool paused) = 0;
 
+	// Pauses or resumes *every* channel, including environmental reverb.
+	virtual void SetInactive(bool inactive) = 0;
+
 	// Updates the volume, separation, and pitch of a sound channel.
 	virtual void UpdateSoundParams3D (FSoundChan *chan, float pos[3], float vel[3]) = 0;
 

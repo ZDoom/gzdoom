@@ -1529,7 +1529,10 @@ static void SetSoundPaused (int state)
 	{
 		if (paused <= 0)
 		{
-			S_ResumeSound ();
+			if (GSnd != NULL)
+			{
+				GSnd->SetInactive(false);
+			}
 			if (!netgame
 #ifdef _DEBUG
 				&& !demoplayback
@@ -1544,7 +1547,10 @@ static void SetSoundPaused (int state)
 	{
 		if (paused == 0)
 		{
-			S_PauseSound (false);
+			if (GSnd !=  NULL)
+			{
+				GSnd->SetInactive(true);
+			}
 			if (!netgame
 #ifdef _DEBUG
 				&& !demoplayback

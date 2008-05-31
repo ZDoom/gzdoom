@@ -1,4 +1,6 @@
 May 30, 2008
+- Fixed: DSBarInfo::updateState() sprung leaks and didn't allocate enough
+  space for the fullStateName string.
 - Disabled DUMB's mono destination mixers. It's not like I'm ever going to
   target an original SoundBlaster, so they're a waste of space to have around.
   This trims resample.obj down to ~60k now.

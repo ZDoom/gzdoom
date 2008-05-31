@@ -1359,7 +1359,10 @@ void DSBarInfo::DrawFace(FString &defaultFace, int accuracy, bool xdth, bool ani
 {
 	int angle = updateState(xdth, animatedgodmode);
 	int level = 0;
-	for(level = 0;CPlayer->health < (accuracy-level-1)*(CPlayer->mo->GetMaxHealth()/accuracy);level++);
+	while (CPlayer->health < (accuracy-level-1)*(CPlayer->mo->GetMaxHealth()/accuracy))
+	{
+		level++;
+	}
 	if(currentState != NULL)
 	{
 		FPlayerSkin *skin = &skins[CPlayer->morphTics ? CPlayer->MorphedPlayerClass : CPlayer->userinfo.skin];
@@ -1420,7 +1423,7 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 				}
 			}
 			bool setOuch = false;
-			const char* stateName = new char[5];
+			const char *stateName;
 			if ((mugshotHealth != -1 && CPlayer->health - mugshotHealth > 20) || ouchActive)
 			{
 				setOuch = true;
@@ -1428,8 +1431,8 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 			}
 			else
 				stateName = "pain";
-			char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
-			sprintf(fullStateName, "%s.%s", stateName, (const char*) CPlayer->LastDamageType);
+			FString fullStateName;
+			fullStateName << stateName << '.' << CPlayer->LastDamageType;
 			if(FindMugShotState(fullStateName) != NULL)
 				SetMugShotState(fullStateName);
 			else
@@ -1446,7 +1449,7 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 			else
 			{
 				bool setOuch = false;
-				const char* stateName = new char[5];
+				const char *stateName;
 				if ((mugshotHealth != -1 && CPlayer->health - mugshotHealth > 20) || ouchActive)
 				{
 					setOuch = true;
@@ -1454,8 +1457,8 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 				}
 				else
 					stateName = "pain";
-				char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
-				sprintf(fullStateName, "%s.%s", stateName, (const char*) CPlayer->LastDamageType);
+				FString fullStateName;
+				fullStateName << stateName << '.' << CPlayer->LastDamageType;
 				if(FindMugShotState(fullStateName) != NULL)
 					SetMugShotState(fullStateName);
 				else
@@ -1487,14 +1490,13 @@ int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
 	}
 	else
 	{
-		const char* stateName = new char[7];
+		const char *stateName;
 		if(!xdth || !(CPlayer->cheats & CF_EXTREMELYDEAD))
 			stateName = "death";
 		else
 			stateName = "xdeath";
-		//new string the size of stateName and the damage type put together
-		char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
-		sprintf(fullStateName, "%s.%s", stateName, (const char*) CPlayer->LastDamageType);
+		FString fullStateName;
+		fullStateName << stateName << '.' << CPlayer->LastDamageType;
 		if(FindMugShotState(fullStateName) != NULL)
 			SetMugShotState(fullStateName);
 		else

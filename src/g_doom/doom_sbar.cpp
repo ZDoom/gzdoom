@@ -801,16 +801,16 @@ private:
 					}
 				}
 				bool useOuch = false;
-				const char* stateName = new char[5];
+				const char *stateName;
 				if ((FaceHealth != -1 && CPlayer->health - FaceHealth > 20) || bOuchActive)
 				{
 					useOuch = true;
-					stateName = "ouch";
+					stateName = "ouch.";
 				}
 				else
-					stateName = "pain";
-				char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
-				sprintf(fullStateName, "%s.%s", stateName, (const char*) CPlayer->LastDamageType);
+					stateName = "pain.";
+				FString fullStateName;
+				fullStateName << stateName << CPlayer->LastDamageType;
 				if(FindMugShotState(fullStateName) != NULL)
 					SetMugShotState(fullStateName);
 				else
@@ -827,16 +827,16 @@ private:
 				else
 				{
 					bool useOuch = false;
-					const char* stateName = new char[5];
+					const char *stateName;
 					if ((FaceHealth != -1 && CPlayer->health - FaceHealth > 20) || bOuchActive)
 					{
 						useOuch = true;
-						stateName = "ouch";
+						stateName = "ouch.";
 					}
 					else
-						stateName = "pain";
-					char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
-					sprintf(fullStateName, "%s.%s", stateName, (const char*) CPlayer->LastDamageType);
+						stateName = "pain.";
+					FString fullStateName;
+					fullStateName << stateName << CPlayer->LastDamageType;
 					if(FindMugShotState(fullStateName) != NULL)
 						SetMugShotState(fullStateName);
 					else
@@ -863,11 +863,8 @@ private:
 		}
 		else
 		{
-			const char* stateName = new char[7];
-			stateName = "death";
-			//new string the size of stateName and the damage type put together
-			char* fullStateName = new char[sizeof(stateName)+sizeof((const char*) CPlayer->LastDamageType) + 1];
-			sprintf(fullStateName, "%s.%s", stateName, (const char*) CPlayer->LastDamageType);
+			FString fullStateName;
+			fullStateName << "death." << CPlayer->LastDamageType;
 			if(FindMugShotState(fullStateName) != NULL)
 				SetMugShotState(fullStateName);
 			else

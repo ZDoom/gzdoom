@@ -5,8 +5,8 @@ May 30, 2008
   playing while the sound is paused.
 - Fixed: S_StartNamedSound() looked for SECF_SILENT in MoreFlags instead of
   Flags.
-- Fixed: DSBarInfo::updateState() sprung leaks and didn't allocate enough
-  space for the fullStateName string.
+- Fixed: DSBarInfo::updateState() and DDoomStatusBar::UpdateState() sprung
+  leaks and didn't allocate enough space for the fullStateName string.
 - Disabled DUMB's mono destination mixers. It's not like I'm ever going to
   target an original SoundBlaster, so they're a waste of space to have around.
   This trims resample.obj down to ~60k now.

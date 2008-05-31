@@ -1852,6 +1852,14 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	}
 	if (!actor->target || !(actor->target->flags & MF_SHOOTABLE))
 	{ // look for a new target
+		if (actor->target != NULL && (actor->target->flags2 & MF2_NONSHOOTABLE))
+		{
+			// Target is only temporarily unshootable, so remember it.
+			actor->lastenemy = actor->target;
+			// Switch targets faster, since we're only changing because we can't
+			// hurt our old one temporarily.
+			actor->threshold = 0;
+		}
 		if (P_LookForPlayers (actor, true) && actor->target != actor->goal)
 		{ // got a new target
 			actor->flags &= ~MF_INCHASE;

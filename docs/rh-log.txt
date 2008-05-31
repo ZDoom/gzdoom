@@ -1,4 +1,6 @@
 May 30, 2008
+- If an actor's current target temporarily goes unshootable, its threshold
+  is now reset to 0, so it will more readily switch back to it.
 - Fixed: Deactivating the game no longer allows reverb effects to continue
   playing while the sound is paused.
 - Fixed: S_StartNamedSound() looked for SECF_SILENT in MoreFlags instead of

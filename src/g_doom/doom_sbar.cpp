@@ -868,7 +868,7 @@ private:
 			if(FindMugShotState(fullStateName) != NULL)
 				SetMugShotState(fullStateName);
 			else
-				SetMugShotState(stateName);
+				SetMugShotState("death");
 		}
 		return 0;
 	}

@@ -1,4 +1,5 @@
 June 1, 2008 (Changes by Graf Zahl)
+- Fixed: Ouch state was far to easy to achieve.
 - Made all the basic texture classes local to their implementation.
   They are not needed anywhere else.
 - Changed the HackHack hack for corrupt 256 pixel high textures that

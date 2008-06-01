@@ -270,13 +270,15 @@ void FMugShot::Tick(player_t *player)
 //
 // Sets the mug shot state and resets it if it is not the state we are
 // already on. Wait_till_done is basically a priority variable; when set to
-// true the state won't change unless the previous state is finished.
+// true the state won't change unless the previous state is finished.  Reset
+// overrides the behavior of only switching when the state is not the one we
+// are already on.
 // Returns true if the requested state was switched to or is already playing,
 // and false if the requested state could not be set.
 //
 //===========================================================================
 
-bool FMugShot::SetState(const char *state_name, bool wait_till_done)
+bool FMugShot::SetState(const char *state_name, bool wait_till_done, bool reset)
 {
 	// Search for full name.
 	FMugShotState *state = FindMugShotState(FName(state_name, true));
@@ -305,6 +307,11 @@ bool FMugShot::SetState(const char *state_name, bool wait_till_done)
 			return true;
 		}
 		return false;
+	}
+	else if(reset)
+	{
+		state->Reset();
+		return true;
 	}
 	return true;
 }
@@ -379,7 +386,7 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 				full_state_name = "pain.";
 			}
 			full_state_name += player->LastDamageType;
-			if (SetState(full_state_name))
+			if (SetState(full_state_name, false, true))
 			{
 				bDamageFaceActive = (CurrentState != NULL);
 				LastDamageAngle = damage_angle;

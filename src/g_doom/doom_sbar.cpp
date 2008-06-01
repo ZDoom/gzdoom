@@ -724,9 +724,9 @@ private:
 		}
 	}
 
-	void SetMugShotState (const char *state_name, bool wait_till_done)
+	void SetMugShotState (const char *state_name, bool wait_till_done, bool reset)
 	{
-		MugShot.SetState(state_name, wait_till_done);
+		MugShot.SetState(state_name, wait_till_done, reset);
 	}
 
 	enum

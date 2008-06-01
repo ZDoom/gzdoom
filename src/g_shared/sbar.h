@@ -201,7 +201,7 @@ struct FMugShot
 {
 	FMugShot();
 	void Tick(player_t *player);
-	bool SetState(const char *state_name, bool wait_till_done=false);
+	bool SetState(const char *state_name, bool wait_till_done=false, bool reset=false);
 	int UpdateState(player_t *player, bool xdeath, bool animated_god_mode);
 	FTexture *GetFace(player_t *player, const char *default_face, int accuracy, bool xdeath, bool animated_god_mode);
 
@@ -293,7 +293,7 @@ public:
 	virtual void ShowPop (int popnum);
 	virtual void ReceivedWeapon (AWeapon *weapon);
 	virtual bool MustDrawLog(EHudState state);
-	virtual void SetMugShotState (const char *state_name, bool wait_till_done=false);
+	virtual void SetMugShotState (const char *state_name, bool wait_till_done=false, bool reset=false);
 	void DrawLog();
 
 protected:

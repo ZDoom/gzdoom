@@ -339,7 +339,7 @@ public:
 	void ReceivedWeapon (AWeapon *weapon);
 	void FlashItem(const PClass *itemtype);
 	void ShowPop(int popnum);
-	void SetMugShotState(const char* stateName, bool waitTillDone=false);
+	void SetMugShotState(const char* stateName, bool waitTillDone=false, bool reset=false);
 private:
 	void doCommands(SBarInfoBlock &block, int xOffset=0, int yOffset=0, int alpha=FRACUNIT);
 	void DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool translate=false, bool dim=false, bool center=false);

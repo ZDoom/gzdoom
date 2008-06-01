@@ -265,9 +265,9 @@ void DSBarInfo::AttachToPlayer (player_t *player)
 	MugShot.CurrentState = NULL;
 }
 
-void DSBarInfo::SetMugShotState (const char *state_name, bool wait_till_done)
+void DSBarInfo::SetMugShotState (const char *state_name, bool wait_till_done, bool reset)
 {
-	MugShot.SetState(state_name, wait_till_done);
+	MugShot.SetState(state_name, wait_till_done, reset);
 }
 
 void DSBarInfo::Tick ()

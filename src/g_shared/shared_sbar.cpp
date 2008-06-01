@@ -1331,7 +1331,7 @@ bool DBaseStatusBar::MustDrawLog(EHudState)
 	return true;
 }
 
-void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone)
+void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, bool reset)
 {
 }
 

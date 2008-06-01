@@ -454,91 +454,11 @@ typedef enum
 	PODOOR_SWING,
 } podoortype_t;
 
-inline FArchive &operator<< (FArchive &arc, podoortype_t &type)
-{
-	BYTE val = (BYTE)type;
-	arc << val;
-	type = (podoortype_t)val;
-	return arc;
-}
-
-class DPolyAction : public DThinker
-{
-	DECLARE_CLASS (DPolyAction, DThinker)
-public:
-	DPolyAction (int polyNum);
-	~DPolyAction ();
-	void Serialize (FArchive &arc);
-
-	void StopInterpolation ();
-protected:
-	DPolyAction ();
-	int m_PolyObj;
-	int m_Speed;
-	int m_Dist;
-
-	void SetInterpolation ();
-
-	friend void ThrustMobj (AActor *actor, seg_t *seg, polyobj_t *po);
-};
-
-void ThrustMobj (AActor *actor, seg_t *seg, polyobj_t *po);
-
-class DRotatePoly : public DPolyAction
-{
-	DECLARE_CLASS (DRotatePoly, DPolyAction)
-public:
-	DRotatePoly (int polyNum);
-	void Tick ();
-private:
-	DRotatePoly ();
-
-	friend bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
-};
-
 bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
-
-bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
-
-class DMovePoly : public DPolyAction
-{
-	DECLARE_CLASS (DMovePoly, DPolyAction)
-public:
-	DMovePoly (int polyNum);
-	void Serialize (FArchive &arc);
-	void Tick ();
-protected:
-	DMovePoly ();
-	int m_Angle;
-	fixed_t m_xSpeed; // for sliding walls
-	fixed_t m_ySpeed;
-
-	friend bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, bool overRide);
-};
-
 bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, bool overRide);
-
-class DPolyDoor : public DMovePoly
-{
-	DECLARE_CLASS (DPolyDoor, DMovePoly)
-public:
-	DPolyDoor (int polyNum, podoortype_t type);
-	void Serialize (FArchive &arc);
-	void Tick ();
-protected:
-	int m_Direction;
-	int m_TotalDist;
-	int m_Tics;
-	int m_WaitTics;
-	podoortype_t m_Type;
-	bool m_Close;
-
-	friend bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
-private:
-	DPolyDoor ();
-};
-
 bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
+
+
 
 // [RH] Data structure for P_SpawnMapThing() to keep track
 //		of polyobject-related things.
@@ -564,7 +484,7 @@ enum
 	PO_SPAWNHURT_TYPE
 };
 
-extern polyobj_t *polyobjs; // list of all poly-objects on the level
+extern FPolyObj *polyobjs; // list of all poly-objects on the level
 extern int po_NumPolyobjs;
 extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 

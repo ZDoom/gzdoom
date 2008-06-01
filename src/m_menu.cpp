@@ -1038,7 +1038,7 @@ static void M_ExtractSaveData (const FSaveGameNode *node)
 			}
 
 			// Extract pic
-			SavePic = FPNGTexture::CreateFromFile(png, node->Filename);
+			SavePic = PNGTexture_CreateFromFile(png, node->Filename);
 
 			delete png;
 		}

@@ -706,7 +706,7 @@ public:
 	angle_t			LookExFOV;		// Field of Vision
 
 	// a linked list of sectors where this object appears
-	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98
+	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
 
 	TObjPtr<AInventory>	Inventory;		// [RH] This actor's inventory
 	DWORD			InventoryID;	// A unique ID to keep track of inventory items

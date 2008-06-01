@@ -59,6 +59,138 @@
 
 
 
+//--------------------------------------------------------------------------
+//
+// Data structures for the TEXTUREx lumps
+//
+//--------------------------------------------------------------------------
+
+//
+// Each texture is composed of one or more patches, with patches being lumps
+// stored in the WAD. The lumps are referenced by number, and patched into
+// the rectangular texture space using origin and possibly other attributes.
+//
+struct mappatch_t
+{
+	SWORD	originx;
+	SWORD	originy;
+	SWORD	patch;
+	SWORD	stepdir;
+	SWORD	colormap;
+};
+
+//
+// A wall texture is a list of patches which are to be combined in a
+// predefined order.
+//
+struct maptexture_t
+{
+	BYTE		name[8];
+	WORD		Flags;				// [RH] Was unused
+	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
+	BYTE		ScaleY;				// [RH] Same as above
+	SWORD		width;
+	SWORD		height;
+	BYTE		columndirectory[4];	// OBSOLETE
+	SWORD		patchcount;
+	mappatch_t	patches[1];
+};
+
+#define MAPTEXF_WORLDPANNING	0x8000
+
+// Strife uses versions of the above structures that remove all unused fields
+
+struct strifemappatch_t
+{
+	SWORD	originx;
+	SWORD	originy;
+	SWORD	patch;
+};
+
+//
+// A wall texture is a list of patches which are to be combined in a
+// predefined order.
+//
+struct strifemaptexture_t
+{
+	BYTE		name[8];
+	WORD		Flags;				// [RH] Was unused
+	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
+	BYTE		ScaleY;				// [RH] Same as above
+	SWORD		width;
+	SWORD		height;
+	SWORD		patchcount;
+	strifemappatch_t	patches[1];
+};
+
+
+//==========================================================================
+//
+// In-memory representation of a single PNAMES lump entry
+//
+//==========================================================================
+
+struct FPatchLookup
+{
+	char Name[9];
+	FTexture *Texture;
+};
+
+
+//==========================================================================
+//
+// A texture defined in a TEXTURE1 or TEXTURE2 lump
+//
+//==========================================================================
+
+class FMultiPatchTexture : public FTexture
+{
+public:
+	FMultiPatchTexture (const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife, int deflump);
+	FMultiPatchTexture (FScanner &sc, int usetype);
+	~FMultiPatchTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	FTextureFormat GetFormat();
+	bool UseBasePalette() ;
+	void Unload ();
+	virtual void SetFrontSkyLayer ();
+
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	int GetSourceLump() { return DefinitionLump; }
+
+protected:
+	BYTE *Pixels;
+	Span **Spans;
+	int DefinitionLump;
+
+	struct TexPart
+	{
+		SWORD OriginX, OriginY;
+		BYTE Rotate;
+		bool textureOwned;
+		BYTE op;
+		FRemapTable *Translation;
+		PalEntry Blend;
+		FTexture *Texture;
+		fixed_t Alpha;
+
+		TexPart();
+	};
+
+	int NumParts;
+	TexPart *Parts;
+	bool bRedirect:1;
+	bool bTranslucentPatches:1;
+
+	void MakeTexture ();
+
+private:
+	void CheckForHacks ();
+	void ParsePatch(FScanner &sc, TexPart & part);
+};
+
 //==========================================================================
 //
 // FMultiPatchTexture :: FMultiPatchTexture
@@ -605,7 +737,7 @@ void FMultiPatchTexture::CheckForHacks ()
 		// All patches must be at the top of the texture for this fix
 		for (i = 0; i < NumParts; ++i)
 		{
-			if (Parts[i].OriginX != 0)
+			if (Parts[i].OriginY != 0)
 			{
 				break;
 			}
@@ -613,39 +745,9 @@ void FMultiPatchTexture::CheckForHacks ()
 
 		if (i == NumParts)
 		{
-			// This really must check whether the texture in question is
-			// actually an FPatchTexture before casting the pointer.
-			for (i = 0; i < NumParts; ++i) if (Parts[i].Texture->bIsPatch)
+			for (i = 0; i < NumParts; ++i)
 			{
-				FPatchTexture *tex = (FPatchTexture *)Parts[i].Texture;
-				// Check if this patch is likely to be a problem.
-				// It must be 256 pixels tall, and all its columns must have exactly
-				// one post, where each post has a supposed length of 0.
-				FMemLump lump = Wads.ReadLump (tex->SourceLump);
-				const patch_t *realpatch = (patch_t *)lump.GetMem();
-				const DWORD *cofs = realpatch->columnofs;
-				int x, x2 = LittleShort(realpatch->width);
-
-				if (LittleShort(realpatch->height) == 256)
-				{
-					for (x = 0; x < x2; ++x)
-					{
-						const column_t *col = (column_t*)((BYTE*)realpatch+LittleLong(cofs[x]));
-						if (col->topdelta != 0 || col->length != 0)
-						{
-							break;	// It's not bad!
-						}
-						col = (column_t *)((BYTE *)col + 256 + 4);
-						if (col->topdelta != 0xFF)
-						{
-							break;	// More than one post in a column!
-						}
-					}
-					if (x == x2)
-					{ // If all the columns were checked, it needs fixing.
-						tex->HackHack (Height);
-					}
-				}
+				Parts[i].Texture->HackHack(256);
 			}
 		}
 	}

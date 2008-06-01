@@ -22,8 +22,6 @@
 #ifndef __R_SKY_H__
 #define __R_SKY_H__
 
-#include "c_cvars.h"
-
 extern int		sky1shift,		sky2shift;
 
 extern int 		sky1texture,	sky2texture;
@@ -33,8 +31,6 @@ extern int		skystretch;
 extern fixed_t	skyiscale;
 extern fixed_t	skyscale;
 extern fixed_t	skyheight;
-
-EXTERN_CVAR (Bool, r_stretchsky)
 
 // Called whenever the sky changes.
 void R_InitSkyMap		();

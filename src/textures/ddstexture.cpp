@@ -95,6 +95,12 @@
 #define DDSCAPS2_CUBEMAP_NEGATIZEZ	0x00008000
 #define DDSCAPS2_VOLUME				0x00200000
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 struct DDPIXELFORMAT
 {
 	DWORD			Size;		// Must be 32
@@ -136,7 +142,62 @@ struct DDSFileHeader
 	DDSURFACEDESC2	Desc;
 };
 
-bool FDDSTexture::Check (FileReader &file)
+
+//==========================================================================
+//
+// A DDS image, with DXTx compression
+//
+//==========================================================================
+
+class FDDSTexture : public FTexture
+{
+public:
+	FDDSTexture (FileReader &lump, int lumpnum, void *surfdesc);
+	~FDDSTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	FTextureFormat GetFormat ();
+	int GetSourceLump() { return SourceLump; }
+
+protected:
+
+	int SourceLump;
+	BYTE *Pixels;
+	Span **Spans;
+
+	DWORD Format;
+
+	DWORD RMask, GMask, BMask, AMask;
+	BYTE RShiftL, GShiftL, BShiftL, AShiftL;
+	BYTE RShiftR, GShiftR, BShiftR, AShiftR;
+
+	SDWORD Pitch;
+	DWORD LinearSize;
+
+	static void CalcBitShift (DWORD mask, BYTE *lshift, BYTE *rshift);
+
+	void MakeTexture ();
+	void ReadRGB (FWadLump &lump, BYTE *tcbuf = NULL);
+	void DecompressDXT1 (FWadLump &lump, BYTE *tcbuf = NULL);
+	void DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
+	void DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbuf = NULL);
+
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	bool UseBasePalette();
+
+	friend class FTexture;
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static bool CheckDDS (FileReader &file)
 {
 	DDSFileHeader Header;
 
@@ -153,13 +214,21 @@ bool FDDSTexture::Check (FileReader &file)
 		Header.Desc.Height != 0;
 }
 
-FTexture *FDDSTexture::Create (FileReader &data, int lumpnum)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
 {
 	union
 	{
 		DDSURFACEDESC2	surfdesc;
 		DWORD			byteswapping[sizeof(DDSURFACEDESC2) / 4];
 	};
+
+	if (!CheckDDS(data)) return NULL;
 
 	data.Seek (4, SEEK_SET);
 	data.Read (&surfdesc, sizeof(surfdesc));
@@ -208,6 +277,12 @@ FTexture *FDDSTexture::Create (FileReader &data, int lumpnum)
 	}
 	return new FDDSTexture (data, lumpnum, &surfdesc);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FDDSTexture::FDDSTexture (FileReader &lump, int lumpnum, void *vsurfdesc)
 : SourceLump(lumpnum), Pixels(0), Spans(0)
@@ -259,6 +334,8 @@ FDDSTexture::FDDSTexture (FileReader &lump, int lumpnum, void *vsurfdesc)
 	}
 }
 
+//==========================================================================
+//
 // Returns the number of bits the color must be shifted to produce
 // an 8-bit value, as in:
 //
@@ -269,6 +346,9 @@ FDDSTexture::FDDSTexture (FileReader &lump, int lumpnum, void *vsurfdesc)
 // For any color of at least 4 bits, this ensures that the result
 // of the calculation for c will be fully saturated, given a maximum
 // value for the input bit mask.
+//
+//==========================================================================
+
 void FDDSTexture::CalcBitShift (DWORD mask, BYTE *lshiftp, BYTE *rshiftp)
 {
 	BYTE shift;
@@ -296,6 +376,12 @@ void FDDSTexture::CalcBitShift (DWORD mask, BYTE *lshiftp, BYTE *rshiftp)
 	*rshiftp = shift;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FDDSTexture::~FDDSTexture ()
 {
 	Unload ();
@@ -306,6 +392,12 @@ FDDSTexture::~FDDSTexture ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FDDSTexture::Unload ()
 {
 	if (Pixels != NULL)
@@ -314,6 +406,12 @@ void FDDSTexture::Unload ()
 		Pixels = NULL;
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FTextureFormat FDDSTexture::GetFormat()
 {
@@ -332,6 +430,12 @@ FTextureFormat FDDSTexture::GetFormat()
 	return TEX_RGB;
 #endif
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FDDSTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -361,6 +465,12 @@ const BYTE *FDDSTexture::GetColumn (unsigned int column, const Span **spans_out)
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FDDSTexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -369,6 +479,12 @@ const BYTE *FDDSTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FDDSTexture::MakeTexture ()
 {
@@ -395,6 +511,12 @@ void FDDSTexture::MakeTexture ()
 		DecompressDXT5 (lump, Format == ID_DXT4);
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FDDSTexture::ReadRGB (FWadLump &lump, BYTE *tcbuf)
 {
@@ -458,6 +580,12 @@ void FDDSTexture::ReadRGB (FWadLump &lump, BYTE *tcbuf)
 	}
 	delete[] linebuff;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FDDSTexture::DecompressDXT1 (FWadLump &lump, BYTE *tcbuf)
 {
@@ -550,8 +678,12 @@ void FDDSTexture::DecompressDXT1 (FWadLump &lump, BYTE *tcbuf)
 	delete[] blockbuff;
 }
 
+//==========================================================================
+//
 // DXT3: Decompression is identical to DXT1, except every 64-bit block is
 // preceded by another 64-bit block with explicit alpha values.
+//
+//==========================================================================
 
 void FDDSTexture::DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbuf)
 {
@@ -628,8 +760,12 @@ void FDDSTexture::DecompressDXT3 (FWadLump &lump, bool premultiplied, BYTE *tcbu
 	delete[] blockbuff;
 }
 
+//==========================================================================
+//
 // DXT5: Decompression is identical to DXT3, except every 64-bit alpha block
 // contains interpolated alpha values, similar to the 64-bit color block.
+//
+//==========================================================================
 
 void FDDSTexture::DecompressDXT5 (FWadLump &lump, bool premultiplied, BYTE *tcbuf)
 {

@@ -41,14 +41,80 @@
 #include "bitmap.h"
 
 
-bool FTGATexture::Check(FileReader & data)
+//==========================================================================
+//
+// TGA file header
+//
+//==========================================================================
+
+#pragma pack(1)
+
+struct TGAHeader
+{
+	BYTE		id_len;
+	BYTE		has_cm;
+	BYTE		img_type;
+	SWORD		cm_first;
+	SWORD		cm_length;
+	BYTE		cm_size;
+	
+	SWORD		x_origin;
+	SWORD		y_origin;
+	SWORD		width;
+	SWORD		height;
+	BYTE		bpp;
+	BYTE		img_desc;
+};
+
+#pragma pack()
+
+//==========================================================================
+//
+// a TGA texture
+//
+//==========================================================================
+
+class FTGATexture : public FTexture
+{
+public:
+	FTGATexture (int lumpnum, TGAHeader *);
+	~FTGATexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	FTextureFormat GetFormat ();
+
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	bool UseBasePalette();
+	int GetSourceLump() { return SourceLump; }
+
+protected:
+	int SourceLump;
+	BYTE *Pixels;
+	Span **Spans;
+
+	void ReadCompressed(FileReader &lump, BYTE * buffer, int bytesperpixel);
+
+	virtual void MakeTexture ();
+
+	friend class FTexture;
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 {
 	TGAHeader hdr;
+
+	if (file.GetLength() < (long)sizeof(hdr)) return NULL;
 	
-	if (data.GetLength() < (long)sizeof(hdr)) return false;
-	
-	data.Seek(0, SEEK_SET);
-	data.Read(&hdr, sizeof(hdr));
+	file.Seek(0, SEEK_SET);
+	file.Read(&hdr, sizeof(hdr));
 #ifdef WORDS_BIGENDIAN
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
@@ -56,18 +122,13 @@ bool FTGATexture::Check(FileReader & data)
 	
 	// Not much that can be done here because TGA does not have a proper
 	// header to be identified with.
-	if (hdr.has_cm != 0 && hdr.has_cm != 1) return false;
-	if (hdr.width <=0 || hdr.height <=0 || hdr.width > 2048 || hdr.height > 2048) return false;
-	if (hdr.bpp != 8 && hdr.bpp != 15 && hdr.bpp != 16 && hdr.bpp !=24 && hdr.bpp !=32) return false;
-	if (hdr.img_type <= 0 || hdr.img_type > 11) return false;
-	if (hdr.img_type >=4  && hdr.img_type <= 8) return false;
-	if ((hdr.img_desc & 16) != 0) return false;
-	return true;
-}
+	if (hdr.has_cm != 0 && hdr.has_cm != 1) return NULL;
+	if (hdr.width <=0 || hdr.height <=0 || hdr.width > 2048 || hdr.height > 2048) return NULL;
+	if (hdr.bpp != 8 && hdr.bpp != 15 && hdr.bpp != 16 && hdr.bpp !=24 && hdr.bpp !=32) return NULL;
+	if (hdr.img_type <= 0 || hdr.img_type > 11) return NULL;
+	if (hdr.img_type >=4  && hdr.img_type <= 8) return NULL;
+	if ((hdr.img_desc & 16) != 0) return NULL;
 
-FTexture *FTGATexture::Create(FileReader & file, int lumpnum)
-{
-	TGAHeader hdr;
 	file.Seek(0, SEEK_SET);
 	file.Read(&hdr, sizeof(hdr));
 #ifdef WORDS_BIGENDIAN
@@ -78,6 +139,11 @@ FTexture *FTGATexture::Create(FileReader & file, int lumpnum)
 	return new FTGATexture(lumpnum, &hdr);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
 : SourceLump(lumpnum), Pixels(0), Spans(0)
@@ -91,6 +157,12 @@ FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
 	CalcBitSize();
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FTGATexture::~FTGATexture ()
 {
 	Unload ();
@@ -101,6 +173,11 @@ FTGATexture::~FTGATexture ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FTGATexture::Unload ()
 {
@@ -111,10 +188,22 @@ void FTGATexture::Unload ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FTextureFormat FTGATexture::GetFormat()
 {
 	return TEX_RGB;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FTGATexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -144,6 +233,12 @@ const BYTE *FTGATexture::GetColumn (unsigned int column, const Span **spans_out)
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FTGATexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -152,6 +247,12 @@ const BYTE *FTGATexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FTGATexture::ReadCompressed(FileReader &lump, BYTE * buffer, int bytesperpixel)
 {
@@ -183,6 +284,12 @@ void FTGATexture::ReadCompressed(FileReader &lump, BYTE * buffer, int bytesperpi
 		Size -= b+1;
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FTGATexture::MakeTexture ()
 {

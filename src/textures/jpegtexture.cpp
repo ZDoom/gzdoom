@@ -41,10 +41,22 @@
 #include "v_text.h"
 #include "bitmap.h"
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FLumpSourceMgr::InitSource (j_decompress_ptr cinfo)
 {
 	((FLumpSourceMgr *)(cinfo->src))->StartOfFile = true;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 boolean FLumpSourceMgr::FillInputBuffer (j_decompress_ptr cinfo)
 {
@@ -63,6 +75,12 @@ boolean FLumpSourceMgr::FillInputBuffer (j_decompress_ptr cinfo)
 	return TRUE;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FLumpSourceMgr::SkipInputData (j_decompress_ptr cinfo, long num_bytes)
 {
 	FLumpSourceMgr *me = (FLumpSourceMgr *)(cinfo->src);
@@ -79,15 +97,52 @@ void FLumpSourceMgr::SkipInputData (j_decompress_ptr cinfo, long num_bytes)
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FLumpSourceMgr::TermSource (j_decompress_ptr cinfo)
 {
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FLumpSourceMgr::FLumpSourceMgr (FileReader *lump, j_decompress_ptr cinfo)
+: Lump (lump)
+{
+	cinfo->src = this;
+	init_source = InitSource;
+	fill_input_buffer = FillInputBuffer;
+	skip_input_data = SkipInputData;
+	resync_to_restart = jpeg_resync_to_restart;
+	term_source = TermSource;
+	bytes_in_buffer = 0;
+	next_input_byte = NULL;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void JPEG_ErrorExit (j_common_ptr cinfo)
 {
 	(*cinfo->err->output_message) (cinfo);
 	throw -1;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void JPEG_OutputMessage (j_common_ptr cinfo)
 {
@@ -97,14 +152,44 @@ void JPEG_OutputMessage (j_common_ptr cinfo)
 	Printf (TEXTCOLOR_ORANGE "JPEG failure: %s\n", buffer);
 }
 
-bool FJPEGTexture::Check(FileReader & file)
-{
-	BYTE hdr[3];
-	file.Seek(0, SEEK_SET);
-	return file.Read(hdr, 3) == 3 && hdr[0] == 0xFF && hdr[1] == 0xD8 && hdr[2] == 0xFF;
-}
+//==========================================================================
+//
+// A JPEG texture
+//
+//==========================================================================
 
-FTexture *FJPEGTexture::Create(FileReader & data, int lumpnum)
+class FJPEGTexture : public FTexture
+{
+public:
+	FJPEGTexture (int lumpnum, int width, int height);
+	~FJPEGTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	FTextureFormat GetFormat ();
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	bool UseBasePalette();
+	int GetSourceLump() { return SourceLump; }
+
+protected:
+
+	int SourceLump;
+	BYTE *Pixels;
+	Span DummySpans[2];
+
+	void MakeTexture ();
+
+	friend class FTexture;
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 {
 	union
 	{
@@ -114,7 +199,10 @@ FTexture *FJPEGTexture::Create(FileReader & data, int lumpnum)
 	} first4bytes;
 
 	data.Seek(0, SEEK_SET);
-	data.Read(&first4bytes, 4);
+	if (data.Read(&first4bytes, 4) < 4) return NULL;
+
+	if (first4bytes.b[0] != 0xFF || first4bytes.b[1] != 0xD8 || first4bytes.b[2] != 0xFF)
+		return NULL;
 
 	// Find the SOFn marker to extract the image dimensions,
 	// where n is 0, 1, or 2 (other types are unsupported).
@@ -145,18 +233,11 @@ FTexture *FJPEGTexture::Create(FileReader & data, int lumpnum)
 	return new FJPEGTexture (lumpnum, BigShort(first4bytes.w[1]), BigShort(first4bytes.w[0]));
 }
 
-FLumpSourceMgr::FLumpSourceMgr (FileReader *lump, j_decompress_ptr cinfo)
-: Lump (lump)
-{
-	cinfo->src = this;
-	init_source = InitSource;
-	fill_input_buffer = FillInputBuffer;
-	skip_input_data = SkipInputData;
-	resync_to_restart = jpeg_resync_to_restart;
-	term_source = TermSource;
-	bytes_in_buffer = 0;
-	next_input_byte = NULL;
-}
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 : SourceLump(lumpnum), Pixels(0)
@@ -179,10 +260,22 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 	DummySpans[1].Length = 0;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FJPEGTexture::~FJPEGTexture ()
 {
 	Unload ();
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FJPEGTexture::Unload ()
 {
@@ -193,10 +286,22 @@ void FJPEGTexture::Unload ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FTextureFormat FJPEGTexture::GetFormat()
 {
 	return TEX_RGB;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FJPEGTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -222,6 +327,12 @@ const BYTE *FJPEGTexture::GetColumn (unsigned int column, const Span **spans_out
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FJPEGTexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -230,6 +341,12 @@ const BYTE *FJPEGTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FJPEGTexture::MakeTexture ()
 {

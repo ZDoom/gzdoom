@@ -39,8 +39,40 @@
 #include "w_wad.h"
 
 
+//==========================================================================
+//
+// A raw 320x200 graphic used by Heretic and Hexen fullscreen images
+//
+//==========================================================================
 
-bool FRawPageTexture::Check(FileReader & data)
+class FRawPageTexture : public FTexture
+{
+public:
+	FRawPageTexture (int lumpnum);
+	~FRawPageTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+	int GetSourceLump() { return SourceLump; }
+
+protected:
+	int SourceLump;
+	BYTE *Pixels;
+	static const Span DummySpans[2];
+
+	void MakeTexture ();
+};
+
+//==========================================================================
+//
+// RAW textures must be exactly 64000 bytes long and not be identifiable
+// as Doom patch
+//
+//==========================================================================
+
+static bool CheckIfRaw(FileReader & data)
 {
 	if (data.GetLength() != 64000) return false;
 
@@ -112,16 +144,35 @@ bool FRawPageTexture::Check(FileReader & data)
 	}
 }
 
-FTexture *FRawPageTexture::Create(FileReader & file, int lumpnum)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture *RawPageTexture_TryCreate(FileReader & file, int lumpnum)
 {
+	if (!CheckIfRaw(file)) return NULL;
 	return new FRawPageTexture(lumpnum);
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const FTexture::Span FRawPageTexture::DummySpans[2] =
 {
 	{ 0, 200 }, { 0, 0 }
 };
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FRawPageTexture::FRawPageTexture (int lumpnum)
 : SourceLump(lumpnum), Pixels(0)
@@ -136,10 +187,22 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 	WidthMask = 255;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FRawPageTexture::~FRawPageTexture ()
 {
 	Unload ();
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FRawPageTexture::Unload ()
 {
@@ -149,6 +212,12 @@ void FRawPageTexture::Unload ()
 		Pixels = NULL;
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FRawPageTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -167,6 +236,12 @@ const BYTE *FRawPageTexture::GetColumn (unsigned int column, const Span **spans_
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FRawPageTexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -175,6 +250,12 @@ const BYTE *FRawPageTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FRawPageTexture::MakeTexture ()
 {

@@ -23,8 +23,6 @@
 #ifndef __R_SEGS_H__
 #define __R_SEGS_H__
 
-#include "c_cvars.h"
-
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2);
 
 extern short *openings;
@@ -40,9 +38,6 @@ inline ptrdiff_t R_NewOpening (ptrdiff_t len)
 
 void R_CheckOpenings (size_t need);
 void R_CheckDrawSegs ();
-
-// [RH] Selects how to draw masked columns.
-EXTERN_CVAR (Int, r_columnmethod)
 
 void R_RenderSegLoop ();
 

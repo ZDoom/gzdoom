@@ -40,16 +40,51 @@
 #include "r_data.h"
 #include "w_wad.h"
 
-bool FAutomapTexture::Check(FileReader & data)
-{
-	if (data.GetLength() < 320) return false;
-	return true;
-}
+//==========================================================================
+//
+// A raw 320x? graphic used by Heretic and Hexen for the automap parchment
+//
+//==========================================================================
 
-FTexture *FAutomapTexture::Create(FileReader &, int lumpnum)
+class FAutomapTexture : public FTexture
 {
+public:
+	~FAutomapTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	void MakeTexture ();
+
+	int GetSourceLump() { return LumpNum; }
+
+	FAutomapTexture (int lumpnum);
+
+private:
+	BYTE *Pixels;
+	Span DummySpan[2];
+	int LumpNum;
+};
+
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
+{
+	if (data.GetLength() < 320) return NULL;
 	return new FAutomapTexture(lumpnum);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FAutomapTexture::FAutomapTexture (int lumpnum)
 : Pixels(NULL), LumpNum(lumpnum)
@@ -64,10 +99,22 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 	DummySpan[1].Length = 0;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FAutomapTexture::~FAutomapTexture ()
 {
 	Unload ();
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FAutomapTexture::Unload ()
 {
@@ -77,6 +124,12 @@ void FAutomapTexture::Unload ()
 		Pixels = NULL;
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FAutomapTexture::MakeTexture ()
 {
@@ -95,6 +148,12 @@ void FAutomapTexture::MakeTexture ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FAutomapTexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -103,6 +162,12 @@ const BYTE *FAutomapTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FAutomapTexture::GetColumn (unsigned int column, const Span **spans_out)
 {

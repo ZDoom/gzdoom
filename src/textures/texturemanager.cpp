@@ -338,7 +338,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 		if (out != NULL) return AddTexture (out);
 		else
 		{
-			Printf (TEXTCOLOR_ORANGE "Invalid data encountered for texture %s\n", Wads.GetLumpFullName(lumpnum));
+			Printf (TEXTCOLOR_ORANGE "Invalid data encountered for texture %s\n", Wads.GetLumpFullPath(lumpnum).GetChars());
 			return -1;
 		}
 	}

@@ -41,15 +41,89 @@
 #include "templates.h"
 #include "bitmap.h"
 
+//==========================================================================
+//
+// PCX file header
+//
+//==========================================================================
 
-bool FPCXTexture::Check(FileReader & file)
+#pragma pack(1)
+
+struct PCXHeader
+{
+  BYTE manufacturer;
+  BYTE version;
+  BYTE encoding;
+  BYTE bitsPerPixel;
+
+  WORD xmin, ymin;
+  WORD xmax, ymax;
+  WORD horzRes, vertRes;
+
+  BYTE palette[48];
+  BYTE reserved;
+  BYTE numColorPlanes;
+
+  WORD bytesPerScanLine;
+  WORD paletteType;
+  WORD horzSize, vertSize;
+
+  BYTE padding[54];
+
+};
+#pragma pack()
+
+//==========================================================================
+//
+// a PCX texture
+//
+//==========================================================================
+
+class FPCXTexture : public FTexture
+{
+public:
+	FPCXTexture (int lumpnum, PCXHeader &);
+	~FPCXTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	FTextureFormat GetFormat ();
+
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	bool UseBasePalette();
+	int GetSourceLump() { return SourceLump; }
+
+protected:
+	int SourceLump;
+	BYTE *Pixels;
+	Span DummySpans[2];
+
+	void ReadPCX1bit (BYTE *dst, FileReader & lump, PCXHeader *hdr);
+	void ReadPCX4bits (BYTE *dst, FileReader & lump, PCXHeader *hdr);
+	void ReadPCX8bits (BYTE *dst, FileReader & lump, PCXHeader *hdr);
+	void ReadPCX24bits (BYTE *dst, FileReader & lump, PCXHeader *hdr, int planes);
+
+	virtual void MakeTexture ();
+
+	friend class FTexture;
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 {
 	PCXHeader hdr;
 
 	file.Seek(0, SEEK_SET);
 	if (file.Read(&hdr, sizeof(hdr)) != sizeof(hdr))
 	{
-		return false;
+		return NULL;
 	}
 
 #ifdef WORDS_BIGENDIAN
@@ -58,28 +132,28 @@ bool FPCXTexture::Check(FileReader & file)
 	hdr.bytesPerScanLine = LittleShort(hdr.bytesPerScanLine);
 #endif
 
-	if (hdr.manufacturer != 10 || hdr.encoding != 1) return false;
-	if (hdr.version != 0 && hdr.version != 2 && hdr.version != 3 && hdr.version != 4 && hdr.version != 5) return false;
-	if (hdr.bitsPerPixel != 1 && hdr.bitsPerPixel != 8) return false; 
-	if (hdr.bitsPerPixel == 1 && hdr.numColorPlanes !=1 && hdr.numColorPlanes != 4) return false;
-	if (hdr.bitsPerPixel == 8 && hdr.bytesPerScanLine != ((hdr.xmax - hdr.xmin + 2)&~1)) return false;
+	if (hdr.manufacturer != 10 || hdr.encoding != 1) return NULL;
+	if (hdr.version != 0 && hdr.version != 2 && hdr.version != 3 && hdr.version != 4 && hdr.version != 5) return NULL;
+	if (hdr.bitsPerPixel != 1 && hdr.bitsPerPixel != 8) return NULL; 
+	if (hdr.bitsPerPixel == 1 && hdr.numColorPlanes !=1 && hdr.numColorPlanes != 4) return NULL;
+	if (hdr.bitsPerPixel == 8 && hdr.bytesPerScanLine != ((hdr.xmax - hdr.xmin + 2)&~1)) return NULL;
 
 	for (int i = 0; i < 54; i++) 
 	{
-		if (hdr.padding[i] != 0) return false;
+		if (hdr.padding[i] != 0) return NULL;
 	}
-	return true;
-}
-
-FTexture * FPCXTexture::Create(FileReader & file, int lumpnum)
-{
-	PCXHeader hdr;
 
 	file.Seek(0, SEEK_SET);
 	file.Read(&hdr, sizeof(hdr));
 
 	return new FPCXTexture(lumpnum, hdr);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FPCXTexture::FPCXTexture(int lumpnum, PCXHeader & hdr)
 : SourceLump(lumpnum), Pixels(0)
@@ -97,11 +171,22 @@ FPCXTexture::FPCXTexture(int lumpnum, PCXHeader & hdr)
 	DummySpans[1].Length = 0;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FPCXTexture::~FPCXTexture ()
 {
 	Unload ();
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FPCXTexture::Unload ()
 {
@@ -112,11 +197,22 @@ void FPCXTexture::Unload ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FTextureFormat FPCXTexture::GetFormat()
 {
 	return TEX_RGB;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FPCXTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -142,6 +238,12 @@ const BYTE *FPCXTexture::GetColumn (unsigned int column, const Span **spans_out)
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FPCXTexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -150,6 +252,12 @@ const BYTE *FPCXTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FPCXTexture::ReadPCX1bit (BYTE *dst, FileReader & lump, PCXHeader *hdr)
 {
@@ -193,6 +301,11 @@ void FPCXTexture::ReadPCX1bit (BYTE *dst, FileReader & lump, PCXHeader *hdr)
 	delete [] srcp;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FPCXTexture::ReadPCX4bits (BYTE *dst, FileReader & lump, PCXHeader *hdr)
 {
@@ -251,6 +364,11 @@ void FPCXTexture::ReadPCX4bits (BYTE *dst, FileReader & lump, PCXHeader *hdr)
 	delete [] srcp;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FPCXTexture::ReadPCX8bits (BYTE *dst, FileReader & lump, PCXHeader *hdr)
 {
@@ -288,6 +406,11 @@ void FPCXTexture::ReadPCX8bits (BYTE *dst, FileReader & lump, PCXHeader *hdr)
 	delete [] srcp;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FPCXTexture::ReadPCX24bits (BYTE *dst, FileReader & lump, PCXHeader *hdr, int planes)
 {
@@ -330,6 +453,12 @@ void FPCXTexture::ReadPCX24bits (BYTE *dst, FileReader & lump, PCXHeader *hdr, i
 	}
 	delete [] srcp;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FPCXTexture::MakeTexture()
 {

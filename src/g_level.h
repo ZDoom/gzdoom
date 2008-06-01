@@ -132,6 +132,9 @@ struct FSpecialAction
 	FSpecialAction *Next;
 };
 
+class FCompressedMemFile;
+class DScroller;
+
 struct level_info_t
 {
 	char		mapname[9];

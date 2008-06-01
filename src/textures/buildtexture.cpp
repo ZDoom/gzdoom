@@ -43,6 +43,34 @@
 
 static TArray<BYTE *> BuildTileFiles;
 
+//==========================================================================
+//
+// A texture defined in a Build TILESxxx.ART file
+//
+//==========================================================================
+
+class FBuildTexture : public FTexture
+{
+public:
+	FBuildTexture (int tilenum, const BYTE *pixels, int width, int height, int left, int top);
+	~FBuildTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+protected:
+	const BYTE *Pixels;
+	Span **Spans;
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FBuildTexture::FBuildTexture (int tilenum, const BYTE *pixels, int width, int height, int left, int top)
 : Pixels (pixels), Spans (NULL)
 {
@@ -55,6 +83,12 @@ FBuildTexture::FBuildTexture (int tilenum, const BYTE *pixels, int width, int he
 	UseType = TEX_Build;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FBuildTexture::~FBuildTexture ()
 {
 	if (Spans != NULL)
@@ -64,15 +98,33 @@ FBuildTexture::~FBuildTexture ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FBuildTexture::Unload ()
 {
 	// Nothing to do, since the pixels are accessed from memory-mapped files directly
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FBuildTexture::GetPixels ()
 {
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FBuildTexture::GetColumn (unsigned int column, const Span **spans_out)
 {

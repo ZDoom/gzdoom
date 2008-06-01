@@ -38,16 +38,54 @@
 #include "r_data.h"
 #include "w_wad.h"
 
+//==========================================================================
+//
+// A texture defined between F_START and F_END markers
+//
+//==========================================================================
 
-bool FFlatTexture::Check(FileReader & file)
+class FFlatTexture : public FTexture
 {
-	return true;
-}
+public:
+	FFlatTexture (int lumpnum);
+	~FFlatTexture ();
 
-FTexture *FFlatTexture::Create(FileReader & file, int lumpnum)
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+	int GetSourceLump() { return SourceLump; }
+
+protected:
+	int SourceLump;
+	BYTE *Pixels;
+	Span DummySpans[2];
+
+
+	void MakeTexture ();
+
+	friend class FTexture;
+};
+
+
+
+//==========================================================================
+//
+// Since there is no way to detect the validity of a flat
+// they can't be used anywhere else but between F_START and F_END
+//
+//==========================================================================
+
+FTexture *FlatTexture_TryCreate(FileReader & file, int lumpnum)
 {
 	return new FFlatTexture(lumpnum);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FFlatTexture::FFlatTexture (int lumpnum)
 : SourceLump(lumpnum), Pixels(0)
@@ -78,23 +116,24 @@ FFlatTexture::FFlatTexture (int lumpnum)
 	DummySpans[0].Length = Height;
 	DummySpans[1].TopOffset = 0;
 	DummySpans[1].Length = 0;
-
-	/*
-	if (bits > 6)
-	{
-		ScaleX = ScaleY = 8 << (bits - 6);
-	}
-	else
-	{
-		ScaleX = ScaleY = 8;
-	}
-	*/
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FFlatTexture::~FFlatTexture ()
 {
 	Unload ();
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FFlatTexture::Unload ()
 {
@@ -104,6 +143,12 @@ void FFlatTexture::Unload ()
 		Pixels = NULL;
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FFlatTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -129,6 +174,12 @@ const BYTE *FFlatTexture::GetColumn (unsigned int column, const Span **spans_out
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FFlatTexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -137,6 +188,12 @@ const BYTE *FFlatTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FFlatTexture::MakeTexture ()
 {

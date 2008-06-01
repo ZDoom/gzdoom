@@ -26,8 +26,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "farchive.h"
-
 //
 // Global parameters/defines.
 //
@@ -90,21 +88,6 @@ typedef enum
 	GS_FORCEWIPEFADE = -2
 } gamestate_t;
 
-//
-// Difficulty/skill settings/filters.
-//
-
-// Skill flags.
-/*
-#define MTF_EASY				1
-#define MTF_NORMAL				2
-#define MTF_HARD				4
-*/
-#define MTF_SKILLMASK			7
-#define MTF_SKILLSHIFT			1
-
-// Deaf monsters/do not react to sound.
-#define MTF_AMBUSH				8
 
 typedef float skill_t;
 

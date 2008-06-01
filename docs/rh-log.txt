@@ -1,3 +1,17 @@
+June 1, 2008 (Changes by Graf Zahl)
+- Made all the basic texture classes local to their implementation.
+  They are not needed anywhere else.
+- Changed the HackHack hack for corrupt 256 pixel high textures that
+  FMultiPatchTexture only calls a virtual function instead of doing any
+  type checks of the patch itself.
+- Cleaned up the constant definitions in doomdata.h.
+- Moved the TEXTUREx structures from doomdata.h to multipatchtexture.cpp
+  because they are used only in this one file.
+- Removed some more typedefs from r_defs.h and doomdata.h
+- Moved local polyobject data definitions from p_local.h to po_man.cpp.
+- Renamed player_s to player_t globally to get rid of the duplicate names 
+  for this class.
+  
 May 31, 2008
 - Added coordinate range checking to DCanvas::ParseDrawTextureTags() to avoid
   potential crashes in the situation that con_scaletext is 2 and somebody

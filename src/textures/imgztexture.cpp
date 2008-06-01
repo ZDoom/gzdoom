@@ -38,38 +38,73 @@
 #include "r_data.h"
 #include "w_wad.h"
 
+
+//==========================================================================
+//
+// An IMGZ image (mostly just crosshairs)
 // [RH] Just a format I invented to avoid WinTex's palette remapping
 // when I wanted to insert some alpha maps.
+//
+//==========================================================================
 
-struct FIMGZTexture::ImageHeader
+class FIMGZTexture : public FTexture
 {
-	BYTE Magic[4];
-	WORD Width;
-	WORD Height;
-	SWORD LeftOffset;
-	SWORD TopOffset;
-	BYTE Compression;
-	BYTE Reserved[11];
+	struct ImageHeader
+	{
+		BYTE Magic[4];
+		WORD Width;
+		WORD Height;
+		SWORD LeftOffset;
+		SWORD TopOffset;
+		BYTE Compression;
+		BYTE Reserved[11];
+	};
+
+public:
+	FIMGZTexture (int lumpnum, WORD w, WORD h, SWORD l, SWORD t);
+	~FIMGZTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+	int GetSourceLump() { return SourceLump; }
+
+protected:
+
+
+	int SourceLump;
+	BYTE *Pixels;
+	Span **Spans;
+
+	void MakeTexture ();
 };
 
 
-bool FIMGZTexture::Check(FileReader & file)
-{
-	DWORD id;
-	file.Seek(0, SEEK_SET);
-	return file.Read(&id, 4) == 4 && id == MAKE_ID('I','M','G','Z');
-}
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-FTexture *FIMGZTexture::Create(FileReader & file, int lumpnum)
+FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 {
-	DWORD magic;
+	DWORD magic = 0;
 	WORD w, h;
 	SWORD l, t;
 
 	file.Seek(0, SEEK_SET);
-	file >> magic >> w >> h >> l >> t;
+	if (file.Read(&magic, 4) != 4) return NULL;
+	if (magic != MAKE_ID('I','M','G','Z')) return NULL;
+	file >> w >> h >> l >> t;
 	return new FIMGZTexture(lumpnum, w, h, l, t);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FIMGZTexture::FIMGZTexture (int lumpnum, WORD w, WORD h, SWORD l, SWORD t)
 	: SourceLump(lumpnum), Pixels(0), Spans(0)
@@ -83,6 +118,12 @@ FIMGZTexture::FIMGZTexture (int lumpnum, WORD w, WORD h, SWORD l, SWORD t)
 	CalcBitSize ();
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FIMGZTexture::~FIMGZTexture ()
 {
 	Unload ();
@@ -93,6 +134,12 @@ FIMGZTexture::~FIMGZTexture ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FIMGZTexture::Unload ()
 {
 	if (Pixels != NULL)
@@ -101,6 +148,12 @@ void FIMGZTexture::Unload ()
 		Pixels = NULL;
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FIMGZTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -130,6 +183,12 @@ const BYTE *FIMGZTexture::GetColumn (unsigned int column, const Span **spans_out
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FIMGZTexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -138,6 +197,12 @@ const BYTE *FIMGZTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FIMGZTexture::MakeTexture ()
 {

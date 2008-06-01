@@ -105,3 +105,8 @@ bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buf
 // image data into the provided buffer. Returns true on success.
 bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitch,
 				 BYTE bitdepth, BYTE colortype, BYTE interlace, unsigned int idatlen);
+
+
+class FTexture;
+
+FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename);

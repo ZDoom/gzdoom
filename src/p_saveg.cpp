@@ -459,7 +459,7 @@ void P_SerializeSounds (FArchive &arc)
 void P_SerializePolyobjs (FArchive &arc)
 {
 	int i;
-	polyobj_t *po;
+	FPolyObj *po;
 
 	if (arc.IsStoring ())
 	{

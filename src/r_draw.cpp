@@ -153,6 +153,8 @@ const FRenderStyle LegacyRenderStyles[STYLE_Count] =
 /* STYLE_TranslucentStencil */{{ STYLEOP_Add,		STYLEALPHA_Src,		STYLEALPHA_InvSrc,	STYLEF_ColorIsFixed }},
 };
 
+EXTERN_CVAR (Int, r_columnmethod)
+
 /************************************/
 /*									*/
 /* Palettized drawers (C versions)	*/

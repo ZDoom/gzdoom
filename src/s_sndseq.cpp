@@ -115,7 +115,7 @@ class DSeqPolyNode : public DSeqNode
 {
 	DECLARE_CLASS (DSeqPolyNode, DSeqNode)
 public:
-	DSeqPolyNode (polyobj_t *poly, int sequence, int modenum);
+	DSeqPolyNode (FPolyObj *poly, int sequence, int modenum);
 	void Destroy ();
 	void Serialize (FArchive &arc);
 	void MakeSound (int loop) { S_SoundID (&m_Poly->startSpot[0], CHAN_BODY|loop, m_CurrentSoundID, clamp(m_Volume, 0.f, 1.f), m_Atten); }
@@ -124,7 +124,7 @@ public:
 	DSeqNode *SpawnChild (int seqnum) { return SN_StartSequence (m_Poly, seqnum, SEQ_NOTRANS, m_ModeNum, true); }
 private:
 	DSeqPolyNode () {}
-	polyobj_t *m_Poly;
+	FPolyObj *m_Poly;
 };
 
 class DSeqSectorNode : public DSeqNode
@@ -747,7 +747,7 @@ DSeqActorNode::DSeqActorNode (AActor *actor, int sequence, int modenum)
 {
 }
 
-DSeqPolyNode::DSeqPolyNode (polyobj_t *poly, int sequence, int modenum)
+DSeqPolyNode::DSeqPolyNode (FPolyObj *poly, int sequence, int modenum)
 	: DSeqNode (sequence, modenum),
 	  m_Poly (poly)
 {
@@ -815,7 +815,7 @@ DSeqNode *SN_StartSequence (sector_t *sector, int sequence, seqtype_t type, int 
 	return NULL;
 }
 
-DSeqNode *SN_StartSequence (polyobj_t *poly, int sequence, seqtype_t type, int modenum, bool nostop)
+DSeqNode *SN_StartSequence (FPolyObj *poly, int sequence, seqtype_t type, int modenum, bool nostop)
 {
 	if (!nostop)
 	{
@@ -864,7 +864,7 @@ DSeqNode *SN_StartSequence (sector_t *sec, const char *seqname, int modenum, boo
 	return NULL;
 }
 
-DSeqNode *SN_StartSequence (polyobj_t *poly, const char *seqname, int modenum)
+DSeqNode *SN_StartSequence (FPolyObj *poly, const char *seqname, int modenum)
 {
 	int seqnum = FindSequence (seqname);
 	if (seqnum >= 0)
@@ -915,7 +915,7 @@ void SN_StopSequence (sector_t *sector)
 	SN_DoStop (sector);
 }
 
-void SN_StopSequence (polyobj_t *poly)
+void SN_StopSequence (FPolyObj *poly)
 {
 	SN_DoStop (poly);
 }

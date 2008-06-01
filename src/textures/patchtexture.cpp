@@ -40,7 +40,42 @@
 #include "templates.h"
 
 
-bool FPatchTexture::Check(FileReader & file)
+//==========================================================================
+//
+// A texture that is just a single Doom format patch
+//
+//==========================================================================
+
+class FPatchTexture : public FTexture
+{
+public:
+	FPatchTexture (int lumpnum, patch_t *header);
+	~FPatchTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+	int GetSourceLump() { return SourceLump; }
+
+protected:
+	int SourceLump;
+	BYTE *Pixels;
+	Span **Spans;
+	bool hackflag;
+
+
+	virtual void MakeTexture ();
+	void HackHack (int newheight);
+};
+
+//==========================================================================
+//
+// Checks if the currently open lump can be a Doom patch
+//
+//==========================================================================
+
+static bool CheckIfPatch(FileReader & file)
 {
 	if (file.GetLength() < 13) return false;	// minimum length of a valid Doom patch
 	
@@ -82,27 +117,45 @@ bool FPatchTexture::Check(FileReader & file)
 	return false;
 }
 
-FTexture *FPatchTexture::Create(FileReader & file, int lumpnum)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
 {
 	patch_t header;
 
+	if (!CheckIfPatch(file)) return NULL;
 	file.Seek(0, SEEK_SET);
 	file >> header.width >> header.height >> header.leftoffset >> header.topoffset;
 	return new FPatchTexture(lumpnum, &header);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FPatchTexture::FPatchTexture (int lumpnum, patch_t * header)
 : SourceLump(lumpnum), Pixels(0), Spans(0), hackflag(false)
 {
 	Wads.GetLumpName (Name, lumpnum);
 	Name[8] = 0;
-	bIsPatch = true;
 	Width = header->width;
 	Height = header->height;
 	LeftOffset = header->leftoffset;
 	TopOffset = header->topoffset;
 	CalcBitSize ();
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FPatchTexture::~FPatchTexture ()
 {
@@ -114,6 +167,12 @@ FPatchTexture::~FPatchTexture ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FPatchTexture::Unload ()
 {
 	if (Pixels != NULL)
@@ -123,6 +182,12 @@ void FPatchTexture::Unload ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FPatchTexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -131,6 +196,12 @@ const BYTE *FPatchTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -161,6 +232,12 @@ const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_ou
 }
 
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FPatchTexture::MakeTexture ()
 {
 	BYTE *remap, remaptable[256];
@@ -174,6 +251,7 @@ void FPatchTexture::MakeTexture ()
 	maxcol = (const column_t *)((const BYTE *)patch + Wads.LumpLength (SourceLump) - 3);
 
 	// Check for badly-sized patches
+#if 0	// Such textures won't be created so there's no need to check here
 	if (LittleShort(patch->width) <= 0 || LittleShort(patch->height) <= 0)
 	{
 		lump = Wads.ReadLump ("-BADPATC");
@@ -186,6 +264,7 @@ void FPatchTexture::MakeTexture ()
 		patch = (const patch_t *)lump.GetMem();
 		Printf (PRINT_BOLD, "Patch %s is too big.\n", Name);
 	}
+#endif
 
 	if (bNoRemap0)
 	{
@@ -271,19 +350,52 @@ void FPatchTexture::MakeTexture ()
 }
 
 
+//==========================================================================
+//
 // Fix for certain special patches on single-patch textures.
+//
+//==========================================================================
+
 void FPatchTexture::HackHack (int newheight)
 {
-	Unload ();
-	if (Spans != NULL)
+	// Check if this patch is likely to be a problem.
+	// It must be 256 pixels tall, and all its columns must have exactly
+	// one post, where each post has a supposed length of 0.
+	FMemLump lump = Wads.ReadLump (SourceLump);
+	const patch_t *realpatch = (patch_t *)lump.GetMem();
+	const DWORD *cofs = realpatch->columnofs;
+	int x, x2 = LittleShort(realpatch->width);
+
+	if (LittleShort(realpatch->height) == 256)
 	{
-		FreeSpans (Spans);
+		for (x = 0; x < x2; ++x)
+		{
+			const column_t *col = (column_t*)((BYTE*)realpatch+LittleLong(cofs[x]));
+			if (col->topdelta != 0 || col->length != 0)
+			{
+				break;	// It's not bad!
+			}
+			col = (column_t *)((BYTE *)col + 256 + 4);
+			if (col->topdelta != 0xFF)
+			{
+				break;	// More than one post in a column!
+			}
+		}
+		if (x == x2)
+		{ 
+			// If all the columns were checked, it needs fixing.
+			Unload ();
+			if (Spans != NULL)
+			{
+				FreeSpans (Spans);
+			}
+
+			Height = newheight;
+			LeftOffset = 0;
+			TopOffset = 0;
+
+			hackflag = true;
+			bMasked = false;	// Hacked textures don't have transparent parts.
+		}
 	}
-
-	Height = newheight;
-	LeftOffset = 0;
-	TopOffset = 0;
-
-	hackflag = true;
-	bMasked = false;	// Hacked textures don't have transparent parts.
 }

@@ -41,15 +41,54 @@
 #include "m_png.h"
 #include "bitmap.h"
 
+//==========================================================================
+//
+// A PNG texture
+//
+//==========================================================================
 
-bool FPNGTexture::Check(FileReader & file)
+class FPNGTexture : public FTexture
 {
-	DWORD id;
-	file.Seek(0, SEEK_SET);
-	return file.Read(&id, 4) == 4 && id == MAKE_ID(137,'P','N','G');
-}
+public:
+	FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height, BYTE bitdepth, BYTE colortype, BYTE interlace);
+	~FPNGTexture ();
 
-FTexture *FPNGTexture::Create(FileReader & data, int lumpnum)
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	FTextureFormat GetFormat ();
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
+	bool UseBasePalette();
+	int GetSourceLump() { return SourceLump; }
+
+protected:
+
+	int SourceLump;
+	FString SourceFile;
+	BYTE *Pixels;
+	Span **Spans;
+
+	BYTE BitDepth;
+	BYTE ColorType;
+	BYTE Interlace;
+
+	BYTE *PaletteMap;
+	int PaletteSize;
+	DWORD StartOfIDAT;
+
+	void MakeTexture ();
+
+	friend class FTexture;
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture *PNGTexture_TryCreate(FileReader & data, int lumpnum)
 {
 	union
 	{
@@ -64,12 +103,15 @@ FTexture *FPNGTexture::Create(FileReader & data, int lumpnum)
 	// This is most likely a PNG, but make sure. (Note that if the
 	// first 4 bytes match, but later bytes don't, we assume it's
 	// a corrupt PNG.)
-	data.Seek(4, SEEK_SET);
-	data.Read (first4bytes.b, 4);
+
+	data.Seek(0, SEEK_SET);
+	if (data.Read (first4bytes.b, 4) != 4) return NULL;
+	if (first4bytes.dw != MAKE_ID(137,'P','N','G'))	return NULL;
+	if (data.Read (first4bytes.b, 4) != 4) return NULL;
 	if (first4bytes.dw != MAKE_ID(13,10,26,10))		return NULL;
-	data.Read (first4bytes.b, 4);
+	if (data.Read (first4bytes.b, 4) != 4) return NULL;
 	if (first4bytes.dw != MAKE_ID(0,0,0,13))		return NULL;
-	data.Read (first4bytes.b, 4);
+	if (data.Read (first4bytes.b, 4) != 4) return NULL;
 	if (first4bytes.dw != MAKE_ID('I','H','D','R'))	return NULL;
 
 	// The PNG looks valid so far. Check the IHDR to make sure it's a
@@ -106,7 +148,13 @@ FTexture *FPNGTexture::Create(FileReader & data, int lumpnum)
 		bitdepth, colortype, interlace);
 }
 
-FTexture *FPNGTexture::CreateFromFile(PNGHandle *png, const FString &filename)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 {
 	DWORD width, height;
 	BYTE bitdepth, colortype, compression, filter, interlace;
@@ -136,6 +184,12 @@ FTexture *FPNGTexture::CreateFromFile(PNGHandle *png, const FString &filename)
 	return new FPNGTexture (*png->File, -1, filename, BigLong((int)width), BigLong((int)height),
 		bitdepth, colortype, interlace);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height,
 						  BYTE depth, BYTE colortype, BYTE interlace)
@@ -276,6 +330,12 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FPNGTexture::~FPNGTexture ()
 {
 	Unload ();
@@ -291,6 +351,12 @@ FPNGTexture::~FPNGTexture ()
 	}
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FPNGTexture::Unload ()
 {
 	if (Pixels != NULL)
@@ -299,6 +365,12 @@ void FPNGTexture::Unload ()
 		Pixels = NULL;
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FTextureFormat FPNGTexture::GetFormat()
 {
@@ -314,6 +386,12 @@ FTextureFormat FPNGTexture::GetFormat()
 	return TEX_RGB;
 #endif
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 const BYTE *FPNGTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
@@ -343,6 +421,12 @@ const BYTE *FPNGTexture::GetColumn (unsigned int column, const Span **spans_out)
 	return Pixels + column*Height;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 const BYTE *FPNGTexture::GetPixels ()
 {
 	if (Pixels == NULL)
@@ -351,6 +435,12 @@ const BYTE *FPNGTexture::GetPixels ()
 	}
 	return Pixels;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void FPNGTexture::MakeTexture ()
 {

@@ -47,8 +47,7 @@ typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
 
 struct TexCreateInfo
 {
-	CheckFunc Check;
-	CreateFunc Create;
+	CreateFunc TryCreate;
 	int usetype;
 };
 
@@ -62,22 +61,33 @@ void FTexture::InitGrayMap()
 	}
 }
 
+FTexture *IMGZTexture_TryCreate(FileReader &, int lumpnum);
+FTexture *PNGTexture_TryCreate(FileReader &, int lumpnum);
+FTexture *JPEGTexture_TryCreate(FileReader &, int lumpnum);
+FTexture *DDSTexture_TryCreate(FileReader &, int lumpnum);
+FTexture *PCXTexture_TryCreate(FileReader &, int lumpnum);
+FTexture *TGATexture_TryCreate(FileReader &, int lumpnum);
+FTexture *RawPageTexture_TryCreate(FileReader &, int lumpnum);
+FTexture *FlatTexture_TryCreate(FileReader &, int lumpnum);
+FTexture *PatchTexture_TryCreate(FileReader &, int lumpnum);
+FTexture *AutomapTexture_TryCreate(FileReader &, int lumpnum);
+
 
 // Examines the lump contents to decide what type of texture to create,
 // and creates the texture.
 FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 {
 	static TexCreateInfo CreateInfo[]={
-		{ FIMGZTexture::Check,		FIMGZTexture::Create,		TEX_Any },
-		{ FPNGTexture::Check,		FPNGTexture::Create,		TEX_Any },
-		{ FJPEGTexture::Check,		FJPEGTexture::Create,		TEX_Any },
-		{ FDDSTexture::Check,		FDDSTexture::Create,		TEX_Any },
-		{ FPCXTexture::Check,		FPCXTexture::Create,		TEX_Any },
-		{ FTGATexture::Check,		FTGATexture::Create,		TEX_Any },
-		{ FRawPageTexture::Check,	FRawPageTexture::Create,	TEX_MiscPatch },
-		{ FFlatTexture::Check,		FFlatTexture::Create,		TEX_Flat },
-		{ FPatchTexture::Check,		FPatchTexture::Create,		TEX_Any },
-		{ FAutomapTexture::Check,	FAutomapTexture::Create,	TEX_Autopage },
+		{ IMGZTexture_TryCreate,		TEX_Any },
+		{ PNGTexture_TryCreate,			TEX_Any },
+		{ JPEGTexture_TryCreate,		TEX_Any },
+		{ DDSTexture_TryCreate,			TEX_Any },
+		{ PCXTexture_TryCreate,			TEX_Any },
+		{ TGATexture_TryCreate,			TEX_Any },
+		{ RawPageTexture_TryCreate,		TEX_MiscPatch },
+		{ FlatTexture_TryCreate,		TEX_Flat },
+		{ PatchTexture_TryCreate,		TEX_Any },
+		{ AutomapTexture_TryCreate,		TEX_Autopage },
 	};
 
 	if (lumpnum == -1) return NULL;
@@ -86,10 +96,9 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 
 	for(size_t i = 0; i < countof(CreateInfo); i++)
 	{
-		if ((CreateInfo[i].usetype == usetype || CreateInfo[i].usetype == TEX_Any) &&
-			CreateInfo[i].Check(data))
+		if ((CreateInfo[i].usetype == usetype || CreateInfo[i].usetype == TEX_Any))
 		{
-			FTexture * tex = CreateInfo[i].Create(data, lumpnum);
+			FTexture * tex = CreateInfo[i].TryCreate(data, lumpnum);
 			if (tex != NULL) 
 			{
 				tex->UseType = usetype;
@@ -121,7 +130,7 @@ FTexture::FTexture ()
 : LeftOffset(0), TopOffset(0),
   WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
-  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bIsPatch(false), bComplex(false),
+  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false),
   Rotations(0xFFFF), Width(0), Height(0), WidthMask(0), Native(NULL)
 {
 	*Name = 0;
@@ -171,6 +180,10 @@ void FTexture::CalcBitSize ()
 	{ }
 
 	HeightBits = i;
+}
+
+void FTexture::HackHack (int newheight)
+{
 }
 
 FTexture::Span **FTexture::CreateSpans (const BYTE *pixels) const

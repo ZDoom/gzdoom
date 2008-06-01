@@ -1,4 +1,8 @@
 May 31, 2008
+- Added coordinate range checking to DCanvas::ParseDrawTextureTags() to avoid
+  potential crashes in the situation that con_scaletext is 2 and somebody
+  uses a hud message as if a hud size was specified, but forgot to actually
+  set the hud size.
 - Consolidated the mug shot code shared by DSBarInfo and DDoomStatusBar
   into a single place.
 - Fixed: Setting an invalid mug shot state crashed the game.

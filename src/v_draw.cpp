@@ -298,6 +298,12 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, int x, int y, DWORD tag, va_l
 		return false;
 	}
 
+	// Do some sanity checks on the coordinates.
+	if (x < -16383 || x > 16383 || y < -16383 || y > 16383)
+	{
+		return false;
+	}
+
 	virtBottom = false;
 
 	parms->texwidth = img->GetScaledWidth();

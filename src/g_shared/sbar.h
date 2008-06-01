@@ -52,6 +52,8 @@ enum EHudState
 
 class AWeapon;
 
+// HUD Message base object --------------------------------------------------
+
 class DHUDMessage : public DObject
 {
 	DECLARE_CLASS (DHUDMessage, DObject)
@@ -92,6 +94,8 @@ private:
 	friend class DBaseStatusBar;
 };
 
+// HUD Message; appear instantly, then fade out type ------------------------
+
 class DHUDMessageFadeOut : public DHUDMessage
 {
 	DECLARE_CLASS (DHUDMessageFadeOut, DHUDMessage)
@@ -109,6 +113,8 @@ protected:
 	DHUDMessageFadeOut() {}
 };
 
+// HUD Message; fade in, then fade out type ---------------------------------
+
 class DHUDMessageFadeInOut : public DHUDMessageFadeOut
 {
 	DECLARE_CLASS (DHUDMessageFadeInOut, DHUDMessageFadeOut)
@@ -125,6 +131,8 @@ protected:
 
 	DHUDMessageFadeInOut() {}
 };
+
+// HUD Message; type on, then fade out type ---------------------------------
 
 class DHUDMessageTypeOnFadeOut : public DHUDMessageFadeOut
 {
@@ -146,6 +154,73 @@ protected:
 
 	DHUDMessageTypeOnFadeOut() {}
 };
+
+// Mug shots ----------------------------------------------------------------
+
+struct FMugShotFrame
+{
+	TArray<FString> Graphic;
+	int Delay;
+
+	FMugShotFrame();
+	~FMugShotFrame();
+	FTexture *GetTexture(const char *default_face, FPlayerSkin *skin, int random, int level=0,
+		int direction=0, bool usesLevels=false, bool health2=false, bool healthspecial=false,
+		bool directional=false);
+};
+
+struct FMugShotState
+{
+	BYTE bUsesLevels:1;
+	BYTE bHealth2:1;		// Health level is the 2nd character from the end.
+	BYTE bHealthSpecial:1;	// Like health2 only the 2nd frame gets the normal health type.
+	BYTE bDirectional:1;	// Faces direction of damage.
+	BYTE bFinished:1;
+
+	unsigned int Position;
+	int Time;
+	int Random;
+	FName State;
+	TArray<FMugShotFrame> Frames;
+
+	FMugShotState(FName name);
+	~FMugShotState();
+	void Tick();
+	void Reset();
+	FMugShotFrame &GetCurrentFrame() { return Frames[Position]; }
+	FTexture *GetCurrentFrameTexture(const char *default_face, FPlayerSkin *skin, int level=0, int direction=0)
+	{
+		return GetCurrentFrame().GetTexture(default_face, skin, Random, level, direction, bUsesLevels, bHealth2, bHealthSpecial, bDirectional);
+	}
+private:
+	FMugShotState();
+};
+
+class player_s;
+struct FMugShot
+{
+	FMugShot();
+	void Tick(player_s *player);
+	bool SetState(const char *state_name, bool wait_till_done=false);
+	int UpdateState(player_s *player, bool xdeath, bool animated_god_mode);
+	FTexture *GetFace(player_s *player, const char *default_face, int accuracy, bool xdeath, bool animated_god_mode);
+
+	FMugShotState *CurrentState;
+	int RampageTimer;
+	int LastDamageAngle;
+	int FaceHealth;
+	bool bEvilGrin;
+	bool bDamageFaceActive;
+	bool bNormal;
+	bool bOuchActive;
+};
+
+extern TArray<FMugShotState> MugShotStates;
+
+FMugShotState *FindMugShotState(FName state);
+int FindMugShotStateIndex(FName state);
+
+// Base Status Bar ----------------------------------------------------------
 
 class FTexture;
 class AAmmo;
@@ -218,7 +293,7 @@ public:
 	virtual void ShowPop (int popnum);
 	virtual void ReceivedWeapon (AWeapon *weapon);
 	virtual bool MustDrawLog(EHudState state);
-	virtual void SetMugShotState (const char* stateName, bool waitTillDone=false) {}
+	virtual void SetMugShotState (const char *state_name, bool wait_till_done=false);
 	void DrawLog();
 
 protected:
@@ -285,8 +360,10 @@ private:
 
 extern DBaseStatusBar *StatusBar;
 
-DBaseStatusBar *CreateDoomStatusBar ();
-DBaseStatusBar *CreateHereticStatusBar ();
-DBaseStatusBar *CreateHexenStatusBar ();
-DBaseStatusBar *CreateStrifeStatusBar ();
-DBaseStatusBar *CreateCustomStatusBar ();
+// Status bar factories -----------------------------------------------------
+
+DBaseStatusBar *CreateDoomStatusBar();
+DBaseStatusBar *CreateHereticStatusBar();
+DBaseStatusBar *CreateHexenStatusBar();
+DBaseStatusBar *CreateStrifeStatusBar();
+DBaseStatusBar *CreateCustomStatusBar();

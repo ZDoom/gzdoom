@@ -1331,6 +1331,10 @@ bool DBaseStatusBar::MustDrawLog(EHudState)
 	return true;
 }
 
+void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone)
+{
+}
+
 //---------------------------------------------------------------------------
 //
 // DrawTopStuff

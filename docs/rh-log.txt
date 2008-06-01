@@ -1,3 +1,9 @@
+May 31, 2008
+- Consolidated the mug shot code shared by DSBarInfo and DDoomStatusBar
+  into a single place.
+- Fixed: Setting an invalid mug shot state crashed the game.
+- Fixed my attempts to be clever with strings yesterday.
+
 May 30, 2008
 - If an actor's current target temporarily goes unshootable, its threshold
   is now reset to 0, so it will more readily switch back to it.

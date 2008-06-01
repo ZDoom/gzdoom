@@ -133,7 +133,7 @@ struct SBarInfo
 	int GetGameType() { return gameType; }
 	void ParseSBarInfo(int lump);
 	void ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block);
-	void ParseMugShotBlock(FScanner &sc, MugShotState &state);
+	void ParseMugShotBlock(FScanner &sc, FMugShotState &state);
 	void getCoordinates(FScanner &sc, SBarInfoCommand &cmd); //retrieves the next two arguments as x and y.
 	int getSignedInteger(FScanner &sc); //returns a signed integer.
 	int newImage(const char* patchname);
@@ -147,47 +147,6 @@ struct SBarInfo
 
 extern SBarInfo *SBarInfoScript;
 
-//Mug Shot scripting structs.
-struct MugShotState;
-
-struct MugShotFrame
-{
-	TArray<FString> graphic;
-	int delay;
-
-	MugShotFrame();
-	~MugShotFrame();
-	FTexture *getTexture(FString &defaultFace, FPlayerSkin *skn, int random, int level=0, int direction=0, bool usesLevels=false, bool health2=false, bool healthspecial=false, bool directional=false);
-};
-
-
-struct MugShotState
-{
-	bool usesLevels;
-	bool health2; //health level is the 2nd character from the end.
-	bool healthspecial; //like health2 only the 2nd frame gets the normal health type.
-	bool directional; //faces direction of damage.
-
-	unsigned int position;
-	int time;
-	int random;
-	bool finished;
-	FName state;
-	TArray<MugShotFrame> frames;
-
-	MugShotState();
-	MugShotState(FString name);
-	~MugShotState();
-	void tick();
-	void reset();
-	MugShotFrame getCurrentFrame() { return frames[position]; }
-	FTexture *getCurrentFrameTexture(FString &defaultFace, FPlayerSkin *skn, int level=0, int direction=0) { return getCurrentFrame().getTexture(defaultFace, skn, random, level, direction, usesLevels, health2, healthspecial, directional); }
-};
-
-extern TArray<MugShotState> MugShotStates;
-
-const MugShotState *FindMugShotState(FString state);
-int FindMugShotStateIndex(FName state);
 
 // Enums used between the parser and the display
 enum //statusbar flags
@@ -386,7 +345,7 @@ private:
 	void DrawGraphic(FTexture* texture, int x, int y, int xOffset, int yOffset, int alpha, bool translate=false, bool dim=false, bool center=false);
 	void DrawString(const char* str, int x, int y, int xOffset, int yOffset, int alpha, EColorRange translation, int spacing=0);
 	void DrawNumber(int num, int len, int x, int y, int xOffset, int yOffset, int alpha, EColorRange translation, int spacing=0, bool fillzeros=false);
-	void DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha);
+	void DrawFace(const char *defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha);
 	int updateState(bool xdth, bool animatedgodmode);
 	void DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool alwaysshow,
 		int counterx, int countery, EColorRange translation, bool drawArtiboxes, bool noArrows, bool alwaysshowcounter);
@@ -397,14 +356,6 @@ private:
 	FImageCollection Images;
 	FPlayerSkin *oldSkin;
 	FFont *drawingFont;
-	FString lastPrefix;
-	MugShotState *currentState;
-	bool weaponGrin;
-	bool damageFaceActive;
-	bool mugshotNormal;
-	bool ouchActive;
-	int lastDamageAngle;
-	int rampageTimer;
 	int oldHealth;
 	int oldArmor;
 	int mugshotHealth;
@@ -417,6 +368,7 @@ private:
 	FBarShader shader_horz_reverse;
 	FBarShader shader_vert_normal;
 	FBarShader shader_vert_reverse;
+	FMugShot MugShot;
 };
 
 #endif //__SBarInfo_SBAR_H__

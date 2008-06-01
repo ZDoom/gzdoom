@@ -74,83 +74,6 @@ enum
 	imgINVRTGEM2,
 };
 
-
-// Custom Mug Shot Stuff (Find mug shot state functions are with the parser).
-MugShotFrame::MugShotFrame()
-{
-}
-
-MugShotFrame::~MugShotFrame()
-{
-	graphic.Clear();
-}
-
-//Assemble a graphic name with the specified prefix and return the FTexture.
-FTexture *MugShotFrame::getTexture(FString &defaultFace, FPlayerSkin *skin, int random, int level, int direction, bool usesLevels, bool health2, bool healthspecial, bool directional)
-{
-	int index = !directional ? random % graphic.Size() : direction;
-	if(index > (signed int) (graphic.Size()-1))
-		index = graphic.Size()-1;
-	FString sprite(skin->face[0] != 0 ? skin->face : &defaultFace[0], 3);
-	sprite += graphic[index];
-	if(usesLevels) //change the last character to the level
-	{
-		if(!health2 && (!healthspecial || index == 1))
-			sprite.LockBuffer()[2 + graphic[index].Len()] += level;
-		else
-			sprite.LockBuffer()[1 + graphic[index].Len()] += level;
-		sprite.UnlockBuffer();
-	}
-	return TexMan[TexMan.CheckForTexture(sprite, 0, true)];
-}
-
-MugShotState::MugShotState()
-{
-}
-MugShotState::MugShotState(FString name)
-{
-	name.ToLower();
-	state = FName(name);
-	usesLevels = false;
-	health2 = false;
-	healthspecial = false;
-	directional = false;
-	random = M_Random();
-}
-
-MugShotState::~MugShotState()
-{
-	frames.Clear();
-}
-
-void MugShotState::tick()
-{
-	if(time == -1) //When the delay is negative 1 stay on this frame indefinitely
-		return;
-	if(time != 0)
-	{
-		time--;
-	}
-	else if(position != frames.Size()-1)
-	{
-		position++;
-		time = frames[position].delay;
-		random = M_Random();
-	}
-	else
-	{
-		finished = true;
-	}
-}
-
-void MugShotState::reset()
-{
-	time = frames[0].delay;
-	position = 0;
-	finished = false;
-	random = M_Random();
-}
-
 //Used for shading
 FBarShader::FBarShader(bool vertical, bool reverse) //make an alpha map
 {
@@ -258,19 +181,10 @@ DSBarInfo::DSBarInfo () : DBaseStatusBar (SBarInfoScript->height),
 	invBarOffset = SBarInfoScript->Images.Size();
 	Images.Init(&patchnames[0], patchnames.Size());
 	drawingFont = V_GetFont("ConFont");
-	rampageTimer = 0;
 	oldHealth = 0;
 	oldArmor = 0;
-	mugshotHealth = -1;
-	lastPrefix = "";
-	weaponGrin = false;
-	damageFaceActive = false;
-	mugshotNormal = true;
-	ouchActive = false;
-	lastDamageAngle = 1;
 	chainWiggle = 0;
 	artiflash = 4;
-	currentState = NULL;
 	currentPopup = POP_None;
 	pendingPopup = POP_None;
 }
@@ -347,9 +261,13 @@ void DSBarInfo::NewGame ()
 
 void DSBarInfo::AttachToPlayer (player_t *player)
 {
-	player_t *oldplayer = CPlayer;
-	currentState = NULL;
 	DBaseStatusBar::AttachToPlayer(player);
+	MugShot.CurrentState = NULL;
+}
+
+void DSBarInfo::SetMugShotState (const char *state_name, bool wait_till_done)
+{
+	MugShot.SetState(state_name, wait_till_done);
 }
 
 void DSBarInfo::Tick ()
@@ -400,29 +318,7 @@ void DSBarInfo::Tick ()
 		artiflash--;
 	}
 
-	//Do some stuff related to the mug shot that has to be done at 35fps
-	if(currentState != NULL)
-	{
-		currentState->tick();
-		if(currentState->finished)
-		{
-			ouchActive = false;
-			mugshotNormal = true;
-			currentState = NULL;
-		}
-	}
-	if((CPlayer->cmd.ucmd.buttons & (BT_ATTACK|BT_ALTATTACK)) && !(CPlayer->cheats & (CF_FROZEN | CF_TOTALLYFROZEN)))
-	{
-		if(rampageTimer != ST_RAMPAGETIME)
-		{
-			rampageTimer++;
-		}
-	}
-	else
-	{
-		rampageTimer = 0;
-	}
-	mugshotHealth = CPlayer->health;
+	MugShot.Tick(CPlayer);
 	if(currentPopup != POP_None)
 	{
 		SBarInfoScript->popups[currentPopup].tick();
@@ -435,9 +331,9 @@ void DSBarInfo::Tick ()
 	}
 }
 
-void DSBarInfo::ReceivedWeapon (AWeapon *weapon)
+void DSBarInfo::ReceivedWeapon(AWeapon *weapon)
 {
-	weaponGrin = true;
+	MugShot.bEvilGrin = true;
 }
 
 void DSBarInfo::FlashItem(const PClass *itemtype)
@@ -462,24 +358,6 @@ void DSBarInfo::ShowPop(int popnum)
 		pendingPopup = POP_None;
 		if(currentPopup != POP_None)
 			SBarInfoScript->popups[currentPopup].open();
-	}
-}
-
-//Public so it can be called by ACS
-//Sets the mug shot state and resets it if it is not the state we are already on.
-//waitTillDone is basically a priority variable when just to true the state won't change unless the previous state is finished.
-void DSBarInfo::SetMugShotState(const char* stateName, bool waitTillDone)
-{
-	mugshotNormal = false;
-	ouchActive = false;
-	MugShotState *state = (MugShotState *) FindMugShotState(stateName);
-	if(state != currentState)
-	{
-		if(!waitTillDone || currentState == NULL || currentState->finished)
-		{
-			currentState = state;
-			state->reset();
-		}
 	}
 }
 
@@ -1349,160 +1227,19 @@ void DSBarInfo::DrawNumber(int num, int len, int x, int y, int xOffset, int yOff
 	}
 	if(SBarInfoScript->spacingCharacter == '\0')
 		x -= int(drawingFont->StringWidth(value)+(spacing * value.Len()));
-	else //monospaced so just multiplay the character size
+	else //monospaced, so just multiplay the character size
 		x -= int((drawingFont->GetCharWidth((int) SBarInfoScript->spacingCharacter) + spacing) * value.Len());
 	DrawString(value, x, y, xOffset, yOffset, alpha, translation, spacing);
 }
 
 //draws the mug shot
-void DSBarInfo::DrawFace(FString &defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha)
+void DSBarInfo::DrawFace(const char *defaultFace, int accuracy, bool xdth, bool animatedgodmode, int x, int y, int xOffset, int yOffset, int alpha)
 {
-	int angle = updateState(xdth, animatedgodmode);
-	int level = 0;
-	while (CPlayer->health < (accuracy-level-1)*(CPlayer->mo->GetMaxHealth()/accuracy))
+	FTexture *face = MugShot.GetFace(CPlayer, defaultFace, accuracy, xdth, animatedgodmode);
+	if (face != NULL)
 	{
-		level++;
+		DrawGraphic(face, x, y, xOffset, yOffset, alpha);
 	}
-	if(currentState != NULL)
-	{
-		FPlayerSkin *skin = &skins[CPlayer->morphTics ? CPlayer->MorphedPlayerClass : CPlayer->userinfo.skin];
-		FTexture *face = currentState->getCurrentFrameTexture(defaultFace, skin, level, angle);
-		if (face != NULL)
-			DrawGraphic(face, x, y, xOffset, yOffset, alpha);
-	}
-}
-
-int DSBarInfo::updateState(bool xdth, bool animatedgodmode)
-{
-	int 		i;
-	angle_t 	badguyangle;
-	angle_t 	diffang;
-
-	if(CPlayer->health > 0)
-	{
-		if(weaponGrin)
-		{
-			if(currentState == NULL)
-				weaponGrin = false;
-			if(CPlayer->bonuscount)
-			{
-				SetMugShotState("grin", false);
-				return 0;
-			}
-		}
-
-		if (CPlayer->damagecount)
-		{
-			int damageAngle = 1;
-			if(CPlayer->attacker && CPlayer->attacker != CPlayer->mo)
-			{
-				if(CPlayer->mo != NULL)
-				{
-					//The next 12 lines is from the Doom statusbar code.
-					badguyangle = R_PointToAngle2(CPlayer->mo->x, CPlayer->mo->y, CPlayer->attacker->x, CPlayer->attacker->y);
-					if(badguyangle > CPlayer->mo->angle)
-					{
-						// whether right or left
-						diffang = badguyangle - CPlayer->mo->angle;
-						i = diffang > ANG180;
-					}
-					else
-					{
-						// whether left or right
-						diffang = CPlayer->mo->angle - badguyangle;
-						i = diffang <= ANG180;
-					} // confusing, aint it?
-					if(i && diffang >= ANG45)
-					{
-						damageAngle = 0;
-					}
-					else if(!i && diffang >= ANG45)
-					{
-						damageAngle = 2;
-					}
-				}
-			}
-			bool setOuch = false;
-			const char *stateName;
-			if ((mugshotHealth != -1 && CPlayer->health - mugshotHealth > 20) || ouchActive)
-			{
-				setOuch = true;
-				stateName = "ouch.";
-			}
-			else
-				stateName = "pain.";
-			FString fullStateName;
-			fullStateName << stateName << CPlayer->LastDamageType;
-			if(FindMugShotState(fullStateName) != NULL)
-				SetMugShotState(fullStateName);
-			else
-				SetMugShotState(stateName);
-			damageFaceActive = !(currentState == NULL);
-			lastDamageAngle = damageAngle;
-			ouchActive = setOuch;
-			return damageAngle;
-		}
-		if(damageFaceActive)
-		{
-			if(currentState == NULL)
-				damageFaceActive = false;
-			else
-			{
-				bool setOuch = false;
-				const char *stateName;
-				if ((mugshotHealth != -1 && CPlayer->health - mugshotHealth > 20) || ouchActive)
-				{
-					setOuch = true;
-					stateName = "ouch.";
-				}
-				else
-					stateName = "pain.";
-				FString fullStateName;
-				fullStateName << stateName << CPlayer->LastDamageType;
-				if(FindMugShotState(fullStateName) != NULL)
-					SetMugShotState(fullStateName);
-				else
-					SetMugShotState(stateName);
-				ouchActive = setOuch;
-				return lastDamageAngle;
-			}
-		}
-
-		if(rampageTimer == ST_RAMPAGETIME)
-		{
-			SetMugShotState("rampage", !mugshotNormal);
-			return 0;
-		}
-
-		if(mugshotNormal)
-		{
-			if((CPlayer->cheats & CF_GODMODE) || (CPlayer->mo != NULL && CPlayer->mo->flags2 & MF2_INVULNERABLE))
-			{
-				if(animatedgodmode)
-					SetMugShotState("godanimated");
-				else
-					SetMugShotState("god");
-			}
-			else
-				SetMugShotState("normal");
-			mugshotNormal = true; //SetMugShotState sets this to false
-		}
-	}
-	else
-	{
-		const char *stateName;
-		if(!xdth || !(CPlayer->cheats & CF_EXTREMELYDEAD))
-			stateName = "death.";
-		else
-			stateName = "xdeath.";
-		FString fullStateName;
-		fullStateName << stateName << CPlayer->LastDamageType;
-		if(FindMugShotState(fullStateName) != NULL)
-			SetMugShotState(fullStateName);
-		else
-			SetMugShotState(stateName);
-	}
-	return 0;
 }
 
 void DSBarInfo::DrawInventoryBar(int type, int num, int x, int y, int xOffset, int yOffset, int alpha, bool alwaysshow,

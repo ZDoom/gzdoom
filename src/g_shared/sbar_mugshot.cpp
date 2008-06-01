@@ -1,0 +1,473 @@
+/*
+** sbar_mugshot.cpp
+**
+** Draws customizable mugshots for the status bar.
+**
+**---------------------------------------------------------------------------
+** Copyright 2008 Braden Obrzut
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+#include "r_defs.h"
+#include "r_main.h"
+#include "m_random.h"
+#include "d_player.h"
+#include "d_event.h"
+#include "sbar.h"
+
+#define ST_RAMPAGEDELAY 		(2*TICRATE)
+#define ST_MUCHPAIN 			20
+
+TArray<FMugShotState> MugShotStates;
+
+
+//===========================================================================
+//
+// FMugShotFrame constructor
+//
+//===========================================================================
+
+FMugShotFrame::FMugShotFrame()
+{
+}
+
+//===========================================================================
+//
+// FMugShotFrame destructor
+//
+//===========================================================================
+
+FMugShotFrame::~FMugShotFrame()
+{
+}
+
+//===========================================================================
+//
+// FMugShotFrame :: GetTexture
+//
+// Assemble a graphic name with the specified prefix and return the FTexture.
+//
+//===========================================================================
+
+FTexture *FMugShotFrame::GetTexture(const char *default_face, FPlayerSkin *skin, int random, int level,
+	int direction, bool uses_levels, bool health2, bool healthspecial, bool directional)
+{
+	int index = !directional ? random % Graphic.Size() : direction;
+	if ((unsigned int)index > Graphic.Size() - 1)
+	{
+		index = Graphic.Size() - 1;
+	}
+	FString sprite(skin->face[0] != 0 ? skin->face : default_face, 3);
+	sprite += Graphic[index];
+	if (uses_levels) //change the last character to the level
+	{
+		if (!health2 && (!healthspecial || index == 1))
+		{
+			sprite.LockBuffer()[2 + Graphic[index].Len()] += level;
+		}
+		else
+		{
+			sprite.LockBuffer()[1 + Graphic[index].Len()] += level;
+		}
+		sprite.UnlockBuffer();
+	}
+	return TexMan[TexMan.CheckForTexture(sprite, 0, true)];
+}
+
+//===========================================================================
+//
+// MugShotState default constructor
+//
+//===========================================================================
+
+FMugShotState::FMugShotState()
+{
+}
+
+//===========================================================================
+//
+// MugShotState named constructor
+//
+//===========================================================================
+
+FMugShotState::FMugShotState(FName name)
+{
+	State = name;
+	bUsesLevels = false;
+	bHealth2 = false;
+	bHealthSpecial = false;
+	bDirectional = false;
+	bFinished = true;
+	Random = M_Random();
+}
+
+//===========================================================================
+//
+// MugShotState destructor
+//
+//===========================================================================
+
+FMugShotState::~FMugShotState()
+{
+}
+
+//===========================================================================
+//
+// FMugShotState :: Tick
+//
+//===========================================================================
+
+void FMugShotState::Tick()
+{
+	if (Time == -1)
+	{ //When the delay is negative 1, stay on this frame indefinitely.
+		return;
+	}
+	if (Time != 0)
+	{
+		Time--;
+	}
+	else if (Position < Frames.Size() - 1)
+	{
+		Position++;
+		Time = Frames[Position].Delay;
+		Random = M_Random();
+	}
+	else
+	{
+		bFinished = true;
+	}
+}
+
+//===========================================================================
+//
+// FMugShotState :: Reset
+//
+//===========================================================================
+
+void FMugShotState::Reset()
+{
+	Time = Frames[0].Delay;
+	Position = 0;
+	bFinished = false;
+	Random = M_Random();
+}
+
+//===========================================================================
+//
+// FindMugShotState
+//
+//===========================================================================
+
+FMugShotState *FindMugShotState(FName state)
+{
+	for (unsigned int i = 0; i < MugShotStates.Size(); i++)
+	{
+		if (MugShotStates[i].State == state)
+			return &MugShotStates[i];
+	}
+	return NULL;
+}
+
+//===========================================================================
+//
+// FindMugShotStateIndex
+//
+// Used to allow replacements of states
+//
+//===========================================================================
+
+int FindMugShotStateIndex(FName state)
+{
+	for (unsigned int i = 0; i < MugShotStates.Size(); i++)
+	{
+		if (MugShotStates[i].State == state)
+			return i;
+	}
+	return -1;
+}
+
+//===========================================================================
+//
+// FMugShot constructor
+//
+//===========================================================================
+
+FMugShot::FMugShot()
+{
+	FaceHealth = -1;
+	bEvilGrin = false;
+	bNormal = true;
+	bDamageFaceActive = false;
+	bOuchActive = false;
+	CurrentState = NULL;
+	RampageTimer = 0;
+	LastDamageAngle = 1;
+}
+
+//===========================================================================
+//
+// FMugShot :: Tick
+//
+// Do some stuff related to the mug shot that has to be done at 35fps
+//
+//===========================================================================
+
+void FMugShot::Tick(player_t *player)
+{
+	if (CurrentState != NULL)
+	{
+		CurrentState->Tick();
+		if (CurrentState->bFinished)
+		{
+			bNormal = true;
+			bOuchActive = false;
+			CurrentState = NULL;
+		}
+	}
+	if ((player->cmd.ucmd.buttons & (BT_ATTACK|BT_ALTATTACK)) && !(player->cheats & (CF_FROZEN | CF_TOTALLYFROZEN)))
+	{
+		if (RampageTimer != ST_RAMPAGEDELAY)
+		{
+			RampageTimer++;
+		}
+	}
+	else
+	{
+		RampageTimer = 0;
+	}
+	FaceHealth = player->health;
+}
+
+//===========================================================================
+//
+// FMugShot :: SetState
+//
+// Sets the mug shot state and resets it if it is not the state we are
+// already on. Wait_till_done is basically a priority variable; when set to
+// true the state won't change unless the previous state is finished.
+// Returns true if the requested state was switched to or is already playing,
+// and false if the requested state could not be set.
+//
+//===========================================================================
+
+bool FMugShot::SetState(const char *state_name, bool wait_till_done)
+{
+	// Search for full name.
+	FMugShotState *state = FindMugShotState(FName(state_name, true));
+	if (state == NULL)
+	{
+		// Search for initial name, if the full one contains a dot.
+		const char *dot = strchr(state_name, '.');
+		if (dot != NULL)
+		{
+			state = FindMugShotState(FName(state_name, dot - state_name, true));
+		}
+		if (state == NULL)
+		{
+			// Requested state does not exist, so do nothing.
+			return false;
+		}
+	}
+	bNormal = false; //Assume we are not setting god or normal for now.
+	bOuchActive = false;
+	if (state != CurrentState)
+	{
+		if (!wait_till_done || CurrentState == NULL || CurrentState->bFinished)
+		{
+			CurrentState = state;
+			state->Reset();
+			return true;
+		}
+		return false;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// FMugShot :: UpdateState
+//
+//===========================================================================
+
+int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
+{
+	int 		i;
+	angle_t 	badguyangle;
+	angle_t 	diffang;
+	FString		full_state_name;
+
+	if (player->health > 0)
+	{
+		if (bEvilGrin)
+		{
+			if (CurrentState == NULL)
+			{
+				bEvilGrin = false;
+			}
+			else if (player->bonuscount)
+			{
+				SetState("grin", false);
+				return 0;
+			}
+		}
+
+		if (player->damagecount)
+		{
+			int damage_angle = 1;
+			if (player->attacker && player->attacker != player->mo)
+			{
+				if (player->mo != NULL)
+				{
+					// The next 12 lines are from the Doom statusbar code.
+					badguyangle = R_PointToAngle2(player->mo->x, player->mo->y, player->attacker->x, player->attacker->y);
+					if (badguyangle > player->mo->angle)
+					{
+						// whether right or left
+						diffang = badguyangle - player->mo->angle;
+						i = diffang > ANG180;
+					}
+					else
+					{
+						// whether left or right
+						diffang = player->mo->angle - badguyangle;
+						i = diffang <= ANG180;
+					} // confusing, aint it?
+					if (i && diffang >= ANG45)
+					{
+						damage_angle = 0;
+					}
+					else if (!i && diffang >= ANG45)
+					{
+						damage_angle = 2;
+					}
+				}
+			}
+			bool use_ouch = false;
+			if ((FaceHealth != -1 && player->health - FaceHealth > ST_MUCHPAIN) || bOuchActive)
+			{
+				use_ouch = true;
+				full_state_name = "ouch.";
+			}
+			else
+			{
+				full_state_name = "pain.";
+			}
+			full_state_name += player->LastDamageType;
+			if (SetState(full_state_name))
+			{
+				bDamageFaceActive = (CurrentState != NULL);
+				LastDamageAngle = damage_angle;
+				bOuchActive = use_ouch;
+			}
+			return damage_angle;
+		}
+		if (bDamageFaceActive)
+		{
+			if (CurrentState == NULL)
+			{
+				bDamageFaceActive = false;
+			}
+			else
+			{
+				bool use_ouch = false;
+				if ((FaceHealth != -1 && player->health - FaceHealth > ST_MUCHPAIN) || bOuchActive)
+				{
+					use_ouch = true;
+					full_state_name = "ouch.";
+				}
+				else
+				{
+					full_state_name = "pain.";
+				}
+				full_state_name += player->LastDamageType;
+				if (SetState(full_state_name))
+				{
+					bOuchActive = use_ouch;
+				}
+				return LastDamageAngle;
+			}
+		}
+
+		if (RampageTimer == ST_RAMPAGEDELAY)
+		{
+			SetState("rampage", !bNormal); //If we have nothing better to show, use the rampage face.
+			return 0;
+		}
+
+		if (bNormal)
+		{
+			bool good;
+			if ((player->cheats & CF_GODMODE) || (player->mo != NULL && player->mo->flags2 & MF2_INVULNERABLE))
+			{
+				good = SetState(animated_god_mode ? "godanimated" : "god");
+			}
+			else
+			{
+				good = SetState("normal");
+			}
+			if (good)
+			{
+				bNormal = true; //SetState sets bNormal to false.
+			}
+		}
+	}
+	else
+	{
+		if (!xdeath || !(player->cheats & CF_EXTREMELYDEAD))
+		{
+			full_state_name = "death.";
+		}
+		else
+		{
+			full_state_name = "xdeath.";
+		}
+		full_state_name += player->LastDamageType;
+		SetState(full_state_name);
+	}
+	return 0;
+}
+
+FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accuracy, bool xdeath, bool animated_god_mode)
+{
+	if (player->mo->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR))
+	{
+		int angle = UpdateState(player, xdeath, animated_god_mode);
+		int level = 0;
+		while (player->health < (4-level) * (player->mo->GetMaxHealth()/5))
+		{
+			level++;
+		}
+		if (CurrentState != NULL)
+		{
+			FPlayerSkin *skin = &skins[player->morphTics ? player->MorphedPlayerClass : player->userinfo.skin];
+			return CurrentState->GetCurrentFrameTexture(default_face, skin, level, angle);
+		}
+	}
+	return NULL;
+}

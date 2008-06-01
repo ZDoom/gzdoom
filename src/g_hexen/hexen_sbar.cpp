@@ -309,7 +309,7 @@ public:
 		}
 	}
 
-	void AttachToPlayer (player_s *player)
+	void AttachToPlayer (player_t *player)
 	{
 		DBaseStatusBar::AttachToPlayer (player);
 		if (player->mo != NULL)

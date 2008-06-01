@@ -84,7 +84,7 @@ struct vertex_t
 // Forward of LineDefs, for Sectors.
 struct line_t;
 
-class player_s;
+class player_t;
 class FScanner;
 class FBitmap;
 struct FCopyInfo;

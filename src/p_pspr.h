@@ -81,15 +81,15 @@ typedef struct pspdef_s
 
 FArchive &operator<< (FArchive &, pspdef_t &);
 
-class player_s;
+class player_t;
 
-void P_SetPsprite (player_s *player, int position, FState *state);
-void P_SetPspriteNF (player_s *player, int position, FState *state);
-void P_CalcSwing (player_s *player);
-void P_BringUpWeapon (player_s *player);
-void P_FireWeapon (player_s *player);
-void P_DropWeapon (player_s *player);
-void P_BobWeapon (player_s *player, pspdef_t *psp, fixed_t *x, fixed_t *y);
+void P_SetPsprite (player_t *player, int position, FState *state);
+void P_SetPspriteNF (player_t *player, int position, FState *state);
+void P_CalcSwing (player_t *player);
+void P_BringUpWeapon (player_t *player);
+void P_FireWeapon (player_t *player);
+void P_DropWeapon (player_t *player);
+void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y);
 angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget = NULL);
 void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch);
 

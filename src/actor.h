@@ -664,7 +664,7 @@ public:
 									// player to freeze a bit after teleporting
 	SDWORD			threshold;		// if > 0, the target will be chased
 									// no matter what (even if shot)
-	player_s		*player;		// only valid if type of APlayerPawn
+	player_t		*player;		// only valid if type of APlayerPawn
 	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
 	fixed_t			SpawnPoint[3]; 	// For nightmare respawn
 	WORD			SpawnAngle;

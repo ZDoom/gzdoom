@@ -166,7 +166,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, const PClass *spawntype, i
 //
 //----------------------------------------------------------------------------
 
-bool P_UndoPlayerMorph (player_s *activator, player_t *player, bool force)
+bool P_UndoPlayerMorph (player_t *activator, player_t *player, bool force)
 {
 	AWeapon *beastweap;
 	APlayerPawn *mo;
@@ -469,7 +469,7 @@ bool P_UpdateMorphedMonster (AMorphedMonster *beast)
 //
 // Unmorphs the actor if possible.
 // Returns the unmorphed actor, the style with which they were morphed and the
-// health (of the AActor, not the player_s) they last had before unmorphing.
+// health (of the AActor, not the player_t) they last had before unmorphing.
 //
 //----------------------------------------------------------------------------
 

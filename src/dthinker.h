@@ -38,7 +38,7 @@
 #include "dobject.h"
 
 class AActor;
-class player_s;
+class player_t;
 struct pspdef_s;
 
 typedef void (*actionf_p)( AActor* );

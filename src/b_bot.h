@@ -86,7 +86,7 @@ public:
 	void Main (int buf);
 	void Init ();
 	void End();
-	void CleanBotstuff (player_s *p);
+	void CleanBotstuff (player_t *p);
 	bool SpawnBot (const char *name, int color = NOCOLOR);
 	bool LoadBots ();
 	void ForgetBots ();

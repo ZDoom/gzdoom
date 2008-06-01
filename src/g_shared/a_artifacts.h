@@ -20,7 +20,7 @@
 		return arc; \
 	}
 
-class player_s;
+class player_t;
 
 // A powerup is a pseudo-inventory item that applies an effect to its
 // owner while it is present.
@@ -267,7 +267,7 @@ protected:
 	void InitEffect ();
 	void EndEffect ();
 	// Variables
-	player_s *Player;
+	player_t *Player;
 };
 
 #endif //__A_ARTIFACTS_H__

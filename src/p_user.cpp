@@ -199,9 +199,9 @@ CCMD (playerclasses)
 
 bool onground;
 
-// The player_s constructor. Since LogText is not a POD, we cannot just
+// The player_t constructor. Since LogText is not a POD, we cannot just
 // memset it all to 0.
-player_s::player_s()
+player_t::player_t()
 : mo(0),
   playerstate(0),
   cls(0),
@@ -298,15 +298,15 @@ player_s::player_s()
 }
 
 // This function supplements the pointer cleanup in dobject.cpp, because
-// player_s is not derived from DObject. (I tried it, and DestroyScan was
+// player_t is not derived from DObject. (I tried it, and DestroyScan was
 // unable to properly determine the player object's type--possibly
 // because it gets staticly allocated in an array.)
 //
-// This function checks all the DObject pointers in a player_s and NULLs any
+// This function checks all the DObject pointers in a player_t and NULLs any
 // that match the pointer passed in. If you add any pointers that point to
 // DObject (or a subclass), add them here too.
 
-size_t player_s::FixPointers (const DObject *old, DObject *rep)
+size_t player_t::FixPointers (const DObject *old, DObject *rep)
 {
 	APlayerPawn *replacement = static_cast<APlayerPawn *>(rep);
 	size_t changed = 0;
@@ -327,7 +327,7 @@ size_t player_s::FixPointers (const DObject *old, DObject *rep)
 	return changed;
 }
 
-size_t player_s::PropagateMark()
+size_t player_t::PropagateMark()
 {
 	GC::Mark(mo);
 	GC::Mark(poisoner);
@@ -349,7 +349,7 @@ size_t player_s::PropagateMark()
 	return sizeof(*this);
 }
 
-void player_s::SetLogNumber (int num)
+void player_t::SetLogNumber (int num)
 {
 	char lumpname[16];
 	int lumpnum;
@@ -377,7 +377,7 @@ void player_s::SetLogNumber (int num)
 	}
 }
 
-void player_s::SetLogText (const char *text)
+void player_t::SetLogText (const char *text)
 {
 	LogText = text;
 }
@@ -2387,7 +2387,7 @@ void P_UnPredictPlayer ()
 	}
 }
 
-void player_s::Serialize (FArchive &arc)
+void player_t::Serialize (FArchive &arc)
 {
 	int i;
 

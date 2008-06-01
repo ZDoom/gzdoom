@@ -5158,7 +5158,7 @@ May 15, 2006
   
   There is one important caveat, however. It is not acceptable to blindly 0
   an FString's contents. This necessitated the creation of a proper
-  constructor for player_s so that it can be reset without using memset. I
+  constructor for player_t so that it can be reset without using memset. I
   did a quick scan of all memsets in the source and didn't see anything else
   with a similar problem, but it's possible I missed something.
 - Fixed: Build tiles were never deallocated.
@@ -7648,7 +7648,7 @@ October 6, 2004
 October 5, 2004
 - Removed MF_NOBLOCKMAP from ColonGibs, SmallBloodPool, BrainStem, and BloodPool. I
   can't see any good reason for them to have this flag set.
-- Fixed: player_s::Serialize() set PendingWeapon to WP_NOCHANGE. I have no idea why.
+- Fixed: player_t::Serialize() set PendingWeapon to WP_NOCHANGE. I have no idea why.
 - Added a playing of "minotaur/attack3" to A_MinotaurAtk3().
 - Fixed: R_FakeFlat() did not set FakeSide to FAKED_BelowFloor when viewing a
   fake plane with SECF_CLIPFAKEPLANES and SECF_FAKEFLOORONLY set and the fake floor
@@ -11757,7 +11757,7 @@ February 12, 2002
   are allowed and vice versa.
 
 February 11, 2002
-- The player_s struct now serializes the camera. Before, it always set it to
+- The player_t struct now serializes the camera. Before, it always set it to
   mo when loading. I'm not sure why I did that, because it meant you lost your
   camera view when loading a game saved from a different camera.
 - Fixed: SetWeapon only worked if passed the name of a Doom weapon. Anything
@@ -15193,7 +15193,7 @@ August 5, 1999
   including the ones that were created while reading the sectors. Storing
   the thinkers before anything else avoids this.
 - Moved the serialization of player data into G_SerializeLevel. The bots
-  use pointers to some actors in their player_s, so we need to keep the
+  use pointers to some actors in their player_t, so we need to keep the
   player data in the same context as the actors they reference. (i.e. They
   need to go in the level snapshot instead of outside of them as was done
   previously.)

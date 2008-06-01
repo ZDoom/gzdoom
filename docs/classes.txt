@@ -173,7 +173,7 @@ IMPLEMENT_SERIAL. For a class that won't be saved to disk, do this:
 	should be sure to change if you change the structs. The code for
 	serializing sector_t and line_t can be found in P_SerializeWorld() in
 	p_saveg.cpp. The code for serializing player_t is in p_user.cpp as
-	player_s::Serialize().
+	player_t::Serialize().
 
 	To determine the type of an object, you can use the IsA() and IsKindOf()
 	methods of DObject. IsA() tests if the object is an instance of a
@@ -210,8 +210,8 @@ END_POINTERS
 
 If you add pointers to any class, you need to update this list accordingly.
 The player class uses a hack, because it is not derived from DObject, to
-clear pointers. See player_s::FixPointers() in p_user.cpp if you add any
-pointers to player_s.
+clear pointers. See player_t::FixPointers() in p_user.cpp if you add any
+pointers to player_t.
 
 When you want to destroy any object derived from DThinker (this includes all
 actors), call that object's Destroy() method. Do not use delete, because it

@@ -62,7 +62,7 @@ enum
 	APMETA_Hexenarmor4,
 };
 
-class player_s;
+class player_t;
 
 class APlayerPawn : public AActor
 {
@@ -186,10 +186,10 @@ typedef enum
 //
 // Extended player object info: player_t
 //
-class player_s
+class player_t
 {
 public:
-	player_s();
+	player_t();
 
 	void Serialize (FArchive &arc);
 	size_t FixPointers (const DObject *obj, DObject *replacement);
@@ -346,13 +346,11 @@ public:
 	int GetSpawnClass();
 };
 
-typedef player_s player_t;
-
 // Bookkeeping on players - state.
-extern player_s players[MAXPLAYERS];
+extern player_t players[MAXPLAYERS];
 extern DWORD playerswiping;
 
-inline FArchive &operator<< (FArchive &arc, player_s *&p)
+inline FArchive &operator<< (FArchive &arc, player_t *&p)
 {
 	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
 }

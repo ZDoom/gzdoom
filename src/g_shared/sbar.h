@@ -38,7 +38,7 @@
 #include "v_text.h"
 
 struct patch_t;
-class player_s;
+class player_t;
 struct FRemapTable;
 
 extern int SB_state;
@@ -196,14 +196,14 @@ private:
 	FMugShotState();
 };
 
-class player_s;
+class player_t;
 struct FMugShot
 {
 	FMugShot();
-	void Tick(player_s *player);
+	void Tick(player_t *player);
 	bool SetState(const char *state_name, bool wait_till_done=false);
-	int UpdateState(player_s *player, bool xdeath, bool animated_god_mode);
-	FTexture *GetFace(player_s *player, const char *default_face, int accuracy, bool xdeath, bool animated_god_mode);
+	int UpdateState(player_t *player, bool xdeath, bool animated_god_mode);
+	FTexture *GetFace(player_t *player, const char *default_face, int accuracy, bool xdeath, bool animated_god_mode);
 
 	FMugShotState *CurrentState;
 	int RampageTimer;
@@ -281,7 +281,7 @@ public:
 	virtual void Draw (EHudState state);
 			void DrawTopStuff (EHudState state);
 	virtual void FlashItem (const PClass *itemtype);
-	virtual void AttachToPlayer (player_s *player);
+	virtual void AttachToPlayer (player_t *player);
 	virtual void FlashCrosshair ();
 	virtual void BlendView (float blend[4]);
 	virtual void SetFace (void *skn);												// Takes a FPlayerSkin as input
@@ -344,7 +344,7 @@ public:
 	};
 	FImageCollection Images;
 
-	player_s *CPlayer;
+	player_t *CPlayer;
 
 private:
 	DBaseStatusBar() {}

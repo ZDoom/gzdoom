@@ -82,7 +82,7 @@ void D_ReadUserInfoStrings (int player, BYTE **stream, bool update);
 void D_GetPlayerColor (int player, float *h, float *s, float *v);
 void D_PickRandomTeam (int player);
 int D_PickRandomTeam ();
-class player_s;
-int D_GetFragCount (player_s *player);
+class player_t;
+int D_GetFragCount (player_t *player);
 
 #endif //__D_CLIENTINFO_H__

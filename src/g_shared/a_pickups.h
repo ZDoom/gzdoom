@@ -10,7 +10,7 @@
 #define MAX_WEAPONS_PER_SLOT	8
 #define NUM_WEAPON_SLOTS		10
 
-class player_s;
+class player_t;
 class FConfigFile;
 class AWeapon;
 
@@ -21,7 +21,7 @@ public:
 	void Clear ();
 	bool AddWeapon (const char *type);
 	bool AddWeapon (const PClass *type);
-	AWeapon *PickWeapon (player_s *player);
+	AWeapon *PickWeapon (player_t *player);
 	int CountWeapons ();
 
 	inline const PClass *GetWeapon (int index) const
@@ -29,8 +29,8 @@ public:
 		return Weapons[index];
 	}
 
-	friend AWeapon *PickNextWeapon (player_s *player);
-	friend AWeapon *PickPrevWeapon (player_s *player);
+	friend AWeapon *PickNextWeapon (player_t *player);
+	friend AWeapon *PickPrevWeapon (player_t *player);
 
 	friend struct FWeaponSlots;
 
@@ -38,8 +38,8 @@ private:
 	const PClass *Weapons[MAX_WEAPONS_PER_SLOT];
 };
 
-AWeapon *PickNextWeapon (player_s *player);
-AWeapon *PickPrevWeapon (player_s *player);
+AWeapon *PickNextWeapon (player_t *player);
+AWeapon *PickPrevWeapon (player_t *player);
 
 // FWeaponSlots::AddDefaultWeapon return codes
 enum ESlotDef

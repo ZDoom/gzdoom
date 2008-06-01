@@ -230,7 +230,7 @@ void DBaseStatusBar::SetScaled (bool scale)
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::AttachToPlayer (player_s *player)
+void DBaseStatusBar::AttachToPlayer (player_t *player)
 {
 	CPlayer = player;
 	SB_state = screen->GetPageCount ();

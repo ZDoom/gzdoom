@@ -1350,14 +1350,27 @@ void A_TakeFromTarget(AActor * self)
 // Common code for A_SpawnItem and A_SpawnItemEx
 //
 //===========================================================================
+enum SIX_Flags
+{
+	SIXF_TRANSFERTRANSLATION=1,
+	SIXF_ABSOLUTEPOSITION=2,
+	SIXF_ABSOLUTEANGLE=4,
+	SIXF_ABSOLUTEMOMENTUM=8,
+	SIXF_SETMASTER=16,
+	SIXF_NOCHECKPOSITION=32,
+	SIXF_TELEFRAG=64,
+	// 128 is used by Skulltag!
+	SIXF_TRANSFERAMBUSHFLAG=256,
+};
 
-static void InitSpawnedItem(AActor *self, AActor *mo, INTBOOL transfer_translation, INTBOOL setmaster, INTBOOL nocheckpos)
+
+static void InitSpawnedItem(AActor *self, AActor *mo, int flags)
 {
 	if (mo)
 	{
 		AActor * originator = self;
 
-		if (transfer_translation && !(mo->flags2 & MF2_DONTTRANSLATE))
+		if ((flags & SIXF_TRANSFERTRANSLATION) && !(mo->flags2 & MF2_DONTTRANSLATE))
 		{
 			mo->Translation = self->Translation;
 		}
@@ -1365,9 +1378,16 @@ static void InitSpawnedItem(AActor *self, AActor *mo, INTBOOL transfer_translati
 		mo->angle=self->angle;
 		while (originator && isMissile(originator)) originator = originator->target;
 
+		if (flags & SIXF_TELEFRAG) 
+		{
+			P_TeleportMove(mo, mo->x, mo->y, mo->z, true);
+			// This is needed to ensure consistent behavior.
+			// Otherwise it will only spawn if nothing gets telefragged
+			flags |= SIXF_NOCHECKPOSITION;	
+		}
 		if (mo->flags3&MF3_ISMONSTER)
 		{
-			if (!nocheckpos && !P_TestMobjLocation(mo))
+			if (!(flags&SIXF_NOCHECKPOSITION) && !P_TestMobjLocation(mo))
 			{
 				// The monster is blocked so don't spawn it at all!
 				if (mo->CountsAsKill()) level.total_monsters--;
@@ -1381,7 +1401,7 @@ static void InitSpawnedItem(AActor *self, AActor *mo, INTBOOL transfer_translati
 				{
 					// If this is a monster transfer all friendliness information
 					mo->CopyFriendliness(originator, true);
-					if (setmaster) mo->master = originator;	// don't let it attack you (optional)!
+					if (flags&SIXF_SETMASTER) mo->master = originator;	// don't let it attack you (optional)!
 				}
 				else if (originator->player)
 				{
@@ -1459,7 +1479,8 @@ void A_SpawnItem(AActor * self)
 					self->y + FixedMul(distance, finesine[self->angle>>ANGLETOFINESHIFT]), 
 					self->z - self->floorclip + zheight, ALLOW_REPLACE);
 
-	InitSpawnedItem(self, mo, transfer_translation, useammo, false);
+	int flags = (transfer_translation? SIXF_TRANSFERTRANSLATION:0) + (useammo? SIXF_SETMASTER:0);
+	InitSpawnedItem(self, mo, flags);
 }
 
 //===========================================================================
@@ -1469,19 +1490,6 @@ void A_SpawnItem(AActor * self)
 // Enhanced spawning function
 //
 //===========================================================================
-enum SIX_Flags
-{
-	SIXF_TRANSFERTRANSLATION=1,
-	SIXF_ABSOLUTEPOSITION=2,
-	SIXF_ABSOLUTEANGLE=4,
-	SIXF_ABSOLUTEMOMENTUM=8,
-	SIXF_SETMASTER=16,
-	SIXF_NOCHECKPOSITION=32,
-	SIXF_TELEFRAG=64,
-	// 128 is used by Skulltag!
-	SIXF_TRANSFERAMBUSHFLAG=256,
-};
-
 void A_SpawnItemEx(AActor * self)
 {
 	FState * CallingState;
@@ -1541,14 +1549,13 @@ void A_SpawnItemEx(AActor * self)
 	}
 
 	AActor * mo = Spawn( missile, x, y, self->z + self->floorclip + zofs, ALLOW_REPLACE);
-	InitSpawnedItem(self, mo, (flags & SIXF_TRANSFERTRANSLATION), (flags&SIXF_SETMASTER), (flags&SIXF_NOCHECKPOSITION));
+	InitSpawnedItem(self, mo, flags);
 	if (mo)
 	{
 		mo->momx=xmom;
 		mo->momy=ymom;
 		mo->momz=zmom;
 		mo->angle=Angle;
-		if (flags & SIXF_TELEFRAG) P_TeleportMove(mo, mo->x, mo->y, mo->z, true);
 		if (flags & SIXF_TRANSFERAMBUSHFLAG) mo->flags = (mo->flags&~MF_AMBUSH) | (self->flags & MF_AMBUSH);
 	}
 }

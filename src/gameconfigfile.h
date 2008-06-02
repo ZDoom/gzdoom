@@ -34,6 +34,7 @@
 #ifndef __GAMECONFIGFILE_H__
 #define __GAMECONFIGFILE_H__
 
+#include "doomtype.h"
 #include "configfile.h"
 
 class DArgs;

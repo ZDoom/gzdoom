@@ -982,7 +982,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	// (i.e. Guantlets/Chainsaw)
 	if (inflictor && inflictor != target	// [RH] Not if hurting own self
 		&& !(target->flags & MF_NOCLIP)
-		&& !(inflictor->flags2 & MF2_NODMGTHRUST))
+		&& !(inflictor->flags2 & MF2_NODMGTHRUST)
+		&& !(flags & DMG_THRUSTLESS))
 	{
 		int kickback;
 

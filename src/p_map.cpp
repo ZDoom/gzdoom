@@ -247,7 +247,8 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 					
 	spechit.Clear ();
 
-	bool StompAlwaysFrags = thing->player || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag;
+	bool StompAlwaysFrags = thing->player || (thing->flags2 & MF2_TELESTOMP) || 
+							(level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag;
 
 	FBoundingBox box(x, y, thing->radius);
 	FBlockLinesIterator it(box);
@@ -291,9 +292,9 @@ bool P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 
 		// monsters don't stomp things except on boss level
 		// [RH] Some Heretic/Hexen monsters can telestomp
-		if (StompAlwaysFrags || (thing->flags2 & MF2_TELESTOMP))
+		if (StompAlwaysFrags)
 		{
-			P_DamageMobj (th, thing, thing, 1000000, NAME_Telefrag);
+			P_DamageMobj (th, thing, thing, 1000000, NAME_Telefrag, DMG_THRUSTLESS);
 			continue;
 		}
 		return false;

@@ -1,3 +1,11 @@
+June 2, 2008 (Changes by Graf Zahl)
+- Added an option to consider intermission screens gameplay for purposes of
+  capturing the mouse.
+- Changed: Telefragging should not thrust the victim if it isn't in precisely the
+  same position as the killer.
+- fixed: A_SpawnItemEx must call P_TeleportMove before checking the spawned
+  object's position.
+
 June 1, 2008 (Changes by Graf Zahl)
 - Fixed: Ouch state was far to easy to achieve.
 - Made all the basic texture classes local to their implementation.

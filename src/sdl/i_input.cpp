@@ -280,13 +280,33 @@ static void MouseRead ()
 	}
 }
 
+CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+{
+	if (self < 0) self = 0;
+	else if (self > 2) self = 2;
+}
+
+static bool inGame()
+{
+	switch (mouse_capturemode)
+	{
+	default:
+	case 0:
+		return gamestate == GS_LEVEL;
+	case 1:
+		return gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
+	case 2:
+		return true;
+	}
+}
+
 static void I_CheckNativeMouse ()
 {
 	bool focus = (SDL_GetAppState() & (SDL_APPINPUTFOCUS|SDL_APPACTIVE))
 			== (SDL_APPINPUTFOCUS|SDL_APPACTIVE);
 	bool fs = (SDL_GetVideoSurface ()->flags & SDL_FULLSCREEN) != 0;
 	
-	bool wantNative = !focus || !use_mouse || (!fs && (GUICapture || paused || demoplayback || gamestate != GS_LEVEL));
+	bool wantNative = !focus || !use_mouse || (!fs && (GUICapture || paused || demoplayback || !inGame()));
 
 	if (wantNative != NativeMouse)
 	{

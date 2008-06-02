@@ -415,10 +415,31 @@ static void I_CheckGUICapture ()
 	}
 }
 
+CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+{
+	if (self < 0) self = 0;
+	else if (self > 2) self = 2;
+}
+
+static bool inGame()
+{
+	switch (mouse_capturemode)
+	{
+	default:
+	case 0:
+		return gamestate == GS_LEVEL;
+	case 1:
+		return gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
+	case 2:
+		return true;
+	}
+}
+
 void I_CheckNativeMouse (bool preferNative)
 {
 	bool wantNative = !HaveFocus ||
-		((!screen || !screen->IsFullscreen()) && (gamestate != GS_LEVEL || GUICapture || paused || preferNative || !use_mouse || demoplayback));
+		((!screen || !screen->IsFullscreen()) && 
+		(!inGame() || GUICapture || paused || preferNative || !use_mouse || demoplayback));
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);
 

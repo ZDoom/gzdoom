@@ -1,3 +1,13 @@
+June 2, 2008 (SBarInfo update #23)
+- Fixed: Drawing the amount of an inventory item in the player's inventory did
+  not work
+- Added: PowerupTime to drawnumber and drawbar.  You must specify a
+  powerupgiver.  Although drawnumber goes in seconds the powerup has left
+  drawbar will use ticks for extra accuracy.
+- I have increased cross-port compatibility with Skulltag.  If an unknown
+  game mode is provided for sbarinfo's gamemode command it will ignore it and
+  continue.
+  
 June 2, 2008 (Changes by Graf Zahl)
 - Added an option to consider intermission screens gameplay for purposes of
   capturing the mouse.

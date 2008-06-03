@@ -579,6 +579,16 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					value = ACS_GlobalVars[cmd.value];
 				else if(cmd.flags & DRAWNUMBER_GLOBALARRAY)
 					value = ACS_GlobalArrays[cmd.value][consoleplayer];
+				else if(cmd.flags & DRAWNUMBER_POWERUPTIME)
+				{
+					//Get the PowerupType and check to see if the player has any in inventory.
+					const PClass* powerupType = ((APowerupGiver*) GetDefaultByType(PClass::FindClass(cmd.string[0])))->PowerupType;
+					APowerup* powerup = (APowerup*) CPlayer->mo->FindInventory(powerupType);
+					if(powerup != NULL)
+					{
+						value = powerup->EffectTics / TICRATE + 1;
+					}
+				}
 				else if(cmd.flags & DRAWNUMBER_INVENTORY)
 				{
 					AInventory* item = CPlayer->mo->FindInventory(PClass::FindClass(cmd.string[0]));
@@ -778,6 +788,21 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					else
 					{
 						value = 0;
+					}
+				}
+				else if(cmd.flags & DRAWNUMBER_POWERUPTIME)
+				{
+					//Get the PowerupType and check to see if the player has any in inventory.
+					APowerupGiver* powerupGiver = (APowerupGiver*) GetDefaultByType(PClass::FindClass(cmd.string[0]));
+					const PClass* powerupType = powerupGiver->PowerupType;
+					APowerup* powerup = (APowerup*) CPlayer->mo->FindInventory(powerupType);
+					if(powerup != NULL && powerupType != NULL && powerupGiver != NULL)
+					{
+						value = powerup->EffectTics + 1;
+						if(powerupGiver->EffectTics == 0) //if 0 we need to get the default from the powerup
+							max = ((APowerup*) GetDefaultByType(powerupType))->EffectTics + 1;
+						else
+							max = powerupGiver->EffectTics + 1;
 					}
 				}
 				if(cmd.special3 != 0)

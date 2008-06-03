@@ -557,10 +557,20 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 							sc.ScriptError("Global variable number out of range: %d", sc.Number);
 						cmd.value = sc.Number;
 					}
+					else if(sc.Compare("poweruptime"))
+					{
+						cmd.flags |= DRAWNUMBER_POWERUPTIME;
+						sc.MustGetToken(TK_Identifier);
+						cmd.setString(sc, sc.String, 0);
+						const PClass* item = PClass::FindClass(sc.String);
+						if(item == NULL || !PClass::FindClass("PowerupGiver")->IsAncestorOf(item))
+						{
+							sc.ScriptError("'%s' is not a type of PowerupGiver.", sc.String);
+						}
+					}
 					else
 					{
 						cmd.flags = DRAWNUMBER_INVENTORY;
-						sc.MustGetToken(TK_Identifier);
 						cmd.setString(sc, sc.String, 0);
 						const PClass* item = PClass::FindClass(sc.String);
 						if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of ammo
@@ -834,6 +844,17 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					cmd.flags = DRAWNUMBER_ITEMS;
 				else if(sc.Compare("secrets"))
 					cmd.flags = DRAWNUMBER_SECRETS;
+				else if(sc.Compare("poweruptime"))
+				{
+					cmd.flags |= DRAWNUMBER_POWERUPTIME;
+					sc.MustGetToken(TK_Identifier);
+					cmd.setString(sc, sc.String, 0);
+					const PClass* item = PClass::FindClass(sc.String);
+					if(item == NULL || !PClass::FindClass("PowerupGiver")->IsAncestorOf(item))
+					{
+						sc.ScriptError("'%s' is not a type of PowerupGiver.", sc.String);
+					}
+				}
 				else
 				{
 					cmd.flags = DRAWNUMBER_INVENTORY;
@@ -978,8 +999,8 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 						cmd.flags |= GAMETYPE_DEATHMATCH;
 					else if(sc.Compare("teamgame"))
 						cmd.flags |= GAMETYPE_TEAMGAME;
-					else
-						sc.ScriptError("Unknown gamemode: %s", sc.String);
+					//else I'm removing this error to allow cross port compatiblity.  If it doesn't know what a gamemode is lets just ignore it.
+					//	sc.ScriptError("Unknown gamemode: %s", sc.String);
 					if(sc.CheckToken('{'))
 						break;
 					sc.MustGetToken(',');

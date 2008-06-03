@@ -4827,8 +4827,6 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHECKWEAPON:
-			if (script == 4)
-				__asm nop
 			if (activator == NULL || activator->player == NULL || // Non-players do not have weapons
 				activator->player->ReadyWeapon == NULL)
 			{

@@ -875,7 +875,7 @@ public:
 		if (MulScale16(yScale, fitheight) != Height) yScale++;
 	}
 
-	void HackHack (int newheight);	// called by FMultipatchTexture to discover corrupt patches.
+	virtual void HackHack (int newheight);	// called by FMultipatchTexture to discover corrupt patches.
 
 protected:
 	WORD Width, Height, WidthMask;

@@ -339,6 +339,7 @@ enum EMIType
 	MITYPE_REDIRECT,
 	MITYPE_SPECIALACTION,
 	MITYPE_COMPATFLAG,
+	MITYPE_STRINGT,
 };
 
 struct MapInfoHandler
@@ -485,8 +486,8 @@ static const char *MapInfoClusterLevel[] =
 
 MapInfoHandler ClusterHandlers[] =
 {
-	{ MITYPE_STRING,	cioffset(entertext), CLUSTER_LOOKUPENTERTEXT },
-	{ MITYPE_STRING,	cioffset(exittext), CLUSTER_LOOKUPEXITTEXT },
+	{ MITYPE_STRINGT,	cioffset(entertext), CLUSTER_LOOKUPENTERTEXT },
+	{ MITYPE_STRINGT,	cioffset(exittext), CLUSTER_LOOKUPEXITTEXT },
 	{ MITYPE_MUSIC,		cioffset(messagemusic), cioffset(musicorder) },
 	{ MITYPE_LUMPNAME,	cioffset(finaleflat), 0 },
 	{ MITYPE_LUMPNAME,	cioffset(finaleflat), CLUSTER_FINALEPIC },
@@ -495,7 +496,7 @@ MapInfoHandler ClusterHandlers[] =
 	{ MITYPE_HEX,		cioffset(cdid), 0 },
 	{ MITYPE_SETFLAG,	CLUSTER_ENTERTEXTINLUMP, 0 },
 	{ MITYPE_SETFLAG,	CLUSTER_EXITTEXTINLUMP, 0 },
-	{ MITYPE_STRING,	cioffset(clustername), CLUSTER_LOOKUPNAME },
+	{ MITYPE_STRINGT,	cioffset(clustername), CLUSTER_LOOKUPNAME },
 };
 
 static void ParseMapInfoLower (FScanner &sc,
@@ -1095,7 +1096,7 @@ static void ParseMapInfoLower (FScanner &sc,
 			}
 			break;
 
-		case MITYPE_STRING:
+		case MITYPE_STRINGT:
 			sc.MustGetString ();
 			if (sc.String[0] == '$')
 			{
@@ -1112,6 +1113,11 @@ static void ParseMapInfoLower (FScanner &sc,
 				}
 				ReplaceString ((char **)(info + handler->data1), sc.String);
 			}
+			break;
+
+		case MITYPE_STRING:
+			sc.MustGetString();
+			ReplaceString ((char **)(info + handler->data1), sc.String);
 			break;
 
 		case MITYPE_MUSIC:

@@ -23,7 +23,7 @@
 #ifndef __P_LOCAL__
 #define __P_LOCAL__
 
-#ifndef __R_LOCAL_H__
+#ifndef __R_LOCAL__
 #include "r_local.h"
 #endif
 

@@ -2,12 +2,13 @@
 #define R_INTERPOLATE_H
 
 #include "doomtype.h"
+#include "dobject.h"
+#include "r_defs.h"
 
 // BUILD stuff for interpolating between frames, but modified (rather a lot)
 #define INTERPOLATION_BUCKETS 107
 
-
-#if 0 
+#if 0
 
 class DInterpolation : public DObject
 {
@@ -21,11 +22,11 @@ protected:
 
 public:
 
-	void Destroy();
-	void CopyInterpToOld() = 0;
-	void CopyBakToInterp() = 0;
-	void DoAnInterpolation(fixed_t smoothratio) = 0;
-	void Serialize(FArchive &arc);
+	virtual void Destroy();
+	virtual void CopyInterpToOld() = 0;
+	virtual void CopyBakToInterp() = 0;
+	virtual void DoAnInterpolation(fixed_t smoothratio) = 0;
+	virtual void Serialize(FArchive &arc);
 };
 
 class DSectorPlaneInterpolation : public DInterpolation
@@ -53,7 +54,7 @@ public:
 
 class DSectorScrollInterpolation : public DInterpolation
 {
-	DECLARE_CLASS(DFloorScrollInterpolation, DInterpolation)
+	DECLARE_CLASS(DSectorScrollInterpolation, DInterpolation)
 
 	sector_t *sector;
 	fixed_t oldx, oldy;
@@ -98,7 +99,7 @@ class DPolyobjInterpolation : public DInterpolation
 
 public:
 
-	DPolyobjInterpolation(FPolyobj *poly);
+	DPolyobjInterpolation(FPolyObj *poly);
 	void Destroy();
 	void CopyInterpToOld();
 	void CopyBakToInterp();
@@ -115,18 +116,17 @@ struct FInterpolator
 
 private:
 
-	size_t HashKey(FName type, void *interptr);
-	DInterpolation *FindInterpolation(const PClass *, void *interptr, DInterpolation **&interp_p);
+	size_t HashKey(FName type, void *interptr, int param);
+	DInterpolation *FindInterpolation(const PClass *, void *interptr, int param, DInterpolation **&interp_p);
 
 public:
-	DInterpolation *FindInterpolation(const PClass *, void *interptr);
+	DInterpolation *FindInterpolation(const PClass *, void *interptr, int param);
 	void UpdateInterpolations();
 	void AddInterpolation(DInterpolation *);
 	void RemoveInterpolation(DInterpolation *);
 	void DoInterpolations(fixed_t smoothratio);
 	void RestoreInterpolations();
 };
-
 
 #endif
 

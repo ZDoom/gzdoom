@@ -1,4 +1,9 @@
-June 2, 2008 (SBarInfo update #23)
+June 3, 2008 (Changes by Graf Zahl)
+- Added a few 'activator == NULL' checks to some ACS functions.
+- Added line and vertex lists to polyobjects so that I can do some 
+  changes that won't work with only a seg list being maintained.
+
+June 3, 2008 (SBarInfo update #23)
 - Fixed: Drawing the amount of an inventory item in the player's inventory did
   not work
 - Added: PowerupTime to drawnumber and drawbar.  You must specify a

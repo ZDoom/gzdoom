@@ -3093,21 +3093,6 @@ void P_FreeLevelData ()
 	}
 	if (polyobjs != NULL)
 	{
-		for (int i = 0; i < po_NumPolyobjs; ++i)
-		{
-			if (polyobjs[i].segs != NULL)
-			{
-				delete[] polyobjs[i].segs;
-			}
-			if (polyobjs[i].originalPts != NULL)
-			{
-				delete[] polyobjs[i].originalPts;
-			}
-			if (polyobjs[i].prevPts != NULL)
-			{
-				delete[] polyobjs[i].prevPts;
-			}
-		}
 		delete[] polyobjs;
 		polyobjs = NULL;
 	}

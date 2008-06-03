@@ -654,6 +654,10 @@ struct FPolyObj
 {
 	int			numsegs;
 	seg_t		**segs;
+	int			numlines;
+	line_t		**lines;
+	int			numvertices;
+	vertex_t	**vertices;
 	fixed_t		startSpot[3];
 	vertex_t	*originalPts;	// used as the base for the rotations
 	vertex_t	*prevPts; 		// use to restore the old point values
@@ -666,6 +670,8 @@ struct FPolyObj
 	int			seqType;
 	fixed_t		size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
 	DThinker	*specialdata;	// pointer to a thinker, if the poly is moving
+
+	~FPolyObj();
 };
 
 //

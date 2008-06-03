@@ -189,20 +189,18 @@ DPolyAction::~DPolyAction ()
 void DPolyAction::SetInterpolation ()
 {
 	FPolyObj *poly = GetPolyobj (m_PolyObj);
-	for (int i = 0; i < poly->numsegs; ++i)
+	for (int i = 0; i < poly->numvertices; ++i)
 	{
-		setinterpolation (INTERP_Vertex, poly->segs[i]->v1);
-		setinterpolation (INTERP_Vertex, poly->segs[i]->v2);
+		setinterpolation (INTERP_Vertex, poly->vertices[i]);
 	}
 }
 
 void DPolyAction::StopInterpolation ()
 {
 	FPolyObj *poly = GetPolyobj (m_PolyObj);
-	for (int i = 0; i < poly->numsegs; ++i)
+	for (int i = 0; i < poly->numvertices; ++i)
 	{
-		stopinterpolation (INTERP_Vertex, poly->segs[i]->v1);
-		stopinterpolation (INTERP_Vertex, poly->segs[i]->v2);
+		stopinterpolation (INTERP_Vertex, poly->vertices[i]);
 	}
 }
 
@@ -711,7 +709,7 @@ static int GetPolyobjMirror(int poly)
 	{
 		if (polyobjs[i].tag == poly)
 		{
-			return (*polyobjs[i].segs)->linedef->args[1];
+			return polyobjs[i].lines[0]->args[1];
 		}
 	}
 	return 0;
@@ -1452,6 +1450,44 @@ static void SpawnPolyobj (int index, int tag, int type)
 		else
 			I_Error ("SpawnPolyobj: Poly %d does not exist\n", tag);
 	}
+
+	TArray<line_t *> lines;
+	TArray<vertex_t *> vertices;
+
+	for(int i=0; i<polyobjs[index].numsegs; i++)
+	{
+		line_t *l = polyobjs[index].segs[i]->linedef;
+		int j;
+
+		for(j = lines.Size() - 1; j >= 0; j--)
+		{
+			if (lines[j] == l) break;
+		}
+		if (j < 0) lines.Push(l);
+
+		vertex_t *v = polyobjs[index].segs[i]->v1;
+
+		for(j = vertices.Size() - 1; j >= 0; j--)
+		{
+			if (vertices[j] == v) break;
+		}
+		if (j < 0) vertices.Push(v);
+
+		v = polyobjs[index].segs[i]->v2;
+
+		for(j = vertices.Size() - 1; j >= 0; j--)
+		{
+			if (vertices[j] == v) break;
+		}
+		if (j < 0) vertices.Push(v);
+	}
+	polyobjs[index].numlines = lines.Size();
+	polyobjs[index].lines = new line_t*[lines.Size()];
+	memcpy(polyobjs[index].lines, &lines[0], sizeof(lines[0]) * lines.Size());
+
+	polyobjs[index].numvertices = vertices.Size();
+	polyobjs[index].vertices = new vertex_t*[vertices.Size()];
+	memcpy(polyobjs[index].vertices, &vertices[0], sizeof(vertices[0]) * vertices.Size());
 }
 
 //==========================================================================
@@ -1627,5 +1663,35 @@ bool PO_Busy (int polyobj)
 	else
 	{
 		return true;
+	}
+}
+
+
+FPolyObj::~FPolyObj()
+{
+	if (segs != NULL)
+	{
+		delete[] segs;
+		segs = NULL;
+	}
+	if (lines != NULL)
+	{
+		delete[] lines;
+		lines = NULL;
+	}
+	if (vertices != NULL)
+	{
+		delete[] vertices;
+		vertices = NULL;
+	}
+	if (originalPts != NULL)
+	{
+		delete[] originalPts;
+		originalPts = NULL;
+	}
+	if (prevPts != NULL)
+	{
+		delete[] prevPts;
+		prevPts = NULL;
 	}
 }

@@ -2613,6 +2613,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\r_interpolate.h"
+					>
+				</File>
+				<File
 					RelativePath=".\src\r_jpeg.h"
 					>
 				</File>

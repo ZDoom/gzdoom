@@ -207,7 +207,7 @@ bool P_MoveLinkedSectors(sector_t *sector, int crush, fixed_t move, bool ceiling
 //
 //============================================================================
 
-void P_StartLinkedSectorInterpolations(sector_t *sector, bool ceiling)
+void P_StartLinkedSectorInterpolations(TArray<DInterpolation *> &list, sector_t *sector, bool ceiling)
 {
 	extsector_t::linked::plane &scrollplane = ceiling? sector->e->Linked.Ceiling : sector->e->Linked.Floor;
 
@@ -215,42 +215,14 @@ void P_StartLinkedSectorInterpolations(sector_t *sector, bool ceiling)
 	{
 		if (scrollplane.Sectors[i].Type & LINK_FLOOR)
 		{
-			setinterpolation(INTERP_SectorFloor, scrollplane.Sectors[i].Sector, false);
+			list.Push(scrollplane.Sectors[i].Sector->SetInterpolation(sector_t::FloorMove, false));
 		}
 		if (scrollplane.Sectors[i].Type & LINK_CEILING)
 		{
-			setinterpolation(INTERP_SectorCeiling, scrollplane.Sectors[i].Sector, false);
+			list.Push(scrollplane.Sectors[i].Sector->SetInterpolation(sector_t::CeilingMove, false));
 		}
 	}
 }
-
-//============================================================================
-//
-// P_StopLinkedSectorInterpolations
-//
-// Stops interpolators for every sector plane is being changed by moving
-// this sector
-//
-//============================================================================
-
-void P_StopLinkedSectorInterpolations(sector_t *sector, bool ceiling)
-{
-	extsector_t::linked::plane &scrollplane = ceiling? sector->e->Linked.Ceiling : sector->e->Linked.Floor;
-
-	for(unsigned i = 0; i < scrollplane.Sectors.Size(); i++)
-	{
-		if (scrollplane.Sectors[i].Type & LINK_FLOOR)
-		{
-			stopinterpolation(INTERP_SectorFloor, scrollplane.Sectors[i].Sector, false);
-		}
-		if (scrollplane.Sectors[i].Type & LINK_CEILING)
-		{
-			stopinterpolation(INTERP_SectorCeiling, scrollplane.Sectors[i].Sector, false);
-		}
-	}
-}
-
-
 
 //============================================================================
 //

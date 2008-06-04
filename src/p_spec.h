@@ -43,6 +43,7 @@ typedef enum
 class DScroller : public DThinker
 {
 	DECLARE_CLASS (DScroller, DThinker)
+	HAS_OBJECT_POINTERS
 public:
 	enum EScrollType
 	{
@@ -62,7 +63,7 @@ public:
 	
 	DScroller (EScrollType type, fixed_t dx, fixed_t dy, int control, int affectee, int accel, int scrollpos = scw_all);
 	DScroller (fixed_t dx, fixed_t dy, const line_t *l, int control, int accel, int scrollpos = scw_all);
-	~DScroller ();
+	void Destroy();
 
 	void Serialize (FArchive &arc);
 	void Tick ();
@@ -83,6 +84,7 @@ protected:
 	fixed_t m_vdx, m_vdy;	// Accumulated velocity if accelerative
 	int m_Accel;			// Whether it's accelerative
 	int m_Parts;			// Which parts of a sidedef are being scrolled?
+	TObjPtr<DInterpolation> m_Interpolations[3];
 
 private:
 	DScroller ();
@@ -490,6 +492,7 @@ inline FArchive &operator<< (FArchive &arc, DPlat::EPlatState &state)
 class DPillar : public DMover
 {
 	DECLARE_CLASS (DPillar, DMover)
+	HAS_OBJECT_POINTERS
 public:
 	enum EPillar
 	{
@@ -503,6 +506,7 @@ public:
 
 	void Serialize (FArchive &arc);
 	void Tick ();
+	void Destroy();
 
 protected:
 	EPillar		m_Type;
@@ -512,6 +516,8 @@ protected:
 	fixed_t		m_CeilingTarget;
 	int			m_Crush;
 	bool		m_Hexencrush;
+	TObjPtr<DInterpolation> m_Interp_Ceiling;
+	TObjPtr<DInterpolation> m_Interp_Floor;
 
 private:
 	DPillar ();
@@ -840,6 +846,7 @@ inline FArchive &operator<< (FArchive &arc, DFloor::EFloor &type)
 class DElevator : public DMover
 {
 	DECLARE_CLASS (DElevator, DMover)
+	HAS_OBJECT_POINTERS
 public:
 	enum EElevator
 	{
@@ -853,6 +860,7 @@ public:
 
 	DElevator (sector_t *sec);
 
+	void Destroy();
 	void Serialize (FArchive &arc);
 	void Tick ();
 
@@ -862,6 +870,8 @@ protected:
 	fixed_t		m_FloorDestDist;
 	fixed_t		m_CeilingDestDist;
 	fixed_t		m_Speed;
+	TObjPtr<DInterpolation> m_Interp_Ceiling;
+	TObjPtr<DInterpolation> m_Interp_Floor;
 
 	void StartFloorSound ();
 
@@ -885,6 +895,7 @@ inline FArchive &operator<< (FArchive &arc, DElevator::EElevator &type)
 class DWaggleBase : public DMover
 {
 	DECLARE_CLASS (DWaggleBase, DMover)
+	HAS_OBJECT_POINTERS
 public:
 	DWaggleBase (sector_t *sec);
 
@@ -899,11 +910,13 @@ protected:
 	fixed_t m_ScaleDelta;
 	int m_Ticker;
 	int m_State;
+	TObjPtr<DInterpolation> m_Interpolation;
 
 	friend bool EV_StartWaggle (int tag, int height, int speed,
 		int offset, int timer, bool ceiling);
 
 	void DoWaggle (bool ceiling);
+	void Destroy();
 	DWaggleBase ();
 };
 

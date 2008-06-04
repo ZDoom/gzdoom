@@ -401,7 +401,7 @@ manual_ceiling:
 		}
 		if (ceiling->m_Speed >= movedist)
 		{
-			stopinterpolation (INTERP_SectorCeiling, sec);
+			ceiling->StopInterpolation();
 		}
 
 		// set texture/type change properties

@@ -1,327 +1,248 @@
-// Stuff from BUILD to interpolate floors and ceilings
-//
-// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
-// Ken Silverman's official web site: "http://www.advsys.net/ken"
-// See the included license file "BUILDLIC.TXT" for license info.
-// This code has been modified from its original form.
+/*
+** r_interpolate.cpp
+**
+** Movement interpolation
+**
+**---------------------------------------------------------------------------
+** Copyright 2008 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #include "r_data.h"
 #include "p_3dmidtex.h"
 #include "stats.h"
+#include "r_interpolate.h"
+#include "p_local.h"
 
-struct FActiveInterpolation
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class DSectorPlaneInterpolation : public DInterpolation
 {
-	FActiveInterpolation *Next;
-	void *Address;
-	EInterpType Type;
+	DECLARE_CLASS(DSectorPlaneInterpolation, DInterpolation)
 
-	friend FArchive &operator << (FArchive &arc, FActiveInterpolation *&interp);
+	sector_t *sector;
+	fixed_t oldheight, oldtexz;
+	fixed_t bakheight, baktexz;
+	bool ceiling;
+	TArray<DInterpolation *> attached;
 
-	static int CountInterpolations ();
-	static int CountInterpolations (int *usedbuckets, int *minbucketfill, int *maxbucketfill);
 
-private:
-	fixed_t oldipos[2], bakipos[2];
+public:
 
-	void CopyInterpToOld();
-	void CopyBakToInterp();
-	void DoAnInterpolation(fixed_t smoothratio);
+	DSectorPlaneInterpolation() {}
+	DSectorPlaneInterpolation(sector_t *sector, bool plane, bool attach);
+	void Destroy();
+	void UpdateInterpolation();
+	void Restore();
+	void Interpolate(fixed_t smoothratio);
+	void Serialize(FArchive &arc);
+	size_t PointerSubstitution (DObject *old, DObject *notOld);
+	size_t PropagateMark();
+};
 
-	static size_t HashKey(EInterpType type, void *interptr);
-	static FActiveInterpolation *FindInterpolation(EInterpType, void *interptr, FActiveInterpolation **&interp_p);
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-	friend void updateinterpolations();
-	friend void setinterpolation(EInterpType, void *interptr, bool dolinks);
-	friend void stopinterpolation(EInterpType, void *interptr, bool dolinks);
-	friend void dointerpolations(fixed_t smoothratio);
-	friend void restoreinterpolations();
-	friend void clearinterpolations();
-	friend void SerializeInterpolations(FArchive &arc);
+class DSectorScrollInterpolation : public DInterpolation
+{
+	DECLARE_CLASS(DSectorScrollInterpolation, DInterpolation)
 
-	static FActiveInterpolation *curiposhash[INTERPOLATION_BUCKETS];
+	sector_t *sector;
+	fixed_t oldx, oldy;
+	fixed_t bakx, baky;
+	bool ceiling;
+
+public:
+
+	DSectorScrollInterpolation() {}
+	DSectorScrollInterpolation(sector_t *sector, bool plane);
+	void UpdateInterpolation();
+	void Restore();
+	void Interpolate(fixed_t smoothratio);
+	void Serialize(FArchive &arc);
 };
 
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-static bool didInterp;
-
-FActiveInterpolation *FActiveInterpolation::curiposhash[INTERPOLATION_BUCKETS];
-
-void FActiveInterpolation::CopyInterpToOld ()
+class DWallScrollInterpolation : public DInterpolation
 {
-	switch (Type)
-	{
-	case INTERP_SectorFloor:
-		oldipos[0] = ((sector_t*)Address)->floorplane.d;
-		oldipos[1] = ((sector_t*)Address)->floortexz;
-		break;
-	case INTERP_SectorCeiling:
-		oldipos[0] = ((sector_t*)Address)->ceilingplane.d;
-		oldipos[1] = ((sector_t*)Address)->ceilingtexz;
-		break;
-	case INTERP_Vertex:
-		oldipos[0] = ((vertex_t*)Address)->x;
-		oldipos[1] = ((vertex_t*)Address)->y;
-		break;
-	case INTERP_FloorPanning:
-		oldipos[0] = ((sector_t*)Address)->floor_xoffs;
-		oldipos[1] = ((sector_t*)Address)->floor_yoffs;
-		break;
-	case INTERP_CeilingPanning:
-		oldipos[0] = ((sector_t*)Address)->ceiling_xoffs;
-		oldipos[1] = ((sector_t*)Address)->ceiling_yoffs;
-		break;
-	case INTERP_WallPanning_Top:
-	case INTERP_WallPanning_Mid:
-	case INTERP_WallPanning_Bottom:
-		oldipos[0] = ((side_t*)Address)->GetTextureYOffset(Type - INTERP_WallPanning_Top);
-		oldipos[1] = ((side_t*)Address)->GetTextureXOffset(Type - INTERP_WallPanning_Top);
-		break;
-	}
-}
+	DECLARE_CLASS(DWallScrollInterpolation, DInterpolation)
 
-void FActiveInterpolation::CopyBakToInterp ()
+	side_t *side;
+	int part;
+	fixed_t oldx, oldy;
+	fixed_t bakx, baky;
+
+public:
+
+	DWallScrollInterpolation() {}
+	DWallScrollInterpolation(side_t *side, int part);
+	void UpdateInterpolation();
+	void Restore();
+	void Interpolate(fixed_t smoothratio);
+	void Serialize(FArchive &arc);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class DPolyobjInterpolation : public DInterpolation
 {
-	switch (Type)
-	{
-	case INTERP_SectorFloor:
-		((sector_t*)Address)->floorplane.d = bakipos[0];
-		((sector_t*)Address)->floortexz = bakipos[1];
-		break;
-	case INTERP_SectorCeiling:
-		((sector_t*)Address)->ceilingplane.d = bakipos[0];
-		((sector_t*)Address)->ceilingtexz = bakipos[1];
-		break;
-	case INTERP_Vertex:
-		((vertex_t*)Address)->x = bakipos[0];
-		((vertex_t*)Address)->y = bakipos[1];
-		break;
-	case INTERP_FloorPanning:
-		((sector_t*)Address)->floor_xoffs = bakipos[0];
-		((sector_t*)Address)->floor_yoffs = bakipos[1];
-		break;
-	case INTERP_CeilingPanning:
-		((sector_t*)Address)->ceiling_xoffs = bakipos[0];
-		((sector_t*)Address)->ceiling_yoffs = bakipos[1];
-		break;
-	case INTERP_WallPanning_Top:
-	case INTERP_WallPanning_Mid:
-	case INTERP_WallPanning_Bottom:
-		((side_t*)Address)->SetTextureYOffset(Type - INTERP_WallPanning_Top, bakipos[0]);
-		((side_t*)Address)->SetTextureXOffset(Type - INTERP_WallPanning_Top, bakipos[1]);
-		break;
-	}
-}
+	DECLARE_CLASS(DPolyobjInterpolation, DInterpolation)
 
-void FActiveInterpolation::DoAnInterpolation (fixed_t smoothratio)
-{
-	fixed_t *adr1, *adr2, pos;
-	int v1, v2;
+	FPolyObj *poly;
+	TArray<fixed_t> oldverts, bakverts;
 
-	switch (Type)
-	{
-	case INTERP_SectorFloor:
-		adr1 = &((sector_t*)Address)->floorplane.d;
-		adr2 = &((sector_t*)Address)->floortexz;
-		break;
-	case INTERP_SectorCeiling:
-		adr1 = &((sector_t*)Address)->ceilingplane.d;
-		adr2 = &((sector_t*)Address)->ceilingtexz;
-		break;
-	case INTERP_Vertex:
-		adr1 = &((vertex_t*)Address)->x;
-		adr2 = &((vertex_t*)Address)->y;
-		break;
-	case INTERP_FloorPanning:
-		adr1 = &((sector_t*)Address)->floor_xoffs;
-		adr2 = &((sector_t*)Address)->floor_yoffs;
-		break;
-	case INTERP_CeilingPanning:
-		adr1 = &((sector_t*)Address)->ceiling_xoffs;
-		adr2 = &((sector_t*)Address)->ceiling_yoffs;
-		break;
-	case INTERP_WallPanning_Top:
-	case INTERP_WallPanning_Mid:
-	case INTERP_WallPanning_Bottom:
-		v1 = ((side_t*)Address)->GetTextureYOffset(Type - INTERP_WallPanning_Top);
-		v2 = ((side_t*)Address)->GetTextureXOffset(Type - INTERP_WallPanning_Top);
-		adr1 = &v1;
-		adr2 = &v2;
-		break;
-	default:
-		return;
-	}
+public:
 
-	pos = bakipos[0] = *adr1;
-	*adr1 = oldipos[0] + FixedMul (pos - oldipos[0], smoothratio);
+	DPolyobjInterpolation() {}
+	DPolyobjInterpolation(FPolyObj *poly);
+	void UpdateInterpolation();
+	void Restore();
+	void Interpolate(fixed_t smoothratio);
+	void Serialize(FArchive &arc);
+};
 
-	pos = bakipos[1] = *adr2;
-	*adr2 = oldipos[1] + FixedMul (pos - oldipos[1], smoothratio);
 
-	switch (Type)
-	{
-	case INTERP_WallPanning_Top:
-	case INTERP_WallPanning_Mid:
-	case INTERP_WallPanning_Bottom:
-		((side_t*)Address)->SetTextureYOffset(Type - INTERP_WallPanning_Top, v1);
-		((side_t*)Address)->SetTextureXOffset(Type - INTERP_WallPanning_Top, v2);
-		break;
-	default:
-		return;
-	}
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-}
+IMPLEMENT_ABSTRACT_CLASS(DInterpolation)
+IMPLEMENT_CLASS(DSectorPlaneInterpolation)
+IMPLEMENT_CLASS(DSectorScrollInterpolation)
+IMPLEMENT_CLASS(DWallScrollInterpolation)
+IMPLEMENT_CLASS(DPolyobjInterpolation)
 
-size_t FActiveInterpolation::HashKey (EInterpType type, void *interptr)
-{
-	return (size_t)type * ((size_t)interptr>>5);
-}
+//==========================================================================
+//
+// Important note:
+// The linked list of interpolations and the pointers in the interpolated
+// objects are not processed by the garbage collector. This is intentional!
+//
+// If an interpolation is no longer owned by any thinker it should
+// be destroyed even if the interpolator still has a link to it.
+//
+// When such an interpolation is destroyed by the garbage collector it
+// will automatically be unlinked from the list.
+//
+//==========================================================================
 
-int FActiveInterpolation::CountInterpolations ()
-{
-	int d1, d2, d3;
-	return CountInterpolations (&d1, &d2, &d3);
-}
+FInterpolator interpolator;
 
-int FActiveInterpolation::CountInterpolations (int *usedbuckets, int *minbucketfill, int *maxbucketfill)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int FInterpolator::CountInterpolations ()
 {
 	int count = 0;
-	int inuse = 0;
-	int minuse = INT_MAX;
-	int maxuse = INT_MIN;
 
-	for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
+	DInterpolation *probe = Head;
+	while (probe != NULL)
 	{
-		int use = 0;
-		FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
-		if (probe != NULL)
-		{
-			inuse++;
-		}
-		while (probe != NULL)
-		{
-			count++;
-			use++;
-			probe = probe->Next;
-		}
-		if (use > 0 && use < minuse)
-		{
-			minuse = use;
-		}
-		if (use > maxuse)
-		{
-			maxuse = use;
-		}
+		count++;
+		probe = probe->Next;
 	}
-	*usedbuckets = inuse;
-	*minbucketfill = minuse == INT_MAX ? 0 : minuse;
-	*maxbucketfill = maxuse;
 	return count;
 }
 
-FActiveInterpolation *FActiveInterpolation::FindInterpolation (EInterpType type, void *interptr, FActiveInterpolation **&interp_p)
-{
-	size_t hash = HashKey (type, interptr) % INTERPOLATION_BUCKETS;
-	FActiveInterpolation *probe, **probe_p;
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-	for (probe_p = &curiposhash[hash], probe = *probe_p;
-		probe != NULL;
-		probe_p = &probe->Next, probe = *probe_p)
-	{
-		if (probe->Address > interptr)
-		{ // We passed the place it would have been, so it must not be here.
-			probe = NULL;
-			break;
-		}
-		if (probe->Address == interptr && probe->Type == type)
-		{ // Found it.
-			break;
-		}
-	}
-	interp_p = probe_p;
-	return probe;
-}
-
-void clearinterpolations()
+void FInterpolator::UpdateInterpolations()
 {
-	for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
+	for (DInterpolation *probe = Head; probe != NULL; probe = probe->Next)
 	{
-		for (FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
-			probe != NULL; )
-		{
-			FActiveInterpolation *next = probe->Next;
-			delete probe;
-			probe = next;
-		}
-		FActiveInterpolation::curiposhash[i] = NULL;
+		probe->UpdateInterpolation ();
 	}
 }
 
-void updateinterpolations()  //Stick at beginning of domovethings
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FInterpolator::AddInterpolation(DInterpolation *interp)
 {
-	for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
+	interp->Next = Head;
+	if (Head != NULL) Head->Prev = &interp->Next;
+	Head = interp;
+	interp->Prev = &Head;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FInterpolator::RemoveInterpolation(DInterpolation *interp)
+{
+	if (interp->Prev != NULL)
 	{
-		for (FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
-			probe != NULL; probe = probe->Next)
-		{
-			probe->CopyInterpToOld ();
-		}
+		*interp->Prev = interp->Next;
+		if (interp->Next != NULL) interp->Next->Prev = interp->Prev;
+		interp->Next = NULL;
+		interp->Prev = NULL;
 	}
 }
 
-void setinterpolation(EInterpType type, void *posptr, bool dolinks)
-{
-	FActiveInterpolation **interp_p;
-	FActiveInterpolation *interp = FActiveInterpolation::FindInterpolation (type, posptr, interp_p);
-	if (interp != NULL) return; // It's already active
-	interp = new FActiveInterpolation;
-	interp->Type = type;
-	interp->Address = posptr;
-	interp->Next = *interp_p;
-	*interp_p = interp;
-	interp->CopyInterpToOld ();
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-	if (dolinks)
-	{
-		if (type == INTERP_SectorFloor) 
-		{
-			P_Start3dMidtexInterpolations((sector_t*)posptr, false);
-			P_StartLinkedSectorInterpolations((sector_t*)posptr, false);
-		}
-		else if (type == INTERP_SectorCeiling) 
-		{
-			P_Start3dMidtexInterpolations((sector_t*)posptr, true);
-			P_StartLinkedSectorInterpolations((sector_t*)posptr, true);
-		}
-	}
-}
-
-void stopinterpolation(EInterpType type, void *posptr, bool dolinks)
-{
-	FActiveInterpolation **interp_p;
-	FActiveInterpolation *interp = FActiveInterpolation::FindInterpolation (type, posptr, interp_p);
-	if (interp != NULL)
-	{
-		*interp_p = interp->Next;
-		delete interp;
-
-		if (dolinks)
-		{
-			if (type == INTERP_SectorFloor) 
-			{
-				P_Stop3dMidtexInterpolations((sector_t*)posptr, false);
-				P_StopLinkedSectorInterpolations((sector_t*)posptr, false);
-			}
-			else if (type == INTERP_SectorCeiling) 
-			{
-				P_Stop3dMidtexInterpolations((sector_t*)posptr, true);
-				P_StopLinkedSectorInterpolations((sector_t*)posptr, true);
-			}
-		}
-	}
-}
-
-void dointerpolations(fixed_t smoothratio)       //Stick at beginning of drawscreen
+void FInterpolator::DoInterpolations(fixed_t smoothratio)
 {
 	if (smoothratio == FRACUNIT)
 	{
@@ -331,119 +252,670 @@ void dointerpolations(fixed_t smoothratio)       //Stick at beginning of drawscr
 
 	didInterp = true;
 
-	for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
+	for (DInterpolation *probe = Head; probe != NULL; probe = probe->Next)
 	{
-		for (FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
-			probe != NULL; probe = probe->Next)
-		{
-			probe->DoAnInterpolation (smoothratio);
-		}
+		probe->Interpolate(smoothratio);
 	}
 }
 
-void restoreinterpolations()  //Stick at end of drawscreen
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FInterpolator::RestoreInterpolations()
 {
 	if (didInterp)
 	{
 		didInterp = false;
-		for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
+		for (DInterpolation *probe = Head; probe != NULL; probe = probe->Next)
 		{
-			for (FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
-				probe != NULL; probe = probe->Next)
-			{
-				probe->CopyBakToInterp ();
-			}
+			probe->Restore();
 		}
 	}
 }
 
-void SerializeInterpolations (FArchive &arc)
-{
-	FActiveInterpolation *interp;
-	int numinterpolations;
-	int i;
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-	if (arc.IsStoring ())
+void FInterpolator::ClearInterpolations()
+{
+	for (DInterpolation *probe = Head; probe != NULL; )
 	{
-		numinterpolations = FActiveInterpolation::CountInterpolations();
-		arc.WriteCount (numinterpolations);
-		for (i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
-		{
-			for (interp = FActiveInterpolation::curiposhash[i];
-				interp != NULL; interp = interp->Next)
-			{
-				arc << interp;
-			}
-		}
+		DInterpolation *next = probe->Next;
+		probe->Destroy();
+		probe = next;
+	}
+	Head = NULL;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DInterpolation::DInterpolation()
+{
+	Next = NULL;
+	Prev = NULL;
+	refcount = 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int DInterpolation::AddRef()
+{
+	return ++refcount;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int DInterpolation::DelRef()
+{
+	if (refcount > 0) --refcount;
+	if (refcount <= 0 && !(ObjectFlags & OF_EuthanizeMe))
+	{
+		Destroy();
+	}
+	return refcount;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DInterpolation::Destroy()
+{
+	interpolator.RemoveInterpolation(this);
+	refcount = 0;
+	Super::Destroy();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DInterpolation::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << refcount;
+	if (arc.IsLoading())
+	{
+		interpolator.AddInterpolation(this);
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DSectorPlaneInterpolation::DSectorPlaneInterpolation(sector_t *_sector, bool _plane, bool attach)
+{
+	sector = _sector;
+	ceiling = _plane;
+	UpdateInterpolation ();
+
+	if (attach)
+	{
+		P_Start3dMidtexInterpolations(attached, sector, ceiling);
+		P_StartLinkedSectorInterpolations(attached, sector, ceiling);
+	}
+	interpolator.AddInterpolation(this);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DSectorPlaneInterpolation::Destroy()
+{
+	for(unsigned i=0; i<attached.Size(); i++)
+	{
+		attached[i]->DelRef();
+	}
+	Super::Destroy();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DSectorPlaneInterpolation::UpdateInterpolation()
+{
+	if (!ceiling)
+	{
+		oldheight = sector->floorplane.d;
+		oldtexz = sector->floortexz;
 	}
 	else
 	{
-		clearinterpolations ();
-		numinterpolations = arc.ReadCount ();
-		for (i = numinterpolations; i > 0; --i)
-		{
-			FActiveInterpolation **interp_p;
-			arc << interp;
-			if (FActiveInterpolation::FindInterpolation (interp->Type, interp->Address, interp_p) == NULL)
-			{ // Should always return NULL, because there should never be any duplicates stored.
-				interp->Next = *interp_p;
-				*interp_p = interp;
-			}
-		}
+		oldheight = sector->ceilingplane.d;
+		oldtexz = sector->ceilingtexz;
 	}
 }
 
-FArchive &operator << (FArchive &arc, FActiveInterpolation *&interp)
-{
-	BYTE type;
-	union
-	{
-		vertex_t *vert;
-		sector_t *sect;
-		side_t *side;
-		void *ptr;
-	} ptr;
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-	if (arc.IsStoring ())
+void DSectorPlaneInterpolation::Restore()
+{
+	if (!ceiling)
 	{
-		type = interp->Type;
-		ptr.ptr = interp->Address;
-		arc << type;
-		switch (type)
-		{
-		case INTERP_Vertex:			arc << ptr.vert;	break;
-		case INTERP_WallPanning_Top:	
-		case INTERP_WallPanning_Mid:	
-		case INTERP_WallPanning_Bottom:	
-									arc << ptr.side;	break;
-		default:					arc << ptr.sect;	break;
-		}
+		sector->floorplane.d = bakheight;
+		sector->floortexz = baktexz;
 	}
 	else
 	{
-		interp = new FActiveInterpolation;
-		arc << type;
-		interp->Type = (EInterpType)type;
-		switch (type)
-		{
-		case INTERP_Vertex:			arc << ptr.vert;	break;
-		case INTERP_WallPanning_Top:	
-		case INTERP_WallPanning_Mid:	
-		case INTERP_WallPanning_Bottom:	
-									arc << ptr.side;	break;
-		default:					arc << ptr.sect;	break;
-		}
-		interp->Address = ptr.ptr;
+		sector->ceilingplane.d = bakheight;
+		sector->ceilingtexz = baktexz;
 	}
-	return arc;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DSectorPlaneInterpolation::Interpolate(fixed_t smoothratio)
+{
+	fixed_t *pheight;
+	fixed_t *ptexz;
+
+	if (!ceiling)
+	{
+		pheight = &sector->floorplane.d;
+		ptexz = &sector->floortexz;
+	}
+	else
+	{
+		pheight = &sector->ceilingplane.d;
+		ptexz = &sector->ceilingtexz;
+	}
+
+	bakheight = *pheight;
+	baktexz = *ptexz;
+
+	*pheight = oldheight + FixedMul(bakheight - oldheight, smoothratio);
+	*ptexz = oldtexz + FixedMul(baktexz - oldtexz, smoothratio);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DSectorPlaneInterpolation::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << sector << ceiling << oldheight << oldtexz << attached;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+size_t DSectorPlaneInterpolation::PointerSubstitution (DObject *old, DObject *notOld)
+{
+	int subst = 0;
+	for(unsigned i=0; i<attached.Size(); i++)
+	{
+		if (attached[i] == old) 
+		{
+			attached[i] = (DInterpolation*)notOld;
+			subst++;
+		}
+	}
+	return subst;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+size_t DSectorPlaneInterpolation::PropagateMark()
+{
+	for(unsigned i=0; i<attached.Size(); i++)
+	{
+		GC::Mark(attached[i]);
+	}
+	return Super::PropagateMark();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DSectorScrollInterpolation::DSectorScrollInterpolation(sector_t *_sector, bool _plane)
+{
+	sector = _sector;
+	ceiling = _plane;
+	UpdateInterpolation ();
+	interpolator.AddInterpolation(this);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DSectorScrollInterpolation::UpdateInterpolation()
+{
+	if (!ceiling)
+	{
+		oldx = sector->floor_xoffs;
+		oldy = sector->floor_yoffs;
+	}
+	else
+	{
+		oldx = sector->ceiling_xoffs;
+		oldy = sector->ceiling_yoffs;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DSectorScrollInterpolation::Restore()
+{
+	if (!ceiling)
+	{
+		sector->floor_xoffs = bakx;
+		sector->floor_yoffs = baky;
+	}
+	else
+	{
+		sector->ceiling_xoffs = bakx;
+		sector->ceiling_yoffs = baky;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DSectorScrollInterpolation::Interpolate(fixed_t smoothratio)
+{
+	fixed_t *px;
+	fixed_t *py;
+
+	if (!ceiling)
+	{
+		px = &sector->floor_xoffs;
+		py = &sector->floor_yoffs;
+	}
+	else
+	{
+		px = &sector->ceiling_xoffs;
+		py = &sector->ceiling_yoffs;
+	}
+
+	bakx = *px;
+	baky = *py;
+
+	*px = oldx + FixedMul(bakx - oldx, smoothratio);
+	*py = oldy + FixedMul(baky - oldy, smoothratio);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DSectorScrollInterpolation::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << sector << ceiling << oldx << oldy;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DWallScrollInterpolation::DWallScrollInterpolation(side_t *_side, int _part)
+{
+	side = _side;
+	part = _part;
+	UpdateInterpolation ();
+	interpolator.AddInterpolation(this);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DWallScrollInterpolation::UpdateInterpolation()
+{
+	oldx = side->GetTextureXOffset(part);
+	oldy = side->GetTextureYOffset(part);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DWallScrollInterpolation::Restore()
+{
+	side->SetTextureXOffset(part, bakx);
+	side->SetTextureYOffset(part, baky);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DWallScrollInterpolation::Interpolate(fixed_t smoothratio)
+{
+	bakx = side->GetTextureXOffset(part);
+	baky = side->GetTextureYOffset(part);
+
+	side->SetTextureXOffset(part, oldx + FixedMul(bakx - oldx, smoothratio));
+	side->SetTextureYOffset(part, oldy + FixedMul(baky - oldy, smoothratio));
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DWallScrollInterpolation::Serialize(FArchive &arc)
+{
+	Super::Serialize(arc);
+	arc << side << part << oldx << oldy;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DPolyobjInterpolation::DPolyobjInterpolation(FPolyObj *po)
+{
+	poly = po;
+	oldverts.Resize(po->numvertices<<1);
+	bakverts.Resize(po->numvertices<<1);
+	UpdateInterpolation ();
+	interpolator.AddInterpolation(this);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DPolyobjInterpolation::UpdateInterpolation()
+{
+	for(int i = 0; i < poly->numvertices; i++)
+	{
+		oldverts[i*2  ] = poly->vertices[i]->x;
+		oldverts[i*2+1] = poly->vertices[i]->y;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DPolyobjInterpolation::Restore()
+{
+	for(int i = 0; i < poly->numvertices; i++)
+	{
+		poly->vertices[i]->x = bakverts[i*2  ];
+		poly->vertices[i]->y = bakverts[i*2+1];
+	}
+	//poly->Moved();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
+{
+	for(int i = 0; i < poly->numvertices; i++)
+	{
+		fixed_t *px = &poly->vertices[i]->x;
+		fixed_t *py = &poly->vertices[i]->y;
+
+		bakverts[i*2  ] = *px;
+		bakverts[i*2+1] = *py;
+
+		*px = oldverts[i*2  ] + FixedMul(bakverts[i*2  ] - oldverts[i*2  ], smoothratio);
+		*py = oldverts[i*2+1] + FixedMul(bakverts[i*2+1] - oldverts[i*2+1], smoothratio);
+	}
+	//poly->Moved();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DPolyobjInterpolation::Serialize(FArchive &arc)
+{
+
+	Super::Serialize(arc);
+	int po = int(poly - polyobjs);
+	arc << po << oldverts;
+	poly = polyobjs + po;
+	if (arc.IsLoading()) bakverts.Resize(oldverts.Size());
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DInterpolation *side_t::SetInterpolation(int position)
+{
+	if (textures[position].interpolation == NULL)
+	{
+		textures[position].interpolation = new DWallScrollInterpolation(this, position);
+		textures[position].interpolation->AddRef();
+	}
+	textures[position].interpolation->AddRef();
+	GC::WriteBarrier(textures[position].interpolation);
+	return textures[position].interpolation;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void side_t::StopInterpolation(int position)
+{
+	if (textures[position].interpolation != NULL)
+	{
+		textures[position].interpolation->DelRef();
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DInterpolation *sector_t::SetInterpolation(int position, bool attach)
+{
+	if (interpolations[position] == NULL)
+	{
+		DInterpolation *interp;
+		switch (position)
+		{
+		case sector_t::CeilingMove:
+			interp = new DSectorPlaneInterpolation(this, true, attach);
+			break;
+
+		case sector_t::FloorMove:
+			interp = new DSectorPlaneInterpolation(this, false, attach);
+			break;
+
+		case sector_t::CeilingScroll:
+			interp = new DSectorScrollInterpolation(this, true);
+			break;
+
+		case sector_t::FloorScroll:
+			interp = new DSectorScrollInterpolation(this, false);
+			break;
+
+		default:
+			return NULL;
+		}
+		interpolations[position] = interp;
+	}
+	interpolations[position]->AddRef();
+	GC::WriteBarrier(interpolations[position]);
+	return interpolations[position];
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void sector_t::StopInterpolation(int position)
+{
+	if (interpolations[position] != NULL)
+	{
+		interpolations[position]->DelRef();
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DInterpolation *FPolyObj::SetInterpolation()
+{
+	if (interpolation != NULL)
+	{
+		interpolation->AddRef();
+	}
+	else
+	{
+		interpolation = new DPolyobjInterpolation(this);
+		interpolation->AddRef();
+	}
+	GC::WriteBarrier(interpolation);
+	return interpolation;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FPolyObj::StopInterpolation()
+{
+	if (interpolation != NULL)
+	{
+		interpolation->DelRef();
+	}
+}
+
 
 ADD_STAT (interpolations)
 {
-	int inuse, minuse, maxuse, total;
 	FString out;
-	total = FActiveInterpolation::CountInterpolations (&inuse, &minuse, &maxuse);
-	out.Format ("%d interpolations  buckets:%3d  min:%3d  max:%3d  avg:%3d  %d%% full  %d%% buckfull",
-		total, inuse, minuse, maxuse, inuse?total/inuse:0, total*100/INTERPOLATION_BUCKETS, inuse*100/INTERPOLATION_BUCKETS);
+	out.Format ("%d interpolations", interpolator.CountInterpolations ());
 	return out;
 }
+
+

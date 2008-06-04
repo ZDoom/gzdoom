@@ -48,6 +48,7 @@
 #include "a_sharedglobal.h"
 #include "r_translate.h"
 #include "p_3dmidtex.h"
+#include "r_interpolate.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1126,7 +1127,7 @@ void R_SetupFrame (AActor *actor)
 	R_CopyStackedViewParameters();
 	R_SetViewAngle ();
 
-	dointerpolations (r_TicFrac);
+	interpolator.DoInterpolations (r_TicFrac);
 
 	// Keep the view within the sector's floor and ceiling
 	fixed_t theZ = viewsector->ceilingplane.ZatPoint (viewx, viewy) - 4*FRACUNIT;
@@ -1570,7 +1571,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	}
 	WallMirrors.Clear ();
 
-	restoreinterpolations ();
+	interpolator.RestoreInterpolations ();
 
 	// If there is vertical doubling, and the view window is not an even height,
 	// draw a black line at the bottom of the view window.

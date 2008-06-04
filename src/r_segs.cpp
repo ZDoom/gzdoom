@@ -1444,20 +1444,6 @@ int side_t::GetLightLevel (bool foggy, int baselight) const
 	return clamp(baselight, 0, 255);
 }
 
-FArchive &operator<< (FArchive &arc, side_t::part &p)
-{
-	arc << p.xoffset << p.yoffset;// << p.Light;
-	if (arc.IsStoring ())
-	{
-		TexMan.WriteTexture (arc, p.texture);
-	}
-	else
-	{
-		p.texture = TexMan.ReadTexture (arc);
-	}
-	return arc;
-}
-
 
 
 //

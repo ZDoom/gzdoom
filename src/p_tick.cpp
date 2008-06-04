@@ -30,6 +30,7 @@
 #include "s_sound.h"
 #include "doomstat.h"
 #include "sbar.h"
+#include "r_interpolate.h"
 
 extern gamestate_t wipegamestate;
 
@@ -68,7 +69,7 @@ void P_Ticker (void)
 {
 	int i;
 
-	updateinterpolations ();
+	interpolator.UpdateInterpolations ();
 	r_NoInterpolate = true;
 
 	// run the tic

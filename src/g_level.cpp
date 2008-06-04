@@ -2744,7 +2744,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializePolyobjs (arc);
 	P_SerializeSounds (arc);
 	StatusBar->Serialize (arc);
-	SerializeInterpolations (arc);
+	//SerializeInterpolations (arc);
 
 	arc << level.total_monsters << level.total_items << level.total_secrets;
 

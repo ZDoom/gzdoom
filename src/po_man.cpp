@@ -24,6 +24,7 @@
 #include "a_sharedglobal.h"
 #include "r_main.h"
 #include "p_lnspec.h"
+#include "r_interpolate.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -42,10 +43,11 @@ inline FArchive &operator<< (FArchive &arc, podoortype_t &type)
 class DPolyAction : public DThinker
 {
 	DECLARE_CLASS (DPolyAction, DThinker)
+	HAS_OBJECT_POINTERS
 public:
 	DPolyAction (int polyNum);
-	~DPolyAction ();
 	void Serialize (FArchive &arc);
+	void Destroy();
 
 	void StopInterpolation ();
 protected:
@@ -53,6 +55,7 @@ protected:
 	int m_PolyObj;
 	int m_Speed;
 	int m_Dist;
+	TObjPtr<DInterpolation> m_Interpolation;
 
 	void SetInterpolation ();
 
@@ -152,7 +155,10 @@ static TArray<SDWORD> KnownPolySegs;
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS (DPolyAction)
+IMPLEMENT_POINTY_CLASS (DPolyAction)
+	DECLARE_POINTER(m_Interpolation)
+END_POINTERS
+
 IMPLEMENT_CLASS (DRotatePoly)
 IMPLEMENT_CLASS (DMovePoly)
 IMPLEMENT_CLASS (DPolyDoor)
@@ -164,7 +170,7 @@ DPolyAction::DPolyAction ()
 void DPolyAction::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << m_PolyObj << m_Speed << m_Dist;
+	arc << m_PolyObj << m_Speed << m_Dist << m_Interpolation;
 }
 
 DPolyAction::DPolyAction (int polyNum)
@@ -175,32 +181,31 @@ DPolyAction::DPolyAction (int polyNum)
 	SetInterpolation ();
 }
 
-DPolyAction::~DPolyAction ()
+void DPolyAction::Destroy()
 {
 	FPolyObj *poly = GetPolyobj (m_PolyObj);
 
 	if (poly->specialdata == NULL || poly->specialdata == this)
 	{
 		poly->specialdata = NULL;
-		StopInterpolation ();
 	}
+
+	StopInterpolation();
+	Super::Destroy();
 }
 
 void DPolyAction::SetInterpolation ()
 {
 	FPolyObj *poly = GetPolyobj (m_PolyObj);
-	for (int i = 0; i < poly->numvertices; ++i)
-	{
-		setinterpolation (INTERP_Vertex, poly->vertices[i]);
-	}
+	m_Interpolation = poly->SetInterpolation();
 }
 
 void DPolyAction::StopInterpolation ()
 {
-	FPolyObj *poly = GetPolyobj (m_PolyObj);
-	for (int i = 0; i < poly->numvertices; ++i)
+	if (m_Interpolation != NULL)
 	{
-		stopinterpolation (INTERP_Vertex, poly->vertices[i]);
+		m_Interpolation->DelRef();
+		m_Interpolation = NULL;
 	}
 }
 

@@ -65,15 +65,18 @@
 
 #include "c_console.h"
 
-// [RH] Needed for sky scrolling
-#include "r_sky.h"
+#include "r_interpolate.h"
 
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 
 // [GrafZahl] Make this message changable by the user! ;)
 CVAR(String, secretmessage, "A Secret is revealed!", CVAR_ARCHIVE)
 
-IMPLEMENT_CLASS (DScroller)
+IMPLEMENT_POINTY_CLASS (DScroller)
+ DECLARE_POINTER (m_Interpolations[0])
+ DECLARE_POINTER (m_Interpolations[1])
+ DECLARE_POINTER (m_Interpolations[2])
+END_POINTERS
 
 IMPLEMENT_POINTY_CLASS (DPusher)
  DECLARE_POINTER (m_Source)
@@ -93,7 +96,10 @@ void DScroller::Serialize (FArchive &arc)
 		<< m_LastHeight
 		<< m_vdx << m_vdy
 		<< m_Accel
-		<< m_Parts;
+		<< m_Parts
+		<< m_Interpolations[0]
+		<< m_Interpolations[1]
+		<< m_Interpolations[2];
 }
 
 DPusher::DPusher ()
@@ -1196,6 +1202,8 @@ DScroller::DScroller (EScrollType type, fixed_t dx, fixed_t dy,
 		m_LastHeight =
 			sectors[control].CenterFloor () + sectors[control].CenterCeiling ();
 	m_Affectee = affectee;
+	m_Interpolations[0] = m_Interpolations[1] = m_Interpolations[2] = NULL;
+
 	switch (type)
 	{
 	case sc_carry:
@@ -1206,25 +1214,25 @@ DScroller::DScroller (EScrollType type, fixed_t dx, fixed_t dy,
 		sides[affectee].Flags |= WALLF_NOAUTODECALS;
 		if (m_Parts & scw_top)
 		{
-			sides[m_Affectee].SetInterpolation(side_t::top);
+			m_Interpolations[0] = sides[m_Affectee].SetInterpolation(side_t::top);
 		}
 		if (m_Parts & scw_mid && (lines[sides[m_Affectee].linenum].backsector == NULL ||
 			!(lines[sides[m_Affectee].linenum].flags&ML_3DMIDTEX)))
 		{
-			sides[m_Affectee].SetInterpolation(side_t::mid);
+			m_Interpolations[1] = sides[m_Affectee].SetInterpolation(side_t::mid);
 		}
 		if (m_Parts & scw_bottom)
 		{
-			sides[m_Affectee].SetInterpolation(side_t::bottom);
+			m_Interpolations[2] = sides[m_Affectee].SetInterpolation(side_t::bottom);
 		}
 		break;
 
 	case sc_floor:
-		setinterpolation (INTERP_FloorPanning, &sectors[affectee]);
+		m_Interpolations[0] = sectors[affectee].SetInterpolation(sector_t::FloorScroll, false);
 		break;
 
 	case sc_ceiling:
-		setinterpolation (INTERP_CeilingPanning, &sectors[affectee]);
+		m_Interpolations[0] = sectors[affectee].SetInterpolation(sector_t::CeilingScroll, false);
 		break;
 
 	default:
@@ -1232,37 +1240,17 @@ DScroller::DScroller (EScrollType type, fixed_t dx, fixed_t dy,
 	}
 }
 
-DScroller::~DScroller ()
+void DScroller::Destroy ()
 {
-	switch (m_Type)
+	for(int i=0;i<3;i++)
 	{
-	case sc_side:
-		if (m_Parts & scw_top)
+		if (m_Interpolations[i] != NULL)
 		{
-			sides[m_Affectee].StopInterpolation(side_t::top);
+			m_Interpolations[i]->DelRef();
+			m_Interpolations[i] = NULL;
 		}
-		if (m_Parts & scw_mid && (lines[sides[m_Affectee].linenum].backsector == NULL ||
-			!(lines[sides[m_Affectee].linenum].flags&ML_3DMIDTEX)))
-		{
-			sides[m_Affectee].StopInterpolation(side_t::mid);
-		}
-		if (m_Parts & scw_bottom)
-		{
-			sides[m_Affectee].StopInterpolation(side_t::bottom);
-		}
-		break;
-
-	case sc_floor:
-		stopinterpolation (INTERP_FloorPanning, &sectors[m_Affectee]);
-		break;
-
-	case sc_ceiling:
-		stopinterpolation (INTERP_CeilingPanning, &sectors[m_Affectee]);
-		break;
-
-	default:
-		break;
 	}
+	Super::Destroy();
 }
 
 // Adds wall scroller. Scroll amount is rotated with respect to wall's
@@ -1294,19 +1282,20 @@ DScroller::DScroller (fixed_t dx, fixed_t dy, const line_t *l,
 		m_LastHeight = sectors[control].CenterFloor() + sectors[control].CenterCeiling();
 	m_Affectee = *l->sidenum;
 	sides[m_Affectee].Flags |= WALLF_NOAUTODECALS;
+	m_Interpolations[0] = m_Interpolations[1] = m_Interpolations[2] = NULL;
 
 	if (m_Parts & scw_top)
 	{
-		sides[m_Affectee].SetInterpolation(side_t::top);
+		m_Interpolations[0] = sides[m_Affectee].SetInterpolation(side_t::top);
 	}
 	if (m_Parts & scw_mid && (lines[sides[m_Affectee].linenum].backsector == NULL ||
 		!(lines[sides[m_Affectee].linenum].flags&ML_3DMIDTEX)))
 	{
-		sides[m_Affectee].SetInterpolation(side_t::mid);
+		m_Interpolations[1] = sides[m_Affectee].SetInterpolation(side_t::mid);
 	}
 	if (m_Parts & scw_bottom)
 	{
-		sides[m_Affectee].SetInterpolation(side_t::bottom);
+		m_Interpolations[2] = sides[m_Affectee].SetInterpolation(side_t::bottom);
 	}
 }
 

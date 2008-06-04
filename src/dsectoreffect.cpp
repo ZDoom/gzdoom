@@ -26,6 +26,7 @@
 #include "gi.h"
 #include "p_local.h"
 #include "p_3dmidtex.h"
+#include "r_interpolate.h"
 
 IMPLEMENT_CLASS (DSectorEffect)
 
@@ -41,12 +42,10 @@ void DSectorEffect::Destroy()
 		if (m_Sector->floordata == this)
 		{
 			m_Sector->floordata = NULL;
-			stopinterpolation (INTERP_SectorFloor, m_Sector);
 		}
 		if (m_Sector->ceilingdata == this)
 		{
 			m_Sector->ceilingdata = NULL;
-			stopinterpolation (INTERP_SectorCeiling, m_Sector);
 		}
 		if (m_Sector->lightingdata == this)
 		{
@@ -67,7 +66,9 @@ void DSectorEffect::Serialize (FArchive &arc)
 	arc << m_Sector;
 }
 
-IMPLEMENT_CLASS (DMover)
+IMPLEMENT_POINTY_CLASS (DMover)
+	DECLARE_POINTER(interpolation)
+END_POINTERS
 
 DMover::DMover ()
 {
@@ -76,7 +77,31 @@ DMover::DMover ()
 DMover::DMover (sector_t *sector)
 	: DSectorEffect (sector)
 {
+	interpolation = NULL;
 }
+
+void DMover::Destroy()
+{
+	StopInterpolation();
+	Super::Destroy();
+}
+
+void DMover::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << interpolation;
+}
+
+void DMover::StopInterpolation()
+{
+	if (interpolation != NULL)
+	{
+		interpolation->DelRef();
+		interpolation = NULL;
+	}
+}
+
+
 
 IMPLEMENT_CLASS (DMovingFloor)
 
@@ -88,7 +113,7 @@ DMovingFloor::DMovingFloor (sector_t *sector)
 	: DMover (sector)
 {
 	sector->floordata = this;
-	setinterpolation (INTERP_SectorFloor, sector);
+	interpolation = sector->SetInterpolation(sector_t::FloorMove, true);
 }
 
 IMPLEMENT_CLASS (DMovingCeiling)
@@ -101,7 +126,7 @@ DMovingCeiling::DMovingCeiling (sector_t *sector)
 	: DMover (sector)
 {
 	sector->ceilingdata = this;
-	setinterpolation (INTERP_SectorCeiling, sector);
+	interpolation = sector->SetInterpolation(sector_t::CeilingMove, true);
 }
 
 bool DMover::MoveAttached(int crush, fixed_t move, int floorOrCeiling, bool resetfailed)

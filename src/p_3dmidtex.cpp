@@ -80,7 +80,7 @@ bool P_Scroll3dMidtex(sector_t *sector, int crush, fixed_t move, bool ceiling)
 //
 //============================================================================
 
-void P_Start3dMidtexInterpolations(sector_t *sector, bool ceiling)
+void P_Start3dMidtexInterpolations(TArray<DInterpolation *> &list, sector_t *sector, bool ceiling)
 {
 	extsector_t::midtex::plane &scrollplane = ceiling? sector->e->Midtex.Ceiling : sector->e->Midtex.Floor;
 
@@ -88,30 +88,8 @@ void P_Start3dMidtexInterpolations(sector_t *sector, bool ceiling)
 	{
 		line_t *l = scrollplane.AttachedLines[i];
 
-		sides[l->sidenum[0]].SetInterpolation(side_t::mid);
-		sides[l->sidenum[1]].SetInterpolation(side_t::mid);
-	}
-}
-
-//============================================================================
-//
-// P_Stop3DMidtexInterpolations
-//
-// Stops interpolators for every sidedef that is being changed by moving
-// this sector
-//
-//============================================================================
-
-void P_Stop3dMidtexInterpolations(sector_t *sector, bool ceiling)
-{
-	extsector_t::midtex::plane &scrollplane = ceiling? sector->e->Midtex.Ceiling : sector->e->Midtex.Floor;
-
-	for(unsigned i = 0; i < scrollplane.AttachedLines.Size(); i++)
-	{
-		line_t *l = scrollplane.AttachedLines[i];
-
-		sides[l->sidenum[0]].StopInterpolation(side_t::mid);
-		sides[l->sidenum[1]].StopInterpolation(side_t::mid);
+		list.Push(sides[l->sidenum[0]].SetInterpolation(side_t::mid));
+		list.Push(sides[l->sidenum[1]].SetInterpolation(side_t::mid));
 	}
 }
 

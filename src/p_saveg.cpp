@@ -45,6 +45,7 @@
 #include "s_sndseq.h"
 #include "v_palette.h"
 #include "a_sharedglobal.h"
+#include "r_interpolate.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc);
@@ -333,7 +334,11 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->Flags
 			<< sec->FloorSkyBox << sec->CeilingSkyBox
 			<< sec->ZoneNumber
-			<< sec->oldspecial;
+			<< sec->oldspecial
+			<< sec->interpolations[0]
+			<< sec->interpolations[1]
+			<< sec->interpolations[2]
+			<< sec->interpolations[3];
 
 		sec->e->Serialize(arc);
 		if (arc.IsStoring ())
@@ -409,6 +414,21 @@ void extsector_t::Serialize(FArchive &arc)
 		<< Linked.Ceiling.Sectors;
 }
 
+FArchive &operator<< (FArchive &arc, side_t::part &p)
+{
+	arc << p.xoffset << p.yoffset << p.interpolation;// << p.Light;
+	if (arc.IsStoring ())
+	{
+		TexMan.WriteTexture (arc, p.texture);
+	}
+	else
+	{
+		p.texture = TexMan.ReadTexture (arc);
+	}
+	return arc;
+}
+
+
 //
 // Thinkers
 //
@@ -468,7 +488,7 @@ void P_SerializePolyobjs (FArchive &arc)
 		for(i = 0, po = polyobjs; i < po_NumPolyobjs; i++, po++)
 		{
 			arc << po->tag << po->angle << po->startSpot[0] <<
-				po->startSpot[1] << po->startSpot[2];
+				po->startSpot[1] << po->startSpot[2] << po->interpolation;
   		}
 	}
 	else
@@ -495,7 +515,7 @@ void P_SerializePolyobjs (FArchive &arc)
 			}
 			arc << angle;
 			PO_RotatePolyobj (po->tag, angle);
-			arc << deltaX << deltaY << deltaZ;
+			arc << deltaX << deltaY << deltaZ << po->interpolation;
 			deltaX -= po->startSpot[0];
 			deltaY -= po->startSpot[1];
 			deltaZ -= po->startSpot[2];

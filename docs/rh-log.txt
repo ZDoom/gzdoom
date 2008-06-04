@@ -1,4 +1,5 @@
 June 4, 2008 (Changes by Graf Zahl)
+- Fixed: The EndSequence structure was not fully initialized.
 - While doing the interpolation rewrite I noticed that DScroller and DPolyAction
   were doing some things in their destructor that needed to be done in the
   Destroy method.

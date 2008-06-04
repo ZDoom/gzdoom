@@ -897,6 +897,7 @@ static void ParseMapInfoLower (FScanner &sc,
 			EndSequence newSeq;
 			bool useseq = false;
 
+			memset(&newSeq, 0, sizeof(newSeq));
 			sc.MustGetString ();
 			if (IsNum (sc.String))
 			{

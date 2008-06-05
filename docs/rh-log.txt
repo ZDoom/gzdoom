@@ -1,3 +1,8 @@
+June 4, 2008
+- Removed the 8-character limit on endpic names from the parser. (Though it
+  might still be present in the texture manager; I don't remember.)
+- Fixed: EndSequence needs a proper constructor.
+
 June 4, 2008 (Changes by Graf Zahl)
 - Fixed: The EndSequence structure was not fully initialized.
 - While doing the interpolation rewrite I noticed that DScroller and DPolyAction

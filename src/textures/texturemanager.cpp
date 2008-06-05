@@ -852,7 +852,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 		FTexture::TEX_Override, FTexture::TEX_MiscPatch 
 	};
 
-	for(int i=0;i<countof(texturetypes);i++)
+	for(unsigned int i=0;i<countof(texturetypes);i++)
 	{
 		for(unsigned j = 0; j<newtextures.Size(); j++)
 		{

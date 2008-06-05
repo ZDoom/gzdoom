@@ -148,7 +148,7 @@ int appendtozip (zipFile zipfile, const char * zipname, const char *filename)
 	if (readbuf == NULL)
 	{
 		fclose(lumpfile);
-		fprintf (stderr, "Could not allocate %d bytes\n", len);
+		fprintf (stderr, "Could not allocate %u bytes\n", (int)len);
 		return 1;
 	}
 	// read the whole source file into buffer

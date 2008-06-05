@@ -1674,9 +1674,9 @@ FILE *err;
   spcnt += k;
   for(; argv[i]; i++) fprintf(err," %s",argv[i]);
   if( spcnt<20 ){
-    fprintf(err,"\n%*s^-- here\n",spcnt,"");
+    fprintf(err,"\n%*s^-- here\n",(int)spcnt,"");
   }else{
-    fprintf(err,"\n%*shere --^\n",spcnt-7,"");
+    fprintf(err,"\n%*shere --^\n",(int)spcnt-7,"");
   }
 }
 
@@ -1915,7 +1915,7 @@ void OptPrint(){
     switch( op[i].type ){
       case OPT_FLAG:
       case OPT_FFLAG:
-        fprintf(errstream,"  -%-*s  %s\n",max,op[i].label,op[i].message);
+        fprintf(errstream,"  -%-*s  %s\n",(int)max,op[i].label,op[i].message);
         break;
       case OPT_INT:
       case OPT_FINT:

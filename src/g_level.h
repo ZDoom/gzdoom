@@ -287,9 +287,11 @@ struct EndSequence
 	bool Advanced;
 	bool MusicLooping;
 	bool PlayTheEnd;
-	char PicName[9];
-	char PicName2[9];
+	FString PicName;
+	FString PicName2;
 	FString Music;
+
+	EndSequence();
 };
 
 extern TArray<EndSequence> EndSequences;

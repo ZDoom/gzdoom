@@ -1,6 +1,8 @@
 June 5, 2008
+- Fixed: When following links in S_StartSound(), the function used sfx
+  instead of S_Sfx as the array base for getting the NearLimit.
 - Repositioned the declaration of the file string in D_DoomMain() so that it
-  won't be left around on the stack at exit.
+  won't be left on the stack at exit.
 - Fixed: PSymbol needs a virtual destructor so that PSymbolActionFunction can
   free its Arguments.
 - Symbols for native classes are now freed on exit.

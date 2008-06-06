@@ -709,17 +709,17 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 		if (sfx->bPlayerReserve)
 		{
 			sound_id = S_FindSkinnedSound (mover, sound_id);
-			NearLimit = sfx[sound_id].NearLimit;
+			NearLimit = S_sfx[sound_id].NearLimit;
 		}
 		else if (sfx->bRandomHeader)
 		{
 			sound_id = S_PickReplacement (sound_id);
-			if (NearLimit < 0) NearLimit = sfx[sound_id].NearLimit;
+			if (NearLimit < 0) NearLimit = S_sfx[sound_id].NearLimit;
 		}
 		else
 		{
 			sound_id = sfx->link;
-			if (NearLimit < 0) NearLimit = sfx[sound_id].NearLimit;
+			if (NearLimit < 0) NearLimit = S_sfx[sound_id].NearLimit;
 		}
 		sfx = &S_sfx[sound_id];
 	}

@@ -460,21 +460,26 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 	return 0;
 }
 
+//===========================================================================
+//
+// FMugShot :: GetFace
+//
+// Updates the status of the mug shot and returns the current face texture.
+//
+//===========================================================================
+
 FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accuracy, bool xdeath, bool animated_god_mode)
 {
-	if (player->mo->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR))
+	int angle = UpdateState(player, xdeath, animated_god_mode);
+	int level = 0;
+	while (player->health < (4-level) * (player->mo->GetMaxHealth()/5))
 	{
-		int angle = UpdateState(player, xdeath, animated_god_mode);
-		int level = 0;
-		while (player->health < (4-level) * (player->mo->GetMaxHealth()/5))
-		{
-			level++;
-		}
-		if (CurrentState != NULL)
-		{
-			FPlayerSkin *skin = &skins[player->morphTics ? player->MorphedPlayerClass : player->userinfo.skin];
-			return CurrentState->GetCurrentFrameTexture(default_face, skin, level, angle);
-		}
+		level++;
+	}
+	if (CurrentState != NULL)
+	{
+		FPlayerSkin *skin = &skins[player->morphTics ? player->MorphedPlayerClass : player->userinfo.skin];
+		return CurrentState->GetCurrentFrameTexture(default_face, skin, level, angle);
 	}
 	return NULL;
 }

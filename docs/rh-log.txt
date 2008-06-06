@@ -1,3 +1,7 @@
+June 6, 2008
+- Fixed: There was still an inventory bar check in FMugShot::GetFace() after
+  separating it from DDoomStatusBar.
+
 June 5, 2008
 - Fixed: When following links in S_StartSound(), the function used sfx
   instead of S_Sfx as the array base for getting the NearLimit.

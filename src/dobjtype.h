@@ -15,6 +15,8 @@ enum ESymbolType
 
 struct PSymbol
 {
+	virtual ~PSymbol();
+
 	ESymbolType SymbolType;
 	FName SymbolName;
 };
@@ -74,6 +76,9 @@ public:
 	// a symbol with the same name is already in the table. This symbol is
 	// not copied and will be freed when the symbol table is destroyed.
 	PSymbol *AddSymbol (PSymbol *sym);
+
+	// Frees all symbols from this table.
+	void ReleaseSymbols();
 
 private:
 	PSymbolTable *ParentSymbolTable;

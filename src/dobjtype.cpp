@@ -147,7 +147,10 @@ void PClass::StaticFreeData (PClass *type)
 		}
 		delete type;
 	}
-
+	else
+	{
+		type->Symbols.ReleaseSymbols();
+	}
 }
 
 void ClassReg::RegisterClass ()
@@ -350,12 +353,22 @@ void PClass::FreeStateList ()
 
 // Symbol tables ------------------------------------------------------------
 
+PSymbol::~PSymbol()
+{
+}
+
 PSymbolTable::~PSymbolTable ()
+{
+	ReleaseSymbols();
+}
+
+void PSymbolTable::ReleaseSymbols()
 {
 	for (unsigned int i = 0; i < Symbols.Size(); ++i)
 	{
 		delete Symbols[i];
 	}
+	Symbols.Clear();
 }
 
 void PSymbolTable::SetParentTable (PSymbolTable *parent)

@@ -3,6 +3,8 @@
 ; See the included license file "BUILDLIC.TXT" for license info.
 ; This file has been modified from Ken Silverman's original release
 
+%include "src/valgrind.inc"
+
 	SECTION .data
 
 %ifndef M_TARGET_LINUX
@@ -56,6 +58,7 @@ setvlinebpl_:
 	mov [fixchain1m+2], eax
 	mov [fixchain2ma+2], eax
 	mov [fixchain2mb+2], eax
+	selfmod fixchain1a, fixchain2mb+6
 	ret
 
 ; pass it log2(texheight)
@@ -87,6 +90,7 @@ setupvlineasm:
 	dec eax
 	mov dword [machvsh2+2], eax    ;(1<<shy)-1
 	mov dword [machvsh4+2], eax    ;(1<<shy)-1
+	selfmod premach3a, machvsh8+6
 	ret
 
 	SECTION .rtext	progbits alloc exec write align=64
@@ -250,6 +254,7 @@ machvsh12:	rol ebx, 88h                ;sh
 		add ebp, ebx
 
 		mov ecx, esi
+		selfmod beginvlineasm4, machvline4end+6
 		jmp short beginvlineasm4
 ALIGN 16
 beginvlineasm4:
@@ -323,6 +328,7 @@ setupmvlineasm:
 		mov byte [machmv14+2], cl
 		mov byte [machmv15+2], cl
 		mov byte [machmv16+2], cl
+		selfmod maskmach3a, machmv13+6
 		ret
 
 ALIGN 16
@@ -405,6 +411,7 @@ mvlineasm4:
 		mov ebp, [vplce+12]
 fixchain2ma:	sub edi, 320
 
+		selfmod beginmvlineasm4, machmv2+6
 		jmp short beginmvlineasm4
 ALIGN 16
 beginmvlineasm4:
@@ -529,3 +536,5 @@ mvcase1:	mov [edi], bl
 		jmp beginmvlineasm4
 ALIGN 16
 mvcase0:	jmp beginmvlineasm4
+
+align 16

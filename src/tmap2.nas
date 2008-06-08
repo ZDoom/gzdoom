@@ -37,6 +37,8 @@
 
 BITS 32
 
+%include "src/valgrind.inc"
+
 %define SPACEFILLER4	(0x44444444)
 
 %ifndef M_TARGET_LINUX
@@ -160,6 +162,7 @@ R_SetTiltedSpanSource_ASM:
 	mov	[fetch9+3],ecx
 	mov	[fetch10+3],ecx
 	mov	[ds_curtiltedsource],ecx
+	selfmod rtext_start, rtext_end
 	ret
 	
 GLOBAL	SetTiltedSpanSize
@@ -209,9 +212,13 @@ SetTiltedSpanSize:
 	mov	[m9+2],eax
 	mov	[m10+2],eax
 	
+	selfmod rtext_start, rtext_end
+	
 	ret
 
 	SECTION .rtext	progbits alloc exec write align=64
+
+rtext_start:
 
 GLOBAL	R_DrawTiltedPlane_ASM
 GLOBAL	@R_DrawTiltedPlane_ASM@8
@@ -619,3 +626,5 @@ fetch10	mov	al,[ebp+esi+SPACEFILLER4]
 	pop	esi
 	pop	ebx
 	ret
+
+rtext_end:

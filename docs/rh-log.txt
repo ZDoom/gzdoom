@@ -1,3 +1,7 @@
+June 7, 2008
+- Added self-modifying code notifications for Valgrind.
+  Build with make VALGRIND=1 to turn them on.
+
 June 6, 2008
 - Fixed: There was still an inventory bar check in FMugShot::GetFace() after
   separating it from DDoomStatusBar.

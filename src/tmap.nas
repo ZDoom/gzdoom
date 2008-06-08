@@ -33,6 +33,8 @@
 
 BITS 32
 
+%include "src/valgrind.inc"
+
 ; Segment/section definition macros. 
 
 	SECTION .data
@@ -176,6 +178,8 @@ R_SetSpanSource_ASM:
 	mov	[mspreade+2],ecx
 	mov	[mspreadf+2],ecx
 	mov	[mspreadg+2],ecx
+	
+	selfmod spreada, mspreadg+6
 
 	mov	[ds_cursource],ecx
 	ret
@@ -202,6 +206,8 @@ R_SetSpanColormap_ASM:
 	mov	[mspmape+2],ecx
 	mov	[mspmapf+2],ecx
 	mov	[mspmapg+2],ecx
+	
+	selfmod spmapa, mspmapg+6
 
 	mov	[ds_curcolormap],ecx
 	ret
@@ -275,9 +281,13 @@ R_SetSpanSize_ASM:
 	mov	[dmsy3+2],dl
 	mov	[dmsy4+2],dl
 	
+	selfmod dsy1, dmsm7+6
+	
 aret:	ret
 
 	SECTION .rtext	progbits alloc exec write align=64
+
+rtext_start:
 
 GLOBAL @R_DrawSpanP_ASM@0
 GLOBAL _R_DrawSpanP_ASM
@@ -1731,6 +1741,7 @@ ac4p:	add		eax,320							; pitch
 ac4nil:	pop		edi
 		ret
 
+rtext_end:
 		align	16
 
 ;************************
@@ -1759,6 +1770,7 @@ R_SetupShadedCol:
 		mov		[s4fg2+3],eax
 		mov		[s4fg3+3],eax
 		mov		[s4fg4+3],eax
+		selfmod s4cm1, s4fg4+7
 .cdone	ret
 
 GLOBAL	R_SetupAddCol
@@ -1790,6 +1802,7 @@ R_SetupAddCol:
 		mov		[a4bg2+3],eax
 		mov		[a4bg3+3],eax
 		mov		[a4bg4+3],eax
+		selfmod a4cm1, a4bg4+7
 .dbdone	ret
 
 GLOBAL	R_SetupAddClampCol
@@ -1821,6 +1834,7 @@ R_SetupAddClampCol:
 		mov		[ac4bg2+3],eax
 		mov		[ac4bg3+3],eax
 		mov		[ac4bg4+3],eax
+		selfmod ac4cm1, ac4bg4+7
 .dbdone	ret
 
 EXTERN setvlinebpl_
@@ -1847,5 +1861,6 @@ _ASM_PatchPitch:
 		mov		[s4p2+2],ecx
 		inc		ecx
 		mov		[s4p3+2],ecx
+		selfmod rtext_start, rtext_end
 		call	setpitch3
 		jmp		setvlinebpl_

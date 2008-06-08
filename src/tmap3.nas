@@ -1,3 +1,5 @@
+%include "src/valgrind.inc"
+
 %ifdef M_TARGET_WATCOM
   SEGMENT DATA PUBLIC ALIGN=16 CLASS=DATA USE32
   SEGMENT DATA
@@ -57,6 +59,7 @@ setpitch3:
 	mov	[vltpitcha+2],eax
 	mov	[vlt1pitch1+2], eax
 	mov	[vlt1pitch2+2], eax
+	selfmod vltpitch, vlt1pitch2+6
 	ret
 
 ALIGN 16
@@ -74,6 +77,7 @@ setupvlinetallasm:
 	mov	[preshift+2], cl
 	mov	[shift11+2], cl
 	mov	[shift12+2], cl
+	selfmod shifter1, shift12+6
 	ret
 
 	SECTION .rtext	progbits alloc exec write align=64
@@ -126,6 +130,7 @@ vlinetallasm4:
 	mov	ecx, [vplce+4]
 	mov	esi, [vplce+8]
 	mov	eax, [vplce+12]
+	selfmod loopit, vltpitch
 	jmp	loopit
 
 ALIGN	16
@@ -217,6 +222,7 @@ vlinetallasmathlon4:
 	mov	ecx, [vplce+4]
 	mov	esi, [vplce+8]
 	mov	eax, [vplce+12]
+	selfmod loopita, vltpitcha
 	jmp	loopita
 
 ; Unfortunately, this code has not been carefully analyzed to determine

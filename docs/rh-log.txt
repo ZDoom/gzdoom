@@ -1,3 +1,14 @@
+June 10, 2008 (Changes by Graf Zahl)
+- Added scaling to double size for idmypos display.
+- Changed: Players don't telefrag when they are spawned now but after all
+  actors have been spawned to avoid accidental voodoo doll telefragging.
+- Fixed: ACS scripts for non-existent maps were started on the current one.
+- Added a 'wallbouncefactor' property to AActor.
+- Reverted forceunderwater change from r1026 and fixed the problem for real:
+  SECF_FORCEDUNDERWATER only has meaning when coming from the heightsec.
+  So the initial check of the current sector in AActor::UpdateWaterLevel
+  must only check for SECF_UNDERWATER, not SECF_UNDERWATERMASK.
+
 June 9, 2008
 - Dehacked fix discovered by entryway: Dehacked only changes the blue armor's
   armortype. It does not touch the armor given by the megasphere.

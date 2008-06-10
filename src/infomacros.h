@@ -265,6 +265,7 @@ public:
 #define PROP_MaxDropOffHeight(x)		ADD_FIXD_PROP(ADEF_MaxDropOffHeight,x)
 #define PROP_MaxStepHeight(x)			ADD_FIXD_PROP(ADEF_MaxStepHeight,x)
 #define PROP_BounceFactor(x)			ADD_LONG_PROP(ADEF_BounceFactor,x)
+#define PROP_WallBounceFactor(x)		ADD_LONG_PROP(ADEF_WallBounceFactor,x)
 #define PROP_BounceCount(x)				ADD_LONG_PROP(ADEF_BounceCount,x)
 #define PROP_RadiusdamageFactor(x)		ADD_LONG_PROP(ADEF_RDFactor,x)
 #define PROP_FXFlags(x)					ADD_LONG_PROP(ADEF_FXFlags,x)

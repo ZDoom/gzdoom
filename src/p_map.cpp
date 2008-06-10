@@ -2302,7 +2302,7 @@ bool FSlide::BounceWall (AActor *mo)
 	deltaangle >>= ANGLETOFINESHIFT;
 
 	movelen = P_AproxDistance (mo->momx, mo->momy);
-	movelen = (movelen * 192) >> 8; // friction
+	movelen = FixedMul(movelen, mo->wallbouncefactor);
 
 	FBoundingBox box(mo->x, mo->y, mo->radius);
 	if (box.BoxOnLineSide (line) == -1)

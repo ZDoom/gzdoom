@@ -746,9 +746,9 @@ static void DrawCoordinates(player_t * CPlayer)
 		z = P_PointInSector(x, y)->floorplane.ZatPoint(x, y);
 	}
 
-	int vwidth = con_scaletext!=2? SCREENWIDTH : SCREENWIDTH/2;
-	int vheight = con_scaletext!=2? SCREENHEIGHT : SCREENHEIGHT/2;
-	int xpos = vwidth - SmallFont->StringWidth("X:-99999");
+	int vwidth = con_scaletext==0? SCREENWIDTH : SCREENWIDTH/2;
+	int vheight = con_scaletext==0? SCREENHEIGHT : SCREENHEIGHT/2;
+	int xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
 	int ypos = 18;
 
 	sprintf(coordstr, "X: %d", x>>FRACBITS);

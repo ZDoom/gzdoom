@@ -311,6 +311,7 @@ void AActor::Serialize (FArchive &arc)
 		<< MaxDropOffHeight 
 		<< MaxStepHeight
 		<< bouncefactor
+		<< wallbouncefactor
 		<< bouncecount
 		<< maxtargetrange
 		<< meleethreshold
@@ -3059,7 +3060,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 		return false;
 	}
 
-	if (Sector->MoreFlags & SECF_UNDERWATERMASK)
+	if (Sector->MoreFlags & SECF_UNDERWATER)	// intentionally not SECF_UNDERWATERMASK
 	{
 		waterlevel = 3;
 	}
@@ -3069,7 +3070,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 		if (hsec != NULL && !(hsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 		{
 			fh = hsec->floorplane.ZatPoint (x, y);
-			//if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors!
+			//if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
 			{
 				if (z < fh)
 				{
@@ -3094,13 +3095,13 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 				}
 			}
 			// even non-swimmable deep water must be checked here to do the splashes correctly
-			// But the water level must be reset when this function returns!
+			// But the water level must be reset when this function returns
 			if (!(hsec->MoreFlags&SECF_UNDERWATERMASK)) reset=true;
 		}
 	}
 
 		
-	// some additional checks to make deep sectors � la Boom splash without setting
+	// some additional checks to make deep sectors like Boom's splash without setting
 	// the water flags. 
 	if (boomwaterlevel == 0 && waterlevel != 0 && dosplash) P_HitWater(this, Sector, fh);
 	boomwaterlevel=waterlevel;
@@ -3169,7 +3170,8 @@ BEGIN_DEFAULTS (AActor, Any, -1, 0)
 	PROP_MeleeRange(44)		// MELEERANGE(64) - 20
 	PROP_MaxDropOffHeight(24)
 	PROP_MaxStepHeight(24)
-	PROP_BounceFactor(FRACUNIT*7/10)
+	PROP_BounceFactor(FRACUNIT*3/4)
+	PROP_WallBounceFactor(FRACUNIT)
 	PROP_BounceCount(-1)
 	PROP_FloatSpeed(4)
 	PROP_Gravity(FRACUNIT)
@@ -3699,8 +3701,6 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 		mobj->z = mobj->ceilingz - mobj->height;
 	}
 
-	// [RH] If someone is in the way, kill them
-	P_PlayerStartStomp (mobj);
 
 	// [BC] Do script stuff
 	if (!tempplayer)

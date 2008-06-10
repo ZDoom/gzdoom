@@ -985,7 +985,7 @@ void P_SpawnSpecials (void)
 			{
 				sec->MoreFlags |= SECF_UNDERWATER;
 			}
-			else if (forcewater && lines[i].sidenum[1] == NO_SIDE)
+			else if (forcewater)
 			{
 				sec->MoreFlags |= SECF_FORCEDUNDERWATER;
 			}

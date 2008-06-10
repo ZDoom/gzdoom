@@ -1120,21 +1120,46 @@ void DBaseStatusBar::Draw (EHudState state)
 	if (idmypos)
 	{ // Draw current coordinates
 		int height = screen->Font->GetHeight();
-		int y = ::ST_Y - height;
 		char labels[3] = { 'X', 'Y', 'Z' };
 		fixed_t *value;
 		int i;
 
+		int vwidth;
+		int vheight;
+		int xpos;
+		int y;
+
+		if (con_scaletext == 0)
+		{
+			vwidth = SCREENWIDTH;
+			vheight = SCREENHEIGHT;
+			xpos = vwidth - 80;
+			y = ::ST_Y - height;
+		}
+		else
+		{
+			vwidth = SCREENWIDTH/2;
+			vheight = SCREENHEIGHT/2;
+			xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
+			y = ::ST_Y/2 - height;
+		}
+
 		if (gameinfo.gametype == GAME_Strife)
 		{
-			y -= height * 4;
+			if (con_scaletext == 0)
+				y -= height * 4;
+			else
+				y -= height * 2;
 		}
 
 		value = &CPlayer->mo->z;
 		for (i = 2, value = &CPlayer->mo->z; i >= 0; y -= height, --value, --i)
 		{
 			sprintf (line, "%c: %d", labels[i], *value >> FRACBITS);
-			screen->DrawText (CR_GREEN, SCREENWIDTH - 80, y, line, TAG_DONE);
+			screen->DrawText (CR_GREEN, xpos, y, line, 
+				DTA_KeepRatio, true,
+				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, 				
+				TAG_DONE);
 			BorderNeedRefresh = screen->GetPageCount();
 		}
 	}

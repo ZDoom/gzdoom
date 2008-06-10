@@ -68,6 +68,7 @@
 #include "c_dispatch.h"
 #include "p_acs.h"
 #include "s_sndseq.h"
+#include "r_interpolate.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -231,6 +232,7 @@ static DObject **SweepList(DObject **p, size_t count, size_t *finalize_count)
 				// thinker pointer is changed. This seems easier and perfectly reasonable, since
 				// a live thinker that isn't on a thinker list isn't much of a thinker.
 				assert(!curr->IsKindOf(RUNTIME_CLASS(DThinker)) || (curr->ObjectFlags & OF_Sentinel));
+				assert(!curr->IsKindOf(RUNTIME_CLASS(DInterpolation)));
 				curr->Destroy();
 			}
 			curr->ObjectFlags |= OF_Cleanup;

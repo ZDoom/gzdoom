@@ -1575,6 +1575,15 @@ static void ActorBounceFactor (FScanner &sc, AActor *defaults, Baggage &bag)
 //==========================================================================
 //
 //==========================================================================
+static void ActorWallBounceFactor (FScanner &sc, AActor *defaults, Baggage &bag)
+{
+	sc.MustGetFloat ();
+	defaults->wallbouncefactor = clamp<fixed_t>(fixed_t(sc.Float * FRACUNIT), 0, FRACUNIT);
+}
+
+//==========================================================================
+//
+//==========================================================================
 static void ActorBounceCount (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	sc.MustGetNumber ();
@@ -2747,6 +2756,7 @@ static const ActorProps props[] =
 	{ "tag",							ActorTag,						RUNTIME_CLASS(AActor) },
 	{ "translation",					ActorTranslation,				RUNTIME_CLASS(AActor) },
 	{ "vspeed",							ActorVSpeed,					RUNTIME_CLASS(AActor) },
+	{ "wallbouncefactor",				ActorWallBounceFactor,			RUNTIME_CLASS(AActor) },
 	{ "weapon.ammogive",				(apf)WeaponAmmoGive1,			RUNTIME_CLASS(AWeapon) },
 	{ "weapon.ammogive1",				(apf)WeaponAmmoGive1,			RUNTIME_CLASS(AWeapon) },
 	{ "weapon.ammogive2",				(apf)WeaponAmmoGive2,			RUNTIME_CLASS(AWeapon) },

@@ -288,6 +288,7 @@ enum
 	ADEF_MaxDropOffHeight,
 	ADEF_MaxStepHeight,
 	ADEF_BounceFactor,
+	ADEF_WallBounceFactor,
 	ADEF_BounceCount,
 	ADEF_FloatSpeed,
 	ADEF_RDFactor,

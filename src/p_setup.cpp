@@ -1488,6 +1488,11 @@ void P_SpawnThings (int position)
 	{
 		SpawnMapThing (i, &MapThingsConverted[i], position);
 	}
+	for(int i=0; i<MAXPLAYERS; i++)
+	{
+		if (playeringame[i])
+			P_PlayerStartStomp(players[i].mo);
+	}
 }
 
 

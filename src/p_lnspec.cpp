@@ -1558,10 +1558,11 @@ FUNC(LS_ACS_Execute)
 {
 	level_info_t *info;
 
-	if ( (arg1 == 0) || !(info = FindLevelByNum (arg1)) )
+	if (arg1 == 0)
 		return P_StartScript (it, ln, arg0, level.mapname, backSide, arg2, arg3, arg4, false, false);
-	else
+	else if ((info = FindLevelByNum (arg1)) )
 		return P_StartScript (it, ln, arg0, info->mapname, backSide, arg2, arg3, arg4, false, false);
+	else return false;
 }
 
 FUNC(LS_ACS_ExecuteAlways)
@@ -1569,10 +1570,11 @@ FUNC(LS_ACS_ExecuteAlways)
 {
 	level_info_t *info;
 
-	if ( (arg1 == 0) || !(info = FindLevelByNum (arg1)) )
+	if (arg1 == 0)
 		return P_StartScript (it, ln, arg0, level.mapname, backSide, arg2, arg3, arg4, true, false);
-	else
+	else if ((info = FindLevelByNum (arg1)) )
 		return P_StartScript (it, ln, arg0, info->mapname, backSide, arg2, arg3, arg4, true, false);
+	else return false;
 }
 
 FUNC(LS_ACS_LockedExecute)
@@ -1607,9 +1609,9 @@ FUNC(LS_ACS_Suspend)
 {
 	level_info_t *info;
 
-	if ( (arg1 == 0) || !(info = FindLevelByNum (arg1)) )
+	if (arg1 == 0)
 		P_SuspendScript (arg0, level.mapname);
-	else
+	else if ((info = FindLevelByNum (arg1)) )
 		P_SuspendScript (arg0, info->mapname);
 
 	return true;
@@ -1620,9 +1622,9 @@ FUNC(LS_ACS_Terminate)
 {
 	level_info_t *info;
 
-	if ( (arg1 == 0) || !(info = FindLevelByNum (arg1)) )
+	if (arg1 == 0)
 		P_TerminateScript (arg0, level.mapname);
-	else
+	else if ((info = FindLevelByNum (arg1)) )
 		P_TerminateScript (arg0, info->mapname);
 
 	return true;

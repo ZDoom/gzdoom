@@ -1,3 +1,11 @@
+June 9, 2008
+- Dehacked fix discovered by entryway: Dehacked only changes the blue armor's
+  armortype. It does not touch the armor given by the megasphere.
+- Changed forcewater handling so that only control sectors created by one-
+  sided lines become swimmable, since there's a good chance that a two-sided
+  line is creating the control sector out of a normal, accessible portion of
+  the map. (See e.g. linedef 29242 of zdoomcmp1.)
+
 June 7, 2008
 - Added self-modifying code notifications for Valgrind.
   Build with make VALGRIND=1 to turn them on.

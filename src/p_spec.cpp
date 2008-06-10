@@ -972,7 +972,7 @@ void P_SpawnSpecials (void)
 		// killough 3/7/98:
 		// support for drawn heights coming from different sector
 		case Transfer_Heights:
-			sec = sides[*lines[i].sidenum].sector;
+			sec = sides[lines[i].sidenum[0]].sector;
 			if (lines[i].args[1] & 2)
 			{
 				sec->MoreFlags |= SECF_FAKEFLOORONLY;
@@ -985,7 +985,7 @@ void P_SpawnSpecials (void)
 			{
 				sec->MoreFlags |= SECF_UNDERWATER;
 			}
-			else if (forcewater)
+			else if (forcewater && lines[i].sidenum[1] == NO_SIDE)
 			{
 				sec->MoreFlags |= SECF_FORCEDUNDERWATER;
 			}

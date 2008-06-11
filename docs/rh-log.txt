@@ -1,3 +1,11 @@
+June 11, 2008 (Changes by Graf Zahl)
+- Fixed: Wall scrolling interpolations incremented their reference count twice.
+- Fixed: Before a level's thinkers are loaded all previous interpolations must
+  be cleared.
+- Fixed: deleted interpolations didn't NULL the pointer in the interpolated
+  object. Also added all interpolation pointers to DSectorMarker to ensure
+  that they are properyl processed by the garbage collector.
+
 June 10, 2008 (Changes by Graf Zahl)
 - Added scaling to double size for idmypos display.
 - Changed: Players don't telefrag when they are spawned now but after all

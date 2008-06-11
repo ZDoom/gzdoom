@@ -93,6 +93,8 @@
 
 // Number of sectors to mark for each step.
 #define SECTORSTEPSIZE	32
+#define POLYSTEPSIZE 120
+#define SIDEDEFSTEPSIZE 240
 
 #define GCSTEPSIZE		1024u
 #define GCSWEEPMAX		40
@@ -108,9 +110,11 @@ class DSectorMarker : public DObject
 {
 	DECLARE_CLASS(DSectorMarker, DObject)
 public:
-	DSectorMarker() : SecNum(0) {}
+	DSectorMarker() : SecNum(0),PolyNum(0),SideNum(0) {}
 	size_t PropagateMark();
 	int SecNum;
+	int PolyNum;
+	int SideNum;
 };
 IMPLEMENT_CLASS(DSectorMarker)
 
@@ -602,32 +606,66 @@ void DelSoftRoot(DObject *obj)
 size_t DSectorMarker::PropagateMark()
 {
 	int i;
+	int marked = 0;
+	bool moretodo = false;
 
-	if (sectors == NULL)
+	if (sectors != NULL)
 	{
-		return 0;
+		for (i = 0; i < SECTORSTEPSIZE && SecNum + i < numsectors; ++i)
+		{
+			sector_t *sec = &sectors[SecNum + i];
+			GC::Mark(sec->SoundTarget);
+			GC::Mark(sec->CeilingSkyBox);
+			GC::Mark(sec->FloorSkyBox);
+			GC::Mark(sec->SecActTarget);
+			GC::Mark(sec->floordata);
+			GC::Mark(sec->ceilingdata);
+			GC::Mark(sec->lightingdata);
+			for(int j=0;j<4;j++) GC::Mark(sec->interpolations[j]);
+		}
+		marked += i * sizeof(sector_t);
+		if (SecNum + i < numsectors)
+		{
+			SecNum += i;
+			moretodo = true;
+		}
 	}
-	for (i = 0; i < SECTORSTEPSIZE && SecNum + i < numsectors; ++i)
+	if (!moretodo && polyobjs != NULL)
 	{
-		sector_t *sec = &sectors[SecNum + i];
-		GC::Mark(sec->SoundTarget);
-		GC::Mark(sec->CeilingSkyBox);
-		GC::Mark(sec->FloorSkyBox);
-		GC::Mark(sec->SecActTarget);
-		GC::Mark(sec->floordata);
-		GC::Mark(sec->ceilingdata);
-		GC::Mark(sec->lightingdata);
+		for (i = 0; i < POLYSTEPSIZE && PolyNum + i < po_NumPolyobjs; ++i)
+		{
+			GC::Mark(polyobjs[PolyNum + i].interpolation);
+		}
+		marked += i * sizeof(FPolyObj);
+		if (PolyNum + i < po_NumPolyobjs)
+		{
+			PolyNum += i;
+			moretodo = true;
+		}
+	}
+	if (!moretodo && sides != NULL)
+	{
+		for (i = 0; i < SIDEDEFSTEPSIZE && SideNum + i < numsides; ++i)
+		{
+			side_t *side = &sides[SideNum + i];
+			for(int j=0;j<3;j++) GC::Mark(side->textures[j].interpolation);
+		}
+		marked += i * sizeof(side_t);
+		if (SideNum + i < numsides)
+		{
+			SideNum += i;
+			moretodo = true;
+		}
 	}
 	// If there are more sectors to mark, put ourself back into the gray
 	// list.
-	if (SecNum + i < numsectors)
+	if (moretodo)
 	{
-		SecNum += i;
 		Black2Gray();
 		GCNext = GC::Gray;
 		GC::Gray = this;
 	}
-	return i * sizeof(sector_t);
+	return marked;
 }
 
 //==========================================================================

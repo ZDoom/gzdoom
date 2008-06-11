@@ -41,6 +41,7 @@ struct FInterpolator
 {
 	DInterpolation *Head;
 	bool didInterp;
+	int count;
 
 	int CountInterpolations ();
 
@@ -49,6 +50,7 @@ public:
 	{
 		Head = NULL;
 		didInterp = false;
+		count = 0;
 	}
 	void UpdateInterpolations();
 	void AddInterpolation(DInterpolation *);

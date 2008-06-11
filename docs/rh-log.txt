@@ -1,4 +1,5 @@
 June 11, 2008 (Changes by Graf Zahl)
+- Fixed: SBARINFO's popup code used 1-based indices to address a C++ array.
 - Fixed: ACS's ChangeSky command didn't clean up the stack.
 - Fixed: Wall scrolling interpolations incremented their reference count twice.
 - Fixed: Before a level's thinkers are loaded all previous interpolations must

@@ -1548,7 +1548,7 @@ void A_SpawnItemEx(AActor * self)
 		xmom = newxmom;
 	}
 
-	AActor * mo = Spawn( missile, x, y, self->z + self->floorclip + zofs, ALLOW_REPLACE);
+	AActor * mo = Spawn( missile, x, y, self->z - self->floorclip + zofs, ALLOW_REPLACE);
 	InitSpawnedItem(self, mo, flags);
 	if (mo)
 	{

@@ -1,3 +1,11 @@
+June 12, 2008 (Changes by Graf Zahl)
+- Fixed: P_ChangeSector could incorrectly block movement when checking for
+  mid textures linked to a moving floor.
+- Fixed AActor's bouncefactor definitions which I accidentally changed when
+  adding wallbouncefactor.
+- Fixed: A_SpawnItemEx added the floorclip offset to the z coordinate instead 
+  of subtracting it.
+
 June 11, 2008 (Changes by Graf Zahl)
 - Fixed: SBARINFO's popup code used 1-based indices to address a C++ array.
 - Fixed: ACS's ChangeSky command didn't clean up the stack.

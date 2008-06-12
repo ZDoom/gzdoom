@@ -3939,6 +3939,8 @@ void PIT_FloorDrop (AActor *thing, FChangePosition *cpos)
 
 	P_AdjustFloorCeil (thing, cpos);
 
+	if (oldfloorz == thing->floorz) return;
+
 	if (thing->momz == 0 &&
 		(!(thing->flags & MF_NOGRAVITY) ||
 		 (thing->z == oldfloorz && !(thing->flags & MF_NOLIFTDROP))))
@@ -3974,6 +3976,8 @@ void PIT_FloorRaise (AActor *thing, FChangePosition *cpos)
 	fixed_t oldfloorz = thing->floorz;
 
 	P_AdjustFloorCeil (thing, cpos);
+
+	if (oldfloorz == thing->floorz) return;
 
 	// Move things intersecting the floor up
 	if (thing->z <= thing->floorz ||

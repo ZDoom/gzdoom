@@ -132,7 +132,7 @@ void S_CacheSound (sfxinfo_t *sfx);
 void S_Sound (int channel, const char *name, float volume, int attenuation);
 void S_Sound (AActor *ent, int channel, const char *name, float volume, int attenuation);
 void S_Sound (fixed_t *pt, int channel, const char *name, float volume, int attenuation);
-void S_Sound (fixed_t x, fixed_t y, int channel, const char *name, float volume, int attenuation);
+//void S_Sound (fixed_t x, fixed_t y, int channel, const char *name, float volume, int attenuation);
 void S_SoundID (int channel, int sfxid, float volume, int attenuation);
 void S_SoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
 void S_SoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
@@ -299,6 +299,7 @@ struct ReverbContainer
 	bool Builtin;
 	bool Modified;
 	REVERB_PROPERTIES Properties;
+	bool SoftwareWater;
 };
 
 extern ReverbContainer *Environments;

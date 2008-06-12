@@ -103,9 +103,22 @@ static const char *ReverbFieldNames[NUM_REVERB_FIELDS+2] =
 
 static const char *BoolNames[3] = { "False", "True", NULL };
 
+static ReverbContainer DSPWater =
+{
+	// Based on the "off" reverb, this one uses the software water effect,
+	// which is completely independant from EAX-like reverb.
+	NULL,
+	"DSP Water",
+	0xffff,
+	true,
+	false,
+	{0, 0,	7.5f,	1.00f, -10000, -10000, 0,   1.00f,  1.00f, 1.0f,  -2602, 0.007f, 0.0f,0.0f,0.0f,   200, 0.011f, 0.0f,0.0f,0.0f, 0.250f, 0.00f, 0.25f, 0.000f, -5.0f, 5000.0f, 250.0f, 0.0f,   0.0f,   0.0f, 0x33f },
+	true
+};
+
 static ReverbContainer Psychotic =
 {
-	NULL,
+	&DSPWater,
 	"Psychotic",
 	0x1900,
 	true,
@@ -564,6 +577,7 @@ static void ReadReverbDef (int lump)
 		newenv->ID = (id1 << 8) | id2;
 		newenv->Builtin = false;
 		newenv->Properties = props;
+		newenv->SoftwareWater = false;
 		S_AddEnvironment (newenv);
 	}
 }

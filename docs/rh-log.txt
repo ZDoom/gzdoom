@@ -1,3 +1,13 @@
+June 12, 2008
+- Add environment 255, 255 as a way to get the software underwater effect in
+  any zone you want.
+- Using a too-recent version of FMOD now gives an error, since there may be
+  breaking changes to the API from one version to the next (excluding
+  revisions in stable branches, which only represent bug fixes).
+- Updated fmod_wrap.h for FMOD 4.16 and corrected a bug that had gone
+  unnoticed before: The delayhi and delaylo parameters for Channel::setDelay()
+  and getDelay() were swapped.
+
 June 12, 2008 (Changes by Graf Zahl)
 - Fixed: P_ChangeSector could incorrectly block movement when checking for
   mid textures linked to a moving floor.

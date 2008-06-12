@@ -46,7 +46,7 @@ namespace FMOD
 	/*
 		FMOD global system functions (optional).
 	*/
-	inline FMOD_RESULT Memory_Initialize(void *poolmem, int poollen, FMOD_MEMORY_ALLOCCALLBACK useralloc, FMOD_MEMORY_REALLOCCALLBACK userrealloc, FMOD_MEMORY_FREECALLBACK userfree) { return FMOD_Memory_Initialize(poolmem, poollen, useralloc, userrealloc, userfree); }
+	inline FMOD_RESULT Memory_Initialize(void *poolmem, int poollen, FMOD_MEMORY_ALLOCCALLBACK useralloc, FMOD_MEMORY_REALLOCCALLBACK userrealloc, FMOD_MEMORY_FREECALLBACK userfree, FMOD_MEMORY_TYPE memtypeflags = (FMOD_MEMORY_NORMAL | FMOD_MEMORY_XBOX360_PHYSICAL)) { return FMOD_Memory_Initialize(poolmem, poollen, useralloc, userrealloc, userfree, memtypeflags); }
 	inline FMOD_RESULT Memory_GetStats  (int *currentalloced, int *maxalloced) { return FMOD_Memory_GetStats(currentalloced, maxalloced); }
 	inline FMOD_RESULT Debug_SetLevel(FMOD_DEBUGLEVEL level)  { return FMOD_Debug_SetLevel(level); }
 	inline FMOD_RESULT Debug_GetLevel(FMOD_DEBUGLEVEL *level) { return FMOD_Debug_GetLevel(level); }
@@ -93,7 +93,7 @@ namespace FMOD
 		  FMOD_RESULT getAdvancedSettings    (FMOD_ADVANCEDSETTINGS *settings) { return FMOD_System_GetAdvancedSettings(this, settings); }
 		  FMOD_RESULT setSpeakerMode         (FMOD_SPEAKERMODE speakermode) { return FMOD_System_SetSpeakerMode(this, speakermode); }
 		  FMOD_RESULT getSpeakerMode         (FMOD_SPEAKERMODE *speakermode) { return FMOD_System_GetSpeakerMode(this, speakermode); }
-		  FMOD_RESULT setCallback            (FMOD_SYSTEM_CALLBACKTYPE type, FMOD_SYSTEM_CALLBACK callback) { return FMOD_System_SetCallback(this, type, callback); }
+		  FMOD_RESULT setCallback            (FMOD_SYSTEM_CALLBACK callback) { return FMOD_System_SetCallback(this, callback); }
 
 		// Plug-in support
 		  FMOD_RESULT setPluginPath          (const char *path) { return FMOD_System_SetPluginPath(this, path); }
@@ -280,8 +280,8 @@ namespace FMOD
 		  FMOD_RESULT getFrequency           (float *frequency) { return FMOD_Channel_GetFrequency(this, frequency); }
 		  FMOD_RESULT setPan                 (float pan) { return FMOD_Channel_SetPan(this, pan); }
 		  FMOD_RESULT getPan                 (float *pan) { return FMOD_Channel_GetPan(this, pan); }
-		  FMOD_RESULT setDelay               (FMOD_DELAYTYPE delaytype, unsigned int delayhi, unsigned int delaylo) { return FMOD_Channel_SetDelay(this, delaytype, delaylo, delayhi); }
-		  FMOD_RESULT getDelay               (FMOD_DELAYTYPE delaytype, unsigned int *delayhi, unsigned int *delaylo) { return FMOD_Channel_GetDelay(this, delaytype, delaylo, delayhi); }
+		  FMOD_RESULT setDelay               (FMOD_DELAYTYPE delaytype, unsigned int delayhi, unsigned int delaylo) { return FMOD_Channel_SetDelay(this, delaytype, delayhi, delaylo); }
+		  FMOD_RESULT getDelay               (FMOD_DELAYTYPE delaytype, unsigned int *delayhi, unsigned int *delaylo) { return FMOD_Channel_GetDelay(this, delaytype, delayhi, delaylo); }
 		  FMOD_RESULT setSpeakerMix          (float frontleft, float frontright, float center, float lfe, float backleft, float backright, float sideleft, float sideright) { return FMOD_Channel_SetSpeakerMix(this, frontleft, frontright, center, lfe, backleft, backright, sideleft, sideright); }
 		  FMOD_RESULT getSpeakerMix          (float *frontleft, float *frontright, float *center, float *lfe, float *backleft, float *backright, float *sideleft, float *sideright) { return FMOD_Channel_GetSpeakerMix(this, frontleft, frontright, center, lfe, backleft, backright, sideleft, sideright); }
 		  FMOD_RESULT setSpeakerLevels       (FMOD_SPEAKER speaker, float *levels, int numlevels) { return FMOD_Channel_SetSpeakerLevels(this, speaker, levels, numlevels); }
@@ -469,6 +469,8 @@ namespace FMOD
 		  FMOD_RESULT getActive              (bool *active) { FMOD_BOOL b; FMOD_RESULT res = FMOD_DSP_GetActive(this, &b); *active = b; return res; }
 		  FMOD_RESULT setBypass              (bool bypass) { return FMOD_DSP_SetBypass(this, bypass); }
 		  FMOD_RESULT getBypass              (bool *bypass) { FMOD_BOOL b; FMOD_RESULT res = FMOD_DSP_GetBypass(this, &b); *bypass = b; return res; }
+		  FMOD_RESULT setSpeakerActive       (FMOD_SPEAKER speaker, bool active) { return FMOD_DSP_SetSpeakerActive(this, speaker, active); }
+		  FMOD_RESULT getSpeakerActive       (FMOD_SPEAKER speaker, bool *active) { FMOD_BOOL b; FMOD_RESULT res = FMOD_DSP_GetSpeakerActive(this, speaker, &b); *active = b; return res; }
 		  FMOD_RESULT reset                  ()  { return FMOD_DSP_Reset(this); }
 
 		// DSP parameter control.

@@ -641,10 +641,20 @@ bool FMODSoundRenderer::Init()
 		return false;
 	}
 
+	const char *wrongver = NULL;
 	if (version < FMOD_VERSION)
 	{
-		Printf (" "TEXTCOLOR_ORANGE"Error! You are using an old version of FMOD (%x.%02x.%02x).\n"
+		wrongver = "an old";
+	}
+	else if ((version & 0xFFFF00) > (FMOD_VERSION & 0xFFFF00))
+	{
+		wrongver = "a new";
+	}
+	if (wrongver != NULL)
+	{
+		Printf (" "TEXTCOLOR_ORANGE"Error! You are using %s version of FMOD (%x.%02x.%02x).\n"
 				" "TEXTCOLOR_ORANGE"This program requires version %x.%02x.%02x\n",
+				wrongver,
 				version >> 16, (version >> 8) & 255, version & 255,
 				FMOD_VERSION >> 16, (FMOD_VERSION >> 8) & 255, FMOD_VERSION & 255);
 		return false;
@@ -1487,8 +1497,11 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 			chan->setFrequency(freq);
 		}
 		chan->setVolume(vol);
-		chan->set3DAttributes((FMOD_VECTOR *)pos, (FMOD_VECTOR *)vel);
-		chan->set3DSpread(snd_3dspread);
+		if (mode & FMOD_3D)
+		{
+			chan->set3DAttributes((FMOD_VECTOR *)pos, (FMOD_VECTOR *)vel);
+			chan->set3DSpread(snd_3dspread);
+		}
 		chan->setDelay(FMOD_DELAYTYPE_DSPCLOCK_START, DSPClockHi, DSPClockLo);
 		chan->setPaused(false);
 		FSoundChan *schan = CommonChannelSetup(chan);
@@ -1707,11 +1720,6 @@ void FMODSoundRenderer::UpdateListener()
 		{
 			env = DefaultEnvironments[0];
 		}
-/*		if (env == DefaultEnvironments[0] && underwater)
-		{
-			env = DefaultEnvironments[22];
-		}
-*/
 	}
 	if (env != PrevEnvironment || env->Modified)
 	{
@@ -1721,7 +1729,7 @@ void FMODSoundRenderer::UpdateListener()
 		PrevEnvironment = env;
 	}
 
-	if (underwater)
+	if (underwater || env->SoftwareWater)
 	{
 		//PausableSfx->setPitch(0.64171f);		// This appears to be what Duke 3D uses
 		PausableSfx->setPitch(0.7937005f);		// Approx. 4 semitones lower; what Nash suggesetd

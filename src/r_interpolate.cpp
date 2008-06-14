@@ -583,16 +583,8 @@ void DSectorScrollInterpolation::Destroy()
 
 void DSectorScrollInterpolation::UpdateInterpolation()
 {
-	if (!ceiling)
-	{
-		oldx = sector->floor_xoffs;
-		oldy = sector->floor_yoffs;
-	}
-	else
-	{
-		oldx = sector->ceiling_xoffs;
-		oldy = sector->ceiling_yoffs;
-	}
+	oldx = sector->GetXOffset(ceiling);
+	oldy = sector->GetYOffset(ceiling, false);
 }
 
 //==========================================================================
@@ -603,16 +595,8 @@ void DSectorScrollInterpolation::UpdateInterpolation()
 
 void DSectorScrollInterpolation::Restore()
 {
-	if (!ceiling)
-	{
-		sector->floor_xoffs = bakx;
-		sector->floor_yoffs = baky;
-	}
-	else
-	{
-		sector->ceiling_xoffs = bakx;
-		sector->ceiling_yoffs = baky;
-	}
+	sector->SetXOffset(ceiling, bakx);
+	sector->SetYOffset(ceiling, bakx);
 }
 
 //==========================================================================
@@ -623,25 +607,11 @@ void DSectorScrollInterpolation::Restore()
 
 void DSectorScrollInterpolation::Interpolate(fixed_t smoothratio)
 {
-	fixed_t *px;
-	fixed_t *py;
+	bakx = sector->GetXOffset(ceiling);
+	baky = sector->GetYOffset(ceiling, false);
 
-	if (!ceiling)
-	{
-		px = &sector->floor_xoffs;
-		py = &sector->floor_yoffs;
-	}
-	else
-	{
-		px = &sector->ceiling_xoffs;
-		py = &sector->ceiling_yoffs;
-	}
-
-	bakx = *px;
-	baky = *py;
-
-	*px = oldx + FixedMul(bakx - oldx, smoothratio);
-	*py = oldy + FixedMul(baky - oldy, smoothratio);
+	sector->SetXOffset(ceiling, oldx + FixedMul(bakx - oldx, smoothratio));
+	sector->SetYOffset(ceiling, oldy + FixedMul(baky - oldy, smoothratio));
 }
 
 //==========================================================================

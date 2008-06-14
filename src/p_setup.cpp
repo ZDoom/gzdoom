@@ -1210,10 +1210,10 @@ void P_LoadSectors (MapData * map)
 		ss->prevsec = -1;	// stair retriggering until build completes
 
 		// killough 3/7/98:
-		ss->floor_xscale = FRACUNIT;	// [RH] floor and ceiling scaling
-		ss->floor_yscale = FRACUNIT;
-		ss->ceiling_xscale = FRACUNIT;
-		ss->ceiling_yscale = FRACUNIT;
+		ss->SetXScale(sector_t::floor, FRACUNIT);	// [RH] floor and ceiling scaling
+		ss->SetYScale(sector_t::floor, FRACUNIT);
+		ss->SetXScale(sector_t::ceiling, FRACUNIT);
+		ss->SetYScale(sector_t::ceiling, FRACUNIT);
 
 		ss->heightsec = NULL;	// sector used to get floor and ceiling height
 		// killough 3/7/98: end changes

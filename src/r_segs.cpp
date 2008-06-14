@@ -1268,8 +1268,8 @@ void R_NewWall (bool needlights)
 				|| backsector->floorpic != frontsector->floorpic
 
 				// killough 3/7/98: Add checks for (x,y) offsets
-				|| backsector->floor_xoffs != frontsector->floor_xoffs
-				|| (backsector->floor_yoffs + backsector->base_floor_yoffs) != (frontsector->floor_yoffs + frontsector->base_floor_yoffs)
+				|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
+				|| backsector->GetYOffset(sector_t::floor) != frontsector->GetYOffset(sector_t::floor)
 
 				// killough 4/15/98: prevent 2s normals
 				// from bleeding through deep water
@@ -1281,10 +1281,10 @@ void R_NewWall (bool needlights)
 				// [RH] Add checks for colormaps
 				|| backsector->ColorMap != frontsector->ColorMap
 
-				|| backsector->floor_xscale != frontsector->floor_xscale
-				|| backsector->floor_yscale != frontsector->floor_yscale
+				|| backsector->GetXScale(sector_t::floor) != frontsector->GetXScale(sector_t::floor)
+				|| backsector->GetYScale(sector_t::floor) != frontsector->GetYScale(sector_t::floor)
 
-				|| (backsector->floor_angle + backsector->base_floor_angle) != (frontsector->floor_angle + frontsector->base_floor_angle)
+				|| backsector->GetAngle(sector_t::floor) != frontsector->GetAngle(sector_t::floor)
 
 				|| (sidedef->GetTexture(side_t::mid) && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
 				;
@@ -1297,8 +1297,8 @@ void R_NewWall (bool needlights)
 				|| backsector->ceilingpic != frontsector->ceilingpic
 
 				// killough 3/7/98: Add checks for (x,y) offsets
-				|| backsector->ceiling_xoffs != frontsector->ceiling_xoffs
-				|| (backsector->ceiling_yoffs + backsector->base_ceiling_yoffs) != (frontsector->ceiling_yoffs + frontsector->base_ceiling_yoffs)
+				|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
+				|| backsector->GetYOffset(sector_t::ceiling) != frontsector->GetYOffset(sector_t::ceiling)
 
 				// killough 4/15/98: prevent 2s normals
 				// from bleeding through fake ceilings
@@ -1310,10 +1310,10 @@ void R_NewWall (bool needlights)
 				// [RH] Add check for colormaps
 				|| backsector->ColorMap != frontsector->ColorMap
 
-				|| backsector->ceiling_xscale != frontsector->ceiling_xscale
-				|| backsector->ceiling_yscale != frontsector->ceiling_yscale
+				|| backsector->GetXScale(sector_t::ceiling) != frontsector->GetXScale(sector_t::ceiling)
+				|| backsector->GetYScale(sector_t::ceiling) != frontsector->GetYScale(sector_t::ceiling)
 
-				|| (backsector->ceiling_angle + backsector->base_ceiling_angle) != (frontsector->ceiling_angle + frontsector->base_ceiling_angle)
+				|| backsector->GetAngle(sector_t::ceiling) != frontsector->GetAngle(sector_t::ceiling)
 
 				|| (sidedef->GetTexture(side_t::mid) && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
 				);

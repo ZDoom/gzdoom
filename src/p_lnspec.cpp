@@ -2160,8 +2160,8 @@ FUNC(LS_Sector_SetCeilingPanning)
 
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
-		sectors[secnum].ceiling_xoffs = xofs;
-		sectors[secnum].ceiling_yoffs = yofs;
+		sectors[secnum].SetXOffset(sector_t::ceiling, xofs);
+		sectors[secnum].SetYOffset(sector_t::ceiling, yofs);
 	}
 	return true;
 }
@@ -2175,8 +2175,8 @@ FUNC(LS_Sector_SetFloorPanning)
 
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
-		sectors[secnum].floor_xoffs = xofs;
-		sectors[secnum].floor_yoffs = yofs;
+		sectors[secnum].SetXOffset(sector_t::floor, xofs);
+		sectors[secnum].SetYOffset(sector_t::floor, yofs);
 	}
 	return true;
 }
@@ -2196,9 +2196,9 @@ FUNC(LS_Sector_SetCeilingScale)
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
 		if (xscale)
-			sectors[secnum].ceiling_xscale = xscale;
+			sectors[secnum].SetXScale(sector_t::ceiling, arg1);
 		if (yscale)
-			sectors[secnum].ceiling_yscale = yscale;
+			sectors[secnum].SetYScale(sector_t::ceiling, arg2);
 	}
 	return true;
 }
@@ -2216,9 +2216,9 @@ FUNC(LS_Sector_SetFloorScale2)
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
 		if (arg1)
-			sectors[secnum].floor_xscale = arg1;
+			sectors[secnum].SetXScale(sector_t::floor, arg1);
 		if (arg2)
-			sectors[secnum].floor_yscale = arg2;
+			sectors[secnum].SetXScale(sector_t::floor, arg1);
 	}
 	return true;
 }
@@ -2236,9 +2236,9 @@ FUNC(LS_Sector_SetCeilingScale2)
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
 		if (arg1)
-			sectors[secnum].ceiling_xscale = arg1;
+			sectors[secnum].SetXScale(sector_t::ceiling, arg1);
 		if (arg2)
-			sectors[secnum].ceiling_yscale = arg2;
+			sectors[secnum].SetXScale(sector_t::ceiling, arg1);
 	}
 	return true;
 }
@@ -2258,9 +2258,9 @@ FUNC(LS_Sector_SetFloorScale)
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
 		if (xscale)
-			sectors[secnum].floor_xscale = xscale;
+			sectors[secnum].SetXScale(sector_t::floor, arg1);
 		if (yscale)
-			sectors[secnum].floor_yscale = yscale;
+			sectors[secnum].SetXScale(sector_t::floor, arg1);
 	}
 	return true;
 }
@@ -2274,8 +2274,8 @@ FUNC(LS_Sector_SetRotation)
 
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
-		sectors[secnum].floor_angle = floor;
-		sectors[secnum].ceiling_angle = ceiling;
+		sectors[secnum].SetAngle(sector_t::floor, floor);
+		sectors[secnum].SetAngle(sector_t::ceiling, ceiling);
 	}
 	return true;
 }

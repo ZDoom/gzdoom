@@ -376,10 +376,10 @@ static void LoadSectors (sectortype *bsec)
 		sec->floorplane.ic = FRACUNIT;
 		sprintf (tnam, "BTIL%04d", LittleShort(bsec->floorpicnum));
 		sec->floorpic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
-		sec->floor_xscale = (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT;
-		sec->floor_yscale = (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT;
-		sec->floor_xoffs = (bsec->floorxpanning << FRACBITS) + (32 << FRACBITS);
-		sec->floor_yoffs = bsec->floorypanning << FRACBITS;
+		sec->SetXScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
+		sec->SetYScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
+		sec->SetXOffset(sector_t::floor, (bsec->floorxpanning << FRACBITS) + (32 << FRACBITS));
+		sec->SetYOffset(sector_t::floor, bsec->floorypanning << FRACBITS);
 		sec->FloorLight = SHADE2LIGHT (bsec->floorshade);
 		sec->FloorFlags = SECF_ABSLIGHTING;
 
@@ -394,10 +394,10 @@ static void LoadSectors (sectortype *bsec)
 			sky1texture = sky2texture = sec->ceilingpic;
 			sec->ceilingpic = skyflatnum;
 		}
-		sec->ceiling_xscale = (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT;
-		sec->ceiling_yscale = (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT;
-		sec->ceiling_xoffs = (bsec->ceilingxpanning << FRACBITS) + (32 << FRACBITS);
-		sec->ceiling_yoffs = bsec->ceilingypanning << FRACBITS;
+		sec->SetXScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT);
+		sec->SetYScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT);
+		sec->SetXOffset(sector_t::ceiling, (bsec->ceilingxpanning << FRACBITS) + (32 << FRACBITS));
+		sec->SetYOffset(sector_t::ceiling, bsec->ceilingypanning << FRACBITS);
 		sec->CeilingLight = SHADE2LIGHT (bsec->ceilingshade);
 		sec->CeilingFlags = SECF_ABSLIGHTING;
 
@@ -414,30 +414,30 @@ static void LoadSectors (sectortype *bsec)
 
 		if (bsec->floorstat & 4)
 		{
-			sec->floor_angle = ANGLE_90;
-			sec->floor_xscale = -sec->floor_xscale;
+			sec->SetAngle(sector_t::floor, ANGLE_90);
+			sec->SetXScale(sector_t::floor, -sec->GetXScale(sector_t::floor));
 		}
 		if (bsec->floorstat & 16)
 		{
-			sec->floor_xscale = -sec->floor_xscale;
+			sec->SetXScale(sector_t::floor, -sec->GetXScale(sector_t::floor));
 		}
 		if (bsec->floorstat & 32)
 		{
-			sec->floor_yscale = -sec->floor_yscale;
+			sec->SetYScale(sector_t::floor, -sec->GetYScale(sector_t::floor));
 		}
 
 		if (bsec->ceilingstat & 4)
 		{
-			sec->ceiling_angle = ANGLE_90;
-			sec->floor_yscale = -sec->floor_yscale;
+			sec->SetAngle(sector_t::ceiling, ANGLE_90);
+			sec->SetYScale(sector_t::ceiling, -sec->GetYScale(sector_t::ceiling));
 		}
 		if (bsec->ceilingstat & 16)
 		{
-			sec->ceiling_xscale = -sec->ceiling_xscale;
+			sec->SetXScale(sector_t::ceiling, -sec->GetXScale(sector_t::ceiling));
 		}
 		if (bsec->ceilingstat & 32)
 		{
-			sec->ceiling_yscale = -sec->ceiling_yscale;
+			sec->SetYScale(sector_t::ceiling, -sec->GetYScale(sector_t::ceiling));
 		}
 	}
 }
@@ -512,7 +512,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		}
 
 		sides[i].TexelLength = walls[i].xrepeat * 8;
-		sides[i].Light = SHADE2LIGHT(walls[i].shade);
+		sides[i].SetLight(SHADE2LIGHT(walls[i].shade));
 		sides[i].Flags = WALLF_ABSLIGHTING;
 		sides[i].RightSide = walls[i].point2;
 		sides[walls[i].point2].LeftSide = i;

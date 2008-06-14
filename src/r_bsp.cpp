@@ -456,13 +456,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		if ((underwater && !back) || doorunderwater)
 		{					// head-below-floor hack
 			tempsec->floorpic			= diffTex ? sec->floorpic : s->floorpic;
-			tempsec->floor_xoffs		= s->floor_xoffs;
-			tempsec->floor_yoffs		= s->floor_yoffs;
-			tempsec->floor_xscale		= s->floor_xscale;
-			tempsec->floor_yscale		= s->floor_yscale;
-			tempsec->floor_angle		= s->floor_angle;
-			tempsec->base_floor_angle	= s->base_floor_angle;
-			tempsec->base_floor_yoffs	= s->base_floor_yoffs;
+			tempsec->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
 
 			tempsec->ceilingplane		= s->floorplane;
 			tempsec->ceilingplane.FlipVert ();
@@ -473,24 +467,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 				tempsec->floorplane.FlipVert ();
 				tempsec->floorplane.ChangeHeight (+1);
 				tempsec->ceilingpic			= tempsec->floorpic;
-				tempsec->ceiling_xoffs		= tempsec->floor_xoffs;
-				tempsec->ceiling_yoffs		= tempsec->floor_yoffs;
-				tempsec->ceiling_xscale		= tempsec->floor_xscale;
-				tempsec->ceiling_yscale		= tempsec->floor_yscale;
-				tempsec->ceiling_angle		= tempsec->floor_angle;
-				tempsec->base_ceiling_angle	= tempsec->base_floor_angle;
-				tempsec->base_ceiling_yoffs	= tempsec->base_floor_yoffs;
+				tempsec->planes[sector_t::ceiling].xform = tempsec->planes[sector_t::floor].xform;
 			}
 			else
 			{
 				tempsec->ceilingpic			= diffTex ? s->floorpic : s->ceilingpic;
-				tempsec->ceiling_xoffs		= s->ceiling_xoffs;
-				tempsec->ceiling_yoffs		= s->ceiling_yoffs;
-				tempsec->ceiling_xscale		= s->ceiling_xscale;
-				tempsec->ceiling_yscale		= s->ceiling_yscale;
-				tempsec->ceiling_angle		= s->ceiling_angle;
-				tempsec->base_ceiling_angle	= s->base_ceiling_angle;
-				tempsec->base_ceiling_yoffs	= s->base_ceiling_yoffs;
+				tempsec->planes[sector_t::ceiling].xform = s->planes[sector_t::ceiling].xform;
 			}
 
 			if (!(s->MoreFlags & SECF_NOFAKELIGHT))
@@ -521,23 +503,13 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 			tempsec->ceilingpic = diffTex ? sec->ceilingpic : s->ceilingpic;
 			tempsec->floorpic											= s->ceilingpic;
-			tempsec->floor_xoffs		= tempsec->ceiling_xoffs		= s->ceiling_xoffs;
-			tempsec->floor_yoffs		= tempsec->ceiling_yoffs		= s->ceiling_yoffs;
-			tempsec->floor_xscale		= tempsec->ceiling_xscale		= s->ceiling_xscale;
-			tempsec->floor_yscale		= tempsec->ceiling_yscale		= s->ceiling_yscale;
-			tempsec->floor_angle		= tempsec->ceiling_angle		= s->ceiling_angle;
-			tempsec->base_floor_angle	= tempsec->base_ceiling_angle	= s->base_ceiling_angle;
-			tempsec->base_floor_yoffs	= tempsec->base_ceiling_yoffs	= s->base_ceiling_yoffs;
+			tempsec->planes[sector_t::ceiling].xform = tempsec->planes[sector_t::floor].xform = s->planes[sector_t::ceiling].xform;
 
 			if (s->floorpic != skyflatnum)
 			{
 				tempsec->ceilingplane	= sec->ceilingplane;
 				tempsec->floorpic		= s->floorpic;
-				tempsec->floor_xoffs	= s->floor_xoffs;
-				tempsec->floor_yoffs	= s->floor_yoffs;
-				tempsec->floor_xscale	= s->floor_xscale;
-				tempsec->floor_yscale	= s->floor_yscale;
-				tempsec->floor_angle	= s->floor_angle;
+				tempsec->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
 			}
 
 			if (!(s->MoreFlags & SECF_NOFAKELIGHT))
@@ -782,10 +754,10 @@ void R_AddLine (seg_t *line)
 			|| curline->sidedef->GetTexture(side_t::mid) != 0
 
 			// killough 3/7/98: Take flats offsets into account:
-			|| backsector->floor_xoffs != frontsector->floor_xoffs
-			|| (backsector->floor_yoffs + backsector->base_floor_yoffs) != (frontsector->floor_yoffs + backsector->base_floor_yoffs)
-			|| backsector->ceiling_xoffs != frontsector->ceiling_xoffs
-			|| (backsector->ceiling_yoffs + backsector->base_ceiling_yoffs) != (frontsector->ceiling_yoffs + frontsector->base_ceiling_yoffs)
+			|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
+			|| backsector->GetYOffset(sector_t::floor) != frontsector->GetYOffset(sector_t::floor)
+			|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
+			|| backsector->GetYOffset(sector_t::ceiling) != frontsector->GetYOffset(sector_t::ceiling)
 
 			|| backsector->FloorLight != frontsector->FloorLight
 			|| backsector->CeilingLight != frontsector->CeilingLight
@@ -796,14 +768,14 @@ void R_AddLine (seg_t *line)
 			|| backsector->ColorMap != frontsector->ColorMap
 
 			// [RH] and scaling
-			|| backsector->floor_xscale != frontsector->floor_xscale
-			|| backsector->floor_yscale != frontsector->floor_yscale
-			|| backsector->ceiling_xscale != frontsector->ceiling_xscale
-			|| backsector->ceiling_yscale != frontsector->ceiling_yscale
+			|| backsector->GetXScale(sector_t::floor) != frontsector->GetXScale(sector_t::floor)
+			|| backsector->GetYScale(sector_t::floor) != frontsector->GetYScale(sector_t::floor)
+			|| backsector->GetXScale(sector_t::ceiling) != frontsector->GetXScale(sector_t::ceiling)
+			|| backsector->GetYScale(sector_t::ceiling) != frontsector->GetYScale(sector_t::ceiling)
 
 			// [RH] and rotation
-			|| (backsector->floor_angle + backsector->base_floor_angle) != (frontsector->floor_angle + frontsector->base_floor_angle)
-			|| (backsector->ceiling_angle + backsector->base_ceiling_angle) != (frontsector->ceiling_angle + frontsector->base_ceiling_angle)
+			|| backsector->GetAngle(sector_t::floor) != frontsector->GetAngle(sector_t::floor)
+			|| backsector->GetAngle(sector_t::ceiling) != frontsector->GetAngle(sector_t::ceiling)
 			)
 		{
 			solid = false;
@@ -1078,11 +1050,11 @@ void R_Subsector (subsector_t *sub)
 						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
 						frontsector->ceilingpic,
 					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
-					frontsector->ceiling_xoffs,		// killough 3/7/98
-					frontsector->ceiling_yoffs + frontsector->base_ceiling_yoffs,
-					frontsector->ceiling_xscale,
-					frontsector->ceiling_yscale,
-					frontsector->ceiling_angle + frontsector->base_ceiling_angle,
+					frontsector->GetXOffset(sector_t::ceiling),		// killough 3/7/98
+					frontsector->GetYOffset(sector_t::ceiling),		// killough 3/7/98
+					frontsector->GetXScale(sector_t::ceiling),
+					frontsector->GetYScale(sector_t::ceiling),
+					frontsector->GetAngle(sector_t::ceiling),
 					frontsector->CeilingSkyBox
 					) : NULL;
 
@@ -1103,11 +1075,11 @@ void R_Subsector (subsector_t *sub)
 						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
 						frontsector->floorpic,
 					floorlightlevel + r_actualextralight,				// killough 3/16/98
-					frontsector->floor_xoffs,		// killough 3/7/98
-					frontsector->floor_yoffs + frontsector->base_floor_yoffs,
-					frontsector->floor_xscale,
-					frontsector->floor_yscale,
-					frontsector->floor_angle + frontsector->base_floor_angle,
+					frontsector->GetXOffset(sector_t::floor),		// killough 3/7/98
+					frontsector->GetYOffset(sector_t::floor),		// killough 3/7/98
+					frontsector->GetXScale(sector_t::floor),
+					frontsector->GetYScale(sector_t::floor),
+					frontsector->GetAngle(sector_t::floor),
 					frontsector->FloorSkyBox
 					) : NULL;
 

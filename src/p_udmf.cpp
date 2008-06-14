@@ -204,6 +204,11 @@ struct UDMFParser
 		return FLOAT2FIXED(CheckFloat(key));
 	}
 
+	angle_t CheckAngle(const char *key)
+	{
+		return angle_t(CheckFloat(key) * ANGLE_90 / 90.);
+	}
+
 	bool CheckBool(const char *key)
 	{
 		if (sc.TokenType == TK_True) return true;
@@ -724,7 +729,7 @@ struct UDMFParser
 				break;
 
 			case NAME_light:
-				sd->Light = CheckInt(key);
+				sd->SetLight(CheckInt(key));
 				break;
 
 			case NAME_lightabsolute:
@@ -767,10 +772,10 @@ struct UDMFParser
 
 		memset(sec, 0, sizeof(*sec));
 		sec->lightlevel = 160;
-		sec->floor_xscale = FRACUNIT;	// [RH] floor and ceiling scaling
-		sec->floor_yscale = FRACUNIT;
-		sec->ceiling_xscale = FRACUNIT;
-		sec->ceiling_yscale = FRACUNIT;
+		sec->SetXScale(sector_t::floor, FRACUNIT);	// [RH] floor and ceiling scaling
+		sec->SetYScale(sector_t::floor, FRACUNIT);
+		sec->SetXScale(sector_t::ceiling, FRACUNIT);
+		sec->SetYScale(sector_t::ceiling, FRACUNIT);
 		sec->oldspecial = !!(sec->special&SECRET_MASK);
 		sec->thinglist = NULL;
 		sec->touching_thinglist = NULL;		// phares 3/14/98
@@ -835,43 +840,43 @@ struct UDMFParser
 			if (namespace_bits & (Zd|Zdt)) switch(key)
 			{
 				case NAME_Xpanningfloor:
-					sec->floor_xoffs = CheckFixed(key);
+					sec->SetXOffset(sector_t::floor, CheckFixed(key));
 					break;
 
 				case NAME_Ypanningfloor:
-					sec->floor_yoffs = CheckFixed(key);
+					sec->SetYOffset(sector_t::floor, CheckFixed(key));
 					break;
 
 				case NAME_Xpanningceiling:
-					sec->ceiling_xoffs = CheckFixed(key);
+					sec->SetXOffset(sector_t::ceiling, CheckFixed(key));
 					break;
 
 				case NAME_Ypanningceiling:
-					sec->ceiling_yoffs = CheckFixed(key);
+					sec->SetYOffset(sector_t::ceiling, CheckFixed(key));
 					break;
 
 				case NAME_Xscalefloor:
-					sec->floor_xscale = CheckFixed(key);
+					sec->SetXScale(sector_t::floor, CheckFixed(key));
 					break;
 
 				case NAME_Yscalefloor:
-					sec->floor_yscale = CheckFixed(key);
+					sec->SetYScale(sector_t::floor, CheckFixed(key));
 					break;
 
 				case NAME_Xscaleceiling:
-					sec->ceiling_xscale = CheckFixed(key);
+					sec->SetXScale(sector_t::ceiling, CheckFixed(key));
 					break;
 
 				case NAME_Yscaleceiling:
-					sec->ceiling_yscale = CheckFixed(key);
+					sec->SetYScale(sector_t::ceiling, CheckFixed(key));
 					break;
 
 				case NAME_Rotationfloor:
-					sec->floor_angle = CheckFixed(key);
+					sec->SetAngle(sector_t::floor, CheckAngle(key));
 					break;
 
 				case NAME_Rotationceiling:
-					sec->ceiling_angle = CheckFixed(key);
+					sec->SetAngle(sector_t::ceiling, CheckAngle(key));
 					break;
 
 				case NAME_Lightfloor:

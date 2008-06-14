@@ -1300,11 +1300,11 @@ void RP_AddLine (seg_t *line)
 			|| curline->sidedef->GetTexture(side_t::mid) != 0
 
 			// killough 3/7/98: Take flats offsets into account:
-			|| backsector->floor_xoffs != frontsector->floor_xoffs
-			|| (backsector->floor_yoffs + backsector->base_floor_yoffs) != (frontsector->floor_yoffs + backsector->base_floor_yoffs)
-			|| backsector->ceiling_xoffs != frontsector->ceiling_xoffs
-			|| (backsector->ceiling_yoffs + backsector->base_ceiling_yoffs) != (frontsector->ceiling_yoffs + frontsector->base_ceiling_yoffs)
-
+			|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
+			|| backsector->GetYOffset(sector_t::floor) != frontsector->GetYOffset(sector_t::floor)
+			|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
+			|| backsector->GetYOffset(sector_t::ceiling) != frontsector->GetYOffset(sector_t::ceiling)
+	
 			|| backsector->FloorLight != frontsector->FloorLight
 			|| backsector->CeilingLight != frontsector->CeilingLight
 			|| backsector->FloorFlags != frontsector->FloorFlags
@@ -1314,14 +1314,14 @@ void RP_AddLine (seg_t *line)
 			|| backsector->ColorMap != frontsector->ColorMap
 
 			// [RH] and scaling
-			|| backsector->floor_xscale != frontsector->floor_xscale
-			|| backsector->floor_yscale != frontsector->floor_yscale
-			|| backsector->ceiling_xscale != frontsector->ceiling_xscale
-			|| backsector->ceiling_yscale != frontsector->ceiling_yscale
+			|| backsector->GetXScale(sector_t::floor) != frontsector->GetXScale(sector_t::floor)
+			|| backsector->GetYScale(sector_t::floor) != frontsector->GetYScale(sector_t::floor)
+			|| backsector->GetXScale(sector_t::ceiling) != frontsector->GetXScale(sector_t::ceiling)
+			|| backsector->GetYScale(sector_t::ceiling) != frontsector->GetYScale(sector_t::ceiling)
 
 			// [RH] and rotation
-			|| (backsector->floor_angle + backsector->base_floor_angle) != (frontsector->floor_angle + frontsector->base_floor_angle)
-			|| (backsector->ceiling_angle + backsector->base_ceiling_angle) != (frontsector->ceiling_angle + frontsector->base_ceiling_angle)
+			|| backsector->GetAngle(sector_t::floor) != frontsector->GetAngle(sector_t::floor)
+			|| backsector->GetAngle(sector_t::ceiling) != frontsector->GetAngle(sector_t::ceiling)
 			)
 		{
 			solid = false;

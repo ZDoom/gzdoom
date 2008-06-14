@@ -1,3 +1,8 @@
+June 14, 2008 (Changes by Graf Zahl)
+- Fixed: The UDMF parser stored plane rotation angles as fixed_t, not angle_t.
+- Grouped the sector plane texture transformation values into a separate
+  structure and replaced all access to them with wrapper functions.
+
 June 12, 2008
 - Add environment 255, 255 as a way to get the software underwater effect in
   any zone you want.

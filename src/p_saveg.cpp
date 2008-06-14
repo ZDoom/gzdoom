@@ -311,13 +311,8 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->stairlock
 			<< sec->prevsec
 			<< sec->nextsec
-			<< sec->floor_xoffs << sec->floor_yoffs
-			<< sec->ceiling_xoffs << sec->ceiling_yoffs
-			<< sec->floor_xscale << sec->floor_yscale
-			<< sec->ceiling_xscale << sec->ceiling_yscale
-			<< sec->floor_angle << sec->ceiling_angle
-			<< sec->base_ceiling_angle << sec->base_ceiling_yoffs
-			<< sec->base_floor_angle << sec->base_floor_yoffs
+			<< sec->planes[sector_t::floor]
+			<< sec->planes[sector_t::ceiling]
 			<< sec->heightsec
 			<< sec->bottommap << sec->midmap << sec->topmap
 			<< sec->gravity
@@ -425,6 +420,13 @@ FArchive &operator<< (FArchive &arc, side_t::part &p)
 	{
 		p.texture = TexMan.ReadTexture (arc);
 	}
+	return arc;
+}
+
+FArchive &operator<< (FArchive &arc, sector_t::splane &p)
+{
+	arc << p.xform.xoffs << p.xform.yoffs << p.xform.xscale << p.xform.yscale 
+		<< p.xform.angle << p.xform.base_yoffs << p.xform.base_angle;
 	return arc;
 }
 

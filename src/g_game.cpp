@@ -1372,7 +1372,8 @@ void G_DeathMatchSpawnPlayer (int playernum)
 			spot->type = playernum+9100-4;
 	}
 
-	P_SpawnPlayer (spot);
+	AActor *mo = P_SpawnPlayer (spot);
+	if (mo != NULL) P_PlayerStartStomp(mo);
 }
 
 //
@@ -1443,7 +1444,8 @@ void G_DoReborn (int playernum, bool freshbot)
 
 		if (G_CheckSpot (playernum, &playerstarts[playernum]) )
 		{
-			P_SpawnPlayer (&playerstarts[playernum]);
+			AActor *mo = P_SpawnPlayer (&playerstarts[playernum]);
+			if (mo != NULL) P_PlayerStartStomp(mo);
 		}
 		else
 		{
@@ -1469,13 +1471,15 @@ void G_DoReborn (int playernum, bool freshbot)
 					{
 						playerstarts[i].type = playernum + 4001 - 4;
 					}
-					P_SpawnPlayer (&playerstarts[i]);
+					AActor *mo = P_SpawnPlayer (&playerstarts[i]);
+					if (mo != NULL) P_PlayerStartStomp(mo);
 					playerstarts[i].type = oldtype; 			// restore 
 					return;
 				}
 				// he's going to be inside something.  Too bad.
 			}
-			P_SpawnPlayer (&playerstarts[playernum]);
+			AActor *mo = P_SpawnPlayer (&playerstarts[playernum]);
+			if (mo != NULL) P_PlayerStartStomp(mo);
 		}
 	}
 }

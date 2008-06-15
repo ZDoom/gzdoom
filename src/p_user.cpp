@@ -342,6 +342,7 @@ size_t player_t::PropagateMark()
 	GC::Mark(ReadyWeapon);
 	GC::Mark(ConversationNPC);
 	GC::Mark(ConversationPC);
+	GC::Mark(PremorphWeapon);
 	if (PendingWeapon != WP_NOCHANGE)
 	{
 		GC::Mark(PendingWeapon);

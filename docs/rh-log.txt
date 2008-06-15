@@ -1,4 +1,10 @@
 June 15, 2008 (Changes by Graf Zahl)
+- Added a read barrier to player_t::PrewmorphWeapon.
+- Fixed: After spawning a deathmatch player P_PlayerStartStomp must
+  be called.
+- Fixed: SpawnThings must check if the players were spawned before
+  calling P_PlayerStartStomp.
+- Fixed typo in flat scroll interpolation.
 - Changed FImageCollection to return translated texture indices so
   that animated icons can be done with it.
 - Changed FImageCollection to use a TArray to hold its data.

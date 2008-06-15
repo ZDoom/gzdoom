@@ -56,6 +56,7 @@
 #include "g_game.h"
 #include "teaminfo.h"
 #include "r_translate.h"
+#include "r_sky.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -197,51 +198,14 @@ void AActor::Serialize (FArchive &arc)
 		<< scaleX
 		<< scaleY
 		<< RenderStyle
-		<< renderflags;
-	if (arc.IsStoring ())
-	{
-		BYTE ff;
-		if (picnum == 0xFFFF)
-		{
-			ff = 0xFF;
-			arc << ff;
-		}
-		else
-		{
-			ff = 0;
-			arc << ff;
-			TexMan.WriteTexture (arc, picnum);
-		}
-		TexMan.WriteTexture (arc, floorpic);
-		TexMan.WriteTexture (arc, ceilingpic);
-	}
-	else
-	{
-		BYTE ff;
-		arc << ff;
-		if (ff == 0xFF)
-		{
-			picnum = 0xFFFF;
-		}
-		else
-		{
-			picnum = TexMan.ReadTexture (arc);
-		}
-		floorpic = TexMan.ReadTexture (arc);
-		ceilingpic = TexMan.ReadTexture (arc);
-	}
-	arc << TIDtoHate;
-	if (TIDtoHate == 0)
-	{
-		arc << LastLookPlayerNumber;
-		LastLookActor = NULL;
-	}
-	else
-	{
-		arc << LastLookActor;
-		LastLookPlayerNumber = -1;
-	}
-	arc << effects
+		<< renderflags
+		<< picnum
+		<< floorpic
+		<< ceilingpic
+		<< TIDtoHate
+		<< LastLookPlayerNumber
+		<< LastLookActor
+		<< effects
 		<< alpha
 		<< fillcolor
 		<< pitch
@@ -3206,7 +3170,7 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	actor->x = actor->PrevX = ix;
 	actor->y = actor->PrevY = iy;
 	actor->z = actor->PrevZ = iz;
-	actor->picnum = 0xffff;
+	actor->picnum.SetInvalid();
 
 	FRandom &rng = bglobal.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
 
@@ -3257,9 +3221,9 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 		actor->floorz = FIXED_MIN;
 		actor->dropoffz = FIXED_MIN;
 		actor->ceilingz = FIXED_MAX;
-		actor->floorpic = 0;
+		actor->floorpic = actor->Sector->floorpic;
 		actor->floorsector = actor->Sector;
-		actor->ceilingpic = 0;
+		actor->ceilingpic = actor->Sector->ceilingpic;
 		actor->ceilingsector = actor->Sector;
 	}
 
@@ -4291,7 +4255,7 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 
 int P_GetThingFloorType (AActor *thing)
 {
-	if (thing->floorpic)
+	if (thing->floorpic.isValid())
 	{		
 		return TerrainTypes[thing->floorpic];
 	}

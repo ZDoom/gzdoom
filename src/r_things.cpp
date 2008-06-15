@@ -43,6 +43,7 @@
 #include "s_sound.h"
 #include "sbar.h"
 #include "gi.h"
+#include "r_sky.h"
 
 extern FTexture *CrosshairImage;
 extern fixed_t globaluclip, globaldclip;
@@ -121,7 +122,7 @@ CVAR (Bool, r_particles, true, 0);
 // [RH] Removed checks for coexistance of rotation 0 with other
 //		rotations and made it look more like BOOM's version.
 //
-static void R_InstallSpriteLump (int lump, unsigned frame, char rot, bool flipped)
+static void R_InstallSpriteLump (FTextureID lump, unsigned frame, char rot, bool flipped)
 {
 	unsigned rotation;
 
@@ -153,9 +154,9 @@ static void R_InstallSpriteLump (int lump, unsigned frame, char rot, bool flippe
 
 		for (r = 14; r >= 0; r -= 2)
 		{
-			if (sprtemp[frame].Texture[r] == 0xFFFF)
+			if (!sprtemp[frame].Texture[r].isValid())
 			{
-				sprtemp[frame].Texture[r] = (short)(lump);
+				sprtemp[frame].Texture[r] = lump;
 				if (flipped)
 				{
 					sprtemp[frame].Flip |= 1 << r;
@@ -175,7 +176,7 @@ static void R_InstallSpriteLump (int lump, unsigned frame, char rot, bool flippe
 			rotation = (rotation - 9) * 2 + 1;
 		}
 
-		if (sprtemp[frame].Texture[rotation] == 0xFFFF)
+		if (!sprtemp[frame].Texture[rotation].isValid())
 		{
 			// the lump is only used for one rotation
 			sprtemp[frame].Texture[rotation] = lump;
@@ -245,7 +246,7 @@ static void R_InstallSprite (int num)
 			// must have all 8 frame pairs
 			for (rot = 0; rot < 8; ++rot)
 			{
-				if (sprtemp[frame].Texture[rot*2+1] == 0xFFFF)
+				if (!sprtemp[frame].Texture[rot*2+1].isValid())
 				{
 					sprtemp[frame].Texture[rot*2+1] = sprtemp[frame].Texture[rot*2];
 					if (sprtemp[frame].Flip & (1 << (rot*2)))
@@ -253,7 +254,7 @@ static void R_InstallSprite (int num)
 						sprtemp[frame].Flip |= 1 << (rot*2+1);
 					}
 				}
-				if (sprtemp[frame].Texture[rot*2] == 0xFFFF)
+				if (!sprtemp[frame].Texture[rot*2].isValid())
 				{
 					sprtemp[frame].Texture[rot*2] = sprtemp[frame].Texture[rot*2+1];
 					if (sprtemp[frame].Flip & (1 << (rot*2+1)))
@@ -265,7 +266,7 @@ static void R_InstallSprite (int num)
 			}
 			for (rot = 0; rot < 16; ++rot)
 			{
-				if (sprtemp[frame].Texture[rot] == 0xFFFF)
+				if (!sprtemp[frame].Texture[rot].isValid())
 					I_FatalError ("R_InstallSprite: Sprite %s frame %c is missing rotations",
 									sprites[num].name, frame+'A');
 			}
@@ -323,7 +324,7 @@ void R_InitSpriteDefs ()
 {
 	struct Hasher
 	{
-		WORD Head, Next;
+		int Head, Next;
 	} *hashes;
 	unsigned int i, max;
 	DWORD intname;
@@ -333,11 +334,11 @@ void R_InitSpriteDefs ()
 	hashes = (Hasher *)alloca (sizeof(Hasher) * max);
 	for (i = 0; i < max; ++i)
 	{
-		hashes[i].Head = 0xFFFF;
+		hashes[i].Head = -1;
 	}
 	for (i = 0; i < max; ++i)
 	{
-		FTexture *tex = TexMan[i];
+		FTexture *tex = TexMan.ByIndex(i);
 		if (tex->UseType == FTexture::TEX_Sprite && strlen (tex->Name) >= 6)
 		{
 			DWORD bucket = *(DWORD *)tex->Name % max;
@@ -358,20 +359,17 @@ void R_InitSpriteDefs ()
 		maxframe = -1;
 		intname = *(DWORD *)sprites[i].name;
 
-		if (intname == MAKE_ID('B','O','S','2'))
-		{
-			intname=intname;}
 		// scan the lumps, filling in the frames for whatever is found
 		int hash = hashes[intname % max].Head;
-		while (hash != 0xFFFF)
+		while (hash != -1)
 		{
 			FTexture *tex = TexMan[hash];
 			if (*(DWORD *)tex->Name == intname)
 			{
-				R_InstallSpriteLump (hash, tex->Name[4] - 'A', tex->Name[5], false);
+				R_InstallSpriteLump (FTextureID(hash), tex->Name[4] - 'A', tex->Name[5], false);
 
 				if (tex->Name[6])
-					R_InstallSpriteLump (hash, tex->Name[6] - 'A', tex->Name[7], true);
+					R_InstallSpriteLump (FTextureID(hash), tex->Name[6] - 'A', tex->Name[7], true);
 			}
 			hash = hashes[hash].Next;
 		}
@@ -700,7 +698,7 @@ void R_InitSkins (void)
 					Wads.GetLumpName (lname, k);
 					if (*(DWORD *)lname == intname)
 					{
-						int picnum = TexMan.CreateTexture(k, FTexture::TEX_SkinSprite);
+						FTextureID picnum = TexMan.CreateTexture(k, FTexture::TEX_SkinSprite);
 						R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false);
 
 						if (lname[6])
@@ -1190,7 +1188,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	int 				x1;
 	int 				x2;
 
-	int 				picnum;
+	FTextureID			picnum;
 	FTexture			*tex;
 	
 	WORD 				flip;
@@ -1241,7 +1239,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	xscale = DivScale12 (centerxfrac, tz);
 
-	if (thing->picnum != 0xFFFF)
+	if (thing->picnum.isValid())
 	{
 		picnum = thing->picnum;
 
@@ -1530,7 +1528,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	int 				x2;
 	spritedef_t*		sprdef;
 	spriteframe_t*		sprframe;
-	int 				picnum;
+	FTextureID			picnum;
 	WORD				flip;
 	FTexture*			tex;
 	vissprite_t*		vis;
@@ -2374,8 +2372,8 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 
 	const secplane_t *topplane;
 	const secplane_t *botplane;
-	int toppic;
-	int botpic;
+	FTextureID toppic;
+	FTextureID botpic;
 
 	if (heightsec)	// only clip things which are in special sectors
 	{

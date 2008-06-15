@@ -1886,7 +1886,8 @@ do_count:
 
 void DLevelScript::ChangeFlat (int tag, int name, bool floorOrCeiling)
 {
-	int flat, secnum = -1;
+	FTextureID flat;
+	int secnum = -1;
 	const char *flatname = FBehavior::StaticLookupString (name);
 
 	if (flatname == NULL)
@@ -1924,7 +1925,8 @@ int DLevelScript::CountPlayers ()
 
 void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 {
-	int texture, linenum = -1;
+	FTextureID texture;
+	int linenum = -1;
 	const char *texname = FBehavior::StaticLookupString (name);
 
 	if (texname == NULL)
@@ -1964,7 +1966,7 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 {
 	const char *fromname = FBehavior::StaticLookupString (fromnamei);
 	const char *toname = FBehavior::StaticLookupString (tonamei);
-	int picnum1, picnum2;
+	FTextureID picnum1, picnum2;
 
 	if (fromname == NULL)
 		return;
@@ -5094,8 +5096,8 @@ int DLevelScript::RunScript ()
 
 				if (camera != NULL)
 				{
-					int picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
-					if (picnum < 0)
+					FTextureID picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+					if (!picnum.Exists())
 					{
 						Printf ("SetCameraToTexture: %s is not a texture\n", picname);
 					}

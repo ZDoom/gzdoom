@@ -331,7 +331,7 @@ static fixed_t old_m_x, old_m_y;
 // old location used by the Follower routine
 static mpoint_t f_oldloc;
 
-static int marknums[10]; // numbers used for marking by the automap
+static FTextureID marknums[10]; // numbers used for marking by the automap
 static mpoint_t markpoints[AM_NUMMARKPOINTS]; // where the points are
 static int markpointnum = 0; // next point to be assigned
 
@@ -429,7 +429,7 @@ void AM_restoreScaleAndLoc ()
 //
 bool AM_addMark ()
 {
-	if (marknums[0] != -1)
+	if (marknums[0].isValid())
 	{
 		markpoints[markpointnum].x = m_x + m_w/2;
 		markpoints[markpointnum].y = m_y + m_h/2;
@@ -761,7 +761,7 @@ bool AM_clearMarks ()
 	for (int i = AM_NUMMARKPOINTS-1; i >= 0; i--)
 		markpoints[i].x = -1; // means empty
 	markpointnum = 0;
-	return marknums[0] != -1;
+	return marknums[0].isValid();
 }
 
 //
@@ -1690,11 +1690,11 @@ void AM_drawAuthorMarkers ()
 			continue;
 		}
 
-		int picnum;
+		FTextureID picnum;
 		FTexture *tex;
 		WORD flip = 0;
 
-		if (mark->picnum != 0xFFFF)
+		if (mark->picnum.isValid())
 		{
 			tex = TexMan(mark->picnum);
 			if (tex->Rotations != 0xFFFF)

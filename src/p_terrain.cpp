@@ -130,7 +130,7 @@ static void ParseFriction (FScanner &sc, int keyword, void *fields);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-TArray<BYTE> TerrainTypes;
+FTerrainTypeArray TerrainTypes;
 TArray<FSplashDef> Splashes;
 TArray<FTerrainDef> Terrains;
 
@@ -554,7 +554,7 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 {
 	bool notdone = true;
 	int keyword;
-	int val;
+	int val = 0;
 	const PClass *info;
 
 	do
@@ -575,11 +575,13 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 		case GEN_Sound:
 			sc.MustGetString ();
 			SET_FIELD (FSoundID, FSoundID(sc.String));
+			/* unknown sounds never produce errors anywhere else so they shouldn't here either.
 			if (val == 0)
 			{
 				Printf ("Unknown sound %s in %s %s\n",
 					sc.String, type, name.GetChars());
 			}
+			*/
 			break;
 
 		case GEN_Byte:
@@ -656,12 +658,12 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 
 static void ParseFloor (FScanner &sc)
 {
-	int picnum;
+	FTextureID picnum;
 	int terrain;
 
 	sc.MustGetString ();
 	picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Flat);
-	if (picnum == -1)
+	if (!picnum.Exists())
 	{
 		Printf ("Unknown flat %s\n", sc.String);
 		sc.MustGetString ();

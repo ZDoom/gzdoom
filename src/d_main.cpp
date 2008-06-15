@@ -348,7 +348,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 {
 	// In case DF_NO_FREELOOK was changed, reinitialize the sky
 	// map. (If no freelook, then no need to stretch the sky.)
-	if (sky1texture != 0)
+	if (sky1texture.isValid())
 		R_InitSkyMap ();
 
 	if (self & DF_NO_FREELOOK)
@@ -656,10 +656,10 @@ void D_Display ()
 	// [RH] Draw icon, if any
 	if (D_DrawIcon)
 	{
-		int picnum = TexMan.CheckForTexture (D_DrawIcon, FTexture::TEX_MiscPatch);
+		FTextureID picnum = TexMan.CheckForTexture (D_DrawIcon, FTexture::TEX_MiscPatch);
 
 		D_DrawIcon = NULL;
-		if (picnum >= 0)
+		if (picnum.isValid())
 		{
 			FTexture *tex = TexMan[picnum];
 			screen->DrawTexture (tex, 160-tex->GetWidth()/2, 100-tex->GetHeight()/2,

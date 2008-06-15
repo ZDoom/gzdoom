@@ -577,7 +577,7 @@ private:
 
 			for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
 			{
-				if (item->Icon > 0 && item->IsKindOf (RUNTIME_CLASS(AKey)))
+				if (item->Icon.isValid() && item->IsKindOf (RUNTIME_CLASS(AKey)))
 				{
 					FTexture *keypic = TexMan(item->Icon);
 					if (keypic != NULL)

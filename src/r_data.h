@@ -109,10 +109,10 @@ struct FCanvasTextureInfo
 	FCanvasTextureInfo *Next;
 	TObjPtr<AActor> Viewpoint;
 	FCanvasTexture *Texture;
-	int PicNum;
+	FTextureID PicNum;
 	int FOV;
 
-	static void Add (AActor *viewpoint, int picnum, int fov);
+	static void Add (AActor *viewpoint, FTextureID picnum, int fov);
 	static void UpdateAll ();
 	static void EmptyList ();
 	static void Serialize (FArchive &arc);

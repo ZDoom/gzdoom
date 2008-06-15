@@ -2766,8 +2766,8 @@ FUNC(LS_ClearForceField)
 			{
 				line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
 				line->special = 0;
-				sides[line->sidenum[0]].SetTexture(side_t::mid, 0);
-				sides[line->sidenum[1]].SetTexture(side_t::mid, 0);
+				sides[line->sidenum[0]].SetTexture(side_t::mid, FNullTextureID());
+				sides[line->sidenum[1]].SetTexture(side_t::mid, FNullTextureID());
 			}
 		}
 	}

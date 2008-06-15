@@ -392,7 +392,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	node->Dialogue = ncopystring (speech.Dialogue);
 
 	// The Teaser version doesn't have portraits.
-	node->Backdrop = -1;
+	node->Backdrop.SetInvalid();
 
 	// The speaker's voice for this node, if any.
 	if (speech.VoiceNumber != 0)
@@ -848,7 +848,7 @@ static void DrawConversationMenu ()
 		menuactive = MENU_On;
 	}
 
-	if (CurNode->Backdrop >= 0)
+	if (CurNode->Backdrop.isValid())
 	{
 		screen->DrawTexture (TexMan(CurNode->Backdrop), 0, 0, DTA_320x200, true, TAG_DONE);
 	}
@@ -871,7 +871,7 @@ static void DrawConversationMenu ()
 	}
 
 	// Dim the screen behind the dialogue (but only if there is no backdrop).
-	if (CurNode->Backdrop <= 0)
+	if (!CurNode->Backdrop.isValid())
 	{
 		for (i = 0; DialogueLines[i].Width >= 0; ++i)
 		{ }

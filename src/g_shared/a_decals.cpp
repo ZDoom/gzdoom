@@ -61,25 +61,28 @@ IMPLEMENT_CLASS (DImpactDecal)
 DBaseDecal::DBaseDecal ()
 : DThinker(STAT_DECAL),
   WallNext(0), WallPrev(0), LeftDistance(0), Z(0), ScaleX(FRACUNIT), ScaleY(FRACUNIT), Alpha(FRACUNIT),
-  AlphaColor(0), Translation(0), PicNum(0xFFFF), RenderFlags(0)
+  AlphaColor(0), Translation(0), RenderFlags(0)
 {
 	RenderStyle = STYLE_None;
+	PicNum.SetInvalid();
 }
 
 DBaseDecal::DBaseDecal (fixed_t z)
 : DThinker(STAT_DECAL),
   WallNext(0), WallPrev(0), LeftDistance(0), Z(z), ScaleX(FRACUNIT), ScaleY(FRACUNIT), Alpha(FRACUNIT),
-  AlphaColor(0), Translation(0), PicNum(0xFFFF), RenderFlags(0)
+  AlphaColor(0), Translation(0), RenderFlags(0)
 {
 	RenderStyle = STYLE_None;
+	PicNum.SetInvalid();
 }
 
 DBaseDecal::DBaseDecal (int statnum, fixed_t z)
 : DThinker(statnum),
   WallNext(0), WallPrev(0), LeftDistance(0), Z(z), ScaleX(FRACUNIT), ScaleY(FRACUNIT), Alpha(FRACUNIT),
-  AlphaColor(0), Translation(0), PicNum(0xFFFF), RenderFlags(0)
+  AlphaColor(0), Translation(0), RenderFlags(0)
 {
 	RenderStyle = STYLE_None;
+	PicNum.SetInvalid();
 }
 
 DBaseDecal::DBaseDecal (const AActor *basis)
@@ -201,7 +204,7 @@ void DBaseDecal::SetShade (int r, int g, int b)
 }
 
 // Returns the texture the decal stuck to.
-int DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y)
+FTextureID DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y)
 {
 	// Stick the decal at the end of the chain so it appears on top
 	DBaseDecal *next, **prev;
@@ -225,7 +228,7 @@ int DBaseDecal::StickToWall (side_t *wall, fixed_t x, fixed_t y)
 */
 	sector_t *front, *back;
 	line_t *line;
-	int tex;
+	FTextureID tex;
 
 	line = &lines[wall->linenum];
 	if (line->sidenum[0] == DWORD(wall - sides))
@@ -624,7 +627,7 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 		DImpactDecal::CheckMax();
 		decal = new DImpactDecal (z);
 
-		int stickypic = decal->StickToWall (wall, x, y);
+		FTextureID stickypic = decal->StickToWall (wall, x, y);
 		FTexture *tex = TexMan[stickypic];
 
 		if (tex != NULL && tex->bNoDecals)
@@ -643,7 +646,7 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 			decal->SetShade (color.r, color.g, color.b);
 		}
 
-		if (!cl_spreaddecals || decal->PicNum == 0xffff)
+		if (!cl_spreaddecals || !decal->PicNum.isValid())
 		{
 			return decal;
 		}
@@ -727,7 +730,7 @@ void ADecal::BeginPlay ()
 	// If no decal is specified, don't try to create one.
 	if (decalid != 0 && (tpl = DecalLibrary.GetDecalByNum (decalid)) != 0)
 	{
-		if (tpl->PicNum == 65535)
+		if (!tpl->PicNum.Exists())
 		{
 			Printf("Decal actor at (%d,%d) does not have a valid texture\n", x>>FRACBITS, y>>FRACBITS);
 			

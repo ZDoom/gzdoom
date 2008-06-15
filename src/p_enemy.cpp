@@ -2054,7 +2054,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		// CANTLEAVEFLOORPIC handling was completely missing in the non-serpent functions.
 		fixed_t oldX = actor->x;
 		fixed_t oldY = actor->y;
-		int oldFloor = actor->floorpic;
+		FTextureID oldFloor = actor->floorpic;
 
 		// chase towards player
 		if (--actor->movecount < 0 || !P_Move (actor))

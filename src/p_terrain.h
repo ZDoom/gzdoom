@@ -39,8 +39,30 @@
 #include "tarray.h"
 #include "name.h"
 #include "s_sound.h"
+#include "textures/textures.h"
 
-extern TArray<BYTE> TerrainTypes;
+// This is just a wrapper class so that I don't have to expose FTextureID's implementation
+// to anything that doesn't really need it.
+class FTerrainTypeArray
+{
+public:
+	TArray<BYTE> Types;
+
+	BYTE &operator [](FTextureID tex)
+	{
+		return Types[tex.GetIndex()];
+	}
+	BYTE &operator [](int texnum)
+	{
+		return Types[texnum];
+	}
+	void Resize(unsigned newsize)
+	{
+		Types.Resize(newsize);
+	}
+};
+
+extern FTerrainTypeArray TerrainTypes;
 
 // at game start
 void P_InitTerrainTypes ();

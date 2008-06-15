@@ -601,11 +601,11 @@ inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor &type)
 
 struct FDoorAnimation
 {
-	int BaseTexture;
-	int *TextureFrames;
+	FTextureID BaseTexture;
+	FTextureID *TextureFrames;
 	int NumTextureFrames;
-	char *OpenSound;
-	char *CloseSound;
+	FName OpenSound;
+	FName CloseSound;
 };
 
 void P_ParseAnimatedDoor (FScanner &sc);
@@ -703,7 +703,7 @@ protected:
 	int 		m_Direction;	// 1 = up, 0 = waiting, -1 = down
 
 	// [RH] Need these for BOOM-ish transferring ceilings
-	int			m_Texture;
+	FTextureID	m_Texture;
 	int			m_NewSpecial;
 
 	// ID
@@ -800,8 +800,8 @@ protected:
 	int 		m_Crush;
 	bool		m_Hexencrush;
 	int 		m_Direction;
-	short 		m_NewSpecial;
-	short		m_Texture;
+	int 		m_NewSpecial;
+	FTextureID	m_Texture;
 	fixed_t 	m_FloorDestDist;
 	fixed_t 	m_Speed;
 

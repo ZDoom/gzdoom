@@ -513,17 +513,17 @@ static visplane_t *new_visplane (unsigned hash)
 // killough 2/28/98: Add offsets
 //==========================================================================
 
-visplane_t *R_FindPlane (const secplane_t &height, int picnum, int lightlevel,
+visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel,
 						 fixed_t xoffs, fixed_t yoffs,
 						 fixed_t xscale, fixed_t yscale, angle_t angle,
-						 ASkyViewpoint *skybox)
+						 int sky, ASkyViewpoint *skybox)
 {
 	secplane_t plane;
 	visplane_t *check;
 	unsigned hash;						// killough
 	bool isskybox;
 
-	if (picnum == skyflatnum || picnum & PL_SKYFLAT)	// killough 10/98
+	if (picnum == skyflatnum)	// killough 10/98
 	{ // most skies map together
 		lightlevel = 0;
 		xoffs = 0;
@@ -550,10 +550,11 @@ visplane_t *R_FindPlane (const secplane_t &height, int picnum, int lightlevel,
 	{
 		plane = height;
 		isskybox = false;
+		sky = 0;	// not skyflatnum so it can't be a sky
 	}
 		
 	// New visplane algorithm uses hash table -- killough
-	hash = isskybox ? MAXVISPLANES : visplane_hash (picnum, lightlevel, height);
+	hash = isskybox ? MAXVISPLANES : visplane_hash (picnum.GetIndex(), lightlevel, height);
 
 	for (check = visplanes[hash]; check; check = check->next)	// killough
 	{
@@ -589,7 +590,8 @@ visplane_t *R_FindPlane (const secplane_t &height, int picnum, int lightlevel,
 			basecolormap == check->colormap &&	// [RH] Add more checks
 			xscale == check->xscale &&
 			yscale == check->yscale &&
-			angle == check->angle
+			angle == check->angle && 
+			sky == check->sky
 			)
 		{
 		  return check;
@@ -607,6 +609,7 @@ visplane_t *R_FindPlane (const secplane_t &height, int picnum, int lightlevel,
 	check->yscale = yscale;
 	check->angle = angle;
 	check->colormap = basecolormap;		// [RH] Save colormap
+	check->sky = sky;
 	check->skybox = skybox;
 	check->minx = viewwidth;			// Was SCREENWIDTH -- killough 11/98
 	check->maxx = -1;
@@ -679,7 +682,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		}
 		else
 		{
-			hash = visplane_hash (pl->picnum, pl->lightlevel, pl->height);
+			hash = visplane_hash (pl->picnum.GetIndex(), pl->lightlevel, pl->height);
 		}
 		visplane_t *new_pl = new_visplane (hash);
 
@@ -951,7 +954,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 		ds_color += 4;
 		R_MapVisPlane (pl, R_MapColoredPlane);
 	}
-	else if (pl->picnum == skyflatnum || pl->picnum & PL_SKYFLAT)
+	else if (pl->picnum == skyflatnum)
 	{ // sky flat
 		R_DrawSkyPlane (pl);
 	}
@@ -1238,7 +1241,7 @@ ADD_STAT(skyboxes)
 
 void R_DrawSkyPlane (visplane_t *pl)
 {
-	int sky1tex, sky2tex;
+	FTextureID sky1tex, sky2tex;
 
 	if ((level.flags & LEVEL_SWAPSKIES) && !(level.flags & LEVEL_DOUBLESKY))
 	{
@@ -1251,66 +1254,69 @@ void R_DrawSkyPlane (visplane_t *pl)
 	sky2tex = sky2texture;
 
 	if (pl->picnum == skyflatnum)
-	{	// use sky1
-sky1:
-		frontskytex = TexMan(sky1tex);
-		if (level.flags & LEVEL_DOUBLESKY)
-			backskytex = TexMan(sky2tex);
-		else
+	{
+		if (!(pl->sky & PL_SKYFLAT))
+		{	// use sky1
+		sky1:
+			frontskytex = TexMan(sky1tex);
+			if (level.flags & LEVEL_DOUBLESKY)
+				backskytex = TexMan(sky2tex);
+			else
+				backskytex = NULL;
+			skyflip = 0;
+			frontpos = sky1pos;
+			backpos = sky2pos;
+		}
+		else if (pl->sky == PL_SKYFLAT)
+		{	// use sky2
+			frontskytex = TexMan(sky2tex);
 			backskytex = NULL;
-		skyflip = 0;
-		frontpos = sky1pos;
-		backpos = sky2pos;
-	}
-	else if (pl->picnum == PL_SKYFLAT)
-	{	// use sky2
-		frontskytex = TexMan(sky2tex);
-		backskytex = NULL;
-		skyflip = 0;
-		frontpos = sky2pos;
-	}
-	else
-	{	// MBF's linedef-controlled skies
-		// Sky Linedef
-		const line_t *l = &lines[(pl->picnum & ~PL_SKYFLAT)-1];
-
-		// Sky transferred from first sidedef
-		const side_t *s = *l->sidenum + sides;
-		int pos;
-
-		// Texture comes from upper texture of reference sidedef
-		// [RH] If swapping skies, then use the lower sidedef
-		if (level.flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom) != 0)
-		{
-			pos = side_t::bottom;
+			skyflip = 0;
+			frontpos = sky2pos;
 		}
 		else
-		{
-			pos = side_t::top;
+		{	// MBF's linedef-controlled skies
+			// Sky Linedef
+			const line_t *l = &lines[(pl->sky & ~PL_SKYFLAT)-1];
+
+			// Sky transferred from first sidedef
+			const side_t *s = *l->sidenum + sides;
+			int pos;
+
+			// Texture comes from upper texture of reference sidedef
+			// [RH] If swapping skies, then use the lower sidedef
+			if (level.flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom).isValid())
+			{
+				pos = side_t::bottom;
+			}
+			else
+			{
+				pos = side_t::top;
+			}
+
+			frontskytex = TexMan(s->GetTexture(pos));
+			if (frontskytex->UseType == FTexture::TEX_Null)
+			{ // [RH] The blank texture: Use normal sky instead.
+				goto sky1;
+			}
+			backskytex = NULL;
+
+			// Horizontal offset is turned into an angle offset,
+			// to allow sky rotation as well as careful positioning.
+			// However, the offset is scaled very small, so that it
+			// allows a long-period of sky rotation.
+			frontpos = (-s->GetTextureXOffset(pos)) >> 6;
+
+			// Vertical offset allows careful sky positioning.
+			dc_texturemid = s->GetTextureYOffset(pos) - 28*FRACUNIT;
+
+			// We sometimes flip the picture horizontally.
+			//
+			// Doom always flipped the picture, so we make it optional,
+			// to make it easier to use the new feature, while to still
+			// allow old sky textures to be used.
+			skyflip = l->args[2] ? 0u : ~0u;
 		}
-
-		frontskytex = TexMan(s->GetTexture(pos));
-		if (frontskytex->UseType == FTexture::TEX_Null)
-		{ // [RH] The blank texture: Use normal sky instead.
-			goto sky1;
-		}
-		backskytex = NULL;
-
-		// Horizontal offset is turned into an angle offset,
-		// to allow sky rotation as well as careful positioning.
-		// However, the offset is scaled very small, so that it
-		// allows a long-period of sky rotation.
-		frontpos = (-s->GetTextureXOffset(pos)) >> 6;
-
-		// Vertical offset allows careful sky positioning.
-		dc_texturemid = s->GetTextureYOffset(pos) - 28*FRACUNIT;
-
-		// We sometimes flip the picture horizontally.
-		//
-		// Doom always flipped the picture, so we make it optional,
-		// to make it easier to use the new feature, while to still
-		// allow old sky textures to be used.
-		skyflip = l->args[2] ? 0u : ~0u;
 	}
 
 	bool fakefixed = false;

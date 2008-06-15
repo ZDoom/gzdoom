@@ -22,9 +22,12 @@
 #ifndef __R_SKY_H__
 #define __R_SKY_H__
 
+#include "textures/textures.h"
+
 extern int		sky1shift,		sky2shift;
 
-extern int 		sky1texture,	sky2texture;
+extern FTextureID	skyflatnum;
+extern FTextureID	sky1texture,	sky2texture;
 extern fixed_t	sky1pos,		sky2pos;
 extern fixed_t	skytexturemid;
 extern int		skystretch;

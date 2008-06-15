@@ -79,7 +79,7 @@ public:
 	DWORD ShadeColor;
 	DWORD Translation;
 	FRenderStyle RenderStyle;
-	WORD PicNum;
+	FTextureID PicNum;
 	WORD RenderFlags;
 	WORD Alpha;				// same as (actor->alpha >> 1)
 	const FDecalAnimator *Animator;

@@ -465,16 +465,7 @@ void AInventory::Tick ()
 void AInventory::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << Owner << Amount << MaxAmount << RespawnTics << ItemFlags;
-	if (arc.IsStoring ())
-	{
-		TexMan.WriteTexture (arc, Icon);
-	}
-	else
-	{
-		Icon = TexMan.ReadTexture (arc);
-	}
-	arc << PickupSound;
+	arc << Owner << Amount << MaxAmount << RespawnTics << ItemFlags << Icon << PickupSound;
 }
 
 //===========================================================================

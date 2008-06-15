@@ -114,7 +114,7 @@ public:
 	fixed_t		ViewHeight;
 	fixed_t		ForwardMove1, ForwardMove2;
 	fixed_t		SideMove1, SideMove2;
-	int			ScoreIcon;
+	FTextureID	ScoreIcon;
 	int			SpawnMask;
 	FNameNoInit	MorphWeapon;
 	fixed_t		AttackZOffset;			// attack height, relative to player center

@@ -429,7 +429,9 @@ void FDecalLib::ParseDecal (FScanner &sc)
 	FString decalName;
 	WORD decalNum;
 	FDecalTemplate newdecal;
-	int code, picnum;
+	int code;
+	FTextureID picnum;
+	int lumpnum;
 
 	sc.MustGetString ();
 	decalName = sc.String;
@@ -437,7 +439,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 	sc.MustGetStringName ("{");
 
 	memset (&newdecal, 0, sizeof(newdecal));
-	newdecal.PicNum = 0xffff;
+	newdecal.PicNum.SetInvalid();
 	newdecal.ScaleX = newdecal.ScaleY = FRACUNIT;
 	newdecal.RenderFlags = RF_WALLSPRITE;
 	newdecal.RenderStyle = STYLE_Normal;
@@ -464,9 +466,9 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		case DECAL_PIC:
 			sc.MustGetString ();
 			picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Any);
-			if (picnum < 0 && (picnum = Wads.CheckNumForName (sc.String, ns_graphics)) >= 0)
+			if (!picnum.Exists() && (lumpnum = Wads.CheckNumForName (sc.String, ns_graphics)) >= 0)
 			{
-				picnum = TexMan.CreateTexture (picnum, FTexture::TEX_Decal);
+				picnum = TexMan.CreateTexture (lumpnum, FTexture::TEX_Decal);
 			}
 			newdecal.PicNum = picnum;
 			break;

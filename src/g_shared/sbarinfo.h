@@ -105,7 +105,8 @@ struct SBarInfoCommand
 	int x;
 	int y;
 	int value;
-	int sprite;
+	int image_index;
+	FTextureID sprite_index;
 	FString string[2];
 	FFont *font;
 	EColorRange translation;

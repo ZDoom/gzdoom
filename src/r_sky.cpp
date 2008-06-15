@@ -39,8 +39,8 @@
 //
 // sky mapping
 //
-int 		skyflatnum;
-int 		sky1texture,	sky2texture;
+FTextureID	skyflatnum;
+FTextureID	sky1texture,	sky2texture;
 fixed_t		skytexturemid;
 fixed_t		skyscale;
 int			skystretch;

@@ -1819,7 +1819,7 @@ void tmvline4_revsubclamp ()
 
 void R_DrawBorder (int x1, int y1, int x2, int y2)
 {
-	int picnum;
+	FTextureID picnum;
 
 	if (level.info != NULL)
 	{
@@ -1830,7 +1830,7 @@ void R_DrawBorder (int x1, int y1, int x2, int y2)
 		picnum = TexMan.CheckForTexture (gameinfo.borderFlat, FTexture::TEX_Flat);
 	}
 
-	if (picnum >= 0)
+	if (picnum.isValid())
 	{
 		screen->FlatFill (x1, y1, x2, y2, TexMan(picnum));
 	}

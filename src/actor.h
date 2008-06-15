@@ -40,6 +40,7 @@
 #include "info.h"
 
 #include "doomdef.h"
+#include "textures/textures.h"
 #include "r_blend.h"
 #include "s_sound.h"
 
@@ -624,7 +625,7 @@ public:
 	fixed_t			scaleX, scaleY;		// Scaling values; FRACUNIT is normal size
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
 	DWORD			renderflags;		// Different rendering flags
-	int				picnum;				// Draw this instead of sprite if != 0xffff
+	FTextureID		picnum;				// Draw this instead of sprite if valid
 	SWORD			TIDtoHate;			// TID of things to hate (0 if none)
 	DWORD			effects;			// [RH] see p_effect.h
 	fixed_t			alpha;
@@ -638,9 +639,9 @@ public:
 	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
 	struct sector_t	*floorsector;
-	SDWORD			floorpic;			// contacted sec floorpic
+	FTextureID		floorpic;			// contacted sec floorpic
 	struct sector_t	*ceilingsector;
-	SDWORD			ceilingpic;			// contacted sec ceilingpic
+	FTextureID		ceilingpic;			// contacted sec ceilingpic
 	fixed_t			radius, height;		// for movement checking
 	fixed_t			momx, momy, momz;	// momentums
 	SDWORD			tics;				// state tic counter

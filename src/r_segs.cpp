@@ -1286,7 +1286,7 @@ void R_NewWall (bool needlights)
 
 				|| backsector->GetAngle(sector_t::floor) != frontsector->GetAngle(sector_t::floor)
 
-				|| (sidedef->GetTexture(side_t::mid) && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
+				|| (sidedef->GetTexture(side_t::mid).isValid() && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
 				;
 
 			markceiling = (frontsector->ceilingpic != skyflatnum ||
@@ -1315,7 +1315,7 @@ void R_NewWall (bool needlights)
 
 				|| backsector->GetAngle(sector_t::ceiling) != frontsector->GetAngle(sector_t::ceiling)
 
-				|| (sidedef->GetTexture(side_t::mid) && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
+				|| (sidedef->GetTexture(side_t::mid).isValid() && linedef->flags & (ML_CLIP_MIDTEX|ML_WRAP_MIDTEX))
 				);
 		}
 
@@ -1583,8 +1583,8 @@ void R_StoreWallRange (int start, int stop)
 		// allocate space for masked texture tables, if needed
 		// [RH] Don't just allocate the space; fill it in too.
 		if ((TexMan(sidedef->GetTexture(side_t::mid))->UseType != FTexture::TEX_Null || IsFogBoundary (frontsector, backsector)) &&
-			(rw_ceilstat != 12 || sidedef->GetTexture(side_t::top) == 0) &&
-			(rw_floorstat != 3 || sidedef->GetTexture(side_t::bottom) == 0) &&
+			(rw_ceilstat != 12 || !sidedef->GetTexture(side_t::top).isValid()) &&
+			(rw_floorstat != 3 || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 			(WallSZ1 >= TOO_CLOSE_Z && WallSZ2 >= TOO_CLOSE_Z))
 		{
 			fixed_t *swal;
@@ -1594,7 +1594,7 @@ void R_StoreWallRange (int start, int stop)
 			maskedtexture = true;
 
 			ds_p->bFogBoundary = IsFogBoundary (frontsector, backsector);
-			if (sidedef->GetTexture(side_t::mid) != 0)
+			if (sidedef->GetTexture(side_t::mid).isValid())
 			{
 				ds_p->maskedtexturecol = R_NewOpening ((stop - start) * 2);
 				ds_p->swall = R_NewOpening ((stop - start) * 2);
@@ -1681,7 +1681,7 @@ void R_StoreWallRange (int start, int stop)
 		memcpy (openings + ds_p->sprbottomclip, &floorclip[start], sizeof(short)*(stop-start));
 	}
 
-	if (maskedtexture && curline->sidedef->GetTexture(side_t::mid) != 0)
+	if (maskedtexture && curline->sidedef->GetTexture(side_t::mid).isValid())
 	{
 		ds_p->silhouette |= SIL_TOP | SIL_BOTTOM;
 	}
@@ -2130,7 +2130,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	int needrepeat = 0;
 	sector_t *front, *back;
 
-	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || decal->PicNum == 0xFFFF)
+	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
 
 	// Determine actor z

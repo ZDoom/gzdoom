@@ -55,7 +55,7 @@ void ABasicArmor::Serialize (FArchive &arc)
 void ABasicArmor::Tick ()
 {
 	Super::Tick ();
-	if (Icon == 0)
+	if (!Icon.isValid())
 	{
 		switch (gameinfo.gametype)
 		{

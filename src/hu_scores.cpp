@@ -335,7 +335,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
 
-	if (player->mo->ScoreIcon > 0)
+	if (player->mo->ScoreIcon.isValid())
 	{
 		screen->DrawTexture (TexMan[player->mo->ScoreIcon], SCREENWIDTH * 4 / 9, y,
 			DTA_CleanNoMove, true, TAG_DONE);

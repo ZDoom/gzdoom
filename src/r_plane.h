@@ -36,13 +36,14 @@ struct visplane_s
 	struct visplane_s *next;		// Next visplane in hash chain -- killough
 
 	secplane_t	height;
-	int			picnum;
+	FTextureID	picnum;
 	int			lightlevel;
 	fixed_t		xoffs, yoffs;		// killough 2/28/98: Support scrolling flats
 	int			minx, maxx;
 	FDynamicColormap *colormap;			// [RH] Support multiple colormaps
 	fixed_t		xscale, yscale;		// [RH] Support flat scaling
 	angle_t		angle;				// [RH] Support flat rotation
+	int			sky;
 	ASkyViewpoint *skybox;			// [RH] Support sky boxes
 
 	// [RH] This set of variables copies information from the time when the
@@ -61,9 +62,6 @@ struct visplane_s
 typedef struct visplane_s visplane_t;
 
 
-
-// killough 10/98: special mask indicates sky flat comes from sidedef
-#define PL_SKYFLAT  0x10000
 
 // Visplane related.
 extern ptrdiff_t		lastopening;	// type short
@@ -92,13 +90,14 @@ void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
 
 visplane_t *R_FindPlane
 ( const secplane_t &height,
-  int			picnum,
+  FTextureID	picnum,
   int			lightlevel,
   fixed_t		xoffs,		// killough 2/28/98: add x-y offsets
   fixed_t		yoffs,
   fixed_t		xscale,
   fixed_t		yscale,
   angle_t		angle,
+  int			sky,
   ASkyViewpoint *skybox);
 
 visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop);

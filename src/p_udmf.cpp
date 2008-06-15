@@ -41,6 +41,7 @@
 #include "templates.h"
 #include "i_system.h"
 #include "gi.h"
+#include "r_sky.h"
 
 //===========================================================================
 //

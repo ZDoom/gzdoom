@@ -450,9 +450,9 @@ fixed_t sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 // jff 02/03/98 Add routine to find shortest lower texture
 //
 
-static inline void CheckShortestTex (int texnum, fixed_t &minsize)
+static inline void CheckShortestTex (FTextureID texnum, fixed_t &minsize)
 {
-	if (texnum > 0 || (texnum == 0 && (i_compatflags & COMPATF_SHORTTEX)))
+	if (texnum.isValid() || (texnum.isNull() && (i_compatflags & COMPATF_SHORTTEX)))
 	{
 		FTexture *tex = TexMan[texnum];
 		if (tex != NULL)

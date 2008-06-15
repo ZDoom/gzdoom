@@ -127,7 +127,7 @@ static int WriteLINEDEFS (FILE *file)
 	return numlines * sizeof(mld);
 }
 
-static const char *GetTextureName (int texnum)
+static const char *GetTextureName (FTextureID texnum)
 {
 	FTexture *tex = TexMan[texnum];
 

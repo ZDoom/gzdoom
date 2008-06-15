@@ -22,7 +22,7 @@ struct FStrifeDialogueNode
 	const PClass *SpeakerType;
 	char *SpeakerName;
 	FSoundID SpeakerVoice;
-	int Backdrop;
+	FTextureID Backdrop;
 	char *Dialogue;
 
 	FStrifeDialogueReply *Children;

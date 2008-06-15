@@ -357,7 +357,7 @@ void AArtiPoisonBag::BeginPlay ()
 {
 	Super::BeginPlay ();
 	// If a subclass's specific icon is not defined, let it use the base class's.
-	if (Icon <= 0)
+	if (!Icon.isValid())
 	{
 		AInventory *defbag;
 		// Why doesn't this work?

@@ -78,7 +78,7 @@ protected:
 
 struct FSwitchDef
 {
-	int PreTexture;		// texture to switch from
+	FTextureID PreTexture;		// texture to switch from
 	WORD PairIndex;		// switch def to use to return to PreTexture
 	WORD NumFrames;		// # of animation frames
 	FSoundID Sound;		// sound to play at start of animation
@@ -86,7 +86,7 @@ struct FSwitchDef
 	struct frame		// Array of times followed by array of textures
 	{					//   actual length of each array is <NumFrames>
 		DWORD Time;
-		int Texture;
+		FTextureID Texture;
 	} u[1];
 };
 
@@ -146,7 +146,7 @@ void P_InitSwitchList ()
 			// [RH] Skip this switch if its texture can't be found.
 			if (((gameinfo.maxSwitch & 15) >= (list_p[18] & 15)) &&
 				((gameinfo.maxSwitch & ~15) == (list_p[18] & ~15)) &&
-				TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags) >= 0)
+				TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags).Exists())
 			{
 				def1 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 				def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
@@ -203,7 +203,7 @@ void P_ProcessSwitchDef (FScanner &sc)
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	FString picname;
 	FSwitchDef *def1, *def2;
-	SWORD picnum;
+	FTextureID picnum;
 	BYTE max;
 	bool quest = false;
 
@@ -255,7 +255,7 @@ void P_ProcessSwitchDef (FScanner &sc)
 			{
 				sc.ScriptError ("Switch already has an on state");
 			}
-			def1 = ParseSwitchDef (sc, picnum == -1);
+			def1 = ParseSwitchDef (sc, !picnum.Exists());
 		}
 		else if (sc.Compare ("off"))
 		{
@@ -263,7 +263,7 @@ void P_ProcessSwitchDef (FScanner &sc)
 			{
 				sc.ScriptError ("Switch already has an off state");
 			}
-			def2 = ParseSwitchDef (sc, picnum == -1);
+			def2 = ParseSwitchDef (sc, !picnum.Exists());
 		}
 		else
 		{
@@ -277,7 +277,7 @@ void P_ProcessSwitchDef (FScanner &sc)
 		sc.ScriptError ("Switch must have an on state");
 	}
 */
-	if (def1 == NULL || picnum == -1 ||
+	if (def1 == NULL || !picnum.Exists() ||
 		((max & 240) != 240 &&
 		 ((gameinfo.maxSwitch & 240) != (max & 240) ||
 		  (gameinfo.maxSwitch & 15) < (max & 15))))
@@ -321,7 +321,7 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 	FSwitchDef *def;
 	TArray<FSwitchDef::frame> frames;
 	FSwitchDef::frame thisframe;
-	int picnum;
+	FTextureID picnum;
 	bool bad;
 	FSoundID sound;
 
@@ -342,7 +342,7 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 		{
 			sc.MustGetString ();
 			picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
-			if (picnum < 0 && !ignoreBad)
+			if (!picnum.Exists() && !ignoreBad)
 			{
 				//Printf ("Unknown switch texture %s\n", sc.String);
 				bad = true;
@@ -442,7 +442,7 @@ static int TryFindSwitch (side_t *side, int Where)
 {
 	int mid, low, high;
 
-	int texture = side->GetTexture(Where);
+	FTextureID texture = side->GetTexture(Where);
 	high = (int)(SwitchList.Size () - 1);
 	if (high >= 0)
 	{

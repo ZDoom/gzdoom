@@ -181,7 +181,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 
 	case ADEF_Inventory_Icon:
 		item->Icon = TexMan.AddPatch (datastr);
-		if (item->Icon <= 0)
+		if (!item->Icon.isValid())
 		{
 			item->Icon = TexMan.AddPatch (datastr, ns_sprites);
 		}
@@ -334,7 +334,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 		break;
 	case ADEF_PlayerPawn_ScoreIcon:
 		player->ScoreIcon = TexMan.AddPatch (datastr);
-		if (player->ScoreIcon <= 0)
+		if (!player->ScoreIcon.isValid())
 		{
 			player->ScoreIcon = TexMan.AddPatch (datastr, ns_sprites);
 		}

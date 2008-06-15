@@ -80,7 +80,7 @@ static bool TabbedLast;		// True if last key pressed was tab
 static bool TabbedList;		// True if tab list was shown
 CVAR (Bool, con_notablist, false, CVAR_ARCHIVE)
 
-static int conback;
+static FTextureID conback;
 static DWORD conshade;
 static bool conline;
 
@@ -302,7 +302,7 @@ void C_InitConsole (int width, int height, bool ingame)
 		{
 			conback = TexMan.CheckForTexture ("CONBACK", FTexture::TEX_MiscPatch);
 
-			if (conback <= 0)
+			if (!conback.isValid())
 			{
 				conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
 				conshade = MAKEARGB(175,0,0,0);

@@ -780,7 +780,7 @@ FMultiPatchTexture::TexPart::TexPart()
 void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup, bool texture1)
 {
 	FPatchLookup *patchlookup;
-	int i, j;
+	int i;
 	DWORD numpatches;
 
 	if (firstdup == 0)
@@ -819,10 +819,10 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 			pnames.Read (patchlookup[i].Name, 8);
 			patchlookup[i].Name[8] = 0;
 
-			j = CheckForTexture (patchlookup[i].Name, FTexture::TEX_WallPatch);
-			if (j >= 0)
+			FTextureID j = CheckForTexture (patchlookup[i].Name, FTexture::TEX_WallPatch);
+			if (j.isValid())
 			{
-				patchlookup[i].Texture = Textures[j].Texture;
+				patchlookup[i].Texture = Textures[j.GetIndex()].Texture;
 			}
 			else
 			{
@@ -899,6 +899,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		// If this texture was defined already in this lump, skip it
 		// This could cause problems with animations that use the same name for intermediate
 		// textures. Should I be worried?
+		int j;
 		for (j = (int)Textures.Size() - 1; j >= firstdup; --j)
 		{
 			if (strnicmp (Textures[j].Texture->Name, (const char *)maptex + offset, 8) == 0)
@@ -957,10 +958,10 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part)
 	FString patchname;
 	sc.MustGetString();
 
-	int texno = TexMan.CheckForTexture(sc.String, TEX_WallPatch);
+	FTextureID texno = TexMan.CheckForTexture(sc.String, TEX_WallPatch);
 	int Mirror = 0;
 
-	if (texno < 0)
+	if (!texno.isValid())
 	{
 		int lumpnum = Wads.CheckNumForFullName(sc.String);
 		if (lumpnum >= 0)

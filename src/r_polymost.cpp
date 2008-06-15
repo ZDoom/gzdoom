@@ -76,6 +76,7 @@ Low priority:
 #include "r_main.h"
 #include "r_draw.h"
 #include "templates.h"
+#include "r_sky.h"
 
 EXTERN_CVAR (Int, r_polymost)
 
@@ -1275,7 +1276,7 @@ void RP_AddLine (seg_t *line)
 		// preserve a kind of transparent door/lift special effect:
 		&& bcz0 >= fcz0 && bcz1 >= fcz1
 
-		&& ((bfz0 <= ffz0 && bfz1 <= ffz1) || line->sidedef->GetTexture(side_t::bottom) != 0))
+		&& ((bfz0 <= ffz0 && bfz1 <= ffz1) || line->sidedef->GetTexture(side_t::bottom).isValid()))
 		{
 		// killough 1/18/98 -- This function is used to fix the automap bug which
 		// showed lines behind closed doors simply because the door had a dropoff.
@@ -1297,7 +1298,7 @@ void RP_AddLine (seg_t *line)
 		else if (backsector->lightlevel != frontsector->lightlevel
 			|| backsector->floorpic != frontsector->floorpic
 			|| backsector->ceilingpic != frontsector->ceilingpic
-			|| curline->sidedef->GetTexture(side_t::mid) != 0
+			|| curline->sidedef->GetTexture(side_t::mid).isValid()
 
 			// killough 3/7/98: Take flats offsets into account:
 			|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
@@ -1416,15 +1417,14 @@ void RP_Subsector (subsector_t *sub)
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->floorpic == skyflatnum) ?
 		R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
-					frontsector->ceilingpic == skyflatnum &&  // killough 10/98
-						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
-						frontsector->ceilingpic,
+					frontsector->ceilingpic,
 					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
 					frontsector->ceiling_xoffs,		// killough 3/7/98
 					frontsector->ceiling_yoffs + frontsector->base_ceiling_yoffs,
 					frontsector->ceiling_xscale,
 					frontsector->ceiling_yscale,
 					frontsector->ceiling_angle + frontsector->base_ceiling_angle,
+					frontsector->sky,
 					frontsector->CeilingSkyBox
 					) : NULL;*/
 
@@ -1441,15 +1441,14 @@ void RP_Subsector (subsector_t *sub)
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->ceilingpic == skyflatnum) ?
 		R_FindPlane(frontsector->floorplane,
-					frontsector->floorpic == skyflatnum &&  // killough 10/98
-						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
-						frontsector->floorpic,
+					frontsector->floorpic,
 					floorlightlevel + r_actualextralight,				// killough 3/16/98
 					frontsector->floor_xoffs,		// killough 3/7/98
 					frontsector->floor_yoffs + frontsector->base_floor_yoffs,
 					frontsector->floor_xscale,
 					frontsector->floor_yscale,
 					frontsector->floor_angle + frontsector->base_floor_angle,
+					frontsector->sky,
 					frontsector->FloorSkyBox
 					) : NULL;*/
 

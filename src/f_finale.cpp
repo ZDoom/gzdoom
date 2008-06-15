@@ -1219,8 +1219,8 @@ void F_Drawer (void)
 		// erase the entire screen to a tiled background (or picture)
 		if (!FinaleHasPic)
 		{
-			int picnum = TexMan.CheckForTexture (FinaleFlat, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
-			if (picnum >= 0)
+			FTextureID picnum = TexMan.CheckForTexture (FinaleFlat, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+			if (picnum.isValid())
 			{
 				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan(picnum));
 			}

@@ -517,7 +517,7 @@ manual_floor:
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (0, 0, newheight);
 			if (line != NULL)
 			{
-				int oldpic = sec->floorpic;
+				FTextureID oldpic = sec->floorpic;
 				sec->floorpic = line->frontsector->floorpic;
 				sec->special = (sec->special & SECRET_MASK) | (line->frontsector->special & ~SECRET_MASK);
 				if (oldpic != sec->floorpic)
@@ -659,7 +659,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 		rtn = true;
 
 		// handle trigger or numeric change type
-		int oldpic = sec->floorpic;
+		FTextureID oldpic = sec->floorpic;
 
 		switch(changetype)
 		{
@@ -717,7 +717,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	fixed_t				stairstep;
 	int 				i;
 	int 				newsecnum = -1;
-	int 				texture;
+	FTextureID			texture;
 	int 				ok;
 	int					persteptime;
 	bool 				rtn = false;

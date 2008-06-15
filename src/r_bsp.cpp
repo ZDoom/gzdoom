@@ -49,6 +49,7 @@
 #include "r_state.h"
 #include "r_bsp.h"
 #include "v_palette.h"
+#include "r_sky.h"
 
 int WallMost (short *mostbuf, const secplane_t &plane);
 
@@ -728,8 +729,8 @@ void R_AddLine (seg_t *line)
 		&& rw_backcz1 <= rw_backfz1 && rw_backcz2 <= rw_backfz2
 
 		// preserve a kind of transparent door/lift special effect:
-		&& ((rw_backcz1 >= rw_frontcz1 && rw_backcz2 >= rw_frontcz2) || line->sidedef->GetTexture(side_t::top) != 0)
-		&& ((rw_backfz1 <= rw_frontfz1 && rw_backfz2 <= rw_frontfz2) || line->sidedef->GetTexture(side_t::bottom) != 0))
+		&& ((rw_backcz1 >= rw_frontcz1 && rw_backcz2 >= rw_frontcz2) || line->sidedef->GetTexture(side_t::top).isValid())
+		&& ((rw_backfz1 <= rw_frontfz1 && rw_backfz2 <= rw_frontfz2) || line->sidedef->GetTexture(side_t::bottom).isValid()))
 		{
 		// killough 1/18/98 -- This function is used to fix the automap bug which
 		// showed lines behind closed doors simply because the door had a dropoff.
@@ -751,7 +752,7 @@ void R_AddLine (seg_t *line)
 		else if (backsector->lightlevel != frontsector->lightlevel
 			|| backsector->floorpic != frontsector->floorpic
 			|| backsector->ceilingpic != frontsector->ceilingpic
-			|| curline->sidedef->GetTexture(side_t::mid) != 0
+			|| curline->sidedef->GetTexture(side_t::mid).isValid()
 
 			// killough 3/7/98: Take flats offsets into account:
 			|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
@@ -1046,15 +1047,14 @@ void R_Subsector (subsector_t *sub)
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->floorpic == skyflatnum) ?
 		R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
-					frontsector->ceilingpic == skyflatnum &&  // killough 10/98
-						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
-						frontsector->ceilingpic,
+					frontsector->ceilingpic,
 					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
 					frontsector->GetXOffset(sector_t::ceiling),		// killough 3/7/98
 					frontsector->GetYOffset(sector_t::ceiling),		// killough 3/7/98
 					frontsector->GetXScale(sector_t::ceiling),
 					frontsector->GetYScale(sector_t::ceiling),
 					frontsector->GetAngle(sector_t::ceiling),
+					frontsector->sky,
 					frontsector->CeilingSkyBox
 					) : NULL;
 
@@ -1071,15 +1071,14 @@ void R_Subsector (subsector_t *sub)
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->ceilingpic == skyflatnum) ?
 		R_FindPlane(frontsector->floorplane,
-					frontsector->floorpic == skyflatnum &&  // killough 10/98
-						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
-						frontsector->floorpic,
+					frontsector->floorpic,
 					floorlightlevel + r_actualextralight,				// killough 3/16/98
 					frontsector->GetXOffset(sector_t::floor),		// killough 3/7/98
 					frontsector->GetYOffset(sector_t::floor),		// killough 3/7/98
 					frontsector->GetXScale(sector_t::floor),
 					frontsector->GetYScale(sector_t::floor),
 					frontsector->GetAngle(sector_t::floor),
+					frontsector->sky,
 					frontsector->FloorSkyBox
 					) : NULL;
 

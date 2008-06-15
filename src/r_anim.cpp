@@ -55,7 +55,7 @@
 
 struct FAnimDef
 {
-	WORD 	BasePic;
+	FTextureID 	BasePic;
 	WORD	NumFrames;
 	WORD	CurFrame;
 	BYTE	AnimType;
@@ -64,7 +64,7 @@ struct FAnimDef
 	{
 		DWORD	SpeedMin;		// Speeds are in ms, not tics
 		DWORD	SpeedRange;
-		WORD	FramePic;
+		FTextureID	FramePic;
 	} Frames[1];
 	enum
 	{
@@ -91,11 +91,11 @@ public:
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void R_InitAnimDefs ();
-static void R_AddComplexAnim (int picnum, const TArray<FAnimDef::FAnimFrame> &frames);
+static void R_AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames);
 static void ParseAnim (FScanner &sc, bool istex);
-static void ParseRangeAnim (FScanner &sc, int picnum, int usetype, bool missing);
-static void ParsePicAnim (FScanner &sc, int picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
-static int  ParseFramenum (FScanner &sc, int basepicnum, int usetype, bool allowMissing);
+static void ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing);
+static void ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
+static FTextureID  ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetype, bool allowMissing);
 static void ParseTime (FScanner &sc, DWORD &min, DWORD &max);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -149,7 +149,7 @@ void R_InitPicAnims (void)
 		FMemLump animatedlump = Wads.ReadLump ("ANIMATED");
 		const char *animdefs = (const char *)animatedlump.GetMem();
 		const char *anim_p;
-		int pic1, pic2;
+		FTextureID pic1, pic2;
 		int animtype;
 		DWORD animspeed;
 
@@ -161,8 +161,8 @@ void R_InitPicAnims (void)
 			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?
-				if ((pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Wall, texflags)) == -1 ||
-					(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .endname */, FTexture::TEX_Wall, texflags)) == -1)
+				if (!(pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Wall, texflags)).Exists() ||
+					!(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .endname */, FTexture::TEX_Wall, texflags)).Exists())
 					continue;		
 
 				// [RH] Bit 1 set means allow decals on walls with this texture
@@ -170,8 +170,8 @@ void R_InitPicAnims (void)
 			}
 			else
 			{
-				if ((pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Flat, texflags)) == -1 ||
-					(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .startname */, FTexture::TEX_Flat, texflags)) == -1)
+				if (!(pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Flat, texflags)).Exists() ||
+					!(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .startname */, FTexture::TEX_Flat, texflags)).Exists())
 					continue;
 			}
 			if (pic1 == pic2)
@@ -182,7 +182,7 @@ void R_InitPicAnims (void)
 			}
 
 			FTexture *tex1 = TexMan[pic1];
-			FTexture *tex2 = TexMan[pic1];
+			FTexture *tex2 = TexMan[pic2];
 
 			if (tex1->UseType != tex2->UseType)
 			{
@@ -193,8 +193,8 @@ void R_InitPicAnims (void)
 			if (debuganimated)
 			{
 				Printf("Defining animation '%s' (texture %d, lump %d, file %d) to '%s' (texture %d, lump %d, file %d)\n",
-					tex1->Name, pic1, tex1->GetSourceLump(), Wads.GetLumpFile(tex1->GetSourceLump()),
-					tex2->Name, pic2, tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
+					tex1->Name, pic1.GetIndex(), tex1->GetSourceLump(), Wads.GetLumpFile(tex1->GetSourceLump()),
+					tex2->Name, pic2.GetIndex(), tex2->GetSourceLump(), Wads.GetLumpFile(tex2->GetSourceLump()));
 			}
 
 			/* FIXME: doesn't work with hires texture replacements.
@@ -240,7 +240,7 @@ void R_InitPicAnims (void)
 //
 //==========================================================================
 
-void R_AddSimpleAnim (int picnum, int animcount, int animtype, DWORD speedmin, DWORD speedrange)
+void R_AddSimpleAnim (FTextureID picnum, int animcount, int animtype, DWORD speedmin, DWORD speedrange)
 {
 	FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef));
 	anim->CurFrame = 0;
@@ -262,7 +262,7 @@ void R_AddSimpleAnim (int picnum, int animcount, int animtype, DWORD speedmin, D
 //
 //==========================================================================
 
-static void R_AddComplexAnim (int picnum, const TArray<FAnimDef::FAnimFrame> &frames)
+static void R_AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames)
 {
 	FAnimDef *anim = (FAnimDef *)M_Malloc (sizeof(FAnimDef) + (frames.Size()-1) * sizeof(frames[0]));
 	anim->BasePic = picnum;
@@ -325,8 +325,8 @@ static void R_InitAnimDefs ()
 				{
 					sc.ScriptError (NULL);
 				}
-				int picnum = TexMan.CheckForTexture (sc.String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
-				if (picnum != -1)
+				FTextureID picnum = TexMan.CheckForTexture (sc.String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
+				if (picnum.isValid())
 				{
 					FTexture * warper = TexMan[picnum];
 
@@ -374,9 +374,9 @@ static void R_InitAnimDefs ()
 				width = sc.Number;
 				sc.MustGetNumber ();
 				height = sc.Number;
-				int picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Flat, texflags);
+				FTextureID picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Flat, texflags);
 				FTexture *viewer = new FCanvasTexture (picname, width, height);
-				if (picnum != -1)
+				if (picnum.Exists())
 				{
 					FTexture *oldtex = TexMan[picnum];
 					fitwidth = oldtex->GetScaledWidth ();
@@ -433,7 +433,7 @@ static void ParseAnim (FScanner &sc, bool istex)
 {
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	TArray<FAnimDef::FAnimFrame> frames (32);
-	int picnum;
+	FTextureID picnum;
 	int usetype;
 	int defined = 0;
 	bool optional = false, missing = false;
@@ -448,7 +448,7 @@ static void ParseAnim (FScanner &sc, bool istex)
 	}
 	picnum = TexMan.CheckForTexture (sc.String, usetype, texflags);
 
-	if (picnum < 0)
+	if (!picnum.Exists())
 	{
 		if (optional)
 		{
@@ -461,7 +461,7 @@ static void ParseAnim (FScanner &sc, bool istex)
 	}
 
 	// no decals on animating textures, by default
-	if (picnum >= 0)
+	if (picnum.isValid())
 	{
 		TexMan[picnum]->bNoDecals = true;
 	}
@@ -470,7 +470,7 @@ static void ParseAnim (FScanner &sc, bool istex)
 	{
 		if (sc.Compare ("allowdecals"))
 		{
-			if (picnum >= 0)
+			if (picnum.isValid())
 			{
 				TexMan[picnum]->bNoDecals = false;
 			}
@@ -507,7 +507,7 @@ static void ParseAnim (FScanner &sc, bool istex)
 
 	// If base pic is not present, don't add this anim
 	// ParseRangeAnim adds the anim itself, but ParsePicAnim does not.
-	if (picnum >= 0 && defined == 2)
+	if (picnum.isValid() && defined == 2)
 	{
 		if (frames.Size() < 2)
 		{
@@ -526,16 +526,17 @@ static void ParseAnim (FScanner &sc, bool istex)
 //
 //==========================================================================
 
-static void ParseRangeAnim (FScanner &sc, int picnum, int usetype, bool missing)
+static void ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing)
 {
-	int type, framenum;
+	int type;
+	FTextureID framenum;
 	DWORD min, max;
 
 	type = FAnimDef::ANIM_Forward;
 	framenum = ParseFramenum (sc, picnum, usetype, missing);
 	ParseTime (sc, min, max);
 
-	if (framenum == picnum || picnum < 0)
+	if (framenum == picnum || !picnum.Exists())
 	{
 		return;		// Animation is only one frame or does not exist
 	}
@@ -567,15 +568,15 @@ static void ParseRangeAnim (FScanner &sc, int picnum, int usetype, bool missing)
 //
 //==========================================================================
 
-static void ParsePicAnim (FScanner &sc, int picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
+static void ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
 {
-	int framenum;
+	FTextureID framenum;
 	DWORD min, max;
 
 	framenum = ParseFramenum (sc, picnum, usetype, missing);
 	ParseTime (sc, min, max);
 
-	if (picnum >= 0)
+	if (picnum.isValid())
 	{
 		FAnimDef::FAnimFrame frame;
 
@@ -595,20 +596,20 @@ static void ParsePicAnim (FScanner &sc, int picnum, int usetype, bool missing, T
 //
 //==========================================================================
 
-static int ParseFramenum (FScanner &sc, int basepicnum, int usetype, bool allowMissing)
+static FTextureID ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetype, bool allowMissing)
 {
 	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
-	int framenum;
+	FTextureID framenum;
 
 	sc.MustGetString ();
 	if (IsNum (sc.String))
 	{
-		framenum = basepicnum + atoi(sc.String) - 1;
+		framenum = basepicnum + (atoi(sc.String) - 1);
 	}
 	else
 	{
 		framenum = TexMan.CheckForTexture (sc.String, usetype, texflags);
-		if (framenum < 0 && !allowMissing)
+		if (!framenum.Exists() && !allowMissing)
 		{
 			sc.ScriptError ("Unknown texture %s", sc.String);
 		}

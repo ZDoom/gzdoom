@@ -42,7 +42,6 @@ class FImageCollection
 public:
 	FImageCollection ();
 	FImageCollection (const char **patchNames, int numPatches);
-	~FImageCollection ();
 
 	void Init (const char **patchnames, int numPatches, int namespc=0);
 	void Add (const char **patchnames, int numPatches, int namespc=0);	
@@ -51,8 +50,7 @@ public:
 	FTexture *operator[] (int index) const;
 
 protected:
-	int NumImages;
-	int *ImageMap;
+	TArray<FTextureID> ImageMap;
 };
 
 #endif //__V_COLLECTION_H__

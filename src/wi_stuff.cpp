@@ -293,10 +293,11 @@ void WI_LoadBackground(bool isenterpic)
 	char buffer[10];
 	in_anim_t an;
 	lnode_t pt;
-	int texture = -1;
+	FTextureID texture;
 
 	bcnt=0;
 
+	texture.SetInvalid();
 	if (isenterpic)
 	{
 		level_info_t * li = FindLevelInfo(wbs->next);

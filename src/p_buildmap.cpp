@@ -479,7 +479,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 	for (i = 0; i < numwalls; ++i)
 	{
 		char tnam[9];
-		int overpic, pic;
+		FTextureID overpic, pic;
 
 		sprintf (tnam, "BTIL%04d", LittleShort(walls[i].picnum));
 		pic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
@@ -508,7 +508,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		}
 		else
 		{
-			sides[i].SetTexture(side_t::mid, 0);
+			sides[i].SetTexture(side_t::mid, FNullTextureID());
 		}
 
 		sides[i].TexelLength = walls[i].xrepeat * 8;
@@ -642,17 +642,12 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsectors,
 						 FMapThing *mapthings)
 {
-	char name[9];
-	int picnum;
 	int count = 0;
 
 	for (int i = 0; i < numsprites; ++i)
 	{
 		if (sprites[i].cstat & (16|32|32768)) continue;
 		if (sprites[i].xrepeat == 0 || sprites[i].yrepeat == 0) continue;
-
-		sprintf (name, "BTIL%04d", sprites[i].picnum);
-		picnum = TexMan.GetTexture (name, FTexture::TEX_Build);
 
 		mapthings[count].thingid = 0;
 		mapthings[count].x = (sprites[i].x << 12);
@@ -665,8 +660,8 @@ static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsector
 		mapthings[count].flags = MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH;
 		mapthings[count].special = 0;
 
-		mapthings[count].args[0] = picnum & 255;
-		mapthings[count].args[1] = picnum >> 8;
+		mapthings[count].args[0] = sprites[i].picnum & 255;
+		mapthings[count].args[1] = sprites[i].picnum >> 8;
 		mapthings[count].args[2] = sprites[i].xrepeat;
 		mapthings[count].args[3] = sprites[i].yrepeat;
 		mapthings[count].args[4] = (sprites[i].cstat & 14) | ((sprites[i].cstat >> 9) & 1);
@@ -810,8 +805,12 @@ END_DEFAULTS
 
 void ACustomSprite::BeginPlay ()
 {
+	char name[9];
 	Super::BeginPlay ();
-	picnum = args[0] + args[1]*256;
+
+	sprintf (name, "BTIL%04d", (args[0] + args[1]*256) & 0xffff);
+	picnum = TexMan.GetTexture (name, FTexture::TEX_Build);
+
 	scaleX = args[2] * (FRACUNIT/64);
 	scaleY = args[3] * (FRACUNIT/64);
 

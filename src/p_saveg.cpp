@@ -286,19 +286,10 @@ void P_SerializeWorld (FArchive &arc)
 		arc << sec->floorplane
 			<< sec->ceilingplane
 			<< sec->floortexz
-			<< sec->ceilingtexz;
-
-		if (arc.IsStoring ())
-		{
-			TexMan.WriteTexture (arc, sec->floorpic);
-			TexMan.WriteTexture (arc, sec->ceilingpic);
-		}
-		else
-		{
-			sec->floorpic = TexMan.ReadTexture (arc);
-			sec->ceilingpic = TexMan.ReadTexture (arc);
-		}
-		arc << sec->lightlevel
+			<< sec->ceilingtexz
+			<< sec->floorpic
+			<< sec->ceilingpic
+			<< sec->lightlevel
 			<< sec->special
 			<< sec->tag
 			<< sec->soundtraversed
@@ -411,15 +402,7 @@ void extsector_t::Serialize(FArchive &arc)
 
 FArchive &operator<< (FArchive &arc, side_t::part &p)
 {
-	arc << p.xoffset << p.yoffset << p.interpolation;// << p.Light;
-	if (arc.IsStoring ())
-	{
-		TexMan.WriteTexture (arc, p.texture);
-	}
-	else
-	{
-		p.texture = TexMan.ReadTexture (arc);
-	}
+	arc << p.xoffset << p.yoffset << p.interpolation << p.texture;// << p.Light;
 	return arc;
 }
 

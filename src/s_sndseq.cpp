@@ -893,6 +893,16 @@ DSeqNode *SN_StartSequence (sector_t *sec, int chan, const char *seqname, int mo
 	return NULL;
 }
 
+DSeqNode *SN_StartSequence (sector_t *sec, int chan, FName seqname, int modenum)
+{
+	int seqnum = FindSequence (seqname);
+	if (seqnum >= 0)
+	{
+		return SN_StartSequence (sec, chan, seqnum, SEQ_NOTRANS, modenum);
+	}
+	return NULL;
+}
+
 DSeqNode *SN_StartSequence (FPolyObj *poly, const char *seqname, int modenum)
 {
 	int seqnum = FindSequence (seqname);

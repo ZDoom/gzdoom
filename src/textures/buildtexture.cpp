@@ -177,7 +177,7 @@ static void AddTiles (void *tiles)
 		int xoffs = (SBYTE)((anm >> 8) & 255) + width/2;
 		int yoffs = (SBYTE)((anm >> 16) & 255) + height/2;
 		int size = width*height;
-		int texnum;
+		FTextureID texnum;
 		FTexture *tex;
 
 		if (width <= 0 || height <= 0) continue;

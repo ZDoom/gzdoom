@@ -443,10 +443,10 @@ void R_PrecacheLevel (void)
 
 				for (k = 0; k < 16; k++)
 				{
-					int pic = frame->Texture[k];
-					if (pic != 0xFFFF)
+					FTextureID pic = frame->Texture[k];
+					if (pic.isValid())
 					{
-						hitlist[pic] = 1;
+						hitlist[pic.GetIndex()] = 1;
 					}
 				}
 			}
@@ -457,14 +457,14 @@ void R_PrecacheLevel (void)
 
 	for (i = numsectors - 1; i >= 0; i--)
 	{
-		hitlist[sectors[i].floorpic] = hitlist[sectors[i].ceilingpic] |= 2;
+		hitlist[sectors[i].floorpic.GetIndex()] = hitlist[sectors[i].ceilingpic.GetIndex()] |= 2;
 	}
 
 	for (i = numsides - 1; i >= 0; i--)
 	{
-		hitlist[sides[i].GetTexture(side_t::top)] =
-			hitlist[sides[i].GetTexture(side_t::mid)] =
-			hitlist[sides[i].GetTexture(side_t::bottom)] |= 1;
+		hitlist[sides[i].GetTexture(side_t::top).GetIndex()] =
+		hitlist[sides[i].GetTexture(side_t::mid).GetIndex()] =
+		hitlist[sides[i].GetTexture(side_t::bottom).GetIndex()] |= 1;
 	}
 
 	// Sky texture is always present.
@@ -474,18 +474,18 @@ void R_PrecacheLevel (void)
 	//	a wall texture, with an episode dependant
 	//	name.
 
-	if (sky1texture >= 0)
+	if (sky1texture.isValid())
 	{
-		hitlist[sky1texture] |= 1;
+		hitlist[sky1texture.GetIndex()] |= 1;
 	}
-	if (sky2texture >= 0)
+	if (sky2texture.isValid())
 	{
-		hitlist[sky2texture] |= 1;
+		hitlist[sky2texture.GetIndex()] |= 1;
 	}
 
 	for (i = TexMan.NumTextures() - 1; i >= 0; i--)
 	{
-		screen->PrecacheTexture(TexMan[i], hitlist[i]);
+		screen->PrecacheTexture(TexMan.ByIndex(i), hitlist[i]);
 	}
 
 	delete[] hitlist;
@@ -516,8 +516,8 @@ CCMD (printspans)
 	if (argv.argc() != 2)
 		return;
 
-	int picnum = TexMan.CheckForTexture (argv[1], FTexture::TEX_Any);
-	if (picnum < 0)
+	FTextureID picnum = TexMan.CheckForTexture (argv[1], FTexture::TEX_Any);
+	if (!picnum.Exists())
 	{
 		Printf ("Unknown texture %s\n", argv[1]);
 		return;
@@ -539,7 +539,7 @@ CCMD (printspans)
 
 CCMD (picnum)
 {
-	int picnum = TexMan.GetTexture (argv[1], FTexture::TEX_Any);
-	Printf ("%d: %s - %s\n", picnum, TexMan[picnum]->Name, TexMan(picnum)->Name);
+	//int picnum = TexMan.GetTexture (argv[1], FTexture::TEX_Any);
+	//Printf ("%d: %s - %s\n", picnum, TexMan[picnum]->Name, TexMan(picnum)->Name);
 }
 #endif

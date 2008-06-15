@@ -764,7 +764,7 @@ private:
 			item != NULL && i < 5;
 			item = item->Inventory)
 		{
-			if (item->Icon > 0 &&
+			if (item->Icon.isValid() &&
 				item->IsKindOf (RUNTIME_CLASS(AKey)) &&
 				item->GetClass() != RUNTIME_CLASS(AKey))
 			{

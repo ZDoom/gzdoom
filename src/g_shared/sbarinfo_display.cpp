@@ -466,7 +466,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				else if((cmd.flags & DRAWIMAGE_WEAPONICON))
 				{
 					AWeapon *weapon = CPlayer->ReadyWeapon;
-					if(weapon != NULL && weapon->Icon > 0)
+					if(weapon != NULL && weapon->Icon.isValid())
 					{
 						texture = TexMan[weapon->Icon];
 					}
@@ -478,9 +478,9 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 						texture = TexMan[item->Icon];
 				}
 				else if((cmd.flags & DRAWIMAGE_INVENTORYICON))
-					texture = TexMan[cmd.sprite];
-				else if(cmd.sprite != -1)
-					texture = Images[cmd.sprite];
+					texture = TexMan[cmd.sprite_index];
+				else if(cmd.image_index > 0)
+					texture = Images[cmd.image_index];
 
 				DrawGraphic(texture, cmd.x, cmd.y, xOffset, yOffset, alpha, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));
 				break;
@@ -671,7 +671,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 			}
 			case SBARINFO_DRAWBAR:
 			{
-				if(cmd.sprite == -1 || Images[cmd.sprite] == NULL)
+				if(cmd.image_index == -1 || Images[cmd.image_index] == NULL)
 					break; //don't draw anything.
 				bool horizontal = !!((cmd.special2 & DRAWBAR_HORIZONTAL));
 				bool reverse = !!((cmd.special2 & DRAWBAR_REVERSE));
@@ -821,9 +821,9 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				{
 					value = 0;
 				}
-				assert(Images[cmd.sprite] != NULL);
+				assert(Images[cmd.image_index] != NULL);
 
-				FTexture *fg = Images[cmd.sprite];
+				FTexture *fg = Images[cmd.image_index];
 				FTexture *bg = (cmd.special != -1) ? Images[cmd.special] : NULL;
 				int x, y, w, h;
 				int cx, cy, cw, ch, cr, cb;
@@ -956,7 +956,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				{
 					wiggle = !!(cmd.flags & DRAWGEM_WIGGLE);
 				}
-				DrawGem(Images[cmd.special], Images[cmd.sprite], value, cmd.x, cmd.y, xOffset, yOffset, alpha, cmd.special2, cmd.special3, cmd.special4+1, wiggle, translate);
+				DrawGem(Images[cmd.special], Images[cmd.image_index], value, cmd.x, cmd.y, xOffset, yOffset, alpha, cmd.special2, cmd.special3, cmd.special4+1, wiggle, translate);
 				break;
 			}
 			case SBARINFO_DRAWSHADER:
@@ -993,7 +993,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 					break;
 				for(int i = 0;i < cmd.value;i++)
 				{
-					while(item->Icon <= 0 || item->GetClass() == RUNTIME_CLASS(AKey) || !item->IsKindOf(RUNTIME_CLASS(AKey)))
+					while(!item->Icon.isValid() || !item->IsKindOf(RUNTIME_CLASS(AKey)))
 					{
 						item = item->Inventory;
 						if(item == NULL)

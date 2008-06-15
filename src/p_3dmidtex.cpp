@@ -214,10 +214,11 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, fixed_t *ptexbot)
 {
 	side_t *side = &sides[line->sidenum[sideno]];
+	FTextureID texnum = side->GetTexture(side_t::mid);
 
-	if (line->sidenum[0]==NO_SIDE || line->sidenum[1]==NO_SIDE || !side->GetTexture(side_t::mid)) return false;
+	if (line->sidenum[0]==NO_SIDE || line->sidenum[1]==NO_SIDE || !texnum.isValid()) return false;
 	
-	FTexture * tex= TexMan(side->GetTexture(side_t::mid));
+	FTexture * tex= TexMan(texnum);
 	if (!tex) return false;
 
 	fixed_t y_offset = side->GetTextureYOffset(side_t::mid);

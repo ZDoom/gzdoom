@@ -1,3 +1,15 @@
+June 15, 2008 (Changes by Graf Zahl)
+- Changed FImageCollection to return translated texture indices so
+  that animated icons can be done with it.
+- Changed FImageCollection to use a TArray to hold its data.
+- Fixed: SetChanHeadSettings did an assignment instead of comparing
+  the channel ID witg CHAN_CEILING.
+- Changed sound sequence names for animated doors to FNames.
+- Automatically fixed: DCeiling didn't properly serialize its texture id.
+- Replaced integers as texture ID representation with a specific new type
+  to track down all potentially incorrect uses and remaining WORDs used
+  for texture IDs so that more than 32767 or 65535 textures can be defined.
+
 June 14, 2008
 - Increased the duration of respawn invulnerability by one second.
 - DF2_YES_RESPAWN_INVUL and DF_FORCE_RESPAWN now apply to all multiplayer 

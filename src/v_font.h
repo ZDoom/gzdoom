@@ -36,9 +36,9 @@
 
 #include "doomtype.h"
 #include "farchive.h"
+#include "textures/textures.h"
 
 class DCanvas;
-class FTexture;
 struct FRemapTable;
 
 enum EColorRange
@@ -149,7 +149,7 @@ protected:
 		bool rescale, PalEntry *out_palette);
 	void LoadFON1 (int lump, const BYTE *data);
 	void LoadFON2 (int lump, const BYTE *data);
-	void CreateFontFromPic (int picnum);
+	void CreateFontFromPic (FTextureID picnum);
 };
 
 class FSinglePicFont : public FFont
@@ -162,7 +162,7 @@ public:
 	int GetCharWidth (int code) const;
 
 protected:
-	int PicNum;
+	FTextureID PicNum;
 };
 
 void RecordTextureColors (FTexture *pic, BYTE *colorsused);

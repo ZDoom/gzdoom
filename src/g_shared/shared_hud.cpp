@@ -98,6 +98,19 @@ static int hudwidth, hudheight;				// current width/height for HUD display
 
 void AM_GetPosition(fixed_t & x, fixed_t & y);
 
+
+FTextureID GetHUDIcon(const PClass *cls)
+{
+	FTextureID tex;
+	tex.texnum = cls->Meta.GetMetaInt(HUMETA_AltIcon, 0);
+	return tex;
+}
+
+void SetHUDIcon(PClass *cls, FTextureID tex)
+{
+	cls->Meta.SetMetaInt(HUMETA_AltIcon, tex.GetIndex());
+}
+
 //---------------------------------------------------------------------------
 //
 // Draws an image into a box with its bottom center at the bottom
@@ -340,7 +353,7 @@ static void SetKeyTypes()
 		{
 			AKey * key = (AKey*)GetDefaultByType(ti);
 
-			if (key->Icon!=0 && key->KeyNumber>0)
+			if (key->Icon.isValid() && key->KeyNumber>0)
 			{
 				KeyTypes.Push(ti);
 			}
@@ -375,12 +388,12 @@ static void SetKeyTypes()
 
 static void DrawOneKey(int xo, int & x, int & y, int & c, AInventory * inv)
 {
-	int icon=0;
-	int AltIcon = inv->GetClass()->Meta.GetMetaInt(HUMETA_AltIcon, 0);
+	FTextureID icon = FNullTextureID();
+	FTextureID AltIcon = GetHUDIcon(inv->GetClass());
 
-	if (AltIcon==-1) return;
+	if (!AltIcon.Exists()) return;
 
-	if (AltIcon>0) 
+	if (AltIcon.isValid()) 
 	{
 		icon = AltIcon;
 	}
@@ -394,9 +407,9 @@ static void DrawOneKey(int xo, int & x, int & y, int & c, AInventory * inv)
 			icon = sprframe->Texture[0];
 		}
 	}
-	if (icon == 0) icon = inv->Icon;
+	if (icon.isNull()) icon = inv->Icon;
 
-	if (icon > 0)	
+	if (icon.isValid())	
 	{
 		x -= 9;
 		DrawImageToBox(TexMan[icon], x, y, 8, 10);
@@ -526,9 +539,9 @@ static int DrawAmmo(player_t * CPlayer, int x, int y)
 		AAmmo * ammoitem = (AAmmo*)CPlayer->mo->FindInventory(type);
 
 		AAmmo * inv = ammoitem? ammoitem : (AAmmo*)GetDefaultByType(orderedammos[i]);
-		int AltIcon = type->Meta.GetMetaInt(HUMETA_AltIcon, 0);
-		int icon = AltIcon != 0? AltIcon : inv->Icon;
-		if (icon<=0) continue;
+		FTextureID AltIcon = GetHUDIcon(type);
+		FTextureID icon = !AltIcon.isNull()? AltIcon : inv->Icon;
+		if (!icon.isValid()) continue;
 
 		int trans= (wi && (type==wi->AmmoType1 || type==wi->AmmoType2)) ? 0xc000:0x6000;
 
@@ -560,7 +573,7 @@ static int DrawAmmo(player_t * CPlayer, int x, int y)
 static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 {
 	int trans;
-	int picnum=-1;
+	FTextureID picnum;
 
 	// Powered up weapons and inherited sister weapons are not displayed.
 	if (weapon->WeaponFlags & WIF_POWERED_UP) return;
@@ -574,10 +587,10 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 
 	FState * state=NULL, *ReadyState;
 	
-	int AltIcon = weapon->GetClass()->Meta.GetMetaInt(HUMETA_AltIcon, 0);
-	picnum = AltIcon? AltIcon : weapon->Icon;
+	FTextureID AltIcon = GetHUDIcon(weapon->GetClass());
+	picnum = AltIcon.isValid()? AltIcon : weapon->Icon;
 
-	if (picnum == 0)
+	if (picnum.isNull())
 	{
 		if (weapon->SpawnState && weapon->SpawnState->sprite.index!=0)
 		{
@@ -597,7 +610,7 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 		}
 	}
 
-	if (picnum > 0)
+	if (picnum.isValid())
 	{
 		FTexture * tex = TexMan[picnum];
 		int w = tex->GetWidth();
@@ -668,13 +681,13 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 		{
 			if (rover->Amount>0)
 			{
-				int AltIcon = rover->GetClass()->Meta.GetMetaInt(HUMETA_AltIcon, 0);
+				FTextureID AltIcon = GetHUDIcon(rover->GetClass());
 
-				if (AltIcon>=0 && (rover->Icon>0 || AltIcon>0) )
+				if (AltIcon.Exists() && (rover->Icon.isValid() || AltIcon.isValid()) )
 				{
 					int trans = rover==CPlayer->mo->InvSel ? FRACUNIT : 0x6666;
 
-					DrawImageToBox(TexMan[AltIcon? AltIcon : rover->Icon], x, y, 19, 25, trans);
+					DrawImageToBox(TexMan[AltIcon.isValid()? AltIcon : rover->Icon], x, y, 19, 25, trans);
 					if (rover->Amount>1)
 					{
 						char buffer[10];
@@ -934,8 +947,8 @@ void HUD_InitHud()
 			if (sc.Compare("Health"))
 			{
 				sc.MustGetString();
-				int tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
-				if (tex > 0) healthpic = TexMan[tex];
+				FTextureID tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+				if (tex.isValid()) healthpic = TexMan[tex];
 			}
 			else
 			{
@@ -950,15 +963,15 @@ void HUD_InitHud()
 					ti=NULL;
 				}
 				sc.MustGetString();
-				int tex=0;
+				FTextureID tex;
 
 				if (!sc.Compare("0") && !sc.Compare("NULL") && !sc.Compare(""))
 				{
 					tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
 				}
-				else tex=-1;
+				else tex.SetInvalid();
 
-				if (ti) const_cast<PClass*>(ti)->Meta.SetMetaInt(HUMETA_AltIcon, tex);
+				if (ti) SetHUDIcon(const_cast<PClass*>(ti), tex);
 			}
 		}
 	}

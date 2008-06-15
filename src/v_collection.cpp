@@ -39,76 +39,49 @@
 #include "w_wad.h"
 
 FImageCollection::FImageCollection ()
-: NumImages (0), ImageMap (0)
 {
 }
 
 FImageCollection::FImageCollection (const char **patchNames, int numPatches)
 {
-	Init (patchNames, numPatches);
-}
-
-FImageCollection::~FImageCollection ()
-{
-	Uninit ();
+	Add (patchNames, numPatches);
 }
 
 void FImageCollection::Init (const char **patchNames, int numPatches, int namespc)
 {
-	NumImages = numPatches;
-	ImageMap = new int[numPatches];
-
-	for (int i = 0; i < numPatches; ++i)
-	{
-		int picnum = TexMan.AddPatch (patchNames[i], namespc, true);
-
-		if (picnum == -1 && namespc != ns_sprites)
-		{
-			picnum = TexMan.AddPatch (patchNames[i], ns_sprites);
-		}
-		ImageMap[i] = picnum;
-	}
+	ImageMap.Clear();
+	Add(patchNames, numPatches, namespc);
 }
 
 // [MH] Mainly for mugshots with skins and SBARINFO
 void FImageCollection::Add (const char **patchNames, int numPatches, int namespc)
 {
-	int NewNumImages = NumImages + numPatches;
-	int *NewImageMap = new int[NewNumImages];
+	int OldCount = ImageMap.Size();
 
-	memcpy(NewImageMap, ImageMap, (NumImages * sizeof(int)));
+	ImageMap.Resize(OldCount + numPatches);
 
 	for (int i = 0; i < numPatches; ++i)
 	{
-		int picnum = TexMan.AddPatch (patchNames[i], namespc, true);
+		FTextureID picnum = TexMan.AddPatch (patchNames[i], namespc, true);
 
-		if (picnum == -1 && namespc != ns_sprites)
+		if (!picnum.Exists() && namespc != ns_sprites)
 		{
 			picnum = TexMan.AddPatch (patchNames[i], ns_sprites);
 		}
-		NewImageMap[NumImages + i] = picnum;
+		ImageMap[OldCount + i] = picnum;
 	}
-
-	delete[] ImageMap;
-	ImageMap = NewImageMap;
-	NumImages = NewNumImages;
 }
 
 void FImageCollection::Uninit ()
 {
-	if (ImageMap != NULL)
-	{
-		delete[] ImageMap;
-		ImageMap = NULL;
-	}
-	NumImages = 0;
+	ImageMap.Clear();
 }
 
 FTexture *FImageCollection::operator[] (int index) const
 {
-	if ((unsigned int)index >= (unsigned int)NumImages)
+	if ((unsigned int)index >= ImageMap.Size())
 	{
 		return NULL;
 	}
-	return ImageMap[index] < 0 ? NULL : TexMan[ImageMap[index]];
+	return ImageMap[index].Exists()? TexMan(ImageMap[index]) : NULL;
 }

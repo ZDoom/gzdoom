@@ -3682,6 +3682,16 @@ APlayerPawn *P_SpawnPlayer (FMapThing *mthing, bool tempplayer)
 	  // it above, but the other modes don't.
 		oldactor->DestroyAllInventory();
 	}
+	// [BC] Handle temporary invulnerability when respawned
+	if ((state == PST_REBORN || state == PST_ENTER) &&
+		(dmflags2 & DF2_YES_RESPAWN_INVUL) &&
+		(multiplayer || alwaysapplydmflags))
+	{
+		APowerup *invul = static_cast<APowerup*>(p->mo->GiveInventoryType (RUNTIME_CLASS(APowerInvulnerable)));
+		invul->EffectTics = 3*TICRATE;
+		invul->BlendColor = 0;				// don't mess with the view
+		p->mo->effects |= FX_RESPAWNINVUL;	// [RH] special effect
+	}
 
 	if (StatusBar != NULL && (playernum == consoleplayer || StatusBar->GetPlayer() == playernum))
 	{

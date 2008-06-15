@@ -748,8 +748,6 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 		return;
 	}
 
-	// If we don't want to lose anything, then we don't need to bother checking
-	// the old inventory.
 	if (dmflags &  (DF_COOP_LOSE_KEYS |
 					DF_COOP_LOSE_WEAPONS |
 					DF_COOP_LOSE_AMMO |
@@ -781,10 +779,24 @@ void APlayerPawn::FilterCoopRespawnInventory (APlayerPawn *oldplayer)
 				item->Destroy();
 			}
 			else if ((dmflags & DF_COOP_LOSE_ARMOR) &&
-				defitem == NULL &&
 				item->IsKindOf(RUNTIME_CLASS(AArmor)))
 			{
-				item->Destroy();
+				if (defitem != NULL)
+				{
+					item->Destroy();
+				}
+				else if (item->IsKindOf(RUNTIME_CLASS(ABasicArmor)))
+				{
+					static_cast<ABasicArmor*>(item)->SavePercent = static_cast<ABasicArmor*>(defitem)->SavePercent;
+					item->Amount = defitem->Amount;
+				}
+				else if (item->IsKindOf(RUNTIME_CLASS(AHexenArmor)))
+				{
+					static_cast<AHexenArmor*>(item)->Slots[0] = static_cast<AHexenArmor*>(defitem)->Slots[0];
+					static_cast<AHexenArmor*>(item)->Slots[1] = static_cast<AHexenArmor*>(defitem)->Slots[1];
+					static_cast<AHexenArmor*>(item)->Slots[2] = static_cast<AHexenArmor*>(defitem)->Slots[2];
+					static_cast<AHexenArmor*>(item)->Slots[3] = static_cast<AHexenArmor*>(defitem)->Slots[3];
+				}
 			}
 			else if ((dmflags & DF_COOP_LOSE_POWERUPS) &&
 				defitem == NULL &&
@@ -1853,7 +1865,7 @@ void P_DeathThink (player_t *player)
 	}		
 
 	if ((player->cmd.ucmd.buttons & BT_USE ||
-		((deathmatch || alwaysapplydmflags) && (dmflags & DF_FORCE_RESPAWN))) && !(dmflags2 & DF2_NO_RESPAWN))
+		((multiplayer || alwaysapplydmflags) && (dmflags & DF_FORCE_RESPAWN))) && !(dmflags2 & DF2_NO_RESPAWN))
 	{
 		if (level.time >= player->respawn_time || ((player->cmd.ucmd.buttons & BT_USE) && !player->isbot))
 		{

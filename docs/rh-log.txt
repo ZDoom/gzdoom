@@ -1,4 +1,11 @@
 June 14, 2008
+- Increased the duration of respawn invulnerability by one second.
+- DF2_YES_RESPAWN_INVUL and DF_FORCE_RESPAWN now apply to all multiplayer 
+  games, not just deathmatch, without the need for turning on
+  alwaysapplydmflags.
+- Fixed: DF2_YES_RESPAWN_INVUL only worked in deathmatch, even with
+  alwaysapplydmflags turned on.
+- Fixed: DF_COOP_LOSE_ARMOR did not empty the starting armor items.
 - Replaced the naive area sound implementation with one that takes into
   consideration the size and shape of the sector producing the sound. See
   the lifts on Doom 2 MAP30 and compare with previous versions.

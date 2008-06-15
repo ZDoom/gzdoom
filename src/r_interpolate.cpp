@@ -596,7 +596,7 @@ void DSectorScrollInterpolation::UpdateInterpolation()
 void DSectorScrollInterpolation::Restore()
 {
 	sector->SetXOffset(ceiling, bakx);
-	sector->SetYOffset(ceiling, bakx);
+	sector->SetYOffset(ceiling, baky);
 }
 
 //==========================================================================

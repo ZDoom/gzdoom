@@ -41,7 +41,7 @@ struct Lock
 	TArray<Keygroup *> keylist;
 	char * message;
 	char * remotemsg;
-	int locksound;
+	FSoundID locksound;
 	int	rgb;
 
 	Lock()
@@ -222,7 +222,7 @@ static void ParseLock(FScanner &sc)
 			delete locks[keynum];
 		}
 		locks[keynum] = lock;
-		locks[keynum]->locksound = S_FindSound("misc/keytry");
+		locks[keynum]->locksound = "misc/keytry";
 		ignorekey=false;
 	}
 	else if (keynum != -1)
@@ -266,7 +266,7 @@ static void ParseLock(FScanner &sc)
 
 		case 4:	// locksound
 			sc.MustGetString();
-			lock->locksound = S_FindSound(sc.String);
+			lock->locksound = sc.String;
 			break;
 
 		default:
@@ -390,10 +390,7 @@ void P_DeinitKeyMessages()
 bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 {
 	const char *failtext = NULL;
-	int failsound = 0;
-
-	failtext = NULL;
-	failsound = 0;
+	FSoundID failsound;
 
 	if (keynum<=0 || keynum>255) return true;
 	// Just a safety precaution. The messages should have been initialized upon game start.
@@ -406,7 +403,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 		else
 			failtext = "That doesn't seem to work";
 
-		failsound = S_FindSound("misc/keytry");
+		failsound = "misc/keytry";
 	}
 	else
 	{
@@ -420,7 +417,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 	if (owner == players[consoleplayer].camera)
 	{
 		PrintMessage(failtext);
-		S_SoundID (owner, CHAN_VOICE, failsound, 1, ATTN_NORM);
+		S_Sound (owner, CHAN_VOICE, failsound, 1, ATTN_NORM);
 	}
 
 	return false;

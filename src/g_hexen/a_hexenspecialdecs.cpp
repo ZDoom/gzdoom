@@ -418,7 +418,7 @@ void A_CorpseExplode (AActor *actor)
 		mo->momx = pr_foo.Random2()<<(FRACBITS-6);
 		mo->momy = pr_foo.Random2()<<(FRACBITS-6);
 	}
-	S_SoundID (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_IDLE);
+	S_Sound (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_IDLE);
 	actor->Destroy ();
 }
 
@@ -739,7 +739,7 @@ void A_SoAExplode (AActor *actor)
 				actor->x, actor->y, actor->z, ALLOW_REPLACE);
 		}
 	}
-	S_SoundID (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_NORM);
+	S_Sound (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_NORM);
 	actor->Destroy ();
 }
 

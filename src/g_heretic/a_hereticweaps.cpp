@@ -2535,7 +2535,7 @@ void A_SkullRodStorm (AActor *actor)
 	P_CheckMissileSpawn (mo);
 	if (actor->special1 != -1 && !S_IsActorPlayingSomething (actor, CHAN_BODY, -1))
 	{
-		S_SoundID (actor, CHAN_BODY|CHAN_LOOP, actor->special1, 1, ATTN_NORM);
+		S_Sound (actor, CHAN_BODY|CHAN_LOOP, actor->special1, 1, ATTN_NORM);
 	}
 }
 
@@ -2874,7 +2874,7 @@ void A_FirePhoenixPL2 (AActor *actor)
 	angle_t angle;
 	fixed_t x, y, z;
 	fixed_t slope;
-	int soundid;
+	FSoundID soundid;
 	player_t *player;
 	APhoenixRod *flamethrower;
 
@@ -2883,7 +2883,7 @@ void A_FirePhoenixPL2 (AActor *actor)
 		return;
 	}
 
-	soundid = S_FindSound ("weapons/phoenixpowshoot");
+	soundid = "weapons/phoenixpowshoot";
 
 	flamethrower = static_cast<APhoenixRod *> (player->ReadyWeapon);
 	if (flamethrower == NULL || --flamethrower->FlameCount == 0)
@@ -2907,7 +2907,7 @@ void A_FirePhoenixPL2 (AActor *actor)
 	mo->momz = FixedMul (mo->Speed, slope);
 	if (!player->refire || !S_IsActorPlayingSomething (actor, CHAN_WEAPON, -1))
 	{
-		S_SoundID (actor, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
+		S_Sound (actor, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
 	}	
 	P_CheckMissileSpawn (mo);
 }

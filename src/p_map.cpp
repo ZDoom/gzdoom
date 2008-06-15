@@ -2639,7 +2639,7 @@ AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		AActor *puffDefaults = GetDefaultByType (pufftype);
 		if (puffDefaults->ActiveSound)
 		{ // Play miss sound
-			S_SoundID (t1, CHAN_WEAPON, puffDefaults->ActiveSound, 1, ATTN_NORM);
+			S_Sound (t1, CHAN_WEAPON, puffDefaults->ActiveSound, 1, ATTN_NORM);
 		}
 		if (puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{ // Spawn the puff anyway
@@ -4111,20 +4111,17 @@ bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil, boo
 	cpos.movemidtex = false;
 	cpos.sector = sector;
 
-	// [RH] Use different functions for the four different types of sector
-	// movement. Also update the soundorg's z-coordinate for 3D sound.
+	// [RH] Use different functions for the four different types of sector movement.
 	switch (floorOrCeil)
 	{
 	case 0:
 		// floor
 		iterator = (amt < 0) ? PIT_FloorDrop : PIT_FloorRaise;
-		sector->soundorg[2] = sector->floorplane.ZatPoint (sector->soundorg[0], sector->soundorg[1]);
 		break;
 
 	case 1:
 		// ceiling
 		iterator = (amt < 0) ? PIT_CeilingLower : PIT_CeilingRaise;
-		sector->soundorg[2] = sector->ceilingplane.ZatPoint (sector->soundorg[0], sector->soundorg[1]);
 		break;
 
 	case 2:

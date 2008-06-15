@@ -1310,7 +1310,7 @@ void A_SpawnBishop(AActor *actor)
 void A_SorcererBishopEntry(AActor *actor)
 {
 	Spawn<ASorcFX3Explosion> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
-	S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NORM);
+	S_Sound (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NORM);
 }
 
 //============================================================================

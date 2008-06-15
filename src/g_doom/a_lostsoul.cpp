@@ -30,7 +30,7 @@ void A_SkullAttack (AActor *self)
 	dest = self->target;		
 	self->flags |= MF_SKULLFLY;
 
-	S_SoundID (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
+	S_Sound (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
 	an = self->angle >> ANGLETOFINESHIFT;
 	self->momx = FixedMul (SKULLSPEED, finecosine[an]);

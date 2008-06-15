@@ -254,12 +254,12 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 				int damage = pr_dragonseek.HitDice (10);
 				P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 				P_TraceBleed (damage, actor->target, actor);
-				S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+				S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 			}
 			else if (pr_dragonseek() < 128 && P_CheckMissileRange(actor))
 			{
 				P_SpawnMissile(actor, target, RUNTIME_CLASS(ADragonFireball));						
-				S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+				S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 			}
 			actor->target = oldTarget;
 		}
@@ -368,12 +368,12 @@ void A_DragonFlight (AActor *actor)
 			int damage = pr_dragonflight.HitDice (8);
 			P_DamageMobj (actor->target, actor, actor, damage, NAME_Melee);
 			P_TraceBleed (damage, actor->target, actor);
-			S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+			S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 		}
 		else if (abs(actor->angle-angle) <= ANGLE_1*20)
 		{
 			actor->SetState (actor->MissileState);
-			S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+			S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 		}
 	}
 	else

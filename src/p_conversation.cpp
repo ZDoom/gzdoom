@@ -329,7 +329,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	// The speaker's voice for this node, if any.
 	speech.Sound[8] = 0;
 	sprintf (fullsound, "svox/%s", speech.Sound);
-	node->SpeakerVoice = S_FindSound (fullsound);
+	node->SpeakerVoice = fullsound;
 
 	// The speaker's name, if any.
 	speech.Name[16] = 0;
@@ -398,7 +398,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	if (speech.VoiceNumber != 0)
 	{
 		sprintf (fullsound, "svox/voc%u", speech.VoiceNumber);
-		node->SpeakerVoice = S_FindSound (fullsound);
+		node->SpeakerVoice = fullsound;
 	}
 	else
 	{
@@ -715,7 +715,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	if (CurNode->SpeakerVoice != 0)
 	{
 		I_SetMusicVolume (dlg_musicvolume);
-		S_SoundID (npc, CHAN_VOICE|CHAN_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
+		S_Sound (npc, CHAN_VOICE|CHAN_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 	}
 
 	if (pc->player != &players[consoleplayer])

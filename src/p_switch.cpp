@@ -80,8 +80,8 @@ struct FSwitchDef
 {
 	int PreTexture;		// texture to switch from
 	WORD PairIndex;		// switch def to use to return to PreTexture
-	SWORD Sound;		// sound to play at start of animation
 	WORD NumFrames;		// # of animation frames
+	FSoundID Sound;		// sound to play at start of animation
 	bool QuestPanel;	// Special texture for Strife mission
 	struct frame		// Array of times followed by array of textures
 	{					//   actual length of each array is <NumFrames>
@@ -323,9 +323,8 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 	FSwitchDef::frame thisframe;
 	int picnum;
 	bool bad;
-	SWORD sound;
+	FSoundID sound;
 
-	sound = 0;
 	bad = false;
 
 	while (sc.GetString ())
@@ -337,7 +336,7 @@ FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad)
 				sc.ScriptError ("Switch state already has a sound");
 			}
 			sc.MustGetString ();
-			sound = S_FindSound (sc.String);
+			sound = sc.String;
 		}
 		else if (sc.Compare ("pic"))
 		{
@@ -584,12 +583,14 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *ques
 
 	pt[0] = line->v1->x + (line->dx >> 1);
 	pt[1] = line->v1->y + (line->dy >> 1);
+	pt[2] = 0;
 	side->SetTexture(texture, SwitchList[i]->u[0].Texture);
 	if (useAgain || SwitchList[i]->NumFrames > 1)
 		playsound = P_StartButton (side, texture, i, pt[0], pt[1], !!useAgain);
 	else 
 		playsound = true;
-	if (playsound) S_SoundID (pt, CHAN_VOICE|CHAN_LISTENERZ|CHAN_IMMOBILE, sound, 1, ATTN_STATIC);
+	if (playsound)
+		S_Sound (pt, CHAN_VOICE|CHAN_LISTENERZ|CHAN_IMMOBILE, sound, 1, ATTN_STATIC);
 	if (quest != NULL)
 	{
 		*quest = SwitchList[i]->QuestPanel;
@@ -656,9 +657,9 @@ void DActiveButton::Tick ()
 				m_Frame = 65535;
 				pt[0] = m_X;
 				pt[1] = m_Y;
-				S_SoundID (pt, CHAN_VOICE|CHAN_LISTENERZ|CHAN_IMMOBILE,
-					def->Sound != 0 ? def->Sound
-					: S_FindSound ("switches/normbutn"), 1, ATTN_STATIC);
+				S_Sound (pt, CHAN_VOICE|CHAN_LISTENERZ|CHAN_IMMOBILE,
+					def->Sound != 0 ? def->Sound : FSoundID("switches/normbutn"),
+					1, ATTN_STATIC);
 				bFlippable = false;
 			}
 			else

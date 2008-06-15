@@ -930,7 +930,7 @@ void A_MinotaurChase (AActor *actor)
 	{
 		if (actor->AttackSound)
 		{
-			S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+			S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 		}
 		actor->SetState (actor->MeleeState);
 		return;

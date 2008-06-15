@@ -26,12 +26,12 @@ public:
 	void StopAndDestroy ();
 	void Destroy ();
 	void Tick ();
-	void ChangeData (int seqOffset, int delayTics, float volume, int currentSoundID);
+	void ChangeData (int seqOffset, int delayTics, float volume, FSoundID currentSoundID);
 	void AddChoice (int seqnum, seqtype_t type);
 	FName GetSequenceName() const;
 	static void StaticMarkHead() { GC::Mark(SequenceListHead); }
 
-	virtual void MakeSound (int loop) {}
+	virtual void MakeSound (int loop, FSoundID id) {}
 	virtual void *Source () { return NULL; }
 	virtual bool IsPlaying () { return false; }
 	virtual DSeqNode *SpawnChild (int seqnum) { return NULL; }
@@ -48,10 +48,10 @@ protected:
 	SDWORD *m_SequencePtr;
 	int m_Sequence;
 
-	int m_CurrentSoundID;
+	FSoundID m_CurrentSoundID;
+	int m_StopSound;
 	int m_DelayUntilTic;
 	float m_Volume;
-	int m_StopSound;
 	int m_Atten;
 	int m_ModeNum;
 
@@ -75,7 +75,6 @@ struct FSoundSequence
 	FName	SeqName;
 	FName	Slot;
 	int		StopSound;
-	bool	bDoorSound;
 	SDWORD	Script[1];	// + more until end of sequence script
 };
 
@@ -83,8 +82,8 @@ void S_ParseSndSeq (int levellump);
 DSeqNode *SN_StartSequence (AActor *mobj, int sequence, seqtype_t type, int modenum, bool nostop=false);
 DSeqNode *SN_StartSequence (AActor *mobj, const char *name, int modenum);
 DSeqNode *SN_StartSequence (AActor *mobj, FName seqname, int modenum);
-DSeqNode *SN_StartSequence (sector_t *sector, int sequence, seqtype_t type, int modenum, bool full3d, bool nostop=false);
-DSeqNode *SN_StartSequence (sector_t *sector, const char *name, int modenum, bool full3d);
+DSeqNode *SN_StartSequence (sector_t *sector, int chan, int sequence, seqtype_t type, int modenum, bool nostop=false);
+DSeqNode *SN_StartSequence (sector_t *sector, int chan, const char *name, int modenum);
 DSeqNode *SN_StartSequence (FPolyObj *poly, int sequence, seqtype_t type, int modenum, bool nostop=false);
 DSeqNode *SN_StartSequence (FPolyObj *poly, const char *name, int modenum);
 void SN_StopSequence (AActor *mobj);

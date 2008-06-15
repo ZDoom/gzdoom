@@ -183,7 +183,7 @@ void A_WizAtk3 (AActor *actor)
 	{
 		return;
 	}
-	S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+	S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 	if (actor->CheckMeleeRange())
 	{
 		int damage = pr_wizatk3.HitDice (4);

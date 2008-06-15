@@ -57,8 +57,8 @@ void ADegninOre::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
 	damage = dist = 192;
 	RenderStyle = STYLE_Add;	// [RH] Make the explosion glow
 
-	// Does strife automatically play the death sound on death?
-	S_SoundID (this, CHAN_BODY, DeathSound, 1, ATTN_NORM);
+	// Does Strife automatically play the death sound on death?
+	S_Sound (this, CHAN_BODY, DeathSound, 1, ATTN_NORM);
 }
 
 void A_RemoveForceField (AActor *self)

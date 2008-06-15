@@ -695,3 +695,67 @@ void sector_t::SetFade(int r, int g, int b)
 	PalEntry fade = PalEntry (r,g,b);
 	ColorMap = GetSpecialLights (ColorMap->Color, fade, ColorMap->Desaturate);
 }
+
+//===========================================================================
+//
+// sector_t :: ClosestPoint
+//
+// Given a point (x,y), returns the point (ox,oy) on the sector's defining
+// lines that is nearest to (x,y).
+//
+//===========================================================================
+
+void sector_t::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy) const
+{
+	int i;
+	double x = fx, y = fy;
+	double bestdist = HUGE_VAL;
+	double bestx = 0, besty = 0;
+
+	for (i = 0; i < linecount; ++i)
+	{
+		vertex_t *v1 = lines[i]->v1;
+		vertex_t *v2 = lines[i]->v2;
+		double a = v2->x - v1->x;
+		double b = v2->y - v1->y;
+		double den = a*a + b*b;
+		double ix, iy, dist;
+
+		if (den == 0)
+		{ // Line is actually a point!
+			ix = v1->x;
+			iy = v1->y;
+		}
+		else
+		{
+			double num = (x - v1->x) * a + (y - v1->y) * b;
+			double u = num / den;
+			if (u <= 0)
+			{
+				ix = v1->x;
+				iy = v1->y;
+			}
+			else if (u >= 1)
+			{
+				ix = v2->x;
+				iy = v2->y;
+			}
+			else
+			{
+				ix = v1->x + u * a;
+				iy = v1->y + u * b;
+			}
+		}
+		a = (ix - x);
+		b = (iy - y);
+		dist = a*a + b*b;
+		if (dist < bestdist)
+		{
+			bestdist = dist;
+			bestx = ix;
+			besty = iy;
+		}
+	}
+	ox = fixed_t(bestx);
+	oy = fixed_t(besty);
+}

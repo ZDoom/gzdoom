@@ -444,7 +444,7 @@ void A_GetHurt (AActor *self)
 	self->flags4 |= MF4_INCOMBAT;
 	if ((pr_gethurt() % 5) == 0)
 	{
-		S_SoundID (self, CHAN_VOICE, self->PainSound, 1, ATTN_NORM);
+		S_Sound (self, CHAN_VOICE, self->PainSound, 1, ATTN_NORM);
 		self->health--;
 	}
 	if (self->health <= 0)
@@ -526,7 +526,7 @@ void A_TurretLook (AActor *self)
 		}
 		if (self->SeeSound != 0)
 		{
-			S_SoundID (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NORM);
+			S_Sound (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NORM);
 		}
 		self->LastHeard = NULL;
 		self->threshold = 10;
@@ -792,7 +792,7 @@ void A_FLoopActiveSound (AActor *self)
 {
 	if (self->ActiveSound != 0 && !(level.time & 7))
 	{
-		S_SoundID (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
+		S_Sound (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
 	}
 }
 
@@ -809,7 +809,7 @@ void A_LoopActiveSound (AActor *self)
 {
 	if (self->ActiveSound != 0 && !S_IsActorPlayingSomething (self, CHAN_VOICE, -1))
 	{
-		S_SoundID (self, CHAN_VOICE|CHAN_LOOP, self->ActiveSound, 1, ATTN_NORM);
+		S_Sound (self, CHAN_VOICE|CHAN_LOOP, self->ActiveSound, 1, ATTN_NORM);
 	}
 }
 
@@ -948,7 +948,7 @@ END_DEFAULTS
 
 void A_ItBurnsItBurns (AActor *self)
 {
-	int burnsound = S_FindSound ("human/imonfire");
+	FSoundID burnsound = "human/imonfire";
 	if (burnsound != 0)
 	{
 		self->DeathSound = burnsound;

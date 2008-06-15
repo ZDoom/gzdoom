@@ -574,8 +574,7 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 
 		case GEN_Sound:
 			sc.MustGetString ();
-			val = S_FindSound (sc.String);
-			SET_FIELD (int, val);
+			SET_FIELD (FSoundID, FSoundID(sc.String));
 			if (val == 0)
 			{
 				Printf ("Unknown sound %s in %s %s\n",

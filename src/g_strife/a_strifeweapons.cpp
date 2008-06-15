@@ -179,7 +179,7 @@ void P_DaggerAlert (AActor *target, AActor *emitter)
 			looker->target = target;
 			if (looker->SeeSound)
 			{
-				S_SoundID (looker, CHAN_VOICE, looker->SeeSound, 1, ATTN_NORM);
+				S_Sound (looker, CHAN_VOICE, looker->SeeSound, 1, ATTN_NORM);
 			}
 			looker->SetState (looker->SeeState);
 			looker->flags4 |= MF4_INCOMBAT;
@@ -1787,7 +1787,7 @@ void A_FireGrenade (AActor *self)
 
 	if (grenade->SeeSound != 0)
 	{
-		S_SoundID (grenade, CHAN_VOICE, grenade->SeeSound, 1, ATTN_NORM);
+		S_Sound (grenade, CHAN_VOICE, grenade->SeeSound, 1, ATTN_NORM);
 	}
 
 	grenade->momz = FixedMul (finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;

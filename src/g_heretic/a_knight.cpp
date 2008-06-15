@@ -215,7 +215,7 @@ void A_KnightAttack (AActor *actor)
 		return;
 	}
 	// Throw axe
-	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
+	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (actor->flags & MF_SHADOW || pr_knightatk () < 40)
 	{ // Red axe
 		P_SpawnMissileZ (actor, actor->z + 36*FRACUNIT, actor->target, RUNTIME_CLASS(ARedAxe));

@@ -439,13 +439,13 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 	{
 		if (!silent)
 		{
-			int sound;
+			FSoundID sound;
 			
 			// Allow other sounds than 'weapons/railgf'!
 			if (!source->player) sound = source->AttackSound;
 			else if (source->player->ReadyWeapon) sound = source->player->ReadyWeapon->AttackSound;
 			else sound = 0;
-			if (!sound) sound=S_FindSound("weapons/railgf");
+			if (!sound) sound = "weapons/railgf";
 
 			// The railgun's sound is special. It gets played from the
 			// point on the slug's trail that is closest to the hearing player.
@@ -457,7 +457,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 			if (abs(mo->x - FLOAT2FIXED(start.X)) < 20 * FRACUNIT
 				&& (mo->y - FLOAT2FIXED(start.Y)) < 20 * FRACUNIT)
 			{ // This player (probably) fired the railgun
-				S_SoundID (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
+				S_Sound (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 			else
 			{
@@ -471,7 +471,7 @@ void P_DrawRailTrail (AActor *source, const FVector3 &start, const FVector3 &end
 				point = start + r * dir;
 				dir.Z = dirz;
 
-				S_SoundID (FLOAT2FIXED(point.X), FLOAT2FIXED(point.Y), mo->z,
+				S_Sound (FLOAT2FIXED(point.X), FLOAT2FIXED(point.Y), mo->z,
 					CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 		}

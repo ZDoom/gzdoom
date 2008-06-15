@@ -74,8 +74,89 @@ enum
 	ROLLOFF_Custom		// Lookup volume from SNDCURVE
 };
 
+int S_FindSound (const char *logicalname);
+
 // the complete set of sound effects
 extern TArray<sfxinfo_t> S_sfx;
+
+// An index into the S_sfx[] array.
+class FSoundID
+{
+public:
+	FSoundID()
+	{
+		ID = 0;
+	}
+	FSoundID(int id)
+	{
+		ID = id;
+	}
+	FSoundID(const char *name)
+	{
+		ID = S_FindSound(name);
+	}
+	FSoundID(const FString &name)
+	{
+		ID = S_FindSound(name);
+	}
+	FSoundID(const FSoundID &other)
+	{
+		ID = other.ID;
+	}
+	FSoundID &operator=(const FSoundID &other)
+	{
+		ID = other.ID;
+		return *this;
+	}
+	FSoundID &operator=(const char *name)
+	{
+		ID = S_FindSound(name);
+		return *this;
+	}
+	FSoundID &operator=(const FString &name)
+	{
+		ID = S_FindSound(name);
+		return *this;
+	}
+	operator int() const
+	{
+		return ID;
+	}
+	operator FString() const
+	{
+		return ID ? S_sfx[ID].name : "";
+	}
+	operator const char *() const
+	{
+		return ID ? S_sfx[ID].name.GetChars() : NULL;
+	}
+private:
+	int ID;
+protected:
+	enum EDummy { NoInit };
+	FSoundID(EDummy) {}
+};
+
+class FSoundIDNoInit : public FSoundID
+{
+public:
+	FSoundIDNoInit() : FSoundID(NoInit) {}
+
+	FSoundID &operator=(const FSoundID &other)
+	{
+		return FSoundID::operator=(other);
+	}
+	FSoundID &operator=(const char *name)
+	{
+		return FSoundID::operator=(name);
+	}
+	FSoundID &operator=(const FString &name)
+	{
+		return FSoundID::operator=(name);
+	}
+};
+
+FArchive &operator<<(FArchive &arc, FSoundID &sid);
 
 // Default rolloff information.
 extern int S_RolloffType;
@@ -85,12 +166,14 @@ extern BYTE *S_SoundCurve;
 extern int S_SoundCurveSize;
 
 // Information about one playing sound.
+struct sector_t;
 struct FSoundChan
 {
 	void		*SysChannel;// Channel information from the system interface.
 	FSoundChan	*NextChan;	// Next channel in this list.
 	FSoundChan **PrevChan;	// Previous channel in this list.
 	AActor		*Mover;		// Used for velocity.
+	sector_t	*Sector;	// Sector for area sounds.
 	fixed_t		*Pt;		// Origin of sound.
 	sfxinfo_t	*SfxInfo;	// Sound information.
 	fixed_t		X,Y,Z;		// Origin if Mover is NULL.
@@ -129,14 +212,11 @@ void S_PrecacheLevel ();
 void S_CacheSound (sfxinfo_t *sfx);
 
 // Start sound for thing at <ent>
-void S_Sound (int channel, const char *name, float volume, int attenuation);
-void S_Sound (AActor *ent, int channel, const char *name, float volume, int attenuation);
-void S_Sound (fixed_t *pt, int channel, const char *name, float volume, int attenuation);
-//void S_Sound (fixed_t x, fixed_t y, int channel, const char *name, float volume, int attenuation);
-void S_SoundID (int channel, int sfxid, float volume, int attenuation);
-void S_SoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
-void S_SoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
-void S_SoundID (fixed_t x, fixed_t y, fixed_t z, int channel, int sfxid, float volume, int attenuation);
+void S_Sound (int channel, FSoundID sfxid, float volume, int attenuation);
+void S_Sound (AActor *ent, int channel, FSoundID sfxid, float volume, int attenuation);
+void S_Sound (fixed_t *pt, int channel, FSoundID sfxid, float volume, int attenuation);
+void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sfxid, float volume, int attenuation);
+void S_Sound (sector_t *sec, int channel, FSoundID sfxid, float volume, int attenuation);
 
 // sound channels
 // channel 0 never willingly overrides
@@ -159,9 +239,16 @@ void S_SoundID (fixed_t x, fixed_t y, fixed_t z, int channel, int sfxid, float v
 #define CHAN_IMMOBILE			16
 #define CHAN_MAYBE_LOCAL		32
 #define CHAN_NOPAUSE			64	// do not pause this sound in menus
-#define CHAN_AREA				128	// Sound plays from all around within MinDistance
+#define CHAN_AREA				128	// Sound plays from all around. Only valid with sector sounds.
 #define CHAN_LOOP				256
-#define CHAN_IS3D				1	// internal flag
+
+// Channel alias for sector sounds. These define how listener height is
+// used when calculating 3D sound volume.
+#define CHAN_FLOOR				1	// Sound comes from the floor.
+#define CHAN_CEILING			2	// Sound comes from the ceiling.
+#define CHAN_FULLHEIGHT			3	// Sound comes entire height of the sector.
+
+#define CHAN_IS3D				(1<<24)	// internal flag
 
 #define CHAN_PICKUP				(CHAN_ITEM|CHAN_MAYBE_LOCAL)
 
@@ -223,15 +310,13 @@ void S_ParseReverbDef ();
 void S_UnloadReverbDef ();
 
 void S_HashSounds ();
-int S_FindSound (const char *logicalname);
 int S_FindSoundNoHash (const char *logicalname);
 bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2);
 bool S_AreSoundsEquivalent (AActor *actor, const char *name1, const char *name2);
 int S_LookupPlayerSound (const char *playerclass, int gender, const char *logicalname);
-int S_LookupPlayerSound (const char *playerclass, int gender, int refid);
-int S_FindSkinnedSound (AActor *actor, const char *logicalname);
+int S_LookupPlayerSound (const char *playerclass, int gender, FSoundID refid);
+int S_FindSkinnedSound (AActor *actor, FSoundID refid);
 int S_FindSkinnedSoundEx (AActor *actor, const char *logicalname, const char *extendedname);
-int S_FindSkinnedSound (AActor *actor, int refid);
 int S_FindSoundByLump (int lump);
 int S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc=NULL);	// Add sound by lumpname
 int S_AddSoundLump (const char *logicalname, int lump);	// Add sound by lump index

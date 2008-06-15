@@ -586,7 +586,7 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 		}
 		if (Terrains[floorType].Splash != -1)
 		{
-			S_SoundID (player->mo, CHAN_AUTO,
+			S_Sound (player->mo, CHAN_AUTO,
 				Splashes[Terrains[floorType].Splash].NormalSplashSound, 1,
 				ATTN_IDLE);
 		}

@@ -607,7 +607,7 @@ bool APlayerPawn::UseInventory (AInventory *item)
 	}
 	if (player == &players[consoleplayer])
 	{
-		S_SoundID (this, CHAN_ITEM, item->UseSound, 1, ATTN_NORM);
+		S_Sound (this, CHAN_ITEM, item->UseSound, 1, ATTN_NORM);
 		StatusBar->FlashItem (itemtype);
 	}
 	return true;
@@ -1193,7 +1193,7 @@ void A_PlayerScream (AActor *self)
 
 	if (self->player == NULL || self->DeathSound != 0)
 	{
-		S_SoundID (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
+		S_Sound (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
 		return;
 	}
 
@@ -1242,7 +1242,7 @@ void A_PlayerScream (AActor *self)
 			}
 		}
 	}
-	S_SoundID (self, chan, sound, 1, ATTN_NORM);
+	S_Sound (self, chan, sound, 1, ATTN_NORM);
 }
 
 
@@ -2185,7 +2185,7 @@ void P_PlayerThink (player_t *player)
 			int id = S_FindSkinnedSound (player->mo, "*falling");
 			if (id != 0 && !S_IsActorPlayingSomething (player->mo, CHAN_VOICE, id))
 			{
-				S_SoundID (player->mo, CHAN_VOICE, id, 1, ATTN_NORM);
+				S_Sound (player->mo, CHAN_VOICE, id, 1, ATTN_NORM);
 			}
 		}
 		// check for use

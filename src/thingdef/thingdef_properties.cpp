@@ -1072,7 +1072,7 @@ static void ActorArgs (FScanner &sc, AActor *defaults, Baggage &bag)
 static void ActorSeeSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->SeeSound=S_FindSound(sc.String);
+	defaults->SeeSound = sc.String;
 }
 
 //==========================================================================
@@ -1081,7 +1081,7 @@ static void ActorSeeSound (FScanner &sc, AActor *defaults, Baggage &bag)
 static void ActorAttackSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->AttackSound=S_FindSound(sc.String);
+	defaults->AttackSound = sc.String;
 }
 
 //==========================================================================
@@ -1090,7 +1090,7 @@ static void ActorAttackSound (FScanner &sc, AActor *defaults, Baggage &bag)
 static void ActorPainSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->PainSound=S_FindSound(sc.String);
+	defaults->PainSound = sc.String;
 }
 
 //==========================================================================
@@ -1099,7 +1099,7 @@ static void ActorPainSound (FScanner &sc, AActor *defaults, Baggage &bag)
 static void ActorDeathSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->DeathSound=S_FindSound(sc.String);
+	defaults->DeathSound = sc.String;
 }
 
 //==========================================================================
@@ -1108,7 +1108,7 @@ static void ActorDeathSound (FScanner &sc, AActor *defaults, Baggage &bag)
 static void ActorActiveSound (FScanner &sc, AActor *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->ActiveSound=S_FindSound(sc.String);
+	defaults->ActiveSound = sc.String;
 }
 
 //==========================================================================
@@ -1935,7 +1935,7 @@ static void InventoryPickupmsg (FScanner &sc, AInventory *defaults, Baggage &bag
 static void InventoryPickupsound (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->PickupSound=S_FindSound(sc.String);
+	defaults->PickupSound = sc.String;
 }
 
 //==========================================================================
@@ -1953,7 +1953,7 @@ static void InventoryRespawntics (FScanner &sc, AInventory *defaults, Baggage &b
 static void InventoryUsesound (FScanner &sc, AInventory *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->UseSound=S_FindSound(sc.String);
+	defaults->UseSound = sc.String;
 }
 
 //==========================================================================
@@ -2069,7 +2069,7 @@ static void WeaponKickback (FScanner &sc, AWeapon *defaults, Baggage &bag)
 static void WeaponReadySound (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->ReadySound=S_FindSound(sc.String);
+	defaults->ReadySound = sc.String;
 }
 
 //==========================================================================
@@ -2096,7 +2096,7 @@ static void WeaponSisterWeapon (FScanner &sc, AWeapon *defaults, Baggage &bag)
 static void WeaponUpSound (FScanner &sc, AWeapon *defaults, Baggage &bag)
 {
 	sc.MustGetString();
-	defaults->UpSound=S_FindSound(sc.String);
+	defaults->UpSound = sc.String;
 }
 
 //==========================================================================

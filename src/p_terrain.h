@@ -38,6 +38,7 @@
 #include "m_fixed.h"
 #include "tarray.h"
 #include "name.h"
+#include "s_sound.h"
 
 extern TArray<BYTE> TerrainTypes;
 
@@ -47,8 +48,8 @@ void P_InitTerrainTypes ();
 struct FSplashDef
 {
 	FName Name;
-	int SmallSplashSound;
-	int NormalSplashSound;
+	FSoundID SmallSplashSound;
+	FSoundID NormalSplashSound;
 	const PClass *SmallSplash;
 	const PClass *SplashBase;
 	const PClass *SplashChunk;
@@ -71,8 +72,8 @@ struct FTerrainDef
 	float StepVolume;
 	int WalkStepTics;
 	int RunStepTics;
-	int LeftStepSound;
-	int RightStepSound;
+	FSoundID LeftStepSound;
+	FSoundID RightStepSound;
 	bool IsLiquid;
 	bool AllowProtection;
 	fixed_t Friction;

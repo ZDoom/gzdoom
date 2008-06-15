@@ -159,7 +159,7 @@ public:
 	fixed_t m_TremorRadius, m_DamageRadius;
 	int m_Intensity;
 	int m_Countdown;
-	int m_QuakeSFX;
+	FSoundID m_QuakeSFX;
 
 	static int StaticGetQuakeIntensity (AActor *viewer);
 

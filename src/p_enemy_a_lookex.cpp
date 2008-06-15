@@ -867,11 +867,11 @@ void A_LookEx (AActor *actor)
 	{
 		if (flags & LOF_FULLVOLSEESOUND)
 		{ // full volume
-			S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NONE);
+			S_Sound (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NONE);
 		}
 		else
 		{
-			S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NORM);
+			S_Sound (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NORM);
 		}
 	}
 

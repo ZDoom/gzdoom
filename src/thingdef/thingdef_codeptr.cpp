@@ -228,7 +228,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 	if (domelee && MeleeDamage>0 && self->CheckMeleeRange ())
 	{
 		int damage = pr_camelee.HitDice(MeleeDamage);
-		if (MeleeSound) S_SoundID (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
+		if (MeleeSound) S_Sound (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (damage, self->target, self);
 	}
@@ -288,7 +288,7 @@ static void DoPlaySound(AActor * self, int channel)
 	if (index<0) return;
 
 	int soundid = StateParameters[index];
-	S_SoundID (self, channel, soundid, 1, ATTN_NORM);
+	S_Sound (self, channel, soundid, 1, ATTN_NORM);
 }
 
 void A_PlaySound(AActor * self)
@@ -333,13 +333,13 @@ void A_PlaySoundEx (AActor *self)
 
 	if (!looping)
 	{
-		S_SoundID (self, channel - NAME_Auto, soundid, 1, attenuation);
+		S_Sound (self, channel - NAME_Auto, soundid, 1, attenuation);
 	}
 	else
 	{
 		if (!S_IsActorPlayingSomething (self, channel - NAME_Auto, soundid))
 		{
-			S_SoundID (self, (channel - NAME_Auto) | CHAN_LOOP, soundid, 1, attenuation);
+			S_Sound (self, (channel - NAME_Auto) | CHAN_LOOP, soundid, 1, attenuation);
 		}
 	}
 }
@@ -390,7 +390,7 @@ void A_BulletAttack (AActor *self)
 
 	slope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
-	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
+	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	for (i = self->GetMissileDamage (0, 1); i > 0; --i)
     {
 		int angle = bangle + (pr_cabullet.Random2() << 20);
@@ -858,7 +858,7 @@ void A_CustomBulletAttack (AActor *self)
 
 		bslope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
-		S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
+		S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 		for (i=0 ; i<NumBullets ; i++)
 		{
 			int angle = bangle + pr_cabullet.Random2() * (Spread_XY / 255);
@@ -893,13 +893,13 @@ void A_CustomMeleeAttack (AActor *self)
 	A_FaceTarget (self);
 	if (self->CheckMeleeRange ())
 	{
-		if (MeleeSound) S_SoundID (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
+		if (MeleeSound) S_Sound (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, DamageType);
 		if (bleed) P_TraceBleed (damage, self->target, self);
 	}
 	else
 	{
-		if (MissSound) S_SoundID (self, CHAN_WEAPON, MissSound, 1, ATTN_NORM);
+		if (MissSound) S_Sound (self, CHAN_WEAPON, MissSound, 1, ATTN_NORM);
 	}
 }
 
@@ -928,7 +928,7 @@ void A_CustomComboAttack (AActor *self)
 	if (self->CheckMeleeRange ())
 	{
 		if (DamageType==NAME_None) DamageType = NAME_Melee;	// Melee is the default type
-		if (MeleeSound) S_SoundID (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
+		if (MeleeSound) S_Sound (self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, DamageType);
 		if (bleed) P_TraceBleed (damage, self->target, self);
 	}
@@ -1021,7 +1021,7 @@ void A_FireBullets (AActor *self)
 	PuffType = PClass::FindClass(PuffTypeName);
 	if (!PuffType) PuffType = PClass::FindClass(NAME_BulletPuff);
 
-	S_SoundID (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
+	S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
 
 	if ((NumberOfBullets==1 && !player->refire) || NumberOfBullets==0)
 	{
@@ -1150,7 +1150,7 @@ void A_CustomPunch (AActor *self)
 	// turn to face target
 	if (linetarget)
 	{
-		S_SoundID (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
+		S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
 
 		self->angle = R_PointToAngle2 (self->x,
 										self->y,

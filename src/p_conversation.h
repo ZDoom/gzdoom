@@ -21,7 +21,7 @@ struct FStrifeDialogueNode
 
 	const PClass *SpeakerType;
 	char *SpeakerName;
-	int SpeakerVoice;
+	FSoundID SpeakerVoice;
 	int Backdrop;
 	char *Dialogue;
 

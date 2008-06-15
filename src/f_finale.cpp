@@ -620,7 +620,7 @@ void F_CastTicker (void)
 				castnum = 0;
 			if (castorder[castnum].info->SeeSound)
 			{
-				S_SoundID (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, ATTN_NONE);
 			}
 			caststate = castorder[castnum].info->SeeState;
 			// [RH] Skip monsters that have been hacked to no longer have attack states
@@ -732,12 +732,11 @@ bool F_CastResponder (event_t* ev)
 		castattacking = false;
 		if (castnum == 16)
 		{
-			//int id = S_LookupPlayerSound (
 			S_Sound (players[consoleplayer].mo, CHAN_VOICE, "*death", 1, ATTN_NONE);
 		}
 		else if (castorder[castnum].info->DeathSound)
 		{
-			S_SoundID (CHAN_VOICE, castorder[castnum].info->DeathSound, 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE, castorder[castnum].info->DeathSound, 1, ATTN_NONE);
 		}
 	}
 		

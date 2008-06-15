@@ -352,7 +352,7 @@ void A_IceGuyAttack (AActor *actor)
 		finecosine[an]), actor->y+FixedMul(actor->radius>>1,
 		finesine[an]), actor->z+40*FRACUNIT, actor, actor->target,
 		RUNTIME_CLASS(AIceGuyFX));
-	S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+	S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 }
 
 //============================================================================

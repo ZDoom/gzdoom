@@ -678,17 +678,17 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 			sc.Compare ("DeathSound"))
 		{
 			sc.MustGetString ();
-			defaults->DeathSound = S_FindSound (sc.String);
+			defaults->DeathSound = sc.String;
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("BurnDeathSound"))
 		{
 			sc.MustGetString ();
-			defaults->ActiveSound = S_FindSound (sc.String);
+			defaults->ActiveSound = sc.String;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("SpawnSound"))
 		{
 			sc.MustGetString ();
-			defaults->SeeSound = S_FindSound (sc.String);
+			defaults->SeeSound = sc.String;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DoomBounce"))
 		{
@@ -705,7 +705,7 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		else if (def == DEF_Pickup && sc.Compare ("PickupSound"))
 		{
 			sc.MustGetString ();
-			inv->PickupSound = S_FindSound (sc.String);
+			inv->PickupSound = sc.String;
 		}
 		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{
@@ -900,6 +900,6 @@ void A_ActiveSound (AActor *actor)
 {
 	if (actor->ActiveSound)
 	{
-		S_SoundID (actor, CHAN_VOICE, actor->ActiveSound, 1, ATTN_NORM);
+		S_Sound (actor, CHAN_VOICE, actor->ActiveSound, 1, ATTN_NORM);
 	}
 }

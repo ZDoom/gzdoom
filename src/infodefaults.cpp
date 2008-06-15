@@ -96,7 +96,7 @@ static BYTE *sgDefaults;
 
 static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 {
-	int datasound = 0;
+	FSoundID datasound;
 	FState *datastate = NULL;
 	const PClass *datatype;
 
@@ -104,7 +104,7 @@ static void ApplyActorDefault (int defnum, const char *datastr, int dataint)
 	{
 		if (defnum <= ADEF_Inventory_PickupSound)
 		{
-			datasound = S_FindSound (datastr);
+			datasound = datastr;
 		}
 	}
 	else if (defnum > ADEF_LastString && dataint >= 0 && dataint < PROP_CLEAR_STATE)

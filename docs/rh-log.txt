@@ -1,7 +1,18 @@
+June 14, 2008
+- Replaced the naive area sound implementation with one that takes into
+  consideration the size and shape of the sector producing the sound. See
+  the lifts on Doom 2 MAP30 and compare with previous versions.
+
 June 14, 2008 (Changes by Graf Zahl)
 - Fixed: The UDMF parser stored plane rotation angles as fixed_t, not angle_t.
 - Grouped the sector plane texture transformation values into a separate
   structure and replaced all access to them with wrapper functions.
+
+June 13, 2008
+- Fixed: The stop sound for sector-based sound sequences was not played with
+  the CHAN_AREA flag.
+- Removed the distinction between S_Sound() and S_SoundID() functions. Use
+  S_Sound() for both names and IDs from now on.
 
 June 12, 2008
 - Add environment 255, 255 as a way to get the software underwater effect in

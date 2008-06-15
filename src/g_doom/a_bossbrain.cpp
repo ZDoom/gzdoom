@@ -187,7 +187,7 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 	AActor *boom = Spawn("Rocket", x, y, z, NO_REPLACE);
 	if (boom != NULL)
 	{
-		boom->DeathSound = S_FindSound("misc/brainexplode");
+		boom->DeathSound = "misc/brainexplode";
 		boom->momz = pr_brainscream() << 9;
 		boom->SetState (&ABossBrain::States[S_BRAINEXPLODE]);
 		boom->effects = 0;

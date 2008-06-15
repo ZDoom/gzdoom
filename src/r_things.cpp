@@ -420,7 +420,7 @@ static int STACK_ARGS skinsorter (const void *a, const void *b)
 
 void R_InitSkins (void)
 {
-	WORD playersoundrefs[NUMSKINSOUNDS];
+	FSoundID playersoundrefs[NUMSKINSOUNDS];
 	spritedef_t temp;
 	int sndlumps[NUMSKINSOUNDS];
 	char key[65];
@@ -438,7 +438,7 @@ void R_InitSkins (void)
 
 	for (j = 0; j < NUMSKINSOUNDS; ++j)
 	{
-		playersoundrefs[j] = S_FindSound (skinsoundnames[j][1]);
+		playersoundrefs[j] = skinsoundnames[j][1];
 	}
 
 	while ((base = Wads.FindLump ("S_SKIN", &lastlump, true)) != -1)

@@ -236,7 +236,7 @@ void A_BishopAttack (AActor *actor)
 	{
 		return;
 	}
-	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
+	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (actor->CheckMeleeRange())
 	{
 		int damage = pr_atk.HitDice (4);

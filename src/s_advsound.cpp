@@ -186,8 +186,8 @@ MidiDeviceMap MidiDevices;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel, 
-	const char *name, float volume, float attenuation);
+FSoundChan *S_StartSound (fixed_t *pt, AActor *mover, sector_t *sec, int channel,
+	FSoundID sound_id, float volume, float attenuation);
 extern bool IsFloat (const char *str);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -201,7 +201,7 @@ static void S_RestorePlayerSounds();
 static int S_AddPlayerClass (const char *name);
 static int S_AddPlayerGender (int classnum, int gender);
 static int S_FindPlayerClass (const char *name);
-static int S_LookupPlayerSound (int classidx, int gender, int refid);
+static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid);
 static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender, int &refid);
 static void S_AddSNDINFO (int lumpnum);
 static void S_AddBloodSFX (int lumpnum);
@@ -1534,7 +1534,7 @@ int S_LookupPlayerSound (const char *pclass, int gender, const char *name)
 	return refid;
 }
 
-int S_LookupPlayerSound (const char *pclass, int gender, int refid)
+int S_LookupPlayerSound (const char *pclass, int gender, FSoundID refid)
 {
 	if (!S_sfx[refid].bPlayerReserve)
 	{ // Not a player sound, so just return this sound
@@ -1544,7 +1544,7 @@ int S_LookupPlayerSound (const char *pclass, int gender, int refid)
 	return S_LookupPlayerSound (S_FindPlayerClass (pclass), gender, refid);
 }
 
-static int S_LookupPlayerSound (int classidx, int gender, int refid)
+static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 {
 	int ingender = gender;
 
@@ -1695,12 +1695,7 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 // Calls S_LookupPlayerSound, deducing the class and gender from actor.
 //==========================================================================
 
-int S_FindSkinnedSound (AActor *actor, const char *name)
-{
-	return S_FindSkinnedSound (actor, S_FindSound (name));
-}
-
-int S_FindSkinnedSound (AActor *actor, int refid)
+int S_FindSkinnedSound (AActor *actor, FSoundID refid)
 {
 	const char *pclass;
 	int gender = GENDER_MALE;
@@ -1728,17 +1723,17 @@ int S_FindSkinnedSound (AActor *actor, int refid)
 int S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedname)
 {
 	FString fullname;
-	int id;
+	FSoundID id;
 
 	// Look for "name-extendedname";
 	fullname = name;
 	fullname += '-';
 	fullname += extendedname;
-	id = S_FindSound (fullname);
+	id = fullname;
 
 	if (id == 0)
 	{ // Look for "name"
-		id = S_FindSound (name);
+		id = name;
 	}
 	return S_FindSkinnedSound (actor, id);
 }
@@ -1885,7 +1880,7 @@ void AAmbientSound::Tick ()
 
 		if (ambient->sound[0])
 		{
-			S_StartNamedSound (this, NULL, CHAN_BODY|CHAN_LOOP, ambient->sound,
+			S_StartSound (NULL, this, NULL, CHAN_BODY|CHAN_LOOP, ambient->sound,
 				ambient->volume, ambient->attenuation);
 			SetTicker (ambient);
 		}
@@ -1898,7 +1893,7 @@ void AAmbientSound::Tick ()
 	{
 		if (ambient->sound[0])
 		{
-			S_StartNamedSound (this, NULL, CHAN_BODY, ambient->sound,
+			S_StartSound (NULL, this, NULL, CHAN_BODY, ambient->sound,
 				ambient->volume, ambient->attenuation);
 			SetTicker (ambient);
 		}

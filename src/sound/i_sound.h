@@ -90,7 +90,7 @@ public:
 
 	// Starts a sound.
 	virtual FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags) = 0;
-	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], int chanflags) = 0;
+	virtual FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], sector_t *sector, int channum, int chanflags) = 0;
 
 	// Stops a sound channel.
 	virtual void StopSound (FSoundChan *chan) = 0;

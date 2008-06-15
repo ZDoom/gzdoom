@@ -57,6 +57,7 @@ extern HWND Window;
 #include "i_music.h"
 #include "i_musicinterns.h"
 #include "v_text.h"
+#include "p_local.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1433,7 +1434,7 @@ FSoundChan *FMODSoundRenderer::StartSound(sfxinfo_t *sfx, float vol, int pitch, 
 CVAR(Float, snd_3dspread, 180, 0)
 
 FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float distscale,
-	int pitch, int priority, float pos[3], float vel[3], int chanflags)
+	int pitch, int priority, float pos[3], float vel[3], sector_t *sector, int channum, int chanflags)
 {
 	int id = int(sfx - &S_sfx[0]);
 	FMOD_RESULT result;
@@ -1489,7 +1490,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 		{
 			mode = (mode & ~FMOD_LOOP_OFF) | FMOD_LOOP_NORMAL;
 		}
-		mode = SetChanHeadSettings(chan, sfx, pos, chanflags, mode);
+		mode = SetChanHeadSettings(chan, sfx, pos, channum, chanflags, sector, mode);
 		chan->setMode(mode);
 		chan->setChannelGroup((!(chanflags & CHAN_NOPAUSE) && !SFXPaused) ? PausableSfx : SfxGroup);
 		if (freq != 0)
@@ -1523,7 +1524,7 @@ FSoundChan *FMODSoundRenderer::StartSound3D(sfxinfo_t *sfx, float vol, float dis
 //
 //==========================================================================
 
-FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t *sfx, float pos[3], int chanflags, FMOD_MODE oldmode) const
+FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t *sfx, float pos[3], int channum, int chanflags, sector_t *sec, FMOD_MODE oldmode) const
 {
 	if (players[consoleplayer].camera == NULL)
 	{
@@ -1533,24 +1534,61 @@ FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t 
 	cpos[0] = FIXED2FLOAT(players[consoleplayer].camera->x);
 	cpos[2] = FIXED2FLOAT(players[consoleplayer].camera->y);
 	cpos[1] = FIXED2FLOAT(players[consoleplayer].camera->z);
-	if (chanflags & CHAN_AREA)
+
+	if ((chanflags & CHAN_AREA) && sec != NULL)
 	{
-		const double interp_range = 256.0;
-		double dx = cpos[0] - pos[0], dy = cpos[1] - pos[1], dz = cpos[2] - pos[2];
-		double min_dist = sfx->MinDistance == 0 ? (S_MinDistance == 0 ? 150 : S_MinDistance * 0.75) : sfx->MinDistance;
-		double dist_sqr = dx*dx + dy*dy + dz*dz;
+		fixed_t ox = fixed_t(pos[0] * 65536);
+		fixed_t oy = fixed_t(pos[1] * 65536);
+		fixed_t cx, cy, cz;
 		float level, old_level;
 
-		if (dist_sqr <= min_dist*min_dist)
-		{ // Within min distance: No 3D panning.
-			level = 0;
-		}
-		else if (dist_sqr <= (min_dist + interp_range) * (min_dist + interp_range))
-		{ // Within interp_range units of min distance: Interpolate between none and full 3D panning.
-			level = float(1 - (min_dist + interp_range - sqrt(dist_sqr)) / interp_range);
+		// Are we inside the sector? If yes, the closest point is the one we're on.
+		if (P_PointInSector(players[consoleplayer].camera->x, players[consoleplayer].camera->y) == sec)
+		{
+			pos[0] = cpos[0];
+			pos[2] = cpos[2];
+			cx = players[consoleplayer].camera->x;
+			cy = players[consoleplayer].camera->y;
 		}
 		else
-		{ // Beyond 256 units of min distance: Normal 3D panning.
+		{
+			// Find the closest point on the sector's boundary lines and use
+			// that as the perceived origin of the sound.
+			sec->ClosestPoint(players[consoleplayer].camera->x, players[consoleplayer].camera->y, cx, cy);
+			pos[0] = FIXED2FLOAT(cx);
+			pos[2] = FIXED2FLOAT(cy);
+		}
+		// Set sound height based on channel.
+		if (channum == CHAN_FLOOR)
+		{
+			cz = MIN(sec->floorplane.ZatPoint(cx, cy), players[consoleplayer].camera->z);
+		}
+		else if (channum = CHAN_CEILING)
+		{
+			cz = MAX(sec->ceilingplane.ZatPoint(cx, cy), players[consoleplayer].camera->z);
+		}
+		else
+		{
+			cz = players[consoleplayer].camera->z;
+		}
+		pos[1] = FIXED2FLOAT(cz);
+
+		// How far are we from the perceived sound origin? Within a certain
+		// short distance, we interpolate between 2D panning and full 3D panning.
+		const double interp_range = 32.0;
+		double dx = cpos[0] - pos[0], dy = cpos[1] - pos[1], dz = cpos[2] - pos[2];
+		double dist_sqr = dx*dx + dy*dy + dz*dz;
+
+		if (dist_sqr == 0)
+		{
+			level = 0;
+		}
+		else if (dist_sqr <= interp_range * interp_range)
+		{ // Within interp_range: Interpolate between none and full 3D panning.
+			level = float(1 - (interp_range - sqrt(dist_sqr)) / interp_range);
+		}
+		else
+		{ // Beyond interp_range: Normal 3D panning.
 			level = 1;
 		}
 		if (chan->get3DPanLevel(&old_level) == FMOD_OK && old_level != level)
@@ -1558,7 +1596,9 @@ FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t 
 			chan->set3DPanLevel(level);
 			if (level < 1)
 			{ // Let the noise come from all speakers, not just the front ones.
-				chan->setSpeakerMix(1,1,1,1,1,1,1,1);
+			  // A centered 3D sound does not play at full volume, so neither should the 2D-panned one.
+			  // This is sqrt(0.5), which is the result for a centered equal power panning.
+				chan->setSpeakerMix(0.70711f,0.70711f,0.70711f,0.70711f,0.70711f,0.70711f,0.70711f,0.70711f);
 			}
 		}
 		return oldmode;
@@ -1657,7 +1697,7 @@ void FMODSoundRenderer::UpdateSoundParams3D(FSoundChan *chan, float pos[3], floa
 	{
 		oldmode = FMOD_3D | FMOD_SOFTWARE;
 	}
-	mode = SetChanHeadSettings(fchan, chan->SfxInfo, pos, chan->ChanFlags, oldmode);
+	mode = SetChanHeadSettings(fchan, chan->SfxInfo, pos, chan->EntChannel, chan->ChanFlags, chan->Sector, oldmode);
 	if (mode != oldmode)
 	{ // Only set the mode if it changed.
 		fchan->setMode(mode);

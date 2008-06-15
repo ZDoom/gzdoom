@@ -1629,11 +1629,11 @@ void A_Look (AActor *actor)
 	{
 		if (actor->flags2 & MF2_BOSS)
 		{ // full volume
-			S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NONE);
+			S_Sound (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NONE);
 		}
 		else
 		{
-			S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NORM);
+			S_Sound (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NORM);
 		}
 	}
 
@@ -1992,7 +1992,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		if (meleestate && actor->CheckMeleeRange ())
 		{
 			if (actor->AttackSound)
-				S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+				S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 
 			actor->SetState (meleestate);
 			actor->flags &= ~MF_INCHASE;
@@ -2345,11 +2345,11 @@ void A_Scream (AActor *actor)
 		if (actor->flags2 & MF2_BOSS)
 		{
 			// full volume
-			S_SoundID (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_NONE);
+			S_Sound (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_NONE);
 		}
 		else
 		{
-			S_SoundID (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_NORM);
+			S_Sound (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_NORM);
 		}
 	}
 }
@@ -2371,7 +2371,7 @@ void A_XXScream (AActor *actor)
 	}
 	else
 	{
-		S_SoundID (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_NORM);
+		S_Sound (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_NORM);
 	}
 }
 
@@ -2474,7 +2474,7 @@ void A_Pain (AActor *actor)
 	if (actor->player && actor->player->morphTics == 0)
 	{
 		const char *pain_amount;
-		int sfx_id = 0;
+		FSoundID sfx_id;
 
 		if (actor->health < 25)
 			pain_amount = "*pain25";
@@ -2491,25 +2491,25 @@ void A_Pain (AActor *actor)
 			FString pain_sound = pain_amount;
 			pain_sound += '-';
 			pain_sound += actor->player->LastDamageType;
-			sfx_id = S_FindSound (pain_sound);
+			sfx_id = pain_sound;
 			if (sfx_id == 0)
 			{
 				// Try again without a specific pain amount.
 				pain_sound = "*pain-";
 				pain_sound += actor->player->LastDamageType;
-				sfx_id = S_FindSound (pain_sound);
+				sfx_id = pain_sound;
 			}
 		}
 		if (sfx_id == 0)
 		{
-			sfx_id = S_FindSound (pain_amount);
+			sfx_id = pain_amount;
 		}
 
-		S_SoundID (actor, CHAN_VOICE, sfx_id, 1, ATTN_NORM);
+		S_Sound (actor, CHAN_VOICE, sfx_id, 1, ATTN_NORM);
 	}
 	else if (actor->PainSound)
 	{
-		S_SoundID (actor, CHAN_VOICE, actor->PainSound, 1, ATTN_NORM);
+		S_Sound (actor, CHAN_VOICE, actor->PainSound, 1, ATTN_NORM);
 	}
 }
 

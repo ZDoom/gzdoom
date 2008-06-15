@@ -159,6 +159,6 @@ void A_Summon (AActor *actor)
 
 		// Make smoke puff
 		Spawn<AMinotaurSmoke> (actor->x, actor->y, actor->z, ALLOW_REPLACE);
-		S_SoundID (actor, CHAN_VOICE, mo->ActiveSound, 1, ATTN_NORM);
+		S_Sound (actor, CHAN_VOICE, mo->ActiveSound, 1, ATTN_NORM);
 	}
 }

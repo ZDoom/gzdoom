@@ -842,7 +842,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1 + linelen - 6, " sound") == 0)
 			{
-				int snd;
+				FSoundID snd;
 				
 				if (val == 0 || val >= (unsigned long)NumSounds)
 				{
@@ -850,16 +850,12 @@ static int PatchThing (int thingy)
 					{ // Sound was not a (valid) number,
 						// so treat it as an actual sound name.
 						stripwhite (Line2);
-						snd = S_FindSound (Line2);
-					}
-					else
-					{
-						snd = 0;
+						snd = Line2;
 					}
 				}
 				else
 				{
-					snd = S_FindSound (GetName (SoundMap[val-1]));
+					snd = GetName (SoundMap[val-1]);
 				}
 
 				if (!strnicmp (Line1, "Alert", 5))

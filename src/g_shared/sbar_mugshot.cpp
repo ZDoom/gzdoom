@@ -333,14 +333,14 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 	{
 		if (bEvilGrin)
 		{
-			if (CurrentState == NULL)
-			{
-				bEvilGrin = false;
-			}
-			else if (player->bonuscount)
+			if (player->bonuscount)
 			{
 				SetState("grin", false);
 				return 0;
+			}
+			else if (CurrentState == NULL)
+			{
+				bEvilGrin = false;
 			}
 		}
 

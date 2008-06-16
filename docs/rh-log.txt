@@ -1,4 +1,6 @@
 June 16, 2008 (Changes by Graf Zahl)
+- Fixed: The mugshot would not reset on re-spawn.
+- Fixed: Picking up a weapon would sometimes not activate the grin.
 - Changed: Line_SetIdentification will ignore extended parameters when
   used in maps defined Hexen style in MAPINFO.
 - Fixed: Ambient sounds didn't pass their point of origin to S_StartSound.

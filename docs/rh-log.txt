@@ -1,3 +1,7 @@
+June 16, 2008 (Changes by Graf Zahl)
+- Added read barriers to all actor pointers within player_t except for
+  mo, ReadyWeapon and PendingWeapon.
+
 June 15, 2008 (Changes by Graf Zahl)
 - Added a read barrier to player_t::PrewmorphWeapon.
 - Fixed: After spawning a deathmatch player P_PlayerStartStomp must

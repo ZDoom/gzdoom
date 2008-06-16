@@ -247,8 +247,8 @@ public:
 	int			damagecount, bonuscount;// for screen flashing
 	int			hazardcount;			// for delayed Strife damage
 	int			poisoncount;			// screen flash for poison damage
-	AActor		*poisoner;				// NULL for non-player actors
-	AActor		*attacker;				// who did damage (NULL for floors)
+	TObjPtr<AActor>		poisoner;		// NULL for non-player actors
+	TObjPtr<AActor>		attacker;		// who did damage (NULL for floors)
 	int			extralight;				// so gun flashes light up areas
 	int			fixedcolormap;			// can be set to REDCOLORMAP, etc.
 	pspdef_t	psprites[NUMPSPRITES];	// view sprites (gun, etc)
@@ -261,7 +261,7 @@ public:
 	int			jumpTics;				// delay the next jump for a moment
 
 	int			respawn_time;			// [RH] delay respawning until this tic
-	AActor		*camera;				// [RH] Whose eyes this player sees through
+	TObjPtr<AActor>		camera;			// [RH] Whose eyes this player sees through
 
 	int			air_finished;			// [RH] Time when you start drowning
 
@@ -275,14 +275,14 @@ public:
 
 	angle_t		angle;		// The wanted angle that the bot try to get every tic.
 							//  (used to get a smoth view movement)
-	AActor		*dest;		// Move Destination.
-	AActor		*prev;		// Previous move destination.
+	TobjPtr<AActor>		dest;		// Move Destination.
+	TObjPtr<AActor>		prev;		// Previous move destination.
 
 
-	AActor		*enemy;		// The dead meat.
-	AActor		*missile;	// A threathing missile that got to be avoided.
-	AActor		*mate;		// Friend (used for grouping in templay or coop.
-	AActor		*last_mate;	// If bots mate dissapeared (not if died) that mate is
+	TObjPtr<AActor>		enemy;		// The dead meat.
+	TObjPtr<AActor>		missile;	// A threathing missile that got to be avoided.
+	TObjPtr<AActor>		mate;		// Friend (used for grouping in templay or coop.
+	TObjPtr<AActor>		last_mate;	// If bots mate dissapeared (not if died) that mate is
 							// pointed to by this. Allows bot to roam to it if
 							// necessary.
 
@@ -325,7 +325,7 @@ public:
 	fixed_t crouchviewdelta;
 
 	// [CW] I moved these here for multiplayer conversation support.
-	AActor *ConversationNPC, *ConversationPC;
+	TObjPtr<AActor> ConversationNPC, ConversationPC;
 	angle_t ConversationNPCAngle;
 	bool ConversationFaceTalker;
 

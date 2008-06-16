@@ -456,6 +456,7 @@ int FMugShot::UpdateState(player_t *player, bool xdeath, bool animated_god_mode)
 		}
 		full_state_name += player->LastDamageType;
 		SetState(full_state_name);
+		bNormal = true; //Allow the face to return to alive states when the player respawns.
 	}
 	return 0;
 }

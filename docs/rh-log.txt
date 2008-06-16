@@ -1,4 +1,6 @@
 June 16, 2008 (Changes by Graf Zahl)
+- Changed: Line_SetIdentification will ignore extended parameters when
+  used in maps defined Hexen style in MAPINFO.
 - Fixed: Ambient sounds didn't pass their point of origin to S_StartSound.
 - Fixed: UseType was not properly set for textures defined in TEXTURES.
 - Fixed: You couldn't set an offset for sprites defined in TEXTURES.

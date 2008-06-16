@@ -1559,8 +1559,15 @@ void P_SetLineID (line_t *ld)
 		switch (ld->special)
 		{
 		case Line_SetIdentification:
-			ld->id = ld->args[0] + 256 * ld->args[4];
-			ld->flags |= ld->args[1]<<16;
+			if (!(level.flags & LEVEL_HEXENHACK))
+			{
+				ld->id = ld->args[0] + 256 * ld->args[4];
+				ld->flags |= ld->args[1]<<16;
+			}
+			else
+			{
+				ld->id = ld->args[0];
+			}
 			break;
 
 		case TranslucentLine:

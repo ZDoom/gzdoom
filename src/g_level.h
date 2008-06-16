@@ -120,6 +120,7 @@
 #define LEVEL_CONV_SINGLE_UNFREEZE	UCONST64(0x10000000000000)
 #define LEVEL_RAILINGHACK			UCONST64(0x20000000000000)	// but UDMF requires them to be separate to have more control
 #define LEVEL_DUMMYSWITCHES			UCONST64(0x40000000000000)
+#define LEVEL_HEXENHACK				UCONST64(0x80000000000000)	// Level was defined in a Hexen style MAPINFO
 
 
 struct acsdefered_s;

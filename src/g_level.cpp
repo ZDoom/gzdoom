@@ -721,7 +721,8 @@ static void G_DoParseMapInfo (int lump)
 							| LEVEL_ACTOWNSPECIAL
 							| LEVEL_MISSILESACTIVATEIMPACT
 							| LEVEL_INFINITE_FLIGHT
-							| LEVEL_MONSTERFALLINGDAMAGE;
+							| LEVEL_MONSTERFALLINGDAMAGE
+							| LEVEL_HEXENHACK;
 			}
 			levelindex = FindWadLevelInfo (sc.String);
 			if (levelindex == -1)

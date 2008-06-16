@@ -275,7 +275,7 @@ public:
 
 	angle_t		angle;		// The wanted angle that the bot try to get every tic.
 							//  (used to get a smoth view movement)
-	TobjPtr<AActor>		dest;		// Move Destination.
+	TObjPtr<AActor>		dest;		// Move Destination.
 	TObjPtr<AActor>		prev;		// Previous move destination.
 
 

@@ -1,4 +1,6 @@
 June 16, 2008 (Changes by Graf Zahl)
+- Fixed: UseType was not properly set for textures defined in TEXTURES.
+- Fixed: You couldn't set an offset for sprites defined in TEXTURES.
 - Added read barriers to all actor pointers within player_t except for
   mo, ReadyWeapon and PendingWeapon.
 

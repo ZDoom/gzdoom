@@ -1166,7 +1166,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 	sc.MustGetStringName(",");
 	sc.MustGetNumber();
 	Height = sc.Number;
-	UseType = FTexture::TEX_Override;
+	UseType = usetype;
 
 	if (sc.CheckString("{"))
 	{
@@ -1203,6 +1203,18 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 				part.Texture = NULL;
 				part.Translation = NULL;
 			}
+			else if (sc.Compare("Offset"))
+			{
+				sc.MustGetNumber();
+				LeftOffset = sc.Number;
+				sc.MustGetStringName(",");
+				sc.MustGetNumber();
+				TopOffset = sc.Number;
+			}
+			else
+			{
+				sc.ScriptError("Unknown texture property '%s'", sc.String);
+			}
 		}
 
 		NumParts = parts.Size();
@@ -1223,7 +1235,6 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 				bRedirect = true;
 			}
 		}
-		//DefinitionLump = sc.G deflumpnum;
 	}
 	sc.SetCMode(false);
 }

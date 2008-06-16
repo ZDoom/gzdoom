@@ -1,4 +1,5 @@
 June 16, 2008 (Changes by Graf Zahl)
+- Fixed: Ambient sounds didn't pass their point of origin to S_StartSound.
 - Fixed: UseType was not properly set for textures defined in TEXTURES.
 - Fixed: You couldn't set an offset for sprites defined in TEXTURES.
 - Added read barriers to all actor pointers within player_t except for

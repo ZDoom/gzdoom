@@ -98,7 +98,8 @@ enum
 	DEPF_LOWGRAVITY,
 	DEPF_LONGMELEERANGE,
 	DEPF_SHORTMISSILERANGE,
-	DEPF_PICKUPFLASH
+	DEPF_PICKUPFLASH,
+	DEPF_QUARTERGRAVITY,
 };
 
 static flagdef ActorFlags[]=
@@ -256,7 +257,9 @@ static flagdef ActorFlags[]=
 	DEFINE_DEPRECATED_FLAG(LOWGRAVITY),
 	DEFINE_DEPRECATED_FLAG(SHORTMISSILERANGE),
 	DEFINE_DEPRECATED_FLAG(LONGMELEERANGE),
+	DEFINE_DEPRECATED_FLAG(QUARTERGRAVITY),
 	DEFINE_DUMMY_FLAG(NONETID),
+	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN),
 };
 
 static flagdef InventoryFlags[] =
@@ -292,7 +295,6 @@ static flagdef WeaponFlags[] =
 	DEFINE_FLAG(WIF, PRIMARY_USES_BOTH, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, WIMPY_WEAPON, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, POWERED_UP, AWeapon, WeaponFlags),
-	//DEFINE_FLAG(WIF, EXTREME_DEATH, AWeapon, WeaponFlags),	// this should be removed now!
 	DEFINE_FLAG(WIF, STAFF2_KICKBACK, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF_BOT, EXPLOSIVE, AWeapon, WeaponFlags),
 	DEFINE_FLAG2(WIF_BOT_MELEE, MELEEWEAPON, AWeapon, WeaponFlags),
@@ -423,6 +425,9 @@ static void HandleDeprecatedFlags(AActor *defaults, bool set, int index)
 		break;
 	case DEPF_LONGMELEERANGE:
 		defaults->meleethreshold = set? 196*FRACUNIT : 0;
+		break;
+	case DEPF_QUARTERGRAVITY:
+		defaults->gravity = set? FRACUNIT/4 : FRACUNIT;
 		break;
 	case DEPF_PICKUPFLASH:
 		if (set)

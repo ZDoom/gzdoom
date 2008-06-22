@@ -53,7 +53,8 @@ void AWeapon::Serialize (FArchive &arc)
 		<< SelectionOrder
 		<< MoveCombatDist
 		<< Ammo1 << Ammo2 << SisterWeapon << GivenAsMorphWeapon
-		<< bAltFire;
+		<< bAltFire
+		<< ReloadCounter;
 }
 
 //===========================================================================

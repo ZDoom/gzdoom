@@ -50,9 +50,9 @@ class Actor extends Thinker
 	action native A_BrainScream();
 	action native A_BrainDie();
 	action native A_BrainAwake();
-	action native A_BrainSpit();
+	action native A_BrainSpit(optional class<Actor> spawntype);
 	action native A_SpawnSound();
-	action native A_SpawnFly();
+	action native A_SpawnFly(optional class<Actor> spawntype);
 	action native A_BrainExplode();
 	action native A_Die(optional name damagetype);
 	action native A_Detonate();
@@ -215,5 +215,7 @@ class Inventory extends Actor
 	action native A_CheckReload();
 	action native A_GunFlash();
 	action native A_Saw(optional coerce sound fullsound, optional coerce sound hitsound, optional eval int damage, optional class<Actor> pufftype);
+	action native A_CheckForReload(eval int counter, state label);
+	action native A_ResetReloadCounter();
 }
 

@@ -6,6 +6,7 @@
 #include "s_sound.h"
 #include "a_doomglobal.h"
 #include "statnums.h"
+#include "thingdef/thingdef.h"
 
 void A_Fire (AActor *);		// from m_archvile.cpp
 
@@ -242,12 +243,18 @@ void A_BrainSpit (AActor *self)
 
 	if (targ != NULL)
 	{
+		const PClass *spawntype = NULL;
+		int index = CheckIndex (1, NULL);
+		if (index >= 0) spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
+		if (spawntype == NULL) spawntype = RUNTIME_CLASS(ASpawnShot);
+
 		// spawn brain missile
-		spit = P_SpawnMissile (self, targ, RUNTIME_CLASS(ASpawnShot));
+		spit = P_SpawnMissile (self, targ, spawntype);
 
 		if (spit != NULL)
 		{
 			spit->target = targ;
+			spit->master = self;
 			// [RH] Do this correctly for any trajectory. Doom would divide by 0
 			// if the target had the same y coordinate as the spitter.
 			if ((spit->momx | spit->momy) == 0)
@@ -265,7 +272,15 @@ void A_BrainSpit (AActor *self)
 			spit->reactiontime /= spit->state->GetTics();
 		}
 
-		S_Sound (self, CHAN_WEAPON, "brain/spit", 1, ATTN_NONE);
+		if (index >= 0)
+		{
+			S_Sound(self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NONE);
+		}
+		else
+		{
+			// compatibility fallback
+			S_Sound (self, CHAN_WEAPON, "brain/spit", 1, ATTN_NONE);
+		}
 	}
 }
 
@@ -275,51 +290,109 @@ void A_SpawnFly (AActor *self)
 	AActor *fog;
 	AActor *targ;
 	int r;
-	const char *type;
 		
 	if (--self->reactiontime)
 		return; // still flying
 		
 	targ = self->target;
 
-	// First spawn teleport fire.
-	fog = Spawn<ASpawnFire> (targ->x, targ->y, targ->z, ALLOW_REPLACE);
-	S_Sound (fog, CHAN_BODY, "brain/spawn", 1, ATTN_NORM);
 
-	// Randomly select monster to spawn.
-	r = pr_spawnfly ();
-
-	// Probability distribution (kind of :),
-	// decreasing likelihood.
-		 if (r < 50)  type = "DoomImp";
-	else if (r < 90)  type = "Demon";
-	else if (r < 120) type = "Spectre";
-	else if (r < 130) type = "PainElemental";
-	else if (r < 160) type = "Cacodemon";
-	else if (r < 162) type = "Archvile";
-	else if (r < 172) type = "Revenant";
-	else if (r < 192) type = "Arachnotron";
-	else if (r < 222) type = "Fatso";
-	else if (r < 246) type = "HellKnight";
-	else			  type = "BaronOfHell";
-
-	newmobj = Spawn (type, targ->x, targ->y, targ->z, ALLOW_REPLACE);
-	if (newmobj != NULL)
+	const PClass *spawntype = NULL;
+	int index = CheckIndex (1, NULL);
+		// First spawn teleport fire.
+	if (index >= 0) 
 	{
-		// Make the new monster hate what the boss eye hates
-		AActor *eye = self->target;
-
-		if (eye != NULL)
+		spawntype = PClass::FindClass ((ENamedName)StateParameters[index]);
+		if (spawntype != NULL) 
 		{
-			newmobj->CopyFriendliness (eye, false);
+			fog = Spawn (spawntype, targ->x, targ->y, targ->z, ALLOW_REPLACE);
+			if (fog != NULL) S_Sound (fog, CHAN_BODY, fog->SeeSound, 1, ATTN_NORM);
 		}
-		if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true))
-			newmobj->SetState (newmobj->SeeState);
+	}
+	else
+	{
+		fog = Spawn<ASpawnFire> (targ->x, targ->y, targ->z, ALLOW_REPLACE);
+		if (fog != NULL) S_Sound (fog, CHAN_BODY, "brain/spawn", 1, ATTN_NORM);
+	}
 
-		if (!(newmobj->ObjectFlags & OF_EuthanizeMe))
+	FName SpawnName;
+
+	if (self->master != NULL)
+	{
+		FDropItem *di;   // di will be our drop item list iterator
+		FDropItem *drop; // while drop stays as the reference point.
+		int n=0;
+
+		drop = di = GetDropItems(self->master->GetClass());
+		if (di != NULL)
 		{
-			// telefrag anything in this spot
-			P_TeleportMove (newmobj, newmobj->x, newmobj->y, newmobj->z, true);
+			while (di != NULL)
+			{
+				if (di->Name != NAME_None)
+				{
+					if (di->amount < 0) di->amount = 1; // default value is -1, we need a positive value.
+					n += di->amount; // this is how we can weight the list.
+					di = di->Next;
+				}
+			}
+			di = drop;
+			n = pr_spawnfly(n);
+			while (n > 0)
+			{
+				if (di->Name != NAME_None)
+				{
+					n -= di->amount; // logically, none of the -1 values have survived by now.
+					if (n > -1) di = di->Next; // If we get into the negatives, a spawnfog could be spawned...
+					// It would mean we've reached the end of the list of monsters.
+				}
+			}
+
+			SpawnName = di->Name;
+		}
+	}
+	if (SpawnName == NAME_None)
+	{
+		const char *type;
+		// Randomly select monster to spawn.
+		r = pr_spawnfly ();
+
+		// Probability distribution (kind of :),
+		// decreasing likelihood.
+			 if (r < 50)  type = "DoomImp";
+		else if (r < 90)  type = "Demon";
+		else if (r < 120) type = "Spectre";
+		else if (r < 130) type = "PainElemental";
+		else if (r < 160) type = "Cacodemon";
+		else if (r < 162) type = "Archvile";
+		else if (r < 172) type = "Revenant";
+		else if (r < 192) type = "Arachnotron";
+		else if (r < 222) type = "Fatso";
+		else if (r < 246) type = "HellKnight";
+		else			  type = "BaronOfHell";
+
+		SpawnName = type;
+	}
+	spawntype = PClass::FindClass(SpawnName);
+	if (spawntype != NULL)
+	{
+		newmobj = Spawn (spawntype, targ->x, targ->y, targ->z, ALLOW_REPLACE);
+		if (newmobj != NULL)
+		{
+			// Make the new monster hate what the boss eye hates
+			AActor *eye = self->target;
+
+			if (eye != NULL)
+			{
+				newmobj->CopyFriendliness (eye, false);
+			}
+			if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true))
+				newmobj->SetState (newmobj->SeeState);
+
+			if (!(newmobj->ObjectFlags & OF_EuthanizeMe))
+			{
+				// telefrag anything in this spot
+				P_TeleportMove (newmobj, newmobj->x, newmobj->y, newmobj->z, true);
+			}
 		}
 	}
 
@@ -375,3 +448,4 @@ void DBrainState::Serialize (FArchive &arc)
 		arc << SerialTarget;
 	}
 }
+

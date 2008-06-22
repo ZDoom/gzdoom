@@ -1416,7 +1416,7 @@ static void InitSpawnedItem(AActor *self, AActor *mo, int flags)
 							(deathmatch && attacker->FriendPlayer!=0 && attacker->FriendPlayer!=mo->FriendPlayer))
 						{
 							// Target the monster which last attacked the player
-							mo->target = attacker;
+							mo->LastHeard = mo->target = attacker;
 						}
 					}
 				}
@@ -2261,3 +2261,50 @@ void A_DamageChildren(AActor * self)
 }
 
 // [KS] *** End of my modifications ***
+
+//===========================================================================
+//
+// Modified code pointer from Skulltag
+//
+//===========================================================================
+
+void A_CheckForReload( AActor *self )
+{
+	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
+		return;
+
+	int index = CheckIndex(2);
+	if (index<0) return;
+	
+	AWeapon *weapon = self->player->ReadyWeapon;
+	int count = EvalExpressionI (StateParameters[index], self);
+	
+	weapon->ReloadCounter = (weapon->ReloadCounter+1) % count;
+	
+	// If we have not made our last shot...
+	if (weapon->ReloadCounter != 0)
+	{
+		// Go back to the refire frames, instead of continuing on to the reload frames.
+		DoJump(self, CallingState, StateParameters[index + 1]);
+	}
+	else
+	{
+		// We need to reload. However, don't reload if we're out of ammo.
+		weapon->CheckAmmo( false, false );
+	}
+}
+
+//===========================================================================
+//
+// Resets the counter for the above function
+//
+//===========================================================================
+
+void A_ResetReloadCounter(AActor *self)
+{
+	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
+		return;
+
+	AWeapon *weapon = self->player->ReadyWeapon;
+	weapon->ReloadCounter = 0;
+}

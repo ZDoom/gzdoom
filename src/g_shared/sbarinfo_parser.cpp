@@ -447,6 +447,7 @@ void SBarInfo::ParseSBarInfoBlock(FScanner &sc, SBarInfoBlock &block)
 					}
 					else
 					{
+						//sc.CheckToken(TK_Identifier);
 						cmd.flags |= DRAWIMAGE_INVENTORYICON;
 						const PClass* item = PClass::FindClass(sc.String);
 						if(item == NULL || !PClass::FindClass("Inventory")->IsAncestorOf(item)) //must be a kind of Inventory

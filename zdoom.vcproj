@@ -55,9 +55,11 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
+				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;snes_spc\snes_spc"
 				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,USEASM,HAVE_STRUPR,HAVE_FILELENGTH"
 				StringPooling="true"
+				ExceptionHandling="1"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				ForceConformanceInForLoopScope="true"
@@ -106,6 +108,7 @@
 				TerminalServerAware="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				LinkTimeCodeGeneration="0"
 				SetChecksum="true"
 			/>
 			<Tool
@@ -2035,6 +2038,10 @@
 			</File>
 			<File
 				RelativePath=".\src\g_shared\a_quake.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\g_shared\a_randomspawner.cpp"
 				>
 			</File>
 			<File

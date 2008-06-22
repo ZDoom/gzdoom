@@ -1,3 +1,13 @@
+June 22, 2008 (Changes by Graf Zahl)
+- Added support for ST's QUARTERGRAVITY flag.
+- Added a generalized version of Skulltag's A_CheckRailReload function.
+- Fixed: DrawImage didn't take 0 as a valid image index.
+- Added Gez's RandomSpawner submission with significant changes.
+- Added optional blocks for MAPINFO map definitions. ZDoom doesn't use
+  this feature itself but it allows other ports based on ZDoom
+  to implement their own sets of options without making such a MAPINFO 
+  unreadable by ZDoom.
+  
 June 16, 2008 (Changes by Graf Zahl)
 - Fixed: The mugshot would not reset on re-spawn.
 - Fixed: Picking up a weapon would sometimes not activate the grin.

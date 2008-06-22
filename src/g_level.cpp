@@ -108,6 +108,48 @@ static void ClearClusterInfoStrings (cluster_info_t *cinfo);
 static void ParseSkill (FScanner &sc);
 static void G_VerifySkill();
 
+struct FOptionalMapinfoParser
+{
+	const char *keyword;
+	MIParseFunc parsefunc;
+};
+
+
+static TArray<FOptionalMapinfoParser> optmapinf(TArray<FOptionalMapinfoParser>::NoInit);
+
+void AddOptionalMapinfoParser(const char *keyword, MIParseFunc parsefunc)
+{
+	FOptionalMapinfoParser mi;
+	
+	mi.keyword = keyword;
+	mi.parsefunc = parsefunc;
+	optmapinf.Push(mi);
+}
+
+static void ParseOptionalBlock(const char *keyword, FScanner &sc, level_info_t *info)
+{
+	for(unsigned i=0;i<optmapinf.Size();i++)
+	{
+		if (!stricmp(keyword, optmapinf[i].keyword))
+		{
+			optmapinf[i].parsefunc(sc, info);
+			return;
+		}
+	}
+	int bracecount = 0;
+	
+	while (sc.GetString())
+	{
+		if (sc.Compare("{")) bracecount++;
+		else if (sc.Compare("}"))
+		{
+			if (--bracecount < 0) return;
+		}
+	}
+}
+			
+
+
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
 TArray<EndSequence> EndSequences;
@@ -314,9 +356,6 @@ static const char *MapInfoMapLevel[] =
 	"noinfiniteflightpowerup",
 	"allowrespawn",
 	"teamdamage",
-	"fogdensity",
-	"outsidefogdensity",
-	"skyfog",
 	"teamplayon",
 	"teamplayoff",
 	"checkswitchrange",
@@ -466,9 +505,6 @@ MapHandlers[] =
 	{ MITYPE_CLRFLAG,	LEVEL_INFINITE_FLIGHT, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_ALLOWRESPAWN, 0 },
 	{ MITYPE_FLOAT,		lioffset(teamdamage), 0 },
-	{ MITYPE_INT,		lioffset(fogdensity), 0 },
-	{ MITYPE_INT,		lioffset(outsidefogdensity), 0 },
-	{ MITYPE_INT,		lioffset(skyfog), 0 },
 	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYON, ~LEVEL_FORCETEAMPLAYOFF },
 	{ MITYPE_SCFLAGS,	LEVEL_FORCETEAMPLAYOFF, ~LEVEL_FORCETEAMPLAYON },
 	{ MITYPE_SETFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
@@ -632,6 +668,19 @@ static FSpecialAction *CopySpecialActions(FSpecialAction *spec)
 	return spec;
 }
 
+static FOptionalMapinfoData *CopyOptData(FOptionalMapinfoData *opdata)
+{
+	FOptionalMapinfoData **opt = &opdata;
+
+	while (*opt)
+	{
+		FOptionalMapinfoData *newop = (*opt)->Clone();
+		*opt = newop;
+		opt = &newop->Next;
+	}
+	return opdata;
+}
+
 static void CopyString (char *& string)
 {
 	if (string != NULL)
@@ -660,6 +709,12 @@ static void ClearLevelInfoStrings(level_info_t *linfo)
 	for (FSpecialAction *spac = linfo->specialactions; spac != NULL; )
 	{
 		FSpecialAction *next = spac->Next;
+		delete spac;
+		spac = next;
+	}
+	for (FOptionalMapinfoData *spac = linfo->opdata; spac != NULL; )
+	{
+		FOptionalMapinfoData *next = spac->Next;
 		delete spac;
 		spac = next;
 	}
@@ -743,6 +798,7 @@ static void G_DoParseMapInfo (int lump)
 			CopyString(levelinfo->soundinfo);
 			CopyString(levelinfo->sndseq);
 			levelinfo->specialactions = CopySpecialActions(levelinfo->specialactions);
+			levelinfo->opdata = CopyOptData(levelinfo->opdata);
 			if (HexenHack)
 			{
 				levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;
@@ -867,7 +923,28 @@ static void ParseMapInfoLower (FScanner &sc,
 			sc.UnGet ();
 			break;
 		}
-		entry = sc.MustMatchString (strings);
+		entry = sc.MatchString (strings);
+		
+		if (entry == -1)
+		{
+			FString keyword = sc.String;
+			sc.MustGetString();
+			if (levelinfo != NULL)
+			{
+				if (sc.Compare("{"))
+				{
+					ParseOptionalBlock(keyword, sc, levelinfo);
+					continue;
+				}
+				else if (!stricmp(keyword, "nobotnodes"))	// Ignore this Skulltag option if it appears
+				{
+					continue;
+				}
+			}
+			sc.ScriptError("Unknown keyword '%s'", keyword.GetChars());
+		}
+		
+		
 		handler = handlers + entry;
 		switch (handler->type)
 		{

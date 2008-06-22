@@ -21,14 +21,14 @@ class FTextureID
 	friend void R_InitSpriteDefs ();
 
 public:
-	FTextureID() {}
+	FTextureID() throw() {}
 	bool isNull() const { return texnum == 0; }
 	bool isValid() const { return texnum > 0; }
 	bool Exists() const { return texnum >= 0; }
 	void SetInvalid() { texnum = -1; }
 	bool operator ==(const FTextureID &other) const { return texnum == other.texnum; }
 	bool operator !=(const FTextureID &other) const { return texnum != other.texnum; }
-	FTextureID operator +(int offset);
+	FTextureID operator +(int offset) throw();
 	int GetIndex() const { return texnum; }	// Use this only if you absolutely need the index!
 
 	// The switch list needs these to sort the switches by texture index

@@ -479,7 +479,7 @@ void DSBarInfo::doCommands(SBarInfoBlock &block, int xOffset, int yOffset, int a
 				}
 				else if((cmd.flags & DRAWIMAGE_INVENTORYICON))
 					texture = TexMan[cmd.sprite_index];
-				else if(cmd.image_index > 0)
+				else if(cmd.image_index >= 0)
 					texture = Images[cmd.image_index];
 
 				DrawGraphic(texture, cmd.x, cmd.y, xOffset, yOffset, alpha, !!(cmd.flags & DRAWIMAGE_TRANSLATABLE), false, !!(cmd.flags & DRAWIMAGE_OFFSET_CENTER));

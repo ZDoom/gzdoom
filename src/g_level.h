@@ -136,6 +136,20 @@ struct FSpecialAction
 class FCompressedMemFile;
 class DScroller;
 
+class FScanner;
+struct level_info_t;
+typedef void (*MIParseFunc)(FScanner &sc, level_info_t *info);
+
+void AddOptionalMapinfoParser(const char *keyword, MIParseFunc parsefunc);
+
+struct FOptionalMapinfoData
+{
+	FOptionalMapinfoData *Next;
+	FName identifier;
+	FOptionalMapinfoData() { Next = NULL; identifier = NAME_None; }
+	virtual FOptionalMapinfoData *Clone() const = 0;
+};
+
 struct level_info_t
 {
 	char		mapname[9];
@@ -187,12 +201,10 @@ struct level_info_t
 	char		*sndseq;
 	char		bordertexture[9];
 
-	int			fogdensity;
-	int			outsidefogdensity;
-	int			skyfog;
-	FSpecialAction * specialactions;
-
 	float		teamdamage;
+
+	FSpecialAction * specialactions;
+	FOptionalMapinfoData *opdata;
 
 };
 

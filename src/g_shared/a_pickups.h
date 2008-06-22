@@ -218,6 +218,7 @@ public:
 	const PClass *AltProjectileType;		// Projectile used by alternate attack
 	int SelectionOrder;						// Lower-numbered weapons get picked first
 	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
+	int ReloadCounter;						// For A_CheckForReload
 
 	// In-inventory instance variables
 	TObjPtr<AAmmo> Ammo1, Ammo2;

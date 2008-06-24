@@ -953,7 +953,7 @@ FArchive &operator<< (FArchive &arc, FTextureID &tex)
 //
 //==========================================================================
 
-FTextureID FTextureID::operator +(int offset)
+FTextureID FTextureID::operator +(int offset) throw()
 {
 	if (!isValid()) return *this;
 	if (texnum + offset >= TexMan.NumTextures()) return FTextureID(-1);

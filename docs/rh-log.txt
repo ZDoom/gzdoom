@@ -1,3 +1,7 @@
+June 23, 2008
+- Fixed compilation issues with GCC.
+- Removed special case for nobotnodes in MAPINFO.
+
 June 22, 2008 (Changes by Graf Zahl)
 - Added support for ST's QUARTERGRAVITY flag.
 - Added a generalized version of Skulltag's A_CheckRailReload function.

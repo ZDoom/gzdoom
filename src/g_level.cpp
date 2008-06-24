@@ -114,8 +114,8 @@ struct FOptionalMapinfoParser
 	MIParseFunc parsefunc;
 };
 
-
 static TArray<FOptionalMapinfoParser> optmapinf(TArray<FOptionalMapinfoParser>::NoInit);
+
 
 void AddOptionalMapinfoParser(const char *keyword, MIParseFunc parsefunc)
 {
@@ -362,6 +362,7 @@ static const char *MapInfoMapLevel[] =
 	"nocheckswitchrange",
 	"translator",
 	"unfreezesingleplayerconversations",
+	"nobotnodes",
 	NULL
 };
 
@@ -511,6 +512,7 @@ MapHandlers[] =
 	{ MITYPE_CLRFLAG,	LEVEL_CHECKSWITCHRANGE, 0 },
 	{ MITYPE_STRING,	lioffset(translator), 0 },
 	{ MITYPE_SETFLAG,	LEVEL_CONV_SINGLE_UNFREEZE, 0 },
+	{ MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -924,7 +926,7 @@ static void ParseMapInfoLower (FScanner &sc,
 			break;
 		}
 		entry = sc.MatchString (strings);
-		
+
 		if (entry == -1)
 		{
 			FString keyword = sc.String;
@@ -936,15 +938,10 @@ static void ParseMapInfoLower (FScanner &sc,
 					ParseOptionalBlock(keyword, sc, levelinfo);
 					continue;
 				}
-				else if (!stricmp(keyword, "nobotnodes"))	// Ignore this Skulltag option if it appears
-				{
-					continue;
-				}
 			}
 			sc.ScriptError("Unknown keyword '%s'", keyword.GetChars());
 		}
-		
-		
+
 		handler = handlers + entry;
 		switch (handler->type)
 		{

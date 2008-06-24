@@ -1,4 +1,5 @@
 June 23, 2008
+- Fixed: PickNext/PrevWeapon() did not check for NULL player actors.
 - Fixed compilation issues with GCC.
 - Removed special case for nobotnodes in MAPINFO.
 

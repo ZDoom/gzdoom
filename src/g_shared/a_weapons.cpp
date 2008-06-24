@@ -733,6 +733,10 @@ AWeapon *PickNextWeapon (player_t *player)
 {
 	int startslot, startindex;
 
+	if (player->mo == NULL)
+	{
+		return NULL;
+	}
 	if (player->ReadyWeapon == NULL || FindMostRecentWeapon (player, &startslot, &startindex))
 	{
 		int start;
@@ -765,6 +769,10 @@ AWeapon *PickPrevWeapon (player_t *player)
 {
 	int startslot, startindex;
 
+	if (player->mo == NULL)
+	{
+		return NULL;
+	}
 	if (player->ReadyWeapon == NULL || FindMostRecentWeapon (player, &startslot, &startindex))
 	{
 		int start;

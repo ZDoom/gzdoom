@@ -996,7 +996,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 		basecolormap = pl->colormap;
 		planeshade = LIGHT2SHADE(pl->lightlevel);
 
-		if (r_drawflat || (pl->height.a == 0 && pl->height.b == 0) && !tilt)
+		if (r_drawflat || ((pl->height.a == 0 && pl->height.b == 0) && !tilt))
 		{
 			R_DrawNormalPlane (pl, alpha, masked);
 		}

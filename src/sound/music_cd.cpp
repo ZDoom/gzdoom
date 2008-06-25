@@ -59,7 +59,7 @@ CDSong::CDSong (int track, int id)
 		success = CD_Init ();
 	}
 
-	if (success && track == 0 || CD_CheckTrack (track))
+	if (success && (track == 0 || CD_CheckTrack (track)))
 	{
 		m_Inited = true;
 		m_Track = track;

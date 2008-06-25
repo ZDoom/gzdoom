@@ -134,9 +134,9 @@ static bool P_SightCheckLine (line_t *ld)
 			return false;
 		}
 		if (SeePastShootableLines &&
-			!(ld->activation & SPAC_Impact) ||
-			(ld->special != ACS_Execute && ld->special != ACS_ExecuteAlways) ||
-			(ld->args[1] != 0 && ld->args[1] != level.levelnum))
+			(!(ld->activation & SPAC_Impact) ||
+			 (ld->special != ACS_Execute && ld->special != ACS_ExecuteAlways) ||
+			 (ld->args[1] != 0 && ld->args[1] != level.levelnum)))
 		{
 			// Pretend the other side is invisible if this is not an impact line
 			// or it does not run a script on the current map. Used to prevent

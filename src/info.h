@@ -181,13 +181,13 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 #endif
 
 #define _S__FR_TIC_(spr,frm,tic,m1,m2,cmd,next) \
-	_S__SPRITE_(spr), (tic+1)&255, m1|((tic+1)>>8), m2, (tic>254)?SF_BIGTIC|(frm):(frm), cmd, next }
+	_S__SPRITE_(spr), (tic+1)&255, (m1)|((tic+1)>>8), m2, (tic>254)?(SF_BIGTIC|(frm)):(frm), cmd, next }
 
 #define S_NORMAL2(spr,frm,tic,cmd,next,m1,m2) \
 	_S__FR_TIC_(spr, (frm) - 'A', tic, m1, m2, cmd, next)
 
 #define S_BRIGHT2(spr,frm,tic,cmd,next,m1,m2) \
-	_S__FR_TIC_(spr, (frm) - 'A' | SF_FULLBRIGHT, tic, m1, m2, cmd, next)
+	_S__FR_TIC_(spr, ((frm) - 'A') | SF_FULLBRIGHT, tic, m1, m2, cmd, next)
 
 /* <winbase.h> #defines its own, completely unrelated S_NORMAL.
  * Since winbase.h will only be included in Win32-specific files that

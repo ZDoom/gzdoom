@@ -98,7 +98,7 @@ static inline void SWAP_DOUBLE(double &dst, double &src)
 }
 #else
 static inline WORD  SWAP_WORD(WORD x)		{ return (((x)<<8) | ((x)>>8)); }
-static inline DWORD SWAP_DWORD(DWORD x)		{ return x = (((x)>>24) | (((x)>>8)&0xff00) | ((x)<<8)&0xff0000 | ((x)<<24)); }
+static inline DWORD SWAP_DWORD(DWORD x)		{ return x = (((x)>>24) | (((x)>>8)&0xff00) | (((x)<<8)&0xff0000) | ((x)<<24)); }
 static inline QWORD SWAP_QWORD(QWORD x)
 {
 	union { QWORD q; DWORD d[2]; } t, u;

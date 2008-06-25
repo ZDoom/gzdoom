@@ -343,7 +343,7 @@ void A_Feathers (AActor *actor)
 		mo->momx = pr_feathers.Random2() << 8;
 		mo->momy = pr_feathers.Random2() << 8;
 		mo->momz = FRACUNIT + (pr_feathers() << 9);
-		mo->SetState (&AFeather::States[S_FEATHER+pr_feathers()&7]);
+		mo->SetState (&AFeather::States[S_FEATHER+(pr_feathers()&7)]);
 	}
 }
 

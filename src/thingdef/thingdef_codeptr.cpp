@@ -529,7 +529,7 @@ void A_JumpIfHealthLower(AActor * self)
 //==========================================================================
 void A_JumpIfCloser(AActor * self)
 {
-	FState * CallingState;
+	FState * CallingState = NULL;
 	int index = CheckIndex(2, &CallingState);
 	AActor * target;
 
@@ -967,7 +967,7 @@ void A_CustomComboAttack (AActor *self)
 //==========================================================================
 void A_JumpIfNoAmmo(AActor * self)
 {
-	FState * CallingState;
+	FState * CallingState = NULL;
 	int index=CheckIndex(1, &CallingState);
 
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
@@ -2015,7 +2015,7 @@ void A_Burst (AActor *actor)
 //===========================================================================
 void A_CheckFloor (AActor *self)
 {
-	FState *CallingState;
+	FState *CallingState = NULL;
 	int index = CheckIndex (1, &CallingState);
 
 	if (pStateCall != NULL) pStateCall->Result=false;	// Jumps should never set the result for inventory state chains!
@@ -2144,7 +2144,7 @@ void A_ClearTarget(AActor * self)
 
 void A_JumpIfTargetInLOS(AActor * self)
 {
-	FState * CallingState;
+	FState * CallingState = NULL;
 	int index = CheckIndex(3, &CallingState);
 	angle_t an;
 	angle_t fov = angle_t(EvalExpressionF (StateParameters[index+1], self) * ANGLE_1);

@@ -106,8 +106,8 @@ int FNodeBuilder::CreateNode (DWORD set, fixed_t bbox[4])
 
 	if ((selstat = SelectSplitter (set, node, splitseg, skip, true)) > 0 ||
 		(skip > 0 && (selstat = SelectSplitter (set, node, splitseg, 1, true)) > 0) ||
-		(selstat < 0 && (SelectSplitter (set, node, splitseg, skip, false) > 0) ||
-						(skip > 0 && SelectSplitter (set, node, splitseg, 1, false))) ||
+		(selstat < 0 && (SelectSplitter (set, node, splitseg, skip, false) > 0 ||
+						(skip > 0 && SelectSplitter (set, node, splitseg, 1, false)))) ||
 		CheckSubsector (set, node, splitseg, count))
 	{
 		// Create a normal node

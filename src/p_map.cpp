@@ -394,7 +394,7 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 	{
 		friction = FRICTION_FLY;
 	}
-	else if (!(mo->flags & MF_NOGRAVITY) && mo->waterlevel > 1 ||
+	else if ((!(mo->flags & MF_NOGRAVITY) && mo->waterlevel > 1) ||
 		(mo->waterlevel == 1 && mo->z > mo->floorz + 6*FRACUNIT))
 	{
 		friction = secfriction (mo->Sector);

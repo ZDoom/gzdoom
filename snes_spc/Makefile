@@ -13,7 +13,10 @@ STATICLIB = libsnes_spc.a
 CCDV = @../ccdv
 
 CC = gcc
-CFLAGS = $(LOC) -O3 -Wall -fomit-frame-pointer
+
+# SNES_SPC::cpu_write_high() contains an intentional write outside
+# the RAM array, so don't warn about it.
+CFLAGS = $(LOC) -O3 -Wall -Wno-array-bounds -fomit-frame-pointer
 
 LD = $(CC)
 LDFLAGS = $(LOC) -s

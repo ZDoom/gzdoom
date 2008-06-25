@@ -1353,7 +1353,7 @@ void P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// that large thrusts can't propel an actor through a wall, because wall
 	// running depends on the player's original movement continuing even after
 	// it gets blocked.
-	if (mo->player != NULL && (i_compatflags & COMPATF_WALLRUN) || (mo->waterlevel >= 1) ||
+	if ((mo->player != NULL && (i_compatflags & COMPATF_WALLRUN)) || (mo->waterlevel >= 1) ||
 		(mo->player != NULL && mo->player->crouchfactor < FRACUNIT*3/4))
 	{
 		// preserve the direction instead of clamping x and y independently.
@@ -2650,7 +2650,7 @@ void AActor::Tick ()
 		}
 
 		if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback &&
-			(flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER))
+			((flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER)))
 		{
 			clock (BotSupportCycles);
 			bglobal.m_Thinking = true;

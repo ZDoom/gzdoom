@@ -831,7 +831,7 @@ void Polymost_Responder (event_t *ev)
 	}
 	else if (ev->type == EV_KeyUp && ev->data1 == KEY_MOUSE1)
 	{
-		if (pt == 1) if (px0 != px1) pt++; else pt--;
+		if (pt == 1) { if (px0 != px1) pt++; else pt--; }
 		if (pt == 2)
 		{
 			numpoly = polypt = 0;

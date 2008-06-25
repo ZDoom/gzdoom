@@ -54,8 +54,7 @@ struct rfflump_t
 	BYTE		IStillDontKnow[8];
 	BYTE		Flags;
 	char		Extension[3];
-	char		Name[8];
-	BYTE		WhatIsThis[4];
+	char		Name[8+4];		// 4 bytes that I don't know what they are for
 };
 
 struct grpinfo_t
@@ -66,8 +65,15 @@ struct grpinfo_t
 
 struct grplump_t
 {
-	char		Name[12];
-	DWORD		Size;
+	union
+	{
+		struct
+		{
+			char		Name[12];
+			DWORD		Size;
+		};
+		char NameWithZero[13];
+	};
 };
 
 union MergedHeader
@@ -491,7 +497,7 @@ void FWadCollection::AddFile (const char *filename, const char * data, int lengt
 			lump_p->position = pos;
 			lump_p->size = LittleLong(grp_p->Size);
 			pos += lump_p->size;
-			grp_p->Name[12] = '\0';	// Be sure filename is null-terminated
+			grp_p->NameWithZero[12] = '\0';	// Be sure filename is null-terminated
 			lump_p->fullname = copystring(grp_p->Name);
 			uppercopy (lump_p->name, grp_p->Name);
 			lump_p->name[8] = 0;

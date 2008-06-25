@@ -3754,7 +3754,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_CASEGOTOSORTED:
 			// The count and jump table are 4-byte aligned
-			pc = (int *)((BYTE *)pc + (4 - (((size_t)pc & 3)) & 3));
+			pc = (int *)(((size_t)pc + 3) & ~3);
 			{
 				int numcases = NEXTWORD;
 				int min = 0, max = numcases-1;

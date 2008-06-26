@@ -1,3 +1,7 @@
+June 26, 2008
+- Fixed: P_BulletSlope() did not return the linetarget. This effected
+  the Sigil, A_JumpIfCloser, and A_JumpIfTargetInLOS.
+
 June 25, 2008
 - Fixed all the new warnings tossed out by GCC 4.3.
 

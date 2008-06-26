@@ -652,6 +652,10 @@ angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget)
 			break;
 		}
 	} while (linetarget == NULL && --i >= 0);
+	if (pLineTarget != NULL)
+	{
+		*pLineTarget = linetarget;
+	}
 	return pitch;
 }
 

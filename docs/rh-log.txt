@@ -1,4 +1,5 @@
 June 26, 2008
+- Applied Gez's BossBrainPatch3.
 - Fixed: P_BulletSlope() did not return the linetarget. This effected
   the Sigil, A_JumpIfCloser, and A_JumpIfTargetInLOS.
 

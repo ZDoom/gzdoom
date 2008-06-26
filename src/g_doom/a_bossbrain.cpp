@@ -269,7 +269,8 @@ void A_BrainSpit (AActor *self)
 			{
 				spit->reactiontime = (targ->x - self->x) / spit->momx;
 			}
-			spit->reactiontime /= spit->state->GetTics();
+			// [GZ] Calculates when the projectile will have reached destination
+			spit->reactiontime += level.maptime;
 		}
 
 		if (index >= 0)
@@ -291,7 +292,8 @@ void A_SpawnFly (AActor *self)
 	AActor *targ;
 	int r;
 		
-	if (--self->reactiontime)
+	// [GZ] Should be more fiable than a countdown...
+	if (self->reactiontime > level.maptime)
 		return; // still flying
 		
 	targ = self->target;
@@ -342,8 +344,7 @@ void A_SpawnFly (AActor *self)
 				if (di->Name != NAME_None)
 				{
 					n -= di->amount; // logically, none of the -1 values have survived by now.
-					if (n > -1) di = di->Next; // If we get into the negatives, a spawnfog could be spawned...
-					// It would mean we've reached the end of the list of monsters.
+					if (n > -1) di = di->Next; // If we get into the negatives, we've reached the end of the list.
 				}
 			}
 

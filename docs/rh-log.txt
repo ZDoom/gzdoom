@@ -1,4 +1,6 @@
 June 26, 2008
+- For controls that are not bound, the customize controls menu now displays
+  a black --- instead of ???.
 - Applied Gez's BossBrainPatch3.
 - Fixed: P_BulletSlope() did not return the linetarget. This effected
   the Sigil, A_JumpIfCloser, and A_JumpIfTargetInLOS.

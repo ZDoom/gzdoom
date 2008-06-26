@@ -681,7 +681,7 @@ void C_NameKeys (char *str, int first, int second)
 	}
 
 	if (!c)
-		strcpy (str, "???");
+		*str = '\0';
 }
 
 void C_UnbindACommand (char *str)

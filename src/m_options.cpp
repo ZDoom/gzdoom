@@ -1896,7 +1896,15 @@ void M_OptDrawer ()
 				char description[64];
 
 				C_NameKeys (description, item->b.key1, item->c.key2);
-				M_DrawConText(CR_WHITE, CurrentMenu->indent + 14, y-1+labelofs, description);
+				if (description[0])
+				{
+					M_DrawConText(CR_WHITE, CurrentMenu->indent + 14, y-1+labelofs, description);
+				}
+				else
+				{
+					screen->DrawText(CR_BLACK, CurrentMenu->indent + 14, y + labelofs, "---",
+						DTA_Clean, true, TAG_DONE);
+				}
 			}
 			break;
 

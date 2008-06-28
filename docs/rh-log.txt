@@ -1,4 +1,7 @@
 June 28, 2008 (Changes by Graf Zahl)
+- Removed some unused constant definitions from sc_man.cpp.
+- Fixed: A_FireBlasterPL2 played the weapon sound with the missile as origin
+  instead of the shooting player.
 - Fixed: Dead players didn't get the MF_CORPSE flag set.
 - Fixed: The internal definition of Floor_LowerToNearest had incorrect parameter
   settings.

@@ -1987,7 +1987,6 @@ void A_FireBlasterPL1 (AActor *actor)
 
 void A_FireBlasterPL2 (AActor *actor)
 {
-	AActor *mo;
 	player_t *player;
 
 	if (NULL == (player = actor->player))
@@ -2001,8 +2000,9 @@ void A_FireBlasterPL2 (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	mo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ABlasterFX1));
-	S_Sound (mo, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ABlasterFX1));
+	S_Sound (actor, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
+
 }
 
 //----------------------------------------------------------------------------

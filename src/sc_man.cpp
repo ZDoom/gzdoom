@@ -24,17 +24,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define ASCII_COMMENT (';')
-#define CPP_COMMENT ('/')
-#define C_COMMENT ('*')
-#define ASCII_QUOTE ('"')
-#define LUMP_SCRIPT 1
-#define FILE_ZONE_SCRIPT 2
-
-#define NORMAL_STOPCHARS			"{}|="
-#define CMODE_STOPCHARS				"`~!@#$%^&*(){}[]/=\?+|;:<>,."
-#define CMODE_STOPCHARS_NODECIMAL	"`~!@#$%^&*(){}[]/=\?+|;:<>,"
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -176,8 +165,7 @@ void FScanner::Open (const char *name)
 //
 // FScanner :: OpenFile
 //
-// Loads a script (from a file). Uses the new/delete memory allocator for
-// memory allocation and de-allocation.
+// Loads a script from a file. Uses new/delete for memory allocation.
 //
 //==========================================================================
 
@@ -215,7 +203,7 @@ void FScanner::OpenMem (const char *name, char *buffer, int size)
 //
 // FScanner :: OpenLumpNum
 //
-// Loads a script (from the WAD files).
+// Loads a script from the lump directory
 //
 //==========================================================================
 

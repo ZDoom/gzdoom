@@ -17,6 +17,7 @@ ACTOR CommanderKeen 72
 	+SHOOTABLE 
 	+COUNTKILL 
 	+NOICEDEATH
+	+ISMONSTER
 	PainSound "keen/pain"
 	DeathSound "keen/death"
 	States

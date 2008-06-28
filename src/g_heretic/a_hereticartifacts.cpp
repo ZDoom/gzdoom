@@ -81,7 +81,7 @@ FState AActivatedTimeBomb::States[] =
 	S_BRIGHT (XPL1, 'F',	4, NULL 	, NULL)
 };
 
-IMPLEMENT_ACTOR (AActivatedTimeBomb, Heretic, -1, 72)
+IMPLEMENT_ACTOR (AActivatedTimeBomb, Heretic, -1, 0)
 	PROP_Flags (MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HR_SHADOW)

@@ -1,3 +1,10 @@
+June 28, 2008 (Changes by Graf Zahl)
+- Fixed: Dead players didn't get the MF_CORPSE flag set.
+- Fixed: The internal definition of Floor_LowerToNearest had incorrect parameter
+  settings.
+- Fixed: Heretic's ActivatedTimeBomb had the same spawn ID as the inventory item.
+- fixed: Heretic's mace did not have its spawn ID set.
+
 June 26, 2008
 - For controls that are not bound, the customize controls menu now displays
   a black --- instead of ???.

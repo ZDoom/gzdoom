@@ -739,7 +739,7 @@ static bool CheckNumParm(FScanner &sc)
 	}
 	else
 	{
-		return !!sc.CheckNumber();
+		return sc.CheckNumber();
 	}
 }
 

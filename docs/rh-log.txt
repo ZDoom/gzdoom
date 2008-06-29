@@ -1,12 +1,8 @@
-June 28, 2008 (Changes by Graf Zahl)
-- Removed some unused constant definitions from sc_man.cpp.
-- Fixed: A_FireBlasterPL2 played the weapon sound with the missile as origin
-  instead of the shooting player.
-- Fixed: Dead players didn't get the MF_CORPSE flag set.
-- Fixed: The internal definition of Floor_LowerToNearest had incorrect parameter
-  settings.
-- Fixed: Heretic's ActivatedTimeBomb had the same spawn ID as the inventory item.
-- fixed: Heretic's mace did not have its spawn ID set.
+June 29, 2008 (Changes by Graf Zahl)
+- Changed: I_Error and I_FatalError now use ZDoom's internal string formatting
+  code to process their messages. This was necessary to handle the %zu format
+  option used in some memory allocation failure messages.
+- Fixed: The flat texture scaling action specials were completely broken.
 
 June 28, 2008
 - The sound code now handles restarting looping sounds itself. As far as
@@ -33,6 +29,16 @@ June 28, 2008
       straight through the sound system like everything else, so I decided
       to dump them now, which leaves the movie player in a totally unworkable
       state.
+
+June 28, 2008 (Changes by Graf Zahl)
+- Removed some unused constant definitions from sc_man.cpp.
+- Fixed: A_FireBlasterPL2 played the weapon sound with the missile as origin
+  instead of the shooting player.
+- Fixed: Dead players didn't get the MF_CORPSE flag set.
+- Fixed: The internal definition of Floor_LowerToNearest had incorrect parameter
+  settings.
+- Fixed: Heretic's ActivatedTimeBomb had the same spawn ID as the inventory item.
+- fixed: Heretic's mace did not have its spawn ID set.
 
 June 26, 2008
 - Changed S_Sound() to take the same floating point attenuation that the

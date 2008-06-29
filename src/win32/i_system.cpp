@@ -515,6 +515,19 @@ void I_Quit (void)
 extern FILE *Logfile;
 bool gameisdead;
 
+// We should use ZDoom's internal formatting routine here so that the extended
+// format specifiers work here as well.
+// However, since throwing FStrings around causes some problems in VC++ the
+// error message is still copied to a local buffer.
+static void myvsnprintf(char *DstBuf, size_t MaxCount, const char * Format, va_list ArgList)
+{
+	FString formatstr;
+
+	formatstr.VFormat(Format, ArgList);
+	strncpy(DstBuf, formatstr.GetChars(), MaxCount);
+	DstBuf[MaxCount-1] = 0;
+}
+
 void STACK_ARGS I_FatalError (const char *error, ...)
 {
 	static BOOL alreadyThrown = false;
@@ -524,10 +537,9 @@ void STACK_ARGS I_FatalError (const char *error, ...)
 	{
 		alreadyThrown = true;
 		char errortext[MAX_ERRORTEXT];
-		int index;
 		va_list argptr;
 		va_start (argptr, error);
-		index = vsprintf (errortext, error, argptr);
+		myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
 		va_end (argptr);
 
 		// Record error to log (if logging)
@@ -550,7 +562,7 @@ void STACK_ARGS I_Error (const char *error, ...)
 	char errortext[MAX_ERRORTEXT];
 
 	va_start (argptr, error);
-	vsprintf (errortext, error, argptr);
+	myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
 	va_end (argptr);
 
 	throw CRecoverableError (errortext);

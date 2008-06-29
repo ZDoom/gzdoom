@@ -2181,6 +2181,28 @@ FUNC(LS_Sector_SetFloorPanning)
 	return true;
 }
 
+FUNC(LS_Sector_SetFloorScale)
+// Sector_SetFloorScale (tag, x-int, x-frac, y-int, y-frac)
+{
+	int secnum = -1;
+	fixed_t xscale = arg1 * FRACUNIT + arg2 * (FRACUNIT/100);
+	fixed_t yscale = arg3 * FRACUNIT + arg4 * (FRACUNIT/100);
+
+	if (xscale)
+		xscale = FixedDiv (FRACUNIT, xscale);
+	if (yscale)
+		yscale = FixedDiv (FRACUNIT, yscale);
+
+	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
+	{
+		if (xscale)
+			sectors[secnum].SetXScale(sector_t::floor, xscale);
+		if (yscale)
+			sectors[secnum].SetYScale(sector_t::floor, yscale);
+	}
+	return true;
+}
+
 FUNC(LS_Sector_SetCeilingScale)
 // Sector_SetCeilingScale (tag, x-int, x-frac, y-int, y-frac)
 {
@@ -2196,9 +2218,9 @@ FUNC(LS_Sector_SetCeilingScale)
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
 		if (xscale)
-			sectors[secnum].SetXScale(sector_t::ceiling, arg1);
+			sectors[secnum].SetXScale(sector_t::ceiling, xscale);
 		if (yscale)
-			sectors[secnum].SetYScale(sector_t::ceiling, arg2);
+			sectors[secnum].SetYScale(sector_t::ceiling, yscale);
 	}
 	return true;
 }
@@ -2218,7 +2240,7 @@ FUNC(LS_Sector_SetFloorScale2)
 		if (arg1)
 			sectors[secnum].SetXScale(sector_t::floor, arg1);
 		if (arg2)
-			sectors[secnum].SetXScale(sector_t::floor, arg1);
+			sectors[secnum].SetYScale(sector_t::floor, arg2);
 	}
 	return true;
 }
@@ -2238,29 +2260,7 @@ FUNC(LS_Sector_SetCeilingScale2)
 		if (arg1)
 			sectors[secnum].SetXScale(sector_t::ceiling, arg1);
 		if (arg2)
-			sectors[secnum].SetXScale(sector_t::ceiling, arg1);
-	}
-	return true;
-}
-
-FUNC(LS_Sector_SetFloorScale)
-// Sector_SetFloorScale (tag, x-int, x-frac, y-int, y-frac)
-{
-	int secnum = -1;
-	fixed_t xscale = arg1 * FRACUNIT + arg2 * (FRACUNIT/100);
-	fixed_t yscale = arg3 * FRACUNIT + arg4 * (FRACUNIT/100);
-
-	if (xscale)
-		xscale = FixedDiv (FRACUNIT, xscale);
-	if (yscale)
-		yscale = FixedDiv (FRACUNIT, yscale);
-
-	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
-	{
-		if (xscale)
-			sectors[secnum].SetXScale(sector_t::floor, arg1);
-		if (yscale)
-			sectors[secnum].SetXScale(sector_t::floor, arg1);
+			sectors[secnum].SetYScale(sector_t::ceiling, arg2);
 	}
 	return true;
 }

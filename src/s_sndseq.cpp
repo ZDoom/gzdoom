@@ -269,10 +269,6 @@ static FRandom pr_sndseq ("SndSeq");
 
 void DSeqNode::SerializeSequences (FArchive &arc)
 {
-	if (arc.IsLoading ())
-	{
-		SN_StopAllSequences ();
-	}
 	arc << SequenceListHead;
 }
 

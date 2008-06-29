@@ -811,16 +811,19 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 			}
 
-			if(GSnd != NULL)
+			if (GSnd != NULL)
 			{
+#if 0
+				// Do we actually need this here?
 				if (!oldstate && SessionState)
 				{
-					GSnd->MovieDisableSound ();
+					GSnd->SuspendSound ();
 				}
 				else if (oldstate && !SessionState)
 				{
 					GSnd->MovieResumeSound ();
 				}
+#endif
 			}
 #ifdef _DEBUG
 			char foo[256];

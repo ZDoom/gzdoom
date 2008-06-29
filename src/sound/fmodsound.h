@@ -25,23 +25,26 @@ public:
 	void StopStream (SoundStream *stream);
 
 	// Starts a sound.
-	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags);
-	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], sector_t *sector, int channum, int chanflags);
+	FSoundChan *StartSound (sfxinfo_t *sfx, float vol, int pitch, int chanflags, FSoundChan *reuse_chan);
+	FSoundChan *StartSound3D (sfxinfo_t *sfx, float vol, float distscale, int pitch, int priority, float pos[3], float vel[3], sector_t *sector, int channum, int chanflags, FSoundChan *reuse_chan);
 
 	// Stops a sound channel.
 	void StopSound (FSoundChan *chan);
 
+	// Returns position of sound on this channel, in samples.
+	unsigned int GetPosition(FSoundChan *chan);
+
+	// Synchronizes following sound startups.
+	void Sync (bool sync);
+
 	// Pauses or resumes all sound effect channels.
 	void SetSfxPaused (bool paused);
 
+	// Pauses or resumes *every* channel, including environmental reverb.
 	void SetInactive (bool inactive);
 
 	// Updates the position of a sound channel.
 	void UpdateSoundParams3D (FSoundChan *chan, float pos[3], float vel[3]);
-
-	// For use by I_PlayMovie
-	void MovieDisableSound ();
-	void MovieResumeSound ();
 
 	void UpdateListener ();
 	void UpdateSounds ();
@@ -56,15 +59,16 @@ public:
 private:
 	bool SFXPaused;
 	bool InitSuccess;
-	unsigned int DSPClockLo;
-	unsigned int DSPClockHi;
+	bool DSPLocked;
+	QWORD_UNION DSPClock;
 	int OutputRate;
 
 	static FMOD_RESULT F_CALLBACK ChannelEndCallback
 		(FMOD_CHANNEL *channel, FMOD_CHANNEL_CALLBACKTYPE type, int cmd, unsigned int data1, unsigned int data2);
 	static float F_CALLBACK RolloffCallback(FMOD_CHANNEL *channel, float distance);
 
-	FSoundChan *CommonChannelSetup(FMOD::Channel *chan) const;
+	void HandleChannelDelay(FMOD::Channel *chan, FSoundChan *reuse_chan, float freq) const;
+	FSoundChan *CommonChannelSetup(FMOD::Channel *chan, FSoundChan *reuse_chan) const;
 	FMOD_MODE SetChanHeadSettings(FMOD::Channel *chan, sfxinfo_t *sfx, float pos[3], int channum, int chanflags, sector_t *sec, FMOD_MODE oldmode) const;
 	void DoLoad (void **slot, sfxinfo_t *sfx);
 	void getsfx (sfxinfo_t *sfx);

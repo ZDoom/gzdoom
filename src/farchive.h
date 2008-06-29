@@ -177,6 +177,7 @@ virtual void Read (void *mem, unsigned int len);
 		FArchive& operator<< (WORD &s);
 		FArchive& operator<< (DWORD &i);
 		FArchive& operator<< (QWORD &i);
+		FArchive& operator<< (QWORD_UNION &i) { return operator<< (i.AsOne); }
 		FArchive& operator<< (float &f);
 		FArchive& operator<< (double &d);
 		FArchive& operator<< (char *&str);

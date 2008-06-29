@@ -729,7 +729,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay)
 	MoveCeiling (2048*FRACUNIT, topdist, 1);
 	if (DoorAnimations[m_WhichDoorIndex].OpenSound != NAME_None)
 	{
-		SN_StartSequence (m_Sector, CHAN_FULLHEIGHT, DoorAnimations[m_WhichDoorIndex].OpenSound, 1);
+		SN_StartSequence (m_Sector, CHAN_INTERIOR, DoorAnimations[m_WhichDoorIndex].OpenSound, 1);
 	}
 }
 

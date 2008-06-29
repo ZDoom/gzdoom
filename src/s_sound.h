@@ -177,17 +177,22 @@ struct FSoundChan
 	fixed_t		*Pt;		// Origin of sound.
 	sfxinfo_t	*SfxInfo;	// Sound information.
 	fixed_t		X,Y,Z;		// Origin if Mover is NULL.
-	int			SoundID;	// Sound ID of playing sound
-	int			OrgID;		// Sound ID of sound used to start this channel
+	FSoundID	SoundID;	// Sound ID of playing sound.
+	FSoundID	OrgID;		// Sound ID of sound used to start this channel.
 	float		Volume;
 	float		DistanceScale;
-	BYTE		EntChannel;	// Actor's sound channel.
+	int			Pitch;		// Pitch variation.
 	int			ChanFlags;
+	BYTE		EntChannel;	// Actor's sound channel.
+	SBYTE		Priority;
+	SWORD		NearLimit;
+	QWORD_UNION	StartTime;	// Sound start time in DSP clocks.
 };
 extern FSoundChan *Channels;
 
 FSoundChan *S_GetChannel(void *syschan);
 void S_ReturnChannel(FSoundChan *chan);
+void S_EvictAllChannels();
 
 void S_LinkChannel(FSoundChan *chan, FSoundChan **head);
 void S_UnlinkChannel(FSoundChan *chan);
@@ -212,11 +217,11 @@ void S_PrecacheLevel ();
 void S_CacheSound (sfxinfo_t *sfx);
 
 // Start sound for thing at <ent>
-void S_Sound (int channel, FSoundID sfxid, float volume, int attenuation);
-void S_Sound (AActor *ent, int channel, FSoundID sfxid, float volume, int attenuation);
-void S_Sound (fixed_t *pt, int channel, FSoundID sfxid, float volume, int attenuation);
-void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sfxid, float volume, int attenuation);
-void S_Sound (sector_t *sec, int channel, FSoundID sfxid, float volume, int attenuation);
+void S_Sound (int channel, FSoundID sfxid, float volume, float attenuation);
+void S_Sound (AActor *ent, int channel, FSoundID sfxid, float volume, float attenuation);
+void S_Sound (fixed_t *pt, int channel, FSoundID sfxid, float volume, float attenuation);
+void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sfxid, float volume, float attenuation);
+void S_Sound (sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation);
 
 // sound channels
 // channel 0 never willingly overrides
@@ -234,29 +239,34 @@ void S_Sound (sector_t *sec, int channel, FSoundID sfxid, float volume, int atte
 #define CHAN_VOICE				2
 #define CHAN_ITEM				3
 #define CHAN_BODY				4
-// modifier flags
-#define CHAN_LISTENERZ			8
-#define CHAN_IMMOBILE			16
-#define CHAN_MAYBE_LOCAL		32
-#define CHAN_NOPAUSE			64	// do not pause this sound in menus
-#define CHAN_AREA				128	// Sound plays from all around. Only valid with sector sounds.
-#define CHAN_LOOP				256
 
 // Channel alias for sector sounds. These define how listener height is
 // used when calculating 3D sound volume.
 #define CHAN_FLOOR				1	// Sound comes from the floor.
 #define CHAN_CEILING			2	// Sound comes from the ceiling.
 #define CHAN_FULLHEIGHT			3	// Sound comes entire height of the sector.
+#define CHAN_INTERIOR			4	// Sound comes height between floor and ceiling.
 
-#define CHAN_IS3D				(1<<24)	// internal flag
+// modifier flags
+#define CHAN_LISTENERZ			8
+#define CHAN_IMMOBILE			16
+#define CHAN_MAYBE_LOCAL		32
+#define CHAN_NOPAUSE			64	// Do not pause this sound in menus.
+#define CHAN_AREA				128	// Sound plays from all around. Only valid with sector sounds.
+#define CHAN_LOOP				256
 
 #define CHAN_PICKUP				(CHAN_ITEM|CHAN_MAYBE_LOCAL)
 
+#define CHAN_IS3D				1	// internal: Sound is 3D.
+#define CHAN_EVICTED			2	// internal: Looping sound was evicted.
+#define CHAN_FORGETTABLE		4	// internal: Forget sound data when sound stops.
+#define CHAN_JUSTSTARTED		512	// internal: Sound has not been updated yet.
+
 // sound attenuation values
-#define ATTN_NONE				0	// full volume the entire level
-#define ATTN_NORM				1
-#define ATTN_IDLE				2
-#define ATTN_STATIC				3	// diminish very rapidly with distance
+#define ATTN_NONE				0.f	// full volume the entire level
+#define ATTN_NORM				1.f
+#define ATTN_IDLE				1.001f
+#define ATTN_STATIC				3.f	// diminish very rapidly with distance
 
 int S_PickReplacement (int refid);
 void S_CacheRandomSound (sfxinfo_t *sfx);
@@ -278,6 +288,9 @@ bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id);
 
 // Moves all sounds from one mobj to another
 void S_RelinkSound (AActor *from, AActor *to);
+
+// Stores/retrieves playing channel information in an archive.
+void S_SerializeSounds(FArchive &arc);
 
 // Start music using <music_name>
 bool S_StartMusic (const char *music_name);
@@ -303,6 +316,8 @@ void S_ResumeSound ();
 // Updates music & sounds
 //
 void S_UpdateSounds (void *listener);
+
+void S_RestoreEvictedChannels();
 
 // [RH] S_sfx "maintenance" routines
 void S_ParseSndInfo ();

@@ -37,6 +37,10 @@
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
+#ifndef I_DO_NOT_LIKE_BIG_DOWNLOADS
+#define I_DO_NOT_LIKE_BIG_DOWNLOADS
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #define USE_WINDOWS_DWORD

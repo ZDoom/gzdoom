@@ -436,6 +436,7 @@ void P_SerializeThinkers (FArchive &arc, bool hubLoad)
 
 void P_SerializeSounds (FArchive &arc)
 {
+	S_SerializeSounds (arc);
 	DSeqNode::SerializeSequences (arc);
 	char *name = NULL;
 	BYTE order;

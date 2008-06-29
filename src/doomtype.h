@@ -126,6 +126,18 @@ typedef struct _GUID
 } GUID;
 #endif
 
+union QWORD_UNION
+{
+	QWORD AsOne;
+	struct
+	{
+#ifdef WORDS_BIG_ENDIAN
+		unsigned int Hi, Lo;
+#else
+		unsigned int Lo, Hi;
+#endif
+	};
+};
 
 // Bounding box coordinate storage.
 enum

@@ -8,7 +8,41 @@ June 28, 2008 (Changes by Graf Zahl)
 - Fixed: Heretic's ActivatedTimeBomb had the same spawn ID as the inventory item.
 - fixed: Heretic's mace did not have its spawn ID set.
 
+June 28, 2008
+- The sound code now handles restarting looping sounds itself. As far as
+  the rest of the game is concerned, these sounds will never stop once they
+  have been started until they are explicitly stopped. If they are evicted
+  from their channels, the sound code will restart them as soon as possible.
+  This means that instead of this:
+	if (!S_IsActorPlayingSomething(actor, CHAN_WEAPON, -1))
+	{
+		S_Sound(actor, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
+	}
+  The following is now just as effective:
+	S_Sound(actor, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
+  There are also a couple of other ramifications presented by this change:
+    * The full state of the sound system (sans music) is now stored in save
+      games. Any sounds that were playing when you saved will still be
+      playing when you load. (Try saving while Korax is making a speech in
+      Hexen to hear it.)
+    * Using snd_reset will also preserve any playing sounds.
+    * Movie playback is disabled, probably forever. I did not want to 
+      update the MovieDisable/ResumeSound stuff for the new eviction
+      tracking code. A properly updated movie player will use the VMR,
+      which doesn't need these functions, since it would pipe the sound
+      straight through the sound system like everything else, so I decided
+      to dump them now, which leaves the movie player in a totally unworkable
+      state.
+
 June 26, 2008
+- Changed S_Sound() to take the same floating point attenuation that the
+  internal S_StartSound() uses. Now ambient sounds can use the public
+  S_Sound() interface.
+- Fixed: S_RelinkSound() compared the points of the channels against the
+  from actor's point, rather than checking the channels' mover.
+- Changed Strife's animated doors so that their sounds originate from the
+  interior of the sector making them and not from the entire vertical height
+  of the map.
 - For controls that are not bound, the customize controls menu now displays
   a black --- instead of ???.
 - Applied Gez's BossBrainPatch3.

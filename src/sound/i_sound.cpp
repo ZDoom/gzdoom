@@ -155,16 +155,16 @@ CCMD (snd_status)
 
 CCMD (snd_reset)
 {
-	SoundRenderer *snd = GSnd;
-	if (snd != NULL)
+	I_ShutdownMusic();
+	S_EvictAllChannels();
+	if (GSnd != NULL)
 	{
-		snd->MovieDisableSound ();
+		delete GSnd;
 		GSnd = NULL;
 	}
-	I_InitSound ();
-	S_Init ();
-	S_RestartMusic ();
-	if (snd != NULL) delete snd;
+	I_InitSound();
+	S_RestartMusic();
+	S_RestoreEvictedChannels();
 }
 
 CCMD (snd_listdrivers)

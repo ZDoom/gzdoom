@@ -488,6 +488,16 @@ void A_ReFire (AActor *actor)
 	}
 }
 
+void A_ClearReFire(AActor *actor)
+{
+	player_t *player = actor->player;
+
+	if (NULL != player)
+	{
+		player->refire = 0;
+	}
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC A_CheckReload

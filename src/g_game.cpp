@@ -217,7 +217,7 @@ CUSTOM_CVAR (Float, turbo, 100.f, 0)
 	}
 	else
 	{
-		float scale = self * 0.01f;
+		double scale = self * 0.01;
 
 		forwardmove[0] = (int)(normforwardmove[0]*scale);
 		forwardmove[1] = (int)(normforwardmove[1]*scale);

@@ -1,3 +1,11 @@
+June 30, 2008 (Changes by Graf Zahl)
+- Added A_ClearReFire code pointer for weapons. Preferably A_WeaponReady should
+  reset this counter but that can't be done due to unwanted side effects with
+  existing weapons.
+- Changed the 'scale' variable in CVAR(turbo) to double because the calculations
+  depended on the current floating point precision setting and only worked properly
+  when set to 'precise' in VC++.
+
 June 29, 2008 (Changes by Graf Zahl)
 - Changed: I_Error and I_FatalError now use ZDoom's internal string formatting
   code to process their messages. This was necessary to handle the %zu format
